@@ -1,0 +1,35 @@
+[gd_scene load_steps=6 format=3 uid="uid://ceognrw5418ks"]
+
+[ext_resource type="Script" uid="uid://d2efwmq2n46lg" path="res://scripts/camera.gd" id="1_4wyf3"]
+[ext_resource type="PackedScene" uid="uid://1isaxxqlfqe8" path="res://characters/character.tscn" id="1_nnsk1"]
+[ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://characters/controllers/player_controller.gd" id="2_rwgxs"]
+[ext_resource type="Script" uid="uid://bon583mupvfcs" path="res://scripts/TerrainGenerator.gd" id="4_71j4m"]
+
+[sub_resource type="Resource" id="Resource_rwgxs"]
+script = ExtResource("2_rwgxs")
+metadata/_custom_type_script = "uid://bb8ia06ag8nwf"
+
+[node name="World" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("camera", "target")]
+transform = Transform3D(0.85278606, -0.12692104, 0.5066034, 0, 0.97002065, 0.2430225, -0.5222604, -0.2072462, 0.8272201, 2.0454454, 2.6963062, 5.949689)
+script = ExtResource("1_4wyf3")
+camera = NodePath(".")
+target = NodePath("../Characters/Character")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -0.94776845, 0.3189592, 0, -0.3189592, -0.94776845, 0, 0, 0)
+light_volumetric_fog_energy = 3.0
+light_angular_distance = 1.0
+shadow_enabled = true
+
+[node name="Terrain" type="Node3D" parent="." node_paths=PackedStringArray("player", "terrain_parent")]
+script = ExtResource("4_71j4m")
+player = NodePath("../Characters/Character")
+terrain_parent = NodePath(".")
+
+[node name="Characters" type="Node" parent="."]
+
+[node name="Character" parent="Characters" instance=ExtResource("1_nnsk1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 12)
+controller = SubResource("Resource_rwgxs")

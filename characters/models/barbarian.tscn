@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://dvdwlhu1xsrcd"]
+
+[ext_resource type="PackedScene" uid="uid://dcp13vlgfgkka" path="res://assets/KayKitAdventurers/Characters/gltf/Barbarian.glb" id="1_fkrmr"]
+
+[node name="Barbarian" instance=ExtResource("1_fkrmr")]

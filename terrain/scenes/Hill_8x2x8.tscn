@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3 uid="uid://d3ravfk8mv7w"]
+
+[ext_resource type="PackedScene" uid="uid://btdjtfx52q3uj" path="res://terrain/gltf/hill_8x_8x_2_color_12.tscn" id="1_dylao"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_dylao"]
+size = Vector3(7.5, 2, 7.5)
+
+[node name="Hill8x2x8" type="Node3D"]
+
+[node name="Mesh" parent="." instance=ExtResource("1_dylao")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("BoxShape3D_dylao")
+
+[node name="Sockets" type="Node3D" parent="."]
+
+[node name="topcenter" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="main" type="Marker3D" parent="Sockets"]
+
+[node name="topfrontright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2, 2)
+
+[node name="topfrontleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2, -2)
+
+[node name="topbackright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 2, 2)
+
+[node name="topbackleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 2, -2)

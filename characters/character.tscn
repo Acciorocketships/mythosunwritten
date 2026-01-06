@@ -1,0 +1,176 @@
+[gd_scene load_steps=26 format=3 uid="uid://1isaxxqlfqe8"]
+
+[ext_resource type="Script" uid="uid://c7u14nqxnhn0n" path="res://scripts/character.gd" id="1_qqr4u"]
+[ext_resource type="PackedScene" uid="uid://dawmb1kfgp2h2" path="res://characters/models/knight.tscn" id="2_3fwhk"]
+[ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://characters/controllers/player_controller.gd" id="2_mdkfl"]
+[ext_resource type="AnimationLibrary" uid="uid://bhob00wxk8lp7" path="res://characters/animations/CharacterAnimationLibrary.tres" id="3_3fwhk"]
+
+[sub_resource type="Resource" id="Resource_b1u1o"]
+script = ExtResource("2_mdkfl")
+metadata/_custom_type_script = "uid://bb8ia06ag8nwf"
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3fwhk"]
+radius = 0.39746094
+height = 2.2454834
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_3fwhk"]
+animation = &"CharacterAnimationLibrary/Jump_Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_mdkfl"]
+animation = &"CharacterAnimationLibrary/Jump_Land"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_b1u1o"]
+animation = &"CharacterAnimationLibrary/Jump_Start"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ke030"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jfi6v"]
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_f0775"]
+xfade_time = 0.1
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_vliyq"]
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_qulg7"]
+states/End/position = Vector2(849, 276.5)
+states/JumpIdle/node = SubResource("AnimationNodeAnimation_3fwhk")
+states/JumpIdle/position = Vector2(515.875, 151.5)
+states/JumpLand/node = SubResource("AnimationNodeAnimation_mdkfl")
+states/JumpLand/position = Vector2(515.8711, 276.5)
+states/JumpStart/node = SubResource("AnimationNodeAnimation_b1u1o")
+states/JumpStart/position = Vector2(515.8672, 38.5)
+states/Start/position = Vector2(204.5, 39.25)
+transitions = ["Start", "JumpStart", SubResource("AnimationNodeStateMachineTransition_ke030"), "JumpStart", "JumpIdle", SubResource("AnimationNodeStateMachineTransition_jfi6v"), "JumpIdle", "JumpLand", SubResource("AnimationNodeStateMachineTransition_f0775"), "JumpLand", "End", SubResource("AnimationNodeStateMachineTransition_vliyq")]
+graph_offset = Vector2(75.419975, 104.775024)
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_4kffy"]
+fadeout_time = 0.3
+
+[sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_bnq0n"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_hgjqb"]
+animation = &"CharacterAnimationLibrary/Idle_A"
+use_custom_timeline = true
+timeline_length = 1.0
+stretch_time_scale = true
+start_offset = 0.0
+loop_mode = 1
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_3h56x"]
+animation = &"CharacterAnimationLibrary/Walking_A"
+use_custom_timeline = true
+timeline_length = 1.0
+stretch_time_scale = true
+start_offset = 0.0
+loop_mode = 1
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_i1355"]
+animation = &"CharacterAnimationLibrary/Running_A"
+use_custom_timeline = true
+timeline_length = 1.0
+stretch_time_scale = true
+start_offset = 0.0
+loop_mode = 1
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_qci4v"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_hgjqb")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_3h56x")
+blend_point_1/pos = 0.5
+blend_point_2/node = SubResource("AnimationNodeAnimation_i1355")
+blend_point_2/pos = 1.0
+min_space = 0.0
+sync = true
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_qnu6j"]
+graph_offset = Vector2(96.01294, -56.350586)
+nodes/output/position = Vector2(930, -20)
+nodes/RunSpeed/node = SubResource("AnimationNodeTimeScale_bnq0n")
+nodes/RunSpeed/position = Vector2(480, -10)
+nodes/Jump/node = SubResource("AnimationNodeStateMachine_qulg7")
+nodes/Jump/position = Vector2(360, 220)
+nodes/OneShot/node = SubResource("AnimationNodeOneShot_4kffy")
+nodes/OneShot/position = Vector2(670, -30)
+nodes/WalkRun/node = SubResource("AnimationNodeBlendSpace1D_qci4v")
+nodes/WalkRun/position = Vector2(290, -10)
+node_connections = [&"output", 0, &"OneShot", &"RunSpeed", 0, &"WalkRun", &"OneShot", 0, &"RunSpeed", &"OneShot", 1, &"Jump"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_e3kty"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_mdkfl"]
+states/End/position = Vector2(1202, 123)
+states/Movement/node = SubResource("AnimationNodeBlendTree_qnu6j")
+states/Movement/position = Vector2(402.6562, 99.23767)
+states/Start/position = Vector2(199.5, 99.625)
+transitions = ["Start", "Movement", SubResource("AnimationNodeStateMachineTransition_e3kty")]
+graph_offset = Vector2(72.67985, 18.587488)
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_b1u1o"]
+nodes/output/position = Vector2(740, 60)
+nodes/StateMachine/node = SubResource("AnimationNodeStateMachine_mdkfl")
+nodes/StateMachine/position = Vector2(360, 30)
+node_connections = [&"output", 0, &"StateMachine"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mdkfl"]
+radius = 0.39013672
+height = 2.0922852
+
+[node name="Character" type="CharacterBody3D"]
+script = ExtResource("1_qqr4u")
+controller = SubResource("Resource_b1u1o")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1227915, 0)
+visible = false
+shape = SubResource("CapsuleShape3D_3fwhk")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="Knight" parent="Body" instance=ExtResource("2_3fwhk")]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+root_node = NodePath("../Body/Knight")
+libraries = {
+&"CharacterAnimationLibrary": ExtResource("3_3fwhk")
+}
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../Body/Knight")
+tree_root = SubResource("AnimationNodeBlendTree_b1u1o")
+anim_player = NodePath("../AnimationPlayer")
+parameters/StateMachine/Movement/RunSpeed/scale = 1.0
+parameters/StateMachine/Movement/OneShot/active = false
+parameters/StateMachine/Movement/OneShot/internal_active = false
+parameters/StateMachine/Movement/OneShot/request = 0
+parameters/StateMachine/Movement/WalkRun/blend_position = 0.0
+
+[node name="Hands" type="Node" parent="."]
+
+[node name="RightHand" type="BoneAttachment3D" parent="Hands"]
+use_external_skeleton = true
+external_skeleton = NodePath("")
+
+[node name="LeftHand" type="BoneAttachment3D" parent="Hands"]
+use_external_skeleton = true
+external_skeleton = NodePath("")
+
+[node name="Spine" type="BoneAttachment3D" parent="."]
+transform = Transform3D(1, 0, 1.4210855e-14, 0, 1, 0, -1.4210855e-14, 0, 1, 0, 0.59764093, 0)
+bone_name = "spine"
+bone_idx = 2
+use_external_skeleton = true
+external_skeleton = NodePath("")
+
+[node name="SpineHitbox" type="Area3D" parent="Spine"]
+collision_layer = 2
+collision_mask = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Spine/SpineHitbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.63345414, 0)
+shape = SubResource("CapsuleShape3D_mdkfl")

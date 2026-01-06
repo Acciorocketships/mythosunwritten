@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://d1gmnh2oqcftj"]
+
+[ext_resource type="PackedScene" uid="uid://cufpdm5oe71qt" path="res://assets/KayKitNature/Assets/gltf/Color1/Tree_1_C_Color1.gltf" id="1_idx2q"]
+
+[node name="Tree_1_C_Color12" instance=ExtResource("1_idx2q")]

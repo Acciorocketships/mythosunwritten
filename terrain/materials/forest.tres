@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://bil1ioserkiij"]
+
+[ext_resource type="Texture2D" uid="uid://cq61yip6xtobk" path="res://assets/KayKitNature/Assets/gltf/Color1/forest_texture.png" id="1_32mxw"]
+
+[resource]
+resource_name = "forest"
+albedo_texture = ExtResource("1_32mxw")
+roughness = 0.6

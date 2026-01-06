@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://bq3445iqj0ne3"]
+
+[ext_resource type="PackedScene" uid="uid://b6ytyld4iw3pe" path="res://assets/KayKitAdventurers/Characters/gltf/Mage.glb" id="1_tt6rw"]
+
+[node name="Mage" instance=ExtResource("1_tt6rw")]

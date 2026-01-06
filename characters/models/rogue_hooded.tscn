@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://c2n5gxx1dggm5"]
+
+[ext_resource type="PackedScene" uid="uid://dxf2mklfmdc8w" path="res://assets/KayKitAdventurers/Characters/gltf/Rogue_Hooded.glb" id="1_wojrq"]
+
+[node name="Rogue_Hooded" instance=ExtResource("1_wojrq")]
