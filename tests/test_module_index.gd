@@ -15,13 +15,13 @@ func _rand_box(rng: RandomNumberGenerator) -> AABB:
 
 var _next_id := 0
 
-func _make_module(size: AABB) -> TerrainModule:
+func _make_module(size: AABB) -> TerrainModuleInstance:
 	var dummy_scene := PackedScene.new()
 	var m := TerrainModule.new(dummy_scene, size)
-	m.aabb = size
+	m.size = size
 	m.debug_id = _next_id
 	_next_id += 1
-	return m
+	return m.spawn()
 
 # --------------------------------------------------------
 # TEST CASE: deterministic small test

@@ -4,3 +4,5 @@
 .DS_Store
 assets/
 addons/
+*.uid
+*.import

@@ -6,7 +6,7 @@ var store: Dictionary[Vector3, TerrainModuleSocket] = {}
 
 # Tune this to your grid/socket spacing tolerance.
 # If your sockets are on a 1-unit grid, set to 1.0; if they’re 0.5, use 0.5, etc.
-const SNAP: float = 0.1
+const SNAP: float = 0.5
 
 func _key(pos: Vector3) -> Vector3:
 	# Quantize so floats don't break hashing/equality

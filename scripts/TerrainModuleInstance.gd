@@ -8,15 +8,14 @@ var sockets: Dictionary = {}  # String -> Marker3D
 
 var transform: Transform3D = Transform3D.IDENTITY
 var aabb: AABB
-var debug_id: int = -1
 
 func _init(_def: TerrainModule) -> void:
 	def = _def
 	aabb = get_world_aabb()
 
 func debug_string() -> String:
-	var tag_str := def.tags[0] if def.tags.size() > 0 else "<no_tag>"
-	return "TerrainModuleInstance(id=%d, tag=%s, aabb=%s)" % [debug_id, tag_str, str(aabb)]
+	var tag_str: String = def.tags.tags[0] if def.tags.size() > 0 else "<no_tag>"
+	return "TerrainModuleInstance(tag=%s, aabb=%s)" % [tag_str, str(aabb)]
 
 func create() -> Node3D:
 	root = def.scene.instantiate()
@@ -27,8 +26,13 @@ func create() -> Node3D:
 
 func destroy() -> void:
 	if root:
-		transform = root.global_transform
-		root.queue_free()
+		# If it was never added to the scene tree, queue_free() will complain.
+		if root.is_inside_tree():
+			transform = root.global_transform
+			root.queue_free()
+		else:
+			# Not in tree => safe to free immediately
+			root.free()
 	root = null
 	socket_node = null
 	sockets.clear()

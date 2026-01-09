@@ -34,13 +34,13 @@ func load_terrain() -> void:
 		var piece: TerrainModuleInstance = piece_socket.piece
 		var socket_name: String = piece_socket.socket_name
 		var socket: Marker3D = piece_socket.socket
-		var dist := get_dist_from_player(socket)
+		var distance := get_dist_from_player(socket)
 
-		if dist > RENDER_RANGE:
-			queue.push(piece_socket, dist)
+		if distance > RENDER_RANGE:
+			queue.push(piece_socket, distance)
 			return
 
-		var fill_prob = piece.def.socket_fill_prob[socket_name]
+		var fill_prob = piece.def.socket_fill_prob.prob(socket_name)
 		if randf() > fill_prob:
 			return
 
@@ -49,10 +49,22 @@ func load_terrain() -> void:
 
 		var adjacent := get_adjacent_from_size(piece_socket, size)
 		
-		print(adjacent)
-
-		# TODO: compute required tags from adjacent, filter defs, sample tag distribution, etc.
-		pass
+		var chosen: TerrainModuleInstance = choose_piece(adjacent)
+		
+		print(chosen)
+		
+		
+func choose_piece(adjacent: Dictionary[String, TerrainModuleSocket]) -> TerrainModuleInstance:
+	var required_tags: TagList = library.get_required_tags(adjacent)
+	var filtered: TerrainModuleList = library.get_by_tags(required_tags)
+	var dist: Distribution = library.get_combined_distribution(adjacent)
+	var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
+	var chosen: TerrainModuleInstance = chosen_template.spawn()
+	# choose a new piece if it cant be placed (i.e. the bounding box overlaps with something)
+	while not can_place(chosen):
+		chosen = library.sample_from_modules(filtered, dist).spawn()
+		push_warning("could not place piece %s" % chosen)
+	return chosen
 
 
 func get_dist_from_player(socket: Marker3D) -> float:
@@ -78,11 +90,11 @@ func can_place(new_piece: TerrainModuleInstance) -> bool:
 	return other_pieces.is_empty()
 
 	
-func get_adjacent(piece: TerrainModuleInstance) -> Dictionary:
+func get_adjacent(piece: TerrainModuleInstance) -> Dictionary[String, TerrainModuleSocket]:
 	if piece.root == null:
 		return {}
 
-	var out: Dictionary = {}
+	var out: Dictionary[String, TerrainModuleSocket] = {}
 	for socket_name: String in piece.sockets.keys():
 		var s: Marker3D = piece.sockets[socket_name]
 		var pos := _socket_world_pos(piece.transform, s, piece.root)
@@ -90,32 +102,30 @@ func get_adjacent(piece: TerrainModuleInstance) -> Dictionary:
 		var hit := socket_index.query(pos)
 		if hit != null:
 			out[socket_name] = hit
-
 	return out
 
 
-func get_adjacent_from_size(orig_piece_socket: TerrainModuleSocket, size: String) -> Dictionary:
+func get_adjacent_from_size(orig_piece_socket: TerrainModuleSocket, size: String) -> Dictionary[String, TerrainModuleSocket]:
 	var orig_piece: TerrainModuleInstance = orig_piece_socket.piece
 	var orig_sock: Marker3D = orig_piece_socket.socket
-	if orig_piece.root == null or orig_sock == null:
-		return {}
+	assert(orig_piece.root != null)
+	assert(orig_sock != null)
 
-	var test_piece: TerrainModuleInstance = library.create_by_tags([size])
-	if test_piece == null:
-		return {}
+	var all_pieces_of_size: TerrainModuleList = library.get_by_tags(TagList.new([size]))
+	var test_piece_template: TerrainModule = library.get_random(all_pieces_of_size, true)
+	var test_piece: TerrainModuleInstance = test_piece_template.spawn()
+	assert(test_piece != null)
 	test_piece.create()
 
 	var test_main: Marker3D = test_piece.sockets.get("main", null)
-	if test_main == null:
-		test_piece.destroy()
-		return {}
+	assert(test_main != null)
 
 	# Align test piece so its "main" socket lands on the given orig socket
 	var orig_main_world := orig_piece.transform * _to_root_tf(orig_sock, orig_piece.root)
 	var test_main_local := _to_root_tf(test_main, test_piece.root)
 	var aligned_tf := orig_main_world * test_main_local.affine_inverse()
 
-	var out: Dictionary = {"main": orig_piece_socket}
+	var out: Dictionary[String, TerrainModuleSocket] = {"main": orig_piece_socket}
 
 	for socket_name: String in test_piece.sockets.keys():
 		if socket_name == "main":
@@ -130,7 +140,6 @@ func get_adjacent_from_size(orig_piece_socket: TerrainModuleSocket, size: String
 
 	test_piece.destroy()
 	return out
-
 
 
 func transform_to_socket(new_piece_socket: TerrainModuleSocket, orig_piece_socket: TerrainModuleSocket) -> void:
@@ -154,6 +163,7 @@ func transform_to_socket(new_piece_socket: TerrainModuleSocket, orig_piece_socke
 	var new_position := orig_socket.global_position + (new_piece.get_position() - new_socket.global_position)
 	new_piece.set_transform(Transform3D(new_basis, new_position))
 
+
 func add_piece(new_piece_socket: TerrainModuleSocket, orig_piece_socket: TerrainModuleSocket) -> bool:
 	transform_to_socket(new_piece_socket, orig_piece_socket)
 
@@ -168,6 +178,7 @@ func add_piece(new_piece_socket: TerrainModuleSocket, orig_piece_socket: Terrain
 	add_piece_to_queue(new_piece)
 	return true
 
+
 func load_start_tile() -> TerrainModuleInstance:
 	var def := library.load_ground_tile()
 	var initial_tile := def.spawn()
@@ -179,6 +190,7 @@ func load_start_tile() -> TerrainModuleInstance:
 	
 ### Helper ###
 
+
 # Node3D -> transform relative to a given root (no scene tree needed)
 func _to_root_tf(n: Node3D, root: Node3D) -> Transform3D:
 	var tf := n.transform
@@ -188,6 +200,7 @@ func _to_root_tf(n: Node3D, root: Node3D) -> Transform3D:
 			tf = (p as Node3D).transform * tf
 		p = p.get_parent()
 	return tf
+
 
 # Socket world position given a piece/world transform and socket node
 func _socket_world_pos(piece_tf: Transform3D, socket_node: Node3D, root: Node3D) -> Vector3:

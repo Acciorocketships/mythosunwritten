@@ -13,7 +13,6 @@ config_version=5
 config/name="Story"
 run/main_scene="uid://ceognrw5418ks"
 config/features=PackedStringArray("4.5", "Forward Plus")
-config/icon="res://icon.svg"
 
 [debug]
 
