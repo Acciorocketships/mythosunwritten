@@ -19,5 +19,7 @@ func test_priority_queue():
 	var o5 = queue.pop()
 	assert_eq(o5, "d")
 	assert_true(queue.is_empty())
+	# PriorityQueue extends Object (not RefCounted), so free explicitly to avoid leaks.
+	queue.free()
 	
 	

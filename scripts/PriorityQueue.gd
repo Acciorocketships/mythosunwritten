@@ -54,3 +54,14 @@ func _bubble_down(i):
 		heap[i] = heap[smallest]
 		heap[smallest] = tmp
 		i = smallest
+
+# Debug helpers (no mutation)
+func debug_dump() -> String:
+	var lines: Array[String] = []
+	# Heap internal order is not sorted; sort a copy for easier debugging.
+	var sorted := heap.duplicate(true)
+	sorted.sort_custom(func(a, b): return float(a["priority"]) < float(b["priority"]))
+	for i in range(sorted.size()):
+		var e = sorted[i]
+		lines.append("%d: p=%.3f %s" % [i, float(e["priority"]), str(e["item"])])
+	return "\n".join(lines)

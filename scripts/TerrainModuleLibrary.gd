@@ -1,9 +1,9 @@
-extends Node
 class_name TerrainModuleLibrary
+extends Node
 
 
-var TERRAIN_MODULES: TerrainModuleList = TerrainModuleList.new()
-var MODULES_BY_TAG: Dictionary[String, TerrainModuleList] = {}
+var terrain_modules: TerrainModuleList = TerrainModuleList.new()
+var modules_by_tag: Dictionary[String, TerrainModuleList] = {}
 
 
 func init() -> void:
@@ -12,31 +12,35 @@ func init() -> void:
 
 
 func load_terrain_modules() -> void:
-	TERRAIN_MODULES.append(load_ground_tile())
+	terrain_modules.append(load_ground_tile())
 
 
 func sort_terrain_modules() -> void:
-	MODULES_BY_TAG.clear()
-	for module: TerrainModule in TERRAIN_MODULES:
+	modules_by_tag.clear()
+	for module: TerrainModule in terrain_modules:
 		for tag: String in module.tags:
-			if not MODULES_BY_TAG.has(tag):
-				MODULES_BY_TAG[tag] = TerrainModuleList.new()
-			MODULES_BY_TAG[tag].library.append(module)
+			if not modules_by_tag.has(tag):
+				modules_by_tag[tag] = TerrainModuleList.new()
+			modules_by_tag[tag].library.append(module)
 		for socket_name: String in module.tags_per_socket:
 			for tag: String in module.tags_per_socket[socket_name]:
 				var tag_combined : String = combined_tag_socket_name(tag, socket_name)
-				if not MODULES_BY_TAG.has(tag_combined):
-					MODULES_BY_TAG[tag_combined] = TerrainModuleList.new()
-				MODULES_BY_TAG[tag_combined].library.append(module)
-			
-			
+				if not modules_by_tag.has(tag_combined):
+					modules_by_tag[tag_combined] = TerrainModuleList.new()
+				modules_by_tag[tag_combined].library.append(module)
+
+
 func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket]) -> TagList:
 	var out: TagList = TagList.new()
 	for socket_name: String in adjacent.keys():
 		var piece_socket: TerrainModuleSocket = adjacent[socket_name]
 		var adjacent_piece: TerrainModuleInstance = piece_socket.piece
 		var adjacent_socket_name: String = piece_socket.socket_name
-		var adjacent_required_tags = adjacent_piece.def.socket_required[adjacent_socket_name]
+		# Safe lookup: some modules may not define tag requirements for every possible socket name.
+		var has_key: bool = adjacent_piece.def.socket_required.has(adjacent_socket_name)
+		if not has_key:
+			print("[TerrainModuleLibrary.get_required_tags] missing key '", adjacent_socket_name, "' in socket_required; available=", adjacent_piece.def.socket_required.keys())
+		var adjacent_required_tags: TagList = adjacent_piece.def.socket_required.get(adjacent_socket_name, TagList.new())
 		var tag_list = convert_tag_list(adjacent_required_tags, socket_name)
 		out = out.union(tag_list)
 	return out
@@ -48,7 +52,11 @@ func get_combined_distribution(adjacent: Dictionary[String, TerrainModuleSocket]
 		var piece_socket: TerrainModuleSocket = adjacent[socket_name]
 		var adjacent_piece: TerrainModuleInstance = piece_socket.piece
 		var adjacent_socket_name: String = piece_socket.socket_name
-		var disti: Distribution = adjacent_piece.def.socket_tag_prob[adjacent_socket_name]
+		# Safe lookup for socket distributions
+		if not adjacent_piece.def.socket_tag_prob.has(adjacent_socket_name):
+			print("[TerrainModuleLibrary.get_combined_distribution] missing key '", adjacent_socket_name, "' in socket_tag_prob; available=", adjacent_piece.def.socket_tag_prob.keys())
+			continue
+		var disti: Distribution = adjacent_piece.def.socket_tag_prob.get(adjacent_socket_name, Distribution.new())
 		dist_set.append(disti)
 	assert(dist_set.size() > 0)
 	if dist_set.size() == 1:
@@ -56,7 +64,7 @@ func get_combined_distribution(adjacent: Dictionary[String, TerrainModuleSocket]
 	var out_dist: Distribution = Distribution.new()
 	for disti: Distribution in dist_set:
 		var new_dist = Distribution.new(out_dist.dist)
-		new_dist.dist.merge(disti)
+		new_dist.dist.merge(disti.dist)
 		for tag: String in new_dist:
 			var disti_tag_prob: float = disti.prob(tag)
 			var orig_tag_prob: float = out_dist.prob(tag)
@@ -65,24 +73,24 @@ func get_combined_distribution(adjacent: Dictionary[String, TerrainModuleSocket]
 		new_dist.normalise()
 		out_dist = new_dist
 	return out_dist
-	
-	
+
+
 func sample_from_modules(modules: TerrainModuleList, dist: Distribution) -> TerrainModule:
 	var sampled_tag: String = dist.sample()
 	var filtered_modules: TerrainModuleList = filter_module_list(modules, sampled_tag)
 	assert(!filtered_modules.is_empty())
 	var chosen_module = get_random(filtered_modules)
 	return chosen_module
-		
+
 
 func get_by_tags(tags: TagList) -> TerrainModuleList:
 	if tags.is_empty():
-		return TERRAIN_MODULES.duplicate()
+		return terrain_modules.duplicate()
 	var sets: Array[TerrainModuleList] = []
 	for tag in tags:
-		if not MODULES_BY_TAG.has(tag):
+		if not modules_by_tag.has(tag):
 			return TerrainModuleList.new()
-		sets.append(MODULES_BY_TAG[tag])
+		sets.append(modules_by_tag[tag])
 	return _intersection(sets)
 
 
@@ -97,9 +105,9 @@ func get_random(modules: TerrainModuleList, first: bool = false) -> TerrainModul
 
 
 func filter_module_list(modules: TerrainModuleList, tag: String) -> TerrainModuleList:
-	if not MODULES_BY_TAG.has(tag):
+	if not modules_by_tag.has(tag):
 		return TerrainModuleList.new()
-	return _intersection([modules, MODULES_BY_TAG[tag]])
+	return _intersection([modules, modules_by_tag[tag]])
 
 
 func _intersection(sets: Array[TerrainModuleList]) -> TerrainModuleList:
@@ -127,16 +135,16 @@ func _intersection(sets: Array[TerrainModuleList]) -> TerrainModuleList:
 	# return intersection as a TerrainModuleList
 	var out_list: TerrainModuleList = TerrainModuleList.new(out.keys())
 	return out_list
-		
-	
+
+
 func convert_tag_list(tag_list: TagList, socket_name: String) -> TagList:
 	for i: int in range(tag_list.size()):
 		var tag: String = tag_list.tags[i]
 		if tag[0] == "!":
-			tag_list.tags[i] = combined_tag_socket_name(tag, socket_name)
+			tag_list.tags[i] = combined_tag_socket_name(tag.substr(1), socket_name)
 	return tag_list
-			
-	
+
+
 func combined_tag_socket_name(tag: String, socket_name: String) -> String:
 	return "[%s]%s" % [socket_name, tag]
 
@@ -148,7 +156,8 @@ func load_ground_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/GroundTile.tscn")
 	var tags: TagList = TagList.new(["ground", "24x24"])
 	var tags_by_socket: Dictionary[String, TagList] = {}
-	var bb: AABB = AABB(Vector3.ZERO, Vector3(24.0, 2.0, 24.0))
+	# Centered 24x24 tile; can_place handles edge-touch tolerances
+	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 2.0, 24.0))
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"main": Distribution.new({"24x24": 1.0}),

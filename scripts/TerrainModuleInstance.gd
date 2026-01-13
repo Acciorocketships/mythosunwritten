@@ -1,5 +1,5 @@
-extends RefCounted
 class_name TerrainModuleInstance
+extends RefCounted
 
 var def: TerrainModule
 var root: Node3D = null
@@ -11,7 +11,7 @@ var aabb: AABB
 
 func _init(_def: TerrainModule) -> void:
 	def = _def
-	aabb = get_world_aabb()
+	set_world_aabb()
 
 func debug_string() -> String:
 	var tag_str: String = def.tags.tags[0] if def.tags.size() > 0 else "<no_tag>"
@@ -47,13 +47,13 @@ func _find_sockets() -> void:
 
 func set_transform(tf: Transform3D) -> void:
 	transform = tf
-	aabb = get_world_aabb()
+	set_world_aabb()
 	if root:
 		root.global_transform = tf
 
 func set_position(pos: Vector3) -> void:
 	transform.origin = pos
-	aabb = get_world_aabb()
+	set_world_aabb()
 	if root:
 		root.global_transform = transform
 
@@ -62,9 +62,20 @@ func get_position() -> Vector3:
 
 func set_basis(basis: Basis) -> void:
 	transform.basis = basis
-	aabb = get_world_aabb()
+	set_world_aabb()
 	if root:
 		root.global_transform = transform
 
-func get_world_aabb() -> AABB:
-	return transform * def.size
+func set_world_aabb() -> AABB:
+	aabb = transform * def.size
+	aabb.position = Helper.snap_vec3(aabb.position, 0.01)
+	aabb.size = Helper.snap_vec3(aabb.size, 0.01)
+	return aabb
+
+func _to_string() -> String:
+	var tag_str := ",".join(def.tags.tags)
+	return "TerrainModuleInstance(tags=[%s], pos=%s, aabb=%s)" % [
+		tag_str,
+		str(transform.origin),
+		str(aabb),
+	]

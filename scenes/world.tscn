@@ -31,5 +31,4 @@ terrain_parent = NodePath(".")
 [node name="Characters" type="Node" parent="."]
 
 [node name="Character" parent="Characters" instance=ExtResource("1_nnsk1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 12)
 controller = SubResource("Resource_rwgxs")

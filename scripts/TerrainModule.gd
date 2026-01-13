@@ -37,3 +37,7 @@ func _init(
 
 func spawn() -> TerrainModuleInstance:
 	return TerrainModuleInstance.new(self)
+
+func _to_string() -> String:
+	var tag_str := ",".join(tags.tags)
+	return "TerrainModule(tags=[%s], size=%s)" % [tag_str, str(size)]

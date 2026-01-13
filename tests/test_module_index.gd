@@ -15,6 +15,17 @@ func _rand_box(rng: RandomNumberGenerator) -> AABB:
 
 var _next_id := 0
 
+var _objs_to_free: Array[Object] = []
+
+func before_each() -> void:
+	_objs_to_free.clear()
+
+func after_each() -> void:
+	for o in _objs_to_free:
+		if is_instance_valid(o):
+			o.free()
+	_objs_to_free.clear()
+
 func _make_module(size: AABB) -> TerrainModuleInstance:
 	var dummy_scene := PackedScene.new()
 	var m := TerrainModule.new(dummy_scene, size)
@@ -28,6 +39,7 @@ func _make_module(size: AABB) -> TerrainModuleInstance:
 # --------------------------------------------------------
 func test_deterministic():
 	var idx := TerrainIndex.new()
+	_objs_to_free.append(idx)
 
 	var center_mod = _make_module(_box(-12, 0, -12, 24, 4, 24))
 	var east_mod   = _make_module(_box(12, 0, -2, 4, 4, 4))
@@ -59,6 +71,7 @@ func test_deterministic():
 # --------------------------------------------------------
 func test_random_stress():
 	var idx := TerrainIndex.new()
+	_objs_to_free.append(idx)
 	var naive: Array = []
 
 	var rng := RandomNumberGenerator.new()

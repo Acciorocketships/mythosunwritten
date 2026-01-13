@@ -417,6 +417,9 @@ func query_box(box: AABB) -> Array:
 	var out: Array = []
 	for m in candidates.keys():
 		var aabb: AABB = aabb_by_module[m]
+		#var a_max := aabb.position + aabb.size
+		#var b_max := box.position + box.size
+		#print("dz gaps: a_max.z - b_min.z =", a_max.z - box.position.z, " b_max.z - a_min.z =", b_max.z - aabb.position.z)
 		if aabb.intersects(box):
 			out.append(m)
 
