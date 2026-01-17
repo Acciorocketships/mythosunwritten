@@ -18,7 +18,14 @@ func debug_string() -> String:
 	return "TerrainModuleInstance(tag=%s, aabb=%s)" % [tag_str, str(aabb)]
 
 func create() -> Node3D:
-	root = def.scene.instantiate()
+	var chosen_scene: PackedScene = def.scene
+	if def.visual_variants.size() > 0:
+		var random_idx: int = randi_range(0, def.visual_variants.size() - 1)
+		chosen_scene = def.visual_variants[random_idx]
+	if chosen_scene == null:
+		push_error("[TerrainModuleInstance.create] No scene available (def.scene is null and visual_variants is empty).")
+		return null
+	root = chosen_scene.instantiate()
 	root.global_transform = transform
 	socket_node = root.get_node("Sockets") as Node3D
 	_find_sockets()

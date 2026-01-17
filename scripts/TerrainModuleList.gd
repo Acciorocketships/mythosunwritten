@@ -1,12 +1,17 @@
 extends Resource
 class_name TerrainModuleList
 
-var library: Array[TerrainModule]
+var library: Array[TerrainModule] = []
 
 var _iter_i := 0
 
 func _init(list: Array[TerrainModule] = []) -> void:
 	library = list
+
+func copy() -> TerrainModuleList:
+	# `Resource.duplicate()` does not reliably copy plain script vars like `library`.
+	# Use an explicit copy for predictable behavior.
+	return TerrainModuleList.new(library.duplicate())
 	
 func size() -> int:
 	return library.size()

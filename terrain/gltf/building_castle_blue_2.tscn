@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://cwb44hf8x6hxu"]
+
+[ext_resource type="PackedScene" uid="uid://y28s128j2qcw" path="res://assets/KayKitMedieval/Assets/gltf/buildings/blue/building_castle_blue.gltf" id="1_d1j3g"]
+
+[node name="building_castle_blue2" instance=ExtResource("1_d1j3g")]
+
+[node name="building_castle_blue" parent="." index="0"]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0)

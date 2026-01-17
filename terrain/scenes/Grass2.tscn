@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://bke0uu40dtn6u"]
+
+[ext_resource type="PackedScene" uid="uid://jbcpeay2ujnd" path="res://terrain/gltf/grass_2_b_color_12.tscn" id="1_htj3q"]
+
+[node name="Grass" type="Node3D"]
+
+[node name="Mesh" parent="." instance=ExtResource("1_htj3q")]
+
+[node name="Sockets" type="Node3D" parent="."]
+
+[node name="main" type="Marker3D" parent="Sockets"]

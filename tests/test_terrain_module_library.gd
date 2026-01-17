@@ -21,7 +21,7 @@ func test_load_terrain_modules_appends_once():
 	add_child_autofree(lib)
 	assert_eq(lib.terrain_modules.size(), 0, "starts empty")
 	lib.load_terrain_modules()
-	assert_eq(lib.terrain_modules.size(), 1, "appends one module")
+	assert_eq(lib.terrain_modules.size(), 2, "appends expected modules")
 
 func test_sort_terrain_modules_builds_tag_index():
 	var lib = TerrainModuleLibrary.new()
@@ -98,8 +98,8 @@ func test_sample_from_modules_filters_by_sampled_tag():
 func test_get_by_tags_empty_returns_all():
 	var lib = _make_library()
 	var out: TerrainModuleList = lib.get_by_tags(TagList.new())
-	# Current implementation returns a duplicate that may be empty; just ensure it returns a list.
 	assert_true(out is TerrainModuleList)
+	assert_eq(out.size(), lib.terrain_modules.size())
 
 func test_get_by_tags_unknown_returns_empty():
 	var lib = _make_library()

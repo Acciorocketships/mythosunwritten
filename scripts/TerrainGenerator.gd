@@ -94,8 +94,10 @@ func load_terrain() -> void:
 		if randf() > fill_prob:
 			return
 
-		var size_prob_dist: Distribution = piece.def.socket_size[socket_name]
-		var size: String = size_prob_dist.sample()
+		var size: String = "point"
+		if socket_name in piece.def.socket_size:
+			var size_prob_dist: Distribution = piece.def.socket_size[socket_name]
+			size = size_prob_dist.sample()
 
 		var adjacent := get_adjacent_from_size(piece_socket, size)
 
@@ -177,7 +179,13 @@ func get_adjacent(piece: TerrainModuleInstance) -> Dictionary[String, TerrainMod
 	return out
 
 
-func get_adjacent_from_size(orig_piece_socket: TerrainModuleSocket, size: String) -> Dictionary[String, TerrainModuleSocket]:
+func get_adjacent_from_size(
+	orig_piece_socket: TerrainModuleSocket,
+	size: String
+) -> Dictionary[String, TerrainModuleSocket]:
+	if size == "point":
+		return {"main": orig_piece_socket}
+
 	var orig_piece: TerrainModuleInstance = orig_piece_socket.piece
 	var orig_sock: Marker3D = orig_piece_socket.socket
 	assert(orig_piece.root != null)
@@ -202,13 +210,17 @@ func get_adjacent_from_size(orig_piece_socket: TerrainModuleSocket, size: String
 
 	for socket_name: String in test_piece.sockets.keys():
 		# Only consider test sockets with non-zero fill probability
-		if socket_name == "main" or test_piece.def.socket_fill_prob.prob(socket_name) <= 0.0:
+		if socket_name == "main":
+			continue
+		if test_piece.def.socket_fill_prob.prob(socket_name) <= 0.0:
+			continue
+		if !test_piece.def.socket_size.has(socket_name):
 			continue
 
 		var s: Marker3D = test_piece.sockets[socket_name]
 		var pos := Helper.socket_world_pos(aligned_tf, s, test_piece.root)
 
-		# We only care about existing world sockets, never sockets on the test_piece. 
+		# We only care about existing world sockets, never sockets on the test_piece.
 		# Now test_piece isn't indexed, but using query_other makes this future-proof.
 		var hit := socket_index.query_other(pos, test_piece)
 		if hit != null:
@@ -253,7 +265,10 @@ func transform_to_socket(new_ps: TerrainModuleSocket, orig_ps: TerrainModuleSock
 	var new_position: Vector3 = new_piece_pos + (orig_socket_pos - rotated_socket_pos)
 	new_piece.set_position(Helper.snap_vec3(new_position))
 
-func add_piece(new_piece_socket: TerrainModuleSocket, orig_piece_socket: TerrainModuleSocket) -> bool:
+func add_piece(
+	new_piece_socket: TerrainModuleSocket,
+	orig_piece_socket: TerrainModuleSocket
+) -> bool:
 	transform_to_socket(new_piece_socket, orig_piece_socket)
 
 	var new_piece: TerrainModuleInstance = new_piece_socket.piece

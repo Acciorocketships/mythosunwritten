@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://blec8371dstao"]
+
+[ext_resource type="PackedScene" uid="uid://bwcc7v55axgff" path="res://assets/KayKitMedieval/Assets/gltf/buildings/red/building_mine_red.gltf" id="1_lsd8o"]
+
+[node name="building_mine_red2" instance=ExtResource("1_lsd8o")]
+
+[node name="building_mine_red" parent="." index="0"]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0)

@@ -13,6 +13,7 @@ func init() -> void:
 
 func load_terrain_modules() -> void:
 	terrain_modules.append(load_ground_tile())
+	terrain_modules.append(load_grass_tile())
 
 
 func sort_terrain_modules() -> void:
@@ -39,8 +40,11 @@ func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket]) -> Tag
 		# Safe lookup: some modules may not define tag requirements for every possible socket name.
 		var has_key: bool = adjacent_piece.def.socket_required.has(adjacent_socket_name)
 		if not has_key:
-			print("[TerrainModuleLibrary.get_required_tags] missing key '", adjacent_socket_name, "' in socket_required; available=", adjacent_piece.def.socket_required.keys())
-		var adjacent_required_tags: TagList = adjacent_piece.def.socket_required.get(adjacent_socket_name, TagList.new())
+			return TagList.new()
+		var adjacent_required_tags: TagList = adjacent_piece.def.socket_required.get(
+			adjacent_socket_name,
+			TagList.new()
+		)
 		var tag_list = convert_tag_list(adjacent_required_tags, socket_name)
 		out = out.union(tag_list)
 	return out
@@ -54,9 +58,17 @@ func get_combined_distribution(adjacent: Dictionary[String, TerrainModuleSocket]
 		var adjacent_socket_name: String = piece_socket.socket_name
 		# Safe lookup for socket distributions
 		if not adjacent_piece.def.socket_tag_prob.has(adjacent_socket_name):
-			print("[TerrainModuleLibrary.get_combined_distribution] missing key '", adjacent_socket_name, "' in socket_tag_prob; available=", adjacent_piece.def.socket_tag_prob.keys())
+			print(
+				"[TerrainModuleLibrary.get_combined_distribution] missing key '",
+				adjacent_socket_name,
+				"' in socket_tag_prob; available=",
+				adjacent_piece.def.socket_tag_prob.keys()
+			)
 			continue
-		var disti: Distribution = adjacent_piece.def.socket_tag_prob.get(adjacent_socket_name, Distribution.new())
+		var disti: Distribution = adjacent_piece.def.socket_tag_prob.get(
+			adjacent_socket_name,
+			Distribution.new()
+		)
 		dist_set.append(disti)
 	assert(dist_set.size() > 0)
 	if dist_set.size() == 1:
@@ -85,7 +97,7 @@ func sample_from_modules(modules: TerrainModuleList, dist: Distribution) -> Terr
 
 func get_by_tags(tags: TagList) -> TerrainModuleList:
 	if tags.is_empty():
-		return terrain_modules.duplicate()
+		return terrain_modules.copy()
 	var sets: Array[TerrainModuleList] = []
 	for tag in tags:
 		if not modules_by_tag.has(tag):
@@ -151,11 +163,10 @@ func combined_tag_socket_name(tag: String, socket_name: String) -> String:
 
 ### Individual Terrain Modules ###
 
-
 func load_ground_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/GroundTile.tscn")
 	var tags: TagList = TagList.new(["ground", "24x24"])
-	var tags_by_socket: Dictionary[String, TagList] = {}
+	var tags_per_socket: Dictionary[String, TagList] = {}
 	# Centered 24x24 tile; can_place handles edge-touch tolerances
 	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 2.0, 24.0))
 
@@ -175,22 +186,39 @@ func load_ground_tile() -> TerrainModule:
 		"main": 1.0,
 		"back": 1.0,
 		"right": 1.0,
-		"left": 1.0
+		"left": 1.0,
+		"topfront": 0.5,
 	})
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"main": Distribution.new({"ground": 1.0}),
 		"back": Distribution.new({"ground": 1.0}),
 		"right": Distribution.new({"ground": 1.0}),
 		"left": Distribution.new({"ground": 1.0}),
+		"topfront": Distribution.new({"grass": 1.0})
 	}
 
 	return TerrainModule.new(
 		scene,
 		bb,
 		tags,
-		tags_by_socket,
+		tags_per_socket,
+		[],
 		socket_size,
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob
+	)
+
+func load_grass_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Grass1.tscn")
+	var tags: TagList = TagList.new(["grass"])
+	var bb: AABB = AABB(Vector3(0.0, 0.0, 0.), Vector3(0.0, 0.0, 0.0))
+	var visual_variants: Array[PackedScene] = [load("res://terrain/scenes/Grass2.tscn")]
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		{},
+		visual_variants
 	)

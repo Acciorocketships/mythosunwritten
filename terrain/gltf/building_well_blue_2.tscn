@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://g1k5h1emr0xh"]
+
+[ext_resource type="PackedScene" uid="uid://dh08wxbj3kpao" path="res://assets/KayKitMedieval/Assets/gltf/buildings/blue/building_well_blue.gltf" id="1_k8aob"]
+
+[node name="building_well_blue2" instance=ExtResource("1_k8aob")]
+
+[node name="building_well_blue" parent="." index="0"]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0)

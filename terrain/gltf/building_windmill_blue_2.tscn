@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bm330f0wl5baw"]
+
+[ext_resource type="PackedScene" uid="uid://p3lte4mery3a" path="res://assets/KayKitMedieval/Assets/gltf/buildings/blue/building_windmill_blue.gltf" id="1_gr2e6"]
+
+[node name="building_windmill_blue2" instance=ExtResource("1_gr2e6")]
+
+[node name="building_windmill_blue" parent="." index="0"]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0)

@@ -19,11 +19,11 @@ func _init(
 	_size: AABB = AABB(),
 	_tags: TagList = TagList.new(),
 	_tags_per_socket: Dictionary[String, TagList] = {},
+	_visual_variants: Array[PackedScene] = [],
 	_socket_size: Dictionary[String, Distribution] = {},
 	_socket_required: Dictionary[String, TagList] = {},
 	_socket_fill_prob: Distribution = Distribution.new(),
 	_socket_tag_prob: Dictionary[String, Distribution] = {},
-	_visual_variants: Array[PackedScene] = [],
 ) -> void:
 	scene = _scene
 	size = _size
@@ -33,7 +33,8 @@ func _init(
 	socket_required = _socket_required
 	socket_fill_prob = _socket_fill_prob
 	socket_tag_prob = _socket_tag_prob
-	visual_variants = _visual_variants
+	visual_variants = _visual_variants.duplicate()
+	visual_variants.append(_scene)
 
 func spawn() -> TerrainModuleInstance:
 	return TerrainModuleInstance.new(self)
