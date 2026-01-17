@@ -5,50 +5,13 @@ extends Node3D
 
 @export var player: Node3D
 @export var terrain_parent: Node
+@export var proximity_rules: ProximityTagRules
 
 var library: TerrainModuleLibrary
 var terrain_index: TerrainIndex
 var socket_index: PositionIndex
 var queue: PriorityQueue
 
-func _compute_inward_normal(piece: TerrainModuleInstance, socket_name: String) -> Vector3:
-	# Compute normal as inward-facing normal of nearest face in LOCAL space,
-	# then transform to world using the piece's basis. This avoids axis-aligned AABB artifacts.
-	var socket_node: Marker3D = piece.sockets.get(socket_name, null)
-	if socket_node == null:
-		return Vector3.ZERO
-	var local_tf: Transform3D = Helper.to_root_tf(socket_node, piece.root)
-	var p_local: Vector3 = local_tf.origin
-	var local_box: AABB = piece.def.size
-	var minp_l: Vector3 = local_box.position
-	var maxp_l: Vector3 = local_box.position + local_box.size
-	var dx_min: float = abs(p_local.x - minp_l.x)
-	var dx_max: float = abs(maxp_l.x - p_local.x)
-	var dy_min: float = abs(p_local.y - minp_l.y)
-	var dy_max: float = abs(maxp_l.y - p_local.y)
-	var dz_min: float = abs(p_local.z - minp_l.z)
-	var dz_max: float = abs(maxp_l.z - p_local.z)
-	var nearest: float = dx_min
-	var n_local: Vector3 = Vector3(-1, 0, 0) # outward on min X
-	if dx_max < nearest:
-		nearest = dx_max
-		n_local = Vector3(1, 0, 0)
-	if dy_min < nearest:
-		nearest = dy_min
-		n_local = Vector3(0, -1, 0)
-	if dy_max < nearest:
-		nearest = dy_max
-		n_local = Vector3(0, 1, 0)
-	if dz_min < nearest:
-		nearest = dz_min
-		n_local = Vector3(0, 0, -1)
-	if dz_max < nearest:
-		nearest = dz_max
-		n_local = Vector3(0, 0, 1)
-	# Inward is opposite of outward
-	var inward_local: Vector3 = -n_local
-	var inward_world: Vector3 = piece.transform.basis * inward_local
-	return inward_world.normalized()
 
 func _ready() -> void:
 	library = TerrainModuleLibrary.new()
@@ -56,6 +19,8 @@ func _ready() -> void:
 
 	socket_index = PositionIndex.new()
 	terrain_index = TerrainIndex.new()
+	if proximity_rules == null:
+		proximity_rules = ProximityTagRules.new()
 
 	var start_tile := load_start_tile()
 	queue = PriorityQueue.new()
@@ -90,10 +55,7 @@ func load_terrain() -> void:
 			queue.push(piece_socket, distance)
 			return
 
-		var fill_prob = piece.def.socket_fill_prob.prob(socket_name)
-		if randf() > fill_prob:
-			return
-
+		var origin_world: Vector3 = piece_socket.get_socket_position()
 		var size: String = "point"
 		if socket_name in piece.def.socket_size:
 			var size_prob_dist: Distribution = piece.def.socket_size[socket_name]
@@ -101,9 +63,19 @@ func load_terrain() -> void:
 
 		var adjacent := get_adjacent_from_size(piece_socket, size)
 
+		# Compute the tag distribution once, then use its proximity factor to adjust
+		# BOTH: (1) whether we fill at all, and (2) which tag we sample.
+		var probs: Dictionary = _compute_socket_probs(piece, socket_name, adjacent, origin_world)
+		var filtered: TerrainModuleList = probs["filtered"] as TerrainModuleList
+		var dist: Distribution = probs["dist"] as Distribution
+		var fill_prob: float = float(probs["fill_prob"])
+		if randf() > fill_prob:
+			return
+
 		var placed_ok := false
 		for attempt in range(4):
-			var chosen: TerrainModuleInstance = choose_piece(adjacent)
+			var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
+			var chosen: TerrainModuleInstance = chosen_template.spawn()
 			chosen.create()
 			var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(chosen, "main")
 			var placed := add_piece(new_piece_socket, piece_socket)
@@ -118,15 +90,41 @@ func load_terrain() -> void:
 		return
 
 
-
-func choose_piece(adjacent: Dictionary[String, TerrainModuleSocket]) -> TerrainModuleInstance:
+func _compute_socket_probs(
+	piece: TerrainModuleInstance,
+	socket_name: String,
+	adjacent: Dictionary[String, TerrainModuleSocket],
+	origin_world: Vector3
+) -> Dictionary:
+	# Returns:
+	# - filtered: TerrainModuleList
+	# - dist: Distribution
+	# - factor: float (tag-dist inflation factor)
+	# - fill_prob: float (base fill prob * factor, clamped 0..1)
 	var required_tags: TagList = library.get_required_tags(adjacent)
 	var filtered: TerrainModuleList = library.get_by_tags(required_tags)
-	var dist: Distribution = library.get_combined_distribution(adjacent)
-	var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
-	var chosen: TerrainModuleInstance = chosen_template.spawn()
-	return chosen
 
+	var dist_raw: Distribution = library.get_combined_distribution(adjacent)
+	var dist: Distribution = dist_raw.copy()
+	var factor: float = 1.0
+	if proximity_rules != null:
+		var res: Dictionary = proximity_rules.augment_distribution_with_factor(
+			dist,
+			origin_world,
+			terrain_index
+		)
+		dist = res["dist"] as Distribution
+		factor = float(res["factor"])
+
+	var fill_prob_base: float = piece.def.socket_fill_prob.prob(socket_name)
+	var fill_prob: float = clampf(fill_prob_base * factor, 0.0, 1.0)
+
+	return {
+		"filtered": filtered,
+		"dist": dist,
+		"factor": factor,
+		"fill_prob": fill_prob,
+	}
 
 func get_dist_from_player(socket: Marker3D) -> float:
 	return (socket.global_position - player.global_position).length()
@@ -160,8 +158,23 @@ func register_piece_and_socket(piece_socket: TerrainModuleSocket) -> void:
 
 
 func can_place(new_piece: TerrainModuleInstance) -> bool:
-	var other_pieces = terrain_index.query_box(new_piece.aabb)
-	return other_pieces.is_empty()
+	if new_piece.def == null:
+		return false
+
+	# If the new piece does not collide, it never blocks placement.
+	if not new_piece.def.has_collisions:
+		return true
+
+	var other_pieces: Array = terrain_index.query_box(new_piece.aabb)
+	for m in other_pieces:
+		var inst: TerrainModuleInstance = m as TerrainModuleInstance
+		if inst == null or inst.def == null:
+			return false
+		# If either piece is non-colliding, ignore this overlap.
+		if not inst.def.has_collisions:
+			continue
+		return false
+	return true
 
 
 func get_adjacent(piece: TerrainModuleInstance) -> Dictionary[String, TerrainModuleSocket]:

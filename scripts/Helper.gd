@@ -1,5 +1,5 @@
-extends RefCounted
 class_name Helper
+extends RefCounted
 
 const SNAP_POS: float = 1.0
 
@@ -30,3 +30,107 @@ static func snap_transform_origin(tf: Transform3D, snap: float = SNAP_POS) -> Tr
 	var out := tf
 	out.origin = snap_vec3(tf.origin, snap)
 	return out
+
+
+# ------------------------------------------------------------
+# Mesh AABB helpers
+# ------------------------------------------------------------
+
+static func merge_aabb(a: AABB, b: AABB) -> AABB:
+	# Union of two AABBs (min/max). We avoid relying on AABB.merge() semantics.
+	var a_min: Vector3 = a.position
+	var a_max: Vector3 = a.position + a.size
+	var b_min: Vector3 = b.position
+	var b_max: Vector3 = b.position + b.size
+
+	var mn: Vector3 = Vector3(
+		min(a_min.x, b_min.x),
+		min(a_min.y, b_min.y),
+		min(a_min.z, b_min.z)
+	)
+	var mx: Vector3 = Vector3(
+		max(a_max.x, b_max.x),
+		max(a_max.y, b_max.y),
+		max(a_max.z, b_max.z)
+	)
+	return AABB(mn, mx - mn)
+
+
+static func compute_local_mesh_aabb(root_node: Node3D) -> AABB:
+	# Collect the root-space AABB of every MeshInstance3D under this root,
+	# then merge them into one local-space bounds.
+	if root_node == null:
+		return AABB()
+
+	var have_any: bool = false
+	var merged: AABB = AABB()
+
+	var to_visit: Array[Node] = [root_node]
+	while not to_visit.is_empty():
+		var node: Node = to_visit.pop_back()
+		for child in node.get_children():
+			to_visit.append(child)
+
+		var mi: MeshInstance3D = node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+
+		var tf_to_root: Transform3D = to_root_tf(mi, root_node)
+		var mesh_aabb_in_root: AABB = tf_to_root * mi.mesh.get_aabb()
+		if not have_any:
+			merged = mesh_aabb_in_root
+			have_any = true
+		else:
+			merged = merge_aabb(merged, mesh_aabb_in_root)
+
+	if not have_any:
+		push_error("[Helper.compute_local_mesh_aabb] No MeshInstance3D found to compute AABB.")
+		return AABB()
+	return merged
+
+
+static func compute_scene_mesh_aabb(scene: PackedScene) -> AABB:
+	if scene == null:
+		return AABB()
+	if not scene.can_instantiate():
+		return AABB()
+	var root: Node = scene.instantiate()
+	var root3: Node3D = root as Node3D
+	if root3 == null:
+		root.free()
+		return AABB()
+
+	var out: AABB = compute_local_mesh_aabb(root3)
+	root.free()
+	return out
+
+
+# ------------------------------------------------------------
+# Collision helpers
+# ------------------------------------------------------------
+
+static func scene_has_collision(scene: PackedScene) -> bool:
+	if scene == null:
+		return false
+	if not scene.can_instantiate():
+		return false
+	var root: Node = scene.instantiate()
+	if root == null:
+		return false
+	var out: bool = node_has_collision(root)
+	root.free()
+	return out
+
+
+static func node_has_collision(root: Node) -> bool:
+	if root == null:
+		return false
+	var to_visit: Array[Node] = [root]
+	while not to_visit.is_empty():
+		var node: Node = to_visit.pop_back()
+		for child in node.get_children():
+			to_visit.append(child)
+		# Be permissive: support both collision nodes used in Godot 4.
+		if node is CollisionShape3D or node is CollisionPolygon3D:
+			return true
+	return false

@@ -50,10 +50,10 @@
   - Sample a size from `socket_size[socket_name]`.
   - Compute adjacency via `get_adjacent_from_size`:
     - Spawn a temporary piece for that size, align its `"main"` to the target socket, then query `PositionIndex` for coincident sockets. Only consider sockets with `socket_fill_prob > 0`.
-  - Choose a module with library/tag logic; `choose_piece(adjacent)` returns an instance without pre-checking `can_place`.
+ - Choose a module with library/tag logic; generation samples a module and then tries to place it.
   - Try up to 4 attempts: create, `transform_to_socket`, then `add_piece`. On failure, destroy and retry. On success, continue.
 - **Placement**
-  - `transform_to_socket` aligns in XZ by rotating yaw so vectors (piece center → socket) oppose, then translates so sockets coincide (snap to grid).
+ - `transform_to_socket` aligns in XZ by rotating yaw so vectors (piece center → socket) oppose, then translates so sockets coincide (snap to grid).
   - `can_place` checks overlap via `TerrainIndex.query_box(aabb)`.
   - `add_piece` assumes the instance is created; on success, add to `terrain_parent`, register sockets, enqueue new sockets.
 
@@ -125,5 +125,5 @@
 - `PositionIndex`
   - `insert(ps)`, `query(pos)`, `query_other(pos, piece)`.
 - `TerrainGenerator`
-  - `_ready()`, `load_terrain()`, `choose_piece(adjacent)`, `get_adjacent_from_size(socket, size)`, `transform_to_socket(new_ps, orig_ps)`, `add_piece(new_ps, orig_ps)`, `can_place(piece)`.
+ - `_ready()`, `load_terrain()`, `get_adjacent_from_size(socket, size)`, `transform_to_socket(new_ps, orig_ps)`, `add_piece(new_ps, orig_ps)`, `can_place(piece)`.
 

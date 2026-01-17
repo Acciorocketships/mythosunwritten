@@ -40,7 +40,7 @@ func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket]) -> Tag
 		# Safe lookup: some modules may not define tag requirements for every possible socket name.
 		var has_key: bool = adjacent_piece.def.socket_required.has(adjacent_socket_name)
 		if not has_key:
-			return TagList.new()
+			continue
 		var adjacent_required_tags: TagList = adjacent_piece.def.socket_required.get(
 			adjacent_socket_name,
 			TagList.new()
@@ -167,8 +167,7 @@ func load_ground_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/GroundTile.tscn")
 	var tags: TagList = TagList.new(["ground", "24x24"])
 	var tags_per_socket: Dictionary[String, TagList] = {}
-	# Centered 24x24 tile; can_place handles edge-touch tolerances
-	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 2.0, 24.0))
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"main": Distribution.new({"24x24": 1.0}),
@@ -211,8 +210,9 @@ func load_ground_tile() -> TerrainModule:
 
 func load_grass_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/Grass1.tscn")
-	var tags: TagList = TagList.new(["grass"])
-	var bb: AABB = AABB(Vector3(0.0, 0.0, 0.), Vector3(0.0, 0.0, 0.0))
+	var tags: TagList = TagList.new(["grass", "rotate"])
+	# Compute bounds from the mesh instead of manually authoring.
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 	var visual_variants: Array[PackedScene] = [load("res://terrain/scenes/Grass2.tscn")]
 
 	return TerrainModule.new(

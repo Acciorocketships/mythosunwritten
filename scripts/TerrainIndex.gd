@@ -1,5 +1,5 @@
-extends Object
 class_name TerrainIndex
+extends Object
 
 # ============================================================
 # CONFIG
@@ -105,14 +105,18 @@ static func _local_z_index(z: float, low: float) -> int:
 
 static func _local_x_range(box: AABB, low: float) -> Vector2i:
 	var x0: float = max(box.position.x, low)
-	var x1: float = min(box.position.x + box.size.x, low + float(CHUNK_XZ)) - EPS
+	var x1: float = min(box.position.x + box.size.x, low + float(CHUNK_XZ))
+	if box.size.x > 0.0:
+		x1 -= EPS
 	var ix0: int = _local_x_index(x0, low)
 	var ix1: int = _local_x_index(x1, low)
 	return Vector2i(ix0, ix1)
 
 static func _local_z_range(box: AABB, low: float) -> Vector2i:
 	var z0: float = max(box.position.z, low)
-	var z1: float = min(box.position.z + box.size.z, low + float(CHUNK_XZ)) - EPS
+	var z1: float = min(box.position.z + box.size.z, low + float(CHUNK_XZ))
+	if box.size.z > 0.0:
+		z1 -= EPS
 	var iz0: int = _local_z_index(z0, low)
 	var iz1: int = _local_z_index(z1, low)
 	return Vector2i(iz0, iz1)
@@ -122,7 +126,9 @@ static func _y_index(y: float) -> int:
 
 static func _y_range(box: AABB) -> Vector2i:
 	var y0 = _y_index(box.position.y)
-	var y1 = _y_index(box.position.y + box.size.y - EPS)
+	var y1 = _y_index(box.position.y + box.size.y)
+	if box.size.y > 0.0:
+		y1 = _y_index(box.position.y + box.size.y - EPS)
 	return Vector2i(y0, y1)
 
 
@@ -185,9 +191,13 @@ func insert(module: TerrainModuleInstance) -> void:
 	aabb_by_module[module] = box
 
 	var min_x = box.position.x
-	var max_x = box.position.x + box.size.x - EPS
+	var max_x = box.position.x + box.size.x
+	if box.size.x > 0.0:
+		max_x -= EPS
 	var min_z = box.position.z
-	var max_z = box.position.z + box.size.z - EPS
+	var max_z = box.position.z + box.size.z
+	if box.size.z > 0.0:
+		max_z -= EPS
 
 	var ck0 = _chunk_key_from_xz(min_x, min_z)
 	var ck1 = _chunk_key_from_xz(max_x, max_z)
@@ -247,9 +257,13 @@ func remove(module: TerrainModuleInstance) -> void:
 		return
 
 	var min_x = box.position.x
-	var max_x = box.position.x + box.size.x - EPS
+	var max_x = box.position.x + box.size.x
+	if box.size.x > 0.0:
+		max_x -= EPS
 	var min_z = box.position.z
-	var max_z = box.position.z + box.size.z - EPS
+	var max_z = box.position.z + box.size.z
+	if box.size.z > 0.0:
+		max_z -= EPS
 
 	var ck0 = _chunk_key_from_xz(min_x, min_z)
 	var ck1 = _chunk_key_from_xz(max_x, max_z)
@@ -324,9 +338,13 @@ func query_box(box: AABB) -> Array:
 		return []
 
 	var min_x = box.position.x
-	var max_x = box.position.x + box.size.x - EPS
+	var max_x = box.position.x + box.size.x
+	if box.size.x > 0.0:
+		max_x -= EPS
 	var min_z = box.position.z
-	var max_z = box.position.z + box.size.z - EPS
+	var max_z = box.position.z + box.size.z
+	if box.size.z > 0.0:
+		max_z -= EPS
 
 	var ck0 = _chunk_key_from_xz(min_x, min_z)
 	var ck1 = _chunk_key_from_xz(max_x, max_z)

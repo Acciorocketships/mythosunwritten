@@ -29,10 +29,13 @@ func after_each() -> void:
 func _make_module(size: AABB) -> TerrainModuleInstance:
 	var dummy_scene := PackedScene.new()
 	var m := TerrainModule.new(dummy_scene, size)
-	m.size = size
 	m.debug_id = _next_id
 	_next_id += 1
-	return m.spawn()
+	var inst: TerrainModuleInstance = m.spawn()
+	# Tests for TerrainIndex use synthetic AABBs; bypass mesh-based AABB computation.
+	inst.size = size
+	inst.set_world_aabb()
+	return inst
 
 # --------------------------------------------------------
 # TEST CASE: deterministic small test

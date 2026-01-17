@@ -1,5 +1,5 @@
-extends Resource
 class_name TerrainModule
+extends Resource
 
 @export var scene: PackedScene
 @export var size: AABB
@@ -11,6 +11,10 @@ class_name TerrainModule
 @export var socket_fill_prob: Distribution
 @export var socket_tag_prob: Dictionary[String, Distribution]
 @export var visual_variants: Array[PackedScene]
+
+# True if this module has collision nodes in its scene (or any visual variant).
+# Used by terrain placement to decide whether AABB overlap should block placement.
+@export var has_collisions: bool = true
 
 var debug_id: int = 0
 
@@ -35,6 +39,17 @@ func _init(
 	socket_tag_prob = _socket_tag_prob
 	visual_variants = _visual_variants.duplicate()
 	visual_variants.append(_scene)
+
+	# Compute collision presence automatically from scene content.
+	has_collisions = false
+	for s: PackedScene in visual_variants:
+		if s == null:
+			continue
+		if not s.can_instantiate():
+			continue
+		if Helper.scene_has_collision(s):
+			has_collisions = true
+			break
 
 func spawn() -> TerrainModuleInstance:
 	return TerrainModuleInstance.new(self)

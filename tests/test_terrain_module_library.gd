@@ -150,3 +150,15 @@ func test_load_ground_tile_has_expected_fields():
 	assert_true(tm.socket_tag_prob.has("main"))
 	assert_true(tm.socket_size.has("main"))
 
+func test_ground_tile_aabb_matches_mesh_bounds():
+	var lib = TerrainModuleLibrary.new()
+	add_child_autofree(lib)
+	var tm: TerrainModule = lib.load_ground_tile()
+	# Expected bounds for GroundTile from its mesh. (We validate this explicitly so that
+	# future asset/variant changes surface as a test failure.)
+	#
+	# Note: this is mesh-derived, not collision-derived.
+	# Current asset has no height in its mesh AABB (flat geometry), so Y size is 0.
+	var expected: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.0, 24.0))
+	assert_almost_eq((tm.size.position - expected.position).length(), 0.0, 0.01)
+	assert_almost_eq((tm.size.size - expected.size).length(), 0.0, 0.01)

@@ -19,19 +19,22 @@ func sample() -> String:
 			return key
 	assert(false) # we can only reach this position if the probabilities dont sum to 1
 	return ""
-	
+
 func prob(tag: String) -> float:
 	return dist.get(tag, 0)
-	
+
 func set_prob(tag: String, p: float) -> void:
 	dist[tag] = p
-	
+
 func normalise() -> void:
 	var total_prob: float = 0
 	for tag: String in dist.keys():
 		total_prob += dist[tag]
 	for tag: String in dist.keys():
 		dist[tag] = dist[tag] / total_prob
+
+func copy() -> Distribution:
+	return Distribution.new(dist.duplicate())
 
 func _iter_init(_arg) -> bool:
 	_iter_i = 0

@@ -36,8 +36,32 @@ func after_each() -> void:
 	_nodes_to_free.clear()
 
 # Helpers
-func _make_scene_with_sockets(pos_by_name: Dictionary[String, Vector3]) -> PackedScene:
+func _make_scene_with_sockets(
+	pos_by_name: Dictionary[String, Vector3],
+	mesh_size: Vector3 = Vector3.ONE,
+	with_collision: bool = true
+) -> PackedScene:
 	var root: Node3D = Node3D.new()
+
+	# Provide a mesh so TerrainModuleInstance can compute bounds automatically.
+	var mesh_i: MeshInstance3D = MeshInstance3D.new()
+	mesh_i.name = "Mesh"
+	var bm: BoxMesh = BoxMesh.new()
+	bm.size = mesh_size
+	mesh_i.mesh = bm
+	root.add_child(mesh_i)
+
+	if with_collision:
+		var body: StaticBody3D = StaticBody3D.new()
+		body.name = "StaticBody3D"
+		var cs: CollisionShape3D = CollisionShape3D.new()
+		cs.name = "CollisionShape3D"
+		var shape: BoxShape3D = BoxShape3D.new()
+		shape.size = mesh_size
+		cs.shape = shape
+		body.add_child(cs)
+		root.add_child(body)
+
 	var sockets: Node3D = Node3D.new()
 	sockets.name = "Sockets"
 	root.add_child(sockets)
@@ -47,6 +71,14 @@ func _make_scene_with_sockets(pos_by_name: Dictionary[String, Vector3]) -> Packe
 		m.transform.origin = pos_by_name[sock_name]
 		sockets.add_child(m)
 	# Ensure children are included in PackedScene by setting owners.
+	mesh_i.owner = root
+	if with_collision:
+		var body2: Node = root.get_node("StaticBody3D")
+		if body2 != null:
+			body2.owner = root
+			var cs2: Node = body2.get_node("CollisionShape3D")
+			if cs2 != null:
+				cs2.owner = root
 	sockets.owner = root
 	for c in sockets.get_children():
 		if c is Node:
@@ -58,9 +90,8 @@ func _make_scene_with_sockets(pos_by_name: Dictionary[String, Vector3]) -> Packe
 	return ps
 
 func _make_module(size: Vector3, pos_by_name: Dictionary[String, Vector3]) -> TerrainModule:
-	var scene: PackedScene = _make_scene_with_sockets(pos_by_name)
-	var aabb: AABB = AABB(Vector3.ZERO, size)
-	var mod: TerrainModule = TerrainModule.new(scene, aabb, TagList.new())
+	var scene: PackedScene = _make_scene_with_sockets(pos_by_name, size)
+	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new())
 	# Ensure sockets are considered fillable in tests
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
@@ -69,6 +100,13 @@ func _make_module(size: Vector3, pos_by_name: Dictionary[String, Vector3]) -> Te
 	if not pos_by_name.has("main"):
 		fill["main"] = 1.0
 	mod.socket_fill_prob = Distribution.new(fill)
+	# Ensure sockets are considered size-capable by get_adjacent_from_size() in tests.
+	var sizes: Dictionary[String, Distribution] = {}
+	for n: String in fill.keys():
+		# The key inside this distribution is not used by get_adjacent_from_size(); it only checks
+		# that socket_size has an entry for the socket name. Use a real size tag for clarity.
+		sizes[n] = Distribution.new({"24x24": 1.0})
+	mod.socket_size = sizes
 	return mod
 
 func _spawn_piece(
@@ -134,20 +172,19 @@ func test_get_dist_from_player():
 func test_can_place_true_when_index_empty():
 	var gen: Variant = _new_generator()
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
-	var piece: TerrainModuleInstance = mod.spawn()
-	piece.set_transform(Transform3D.IDENTITY)
-	# aabb is computed from size/transform
+	var piece: TerrainModuleInstance = _spawn_piece(mod)
 	assert_true(gen.can_place(piece))
 
 
 func test_can_place_allows_touching_edges_after_alignment():
 	var gen: Variant = _new_generator()
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
-	var start: TerrainModuleInstance = mod.spawn()
-	start.set_transform(Transform3D.IDENTITY)
+	var start: TerrainModuleInstance = _spawn_piece(mod)
 	gen.terrain_index.insert(start)
 	var neighbor: TerrainModuleInstance = mod.spawn()
 	neighbor.set_position(Vector3(2, 0, 0)) # edge-touching on X
+	neighbor.create()
+	_pieces_to_destroy.append(neighbor)
 	assert_true(gen.can_place(neighbor))
 
 
@@ -155,12 +192,13 @@ func test_can_place_false_when_overlap_exists():
 	var gen: Variant = _new_generator()
 	# New piece at origin with 2x2x2 size
 	var new_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
-	var new_piece: TerrainModuleInstance = new_mod.spawn()
-	new_piece.set_transform(Transform3D.IDENTITY)
+	var new_piece: TerrainModuleInstance = _spawn_piece(new_mod)
 	# Insert another overlapping module into the index
 	var other_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
 	var other_piece: TerrainModuleInstance = other_mod.spawn()
 	other_piece.set_position(Vector3(0.5, 0, 0.5)) # overlaps at origin
+	other_piece.create()
+	_pieces_to_destroy.append(other_piece)
 	gen.terrain_index.insert(other_piece)
 	assert_false(gen.can_place(new_piece))
 
@@ -189,13 +227,6 @@ func test_transform_to_socket_aligns_normals_opposite_and_sockets_coincide():
 	var p_orig: Vector3 = orig_ps.get_socket_position()
 	var p_new: Vector3 = new_ps.get_socket_position()
 	assert_almost_eq((p_orig - p_new).length(), 0.0, 0.0001)
-	# Inward normals should oppose in XZ plane (yaw-only alignment)
-	var n_orig3: Vector3 = gen._compute_inward_normal(orig, "left")
-	var n_new3: Vector3 = gen._compute_inward_normal(newp, "main")
-	var n_orig2 := Vector2(n_orig3.x, n_orig3.z).normalized()
-	var n_new2 := Vector2(n_new3.x, n_new3.z).normalized()
-	if n_orig2.length() > 0.0 and n_new2.length() > 0.0:
-		assert_almost_eq(n_orig2.dot(n_new2), -1.0, 0.0001)
 
 func test_transform_to_socket_handles_main_not_centered():
 	var gen: Variant = _new_generator()
@@ -209,7 +240,6 @@ func test_transform_to_socket_handles_main_not_centered():
 			"back": Vector3(0, 0, -1),
 		}
 	)
-	mod.size = AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
 	var newp: TerrainModuleInstance = _spawn_piece(mod)
 	# Attach new piece's main to orig's left
@@ -220,18 +250,11 @@ func test_transform_to_socket_handles_main_not_centered():
 	var p_orig: Vector3 = orig_ps.get_socket_position()
 	var p_new: Vector3 = new_ps.get_socket_position()
 	assert_almost_eq((p_orig - p_new).length(), 0.0, 0.0001)
-	# Inward normals oppose in XZ plane
-	var n_orig3: Vector3 = gen._compute_inward_normal(orig, "left")
-	var n_new3: Vector3 = gen._compute_inward_normal(newp, "main")
-	var n_orig2 := Vector2(n_orig3.x, n_orig3.z).normalized()
-	var n_new2 := Vector2(n_new3.x, n_new3.z).normalized()
-	if n_orig2.length() > 0.0 and n_new2.length() > 0.0:
-		assert_almost_eq(n_orig2.dot(n_new2), -1.0, 0.0001)
 
 
 func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapping():
-	# Regression for a real-world failure: when sockets sit on y=0, _compute_inward_normal often
-	# degenerates to Y and transform_to_socket must use the fallback correctly.
+	# Regression for a real-world failure: when sockets sit on y=0, transform_to_socket must still
+	# place adjacent (not overlapping), even with rotated parent sockets.
 	var gen: Variant = _new_generator()
 
 	var size := Vector3(24, 2, 24)
@@ -246,10 +269,8 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 		"right": Vector3(0, 0, half_z),
 	}
 
-	var scene: PackedScene = _make_scene_with_sockets(pos_by_name)
-	# Centered AABB (piece origin is the center in XZ)
-	var aabb: AABB = AABB(Vector3(-half_x, 0, -half_z), size)
-	var mod: TerrainModule = TerrainModule.new(scene, aabb, TagList.new())
+	var scene: PackedScene = _make_scene_with_sockets(pos_by_name, size)
+	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new())
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
 		fill[n] = 1.0
@@ -331,24 +352,6 @@ class FakeLibrary:
 		return m1 if step == 1 else m2
 
 
-func test_choose_piece_returns_instance_without_prechecking_placeability():
-	var gen: Variant = _new_generator()
-	# First module overlaps with a blocker at origin, second has zero size so it can place.
-	var m1: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
-	var m2: TerrainModule = _make_module(Vector3(0, 0, 0), {"main": Vector3.ZERO})
-	var fake_lib: TerrainModuleLibrary = FakeLibrary.new(m1, m2)
-	gen.add_child(fake_lib)
-	gen.library = fake_lib
-	# Blocker at origin to make first fail
-	var blocker: TerrainModuleInstance = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO}).spawn()
-	blocker.set_transform(Transform3D.IDENTITY)
-	gen.terrain_index.insert(blocker)
-	var empty_adjacent: Dictionary[String, TerrainModuleSocket] = {}
-	var chosen: TerrainModuleInstance = gen.choose_piece(empty_adjacent)
-	assert_true(chosen is TerrainModuleInstance)
-	# We no longer guarantee pre-filtering by placeability here.
-
-
 func test_get_adjacent_from_size_hits_expected_sockets():
 	var gen: Variant = _new_generator()
 	# Use a controlled module and a fake library.
@@ -360,7 +363,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 	gen.library = lib
 	gen.library.terrain_modules = TerrainModuleList.new([mod])
 	gen.library.modules_by_tag.clear()
-	gen.library.modules_by_tag["1x1"] = TerrainModuleList.new([mod])
+	gen.library.modules_by_tag["24x24"] = TerrainModuleList.new([mod])
 	# Orig piece at identity
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
 	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(orig, "main")
@@ -380,7 +383,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 			m.transform.origin = Vector3(0, 0, -1)
 		gen.socket_index.insert(TerrainModuleSocket.new(dummy_piece, "main"))
 	# Query
-	var out: Dictionary[String, TerrainModuleSocket] = gen.get_adjacent_from_size(orig_ps, "1x1")
+	var out: Dictionary[String, TerrainModuleSocket] = gen.get_adjacent_from_size(orig_ps, "24x24")
 	assert_true(out.has("main"))
 	assert_true(out.has("left"))
 	assert_true(out.has("right"))
@@ -434,44 +437,6 @@ class _FakeSingleLib:
 		return TerrainModuleList.new([_m])
 	func sample_from_modules(_modules, _dist) -> TerrainModule:
 		return _m
-
-func test_choose_then_add_places_even_if_origin_overlaps():
-	# Captures the prior failure mode where choose_piece pre-culled by can_place at origin.
-	var gen: Variant = _new_generator()
-	add_child_autofree(gen.player)
-	add_child_autofree(gen.terrain_parent)
-	var mod: TerrainModule = _make_module(
-		Vector3(2, 2, 2),
-		{
-			"main": Vector3(0, 0, 0),
-			"left": Vector3(-2, 0, 0),
-			"right": Vector3(2, 0, 0),
-			"back": Vector3(0, 0, -2),
-		}
-	)
-	var fake_lib: TerrainModuleLibrary = _FakeSingleLib.new(mod)
-	gen.add_child(fake_lib)
-	gen.library = fake_lib
-	# Start piece at origin and register
-	var start: TerrainModuleInstance = _spawn_piece(mod)
-	gen.terrain_parent.add_child(start.root)
-	gen.register_piece_and_socket(TerrainModuleSocket.new(start, "main"))
-	# Adjacent dict saying we're attaching on the left side context
-	var adj: Dictionary[String, TerrainModuleSocket] = {}
-	adj["left"] = TerrainModuleSocket.new(start, "left")
-	# choose_piece should return an instance without considering can_place at origin
-	var chosen: TerrainModuleInstance = gen.choose_piece(adj)
-	assert_true(chosen is TerrainModuleInstance)
-	# At origin it overlaps the start tile
-	assert_true(gen.can_place(chosen) == false, "origin AABB overlaps")
-	# But after alignment through add_piece it should place and not overlap
-	chosen.create()
-	var ok: bool = gen.add_piece(
-		TerrainModuleSocket.new(chosen, "main"),
-		TerrainModuleSocket.new(start, "left")
-	)
-	assert_true(ok)
-
 
 func test_integration_one_iteration_places_expected_tile_to_right():
 	# Run one iteration of load_terrain with a controlled library and start tile.

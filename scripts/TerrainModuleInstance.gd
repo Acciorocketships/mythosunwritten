@@ -8,9 +8,12 @@ var sockets: Dictionary = {}  # String -> Marker3D
 
 var transform: Transform3D = Transform3D.IDENTITY
 var aabb: AABB
+# Local-space bounds computed from the instantiated scene mesh.
+var size: AABB
 
 func _init(_def: TerrainModule) -> void:
 	def = _def
+	size = AABB()
 	set_world_aabb()
 
 func debug_string() -> String:
@@ -23,10 +26,24 @@ func create() -> Node3D:
 		var random_idx: int = randi_range(0, def.visual_variants.size() - 1)
 		chosen_scene = def.visual_variants[random_idx]
 	if chosen_scene == null:
-		push_error("[TerrainModuleInstance.create] No scene available (def.scene is null and visual_variants is empty).")
+		push_error(
+			"[TerrainModuleInstance.create] No scene available "
+			+ "(def.scene is null and visual_variants is empty)."
+		)
 		return null
+
+	# Optional spawn-time random rotation for cosmetic variety.
+	# This intentionally does not preserve socket alignment; use only for pieces where that's OK.
+	if def != null and def.tags.has("rotate"):
+		var yaw: float = randf_range(0.0, TAU)
+		set_basis(Basis(Vector3.UP, yaw) * transform.basis)
+
 	root = chosen_scene.instantiate()
 	root.global_transform = transform
+
+	size = Helper.compute_local_mesh_aabb(root)
+	set_world_aabb()
+
 	socket_node = root.get_node("Sockets") as Node3D
 	_find_sockets()
 	return root
@@ -74,10 +91,11 @@ func set_basis(basis: Basis) -> void:
 		root.global_transform = transform
 
 func set_world_aabb() -> AABB:
-	aabb = transform * def.size
+	aabb = transform * size
 	aabb.position = Helper.snap_vec3(aabb.position, 0.01)
 	aabb.size = Helper.snap_vec3(aabb.size, 0.01)
 	return aabb
+
 
 func _to_string() -> String:
 	var tag_str := ",".join(def.tags.tags)
