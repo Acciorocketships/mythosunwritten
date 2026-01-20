@@ -61,22 +61,29 @@ static func compute_local_mesh_aabb(root_node: Node3D) -> AABB:
 	# then merge them into one local-space bounds.
 	if root_node == null:
 		return AABB()
+	var static_body_node : StaticBody3D = null
+	if root_node.has_node("Mesh/StaticBody3D"):
+		static_body_node = root_node.get_node("Mesh/StaticBody3D") as StaticBody3D
+	if static_body_node == null:
+		return AABB()
 
 	var have_any: bool = false
 	var merged: AABB = AABB()
 
-	var to_visit: Array[Node] = [root_node]
+	var to_visit: Array[Node] = [static_body_node]
 	while not to_visit.is_empty():
 		var node: Node = to_visit.pop_back()
 		for child in node.get_children():
 			to_visit.append(child)
 
-		var mi: MeshInstance3D = node as MeshInstance3D
-		if mi == null or mi.mesh == null:
+		var collision_shape: CollisionShape3D = node as CollisionShape3D
+		# everything that isn't a collision shape will be skipped
+		if collision_shape == null:
 			continue
+		var mesh :  = collision_shape.shape.get_debug_mesh()
 
-		var tf_to_root: Transform3D = to_root_tf(mi, root_node)
-		var mesh_aabb_in_root: AABB = tf_to_root * mi.mesh.get_aabb()
+		var tf_to_root: Transform3D = to_root_tf(collision_shape, root_node)
+		var mesh_aabb_in_root: AABB = tf_to_root * mesh.get_aabb()
 		if not have_any:
 			merged = mesh_aabb_in_root
 			have_any = true

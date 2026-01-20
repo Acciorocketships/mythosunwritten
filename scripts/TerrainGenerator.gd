@@ -28,7 +28,7 @@ func _ready() -> void:
 	var dummy_socket: TerrainModuleSocket = TerrainModuleSocket.new(start_tile, "__init__")
 	register_piece_and_socket(dummy_socket)
 	for socket_name in start_tile.sockets.keys():
-		if start_tile.def.socket_fill_prob.prob(socket_name) <= 0.0:
+		if float(start_tile.def.socket_fill_prob.get(socket_name, 0.0)) <= 0.0:
 			continue
 		var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(start_tile, socket_name)
 		var dist := get_dist_from_player(piece_socket.socket)
@@ -106,17 +106,18 @@ func _compute_socket_probs(
 
 	var dist_raw: Distribution = library.get_combined_distribution(adjacent)
 	var dist: Distribution = dist_raw.copy()
+	var fill_prob_base: float = float(piece.def.socket_fill_prob.get(socket_name, 0.0))
 	var factor: float = 1.0
 	if proximity_rules != null:
 		var res: Dictionary = proximity_rules.augment_distribution_with_factor(
 			dist,
 			origin_world,
-			terrain_index
+			terrain_index,
+			fill_prob_base
 		)
 		dist = res["dist"] as Distribution
 		factor = float(res["factor"])
 
-	var fill_prob_base: float = piece.def.socket_fill_prob.prob(socket_name)
 	var fill_prob: float = clampf(fill_prob_base * factor, 0.0, 1.0)
 
 	return {
@@ -135,7 +136,7 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 		# "main" is the attachment socket; do not expand from it (it points back inward).
 		if socket_name == "main":
 			continue
-		if piece.def.socket_fill_prob.prob(socket_name) <= 0.0:
+		if float(piece.def.socket_fill_prob.get(socket_name, 0.0)) <= 0.0:
 			continue
 		var socket: Marker3D = piece.sockets[socket_name]
 		var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
@@ -151,30 +152,20 @@ func register_piece_and_socket(piece_socket: TerrainModuleSocket) -> void:
 	var piece: TerrainModuleInstance = piece_socket.piece
 	for socket_name: String in piece.sockets.keys():
 		# Only index sockets with non-zero fill probability, skip the one used for attachment
-		if socket_name != piece_socket.socket_name and piece.def.socket_fill_prob.prob(socket_name) > 0.0:
+		if (
+			socket_name != piece_socket.socket_name
+			and float(piece.def.socket_fill_prob.get(socket_name, 0.0)) > 0.0
+		):
 			var piece_other_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
 			socket_index.insert(piece_other_socket)
 	terrain_index.insert(piece)
 
 
-func can_place(new_piece: TerrainModuleInstance) -> bool:
-	if new_piece.def == null:
-		return false
-
-	# If the new piece does not collide, it never blocks placement.
-	if not new_piece.def.has_collisions:
-		return true
-
+func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInstance) -> bool:
+	assert(new_piece.def != null and parent_piece.def != null)
 	var other_pieces: Array = terrain_index.query_box(new_piece.aabb)
-	for m in other_pieces:
-		var inst: TerrainModuleInstance = m as TerrainModuleInstance
-		if inst == null or inst.def == null:
-			return false
-		# If either piece is non-colliding, ignore this overlap.
-		if not inst.def.has_collisions:
-			continue
-		return false
-	return true
+	other_pieces.erase(parent_piece)
+	return other_pieces.is_empty()
 
 
 func get_adjacent(piece: TerrainModuleInstance) -> Dictionary[String, TerrainModuleSocket]:
@@ -225,7 +216,7 @@ func get_adjacent_from_size(
 		# Only consider test sockets with non-zero fill probability
 		if socket_name == "main":
 			continue
-		if test_piece.def.socket_fill_prob.prob(socket_name) <= 0.0:
+		if float(test_piece.def.socket_fill_prob.get(socket_name, 0.0)) <= 0.0:
 			continue
 		if !test_piece.def.socket_size.has(socket_name):
 			continue
@@ -285,7 +276,7 @@ func add_piece(
 	transform_to_socket(new_piece_socket, orig_piece_socket)
 
 	var new_piece: TerrainModuleInstance = new_piece_socket.piece
-	if not can_place(new_piece):
+	if not can_place(new_piece, orig_piece_socket.piece):
 		return false
 
 	terrain_parent.add_child(new_piece.root)

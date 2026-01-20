@@ -8,7 +8,8 @@ extends Resource
 
 @export var socket_size: Dictionary[String, Distribution]
 @export var socket_required: Dictionary[String, TagList]
-@export var socket_fill_prob: Distribution
+# Per-socket fill probabilities in [0, 1] (NOT a Distribution; does not sum to 1).
+@export var socket_fill_prob: Dictionary[String, float]
 @export var socket_tag_prob: Dictionary[String, Distribution]
 @export var visual_variants: Array[PackedScene]
 
@@ -26,7 +27,7 @@ func _init(
 	_visual_variants: Array[PackedScene] = [],
 	_socket_size: Dictionary[String, Distribution] = {},
 	_socket_required: Dictionary[String, TagList] = {},
-	_socket_fill_prob: Distribution = Distribution.new(),
+	_socket_fill_prob: Dictionary[String, float] = {},
 	_socket_tag_prob: Dictionary[String, Distribution] = {},
 ) -> void:
 	scene = _scene
@@ -51,9 +52,57 @@ func _init(
 			has_collisions = true
 			break
 
+	# Validate authored distributions (fail fast in debug/tests).
+	assert_distributions_normalized(socket_size, "socket_size")
+	assert_distributions_normalized(socket_tag_prob, "socket_tag_prob")
+	assert_probabilities_in_range(socket_fill_prob, "socket_fill_prob")
+
 func spawn() -> TerrainModuleInstance:
 	return TerrainModuleInstance.new(self)
 
 func _to_string() -> String:
 	var tag_str := ",".join(tags.tags)
 	return "TerrainModule(tags=[%s], size=%s)" % [tag_str, str(size)]
+
+static func assert_distributions_normalized(
+	dists: Dictionary[String, Distribution],
+	label: String = ""
+) -> void:
+	# Asserts each Distribution in a dict sums to ~1.0.
+	# Intended for dicts like `socket_tag_prob` or `socket_size`.
+	const EPS: float = 1e-4
+	for k: String in dists.keys():
+		var dist: Distribution = dists[k]
+		assert(dist != null, "Null Distribution for key '%s' (%s)" % [k, label])
+		assert(!dist.dist.is_empty(), "Empty Distribution for key '%s' (%s)" % [k, label])
+		var s: float = 0.0
+		for tag: String in dist.dist.keys():
+			s += float(dist.dist[tag])
+		assert(
+			absf(s - 1.0) <= EPS,
+			"Distribution not normalised for key '%s' (%s): sum=%s dist=%s"
+			% [k, label, str(s), str(dist.dist)]
+		)
+
+static func assert_distribution_normalized(dist: Distribution, label: String = "") -> void:
+	# Asserts a single Distribution sums to ~1.0 (e.g. `socket_fill_prob`).
+	const EPS: float = 1e-4
+	assert(dist != null, "Null Distribution (%s)" % label)
+	assert(!dist.dist.is_empty(), "Empty Distribution (%s)" % label)
+	var s: float = 0.0
+	for tag: String in dist.dist.keys():
+		s += float(dist.dist[tag])
+	assert(
+		absf(s - 1.0) <= EPS,
+		"Distribution not normalised (%s): sum=%s dist=%s" % [label, str(s), str(dist.dist)]
+	)
+
+static func assert_probabilities_in_range(probs: Dictionary[String, float], label: String = "") -> void:
+	# Asserts each probability is within [0, 1].
+	for k: String in probs.keys():
+		var p: float = float(probs[k])
+		assert(
+			p >= 0.0 and p <= 1.0,
+			"Probability out of range for key '%s' (%s): p=%s"
+			% [k, label, str(p)]
+		)

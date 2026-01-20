@@ -21,7 +21,7 @@ func test_load_terrain_modules_appends_once():
 	add_child_autofree(lib)
 	assert_eq(lib.terrain_modules.size(), 0, "starts empty")
 	lib.load_terrain_modules()
-	assert_eq(lib.terrain_modules.size(), 2, "appends expected modules")
+	assert_eq(lib.terrain_modules.size(), 3, "appends expected modules")
 
 func test_sort_terrain_modules_builds_tag_index():
 	var lib = TerrainModuleLibrary.new()

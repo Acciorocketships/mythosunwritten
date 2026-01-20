@@ -14,7 +14,7 @@ extends Node
 
 # Follow behavior
 @export var ema_alpha: float = 0.1 # when strafe ratio is close to 0, increasing this makes it "snappier"
-@export var strafe_ratio: float = 1.3 	# if 0, camera moves behind direction of motion. if 1, camera moves to keep same angle
+@export var strafe_ratio: float = 0.8 	# if 0, camera moves behind direction of motion. if 1, camera moves to keep same angle
 @export var follow_gain: float = 1.0 # how much to follow the player. if 0, it stays in the same place
 @export var max_speed: float = 15.0 
 

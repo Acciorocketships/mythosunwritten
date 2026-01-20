@@ -1,19 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://ctkcce2hyjo75"]
+[gd_scene load_steps=2 format=3 uid="uid://ctkcce2hyjo75"]
 
 [ext_resource type="PackedScene" uid="uid://d1gmnh2oqcftj" path="res://terrain/gltf/tree_1_c_color_12.tscn" id="1_hmmc8"]
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hmmc8"]
-height = 1.5
 
 [node name="Tree1" type="Node3D"]
 
 [node name="Mesh" parent="." instance=ExtResource("1_hmmc8")]
-
-[node name="StaticBody3D" type="StaticBody3D" parent="."]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, 0.4, 0)
-shape = SubResource("CapsuleShape3D_hmmc8")
 
 [node name="Sockets" type="Node3D" parent="."]
 

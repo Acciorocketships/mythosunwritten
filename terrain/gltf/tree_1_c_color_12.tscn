@@ -1,5 +1,15 @@
-[gd_scene load_steps=2 format=3 uid="uid://d1gmnh2oqcftj"]
+[gd_scene load_steps=3 format=3 uid="uid://d1gmnh2oqcftj"]
 
 [ext_resource type="PackedScene" uid="uid://cufpdm5oe71qt" path="res://assets/KayKitNature/Assets/gltf/Color1/Tree_1_C_Color1.gltf" id="1_idx2q"]
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_idx2q"]
+height = 1.5
+
 [node name="Tree_1_C_Color12" instance=ExtResource("1_idx2q")]
+transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, 0, 0, 0)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, 0.4, 0)
+shape = SubResource("CapsuleShape3D_idx2q")

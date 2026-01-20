@@ -14,6 +14,168 @@ func init() -> void:
 func load_terrain_modules() -> void:
 	terrain_modules.append(load_ground_tile())
 	terrain_modules.append(load_grass_tile())
+	terrain_modules.append(load_bush_tile())
+	terrain_modules.append(load_rock_tile())
+	terrain_modules.append(load_tree_tile())
+	terrain_modules.append(load_8x2x8_tile())
+
+
+### Individual Terrain Modules ###
+
+
+func load_ground_tile() -> TerrainModule:
+	var top_fill_prob: float = 0.05
+	var scene = load("res://terrain/scenes/GroundTile.tscn")
+	var tags: TagList = TagList.new(["ground", "24x24"])
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"main": Distribution.new({"24x24": 1.0}),
+		"back": Distribution.new({"24x24": 1.0}),
+		"right": Distribution.new({"24x24": 1.0}),
+		"left": Distribution.new({"24x24": 1.0}),
+	}
+	var socket_required: Dictionary[String, TagList] = {
+		"main": TagList.new(["ground"]),
+		"back": TagList.new(["ground"]),
+		"right": TagList.new(["ground"]),
+		"left": TagList.new(["ground"]),
+	}
+	var socket_fill_prob: Dictionary[String, float] = {
+		"main": 1.0,
+		"back": 1.0,
+		"right": 1.0,
+		"left": 1.0,
+		"topfront": top_fill_prob,
+		"topback": top_fill_prob,
+		"topleft": top_fill_prob,
+		"topright": top_fill_prob,
+		"topfrontright": top_fill_prob,
+		"topfrontleft": top_fill_prob,
+		"topbackright": top_fill_prob,
+		"topbackleft": top_fill_prob,
+		"topcenter": top_fill_prob,
+	}
+	var dist1: Distribution = Distribution.new({"ground": 1.0})
+	var dist2: Distribution = Distribution.new({"grass": 0.15, "rock": 0.1, "bush": 0.15,  "tree": 0.2, "hill": 0.4})
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"main": dist1,
+		"back": dist1,
+		"right": dist1,
+		"left": dist1,
+		"topfront": dist2,
+		"topback": dist2,
+		"topleft": dist2,
+		"topright": dist2,
+		"topfrontright": dist2,
+		"topfrontleft": dist2,
+		"topbackright": dist2,
+		"topbackleft": dist2,
+		"topcenter": dist2,
+	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob
+	)
+
+func load_grass_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Grass1.tscn")
+	var tags: TagList = TagList.new(["grass", "rotate"])
+	# Compute bounds from the mesh instead of manually authoring.
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+	var visual_variants: Array[PackedScene] = [load("res://terrain/scenes/Grass2.tscn")]
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		{},
+		visual_variants
+	)
+	
+func load_bush_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Bush1.tscn")
+	var tags: TagList = TagList.new(["bush", "rotate"])
+	# Compute bounds from the mesh instead of manually authoring.
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+	var visual_variants: Array[PackedScene] = []
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		{},
+		visual_variants
+	)
+	
+func load_rock_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Rock1.tscn")
+	var tags: TagList = TagList.new(["rock", "rotate"])
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+	var visual_variants: Array[PackedScene] = []
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		{},
+		visual_variants
+	)
+	
+func load_tree_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Tree1.tscn")
+	var tags: TagList = TagList.new(["tree", "rotate"])
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+	var visual_variants: Array[PackedScene] = []
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		{},
+		visual_variants
+	)
+
+func load_8x2x8_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Hill_8x2x8.tscn")
+	var tags: TagList = TagList.new(["hill", "8x8"])
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"topcenter": Distribution.new({"point": 1.0}),
+	}
+	var socket_required: Dictionary[String, TagList] = {}
+	var socket_fill_prob: Dictionary[String, float] = {
+		"topcenter": 0.5,
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"topcenter": Distribution.new({"grass": 1.0}),
+	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob
+	)
+
+
+## Class Functions ##
 
 
 func sort_terrain_modules() -> void:
@@ -159,66 +321,3 @@ func convert_tag_list(tag_list: TagList, socket_name: String) -> TagList:
 
 func combined_tag_socket_name(tag: String, socket_name: String) -> String:
 	return "[%s]%s" % [socket_name, tag]
-
-
-### Individual Terrain Modules ###
-
-func load_ground_tile() -> TerrainModule:
-	var scene = load("res://terrain/scenes/GroundTile.tscn")
-	var tags: TagList = TagList.new(["ground", "24x24"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
-	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
-
-	var socket_size: Dictionary[String, Distribution] = {
-		"main": Distribution.new({"24x24": 1.0}),
-		"back": Distribution.new({"24x24": 1.0}),
-		"right": Distribution.new({"24x24": 1.0}),
-		"left": Distribution.new({"24x24": 1.0}),
-	}
-	var socket_required: Dictionary[String, TagList] = {
-		"main": TagList.new(["ground"]),
-		"back": TagList.new(["ground"]),
-		"right": TagList.new(["ground"]),
-		"left": TagList.new(["ground"]),
-	}
-	var socket_fill_prob: Distribution = Distribution.new({
-		"main": 1.0,
-		"back": 1.0,
-		"right": 1.0,
-		"left": 1.0,
-		"topfront": 0.5,
-	})
-	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"main": Distribution.new({"ground": 1.0}),
-		"back": Distribution.new({"ground": 1.0}),
-		"right": Distribution.new({"ground": 1.0}),
-		"left": Distribution.new({"ground": 1.0}),
-		"topfront": Distribution.new({"grass": 1.0})
-	}
-
-	return TerrainModule.new(
-		scene,
-		bb,
-		tags,
-		tags_per_socket,
-		[],
-		socket_size,
-		socket_required,
-		socket_fill_prob,
-		socket_tag_prob
-	)
-
-func load_grass_tile() -> TerrainModule:
-	var scene = load("res://terrain/scenes/Grass1.tscn")
-	var tags: TagList = TagList.new(["grass", "rotate"])
-	# Compute bounds from the mesh instead of manually authoring.
-	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
-	var visual_variants: Array[PackedScene] = [load("res://terrain/scenes/Grass2.tscn")]
-
-	return TerrainModule.new(
-		scene,
-		bb,
-		tags,
-		{},
-		visual_variants
-	)

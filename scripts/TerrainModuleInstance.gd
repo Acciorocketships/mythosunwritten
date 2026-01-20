@@ -11,14 +11,17 @@ var aabb: AABB
 # Local-space bounds computed from the instantiated scene mesh.
 var size: AABB
 
+
 func _init(_def: TerrainModule) -> void:
 	def = _def
 	size = AABB()
 	set_world_aabb()
 
+
 func debug_string() -> String:
 	var tag_str: String = def.tags.tags[0] if def.tags.size() > 0 else "<no_tag>"
 	return "TerrainModuleInstance(tag=%s, aabb=%s)" % [tag_str, str(aabb)]
+
 
 func create() -> Node3D:
 	var chosen_scene: PackedScene = def.scene
@@ -48,6 +51,7 @@ func create() -> Node3D:
 	_find_sockets()
 	return root
 
+
 func destroy() -> void:
 	if root:
 		# If it was never added to the scene tree, queue_free() will complain.
@@ -69,11 +73,13 @@ func _find_sockets() -> void:
 		if child is Marker3D:
 			sockets[child.name] = child
 
+
 func set_transform(tf: Transform3D) -> void:
 	transform = tf
 	set_world_aabb()
 	if root:
 		root.global_transform = tf
+
 
 func set_position(pos: Vector3) -> void:
 	transform.origin = pos
@@ -81,14 +87,17 @@ func set_position(pos: Vector3) -> void:
 	if root:
 		root.global_transform = transform
 
+
 func get_position() -> Vector3:
 	return transform.origin
+
 
 func set_basis(basis: Basis) -> void:
 	transform.basis = basis
 	set_world_aabb()
 	if root:
 		root.global_transform = transform
+
 
 func set_world_aabb() -> AABB:
 	aabb = transform * size

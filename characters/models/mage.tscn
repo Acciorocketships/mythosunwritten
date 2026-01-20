@@ -3,3 +3,6 @@
 [ext_resource type="PackedScene" uid="uid://b6ytyld4iw3pe" path="res://assets/KayKitAdventurers/Characters/gltf/Mage.glb" id="1_tt6rw"]
 
 [node name="Mage" instance=ExtResource("1_tt6rw")]
+
+[node name="Mage_Cape" parent="Rig_Medium/Skeleton3D" index="3"]
+visible = false

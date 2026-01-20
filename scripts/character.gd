@@ -1,11 +1,12 @@
 extends CharacterBody3D
 
 # ---------- Inspector ----------
-@export var MAX_SPEED := 6.0
-@export var TURN_SPEED := 10.0
-@export var ACCEL := 18.0
-@export var FRICTION := 25.0
-@export var JUMP_VELOCITY := 4.5
+@export var MAX_SPEED := 10.0
+@export var TURN_SPEED := 14.0
+@export var ACCEL := 20.0
+@export var ACCEL_AIR := 12.0
+@export var FRICTION := 500.0
+@export var JUMP_VELOCITY := 12.0
 
 # Bone names you expect (only used if your attachments don't already have one)
 @export var RIGHT_HAND_BONE := "handslot.r"
@@ -27,6 +28,8 @@ extends CharacterBody3D
 # ---------- Runtime ----------
 var body: Node3D
 var skeleton: Skeleton3D
+var collision_shape: CollisionObject3D
+var raycast: RayCast3D
 var was_on_ground: bool = false
 
 func _ready() -> void:
@@ -46,13 +49,15 @@ func _physics_process(delta: float) -> void:
 	var wants_jump := controller.wants_jump(self, delta)
 
 	# gravity + jump
-	var on_ground = is_on_floor()
-	jump_animation(wants_jump, on_ground)
+	var on_ground = is_on_floor() or _get_ground_dist() < 0.2
+	var started_animation: bool = !on_ground and was_on_ground
 	was_on_ground = on_ground
+	
+	jump_animation(started_animation)
 	if not is_on_floor():
 		velocity += get_gravity() * delta
-	elif wants_jump:
-		velocity.y = JUMP_VELOCITY
+	elif wants_jump: # TODO: add a mechanism to allow jump if we recently walked off a ledge (falling without having jumped, low negative vertical velocity)
+		velocity += Vector3(mv2.x / 3, 1.0, mv2.y / 3).normalized() * JUMP_VELOCITY
 
 	# desired direction & facing
 	var desired_dir := Vector3(mv2.x, 0.0, mv2.y)
@@ -67,7 +72,12 @@ func _physics_process(delta: float) -> void:
 	var target_vxz := desired_dir * target_speed
 	var vxz := Vector2(velocity.x, velocity.z)
 	var tv := Vector2(target_vxz.x, target_vxz.z)
-	var rate := ACCEL if has_input else FRICTION
+	var changing_direction: bool = vxz.dot(tv) < 0.8
+	var rate: float = ACCEL
+	if !on_ground:
+		rate = ACCEL_AIR
+	elif !has_input or changing_direction:
+		rate = FRICTION
 	vxz = vxz.move_toward(tv, rate * delta)
 	velocity.x = vxz.x
 	velocity.z = vxz.y
@@ -76,17 +86,18 @@ func _physics_process(delta: float) -> void:
 	movement_animation(target_speed)
 
 
-func jump_animation(jump: bool, on_ground: bool):
-	if on_ground:
-		var state_machine = anim_tree.get("parameters/StateMachine/Movement/Jump/playback")
-		if jump:
-			state_machine.travel("JumpStart")
-			anim_tree.set("parameters/StateMachine/Movement/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
-		elif not was_on_ground:
-			state_machine.travel("JumpLand")
-		if anim_tree.get("parameters/StateMachine/Movement/OneShot/active") and state_machine.get_current_node() == "JumpLand":
-			anim_tree.set("parameters/StateMachine/Movement/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
-			
+func jump_animation(started_animation: bool):
+	var vertical_vel: float = velocity.y
+	var is_near_ground: bool = raycast.is_colliding()
+	var state_machine = anim_tree.get("parameters/StateMachine/Movement/Jump/playback")
+	if vertical_vel > 0 and started_animation:
+		state_machine.travel("JumpStart")
+		anim_tree.set("parameters/StateMachine/Movement/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+	if vertical_vel < 0 and is_near_ground:
+		state_machine.travel("JumpLand")
+	if anim_tree.get("parameters/StateMachine/Movement/OneShot/active") and state_machine.get_current_node() == "JumpLand":
+		anim_tree.set("parameters/StateMachine/Movement/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
+		
 		
 	
 func movement_animation(speed: float):
@@ -110,6 +121,7 @@ func _cache_body_and_skeleton() -> void:
 	assert(body, "No model found under $Body. Put your Knight (or other) as a child of Body.")
 	skeleton = body.get_node("Rig_Medium/Skeleton3D") as Skeleton3D
 	assert(skeleton, "Model must contain a Skeleton3D (e.g. Rig_Medium/Skeleton3D).")
+	raycast = self.get_node("CollisionShape3D/RayCast3D")
 
 
 func _wire_animations() -> void:
@@ -158,3 +170,11 @@ func _first_child_node3d(parent: Node) -> Node3D:
 		if c is Node3D:
 			return c
 	return null
+	
+func _get_ground_dist() -> float:
+	var is_nearby: bool = raycast.is_colliding()
+	if is_nearby:
+		var point: Vector3 = raycast.get_collision_point()
+		var dist: float = (point - raycast.global_position).length()
+		return dist
+	return INF

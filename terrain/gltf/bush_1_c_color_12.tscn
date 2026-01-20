@@ -3,3 +3,4 @@
 [ext_resource type="PackedScene" uid="uid://c2xpcse1b5us8" path="res://assets/KayKitNature/Assets/gltf/Color1/Bush_1_C_Color1.gltf" id="1_q7jk1"]
 
 [node name="Bush_1_C_Color12" instance=ExtResource("1_q7jk1")]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)

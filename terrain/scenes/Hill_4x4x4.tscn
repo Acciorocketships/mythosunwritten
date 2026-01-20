@@ -1,19 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://d24fhb1brd58g"]
+[gd_scene load_steps=2 format=3 uid="uid://d24fhb1brd58g"]
 
 [ext_resource type="PackedScene" uid="uid://cum7e4nqyo2ub" path="res://terrain/gltf/hill_4x_4x_4_color_12.tscn" id="1_nnv78"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_nnv78"]
-size = Vector3(3.5, 4, 3.5)
 
 [node name="Hill" type="Node3D"]
 
 [node name="Mesh" parent="." instance=ExtResource("1_nnv78")]
-
-[node name="StaticBody3D" type="StaticBody3D" parent="."]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
-shape = SubResource("BoxShape3D_nnv78")
 
 [node name="Sockets" type="Node3D" parent="."]
 

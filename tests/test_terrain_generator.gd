@@ -99,7 +99,7 @@ func _make_module(size: Vector3, pos_by_name: Dictionary[String, Vector3]) -> Te
 	# Also include main if not present
 	if not pos_by_name.has("main"):
 		fill["main"] = 1.0
-	mod.socket_fill_prob = Distribution.new(fill)
+	mod.socket_fill_prob = fill
 	# Ensure sockets are considered size-capable by get_adjacent_from_size() in tests.
 	var sizes: Dictionary[String, Distribution] = {}
 	for n: String in fill.keys():
@@ -274,7 +274,7 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
 		fill[n] = 1.0
-	mod.socket_fill_prob = Distribution.new(fill)
+	mod.socket_fill_prob = fill
 
 	# Parent tile rotated so its local "back" (-X) points to world +Z.
 	var rot := Basis(Vector3.UP, deg_to_rad(-90.0))
