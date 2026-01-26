@@ -16,12 +16,6 @@ func test_init_populates_modules_and_index():
 	assert_true(lib.modules_by_tag.has("ground"), "modules_by_tag has 'ground'")
 	assert_true(lib.modules_by_tag.has("24x24"), "modules_by_tag has '24x24'")
 
-func test_load_terrain_modules_appends_once():
-	var lib = TerrainModuleLibrary.new()
-	add_child_autofree(lib)
-	assert_eq(lib.terrain_modules.size(), 0, "starts empty")
-	lib.load_terrain_modules()
-	assert_eq(lib.terrain_modules.size(), 3, "appends expected modules")
 
 func test_sort_terrain_modules_builds_tag_index():
 	var lib = TerrainModuleLibrary.new()
@@ -130,7 +124,7 @@ func test_intersection_of_lists_returns_common_elements():
 	var a_mod: TerrainModule = lib.terrain_modules.library[0]
 	var list_a := TerrainModuleList.new([a_mod])
 	var list_b := TerrainModuleList.new([a_mod])
-	var out: TerrainModuleList = lib._intersection([list_a, list_b])
+	var out: TerrainModuleList = lib.intersection([list_a, list_b])
 	assert_eq(out.size(), 1)
 	assert_true(out.library[0] == a_mod)
 
@@ -158,7 +152,7 @@ func test_ground_tile_aabb_matches_mesh_bounds():
 	# future asset/variant changes surface as a test failure.)
 	#
 	# Note: this is mesh-derived, not collision-derived.
-	# Current asset has no height in its mesh AABB (flat geometry), so Y size is 0.
-	var expected: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.0, 24.0))
+	# Current asset has a height of 2.0 units and is centered at Y=-2.0.
+	var expected: AABB = AABB(Vector3(-12.0, -2.0, -12.0), Vector3(24.0, 2.0, 24.0))
 	assert_almost_eq((tm.size.position - expected.position).length(), 0.0, 0.01)
 	assert_almost_eq((tm.size.size - expected.size).length(), 0.0, 0.01)

@@ -173,7 +173,8 @@ func test_can_place_true_when_index_empty():
 	var gen: Variant = _new_generator()
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
 	var piece: TerrainModuleInstance = _spawn_piece(mod)
-	assert_true(gen.can_place(piece))
+	# can_place requires a parent piece (can be null for no parent)
+	assert_true(gen.can_place(piece, null))
 
 
 func test_can_place_allows_touching_edges_after_alignment():
@@ -185,7 +186,7 @@ func test_can_place_allows_touching_edges_after_alignment():
 	neighbor.set_position(Vector3(2, 0, 0)) # edge-touching on X
 	neighbor.create()
 	_pieces_to_destroy.append(neighbor)
-	assert_true(gen.can_place(neighbor))
+	assert_true(gen.can_place(neighbor, start))
 
 
 func test_can_place_false_when_overlap_exists():
@@ -200,7 +201,7 @@ func test_can_place_false_when_overlap_exists():
 	other_piece.create()
 	_pieces_to_destroy.append(other_piece)
 	gen.terrain_index.insert(other_piece)
-	assert_false(gen.can_place(new_piece))
+	assert_false(gen.can_place(new_piece, null))
 
 
 func test_transform_to_socket_aligns_position():

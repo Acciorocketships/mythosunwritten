@@ -25,27 +25,36 @@ func load_terrain_modules() -> void:
 
 
 func load_ground_tile() -> TerrainModule:
-	var top_fill_prob: float = 0.05
 	var scene = load("res://terrain/scenes/GroundTile.tscn")
 	var tags: TagList = TagList.new(["ground", "24x24"])
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
-	var top_size_dist: Distribution = Distribution.new({"point": 0.85, "8x8": 0.03, "12x12": 0.12})
+	var top_size_dist_corners: Distribution = Distribution.new({"point": 0.9, "12x12": 0.1})
+	var top_fill_prob_corners: float = 0.05
+	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8": 0.1})
+	var top_fill_prob_cardinal: float = 0.05
+	var top_size_dist_center: Distribution = Distribution.new({"point": 1.0})
+	var top_fill_prob_center: float = 0.05
+	var adjacent_tag_prob: Distribution = Distribution.new({"ground": 1.0})
+	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
+	var top_tag_prob_cardinal: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
+	var top_tag_prob_center: Distribution = null
+	
 	var socket_size: Dictionary[String, Distribution] = {
 		"main": Distribution.new({"24x24": 1.0}),
 		"back": Distribution.new({"24x24": 1.0}),
 		"right": Distribution.new({"24x24": 1.0}),
 		"left": Distribution.new({"24x24": 1.0}),
-		"topfront": top_size_dist,
-		"topback": top_size_dist,
-		"topleft": top_size_dist,
-		"topright": top_size_dist,
-		"topfrontright": top_size_dist,
-		"topfrontleft": top_size_dist,
-		"topbackright": top_size_dist,
-		"topbackleft": top_size_dist,
-		"topcenter": top_size_dist,
+		"topfront": top_size_dist_cardinal,
+		"topback": top_size_dist_cardinal,
+		"topleft": top_size_dist_cardinal,
+		"topright": top_size_dist_cardinal,
+		"topcenter": top_size_dist_center,
+		"topfrontright": top_size_dist_corners,
+		"topfrontleft": top_size_dist_corners,
+		"topbackright": top_size_dist_corners,
+		"topbackleft": top_size_dist_corners,
 	}
 	var socket_required: Dictionary[String, TagList] = {
 		"main": TagList.new(["ground"]),
@@ -58,32 +67,31 @@ func load_ground_tile() -> TerrainModule:
 		"back": 1.0,
 		"right": 1.0,
 		"left": 1.0,
-		"topfront": top_fill_prob,
-		"topback": top_fill_prob,
-		"topleft": top_fill_prob,
-		"topright": top_fill_prob,
-		"topfrontright": top_fill_prob,
-		"topfrontleft": top_fill_prob,
-		"topbackright": top_fill_prob,
-		"topbackleft": top_fill_prob,
-		"topcenter": top_fill_prob,
+		"topfront": top_fill_prob_cardinal,
+		"topback": top_fill_prob_cardinal,
+		"topleft": top_fill_prob_cardinal,
+		"topright": top_fill_prob_cardinal,
+		"topfrontright": top_fill_prob_corners,
+		"topfrontleft": top_fill_prob_corners,
+		"topbackright": top_fill_prob_corners,
+		"topbackleft": top_fill_prob_corners,
+		"topcenter": top_fill_prob_center,
 	}
-	var dist1: Distribution = Distribution.new({"ground": 1.0})
-	var dist2: Distribution = Distribution.new({"grass": 0.15, "rock": 0.1, "bush": 0.15, "tree": 0.2, "hill": 0.4})
+
 	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"main": dist1,
-		"back": dist1,
-		"right": dist1,
-		"left": dist1,
-		"topfront": dist2,
-		"topback": dist2,
-		"topleft": dist2,
-		"topright": dist2,
-		"topfrontright": dist2,
-		"topfrontleft": dist2,
-		"topbackright": dist2,
-		"topbackleft": dist2,
-		"topcenter": dist2,
+		"main": adjacent_tag_prob,
+		"back": adjacent_tag_prob,
+		"right": adjacent_tag_prob,
+		"left": adjacent_tag_prob,
+		"topfront": top_tag_prob_cardinal,
+		"topback": top_tag_prob_cardinal,
+		"topleft": top_tag_prob_cardinal,
+		"topright": top_tag_prob_cardinal,
+		"topfrontright": top_tag_prob_corners,
+		"topfrontleft": top_tag_prob_corners,
+		"topbackright": top_tag_prob_corners,
+		"topbackleft": top_tag_prob_corners,
+		"topcenter": top_tag_prob_center,
 	}
 
 	return TerrainModule.new(
@@ -270,6 +278,9 @@ func get_combined_distribution(adjacent: Dictionary[String, TerrainModuleSocket]
 			adjacent_socket_name,
 			Distribution.new()
 		)
+		if disti == null:
+			# Null distributions are treated as uniform (no influence)
+			continue
 		dist_set.append(disti)
 	if dist_set.is_empty():
 		return Distribution.new()  # No adjacent influences, return empty distribution
@@ -327,7 +338,7 @@ func get_by_tags(tags: TagList) -> TerrainModuleList:
 		if not modules_by_tag.has(tag):
 			return TerrainModuleList.new()
 		sets.append(modules_by_tag[tag])
-	return _intersection(sets)
+	return intersection(sets)
 
 
 func get_random(modules: TerrainModuleList, first: bool = false) -> TerrainModule:
@@ -343,10 +354,10 @@ func get_random(modules: TerrainModuleList, first: bool = false) -> TerrainModul
 func filter_module_list(modules: TerrainModuleList, tag: String) -> TerrainModuleList:
 	if not modules_by_tag.has(tag):
 		return TerrainModuleList.new()
-	return _intersection([modules, modules_by_tag[tag]])
+	return intersection([modules, modules_by_tag[tag]])
 
 
-func _intersection(sets: Array[TerrainModuleList]) -> TerrainModuleList:
+func intersection(sets: Array[TerrainModuleList]) -> TerrainModuleList:
 	sets = sets.duplicate()
 	if sets.is_empty():
 		return TerrainModuleList.new()

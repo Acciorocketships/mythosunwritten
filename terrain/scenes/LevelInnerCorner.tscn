@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://cwh1i0ski6d2l"]
+
+[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill_top_e_center_color_12.tscn" id="2_5wtta"]
+[ext_resource type="PackedScene" uid="uid://begwnakrt5py5" path="res://terrain/gltf/hill_top_a_inner_corner_color_12.tscn" id="2_uv6pu"]
+
+[node name="LevelSide" type="Node3D"]
+
+[node name="Hill_Top_E_Center_Color12" parent="." instance=ExtResource("2_5wtta")]
+transform = Transform3D(0.875, 0, 0, 0, 1, 0, 0, 0, 0.875, 1.5, 0, 1.5)
+
+[node name="Hill_Top_E_Center_Color13" parent="." instance=ExtResource("2_5wtta")]
+transform = Transform3D(0.125, 0, 0, 0, 1, 0, 0, 0, 0.875, -10.5, 0, 1.5)
+
+[node name="Hill_Top_E_Center_Color14" parent="." instance=ExtResource("2_5wtta")]
+transform = Transform3D(0.875, 0, 0, 0, 1, 0, 0, 0, 0.125, 1.5, 0, -10.5)
+
+[node name="Hill_Top_A_InnerCorner_Color12" parent="." instance=ExtResource("2_uv6pu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -10.5)

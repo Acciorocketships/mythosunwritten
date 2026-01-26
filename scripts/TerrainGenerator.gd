@@ -164,9 +164,10 @@ func register_piece_and_socket(piece_socket: TerrainModuleSocket) -> void:
 
 
 func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInstance) -> bool:
-	assert(new_piece.def != null and parent_piece.def != null)
+	assert(new_piece.def != null)
 	var other_pieces: Array = terrain_index.query_box(new_piece.aabb)
-	other_pieces.erase(parent_piece)
+	if parent_piece != null:
+		other_pieces.erase(parent_piece)
 	return other_pieces.is_empty()
 
 

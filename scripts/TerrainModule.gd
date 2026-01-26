@@ -70,10 +70,12 @@ static func assert_distributions_normalized(
 ) -> void:
 	# Asserts each Distribution in a dict sums to ~1.0.
 	# Intended for dicts like `socket_tag_prob` or `socket_size`.
+	# Null distributions are allowed and treated as uniform (no preference).
 	const EPS: float = 1e-4
 	for k: String in dists.keys():
 		var dist: Distribution = dists[k]
-		assert(dist != null, "Null Distribution for key '%s' (%s)" % [k, label])
+		if dist == null:
+			continue  # Null distributions are valid (treated as uniform)
 		assert(!dist.dist.is_empty(), "Empty Distribution for key '%s' (%s)" % [k, label])
 		var s: float = 0.0
 		for tag: String in dist.dist.keys():

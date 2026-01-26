@@ -3,7 +3,7 @@
 ## Quick commands
 
 - **Run the project**: `godot --path .`
-- **Run all tests (GUT)**: `godot -d --path /Users/ryko/story -s res://addons/gut/gut_cmdln.gd -gconfig=res://tests/gutconfig.json`
+- **Run all tests (GUT)**: `godot --path /Users/ryko/story -s res://addons/gut/gut_cmdln.gd -gconfig=res://tests/gutconfig.json`
 
 ## Project context: procedural terrain via “socketing”
 
