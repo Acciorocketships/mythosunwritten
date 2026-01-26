@@ -203,11 +203,34 @@ func load_12x12x2_tile() -> TerrainModule:
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, float] = {
-		"topcenter": 0.2,
+		"topcenter": 0.3,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"topcenter": Distribution.new({"hill": 1.0}),
 	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob
+		)
+		
+func load_level_side_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/LevelSide.tscn")
+	var tags: TagList = TagList.new(["level", "24x24"])
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+
+	var socket_size: Dictionary[String, Distribution] = {}
+	var socket_required: Dictionary[String, TagList] = {}
+	var socket_fill_prob: Dictionary[String, float] = {}
+	var socket_tag_prob: Dictionary[String, Distribution] = {}
 
 	return TerrainModule.new(
 		scene,

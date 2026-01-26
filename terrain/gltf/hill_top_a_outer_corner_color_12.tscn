@@ -1,5 +1,28 @@
-[gd_scene load_steps=2 format=3 uid="uid://bknoepwfsrkrk"]
+[gd_scene load_steps=5 format=3 uid="uid://bknoepwfsrkrk"]
 
 [ext_resource type="PackedScene" uid="uid://0bkikjug8pwq" path="res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_A_OuterCorner_Color1.gltf" id="1_ik33u"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_ik33u"]
+size = Vector3(2, 0.75, 2.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_eu7hy"]
+size = Vector3(2.5, 0.75, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0s06n"]
+size = Vector3(0.707, 0.75, 0.707)
+
 [node name="Hill_Top_A_OuterCorner_Color12" instance=ExtResource("1_ik33u")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, -0.375, 0.25)
+shape = SubResource("BoxShape3D_ik33u")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, -0.375, 0.5)
+shape = SubResource("BoxShape3D_eu7hy")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="StaticBody3D" index="2"]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, -0.5, -0.375, -0.5)
+shape = SubResource("BoxShape3D_0s06n")
