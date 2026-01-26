@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://btdjtfx52q3uj" path="res://terrain/gltf/hill_8x_8x_2_color_12.tscn" id="1_dylao"]
 
-[node name="Hill8x2x8" type="Node3D"]
+[node name="Hill" type="Node3D"]
 
 [node name="Mesh" parent="." instance=ExtResource("1_dylao")]
 

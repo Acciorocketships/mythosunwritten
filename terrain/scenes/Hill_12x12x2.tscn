@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3 uid="uid://ucgtkis5xkns"]
+
+[ext_resource type="PackedScene" uid="uid://bjdh21gahf2b6" path="res://terrain/gltf/hill_12x_12x_2_color_12.tscn" id="1_s12sc"]
+
+[node name="Hill" type="Node3D"]
+
+[node name="Mesh" parent="." instance=ExtResource("1_s12sc")]
+
+[node name="Sockets" type="Node3D" parent="."]
+
+[node name="topcenter" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="main" type="Marker3D" parent="Sockets"]
+
+[node name="topfrontright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2, 2)
+
+[node name="topfrontleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2, -2)
+
+[node name="topbackright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 2, 2)
+
+[node name="topbackleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 2, -2)

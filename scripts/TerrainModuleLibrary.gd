@@ -17,7 +17,8 @@ func load_terrain_modules() -> void:
 	terrain_modules.append(load_bush_tile())
 	terrain_modules.append(load_rock_tile())
 	terrain_modules.append(load_tree_tile())
-	terrain_modules.append(load_8x2x8_tile())
+	terrain_modules.append(load_8x8x2_tile())
+	terrain_modules.append(load_12x12x2_tile())
 
 
 ### Individual Terrain Modules ###
@@ -30,11 +31,21 @@ func load_ground_tile() -> TerrainModule:
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
+	var top_size_dist: Distribution = Distribution.new({"point": 0.5, "8x8": 0.1, "12x12": 0.4})
 	var socket_size: Dictionary[String, Distribution] = {
 		"main": Distribution.new({"24x24": 1.0}),
 		"back": Distribution.new({"24x24": 1.0}),
 		"right": Distribution.new({"24x24": 1.0}),
 		"left": Distribution.new({"24x24": 1.0}),
+		"topfront": top_size_dist,
+		"topback": top_size_dist,
+		"topleft": top_size_dist,
+		"topright": top_size_dist,
+		"topfrontright": top_size_dist,
+		"topfrontleft": top_size_dist,
+		"topbackright": top_size_dist,
+		"topbackleft": top_size_dist,
+		"topcenter": top_size_dist,
 	}
 	var socket_required: Dictionary[String, TagList] = {
 		"main": TagList.new(["ground"]),
@@ -58,7 +69,7 @@ func load_ground_tile() -> TerrainModule:
 		"topcenter": top_fill_prob,
 	}
 	var dist1: Distribution = Distribution.new({"ground": 1.0})
-	var dist2: Distribution = Distribution.new({"grass": 0.15, "rock": 0.1, "bush": 0.15,  "tree": 0.2, "hill": 0.4})
+	var dist2: Distribution = Distribution.new({"grass": 0.15, "rock": 0.1, "bush": 0.15, "tree": 0.2, "hill": 0.4})
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"main": dist1,
 		"back": dist1,
@@ -89,7 +100,7 @@ func load_ground_tile() -> TerrainModule:
 
 func load_grass_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/Grass1.tscn")
-	var tags: TagList = TagList.new(["grass", "rotate"])
+	var tags: TagList = TagList.new(["grass", "rotate", "point"])
 	# Compute bounds from the mesh instead of manually authoring.
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 	var visual_variants: Array[PackedScene] = [load("res://terrain/scenes/Grass2.tscn")]
@@ -101,10 +112,10 @@ func load_grass_tile() -> TerrainModule:
 		{},
 		visual_variants
 	)
-	
+
 func load_bush_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/Bush1.tscn")
-	var tags: TagList = TagList.new(["bush", "rotate"])
+	var tags: TagList = TagList.new(["bush", "rotate", "point"])
 	# Compute bounds from the mesh instead of manually authoring.
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 	var visual_variants: Array[PackedScene] = []
@@ -116,10 +127,10 @@ func load_bush_tile() -> TerrainModule:
 		{},
 		visual_variants
 	)
-	
+
 func load_rock_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/Rock1.tscn")
-	var tags: TagList = TagList.new(["rock", "rotate"])
+	var tags: TagList = TagList.new(["rock", "rotate", "point"])
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 	var visual_variants: Array[PackedScene] = []
 
@@ -130,10 +141,10 @@ func load_rock_tile() -> TerrainModule:
 		{},
 		visual_variants
 	)
-	
+
 func load_tree_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/Tree1.tscn")
-	var tags: TagList = TagList.new(["tree", "rotate"])
+	var tags: TagList = TagList.new(["tree", "rotate", "point"])
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 	var visual_variants: Array[PackedScene] = []
 
@@ -145,8 +156,8 @@ func load_tree_tile() -> TerrainModule:
 		visual_variants
 	)
 
-func load_8x2x8_tile() -> TerrainModule:
-	var scene = load("res://terrain/scenes/Hill_8x2x8.tscn")
+func load_8x8x2_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Hill_8x8x2.tscn")
 	var tags: TagList = TagList.new(["hill", "8x8"])
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
@@ -158,9 +169,7 @@ func load_8x2x8_tile() -> TerrainModule:
 	var socket_fill_prob: Dictionary[String, float] = {
 		"topcenter": 0.5,
 	}
-	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"grass": 1.0}),
-	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {"topcenter": Distribution.new({"grass": 1.0})}
 
 	return TerrainModule.new(
 		scene,
@@ -173,6 +182,36 @@ func load_8x2x8_tile() -> TerrainModule:
 		socket_fill_prob,
 		socket_tag_prob
 	)
+
+
+func load_12x12x2_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Hill_12x12x2.tscn")
+	var tags: TagList = TagList.new(["hill", "12x12"])
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"topcenter": Distribution.new({"8x8": 1.0}),
+	}
+	var socket_required: Dictionary[String, TagList] = {}
+	var socket_fill_prob: Dictionary[String, float] = {
+		"topcenter": 0.2,
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"topcenter": Distribution.new({"hill": 1.0}),
+	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob
+		)
 
 
 ## Class Functions ##
@@ -232,26 +271,49 @@ func get_combined_distribution(adjacent: Dictionary[String, TerrainModuleSocket]
 			Distribution.new()
 		)
 		dist_set.append(disti)
-	assert(dist_set.size() > 0)
+	if dist_set.is_empty():
+		return Distribution.new()  # No adjacent influences, return empty distribution
 	if dist_set.size() == 1:
 		return dist_set[0]
-	var out_dist: Distribution = Distribution.new()
+
+	# Combine distributions by multiplying probabilities for overlapping tags
+	var combined: Dictionary[String, float] = {}
 	for disti: Distribution in dist_set:
-		var new_dist = Distribution.new(out_dist.dist)
-		new_dist.dist.merge(disti.dist)
-		for tag: String in new_dist:
-			var disti_tag_prob: float = disti.prob(tag)
-			var orig_tag_prob: float = out_dist.prob(tag)
-			var new_prob: float = disti_tag_prob * orig_tag_prob
-			new_dist.set_prob(tag, new_prob)
-		new_dist.normalise()
-		out_dist = new_dist
-	return out_dist
+		for tag: String in disti.dist.keys():
+			var p: float = disti.prob(tag)
+			if combined.has(tag):
+				# Tag exists in multiple distributions, multiply probabilities
+				combined[tag] *= p
+			else:
+				# First time seeing this tag, set its probability
+				combined[tag] = p
+
+	var result: Distribution = Distribution.new(combined)
+	result.normalise()
+	return result
 
 
 func sample_from_modules(modules: TerrainModuleList, dist: Distribution) -> TerrainModule:
-	var sampled_tag: String = dist.sample()
-	var filtered_modules: TerrainModuleList = filter_module_list(modules, sampled_tag)
+	var filtered_modules: TerrainModuleList = modules
+	var working_dist: Distribution = dist.copy()
+
+	while !working_dist.is_empty():
+		var sampled_tag: String = working_dist.sample()
+		filtered_modules = filter_module_list(modules, sampled_tag)
+		if !filtered_modules.is_empty():
+			# Found modules for this tag
+			break
+		else:
+			# No modules for this tag, remove it and continue
+			working_dist.remove(sampled_tag)
+			if !working_dist.is_empty():
+				working_dist.normalise()
+
+	# If no tags had any modules, return original modules
+	if filtered_modules.is_empty():
+		print("warning: no matching tags in module list")
+		filtered_modules = modules
+
 	assert(!filtered_modules.is_empty())
 	var chosen_module = get_random(filtered_modules)
 	return chosen_module

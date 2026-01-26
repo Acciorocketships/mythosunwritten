@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://1isaxxqlfqe8"]
+[gd_scene load_steps=28 format=3 uid="uid://1isaxxqlfqe8"]
 
 [ext_resource type="Script" uid="uid://c7u14nqxnhn0n" path="res://scripts/character.gd" id="1_qqr4u"]
 [ext_resource type="PackedScene" uid="uid://dawmb1kfgp2h2" path="res://characters/models/knight.tscn" id="2_3fwhk"]
@@ -16,47 +16,45 @@ metadata/_custom_type_script = "uid://bb8ia06ag8nwf"
 radius = 0.39746094
 height = 2.244
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_3fwhk"]
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_f0775"]
+fadeout_time = 0.2
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qulg7"]
 animation = &"CharacterAnimationLibrary/Jump_Idle"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_mdkfl"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_4kffy"]
 animation = &"CharacterAnimationLibrary/Jump_Land"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_b1u1o"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_bnq0n"]
 animation = &"CharacterAnimationLibrary/Jump_Start"
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ke030"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_hgjqb"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_3h56x"]
+switch_mode = 2
 advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_i1355"]
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jfi6v"]
+xfade_time = 0.2
 switch_mode = 2
 advance_mode = 2
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_f0775"]
-xfade_time = 0.1
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_qnu6j"]
+states/End/position = Vector2(963, 100.625)
+states/JumpIdle/node = SubResource("AnimationNodeAnimation_qulg7")
+states/JumpIdle/position = Vector2(563, -18)
+states/JumpLand/node = SubResource("AnimationNodeAnimation_4kffy")
+states/JumpLand/position = Vector2(773.675, -17.75)
+states/JumpStart/node = SubResource("AnimationNodeAnimation_bnq0n")
+states/JumpStart/position = Vector2(373, -17.5)
+transitions = ["Start", "JumpStart", SubResource("AnimationNodeStateMachineTransition_hgjqb"), "JumpStart", "JumpIdle", SubResource("AnimationNodeStateMachineTransition_3h56x"), "JumpIdle", "JumpLand", SubResource("AnimationNodeStateMachineTransition_i1355"), "JumpLand", "End", SubResource("AnimationNodeStateMachineTransition_jfi6v")]
+graph_offset = Vector2(56.219753, -35.055103)
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_vliyq"]
-switch_mode = 2
-advance_mode = 2
+[sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_e3kty"]
 
-[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_qulg7"]
-states/End/position = Vector2(849, 276.5)
-states/JumpIdle/node = SubResource("AnimationNodeAnimation_3fwhk")
-states/JumpIdle/position = Vector2(515.875, 151.5)
-states/JumpLand/node = SubResource("AnimationNodeAnimation_mdkfl")
-states/JumpLand/position = Vector2(515.8711, 276.5)
-states/JumpStart/node = SubResource("AnimationNodeAnimation_b1u1o")
-states/JumpStart/position = Vector2(515.8672, 38.5)
-states/Start/position = Vector2(204.5, 39.25)
-transitions = ["Start", "JumpStart", SubResource("AnimationNodeStateMachineTransition_ke030"), "JumpStart", "JumpIdle", SubResource("AnimationNodeStateMachineTransition_jfi6v"), "JumpIdle", "JumpLand", SubResource("AnimationNodeStateMachineTransition_f0775"), "JumpLand", "End", SubResource("AnimationNodeStateMachineTransition_vliyq")]
-graph_offset = Vector2(60.65997, -69.037506)
-
-[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_4kffy"]
-fadeout_time = 0.3
-
-[sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_bnq0n"]
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_hgjqb"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_jfi6v"]
 animation = &"CharacterAnimationLibrary/Idle_A"
 use_custom_timeline = true
 timeline_length = 1.0
@@ -64,7 +62,7 @@ stretch_time_scale = true
 start_offset = 0.0
 loop_mode = 1
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_3h56x"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_f0775"]
 animation = &"CharacterAnimationLibrary/Walking_A"
 use_custom_timeline = true
 timeline_length = 1.0
@@ -72,7 +70,7 @@ stretch_time_scale = true
 start_offset = 0.0
 loop_mode = 1
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_i1355"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_vliyq"]
 animation = &"CharacterAnimationLibrary/Running_A"
 use_custom_timeline = true
 timeline_length = 1.0
@@ -80,45 +78,38 @@ stretch_time_scale = true
 start_offset = 0.0
 loop_mode = 1
 
-[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_qci4v"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_hgjqb")
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_qulg7"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_jfi6v")
 blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_3h56x")
+blend_point_1/node = SubResource("AnimationNodeAnimation_f0775")
 blend_point_1/pos = 0.5
-blend_point_2/node = SubResource("AnimationNodeAnimation_i1355")
+blend_point_2/node = SubResource("AnimationNodeAnimation_vliyq")
 blend_point_2/pos = 1.0
 min_space = 0.0
 sync = true
 
-[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_qnu6j"]
-graph_offset = Vector2(-7.6671596, 186.52916)
-nodes/output/position = Vector2(930, -20)
-nodes/RunSpeed/node = SubResource("AnimationNodeTimeScale_bnq0n")
-nodes/RunSpeed/position = Vector2(480, -10)
-nodes/Jump/node = SubResource("AnimationNodeStateMachine_qulg7")
-nodes/Jump/position = Vector2(360, 220)
-nodes/OneShot/node = SubResource("AnimationNodeOneShot_4kffy")
-nodes/OneShot/position = Vector2(670, -30)
-nodes/WalkRun/node = SubResource("AnimationNodeBlendSpace1D_qci4v")
-nodes/WalkRun/position = Vector2(290, -10)
-node_connections = [&"output", 0, &"OneShot", &"RunSpeed", 0, &"WalkRun", &"OneShot", 0, &"RunSpeed", &"OneShot", 1, &"Jump"]
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_4kffy"]
+graph_offset = Vector2(-99.99327, 121.63611)
+nodes/output/position = Vector2(960, 160)
+nodes/WalkRun/node = SubResource("AnimationNodeBlendSpace1D_qulg7")
+nodes/WalkRun/position = Vector2(210, 210)
+nodes/OneShot/node = SubResource("AnimationNodeOneShot_f0775")
+nodes/OneShot/position = Vector2(760, 150)
+nodes/RunSpeed/node = SubResource("AnimationNodeTimeScale_e3kty")
+nodes/RunSpeed/position = Vector2(410, 180)
+nodes/OneShots/node = SubResource("AnimationNodeStateMachine_qnu6j")
+nodes/OneShots/position = Vector2(400, 380)
+node_connections = [&"output", 0, &"OneShot", &"OneShot", 0, &"RunSpeed", &"OneShot", 1, &"OneShots", &"RunSpeed", 0, &"WalkRun"]
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_e3kty"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_bnq0n"]
 advance_mode = 2
 
-[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_mdkfl"]
-states/End/position = Vector2(1202, 123)
-states/Movement/node = SubResource("AnimationNodeBlendTree_qnu6j")
-states/Movement/position = Vector2(402.6562, 99.23767)
-states/Start/position = Vector2(199.5, 99.625)
-transitions = ["Start", "Movement", SubResource("AnimationNodeStateMachineTransition_e3kty")]
-graph_offset = Vector2(72.67985, 18.587488)
-
-[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_b1u1o"]
-nodes/output/position = Vector2(740, 60)
-nodes/StateMachine/node = SubResource("AnimationNodeStateMachine_mdkfl")
-nodes/StateMachine/position = Vector2(360, 30)
-node_connections = [&"output", 0, &"StateMachine"]
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_hgjqb"]
+states/BlendTree/node = SubResource("AnimationNodeBlendTree_4kffy")
+states/BlendTree/position = Vector2(373.5, 99.875)
+states/Start/position = Vector2(190.5, 99.5)
+transitions = ["Start", "BlendTree", SubResource("AnimationNodeStateMachineTransition_bnq0n")]
+graph_offset = Vector2(77.17497, 24.262499)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mdkfl"]
 radius = 0.39013672
@@ -150,20 +141,20 @@ visible = false
 visible = false
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-root_node = NodePath("../Body/Knight")
+root_node = NodePath("../Body/Mage")
 libraries = {
 &"CharacterAnimationLibrary": ExtResource("3_3fwhk")
 }
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
-root_node = NodePath("../Body/Knight")
-tree_root = SubResource("AnimationNodeBlendTree_b1u1o")
+root_node = NodePath("../Body/Mage")
+tree_root = SubResource("AnimationNodeStateMachine_hgjqb")
 anim_player = NodePath("../AnimationPlayer")
-parameters/StateMachine/Movement/RunSpeed/scale = 1.0
-parameters/StateMachine/Movement/OneShot/active = false
-parameters/StateMachine/Movement/OneShot/internal_active = false
-parameters/StateMachine/Movement/OneShot/request = 0
-parameters/StateMachine/Movement/WalkRun/blend_position = 0.0
+parameters/BlendTree/WalkRun/blend_position = 0.0
+parameters/BlendTree/OneShot/active = false
+parameters/BlendTree/OneShot/internal_active = false
+parameters/BlendTree/OneShot/request = 0
+parameters/BlendTree/RunSpeed/scale = 1.0
 
 [node name="Hands" type="Node" parent="."]
 

@@ -3,10 +3,11 @@ extends CharacterBody3D
 # ---------- Inspector ----------
 @export var MAX_SPEED := 10.0
 @export var TURN_SPEED := 14.0
-@export var ACCEL := 20.0
+@export var TURN_SPEED_AIR := 1.0
+@export var ACCEL := 50.0
 @export var ACCEL_AIR := 12.0
 @export var FRICTION := 500.0
-@export var JUMP_VELOCITY := 12.0
+@export var JUMP_VELOCITY := 13.0
 
 # Bone names you expect (only used if your attachments don't already have one)
 @export var RIGHT_HAND_BONE := "handslot.r"
@@ -30,6 +31,7 @@ var body: Node3D
 var skeleton: Skeleton3D
 var collision_shape: CollisionObject3D
 var raycast: RayCast3D
+var on_ground: bool = true
 var was_on_ground: bool = false
 
 func _ready() -> void:
@@ -49,7 +51,7 @@ func _physics_process(delta: float) -> void:
 	var wants_jump := controller.wants_jump(self, delta)
 
 	# gravity + jump
-	var on_ground = is_on_floor() or _get_ground_dist() < 0.2
+	on_ground = is_on_floor() or _get_ground_dist() < 0.2
 	var started_animation: bool = !on_ground and was_on_ground
 	was_on_ground = on_ground
 	
@@ -65,7 +67,8 @@ func _physics_process(delta: float) -> void:
 	if has_input:
 		desired_dir = desired_dir.normalized()
 		var target_yaw := atan2(desired_dir.x, desired_dir.z)
-		rotation.y = lerp_angle(rotation.y, target_yaw, TURN_SPEED * delta)
+		var turn_speed: float = TURN_SPEED if on_ground else TURN_SPEED_AIR
+		rotation.y = lerp_angle(rotation.y, target_yaw, turn_speed * delta)
 
 	# accel/ friction on XZ
 	var target_speed := MAX_SPEED * mv2.length()
@@ -89,21 +92,20 @@ func _physics_process(delta: float) -> void:
 func jump_animation(started_animation: bool):
 	var vertical_vel: float = velocity.y
 	var is_near_ground: bool = raycast.is_colliding()
-	var state_machine = anim_tree.get("parameters/StateMachine/Movement/Jump/playback")
-	if vertical_vel > 0 and started_animation:
+	var state_machine = anim_tree.get("parameters/BlendTree/OneShots/playback")
+	if started_animation:
 		state_machine.travel("JumpStart")
-		anim_tree.set("parameters/StateMachine/Movement/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+		anim_tree.set("parameters/BlendTree/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 	if vertical_vel < 0 and is_near_ground:
 		state_machine.travel("JumpLand")
-	if anim_tree.get("parameters/StateMachine/Movement/OneShot/active") and state_machine.get_current_node() == "JumpLand":
-		anim_tree.set("parameters/StateMachine/Movement/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
-		
 		
 	
 func movement_animation(speed: float):
 	var amount = speed / MAX_SPEED
-	anim_tree.set("parameters/StateMachine/Movement/WalkRun/blend_position", amount)
-	anim_tree.set("parameters/StateMachine/Movement/RunSpeed/scale", 1 + amount)
+	if anim_tree.get("parameters/BlendTree/OneShot/active") and amount > 0 and on_ground:
+		anim_tree.set("parameters/BlendTree/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
+	anim_tree.set("parameters/BlendTree/WalkRun/blend_position", amount)
+	anim_tree.set("parameters/BlendTree/RunSpeed/scale", 1 + amount)
 	
 
 # --------------------------------------------

@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://dvfkuwmfj51dk" path="res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x8x2_Color1.gltf" id="1_b6sk4"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_b6sk4"]
-size = Vector3(7.5, 2, 7.5)
+size = Vector3(7.75, 2, 7.75)
 
 [node name="Hill_8x8x2_Color12" instance=ExtResource("1_b6sk4")]
 

@@ -9,8 +9,8 @@ extends Node
 
 # Orbit (Q/E)
 @export var orbit_speed_rad: float = 2          # radians per second
-@export var act_orbit_left := "camera_left"       # bind to Q
-@export var act_orbit_right := "camera_right"     # bind to E
+@export var act_orbit_left := "camera_left"       # bind to E
+@export var act_orbit_right := "camera_right"     # bind to Q
 
 # Follow behavior
 @export var ema_alpha: float = 0.1 # when strafe ratio is close to 0, increasing this makes it "snappier"
@@ -72,7 +72,7 @@ func _process(delta: float) -> void:
 		radial = radial.lerp(radial.normalized() * distance, alpha)
 		
 	# --- apply manual orbit (Q/E) *after* smoothing ---
-	var yaw_dir := Input.get_axis(act_orbit_left, act_orbit_right)
+	var yaw_dir := Input.get_axis(act_orbit_right, act_orbit_left)
 	if absf(yaw_dir) > 1e-6:
 		var rot_amount := orbit_speed_rad * yaw_dir * delta
 		radial = radial.rotated(Vector3.UP, rot_amount)

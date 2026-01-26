@@ -65,7 +65,7 @@ func load_terrain() -> void:
 
 		# Compute the tag distribution once, then use its proximity factor to adjust
 		# BOTH: (1) whether we fill at all, and (2) which tag we sample.
-		var probs: Dictionary = _compute_socket_probs(piece, socket_name, adjacent, origin_world)
+		var probs: Dictionary = _compute_socket_probs(piece, socket_name, adjacent, origin_world, size)
 		var filtered: TerrainModuleList = probs["filtered"] as TerrainModuleList
 		var dist: Distribution = probs["dist"] as Distribution
 		var fill_prob: float = float(probs["fill_prob"])
@@ -94,7 +94,8 @@ func _compute_socket_probs(
 	piece: TerrainModuleInstance,
 	socket_name: String,
 	adjacent: Dictionary[String, TerrainModuleSocket],
-	origin_world: Vector3
+	origin_world: Vector3,
+	size: String,
 ) -> Dictionary:
 	# Returns:
 	# - filtered: TerrainModuleList
@@ -102,6 +103,7 @@ func _compute_socket_probs(
 	# - factor: float (tag-dist inflation factor)
 	# - fill_prob: float (base fill prob * factor, clamped 0..1)
 	var required_tags: TagList = library.get_required_tags(adjacent)
+	required_tags.append(size) # only find pieces with the given size
 	var filtered: TerrainModuleList = library.get_by_tags(required_tags)
 
 	var dist_raw: Distribution = library.get_combined_distribution(adjacent)

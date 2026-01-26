@@ -30,11 +30,18 @@ func normalise() -> void:
 	var total_prob: float = 0
 	for tag: String in dist.keys():
 		total_prob += dist[tag]
-	for tag: String in dist.keys():
-		dist[tag] = dist[tag] / total_prob
+	if total_prob > 0.0:
+		for tag: String in dist.keys():
+			dist[tag] = dist[tag] / total_prob
 
 func copy() -> Distribution:
 	return Distribution.new(dist.duplicate())
+	
+func remove(tag: String) -> void:
+	dist.erase(tag)
+	
+func is_empty() -> bool:
+	return dist.is_empty()
 
 func _iter_init(_arg) -> bool:
 	_iter_i = 0

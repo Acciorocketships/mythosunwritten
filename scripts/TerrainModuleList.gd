@@ -19,6 +19,9 @@ func size() -> int:
 func append(element: TerrainModule) -> void:
 	library.append(element)
 	
+func remove(element: TerrainModule) -> void:
+	library.erase(element)
+	
 func is_empty() -> bool:
 	return library.is_empty()
 
