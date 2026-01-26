@@ -89,8 +89,28 @@ static func compute_local_mesh_aabb(root_node: Node3D) -> AABB:
 		else:
 			merged = merge_aabb(merged, mesh_aabb_in_root)
 
+	# If no collision shapes found, fall back to visual meshes
 	if not have_any:
-		push_error("[Helper.compute_local_mesh_aabb] No CollisionShape3D with valid debug mesh found to compute AABB.")
+		to_visit = [root_node]
+		while not to_visit.is_empty():
+			var node: Node = to_visit.pop_back()
+			for child in node.get_children():
+				to_visit.append(child)
+
+			var mesh_instance: MeshInstance3D = node as MeshInstance3D
+			if mesh_instance == null or mesh_instance.mesh == null:
+				continue
+
+			var tf_to_root: Transform3D = to_root_tf(mesh_instance, root_node)
+			var mesh_aabb_in_root: AABB = tf_to_root * mesh_instance.mesh.get_aabb()
+			if not have_any:
+				merged = mesh_aabb_in_root
+				have_any = true
+			else:
+				merged = merge_aabb(merged, mesh_aabb_in_root)
+
+	if not have_any:
+		push_error("[Helper.compute_local_mesh_aabb] No CollisionShape3D or MeshInstance3D with valid mesh found to compute AABB.")
 		return AABB()
 	return merged
 

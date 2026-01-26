@@ -31,7 +31,7 @@ func load_ground_tile() -> TerrainModule:
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
-	var top_size_dist: Distribution = Distribution.new({"point": 0.5, "8x8": 0.1, "12x12": 0.4})
+	var top_size_dist: Distribution = Distribution.new({"point": 0.85, "8x8": 0.03, "12x12": 0.12})
 	var socket_size: Dictionary[String, Distribution] = {
 		"main": Distribution.new({"24x24": 1.0}),
 		"back": Distribution.new({"24x24": 1.0}),
