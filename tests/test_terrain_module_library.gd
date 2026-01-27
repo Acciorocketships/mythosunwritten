@@ -148,11 +148,12 @@ func test_ground_tile_aabb_matches_mesh_bounds():
 	var lib = TerrainModuleLibrary.new()
 	add_child_autofree(lib)
 	var tm: TerrainModule = lib.load_ground_tile()
-	# Expected bounds for GroundTile from its mesh. (We validate this explicitly so that
+	# Expected bounds for GroundTile from its collision shape. (We validate this explicitly so that
 	# future asset/variant changes surface as a test failure.)
 	#
-	# Note: this is mesh-derived, not collision-derived.
-	# Current asset has a height of 2.0 units and is centered at Y=-2.0.
-	var expected: AABB = AABB(Vector3(-12.0, -2.0, -12.0), Vector3(24.0, 2.0, 24.0))
+	# Note: this is collision-derived, not mesh-derived.
+	# Current collision shape has size (24, 0.75, 24) and is positioned at (0, -0.375, 0),
+	# so AABB extends from (-12, -0.75, -12) to (12, 0, 12).
+	var expected: AABB = AABB(Vector3(-12.0, -0.75, -12.0), Vector3(24.0, 0.75, 24.0))
 	assert_almost_eq((tm.size.position - expected.position).length(), 0.0, 0.01)
 	assert_almost_eq((tm.size.size - expected.size).length(), 0.0, 0.01)

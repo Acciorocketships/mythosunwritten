@@ -1,6 +1,6 @@
 extends Node3D
 
-@export var RENDER_RANGE: int = 150
+@export var RENDER_RANGE: int = 250
 @export var MAX_LOAD_PER_STEP: int = 8
 
 @export var player: Node3D

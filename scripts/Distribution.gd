@@ -36,10 +36,10 @@ func normalise() -> void:
 
 func copy() -> Distribution:
 	return Distribution.new(dist.duplicate())
-	
+
 func remove(tag: String) -> void:
 	dist.erase(tag)
-	
+
 func is_empty() -> bool:
 	return dist.is_empty()
 

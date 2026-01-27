@@ -2,7 +2,7 @@
 
 ## Quick commands
 
-- **Run the project**: `godot --path .`
+- **Run the project**: `godot --headless --path /Users/ryko/story`
 - **Run all tests (GUT)**: `godot --path /Users/ryko/story -s res://addons/gut/gut_cmdln.gd -gconfig=res://tests/gutconfig.json`
 
 ## Project context: procedural terrain via “socketing”
@@ -111,7 +111,7 @@
 
 - If the issue isn’t obvious:
   - Add targeted `print()`s in suspected scripts
-  - Run the game (`godot --path .`)
+  - Run the game (`godot --headless --path /Users/ryko/story`)
   - Use console output to identify the root cause
 - When asked to test a fix:
   - Re-run with relevant `print()`s and iterate until behavior is correct

@@ -160,3 +160,92 @@ static func node_has_collision(root: Node) -> bool:
 		if node is CollisionShape3D or node is CollisionPolygon3D:
 			return true
 	return false
+
+
+# ------------------------------------------------------------
+# Terrain Module Utilities
+# ------------------------------------------------------------
+
+## Creates rotated variants of a TerrainModule by cycling socket directions.
+static func create_rotated_terrain_modules(base_module: TerrainModule) -> Array[TerrainModule]:
+	# Define 90° clockwise rotation mapping - substrings will be replaced in longer names
+	var rotation_90 := {
+		# Base directions
+		"front": "main",  # front becomes new attachment point
+		"main": "right",  # main becomes right
+		"right": "back",
+		"back": "left",
+		"left": "front",  # left becomes front (will be handled by special case)
+		# Corner combinations
+		"frontright": "mainright",
+		"mainright": "backright",
+		"backright": "backleft",
+		"backleft": "frontleft",
+		"frontleft": "frontright"
+	}
+
+	var variants: Array[TerrainModule] = []
+
+	# 90° rotation
+	variants.append(create_socket_swapped_module(base_module, rotation_90))
+
+	# 180° rotation (apply rotation twice)
+	var rotation_180 := apply_direction_mapping(rotation_90, rotation_90)
+	variants.append(create_socket_swapped_module(base_module, rotation_180))
+
+	# 270° rotation (apply rotation three times)
+	var rotation_270 := apply_direction_mapping(rotation_180, rotation_90)
+	variants.append(create_socket_swapped_module(base_module, rotation_270))
+
+	return variants
+
+## Creates a TerrainModule with swapped socket names.
+static func create_socket_swapped_module(base_module: TerrainModule, swaps: Dictionary) -> TerrainModule:
+	var tags_per_socket := swap_dict_keys(base_module.tags_per_socket, swaps)
+	var socket_size := swap_dict_keys(base_module.socket_size, swaps)
+	var socket_required := swap_dict_keys(base_module.socket_required, swaps)
+	var socket_fill_prob := swap_dict_keys(base_module.socket_fill_prob, swaps)
+	var socket_tag_prob := swap_dict_keys(base_module.socket_tag_prob, swaps)
+
+	return TerrainModule.new(
+		base_module.scene,
+		base_module.size,
+		base_module.tags,
+		tags_per_socket,
+		base_module.visual_variants,
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob
+	)
+
+## Swaps dictionary keys according to the provided mapping.
+static func swap_dict_keys(dict: Dictionary, swaps: Dictionary) -> Dictionary:
+	var result := {}
+	for key: String in dict.keys():
+		var original_key := key
+		var new_key := key
+
+		# Process swaps in order from longest to shortest to handle compound directions first
+		# This prevents single direction replacements from interfering with compound ones
+		var sorted_swaps := swaps.keys()
+		sorted_swaps.sort_custom(func(a, b): return a.length() > b.length())  # Sort by length descending
+
+		for swap_key: String in sorted_swaps:
+			if swap_key in new_key:
+				new_key = new_key.replace(swap_key, swaps[swap_key])
+				break  # Only apply the first (longest) matching replacement
+
+		# Special case: if the key was exactly "left", it should become "main" (new attachment point)
+		if original_key == "left":
+			new_key = "main"
+
+		result[new_key] = dict[key]
+	return result
+
+## Applies one direction mapping to another.
+static func apply_direction_mapping(first: Dictionary, second: Dictionary) -> Dictionary:
+	var result := {}
+	for key: String in first.keys():
+		result[key] = second.get(first[key], first[key])
+	return result

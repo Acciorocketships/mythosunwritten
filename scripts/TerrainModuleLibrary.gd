@@ -19,6 +19,7 @@ func load_terrain_modules() -> void:
 	terrain_modules.append(load_tree_tile())
 	terrain_modules.append(load_8x8x2_tile())
 	terrain_modules.append(load_12x12x2_tile())
+	terrain_modules.append(load_level_side_tile())
 
 
 ### Individual Terrain Modules ###
@@ -39,8 +40,8 @@ func load_ground_tile() -> TerrainModule:
 	var adjacent_tag_prob: Distribution = Distribution.new({"ground": 1.0})
 	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
 	var top_tag_prob_cardinal: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
-	var top_tag_prob_center: Distribution = null
-	
+	var top_tag_prob_center: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "level": 0.1})
+
 	var socket_size: Dictionary[String, Distribution] = {
 		"main": Distribution.new({"24x24": 1.0}),
 		"back": Distribution.new({"24x24": 1.0}),
