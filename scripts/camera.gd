@@ -72,7 +72,7 @@ func _process(delta: float) -> void:
 		radial = radial.lerp(radial.normalized() * distance, alpha)
 		
 	# --- apply manual orbit (Q/E) *after* smoothing ---
-	var yaw_dir := Input.get_axis(act_orbit_right, act_orbit_left)
+	var yaw_dir := Input.get_axis(act_orbit_left, act_orbit_right)
 	if absf(yaw_dir) > 1e-6:
 		var rot_amount := orbit_speed_rad * yaw_dir * delta
 		radial = radial.rotated(Vector3.UP, rot_amount)

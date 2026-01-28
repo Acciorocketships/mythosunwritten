@@ -91,7 +91,7 @@ func _make_scene_with_sockets(
 
 func _make_module(size: Vector3, pos_by_name: Dictionary[String, Vector3]) -> TerrainModule:
 	var scene: PackedScene = _make_scene_with_sockets(pos_by_name, size)
-	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new())
+	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new(), {}, [], {}, {}, {}, {}, false)
 	# Ensure sockets are considered fillable in tests
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
@@ -271,7 +271,7 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 	}
 
 	var scene: PackedScene = _make_scene_with_sockets(pos_by_name, size)
-	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new())
+	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new(), {}, [], {}, {}, {}, {}, false)
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
 		fill[n] = 1.0

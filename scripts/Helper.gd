@@ -216,7 +216,8 @@ static func create_socket_swapped_module(base_module: TerrainModule, swaps: Dict
 		socket_size,
 		socket_required,
 		socket_fill_prob,
-		socket_tag_prob
+		socket_tag_prob,
+		base_module.replace_existing
 	)
 
 ## Swaps dictionary keys according to the provided mapping.

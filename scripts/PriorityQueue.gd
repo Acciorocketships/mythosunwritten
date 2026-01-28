@@ -28,6 +28,13 @@ func size() -> int:
 func is_empty() -> bool:
 	return heap.is_empty()
 
+func remove_where(predicate: Callable) -> void:
+	var new_heap: Array = []
+	for entry in heap:
+		if not predicate.call(entry["item"]):
+			new_heap.append(entry)
+	heap = new_heap
+
 func _bubble_up(i):
 	while i > 0:
 		var p = int((i - 1) / 2)

@@ -17,6 +17,10 @@ extends Resource
 # Used by terrain placement to decide whether AABB overlap should block placement.
 @export var has_collisions: bool = true
 
+# If true, this module can replace existing terrain pieces when placed.
+# Instead of failing placement due to AABB collisions, it will remove overlapping pieces.
+@export var replace_existing: bool = false
+
 var debug_id: int = 0
 
 func _init(
@@ -29,6 +33,7 @@ func _init(
 	_socket_required: Dictionary[String, TagList] = {},
 	_socket_fill_prob: Dictionary[String, float] = {},
 	_socket_tag_prob: Dictionary[String, Distribution] = {},
+	_replace_existing: bool = false,
 ) -> void:
 	scene = _scene
 	size = _size
@@ -40,6 +45,7 @@ func _init(
 	socket_tag_prob = _socket_tag_prob
 	visual_variants = _visual_variants.duplicate()
 	visual_variants.append(_scene)
+	replace_existing = _replace_existing
 
 	# Compute collision presence automatically from scene content.
 	has_collisions = false

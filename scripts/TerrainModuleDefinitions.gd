@@ -5,7 +5,7 @@ extends Resource
 
 static func load_ground_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/GroundTile.tscn")
-	var tags: TagList = TagList.new(["ground", "24x24"])
+	var tags: TagList = TagList.new(["ground", "24x24", "side"])
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
@@ -36,10 +36,10 @@ static func load_ground_tile() -> TerrainModule:
 		"topbackleft": top_size_dist_corners,
 	}
 	var socket_required: Dictionary[String, TagList] = {
-		"main": TagList.new(["ground"]),
-		"back": TagList.new(["ground"]),
-		"right": TagList.new(["ground"]),
-		"left": TagList.new(["ground"]),
+		"main": TagList.new(["ground", "side"]),
+		"back": TagList.new(["ground", "side"]),
+		"right": TagList.new(["ground", "side"]),
+		"left": TagList.new(["ground", "side"]),
 	}
 	var socket_fill_prob: Dictionary[String, float] = {
 		"main": 1.0,
@@ -82,7 +82,8 @@ static func load_ground_tile() -> TerrainModule:
 		socket_size,
 		socket_required,
 		socket_fill_prob,
-		socket_tag_prob
+		socket_tag_prob,
+		false  # replace_existing = false
 	)
 
 static func load_grass_tile() -> TerrainModule:
@@ -167,7 +168,8 @@ static func load_8x8x2_tile() -> TerrainModule:
 		socket_size,
 		socket_required,
 		socket_fill_prob,
-		socket_tag_prob
+		socket_tag_prob,
+		false  # replace_existing = false
 	)
 
 
@@ -199,17 +201,17 @@ static func load_12x12x2_tile() -> TerrainModule:
 		socket_fill_prob,
 		socket_tag_prob
 		)
-		
+
 static func load_level_side_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/LevelSide.tscn")
 	var tags: TagList = TagList.new(["level", "24x24"])
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
-	var socket_size: Dictionary[String, Distribution] = {}
-	var socket_required: Dictionary[String, TagList] = {}
-	var socket_fill_prob: Dictionary[String, float] = {}
-	var socket_tag_prob: Dictionary[String, Distribution] = {}
+	var socket_size: Dictionary[String, Distribution] = {"left": Distribution.new({"24x24": 1.0})}
+	var socket_required: Dictionary[String, TagList] = {"left": TagList.new(["level", "side"])}
+	var socket_fill_prob: Dictionary[String, float] = {"left": 0.5}
+	var socket_tag_prob: Dictionary[String, Distribution] = {"left": null}
 
 	return TerrainModule.new(
 		scene,
@@ -220,5 +222,6 @@ static func load_level_side_tile() -> TerrainModule:
 		socket_size,
 		socket_required,
 		socket_fill_prob,
-		socket_tag_prob
+		socket_tag_prob,
+		true  # replace_existing = true for level side tiles
 		)

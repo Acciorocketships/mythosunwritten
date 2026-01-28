@@ -28,7 +28,7 @@ func after_each() -> void:
 
 func _make_module(size: AABB) -> TerrainModuleInstance:
 	var dummy_scene := PackedScene.new()
-	var m := TerrainModule.new(dummy_scene, size)
+	var m := TerrainModule.new(dummy_scene, size, TagList.new(), {}, [], {}, {}, {}, {}, false)
 	m.debug_id = _next_id
 	_next_id += 1
 	var inst: TerrainModuleInstance = m.spawn()

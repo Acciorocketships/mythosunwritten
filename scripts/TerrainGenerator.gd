@@ -173,10 +173,37 @@ func register_piece_and_socket(piece_socket: TerrainModuleSocket) -> void:
 
 func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInstance) -> bool:
 	assert(new_piece.def != null)
+	if new_piece.def.replace_existing:
+		return true
 	var other_pieces: Array = terrain_index.query_box(new_piece.aabb)
 	if parent_piece != null:
 		other_pieces.erase(parent_piece)
 	return other_pieces.is_empty()
+
+
+func remove_piece(piece: TerrainModuleInstance) -> void:
+	# Remove from terrain index
+	terrain_index.remove(piece)
+
+	# Remove all sockets from position index
+	for socket_name in piece.sockets.keys():
+		var socket_pos = Helper.socket_world_pos(piece.transform, piece.sockets[socket_name], piece.root)
+		var snapped_pos = Helper.snap_vec3(socket_pos)
+		if socket_index.store.has(snapped_pos):
+			var sockets_at_pos = socket_index.store[snapped_pos]
+			sockets_at_pos = sockets_at_pos.filter(func(ps): return ps.piece != piece)
+			if sockets_at_pos.is_empty():
+				socket_index.store.erase(snapped_pos)
+			else:
+				socket_index.store[snapped_pos] = sockets_at_pos
+
+	# Remove from priority queue
+	queue.remove_where(func(item): return item is TerrainModuleSocket and item.piece == piece)
+
+	# Remove from scene tree
+	if piece.root and piece.root.get_parent() == terrain_parent:
+		terrain_parent.remove_child(piece.root)
+		piece.root.queue_free()
 
 
 func get_adjacent(piece: TerrainModuleInstance) -> Dictionary[String, TerrainModuleSocket]:
@@ -289,6 +316,14 @@ func add_piece(
 	var new_piece: TerrainModuleInstance = new_piece_socket.piece
 	if not can_place(new_piece, orig_piece_socket.piece):
 		return false
+
+	# If replace_existing is true, remove all overlapping pieces
+	if new_piece.def.replace_existing:
+		var overlapping_pieces: Array = terrain_index.query_box(new_piece.aabb)
+		if orig_piece_socket.piece != null:
+			overlapping_pieces.erase(orig_piece_socket.piece)
+		for piece in overlapping_pieces:
+			remove_piece(piece)
 
 	terrain_parent.add_child(new_piece.root)
 
