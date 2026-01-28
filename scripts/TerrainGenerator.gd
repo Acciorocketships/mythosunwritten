@@ -298,7 +298,7 @@ func add_piece(
 
 
 func load_start_tile() -> TerrainModuleInstance:
-	var def := library.load_ground_tile()
+	var def : TerrainModule = TerrainModuleDefinitions.load_ground_tile()
 	var initial_tile := def.spawn()
 	initial_tile.set_transform(Transform3D.IDENTITY)
 	var root := initial_tile.create()
