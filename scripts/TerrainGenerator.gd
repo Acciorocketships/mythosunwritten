@@ -105,6 +105,14 @@ func _compute_socket_probs(
 	var required_tags: TagList = library.get_required_tags(adjacent)
 	required_tags.append(size) # only find pieces with the given size
 	var filtered: TerrainModuleList = library.get_by_tags(required_tags)
+	if filtered.is_empty():
+		print("CRITICAL: No modules for tags %s (size %s, adj %s)" % [required_tags.tags, size, adjacent.keys()])
+		return {
+			"filtered": filtered,
+			"dist": Distribution.new(),
+			"factor": 0.0,
+			"fill_prob": 0.0,
+		}
 
 	var dist_raw: Distribution = library.get_combined_distribution(adjacent)
 	var dist: Distribution = dist_raw.copy()

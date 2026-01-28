@@ -1,7 +1,7 @@
 class_name Helper
 extends RefCounted
 
-const SNAP_POS: float = 1.0
+const SNAP_POS: float = 0.01
 
 # Node3D -> transform relative to a given root (no scene tree needed)
 static func to_root_tf(n: Node3D, root: Node3D) -> Transform3D:
