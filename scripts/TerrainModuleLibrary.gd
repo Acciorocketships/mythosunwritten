@@ -28,9 +28,9 @@ func load_terrain_modules() -> void:
 
 
 func load_test_pieces() -> void:
-	terrain_modules.append(TerrainModuleDefinitions.create_8x8x2_test_piece())
-	terrain_modules.append(TerrainModuleDefinitions.create_12x12x2_test_piece())
-	terrain_modules.append(TerrainModuleDefinitions.create_24x24x0_5_test_piece())
+	terrain_modules.append(TerrainModuleDefinitions.create_8x8_test_piece())
+	terrain_modules.append(TerrainModuleDefinitions.create_12x12_test_piece())
+	terrain_modules.append(TerrainModuleDefinitions.create_24x24_test_piece())
 
 
 ## Class Functions ##

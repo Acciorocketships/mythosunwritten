@@ -66,6 +66,9 @@ func load_terrain() -> void:
 			size = size_prob_dist.sample()
 
 		var adjacent := get_adjacent_from_size(piece_socket, size)
+		if adjacent.is_empty():
+			# Adjacent sockets include forbidden areas (fill_prob <= 0), skip this expansion
+			continue
 
 		# Compute the tag distribution once, then use its proximity factor to adjust
 		# BOTH: (1) whether we fill at all, and (2) which tag we sample.
@@ -181,11 +184,9 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 func register_piece_and_socket(piece_socket: TerrainModuleSocket) -> void:
 	var piece: TerrainModuleInstance = piece_socket.piece
 	for socket_name: String in piece.sockets.keys():
-		# Only index sockets with non-zero fill probability, skip the attachment socket
-		if (
-			socket_name != piece_socket.socket_name
-			and float(piece.def.socket_fill_prob.get(socket_name, 0.0)) > 0.0
-		):
+		# Index all sockets (including those with fill_prob = 0) so they can act as adjacency barriers
+		# Skip only the attachment socket
+		if socket_name != piece_socket.socket_name:
 			var piece_other_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
 			socket_index.insert(piece_other_socket)
 	terrain_index.insert(piece)
@@ -283,14 +284,21 @@ func get_adjacent_from_size(
 	for socket_name: String in test_piece.sockets.keys():
 		if socket_name == attachment_socket_name:
 			continue
-		if float(test_piece.def.socket_fill_prob.get(socket_name, 0.0)) <= 0.0:
-			continue
 
 		var s: Marker3D = test_piece.sockets[socket_name]
 		var pos := Helper.socket_world_pos(test_piece.transform, s, test_piece.root)
 		var hit := socket_index.query_other(pos, test_piece)
 		if hit != null:
-			adjacency[socket_name] = hit
+			# If we find any adjacent socket with fill_prob <= 0, prevent this placement entirely
+			var adjacent_fill_prob: float = float(hit.piece.def.socket_fill_prob.get(hit.socket_name, 0.0))
+			if adjacent_fill_prob <= 0.0:
+				test_piece.destroy()
+				return {}
+
+		# Only include in adjacency if this socket can actually expand
+		if float(test_piece.def.socket_fill_prob.get(socket_name, 0.0)) > 0.0:
+			if hit != null:
+				adjacency[socket_name] = hit
 
 	test_piece.destroy()
 	return adjacency

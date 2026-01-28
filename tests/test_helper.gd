@@ -154,7 +154,7 @@ func test_get_attachment_socket_name_top_sockets():
 	assert_eq(Helper.get_attachment_socket_name("topleft"), "bottom", "topleft attaches to bottom")
 
 func test_get_attachment_socket_name_bottom_and_top():
-	assert_eq(Helper.get_attachment_socket_name("bottom"), "top", "bottom attaches to top")
+	assert_eq(Helper.get_attachment_socket_name("bottom"), "topcenter", "bottom attaches to topcenter")
 	assert_eq(Helper.get_attachment_socket_name("top"), "bottom", "top attaches to bottom")
 
 func test_get_attachment_socket_name_unknown():

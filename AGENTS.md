@@ -27,7 +27,7 @@
 - `TerrainModuleInstance` (RefCounted): `def`, `root`, `socket_node` (`Sockets`), `sockets` (String → Marker3D), `transform`, `aabb`.
 - `TerrainModuleSocket` (Resource): binds a piece to one socket name; exposes `socket`, `get_piece_position()`, `get_socket_position()`.
 - `TagList`, `Distribution`: helpers for set/weighted ops (`union`, `sample`, `normalise`, …).
-- **Sizes**: tags like `"24x24x2"` correspond to AABB extents (now include height dimension).
+- **Sizes**: tags like `"24x24"` correspond to XZ dimensions. Height is a visual property that doesn't affect connectivity.
 
 ## Library and tag rules
 
@@ -47,9 +47,9 @@
   - Pop nearest socket; if distance > `RENDER_RANGE`, requeue and exit for this frame (`MAX_LOAD_PER_STEP` caps work).
   - Skip if the socket position already has a connection (use `PositionIndex.query_other` with the current piece to avoid self-hits).
   - Roll `socket_fill_prob` to decide sparsity.
-  - Sample a size from `socket_size[socket_name]`.
+  - Sample a size from `socket_size[socket_name]` (XZ dimensions only; height doesn't affect connectivity).
   - Compute adjacency via `get_adjacent_from_size`:
-	- Spawn a temporary test piece for that size, determine attachment socket using `get_attachment_socket_name()`, position the test piece correctly, then query `PositionIndex` for adjacent sockets.
+	- Spawn a temporary test piece for that size, determine attachment socket using `get_attachment_socket_name()`, position the test piece correctly, then query `PositionIndex` for adjacent sockets at all socket positions. If any socket on the test piece would overlap with existing sockets (considering fill_prob blocking zones), skip this expansion attempt. Otherwise, only include adjacent sockets that have `socket_fill_prob > 0` in the adjacency for tag requirements.
  - Choose a module with library/tag logic; if initial adjacency produces no valid modules, try rotating the adjacency up to 3 times.
   - Try up to 4 attempts: create, `transform_to_socket`, then `add_piece`. On failure, destroy and retry. On success, continue.
 - **Placement**
@@ -60,10 +60,10 @@
 ## Spatial indices
 
 - `PositionIndex` (Node):
-  - Stores multiple sockets per snapped position; keyed by `Helper.snap_vec3(world_pos)`.
-  - `insert(ps: TerrainModuleSocket)`: uses `ps.get_socket_position()` (off-tree safe).
-  - `query(pos)`: returns one socket at the snapped position or null.
-  - `query_other(pos, piece)`: returns a socket at the position that belongs to a different piece (avoids self-matches).
+ - Stores multiple sockets per snapped position; keyed by `Helper.snap_vec3(world_pos)`.
+ - `insert(ps: TerrainModuleSocket)`: uses `ps.get_socket_position()` (off-tree safe). All sockets are indexed, including those with `fill_prob = 0`, so they can act as adjacency barriers.
+ - `query(pos)`: returns one socket at the snapped position or null.
+ - `query_other(pos, piece)`: returns a socket at the position that belongs to a different piece (avoids self-matches).
 - `TerrainIndex` (Object):
   - Hierarchical index for AABB overlap tests/culling.
   - XZ plane: 24×24 chunks; within each chunk, 4-unit X/Z buckets and 2-unit Y buckets.
@@ -89,9 +89,9 @@
 - **Attachment Rules**: Sockets containing `"top"` attach with `"bottom"`. Cardinal directions attach with their opposites:
   - `"front"` ↔ `"back"`
   - `"left"` ↔ `"right"`
-  - `"bottom"` ↔ `"top"`
+  - `"bottom"` attaches with `"topcenter"`
 - **Adjacency Rotation**: If initial adjacency produces no valid modules, rotate socket names up to 3 times to find alternative placements.
-- **Test Pieces**: Dedicated test pieces exist for each size (`8x8x2`, `12x12x2`, `24x24x2`) to determine adjacency without mixing with game pieces.
+- **Test Pieces**: Dedicated test pieces exist for each size (`8x8`, `12x12`, `24x24`) to determine adjacency without mixing with game pieces.
 
 ## Runtime tuning
 
@@ -117,7 +117,7 @@
   - AABB, module tags, per-socket tags, `socket_size`, `socket_required` (use `"!"` where appropriate), `socket_fill_prob`, `socket_tag_prob`.
 - For ground pieces: include a `"front"` socket for attachment. For other pieces: include a `"bottom"` socket for attachment.
 - Socket names should follow conventions: `"front"`, `"back"`, `"left"`, `"right"`, `"topfront"`, `"topback"`, etc.
-- Prefer tags like `"ground"`, `"hill"`, `"grass"` and 3D sizes like `"24x24x2"`, `"8x8x2"`. Use `"!"` socket tags for directional/path semantics as needed.
+- Prefer tags like `"ground"`, `"hill"`, `"grass"` and XZ sizes like `"24x24"`, `"8x8"`. Use `"!"` socket tags for directional/path semantics as needed.
 
 ## Debugging workflow (preferred)
 
