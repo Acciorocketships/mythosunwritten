@@ -96,16 +96,13 @@ func _make_module(size: Vector3, pos_by_name: Dictionary[String, Vector3]) -> Te
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
 		fill[n] = 1.0
-	# Also include main if not present
-	if not pos_by_name.has("main"):
-		fill["main"] = 1.0
 	mod.socket_fill_prob = fill
 	# Ensure sockets are considered size-capable by get_adjacent_from_size() in tests.
 	var sizes: Dictionary[String, Distribution] = {}
 	for n: String in fill.keys():
 		# The key inside this distribution is not used by get_adjacent_from_size(); it only checks
 		# that socket_size has an entry for the socket name. Use a real size tag for clarity.
-		sizes[n] = Distribution.new({"24x24": 1.0})
+		sizes[n] = Distribution.new({"24x24x0.5": 1.0})
 	mod.socket_size = sizes
 	return mod
 
@@ -122,7 +119,8 @@ func _spawn_piece(
 # A compact default socket layout used in multiple tests
 func _default_socket_layout() -> Dictionary[String, Vector3]:
 	return {
-		"main": Vector3(0, 0, 0),
+		"bottom": Vector3(0, 0, 0),  # For expansion from "top", attachment is "bottom"
+		"top": Vector3(0, 0, 0),  # For expansion from "bottom", attachment is "top"
 		"left": Vector3(-1, 0, 0),
 		"right": Vector3(1, 0, 0),
 		"back": Vector3(0, 0, -1),
@@ -130,8 +128,8 @@ func _default_socket_layout() -> Dictionary[String, Vector3]:
 
 func _socket_layout_main_offset() -> Dictionary[String, Vector3]:
 	return {
-		# "main" is on the front edge (+Z), opposite of "back" (-Z), like left/right.
-		"main": Vector3(0, 0, 1),
+		# "bottom" is on the front edge (+Z), opposite of "back" (-Z), like left/right.
+		"bottom": Vector3(0, 0, 1),
 		"left": Vector3(-1, 0, 0),
 		"right": Vector3(1, 0, 0),
 		"back": Vector3(0, 0, -1),
@@ -210,7 +208,7 @@ func test_transform_to_socket_aligns_position():
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
 	var newp: TerrainModuleInstance = _spawn_piece(mod)
 	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(orig, "left")
-	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(newp, "main")
+	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(newp, "bottom")
 	gen.transform_to_socket(new_ps, orig_ps)
 	assert_eq(newp.get_position(), Vector3(-1, 0, 0))
 
@@ -221,7 +219,7 @@ func test_transform_to_socket_aligns_normals_opposite_and_sockets_coincide():
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
 	var newp: TerrainModuleInstance = _spawn_piece(mod)
 	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(orig, "left")
-	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(newp, "main")
+	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(newp, "bottom")
 	# Act
 	gen.transform_to_socket(new_ps, orig_ps)
 	# Sockets must coincide
@@ -231,11 +229,11 @@ func test_transform_to_socket_aligns_normals_opposite_and_sockets_coincide():
 
 func test_transform_to_socket_handles_main_not_centered():
 	var gen: Variant = _new_generator()
-	# Main is not at origin, but is on the +X face center (stable normal).
+	# Bottom is not at origin, but is on the +X face center (stable normal).
 	var mod: TerrainModule = _make_module(
 		Vector3(2, 2, 2),
 		{
-			"main": Vector3(1, 0, 0),
+			"bottom": Vector3(1, 0, 0),
 			"left": Vector3(-1, 0, 0),
 			"right": Vector3(1, 0, 0),
 			"back": Vector3(0, 0, -1),
@@ -243,9 +241,9 @@ func test_transform_to_socket_handles_main_not_centered():
 	)
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
 	var newp: TerrainModuleInstance = _spawn_piece(mod)
-	# Attach new piece's main to orig's left
+	# Attach new piece's bottom to orig's left
 	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(orig, "left")
-	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(newp, "main")
+	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(newp, "bottom")
 	gen.transform_to_socket(new_ps, orig_ps)
 	# Sockets coincide exactly on-grid
 	var p_orig: Vector3 = orig_ps.get_socket_position()
@@ -264,7 +262,7 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 
 	var pos_by_name: Dictionary[String, Vector3] = {
 		# sockets on the perimeter (y=0 plane, like the ground tiles)
-		"main": Vector3(half_x, 0, 0),
+		"bottom": Vector3(half_x, 0, 0),
 		"back": Vector3(-half_x, 0, 0),
 		"left": Vector3(0, 0, -half_z),
 		"right": Vector3(0, 0, half_z),
@@ -286,7 +284,7 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 	var candidate: TerrainModuleInstance = _spawn_piece(mod)
 
 	var orig_ps := TerrainModuleSocket.new(start, "back")
-	var new_ps := TerrainModuleSocket.new(candidate, "main")
+	var new_ps := TerrainModuleSocket.new(candidate, "bottom")
 
 	gen.transform_to_socket(new_ps, orig_ps)
 
@@ -317,21 +315,24 @@ func test_add_piece_registers_and_queues():
 	add_child_autofree(gen.terrain_parent)
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
+	gen.terrain_parent.add_child(orig.root)
+	gen.register_piece_and_socket(TerrainModuleSocket.new(orig, "bottom"))  # Register original piece
 	# prepare sockets
 	var new_inst: TerrainModuleInstance = mod.spawn()
 	new_inst.create()
 	_pieces_to_destroy.append(new_inst)
-	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(new_inst, "main")
+	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(new_inst, "bottom")
 	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(orig, "left")
 	var ok: bool = gen.add_piece(new_ps, orig_ps)
 	assert_true(ok)
 	# child added
-	assert_eq(gen.terrain_parent.get_child_count(), 1)
-	# main socket is not queued (attachment socket)
-	assert_eq(gen.queue.size(), new_inst.sockets.size() - 1)
+	assert_eq(gen.terrain_parent.get_child_count(), 2)  # orig + new piece
+	# Connected sockets are not queued (attachment and any overlapping sockets)
+	assert_eq(gen.queue.size(), 2)  # left and back sockets
 	for e in gen.queue.heap:
 		var it: TerrainModuleSocket = e["item"]
-		assert_ne(it.socket_name, "main")
+		assert_ne(it.socket_name, "bottom")
+		assert_ne(it.socket_name, "front")
 
 
 class FakeLibrary:
@@ -364,17 +365,26 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 	gen.library = lib
 	gen.library.terrain_modules = TerrainModuleList.new([mod])
 	gen.library.modules_by_tag.clear()
-	gen.library.modules_by_tag["24x24"] = TerrainModuleList.new([mod])
+	gen.library.modules_by_tag["24x24x0.5"] = TerrainModuleList.new([mod])
+
+	# For test pieces, use the ground tile which has all the expected sockets
+	var ground_mod: TerrainModule = TerrainModuleDefinitions.load_ground_tile()
+	var test_lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
+	gen.add_child(test_lib)
+	gen.test_pieces_library = test_lib
+	gen.test_pieces_library.terrain_modules = TerrainModuleList.new([mod])
+	gen.test_pieces_library.modules_by_tag.clear()
+	gen.test_pieces_library.modules_by_tag["24x24x0.5"] = TerrainModuleList.new([mod])
 	# Orig piece at identity
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
-	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(orig, "main")
+	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(orig, "top")
 	# Pre-insert dummy adjacent sockets at expected positions
 	var names: Array[String] = ["left", "right", "back"]
 	for n in names:
-		var dummy_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+		var dummy_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"bottom": Vector3.ZERO})
 		var dummy_piece: TerrainModuleInstance = _spawn_piece(dummy_mod)
-		# Move its "main" socket to the expected position in local space.
-		var m: Marker3D = dummy_piece.sockets.get("main", null)
+		# Move its "bottom" socket to the expected position in local space.
+		var m: Marker3D = dummy_piece.sockets.get("bottom", null)
 		assert_true(m != null)
 		if n == "left":
 			m.transform.origin = Vector3(-1, 0, 0)
@@ -382,13 +392,13 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 			m.transform.origin = Vector3(1, 0, 0)
 		else:
 			m.transform.origin = Vector3(0, 0, -1)
-		gen.socket_index.insert(TerrainModuleSocket.new(dummy_piece, "main"))
+		gen.socket_index.insert(TerrainModuleSocket.new(dummy_piece, "bottom"))
 	# Query
-	var out: Dictionary[String, TerrainModuleSocket] = gen.get_adjacent_from_size(orig_ps, "24x24")
-	assert_true(out.has("main"))
+	var out: Dictionary[String, TerrainModuleSocket] = gen.get_adjacent_from_size(orig_ps, "24x24x0.5")
+	assert_true(out.has("bottom"))
+	assert_true(out.has("back"))
 	assert_true(out.has("left"))
 	assert_true(out.has("right"))
-	assert_true(out.has("back"))
 
 
 func test_add_piece_checks_can_place_after_alignment():
@@ -402,7 +412,7 @@ func test_add_piece_checks_can_place_after_alignment():
 	var mod: TerrainModule = _make_module(
 		Vector3(2, 2, 2),
 		{
-			"main": Vector3(0, 0, 0),
+			"bottom": Vector3(0, 0, 0),
 			"left": Vector3(-2, 0, 0),
 			"right": Vector3(2, 0, 0),
 			"back": Vector3(0, 0, -2),
@@ -412,13 +422,13 @@ func test_add_piece_checks_can_place_after_alignment():
 	var start: TerrainModuleInstance = _spawn_piece(mod)
 	gen.terrain_parent.add_child(start.root)
 	# Register so TerrainIndex contains the start tile for overlap tests
-	gen.register_piece_and_socket(TerrainModuleSocket.new(start, "main"))
+	gen.register_piece_and_socket(TerrainModuleSocket.new(start, "bottom"))
 	# New candidate spawns at origin and overlaps BEFORE alignment
 	var cand: TerrainModuleInstance = _spawn_piece(mod)
 	assert_true(cand.aabb.intersects(start.aabb), "precondition: candidate overlaps start at origin")
-	# Attach candidate's main to start's left socket
+	# Attach candidate's bottom to start's left socket
 	var orig_ps := TerrainModuleSocket.new(start, "left")
-	var new_ps := TerrainModuleSocket.new(cand, "main")
+	var new_ps := TerrainModuleSocket.new(cand, "bottom")
 	var ok: bool = gen.add_piece(new_ps, orig_ps)
 	assert_true(ok, "add_piece placed after alignment")
 	# AFTER alignment, AABBs must not overlap
@@ -447,30 +457,34 @@ func test_integration_one_iteration_places_expected_tile_to_right():
 	gen.player.global_position = Vector3.ZERO
 	gen.RENDER_RANGE = 10000
 	gen.MAX_LOAD_PER_STEP = 1
-	# Module: 2x2x2 with sockets on face centers and size tag "2x2".
-	# Important: "main" is the attachment socket, so for placing a tile to the right (+X),
-	# main must be on the LEFT face (-X) so it can connect to the parent's "right" socket (+X).
+	# Module: 2x2x2 with sockets on face centers and size tag "2x2x2".
+	# Important: "bottom" is the attachment socket, so for placing a tile to the right (+X),
+	# bottom must be on the LEFT face (-X) so it can connect to the parent's "right" socket (+X).
 	var layout: Dictionary[String, Vector3] = {
-		"main": Vector3(-1, 0, 0),
+		"bottom": Vector3(-1, 0, 0),
 		"left": Vector3(-1, 0, 0),
 		"right": Vector3(1, 0, 0),
 		"back": Vector3(0, 0, -1),
 	}
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), layout)
-	mod.tags = TagList.new(["2x2"])
+	mod.tags = TagList.new(["2x2x2"])
 	mod.socket_size = {
-		"main": Distribution.new({"2x2": 1.0}),
-		"left": Distribution.new({"2x2": 1.0}),
-		"right": Distribution.new({"2x2": 1.0}),
-		"back": Distribution.new({"2x2": 1.0}),
+		"bottom": Distribution.new({"2x2x2": 1.0}),
+		"left": Distribution.new({"2x2x2": 1.0}),
+		"right": Distribution.new({"2x2x2": 1.0}),
+		"back": Distribution.new({"2x2x2": 1.0}),
 	}
 	var fake_lib: TerrainModuleLibrary = _FakeSingleLib.new(mod)
 	gen.add_child(fake_lib)
 	gen.library = fake_lib
+
+	var test_fake_lib: TerrainModuleLibrary = _FakeSingleLib.new(mod)
+	gen.add_child(test_fake_lib)
+	gen.test_pieces_library = test_fake_lib
 	# Start piece at origin; add to tree and indices
 	var start: TerrainModuleInstance = _spawn_piece(mod)
 	gen.terrain_parent.add_child(start.root)
-	gen.register_piece_and_socket(TerrainModuleSocket.new(start, "main"))
+	gen.register_piece_and_socket(TerrainModuleSocket.new(start, "bottom"))
 	# Seed queue with one socket: place to the right
 	gen.queue = PriorityQueue.new()
 	_objects_to_free.append(gen.queue)
@@ -488,7 +502,8 @@ func test_integration_one_iteration_places_expected_tile_to_right():
 			placed_root = c as Node3D
 	assert_true(placed_root != null)
 	assert_eq(placed_root.global_position, Vector3(2, 0, 0))
-	# And ensure we did not enqueue the "main" socket of the new piece
+	# And ensure we did not enqueue the "bottom" socket of the new piece
 	for e in gen.queue.heap:
 		var it: TerrainModuleSocket = e["item"]
-		assert_ne(it.socket_name, "main")
+		assert_ne(it.socket_name, "bottom")
+		assert_ne(it.socket_name, "front")

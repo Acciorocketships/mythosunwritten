@@ -8,6 +8,7 @@ extends Node3D
 @export var proximity_rules: ProximityTagRules
 
 var library: TerrainModuleLibrary
+var test_pieces_library: TerrainModuleLibrary
 var terrain_index: TerrainIndex
 var socket_index: PositionIndex
 var queue: PriorityQueue
@@ -17,6 +18,9 @@ func _ready() -> void:
 	library = TerrainModuleLibrary.new()
 	library.init()
 
+	test_pieces_library = TerrainModuleLibrary.new()
+	test_pieces_library.init_test_pieces()
+
 	socket_index = PositionIndex.new()
 	terrain_index = TerrainIndex.new()
 	if proximity_rules == null:
@@ -25,7 +29,7 @@ func _ready() -> void:
 	var start_tile := load_start_tile()
 	queue = PriorityQueue.new()
 	# Register the start tile in indices so collision checks work and adjacency can be detected
-	var dummy_socket: TerrainModuleSocket = TerrainModuleSocket.new(start_tile, "__init__")
+	var dummy_socket: TerrainModuleSocket = TerrainModuleSocket.new(start_tile, "front")
 	register_piece_and_socket(dummy_socket)
 	for socket_name in start_tile.sockets.keys():
 		if float(start_tile.def.socket_fill_prob.get(socket_name, 0.0)) <= 0.0:
@@ -65,19 +69,23 @@ func load_terrain() -> void:
 
 		# Compute the tag distribution once, then use its proximity factor to adjust
 		# BOTH: (1) whether we fill at all, and (2) which tag we sample.
-		var probs: Dictionary = _compute_socket_probs(piece, socket_name, adjacent, origin_world, size)
+		var probs: Dictionary = compute_socket_probs(piece, socket_name, adjacent, origin_world, size)
 		var filtered: TerrainModuleList = probs["filtered"] as TerrainModuleList
 		var dist: Distribution = probs["dist"] as Distribution
 		var fill_prob: float = float(probs["fill_prob"])
 		if randf() > fill_prob:
-			return
+			# Continue to next socket instead of stopping processing for this frame
+			continue
+
+		# Determine the attachment socket name based on the expansion socket
+		var attachment_socket_name: String = Helper.get_attachment_socket_name(socket_name)
 
 		var placed_ok := false
 		for attempt in range(4):
 			var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
 			var chosen: TerrainModuleInstance = chosen_template.spawn()
 			chosen.create()
-			var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(chosen, "main")
+			var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(chosen, attachment_socket_name)
 			var placed := add_piece(new_piece_socket, piece_socket)
 			if placed:
 				num_added += 1
@@ -87,10 +95,11 @@ func load_terrain() -> void:
 				chosen.destroy()
 		if placed_ok:
 			continue
-		return
+		# Continue to next socket instead of stopping processing for this frame
+		continue
 
 
-func _compute_socket_probs(
+func compute_socket_probs(
 	piece: TerrainModuleInstance,
 	socket_name: String,
 	adjacent: Dictionary[String, TerrainModuleSocket],
@@ -102,50 +111,61 @@ func _compute_socket_probs(
 	# - dist: Distribution
 	# - factor: float (tag-dist inflation factor)
 	# - fill_prob: float (base fill prob * factor, clamped 0..1)
-	var required_tags: TagList = library.get_required_tags(adjacent)
-	required_tags.append(size) # only find pieces with the given size
-	var filtered: TerrainModuleList = library.get_by_tags(required_tags)
-	if filtered.is_empty():
-		print("CRITICAL: No modules for tags %s (size %s, adj %s)" % [required_tags.tags, size, adjacent.keys()])
-		return {
-			"filtered": filtered,
-			"dist": Distribution.new(),
-			"factor": 0.0,
-			"fill_prob": 0.0,
-		}
+	
+	# Try different rotations of adjacency until we find one that works
+	var current_adjacent = adjacent.duplicate()
+	for rotation_attempt in range(4):  # Try up to 4 rotations
+		var required_tags: TagList = library.get_required_tags(current_adjacent)
+		required_tags.append(size) # only find pieces with the given size
+		var filtered: TerrainModuleList = library.get_by_tags(required_tags)
+		
+		if !filtered.is_empty():
+			# Found valid results with this adjacency
+			var dist_raw: Distribution = library.get_combined_distribution(current_adjacent)
+			var dist: Distribution = dist_raw.copy()
+			var fill_prob_base: float = float(piece.def.socket_fill_prob.get(socket_name, 0.0))
+			var factor: float = 1.0
+			if proximity_rules != null:
+				var res: Dictionary = proximity_rules.augment_distribution_with_factor(
+					dist,
+					origin_world,
+					terrain_index,
+					fill_prob_base
+				)
+				dist = res["dist"] as Distribution
+				factor = float(res["factor"])
 
-	var dist_raw: Distribution = library.get_combined_distribution(adjacent)
-	var dist: Distribution = dist_raw.copy()
-	var fill_prob_base: float = float(piece.def.socket_fill_prob.get(socket_name, 0.0))
-	var factor: float = 1.0
-	if proximity_rules != null:
-		var res: Dictionary = proximity_rules.augment_distribution_with_factor(
-			dist,
-			origin_world,
-			terrain_index,
-			fill_prob_base
-		)
-		dist = res["dist"] as Distribution
-		factor = float(res["factor"])
+			var fill_prob: float = clampf(fill_prob_base * factor, 0.0, 1.0)
 
-	var fill_prob: float = clampf(fill_prob_base * factor, 0.0, 1.0)
-
+			return {
+				"filtered": filtered,
+				"dist": dist,
+				"factor": factor,
+				"fill_prob": fill_prob,
+			}
+		
+		# Rotate adjacency for next attempt
+		current_adjacent = Helper.rotate_adjacency(current_adjacent)
+	
+	# No valid adjacency found after all rotations
+	print("CRITICAL: No modules for any rotation of adjacency (size %s, original adj %s)" % [size, adjacent.keys()])
 	return {
-		"filtered": filtered,
-		"dist": dist,
-		"factor": factor,
-		"fill_prob": fill_prob,
+		"filtered": TerrainModuleList.new(),
+		"dist": Distribution.new(),
+		"factor": 0.0,
+		"fill_prob": 0.0,
 	}
 
 func get_dist_from_player(socket: Marker3D) -> float:
 	return (socket.global_position - player.global_position).length()
 
 
+
+
+
+
 func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 	for socket_name: String in piece.sockets.keys():
-		# "main" is the attachment socket; do not expand from it (it points back inward).
-		if socket_name == "main":
-			continue
 		if float(piece.def.socket_fill_prob.get(socket_name, 0.0)) <= 0.0:
 			continue
 		var socket: Marker3D = piece.sockets[socket_name]
@@ -161,7 +181,7 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 func register_piece_and_socket(piece_socket: TerrainModuleSocket) -> void:
 	var piece: TerrainModuleInstance = piece_socket.piece
 	for socket_name: String in piece.sockets.keys():
-		# Only index sockets with non-zero fill probability, skip the one used for attachment
+		# Only index sockets with non-zero fill probability, skip the attachment socket
 		if (
 			socket_name != piece_socket.socket_name
 			and float(piece.def.socket_fill_prob.get(socket_name, 0.0)) > 0.0
@@ -226,50 +246,54 @@ func get_adjacent_from_size(
 	size: String
 ) -> Dictionary[String, TerrainModuleSocket]:
 	if size == "point":
-		return {"main": orig_piece_socket}
+		return {"bottom": orig_piece_socket}
 
 	var orig_piece: TerrainModuleInstance = orig_piece_socket.piece
 	var orig_sock: Marker3D = orig_piece_socket.socket
 	assert(orig_piece.root != null)
 	assert(orig_sock != null)
 
-	var all_pieces_of_size: TerrainModuleList = library.get_by_tags(TagList.new([size]))
-	var test_piece_template: TerrainModule = library.get_random(all_pieces_of_size, true)
+	# Get test piece for this size
+	var test_pieces: TerrainModuleList = test_pieces_library.get_by_tags(TagList.new([size]))
+	if test_pieces.is_empty():
+		push_error("No test piece found for size: " + size)
+		return {}
+
+	var test_piece_template: TerrainModule = test_pieces_library.get_random(test_pieces, true)
 	var test_piece: TerrainModuleInstance = test_piece_template.spawn()
 	assert(test_piece != null)
 	test_piece.create()
 
-	var test_main: Marker3D = test_piece.sockets.get("main", null)
-	assert(test_main != null)
+	# Determine which socket on the test piece should attach
+	var attachment_socket_name: String = Helper.get_attachment_socket_name(orig_piece_socket.socket_name)
+	var attachment_socket: Marker3D = test_piece.sockets.get(attachment_socket_name, null)
+	if attachment_socket == null:
+		push_error("Test piece does not have attachment socket: " + attachment_socket_name)
+		test_piece.destroy()
+		return {}
 
-	# Align test piece so its "main" socket lands on the given orig socket
-	var orig_main_world := orig_piece.transform * Helper.to_root_tf(orig_sock, orig_piece.root)
-	var test_main_local := Helper.to_root_tf(test_main, test_piece.root)
-	var aligned_tf := orig_main_world * test_main_local.affine_inverse()
-	aligned_tf = Helper.snap_transform_origin(aligned_tf)
+	# Position the test piece so the attachment socket aligns with the expansion socket
+	var orig_socket_pos: Vector3 = orig_piece_socket.get_socket_position()
+	var attachment_local: Transform3D = Helper.to_root_tf(attachment_socket, test_piece.root)
+	test_piece.set_position(orig_socket_pos - attachment_local.origin)
 
-	var out: Dictionary[String, TerrainModuleSocket] = {"main": orig_piece_socket}
+	# Get initial adjacency
+	var adjacency: Dictionary[String, TerrainModuleSocket] = {attachment_socket_name: orig_piece_socket}
 
 	for socket_name: String in test_piece.sockets.keys():
-		# Only consider test sockets with non-zero fill probability
-		if socket_name == "main":
+		if socket_name == attachment_socket_name:
 			continue
 		if float(test_piece.def.socket_fill_prob.get(socket_name, 0.0)) <= 0.0:
 			continue
-		if !test_piece.def.socket_size.has(socket_name):
-			continue
 
 		var s: Marker3D = test_piece.sockets[socket_name]
-		var pos := Helper.socket_world_pos(aligned_tf, s, test_piece.root)
-
-		# We only care about existing world sockets, never sockets on the test_piece.
-		# Now test_piece isn't indexed, but using query_other makes this future-proof.
+		var pos := Helper.socket_world_pos(test_piece.transform, s, test_piece.root)
 		var hit := socket_index.query_other(pos, test_piece)
 		if hit != null:
-			out[socket_name] = hit
+			adjacency[socket_name] = hit
 
 	test_piece.destroy()
-	return out
+	return adjacency
 
 
 func transform_to_socket(new_ps: TerrainModuleSocket, orig_ps: TerrainModuleSocket) -> void:
@@ -329,7 +353,33 @@ func add_piece(
 
 	register_piece_and_socket(new_piece_socket)
 	add_piece_to_queue(new_piece)
+
+	# Remove sockets that are now linked into from the queue
+	remove_linked_sockets_from_queue(new_piece_socket)
+
 	return true
+
+
+func remove_linked_sockets_from_queue(new_piece_socket: TerrainModuleSocket) -> void:
+	# Remove sockets that were linked into by the new piece from the queue
+	# These are the sockets that the new piece connected to
+
+	var new_piece: TerrainModuleInstance = new_piece_socket.piece
+	var linked_sockets: Array[TerrainModuleSocket] = []
+
+	# Find all sockets on other pieces that are at the same positions as our new piece's sockets
+	for socket_name in new_piece.sockets.keys():
+		var socket: Marker3D = new_piece.sockets[socket_name]
+		var socket_pos := Helper.socket_world_pos(new_piece.transform, socket, new_piece.root)
+
+		# Find any existing socket at this position (not belonging to our new piece)
+		var existing_socket := socket_index.query_other(socket_pos, new_piece)
+		if existing_socket != null:
+			linked_sockets.append(existing_socket)
+
+	# Remove these linked sockets from the queue
+	for linked_socket in linked_sockets:
+		queue.remove_where(func(item): return item is TerrainModuleSocket and item.piece == linked_socket.piece and item.socket_name == linked_socket.socket_name)
 
 
 func load_start_tile() -> TerrainModuleInstance:
@@ -338,4 +388,9 @@ func load_start_tile() -> TerrainModuleInstance:
 	initial_tile.set_transform(Transform3D.IDENTITY)
 	var root := initial_tile.create()
 	terrain_parent.add_child(root)
+
+	# For the start tile, we need to register it with the "front" socket as the attachment point
+	var dummy_socket: TerrainModuleSocket = TerrainModuleSocket.new(initial_tile, "front")
+	register_piece_and_socket(dummy_socket)
+
 	return initial_tile

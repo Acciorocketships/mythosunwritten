@@ -250,3 +250,56 @@ static func apply_direction_mapping(first: Dictionary, second: Dictionary) -> Di
 	for key: String in first.keys():
 		result[key] = second.get(first[key], first[key])
 	return result
+
+
+## Terrain generation utilities
+
+static func get_attachment_socket_name(expansion_socket_name: String) -> String:
+	# Determine which socket on the new piece should attach based on the expansion socket
+	if "top" in expansion_socket_name:
+		return "bottom"
+
+	# Map cardinal directions to their opposites
+	match expansion_socket_name:
+		"front":
+			return "back"
+		"back":
+			return "front"
+		"left":
+			return "right"
+		"right":
+			return "left"
+		"bottom":
+			return "topcenter"
+		_:
+			print("[Helper.get_attachment_socket_name] Unknown expansion socket name: ", expansion_socket_name)
+			return "bottom"
+
+
+static func rotate_adjacency(adjacency: Dictionary) -> Dictionary:
+	# Rotate adjacency by renaming socket keys according to the rotation rule
+	# Process longer substrings first as requested
+	var rotation_map = {
+		"frontright": "backright",
+		"backright": "backleft",
+		"backleft": "frontleft",
+		"frontleft": "frontright",
+		"front": "right",
+		"right": "back",
+		"back": "left",
+		"left": "front"
+	}
+
+	var rotated: Dictionary[String, TerrainModuleSocket] = {}
+
+	for socket_name in adjacency.keys():
+		var rotated_name = socket_name
+		# Apply rotations, checking longer matches first
+		for original in rotation_map.keys():
+			if original in rotated_name:
+				rotated_name = rotated_name.replace(original, rotation_map[original])
+				break  # Only apply first match
+
+		rotated[rotated_name] = adjacency[socket_name]
+
+	return rotated

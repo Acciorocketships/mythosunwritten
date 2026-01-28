@@ -8,4 +8,4 @@
 
 [node name="Sockets" type="Node3D" parent="."]
 
-[node name="main" type="Marker3D" parent="Sockets"]
+[node name="bottom" type="Marker3D" parent="Sockets"]

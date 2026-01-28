@@ -1,5 +1,5 @@
 class_name TerrainModuleLibrary
-extends Resource
+extends Node
 
 
 var terrain_modules: TerrainModuleList = TerrainModuleList.new()
@@ -8,6 +8,11 @@ var modules_by_tag: Dictionary[String, TerrainModuleList] = {}
 
 func init() -> void:
 	load_terrain_modules()
+	sort_terrain_modules()
+
+
+func init_test_pieces() -> void:
+	load_test_pieces()
 	sort_terrain_modules()
 
 
@@ -21,6 +26,14 @@ func load_terrain_modules() -> void:
 	terrain_modules.append(TerrainModuleDefinitions.load_12x12x2_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_level_side_tile())
 
+
+func load_test_pieces() -> void:
+	terrain_modules.append(TerrainModuleDefinitions.create_8x8x2_test_piece())
+	terrain_modules.append(TerrainModuleDefinitions.create_12x12x2_test_piece())
+	terrain_modules.append(TerrainModuleDefinitions.create_24x24x0_5_test_piece())
+
+
+## Class Functions ##
 
 func sort_terrain_modules() -> void:
 	modules_by_tag.clear()
@@ -130,6 +143,7 @@ func sample_from_modules(modules: TerrainModuleList, dist: Distribution) -> Terr
 func get_by_tags(tags: TagList) -> TerrainModuleList:
 	if tags.is_empty():
 		return terrain_modules.copy()
+
 	var sets: Array[TerrainModuleList] = []
 	for tag in tags:
 		if not modules_by_tag.has(tag):

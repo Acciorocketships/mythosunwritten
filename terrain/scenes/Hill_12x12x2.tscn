@@ -11,7 +11,7 @@
 [node name="topcenter" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
-[node name="main" type="Marker3D" parent="Sockets"]
+[node name="bottom" type="Marker3D" parent="Sockets"]
 
 [node name="topfrontright" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2, 2)
