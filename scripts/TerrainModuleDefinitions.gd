@@ -15,11 +15,11 @@ static func load_ground_tile() -> TerrainModule:
 	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8": 0.1})
 	var top_fill_prob_cardinal: float = 0.05
 	var top_size_dist_center: Distribution = Distribution.new({"24x24": 1.0})
-	var top_fill_prob_center: float = 0.05
+	var top_fill_prob_center: float = 0.05  # Default level tile generation
 	var adjacent_tag_prob: Distribution = Distribution.new({"ground": 1.0})
 	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
 	var top_tag_prob_cardinal: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
-	var top_tag_prob_center: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "level": 0.1})
+	var top_tag_prob_center: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "level-center": 0.1})
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24": 1.0}),
@@ -206,14 +206,15 @@ static func load_12x12x2_tile() -> TerrainModule:
 static func load_level_side_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/LevelSide.tscn")
 	var tags: TagList = TagList.new(["level", "24x24"])
+	# Tags provided by each socket to the index (geometric capabilities this piece provides)
 	var tags_per_socket: Dictionary[String, TagList] = {}
-	# Override computed AABB to have height 0.5
-	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.5, 24.0))
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
-	var socket_size: Dictionary[String, Distribution] = {"left": Distribution.new({"24x24": 1.0})}
-	var socket_required: Dictionary[String, TagList] = {"left": TagList.new(["level"])}
-	var socket_fill_prob: Dictionary[String, float] = {"left": 0.5, "front": 0.0}
-	var socket_tag_prob: Dictionary[String, Distribution] = {"left": null}
+	var socket_size: Dictionary[String, Distribution] = {}
+	# What geometric capabilities adjacent pieces must have to connect to each socket
+	var socket_required: Dictionary[String, TagList] = {}
+	var socket_fill_prob: Dictionary[String, float] = {}
+	var socket_tag_prob: Dictionary[String, Distribution] = {}
 
 	return TerrainModule.new(
 		scene,
@@ -225,7 +226,75 @@ static func load_level_side_tile() -> TerrainModule:
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob,
-		true  # replace_existing = true for level side tiles
+		false
+		)
+
+static func load_level_corner_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/LevelCorner.tscn")
+	var tags: TagList = TagList.new(["level", "24x24"])
+	# Tags provided by each socket to the index (geometric capabilities this piece provides)
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+
+	var socket_size: Dictionary[String, Distribution] = {}
+	# What geometric capabilities adjacent pieces must have to connect to each socket
+	var socket_required: Dictionary[String, TagList] = {}
+	var socket_fill_prob: Dictionary[String, float] = {}
+	var socket_tag_prob: Dictionary[String, Distribution] = {}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		false
+		)
+
+static func load_level_middle_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/GroundTile.tscn")  # Same scene as ground
+	var tags: TagList = TagList.new(["level", "level-center", "24x24"])
+	# Tags provided by each socket to the index (geometric capabilities this piece provides)
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"front": Distribution.new({"24x24": 1.0}),
+		"back": Distribution.new({"24x24": 1.0}),
+		"left": Distribution.new({"24x24": 1.0}),
+		"right": Distribution.new({"24x24": 1.0})
+	}
+	var socket_required: Dictionary[String, TagList] = {
+		"front": TagList.new(["level-center"]),   # front socket requires level pieces
+		"back": TagList.new(["level-center"]),    # back socket requires level pieces
+		"left": TagList.new(["level-center"]),    # left socket requires level pieces
+		"right": TagList.new(["level-center"]),   # right socket requires level pieces
+		"bottom": TagList.new(["ground"])  # bottom socket requires ground for attachment
+	}
+	var socket_fill_prob: Dictionary[String, float] = {
+		"front": 0.5,
+		"back": 0.5,
+		"left": 0.5,
+		"right": 0.5,
+		"topcenter": 0.0  # Don't spawn level tiles on top
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {"front": null, "back": null, "left": null, "right": null}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		false
 		)
 
 
@@ -319,11 +388,11 @@ static func create_24x24_test_piece() -> TerrainModule:
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, float] = {
-		"front": 0.0,  # Test pieces don't expand
-		"back": 0.0,
-		"left": 0.0,
-		"right": 0.0,
-		"topcenter": 0.0,
+		"front": 1.0,  # Test pieces need fill_prob > 0 for adjacency detection
+		"back": 1.0,
+		"left": 1.0,
+		"right": 1.0,
+		"topcenter": 0.0,  # Only level tiles expand from these
 		"topfront": 0.0,
 		"topback": 0.0,
 		"topleft": 0.0,

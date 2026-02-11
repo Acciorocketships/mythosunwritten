@@ -1,0 +1,64 @@
+[gd_scene load_steps=3 format=3 uid="uid://bgei6p0q5tgxm"]
+
+[ext_resource type="PackedScene" uid="uid://d26h5651ssk36" path="res://terrain/gltf/hill_top_b_side_color_12.tscn" id="1_ycl1u"]
+[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill_top_e_center_color_12.tscn" id="2_clpxw"]
+
+[node name="LevelSide" type="Node3D"]
+
+[node name="Hill_Top_B_Side_Color12" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -10.5)
+
+[node name="Hill_Top_B_Side_Color13" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, -10.5)
+
+[node name="Hill_Top_B_Side_Color14" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -10.5)
+
+[node name="Hill_Top_B_Side_Color15" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, -10.5)
+
+[node name="Hill_Top_B_Side_Color16" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, -10.5)
+
+[node name="Hill_Top_B_Side_Color17" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, -10.5)
+
+[node name="Hill_Top_B_Side_Color18" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -10.5)
+
+[node name="Hill_Top_B_Side_Color19" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -10.5)
+
+[node name="Hill_Top_E_Center_Color12" parent="." instance=ExtResource("2_clpxw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.875, 0, 0, 1.5)
+
+[node name="Sockets" type="Node3D" parent="."]
+
+[node name="front" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12)
+
+[node name="bottom" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="back" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
+
+[node name="right" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 0)
+
+[node name="left" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 0)
+
+[node name="topfrontright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -6)
+
+[node name="topfrontleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -6)
+
+[node name="topbackright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 6)
+
+[node name="topbackleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 6)
+
+[node name="topcenter" type="Marker3D" parent="Sockets"]

@@ -303,3 +303,26 @@ static func rotate_adjacency(adjacency: Dictionary) -> Dictionary:
 		rotated[rotated_name] = adjacency[socket_name]
 
 	return rotated
+
+
+static func rotate_socket_name(socket_name: String) -> String:
+	# Rotate a single socket name according to the rotation rule
+	var rotation_map = {
+		"frontright": "backright",
+		"backright": "backleft",
+		"backleft": "frontleft",
+		"frontleft": "frontright",
+		"front": "right",
+		"right": "back",
+		"back": "left",
+		"left": "front"
+	}
+
+	var rotated_name = socket_name
+	# Apply rotations, checking longer matches first
+	for original in rotation_map.keys():
+		if original in rotated_name:
+			rotated_name = rotated_name.replace(original, rotation_map[original])
+			break  # Only apply first match
+
+	return rotated_name

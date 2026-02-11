@@ -25,6 +25,8 @@ func load_terrain_modules() -> void:
 	terrain_modules.append(TerrainModuleDefinitions.load_8x8x2_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_12x12x2_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_level_side_tile())
+	terrain_modules.append(TerrainModuleDefinitions.load_level_corner_tile())
+	terrain_modules.append(TerrainModuleDefinitions.load_level_middle_tile())
 
 
 func load_test_pieces() -> void:
@@ -50,12 +52,13 @@ func sort_terrain_modules() -> void:
 				modules_by_tag[tag_combined].library.append(module)
 
 
-func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket]) -> TagList:
+func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket], attachment_socket_name: String = "") -> TagList:
 	var out: TagList = TagList.new()
 	for socket_name: String in adjacent.keys():
 		var piece_socket: TerrainModuleSocket = adjacent[socket_name]
 		var adjacent_piece: TerrainModuleInstance = piece_socket.piece
 		var adjacent_socket_name: String = piece_socket.socket_name
+
 		# Safe lookup: some modules may not define tag requirements for every possible socket name.
 		var has_key: bool = adjacent_piece.def.socket_required.has(adjacent_socket_name)
 		if not has_key:
@@ -64,7 +67,8 @@ func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket]) -> Tag
 			adjacent_socket_name,
 			TagList.new()
 		)
-		var tag_list = convert_tag_list(adjacent_required_tags, socket_name)
+		var convert_attachment_name = Helper.get_attachment_socket_name(socket_name)
+		var tag_list = convert_tag_list(adjacent_required_tags, convert_attachment_name)
 		out = out.union(tag_list)
 	return out
 
@@ -198,10 +202,14 @@ func intersection(sets: Array[TerrainModuleList]) -> TerrainModuleList:
 func convert_tag_list(tag_list: TagList, socket_name: String) -> TagList:
 	for i: int in range(tag_list.size()):
 		var tag: String = tag_list.tags[i]
-		if tag[0] == "!":
-			tag_list.tags[i] = combined_tag_socket_name(tag.substr(1), socket_name)
+		tag_list.tags[i] = combined_tag_socket_name(tag, socket_name)
 	return tag_list
 
 
 func combined_tag_socket_name(tag: String, socket_name: String) -> String:
-	return "[%s]%s" % [socket_name, tag]
+	var processed_tag = tag
+	if tag[0] == "!":
+		processed_tag = tag.substr(1)
+		return "[%s]%s" % [socket_name, processed_tag]
+	else:
+		return tag

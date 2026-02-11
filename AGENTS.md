@@ -140,3 +140,9 @@
   - `insert(ps)`, `query(pos)`, `query_other(pos, piece)`.
 - `TerrainGenerator`
  - `_ready()`, `load_terrain()`, `get_adjacent_from_size(socket, size)`, `transform_to_socket(new_ps, orig_ps)`, `add_piece(new_ps, orig_ps)`, `can_place(piece)`.
+
+## Code Design Principles
+
+- **Avoid tag/socket specific logic**: Never add conditional logic in `TerrainGenerator` based on specific tags, socket names, or piece types. All logic should be generalizable.
+- **No fallbacks**: Avoid coding "fallback" behaviors. The system should work correctly without special case handling.
+- **Clean and succinct**: Design the architecture to minimize special handling and edge cases. Keep code clean and maintainable.

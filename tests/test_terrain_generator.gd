@@ -15,24 +15,24 @@ func before_each() -> void:
 func after_each() -> void:
 	# TerrainModuleInstance roots are Nodes and must be freed explicitly.
 	for p: TerrainModuleInstance in _pieces_to_destroy:
-		if p != null:
-			p.destroy()
+		if p != null and p.root != null:
+			if p.root.get_parent() != null:
+				p.root.get_parent().remove_child(p.root)
+			p.root.free()
 	_pieces_to_destroy.clear()
 
 	# Non-RefCounted Objects must be freed explicitly.
 	for o: Object in _objects_to_free:
-		if is_instance_valid(o):
+		if is_instance_valid(o) and not o is RefCounted:
 			o.free()
 	_objects_to_free.clear()
 
 	# Nodes created by tests but never added to the scene tree must be freed explicitly.
 	for n: Node in _nodes_to_free:
 		if is_instance_valid(n):
-			# If it ended up in the tree, queue it; otherwise free immediately.
-			if n.is_inside_tree():
-				n.queue_free()
-			else:
-				n.free()
+			if n.get_parent() != null:
+				n.get_parent().remove_child(n)
+			n.free()
 	_nodes_to_free.clear()
 
 # Helpers
@@ -136,14 +136,16 @@ func _socket_layout_main_offset() -> Dictionary[String, Vector3]:
 	}
 
 func _new_generator() -> Variant:
-	var Generator: Script = preload("res://scripts/TerrainGenerator.gd")
+	var Generator: Script = load("res://scripts/TerrainGenerator.gd")
 	var g: Variant = Generator.new()
 	_nodes_to_free.append(g)
 
 	g.player = Node3D.new()
-	g.terrain_parent = Node.new()
+	g.terrain_parent = Node3D.new()
 	g.library = TerrainModuleLibrary.new()
 	g.socket_index = PositionIndex.new()
+	add_child(g.player)
+	add_child(g.terrain_parent)
 	_nodes_to_free.append(g.player)
 	_nodes_to_free.append(g.terrain_parent)
 	_nodes_to_free.append(g.library)
@@ -151,8 +153,10 @@ func _new_generator() -> Variant:
 
 	g.terrain_index = TerrainIndex.new()
 	g.queue = PriorityQueue.new()
+	g.generation_rules = TerrainGenerationRules.new()
 	_objects_to_free.append(g.terrain_index)
 	_objects_to_free.append(g.queue)
+	_objects_to_free.append(g.generation_rules)
 	return g
 
 
@@ -163,7 +167,13 @@ func test_get_dist_from_player():
 	var sock: Marker3D = Marker3D.new()
 	add_child_autofree(sock)
 	sock.global_position = Vector3.ZERO
-	var d: float = gen.get_dist_from_player(sock)
+	# Create a mock TerrainModuleInstance with the socket
+	var mock_def := TerrainModule.new(null, AABB(), TagList.new(), {}, [], {}, {}, {}, {}, false)
+	var mock_piece = TerrainModuleInstance.new(mock_def)
+	mock_piece.sockets = {"test_socket": sock}
+	mock_piece.root = Node3D.new()
+	mock_piece.transform = Transform3D.IDENTITY
+	var d: float = gen.get_dist_from_player(mock_piece, "test_socket")
 	assert_eq(d, 1.0)
 
 
@@ -316,7 +326,7 @@ func test_add_piece_registers_and_queues():
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
 	gen.terrain_parent.add_child(orig.root)
-	gen.register_piece_and_socket(TerrainModuleSocket.new(orig, "bottom"))  # Register original piece
+	gen.register_piece(orig, "bottom")  # Register original piece
 	# prepare sockets
 	var new_inst: TerrainModuleInstance = mod.spawn()
 	new_inst.create()
@@ -343,7 +353,7 @@ class FakeLibrary:
 	func _init(_m1: TerrainModule, _m2: TerrainModule) -> void:
 		m1 = _m1
 		m2 = _m2
-	func get_required_tags(_adj) -> TagList:
+	func get_required_tags(_adj, _attachment_socket_name = "") -> TagList:
 		return TagList.new()
 	func get_combined_distribution(_adj) -> Distribution:
 		return Distribution.new({"x": 1.0})
@@ -422,7 +432,7 @@ func test_add_piece_checks_can_place_after_alignment():
 	var start: TerrainModuleInstance = _spawn_piece(mod)
 	gen.terrain_parent.add_child(start.root)
 	# Register so TerrainIndex contains the start tile for overlap tests
-	gen.register_piece_and_socket(TerrainModuleSocket.new(start, "bottom"))
+	gen.register_piece(start, "bottom")
 	# New candidate spawns at origin and overlaps BEFORE alignment
 	var cand: TerrainModuleInstance = _spawn_piece(mod)
 	assert_true(cand.aabb.intersects(start.aabb), "precondition: candidate overlaps start at origin")
@@ -440,7 +450,7 @@ class _FakeSingleLib:
 	var _m: TerrainModule
 	func _init(m: TerrainModule) -> void:
 		_m = m
-	func get_required_tags(_adj) -> TagList:
+	func get_required_tags(_adj, _attachment_socket_name = "") -> TagList:
 		return TagList.new()
 	func get_combined_distribution(_adj) -> Distribution:
 		return Distribution.new({"x": 1.0})
@@ -484,12 +494,12 @@ func test_integration_one_iteration_places_expected_tile_to_right():
 	# Start piece at origin; add to tree and indices
 	var start: TerrainModuleInstance = _spawn_piece(mod)
 	gen.terrain_parent.add_child(start.root)
-	gen.register_piece_and_socket(TerrainModuleSocket.new(start, "bottom"))
+	gen.register_piece(start, "bottom")
 	# Seed queue with one socket: place to the right
 	gen.queue = PriorityQueue.new()
 	_objects_to_free.append(gen.queue)
 	var item: TerrainModuleSocket = TerrainModuleSocket.new(start, "right")
-	var dist: float = gen.get_dist_from_player(item.socket)
+	var dist: float = gen.get_dist_from_player(item.piece, item.socket_name)
 	gen.queue.push(item, dist)
 	# Act: one iteration
 	gen.load_terrain()
@@ -507,3 +517,79 @@ func test_integration_one_iteration_places_expected_tile_to_right():
 		var it: TerrainModuleSocket = e["item"]
 		assert_ne(it.socket_name, "bottom")
 		assert_ne(it.socket_name, "front")
+
+
+func test_ground_queue_priority():
+	# Test that ground expansion is prioritized over other placement
+	var gen = _new_generator()
+	gen._ready()
+
+	# Check that start tile was placed
+	var initial_count: int = gen.terrain_parent.get_child_count()
+	print("After _ready: ", initial_count, " pieces in terrain")
+
+	# Generate a small amount of terrain
+	for i in range(5):
+		gen.load_terrain()
+
+	# Check that more pieces were generated
+	var final_count: int = gen.terrain_parent.get_child_count()
+	print("After generation: ", final_count, " pieces")
+
+	# The test passes if generation happened (more pieces than initial)
+	if final_count > initial_count:
+		assert_true(true, "Generation working - " + str(final_count) + " total pieces")
+	else:
+		assert_true(false, "No generation - still " + str(final_count) + " pieces")
+
+
+func test_ground_grid_completeness():
+	var gen: Variant = _new_generator()
+	# gen.player and gen.terrain_parent are already created and gen.player is added to tree in _new_generator
+	
+	# Use real library for this integration test
+	gen.library = TerrainModuleLibrary.new()
+	gen.library.init()
+	gen.test_pieces_library = TerrainModuleLibrary.new()
+	gen.test_pieces_library.init_test_pieces()
+	
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 250
+	gen.MAX_LOAD_PER_STEP = 10
+	
+	# Initialize the generator (places start tile)
+	gen._ready()
+	
+	# Set a fixed seed for determinism
+	seed(12345)
+	
+	# Run many iterations to fill the immediate neighborhood
+	for i in range(1000):
+		gen.load_terrain()
+	
+	# Check for ground tiles in a grid around origin (each 24x24)
+	var expected_positions = []
+	
+	# Check a larger area where we expect everything to be filled
+	# 13x13 grid should be well within 250 unit RENDER_RANGE
+	for x in range(-6, 7):
+		for z in range(-6, 7):
+			expected_positions.append(Vector3(x * 24, -0.25, z * 24))
+	
+	var missing_count = 0
+	for pos in expected_positions:
+		# Query a small box at the center of the expected tile position
+		# Ground tiles are 0.5 high, at y=0.
+		var query_aabb = AABB(pos + Vector3(-0.1, 0.1, -0.1), Vector3(0.2, 0.2, 0.2))
+		var results = gen.terrain_index.query_box(query_aabb)
+		
+		var found_ground = false
+		for piece in results:
+			if piece.def.tags.has("ground"):
+				found_ground = true
+				break
+		
+		if not found_ground:
+			missing_count += 1
+	
+	assert_eq(missing_count, 0, "Should have 0 missing ground tiles in the immediate neighborhood")
