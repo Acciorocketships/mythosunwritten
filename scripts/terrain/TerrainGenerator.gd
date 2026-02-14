@@ -5,7 +5,7 @@ extends Node3D
 
 @export var player: Node3D
 @export var terrain_parent: Node
-@export var generation_rules: TerrainGenerationRules
+@export var generation_rules: TerrainGenerationRuleLibrary
 
 var library: TerrainModuleLibrary
 var test_pieces_library: TerrainModuleLibrary
@@ -24,7 +24,7 @@ func _ready() -> void:
 	socket_index = PositionIndex.new()
 	terrain_index = TerrainIndex.new()
 	if generation_rules == null:
-		generation_rules = TerrainGenerationRules.new()
+		generation_rules = TerrainGenerationRuleLibrary.new()
 
 	var start_tile := load_start_tile()
 	queue = PriorityQueue.new()
@@ -167,6 +167,7 @@ func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool
 			"socket_name": socket_name,
 			"adjacent": adjacent,
 			"chosen_piece": chosen,
+			"filtered": filtered,
 			"origin_world": origin_world,
 			"terrain_index": terrain_index,
 			"socket_index": socket_index,
@@ -220,13 +221,18 @@ func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool
 				final_piece.destroy()
 			break  # Successfully "handled" this attempt
 
-		# Remove any pieces that rules requested to be removed
+		# Remove any pieces that rules requested to be removed (only instances; rules must not pass sockets)
 		for piece_to_remove in rule_result["pieces_to_remove"]:
-			remove_piece(piece_to_remove)
+			if piece_to_remove is TerrainModuleInstance:
+				remove_piece(piece_to_remove)
 
 		# Re-queue specific sockets that rules requested
 		for socket_to_queue in rule_result["sockets_for_queue"]:
 			queue.push(socket_to_queue, 0)  # Priority will be recalculated when processed
+
+		# Only place if we have a valid piece instance (rules may return updated_piece: null)
+		if final_piece == null or not (final_piece is TerrainModuleInstance):
+			continue
 
 		var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(final_piece, attachment_socket_name)
 		var placed := add_piece(new_piece_socket, piece_socket)

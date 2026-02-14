@@ -29,8 +29,32 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -10.5)
 [node name="Hill_Top_B_Side_Color19" parent="." instance=ExtResource("1_ycl1u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -10.5)
 
+[node name="Hill_Top_B_Side_Color20" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.5, 0, 10.5)
+
+[node name="Hill_Top_B_Side_Color21" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 4.5, 0, 10.5)
+
+[node name="Hill_Top_B_Side_Color22" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.5, 0, 10.5)
+
+[node name="Hill_Top_B_Side_Color23" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -4.5, 0, 10.5)
+
+[node name="Hill_Top_B_Side_Color24" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.5, 0, 10.5)
+
+[node name="Hill_Top_B_Side_Color25" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -7.5, 0, 10.5)
+
+[node name="Hill_Top_B_Side_Color26" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 10.5, 0, 10.5)
+
+[node name="Hill_Top_B_Side_Color27" parent="." instance=ExtResource("1_ycl1u")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, 0, 10.5)
+
 [node name="Hill_Top_E_Center_Color12" parent="." instance=ExtResource("2_clpxw")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.875, 0, 0, 1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.75, 0, 0, 0)
 
 [node name="Sockets" type="Node3D" parent="."]
 

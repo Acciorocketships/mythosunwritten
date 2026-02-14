@@ -1,9 +1,9 @@
 [gd_scene load_steps=6 format=3 uid="uid://ceognrw5418ks"]
 
-[ext_resource type="Script" uid="uid://d2efwmq2n46lg" path="res://scripts/camera.gd" id="1_4wyf3"]
+[ext_resource type="Script" uid="uid://d2efwmq2n46lg" path="res://scripts/camera/camera.gd" id="1_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://1isaxxqlfqe8" path="res://characters/character.tscn" id="1_nnsk1"]
 [ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://characters/controllers/player_controller.gd" id="2_rwgxs"]
-[ext_resource type="Script" uid="uid://bon583mupvfcs" path="res://scripts/TerrainGenerator.gd" id="4_71j4m"]
+[ext_resource type="Script" uid="uid://bon583mupvfcs" path="res://scripts/terrain/TerrainGenerator.gd" id="4_71j4m"]
 
 [sub_resource type="Resource" id="Resource_rwgxs"]
 script = ExtResource("2_rwgxs")

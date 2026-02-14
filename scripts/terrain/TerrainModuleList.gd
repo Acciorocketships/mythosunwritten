@@ -15,7 +15,12 @@ func copy() -> TerrainModuleList:
 	
 func size() -> int:
 	return library.size()
-	
+
+func get_at_index(i: int) -> TerrainModule:
+	if i < 0 or i >= library.size():
+		return null
+	return library[i]
+
 func append(element: TerrainModule) -> void:
 	library.append(element)
 	

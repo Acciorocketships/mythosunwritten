@@ -136,7 +136,7 @@ func _socket_layout_main_offset() -> Dictionary[String, Vector3]:
 	}
 
 func _new_generator() -> Variant:
-	var Generator: Script = load("res://scripts/TerrainGenerator.gd")
+	var Generator: Script = load("res://scripts/terrain/TerrainGenerator.gd")
 	var g: Variant = Generator.new()
 	_nodes_to_free.append(g)
 
@@ -153,7 +153,7 @@ func _new_generator() -> Variant:
 
 	g.terrain_index = TerrainIndex.new()
 	g.queue = PriorityQueue.new()
-	g.generation_rules = TerrainGenerationRules.new()
+	g.generation_rules = TerrainGenerationRuleLibrary.new()
 	_objects_to_free.append(g.terrain_index)
 	_objects_to_free.append(g.queue)
 	_objects_to_free.append(g.generation_rules)
@@ -162,7 +162,7 @@ func _new_generator() -> Variant:
 
 func test_get_dist_from_player():
 	var gen: Variant = _new_generator()
-	add_child_autofree(gen.player)
+	# gen.player already in tree from _new_generator()
 	gen.player.global_position = Vector3(1, 0, 0)
 	var sock: Marker3D = Marker3D.new()
 	add_child_autofree(sock)
@@ -320,9 +320,7 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 
 func test_add_piece_registers_and_queues():
 	var gen: Variant = _new_generator()
-	# Ensure nodes using global_position are inside the scene tree
-	add_child_autofree(gen.player)
-	add_child_autofree(gen.terrain_parent)
+	# gen.player and gen.terrain_parent already in tree from _new_generator()
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
 	gen.terrain_parent.add_child(orig.root)
@@ -414,8 +412,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 func test_add_piece_checks_can_place_after_alignment():
 	# Ensures we evaluate placement using the aligned transform, not the origin AABB.
 	var gen: Variant = _new_generator()
-	add_child_autofree(gen.player)
-	add_child_autofree(gen.terrain_parent)
+	# gen.player and gen.terrain_parent already in tree from _new_generator()
 	# Simple square module with 2x2x2 AABB and default sockets
 	# Use sockets positioned at face centers one full size away so pieces don't overlap after
 	# alignment.
@@ -462,8 +459,7 @@ class _FakeSingleLib:
 func test_integration_one_iteration_places_expected_tile_to_right():
 	# Run one iteration of load_terrain with a controlled library and start tile.
 	var gen: Variant = _new_generator()
-	add_child_autofree(gen.player)
-	add_child_autofree(gen.terrain_parent)
+	# gen.player and gen.terrain_parent already in tree from _new_generator()
 	gen.player.global_position = Vector3.ZERO
 	gen.RENDER_RANGE = 10000
 	gen.MAX_LOAD_PER_STEP = 1

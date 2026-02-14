@@ -1,6 +1,6 @@
 [gd_scene load_steps=28 format=3 uid="uid://1isaxxqlfqe8"]
 
-[ext_resource type="Script" uid="uid://c7u14nqxnhn0n" path="res://scripts/character.gd" id="1_qqr4u"]
+[ext_resource type="Script" uid="uid://c7u14nqxnhn0n" path="res://characters/character.gd" id="1_qqr4u"]
 [ext_resource type="PackedScene" uid="uid://dawmb1kfgp2h2" path="res://characters/models/knight.tscn" id="2_3fwhk"]
 [ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://characters/controllers/player_controller.gd" id="2_mdkfl"]
 [ext_resource type="AnimationLibrary" uid="uid://bhob00wxk8lp7" path="res://characters/animations/CharacterAnimationLibrary.tres" id="3_3fwhk"]

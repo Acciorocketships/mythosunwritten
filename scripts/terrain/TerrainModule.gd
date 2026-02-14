@@ -13,9 +13,6 @@ extends Resource
 @export var socket_tag_prob: Dictionary[String, Distribution]
 @export var visual_variants: Array[PackedScene]
 
-# True if this module has collision nodes in its scene (or any visual variant).
-# Used by terrain placement to decide whether AABB overlap should block placement.
-@export var has_collisions: bool = true
 
 # If true, this module can replace existing terrain pieces when placed.
 # Instead of failing placement due to AABB collisions, it will remove overlapping pieces.
@@ -47,16 +44,6 @@ func _init(
 	visual_variants.append(_scene)
 	replace_existing = _replace_existing
 
-	# Compute collision presence automatically from scene content.
-	has_collisions = false
-	for s: PackedScene in visual_variants:
-		if s == null:
-			continue
-		if not s.can_instantiate():
-			continue
-		if Helper.scene_has_collision(s):
-			has_collisions = true
-			break
 
 	# Validate authored distributions (fail fast in debug/tests).
 	assert_distributions_normalized(socket_size, "socket_size")
