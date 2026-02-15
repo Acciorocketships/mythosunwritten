@@ -5,8 +5,8 @@ extends Node3D
 
 @export var player: Node3D
 @export var terrain_parent: Node
-@export var generation_rules: TerrainGenerationRuleLibrary
 
+var generation_rules: TerrainGenerationRuleLibrary
 var library: TerrainModuleLibrary
 var test_pieces_library: TerrainModuleLibrary
 var terrain_index: TerrainIndex
@@ -23,8 +23,7 @@ func _ready() -> void:
 
 	socket_index = PositionIndex.new()
 	terrain_index = TerrainIndex.new()
-	if generation_rules == null:
-		generation_rules = TerrainGenerationRuleLibrary.new()
+	generation_rules = TerrainGenerationRuleLibrary.new()
 
 	var start_tile := load_start_tile()
 	queue = PriorityQueue.new()
@@ -32,9 +31,9 @@ func _ready() -> void:
 	# Sockets are indexed so they can act as adjacency barriers.
 	register_piece(start_tile, "")
 	for socket_name in start_tile.sockets.keys():
-		if float(start_tile.def.socket_fill_prob.get(socket_name, 0.0)) <= 0.0:
-			continue
 		var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(start_tile, socket_name)
+		if not _is_socket_expandable(piece_socket):
+			continue
 		var dist := get_dist_from_player(piece_socket.piece, piece_socket.socket_name)
 		queue.push(piece_socket, dist)
 
@@ -53,24 +52,21 @@ func load_terrain() -> void:
 
 		num_processed += 1
 
-		if not _process_socket(piece_socket, distance):
-			continue
-		num_added += 1
+		var added: bool = _process_socket(piece_socket, distance)
+		if added:
+			num_added += 1
 
 
 func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
-	var piece: TerrainModuleInstance = piece_socket.piece
-	var socket_name: String = piece_socket.socket_name
 	if _is_socket_connected(piece_socket):
 		return false
 	if _defer_if_out_of_range(piece_socket, distance):
 		return false
-
-	var size: String = _sample_socket_size(piece, socket_name)
-	var placement_context: Dictionary = _resolve_placement_context(piece_socket, size)
-	var fill_prob: float = placement_context.get("fill_prob", 0.0)
-	if randf() > fill_prob:
+	if not _passes_fill_prob_roll(piece_socket):
 		return false
+
+	var size: String = _sample_socket_size(piece_socket.piece, piece_socket.socket_name)
+	var placement_context: Dictionary = _resolve_placement_context(piece_socket, size)
 	return _try_place_with_rules(piece_socket, placement_context)
 
 
@@ -105,23 +101,23 @@ func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) ->
 	return float(piece.def.socket_fill_prob.get(socket_name, 0.0))
 
 
+func _is_socket_expandable(piece_socket: TerrainModuleSocket) -> bool:
+	return _get_socket_fill_prob(piece_socket.piece, piece_socket.socket_name) > 0.0
+
+
+func _passes_fill_prob_roll(piece_socket: TerrainModuleSocket) -> bool:
+	var fill_prob: float = _get_socket_fill_prob(piece_socket.piece, piece_socket.socket_name)
+	return fill_prob > 0.0 and randf() <= fill_prob
+
+
 func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String) -> Dictionary:
 	var socket_name: String = piece_socket.socket_name
 	var adjacent: Dictionary[String, TerrainModuleSocket] = get_adjacent_from_size(piece_socket, size)
 	var attachment_socket_name: String = Helper.get_attachment_socket_name(socket_name)
-	var fill_prob: float = _get_socket_fill_prob(piece_socket.piece, socket_name)
+	var origin_world: Vector3 = piece_socket.get_socket_position()
 
-	if _has_forbidden_adjacency(adjacent, attachment_socket_name):
-		return {
-			"size": size,
-			"adjacent": adjacent,
-			"attachment_socket_name": attachment_socket_name,
-			"required_tags": TagList.new(),
-			"filtered": TerrainModuleList.new(),
-			"dist": Distribution.new(),
-			"fill_prob": 0.0,
-			"origin_world": piece_socket.get_socket_position()
-		}
+	if _has_forbidden_adjacency(adjacent):
+		return _empty_placement_context(size, adjacent, attachment_socket_name, origin_world)
 
 	var rotated_adjacent: Dictionary = adjacent.duplicate()
 	var rotated_attachment_socket: String = attachment_socket_name
@@ -137,12 +133,20 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 				"required_tags": required_tags,
 				"filtered": filtered,
 				"dist": library.get_combined_distribution(rotated_adjacent).copy(),
-				"fill_prob": fill_prob,
-				"origin_world": piece_socket.get_socket_position()
+				"origin_world": origin_world
 			}
 		rotated_adjacent = Helper.rotate_adjacency(rotated_adjacent)
 		rotated_attachment_socket = Helper.rotate_socket_name(rotated_attachment_socket)
 
+	return _empty_placement_context(size, adjacent, attachment_socket_name, origin_world)
+
+
+func _empty_placement_context(
+	size: String,
+	adjacent: Dictionary[String, TerrainModuleSocket],
+	attachment_socket_name: String,
+	origin_world: Vector3
+) -> Dictionary:
 	return {
 		"size": size,
 		"adjacent": adjacent,
@@ -150,19 +154,15 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 		"required_tags": TagList.new(),
 		"filtered": TerrainModuleList.new(),
 		"dist": Distribution.new(),
-		"fill_prob": 0.0,
-		"origin_world": piece_socket.get_socket_position()
+		"origin_world": origin_world
 	}
 
 
-func _has_forbidden_adjacency(adjacent: Dictionary[String, TerrainModuleSocket], attachment_socket_name: String) -> bool:
-	for adj_socket_name in adjacent.keys():
-		if adj_socket_name == attachment_socket_name:
-			continue
-		var hit: TerrainModuleSocket = adjacent[adj_socket_name]
+func _has_forbidden_adjacency(adjacent: Dictionary[String, TerrainModuleSocket]) -> bool:
+	for hit in adjacent.values():
 		if hit == null:
 			continue
-		if _get_socket_fill_prob(hit.piece, hit.socket_name) <= 0.0:
+		if not _is_socket_expandable(hit):
 			return true
 	return false
 
@@ -262,12 +262,11 @@ func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> 
 
 func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 	for socket_name: String in piece.sockets.keys():
-		var fill_prob: float = _get_socket_fill_prob(piece, socket_name)
-		if fill_prob <= 0.0:
+		var current_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+		if not _is_socket_expandable(current_socket):
 			continue
 		var socket: Marker3D = piece.sockets[socket_name]
 		var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
-		var current_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
 		var existing_socket: TerrainModuleSocket = socket_index.query_other(pos, piece)
 		if existing_socket != null and _sockets_same_layer(current_socket, existing_socket):
 				continue

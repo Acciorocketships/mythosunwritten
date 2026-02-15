@@ -88,6 +88,7 @@
 ## Queueing, sockets, and probabilities
 
 - Do not enqueue sockets with `socket_fill_prob <= 0`.
+- `_process_socket` also early-exits when `socket_fill_prob <= 0` so externally re-queued sockets cannot expand.
 - Only index/enqueue sockets that are not already connected (determined by `PositionIndex.query_other()`).
 - Priority queue uses distance to the player; `RENDER_RANGE` and `MAX_LOAD_PER_STEP` throttle work.
 
