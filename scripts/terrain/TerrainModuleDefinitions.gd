@@ -269,13 +269,17 @@ static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModul
 		"back": 0.8,
 		"left": 0.8,
 		"right": 0.8,
+		"bottomfront": 0.0,
+		"bottomback": 0.0,
+		"bottomleft": 0.0,
+		"bottomright": 0.0,
 		"topcenter": 0.0
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"front": null,
 		"back": null,
 		"left": null,
-		"right": null
+		"right": null,
 	}
 	return TerrainModule.new(
 		scene,

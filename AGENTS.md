@@ -86,6 +86,13 @@
 - **Snap**: keep socket/AABB positions on the 1.0 grid via `Helper.SNAP_POS`; snap final placement.
 - **Distributions**: normalize after merges/manual edits.
 
+### Code style requirements (simplify as much as possible)
+
+- **Consolidate repeated logic**: If the same or similar logic appears in multiple locations, it probably can be consolidated.
+- **Avoid retries/iterations/try-catch**: If we have retries, loops over attempts, or try/catch, rethink the design so the normal path works without them.
+- **Minimize special cases**: A lot of handling for corner cases or tag/socket-specific behavior (e.g. "if this happens only for tiles with tag X") usually means we can rethink the design, reorganise the code, and implement a more robust system that doesn't need special cases.
+- **Prefer shorter code**: In general, if we can edit something to be shorter, that will be simpler and more understandable.
+
 ## Queueing, sockets, and probabilities
 
 - Do not enqueue sockets with `socket_fill_prob <= 0`.
@@ -160,4 +167,15 @@
 
 - **Avoid tag/socket specific logic**: Never add conditional logic in `TerrainGenerator` based on specific tags, socket names, or piece types. All logic should be generalizable.
 - **No fallbacks**: Avoid coding "fallback" behaviors. The system should work correctly without special case handling.
-- **Clean and succinct**: Design the architecture to minimize special handling and edge cases. Keep code code clean and maintainable.
+- **Clean and succinct**: Design the architecture to minimize special handling and edge cases. Keep code clean and maintainable.
+
+## Future plans
+
+- **Level-on-level → cliff**: Add rule so that when a level is placed on top of another level tile, the bottom one is transformed into a cliff side (need to add cliff asset).
+- **Level tile sockets**: Level variants now include bottom-side sockets (`bottomfront`, `bottomback`, `bottomleft`, `bottomright`) with `fill_prob` 0 and no requirements, while corner sockets stay on top (`topfrontleft`, `topfrontright`, `topbackleft`, `topbackright`) for rule adjacency logic.
+- **Inner corners (level rule)**: Add inner corners to level rule; check diagonals (one use case for the new sockets). If the diagonal is free, that side needs an interior corner.
+- **Modularise ground/level tile logic**: Give level tiles the same logic as ground tiles; only difference is that another level is significantly more probable on level tiles. Use the new sockets so the majority of level tiles are slightly inset from the platform below (avoid unwanted cliff).
+- **Guaranteed-fill rule**: Add a rule that guarantees fill with a tag if at least n adjacent tiles in some set (default: front, back, left, right) have that tag.
+- **Camera**: Fix camera blurring/jittering; add new camera controller that follows the mouse.
+- **Character**: Stepping over obstacles up to level-tile height; strafing where character always looks towards the mouse; dodge/dash animation.
+- **Items and inventory**.
