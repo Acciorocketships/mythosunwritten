@@ -24,8 +24,6 @@ func load_terrain_modules() -> void:
 	terrain_modules.append(TerrainModuleDefinitions.load_tree_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_8x8x2_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_12x12x2_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_level_side_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_level_corner_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_level_middle_tile())
 
 

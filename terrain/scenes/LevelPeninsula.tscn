@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill_top_e_center_color_12.tscn" id="2_g5hsj"]
 [ext_resource type="PackedScene" uid="uid://bknoepwfsrkrk" path="res://terrain/gltf/hill_top_a_outer_corner_color_12.tscn" id="3_g5hsj"]
 
-[node name="LevelSide" type="Node3D"]
+[node name="LevelSide2" type="Node3D"]
 
 [node name="Hill_Top_B_Side_Color12" parent="." instance=ExtResource("1_vj14l")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -10.5)
@@ -24,9 +24,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, -10.5)
 [node name="Hill_Top_B_Side_Color17" parent="." instance=ExtResource("1_vj14l")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, -10.5)
 
-[node name="Hill_Top_B_Side_Color18" parent="." instance=ExtResource("1_vj14l")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -10.5)
-
 [node name="Hill_Top_B_Side_Color29" parent="." instance=ExtResource("1_vj14l")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -10.5, 0, -7.5)
 
@@ -45,35 +42,38 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -10.
 [node name="Hill_Top_B_Side_Color34" parent="." instance=ExtResource("1_vj14l")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -10.5, 0, 7.5)
 
+[node name="Hill_Top_B_Side_Color27" parent="." instance=ExtResource("1_vj14l")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, 10.5)
+
 [node name="Hill_Top_B_Side_Color20" parent="." instance=ExtResource("1_vj14l")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.5, 0, 10.5)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, 7.5)
 
 [node name="Hill_Top_B_Side_Color21" parent="." instance=ExtResource("1_vj14l")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 4.5, 0, 10.5)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, 4.5)
 
 [node name="Hill_Top_B_Side_Color22" parent="." instance=ExtResource("1_vj14l")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.5, 0, 10.5)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, 1.5)
 
 [node name="Hill_Top_B_Side_Color23" parent="." instance=ExtResource("1_vj14l")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -4.5, 0, 10.5)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, -1.5)
 
 [node name="Hill_Top_B_Side_Color24" parent="." instance=ExtResource("1_vj14l")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.5, 0, 10.5)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, -4.5)
 
 [node name="Hill_Top_B_Side_Color25" parent="." instance=ExtResource("1_vj14l")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -7.5, 0, 10.5)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, -7.5)
 
 [node name="Hill_Top_B_Side_Color26" parent="." instance=ExtResource("1_vj14l")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 10.5, 0, 10.5)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -10.5, 0, 10.5)
 
 [node name="Hill_Top_E_Center_Color12" parent="." instance=ExtResource("2_g5hsj")]
-transform = Transform3D(0.875, 0, 0, 0, 1, 0, 0, 0, 0.75, 1.5, 0, 0)
+transform = Transform3D(0.75, 0, 0, 0, 1, 0, 0, 0, 0.875, 0, 0, 1.5)
 
 [node name="Hill_Top_A_OuterCorner_Color12" parent="." instance=ExtResource("3_g5hsj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -10.5)
 
 [node name="Hill_Top_A_OuterCorner_Color13" parent="." instance=ExtResource("3_g5hsj")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -10.5, 0, 10.5)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 10.5, 0, -10.5)
 
 [node name="Sockets" type="Node3D" parent="."]
 

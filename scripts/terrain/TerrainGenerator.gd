@@ -178,27 +178,11 @@ func _try_place_with_rules(orig_piece_socket: TerrainModuleSocket, placement_con
 		var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
 		var chosen: TerrainModuleInstance = chosen_template.spawn()
 		chosen.create()
-		var rule_context: Dictionary = _build_rule_context(orig_piece_socket, placement_context, chosen, filtered)
-		var rule_result: Dictionary = _apply_generation_rules(rule_context, chosen)
-		if rule_result.get("skip", false):
-			var skipped_piece = rule_result.get("updated_piece", null)
-			if skipped_piece != null:
-				skipped_piece.destroy()
-			break
-
-		for piece_to_remove in rule_result.get("pieces_to_remove", []):
-			if piece_to_remove is TerrainModuleInstance:
-				remove_piece(piece_to_remove)
-		for socket_to_queue in rule_result.get("sockets_for_queue", []):
-			queue.push(socket_to_queue, 0)
-
-		var final_piece: TerrainModuleInstance = rule_result.get("updated_piece", null)
-		if final_piece == null or not (final_piece is TerrainModuleInstance):
-			continue
-		var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(final_piece, attachment_socket_name)
+		var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(chosen, attachment_socket_name)
 		if add_piece(new_piece_socket, orig_piece_socket):
+			_apply_rules_after_placement(chosen, orig_piece_socket, placement_context, filtered)
 			return true
-		final_piece.destroy()
+		chosen.destroy()
 	return false
 
 
@@ -224,34 +208,62 @@ func _build_rule_context(
 	}
 
 
-func _apply_generation_rules(rule_context: Dictionary, chosen_piece: TerrainModuleInstance) -> Dictionary:
-	var final_piece: TerrainModuleInstance = rule_context.get("chosen_piece", null)
-	var all_pieces_to_remove: Array = []
-	var all_sockets_for_queue: Array = []
-	var should_skip: bool = false
-	for rule in generation_rules.rules:
-		if not rule.matches(rule_context):
-			continue
-		var step_result: Dictionary = rule.apply(rule_context)
-		if step_result.get("skip", false):
-			should_skip = true
-			break
-		var updated_piece = step_result.get("updated_piece", null)
-		if updated_piece != null:
-			final_piece = updated_piece
-		if step_result.has("pieces_to_remove"):
-			all_pieces_to_remove.append_array(step_result.pieces_to_remove)
-		if step_result.has("sockets_for_queue"):
-			all_sockets_for_queue.append_array(step_result.sockets_for_queue)
+func _apply_rules_after_placement(
+	placed_piece: TerrainModuleInstance,
+	orig_piece_socket: TerrainModuleSocket,
+	placement_context: Dictionary,
+	filtered: TerrainModuleList
+) -> void:
+	var current_piece: TerrainModuleInstance = placed_piece
+	for _pass in range(2):
+		var context: Dictionary = _build_rule_context(orig_piece_socket, placement_context, current_piece, filtered)
+		context["adjacent"] = get_adjacent(current_piece)
+		for rule in generation_rules.rules:
+			context["chosen_piece"] = current_piece
+			if not rule.matches(context):
+				continue
+			var step_result: Dictionary = rule.apply(context)
+			if step_result.get("skip", false):
+				return
+			var updated_piece: Variant = step_result.get("chosen_piece", current_piece)
+			if updated_piece != null and updated_piece is TerrainModuleInstance and updated_piece != current_piece:
+				_replace_piece(current_piece, updated_piece)
+				current_piece = updated_piece
+				context["adjacent"] = get_adjacent(current_piece)
+			var step_updates: Dictionary = step_result.get("piece_updates", {})
+			_apply_piece_updates_after_placement(step_updates, current_piece)
+			for socket_to_queue in step_result.get("sockets_for_queue", []):
+				queue.push(socket_to_queue, 0)
 
-	if final_piece != chosen_piece:
-		chosen_piece.destroy()
-	return {
-		"updated_piece": final_piece,
-		"pieces_to_remove": all_pieces_to_remove,
-		"sockets_for_queue": all_sockets_for_queue,
-		"skip": should_skip
-	}
+
+func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piece: TerrainModuleInstance) -> void:
+	for from_piece in piece_updates.keys():
+		var to_piece: Variant = piece_updates[from_piece]
+		if from_piece == placed_piece:
+			continue
+		if not (from_piece is TerrainModuleInstance):
+			continue
+		var existing_piece: TerrainModuleInstance = from_piece
+		var is_registered_piece: bool = existing_piece.root != null and existing_piece.root.get_parent() == terrain_parent
+		if not is_registered_piece:
+			continue
+		if to_piece == from_piece:
+			continue
+		if to_piece == null:
+			remove_piece(existing_piece)
+			continue
+		if not (to_piece is TerrainModuleInstance):
+			continue
+		_replace_piece(existing_piece, to_piece)
+
+
+func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleInstance) -> void:
+	if old_piece == null or new_piece == null:
+		return
+	remove_piece(old_piece)
+	terrain_parent.add_child(new_piece.root)
+	register_piece(new_piece, "")
+	add_piece_to_queue(new_piece)
 
 
 func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> float:
@@ -373,8 +385,11 @@ func get_adjacent_from_size(
 		if hit != null:
 			var is_hit_ground = hit.piece.def.tags.has("ground")
 			if orig_piece.def.tags.has("ground") and not is_hit_ground:
-				# Ignore non-ground adjacency for ground pieces
-				continue
+				var from_top_socket: bool = orig_piece_socket.socket_name.begins_with("top")
+				# Ground top sockets may spawn elevated pieces that should connect to existing non-ground tiles.
+				# Keep legacy behavior for non-top ground sockets.
+				if not from_top_socket:
+					continue
 				
 			adjacency[socket_name] = hit
 

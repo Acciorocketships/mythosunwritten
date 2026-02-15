@@ -7,6 +7,63 @@ var _objects_to_free: Array[Object] = []
 var _pieces_to_destroy: Array[TerrainModuleInstance] = []
 var _nodes_to_free: Array[Node] = []
 
+func _track_node_for_cleanup(node: Node) -> void:
+	if node == null:
+		return
+	if _nodes_to_free.has(node):
+		return
+	_nodes_to_free.append(node)
+
+func _free_detached_node(node: Node) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	if node.get_parent() != null:
+		node.get_parent().remove_child(node)
+	node.free()
+
+func _set_generator_library(gen: Variant, lib: TerrainModuleLibrary) -> void:
+	if gen.library != null and gen.library != lib:
+		_free_detached_node(gen.library)
+	gen.library = lib
+	_track_node_for_cleanup(lib)
+
+func _set_generator_test_pieces_library(gen: Variant, lib: TerrainModuleLibrary) -> void:
+	if gen.test_pieces_library != null and gen.test_pieces_library != lib:
+		_free_detached_node(gen.test_pieces_library)
+	gen.test_pieces_library = lib
+	_track_node_for_cleanup(lib)
+
+func _run_generator_ready(gen: Variant) -> void:
+	# _ready() can replace several generator-owned Node references; free detached replacements immediately.
+	var prev_library: TerrainModuleLibrary = gen.library
+	var prev_test_pieces_library: TerrainModuleLibrary = gen.test_pieces_library
+	var prev_socket_index: PositionIndex = gen.socket_index
+	gen._ready()
+	if prev_library != gen.library:
+		_free_detached_node(prev_library)
+	if prev_test_pieces_library != gen.test_pieces_library:
+		_free_detached_node(prev_test_pieces_library)
+	if prev_socket_index != gen.socket_index:
+		_free_detached_node(prev_socket_index)
+	_track_node_for_cleanup(gen.library)
+	_track_node_for_cleanup(gen.test_pieces_library)
+	_track_node_for_cleanup(gen.socket_index)
+
+func _dispose_generator_immediately(gen: Variant) -> void:
+	if gen == null or not is_instance_valid(gen):
+		return
+	_free_detached_node(gen.player)
+	_free_detached_node(gen.terrain_parent)
+	_free_detached_node(gen.library)
+	_free_detached_node(gen.test_pieces_library)
+	_free_detached_node(gen.socket_index)
+	_free_detached_node(gen)
+
+func _flush_deferred_frees() -> void:
+	# remove_piece()/destroy() use queue_free() for in-tree nodes; flush those before GUT orphan checks.
+	await get_tree().process_frame
+	await get_tree().process_frame
+
 func before_each() -> void:
 	_objects_to_free.clear()
 	_pieces_to_destroy.clear()
@@ -172,6 +229,7 @@ func test_get_dist_from_player():
 	var mock_piece = TerrainModuleInstance.new(mock_def)
 	mock_piece.sockets = {"test_socket": sock}
 	mock_piece.root = Node3D.new()
+	_track_node_for_cleanup(mock_piece.root)
 	mock_piece.transform = Transform3D.IDENTITY
 	var d: float = gen.get_dist_from_player(mock_piece, "test_socket")
 	assert_eq(d, 1.0)
@@ -394,7 +452,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 	# Replace the library with a new one, and ensure it is freed with the generator.
 	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
 	gen.add_child(lib)
-	gen.library = lib
+	_set_generator_library(gen, lib)
 	gen.library.terrain_modules = TerrainModuleList.new([mod])
 	gen.library.modules_by_tag.clear()
 	gen.library.modules_by_tag["24x24"] = TerrainModuleList.new([mod])
@@ -402,7 +460,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 	# For test pieces, use a controlled single-module library.
 	var test_lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
 	gen.add_child(test_lib)
-	gen.test_pieces_library = test_lib
+	_set_generator_test_pieces_library(gen, test_lib)
 	gen.test_pieces_library.terrain_modules = TerrainModuleList.new([mod])
 	gen.test_pieces_library.modules_by_tag.clear()
 	gen.test_pieces_library.modules_by_tag["24x24"] = TerrainModuleList.new([mod])
@@ -603,11 +661,11 @@ func test_integration_one_iteration_places_expected_tile_to_right():
 	}
 	var fake_lib: TerrainModuleLibrary = _FakeSingleLib.new(mod)
 	gen.add_child(fake_lib)
-	gen.library = fake_lib
+	_set_generator_library(gen, fake_lib)
 
 	var test_fake_lib: TerrainModuleLibrary = _FakeSingleLib.new(mod)
 	gen.add_child(test_fake_lib)
-	gen.test_pieces_library = test_fake_lib
+	_set_generator_test_pieces_library(gen, test_fake_lib)
 	# Start piece at origin; add to tree and indices
 	var start: TerrainModuleInstance = _spawn_piece(mod)
 	gen.terrain_parent.add_child(start.root)
@@ -639,7 +697,7 @@ func test_integration_one_iteration_places_expected_tile_to_right():
 func test_ground_queue_priority():
 	# Test that ground expansion is prioritized over other placement
 	var gen = _new_generator()
-	gen._ready()
+	_run_generator_ready(gen)
 
 	# Check that start tile was placed
 	var initial_count: int = gen.terrain_parent.get_child_count()
@@ -658,6 +716,8 @@ func test_ground_queue_priority():
 		assert_true(true, "Generation working - " + str(final_count) + " total pieces")
 	else:
 		assert_true(false, "No generation - still " + str(final_count) + " pieces")
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
 
 
 func test_ground_grid_completeness():
@@ -665,9 +725,9 @@ func test_ground_grid_completeness():
 	# gen.player and gen.terrain_parent are already created and gen.player is added to tree in _new_generator
 	
 	# Use real library for this integration test
-	gen.library = TerrainModuleLibrary.new()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
 	gen.library.init()
-	gen.test_pieces_library = TerrainModuleLibrary.new()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
 	gen.test_pieces_library.init_test_pieces()
 	
 	gen.player.global_position = Vector3.ZERO
@@ -675,7 +735,7 @@ func test_ground_grid_completeness():
 	gen.MAX_LOAD_PER_STEP = 10
 	
 	# Initialize the generator (places start tile)
-	gen._ready()
+	_run_generator_ready(gen)
 	
 	# Set a fixed seed for determinism
 	seed(12345)
@@ -710,3 +770,327 @@ func test_ground_grid_completeness():
 			missing_count += 1
 	
 	assert_eq(missing_count, 0, "Should have 0 missing ground tiles in the immediate neighborhood")
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func _collect_level_pieces(gen: Variant) -> Array[TerrainModuleInstance]:
+	var search_box: AABB = AABB(Vector3(-1200, -10, -1200), Vector3(2400, 200, 2400))
+	var pieces: Array = gen.terrain_index.query_box(search_box)
+	var out: Array[TerrainModuleInstance] = []
+	var seen: Dictionary = {}
+	for piece in pieces:
+		if not (piece is TerrainModuleInstance):
+			continue
+		var level_piece: TerrainModuleInstance = piece
+		if not level_piece.def.tags.has("level"):
+			continue
+		if seen.has(level_piece):
+			continue
+		seen[level_piece] = true
+		out.append(level_piece)
+	return out
+
+
+func _level_missing_sockets(gen: Variant, piece: TerrainModuleInstance) -> Array[String]:
+	var missing: Array[String] = []
+	var sockets: Array[String] = ["front", "right", "back", "left"]
+	for socket_name in sockets:
+		if not piece.sockets.has(socket_name):
+			continue
+		var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+		var other: TerrainModuleSocket = gen.socket_index.query_other(piece_socket.get_socket_position(), piece)
+		var connected_to_level: bool = other != null and other.piece != null and other.piece.def.tags.has("level")
+		if not connected_to_level:
+			missing.append(socket_name)
+	return missing
+
+
+func _level_variant_tag(piece: TerrainModuleInstance) -> String:
+	var variants: Array[String] = [
+		"level-center",
+		"level-side",
+		"level-line",
+		"level-corner",
+		"level-peninsula",
+		"level-island",
+	]
+	for tag in variants:
+		if piece.def.tags.has(tag):
+			return tag
+	return ""
+
+
+## Rotate socket name set by n 90° steps (same convention as LevelEdgeRule / Helper.rotate_socket_name).
+func _rotate_socket_set(socket_names: Array, steps: int) -> Array:
+	var out: Array = socket_names.duplicate()
+	for _s in range(steps):
+		var next: Array = []
+		for sock_name in out:
+			next.append(Helper.rotate_socket_name(sock_name))
+		out = next
+	return out
+
+
+func _socket_set_equals(a: Array, b: Array) -> bool:
+	if a.size() != b.size():
+		return false
+	for x in a:
+		if not b.has(x):
+			return false
+	return true
+
+
+## World cardinal from direction vector (Godot: front=-Z, back=+Z, right=+X, left=-X). Uses dominant axis.
+func _world_cardinal_from_direction(v: Vector3) -> String:
+	var vxz: Vector3 = Vector3(v.x, 0, v.z)
+	if vxz.length_squared() < 0.01:
+		return "front"
+	vxz = vxz.normalized()
+	if abs(vxz.x) >= abs(vxz.z):
+		return "right" if vxz.x > 0 else "left"
+	else:
+		return "back" if vxz.z > 0 else "front"
+
+
+## Set of world cardinal names where there is no level neighbor (derived from actual missing socket positions).
+func _level_world_cardinals_with_no_neighbor(
+	_gen: Variant,
+	piece: TerrainModuleInstance,
+	missing_socket_names: Array
+) -> Array:
+	var center: Vector3 = piece.transform.origin
+	var cardinals: Array = []
+	var seen: Dictionary = {}
+	for socket_name in missing_socket_names:
+		if not piece.sockets.has(socket_name):
+			continue
+		var ps: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+		var pos: Vector3 = ps.get_socket_position()
+		var dir: Vector3 = (pos - center)
+		if dir.length_squared() < 0.01:
+			continue
+		var c: String = _world_cardinal_from_direction(dir)
+		if not seen.get(c, false):
+			seen[c] = true
+			cardinals.append(c)
+	return cardinals
+
+
+## Set of world cardinal names that the piece's canonical missing sockets point to (using piece's current rotation).
+func _piece_canonical_edges_world_cardinals(piece: TerrainModuleInstance, canonical_missing: Array) -> Array:
+	if piece.root == null or piece.socket_node == null:
+		return []
+	var cardinals: Array = []
+	var seen: Dictionary = {}
+	for socket_name in canonical_missing:
+		if not piece.sockets.has(socket_name):
+			continue
+		var sock: Node3D = piece.sockets[socket_name]
+		var local_tf: Transform3D = Helper.to_root_tf(sock, piece.root)
+		var local_pos: Vector3 = local_tf.origin
+		if local_pos.length_squared() < 0.01:
+			continue
+		var world_dir: Vector3 = (piece.transform.basis * local_pos).normalized()
+		var c: String = _world_cardinal_from_direction(world_dir)
+		if not seen.get(c, false):
+			seen[c] = true
+			cardinals.append(c)
+	return cardinals
+
+
+func _world_cardinal_sets_equal(a: Array, b: Array) -> bool:
+	return _socket_set_equals(a, b)
+
+
+func test_integration_level_edges_match_neighbors_and_include_connected_regions():
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	for module in gen.library.terrain_modules.library:
+		if module.tags.has("ground"):
+			module.socket_fill_prob["topcenter"] = 1.0
+			module.socket_tag_prob["topcenter"] = Distribution.new({"level-center": 1.0})
+		if module.tags.has("level"):
+			module.socket_fill_prob["front"] = 1.0
+			module.socket_fill_prob["back"] = 1.0
+			module.socket_fill_prob["left"] = 1.0
+			module.socket_fill_prob["right"] = 1.0
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 300
+	gen.MAX_LOAD_PER_STEP = 20
+	seed(12345)
+	_run_generator_ready(gen)
+
+	for _i in range(1500):
+		gen.load_terrain()
+
+	var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
+	assert_true(level_pieces.size() > 0, "Expected level tiles to be generated")
+
+	var best_neighbor_count: int = 0
+	for piece in level_pieces:
+		var missing: Array[String] = _level_missing_sockets(gen, piece)
+		var neighbors: int = 4 - missing.size()
+		if neighbors > best_neighbor_count:
+			best_neighbor_count = neighbors
+
+		var variant_tag: String = _level_variant_tag(piece)
+		assert_ne(variant_tag, "", "Level tile missing a variant tag: " + str(piece.def.tags.tags))
+		match variant_tag:
+			"level-center":
+				assert_eq(missing.size(), 0)
+			"level-side":
+				assert_eq(missing.size(), 1)
+			"level-line":
+				assert_eq(missing.size(), 2)
+				var opposite: bool = (missing.has("front") and missing.has("back")) or (missing.has("left") and missing.has("right"))
+				assert_true(opposite, "Line must have opposite missing sockets")
+			"level-corner":
+				assert_eq(missing.size(), 2)
+				var opposite2: bool = (missing.has("front") and missing.has("back")) or (missing.has("left") and missing.has("right"))
+				assert_false(opposite2, "Corner must have adjacent missing sockets")
+			"level-peninsula":
+				assert_eq(missing.size(), 3)
+			"level-island":
+				assert_eq(missing.size(), 4)
+			_:
+				assert_true(false, "Unexpected variant tag: " + variant_tag)
+
+		# Rotation correctness (socket-name check): actual missing must match canonical up to rotation.
+		var canonical_missing: Array = LevelEdgeRule.CANONICAL_MISSING_BY_TAG.get(variant_tag, []).duplicate()
+		var matches_rotation: bool = false
+		for k in range(4):
+			if _socket_set_equals(_rotate_socket_set(canonical_missing.duplicate(), k), missing):
+				matches_rotation = true
+				break
+		assert_true(
+			matches_rotation,
+			"Level tile rotation mismatch: variant=%s canonical_missing=%s actual missing=%s (must match for some 90° rotation)"
+				% [variant_tag, canonical_missing, missing]
+		)
+
+		# World-space rotation correctness: the world directions the piece's canonical edges point to
+		# must equal the world directions that have no level neighbor. This catches the bug where we
+		# only rotate the newly placed piece but not the pieces we update (neighbors keep wrong orientation).
+		if variant_tag != "level-center" and variant_tag != "level-island":
+			var world_dirs_no_neighbor: Array = _level_world_cardinals_with_no_neighbor(gen, piece, missing)
+			var piece_edges_world_dirs: Array = _piece_canonical_edges_world_cardinals(piece, canonical_missing)
+			assert_true(
+				_socket_set_equals(world_dirs_no_neighbor, piece_edges_world_dirs),
+				"Level tile world-space rotation mismatch: variant=%s world_dirs_with_no_neighbor=%s piece_canonical_edges_world_dirs=%s (edges must point toward directions that have no neighbor)"
+					% [variant_tag, world_dirs_no_neighbor, piece_edges_world_dirs]
+			)
+
+	assert_true(best_neighbor_count >= 3, "Expected at least one level tile with >= 3 level neighbors")
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func test_integration_default_level_generation_not_sparse_or_isolated():
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 300
+	gen.MAX_LOAD_PER_STEP = 20
+	seed(12345)
+	_run_generator_ready(gen)
+
+	for _i in range(1500):
+		gen.load_terrain()
+
+	var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
+	assert_true(level_pieces.size() >= 10, "Expected at least 10 level tiles in default generation")
+
+	var pieces_with_level_neighbor: int = 0
+	var best_neighbor_count: int = 0
+	for piece in level_pieces:
+		var missing: Array[String] = _level_missing_sockets(gen, piece)
+		var neighbors: int = 4 - missing.size()
+		if neighbors > 0:
+			pieces_with_level_neighbor += 1
+		if neighbors > best_neighbor_count:
+			best_neighbor_count = neighbors
+
+	assert_true(pieces_with_level_neighbor >= 4, "Expected multiple level tiles to have adjacent level neighbors")
+	assert_true(best_neighbor_count >= 2, "Expected at least one level tile connected to 2+ level neighbors")
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func test_integration_default_level_generation_forms_cluster_early():
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 300
+	gen.MAX_LOAD_PER_STEP = 20
+	seed(12345)
+	_run_generator_ready(gen)
+
+	for _i in range(220):
+		gen.load_terrain()
+
+	var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
+	assert_true(level_pieces.size() >= 8, "Expected at least 8 level tiles after early generation")
+
+	var pieces_with_level_neighbor: int = 0
+	var best_neighbor_count: int = 0
+	for piece in level_pieces:
+		var missing: Array[String] = _level_missing_sockets(gen, piece)
+		var neighbors: int = 4 - missing.size()
+		if neighbors > 0:
+			pieces_with_level_neighbor += 1
+		if neighbors > best_neighbor_count:
+			best_neighbor_count = neighbors
+
+	assert_true(pieces_with_level_neighbor >= 4, "Expected early generation to include adjacent level pairs")
+	assert_true(best_neighbor_count >= 2, "Expected early generation to include a local level cluster")
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func test_integration_default_level_generation_not_sparse_across_seeds():
+	var failing_seeds: Array[int] = []
+	var seeds: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8]
+	for run_seed in seeds:
+		var gen: Variant = _new_generator()
+		_set_generator_library(gen, TerrainModuleLibrary.new())
+		gen.library.init()
+		_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+		gen.test_pieces_library.init_test_pieces()
+		gen.player.global_position = Vector3.ZERO
+		gen.RENDER_RANGE = 300
+		gen.MAX_LOAD_PER_STEP = 20
+		seed(run_seed)
+		_run_generator_ready(gen)
+
+		for _i in range(220):
+			gen.load_terrain()
+
+		var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
+		var pieces_with_level_neighbor: int = 0
+		for piece in level_pieces:
+			var missing: Array[String] = _level_missing_sockets(gen, piece)
+			var neighbors: int = 4 - missing.size()
+			if neighbors > 0:
+				pieces_with_level_neighbor += 1
+
+		var has_density: bool = level_pieces.size() >= 8
+		var has_connectivity: bool = pieces_with_level_neighbor >= 4
+		if not has_density or not has_connectivity:
+			failing_seeds.append(run_seed)
+		_dispose_generator_immediately(gen)
+		await _flush_deferred_frees()
+
+	assert_true(
+		failing_seeds.is_empty(),
+		"Expected dense/connected default level generation across seeds; failing seeds: " + str(failing_seeds)
+	)

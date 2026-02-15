@@ -60,6 +60,7 @@
  - Sample a size from `socket_size[socket_name]`.
  - Compute adjacency via `get_adjacent_from_size`:
 	- Spawn a temporary test piece for that size, determine attachment socket using `Helper.get_attachment_socket_name()`, position the test piece correctly, then query `PositionIndex` for adjacent sockets.
+	- For ground expansion sockets, non-ground adjacency is ignored on lateral sockets, but kept on `"top..."` sockets so elevated systems (like level tiles) can connect to existing non-ground neighbors.
  - Choose a module with library/tag logic; if initial adjacency produces no valid modules, try rotating the adjacency up to 3 times.
  - Try up to 4 attempts: create, `transform_to_socket`, apply `TerrainGenerationRuleLibrary`, then `add_piece`.
 - **Placement**
@@ -104,11 +105,21 @@
 
 ## Terrain Generation Rules (`scripts/terrain/TerrainGenerationRuleLibrary.gd`)
 
-- Each rule lives in its own file under `scripts/terrain/rules/` (e.g. `LevelContradictionRule.gd`). `TerrainGenerationRuleLibrary.gd` instantiates rule classes in `_init()` (currently `LevelContradictionRule`) and appends them to `rules`.
+- Each rule lives in its own file under `scripts/terrain/rules/` (e.g. `LevelContradictionRule.gd`, `LevelEdgeRule.gd`). `TerrainGenerationRuleLibrary.gd` instantiates rule classes in `_init()` and appends them to `rules`.
 - **Style**: Prefer instantiating rule classes directly (e.g. `LevelContradictionRule.new()`) rather than `preload()`ing scripts; rule scripts use `class_name` so they are globally available.
 - Rule-specific helpers belong in the rule file (e.g. static or instance methods on the rule class).
 - Rules can modify or skip placements based on complex logic (e.g., `LevelContradictionRule` avoids invalid level tile configurations).
 - Rules can request removal of existing pieces or re-queueing of sockets.
+- Rules return `piece_updates` (Dictionary: `TerrainModuleInstance -> TerrainModuleInstance|nil`) so one rule can retile/remove multiple pieces in one pass.
+- `TerrainGenerator` applies `piece_updates` after successful placement, replacing/removing already-placed pieces and re-registering replacements.
+
+## Level edge retile system
+
+- Terrain sampling library includes only `"level-center"` for level generation; visual variants (`"level-side"`, `"level-corner"`, `"level-line"`, `"level-peninsula"`, `"level-island"`) are selected by `LevelEdgeRule`.
+- `LevelEdgeRule` computes missing neighbors on cardinal sockets and rotates canonical edge variants to match missing sides.
+- When a new level tile is chosen, `LevelEdgeRule` also updates directly adjacent level tiles so their edge silhouettes stay consistent after the new connection appears.
+- All level variants keep center-like lateral expansion behavior (matching lateral fill probabilities) so growth logic stays consistent while visuals are retiled.
+- Default level density is intentionally higher: ground `"topcenter"` has stronger level seeding and level lateral sockets use higher fill probability for contiguous patches.
 
 ## Adding new terrain pieces
 

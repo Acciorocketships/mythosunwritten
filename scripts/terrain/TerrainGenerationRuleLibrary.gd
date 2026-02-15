@@ -6,5 +6,5 @@ extends Resource
 
 
 func _init() -> void:
-	pass
-	# rules.append(LevelContradictionRule.new())
+	rules.append(LevelContradictionRule.new())
+	rules.append(LevelEdgeRule.new())
