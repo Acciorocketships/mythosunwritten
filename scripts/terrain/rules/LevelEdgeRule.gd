@@ -92,6 +92,8 @@ func _get_level_neighbors(
 	return neighbors
 
 
+## Replace piece with the correct level variant (center/side/corner/...) and rotate so its
+## canonical "missing" edges align with this piece's actual missing sockets.
 func _create_replacement(
 	source_piece: TerrainModuleInstance,
 	missing_sockets: Array[String]
@@ -103,134 +105,30 @@ func _create_replacement(
 	var replacement: TerrainModuleInstance = module_template.spawn()
 	replacement.set_transform(source_piece.transform)
 	replacement.create()
-	var rotation_steps: int = _rotation_steps_from_world_directions(
-		source_piece,
-		replacement,
-		target_tag,
-		missing_sockets
-	)
-	if rotation_steps != 0:
-		# Step count K from _rotation_steps_from_world_directions rotates canonical world
-		# cardinals to match desired; the piece must be rotated by (4 - K) steps so that
-		# its canonical edges end up pointing at those world directions.
-		var steps_to_apply: int = (4 - rotation_steps) % 4
-		var yaw: float = PI * 0.5 * float(steps_to_apply)
+
+	# Variant has canonical edge socket names (e.g. level-side has ["front"]). Find how many
+	# 90° rotations of that set match missing_sockets; then rotate piece by (4 - steps).
+	var steps: int = _rotation_steps_to_align_canonical(target_tag, missing_sockets)
+	if steps >= 0:
+		var yaw: float = PI * 0.5 * float((4 - steps) % 4)
 		var rotated_basis: Basis = Basis(Vector3.UP, yaw) * replacement.transform.basis
 		replacement.set_basis(rotated_basis)
 	return replacement
 
 
-func _tag_for_missing_sockets(missing_sockets: Array[String]) -> String:
-	var count: int = missing_sockets.size()
-	var target_tag: String = "level-center"
-	match count:
-		0:
-			target_tag = "level-center"
-		1:
-			target_tag = "level-side"
-		2:
-			var has_front: bool = missing_sockets.has("front")
-			var has_back: bool = missing_sockets.has("back")
-			var has_left: bool = missing_sockets.has("left")
-			var has_right: bool = missing_sockets.has("right")
-			if (has_front and has_back) or (has_left and has_right):
-				target_tag = "level-line"
-			else:
-				target_tag = "level-corner"
-		3:
-			target_tag = "level-peninsula"
-		4:
-			target_tag = "level-island"
-		_:
-			target_tag = "level-center"
-	return target_tag
-
-
-func _rotation_steps_for_missing(target_tag: String, desired_missing: Array[String]) -> int:
-	var canonical_missing: Array = CANONICAL_MISSING_BY_TAG.get(target_tag, []).duplicate()
+## Returns 0..3: rotations of canonical missing set until it equals desired_missing; -1 if no match.
+func _rotation_steps_to_align_canonical(target_tag: String, desired_missing: Array[String]) -> int:
+	var canonical: Array = CANONICAL_MISSING_BY_TAG.get(target_tag, []).duplicate()
 	for step in range(4):
-		if _same_socket_set(canonical_missing, desired_missing):
+		if _same_socket_set(canonical, desired_missing):
 			return step
-		canonical_missing = _rotate_socket_array(canonical_missing)
-	return 0
+		canonical = _rotate_socket_names_once(canonical)
+	return -1
 
 
-## World cardinal from direction (Godot: front=-Z, back=+Z, right=+X, left=-X). Must match test _world_cardinal_from_direction.
-static func _world_cardinal_from_direction(v: Vector3) -> String:
-	var vxz: Vector3 = Vector3(v.x, 0, v.z)
-	if vxz.length_squared() < 0.01:
-		return "front"
-	vxz = vxz.normalized()
-	if abs(vxz.x) >= abs(vxz.z):
-		return "right" if vxz.x > 0 else "left"
-	else:
-		return "back" if vxz.z > 0 else "front"
-
-
-## Set of world cardinal names for the given socket names on the piece (by direction from piece origin to socket).
-static func _piece_world_cardinals_for_sockets(piece: TerrainModuleInstance, socket_names: Array) -> Array:
-	var center: Vector3 = piece.transform.origin
-	var cardinals: Array = []
-	var seen: Dictionary = {}
-	for socket_name in socket_names:
-		if not piece.sockets.has(socket_name):
-			continue
-		var ps: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
-		var pos: Vector3 = ps.get_socket_position()
-		var dir: Vector3 = pos - center
-		if dir.length_squared() < 0.01:
-			continue
-		var c: String = _world_cardinal_from_direction(dir)
-		if not seen.get(c, false):
-			seen[c] = true
-			cardinals.append(c)
-	return cardinals
-
-
-## World cardinals that the replacement's canonical edge sockets point to (using replacement's current transform).
-static func _replacement_canonical_world_cardinals(replacement: TerrainModuleInstance, target_tag: String) -> Array:
-	var canonical_missing: Array = CANONICAL_MISSING_BY_TAG.get(target_tag, [])
-	if replacement.root == null or replacement.socket_node == null:
-		return []
-	var cardinals: Array = []
-	var seen: Dictionary = {}
-	for socket_name in canonical_missing:
-		if not replacement.sockets.has(socket_name):
-			continue
-		var sock: Node3D = replacement.sockets[socket_name]
-		var local_tf: Transform3D = Helper.to_root_tf(sock, replacement.root)
-		var local_pos: Vector3 = local_tf.origin
-		if local_pos.length_squared() < 0.01:
-			continue
-		var world_dir: Vector3 = (replacement.transform.basis * local_pos).normalized()
-		var c: String = _world_cardinal_from_direction(world_dir)
-		if not seen.get(c, false):
-			seen[c] = true
-			cardinals.append(c)
-	return cardinals
-
-
-## Find rotation steps so replacement's canonical edges (after rotation) point to the same world directions as source's missing sockets.
-func _rotation_steps_from_world_directions(
-	source_piece: TerrainModuleInstance,
-	replacement: TerrainModuleInstance,
-	target_tag: String,
-	missing_sockets: Array[String]
-) -> int:
-	var desired_world_cardinals: Array = _piece_world_cardinals_for_sockets(source_piece, missing_sockets)
-	var canonical_world_cardinals: Array = _replacement_canonical_world_cardinals(replacement, target_tag)
-	if desired_world_cardinals.size() != canonical_world_cardinals.size():
-		return _rotation_steps_for_missing(target_tag, missing_sockets)
-	for step in range(4):
-		if _same_socket_set(canonical_world_cardinals, desired_world_cardinals):
-			return step
-		canonical_world_cardinals = _rotate_socket_array(canonical_world_cardinals)
-	return 0
-
-
-func _rotate_socket_array(sockets: Array) -> Array:
+func _rotate_socket_names_once(socket_names: Array) -> Array:
 	var out: Array = []
-	for socket_name in sockets:
+	for socket_name in socket_names:
 		out.append(Helper.rotate_socket_name(socket_name))
 	return out
 
@@ -242,6 +140,27 @@ func _same_socket_set(a: Array, b: Array) -> bool:
 		if not b.has(socket_name):
 			return false
 	return true
+
+
+func _tag_for_missing_sockets(missing_sockets: Array[String]) -> String:
+	var count: int = missing_sockets.size()
+	var tag: String = "level-center"
+	match count:
+		0:
+			tag = "level-center"
+		1:
+			tag = "level-side"
+		2:
+			var opp: bool = (
+				(missing_sockets.has("front") and missing_sockets.has("back"))
+				or (missing_sockets.has("left") and missing_sockets.has("right"))
+			)
+			tag = "level-line" if opp else "level-corner"
+		3:
+			tag = "level-peninsula"
+		4:
+			tag = "level-island"
+	return tag
 
 
 func _get_module_for_level_tag(level_tag: String) -> TerrainModule:
