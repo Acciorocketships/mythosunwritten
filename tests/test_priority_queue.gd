@@ -21,5 +21,20 @@ func test_priority_queue():
 	assert_true(queue.is_empty())
 	# PriorityQueue extends Object (not RefCounted), so free explicitly to avoid leaks.
 	queue.free()
-	
-	
+
+
+func test_remove_where_keeps_heap_ordering():
+	var queue: PriorityQueue = PriorityQueue.new()
+	queue.push("a", 5)
+	queue.push("b", 1)
+	queue.push("c", 3)
+	queue.push("d", 2)
+	queue.push("e", 4)
+
+	queue.remove_where(func(item): return item == "b" or item == "e")
+
+	assert_eq(queue.pop(), "d")
+	assert_eq(queue.pop(), "c")
+	assert_eq(queue.pop(), "a")
+	assert_true(queue.is_empty())
+	queue.free()

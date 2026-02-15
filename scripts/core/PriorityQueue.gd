@@ -34,6 +34,16 @@ func remove_where(predicate: Callable) -> void:
 		if not predicate.call(entry["item"]):
 			new_heap.append(entry)
 	heap = new_heap
+	_rebuild_heap()
+
+
+func _rebuild_heap() -> void:
+	if heap.is_empty():
+		return
+	var i: int = int(heap.size() / 2) - 1
+	while i >= 0:
+		_bubble_down(i)
+		i -= 1
 
 func _bubble_up(i):
 	while i > 0:

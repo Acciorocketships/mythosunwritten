@@ -25,3 +25,19 @@ func query_other(pos: Vector3, piece: TerrainModuleInstance) -> TerrainModuleSoc
 		if ps != null and ps.piece != piece:
 			return ps as TerrainModuleSocket
 	return null
+
+
+func remove_piece(piece: TerrainModuleInstance) -> void:
+	if piece == null:
+		return
+	for socket_name in piece.sockets.keys():
+		var socket_pos: Vector3 = Helper.socket_world_pos(piece.transform, piece.sockets[socket_name], piece.root)
+		var snapped_pos: Vector3 = Helper.snap_vec3(socket_pos)
+		if not store.has(snapped_pos):
+			continue
+		var sockets_at_pos: Array = store[snapped_pos]
+		sockets_at_pos = sockets_at_pos.filter(func(ps): return ps.piece != piece)
+		if sockets_at_pos.is_empty():
+			store.erase(snapped_pos)
+		else:
+			store[snapped_pos] = sockets_at_pos

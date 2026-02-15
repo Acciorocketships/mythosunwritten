@@ -49,7 +49,6 @@ func load_terrain() -> void:
 		var piece_socket = queue.pop()
 		var piece: TerrainModuleInstance = piece_socket.piece
 		var socket_name: String = piece_socket.socket_name
-		var socket: Marker3D = piece_socket.socket
 		var distance := get_dist_from_player(piece, socket_name)
 
 		num_processed += 1
@@ -62,186 +61,197 @@ func load_terrain() -> void:
 func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
 	var piece: TerrainModuleInstance = piece_socket.piece
 	var socket_name: String = piece_socket.socket_name
-	var socket: Marker3D = piece_socket.socket
-
-	# If this socket is already connected (another piece has a socket at the same position),
-	# skip it to avoid repeatedly trying to place overlapping tiles.
-	# Exception: Ground pieces are allowed to overlap with non-ground pieces' sockets.
-	# If this socket is already connected (another piece has a socket at the same position),
-	# skip it to avoid repeatedly trying to place overlapping tiles.
-	# Exception: Ground pieces are allowed to overlap with non-ground pieces' sockets.
-	# This allows ground to be generated under level pieces.
-	var existing_socket = socket_index.query_other(piece_socket.get_socket_position(), piece)
-	
-	if existing_socket != null:
-		var is_existing_ground = existing_socket.piece.def.tags.has("ground")
-		var is_current_ground = piece.def.tags.has("ground")
-		
-		# If both are ground, it's a real connection/overlap, so skip.
-		# If both are non-ground, it's a real connection/overlap, so skip.
-		if is_current_ground == is_existing_ground:
-			return false
-		
-		# If one is ground and the other isn't, we allow it to proceed.
-		# This allows ground to be generated under level pieces, and level pieces on ground.
-		pass
-
-	if distance > RENDER_RANGE:
-		# Defer distant sockets back to queue for later processing when player moves closer
-		queue.push(piece_socket, distance)
+	if _is_socket_connected(piece_socket):
+		return false
+	if _defer_if_out_of_range(piece_socket, distance):
 		return false
 
-	var origin_world: Vector3 = piece_socket.get_socket_position()
-	var size: String = "point"
-	if socket_name in piece.def.socket_size:
-		var size_prob_dist: Distribution = piece.def.socket_size[socket_name]
-		size = size_prob_dist.sample()
+	var size: String = _sample_socket_size(piece, socket_name)
+	var placement_context: Dictionary = _resolve_placement_context(piece_socket, size)
+	var fill_prob: float = placement_context.get("fill_prob", 0.0)
+	if randf() > fill_prob:
+		return false
+	return _try_place_with_rules(piece_socket, placement_context)
 
-	var adjacent := get_adjacent_from_size(piece_socket, size)
 
-	# Check for forbidden areas (adjacent sockets with fill_prob <= 0)
-	var attachment_socket_name = Helper.get_attachment_socket_name(socket_name)
-	var required_tags: TagList
-	var filtered: TerrainModuleList
-	var dist: Distribution
-	var fill_prob: float
+func _is_socket_connected(piece_socket: TerrainModuleSocket) -> bool:
+	var existing_socket: TerrainModuleSocket = socket_index.query_other(piece_socket.get_socket_position(), piece_socket.piece)
+	return existing_socket != null and _sockets_same_layer(piece_socket, existing_socket)
 
-	var found_valid_adjacency := false
+
+func _sockets_same_layer(a: TerrainModuleSocket, b: TerrainModuleSocket) -> bool:
+	if a == null or b == null:
+		return false
+	var a_is_ground: bool = a.piece.def.tags.has("ground")
+	var b_is_ground: bool = b.piece.def.tags.has("ground")
+	return a_is_ground == b_is_ground
+
+
+func _defer_if_out_of_range(piece_socket: TerrainModuleSocket, distance: float) -> bool:
+	if distance <= RENDER_RANGE:
+		return false
+	queue.push(piece_socket, distance)
+	return true
+
+
+func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> String:
+	if not piece.def.socket_size.has(socket_name):
+		return "point"
+	var size_prob_dist: Distribution = piece.def.socket_size[socket_name]
+	return size_prob_dist.sample()
+
+
+func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
+	return float(piece.def.socket_fill_prob.get(socket_name, 0.0))
+
+
+func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String) -> Dictionary:
+	var socket_name: String = piece_socket.socket_name
+	var adjacent: Dictionary[String, TerrainModuleSocket] = get_adjacent_from_size(piece_socket, size)
+	var attachment_socket_name: String = Helper.get_attachment_socket_name(socket_name)
+	var fill_prob: float = _get_socket_fill_prob(piece_socket.piece, socket_name)
+
+	if _has_forbidden_adjacency(adjacent, attachment_socket_name):
+		return {
+			"size": size,
+			"adjacent": adjacent,
+			"attachment_socket_name": attachment_socket_name,
+			"required_tags": TagList.new(),
+			"filtered": TerrainModuleList.new(),
+			"dist": Distribution.new(),
+			"fill_prob": 0.0,
+			"origin_world": piece_socket.get_socket_position()
+		}
+
+	var rotated_adjacent: Dictionary = adjacent.duplicate()
+	var rotated_attachment_socket: String = attachment_socket_name
+	for _rotation_attempt in range(4):
+		var required_tags: TagList = library.get_required_tags(rotated_adjacent, rotated_attachment_socket)
+		required_tags.append(size)
+		var filtered: TerrainModuleList = library.get_by_tags(required_tags)
+		if not filtered.is_empty():
+			return {
+				"size": size,
+				"adjacent": rotated_adjacent,
+				"attachment_socket_name": rotated_attachment_socket,
+				"required_tags": required_tags,
+				"filtered": filtered,
+				"dist": library.get_combined_distribution(rotated_adjacent).copy(),
+				"fill_prob": fill_prob,
+				"origin_world": piece_socket.get_socket_position()
+			}
+		rotated_adjacent = Helper.rotate_adjacency(rotated_adjacent)
+		rotated_attachment_socket = Helper.rotate_socket_name(rotated_attachment_socket)
+
+	return {
+		"size": size,
+		"adjacent": adjacent,
+		"attachment_socket_name": attachment_socket_name,
+		"required_tags": TagList.new(),
+		"filtered": TerrainModuleList.new(),
+		"dist": Distribution.new(),
+		"fill_prob": 0.0,
+		"origin_world": piece_socket.get_socket_position()
+	}
+
+
+func _has_forbidden_adjacency(adjacent: Dictionary[String, TerrainModuleSocket], attachment_socket_name: String) -> bool:
 	for adj_socket_name in adjacent.keys():
 		if adj_socket_name == attachment_socket_name:
-			continue  # Skip the attachment socket
-		var hit = adjacent[adj_socket_name]
-		if hit != null:
-			var adjacent_fill_prob: float = float(hit.piece.def.socket_fill_prob.get(hit.socket_name, 0.0))
-			if adjacent_fill_prob <= 0.0:
-				# Forbidden area, skip this placement
-				found_valid_adjacency = true
-				required_tags = TagList.new()
-				filtered = TerrainModuleList.new()
-				dist = Distribution.new()
-				fill_prob = 0.0
-				break
+			continue
+		var hit: TerrainModuleSocket = adjacent[adj_socket_name]
+		if hit == null:
+			continue
+		if _get_socket_fill_prob(hit.piece, hit.socket_name) <= 0.0:
+			return true
+	return false
 
-	if not found_valid_adjacency:
-		# Try different rotations of adjacency until we find one that works
-		var current_adjacent = adjacent.duplicate()
-		var current_attachment_socket_name = attachment_socket_name
-		for rotation_attempt in range(4):  # Try up to 4 rotations
-			required_tags = library.get_required_tags(current_adjacent, current_attachment_socket_name)
-			required_tags.append(size) # only find pieces with the given size
-			filtered = library.get_by_tags(required_tags)
 
-			if !filtered.is_empty():
-				# Found valid results with this adjacency
-				var dist_raw: Distribution = library.get_combined_distribution(current_adjacent)
-				dist = dist_raw.copy()
-				var fill_prob_base: float = float(piece.def.socket_fill_prob.get(socket_name, 0.0))
-				fill_prob = fill_prob_base
-				found_valid_adjacency = true
-				break
-
-			# Rotate adjacency for next attempt
-			current_adjacent = Helper.rotate_adjacency(current_adjacent)
-			current_attachment_socket_name = Helper.rotate_socket_name(current_attachment_socket_name)
-
-		if not found_valid_adjacency:
-			# No valid adjacency found after all rotations
-			required_tags = TagList.new()
-			filtered = TerrainModuleList.new()
-			dist = Distribution.new()
-			fill_prob = 0.0
-
-	if randf() > fill_prob:
-		# Continue to next socket instead of stopping processing for this frame
+func _try_place_with_rules(orig_piece_socket: TerrainModuleSocket, placement_context: Dictionary) -> bool:
+	var filtered: TerrainModuleList = placement_context.get("filtered", TerrainModuleList.new())
+	var dist: Distribution = placement_context.get("dist", Distribution.new())
+	var attachment_socket_name: String = placement_context.get("attachment_socket_name", "bottom")
+	if filtered.is_empty():
 		return false
 
-	for attempt in range(4):
+	for _attempt in range(4):
 		var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
 		var chosen: TerrainModuleInstance = chosen_template.spawn()
 		chosen.create()
+		var rule_context: Dictionary = _build_rule_context(orig_piece_socket, placement_context, chosen, filtered)
+		var rule_result: Dictionary = _apply_generation_rules(rule_context, chosen)
+		if rule_result.get("skip", false):
+			var skipped_piece = rule_result.get("updated_piece", null)
+			if skipped_piece != null:
+				skipped_piece.destroy()
+			break
 
-		# Apply generation rules to the chosen piece
-		var rule_context = {
-			"size": size,
-			"required_tags": required_tags,
-			"socket_name": socket_name,
-			"adjacent": adjacent,
-			"chosen_piece": chosen,
-			"filtered": filtered,
-			"origin_world": origin_world,
-			"terrain_index": terrain_index,
-			"socket_index": socket_index,
-			"queue": queue,
-			"library": library,
-			"rules_instance": generation_rules
-		}
-
-		# Apply all matching rules
-		var applicable_rules = []
-		for rule in generation_rules.rules:
-			if rule.matches(rule_context):
-				applicable_rules.append(rule)
-
-		var final_piece = rule_context.get("chosen_piece", null)
-		var all_pieces_to_remove = []
-		var all_sockets_for_queue = []
-		var should_skip = false
-
-		for rule in applicable_rules:
-			var rule_result = rule.apply(rule_context)
-
-			if rule_result.get("skip", false):
-				should_skip = true
-				break
-
-			var updated_piece = rule_result.get("updated_piece", null)
-			if updated_piece != null:
-				final_piece = updated_piece
-
-			if rule_result.has("pieces_to_remove"):
-				all_pieces_to_remove.append_array(rule_result.pieces_to_remove)
-
-			if rule_result.has("sockets_for_queue"):
-				all_sockets_for_queue.append_array(rule_result.sockets_for_queue)
-
-
-		var rule_result = {
-			"updated_piece": final_piece,
-			"pieces_to_remove": all_pieces_to_remove,
-			"sockets_for_queue": all_sockets_for_queue,
-			"skip": should_skip
-		}
-
-		# Clean up the original piece if it was replaced
-		if final_piece != chosen:
-			chosen.destroy()
-
-		if rule_result["skip"]:
-			if final_piece != null:
-				final_piece.destroy()
-			break  # Successfully "handled" this attempt
-
-		# Remove any pieces that rules requested to be removed (only instances; rules must not pass sockets)
-		for piece_to_remove in rule_result["pieces_to_remove"]:
+		for piece_to_remove in rule_result.get("pieces_to_remove", []):
 			if piece_to_remove is TerrainModuleInstance:
 				remove_piece(piece_to_remove)
+		for socket_to_queue in rule_result.get("sockets_for_queue", []):
+			queue.push(socket_to_queue, 0)
 
-		# Re-queue specific sockets that rules requested
-		for socket_to_queue in rule_result["sockets_for_queue"]:
-			queue.push(socket_to_queue, 0)  # Priority will be recalculated when processed
-
-		# Only place if we have a valid piece instance (rules may return updated_piece: null)
+		var final_piece: TerrainModuleInstance = rule_result.get("updated_piece", null)
 		if final_piece == null or not (final_piece is TerrainModuleInstance):
 			continue
-
 		var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(final_piece, attachment_socket_name)
-		var placed := add_piece(new_piece_socket, piece_socket)
-		if placed:
-			return true  # Successfully placed
-		else:
-			final_piece.destroy()
+		if add_piece(new_piece_socket, orig_piece_socket):
+			return true
+		final_piece.destroy()
+	return false
 
-	return false  # No successful placement
+
+func _build_rule_context(
+	orig_piece_socket: TerrainModuleSocket,
+	placement_context: Dictionary,
+	chosen_piece: TerrainModuleInstance,
+	filtered: TerrainModuleList
+) -> Dictionary:
+	return {
+		"size": placement_context.get("size", "point"),
+		"required_tags": placement_context.get("required_tags", TagList.new()),
+		"socket_name": orig_piece_socket.socket_name,
+		"adjacent": placement_context.get("adjacent", {}),
+		"chosen_piece": chosen_piece,
+		"filtered": filtered,
+		"origin_world": placement_context.get("origin_world", orig_piece_socket.get_socket_position()),
+		"terrain_index": terrain_index,
+		"socket_index": socket_index,
+		"queue": queue,
+		"library": library,
+		"rules_instance": generation_rules
+	}
+
+
+func _apply_generation_rules(rule_context: Dictionary, chosen_piece: TerrainModuleInstance) -> Dictionary:
+	var final_piece: TerrainModuleInstance = rule_context.get("chosen_piece", null)
+	var all_pieces_to_remove: Array = []
+	var all_sockets_for_queue: Array = []
+	var should_skip: bool = false
+	for rule in generation_rules.rules:
+		if not rule.matches(rule_context):
+			continue
+		var step_result: Dictionary = rule.apply(rule_context)
+		if step_result.get("skip", false):
+			should_skip = true
+			break
+		var updated_piece = step_result.get("updated_piece", null)
+		if updated_piece != null:
+			final_piece = updated_piece
+		if step_result.has("pieces_to_remove"):
+			all_pieces_to_remove.append_array(step_result.pieces_to_remove)
+		if step_result.has("sockets_for_queue"):
+			all_sockets_for_queue.append_array(step_result.sockets_for_queue)
+
+	if final_piece != chosen_piece:
+		chosen_piece.destroy()
+	return {
+		"updated_piece": final_piece,
+		"pieces_to_remove": all_pieces_to_remove,
+		"sockets_for_queue": all_sockets_for_queue,
+		"skip": should_skip
+	}
 
 
 func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> float:
@@ -252,22 +262,17 @@ func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> 
 
 func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 	for socket_name: String in piece.sockets.keys():
-		var fill_prob = float(piece.def.socket_fill_prob.get(socket_name, 0.0))
+		var fill_prob: float = _get_socket_fill_prob(piece, socket_name)
 		if fill_prob <= 0.0:
 			continue
 		var socket: Marker3D = piece.sockets[socket_name]
 		var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
-		# If this socket is already connected (another piece has a socket here), don't enqueue it.
-		# Exception: Ground pieces are allowed to overlap with non-ground pieces' sockets.
-		var existing_socket = socket_index.query_other(pos, piece)
-		if existing_socket != null:
-			var is_existing_ground = existing_socket.piece.def.tags.has("ground")
-			var is_current_ground = piece.def.tags.has("ground")
-			if is_current_ground == is_existing_ground:
+		var current_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+		var existing_socket: TerrainModuleSocket = socket_index.query_other(pos, piece)
+		if existing_socket != null and _sockets_same_layer(current_socket, existing_socket):
 				continue
 		var dist := get_dist_from_player(piece, socket_name)
-		var item: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
-		queue.push(item, dist)
+		queue.push(current_socket, dist)
 
 
 func register_piece(piece: TerrainModuleInstance, attachment_socket_name: String) -> void:
@@ -297,25 +302,9 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 
 
 func remove_piece(piece: TerrainModuleInstance) -> void:
-	# Remove from terrain index
 	terrain_index.remove(piece)
-
-	# Remove all sockets from position index
-	for socket_name in piece.sockets.keys():
-		var socket_pos = Helper.socket_world_pos(piece.transform, piece.sockets[socket_name], piece.root)
-		var snapped_pos = Helper.snap_vec3(socket_pos)
-		if socket_index.store.has(snapped_pos):
-			var sockets_at_pos = socket_index.store[snapped_pos]
-			sockets_at_pos = sockets_at_pos.filter(func(ps): return ps.piece != piece)
-			if sockets_at_pos.is_empty():
-				socket_index.store.erase(snapped_pos)
-			else:
-				socket_index.store[snapped_pos] = sockets_at_pos
-
-	# Remove from priority queue
+	socket_index.remove_piece(piece)
 	queue.remove_where(func(item): return item is TerrainModuleSocket and item.piece == piece)
-
-	# Remove from scene tree
 	if piece.root and piece.root.get_parent() == terrain_parent:
 		terrain_parent.remove_child(piece.root)
 		piece.root.queue_free()
@@ -438,21 +427,18 @@ func add_piece(
 	transform_to_socket(new_piece_socket, orig_piece_socket)
 
 	var new_piece: TerrainModuleInstance = new_piece_socket.piece
+	if new_piece.def.replace_existing:
+		var overlapping_pieces: Array = terrain_index.query_box(new_piece.aabb)
+		if orig_piece_socket.piece != null:
+			overlapping_pieces.erase(orig_piece_socket.piece)
+		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.tags.has("ground"))
+		for piece in overlapping_pieces:
+			remove_piece(piece)
+
 	var can_place_result := can_place(new_piece, orig_piece_socket.piece)
 
 	if not can_place_result:
 		return false
-
-		# If replace_existing is true, remove all overlapping pieces
-		if new_piece.def.replace_existing:
-			var overlapping_pieces: Array = terrain_index.query_box(new_piece.aabb)
-			if orig_piece_socket.piece != null:
-				overlapping_pieces.erase(orig_piece_socket.piece)
-			# Don't remove ground pieces
-			overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.tags.has("ground"))
-			
-			for piece in overlapping_pieces:
-				remove_piece(piece)
 
 	terrain_parent.add_child(new_piece.root)
 
@@ -485,10 +471,8 @@ func remove_linked_sockets_from_queue(new_piece_socket: TerrainModuleSocket) -> 
 		# Find any existing socket at this position (not belonging to our new piece)
 		var existing_socket := socket_index.query_other(socket_pos, new_piece)
 		if existing_socket != null:
-			# Only remove if they are the same layer (ground vs non-ground)
-			var is_existing_ground = existing_socket.piece.def.tags.has("ground")
-			var is_new_ground = new_piece.def.tags.has("ground")
-			if is_existing_ground == is_new_ground:
+			var new_socket: TerrainModuleSocket = TerrainModuleSocket.new(new_piece, socket_name)
+			if _sockets_same_layer(new_socket, existing_socket):
 				linked_sockets.append(existing_socket)
 
 	# Remove these linked sockets from the queue
@@ -502,8 +486,4 @@ func load_start_tile() -> TerrainModuleInstance:
 	initial_tile.set_transform(Transform3D.IDENTITY)
 	var root := initial_tile.create()
 	terrain_parent.add_child(root)
-
-	# For the start tile, we need to register it without an attachment point
-	register_piece(initial_tile, "")
-
 	return initial_tile

@@ -2,6 +2,16 @@ class_name Helper
 extends RefCounted
 
 const SNAP_POS: float = 0.01
+const SOCKET_ROTATION_90: Dictionary = {
+	"frontright": "backright",
+	"backright": "backleft",
+	"backleft": "frontleft",
+	"frontleft": "frontright",
+	"front": "right",
+	"right": "back",
+	"back": "left",
+	"left": "front"
+}
 
 # Node3D -> transform relative to a given root (no scene tree needed)
 static func to_root_tf(n: Node3D, root: Node3D) -> Transform3D:
@@ -277,52 +287,31 @@ static func get_attachment_socket_name(expansion_socket_name: String) -> String:
 
 
 static func rotate_adjacency(adjacency: Dictionary) -> Dictionary:
-	# Rotate adjacency by renaming socket keys according to the rotation rule
-	# Process longer substrings first as requested
-	var rotation_map = {
-		"frontright": "backright",
-		"backright": "backleft",
-		"backleft": "frontleft",
-		"frontleft": "frontright",
-		"front": "right",
-		"right": "back",
-		"back": "left",
-		"left": "front"
-	}
-
 	var rotated: Dictionary[String, TerrainModuleSocket] = {}
-
 	for socket_name in adjacency.keys():
-		var rotated_name = socket_name
-		# Apply rotations, checking longer matches first
-		for original in rotation_map.keys():
-			if original in rotated_name:
-				rotated_name = rotated_name.replace(original, rotation_map[original])
-				break  # Only apply first match
-
+		var rotated_name: String = rotate_name_with_map(socket_name, SOCKET_ROTATION_90)
 		rotated[rotated_name] = adjacency[socket_name]
-
 	return rotated
 
 
 static func rotate_socket_name(socket_name: String) -> String:
-	# Rotate a single socket name according to the rotation rule
-	var rotation_map = {
-		"frontright": "backright",
-		"backright": "backleft",
-		"backleft": "frontleft",
-		"frontleft": "frontright",
-		"front": "right",
-		"right": "back",
-		"back": "left",
-		"left": "front"
-	}
+	return rotate_name_with_map(socket_name, SOCKET_ROTATION_90)
 
-	var rotated_name = socket_name
-	# Apply rotations, checking longer matches first
-	for original in rotation_map.keys():
+
+static func rotate_name_with_map(socket_name: String, rotation_map: Dictionary) -> String:
+	var rotated_name: String = socket_name
+	var sorted_keys: Array = rotation_map.keys()
+	sorted_keys.sort_custom(func(a, b): return String(a).length() > String(b).length())
+	for original in sorted_keys:
 		if original in rotated_name:
-			rotated_name = rotated_name.replace(original, rotation_map[original])
-			break  # Only apply first match
-
+			rotated_name = rotated_name.replace(original, rotation_map.get(original, original))
+			break
 	return rotated_name
+
+
+static func sockets_same_layer(a: Variant, b: Variant) -> bool:
+	if a == null or b == null or a.piece == null or b.piece == null:
+		return false
+	var a_is_ground: bool = a.piece.def.tags.has("ground")
+	var b_is_ground: bool = b.piece.def.tags.has("ground")
+	return a_is_ground == b_is_ground

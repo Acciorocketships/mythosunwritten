@@ -52,7 +52,7 @@ func sort_terrain_modules() -> void:
 				modules_by_tag[tag_combined].library.append(module)
 
 
-func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket], attachment_socket_name: String = "") -> TagList:
+func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket], _attachment_socket_name: String = "") -> TagList:
 	var out: TagList = TagList.new()
 	for socket_name: String in adjacent.keys():
 		var piece_socket: TerrainModuleSocket = adjacent[socket_name]
@@ -81,12 +81,6 @@ func get_combined_distribution(adjacent: Dictionary[String, TerrainModuleSocket]
 		var adjacent_socket_name: String = piece_socket.socket_name
 		# Safe lookup for socket distributions
 		if not adjacent_piece.def.socket_tag_prob.has(adjacent_socket_name):
-			print(
-				"[TerrainModuleLibrary.get_combined_distribution] missing key '",
-				adjacent_socket_name,
-				"' in socket_tag_prob; available=",
-				adjacent_piece.def.socket_tag_prob.keys()
-			)
 			continue
 		var disti: Distribution = adjacent_piece.def.socket_tag_prob.get(
 			adjacent_socket_name,
@@ -101,19 +95,7 @@ func get_combined_distribution(adjacent: Dictionary[String, TerrainModuleSocket]
 	if dist_set.size() == 1:
 		return dist_set[0]
 
-	# Combine distributions by multiplying probabilities for overlapping tags
-	var combined: Dictionary[String, float] = {}
-	for disti: Distribution in dist_set:
-		for tag: String in disti.dist.keys():
-			var p: float = disti.prob(tag)
-			if combined.has(tag):
-				# Tag exists in multiple distributions, multiply probabilities
-				combined[tag] *= p
-			else:
-				# First time seeing this tag, set its probability
-				combined[tag] = p
-
-	var result: Distribution = Distribution.new(combined)
+	var result: Distribution = Distribution.new(_multiply_distributions(dist_set))
 	result.normalise()
 	return result
 
@@ -176,14 +158,7 @@ func intersection(sets: Array[TerrainModuleList]) -> TerrainModuleList:
 	sets = sets.duplicate()
 	if sets.is_empty():
 		return TerrainModuleList.new()
-	# pick smallest set
-	var min_i := 0
-	var min_size := INF
-	for i in range(sets.size()):
-		var s: TerrainModuleList = sets[i]
-		if s.size() < min_size:
-			min_size = s.size()
-			min_i = i
+	var min_i: int = _index_of_smallest(sets)
 	# populate out with smallest set
 	var out: Dictionary[TerrainModule, Variant] = {}
 	for element: TerrainModule in sets[min_i].library:
@@ -200,10 +175,11 @@ func intersection(sets: Array[TerrainModuleList]) -> TerrainModuleList:
 
 
 func convert_tag_list(tag_list: TagList, socket_name: String) -> TagList:
+	var out: TagList = TagList.new()
 	for i: int in range(tag_list.size()):
 		var tag: String = tag_list.tags[i]
-		tag_list.tags[i] = combined_tag_socket_name(tag, socket_name)
-	return tag_list
+		out.append(combined_tag_socket_name(tag, socket_name))
+	return out
 
 
 func combined_tag_socket_name(tag: String, socket_name: String) -> String:
@@ -213,3 +189,26 @@ func combined_tag_socket_name(tag: String, socket_name: String) -> String:
 		return "[%s]%s" % [socket_name, processed_tag]
 	else:
 		return tag
+
+
+func _multiply_distributions(dists: Array[Distribution]) -> Dictionary[String, float]:
+	var combined: Dictionary[String, float] = {}
+	for disti: Distribution in dists:
+		for tag: String in disti.dist.keys():
+			var p: float = disti.prob(tag)
+			if combined.has(tag):
+				combined[tag] *= p
+			else:
+				combined[tag] = p
+	return combined
+
+
+func _index_of_smallest(sets: Array[TerrainModuleList]) -> int:
+	var min_i: int = 0
+	var min_size: int = sets[0].size()
+	for i in range(1, sets.size()):
+		var set_size: int = sets[i].size()
+		if set_size < min_size:
+			min_size = set_size
+			min_i = i
+	return min_i

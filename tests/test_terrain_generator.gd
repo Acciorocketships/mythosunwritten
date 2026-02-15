@@ -212,6 +212,30 @@ func test_can_place_false_when_overlap_exists():
 	assert_false(gen.can_place(new_piece, null))
 
 
+func test_can_place_true_for_ground_even_with_overlap():
+	var gen: Variant = _new_generator()
+	var regular: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
+	var regular_piece: TerrainModuleInstance = _spawn_piece(regular)
+	gen.terrain_index.insert(regular_piece)
+
+	var ground_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
+	ground_mod.tags = TagList.new(["ground"])
+	var ground_piece: TerrainModuleInstance = _spawn_piece(ground_mod)
+	assert_true(gen.can_place(ground_piece, null))
+
+
+func test_can_place_true_for_replace_existing_even_with_overlap():
+	var gen: Variant = _new_generator()
+	var regular: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
+	var regular_piece: TerrainModuleInstance = _spawn_piece(regular)
+	gen.terrain_index.insert(regular_piece)
+
+	var replacement_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
+	replacement_mod.replace_existing = true
+	var replacement_piece: TerrainModuleInstance = _spawn_piece(replacement_mod)
+	assert_true(gen.can_place(replacement_piece, null))
+
+
 func test_transform_to_socket_aligns_position():
 	var gen: Variant = _new_generator()
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
@@ -375,8 +399,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 	gen.library.modules_by_tag.clear()
 	gen.library.modules_by_tag["24x24"] = TerrainModuleList.new([mod])
 
-	# For test pieces, use the ground tile which has all the expected sockets
-	var ground_mod: TerrainModule = TerrainModuleDefinitions.load_ground_tile()
+	# For test pieces, use a controlled single-module library.
 	var test_lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
 	gen.add_child(test_lib)
 	gen.test_pieces_library = test_lib
@@ -440,6 +463,104 @@ func test_add_piece_checks_can_place_after_alignment():
 	assert_true(ok, "add_piece placed after alignment")
 	# AFTER alignment, AABBs must not overlap
 	assert_false(cand.aabb.intersects(start.aabb), "postcondition: no overlap after placement")
+
+
+func test_add_piece_to_queue_skips_nonfillable_sockets():
+	var gen: Variant = _new_generator()
+	var mod: TerrainModule = _make_module(
+		Vector3(2, 2, 2),
+		{
+			"bottom": Vector3.ZERO,
+			"right": Vector3(1, 0, 0),
+			"left": Vector3(-1, 0, 0)
+		}
+	)
+	mod.socket_fill_prob["bottom"] = 0.0
+	mod.socket_fill_prob["right"] = 1.0
+	mod.socket_fill_prob["left"] = 1.0
+	var piece: TerrainModuleInstance = _spawn_piece(mod)
+
+	gen.add_piece_to_queue(piece)
+	assert_eq(gen.queue.size(), 2)
+	for e in gen.queue.heap:
+		var it: TerrainModuleSocket = e["item"]
+		assert_ne(it.socket_name, "bottom")
+
+
+func test_remove_piece_cleans_indices_queue_and_scene():
+	var gen: Variant = _new_generator()
+	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
+	var piece: TerrainModuleInstance = _spawn_piece(mod)
+	gen.terrain_parent.add_child(piece.root)
+	gen.register_piece(piece, "")
+	gen.add_piece_to_queue(piece)
+	assert_true(gen.queue.size() > 0)
+
+	gen.remove_piece(piece)
+
+	var results: Array = gen.terrain_index.query_box(piece.aabb)
+	assert_false(results.has(piece))
+
+	for socket_name in piece.sockets.keys():
+		var pos: Vector3 = Helper.socket_world_pos(piece.transform, piece.sockets[socket_name], piece.root)
+		var hit: TerrainModuleSocket = gen.socket_index.query_other(pos, piece)
+		assert_true(hit == null)
+
+	for entry in gen.queue.heap:
+		var item = entry["item"]
+		if item is TerrainModuleSocket:
+			assert_ne(item.piece, piece)
+
+	assert_eq(gen.terrain_parent.get_child_count(), 0)
+
+
+func test_remove_linked_sockets_from_queue_removes_connected_socket():
+	var gen: Variant = _new_generator()
+	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
+
+	var start: TerrainModuleInstance = _spawn_piece(mod)
+	gen.terrain_parent.add_child(start.root)
+	gen.register_piece(start, "")
+	gen.add_piece_to_queue(start)
+
+	var cand: TerrainModuleInstance = _spawn_piece(mod)
+	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(cand, "bottom")
+	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(start, "left")
+
+	var ok: bool = gen.add_piece(new_ps, orig_ps)
+	assert_true(ok)
+
+	var found_linked_socket: bool = false
+	for entry in gen.queue.heap:
+		var item: TerrainModuleSocket = entry["item"]
+		if item.piece == start and item.socket_name == "left":
+			found_linked_socket = true
+	assert_false(found_linked_socket)
+
+
+func test_add_piece_replace_existing_removes_overlapping_non_ground():
+	var gen: Variant = _new_generator()
+	var base_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"bottom": Vector3.ZERO})
+	var start: TerrainModuleInstance = _spawn_piece(base_mod)
+	gen.terrain_parent.add_child(start.root)
+	gen.register_piece(start, "")
+
+	var blocker: TerrainModuleInstance = _spawn_piece(base_mod)
+	gen.terrain_parent.add_child(blocker.root)
+	gen.register_piece(blocker, "")
+	assert_true(gen.terrain_index.query_box(blocker.aabb).has(blocker))
+
+	var replacement_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"bottom": Vector3.ZERO})
+	replacement_mod.replace_existing = true
+	var replacement_piece: TerrainModuleInstance = replacement_mod.spawn()
+	replacement_piece.create()
+	_pieces_to_destroy.append(replacement_piece)
+
+	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(replacement_piece, "bottom")
+	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(start, "bottom")
+	var ok: bool = gen.add_piece(new_ps, orig_ps)
+	assert_true(ok)
+	assert_false(gen.terrain_index.query_box(blocker.aabb).has(blocker))
 
 
 class _FakeSingleLib:

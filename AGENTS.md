@@ -55,7 +55,7 @@
  - Seed a distance-priority queue with start tile sockets having `socket_fill_prob > 0`.
 - **load_terrain loop**
  - Pop nearest socket; if distance > `RENDER_RANGE`, requeue and exit for this frame (`MAX_LOAD_PER_STEP` caps work).
- - Skip if the socket position already has a connection (use `PositionIndex.query_other` with the current piece to avoid self-hits).
+ - Skip if the socket position already has a same-layer connection (ground-ground or non-ground/non-ground).
  - Roll `socket_fill_prob` to decide sparsity.
  - Sample a size from `socket_size[socket_name]`.
  - Compute adjacency via `get_adjacent_from_size`:
@@ -65,13 +65,15 @@
 - **Placement**
  - `transform_to_socket` aligns in XZ by rotating yaw so vectors (piece center → socket) oppose, then translates so sockets coincide.
  - `can_place` checks overlap via `TerrainIndex.query_box(aabb)`. Ground pieces and `replace_existing` pieces have special overlap rules.
- - `add_piece` assumes the instance is created; on success, add to `terrain_parent`, register sockets, enqueue new sockets.
+ - `add_piece` applies `replace_existing` by removing overlapping non-ground pieces before final placement; on success, add to `terrain_parent`, register sockets, enqueue new sockets.
+ - `_process_socket` is split into staged helpers (`_is_socket_connected`, `_resolve_placement_context`, `_try_place_with_rules`) so the main loop stays short and reusable.
 
 ## Spatial indices
 
 - `PositionIndex` (Node):
  - Stores multiple sockets per snapped position; keyed by `Helper.snap_vec3(world_pos)`.
  - `insert(ps: TerrainModuleSocket)`: uses `ps.get_socket_position()` (off-tree safe). All sockets are indexed, including those with `fill_prob = 0`, so they can act as adjacency barriers.
+ - `remove_piece(piece: TerrainModuleInstance)`: removes all sockets for a piece from the index.
 - `TerrainIndex` (Object):
  - Hierarchical index for AABB overlap tests/culling.
  - `query_box` prunes aggressively before AABB checks.
@@ -101,7 +103,7 @@
 
 ## Terrain Generation Rules (`scripts/terrain/TerrainGenerationRuleLibrary.gd`)
 
-- Each rule lives in its own file under `scripts/terrain/rules/` (e.g. `LevelContradictionRule.gd`). `TerrainGenerationRuleLibrary.gd` instantiates rule classes in `_init()` and appends them to `rules`.
+- Each rule lives in its own file under `scripts/terrain/rules/` (e.g. `LevelContradictionRule.gd`). `TerrainGenerationRuleLibrary.gd` instantiates rule classes in `_init()` (currently `LevelContradictionRule`) and appends them to `rules`.
 - **Style**: Prefer instantiating rule classes directly (e.g. `LevelContradictionRule.new()`) rather than `preload()`ing scripts; rule scripts use `class_name` so they are globally available.
 - Rule-specific helpers belong in the rule file (e.g. static or instance methods on the rule class).
 - Rules can modify or skip placements based on complex logic (e.g., `LevelContradictionRule` avoids invalid level tile configurations).
@@ -138,7 +140,7 @@
  - `get_attachment_socket_name(expansion_socket_name)`: determines attachment socket based on expansion socket.
  - `rotate_adjacency(adjacency)`: rotates adjacency socket names for alternative placement attempts.
 - `PositionIndex`
- - `insert(ps)`, `query(pos)`, `query_other(pos, piece)`.
+ - `insert(ps)`, `query(pos)`, `query_other(pos, piece)`, `remove_piece(piece)`.
 - `TerrainGenerator`
  - `_ready()`, `load_terrain()`, `get_adjacent_from_size(socket, size)`, `transform_to_socket(new_ps, orig_ps)`, `add_piece(new_ps, orig_ps)`, `can_place(piece)`.
 
