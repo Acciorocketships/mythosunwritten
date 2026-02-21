@@ -246,6 +246,12 @@ static func load_level_middle_tile() -> TerrainModule:
 		TagList.new(["level", "level-center", "24x24"])
 	)
 
+static func load_level_inner_corner_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCorner.tscn",
+		TagList.new(["level", "level-inner-corner", "24x24"])
+	)
+
 
 static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModule:
 	var scene = load(scene_path)
@@ -273,6 +279,10 @@ static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModul
 		"bottomback": 0.0,
 		"bottomleft": 0.0,
 		"bottomright": 0.0,
+		"frontright": 0.0,
+		"frontleft": 0.0,
+		"backright": 0.0,
+		"backleft": 0.0,
 		"topcenter": 0.0
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {

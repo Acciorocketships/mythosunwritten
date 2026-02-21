@@ -279,6 +279,14 @@ static func get_attachment_socket_name(expansion_socket_name: String) -> String:
 			return "right"
 		"right":
 			return "left"
+		"frontright":
+			return "backleft"
+		"backright":
+			return "frontleft"
+		"backleft":
+			return "frontright"
+		"frontleft":
+			return "backright"
 		"bottom":
 			return "topcenter"
 		_:

@@ -2,13 +2,16 @@ class_name LevelEdgeRule
 extends TerrainGenerationRule
 
 const CARDINAL_SOCKETS: Array[String] = ["front", "right", "back", "left"]
+const DIAGONAL_SOCKETS: Array[String] = ["frontright", "backright", "backleft", "frontleft"]
+
 const CANONICAL_MISSING_BY_TAG: Dictionary[String, Array] = {
 	"level-center": [],
 	"level-side": ["front"],
 	"level-line": ["front", "back"],
 	"level-corner": ["front", "left"],
 	"level-peninsula": ["front", "left", "right"],
-	"level-island": ["front", "right", "back", "left"]
+	"level-island": ["front", "right", "back", "left"],
+	"level-inner-corner": ["frontleft"]
 }
 static var module_by_level_tag: Dictionary = {}
 
@@ -49,22 +52,40 @@ func _missing_sockets_for_piece(
 	socket_index: PositionIndex
 ) -> Array[String]:
 	var missing: Array[String] = []
+	# Check cardinal missing
 	for socket_name in CARDINAL_SOCKETS:
-		if not piece.sockets.has(socket_name):
-			continue
-		var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
-		var other: TerrainModuleSocket = socket_index.query_other(
-			piece_socket.get_socket_position(),
-			piece
-		)
-		var has_level_connection: bool = (
-			other != null
-			and other.piece != null
-			and other.piece.def.tags.has("level")
-		)
-		if not has_level_connection:
+		if not _has_level_connection(piece, socket_name, socket_index):
 			missing.append(socket_name)
+	
+	# If no cardinal missing, check diagonals for inner corners
+	if missing.is_empty():
+		for socket_name in DIAGONAL_SOCKETS:
+			if not _has_level_connection(piece, socket_name, socket_index):
+				missing.append(socket_name)
+				# Only one inner corner per tile for now; if we have multiple, 
+				# we might need more complex variants (LevelInCornerDiag, etc.)
+				# but the canonical system handles one set of missing sockets.
+				break
 	return missing
+
+
+func _has_level_connection(
+	piece: TerrainModuleInstance,
+	socket_name: String,
+	socket_index: PositionIndex
+) -> bool:
+	if not piece.sockets.has(socket_name):
+		return false
+	var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+	var other: TerrainModuleSocket = socket_index.query_other(
+		piece_socket.get_socket_position(),
+		piece
+	)
+	return (
+		other != null
+		and other.piece != null
+		and other.piece.def.tags.has("level")
+	)
 
 
 func _get_level_neighbors(
@@ -73,7 +94,8 @@ func _get_level_neighbors(
 ) -> Array[TerrainModuleInstance]:
 	var neighbors: Array[TerrainModuleInstance] = []
 	var seen: Dictionary = {}
-	for socket_name in CARDINAL_SOCKETS:
+	# Check cardinal and diagonal neighbors
+	for socket_name in CARDINAL_SOCKETS + DIAGONAL_SOCKETS:
 		if not piece.sockets.has(socket_name):
 			continue
 		var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
@@ -149,7 +171,10 @@ func _tag_for_missing_sockets(missing_sockets: Array[String]) -> String:
 		0:
 			tag = "level-center"
 		1:
-			tag = "level-side"
+			if CARDINAL_SOCKETS.has(missing_sockets[0]):
+				tag = "level-side"
+			else:
+				tag = "level-inner-corner"
 		2:
 			var opp: bool = (
 				(missing_sockets.has("front") and missing_sockets.has("back"))
@@ -171,6 +196,7 @@ func _get_module_for_level_tag(level_tag: String) -> TerrainModule:
 			"level-corner": TerrainModuleDefinitions.load_level_corner_tile(),
 			"level-line": TerrainModuleDefinitions.load_level_line_tile(),
 			"level-peninsula": TerrainModuleDefinitions.load_level_peninsula_tile(),
-			"level-island": TerrainModuleDefinitions.load_level_island_tile()
+			"level-island": TerrainModuleDefinitions.load_level_island_tile(),
+			"level-inner-corner": TerrainModuleDefinitions.load_level_inner_corner_tile()
 		}
 	return module_by_level_tag.get(level_tag, null)
