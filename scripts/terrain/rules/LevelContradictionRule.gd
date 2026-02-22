@@ -9,8 +9,7 @@ static func has_contradictions(piece: TerrainModuleInstance, _attachment_socket_
 			var adj_socket: TerrainModuleSocket = adjacent[adj_socket_name]
 			if adj_socket != null and adj_socket.piece.def.tags.has("level"):
 				var piece_fill_prob: float = _socket_fill_prob(piece, adj_socket_name)
-				var attach_name: String = Helper.get_attachment_socket_name(adj_socket_name)
-				var adj_fill_prob: float = _socket_fill_prob(adj_socket.piece, attach_name)
+				var adj_fill_prob: float = _socket_fill_prob(adj_socket.piece, adj_socket.socket_name)
 				if piece_fill_prob <= 0.0 and adj_fill_prob > 0.0:
 					return true
 

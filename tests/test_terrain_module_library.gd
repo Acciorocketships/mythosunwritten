@@ -54,6 +54,27 @@ func test_get_required_tags_ignores_unknown_adjacent_socket_name():
 	var tags: TagList = lib.get_required_tags(adj)
 	assert_true(tags.has("ground"), "still includes 'ground' from valid socket")
 
+
+func test_get_required_tags_uses_adjacent_key_as_socket_context():
+	var lib = _make_library()
+	var module := TerrainModule.new(
+		null,
+		AABB(),
+		TagList.new(["dummy"]),
+		{},
+		[],
+		{},
+		{"front": TagList.new(["!path"])},
+		{},
+		{},
+		false
+	)
+	var piece = module.spawn()
+	var adj: Dictionary[String, TerrainModuleSocket] = {}
+	adj["bottomleft"] = TerrainModuleSocket.new(piece, "front")
+	var tags: TagList = lib.get_required_tags(adj)
+	assert_true(tags.has("[bottomleft]path"), "uses adjacency key for !tag socket context")
+
 func test_convert_tag_list_exclamation_converts_with_socket_name():
 	var lib = _make_library()
 	var tl = TagList.new(["!path", "ground"])

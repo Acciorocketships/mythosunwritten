@@ -50,7 +50,10 @@ func sort_terrain_modules() -> void:
 				modules_by_tag[tag_combined].library.append(module)
 
 
-func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket], _attachment_socket_name: String = "") -> TagList:
+func get_required_tags(
+	adjacent: Dictionary[String, TerrainModuleSocket],
+	_attachment_socket_name: String = ""
+) -> TagList:
 	var out: TagList = TagList.new()
 	for socket_name: String in adjacent.keys():
 		var piece_socket: TerrainModuleSocket = adjacent[socket_name]
@@ -65,8 +68,7 @@ func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket], _attac
 			adjacent_socket_name,
 			TagList.new()
 		)
-		var convert_attachment_name = Helper.get_attachment_socket_name(socket_name)
-		var tag_list = convert_tag_list(adjacent_required_tags, convert_attachment_name)
+		var tag_list = convert_tag_list(adjacent_required_tags, socket_name)
 		out = out.union(tag_list)
 	return out
 
@@ -185,8 +187,7 @@ func combined_tag_socket_name(tag: String, socket_name: String) -> String:
 	if tag[0] == "!":
 		processed_tag = tag.substr(1)
 		return "[%s]%s" % [socket_name, processed_tag]
-	else:
-		return tag
+	return tag
 
 
 func _multiply_distributions(dists: Array[Distribution]) -> Dictionary[String, float]:

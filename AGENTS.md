@@ -116,6 +116,7 @@
 - **Style**: Prefer instantiating rule classes directly (e.g. `LevelContradictionRule.new()`) rather than `preload()`ing scripts; rule scripts use `class_name` so they are globally available.
 - Rule-specific helpers belong in the rule file (e.g. static or instance methods on the rule class).
 - Rules can modify or skip placements based on complex logic (e.g., `LevelContradictionRule` avoids invalid level tile configurations).
+- `LevelContradictionRule` compares fillability using the actual touching socket names from adjacency (do not remap through expansion attachment logic).
 - Rules can request removal of existing pieces or re-queueing of sockets.
 - Rules return `piece_updates` (Dictionary: `TerrainModuleInstance -> TerrainModuleInstance|nil`) so one rule can retile/remove multiple pieces in one pass.
 - `TerrainGenerator` applies `piece_updates` after successful placement, replacing/removing already-placed pieces and re-registering replacements.
