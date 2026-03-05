@@ -49,6 +49,7 @@ func _init(
 	assert_distributions_normalized(socket_size, "socket_size")
 	assert_distributions_normalized(socket_tag_prob, "socket_tag_prob")
 	assert_probabilities_in_range(socket_fill_prob, "socket_fill_prob")
+	assert_socket_fill_prob_matches_scene(scene, socket_fill_prob, "socket_fill_prob")
 
 func spawn() -> TerrainModuleInstance:
 	return TerrainModuleInstance.new(self)
@@ -103,3 +104,44 @@ static func assert_probabilities_in_range(probs: Dictionary, label: String = "")
 			"Probability out of range for key '%s' (%s): p=%s"
 			% [k, label, str(p)]
 		)
+
+
+static func assert_socket_fill_prob_matches_scene(
+	scene_ref: PackedScene,
+	fill_probs: Dictionary,
+	label: String = ""
+) -> void:
+	var socket_names: Array[String] = _scene_socket_names(scene_ref)
+	if socket_names.is_empty():
+		return
+
+	for socket_name: String in socket_names:
+		assert(
+			fill_probs.has(socket_name),
+			"Missing socket_fill_prob entry for socket '%s' (%s)"
+			% [socket_name, label]
+		)
+
+	for authored_socket: String in fill_probs.keys():
+		assert(
+			socket_names.has(authored_socket),
+			"Unknown socket_fill_prob entry '%s' not present in scene (%s)"
+			% [authored_socket, label]
+		)
+
+
+static func _scene_socket_names(scene_ref: PackedScene) -> Array[String]:
+	var out: Array[String] = []
+	if scene_ref == null or not scene_ref.can_instantiate():
+		return out
+	var root_node: Node = scene_ref.instantiate()
+	var sockets_node: Node = root_node.get_node_or_null("Sockets")
+	if sockets_node == null:
+		root_node.free()
+		return out
+	for child in sockets_node.get_children():
+		var marker: Marker3D = child as Marker3D
+		if marker != null:
+			out.append(String(marker.name))
+	root_node.free()
+	return out

@@ -109,8 +109,11 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 
 
 func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	if not piece.def.socket_fill_prob.has(socket_name):
-		return 0.0
+	assert(
+		piece.def.socket_fill_prob.has(socket_name),
+		"Missing socket_fill_prob entry for socket '%s' on module %s"
+		% [socket_name, str(piece.def.tags.tags)]
+	)
 	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
 	if fill_prob == null:
 		return 0.0
@@ -130,8 +133,11 @@ func _is_socket_blocking(piece_socket: TerrainModuleSocket) -> bool:
 		return false
 	var socket_name: String = piece_socket.socket_name
 	var fill_probs: Dictionary = piece_socket.piece.def.socket_fill_prob
-	if not fill_probs.has(socket_name):
-		return false # setting this to false made lag even worse
+	assert(
+		fill_probs.has(socket_name),
+		"Missing socket_fill_prob entry for socket '%s' on module %s"
+		% [socket_name, str(piece_socket.piece.def.tags.tags)]
+	)
 	var fill_prob: Variant = fill_probs[socket_name]
 	if fill_prob == null:
 		return false

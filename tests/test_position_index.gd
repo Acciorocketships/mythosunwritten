@@ -60,7 +60,19 @@ func _make_scene_with_socket(socket_name: String, local_pos: Vector3) -> PackedS
 
 func _make_piece(world_pos: Vector3, socket_name: String = "main", socket_local: Vector3 = Vector3.ZERO) -> TerrainModuleInstance:
 	var scene: PackedScene = _make_scene_with_socket(socket_name, socket_local)
-	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new(), {}, [], {}, {}, {}, {}, false)
+	var fill_prob: Dictionary = {socket_name: 1.0}
+	var mod: TerrainModule = TerrainModule.new(
+		scene,
+		AABB(),
+		TagList.new(),
+		{},
+		[],
+		{},
+		{},
+		fill_prob,
+		{},
+		false
+	)
 	var piece: TerrainModuleInstance = mod.spawn()
 	piece.set_transform(Transform3D(Basis.IDENTITY, world_pos))
 	piece.create()

@@ -120,18 +120,23 @@ Observed debug map:
 - Result: removed runtime constructor errors from `float(null)`.
 - Status: **successful**.
 
-## Open Decision Needed
+## Decision (March 2026)
 
-Define final semantics and authoring policy:
+Final policy is now explicit and enforced:
 
-1. Should missing key always be treated as `null`, or should missing be invalid?
-2. Should all sockets be explicitly authored in `socket_fill_prob` to avoid implicit behavior?
-3. Should `topcenter` on level tiles remain blocking (`0`) or become non-blocking (`null`)?
+1. Missing `socket_fill_prob` keys are invalid.
+2. Every scene socket must have an explicit `socket_fill_prob` entry.
+3. `topcenter` on level tiles remains explicit `0` (non-expandable and blocking).
+
+Validation now fails fast at `TerrainModule` construction when:
+
+- a scene socket is missing from `socket_fill_prob`, or
+- `socket_fill_prob` contains a key that is not present on the scene.
 
 ## Recommended Next Actions
 
-1. Make `socket_fill_prob` explicit for all sockets on all level variants.
-2. Enforce via validation test (fail if any level socket is missing from `socket_fill_prob`).
-3. Keep only intentional blockers as explicit `0`.
-4. Use `null` only for adjacency-only sockets (diagonals and similar).
+1. Keep `socket_fill_prob` explicit for all sockets on all modules.
+2. Keep only intentional blockers as explicit `0`.
+3. Use `null` for non-expandable sockets that must not block adjacency.
+4. Treat validation failures as module authoring errors and fix definitions immediately.
 

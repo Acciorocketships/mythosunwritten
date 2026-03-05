@@ -49,7 +49,7 @@ static func load_ground_tile() -> TerrainModule:
 		"right": TagList.new(["ground", "side"]),
 		"left": TagList.new(["ground", "side"]),
 	}
-	var socket_fill_prob: Dictionary[String, float] = {
+	var socket_fill_prob: Dictionary[String, Variant] = {
 		"front": 1.0,
 		"back": 1.0,
 		"right": 1.0,
@@ -63,6 +63,7 @@ static func load_ground_tile() -> TerrainModule:
 		"topbackright": top_fill_prob_corners,
 		"topbackleft": top_fill_prob_corners,
 		"topcenter": top_fill_prob_center,
+		"bottom": null,
 	}
 
 	var socket_tag_prob: Dictionary[String, Distribution] = {
@@ -106,7 +107,11 @@ static func load_grass_tile() -> TerrainModule:
 		bb,
 		tags,
 		{},
-		visual_variants
+		visual_variants,
+		{},
+		{},
+		{"bottom": null},
+		{}
 	)
 
 static func load_bush_tile() -> TerrainModule:
@@ -121,7 +126,11 @@ static func load_bush_tile() -> TerrainModule:
 		bb,
 		tags,
 		{},
-		visual_variants
+		visual_variants,
+		{},
+		{},
+		{"bottom": null},
+		{}
 	)
 
 static func load_rock_tile() -> TerrainModule:
@@ -135,7 +144,11 @@ static func load_rock_tile() -> TerrainModule:
 		bb,
 		tags,
 		{},
-		visual_variants
+		visual_variants,
+		{},
+		{},
+		{"bottom": null},
+		{}
 	)
 
 static func load_tree_tile() -> TerrainModule:
@@ -149,7 +162,11 @@ static func load_tree_tile() -> TerrainModule:
 		bb,
 		tags,
 		{},
-		visual_variants
+		visual_variants,
+		{},
+		{},
+		{"bottom": null},
+		{}
 	)
 
 static func load_8x8x2_tile() -> TerrainModule:
@@ -162,8 +179,13 @@ static func load_8x8x2_tile() -> TerrainModule:
 		"topcenter": Distribution.new({"point": 1.0}),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
-	var socket_fill_prob: Dictionary[String, float] = {
+	var socket_fill_prob: Dictionary[String, Variant] = {
 		"topcenter": 0.5,
+		"bottom": null,
+		"topfrontright": null,
+		"topfrontleft": null,
+		"topbackright": null,
+		"topbackleft": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {"topcenter": Distribution.new({"grass": 1.0})}
 
@@ -191,8 +213,13 @@ static func load_12x12x2_tile() -> TerrainModule:
 		"topcenter": Distribution.new({"8x8": 1.0}),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
-	var socket_fill_prob: Dictionary[String, float] = {
+	var socket_fill_prob: Dictionary[String, Variant] = {
 		"topcenter": 0.3,
+		"bottom": null,
+		"topfrontright": null,
+		"topfrontleft": null,
+		"topbackright": null,
+		"topbackleft": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"topcenter": Distribution.new({"hill": 1.0}),
@@ -208,7 +235,7 @@ static func load_12x12x2_tile() -> TerrainModule:
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob
-		)
+	)
 
 static func load_level_side_tile() -> TerrainModule:
 	return _build_level_tile(
@@ -326,11 +353,12 @@ static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModul
 		"right": TagList.new(["level"]),
 		"bottom": TagList.new(["ground"])
 	}
-	var socket_fill_prob: Dictionary[String, Variant] = {
+	var socket_fill_prob_policy: Dictionary = {
 		"front": 0.3,
 		"back": 0.3,
 		"left": 0.3,
 		"right": 0.3,
+		"bottom": null,
 		"bottomfront": 0.0,
 		"bottomback": 0.0,
 		"bottomleft": 0.0,
@@ -340,8 +368,17 @@ static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModul
 		"frontleft": null,
 		"backright": null,
 		"backleft": null,
-		"topcenter": 0.0
+		"topcenter": 0.0,
+		"topfront": null,
+		"topback": null,
+		"topright": null,
+		"topleft": null,
+		"topfrontright": null,
+		"topfrontleft": null,
+		"topbackright": null,
+		"topbackleft": null,
 	}
+	var socket_fill_prob: Dictionary[String, Variant] = _socket_fill_prob_for_scene(scene, socket_fill_prob_policy)
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"front": null,
 		"back": null,
@@ -362,6 +399,35 @@ static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModul
 	)
 
 
+static func _socket_fill_prob_for_scene(scene: PackedScene, policy: Dictionary) -> Dictionary[String, Variant]:
+	var out: Dictionary[String, Variant] = {}
+	var socket_names: Array[String] = _scene_socket_names(scene)
+	for socket_name in socket_names:
+		assert(
+			policy.has(socket_name),
+			"Missing socket_fill_prob policy entry for scene socket '%s'" % socket_name
+		)
+		out[socket_name] = policy[socket_name]
+	return out
+
+
+static func _scene_socket_names(scene: PackedScene) -> Array[String]:
+	var out: Array[String] = []
+	if scene == null or not scene.can_instantiate():
+		return out
+	var root_node: Node = scene.instantiate()
+	var sockets_node: Node = root_node.get_node_or_null("Sockets")
+	if sockets_node == null:
+		root_node.free()
+		return out
+	for child in sockets_node.get_children():
+		var marker: Marker3D = child as Marker3D
+		if marker != null:
+			out.append(String(marker.name))
+	root_node.free()
+	return out
+
+
 ### Test Pieces for Different Sizes ###
 
 static func create_8x8_test_piece() -> TerrainModule:
@@ -376,9 +442,13 @@ static func create_8x8_test_piece() -> TerrainModule:
 		"topcenter": Distribution.new({"point": 1.0}),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
-	var socket_fill_prob: Dictionary[String, float] = {
+	var socket_fill_prob: Dictionary[String, Variant] = {
 		"bottom": 0.0,  # Test pieces don't expand
 		"topcenter": 0.0,
+		"topfrontright": null,
+		"topfrontleft": null,
+		"topbackright": null,
+		"topbackleft": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {}
 
@@ -408,9 +478,13 @@ static func create_12x12_test_piece() -> TerrainModule:
 		"topcenter": Distribution.new({"8x8": 1.0}),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
-	var socket_fill_prob: Dictionary[String, float] = {
+	var socket_fill_prob: Dictionary[String, Variant] = {
 		"bottom": 0.0,  # Test pieces don't expand
 		"topcenter": 0.0,
+		"topfrontright": null,
+		"topfrontleft": null,
+		"topbackright": null,
+		"topbackleft": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {}
 
@@ -451,11 +525,12 @@ static func create_24x24_test_piece() -> TerrainModule:
 		"topbackleft": Distribution.new({"12x12": 1.0}),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
-	var socket_fill_prob: Dictionary[String, float] = {
+	var socket_fill_prob: Dictionary[String, Variant] = {
 		"front": 1.0,  # Test pieces need fill_prob > 0 for adjacency detection
 		"back": 1.0,
 		"left": 1.0,
 		"right": 1.0,
+		"bottom": null,
 		"topcenter": 0.0,  # Only level tiles expand from these
 		"topfront": 0.0,
 		"topback": 0.0,

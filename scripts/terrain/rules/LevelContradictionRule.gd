@@ -103,8 +103,11 @@ static func _append_conflicts_for_piece_state(
 
 
 static func _socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	if not piece.def.socket_fill_prob.has(socket_name):
-		return 0.0
+	assert(
+		piece.def.socket_fill_prob.has(socket_name),
+		"Missing socket_fill_prob entry for socket '%s' on module %s"
+		% [socket_name, str(piece.def.tags.tags)]
+	)
 	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
 	if fill_prob == null:
 		return 0.0

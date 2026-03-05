@@ -104,7 +104,7 @@
  - `> 0`: socket can expand and is non-forbidden for adjacency.
  - `0`: socket cannot expand and is considered blocking/forbidden in adjacency checks.
  - `null`: socket cannot expand but is **non-blocking** in adjacency checks (use for adjacency-only sockets such as level diagonals).
- - Missing `socket_fill_prob` entry behaves like `null`: non-expandable and non-blocking in forbidden-adjacency checks.
+ - Missing `socket_fill_prob` entries are invalid and must fail module validation. Every socket in a module scene must have an explicit `socket_fill_prob` entry.
 - Only index/enqueue sockets that are not already connected (determine connectivity by checking all hits at the position, not only the first).
 - Priority queue uses distance to the player; `RENDER_RANGE` and `MAX_LOAD_PER_STEP` throttle work.
 
@@ -179,6 +179,7 @@
 
 - **Avoid tag/socket specific logic**: Never add conditional logic in `TerrainGenerator` based on specific tags, socket names, or piece types. All logic should be generalizable.
 - **No fallbacks**: Avoid coding "fallback" behaviors. The system should work correctly without special case handling.
+- **No backward compatibility paths**: When behavior or schema changes, update all call sites/tests/data in the repo to the new contract immediately instead of keeping legacy compatibility branches.
 - **Clean and succinct**: Design the architecture to minimize special handling and edge cases. Keep code clean and maintainable.
 
 ## Future plans

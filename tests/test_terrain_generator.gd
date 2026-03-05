@@ -91,6 +91,8 @@ func after_each() -> void:
 				n.get_parent().remove_child(n)
 			n.free()
 	_nodes_to_free.clear()
+	# Reset static module cache to release loaded level resources between tests.
+	LevelEdgeRule.module_by_level_tag.clear()
 
 # Helpers
 func _make_scene_with_sockets(
@@ -148,12 +150,22 @@ func _make_scene_with_sockets(
 
 func _make_module(size: Vector3, pos_by_name: Dictionary[String, Vector3]) -> TerrainModule:
 	var scene: PackedScene = _make_scene_with_sockets(pos_by_name, size)
-	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new(), {}, [], {}, {}, {}, {}, false)
-	# Ensure sockets are considered fillable in tests
+	# Ensure sockets are considered fillable in tests.
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
 		fill[n] = 1.0
-	mod.socket_fill_prob = fill
+	var mod: TerrainModule = TerrainModule.new(
+		scene,
+		AABB(),
+		TagList.new(),
+		{},
+		[],
+		{},
+		{},
+		fill,
+		{},
+		false
+	)
 	# Ensure sockets are considered size-capable by get_adjacent_from_size() in tests.
 	var sizes: Dictionary[String, Distribution] = {}
 	for n: String in fill.keys():
@@ -652,11 +664,21 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 	}
 
 	var scene: PackedScene = _make_scene_with_sockets(pos_by_name, size)
-	var mod: TerrainModule = TerrainModule.new(scene, AABB(), TagList.new(), {}, [], {}, {}, {}, {}, false)
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
 		fill[n] = 1.0
-	mod.socket_fill_prob = fill
+	var mod: TerrainModule = TerrainModule.new(
+		scene,
+		AABB(),
+		TagList.new(),
+		{},
+		[],
+		{},
+		{},
+		fill,
+		{},
+		false
+	)
 
 	# Parent tile rotated so its local "back" (-X) points to world +Z.
 	var rot := Basis(Vector3.UP, deg_to_rad(-90.0))
@@ -864,17 +886,14 @@ func test_forbidden_adjacency_blocks_explicit_zero_fill_prob_hit():
 	)
 
 
-func test_forbidden_adjacency_allows_missing_fill_prob_hit():
+func test_level_modules_have_explicit_fill_prob_entries_for_all_scene_sockets():
 	var gen: Variant = _new_generator()
-	var blocker_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"diag": Vector3.ZERO})
-	blocker_mod.socket_fill_prob.erase("diag")
-	var blocker_piece: TerrainModuleInstance = _spawn_piece(blocker_mod)
-	var adjacent: Dictionary[String, TerrainModuleSocket] = {
-		"frontleft": TerrainModuleSocket.new(blocker_piece, "diag")
-	}
-	assert_false(
-		gen._has_forbidden_adjacency(adjacent),
-		"missing fill_prob should behave like null: non-expandable but non-blocking"
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	var missing: Dictionary = _audit_level_module_missing_fill_prob(gen)
+	assert_true(
+		missing.is_empty(),
+		"All level module sockets must be explicitly authored in socket_fill_prob: " + str(missing)
 	)
 
 
@@ -1831,8 +1850,9 @@ func test_level_edge_rule_top_diagonal_absent_requires_inner_corner() -> void:
 	)
 
 
-func test_get_adjacent_from_size_diagonal_filters_side_touching_hits() -> void:
+func test_level_edge_rule_diagonal_projection_ignores_side_touching_socket_noise() -> void:
 	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
 	var center_mod: TerrainModule = _make_module(
 		Vector3(2, 2, 2),
 		{
@@ -1853,29 +1873,29 @@ func test_get_adjacent_from_size_diagonal_filters_side_touching_hits() -> void:
 	side_touching_mod.tags = TagList.new(["level"])
 	var side_touching_piece: TerrainModuleInstance = _spawn_piece(
 		side_touching_mod,
-		Transform3D(Basis.IDENTITY, Vector3(-1, 0, -1))
+		Transform3D(Basis.IDENTITY, Vector3(-3, 0, -2))
 	)
 	_insert_all_piece_sockets(gen, side_touching_piece)
 	var true_diagonal_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
 	true_diagonal_mod.tags = TagList.new(["level"])
 	var true_diagonal_piece: TerrainModuleInstance = _spawn_piece(
 		true_diagonal_mod,
-		Transform3D(Basis.IDENTITY, Vector3(-1, 0, -1))
+		Transform3D(Basis.IDENTITY, Vector3(-2, 0, -2))
 	)
-	gen.socket_index.insert(TerrainModuleSocket.new(true_diagonal_piece, "main"))
-	var diagonal_pos: Vector3 = TerrainModuleSocket.new(center_piece, "frontleft").get_socket_position()
-	var hit: TerrainModuleSocket = gen._adjacent_hit_for_socket(
+	gen.terrain_index.insert(side_touching_piece)
+	gen.terrain_index.insert(true_diagonal_piece)
+	var hit: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece(
 		center_piece,
 		"frontleft",
-		diagonal_pos,
-		center_piece
+		gen.terrain_index
 	)
-	assert_true(hit != null, "Expected a true diagonal hit after filtering side-touching candidate")
-	assert_eq(hit.piece, true_diagonal_piece)
+	assert_true(hit != null, "Expected a true diagonal hit after ignoring side-touching sockets")
+	assert_eq(hit, true_diagonal_piece)
 
 
-func test_get_adjacent_from_size_diagonal_ignores_wrong_layer_hit() -> void:
+func test_level_edge_rule_diagonal_projection_ignores_wrong_layer_hit() -> void:
 	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
 	var center_mod: TerrainModule = _make_module(
 		Vector3(2, 2, 2),
 		{
@@ -1890,15 +1910,13 @@ func test_get_adjacent_from_size_diagonal_ignores_wrong_layer_hit() -> void:
 	wrong_layer_mod.tags = TagList.new(["ground"])
 	var wrong_layer_piece: TerrainModuleInstance = _spawn_piece(
 		wrong_layer_mod,
-		Transform3D(Basis.IDENTITY, Vector3(-1, 0, -1))
+		Transform3D(Basis.IDENTITY, Vector3(-2, 0, -2))
 	)
-	gen.socket_index.insert(TerrainModuleSocket.new(wrong_layer_piece, "main"))
-	var diagonal_pos: Vector3 = TerrainModuleSocket.new(center_piece, "frontleft").get_socket_position()
-	var hit: TerrainModuleSocket = gen._adjacent_hit_for_socket(
+	gen.terrain_index.insert(wrong_layer_piece)
+	var hit: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece(
 		center_piece,
 		"frontleft",
-		diagonal_pos,
-		center_piece
+		gen.terrain_index
 	)
 	assert_eq(hit, null, "Diagonal adjacency should reject wrong-layer hits")
 
@@ -1941,7 +1959,7 @@ func test_level_edge_rule_top_diagonal_insertion_order_invariant() -> void:
 		assert_false(missing.has("frontleft"))
 
 
-func test_level_edge_rule_dual_method_agreement_for_plain_and_top_diagonal() -> void:
+func test_level_edge_rule_projection_matches_legacy_for_plain_and_top_diagonal() -> void:
 	var rule: LevelEdgeRule = LevelEdgeRule.new()
 	var use_top_variants: Array[bool] = [false, true]
 	for use_top in use_top_variants:
@@ -1972,23 +1990,24 @@ func test_level_edge_rule_dual_method_agreement_for_plain_and_top_diagonal() -> 
 			diagonal_mod,
 			Transform3D(Basis.IDENTITY, Vector3(-2, 0, -2))
 		)
-		gen.socket_index.insert(TerrainModuleSocket.new(diagonal_piece, "main"))
 		gen.terrain_index.insert(diagonal_piece)
-		var by_adj: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece_from_socket_adj(
+		var by_current: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece(
 			center_piece,
 			"frontleft",
-			gen.socket_index
+			gen.terrain_index
 		)
-		var by_proj: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece_from_terrain(
+		var by_legacy: TerrainModuleInstance = _legacy_diagonal_neighbor_from_terrain_for_test(
 			center_piece,
 			"frontleft",
 			gen.terrain_index
 		)
 		assert_eq(
-			by_adj != null,
-			by_proj != null,
-			"Dual diagonal methods must agree for use_top=%s" % [use_top]
+			by_current,
+			by_legacy,
+			"Current diagonal projection should match legacy behavior for use_top=%s" % [use_top]
 		)
+		_dispose_generator_immediately(gen)
+		await _flush_deferred_frees()
 
 
 func _legacy_diagonal_target_center_for_test(
@@ -2041,7 +2060,7 @@ func _legacy_diagonal_neighbor_from_terrain_for_test(
 	return null
 
 
-func test_level_edge_rule_generated_world_adj_vs_legacy_projection_match() -> void:
+func test_level_edge_rule_generated_world_projection_matches_legacy_projection() -> void:
 	var gen: Variant = _new_generator()
 	_set_generator_library(gen, TerrainModuleLibrary.new())
 	gen.library.init()
@@ -2062,10 +2081,10 @@ func test_level_edge_rule_generated_world_adj_vs_legacy_projection_match() -> vo
 	var sample_mismatches: Array[String] = []
 	for piece in level_pieces:
 		for diagonal_socket_name in diagonal_sockets:
-			var by_current: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece_from_socket_adj(
+			var by_current: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece(
 				piece,
 				diagonal_socket_name,
-				gen.socket_index
+				gen.terrain_index
 			)
 			var by_legacy: TerrainModuleInstance = _legacy_diagonal_neighbor_from_terrain_for_test(
 				piece,
@@ -2086,3 +2105,5 @@ func test_level_edge_rule_generated_world_adj_vs_legacy_projection_match() -> vo
 		"Diagonal mismatch count=%s; sample=%s"
 			% [mismatch_count, sample_mismatches]
 	)
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()

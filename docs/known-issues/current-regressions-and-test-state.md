@@ -10,24 +10,17 @@ Terrain integration behavior tests used for this investigation are passing, incl
 - `test_integration_moving_player_frontier_keeps_generating_ground`
 - `test_integration_out_of_range_requeue_does_not_duplicate_and_recovers`
 
-However, full `test_terrain_generator.gd` run still reports known failing tests unrelated to this socket-semantics profiling work.
+`test_terrain_generator.gd` now passes fully on this branch.
 
 ## Known Failing Tests (Current Branch)
 
-From recent run summaries, 4 failures are consistently present:
+No current failing tests are known in `test_terrain_generator.gd`.
 
-1. Calls to nonexistent `TerrainGenerator` method:
-   - `_adjacent_hit_for_socket`
-2. Calls to nonexistent `LevelEdgeRule` method:
-   - `_get_diagonal_level_neighbor_piece_from_socket_adj`
-
-These produce "Unexpected Errors" in tests that still reference those symbols.
+The previous 4 failures caused by calls to removed private helpers were fixed by updating tests to the current diagonal projection behavior path in `LevelEdgeRule`.
 
 ## Why This Matters
 
-- These failures create noise when validating new changes.
-- They are not direct evidence that the socket fill-prob/lag changes are broken.
-- They reduce confidence in red/green test signal unless filtered mentally.
+- The suite now provides a cleaner red/green signal for terrain changes.
 
 ## Repro
 
@@ -35,16 +28,13 @@ Run:
 
 - `godot --path /Users/ryko/story -s res://addons/gut/gut_cmdln.gd -gconfig=res://tests/gutconfig.json -gtest=res://tests/test_terrain_generator.gd`
 
-Look for:
-
-- `Invalid call. Nonexistent function '_adjacent_hit_for_socket'`
-- `Invalid call. Nonexistent function '_get_diagonal_level_neighbor_piece_from_socket_adj'`
+Current run should complete without those deprecated-method errors.
 
 ## Suggested Cleanup
 
-1. Update or remove tests referencing removed/private methods.
-2. Prefer testing via public behavior contracts rather than private helper symbols.
-3. Keep profiling diagnostics in dedicated tests to avoid coupling to deprecated internals.
+1. Keep tests aligned to current behavior paths (avoid removed/private helper calls).
+2. Prefer behavior-contract assertions over private helper symbol coupling.
+3. Keep profiling diagnostics in dedicated tests.
 
 ## Runtime Startup State
 
@@ -56,7 +46,7 @@ Observed warnings are UID/path resolution warnings (camera/character/terrain gen
 
 ## Latest Queue-Fix Validation Notes
 
-- Full `test_terrain_generator.gd` run still reports the same 4 pre-existing failures.
+- Full `test_terrain_generator.gd` run passes.
 - New queue/regression tests pass and emit queue-health logs used in `generation-lag-and-stall.md`.
 - No additional regressions were introduced by queue dedupe/deferred requeue/connection-query updates.
 
