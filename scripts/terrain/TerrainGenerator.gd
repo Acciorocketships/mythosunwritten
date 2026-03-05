@@ -212,7 +212,6 @@ func _try_place_with_rules(orig_piece_socket: TerrainModuleSocket, placement_con
 	var attachment_socket_name: String = placement_context.get("attachment_socket_name", "bottom")
 	if filtered.is_empty():
 		return false
-
 	var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
 	var chosen: TerrainModuleInstance = chosen_template.spawn()
 	chosen.create()
@@ -353,6 +352,21 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 
 func remove_piece(piece: TerrainModuleInstance) -> void:
 	_ensure_queue_tracking_current()
+	var piece_deferred_keys: Dictionary = {}
+	for socket_name in piece.sockets.keys():
+		var deferred_key: String = _socket_queue_key_from_parts(piece, socket_name)
+		piece_deferred_keys[deferred_key] = true
+	var kept_deferred: Array = []
+	for entry in _deferred_sockets:
+		var deferred_socket: TerrainModuleSocket = entry.get("socket", null)
+		var deferred_key: String = _socket_queue_key(deferred_socket)
+		if piece_deferred_keys.has(deferred_key):
+			continue
+		kept_deferred.append(entry)
+	_deferred_sockets = kept_deferred
+	for deferred_key in piece_deferred_keys.keys():
+		if _deferred_socket_keys.has(deferred_key):
+			_deferred_socket_keys.erase(deferred_key)
 	terrain_index.remove(piece)
 	socket_index.remove_piece(piece)
 	queue.remove_where(func(item): return item is TerrainModuleSocket and item.piece == piece)
