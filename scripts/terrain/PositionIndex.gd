@@ -27,6 +27,16 @@ func query_other(pos: Vector3, piece: TerrainModuleInstance) -> TerrainModuleSoc
 	return null
 
 
+func query_others(pos: Vector3, piece: TerrainModuleInstance) -> Array[TerrainModuleSocket]:
+	var arr: Array = store.get(Helper.snap_vec3(pos), [])
+	var out: Array[TerrainModuleSocket] = []
+	for ps in arr:
+		if ps == null or ps.piece == piece:
+			continue
+		out.append(ps as TerrainModuleSocket)
+	return out
+
+
 func remove_piece(piece: TerrainModuleInstance) -> void:
 	if piece == null:
 		return

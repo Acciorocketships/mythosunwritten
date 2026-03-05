@@ -253,6 +253,62 @@ static func load_level_inner_corner_tile() -> TerrainModule:
 	)
 
 
+static func load_level_inner_corner_diag_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerDiag.tscn",
+		TagList.new(["level", "level-inner-corner-diag", "24x24"])
+	)
+
+
+static func load_level_inner_corner_side_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerSide.tscn",
+		TagList.new(["level", "level-inner-corner-side", "24x24"])
+	)
+
+
+static func load_level_inner_corner_edge1_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerEdge1.tscn",
+		TagList.new(["level", "level-inner-corner-edge1", "24x24"])
+	)
+
+
+static func load_level_inner_corner_edge2_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerEdge2.tscn",
+		TagList.new(["level", "level-inner-corner-edge2", "24x24"])
+	)
+
+
+static func load_level_inner_corner_edge_both_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerEdgeBoth.tscn",
+		TagList.new(["level", "level-inner-corner-edge-both", "24x24"])
+	)
+
+
+static func load_level_inner_corner_side_edge_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerSideEdge.tscn",
+		TagList.new(["level", "level-inner-corner-side-edge", "24x24"])
+	)
+
+
+static func load_level_inner_corner_three_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerThree.tscn",
+		TagList.new(["level", "level-inner-corner-three", "24x24"])
+	)
+
+
+static func load_level_inner_corner_all_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerAll.tscn",
+		TagList.new(["level", "level-inner-corner-all", "24x24"])
+	)
+
+
 static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModule:
 	var scene = load(scene_path)
 	var tags_per_socket: Dictionary[String, TagList] = {}
@@ -270,19 +326,20 @@ static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModul
 		"right": TagList.new(["level"]),
 		"bottom": TagList.new(["ground"])
 	}
-	var socket_fill_prob: Dictionary[String, float] = {
-		"front": 0.8,
-		"back": 0.8,
-		"left": 0.8,
-		"right": 0.8,
+	var socket_fill_prob: Dictionary[String, Variant] = {
+		"front": 0.3,
+		"back": 0.3,
+		"left": 0.3,
+		"right": 0.3,
 		"bottomfront": 0.0,
 		"bottomback": 0.0,
 		"bottomleft": 0.0,
 		"bottomright": 0.0,
-		"frontright": 0.0,
-		"frontleft": 0.0,
-		"backright": 0.0,
-		"backleft": 0.0,
+		# Diagonals are for adjacency/rules only: no expansion and no forbidden-adjacency blocking.
+		"frontright": null,
+		"frontleft": null,
+		"backright": null,
+		"backleft": null,
 		"topcenter": 0.0
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {

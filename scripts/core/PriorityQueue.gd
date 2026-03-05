@@ -28,13 +28,17 @@ func size() -> int:
 func is_empty() -> bool:
 	return heap.is_empty()
 
-func remove_where(predicate: Callable) -> void:
+func remove_where(predicate: Callable) -> int:
 	var new_heap: Array = []
+	var removed: int = 0
 	for entry in heap:
 		if not predicate.call(entry["item"]):
 			new_heap.append(entry)
+		else:
+			removed += 1
 	heap = new_heap
 	_rebuild_heap()
+	return removed
 
 
 func _rebuild_heap() -> void:

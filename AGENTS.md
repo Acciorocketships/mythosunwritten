@@ -46,6 +46,7 @@
 - **scripts/terrain/rules/**: Terrain generation rules — one script per rule (e.g. `LevelContradictionRule.gd`). `TerrainGenerationRuleLibrary.gd` preloads these and appends instances to `rules`.
 - **scripts/camera/**: Camera controller — `camera.gd`.
 - **characters/**: Character script and controllers — `character.gd`, `controllers/player_controller.gd`, etc.
+- **docs/known-issues/**: Investigation dossiers for known generation/performance issues and fix history.
 
 ## Terrain generation flow (`scripts/terrain/TerrainGenerator.gd`)
 
@@ -54,8 +55,8 @@
  - Spawn a start tile with `load_ground_tile()`; immediately register it in indices.
  - Seed a distance-priority queue with start tile sockets having `socket_fill_prob > 0`.
 - **load_terrain loop**
- - Pop nearest socket; if distance > `RENDER_RANGE`, requeue and exit for this frame (`MAX_LOAD_PER_STEP` caps work).
- - Skip if the socket position already has a same-layer connection (ground-ground or non-ground/non-ground).
+ - Pop nearest socket; out-of-range sockets are staged and re-queued after the per-frame processing loop (prevents same-frame pop/requeue churn).
+ - Skip if the socket position already has an expandable connection (connection logic is based on socket expandability, not tile tags/layers).
  - Roll `socket_fill_prob` to decide sparsity.
  - Sample a size from `socket_size[socket_name]`.
  - Compute adjacency via `get_adjacent_from_size`:
@@ -73,7 +74,8 @@
 
 - `PositionIndex` (Node):
  - Stores multiple sockets per snapped position; keyed by `Helper.snap_vec3(world_pos)`.
- - `insert(ps: TerrainModuleSocket)`: uses `ps.get_socket_position()` (off-tree safe). All sockets are indexed, including those with `fill_prob = 0`, so they can act as adjacency barriers.
+ - `insert(ps: TerrainModuleSocket)`: uses `ps.get_socket_position()` (off-tree safe). All sockets are indexed, but barrier behavior is controlled by `socket_fill_prob` semantics (see below).
+ - `query_others(pos, piece)`: returns all sockets at a snapped position except those from `piece` (use this when overlap can contain more than one candidate).
  - `remove_piece(piece: TerrainModuleInstance)`: removes all sockets for a piece from the index.
 - `TerrainIndex` (Object):
  - Hierarchical index for AABB overlap tests/culling.
@@ -97,7 +99,13 @@
 
 - Do not enqueue sockets with `socket_fill_prob <= 0`.
 - `_process_socket` also early-exits when `socket_fill_prob <= 0` so externally re-queued sockets cannot expand.
-- Only index/enqueue sockets that are not already connected (determined by `PositionIndex.query_other()`).
+- Queue entries are deduped by `(piece instance, socket name)`; do not bypass `TerrainGenerator` queue helpers when enqueuing/removing sockets.
+- `socket_fill_prob` semantics:
+ - `> 0`: socket can expand and is non-forbidden for adjacency.
+ - `0`: socket cannot expand and is considered blocking/forbidden in adjacency checks.
+ - `null`: socket cannot expand but is **non-blocking** in adjacency checks (use for adjacency-only sockets such as level diagonals).
+ - Missing `socket_fill_prob` entry behaves like `null`: non-expandable and non-blocking in forbidden-adjacency checks.
+- Only index/enqueue sockets that are not already connected (determine connectivity by checking all hits at the position, not only the first).
 - Priority queue uses distance to the player; `RENDER_RANGE` and `MAX_LOAD_PER_STEP` throttle work.
 
 ## Socket Attachment System
@@ -125,6 +133,8 @@
 
 - Terrain sampling library includes only `"level-center"` for level generation; visual variants (`"level-side"`, `"level-corner"`, `"level-line"`, `"level-peninsula"`, `"level-island"`) are selected by `LevelEdgeRule`.
 - `LevelEdgeRule` computes missing neighbors on cardinal sockets and rotates canonical edge variants to match missing sides.
+- If all cardinals are connected, `LevelEdgeRule` computes missing diagonal neighbors and selects inner-corner variants (`"level-inner-corner"`, `"level-inner-corner-diag"`, `"level-inner-corner-side"`, `"level-inner-corner-three"`, `"level-inner-corner-all"`), rotated from canonical `"frontleft"`-based socket sets.
+- `LevelEdgeRule` treats a diagonal as an inner-corner gap only when both touching cardinals are connected; this allows mixed variants that combine inner-corner diagonals with cardinal edges (`"level-inner-corner-edge1"`, `"level-inner-corner-edge2"`, `"level-inner-corner-edge-both"`, `"level-inner-corner-side-edge"`).
 - When a new level tile is chosen, `LevelEdgeRule` also updates directly adjacent level tiles so their edge silhouettes stay consistent after the new connection appears.
 - All level variants keep center-like lateral expansion behavior (matching lateral fill probabilities) so growth logic stays consistent while visuals are retiled.
 - Default level density is intentionally higher: ground `"topcenter"` has stronger level seeding and level lateral sockets use higher fill probability for contiguous patches.
@@ -141,6 +151,7 @@
 
 - **Always run the game** before considering a change complete: `godot --headless --path /Users/ryko/story`. If the game errors, fix the error and re-run until it runs without errors.
 - **After moving/renaming scripts**: run `godot --headless --path /Users/ryko/story --import` once so Godot regenerates the global script class cache; otherwise you may see "Could not find type X in the current scope" when running headless.
+- **Maintain known-issues docs**: whenever you discover new root-cause context, repro details, logs, or fix outcomes for active issues, update files under `docs/known-issues/` in the same change.
 
 ## Debugging workflow (preferred)
 
@@ -160,7 +171,7 @@
  - `get_attachment_socket_name(expansion_socket_name)`: determines attachment socket based on expansion socket.
  - `rotate_adjacency(adjacency)`: rotates adjacency socket names for alternative placement attempts.
 - `PositionIndex`
- - `insert(ps)`, `query(pos)`, `query_other(pos, piece)`, `remove_piece(piece)`.
+ - `insert(ps)`, `query(pos)`, `query_other(pos, piece)`, `query_others(pos, piece)`, `remove_piece(piece)`.
 - `TerrainGenerator`
  - `_ready()`, `load_terrain()`, `get_adjacent_from_size(socket, size)`, `transform_to_socket(new_ps, orig_ps)`, `add_piece(new_ps, orig_ps)`, `can_place(piece)`.
 

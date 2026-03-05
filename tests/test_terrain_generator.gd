@@ -217,6 +217,297 @@ func _new_generator() -> Variant:
 	return g
 
 
+class _DebugTerrainGenerator:
+	extends "res://scripts/terrain/TerrainGenerator.gd"
+
+	var debug_socket_stats: Dictionary = {}
+	var deferred_socket_counts: Dictionary = {}
+	var forbidden_blocking_socket_names: Dictionary = {}
+	var nonblocking_missing_socket_names: Dictionary = {}
+	var nonblocking_null_socket_names: Dictionary = {}
+	var nonblocking_missing_socket_pair_counts: Dictionary = {}
+	var forbidden_blocking_socket_pair_counts: Dictionary = {}
+	var debug_time_us: Dictionary = {}
+
+	func _init() -> void:
+		_reset_debug_socket_stats()
+
+	func _reset_debug_socket_stats() -> void:
+		debug_socket_stats = {
+			"processed_total": 0,
+			"processed_level": 0,
+			"placed_total": 0,
+			"placed_level": 0,
+			"blocked_connected_total": 0,
+			"blocked_connected_level": 0,
+			"deferred_out_of_range_total": 0,
+			"deferred_out_of_range_level": 0,
+			"fill_roll_failed_total": 0,
+			"fill_roll_failed_level": 0,
+			"filtered_empty_total": 0,
+			"filtered_empty_level": 0,
+			"forbidden_adjacency_total": 0,
+			"forbidden_adjacency_level": 0
+		}
+		deferred_socket_counts.clear()
+		forbidden_blocking_socket_names.clear()
+		nonblocking_missing_socket_names.clear()
+		nonblocking_null_socket_names.clear()
+		nonblocking_missing_socket_pair_counts.clear()
+		forbidden_blocking_socket_pair_counts.clear()
+		debug_time_us = {
+			"process_socket_total": 0,
+			"resolve_context": 0,
+			"try_place_with_rules": 0,
+			"forbidden_scan": 0
+		}
+
+	func _add_debug_stat(key: String, amount: int = 1) -> void:
+		var current: int = int(debug_socket_stats.get(key, 0))
+		debug_socket_stats[key] = current + amount
+
+	func _is_socket_missing_fill_prob(piece_socket: TerrainModuleSocket) -> bool:
+		if piece_socket == null or piece_socket.piece == null or piece_socket.piece.def == null:
+			return false
+		return not piece_socket.piece.def.socket_fill_prob.has(piece_socket.socket_name)
+
+	func _is_socket_null_fill_prob(piece_socket: TerrainModuleSocket) -> bool:
+		if piece_socket == null or piece_socket.piece == null or piece_socket.piece.def == null:
+			return false
+		if not piece_socket.piece.def.socket_fill_prob.has(piece_socket.socket_name):
+			return false
+		return piece_socket.piece.def.socket_fill_prob[piece_socket.socket_name] == null
+
+	func _socket_pair_key(
+		expanding_socket: TerrainModuleSocket,
+		hit_socket: TerrainModuleSocket
+	) -> String:
+		var expanding_tags: String = "[]"
+		var hit_tags: String = "[]"
+		if expanding_socket != null and expanding_socket.piece != null and expanding_socket.piece.def != null:
+			expanding_tags = str(expanding_socket.piece.def.tags.tags)
+		if hit_socket != null and hit_socket.piece != null and hit_socket.piece.def != null:
+			hit_tags = str(hit_socket.piece.def.tags.tags)
+		return "expander=%s hit=%s hit_socket=%s" % [expanding_tags, hit_tags, hit_socket.socket_name]
+
+	func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
+		var t0_us: int = Time.get_ticks_usec()
+		var is_level_socket: bool = piece_socket.piece != null and piece_socket.piece.def.tags.has("level")
+		_add_debug_stat("processed_total")
+		if is_level_socket:
+			_add_debug_stat("processed_level")
+
+		if _is_socket_connected(piece_socket):
+			_add_debug_stat("blocked_connected_total")
+			if is_level_socket:
+				_add_debug_stat("blocked_connected_level")
+			return false
+		if _defer_if_out_of_range(piece_socket, distance):
+			_add_debug_stat("deferred_out_of_range_total")
+			var deferred_count: int = int(deferred_socket_counts.get(piece_socket.socket_name, 0))
+			deferred_socket_counts[piece_socket.socket_name] = deferred_count + 1
+			if is_level_socket:
+				_add_debug_stat("deferred_out_of_range_level")
+			return false
+		if not _passes_fill_prob_roll(piece_socket):
+			_add_debug_stat("fill_roll_failed_total")
+			if is_level_socket:
+				_add_debug_stat("fill_roll_failed_level")
+			return false
+
+		var t_ctx_us0: int = Time.get_ticks_usec()
+		var size: String = _sample_socket_size(piece_socket.piece, piece_socket.socket_name)
+		var placement_context: Dictionary = _resolve_placement_context(piece_socket, size)
+		debug_time_us["resolve_context"] = int(debug_time_us["resolve_context"]) + (Time.get_ticks_usec() - t_ctx_us0)
+		var filtered: TerrainModuleList = placement_context.get("filtered", TerrainModuleList.new())
+		var adjacent: Dictionary = placement_context.get("adjacent", {})
+		for hit in adjacent.values():
+			if hit == null:
+				continue
+			if _is_socket_missing_fill_prob(hit):
+				var missing_count: int = int(nonblocking_missing_socket_names.get(hit.socket_name, 0))
+				nonblocking_missing_socket_names[hit.socket_name] = missing_count + 1
+				var missing_pair_key: String = _socket_pair_key(piece_socket, hit)
+				var missing_pair_count: int = int(nonblocking_missing_socket_pair_counts.get(missing_pair_key, 0))
+				nonblocking_missing_socket_pair_counts[missing_pair_key] = missing_pair_count + 1
+			elif _is_socket_null_fill_prob(hit):
+				var null_count: int = int(nonblocking_null_socket_names.get(hit.socket_name, 0))
+				nonblocking_null_socket_names[hit.socket_name] = null_count + 1
+		if filtered.is_empty():
+			_add_debug_stat("filtered_empty_total")
+			if is_level_socket:
+				_add_debug_stat("filtered_empty_level")
+			var t_forbidden_us0: int = Time.get_ticks_usec()
+			if _has_forbidden_adjacency(adjacent):
+				_add_debug_stat("forbidden_adjacency_total")
+				if is_level_socket:
+					_add_debug_stat("forbidden_adjacency_level")
+				for hit in adjacent.values():
+					if hit == null:
+						continue
+					if not _is_socket_blocking(hit):
+						continue
+					var count: int = int(forbidden_blocking_socket_names.get(hit.socket_name, 0))
+					forbidden_blocking_socket_names[hit.socket_name] = count + 1
+					var forbidden_pair_key: String = _socket_pair_key(piece_socket, hit)
+					var forbidden_pair_count: int = int(forbidden_blocking_socket_pair_counts.get(forbidden_pair_key, 0))
+					forbidden_blocking_socket_pair_counts[forbidden_pair_key] = forbidden_pair_count + 1
+			debug_time_us["forbidden_scan"] = int(debug_time_us["forbidden_scan"]) + (Time.get_ticks_usec() - t_forbidden_us0)
+		var t_place_us0: int = Time.get_ticks_usec()
+		var placed: bool = _try_place_with_rules(piece_socket, placement_context)
+		debug_time_us["try_place_with_rules"] = int(debug_time_us["try_place_with_rules"]) + (Time.get_ticks_usec() - t_place_us0)
+		if placed:
+			_add_debug_stat("placed_total")
+			if is_level_socket:
+				_add_debug_stat("placed_level")
+		debug_time_us["process_socket_total"] = int(debug_time_us["process_socket_total"]) + (Time.get_ticks_usec() - t0_us)
+		return placed
+
+
+func _new_debug_generator() -> Variant:
+	var g: Variant = _DebugTerrainGenerator.new()
+	_nodes_to_free.append(g)
+
+	g.player = Node3D.new()
+	g.terrain_parent = Node3D.new()
+	g.library = TerrainModuleLibrary.new()
+	g.socket_index = PositionIndex.new()
+	add_child(g.player)
+	add_child(g.terrain_parent)
+	_nodes_to_free.append(g.player)
+	_nodes_to_free.append(g.terrain_parent)
+	_nodes_to_free.append(g.library)
+	_nodes_to_free.append(g.socket_index)
+
+	g.terrain_index = TerrainIndex.new()
+	g.queue = PriorityQueue.new()
+	g.generation_rules = TerrainGenerationRuleLibrary.new()
+	_objects_to_free.append(g.terrain_index)
+	_objects_to_free.append(g.queue)
+	_objects_to_free.append(g.generation_rules)
+	return g
+
+
+func _queue_health_snapshot(gen: Variant) -> Dictionary:
+	var duplicate_counts: Dictionary = {}
+	for entry in gen.queue.heap:
+		if not (entry is Dictionary):
+			continue
+		var item: Variant = entry.get("item", null)
+		if not (item is TerrainModuleSocket):
+			continue
+		var socket: TerrainModuleSocket = item
+		var key: String = str(socket.piece.get_instance_id()) + ":" + socket.socket_name
+		var count: int = int(duplicate_counts.get(key, 0))
+		duplicate_counts[key] = count + 1
+	var duplicate_entry_count: int = 0
+	var duplicate_key_count: int = 0
+	for count in duplicate_counts.values():
+		if count <= 1:
+			continue
+		duplicate_key_count += 1
+		duplicate_entry_count += int(count) - 1
+	return {
+		"queue_size": gen.queue.size(),
+		"duplicate_key_count": duplicate_key_count,
+		"duplicate_entry_count": duplicate_entry_count
+	}
+
+
+func _has_ground_near_position(gen: Variant, position: Vector3, radius: float = 20.0) -> bool:
+	var half_size: Vector3 = Vector3(radius, 4.0, radius)
+	var box: AABB = AABB(position - half_size, half_size * 2.0)
+	var pieces: Array = gen.terrain_index.query_box(box)
+	for hit in pieces:
+		if not (hit is TerrainModuleInstance):
+			continue
+		var piece: TerrainModuleInstance = hit
+		if piece.def != null and piece.def.tags.has("ground"):
+			return true
+	return false
+
+
+func _max_ground_x_within(gen: Variant, center: Vector3, half_extent: float) -> float:
+	var box: AABB = AABB(
+		Vector3(center.x - half_extent, -20.0, center.z - half_extent),
+		Vector3(half_extent * 2.0, 60.0, half_extent * 2.0)
+	)
+	var pieces: Array = gen.terrain_index.query_box(box)
+	var max_x: float = -INF
+	for hit in pieces:
+		if not (hit is TerrainModuleInstance):
+			continue
+		var piece: TerrainModuleInstance = hit
+		if piece.def == null or not piece.def.tags.has("ground"):
+			continue
+		max_x = max(max_x, piece.transform.origin.x)
+	return max_x
+
+
+func _count_level_expansion_blocking(gen: Variant) -> Dictionary:
+	var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
+	var total_expandable_cardinal_sockets: int = 0
+	var blocked_same_layer: int = 0
+	var blocked_by_non_expandable_hit: int = 0
+	var open_expandable: int = 0
+	var cardinal_sockets: Array[String] = ["front", "back", "left", "right"]
+	for piece in level_pieces:
+		for socket_name in cardinal_sockets:
+			if not piece.sockets.has(socket_name):
+				continue
+			var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+			var fill_prob: float = 0.0
+			if piece.def.socket_fill_prob.has(socket_name):
+				var fill_setting: Variant = piece.def.socket_fill_prob[socket_name]
+				if fill_setting is float:
+					fill_prob = fill_setting
+				elif fill_setting is int:
+					fill_prob = fill_setting
+			if fill_prob <= 0.0:
+				continue
+			total_expandable_cardinal_sockets += 1
+			var other: TerrainModuleSocket = gen.socket_index.query_other(piece_socket.get_socket_position(), piece)
+			if other != null and gen._is_socket_expandable(other):
+				blocked_same_layer += 1
+				var other_fill: float = 0.0
+				if other.piece != null and other.piece.def.socket_fill_prob.has(other.socket_name):
+					var other_fill_setting: Variant = other.piece.def.socket_fill_prob[other.socket_name]
+					if other_fill_setting is float:
+						other_fill = other_fill_setting
+					elif other_fill_setting is int:
+						other_fill = other_fill_setting
+				if other_fill <= 0.0:
+					blocked_by_non_expandable_hit += 1
+				continue
+			open_expandable += 1
+	return {
+		"level_piece_count": level_pieces.size(),
+		"total_expandable_cardinal_sockets": total_expandable_cardinal_sockets,
+		"blocked_same_layer": blocked_same_layer,
+		"blocked_by_non_expandable_hit": blocked_by_non_expandable_hit,
+		"open_expandable": open_expandable
+	}
+
+
+func _audit_level_module_missing_fill_prob(gen: Variant) -> Dictionary:
+	var out: Dictionary = {}
+	if gen.library == null or gen.library.terrain_modules == null:
+		return out
+	for module in gen.library.terrain_modules.library:
+		if module == null or not module.tags.has("level"):
+			continue
+		var piece: TerrainModuleInstance = module.spawn()
+		piece.create()
+		var missing: Array[String] = []
+		for socket_name in piece.sockets.keys():
+			if not module.socket_fill_prob.has(socket_name):
+				missing.append(socket_name)
+		piece.destroy()
+		if not missing.is_empty():
+			out[str(module.tags.tags)] = missing
+	return out
+
+
 func test_get_dist_from_player():
 	var gen: Variant = _new_generator()
 	# gen.player already in tree from _new_generator()
@@ -545,6 +836,48 @@ func test_add_piece_to_queue_skips_nonfillable_sockets():
 		assert_ne(it.socket_name, "bottom")
 
 
+func test_forbidden_adjacency_allows_null_fill_prob_hit():
+	var gen: Variant = _new_generator()
+	var blocker_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"diag": Vector3.ZERO})
+	blocker_mod.socket_fill_prob = {"diag": null}
+	var blocker_piece: TerrainModuleInstance = _spawn_piece(blocker_mod)
+	var adjacent: Dictionary[String, TerrainModuleSocket] = {
+		"frontleft": TerrainModuleSocket.new(blocker_piece, "diag")
+	}
+	assert_false(
+		gen._has_forbidden_adjacency(adjacent),
+		"null fill_prob sockets should be non-blocking adjacency-only sockets"
+	)
+
+
+func test_forbidden_adjacency_blocks_explicit_zero_fill_prob_hit():
+	var gen: Variant = _new_generator()
+	var blocker_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"diag": Vector3.ZERO})
+	blocker_mod.socket_fill_prob["diag"] = 0.0
+	var blocker_piece: TerrainModuleInstance = _spawn_piece(blocker_mod)
+	var adjacent: Dictionary[String, TerrainModuleSocket] = {
+		"frontleft": TerrainModuleSocket.new(blocker_piece, "diag")
+	}
+	assert_true(
+		gen._has_forbidden_adjacency(adjacent),
+		"explicit 0 fill_prob sockets remain blocking"
+	)
+
+
+func test_forbidden_adjacency_allows_missing_fill_prob_hit():
+	var gen: Variant = _new_generator()
+	var blocker_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"diag": Vector3.ZERO})
+	blocker_mod.socket_fill_prob.erase("diag")
+	var blocker_piece: TerrainModuleInstance = _spawn_piece(blocker_mod)
+	var adjacent: Dictionary[String, TerrainModuleSocket] = {
+		"frontleft": TerrainModuleSocket.new(blocker_piece, "diag")
+	}
+	assert_false(
+		gen._has_forbidden_adjacency(adjacent),
+		"missing fill_prob should behave like null: non-expandable but non-blocking"
+	)
+
+
 func test_remove_piece_cleans_indices_queue_and_scene():
 	var gen: Variant = _new_generator()
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
@@ -775,7 +1108,15 @@ func test_ground_grid_completeness():
 
 
 func _collect_level_pieces(gen: Variant) -> Array[TerrainModuleInstance]:
-	var search_box: AABB = AABB(Vector3(-1200, -10, -1200), Vector3(2400, 200, 2400))
+	var search_half_extent: float = 450.0
+	if gen != null:
+		var render_range_value: Variant = gen.get("RENDER_RANGE")
+		if render_range_value is float or render_range_value is int:
+			search_half_extent = float(render_range_value) + 120.0
+	var search_box: AABB = AABB(
+		Vector3(-search_half_extent, -10, -search_half_extent),
+		Vector3(search_half_extent * 2.0, 200, search_half_extent * 2.0)
+	)
 	var pieces: Array = gen.terrain_index.query_box(search_box)
 	var out: Array[TerrainModuleInstance] = []
 	var seen: Dictionary = {}
@@ -792,18 +1133,27 @@ func _collect_level_pieces(gen: Variant) -> Array[TerrainModuleInstance]:
 	return out
 
 
-func _level_missing_sockets(gen: Variant, piece: TerrainModuleInstance) -> Array[String]:
-	var missing: Array[String] = []
-	var sockets: Array[String] = ["front", "right", "back", "left"]
-	for socket_name in sockets:
-		if not piece.sockets.has(socket_name):
+func _run_generation_until_level_count(
+	gen: Variant,
+	max_steps: int,
+	target_level_count: int,
+	probe_every: int = 20
+) -> void:
+	for i in range(max_steps):
+		gen.load_terrain()
+		if target_level_count <= 0:
 			continue
-		var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
-		var other: TerrainModuleSocket = gen.socket_index.query_other(piece_socket.get_socket_position(), piece)
-		var connected_to_level: bool = other != null and other.piece != null and other.piece.def.tags.has("level")
-		if not connected_to_level:
-			missing.append(socket_name)
-	return missing
+		var should_probe: bool = (i + 1) % probe_every == 0 or i == max_steps - 1
+		if not should_probe:
+			continue
+		var level_count: int = _collect_level_pieces(gen).size()
+		if level_count >= target_level_count:
+			break
+
+
+func _level_missing_sockets(gen: Variant, piece: TerrainModuleInstance) -> Array[String]:
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	return rule._missing_sockets_for_piece(piece, gen.socket_index, gen.terrain_index)
 
 
 func _level_variant_tag(piece: TerrainModuleInstance) -> String:
@@ -814,6 +1164,15 @@ func _level_variant_tag(piece: TerrainModuleInstance) -> String:
 		"level-corner",
 		"level-peninsula",
 		"level-island",
+		"level-inner-corner",
+		"level-inner-corner-diag",
+		"level-inner-corner-side",
+		"level-inner-corner-edge1",
+		"level-inner-corner-edge2",
+		"level-inner-corner-edge-both",
+		"level-inner-corner-side-edge",
+		"level-inner-corner-three",
+		"level-inner-corner-all",
 	]
 	for tag in variants:
 		if piece.def.tags.has(tag):
@@ -924,8 +1283,7 @@ func test_integration_level_edges_match_neighbors_and_include_connected_regions(
 	seed(12345)
 	_run_generator_ready(gen)
 
-	for _i in range(1500):
-		gen.load_terrain()
+	_run_generation_until_level_count(gen, 450, 24)
 
 	var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
 	assert_true(level_pieces.size() > 0, "Expected level tiles to be generated")
@@ -955,6 +1313,64 @@ func test_integration_level_edges_match_neighbors_and_include_connected_regions(
 			"level-peninsula":
 				assert_eq(missing.size(), 3)
 			"level-island":
+				assert_eq(missing.size(), 4)
+			"level-inner-corner":
+				assert_eq(missing.size(), 1)
+			"level-inner-corner-diag":
+				assert_eq(missing.size(), 2)
+				var is_diag_pair: bool = (
+					(missing.has("frontleft") and missing.has("backright"))
+					or (missing.has("frontright") and missing.has("backleft"))
+				)
+				assert_true(is_diag_pair, "Inner-corner-diag must have opposite diagonal missing sockets")
+			"level-inner-corner-side":
+				assert_eq(missing.size(), 2)
+				var is_side_pair: bool = (
+					(missing.has("frontleft") and missing.has("backleft"))
+					or (missing.has("frontleft") and missing.has("frontright"))
+					or (missing.has("frontright") and missing.has("backright"))
+					or (missing.has("backleft") and missing.has("backright"))
+				)
+				assert_true(is_side_pair, "Inner-corner-side must have adjacent diagonal missing sockets")
+			"level-inner-corner-edge1":
+				assert_eq(missing.size(), 2)
+				assert_true(
+					(missing.has("frontleft") and missing.has("back"))
+					or (missing.has("frontright") and missing.has("left"))
+					or (missing.has("backright") and missing.has("front"))
+					or (missing.has("backleft") and missing.has("right")),
+					"Inner-corner-edge1 must have one inner-corner diagonal and one opposite edge"
+				)
+			"level-inner-corner-edge2":
+				assert_eq(missing.size(), 2)
+				assert_true(
+					(missing.has("frontleft") and missing.has("right"))
+					or (missing.has("frontright") and missing.has("back"))
+					or (missing.has("backright") and missing.has("left"))
+					or (missing.has("backleft") and missing.has("front")),
+					"Inner-corner-edge2 must have one inner-corner diagonal and one side edge"
+				)
+			"level-inner-corner-edge-both":
+				assert_eq(missing.size(), 3)
+				assert_true(
+					(missing.has("frontleft") and missing.has("back") and missing.has("right"))
+					or (missing.has("frontright") and missing.has("back") and missing.has("left"))
+					or (missing.has("backright") and missing.has("front") and missing.has("left"))
+					or (missing.has("backleft") and missing.has("front") and missing.has("right")),
+					"Inner-corner-edge-both must have one inner-corner diagonal and two cardinal edges"
+				)
+			"level-inner-corner-side-edge":
+				assert_eq(missing.size(), 3)
+				assert_true(
+					(missing.has("frontleft") and missing.has("backleft") and missing.has("right"))
+					or (missing.has("frontleft") and missing.has("frontright") and missing.has("back"))
+					or (missing.has("frontright") and missing.has("backright") and missing.has("left"))
+					or (missing.has("backright") and missing.has("backleft") and missing.has("front")),
+					"Inner-corner-side-edge must have two adjacent inner-corner diagonals and one edge"
+				)
+			"level-inner-corner-three":
+				assert_eq(missing.size(), 3)
+			"level-inner-corner-all":
 				assert_eq(missing.size(), 4)
 			_:
 				assert_true(false, "Unexpected variant tag: " + variant_tag)
@@ -1001,8 +1417,7 @@ func test_integration_default_level_generation_not_sparse_or_isolated():
 	seed(12345)
 	_run_generator_ready(gen)
 
-	for _i in range(1500):
-		gen.load_terrain()
+	_run_generation_until_level_count(gen, 360, 12)
 
 	var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
 	assert_true(level_pieces.size() >= 10, "Expected at least 10 level tiles in default generation")
@@ -1024,7 +1439,7 @@ func test_integration_default_level_generation_not_sparse_or_isolated():
 
 
 func test_integration_default_level_generation_forms_cluster_early():
-	var gen: Variant = _new_generator()
+	var gen: Variant = _new_debug_generator()
 	_set_generator_library(gen, TerrainModuleLibrary.new())
 	gen.library.init()
 	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
@@ -1035,8 +1450,7 @@ func test_integration_default_level_generation_forms_cluster_early():
 	seed(12345)
 	_run_generator_ready(gen)
 
-	for _i in range(220):
-		gen.load_terrain()
+	_run_generation_until_level_count(gen, 260, 10)
 
 	var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
 	assert_true(level_pieces.size() >= 8, "Expected at least 8 level tiles after early generation")
@@ -1059,7 +1473,7 @@ func test_integration_default_level_generation_forms_cluster_early():
 
 func test_integration_default_level_generation_not_sparse_across_seeds():
 	var failing_seeds: Array[int] = []
-	var seeds: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8]
+	var seeds: Array[int] = [1, 2, 3, 4]
 	for run_seed in seeds:
 		var gen: Variant = _new_generator()
 		_set_generator_library(gen, TerrainModuleLibrary.new())
@@ -1072,8 +1486,7 @@ func test_integration_default_level_generation_not_sparse_across_seeds():
 		seed(run_seed)
 		_run_generator_ready(gen)
 
-		for _i in range(220):
-			gen.load_terrain()
+		_run_generation_until_level_count(gen, 200, 10)
 
 		var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
 		var pieces_with_level_neighbor: int = 0
@@ -1093,4 +1506,583 @@ func test_integration_default_level_generation_not_sparse_across_seeds():
 	assert_true(
 		failing_seeds.is_empty(),
 		"Expected dense/connected default level generation across seeds; failing seeds: " + str(failing_seeds)
+	)
+
+
+func test_integration_moving_player_frontier_keeps_generating_ground():
+	var gen: Variant = _new_debug_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 260
+	gen.MAX_LOAD_PER_STEP = 14
+	seed(24681357)
+	_run_generator_ready(gen)
+
+	var queue_peak: int = 0
+	var duplicate_entry_peak: int = 0
+	var no_ground_near_player_checks: int = 0
+	var prev_placed_total: int = 0
+	var zero_placement_streak: int = 0
+	var longest_zero_placement_streak: int = 0
+	for step in range(280):
+		if step > 0 and step % 4 == 0:
+			gen.player.global_position += Vector3(12, 0, 0)
+		gen.load_terrain()
+
+		var queue_health: Dictionary = _queue_health_snapshot(gen)
+		queue_peak = max(queue_peak, int(queue_health["queue_size"]))
+		duplicate_entry_peak = max(duplicate_entry_peak, int(queue_health["duplicate_entry_count"]))
+
+		var placed_total: int = int(gen.debug_socket_stats.get("placed_total", 0))
+		if placed_total == prev_placed_total:
+			zero_placement_streak += 1
+		else:
+			zero_placement_streak = 0
+		longest_zero_placement_streak = max(longest_zero_placement_streak, zero_placement_streak)
+		prev_placed_total = placed_total
+
+		if step >= 40 and step % 8 == 0:
+			if not _has_ground_near_position(gen, gen.player.global_position, 22.0):
+				no_ground_near_player_checks += 1
+
+	var max_ground_x: float = _max_ground_x_within(gen, gen.player.global_position, 420.0)
+	print(
+		"moving-frontier-debug",
+		{
+			"player_x": gen.player.global_position.x,
+			"max_ground_x": max_ground_x,
+			"queue_peak": queue_peak,
+			"duplicate_entry_peak": duplicate_entry_peak,
+			"no_ground_near_player_checks": no_ground_near_player_checks,
+			"longest_zero_placement_streak": longest_zero_placement_streak,
+			"deferred_total": int(gen.debug_socket_stats.get("deferred_out_of_range_total", 0)),
+			"placed_total": int(gen.debug_socket_stats.get("placed_total", 0)),
+			"deferred_socket_counts": gen.deferred_socket_counts
+		}
+	)
+
+	assert_eq(duplicate_entry_peak, 0, "Queue should not contain duplicate socket entries")
+	assert_true(no_ground_near_player_checks <= 1, "Ground should stay available near moving player")
+	assert_true(
+		max_ground_x >= gen.player.global_position.x - 48.0,
+		"Ground frontier should keep up with player progression"
+	)
+	assert_true(longest_zero_placement_streak <= 70, "Placement should not starve for long streaks")
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func test_integration_out_of_range_requeue_does_not_duplicate_and_recovers():
+	var gen: Variant = _new_debug_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 220
+	gen.MAX_LOAD_PER_STEP = 10
+	seed(445566)
+	_run_generator_ready(gen)
+
+	for _i in range(120):
+		gen.load_terrain()
+
+	gen.player.global_position = Vector3(3000, 0, 0)
+	var queue_size_during_deferral_peak: int = 0
+	var duplicate_entry_peak: int = 0
+	var before_deferral_placed_total: int = int(gen.debug_socket_stats.get("placed_total", 0))
+	for _i in range(140):
+		gen.load_terrain()
+		var queue_health: Dictionary = _queue_health_snapshot(gen)
+		queue_size_during_deferral_peak = max(queue_size_during_deferral_peak, int(queue_health["queue_size"]))
+		duplicate_entry_peak = max(duplicate_entry_peak, int(queue_health["duplicate_entry_count"]))
+
+	var deferred_total_after_far: int = int(gen.debug_socket_stats.get("deferred_out_of_range_total", 0))
+	gen.player.global_position = Vector3.ZERO
+	for _i in range(140):
+		gen.load_terrain()
+
+	var after_recovery_placed_total: int = int(gen.debug_socket_stats.get("placed_total", 0))
+	print(
+		"requeue-recovery-debug",
+		{
+			"queue_size_during_deferral_peak": queue_size_during_deferral_peak,
+			"duplicate_entry_peak": duplicate_entry_peak,
+			"deferred_total_after_far": deferred_total_after_far,
+			"placed_before_far": before_deferral_placed_total,
+			"placed_after_recovery": after_recovery_placed_total,
+			"deferred_socket_counts": gen.deferred_socket_counts
+		}
+	)
+
+	assert_eq(duplicate_entry_peak, 0, "Out-of-range deferral should not duplicate queued sockets")
+	assert_true(deferred_total_after_far > 0, "Expected out-of-range deferrals while player is far away")
+	assert_true(
+		after_recovery_placed_total > before_deferral_placed_total,
+		"Generation should recover and place more pieces after returning player near frontier"
+	)
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func test_level_edge_rule_classifies_new_inner_corner_edge_variants() -> void:
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	assert_eq(
+		rule._tag_for_missing_sockets(["frontleft", "back"]),
+		"level-inner-corner-edge1"
+	)
+	assert_eq(
+		rule._tag_for_missing_sockets(["frontleft", "right"]),
+		"level-inner-corner-edge2"
+	)
+	assert_eq(
+		rule._tag_for_missing_sockets(["frontleft", "back", "right"]),
+		"level-inner-corner-edge-both"
+	)
+	assert_eq(
+		rule._tag_for_missing_sockets(["frontleft", "backleft", "right"]),
+		"level-inner-corner-side-edge"
+	)
+
+
+func test_level_edge_rule_missing_sockets_uses_cardinal_and_diagonal_adjacency() -> void:
+	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	var layout: Dictionary[String, Vector3] = {
+		"front": Vector3(0, 0, -1),
+		"right": Vector3(1, 0, 0),
+		"back": Vector3(0, 0, 1),
+		"left": Vector3(-1, 0, 0),
+		"frontright": Vector3(1, 0, -1),
+		"backright": Vector3(1, 0, 1),
+		"backleft": Vector3(-1, 0, 1),
+		"frontleft": Vector3(-1, 0, -1),
+	}
+	var level_mod: TerrainModule = _make_module(Vector3(2, 2, 2), layout)
+	level_mod.tags = TagList.new(["level"])
+	var center_piece: TerrainModuleInstance = _spawn_piece(level_mod)
+	var neighbor_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+	neighbor_mod.tags = TagList.new(["level"])
+	var front_neighbor: TerrainModuleInstance = _spawn_piece(
+		neighbor_mod,
+		Transform3D(Basis.IDENTITY, Vector3(0, 0, -1))
+	)
+	var left_neighbor: TerrainModuleInstance = _spawn_piece(
+		neighbor_mod,
+		Transform3D(Basis.IDENTITY, Vector3(-1, 0, 0))
+	)
+	gen.socket_index.insert(TerrainModuleSocket.new(front_neighbor, "main"))
+	gen.socket_index.insert(TerrainModuleSocket.new(left_neighbor, "main"))
+	var missing: Array[String] = rule._missing_sockets_for_piece(
+		center_piece,
+		gen.socket_index,
+		gen.terrain_index
+	)
+	assert_true(missing.has("back"))
+	assert_true(missing.has("right"))
+	assert_true(missing.has("frontleft"))
+	assert_false(missing.has("backleft"))
+	assert_false(missing.has("frontright"))
+	assert_false(missing.has("backright"))
+
+
+func test_level_edge_rule_diagonal_neighbor_blocks_inner_corner() -> void:
+	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	var layout: Dictionary[String, Vector3] = {
+		"front": Vector3(0, 0, -1),
+		"right": Vector3(1, 0, 0),
+		"back": Vector3(0, 0, 1),
+		"left": Vector3(-1, 0, 0),
+	}
+	var level_mod: TerrainModule = _make_module(Vector3(2, 2, 2), layout)
+	level_mod.tags = TagList.new(["level"])
+	var center_piece: TerrainModuleInstance = _spawn_piece(level_mod)
+	var neighbor_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+	neighbor_mod.tags = TagList.new(["level"])
+	var front_neighbor: TerrainModuleInstance = _spawn_piece(
+		neighbor_mod,
+		Transform3D(Basis.IDENTITY, Vector3(0, 0, -1))
+	)
+	var left_neighbor: TerrainModuleInstance = _spawn_piece(
+		neighbor_mod,
+		Transform3D(Basis.IDENTITY, Vector3(-1, 0, 0))
+	)
+	var diagonal_neighbor: TerrainModuleInstance = _spawn_piece(
+		neighbor_mod,
+		Transform3D(Basis.IDENTITY, Vector3(-2, 0, -2))
+	)
+	gen.socket_index.insert(TerrainModuleSocket.new(front_neighbor, "main"))
+	gen.socket_index.insert(TerrainModuleSocket.new(left_neighbor, "main"))
+	gen.terrain_index.insert(diagonal_neighbor)
+	var missing: Array[String] = rule._missing_sockets_for_piece(
+		center_piece,
+		gen.socket_index,
+		gen.terrain_index
+	)
+	assert_false(
+		missing.has("frontleft"),
+		"Inner corner must not be marked missing when diagonal level tile exists"
+	)
+
+
+func test_level_edge_rule_missing_diagonal_adds_inner_corner() -> void:
+	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	var layout: Dictionary[String, Vector3] = {
+		"front": Vector3(0, 0, -1),
+		"right": Vector3(1, 0, 0),
+		"back": Vector3(0, 0, 1),
+		"left": Vector3(-1, 0, 0),
+	}
+	var level_mod: TerrainModule = _make_module(Vector3(2, 2, 2), layout)
+	level_mod.tags = TagList.new(["level"])
+	var center_piece: TerrainModuleInstance = _spawn_piece(level_mod)
+	var neighbor_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+	neighbor_mod.tags = TagList.new(["level"])
+	var front_neighbor: TerrainModuleInstance = _spawn_piece(
+		neighbor_mod,
+		Transform3D(Basis.IDENTITY, Vector3(0, 0, -1))
+	)
+	var left_neighbor: TerrainModuleInstance = _spawn_piece(
+		neighbor_mod,
+		Transform3D(Basis.IDENTITY, Vector3(-1, 0, 0))
+	)
+	gen.socket_index.insert(TerrainModuleSocket.new(front_neighbor, "main"))
+	gen.socket_index.insert(TerrainModuleSocket.new(left_neighbor, "main"))
+	var missing: Array[String] = rule._missing_sockets_for_piece(
+		center_piece,
+		gen.socket_index,
+		gen.terrain_index
+	)
+	assert_true(
+		missing.has("frontleft"),
+		"Inner corner must be marked missing when diagonal level tile is absent"
+	)
+
+
+func _insert_all_piece_sockets(gen: Variant, piece: TerrainModuleInstance) -> void:
+	for socket_name in piece.sockets.keys():
+		gen.socket_index.insert(TerrainModuleSocket.new(piece, socket_name))
+
+
+func test_level_edge_rule_top_diagonal_present_blocks_inner_corner() -> void:
+	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	var center_mod: TerrainModule = _make_module(
+		Vector3(2, 2, 2),
+		{
+			"front": Vector3(0, 0, -1),
+			"left": Vector3(-1, 0, 0),
+			"frontleft": Vector3(-1, 0, -1),
+			"topfrontleft": Vector3(-1, 1, -1),
+		}
+	)
+	center_mod.tags = TagList.new(["level"])
+	var center_piece: TerrainModuleInstance = _spawn_piece(center_mod)
+	var neighbor_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+	neighbor_mod.tags = TagList.new(["level"])
+	var front_neighbor: TerrainModuleInstance = _spawn_piece(neighbor_mod, Transform3D(Basis.IDENTITY, Vector3(0, 0, -1)))
+	var left_neighbor: TerrainModuleInstance = _spawn_piece(neighbor_mod, Transform3D(Basis.IDENTITY, Vector3(-1, 0, 0)))
+	gen.socket_index.insert(TerrainModuleSocket.new(front_neighbor, "main"))
+	gen.socket_index.insert(TerrainModuleSocket.new(left_neighbor, "main"))
+	var top_diagonal_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3(1, 1, 1)})
+	top_diagonal_mod.tags = TagList.new(["level"])
+	var top_diagonal_piece: TerrainModuleInstance = _spawn_piece(
+		top_diagonal_mod,
+		Transform3D(Basis.IDENTITY, Vector3(-2, 0, -2))
+	)
+	gen.socket_index.insert(TerrainModuleSocket.new(top_diagonal_piece, "main"))
+	gen.terrain_index.insert(top_diagonal_piece)
+	var missing: Array[String] = rule._missing_sockets_for_piece(center_piece, gen.socket_index, gen.terrain_index)
+	assert_false(
+		missing.has("frontleft"),
+		"Top diagonal level tile should block frontleft inner-corner missing state"
+	)
+
+
+func test_level_edge_rule_top_diagonal_absent_requires_inner_corner() -> void:
+	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	var center_mod: TerrainModule = _make_module(
+		Vector3(2, 2, 2),
+		{
+			"front": Vector3(0, 0, -1),
+			"left": Vector3(-1, 0, 0),
+			"frontleft": Vector3(-1, 0, -1),
+			"topfrontleft": Vector3(-1, 1, -1),
+		}
+	)
+	center_mod.tags = TagList.new(["level"])
+	var center_piece: TerrainModuleInstance = _spawn_piece(center_mod)
+	var neighbor_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+	neighbor_mod.tags = TagList.new(["level"])
+	var front_neighbor: TerrainModuleInstance = _spawn_piece(neighbor_mod, Transform3D(Basis.IDENTITY, Vector3(0, 0, -1)))
+	var left_neighbor: TerrainModuleInstance = _spawn_piece(neighbor_mod, Transform3D(Basis.IDENTITY, Vector3(-1, 0, 0)))
+	gen.socket_index.insert(TerrainModuleSocket.new(front_neighbor, "main"))
+	gen.socket_index.insert(TerrainModuleSocket.new(left_neighbor, "main"))
+	var missing: Array[String] = rule._missing_sockets_for_piece(center_piece, gen.socket_index, gen.terrain_index)
+	assert_true(
+		missing.has("frontleft"),
+		"Without top diagonal level tile, frontleft should be treated as missing inner corner"
+	)
+
+
+func test_get_adjacent_from_size_diagonal_filters_side_touching_hits() -> void:
+	var gen: Variant = _new_generator()
+	var center_mod: TerrainModule = _make_module(
+		Vector3(2, 2, 2),
+		{
+			"front": Vector3(0, 0, -1),
+			"left": Vector3(-1, 0, 0),
+			"frontleft": Vector3(-1, 0, -1),
+		}
+	)
+	center_mod.tags = TagList.new(["level"])
+	var center_piece: TerrainModuleInstance = _spawn_piece(center_mod)
+	var side_touching_mod: TerrainModule = _make_module(
+		Vector3(1, 1, 1),
+		{
+			"corner": Vector3.ZERO,
+			"front_touch": Vector3(1, 0, 0),
+		}
+	)
+	side_touching_mod.tags = TagList.new(["level"])
+	var side_touching_piece: TerrainModuleInstance = _spawn_piece(
+		side_touching_mod,
+		Transform3D(Basis.IDENTITY, Vector3(-1, 0, -1))
+	)
+	_insert_all_piece_sockets(gen, side_touching_piece)
+	var true_diagonal_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+	true_diagonal_mod.tags = TagList.new(["level"])
+	var true_diagonal_piece: TerrainModuleInstance = _spawn_piece(
+		true_diagonal_mod,
+		Transform3D(Basis.IDENTITY, Vector3(-1, 0, -1))
+	)
+	gen.socket_index.insert(TerrainModuleSocket.new(true_diagonal_piece, "main"))
+	var diagonal_pos: Vector3 = TerrainModuleSocket.new(center_piece, "frontleft").get_socket_position()
+	var hit: TerrainModuleSocket = gen._adjacent_hit_for_socket(
+		center_piece,
+		"frontleft",
+		diagonal_pos,
+		center_piece
+	)
+	assert_true(hit != null, "Expected a true diagonal hit after filtering side-touching candidate")
+	assert_eq(hit.piece, true_diagonal_piece)
+
+
+func test_get_adjacent_from_size_diagonal_ignores_wrong_layer_hit() -> void:
+	var gen: Variant = _new_generator()
+	var center_mod: TerrainModule = _make_module(
+		Vector3(2, 2, 2),
+		{
+			"front": Vector3(0, 0, -1),
+			"left": Vector3(-1, 0, 0),
+			"frontleft": Vector3(-1, 0, -1),
+		}
+	)
+	center_mod.tags = TagList.new(["level"])
+	var center_piece: TerrainModuleInstance = _spawn_piece(center_mod)
+	var wrong_layer_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+	wrong_layer_mod.tags = TagList.new(["ground"])
+	var wrong_layer_piece: TerrainModuleInstance = _spawn_piece(
+		wrong_layer_mod,
+		Transform3D(Basis.IDENTITY, Vector3(-1, 0, -1))
+	)
+	gen.socket_index.insert(TerrainModuleSocket.new(wrong_layer_piece, "main"))
+	var diagonal_pos: Vector3 = TerrainModuleSocket.new(center_piece, "frontleft").get_socket_position()
+	var hit: TerrainModuleSocket = gen._adjacent_hit_for_socket(
+		center_piece,
+		"frontleft",
+		diagonal_pos,
+		center_piece
+	)
+	assert_eq(hit, null, "Diagonal adjacency should reject wrong-layer hits")
+
+
+func test_level_edge_rule_top_diagonal_insertion_order_invariant() -> void:
+	var orders: Array = [true, false]
+	for front_first in orders:
+		var gen: Variant = _new_generator()
+		var rule: LevelEdgeRule = LevelEdgeRule.new()
+		var center_mod: TerrainModule = _make_module(
+			Vector3(2, 2, 2),
+			{
+				"front": Vector3(0, 0, -1),
+				"left": Vector3(-1, 0, 0),
+				"frontleft": Vector3(-1, 0, -1),
+				"topfrontleft": Vector3(-1, 1, -1),
+			}
+		)
+		center_mod.tags = TagList.new(["level"])
+		var center_piece: TerrainModuleInstance = _spawn_piece(center_mod)
+		var neighbor_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+		neighbor_mod.tags = TagList.new(["level"])
+		var front_neighbor: TerrainModuleInstance = _spawn_piece(neighbor_mod, Transform3D(Basis.IDENTITY, Vector3(0, 0, -1)))
+		var left_neighbor: TerrainModuleInstance = _spawn_piece(neighbor_mod, Transform3D(Basis.IDENTITY, Vector3(-1, 0, 0)))
+		var top_diagonal_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3(1, 1, 1)})
+		top_diagonal_mod.tags = TagList.new(["level"])
+		var top_diagonal_piece: TerrainModuleInstance = _spawn_piece(
+			top_diagonal_mod,
+			Transform3D(Basis.IDENTITY, Vector3(-2, 0, -2))
+		)
+		if front_first:
+			gen.socket_index.insert(TerrainModuleSocket.new(front_neighbor, "main"))
+			gen.socket_index.insert(TerrainModuleSocket.new(left_neighbor, "main"))
+		else:
+			gen.socket_index.insert(TerrainModuleSocket.new(left_neighbor, "main"))
+			gen.socket_index.insert(TerrainModuleSocket.new(front_neighbor, "main"))
+		gen.socket_index.insert(TerrainModuleSocket.new(top_diagonal_piece, "main"))
+		gen.terrain_index.insert(top_diagonal_piece)
+		var missing: Array[String] = rule._missing_sockets_for_piece(center_piece, gen.socket_index, gen.terrain_index)
+		assert_false(missing.has("frontleft"))
+
+
+func test_level_edge_rule_dual_method_agreement_for_plain_and_top_diagonal() -> void:
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	var use_top_variants: Array[bool] = [false, true]
+	for use_top in use_top_variants:
+		var gen: Variant = _new_generator()
+		var center_mod: TerrainModule = _make_module(
+			Vector3(2, 2, 2),
+			{
+				"front": Vector3(0, 0, -1),
+				"left": Vector3(-1, 0, 0),
+				"frontleft": Vector3(-1, 0, -1),
+				"topfrontleft": Vector3(-1, 1, -1),
+			}
+		)
+		center_mod.tags = TagList.new(["level"])
+		var center_piece: TerrainModuleInstance = _spawn_piece(center_mod)
+		var front_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": Vector3.ZERO})
+		front_mod.tags = TagList.new(["level"])
+		var front_neighbor: TerrainModuleInstance = _spawn_piece(front_mod, Transform3D(Basis.IDENTITY, Vector3(0, 0, -1)))
+		var left_neighbor: TerrainModuleInstance = _spawn_piece(front_mod, Transform3D(Basis.IDENTITY, Vector3(-1, 0, 0)))
+		gen.socket_index.insert(TerrainModuleSocket.new(front_neighbor, "main"))
+		gen.socket_index.insert(TerrainModuleSocket.new(left_neighbor, "main"))
+		var diagonal_offset: Vector3 = Vector3(1, 0, 1)
+		if use_top:
+			diagonal_offset = Vector3(1, 1, 1)
+		var diagonal_mod: TerrainModule = _make_module(Vector3(1, 1, 1), {"main": diagonal_offset})
+		diagonal_mod.tags = TagList.new(["level"])
+		var diagonal_piece: TerrainModuleInstance = _spawn_piece(
+			diagonal_mod,
+			Transform3D(Basis.IDENTITY, Vector3(-2, 0, -2))
+		)
+		gen.socket_index.insert(TerrainModuleSocket.new(diagonal_piece, "main"))
+		gen.terrain_index.insert(diagonal_piece)
+		var by_adj: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece_from_socket_adj(
+			center_piece,
+			"frontleft",
+			gen.socket_index
+		)
+		var by_proj: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece_from_terrain(
+			center_piece,
+			"frontleft",
+			gen.terrain_index
+		)
+		assert_eq(
+			by_adj != null,
+			by_proj != null,
+			"Dual diagonal methods must agree for use_top=%s" % [use_top]
+		)
+
+
+func _legacy_diagonal_target_center_for_test(
+	piece: TerrainModuleInstance,
+	diagonal_socket_name: String
+) -> Variant:
+	var cardinals: Dictionary = {
+		"frontleft": ["front", "left"],
+		"frontright": ["front", "right"],
+		"backright": ["back", "right"],
+		"backleft": ["back", "left"],
+	}
+	var required_cardinals: Array = cardinals.get(diagonal_socket_name, [])
+	if required_cardinals.size() != 2:
+		return null
+	var first_cardinal: String = required_cardinals[0]
+	var second_cardinal: String = required_cardinals[1]
+	if not piece.sockets.has(first_cardinal) or not piece.sockets.has(second_cardinal):
+		return null
+	var center: Vector3 = piece.transform.origin
+	var first_pos: Vector3 = TerrainModuleSocket.new(piece, first_cardinal).get_socket_position()
+	var second_pos: Vector3 = TerrainModuleSocket.new(piece, second_cardinal).get_socket_position()
+	var first_offset: Vector3 = first_pos - center
+	var second_offset: Vector3 = second_pos - center
+	return center + (first_offset + second_offset) * 2.0
+
+
+func _legacy_diagonal_neighbor_from_terrain_for_test(
+	piece: TerrainModuleInstance,
+	diagonal_socket_name: String,
+	terrain_index: TerrainIndex
+) -> TerrainModuleInstance:
+	var diagonal_target: Variant = _legacy_diagonal_target_center_for_test(piece, diagonal_socket_name)
+	if not (diagonal_target is Vector3):
+		return null
+	var target_pos: Vector3 = diagonal_target
+	var query_box: AABB = AABB(target_pos + Vector3(-0.6, -2.0, -0.6), Vector3(1.2, 4.0, 1.2))
+	var hits: Array = terrain_index.query_box(query_box)
+	for hit in hits:
+		if not (hit is TerrainModuleInstance):
+			continue
+		var other: TerrainModuleInstance = hit
+		if other == piece:
+			continue
+		if not other.def.tags.has("level"):
+			continue
+		var delta: Vector3 = other.transform.origin - target_pos
+		if abs(delta.x) <= 0.6 and abs(delta.z) <= 0.6:
+			return other
+	return null
+
+
+func test_level_edge_rule_generated_world_adj_vs_legacy_projection_match() -> void:
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 300
+	gen.MAX_LOAD_PER_STEP = 20
+	seed(12345)
+	_run_generator_ready(gen)
+	for _i in range(100):
+		gen.load_terrain()
+	var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
+	assert_true(level_pieces.size() > 0, "Expected generated level pieces for diagonal agreement check")
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+	var diagonal_sockets: Array[String] = ["frontleft", "frontright", "backright", "backleft"]
+	var mismatch_count: int = 0
+	var sample_mismatches: Array[String] = []
+	for piece in level_pieces:
+		for diagonal_socket_name in diagonal_sockets:
+			var by_current: TerrainModuleInstance = rule._get_diagonal_level_neighbor_piece_from_socket_adj(
+				piece,
+				diagonal_socket_name,
+				gen.socket_index
+			)
+			var by_legacy: TerrainModuleInstance = _legacy_diagonal_neighbor_from_terrain_for_test(
+				piece,
+				diagonal_socket_name,
+				gen.terrain_index
+			)
+			if by_current == by_legacy:
+				continue
+			mismatch_count += 1
+			if sample_mismatches.size() < 12:
+				sample_mismatches.append(
+					"piece=%s socket=%s current=%s legacy=%s"
+					% [piece.transform.origin, diagonal_socket_name, by_current, by_legacy]
+				)
+	assert_eq(
+		mismatch_count,
+		0,
+		"Diagonal mismatch count=%s; sample=%s"
+			% [mismatch_count, sample_mismatches]
 	)

@@ -103,4 +103,13 @@ static func _append_conflicts_for_piece_state(
 
 
 static func _socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	return float(piece.def.socket_fill_prob.get(socket_name, 0.0))
+	if not piece.def.socket_fill_prob.has(socket_name):
+		return 0.0
+	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
+	if fill_prob == null:
+		return 0.0
+	if fill_prob is float:
+		return fill_prob
+	if fill_prob is int:
+		return fill_prob
+	return 0.0

@@ -12,6 +12,10 @@ var test_pieces_library: TerrainModuleLibrary
 var terrain_index: TerrainIndex
 var socket_index: PositionIndex
 var queue: PriorityQueue
+var queued_socket_keys: Dictionary = {}
+var _tracked_queue_ref: PriorityQueue = null
+var _deferred_sockets: Array = []
+var _deferred_socket_keys: Dictionary = {}
 
 
 func _ready() -> void:
@@ -27,6 +31,8 @@ func _ready() -> void:
 
 	var start_tile := load_start_tile()
 	queue = PriorityQueue.new()
+	queued_socket_keys.clear()
+	_tracked_queue_ref = queue
 	# Register the start tile in indices so collision checks work and adjacency can be detected
 	# Sockets are indexed so they can act as adjacency barriers.
 	register_piece(start_tile, "")
@@ -35,17 +41,23 @@ func _ready() -> void:
 		if not _is_socket_expandable(piece_socket):
 			continue
 		var dist := get_dist_from_player(piece_socket.piece, piece_socket.socket_name)
-		queue.push(piece_socket, dist)
+		_enqueue_socket(piece_socket, dist)
 
 func _process(_delta: float) -> void:
 	load_terrain()
 
 func load_terrain() -> void:
+	_ensure_queue_tracking_current()
 	var num_added: int = 0
 	var num_processed: int = 0
+	_deferred_sockets.clear()
+	_deferred_socket_keys.clear()
 
 	while num_added < MAX_LOAD_PER_STEP and num_processed < MAX_LOAD_PER_STEP * 2 and !queue.is_empty():
 		var piece_socket = queue.pop()
+		if piece_socket == null:
+			break
+		_mark_socket_dequeued(piece_socket)
 		var piece: TerrainModuleInstance = piece_socket.piece
 		var socket_name: String = piece_socket.socket_name
 		var distance := get_dist_from_player(piece, socket_name)
@@ -55,6 +67,7 @@ func load_terrain() -> void:
 		var added: bool = _process_socket(piece_socket, distance)
 		if added:
 			num_added += 1
+	_flush_deferred_sockets()
 
 
 func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
@@ -71,22 +84,20 @@ func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool
 
 
 func _is_socket_connected(piece_socket: TerrainModuleSocket) -> bool:
-	var existing_socket: TerrainModuleSocket = socket_index.query_other(piece_socket.get_socket_position(), piece_socket.piece)
-	return existing_socket != null and _sockets_same_layer(piece_socket, existing_socket)
-
-
-func _sockets_same_layer(a: TerrainModuleSocket, b: TerrainModuleSocket) -> bool:
-	if a == null or b == null:
-		return false
-	var a_is_ground: bool = a.piece.def.tags.has("ground")
-	var b_is_ground: bool = b.piece.def.tags.has("ground")
-	return a_is_ground == b_is_ground
+	var existing_sockets: Array[TerrainModuleSocket] = socket_index.query_others(
+		piece_socket.get_socket_position(),
+		piece_socket.piece
+	)
+	for existing_socket in existing_sockets:
+		if _is_socket_expandable(existing_socket):
+			return true
+	return false
 
 
 func _defer_if_out_of_range(piece_socket: TerrainModuleSocket, distance: float) -> bool:
 	if distance <= RENDER_RANGE:
 		return false
-	queue.push(piece_socket, distance)
+	_stage_deferred_socket(piece_socket, distance)
 	return true
 
 
@@ -98,11 +109,33 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 
 
 func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	return float(piece.def.socket_fill_prob.get(socket_name, 0.0))
+	if not piece.def.socket_fill_prob.has(socket_name):
+		return 0.0
+	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
+	if fill_prob == null:
+		return 0.0
+	if fill_prob is float:
+		return fill_prob
+	if fill_prob is int:
+		return fill_prob
+	return 0.0
 
 
 func _is_socket_expandable(piece_socket: TerrainModuleSocket) -> bool:
 	return _get_socket_fill_prob(piece_socket.piece, piece_socket.socket_name) > 0.0
+
+
+func _is_socket_blocking(piece_socket: TerrainModuleSocket) -> bool:
+	if piece_socket == null or piece_socket.piece == null or piece_socket.piece.def == null:
+		return false
+	var socket_name: String = piece_socket.socket_name
+	var fill_probs: Dictionary = piece_socket.piece.def.socket_fill_prob
+	if not fill_probs.has(socket_name):
+		return false # setting this to false made lag even worse
+	var fill_prob: Variant = fill_probs[socket_name]
+	if fill_prob == null:
+		return false
+	return _get_socket_fill_prob(piece_socket.piece, socket_name) <= 0.0
 
 
 func _passes_fill_prob_roll(piece_socket: TerrainModuleSocket) -> bool:
@@ -162,7 +195,7 @@ func _has_forbidden_adjacency(adjacent: Dictionary[String, TerrainModuleSocket])
 	for hit in adjacent.values():
 		if hit == null:
 			continue
-		if not _is_socket_expandable(hit):
+		if _is_socket_blocking(hit):
 			return true
 	return false
 
@@ -174,15 +207,14 @@ func _try_place_with_rules(orig_piece_socket: TerrainModuleSocket, placement_con
 	if filtered.is_empty():
 		return false
 
-	for _attempt in range(4):
-		var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
-		var chosen: TerrainModuleInstance = chosen_template.spawn()
-		chosen.create()
-		var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(chosen, attachment_socket_name)
-		if add_piece(new_piece_socket, orig_piece_socket):
-			_apply_rules_after_placement(chosen, orig_piece_socket, placement_context, filtered)
-			return true
-		chosen.destroy()
+	var chosen_template: TerrainModule = library.sample_from_modules(filtered, dist)
+	var chosen: TerrainModuleInstance = chosen_template.spawn()
+	chosen.create()
+	var new_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(chosen, attachment_socket_name)
+	if add_piece(new_piece_socket, orig_piece_socket):
+		_apply_rules_after_placement(chosen, orig_piece_socket, placement_context, filtered)
+		return true
+	chosen.destroy()
 	return false
 
 
@@ -273,6 +305,7 @@ func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> 
 
 
 func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
+	_ensure_queue_tracking_current()
 	for socket_name: String in piece.sockets.keys():
 		var current_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
 		if not _is_socket_expandable(current_socket):
@@ -280,10 +313,10 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 		var socket: Marker3D = piece.sockets[socket_name]
 		var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
 		var existing_socket: TerrainModuleSocket = socket_index.query_other(pos, piece)
-		if existing_socket != null and _sockets_same_layer(current_socket, existing_socket):
-				continue
+		if existing_socket != null and _is_socket_expandable(existing_socket):
+			continue
 		var dist := get_dist_from_player(piece, socket_name)
-		queue.push(current_socket, dist)
+		_enqueue_socket(current_socket, dist)
 
 
 func register_piece(piece: TerrainModuleInstance, attachment_socket_name: String) -> void:
@@ -313,9 +346,14 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 
 
 func remove_piece(piece: TerrainModuleInstance) -> void:
+	_ensure_queue_tracking_current()
 	terrain_index.remove(piece)
 	socket_index.remove_piece(piece)
 	queue.remove_where(func(item): return item is TerrainModuleSocket and item.piece == piece)
+	for socket_name in piece.sockets.keys():
+		var queued_key: String = _socket_queue_key_from_parts(piece, socket_name)
+		if queued_socket_keys.has(queued_key):
+			queued_socket_keys.erase(queued_key)
 	if piece.root and piece.root.get_parent() == terrain_parent:
 		terrain_parent.remove_child(piece.root)
 		piece.root.queue_free()
@@ -390,7 +428,7 @@ func get_adjacent_from_size(
 				# Keep legacy behavior for non-top ground sockets.
 				if not from_top_socket:
 					continue
-				
+
 			adjacency[socket_name] = hit
 
 	test_piece.destroy()
@@ -471,11 +509,13 @@ func add_piece(
 
 
 func remove_linked_sockets_from_queue(new_piece_socket: TerrainModuleSocket) -> void:
+	_ensure_queue_tracking_current()
 	# Remove sockets that were linked into by the new piece from the queue
 	# These are the sockets that the new piece connected to
 
 	var new_piece: TerrainModuleInstance = new_piece_socket.piece
 	var linked_sockets: Array[TerrainModuleSocket] = []
+	var linked_socket_keys: Dictionary = {}
 
 	# Find all sockets on other pieces that are at the same positions as our new piece's sockets
 	for socket_name in new_piece.sockets.keys():
@@ -485,13 +525,23 @@ func remove_linked_sockets_from_queue(new_piece_socket: TerrainModuleSocket) -> 
 		# Find any existing socket at this position (not belonging to our new piece)
 		var existing_socket := socket_index.query_other(socket_pos, new_piece)
 		if existing_socket != null:
-			var new_socket: TerrainModuleSocket = TerrainModuleSocket.new(new_piece, socket_name)
-			if _sockets_same_layer(new_socket, existing_socket):
+			if _is_socket_expandable(existing_socket):
 				linked_sockets.append(existing_socket)
+				linked_socket_keys[_socket_queue_key(existing_socket)] = true
 
 	# Remove these linked sockets from the queue
-	for linked_socket in linked_sockets:
-		queue.remove_where(func(item): return item is TerrainModuleSocket and item.piece == linked_socket.piece and item.socket_name == linked_socket.socket_name)
+	if linked_sockets.is_empty():
+		return
+	queue.remove_where(
+		func(item):
+			if not (item is TerrainModuleSocket):
+				return false
+			var item_socket: TerrainModuleSocket = item
+			return linked_socket_keys.has(_socket_queue_key(item_socket))
+	)
+	for linked_socket_key in linked_socket_keys.keys():
+		if queued_socket_keys.has(linked_socket_key):
+			queued_socket_keys.erase(linked_socket_key)
 
 
 func load_start_tile() -> TerrainModuleInstance:
@@ -501,3 +551,77 @@ func load_start_tile() -> TerrainModuleInstance:
 	var root := initial_tile.create()
 	terrain_parent.add_child(root)
 	return initial_tile
+
+
+func _socket_queue_key(piece_socket: TerrainModuleSocket) -> String:
+	if piece_socket == null:
+		return ""
+	return _socket_queue_key_from_parts(piece_socket.piece, piece_socket.socket_name)
+
+
+func _socket_queue_key_from_parts(piece: TerrainModuleInstance, socket_name: String) -> String:
+	if piece == null:
+		return ""
+	return str(piece.get_instance_id()) + ":" + socket_name
+
+
+func _ensure_queue_tracking_current() -> void:
+	if queue == null:
+		queued_socket_keys.clear()
+		_tracked_queue_ref = null
+		return
+	if queue == _tracked_queue_ref:
+		return
+	queued_socket_keys.clear()
+	for entry in queue.heap:
+		if not (entry is Dictionary):
+			continue
+		if not entry.has("item"):
+			continue
+		var item: Variant = entry["item"]
+		if not (item is TerrainModuleSocket):
+			continue
+		var key: String = _socket_queue_key(item)
+		if key == "":
+			continue
+		queued_socket_keys[key] = true
+	_tracked_queue_ref = queue
+
+
+func _mark_socket_dequeued(piece_socket: TerrainModuleSocket) -> void:
+	var queue_key: String = _socket_queue_key(piece_socket)
+	if queue_key == "":
+		return
+	if queued_socket_keys.has(queue_key):
+		queued_socket_keys.erase(queue_key)
+
+
+func _enqueue_socket(piece_socket: TerrainModuleSocket, priority: float) -> bool:
+	_ensure_queue_tracking_current()
+	var queue_key: String = _socket_queue_key(piece_socket)
+	if queue_key == "":
+		return false
+	if queued_socket_keys.has(queue_key):
+		return false
+	queue.push(piece_socket, priority)
+	queued_socket_keys[queue_key] = true
+	return true
+
+
+func _stage_deferred_socket(piece_socket: TerrainModuleSocket, distance: float) -> void:
+	var queue_key: String = _socket_queue_key(piece_socket)
+	if queue_key == "":
+		return
+	if _deferred_socket_keys.has(queue_key):
+		return
+	_deferred_socket_keys[queue_key] = true
+	_deferred_sockets.append({"socket": piece_socket, "distance": distance})
+
+
+func _flush_deferred_sockets() -> void:
+	for entry in _deferred_sockets:
+		var piece_socket: TerrainModuleSocket = entry.get("socket", null)
+		var distance: float = float(entry.get("distance", 0.0))
+		_enqueue_socket(piece_socket, distance)
+	_deferred_sockets.clear()
+	_deferred_socket_keys.clear()

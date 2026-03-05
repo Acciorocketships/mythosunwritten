@@ -9,7 +9,7 @@ extends Resource
 @export var socket_size: Dictionary[String, Distribution]
 @export var socket_required: Dictionary[String, TagList]
 # Per-socket fill probabilities in [0, 1] (NOT a Distribution; does not sum to 1).
-@export var socket_fill_prob: Dictionary[String, float]
+@export var socket_fill_prob: Dictionary
 @export var socket_tag_prob: Dictionary[String, Distribution]
 @export var visual_variants: Array[PackedScene]
 
@@ -28,7 +28,7 @@ func _init(
 	_visual_variants: Array[PackedScene] = [],
 	_socket_size: Dictionary[String, Distribution] = {},
 	_socket_required: Dictionary[String, TagList] = {},
-	_socket_fill_prob: Dictionary[String, float] = {},
+	_socket_fill_prob: Dictionary = {},
 	_socket_tag_prob: Dictionary[String, Distribution] = {},
 	_replace_existing: bool = false,
 ) -> void:
@@ -92,9 +92,11 @@ static func assert_distribution_normalized(dist: Distribution, label: String = "
 		"Distribution not normalised (%s): sum=%s dist=%s" % [label, str(s), str(dist.dist)]
 	)
 
-static func assert_probabilities_in_range(probs: Dictionary[String, float], label: String = "") -> void:
+static func assert_probabilities_in_range(probs: Dictionary, label: String = "") -> void:
 	# Asserts each probability is within [0, 1].
 	for k: String in probs.keys():
+		if probs[k] == null:
+			continue
 		var p: float = float(probs[k])
 		assert(
 			p >= 0.0 and p <= 1.0,
