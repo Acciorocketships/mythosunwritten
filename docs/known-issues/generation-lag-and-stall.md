@@ -170,3 +170,154 @@ Interpretation:
 - Core queue bug/optimization issue has a concrete fix in place.
 - Remaining full-suite failures are the pre-existing test regressions documented in `current-regressions-and-test-state.md` (deprecated private-method calls), not this queue fix.
 
+## March 2026 Ongoing Profiling: `_try_place_with_rules` Still Dominant
+
+### Goal
+
+Continue reducing `_try_place_with_rules` runtime after queue-churn root cause was fixed.
+
+### Debug Session Summary
+
+- Runtime logging session: `aeacc0`
+- Log path: `res://.cursor/debug-aeacc0.log`
+- Focused paths:
+  - `TerrainGenerator._try_place_with_rules`
+  - `TerrainGenerator._apply_rules_after_placement`
+  - `TerrainGenerator.add_piece`
+  - `LevelEdgeRule.apply`
+
+### Hypotheses and Outcomes
+
+1. `rules_us` dominates `_try_place_with_rules`:
+   - **CONFIRMED**
+   - Example logs:
+     - `try_place_slow_success total_us=88037 add_piece_us=1646 rules_us=86302`
+     - `try_place_slow_success total_us=31538 add_piece_us=1585 rules_us=29904`
+2. `add_piece` dominates the same path:
+   - **PARTIAL / SECONDARY**
+   - `add_piece` can be expensive, but in the worst `_try_place_with_rules` events, `rules_us` remains much larger.
+3. Two rule passes are duplicated expensive work:
+   - **CONFIRMED**
+   - `slow_rule_apply` events occurred on both `pass=0` and `pass=1` before optimization.
+4. `get_adjacent` fetch is the major rule sub-cost:
+   - **REJECTED (for observed runs)**
+   - No `slow_adjacent_fetch` events at configured threshold.
+
+### Fixes Attempted (Runtime-Evidence Driven)
+
+#### Attempt C: Reduce post-placement rule passes
+
+- Change: `_apply_rules_after_placement` from `range(2)` to `range(1)`.
+- Evidence after change:
+  - `slow_rule_apply` logs now only appear for `pass=0`.
+  - `_try_place_with_rules` remains rule-dominant but with fewer duplicate pass events.
+- Status: **confirmed partial improvement**.
+
+### LevelEdgeRule Internal Breakdown (New Evidence)
+
+Instrumentation added inside `LevelEdgeRule.apply` to split:
+
+- `neighbors_us`
+- `missing_total_us`
+- `replacement_total_us`
+
+Representative events:
+
+- `affected_count=1 direct_neighbors=0 missing_total_us=24 neighbors_us=101 replacement_total_us=40253 total_us=40382`
+- `affected_count=12 direct_neighbors=4 missing_total_us=931 neighbors_us=627 replacement_total_us=4525 total_us=6090`
+- `affected_count=15 direct_neighbors=6 missing_total_us=1499 neighbors_us=817 replacement_total_us=3254 total_us=5579`
+
+Interpretation:
+
+- `replacement_total_us` is often the largest component.
+- In large neighborhoods, both `missing_total_us` and `replacement_total_us` are significant.
+- There is at least one extreme outlier where replacement work dominates almost entirely.
+
+### Current Working Theory
+
+`LevelEdgeRule.apply` spends substantial time in per-affected-piece replacement selection/creation, and this dominates rule cost under dense level neighborhoods.
+
+### Next Instrumentation (Added During Investigation)
+
+To validate no-op replacement churn potential, logging now includes:
+
+- `same_tag_candidates`: affected pieces where target variant tag already matches current piece.
+- `no_change_candidates`: stricter subset where tag matches and canonical alignment is already `0` steps.
+
+This is intended to prove/disprove whether we can safely skip replacement creation for a meaningful fraction of affected pieces.
+
+### March 2026 Follow-up Evidence: No-op Replacement Churn (Confirmed)
+
+Latest `perf-round3` samples show `same_tag_candidates` and `no_change_candidates` are frequently high:
+
+- `affected_count=12 same_tag_candidates=10 no_change_candidates=9 replacement_total_us=4208 total_us=6937`
+- `affected_count=17 same_tag_candidates=12 no_change_candidates=12 replacement_total_us=6812 total_us=11641`
+- `affected_count=8 same_tag_candidates=7 no_change_candidates=7 replacement_total_us=2709 total_us=4713`
+
+Interpretation:
+
+- A significant share of affected pieces already have the target level tag and required alignment.
+- We were still spending replacement time even when no visual/state change was needed.
+
+### Attempt D: Skip No-op Replacements in `LevelEdgeRule`
+
+Implemented:
+
+- In `LevelEdgeRule.apply`, compute `target_tag` and `steps_to_align` once per affected piece.
+- New helper `_create_replacement_for_target(source_piece, target_tag, steps_to_align)`.
+- Fast-return `source_piece` when:
+  - existing tag already equals target tag, and
+  - `steps_to_align == 0`.
+
+Verification instrumentation used an extra metric:
+
+- `no_change_skips` (actual number of replacements skipped at runtime)
+
+Expected effect:
+
+- Reduce `replacement_total_us` proportionally to no-op candidate frequency.
+- Lower `rules_us` contribution inside `_try_place_with_rules`.
+
+### Attempt D Verification (Post-change Runtime Evidence)
+
+Post-change logs (same scenario) now show `no_change_skips` firing frequently and replacement cost reduced:
+
+- `affected_count=9 no_change_candidates=6 no_change_skips=6 replacement_total_us=638 total_us=2463`
+- `affected_count=8 no_change_candidates=5 no_change_skips=5 replacement_total_us=457 total_us=2124`
+- `affected_count=10 no_change_candidates=5 no_change_skips=5 replacement_total_us=1337 total_us=4070`
+
+Compared to pre-change runs, many similar neighborhood sizes previously showed replacement totals in the ~2k-5k range.
+
+Status: **confirmed improvement** for recurring LevelEdge retile workload.
+
+Additional post-change run confirms this pattern:
+
+- `no_change_skips` consistently tracks a large share of affected pieces.
+- `replacement_total_us` is commonly around ~0.4k-1.5k in many events where earlier runs were often ~2k-5k for similar neighborhood sizes.
+- `_try_place_with_rules` still shows occasional high spikes, but typical `rules_us` values are materially lower than earlier heavy clusters.
+
+### Remaining Issue
+
+A first-use outlier is still visible:
+
+- `affected_count=1 replacement_total_us=40007 total_us=40292`
+
+Likely cause is one-time lazy setup/warm-up in level variant selection paths (not repeated in later events).
+
+### Next Profiling Step Added
+
+Added `tag_eval_total_us` metric in `LevelEdgeRule.apply` to separate:
+
+- missing-socket cost (`missing_total_us`)
+- tag/rotation classification cost (`tag_eval_total_us`)
+- replacement work (`replacement_total_us`)
+
+This was used to identify the next dominant cost after no-op replacement skips.
+
+### Post-investigation Cleanup
+
+- Debug instrumentation added for this profiling session has been removed from runtime code.
+- Retained code changes:
+  - single-pass `_apply_rules_after_placement` (`range(1)`)
+  - no-op replacement skip in `LevelEdgeRule` via `_create_replacement_for_target(...)`.
+

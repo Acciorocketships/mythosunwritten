@@ -50,3 +50,22 @@ Observed warnings are UID/path resolution warnings (camera/character/terrain gen
 - New queue/regression tests pass and emit queue-health logs used in `generation-lag-and-stall.md`.
 - No additional regressions were introduced by queue dedupe/deferred requeue/connection-query updates.
 
+## Open Runtime Visual Issue (March 2026)
+
+### Boundary level tile orientation occasionally incorrect
+
+- User-observed issue during runtime profiling:
+  - A boundary level tile can appear with an "edge" silhouette facing inward toward an adjacent level tile.
+  - This is typically seen near level patch boundaries (not commonly in large interior clusters).
+- Status: **known open issue**, not addressed in current perf-focused changes.
+
+### Repro Notes (qualitative)
+
+1. Run terrain generation long enough to form medium/large level patches.
+2. Inspect boundary tiles around patch perimeter.
+3. Occasionally one boundary tile appears visually mismatched, with an inward-facing edge toward a neighboring level tile.
+
+### Investigation Context Link
+
+- See `generation-lag-and-stall.md` for recent `LevelEdgeRule` performance findings and change history.
+

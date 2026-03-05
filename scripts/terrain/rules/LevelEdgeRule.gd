@@ -56,7 +56,11 @@ func matches(context: Dictionary) -> bool:
 
 
 func apply(context: Dictionary) -> Dictionary:
-	if not context.has("chosen_piece") or not context.has("socket_index") or not context.has("terrain_index"):
+	if (
+		not context.has("chosen_piece")
+		or not context.has("socket_index")
+		or not context.has("terrain_index")
+	):
 		return {"chosen_piece": context.get("chosen_piece", null), "piece_updates": {}}
 
 	var chosen_piece: TerrainModuleInstance = context["chosen_piece"]
@@ -83,13 +87,32 @@ func apply(context: Dictionary) -> Dictionary:
 			_add_unique_piece(affected, seen, indirect_neighbor)
 	var chosen_replacement: TerrainModuleInstance = chosen_piece
 	for affected_piece in affected:
-		var missing: Array[String] = _missing_sockets_for_piece(affected_piece, socket_index, terrain_index)
-		var replacement: TerrainModuleInstance = _create_replacement(affected_piece, missing)
+		var missing: Array[String] = _missing_sockets_for_piece(
+			affected_piece,
+			socket_index,
+			terrain_index
+		)
+		var target_tag: String = _tag_for_missing_sockets(missing)
+		var steps_to_align: int = _rotation_steps_to_align_canonical(target_tag, missing)
+		var replacement: TerrainModuleInstance = _create_replacement_for_target(
+			affected_piece,
+			target_tag,
+			steps_to_align
+		)
 		if affected_piece == chosen_piece:
 			chosen_replacement = replacement
 		else:
 			piece_updates[affected_piece] = replacement
 	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
+
+
+func _current_level_tag(module_def: TerrainModule) -> String:
+	if module_def == null:
+		return ""
+	for level_tag in LEVEL_TAG_ORDER:
+		if module_def.tags.has(level_tag):
+			return level_tag
+	return ""
 
 
 func _add_unique_piece(
@@ -242,13 +265,18 @@ func _diagonal_target_center(piece: TerrainModuleInstance, diagonal_socket_name:
 
 ## Replace piece with the correct level variant (center/side/corner/...) and rotate so its
 ## canonical "missing" edges align with this piece's actual missing sockets.
-func _create_replacement(
+func _create_replacement_for_target(
 	source_piece: TerrainModuleInstance,
-	missing_sockets: Array[String]
+	target_tag: String,
+	steps_to_align: int
 ) -> TerrainModuleInstance:
-	var target_tag: String = _tag_for_missing_sockets(missing_sockets)
+	var existing_tag: String = _current_level_tag(source_piece.def)
+	if existing_tag == target_tag and steps_to_align == 0:
+		return source_piece
 	var module_template: TerrainModule = _get_module_for_level_tag(target_tag)
 	if module_template == null:
+		return source_piece
+	if module_template == source_piece.def and steps_to_align == 0:
 		return source_piece
 	var replacement: TerrainModuleInstance = module_template.spawn()
 	replacement.set_transform(source_piece.transform)
@@ -256,9 +284,8 @@ func _create_replacement(
 
 	# Variant has canonical edge socket names (e.g. level-side has ["front"]). Find how many
 	# 90° rotations of that set match missing_sockets; then rotate piece by (4 - steps).
-	var steps: int = _rotation_steps_to_align_canonical(target_tag, missing_sockets)
-	if steps >= 0:
-		var yaw: float = PI * 0.5 * float((4 - steps) % 4)
+	if steps_to_align >= 0:
+		var yaw: float = PI * 0.5 * float((4 - steps_to_align) % 4)
 		var rotated_basis: Basis = Basis(Vector3.UP, yaw) * replacement.transform.basis
 		replacement.set_basis(rotated_basis)
 	return replacement
@@ -311,8 +338,10 @@ func _get_module_for_level_tag(level_tag: String) -> TerrainModule:
 			"level-inner-corner-side": TerrainModuleDefinitions.load_level_inner_corner_side_tile(),
 			"level-inner-corner-edge1": TerrainModuleDefinitions.load_level_inner_corner_edge1_tile(),
 			"level-inner-corner-edge2": TerrainModuleDefinitions.load_level_inner_corner_edge2_tile(),
-			"level-inner-corner-edge-both": TerrainModuleDefinitions.load_level_inner_corner_edge_both_tile(),
-			"level-inner-corner-side-edge": TerrainModuleDefinitions.load_level_inner_corner_side_edge_tile(),
+			"level-inner-corner-edge-both":
+				TerrainModuleDefinitions.load_level_inner_corner_edge_both_tile(),
+			"level-inner-corner-side-edge":
+				TerrainModuleDefinitions.load_level_inner_corner_side_edge_tile(),
 			"level-inner-corner-three": TerrainModuleDefinitions.load_level_inner_corner_three_tile(),
 			"level-inner-corner-all": TerrainModuleDefinitions.load_level_inner_corner_all_tile()
 		}
