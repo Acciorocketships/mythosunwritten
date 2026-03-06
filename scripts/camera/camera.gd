@@ -23,7 +23,11 @@ var _have_prev := false
 var _v_ema := Vector3.ZERO
 var _last_back_dir := Vector3.ZERO
 
-func _process(delta: float) -> void:
+func _ready() -> void:
+	if camera == null:
+		camera = get_node_or_null(".") as Camera3D
+
+func _physics_process(delta: float) -> void:
 	if camera == null or target == null:
 		return
 
@@ -35,14 +39,19 @@ func _process(delta: float) -> void:
 		_v_ema = (1-ema_alpha) * _v_ema + ema_alpha * v
 	else:
 		_have_prev = true
-	var prev_dir : Vector3 = (camera.global_position -_prev_pos).normalized()
+	var prev_dir: Vector3 = (camera.global_position - pos)
+	prev_dir.y = 0.0
+	if prev_dir.length_squared() > 1e-9:
+		prev_dir = prev_dir.normalized()
+	else:
+		prev_dir = Vector3.BACK
 	_prev_pos = pos
 	var speed : float = max(_v_ema.length(), v.length())
 
 	# --- determine "behind" direction based on smoothed velocity ---
 	var back_dir: Vector3
 	if _last_back_dir.length() == 0:
-		_last_back_dir = camera.position - target.position
+		_last_back_dir = camera.global_position - target.global_position
 		_last_back_dir.y = 0
 		_last_back_dir = _last_back_dir.normalized()
 	if speed > 1e-4:
