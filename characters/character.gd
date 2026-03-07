@@ -8,6 +8,7 @@ extends CharacterBody3D
 @export var ACCEL_AIR := 12.0
 @export var FRICTION := 500.0
 @export var JUMP_VELOCITY := 13.0
+@export var MAX_STEP_HEIGHT := 0.5
 
 # Bone names you expect (only used if your attachments don't already have one)
 @export var RIGHT_HAND_BONE := "handslot.r"
@@ -33,12 +34,17 @@ var collision_shape: CollisionObject3D
 var raycast: RayCast3D
 var on_ground: bool = true
 var was_on_ground: bool = false
+var step_visual_offset_y: float = 0.0
+var body_model_base_pos: Vector3 = Vector3.ZERO
+var prev_body_global_y: float = 0.0
 
 func _ready() -> void:
 	_setup_player_controller()
 	_cache_body_and_skeleton()
 	_wire_animations()
 	_bind_all_attachments()
+	body_model_base_pos = body_model_root.position
+	prev_body_global_y = global_position.y
 
 # --------------------------------------------
 # Movement
@@ -85,7 +91,10 @@ func _physics_process(delta: float) -> void:
 	velocity.x = vxz.x
 	velocity.z = vxz.y
 
-	move_and_slide()
+	var did_step: bool = _try_step_up(delta)
+	if not did_step:
+		move_and_slide()
+	_update_step_visual_smoothing(delta)
 	movement_animation(target_speed)
 
 
@@ -180,3 +189,73 @@ func _get_ground_dist() -> float:
 		var dist: float = (point - raycast.global_position).length()
 		return dist
 	return INF
+
+func _try_step_up(delta: float) -> bool:
+	var step_clearance: float = 0.05
+	var step_down_extra: float = 0.1
+	var forward_probe_extra: float = 0.45
+	var step_height_epsilon: float = 0.01
+	var min_step_height: float = 0.005
+	var horizontal_motion: Vector3 = Vector3(velocity.x, 0.0, velocity.z) * delta
+	var current_tf: Transform3D = global_transform
+	var has_motion: bool = horizontal_motion.length() >= 0.001
+	var on_floor_now: bool = on_ground
+	var moving_down_or_flat: bool = velocity.y <= 0.0
+	var probe_motion: Vector3 = horizontal_motion
+	if has_motion:
+		probe_motion = horizontal_motion + horizontal_motion.normalized() * forward_probe_extra
+
+	var blocked_short: bool = false
+	var blocked_long: bool = false
+	if on_floor_now and moving_down_or_flat and has_motion:
+		blocked_short = test_move(current_tf, horizontal_motion)
+		blocked_long = test_move(current_tf, probe_motion)
+
+	var raise_amount: float = MAX_STEP_HEIGHT + step_clearance
+	var raised_tf: Transform3D = current_tf.translated(Vector3.UP * raise_amount)
+	var can_step: bool = (
+		on_floor_now
+		and moving_down_or_flat
+		and has_motion
+		and (blocked_short or blocked_long)
+	)
+	if not can_step:
+		return false
+
+	if test_move(raised_tf, probe_motion):
+		return false
+
+	var raised_forward_tf: Transform3D = raised_tf.translated(probe_motion)
+	var downward_motion: Vector3 = Vector3.DOWN * (raise_amount + step_down_extra)
+	var down_collision: KinematicCollision3D = KinematicCollision3D.new()
+	if not test_move(raised_forward_tf, downward_motion, down_collision):
+		return false
+
+	var floor_angle: float = down_collision.get_normal().angle_to(Vector3.UP)
+	if floor_angle > floor_max_angle:
+		return false
+
+	var probe_origin: Vector3 = raised_forward_tf.origin + down_collision.get_travel()
+	var new_origin: Vector3 = current_tf.origin + horizontal_motion
+	new_origin.y = probe_origin.y
+	var climbed_height: float = new_origin.y - current_tf.origin.y
+	if climbed_height < min_step_height:
+		return false
+	if climbed_height <= 0.0 or climbed_height > MAX_STEP_HEIGHT + step_height_epsilon:
+		return false
+
+	global_position = new_origin
+	velocity.y = 0.0
+	apply_floor_snap()
+	return true
+
+func _update_step_visual_smoothing(delta: float) -> void:
+	var visual_comp_threshold: float = 0.2
+	var smooth_speed: float = 8.0
+	var body_delta_y: float = global_position.y - prev_body_global_y
+	if body_delta_y > visual_comp_threshold:
+		step_visual_offset_y -= body_delta_y * 0.35
+		step_visual_offset_y = max(step_visual_offset_y, -MAX_STEP_HEIGHT * 0.16)
+	prev_body_global_y = global_position.y
+	step_visual_offset_y = lerp(step_visual_offset_y, 0.0, clamp(smooth_speed * delta, 0.0, 1.0))
+	body_model_root.position = body_model_base_pos + Vector3(0.0, step_visual_offset_y, 0.0)

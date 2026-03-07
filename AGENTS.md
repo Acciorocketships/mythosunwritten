@@ -190,5 +190,5 @@
 - **Modularise ground/level tile logic**: Give level tiles the same logic as ground tiles; only difference is that another level is significantly more probable on level tiles. Use the new sockets so the majority of level tiles are slightly inset from the platform below (avoid unwanted cliff).
 - **Guaranteed-fill rule**: Add a rule that guarantees fill with a tag if at least n adjacent tiles in some set (default: front, back, left, right) have that tag.
 - **Camera**: Fix camera blurring/jittering; add new camera controller that follows the mouse.
-- **Character**: Stepping over obstacles up to level-tile height; strafing where character always looks towards the mouse; dodge/dash animation.
+- **Character**: Strafing where character always looks towards the mouse; dodge/dash animation. (Stepping over ledges is implemented in `characters/character.gd` via `MAX_STEP_HEIGHT` + step probe motion.)
 - **Items and inventory**.
