@@ -5,7 +5,7 @@ extends Resource
 
 static func load_ground_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/GroundTile.tscn")
-	var tags: TagList = TagList.new(["ground", "24x24", "side"])
+	var tags: TagList = TagList.new(["ground", "ground-type", "24x24", "side"])
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	# Override computed AABB to have height 0.5 instead of computed value
 	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.5, 24.0))
@@ -270,7 +270,8 @@ static func load_level_island_tile() -> TerrainModule:
 static func load_level_middle_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/GroundTile.tscn",
-		TagList.new(["level", "level-center", "24x24"])
+		TagList.new(["level", "level-center", "ground-type", "24x24"]),
+		0.2
 	)
 
 static func load_level_inner_corner_tile() -> TerrainModule:
@@ -336,7 +337,11 @@ static func load_level_inner_corner_all_tile() -> TerrainModule:
 	)
 
 
-static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModule:
+static func _build_level_tile(
+	scene_path: String,
+	tags: TagList,
+	topcenter_fill_prob: float = 0.0
+) -> TerrainModule:
 	var scene = load(scene_path)
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
@@ -344,14 +349,15 @@ static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModul
 		"front": Distribution.new({"24x24": 1.0}),
 		"back": Distribution.new({"24x24": 1.0}),
 		"left": Distribution.new({"24x24": 1.0}),
-		"right": Distribution.new({"24x24": 1.0})
+		"right": Distribution.new({"24x24": 1.0}),
+		"topcenter": Distribution.new({"24x24": 1.0})
 	}
 	var socket_required: Dictionary[String, TagList] = {
 		"front": TagList.new(["level"]),
 		"back": TagList.new(["level"]),
 		"left": TagList.new(["level"]),
 		"right": TagList.new(["level"]),
-		"bottom": TagList.new(["ground"])
+		"bottom": TagList.new(["ground-type"])
 	}
 	var socket_fill_prob_policy: Dictionary = {
 		"front": 0.3,
@@ -359,16 +365,15 @@ static func _build_level_tile(scene_path: String, tags: TagList) -> TerrainModul
 		"left": 0.3,
 		"right": 0.3,
 		"bottom": null,
-		"bottomfront": 0.0,
-		"bottomback": 0.0,
-		"bottomleft": 0.0,
-		"bottomright": 0.0,
-		# Diagonals are for adjacency/rules only: no expansion and no forbidden-adjacency blocking.
+		"bottomfront": null,
+		"bottomback": null,
+		"bottomleft": null,
+		"bottomright": null,
 		"frontright": null,
 		"frontleft": null,
 		"backright": null,
 		"backleft": null,
-		"topcenter": 0.0,
+		"topcenter": null,
 		"topfront": null,
 		"topback": null,
 		"topright": null,

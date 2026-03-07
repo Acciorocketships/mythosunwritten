@@ -68,7 +68,7 @@ func get_required_tags(
 			adjacent_socket_name,
 			TagList.new()
 		)
-		var tag_list = convert_tag_list(adjacent_required_tags, socket_name)
+		var tag_list: TagList = convert_tag_list(adjacent_required_tags, socket_name)
 		out = out.union(tag_list)
 	return out
 
@@ -178,16 +178,50 @@ func convert_tag_list(tag_list: TagList, socket_name: String) -> TagList:
 	var out: TagList = TagList.new()
 	for i: int in range(tag_list.size()):
 		var tag: String = tag_list.tags[i]
+		# "!tag" is reserved for self-placement socket requirements and should not
+		# be injected into adjacency-driven required tags.
+		if tag.begins_with("!"):
+			continue
 		out.append(combined_tag_socket_name(tag, socket_name))
 	return out
 
 
 func combined_tag_socket_name(tag: String, socket_name: String) -> String:
-	var processed_tag = tag
-	if tag[0] == "!":
-		processed_tag = tag.substr(1)
+	if tag.begins_with("[socket]"):
+		var processed_tag: String = tag.substr(8)
 		return "[%s]%s" % [socket_name, processed_tag]
 	return tag
+
+
+func filter_by_socket_requirements(
+	modules: TerrainModuleList,
+	adjacent: Dictionary[String, TerrainModuleSocket]
+) -> TerrainModuleList:
+	var out: TerrainModuleList = TerrainModuleList.new()
+	for module_def: TerrainModule in modules.library:
+		if _module_matches_socket_requirements(module_def, adjacent):
+			out.append(module_def)
+	return out
+
+
+func _module_matches_socket_requirements(
+	module_def: TerrainModule,
+	adjacent: Dictionary[String, TerrainModuleSocket]
+) -> bool:
+	if module_def == null:
+		return false
+	for socket_name: String in module_def.socket_required.keys():
+		var required: TagList = module_def.socket_required[socket_name]
+		for required_tag: String in required:
+			if not required_tag.begins_with("!"):
+				continue
+			var tag_name: String = required_tag.substr(1)
+			var adjacent_socket: TerrainModuleSocket = adjacent.get(socket_name, null)
+			if adjacent_socket == null or adjacent_socket.piece == null:
+				return false
+			if not adjacent_socket.piece.def.tags.has(tag_name):
+				return false
+	return true
 
 
 func _multiply_distributions(dists: Array[Distribution]) -> Dictionary[String, float]:

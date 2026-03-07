@@ -87,12 +87,17 @@ func apply(context: Dictionary) -> Dictionary:
 			_add_unique_piece(affected, seen, indirect_neighbor)
 	var chosen_replacement: TerrainModuleInstance = chosen_piece
 	for affected_piece in affected:
-		var missing: Array[String] = _missing_sockets_for_piece(
-			affected_piece,
-			socket_index,
-			terrain_index
+		var missing: Array[String] = []
+		var target_tag: String = (
+			"level-center" if _is_stacked_support(affected_piece, socket_index) else ""
 		)
-		var target_tag: String = _tag_for_missing_sockets(missing)
+		if target_tag == "":
+			missing = _missing_sockets_for_piece(
+				affected_piece,
+				socket_index,
+				terrain_index
+			)
+			target_tag = _tag_for_missing_sockets(missing)
 		var steps_to_align: int = _rotation_steps_to_align_canonical(target_tag, missing)
 		var replacement: TerrainModuleInstance = _create_replacement_for_target(
 			affected_piece,
@@ -104,6 +109,12 @@ func apply(context: Dictionary) -> Dictionary:
 		else:
 			piece_updates[affected_piece] = replacement
 	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
+
+
+func _is_stacked_support(piece: TerrainModuleInstance, socket_index: PositionIndex) -> bool:
+	if piece == null:
+		return false
+	return _has_level_connection(piece, "topcenter", socket_index)
 
 
 func _current_level_tag(module_def: TerrainModule) -> String:

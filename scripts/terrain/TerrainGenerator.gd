@@ -164,6 +164,7 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 		var required_tags: TagList = library.get_required_tags(rotated_adjacent, rotated_attachment_socket)
 		required_tags.append(size)
 		var filtered: TerrainModuleList = library.get_by_tags(required_tags)
+		filtered = library.filter_by_socket_requirements(filtered, rotated_adjacent)
 		if not filtered.is_empty():
 			return {
 				"size": size,
@@ -306,7 +307,9 @@ func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleIn
 func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> float:
 	var socket: Marker3D = piece.sockets[socket_name]
 	var socket_world_pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
-	return (socket_world_pos - player.global_position).length()
+	var player_pos := player.global_position
+	player_pos[1] = -1.0
+	return (socket_world_pos - player_pos).length()
 
 
 func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
