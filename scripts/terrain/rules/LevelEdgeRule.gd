@@ -1,7 +1,6 @@
 class_name LevelEdgeRule
 extends TerrainGenerationRule
 
-const TOPCENTER_FILL_PROB: float = 0.95
 const CARDINAL_SOCKETS: Array[String] = ["front", "right", "back", "left"]
 const DIAGONAL_SOCKETS: Array[String] = ["frontright", "backright", "backleft", "frontleft"]
 const SAME_LEVEL_EPS: float = 0.1
@@ -88,9 +87,7 @@ func apply(context: Dictionary) -> Dictionary:
 		for indirect_neighbor in neighbor_neighbors:
 			_add_unique_piece(affected, seen, indirect_neighbor)
 	var chosen_replacement: TerrainModuleInstance = chosen_piece
-	var sockets_for_queue: Array[TerrainModuleSocket] = []
 	for affected_piece in affected:
-		var had_topcenter_override: bool = affected_piece.socket_fill_prob_override.has("topcenter")
 		var missing: Array[String] = _missing_sockets_for_piece(
 			affected_piece,
 			socket_index,
@@ -110,14 +107,7 @@ func apply(context: Dictionary) -> Dictionary:
 			chosen_replacement = replacement
 		else:
 			piece_updates[affected_piece] = replacement
-		if (
-			replacement == affected_piece
-			and not had_topcenter_override
-			and affected_piece.socket_fill_prob_override.has("topcenter")
-			and affected_piece.sockets.has("topcenter")
-		):
-			sockets_for_queue.append(TerrainModuleSocket.new(affected_piece, "topcenter"))
-	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates, "sockets_for_queue": sockets_for_queue}
+	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
 
 
 func _is_stacked_support(piece: TerrainModuleInstance, socket_index: PositionIndex) -> bool:
@@ -333,7 +323,6 @@ func _create_replacement_for_target(
 ) -> TerrainModuleInstance:
 	var existing_tag: String = _current_level_tag(source_piece.def)
 	if existing_tag == target_tag and steps_to_align == 0:
-		_apply_topcenter_override(source_piece, target_tag)
 		return source_piece
 	var module_template: TerrainModule = _get_module_for_level_tag(
 		target_tag,
@@ -342,7 +331,6 @@ func _create_replacement_for_target(
 	if module_template == null:
 		return source_piece
 	if module_template == source_piece.def and steps_to_align == 0:
-		_apply_topcenter_override(source_piece, target_tag)
 		return source_piece
 	var replacement: TerrainModuleInstance = module_template.spawn()
 	replacement.set_transform(source_piece.transform)
@@ -352,13 +340,7 @@ func _create_replacement_for_target(
 		var yaw: float = PI * 0.5 * float((4 - steps_to_align) % 4)
 		var rotated_basis: Basis = Basis(Vector3.UP, yaw) * replacement.transform.basis
 		replacement.set_basis(rotated_basis)
-	_apply_topcenter_override(replacement, target_tag)
 	return replacement
-
-
-func _apply_topcenter_override(piece: TerrainModuleInstance, level_tag: String) -> void:
-	if level_tag == "level-center" and piece.sockets.has("topcenter"):
-		piece.socket_fill_prob_override["topcenter"] = TOPCENTER_FILL_PROB
 
 
 ## Returns 0..3: rotations of canonical missing set until it equals desired_missing; -1 if no match.

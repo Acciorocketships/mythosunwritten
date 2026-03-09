@@ -111,13 +111,6 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 
 
 func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	if piece.socket_fill_prob_override.has(socket_name):
-		var override_val: Variant = piece.socket_fill_prob_override[socket_name]
-		if override_val is float:
-			return override_val
-		if override_val is int:
-			return override_val
-		return 0.0
 	if not piece.def.socket_fill_prob.has(socket_name):
 		return 0.0
 	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
@@ -273,7 +266,7 @@ func _apply_rules_after_placement(
 			var step_updates: Dictionary = step_result.get("piece_updates", {})
 			_apply_piece_updates_after_placement(step_updates, current_piece)
 			for socket_to_queue in step_result.get("sockets_for_queue", []):
-				_enqueue_socket(socket_to_queue, 0)
+				queue.push(socket_to_queue, 0)
 
 
 func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piece: TerrainModuleInstance) -> void:

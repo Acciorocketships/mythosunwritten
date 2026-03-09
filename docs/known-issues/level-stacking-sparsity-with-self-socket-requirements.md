@@ -73,26 +73,23 @@ This naturally produces the desired behavior:
 
 ## Additional Bugs Found During Implementation
 
-### Second-level density still low after tier split — FIXED (rule-gated topcenter)
+### Second-level density still low after tier split — FIXED
 
 After splitting level tiles into `level-ground` and `level-stack` tiers, second-level stacking was
-still sparse because:
+still sparse because the ground-tier center used `topcenter = 0.6`, so only 60% of centers tried to
+stack.
 
-1. The ground-tier center used `topcenter = 0.6`, so only 60% of centers tried to stack.
-2. Tiles start as edge variants (no neighbors yet) and only become centers after all 4 cardinals
-   are connected. The `topcenter` socket was enqueued/dequeued repeatedly during retiling churn,
-   and only got a single fill-prob roll once the tile finally settled as a center.
+**Fix**: Both `level-ground-center` and `level-stack-center` now use `topcenter = 0.95`
+(`LEVEL_TOPCENTER_FILL_PROB` in `TerrainModuleDefinitions`). Edge variants keep `topcenter: null`.
+When `_replace_piece` retiles an edge variant to center, the new center's topcenter (0.95) is
+automatically enqueued via `add_piece_to_queue`.
 
-**Fix**: topcenter is now **rule-gated**. All level center module definitions have
-`topcenter = null` (non-expandable). `LevelEdgeRule` activates topcenter via a per-instance
-`socket_fill_prob_override` when a tile is confirmed as center (all 4 cardinal neighbors connected).
-The override value is `0.95` for both ground and stack tiers. This ensures:
-
-- No wasted queue operations during retiling churn.
-- The topcenter socket is only enqueued once, at the right time, with `0.95` probability.
-- Replaced center pieces get their topcenter enqueued automatically via `_replace_piece` →
-  `add_piece_to_queue` (which reads the override). Unchanged centers that newly gain the override
-  use `sockets_for_queue` returned by the rule.
+**Remaining sparsity on higher tiers**: Stacked tiles (level-stack) have `null` lateral fill_prob
+and cannot expand laterally. For a stacked tile to become a center and stack further, all 4 of its
+cardinal positions need independently-placed stacked tiles. This requires a large ground-level patch
+where many interior centers all independently stack — a combinatorial bottleneck. The 0.95 fill_prob
+works correctly (nearly every center's topcenter succeeds), but few stacked tiles accumulate enough
+lateral neighbors to become centers themselves.
 
 ### Stale piece references in queue
 

@@ -26,8 +26,8 @@
 ## Types and terminology
 
 - `TerrainModule` (Resource): `scene`, `size` (AABB), `tags`, `tags_per_socket`, `socket_size`, `socket_required`, `socket_fill_prob`, `socket_tag_prob`, optional `visual_variants`, `replace_existing`.
-- `TerrainModuleInstance` (RefCounted): `def`, `root`, `socket_node` (`Sockets`), `sockets` (String → Marker3D), `transform`, `aabb`, `socket_fill_prob_override` (per-instance fill_prob overrides, checked before module definition).
-- **Level stacking model**: Level tiles use **rule-gated topcenter** — all level center module definitions have `topcenter: null`. `LevelEdgeRule` activates topcenter via `socket_fill_prob_override` (0.95) when a tile is confirmed as center (all 4 cardinal neighbors connected). Edge variants keep `topcenter: null`, preventing stacking on non-center tiles. The `LevelEdgeRule` removes stacked tiles when a center support becomes an edge variant. This produces graduated mountain slopes without explicit support-tag constraints.
+- `TerrainModuleInstance` (RefCounted): `def`, `root`, `socket_node` (`Sockets`), `sockets` (String → Marker3D), `transform`, `aabb`.
+- **Level stacking model**: Level tiles expand **vertically only** — only `level-center` has a nonzero `topcenter` fill_prob (0.95). Edge variants (side/corner/etc.) have `topcenter: null`, preventing stacking on non-center tiles. When `LevelEdgeRule` retiles a piece to center via `_replace_piece`, the new center's topcenter (0.95) is automatically enqueued. The `LevelEdgeRule` removes stacked tiles when a center support becomes an edge variant. This produces graduated mountain slopes without explicit support-tag constraints.
 - `TerrainModuleSocket` (Resource): binds a piece to one socket name; exposes `socket`, `get_piece_position()`, `get_socket_position()`.
 - `TagList`, `Distribution`: helpers for set/weighted ops (`union`, `sample`, `normalise`, …).
 - **Sizes**: tags like `"24x24"`, `"8x8"`, `"12x12"`, or `"point"` (for 0x0 pieces).
@@ -101,12 +101,11 @@
 - Do not enqueue sockets with `socket_fill_prob <= 0`.
 - `_process_socket` also early-exits when `socket_fill_prob <= 0` so externally re-queued sockets cannot expand.
 - Queue entries are deduped by `(piece instance, socket name)`; do not bypass `TerrainGenerator` queue helpers when enqueuing/removing sockets.
-- `socket_fill_prob` semantics (per-instance `socket_fill_prob_override` is checked first, then module definition):
+- `socket_fill_prob` semantics:
  - `> 0`: socket can expand and is non-forbidden for adjacency.
  - `0`: socket cannot expand and is considered blocking/forbidden in adjacency checks.
  - `null`: socket cannot expand but is **non-blocking** in adjacency checks (use for adjacency-only sockets such as level diagonals).
  - Missing `socket_fill_prob` entries are invalid and must fail module validation. Every socket in a module scene must have an explicit `socket_fill_prob` entry.
- - Rules can set `socket_fill_prob_override` on instances to activate sockets that are null in the definition (e.g., `LevelEdgeRule` activates topcenter on confirmed centers).
 - Only index/enqueue sockets that are not already connected (determine connectivity by checking all hits at the position, not only the first).
 - Priority queue uses distance to the player; `RENDER_RANGE` and `MAX_LOAD_PER_STEP` throttle work.
 
@@ -145,7 +144,6 @@
  - `LevelEdgeRule` preserves the `level-ground`/`level-stack` tier when it retile-swaps variants.
  - Elevated stacked tiles are only valid above supports that have all four cardinal level neighbors.
 - Default level density is intentionally higher on the first level: ground `"topcenter"` uses stronger level seeding so contiguous level patches can form before elevated vertical growth takes over.
-- Level topcenter is **rule-gated**: all level center definitions have `topcenter: null`. `LevelEdgeRule` sets `socket_fill_prob_override["topcenter"] = 0.95` when a tile is confirmed as center. This prevents wasted queue churn during retiling and ensures topcenter is only enqueued at the right time.
 
 ## Adding new terrain pieces
 

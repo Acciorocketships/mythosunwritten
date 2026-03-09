@@ -1859,8 +1859,10 @@ func _configure_vertical_stacking_test_generation(gen: Variant) -> void:
 			module.socket_fill_prob["topcenter"] = 1.0
 			module.socket_tag_prob["topcenter"] = Distribution.new({"level-ground-center": 1.0})
 		if module.tags.has("level-ground-center"):
+			module.socket_fill_prob["topcenter"] = 0.95
 			module.socket_tag_prob["topcenter"] = Distribution.new({"level-stack-center": 1.0})
 		if module.tags.has("level-stack-center"):
+			module.socket_fill_prob["topcenter"] = 0.95
 			module.socket_tag_prob["topcenter"] = Distribution.new({"level-stack-center": 1.0})
 
 
@@ -1915,27 +1917,12 @@ func _run_generation_until_elevated_level_count(
 		if _count_elevated_level_pieces(gen) >= target_count:
 			return
 
-func test_level_center_topcenter_is_rule_gated():
+func test_level_center_has_nonzero_topcenter_fill_prob():
 	var module: TerrainModule = TerrainModuleDefinitions.load_level_middle_tile()
 	assert_true(module.socket_fill_prob.has("topcenter"))
-	assert_eq(
-		module.socket_fill_prob["topcenter"],
-		null,
-		"level-ground-center definition topcenter should be null (rule-gated)"
-	)
-	var piece: TerrainModuleInstance = module.spawn()
-	piece.create()
-	_pieces_to_destroy.append(piece)
-	var rule: LevelEdgeRule = LevelEdgeRule.new()
-	rule._apply_topcenter_override(piece, "level-center")
-	assert_true(
-		piece.socket_fill_prob_override.has("topcenter"),
-		"LevelEdgeRule should set topcenter override on center pieces"
-	)
-	assert_true(
-		float(piece.socket_fill_prob_override["topcenter"]) >= 0.95,
-		"topcenter override should be >= 0.95"
-	)
+	var fill: Variant = module.socket_fill_prob["topcenter"]
+	assert_true(fill is float, "topcenter fill_prob should be a float")
+	assert_true(float(fill) >= 0.95, "topcenter fill_prob should be >= 0.95")
 
 
 func test_level_edge_has_null_topcenter_fill_prob():
@@ -1981,10 +1968,10 @@ func test_level_stack_center_is_vertical_only():
 			null,
 			"stacked level cardinal fill_prob should be null: " + socket_name
 		)
-	assert_eq(
-		module.socket_fill_prob["topcenter"],
-		null,
-		"stacked level center definition topcenter should be null (rule-gated)"
+	assert_true(module.socket_fill_prob["topcenter"] is float)
+	assert_true(
+		float(module.socket_fill_prob["topcenter"]) >= 0.95,
+		"stacked level center should strongly prefer vertical growth"
 	)
 	var top_dist: Distribution = module.socket_tag_prob["topcenter"]
 	assert_true(
@@ -2079,7 +2066,7 @@ func test_level_edge_rule_removes_stacked_when_becoming_edge():
 	)
 
 
-func test_replace_piece_queues_topcenter_when_override_set():
+func test_replace_piece_queues_topcenter_when_stack_piece_retiles_to_center():
 	var gen: Variant = _new_generator()
 	var side_module: TerrainModule = TerrainModuleDefinitions.load_level_stack_side_tile()
 	var side_piece: TerrainModuleInstance = _spawn_piece(side_module)
@@ -2091,7 +2078,6 @@ func test_replace_piece_queues_topcenter_when_override_set():
 	center_piece.set_transform(side_piece.transform)
 	center_piece.create()
 	_pieces_to_destroy.append(center_piece)
-	center_piece.socket_fill_prob_override["topcenter"] = LevelEdgeRule.TOPCENTER_FILL_PROB
 
 	gen._replace_piece(side_piece, center_piece)
 
@@ -2111,7 +2097,7 @@ func test_replace_piece_queues_topcenter_when_override_set():
 
 	assert_true(
 		queued_topcenter,
-		"_replace_piece should enqueue topcenter when socket_fill_prob_override is set"
+		"Retiling a stacked piece to level-stack-center should enqueue its topcenter socket"
 	)
 
 

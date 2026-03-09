@@ -1,7 +1,8 @@
 class_name TerrainModuleDefinitions
 extends Resource
 
-const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.3
+const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.4
+const LEVEL_TOPCENTER_FILL_PROB: float = 1.0
 
 ### Individual Terrain Modules ###
 
@@ -287,7 +288,7 @@ static func load_level_middle_tile() -> TerrainModule:
 		"res://terrain/scenes/LevelCenter.tscn",
 		TagList.new(["level", "level-ground", "level-center", "level-ground-center", "ground-type", "24x24"]),
 		LEVEL_BASE_LATERAL_FILL_PROB,
-		null,
+		LEVEL_TOPCENTER_FILL_PROB,
 		"level-ground-center",
 		"level-stack-center"
 	)
@@ -297,7 +298,7 @@ static func load_level_stack_middle_tile() -> TerrainModule:
 		"res://terrain/scenes/LevelCenter.tscn",
 		TagList.new(["level", "level-stack", "level-center", "level-stack-center", "24x24"]),
 		null,
-		null,
+		LEVEL_TOPCENTER_FILL_PROB,
 		"",
 		"level-stack-center"
 	)
