@@ -111,6 +111,12 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 
 
 func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
+	if piece.socket_fill_prob_override.has(socket_name):
+		var ov: Variant = piece.socket_fill_prob_override[socket_name]
+		if ov is float:
+			return ov
+		if ov is int:
+			return float(ov)
 	if not piece.def.socket_fill_prob.has(socket_name):
 		return 0.0
 	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
@@ -260,13 +266,17 @@ func _apply_rules_after_placement(
 				return
 			var updated_piece: Variant = step_result.get("chosen_piece", current_piece)
 			if updated_piece != null and updated_piece is TerrainModuleInstance and updated_piece != current_piece:
-				_replace_piece(current_piece, updated_piece)
+				# Preserve topcenter when retiling a piece placed by lateral expansion so that position gets one stacked tile.
+				# Do not preserve when this piece was placed by stacking (topcenter), or we'd enqueue its topcenter and build infinite towers.
+				var preserve_topcenter: bool = orig_piece_socket.socket_name != "topcenter"
+				_replace_piece(current_piece, updated_piece, preserve_topcenter, true)
 				current_piece = updated_piece
 				context["adjacent"] = get_adjacent(current_piece)
 			var step_updates: Dictionary = step_result.get("piece_updates", {})
 			_apply_piece_updates_after_placement(step_updates, current_piece)
 			for socket_to_queue in step_result.get("sockets_for_queue", []):
 				queue.push(socket_to_queue, 0)
+	add_piece_to_queue(current_piece)  # Enqueue final piece once after all rules (avoids enqueue center then remove when replaced by edge).
 
 
 func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piece: TerrainModuleInstance) -> void:
@@ -287,16 +297,28 @@ func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piec
 			continue
 		if not (to_piece is TerrainModuleInstance):
 			continue
-		_replace_piece(existing_piece, to_piece)
+		_replace_piece(existing_piece, to_piece, true, false)
 
 
-func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleInstance) -> void:
+func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleInstance, preserve_topcenter: bool = false, skip_enqueue: bool = false) -> void:
 	if old_piece == null or new_piece == null:
 		return
+	# Only preserve topcenter when retiling an existing piece (neighbor update) or when the placed piece was placed by lateral expansion. Do not preserve when
+	# retiling the piece we just placed, or we would enqueue that edge's topcenter and build infinite towers.
+	if preserve_topcenter and (
+		old_piece.def != null and old_piece.def.tags.has("level-stack-center")
+		and new_piece.def != null and new_piece.def.tags.has("level-stack")
+		and not new_piece.def.tags.has("level-stack-center")
+		and new_piece.sockets.has("topcenter")
+	):
+		var fp: Variant = old_piece.def.socket_fill_prob.get("topcenter")
+		if fp != null and (fp is float or fp is int):
+			new_piece.socket_fill_prob_override["topcenter"] = float(fp)
 	remove_piece(old_piece)
 	terrain_parent.add_child(new_piece.root)
 	register_piece(new_piece, "")
-	add_piece_to_queue(new_piece)
+	if not skip_enqueue:
+		add_piece_to_queue(new_piece)
 
 
 func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> float:
@@ -520,8 +542,7 @@ func add_piece(
 	terrain_parent.add_child(new_piece.root)
 
 	register_piece(new_piece, new_piece_socket.socket_name)
-	add_piece_to_queue(new_piece)
-
+	# Enqueue after rules run, so we only enqueue the final piece (e.g. edge with override) and avoid add-then-remove churn.
 
 	# Remove sockets that are now linked into from the queue
 	remove_linked_sockets_from_queue(new_piece_socket)

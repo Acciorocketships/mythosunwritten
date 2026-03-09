@@ -106,6 +106,12 @@ static func _append_conflicts_for_piece_state(
 
 
 static func _socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
+	if piece.socket_fill_prob_override.has(socket_name):
+		var ov: Variant = piece.socket_fill_prob_override[socket_name]
+		if ov is float:
+			return ov
+		if ov is int:
+			return float(ov)
 	if not piece.def.socket_fill_prob.has(socket_name):
 		return 0.0
 	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
