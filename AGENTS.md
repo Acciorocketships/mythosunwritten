@@ -198,3 +198,4 @@
 - **Camera**: Fix camera blurring/jittering; add new camera controller that follows the mouse.
 - **Character**: Strafing where character always looks towards the mouse; dodge/dash animation. (Stepping over ledges is implemented in `characters/character.gd` via `MAX_STEP_HEIGHT` + step probe motion.)
 - **Items and inventory**.
+- **Full list**: See `docs/future-work/` for detailed future-work projects in markdown files.
