@@ -1,6 +1,8 @@
 class_name TerrainModuleDefinitions
 extends Resource
 
+const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.3
+
 ### Individual Terrain Modules ###
 
 static func load_ground_tile() -> TerrainModule:
@@ -15,18 +17,11 @@ static func load_ground_tile() -> TerrainModule:
 	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8": 0.1})
 	var top_fill_prob_cardinal: float = 0.05
 	var top_size_dist_center: Distribution = Distribution.new({"24x24": 1.0})
-	var top_fill_prob_center: float = 0.2  # Increase level seed frequency
+	var top_fill_prob_center: float = 0.2
 	var adjacent_tag_prob: Distribution = Distribution.new({"ground": 1.0})
 	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
 	var top_tag_prob_cardinal: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
-	var top_tag_prob_center: Distribution = Distribution.new({
-		"grass": 0.2,
-		"rock": 0.15,
-		"bush": 0.15,
-		"tree": 0.15,
-		"hill": 0.1,
-		"level-center": 0.25
-	})
+	var top_tag_prob_center: Distribution = Distribution.new({"level-ground-center": 1.0})
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24": 1.0}),
@@ -240,107 +235,319 @@ static func load_12x12x2_tile() -> TerrainModule:
 static func load_level_side_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelSide.tscn",
-		TagList.new(["level", "level-side", "24x24"])
+		TagList.new(["level", "level-ground", "level-side", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 static func load_level_corner_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelCorner.tscn",
-		TagList.new(["level", "level-corner", "24x24"])
+		TagList.new(["level", "level-ground", "level-corner", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 static func load_level_line_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelLine.tscn",
-		TagList.new(["level", "level-line", "24x24"])
+		TagList.new(["level", "level-ground", "level-line", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 static func load_level_peninsula_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelPeninsula.tscn",
-		TagList.new(["level", "level-peninsula", "24x24"])
+		TagList.new(["level", "level-ground", "level-peninsula", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 static func load_level_island_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelIsland.tscn",
-		TagList.new(["level", "level-island", "24x24"])
+		TagList.new(["level", "level-ground", "level-island", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 static func load_level_middle_tile() -> TerrainModule:
 	return _build_level_tile(
-		"res://terrain/scenes/GroundTile.tscn",
-		TagList.new(["level", "level-center", "ground-type", "24x24"]),
-		0.2
+		"res://terrain/scenes/LevelCenter.tscn",
+		TagList.new(["level", "level-ground", "level-center", "level-ground-center", "ground-type", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		"level-stack-center"
+	)
+
+static func load_level_stack_middle_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelCenter.tscn",
+		TagList.new(["level", "level-stack", "level-center", "level-stack-center", "24x24"]),
+		null,
+		null,
+		"",
+		"level-stack-center"
 	)
 
 static func load_level_inner_corner_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCorner.tscn",
-		TagList.new(["level", "level-inner-corner", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 
 static func load_level_inner_corner_diag_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCornerDiag.tscn",
-		TagList.new(["level", "level-inner-corner-diag", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner-diag", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 
 static func load_level_inner_corner_side_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCornerSide.tscn",
-		TagList.new(["level", "level-inner-corner-side", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner-side", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 
 static func load_level_inner_corner_edge1_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCornerEdge1.tscn",
-		TagList.new(["level", "level-inner-corner-edge1", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner-edge1", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 
 static func load_level_inner_corner_edge2_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCornerEdge2.tscn",
-		TagList.new(["level", "level-inner-corner-edge2", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner-edge2", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 
 static func load_level_inner_corner_edge_both_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCornerEdgeBoth.tscn",
-		TagList.new(["level", "level-inner-corner-edge-both", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner-edge-both", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 
 static func load_level_inner_corner_side_edge_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCornerSideEdge.tscn",
-		TagList.new(["level", "level-inner-corner-side-edge", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner-side-edge", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 
 static func load_level_inner_corner_three_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCornerThree.tscn",
-		TagList.new(["level", "level-inner-corner-three", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner-three", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
 	)
 
 
 static func load_level_inner_corner_all_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelInCornerAll.tscn",
-		TagList.new(["level", "level-inner-corner-all", "24x24"])
+		TagList.new(["level", "level-ground", "level-inner-corner-all", "24x24"]),
+		LEVEL_BASE_LATERAL_FILL_PROB,
+		null,
+		"level-ground-center",
+		""
+	)
+
+static func load_level_stack_side_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelSide.tscn",
+		TagList.new(["level", "level-stack", "level-side", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_corner_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelCorner.tscn",
+		TagList.new(["level", "level-stack", "level-corner", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_line_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelLine.tscn",
+		TagList.new(["level", "level-stack", "level-line", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_peninsula_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelPeninsula.tscn",
+		TagList.new(["level", "level-stack", "level-peninsula", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_island_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelIsland.tscn",
+		TagList.new(["level", "level-stack", "level-island", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCorner.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_diag_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerDiag.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner-diag", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_side_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerSide.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner-side", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_edge1_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerEdge1.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner-edge1", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_edge2_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerEdge2.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner-edge2", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_edge_both_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerEdgeBoth.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner-edge-both", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_side_edge_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerSideEdge.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner-side-edge", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_three_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerThree.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner-three", "24x24"]),
+		null,
+		null,
+		"",
+		""
+	)
+
+static func load_level_stack_inner_corner_all_tile() -> TerrainModule:
+	return _build_level_tile(
+		"res://terrain/scenes/LevelInCornerAll.tscn",
+		TagList.new(["level", "level-stack", "level-inner-corner-all", "24x24"]),
+		null,
+		null,
+		"",
+		""
 	)
 
 
 static func _build_level_tile(
 	scene_path: String,
 	tags: TagList,
-	topcenter_fill_prob: float = 0.0
+	cardinal_fill_prob: Variant = null,
+	topcenter_fill_prob: Variant = null,
+	cardinal_target_tag: String = "",
+	topcenter_target_tag: String = ""
 ) -> TerrainModule:
 	var scene = load(scene_path)
 	var tags_per_socket: Dictionary[String, TagList] = {}
@@ -357,13 +564,12 @@ static func _build_level_tile(
 		"back": TagList.new(["level"]),
 		"left": TagList.new(["level"]),
 		"right": TagList.new(["level"]),
-		"bottom": TagList.new(["ground-type"])
 	}
 	var socket_fill_prob_policy: Dictionary = {
-		"front": 0.3,
-		"back": 0.3,
-		"left": 0.3,
-		"right": 0.3,
+		"front": cardinal_fill_prob,
+		"back": cardinal_fill_prob,
+		"left": cardinal_fill_prob,
+		"right": cardinal_fill_prob,
 		"bottom": null,
 		"bottomfront": null,
 		"bottomback": null,
@@ -373,7 +579,7 @@ static func _build_level_tile(
 		"frontleft": null,
 		"backright": null,
 		"backleft": null,
-		"topcenter": null,
+		"topcenter": topcenter_fill_prob,
 		"topfront": null,
 		"topback": null,
 		"topright": null,
@@ -390,6 +596,14 @@ static func _build_level_tile(
 		"left": null,
 		"right": null,
 	}
+	if cardinal_target_tag != "":
+		var cardinal_dist: Distribution = Distribution.new({cardinal_target_tag: 1.0})
+		socket_tag_prob["front"] = cardinal_dist
+		socket_tag_prob["back"] = cardinal_dist
+		socket_tag_prob["left"] = cardinal_dist
+		socket_tag_prob["right"] = cardinal_dist
+	if topcenter_target_tag != "":
+		socket_tag_prob["topcenter"] = Distribution.new({topcenter_target_tag: 1.0})
 	return TerrainModule.new(
 		scene,
 		bb,
@@ -402,6 +616,7 @@ static func _build_level_tile(
 		socket_tag_prob,
 		false
 	)
+
 
 
 static func _socket_fill_prob_for_scene(scene: PackedScene, policy: Dictionary) -> Dictionary[String, Variant]:

@@ -26,7 +26,8 @@
 ## Types and terminology
 
 - `TerrainModule` (Resource): `scene`, `size` (AABB), `tags`, `tags_per_socket`, `socket_size`, `socket_required`, `socket_fill_prob`, `socket_tag_prob`, optional `visual_variants`, `replace_existing`.
-- `TerrainModuleInstance` (RefCounted): `def`, `root`, `socket_node` (`Sockets`), `sockets` (String → Marker3D), `transform`, `aabb`.
+- `TerrainModuleInstance` (RefCounted): `def`, `root`, `socket_node` (`Sockets`), `sockets` (String → Marker3D), `transform`, `aabb`, `socket_fill_prob_override` (per-instance fill_prob overrides, checked before module definition).
+- **Level stacking model**: Level tiles use **rule-gated topcenter** — all level center module definitions have `topcenter: null`. `LevelEdgeRule` activates topcenter via `socket_fill_prob_override` (0.95) when a tile is confirmed as center (all 4 cardinal neighbors connected). Edge variants keep `topcenter: null`, preventing stacking on non-center tiles. The `LevelEdgeRule` removes stacked tiles when a center support becomes an edge variant. This produces graduated mountain slopes without explicit support-tag constraints.
 - `TerrainModuleSocket` (Resource): binds a piece to one socket name; exposes `socket`, `get_piece_position()`, `get_socket_position()`.
 - `TagList`, `Distribution`: helpers for set/weighted ops (`union`, `sample`, `normalise`, …).
 - **Sizes**: tags like `"24x24"`, `"8x8"`, `"12x12"`, or `"point"` (for 0x0 pieces).
@@ -34,8 +35,8 @@
 ## Library and tag rules
 
 - `TerrainModuleLibrary.init()` loads modules and builds tag indexes.
-- **Socket tag rewrite**: tags starting with `"!"` become `"[<socket>]<tag>"` using the connecting socket context (e.g., `"!path"` with `"left"` → `"[left]path"`).
-- `get_required_tags(adjacent)`: union of per-socket requirements across adjacents with `"!"` rewrites.
+- **Socket tag rewrite**: `[socket]tag` in `tags_per_socket` becomes `"[<socket>]<tag>"` using the connecting socket context.
+- `get_required_tags(adjacent)`: union of per-socket requirements across adjacents with socket-context rewrites.
 - `get_combined_distribution(adjacent)`: multiply per-adjacent `socket_tag_prob`, then normalize.
 - Filtering/sampling: `get_by_tags` filters; `sample_from_modules(filtered, dist)` samples with bias from adjacency.
 
@@ -100,11 +101,12 @@
 - Do not enqueue sockets with `socket_fill_prob <= 0`.
 - `_process_socket` also early-exits when `socket_fill_prob <= 0` so externally re-queued sockets cannot expand.
 - Queue entries are deduped by `(piece instance, socket name)`; do not bypass `TerrainGenerator` queue helpers when enqueuing/removing sockets.
-- `socket_fill_prob` semantics:
+- `socket_fill_prob` semantics (per-instance `socket_fill_prob_override` is checked first, then module definition):
  - `> 0`: socket can expand and is non-forbidden for adjacency.
  - `0`: socket cannot expand and is considered blocking/forbidden in adjacency checks.
  - `null`: socket cannot expand but is **non-blocking** in adjacency checks (use for adjacency-only sockets such as level diagonals).
  - Missing `socket_fill_prob` entries are invalid and must fail module validation. Every socket in a module scene must have an explicit `socket_fill_prob` entry.
+ - Rules can set `socket_fill_prob_override` on instances to activate sockets that are null in the definition (e.g., `LevelEdgeRule` activates topcenter on confirmed centers).
 - Only index/enqueue sockets that are not already connected (determine connectivity by checking all hits at the position, not only the first).
 - Priority queue uses distance to the player; `RENDER_RANGE` and `MAX_LOAD_PER_STEP` throttle work.
 
@@ -131,13 +133,19 @@
 
 ## Level edge retile system
 
-- Terrain sampling library includes only `"level-center"` for level generation; visual variants (`"level-side"`, `"level-corner"`, `"level-line"`, `"level-peninsula"`, `"level-island"`) are selected by `LevelEdgeRule`.
+- Terrain sampling library includes the sampled center modules only: `level-ground-center` for the first level and `level-stack-center` for elevated levels. Visual variants (`"level-side"`, `"level-corner"`, `"level-line"`, `"level-peninsula"`, `"level-island"`) are selected by `LevelEdgeRule`.
 - `LevelEdgeRule` computes missing neighbors on cardinal sockets and rotates canonical edge variants to match missing sides.
 - If all cardinals are connected, `LevelEdgeRule` computes missing diagonal neighbors and selects inner-corner variants (`"level-inner-corner"`, `"level-inner-corner-diag"`, `"level-inner-corner-side"`, `"level-inner-corner-three"`, `"level-inner-corner-all"`), rotated from canonical `"frontleft"`-based socket sets.
+- Diagonal edge detection is same-layer only; elevated tiles must not affect lower-level inner-corner or edge silhouettes.
 - `LevelEdgeRule` treats a diagonal as an inner-corner gap only when both touching cardinals are connected; this allows mixed variants that combine inner-corner diagonals with cardinal edges (`"level-inner-corner-edge1"`, `"level-inner-corner-edge2"`, `"level-inner-corner-edge-both"`, `"level-inner-corner-side-edge"`).
 - When a new level tile is chosen, `LevelEdgeRule` also updates directly adjacent level tiles so their edge silhouettes stay consistent after the new connection appears.
-- All level variants keep center-like lateral expansion behavior (matching lateral fill probabilities) so growth logic stays consistent while visuals are retiled.
-- Default level density is intentionally higher: ground `"topcenter"` has stronger level seeding and level lateral sockets use higher fill probability for contiguous patches.
+- Level expansion is encoded in the module tier, not in `TerrainGenerator`:
+ - `level-ground` variants may expand laterally to form first-level patches.
+ - `level-stack` variants are vertical-only; their lateral sockets are non-expandable.
+ - `LevelEdgeRule` preserves the `level-ground`/`level-stack` tier when it retile-swaps variants.
+ - Elevated stacked tiles are only valid above supports that have all four cardinal level neighbors.
+- Default level density is intentionally higher on the first level: ground `"topcenter"` uses stronger level seeding so contiguous level patches can form before elevated vertical growth takes over.
+- Level topcenter is **rule-gated**: all level center definitions have `topcenter: null`. `LevelEdgeRule` sets `socket_fill_prob_override["topcenter"] = 0.95` when a tile is confirmed as center. This prevents wasted queue churn during retiling and ensures topcenter is only enqueued at the right time.
 
 ## Adding new terrain pieces
 

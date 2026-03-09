@@ -10,16 +10,15 @@ func _init(_piece, _socket_name) -> void:
 	
 var socket:
 	get:
-		return piece.sockets[socket_name]
+		return piece.sockets.get(socket_name, null)
 
 func get_piece_position() -> Vector3:
-	# Piece origin in world space
 	return piece.transform.origin
 
 func get_socket_position() -> Vector3:
 	var s : Node3D = socket
-	assert(s != null)
-	assert(piece.root != null)
+	if s == null or piece.root == null:
+		return piece.transform.origin
 	# socket -> root local transform
 	var local_tf := Helper.to_root_tf(s, piece.root)
 	# piece.transform is root's world transform

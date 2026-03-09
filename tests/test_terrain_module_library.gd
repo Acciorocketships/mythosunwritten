@@ -55,36 +55,9 @@ func test_get_required_tags_ignores_unknown_adjacent_socket_name():
 	assert_true(tags.has("ground"), "still includes 'ground' from valid socket")
 
 
-func test_get_required_tags_uses_adjacent_key_as_socket_context():
+func test_combined_tag_socket_name_socket_prefix():
 	var lib = _make_library()
-	var module := TerrainModule.new(
-		null,
-		AABB(),
-		TagList.new(["dummy"]),
-		{},
-		[],
-		{},
-		{"front": TagList.new(["!path"])},
-		{},
-		{},
-		false
-	)
-	var piece = module.spawn()
-	var adj: Dictionary[String, TerrainModuleSocket] = {}
-	adj["bottomleft"] = TerrainModuleSocket.new(piece, "front")
-	var tags: TagList = lib.get_required_tags(adj)
-	assert_true(tags.has("[bottomleft]path"), "uses adjacency key for !tag socket context")
-
-func test_convert_tag_list_exclamation_converts_with_socket_name():
-	var lib = _make_library()
-	var tl = TagList.new(["!path", "ground"])
-	var out = lib.convert_tag_list(tl, "left")
-	assert_true(out.has("[left]path"), "converted '!path' to socket-specific")
-	assert_true(out.has("ground"))
-
-func test_combined_tag_socket_name_formats_correctly():
-	var lib = _make_library()
-	var s = lib.combined_tag_socket_name("!path", "right")
+	var s = lib.combined_tag_socket_name("[socket]path", "right")
 	assert_eq(s, "[right]path")
 
 # ----------------------------
@@ -148,6 +121,7 @@ func test_intersection_of_lists_returns_common_elements():
 	var out: TerrainModuleList = lib.intersection([list_a, list_b])
 	assert_eq(out.size(), 1)
 	assert_true(out.library[0] == a_mod)
+
 
 # ----------------------------
 # module constructor

@@ -6,14 +6,23 @@ static func has_contradictions(piece: TerrainModuleInstance, _attachment_socket_
 	if rule_context.has("adjacent") and piece.def.tags.has("level"):
 		var adjacent: Dictionary = rule_context["adjacent"]
 		for adj_socket_name in adjacent.keys():
+			if _is_vertical_socket(adj_socket_name):
+				continue
 			var adj_socket: TerrainModuleSocket = adjacent[adj_socket_name]
-			if adj_socket != null and adj_socket.piece.def.tags.has("level"):
-				var piece_fill_prob: float = _socket_fill_prob(piece, adj_socket_name)
-				var adj_fill_prob: float = _socket_fill_prob(adj_socket.piece, adj_socket.socket_name)
-				if piece_fill_prob <= 0.0 and adj_fill_prob > 0.0:
-					return true
+			if adj_socket == null or not adj_socket.piece.def.tags.has("level"):
+				continue
+			if _is_vertical_socket(adj_socket.socket_name):
+				continue
+			var piece_fill_prob: float = _socket_fill_prob(piece, adj_socket_name)
+			var adj_fill_prob: float = _socket_fill_prob(adj_socket.piece, adj_socket.socket_name)
+			if piece_fill_prob <= 0.0 and adj_fill_prob > 0.0:
+				return true
 
 	return false
+
+
+static func _is_vertical_socket(socket_name: String) -> bool:
+	return socket_name == "bottom" or socket_name == "topcenter"
 
 
 # Find neighbors that are causing contradictions with the given piece
@@ -31,7 +40,7 @@ func matches(context: Dictionary) -> bool:
 
 func apply(context: Dictionary) -> Dictionary:
 	if not context.has("chosen_piece") or not context.has("filtered") or not context.has("socket_name") or not context.has("adjacent") or not context.has("socket_index"):
-		return {"updated_piece": context.get("chosen_piece", null)}
+		return {"chosen_piece": context.get("chosen_piece", null)}
 
 	var chosen_piece = context.chosen_piece
 	var attachment_socket_name = Helper.get_attachment_socket_name(context.socket_name)
@@ -42,7 +51,7 @@ func apply(context: Dictionary) -> Dictionary:
 		"socket_name": context.get("socket_name", "")
 	}
 	if not has_contradictions(chosen_piece, attachment_socket_name, socket_index, contradiction_context):
-		return {"updated_piece": chosen_piece}
+		return {"chosen_piece": chosen_piece}
 
 	var filtered = context.filtered
 	for i in range(filtered.size()):
@@ -54,27 +63,21 @@ func apply(context: Dictionary) -> Dictionary:
 		alternative_piece.create()
 
 		if not has_contradictions(alternative_piece, attachment_socket_name, socket_index, contradiction_context):
-			chosen_piece.destroy()
-			return {"updated_piece": alternative_piece}
+			return {"chosen_piece": alternative_piece}
 
 		alternative_piece.destroy()
 
 	var conflicting_pieces = find_conflicting_neighbors(chosen_piece, attachment_socket_name, socket_index)
 	if not conflicting_pieces.is_empty():
-		chosen_piece.destroy()
-		var sockets_to_requeue = []
+		var piece_updates: Dictionary = {}
 		for piece in conflicting_pieces:
-			for socket_name in piece.sockets.keys():
-				var socket = TerrainModuleSocket.new(piece, socket_name)
-				sockets_to_requeue.append(socket)
+			piece_updates[piece] = null
 		return {
-			"pieces_to_remove": conflicting_pieces,
-			"sockets_for_queue": sockets_to_requeue,
-			"updated_piece": null
+			"chosen_piece": chosen_piece,
+			"piece_updates": piece_updates,
 		}
 
-	chosen_piece.destroy()
-	return {"skip": true}
+	return {"chosen_piece": chosen_piece}
 
 
 static func _append_conflicts_for_piece_state(
@@ -103,11 +106,8 @@ static func _append_conflicts_for_piece_state(
 
 
 static func _socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	assert(
-		piece.def.socket_fill_prob.has(socket_name),
-		"Missing socket_fill_prob entry for socket '%s' on module %s"
-		% [socket_name, str(piece.def.tags.tags)]
-	)
+	if not piece.def.socket_fill_prob.has(socket_name):
+		return 0.0
 	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
 	if fill_prob == null:
 		return 0.0

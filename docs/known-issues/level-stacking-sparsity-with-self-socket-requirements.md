@@ -1,178 +1,140 @@
 # Level Stacking Sparsity with Self Socket Requirements
 
-## Goal
+## Status: RESOLVED
 
-Enable multi-level level-tile stacking ("mountain" behavior) while enforcing support constraints:
+The `!ground-type` self-requirement mechanism has been removed. The tiered level-module model
+makes it unnecessary — see resolution below.
 
-- Level tiles should only be placeable when their `bottom` socket is supported by a tile with a required tag.
-- Current authoring uses `socket_required["bottom"] = ["!ground-type"]` for level modules.
-- `ground-type` is intended to represent valid support surfaces (ground + center-like level support).
+## Original Goal
 
-## What We Are Trying to Prevent
+Enable multi-level level-tile stacking ("mountain" behavior) while ensuring:
 
-- Infinite/over-aggressive upward growth.
-- Visual artifacts where unsupported lateral expansion creates sparse/noisy level coverage.
-- Edge/corner-on-edge/corner stacking that looks wrong.
+- Level tiles only stack on valid supports (not on edge/corner variants).
+- Graduated slopes instead of cliffs (edge textures look bad when stacked).
+- No infinite/over-aggressive upward growth.
 
-## Semantics Introduced
+## What Was Tried
 
-During this investigation, socket requirement semantics were clarified:
+### `!` self-requirement mechanism
 
-- `!tag` in `socket_required` means **self placement requirement**:
-  - this candidate piece requires an adjacent piece with `tag` on that same socket.
-- `[socket]tag` means **adjacency-context rewrite** for tag indexing requirements.
+`socket_required["bottom"] = ["!ground-type"]` required the adjacent piece at the bottom socket
+to have the `ground-type` tag. This was semantically correct but caused sparsity because:
 
-This moved old `!` rewrite behavior to explicit `[socket]...` and reserved `!` for hard placement constraints.
+1. Most lateral level expansion contexts lacked a `bottom` adjacency entirely.
+2. The filtering rejected all candidates whenever `bottom` support was missing.
+3. Combined with `LevelEdgeRule` retiling (which replaced center tiles before their `topcenter`
+   sockets could be processed), very few vertical placements succeeded.
 
-## Runtime Findings (Debug Session 34c6f6)
+### Coordinate system mismatch
 
-### Confirmed
+`level-center` originally used `GroundTile.tscn`, whose socket coordinate system was rotated 90°
+relative to all other level variant scenes. This caused `LevelEdgeRule` neighbor detection to fail,
+preventing tiles from converging to center state. Fixed by creating `LevelCenter.tscn` with
+sockets aligned to the standard level variant coordinate system (front=Z-, right=X+).
 
-1. Most `!ground-type` failures were due to **missing `bottom` adjacency**, not wrong tags.
-2. For lateral level expansion attempts, adjacency snapshots often include only:
-   - `front/back/left/right/topcenter` (or subsets), with no `bottom`.
-3. Candidate filtering commonly had:
-   - `pre_socket_requirement_count = 1`
-   - `post_socket_requirement_count = 0`
-   when `bottom` support was missing.
+### Socket overlap issue
 
-### Rejected
+`LevelCenter.tscn` initially included `bottomfront/back/left/right` sockets that spatially
+overlapped with ground cardinal sockets, causing `remove_linked_sockets_from_queue` to incorrectly
+remove ground expansion sockets. Fixed by removing those unnecessary bottom-side sockets.
 
-- "Existing adjacent support has wrong tag" was not a major driver in captured runs.
+## Resolution: Tiered Level Modules
 
-## Solutions Tried So Far
+Instead of using `!` requirements to constrain stacking, the system now relies on **two explicit
+families of level modules**:
 
-### 1) Self-requirement filtering in module selection
+- **Ground-level modules** carry the `level-ground` tier tag. Their cardinal sockets keep lateral
+  fill probability so the first level can form dense connected patches, and their lateral
+  distributions point back to the sampled `level-ground-center` module.
+- **Elevated modules** carry the `level-stack` tier tag. Their cardinal sockets are non-expandable,
+  so once terrain is above the base level it only grows vertically.
+- **Ground `topcenter` seeding uses `{"level-ground-center": 1.0}`** so first-level 24x24 spawns
+  always start from the ground-tier center module.
+- **Ground-tier `level-center` tiles use `{"level-stack-center": 1.0}` on `topcenter`**, so
+  stacked terrain samples the elevated center module instead of reusing the ground-tier one.
+- **Elevated `level-stack-center` uses `topcenter` fill probability `0.95`**, so higher levels fill
+  the interior of valid supports almost completely.
+- **`LevelEdgeRule` removes stacked tiles** when a center support tile is retiled to an edge
+  variant (the stacked tile would be visually unsupported).
+- **`LevelEdgeRule` preserves the tier of the source piece** when it retile-swaps variants, so
+  ground and elevated levels keep their own expansion behavior without any generator special cases.
+- **`LevelEdgeRule` diagonal checks are same-layer only** — elevated tiles must not influence
+  lower-level inner-corner/edge silhouette selection.
+- **`LevelContradictionRule` remains disabled** — it caused stale references and false positives on
+  vertical socket connections, removing stacked tiles immediately after placement.
 
-- Added explicit filtering path so `!tag` requirements are enforced during candidate selection.
-- Outcome: behavior became correct semantically, but level generation became noticeably more sparse.
+This naturally produces the desired behavior:
 
-### 2) Early skip of unsupported lateral level expansion attempts
+- Ground seeding forms first-level level patches.
+- Mountains grow vertically from upper-level supports without letting higher levels sprawl outward.
+- Stacked tiles are only kept above supports that still have all four cardinal neighbors.
+- Edge variants cannot keep stacked tiles above them.
+- Upper levels no longer distort lower-level edge silhouettes.
 
-- Added an early gate in placement context:
-  - if expanding from level on cardinal socket and adjacency lacks `bottom`, skip that attempt.
-- Outcome: eliminated many deep failures, but sparsity still persisted.
+## Additional Bugs Found During Implementation
 
-### 3) Scheduler adjustment to avoid starvation from unsupported attempts
+### Second-level density still low after tier split — FIXED (rule-gated topcenter)
 
-- Tracked skipped reasons and attempted not counting specific unsupported skips against processing budget.
-- Added pop cap to avoid runaway loops.
-- Outcome: partial improvement, but still insufficient in observed runtime runs.
+After splitting level tiles into `level-ground` and `level-stack` tiers, second-level stacking was
+still sparse because:
 
-### 4) Additional adjacency diagnostics (`H6`)
+1. The ground-tier center used `topcenter = 0.6`, so only 60% of centers tried to stack.
+2. Tiles start as edge variants (no neighbors yet) and only become centers after all 4 cardinals
+   are connected. The `topcenter` socket was enqueued/dequeued repeatedly during retiling churn,
+   and only got a single fill-prob roll once the tile finally settled as a center.
 
-- Added diagnostics to determine whether missing `bottom` means:
-  - true topology gap (no support tile), or
-  - alignment/index visibility miss (support exists nearby but is not recognized as adjacent).
-- Outcome: this path is now instrumented for continuing analysis.
+**Fix**: topcenter is now **rule-gated**. All level center module definitions have
+`topcenter = null` (non-expandable). `LevelEdgeRule` activates topcenter via a per-instance
+`socket_fill_prob_override` when a tile is confirmed as center (all 4 cardinal neighbors connected).
+The override value is `0.95` for both ground and stack tiers. This ensures:
 
-### 5) Restore level-center vertical expansion configuration
+- No wasted queue operations during retiling churn.
+- The topcenter socket is only enqueued once, at the right time, with `0.95` probability.
+- Replaced center pieces get their topcenter enqueued automatically via `_replace_piece` →
+  `add_piece_to_queue` (which reads the override). Unchanged centers that newly gain the override
+  use `sockets_for_queue` returned by the rule.
 
-- Found a regression in module definitions: `_build_level_tile` was leaving `topcenter` fill as `null`, so authored `topcenter_fill_prob` was effectively ignored.
-- Fix applied:
-  - `socket_fill_prob_policy["topcenter"] = topcenter_fill_prob`
-  - when `topcenter_fill_prob > 0`, set `socket_tag_prob["topcenter"] = {"level-center": 1.0}`.
-- Runtime result:
-  - `level-center` `topcenter` sockets began enqueuing and processing (`H8` logs).
+### Stale piece references in queue
 
-### 6) Defer unsupported lateral attempts (instead of dropping)
+`LevelContradictionRule.apply()` called `destroy()` on pieces directly and used incorrect
+dictionary keys (`"updated_piece"` instead of `"chosen_piece"`). This caused:
 
-- For lateral level expansions with missing `bottom` support adjacency, attempts are deferred and retried (`H7`) rather than discarded.
-- Outcome: improved retry behavior, but sparsity still depends on support availability and retile timing.
+- Stale `TerrainModuleSocket` references in the priority queue pointing to destroyed pieces
+  (null root, empty sockets dict).
+- `Invalid access to property or key 'topcenter' on Dictionary` errors when processing stale
+  sockets.
+- `Assertion failed` in `TerrainModuleSocket.get_socket_position()` when socket lookups
+  returned null.
 
-### 7) Rule-retile interaction with queued vertical growth (`H8/H9/H10`)
+Fixed by:
 
-- `H8`: many `level-center` `topcenter` sockets were enqueued.
-- `H9`: frequent `level-center` replacements by `LevelEdgeRule` removed queued `topcenter` work before it executed (`had_topcenter_key_before: true` observed repeatedly).
-- Attempted fix:
-  - preserve `level-center` variant when vertical growth preconditions matched.
-- Side effect:
-  - user observed missing edge/corner visuals; `H10` fired very frequently, indicating over-preservation pressure.
-- Status:
-  - this preservation behavior is currently treated as **rejected as a direct fix** due to visual regression.
-  - instrumentation remains to track when this condition matches (`H10`) without forcing variant preservation.
+1. Using `.get()` instead of `[]` for dictionary access in `TerrainModuleSocket.socket` getter.
+2. Adding stale-piece guards at the top of `_process_socket` and `get_dist_from_player`.
+3. Fixing `LevelContradictionRule` to use `"chosen_piece"` key (matching generator expectations)
+   and to communicate removals via `"piece_updates"` instead of calling `destroy()` directly.
+4. Adding `.has()` guards in `_socket_fill_prob` (both in `TerrainGenerator` and
+   `LevelContradictionRule`) to handle pieces whose socket names don't match the adjacency keys.
 
-## Current Understanding
+### Vertical socket contradiction false positive
 
-The dominant issue appears to be:
+`LevelContradictionRule.has_contradictions()` treated the `bottom` ↔ `topcenter` connection as a
+fillability contradiction (non-expandable bottom touching expandable topcenter). This caused every
+stacked level tile to be removed immediately after placement. The bottom socket is naturally
+non-expandable (it's the support connection), so this isn't a real contradiction. Fixed by skipping
+vertical sockets (`bottom`, `topcenter`) in contradiction detection.
 
-- Lateral level expansion generates many candidate contexts where valid `bottom` support is unavailable at evaluation time.
-- Strict `!ground-type` is semantically correct but amplifies sparsity because many attempts are invalid by construction.
+### Elevated tiles affecting lower-level edge silhouettes
 
-Current evidence indicates this is a combined scheduling + rule interaction problem:
+`LevelEdgeRule` diagonal neighbor queries used a tall Y query range and only checked X/Z alignment.
+That allowed elevated level tiles to count as diagonal neighbors for lower-level tiles, which
+produced incorrect inner-corner and edge variants near stacked terrain. Fixed by requiring diagonal
+neighbors to be on the same height level as the piece being retiled.
 
-- strict support requirement (`!ground-type`) is correct,
-- many lateral contexts are invalid by construction (no exact `bottom` support),
-- and rule-driven retile can interfere with queued vertical-growth opportunities.
+## Code Removed
 
-## Future Ideas
-
-### A) Bottom-to-top queue priority (user proposal)
-
-Current queue priority is distance-driven. Add height bias so lower Y sockets are processed first:
-
-- Example conceptual priority:
-  - `priority = distance + (y_bias * socket_world_y)`
-  - or lexicographic `(y_bucket, distance)` where lower Y buckets win.
-
-Expected effect:
-
-- Support layers (ground/support surfaces) materialize before higher/lateral expansions depend on them.
-- Fewer invalid `!ground-type` attempts.
-
-Risks:
-
-- Could delay desirable high-elevation detail far from player.
-- Needs careful balancing with render-range behavior and deferred sockets.
-
-### B) Two-queue strategy
-
-- Queue A: support-forming sockets (low Y / foundation-relevant).
-- Queue B: lateral/detail sockets.
-- Process A before B each step.
-
-Expected effect:
-
-- Cleaner dependency ordering without overloading one scalar priority.
-
-### C) Context-aware level lateral throttling
-
-- Dynamically reduce cardinal level expansion probability when support confidence is low.
-- Keep strict `!ground-type`, but avoid spending budget on low-probability-valid contexts.
-
-### D) Validate adjacency geometry assumptions
-
-- Use `H6` logs to check if near-support pieces are present but not registered as socket adjacency hits.
-- If yes, investigate socket alignment, snap, or test-piece probing geometry.
-
-### E) Prioritize queued `topcenter` before retile-sensitive lateral updates
-
-- Give temporary priority boost to `level-center/topcenter` queue items (or process these in a dedicated pass first).
-- Goal: consume vertical-growth opportunities before edge retile replaces center pieces.
-- This can be paired with your Y-biased priority idea.
-
-## Recommended Next Step
-
-Implement and test **priority shaping** first:
-
-1. Add Y component to queue priority for expansion sockets (bottom-to-top control).
-2. Add a temporary boost or dedicated pass for `level-center/topcenter` sockets.
-2. Keep current strict `!ground-type` semantics.
-3. Compare before/after:
-   - number of unsupported skips,
-   - successful vertical placements,
-   - visual density of stacked level formations.
-
-## Status
-
-- Issue remains open.
-- Instrumentation is active for continued runtime-driven debugging.
-
-## Branch Reset Note
-
-- Per user request, experimental code changes from this debugging pass were rolled back.
-- This dossier is intentionally retained as the running record of:
-  - hypotheses,
-  - runtime evidence,
-  - attempted fixes and side effects,
-  - and next candidate directions.
+- `!` prefix handling in `TerrainModuleLibrary.convert_tag_list()`
+- `filter_by_socket_requirements()` and `_module_matches_socket_requirements()` methods
+- `socket_fill_prob_override` field on `TerrainModuleInstance`
+- `bottom: TagList.new(["!ground-type"])` from level module `socket_required`
+- All `[stack-dbg]`, `[edge-dbg]`, `[fill-fail]` debug prints
+- Related unit tests for `!` requirements

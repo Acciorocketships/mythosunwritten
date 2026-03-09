@@ -71,6 +71,8 @@ func load_terrain() -> void:
 
 
 func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
+	if piece_socket.piece.root == null or piece_socket.piece.sockets.is_empty():
+		return false
 	if _is_socket_connected(piece_socket):
 		return false
 	if _defer_if_out_of_range(piece_socket, distance):
@@ -109,11 +111,15 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 
 
 func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	assert(
-		piece.def.socket_fill_prob.has(socket_name),
-		"Missing socket_fill_prob entry for socket '%s' on module %s"
-		% [socket_name, str(piece.def.tags.tags)]
-	)
+	if piece.socket_fill_prob_override.has(socket_name):
+		var override_val: Variant = piece.socket_fill_prob_override[socket_name]
+		if override_val is float:
+			return override_val
+		if override_val is int:
+			return override_val
+		return 0.0
+	if not piece.def.socket_fill_prob.has(socket_name):
+		return 0.0
 	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
 	if fill_prob == null:
 		return 0.0
@@ -133,11 +139,8 @@ func _is_socket_blocking(piece_socket: TerrainModuleSocket) -> bool:
 		return false
 	var socket_name: String = piece_socket.socket_name
 	var fill_probs: Dictionary = piece_socket.piece.def.socket_fill_prob
-	assert(
-		fill_probs.has(socket_name),
-		"Missing socket_fill_prob entry for socket '%s' on module %s"
-		% [socket_name, str(piece_socket.piece.def.tags.tags)]
-	)
+	if not fill_probs.has(socket_name):
+		return false
 	var fill_prob: Variant = fill_probs[socket_name]
 	if fill_prob == null:
 		return false
@@ -164,7 +167,6 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 		var required_tags: TagList = library.get_required_tags(rotated_adjacent, rotated_attachment_socket)
 		required_tags.append(size)
 		var filtered: TerrainModuleList = library.get_by_tags(required_tags)
-		filtered = library.filter_by_socket_requirements(filtered, rotated_adjacent)
 		if not filtered.is_empty():
 			return {
 				"size": size,
@@ -271,7 +273,7 @@ func _apply_rules_after_placement(
 			var step_updates: Dictionary = step_result.get("piece_updates", {})
 			_apply_piece_updates_after_placement(step_updates, current_piece)
 			for socket_to_queue in step_result.get("sockets_for_queue", []):
-				queue.push(socket_to_queue, 0)
+				_enqueue_socket(socket_to_queue, 0)
 
 
 func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piece: TerrainModuleInstance) -> void:
@@ -305,7 +307,9 @@ func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleIn
 
 
 func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> float:
-	var socket: Marker3D = piece.sockets[socket_name]
+	var socket: Marker3D = piece.sockets.get(socket_name, null)
+	if socket == null or piece.root == null:
+		return INF
 	var socket_world_pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
 	var player_pos := player.global_position
 	player_pos[1] = -1.0
@@ -347,8 +351,13 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 	if parent_piece != null:
 		other_pieces.erase(parent_piece)
 
-	# Ignore collisions with ground pieces (they can overlap)
 	other_pieces = other_pieces.filter(func(p): return not p.def.tags.has("ground"))
+
+	if new_piece.def.tags.has("level") and parent_piece != null and parent_piece.def.tags.has("level"):
+		var parent_y: float = parent_piece.transform.origin.y
+		other_pieces = other_pieces.filter(func(p):
+			return not (p.def.tags.has("level") and p.transform.origin.y <= parent_y)
+		)
 
 	return other_pieces.is_empty()
 

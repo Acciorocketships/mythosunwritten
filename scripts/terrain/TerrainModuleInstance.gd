@@ -5,10 +5,10 @@ var def: TerrainModule
 var root: Node3D = null
 var socket_node: Node3D = null
 var sockets: Dictionary = {}  # String -> Marker3D
+var socket_fill_prob_override: Dictionary = {}  # String -> float
 
 var transform: Transform3D = Transform3D.IDENTITY
 var aabb: AABB
-# Local-space bounds computed from the instantiated scene mesh.
 var size: AABB
 
 
