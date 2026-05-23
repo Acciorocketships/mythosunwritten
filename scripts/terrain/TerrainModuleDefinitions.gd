@@ -550,6 +550,27 @@ static func load_cliff_edge_tile() -> TerrainModule:
 	)
 
 
+static func load_cliff_outer_corner_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffOuterCorner.tscn",
+		TagList.new(["cliff", "cliff-outer-corner", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInnerCorner.tscn",
+		TagList.new(["cliff", "cliff-inner-corner", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_diag_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInnerCornerDiag.tscn",
+		TagList.new(["cliff", "cliff-inner-corner-diag", "24x24x4"])
+	)
+
+
 static func _build_cliff_tile(
 	scene_path: String,
 	tags: TagList

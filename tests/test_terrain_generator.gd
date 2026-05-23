@@ -2306,3 +2306,18 @@ func test_cliff_edge_tile_has_correct_tags_and_socket_config() -> void:
 
 	# Bottom is non-expandable (attaches to ground, doesn't seek neighbors).
 	assert_eq(module.socket_fill_prob["bottom"], null)
+
+
+func test_all_cliff_edge_variants_load() -> void:
+	var variants: Dictionary[String, Callable] = {
+		"cliff-outer-corner": TerrainModuleDefinitions.load_cliff_outer_corner_tile,
+		"cliff-inner-corner": TerrainModuleDefinitions.load_cliff_inner_corner_tile,
+		"cliff-inner-corner-diag": TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile,
+	}
+	for variant_tag in variants.keys():
+		var module: TerrainModule = variants[variant_tag].call()
+		assert_not_null(module, "Module loader failed for %s" % variant_tag)
+		assert_true(module.tags.has("cliff"), "%s missing 'cliff' tag" % variant_tag)
+		assert_true(module.tags.has(variant_tag), "%s missing '%s' tag" % [variant_tag, variant_tag])
+		assert_true(module.tags.has("24x24x4"), "%s missing '24x24x4' tag" % variant_tag)
+		assert_true(module.replace_existing, "%s must have replace_existing" % variant_tag)
