@@ -2368,3 +2368,15 @@ func test_cliff_edge_rule_matches_cliff_tagged_pieces_only() -> void:
 	assert_false(rule.matches({"chosen_piece": grass}))
 	assert_false(rule.matches({}))
 	assert_false(rule.matches({"chosen_piece": null}))
+
+
+func test_cliff_edge_rule_aligns_outer_corner_with_neighbors() -> void:
+	# Place an outer-corner cliff with cliff neighbors on back and left only.
+	# Rule should align canonical missing ["front","left"] to actual missing ["front","right"]
+	# via rotation, ultimately producing an outer-corner facing back+right toward the cliffs.
+	# Verify by checking the rule's canonical-missing lookup for a known pattern.
+	var rule: CliffEdgeRule = CliffEdgeRule.new()
+	var missing: Array[String] = ["front", "right"]
+	# In CliffEdgeRule's logic this should map to cliff-outer-corner (rotated).
+	var target_tag: String = rule._tag_for_missing_sockets(missing)
+	assert_eq(target_tag, "cliff-outer-corner")

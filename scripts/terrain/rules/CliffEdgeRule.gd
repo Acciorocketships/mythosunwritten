@@ -194,3 +194,86 @@ func _add_unique_piece(
 		return
 	seen[piece] = true
 	pieces.append(piece)
+
+
+func _rotate_socket_names_once(socket_names: Array) -> Array:
+	var out: Array = []
+	for socket_name in socket_names:
+		out.append(Helper.rotate_socket_name(socket_name))
+	return out
+
+
+func _same_socket_set(a: Array, b: Array) -> bool:
+	if a.size() != b.size():
+		return false
+	for socket_name in a:
+		if not b.has(socket_name):
+			return false
+	return true
+
+
+func _rotation_steps_to_align_canonical(target_tag: String, desired_missing: Array[String]) -> int:
+	var canonical: Array = CANONICAL_MISSING_BY_TAG.get(target_tag, []).duplicate()
+	for step in range(4):
+		if _same_socket_set(canonical, desired_missing):
+			return step
+		canonical = _rotate_socket_names_once(canonical)
+	return -1
+
+
+func _tag_for_missing_sockets(missing_sockets: Array[String]) -> String:
+	# Empty -> swap to interior (signaled by special tag).
+	if missing_sockets.is_empty():
+		return "cliff-interior"
+	for cliff_tag in CLIFF_TAG_ORDER:
+		if _rotation_steps_to_align_canonical(cliff_tag, missing_sockets) >= 0:
+			return cliff_tag
+	# No match: signal "keep piece as-is" via empty string.
+	return ""
+
+
+func _current_cliff_tag(module_def: TerrainModule) -> String:
+	if module_def == null:
+		return ""
+	for cliff_tag in CLIFF_TAG_ORDER:
+		if module_def.tags.has(cliff_tag):
+			return cliff_tag
+	if module_def.tags.has("cliff-interior"):
+		return "cliff-interior"
+	return ""
+
+
+func _get_module_for_cliff_tag(cliff_tag: String) -> TerrainModule:
+	if module_by_cliff_tag.is_empty():
+		module_by_cliff_tag = {
+			"cliff-edge": TerrainModuleDefinitions.load_cliff_edge_tile(),
+			"cliff-outer-corner": TerrainModuleDefinitions.load_cliff_outer_corner_tile(),
+			"cliff-inner-corner": TerrainModuleDefinitions.load_cliff_inner_corner_tile(),
+			"cliff-inner-corner-diag": TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile(),
+			"cliff-interior": TerrainModuleDefinitions.load_cliff_interior_tile(),
+		}
+	return module_by_cliff_tag.get(cliff_tag, null)
+
+
+func _create_replacement_for_target(
+	source_piece: TerrainModuleInstance,
+	target_tag: String,
+	steps_to_align: int
+) -> TerrainModuleInstance:
+	var existing_tag: String = _current_cliff_tag(source_piece.def)
+	if existing_tag == target_tag and steps_to_align == 0:
+		return source_piece
+	var module_template: TerrainModule = _get_module_for_cliff_tag(target_tag)
+	if module_template == null:
+		return source_piece
+	if module_template == source_piece.def and steps_to_align == 0:
+		return source_piece
+	var replacement: TerrainModuleInstance = module_template.spawn()
+	replacement.set_transform(source_piece.transform)
+	replacement.create()
+
+	if steps_to_align > 0:
+		var yaw: float = PI * 0.5 * float((4 - steps_to_align) % 4)
+		var rotated_basis: Basis = Basis(Vector3.UP, yaw) * replacement.transform.basis
+		replacement.set_basis(rotated_basis)
+	return replacement
