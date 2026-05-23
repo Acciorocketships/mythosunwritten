@@ -145,3 +145,28 @@ func test_ground_tile_aabb_matches_mesh_bounds():
 	# Temporarily allow some tolerance due to socket renaming
 	assert_almost_eq((tm.size.position - expected.position).length(), 0.0, 0.5)
 	assert_almost_eq((tm.size.size - expected.size).length(), 0.0, 0.5)
+
+
+func test_library_registers_all_cliff_variants() -> void:
+	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
+	add_child_autofree(lib)
+	lib.init()
+
+	var variant_tags = [
+		"cliff-edge",
+		"cliff-outer-corner",
+		"cliff-inner-corner",
+		"cliff-inner-corner-diag",
+		"cliff-interior"
+	]
+	for variant_tag in variant_tags:
+		assert_true(
+			lib.modules_by_tag.has(variant_tag),
+			"Library missing variant: %s" % variant_tag
+		)
+	# The "cliff" tag should map to all 5 variants.
+	assert_eq(
+		lib.modules_by_tag["cliff"].size(),
+		5,
+		"All 5 cliff modules should carry 'cliff' tag"
+	)

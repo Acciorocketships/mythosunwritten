@@ -26,6 +26,11 @@ func load_terrain_modules() -> void:
 	terrain_modules.append(TerrainModuleDefinitions.load_12x12x2_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_level_middle_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_level_stack_middle_tile())
+	terrain_modules.append(TerrainModuleDefinitions.load_cliff_edge_tile())
+	terrain_modules.append(TerrainModuleDefinitions.load_cliff_outer_corner_tile())
+	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_tile())
+	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile())
+	terrain_modules.append(TerrainModuleDefinitions.load_cliff_interior_tile())
 
 
 func load_test_pieces() -> void:
