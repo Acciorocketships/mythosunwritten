@@ -2321,3 +2321,22 @@ func test_all_cliff_edge_variants_load() -> void:
 		assert_true(module.tags.has(variant_tag), "%s missing '%s' tag" % [variant_tag, variant_tag])
 		assert_true(module.tags.has("24x24x4"), "%s missing '24x24x4' tag" % variant_tag)
 		assert_true(module.replace_existing, "%s must have replace_existing" % variant_tag)
+
+
+func test_cliff_interior_tile_uses_ground_scene_with_cliff_tag() -> void:
+	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_interior_tile()
+	assert_not_null(module)
+	# Visually a ground tile.
+	assert_eq(module.scene.resource_path, "res://terrain/scenes/GroundTile.tscn")
+	# Tagged for cliff connectivity AND ground-style topcenter behavior.
+	assert_true(module.tags.has("cliff"), "cliff-interior must have 'cliff' tag")
+	assert_true(module.tags.has("ground-type"), "cliff-interior must have 'ground-type' tag")
+	assert_true(module.tags.has("24x24x4"), "cliff-interior must use cliff size tag")
+	assert_true(module.replace_existing, "cliff-interior must replace_existing for rule swap")
+	# Lateral cardinals are NON-expandable (the perimeter is covered by cliff-edges).
+	for socket_name in ["front", "back", "left", "right"]:
+		assert_eq(
+			module.socket_fill_prob[socket_name],
+			null,
+			"cliff-interior %s must be non-expandable" % socket_name
+		)

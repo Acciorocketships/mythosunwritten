@@ -571,6 +571,82 @@ static func load_cliff_inner_corner_diag_tile() -> TerrainModule:
 	)
 
 
+static func load_cliff_interior_tile() -> TerrainModule:
+	# Cliff plateau interior: visually a ground tile, but tagged "cliff" so neighbour
+	# cliff-edges' required-tag filters remain satisfied. Lateral cardinals are
+	# non-expandable because the plateau perimeter is covered by cliff-edges; we
+	# don't want the interior to spawn more lateral tiles. Topcenter mirrors a
+	# normal ground tile (grass/trees/multi-storey cliff seeding).
+	var scene: PackedScene = load("res://terrain/scenes/GroundTile.tscn")
+	var tags: TagList = TagList.new(["cliff", "cliff-interior", "ground-type", "24x24x4"])
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	var bb: AABB = AABB(Vector3(-12, -0.5, -12), Vector3(24, 0.5, 24))
+
+	var top_size_dist_corners: Distribution = Distribution.new({"point": 0.9, "12x12x2": 0.1})
+	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8x2": 0.1})
+	var top_size_dist_center: Distribution = Distribution.new({"24x24x0.5": 1.0})
+	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
+	var top_tag_prob_cardinal: Distribution = top_tag_prob_corners
+	var top_tag_prob_center: Distribution = Distribution.new({"level-ground-center": 0.95, "cliff-edge": 0.05})
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"front": Distribution.new({"24x24x4": 1.0}),
+		"back": Distribution.new({"24x24x4": 1.0}),
+		"right": Distribution.new({"24x24x4": 1.0}),
+		"left": Distribution.new({"24x24x4": 1.0}),
+		"topfront": top_size_dist_cardinal,
+		"topback": top_size_dist_cardinal,
+		"topleft": top_size_dist_cardinal,
+		"topright": top_size_dist_cardinal,
+		"topcenter": top_size_dist_center,
+		"topfrontright": top_size_dist_corners,
+		"topfrontleft": top_size_dist_corners,
+		"topbackright": top_size_dist_corners,
+		"topbackleft": top_size_dist_corners,
+	}
+	var socket_required: Dictionary[String, TagList] = {}
+	var socket_fill_prob: Dictionary[String, Variant] = {
+		"front": null,
+		"back": null,
+		"right": null,
+		"left": null,
+		"topfront": 0.05,
+		"topback": 0.05,
+		"topleft": 0.05,
+		"topright": 0.05,
+		"topfrontright": 0.05,
+		"topfrontleft": 0.05,
+		"topbackright": 0.05,
+		"topbackleft": 0.05,
+		"topcenter": 0.2,
+		"bottom": null,
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"topfront": top_tag_prob_cardinal,
+		"topback": top_tag_prob_cardinal,
+		"topleft": top_tag_prob_cardinal,
+		"topright": top_tag_prob_cardinal,
+		"topfrontright": top_tag_prob_corners,
+		"topfrontleft": top_tag_prob_corners,
+		"topbackright": top_tag_prob_corners,
+		"topbackleft": top_tag_prob_corners,
+		"topcenter": top_tag_prob_center,
+	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		true  # replace_existing
+	)
+
+
 static func _build_cliff_tile(
 	scene_path: String,
 	tags: TagList
