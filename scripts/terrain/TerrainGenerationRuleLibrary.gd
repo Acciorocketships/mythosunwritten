@@ -6,4 +6,5 @@ extends Resource
 
 
 func _init() -> void:
+	rules.append(CliffEdgeRule.new())
 	rules.append(LevelEdgeRule.new())
