@@ -9,7 +9,7 @@ Planned projects and feature ideas, stored as individual markdown files. Update 
 | Guaranteed placement when ≥3 level neighbours | [level-guaranteed-fill-rule.md](level-guaranteed-fill-rule.md) |
 | Sky: day/night cycle, glowing orbs at night | [sky-day-night-orbs.md](sky-day-night-orbs.md) |
 | Bigger trees, larger grass patches | [trees-and-grass-scale.md](trees-and-grass-scale.md) |
-| More/bigger cliff tiles, composition, floating islands | [cliffs-and-floating-islands.md](cliffs-and-floating-islands.md) |
+| Directional socket tags (rivers, paths, asymmetric tiles) | [directional-socket-tags.md](directional-socket-tags.md) |
 | Water tiles (ground type, level-like composition) | [water-tiles.md](water-tiles.md) |
 | Buildings in terrain generator, animations | [buildings-in-terrain.md](buildings-in-terrain.md) |
 | Door collision → load another scene | [doors-scene-transition.md](doors-scene-transition.md) |
