@@ -3,6 +3,7 @@ extends Resource
 
 const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.5
 const LEVEL_TOPCENTER_FILL_PROB: float = 1.0
+const CLIFF_LATERAL_FILL_PROB: float = 0.7
 
 ### Individual Terrain Modules ###
 
@@ -539,6 +540,84 @@ static func load_level_stack_inner_corner_all_tile() -> TerrainModule:
 		null,
 		"",
 		""
+	)
+
+
+static func load_cliff_edge_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffSide.tscn",
+		TagList.new(["cliff", "cliff-edge", "24x24x4"])
+	)
+
+
+static func _build_cliff_tile(
+	scene_path: String,
+	tags: TagList
+) -> TerrainModule:
+	# All cliff edge variants share an identical socket layout:
+	#   - Cardinals at top elevation, required=cliff, high lateral fill.
+	#   - Diagonals are null (markers for inner-corner detection only).
+	#   - Bottom attaches to a ground tile below (no expansion).
+	#   - Topcenter inherits ground-tile distribution (grass/trees/multi-storey cliffs).
+	var scene: PackedScene = load(scene_path)
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	var bb: AABB = AABB(Vector3(-12, -4, -12), Vector3(24, 4, 24))
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"front": Distribution.new({"24x24x4": 1.0}),
+		"back": Distribution.new({"24x24x4": 1.0}),
+		"left": Distribution.new({"24x24x4": 1.0}),
+		"right": Distribution.new({"24x24x4": 1.0}),
+		"topcenter": Distribution.new({"24x24x0.5": 1.0}),
+		"bottom": Distribution.new({"24x24x0.5": 1.0}),
+	}
+	var socket_required: Dictionary[String, TagList] = {
+		"front": TagList.new(["cliff"]),
+		"back": TagList.new(["cliff"]),
+		"left": TagList.new(["cliff"]),
+		"right": TagList.new(["cliff"]),
+		"bottom": TagList.new(["ground"]),
+	}
+	var socket_fill_prob: Dictionary[String, Variant] = {
+		"front": CLIFF_LATERAL_FILL_PROB,
+		"back": CLIFF_LATERAL_FILL_PROB,
+		"left": CLIFF_LATERAL_FILL_PROB,
+		"right": CLIFF_LATERAL_FILL_PROB,
+		"frontleft": null,
+		"frontright": null,
+		"backleft": null,
+		"backright": null,
+		"bottom": null,
+		"topcenter": 0.2,
+	}
+	# Cliff cardinals favor more cliff growth; topcenter mirrors a ground tile's mix.
+	var cliff_lateral_dist: Distribution = Distribution.new({"cliff": 1.0})
+	var topcenter_dist: Distribution = Distribution.new({
+		"grass": 0.3,
+		"rock": 0.2,
+		"bush": 0.2,
+		"tree": 0.2,
+		"hill": 0.1,
+	})
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"front": cliff_lateral_dist,
+		"back": cliff_lateral_dist,
+		"left": cliff_lateral_dist,
+		"right": cliff_lateral_dist,
+		"topcenter": topcenter_dist,
+	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		true  # replace_existing
 	)
 
 

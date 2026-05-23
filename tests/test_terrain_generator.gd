@@ -2277,3 +2277,32 @@ func test_24x24x4_test_piece_uses_cliff_socket_layout() -> void:
 	assert_eq(inst.sockets["back"].transform.origin, Vector3(0, 0, 12))
 	assert_eq(inst.sockets["left"].transform.origin, Vector3(-12, 0, 0))
 	assert_eq(inst.sockets["right"].transform.origin, Vector3(12, 0, 0))
+
+
+func test_cliff_edge_tile_has_correct_tags_and_socket_config() -> void:
+	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_edge_tile()
+	assert_not_null(module)
+	assert_true(module.tags.has("cliff"))
+	assert_true(module.tags.has("cliff-edge"))
+	assert_true(module.tags.has("24x24x4"))
+	assert_true(module.replace_existing)
+
+	# Cardinal sockets must require cliff and have high fill prob.
+	for socket_name in ["front", "back", "left", "right"]:
+		assert_true(
+			module.socket_required.has(socket_name),
+			"Missing socket_required for %s" % socket_name
+		)
+		assert_true(
+			module.socket_required[socket_name].has("cliff"),
+			"Cardinal %s must require cliff" % socket_name
+		)
+		assert_almost_eq(
+			float(module.socket_fill_prob[socket_name]),
+			0.7,
+			0.001,
+			"Cardinal %s must have high fill prob" % socket_name
+		)
+
+	# Bottom is non-expandable (attaches to ground, doesn't seek neighbors).
+	assert_eq(module.socket_fill_prob["bottom"], null)
