@@ -356,13 +356,14 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 		_enqueue_socket(current_socket, dist)
 
 
-func register_piece(piece: TerrainModuleInstance, attachment_socket_name: String) -> void:
+func register_piece(piece: TerrainModuleInstance, _attachment_socket_name: String) -> void:
+	# Index every socket. The attachment socket must be indexed too — otherwise a query
+	# from the parent piece's matching socket position finds only its own socket and
+	# falsely concludes the side has no neighbor, which causes LevelEdgeRule to choose
+	# the wrong variant for the parent (treating an attached neighbor as missing).
 	for socket_name: String in piece.sockets.keys():
-		# Index all sockets (including those with fill_prob = 0) so they can act as adjacency barriers
-		# Skip only the attachment socket
-		if socket_name != attachment_socket_name:
-			var piece_other_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
-			socket_index.insert(piece_other_socket)
+		var piece_other_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+		socket_index.insert(piece_other_socket)
 	terrain_index.insert(piece)
 
 
