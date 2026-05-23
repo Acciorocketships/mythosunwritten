@@ -608,7 +608,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 	_set_generator_library(gen, lib)
 	gen.library.terrain_modules = TerrainModuleList.new([mod])
 	gen.library.modules_by_tag.clear()
-	gen.library.modules_by_tag["24x24"] = TerrainModuleList.new([mod])
+	gen.library.modules_by_tag["24x24x0.5"] = TerrainModuleList.new([mod])
 
 	# For test pieces, use a controlled single-module library.
 	var test_lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
@@ -616,7 +616,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 	_set_generator_test_pieces_library(gen, test_lib)
 	gen.test_pieces_library.terrain_modules = TerrainModuleList.new([mod])
 	gen.test_pieces_library.modules_by_tag.clear()
-	gen.test_pieces_library.modules_by_tag["24x24"] = TerrainModuleList.new([mod])
+	gen.test_pieces_library.modules_by_tag["24x24x0.5"] = TerrainModuleList.new([mod])
 	# Orig piece at identity
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
 	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(orig, "top")
@@ -636,7 +636,7 @@ func test_get_adjacent_from_size_hits_expected_sockets():
 			m.transform.origin = Vector3(0, 0, -1)
 		gen.socket_index.insert(TerrainModuleSocket.new(dummy_piece, "bottom"))
 	# Query
-	var out: Dictionary[String, TerrainModuleSocket] = gen.get_adjacent_from_size(orig_ps, "24x24")
+	var out: Dictionary[String, TerrainModuleSocket] = gen.get_adjacent_from_size(orig_ps, "24x24x0.5")
 	assert_true(out.has("bottom"))
 	assert_true(out.has("back"))
 	assert_true(out.has("left"))

@@ -14,7 +14,7 @@ func test_init_populates_modules_and_index():
 	var lib = _make_library()
 	assert_true(lib.terrain_modules.size() >= 1, "terrain_modules has entries after init")
 	assert_true(lib.modules_by_tag.has("ground"), "modules_by_tag has 'ground'")
-	assert_true(lib.modules_by_tag.has("24x24"), "modules_by_tag has '24x24'")
+	assert_true(lib.modules_by_tag.has("24x24x0.5"), "modules_by_tag has '24x24'")
 
 
 func test_sort_terrain_modules_builds_tag_index():
@@ -23,7 +23,7 @@ func test_sort_terrain_modules_builds_tag_index():
 	lib.load_terrain_modules()
 	lib.sort_terrain_modules()
 	assert_true(lib.modules_by_tag.has("ground"))
-	assert_true(lib.modules_by_tag.has("24x24"))
+	assert_true(lib.modules_by_tag.has("24x24x0.5"))
 	var ground_list: TerrainModuleList = lib.modules_by_tag["ground"]
 	assert_true(ground_list.size() >= 1)
 
@@ -129,7 +129,7 @@ func test_intersection_of_lists_returns_common_elements():
 func test_load_ground_tile_has_expected_fields():
 	var tm: TerrainModule = TerrainModuleDefinitions.load_ground_tile()
 	assert_true(tm.tags.has("ground"))
-	assert_true(tm.tags.has("24x24"))
+	assert_true(tm.tags.has("24x24x0.5"))
 	assert_true(tm.socket_required.has("front"))
 	assert_true(tm.socket_required.has("left"))
 	assert_true(tm.socket_required.has("right"))
