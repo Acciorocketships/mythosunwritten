@@ -723,6 +723,55 @@ static func create_12x12_test_piece() -> TerrainModule:
 	)
 
 
+static func create_24x24x4_test_piece() -> TerrainModule:
+	# Test piece for cliffs (24x24 footprint, 4 units tall).
+	# Uses CliffSide.tscn for its socket layout (cardinals at local y=0, bottom at local y=-4).
+	# The visual is irrelevant — only sockets matter for adjacency probing.
+	var scene = load("res://terrain/scenes/CliffSide.tscn")
+	var tags: TagList = TagList.new(["24x24x4"])
+	var tags_per_socket: Dictionary[String, TagList] = {}
+	# Override AABB to match cliff dimensions: 24x24x4, base at y=-4 relative to origin.
+	var bb: AABB = AABB(Vector3(-12, -4, -12), Vector3(24, 4, 24))
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"front": Distribution.new({"24x24x4": 1.0}),
+		"back": Distribution.new({"24x24x4": 1.0}),
+		"left": Distribution.new({"24x24x4": 1.0}),
+		"right": Distribution.new({"24x24x4": 1.0}),
+		"topcenter": Distribution.new({"24x24x4": 1.0}),
+		"bottom": Distribution.new({"24x24x0.5": 1.0}),
+	}
+	var socket_required: Dictionary[String, TagList] = {}
+	# Every scene socket must have an entry (asserted by TerrainModule).
+	# Test pieces don't expand; null = blocking-but-not-fillable.
+	var socket_fill_prob: Dictionary[String, Variant] = {
+		"front": 0.0,
+		"back": 0.0,
+		"left": 0.0,
+		"right": 0.0,
+		"frontleft": null,
+		"frontright": null,
+		"backleft": null,
+		"backright": null,
+		"bottom": 0.0,
+		"topcenter": 0.0,
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		tags_per_socket,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		false
+	)
+
+
 static func create_24x24_test_piece() -> TerrainModule:
 	# Create a simple test piece for the ground size
 	var scene = load("res://terrain/scenes/GroundTile.tscn")  # Use existing ground as base

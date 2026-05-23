@@ -2257,3 +2257,23 @@ func test_integration_stacked_level_tiles_only_use_full_cardinal_supports():
 	assert_true(stacked_count > 0, "Expected at least one elevated level tile to validate support rules")
 	_dispose_generator_immediately(gen)
 	await _flush_deferred_frees()
+
+
+func test_24x24x4_test_piece_uses_cliff_socket_layout() -> void:
+	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
+	_track_node_for_cleanup(lib)
+	lib.init_test_pieces()
+
+	var matches: TerrainModuleList = lib.get_by_tags(TagList.new(["24x24x4"]))
+	assert_eq(matches.size(), 1, "Should have exactly one 24x24x4 test piece")
+	var module: TerrainModule = matches.library[0]
+
+	var inst: TerrainModuleInstance = module.spawn()
+	_pieces_to_destroy.append(inst)
+	inst.create()
+
+	assert_eq(inst.sockets["bottom"].transform.origin, Vector3(0, -4, 0))
+	assert_eq(inst.sockets["front"].transform.origin, Vector3(0, 0, -12))
+	assert_eq(inst.sockets["back"].transform.origin, Vector3(0, 0, 12))
+	assert_eq(inst.sockets["left"].transform.origin, Vector3(-12, 0, 0))
+	assert_eq(inst.sockets["right"].transform.origin, Vector3(12, 0, 0))
