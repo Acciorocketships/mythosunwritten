@@ -40,8 +40,55 @@ func matches(context: Dictionary) -> bool:
 
 
 func apply(context: Dictionary) -> Dictionary:
-	# Stub for now; filled in over the next tasks.
-	return {"chosen_piece": context.get("chosen_piece", null), "piece_updates": {}}
+	if (
+		not context.has("chosen_piece")
+		or not context.has("socket_index")
+		or not context.has("terrain_index")
+	):
+		return {"chosen_piece": context.get("chosen_piece", null), "piece_updates": {}}
+
+	var chosen_piece: TerrainModuleInstance = context["chosen_piece"]
+	var socket_index: PositionIndex = context["socket_index"]
+	var terrain_index: TerrainIndex = context["terrain_index"]
+	var piece_updates: Dictionary = {}
+
+	# Walk affected pieces: chosen + direct cliff neighbors + their neighbors.
+	var affected: Array[TerrainModuleInstance] = []
+	var seen: Dictionary = {}
+	_add_unique_piece(affected, seen, chosen_piece)
+	var direct_neighbors: Array[TerrainModuleInstance] = _get_cliff_neighbors(
+		chosen_piece, socket_index, terrain_index
+	)
+	for neighbor_piece in direct_neighbors:
+		_add_unique_piece(affected, seen, neighbor_piece)
+	for neighbor_piece in direct_neighbors:
+		var indirect: Array[TerrainModuleInstance] = _get_cliff_neighbors(
+			neighbor_piece, socket_index, terrain_index
+		)
+		for indirect_neighbor in indirect:
+			_add_unique_piece(affected, seen, indirect_neighbor)
+
+	var chosen_replacement: TerrainModuleInstance = chosen_piece
+	for affected_piece in affected:
+		var missing: Array[String] = _missing_sockets_for_piece(
+			affected_piece, socket_index, terrain_index
+		)
+		var target_tag: String = _tag_for_missing_sockets(missing)
+		if target_tag == "":
+			# No matching variant — leave piece as-is. Eventually-consistent fallback.
+			continue
+		var steps_to_align: int = _rotation_steps_to_align_canonical(target_tag, missing)
+		# cliff-interior has no canonical missing pattern (always 0 missing); skip rotation.
+		if target_tag == "cliff-interior":
+			steps_to_align = 0
+		var replacement: TerrainModuleInstance = _create_replacement_for_target(
+			affected_piece, target_tag, steps_to_align
+		)
+		if affected_piece == chosen_piece:
+			chosen_replacement = replacement
+		elif replacement != affected_piece:
+			piece_updates[affected_piece] = replacement
+	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
 
 
 func _has_cliff_connection(

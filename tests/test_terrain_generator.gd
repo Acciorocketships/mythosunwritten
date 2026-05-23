@@ -2380,3 +2380,27 @@ func test_cliff_edge_rule_aligns_outer_corner_with_neighbors() -> void:
 	# In CliffEdgeRule's logic this should map to cliff-outer-corner (rotated).
 	var target_tag: String = rule._tag_for_missing_sockets(missing)
 	assert_eq(target_tag, "cliff-outer-corner")
+
+
+func test_cliff_edge_rule_keeps_isolated_piece_unchanged() -> void:
+	# An isolated cliff (no neighbors) is invalid; the rule must keep it as-is,
+	# not delete it — otherwise seeding could never form a plateau.
+	var rule: CliffEdgeRule = CliffEdgeRule.new()
+	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
+	_pieces_to_destroy.append(cliff)
+	cliff.create()
+
+	var socket_index: PositionIndex = PositionIndex.new()
+	_track_node_for_cleanup(socket_index)
+	for socket_name in cliff.sockets.keys():
+		socket_index.insert(TerrainModuleSocket.new(cliff, socket_name))
+	var terrain_index: TerrainIndex = TerrainIndex.new()
+	terrain_index.insert(cliff)
+
+	var result: Dictionary = rule.apply({
+		"chosen_piece": cliff,
+		"socket_index": socket_index,
+		"terrain_index": terrain_index,
+	})
+	assert_eq(result["chosen_piece"], cliff, "Isolated cliff should be kept as-is")
+	assert_eq((result["piece_updates"] as Dictionary).size(), 0, "No piece updates for isolated cliff")
