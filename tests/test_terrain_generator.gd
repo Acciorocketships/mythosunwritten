@@ -1318,6 +1318,18 @@ func test_integration_default_level_generation_not_sparse_across_seeds():
 	)
 
 
+func test_ground_tile_topcenter_can_seed_cliff() -> void:
+	var module: TerrainModule = TerrainModuleDefinitions.load_ground_tile()
+	var topcenter_dist: Distribution = module.socket_tag_prob.get("topcenter")
+	assert_not_null(topcenter_dist)
+	assert_true(topcenter_dist.dist.has("cliff-edge"), "Ground topcenter must seed cliff-edge")
+	assert_true(topcenter_dist.dist.has("level-ground-center"), "Ground topcenter must still seed level")
+
+	var top_size_dist: Distribution = module.socket_size.get("topcenter")
+	assert_true(top_size_dist.dist.has("24x24x4"), "Ground topcenter must include 24x24x4 size for cliffs")
+	assert_true(top_size_dist.dist.has("24x24x0.5"), "Ground topcenter must still include 24x24x0.5 size for levels")
+
+
 func test_integration_moving_player_frontier_keeps_generating_ground():
 	var gen: Variant = _new_debug_generator()
 	_set_generator_library(gen, TerrainModuleLibrary.new())
