@@ -615,7 +615,7 @@ static func _build_level_tile(
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob,
-		false
+		true
 	)
 
 
