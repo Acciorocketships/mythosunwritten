@@ -737,6 +737,56 @@ func test_level_modules_have_explicit_fill_prob_entries_for_all_scene_sockets():
 	)
 
 
+func test_cliff_scenes_have_correct_socket_layout() -> void:
+	var expected_sockets: Dictionary[String, Vector3] = {
+		"front": Vector3(0, 0, -12),
+		"back": Vector3(0, 0, 12),
+		"left": Vector3(-12, 0, 0),
+		"right": Vector3(12, 0, 0),
+		"frontleft": Vector3(-12, 0, -12),
+		"frontright": Vector3(12, 0, -12),
+		"backleft": Vector3(-12, 0, 12),
+		"backright": Vector3(12, 0, 12),
+		"bottom": Vector3(0, -4, 0),
+		"topcenter": Vector3(0, 0, 0),
+	}
+	var scene_paths: Array[String] = [
+		"res://terrain/scenes/CliffSide.tscn",
+		"res://terrain/scenes/CliffOuterCorner.tscn",
+		"res://terrain/scenes/CliffInnerCorner.tscn",
+		"res://terrain/scenes/CliffInnerCornerDiag.tscn",
+	]
+	for path in scene_paths:
+		var scene: PackedScene = load(path)
+		assert_not_null(scene, "Scene must load: %s" % path)
+		var root: Node = scene.instantiate()
+		_track_node_for_cleanup(root)
+		var sockets_node: Node = root.get_node_or_null("Sockets")
+		assert_not_null(sockets_node, "Scene must have Sockets node: %s" % path)
+		var actual_sockets: Dictionary[String, Vector3] = {}
+		for child in sockets_node.get_children():
+			var marker: Marker3D = child as Marker3D
+			if marker == null:
+				continue
+			actual_sockets[String(marker.name)] = marker.transform.origin
+		for socket_name in expected_sockets.keys():
+			var expected_pos: Vector3 = expected_sockets[socket_name]
+			assert_true(
+				actual_sockets.has(socket_name),
+				"Scene %s missing socket '%s'" % [path, socket_name]
+			)
+			assert_eq(
+				actual_sockets[socket_name],
+				expected_pos,
+				"Scene %s socket '%s' position mismatch" % [path, socket_name]
+			)
+		assert_eq(
+			actual_sockets.size(),
+			expected_sockets.size(),
+			"Scene %s has extra sockets: %s" % [path, str(actual_sockets.keys())]
+		)
+
+
 func test_remove_piece_cleans_indices_queue_and_scene():
 	var gen: Variant = _new_generator()
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
