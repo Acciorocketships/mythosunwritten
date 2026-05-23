@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://s7hlq6puc3vl"]
+
+[ext_resource type="PackedScene" uid="uid://bq5fu4bd8bl7a" path="res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_H_Side_Color1.gltf" id="1_8dwu8"]
+
+[node name="Hill_Cliff_Tall_H_Side_Color12" instance=ExtResource("1_8dwu8")]
