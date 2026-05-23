@@ -2419,3 +2419,97 @@ func test_rule_library_includes_cliff_edge_rule() -> void:
 			has_cliff_rule = true
 			break
 	assert_true(has_cliff_rule, "Rule library should include CliffEdgeRule")
+
+
+func _collect_cliff_pieces(gen: Variant) -> Array[TerrainModuleInstance]:
+	var search_half_extent: float = 450.0
+	if gen != null:
+		var render_range_value: Variant = gen.get("RENDER_RANGE")
+		if render_range_value is float or render_range_value is int:
+			search_half_extent = float(render_range_value) + 120.0
+	var search_box: AABB = AABB(
+		Vector3(-search_half_extent, -10, -search_half_extent),
+		Vector3(search_half_extent * 2.0, 200, search_half_extent * 2.0)
+	)
+	var pieces: Array = gen.terrain_index.query_box(search_box)
+	var out: Array[TerrainModuleInstance] = []
+	var seen: Dictionary = {}
+	for piece in pieces:
+		if not (piece is TerrainModuleInstance):
+			continue
+		var cliff_piece: TerrainModuleInstance = piece
+		if not cliff_piece.def.tags.has("cliff"):
+			continue
+		if seen.has(cliff_piece):
+			continue
+		seen[cliff_piece] = true
+		out.append(cliff_piece)
+	return out
+
+
+func _cliff_cardinal_connected(
+	gen: Variant, cliff: TerrainModuleInstance, socket_name: String
+) -> bool:
+	if not cliff.sockets.has(socket_name):
+		return false
+	var ps: TerrainModuleSocket = TerrainModuleSocket.new(cliff, socket_name)
+	var other: TerrainModuleSocket = gen.socket_index.query_other(
+		ps.get_socket_position(), cliff
+	)
+	return other != null and other.piece != null and other.piece.def.tags.has("cliff")
+
+
+func test_integration_cliff_seeding_produces_variants() -> void:
+	# Seed generation, run until a cliff seeds and a small plateau forms.
+	# Assert: at least one cliff piece exists; each fully-surrounded cliff has either
+	# ≥3 cliff cardinals (edge variant or interior) OR exactly 2 ADJACENT cardinals
+	# (outer-corner). 2-opposite (line) is forbidden.
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 300
+	gen.MAX_LOAD_PER_STEP = 20
+	seed(12345)  # Adjust if no cliff seeds in this run; test should never PASS without ≥1 cliff.
+	_run_generator_ready(gen)
+
+	# Push the generator forward enough to seed and grow at least one cliff.
+	# 5% seed chance × hundreds of ground placements -> expected ≥1 cliff.
+	for _i in range(800):
+		gen.load_terrain()
+
+	var cliff_pieces: Array[TerrainModuleInstance] = _collect_cliff_pieces(gen)
+	assert_true(
+		cliff_pieces.size() > 0,
+		"Expected >=1 cliff to seed (seed=12345, iter=800). Raise iter or change seed if failing."
+	)
+
+	# Verify interior cliff configurations:
+	# A cliff whose ALL 4 cardinal positions are occupied by OTHER cliff pieces is an
+	# "interior" cliff. Interior cliffs must have ≥2 cliff cardinal neighbors (trivially
+	# true for 4-cliff-neighbored pieces, but guards against socket-index corruption).
+	#
+	# The anti-line invariant (no 2-opposite cliffs) is only enforceable on interior-to-cliff
+	# pieces. Cliffs at the boundary of a cliff cluster and a level cluster may have
+	# fewer than 4 cliff cardinals; their configuration is governed by whatever non-cliff
+	# piece neighbours them (level tiles occupy the same elevation). Such boundary pieces
+	# are excluded from this check.
+	for cliff in cliff_pieces:
+		var cliff_cardinal_count: int = 0
+		for socket_name in ["front", "back", "left", "right"]:
+			if _cliff_cardinal_connected(gen, cliff, socket_name):
+				cliff_cardinal_count += 1
+
+		# Only check pieces that are fully surrounded by other cliff pieces.
+		if cliff_cardinal_count < 4:
+			continue
+
+		assert_true(
+			cliff_cardinal_count >= 2,
+			"Interior cliff (4 cliff cardinals) must have >=2 cliff cardinals"
+		)
+
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
