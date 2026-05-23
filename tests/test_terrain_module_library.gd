@@ -14,7 +14,7 @@ func test_init_populates_modules_and_index():
 	var lib = _make_library()
 	assert_true(lib.terrain_modules.size() >= 1, "terrain_modules has entries after init")
 	assert_true(lib.modules_by_tag.has("ground"), "modules_by_tag has 'ground'")
-	assert_true(lib.modules_by_tag.has("24x24x0.5"), "modules_by_tag has '24x24'")
+	assert_true(lib.modules_by_tag.has("24x24x0.5"), "modules_by_tag has '24x24x0.5'")
 
 
 func test_sort_terrain_modules_builds_tag_index():
