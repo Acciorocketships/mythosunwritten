@@ -91,8 +91,9 @@ func after_each() -> void:
 				n.get_parent().remove_child(n)
 			n.free()
 	_nodes_to_free.clear()
-	# Reset static module cache to release loaded level resources between tests.
+	# Reset static module caches to release loaded resources between tests.
 	LevelEdgeRule.module_by_level_tag.clear()
+	CliffEdgeRule.module_by_cliff_tag.clear()
 
 # Helpers
 func _make_scene_with_sockets(
@@ -2352,3 +2353,18 @@ func test_cliff_interior_tile_uses_ground_scene_with_cliff_tag() -> void:
 			null,
 			"cliff-interior %s must be non-expandable" % socket_name
 		)
+
+
+func test_cliff_edge_rule_matches_cliff_tagged_pieces_only() -> void:
+	var rule: CliffEdgeRule = CliffEdgeRule.new()
+	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
+	_pieces_to_destroy.append(cliff)
+	cliff.create()
+	var grass: TerrainModuleInstance = TerrainModuleDefinitions.load_grass_tile().spawn()
+	_pieces_to_destroy.append(grass)
+	grass.create()
+
+	assert_true(rule.matches({"chosen_piece": cliff}))
+	assert_false(rule.matches({"chosen_piece": grass}))
+	assert_false(rule.matches({}))
+	assert_false(rule.matches({"chosen_piece": null}))
