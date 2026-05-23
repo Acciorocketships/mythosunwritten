@@ -16,6 +16,7 @@ var queued_socket_keys: Dictionary = {}
 var _tracked_queue_ref: PriorityQueue = null
 var _deferred_sockets: Array = []
 var _deferred_socket_keys: Dictionary = {}
+var _last_player_pos: Vector3 = Vector3(INF, INF, INF)
 
 
 func _ready() -> void:
@@ -48,6 +49,18 @@ func _process(_delta: float) -> void:
 
 func load_terrain() -> void:
 	_ensure_queue_tracking_current()
+	# When the player hasn't moved since last frame, all queue priorities still reflect
+	# the current player position, so the heap top is the actual nearest socket. If even
+	# that is out of range, every queued socket is out of range too — skip the frame to
+	# avoid the pop/defer/re-enqueue churn that would otherwise burn the per-frame budget.
+	var current_player_pos: Vector3 = player.global_position if player != null else Vector3.ZERO
+	if current_player_pos == _last_player_pos and not queue.is_empty():
+		var top_item: Variant = queue.peek()
+		if top_item is TerrainModuleSocket:
+			var top_socket: TerrainModuleSocket = top_item
+			if get_dist_from_player(top_socket.piece, top_socket.socket_name) > RENDER_RANGE:
+				return
+	_last_player_pos = current_player_pos
 	var num_added: int = 0
 	var num_processed: int = 0
 	_deferred_sockets.clear()
@@ -254,29 +267,27 @@ func _apply_rules_after_placement(
 	filtered: TerrainModuleList
 ) -> void:
 	var current_piece: TerrainModuleInstance = placed_piece
-	for _pass in range(2):
-		var context: Dictionary = _build_rule_context(orig_piece_socket, placement_context, current_piece, filtered)
-		context["adjacent"] = get_adjacent(current_piece)
-		for rule in generation_rules.rules:
-			context["chosen_piece"] = current_piece
-			if not rule.matches(context):
-				continue
-			var step_result: Dictionary = rule.apply(context)
-			if step_result.get("skip", false):
-				return
-			var updated_piece: Variant = step_result.get("chosen_piece", current_piece)
-			if updated_piece != null and updated_piece is TerrainModuleInstance and updated_piece != current_piece:
-				# Preserve topcenter when retiling a piece placed by lateral expansion so that position gets one stacked tile.
-				# Do not preserve when this piece was placed by stacking (topcenter), or we'd enqueue its topcenter and build infinite towers.
-				var preserve_topcenter: bool = orig_piece_socket.socket_name != "topcenter"
-				_replace_piece(current_piece, updated_piece, preserve_topcenter, true)
-				current_piece = updated_piece
-				context["adjacent"] = get_adjacent(current_piece)
-			var step_updates: Dictionary = step_result.get("piece_updates", {})
-			_apply_piece_updates_after_placement(step_updates, current_piece)
-			for socket_to_queue in step_result.get("sockets_for_queue", []):
-				queue.push(socket_to_queue, 0)
-	add_piece_to_queue(current_piece)  # Enqueue final piece once after all rules (avoids enqueue center then remove when replaced by edge).
+	var context: Dictionary = _build_rule_context(orig_piece_socket, placement_context, current_piece, filtered)
+	context["adjacent"] = get_adjacent(current_piece)
+	for rule in generation_rules.rules:
+		context["chosen_piece"] = current_piece
+		if not rule.matches(context):
+			continue
+		var step_result: Dictionary = rule.apply(context)
+		if step_result.get("skip", false):
+			return
+		var updated_piece: Variant = step_result.get("chosen_piece", current_piece)
+		if updated_piece != null and updated_piece is TerrainModuleInstance and updated_piece != current_piece:
+			# Preserve topcenter when retiling a piece placed by lateral expansion so that position gets one stacked tile.
+			# Do not preserve when this piece was placed by stacking (topcenter), or we'd enqueue its topcenter and build infinite towers.
+			var preserve_topcenter: bool = orig_piece_socket.socket_name != "topcenter"
+			_replace_piece(current_piece, updated_piece, preserve_topcenter)
+			current_piece = updated_piece
+			context["adjacent"] = get_adjacent(current_piece)
+		var step_updates: Dictionary = step_result.get("piece_updates", {})
+		_apply_piece_updates_after_placement(step_updates, current_piece)
+		for socket_to_queue in step_result.get("sockets_for_queue", []):
+			queue.push(socket_to_queue, 0)
 
 
 func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piece: TerrainModuleInstance) -> void:
@@ -297,10 +308,10 @@ func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piec
 			continue
 		if not (to_piece is TerrainModuleInstance):
 			continue
-		_replace_piece(existing_piece, to_piece, true, false)
+		_replace_piece(existing_piece, to_piece, true)
 
 
-func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleInstance, preserve_topcenter: bool = false, skip_enqueue: bool = false) -> void:
+func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleInstance, preserve_topcenter: bool = false) -> void:
 	if old_piece == null or new_piece == null:
 		return
 	# Only preserve topcenter when retiling an existing piece (neighbor update) or when the placed piece was placed by lateral expansion. Do not preserve when
@@ -317,8 +328,7 @@ func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleIn
 	remove_piece(old_piece)
 	terrain_parent.add_child(new_piece.root)
 	register_piece(new_piece, "")
-	if not skip_enqueue:
-		add_piece_to_queue(new_piece)
+	add_piece_to_queue(new_piece)
 
 
 func get_dist_from_player(piece: TerrainModuleInstance, socket_name: String) -> float:
@@ -542,7 +552,7 @@ func add_piece(
 	terrain_parent.add_child(new_piece.root)
 
 	register_piece(new_piece, new_piece_socket.socket_name)
-	# Enqueue after rules run, so we only enqueue the final piece (e.g. edge with override) and avoid add-then-remove churn.
+	add_piece_to_queue(new_piece)
 
 	# Remove sockets that are now linked into from the queue
 	remove_linked_sockets_from_queue(new_piece_socket)

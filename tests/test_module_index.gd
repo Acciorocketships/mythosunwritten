@@ -13,8 +13,6 @@ func _rand_box(rng: RandomNumberGenerator) -> AABB:
 	var sy = rng.randf_range(1, 8)
 	return AABB(Vector3(x, y, z), Vector3(sx, sy, sz))
 
-var _next_id := 0
-
 var _objs_to_free: Array[Object] = []
 
 func before_each() -> void:
@@ -29,8 +27,6 @@ func after_each() -> void:
 func _make_module(size: AABB) -> TerrainModuleInstance:
 	var dummy_scene := PackedScene.new()
 	var m := TerrainModule.new(dummy_scene, size, TagList.new(), {}, [], {}, {}, {}, {}, false)
-	m.debug_id = _next_id
-	_next_id += 1
 	var inst: TerrainModuleInstance = m.spawn()
 	# Tests for TerrainIndex use synthetic AABBs; bypass mesh-based AABB computation.
 	inst.size = size
@@ -79,8 +75,6 @@ func test_random_stress():
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 123456
-
-	_next_id = 0
 
 	# fewer modules to reduce CPU load
 	for i in range(200):

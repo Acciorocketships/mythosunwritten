@@ -18,8 +18,6 @@ extends Resource
 # Instead of failing placement due to AABB collisions, it will remove overlapping pieces.
 @export var replace_existing: bool = false
 
-var debug_id: int = 0
-
 func _init(
 	_scene: PackedScene = null,
 	_size: AABB = AABB(),
@@ -79,19 +77,6 @@ static func assert_distributions_normalized(
 			"Distribution not normalised for key '%s' (%s): sum=%s dist=%s"
 			% [k, label, str(s), str(dist.dist)]
 		)
-
-static func assert_distribution_normalized(dist: Distribution, label: String = "") -> void:
-	# Asserts a single Distribution sums to ~1.0 (e.g. `socket_fill_prob`).
-	const EPS: float = 1e-4
-	assert(dist != null, "Null Distribution (%s)" % label)
-	assert(!dist.dist.is_empty(), "Empty Distribution (%s)" % label)
-	var s: float = 0.0
-	for tag: String in dist.dist.keys():
-		s += float(dist.dist[tag])
-	assert(
-		absf(s - 1.0) <= EPS,
-		"Distribution not normalised (%s): sum=%s dist=%s" % [label, str(s), str(dist.dist)]
-	)
 
 static func assert_probabilities_in_range(probs: Dictionary, label: String = "") -> void:
 	# Asserts each probability is within [0, 1].
