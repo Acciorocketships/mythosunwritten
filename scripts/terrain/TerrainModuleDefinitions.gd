@@ -23,7 +23,7 @@ static func load_ground_tile() -> TerrainModule:
 	var adjacent_tag_prob: Distribution = Distribution.new({"ground": 1.0})
 	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
 	var top_tag_prob_cardinal: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
-	var top_tag_prob_center: Distribution = Distribution.new({"level-ground-center": 0.95, "cliff-edge": 0.05})
+	var top_tag_prob_center: Distribution = Distribution.new({"level-ground-center": 0.95, "cliff-side": 0.05})
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x0.5": 1.0}),
@@ -543,38 +543,108 @@ static func load_level_stack_inner_corner_all_tile() -> TerrainModule:
 	)
 
 
-static func load_cliff_edge_tile() -> TerrainModule:
+static func load_cliff_side_tile() -> TerrainModule:
 	return _build_cliff_tile(
 		"res://terrain/scenes/CliffSide.tscn",
-		TagList.new(["cliff", "cliff-edge", "24x24x4"])
+		TagList.new(["cliff", "cliff-side", "24x24x4"])
 	)
 
 
-static func load_cliff_outer_corner_tile() -> TerrainModule:
+static func load_cliff_corner_tile() -> TerrainModule:
 	return _build_cliff_tile(
-		"res://terrain/scenes/CliffOuterCorner.tscn",
-		TagList.new(["cliff", "cliff-outer-corner", "24x24x4"])
+		"res://terrain/scenes/CliffCorner.tscn",
+		TagList.new(["cliff", "cliff-corner", "24x24x4"])
+	)
+
+
+static func load_cliff_line_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffLine.tscn",
+		TagList.new(["cliff", "cliff-line", "24x24x4"])
+	)
+
+
+static func load_cliff_peninsula_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffPeninsula.tscn",
+		TagList.new(["cliff", "cliff-peninsula", "24x24x4"])
+	)
+
+
+static func load_cliff_island_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffIsland.tscn",
+		TagList.new(["cliff", "cliff-island", "24x24x4"])
 	)
 
 
 static func load_cliff_inner_corner_tile() -> TerrainModule:
 	return _build_cliff_tile(
-		"res://terrain/scenes/CliffInnerCorner.tscn",
+		"res://terrain/scenes/CliffInCorner.tscn",
 		TagList.new(["cliff", "cliff-inner-corner", "24x24x4"])
 	)
 
 
 static func load_cliff_inner_corner_diag_tile() -> TerrainModule:
 	return _build_cliff_tile(
-		"res://terrain/scenes/CliffInnerCornerDiag.tscn",
+		"res://terrain/scenes/CliffInCornerDiag.tscn",
 		TagList.new(["cliff", "cliff-inner-corner-diag", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_side_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInCornerSide.tscn",
+		TagList.new(["cliff", "cliff-inner-corner-side", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_three_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInCornerThree.tscn",
+		TagList.new(["cliff", "cliff-inner-corner-three", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_all_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInCornerAll.tscn",
+		TagList.new(["cliff", "cliff-inner-corner-all", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_edge1_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInCornerEdge1.tscn",
+		TagList.new(["cliff", "cliff-inner-corner-edge1", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_edge2_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInCornerEdge2.tscn",
+		TagList.new(["cliff", "cliff-inner-corner-edge2", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_edge_both_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInCornerEdgeBoth.tscn",
+		TagList.new(["cliff", "cliff-inner-corner-edge-both", "24x24x4"])
+	)
+
+
+static func load_cliff_inner_corner_side_edge_tile() -> TerrainModule:
+	return _build_cliff_tile(
+		"res://terrain/scenes/CliffInCornerSideEdge.tscn",
+		TagList.new(["cliff", "cliff-inner-corner-side-edge", "24x24x4"])
 	)
 
 
 static func load_cliff_interior_tile() -> TerrainModule:
 	# Cliff plateau interior: visually a ground tile, but tagged "cliff" so neighbour
-	# cliff-edges' required-tag filters remain satisfied. Lateral cardinals are
-	# non-expandable because the plateau perimeter is covered by cliff-edges.
+	# cliff-sides' required-tag filters remain satisfied. Lateral cardinals are
+	# non-expandable because the plateau perimeter is covered by cliff-sides.
 	# Topcenter is NOT expanded — placing a level/cliff on top would cover the
 	# cliff plateau with a second tile layer and merge plateaus into giant slabs.
 	# Foliage spawns on the top corners (grass/trees on the cliff plateau surface).
