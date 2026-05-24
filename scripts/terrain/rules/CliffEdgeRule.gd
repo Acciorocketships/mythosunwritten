@@ -5,12 +5,15 @@ const CARDINAL_SOCKETS: Array[String] = ["front", "right", "back", "left"]
 const DIAGONAL_SOCKETS: Array[String] = ["frontright", "backright", "backleft", "frontleft"]
 const SAME_LEVEL_EPS: float = 0.1
 
-# Canonical missing-socket patterns for each cliff variant.
+# Canonical missing-socket patterns for each cliff variant. Drop faces in the
+# authored scenes sit on +Z ("back") and +X ("right"), so canonical missing
+# names reflect that — getting these wrong rotates every retiled piece 180°
+# off its intended orientation.
 const CANONICAL_MISSING_BY_TAG: Dictionary[String, Array] = {
-	"cliff-edge": ["front"],
-	"cliff-outer-corner": ["front", "left"],
-	"cliff-inner-corner": ["frontleft"],
-	"cliff-inner-corner-diag": ["frontleft", "backright"],
+	"cliff-edge": ["back"],
+	"cliff-outer-corner": ["back", "right"],
+	"cliff-inner-corner": ["backright"],
+	"cliff-inner-corner-diag": ["backright", "frontleft"],
 }
 # Order checked: most-constrained first (so inner-corner-diag with both diagonals
 # wins over inner-corner with just one).
@@ -75,8 +78,13 @@ func apply(context: Dictionary) -> Dictionary:
 		)
 		var target_tag: String = _tag_for_missing_sockets(missing)
 		if target_tag == "":
-			# No matching variant — leave piece as-is. Eventually-consistent fallback.
-			continue
+			# Invalid configuration (peninsula / line / island / multi-diagonal).
+			# Show as cliff-interior so we don't expose a wrong-orientation cliff
+			# face. Plateaus self-grow into valid shapes as neighbouring pieces
+			# arrive — the interior tile is still tagged "cliff", so it still
+			# satisfies the cardinal `required=["cliff"]` constraint and lets
+			# later expansion turn it into a real edge/corner.
+			target_tag = "cliff-interior"
 		var steps_to_align: int = _rotation_steps_to_align_canonical(target_tag, missing)
 		# cliff-interior has no canonical missing pattern (always 0 missing); skip rotation.
 		if target_tag == "cliff-interior":

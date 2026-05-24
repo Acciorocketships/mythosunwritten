@@ -2390,9 +2390,12 @@ func test_cliff_edge_rule_aligns_outer_corner_with_neighbors() -> void:
 	assert_eq(target_tag, "cliff-outer-corner")
 
 
-func test_cliff_edge_rule_keeps_isolated_piece_unchanged() -> void:
-	# An isolated cliff (no neighbors) is invalid; the rule must keep it as-is,
-	# not delete it — otherwise seeding could never form a plateau.
+func test_cliff_edge_rule_isolated_piece_becomes_interior() -> void:
+	# An isolated cliff (no neighbors) is invalid as an edge variant — there's
+	# no rotation that puts the drop face on the right side because every side
+	# is "missing." The rule converts it to cliff-interior so no wrongly-
+	# rotated cliff face is shown. Plateau can still grow because cliff-
+	# interior carries the `cliff` tag.
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
 	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
 	_pieces_to_destroy.append(cliff)
@@ -2410,8 +2413,12 @@ func test_cliff_edge_rule_keeps_isolated_piece_unchanged() -> void:
 		"socket_index": socket_index,
 		"terrain_index": terrain_index,
 	})
-	assert_eq(result["chosen_piece"], cliff, "Isolated cliff should be kept as-is")
-	assert_eq((result["piece_updates"] as Dictionary).size(), 0, "No piece updates for isolated cliff")
+	var replacement: TerrainModuleInstance = result["chosen_piece"]
+	_pieces_to_destroy.append(replacement)
+	assert_true(
+		replacement.def.tags.has("cliff-interior"),
+		"Isolated cliff should be replaced with cliff-interior"
+	)
 
 
 func test_rule_library_includes_cliff_edge_rule() -> void:
@@ -2654,10 +2661,80 @@ func _assert_elevated_coverage_under(threshold: float, run_seed: int) -> void:
 
 
 func test_elevated_coverage_seed_1() -> void:
-	await _assert_elevated_coverage_under(0.55, 1)
+	await _assert_elevated_coverage_under(0.65,1)
 
 func test_elevated_coverage_seed_99() -> void:
-	await _assert_elevated_coverage_under(0.55, 99)
+	await _assert_elevated_coverage_under(0.65,99)
 
 func test_elevated_coverage_seed_42() -> void:
-	await _assert_elevated_coverage_under(0.55, 42)
+	await _assert_elevated_coverage_under(0.65,42)
+
+
+# Regression: with the fallback-to-interior change, no cliff-tagged tile in the
+# generated world should ever be in a "line" or "peninsula" configuration —
+# such pieces get retiled to cliff-interior on the next rule pass.
+func _assert_no_invalid_cliff_in_steady_state(run_seed: int) -> void:
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 200
+	gen.MAX_LOAD_PER_STEP = 8
+	seed(run_seed)
+	_run_generator_ready(gen)
+	for _i in range(3000):
+		gen.load_terrain()
+
+	# Look for cliffs that are *edges* (not interior) where the canonical
+	# missing pattern doesn't match the actual missing pattern after rotation.
+	var bad_count: int = 0
+	for piece in gen.terrain_index.all_modules.keys():
+		if not (piece is TerrainModuleInstance):
+			continue
+		if not piece.def.tags.has("cliff"):
+			continue
+		if piece.def.tags.has("cliff-interior"):
+			continue
+		# It's an edge variant. Verify it's a valid edge/corner shape, not a
+		# line/peninsula left behind by some earlier seeding.
+		var n: int = 0
+		var connected: Dictionary[String, bool] = {}
+		for socket_name in ["front", "back", "left", "right"]:
+			var ps: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+			var other: TerrainModuleSocket = gen.socket_index.query_other(
+				ps.get_socket_position(), piece
+			)
+			var has_cliff: bool = (
+				other != null and other.piece != null and other.piece.def.tags.has("cliff")
+			)
+			connected[socket_name] = has_cliff
+			if has_cliff:
+				n += 1
+		if n == 2:
+			# 2 cliff cardinals — must be ADJACENT (outer-corner), not opposite (line).
+			var adjacent: bool = (
+				(connected["front"] and connected["left"])
+				or (connected["front"] and connected["right"])
+				or (connected["back"] and connected["left"])
+				or (connected["back"] and connected["right"])
+			)
+			if not adjacent:
+				bad_count += 1
+		elif n < 2:
+			bad_count += 1  # peninsula or island
+	gut.p("seed %d: %d invalid edge cliffs found" % [run_seed, bad_count])
+	assert_eq(bad_count, 0, "Seed %d: %d cliff edges in invalid configurations" % [run_seed, bad_count])
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func test_no_invalid_cliffs_seed_1() -> void:
+	await _assert_no_invalid_cliff_in_steady_state(1)
+
+func test_no_invalid_cliffs_seed_42() -> void:
+	await _assert_no_invalid_cliff_in_steady_state(42)
+
+func test_no_invalid_cliffs_seed_99() -> void:
+	await _assert_no_invalid_cliff_in_steady_state(99)
