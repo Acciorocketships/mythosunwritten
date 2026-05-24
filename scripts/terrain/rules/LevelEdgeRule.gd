@@ -71,6 +71,21 @@ func apply(context: Dictionary) -> Dictionary:
 	var affected: Array[TerrainModuleInstance] = []
 	var seen: Dictionary = {}
 	_add_unique_piece(affected, seen, chosen_piece)
+	# If chosen is a stacked tile, walk down so the support's stacking check
+	# runs in this rule call. Without this, an unsupported stack placed by the
+	# queue persists until something happens to its support's neighbours —
+	# which can take forever, letting towers grow upward unchecked.
+	if chosen_piece.def.tags.has("level-stack"):
+		# Proactive support check: a stacked level is only allowed when its
+		# support tile below has all 4 cardinal level neighbours. Without this,
+		# the queue's deterministic topcenter expansion (fill_prob 1.0) lets
+		# unsupported towers grow upward indefinitely until something happens
+		# to perturb the support's neighbourhood — which often never happens.
+		var support: TerrainModuleInstance = _get_support_piece_below(
+			chosen_piece, terrain_index
+		)
+		if support == null or not _has_all_cardinal_level_neighbors(support, socket_index):
+			return {"chosen_piece": null, "piece_updates": piece_updates}
 	var direct_neighbors: Array[TerrainModuleInstance] = _get_level_neighbors(
 		chosen_piece,
 		socket_index,
@@ -97,6 +112,17 @@ func apply(context: Dictionary) -> Dictionary:
 		var stacked: TerrainModuleInstance = _get_stacked_piece(affected_piece, socket_index)
 		if stacked != null and not _can_support_stacked_piece(affected_piece, socket_index):
 			piece_updates[stacked] = null
+		# Wider-range check: catches stacks at 0.5-offset that _get_stacked_piece
+		# misses (its +1.0 height check is too strict for some scenes). When the
+		# support level lacks full cardinals, delete those stacks too.
+		var wide_stacks: Array[TerrainModuleInstance] = _get_stacks_above(
+			affected_piece, terrain_index
+		)
+		if not wide_stacks.is_empty() and not _has_all_cardinal_level_neighbors(
+			affected_piece, socket_index
+		):
+			for s in wide_stacks:
+				piece_updates[s] = null
 		var steps_to_align: int = _rotation_steps_to_align_canonical(target_tag, missing)
 		var replacement: TerrainModuleInstance = _create_replacement_for_target(
 			affected_piece,
@@ -130,6 +156,70 @@ func _has_all_cardinal_level_neighbors(
 		if not _has_level_connection(piece, socket_name, socket_index):
 			return false
 	return true
+
+
+## Find all level-stack tiles directly above this piece (within 1.5 units up).
+## Mirrors _get_support_piece_below: catches stacks at any vertical offset
+## that the strict _is_same_height(+1.0) check in _get_stacked_piece would
+## miss. Used to clean up stacks when their support's neighbourhood changes.
+func _get_stacks_above(
+	piece: TerrainModuleInstance, terrain_index: TerrainIndex
+) -> Array[TerrainModuleInstance]:
+	var out: Array[TerrainModuleInstance] = []
+	if piece == null:
+		return out
+	var piece_y: float = piece.transform.origin.y
+	var query_box: AABB = AABB(
+		Vector3(piece.transform.origin.x - 0.5, piece_y, piece.transform.origin.z - 0.5),
+		Vector3(1.0, 1.5, 1.0)
+	)
+	var hits: Array = terrain_index.query_box(query_box)
+	for hit in hits:
+		if not (hit is TerrainModuleInstance):
+			continue
+		var other: TerrainModuleInstance = hit
+		if other == piece:
+			continue
+		if not other.def.tags.has("level-stack"):
+			continue
+		if other.transform.origin.y - piece_y <= SAME_LEVEL_EPS:
+			continue  # not above
+		out.append(other)
+	return out
+
+
+## Find the nearest level tile directly under this stacked tile (within 1.5
+## units down). Used by apply() so the rule can validate stacking support
+## proactively when a new stack tile is placed, rather than waiting for the
+## support's own neighbours to change.
+func _get_support_piece_below(
+	piece: TerrainModuleInstance, terrain_index: TerrainIndex
+) -> TerrainModuleInstance:
+	if piece == null:
+		return null
+	var piece_y: float = piece.transform.origin.y
+	var query_box: AABB = AABB(
+		Vector3(piece.transform.origin.x - 0.5, piece_y - 1.5, piece.transform.origin.z - 0.5),
+		Vector3(1.0, 1.4, 1.0)
+	)
+	var hits: Array = terrain_index.query_box(query_box)
+	var best_support: TerrainModuleInstance = null
+	var best_dy: float = INF
+	for hit in hits:
+		if not (hit is TerrainModuleInstance):
+			continue
+		var other: TerrainModuleInstance = hit
+		if other == piece:
+			continue
+		if not other.def.tags.has("level"):
+			continue
+		var dy: float = piece_y - other.transform.origin.y
+		if dy <= SAME_LEVEL_EPS:
+			continue  # same height or above
+		if dy < best_dy:
+			best_dy = dy
+			best_support = other
+	return best_support
 
 
 func _get_stacked_piece(

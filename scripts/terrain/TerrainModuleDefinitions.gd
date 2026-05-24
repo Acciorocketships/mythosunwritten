@@ -1,8 +1,8 @@
 class_name TerrainModuleDefinitions
 extends Resource
 
-const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.5
-const LEVEL_TOPCENTER_FILL_PROB: float = 1.0
+const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.3
+const LEVEL_TOPCENTER_FILL_PROB: float = 0.3
 const CLIFF_LATERAL_FILL_PROB: float = 0.4
 
 ### Individual Terrain Modules ###
