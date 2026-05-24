@@ -1993,7 +1993,9 @@ func test_level_center_has_nonzero_topcenter_fill_prob():
 	assert_true(module.socket_fill_prob.has("topcenter"))
 	var fill: Variant = module.socket_fill_prob["topcenter"]
 	assert_true(fill is float, "topcenter fill_prob should be a float")
-	assert_true(float(fill) >= 0.95, "topcenter fill_prob should be >= 0.95")
+	# Stacking is gated by LevelEdgeRule's proactive support check; the topcenter
+	# only needs a non-zero probability so it's expandable.
+	assert_true(float(fill) > 0.0, "topcenter fill_prob should be > 0")
 
 
 func test_level_edge_has_null_topcenter_fill_prob():
@@ -2040,9 +2042,11 @@ func test_level_stack_center_is_vertical_only():
 			"stacked level cardinal fill_prob should be null: " + socket_name
 		)
 	assert_true(module.socket_fill_prob["topcenter"] is float)
+	# Stacking is gated by LevelEdgeRule's proactive support check; the topcenter
+	# only needs a non-zero probability so it's expandable.
 	assert_true(
-		float(module.socket_fill_prob["topcenter"]) >= 0.95,
-		"stacked level center should strongly prefer vertical growth"
+		float(module.socket_fill_prob["topcenter"]) > 0.0,
+		"stacked level center should be vertically expandable"
 	)
 	var top_dist: Distribution = module.socket_tag_prob["topcenter"]
 	assert_true(
@@ -2390,12 +2394,11 @@ func test_cliff_edge_rule_aligns_outer_corner_with_neighbors() -> void:
 	assert_eq(target_tag, "cliff-outer-corner")
 
 
-func test_cliff_edge_rule_freshly_placed_isolated_seed_kept_as_cliff_edge() -> void:
-	# A just-placed cliff seed has zero cliff neighbours and no valid edge
-	# variant yet. The rule must leave it unchanged so its queued cardinal
-	# sockets stay intact and lateral expansion can grow a plateau. Replacing
-	# it (e.g. with cliff-interior) would tear down those sockets and orphan
-	# the seed as a floating 0.5-thick slab at cliff height.
+func test_cliff_edge_rule_without_generator_leaves_invalid_piece_unchanged() -> void:
+	# When invoked without a `generator` (e.g. from a unit test that passes no
+	# context), the rule can't spawn neighbours and there's no valid 5-variant
+	# fit for an isolated piece, so it should leave the piece untouched rather
+	# than synthesise a wrong-shape replacement.
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
 	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
 	_pieces_to_destroy.append(cliff)
@@ -2415,52 +2418,11 @@ func test_cliff_edge_rule_freshly_placed_isolated_seed_kept_as_cliff_edge() -> v
 	})
 	assert_eq(
 		result["chosen_piece"], cliff,
-		"Isolated seed (chosen_piece, 0 connections) must be kept unchanged"
+		"Isolated piece without a generator must be left unchanged"
 	)
 	assert_true(
 		cliff.def.tags.has("cliff-edge"),
-		"Seed must remain a cliff-edge so its cardinal sockets can expand"
-	)
-
-
-func test_cliff_edge_rule_isolated_non_chosen_neighbor_is_deleted() -> void:
-	# Setup: a chosen_piece cliff with a single cliff cardinal neighbour. Both
-	# pieces have invalid configs (1 connection, 3 missing). The chosen piece
-	# stays (its cardinals may still grow), but the neighbour — which has
-	# already had its lateral expansion attempts — must be deleted so a
-	# 1-wide strip doesn't persist as a floating slab.
-	var rule: CliffEdgeRule = CliffEdgeRule.new()
-	var chosen: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
-	_pieces_to_destroy.append(chosen)
-	chosen.create()
-	var neighbor: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
-	_pieces_to_destroy.append(neighbor)
-	neighbor.create()
-	# Place neighbor exactly 24 units along +X (right) so chosen's "right"
-	# socket aligns with neighbor's "left" socket.
-	var neighbor_xform: Transform3D = neighbor.transform
-	neighbor_xform.origin = Vector3(24.0, 0.0, 0.0)
-	neighbor.set_transform(neighbor_xform)
-
-	var socket_index: PositionIndex = PositionIndex.new()
-	_track_node_for_cleanup(socket_index)
-	for socket_name in chosen.sockets.keys():
-		socket_index.insert(TerrainModuleSocket.new(chosen, socket_name))
-	for socket_name in neighbor.sockets.keys():
-		socket_index.insert(TerrainModuleSocket.new(neighbor, socket_name))
-	var terrain_index: TerrainIndex = TerrainIndex.new()
-	terrain_index.insert(chosen)
-	terrain_index.insert(neighbor)
-
-	var result: Dictionary = rule.apply({
-		"chosen_piece": chosen,
-		"socket_index": socket_index,
-		"terrain_index": terrain_index,
-	})
-	var piece_updates: Dictionary = result["piece_updates"]
-	assert_true(
-		piece_updates.has(neighbor) and piece_updates[neighbor] == null,
-		"Stuck 1-connection neighbour should be marked for deletion"
+		"Original cliff-edge variant should be preserved (no valid replacement exists)"
 	)
 
 

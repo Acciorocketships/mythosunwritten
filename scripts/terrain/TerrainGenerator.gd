@@ -256,7 +256,8 @@ func _build_rule_context(
 		"socket_index": socket_index,
 		"queue": queue,
 		"library": library,
-		"rules_instance": generation_rules
+		"rules_instance": generation_rules,
+		"generator": self
 	}
 
 
@@ -279,9 +280,9 @@ func _apply_rules_after_placement(
 		var updated_piece: Variant = step_result.get("chosen_piece", current_piece)
 		var step_updates: Dictionary = step_result.get("piece_updates", {})
 		if updated_piece == null:
-			# Rule asked us to delete the just-placed piece (e.g. CliffEdgeRule
-			# pruning a stuck/peninsula cliff). Apply any sibling updates first,
-			# then remove the piece and stop running rules for this placement.
+			# Rule decided the placement is invalid (e.g. an unsupported level
+			# stack, or a stuck cliff). Apply any sibling updates, remove the
+			# piece, and stop running further rules for this placement.
 			_apply_piece_updates_after_placement(step_updates, null)
 			remove_piece(current_piece)
 			return
@@ -393,6 +394,28 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 		)
 
 	return other_pieces.is_empty()
+
+
+## Attach a piece whose transform is already set in world space. Mirrors the
+## tail of `add_piece` (replace_existing cleanup, scene + index registration,
+## socket queueing) for rule-driven spawning where no socket alignment is
+## needed. Returns true if attached.
+func attach_piece(piece: TerrainModuleInstance) -> bool:
+	if piece == null:
+		return false
+	if piece.def.replace_existing:
+		var overlapping_pieces: Array = terrain_index.query_box(piece.aabb)
+		overlapping_pieces = overlapping_pieces.filter(
+			func(p): return not p.def.tags.has("ground")
+		)
+		for overlapping in overlapping_pieces:
+			remove_piece(overlapping)
+	if not can_place(piece, null):
+		return false
+	terrain_parent.add_child(piece.root)
+	register_piece(piece, "")
+	add_piece_to_queue(piece)
+	return true
 
 
 func remove_piece(piece: TerrainModuleInstance) -> void:
