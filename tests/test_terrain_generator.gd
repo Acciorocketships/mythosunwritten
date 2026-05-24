@@ -2320,9 +2320,9 @@ func test_cliff_edge_tile_has_correct_tags_and_socket_config() -> void:
 		)
 		assert_almost_eq(
 			float(module.socket_fill_prob[socket_name]),
-			0.7,
+			TerrainModuleDefinitions.CLIFF_LATERAL_FILL_PROB,
 			0.001,
-			"Cardinal %s must have high fill prob" % socket_name
+			"Cardinal %s must use CLIFF_LATERAL_FILL_PROB" % socket_name
 		)
 
 	# Bottom is non-expandable (attaches to ground, doesn't seek neighbors).
