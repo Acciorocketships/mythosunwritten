@@ -1,11 +1,5 @@
 extends Node3D
 
-## World-space AABB around the character so the generator never spawns a non-
-## ground tile that clips the player's body. Capsule is ~0.4 radius, ~2.24 tall;
-## padded slightly so a tile placed exactly at the player's XZ still fails.
-const PLAYER_EXCLUSION_HALF_XZ: float = 0.6
-const PLAYER_EXCLUSION_HEIGHT: float = 2.5
-
 @export var RENDER_RANGE: int = 250
 @export var MAX_LOAD_PER_STEP: int = 8
 
@@ -373,29 +367,8 @@ func register_piece(piece: TerrainModuleInstance, _attachment_socket_name: Strin
 	terrain_index.insert(piece)
 
 
-func _overlaps_player(piece_world_aabb: AABB) -> bool:
-	if player == null:
-		return false
-	var pos: Vector3 = player.global_position
-	var exclusion: AABB = AABB(
-		Vector3(pos.x - PLAYER_EXCLUSION_HALF_XZ, pos.y, pos.z - PLAYER_EXCLUSION_HALF_XZ),
-		Vector3(PLAYER_EXCLUSION_HALF_XZ * 2.0, PLAYER_EXCLUSION_HEIGHT, PLAYER_EXCLUSION_HALF_XZ * 2.0)
-	)
-	return piece_world_aabb.intersects(exclusion)
-
-
 func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInstance) -> bool:
 	assert(new_piece.def != null)
-	# Player exclusion check runs first for non-ground tiles so neither the
-	# `ground` shortcut nor `replace_existing` can let something spawn into
-	# the character's body. Ground tiles are exempt — the player stands on them.
-	if not new_piece.def.tags.has("ground"):
-		var world_aabb: AABB = AABB(
-			new_piece.aabb.position + new_piece.transform.origin,
-			new_piece.aabb.size
-		)
-		if _overlaps_player(world_aabb):
-			return false
 	if new_piece.def.tags.has("ground"):
 		return true
 	if new_piece.def.replace_existing:

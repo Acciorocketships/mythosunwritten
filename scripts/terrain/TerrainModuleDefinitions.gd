@@ -19,7 +19,7 @@ static func load_ground_tile() -> TerrainModule:
 	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8x2": 0.1})
 	var top_fill_prob_cardinal: float = 0.05
 	var top_size_dist_center: Distribution = Distribution.new({"24x24x0.5": 0.95, "24x24x4": 0.05})
-	var top_fill_prob_center: float = 0.2
+	var top_fill_prob_center: float = 0.1
 	var adjacent_tag_prob: Distribution = Distribution.new({"ground": 1.0})
 	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
 	var top_tag_prob_cardinal: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
