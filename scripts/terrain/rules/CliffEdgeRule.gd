@@ -20,22 +20,44 @@ const ADJACENT_CARDINALS: Dictionary[String, Array] = {
 }
 
 # Canonical missing-socket patterns for each cliff variant. Drop faces in the
-# authored scenes sit on +Z ("back") and +X ("right"), so canonical missing
-# names reflect that — getting these wrong rotates every retiled piece 180°
-# off its intended orientation.
+# authored scenes sit on -Z ("front") and -X ("left"), matching the level-tile
+# convention — getting these wrong rotates every retiled piece 180° off its
+# intended orientation.
 const CANONICAL_MISSING_BY_TAG: Dictionary[String, Array] = {
-	"cliff-edge": ["back"],
-	"cliff-outer-corner": ["back", "right"],
-	"cliff-inner-corner": ["backright"],
-	"cliff-inner-corner-diag": ["backright", "frontleft"],
+	"cliff-side":                   ["front"],
+	"cliff-corner":                 ["front", "left"],
+	"cliff-line":                   ["front", "back"],
+	"cliff-peninsula":              ["front", "back", "left"],
+	"cliff-island":                 ["front", "back", "left", "right"],
+	"cliff-inner-corner":           ["frontleft"],
+	"cliff-inner-corner-diag":      ["frontleft", "backright"],
+	"cliff-inner-corner-side":      ["frontleft", "backleft"],
+	"cliff-inner-corner-three":     ["frontleft", "backleft", "backright"],
+	"cliff-inner-corner-all":       ["frontleft", "frontright", "backleft", "backright"],
+	"cliff-inner-corner-edge1":     ["back", "frontleft"],
+	"cliff-inner-corner-edge2":     ["right", "frontleft"],
+	"cliff-inner-corner-edge-both": ["back", "right", "frontleft"],
+	"cliff-inner-corner-side-edge": ["right", "frontleft", "backleft"],
 }
-# Order checked: most-constrained first (so inner-corner-diag with both diagonals
-# wins over inner-corner with just one).
+# Order checked: most-constrained first. Variants with more missing sockets
+# are matched before variants with fewer; within a missing-count, hybrid
+# (cardinal + diagonal) patterns are matched before pure-cardinal or
+# pure-diagonal patterns of the same count.
 const CLIFF_TAG_ORDER: Array[String] = [
+	"cliff-island",
+	"cliff-inner-corner-all",
+	"cliff-inner-corner-edge-both",
+	"cliff-inner-corner-side-edge",
+	"cliff-inner-corner-three",
+	"cliff-peninsula",
+	"cliff-inner-corner-edge1",
+	"cliff-inner-corner-edge2",
 	"cliff-inner-corner-diag",
+	"cliff-inner-corner-side",
+	"cliff-line",
+	"cliff-corner",
 	"cliff-inner-corner",
-	"cliff-outer-corner",
-	"cliff-edge",
+	"cliff-side",
 ]
 const INNER_CORNER_CARDINALS_BY_DIAGONAL: Dictionary[String, Array] = {
 	"frontleft": ["front", "left"],
@@ -179,7 +201,7 @@ func _spawn_one_cliff_neighbour(
 	# (Socket sits at the tile edge halfway between the two centres.)
 	var socket_world: Vector3 = piece.transform.origin + piece.transform.basis * marker.position
 	var neighbour_centre: Vector3 = socket_world * 2.0 - piece.transform.origin
-	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_edge_tile()
+	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_side_tile()
 	var inst: TerrainModuleInstance = module.spawn()
 	inst.create()
 	_suppress_lateral_expansion(inst)
@@ -436,11 +458,23 @@ func _current_cliff_tag(module_def: TerrainModule) -> String:
 func _get_module_for_cliff_tag(cliff_tag: String) -> TerrainModule:
 	if module_by_cliff_tag.is_empty():
 		module_by_cliff_tag = {
-			"cliff-edge": TerrainModuleDefinitions.load_cliff_edge_tile(),
-			"cliff-outer-corner": TerrainModuleDefinitions.load_cliff_outer_corner_tile(),
-			"cliff-inner-corner": TerrainModuleDefinitions.load_cliff_inner_corner_tile(),
-			"cliff-inner-corner-diag": TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile(),
-			"cliff-interior": TerrainModuleDefinitions.load_cliff_interior_tile(),
+			"cliff-side":                   TerrainModuleDefinitions.load_cliff_side_tile(),
+			"cliff-corner":                 TerrainModuleDefinitions.load_cliff_corner_tile(),
+			"cliff-line":                   TerrainModuleDefinitions.load_cliff_line_tile(),
+			"cliff-peninsula":              TerrainModuleDefinitions.load_cliff_peninsula_tile(),
+			"cliff-island":                 TerrainModuleDefinitions.load_cliff_island_tile(),
+			"cliff-inner-corner":           TerrainModuleDefinitions.load_cliff_inner_corner_tile(),
+			"cliff-inner-corner-diag":      TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile(),
+			"cliff-inner-corner-side":      TerrainModuleDefinitions.load_cliff_inner_corner_side_tile(),
+			"cliff-inner-corner-three":     TerrainModuleDefinitions.load_cliff_inner_corner_three_tile(),
+			"cliff-inner-corner-all":       TerrainModuleDefinitions.load_cliff_inner_corner_all_tile(),
+			"cliff-inner-corner-edge1":     TerrainModuleDefinitions.load_cliff_inner_corner_edge1_tile(),
+			"cliff-inner-corner-edge2":     TerrainModuleDefinitions.load_cliff_inner_corner_edge2_tile(),
+			"cliff-inner-corner-edge-both":
+					TerrainModuleDefinitions.load_cliff_inner_corner_edge_both_tile(),
+			"cliff-inner-corner-side-edge":
+					TerrainModuleDefinitions.load_cliff_inner_corner_side_edge_tile(),
+			"cliff-interior":               TerrainModuleDefinitions.load_cliff_interior_tile(),
 		}
 	return module_by_cliff_tag.get(cliff_tag, null)
 
