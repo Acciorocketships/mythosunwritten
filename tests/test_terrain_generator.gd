@@ -755,9 +755,19 @@ func test_cliff_scenes_have_correct_socket_layout() -> void:
 	}
 	var scene_paths: Array[String] = [
 		"res://terrain/scenes/CliffSide.tscn",
-		"res://terrain/scenes/CliffOuterCorner.tscn",
-		"res://terrain/scenes/CliffInnerCorner.tscn",
-		"res://terrain/scenes/CliffInnerCornerDiag.tscn",
+		"res://terrain/scenes/CliffCorner.tscn",
+		"res://terrain/scenes/CliffLine.tscn",
+		"res://terrain/scenes/CliffPeninsula.tscn",
+		"res://terrain/scenes/CliffIsland.tscn",
+		"res://terrain/scenes/CliffInCorner.tscn",
+		"res://terrain/scenes/CliffInCornerDiag.tscn",
+		"res://terrain/scenes/CliffInCornerSide.tscn",
+		"res://terrain/scenes/CliffInCornerThree.tscn",
+		"res://terrain/scenes/CliffInCornerAll.tscn",
+		"res://terrain/scenes/CliffInCornerEdge1.tscn",
+		"res://terrain/scenes/CliffInCornerEdge2.tscn",
+		"res://terrain/scenes/CliffInCornerEdgeBoth.tscn",
+		"res://terrain/scenes/CliffInCornerSideEdge.tscn",
 	]
 	for path in scene_paths:
 		var scene: PackedScene = load(path)
@@ -1326,7 +1336,7 @@ func test_ground_tile_topcenter_can_seed_cliff() -> void:
 	var module: TerrainModule = TerrainModuleDefinitions.load_ground_tile()
 	var topcenter_dist: Distribution = module.socket_tag_prob.get("topcenter")
 	assert_not_null(topcenter_dist)
-	assert_true(topcenter_dist.dist.has("cliff-edge"), "Ground topcenter must seed cliff-edge")
+	assert_true(topcenter_dist.dist.has("cliff-side"), "Ground topcenter must seed cliff-side")
 	assert_true(topcenter_dist.dist.has("level-ground-center"), "Ground topcenter must still seed level")
 
 	var top_size_dist: Distribution = module.socket_size.get("topcenter")
@@ -2304,11 +2314,11 @@ func test_24x24x4_test_piece_uses_cliff_socket_layout() -> void:
 	assert_eq(inst.sockets["right"].transform.origin, Vector3(12, 0, 0))
 
 
-func test_cliff_edge_tile_has_correct_tags_and_socket_config() -> void:
-	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_edge_tile()
+func test_cliff_side_tile_has_correct_tags_and_socket_config() -> void:
+	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_side_tile()
 	assert_not_null(module)
 	assert_true(module.tags.has("cliff"))
-	assert_true(module.tags.has("cliff-edge"))
+	assert_true(module.tags.has("cliff-side"))
 	assert_true(module.tags.has("24x24x4"))
 	assert_true(module.replace_existing)
 
@@ -2333,11 +2343,21 @@ func test_cliff_edge_tile_has_correct_tags_and_socket_config() -> void:
 	assert_eq(module.socket_fill_prob["bottom"], null)
 
 
-func test_all_cliff_edge_variants_load() -> void:
+func test_all_cliff_variants_load() -> void:
 	var variants: Dictionary[String, Callable] = {
-		"cliff-outer-corner": TerrainModuleDefinitions.load_cliff_outer_corner_tile,
-		"cliff-inner-corner": TerrainModuleDefinitions.load_cliff_inner_corner_tile,
-		"cliff-inner-corner-diag": TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile,
+		"cliff-corner":                 TerrainModuleDefinitions.load_cliff_corner_tile,
+		"cliff-line":                   TerrainModuleDefinitions.load_cliff_line_tile,
+		"cliff-peninsula":              TerrainModuleDefinitions.load_cliff_peninsula_tile,
+		"cliff-island":                 TerrainModuleDefinitions.load_cliff_island_tile,
+		"cliff-inner-corner":           TerrainModuleDefinitions.load_cliff_inner_corner_tile,
+		"cliff-inner-corner-diag":      TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile,
+		"cliff-inner-corner-side":      TerrainModuleDefinitions.load_cliff_inner_corner_side_tile,
+		"cliff-inner-corner-three":     TerrainModuleDefinitions.load_cliff_inner_corner_three_tile,
+		"cliff-inner-corner-all":       TerrainModuleDefinitions.load_cliff_inner_corner_all_tile,
+		"cliff-inner-corner-edge1":     TerrainModuleDefinitions.load_cliff_inner_corner_edge1_tile,
+		"cliff-inner-corner-edge2":     TerrainModuleDefinitions.load_cliff_inner_corner_edge2_tile,
+		"cliff-inner-corner-edge-both": TerrainModuleDefinitions.load_cliff_inner_corner_edge_both_tile,
+		"cliff-inner-corner-side-edge": TerrainModuleDefinitions.load_cliff_inner_corner_side_edge_tile,
 	}
 	for variant_tag in variants.keys():
 		var module: TerrainModule = variants[variant_tag].call()
@@ -2358,7 +2378,7 @@ func test_cliff_interior_tile_uses_ground_scene_with_cliff_tag() -> void:
 	assert_true(module.tags.has("ground-type"), "cliff-interior must have 'ground-type' tag")
 	assert_true(module.tags.has("24x24x4"), "cliff-interior must use cliff size tag")
 	assert_true(module.replace_existing, "cliff-interior must replace_existing for rule swap")
-	# Lateral cardinals are NON-expandable (the perimeter is covered by cliff-edges).
+	# Lateral cardinals are NON-expandable (the perimeter is covered by cliff-sides).
 	for socket_name in ["front", "back", "left", "right"]:
 		assert_eq(
 			module.socket_fill_prob[socket_name],
@@ -2369,7 +2389,7 @@ func test_cliff_interior_tile_uses_ground_scene_with_cliff_tag() -> void:
 
 func test_cliff_edge_rule_matches_cliff_tagged_pieces_only() -> void:
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
-	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
+	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_side_tile().spawn()
 	_pieces_to_destroy.append(cliff)
 	cliff.create()
 	var grass: TerrainModuleInstance = TerrainModuleDefinitions.load_grass_tile().spawn()
@@ -2389,9 +2409,9 @@ func test_cliff_edge_rule_aligns_outer_corner_with_neighbors() -> void:
 	# Verify by checking the rule's canonical-missing lookup for a known pattern.
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
 	var missing: Array[String] = ["front", "right"]
-	# In CliffEdgeRule's logic this should map to cliff-outer-corner (rotated).
+	# In CliffEdgeRule's logic this should map to cliff-corner (rotated).
 	var target_tag: String = rule._tag_for_missing_sockets(missing)
-	assert_eq(target_tag, "cliff-outer-corner")
+	assert_eq(target_tag, "cliff-corner")
 
 
 func test_cliff_edge_rule_without_generator_leaves_invalid_piece_unchanged() -> void:
@@ -2400,7 +2420,7 @@ func test_cliff_edge_rule_without_generator_leaves_invalid_piece_unchanged() -> 
 	# fit for an isolated piece, so it should leave the piece untouched rather
 	# than synthesise a wrong-shape replacement.
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
-	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
+	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_side_tile().spawn()
 	_pieces_to_destroy.append(cliff)
 	cliff.create()
 
@@ -2421,8 +2441,8 @@ func test_cliff_edge_rule_without_generator_leaves_invalid_piece_unchanged() -> 
 		"Isolated piece without a generator must be left unchanged"
 	)
 	assert_true(
-		cliff.def.tags.has("cliff-edge"),
-		"Original cliff-edge variant should be preserved (no valid replacement exists)"
+		cliff.def.tags.has("cliff-side"),
+		"Original cliff-side variant should be preserved (no valid replacement exists)"
 	)
 
 
