@@ -4,26 +4,13 @@ extends TerrainGenerationRule
 const CARDINAL_SOCKETS: Array[String] = ["front", "right", "back", "left"]
 const DIAGONAL_SOCKETS: Array[String] = ["frontright", "backright", "backleft", "frontleft"]
 const SAME_LEVEL_EPS: float = 0.1
-# Cap the recursive spawn loop. A 1x1 seed needs ~3 actual spawns (and ~7
-# iterations including re-checks) to grow into a 2x2 plateau. Each spawn
-# attaches a new cliff via the generator, so this also bounds the number of
-# new pieces a single rule invocation can create.
-const MAX_SPAWN_ITERATIONS: int = 20
-# Which empty cardinal each connected cardinal is "adjacent" to. Preferring an
-# empty cardinal adjacent to a connected one biases growth toward outer-corner
-# (2 adjacent connections) instead of line (2 opposite connections).
-const ADJACENT_CARDINALS: Dictionary[String, Array] = {
-	"front": ["left", "right"],
-	"back": ["left", "right"],
-	"left": ["front", "back"],
-	"right": ["front", "back"],
-}
 
 # Canonical missing-socket patterns for each cliff variant. Drop faces in the
 # authored scenes sit on -Z ("front") and -X ("left"), matching the level-tile
 # convention — getting these wrong rotates every retiled piece 180° off its
 # intended orientation.
 const CANONICAL_MISSING_BY_TAG: Dictionary[String, Array] = {
+	"cliff-interior":               [],
 	"cliff-side":                   ["front"],
 	"cliff-corner":                 ["front", "left"],
 	"cliff-line":                   ["front", "back"],
@@ -58,6 +45,7 @@ const CLIFF_TAG_ORDER: Array[String] = [
 	"cliff-corner",
 	"cliff-inner-corner",
 	"cliff-side",
+	"cliff-interior",
 ]
 const INNER_CORNER_CARDINALS_BY_DIAGONAL: Dictionary[String, Array] = {
 	"frontleft": ["front", "left"],
@@ -89,171 +77,37 @@ func apply(context: Dictionary) -> Dictionary:
 	var chosen_piece: TerrainModuleInstance = context["chosen_piece"]
 	var socket_index: PositionIndex = context["socket_index"]
 	var terrain_index: TerrainIndex = context["terrain_index"]
-	var generator: Variant = context.get("generator", null)
 	var piece_updates: Dictionary = {}
-
-	# Step 1: recursively spawn cliffs so every invalid cliff piece reaches a
-	# valid 5-variant config (interior / inner-corner / inner-corner-diag /
-	# edge / outer-corner). Cliffs have no line/peninsula/island variants, so
-	# we must grow neighbours instead of accepting those shapes.
-	_recursively_validate_via_spawning(
-		chosen_piece, socket_index, terrain_index, generator
-	)
-
-	# Step 2: collect everything still in scope of `chosen_piece` (which now
-	# includes whatever we spawned) and assign each its correct variant.
 	var affected: Array[TerrainModuleInstance] = []
 	var seen: Dictionary = {}
-	_collect_affected(chosen_piece, affected, seen, socket_index, terrain_index)
+	_add_unique_piece(affected, seen, chosen_piece)
+	var direct_neighbors: Array[TerrainModuleInstance] = _get_cliff_neighbors(
+		chosen_piece, socket_index, terrain_index
+	)
+	for neighbor_piece in direct_neighbors:
+		_add_unique_piece(affected, seen, neighbor_piece)
+	for neighbor_piece in direct_neighbors:
+		var indirect: Array[TerrainModuleInstance] = _get_cliff_neighbors(
+			neighbor_piece, socket_index, terrain_index
+		)
+		for indirect_neighbor in indirect:
+			_add_unique_piece(affected, seen, indirect_neighbor)
 
 	var chosen_replacement: TerrainModuleInstance = chosen_piece
 	for affected_piece in affected:
-		if not is_instance_valid(affected_piece):
-			continue
-		if not affected_piece.def.tags.has("cliff"):
-			continue
 		var missing: Array[String] = _missing_sockets_for_piece(
 			affected_piece, socket_index, terrain_index
 		)
 		var target_tag: String = _tag_for_missing_sockets(missing)
-		if target_tag == "":
-			# Spawning capped out without reaching a valid variant. Leave the
-			# piece untouched rather than deleting (avoids ripping holes in
-			# the indices that other rules depend on).
-			continue
 		var steps_to_align: int = _rotation_steps_to_align_canonical(target_tag, missing)
 		var replacement: TerrainModuleInstance = _create_replacement_for_target(
 			affected_piece, target_tag, steps_to_align
 		)
 		if affected_piece == chosen_piece:
 			chosen_replacement = replacement
-		elif replacement != affected_piece:
+		else:
 			piece_updates[affected_piece] = replacement
 	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
-
-
-func _collect_affected(
-	chosen_piece: TerrainModuleInstance,
-	affected: Array[TerrainModuleInstance],
-	seen: Dictionary,
-	socket_index: PositionIndex,
-	terrain_index: TerrainIndex
-) -> void:
-	# BFS up to 2 hops (matches the old direct + indirect neighbour walk).
-	_add_unique_piece(affected, seen, chosen_piece)
-	var direct: Array[TerrainModuleInstance] = _get_cliff_neighbors(
-		chosen_piece, socket_index, terrain_index
-	)
-	for n in direct:
-		_add_unique_piece(affected, seen, n)
-	for n in direct:
-		var indirect: Array[TerrainModuleInstance] = _get_cliff_neighbors(
-			n, socket_index, terrain_index
-		)
-		for nn in indirect:
-			_add_unique_piece(affected, seen, nn)
-
-
-func _recursively_validate_via_spawning(
-	chosen_piece: TerrainModuleInstance,
-	socket_index: PositionIndex,
-	terrain_index: TerrainIndex,
-	generator: Variant
-) -> void:
-	if generator == null:
-		return
-	var worklist: Array[TerrainModuleInstance] = [chosen_piece]
-	var iter: int = 0
-	while not worklist.is_empty() and iter < MAX_SPAWN_ITERATIONS:
-		iter += 1
-		var piece: TerrainModuleInstance = worklist.pop_back()
-		if not is_instance_valid(piece):
-			continue
-		if not piece.def.tags.has("cliff"):
-			continue
-		var missing: Array[String] = _missing_sockets_for_piece(
-			piece, socket_index, terrain_index
-		)
-		var target_tag: String = _tag_for_missing_sockets(missing)
-		if target_tag != "":
-			continue  # already valid, nothing to spawn
-		var spawned: TerrainModuleInstance = _spawn_one_cliff_neighbour(
-			piece, socket_index, generator
-		)
-		if spawned == null:
-			continue  # no empty cardinal slot or attach failed
-		worklist.push_back(spawned)
-		worklist.push_back(piece)  # re-evaluate this piece next iteration
-
-
-func _spawn_one_cliff_neighbour(
-	piece: TerrainModuleInstance,
-	socket_index: PositionIndex,
-	generator: Variant
-) -> TerrainModuleInstance:
-	var socket_name: String = _select_cardinal_to_spawn(piece, socket_index)
-	if socket_name == "":
-		return null
-	var marker: Marker3D = piece.sockets.get(socket_name, null)
-	if marker == null:
-		return null
-	# Neighbour centre = 2 × socket world position − piece centre.
-	# (Socket sits at the tile edge halfway between the two centres.)
-	var socket_world: Vector3 = piece.transform.origin + piece.transform.basis * marker.position
-	var neighbour_centre: Vector3 = socket_world * 2.0 - piece.transform.origin
-	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_side_tile()
-	var inst: TerrainModuleInstance = module.spawn()
-	inst.create()
-	_suppress_lateral_expansion(inst)
-	var xform: Transform3D = inst.transform
-	xform.origin = Helper.snap_vec3(neighbour_centre)
-	inst.set_transform(xform)
-	if generator.attach_piece(inst):
-		return inst
-	inst.destroy()
-	return null
-
-
-# Override cardinal fill_prob to 0 so the queue does not try to expand this
-# piece laterally. The rule drives all cliff growth; allowing the queue to also
-# expand promoted/spawned cliffs cascades into runaway plateau merging.
-func _suppress_lateral_expansion(piece: TerrainModuleInstance) -> void:
-	for socket_name in CARDINAL_SOCKETS:
-		piece.socket_fill_prob_override[socket_name] = 0.0
-
-
-func _select_cardinal_to_spawn(
-	piece: TerrainModuleInstance,
-	socket_index: PositionIndex
-) -> String:
-	var connected: Dictionary[String, bool] = {}
-	var empty_cardinals: Array[String] = []
-	for socket_name in CARDINAL_SOCKETS:
-		var has_neighbour: bool = _has_cliff_connection(piece, socket_name, socket_index)
-		connected[socket_name] = has_neighbour
-		if not has_neighbour:
-			empty_cardinals.append(socket_name)
-	if empty_cardinals.is_empty():
-		return ""
-	# Prefer an empty cardinal adjacent to a connected one (forms outer-corner
-	# instead of line, which has no valid variant).
-	for empty in empty_cardinals:
-		for adj in ADJACENT_CARDINALS.get(empty, []):
-			if connected.get(adj, false):
-				return empty
-	# Fully isolated piece: any cardinal works as the first growth step.
-	return empty_cardinals[0]
-
-
-func _count_cardinal_cliff_connections(
-	piece: TerrainModuleInstance,
-	socket_index: PositionIndex
-) -> int:
-	var n: int = 0
-	for socket_name in CARDINAL_SOCKETS:
-		if _has_cliff_connection(piece, socket_name, socket_index):
-			n += 1
-	return n
 
 
 func _has_cliff_connection(
@@ -434,14 +288,10 @@ func _rotation_steps_to_align_canonical(target_tag: String, desired_missing: Arr
 
 
 func _tag_for_missing_sockets(missing_sockets: Array[String]) -> String:
-	# Empty -> swap to interior (signaled by special tag).
-	if missing_sockets.is_empty():
-		return "cliff-interior"
 	for cliff_tag in CLIFF_TAG_ORDER:
 		if _rotation_steps_to_align_canonical(cliff_tag, missing_sockets) >= 0:
 			return cliff_tag
-	# No match: signal "keep piece as-is" via empty string.
-	return ""
+	return "cliff-interior"
 
 
 func _current_cliff_tag(module_def: TerrainModule) -> String:
@@ -495,9 +345,8 @@ func _create_replacement_for_target(
 	var replacement: TerrainModuleInstance = module_template.spawn()
 	replacement.set_transform(source_piece.transform)
 	replacement.create()
-	_suppress_lateral_expansion(replacement)
 
-	if steps_to_align > 0:
+	if steps_to_align >= 0:
 		var yaw: float = PI * 0.5 * float((4 - steps_to_align) % 4)
 		var rotated_basis: Basis = Basis(Vector3.UP, yaw) * replacement.transform.basis
 		replacement.set_basis(rotated_basis)

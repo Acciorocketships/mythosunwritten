@@ -256,8 +256,7 @@ func _build_rule_context(
 		"socket_index": socket_index,
 		"queue": queue,
 		"library": library,
-		"rules_instance": generation_rules,
-		"generator": self
+		"rules_instance": generation_rules
 	}
 
 
@@ -394,28 +393,6 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 		)
 
 	return other_pieces.is_empty()
-
-
-## Attach a piece whose transform is already set in world space. Mirrors the
-## tail of `add_piece` (replace_existing cleanup, scene + index registration,
-## socket queueing) for rule-driven spawning where no socket alignment is
-## needed. Returns true if attached.
-func attach_piece(piece: TerrainModuleInstance) -> bool:
-	if piece == null:
-		return false
-	if piece.def.replace_existing:
-		var overlapping_pieces: Array = terrain_index.query_box(piece.aabb)
-		overlapping_pieces = overlapping_pieces.filter(
-			func(p): return not p.def.tags.has("ground")
-		)
-		for overlapping in overlapping_pieces:
-			remove_piece(overlapping)
-	if not can_place(piece, null):
-		return false
-	terrain_parent.add_child(piece.root)
-	register_piece(piece, "")
-	add_piece_to_queue(piece)
-	return true
 
 
 func remove_piece(piece: TerrainModuleInstance) -> void:
