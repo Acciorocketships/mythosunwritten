@@ -574,9 +574,10 @@ static func load_cliff_inner_corner_diag_tile() -> TerrainModule:
 static func load_cliff_interior_tile() -> TerrainModule:
 	# Cliff plateau interior: visually a ground tile, but tagged "cliff" so neighbour
 	# cliff-edges' required-tag filters remain satisfied. Lateral cardinals are
-	# non-expandable because the plateau perimeter is covered by cliff-edges; we
-	# don't want the interior to spawn more lateral tiles. Topcenter mirrors a
-	# normal ground tile (grass/trees/multi-storey cliff seeding).
+	# non-expandable because the plateau perimeter is covered by cliff-edges.
+	# Topcenter is NOT expanded — placing a level/cliff on top would cover the
+	# cliff plateau with a second tile layer and merge plateaus into giant slabs.
+	# Foliage spawns on the top corners (grass/trees on the cliff plateau surface).
 	var scene: PackedScene = load("res://terrain/scenes/GroundTile.tscn")
 	var tags: TagList = TagList.new(["cliff", "cliff-interior", "ground-type", "24x24x4"])
 	var tags_per_socket: Dictionary[String, TagList] = {}
@@ -584,10 +585,8 @@ static func load_cliff_interior_tile() -> TerrainModule:
 
 	var top_size_dist_corners: Distribution = Distribution.new({"point": 0.9, "12x12x2": 0.1})
 	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8x2": 0.1})
-	var top_size_dist_center: Distribution = Distribution.new({"24x24x0.5": 1.0})
 	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
 	var top_tag_prob_cardinal: Distribution = top_tag_prob_corners
-	var top_tag_prob_center: Distribution = Distribution.new({"level-ground-center": 0.95, "cliff-edge": 0.05})
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x4": 1.0}),
@@ -598,7 +597,7 @@ static func load_cliff_interior_tile() -> TerrainModule:
 		"topback": top_size_dist_cardinal,
 		"topleft": top_size_dist_cardinal,
 		"topright": top_size_dist_cardinal,
-		"topcenter": top_size_dist_center,
+		"topcenter": Distribution.new({"point": 1.0}),
 		"topfrontright": top_size_dist_corners,
 		"topfrontleft": top_size_dist_corners,
 		"topbackright": top_size_dist_corners,
@@ -618,7 +617,7 @@ static func load_cliff_interior_tile() -> TerrainModule:
 		"topfrontleft": 0.05,
 		"topbackright": 0.05,
 		"topbackleft": 0.05,
-		"topcenter": 0.2,
+		"topcenter": null,
 		"bottom": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
@@ -630,7 +629,6 @@ static func load_cliff_interior_tile() -> TerrainModule:
 		"topfrontleft": top_tag_prob_corners,
 		"topbackright": top_tag_prob_corners,
 		"topbackleft": top_tag_prob_corners,
-		"topcenter": top_tag_prob_center,
 	}
 
 	return TerrainModule.new(
