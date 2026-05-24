@@ -153,10 +153,20 @@ func test_library_registers_all_cliff_variants() -> void:
 	lib.init()
 
 	var variant_tags = [
-		"cliff-edge",
-		"cliff-outer-corner",
+		"cliff-side",
+		"cliff-corner",
+		"cliff-line",
+		"cliff-peninsula",
+		"cliff-island",
 		"cliff-inner-corner",
 		"cliff-inner-corner-diag",
+		"cliff-inner-corner-side",
+		"cliff-inner-corner-three",
+		"cliff-inner-corner-all",
+		"cliff-inner-corner-edge1",
+		"cliff-inner-corner-edge2",
+		"cliff-inner-corner-edge-both",
+		"cliff-inner-corner-side-edge",
 		"cliff-interior"
 	]
 	for variant_tag in variant_tags:
@@ -164,9 +174,9 @@ func test_library_registers_all_cliff_variants() -> void:
 			lib.modules_by_tag.has(variant_tag),
 			"Library missing variant: %s" % variant_tag
 		)
-	# The "cliff" tag should map to all 5 variants.
+	# The "cliff" tag should map to all 15 variants.
 	assert_eq(
 		lib.modules_by_tag["cliff"].size(),
-		5,
-		"All 5 cliff modules should carry 'cliff' tag"
+		15,
+		"All 15 cliff modules should carry 'cliff' tag"
 	)
