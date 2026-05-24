@@ -71,24 +71,32 @@ func apply(context: Dictionary) -> Dictionary:
 		for indirect_neighbor in indirect:
 			_add_unique_piece(affected, seen, indirect_neighbor)
 
-	var chosen_replacement: TerrainModuleInstance = chosen_piece
+	var chosen_replacement: Variant = chosen_piece
 	for affected_piece in affected:
 		var missing: Array[String] = _missing_sockets_for_piece(
 			affected_piece, socket_index, terrain_index
 		)
 		var target_tag: String = _tag_for_missing_sockets(missing)
 		if target_tag == "":
-			# Invalid configuration (peninsula / line / island / multi-diagonal).
-			# Show as cliff-interior so we don't expose a wrong-orientation cliff
-			# face. Plateaus self-grow into valid shapes as neighbouring pieces
-			# arrive — the interior tile is still tagged "cliff", so it still
-			# satisfies the cardinal `required=["cliff"]` constraint and lets
-			# later expansion turn it into a real edge/corner.
-			target_tag = "cliff-interior"
+			# Invalid config (1-wide strip, peninsula, isolated tile, etc.).
+			# Special case: a just-placed seed with 0 cardinal cliff neighbours
+			# has no valid variant yet, but its cardinals still need to expand
+			# laterally for a plateau to form. Leave it unchanged so its queued
+			# sockets are not torn down by replacement.
+			var cardinal_connections: int = _count_cardinal_cliff_connections(
+				affected_piece, socket_index
+			)
+			if affected_piece == chosen_piece and cardinal_connections == 0:
+				continue
+			# Otherwise delete: 1-wide strips and peninsulas would show as
+			# wrong-orientation cliff faces, and orphaned cliff-interior tiles
+			# would float as ground tiles at cliff height.
+			if affected_piece == chosen_piece:
+				chosen_replacement = null
+			else:
+				piece_updates[affected_piece] = null
+			continue
 		var steps_to_align: int = _rotation_steps_to_align_canonical(target_tag, missing)
-		# cliff-interior has no canonical missing pattern (always 0 missing); skip rotation.
-		if target_tag == "cliff-interior":
-			steps_to_align = 0
 		var replacement: TerrainModuleInstance = _create_replacement_for_target(
 			affected_piece, target_tag, steps_to_align
 		)
@@ -97,6 +105,17 @@ func apply(context: Dictionary) -> Dictionary:
 		elif replacement != affected_piece:
 			piece_updates[affected_piece] = replacement
 	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
+
+
+func _count_cardinal_cliff_connections(
+	piece: TerrainModuleInstance,
+	socket_index: PositionIndex
+) -> int:
+	var n: int = 0
+	for socket_name in CARDINAL_SOCKETS:
+		if _has_cliff_connection(piece, socket_name, socket_index):
+			n += 1
+	return n
 
 
 func _has_cliff_connection(

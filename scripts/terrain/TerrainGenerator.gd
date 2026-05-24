@@ -277,14 +277,21 @@ func _apply_rules_after_placement(
 		if step_result.get("skip", false):
 			return
 		var updated_piece: Variant = step_result.get("chosen_piece", current_piece)
-		if updated_piece != null and updated_piece is TerrainModuleInstance and updated_piece != current_piece:
+		var step_updates: Dictionary = step_result.get("piece_updates", {})
+		if updated_piece == null:
+			# Rule asked us to delete the just-placed piece (e.g. CliffEdgeRule
+			# pruning a stuck/peninsula cliff). Apply any sibling updates first,
+			# then remove the piece and stop running rules for this placement.
+			_apply_piece_updates_after_placement(step_updates, null)
+			remove_piece(current_piece)
+			return
+		if updated_piece is TerrainModuleInstance and updated_piece != current_piece:
 			# Preserve topcenter when retiling a piece placed by lateral expansion so that position gets one stacked tile.
 			# Do not preserve when this piece was placed by stacking (topcenter), or we'd enqueue its topcenter and build infinite towers.
 			var preserve_topcenter: bool = orig_piece_socket.socket_name != "topcenter"
 			_replace_piece(current_piece, updated_piece, preserve_topcenter)
 			current_piece = updated_piece
 			context["adjacent"] = get_adjacent(current_piece)
-		var step_updates: Dictionary = step_result.get("piece_updates", {})
 		_apply_piece_updates_after_placement(step_updates, current_piece)
 		for socket_to_queue in step_result.get("sockets_for_queue", []):
 			queue.push(socket_to_queue, 0)

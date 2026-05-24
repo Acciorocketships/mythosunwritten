@@ -2390,12 +2390,12 @@ func test_cliff_edge_rule_aligns_outer_corner_with_neighbors() -> void:
 	assert_eq(target_tag, "cliff-outer-corner")
 
 
-func test_cliff_edge_rule_isolated_piece_becomes_interior() -> void:
-	# An isolated cliff (no neighbors) is invalid as an edge variant — there's
-	# no rotation that puts the drop face on the right side because every side
-	# is "missing." The rule converts it to cliff-interior so no wrongly-
-	# rotated cliff face is shown. Plateau can still grow because cliff-
-	# interior carries the `cliff` tag.
+func test_cliff_edge_rule_freshly_placed_isolated_seed_kept_as_cliff_edge() -> void:
+	# A just-placed cliff seed has zero cliff neighbours and no valid edge
+	# variant yet. The rule must leave it unchanged so its queued cardinal
+	# sockets stay intact and lateral expansion can grow a plateau. Replacing
+	# it (e.g. with cliff-interior) would tear down those sockets and orphan
+	# the seed as a floating 0.5-thick slab at cliff height.
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
 	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
 	_pieces_to_destroy.append(cliff)
@@ -2413,11 +2413,54 @@ func test_cliff_edge_rule_isolated_piece_becomes_interior() -> void:
 		"socket_index": socket_index,
 		"terrain_index": terrain_index,
 	})
-	var replacement: TerrainModuleInstance = result["chosen_piece"]
-	_pieces_to_destroy.append(replacement)
+	assert_eq(
+		result["chosen_piece"], cliff,
+		"Isolated seed (chosen_piece, 0 connections) must be kept unchanged"
+	)
 	assert_true(
-		replacement.def.tags.has("cliff-interior"),
-		"Isolated cliff should be replaced with cliff-interior"
+		cliff.def.tags.has("cliff-edge"),
+		"Seed must remain a cliff-edge so its cardinal sockets can expand"
+	)
+
+
+func test_cliff_edge_rule_isolated_non_chosen_neighbor_is_deleted() -> void:
+	# Setup: a chosen_piece cliff with a single cliff cardinal neighbour. Both
+	# pieces have invalid configs (1 connection, 3 missing). The chosen piece
+	# stays (its cardinals may still grow), but the neighbour — which has
+	# already had its lateral expansion attempts — must be deleted so a
+	# 1-wide strip doesn't persist as a floating slab.
+	var rule: CliffEdgeRule = CliffEdgeRule.new()
+	var chosen: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
+	_pieces_to_destroy.append(chosen)
+	chosen.create()
+	var neighbor: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_edge_tile().spawn()
+	_pieces_to_destroy.append(neighbor)
+	neighbor.create()
+	# Place neighbor exactly 24 units along +X (right) so chosen's "right"
+	# socket aligns with neighbor's "left" socket.
+	var neighbor_xform: Transform3D = neighbor.transform
+	neighbor_xform.origin = Vector3(24.0, 0.0, 0.0)
+	neighbor.set_transform(neighbor_xform)
+
+	var socket_index: PositionIndex = PositionIndex.new()
+	_track_node_for_cleanup(socket_index)
+	for socket_name in chosen.sockets.keys():
+		socket_index.insert(TerrainModuleSocket.new(chosen, socket_name))
+	for socket_name in neighbor.sockets.keys():
+		socket_index.insert(TerrainModuleSocket.new(neighbor, socket_name))
+	var terrain_index: TerrainIndex = TerrainIndex.new()
+	terrain_index.insert(chosen)
+	terrain_index.insert(neighbor)
+
+	var result: Dictionary = rule.apply({
+		"chosen_piece": chosen,
+		"socket_index": socket_index,
+		"terrain_index": terrain_index,
+	})
+	var piece_updates: Dictionary = result["piece_updates"]
+	assert_true(
+		piece_updates.has(neighbor) and piece_updates[neighbor] == null,
+		"Stuck 1-connection neighbour should be marked for deletion"
 	)
 
 
@@ -2738,3 +2781,58 @@ func test_no_invalid_cliffs_seed_42() -> void:
 
 func test_no_invalid_cliffs_seed_99() -> void:
 	await _assert_no_invalid_cliff_in_steady_state(99)
+
+
+func _assert_no_floating_cliff_interior(run_seed: int) -> void:
+	# Regression: a cliff-interior with fewer than 4 cliff cardinal neighbours
+	# renders as a 0.5-thick green slab at cliff height (GroundTile mesh) with
+	# nothing under it on the unconnected sides. Visually it looks like a
+	# floating ground tile and should not exist in the final terrain.
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 200
+	gen.MAX_LOAD_PER_STEP = 8
+	seed(run_seed)
+	_run_generator_ready(gen)
+	for _i in range(3000):
+		gen.load_terrain()
+
+	var floating_count: int = 0
+	for piece in gen.terrain_index.all_modules.keys():
+		if not (piece is TerrainModuleInstance):
+			continue
+		if not piece.def.tags.has("cliff-interior"):
+			continue
+		var n: int = 0
+		for socket_name in ["front", "back", "left", "right"]:
+			var ps: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
+			var other: TerrainModuleSocket = gen.socket_index.query_other(
+				ps.get_socket_position(), piece
+			)
+			if other != null and other.piece != null and other.piece.def.tags.has("cliff"):
+				n += 1
+		if n < 4:
+			floating_count += 1
+	gut.p("seed %d: %d floating cliff-interior tiles found" % [run_seed, floating_count])
+	assert_eq(
+		floating_count, 0,
+		"Seed %d: %d cliff-interior tiles with <4 cliff cardinal neighbours" % [
+			run_seed, floating_count
+		]
+	)
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func test_no_floating_cliff_interior_seed_1() -> void:
+	await _assert_no_floating_cliff_interior(1)
+
+func test_no_floating_cliff_interior_seed_42() -> void:
+	await _assert_no_floating_cliff_interior(42)
+
+func test_no_floating_cliff_interior_seed_99() -> void:
+	await _assert_no_floating_cliff_interior(99)
