@@ -655,7 +655,9 @@ static func _build_cliff_tile(
 	#   - Cardinals at top elevation, required=cliff, high lateral fill.
 	#   - Diagonals are null (markers for inner-corner detection only).
 	#   - Bottom attaches to a ground tile below (no expansion).
-	#   - Topcenter inherits ground-tile distribution (grass/trees/multi-storey cliffs).
+	#   - Topcenter does NOT expand on edge variants. Only cliff-interior
+	#     (the rule's interior-swap target) carries the topcenter distribution
+	#     for foliage and multi-storey cliff seeding.
 	var scene: PackedScene = load(scene_path)
 	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = AABB(Vector3(-12, -4, -12), Vector3(24, 4, 24))
@@ -685,23 +687,14 @@ static func _build_cliff_tile(
 		"backleft": null,
 		"backright": null,
 		"bottom": null,
-		"topcenter": 0.2,
+		"topcenter": null,
 	}
-	# Cliff cardinals favor more cliff growth; topcenter mirrors a ground tile's mix.
 	var cliff_lateral_dist: Distribution = Distribution.new({"cliff": 1.0})
-	var topcenter_dist: Distribution = Distribution.new({
-		"grass": 0.3,
-		"rock": 0.2,
-		"bush": 0.2,
-		"tree": 0.2,
-		"hill": 0.1,
-	})
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"front": cliff_lateral_dist,
 		"back": cliff_lateral_dist,
 		"left": cliff_lateral_dist,
 		"right": cliff_lateral_dist,
-		"topcenter": topcenter_dist,
 	}
 
 	return TerrainModule.new(
