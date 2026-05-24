@@ -381,6 +381,7 @@ func test_get_dist_from_player():
 
 func test_can_place_true_when_index_empty():
 	var gen: Variant = _new_generator()
+	gen.player.position = Vector3(10000, 0, 10000)  # avoid player-exclusion check
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
 	var piece: TerrainModuleInstance = _spawn_piece(mod)
 	# can_place requires a parent piece (can be null for no parent)
@@ -428,6 +429,7 @@ func test_can_place_true_for_ground_even_with_overlap():
 
 func test_can_place_true_for_replace_existing_even_with_overlap():
 	var gen: Variant = _new_generator()
+	gen.player.position = Vector3(10000, 0, 10000)  # avoid player-exclusion check
 	var regular: TerrainModule = _make_module(Vector3(2, 2, 2), {"main": Vector3.ZERO})
 	var regular_piece: TerrainModuleInstance = _spawn_piece(regular)
 	gen.terrain_index.insert(regular_piece)
@@ -841,6 +843,7 @@ func test_remove_linked_sockets_from_queue_removes_connected_socket():
 
 func test_add_piece_replace_existing_removes_overlapping_non_ground():
 	var gen: Variant = _new_generator()
+	gen.player.position = Vector3(10000, 0, 10000)  # avoid player-exclusion check
 	var base_mod: TerrainModule = _make_module(Vector3(2, 2, 2), {"bottom": Vector3.ZERO})
 	var start: TerrainModuleInstance = _spawn_piece(base_mod)
 	gen.terrain_parent.add_child(start.root)
@@ -2513,3 +2516,72 @@ func test_integration_cliff_seeding_produces_variants() -> void:
 
 	_dispose_generator_immediately(gen)
 	await _flush_deferred_frees()
+
+
+# ----------------------------
+# Player spawn safety
+# ----------------------------
+# Without a player-exclusion check in can_place, lateral level expansion from
+# neighbouring ground tiles can place a level tile directly at (0, 0.5, 0) —
+# clipping with the character's head/chest. Multiple seeds reproduce this
+# pre-fix; regression check below.
+func _assert_no_tile_overlaps_player_spawn(run_seed: int) -> void:
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 100
+	gen.MAX_LOAD_PER_STEP = 20
+	seed(run_seed)
+	_run_generator_ready(gen)
+	for _i in range(400):
+		gen.load_terrain()
+
+	# Player capsule approximation: ~1 unit wide cylinder, 2 units tall.
+	var player_aabb: AABB = AABB(Vector3(-0.5, 0.01, -0.5), Vector3(1.0, 2.0, 1.0))
+
+	var offender_tags: String = ""
+	var offender_origin: Vector3 = Vector3.ZERO
+	for piece in gen.terrain_index.all_modules.keys():
+		if not (piece is TerrainModuleInstance):
+			continue
+		var world_aabb: AABB = AABB(
+			piece.aabb.position + piece.transform.origin,
+			piece.aabb.size
+		)
+		if not world_aabb.intersects(player_aabb):
+			continue
+		# Ground tile at y=0 is the start tile the player stands on — allowed.
+		if piece.def.tags.has("ground") and piece.transform.origin.y <= 0.01:
+			continue
+		offender_tags = str(piece.def.tags.tags)
+		offender_origin = piece.transform.origin
+		break
+
+	assert_eq(
+		offender_tags,
+		"",
+		"Seed %d: tile covers player spawn — tags=%s origin=%s" % [
+			run_seed, offender_tags, str(offender_origin)
+		]
+	)
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
+func test_player_spawn_not_covered_seed_1() -> void:
+	await _assert_no_tile_overlaps_player_spawn(1)
+
+func test_player_spawn_not_covered_seed_7() -> void:
+	await _assert_no_tile_overlaps_player_spawn(7)
+
+func test_player_spawn_not_covered_seed_42() -> void:
+	await _assert_no_tile_overlaps_player_spawn(42)
+
+func test_player_spawn_not_covered_seed_99() -> void:
+	await _assert_no_tile_overlaps_player_spawn(99)
+
+func test_player_spawn_not_covered_seed_12345() -> void:
+	await _assert_no_tile_overlaps_player_spawn(12345)
