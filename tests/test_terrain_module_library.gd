@@ -14,7 +14,7 @@ func test_init_populates_modules_and_index():
 	var lib = _make_library()
 	assert_true(lib.terrain_modules.size() >= 1, "terrain_modules has entries after init")
 	assert_true(lib.modules_by_tag.has("ground"), "modules_by_tag has 'ground'")
-	assert_true(lib.modules_by_tag.has("24x24"), "modules_by_tag has '24x24'")
+	assert_true(lib.modules_by_tag.has("24x24x0.5"), "modules_by_tag has '24x24x0.5'")
 
 
 func test_sort_terrain_modules_builds_tag_index():
@@ -23,7 +23,7 @@ func test_sort_terrain_modules_builds_tag_index():
 	lib.load_terrain_modules()
 	lib.sort_terrain_modules()
 	assert_true(lib.modules_by_tag.has("ground"))
-	assert_true(lib.modules_by_tag.has("24x24"))
+	assert_true(lib.modules_by_tag.has("24x24x0.5"))
 	var ground_list: TerrainModuleList = lib.modules_by_tag["ground"]
 	assert_true(ground_list.size() >= 1)
 
@@ -129,7 +129,7 @@ func test_intersection_of_lists_returns_common_elements():
 func test_load_ground_tile_has_expected_fields():
 	var tm: TerrainModule = TerrainModuleDefinitions.load_ground_tile()
 	assert_true(tm.tags.has("ground"))
-	assert_true(tm.tags.has("24x24"))
+	assert_true(tm.tags.has("24x24x0.5"))
 	assert_true(tm.socket_required.has("front"))
 	assert_true(tm.socket_required.has("left"))
 	assert_true(tm.socket_required.has("right"))
@@ -145,3 +145,28 @@ func test_ground_tile_aabb_matches_mesh_bounds():
 	# Temporarily allow some tolerance due to socket renaming
 	assert_almost_eq((tm.size.position - expected.position).length(), 0.0, 0.5)
 	assert_almost_eq((tm.size.size - expected.size).length(), 0.0, 0.5)
+
+
+func test_library_registers_all_cliff_variants() -> void:
+	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
+	add_child_autofree(lib)
+	lib.init()
+
+	var variant_tags = [
+		"cliff-edge",
+		"cliff-outer-corner",
+		"cliff-inner-corner",
+		"cliff-inner-corner-diag",
+		"cliff-interior"
+	]
+	for variant_tag in variant_tags:
+		assert_true(
+			lib.modules_by_tag.has(variant_tag),
+			"Library missing variant: %s" % variant_tag
+		)
+	# The "cliff" tag should map to all 5 variants.
+	assert_eq(
+		lib.modules_by_tag["cliff"].size(),
+		5,
+		"All 5 cliff modules should carry 'cliff' tag"
+	)

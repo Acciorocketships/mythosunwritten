@@ -16,9 +16,9 @@
 
 **New files:**
 - `terrain/scenes/CliffSide.tscn` — cliff edge variant (user-authored)
-- `terrain/scenes/CliffCorner.tscn` — cliff outer-corner variant (user-authored)
-- `terrain/scenes/CliffInCorner.tscn` — cliff inner-corner variant (user-authored)
-- `terrain/scenes/CliffInCornerDiag.tscn` — cliff inner-corner-diag variant (user-authored)
+- `terrain/scenes/CliffOuterCorner.tscn` — cliff outer-corner variant (user-authored)
+- `terrain/scenes/CliffInnerCorner.tscn` — cliff inner-corner variant (user-authored)
+- `terrain/scenes/CliffInnerCornerDiag.tscn` — cliff inner-corner-diag variant (user-authored)
 - `scripts/terrain/rules/CliffEdgeRule.gd` — cliff retiling rule
 - `docs/future-work/directional-socket-tags.md` — future-work note
 
@@ -80,9 +80,9 @@ git commit -m "refactor(terrain): migrate size tags to 3D (24x24x0.5, 12x12x2, 8
 
 **Files:**
 - Verify: `terrain/scenes/CliffSide.tscn`
-- Verify: `terrain/scenes/CliffCorner.tscn`
-- Verify: `terrain/scenes/CliffInCorner.tscn`
-- Verify: `terrain/scenes/CliffInCornerDiag.tscn`
+- Verify: `terrain/scenes/CliffOuterCorner.tscn`
+- Verify: `terrain/scenes/CliffInnerCorner.tscn`
+- Verify: `terrain/scenes/CliffInnerCornerDiag.tscn`
 - Add test: `tests/test_terrain_generator.gd` (new test function)
 
 This task verifies that the user has authored the cliff scenes with the socket layout required by the spec. Required sockets and local positions:
@@ -126,9 +126,9 @@ func test_cliff_scenes_have_correct_socket_layout() -> void:
 	}
 	var scene_paths: Array[String] = [
 		"res://terrain/scenes/CliffSide.tscn",
-		"res://terrain/scenes/CliffCorner.tscn",
-		"res://terrain/scenes/CliffInCorner.tscn",
-		"res://terrain/scenes/CliffInCornerDiag.tscn",
+		"res://terrain/scenes/CliffOuterCorner.tscn",
+		"res://terrain/scenes/CliffInnerCorner.tscn",
+		"res://terrain/scenes/CliffInnerCornerDiag.tscn",
 	]
 	for path in scene_paths:
 		var scene: PackedScene = load(path)
@@ -493,21 +493,21 @@ In [scripts/terrain/TerrainModuleDefinitions.gd](../../../scripts/terrain/Terrai
 ```gdscript
 static func load_cliff_outer_corner_tile() -> TerrainModule:
 	return _build_cliff_tile(
-		"res://terrain/scenes/CliffCorner.tscn",
+		"res://terrain/scenes/CliffOuterCorner.tscn",
 		TagList.new(["cliff", "cliff-outer-corner", "24x24x4"])
 	)
 
 
 static func load_cliff_inner_corner_tile() -> TerrainModule:
 	return _build_cliff_tile(
-		"res://terrain/scenes/CliffInCorner.tscn",
+		"res://terrain/scenes/CliffInnerCorner.tscn",
 		TagList.new(["cliff", "cliff-inner-corner", "24x24x4"])
 	)
 
 
 static func load_cliff_inner_corner_diag_tile() -> TerrainModule:
 	return _build_cliff_tile(
-		"res://terrain/scenes/CliffInCornerDiag.tscn",
+		"res://terrain/scenes/CliffInnerCornerDiag.tscn",
 		TagList.new(["cliff", "cliff-inner-corner-diag", "24x24x4"])
 	)
 ```
