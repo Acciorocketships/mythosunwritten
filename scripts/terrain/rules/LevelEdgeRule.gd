@@ -129,11 +129,78 @@ func apply(context: Dictionary) -> Dictionary:
 			target_tag,
 			steps_to_align
 		)
+		# If this affected piece is a stacked level and its support below has
+		# lost all-4-cardinal coverage, delete it rather than retiling it to a
+		# stack variant. Without this check, the wide_stacks cleanup above
+		# (piece_updates[stack] = null) is overwritten by
+		# piece_updates[stack] = replacement when the loop reaches the stack
+		# as its own affected_piece, leaving an unsupported stack-island.
+		if affected_piece.def.tags.has("level-stack"):
+			var support: TerrainModuleInstance = _get_support_piece_below(
+				affected_piece, terrain_index
+			)
+			var support_ok: bool = (
+				support != null
+				and _has_all_cardinal_level_neighbors(support, socket_index)
+			)
+			if not support_ok:
+				replacement = null
 		if affected_piece == chosen_piece:
 			chosen_replacement = replacement
 		else:
 			piece_updates[affected_piece] = replacement
+	# Second pass: any level-stack tile near the affected region whose support
+	# now lacks all-4-cardinal coverage must be deleted. The main loop only
+	# covers stacks directly above affected pieces; this pass catches stacks
+	# whose base slid out of the affected set (> 2 hops from chosen_piece)
+	# but whose support was invalidated by the current round of retiling.
+	_sweep_orphaned_stacks(affected, terrain_index, socket_index, piece_updates)
 	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
+
+
+## Delete any level-stack tile whose support tile lacks all 4 cardinal level
+## neighbours. Searches within a neighbourhood of the currently-affected pieces
+## so the cost is bounded (small constant multiple of affected.size()).
+func _sweep_orphaned_stacks(
+	affected: Array[TerrainModuleInstance],
+	terrain_index: TerrainIndex,
+	socket_index: PositionIndex,
+	piece_updates: Dictionary
+) -> void:
+	# Build a search box that covers all affected pieces + 3 tile widths (72u).
+	const SWEEP_PAD: float = 72.0
+	if affected.is_empty():
+		return
+	var lo: Vector3 = affected[0].transform.origin
+	var hi: Vector3 = lo
+	for p in affected:
+		var o: Vector3 = p.transform.origin
+		lo.x = min(lo.x, o.x)
+		lo.y = min(lo.y, o.y)
+		lo.z = min(lo.z, o.z)
+		hi.x = max(hi.x, o.x)
+		hi.y = max(hi.y, o.y)
+		hi.z = max(hi.z, o.z)
+	var search_box: AABB = AABB(
+		lo - Vector3(SWEEP_PAD, 2.0, SWEEP_PAD),
+		hi - lo + Vector3(SWEEP_PAD * 2.0, 6.0, SWEEP_PAD * 2.0)
+	)
+	var candidates: Array = terrain_index.query_box(search_box)
+	for m in candidates:
+		if not (m is TerrainModuleInstance):
+			continue
+		var stack: TerrainModuleInstance = m
+		if not stack.def.tags.has("level-stack"):
+			continue
+		if piece_updates.has(stack):
+			continue  # already scheduled
+		var support: TerrainModuleInstance = _get_support_piece_below(stack, terrain_index)
+		var ok: bool = (
+			support != null
+			and _has_all_cardinal_level_neighbors(support, socket_index)
+		)
+		if not ok:
+			piece_updates[stack] = null
 
 
 func _is_stacked_support(piece: TerrainModuleInstance, socket_index: PositionIndex) -> bool:
@@ -145,7 +212,10 @@ func _is_stacked_support(piece: TerrainModuleInstance, socket_index: PositionInd
 func _can_support_stacked_piece(piece: TerrainModuleInstance, socket_index: PositionIndex) -> bool:
 	if piece == null:
 		return false
-	return _get_stacked_piece(piece, socket_index) != null and _has_all_cardinal_level_neighbors(piece, socket_index)
+	return (
+		_get_stacked_piece(piece, socket_index) != null
+		and _has_all_cardinal_level_neighbors(piece, socket_index)
+	)
 
 
 func _has_all_cardinal_level_neighbors(

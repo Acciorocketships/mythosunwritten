@@ -1,5 +1,10 @@
 extends Node3D
 
+## Player feet rest at y=0.5 (top of ground tile). Tiles whose top exceeds
+## feet_y + max_step are unclimbable and must not spawn at the player origin.
+const PLAYER_FEET_Y: float = 0.5
+const PLAYER_MAX_STEP_HEIGHT: float = 0.5
+
 @export var RENDER_RANGE: int = 250
 @export var MAX_LOAD_PER_STEP: int = 8
 
@@ -81,6 +86,67 @@ func load_terrain() -> void:
 		if added:
 			num_added += 1
 	_flush_deferred_sockets()
+	_purge_orphaned_level_stacks()
+
+
+## Delete any level-stack tile whose support tile (directly below) no longer
+## has all 4 cardinal level neighbours. Runs once per load_terrain() call so
+## stacks whose support lost cardinals between rule evaluations are cleaned up
+## even when no LevelEdgeRule trigger fires near that support tile.
+func _purge_orphaned_level_stacks() -> void:
+	var to_remove: Array[TerrainModuleInstance] = []
+	for module in terrain_index.all_modules.keys():
+		if not (module is TerrainModuleInstance):
+			continue
+		var piece: TerrainModuleInstance = module
+		if not piece.def.tags.has("level-stack"):
+			continue
+		# Find support tile (level tile directly below, within 1.5 units).
+		var piece_y: float = piece.transform.origin.y
+		var query_box: AABB = AABB(
+			Vector3(piece.transform.origin.x - 0.5, piece_y - 1.5, piece.transform.origin.z - 0.5),
+			Vector3(1.0, 1.4, 1.0)
+		)
+		var candidates: Array = terrain_index.query_box(query_box)
+		var support: TerrainModuleInstance = null
+		var best_dy: float = INF
+		for c in candidates:
+			if not (c is TerrainModuleInstance):
+				continue
+			var other: TerrainModuleInstance = c
+			if other == piece:
+				continue
+			if not other.def.tags.has("level"):
+				continue
+			var dy: float = piece_y - other.transform.origin.y
+			if dy <= 0.1:
+				continue
+			if dy < best_dy:
+				best_dy = dy
+				support = other
+		if support == null:
+			to_remove.append(piece)
+			continue
+		# Support found — verify it still has all 4 cardinal level neighbours.
+		var all_cardinals: bool = true
+		for socket_name in ["front", "right", "back", "left"]:
+			if not support.sockets.has(socket_name):
+				all_cardinals = false
+				break
+			var s: TerrainModuleSocket = TerrainModuleSocket.new(support, socket_name)
+			var other_socket: TerrainModuleSocket = socket_index.query_other(
+				s.get_socket_position(), support
+			)
+			if other_socket == null or other_socket.piece == null:
+				all_cardinals = false
+				break
+			if not other_socket.piece.def.tags.has("level"):
+				all_cardinals = false
+				break
+		if not all_cardinals:
+			to_remove.append(piece)
+	for piece in to_remove:
+		remove_piece(piece)
 
 
 func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
@@ -544,6 +610,25 @@ func add_piece(
 	transform_to_socket(new_piece_socket, orig_piece_socket)
 
 	var new_piece: TerrainModuleInstance = new_piece_socket.piece
+	# Block level-stack tiles whose top exceeds the player's step-height limit
+	# from being placed anywhere that overlaps the player's body footprint.
+	# level-stack tiles sit at y=1.0 (top y=1.5), which traps a player standing
+	# on the ground tile at y=0..0.5. This check runs before replace_existing
+	# removal because can_place() always returns true for replace_existing tiles.
+	if new_piece.def.tags.has("level-stack") and player != null:
+		# level-stack tiles are placed at y=1.0 (their surface starts at ~y=1.0
+		# and extends up to ~y=1.5). Any stack whose origin is above
+		# PLAYER_FEET_Y (0.5) + PLAYER_MAX_STEP_HEIGHT (0.5) = 1.0 is
+		# unreachable. We use the transform origin directly because the mesh AABB
+		# top may be at y=0 locally (top face flush with origin), making the
+		# world-space AABB top equal to origin.y — not origin.y + thickness.
+		if new_piece.transform.origin.y > PLAYER_FEET_Y + 0.01:
+			var player_footprint: AABB = AABB(
+				Vector3(player.global_position.x - 0.5, 0.0, player.global_position.z - 0.5),
+				Vector3(1.0, 3.0, 1.0)
+			)
+			if new_piece.aabb.intersects(player_footprint):
+				return false
 	if new_piece.def.replace_existing:
 		var overlapping_pieces: Array = terrain_index.query_box(new_piece.aabb)
 		if orig_piece_socket.piece != null:
