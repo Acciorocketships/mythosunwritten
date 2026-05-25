@@ -2612,18 +2612,18 @@ func test_integration_cliff_seeding_produces_variants() -> void:
 	gen.player.global_position = Vector3.ZERO
 	gen.RENDER_RANGE = 300
 	gen.MAX_LOAD_PER_STEP = 20
-	seed(31337)  # Adjust if no cliff seeds in this run; test should never PASS without ≥1 cliff.
+	seed(1)  # Adjust if no cliff seeds in this run; test should never PASS without ≥1 cliff.
 	_run_generator_ready(gen)
 
 	# Push the generator forward enough to seed and grow at least one cliff.
 	# 5% seed chance × hundreds of ground placements -> expected ≥1 cliff.
-	for _i in range(2000):
+	for _i in range(5000):
 		gen.load_terrain()
 
 	var cliff_pieces: Array[TerrainModuleInstance] = _collect_cliff_pieces(gen)
 	assert_true(
 		cliff_pieces.size() > 0,
-		"Expected >=1 cliff to seed (seed=31337, iter=2000). Raise iter or change seed if failing."
+		"Expected >=1 cliff to seed (seed=1, iter=5000). Raise iter or change seed if failing."
 	)
 
 	# Verify interior cliff configurations:

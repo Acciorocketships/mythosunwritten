@@ -5,47 +5,6 @@ extends Node3D
 const PLAYER_FEET_Y: float = 0.5
 const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 
-# Tiered placement priority via distance banding. Sockets within the same
-# band sort strictly by tier (cliff > level > deco); across bands they sort
-# by distance, so the closer band always finishes before the next band
-# starts. This gives the user-requested multi-pass behavior (cliffs first,
-# then levels, then decoration) without starving outer tiers — once a band
-# is drained, the next band begins, with its own tier order.
-const TIER_CLIFF: int = 0
-const TIER_LEVEL: int = 1
-const TIER_DECO: int = 2
-
-# One tile width per tier slot, two tile widths per band. Layout per band:
-#   [0..47]    cliff sub-band (sorted by within-band distance)
-#   [48..95]   level sub-band
-#   [96..143]  deco sub-band
-# Next band starts at +144 (3 × TIER_BAND).
-const TIER_BAND: float = 48.0
-
-# How far the player must move between frames before we rebuild the heap.
-# Without this, sockets keep their enqueue-time priorities and origin-area
-# work pops first even after the player has walked away. Half a tile.
-const REPRIORITIZE_DELTA: float = 12.0
-
-const TIER_BY_TAG: Dictionary[String, int] = {
-	"ground": TIER_CLIFF,
-	"cliff": TIER_CLIFF,
-	"cliff-base": TIER_CLIFF,
-	"cliff-stack": TIER_CLIFF,
-	"cliff-side": TIER_CLIFF,
-	"cliff-interior": TIER_CLIFF,
-	"level": TIER_LEVEL,
-	"level-ground": TIER_LEVEL,
-	"level-stack": TIER_LEVEL,
-	"level-ground-center": TIER_LEVEL,
-	"level-stack-center": TIER_LEVEL,
-	"grass": TIER_DECO,
-	"bush": TIER_DECO,
-	"rock": TIER_DECO,
-	"tree": TIER_DECO,
-	"hill": TIER_DECO,
-}
-
 @export var RENDER_RANGE: int = 250
 @export var MAX_LOAD_PER_STEP: int = 8
 
@@ -63,7 +22,6 @@ var _tracked_queue_ref: PriorityQueue = null
 var _deferred_sockets: Array = []
 var _deferred_socket_keys: Dictionary = {}
 var _last_player_pos: Vector3 = Vector3(INF, INF, INF)
-var _last_reprioritize_pos: Vector3 = Vector3(INF, INF, INF)
 
 
 func _ready() -> void:
@@ -96,19 +54,11 @@ func _process(_delta: float) -> void:
 
 func load_terrain() -> void:
 	_ensure_queue_tracking_current()
-	var current_player_pos: Vector3 = player.global_position if player != null else Vector3.ZERO
-	# When the player has moved further than REPRIORITIZE_DELTA since the last
-	# rebuild, recompute the priority of every queued socket against the new
-	# position. Without this, old origin sockets (with low enqueue-time priority)
-	# keep popping first even after the player has walked away, and generation
-	# stays anchored at origin.
-	if (current_player_pos - _last_reprioritize_pos).length() > REPRIORITIZE_DELTA:
-		_reprioritize_queue()
-		_last_reprioritize_pos = current_player_pos
 	# When the player hasn't moved since last frame, all queue priorities still reflect
 	# the current player position, so the heap top is the actual nearest socket. If even
 	# that is out of range, every queued socket is out of range too — skip the frame to
 	# avoid the pop/defer/re-enqueue churn that would otherwise burn the per-frame budget.
+	var current_player_pos: Vector3 = player.global_position if player != null else Vector3.ZERO
 	if current_player_pos == _last_player_pos and not queue.is_empty():
 		var top_item: Variant = queue.peek()
 		if top_item is TerrainModuleSocket:
@@ -739,17 +689,6 @@ func add_piece(
 		if orig_piece_socket.piece != null:
 			overlapping_pieces.erase(orig_piece_socket.piece)
 		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.tags.has("ground"))
-		# Cross-family terrain doesn't overwrite. A level placement shouldn't
-		# delete cliff tiles in its footprint (and vice versa) — they belong to
-		# different vertical regimes. If a cross-family conflict exists, reject
-		# the placement entirely rather than removing the other family.
-		var placing_level: bool = new_piece.def.tags.has("level")
-		var placing_cliff: bool = new_piece.def.tags.has("cliff")
-		for p in overlapping_pieces:
-			if placing_level and p.def.tags.has("cliff"):
-				return false
-			if placing_cliff and p.def.tags.has("level"):
-				return false
 		# Collect pieces stacked above each overlapping piece (e.g. a hill or grass on a
 		# ground tile's topcenter that sits above the new piece's AABB and would be missed
 		# by the query_box call). Gathered before any removal so the socket index is intact.
@@ -875,65 +814,9 @@ func _enqueue_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool
 		return false
 	if queued_socket_keys.has(queue_key):
 		return false
-	var tier: int = _socket_tier(piece_socket.piece, piece_socket.socket_name)
-	queue.push(piece_socket, _banded_priority(distance, tier))
+	queue.push(piece_socket, distance)
 	queued_socket_keys[queue_key] = true
 	return true
-
-
-# Rebuild the heap with fresh priorities computed against the current player
-# position. Called by load_terrain when the player has moved significantly
-# since the last rebuild. Drops sockets whose piece has been destroyed.
-func _reprioritize_queue() -> void:
-	if queue == null or queue.is_empty():
-		return
-	var items: Array[TerrainModuleSocket] = []
-	for entry in queue.heap:
-		if not (entry is Dictionary):
-			continue
-		var item: Variant = entry.get("item")
-		if item is TerrainModuleSocket:
-			items.append(item)
-	queue.heap.clear()
-	queued_socket_keys.clear()
-	for sock in items:
-		if sock.piece == null or sock.piece.root == null:
-			continue
-		var dist: float = get_dist_from_player(sock.piece, sock.socket_name)
-		_enqueue_socket(sock, dist)
-
-
-# Banded priority: floor(distance / TIER_BAND) determines the band; within a
-# band sockets sort by tier first, then by their offset inside the band.
-# Different bands are spaced 3 × TIER_BAND apart so tier sub-bands of one band
-# can't reach into the next band.
-func _banded_priority(distance: float, tier: int) -> float:
-	var band: float = floor(distance / TIER_BAND)
-	var within_band: float = distance - band * TIER_BAND
-	return band * TIER_BAND * 3.0 + float(tier) * TIER_BAND + within_band
-
-
-# Return the tier (0=cliff/ground, 1=level, 2=decoration) for the kind of tile
-# this socket would spawn. Picks the highest-probability tag in the socket's
-# tag distribution and maps it via TIER_BY_TAG. Defaults to TIER_LEVEL for
-# unknown sockets so unfamiliar pieces don't accidentally beat cliffs to a
-# position.
-func _socket_tier(piece: TerrainModuleInstance, socket_name: String) -> int:
-	if piece == null or piece.def == null:
-		return TIER_LEVEL
-	if not piece.def.socket_tag_prob.has(socket_name):
-		return TIER_LEVEL
-	var dist: Distribution = piece.def.socket_tag_prob[socket_name]
-	if dist == null or dist.dist.is_empty():
-		return TIER_LEVEL
-	var best_tag: String = ""
-	var best_prob: float = -1.0
-	for tag in dist.dist.keys():
-		var p: float = dist.prob(tag)
-		if p > best_prob:
-			best_prob = p
-			best_tag = tag
-	return TIER_BY_TAG.get(best_tag, TIER_LEVEL)
 
 
 func _stage_deferred_socket(piece_socket: TerrainModuleSocket, distance: float) -> void:
