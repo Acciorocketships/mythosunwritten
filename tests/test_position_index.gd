@@ -65,7 +65,6 @@ func _make_piece(world_pos: Vector3, socket_name: String = "main", socket_local:
 		scene,
 		AABB(),
 		TagList.new(),
-		{},
 		[],
 		{},
 		{},

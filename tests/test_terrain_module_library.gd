@@ -169,9 +169,10 @@ func test_library_registers_all_cliff_variants() -> void:
 			lib.modules_by_tag.has(variant_tag),
 			"Library missing variant: %s" % variant_tag
 		)
-	# The "cliff" tag should map to all 15 variants.
+	# The "cliff" tag should map to all variants in both tiers (cliff-base and
+	# cliff-stack): 14 edge variants × 2 tiers + cliff-interior + cliff-stack-interior = 30.
 	assert_eq(
 		lib.modules_by_tag["cliff"].size(),
-		15,
-		"All 15 cliff modules should carry 'cliff' tag"
+		30,
+		"All 30 cliff modules (both tiers) should carry 'cliff' tag"
 	)

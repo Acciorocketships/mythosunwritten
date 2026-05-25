@@ -5,15 +5,21 @@ extends Node3D
 const PLAYER_FEET_Y: float = 0.5
 const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 
-# Tiered placement priority. Lower tier processes first within the per-frame
-# budget. Cliffs (and ground expansion) come before levels; both come before
-# decoration. The offset is added to the player-distance so that within a tier
-# the nearest socket still wins. Without tiering, levels and cliffs sampled at
-# similar distances overwrite each other (both have replace_existing=true),
-# producing visible thrashing.
+# Tiered placement priority. Lower tier processes first when distances tie,
+# but tier doesn't dominate distance — a level seed 100 units closer than a
+# cliff seed still wins. Offsets are small so terrain growth stays interleaved
+# instead of waiting for one tier to fully drain. The cross-family conflict
+# guard in add_piece (level won't overwrite cliff and vice versa) is what
+# actually prevents the level↔cliff thrashing; the tier order here just makes
+# cliffs win the ties.
 const TIER_CLIFF: int = 0
 const TIER_LEVEL: int = 1
 const TIER_DECO: int = 2
+
+# Distance offset per tier. One tile width (24) is enough to bias which family
+# wins when both are seeded at a similar position; large enough to influence
+# order without starving any tier.
+const TIER_OFFSET_DISTANCE: float = 24.0
 
 const TIER_BY_TAG: Dictionary[String, int] = {
 	"ground": TIER_CLIFF,
@@ -715,6 +721,17 @@ func add_piece(
 		if orig_piece_socket.piece != null:
 			overlapping_pieces.erase(orig_piece_socket.piece)
 		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.tags.has("ground"))
+		# Cross-family terrain doesn't overwrite. A level placement shouldn't
+		# delete cliff tiles in its footprint (and vice versa) — they belong to
+		# different vertical regimes. If a cross-family conflict exists, reject
+		# the placement entirely rather than removing the other family.
+		var placing_level: bool = new_piece.def.tags.has("level")
+		var placing_cliff: bool = new_piece.def.tags.has("cliff")
+		for p in overlapping_pieces:
+			if placing_level and p.def.tags.has("cliff"):
+				return false
+			if placing_cliff and p.def.tags.has("level"):
+				return false
 		# Collect pieces stacked above each overlapping piece (e.g. a hill or grass on a
 		# ground tile's topcenter that sits above the new piece's AABB and would be missed
 		# by the query_box call). Gathered before any removal so the socket index is intact.
@@ -841,7 +858,7 @@ func _enqueue_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool
 	if queued_socket_keys.has(queue_key):
 		return false
 	var tier: int = _socket_tier(piece_socket.piece, piece_socket.socket_name)
-	var priority: float = distance + float(tier) * float(RENDER_RANGE)
+	var priority: float = distance + float(tier) * TIER_OFFSET_DISTANCE
 	queue.push(piece_socket, priority)
 	queued_socket_keys[queue_key] = true
 	return true

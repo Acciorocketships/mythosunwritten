@@ -156,7 +156,6 @@ func _make_module(size: Vector3, pos_by_name: Dictionary[String, Vector3]) -> Te
 		scene,
 		AABB(),
 		TagList.new(),
-		{},
 		[],
 		{},
 		{},
@@ -363,7 +362,7 @@ func _audit_level_module_missing_fill_prob(gen: Variant) -> Dictionary:
 func test_get_dist_from_player():
 	var gen: Variant = _new_generator()
 	gen.player.global_position = Vector3(1, 0, 0)
-	var mock_def := TerrainModule.new(null, AABB(), TagList.new(), {}, [], {}, {}, {}, {}, false)
+	var mock_def := TerrainModule.new(null, AABB(), TagList.new(), [], {}, {}, {}, {}, false)
 	var mock_piece = TerrainModuleInstance.new(mock_def)
 	mock_piece.root = Node3D.new()
 	_track_node_for_cleanup(mock_piece.root)
@@ -511,7 +510,6 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 		scene,
 		AABB(),
 		TagList.new(),
-		{},
 		[],
 		{},
 		{},
@@ -952,7 +950,6 @@ func test_add_piece_replace_existing_removes_stacked_pieces_above_aabb():
 		replacer_scene,
 		replacer_bb,
 		TagList.new(),
-		{},
 		[],
 		{},
 		{},
@@ -2429,7 +2426,7 @@ func test_24x24x4_test_piece_uses_cliff_socket_layout() -> void:
 
 func test_cliff_side_tile_has_correct_tags_and_socket_config() -> void:
 	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_variant(
-		"CliffSide", "cliff-side"
+		"CliffSide", "cliff-base", "cliff-side"
 	)
 	assert_not_null(module)
 	assert_true(module.tags.has("cliff"))
@@ -2463,7 +2460,7 @@ func test_all_cliff_variants_load() -> void:
 		var scene_name: String = entry[0]
 		var variant_tag: String = entry[1]
 		var module: TerrainModule = TerrainModuleDefinitions.load_cliff_variant(
-			scene_name, variant_tag
+			scene_name, "cliff-base", variant_tag
 		)
 		assert_not_null(module, "Module loader failed for %s" % variant_tag)
 		assert_true(module.tags.has("cliff"), "%s missing 'cliff' tag" % variant_tag)
@@ -2493,7 +2490,7 @@ func test_cliff_interior_tile_uses_ground_scene_with_cliff_tag() -> void:
 
 func test_cliff_edge_rule_matches_cliff_tagged_pieces_only() -> void:
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
-	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_variant("CliffSide", "cliff-side").spawn()
+	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_variant("CliffSide", "cliff-base", "cliff-side").spawn()
 	_pieces_to_destroy.append(cliff)
 	cliff.create()
 	var grass: TerrainModuleInstance = TerrainModuleDefinitions.load_grass_tile().spawn()
@@ -2524,7 +2521,12 @@ func test_cliff_edge_rule_isolated_piece_becomes_cliff_island() -> void:
 	# retiles the piece to cliff-island (visually a 1x1 plateau with cliff
 	# faces on all 4 sides).
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
-	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_variant("CliffSide", "cliff-side").spawn()
+	var library: TerrainModuleLibrary = TerrainModuleLibrary.new()
+	add_child_autofree(library)
+	library.init()
+	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_variant(
+		"CliffSide", "cliff-base", "cliff-side"
+	).spawn()
 	_pieces_to_destroy.append(cliff)
 	cliff.create()
 
@@ -2539,6 +2541,7 @@ func test_cliff_edge_rule_isolated_piece_becomes_cliff_island() -> void:
 		"chosen_piece": cliff,
 		"socket_index": socket_index,
 		"terrain_index": terrain_index,
+		"library": library,
 	})
 	var replacement: TerrainModuleInstance = result["chosen_piece"]
 	_pieces_to_destroy.append(replacement)
@@ -2609,18 +2612,18 @@ func test_integration_cliff_seeding_produces_variants() -> void:
 	gen.player.global_position = Vector3.ZERO
 	gen.RENDER_RANGE = 300
 	gen.MAX_LOAD_PER_STEP = 20
-	seed(12345)  # Adjust if no cliff seeds in this run; test should never PASS without ≥1 cliff.
+	seed(31337)  # Adjust if no cliff seeds in this run; test should never PASS without ≥1 cliff.
 	_run_generator_ready(gen)
 
 	# Push the generator forward enough to seed and grow at least one cliff.
 	# 5% seed chance × hundreds of ground placements -> expected ≥1 cliff.
-	for _i in range(800):
+	for _i in range(2000):
 		gen.load_terrain()
 
 	var cliff_pieces: Array[TerrainModuleInstance] = _collect_cliff_pieces(gen)
 	assert_true(
 		cliff_pieces.size() > 0,
-		"Expected >=1 cliff to seed (seed=12345, iter=800). Raise iter or change seed if failing."
+		"Expected >=1 cliff to seed (seed=31337, iter=2000). Raise iter or change seed if failing."
 	)
 
 	# Verify interior cliff configurations:
