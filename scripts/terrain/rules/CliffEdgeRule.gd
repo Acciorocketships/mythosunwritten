@@ -331,29 +331,13 @@ func _tag_for_missing_sockets(missing_sockets: Array[String]) -> String:
 
 func _get_module_for_cliff_tag(cliff_tag: String) -> TerrainModule:
 	if module_by_cliff_tag.is_empty():
-		module_by_cliff_tag = {
-			"cliff-interior": TerrainModuleDefinitions.load_cliff_interior_tile(),
-			"cliff-side": TerrainModuleDefinitions.load_cliff_side_tile(),
-			"cliff-corner": TerrainModuleDefinitions.load_cliff_corner_tile(),
-			"cliff-line": TerrainModuleDefinitions.load_cliff_line_tile(),
-			"cliff-peninsula": TerrainModuleDefinitions.load_cliff_peninsula_tile(),
-			"cliff-island": TerrainModuleDefinitions.load_cliff_island_tile(),
-			"cliff-inner-corner": TerrainModuleDefinitions.load_cliff_inner_corner_tile(),
-			"cliff-inner-corner-diag":
-				TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile(),
-			"cliff-inner-corner-side":
-				TerrainModuleDefinitions.load_cliff_inner_corner_side_tile(),
-			"cliff-inner-corner-edge1":
-				TerrainModuleDefinitions.load_cliff_inner_corner_edge1_tile(),
-			"cliff-inner-corner-edge2":
-				TerrainModuleDefinitions.load_cliff_inner_corner_edge2_tile(),
-			"cliff-inner-corner-edge-both":
-				TerrainModuleDefinitions.load_cliff_inner_corner_edge_both_tile(),
-			"cliff-inner-corner-side-edge":
-				TerrainModuleDefinitions.load_cliff_inner_corner_side_edge_tile(),
-			"cliff-inner-corner-three":
-				TerrainModuleDefinitions.load_cliff_inner_corner_three_tile(),
-			"cliff-inner-corner-all":
-				TerrainModuleDefinitions.load_cliff_inner_corner_all_tile()
-		}
+		module_by_cliff_tag["cliff-interior"] = (
+			TerrainModuleDefinitions.load_cliff_interior_tile()
+		)
+		for entry in TerrainModuleDefinitions.CLIFF_VARIANT_TABLE:
+			var scene_name: String = entry[0]
+			var variant_tag: String = entry[1]
+			module_by_cliff_tag[variant_tag] = (
+				TerrainModuleDefinitions.load_cliff_variant(scene_name, variant_tag)
+			)
 	return module_by_cliff_tag.get(cliff_tag, null)

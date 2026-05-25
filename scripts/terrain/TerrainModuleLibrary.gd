@@ -24,23 +24,10 @@ func load_terrain_modules() -> void:
 	terrain_modules.append(TerrainModuleDefinitions.load_tree_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_8x8x2_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_12x12x2_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_level_middle_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_level_stack_middle_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_side_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_corner_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_line_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_peninsula_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_island_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_side_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_three_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_all_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_edge1_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_edge2_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_edge_both_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_inner_corner_side_edge_tile())
-	terrain_modules.append(TerrainModuleDefinitions.load_cliff_interior_tile())
+	for m in TerrainModuleDefinitions.load_level_variants():
+		terrain_modules.append(m)
+	for m in TerrainModuleDefinitions.load_cliff_variants():
+		terrain_modules.append(m)
 
 
 func load_test_pieces() -> void:

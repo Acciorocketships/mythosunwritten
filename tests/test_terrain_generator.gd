@@ -2121,7 +2121,9 @@ func test_level_center_has_nonzero_topcenter_fill_prob():
 
 
 func test_level_edge_has_null_topcenter_fill_prob():
-	var module: TerrainModule = TerrainModuleDefinitions.load_level_side_tile()
+	var module: TerrainModule = TerrainModuleDefinitions.load_level_variant(
+		"LevelSide", "level-ground", "level-side"
+	)
 	assert_true(module.socket_fill_prob.has("topcenter"))
 	assert_eq(module.socket_fill_prob["topcenter"], null)
 
@@ -2265,7 +2267,9 @@ func test_level_edge_rule_removes_stacked_when_becoming_edge():
 
 func test_replace_piece_queues_topcenter_when_stack_piece_retiles_to_center():
 	var gen: Variant = _new_generator()
-	var side_module: TerrainModule = TerrainModuleDefinitions.load_level_stack_side_tile()
+	var side_module: TerrainModule = TerrainModuleDefinitions.load_level_variant(
+		"LevelSide", "level-stack", "level-side"
+	)
 	var side_piece: TerrainModuleInstance = _spawn_piece(side_module)
 	gen.terrain_parent.add_child(side_piece.root)
 	gen.register_piece(side_piece, "")
@@ -2427,7 +2431,9 @@ func test_24x24x4_test_piece_uses_cliff_socket_layout() -> void:
 
 
 func test_cliff_side_tile_has_correct_tags_and_socket_config() -> void:
-	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_side_tile()
+	var module: TerrainModule = TerrainModuleDefinitions.load_cliff_variant(
+		"CliffSide", "cliff-side"
+	)
 	assert_not_null(module)
 	assert_true(module.tags.has("cliff"))
 	assert_true(module.tags.has("cliff-side"))
@@ -2456,23 +2462,12 @@ func test_cliff_side_tile_has_correct_tags_and_socket_config() -> void:
 
 
 func test_all_cliff_variants_load() -> void:
-	var variants: Dictionary[String, Callable] = {
-		"cliff-corner":                 TerrainModuleDefinitions.load_cliff_corner_tile,
-		"cliff-line":                   TerrainModuleDefinitions.load_cliff_line_tile,
-		"cliff-peninsula":              TerrainModuleDefinitions.load_cliff_peninsula_tile,
-		"cliff-island":                 TerrainModuleDefinitions.load_cliff_island_tile,
-		"cliff-inner-corner":           TerrainModuleDefinitions.load_cliff_inner_corner_tile,
-		"cliff-inner-corner-diag":      TerrainModuleDefinitions.load_cliff_inner_corner_diag_tile,
-		"cliff-inner-corner-side":      TerrainModuleDefinitions.load_cliff_inner_corner_side_tile,
-		"cliff-inner-corner-three":     TerrainModuleDefinitions.load_cliff_inner_corner_three_tile,
-		"cliff-inner-corner-all":       TerrainModuleDefinitions.load_cliff_inner_corner_all_tile,
-		"cliff-inner-corner-edge1":     TerrainModuleDefinitions.load_cliff_inner_corner_edge1_tile,
-		"cliff-inner-corner-edge2":     TerrainModuleDefinitions.load_cliff_inner_corner_edge2_tile,
-		"cliff-inner-corner-edge-both": TerrainModuleDefinitions.load_cliff_inner_corner_edge_both_tile,
-		"cliff-inner-corner-side-edge": TerrainModuleDefinitions.load_cliff_inner_corner_side_edge_tile,
-	}
-	for variant_tag in variants.keys():
-		var module: TerrainModule = variants[variant_tag].call()
+	for entry in TerrainModuleDefinitions.CLIFF_VARIANT_TABLE:
+		var scene_name: String = entry[0]
+		var variant_tag: String = entry[1]
+		var module: TerrainModule = TerrainModuleDefinitions.load_cliff_variant(
+			scene_name, variant_tag
+		)
 		assert_not_null(module, "Module loader failed for %s" % variant_tag)
 		assert_true(module.tags.has("cliff"), "%s missing 'cliff' tag" % variant_tag)
 		assert_true(module.tags.has(variant_tag), "%s missing '%s' tag" % [variant_tag, variant_tag])
@@ -2501,7 +2496,7 @@ func test_cliff_interior_tile_uses_ground_scene_with_cliff_tag() -> void:
 
 func test_cliff_edge_rule_matches_cliff_tagged_pieces_only() -> void:
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
-	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_side_tile().spawn()
+	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_variant("CliffSide", "cliff-side").spawn()
 	_pieces_to_destroy.append(cliff)
 	cliff.create()
 	var grass: TerrainModuleInstance = TerrainModuleDefinitions.load_grass_tile().spawn()
@@ -2532,7 +2527,7 @@ func test_cliff_edge_rule_isolated_piece_becomes_cliff_island() -> void:
 	# retiles the piece to cliff-island (visually a 1x1 plateau with cliff
 	# faces on all 4 sides).
 	var rule: CliffEdgeRule = CliffEdgeRule.new()
-	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_side_tile().spawn()
+	var cliff: TerrainModuleInstance = TerrainModuleDefinitions.load_cliff_variant("CliffSide", "cliff-side").spawn()
 	_pieces_to_destroy.append(cliff)
 	cliff.create()
 

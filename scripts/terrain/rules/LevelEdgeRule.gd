@@ -544,52 +544,21 @@ func _level_tier_tag(module_def: TerrainModule) -> String:
 
 func _get_module_for_level_tag(level_tag: String, level_tier: String) -> TerrainModule:
 	if module_by_level_tag.is_empty():
-		module_by_level_tag = {
-			"level-ground:level-center": TerrainModuleDefinitions.load_level_middle_tile(),
-			"level-ground:level-side": TerrainModuleDefinitions.load_level_side_tile(),
-			"level-ground:level-corner": TerrainModuleDefinitions.load_level_corner_tile(),
-			"level-ground:level-line": TerrainModuleDefinitions.load_level_line_tile(),
-			"level-ground:level-peninsula": TerrainModuleDefinitions.load_level_peninsula_tile(),
-			"level-ground:level-island": TerrainModuleDefinitions.load_level_island_tile(),
-			"level-ground:level-inner-corner": TerrainModuleDefinitions.load_level_inner_corner_tile(),
-			"level-ground:level-inner-corner-diag":
-				TerrainModuleDefinitions.load_level_inner_corner_diag_tile(),
-			"level-ground:level-inner-corner-side":
-				TerrainModuleDefinitions.load_level_inner_corner_side_tile(),
-			"level-ground:level-inner-corner-edge1":
-				TerrainModuleDefinitions.load_level_inner_corner_edge1_tile(),
-			"level-ground:level-inner-corner-edge2":
-				TerrainModuleDefinitions.load_level_inner_corner_edge2_tile(),
-			"level-ground:level-inner-corner-edge-both":
-				TerrainModuleDefinitions.load_level_inner_corner_edge_both_tile(),
-			"level-ground:level-inner-corner-side-edge":
-				TerrainModuleDefinitions.load_level_inner_corner_side_edge_tile(),
-			"level-ground:level-inner-corner-three":
-				TerrainModuleDefinitions.load_level_inner_corner_three_tile(),
-			"level-ground:level-inner-corner-all":
-				TerrainModuleDefinitions.load_level_inner_corner_all_tile(),
-			"level-stack:level-center": TerrainModuleDefinitions.load_level_stack_middle_tile(),
-			"level-stack:level-side": TerrainModuleDefinitions.load_level_stack_side_tile(),
-			"level-stack:level-corner": TerrainModuleDefinitions.load_level_stack_corner_tile(),
-			"level-stack:level-line": TerrainModuleDefinitions.load_level_stack_line_tile(),
-			"level-stack:level-peninsula": TerrainModuleDefinitions.load_level_stack_peninsula_tile(),
-			"level-stack:level-island": TerrainModuleDefinitions.load_level_stack_island_tile(),
-			"level-stack:level-inner-corner": TerrainModuleDefinitions.load_level_stack_inner_corner_tile(),
-			"level-stack:level-inner-corner-diag":
-				TerrainModuleDefinitions.load_level_stack_inner_corner_diag_tile(),
-			"level-stack:level-inner-corner-side":
-				TerrainModuleDefinitions.load_level_stack_inner_corner_side_tile(),
-			"level-stack:level-inner-corner-edge1":
-				TerrainModuleDefinitions.load_level_stack_inner_corner_edge1_tile(),
-			"level-stack:level-inner-corner-edge2":
-				TerrainModuleDefinitions.load_level_stack_inner_corner_edge2_tile(),
-			"level-stack:level-inner-corner-edge-both":
-				TerrainModuleDefinitions.load_level_stack_inner_corner_edge_both_tile(),
-			"level-stack:level-inner-corner-side-edge":
-				TerrainModuleDefinitions.load_level_stack_inner_corner_side_edge_tile(),
-			"level-stack:level-inner-corner-three":
-				TerrainModuleDefinitions.load_level_stack_inner_corner_three_tile(),
-			"level-stack:level-inner-corner-all":
-				TerrainModuleDefinitions.load_level_stack_inner_corner_all_tile()
-		}
+		# Special-tag center tiles (carry ground-type / level-stack-center beyond the
+		# generic variant tag set) — built by dedicated loaders.
+		module_by_level_tag["level-ground:level-center"] = (
+			TerrainModuleDefinitions.load_level_middle_tile()
+		)
+		module_by_level_tag["level-stack:level-center"] = (
+			TerrainModuleDefinitions.load_level_stack_middle_tile()
+		)
+		for entry in TerrainModuleDefinitions.LEVEL_VARIANT_TABLE:
+			var scene_name: String = entry[0]
+			var variant_tag: String = entry[1]
+			module_by_level_tag["level-ground:%s" % variant_tag] = (
+				TerrainModuleDefinitions.load_level_variant(scene_name, "level-ground", variant_tag)
+			)
+			module_by_level_tag["level-stack:%s" % variant_tag] = (
+				TerrainModuleDefinitions.load_level_variant(scene_name, "level-stack", variant_tag)
+			)
 	return module_by_level_tag.get("%s:%s" % [level_tier, level_tag], null)
