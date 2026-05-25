@@ -638,19 +638,14 @@ func add_piece(
 	transform_to_socket(new_piece_socket, orig_piece_socket)
 
 	var new_piece: TerrainModuleInstance = new_piece_socket.piece
-	# Block level-stack tiles whose top exceeds the player's step-height limit
-	# from being placed anywhere that overlaps the player's body footprint.
-	# level-stack tiles sit at y=1.0 (top y=1.5), which traps a player standing
-	# on the ground tile at y=0..0.5. This check runs before replace_existing
-	# removal because can_place() always returns true for replace_existing tiles.
-	if new_piece.def.tags.has("level-stack") and player != null:
-		# level-stack tiles are placed at y=1.0 (their surface starts at ~y=1.0
-		# and extends up to ~y=1.5). Any stack whose origin is above
-		# PLAYER_FEET_Y (0.5) + PLAYER_MAX_STEP_HEIGHT (0.5) = 1.0 is
-		# unreachable. We use the transform origin directly because the mesh AABB
-		# top may be at y=0 locally (top face flush with origin), making the
-		# world-space AABB top equal to origin.y — not origin.y + thickness.
-		if new_piece.transform.origin.y > PLAYER_FEET_Y + 0.01:
+	# Reject any non-ground tile whose top rises above what the player can step
+	# over (PLAYER_FEET_Y + PLAYER_MAX_STEP_HEIGHT) and whose footprint overlaps
+	# the player body — without this check, cliffs / level-stacks / hills can
+	# spawn on the player and trap them. Runs before replace_existing removal
+	# because can_place() unconditionally allows replace_existing tiles.
+	if player != null and not new_piece.def.tags.has("ground"):
+		var aabb_top: float = new_piece.aabb.position.y + new_piece.aabb.size.y
+		if aabb_top > PLAYER_FEET_Y + PLAYER_MAX_STEP_HEIGHT:
 			var player_footprint: AABB = AABB(
 				Vector3(player.global_position.x - 0.5, 0.0, player.global_position.z - 0.5),
 				Vector3(1.0, 3.0, 1.0)
