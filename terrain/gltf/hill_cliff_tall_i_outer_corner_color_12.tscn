@@ -1,5 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://dvihclfiaajr3"]
+[gd_scene load_steps=3 format=3 uid="uid://dvihclfiaajr3"]
 
 [ext_resource type="PackedScene" uid="uid://busoagg5wld2s" path="res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_I_OuterCorner_Color1.gltf" id="1_xrrnw"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_xrrnw"]
+size = Vector3(3, 4, 2.5)
+
 [node name="Hill_Cliff_Tall_I_OuterCorner_Color12" instance=ExtResource("1_xrrnw")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -0.25)
+shape = SubResource("BoxShape3D_xrrnw")
