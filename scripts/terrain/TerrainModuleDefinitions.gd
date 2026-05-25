@@ -4,6 +4,7 @@ extends Resource
 const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.3
 const LEVEL_TOPCENTER_FILL_PROB: float = 0.3
 const CLIFF_LATERAL_FILL_PROB: float = 0.35
+const CLIFF_TOPCENTER_FILL_PROB: float = 0.15
 
 # Scene-name ↔ variant-tag tables. Each entry is loaded once per tier (level
 # emits both "level-ground" and "level-stack" tiers; cliff currently emits only
@@ -315,37 +316,77 @@ static func load_level_stack_middle_tile() -> TerrainModule:
 
 ### Cliff variants (data-driven) ###
 
-# Returns every cliff variant plus the interior tile. Used by
+# Returns every cliff variant in both tiers (cliff-base sits on ground,
+# cliff-stack sits on cliff-interior) plus the two interior tiles. Used by
 # TerrainModuleLibrary to populate the library in one call.
 static func load_cliff_variants() -> Array[TerrainModule]:
 	var out: Array[TerrainModule] = []
 	for entry in CLIFF_VARIANT_TABLE:
-		out.append(load_cliff_variant(entry[0], entry[1]))
+		out.append(load_cliff_variant(entry[0], "cliff-base", entry[1]))
+		out.append(load_cliff_variant(entry[0], "cliff-stack", entry[1]))
 	out.append(load_cliff_interior_tile())
+	out.append(load_cliff_stack_interior_tile())
 	return out
 
 
-# Build a single cliff variant from a scene short-name and variant tag.
-static func load_cliff_variant(scene_name: String, variant_tag: String) -> TerrainModule:
+# Build a single cliff variant. tier is "cliff-base" (bottom required tag
+# "ground", sits on a ground tile) or "cliff-stack" (bottom required tag
+# "cliff", sits on a cliff-interior plateau).
+static func load_cliff_variant(
+	scene_name: String, tier: String, variant_tag: String
+) -> TerrainModule:
 	var scene_path: String = "res://terrain/scenes/%s.tscn" % scene_name
-	return _build_cliff_tile(scene_path, TagList.new(["cliff", variant_tag, "24x24x4"]))
+	if tier == "cliff-stack":
+		return _build_cliff_tile(
+			scene_path,
+			TagList.new(["cliff", "cliff-stack", variant_tag, "24x24x4"]),
+			"cliff"
+		)
+	return _build_cliff_tile(
+		scene_path,
+		TagList.new(["cliff", "cliff-base", variant_tag, "24x24x4"]),
+		"ground"
+	)
 
 
 static func load_cliff_interior_tile() -> TerrainModule:
 	# Cliff plateau interior: visually a ground tile, but tagged "cliff" so neighbour
 	# cliff-sides' required-tag filters remain satisfied. Lateral cardinals are
 	# non-expandable because the plateau perimeter is covered by cliff-sides.
-	# Topcenter is NOT expanded — placing a level/cliff on top would cover the
-	# cliff plateau with a second tile layer and merge plateaus into giant slabs.
-	# Foliage spawns on the top corners (grass/trees on the cliff plateau surface).
+	# Topcenter seeds a cliff-stack-side with CLIFF_TOPCENTER_FILL_PROB so that
+	# multi-storey cliff plateaus can grow upward, just like level-stack does for
+	# levels. Foliage spawns on the top cardinals/corners (grass/trees on the
+	# cliff plateau surface).
+	return _build_cliff_interior_module(
+		TagList.new(["cliff", "cliff-base", "cliff-interior", "ground-type", "24x24x4"])
+	)
+
+
+static func load_cliff_stack_interior_tile() -> TerrainModule:
+	# Cliff-stack interior: the plateau surface tile at the second (or higher)
+	# storey. Mirrors cliff-interior but is tagged "cliff-stack" so the next
+	# tier of stacking can attach. Seeds another cliff-stack-side from its
+	# topcenter, enabling infinite stacking limited by CLIFF_TOPCENTER_FILL_PROB.
+	return _build_cliff_interior_module(
+		TagList.new(["cliff", "cliff-stack", "cliff-interior", "ground-type", "24x24x4"])
+	)
+
+
+static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 	var scene: PackedScene = load("res://terrain/scenes/GroundTile.tscn")
-	var tags: TagList = TagList.new(["cliff", "cliff-interior", "ground-type", "24x24x4"])
 	var bb: AABB = AABB(Vector3(-12, -0.5, -12), Vector3(24, 0.5, 24))
 
 	var top_size_dist_corners: Distribution = Distribution.new({"point": 0.9, "12x12x2": 0.1})
 	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8x2": 0.1})
-	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
+	var top_tag_prob_corners: Distribution = Distribution.new(
+		{"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1}
+	)
 	var top_tag_prob_cardinal: Distribution = top_tag_prob_corners
+	# Topcenter: chance to seed a cliff-stack tile; otherwise decorations only.
+	var top_size_dist_center: Distribution = Distribution.new(
+		{"24x24x4": CLIFF_TOPCENTER_FILL_PROB, "point": 1.0 - CLIFF_TOPCENTER_FILL_PROB}
+	)
+	var top_tag_prob_center: Distribution = Distribution.new({"cliff-side": 1.0})
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x4": 1.0}),
@@ -356,7 +397,7 @@ static func load_cliff_interior_tile() -> TerrainModule:
 		"topback": top_size_dist_cardinal,
 		"topleft": top_size_dist_cardinal,
 		"topright": top_size_dist_cardinal,
-		"topcenter": Distribution.new({"point": 1.0}),
+		"topcenter": top_size_dist_center,
 		"topfrontright": top_size_dist_corners,
 		"topfrontleft": top_size_dist_corners,
 		"topbackright": top_size_dist_corners,
@@ -376,7 +417,7 @@ static func load_cliff_interior_tile() -> TerrainModule:
 		"topfrontleft": 0.05,
 		"topbackright": 0.05,
 		"topbackleft": 0.05,
-		"topcenter": null,
+		"topcenter": CLIFF_TOPCENTER_FILL_PROB,
 		"bottom": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
@@ -388,6 +429,7 @@ static func load_cliff_interior_tile() -> TerrainModule:
 		"topfrontleft": top_tag_prob_corners,
 		"topbackright": top_tag_prob_corners,
 		"topbackleft": top_tag_prob_corners,
+		"topcenter": top_tag_prob_center,
 	}
 
 	return TerrainModule.new(
@@ -405,17 +447,20 @@ static func load_cliff_interior_tile() -> TerrainModule:
 
 static func _build_cliff_tile(
 	scene_path: String,
-	tags: TagList
+	tags: TagList,
+	bottom_required_tag: String = "ground"
 ) -> TerrainModule:
-	# All cliff edge variants share an identical socket layout:
+	# Shared layout for both cliff tiers:
 	#   - Cardinals at top elevation, required=cliff, high lateral fill.
 	#   - Diagonals are null (markers for inner-corner detection only).
-	#   - Bottom attaches to a ground tile below (no expansion).
-	#   - Topcenter does NOT expand on edge variants. Only cliff-interior
-	#     (the rule's interior-swap target) carries the topcenter distribution
-	#     for foliage and multi-storey cliff seeding.
+	#   - Bottom attaches to a ground tile (cliff-base) or another cliff
+	#     (cliff-stack) below; no expansion.
+	#   - Topcenter does NOT expand on edge variants. Only the interior
+	#     tiles (the rule's interior-swap target) carry the topcenter
+	#     distribution for foliage and stacking.
 	var scene: PackedScene = load(scene_path)
 	var bb: AABB = AABB(Vector3(-12, -4, -12), Vector3(24, 4, 24))
+	var bottom_size_tag: String = "24x24x0.5" if bottom_required_tag == "ground" else "24x24x4"
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x4": 1.0}),
@@ -423,14 +468,14 @@ static func _build_cliff_tile(
 		"left": Distribution.new({"24x24x4": 1.0}),
 		"right": Distribution.new({"24x24x4": 1.0}),
 		"topcenter": Distribution.new({"24x24x0.5": 1.0}),
-		"bottom": Distribution.new({"24x24x0.5": 1.0}),
+		"bottom": Distribution.new({bottom_size_tag: 1.0}),
 	}
 	var socket_required: Dictionary[String, TagList] = {
 		"front": TagList.new(["cliff"]),
 		"back": TagList.new(["cliff"]),
 		"left": TagList.new(["cliff"]),
 		"right": TagList.new(["cliff"]),
-		"bottom": TagList.new(["ground"]),
+		"bottom": TagList.new([bottom_required_tag]),
 	}
 	var socket_fill_prob: Dictionary[String, Variant] = {
 		"front": CLIFF_LATERAL_FILL_PROB,

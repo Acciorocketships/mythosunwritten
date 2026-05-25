@@ -86,67 +86,88 @@ func load_terrain() -> void:
 		if added:
 			num_added += 1
 	_flush_deferred_sockets()
-	_purge_orphaned_level_stacks()
+	_purge_orphaned_stacks()
 
 
-## Delete any level-stack tile whose support tile (directly below) no longer
-## has all 4 cardinal level neighbours. Runs once per load_terrain() call so
-## stacks whose support lost cardinals between rule evaluations are cleaned up
-## even when no LevelEdgeRule trigger fires near that support tile.
-func _purge_orphaned_level_stacks() -> void:
+## Delete any stack tile (level-stack or cliff-stack) whose support tile
+## (directly below) no longer satisfies its support invariant:
+##   - level-stack: support must be a level tile with all 4 cardinal level
+##     neighbours.
+##   - cliff-stack: support must be a cliff-interior tile (no cardinal check
+##     needed; cliff-interior already implies the perimeter is filled).
+## Runs once per load_terrain() call so stacks whose support changed between
+## rule evaluations are cleaned up even when no rule trigger fires nearby.
+func _purge_orphaned_stacks() -> void:
 	var to_remove: Array[TerrainModuleInstance] = []
 	for module in terrain_index.all_modules.keys():
 		if not (module is TerrainModuleInstance):
 			continue
 		var piece: TerrainModuleInstance = module
-		if not piece.def.tags.has("level-stack"):
-			continue
-		# Find support tile (level tile directly below, within 1.5 units).
-		var piece_y: float = piece.transform.origin.y
-		var query_box: AABB = AABB(
-			Vector3(piece.transform.origin.x - 0.5, piece_y - 1.5, piece.transform.origin.z - 0.5),
-			Vector3(1.0, 1.4, 1.0)
-		)
-		var candidates: Array = terrain_index.query_box(query_box)
-		var support: TerrainModuleInstance = null
-		var best_dy: float = INF
-		for c in candidates:
-			if not (c is TerrainModuleInstance):
-				continue
-			var other: TerrainModuleInstance = c
-			if other == piece:
-				continue
-			if not other.def.tags.has("level"):
-				continue
-			var dy: float = piece_y - other.transform.origin.y
-			if dy <= 0.1:
-				continue
-			if dy < best_dy:
-				best_dy = dy
-				support = other
-		if support == null:
-			to_remove.append(piece)
-			continue
-		# Support found — verify it still has all 4 cardinal level neighbours.
-		var all_cardinals: bool = true
-		for socket_name in ["front", "right", "back", "left"]:
-			if not support.sockets.has(socket_name):
-				all_cardinals = false
-				break
-			var s: TerrainModuleSocket = TerrainModuleSocket.new(support, socket_name)
-			var other_socket: TerrainModuleSocket = socket_index.query_other(
-				s.get_socket_position(), support
-			)
-			if other_socket == null or other_socket.piece == null:
-				all_cardinals = false
-				break
-			if not other_socket.piece.def.tags.has("level"):
-				all_cardinals = false
-				break
-		if not all_cardinals:
-			to_remove.append(piece)
+		if piece.def.tags.has("level-stack"):
+			if not _has_valid_stack_support(piece, "level", 1.5, true):
+				to_remove.append(piece)
+		elif piece.def.tags.has("cliff-stack"):
+			if not _has_valid_stack_support(piece, "cliff", 5.0, false):
+				to_remove.append(piece)
 	for piece in to_remove:
 		remove_piece(piece)
+
+
+# Returns true if `piece` has a valid stack support directly below: a
+# `family_tag`-tagged tile within `search_dy` units down (cliff-stack searches
+# specifically for cliff-interior). If `require_all_cardinals` is true the
+# support must also have all 4 cardinal `family_tag` neighbours.
+func _has_valid_stack_support(
+	piece: TerrainModuleInstance,
+	family_tag: String,
+	search_dy: float,
+	require_all_cardinals: bool
+) -> bool:
+	var piece_y: float = piece.transform.origin.y
+	var query_box: AABB = AABB(
+		Vector3(
+			piece.transform.origin.x - 0.5,
+			piece_y - search_dy,
+			piece.transform.origin.z - 0.5,
+		),
+		Vector3(1.0, search_dy - 0.1, 1.0)
+	)
+	var support: TerrainModuleInstance = null
+	var best_dy: float = INF
+	for c in terrain_index.query_box(query_box):
+		if not (c is TerrainModuleInstance):
+			continue
+		var other: TerrainModuleInstance = c
+		if other == piece:
+			continue
+		if not other.def.tags.has(family_tag):
+			continue
+		# cliff-stack pieces require a cliff-interior support — not just any cliff
+		# (a neighbour cliff-edge at the same y is not a valid support).
+		if family_tag == "cliff" and not other.def.tags.has("cliff-interior"):
+			continue
+		var dy: float = piece_y - other.transform.origin.y
+		if dy <= 0.1:
+			continue
+		if dy < best_dy:
+			best_dy = dy
+			support = other
+	if support == null:
+		return false
+	if not require_all_cardinals:
+		return true
+	for socket_name in ["front", "right", "back", "left"]:
+		if not support.sockets.has(socket_name):
+			return false
+		var s: TerrainModuleSocket = TerrainModuleSocket.new(support, socket_name)
+		var other_socket: TerrainModuleSocket = socket_index.query_other(
+			s.get_socket_position(), support
+		)
+		if other_socket == null or other_socket.piece == null:
+			return false
+		if not other_socket.piece.def.tags.has(family_tag):
+			return false
+	return true
 
 
 func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:

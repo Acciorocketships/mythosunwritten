@@ -70,6 +70,17 @@ func apply(context: Dictionary) -> Dictionary:
 	var affected: Array[TerrainModuleInstance] = []
 	var seen: Dictionary = {}
 	_add_unique_piece(affected, seen, chosen_piece)
+	# Proactive support check for cliff-stack tiles: parallel to LevelEdgeRule's
+	# stack support check. A stacked cliff is only valid when there's a
+	# cliff-interior directly below (the plateau it sits on). Without this gate,
+	# cliff-interior topcenter seeding can stack tiles that aren't actually
+	# supported, producing floating cliff towers.
+	if chosen_piece.def.tags.has("cliff-stack"):
+		var support: TerrainModuleInstance = _get_cliff_support_below(
+			chosen_piece, terrain_index
+		)
+		if support == null:
+			return {"chosen_piece": null, "piece_updates": piece_updates}
 	var direct_neighbors: Array[TerrainModuleInstance] = _get_cliff_neighbors(
 		chosen_piece,
 		socket_index,
@@ -177,6 +188,39 @@ func _has_cliff_connection(
 	)
 
 
+# Find the cliff-interior tile a cliff-stack rests on (within ~4.5 units down).
+# Mirrors LevelEdgeRule._get_support_piece_below; the y range is wider because
+# cliff tiles are 4 units tall (vs 1 for level).
+func _get_cliff_support_below(
+	piece: TerrainModuleInstance, terrain_index: TerrainIndex
+) -> TerrainModuleInstance:
+	if piece == null:
+		return null
+	var piece_y: float = piece.transform.origin.y
+	var query_box: AABB = AABB(
+		Vector3(piece.transform.origin.x - 0.5, piece_y - 5.0, piece.transform.origin.z - 0.5),
+		Vector3(1.0, 4.9, 1.0)
+	)
+	var hits: Array = terrain_index.query_box(query_box)
+	var best_support: TerrainModuleInstance = null
+	var best_dy: float = INF
+	for hit in hits:
+		if not (hit is TerrainModuleInstance):
+			continue
+		var other: TerrainModuleInstance = hit
+		if other == piece:
+			continue
+		if not other.def.tags.has("cliff-interior"):
+			continue
+		var dy: float = piece_y - other.transform.origin.y
+		if dy <= SAME_LEVEL_EPS:
+			continue
+		if dy < best_dy:
+			best_dy = dy
+			best_support = other
+	return best_support
+
+
 func _get_cliff_neighbors(
 	piece: TerrainModuleInstance,
 	socket_index: PositionIndex,
@@ -281,7 +325,9 @@ func _create_replacement_for_target(
 	var existing_tag: String = _current_cliff_tag(source_piece.def)
 	if existing_tag == target_tag and steps_to_align == 0:
 		return source_piece
-	var module_template: TerrainModule = _get_module_for_cliff_tag(target_tag, library)
+	var module_template: TerrainModule = _get_module_for_cliff_tag(
+		target_tag, _cliff_tier_tag(source_piece.def), library
+	)
 	if module_template == null:
 		return source_piece
 	if module_template == source_piece.def and steps_to_align == 0:
@@ -330,18 +376,20 @@ func _tag_for_missing_sockets(missing_sockets: Array[String]) -> String:
 	return "cliff-interior"
 
 
+func _cliff_tier_tag(module_def: TerrainModule) -> String:
+	if module_def != null and module_def.tags.has("cliff-stack"):
+		return "cliff-stack"
+	return "cliff-base"
+
+
 func _get_module_for_cliff_tag(
-	cliff_tag: String, library: TerrainModuleLibrary
+	cliff_tag: String, cliff_tier: String, library: TerrainModuleLibrary
 ) -> TerrainModule:
 	if library == null:
 		return null
-	var matches_list: TerrainModuleList = library.get_by_tags(TagList.new([cliff_tag]))
+	var matches_list: TerrainModuleList = library.get_by_tags(
+		TagList.new([cliff_tier, cliff_tag])
+	)
 	if matches_list.is_empty():
 		return null
-	# Pick the entry that doesn't carry the cliff-stack tier tag — cliff-interior
-	# shares its variant_tag with no other module, but other cliff variants will
-	# eventually exist in both tiers (section 5). Return the first base-tier match.
-	for module in matches_list.library:
-		if not module.tags.has("cliff-stack"):
-			return module
 	return matches_list.library[0]
