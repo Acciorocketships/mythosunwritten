@@ -5,6 +5,35 @@ extends Node3D
 const PLAYER_FEET_Y: float = 0.5
 const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 
+# Tiered placement priority. Lower tier processes first within the per-frame
+# budget. Cliffs (and ground expansion) come before levels; both come before
+# decoration. The offset is added to the player-distance so that within a tier
+# the nearest socket still wins. Without tiering, levels and cliffs sampled at
+# similar distances overwrite each other (both have replace_existing=true),
+# producing visible thrashing.
+const TIER_CLIFF: int = 0
+const TIER_LEVEL: int = 1
+const TIER_DECO: int = 2
+
+const TIER_BY_TAG: Dictionary[String, int] = {
+	"ground": TIER_CLIFF,
+	"cliff": TIER_CLIFF,
+	"cliff-base": TIER_CLIFF,
+	"cliff-stack": TIER_CLIFF,
+	"cliff-side": TIER_CLIFF,
+	"cliff-interior": TIER_CLIFF,
+	"level": TIER_LEVEL,
+	"level-ground": TIER_LEVEL,
+	"level-stack": TIER_LEVEL,
+	"level-ground-center": TIER_LEVEL,
+	"level-stack-center": TIER_LEVEL,
+	"grass": TIER_DECO,
+	"bush": TIER_DECO,
+	"rock": TIER_DECO,
+	"tree": TIER_DECO,
+	"hill": TIER_DECO,
+}
+
 @export var RENDER_RANGE: int = 250
 @export var MAX_LOAD_PER_STEP: int = 8
 
@@ -804,16 +833,41 @@ func _mark_socket_dequeued(piece_socket: TerrainModuleSocket) -> void:
 		queued_socket_keys.erase(queue_key)
 
 
-func _enqueue_socket(piece_socket: TerrainModuleSocket, priority: float) -> bool:
+func _enqueue_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
 	_ensure_queue_tracking_current()
 	var queue_key: String = _socket_queue_key(piece_socket)
 	if queue_key == "":
 		return false
 	if queued_socket_keys.has(queue_key):
 		return false
+	var tier: int = _socket_tier(piece_socket.piece, piece_socket.socket_name)
+	var priority: float = distance + float(tier) * float(RENDER_RANGE)
 	queue.push(piece_socket, priority)
 	queued_socket_keys[queue_key] = true
 	return true
+
+
+# Return the tier (0=cliff/ground, 1=level, 2=decoration) for the kind of tile
+# this socket would spawn. Picks the highest-probability tag in the socket's
+# tag distribution and maps it via TIER_BY_TAG. Defaults to TIER_LEVEL for
+# unknown sockets so unfamiliar pieces don't accidentally beat cliffs to a
+# position.
+func _socket_tier(piece: TerrainModuleInstance, socket_name: String) -> int:
+	if piece == null or piece.def == null:
+		return TIER_LEVEL
+	if not piece.def.socket_tag_prob.has(socket_name):
+		return TIER_LEVEL
+	var dist: Distribution = piece.def.socket_tag_prob[socket_name]
+	if dist == null or dist.dist.is_empty():
+		return TIER_LEVEL
+	var best_tag: String = ""
+	var best_prob: float = -1.0
+	for tag in dist.dist.keys():
+		var p: float = dist.prob(tag)
+		if p > best_prob:
+			best_prob = p
+			best_tag = tag
+	return TIER_BY_TAG.get(best_tag, TIER_LEVEL)
 
 
 func _stage_deferred_socket(piece_socket: TerrainModuleSocket, distance: float) -> void:
