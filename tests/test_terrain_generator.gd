@@ -877,6 +877,118 @@ func test_add_piece_replace_existing_removes_overlapping_non_ground():
 	assert_false(gen.terrain_index.query_box(blocker.aabb).has(blocker))
 
 
+func test_add_piece_replace_existing_removes_stacked_pieces_above_aabb():
+	# Regression: when a replace_existing piece is placed and removes a piece that has
+	# a topcenter socket, decorations stacked on that topcenter (e.g. small hills or
+	# grass) may sit entirely above the replacer's AABB. Before the fix they were
+	# missed by query_box and remained floating in all indices. This test verifies
+	# the stacked decoration is removed along with the piece it was attached to.
+	#
+	# Layout (Y axis view):
+	#   y=3 ┌──────┐  deco (origin y=2, mesh 2 tall → y=1..3)
+	#   y=2 │ deco │  deco.bottom socket at world (0,0,0) → local (0,-2,0)
+	#   y=1 └──────┘
+	#   y=0   ══════  target.topcenter world (0,0,0); replacer AABB top
+	#   y=-1  target origin=0, mesh 2 tall → target AABB y=-1..1. BUT query_box uses
+	#         the world AABB which for a centered 2-tall mesh at y=0 is y=-1..1.
+	#         The replacer AABB (y=-3..0) overlaps target AABB at y=-1..0. OK.
+	#
+	# trigger is the orig_ps so it is excluded from overlapping_pieces. It lives far
+	# away at x=-50 so its own AABB is never inside the replacer AABB.
+	var gen: Variant = _new_generator()
+	gen.player.position = Vector3(10000, 0, 10000)  # avoid player-exclusion check
+
+	# trigger at (-50,0,0): socket "right" at local (50,0,0) → world (0,0,0).
+	var trigger_mod: TerrainModule = _make_module(
+		Vector3(2, 2, 2), {"right": Vector3(50, 0, 0)}
+	)
+	var trigger: TerrainModuleInstance = _spawn_piece(
+		trigger_mod, Transform3D(Basis.IDENTITY, Vector3(-50, 0, 0))
+	)
+	gen.terrain_parent.add_child(trigger.root)
+	gen.register_piece(trigger, "")
+
+	# target at (0,0,0): 4x2x4 mesh → local AABB (-2,-1,-2) size(4,2,4) →
+	# world AABB y=-1..1. topcenter at local (0,0,0) → world (0,0,0).
+	var target_mod: TerrainModule = _make_module(
+		Vector3(4, 2, 4), {"topcenter": Vector3(0, 0, 0), "bottom": Vector3(0, -1, 0)}
+	)
+	var target: TerrainModuleInstance = _spawn_piece(target_mod)
+	gen.terrain_parent.add_child(target.root)
+	gen.register_piece(target, "")
+
+	# deco at (0,2,0): 2x2x2 mesh → world AABB y=1..3. bottom at local (0,-2,0) →
+	# world (0,2,0)+(0,-2,0) = (0,0,0) = target.topcenter. deco.origin.y=2 > target.origin.y=0. OK.
+	var deco_mod: TerrainModule = _make_module(
+		Vector3(2, 2, 2), {"bottom": Vector3(0, -2, 0)}
+	)
+	var deco: TerrainModuleInstance = deco_mod.spawn()
+	deco.set_position(Vector3(0, 2, 0))
+	deco.create()
+	_pieces_to_destroy.append(deco)
+	gen.terrain_parent.add_child(deco.root)
+	gen.register_piece(deco, "bottom")
+
+	# Sanity: both target and deco are indexed.
+	assert_true(gen.terrain_index.query_box(target.aabb).has(target), "target in index")
+	assert_true(gen.terrain_index.query_box(deco.aabb).has(deco), "deco in index")
+
+	# replacer: replace_existing=true. socket "bottom" at local (0,-3,0) → after
+	# transform_to_socket aligning bottom to trigger.right (world (0,0,0)):
+	#   replacer.origin.y = 3. mesh 4x6x4 → local AABB (-2,-3,-2) size(4,6,4).
+	#   world AABB: y = 3-3..3+3 = 0..6. But we want the AABB to EXCLUDE deco (y=1..3).
+	#
+	# Simpler: skip transform_to_socket complications and use a module whose "bottom"
+	# socket is at y=0 local so after alignment the replacer sits at y=0 with AABB y=-3..3.
+	# That still covers deco. Instead, place via a different approach:
+	# make replacer.bottom at local (0,0,0) so replacer.origin aligns to (0,0,0) and
+	# a mesh that hangs strictly downward: mesh extends only below origin (y=-3..0).
+	# Then replacer world AABB = y=-3..0, which overlaps target (y=-1..1 → at y=-1..0)
+	# but NOT deco (y=1..3). The "topcenter" check guards: deco.origin.y=2 > target.origin.y=0.
+	var replacer_scene: PackedScene = _make_scene_with_sockets(
+		{"bottom": Vector3(0, 0, 0), "topcenter": Vector3(0, 0, 0)},
+		Vector3(4, 3, 4)  # 4x3x4 mesh; centered → local AABB (-2,-1.5,-2)..size(4,3,4)
+	)
+	# We need world AABB below y=0. Override the AABB to be strictly below origin.
+	var replacer_bb: AABB = AABB(Vector3(-2, -3, -2), Vector3(4, 3, 4))  # y=-3..0
+	var replacer_mod: TerrainModule = TerrainModule.new(
+		replacer_scene,
+		replacer_bb,
+		TagList.new(),
+		{},
+		[],
+		{},
+		{},
+		{"bottom": null, "topcenter": null},
+		{},
+		true  # replace_existing
+	)
+	var replacer: TerrainModuleInstance = replacer_mod.spawn()
+	replacer.set_position(Vector3(0, 0, 0))
+	replacer.create()
+	_pieces_to_destroy.append(replacer)
+
+	# Place replacer: bottom at local (0,0,0) aligned to trigger.right at world (0,0,0).
+	# transform_to_socket will align replacer.bottom (world) to trigger.right (world (0,0,0)).
+	# Since bottom is at origin, replacer.origin stays at (0,0,0). World AABB = replacer_bb = y=-3..0.
+	var new_ps: TerrainModuleSocket = TerrainModuleSocket.new(replacer, "bottom")
+	var orig_ps: TerrainModuleSocket = TerrainModuleSocket.new(trigger, "right")
+	var ok: bool = gen.add_piece(new_ps, orig_ps)
+	assert_true(ok, "Replacer should be placed successfully")
+
+	# target must be removed (AABB overlap with replacer at y=-1..0).
+	assert_false(
+		gen.terrain_index.query_box(target.aabb).has(target),
+		"Target inside replacer AABB must be removed"
+	)
+	# deco must also be removed — stacked on target.topcenter (world (0,0,0)),
+	# sits above the replacer AABB (deco y=1..3, replacer y=-3..0).
+	assert_false(
+		gen.terrain_index.query_box(deco.aabb).has(deco),
+		"Decoration stacked above target must be removed even though it is above the replacer AABB"
+	)
+
+
 class _FakeSingleLib:
 	extends TerrainModuleLibrary
 	var _m: TerrainModule
