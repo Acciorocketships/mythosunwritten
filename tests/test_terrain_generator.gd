@@ -91,9 +91,6 @@ func after_each() -> void:
 				n.get_parent().remove_child(n)
 			n.free()
 	_nodes_to_free.clear()
-	# Reset static module caches to release loaded resources between tests.
-	LevelEdgeRule.module_by_level_tag.clear()
-	CliffEdgeRule.module_by_cliff_tag.clear()
 
 # Helpers
 func _make_scene_with_sockets(

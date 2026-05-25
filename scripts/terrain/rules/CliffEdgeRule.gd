@@ -45,8 +45,6 @@ const CLIFF_TAG_ORDER: Array[String] = [
 	"cliff-inner-corner-three",
 	"cliff-inner-corner-all"
 ]
-static var module_by_cliff_tag: Dictionary = {}
-
 func matches(context: Dictionary) -> bool:
 	if not context.has("chosen_piece"):
 		return false
@@ -67,6 +65,7 @@ func apply(context: Dictionary) -> Dictionary:
 	var chosen_piece: TerrainModuleInstance = context["chosen_piece"]
 	var socket_index: PositionIndex = context["socket_index"]
 	var terrain_index: TerrainIndex = context["terrain_index"]
+	var library: TerrainModuleLibrary = context.get("library", null)
 	var piece_updates: Dictionary = {}
 	var affected: Array[TerrainModuleInstance] = []
 	var seen: Dictionary = {}
@@ -98,7 +97,8 @@ func apply(context: Dictionary) -> Dictionary:
 		var replacement: TerrainModuleInstance = _create_replacement_for_target(
 			affected_piece,
 			target_tag,
-			steps_to_align
+			steps_to_align,
+			library
 		)
 		if affected_piece == chosen_piece:
 			chosen_replacement = replacement
@@ -275,12 +275,13 @@ func _diagonal_target_center(piece: TerrainModuleInstance, diagonal_socket_name:
 func _create_replacement_for_target(
 	source_piece: TerrainModuleInstance,
 	target_tag: String,
-	steps_to_align: int
+	steps_to_align: int,
+	library: TerrainModuleLibrary
 ) -> TerrainModuleInstance:
 	var existing_tag: String = _current_cliff_tag(source_piece.def)
 	if existing_tag == target_tag and steps_to_align == 0:
 		return source_piece
-	var module_template: TerrainModule = _get_module_for_cliff_tag(target_tag)
+	var module_template: TerrainModule = _get_module_for_cliff_tag(target_tag, library)
 	if module_template == null:
 		return source_piece
 	if module_template == source_piece.def and steps_to_align == 0:
@@ -329,15 +330,18 @@ func _tag_for_missing_sockets(missing_sockets: Array[String]) -> String:
 	return "cliff-interior"
 
 
-func _get_module_for_cliff_tag(cliff_tag: String) -> TerrainModule:
-	if module_by_cliff_tag.is_empty():
-		module_by_cliff_tag["cliff-interior"] = (
-			TerrainModuleDefinitions.load_cliff_interior_tile()
-		)
-		for entry in TerrainModuleDefinitions.CLIFF_VARIANT_TABLE:
-			var scene_name: String = entry[0]
-			var variant_tag: String = entry[1]
-			module_by_cliff_tag[variant_tag] = (
-				TerrainModuleDefinitions.load_cliff_variant(scene_name, variant_tag)
-			)
-	return module_by_cliff_tag.get(cliff_tag, null)
+func _get_module_for_cliff_tag(
+	cliff_tag: String, library: TerrainModuleLibrary
+) -> TerrainModule:
+	if library == null:
+		return null
+	var matches_list: TerrainModuleList = library.get_by_tags(TagList.new([cliff_tag]))
+	if matches_list.is_empty():
+		return null
+	# Pick the entry that doesn't carry the cliff-stack tier tag — cliff-interior
+	# shares its variant_tag with no other module, but other cliff variants will
+	# eventually exist in both tiers (section 5). Return the first base-tier match.
+	for module in matches_list.library:
+		if not module.tags.has("cliff-stack"):
+			return module
+	return matches_list.library[0]

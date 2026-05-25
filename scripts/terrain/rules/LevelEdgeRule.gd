@@ -45,8 +45,6 @@ const LEVEL_TAG_ORDER: Array[String] = [
 	"level-inner-corner-three",
 	"level-inner-corner-all"
 ]
-static var module_by_level_tag: Dictionary = {}
-
 func matches(context: Dictionary) -> bool:
 	if not context.has("chosen_piece"):
 		return false
@@ -67,6 +65,7 @@ func apply(context: Dictionary) -> Dictionary:
 	var chosen_piece: TerrainModuleInstance = context["chosen_piece"]
 	var socket_index: PositionIndex = context["socket_index"]
 	var terrain_index: TerrainIndex = context["terrain_index"]
+	var library: TerrainModuleLibrary = context.get("library", null)
 	var piece_updates: Dictionary = {}
 	var affected: Array[TerrainModuleInstance] = []
 	var seen: Dictionary = {}
@@ -127,7 +126,8 @@ func apply(context: Dictionary) -> Dictionary:
 		var replacement: TerrainModuleInstance = _create_replacement_for_target(
 			affected_piece,
 			target_tag,
-			steps_to_align
+			steps_to_align,
+			library
 		)
 		# If this affected piece is a stacked level and its support below has
 		# lost all-4-cardinal coverage, delete it rather than retiling it to a
@@ -479,14 +479,16 @@ func _diagonal_target_center(piece: TerrainModuleInstance, diagonal_socket_name:
 func _create_replacement_for_target(
 	source_piece: TerrainModuleInstance,
 	target_tag: String,
-	steps_to_align: int
+	steps_to_align: int,
+	library: TerrainModuleLibrary
 ) -> TerrainModuleInstance:
 	var existing_tag: String = _current_level_tag(source_piece.def)
 	if existing_tag == target_tag and steps_to_align == 0:
 		return source_piece
 	var module_template: TerrainModule = _get_module_for_level_tag(
 		target_tag,
-		_level_tier_tag(source_piece.def)
+		_level_tier_tag(source_piece.def),
+		library
 	)
 	if module_template == null:
 		return source_piece
@@ -542,23 +544,14 @@ func _level_tier_tag(module_def: TerrainModule) -> String:
 	return "level-ground"
 
 
-func _get_module_for_level_tag(level_tag: String, level_tier: String) -> TerrainModule:
-	if module_by_level_tag.is_empty():
-		# Special-tag center tiles (carry ground-type / level-stack-center beyond the
-		# generic variant tag set) — built by dedicated loaders.
-		module_by_level_tag["level-ground:level-center"] = (
-			TerrainModuleDefinitions.load_level_middle_tile()
-		)
-		module_by_level_tag["level-stack:level-center"] = (
-			TerrainModuleDefinitions.load_level_stack_middle_tile()
-		)
-		for entry in TerrainModuleDefinitions.LEVEL_VARIANT_TABLE:
-			var scene_name: String = entry[0]
-			var variant_tag: String = entry[1]
-			module_by_level_tag["level-ground:%s" % variant_tag] = (
-				TerrainModuleDefinitions.load_level_variant(scene_name, "level-ground", variant_tag)
-			)
-			module_by_level_tag["level-stack:%s" % variant_tag] = (
-				TerrainModuleDefinitions.load_level_variant(scene_name, "level-stack", variant_tag)
-			)
-	return module_by_level_tag.get("%s:%s" % [level_tier, level_tag], null)
+func _get_module_for_level_tag(
+	level_tag: String, level_tier: String, library: TerrainModuleLibrary
+) -> TerrainModule:
+	if library == null:
+		return null
+	var matches_list: TerrainModuleList = library.get_by_tags(
+		TagList.new([level_tier, level_tag])
+	)
+	if matches_list.is_empty():
+		return null
+	return matches_list.library[0]
