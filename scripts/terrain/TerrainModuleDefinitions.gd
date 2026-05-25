@@ -10,7 +10,6 @@ const CLIFF_LATERAL_FILL_PROB: float = 0.35
 static func load_ground_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/GroundTile.tscn")
 	var tags: TagList = TagList.new(["ground", "ground-type", "24x24x0.5", "side"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	# Override computed AABB to have height 0.5 instead of computed value
 	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.5, 24.0))
 
@@ -83,7 +82,6 @@ static func load_ground_tile() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -103,7 +101,6 @@ static func load_grass_tile() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		{},
 		visual_variants,
 		{},
 		{},
@@ -122,7 +119,6 @@ static func load_bush_tile() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		{},
 		visual_variants,
 		{},
 		{},
@@ -140,7 +136,6 @@ static func load_rock_tile() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		{},
 		visual_variants,
 		{},
 		{},
@@ -158,7 +153,6 @@ static func load_tree_tile() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		{},
 		visual_variants,
 		{},
 		{},
@@ -169,7 +163,6 @@ static func load_tree_tile() -> TerrainModule:
 static func load_8x8x2_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/Hill_8x8x2.tscn")
 	var tags: TagList = TagList.new(["hill", "8x8x2"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
 	var socket_size: Dictionary[String, Distribution] = {
@@ -190,7 +183,6 @@ static func load_8x8x2_tile() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -203,7 +195,6 @@ static func load_8x8x2_tile() -> TerrainModule:
 static func load_12x12x2_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/Hill_12x12x2.tscn")
 	var tags: TagList = TagList.new(["hill", "12x12x2"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
 	var socket_size: Dictionary[String, Distribution] = {
@@ -226,7 +217,6 @@ static func load_12x12x2_tile() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -650,7 +640,6 @@ static func load_cliff_interior_tile() -> TerrainModule:
 	# Foliage spawns on the top corners (grass/trees on the cliff plateau surface).
 	var scene: PackedScene = load("res://terrain/scenes/GroundTile.tscn")
 	var tags: TagList = TagList.new(["cliff", "cliff-interior", "ground-type", "24x24x4"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = AABB(Vector3(-12, -0.5, -12), Vector3(24, 0.5, 24))
 
 	var top_size_dist_corners: Distribution = Distribution.new({"point": 0.9, "12x12x2": 0.1})
@@ -705,7 +694,6 @@ static func load_cliff_interior_tile() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -727,7 +715,6 @@ static func _build_cliff_tile(
 	#     (the rule's interior-swap target) carries the topcenter distribution
 	#     for foliage and multi-storey cliff seeding.
 	var scene: PackedScene = load(scene_path)
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = AABB(Vector3(-12, -4, -12), Vector3(24, 4, 24))
 
 	var socket_size: Dictionary[String, Distribution] = {
@@ -769,7 +756,6 @@ static func _build_cliff_tile(
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -788,7 +774,6 @@ static func _build_level_tile(
 	topcenter_target_tag: String = ""
 ) -> TerrainModule:
 	var scene = load(scene_path)
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x0.5": 1.0}),
@@ -846,7 +831,6 @@ static func _build_level_tile(
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -892,7 +876,6 @@ static func create_8x8_test_piece() -> TerrainModule:
 	# Create a simple test piece with a bottom socket and appropriate dimensions
 	var scene = load("res://terrain/scenes/Hill_8x8x2.tscn")  # Use existing hill as base
 	var tags: TagList = TagList.new(["8x8x2"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = AABB(Vector3(-4, -1, -4), Vector3(8, 2, 8))  # 8x2x8 centered
 
 	var socket_size: Dictionary[String, Distribution] = {
@@ -914,7 +897,6 @@ static func create_8x8_test_piece() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -928,7 +910,6 @@ static func create_12x12_test_piece() -> TerrainModule:
 	# Create a simple test piece with a bottom socket and appropriate dimensions
 	var scene = load("res://terrain/scenes/Hill_12x12x2.tscn")  # Use existing hill as base
 	var tags: TagList = TagList.new(["12x12x2"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = AABB(Vector3(-6, -1, -6), Vector3(12, 2, 12))  # 12x2x12 centered
 
 	var socket_size: Dictionary[String, Distribution] = {
@@ -950,7 +931,6 @@ static func create_12x12_test_piece() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -966,7 +946,6 @@ static func create_24x24x4_test_piece() -> TerrainModule:
 	# The visual is irrelevant — only sockets matter for adjacency probing.
 	var scene = load("res://terrain/scenes/CliffSide.tscn")
 	var tags: TagList = TagList.new(["24x24x4"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	# Override AABB to match cliff dimensions: 24x24x4, base at y=-4 relative to origin.
 	var bb: AABB = AABB(Vector3(-12, -4, -12), Vector3(24, 4, 24))
 
@@ -999,7 +978,6 @@ static func create_24x24x4_test_piece() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,
@@ -1013,7 +991,6 @@ static func create_24x24_test_piece() -> TerrainModule:
 	# Create a simple test piece for the ground size
 	var scene = load("res://terrain/scenes/GroundTile.tscn")  # Use existing ground as base
 	var tags: TagList = TagList.new(["24x24x0.5"])
-	var tags_per_socket: Dictionary[String, TagList] = {}
 	var bb: AABB = AABB(Vector3(-12, 0, -12), Vector3(24, 0.5, 24))  # 24x0.5x24
 
 	var socket_size: Dictionary[String, Distribution] = {
@@ -1054,7 +1031,6 @@ static func create_24x24_test_piece() -> TerrainModule:
 		scene,
 		bb,
 		tags,
-		tags_per_socket,
 		[],
 		socket_size,
 		socket_required,

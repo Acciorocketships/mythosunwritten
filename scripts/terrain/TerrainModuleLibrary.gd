@@ -59,34 +59,18 @@ func sort_terrain_modules() -> void:
 			if not modules_by_tag.has(tag):
 				modules_by_tag[tag] = TerrainModuleList.new()
 			modules_by_tag[tag].library.append(module)
-		for socket_name: String in module.tags_per_socket:
-			for tag: String in module.tags_per_socket[socket_name]:
-				var tag_combined : String = combined_tag_socket_name(tag, socket_name)
-				if not modules_by_tag.has(tag_combined):
-					modules_by_tag[tag_combined] = TerrainModuleList.new()
-				modules_by_tag[tag_combined].library.append(module)
 
 
-func get_required_tags(
-	adjacent: Dictionary[String, TerrainModuleSocket],
-	_attachment_socket_name: String = ""
-) -> TagList:
+func get_required_tags(adjacent: Dictionary[String, TerrainModuleSocket]) -> TagList:
 	var out: TagList = TagList.new()
 	for socket_name: String in adjacent.keys():
 		var piece_socket: TerrainModuleSocket = adjacent[socket_name]
 		var adjacent_piece: TerrainModuleInstance = piece_socket.piece
 		var adjacent_socket_name: String = piece_socket.socket_name
-
-		# Safe lookup: some modules may not define tag requirements for every possible socket name.
-		var has_key: bool = adjacent_piece.def.socket_required.has(adjacent_socket_name)
-		if not has_key:
+		if not adjacent_piece.def.socket_required.has(adjacent_socket_name):
 			continue
-		var adjacent_required_tags: TagList = adjacent_piece.def.socket_required.get(
-			adjacent_socket_name,
-			TagList.new()
-		)
-		var tag_list: TagList = convert_tag_list(adjacent_required_tags, socket_name)
-		out = out.union(tag_list)
+		var adjacent_required_tags: TagList = adjacent_piece.def.socket_required[adjacent_socket_name]
+		out = out.union(adjacent_required_tags)
 	return out
 
 
@@ -189,21 +173,6 @@ func intersection(sets: Array[TerrainModuleList]) -> TerrainModuleList:
 	# return intersection as a TerrainModuleList
 	var out_list: TerrainModuleList = TerrainModuleList.new(out.keys())
 	return out_list
-
-
-func convert_tag_list(tag_list: TagList, socket_name: String) -> TagList:
-	var out: TagList = TagList.new()
-	for i: int in range(tag_list.size()):
-		var tag: String = tag_list.tags[i]
-		out.append(combined_tag_socket_name(tag, socket_name))
-	return out
-
-
-func combined_tag_socket_name(tag: String, socket_name: String) -> String:
-	if tag.begins_with("[socket]"):
-		var processed_tag: String = tag.substr(8)
-		return "[%s]%s" % [socket_name, processed_tag]
-	return tag
 
 
 func _multiply_distributions(dists: Array[Distribution]) -> Dictionary[String, float]:

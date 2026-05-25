@@ -239,26 +239,23 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 	if _has_forbidden_adjacency(adjacent):
 		return _empty_placement_context(size, adjacent, attachment_socket_name, origin_world)
 
-	var rotated_adjacent: Dictionary = adjacent.duplicate()
-	var rotated_attachment_socket: String = attachment_socket_name
-	for _rotation_attempt in range(4):
-		var required_tags: TagList = library.get_required_tags(rotated_adjacent, rotated_attachment_socket)
-		required_tags.append(size)
-		var filtered: TerrainModuleList = library.get_by_tags(required_tags)
-		if not filtered.is_empty():
-			return {
-				"size": size,
-				"adjacent": rotated_adjacent,
-				"attachment_socket_name": rotated_attachment_socket,
-				"required_tags": required_tags,
-				"filtered": filtered,
-				"dist": library.get_combined_distribution(rotated_adjacent).copy(),
-				"origin_world": origin_world
-			}
-		rotated_adjacent = Helper.rotate_adjacency(rotated_adjacent)
-		rotated_attachment_socket = Helper.rotate_socket_name(rotated_attachment_socket)
+	# `socket_required` entries are unprefixed raw tags, so rotating the adjacency
+	# would yield identical `required_tags` on every iteration. One pass is enough.
+	var required_tags: TagList = library.get_required_tags(adjacent)
+	required_tags.append(size)
+	var filtered: TerrainModuleList = library.get_by_tags(required_tags)
+	if filtered.is_empty():
+		return _empty_placement_context(size, adjacent, attachment_socket_name, origin_world)
 
-	return _empty_placement_context(size, adjacent, attachment_socket_name, origin_world)
+	return {
+		"size": size,
+		"adjacent": adjacent,
+		"attachment_socket_name": attachment_socket_name,
+		"required_tags": required_tags,
+		"filtered": filtered,
+		"dist": library.get_combined_distribution(adjacent).copy(),
+		"origin_world": origin_world
+	}
 
 
 func _empty_placement_context(
@@ -701,10 +698,6 @@ func add_piece(
 	remove_linked_sockets_from_queue(new_piece_socket)
 
 	return true
-
-
-
-# Removed ensure_ground_coverage_around_piece - using prioritized ground expansion instead
 
 
 func remove_linked_sockets_from_queue(new_piece_socket: TerrainModuleSocket) -> void:

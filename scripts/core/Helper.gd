@@ -206,14 +206,6 @@ static func get_attachment_socket_name(expansion_socket_name: String) -> String:
 			return "bottom"
 
 
-static func rotate_adjacency(adjacency: Dictionary) -> Dictionary:
-	var rotated: Dictionary[String, TerrainModuleSocket] = {}
-	for socket_name in adjacency.keys():
-		var rotated_name: String = rotate_name_with_map(socket_name, SOCKET_ROTATION_90)
-		rotated[rotated_name] = adjacency[socket_name]
-	return rotated
-
-
 static func rotate_socket_name(socket_name: String) -> String:
 	return rotate_name_with_map(socket_name, SOCKET_ROTATION_90)
 

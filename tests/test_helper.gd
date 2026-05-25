@@ -23,62 +23,6 @@ func test_get_attachment_socket_name_unknown():
 	assert_eq(Helper.get_attachment_socket_name("unknown"), "bottom", "unknown socket defaults to bottom")
 
 
-func test_rotate_adjacency_basic_rotation():
-	var adjacency = {
-		"front": null,
-		"right": null,
-		"back": null,
-		"left": null
-	}
-	
-	var rotated = Helper.rotate_adjacency(adjacency)
-	
-	assert_true(rotated.has("right"), "should have right key")
-	assert_true(rotated.has("back"), "should have back key")
-	assert_true(rotated.has("left"), "should have left key")
-	assert_true(rotated.has("front"), "should have front key")
-	
-	# front -> right, right -> back, back -> left, left -> front
-	assert_eq(rotated["right"], adjacency["front"], "front should rotate to right")
-	assert_eq(rotated["back"], adjacency["right"], "right should rotate to back")
-	assert_eq(rotated["left"], adjacency["back"], "back should rotate to left")
-	assert_eq(rotated["front"], adjacency["left"], "left should rotate to front")
-
-func test_rotate_adjacency_compound_directions():
-	var adjacency = {
-		"frontright": null,
-		"backright": null,
-		"backleft": null,
-		"frontleft": null
-	}
-	
-	var rotated = Helper.rotate_adjacency(adjacency)
-	
-	# frontright -> backright, backright -> backleft, backleft -> frontleft, frontleft -> frontright
-	assert_eq(rotated["backright"], adjacency["frontright"], "frontright should rotate to backright")
-	assert_eq(rotated["backleft"], adjacency["backright"], "backright should rotate to backleft")
-	assert_eq(rotated["frontleft"], adjacency["backleft"], "backleft should rotate to frontleft")
-	assert_eq(rotated["frontright"], adjacency["frontleft"], "frontleft should rotate to frontright")
-
-func test_rotate_adjacency_mixed_directions():
-	var adjacency = {
-		"front": null,
-		"frontright": null,
-		"top": null
-	}
-	
-	var rotated = Helper.rotate_adjacency(adjacency)
-	
-	assert_eq(rotated["right"], adjacency["front"], "front rotates to right")
-	assert_eq(rotated["backright"], adjacency["frontright"], "frontright rotates to backright")
-	assert_eq(rotated["top"], adjacency["top"], "top stays as top (no rotation rule)")
-
-func test_rotate_adjacency_empty():
-	var adjacency = {}
-	var rotated = Helper.rotate_adjacency(adjacency)
-	assert_eq(rotated.size(), 0, "empty adjacency should remain empty")
-
-
 func test_snap_vec3_snaps_to_grid():
 	var out: Vector3 = Helper.snap_vec3(Vector3(0.015, -0.014, 1.234))
 	assert_eq(out, Vector3(0.01, -0.01, 1.23))

@@ -55,11 +55,6 @@ func test_get_required_tags_ignores_unknown_adjacent_socket_name():
 	assert_true(tags.has("ground"), "still includes 'ground' from valid socket")
 
 
-func test_combined_tag_socket_name_socket_prefix():
-	var lib = _make_library()
-	var s = lib.combined_tag_socket_name("[socket]path", "right")
-	assert_eq(s, "[right]path")
-
 # ----------------------------
 # distributions
 # ----------------------------
