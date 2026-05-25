@@ -661,7 +661,15 @@ func add_piece(
 			if new_piece.aabb.intersects(player_footprint):
 				return false
 	if new_piece.def.replace_existing:
-		var overlapping_pieces: Array = terrain_index.query_box(new_piece.aabb)
+		# Expand the query box slightly downward so that tiles whose top surface
+		# exactly meets this piece's bottom (e.g. a level tile at y=0..0.5 vs a
+		# cliff whose AABB starts at y=0.5) are found. Godot's AABB.intersects
+		# is exclusive at boundaries, so without this expansion a touching tile
+		# is missed and never removed.
+		var replace_query_aabb := new_piece.aabb
+		replace_query_aabb.position.y -= 0.1
+		replace_query_aabb.size.y += 0.1
+		var overlapping_pieces: Array = terrain_index.query_box(replace_query_aabb)
 		if orig_piece_socket.piece != null:
 			overlapping_pieces.erase(orig_piece_socket.piece)
 		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.tags.has("ground"))
