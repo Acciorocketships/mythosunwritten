@@ -1,10 +1,56 @@
 class_name TerrainModuleDefinitions
 extends Resource
 
+### Tuning knobs ###################################################
+# All terrain-rendering tuning lives here. Change values in this block to
+# adjust generation density / behavior without hunting through factories.
+
+# --- Level (second-level patches that sit on top of ground tiles) ---
+# Lateral expansion rate per cardinal socket — how aggressively level
+# clusters grow outward on the second tier.
 const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.3
-const LEVEL_TOPCENTER_FILL_PROB: float = 0.3
+# Lateral expansion rate for the level-stack tier (third level and above).
+# Use null to disable lateral spread on stacks.
+const LEVEL_STACK_LATERAL_FILL_PROB: float = 0.5
+# Vertical stacking rate from a level-center topcenter (seeds the level
+# directly above). Applies to both level-ground and level-stack centers.
+const LEVEL_TOPCENTER_FILL_PROB: float = 0.2
+# Whether placing a level tile removes overlapping non-ground pieces in
+# its footprint. True keeps LevelEdgeRule retiling clean.
+const LEVEL_REPLACE_EXISTING: bool = true
+
+# --- Cliff ---
 const CLIFF_LATERAL_FILL_PROB: float = 0.35
+# Vertical stacking rate from a cliff-interior topcenter (seeds a
+# cliff-stack edge above the plateau).
 const CLIFF_TOPCENTER_FILL_PROB: float = 0.15
+const CLIFF_REPLACE_EXISTING: bool = true
+# Per-socket foliage chance on each top edge/corner of a cliff-interior plateau.
+const CLIFF_INTERIOR_FOLIAGE_FILL_PROB: float = 0.05
+
+# --- Ground topcenter (seeds level or cliff above each ground tile) ---
+# Per-tile chance that the topcenter socket attempts to place anything.
+const GROUND_TOPCENTER_FILL_PROB: float = 0.1
+# Probability split of what a ground topcenter seeds when it does fire.
+# Must sum to 1.0. Mirrors both the size and tag distributions used to
+# pick between a level-ground-center (small) and a cliff-side (tall).
+const GROUND_TOPCENTER_LEVEL_PROB: float = 0.95
+const GROUND_TOPCENTER_CLIFF_PROB: float = 0.05
+
+# --- Ground top-edge foliage (cardinals + corners on each ground tile) ---
+const GROUND_FOLIAGE_FILL_PROB: float = 0.05
+# Sampled tag distribution for foliage tiles on top-edges. Reused for
+# cliff-interior plateau top-edges too. Weights need not sum to 1 — the
+# Distribution normalises.
+const FOLIAGE_TAG_WEIGHTS: Dictionary[String, float] = {
+	"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1,
+}
+
+# --- Hill stacking (small hills can stack on top of each other) ---
+# Per-hill chance that its topcenter seeds another (smaller) hill above.
+const HILL_8X8_STACK_FILL_PROB: float = 0.5
+const HILL_12X12_STACK_FILL_PROB: float = 0.3
+####################################################################
 
 # Scene-name ↔ variant-tag tables. Each entry is loaded once per tier (level
 # emits both "level-ground" and "level-stack" tiers; cliff currently emits only
@@ -55,15 +101,18 @@ static func load_ground_tile() -> TerrainModule:
 	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.5, 24.0))
 
 	var top_size_dist_corners: Distribution = Distribution.new({"point": 0.9, "12x12x2": 0.1})
-	var top_fill_prob_corners: float = 0.05
 	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8x2": 0.1})
-	var top_fill_prob_cardinal: float = 0.05
-	var top_size_dist_center: Distribution = Distribution.new({"24x24x0.5": 0.95, "24x24x4": 0.05})
-	var top_fill_prob_center: float = 0.1
+	var top_size_dist_center: Distribution = Distribution.new({
+		"24x24x0.5": GROUND_TOPCENTER_LEVEL_PROB,
+		"24x24x4": GROUND_TOPCENTER_CLIFF_PROB,
+	})
 	var adjacent_tag_prob: Distribution = Distribution.new({"ground": 1.0})
-	var top_tag_prob_corners: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
-	var top_tag_prob_cardinal: Distribution = Distribution.new({"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1})
-	var top_tag_prob_center: Distribution = Distribution.new({"level-ground-center": 0.95, "cliff-side": 0.05})
+	var top_tag_prob_corners: Distribution = Distribution.new(FOLIAGE_TAG_WEIGHTS)
+	var top_tag_prob_cardinal: Distribution = top_tag_prob_corners
+	var top_tag_prob_center: Distribution = Distribution.new({
+		"level-ground-center": GROUND_TOPCENTER_LEVEL_PROB,
+		"cliff-side": GROUND_TOPCENTER_CLIFF_PROB,
+	})
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x0.5": 1.0}),
@@ -91,15 +140,15 @@ static func load_ground_tile() -> TerrainModule:
 		"back": 1.0,
 		"right": 1.0,
 		"left": 1.0,
-		"topfront": top_fill_prob_cardinal,
-		"topback": top_fill_prob_cardinal,
-		"topleft": top_fill_prob_cardinal,
-		"topright": top_fill_prob_cardinal,
-		"topfrontright": top_fill_prob_corners,
-		"topfrontleft": top_fill_prob_corners,
-		"topbackright": top_fill_prob_corners,
-		"topbackleft": top_fill_prob_corners,
-		"topcenter": top_fill_prob_center,
+		"topfront": GROUND_FOLIAGE_FILL_PROB,
+		"topback": GROUND_FOLIAGE_FILL_PROB,
+		"topleft": GROUND_FOLIAGE_FILL_PROB,
+		"topright": GROUND_FOLIAGE_FILL_PROB,
+		"topfrontright": GROUND_FOLIAGE_FILL_PROB,
+		"topfrontleft": GROUND_FOLIAGE_FILL_PROB,
+		"topbackright": GROUND_FOLIAGE_FILL_PROB,
+		"topbackleft": GROUND_FOLIAGE_FILL_PROB,
+		"topcenter": GROUND_TOPCENTER_FILL_PROB,
 		"bottom": null,
 	}
 
@@ -211,14 +260,16 @@ static func load_8x8x2_tile() -> TerrainModule:
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
-		"topcenter": 0.5,
+		"topcenter": HILL_8X8_STACK_FILL_PROB,
 		"bottom": null,
 		"topfrontright": null,
 		"topfrontleft": null,
 		"topbackright": null,
 		"topbackleft": null,
 	}
-	var socket_tag_prob: Dictionary[String, Distribution] = {"topcenter": Distribution.new({"grass": 1.0})}
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"topcenter": Distribution.new({"grass": 1.0})
+	}
 
 	return TerrainModule.new(
 		scene,
@@ -243,7 +294,7 @@ static func load_12x12x2_tile() -> TerrainModule:
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
-		"topcenter": 0.3,
+		"topcenter": HILL_12X12_STACK_FILL_PROB,
 		"bottom": null,
 		"topfrontright": null,
 		"topfrontleft": null,
@@ -290,7 +341,9 @@ static func load_level_variant(
 		return _build_level_tile(
 			scene_path, tags, LEVEL_BASE_LATERAL_FILL_PROB, null, "level-ground-center", ""
 		)
-	return _build_level_tile(scene_path, tags, null, null, "", "")
+	return _build_level_tile(
+		scene_path, tags, LEVEL_STACK_LATERAL_FILL_PROB, null, "level-stack-center", ""
+	)
 
 
 static func load_level_middle_tile() -> TerrainModule:
@@ -307,9 +360,9 @@ static func load_level_stack_middle_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelCenter.tscn",
 		TagList.new(["level", "level-stack", "level-center", "level-stack-center", "24x24x0.5"]),
-		null,
+		LEVEL_STACK_LATERAL_FILL_PROB,
 		LEVEL_TOPCENTER_FILL_PROB,
-		"",
+		"level-stack-center",
 		"level-stack-center"
 	)
 
@@ -378,9 +431,7 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 
 	var top_size_dist_corners: Distribution = Distribution.new({"point": 0.9, "12x12x2": 0.1})
 	var top_size_dist_cardinal: Distribution = Distribution.new({"point": 0.9, "8x8x2": 0.1})
-	var top_tag_prob_corners: Distribution = Distribution.new(
-		{"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1}
-	)
+	var top_tag_prob_corners: Distribution = Distribution.new(FOLIAGE_TAG_WEIGHTS)
 	var top_tag_prob_cardinal: Distribution = top_tag_prob_corners
 	# Topcenter: chance to seed a cliff-stack tile; otherwise decorations only.
 	var top_size_dist_center: Distribution = Distribution.new(
@@ -409,14 +460,14 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 		"back": null,
 		"right": null,
 		"left": null,
-		"topfront": 0.05,
-		"topback": 0.05,
-		"topleft": 0.05,
-		"topright": 0.05,
-		"topfrontright": 0.05,
-		"topfrontleft": 0.05,
-		"topbackright": 0.05,
-		"topbackleft": 0.05,
+		"topfront": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
+		"topback": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
+		"topleft": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
+		"topright": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
+		"topfrontright": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
+		"topfrontleft": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
+		"topbackright": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
+		"topbackleft": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
 		"topcenter": CLIFF_TOPCENTER_FILL_PROB,
 		"bottom": null,
 	}
@@ -441,7 +492,7 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob,
-		true  # replace_existing
+		CLIFF_REPLACE_EXISTING
 	)
 
 
@@ -506,7 +557,7 @@ static func _build_cliff_tile(
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob,
-		true  # replace_existing
+		CLIFF_REPLACE_EXISTING
 	)
 
 
@@ -581,7 +632,7 @@ static func _build_level_tile(
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob,
-		true
+		LEVEL_REPLACE_EXISTING
 	)
 
 

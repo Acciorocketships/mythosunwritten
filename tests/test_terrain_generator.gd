@@ -2147,21 +2147,27 @@ func test_level_center_has_topcenter_tag_prob():
 	)
 
 
-func test_level_stack_center_is_vertical_only():
+func test_level_stack_center_expands_laterally_and_vertically():
 	var module: TerrainModule = TerrainModuleDefinitions.load_level_stack_middle_tile()
+	# Stack tier now spreads laterally so a single stack seed can cluster into
+	# a plateau; the LevelEdgeRule support check still gates which placements
+	# survive based on the second-level support below.
 	for socket_name in ["front", "back", "left", "right"]:
 		assert_true(
 			module.socket_fill_prob.has(socket_name),
 			"stack module missing fill_prob for " + socket_name
 		)
-		assert_eq(
-			module.socket_fill_prob[socket_name],
-			null,
-			"stacked level cardinal fill_prob should be null: " + socket_name
+		assert_true(
+			module.socket_fill_prob[socket_name] is float
+				and float(module.socket_fill_prob[socket_name]) > 0.0,
+			"stacked level cardinal fill_prob should be > 0: " + socket_name
 		)
+	var lateral_dist: Distribution = module.socket_tag_prob["front"]
+	assert_true(
+		lateral_dist.prob("level-stack-center") > 0.0,
+		"stacked level cardinals should target other stacked centers"
+	)
 	assert_true(module.socket_fill_prob["topcenter"] is float)
-	# Stacking is gated by LevelEdgeRule's proactive support check; the topcenter
-	# only needs a non-zero probability so it's expandable.
 	assert_true(
 		float(module.socket_fill_prob["topcenter"]) > 0.0,
 		"stacked level center should be vertically expandable"
@@ -2612,18 +2618,19 @@ func test_integration_cliff_seeding_produces_variants() -> void:
 	gen.player.global_position = Vector3.ZERO
 	gen.RENDER_RANGE = 300
 	gen.MAX_LOAD_PER_STEP = 20
-	seed(1)  # Adjust if no cliff seeds in this run; test should never PASS without ≥1 cliff.
+	seed(99)  # Adjust if no cliff seeds in this run; test should never PASS without ≥1 cliff.
 	_run_generator_ready(gen)
 
 	# Push the generator forward enough to seed and grow at least one cliff.
-	# 5% seed chance × hundreds of ground placements -> expected ≥1 cliff.
-	for _i in range(5000):
+	# Stack-tier lateral expansion floods the queue near level clusters, so
+	# the ground-topcenter cliff samples (5%) take many iterations to drain.
+	for _i in range(50000):
 		gen.load_terrain()
 
 	var cliff_pieces: Array[TerrainModuleInstance] = _collect_cliff_pieces(gen)
 	assert_true(
 		cliff_pieces.size() > 0,
-		"Expected >=1 cliff to seed (seed=1, iter=5000). Raise iter or change seed if failing."
+		"Expected >=1 cliff to seed (seed=99, iter=50000). Raise iter or change seed if failing."
 	)
 
 	# Verify interior cliff configurations:
