@@ -8,22 +8,22 @@ extends Resource
 # --- Level (second-level patches that sit on top of ground tiles) ---
 # Lateral expansion rate per cardinal socket — how aggressively level
 # clusters grow outward on the second tier.
-const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.3
+const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.5
 # Lateral expansion rate for the level-stack tier (third level and above).
 # Use null to disable lateral spread on stacks.
-const LEVEL_STACK_LATERAL_FILL_PROB: float = 0.5
+const LEVEL_STACK_LATERAL_FILL_PROB: float = 0.8
 # Vertical stacking rate from a level-center topcenter (seeds the level
 # directly above). Applies to both level-ground and level-stack centers.
-const LEVEL_TOPCENTER_FILL_PROB: float = 0.2
+const LEVEL_TOPCENTER_FILL_PROB: float = 0.3
 # Whether placing a level tile removes overlapping non-ground pieces in
 # its footprint. True keeps LevelEdgeRule retiling clean.
-const LEVEL_REPLACE_EXISTING: bool = true
+const LEVEL_REPLACE_EXISTING: bool = false
 
 # --- Cliff ---
 const CLIFF_LATERAL_FILL_PROB: float = 0.35
 # Vertical stacking rate from a cliff-interior topcenter (seeds a
 # cliff-stack edge above the plateau).
-const CLIFF_TOPCENTER_FILL_PROB: float = 0.15
+const CLIFF_TOPCENTER_FILL_PROB: float = 0.1
 const CLIFF_REPLACE_EXISTING: bool = true
 # Per-socket foliage chance on each top edge/corner of a cliff-interior plateau.
 const CLIFF_INTERIOR_FOLIAGE_FILL_PROB: float = 0.05
@@ -583,6 +583,20 @@ static func _build_level_tile(
 		"back": TagList.new(["level"]),
 		"left": TagList.new(["level"]),
 		"right": TagList.new(["level"]),
+		# Pin topcenter to "level-stack": topcenter expansion of any level
+		# tile must produce a level-stack tile, never ground or a level-ground
+		# variant. Without this, when LevelEdgeRule retiles a level-stack-center
+		# to a level-stack-side, _replace_piece preserves the topcenter
+		# fill_prob via socket_fill_prob_override but the side's def has no
+		# topcenter tag_prob. With no tag bias and only the size constraint
+		# ("24x24x0.5"), sample_from_modules falls back to a random pick across
+		# all 24x24x0.5 tiles — including the ground tile and level-ground
+		# variants. A ground tile placed at y > 0.5 is invisible to
+		# LevelEdgeRule's proactive check (no "level-stack" tag) and to
+		# _purge_orphaned_stacks (iterates "level-stack" only), so it persists
+		# and seeds a chain of legitimate-looking level placements above it
+		# (the "cantilever" the regression test catches).
+		"topcenter": TagList.new(["level-stack"]),
 	}
 	var socket_fill_prob_policy: Dictionary = {
 		"front": cardinal_fill_prob,

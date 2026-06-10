@@ -5,6 +5,11 @@ const CARDINAL_SOCKETS: Array[String] = ["front", "right", "back", "left"]
 const DIAGONAL_SOCKETS: Array[String] = ["frontright", "backright", "backleft", "frontleft"]
 const SAME_LEVEL_EPS: float = 0.1
 
+# Toggle to trace stack support decisions. Prints when a stack is rejected
+# (and why) and when an existing stack would be a cantilever. Useful for
+# debugging unbounded tower growth. Keep false in shipped builds.
+const DEBUG_STACK_SUPPORT: bool = false
+
 const CANONICAL_MISSING_BY_TAG: Dictionary[String, Array] = {
 	"level-center": [],
 	"level-side": ["front"],
@@ -84,6 +89,13 @@ func apply(context: Dictionary) -> Dictionary:
 			chosen_piece, terrain_index
 		)
 		if support == null or not _has_all_cardinal_level_neighbors(support, socket_index):
+			if DEBUG_STACK_SUPPORT:
+				var reason: String = "no support directly below" if support == null else (
+					"support at %s lacks all 4 cardinals" % str(support.transform.origin)
+				)
+				print("[LevelEdgeRule] reject stack at %s: %s" % [
+					str(chosen_piece.transform.origin), reason
+				])
 			return {"chosen_piece": null, "piece_updates": piece_updates}
 	var direct_neighbors: Array[TerrainModuleInstance] = _get_level_neighbors(
 		chosen_piece,
@@ -258,10 +270,15 @@ func _get_stacks_above(
 	return out
 
 
-## Find the nearest level tile directly under this stacked tile (within 1.5
-## units down). Used by apply() so the rule can validate stacking support
-## proactively when a new stack tile is placed, rather than waiting for the
-## support's own neighbours to change.
+## Find the level tile DIRECTLY under this stacked tile (within ~0.6 units
+## down, i.e. one tier — levels are 0.5 tall). Used by apply() to validate
+## stacking support proactively.
+##
+## The search window MUST be tight enough that a tile two tiers below cannot
+## be returned as "support" — otherwise a tier-N stack with the tier-(N-1)
+## layer missing could find tier-(N-2) and pass the support check, producing
+## a cantilever (stack with empty space directly beneath) and chaining into
+## unbounded tower growth.
 func _get_support_piece_below(
 	piece: TerrainModuleInstance, terrain_index: TerrainIndex
 ) -> TerrainModuleInstance:
@@ -269,8 +286,8 @@ func _get_support_piece_below(
 		return null
 	var piece_y: float = piece.transform.origin.y
 	var query_box: AABB = AABB(
-		Vector3(piece.transform.origin.x - 0.5, piece_y - 1.5, piece.transform.origin.z - 0.5),
-		Vector3(1.0, 1.4, 1.0)
+		Vector3(piece.transform.origin.x - 0.5, piece_y - 0.6, piece.transform.origin.z - 0.5),
+		Vector3(1.0, 0.5, 1.0)
 	)
 	var hits: Array = terrain_index.query_box(query_box)
 	var best_support: TerrainModuleInstance = null
@@ -286,6 +303,10 @@ func _get_support_piece_below(
 		var dy: float = piece_y - other.transform.origin.y
 		if dy <= SAME_LEVEL_EPS:
 			continue  # same height or above
+		# Reject tiles further down than one tier (catches anything the
+		# query box might catch due to mesh-aabb overlap with the next tier).
+		if dy > 0.6:
+			continue
 		if dy < best_dy:
 			best_dy = dy
 			best_support = other

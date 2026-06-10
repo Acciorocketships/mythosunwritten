@@ -2302,6 +2302,224 @@ func test_replace_piece_queues_topcenter_when_stack_piece_retiles_to_center():
 	)
 
 
+func test_get_support_piece_below_rejects_two_tier_skip() -> void:
+	# Regression test for cantilever bug: a tier-2 level-stack at y=1.5 must
+	# NOT find a level-ground at y=0.5 as "support" when the y=1.0 layer is
+	# missing. Before the fix, _get_support_piece_below searched 1.5 units
+	# down — wide enough to span two tile heights — so a missing layer would
+	# be silently bridged. The proactive check would then pass against the
+	# wrong tile, the stack would be placed without anything directly under
+	# it, and stacks could chain off cantilevers into unbounded towers.
+	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+
+	var base_mod: TerrainModule = TerrainModuleDefinitions.load_level_middle_tile()
+	var base: TerrainModuleInstance = _spawn_piece(
+		base_mod, Transform3D(Basis.IDENTITY, Vector3(0, 0.5, 0))
+	)
+	gen.register_piece(base, "")
+
+	var stack_mod: TerrainModule = TerrainModuleDefinitions.load_level_stack_middle_tile()
+	var stack: TerrainModuleInstance = _spawn_piece(
+		stack_mod, Transform3D(Basis.IDENTITY, Vector3(0, 1.5, 0))
+	)
+
+	var support: TerrainModuleInstance = rule._get_support_piece_below(
+		stack, gen.terrain_index
+	)
+	assert_null(
+		support,
+		"Stack at y=1.5 must NOT find level-ground at y=0.5 as support "
+		+ "(layer y=1.0 missing); allowing it produces cantilever stacks."
+	)
+
+
+func test_get_support_piece_below_finds_direct_support() -> void:
+	# Positive case: when the layer directly below exists, it must be found.
+	# Guards against over-tightening the search window in the cantilever fix.
+	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+
+	var base_mod: TerrainModule = TerrainModuleDefinitions.load_level_middle_tile()
+	var base: TerrainModuleInstance = _spawn_piece(
+		base_mod, Transform3D(Basis.IDENTITY, Vector3(0, 0.5, 0))
+	)
+	gen.register_piece(base, "")
+
+	var stack_mod: TerrainModule = TerrainModuleDefinitions.load_level_stack_middle_tile()
+	var stack: TerrainModuleInstance = _spawn_piece(
+		stack_mod, Transform3D(Basis.IDENTITY, Vector3(0, 1.0, 0))
+	)
+
+	var support: TerrainModuleInstance = rule._get_support_piece_below(
+		stack, gen.terrain_index
+	)
+	assert_eq(
+		support, base,
+		"Stack at y=1.0 must find the level-ground at y=0.5 (dy=0.5) as support."
+	)
+
+
+func test_no_cantilever_stacks_under_runtime_config() -> void:
+	# Stress test: run the generator with the live default fill-probabilities
+	# (no test-only overrides like _configure_vertical_stacking_test_generation)
+	# and confirm that no elevated level-stack tile ends up without a tile
+	# directly under its bottom socket. This is the exact condition the user
+	# observed visually as "level tiles stacking and overhanging."
+	# Runs multiple seeds because the issue is probabilistic.
+	const SEEDS_TO_TRY: Array[int] = [1, 7, 13, 42, 99, 314, 2718]
+	for s in SEEDS_TO_TRY:
+		var gen: Variant = _new_debug_generator()
+		gen.player.global_position = Vector3.ZERO
+		gen.RENDER_RANGE = 220
+		gen.MAX_LOAD_PER_STEP = 20
+		seed(s)
+		_run_generator_ready(gen)
+		# Run for enough frames for the generator to settle.
+		for _i in range(600):
+			gen.load_terrain()
+
+		var level_pieces: Array[TerrainModuleInstance] = _collect_level_pieces(gen)
+		var cantilevers: Array[String] = []
+		for piece in level_pieces:
+			if piece.transform.origin.y <= 0.6:
+				continue  # ground-tier level, not elevated
+			var support: TerrainModuleInstance = _get_level_piece_below(gen, piece)
+			if support == null:
+				cantilevers.append(
+					"seed=%d stack at %s has NO tile directly below (cantilever)"
+					% [s, str(piece.transform.origin)]
+				)
+				continue
+			# Direct-below dy should be ~0.5 — anything larger is a cantilever
+			# bridged by an AABB-overlap search rather than a true bottom-socket link.
+			var dy: float = piece.transform.origin.y - support.transform.origin.y
+			if dy > 0.6:
+				cantilevers.append(
+					"seed=%d stack at %s has support %s units below (>0.6 = cantilever)"
+					% [s, str(piece.transform.origin), str(dy)]
+				)
+		assert_true(
+			cantilevers.is_empty(),
+			"Found cantilever level-stacks (no direct support below): %s"
+			% str(cantilevers)
+		)
+		_dispose_generator_immediately(gen)
+		await _flush_deferred_frees()
+
+
+func test_purge_orphaned_stacks_removes_cantilever_after_support_lost() -> void:
+	# Focused regression: cleanup must remove a level-stack tile whose direct-
+	# below level was removed (e.g. by a cliff placement). This is the cascade
+	# the orphan-purge is meant to handle once placement-time defenses are
+	# satisfied. We exercise it directly: build a valid level + stack, then
+	# manually remove the level, run cleanup, and verify the stack is gone.
+	var gen: Variant = _new_generator()
+	gen.player.global_position = Vector3.ZERO
+
+	# 3x3 ground-level plateau at y=0.5 so the center has 4 cardinals.
+	var base_mod: TerrainModule = TerrainModuleDefinitions.load_level_middle_tile()
+	var center: TerrainModuleInstance = _spawn_piece(
+		base_mod, Transform3D(Basis.IDENTITY, Vector3(0, 0.5, 0))
+	)
+	gen.terrain_parent.add_child(center.root)
+	gen.register_piece(center, "")
+	var cardinal_offsets: Array[Vector3] = [
+		Vector3(24, 0.5, 0), Vector3(-24, 0.5, 0),
+		Vector3(0, 0.5, 24), Vector3(0, 0.5, -24),
+	]
+	for offset in cardinal_offsets:
+		var n: TerrainModuleInstance = _spawn_piece(
+			base_mod, Transform3D(Basis.IDENTITY, offset)
+		)
+		gen.terrain_parent.add_child(n.root)
+		gen.register_piece(n, "")
+
+	# Stack on top of center at y=1.0. Place it directly so we can be sure it's
+	# there (skip the placement-time check, which we've already tested).
+	var stack_mod: TerrainModule = TerrainModuleDefinitions.load_level_stack_middle_tile()
+	var stack: TerrainModuleInstance = _spawn_piece(
+		stack_mod, Transform3D(Basis.IDENTITY, Vector3(0, 1.0, 0))
+	)
+	gen.terrain_parent.add_child(stack.root)
+	gen.register_piece(stack, "")
+
+	# Sanity: stack is valid right now.
+	assert_true(
+		gen._has_valid_stack_support(stack, "level", 0.6, true),
+		"Setup: stack should be valid before we remove its support"
+	)
+
+	# Simulate cliff removal: pull the level directly under the stack.
+	gen.remove_piece(center)
+
+	# Now cleanup should detect the orphan.
+	assert_false(
+		gen._has_valid_stack_support(stack, "level", 0.6, true),
+		"After support removal, support check should fail"
+	)
+	gen._purge_orphaned_stacks()
+
+	# Stack must no longer be in the terrain index.
+	var still_present: bool = false
+	for piece in gen.terrain_index.all_modules.keys():
+		if piece == stack:
+			still_present = true
+			break
+	assert_false(
+		still_present,
+		"_purge_orphaned_stacks must remove the cantilever stack"
+	)
+
+
+func test_level_edge_rule_rejects_cantilever_stack() -> void:
+	# End-to-end version: with a fully-supported level-ground plateau at y=0.5
+	# (center has all 4 cardinals), the proactive support check must still
+	# reject a stack placed at y=1.5 because nothing exists at y=1.0 directly
+	# under it. Without this rejection, the topcenter expansion chain can
+	# produce floating stacks that overhang and grow into unbounded towers.
+	var gen: Variant = _new_generator()
+	var rule: LevelEdgeRule = LevelEdgeRule.new()
+
+	var base_mod: TerrainModule = TerrainModuleDefinitions.load_level_middle_tile()
+	var center: TerrainModuleInstance = _spawn_piece(
+		base_mod, Transform3D(Basis.IDENTITY, Vector3(0, 0.5, 0))
+	)
+	gen.register_piece(center, "")
+	var cardinal_offsets: Array[Vector3] = [
+		Vector3(24, 0.5, 0), Vector3(-24, 0.5, 0),
+		Vector3(0, 0.5, 24), Vector3(0, 0.5, -24),
+	]
+	for offset in cardinal_offsets:
+		var neighbor: TerrainModuleInstance = _spawn_piece(
+			base_mod, Transform3D(Basis.IDENTITY, offset)
+		)
+		gen.register_piece(neighbor, "")
+
+	assert_true(
+		rule._has_all_cardinal_level_neighbors(center, gen.socket_index),
+		"Test setup: 3x3 plateau center should have all 4 cardinal level neighbors."
+	)
+
+	var stack_mod: TerrainModule = TerrainModuleDefinitions.load_level_stack_middle_tile()
+	var stack: TerrainModuleInstance = _spawn_piece(
+		stack_mod, Transform3D(Basis.IDENTITY, Vector3(0, 1.5, 0))
+	)
+	gen.register_piece(stack, "")
+
+	var result: Dictionary = rule.apply({
+		"chosen_piece": stack,
+		"socket_index": gen.socket_index,
+		"terrain_index": gen.terrain_index,
+		"library": gen.library,
+	})
+	assert_null(
+		result.get("chosen_piece"),
+		"LevelEdgeRule must reject a level-stack at y=1.5 when no level tile "
+		+ "exists at y=1.0, even if the y=0.5 plateau has a fully-supported center."
+	)
+
+
 func test_level_edge_rule_ignores_elevated_diagonal_when_computing_inner_corner():
 	var gen: Variant = _new_generator()
 	var rule: LevelEdgeRule = LevelEdgeRule.new()

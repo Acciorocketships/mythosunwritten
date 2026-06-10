@@ -54,6 +54,14 @@ func _process(_delta: float) -> void:
 
 func load_terrain() -> void:
 	_ensure_queue_tracking_current()
+	# Orphan cleanup runs unconditionally — even in the early-return path below.
+	# Removals can happen *after* the last queue-processing frame (e.g. a cliff
+	# placement near the edge removes level tiles whose stacks then need to
+	# cascade-cleanup over several frames). If we only purged when there was
+	# in-range queue work, orphaned towers would persist visually forever once
+	# the local terrain finished generating. Cost is O(stacks), small in
+	# practice and capped by RENDER_RANGE.
+	_purge_orphaned_stacks()
 	# When the player hasn't moved since last frame, all queue priorities still reflect
 	# the current player position, so the heap top is the actual nearest socket. If even
 	# that is out of range, every queued socket is out of range too — skip the frame to
@@ -86,7 +94,6 @@ func load_terrain() -> void:
 		if added:
 			num_added += 1
 	_flush_deferred_sockets()
-	_purge_orphaned_stacks()
 
 
 ## Delete any stack tile (level-stack or cliff-stack) whose support tile
@@ -104,7 +111,10 @@ func _purge_orphaned_stacks() -> void:
 			continue
 		var piece: TerrainModuleInstance = module
 		if piece.def.tags.has("level-stack"):
-			if not _has_valid_stack_support(piece, "level", 1.5, true):
+			# 0.6u window = one level tier (0.5 thick + epsilon). Any wider and
+			# a stack with the tier directly below missing would find the next
+			# tier down as "support" — that's the cantilever bug.
+			if not _has_valid_stack_support(piece, "level", 0.6, true):
 				to_remove.append(piece)
 		elif piece.def.tags.has("cliff-stack"):
 			if not _has_valid_stack_support(piece, "cliff", 5.0, false):
@@ -471,9 +481,13 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 	other_pieces = other_pieces.filter(func(p): return not p.def.tags.has("ground"))
 
 	if new_piece.def.tags.has("level") and parent_piece != null and parent_piece.def.tags.has("level"):
-		var parent_y: float = parent_piece.transform.origin.y
+		# Only filter out level tiles that are strictly *below* the new piece (the support layer).
+		# Using parent_y with `<=` here was wrong for lateral expansion (where new.y == parent.y):
+		# it also removed same-y level tiles from the blocker set, allowing the new tile to overlap
+		# an existing level tile at the same x/y/z when LEVEL_REPLACE_EXISTING is false.
+		var new_y: float = new_piece.transform.origin.y
 		other_pieces = other_pieces.filter(func(p):
-			return not (p.def.tags.has("level") and p.transform.origin.y <= parent_y)
+			return not (p.def.tags.has("level") and p.transform.origin.y < new_y - 0.1)
 		)
 
 	return other_pieces.is_empty()
