@@ -111,7 +111,7 @@ static func load_ground_tile() -> TerrainModule:
 	var top_tag_prob_cardinal: Distribution = top_tag_prob_corners
 	var top_tag_prob_center: Distribution = Distribution.new({
 		"level-ground-center": GROUND_TOPCENTER_LEVEL_PROB,
-		"cliff-side": GROUND_TOPCENTER_CLIFF_PROB,
+		"cliff-base-side": GROUND_TOPCENTER_CLIFF_PROB,
 	})
 
 	var socket_size: Dictionary[String, Distribution] = {
@@ -384,21 +384,19 @@ static func load_cliff_variants() -> Array[TerrainModule]:
 
 # Build a single cliff variant. tier is "cliff-base" (bottom required tag
 # "ground", sits on a ground tile) or "cliff-stack" (bottom required tag
-# "cliff", sits on a cliff-interior plateau).
+# "cliff", sits on a cliff-interior plateau). Each variant also carries a
+# tier-qualified variant tag (e.g. "cliff-base-side") so seeding distributions
+# can pin the tier — the bare variant tag ("cliff-side") matches both tiers.
 static func load_cliff_variant(
 	scene_name: String, tier: String, variant_tag: String
 ) -> TerrainModule:
 	var scene_path: String = "res://terrain/scenes/%s.tscn" % scene_name
-	if tier == "cliff-stack":
-		return _build_cliff_tile(
-			scene_path,
-			TagList.new(["cliff", "cliff-stack", variant_tag, "24x24x4"]),
-			"cliff"
-		)
+	var tier_variant_tag: String = variant_tag.replace("cliff-", tier + "-")
+	var bottom_required: String = "cliff" if tier == "cliff-stack" else "ground"
 	return _build_cliff_tile(
 		scene_path,
-		TagList.new(["cliff", "cliff-base", variant_tag, "24x24x4"]),
-		"ground"
+		TagList.new(["cliff", tier, variant_tag, tier_variant_tag, "24x24x4"]),
+		bottom_required
 	)
 
 
@@ -437,7 +435,7 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 	var top_size_dist_center: Distribution = Distribution.new(
 		{"24x24x4": CLIFF_TOPCENTER_FILL_PROB, "point": 1.0 - CLIFF_TOPCENTER_FILL_PROB}
 	)
-	var top_tag_prob_center: Distribution = Distribution.new({"cliff-side": 1.0})
+	var top_tag_prob_center: Distribution = Distribution.new({"cliff-stack-side": 1.0})
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x4": 1.0}),
@@ -512,6 +510,7 @@ static func _build_cliff_tile(
 	var scene: PackedScene = load(scene_path)
 	var bb: AABB = AABB(Vector3(-12, -4, -12), Vector3(24, 4, 24))
 	var bottom_size_tag: String = "24x24x0.5" if bottom_required_tag == "ground" else "24x24x4"
+	var tier: String = "cliff-base" if bottom_required_tag == "ground" else "cliff-stack"
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x4": 1.0}),
@@ -540,7 +539,10 @@ static func _build_cliff_tile(
 		"bottom": null,
 		"topcenter": null,
 	}
-	var cliff_lateral_dist: Distribution = Distribution.new({"cliff": 1.0})
+	# Pin lateral growth to this tier's side variant: the bare "cliff" tag
+	# matches both tiers, and a cliff-stack placed at ground level (or vice
+	# versa) is invalid and gets removed by CliffEdgeRule's support check.
+	var cliff_lateral_dist: Distribution = Distribution.new({tier + "-side": 1.0})
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"front": cliff_lateral_dist,
 		"back": cliff_lateral_dist,

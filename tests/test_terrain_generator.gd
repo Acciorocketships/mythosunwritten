@@ -1443,7 +1443,7 @@ func test_ground_tile_topcenter_can_seed_cliff() -> void:
 	var module: TerrainModule = TerrainModuleDefinitions.load_ground_tile()
 	var topcenter_dist: Distribution = module.socket_tag_prob.get("topcenter")
 	assert_not_null(topcenter_dist)
-	assert_true(topcenter_dist.dist.has("cliff-side"), "Ground topcenter must seed cliff-side")
+	assert_true(topcenter_dist.dist.has("cliff-base-side"), "Ground topcenter must seed cliff-base-side")
 	assert_true(topcenter_dist.dist.has("level-ground-center"), "Ground topcenter must still seed level")
 
 	var top_size_dist: Distribution = module.socket_size.get("topcenter")
