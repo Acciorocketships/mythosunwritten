@@ -45,7 +45,11 @@ func create() -> Node3D:
 	root = chosen_scene.instantiate()
 	root.global_transform = transform
 
-	size = Helper.compute_local_mesh_aabb(root)
+	# Logical bounds come from the module definition, NOT the mesh: meshes may
+	# overhang their tile (lips, skirts), and mesh-derived AABBs would make
+	# face-adjacent tiles register as overlapping (replace_existing then eats
+	# neighbours, producing infinite place/remove churn).
+	size = def.size
 	set_world_aabb()
 
 	socket_node = root.get_node("Sockets") as Node3D

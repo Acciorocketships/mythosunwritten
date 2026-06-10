@@ -152,9 +152,10 @@ func _make_module(size: Vector3, pos_by_name: Dictionary[String, Vector3]) -> Te
 	var fill: Dictionary[String, float] = {}
 	for n: String in pos_by_name.keys():
 		fill[n] = 1.0
+	# Authored bounds matching the centered BoxMesh (instances use def.size).
 	var mod: TerrainModule = TerrainModule.new(
 		scene,
-		AABB(),
+		AABB(-size / 2.0, size),
 		TagList.new(),
 		[],
 		{},
@@ -508,7 +509,7 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 		fill[n] = 1.0
 	var mod: TerrainModule = TerrainModule.new(
 		scene,
-		AABB(),
+		AABB(-size / 2.0, size),
 		TagList.new(),
 		[],
 		{},

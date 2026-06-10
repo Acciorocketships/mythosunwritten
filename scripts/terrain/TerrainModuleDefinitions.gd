@@ -570,7 +570,10 @@ static func _build_level_tile(
 	topcenter_target_tag: String = ""
 ) -> TerrainModule:
 	var scene = load(scene_path)
-	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
+	# Authored logical bounds: a level tile is exactly one 24x24x0.5 slab with
+	# its origin on the top plane (edge-variant meshes overhang below with
+	# their skirts; that must not count as occupancy).
+	var bb: AABB = AABB(Vector3(-12.0, -0.5, -12.0), Vector3(24.0, 0.5, 24.0))
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x0.5": 1.0}),
 		"back": Distribution.new({"24x24x0.5": 1.0}),
