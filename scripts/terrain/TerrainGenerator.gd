@@ -599,10 +599,12 @@ func get_adjacent_from_size(
 		test_piece.destroy()
 		return {}
 
-	# Position the test piece so the attachment socket aligns with the expansion socket
-	var orig_socket_pos: Vector3 = orig_piece_socket.get_socket_position()
-	var attachment_local: Transform3D = Helper.to_root_tf(attachment_socket, test_piece.root)
-	test_piece.set_position(orig_socket_pos - attachment_local.origin)
+	# Position the test piece with the same direction-aware transform used for
+	# real placement. A plain offset would assume the source piece is unrotated;
+	# rotated pieces (e.g. level variants aligned by LevelEdgeRule) would get a
+	# misplaced test piece and garbage adjacency.
+	var test_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(test_piece, attachment_socket_name)
+	transform_to_socket(test_piece_socket, orig_piece_socket)
 
 	# Get initial adjacency
 	var adjacency: Dictionary[String, TerrainModuleSocket] = {attachment_socket_name: orig_piece_socket}
