@@ -42,6 +42,71 @@ static func snap_transform_origin(tf: Transform3D, snap: float = SNAP_POS) -> Tr
 	return out
 
 
+# Deterministic per-position pseudo-random value in [0, 1). The same world
+# position (snapped to a 0.5 grid — socket y positions sit on half-units)
+# always yields the same value for a given seed, so probability rolls keyed on
+# position survive piece retiles/replaces without granting fresh rolls.
+static func position_hash01(pos: Vector3, world_seed: int) -> float:
+	var key: Vector3i = Vector3i(roundi(pos.x * 2.0), roundi(pos.y * 2.0), roundi(pos.z * 2.0))
+	return _hash01(_mix64(world_seed ^ _mix64(key.x ^ _mix64(key.y ^ _mix64(key.z)))))
+
+
+# Smooth value-noise density field over XZ in [0, 1] with ~MACRO_SCALE-unit
+# features. Used to modulate fill probabilities so terrain features cluster
+# into coherent regions (mountain ranges, groves, open meadows) instead of
+# being uniformly scattered. Deterministic per seed — infinite-terrain safe.
+# The field fades to 0 within SPAWN_CLEAR_RADIUS of the world origin so the
+# player always spawns in an open meadow rather than walled in by a mountain.
+const MACRO_SCALE: float = 144.0
+const SPAWN_CLEAR_RADIUS: float = 60.0
+const SPAWN_CLEAR_FADE: float = 120.0
+
+static func macro_density01(pos: Vector3, world_seed: int) -> float:
+	# Two octaves: large cores (mountain ranges) plus smaller secondary
+	# features between them, so any render-range-sized area reliably contains
+	# some features regardless of where the big cores landed for this seed.
+	var value: float = (
+		0.65 * _value_noise01(pos, world_seed, MACRO_SCALE)
+		+ 0.35 * _value_noise01(pos, world_seed + 1, MACRO_SCALE * 0.4)
+	)
+	var origin_falloff: float = clampf(
+		(Vector2(pos.x, pos.z).length() - SPAWN_CLEAR_RADIUS) / SPAWN_CLEAR_FADE, 0.0, 1.0
+	)
+	return value * origin_falloff
+
+
+static func _value_noise01(pos: Vector3, world_seed: int, scale: float) -> float:
+	var x: float = pos.x / scale
+	var z: float = pos.z / scale
+	var cx: int = floori(x)
+	var cz: int = floori(z)
+	var fx: float = smoothstep(0.0, 1.0, x - float(cx))
+	var fz: float = smoothstep(0.0, 1.0, z - float(cz))
+	var h00: float = _cell_hash01(world_seed, cx, cz)
+	var h10: float = _cell_hash01(world_seed, cx + 1, cz)
+	var h01: float = _cell_hash01(world_seed, cx, cz + 1)
+	var h11: float = _cell_hash01(world_seed, cx + 1, cz + 1)
+	return lerpf(lerpf(h00, h10, fx), lerpf(h01, h11, fx), fz)
+
+
+static func _cell_hash01(world_seed: int, cx: int, cz: int) -> float:
+	return _hash01(_mix64(world_seed ^ _mix64(cx ^ _mix64(cz))))
+
+
+# splitmix64-style avalanche mix. Godot's built-in hash() of small integer
+# tuples is correlated along diagonals, which shows up as straight stripes of
+# placements across the map; this mixing removes that structure.
+static func _mix64(value: int) -> int:
+	var x: int = value + -7046029254386353131  # 0x9E3779B97F4A7C15
+	x = (x ^ (x >> 30)) * -4658895280553007687  # 0xBF58476D1CE4E5B9
+	x = (x ^ (x >> 27)) * -7723592293110705685  # 0x94D049BB133111EB
+	return x ^ (x >> 31)
+
+
+static func _hash01(h: int) -> float:
+	return float(h & 0x7FFFFFFF) / float(0x80000000)
+
+
 # ------------------------------------------------------------
 # Mesh AABB helpers
 # ------------------------------------------------------------

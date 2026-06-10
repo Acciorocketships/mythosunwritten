@@ -14,6 +14,9 @@ const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 var generation_rules: TerrainGenerationRuleLibrary
 var library: TerrainModuleLibrary
 var test_pieces_library: TerrainModuleLibrary
+# Seed for deterministic per-position probability rolls (see add_piece_to_queue).
+# Drawn in _ready() so a seed() call before setup yields a reproducible world.
+var world_seed: int = 0
 var terrain_index: TerrainIndex
 var socket_index: PositionIndex
 var queue: PriorityQueue
@@ -25,6 +28,7 @@ var _last_player_pos: Vector3 = Vector3(INF, INF, INF)
 
 
 func _ready() -> void:
+	world_seed = randi()
 	library = TerrainModuleLibrary.new()
 	library.init()
 
@@ -42,12 +46,7 @@ func _ready() -> void:
 	# Register the start tile in indices so collision checks work and adjacency can be detected
 	# Sockets are indexed so they can act as adjacency barriers.
 	register_piece(start_tile, "")
-	for socket_name in start_tile.sockets.keys():
-		var piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(start_tile, socket_name)
-		if not _is_socket_expandable(piece_socket):
-			continue
-		var dist := get_dist_from_player(piece_socket.piece, piece_socket.socket_name)
-		_enqueue_socket(piece_socket, dist)
+	add_piece_to_queue(start_tile)
 
 func _process(_delta: float) -> void:
 	load_terrain()
@@ -187,7 +186,7 @@ func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool
 		return false
 	if _defer_if_out_of_range(piece_socket, distance):
 		return false
-	if not _passes_fill_prob_roll(piece_socket):
+	if not _is_socket_expandable(piece_socket):
 		return false
 
 	var size: String = _sample_socket_size(piece_socket.piece, piece_socket.socket_name)
@@ -243,6 +242,25 @@ func _is_socket_expandable(piece_socket: TerrainModuleSocket) -> bool:
 	return _get_socket_fill_prob(piece_socket.piece, piece_socket.socket_name) > 0.0
 
 
+# Fill probability modulated by the macro density field: probabilistic sockets
+# fire more in dense regions (mountain ranges, groves) and rarely in open
+# meadows, so features form coherent bounded clusters. The curve concentrates
+# the field into rare strong cores (~m^5): features grow aggressively inside a
+# core and die out quickly past its edge, which is what bounds cluster size.
+# Structural sockets (fill >= 1.0, e.g. ground lateral expansion) ignore the
+# field — ground must always fill for the world to be infinite.
+func _effective_fill_prob(piece: TerrainModuleInstance, socket_name: String, pos: Vector3) -> float:
+	return _macro_scaled_fill(_get_socket_fill_prob(piece, socket_name), pos)
+
+
+func _macro_scaled_fill(fill: float, pos: Vector3) -> float:
+	if fill >= 1.0:
+		return fill
+	var macro: float = Helper.macro_density01(pos, world_seed)
+	var factor: float = 0.25 + 2.2 * pow(macro, 3.0)
+	return clampf(fill * factor, 0.0, 1.0)
+
+
 func _is_socket_blocking(piece_socket: TerrainModuleSocket) -> bool:
 	if piece_socket == null or piece_socket.piece == null or piece_socket.piece.def == null:
 		return false
@@ -254,11 +272,6 @@ func _is_socket_blocking(piece_socket: TerrainModuleSocket) -> bool:
 	if fill_prob == null:
 		return false
 	return _get_socket_fill_prob(piece_socket.piece, socket_name) <= 0.0
-
-
-func _passes_fill_prob_roll(piece_socket: TerrainModuleSocket) -> bool:
-	var fill_prob: float = _get_socket_fill_prob(piece_socket.piece, piece_socket.socket_name)
-	return fill_prob > 0.0 and randf() <= fill_prob
 
 
 func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String) -> Dictionary:
@@ -450,6 +463,14 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 			continue
 		var socket: Marker3D = piece.sockets[socket_name]
 		var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
+		# Sparsity roll happens at enqueue time, so the queue only ever holds
+		# sockets that will actually expand once in range. The roll is a
+		# deterministic hash of the socket's world position: piece retiles
+		# (rule replacements) re-derive the same verdict instead of getting a
+		# fresh roll, otherwise frontier sockets would be re-rolled on every
+		# neighbour retile and any fill probability would ratchet toward 1.
+		if Helper.position_hash01(pos, world_seed) > _effective_fill_prob(piece, socket_name, pos):
+			continue
 		var existing_socket: TerrainModuleSocket = socket_index.query_other(pos, piece)
 		if existing_socket != null and _is_socket_expandable(existing_socket):
 			continue

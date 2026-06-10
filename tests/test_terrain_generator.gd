@@ -249,7 +249,7 @@ class _DebugTerrainGenerator:
 		if _defer_if_out_of_range(piece_socket, distance):
 			_add_debug_stat("deferred_out_of_range_total")
 			return false
-		if not _passes_fill_prob_roll(piece_socket):
+		if not _is_socket_expandable(piece_socket):
 			return false
 
 		var size: String = _sample_socket_size(piece_socket.piece, piece_socket.socket_name)
@@ -1532,7 +1532,9 @@ func test_integration_out_of_range_requeue_does_not_duplicate_and_recovers():
 	seed(99)
 	_run_generator_ready(gen)
 
-	for _i in range(120):
+	# Few enough steps that the area within RENDER_RANGE is NOT yet saturated:
+	# recovery must have work left to do when the player returns.
+	for _i in range(20):
 		gen.load_terrain()
 
 	gen.player.global_position = Vector3(3000, 0, 0)
@@ -2275,6 +2277,9 @@ func test_replace_piece_queues_topcenter_when_stack_piece_retiles_to_center():
 	gen.register_piece(side_piece, "")
 
 	var center_module: TerrainModule = TerrainModuleDefinitions.load_level_stack_middle_tile()
+	# Pin the fill prob to 1.0 so the enqueue-time sparsity roll (deterministic
+	# per position, macro-field modulated) cannot make this test flaky.
+	center_module.socket_fill_prob["topcenter"] = 1.0
 	var center_piece: TerrainModuleInstance = center_module.spawn()
 	center_piece.set_transform(side_piece.transform)
 	center_piece.create()
