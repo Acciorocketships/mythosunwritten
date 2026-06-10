@@ -3,12 +3,12 @@
 [ext_resource type="PackedScene" uid="uid://ca2otvi260x2p" path="res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_I_InnerCorner_Color1.gltf" id="1_4qc0n"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4qc0n"]
-size = Vector3(1.37, 4, 1.37)
+size = Vector3(1.5, 4, 1.5)
 
 [node name="Hill_Cliff_Tall_I_InnerCorner_Color12" instance=ExtResource("1_4qc0n")]
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.815, 1.7, 0.815)
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0.5, 1.7, 0.5)
 shape = SubResource("BoxShape3D_4qc0n")
