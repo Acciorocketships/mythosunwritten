@@ -8,3 +8,5 @@ extends Resource
 func _init() -> void:
 	rules.append(CliffEdgeRule.new())
 	rules.append(LevelEdgeRule.new())
+	# Runs last so it sees the final (possibly retiled) placement.
+	rules.append(ClusterFillRule.new())

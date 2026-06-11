@@ -7,23 +7,32 @@ extends Resource
 
 # --- Level (second-level patches that sit on top of ground tiles) ---
 # Lateral expansion rate per cardinal socket — how aggressively level
-# clusters grow outward on the second tier.
-const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.5
+# clusters grow outward on the second tier. Each frontier tile exposes ~3 new
+# sockets, so keep this below 1/3 (subcritical) or patches grow unbounded and
+# blanket the map.
+const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.3
 # Lateral expansion rate for the level-stack tier (third level and above).
-# Use null to disable lateral spread on stacks.
-const LEVEL_STACK_LATERAL_FILL_PROB: float = 0.8
+# Stacks can only sit on supported level tiles below, so this is intrinsically
+# bounded and can stay high — upper tiers fill out their support, producing
+# terraced slopes rather than spires.
+const LEVEL_STACK_LATERAL_FILL_PROB: float = 0.7
 # Vertical stacking rate from a level-center topcenter (seeds the level
 # directly above). Applies to both level-ground and level-stack centers.
-const LEVEL_TOPCENTER_FILL_PROB: float = 0.3
+const LEVEL_TOPCENTER_FILL_PROB: float = 0.9
 # Whether placing a level tile removes overlapping non-ground pieces in
 # its footprint. True keeps LevelEdgeRule retiling clean.
 const LEVEL_REPLACE_EXISTING: bool = false
 
 # --- Cliff ---
-const CLIFF_LATERAL_FILL_PROB: float = 0.35
-# Vertical stacking rate from a cliff-interior topcenter (seeds a
-# cliff-stack edge above the plateau).
-const CLIFF_TOPCENTER_FILL_PROB: float = 0.1
+# Same subcritical rule as LEVEL_BASE_LATERAL_FILL_PROB: keep below ~1/3 or
+# cliff plateaus grow until they cover everything (they replace_existing, so
+# runaway growth eats the rest of the terrain too).
+const CLIFF_LATERAL_FILL_PROB: float = 0.3
+# Vertical stacking rate from a cliff-interior topcenter (seeds the next
+# cliff storey above the plateau). Bounded: a storey only stands on a
+# cliff-interior tile, which requires a >=3x3 plateau below, so each storey
+# shrinks and mountains taper naturally.
+const CLIFF_TOPCENTER_FILL_PROB: float = 0.8
 const CLIFF_REPLACE_EXISTING: bool = true
 # Per-socket foliage chance on each top edge/corner of a cliff-interior plateau.
 const CLIFF_INTERIOR_FOLIAGE_FILL_PROB: float = 0.05
@@ -34,8 +43,8 @@ const GROUND_TOPCENTER_FILL_PROB: float = 0.1
 # Probability split of what a ground topcenter seeds when it does fire.
 # Must sum to 1.0. Mirrors both the size and tag distributions used to
 # pick between a level-ground-center (small) and a cliff-side (tall).
-const GROUND_TOPCENTER_LEVEL_PROB: float = 0.95
-const GROUND_TOPCENTER_CLIFF_PROB: float = 0.05
+const GROUND_TOPCENTER_LEVEL_PROB: float = 0.65
+const GROUND_TOPCENTER_CLIFF_PROB: float = 0.35
 
 # --- Ground top-edge foliage (cardinals + corners on each ground tile) ---
 const GROUND_FOLIAGE_FILL_PROB: float = 0.05
@@ -337,12 +346,15 @@ static func load_level_variant(
 ) -> TerrainModule:
 	var scene_path: String = "res://terrain/scenes/%s.tscn" % scene_name
 	var tags: TagList = TagList.new(["level", tier, variant_tag, "24x24x0.5"])
+	# Edge variants get a BLOCKING topcenter (0.0, not null): stacks may only
+	# be probed above center tiles, otherwise stack expansion places over an
+	# edge and is rejected by LevelEdgeRule afterwards, churning forever.
 	if tier == "level-ground":
 		return _build_level_tile(
-			scene_path, tags, LEVEL_BASE_LATERAL_FILL_PROB, null, "level-ground-center", ""
+			scene_path, tags, LEVEL_BASE_LATERAL_FILL_PROB, 0.0, "level-ground-center", ""
 		)
 	return _build_level_tile(
-		scene_path, tags, LEVEL_STACK_LATERAL_FILL_PROB, null, "level-stack-center", ""
+		scene_path, tags, LEVEL_STACK_LATERAL_FILL_PROB, 0.0, "level-stack-center", ""
 	)
 
 
@@ -453,11 +465,15 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 		"topbackleft": top_size_dist_corners,
 	}
 	var socket_required: Dictionary[String, TagList] = {}
+	# Laterals are BLOCKING (0.0, not null): the plateau interior is occupied
+	# space. Non-blocking laterals let neighbouring cliff edges expand INTO
+	# the plateau footprint (their facing socket has no expandable
+	# counterpart), eat the interior via replace_existing, and churn forever.
 	var socket_fill_prob: Dictionary[String, Variant] = {
-		"front": null,
-		"back": null,
-		"right": null,
-		"left": null,
+		"front": 0.0,
+		"back": 0.0,
+		"right": 0.0,
+		"left": 0.0,
 		"topfront": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
 		"topback": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
 		"topleft": CLIFF_INTERIOR_FOLIAGE_FILL_PROB,
@@ -537,7 +553,11 @@ static func _build_cliff_tile(
 		"backleft": null,
 		"backright": null,
 		"bottom": null,
-		"topcenter": null,
+		# Blocking (0, not null): a stack tier must never be probed above an
+		# edge tile — only interiors support the next storey. Non-blocking
+		# would let stack lateral expansion place here and get rejected by
+		# CliffEdgeRule afterwards, churning forever.
+		"topcenter": 0.0,
 	}
 	# Pin lateral growth to this tier's side variant: the bare "cliff" tag
 	# matches both tiers, and a cliff-stack placed at ground level (or vice

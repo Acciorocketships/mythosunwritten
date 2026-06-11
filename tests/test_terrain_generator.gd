@@ -2117,12 +2117,15 @@ func test_level_center_has_nonzero_topcenter_fill_prob():
 	assert_true(float(fill) > 0.0, "topcenter fill_prob should be > 0")
 
 
-func test_level_edge_has_null_topcenter_fill_prob():
+func test_level_edge_has_blocking_topcenter_fill_prob():
+	# Edge variants must have a BLOCKING topcenter (0.0, not null): stacks may
+	# only be probed above center tiles, otherwise stack expansion places over
+	# an edge and is rejected by LevelEdgeRule afterwards, churning forever.
 	var module: TerrainModule = TerrainModuleDefinitions.load_level_variant(
 		"LevelSide", "level-ground", "level-side"
 	)
 	assert_true(module.socket_fill_prob.has("topcenter"))
-	assert_eq(module.socket_fill_prob["topcenter"], null)
+	assert_eq(module.socket_fill_prob["topcenter"], 0.0)
 
 
 func test_level_tiles_have_cardinal_fill_prob():
@@ -2709,12 +2712,13 @@ func test_cliff_interior_tile_uses_ground_scene_with_cliff_tag() -> void:
 	assert_true(module.tags.has("ground-type"), "cliff-interior must have 'ground-type' tag")
 	assert_true(module.tags.has("24x24x4"), "cliff-interior must use cliff size tag")
 	assert_true(module.replace_existing, "cliff-interior must replace_existing for rule swap")
-	# Lateral cardinals are NON-expandable (the perimeter is covered by cliff-sides).
+	# Lateral cardinals are BLOCKING (0.0): the plateau interior is occupied
+	# space, so neighbouring expansions must never probe into its footprint.
 	for socket_name in ["front", "back", "left", "right"]:
 		assert_eq(
 			module.socket_fill_prob[socket_name],
-			null,
-			"cliff-interior %s must be non-expandable" % socket_name
+			0.0,
+			"cliff-interior %s must be blocking" % socket_name
 		)
 
 
