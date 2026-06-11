@@ -55,6 +55,14 @@ func _run() -> void:
 		var peak: Vector3 = _highest_piece_position()
 		if peak != Vector3.INF:
 			await _capture_from("shot_%02d_mountain" % i, peak + Vector3(70, 50, 70), peak, false)
+		var water: Vector3 = _tagged_piece_position("water")
+		if water != Vector3.INF:
+			await _capture_from("shot_%02d_water" % i, water + Vector3(45, 35, 45), water, false)
+			# From low over the water looking back at the land: shows the bank walls.
+			var land: Vector3 = _tagged_piece_position("bank")
+			if land != Vector3.INF:
+				var from_water: Vector3 = water + (water - land).normalized() * 30.0 + Vector3(0, 7, 0)
+				await _capture_from("shot_%02d_shore" % i, from_water, land + Vector3(0, -1, 0), false)
 	get_tree().quit()
 
 
@@ -69,6 +77,13 @@ func _capture_from(shot_name: String, cam_pos: Vector3, target: Vector3, use_mai
 	await RenderingServer.frame_post_draw
 	var img: Image = get_viewport().get_texture().get_image()
 	img.save_png("%s/%s.png" % [SHOT_DIR, shot_name])
+
+
+func _tagged_piece_position(tag: String) -> Vector3:
+	for module in terrain.terrain_index.all_modules.keys():
+		if module is TerrainModuleInstance and module.def.tags.has(tag):
+			return module.transform.origin
+	return Vector3.INF
 
 
 func _highest_piece_position() -> Vector3:
@@ -91,7 +106,7 @@ func _print_stats(i: int) -> void:
 		if not (module is TerrainModuleInstance):
 			continue
 		total += 1
-		for family in ["ground", "level", "cliff", "hill"]:
+		for family in ["ground", "level", "cliff", "hill", "water", "bank"]:
 			if module.def.tags.has(family):
 				counts[family] = counts.get(family, 0) + 1
 	print("[harness %d] fps=%d pieces=%d queue=%d counts=%s player=%s" % [
