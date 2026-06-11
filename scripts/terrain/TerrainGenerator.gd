@@ -7,6 +7,8 @@ const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 
 @export var RENDER_RANGE: int = 250
 @export var MAX_LOAD_PER_STEP: int = 8
+## Queue-priority penalty (in distance units) for decoration-capable sockets.
+const DECO_PRIORITY_PENALTY: float = 48.0
 
 @export var player: Node3D
 @export var terrain_parent: Node
@@ -501,11 +503,43 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 		# neighbour retile and any fill probability would ratchet toward 1.
 		if Helper.position_hash01(pos, world_seed) > _effective_fill_prob(piece, socket_name, pos):
 			continue
+		# Suppression: don't enqueue a socket whose suppressor (e.g. topcenter
+		# seeding a structure on this tile) is going to fire — its placement
+		# would visibly displace whatever this socket spawns.
+		if _suppressor_roll_passes(piece, piece.def.socket_suppressed_by.get(socket_name)):
+			continue
 		var existing_socket: TerrainModuleSocket = socket_index.query_other(pos, piece)
 		if existing_socket != null and _is_socket_expandable(existing_socket):
 			continue
 		var dist := get_dist_from_player(piece, socket_name)
+		# Decoration-capable sockets (size dist includes "point") are processed
+		# a couple of tiles later than structural work at the same distance, so
+		# decorations don't appear and then get displaced moments later by
+		# lateral growth arriving from a neighbouring tile.
+		if _socket_can_spawn_point(piece, socket_name):
+			dist += DECO_PRIORITY_PENALTY
 		_enqueue_socket(current_socket, dist)
+
+
+func _socket_can_spawn_point(piece: TerrainModuleInstance, socket_name: String) -> bool:
+	var size_dist: Distribution = piece.def.socket_size.get(socket_name, null)
+	if size_dist == null:
+		return true  # sockets without a size dist default to "point"
+	return size_dist.dist.has("point")
+
+
+# Whether a suppression entry ({"socket": name, "prob": float}) fires: the
+# suppressor socket's deterministic position roll passes at the authored
+# probability (macro-scaled like any fill prob).
+func _suppressor_roll_passes(piece: TerrainModuleInstance, entry: Variant) -> bool:
+	if not (entry is Dictionary):
+		return false
+	var socket: Marker3D = piece.sockets.get(entry.get("socket", ""), null)
+	if socket == null:
+		return false
+	var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
+	var prob: float = float(entry.get("prob", 0.0))
+	return Helper.position_hash01(pos, world_seed) <= _macro_scaled_fill(prob, pos)
 
 
 func register_piece(piece: TerrainModuleInstance, _attachment_socket_name: String) -> void:
@@ -529,7 +563,14 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 	if parent_piece != null:
 		other_pieces.erase(parent_piece)
 
-	other_pieces = other_pieces.filter(func(p): return not p.def.tags.has("ground"))
+	# Displaceable decorations never block structure (they get removed on
+	# placement instead), but they DO block other decorations — otherwise a
+	# retiled tile re-enqueues its foliage sockets and stacks duplicate
+	# decorations at the same spot.
+	var new_is_displaceable: bool = new_piece.def.displaceable
+	other_pieces = other_pieces.filter(
+		func(p): return not p.def.tags.has("ground") 			and not (p.def.displaceable and not new_is_displaceable)
+	)
 
 	if new_piece.def.tags.has("level") and parent_piece != null and parent_piece.def.tags.has("level"):
 		# Only filter out level tiles that are strictly *below* the new piece (the support layer).
@@ -772,6 +813,13 @@ func add_piece(
 
 	if not can_place_result:
 		return false
+
+	# Decorations yield to structure: remove any displaceable piece this piece
+	# now covers (can_place ignored them as blockers).
+	if not new_piece.def.displaceable:
+		for piece in terrain_index.query_box(new_piece.aabb):
+			if piece is TerrainModuleInstance and piece.def.displaceable:
+				remove_piece(piece)
 
 	terrain_parent.add_child(new_piece.root)
 

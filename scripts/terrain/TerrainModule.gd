@@ -17,6 +17,20 @@ extends Resource
 # Instead of failing placement due to AABB collisions, it will remove overlapping pieces.
 @export var replace_existing: bool = false
 
+# If true, this module is a decoration that yields to structure: it never blocks
+# placement, and any piece placed over it removes it (e.g. grass, bushes, rocks).
+@export var displaceable: bool = false
+
+# Optional per-socket suppression: socket name -> {"socket": String,
+# "prob": float}. If the suppressor socket's deterministic position roll would
+# pass at the given probability, the suppressed socket is never enqueued. The
+# probability is authored independently of the current variant's fill prob so
+# the verdict stays stable across retiles (e.g. a level edge that later
+# becomes a stacking center). Used so decorations don't spawn on a tile whose
+# topcenter is (ever) going to seed a structure, which would visibly displace
+# them.
+@export var socket_suppressed_by: Dictionary[String, Dictionary] = {}
+
 func _init(
 	_scene: PackedScene = null,
 	_size: AABB = AABB(),
@@ -27,6 +41,8 @@ func _init(
 	_socket_fill_prob: Dictionary = {},
 	_socket_tag_prob: Dictionary[String, Distribution] = {},
 	_replace_existing: bool = false,
+	_displaceable: bool = false,
+	_socket_suppressed_by: Dictionary[String, Dictionary] = {},
 ) -> void:
 	scene = _scene
 	size = _size
@@ -38,6 +54,8 @@ func _init(
 	visual_variants = _visual_variants.duplicate()
 	visual_variants.append(_scene)
 	replace_existing = _replace_existing
+	displaceable = _displaceable
+	socket_suppressed_by = _socket_suppressed_by
 
 
 	# Validate authored distributions (fail fast in debug/tests).
