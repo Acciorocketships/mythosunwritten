@@ -1,28 +1,29 @@
 // Stylized water — Godot 4 port of the ideas in
-// assets/SeaWaterMaterial (Sea Water Base Shader, Godot 3): layered
-// directional waves with noise detail, depth-based shore foam, and
-// depth-tinted transparency. UVs are world-space so tiles are seamless.
+// assets/SeaWaterMaterial (Sea Water Base Shader, Godot 3): large smooth
+// rolling waves, depth-based shore foam, and depth-tinted transparency.
+// UVs are world-space so tiles are seamless.
 shader_type spatial;
 render_mode specular_schlick_ggx;
 
-uniform vec3 color_deep : source_color = vec3(0.08, 0.3, 0.5);
-uniform vec3 color_shallow : source_color = vec3(0.2, 0.52, 0.65);
-uniform vec3 foam_color : source_color = vec3(0.93, 0.96, 1.0);
+uniform vec3 color_deep : source_color = vec3(0.12, 0.45, 0.55);
+uniform vec3 color_shallow : source_color = vec3(0.32, 0.66, 0.69);
+uniform vec3 foam_color : source_color = vec3(0.93, 0.97, 1.0);
 uniform float foam_width : hint_range(0.0, 3.0) = 1.15;
 uniform float depth_fade : hint_range(0.5, 8.0) = 2.6;
-uniform float wave_height : hint_range(0.0, 0.5) = 0.09;
+uniform float wave_height : hint_range(0.0, 0.6) = 0.17;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
-uniform float roughness : hint_range(0.0, 1.0) = 0.1;
-uniform float normal_strength : hint_range(0.0, 1.0) = 0.16;
+uniform float roughness : hint_range(0.0, 1.0) = 0.08;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
 
 varying vec3 world_pos;
 
+// Long-wavelength swells: two crossing directional waves plus a broad noise
+// drift. Their interference makes the surface pulse slowly.
 float wave_h(vec2 p, float t) {
-	float h = sin(p.x * 0.31 + t) * cos(p.y * 0.26 + t * 0.83);
-	h += 0.6 * sin(dot(p, vec2(0.2, 0.16)) - t * 1.31);
-	h += 1.6 * (textureLod(noise_tex, p * 0.015 + vec2(t * 0.011, -t * 0.007), 0.0).r - 0.5);
+	float h = sin(p.x * 0.11 + t * 0.9) * cos(p.y * 0.085 + t * 0.66);
+	h += 0.7 * sin(dot(p, vec2(0.071, 0.052)) - t * 1.05);
+	h += 1.0 * (textureLod(noise_tex, p * 0.0045 + vec2(t * 0.006, -t * 0.0045), 0.0).r - 0.5);
 	return h;
 }
 
@@ -31,12 +32,12 @@ void vertex() {
 	float t = TIME * wave_speed;
 	float h = wave_h(world_pos.xz, t);
 	VERTEX.y += h * wave_height;
-	// Normals from the analytic height gradient.
-	float e = 0.6;
+	// Smooth normals from the analytic height gradient (wide epsilon keeps
+	// the surface rolling, not rippled).
+	float e = 2.0;
 	float hx = wave_h(world_pos.xz + vec2(e, 0.0), t);
 	float hz = wave_h(world_pos.xz + vec2(0.0, e), t);
-	vec3 n = normalize(vec3((h - hx) * wave_height / e, 1.0, (h - hz) * wave_height / e));
-	NORMAL = n;
+	NORMAL = normalize(vec3((h - hx) * wave_height / e, 1.0, (h - hz) * wave_height / e));
 }
 
 void fragment() {
@@ -48,18 +49,7 @@ void fragment() {
 	float surface_dist = -VERTEX.z;
 	float water_depth = max(scene_dist - surface_dist, 0.0);
 
-	// Fine ripple normals on top of the vertex waves.
 	float t = TIME * wave_speed;
-	vec2 nuv = world_pos.xz * 0.035;
-	float e = 0.02;
-	float r0 = texture(noise_tex, nuv + vec2(t * 0.018, t * 0.011)).r
-		+ texture(noise_tex, nuv * 1.7 - vec2(t * 0.013, -t * 0.017)).r;
-	float rx = texture(noise_tex, nuv + vec2(e, 0.0) + vec2(t * 0.018, t * 0.011)).r
-		+ texture(noise_tex, nuv * 1.7 + vec2(e * 1.7, 0.0) - vec2(t * 0.013, -t * 0.017)).r;
-	float rz = texture(noise_tex, nuv + vec2(0.0, e) + vec2(t * 0.018, t * 0.011)).r
-		+ texture(noise_tex, nuv * 1.7 + vec2(0.0, e * 1.7) - vec2(t * 0.013, -t * 0.017)).r;
-	vec3 ripple = vec3((r0 - rx) / e, 1.0 / max(normal_strength, 0.001), (r0 - rz) / e);
-	NORMAL = normalize(mix(NORMAL, normalize((VIEW_MATRIX * vec4(normalize(ripple), 0.0)).xyz), normal_strength));
 
 	// Depth-tinted base color.
 	float depth_t = clamp(water_depth / depth_fade, 0.0, 1.0);
@@ -73,7 +63,7 @@ void fragment() {
 	foam_mask *= 0.85 + 0.15 * sin(t * 2.1 + foam_noise * 6.0);
 
 	ALBEDO = mix(base, foam_color, clamp(foam_mask, 0.0, 1.0));
-	ALPHA = mix(0.65, 0.94, depth_t);
+	ALPHA = mix(0.6, 0.9, depth_t);
 	ALPHA = max(ALPHA, foam_mask * 0.95);
 	ROUGHNESS = mix(roughness, 0.5, foam_mask);
 	SPECULAR = 0.7;
