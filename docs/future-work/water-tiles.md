@@ -20,5 +20,7 @@
   and banks carry `ground`/`side` so they satisfy neighbour requirements but
   are placed exclusively by the rule.
 
-Follow-up: swimming/wading gameplay (the player can currently walk on the
-water surface and cannot climb a bank from the water).
+Swimming is implemented (`characters/character.gd`): water tiles expose an
+`Area3D` volume; while inside, the character moves slower, slowly sinks, and
+floats back to the surface while jump is held. A jump pressed near the
+surface leaps out of the water, high enough to clear a bank top.
