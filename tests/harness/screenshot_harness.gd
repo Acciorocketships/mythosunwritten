@@ -129,6 +129,7 @@ func _print_stats(i: int) -> void:
 func _scan_invariants(tag: String) -> void:
 	var level_rule: LevelEdgeRule = LevelEdgeRule.new()
 	var cliff_rule: CliffEdgeRule = CliffEdgeRule.new()
+	var water_rule: WaterRule = WaterRule.new()
 	var violations: int = 0
 	for module in terrain.terrain_index.all_modules.keys():
 		if not (module is TerrainModuleInstance):
@@ -157,6 +158,25 @@ func _scan_invariants(tag: String) -> void:
 			for above in terrain.terrain_index.query_box(AABB(o + Vector3(-0.5, 0.2, -0.5), Vector3(1, 1, 1))):
 				if above is TerrainModuleInstance and above != piece and above.def.tags.has("level"):
 					print("[scan %s] LEVEL-ON-BANK at %s" % [tag, str(o)])
+					violations += 1
+		if piece.def.tags.has("ground") and not piece.def.tags.has("water"):
+			# Base tiles must carry the bank variant matching their actual
+			# water-facing sides, counted from PLACED water pieces only (field
+			# positions not yet generated retile on arrival — not a violation).
+			var placed_sides: Array[String] = []
+			for socket_name in water_rule.CARDINAL_SOCKETS:
+				if water_rule._water_at_cardinal(piece, socket_name, terrain.socket_index, terrain.world_seed):
+					placed_sides.append(socket_name)
+			if not placed_sides.is_empty():
+				var wmissing: Array[String] = water_rule._water_sides_for_piece(
+					piece, terrain.socket_index, terrain.terrain_index, terrain.world_seed
+				)
+				var wexpected: String = water_rule._tag_for_missing_sockets(wmissing)
+				var wactual: String = water_rule._current_bank_tag(piece.def)
+				if wexpected != wactual:
+					print("[scan %s] BANK-WALL-MISMATCH at %s actual=%s expected=%s water_sides=%s" % [
+						tag, str(o), wactual, wexpected, str(wmissing)
+					])
 					violations += 1
 		if piece.def.tags.has("cliff"):
 			var cmissing: Array[String] = cliff_rule._missing_sockets_for_piece(piece, terrain.socket_index, terrain.terrain_index)

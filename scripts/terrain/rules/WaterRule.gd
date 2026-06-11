@@ -85,9 +85,16 @@ func apply(context: Dictionary) -> Dictionary:
 	):
 		chosen_replacement = _create_water_replacement(chosen_piece, library)
 
-	# Cheap exit for the overwhelmingly common case: nothing watery nearby.
+	# Cheap exit for the overwhelmingly common case: nothing watery nearby —
+	# neither placed water pieces nor ungenerated field-water positions (banks
+	# are pre-tiled toward those so the wall is already there when the water
+	# tile arrives).
 	var chosen_is_water: bool = chosen_replacement.def.tags.has("water")
-	if not chosen_is_water and not _has_any_water_neighbor(chosen_piece, socket_index, terrain_index):
+	if (
+		not chosen_is_water
+		and not _has_any_water_neighbor(chosen_piece, socket_index, terrain_index, world_seed)
+		and not _field_water_near(chosen_piece, world_seed)
+	):
 		return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
 
 	# Reclassify the neighbourhood: the chosen tile plus two rings of
@@ -164,15 +171,49 @@ func _create_water_replacement(
 func _has_any_water_neighbor(
 	piece: TerrainModuleInstance,
 	socket_index: PositionIndex,
-	terrain_index: TerrainIndex
+	terrain_index: TerrainIndex,
+	world_seed: int
 ) -> bool:
 	for socket_name in CARDINAL_SOCKETS:
-		if _water_at_cardinal(piece, socket_name, socket_index):
+		if _water_at_cardinal(piece, socket_name, socket_index, world_seed):
 			return true
 	for socket_name in DIAGONAL_SOCKETS:
-		if _get_diagonal_water_piece(piece, socket_name, terrain_index) != null:
+		if _get_diagonal_water_piece(piece, socket_name, terrain_index, world_seed) != null:
 			return true
 	return false
+
+
+## Field lookahead for the cheap exit: any of the 8 neighbouring tile centers
+## on a water-field position means classification must run even when no water
+## piece has been generated there yet.
+func _field_water_near(piece: TerrainModuleInstance, world_seed: int) -> bool:
+	for socket_name in CARDINAL_SOCKETS:
+		if not piece.sockets.has(socket_name):
+			continue
+		if Helper.is_water(_adjacent_center(piece, socket_name), world_seed):
+			return true
+	for socket_name in DIAGONAL_SOCKETS:
+		var target: Variant = _diagonal_target_center(piece, socket_name)
+		if target is Vector3 and Helper.is_water(target, world_seed):
+			return true
+	return false
+
+
+## A piece counts as water if it is a water tile, or a plain ground tile
+## sitting on a field-water position. The rule always swaps the latter at
+## placement time, but while THIS apply() runs for it, the registered piece
+## in the indices is still the plain ground instance — neighbours classified
+## in the same pass must already see it as water, or they keep (or get
+## downgraded to) wall-less variants beside the new water tile.
+func _piece_counts_as_water(piece: TerrainModuleInstance, world_seed: int) -> bool:
+	if piece == null or piece.def == null:
+		return false
+	if piece.def.tags.has("water"):
+		return true
+	return (
+		piece.def.tags.has("ground-plain")
+		and Helper.is_water(piece.transform.origin, world_seed)
+	)
 
 
 ## The chosen piece's water-facing sides: cardinals adjacent to a water tile,
@@ -188,7 +229,7 @@ func _water_sides_for_piece(
 	var water_cardinals: Array[String] = []
 	var cardinal_is_water: Dictionary[String, bool] = {}
 	for socket_name in CARDINAL_SOCKETS:
-		var is_water_side: bool = _water_at_cardinal(piece, socket_name, socket_index)
+		var is_water_side: bool = _water_at_cardinal(piece, socket_name, socket_index, world_seed)
 		if not is_water_side and not _cardinal_occupied(piece, socket_name, socket_index):
 			is_water_side = Helper.is_water(_adjacent_center(piece, socket_name), world_seed)
 		cardinal_is_water[socket_name] = is_water_side
@@ -203,7 +244,9 @@ func _water_sides_for_piece(
 			continue
 		if cardinal_is_water.get(required_cardinals[1], false):
 			continue
-		var diagonal_water: bool = _get_diagonal_water_piece(piece, socket_name, terrain_index) != null
+		var diagonal_water: bool = (
+			_get_diagonal_water_piece(piece, socket_name, terrain_index, world_seed) != null
+		)
 		if not diagonal_water:
 			var target: Variant = _diagonal_target_center(piece, socket_name)
 			if target is Vector3 and not _position_occupied(target, terrain_index):
@@ -214,7 +257,10 @@ func _water_sides_for_piece(
 
 
 func _water_at_cardinal(
-	piece: TerrainModuleInstance, socket_name: String, socket_index: PositionIndex
+	piece: TerrainModuleInstance,
+	socket_name: String,
+	socket_index: PositionIndex,
+	world_seed: int
 ) -> bool:
 	if not piece.sockets.has(socket_name):
 		return false
@@ -222,7 +268,7 @@ func _water_at_cardinal(
 	var other: TerrainModuleSocket = socket_index.query_other(
 		piece_socket.get_socket_position(), piece
 	)
-	return other != null and other.piece != null and other.piece.def.tags.has("water")
+	return other != null and _piece_counts_as_water(other.piece, world_seed)
 
 
 func _cardinal_occupied(
@@ -289,12 +335,15 @@ func _is_base_piece(piece: TerrainModuleInstance) -> bool:
 
 
 func _get_diagonal_water_piece(
-	piece: TerrainModuleInstance, diagonal_socket_name: String, terrain_index: TerrainIndex
+	piece: TerrainModuleInstance,
+	diagonal_socket_name: String,
+	terrain_index: TerrainIndex,
+	world_seed: int
 ) -> TerrainModuleInstance:
 	var diagonal_piece: TerrainModuleInstance = _get_diagonal_base_piece(
 		piece, diagonal_socket_name, terrain_index
 	)
-	if diagonal_piece != null and diagonal_piece.def.tags.has("water"):
+	if diagonal_piece != null and _piece_counts_as_water(diagonal_piece, world_seed):
 		return diagonal_piece
 	return null
 
