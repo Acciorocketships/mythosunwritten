@@ -25,6 +25,8 @@ var _tracked_queue_ref: PriorityQueue = null
 var _deferred_sockets: Array = []
 var _deferred_socket_keys: Dictionary = {}
 var _last_player_pos: Vector3 = Vector3(INF, INF, INF)
+var _pending_rule_rechecks: Array = []
+var _pending_recheck_ids: Dictionary = {}
 
 
 func _ready() -> void:
@@ -78,7 +80,10 @@ func load_terrain() -> void:
 	_deferred_sockets.clear()
 	_deferred_socket_keys.clear()
 
-	while num_added < MAX_LOAD_PER_STEP and num_processed < MAX_LOAD_PER_STEP * 2 and !queue.is_empty():
+	# Placements are capped at MAX_LOAD_PER_STEP; non-placing pops (already
+	# connected, deferred, re-enqueued by retiles) are much cheaper, so they
+	# get a wider budget — otherwise they crowd out real frontier work.
+	while num_added < MAX_LOAD_PER_STEP and num_processed < MAX_LOAD_PER_STEP * 4 and !queue.is_empty():
 		var piece_socket = queue.pop()
 		if piece_socket == null:
 			break
@@ -119,7 +124,10 @@ func _purge_orphaned_stacks() -> void:
 			if not _has_valid_stack_support(piece, "cliff", 5.0, "cliff-interior"):
 				to_remove.append(piece)
 	for piece in to_remove:
+		_recheck_neighbors_after_removal(piece)
 		remove_piece(piece)
+	if not to_remove.is_empty():
+		_process_rule_rechecks()
 
 
 # Returns true if `piece` has a valid stack support directly below: a
@@ -347,8 +355,13 @@ func _apply_rules_after_placement(
 	placement_context: Dictionary,
 	filtered: TerrainModuleList
 ) -> void:
-	var current_piece: TerrainModuleInstance = placed_piece
-	var context: Dictionary = _build_rule_context(orig_piece_socket, placement_context, current_piece, filtered)
+	var context: Dictionary = _build_rule_context(orig_piece_socket, placement_context, placed_piece, filtered)
+	_run_rules_on_piece(placed_piece, context)
+	_process_rule_rechecks()
+
+
+func _run_rules_on_piece(piece: TerrainModuleInstance, context: Dictionary) -> void:
+	var current_piece: TerrainModuleInstance = piece
 	context["adjacent"] = get_adjacent(current_piece)
 	for rule in generation_rules.rules:
 		context["chosen_piece"] = current_piece
@@ -364,6 +377,7 @@ func _apply_rules_after_placement(
 			# stack, or a stuck cliff). Apply any sibling updates, remove the
 			# piece, and stop running further rules for this placement.
 			_apply_piece_updates_after_placement(step_updates, null)
+			_recheck_neighbors_after_removal(current_piece)
 			remove_piece(current_piece)
 			return
 		if updated_piece is TerrainModuleInstance and updated_piece != current_piece:
@@ -372,7 +386,57 @@ func _apply_rules_after_placement(
 			context["adjacent"] = get_adjacent(current_piece)
 		_apply_piece_updates_after_placement(step_updates, current_piece)
 		for socket_to_queue in step_result.get("sockets_for_queue", []):
-			queue.push(socket_to_queue, 0)
+			var socket_dist: float = get_dist_from_player(
+				socket_to_queue.piece, socket_to_queue.socket_name
+			)
+			_enqueue_socket(socket_to_queue, socket_dist)
+
+
+## Re-run the rule pipeline for a piece that is already part of the terrain.
+## Used after removals that bypass placement (replace_existing, orphan purges)
+## so neighbouring tiles' edge variants stay consistent with the new occupancy.
+func _run_rules_for_existing_piece(piece: TerrainModuleInstance) -> void:
+	if piece == null or piece.root == null or piece.root.get_parent() != terrain_parent:
+		return
+	var context: Dictionary = {
+		"size": "",
+		"required_tags": TagList.new(),
+		"socket_name": "",
+		"adjacent": {},
+		"chosen_piece": piece,
+		"filtered": TerrainModuleList.new(),
+		"origin_world": piece.transform.origin,
+		"terrain_index": terrain_index,
+		"socket_index": socket_index,
+		"queue": queue,
+		"library": library,
+		"rules_instance": generation_rules
+	}
+	_run_rules_on_piece(piece, context)
+
+
+## Schedule every piece adjacent to a removed piece for a rule re-run. The
+## variants of edge tiles encode neighbour occupancy, so any removal that
+## happens outside the placement pipeline must trigger a reclassification of
+## its neighbourhood or stale variants (and stale interiors) persist forever.
+func _recheck_neighbors_after_removal(piece: TerrainModuleInstance) -> void:
+	if piece == null or piece.def == null or piece.def.displaceable:
+		return
+	for hit in terrain_index.query_box(piece.aabb.grow(1.0)):
+		if not (hit is TerrainModuleInstance) or hit == piece:
+			continue
+		var hit_id: int = hit.get_instance_id()
+		if _pending_recheck_ids.has(hit_id):
+			continue
+		_pending_recheck_ids[hit_id] = true
+		_pending_rule_rechecks.append(hit)
+
+
+func _process_rule_rechecks() -> void:
+	while not _pending_rule_rechecks.is_empty():
+		var piece: TerrainModuleInstance = _pending_rule_rechecks.pop_front()
+		_pending_recheck_ids.erase(piece.get_instance_id())
+		_run_rules_for_existing_piece(piece)
 
 
 func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piece: TerrainModuleInstance) -> void:
@@ -385,10 +449,16 @@ func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piec
 		var existing_piece: TerrainModuleInstance = from_piece
 		var is_registered_piece: bool = existing_piece.root != null and existing_piece.root.get_parent() == terrain_parent
 		if not is_registered_piece:
+			# The target was already removed/replaced in this pass; destroy the
+			# orphan replacement or its instantiated scene (physics bodies and
+			# all) leaks.
+			if to_piece is TerrainModuleInstance and to_piece != from_piece:
+				to_piece.destroy()
 			continue
 		if to_piece == from_piece:
 			continue
 		if to_piece == null:
+			_recheck_neighbors_after_removal(existing_piece)
 			remove_piece(existing_piece)
 			continue
 		if not (to_piece is TerrainModuleInstance):
@@ -692,8 +762,10 @@ func add_piece(
 		for piece in overlapping_pieces:
 			_collect_stacked_above(piece, stacked_set, stacked_to_remove)
 		for piece in overlapping_pieces:
+			_recheck_neighbors_after_removal(piece)
 			remove_piece(piece)
 		for piece in stacked_to_remove:
+			_recheck_neighbors_after_removal(piece)
 			remove_piece(piece)
 
 	var can_place_result := can_place(new_piece, orig_piece_socket.piece)
