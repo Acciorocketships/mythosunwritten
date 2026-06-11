@@ -29,6 +29,9 @@ var overhead_cam: Camera3D
 
 
 func _ready() -> void:
+	# Keep the window unoccluded: macOS suspends fully-covered windows
+	# (App Nap), which freezes the main loop and hangs the await chain.
+	get_window().always_on_top = true
 	DirAccess.make_dir_recursive_absolute(SHOT_DIR)
 	world = load("res://scenes/world.tscn").instantiate()
 	add_child(world)
