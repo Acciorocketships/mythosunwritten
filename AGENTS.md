@@ -25,9 +25,14 @@
 
 ## Types and terminology
 
-- `TerrainModule` (Resource): `scene`, `size` (AABB), `tags`, `tags_per_socket`, `socket_size`, `socket_required`, `socket_fill_prob`, `socket_tag_prob`, optional `visual_variants`, `replace_existing`.
+- `TerrainModule` (Resource): `scene`, `size` (AABB), `tags`, `tags_per_socket`, `socket_size`, `socket_required`, `socket_fill_prob`, `socket_tag_prob`, optional `visual_variants`, `replace_existing`, `displaceable`.
+- **Logical bounds**: `TerrainModuleInstance` uses the authored `def.size` for its AABB (never the mesh AABB — meshes overhang their tile with lips/skirts, and mesh-derived AABBs make face-adjacent tiles register as overlapping).
+- **Displaceable decorations**: modules with `displaceable = true` (grass, bush, rock, tree) never block structure placement (`can_place` ignores them; the placement removes them), but they DO block other decorations (otherwise retiled tiles re-enqueue their foliage sockets and stack duplicates). Three mechanisms keep the displacement invisible:
+ - `socket_suppressed_by` (per-socket `{"socket", "prob"}` map): a decoration socket is never enqueued when its tile's `topcenter` position roll would pass at the authored probability. The probability is authored independently of the current variant (level edges use the center's stacking prob) so the verdict is stable across retiles.
+ - `DECO_PRIORITY_PENALTY`: decoration-capable sockets (size dist includes `"point"`) enqueue at distance + 48u, so nearby structural growth settles first.
+ - Residual displacements happen almost exclusively beyond visible range.
 - `TerrainModuleInstance` (RefCounted): `def`, `root`, `socket_node` (`Sockets`), `sockets` (String → Marker3D), `transform`, `aabb`.
-- **Level stacking model**: Level tiles expand **vertically only** — only `level-center` has a nonzero `topcenter` fill_prob (0.95). Edge variants (side/corner/etc.) have `topcenter: null`, preventing stacking on non-center tiles. When `LevelEdgeRule` retiles a piece to center via `_replace_piece`, the new center's topcenter (0.95) is automatically enqueued. The `LevelEdgeRule` removes stacked tiles when a center support becomes an edge variant. This produces graduated mountain slopes without explicit support-tag constraints.
+- **Level stacking model**: stacks may only exist above a full `level-center` support (all 4 cardinals AND all 4 diagonals — an inner-corner support would leave the stack overhanging its notch). Only center tiles have a nonzero `topcenter` fill_prob; edge variants have a **blocking** `topcenter` (0.0) so stack positions above them are never probed. When `LevelEdgeRule` retiles a piece to center via `_replace_piece`, the new center's topcenter is automatically enqueued (deterministic position roll). When a support stops being a center, `LevelEdgeRule` and `_purge_orphaned_stacks` delete its stacks (support validity = the support carries the `level-center` tag; mirrors cliff stacks requiring `cliff-interior`). There is no fill-prob override mechanism — variant tags are the single source of truth for stackability.
 - `TerrainModuleSocket` (Resource): binds a piece to one socket name; exposes `socket`, `get_piece_position()`, `get_socket_position()`.
 - `TagList`, `Distribution`: helpers for set/weighted ops (`union`, `sample`, `normalise`, …).
 - **Sizes**: tags like `"24x24"`, `"8x8"`, `"12x12"`, or `"point"` (for 0x0 pieces).
@@ -58,7 +63,7 @@
 - **load_terrain loop**
  - Pop nearest socket; out-of-range sockets are staged and re-queued after the per-frame processing loop (prevents same-frame pop/requeue churn).
  - Skip if the socket position already has an expandable connection (connection logic is based on socket expandability, not tile tags/layers).
- - Roll `socket_fill_prob` to decide sparsity.
+ - Sparsity was already decided at enqueue time (deterministic position roll — see "Queueing, sockets, and probabilities"); the pop path only re-checks expandability.
  - Sample a size from `socket_size[socket_name]`.
  - Compute adjacency via `get_adjacent_from_size`:
 	- Spawn a temporary test piece for that size, determine attachment socket using `Helper.get_attachment_socket_name()`, position the test piece correctly, then query `PositionIndex` for adjacent sockets.
@@ -99,11 +104,14 @@
 ## Queueing, sockets, and probabilities
 
 - Do not enqueue sockets with `socket_fill_prob <= 0`.
-- `_process_socket` also early-exits when `socket_fill_prob <= 0` so externally re-queued sockets cannot expand.
-- Queue entries are deduped by `(piece instance, socket name)`; do not bypass `TerrainGenerator` queue helpers when enqueuing/removing sockets.
+- `_process_socket` also early-exits when the socket is not expandable so externally re-queued sockets cannot expand.
+- **Sparsity roll happens at enqueue time** (`add_piece_to_queue`), not at pop time: the queue only ever holds sockets that will actually expand once in range.
+- **Rolls are deterministic per world position**: `Helper.position_hash01(socket_pos, world_seed)` is compared against the effective fill prob. Piece retiles (rule replacements) re-derive the same verdict instead of getting a fresh roll — without this, frontier sockets get re-rolled on every neighbour retile and any fill probability ratchets toward 1 (the historical "cliffs grow until they cover everything" bug).
+- **Macro density field**: `TerrainGenerator._effective_fill_prob` multiplies fill probs (only those `< 1.0`) by a factor derived from `Helper.macro_density01(pos, world_seed)` — smooth value noise over ~`Helper.MACRO_SCALE` (144u) XZ regions, faded to 0 near the world origin so the spawn is always open meadow. Features (mountains, level hills, groves) cluster in high-density cores and die out past the core edge, which is what bounds cluster size. Structural sockets (fill `>= 1.0`, e.g. ground laterals) ignore the field so ground stays infinite.
+- Queue entries are deduped by `(piece instance, socket name)`; do not bypass `TerrainGenerator` queue helpers when enqueuing/removing sockets (exception: rules may push sockets via `sockets_for_queue`, which deliberately skips the sparsity roll).
 - `socket_fill_prob` semantics:
  - `> 0`: socket can expand and is non-forbidden for adjacency.
- - `0`: socket cannot expand and is considered blocking/forbidden in adjacency checks.
+ - `0`: socket cannot expand and is considered blocking/forbidden in adjacency checks. Edge-variant `topcenter` sockets use `0.0` (blocking) so stack tiers can never be probed above a non-center/non-interior tile. Cliff-interior lateral sockets use `0.0` so neighbouring expansions can never probe into the plateau footprint (non-blocking laterals let a neighbour expand into the interior, eat it via replace_existing, and churn forever).
  - `null`: socket cannot expand but is **non-blocking** in adjacency checks (use for adjacency-only sockets such as level diagonals).
  - Missing `socket_fill_prob` entries are invalid and must fail module validation. Every socket in a module scene must have an explicit `socket_fill_prob` entry.
 - Only index/enqueue sockets that are not already connected (determine connectivity by checking all hits at the position, not only the first).
@@ -121,7 +129,8 @@
 
 ## Terrain Generation Rules (`scripts/terrain/TerrainGenerationRuleLibrary.gd`)
 
-- Each rule lives in its own file under `scripts/terrain/rules/` (e.g. `LevelContradictionRule.gd`, `LevelEdgeRule.gd`). `TerrainGenerationRuleLibrary.gd` instantiates rule classes in `_init()` and appends them to `rules`.
+- Each rule lives in its own file under `scripts/terrain/rules/` (`CliffEdgeRule.gd`, `LevelEdgeRule.gd`, `ClusterFillRule.gd`). `TerrainGenerationRuleLibrary.gd` instantiates rule classes in `_init()` and appends them to `rules` (ClusterFillRule runs last so it sees the final retiled placement).
+- `ClusterFillRule`: when a placed cliff/level tile leaves an empty cardinal position with >=2 same-family same-height neighbours, it pushes that expansion socket directly onto the queue (no sparsity roll). This convexifies clusters into chunky plateaus that can host interior tiles — which is what enables vertical stacking.
 - **Style**: Prefer instantiating rule classes directly (e.g. `LevelContradictionRule.new()`) rather than `preload()`ing scripts; rule scripts use `class_name` so they are globally available.
 - Rule-specific helpers belong in the rule file (e.g. static or instance methods on the rule class).
 - Rules can modify or skip placements based on complex logic (e.g., `LevelContradictionRule` avoids invalid level tile configurations).
@@ -152,12 +161,21 @@
  - AABB, module tags, per-socket tags, `socket_size`, `socket_required`, `socket_fill_prob`, `socket_tag_prob`.
 - Any socket can serve as an attachment socket.
 - Use tags to categorize pieces (e.g., `"ground"`, `"hill"`, `"level"`) and sizes (e.g., `"24x24"`, `"8x8"`, `"point"`).
+- **Shared surface spawning**: `TerrainModuleDefinitions.surface_spawn_sockets()` is the single source of truth for what spawns on top of a walkable tile (foliage on the 8 top cardinal/corner sockets + a seeding distribution on `topcenter`). Ground tiles, level centers, and cliff plateau interiors all merge its output into their socket dicts — change spawning behavior there, not per-module.
+- **Cliff tier tags**: every cliff variant carries both the bare variant tag (`"cliff-side"`, matches both tiers) and a tier-qualified tag (`"cliff-base-side"` / `"cliff-stack-side"`). Seeding/lateral distributions must use the tier-qualified tags — sampling a bare tag picks a random tier, and a cliff-stack at ground level (or vice versa) is invalid and gets removed by CliffEdgeRule.
 
 ## Before finishing
 
 - **Always run the game** before considering a change complete: `godot --headless --path /Users/ryko/story`. If the game errors, fix the error and re-run until it runs without errors.
 - **After moving/renaming scripts**: run `godot --headless --path /Users/ryko/story --import` once so Godot regenerates the global script class cache; otherwise you may see "Could not find type X in the current scope" when running headless.
 - **Maintain known-issues docs**: whenever you discover new root-cause context, repro details, logs, or fix outcomes for active issues, update files under `docs/known-issues/` in the same change.
+
+## Screenshot harness (visual iteration)
+
+- `godot --path . res://tests/harness/screenshot_harness.tscn` boots the real world, walks the character in a slow spiral, and saves screenshots to `/tmp/terrain_shots/` every 8s for ~80s: `shot_NN_gameplay` (player camera), `shot_NN_overhead` (above the player), `shot_NN_wide` (top-down, ~600u), `shot_NN_mountain` (aimed at the tallest piece).
+- It also prints `[harness N] fps=... pieces=... queue=... counts={ground/level/cliff/hill}` — use these to detect runaway growth (a family count exploding), churn (pieces count oscillating), and perf regressions.
+- Each checkpoint also runs `_scan_invariants`, which prints `[scan N] violations=K` plus a line per violation: wrong-tier tiles, stacks without a center/interior support, and edge variants whose tag disagrees with their actual neighbours. A healthy run reports 0 everywhere.
+- **Scene gotcha**: inner-corner level variants carry adjacency-only `topfrontleft`-style rule markers. Never add same-named sockets to those scenes — duplicate node names in a `Sockets` parent corrupt instantiation (crashes Godot's ObjectDB). Level foliage uses the 4 top cardinals only.
 
 ## Debugging workflow (preferred)
 

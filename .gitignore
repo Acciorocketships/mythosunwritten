@@ -6,3 +6,4 @@ assets/
 addons/
 *.uid
 *.import
+.claude/

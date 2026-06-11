@@ -1,7 +1,17 @@
 # Level guaranteed-fill rule
 
-**Goal:** Add a rule: if a level tile can be placed and it has ≥3 neighbours (in cardinal directions) that are also level tiles, then placement is guaranteed.
+**Status: IMPLEMENTED** as `ClusterFillRule` (`scripts/terrain/rules/ClusterFillRule.gd`).
 
-- New rule (or extend existing level rule): before normal sampling, detect when the expansion socket’s cardinal neighbours include ≥3 level tiles.
-- In that case, force placement of a level tile (skip sparsity roll / guarantee fill) for that socket.
-- Cardinal directions: front, back, left, right (same as used elsewhere for level edge logic).
+When a placed cliff/level tile leaves an empty cardinal position that already
+has >=2 same-family neighbours at the same height, the rule pushes that
+position's expansion socket directly onto the queue (skipping the sparsity
+roll). Notches and 1-wide slots always fill, so clusters convexify into chunky
+plateaus that can host interior tiles — which is what enables vertical
+stacking into terraced hills and multi-storey cliff mountains.
+
+Differences from the original sketch:
+- Threshold is >=2 neighbours (not >=3): with >=3 a snake-shaped cluster never
+  develops an interior, because no empty cell ever has 3 neighbours.
+- Applies to both `level` and `cliff` families with the same logic.
+- Growth stays bounded because a fill needs two pre-existing neighbours — the
+  rule thickens a cluster within its extent, never extends it.
