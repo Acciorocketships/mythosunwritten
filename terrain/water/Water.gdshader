@@ -3,13 +3,16 @@
 // rolling waves, depth-based shore foam, and depth-tinted transparency.
 // UVs are world-space so tiles are seamless.
 shader_type spatial;
-render_mode specular_schlick_ggx;
+// depth_draw_always: neighbouring water tiles' surfaces overlap slightly (the
+// mesh extends past the tile so water reaches recessed bank walls); writing
+// depth makes the overlap render once instead of double-blending.
+render_mode specular_schlick_ggx, depth_draw_always;
 
 uniform vec3 color_deep : source_color = vec3(0.12, 0.45, 0.55);
 uniform vec3 color_shallow : source_color = vec3(0.32, 0.66, 0.69);
 uniform vec3 foam_color : source_color = vec3(0.93, 0.97, 1.0);
-uniform float foam_width : hint_range(0.0, 3.0) = 1.15;
-uniform float depth_fade : hint_range(0.5, 8.0) = 2.6;
+uniform float foam_width : hint_range(0.0, 3.0) = 0.7;
+uniform float depth_fade : hint_range(0.5, 8.0) = 1.8;
 uniform float wave_height : hint_range(0.0, 0.6) = 0.17;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
 uniform float roughness : hint_range(0.0, 1.0) = 0.08;
@@ -32,6 +35,7 @@ void vertex() {
 	float t = TIME * wave_speed;
 	float h = wave_h(world_pos.xz, t);
 	VERTEX.y += h * wave_height;
+	world_pos.y += h * wave_height;
 	// Smooth normals from the analytic height gradient (wide epsilon keeps
 	// the surface rolling, not rippled).
 	float e = 2.0;
@@ -41,13 +45,17 @@ void vertex() {
 }
 
 void fragment() {
-	// Water depth from the opaque depth buffer (banks and floor).
+	// VERTICAL water depth: reconstruct the world position of the opaque
+	// scene point behind this fragment (bank wall or floor) and measure how
+	// far below the water surface it sits. Using the view-ray distance
+	// instead would scale with camera angle and crush the foam band to a
+	// sliver at gameplay angles.
 	float depth_raw = texture(depth_texture, SCREEN_UV).r;
 	vec3 ndc = vec3(SCREEN_UV * 2.0 - 1.0, depth_raw);
-	vec4 view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
-	float scene_dist = -view.z / view.w;
-	float surface_dist = -VERTEX.z;
-	float water_depth = max(scene_dist - surface_dist, 0.0);
+	vec4 scene_view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
+	scene_view.xyz /= scene_view.w;
+	vec4 scene_world = INV_VIEW_MATRIX * vec4(scene_view.xyz, 1.0);
+	float water_depth = max(world_pos.y - scene_world.y, 0.0);
 
 	float t = TIME * wave_speed;
 
@@ -58,9 +66,9 @@ void fragment() {
 	// Shore foam: a noisy band where the water is shallow (bank walls,
 	// island edges), animated so it laps against the shore.
 	float foam_noise = texture(noise_tex, world_pos.xz * 0.11 + vec2(t * 0.03, -t * 0.022)).r;
-	float foam_edge = foam_width * (0.45 + 0.55 * foam_noise);
-	float foam_mask = 1.0 - smoothstep(foam_edge * 0.25, foam_edge, water_depth);
-	foam_mask *= 0.85 + 0.15 * sin(t * 2.1 + foam_noise * 6.0);
+	float foam_edge = foam_width * (0.5 + 0.7 * foam_noise);
+	float foam_mask = 1.0 - smoothstep(foam_edge * 0.55, foam_edge, water_depth);
+	foam_mask *= 0.8 + 0.2 * sin(t * 1.9 + foam_noise * 6.0);
 
 	ALBEDO = mix(base, foam_color, clamp(foam_mask, 0.0, 1.0));
 	ALPHA = mix(0.6, 0.9, depth_t);

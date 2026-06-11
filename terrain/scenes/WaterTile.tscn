@@ -17,9 +17,9 @@ shader_parameter/noise_tex = SubResource("NoiseTexture2D_water")
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_water"]
 material = SubResource("ShaderMaterial_water")
-size = Vector2(24, 24)
-subdivide_width = 23
-subdivide_depth = 23
+size = Vector2(27.4, 27.4)
+subdivide_width = 26
+subdivide_depth = 26
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
 albedo_color = Color(0.33, 0.27, 0.19, 1)
