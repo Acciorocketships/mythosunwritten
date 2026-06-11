@@ -1,11 +1,11 @@
 // Stylized water — Godot 4 port of the ideas in
 // assets/SeaWaterMaterial (Sea Water Base Shader, Godot 3): large smooth
 // rolling waves, depth-based shore foam, and depth-tinted transparency.
-// UVs are world-space so tiles are seamless.
+// Waves and UVs are pure functions of world position: the single moving
+// sheet (terrain/water/WaterSurface.tscn) stays seamless and world-stable.
 shader_type spatial;
-// depth_draw_always: neighbouring water tiles' surfaces overlap slightly (the
-// mesh extends past the tile so water reaches recessed bank walls); writing
-// depth makes the overlap render once instead of double-blending.
+// depth_draw_always: self-depth keeps the transparent surface from ever
+// double-blending against itself (e.g. when the camera clips the sheet).
 render_mode specular_schlick_ggx, depth_draw_always;
 
 uniform vec3 color_deep : source_color = vec3(0.12, 0.45, 0.55);

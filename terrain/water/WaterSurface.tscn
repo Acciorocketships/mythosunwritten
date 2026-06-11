@@ -1,0 +1,30 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Shader" path="res://terrain/water/Water.gdshader" id="1_shader"]
+[ext_resource type="Script" path="res://terrain/water/water_surface.gd" id="2_script"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_water"]
+noise_type = 3
+frequency = 0.012
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_water"]
+seamless = true
+noise = SubResource("FastNoiseLite_water")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/noise_tex = SubResource("NoiseTexture2D_water")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_water"]
+material = SubResource("ShaderMaterial_water")
+size = Vector2(600, 600)
+subdivide_width = 199
+subdivide_depth = 199
+
+[node name="WaterSurface" type="MeshInstance3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5, 0)
+cast_shadow = 0
+extra_cull_margin = 2.0
+mesh = SubResource("PlaneMesh_water")
+script = ExtResource("2_script")
