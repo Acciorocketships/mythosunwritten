@@ -129,7 +129,7 @@
 
 ## Terrain Generation Rules (`scripts/terrain/TerrainGenerationRuleLibrary.gd`)
 
-- Each rule lives in its own file under `scripts/terrain/rules/` (`CliffEdgeRule.gd`, `LevelEdgeRule.gd`, `ClusterFillRule.gd`). `TerrainGenerationRuleLibrary.gd` instantiates rule classes in `_init()` and appends them to `rules` (ClusterFillRule runs last so it sees the final retiled placement).
+- Each rule lives in its own file under `scripts/terrain/rules/` (`WaterRule.gd`, `CliffEdgeRule.gd`, `LevelEdgeRule.gd`, `ClusterFillRule.gd`). `TerrainGenerationRuleLibrary.gd` instantiates rule classes in `_init()` and appends them to `rules` (WaterRule runs first because it may swap the placed base tile; ClusterFillRule runs last so it sees the final retiled placement).
 - `ClusterFillRule`: when a placed cliff/level tile leaves an empty cardinal position with >=2 same-family same-height neighbours, it pushes that expansion socket directly onto the queue (no sparsity roll). This convexifies clusters into chunky plateaus that can host interior tiles — which is what enables vertical stacking.
 - **Style**: Prefer instantiating rule classes directly (e.g. `LevelContradictionRule.new()`) rather than `preload()`ing scripts; rule scripts use `class_name` so they are globally available.
 - Rule-specific helpers belong in the rule file (e.g. static or instance methods on the rule class).
@@ -154,6 +154,13 @@
  - Elevated stacked tiles are only valid above supports that have all four cardinal level neighbors.
 - Default level density is intentionally higher on the first level: ground `"topcenter"` uses stronger level seeding so contiguous level patches can form before elevated vertical growth takes over.
 
+## Water, banks, rivers and islands
+
+- `Helper.is_water(pos, world_seed)` is the deterministic water field: ridged value noise forms winding rivers, blob noise forms lakes, finer noise carves islands inside water regions, isolated single-tile ponds are eroded, and the field fades to zero near the origin (dry spawn).
+- The base plane has three tile kinds: plain ground (sampling tag `ground-plain`), `water`, and `bank`. Water and banks also carry `ground`/`side` so they satisfy neighbour requirements, but lateral tag distributions sample `ground-plain` exclusively — water/banks are placed only by `WaterRule`.
+- `WaterRule` (runs first) swaps a placed plain-ground tile for a water tile when the field says so, and retiles land adjacent to water to bank variants: the cliff scenes placed at ground depth (grass top at ground level, rock wall dropping to the water floor), rotated so the wall faces the water. Classification counts ungenerated neighbour positions via the field so banks don't churn while the frontier advances.
+- `WaterTile` rides the ground grid: lateral sockets at ground level keep the frontier flowing across water; its `topcenter` is blocking (0.0) so levels can never cantilever over open water. Collision is at the water surface for now (swimming is future work).
+
 ## Adding new terrain pieces
 
 - Create a scene with the required node structure and named sockets; ensure sockets are on the 1.0 grid.
@@ -161,6 +168,7 @@
  - AABB, module tags, per-socket tags, `socket_size`, `socket_required`, `socket_fill_prob`, `socket_tag_prob`.
 - Any socket can serve as an attachment socket.
 - Use tags to categorize pieces (e.g., `"ground"`, `"hill"`, `"level"`) and sizes (e.g., `"24x24"`, `"8x8"`, `"point"`).
+- **Decoration visual variants**: grass/bush/rock/tree modules carry `visual_variants` (random pick at create time). To add a new decoration look: wrap the KayKit gltf in `terrain/gltf/<name>.tscn` (tree x2.5 + capsule collision, bush x4, rock x3 + cylinder collision, grass x1 — match the existing wrappers), create `terrain/scenes/<Name>.tscn` (Mesh + Sockets/bottom), and append it to the kind's `_load_scenes([...])` list in `TerrainModuleDefinitions`.
 - **Shared surface spawning**: `TerrainModuleDefinitions.surface_spawn_sockets()` is the single source of truth for what spawns on top of a walkable tile (foliage on the 8 top cardinal/corner sockets + a seeding distribution on `topcenter`). Ground tiles, level centers, and cliff plateau interiors all merge its output into their socket dicts — change spawning behavior there, not per-module.
 - **Cliff tier tags**: every cliff variant carries both the bare variant tag (`"cliff-side"`, matches both tiers) and a tier-qualified tag (`"cliff-base-side"` / `"cliff-stack-side"`). Seeding/lateral distributions must use the tier-qualified tags — sampling a bare tag picks a random tier, and a cliff-stack at ground level (or vice versa) is invalid and gets removed by CliffEdgeRule.
 
