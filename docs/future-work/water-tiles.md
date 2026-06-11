@@ -22,5 +22,11 @@
 
 Swimming is implemented (`characters/character.gd`): water tiles expose an
 `Area3D` volume; while inside, the character moves slower, slowly sinks, and
-floats back to the surface while jump is held. A jump pressed near the
-surface leaps out of the water, high enough to clear a bank top.
+— while jump is held — floats up to a bobbing equilibrium about
+half-submerged. Pressing into a bank wall near the surface with jump held
+launches the character out of the water like a jump.
+
+Visuals: `terrain/water/Water.gdshader` (Godot 4 port of the Godot 3
+`assets/SeaWaterMaterial` concepts) — world-space waves, ripple normals,
+depth-tinted transparency, animated depth-based shore foam, and sky
+reflections via the `WorldEnvironment` in `scenes/world.tscn`.
