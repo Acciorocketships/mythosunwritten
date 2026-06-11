@@ -2225,8 +2225,9 @@ func test_level_edge_rule_keeps_center_when_stacked():
 	gen.socket_index.insert(
 		TerrainModuleSocket.new(stacked_piece, "bottom")
 	)
-	assert_true(
-		rule._is_stacked_support(center_piece, gen.socket_index),
+	assert_eq(
+		rule._get_stacked_piece(center_piece, gen.socket_index),
+		stacked_piece,
 		"Center with stacked tile should be identified as support"
 	)
 
@@ -2455,7 +2456,7 @@ func test_purge_orphaned_stacks_removes_cantilever_after_support_lost() -> void:
 
 	# Sanity: stack is valid right now.
 	assert_true(
-		gen._has_valid_stack_support(stack, "level", 0.6, true),
+		gen._has_valid_stack_support(stack, "level", 0.6, "level-center"),
 		"Setup: stack should be valid before we remove its support"
 	)
 
@@ -2464,7 +2465,7 @@ func test_purge_orphaned_stacks_removes_cantilever_after_support_lost() -> void:
 
 	# Now cleanup should detect the orphan.
 	assert_false(
-		gen._has_valid_stack_support(stack, "level", 0.6, true),
+		gen._has_valid_stack_support(stack, "level", 0.6, "level-center"),
 		"After support removal, support check should fail"
 	)
 	gen._purge_orphaned_stacks()

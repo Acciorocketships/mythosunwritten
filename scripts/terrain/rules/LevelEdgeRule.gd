@@ -88,10 +88,10 @@ func apply(context: Dictionary) -> Dictionary:
 		var support: TerrainModuleInstance = _get_support_piece_below(
 			chosen_piece, terrain_index
 		)
-		if support == null or not _has_all_cardinal_level_neighbors(support, socket_index):
+		if support == null or not support.def.tags.has("level-center"):
 			if DEBUG_STACK_SUPPORT:
 				var reason: String = "no support directly below" if support == null else (
-					"support at %s lacks all 4 cardinals" % str(support.transform.origin)
+					"support at %s is not a level-center" % str(support.transform.origin)
 				)
 				print("[LevelEdgeRule] reject stack at %s: %s" % [
 					str(chosen_piece.transform.origin), reason
@@ -120,18 +120,19 @@ func apply(context: Dictionary) -> Dictionary:
 			terrain_index
 		)
 		var target_tag: String = _tag_for_missing_sockets(missing)
+		# A stack is only valid above a tile that will (still) be a full
+		# level-center after this pass. Inner-corner variants keep all 4
+		# cardinals but lose a diagonal — a stack on one overhangs its notch.
+		var supports_stack: bool = target_tag == "level-center"
 		var stacked: TerrainModuleInstance = _get_stacked_piece(affected_piece, socket_index)
-		if stacked != null and not _can_support_stacked_piece(affected_piece, socket_index):
+		if stacked != null and not supports_stack:
 			piece_updates[stacked] = null
 		# Wider-range check: catches stacks at 0.5-offset that _get_stacked_piece
-		# misses (its +1.0 height check is too strict for some scenes). When the
-		# support level lacks full cardinals, delete those stacks too.
+		# misses (its +1.0 height check is too strict for some scenes).
 		var wide_stacks: Array[TerrainModuleInstance] = _get_stacks_above(
 			affected_piece, terrain_index
 		)
-		if not wide_stacks.is_empty() and not _has_all_cardinal_level_neighbors(
-			affected_piece, socket_index
-		):
+		if not supports_stack:
 			for s in wide_stacks:
 				piece_updates[s] = null
 		var steps_to_align: int = _rotation_steps_to_align_canonical(target_tag, missing)
@@ -141,9 +142,9 @@ func apply(context: Dictionary) -> Dictionary:
 			steps_to_align,
 			library
 		)
-		# If this affected piece is a stacked level and its support below has
-		# lost all-4-cardinal coverage, delete it rather than retiling it to a
-		# stack variant. Without this check, the wide_stacks cleanup above
+		# If this affected piece is a stacked level and its support below is no
+		# longer a level-center, delete it rather than retiling it to a stack
+		# variant. Without this check, the wide_stacks cleanup above
 		# (piece_updates[stack] = null) is overwritten by
 		# piece_updates[stack] = replacement when the loop reaches the stack
 		# as its own affected_piece, leaving an unsupported stack-island.
@@ -151,11 +152,7 @@ func apply(context: Dictionary) -> Dictionary:
 			var support: TerrainModuleInstance = _get_support_piece_below(
 				affected_piece, terrain_index
 			)
-			var support_ok: bool = (
-				support != null
-				and _has_all_cardinal_level_neighbors(support, socket_index)
-			)
-			if not support_ok:
+			if not _is_center_after_updates(support, piece_updates):
 				replacement = null
 		if affected_piece == chosen_piece:
 			chosen_replacement = replacement
@@ -207,27 +204,23 @@ func _sweep_orphaned_stacks(
 		if piece_updates.has(stack):
 			continue  # already scheduled
 		var support: TerrainModuleInstance = _get_support_piece_below(stack, terrain_index)
-		var ok: bool = (
-			support != null
-			and _has_all_cardinal_level_neighbors(support, socket_index)
-		)
-		if not ok:
+		if not _is_center_after_updates(support, piece_updates):
 			piece_updates[stack] = null
 
 
-func _is_stacked_support(piece: TerrainModuleInstance, socket_index: PositionIndex) -> bool:
-	if piece == null:
+## True if `support` — after applying any pending retile in `piece_updates` —
+## is a full level-center tile (the only valid stack support).
+func _is_center_after_updates(
+	support: TerrainModuleInstance, piece_updates: Dictionary
+) -> bool:
+	if support == null:
 		return false
-	return _has_level_connection(piece, "topcenter", socket_index)
-
-
-func _can_support_stacked_piece(piece: TerrainModuleInstance, socket_index: PositionIndex) -> bool:
-	if piece == null:
+	var support_now: Variant = support
+	if piece_updates.has(support):
+		support_now = piece_updates[support]
+	if not (support_now is TerrainModuleInstance):
 		return false
-	return (
-		_get_stacked_piece(piece, socket_index) != null
-		and _has_all_cardinal_level_neighbors(piece, socket_index)
-	)
+	return support_now.def.tags.has("level-center")
 
 
 func _has_all_cardinal_level_neighbors(

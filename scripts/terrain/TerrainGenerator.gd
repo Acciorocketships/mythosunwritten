@@ -97,10 +97,10 @@ func load_terrain() -> void:
 
 ## Delete any stack tile (level-stack or cliff-stack) whose support tile
 ## (directly below) no longer satisfies its support invariant:
-##   - level-stack: support must be a level tile with all 4 cardinal level
-##     neighbours.
-##   - cliff-stack: support must be a cliff-interior tile (no cardinal check
-##     needed; cliff-interior already implies the perimeter is filled).
+##   - level-stack: support must be a level-center tile (full interior: all
+##     cardinals AND diagonals — a stack on an inner-corner support would
+##     overhang its notch).
+##   - cliff-stack: support must be a cliff-interior tile.
 ## Runs once per load_terrain() call so stacks whose support changed between
 ## rule evaluations are cleaned up even when no rule trigger fires nearby.
 func _purge_orphaned_stacks() -> void:
@@ -113,24 +113,25 @@ func _purge_orphaned_stacks() -> void:
 			# 0.6u window = one level tier (0.5 thick + epsilon). Any wider and
 			# a stack with the tier directly below missing would find the next
 			# tier down as "support" — that's the cantilever bug.
-			if not _has_valid_stack_support(piece, "level", 0.6, true):
+			if not _has_valid_stack_support(piece, "level", 0.6, "level-center"):
 				to_remove.append(piece)
 		elif piece.def.tags.has("cliff-stack"):
-			if not _has_valid_stack_support(piece, "cliff", 5.0, false):
+			if not _has_valid_stack_support(piece, "cliff", 5.0, "cliff-interior"):
 				to_remove.append(piece)
 	for piece in to_remove:
 		remove_piece(piece)
 
 
 # Returns true if `piece` has a valid stack support directly below: a
-# `family_tag`-tagged tile within `search_dy` units down (cliff-stack searches
-# specifically for cliff-interior). If `require_all_cardinals` is true the
-# support must also have all 4 cardinal `family_tag` neighbours.
+# `family_tag`-tagged tile within `search_dy` units down that also carries
+# `support_tag` ("level-center" / "cliff-interior"). The variant tags encode
+# the support's neighbourhood, and the rules keep them consistent, so a tag
+# check is the full support invariant.
 func _has_valid_stack_support(
 	piece: TerrainModuleInstance,
 	family_tag: String,
 	search_dy: float,
-	require_all_cardinals: bool
+	support_tag: String
 ) -> bool:
 	var piece_y: float = piece.transform.origin.y
 	var query_box: AABB = AABB(
@@ -141,8 +142,6 @@ func _has_valid_stack_support(
 		),
 		Vector3(1.0, search_dy - 0.1, 1.0)
 	)
-	var support: TerrainModuleInstance = null
-	var best_dy: float = INF
 	for c in terrain_index.query_box(query_box):
 		if not (c is TerrainModuleInstance):
 			continue
@@ -151,32 +150,13 @@ func _has_valid_stack_support(
 			continue
 		if not other.def.tags.has(family_tag):
 			continue
-		# cliff-stack pieces require a cliff-interior support — not just any cliff
-		# (a neighbour cliff-edge at the same y is not a valid support).
-		if family_tag == "cliff" and not other.def.tags.has("cliff-interior"):
+		if not other.def.tags.has(support_tag):
 			continue
 		var dy: float = piece_y - other.transform.origin.y
 		if dy <= 0.1:
 			continue
-		if dy < best_dy:
-			best_dy = dy
-			support = other
-	if support == null:
-		return false
-	if not require_all_cardinals:
 		return true
-	for socket_name in ["front", "right", "back", "left"]:
-		if not support.sockets.has(socket_name):
-			return false
-		var s: TerrainModuleSocket = TerrainModuleSocket.new(support, socket_name)
-		var other_socket: TerrainModuleSocket = socket_index.query_other(
-			s.get_socket_position(), support
-		)
-		if other_socket == null or other_socket.piece == null:
-			return false
-		if not other_socket.piece.def.tags.has(family_tag):
-			return false
-	return true
+	return false
 
 
 func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
@@ -220,12 +200,6 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 
 
 func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	if piece.socket_fill_prob_override.has(socket_name):
-		var ov: Variant = piece.socket_fill_prob_override[socket_name]
-		if ov is float:
-			return ov
-		if ov is int:
-			return float(ov)
 	if not piece.def.socket_fill_prob.has(socket_name):
 		return 0.0
 	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
@@ -393,10 +367,7 @@ func _apply_rules_after_placement(
 			remove_piece(current_piece)
 			return
 		if updated_piece is TerrainModuleInstance and updated_piece != current_piece:
-			# Preserve topcenter when retiling a piece placed by lateral expansion so that position gets one stacked tile.
-			# Do not preserve when this piece was placed by stacking (topcenter), or we'd enqueue its topcenter and build infinite towers.
-			var preserve_topcenter: bool = orig_piece_socket.socket_name != "topcenter"
-			_replace_piece(current_piece, updated_piece, preserve_topcenter)
+			_replace_piece(current_piece, updated_piece)
 			current_piece = updated_piece
 			context["adjacent"] = get_adjacent(current_piece)
 		_apply_piece_updates_after_placement(step_updates, current_piece)
@@ -422,23 +393,12 @@ func _apply_piece_updates_after_placement(piece_updates: Dictionary, placed_piec
 			continue
 		if not (to_piece is TerrainModuleInstance):
 			continue
-		_replace_piece(existing_piece, to_piece, true)
+		_replace_piece(existing_piece, to_piece)
 
 
-func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleInstance, preserve_topcenter: bool = false) -> void:
+func _replace_piece(old_piece: TerrainModuleInstance, new_piece: TerrainModuleInstance) -> void:
 	if old_piece == null or new_piece == null:
 		return
-	# Only preserve topcenter when retiling an existing piece (neighbor update) or when the placed piece was placed by lateral expansion. Do not preserve when
-	# retiling the piece we just placed, or we would enqueue that edge's topcenter and build infinite towers.
-	if preserve_topcenter and (
-		old_piece.def != null and old_piece.def.tags.has("level-stack-center")
-		and new_piece.def != null and new_piece.def.tags.has("level-stack")
-		and not new_piece.def.tags.has("level-stack-center")
-		and new_piece.sockets.has("topcenter")
-	):
-		var fp: Variant = old_piece.def.socket_fill_prob.get("topcenter")
-		if fp != null and (fp is float or fp is int):
-			new_piece.socket_fill_prob_override["topcenter"] = float(fp)
 	remove_piece(old_piece)
 	terrain_parent.add_child(new_piece.root)
 	register_piece(new_piece, "")

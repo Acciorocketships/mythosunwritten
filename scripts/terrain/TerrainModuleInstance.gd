@@ -9,8 +9,6 @@ var sockets: Dictionary = {}  # String -> Marker3D
 var transform: Transform3D = Transform3D.IDENTITY
 var aabb: AABB
 var size: AABB
-# When set (e.g. when retiled from level-stack-center to edge), topcenter is still expandable at this position.
-var socket_fill_prob_override: Dictionary = {}
 
 
 func _init(_def: TerrainModule) -> void:

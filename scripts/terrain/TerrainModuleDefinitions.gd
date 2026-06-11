@@ -610,17 +610,10 @@ static func _build_level_tile(
 		"right": TagList.new(["level"]),
 		# Pin topcenter to "level-stack": topcenter expansion of any level
 		# tile must produce a level-stack tile, never ground or a level-ground
-		# variant. Without this, when LevelEdgeRule retiles a level-stack-center
-		# to a level-stack-side, _replace_piece preserves the topcenter
-		# fill_prob via socket_fill_prob_override but the side's def has no
-		# topcenter tag_prob. With no tag bias and only the size constraint
-		# ("24x24x0.5"), sample_from_modules falls back to a random pick across
-		# all 24x24x0.5 tiles — including the ground tile and level-ground
-		# variants. A ground tile placed at y > 0.5 is invisible to
-		# LevelEdgeRule's proactive check (no "level-stack" tag) and to
-		# _purge_orphaned_stacks (iterates "level-stack" only), so it persists
-		# and seeds a chain of legitimate-looking level placements above it
-		# (the "cantilever" the regression test catches).
+		# variant. A wrong-tier tile placed at y > 0.5 is invisible to the
+		# stack support checks (no "level-stack" tag), so it would persist and
+		# seed a chain of legitimate-looking level placements above it (the
+		# "cantilever" the regression test catches).
 		"topcenter": TagList.new(["level-stack"]),
 	}
 	var socket_fill_prob_policy: Dictionary = {
