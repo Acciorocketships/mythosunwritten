@@ -189,7 +189,10 @@ static func surface_spawn_sockets(
 
 static func load_ground_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/GroundTile.tscn")
-	var tags: TagList = TagList.new(["ground", "ground-type", "24x24x0.5", "side"])
+	# "ground-plain" is the sampling tag: water and bank tiles also carry
+	# "ground"/"side" (so they satisfy neighbour requirements), but only the
+	# plain tile may be SAMPLED at the frontier — WaterRule swaps in the rest.
+	var tags: TagList = TagList.new(["ground", "ground-plain", "ground-type", "24x24x0.5", "side"])
 	# Override computed AABB to have height 0.5 instead of computed value
 	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.5, 24.0))
 
@@ -205,7 +208,7 @@ static func load_ground_tile() -> TerrainModule:
 		GROUND_TOPCENTER_FILL_PROB,
 		GROUND_FOLIAGE_FILL_PROB
 	)
-	var adjacent_tag_prob: Distribution = Distribution.new({"ground": 1.0})
+	var adjacent_tag_prob: Distribution = Distribution.new({"ground-plain": 1.0})
 
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x0.5": 1.0}),
@@ -382,6 +385,146 @@ static func load_4x4x4_tile() -> TerrainModule:
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"topcenter": Distribution.new({"grass": 1.0}),
+	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		false
+	)
+
+
+### Water and banks (data-driven) ###
+
+# Bank variants reuse the cliff scenes placed at ground depth: the grassy top
+# sits at ground level and the rock wall drops to the water floor. A variant's
+# canonical missing set (see WaterRule) = the sides facing water.
+const BANK_VARIANT_TABLE: Array = [
+	["CliffSide", "bank-side"],
+	["CliffCorner", "bank-corner"],
+	["CliffLine", "bank-line"],
+	["CliffPeninsula", "bank-peninsula"],
+	["CliffIsland", "bank-island"],
+	["CliffInCorner", "bank-inner-corner"],
+	["CliffInCornerDiag", "bank-inner-corner-diag"],
+	["CliffInCornerSide", "bank-inner-corner-side"],
+	["CliffInCornerEdge1", "bank-inner-corner-edge1"],
+	["CliffInCornerEdge2", "bank-inner-corner-edge2"],
+	["CliffInCornerEdgeBoth", "bank-inner-corner-edge-both"],
+	["CliffInCornerSideEdge", "bank-inner-corner-side-edge"],
+	["CliffInCornerThree", "bank-inner-corner-three"],
+	["CliffInCornerAll", "bank-inner-corner-all"],
+]
+
+
+static func load_water_and_bank_modules() -> Array[TerrainModule]:
+	var out: Array[TerrainModule] = []
+	out.append(load_water_tile())
+	for entry in BANK_VARIANT_TABLE:
+		out.append(load_bank_variant(entry[0], entry[1]))
+	return out
+
+
+static func load_water_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/WaterTile.tscn")
+	# Rides the ground grid (origin at ground-top level); the water surface
+	# and floor hang below. Tagged "ground"/"side" so it satisfies neighbour
+	# requirements, but NOT "ground-plain" — it is only placed by WaterRule.
+	var tags: TagList = TagList.new(["ground", "water", "side", "24x24x0.5"])
+	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.5, 24.0))
+
+	var lateral_size: Distribution = Distribution.new({"24x24x0.5": 1.0})
+	var lateral_tags: Distribution = Distribution.new({"ground-plain": 1.0})
+	var lateral_required: TagList = TagList.new(["ground", "side"])
+	var socket_size: Dictionary[String, Distribution] = {
+		"front": lateral_size,
+		"back": lateral_size,
+		"right": lateral_size,
+		"left": lateral_size,
+	}
+	var socket_required: Dictionary[String, TagList] = {
+		"front": lateral_required,
+		"back": lateral_required,
+		"right": lateral_required,
+		"left": lateral_required,
+	}
+	var socket_fill_prob: Dictionary[String, Variant] = {
+		"front": 1.0,
+		"back": 1.0,
+		"right": 1.0,
+		"left": 1.0,
+		# Blocking: nothing may be probed above open water (a level expanding
+		# laterally would otherwise cantilever over the river).
+		"topcenter": 0.0,
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"front": lateral_tags,
+		"back": lateral_tags,
+		"right": lateral_tags,
+		"left": lateral_tags,
+	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		false
+	)
+
+
+static func load_bank_variant(scene_name: String, variant_tag: String) -> TerrainModule:
+	var scene = load("res://terrain/scenes/%s.tscn" % scene_name)
+	# Walkable land at ground level whose rock wall drops to the water floor.
+	var tags: TagList = TagList.new(
+		["ground", "ground-type", "side", "bank", variant_tag, "24x24x0.5"]
+	)
+	var bb: AABB = AABB(Vector3(-12.0, -4.0, -12.0), Vector3(24.0, 4.5, 24.0))
+
+	var lateral_size: Distribution = Distribution.new({"24x24x0.5": 1.0})
+	var lateral_tags: Distribution = Distribution.new({"ground-plain": 1.0})
+	var lateral_required: TagList = TagList.new(["ground", "side"])
+	var socket_size: Dictionary[String, Distribution] = {
+		"front": lateral_size,
+		"back": lateral_size,
+		"right": lateral_size,
+		"left": lateral_size,
+		"topcenter": Distribution.new({"point": 1.0}),
+	}
+	var socket_required: Dictionary[String, TagList] = {
+		"front": lateral_required,
+		"back": lateral_required,
+		"right": lateral_required,
+		"left": lateral_required,
+	}
+	var socket_fill_prob: Dictionary[String, Variant] = {
+		"front": 1.0,
+		"back": 1.0,
+		"right": 1.0,
+		"left": 1.0,
+		"frontleft": null,
+		"frontright": null,
+		"backleft": null,
+		"backright": null,
+		"bottom": null,
+		"topcenter": GROUND_FOLIAGE_FILL_PROB,
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"front": lateral_tags,
+		"back": lateral_tags,
+		"right": lateral_tags,
+		"left": lateral_tags,
+		"topcenter": Distribution.new(FOLIAGE_TAG_WEIGHTS),
 	}
 
 	return TerrainModule.new(

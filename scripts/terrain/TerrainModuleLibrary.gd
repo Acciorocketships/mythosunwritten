@@ -29,6 +29,8 @@ func load_terrain_modules() -> void:
 		terrain_modules.append(m)
 	for m in TerrainModuleDefinitions.load_cliff_variants():
 		terrain_modules.append(m)
+	for m in TerrainModuleDefinitions.load_water_and_bank_modules():
+		terrain_modules.append(m)
 
 
 func load_test_pieces() -> void:

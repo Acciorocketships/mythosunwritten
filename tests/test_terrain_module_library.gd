@@ -65,7 +65,9 @@ func test_get_combined_distribution_single_adjacent_passthrough():
 	var adj: Dictionary[String, TerrainModuleSocket] = {}
 	adj["left"] = TerrainModuleSocket.new(m, "left")
 	var dist: Distribution = lib.get_combined_distribution(adj)
-	assert_almost_eq(dist.prob("ground"), 1.0, 0.0001)
+	# Lateral sampling pins "ground-plain": only the plain ground tile may be
+	# sampled at the frontier (water/banks are placed by WaterRule).
+	assert_almost_eq(dist.prob("ground-plain"), 1.0, 0.0001)
 
 func test_sample_from_modules_filters_by_sampled_tag():
 	var lib = _make_library()

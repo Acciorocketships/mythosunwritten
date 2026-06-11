@@ -347,7 +347,8 @@ func _build_rule_context(
 		"socket_index": socket_index,
 		"queue": queue,
 		"library": library,
-		"rules_instance": generation_rules
+		"rules_instance": generation_rules,
+		"world_seed": world_seed
 	}
 
 
@@ -412,7 +413,8 @@ func _run_rules_for_existing_piece(piece: TerrainModuleInstance) -> void:
 		"socket_index": socket_index,
 		"queue": queue,
 		"library": library,
-		"rules_instance": generation_rules
+		"rules_instance": generation_rules,
+		"world_seed": world_seed
 	}
 	_run_rules_on_piece(piece, context)
 
