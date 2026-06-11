@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://ceognrw5418ks"]
+[gd_scene load_steps=9 format=3 uid="uid://ceognrw5418ks"]
 
 [ext_resource type="Script" uid="uid://d2efwmq2n46lg" path="res://scripts/camera/camera.gd" id="1_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://1isaxxqlfqe8" path="res://characters/character.tscn" id="1_nnsk1"]
@@ -9,7 +9,26 @@
 script = ExtResource("2_rwgxs")
 metadata/_custom_type_script = "uid://bb8ia06ag8nwf"
 
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_world"]
+sky_top_color = Color(0.27, 0.46, 0.75, 1)
+sky_horizon_color = Color(0.71, 0.82, 0.92, 1)
+ground_bottom_color = Color(0.42, 0.5, 0.56, 1)
+ground_horizon_color = Color(0.68, 0.78, 0.86, 1)
+
+[sub_resource type="Sky" id="Sky_world"]
+sky_material = SubResource("ProceduralSkyMaterial_world")
+
+[sub_resource type="Environment" id="Environment_world"]
+background_mode = 2
+sky = SubResource("Sky_world")
+ambient_light_source = 3
+ambient_light_sky_contribution = 0.6
+tonemap_mode = 2
+
 [node name="World" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_world")
 
 [node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("camera", "target")]
 transform = Transform3D(0.85278606, -0.12692104, 0.5066034, 0, 0.97002065, 0.2430225, -0.5222604, -0.2072462, 0.8272201, 2.0454454, 2.6963062, 5.949689)
