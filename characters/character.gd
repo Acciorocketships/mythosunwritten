@@ -12,21 +12,23 @@ extends CharacterBody3D
 
 # ---------- Swimming ----------
 # Water tiles expose an Area3D volume on WATER_LAYER. While the character's
-# probe point is inside one it swims: slower movement, a slow sink unless
-# jump is held (buoyancy), and a jump pressed near the surface leaps out of
-# the water (enough to clear a bank top 1.5 above the surface).
+# probe point is inside one it swims with force-based control: buoyancy
+# proportional to the submerged fraction of the body counteracts gravity
+# (slightly losing when fully submerged, so idling sinks slowly), holding
+# jump adds a constant upward kick. The body rising out of the water loses
+# buoyancy and falls back in, so bobbing emerges naturally. Pressing toward
+# a nearby bank wall with jump launches the character out of the water.
 const WATER_LAYER_MASK: int = 1 << 7
 const WATER_SURFACE_Y: float = -1.5  # water tiles sit on the base plane (y=0)
 @export var SWIM_SPEED_FACTOR := 0.45
-@export var SWIM_ACCEL := 20.0
-@export var SINK_SPEED := 1.2
-@export var FLOAT_SPEED := 2.0
-@export var WATER_DRAG := 25.0
-# Floating equilibrium: the character bobs about half-submerged, this far
-# below the surface, with a gentle oscillation.
-@export var SWIM_FLOAT_DEPTH := 0.75
-@export var BOB_AMPLITUDE := 0.1
-@export var BOB_FREQUENCY := 2.0
+@export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
+@export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
+@export var BUOYANCY := 17.0  # < gravity (18) fully submerged: idle = slow sink
+@export var SWIM_THRUST := 8.0  # extra upward force while holding jump
+@export var WATER_LINEAR_DRAG := 1.4
+@export var MAX_SWIM_RISE := 2.5
+@export var MAX_SWIM_SINK := 4.0
+@export var WATER_EXIT_PROBE := 1.3  # how far ahead a bank wall triggers the leap
 
 # Bone names you expect (only used if your attachments don't already have one)
 @export var RIGHT_HAND_BONE := "handslot.r"
@@ -56,7 +58,6 @@ var step_visual_offset_y: float = 0.0
 var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
 var in_water: bool = false
-var swim_time: float = 0.0
 
 func _ready() -> void:
 	_setup_player_controller()
@@ -125,25 +126,43 @@ func _physics_process(delta: float) -> void:
 	movement_animation(target_speed)
 
 
-# Swimming: drag pulls vertical speed toward a slow sink, or — while jump is
-# held — toward a bobbing equilibrium about half-submerged below the surface.
-# Pressing into a bank wall near the surface with jump held (or pressed)
-# launches the character out of the water like a jump.
+# Swimming verticals, force based: gravity always pulls; buoyancy pushes up
+# in proportion to how much of the body is under the surface; holding jump
+# adds a constant kick. As the body rises out it loses buoyancy and drops
+# back in — the bobbing falls out of the physics. Drag keeps speeds low and
+# damps the splash-in plunge.
 func _swim_vertical(delta: float, wants_jump: bool) -> void:
-	swim_time += delta
-	var jump_held: bool = controller.jump_held(self, delta)
-	var near_surface: bool = global_position.y >= WATER_SURFACE_Y - SWIM_FLOAT_DEPTH - 0.5
-	if (wants_jump or jump_held) and near_surface and is_on_wall():
-		velocity.y = JUMP_VELOCITY * 0.85
+	if _try_water_exit(wants_jump, delta):
 		return
-	var target_vy: float = -SINK_SPEED
-	if jump_held:
-		var bob_y: float = (
-			WATER_SURFACE_Y - SWIM_FLOAT_DEPTH
-			+ sin(swim_time * BOB_FREQUENCY) * BOB_AMPLITUDE
-		)
-		target_vy = clampf((bob_y - global_position.y) * 3.0, -FLOAT_SPEED, FLOAT_SPEED)
-	velocity.y = move_toward(velocity.y, target_vy, WATER_DRAG * delta)
+	var submerged: float = clampf(
+		(WATER_SURFACE_Y - global_position.y) / BODY_HEIGHT, 0.0, 1.0
+	)
+	var lift: float = BUOYANCY * submerged
+	if controller.jump_held(self, delta):
+		lift += SWIM_THRUST
+	velocity.y += (get_gravity().y + lift) * delta
+	velocity.y -= velocity.y * WATER_LINEAR_DRAG * delta
+	velocity.y = clampf(velocity.y, -MAX_SWIM_SINK, MAX_SWIM_RISE)
+
+
+# Mirrors _try_step_up's forward probe: while swimming near the surface and
+# pressing jump (held or fresh), probe ahead along the facing direction. If a
+# bank wall blocks within WATER_EXIT_PROBE, launch out of the water like a
+# jump — no need to be touching the wall.
+func _try_water_exit(wants_jump: bool, delta: float) -> bool:
+	if not (wants_jump or controller.jump_held(self, delta)):
+		return false
+	if global_position.y < WATER_SURFACE_Y - BODY_HEIGHT:
+		return false
+	var facing: Vector3 = global_transform.basis.z
+	facing.y = 0.0
+	if facing.length() < 0.001:
+		return false
+	var probe: Vector3 = facing.normalized() * WATER_EXIT_PROBE
+	if not test_move(global_transform, probe):
+		return false
+	velocity.y = JUMP_VELOCITY * 0.85
+	return true
 
 
 # The probe sits at knee height: standing on a dry bank keeps it above the
