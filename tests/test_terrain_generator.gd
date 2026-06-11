@@ -1298,7 +1298,17 @@ func test_integration_level_edges_match_neighbors_and_include_connected_regions(
 	for module in gen.library.terrain_modules.library:
 		if module.tags.has("ground"):
 			module.socket_fill_prob["topcenter"] = 1.0
-			module.socket_tag_prob["topcenter"] = Distribution.new({"level-center": 1.0})
+			# Pin the tier: the bare "level-center" tag matches both tiers, and
+			# a level-stack-center placed on ground gets rejected for missing
+			# support.
+			module.socket_tag_prob["topcenter"] = Distribution.new({"level-ground-center": 1.0})
+		# Force lateral expansion (fill >= 1.0 bypasses the macro density
+		# field, which suppresses probabilistic growth near the spawn-clear
+		# zone) so connected level regions reliably form around the origin.
+		if module.tags.has("level-ground"):
+			for socket_name in ["front", "back", "left", "right"]:
+				if module.socket_fill_prob.get(socket_name) != null:
+					module.socket_fill_prob[socket_name] = 1.0
 
 	_run_generation_until_level_count(gen, 800, 24)
 
