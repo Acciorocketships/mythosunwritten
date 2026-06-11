@@ -499,7 +499,6 @@ static func load_bank_variant(scene_name: String, variant_tag: String) -> Terrai
 		"back": lateral_size,
 		"right": lateral_size,
 		"left": lateral_size,
-		"topcenter": Distribution.new({"point": 1.0}),
 	}
 	var socket_required: Dictionary[String, TagList] = {
 		"front": lateral_required,
@@ -517,14 +516,16 @@ static func load_bank_variant(scene_name: String, variant_tag: String) -> Terrai
 		"backleft": null,
 		"backright": null,
 		"bottom": null,
-		"topcenter": GROUND_FOLIAGE_FILL_PROB,
+		# Blocking: nothing may sit on a bank tile (the wall lip). A level
+		# growing onto a bank would leave its naked side face hanging over
+		# the waterline.
+		"topcenter": 0.0,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
 		"front": lateral_tags,
 		"back": lateral_tags,
 		"right": lateral_tags,
 		"left": lateral_tags,
-		"topcenter": Distribution.new(FOLIAGE_TAG_WEIGHTS),
 	}
 
 	return TerrainModule.new(

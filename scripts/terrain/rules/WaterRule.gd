@@ -119,11 +119,34 @@ func apply(context: Dictionary) -> Dictionary:
 		var replacement: TerrainModuleInstance = _create_replacement_for_target(
 			affected_piece, target_tag, steps_to_align, library
 		)
+		# Nothing may sit on a bank (its topcenter is blocking going forward,
+		# but a level may have grown onto the tile before the water arrived).
+		if target_tag != "ground-plain":
+			for stacked in _levels_above(affected_piece, terrain_index):
+				piece_updates[stacked] = null
 		if affected_piece == chosen_replacement:
 			chosen_replacement = replacement
 		elif replacement != affected_piece:
 			piece_updates[affected_piece] = replacement
 	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
+
+
+## Level tiles sitting directly on top of this base tile (one tier up).
+func _levels_above(
+	piece: TerrainModuleInstance, terrain_index: TerrainIndex
+) -> Array[TerrainModuleInstance]:
+	var out: Array[TerrainModuleInstance] = []
+	var o: Vector3 = piece.transform.origin
+	var query_box: AABB = AABB(o + Vector3(-0.5, 0.2, -0.5), Vector3(1.0, 1.0, 1.0))
+	for hit in terrain_index.query_box(query_box):
+		if not (hit is TerrainModuleInstance) or hit == piece:
+			continue
+		if not hit.def.tags.has("level"):
+			continue
+		var delta: Vector3 = hit.transform.origin - o
+		if absf(delta.x) <= 0.5 and absf(delta.z) <= 0.5 and delta.y > 0.2 and delta.y < 1.2:
+			out.append(hit)
+	return out
 
 
 func _create_water_replacement(
