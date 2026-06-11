@@ -29,6 +29,9 @@ func get_move_vector(_c: CharacterBody3D, _dt: float) -> Vector2:
 
 func wants_jump(_c: CharacterBody3D, _dt: float) -> bool:
 	return Input.is_action_just_pressed(jump_action)
+
+func jump_held(_c: CharacterBody3D, _dt: float) -> bool:
+	return Input.is_action_pressed(jump_action)
 	
 func _find_camera():
 	camera = Engine.get_main_loop().root.get_viewport().get_camera_3d()

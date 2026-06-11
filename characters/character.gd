@@ -10,6 +10,19 @@ extends CharacterBody3D
 @export var JUMP_VELOCITY := 13.0
 @export var MAX_STEP_HEIGHT := 0.5
 
+# ---------- Swimming ----------
+# Water tiles expose an Area3D volume on WATER_LAYER. While the character's
+# probe point is inside one it swims: slower movement, a slow sink unless
+# jump is held (buoyancy), and a jump pressed near the surface leaps out of
+# the water (enough to clear a bank top 1.5 above the surface).
+const WATER_LAYER_MASK: int = 1 << 7
+const WATER_SURFACE_Y: float = -1.5  # water tiles sit on the base plane (y=0)
+@export var SWIM_SPEED_FACTOR := 0.45
+@export var SWIM_ACCEL := 20.0
+@export var SINK_SPEED := 1.2
+@export var FLOAT_SPEED := 2.0
+@export var WATER_DRAG := 25.0
+
 # Bone names you expect (only used if your attachments don't already have one)
 @export var RIGHT_HAND_BONE := "handslot.r"
 @export var LEFT_HAND_BONE  := "handslot.l"
@@ -37,6 +50,7 @@ var was_on_ground: bool = false
 var step_visual_offset_y: float = 0.0
 var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
+var in_water: bool = false
 
 func _ready() -> void:
 	_setup_player_controller()
@@ -56,13 +70,17 @@ func _physics_process(delta: float) -> void:
 	var mv2: Vector2 = controller.get_move_vector(self, delta)
 	var wants_jump := controller.wants_jump(self, delta)
 
-	# gravity + jump
+	_update_in_water()
+
+	# gravity + jump (or buoyancy while swimming)
 	on_ground = is_on_floor() or _get_ground_dist() < 0.2
-	var started_animation: bool = !on_ground and was_on_ground
+	var started_animation: bool = !on_ground and was_on_ground and not in_water
 	was_on_ground = on_ground
 	
 	jump_animation(started_animation)
-	if not is_on_floor():
+	if in_water:
+		_swim_vertical(delta, wants_jump)
+	elif not is_on_floor():
 		velocity += get_gravity() * delta
 	elif wants_jump: # TODO: add a mechanism to allow jump if we recently walked off a ledge (falling without having jumped, low negative vertical velocity)
 		velocity += Vector3(mv2.x / 3, 1.0, mv2.y / 3).normalized() * JUMP_VELOCITY
@@ -73,17 +91,20 @@ func _physics_process(delta: float) -> void:
 	if has_input:
 		desired_dir = desired_dir.normalized()
 		var target_yaw := atan2(desired_dir.x, desired_dir.z)
-		var turn_speed: float = TURN_SPEED if on_ground else TURN_SPEED_AIR
+		var turn_speed: float = TURN_SPEED if (on_ground or in_water) else TURN_SPEED_AIR
 		rotation.y = lerp_angle(rotation.y, target_yaw, turn_speed * delta)
 
 	# accel/ friction on XZ
-	var target_speed := MAX_SPEED * mv2.length()
+	var max_speed: float = MAX_SPEED * SWIM_SPEED_FACTOR if in_water else MAX_SPEED
+	var target_speed := max_speed * mv2.length()
 	var target_vxz := desired_dir * target_speed
 	var vxz := Vector2(velocity.x, velocity.z)
 	var tv := Vector2(target_vxz.x, target_vxz.z)
 	var changing_direction: bool = vxz.dot(tv) < 0.8
 	var rate: float = ACCEL
-	if !on_ground:
+	if in_water:
+		rate = SWIM_ACCEL
+	elif !on_ground:
 		rate = ACCEL_AIR
 	elif !has_input or changing_direction:
 		rate = FRICTION
@@ -96,6 +117,31 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 	_update_step_visual_smoothing(delta)
 	movement_animation(target_speed)
+
+
+# Swimming: drag pulls vertical speed toward a slow sink, or a gentle rise
+# while jump is held (stopping at the surface). A jump PRESSED near the
+# surface leaps out of the water — enough to clear a bank.
+func _swim_vertical(delta: float, wants_jump: bool) -> void:
+	var near_surface: bool = global_position.y >= WATER_SURFACE_Y - 0.3
+	if wants_jump and near_surface:
+		velocity.y = JUMP_VELOCITY * 0.85
+		return
+	var target_vy: float = -SINK_SPEED
+	if controller.jump_held(self, delta):
+		target_vy = FLOAT_SPEED if global_position.y < WATER_SURFACE_Y - 0.05 else 0.0
+	velocity.y = move_toward(velocity.y, target_vy, WATER_DRAG * delta)
+
+
+# The probe sits at knee height: standing on a dry bank keeps it above the
+# water volume, while floating at the surface keeps it inside.
+func _update_in_water() -> void:
+	var params := PhysicsPointQueryParameters3D.new()
+	params.position = global_position + Vector3(0.0, 0.3, 0.0)
+	params.collide_with_areas = true
+	params.collide_with_bodies = false
+	params.collision_mask = WATER_LAYER_MASK
+	in_water = not get_world_3d().direct_space_state.intersect_point(params, 1).is_empty()
 
 
 func jump_animation(started_animation: bool):

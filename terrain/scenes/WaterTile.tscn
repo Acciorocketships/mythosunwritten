@@ -20,8 +20,11 @@ roughness = 1.0
 material = SubResource("StandardMaterial3D_floor")
 size = Vector2(24, 24)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_surface"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(24, 0.2, 24)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_volume"]
+size = Vector3(25.4, 2.7, 25.4)
 
 [node name="WaterTile" type="Node3D"]
 
@@ -38,8 +41,17 @@ mesh = SubResource("PlaneMesh_floor")
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.7, 0)
-shape = SubResource("BoxShape3D_surface")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.8, 0)
+shape = SubResource("BoxShape3D_floor")
+
+[node name="WaterVolume" type="Area3D" parent="."]
+collision_layer = 128
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WaterVolume"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.35, 0)
+shape = SubResource("BoxShape3D_volume")
 
 [node name="Sockets" type="Node3D" parent="."]
 
