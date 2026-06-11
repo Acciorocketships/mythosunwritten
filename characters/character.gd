@@ -22,6 +22,11 @@ const WATER_SURFACE_Y: float = -1.5  # water tiles sit on the base plane (y=0)
 @export var SINK_SPEED := 1.2
 @export var FLOAT_SPEED := 2.0
 @export var WATER_DRAG := 25.0
+# Floating equilibrium: the character bobs about half-submerged, this far
+# below the surface, with a gentle oscillation.
+@export var SWIM_FLOAT_DEPTH := 0.75
+@export var BOB_AMPLITUDE := 0.1
+@export var BOB_FREQUENCY := 2.0
 
 # Bone names you expect (only used if your attachments don't already have one)
 @export var RIGHT_HAND_BONE := "handslot.r"
@@ -51,6 +56,7 @@ var step_visual_offset_y: float = 0.0
 var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
 var in_water: bool = false
+var swim_time: float = 0.0
 
 func _ready() -> void:
 	_setup_player_controller()
@@ -119,17 +125,24 @@ func _physics_process(delta: float) -> void:
 	movement_animation(target_speed)
 
 
-# Swimming: drag pulls vertical speed toward a slow sink, or a gentle rise
-# while jump is held (stopping at the surface). A jump PRESSED near the
-# surface leaps out of the water — enough to clear a bank.
+# Swimming: drag pulls vertical speed toward a slow sink, or — while jump is
+# held — toward a bobbing equilibrium about half-submerged below the surface.
+# Pressing into a bank wall near the surface with jump held (or pressed)
+# launches the character out of the water like a jump.
 func _swim_vertical(delta: float, wants_jump: bool) -> void:
-	var near_surface: bool = global_position.y >= WATER_SURFACE_Y - 0.3
-	if wants_jump and near_surface:
+	swim_time += delta
+	var jump_held: bool = controller.jump_held(self, delta)
+	var near_surface: bool = global_position.y >= WATER_SURFACE_Y - SWIM_FLOAT_DEPTH - 0.5
+	if (wants_jump or jump_held) and near_surface and is_on_wall():
 		velocity.y = JUMP_VELOCITY * 0.85
 		return
 	var target_vy: float = -SINK_SPEED
-	if controller.jump_held(self, delta):
-		target_vy = FLOAT_SPEED if global_position.y < WATER_SURFACE_Y - 0.05 else 0.0
+	if jump_held:
+		var bob_y: float = (
+			WATER_SURFACE_Y - SWIM_FLOAT_DEPTH
+			+ sin(swim_time * BOB_FREQUENCY) * BOB_AMPLITUDE
+		)
+		target_vy = clampf((bob_y - global_position.y) * 3.0, -FLOAT_SPEED, FLOAT_SPEED)
 	velocity.y = move_toward(velocity.y, target_vy, WATER_DRAG * delta)
 
 

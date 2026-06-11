@@ -89,8 +89,9 @@ func _run() -> void:
 	ctrl.hold_jump = true
 	await _watch("float", 4.0)
 	var y_float: float = character.global_position.y
+	# Bobbing equilibrium: half-submerged (surface -1.5, float depth 0.75).
 	print("[swim] float: %.2f (%s)" % [
-		y_float, "OK at surface" if absf(y_float - (-1.5)) < 0.35 else "CHECK"])
+		y_float, "OK bobbing half-out" if absf(y_float - (-2.25)) < 0.35 else "CHECK"])
 	await _shot(water, "swim_2_float")
 
 	# Phase 3: swim against the bank and leap out.
