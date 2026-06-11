@@ -24,6 +24,7 @@ func load_terrain_modules() -> void:
 	terrain_modules.append(TerrainModuleDefinitions.load_tree_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_8x8x2_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_12x12x2_tile())
+	terrain_modules.append(TerrainModuleDefinitions.load_4x4x4_tile())
 	for m in TerrainModuleDefinitions.load_level_variants():
 		terrain_modules.append(m)
 	for m in TerrainModuleDefinitions.load_cliff_variants():
@@ -35,6 +36,7 @@ func load_test_pieces() -> void:
 	terrain_modules.append(TerrainModuleDefinitions.create_12x12_test_piece())
 	terrain_modules.append(TerrainModuleDefinitions.create_24x24_test_piece())
 	terrain_modules.append(TerrainModuleDefinitions.create_24x24x4_test_piece())
+	terrain_modules.append(TerrainModuleDefinitions.create_4x4x4_test_piece())
 
 
 ## Class Functions ##

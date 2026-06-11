@@ -49,7 +49,7 @@ const GROUND_TOPCENTER_LEVEL_PROB: float = 0.65
 const GROUND_TOPCENTER_CLIFF_PROB: float = 0.35
 
 # --- Ground top-edge foliage (cardinals + corners on each ground tile) ---
-const GROUND_FOLIAGE_FILL_PROB: float = 0.12
+const GROUND_FOLIAGE_FILL_PROB: float = 0.16
 # Sampled tag distribution for foliage tiles on top-edges. Reused for
 # cliff-interior plateau top-edges too. Weights need not sum to 1 — the
 # Distribution normalises.
@@ -61,6 +61,7 @@ const FOLIAGE_TAG_WEIGHTS: Dictionary[String, float] = {
 # Per-hill chance that its topcenter seeds another (smaller) hill above.
 const HILL_8X8_STACK_FILL_PROB: float = 0.5
 const HILL_12X12_STACK_FILL_PROB: float = 0.3
+const HILL_4X4_STACK_FILL_PROB: float = 0.4
 ####################################################################
 
 # Scene-name ↔ variant-tag tables. Each entry is loaded once per tier (level
@@ -119,8 +120,8 @@ static func surface_spawn_sockets(
 	foliage_fill_prob: Variant,
 	topcenter_suppression_prob: Variant = null
 ) -> Dictionary:
-	var corner_size: Distribution = Distribution.new({"point": 0.9, "12x12x2": 0.1})
-	var cardinal_size: Distribution = Distribution.new({"point": 0.9, "8x8x2": 0.1})
+	var corner_size: Distribution = Distribution.new({"point": 0.85, "12x12x2": 0.1, "4x4x4": 0.05})
+	var cardinal_size: Distribution = Distribution.new({"point": 0.85, "8x8x2": 0.1, "4x4x4": 0.05})
 	var foliage_tags: Distribution = Distribution.new(FOLIAGE_TAG_WEIGHTS)
 	var socket_size: Dictionary[String, Distribution] = {
 		"topfront": cardinal_size,
@@ -250,17 +251,31 @@ static func load_ground_tile() -> TerrainModule:
 	)
 
 static func load_grass_tile() -> TerrainModule:
-	var visual_variants: Array[PackedScene] = [load("res://terrain/scenes/Grass2.tscn")]
-	return _build_foliage_tile("res://terrain/scenes/Grass1.tscn", "grass", visual_variants)
+	return _build_foliage_tile("res://terrain/scenes/Grass1.tscn", "grass", _load_scenes([
+		"Grass2", "Grass3", "Grass4",
+	]))
 
 static func load_bush_tile() -> TerrainModule:
-	return _build_foliage_tile("res://terrain/scenes/Bush1.tscn", "bush")
+	return _build_foliage_tile("res://terrain/scenes/Bush1.tscn", "bush", _load_scenes([
+		"Bush2", "Bush3", "Bush4", "Bush5", "Bush6",
+	]))
 
 static func load_rock_tile() -> TerrainModule:
-	return _build_foliage_tile("res://terrain/scenes/Rock1.tscn", "rock")
+	return _build_foliage_tile("res://terrain/scenes/Rock1.tscn", "rock", _load_scenes([
+		"Rock2", "Rock3", "Rock4", "Rock5", "Rock6",
+	]))
 
 static func load_tree_tile() -> TerrainModule:
-	return _build_foliage_tile("res://terrain/scenes/Tree1.tscn", "tree")
+	return _build_foliage_tile("res://terrain/scenes/Tree1.tscn", "tree", _load_scenes([
+		"Tree2", "Tree3", "Tree4", "Tree5", "Tree6", "Tree7", "TreeBare1",
+	]))
+
+
+static func _load_scenes(names: Array) -> Array[PackedScene]:
+	var out: Array[PackedScene] = []
+	for scene_name in names:
+		out.append(load("res://terrain/scenes/%s.tscn" % scene_name))
+	return out
 
 
 # Point-sized surface decoration: no expansion sockets, never blocks structure
@@ -291,7 +306,7 @@ static func load_8x8x2_tile() -> TerrainModule:
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
 	var socket_size: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"point": 1.0}),
+		"topcenter": Distribution.new({"4x4x4": 0.4, "point": 0.6}),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
@@ -303,7 +318,7 @@ static func load_8x8x2_tile() -> TerrainModule:
 		"topbackleft": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"grass": 1.0})
+		"topcenter": Distribution.new({"hill": 0.4, "grass": 0.6})
 	}
 
 	return TerrainModule.new(
@@ -350,6 +365,37 @@ static func load_12x12x2_tile() -> TerrainModule:
 		socket_fill_prob,
 		socket_tag_prob
 	)
+
+static func load_4x4x4_tile() -> TerrainModule:
+	var scene = load("res://terrain/scenes/Hill_4x4x4.tscn")
+	var tags: TagList = TagList.new(["hill", "4x4x4"])
+	# Origin at the top surface; the mesh hangs 4 units down (like cliffs).
+	var bb: AABB = AABB(Vector3(-2.0, -4.0, -2.0), Vector3(4.0, 4.0, 4.0))
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"topcenter": Distribution.new({"point": 1.0}),
+	}
+	var socket_required: Dictionary[String, TagList] = {}
+	var socket_fill_prob: Dictionary[String, Variant] = {
+		"topcenter": HILL_4X4_STACK_FILL_PROB,
+		"bottom": null,
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {
+		"topcenter": Distribution.new({"grass": 1.0}),
+	}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		false
+	)
+
 
 ### Level variants (data-driven) ###
 
@@ -767,6 +813,37 @@ static func create_12x12_test_piece() -> TerrainModule:
 		"topfrontleft": null,
 		"topbackright": null,
 		"topbackleft": null,
+	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {}
+
+	return TerrainModule.new(
+		scene,
+		bb,
+		tags,
+		[],
+		socket_size,
+		socket_required,
+		socket_fill_prob,
+		socket_tag_prob,
+		false
+	)
+
+
+static func create_4x4x4_test_piece() -> TerrainModule:
+	# Test piece for the small hill spire (4x4 footprint, 4 units tall,
+	# origin at the top surface like the real module).
+	var scene = load("res://terrain/scenes/Hill_4x4x4.tscn")
+	var tags: TagList = TagList.new(["4x4x4"])
+	var bb: AABB = AABB(Vector3(-2, -4, -2), Vector3(4, 4, 4))
+
+	var socket_size: Dictionary[String, Distribution] = {
+		"topcenter": Distribution.new({"point": 1.0}),
+		"bottom": Distribution.new({"point": 1.0}),
+	}
+	var socket_required: Dictionary[String, TagList] = {}
+	var socket_fill_prob: Dictionary[String, Variant] = {
+		"topcenter": 0.0,
+		"bottom": 0.0,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {}
 

@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://terrain/gltf/tree_2_c_color_12.tscn" id="1_mesh"]
+
+[node name="Tree2" type="Node3D"]
+
+[node name="Mesh" parent="." instance=ExtResource("1_mesh")]
+
+[node name="Sockets" type="Node3D" parent="."]
+
+[node name="bottom" type="Marker3D" parent="Sockets"]

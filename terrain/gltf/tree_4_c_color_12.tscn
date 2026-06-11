@@ -1,11 +1,11 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="PackedScene" path="res://assets/KayKitNature/Assets/gltf/Color1/Tree_5_C_Color1.gltf" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/KayKitNature/Assets/gltf/Color1/Tree_4_C_Color1.gltf" id="1_base"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_base"]
 height = 1.5
 
-[node name="Tree_5_C_Color12" instance=ExtResource("1_base")]
+[node name="Tree_4_C_Color12" instance=ExtResource("1_base")]
 transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, 0, 0, 0)
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
