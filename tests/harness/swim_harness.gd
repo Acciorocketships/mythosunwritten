@@ -87,11 +87,12 @@ func _run() -> void:
 
 	# Phase 2: hold jump -> float back to the surface and bob there.
 	ctrl.hold_jump = true
-	await _watch("float", 4.0)
+	await _watch("float", 6.0)
 	var y_float: float = character.global_position.y
-	# Bobbing equilibrium: half-submerged (surface -1.5, float depth 0.75).
+	# Buoyancy equilibrium: B*f + T = g -> f = (18-8)/17 = 0.59 submerged,
+	# origin ~ -2.3, oscillating around it.
 	print("[swim] float: %.2f (%s)" % [
-		y_float, "OK bobbing half-out" if absf(y_float - (-2.25)) < 0.35 else "CHECK"])
+		y_float, "OK bobbing" if absf(y_float - (-2.3)) < 0.5 else "CHECK"])
 	await _shot(water, "swim_2_float")
 
 	# Phase 3: swim against the bank and leap out.
@@ -115,9 +116,15 @@ func _run() -> void:
 
 
 func _watch(label: String, seconds: float) -> void:
-	for _i in range(int(seconds * 2)):
-		await get_tree().create_timer(0.5).timeout
-		print("[swim] %s y=%.2f in_water=%s" % [label, character.global_position.y, character.in_water])
+	var lo: float = INF
+	var hi: float = -INF
+	for _i in range(int(seconds * 4)):
+		await get_tree().create_timer(0.25).timeout
+		var y: float = character.global_position.y
+		lo = minf(lo, y)
+		hi = maxf(hi, y)
+		print("[swim] %s y=%.2f in_water=%s" % [label, y, character.in_water])
+	print("[swim] %s range: %.2f .. %.2f (spread %.2f)" % [label, lo, hi, hi - lo])
 
 
 func _shot(target: Vector3, shot_name: String) -> void:

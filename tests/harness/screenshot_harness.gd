@@ -153,6 +153,11 @@ func _scan_invariants(tag: String) -> void:
 			if expected != actual:
 				print("[scan %s] STALE-LEVEL-VARIANT %s at %s expected=%s missing=%s" % [tag, actual, str(o), expected, str(missing)])
 				violations += 1
+		if piece.def.tags.has("bank"):
+			for above in terrain.terrain_index.query_box(AABB(o + Vector3(-0.5, 0.2, -0.5), Vector3(1, 1, 1))):
+				if above is TerrainModuleInstance and above != piece and above.def.tags.has("level"):
+					print("[scan %s] LEVEL-ON-BANK at %s" % [tag, str(o)])
+					violations += 1
 		if piece.def.tags.has("cliff"):
 			var cmissing: Array[String] = cliff_rule._missing_sockets_for_piece(piece, terrain.socket_index, terrain.terrain_index)
 			var cexpected: String = cliff_rule._tag_for_missing_sockets(cmissing)
