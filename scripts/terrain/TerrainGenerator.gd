@@ -206,7 +206,39 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 	if not piece.def.socket_size.has(socket_name):
 		return "point"
 	var size_prob_dist: Distribution = piece.def.socket_size[socket_name]
+	var socket: Marker3D = piece.sockets.get(socket_name, null)
+	if socket != null and piece.root != null:
+		var pos: Vector3 = Helper.socket_world_pos(piece.transform, socket, piece.root)
+		size_prob_dist = _biome_scaled_dist(size_prob_dist, pos)
 	return size_prob_dist.sample()
+
+
+# Re-weight a tag/size distribution by the biome multipliers at `pos`. Tags
+# absent from the weights table keep their authored probability; the result is
+# renormalised. Both the size roll and the tag roll for the same socket pass
+# through this with the same weights, so they stay consistent (e.g. the
+# "24x24x4" size entry and the "cliff-base-side" tag entry carry the same
+# rocky-biome multiplier).
+func _biome_scaled_dist(dist: Distribution, pos: Vector3) -> Distribution:
+	if dist == null or dist.is_empty() or dist.dist.size() < 2:
+		return dist  # single-entry distributions renormalise to themselves
+	var weights: Dictionary[String, float] = Helper.biome_weights(pos, world_seed)
+	# Contour cores skew the structure seed mix toward cliffs so the mountain
+	# wins over a stray level patch inside its own footprint.
+	if _in_cliff_core(pos):
+		var boost: float = TerrainModuleDefinitions.CLIFF_CORE_SEED_MIX_BOOST
+		weights["cliff-base-side"] = weights.get("cliff-base-side", 1.0) * boost
+		weights["24x24x4"] = weights.get("24x24x4", 1.0) * boost
+	var scaled: Distribution = dist.copy()
+	var changed: bool = false
+	for tag in scaled.dist.keys():
+		if weights.has(tag):
+			scaled.dist[tag] *= weights[tag]
+			changed = true
+	if not changed:
+		return dist
+	scaled.normalise()
+	return scaled
 
 
 func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
@@ -234,14 +266,82 @@ func _is_socket_expandable(piece_socket: TerrainModuleSocket) -> bool:
 # Structural sockets (fill >= 1.0, e.g. ground lateral expansion) ignore the
 # field — ground must always fill for the world to be infinite.
 func _effective_fill_prob(piece: TerrainModuleInstance, socket_name: String, pos: Vector3) -> float:
-	return _macro_scaled_fill(_get_socket_fill_prob(piece, socket_name), pos)
+	var fill: float = _get_socket_fill_prob(piece, socket_name)
+	if fill > 0.0 and fill < 1.0:
+		# Cliff plateaus are carved from the macro field as contour lines
+		# (solid mesas, per-storey taper) — see CLIFF_CONTOUR_BASE.
+		if _is_cliff_lateral(piece, socket_name):
+			return _cliff_contour_fill(piece, pos)
+		# Level patches are the mid-altitude feature: the high-contrast macro
+		# curve that keeps cliffs out of the lowlands would crush their
+		# growth at the mid densities where they live, so level-family
+		# sockets and the ground topcenter seed keep the gentler legacy
+		# curve (lone cliff crags seeded outside cores are bounded anyway —
+		# the contour test stops their lateral growth immediately).
+		if piece.def.tags.has("level"):
+			return _gentle_scaled_fill(fill, pos)
+		if socket_name == "topcenter" and piece.def.tags.has("ground-plain"):
+			var seed_fill: float = _gentle_scaled_fill(fill, pos)
+			# Inside a contour core, seed eagerly so the core reliably grows
+			# its mountain (mesa fill is idempotent — extra seeds merge).
+			if _in_cliff_core(pos):
+				return maxf(seed_fill, TerrainModuleDefinitions.CLIFF_CORE_SEED_FILL_PROB)
+			return seed_fill
+		# Decoration-capable sockets follow the biome flora density (forests
+		# dense, meadows open); structural sockets follow the macro density
+		# field. fill >= 1.0 stays a structural guarantee either way.
+		if _socket_can_spawn_point(piece, socket_name):
+			return clampf(fill * Helper.biome_foliage_density(pos, world_seed), 0.0, 1.0)
+	return _macro_scaled_fill(fill, pos)
+
+
+# The original macro curve: moderate contrast, alive at mid densities. Used
+# for level patches and ground-topcenter seeds; cliff plateau growth uses the
+# contour test and everything else the high-contrast _macro_scaled_fill.
+func _gentle_scaled_fill(fill: float, pos: Vector3) -> float:
+	var macro: float = Helper.macro_density01(pos, world_seed)
+	return clampf(fill * (0.25 + 2.2 * pow(macro, 3.0)), 0.0, 1.0)
+
+
+func _in_cliff_core(pos: Vector3) -> bool:
+	return (
+		Helper.macro_density01(pos, world_seed)
+		>= TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
+	)
+
+
+func _is_cliff_lateral(piece: TerrainModuleInstance, socket_name: String) -> bool:
+	if not (socket_name == "front" or socket_name == "back"
+			or socket_name == "left" or socket_name == "right"):
+		return false
+	return piece.def.tags.has("cliff")
+
+
+# Contour test for cliff plateau growth: expand iff the macro density at the
+# target position clears this storey's threshold. Cliff origins sit on the
+# storey top plane (base tier y = 4.5: ground top 0.5 + one 4u storey), so the
+# storey index falls out of the origin height.
+func _cliff_contour_fill(piece: TerrainModuleInstance, pos: Vector3) -> float:
+	var storey: float = maxf(0.0, (piece.transform.origin.y - 4.5) / 4.0)
+	var threshold: float = (
+		TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
+		+ TerrainModuleDefinitions.CLIFF_CONTOUR_STEP * storey
+	)
+	if Helper.macro_density01(pos, world_seed) >= threshold:
+		return 1.0
+	return 0.0
 
 
 func _macro_scaled_fill(fill: float, pos: Vector3) -> float:
 	if fill >= 1.0:
 		return fill
 	var macro: float = Helper.macro_density01(pos, world_seed)
-	var factor: float = 0.25 + 2.2 * pow(macro, 3.0)
+	# High-contrast curve: lateral cluster growth (cliff 0.42, level 0.3) must
+	# cross criticality (~1/3 effective) only INSIDE range cores. Cores then
+	# fill into solid mesas — whose interior tiles enable vertical stacking —
+	# while mid-density terrain stays subcritical instead of sprawling into
+	# single-storey snake mazes.
+	var factor: float = 0.15 + 3.2 * pow(macro, 3.2)
 	return clampf(fill * factor, 0.0, 1.0)
 
 
@@ -281,7 +381,7 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 		"attachment_socket_name": attachment_socket_name,
 		"required_tags": required_tags,
 		"filtered": filtered,
-		"dist": library.get_combined_distribution(adjacent).copy(),
+		"dist": _biome_scaled_dist(library.get_combined_distribution(adjacent).copy(), origin_world),
 		"origin_world": origin_world
 	}
 

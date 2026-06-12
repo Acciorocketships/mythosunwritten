@@ -29,24 +29,50 @@ const LEVEL_FOLIAGE_FILL_PROB: float = 0.1
 # Same subcritical rule as LEVEL_BASE_LATERAL_FILL_PROB: keep below ~1/3 or
 # cliff plateaus grow until they cover everything (they replace_existing, so
 # runaway growth eats the rest of the terrain too).
+# Authored lateral fill marks the socket expandable (>0); the actual growth
+# verdict is the contour test below (TerrainGenerator._cliff_contour_fill).
 const CLIFF_LATERAL_FILL_PROB: float = 0.3
+# --- Cliff mesa contours ---
+# Cliff plateaus are carved from the macro density field instead of rolled
+# per-socket: a cliff lateral expands iff the target position's macro density
+# exceeds the threshold for its storey. Mesas come out as solid field-shaped
+# blobs (independent rolls produce single-storey snake mazes that never form
+# the 3x3 interiors stacking needs), and each storey's threshold rises so
+# mountains terrace and taper like contour lines on a heightmap.
+const CLIFF_CONTOUR_BASE: float = 0.58
+# Small step: the 3x3-interior support requirement already insets each storey
+# by a tile, so mountains taper geometrically into stepped pyramids; the
+# threshold step only needs to fade the very top against the field falloff.
+const CLIFF_CONTOUR_STEP: float = 0.02
+# Inside a contour core, ground topcenters seed much more eagerly (and the
+# seed mix skews toward cliffs) so every core actually grows its mountain —
+# the base rates alone can miss a whole core and leave it flat.
+const CLIFF_CORE_SEED_FILL_PROB: float = 0.5
+const CLIFF_CORE_SEED_MIX_BOOST: float = 3.0
 # Vertical stacking rate from a cliff-interior topcenter (seeds the next
 # cliff storey above the plateau). Bounded: a storey only stands on a
 # cliff-interior tile, which requires a >=3x3 plateau below, so each storey
 # shrinks and mountains taper naturally.
-const CLIFF_TOPCENTER_FILL_PROB: float = 0.8
+# 1.0 = structural: every interior tile seeds the storey above. Vertical
+# growth is already bounded by the 3x3-interior requirement plus the rising
+# contour threshold, and a probabilistic roll here just leaves ragged holes
+# in upper tiers that block the NEXT tier's interiors from ever forming.
+const CLIFF_TOPCENTER_FILL_PROB: float = 1.0
 const CLIFF_REPLACE_EXISTING: bool = true
 # Per-socket foliage chance on each top edge/corner of a cliff-interior plateau.
 const CLIFF_INTERIOR_FOLIAGE_FILL_PROB: float = 0.05
 
 # --- Ground topcenter (seeds level or cliff above each ground tile) ---
 # Per-tile chance that the topcenter socket attempts to place anything.
-const GROUND_TOPCENTER_FILL_PROB: float = 0.1
+const GROUND_TOPCENTER_FILL_PROB: float = 0.16
 # Probability split of what a ground topcenter seeds when it does fire.
 # Must sum to 1.0. Mirrors both the size and tag distributions used to
 # pick between a level-ground-center (small) and a cliff-side (tall).
-const GROUND_TOPCENTER_LEVEL_PROB: float = 0.65
-const GROUND_TOPCENTER_CLIFF_PROB: float = 0.35
+# The rocky biome multiplies the cliff side of both distributions at
+# placement time (Helper.biome_weights), so highlands skew further toward
+# cliffs than this base split.
+const GROUND_TOPCENTER_LEVEL_PROB: float = 0.6
+const GROUND_TOPCENTER_CLIFF_PROB: float = 0.4
 
 # --- Ground top-edge foliage (cardinals + corners on each ground tile) ---
 const GROUND_FOLIAGE_FILL_PROB: float = 0.16
