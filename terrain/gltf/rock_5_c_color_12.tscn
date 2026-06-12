@@ -1,10 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://cgb144kmgo72q"]
 
-[ext_resource type="PackedScene" path="res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_C_Color1.gltf" id="1_base"]
+[ext_resource type="PackedScene" uid="uid://dmm7p2s0hygf2" path="res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_C_Color1.gltf" id="1_base"]
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_base"]
-height = 0.8
-radius = 0.4
+[sub_resource type="SphereShape3D" id="SphereShape3D_6wsgc"]
+radius = 0.45020083
 
 [node name="Rock_5_C_Color12" instance=ExtResource("1_base")]
 transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
@@ -12,5 +11,5 @@ transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
 [node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
-shape = SubResource("CylinderShape3D_base")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15589921, 0)
+shape = SubResource("SphereShape3D_6wsgc")
