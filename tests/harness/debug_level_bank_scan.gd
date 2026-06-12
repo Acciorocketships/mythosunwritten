@@ -12,8 +12,17 @@ const SEEDS: Array[int] = [11, 22, 33, 44, 55, 66, 77, 88]
 
 
 func _init() -> void:
+	_run()  # async: resumes once the tree is processing frames
+
+
+func _run() -> void:
+	# Nodes only enter the active tree (making global_position usable) once
+	# the main loop starts — driving generation straight from _init() leaves
+	# the player position stuck at the origin and silently turns every walk
+	# into a no-op.
+	await process_frame
 	for s in SEEDS:
-		_run_seed(s)
+		await _run_seed(s)
 	quit()
 
 
@@ -25,6 +34,7 @@ func _run_seed(seed_value: int) -> void:
 	gen.terrain_parent = Node3D.new()
 	root.add_child(gen.player)
 	root.add_child(gen.terrain_parent)
+	await process_frame
 	gen._ready()  # library init + start tile (gen itself stays out of tree)
 
 	# Spiral outward through the water belt so banks form at many angles and
@@ -45,6 +55,8 @@ func _run_seed(seed_value: int) -> void:
 	gen.player.free()
 	gen.terrain_parent.free()
 	gen.free()
+	# Let queue_free'd piece roots actually free between seeds.
+	await process_frame
 
 
 func _scan(gen: Variant, seed_value: int) -> void:
