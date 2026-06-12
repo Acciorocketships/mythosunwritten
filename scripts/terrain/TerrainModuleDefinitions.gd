@@ -681,7 +681,13 @@ static func load_cliff_stack_interior_tile() -> TerrainModule:
 
 static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 	var scene: PackedScene = load("res://terrain/scenes/GroundTile.tscn")
-	var bb: AABB = AABB(Vector3(-12, -0.5, -12), Vector3(24, 0.5, 24))
+	# Full-storey logical bounds, same as the edge variants in
+	# _build_cliff_tile. The scene is visually a thin ground slab, but the
+	# bounds must claim the whole 4u storey volume below the walkable top:
+	# with slab-only bounds the volume under the plateau is unindexed, so a
+	# buried ground tile's still-queued foliage sockets pass can_place and
+	# plant trees inside the mesa (poking out of the plateau top).
+	var bb: AABB = AABB(Vector3(-12, -4, -12), Vector3(24, 4, 24))
 
 	# Same surface spawning as ground tiles; topcenter seeds the next cliff
 	# storey instead of a level/cliff mix.
