@@ -65,26 +65,41 @@ func load_terrain() -> void:
 	# the local terrain finished generating. Cost is O(stacks), small in
 	# practice and capped by RENDER_RANGE.
 	_purge_orphaned_stacks()
-	# When the player hasn't moved since last frame and the heap top is out of
-	# range, skip the frame's full budget — but DON'T just return: priorities
-	# are stale (distance at enqueue time), so an out-of-range socket with a
-	# small stale priority can sit on top of in-range work forever (e.g. the
-	# player explored far away and came back; the far frontier's sockets keep
-	# their old small priorities and starve pending decorations here). Repair
-	# one stale top per frame: re-enqueue it at its actual distance so the
-	# in-range work surfaces within a few frames even while standing still.
+	# A teleported (or void-stranded) player may sit beyond the frontier with
+	# no socket in range at all — generation must re-seed beneath them.
+	_ensure_seed_under_player()
+	# Queue priorities are distances at ENQUEUE time, so they go stale: a
+	# socket enqueued when the player was near keeps its small priority after
+	# the player leaves, sits on top of the heap out of range, and starves
+	# in-range work behind it (pending decorations around a player who just
+	# stopped — they were enqueued at ~frontier distance, priority ~300, and
+	# lose to every fresh frontier socket while running). When the player is
+	# stationary, spend the frame's pop budget repairing stale tops: re-enqueue
+	# each at its actual distance until an in-range socket surfaces (fall
+	# through to the normal pass) or the top's PRIORITY already exceeds the
+	# worst-case in-range value (then nothing can be in range — the cheap idle
+	# exit, now trustworthy because priorities are honest).
 	var current_player_pos: Vector3 = player.global_position if player != null else Vector3.ZERO
 	if current_player_pos == _last_player_pos and not queue.is_empty():
-		var top_item: Variant = queue.peek()
-		if top_item is TerrainModuleSocket:
+		var repairs: int = 0
+		while not queue.is_empty():
+			var top_priority: float = float(queue.heap[0].get("priority", INF))
+			if top_priority > RENDER_RANGE + DECO_PRIORITY_PENALTY:
+				return  # honest priorities say nothing is in range
+			var top_item: Variant = queue.peek()
+			if not (top_item is TerrainModuleSocket):
+				break
 			var top_socket: TerrainModuleSocket = top_item
 			var top_dist: float = get_dist_from_player(top_socket.piece, top_socket.socket_name)
-			if top_dist > RENDER_RANGE:
-				queue.pop()
-				_mark_socket_dequeued(top_socket)
-				if _socket_can_spawn_point(top_socket.piece, top_socket.socket_name):
-					top_dist += DECO_PRIORITY_PENALTY
-				_enqueue_socket(top_socket, top_dist)
+			if top_dist <= RENDER_RANGE:
+				break  # real in-range work — run the normal pass below
+			queue.pop()
+			_mark_socket_dequeued(top_socket)
+			if _socket_can_spawn_point(top_socket.piece, top_socket.socket_name):
+				top_dist += DECO_PRIORITY_PENALTY
+			_enqueue_socket(top_socket, top_dist)
+			repairs += 1
+			if repairs >= MAX_LOAD_PER_STEP * 4:
 				return
 	_last_player_pos = current_player_pos
 	var num_added: int = 0
@@ -112,6 +127,39 @@ func load_terrain() -> void:
 	_flush_deferred_sockets()
 
 
+## Generation grows as a contiguous wavefront from the start tile, so a
+## player teleported (or otherwise displaced) beyond frontier+RENDER_RANGE
+## has no queued socket in range and would hang over the void forever. When
+## no base tile exists under the player, seed a fresh ground tile at their
+## grid position — it expands like the start tile and merges seamlessly with
+## the main wavefront (same 24-grid), and the rules pipeline swaps it for
+## water if the field says so.
+func _ensure_seed_under_player() -> void:
+	if player == null or library == null:
+		return
+	var p: Vector3 = player.global_position
+	var center: Vector3 = Vector3(snappedf(p.x, 24.0), 0.0, snappedf(p.z, 24.0))
+	# Any piece occupying the cell means terrain reached here — only seed
+	# into genuine void.
+	var probe: AABB = AABB(center + Vector3(-1.0, -1.0, -1.0), Vector3(2.0, 3.0, 2.0))
+	for hit in terrain_index.query_box(probe):
+		if hit is TerrainModuleInstance:
+			return
+	var ground_modules: TerrainModuleList = library.get_by_tags(TagList.new(["ground-plain"]))
+	if ground_modules.is_empty():
+		return
+	var seed_tile: TerrainModuleInstance = ground_modules.library[0].spawn()
+	seed_tile.set_transform(Transform3D(Basis.IDENTITY, center))
+	seed_tile.create()
+	terrain_parent.add_child(seed_tile.root)
+	register_piece(seed_tile, "")
+	add_piece_to_queue(seed_tile)
+	# Run the rules so a seed on a water-field position becomes water, banks
+	# pre-tile, etc. — same treatment as any placed base tile.
+	_run_rules_for_existing_piece(seed_tile)
+	_process_rule_rechecks()
+
+
 ## Delete any stack tile (level-stack or cliff-stack) whose support tile
 ## (directly below) no longer satisfies its support invariant:
 ##   - level-stack: support must be a level-center tile (full interior: all
@@ -121,6 +169,11 @@ func load_terrain() -> void:
 ## Runs once per load_terrain() call so stacks whose support changed between
 ## rule evaluations are cleaned up even when no rule trigger fires nearby.
 func _purge_orphaned_stacks() -> void:
+	# The hill/deco support sweep touches every module with a spatial query, so
+	# it runs on a slow cadence; stack support checks are tag-only and run
+	# every call.
+	_support_sweep_counter += 1
+	var run_support_sweep: bool = _support_sweep_counter % 16 == 0
 	var to_remove: Array[TerrainModuleInstance] = []
 	for module in terrain_index.all_modules.keys():
 		if not (module is TerrainModuleInstance):
@@ -135,11 +188,34 @@ func _purge_orphaned_stacks() -> void:
 		elif piece.def.tags.has("cliff-stack"):
 			if not _has_valid_stack_support(piece, "cliff", 5.0, "cliff-interior"):
 				to_remove.append(piece)
+		elif run_support_sweep and (piece.def.tags.has("hill") or piece.def.displaceable):
+			# Hills and decorations whose surface vanished (e.g. the base of a
+			# hill stack removed by a bank conversion, leaving the upper hills
+			# and their grass floating) have no rule that re-checks them —
+			# sweep them out by direct support probing.
+			if not _has_surface_support(piece):
+				to_remove.append(piece)
 	for piece in to_remove:
 		_recheck_neighbors_after_removal(piece)
 		remove_piece(piece)
 	if not to_remove.is_empty():
 		_process_rule_rechecks()
+
+
+var _support_sweep_counter: int = 0
+
+
+# Whether anything solid sits directly under this piece's origin: a piece
+# whose AABB intersects a thin probe just below the origin. Hills and
+# decorations attach their bottom socket to the support's top surface, so the
+# support's AABB always reaches the origin plane.
+func _has_surface_support(piece: TerrainModuleInstance) -> bool:
+	var o: Vector3 = piece.transform.origin
+	var probe: AABB = AABB(o + Vector3(-0.4, -1.2, -0.4), Vector3(0.8, 1.3, 0.8))
+	for hit in terrain_index.query_box(probe):
+		if hit is TerrainModuleInstance and hit != piece and not hit.def.displaceable:
+			return true
+	return false
 
 
 # Returns true if `piece` has a valid stack support directly below: a

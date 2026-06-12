@@ -139,11 +139,14 @@ static func biome_weights(pos: Vector3, world_seed: int) -> Dictionary[String, f
 # Overall foliage density multiplier for decoration sockets: forests are
 # dense, meadows open, rocky ground in between. Replaces the macro factor for
 # point-capable sockets (structures keep the macro field) so flora clustering
-# follows biomes instead of the structural density field.
+# follows biomes instead of the structural density field. The meadow floor is
+# deliberately generous: far terrain spends much of its area on mesas and
+# water, so a low floor reads as "empty plains" next to the structure-free
+# spawn meadow.
 static func biome_foliage_density(pos: Vector3, world_seed: int) -> float:
 	var forest: float = biome_forest01(pos, world_seed)
 	var rocky: float = biome_rocky01(pos, world_seed)
-	return 0.55 + 1.35 * forest + 0.5 * rocky
+	return 0.7 + 1.2 * forest + 0.45 * rocky
 
 
 # Deterministic water field: thin ridged-noise bands form winding rivers,

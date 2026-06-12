@@ -1138,6 +1138,35 @@ func test_ground_grid_completeness():
 	await _flush_deferred_frees()
 
 
+func test_generation_reseeds_under_displaced_player() -> void:
+	# Generation grows as a wavefront from the start tile; a player teleported
+	# beyond frontier+RENDER_RANGE must get terrain seeded beneath them
+	# instead of hanging over the void with every queued socket out of range.
+	var gen: Variant = _new_generator()
+	_set_generator_library(gen, TerrainModuleLibrary.new())
+	gen.library.init()
+	_set_generator_test_pieces_library(gen, TerrainModuleLibrary.new())
+	gen.test_pieces_library.init_test_pieces()
+	gen.player.global_position = Vector3.ZERO
+	gen.RENDER_RANGE = 250
+	gen.MAX_LOAD_PER_STEP = 10
+	_run_generator_ready(gen)
+	seed(7)
+	for i in range(20):
+		gen.load_terrain()
+
+	var teleport: Vector3 = Vector3(900, 0, 900)
+	gen.player.global_position = teleport
+	for i in range(60):
+		gen.load_terrain()
+	assert_true(
+		_has_ground_near_position(gen, teleport, 30.0),
+		"terrain must re-seed and grow under a far-teleported player"
+	)
+	_dispose_generator_immediately(gen)
+	await _flush_deferred_frees()
+
+
 func _collect_level_pieces(gen: Variant) -> Array[TerrainModuleInstance]:
 	var search_half_extent: float = 450.0
 	if gen != null:
