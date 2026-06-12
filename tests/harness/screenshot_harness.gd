@@ -160,13 +160,13 @@ func _scan_invariants(tag: String) -> void:
 		if piece.def.tags.has("bank"):
 			# Full footprint: levels are co-located with the tile origin, but
 			# hills sit at edge-socket offsets.
-			var bank_box: AABB = AABB(o + Vector3(-11.5, -0.2, -11.5), Vector3(23, 4, 23))
+			var bank_box: AABB = AABB(o + Vector3(-11.5, -0.2, -11.5), Vector3(23, 12, 23))
 			for above in terrain.terrain_index.query_box(bank_box):
 				if not (above is TerrainModuleInstance) or above == piece:
 					continue
 				if above.def.tags.has("level") or above.def.tags.has("hill"):
 					var bd: Vector3 = above.transform.origin - o
-					if absf(bd.x) <= 11.9 and absf(bd.z) <= 11.9 and bd.y > -0.2 and bd.y < 3.8:
+					if absf(bd.x) <= 11.9 and absf(bd.z) <= 11.9 and bd.y > -0.2 and bd.y < 11.0:
 						print("[scan %s] STRUCTURE-ON-BANK %s at %s" % [tag, str(above.def.tags.tags), str(o)])
 						violations += 1
 		if piece.def.tags.has("ground") and not piece.def.tags.has("water"):

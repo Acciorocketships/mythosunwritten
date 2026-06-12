@@ -139,27 +139,29 @@ func apply(context: Dictionary) -> Dictionary:
 	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
 
 
-## Structures (level or hill tiles) on top of this base tile. Queried over the
-## full 24x24 footprint, not just the tile center: levels are co-located with
-## the base tile origin, but hills spawn from edge foliage sockets and sit at
-## offsets — a 1x1 center box misses them entirely. Hill origins sit at the
-## base tile's top plane (dy ~0), so the window starts just below it.
+## Structures (level or hill tiles) on top of this base tile, plus anything
+## riding them. Queried over the full 24x24 footprint, not just the tile
+## center: levels are co-located with the base tile origin, but hills spawn
+## from edge foliage sockets and sit at offsets — a 1x1 center box misses
+## them entirely. The column reaches the full hill-stack height (hills stack
+## on hills), and elevated displaceable decorations (grass on a doomed hill)
+## are included too or they'd be left floating; deco at the bank's own top
+## (dy < 1.5) is legitimate shore vegetation and stays.
 func _structures_above(
 	piece: TerrainModuleInstance, terrain_index: TerrainIndex
 ) -> Array[TerrainModuleInstance]:
 	var out: Array[TerrainModuleInstance] = []
 	var o: Vector3 = piece.transform.origin
-	var query_box: AABB = AABB(o + Vector3(-11.5, -0.2, -11.5), Vector3(23.0, 4.0, 23.0))
+	var query_box: AABB = AABB(o + Vector3(-11.5, -0.2, -11.5), Vector3(23.0, 12.0, 23.0))
 	for hit in terrain_index.query_box(query_box):
 		if not (hit is TerrainModuleInstance) or hit == piece:
 			continue
-		if not (hit.def.tags.has("level") or hit.def.tags.has("hill")):
-			continue
 		var delta: Vector3 = hit.transform.origin - o
-		if (
-			absf(delta.x) <= 11.9 and absf(delta.z) <= 11.9
-			and delta.y > -0.2 and delta.y < 3.8
-		):
+		if absf(delta.x) > 11.9 or absf(delta.z) > 11.9 or delta.y < -0.2 or delta.y > 11.0:
+			continue
+		if hit.def.tags.has("level") or hit.def.tags.has("hill"):
+			out.append(hit)
+		elif hit.def.displaceable and delta.y > 1.5:
 			out.append(hit)
 	return out
 
