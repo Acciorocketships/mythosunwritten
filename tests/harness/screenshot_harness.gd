@@ -57,7 +57,10 @@ func _run() -> void:
 		await _capture_from("shot_%02d_wide" % i, center + Vector3(0.5, 320, 0.5), center, false)
 		var peak: Vector3 = _highest_piece_position()
 		if peak != Vector3.INF:
-			await _capture_from("shot_%02d_mountain" % i, peak + Vector3(70, 50, 70), peak, false)
+			# Low oblique angle: a terraced mountain reads flat from high above.
+			await _capture_from(
+				"shot_%02d_mountain" % i, peak + Vector3(55, 14, 55), peak + Vector3(0, 4, 0), false
+			)
 		var water: Vector3 = _tagged_piece_position("water")
 		if water != Vector3.INF:
 			await _capture_from("shot_%02d_water" % i, water + Vector3(45, 35, 45), water, false)

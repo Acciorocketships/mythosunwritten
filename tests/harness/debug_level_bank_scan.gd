@@ -114,6 +114,12 @@ func _scan(gen: Variant, seed_value: int) -> void:
 					print("[seed %d] OVER-BANK bank at %s topper=%s at %s" % [
 						seed_value, str(bo), str(hit.def.tags.tags), str(hit.transform.origin)
 					])
-	print("[seed %d] counts=%s toppers_at_water=%s violations=%d" % [
-		seed_value, str(counts), str(water_adjacent_tops), violations
+	# Cliff storey histogram: how tall do mountains actually get?
+	var storeys: Dictionary = {}
+	for module in gen.terrain_index.all_modules.keys():
+		if module is TerrainModuleInstance and module.def.tags.has("cliff"):
+			var s: int = roundi((module.transform.origin.y - 4.5) / 4.0) + 1
+			storeys[s] = storeys.get(s, 0) + 1
+	print("[seed %d] counts=%s cliff_storeys=%s toppers_at_water=%s violations=%d" % [
+		seed_value, str(counts), str(storeys), str(water_adjacent_tops), violations
 	])
