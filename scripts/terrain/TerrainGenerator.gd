@@ -65,16 +65,26 @@ func load_terrain() -> void:
 	# the local terrain finished generating. Cost is O(stacks), small in
 	# practice and capped by RENDER_RANGE.
 	_purge_orphaned_stacks()
-	# When the player hasn't moved since last frame, all queue priorities still reflect
-	# the current player position, so the heap top is the actual nearest socket. If even
-	# that is out of range, every queued socket is out of range too — skip the frame to
-	# avoid the pop/defer/re-enqueue churn that would otherwise burn the per-frame budget.
+	# When the player hasn't moved since last frame and the heap top is out of
+	# range, skip the frame's full budget — but DON'T just return: priorities
+	# are stale (distance at enqueue time), so an out-of-range socket with a
+	# small stale priority can sit on top of in-range work forever (e.g. the
+	# player explored far away and came back; the far frontier's sockets keep
+	# their old small priorities and starve pending decorations here). Repair
+	# one stale top per frame: re-enqueue it at its actual distance so the
+	# in-range work surfaces within a few frames even while standing still.
 	var current_player_pos: Vector3 = player.global_position if player != null else Vector3.ZERO
 	if current_player_pos == _last_player_pos and not queue.is_empty():
 		var top_item: Variant = queue.peek()
 		if top_item is TerrainModuleSocket:
 			var top_socket: TerrainModuleSocket = top_item
-			if get_dist_from_player(top_socket.piece, top_socket.socket_name) > RENDER_RANGE:
+			var top_dist: float = get_dist_from_player(top_socket.piece, top_socket.socket_name)
+			if top_dist > RENDER_RANGE:
+				queue.pop()
+				_mark_socket_dequeued(top_socket)
+				if _socket_can_spawn_point(top_socket.piece, top_socket.socket_name):
+					top_dist += DECO_PRIORITY_PENALTY
+				_enqueue_socket(top_socket, top_dist)
 				return
 	_last_player_pos = current_player_pos
 	var num_added: int = 0
@@ -266,12 +276,32 @@ func _is_socket_expandable(piece_socket: TerrainModuleSocket) -> bool:
 # Structural sockets (fill >= 1.0, e.g. ground lateral expansion) ignore the
 # field — ground must always fill for the world to be infinite.
 func _effective_fill_prob(piece: TerrainModuleInstance, socket_name: String, pos: Vector3) -> float:
-	var fill: float = _get_socket_fill_prob(piece, socket_name)
-	if fill > 0.0 and fill < 1.0:
+	return _route_fill_prob(piece, socket_name, pos, _get_socket_fill_prob(piece, socket_name))
+
+
+# Scale a raw probability the way the given socket's actual verdict is
+# computed. Shared by the enqueue roll (_effective_fill_prob) and the
+# suppression roll (_suppressor_roll_passes) so suppression always mirrors the
+# suppressor socket's real verdict — a mismatch either suppresses foliage that
+# nothing will ever displace, or lets foliage spawn where a structure is
+# coming (visible pop-out).
+func _route_fill_prob(
+	piece: TerrainModuleInstance, socket_name: String, pos: Vector3, fill: float
+) -> float:
+	if fill <= 0.0:
+		return 0.0
+	if fill < 1.0:
 		# Cliff plateaus are carved from the macro field as contour lines
 		# (solid mesas, per-storey taper) — see CLIFF_CONTOUR_BASE.
 		if _is_cliff_lateral(piece, socket_name):
 			return _cliff_contour_fill(piece, pos)
+		# Decoration-capable sockets follow the biome flora density (forests
+		# dense, meadows open) on EVERY walkable surface — ground, level, and
+		# cliff tops share the same deco spawn rules. Checked before the
+		# level branch so level foliage doesn't fall into the structural
+		# curve below.
+		if _socket_can_spawn_point(piece, socket_name):
+			return clampf(fill * Helper.biome_foliage_density(pos, world_seed), 0.0, 1.0)
 		# Level patches are the mid-altitude feature: the high-contrast macro
 		# curve that keeps cliffs out of the lowlands would crush their
 		# growth at the mid densities where they live, so level-family
@@ -287,11 +317,6 @@ func _effective_fill_prob(piece: TerrainModuleInstance, socket_name: String, pos
 			if _in_cliff_core(pos):
 				return maxf(seed_fill, TerrainModuleDefinitions.CLIFF_CORE_SEED_FILL_PROB)
 			return seed_fill
-		# Decoration-capable sockets follow the biome flora density (forests
-		# dense, meadows open); structural sockets follow the macro density
-		# field. fill >= 1.0 stays a structural guarantee either way.
-		if _socket_can_spawn_point(piece, socket_name):
-			return clampf(fill * Helper.biome_foliage_density(pos, world_seed), 0.0, 1.0)
 	return _macro_scaled_fill(fill, pos)
 
 
@@ -318,18 +343,44 @@ func _is_cliff_lateral(piece: TerrainModuleInstance, socket_name: String) -> boo
 
 
 # Contour test for cliff plateau growth: expand iff the macro density at the
-# target position clears this storey's threshold. Cliff origins sit on the
-# storey top plane (base tier y = 4.5: ground top 0.5 + one 4u storey), so the
-# storey index falls out of the origin height.
+# target position clears this storey's threshold.
 func _cliff_contour_fill(piece: TerrainModuleInstance, pos: Vector3) -> float:
-	var storey: float = maxf(0.0, (piece.transform.origin.y - 4.5) / 4.0)
-	var threshold: float = (
+	if Helper.macro_density01(pos, world_seed) >= _cliff_storey_threshold(piece):
+		return 1.0
+	return 0.0
+
+
+# Cliff origins sit on the storey top plane (base tier y = 4.0: ground
+# topcenter at y = 0 plus one 4u storey), so the storey index falls out of
+# the origin height.
+func _cliff_storey_threshold(piece: TerrainModuleInstance) -> float:
+	var storey: float = maxf(0.0, (piece.transform.origin.y - 4.0) / 4.0)
+	return (
 		TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
 		+ TerrainModuleDefinitions.CLIFF_CONTOUR_STEP * storey
 	)
-	if Helper.macro_density01(pos, world_seed) >= threshold:
-		return 1.0
-	return 0.0
+
+
+# Foliage on a cliff tile is pointless when the tile is destined to become a
+# plateau interior: the next storey lands on it and displaces the foliage
+# (visible pop-out). Interior-ness is deterministic for contour-carved mesas —
+# the tile and all 8 neighbours inside this storey's contour — so cliff
+# foliage is suppressed geometrically instead of by probability roll.
+func _cliff_foliage_covered_by_stack(
+	piece: TerrainModuleInstance, socket_name: String
+) -> bool:
+	if not piece.def.tags.has("cliff"):
+		return false
+	if not _socket_can_spawn_point(piece, socket_name):
+		return false
+	var threshold: float = _cliff_storey_threshold(piece)
+	var origin: Vector3 = piece.transform.origin
+	for dx in [-24.0, 0.0, 24.0]:
+		for dz in [-24.0, 0.0, 24.0]:
+			var neighbor: Vector3 = origin + Vector3(dx, 0.0, dz)
+			if Helper.macro_density01(neighbor, world_seed) < threshold:
+				return false
+	return true
 
 
 func _macro_scaled_fill(fill: float, pos: Vector3) -> float:
@@ -610,6 +661,11 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 		# would visibly displace whatever this socket spawns.
 		if _suppressor_roll_passes(piece, piece.def.socket_suppressed_by.get(socket_name)):
 			continue
+		# Cliff foliage is suppressed geometrically: a tile whose whole
+		# neighbourhood is inside this storey's contour will retile to
+		# interior and be covered by the next storey.
+		if _cliff_foliage_covered_by_stack(piece, socket_name):
+			continue
 		var existing_socket: TerrainModuleSocket = socket_index.query_other(pos, piece)
 		if existing_socket != null and _is_socket_expandable(existing_socket):
 			continue
@@ -632,16 +688,19 @@ func _socket_can_spawn_point(piece: TerrainModuleInstance, socket_name: String) 
 
 # Whether a suppression entry ({"socket": name, "prob": float}) fires: the
 # suppressor socket's deterministic position roll passes at the authored
-# probability (macro-scaled like any fill prob).
+# probability, scaled exactly the way that socket's own enqueue verdict would
+# be (_route_fill_prob) — same position hash, same curve — so suppression
+# fires precisely where the suppressor socket actually fires.
 func _suppressor_roll_passes(piece: TerrainModuleInstance, entry: Variant) -> bool:
 	if not (entry is Dictionary):
 		return false
-	var socket: Marker3D = piece.sockets.get(entry.get("socket", ""), null)
+	var suppressor_name: String = String(entry.get("socket", ""))
+	var socket: Marker3D = piece.sockets.get(suppressor_name, null)
 	if socket == null:
 		return false
 	var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
 	var prob: float = float(entry.get("prob", 0.0))
-	return Helper.position_hash01(pos, world_seed) <= _macro_scaled_fill(prob, pos)
+	return Helper.position_hash01(pos, world_seed) <= _route_fill_prob(piece, suppressor_name, pos, prob)
 
 
 func register_piece(piece: TerrainModuleInstance, _attachment_socket_name: String) -> void:

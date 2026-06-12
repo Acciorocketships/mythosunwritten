@@ -748,6 +748,12 @@ func test_cliff_scenes_have_correct_socket_layout() -> void:
 		"backright": Vector3(12, 0, 12),
 		"bottom": Vector3(0, -4, 0),
 		"topcenter": Vector3(0, 0, 0),
+		# Foliage spawn markers on the walkable plateau top — cliff tops share
+		# the ground tiles' decoration spawn rules.
+		"topfront": Vector3(0, 0, -8),
+		"topback": Vector3(0, 0, 8),
+		"topleft": Vector3(-8, 0, 0),
+		"topright": Vector3(8, 0, 0),
 	}
 	var scene_paths: Array[String] = [
 		"res://terrain/scenes/CliffSide.tscn",
