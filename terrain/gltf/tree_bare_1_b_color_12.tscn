@@ -1,8 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://bcdburh23hjr4"]
 
-[ext_resource type="PackedScene" path="res://assets/KayKitNature/Assets/gltf/Color1/Tree_Bare_1_B_Color1.gltf" id="1_base"]
+[ext_resource type="PackedScene" uid="uid://b4hc3q7834r4o" path="res://assets/KayKitNature/Assets/gltf/Color1/Tree_Bare_1_B_Color1.gltf" id="1_base"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_base"]
+radius = 0.4428711
 height = 1.5
 
 [node name="Tree_Bare_1_B_Color12" instance=ExtResource("1_base")]
