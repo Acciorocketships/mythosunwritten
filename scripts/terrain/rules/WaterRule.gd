@@ -127,9 +127,10 @@ func apply(context: Dictionary) -> Dictionary:
 			affected_piece, target_tag, steps_to_align, library
 		)
 		# Nothing may sit on a bank (its topcenter is blocking going forward,
-		# but a level may have grown onto the tile before the water arrived).
+		# but a level or hill may have grown onto the tile before the water
+		# arrived).
 		if target_tag != "ground-plain":
-			for stacked in _levels_above(affected_piece, terrain_index):
+			for stacked in _structures_above(affected_piece, terrain_index):
 				piece_updates[stacked] = null
 		if affected_piece == chosen_replacement:
 			chosen_replacement = replacement
@@ -138,20 +139,27 @@ func apply(context: Dictionary) -> Dictionary:
 	return {"chosen_piece": chosen_replacement, "piece_updates": piece_updates}
 
 
-## Level tiles sitting directly on top of this base tile (one tier up).
-func _levels_above(
+## Structures (level or hill tiles) on top of this base tile. Queried over the
+## full 24x24 footprint, not just the tile center: levels are co-located with
+## the base tile origin, but hills spawn from edge foliage sockets and sit at
+## offsets — a 1x1 center box misses them entirely. Hill origins sit at the
+## base tile's top plane (dy ~0), so the window starts just below it.
+func _structures_above(
 	piece: TerrainModuleInstance, terrain_index: TerrainIndex
 ) -> Array[TerrainModuleInstance]:
 	var out: Array[TerrainModuleInstance] = []
 	var o: Vector3 = piece.transform.origin
-	var query_box: AABB = AABB(o + Vector3(-0.5, 0.2, -0.5), Vector3(1.0, 1.0, 1.0))
+	var query_box: AABB = AABB(o + Vector3(-11.5, -0.2, -11.5), Vector3(23.0, 4.0, 23.0))
 	for hit in terrain_index.query_box(query_box):
 		if not (hit is TerrainModuleInstance) or hit == piece:
 			continue
-		if not hit.def.tags.has("level"):
+		if not (hit.def.tags.has("level") or hit.def.tags.has("hill")):
 			continue
 		var delta: Vector3 = hit.transform.origin - o
-		if absf(delta.x) <= 0.5 and absf(delta.z) <= 0.5 and delta.y > 0.2 and delta.y < 1.2:
+		if (
+			absf(delta.x) <= 11.9 and absf(delta.z) <= 11.9
+			and delta.y > -0.2 and delta.y < 3.8
+		):
 			out.append(hit)
 	return out
 

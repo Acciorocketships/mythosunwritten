@@ -158,10 +158,17 @@ func _scan_invariants(tag: String) -> void:
 				print("[scan %s] STALE-LEVEL-VARIANT %s at %s expected=%s missing=%s" % [tag, actual, str(o), expected, str(missing)])
 				violations += 1
 		if piece.def.tags.has("bank"):
-			for above in terrain.terrain_index.query_box(AABB(o + Vector3(-0.5, 0.2, -0.5), Vector3(1, 1, 1))):
-				if above is TerrainModuleInstance and above != piece and above.def.tags.has("level"):
-					print("[scan %s] LEVEL-ON-BANK at %s" % [tag, str(o)])
-					violations += 1
+			# Full footprint: levels are co-located with the tile origin, but
+			# hills sit at edge-socket offsets.
+			var bank_box: AABB = AABB(o + Vector3(-11.5, -0.2, -11.5), Vector3(23, 4, 23))
+			for above in terrain.terrain_index.query_box(bank_box):
+				if not (above is TerrainModuleInstance) or above == piece:
+					continue
+				if above.def.tags.has("level") or above.def.tags.has("hill"):
+					var bd: Vector3 = above.transform.origin - o
+					if absf(bd.x) <= 11.9 and absf(bd.z) <= 11.9 and bd.y > -0.2 and bd.y < 3.8:
+						print("[scan %s] STRUCTURE-ON-BANK %s at %s" % [tag, str(above.def.tags.tags), str(o)])
+						violations += 1
 		if piece.def.tags.has("ground") and not piece.def.tags.has("water"):
 			# Base tiles must carry the bank variant matching their actual
 			# water-facing sides, counted from PLACED water pieces only (field

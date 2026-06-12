@@ -176,6 +176,36 @@ func test_existing_neighbor_retiled_when_water_position_generated() -> void:
 		)
 
 
+## A hill that grew on the shore tile before the water arrived must be removed
+## when the tile converts to a bank — hills sit at edge-socket offsets, so the
+## cleanup must search the full tile footprint, not just the tile center.
+func test_hill_on_converting_bank_is_removed() -> void:
+	var world_seed: int = 12345
+	var config: Dictionary = _find_side_config(world_seed)
+	assert_false(config.is_empty(), "field configuration required")
+	var gen: Variant = _new_generator()
+
+	var land_pos: Vector3 = config["land"]
+	_spawn_ground_plain(gen, land_pos)
+	# A hill on the land tile, offset toward a corner like an edge-socket
+	# spawn would place it.
+	var hill: TerrainModuleInstance = TerrainModuleDefinitions.load_8x8x2_tile().spawn()
+	hill.set_transform(Transform3D(Basis.IDENTITY, land_pos + Vector3(6, 0, 6)))
+	hill.create()
+	_pieces_to_destroy.append(hill)
+	gen.terrain_parent.add_child(hill.root)
+	gen.register_piece(hill, "")
+
+	var chosen: TerrainModuleInstance = _spawn_ground_plain(gen, config["water"])
+	var result: Dictionary = _apply_water_rule(gen, chosen, world_seed)
+
+	var updates: Dictionary = result.get("piece_updates", {})
+	assert_true(
+		updates.has(hill) and updates.get(hill, "x") == null,
+		"a hill on a tile converting to bank must be scheduled for removal"
+	)
+
+
 ## A neighbour that is ALREADY the correct bank (placed earlier via field
 ## lookahead) must not be downgraded to plain ground while the water tile at
 ## the position it faces is mid-swap.
