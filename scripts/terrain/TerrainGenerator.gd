@@ -5,7 +5,9 @@ extends Node3D
 const PLAYER_FEET_Y: float = 0.5
 const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 
-@export var RENDER_RANGE: int = 250
+# Generation reaches RENDER_RANGE; the visible world is RENDER_RANGE -
+# REVEAL_MARGIN (the outer band generates hidden, then reveals settled).
+@export var RENDER_RANGE: int = 260
 @export var MAX_LOAD_PER_STEP: int = 8
 ## Queue-priority penalty (in distance units) for decoration-capable sockets.
 const DECO_PRIORITY_PENALTY: float = 48.0
@@ -74,6 +76,9 @@ func load_terrain() -> void:
 	# the local terrain finished generating. Cost is O(stacks), small in
 	# practice and capped by RENDER_RANGE.
 	_purge_orphaned_stacks()
+	# Reveal frontier tiles that have settled (frontier advanced past them) so
+	# the player never sees edge tiles retiling/morphing in the distance.
+	_reveal_settled_pieces()
 	# A teleported (or void-stranded) player may sit beyond the frontier with
 	# no socket in range at all — generation must re-seed beneath them.
 	_ensure_seed_under_player()
@@ -902,6 +907,53 @@ func register_piece(piece: TerrainModuleInstance, _attachment_socket_name: Strin
 		var piece_other_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
 		socket_index.insert(piece_other_socket)
 	terrain_index.insert(piece)
+	_apply_initial_visibility(piece)
+
+
+# Edge tiles retile (swap variant) as their neighbours fill in — visible
+# "appearing and disappearing in the distance" if shown while still settling.
+# A tile is "done" once the frontier has advanced ~REVEAL_MARGIN past it (all
+# immediate neighbours placed, so its variant is final). So pieces placed in
+# the actively-generating band near RENDER_RANGE start hidden and are revealed
+# — already settled, no morph — once the player is close enough.
+const REVEAL_MARGIN: float = 88.0
+
+func _reveal_radius() -> float:
+	return float(RENDER_RANGE) - REVEAL_MARGIN
+
+func _apply_initial_visibility(piece: TerrainModuleInstance) -> void:
+	if piece == null or piece.root == null:
+		return
+	if _player_xz_distance(piece) > _reveal_radius():
+		piece.root.visible = false
+		if not _hidden_set.has(piece):
+			_hidden_set[piece] = true
+			_hidden_pieces.append(piece)
+
+func _player_xz_distance(piece: TerrainModuleInstance) -> float:
+	var pp: Vector3 = player.global_position if player != null else Vector3.ZERO
+	var o: Vector3 = piece.transform.origin
+	return Vector2(o.x - pp.x, o.z - pp.z).length()
+
+func _reveal_settled_pieces() -> void:
+	if _hidden_pieces.is_empty():
+		return
+	var radius: float = _reveal_radius()
+	var still_hidden: Array = []
+	for piece in _hidden_pieces:
+		if piece == null or piece.root == null or not is_instance_valid(piece.root):
+			continue  # removed/replaced while hidden — drop it
+		if _player_xz_distance(piece) <= radius:
+			piece.root.visible = true
+		else:
+			still_hidden.append(piece)
+	_hidden_pieces = still_hidden
+	_hidden_set.clear()
+	for piece in _hidden_pieces:
+		_hidden_set[piece] = true
+
+var _hidden_pieces: Array = []
+var _hidden_set: Dictionary = {}
 
 
 func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInstance) -> bool:
