@@ -104,7 +104,9 @@ const BIOME_FOREST_SCALE: float = 190.0
 const BIOME_ROCKY_SCALE: float = 150.0
 
 static func biome_forest01(pos: Vector3, world_seed: int) -> float:
-	return smoothstep(0.45, 0.75, _value_noise01(pos, world_seed + 31, BIOME_FOREST_SCALE))
+	# Lower, narrower ramp => forest cores saturate to 1.0 over more of their
+	# area => denser groves (vs a gradual fade that thins trees everywhere).
+	return smoothstep(0.42, 0.64, _value_noise01(pos, world_seed + 31, BIOME_FOREST_SCALE))
 
 
 static func biome_rocky01(pos: Vector3, world_seed: int) -> float:
@@ -123,8 +125,8 @@ static func biome_weights(pos: Vector3, world_seed: int) -> Dictionary[String, f
 	var hill_weight: float = clampf(0.5 + 2.2 * rocky - 0.3 * forest, 0.1, 4.0)
 	var cliff_weight: float = 0.6 + 2.6 * rocky
 	return {
-		"tree": 0.35 + 3.2 * forest,
-		"bush": 0.6 + 1.4 * forest,
+		"tree": 0.4 + 4.6 * forest,
+		"bush": 0.6 + 1.6 * forest,
 		"grass": clampf(1.7 - 1.2 * forest - 0.9 * rocky, 0.15, 2.0),
 		"rock": 0.4 + 2.9 * rocky,
 		"hill": hill_weight,

@@ -10,7 +10,7 @@ extends Resource
 # clusters grow outward on the second tier. Each frontier tile exposes ~3 new
 # sockets, so keep this below 1/3 (subcritical) or patches grow unbounded and
 # blanket the map.
-const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.3
+const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.33
 # Lateral expansion rate for the level-stack tier (third level and above).
 # Stacks can only sit on supported level tiles below, so this is intrinsically
 # bounded and can stay high — upper tiers fill out their support, producing
@@ -37,11 +37,12 @@ const CLIFF_LATERAL_FILL_PROB: float = 0.3
 # blobs (independent rolls produce single-storey snake mazes that never form
 # the 3x3 interiors stacking needs), and each storey's threshold rises so
 # mountains terrace and taper like contour lines on a heightmap.
-const CLIFF_CONTOUR_BASE: float = 0.58
+const CLIFF_CONTOUR_BASE: float = 0.56
 # Small step: the 3x3-interior support requirement already insets each storey
 # by a tile, so mountains taper geometrically into stepped pyramids; the
 # threshold step only needs to fade the very top against the field falloff.
-const CLIFF_CONTOUR_STEP: float = 0.02
+# Lower step => more storeys clear the threshold => taller mountains.
+const CLIFF_CONTOUR_STEP: float = 0.012
 # Inside a contour core, ground topcenters seed much more eagerly (and the
 # seed mix skews toward cliffs) so every core actually grows its mountain —
 # the base rates alone can miss a whole core and leave it flat.
@@ -60,25 +61,25 @@ const CLIFF_REPLACE_EXISTING: bool = true
 
 # --- Ground topcenter (seeds level or cliff above each ground tile) ---
 # Per-tile chance that the topcenter socket attempts to place anything.
-const GROUND_TOPCENTER_FILL_PROB: float = 0.16
+const GROUND_TOPCENTER_FILL_PROB: float = 0.2
 # Probability split of what a ground topcenter seeds when it does fire.
 # Must sum to 1.0. Mirrors both the size and tag distributions used to
 # pick between a level-ground-center (small) and a cliff-side (tall).
 # The rocky biome multiplies the cliff side of both distributions at
 # placement time (Helper.biome_weights), so highlands skew further toward
 # cliffs than this base split.
-const GROUND_TOPCENTER_LEVEL_PROB: float = 0.6
-const GROUND_TOPCENTER_CLIFF_PROB: float = 0.4
+const GROUND_TOPCENTER_LEVEL_PROB: float = 0.7
+const GROUND_TOPCENTER_CLIFF_PROB: float = 0.3
 
 # --- Top-edge foliage (cardinals + corners on each walkable surface) ---
 # Shared by ground tiles, level tiles, and cliff plateau tops: every walkable
 # surface uses the same decoration spawn rules.
-const GROUND_FOLIAGE_FILL_PROB: float = 0.16
+const GROUND_FOLIAGE_FILL_PROB: float = 0.2
 # Sampled tag distribution for foliage tiles on top-edges. Reused for
 # cliff-interior plateau top-edges too. Weights need not sum to 1 — the
 # Distribution normalises.
 const FOLIAGE_TAG_WEIGHTS: Dictionary[String, float] = {
-	"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.2, "hill": 0.1,
+	"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.25, "hill": 0.05,
 }
 
 # --- Hill stacking (small hills can stack on top of each other) ---
