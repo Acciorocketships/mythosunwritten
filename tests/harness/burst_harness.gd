@@ -19,6 +19,8 @@ var terrain: Node3D
 var _last_count: int = -1
 var _deltas: Array[int] = []
 var _min_fps: float = INF
+var _fps_sum: float = 0.0
+var _fps_n: int = 0
 var _elapsed: float = 0.0
 
 var _birth: Dictionary = {}            # instance_id -> {t, pos}
@@ -115,7 +117,10 @@ func _process(delta: float) -> void:
 	if _last_count >= 0:
 		_deltas.append(count - _last_count)
 		if _elapsed > 5.0:
-			_min_fps = minf(_min_fps, Engine.get_frames_per_second())
+			var fps: float = Engine.get_frames_per_second()
+			_min_fps = minf(_min_fps, fps)
+			_fps_sum += fps
+			_fps_n += 1
 	_last_count = count
 	if _elapsed >= RUN_SECONDS:
 		_report()
@@ -135,8 +140,9 @@ func _report() -> void:
 			zero_streak = 0
 	for s in _samples:
 		print(s)
-	print("[burst] frames=%d max_delta=%d max_zero_streak=%d min_fps=%.0f" % [
-		_deltas.size(), max_delta, max_zero_streak, _min_fps
+	var avg_fps: float = (_fps_sum / _fps_n) if _fps_n > 0 else 0.0
+	print("[burst] frames=%d max_delta=%d max_zero_streak=%d min_fps=%.0f avg_fps=%.0f" % [
+		_deltas.size(), max_delta, max_zero_streak, _min_fps, avg_fps
 	])
 	print("[burst] churn_total=%d max_churn_dist=%.0f by_family=%s" % [
 		_churn_total, _max_churn_dist, str(_churn_by_family)
