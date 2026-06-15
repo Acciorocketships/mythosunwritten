@@ -29,6 +29,15 @@ var _deferred_socket_keys: Dictionary = {}
 var _last_player_pos: Vector3 = Vector3(INF, INF, INF)
 var _pending_rule_rechecks: Array = []
 var _pending_recheck_ids: Dictionary = {}
+# Set by add_piece when a placement was rejected because the player stands in
+# its footprint; _process_socket re-defers such sockets instead of consuming.
+var _blocked_by_player: bool = false
+# Set by _defer_if_out_of_range so load_terrain can exclude near-free deferral
+# pops from its placement-attempt budget.
+var _last_pop_deferred: bool = false
+# Cooldown (frame number) before re-attempting sockets whose placement was
+# rejected because the player stood in the footprint.
+var _player_blocked_retry_at: Dictionary = {}
 
 
 func _ready() -> void:
@@ -103,14 +112,24 @@ func load_terrain() -> void:
 				return
 	_last_player_pos = current_player_pos
 	var num_added: int = 0
-	var num_processed: int = 0
+	var num_attempts: int = 0
+	var num_pops: int = 0
 	_deferred_sockets.clear()
 	_deferred_socket_keys.clear()
 
-	# Placements are capped at MAX_LOAD_PER_STEP; non-placing pops (already
-	# connected, deferred, re-enqueued by retiles) are much cheaper, so they
-	# get a wider budget — otherwise they crowd out real frontier work.
-	while num_added < MAX_LOAD_PER_STEP and num_processed < MAX_LOAD_PER_STEP * 4 and !queue.is_empty():
+	# Placements are capped at MAX_LOAD_PER_STEP; real placement attempts get
+	# a wider budget; out-of-range deferrals are nearly free (a distance check
+	# and a re-stage) and get a generous separate cap. Deferrals must NOT
+	# consume the attempt budget — when the heap's lowest priorities are stale
+	# out-of-range entries, counting them starves placement entirely for many
+	# frames and the pending work then lands all at once (a visible lag spike
+	# with everything popping in together).
+	while (
+		num_added < MAX_LOAD_PER_STEP
+		and num_attempts < MAX_LOAD_PER_STEP * 4
+		and num_pops < MAX_LOAD_PER_STEP * 8
+		and !queue.is_empty()
+	):
 		var piece_socket = queue.pop()
 		if piece_socket == null:
 			break
@@ -119,11 +138,14 @@ func load_terrain() -> void:
 		var socket_name: String = piece_socket.socket_name
 		var distance := get_dist_from_player(piece, socket_name)
 
-		num_processed += 1
+		num_pops += 1
+		_last_pop_deferred = false
 
 		var added: bool = _process_socket(piece_socket, distance)
 		if added:
 			num_added += 1
+		if not _last_pop_deferred:
+			num_attempts += 1
 	_flush_deferred_sockets()
 
 
@@ -169,11 +191,6 @@ func _ensure_seed_under_player() -> void:
 ## Runs once per load_terrain() call so stacks whose support changed between
 ## rule evaluations are cleaned up even when no rule trigger fires nearby.
 func _purge_orphaned_stacks() -> void:
-	# The hill/deco support sweep touches every module with a spatial query, so
-	# it runs on a slow cadence; stack support checks are tag-only and run
-	# every call.
-	_support_sweep_counter += 1
-	var run_support_sweep: bool = _support_sweep_counter % 16 == 0
 	var to_remove: Array[TerrainModuleInstance] = []
 	for module in terrain_index.all_modules.keys():
 		if not (module is TerrainModuleInstance):
@@ -188,13 +205,26 @@ func _purge_orphaned_stacks() -> void:
 		elif piece.def.tags.has("cliff-stack"):
 			if not _has_valid_stack_support(piece, "cliff", 5.0, "cliff-interior"):
 				to_remove.append(piece)
-		elif run_support_sweep and (piece.def.tags.has("hill") or piece.def.displaceable):
-			# Hills and decorations whose surface vanished (e.g. the base of a
-			# hill stack removed by a bank conversion, leaving the upper hills
-			# and their grass floating) have no rule that re-checks them —
-			# sweep them out by direct support probing.
-			if not _has_surface_support(piece):
-				to_remove.append(piece)
+	# Hills and decorations whose surface vanished (e.g. the base of a hill
+	# stack removed by a bank conversion, leaving the upper hills and their
+	# grass floating) have no rule that re-checks them — probe their support
+	# directly. The probe is a spatial query per piece, so it runs as a
+	# rotating slice (a batch-every-N version was a one-frame hitch).
+	if _support_sweep_pieces.is_empty():
+		_support_sweep_pieces = terrain_index.all_modules.keys()
+	var sweep_budget: int = 64
+	while sweep_budget > 0 and not _support_sweep_pieces.is_empty():
+		sweep_budget -= 1
+		var swept: Variant = _support_sweep_pieces.pop_back()
+		if not (swept is TerrainModuleInstance):
+			continue
+		var swept_piece: TerrainModuleInstance = swept
+		if not terrain_index.all_modules.has(swept_piece):
+			continue  # removed since the slice was snapshotted
+		if not (swept_piece.def.tags.has("hill") or swept_piece.def.displaceable):
+			continue
+		if not _has_surface_support(swept_piece):
+			to_remove.append(swept_piece)
 	for piece in to_remove:
 		_recheck_neighbors_after_removal(piece)
 		remove_piece(piece)
@@ -202,7 +232,7 @@ func _purge_orphaned_stacks() -> void:
 		_process_rule_rechecks()
 
 
-var _support_sweep_counter: int = 0
+var _support_sweep_pieces: Array = []
 
 
 # Whether anything solid sits directly under this piece's origin: a piece
@@ -210,8 +240,19 @@ var _support_sweep_counter: int = 0
 # decorations attach their bottom socket to the support's top surface, so the
 # support's AABB always reaches the origin plane.
 func _has_surface_support(piece: TerrainModuleInstance) -> bool:
-	var o: Vector3 = piece.transform.origin
-	var probe: AABB = AABB(o + Vector3(-0.4, -1.2, -0.4), Vector3(0.8, 1.3, 0.8))
+	# Probe a thin slab spanning the piece's footprint from just below its
+	# AABB bottom (where it rests) down a tile-ish depth. A fixed offset from
+	# the ORIGIN was wrong for pieces whose origin sits well above their base
+	# (e.g. an 8x8x2 hill origin is ~1.5u above the ground it stands on), and
+	# falsely reported those as unsupported the frame they spawned.
+	var aabb: AABB = piece.aabb
+	var bottom_y: float = aabb.position.y
+	var cx: float = aabb.position.x + aabb.size.x * 0.5
+	var cz: float = aabb.position.z + aabb.size.z * 0.5
+	var probe: AABB = AABB(
+		Vector3(cx - 0.4, bottom_y - 1.0, cz - 0.4),
+		Vector3(0.8, 1.1, 0.8)
+	)
 	for hit in terrain_index.query_box(probe):
 		if hit is TerrainModuleInstance and hit != piece and not hit.def.displaceable:
 			return true
@@ -265,9 +306,28 @@ func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool
 	if not _is_socket_expandable(piece_socket):
 		return false
 
+	# Sockets recently rejected because the player stood in their footprint
+	# wait out a cooldown before re-attempting: every attempt instantiates a
+	# candidate scene just to destroy it on failure, so retrying each frame
+	# while the player stands still burns the whole frame budget.
+	var blocked_key: String = _socket_queue_key(piece_socket)
+	if _player_blocked_retry_at.get(blocked_key, 0) > Engine.get_process_frames():
+		_stage_deferred_socket(piece_socket, distance)
+		_last_pop_deferred = true
+		return false
+
 	var size: String = _sample_socket_size(piece_socket.piece, piece_socket.socket_name)
 	var placement_context: Dictionary = _resolve_placement_context(piece_socket, size)
-	return _try_place_with_rules(piece_socket, placement_context)
+	var placed: bool = _try_place_with_rules(piece_socket, placement_context)
+	if not placed and _blocked_by_player:
+		# The player is standing where this piece would land. Retry once they
+		# have moved instead of permanently consuming the socket (which would
+		# leave a bare patch everywhere the player happened to stand).
+		_player_blocked_retry_at[blocked_key] = Engine.get_process_frames() + 90
+		_stage_deferred_socket(piece_socket, distance)
+	elif _player_blocked_retry_at.has(blocked_key):
+		_player_blocked_retry_at.erase(blocked_key)
+	return placed
 
 
 func _is_socket_connected(piece_socket: TerrainModuleSocket) -> bool:
@@ -285,6 +345,7 @@ func _defer_if_out_of_range(piece_socket: TerrainModuleSocket, distance: float) 
 	if distance <= RENDER_RANGE:
 		return false
 	_stage_deferred_socket(piece_socket, distance)
+	_last_pop_deferred = true
 	return true
 
 
@@ -309,19 +370,50 @@ func _biome_scaled_dist(dist: Distribution, pos: Vector3) -> Distribution:
 	if dist == null or dist.is_empty() or dist.dist.size() < 2:
 		return dist  # single-entry distributions renormalise to themselves
 	var weights: Dictionary[String, float] = Helper.biome_weights(pos, world_seed)
-	# Contour cores skew the structure seed mix toward cliffs so the mountain
-	# wins over a stray level patch inside its own footprint.
+	# Contour cores pin the structure seed mix to cliffs: a level patch
+	# seeded inside the mesa footprint would just be eaten by it later
+	# (visible appear-then-disappear churn). Zeroing the level entries makes
+	# multi-entry topcenter distributions sample cliffs exclusively; the
+	# single-entry lateral dists (which share the "24x24x0.5" size tag) are
+	# untouched because single-entry distributions skip scaling entirely.
 	if _in_cliff_core(pos):
 		var boost: float = TerrainModuleDefinitions.CLIFF_CORE_SEED_MIX_BOOST
 		weights["cliff-base-side"] = weights.get("cliff-base-side", 1.0) * boost
 		weights["24x24x4"] = weights.get("24x24x4", 1.0) * boost
+		# Drop (not zero) the level/flat-ground entries: a level seeded inside
+		# a mesa footprint is eaten by it later (visible churn). Zeroing leaves
+		# a 0-weight key that sample_from_modules can strand — if the surviving
+		# cliff tag filters to no modules it removes it and is left with the
+		# unsamplable zero key (Distribution.sample asserts). Erasing avoids
+		# that entirely.
+		weights["level-ground-center"] = 0.0
+		weights["24x24x0.5"] = 0.0
+		# Hills are tall structures; one placed inside a core (on ground that
+		# becomes cliff, or on a plateau that gains another storey) is eaten by
+		# the rising mesa. Drop the hill SIZES from foliage/stacking rolls so
+		# only point decorations (trees, grass, rocks — the intended mountain
+		# vegetation) survive on plateau tops. "point" always remains in those
+		# dists, so this never nulls them.
+		weights["8x8x2"] = 0.0
+		weights["12x12x2"] = 0.0
+		weights["4x4x4"] = 0.0
 	var scaled: Distribution = dist.copy()
 	var changed: bool = false
 	for tag in scaled.dist.keys():
-		if weights.has(tag):
-			scaled.dist[tag] *= weights[tag]
-			changed = true
+		if not weights.has(tag):
+			continue
+		changed = true
+		var w: float = weights[tag]
+		if w <= 0.0:
+			scaled.dist.erase(tag)
+		else:
+			scaled.dist[tag] *= w
 	if not changed:
+		return dist
+	# Scaling must never null a distribution (sample() asserts on an empty or
+	# zero-sum dist). A dist consisting only of fully-suppressed tags has
+	# nothing else to pick, so honour the original weights rather than crash.
+	if scaled.dist.is_empty():
 		return dist
 	scaled.normalise()
 	return scaled
@@ -375,17 +467,27 @@ func _route_fill_prob(
 		# dense, meadows open) on EVERY walkable surface — ground, level, and
 		# cliff tops share the same deco spawn rules. Checked before the
 		# level branch so level foliage doesn't fall into the structural
-		# curve below.
+		# curve below. Decorations (and stacked hills) on a NON-cliff surface
+		# inside a cliff contour core are doomed — the mesa rises over the
+		# base ground/hill and visibly displaces them — so they never spawn;
+		# the mesa's own plateau foliage replaces them. Cliff plateau tops are
+		# exempt (the final surface, not something the mesa eats), so foliage
+		# still decorates mountains.
 		if _socket_can_spawn_point(piece, socket_name):
+			if _in_cliff_core(pos) and not piece.def.tags.has("cliff"):
+				return 0.0
 			return clampf(fill * Helper.biome_foliage_density(pos, world_seed), 0.0, 1.0)
 		# Level patches are the mid-altitude feature: the high-contrast macro
 		# curve that keeps cliffs out of the lowlands would crush their
 		# growth at the mid densities where they live, so level-family
 		# sockets and the ground topcenter seed keep the gentler legacy
 		# curve (lone cliff crags seeded outside cores are bounded anyway —
-		# the contour test stops their lateral growth immediately).
+		# the contour test stops their lateral growth immediately). Level
+		# growth into a contour core is doomed for the same reason as deco.
 		if piece.def.tags.has("level"):
-			return _gentle_scaled_fill(fill, pos)
+			if _in_cliff_core(pos):
+				return 0.0
+			return _level_scaled_fill(fill, pos)
 		if socket_name == "topcenter" and piece.def.tags.has("ground-plain"):
 			var seed_fill: float = _gentle_scaled_fill(fill, pos)
 			# Inside a contour core, seed eagerly so the core reliably grows
@@ -402,6 +504,18 @@ func _route_fill_prob(
 func _gentle_scaled_fill(fill: float, pos: Vector3) -> float:
 	var macro: float = Helper.macro_density01(pos, world_seed)
 	return clampf(fill * (0.25 + 2.2 * pow(macro, 3.0)), 0.0, 1.0)
+
+
+# Flatter curve for level GROWTH (laterals + stacking on existing levels):
+# levels are a common mid-altitude terrace feature and should populate the
+# meadows the player crosses, not only mid-density bands. A generous floor
+# (0.5) lets a seeded level patch spread even where macro is low, while the
+# 0.33 authored lateral stays subcritical so patches still bound themselves.
+# Only applied once a level exists (the ground topcenter seed keeps the gentle
+# curve, so lone meadow cliffs stay rare).
+func _level_scaled_fill(fill: float, pos: Vector3) -> float:
+	var macro: float = Helper.macro_density01(pos, world_seed)
+	return clampf(fill * (0.5 + 0.9 * macro), 0.0, 1.0)
 
 
 func _in_cliff_core(pos: Vector3) -> bool:
@@ -1004,23 +1118,28 @@ func add_piece(
 	transform_to_socket(new_piece_socket, orig_piece_socket)
 
 	var new_piece: TerrainModuleInstance = new_piece_socket.piece
-	# Reject any non-ground tile that's stacked above the floor and would
-	# overlap the player body — without this check, cliffs / level-stacks /
-	# hills can spawn on the player and trap them. We compare transform.origin.y
-	# rather than the AABB top because some scenes place their origin at the
-	# mesh top (so the AABB top equals origin.y exactly at the step-height
-	# limit and slips through a strict aabb_top > limit check). Runs before
-	# replace_existing removal because can_place() unconditionally allows
-	# replace_existing tiles. Foliage origins sit at PLAYER_FEET_Y so they
-	# pass naturally.
+	# Reject any non-ground piece that would overlap the player body —
+	# without this check, hills / levels / cliffs / collision-bearing foliage
+	# can spawn on the player and trap them. No origin-height exemption: hill
+	# and level origins sit at ground height and used to slip through. The
+	# footprint follows the player's height so the check also holds on
+	# plateaus. Runs before replace_existing removal because can_place()
+	# unconditionally allows replace_existing tiles. Rejected sockets are
+	# re-deferred by _process_socket (the spawn retries after the player
+	# moves away) — see _blocked_by_player.
+	_blocked_by_player = false
 	if player != null and not new_piece.def.tags.has("ground"):
-		if new_piece.transform.origin.y > PLAYER_FEET_Y + 0.01:
-			var player_footprint: AABB = AABB(
-				Vector3(player.global_position.x - 0.5, 0.0, player.global_position.z - 0.5),
-				Vector3(1.0, 3.0, 1.0)
-			)
-			if new_piece.aabb.intersects(player_footprint):
-				return false
+		var player_footprint: AABB = AABB(
+			Vector3(
+				player.global_position.x - 0.5,
+				player.global_position.y - 0.6,
+				player.global_position.z - 0.5
+			),
+			Vector3(1.0, 3.0, 1.0)
+		)
+		if new_piece.aabb.intersects(player_footprint):
+			_blocked_by_player = true
+			return false
 	if new_piece.def.replace_existing:
 		# Logical AABBs (def.size) make genuine overlaps exact: a cliff covers
 		# the levels in its footprint, while tiles that merely share a face

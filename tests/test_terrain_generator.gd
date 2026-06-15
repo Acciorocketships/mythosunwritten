@@ -554,6 +554,7 @@ func test_transform_to_socket_rotated_parent_socket_places_adjacent_not_overlapp
 
 func test_add_piece_registers_and_queues():
 	var gen: Variant = _new_generator()
+	gen.player.position = Vector3(10000, 0, 10000)  # avoid player-exclusion check
 	# gen.player and gen.terrain_parent already in tree from _new_generator()
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
 	var orig: TerrainModuleInstance = _spawn_piece(mod)
@@ -831,6 +832,7 @@ func test_remove_piece_cleans_indices_queue_and_scene():
 
 func test_remove_linked_sockets_from_queue_removes_connected_socket():
 	var gen: Variant = _new_generator()
+	gen.player.position = Vector3(10000, 0, 10000)  # avoid player-exclusion check
 	var mod: TerrainModule = _make_module(Vector3(2, 2, 2), _default_socket_layout())
 
 	var start: TerrainModuleInstance = _spawn_piece(mod)
@@ -2089,16 +2091,25 @@ func test_level_edge_rule_generated_world_projection_matches_legacy_projection()
 # --------------------------------------------------------
 
 func _configure_vertical_stacking_test_generation(gen: Variant) -> void:
+	# Pin BOTH the topcenter tag and size to the level forms. Without the size
+	# pin, the default ground topcenter size dist ({24x24x0.5, 24x24x4}) is
+	# biome-scaled at placement and can divert the forced seed to the cliff
+	# size (24x24x4), placing a cliff instead of the level this test means to
+	# stack. A single-entry size dist also bypasses biome scaling entirely.
+	var level_size: Distribution = Distribution.new({"24x24x0.5": 1.0})
 	for module in gen.library.terrain_modules.library:
 		if module.tags.has("ground"):
 			module.socket_fill_prob["topcenter"] = 1.0
 			module.socket_tag_prob["topcenter"] = Distribution.new({"level-ground-center": 1.0})
+			module.socket_size["topcenter"] = level_size
 		if module.tags.has("level-ground-center"):
 			module.socket_fill_prob["topcenter"] = 0.95
 			module.socket_tag_prob["topcenter"] = Distribution.new({"level-stack-center": 1.0})
+			module.socket_size["topcenter"] = level_size
 		if module.tags.has("level-stack-center"):
 			module.socket_fill_prob["topcenter"] = 0.95
 			module.socket_tag_prob["topcenter"] = Distribution.new({"level-stack-center": 1.0})
+			module.socket_size["topcenter"] = level_size
 
 
 func _get_level_piece_below(gen: Variant, piece: TerrainModuleInstance) -> TerrainModuleInstance:

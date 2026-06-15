@@ -43,6 +43,13 @@ func remove(tag: String) -> void:
 func is_empty() -> bool:
 	return dist.is_empty()
 
+# True when at least one entry has positive weight, i.e. sample() can return.
+func has_positive_weight() -> bool:
+	for tag: String in dist.keys():
+		if dist[tag] > 0.0:
+			return true
+	return false
+
 func _iter_init(_arg) -> bool:
 	_iter_i = 0
 	return dist.size() > 0

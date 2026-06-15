@@ -97,6 +97,11 @@ func sample_from_modules(modules: TerrainModuleList, dist: Distribution) -> Terr
 	var working_dist: Distribution = dist.copy()
 
 	while !working_dist.is_empty():
+		# A zero-sum working_dist (every remaining tag has weight 0, e.g. after
+		# removing the only positive-weight tag) cannot be sampled —
+		# Distribution.sample asserts. Bail to the original-modules fallback.
+		if not working_dist.has_positive_weight():
+			break
 		var sampled_tag: String = working_dist.sample()
 		filtered_modules = filter_module_list(modules, sampled_tag)
 		if !filtered_modules.is_empty():
