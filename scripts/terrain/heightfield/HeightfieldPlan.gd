@@ -82,6 +82,8 @@ static func clamp_field(targets: Dictionary) -> Dictionary:
 				var nb: Vector2i = cell + d
 				if not out.has(nb):
 					continue
+				# Reads the possibly-already-lowered neighbour (Gauss-Seidel): safe
+				# and faster to converge because values only ever decrease.
 				var cap: int = out[nb] + 1
 				if here > cap:
 					here = cap

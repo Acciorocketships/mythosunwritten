@@ -89,3 +89,21 @@ func test_clamp_is_order_independent() -> void:
 		b[k] = a[k]
 	assert_eq(HeightfieldPlan.clamp_field(a), HeightfieldPlan.clamp_field(b),
 		"clamp result independent of key order")
+
+func test_clamp_checkerboard_order_matches_rowmajor() -> void:
+	# A non-monotonic sweep order (even-parity cells, then odd) must still reach
+	# the same unique fixpoint as the row-major order.
+	var a: Dictionary = _grid([[0, 5, 0], [5, 5, 5], [0, 5, 0]])
+	var checker: Dictionary = {}
+	for parity in [0, 1]:
+		for cell in a.keys():
+			if (cell.x + cell.y) % 2 == parity:
+				checker[cell] = a[cell]
+	assert_eq(HeightfieldPlan.clamp_field(a), HeightfieldPlan.clamp_field(checker),
+		"clamp fixpoint is independent of (checkerboard) sweep order")
+
+func test_clamp_handles_degenerate_inputs() -> void:
+	assert_eq(HeightfieldPlan.clamp_field({}), {}, "empty field clamps to empty")
+	var single: Dictionary = {Vector2i(3, 7): 5}
+	assert_eq(HeightfieldPlan.clamp_field(single), single,
+		"single cell with no neighbours is unchanged")
