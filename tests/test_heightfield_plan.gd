@@ -225,3 +225,19 @@ func test_cliff_distance_returns_sentinel_when_uniform() -> void:
 	var storeys: Dictionary = _grid([[2, 2, 2], [2, 2, 2], [2, 2, 2]])
 	assert_eq(HeightfieldPlan._cliff_distance_in(Vector2i(1, 1), storeys, 8),
 		HeightfieldPlan._NO_CLIFF, "no differing storey within range => sentinel")
+
+func test_cliff_distance_finds_a_diagonal_cliff() -> void:
+	# Only a diagonal cell differs: from (0,0) the storey-1 cell at (2,2) is at
+	# Manhattan distance 4 — exercises the diagonal (dx,dz) cells of the ring.
+	var storeys: Dictionary = _grid([[0, 0, 0], [0, 0, 0], [0, 0, 1]])
+	assert_eq(HeightfieldPlan._cliff_distance_in(Vector2i(0, 0), storeys, 8), 4,
+		"nearest differing storey on the diagonal is at Manhattan distance 4")
+
+func test_cliff_distance_respects_the_search_radius() -> void:
+	# Differing cell at distance 2; with max_r=1 it is out of range (sentinel),
+	# with max_r=2 it is found. Distinct from the uniform/out-of-map case.
+	var storeys: Dictionary = _grid([[0, 0, 1]])
+	assert_eq(HeightfieldPlan._cliff_distance_in(Vector2i(0, 0), storeys, 1),
+		HeightfieldPlan._NO_CLIFF, "cliff beyond max_r is not found")
+	assert_eq(HeightfieldPlan._cliff_distance_in(Vector2i(0, 0), storeys, 2), 2,
+		"cliff at exactly max_r is found")

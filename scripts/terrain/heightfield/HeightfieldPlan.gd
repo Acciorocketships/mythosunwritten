@@ -163,7 +163,11 @@ static func _cliff_distance_in(cell: Vector2i, storeys: Dictionary, max_r: int) 
 	for r in range(1, max_r + 1):
 		for dx in range(-r, r + 1):
 			var rem: int = r - absi(dx)
-			var dzs: Array = [0] if rem == 0 else [rem, -rem]
+			var dzs: Array[int]
+			if rem == 0:
+				dzs = [0]
+			else:
+				dzs = [rem, -rem]
 			for dz in dzs:
 				var nb: Vector2i = cell + Vector2i(dx, dz)
 				if storeys.has(nb) and storeys[nb] != s0:
