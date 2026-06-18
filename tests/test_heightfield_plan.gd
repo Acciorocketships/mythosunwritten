@@ -28,12 +28,14 @@ func test_quantize_storey_mean_rounds_nearest() -> void:
 	assert_eq(plan.quantize_storey(3.9), 1, "3.9m rounds to storey 1")
 	assert_eq(plan.quantize_storey(5.0), 1, "5.0m rounds to storey 1")
 	assert_eq(plan.quantize_storey(6.1), 2, "6.1m rounds to storey 2")
+	assert_eq(plan.quantize_storey(6.0), 2, "6.0m (=1.5 storeys) rounds half-up to 2")
 
 func test_quantize_storey_min_floors_and_max_ceils() -> void:
 	var lo: HeightfieldPlan = HeightfieldPlan.new(1, 32.0, 8, "min")
 	var hi: HeightfieldPlan = HeightfieldPlan.new(1, 32.0, 8, "max")
 	assert_eq(lo.quantize_storey(3.9), 0, "min => floor(3.9/4) = 0")
 	assert_eq(hi.quantize_storey(0.1), 1, "max => ceil(0.1/4) = 1")
+	assert_eq(hi.quantize_storey(4.0), 1, "max => ceil(4.0/4) = 1 at an exact storey boundary")
 
 func test_quantize_storey_clamps_to_max_storeys() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 1000.0, 3, "mean")
