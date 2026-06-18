@@ -275,6 +275,9 @@ func test_level_at_pins_cliff_edges_to_zero() -> void:
 	# Two tiles into the storey-0 side, away from the step: the level is no longer
 	# pinned — it ramps up by one per tile (cap = cliff_distance - 1).
 	assert_eq(plan.level_at(-2, 0), 2, "levels ramp up away from the cliff edge")
+	# Both sides pinned to level 0 makes the cliff face exactly 4m.
+	assert_almost_eq(absf(plan.surface_height(1, 0) - plan.surface_height(0, 0)), 4.0, 0.0001,
+		"cliff face between the two storeys is exactly 4m")
 
 func test_level_at_terraces_a_flat_storey_interior() -> void:
 	# Single storey everywhere (H stays under 2m so storey 0), with a gentle
@@ -347,3 +350,20 @@ func test_full_invariant_adjacent_surface_differs_by_0_half_or_4() -> void:
 				var ok: bool = diff < 0.001 or absf(diff - 0.5) < 0.001 or absf(diff - 4.0) < 0.001
 				assert_true(ok,
 					"adjacent surface heights differ by 0, 0.5, or 4m (got %.3f at %d,%d)" % [diff, cx, cz])
+
+
+func test_full_invariant_includes_half_metre_terraces() -> void:
+	# A pure storey-0 field whose residual ramps 0.5m/tile in x produces a run of
+	# 0.5m terrace steps, exercising the 0.5 case of the invariant (the seeded
+	# region test happened to contain only flats and 4m cliffs).
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
+		return clampf(0.5 * float(cx), 0.0, 1.9))
+	var saw_half: bool = false
+	for cx in range(0, 4):
+		var diff: float = absf(plan.surface_height(cx + 1, 0) - plan.surface_height(cx, 0))
+		assert_true(diff < 0.001 or absf(diff - 0.5) < 0.001,
+			"adjacent terrace heights differ by 0 or 0.5m (got %.3f at cx=%d)" % [diff, cx])
+		if absf(diff - 0.5) < 0.001:
+			saw_half = true
+	assert_true(saw_half, "the ramp produced at least one 0.5m terrace step")
