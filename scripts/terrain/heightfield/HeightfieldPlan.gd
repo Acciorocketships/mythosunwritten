@@ -12,6 +12,10 @@ extends RefCounted
 
 const TILE: float = 24.0
 const STOREY_HEIGHT: float = 4.0
+const LEVEL_HEIGHT: float = 0.5
+# 4.0 / 0.5. Level saturates at LEVELS_PER_STOREY - 1 (=7), so a full storey is
+# always a single cliff, never a stack of 8 level tiles.
+const LEVELS_PER_STOREY: int = 8
 
 var world_seed: int
 var height_amplitude: float   # metres; macro field [0,1] -> [0, amplitude]
@@ -52,20 +56,21 @@ func raw_height(cx: int, cz: int) -> float:
 	return Helper.macro_density01(pos, world_seed) * height_amplitude
 
 
-## Quantize a height (metres) to an integer storey index, using the aggregation
-## rounding mode (min=floor hugs valleys, max=ceil builds up, mean=nearest),
-## clamped to [0, max_storeys].
-func quantize_storey(h: float) -> int:
-	var q: float = h / STOREY_HEIGHT
-	var s: int
+## Apply the aggregation rounding mode to a quotient: min=floor (hug valleys),
+## max=ceil (build up), mean/unknown=nearest. Shared by storey and level quantization.
+func _round_mode(q: float) -> int:
 	match aggregation:
 		"min":
-			s = floori(q)
+			return floori(q)
 		"max":
-			s = ceili(q)
+			return ceili(q)
 		_:
-			s = roundi(q)
-	return clampi(s, 0, max_storeys)
+			return roundi(q)
+
+
+## Quantize a height (metres) to an integer storey index, clamped to [0, max_storeys].
+func quantize_storey(h: float) -> int:
+	return clampi(_round_mode(h / STOREY_HEIGHT), 0, max_storeys)
 
 
 const _CARDINALS: Array[Vector2i] = [
@@ -131,3 +136,15 @@ func surface_height(cx: int, cz: int) -> float:
 func tile_plan(cx: int, cz: int) -> Dictionary:
 	var s: int = storey_at(cx, cz)
 	return {"storey": s, "height": float(s) * STOREY_HEIGHT}
+
+
+## Sub-storey height (metres) of the raw field above this cell's clamped storey base.
+func residual_height(cx: int, cz: int) -> float:
+	return raw_height(cx, cz) - float(storey_at(cx, cz)) * STOREY_HEIGHT
+
+
+## Quantized sub-storey terrace index in [0, LEVELS_PER_STOREY - 1], using the same
+## aggregation rounding as the storey tier.
+func detail_level(cx: int, cz: int) -> int:
+	var r: float = residual_height(cx, cz)
+	return clampi(_round_mode(r / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)

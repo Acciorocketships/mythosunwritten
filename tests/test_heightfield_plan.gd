@@ -179,3 +179,23 @@ func test_invariant_adjacent_surface_differs_by_0_or_4() -> void:
 				var diff: float = absf(here - plan.surface_height(cx + d.x, cz + d.y))
 				assert_true(diff < 0.001 or absf(diff - 4.0) < 0.001,
 					"adjacent surface heights differ by 0 or 4m (got %.2f at %d,%d)" % [diff, cx, cz])
+
+
+func test_detail_level_quantizes_residual_above_the_storey_base() -> void:
+	# Flat field at 1.7m: storey 0 (mean: round(1.7/4)=0), residual 1.7m,
+	# detail level = round(1.7/0.5) = 3.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.7)
+	assert_eq(plan.detail_level(0, 0), 3, "residual 1.7m => 3 half-metre terraces")
+
+func test_detail_level_caps_below_a_full_storey() -> void:
+	# A column far above its (clamped) storey must not produce 8+ stacked levels;
+	# detail level saturates at LEVELS_PER_STOREY - 1 = 7 (a full storey is a cliff).
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 1000.0, 8, "mean")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 100.0)
+	assert_eq(plan.detail_level(0, 0), 7, "detail level never reaches a full storey")
+
+func test_quantize_storey_still_correct_after_refactor() -> void:
+	# Guards the _round_mode extraction: storey quantization is unchanged.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 32.0, 8, "mean")
+	assert_eq(plan.quantize_storey(6.1), 2, "6.1m still rounds to storey 2 after refactor")
