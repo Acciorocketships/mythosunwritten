@@ -200,3 +200,45 @@ static func _clamp_levels(levels: Dictionary, storeys: Dictionary) -> Dictionary
 					changed = true
 			out[cell] = here
 	return out
+
+
+## Window radius over which the level field is assembled and clamped around a
+## query cell. The masked clamp and the cliff-distance ramp both reach at most
+## LEVELS_PER_STOREY tiles, so this margin makes a cell's level final.
+func level_margin() -> int:
+	return LEVELS_PER_STOREY
+
+
+## Final (clamped) storeys over [cx +/- radius]. Quantizes a window padded by
+## max_storeys (the clamp's influence distance) so the inner `radius` storeys are
+## settled, then runs the storey clamp once. Reused by level_at to avoid per-cell
+## storey windows.
+func _build_storey_map(cx: int, cz: int, radius: int) -> Dictionary:
+	var outer: int = radius + max_storeys
+	var targets: Dictionary = {}
+	for dz in range(-outer, outer + 1):
+		for dx in range(-outer, outer + 1):
+			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
+			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
+	return clamp_field(targets)
+
+
+## Final terrace level in [0, LEVELS_PER_STOREY - 1] for a cell. Builds a settled
+## storey map over the window, derives a pre-clamp level for each cell (the detail
+## terrace capped by the ramp from the nearest cliff: a cell touching a different
+## storey is pinned to 0), then runs the storey-masked level clamp and returns the
+## center. Reference implementation; production batches this over chunks.
+func level_at(cx: int, cz: int) -> int:
+	var lm: int = level_margin()
+	var storeys: Dictionary = _build_storey_map(cx, cz, lm + _CLIFF_SEARCH_MAX)
+	var l0: Dictionary = {}
+	for dz in range(-lm, lm + 1):
+		for dx in range(-lm, lm + 1):
+			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
+			var s: int = storeys[cell]
+			var residual: float = raw_height(cell.x, cell.y) - float(s) * STOREY_HEIGHT
+			var detail: int = clampi(_round_mode(residual / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
+			var cliff_cap: int = _cliff_distance_in(cell, storeys, _CLIFF_SEARCH_MAX) - 1
+			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
+	var leveled: Dictionary = _clamp_levels(l0, storeys)
+	return leveled[Vector2i(cx, cz)]

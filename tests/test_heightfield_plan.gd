@@ -259,3 +259,56 @@ func test_clamp_levels_ignores_neighbours_in_a_different_storey() -> void:
 	var levels: Dictionary = _grid([[0, 3], [0, 3], [0, 3]])
 	var out: Dictionary = HeightfieldPlan._clamp_levels(levels, storeys)
 	assert_eq(out[Vector2i(1, 1)], 3, "cross-storey neighbour does not constrain level")
+
+
+func test_level_at_pins_cliff_edges_to_zero() -> void:
+	# A step field: left half low, right half a full storey higher. Every cell on
+	# either side of the storey boundary cardinally touches a different storey, so
+	# its level is pinned to 0 — which is what makes the cliff face exactly 4m.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+	# H = 1.7m on the left (storey 0, residual would be level 3), 5.7m on the right
+	# (storey 1). Without the pin the left edge would terrace up to 3.
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
+		return 5.7 if cx >= 1 else 1.7)
+	assert_eq(plan.level_at(0, 0), 0, "storey-0 cell touching the storey-1 step is pinned to level 0")
+	assert_eq(plan.level_at(1, 0), 0, "storey-1 cell touching the storey-0 step is pinned to level 0")
+
+func test_level_at_terraces_a_flat_storey_interior() -> void:
+	# Single storey everywhere (H stays under 2m so storey 0), with a gentle
+	# residual ramp in x that rises ~0.5m per tile. Far from any cliff, levels
+	# follow the ramp in single steps.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
+		return clampf(0.5 * float(cx), 0.0, 1.9))
+	# At x=2, residual ~1.0m => level ~2; at x=3, ~1.5m => level ~3. Adjacent
+	# interior levels differ by at most one.
+	var l2: int = plan.level_at(2, 0)
+	var l3: int = plan.level_at(3, 0)
+	assert_true(absi(l3 - l2) <= 1, "interior terraces step by at most one level")
+	assert_true(l3 >= 1, "the ramp produces some terracing in the interior")
+
+func test_level_at_is_window_independent() -> void:
+	# Like the storey determinism test: the level at a cell is final, independent
+	# of how much extra margin we compute around it.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 24.0, 6, "mean")
+	var from_method: int = plan.level_at(5, -2)
+	# Recompute with a hand-built, wider context using the same primitives.
+	var wider: int = _level_at_with_extra_margin(plan, 5, -2, 6)
+	assert_eq(from_method, wider, "level_at value is final regardless of window size")
+
+# Helper: reproduce level_at(cx,cz) but with `extra` tiles of additional margin,
+# to prove window independence. Mirrors the production assembly.
+func _level_at_with_extra_margin(plan: HeightfieldPlan, cx: int, cz: int, extra: int) -> int:
+	var lm: int = plan.level_margin() + extra
+	var storeys: Dictionary = plan._build_storey_map(cx, cz, lm + HeightfieldPlan._CLIFF_SEARCH_MAX)
+	var l0: Dictionary = {}
+	for dz in range(-lm, lm + 1):
+		for dx in range(-lm, lm + 1):
+			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
+			var s: int = storeys[cell]
+			var residual: float = plan.raw_height(cell.x, cell.y) - float(s) * HeightfieldPlan.STOREY_HEIGHT
+			var detail: int = clampi(plan._round_mode(residual / HeightfieldPlan.LEVEL_HEIGHT), 0, HeightfieldPlan.LEVELS_PER_STOREY - 1)
+			var cliff_cap: int = HeightfieldPlan._cliff_distance_in(cell, storeys, HeightfieldPlan._CLIFF_SEARCH_MAX) - 1
+			l0[cell] = clampi(mini(detail, cliff_cap), 0, HeightfieldPlan.LEVELS_PER_STOREY - 1)
+	var leveled: Dictionary = HeightfieldPlan._clamp_levels(l0, storeys)
+	return leveled[Vector2i(cx, cz)]
