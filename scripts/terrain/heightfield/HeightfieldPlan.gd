@@ -173,3 +173,30 @@ static func _cliff_distance_in(cell: Vector2i, storeys: Dictionary, max_r: int) 
 				if storeys.has(nb) and storeys[nb] != s0:
 					return r
 	return _NO_CLIFF
+
+
+## Monotone trickle-down clamp for the level field, masked by storey: a cell is
+## lowered to at most one level above its lowest SAME-storey cardinal neighbour.
+## Cross-storey neighbours impose no constraint — that transition is a cliff,
+## owned by the storey tier. Same unique-fixpoint / order-independence properties
+## as clamp_field. `levels` and `storeys` share keys.
+static func _clamp_levels(levels: Dictionary, storeys: Dictionary) -> Dictionary:
+	var out: Dictionary = levels.duplicate()
+	var changed: bool = true
+	while changed:
+		changed = false
+		for cell in out.keys():
+			var here: int = out[cell]
+			var s: int = storeys[cell]
+			for d in _CARDINALS:
+				var nb: Vector2i = cell + d
+				if not out.has(nb):
+					continue
+				if storeys[nb] != s:
+					continue
+				var cap: int = out[nb] + 1
+				if here > cap:
+					here = cap
+					changed = true
+			out[cell] = here
+	return out

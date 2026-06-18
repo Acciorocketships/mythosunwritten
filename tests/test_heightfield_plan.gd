@@ -241,3 +241,21 @@ func test_cliff_distance_respects_the_search_radius() -> void:
 		HeightfieldPlan._NO_CLIFF, "cliff beyond max_r is not found")
 	assert_eq(HeightfieldPlan._cliff_distance_in(Vector2i(0, 0), storeys, 2), 2,
 		"cliff at exactly max_r is found")
+
+
+func test_clamp_levels_trickles_within_a_storey() -> void:
+	# All one storey: a level-5 spike among 0s must trickle to <=1 per step,
+	# exactly like the storey clamp.
+	var storeys: Dictionary = _grid([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+	var levels: Dictionary = _grid([[0, 0, 0], [0, 5, 0], [0, 0, 0]])
+	var out: Dictionary = HeightfieldPlan._clamp_levels(levels, storeys)
+	assert_eq(out[Vector2i(1, 1)], 1, "level spike trickled to one above neighbours")
+
+func test_clamp_levels_ignores_neighbours_in_a_different_storey() -> void:
+	# Left column is storey 0, right column storey 1. A high level on the storey-1
+	# side must NOT be pulled down by the low level across the storey boundary,
+	# because that boundary is a cliff (handled by the storey tier), not a terrace.
+	var storeys: Dictionary = _grid([[0, 1], [0, 1], [0, 1]])
+	var levels: Dictionary = _grid([[0, 3], [0, 3], [0, 3]])
+	var out: Dictionary = HeightfieldPlan._clamp_levels(levels, storeys)
+	assert_eq(out[Vector2i(1, 1)], 3, "cross-storey neighbour does not constrain level")
