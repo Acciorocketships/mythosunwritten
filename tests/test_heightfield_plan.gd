@@ -36,6 +36,7 @@ func test_quantize_storey_min_floors_and_max_ceils() -> void:
 	assert_eq(lo.quantize_storey(3.9), 0, "min => floor(3.9/4) = 0")
 	assert_eq(hi.quantize_storey(0.1), 1, "max => ceil(0.1/4) = 1")
 	assert_eq(hi.quantize_storey(4.0), 1, "max => ceil(4.0/4) = 1 at an exact storey boundary")
+	assert_eq(lo.quantize_storey(4.0), 1, "min => floor(4.0/4) = 1 at an exact storey boundary")
 
 func test_quantize_storey_clamps_to_max_storeys() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 1000.0, 3, "mean")

@@ -27,6 +27,12 @@ func _init(
 	p_max_storeys: int = 8,
 	p_aggregation: String = "mean"
 ) -> void:
+	assert(p_height_amplitude > 0.0, "HeightfieldPlan: height_amplitude must be positive")
+	# max_storeys is the clamp window margin; a non-positive value collapses the
+	# window to a single cell and silently breaks the churn-free guarantee.
+	assert(p_max_storeys > 0, "HeightfieldPlan: max_storeys must be positive")
+	if not (p_aggregation == "min" or p_aggregation == "mean" or p_aggregation == "max"):
+		push_warning("HeightfieldPlan: unknown aggregation '%s', defaulting to nearest (mean)" % p_aggregation)
 	world_seed = p_world_seed
 	height_amplitude = p_height_amplitude
 	max_storeys = p_max_storeys
@@ -108,7 +114,8 @@ func storey_at(cx: int, cz: int) -> int:
 	for dz in range(-m, m + 1):
 		for dx in range(-m, m + 1):
 			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
-			# cell.y is the z grid coordinate (Vector2i holds (cx, cz)).
+			# cell.x = cx, cell.y = cz (Vector2i stores the horizontal grid pair,
+			# NOT world Y / the up-axis).
 			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
 	var clamped: Dictionary = clamp_field(targets)
 	return clamped[Vector2i(cx, cz)]
