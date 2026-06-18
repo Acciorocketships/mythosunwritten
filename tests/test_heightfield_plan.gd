@@ -152,3 +152,29 @@ func test_storey_at_lowers_a_spike_through_the_full_pipeline() -> void:
 		return 40.0 if (cx == 0 and cz == 0) else 0.0)
 	assert_eq(plan.storey_at(0, 0), 1, "lone spike trickled to one storey above flat neighbours")
 	assert_eq(plan.storey_at(5, 0), 0, "flat ground away from the spike stays at storey 0")
+
+
+func test_surface_height_is_storey_times_4() -> void:
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "min")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 8.0)
+	assert_almost_eq(plan.surface_height(0, 0), 8.0, 0.0001, "storey 2 => 8.0m")
+
+func test_tile_plan_reports_storey_and_height() -> void:
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "min")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 4.0)
+	var tp: Dictionary = plan.tile_plan(0, 0)
+	assert_eq(tp["storey"], 1, "4.0m => storey 1")
+	assert_almost_eq(tp["height"], 4.0, 0.0001, "height = storey * 4")
+
+func test_invariant_adjacent_surface_differs_by_0_or_4() -> void:
+	# Over a seeded region, the storey clamp guarantees adjacent cells differ by
+	# at most one storey, so rendered surface heights differ by exactly 0 or 4m
+	# (the Phase-1 invariant; levels add 0.5 in Phase 2).
+	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 48.0, 8, "mean")
+	for cz in range(-6, 7):
+		for cx in range(-6, 7):
+			var here: float = plan.surface_height(cx, cz)
+			for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+				var diff: float = absf(here - plan.surface_height(cx + d.x, cz + d.y))
+				assert_true(diff < 0.001 or absf(diff - 4.0) < 0.001,
+					"adjacent surface heights differ by 0 or 4m (got %.2f at %d,%d)" % [diff, cx, cz])

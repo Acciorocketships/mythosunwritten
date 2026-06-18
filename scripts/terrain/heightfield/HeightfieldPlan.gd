@@ -112,3 +112,15 @@ func storey_at(cx: int, cz: int) -> int:
 			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
 	var clamped: Dictionary = clamp_field(targets)
 	return clamped[Vector2i(cx, cz)]
+
+
+## Rendered surface height (metres) for a cell.
+func surface_height(cx: int, cz: int) -> float:
+	return float(storey_at(cx, cz)) * STOREY_HEIGHT
+
+
+## Read API for downstream instantiation: the storey index and its world height.
+## (Phase 2 will add a "level" field and a fractional height contribution.)
+func tile_plan(cx: int, cz: int) -> Dictionary:
+	var s: int = storey_at(cx, cz)
+	return {"storey": s, "height": float(s) * STOREY_HEIGHT}
