@@ -1,7 +1,7 @@
 extends GutTest
 
 # ------------------------------------------------------------
-# HeightfieldPlan — numerical terrain plan (Phase 1: storeys)
+# HeightfieldPlan — numerical terrain plan (storey + level tiers)
 # ------------------------------------------------------------
 
 func test_raw_height_is_deterministic_per_seed() -> void:
@@ -366,3 +366,11 @@ func test_full_invariant_includes_half_metre_terraces() -> void:
 		if absf(diff - 0.5) < 0.001:
 			saw_half = true
 	assert_true(saw_half, "the ramp produced at least one 0.5m terrace step")
+
+
+func test_detail_level_uses_min_aggregation_rounding() -> void:
+	# "min" floors the level quantization just like the storey tier. Flat 1.9m:
+	# storey 0 (floor(1.9/4)=0), residual 1.9 => floor(1.9/0.5)=3 (mean would give 4).
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "min")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.9)
+	assert_eq(plan.detail_level(0, 0), 3, "min aggregation floors the terrace index")

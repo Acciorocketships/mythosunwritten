@@ -137,7 +137,9 @@ func surface_height(cx: int, cz: int) -> float:
 
 
 ## Read API for downstream instantiation: storey index, terrace level, and the
-## combined world height.
+## combined world height. Reference path — it computes storey_at and level_at
+## separately (two windows). Phase 3 should batch a whole chunk in one pass
+## rather than call this per cell in a hot loop.
 func tile_plan(cx: int, cz: int) -> Dictionary:
 	var s: int = storey_at(cx, cz)
 	var l: int = level_at(cx, cz)
@@ -151,6 +153,7 @@ func residual_height(cx: int, cz: int) -> float:
 
 ## Quantized sub-storey terrace index in [0, LEVELS_PER_STOREY - 1], using the same
 ## aggregation rounding as the storey tier.
+## Uncapped/unclamped building block — see level_at for the final settled level.
 func detail_level(cx: int, cz: int) -> int:
 	var r: float = residual_height(cx, cz)
 	return clampi(_round_mode(r / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
