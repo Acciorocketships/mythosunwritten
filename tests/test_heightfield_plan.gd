@@ -141,3 +141,14 @@ func test_storey_at_is_window_independent() -> void:
 	var wider: Dictionary = HeightfieldPlan.clamp_field(targets)
 	assert_eq(from_method, wider[Vector2i(cx, cz)],
 		"storey_at value is final regardless of window size")
+
+func test_storey_at_lowers_a_spike_through_the_full_pipeline() -> void:
+	# Integration: a lone tall column (well above max_storeys) surrounded by flat
+	# ground must be trickled DOWN by storey_at to exactly one storey above its
+	# neighbours — exercising quantize -> clamp where the clamp actively lowers
+	# the queried cell (not the no-op ramp case).
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
+		return 40.0 if (cx == 0 and cz == 0) else 0.0)
+	assert_eq(plan.storey_at(0, 0), 1, "lone spike trickled to one storey above flat neighbours")
+	assert_eq(plan.storey_at(5, 0), 0, "flat ground away from the spike stays at storey 0")

@@ -108,6 +108,7 @@ func storey_at(cx: int, cz: int) -> int:
 	for dz in range(-m, m + 1):
 		for dx in range(-m, m + 1):
 			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
+			# cell.y is the z grid coordinate (Vector2i holds (cx, cz)).
 			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
 	var clamped: Dictionary = clamp_field(targets)
 	return clamped[Vector2i(cx, cz)]
