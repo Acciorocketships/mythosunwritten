@@ -90,3 +90,24 @@ static func clamp_field(targets: Dictionary) -> Dictionary:
 					changed = true
 			out[cell] = here
 	return out
+
+
+## Clamp influence fans out one storey per tile, and storeys are capped at
+## max_storeys, so a window margin of max_storeys guarantees the center cell's
+## clamped value equals the global (infinite-window) result.
+func storey_margin() -> int:
+	return max_storeys
+
+
+## Final clamped storey for a cell. Reference implementation: builds a window of
+## quantized targets and clamps it. (Production will batch this over chunks; the
+## per-cell window here is for correctness/validation, not the hot path.)
+func storey_at(cx: int, cz: int) -> int:
+	var m: int = storey_margin()
+	var targets: Dictionary = {}
+	for dz in range(-m, m + 1):
+		for dx in range(-m, m + 1):
+			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
+			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
+	var clamped: Dictionary = clamp_field(targets)
+	return clamped[Vector2i(cx, cz)]

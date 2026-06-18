@@ -107,3 +107,54 @@ func test_clamp_handles_degenerate_inputs() -> void:
 	var single: Dictionary = {Vector2i(3, 7): 5}
 	assert_eq(HeightfieldPlan.clamp_field(single), single,
 		"single cell with no neighbours is unchanged")
+
+
+func test_storey_at_matches_spec_2x3_example() -> void:
+	# Spec worked example: H = [[8,8],[5,4],[2,0]] (z=0 is the 8-row) must
+	# quantize to storeys [[2,2],[1,1],[0,0]] under floor (min) aggregation.
+	# Embed core in a larger field with margins beyond clamp influence distance.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "min")
+	var field: Dictionary = {}
+	# Place core 2x3 region at offset (10, 10) to create space for clamp boundaries.
+	var offset_x: int = 10
+	var offset_z: int = 10
+	var core: Array = [[8.0, 8.0], [5.0, 4.0], [2.0, 0.0]]
+	for z in range(3):
+		for x in range(2):
+			field[Vector2i(offset_x + x, offset_z + z)] = core[z][x]
+	# Fill extended region with smooth ramp to 0 to satisfy clamp constraints.
+	for z in range(offset_z - 9, offset_z + 3 + 9):
+		for x in range(offset_x - 9, offset_x + 2 + 9):
+			if not field.has(Vector2i(x, z)):
+				# Distance-based blend from interior to boundary zero.
+				var dz: int = absi(z - offset_z)
+				var dx: int = absi(x - offset_x)
+				var dist: int = maxi(dz, dx)
+				var interior_dist: int = maxi(0, dist - 2)
+				field[Vector2i(x, z)] = float(max(0, 8 - interior_dist)) * 0.5
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
+		return field.get(Vector2i(cx, cz), 0.0))
+	var result_0_0 = plan.storey_at(offset_x, offset_z)
+	var result_1_1 = plan.storey_at(offset_x + 1, offset_z + 1)
+	var result_0_2 = plan.storey_at(offset_x, offset_z + 2)
+	assert_eq(result_0_0, 2, "A => storey 2")
+	assert_eq(result_1_1, 1, "D => storey 1")
+	assert_eq(result_0_2, 0, "E => storey 0")
+
+func test_storey_at_is_window_independent() -> void:
+	# The clamp propagates at most max_storeys tiles, so the default margin
+	# yields the same value as a deliberately larger manual window.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 48.0, 8, "mean")
+	var cx: int = 6
+	var cz: int = -3
+	var from_method: int = plan.storey_at(cx, cz)
+	# Manual clamp over a window 4 tiles wider than the plan's margin.
+	var m: int = plan.storey_margin() + 4
+	var targets: Dictionary = {}
+	for dz in range(-m, m + 1):
+		for dx in range(-m, m + 1):
+			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
+			targets[cell] = plan.quantize_storey(plan.raw_height(cell.x, cell.y))
+	var wider: Dictionary = HeightfieldPlan.clamp_field(targets)
+	assert_eq(from_method, wider[Vector2i(cx, cz)],
+		"storey_at value is final regardless of window size")
