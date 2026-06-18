@@ -167,18 +167,18 @@ func test_tile_plan_reports_storey_and_height() -> void:
 	assert_eq(tp["storey"], 1, "4.0m => storey 1")
 	assert_almost_eq(tp["height"], 4.0, 0.0001, "height = storey * 4")
 
-func test_invariant_adjacent_surface_differs_by_0_or_4() -> void:
+func test_storey_region_still_satisfies_the_full_invariant() -> void:
 	# Over a seeded region, the storey clamp guarantees adjacent cells differ by
 	# at most one storey, so rendered surface heights differ by exactly 0 or 4m
 	# (the Phase-1 invariant; levels add 0.5 in Phase 2).
 	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 48.0, 8, "mean")
-	for cz in range(-6, 7):
-		for cx in range(-6, 7):
+	for cz in range(-3, 4):
+		for cx in range(-3, 4):
 			var here: float = plan.surface_height(cx, cz)
 			for d in [Vector2i(1, 0), Vector2i(0, 1)]:
 				var diff: float = absf(here - plan.surface_height(cx + d.x, cz + d.y))
-				assert_true(diff < 0.001 or absf(diff - 4.0) < 0.001,
-					"adjacent surface heights differ by 0 or 4m (got %.2f at %d,%d)" % [diff, cx, cz])
+				assert_true(diff < 0.001 or absf(diff - 0.5) < 0.001 or absf(diff - 4.0) < 0.001,
+					"adjacent surface heights differ by 0, 0.5, or 4m (got %.3f at %d,%d)" % [diff, cx, cz])
 
 
 func test_detail_level_quantizes_residual_above_the_storey_base() -> void:
@@ -316,3 +316,34 @@ func _level_at_with_extra_margin(plan: HeightfieldPlan, cx: int, cz: int, extra:
 			l0[cell] = clampi(mini(detail, cliff_cap), 0, HeightfieldPlan.LEVELS_PER_STOREY - 1)
 	var leveled: Dictionary = HeightfieldPlan._clamp_levels(l0, storeys)
 	return leveled[Vector2i(cx, cz)]
+
+
+func test_surface_height_combines_storey_and_level() -> void:
+	# Flat 1.7m field: storey 0 (height 0) + level 3 (1.5m) = 1.5m. Far from any
+	# cliff so the level is the full detail terrace.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.7)
+	assert_almost_eq(plan.surface_height(0, 0), 1.5, 0.0001, "0 storeys + 3 levels = 1.5m")
+
+func test_tile_plan_reports_storey_level_and_height() -> void:
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.7)
+	var tp: Dictionary = plan.tile_plan(0, 0)
+	assert_eq(tp["storey"], 0, "storey 0")
+	assert_eq(tp["level"], 3, "level 3")
+	assert_almost_eq(tp["height"], 1.5, 0.0001, "height = storey*4 + level*0.5")
+
+func test_full_invariant_adjacent_surface_differs_by_0_half_or_4() -> void:
+	# Over a seeded region, every cardinal-adjacent pair of rendered surface
+	# heights differs by exactly 0, 0.5, or 4m — the Phase-2 invariant: clean 4m
+	# cliffs (both sides pinned to level 0) and clean 0.5m terraces. Region kept
+	# small because level_at is the (slow) reference implementation.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 24.0, 6, "mean")
+	for cz in range(-3, 4):
+		for cx in range(-3, 4):
+			var here: float = plan.surface_height(cx, cz)
+			for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+				var diff: float = absf(here - plan.surface_height(cx + d.x, cz + d.y))
+				var ok: bool = diff < 0.001 or absf(diff - 0.5) < 0.001 or absf(diff - 4.0) < 0.001
+				assert_true(ok,
+					"adjacent surface heights differ by 0, 0.5, or 4m (got %.3f at %d,%d)" % [diff, cx, cz])

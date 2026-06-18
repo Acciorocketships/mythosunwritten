@@ -131,16 +131,17 @@ func storey_at(cx: int, cz: int) -> int:
 	return clamped[Vector2i(cx, cz)]
 
 
-## Rendered surface height (metres) for a cell.
+## Rendered surface height (metres): storey tier (4m steps) plus level tier (0.5m).
 func surface_height(cx: int, cz: int) -> float:
-	return float(storey_at(cx, cz)) * STOREY_HEIGHT
+	return float(storey_at(cx, cz)) * STOREY_HEIGHT + float(level_at(cx, cz)) * LEVEL_HEIGHT
 
 
-## Read API for downstream instantiation: the storey index and its world height.
-## (Phase 2 will add a "level" field and a fractional height contribution.)
+## Read API for downstream instantiation: storey index, terrace level, and the
+## combined world height.
 func tile_plan(cx: int, cz: int) -> Dictionary:
 	var s: int = storey_at(cx, cz)
-	return {"storey": s, "height": float(s) * STOREY_HEIGHT}
+	var l: int = level_at(cx, cz)
+	return {"storey": s, "level": l, "height": float(s) * STOREY_HEIGHT + float(l) * LEVEL_HEIGHT}
 
 
 ## Sub-storey height (metres) of the raw field above this cell's clamped storey base.
