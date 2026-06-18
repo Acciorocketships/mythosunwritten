@@ -16,6 +16,11 @@ const LEVEL_HEIGHT: float = 0.5
 # 4.0 / 0.5. Level saturates at LEVELS_PER_STOREY - 1 (=7), so a full storey is
 # always a single cliff, never a stack of 8 level tiles.
 const LEVELS_PER_STOREY: int = 8
+# Search radius for the nearest different storey. Levels saturate at
+# LEVELS_PER_STOREY - 1, so a cliff farther than LEVELS_PER_STOREY tiles can never
+# affect a cell's level — no need to look past it.
+const _CLIFF_SEARCH_MAX: int = LEVELS_PER_STOREY
+const _NO_CLIFF: int = 999
 
 var world_seed: int
 var height_amplitude: float   # metres; macro field [0,1] -> [0, amplitude]
@@ -148,3 +153,19 @@ func residual_height(cx: int, cz: int) -> float:
 func detail_level(cx: int, cz: int) -> int:
 	var r: float = residual_height(cx, cz)
 	return clampi(_round_mode(r / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
+
+
+## Cardinal (Manhattan) distance from `cell` to the nearest cell in `storeys` whose
+## storey differs, searched out to `max_r`. Returns _NO_CLIFF if none within range.
+## Pure function of the supplied storey map.
+static func _cliff_distance_in(cell: Vector2i, storeys: Dictionary, max_r: int) -> int:
+	var s0: int = storeys[cell]
+	for r in range(1, max_r + 1):
+		for dx in range(-r, r + 1):
+			var rem: int = r - absi(dx)
+			var dzs: Array = [0] if rem == 0 else [rem, -rem]
+			for dz in dzs:
+				var nb: Vector2i = cell + Vector2i(dx, dz)
+				if storeys.has(nb) and storeys[nb] != s0:
+					return r
+	return _NO_CLIFF

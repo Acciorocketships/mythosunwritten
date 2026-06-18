@@ -206,3 +206,22 @@ func test_detail_level_is_zero_when_storey_rounds_above_raw_height() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 3.0)
 	assert_eq(plan.detail_level(0, 0), 0, "negative residual clamps to level 0")
+
+
+func test_cliff_distance_is_one_when_a_neighbour_differs() -> void:
+	# A storey-1 cell with a storey-0 cardinal neighbour is one tile from a cliff.
+	var storeys: Dictionary = _grid([[1, 1, 0], [1, 1, 0], [1, 1, 0]])
+	assert_eq(HeightfieldPlan._cliff_distance_in(Vector2i(1, 1), storeys, 8), 1,
+		"cell adjacent to a different storey is at cliff distance 1")
+
+func test_cliff_distance_grows_with_manhattan_steps() -> void:
+	# A 5-wide row: storey 0 except the far-right cell is storey 1. From x=0 the
+	# nearest different storey is 4 cardinal steps away.
+	var storeys: Dictionary = _grid([[0, 0, 0, 0, 1]])
+	assert_eq(HeightfieldPlan._cliff_distance_in(Vector2i(0, 0), storeys, 8), 4,
+		"cliff distance is the Manhattan distance to the nearest differing storey")
+
+func test_cliff_distance_returns_sentinel_when_uniform() -> void:
+	var storeys: Dictionary = _grid([[2, 2, 2], [2, 2, 2], [2, 2, 2]])
+	assert_eq(HeightfieldPlan._cliff_distance_in(Vector2i(1, 1), storeys, 8),
+		HeightfieldPlan._NO_CLIFF, "no differing storey within range => sentinel")
