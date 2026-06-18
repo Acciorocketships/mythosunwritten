@@ -41,3 +41,51 @@ func test_quantize_storey_clamps_to_max_storeys() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 1000.0, 3, "mean")
 	assert_eq(plan.quantize_storey(999.0), 3, "clamped to max_storeys")
 	assert_eq(plan.quantize_storey(-5.0), 0, "never below 0")
+
+
+# Build a Dictionary[Vector2i,int] from a row-major 2D array. rows[0] is z=0.
+func _grid(rows: Array) -> Dictionary:
+	var out: Dictionary = {}
+	for z in range(rows.size()):
+		var row: Array = rows[z]
+		for x in range(row.size()):
+			out[Vector2i(x, z)] = int(row[x])
+	return out
+
+func test_clamp_leaves_gentle_field_untouched() -> void:
+	# Neighbours already differ by <=1: clamp is a no-op.
+	var targets: Dictionary = _grid([[0, 1, 2], [1, 2, 3], [2, 3, 4]])
+	var out: Dictionary = HeightfieldPlan.clamp_field(targets)
+	assert_eq(out, targets, "already-valid field is unchanged")
+
+func test_clamp_trickles_a_spike_into_a_staircase() -> void:
+	# A lone storey-4 spike surrounded by 0s must trickle down to <=1 per step.
+	var targets: Dictionary = _grid([
+		[0, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0],
+		[0, 0, 4, 0, 0],
+		[0, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0],
+	])
+	var out: Dictionary = HeightfieldPlan.clamp_field(targets)
+	# Center can be at most 1 above its (now-clamped) neighbours.
+	assert_eq(out[Vector2i(2, 2)], 1, "spike clamped to one step above neighbours")
+	# Every adjacent pair now differs by <=1.
+	for cell in out.keys():
+		for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+			var nb: Vector2i = cell + d
+			if out.has(nb):
+				assert_true(absi(out[cell] - out[nb]) <= 1,
+					"adjacent storeys differ by <=1 after clamp")
+
+func test_clamp_is_order_independent() -> void:
+	# Same input via two different key insertion orders => identical fixpoint.
+	var a: Dictionary = _grid([[0, 5, 0], [5, 5, 5], [0, 5, 0]])
+	var b: Dictionary = {}
+	# Insert in reverse order.
+	var keys: Array = a.keys()
+	keys.reverse()
+	for k in keys:
+		b[k] = a[k]
+	assert_eq(HeightfieldPlan.clamp_field(a), HeightfieldPlan.clamp_field(b),
+		"clamp result independent of key order")
