@@ -44,3 +44,19 @@ func raw_height(cx: int, cz: int) -> float:
 		return _raw_override.call(cx, cz)
 	var pos: Vector3 = Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
 	return Helper.macro_density01(pos, world_seed) * height_amplitude
+
+
+## Quantize a height (metres) to an integer storey index, using the aggregation
+## rounding mode (min=floor hugs valleys, max=ceil builds up, mean=nearest),
+## clamped to [0, max_storeys].
+func quantize_storey(h: float) -> int:
+	var q: float = h / STOREY_HEIGHT
+	var s: int
+	match aggregation:
+		"min":
+			s = floori(q)
+		"max":
+			s = ceili(q)
+		_:
+			s = roundi(q)
+	return clampi(s, 0, max_storeys)
