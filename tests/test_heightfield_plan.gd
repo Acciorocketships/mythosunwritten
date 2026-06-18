@@ -155,7 +155,7 @@ func test_storey_at_lowers_a_spike_through_the_full_pipeline() -> void:
 	assert_eq(plan.storey_at(5, 0), 0, "flat ground away from the spike stays at storey 0")
 
 
-func test_surface_height_is_storey_times_4() -> void:
+func test_surface_height_is_storey_height_when_level_is_zero() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "min")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 8.0)
 	assert_almost_eq(plan.surface_height(0, 0), 8.0, 0.0001, "storey 2 => 8.0m")
@@ -168,9 +168,8 @@ func test_tile_plan_reports_storey_and_height() -> void:
 	assert_almost_eq(tp["height"], 4.0, 0.0001, "height = storey * 4")
 
 func test_storey_region_still_satisfies_the_full_invariant() -> void:
-	# Over a seeded region, the storey clamp guarantees adjacent cells differ by
-	# at most one storey, so rendered surface heights differ by exactly 0 or 4m
-	# (the Phase-1 invariant; levels add 0.5 in Phase 2).
+	# Over a seeded region, every cardinal-adjacent pair of rendered surface
+	# heights differs by exactly 0, 0.5, or 4m — the full storey+level invariant.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 48.0, 8, "mean")
 	for cz in range(-3, 4):
 		for cx in range(-3, 4):
