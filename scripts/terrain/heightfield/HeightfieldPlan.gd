@@ -7,7 +7,7 @@ extends RefCounted
 ## function of (world_seed, cell), so a tile's planned height is final before it
 ## is ever instantiated — the anti-churn guarantee.
 ##
-## Phase 1: storey (cliff) tier only. See
+## Phases 1-2: storey (cliff) + level (terrace) tiers. See
 ## docs/superpowers/specs/2026-06-17-heightfield-terrain-design.md.
 
 const TILE: float = 24.0

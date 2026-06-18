@@ -199,3 +199,10 @@ func test_quantize_storey_still_correct_after_refactor() -> void:
 	# Guards the _round_mode extraction: storey quantization is unchanged.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 32.0, 8, "mean")
 	assert_eq(plan.quantize_storey(6.1), 2, "6.1m still rounds to storey 2 after refactor")
+
+func test_detail_level_is_zero_when_storey_rounds_above_raw_height() -> void:
+	# mean mode at 3.0m: quantize_storey(3.0) = round(0.75) = 1 (rounds up),
+	# so residual = 3.0 - 4.0 = -1.0 => negative; must clamp to 0, not produce -2.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 3.0)
+	assert_eq(plan.detail_level(0, 0), 0, "negative residual clamps to level 0")
