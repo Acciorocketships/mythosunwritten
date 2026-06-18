@@ -203,8 +203,10 @@ static func _clamp_levels(levels: Dictionary, storeys: Dictionary) -> Dictionary
 
 
 ## Window radius over which the level field is assembled and clamped around a
-## query cell. The masked clamp and the cliff-distance ramp both reach at most
-## LEVELS_PER_STOREY tiles, so this margin makes a cell's level final.
+## query cell. The cliff-distance ramp reaches _CLIFF_SEARCH_MAX (= LEVELS_PER_STOREY)
+## tiles; the masked level clamp reaches at most LEVELS_PER_STOREY - 1 (a level
+## saturates at 7, so a spike settles within 7 tiles). LEVELS_PER_STOREY thus has
+## one tile of spare margin — do NOT shrink it.
 func level_margin() -> int:
 	return LEVELS_PER_STOREY
 

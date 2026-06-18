@@ -272,6 +272,9 @@ func test_level_at_pins_cliff_edges_to_zero() -> void:
 		return 5.7 if cx >= 1 else 1.7)
 	assert_eq(plan.level_at(0, 0), 0, "storey-0 cell touching the storey-1 step is pinned to level 0")
 	assert_eq(plan.level_at(1, 0), 0, "storey-1 cell touching the storey-0 step is pinned to level 0")
+	# Two tiles into the storey-0 side, away from the step: the level is no longer
+	# pinned — it ramps up by one per tile (cap = cliff_distance - 1).
+	assert_eq(plan.level_at(-2, 0), 2, "levels ramp up away from the cliff edge")
 
 func test_level_at_terraces_a_flat_storey_interior() -> void:
 	# Single storey everywhere (H stays under 2m so storey 0), with a gentle
@@ -298,6 +301,7 @@ func test_level_at_is_window_independent() -> void:
 
 # Helper: reproduce level_at(cx,cz) but with `extra` tiles of additional margin,
 # to prove window independence. Mirrors the production assembly.
+# IMPORTANT: this body is a deliberate copy of level_at — keep it in sync if level_at changes.
 func _level_at_with_extra_margin(plan: HeightfieldPlan, cx: int, cz: int, extra: int) -> int:
 	var lm: int = plan.level_margin() + extra
 	var storeys: Dictionary = plan._build_storey_map(cx, cz, lm + HeightfieldPlan._CLIFF_SEARCH_MAX)
