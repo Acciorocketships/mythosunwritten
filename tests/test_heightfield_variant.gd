@@ -78,3 +78,16 @@ func test_missing_diagonal_suppressed_when_a_cardinal_is_a_wall() -> void:
 	var diag: Dictionary = {"frontright": 4.0, "backright": 4.0, "backleft": 4.0, "frontleft": 0.0}
 	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, cards, diag)
 	assert_eq(missing, ["front"], "diagonal not reported when an adjoining cardinal is a wall")
+
+func test_missing_diagonal_suppressed_when_other_cardinal_is_a_wall() -> void:
+	# Mirror of the front-wall case: here `left` is the wall (front is level), so
+	# frontleft is suppressed because the SECOND adjoining cardinal is a wall.
+	var cards: Dictionary = {"front": 4.0, "right": 4.0, "back": 4.0, "left": 0.0}
+	var diag: Dictionary = {"frontright": 4.0, "backright": 4.0, "backleft": 4.0, "frontleft": 0.0}
+	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, cards, diag)
+	assert_eq(missing, ["left"], "diagonal suppressed when only the second adjoining cardinal is a wall")
+
+func test_missing_defaults_absent_neighbours_to_h0() -> void:
+	# Absent dict entries default to h0 (connected) => no walls.
+	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, {}, {})
+	assert_eq(missing.size(), 0, "absent neighbours default to h0 => no walls")
