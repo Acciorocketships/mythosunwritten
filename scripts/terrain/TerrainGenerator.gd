@@ -463,8 +463,10 @@ func structural_seeding_suppressed() -> bool:
 
 
 ## A socket whose expansion would place a level/cliff structural tile: the
-## ground-topcenter seed, and any lateral/topcenter on a level or cliff tile.
-## (Foliage top sockets and base-ground cardinal laterals are NOT structural.)
+## ground-topcenter seed, and any lateral/topcenter on a level or cliff tile
+## (this includes cliff-interior, whose topcenter seeds the next cliff storey).
+## Foliage top sockets (topfront/…) and base-ground cardinal laterals are NOT
+## structural and are left untouched.
 func _is_structural_socket(piece: TerrainModuleInstance, socket_name: String) -> bool:
 	if piece.def.tags.has("level") or piece.def.tags.has("cliff"):
 		return socket_name in ["front", "back", "left", "right", "topcenter"]
