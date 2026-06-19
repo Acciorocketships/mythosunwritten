@@ -250,12 +250,51 @@ func level_at(cx: int, cz: int) -> int:
 	return leveled[Vector2i(cx, cz)]
 
 
-## Batched region computation: runs the storey clamp and level clamp ONCE for the
-## whole [center +/- radius] block (plus the margins that make values final), then
-## returns a HeightfieldRegion of O(1) lookups equal to the per-cell reference.
-func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldRegion:
-	var place_r: int = radius + 1                       # placed cells + neighbour ring
-	var level_r: int = place_r + LEVELS_PER_STOREY      # level-clamp reach
+## Cliff distance for every cell at once via a BFS from storey-boundary cells
+## through same-storey regions (O(N) vs per-cell ring scans). For a cell, the
+## nearest different-storey cell is reached by a same-storey path to a boundary,
+## so seeding boundaries at distance 1 and flooding within each storey gives the
+## same Manhattan distance as _cliff_distance_in. Cells not reached within max_r
+## are absent (== _NO_CLIFF). Equivalent to _cliff_distance_in for all cells.
+static func _cliff_distance_field(storeys: Dictionary, max_r: int) -> Dictionary:
+	var dist: Dictionary = {}
+	var queue: Array[Vector2i] = []
+	for cell in storeys.keys():
+		var s: int = storeys[cell]
+		for d in _CARDINALS:
+			var nb: Vector2i = cell + d
+			if storeys.has(nb) and storeys[nb] != s:
+				dist[cell] = 1
+				queue.append(cell)
+				break
+	var head: int = 0
+	while head < queue.size():
+		var cell: Vector2i = queue[head]
+		head += 1
+		var cd: int = dist[cell]
+		if cd >= max_r:
+			continue
+		var s: int = storeys[cell]
+		for off in _CARDINALS:
+			var nb: Vector2i = cell + off
+			if not storeys.has(nb):
+				continue
+			if storeys[nb] != s:
+				continue
+			if not dist.has(nb):
+				dist[nb] = cd + 1
+				queue.append(nb)
+	return dist
+
+
+## Batched region computation (storey clamp + level clamp once). `target_cache`,
+## if provided, persists quantized storey targets across calls so the ~98%-
+## overlapping window of a moving player is not re-sampled (the noise step
+## dominates). Cliff distances use one BFS field. Returns values equal to the
+## per-cell reference.
+func compute_region(center_cx: int, center_cz: int, radius: int, target_cache: Dictionary = {}) -> HeightfieldRegion:
+	var place_r: int = radius + 1
+	var level_r: int = place_r + LEVELS_PER_STOREY
 	var storey_final_r: int = level_r + _CLIFF_SEARCH_MAX
 	var storey_outer: int = storey_final_r + max_storeys
 
@@ -263,9 +302,16 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 	for dz in range(-storey_outer, storey_outer + 1):
 		for dx in range(-storey_outer, storey_outer + 1):
 			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
-			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
+			var q: int
+			if target_cache.has(cell):
+				q = target_cache[cell]
+			else:
+				q = quantize_storey(raw_height(cell.x, cell.y))
+				target_cache[cell] = q
+			targets[cell] = q
 	var storeys: Dictionary = clamp_field(targets)
 
+	var cliff_field: Dictionary = _cliff_distance_field(storeys, _CLIFF_SEARCH_MAX)
 	var l0: Dictionary = {}
 	for dz in range(-level_r, level_r + 1):
 		for dx in range(-level_r, level_r + 1):
@@ -273,7 +319,7 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 			var s: int = int(storeys[cell])
 			var residual: float = raw_height(cell.x, cell.y) - float(s) * STOREY_HEIGHT
 			var detail: int = clampi(_round_mode(residual / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
-			var cliff_cap: int = _cliff_distance_in(cell, storeys, _CLIFF_SEARCH_MAX) - 1
+			var cliff_cap: int = int(cliff_field.get(cell, _NO_CLIFF)) - 1
 			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
 
 	var levels: Dictionary = _clamp_levels(l0, storeys)

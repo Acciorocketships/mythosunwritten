@@ -80,6 +80,7 @@ static func spawn_placement(
 # Instance state: cells already placed (so re-running a region is idempotent and
 # churn-free). Keyed by Vector2i(cx, cz).
 var _placed: Dictionary = {}
+var _target_cache: Dictionary = {}
 
 
 ## Place every not-yet-placed cell in the (2*place_radius+1)^2 block around the
@@ -101,7 +102,7 @@ func place_region(
 	if new_cells.is_empty():
 		return spawned
 	# Batch the plan computation for the whole region exactly once.
-	var region: HeightfieldRegion = plan.compute_region(center_cx, center_cz, place_radius)
+	var region: HeightfieldRegion = plan.compute_region(center_cx, center_cz, place_radius, _target_cache)
 	for cell in new_cells:
 		var rec: Dictionary = placement_for_cell(region, cell.x, cell.y)
 		var inst: TerrainModuleInstance = spawn_placement(rec, library, parent)
@@ -131,6 +132,11 @@ func evict_placed_outside(center_cx: int, center_cz: int, keep_radius: int) -> A
 			if inst != null:
 				evicted.append(inst)
 	_placed = survivors
+	var kept_cache: Dictionary = {}
+	for cell in _target_cache.keys():
+		if absi(cell.x - center_cx) <= keep_radius + 40 and absi(cell.y - center_cz) <= keep_radius + 40:
+			kept_cache[cell] = _target_cache[cell]
+	_target_cache = kept_cache
 	return evicted
 
 
