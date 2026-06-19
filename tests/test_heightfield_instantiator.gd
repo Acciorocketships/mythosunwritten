@@ -154,3 +154,28 @@ func test_place_region_streams_incrementally_on_shift() -> void:
 	var shifted: Array = placer.place_region(plan, lib, parent, 1, 0, 1)
 	assert_eq(shifted.size(), 3, "only the new column (cx=2, 3 cells) is spawned")
 	assert_eq(parent.get_child_count(), 12, "total tiles = 9 + 3 new")
+
+func test_evict_placed_outside_radius_prunes_distant_cells() -> void:
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var lib: TerrainModuleLibrary = _library()
+	var plan: HeightfieldPlan = _stepped_plan()
+	var placer: HeightfieldInstantiator = HeightfieldInstantiator.new()
+	placer.place_region(plan, lib, parent, 0, 0, 1)            # places 9 cells around (0,0)
+	assert_eq(placer.placed_count(), 9, "9 cells tracked")
+	# Evict everything not within radius 0 of a far center => all 9 pruned.
+	placer.evict_placed_outside(100, 100, 0)
+	assert_eq(placer.placed_count(), 0, "distant cells pruned from the placed set")
+
+func test_place_region_reports_dropped_cells_for_unknown_tag() -> void:
+	# A record whose tag has no module is dropped; spawn_count_dropped returns 1.
+	# (spawn_placement internally reports the error via push_error for visibility.)
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var lib: TerrainModuleLibrary = _library()
+	var placer: HeightfieldInstantiator = HeightfieldInstantiator.new()
+	var dropped: int = placer.spawn_count_dropped({
+		"variant_tag": "no-such-variant", "family": "cliff",
+		"world_x": 0.0, "world_z": 0.0, "origin_y": 0.0, "yaw": 0.0,
+	}, lib, parent)
+	assert_eq(dropped, 1, "an unknown tag is reported as a dropped placement")

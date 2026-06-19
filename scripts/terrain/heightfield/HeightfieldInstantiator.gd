@@ -100,3 +100,30 @@ func place_region(
 			if inst != null:
 				spawned.append(inst)
 	return spawned
+
+
+## Number of cells currently tracked as placed.
+func placed_count() -> int:
+	return _placed.size()
+
+
+## Drop placed-cell records whose Chebyshev distance from (center_cx, center_cz)
+## exceeds `keep_radius`, so the set stays bounded as the player roams. Cells
+## re-enter via place_region identically (the plan is deterministic) — no churn.
+func evict_placed_outside(center_cx: int, center_cz: int, keep_radius: int) -> void:
+	var survivors: Dictionary = {}
+	for cell in _placed.keys():
+		if absi(cell.x - center_cx) <= keep_radius and absi(cell.y - center_cz) <= keep_radius:
+			survivors[cell] = true
+	_placed = survivors
+
+
+## Spawn one record; return 1 if it was dropped (no module / failed create), else 0.
+## Surfaces gaps that spawn_placement otherwise reports only via push_error.
+func spawn_count_dropped(record: Dictionary, library: TerrainModuleLibrary, parent: Node3D) -> int:
+	var tag: String = _lookup_tag(String(record["variant_tag"]))
+	var modules: TerrainModuleList = library.get_by_tags(TagList.new([tag]))
+	if modules.is_empty():
+		return 1  # Dropped: no module for this tag.
+	var inst: TerrainModuleInstance = spawn_placement(record, library, parent)
+	return 0 if inst != null else 1  # Dropped if spawn_placement failed.
