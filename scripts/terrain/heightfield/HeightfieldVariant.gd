@@ -26,6 +26,11 @@ const CANONICAL_MISSING_BY_TAG: Dictionary = {
 	"side": ["front"],
 	"line": ["front", "back"],
 	"corner": ["front", "left"],
+	# NOTE (Phase 3b): this peninsula orientation matches LevelEdgeRule
+	# (open side = back). CliffEdgeRule uses ["front","back","left"] (open side =
+	# right) — a 1-step difference. Before wiring cliff-peninsula rotation in 3b,
+	# verify the CliffPeninsula.tscn mesh's default open face; cliff tiles may need
+	# a per-family rotation offset relative to this table.
 	"peninsula": ["front", "left", "right"],
 	"island": ["front", "right", "back", "left"],
 	"inner-corner": ["frontleft"],

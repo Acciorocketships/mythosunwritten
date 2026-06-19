@@ -161,3 +161,21 @@ func test_descriptor_flat_terrace_interior_on_plateau_is_level_center() -> void:
 	var d: Dictionary = HeightfieldVariant.cell_descriptor(5.0, 1, 2, nb[0], nb[1])
 	assert_eq(d["family"], "level", "level>0 takes priority over storey>0 for flat cells")
 	assert_eq(d["variant_tag"], "level-center", "flat terrace interior => level-center")
+
+func test_variant_peninsula_three_walls() -> void:
+	# Three walls (open on the fourth side) => peninsula. Canonical is open-back.
+	var v: Dictionary = HeightfieldVariant.variant_for_missing(["front", "left", "right"])
+	assert_eq(v["tag"], "peninsula", "three walls => peninsula")
+	assert_eq(v["rotation_steps"], 0, "canonical peninsula is open on the back")
+
+func test_variant_two_opposite_diagonals_is_inner_corner_diag() -> void:
+	var v: Dictionary = HeightfieldVariant.variant_for_missing(["frontleft", "backright"])
+	assert_eq(v["tag"], "inner-corner-diag", "two opposite diagonal notches => inner-corner-diag")
+
+func test_descriptor_cliff_peninsula() -> void:
+	# Storey 1 plateau finger: front, left, right all drop a full storey; back connected.
+	var cards: Dictionary = {"front": 0.0, "right": 0.0, "back": 4.0, "left": 0.0}
+	var diag: Dictionary = {"frontright": 0.0, "backright": 0.0, "backleft": 0.0, "frontleft": 0.0}
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(4.0, 1, 0, cards, diag)
+	assert_eq(d["family"], "cliff", "three cliff drops")
+	assert_eq(d["variant_tag"], "cliff-peninsula", "three cliff walls => cliff-peninsula")
