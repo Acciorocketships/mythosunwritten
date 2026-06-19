@@ -1064,6 +1064,8 @@ func _collect_stacked_above(
 
 
 func remove_piece(piece: TerrainModuleInstance) -> void:
+	if piece == null or piece.root == null or not is_instance_valid(piece.root):
+		return
 	_ensure_queue_tracking_current()
 	var piece_deferred_keys: Dictionary = {}
 	for socket_name in piece.sockets.keys():
@@ -1363,6 +1365,41 @@ func _drive_heightfield_structure(player_pos: Vector3) -> void:
 	for inst in spawned:
 		register_piece(inst, "")
 		add_piece_to_queue(inst)
+	for inst in spawned:
+		if inst != null and inst.def.tags.has("ground"):
+			_run_rules_for_existing_piece(inst)
+			# NOTE: WaterRule may replace a tracked ground tile with a water/bank tile;
+			# the replacement is not re-tracked in the instantiator's placed-set, so it
+			# is not evicted when the player leaves (minor leak — see Phase 3d results).
+	# Also seed the water plane at structural-tile positions: the heightfield places
+	# cliff/level tiles but not the ground layer underneath them. Water at those
+	# positions would never be triggered by the ground-tile pass above, so we
+	# explicitly place water tiles at ground level (y=0) wherever the field says
+	# water and no ground tile is already indexed there.
+	for inst in spawned:
+		if inst == null or inst.def.tags.has("ground"):
+			continue
+		var ground_pos: Vector3 = Vector3(inst.transform.origin.x, 0.0, inst.transform.origin.z)
+		if not Helper.is_water(ground_pos, world_seed):
+			continue
+		var probe: AABB = AABB(ground_pos + Vector3(-0.5, -0.5, -0.5), Vector3(1.0, 1.5, 1.0))
+		var already_present: bool = false
+		for hit in terrain_index.query_box(probe):
+			if hit is TerrainModuleInstance and (hit.def.tags.has("water") or (hit.def.tags.has("ground") and hit.transform.origin.y < 0.6)):
+				already_present = true
+				break
+		if already_present:
+			continue
+		var water_modules: TerrainModuleList = library.get_by_tags(TagList.new(["water"]))
+		if water_modules.is_empty():
+			continue
+		var water_inst: TerrainModuleInstance = water_modules.library[0].spawn()
+		water_inst.set_transform(Transform3D(Basis.IDENTITY, ground_pos))
+		water_inst.create()
+		if water_inst.root == null:
+			continue
+		terrain_parent.add_child(water_inst.root)
+		register_piece(water_inst, "")
 	for inst in _heightfield_placer.evict_placed_outside(cx, cz, HEIGHTFIELD_PLACE_RADIUS + 2):
 		remove_piece(inst)
 

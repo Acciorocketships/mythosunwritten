@@ -96,3 +96,28 @@ func test_ground_laterals_suppressed_under_heightfield() -> void:
 		assert_true(gen._is_structural_socket(ground, s),
 			"ground %s is structural under the heightfield" % s)
 	gen.free()
+
+func test_heightfield_ground_becomes_water_in_water_field() -> void:
+	var gen = _make_generator(true)
+	add_child_autofree(gen)
+	gen.init_for_test()
+	gen.HEIGHTFIELD_PLACE_RADIUS = 3
+	var seed: int = gen.world_seed
+	# Find a water cell for this seed within a small search area.
+	var water_cell := Vector2i(99999, 99999)
+	for cz in range(-30, 30):
+		for cx in range(-30, 30):
+			if Helper.is_water(Vector3(cx * 24.0, 0.0, cz * 24.0), seed):
+				water_cell = Vector2i(cx, cz)
+				break
+		if water_cell.x != 99999:
+			break
+	assert_true(water_cell.x != 99999, "found a water cell for this seed")
+	gen._drive_heightfield_structure(Vector3(water_cell.x * 24.0, 0.0, water_cell.y * 24.0))
+	var box: AABB = AABB(Vector3(water_cell.x * 24.0 - 1.0, -6.0, water_cell.y * 24.0 - 1.0), Vector3(2.0, 12.0, 2.0))
+	var has_water: bool = false
+	for hit in gen.terrain_index.query_box(box):
+		if hit is TerrainModuleInstance and hit.def.tags.has("water"):
+			has_water = true
+	assert_true(has_water, "heightfield ground in the water field is converted to water")
+	gen.free()
