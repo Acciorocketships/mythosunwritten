@@ -4,8 +4,9 @@ extends RefCounted
 ## Turns the heightfield plan into placement records and (Task 3) real tiles.
 ## A placement record is {variant_tag, family, world_x, world_z, origin_y, yaw}.
 
+## `plan` is HeightfieldPlan OR HeightfieldRegion (both expose tile_plan + surface_height).
 ## Build the neighbour-height dictionaries (socket name -> surface height) for a cell.
-static func _neighbour_heights(plan: HeightfieldPlan, cx: int, cz: int) -> Array:
+static func _neighbour_heights(plan, cx: int, cz: int) -> Array:
 	var cardinals: Dictionary = {}
 	var diagonals: Dictionary = {}
 	for off in HeightfieldFacing.OFFSET_TO_SOCKET.keys():
@@ -27,8 +28,9 @@ static func placements(plan: HeightfieldPlan, cx: int, cz: int, place_radius: in
 	return out
 
 
+## `plan` is HeightfieldPlan OR HeightfieldRegion (both expose tile_plan + surface_height).
 ## The placement record for a single cell.
-static func placement_for_cell(plan: HeightfieldPlan, cx: int, cz: int) -> Dictionary:
+static func placement_for_cell(plan, cx: int, cz: int) -> Dictionary:
 	var tp: Dictionary = plan.tile_plan(cx, cz)
 	var h0: float = float(tp["height"])
 	var nb: Array = _neighbour_heights(plan, cx, cz)
@@ -88,17 +90,24 @@ func place_region(
 	plan: HeightfieldPlan, library: TerrainModuleLibrary, parent: Node3D,
 	center_cx: int, center_cz: int, place_radius: int
 ) -> Array[TerrainModuleInstance]:
-	var spawned: Array[TerrainModuleInstance] = []
+	# Collect not-yet-placed cells; if none, this frame is free.
+	var new_cells: Array[Vector2i] = []
 	for dz in range(-place_radius, place_radius + 1):
 		for dx in range(-place_radius, place_radius + 1):
 			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
-			if _placed.has(cell):
-				continue
-			var rec: Dictionary = placement_for_cell(plan, cell.x, cell.y)
-			var inst: TerrainModuleInstance = spawn_placement(rec, library, parent)
-			_placed[cell] = inst   # may be null if dropped; key presence = placed
-			if inst != null:
-				spawned.append(inst)
+			if not _placed.has(cell):
+				new_cells.append(cell)
+	var spawned: Array[TerrainModuleInstance] = []
+	if new_cells.is_empty():
+		return spawned
+	# Batch the plan computation for the whole region exactly once.
+	var region: HeightfieldRegion = plan.compute_region(center_cx, center_cz, place_radius)
+	for cell in new_cells:
+		var rec: Dictionary = placement_for_cell(region, cell.x, cell.y)
+		var inst: TerrainModuleInstance = spawn_placement(rec, library, parent)
+		_placed[cell] = inst
+		if inst != null:
+			spawned.append(inst)
 	return spawned
 
 

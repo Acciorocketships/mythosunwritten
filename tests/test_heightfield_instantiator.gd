@@ -180,3 +180,19 @@ func test_place_region_reports_dropped_cells_for_unknown_tag() -> void:
 		"world_x": 0.0, "world_z": 0.0, "origin_y": 0.0, "yaw": 0.0,
 	}, lib, parent)
 	assert_eq(dropped, 1, "an unknown tag is reported as a dropped placement")
+
+func test_place_region_uses_batched_region_and_matches_per_cell() -> void:
+	# place_region (now batched) places the same tiles at the same heights as the
+	# per-cell path.
+	var lib: TerrainModuleLibrary = _library()
+	var plan: HeightfieldPlan = _stepped_plan()
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var placer: HeightfieldInstantiator = HeightfieldInstantiator.new()
+	placer.place_region(plan, lib, parent, 0, 0, 2)
+	for child in parent.get_children():
+		var t: Transform3D = (child as Node3D).transform
+		var cx: int = int(round(t.origin.x / HeightfieldPlan.TILE))
+		var cz: int = int(round(t.origin.z / HeightfieldPlan.TILE))
+		assert_almost_eq(t.origin.y, plan.surface_height(cx, cz), 0.01,
+			"batched placement height matches the plan at (%d,%d)" % [cx, cz])
