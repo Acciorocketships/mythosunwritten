@@ -43,3 +43,38 @@ func test_variant_rotated_inner_corner() -> void:
 	var v: Dictionary = HeightfieldVariant.variant_for_missing(["frontright"])
 	assert_eq(v["tag"], "inner-corner", "a diagonal notch is still inner-corner")
 	assert_eq(v["rotation_steps"], 1, "frontleft rotates to frontright in one step")
+
+func test_missing_is_empty_when_all_neighbours_level() -> void:
+	var flat: Dictionary = {"front": 4.0, "right": 4.0, "back": 4.0, "left": 4.0}
+	var diag: Dictionary = {"frontright": 4.0, "backright": 4.0, "backleft": 4.0, "frontleft": 4.0}
+	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, flat, diag)
+	assert_eq(missing.size(), 0, "no drops => no walls")
+
+func test_missing_includes_a_lower_cardinal() -> void:
+	var cards: Dictionary = {"front": 0.0, "right": 4.0, "back": 4.0, "left": 4.0}
+	var diag: Dictionary = {"frontright": 4.0, "backright": 4.0, "backleft": 4.0, "frontleft": 4.0}
+	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, cards, diag)
+	assert_eq(missing, ["front"], "a lower front neighbour is a wall")
+
+func test_missing_ignores_higher_neighbours() -> void:
+	# A higher neighbour means THIS cell is at the foot of that wall — no wall here.
+	var cards: Dictionary = {"front": 8.0, "right": 4.0, "back": 4.0, "left": 4.0}
+	var diag: Dictionary = {"frontright": 4.0, "backright": 4.0, "backleft": 4.0, "frontleft": 4.0}
+	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, cards, diag)
+	assert_eq(missing.size(), 0, "higher neighbours are not walls")
+
+func test_missing_diagonal_only_when_both_cardinals_connected() -> void:
+	# frontleft lower, but front and left are level => inner-corner notch.
+	var cards: Dictionary = {"front": 4.0, "right": 4.0, "back": 4.0, "left": 4.0}
+	var diag: Dictionary = {"frontright": 4.0, "backright": 4.0, "backleft": 4.0, "frontleft": 0.0}
+	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, cards, diag)
+	assert_eq(missing, ["frontleft"], "diagonal drop with connected cardinals => inner corner")
+
+func test_missing_diagonal_suppressed_when_a_cardinal_is_a_wall() -> void:
+	# Both front and frontleft are lower: the diagonal is absorbed by the front
+	# wall (the canonical 'side'/'corner' shapes already cover it), so only the
+	# cardinal is reported.
+	var cards: Dictionary = {"front": 0.0, "right": 4.0, "back": 4.0, "left": 4.0}
+	var diag: Dictionary = {"frontright": 4.0, "backright": 4.0, "backleft": 4.0, "frontleft": 0.0}
+	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, cards, diag)
+	assert_eq(missing, ["front"], "diagonal not reported when an adjoining cardinal is a wall")

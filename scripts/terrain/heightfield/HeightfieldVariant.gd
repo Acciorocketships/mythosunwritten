@@ -75,3 +75,29 @@ static func _same_set(a: Array, b: Array) -> bool:
 		if not b.has(x):
 			return false
 	return true
+
+
+## Compute the missing-socket set from a cell's surface height and its neighbours'.
+## A cardinal is a wall when its neighbour is lower by more than `eps`. A diagonal
+## is an inner-corner notch only when its neighbour is lower AND both adjoining
+## cardinals are connected (not themselves walls). `cardinals`/`diagonals` map a
+## socket name to that neighbour's surface height; a missing entry defaults to h0
+## (treated as level/connected).
+static func missing_from_heights(
+	h0: float, cardinals: Dictionary, diagonals: Dictionary, eps: float = 0.1
+) -> Array[String]:
+	var missing: Array[String] = []
+	var card_wall: Dictionary = {}
+	for c in CARDINALS:
+		var hc: float = float(cardinals.get(c, h0))
+		var is_wall: bool = hc < h0 - eps
+		card_wall[c] = is_wall
+		if is_wall:
+			missing.append(c)
+	for d in DIAGONALS:
+		var hd: float = float(diagonals.get(d, h0))
+		if hd < h0 - eps:
+			var pair: Array = DIAG_CARDINALS[d]
+			if not card_wall[pair[0]] and not card_wall[pair[1]]:
+				missing.append(d)
+	return missing
