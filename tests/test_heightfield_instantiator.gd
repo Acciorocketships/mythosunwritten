@@ -117,10 +117,12 @@ func test_place_region_places_each_cell_once_and_is_idempotent() -> void:
 	var plan: HeightfieldPlan = _stepped_plan()
 	var placer: HeightfieldInstantiator = HeightfieldInstantiator.new()
 	# First pass over a 3x3 block: 9 tiles spawned.
-	placer.place_region(plan, lib, parent, 0, 0, 1)
+	var first: Array = placer.place_region(plan, lib, parent, 0, 0, 1)
+	assert_eq(first.size(), 9, "first pass spawns 9")
 	assert_eq(parent.get_child_count(), 9, "9 tiles for a 3x3 block")
-	# Second pass over the same block: no duplicates (already-placed cells skipped).
-	placer.place_region(plan, lib, parent, 0, 0, 1)
+	# Second pass over the same block: returns nothing, no duplicates.
+	var second: Array = placer.place_region(plan, lib, parent, 0, 0, 1)
+	assert_eq(second.size(), 0, "re-running the same block spawns nothing")
 	assert_eq(parent.get_child_count(), 9, "re-running places nothing new (idempotent)")
 
 func test_place_region_tiles_sit_at_plan_heights() -> void:
@@ -132,8 +134,23 @@ func test_place_region_tiles_sit_at_plan_heights() -> void:
 	placer.place_region(plan, lib, parent, 0, 0, 1)
 	# Every spawned tile's origin.y equals the plan's surface height for its cell.
 	for child in parent.get_children():
-		var t: Transform3D = (child as Node3D).global_transform
+		var t: Transform3D = (child as Node3D).transform
 		var cx: int = int(round(t.origin.x / HeightfieldPlan.TILE))
 		var cz: int = int(round(t.origin.z / HeightfieldPlan.TILE))
 		assert_almost_eq(t.origin.y, plan.surface_height(cx, cz), 0.01,
 			"tile at (%d,%d) sits at its plan surface height" % [cx, cz])
+
+func test_place_region_streams_incrementally_on_shift() -> void:
+	# The real streaming pattern: a block, then a block shifted by one tile in x.
+	# Only the new (non-overlapping) column is spawned; overlap is skipped.
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var lib: TerrainModuleLibrary = _library()
+	var plan: HeightfieldPlan = _stepped_plan()
+	var placer: HeightfieldInstantiator = HeightfieldInstantiator.new()
+	var first: Array = placer.place_region(plan, lib, parent, 0, 0, 1)
+	assert_eq(first.size(), 9, "first block: 9 cells")
+	# Center shifts +1 in x: cells cx in {0,1} overlap (already placed); cx=2 is new.
+	var shifted: Array = placer.place_region(plan, lib, parent, 1, 0, 1)
+	assert_eq(shifted.size(), 3, "only the new column (cx=2, 3 cells) is spawned")
+	assert_eq(parent.get_child_count(), 12, "total tiles = 9 + 3 new")
