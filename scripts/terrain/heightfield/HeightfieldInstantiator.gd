@@ -73,3 +73,30 @@ static func spawn_placement(
 		return null
 	parent.add_child(inst.root)
 	return inst
+
+
+# Instance state: cells already placed (so re-running a region is idempotent and
+# churn-free). Keyed by Vector2i(cx, cz).
+var _placed: Dictionary = {}
+
+
+## Place every not-yet-placed cell in the (2*place_radius+1)^2 block around the
+## center cell, under `parent`. Returns the instances spawned this call. A cell is
+## placed at most once for the lifetime of this instance, so repeated calls as the
+## player moves never re-place (or churn) settled tiles.
+func place_region(
+	plan: HeightfieldPlan, library: TerrainModuleLibrary, parent: Node3D,
+	center_cx: int, center_cz: int, place_radius: int
+) -> Array[TerrainModuleInstance]:
+	var spawned: Array[TerrainModuleInstance] = []
+	for dz in range(-place_radius, place_radius + 1):
+		for dx in range(-place_radius, place_radius + 1):
+			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
+			if _placed.has(cell):
+				continue
+			var rec: Dictionary = placement_for_cell(plan, cell.x, cell.y)
+			var inst: TerrainModuleInstance = spawn_placement(rec, library, parent)
+			_placed[cell] = true
+			if inst != null:
+				spawned.append(inst)
+	return spawned

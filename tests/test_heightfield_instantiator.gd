@@ -109,3 +109,31 @@ func test_spawn_placement_applies_nonzero_yaw_to_basis() -> void:
 	var inst: TerrainModuleInstance = HeightfieldInstantiator.spawn_placement(rec, lib, parent)
 	assert_true(inst.transform.basis.is_equal_approx(Basis(Vector3.UP, PI * 0.5)),
 		"non-zero yaw is applied to the tile basis")
+
+func test_place_region_places_each_cell_once_and_is_idempotent() -> void:
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var lib: TerrainModuleLibrary = _library()
+	var plan: HeightfieldPlan = _stepped_plan()
+	var placer: HeightfieldInstantiator = HeightfieldInstantiator.new()
+	# First pass over a 3x3 block: 9 tiles spawned.
+	placer.place_region(plan, lib, parent, 0, 0, 1)
+	assert_eq(parent.get_child_count(), 9, "9 tiles for a 3x3 block")
+	# Second pass over the same block: no duplicates (already-placed cells skipped).
+	placer.place_region(plan, lib, parent, 0, 0, 1)
+	assert_eq(parent.get_child_count(), 9, "re-running places nothing new (idempotent)")
+
+func test_place_region_tiles_sit_at_plan_heights() -> void:
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var lib: TerrainModuleLibrary = _library()
+	var plan: HeightfieldPlan = _stepped_plan()
+	var placer: HeightfieldInstantiator = HeightfieldInstantiator.new()
+	placer.place_region(plan, lib, parent, 0, 0, 1)
+	# Every spawned tile's origin.y equals the plan's surface height for its cell.
+	for child in parent.get_children():
+		var t: Transform3D = (child as Node3D).global_transform
+		var cx: int = int(round(t.origin.x / HeightfieldPlan.TILE))
+		var cz: int = int(round(t.origin.z / HeightfieldPlan.TILE))
+		assert_almost_eq(t.origin.y, plan.surface_height(cx, cz), 0.01,
+			"tile at (%d,%d) sits at its plan surface height" % [cx, cz])
