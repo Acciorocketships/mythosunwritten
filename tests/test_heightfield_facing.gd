@@ -10,20 +10,24 @@ func test_offset_to_socket_covers_four_cardinals_and_four_diagonals() -> void:
 			"frontright", "backright", "backleft", "frontleft"]:
 		assert_true(seen.has(name), "mapping includes socket '%s'" % name)
 
-func test_offset_to_socket_matches_scene_for_one_cardinal() -> void:
+func test_offset_to_socket_matches_scene_for_all_cardinals() -> void:
+	# Asset grounding: each cardinal socket's OFFSET_TO_SOCKET entry must equal the
+	# UNIT direction (sign included) of that marker's horizontal position in the
+	# real scene — so a front<->back or left<->right sign flip is caught, not just
+	# an axis swap.
 	var scene: PackedScene = load("res://terrain/scenes/CliffSide.tscn")
 	var root: Node3D = scene.instantiate()
 	var sockets: Node = root.get_node("Sockets")
-	var front_marker: Marker3D = sockets.get_node("front") as Marker3D
-	var p: Vector3 = front_marker.position
+	for socket_name in ["front", "right", "back", "left"]:
+		var m: Marker3D = sockets.get_node(socket_name) as Marker3D
+		var p: Vector3 = m.position
+		var expected: Vector2i = Vector2i(signi(int(round(p.x))), signi(int(round(p.z))))
+		assert_eq(HeightfieldFacing.socket_to_offset(socket_name), expected,
+			"%s offset matches its marker direction incl. sign" % socket_name)
 	root.free()
-	var front_offset: Vector2i = HeightfieldFacing.socket_to_offset("front")
-	if absf(p.x) > absf(p.z):
-		assert_true(front_offset.x != 0 and front_offset.y == 0, "front is an X-axis face")
-	else:
-		assert_true(front_offset.y != 0 and front_offset.x == 0, "front is a Z-axis face")
 
 func test_yaw_for_rotation_steps() -> void:
 	assert_almost_eq(HeightfieldFacing.yaw_for_rotation_steps(0), 0.0, 0.0001, "0 steps => 0 rad")
 	assert_almost_eq(HeightfieldFacing.yaw_for_rotation_steps(1), PI * 0.5 * 3.0, 0.0001, "matches (4-steps)%4 convention")
 	assert_almost_eq(HeightfieldFacing.yaw_for_rotation_steps(2), PI, 0.0001, "2 steps => 180 deg")
+	assert_almost_eq(HeightfieldFacing.yaw_for_rotation_steps(3), PI * 0.5, 0.0001, "3 steps => 90 deg")
