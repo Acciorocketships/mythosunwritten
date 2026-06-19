@@ -94,3 +94,18 @@ func test_spawn_placement_ground_uses_ground_plain() -> void:
 	var inst: TerrainModuleInstance = HeightfieldInstantiator.spawn_placement(rec, lib, parent)
 	assert_not_null(inst, "ground tile produced")
 	assert_true(inst.def.tags.has("ground-plain"), "ground maps to the ground-plain module")
+
+func test_spawn_placement_applies_nonzero_yaw_to_basis() -> void:
+	# A dropped/zeroed basis would pass the other (yaw 0) tests; this asserts the
+	# yaw actually reaches the placed tile's basis. cliff-side is not a "rotate"
+	# tile, so create() leaves the basis we set.
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var lib: TerrainModuleLibrary = _library()
+	var rec: Dictionary = {
+		"variant_tag": "cliff-side", "family": "cliff",
+		"world_x": 0.0, "world_z": 0.0, "origin_y": 4.0, "yaw": PI * 0.5,
+	}
+	var inst: TerrainModuleInstance = HeightfieldInstantiator.spawn_placement(rec, lib, parent)
+	assert_true(inst.transform.basis.is_equal_approx(Basis(Vector3.UP, PI * 0.5)),
+		"non-zero yaw is applied to the tile basis")

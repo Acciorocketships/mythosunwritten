@@ -69,5 +69,7 @@ static func spawn_placement(
 	var origin: Vector3 = Vector3(float(record["world_x"]), float(record["origin_y"]), float(record["world_z"]))
 	inst.set_transform(Transform3D(basis, origin))
 	inst.create()
+	if inst.root == null:
+		return null
 	parent.add_child(inst.root)
 	return inst
