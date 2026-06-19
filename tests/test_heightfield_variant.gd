@@ -35,3 +35,11 @@ func test_variant_all_four_walls_is_island() -> void:
 func test_variant_diagonal_is_inner_corner() -> void:
 	var v: Dictionary = HeightfieldVariant.variant_for_missing(["frontleft"])
 	assert_eq(v["tag"], "inner-corner", "a single diagonal notch => inner-corner")
+
+func test_variant_rotated_inner_corner() -> void:
+	# Canonical inner-corner notch is on frontleft; a frontright notch is the same
+	# variant rotated one 90deg step (frontleft -> frontright). Exercises rotation
+	# of a diagonal (period-4) variant, complementing the cardinal rotation test.
+	var v: Dictionary = HeightfieldVariant.variant_for_missing(["frontright"])
+	assert_eq(v["tag"], "inner-corner", "a diagonal notch is still inner-corner")
+	assert_eq(v["rotation_steps"], 1, "frontleft rotates to frontright in one step")
