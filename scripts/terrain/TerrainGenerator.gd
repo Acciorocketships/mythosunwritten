@@ -9,6 +9,10 @@ const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 # REVEAL_MARGIN (the outer band generates hidden, then reveals settled).
 @export var RENDER_RANGE: int = 260
 @export var MAX_LOAD_PER_STEP: int = 8
+## When true, structural tiles (level/cliff) come from the deterministic
+## heightfield plan instead of emergent socket-growth. Water, decorations, the
+## base ground plane, and the reveal margin are unaffected. Default off.
+@export var use_heightfield: bool = false
 ## Queue-priority penalty (in distance units) for decoration-capable sockets.
 const DECO_PRIORITY_PENALTY: float = 48.0
 
@@ -449,7 +453,24 @@ func _is_socket_expandable(piece_socket: TerrainModuleSocket) -> bool:
 # Structural sockets (fill >= 1.0, e.g. ground lateral expansion) ignore the
 # field — ground must always fill for the world to be infinite.
 func _effective_fill_prob(piece: TerrainModuleInstance, socket_name: String, pos: Vector3) -> float:
+	if structural_seeding_suppressed() and _is_structural_socket(piece, socket_name):
+		return 0.0
 	return _route_fill_prob(piece, socket_name, pos, _get_socket_fill_prob(piece, socket_name))
+
+
+func structural_seeding_suppressed() -> bool:
+	return use_heightfield
+
+
+## A socket whose expansion would place a level/cliff structural tile: the
+## ground-topcenter seed, and any lateral/topcenter on a level or cliff tile.
+## (Foliage top sockets and base-ground cardinal laterals are NOT structural.)
+func _is_structural_socket(piece: TerrainModuleInstance, socket_name: String) -> bool:
+	if piece.def.tags.has("level") or piece.def.tags.has("cliff"):
+		return socket_name in ["front", "back", "left", "right", "topcenter"]
+	if piece.def.tags.has("ground-plain") and socket_name == "topcenter":
+		return true
+	return false
 
 
 # Scale a raw probability the way the given socket's actual verdict is
