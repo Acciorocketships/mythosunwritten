@@ -248,3 +248,33 @@ func level_at(cx: int, cz: int) -> int:
 			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
 	var leveled: Dictionary = _clamp_levels(l0, storeys)
 	return leveled[Vector2i(cx, cz)]
+
+
+## Batched region computation: runs the storey clamp and level clamp ONCE for the
+## whole [center +/- radius] block (plus the margins that make values final), then
+## returns a HeightfieldRegion of O(1) lookups equal to the per-cell reference.
+func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldRegion:
+	var place_r: int = radius + 1                       # placed cells + neighbour ring
+	var level_r: int = place_r + LEVELS_PER_STOREY      # level-clamp reach
+	var storey_final_r: int = level_r + _CLIFF_SEARCH_MAX
+	var storey_outer: int = storey_final_r + max_storeys
+
+	var targets: Dictionary = {}
+	for dz in range(-storey_outer, storey_outer + 1):
+		for dx in range(-storey_outer, storey_outer + 1):
+			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
+			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
+	var storeys: Dictionary = clamp_field(targets)
+
+	var l0: Dictionary = {}
+	for dz in range(-level_r, level_r + 1):
+		for dx in range(-level_r, level_r + 1):
+			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
+			var s: int = int(storeys[cell])
+			var residual: float = raw_height(cell.x, cell.y) - float(s) * STOREY_HEIGHT
+			var detail: int = clampi(_round_mode(residual / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
+			var cliff_cap: int = _cliff_distance_in(cell, storeys, _CLIFF_SEARCH_MAX) - 1
+			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
+
+	var levels: Dictionary = _clamp_levels(l0, storeys)
+	return HeightfieldRegion.new(storeys, levels)
