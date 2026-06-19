@@ -91,3 +91,55 @@ func test_missing_defaults_absent_neighbours_to_h0() -> void:
 	# Absent dict entries default to h0 (connected) => no walls.
 	var missing: Array = HeightfieldVariant.missing_from_heights(4.0, {}, {})
 	assert_eq(missing.size(), 0, "absent neighbours default to h0 => no walls")
+
+# Convenience: a flat neighbourhood at height h (all 8 neighbours == h).
+func _flat(h: float) -> Array:
+	var cards: Dictionary = {"front": h, "right": h, "back": h, "left": h}
+	var diag: Dictionary = {"frontright": h, "backright": h, "backleft": h, "frontleft": h}
+	return [cards, diag]
+
+func test_descriptor_flat_ground() -> void:
+	var nb: Array = _flat(0.0)
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(0.0, 0, 0, nb[0], nb[1])
+	assert_eq(d["family"], "ground", "storey 0 level 0 flat => ground")
+	assert_eq(d["variant_tag"], "ground", "ground tile tag")
+	assert_almost_eq(d["origin_y"], 0.0, 0.0001, "ground at y=0")
+
+func test_descriptor_cliff_edge() -> void:
+	# Storey 1 (origin 4m), front drops a full storey to ground.
+	var cards: Dictionary = {"front": 0.0, "right": 4.0, "back": 4.0, "left": 4.0}
+	var diag: Dictionary = {"frontright": 4.0, "backright": 4.0, "backleft": 4.0, "frontleft": 4.0}
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(4.0, 1, 0, cards, diag)
+	assert_eq(d["family"], "cliff", "a 4m drop => cliff family")
+	assert_eq(d["variant_tag"], "cliff-side", "one cliff wall => cliff-side")
+	assert_almost_eq(d["origin_y"], 4.0, 0.0001, "cliff plateau top at storey*4")
+
+func test_descriptor_level_edge() -> void:
+	# Storey 0 level 1 (origin 0.5m), front drops one level to 0.
+	var cards: Dictionary = {"front": 0.0, "right": 0.5, "back": 0.5, "left": 0.5}
+	var diag: Dictionary = {"frontright": 0.5, "backright": 0.5, "backleft": 0.5, "frontleft": 0.5}
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(0.5, 0, 1, cards, diag)
+	assert_eq(d["family"], "level", "a 0.5m drop => level family")
+	assert_eq(d["variant_tag"], "level-side", "one level wall => level-side")
+	assert_almost_eq(d["origin_y"], 0.5, 0.0001, "level top at storey*4 + level*0.5")
+
+func test_descriptor_cliff_plateau_interior() -> void:
+	var nb: Array = _flat(4.0)
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(4.0, 1, 0, nb[0], nb[1])
+	assert_eq(d["family"], "cliff", "elevated flat cell is cliff family")
+	assert_eq(d["variant_tag"], "cliff-interior", "flat cliff top => cliff-interior")
+
+func test_descriptor_level_center() -> void:
+	var nb: Array = _flat(0.5)
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(0.5, 0, 1, nb[0], nb[1])
+	assert_eq(d["family"], "level", "raised-but-flat level cell")
+	assert_eq(d["variant_tag"], "level-center", "flat level => level-center")
+
+func test_descriptor_cliff_corner_with_rotation() -> void:
+	# Drops on right and back (a corner) at storey 1.
+	var cards: Dictionary = {"front": 4.0, "right": 0.0, "back": 0.0, "left": 4.0}
+	var diag: Dictionary = {"frontright": 0.0, "backright": 0.0, "backleft": 4.0, "frontleft": 4.0}
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(4.0, 1, 0, cards, diag)
+	assert_eq(d["family"], "cliff", "two cliff walls")
+	assert_eq(d["variant_tag"], "cliff-corner", "adjacent cliff walls => cliff-corner")
+	assert_true(d["rotation_steps"] >= 0 and d["rotation_steps"] <= 3, "rotation in range")

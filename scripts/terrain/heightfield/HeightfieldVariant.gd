@@ -101,3 +101,53 @@ static func missing_from_heights(
 			if not card_wall[pair[0]] and not card_wall[pair[1]]:
 				missing.append(d)
 	return missing
+
+
+## Full tile descriptor for a cell: {family, variant_tag, rotation_steps, origin_y}.
+## family is "ground"/"level"/"cliff". Family is chosen by the magnitude of the
+## cardinal drops (a ~4m drop => cliff, a ~0.5m drop => level); a flat cell's family
+## comes from its elevation (storey>0 => cliff plateau, level>0 => level plateau,
+## else ground). origin_y is the cell's surface height (tiles' origins sit at their
+## top). variant_tag is the family-prefixed bare variant ("center" maps to
+## "level-center" / "cliff-interior").
+static func cell_descriptor(
+	h0: float, storey: int, level: int,
+	cardinals: Dictionary, diagonals: Dictionary, eps: float = 0.1
+) -> Dictionary:
+	var missing: Array[String] = missing_from_heights(h0, cardinals, diagonals, eps)
+	var has_cliff_drop: bool = false
+	var has_level_drop: bool = false
+	for c in CARDINALS:
+		var drop: float = h0 - float(cardinals.get(c, h0))
+		if drop > eps:
+			if absf(drop - STOREY_HEIGHT) < absf(drop - LEVEL_HEIGHT):
+				has_cliff_drop = true
+			else:
+				has_level_drop = true
+	var family: String
+	if has_cliff_drop:
+		family = "cliff"
+	elif has_level_drop:
+		family = "level"
+	elif storey > 0:
+		family = "cliff"
+	elif level > 0:
+		family = "level"
+	else:
+		family = "ground"
+	var origin_y: float = float(storey) * STOREY_HEIGHT + float(level) * LEVEL_HEIGHT
+	if family == "ground":
+		return {"family": "ground", "variant_tag": "ground", "rotation_steps": 0, "origin_y": origin_y}
+	var v: Dictionary = variant_for_missing(missing)
+	var bare: String = v["tag"]
+	var variant_tag: String
+	if family == "cliff":
+		variant_tag = "cliff-interior" if bare == "center" else "cliff-" + bare
+	else:
+		variant_tag = "level-center" if bare == "center" else "level-" + bare
+	return {
+		"family": family,
+		"variant_tag": variant_tag,
+		"rotation_steps": int(v["rotation_steps"]),
+		"origin_y": origin_y,
+	}
