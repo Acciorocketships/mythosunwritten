@@ -129,10 +129,13 @@ static func cell_descriptor(
 		family = "cliff"
 	elif has_level_drop:
 		family = "level"
+	elif level > 0:
+		# A flat terrace surface (even on a cliff plateau) is level-center, so it
+		# matches the level-* variants of its own 0.5m edges. Checked before
+		# storey>0 so a terraced plateau interior is not mislabelled cliff-interior.
+		family = "level"
 	elif storey > 0:
 		family = "cliff"
-	elif level > 0:
-		family = "level"
 	else:
 		family = "ground"
 	var origin_y: float = float(storey) * STOREY_HEIGHT + float(level) * LEVEL_HEIGHT

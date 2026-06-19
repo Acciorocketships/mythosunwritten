@@ -142,4 +142,22 @@ func test_descriptor_cliff_corner_with_rotation() -> void:
 	var d: Dictionary = HeightfieldVariant.cell_descriptor(4.0, 1, 0, cards, diag)
 	assert_eq(d["family"], "cliff", "two cliff walls")
 	assert_eq(d["variant_tag"], "cliff-corner", "adjacent cliff walls => cliff-corner")
-	assert_true(d["rotation_steps"] >= 0 and d["rotation_steps"] <= 3, "rotation in range")
+	assert_eq(d["rotation_steps"], 2, "corner canonical [front,left] rotates twice to [back,right]")
+
+func test_descriptor_terrace_edge_on_a_cliff_plateau() -> void:
+	# A level-2 terrace sitting on a storey-1 plateau (origin 5.0m), front drops
+	# one level (0.5m) to level 1. It is a level-side, NOT a cliff tile.
+	var cards: Dictionary = {"front": 4.5, "right": 5.0, "back": 5.0, "left": 5.0}
+	var diag: Dictionary = {"frontright": 5.0, "backright": 5.0, "backleft": 5.0, "frontleft": 5.0}
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(5.0, 1, 2, cards, diag)
+	assert_eq(d["family"], "level", "a 0.5m drop is a level edge even up on a plateau")
+	assert_eq(d["variant_tag"], "level-side", "terrace edge on a plateau => level-side")
+	assert_almost_eq(d["origin_y"], 5.0, 0.0001, "origin = 1*4 + 2*0.5")
+
+func test_descriptor_flat_terrace_interior_on_plateau_is_level_center() -> void:
+	# Flat level-2 terrace interior on a storey-1 plateau: must be level-center
+	# (matching its level-* edges), NOT cliff-interior, even though storey > 0.
+	var nb: Array = _flat(5.0)
+	var d: Dictionary = HeightfieldVariant.cell_descriptor(5.0, 1, 2, nb[0], nb[1])
+	assert_eq(d["family"], "level", "level>0 takes priority over storey>0 for flat cells")
+	assert_eq(d["variant_tag"], "level-center", "flat terrace interior => level-center")
