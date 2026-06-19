@@ -41,3 +41,21 @@ func test_is_structural_socket_classifies_seeds_vs_decoration() -> void:
 	var water: TerrainModuleInstance = _spawn(lib, "water")
 	assert_false(gen._is_structural_socket(water, "topcenter"), "water is not structural")
 	gen.free()
+
+func test_heightfield_places_and_indexes_structural_tiles() -> void:
+	var gen = _make_generator(true)
+	add_child_autofree(gen)         # so child nodes (terrain_parent, player, tiles) clean up
+	gen.init_for_test()
+	gen.HEIGHTFIELD_PLACE_RADIUS = 1   # keep the (reference, slow) placement tiny for the test
+	gen.drive_heightfield_structure(Vector3.ZERO)
+	var plan: HeightfieldPlan = gen.heightfield_plan
+	var found: int = 0
+	for cz in range(-1, 2):
+		for cx in range(-1, 2):
+			var center: Vector3 = Vector3(cx * 24.0, plan.surface_height(cx, cz), cz * 24.0)
+			var box: AABB = AABB(center - Vector3(1, 2, 1), Vector3(2, 4, 2))
+			for hit in gen.terrain_index.query_box(box):
+				if hit is TerrainModuleInstance:
+					found += 1
+					break
+	assert_gt(found, 0, "structural tiles were placed and indexed near the origin")
