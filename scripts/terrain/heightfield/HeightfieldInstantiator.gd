@@ -120,6 +120,11 @@ func evict_placed_outside(center_cx: int, center_cz: int, keep_radius: int) -> v
 
 ## Spawn one record; return 1 if it was dropped (no module / failed create), else 0.
 ## Surfaces gaps that spawn_placement otherwise reports only via push_error.
+## NOTE: the empty-module case is checked here and returns early WITHOUT calling
+## spawn_placement on purpose — spawn_placement push_error()s on a missing module,
+## and this project's GUT config turns any push_error during a test into a failure.
+## Do not "simplify" this to a bare spawn_placement delegation; it will break
+## test_place_region_reports_dropped_cells_for_unknown_tag.
 func spawn_count_dropped(record: Dictionary, library: TerrainModuleLibrary, parent: Node3D) -> int:
 	var tag: String = _lookup_tag(String(record["variant_tag"]))
 	var modules: TerrainModuleList = library.get_by_tags(TagList.new([tag]))
