@@ -33,7 +33,7 @@ func test_is_structural_socket_classifies_seeds_vs_decoration() -> void:
 	lib.init()
 	var ground: TerrainModuleInstance = _spawn(lib, "ground-plain")
 	assert_true(gen._is_structural_socket(ground, "topcenter"), "ground topcenter seeds structure")
-	assert_false(gen._is_structural_socket(ground, "front"), "ground laterals tile the base plane, not structure")
+	assert_true(gen._is_structural_socket(ground, "front"), "under heightfield the plan owns the base plane, so ground laterals are suppressed")
 	var cliff: TerrainModuleInstance = _spawn(lib, "cliff-side")
 	assert_true(gen._is_structural_socket(cliff, "front"), "cliff lateral is structural")
 	assert_true(gen._is_structural_socket(cliff, "topcenter"), "cliff topcenter (stacking) is structural")
@@ -86,3 +86,13 @@ func test_no_start_tile_when_heightfield_on() -> void:
 	add_child_autofree(gen.terrain_parent)
 	add_child_autofree(gen)   # fires _ready with the flag on and terrain_parent set
 	assert_eq(gen.terrain_parent.get_child_count(), 0, "no start tile placed under heightfield")
+
+func test_ground_laterals_suppressed_under_heightfield() -> void:
+	var gen = _make_generator(true)
+	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
+	lib.init()
+	var ground: TerrainModuleInstance = _spawn(lib, "ground-plain")
+	for s in ["front", "back", "left", "right", "topcenter"]:
+		assert_true(gen._is_structural_socket(ground, s),
+			"ground %s is structural under the heightfield" % s)
+	gen.free()

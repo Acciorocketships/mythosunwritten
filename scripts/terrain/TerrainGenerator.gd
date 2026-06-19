@@ -482,13 +482,17 @@ func structural_seeding_suppressed() -> bool:
 ## A socket whose expansion would place a level/cliff structural tile: the
 ## ground-topcenter seed, and any lateral/topcenter on a level or cliff tile
 ## (this includes cliff-interior, whose topcenter seeds the next cliff storey).
-## Foliage top sockets (topfront/…) and base-ground cardinal laterals are NOT
-## structural and are left untouched.
+## Under the heightfield, ground-plain cardinal laterals are ALSO structural:
+## the moving place-region is the sole base-plane source, so emergent ground
+## lateral expansion would double-place at the region edge.
+## Foliage top sockets (topfront/…) are NOT structural and are left untouched.
 func _is_structural_socket(piece: TerrainModuleInstance, socket_name: String) -> bool:
 	if piece.def.tags.has("level") or piece.def.tags.has("cliff"):
 		return socket_name in ["front", "back", "left", "right", "topcenter"]
-	if piece.def.tags.has("ground-plain") and socket_name == "topcenter":
-		return true
+	if piece.def.tags.has("ground-plain"):
+		# Under the heightfield, the moving place-region is the sole base-plane
+		# source; emergent ground laterals would double-place at the region edge.
+		return socket_name in ["front", "back", "left", "right", "topcenter"]
 	return false
 
 
