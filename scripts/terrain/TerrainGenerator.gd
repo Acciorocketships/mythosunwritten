@@ -68,14 +68,15 @@ func _ready() -> void:
 	if terrain_parent == null:
 		return
 
-	var start_tile := load_start_tile()
 	queue = PriorityQueue.new()
 	queued_socket_keys.clear()
 	_tracked_queue_ref = queue
-	# Register the start tile in indices so collision checks work and adjacency can be detected
-	# Sockets are indexed so they can act as adjacency barriers.
-	register_piece(start_tile, "")
-	add_piece_to_queue(start_tile)
+	if not use_heightfield:
+		var start_tile := load_start_tile()
+		# Register the start tile in indices so collision checks work and adjacency can be detected
+		# Sockets are indexed so they can act as adjacency barriers.
+		register_piece(start_tile, "")
+		add_piece_to_queue(start_tile)
 
 	if use_heightfield:
 		heightfield_plan = HeightfieldPlan.new(world_seed)
@@ -113,7 +114,7 @@ func load_terrain() -> void:
 	# exit, now trustworthy because priorities are honest).
 	var current_player_pos: Vector3 = player.global_position if player != null else Vector3.ZERO
 	if use_heightfield:
-		drive_heightfield_structure(current_player_pos)
+		_drive_heightfield_structure(current_player_pos)
 	if current_player_pos == _last_player_pos and not queue.is_empty():
 		var repairs: int = 0
 		while not queue.is_empty():
@@ -1347,18 +1348,19 @@ func init_for_test() -> void:
 ## seeding is suppressed (structural_seeding_suppressed). register_piece indexes the
 ## tile and applies the reveal margin; add_piece_to_queue seeds only foliage/water
 ## (structural sockets return 0 fill while the flag is on).
-func drive_heightfield_structure(player_pos: Vector3) -> void:
+func _drive_heightfield_structure(player_pos: Vector3) -> void:
 	if not use_heightfield or heightfield_plan == null or _heightfield_placer == null:
 		return
-	var cx: int = int(round(player_pos.x / HeightfieldPlan.TILE))
-	var cz: int = int(round(player_pos.z / HeightfieldPlan.TILE))
+	var cx: int = roundi(player_pos.x / HeightfieldPlan.TILE)
+	var cz: int = roundi(player_pos.z / HeightfieldPlan.TILE)
 	var spawned: Array = _heightfield_placer.place_region(
 		heightfield_plan, library, terrain_parent, cx, cz, HEIGHTFIELD_PLACE_RADIUS
 	)
 	for inst in spawned:
 		register_piece(inst, "")
 		add_piece_to_queue(inst)
-	_heightfield_placer.evict_placed_outside(cx, cz, HEIGHTFIELD_PLACE_RADIUS + 2)
+	for inst in _heightfield_placer.evict_placed_outside(cx, cz, HEIGHTFIELD_PLACE_RADIUS + 2):
+		remove_piece(inst)
 
 
 func load_start_tile() -> TerrainModuleInstance:

@@ -164,8 +164,9 @@ func test_evict_placed_outside_radius_prunes_distant_cells() -> void:
 	placer.place_region(plan, lib, parent, 0, 0, 1)            # places 9 cells around (0,0)
 	assert_eq(placer.placed_count(), 9, "9 cells tracked")
 	# Evict everything not within radius 0 of a far center => all 9 pruned.
-	placer.evict_placed_outside(100, 100, 0)
+	var evicted: Array = placer.evict_placed_outside(100, 100, 0)
 	assert_eq(placer.placed_count(), 0, "distant cells pruned from the placed set")
+	assert_eq(evicted.size(), 9, "evicted instances returned for removal")
 
 func test_place_region_reports_dropped_cells_for_unknown_tag() -> void:
 	# A record whose tag has no module is dropped; spawn_count_dropped returns 1.

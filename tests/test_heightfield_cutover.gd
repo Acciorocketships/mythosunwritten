@@ -47,7 +47,7 @@ func test_heightfield_places_and_indexes_structural_tiles() -> void:
 	add_child_autofree(gen)         # so child nodes (terrain_parent, player, tiles) clean up
 	gen.init_for_test()
 	gen.HEIGHTFIELD_PLACE_RADIUS = 1   # keep the (reference, slow) placement tiny for the test
-	gen.drive_heightfield_structure(Vector3.ZERO)
+	gen._drive_heightfield_structure(Vector3.ZERO)
 	var plan: HeightfieldPlan = gen.heightfield_plan
 	var found: int = 0
 	for cz in range(-1, 2):
@@ -59,3 +59,30 @@ func test_heightfield_places_and_indexes_structural_tiles() -> void:
 					found += 1
 					break
 	assert_gt(found, 0, "structural tiles were placed and indexed near the origin")
+
+func test_eviction_removes_distant_tiles_no_double_placement() -> void:
+	# Place around origin, then drive far away: the origin cluster must be removed
+	# from the index (not just forgotten), so returning never double-places it.
+	var gen = _make_generator(true)
+	add_child_autofree(gen)
+	gen.init_for_test()
+	gen.HEIGHTFIELD_PLACE_RADIUS = 1
+	gen._drive_heightfield_structure(Vector3.ZERO)
+	# Drive far enough that the origin cells fall outside keep_radius (R+2 = 3).
+	gen._drive_heightfield_structure(Vector3(100 * 24.0, 0, 0))
+	var origin_box: AABB = AABB(Vector3(-13, -6, -13), Vector3(26, 12, 26))
+	var near_origin: int = 0
+	for hit in gen.terrain_index.query_box(origin_box):
+		if hit is TerrainModuleInstance:
+			near_origin += 1
+	assert_eq(near_origin, 0, "evicted origin tiles were removed from the index")
+	gen.free()
+
+func test_no_start_tile_when_heightfield_on() -> void:
+	# With the flag on, _ready must NOT place the emergent start tile (the
+	# heightfield covers the origin cell), avoiding an overlap at (0,0).
+	var gen = _make_generator(true)
+	gen.terrain_parent = Node3D.new()
+	add_child_autofree(gen.terrain_parent)
+	add_child_autofree(gen)   # fires _ready with the flag on and terrain_parent set
+	assert_eq(gen.terrain_parent.get_child_count(), 0, "no start tile placed under heightfield")

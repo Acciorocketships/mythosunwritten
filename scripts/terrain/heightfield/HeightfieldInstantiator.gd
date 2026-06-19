@@ -96,7 +96,7 @@ func place_region(
 				continue
 			var rec: Dictionary = placement_for_cell(plan, cell.x, cell.y)
 			var inst: TerrainModuleInstance = spawn_placement(rec, library, parent)
-			_placed[cell] = true
+			_placed[cell] = inst   # may be null if dropped; key presence = placed
 			if inst != null:
 				spawned.append(inst)
 	return spawned
@@ -108,14 +108,21 @@ func placed_count() -> int:
 
 
 ## Drop placed-cell records whose Chebyshev distance from (center_cx, center_cz)
-## exceeds `keep_radius`, so the set stays bounded as the player roams. Cells
-## re-enter via place_region identically (the plan is deterministic) — no churn.
-func evict_placed_outside(center_cx: int, center_cz: int, keep_radius: int) -> void:
+## exceeds `keep_radius`. Returns the evicted (non-null) instances so the caller
+## can remove their nodes/index entries — the placed set alone going stale would
+## otherwise let a returning player double-place a cell.
+func evict_placed_outside(center_cx: int, center_cz: int, keep_radius: int) -> Array[TerrainModuleInstance]:
 	var survivors: Dictionary = {}
+	var evicted: Array[TerrainModuleInstance] = []
 	for cell in _placed.keys():
 		if absi(cell.x - center_cx) <= keep_radius and absi(cell.y - center_cz) <= keep_radius:
-			survivors[cell] = true
+			survivors[cell] = _placed[cell]
+		else:
+			var inst: TerrainModuleInstance = _placed[cell]
+			if inst != null:
+				evicted.append(inst)
 	_placed = survivors
+	return evicted
 
 
 ## Spawn one record; return 1 if it was dropped (no module / failed create), else 0.
