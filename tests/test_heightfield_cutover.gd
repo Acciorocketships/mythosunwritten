@@ -98,12 +98,17 @@ func test_ground_laterals_suppressed_under_heightfield() -> void:
 	gen.free()
 
 func test_heightfield_ground_becomes_water_in_water_field() -> void:
+	# On flat (all storey-0 ground) terrain, a heightfield ground tile placed at a
+	# water-field position must be converted to a water tile by WaterRule.
 	var gen = _make_generator(true)
 	add_child_autofree(gen)
 	gen.init_for_test()
 	gen.HEIGHTFIELD_PLACE_RADIUS = 3
 	var seed: int = gen.world_seed
-	# Find a water cell for this seed within a small search area.
+	# Force a flat ground plan so every cell is a storey-0 ground tile (the case
+	# WaterRule handles). is_water still uses world_seed, unaffected by the override.
+	gen.heightfield_plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 0.0)
+	# Find a water cell for this seed.
 	var water_cell := Vector2i(99999, 99999)
 	for cz in range(-30, 30):
 		for cx in range(-30, 30):
@@ -119,5 +124,5 @@ func test_heightfield_ground_becomes_water_in_water_field() -> void:
 	for hit in gen.terrain_index.query_box(box):
 		if hit is TerrainModuleInstance and hit.def.tags.has("water"):
 			has_water = true
-	assert_true(has_water, "heightfield ground in the water field is converted to water")
+	assert_true(has_water, "flat heightfield ground in the water field is converted to water by WaterRule")
 	gen.free()

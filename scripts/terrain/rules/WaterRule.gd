@@ -118,6 +118,23 @@ func apply(context: Dictionary) -> Dictionary:
 		# classify everything else by its water-facing sides.
 		if affected_piece == chosen_replacement and chosen_is_water:
 			continue
+		# A neighbour that is itself ground-plain on a water-field position must
+		# become a water tile too, not a bank — regardless of processing order.
+		# (When the heightfield places all ground tiles at once and then runs rules,
+		# a border tile may be processed before the water-cell tile and classify it
+		# as a bank via piece_updates; this guard ensures it becomes water instead.)
+		if (
+			affected_piece.def.tags.has("ground-plain")
+			and Helper.is_water(affected_piece.transform.origin, world_seed)
+		):
+			var water_replacement: TerrainModuleInstance = _create_water_replacement(
+				affected_piece, library
+			)
+			if affected_piece == chosen_replacement:
+				chosen_replacement = water_replacement
+			elif water_replacement != affected_piece:
+				piece_updates[affected_piece] = water_replacement
+			continue
 		var missing: Array[String] = _water_sides_for_piece(
 			affected_piece, socket_index, terrain_index, world_seed
 		)

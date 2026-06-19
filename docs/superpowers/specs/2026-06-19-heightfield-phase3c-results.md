@@ -18,6 +18,8 @@ These were surfaced during Phase 3c integration/visual analysis. None affect the
 3. **Performance / batching.** The per-cell reference `surface_height`/`storey_at`/`level_at` build large windows; `place_region` at radius 6–8 every frame is slow (first-frame hitch of seconds). For playable live use, batch the storey/level fields once per chunk instead of per cell. (Flagged since Phases 1–2 as deferred.)
 4. **Place-radius vs RENDER_RANGE/REVEAL_MARGIN reconciliation** and a **burst-harness churn run** (`burst_harness` with the flag on) to record structural churn = 0 quantitatively.
 
+- **Water on elevated terrain is deferred.** WaterRule now restores water/banks on flat (storey-0) heightfield ground tiles. Where the (independent) water field overlaps high terrain, the heightfield currently places land (cliff/level), not water — matching "water in low areas" rather than the old generator's water-takes-precedence. Full water-vs-height integration (force water cells low + bank drops, without breaking the 0/0.5/4 gap invariant) is a follow-up.
+
 ## Recommendation
 
 The structural redesign is proven end-to-end behind the flag. The remaining items are a focused follow-up phase (call it 3d): water integration + ground-lateral reconciliation + batching, then flip `use_heightfield` on by default and re-run the churn harness + screenshots as the final acceptance.
