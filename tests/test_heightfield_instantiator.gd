@@ -59,3 +59,38 @@ func test_placement_flat_ground_interior() -> void:
 	assert_eq(r["family"], "ground", "interior of the lowland is ground")
 	assert_eq(r["variant_tag"], "ground", "flat ground => ground tile")
 	assert_almost_eq(r["origin_y"], 0.0, 0.0001, "ground at y=0")
+
+
+func _library() -> TerrainModuleLibrary:
+	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
+	lib.init()
+	return lib
+
+func test_spawn_placement_creates_a_tile_at_the_right_transform() -> void:
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var lib: TerrainModuleLibrary = _library()
+	var rec: Dictionary = {
+		"variant_tag": "cliff-side", "family": "cliff",
+		"world_x": 48.0, "world_z": -24.0, "origin_y": 4.0, "yaw": 0.0,
+	}
+	var inst: TerrainModuleInstance = HeightfieldInstantiator.spawn_placement(rec, lib, parent)
+	assert_not_null(inst, "a tile instance is produced")
+	assert_not_null(inst.root, "the scene was instantiated")
+	assert_true(inst.def.tags.has("cliff-side"), "the chosen module is a cliff-side variant")
+	assert_almost_eq(inst.transform.origin.x, 48.0, 0.01, "x placed")
+	assert_almost_eq(inst.transform.origin.y, 4.0, 0.01, "origin_y placed")
+	assert_almost_eq(inst.transform.origin.z, -24.0, 0.01, "z placed")
+	assert_eq(inst.root.get_parent(), parent, "tile parented under the target node")
+
+func test_spawn_placement_ground_uses_ground_plain() -> void:
+	var parent: Node3D = Node3D.new()
+	add_child_autofree(parent)
+	var lib: TerrainModuleLibrary = _library()
+	var rec: Dictionary = {
+		"variant_tag": "ground", "family": "ground",
+		"world_x": 0.0, "world_z": 0.0, "origin_y": 0.0, "yaw": 0.0,
+	}
+	var inst: TerrainModuleInstance = HeightfieldInstantiator.spawn_placement(rec, lib, parent)
+	assert_not_null(inst, "ground tile produced")
+	assert_true(inst.def.tags.has("ground-plain"), "ground maps to the ground-plain module")

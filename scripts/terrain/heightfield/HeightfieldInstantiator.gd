@@ -43,3 +43,31 @@ static func placement_for_cell(plan: HeightfieldPlan, cx: int, cz: int) -> Dicti
 		"origin_y": float(desc["origin_y"]),
 		"yaw": HeightfieldFacing.yaw_for_rotation_steps(int(desc["rotation_steps"])),
 	}
+
+
+## HV variant_tag -> the module tag to look up in the library.
+static func _lookup_tag(variant_tag: String) -> String:
+	if variant_tag == "ground":
+		return "ground-plain"
+	return variant_tag
+
+
+## Instantiate one placement record under `parent` and return the live instance,
+## or null if no module matches the tag. Sets the transform directly (origin_y +
+## a Y-axis yaw) — no socket attachment. Caller is responsible for indexing.
+static func spawn_placement(
+	record: Dictionary, library: TerrainModuleLibrary, parent: Node3D
+) -> TerrainModuleInstance:
+	var tag: String = _lookup_tag(String(record["variant_tag"]))
+	var modules: TerrainModuleList = library.get_by_tags(TagList.new([tag]))
+	if modules.is_empty():
+		push_error("HeightfieldInstantiator: no module for tag '%s'" % tag)
+		return null
+	var template: TerrainModule = library.get_random(modules, true)
+	var inst: TerrainModuleInstance = template.spawn()
+	var basis: Basis = Basis(Vector3.UP, float(record["yaw"]))
+	var origin: Vector3 = Vector3(float(record["world_x"]), float(record["origin_y"]), float(record["world_z"]))
+	inst.set_transform(Transform3D(basis, origin))
+	inst.create()
+	parent.add_child(inst.root)
+	return inst
