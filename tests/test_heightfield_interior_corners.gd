@@ -91,10 +91,55 @@ func test_multistorey_corners_get_a_stacked_inner_corner() -> void:
 				continue
 			pattern_cells += 1
 			var rec: Dictionary = HeightfieldInstantiator.placement_for_cell(region, b.x, b.y)
-			if (rec.get("understack_yaws", []) as Array).is_empty():
+			if (rec.get("understacks", []) as Array).is_empty():
 				missing.append("%s s%d" % [b, sb])
 	gut.p("two-storey diagonal corners: %d, without a stacked inner corner: %d" % [pattern_cells, missing.size()])
 	for v in missing.slice(0, 12):
 		gut.p("  MISSING: " + v)
 	assert_gt(pattern_cells, 0, "two-storey diagonal corners must occur in the sampled region")
 	assert_eq(missing.size(), 0, "every two-storey diagonal corner gets a stacked inner corner")
+
+
+func test_multilevel_corners_get_a_stacked_inner_corner() -> void:
+	# Level analog of the multi-storey corner: within ONE storey, the level clamp is
+	# also cardinal-only, so a corner's diagonal can drop two levels (cardinals
+	# clamped to the level between). The lower-level interior corner belongs at the
+	# taller (same-storey) column whose surface tile sits a level higher, so the
+	# placement must stack a LEVEL inner corner there. Verify every such corner does.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(_SEED, _AMPLITUDE, _MAX_STOREYS, "mean")
+	var region: HeightfieldRegion = plan.compute_region(_CENTER.x, _CENTER.y, _RADIUS)
+	var pattern_cells: int = 0
+	var missing: Array = []
+	for dz in range(-_RADIUS + 1, _RADIUS):
+		for dx in range(-_RADIUS + 1, _RADIUS):
+			var b := Vector2i(_CENTER.x + dx, _CENTER.y + dz)
+			var sb: int = region.storey_at(b.x, b.y)
+			var lb: int = region.level_at(b.x, b.y)
+			var deep: bool = false
+			for corner in _CORNERS:
+				var c1: Vector2i = b + corner[0]
+				var c2: Vector2i = b + corner[1]
+				var d: Vector2i = b + corner[2]
+				# All four cells in B's storey; cardinals one level down, diagonal two.
+				if (region.storey_at(c1.x, c1.y) == sb
+						and region.storey_at(c2.x, c2.y) == sb
+						and region.storey_at(d.x, d.y) == sb
+						and region.level_at(c1.x, c1.y) == lb - 1
+						and region.level_at(c2.x, c2.y) == lb - 1
+						and region.level_at(d.x, d.y) == lb - 2):
+					deep = true
+			if not deep:
+				continue
+			pattern_cells += 1
+			var rec: Dictionary = HeightfieldInstantiator.placement_for_cell(region, b.x, b.y)
+			var has_level_understack: bool = false
+			for u in (rec.get("understacks", []) as Array):
+				if bool(u["is_level"]):
+					has_level_understack = true
+			if not has_level_understack:
+				missing.append("%s s%d.L%d" % [b, sb, lb])
+	gut.p("two-level diagonal corners: %d, without a stacked level inner corner: %d" % [pattern_cells, missing.size()])
+	for v in missing.slice(0, 12):
+		gut.p("  MISSING: " + v)
+	assert_gt(pattern_cells, 0, "two-level diagonal corners must occur in the sampled region")
+	assert_eq(missing.size(), 0, "every two-level diagonal corner gets a stacked level inner corner")
