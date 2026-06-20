@@ -124,15 +124,22 @@ static func spawn_placement(
 	if inst.root == null:
 		return null
 	parent.add_child(inst.root)
-	_add_base_fill(inst, String(record["family"]), tag)
-	_add_understack_corners(inst, record.get("understack_yaws", []))
+	var understacks: Array = record.get("understack_yaws", [])
+	# Skip the flat base plate when an understack is present: the understack's
+	# inner-corner top IS the storey-below floor (correctly notched toward the pit),
+	# whereas the base plate is a full square that would float over the pit and
+	# z-fight the understack top (the reported "superimposed center tile").
+	if understacks.is_empty():
+		_add_base_fill(inst, String(record["family"]), tag)
+	_add_understack_corners(inst, understacks)
 	if debug_labels:
 		_add_debug_label(inst, record)
 	return inst
 
 
 ## Stack inner-corner tiles one storey below this cell (children of its root, so
-## they evict with it) to render the corners of two-storey diagonal drops.
+## they evict with it) to render the corners of two-storey diagonal drops. Each
+## gets its own base plate so the ground reads under its overhanging lip.
 static func _add_understack_corners(inst: TerrainModuleInstance, yaws: Array) -> void:
 	var parent_yaw: float = inst.transform.basis.get_euler().y
 	for understack_yaw in yaws:
@@ -143,6 +150,11 @@ static func _add_understack_corners(inst: TerrainModuleInstance, yaws: Array) ->
 			Basis(Vector3.UP, float(understack_yaw) - parent_yaw),
 			Vector3(0.0, -_STOREY_DROP, 0.0))
 		inst.root.add_child(tile)
+		# Base plate one storey below the understack, so the ground extends under
+		# its inset wall (the reported "tile below peeking through").
+		var fill: Node3D = _BASE_FILL_SCENE.instantiate()
+		fill.position = Vector3(0.0, -_STOREY_DROP, 0.0)
+		tile.add_child(fill)
 
 
 ## Floating label over a cliff/level tile: variant tag, cell coords, storey/level.
