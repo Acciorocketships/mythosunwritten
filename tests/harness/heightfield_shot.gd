@@ -17,6 +17,7 @@ var character
 var cam: Camera3D
 var _frame: int = 0
 var _saved: bool = false
+var _park: Vector3 = PLAYER_POS
 
 
 func _ready() -> void:
@@ -27,22 +28,41 @@ func _ready() -> void:
 	add_child(world)
 	# Use the generator's real plan params (set in _ready). Just trim the place
 	# radius so the render is quick.
-	terrain.HEIGHTFIELD_PLACE_RADIUS = 6
+	terrain.HEIGHTFIELD_PLACE_RADIUS = 8
+	# Find the highest-elevation spot in a search area so the shot frames mountains.
+	var spot: Vector3 = _find_high_spot(terrain.heightfield_plan)
+	print("[hf-shot] high spot=", spot)
+	_park = spot
 	character = world.get_node("Characters/Character")
 	character.set_physics_process(false)
-	character.global_position = PLAYER_POS
+	character.global_position = spot
 
+	# Camera kept INSIDE the placed region (radius 8 = 192m) so terrain fills frame.
 	cam = Camera3D.new()
 	add_child(cam)
-	cam.global_position = PLAYER_POS + Vector3(0.0, 45.0, 150.0)
-	cam.look_at(PLAYER_POS + Vector3(0.0, 18.0, -30.0), Vector3.UP)
+	cam.global_position = spot + Vector3(70.0, 50.0, 90.0)
+	cam.look_at(spot + Vector3(0.0, -6.0, 0.0), Vector3.UP)
 	cam.current = true
+
+
+func _find_high_spot(plan) -> Vector3:
+	var best: Vector2i = Vector2i(50, 50)
+	var best_h: float = -1.0
+	# Scan the fast raw height field (not the slow clamped surface_height) for the
+	# tallest column to frame the shot on a mountain.
+	for cz in range(-150, 150, 2):
+		for cx in range(-150, 150, 2):
+			var h: float = plan.raw_height(cx, cz)
+			if h > best_h:
+				best_h = h
+				best = Vector2i(cx, cz)
+	return Vector3(best.x * 24.0, best_h + 4.0, best.y * 24.0)
 
 
 func _process(_dt: float) -> void:
 	# Keep the player parked so terrain settles around PLAYER_POS.
 	if character != null:
-		character.global_position = PLAYER_POS
+		character.global_position = _park
 	_frame += 1
 	if _frame >= WARMUP_FRAMES and not _saved:
 		_saved = true
