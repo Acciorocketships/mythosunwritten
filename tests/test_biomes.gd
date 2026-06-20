@@ -112,28 +112,3 @@ func test_biome_scaled_dist_leaves_single_entry_untouched() -> void:
 	assert_eq(scaled.prob("tree"), 1.0, "single-entry distributions renormalise to themselves")
 
 
-func test_cliff_contour_threshold_rises_with_storey() -> void:
-	var gen: Variant = _new_generator()
-	# Find positions just inside the base contour: the base storey must expand
-	# there while a higher storey must not.
-	var found: bool = false
-	for i in range(6000):
-		var p: Vector3 = Vector3((i % 96) * 31.0, 0.0, (i / 96) * 37.0)
-		var macro: float = Helper.macro_density01(p, gen.world_seed)
-		var base_threshold: float = TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
-		if macro < base_threshold or macro >= base_threshold + TerrainModuleDefinitions.CLIFF_CONTOUR_STEP * 3.0:
-			continue
-		found = true
-		var base_piece: TerrainModuleInstance = _mock_cliff_piece_at_height(4.5)
-		var high_piece: TerrainModuleInstance = _mock_cliff_piece_at_height(4.5 + 4.0 * 4.0)
-		assert_eq(gen._cliff_contour_fill(base_piece, p), 1.0, "base storey expands inside its contour")
-		assert_eq(gen._cliff_contour_fill(high_piece, p), 0.0, "storey 5 must not expand at a base-edge position")
-		break
-	assert_true(found, "sample area must contain a base-contour edge position")
-
-
-func _mock_cliff_piece_at_height(y: float) -> TerrainModuleInstance:
-	var def: TerrainModule = TerrainModule.new(null, AABB(), TagList.new(["cliff"]), [], {}, {}, {}, {}, false)
-	var piece: TerrainModuleInstance = TerrainModuleInstance.new(def)
-	piece.transform = Transform3D(Basis.IDENTITY, Vector3(0, y, 0))
-	return piece

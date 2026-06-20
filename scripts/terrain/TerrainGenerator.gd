@@ -495,10 +495,6 @@ func _route_fill_prob(
 	if fill <= 0.0:
 		return 0.0
 	if fill < 1.0:
-		# Cliff plateaus are carved from the macro field as contour lines
-		# (solid mesas, per-storey taper) — see CLIFF_CONTOUR_BASE.
-		if _is_cliff_lateral(piece, socket_name):
-			return _cliff_contour_fill(piece, pos)
 		# Decoration-capable sockets follow the biome flora density (forests
 		# dense, meadows open) on EVERY walkable surface — ground, level, and
 		# cliff tops share the same deco spawn rules. Checked before the
@@ -559,21 +555,6 @@ func _in_cliff_core(pos: Vector3) -> bool:
 		Helper.macro_density01(pos, world_seed)
 		>= TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
 	)
-
-
-func _is_cliff_lateral(piece: TerrainModuleInstance, socket_name: String) -> bool:
-	if not (socket_name == "front" or socket_name == "back"
-			or socket_name == "left" or socket_name == "right"):
-		return false
-	return piece.def.tags.has("cliff")
-
-
-# Contour test for cliff plateau growth: expand iff the macro density at the
-# target position clears this storey's threshold.
-func _cliff_contour_fill(piece: TerrainModuleInstance, pos: Vector3) -> float:
-	if Helper.macro_density01(pos, world_seed) >= _cliff_storey_threshold(piece):
-		return 1.0
-	return 0.0
 
 
 # Cliff origins sit on the storey top plane (base tier y = 4.0: ground
