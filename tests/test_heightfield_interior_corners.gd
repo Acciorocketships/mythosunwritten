@@ -65,28 +65,36 @@ func test_interior_corners_are_inner_corner_variants() -> void:
 	assert_eq(violations.size(), 0, "every interior corner is an inner-corner variant")
 
 
-func test_no_diagonal_drops_more_than_one_storey() -> void:
-	# A diagonal that drops 2+ storeys is a multi-storey corner: the cardinals
-	# between are clamped to the storey in between, so the lower (s-1 -> s-2)
-	# interior corner falls on the taller diagonal column, which renders only its
-	# top tile -> that interior corner is never placed and a gap opens. This is the
-	# reported "tile above the missing corner". A column tile cannot represent a
-	# corner at a storey below its own surface, so the cliff field must not produce
-	# diagonal drops steeper than one storey.
+func test_multistorey_corners_get_a_stacked_inner_corner() -> void:
+	# A diagonal that drops two storeys (cardinals clamped to the storey between) is
+	# a multi-storey corner: the lower interior corner belongs at the taller column,
+	# whose surface tile sits a storey higher. The placement must stack an inner
+	# corner there, else the corner gaps. Verify every such corner gets a stack.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(_SEED, _AMPLITUDE, _MAX_STOREYS, "mean")
 	var region: HeightfieldRegion = plan.compute_region(_CENTER.x, _CENTER.y, _RADIUS)
-	var diags: Array = [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
-	var violations: Array = []
+	var pattern_cells: int = 0
+	var missing: Array = []
 	for dz in range(-_RADIUS + 1, _RADIUS):
 		for dx in range(-_RADIUS + 1, _RADIUS):
 			var b := Vector2i(_CENTER.x + dx, _CENTER.y + dz)
 			var sb: int = region.storey_at(b.x, b.y)
-			for dg in diags:
-				var nb: Vector2i = b + dg
-				if absi(region.storey_at(nb.x, nb.y) - sb) >= 2:
-					violations.append("%s s%d <-> %s s%d (diagonal)" % [
-						b, sb, nb, region.storey_at(nb.x, nb.y)])
-	gut.p("diagonal drops >1 storey: %d" % violations.size())
-	for v in violations.slice(0, 12):
-		gut.p("  VIOLATION: " + v)
-	assert_eq(violations.size(), 0, "no diagonal neighbour differs by more than one storey")
+			var deep: bool = false
+			for corner in _CORNERS:
+				var c1: Vector2i = b + corner[0]
+				var c2: Vector2i = b + corner[1]
+				var d: Vector2i = b + corner[2]
+				if (region.storey_at(c1.x, c1.y) == sb - 1
+						and region.storey_at(c2.x, c2.y) == sb - 1
+						and region.storey_at(d.x, d.y) == sb - 2):
+					deep = true
+			if not deep:
+				continue
+			pattern_cells += 1
+			var rec: Dictionary = HeightfieldInstantiator.placement_for_cell(region, b.x, b.y)
+			if (rec.get("understack_yaws", []) as Array).is_empty():
+				missing.append("%s s%d" % [b, sb])
+	gut.p("two-storey diagonal corners: %d, without a stacked inner corner: %d" % [pattern_cells, missing.size()])
+	for v in missing.slice(0, 12):
+		gut.p("  MISSING: " + v)
+	assert_gt(pattern_cells, 0, "two-storey diagonal corners must occur in the sampled region")
+	assert_eq(missing.size(), 0, "every two-storey diagonal corner gets a stacked inner corner")

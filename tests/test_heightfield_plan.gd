@@ -54,18 +54,18 @@ func _grid(rows: Array) -> Dictionary:
 	return out
 
 func test_clamp_leaves_gentle_field_untouched() -> void:
-	# All 8 neighbours (diagonals included) already differ by <=1: clamp is a no-op.
-	# Ramps in x only, so every diagonal differs by exactly 1.
-	var targets: Dictionary = _grid([[0, 1, 2], [0, 1, 2], [0, 1, 2]])
+	# Cardinal neighbours already differ by <=1: clamp is a no-op.
+	var targets: Dictionary = _grid([[0, 1, 2], [1, 2, 3], [2, 3, 4]])
 	var out: Dictionary = HeightfieldPlan.clamp_field(targets)
 	assert_eq(out, targets, "already-valid field is unchanged")
 
-func test_clamp_lowers_a_two_storey_diagonal_drop() -> void:
-	# 8-connectivity: a cell two storeys above a DIAGONAL neighbour is lowered,
-	# even when its cardinals are fine (this is the multi-storey-corner gap source).
+func test_clamp_allows_a_two_storey_diagonal_drop() -> void:
+	# Diagonals are intentionally unconstrained: a convex corner (2) may sit one
+	# diagonal step from a pit (0), cardinals clamped to the storey (1) between.
+	# The instantiator renders the lower interior corner for this formation.
 	var targets: Dictionary = _grid([[2, 1], [1, 0]])
 	var out: Dictionary = HeightfieldPlan.clamp_field(targets)
-	assert_eq(out[Vector2i(0, 0)], 1, "cell is clamped to one storey above its diagonal pit")
+	assert_eq(out[Vector2i(0, 0)], 2, "diagonal drop of two storeys is preserved")
 
 func test_clamp_trickles_a_spike_into_a_staircase() -> void:
 	# A lone storey-4 spike surrounded by 0s must trickle down to <=1 per step.

@@ -12,6 +12,21 @@ const _BASE_FILL_SCENE: PackedScene = preload("res://terrain/gltf/hill_top_e_cen
 const _STOREY_DROP: float = 4.0
 const _LEVEL_DROP: float = 0.5
 
+## Inner-corner cliff tile, stacked one storey below a convex corner whose diagonal
+## drops two storeys. The cardinal clamp lets a corner column (storey S) sit one
+## diagonal step above a pit (storey S-2), cardinals clamped to S-1 between. The
+## S-1 interior corner of that pit belongs at the corner column, but the column's
+## surface tile is the S convex corner — a single tile can't be a corner a storey
+## below itself — so we stack the inner corner at S-1 to fill it.
+const _INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/CliffInCorner.tscn")
+# diagonal socket -> [adjoining cardinal offsets, diagonal cell offset]
+const _CORNER_DIAGS: Array = [
+	["frontright", Vector2i(0, -1), Vector2i(1, 0), Vector2i(1, -1)],
+	["backright", Vector2i(0, 1), Vector2i(1, 0), Vector2i(1, 1)],
+	["backleft", Vector2i(0, 1), Vector2i(-1, 0), Vector2i(-1, 1)],
+	["frontleft", Vector2i(0, -1), Vector2i(-1, 0), Vector2i(-1, -1)],
+]
+
 ## When true, every cliff/level tile gets a floating Label3D showing its variant
 ## tag + cell coords + storey/level — a diagnostic overlay for inspecting tiling
 ## bugs in-game. Toggled via TerrainGenerator.DEBUG_TILE_LABELS.
@@ -57,7 +72,29 @@ static func placement_for_cell(plan, cx: int, cz: int) -> Dictionary:
 		"world_z": float(cz) * HeightfieldPlan.TILE,
 		"origin_y": float(desc["origin_y"]),
 		"yaw": HeightfieldFacing.yaw_for_rotation_steps(int(desc["rotation_steps"])),
+		"understack_yaws": _understack_corner_yaws(plan, cx, cz, int(tp["storey"])),
 	}
+
+
+## Yaws for inner-corner tiles to stack one storey below this cell, one per corner
+## whose DIAGONAL drops two storeys (its two adjoining cardinals clamped to S-1).
+## That lower interior corner belongs at this (taller) column but its surface tile
+## sits a storey higher, so we stack the inner corner (notch facing the pit) to
+## render it. Variant-agnostic: a corner has one such diagonal, a peninsula can
+## have two. Empty when none.
+static func _understack_corner_yaws(plan, cx: int, cz: int, storey: int) -> Array:
+	var out: Array = []
+	for entry in _CORNER_DIAGS:
+		var socket: String = entry[0]
+		var c1: Vector2i = entry[1]
+		var c2: Vector2i = entry[2]
+		var d: Vector2i = entry[3]
+		if (plan.storey_at(cx + c1.x, cz + c1.y) == storey - 1
+				and plan.storey_at(cx + c2.x, cz + c2.y) == storey - 1
+				and plan.storey_at(cx + d.x, cz + d.y) == storey - 2):
+			var v: Dictionary = HeightfieldVariant.variant_for_missing([socket])
+			out.append(HeightfieldFacing.yaw_for_rotation_steps(int(v["rotation_steps"])))
+	return out
 
 
 ## HV variant_tag -> the module tag to look up in the library.
@@ -88,9 +125,24 @@ static func spawn_placement(
 		return null
 	parent.add_child(inst.root)
 	_add_base_fill(inst, String(record["family"]), tag)
+	_add_understack_corners(inst, record.get("understack_yaws", []))
 	if debug_labels:
 		_add_debug_label(inst, record)
 	return inst
+
+
+## Stack inner-corner tiles one storey below this cell (children of its root, so
+## they evict with it) to render the corners of two-storey diagonal drops.
+static func _add_understack_corners(inst: TerrainModuleInstance, yaws: Array) -> void:
+	var parent_yaw: float = inst.transform.basis.get_euler().y
+	for understack_yaw in yaws:
+		var tile: Node3D = _INNER_CORNER_SCENE.instantiate()
+		# Local to this tile (origin at its top): one storey down, rotated from the
+		# parent's yaw to the inner corner's absolute yaw.
+		tile.transform = Transform3D(
+			Basis(Vector3.UP, float(understack_yaw) - parent_yaw),
+			Vector3(0.0, -_STOREY_DROP, 0.0))
+		inst.root.add_child(tile)
 
 
 ## Floating label over a cliff/level tile: variant tag, cell coords, storey/level.
