@@ -110,6 +110,41 @@ func test_clamp_handles_degenerate_inputs() -> void:
 		"single cell with no neighbours is unchanged")
 
 
+func test_saddle_is_resolved_by_raising_owner() -> void:
+	# Two taller cells touching only diagonally ((1,1) and (2,2) at storey 2) leave
+	# the low cells (2,1)/(1,2) at the tier's interior corner with nothing to own it
+	# -> a gap. settle_storeys raises the owning low cell (the +X-diagonal one,
+	# (1,2)) to connect the tiers into a proper interior corner.
+	var targets: Dictionary = _grid([
+		[1, 1, 1, 1],
+		[1, 2, 1, 1],
+		[1, 1, 2, 1],
+		[1, 1, 1, 1],
+	])
+	var out: Dictionary = HeightfieldPlan.settle_storeys(targets)
+	assert_eq(out[Vector2i(1, 2)], 2, "owning low cell raised to connect the diagonal tiers")
+	assert_eq(out[Vector2i(2, 1)], 1, "the partner low cell stays (a clean inner-corner pocket)")
+	for cell in out.keys():
+		for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+			var nb: Vector2i = cell + d
+			if out.has(nb):
+				assert_true(absi(out[cell] - out[nb]) <= 1,
+					"adjacent storeys differ by <=1 after saddle resolution")
+
+
+func test_saddle_not_raised_when_it_would_break_the_invariant() -> void:
+	# Same saddle, but the owner (1,2) has a storey-0 neighbour to its left. Raising
+	# it to storey 2 would make that side a 2-storey (8m) drop, so it must NOT raise.
+	var targets: Dictionary = _grid([
+		[1, 1, 1, 1],
+		[1, 2, 1, 1],
+		[0, 1, 2, 1],
+		[1, 1, 1, 1],
+	])
+	var out: Dictionary = HeightfieldPlan.settle_storeys(targets)
+	assert_eq(out[Vector2i(1, 2)], 1, "saddle owner not raised when a neighbour sits below it")
+
+
 func test_storey_at_quantizes_a_clamp_stable_ramp() -> void:
 	# Spec intent: storeys = round(H / 4). When H rises exactly one storey (4m)
 	# per tile in x, the quantized field is already a valid staircase, so the

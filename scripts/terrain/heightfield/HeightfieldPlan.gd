@@ -129,11 +129,62 @@ static func clamp_field(targets: Dictionary) -> Dictionary:
 	return out
 
 
+# Saddle corners owned by the +X-pointing low cell: [cardinal1, cardinal2, diagonal].
+# A "saddle" is a 2x2 where two taller regions meet only diagonally: the cell has
+# two adjoining cardinals one storey HIGHER and the diagonal between them NOT higher
+# (its low partner). Such a pinch leaves no cell to own the taller tier's interior
+# corner, so a gap opens. Only these two corners (diagonal +X) are checked so each
+# shared pinch is resolved by exactly one of its two low cells.
+const _SADDLE_OWN_CORNERS: Array = [
+	[Vector2i(0, -1), Vector2i(1, 0), Vector2i(1, -1)],  # front, right -> frontright
+	[Vector2i(0, 1), Vector2i(1, 0), Vector2i(1, 1)],    # back, right  -> backright
+]
+
+
+## Resolve saddles by raising the owning low cell one storey, connecting the two
+## taller regions so their junction becomes a proper interior corner instead of a
+## gap. Pure: reads only the input (clamped) map, so it is order-independent. One
+## pass suffices — raising a low cell to a 3-cell L never forms a new saddle (a
+## saddle needs exactly two diagonally-opposite high corners). Preserves the
+## adjacent-<=1-storey invariant: the raised cell was already one below its two
+## higher cardinals, and its other (same-storey) neighbours become one below.
+static func resolve_saddles(storeys: Dictionary) -> Dictionary:
+	var out: Dictionary = storeys.duplicate()
+	for cell in storeys.keys():
+		var s: int = storeys[cell]
+		for corner in _SADDLE_OWN_CORNERS:
+			var c1: Vector2i = cell + corner[0]
+			var c2: Vector2i = cell + corner[1]
+			var dg: Vector2i = cell + corner[2]
+			if not (storeys.has(c1) and storeys.has(c2) and storeys.has(dg)):
+				continue
+			if storeys[c1] == s + 1 and storeys[c2] == s + 1 and storeys[dg] <= s:
+				# Only raise if no cardinal neighbour sits below s — raising to s+1
+				# would otherwise make that side a 2-storey (8m) drop, breaking the
+				# adjacent-<=1 invariant (the 4m cliff mesh would not reach).
+				var safe: bool = true
+				for d in _CARDINALS:
+					var nb: Vector2i = cell + d
+					if out.has(nb) and storeys[nb] < s:
+						safe = false
+						break
+				if safe:
+					out[cell] = s + 1
+					break
+	return out
+
+
+## Clamp then resolve saddles — the settled storey field used everywhere.
+static func settle_storeys(targets: Dictionary) -> Dictionary:
+	return resolve_saddles(clamp_field(targets))
+
+
 ## Clamp influence fans out one storey per tile, and storeys are capped at
 ## max_storeys, so a window margin of max_storeys guarantees the center cell's
-## clamped value equals the global (infinite-window) result.
+## clamped value equals the global (infinite-window) result. +1 so the saddle pass
+## (which reads one cell beyond each clamped cell) is also settled at the center.
 func storey_margin() -> int:
-	return max_storeys
+	return max_storeys + 1
 
 
 ## Final clamped storey for a cell. Reference implementation: builds a window of
@@ -148,7 +199,7 @@ func storey_at(cx: int, cz: int) -> int:
 			# cell.x = cx, cell.y = cz (Vector2i stores the horizontal grid pair,
 			# NOT world Y / the up-axis).
 			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
-	var clamped: Dictionary = clamp_field(targets)
+	var clamped: Dictionary = settle_storeys(targets)
 	return clamped[Vector2i(cx, cz)]
 
 
@@ -241,13 +292,13 @@ func level_margin() -> int:
 ## settled, then runs the storey clamp once. Reused by level_at to avoid per-cell
 ## storey windows.
 func _build_storey_map(cx: int, cz: int, radius: int) -> Dictionary:
-	var outer: int = radius + max_storeys
+	var outer: int = radius + max_storeys + 1  # +1 so the saddle pass settles to `radius`
 	var targets: Dictionary = {}
 	for dz in range(-outer, outer + 1):
 		for dx in range(-outer, outer + 1):
 			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
 			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
-	return clamp_field(targets)
+	return settle_storeys(targets)
 
 
 ## Final terrace level in [0, LEVELS_PER_STOREY - 1] for a cell. Builds a settled
@@ -317,7 +368,7 @@ func compute_region(center_cx: int, center_cz: int, radius: int, target_cache: D
 	var place_r: int = radius + 1
 	var level_r: int = place_r + LEVELS_PER_STOREY
 	var storey_final_r: int = level_r + _CLIFF_SEARCH_MAX
-	var storey_outer: int = storey_final_r + max_storeys
+	var storey_outer: int = storey_final_r + max_storeys + 1  # +1 for the saddle pass reach
 
 	var targets: Dictionary = {}
 	for dz in range(-storey_outer, storey_outer + 1):
@@ -330,7 +381,7 @@ func compute_region(center_cx: int, center_cz: int, radius: int, target_cache: D
 				q = quantize_storey(raw_height(cell.x, cell.y))
 				target_cache[cell] = q
 			targets[cell] = q
-	var storeys: Dictionary = clamp_field(targets)
+	var storeys: Dictionary = settle_storeys(targets)
 
 	var cliff_field: Dictionary = _cliff_distance_field(storeys, _CLIFF_SEARCH_MAX)
 	var l0: Dictionary = {}
