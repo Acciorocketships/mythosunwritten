@@ -102,6 +102,24 @@ func quantize_storey(h: float) -> int:
 const _CARDINALS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)
 ]
+const _DIAGONALS: Array[Vector2i] = [
+	Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)
+]
+
+
+## True if a DIAGONAL neighbour is a different storey (a cliff on the diagonal).
+## The cardinal cliff ramp already pins cells next to a cardinal cliff to level 0;
+## this extends that pin to diagonal cliffs. Without it, a cell whose only cliff is
+## diagonal keeps a 0.5m terrace bump (cardinal cliff-distance is 2 there, capping
+## level at 1), comes out level-family, and the diagonal cliff's interior corner is
+## never rendered — leaving a gap at the corner.
+static func _has_diagonal_cliff(storeys: Dictionary, cell: Vector2i) -> bool:
+	var s: int = storeys[cell]
+	for d in _DIAGONALS:
+		var nb: Vector2i = cell + d
+		if storeys.has(nb) and storeys[nb] != s:
+			return true
+	return false
 
 ## Monotone trickle-down clamp: repeatedly lower each cell to at most one storey
 ## above its lowest cardinal neighbour, until nothing changes. The operation
@@ -266,6 +284,8 @@ func level_at(cx: int, cz: int) -> int:
 			var residual: float = raw_height(cell.x, cell.y) - float(s) * STOREY_HEIGHT
 			var detail: int = clampi(_round_mode(residual / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
 			var cliff_cap: int = _cliff_distance_in(cell, storeys, _CLIFF_SEARCH_MAX) - 1
+			if _has_diagonal_cliff(storeys, cell):
+				cliff_cap = 0
 			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
 	var leveled: Dictionary = _clamp_levels(l0, storeys)
 	return leveled[Vector2i(cx, cz)]
@@ -341,6 +361,8 @@ func compute_region(center_cx: int, center_cz: int, radius: int, target_cache: D
 			var residual: float = raw_height(cell.x, cell.y) - float(s) * STOREY_HEIGHT
 			var detail: int = clampi(_round_mode(residual / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
 			var cliff_cap: int = int(cliff_field.get(cell, _NO_CLIFF)) - 1
+			if _has_diagonal_cliff(storeys, cell):
+				cliff_cap = 0
 			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
 
 	var levels: Dictionary = _clamp_levels(l0, storeys)
