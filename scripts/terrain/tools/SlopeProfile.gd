@@ -4,8 +4,8 @@ extends RefCounted
 
 const HALF := 3.0      # half cell width
 const CELL := 6.0      # cell / slope band width
-const HEIGHT := 4.0    # total drop (top y=0 to bottom y=-4)
-const BOTTOM := -4.0
+const HEIGHT := 4.0     # total drop magnitude (single source of truth)
+const BOTTOM := -HEIGHT # plateau top is y=0, lower ground is y=-HEIGHT
 
 static func smootherstep(t: float) -> float:
 	t = clampf(t, 0.0, 1.0)
