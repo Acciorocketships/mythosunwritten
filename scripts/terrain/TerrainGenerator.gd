@@ -15,6 +15,8 @@ const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 ## a column may reach (taller = more dramatic mountains; also bounds the plan margin).
 @export var HEIGHTFIELD_AMPLITUDE: float = 56.0
 @export var HEIGHTFIELD_MAX_STOREYS: int = 12
+## Diagnostic: float a label over every cliff/level tile (variant tag + cell + storey).
+@export var DEBUG_TILE_LABELS: bool = false
 ## Queue-priority penalty (in distance units) for decoration-capable sockets.
 const DECO_PRIORITY_PENALTY: float = 48.0
 
@@ -72,6 +74,7 @@ func _ready() -> void:
 	queued_socket_keys.clear()
 	_tracked_queue_ref = queue
 	heightfield_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean")
+	HeightfieldInstantiator.debug_labels = DEBUG_TILE_LABELS
 	_heightfield_placer = HeightfieldInstantiator.new()
 
 func _process(_delta: float) -> void:

@@ -12,6 +12,11 @@ const _BASE_FILL_SCENE: PackedScene = preload("res://terrain/gltf/hill_top_e_cen
 const _STOREY_DROP: float = 4.0
 const _LEVEL_DROP: float = 0.5
 
+## When true, every cliff/level tile gets a floating Label3D showing its variant
+## tag + cell coords + storey/level — a diagnostic overlay for inspecting tiling
+## bugs in-game. Toggled via TerrainGenerator.DEBUG_TILE_LABELS.
+static var debug_labels: bool = false
+
 ## `plan` is HeightfieldPlan OR HeightfieldRegion (both expose tile_plan + surface_height).
 ## Build the neighbour-height dictionaries (socket name -> surface height) for a cell.
 static func _neighbour_heights(plan, cx: int, cz: int) -> Array:
@@ -83,7 +88,31 @@ static func spawn_placement(
 		return null
 	parent.add_child(inst.root)
 	_add_base_fill(inst, String(record["family"]), tag)
+	if debug_labels:
+		_add_debug_label(inst, record)
 	return inst
+
+
+## Floating label over a cliff/level tile: variant tag, cell coords, storey/level.
+static func _add_debug_label(inst: TerrainModuleInstance, record: Dictionary) -> void:
+	var family: String = String(record["family"])
+	if family != "cliff" and family != "level":
+		return
+	var cxv: int = int(round(float(record["world_x"]) / HeightfieldPlan.TILE))
+	var czv: int = int(round(float(record["world_z"]) / HeightfieldPlan.TILE))
+	var oy: float = float(record["origin_y"])
+	var storey: int = int(floor(oy / _STOREY_DROP))
+	var lvl: int = int(round((oy - float(storey) * _STOREY_DROP) / _LEVEL_DROP))
+	var lbl: Label3D = Label3D.new()
+	lbl.text = "%s\n(%d,%d) s%d.%d" % [String(record["variant_tag"]).replace("cliff-", "C:").replace("level-", "L:"), cxv, czv, storey, lvl]
+	lbl.font_size = 64
+	lbl.pixel_size = 0.012
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.no_depth_test = true
+	lbl.modulate = Color.YELLOW if String(record["variant_tag"]).ends_with("interior") else Color.WHITE
+	lbl.outline_size = 16
+	lbl.position = Vector3(0.0, 1.0, 0.0)
+	inst.root.add_child(lbl)
 
 
 ## Bake a flat ground plate under a cliff/level EDGE tile (one with walls), one
