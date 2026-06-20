@@ -4,6 +4,14 @@ extends RefCounted
 ## Turns the heightfield plan into placement records and (Task 3) real tiles.
 ## A placement record is {variant_tag, family, world_x, world_z, origin_y, yaw}.
 
+## Flat 24x24 ground plate (same mesh as GroundTile) baked under cliff/level edge
+## tiles so the ground extends beneath their inset, overhanging walls — the tiles
+## are hollow shells whose walls sit ~1.5m in from the footprint edge, so without
+## this you see a void under the lip and into the hollow interior.
+const _BASE_FILL_SCENE: PackedScene = preload("res://terrain/gltf/hill_top_e_center_color_12.tscn")
+const _STOREY_DROP: float = 4.0
+const _LEVEL_DROP: float = 0.5
+
 ## `plan` is HeightfieldPlan OR HeightfieldRegion (both expose tile_plan + surface_height).
 ## Build the neighbour-height dictionaries (socket name -> surface height) for a cell.
 static func _neighbour_heights(plan, cx: int, cz: int) -> Array:
@@ -74,7 +82,22 @@ static func spawn_placement(
 	if inst.root == null:
 		return null
 	parent.add_child(inst.root)
+	_add_base_fill(inst, String(record["family"]), tag)
 	return inst
+
+
+## Bake a flat ground plate under a cliff/level EDGE tile (one with walls), one
+## step below its top, so the ground reads continuously beneath the overhanging
+## lip. Interior/center variants have no walls (no exposed drop) and need none.
+static func _add_base_fill(inst: TerrainModuleInstance, family: String, tag: String) -> void:
+	if family != "cliff" and family != "level":
+		return
+	if tag.ends_with("interior") or tag.ends_with("center"):
+		return
+	var drop: float = _STOREY_DROP if family == "cliff" else _LEVEL_DROP
+	var fill: Node3D = _BASE_FILL_SCENE.instantiate()
+	fill.position = Vector3(0.0, -drop, 0.0)
+	inst.root.add_child(fill)
 
 
 # Instance state: cells already placed (so re-running a region is idempotent and
