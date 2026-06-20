@@ -25,10 +25,9 @@ func _ready() -> void:
 	world = load("res://scenes/world.tscn").instantiate()
 	terrain = world.get_node("Terrain")
 	add_child(world)
-	# Tune the plan for a clearly-readable view: taller amplitude, a handful of
-	# storeys, a modest place radius (the per-cell reference path is slow).
-	terrain.heightfield_plan = HeightfieldPlan.new(terrain.world_seed, 80.0, 12, "mean")
-	terrain.HEIGHTFIELD_PLACE_RADIUS = 5
+	# Use the generator's real plan params (set in _ready). Just trim the place
+	# radius so the render is quick.
+	terrain.HEIGHTFIELD_PLACE_RADIUS = 6
 	character = world.get_node("Characters/Character")
 	character.set_physics_process(false)
 	character.global_position = PLAYER_POS

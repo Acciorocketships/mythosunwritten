@@ -11,6 +11,10 @@ const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 @export var MAX_LOAD_PER_STEP: int = 8
 ## Chebyshev radius (in tiles) of the heightfield region placed each drive step.
 @export var HEIGHTFIELD_PLACE_RADIUS: int = 8
+## Heightfield terrain shape: peak height (metres) and how many 4m cliff storeys
+## a column may reach (taller = more dramatic mountains; also bounds the plan margin).
+@export var HEIGHTFIELD_AMPLITUDE: float = 56.0
+@export var HEIGHTFIELD_MAX_STOREYS: int = 12
 ## Queue-priority penalty (in distance units) for decoration-capable sockets.
 const DECO_PRIORITY_PENALTY: float = 48.0
 
@@ -67,7 +71,7 @@ func _ready() -> void:
 	queue = PriorityQueue.new()
 	queued_socket_keys.clear()
 	_tracked_queue_ref = queue
-	heightfield_plan = HeightfieldPlan.new(world_seed)
+	heightfield_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean")
 	_heightfield_placer = HeightfieldInstantiator.new()
 
 func _process(_delta: float) -> void:
