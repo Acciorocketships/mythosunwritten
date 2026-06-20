@@ -9,10 +9,6 @@ const PLAYER_MAX_STEP_HEIGHT: float = 0.5
 # REVEAL_MARGIN (the outer band generates hidden, then reveals settled).
 @export var RENDER_RANGE: int = 260
 @export var MAX_LOAD_PER_STEP: int = 8
-## When true, structural tiles (level/cliff) come from the deterministic
-## heightfield plan instead of emergent socket-growth. Water, decorations, the
-## base ground plane, and the reveal margin are unaffected. Default off.
-@export var use_heightfield: bool = false
 ## Chebyshev radius (in tiles) of the heightfield region placed each drive step.
 @export var HEIGHTFIELD_PLACE_RADIUS: int = 8
 ## Queue-priority penalty (in distance units) for decoration-capable sockets.
@@ -71,16 +67,8 @@ func _ready() -> void:
 	queue = PriorityQueue.new()
 	queued_socket_keys.clear()
 	_tracked_queue_ref = queue
-	if not use_heightfield:
-		var start_tile := load_start_tile()
-		# Register the start tile in indices so collision checks work and adjacency can be detected
-		# Sockets are indexed so they can act as adjacency barriers.
-		register_piece(start_tile, "")
-		add_piece_to_queue(start_tile)
-
-	if use_heightfield:
-		heightfield_plan = HeightfieldPlan.new(world_seed)
-		_heightfield_placer = HeightfieldInstantiator.new()
+	heightfield_plan = HeightfieldPlan.new(world_seed)
+	_heightfield_placer = HeightfieldInstantiator.new()
 
 func _process(_delta: float) -> void:
 	load_terrain()
@@ -113,8 +101,7 @@ func load_terrain() -> void:
 	# worst-case in-range value (then nothing can be in range — the cheap idle
 	# exit, now trustworthy because priorities are honest).
 	var current_player_pos: Vector3 = player.global_position if player != null else Vector3.ZERO
-	if use_heightfield:
-		_drive_heightfield_structure(current_player_pos)
+	_drive_heightfield_structure(current_player_pos)
 	if current_player_pos == _last_player_pos and not queue.is_empty():
 		var repairs: int = 0
 		while not queue.is_empty():
@@ -470,13 +457,9 @@ func _is_socket_expandable(piece_socket: TerrainModuleSocket) -> bool:
 # Structural sockets (fill >= 1.0, e.g. ground lateral expansion) ignore the
 # field — ground must always fill for the world to be infinite.
 func _effective_fill_prob(piece: TerrainModuleInstance, socket_name: String, pos: Vector3) -> float:
-	if structural_seeding_suppressed() and _is_structural_socket(piece, socket_name):
+	if _is_structural_socket(piece, socket_name):
 		return 0.0
 	return _route_fill_prob(piece, socket_name, pos, _get_socket_fill_prob(piece, socket_name))
-
-
-func structural_seeding_suppressed() -> bool:
-	return use_heightfield
 
 
 ## A socket whose expansion would place a level/cliff structural tile: the
@@ -1350,12 +1333,11 @@ func init_for_test() -> void:
 
 
 ## Place (and index) plan structural tiles around the player, then evict far ones.
-## When use_heightfield is on, this is the structural source; emergent level/cliff
-## seeding is suppressed (structural_seeding_suppressed). register_piece indexes the
-## tile and applies the reveal margin; add_piece_to_queue seeds only foliage/water
-## (structural sockets return 0 fill while the flag is on).
+## This is the sole structural source; emergent level/cliff seeding is suppressed
+## (_is_structural_socket returns 0 fill). register_piece indexes the tile and
+## applies the reveal margin; add_piece_to_queue seeds only foliage/water.
 func _drive_heightfield_structure(player_pos: Vector3) -> void:
-	if not use_heightfield or heightfield_plan == null or _heightfield_placer == null:
+	if heightfield_plan == null or _heightfield_placer == null:
 		return
 	var cx: int = roundi(player_pos.x / HeightfieldPlan.TILE)
 	var cz: int = roundi(player_pos.z / HeightfieldPlan.TILE)

@@ -1,26 +1,10 @@
 extends GutTest
 
-# Phase 3c: the heightfield cutover flag suppresses emergent structural growth.
+# Phase 3c: the heightfield is now the unconditional structural source.
 
-func _make_generator(use_hf: bool) -> Node:
+func _make_generator() -> Node:
 	var gen = preload("res://scripts/terrain/TerrainGenerator.gd").new()
-	gen.use_heightfield = use_hf
 	return gen
-
-func test_flag_defaults_off() -> void:
-	var gen = _make_generator(false)
-	assert_false(gen.use_heightfield, "heightfield path is off by default")
-	gen.free()
-
-func test_structural_seeding_suppressed_when_flag_on() -> void:
-	var gen = _make_generator(true)
-	assert_true(gen.structural_seeding_suppressed(), "structural seeds off under heightfield")
-	gen.free()
-
-func test_structural_seeding_active_when_flag_off() -> void:
-	var gen = _make_generator(false)
-	assert_false(gen.structural_seeding_suppressed(), "emergent structural seeds on by default")
-	gen.free()
 
 func _spawn(lib: TerrainModuleLibrary, tag: String) -> TerrainModuleInstance:
 	# spawn() sets .def (with tags); _is_structural_socket reads only def.tags,
@@ -28,7 +12,7 @@ func _spawn(lib: TerrainModuleLibrary, tag: String) -> TerrainModuleInstance:
 	return lib.get_random(lib.get_by_tags(TagList.new([tag])), true).spawn()
 
 func test_is_structural_socket_classifies_seeds_vs_decoration() -> void:
-	var gen = _make_generator(true)
+	var gen = _make_generator()
 	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
 	lib.init()
 	var ground: TerrainModuleInstance = _spawn(lib, "ground-plain")
@@ -43,7 +27,7 @@ func test_is_structural_socket_classifies_seeds_vs_decoration() -> void:
 	gen.free()
 
 func test_heightfield_places_and_indexes_structural_tiles() -> void:
-	var gen = _make_generator(true)
+	var gen = _make_generator()
 	add_child_autofree(gen)         # so child nodes (terrain_parent, player, tiles) clean up
 	gen.init_for_test()
 	gen.HEIGHTFIELD_PLACE_RADIUS = 1   # keep the (reference, slow) placement tiny for the test
@@ -63,7 +47,7 @@ func test_heightfield_places_and_indexes_structural_tiles() -> void:
 func test_eviction_removes_distant_tiles_no_double_placement() -> void:
 	# Place around origin, then drive far away: the origin cluster must be removed
 	# from the index (not just forgotten), so returning never double-places it.
-	var gen = _make_generator(true)
+	var gen = _make_generator()
 	add_child_autofree(gen)
 	gen.init_for_test()
 	gen.HEIGHTFIELD_PLACE_RADIUS = 1
@@ -79,16 +63,16 @@ func test_eviction_removes_distant_tiles_no_double_placement() -> void:
 	gen.free()
 
 func test_no_start_tile_when_heightfield_on() -> void:
-	# With the flag on, _ready must NOT place the emergent start tile (the
-	# heightfield covers the origin cell), avoiding an overlap at (0,0).
-	var gen = _make_generator(true)
+	# _ready must NOT place the emergent start tile (the heightfield covers the
+	# origin cell), avoiding an overlap at (0,0).
+	var gen = _make_generator()
 	gen.terrain_parent = Node3D.new()
 	add_child_autofree(gen.terrain_parent)
-	add_child_autofree(gen)   # fires _ready with the flag on and terrain_parent set
+	add_child_autofree(gen)   # fires _ready with terrain_parent set
 	assert_eq(gen.terrain_parent.get_child_count(), 0, "no start tile placed under heightfield")
 
 func test_ground_laterals_suppressed_under_heightfield() -> void:
-	var gen = _make_generator(true)
+	var gen = _make_generator()
 	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
 	lib.init()
 	var ground: TerrainModuleInstance = _spawn(lib, "ground-plain")
@@ -100,7 +84,7 @@ func test_ground_laterals_suppressed_under_heightfield() -> void:
 func test_heightfield_ground_becomes_water_in_water_field() -> void:
 	# On flat (all storey-0 ground) terrain, a heightfield ground tile placed at a
 	# water-field position must be converted to a water tile by WaterRule.
-	var gen = _make_generator(true)
+	var gen = _make_generator()
 	add_child_autofree(gen)
 	gen.init_for_test()
 	gen.HEIGHTFIELD_PLACE_RADIUS = 3
