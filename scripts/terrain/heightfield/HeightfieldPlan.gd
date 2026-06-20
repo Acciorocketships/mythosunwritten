@@ -121,11 +121,19 @@ static func _has_diagonal_cliff(storeys: Dictionary, cell: Vector2i) -> bool:
 			return true
 	return false
 
+const _NEIGHBORS8: Array[Vector2i] = [
+	Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+	Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1),
+]
+
 ## Monotone trickle-down clamp: repeatedly lower each cell to at most one storey
-## above its lowest cardinal neighbour, until nothing changes. The operation
-## only lowers and is bounded below by the input, so it terminates; the fixpoint
-## (each cell <= min_neighbour + 1) is unique regardless of sweep order. `targets`
-## maps Vector2i(cx, cz) -> storey; returns a new clamped map.
+## above its lowest neighbour — across all 8 neighbours, DIAGONALS INCLUDED, so a
+## cliff never drops more than one storey diagonally either. (Cardinal-only would
+## allow a 2-storey diagonal drop, whose lower interior corner falls on the taller
+## diagonal column and is never rendered — a gap.) The operation only lowers and is
+## bounded below by the input, so it terminates; the fixpoint (each cell <=
+## min_neighbour + 1) is unique regardless of sweep order. `targets` maps
+## Vector2i(cx, cz) -> storey; returns a new clamped map.
 static func clamp_field(targets: Dictionary) -> Dictionary:
 	var out: Dictionary = targets.duplicate()
 	var changed: bool = true
@@ -133,7 +141,7 @@ static func clamp_field(targets: Dictionary) -> Dictionary:
 		changed = false
 		for cell in out.keys():
 			var here: int = out[cell]
-			for d in _CARDINALS:
+			for d in _NEIGHBORS8:
 				var nb: Vector2i = cell + d
 				if not out.has(nb):
 					continue
