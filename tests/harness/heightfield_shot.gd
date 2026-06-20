@@ -24,9 +24,6 @@ func _ready() -> void:
 	seed(4242)
 	world = load("res://scenes/world.tscn").instantiate()
 	terrain = world.get_node("Terrain")
-	# Enable the heightfield BEFORE the world enters the tree so the generator's
-	# _ready() sees the flag (skips the emergent start tile, builds the plan).
-	terrain.use_heightfield = true
 	add_child(world)
 	# Tune the plan for a clearly-readable view: taller amplitude, a handful of
 	# storeys, a modest place radius (the per-cell reference path is slow).
