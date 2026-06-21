@@ -4,16 +4,17 @@
 # step/hole instead of a continuous walkable surface.
 #
 # !!! KNOWN-FAILING (intentional TODO) !!!
-# This test currently FAILS. It documents the goal — fully continuous slopes across
-# tile boundaries — which the current one-tile-per-cell, one-storey-slope model does
-# NOT achieve in diagonal staircases:
-#   * ~4u gaps at multi-storey corner VERTICES (4 cells spanning 2 storeys at a
-#     point) — a single one-storey tile cannot bridge a 2-storey junction.
-#   * ~1.4u gaps along diagonal-staircase EDGES (consecutive corner tiles descend at
-#     different offsets).
-# A complete fix needs multi-cell slope spanning (slopes authored across >1 tile),
-# the architectural change deferred during the stacked-corner work. Keep this test
-# as the target; make it green by fixing the geometry, not by weakening the bound.
+# This test still FAILS, but far less than before. History:
+#   * Single-storey diagonal staircases: CONTINUOUS (the per-cell corner profiles
+#     mate correctly — verified by test_diag_seams).
+#   * 2-storey diagonal CORNERS (cliff-corner over a 2-down pit): FIXED by the
+#     2-storey diagonal-ramp corner (cliff-corner-stacked) — the corner descends
+#     both storeys to the pit floor itself. Was ~half the gaps.
+#   * REMAINING (~14): the SAME 2-storey diagonal drop on PENINSULA / ISLAND
+#     variants. Those have 2-4 open diagonals, so they need the 2-storey ramp on
+#     specific corners — not yet wired (the remap only upgrades `cliff-corner`).
+# Close the rest by extending the 2-storey-ramp corner to peninsula/island
+# variants. Make this green by fixing the geometry, not by weakening the bound.
 #
 # Method (no physics): instantiate the cliff tiles the heightfield would place over
 # a region, then for each shared boundary sample both tiles' top-surface mesh

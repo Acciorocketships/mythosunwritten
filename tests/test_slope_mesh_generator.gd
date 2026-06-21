@@ -65,11 +65,16 @@ func test_edge_collision_follows_the_drop() -> void:
 
 func test_stacked_corner_meshes_build() -> void:
 	var g := _gen()
-	for mesh in [g.build_outer_corner_stacked(), g.build_inner_corner_stacked()]:
+	# outer_corner_stacked is the 2-storey diagonal ramp (bottoms at -8); the
+	# (deprecated) inner_corner_stacked still bottoms at -4.
+	var cases := [[g.build_outer_corner_stacked(), -8.0], [g.build_inner_corner_stacked(), -4.0]]
+	for case in cases:
+		var mesh: ArrayMesh = case[0]
+		var bottom: float = case[1]
 		var box: AABB = mesh.get_aabb()
 		assert_almost_eq(box.size.x, 12.0, 1e-3)
 		assert_almost_eq(box.size.z, 12.0, 1e-3)
-		assert_almost_eq(box.position.y, -4.0, 1e-3)
+		assert_almost_eq(box.position.y, bottom, 1e-3)
 		assert_almost_eq(box.position.y + box.size.y, 0.0, 1e-3)
 		assert_not_null(mesh.surface_get_material(0))
 	var n := SlopeMeshGenerator.COLLISION_SEG * SlopeMeshGenerator.COLLISION_SEG

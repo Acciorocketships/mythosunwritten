@@ -81,19 +81,22 @@ static func _up_band(c: float) -> float:
 static func _in_band(c: float) -> float:
 	return clampf((HALF - c) / IN_BAND, 0.0, 1.0)
 
-# Outer (convex) UPPER tile: base is the plain convex corner field w=a+b-ab, so at
-# the x=+HALF edge-seam (b=0, k=0) it reproduces `edge`. On the corner diagonal the
-# gate k=a*b -> 1, swapping in the steep top-half S (_top_s) of the seam-band coord;
-# its inflection lands at the seam so the bottom tangent is steep there.
+# Repurposed (2026-06-21): the 2-STOREY diagonal-ramp corner. Where a convex
+# corner column sits two storeys above a diagonal pit (the cardinal clamp forces
+# the two adjoining cardinals to exactly one storey between, and a diagonal drop
+# can never exceed two), a single 1-storey corner tile cannot reach the pit floor
+# — it bottoms out a storey up, leaving a sheer drop into the pit. This profile
+# descends BOTH storeys across the corner's open diagonal as the SUM of the two
+# per-axis edge ramps:
+#   * along each cardinal edge-seam one ramp is 0 (b=_ramp(+HALF)=0 at the +x
+#     seam, a=0 at the +z seam), so it reduces to exactly the plain `edge`
+#     profile -> it mates continuously with the 1-storey sloping neighbour there;
+#   * at the open-diagonal vertex (a=b=1) it reaches 2*BOTTOM = the pit floor.
+# Replaces the old convex-top + understacked concave-bottom pair (which stacked
+# the two halves vertically, so the lower half sat *under* the walkable surface
+# instead of continuing the descent — see HeightfieldInstantiator).
 static func outer_corner_stacked_height(x: float, z: float) -> float:
-	var a := _ramp(z)
-	var b := _ramp(x)
-	var w := a + b - a * b
-	var k := a * b
-	var dz := _up_band(z)
-	var dx := _up_band(x)
-	var d := dz + dx - dz * dx            # convex combine -> 1 only at the seam corner
-	return BOTTOM * lerpf(w, _top_s(d), k)
+	return BOTTOM * (_ramp(z) + _ramp(x))
 
 # Inner (concave) LOWER tile: only the far (-,-) corner dips. The onset coordinate q
 # mixes the steep seam-band progress (`seam`, which has a non-zero slope right at the

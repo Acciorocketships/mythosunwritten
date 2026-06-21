@@ -12,16 +12,11 @@ const _BASE_FILL_SCENE: PackedScene = preload("res://terrain/gltf/hill_top_e_cen
 const _STOREY_DROP: float = 4.0
 const _LEVEL_DROP: float = 0.5
 
-## Inner-corner cliff tile, stacked one storey below a convex corner whose diagonal
-## drops two storeys. The cardinal clamp lets a corner column (storey S) sit one
-## diagonal step above a pit (storey S-2), cardinals clamped to S-1 between. The
-## S-1 interior corner of that pit belongs at the corner column, but the column's
-## surface tile is the S convex corner — a single tile can't be a corner a storey
-## below itself — so we stack the inner corner at S-1 to fill it.
-# Sloped, C1-mating concave bottom half: pairs with the CliffCornerStacked convex
-# top half on the column above (see placement_for_cell) so the 2-storey corner is
-# continuous. (Levels are still sheer / out of scope for slopes.)
-const _INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/slope/CliffInCornerStacked.tscn")
+## Level inner-corner tile, stacked one LEVEL (0.5m) below a convex level corner
+## whose diagonal drops two levels. Cliff (storey) two-tier diagonals are NOT
+## understacked: the 2-storey diagonal-ramp corner (cliff-corner-stacked) descends
+## both storeys across its own open diagonal to the pit floor, so no concave tile
+## is stacked beneath it. (Levels are still sheer / out of scope for slopes.)
 const _LEVEL_INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/LevelInCorner.tscn")
 # diagonal socket -> [adjoining cardinal offsets, diagonal cell offset]
 const _CORNER_DIAGS: Array = [
@@ -70,9 +65,10 @@ static func placement_for_cell(plan, cx: int, cz: int) -> Dictionary:
 		h0, int(tp["storey"]), int(tp["level"]), nb[0], nb[1]
 	)
 	var understacks: Array = _understack_corners(plan, cx, cz, int(tp["storey"]), int(tp["level"]))
-	# A convex corner sitting above a cliff understack (the concave bottom half is
-	# spawned one storey below) uses the mating CONVEX TOP half so the 2-storey corner
-	# is one continuous C1 slope instead of a ledge.
+	# A convex corner whose open diagonal drops two storeys (a cliff understack
+	# diagonal) becomes the 2-storey diagonal-ramp corner, which descends both
+	# storeys to the pit floor itself (continuous) instead of a 1-storey corner
+	# bottoming out at a ledge. No concave tile is stacked beneath it.
 	var variant_tag: String = String(desc["variant_tag"])
 	if variant_tag == "cliff-corner":
 		for u in understacks:
@@ -149,11 +145,17 @@ static func spawn_placement(
 		return null
 	parent.add_child(inst.root)
 	var understacks: Array = record.get("understacks", [])
-	# Skip the flat base plate when an understack is present: the understack's
-	# inner-corner top IS the tier-below floor (correctly notched toward the pit),
-	# whereas the base plate is a full square that would float over the pit and
-	# z-fight the understack top (the reported "superimposed center tile").
-	if understacks.is_empty():
+	# Skip the flat base plate only when a LEVEL understack is present: its
+	# inner-corner top IS the tier-below floor (notched toward the pit), whereas a
+	# full base square would float over the pit and z-fight that top. Cliff
+	# two-tier diagonals are handled by the 2-storey corner (no understack tile),
+	# so those still get their base fill.
+	var has_level_understack: bool = false
+	for u in understacks:
+		if bool(u["is_level"]):
+			has_level_understack = true
+			break
+	if not has_level_understack:
 		_add_base_fill(inst, String(record["family"]), tag)
 	_add_understack_corners(inst, understacks)
 	if debug_labels:
@@ -169,8 +171,12 @@ static func spawn_placement(
 static func _add_understack_corners(inst: TerrainModuleInstance, understacks: Array) -> void:
 	var parent_yaw: float = inst.transform.basis.get_euler().y
 	for u in understacks:
+		# Cliff (storey) two-tier diagonals are absorbed by the 2-storey corner;
+		# only LEVEL (0.5m) two-tier diagonals stack a (sheer) inner corner.
+		if not bool(u["is_level"]):
+			continue
 		var drop: float = float(u["drop"])
-		var scene: PackedScene = _LEVEL_INNER_CORNER_SCENE if bool(u["is_level"]) else _INNER_CORNER_SCENE
+		var scene: PackedScene = _LEVEL_INNER_CORNER_SCENE
 		var tile: Node3D = scene.instantiate()
 		# Local to this tile (origin at its top): one tier down, rotated from the
 		# parent's yaw to the inner corner's absolute yaw.
@@ -214,6 +220,15 @@ static func _add_base_fill(inst: TerrainModuleInstance, family: String, tag: Str
 	if family != "cliff" and family != "level":
 		return
 	if tag.ends_with("interior") or tag.ends_with("center"):
+		return
+	# The 2-storey diagonal-ramp corner descends all the way to the pit floor, so
+	# its base plate sits two storeys down. (A plate only one storey down would
+	# poke ABOVE the ramp where it dips past that level toward the pit, creating a
+	# false shelf — the corner mesh itself covers the upper, edge-level region.)
+	if tag == "cliff-corner-stacked":
+		var plate: Node3D = _BASE_FILL_SCENE.instantiate()
+		plate.position = Vector3(0.0, -2.0 * _STOREY_DROP, 0.0)
+		inst.root.add_child(plate)
 		return
 	var drop: float = _STOREY_DROP if family == "cliff" else _LEVEL_DROP
 	var fill: Node3D = _BASE_FILL_SCENE.instantiate()
