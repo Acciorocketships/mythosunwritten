@@ -18,7 +18,10 @@ const _LEVEL_DROP: float = 0.5
 ## S-1 interior corner of that pit belongs at the corner column, but the column's
 ## surface tile is the S convex corner — a single tile can't be a corner a storey
 ## below itself — so we stack the inner corner at S-1 to fill it.
-const _INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/CliffInCorner.tscn")
+# Sloped, C1-mating concave bottom half: pairs with the CliffCornerStacked convex
+# top half on the column above (see placement_for_cell) so the 2-storey corner is
+# continuous. (Levels are still sheer / out of scope for slopes.)
+const _INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/slope/CliffInCornerStacked.tscn")
 const _LEVEL_INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/LevelInCorner.tscn")
 # diagonal socket -> [adjoining cardinal offsets, diagonal cell offset]
 const _CORNER_DIAGS: Array = [
@@ -66,14 +69,24 @@ static func placement_for_cell(plan, cx: int, cz: int) -> Dictionary:
 	var desc: Dictionary = HeightfieldVariant.cell_descriptor(
 		h0, int(tp["storey"]), int(tp["level"]), nb[0], nb[1]
 	)
+	var understacks: Array = _understack_corners(plan, cx, cz, int(tp["storey"]), int(tp["level"]))
+	# A convex corner sitting above a cliff understack (the concave bottom half is
+	# spawned one storey below) uses the mating CONVEX TOP half so the 2-storey corner
+	# is one continuous C1 slope instead of a ledge.
+	var variant_tag: String = String(desc["variant_tag"])
+	if variant_tag == "cliff-corner":
+		for u in understacks:
+			if not bool(u["is_level"]):
+				variant_tag = "cliff-corner-stacked"
+				break
 	return {
-		"variant_tag": desc["variant_tag"],
+		"variant_tag": variant_tag,
 		"family": desc["family"],
 		"world_x": float(cx) * HeightfieldPlan.TILE,
 		"world_z": float(cz) * HeightfieldPlan.TILE,
 		"origin_y": float(desc["origin_y"]),
 		"yaw": HeightfieldFacing.yaw_for_rotation_steps(int(desc["rotation_steps"])),
-		"understacks": _understack_corners(plan, cx, cz, int(tp["storey"]), int(tp["level"])),
+		"understacks": understacks,
 	}
 
 
