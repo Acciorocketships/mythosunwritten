@@ -19,6 +19,7 @@ const _LEVEL_DROP: float = 0.5
 ## surface tile is the S convex corner — a single tile can't be a corner a storey
 ## below itself — so we stack the inner corner at S-1 to fill it.
 const _INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/CliffInCorner.tscn")
+const _LEVEL_INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/LevelInCorner.tscn")
 # diagonal socket -> [adjoining cardinal offsets, diagonal cell offset]
 const _CORNER_DIAGS: Array = [
 	["frontright", Vector2i(0, -1), Vector2i(1, 0), Vector2i(1, -1)],
@@ -72,28 +73,38 @@ static func placement_for_cell(plan, cx: int, cz: int) -> Dictionary:
 		"world_z": float(cz) * HeightfieldPlan.TILE,
 		"origin_y": float(desc["origin_y"]),
 		"yaw": HeightfieldFacing.yaw_for_rotation_steps(int(desc["rotation_steps"])),
-		"understack_yaws": _understack_corner_yaws(plan, cx, cz, int(tp["storey"])),
+		"understacks": _understack_corners(plan, cx, cz, int(tp["storey"]), int(tp["level"])),
 	}
 
 
-## Yaws for inner-corner tiles to stack one storey below this cell, one per corner
-## whose DIAGONAL drops two storeys (its two adjoining cardinals clamped to S-1).
+## Inner-corner tiles to stack one TIER below this cell — one per corner whose
+## DIAGONAL drops two tiers (its two adjoining cardinals clamped to one between).
 ## That lower interior corner belongs at this (taller) column but its surface tile
-## sits a storey higher, so we stack the inner corner (notch facing the pit) to
-## render it. Variant-agnostic: a corner has one such diagonal, a peninsula can
-## have two. Empty when none.
-static func _understack_corner_yaws(plan, cx: int, cz: int, storey: int) -> Array:
+## sits a tier higher, so we stack the inner corner (notch facing the pit). Works
+## for both tiers: a storey corner (diagonal 2 storeys down) gets a cliff inner
+## corner one storey (4m) down; a level corner (same storey, diagonal 2 levels
+## down) gets a level inner corner one level (0.5m) down. Each entry is
+## {yaw, drop, is_level}; a corner has one such diagonal, a peninsula can have two.
+static func _understack_corners(plan, cx: int, cz: int, storey: int, level: int) -> Array:
 	var out: Array = []
 	for entry in _CORNER_DIAGS:
 		var socket: String = entry[0]
 		var c1: Vector2i = entry[1]
 		var c2: Vector2i = entry[2]
 		var d: Vector2i = entry[3]
-		if (plan.storey_at(cx + c1.x, cz + c1.y) == storey - 1
-				and plan.storey_at(cx + c2.x, cz + c2.y) == storey - 1
-				and plan.storey_at(cx + d.x, cz + d.y) == storey - 2):
-			var v: Dictionary = HeightfieldVariant.variant_for_missing([socket])
-			out.append(HeightfieldFacing.yaw_for_rotation_steps(int(v["rotation_steps"])))
+		var s1: int = plan.storey_at(cx + c1.x, cz + c1.y)
+		var s2: int = plan.storey_at(cx + c2.x, cz + c2.y)
+		var sd: int = plan.storey_at(cx + d.x, cz + d.y)
+		var yaw: float = HeightfieldFacing.yaw_for_rotation_steps(
+			int(HeightfieldVariant.variant_for_missing([socket])["rotation_steps"]))
+		if s1 == storey - 1 and s2 == storey - 1 and sd == storey - 2:
+			out.append({"yaw": yaw, "drop": _STOREY_DROP, "is_level": false})
+		elif s1 == storey and s2 == storey and sd == storey:
+			# Same storey: check the level tier for the same two-tiers-down pattern.
+			if (plan.level_at(cx + c1.x, cz + c1.y) == level - 1
+					and plan.level_at(cx + c2.x, cz + c2.y) == level - 1
+					and plan.level_at(cx + d.x, cz + d.y) == level - 2):
+				out.append({"yaw": yaw, "drop": _LEVEL_DROP, "is_level": true})
 	return out
 
 
@@ -124,9 +135,9 @@ static func spawn_placement(
 	if inst.root == null:
 		return null
 	parent.add_child(inst.root)
-	var understacks: Array = record.get("understack_yaws", [])
+	var understacks: Array = record.get("understacks", [])
 	# Skip the flat base plate when an understack is present: the understack's
-	# inner-corner top IS the storey-below floor (correctly notched toward the pit),
+	# inner-corner top IS the tier-below floor (correctly notched toward the pit),
 	# whereas the base plate is a full square that would float over the pit and
 	# z-fight the understack top (the reported "superimposed center tile").
 	if understacks.is_empty():
@@ -137,23 +148,27 @@ static func spawn_placement(
 	return inst
 
 
-## Stack inner-corner tiles one storey below this cell (children of its root, so
-## they evict with it) to render the corners of two-storey diagonal drops. Each
-## gets its own base plate so the ground reads under its overhanging lip.
-static func _add_understack_corners(inst: TerrainModuleInstance, yaws: Array) -> void:
+## Stack inner-corner tiles one tier below this cell (children of its root, so
+## they evict with it) to render the corners of two-tier diagonal drops. A cliff
+## corner (storey drop) stacks a cliff inner corner one storey (4m) down; a level
+## corner (level drop within a storey) stacks a level inner corner one level
+## (0.5m) down. Each gets its own base plate so the ground reads under its lip.
+static func _add_understack_corners(inst: TerrainModuleInstance, understacks: Array) -> void:
 	var parent_yaw: float = inst.transform.basis.get_euler().y
-	for understack_yaw in yaws:
-		var tile: Node3D = _INNER_CORNER_SCENE.instantiate()
-		# Local to this tile (origin at its top): one storey down, rotated from the
+	for u in understacks:
+		var drop: float = float(u["drop"])
+		var scene: PackedScene = _LEVEL_INNER_CORNER_SCENE if bool(u["is_level"]) else _INNER_CORNER_SCENE
+		var tile: Node3D = scene.instantiate()
+		# Local to this tile (origin at its top): one tier down, rotated from the
 		# parent's yaw to the inner corner's absolute yaw.
 		tile.transform = Transform3D(
-			Basis(Vector3.UP, float(understack_yaw) - parent_yaw),
-			Vector3(0.0, -_STOREY_DROP, 0.0))
+			Basis(Vector3.UP, float(u["yaw"]) - parent_yaw),
+			Vector3(0.0, -drop, 0.0))
 		inst.root.add_child(tile)
-		# Base plate one storey below the understack, so the ground extends under
+		# Base plate one tier below the understack, so the ground extends under
 		# its inset wall (the reported "tile below peeking through").
 		var fill: Node3D = _BASE_FILL_SCENE.instantiate()
-		fill.position = Vector3(0.0, -_STOREY_DROP, 0.0)
+		fill.position = Vector3(0.0, -drop, 0.0)
 		tile.add_child(fill)
 
 

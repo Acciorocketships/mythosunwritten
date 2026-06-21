@@ -181,9 +181,20 @@ func _ensure_seed_under_player() -> void:
 		return
 	var p: Vector3 = player.global_position
 	var center: Vector3 = Vector3(snappedf(p.x, 24.0), 0.0, snappedf(p.z, 24.0))
-	# Any piece occupying the cell means terrain reached here — only seed
-	# into genuine void.
-	var probe: AABB = AABB(center + Vector3(-1.0, -1.0, -1.0), Vector3(2.0, 3.0, 2.0))
+	# Any piece occupying the cell means terrain reached here — only seed into
+	# genuine void. Probe the FULL vertical column, not a thin base-level band: a
+	# player standing on ELEVATED heightfield terrain has their real ground tile at
+	# the cell's surface height (storey >= 1 -> y >= 4), well above y=0. A short
+	# probe misses it, mistakes raised ground for void, and seeds a duplicate tile
+	# at y=0 — underground — which then grows its own section of tiles + foliage
+	# below the real terrain (the reported gaps in the ground). The column spans
+	# one storey below 0 (understack drops / base-fill plates) to above the tallest
+	# possible column so any tile at this cell is detected regardless of height.
+	var col_bottom: float = -HeightfieldPlan.STOREY_HEIGHT
+	var col_top: float = float(HEIGHTFIELD_MAX_STOREYS + 1) * HeightfieldPlan.STOREY_HEIGHT
+	var probe: AABB = AABB(
+		Vector3(center.x - 1.0, col_bottom, center.z - 1.0),
+		Vector3(2.0, col_top - col_bottom, 2.0))
 	for hit in terrain_index.query_box(probe):
 		if hit is TerrainModuleInstance:
 			return
