@@ -65,16 +65,22 @@ static func placement_for_cell(plan, cx: int, cz: int) -> Dictionary:
 		h0, int(tp["storey"]), int(tp["level"]), nb[0], nb[1]
 	)
 	var understacks: Array = _understack_corners(plan, cx, cz, int(tp["storey"]), int(tp["level"]))
-	# A convex corner whose open diagonal drops two storeys (a cliff understack
-	# diagonal) becomes the 2-storey diagonal-ramp corner, which descends both
-	# storeys to the pit floor itself (continuous) instead of a 1-storey corner
-	# bottoming out at a ledge. No concave tile is stacked beneath it.
+	# Outer corners whose open diagonal drops two storeys (cliff understack
+	# diagonals) use the 2-storey diagonal-ramp corner, which descends both storeys
+	# to the pit floor itself (continuous) instead of a 1-storey corner bottoming
+	# out at a ledge. A plain corner has one such corner -> cliff-corner-stacked; a
+	# peninsula/island has 2-4, so it selects the variant baked for that exact
+	# subset (e.g. cliff-island-stacked-flbr). No concave tile is stacked beneath.
 	var variant_tag: String = String(desc["variant_tag"])
-	if variant_tag == "cliff-corner":
-		for u in understacks:
-			if not bool(u["is_level"]):
-				variant_tag = "cliff-corner-stacked"
-				break
+	var deep_corners: Array = []
+	for u in understacks:
+		if not bool(u["is_level"]):
+			deep_corners.append(_canonical_corner(String(u["socket"]), int(desc["rotation_steps"])))
+	if not deep_corners.is_empty():
+		if variant_tag == "cliff-corner":
+			variant_tag = "cliff-corner-stacked"
+		elif variant_tag == "cliff-peninsula" or variant_tag == "cliff-island":
+			variant_tag = SlopeVariantLayout.stacked_tag(variant_tag, deep_corners)
 	return {
 		"variant_tag": variant_tag,
 		"family": desc["family"],
@@ -107,14 +113,30 @@ static func _understack_corners(plan, cx: int, cz: int, storey: int, level: int)
 		var yaw: float = HeightfieldFacing.yaw_for_rotation_steps(
 			int(HeightfieldVariant.variant_for_missing([socket])["rotation_steps"]))
 		if s1 == storey - 1 and s2 == storey - 1 and sd == storey - 2:
-			out.append({"yaw": yaw, "drop": _STOREY_DROP, "is_level": false})
+			out.append({"yaw": yaw, "drop": _STOREY_DROP, "is_level": false, "socket": socket})
 		elif s1 == storey and s2 == storey and sd == storey:
 			# Same storey: check the level tier for the same two-tiers-down pattern.
 			if (plan.level_at(cx + c1.x, cz + c1.y) == level - 1
 					and plan.level_at(cx + c2.x, cz + c2.y) == level - 1
 					and plan.level_at(cx + d.x, cz + d.y) == level - 2):
-				out.append({"yaw": yaw, "drop": _LEVEL_DROP, "is_level": true})
+				out.append({"yaw": yaw, "drop": _LEVEL_DROP, "is_level": true, "socket": socket})
 	return out
+
+
+# Diagonal socket -> the layout corner key it occupies in canonical (unrotated) frame.
+const _DIAG_SOCKET_TO_CORNER: Dictionary = {
+	"frontleft": "FL", "frontright": "FR", "backleft": "BL", "backright": "BR",
+}
+
+## A 2-down diagonal is detected in WORLD frame (its socket); the baked variant's
+## corners are in canonical (unrotated) frame. variant_for_missing aligns canonical
+## -> world by `rotation_steps` rotations, so the inverse un-rotates the socket back
+## to canonical: apply rotate_socket_name (4 - rotation_steps) times.
+static func _canonical_corner(socket: String, rotation_steps: int) -> String:
+	var s: String = socket
+	for _i in range((4 - rotation_steps) % 4):
+		s = Helper.rotate_socket_name(s)
+	return String(_DIAG_SOCKET_TO_CORNER[s])
 
 
 ## HV variant_tag -> the module tag to look up in the library.
@@ -221,11 +243,12 @@ static func _add_base_fill(inst: TerrainModuleInstance, family: String, tag: Str
 		return
 	if tag.ends_with("interior") or tag.ends_with("center"):
 		return
-	# The 2-storey diagonal-ramp corner descends all the way to the pit floor, so
-	# its base plate sits two storeys down. (A plate only one storey down would
-	# poke ABOVE the ramp where it dips past that level toward the pit, creating a
-	# false shelf — the corner mesh itself covers the upper, edge-level region.)
-	if tag == "cliff-corner-stacked":
+	# Any 2-storey diagonal-ramp corner variant (cliff-corner-stacked or a
+	# peninsula/island *-stacked-* subset) descends to the pit floor, so its base
+	# plate sits two storeys down. (A plate only one storey down would poke ABOVE
+	# the ramp where it dips past that level toward the pit, a false shelf — the
+	# corner mesh itself covers the upper, edge-level region.)
+	if family == "cliff" and tag.contains("-stacked"):
 		var plate: Node3D = _BASE_FILL_SCENE.instantiate()
 		plate.position = Vector3(0.0, -2.0 * _STOREY_DROP, 0.0)
 		inst.root.add_child(plate)

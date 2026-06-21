@@ -3,18 +3,17 @@
 # — where a tile's slope fails to descend to meet its lower neighbour, leaving a
 # step/hole instead of a continuous walkable surface.
 #
-# !!! KNOWN-FAILING (intentional TODO) !!!
-# This test still FAILS, but far less than before. History:
-#   * Single-storey diagonal staircases: CONTINUOUS (the per-cell corner profiles
-#     mate correctly — verified by test_diag_seams).
-#   * 2-storey diagonal CORNERS (cliff-corner over a 2-down pit): FIXED by the
-#     2-storey diagonal-ramp corner (cliff-corner-stacked) — the corner descends
-#     both storeys to the pit floor itself. Was ~half the gaps.
-#   * REMAINING (~14): the SAME 2-storey diagonal drop on PENINSULA / ISLAND
-#     variants. Those have 2-4 open diagonals, so they need the 2-storey ramp on
-#     specific corners — not yet wired (the remap only upgrades `cliff-corner`).
-# Close the rest by extending the 2-storey-ramp corner to peninsula/island
-# variants. Make this green by fixing the geometry, not by weakening the bound.
+# Now PASSES (0 gaps). It once documented a target; the geometry has caught up:
+#   * Single-storey diagonal staircases: continuous (per-cell corner profiles mate).
+#   * 2-storey diagonal drops (the cardinal clamp caps diagonals at 2): the convex
+#     corner is upgraded to the 2-storey diagonal-ramp corner that descends both
+#     storeys to the pit floor itself — for plain corners (cliff-corner-stacked)
+#     AND for peninsula/island (per-open-corner *-stacked-* subset variants).
+#   * The cliff-peninsula slope geometry was reflected vs HeightfieldVariant's
+#     canonical (open=back); the mask now matches, so peninsula edges slope on the
+#     correct faces.
+# Keep this green by fixing geometry, not by weakening the bound. (See the
+# deterministic, triangle-accurate companion guard test_diag_seams.)
 #
 # Method (no physics): instantiate the cliff tiles the heightfield would place over
 # a region, then for each shared boundary sample both tiles' top-surface mesh

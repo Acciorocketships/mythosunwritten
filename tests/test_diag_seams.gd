@@ -166,3 +166,19 @@ func test_scan_2storey_pit() -> void:
 		-2, 3)
 	# The 2-storey diagonal-ramp corner must descend continuously to the pit floor.
 	assert_eq(_scan(holder, -6.0, 30.0, -6.0, 30.0, "2-STOREY PIT (diagonal-ramp corner)"), 0)
+
+func test_scan_random_field_offender() -> void:
+	# The lone test_slope_tile_continuity offender (cell (2,3)|+x, a peninsula-
+	# stacked-fl beside a cliff-interior). Sampled triangle-accurately on the REAL
+	# placement (base fill + stacked variants) to tell a true gap from a vertex-
+	# matching artifact in that test.
+	var plan := HeightfieldPlan.new(12345, 56.0, 12, "mean")
+	var holder := Node3D.new()
+	add_child_autofree(holder)
+	for cz in range(0, 6):
+		for cx in range(0, 5):
+			var rec: Dictionary = HeightfieldInstantiator.placement_for_cell(plan, cx, cz)
+			if String(rec["family"]) == "ground":
+				continue
+			HeightfieldInstantiator.spawn_placement(rec, _lib, holder)
+	assert_eq(_scan(holder, 50.0, 70.0, 62.0, 82.0, "RANDOM FIELD around (2,3)"), 0)

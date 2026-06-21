@@ -69,6 +69,9 @@ func _bake_variants(_gen: SlopeMeshGenerator) -> void:
 		_bake_variant_cells(name, SlopeVariantLayout.layout(name), name)
 	for name in SlopeVariantLayout.STACKED_VARIANTS.keys():
 		_bake_variant_cells(name, SlopeVariantLayout.stacked_layout(name), SlopeVariantLayout.STACKED_VARIANTS[name].base)
+	# Generative 2-storey corner variants for peninsula/island (one per outer-corner subset).
+	for v in SlopeVariantLayout.generated_stacked_variants():
+		_bake_variant_cells(v.name, SlopeVariantLayout.stacked_layout_for(v.base, v.corners), v.base)
 
 func _bake_variant_cells(name: String, cells: Array, socket_source: String) -> void:
 	var root := Node3D.new()

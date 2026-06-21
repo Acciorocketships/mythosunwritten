@@ -1,21 +1,21 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="PackedScene" path="res://terrain/gltf/slope/outer_corner.tscn" id="1_knejl"]
-[ext_resource type="PackedScene" path="res://terrain/gltf/slope/edge.tscn" id="2_dvkrj"]
+[ext_resource type="PackedScene" path="res://terrain/gltf/slope/outer_corner.tscn" id="1_hp0bb"]
+[ext_resource type="PackedScene" path="res://terrain/gltf/slope/outer_corner_stacked.tscn" id="2_s7sha"]
 
-[node name="CliffPeninsula" type="Node3D"]
+[node name="CliffIslandStacked_FRBL" type="Node3D"]
 
-[node name="outer_0" type="Node3D" parent="." instance=ExtResource("1_knejl")]
+[node name="outer_0" type="Node3D" parent="." instance=ExtResource("1_hp0bb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -6)
 
-[node name="outer_1" type="Node3D" parent="." instance=ExtResource("1_knejl")]
+[node name="outer_stacked_1" type="Node3D" parent="." instance=ExtResource("2_s7sha")]
 transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 6, 0, -6)
 
-[node name="edge_2" type="Node3D" parent="." instance=ExtResource("2_dvkrj")]
+[node name="outer_stacked_2" type="Node3D" parent="." instance=ExtResource("2_s7sha")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -6, 0, 6)
 
-[node name="edge_3" type="Node3D" parent="." instance=ExtResource("2_dvkrj")]
-transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 6, 0, 6)
+[node name="outer_3" type="Node3D" parent="." instance=ExtResource("1_hp0bb")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 6, 0, 6)
 
 [node name="Sockets" type="Node3D" parent="."]
 

@@ -671,6 +671,11 @@ static func load_cliff_variants() -> Array[TerrainModule]:
 	for entry in CLIFF_STACKED_VARIANT_TABLE:
 		out.append(load_cliff_variant(entry[0], "cliff-base", entry[1]))
 		out.append(load_cliff_variant(entry[0], "cliff-stack", entry[1]))
+	# Generative 2-storey corner variants for peninsula/island (one per outer-corner
+	# subset that can sit above a 2-storey diagonal drop).
+	for v in SlopeVariantLayout.generated_stacked_variants():
+		out.append(load_cliff_variant(String(v.name), "cliff-base", String(v.tag)))
+		out.append(load_cliff_variant(String(v.name), "cliff-stack", String(v.tag)))
 	out.append(load_cliff_interior_tile())
 	out.append(load_cliff_stack_interior_tile())
 	return out
