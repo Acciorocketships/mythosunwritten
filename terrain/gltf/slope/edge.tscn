@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=4]
+[gd_scene load_steps=8 format=4]
 
 [ext_resource type="Material" path="res://terrain/materials/ground.tres" id="1_0sb3v"]
 
@@ -15,16 +15,19 @@ _surfaces = [{
 }]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_4okiq"]
-points = PackedVector3Array(-6, -4, -6, -6, -4.4, -6, 0, -4, -6, 0, -4.4, -6, 0, -2, 0, 0, -2.4, 0, -6, -2, 0, -6, -2.4, 0)
+points = PackedVector3Array(-6, -4, -6, -6, -4.4, -6, 6, -4, -6, 6, -4.4, -6, 6, -3.76832, -3.6, 6, -4.16832, -3.6, -6, -3.76832, -3.6, -6, -4.16832, -3.6)
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_bdsvu"]
-points = PackedVector3Array(0, -4, -6, 0, -4.4, -6, 6, -4, -6, 6, -4.4, -6, 6, -2, 0, 6, -2.4, 0, 0, -2, 0, 0, -2.4, 0)
+points = PackedVector3Array(-6, -3.76832, -3.6, -6, -4.16832, -3.6, 6, -3.76832, -3.6, 6, -4.16832, -3.6, 6, -2.73024, -1.2, 6, -3.13024, -1.2, -6, -2.73024, -1.2, -6, -3.13024, -1.2)
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_5woj5"]
-points = PackedVector3Array(-6, -2, 0, -6, -2.4, 0, 0, -2, 0, 0, -2.4, 0, 0, 0, 6, 0, -0.4, 6, -6, 0, 6, -6, -0.4, 6)
+points = PackedVector3Array(-6, -2.73024, -1.2, -6, -3.13024, -1.2, 6, -2.73024, -1.2, 6, -3.13024, -1.2, 6, -1.26976, 1.2, 6, -1.66976, 1.2, -6, -1.26976, 1.2, -6, -1.66976, 1.2)
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_ywlkc"]
-points = PackedVector3Array(0, -2, 0, 0, -2.4, 0, 6, -2, 0, 6, -2.4, 0, 6, 0, 6, 6, -0.4, 6, 0, 0, 6, 0, -0.4, 6)
+points = PackedVector3Array(-6, -1.26976, 1.2, -6, -1.66976, 1.2, 6, -1.26976, 1.2, 6, -1.66976, 1.2, 6, -0.23168, 3.6, 6, -0.63168, 3.6, -6, -0.23168, 3.6, -6, -0.63168, 3.6)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_2f076"]
+points = PackedVector3Array(-6, -0.23168, 3.6, -6, -0.63168, 3.6, 6, -0.23168, 3.6, 6, -0.63168, 3.6, 6, 0, 6, 6, -0.4, 6, -6, 0, 6, -6, -0.4, 6)
 
 [node name="edge" type="Node3D"]
 
@@ -44,3 +47,6 @@ shape = SubResource("ConvexPolygonShape3D_5woj5")
 
 [node name="CollisionShape3D4" type="CollisionShape3D" parent="StaticBody3D"]
 shape = SubResource("ConvexPolygonShape3D_ywlkc")
+
+[node name="CollisionShape3D5" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("ConvexPolygonShape3D_2f076")
