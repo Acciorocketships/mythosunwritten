@@ -28,8 +28,14 @@ variant becomes a ridge and an Island a dome.
   — four reusable 12×12 cells, each a `MeshInstance3D` + `StaticBody3D`. Slope cells carry
   `COLLISION_SEG²` convex collision slabs that follow the curve; `top` is a single flat box.
 - **Assembled variants** (generated): `terrain/scenes/slope/Cliff*.tscn`, built on a 2×2
-  grid of those components, with each original's `Sockets` node copied verbatim so adjacency
-  is unchanged.
+  grid of those components, with each original's `Sockets` node copied so adjacency is
+  unchanged. The adjacency sockets (`front`/`back`/`left`/`right`, diagonals, `bottom`) keep
+  their original `y=0`, but the **top-surface decoration sockets** (`topcenter`/`topfront`/
+  `topback`/`topleft`/`topright`) are **dropped onto the slope** at bake time via
+  `SlopeProfile.surface_height(cells, x, z)` — otherwise a socket over a slope band would
+  stay at `y=0` while the grass dropped below it, leaving its decoration floating (decorations
+  attach socket-to-socket, no raycast). `topcenter` is always at the plateau centre, so it
+  stays at `y=0`.
 - **Loader**: `TerrainModuleDefinitions.load_cliff_variant()` resolves cliff scenes from
   `res://terrain/scenes/slope/`.
 - **Regenerate** all component + variant scenes after changing the profile/params/layout:
@@ -73,6 +79,9 @@ sheer drop. The fix is a **2-storey diagonal-ramp corner**:
   module registration, orientation.
 - `test_slope_tile_continuity` — random-field guard: adjacent cliff tiles must form a
   gap-free surface at shared boundaries (0 gaps).
+- `test_slope_socket_grounding` — every `top*` decoration socket in every baked slope scene
+  must sit on the actual mesh surface (sampled triangle-accurately), so decorations don't
+  float over slope bands.
 - `test_diag_seams` — deterministic, triangle-accurate guard: samples the actual walkable
   surface over controlled staircases (single-storey, 2-storey pit, real-field spot) and
   asserts no vertical discontinuities. Run targeted; it spawns full placements so it's slow.

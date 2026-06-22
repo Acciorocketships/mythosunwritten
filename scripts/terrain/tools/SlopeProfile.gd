@@ -112,3 +112,29 @@ static func inner_corner_stacked_height(x: float, z: float) -> float:
 	var seam := minf(_in_band(z), _in_band(x))   # steep onset right at the seam corner
 	var q := IN_MIX * seam + (1.0 - IN_MIX) * base
 	return BOTTOM * _bot_s(q)
+
+# --- assembled-tile surface height -----------------------------------------
+# Walkable surface height at tile-local (x,z) for a variant's cell layout (from
+# SlopeVariantLayout.layout / stacked_layout*). The baker uses this to drop the
+# top-surface decoration sockets onto the slope so attached decorations rest on
+# the ground instead of floating at the old flat y=0. Cells are 12u wide centered
+# at +/-HALF; the four cells meet at the seams, where adjacent profiles agree
+# (continuity), so the half-plane pick below is unambiguous in effect.
+static func surface_height(cells: Array, x: float, z: float) -> float:
+	var cx := -HALF if x < 0.0 else HALF
+	var cz := -HALF if z < 0.0 else HALF
+	for cell in cells:
+		if is_equal_approx(cell.x, cx) and is_equal_approx(cell.z, cz):
+			# tile-local -> cell-local -> un-rotate into the component's canonical frame
+			var local := Basis(Vector3.UP, -deg_to_rad(cell.angle_deg)) * Vector3(x - cell.x, 0.0, z - cell.z)
+			return _component_height(String(cell.component), local.x, local.z)
+	return 0.0
+
+static func _component_height(component: String, x: float, z: float) -> float:
+	match component:
+		"edge": return edge_height(x, z)
+		"outer": return outer_corner_height(x, z)
+		"inner": return inner_corner_height(x, z)
+		"outer_stacked": return outer_corner_stacked_height(x, z)
+		"inner_stacked": return inner_corner_stacked_height(x, z)
+		_: return 0.0   # "top" (flat plateau) and anything unknown stay at y=0

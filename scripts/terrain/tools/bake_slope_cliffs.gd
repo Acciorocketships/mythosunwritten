@@ -94,6 +94,7 @@ func _bake_variant_cells(name: String, cells: Array, socket_source: String) -> v
 	var sockets := orig.get_node_or_null("Sockets")
 	if sockets != null:
 		var dup := sockets.duplicate()
+		_ground_surface_sockets(dup, cells)
 		root.add_child(dup)
 		_set_owner_recursive(dup, root)
 	orig.free()
@@ -103,6 +104,17 @@ func _bake_variant_cells(name: String, cells: Array, socket_source: String) -> v
 	var err := ResourceSaver.save(packed, path)
 	assert(err == OK, "save failed: %s" % path)
 	root.free()
+
+# Drop top-surface decoration sockets (topcenter/topfront/topback/topleft/topright)
+# onto the slope surface so attached decorations rest on the ground instead of
+# floating at the old flat y=0. Adjacency sockets (front/back/left/right, diagonals,
+# bottom) are left untouched — they keep y=0 for adjacency parity and drive tile
+# connection, not decoration placement.
+func _ground_surface_sockets(sockets: Node, cells: Array) -> void:
+	for m in sockets.get_children():
+		if m is Marker3D and String(m.name).begins_with("top"):
+			var p: Vector3 = m.transform.origin
+			m.transform.origin = Vector3(p.x, SlopeProfile.surface_height(cells, p.x, p.z), p.z)
 
 func _set_owner_recursive(node: Node, owner_root: Node) -> void:
 	node.owner = owner_root
