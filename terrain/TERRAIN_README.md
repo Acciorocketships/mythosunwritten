@@ -60,10 +60,14 @@ sheer drop. The fix is a **2-storey diagonal-ramp corner**:
   neighbour); at the open-diagonal vertex both are 1, reaching `2·BOTTOM` = the pit floor.
 - **Components / scenes**: `outer_corner_stacked.tscn` (2 storeys tall, 2-storey collision)
   is assembled into the stacked variant scenes. A plain corner uses `CliffCornerStacked`
-  (tag `cliff-corner-stacked`). A peninsula/island has 2–4 open corners, so the baker
-  **generates one variant per non-empty subset of its outer corners** (e.g.
-  `CliffIslandStacked_FLBR`, tag `cliff-island-stacked-flbr`) via
-  `SlopeVariantLayout.generated_stacked_variants()`.
+  (tag `cliff-corner-stacked`). Any variant with **two adjacent edge-walls meeting at a
+  convex corner** can have that corner drop two storeys, so the baker **generates one variant
+  per non-empty subset of those corners** (e.g. `CliffIslandStacked_FLBR`, tag
+  `cliff-island-stacked-flbr`) via `SlopeVariantLayout.generated_stacked_variants()`. The
+  stackable bases are peninsula (FL/FR), island (FL/FR/BL/BR), **and
+  `inner-corner-edge-both`** (back+right meet at a convex BR corner, alongside an FL inner
+  notch → `CliffInCornerEdgeBothStacked_BR`). This last one was the lone case still showing a
+  triangular sheer ledge before being added (`SlopeVariantLayout.STACKABLE_BASES`).
 - **Selection**: automatic. `HeightfieldInstantiator` detects each 2-storey-down diagonal,
   maps its world socket back to the canonical corner (un-rotating by the tile's
   `rotation_steps`), and selects the variant baked for that exact corner subset. Each ramp
@@ -82,6 +86,9 @@ sheer drop. The fix is a **2-storey diagonal-ramp corner**:
 - `test_slope_socket_grounding` — every `top*` decoration socket in every baked slope scene
   must sit on the actual mesh surface (sampled triangle-accurately), so decorations don't
   float over slope bands.
+- `test_slope_edgeboth_corner` — the `inner-corner-edge-both` convex BR corner, when it drops
+  two storeys, must select the ramp variant and form a gap-free surface (regression for the
+  triangular sheer ledge).
 - `test_diag_seams` — deterministic, triangle-accurate guard: samples the actual walkable
   surface over controlled staircases (single-storey, 2-storey pit, real-field spot) and
   asserts no vertical discontinuities. Run targeted; it spawns full placements so it's slow.

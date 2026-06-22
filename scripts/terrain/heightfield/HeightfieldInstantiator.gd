@@ -69,8 +69,9 @@ static func placement_for_cell(plan, cx: int, cz: int) -> Dictionary:
 	# diagonals) use the 2-storey diagonal-ramp corner, which descends both storeys
 	# to the pit floor itself (continuous) instead of a 1-storey corner bottoming
 	# out at a ledge. A plain corner has one such corner -> cliff-corner-stacked; a
-	# peninsula/island has 2-4, so it selects the variant baked for that exact
-	# subset (e.g. cliff-island-stacked-flbr). No concave tile is stacked beneath.
+	# peninsula/island/inner-corner-edge-both has more, so it selects the variant
+	# baked for that exact subset (e.g. cliff-island-stacked-flbr, or
+	# cliff-inner-corner-edge-both-stacked-br). No concave tile is stacked beneath.
 	var variant_tag: String = String(desc["variant_tag"])
 	var deep_corners: Array = []
 	for u in understacks:
@@ -79,7 +80,9 @@ static func placement_for_cell(plan, cx: int, cz: int) -> Dictionary:
 	if not deep_corners.is_empty():
 		if variant_tag == "cliff-corner":
 			variant_tag = "cliff-corner-stacked"
-		elif variant_tag == "cliff-peninsula" or variant_tag == "cliff-island":
+		elif SlopeVariantLayout.is_stackable_base_tag(variant_tag):
+			# peninsula / island / inner-corner-edge-both: pick the variant baked for
+			# the exact subset of convex corners that drop two storeys.
 			variant_tag = SlopeVariantLayout.stacked_tag(variant_tag, deep_corners)
 	return {
 		"variant_tag": variant_tag,

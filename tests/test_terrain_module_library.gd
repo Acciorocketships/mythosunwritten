@@ -171,10 +171,17 @@ func test_library_registers_all_cliff_variants() -> void:
 			lib.modules_by_tag.has(variant_tag),
 			"Library missing variant: %s" % variant_tag
 		)
-	# The "cliff" tag should map to all variants in both tiers (cliff-base and
-	# cliff-stack): 14 edge variants × 2 tiers + cliff-interior + cliff-stack-interior = 30.
+	# The "cliff" tag should map to every cliff variant in both tiers (cliff-base
+	# and cliff-stack), plus the two interior tiles. Derived from the layout source
+	# of truth so it stays correct as stacked/generated variants are added:
+	#   (base masks + fixed stacked + generated stacked) × 2 tiers + 2 interiors.
+	var expected_cliff := (
+		SlopeVariantLayout.VARIANT_MASKS.size()
+		+ SlopeVariantLayout.STACKED_VARIANTS.size()
+		+ SlopeVariantLayout.generated_stacked_variants().size()
+	) * 2 + 2
 	assert_eq(
 		lib.modules_by_tag["cliff"].size(),
-		30,
-		"All 30 cliff modules (both tiers) should carry 'cliff' tag"
+		expected_cliff,
+		"All %d cliff modules (both tiers) should carry 'cliff' tag" % expected_cliff
 	)
