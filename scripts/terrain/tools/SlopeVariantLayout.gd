@@ -54,11 +54,28 @@ static func stacked_layout(name: String) -> Array:
 # so the instantiator can pick the exact subset the heightfield needs. (CliffCorner
 # has a single outer corner -> its only subset is the existing CliffCornerStacked.)
 const CORNER_KEYS := ["FL", "FR", "BL", "BR"]
-const BASE_TAG := {"CliffPeninsula": "cliff-peninsula", "CliffIsland": "cliff-island"}
+const BASE_TAG := {
+	"CliffPeninsula": "cliff-peninsula",
+	"CliffIsland": "cliff-island",
+	# Has two adjacent edge-walls (back+right) meeting at a convex BR corner, plus
+	# an FL inner notch. That BR corner can sit one diagonal step above a pit (a
+	# 2-storey drop), so it needs the ramp corner too — the same as a plain corner,
+	# just on a tile that also carries an inner notch.
+	"CliffInCornerEdgeBoth": "cliff-inner-corner-edge-both",
+}
 const STACKABLE_BASES := {
 	"CliffPeninsula": ["FL", "FR"],
 	"CliffIsland": ["FL", "FR", "BL", "BR"],
+	"CliffInCornerEdgeBoth": ["BR"],
 }
+
+# True if `variant_tag` is a generative stacked base (peninsula/island/edge-both):
+# one whose 2-storey convex corners are upgraded to ramp variants per open subset.
+static func is_stackable_base_tag(variant_tag: String) -> bool:
+	for base in BASE_TAG:
+		if BASE_TAG[base] == variant_tag:
+			return true
+	return false
 
 # Canonical corner-subset suffix (fixed CORNER_KEYS order), e.g. {BL,FL} -> "FLBL".
 static func corner_suffix(corners: Array) -> String:

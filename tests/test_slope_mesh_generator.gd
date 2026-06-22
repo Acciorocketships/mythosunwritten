@@ -43,13 +43,35 @@ func test_components_have_material_and_normals() -> void:
 
 func test_collision_slabs_are_convex() -> void:
 	var g := _gen()
-	var n := SlopeMeshGenerator.COLLISION_SEG * SlopeMeshGenerator.COLLISION_SEG
-	for arr in [g.build_edge_collision(), g.build_outer_corner_collision(), g.build_inner_corner_collision()]:
-		assert_eq(arr.size(), n, "expected COLLISION_SEG^2 slabs")
+	var seg := SlopeMeshGenerator.COLLISION_SEG
+	# edge is flat across x, so only its curved (z) axis is subdivided -> `seg` slabs;
+	# corners curve in both axes -> seg*seg slabs.
+	var cases := [
+		[g.build_edge_collision(), seg],
+		[g.build_outer_corner_collision(), seg * seg],
+		[g.build_inner_corner_collision(), seg * seg],
+	]
+	for case in cases:
+		var arr: Array = case[0]
+		assert_eq(arr.size(), case[1], "unexpected slab count")
 		for s in arr:
 			assert_true(s is ConvexPolygonShape3D)
 			assert_gt((s as ConvexPolygonShape3D).points.size(), 0)
 	assert_true(g.build_top_collision() is BoxShape3D)
+
+func test_edge_collision_not_split_across_flat_axis() -> void:
+	# The edge profile is flat across x (derivative 0), so collision must NOT waste
+	# slabs splitting x: expect exactly COLLISION_SEG slabs (curved z axis only), each
+	# spanning the full 12u width in x.
+	var slabs := _gen().build_edge_collision()
+	assert_eq(slabs.size(), SlopeMeshGenerator.COLLISION_SEG, "edge should subdivide only the curved axis")
+	for s in slabs:
+		var min_x := 100.0
+		var max_x := -100.0
+		for p in (s as ConvexPolygonShape3D).points:
+			min_x = minf(min_x, p.x)
+			max_x = maxf(max_x, p.x)
+		assert_almost_eq(max_x - min_x, 12.0, 1e-3)
 
 func test_edge_collision_follows_the_drop() -> void:
 	# The edge slabs must actually track the slope (not sit flat) and skirt downward:
@@ -77,6 +99,7 @@ func test_stacked_corner_meshes_build() -> void:
 		assert_almost_eq(box.position.y, bottom, 1e-3)
 		assert_almost_eq(box.position.y + box.size.y, 0.0, 1e-3)
 		assert_not_null(mesh.surface_get_material(0))
+	# both stacked corners curve in x and z -> seg*seg slabs
 	var n := SlopeMeshGenerator.COLLISION_SEG * SlopeMeshGenerator.COLLISION_SEG
 	for arr in [g.build_outer_corner_stacked_collision(), g.build_inner_corner_stacked_collision()]:
 		assert_eq(arr.size(), n)
