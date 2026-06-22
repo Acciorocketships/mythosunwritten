@@ -128,6 +128,14 @@ const CLIFF_VARIANT_TABLE: Array = [
 	["CliffInCornerSideEdge", "cliff-inner-corner-side-edge"],
 ]
 
+# Mating C1 corner variants for multi-storey diagonal corners (selected by the
+# heightfield's understacks detection). CliffCornerStacked = convex top half;
+# CliffInCornerStacked = concave bottom half (spawned one tier below).
+const CLIFF_STACKED_VARIANT_TABLE: Array = [
+	["CliffCornerStacked", "cliff-corner-stacked"],
+	["CliffInCornerStacked", "cliff-inner-corner-stacked"],
+]
+
 
 ### Shared surface spawning ###
 
@@ -658,6 +666,16 @@ static func load_cliff_variants() -> Array[TerrainModule]:
 	for entry in CLIFF_VARIANT_TABLE:
 		out.append(load_cliff_variant(entry[0], "cliff-base", entry[1]))
 		out.append(load_cliff_variant(entry[0], "cliff-stack", entry[1]))
+	# Mating C1 stacked corners: their understacks detection (HeightfieldInstantiator)
+	# selects these to render multi-storey diagonal corners continuously.
+	for entry in CLIFF_STACKED_VARIANT_TABLE:
+		out.append(load_cliff_variant(entry[0], "cliff-base", entry[1]))
+		out.append(load_cliff_variant(entry[0], "cliff-stack", entry[1]))
+	# Generative 2-storey corner variants for peninsula/island (one per outer-corner
+	# subset that can sit above a 2-storey diagonal drop).
+	for v in SlopeVariantLayout.generated_stacked_variants():
+		out.append(load_cliff_variant(String(v.name), "cliff-base", String(v.tag)))
+		out.append(load_cliff_variant(String(v.name), "cliff-stack", String(v.tag)))
 	out.append(load_cliff_interior_tile())
 	out.append(load_cliff_stack_interior_tile())
 	return out
@@ -671,7 +689,7 @@ static func load_cliff_variants() -> Array[TerrainModule]:
 static func load_cliff_variant(
 	scene_name: String, tier: String, variant_tag: String
 ) -> TerrainModule:
-	var scene_path: String = "res://terrain/scenes/%s.tscn" % scene_name
+	var scene_path: String = "res://terrain/scenes/slope/%s.tscn" % scene_name
 	var tier_variant_tag: String = variant_tag.replace("cliff-", tier + "-")
 	var bottom_required: String = "cliff" if tier == "cliff-stack" else "ground"
 	return _build_cliff_tile(
