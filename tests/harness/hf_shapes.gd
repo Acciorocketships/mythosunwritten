@@ -56,7 +56,7 @@ func _build_shapes() -> void:
 
 func _short(tag: String) -> String:
 	# Compact code for the grid view.
-	tag = tag.replace("cliff-", "C").replace("level-", "L").replace("ground", "G")
+	tag = tag.replace("cliff-", "C").replace("level-", "L").replace("ground-plain", "G")
 	tag = tag.replace("inner-corner", "IC").replace("interior", "in").replace("center", "ce")
 	tag = tag.replace("corner", "co").replace("side", "sd").replace("peninsula", "pe")
 	return tag

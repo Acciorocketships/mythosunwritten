@@ -26,7 +26,7 @@ var _eye: Vector3
 
 
 func _vcode(v: String) -> String:
-	if v == "ground": return "."
+	if v == "ground-plain": return "."
 	if v.begins_with("water") or v.begins_with("bank"): return "~"
 	v = v.replace("cliff-", "").replace("level-", "")
 	if v == "interior" or v == "center": return "i"

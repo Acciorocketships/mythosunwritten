@@ -145,7 +145,7 @@ static func cell_descriptor(
 		family = "ground"
 	var origin_y: float = float(storey) * STOREY_HEIGHT + float(level) * LEVEL_HEIGHT
 	if family == "ground":
-		return {"family": "ground", "variant_tag": "ground", "rotation_steps": 0, "origin_y": origin_y}
+		return {"family": "ground", "variant_tag": "ground-plain", "rotation_steps": 0, "origin_y": origin_y}
 	var v: Dictionary = variant_for_missing(missing)
 	var bare: String = v["tag"]
 	var variant_tag: String
