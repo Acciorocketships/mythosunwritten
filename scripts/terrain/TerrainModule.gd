@@ -73,6 +73,12 @@ extends Resource
 # will rise over it and displace it).
 @export var grows_in_cliff_core: bool = false
 
+# If true, foliage sockets on this module may be covered by a storey landing
+# on top (only cliff-family tiles stack storeys). Used by
+# _cliff_foliage_covered_by_stack to geometrically suppress foliage that
+# would be displaced by the next storey.
+@export var covered_by_storey_above: bool = false
+
 func _init(
 	_scene: PackedScene = null,
 	_size: AABB = AABB(),

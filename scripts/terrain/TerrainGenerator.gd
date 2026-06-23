@@ -534,7 +534,7 @@ func _cliff_storey_threshold(piece: TerrainModuleInstance) -> float:
 func _cliff_foliage_covered_by_stack(
 	piece: TerrainModuleInstance, socket_name: String
 ) -> bool:
-	if not piece.def.tags.has("cliff"):
+	if not piece.def.covered_by_storey_above:
 		return false
 	if not _socket_can_spawn_point(piece, socket_name):
 		return false

@@ -626,6 +626,7 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
 	m.grows_in_cliff_core = true
+	m.covered_by_storey_above = true
 	m.socket_role.merge(surface["socket_role"])
 	return m
 
@@ -711,6 +712,7 @@ static func _build_cliff_tile(
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
 	m.grows_in_cliff_core = true
+	m.covered_by_storey_above = true
 	m.socket_role.merge(surface["socket_role"])
 	return m
 
