@@ -173,7 +173,7 @@ static func load_8x8x2_tile() -> TerrainModule:
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
 	var socket_size: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"4x4x4": 0.4, "point": 0.6}),
+		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_8X8_STACK_SIZE_WEIGHTS),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
@@ -185,7 +185,7 @@ static func load_8x8x2_tile() -> TerrainModule:
 		"topbackleft": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"hill": 0.4, "grass": 0.6})
+		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_8X8_STACK_TAG_WEIGHTS)
 	}
 
 	return TerrainModule.new(
@@ -207,7 +207,7 @@ static func load_12x12x2_tile() -> TerrainModule:
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
 	var socket_size: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"8x8x2": 1.0}),
+		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_12X12_STACK_SIZE_WEIGHTS),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
@@ -219,7 +219,7 @@ static func load_12x12x2_tile() -> TerrainModule:
 		"topbackleft": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"hill": 1.0}),
+		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_12X12_STACK_TAG_WEIGHTS),
 	}
 
 	return TerrainModule.new(
@@ -240,7 +240,7 @@ static func load_4x4x4_tile() -> TerrainModule:
 	var bb: AABB = AABB(Vector3(-2.0, -4.0, -2.0), Vector3(4.0, 4.0, 4.0))
 
 	var socket_size: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"point": 1.0}),
+		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_4X4_STACK_SIZE_WEIGHTS),
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
@@ -248,7 +248,7 @@ static func load_4x4x4_tile() -> TerrainModule:
 		"bottom": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"topcenter": Distribution.new({"grass": 1.0}),
+		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_4X4_STACK_TAG_WEIGHTS),
 	}
 
 	return TerrainModule.new(

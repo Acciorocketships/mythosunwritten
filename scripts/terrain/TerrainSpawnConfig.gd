@@ -49,6 +49,10 @@ static func category_for_y(y: float) -> String:
 # on level sockets. Never empties a distribution (Distribution.sample asserts on
 # an empty / zero-sum dist) — point foliage always survives a foliage roll, and
 # a dist of only-structures is left as-is rather than nulled.
+# Note: structural SEED SIZES (24x24x4 / 24x24x0.5) are intentionally NOT size-gated
+# here — no slope socket bears a topcenter seed (every baked topcenter sits at the
+# plateau, y≈0 → level category); seed suppression on a slope topcenter relies on the
+# tag filter (SLOPE_BLOCKED_TAGS) rather than a size gate.
 static func filter_for_category(dist: Distribution, category: String) -> Distribution:
 	if category != "slope" or dist == null or dist.is_empty():
 		return dist
@@ -148,12 +152,25 @@ const GROUND_FOLIAGE_FILL_PROB: float = 0.2
 const FOLIAGE_TAG_WEIGHTS: Dictionary[String, float] = {
 	"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.25, "hill": 0.05,
 }
+# Size mix for a top-edge foliage socket: mostly point decorations, occasionally
+# a small hill. Cardinals can seed an 8x8x2; corners (more open space) a 12x12x2.
+# The slope gate (filter_for_category) drops the hill sizes on slope sockets.
+const FOLIAGE_CARDINAL_SIZE_WEIGHTS: Dictionary[String, float] = {"point": 0.85, "8x8x2": 0.1, "4x4x4": 0.05}
+const FOLIAGE_CORNER_SIZE_WEIGHTS: Dictionary[String, float] = {"point": 0.85, "12x12x2": 0.1, "4x4x4": 0.05}
 
 # --- Hill stacking (small hills can stack on top of each other) ---
 # Per-hill chance that its topcenter seeds another (smaller) hill above.
 const HILL_8X8_STACK_FILL_PROB: float = 0.5
 const HILL_12X12_STACK_FILL_PROB: float = 0.3
 const HILL_4X4_STACK_FILL_PROB: float = 0.4
+# What each hill seeds from its topcenter when it stacks: a size mix and a tag
+# mix. (Companion to the HILL_*_STACK_FILL_PROB rates above.)
+const HILL_8X8_STACK_SIZE_WEIGHTS: Dictionary[String, float] = {"4x4x4": 0.4, "point": 0.6}
+const HILL_8X8_STACK_TAG_WEIGHTS: Dictionary[String, float] = {"hill": 0.4, "grass": 0.6}
+const HILL_12X12_STACK_SIZE_WEIGHTS: Dictionary[String, float] = {"8x8x2": 1.0}
+const HILL_12X12_STACK_TAG_WEIGHTS: Dictionary[String, float] = {"hill": 1.0}
+const HILL_4X4_STACK_SIZE_WEIGHTS: Dictionary[String, float] = {"point": 1.0}
+const HILL_4X4_STACK_TAG_WEIGHTS: Dictionary[String, float] = {"grass": 1.0}
 
 
 ### Shared surface spawning ###
@@ -172,8 +189,8 @@ static func surface_spawn_sockets(
 	foliage_fill_prob: Variant,
 	topcenter_suppression_prob: Variant = null
 ) -> Dictionary:
-	var corner_size: Distribution = Distribution.new({"point": 0.85, "12x12x2": 0.1, "4x4x4": 0.05})
-	var cardinal_size: Distribution = Distribution.new({"point": 0.85, "8x8x2": 0.1, "4x4x4": 0.05})
+	var corner_size: Distribution = Distribution.new(FOLIAGE_CORNER_SIZE_WEIGHTS)
+	var cardinal_size: Distribution = Distribution.new(FOLIAGE_CARDINAL_SIZE_WEIGHTS)
 	var foliage_tags: Distribution = Distribution.new(FOLIAGE_TAG_WEIGHTS)
 	var socket_size: Dictionary[String, Distribution] = {
 		"topfront": cardinal_size,

@@ -47,3 +47,12 @@ func test_category_for_y() -> void:
 	assert_eq(TerrainSpawnConfig.category_for_y(0.0), "level", "plateau sockets at y~0 are level")
 	assert_eq(TerrainSpawnConfig.category_for_y(-2.0), "slope", "sockets dropped below the plateau are slope")
 	assert_eq(TerrainSpawnConfig.category_for_y(-0.5), "level", "boundary value is level (strict <)")
+
+
+func test_slope_blocked_tags_cover_all_seed_tags() -> void:
+	for seed_tag in [
+		TerrainSpawnConfig.SEED_TAG_LEVEL_GROUND, TerrainSpawnConfig.SEED_TAG_LEVEL_STACK,
+		TerrainSpawnConfig.SEED_TAG_CLIFF_BASE, TerrainSpawnConfig.SEED_TAG_CLIFF_STACK,
+	]:
+		assert_true(seed_tag in TerrainSpawnConfig.SLOPE_BLOCKED_TAGS,
+			"%s must be in SLOPE_BLOCKED_TAGS (drift between the const and the literal list)" % seed_tag)
