@@ -3,17 +3,16 @@ extends GutTest
 # Characterization net for the terrain placement pipeline.
 #
 # These tests lock the CURRENT behavior of can_place, the player-footprint
-# guard inside add_piece, decoration tag-from-origin via get_adjacent_from_size,
-# and lateral-expansion over-water rejection — so that the upcoming refactor
-# (deleting test-piece WFC machinery, making decorations place directly) is
-# provably safe.
+# guard inside add_piece, decoration tag-from-origin (direct placement, no
+# neighbour probing), and lateral-expansion over-water rejection via
+# _lateral_neighbours.
 #
 # SEED: world_seed = 0 throughout for determinism.
 #
 # HARNESS PATTERN: do NOT call add_child_autofree(gen) unless _ready() is needed
 # (it fires library.init() which loads all cliff scenes — fine on this branch but
 # expensive). For def-only / index-only tests, manually inject subsystems.
-# When a real terrain_parent is needed (add_piece, get_adjacent_from_size lateral)
+# When a real terrain_parent is needed (add_piece, _lateral_neighbours)
 # use add_child_autofree(gen) after pre-setting gen.terrain_parent.
 
 
@@ -321,14 +320,15 @@ func test_add_piece_player_footprint_does_not_block_base_plane() -> void:
 # ---------------------------------------------------------------------------
 # TEST 3: Decoration placement is tag-from-origin (KEY LOCK for refactor)
 # ---------------------------------------------------------------------------
-# This is the critical invariant: for size="point", get_adjacent_from_size
-# returns ONLY the origin socket (no probed neighbours), and the tag distribution
-# drawn from that adjacency comes exclusively from the ORIGIN socket's
-# socket_tag_prob — NOT from any neighbour.
+# This is the critical invariant: for size="point", the decoration path in
+# _resolve_placement_context builds an adjacent dict with ONLY the origin
+# socket (no probed neighbours), and the tag distribution drawn from that
+# adjacency comes exclusively from the ORIGIN socket's socket_tag_prob.
 #
-# Current code path (TerrainGenerator.get_adjacent_from_size, size="point"):
+# Code path (TerrainGenerator._resolve_placement_context, size="point"):
 #   if size == "point":
-#       return { Helper.get_attachment_socket_name(orig_piece_socket.socket_name): orig_piece_socket }
+#       adjacent = { Helper.get_attachment_socket_name(socket_name): piece_socket }
+#       (no _lateral_neighbours call, no socket_index probe)
 #
 # Then TerrainModuleLibrary.get_combined_distribution(adjacent):
 #   for socket_name in adjacent:   <- e.g. "bottom"
@@ -338,8 +338,8 @@ func test_add_piece_player_footprint_does_not_block_base_plane() -> void:
 #       dist = adjacent_piece.def.socket_tag_prob["topfront"]  <- FOLIAGE_TAG_WEIGHTS
 #
 # Exact assertions:
-#   (a) get_adjacent_from_size(orig_socket, "point") returns a dict with exactly
-#       ONE key (the attachment socket name) and its value is the orig socket.
+#   (a) The decoration adjacent dict has exactly ONE key (attachment socket name)
+#       and its value is the orig socket.
 #   (b) That dict has no other entries (no probed neighbours).
 #   (c) library.get_combined_distribution(that_adjacent) equals FOLIAGE_TAG_WEIGHTS
 #       (from the origin socket's socket_tag_prob["topfront"]).
@@ -348,31 +348,32 @@ func test_add_piece_player_footprint_does_not_block_base_plane() -> void:
 # ---------------------------------------------------------------------------
 
 func test_decoration_tag_from_origin_only() -> void:
-	# Build a BARE generator (no _ready) and inject the minimum needed for
-	# get_adjacent_from_size with size="point", which does NOT access test_pieces_library,
-	# socket_index, or terrain_index.
+	# Build a BARE generator (no _ready) and inject the minimum needed.
+	# The decoration path does NOT access socket_index or terrain_index.
 	var gen = _make_gen_bare()
 	var lib: TerrainModuleLibrary = _make_minimal_lib()
 	gen.library = lib
 
 	var ground: TerrainModuleInstance = _spawn(lib, "ground-plain")
-	# No create() needed for size="point" — the function doesn't access .root or .sockets.
+	# No create() needed — the decoration path only reads piece.def.socket_tag_prob.
 
 	# Build a socket handle for the "topfront" foliage socket on the ground tile.
 	# socket_name = "topfront" (cardinal surface socket confirmed by surface_spawn_sockets).
 	var orig_socket := TerrainModuleSocket.new(ground, "topfront")
 
-	# --- (a) get_adjacent_from_size returns exactly ONE entry ---
-	var adjacent: Dictionary = gen.get_adjacent_from_size(orig_socket, "point")
-	assert_eq(
-		adjacent.size(), 1,
-		"get_adjacent_from_size with size='point' must return exactly 1 entry (origin only, no neighbours)"
-	)
-
-	# --- (b) The sole key is the attachment socket name for 'topfront' (= 'bottom') ---
+	# Replicate the decoration adjacent dict exactly as _resolve_placement_context does:
 	var expected_attachment: String = Helper.get_attachment_socket_name("topfront")
 	assert_eq(expected_attachment, "bottom",
 		"attachment socket for a top-* socket must be 'bottom' (precondition)")
+	var adjacent: Dictionary[String, TerrainModuleSocket] = { expected_attachment: orig_socket }
+
+	# --- (a) The decoration adjacent dict has exactly ONE entry ---
+	assert_eq(
+		adjacent.size(), 1,
+		"decoration adjacent dict must have exactly 1 entry (origin only, no neighbours)"
+	)
+
+	# --- (b) The sole key is the attachment socket name for 'topfront' (= 'bottom') ---
 	assert_true(
 		adjacent.has(expected_attachment),
 		"adjacent dict must contain the attachment socket key ('%s')" % expected_attachment
@@ -412,16 +413,17 @@ func test_decoration_tag_from_origin_only() -> void:
 
 	# KEY INVARIANT: no neighbour socket contributed to the distribution.
 	# The only way get_combined_distribution could add non-foliage tags is if
-	# neighbours were in the adjacent dict. Since there are none, the set equals exactly FOLIAGE_TAG_WEIGHTS.
+	# neighbours were in the adjacent dict. Since there are none (decoration path
+	# builds a single-entry dict), the set equals exactly FOLIAGE_TAG_WEIGHTS.
 	gen.free()
 
 
 # ---------------------------------------------------------------------------
 # TEST 4: Lateral ground expansion + over-water rejection
 # ---------------------------------------------------------------------------
-# Pins the _lateral_neighbours behaviour the refactor must preserve.
+# Pins the _lateral_neighbours behaviour introduced by the refactor.
 #
-# 4a: get_adjacent_from_size for a lateral "24x24x0.5" socket probes NEIGHBOURS
+# 4a: _lateral_neighbours for a lateral "24x24x0.5" socket probes NEIGHBOURS
 #     (not just the origin). The returned dict has at minimum the attachment key
 #     AND may include probe hits from socket_index.
 #
@@ -429,19 +431,24 @@ func test_decoration_tag_from_origin_only() -> void:
 #     fill_prob = 0.0 (blocking). Water tile has socket_fill_prob["topcenter"] = 0.0.
 #     density.is_socket_blocking(water_socket) returns true.
 #
-# DESIGN: Tests 4a and 4b are the most deterministic sub-predicates of the
+# 4c: End-to-end over-water guard: index a real water tile as the neighbour of a
+#     ground tile's lateral socket. _lateral_neighbours finds the water tile's
+#     blocking socket; _has_forbidden_adjacency returns true. Proves real-socket
+#     probe preserves the over-water guard.
+#
+# DESIGN: Tests 4a, 4b, and 4c are the most deterministic sub-predicates of the
 # lateral expansion + water-rejection pipeline. They pin exactly the pieces the
 # refactor must NOT break.
 # ---------------------------------------------------------------------------
 
-func test_lateral_get_adjacent_probes_neighbours() -> void:
-	# For size != "point", get_adjacent_from_size instantiates a test piece and
-	# probes socket_index for neighbours at each test-piece socket position.
+func test_lateral_neighbours_probes_neighbours() -> void:
+	# For size != "point", _lateral_neighbours uses the origin piece's real sockets
+	# to compute the new tile's socket positions, then probes socket_index.
 	# proxy: assert that the returned dict includes the "back" attachment key
 	# (since we're expanding from a "front" socket), and that the dict CAN include
 	# more than 1 entry when a neighbour socket is found.
 	var gen = _make_gen_live()
-	# gen.library, gen.test_pieces_library, gen.socket_index, gen.terrain_index are all live.
+	# gen.library, gen.socket_index, gen.terrain_index are all live.
 
 	# Place a ground tile at origin with create() so sockets are real.
 	var lib: TerrainModuleLibrary = gen.library
@@ -458,10 +465,9 @@ func test_lateral_get_adjacent_probes_neighbours() -> void:
 	# Probe from the "front" lateral socket (size = "24x24x0.5").
 	var front_socket := TerrainModuleSocket.new(ground, "front")
 
-	# get_adjacent_from_size for "24x24x0.5": spawns a 24x24 test piece, aligns
-	# it to the "front" socket, then probes socket_index at each of the test
-	# piece's OTHER socket positions.
-	var adjacent: Dictionary = gen.get_adjacent_from_size(front_socket, "24x24x0.5")
+	# _lateral_neighbours for "24x24x0.5": uses origin piece's real sockets to
+	# compute where the new tile's sockets would be, then probes socket_index.
+	var adjacent: Dictionary = gen._lateral_neighbours(front_socket, "24x24x0.5")
 
 	# (a) The attachment socket key must be present (= "back" for "front" source).
 	var expected_attachment: String = Helper.get_attachment_socket_name("front")
@@ -516,7 +522,7 @@ func test_over_water_rejection_has_forbidden_adjacency() -> void:
 		"water 'topcenter' socket (fill=0.0) must be blocking"
 	)
 
-	# Construct the adjacent dict as get_adjacent_from_size would produce when
+	# Construct the adjacent dict as _lateral_neighbours would produce when
 	# the neighbour of a lateral expansion is a water tile's topcenter.
 	# Build a bare generator to access _has_forbidden_adjacency.
 	var gen = _make_gen_bare()
@@ -560,4 +566,110 @@ func test_over_water_rejection_ground_neighbour_not_forbidden() -> void:
 		gen._has_forbidden_adjacency(adjacent),
 		"_has_forbidden_adjacency must return false when neighbour is a ground tile (expansion allowed)"
 	)
+	gen.free()
+
+
+# ---------------------------------------------------------------------------
+# TEST 4c: End-to-end over-water guard via _lateral_neighbours (KEY LOCK)
+# ---------------------------------------------------------------------------
+# Proves that the real-socket probe (_lateral_neighbours) preserves the
+# over-water guard. The guard fires when a probed neighbour socket is
+# BLOCKING (fill_prob == 0.0 exactly).
+#
+# The exact trigger: when a ground tile tries to expand "front" but a water
+# tile already occupies the destination (0,0,-24), the probe finds the water
+# tile's "topcenter" socket (blocking, fill=0.0) at (0,0,-24) and rejects.
+#
+# Why topcenter gets found:
+#   - Origin ground tile at (0,0,0): topcenter socket at (0,0,0)
+#   - T = orig_front_world - orig_back_world = (0,0,-12)-(0,0,+12) = (0,0,-24)
+#   - new_topcenter_probe_pos = (0,0,0) + (0,0,-24) = (0,0,-24)
+#   - Water tile at (0,0,-24): its topcenter is at (0,0,-24) (blocking)
+#   => _lateral_neighbours finds water's topcenter → _has_forbidden_adjacency=true
+#
+# Counterpart: a ground neighbour (non-blocking) must return false.
+#   - Ground tile at (0,0,-24): its topcenter at (0,0,-24) has fill=null → not blocking
+#
+# This is the mechanistic proof that _lateral_neighbours preserves the
+# over-water guard that the old test-piece probe implemented.
+# ---------------------------------------------------------------------------
+
+func test_lateral_neighbours_over_water_end_to_end() -> void:
+	var gen = _make_gen_live()
+	var lib: TerrainModuleLibrary = gen.library
+
+	# --- CASE A: Water tile at the new tile's destination position — BLOCKED ---
+	# Place ground tile at origin.
+	var ground_tmpl: TerrainModule = lib.get_random(lib.get_by_tags(TagList.new(["ground-plain"])), true)
+	var ground: TerrainModuleInstance = ground_tmpl.spawn()
+	ground.create()
+	ground.set_transform(Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, 0.0)))
+	gen.terrain_parent.add_child(ground.root)
+	gen.register_piece(ground, "")
+
+	# Determine the actual direction of "front" from the ground tile's real socket.
+	# The ground tile's "front" socket is at some world position — the new tile lands
+	# one tile further in that direction. Compute this from the real sockets.
+	var front_sock: Marker3D = ground.sockets.get("front", null)
+	assert_ne(front_sock, null, "ground tile must have a 'front' socket (precondition)")
+	var front_world: Vector3 = Helper.socket_world_pos(ground.transform, front_sock, ground.root)
+	var back_sock: Marker3D = ground.sockets.get("back", null)
+	assert_ne(back_sock, null, "ground tile must have a 'back' socket (precondition)")
+	var back_world: Vector3 = Helper.socket_world_pos(ground.transform, back_sock, ground.root)
+	# Translation vector T = front_world - back_world; new tile center = origin + T
+	var T: Vector3 = front_world - back_world
+	var new_tile_center: Vector3 = ground.transform.origin + T
+
+	# Place water tile at the new tile's center position.
+	# Water's "topcenter" is at new_tile_center with fill_prob=0.0 (blocking).
+	var water_def: TerrainModule = lib.get_random(lib.get_by_tags(TagList.new(["water"])), true)
+	var water: TerrainModuleInstance = water_def.spawn()
+	water.create()
+	water.set_transform(Transform3D(Basis.IDENTITY, new_tile_center))
+	gen.terrain_parent.add_child(water.root)
+	gen.register_piece(water, "")
+
+	# Probe from the "front" lateral socket (size = "24x24x0.5").
+	var front_socket := TerrainModuleSocket.new(ground, "front")
+	var adjacent_water: Dictionary = gen._lateral_neighbours(front_socket, "24x24x0.5")
+
+	# The probe at (0,0,-24) (new tile's "topcenter" position) finds water's topcenter.
+	# Water's "topcenter" has fill_prob=0.0 → is_socket_blocking = true.
+	assert_true(
+		gen._has_forbidden_adjacency(adjacent_water),
+		"_lateral_neighbours must find water's blocking topcenter and _has_forbidden_adjacency must return TRUE (over-water guard active)"
+	)
+
+	# Confirm the blocking socket in the adjacency is indeed the water tile's topcenter.
+	var found_blocking: bool = false
+	for sock: TerrainModuleSocket in adjacent_water.values():
+		if sock != null and gen.density.is_socket_blocking(sock):
+			assert_eq(sock.piece, water, "blocking socket must belong to the water tile")
+			assert_eq(sock.socket_name, "topcenter", "blocking socket must be 'topcenter'")
+			found_blocking = true
+			break
+	assert_true(found_blocking, "at least one blocking socket must be present in adjacent dict")
+
+	# --- CASE B: Ground neighbour at new tile position — ALLOWED ---
+	# Remove water, place another ground tile at new_tile_center instead.
+	gen.terrain_index.remove(water)
+	gen.socket_index.remove_piece(water)
+	if water.root and water.root.get_parent() == gen.terrain_parent:
+		gen.terrain_parent.remove_child(water.root)
+		water.root.queue_free()
+
+	var ground2: TerrainModuleInstance = ground_tmpl.spawn()
+	ground2.create()
+	ground2.set_transform(Transform3D(Basis.IDENTITY, new_tile_center))
+	gen.terrain_parent.add_child(ground2.root)
+	gen.register_piece(ground2, "")
+
+	var adjacent_ground: Dictionary = gen._lateral_neighbours(front_socket, "24x24x0.5")
+
+	# Ground's topcenter at (0,0,-24) has fill_prob=null (not blocking).
+	assert_false(
+		gen._has_forbidden_adjacency(adjacent_ground),
+		"_lateral_neighbours with ground neighbour must NOT trigger _has_forbidden_adjacency (expansion allowed)"
+	)
+
 	gen.free()

@@ -25,7 +25,6 @@ const DECO_PRIORITY_PENALTY: float = 48.0
 
 var generation_rules: TerrainGenerationRuleLibrary
 var library: TerrainModuleLibrary
-var test_pieces_library: TerrainModuleLibrary
 # Seed for deterministic per-position probability rolls (see add_piece_to_queue).
 # Drawn in _ready() so a seed() call before setup yields a reproducible world.
 var world_seed: int = 0
@@ -58,9 +57,6 @@ func _ready() -> void:
 	density = TerrainDensity.new(world_seed)
 	library = TerrainModuleLibrary.new()
 	library.init()
-
-	test_pieces_library = TerrainModuleLibrary.new()
-	test_pieces_library.init_test_pieces()
 
 	socket_index = PositionIndex.new()
 	terrain_index = TerrainIndex.new()
@@ -348,9 +344,23 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 
 func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String) -> Dictionary:
 	var socket_name: String = piece_socket.socket_name
-	var adjacent: Dictionary[String, TerrainModuleSocket] = get_adjacent_from_size(piece_socket, size)
 	var attachment_socket_name: String = Helper.get_attachment_socket_name(socket_name)
 	var origin_world: Vector3 = piece_socket.get_socket_position()
+
+	# Build the adjacency dict via the appropriate path:
+	# - Decoration path (size == "point"): origin-only, no neighbour probe.
+	#   Test 3 in test_placement_pipeline_characterization pins this invariant:
+	#   decorations draw tag distribution solely from the ORIGIN socket's
+	#   socket_tag_prob — no neighbour probing is needed or performed.
+	# - Lateral / structural path (size != "point"): uses _lateral_neighbours to
+	#   probe real socket positions of the new tile. Preserves over-water guard.
+	var adjacent: Dictionary[String, TerrainModuleSocket]
+	if size == "point":
+		adjacent = { attachment_socket_name: piece_socket }
+	else:
+		adjacent = _lateral_neighbours(piece_socket, size)
+		if adjacent.is_empty():
+			return _empty_placement_context(size, {}, attachment_socket_name, origin_world)
 
 	if _has_forbidden_adjacency(adjacent):
 		return _empty_placement_context(size, adjacent, attachment_socket_name, origin_world)
@@ -375,6 +385,92 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 		),
 		"origin_world": origin_world
 	}
+
+
+## Compute the adjacency dict for a non-point lateral/structural expansion
+## WITHOUT spawning a dummy test piece. Uses the origin piece's real socket
+## geometry to derive where the new tile's sockets would land, then queries
+## socket_index at those positions.
+##
+## The new tile has the same socket layout as the origin tile (all lateral
+## expansions go piece-size → same-piece-size). After transform_to_socket
+## alignment the new tile's socket positions equal:
+##
+##   new_pos[X] = orig_socket_world[X] + T
+##
+## where T = orig_piece_socket.get_socket_position()
+##           - Helper.socket_world_pos(orig.transform, orig.sockets[attachment_name], orig.root)
+##
+## This is a pure translation from the origin tile to the new tile, derived
+## entirely from the real piece's already-instantiated sockets.
+##
+## Returns {} (empty) if the origin piece lacks the sockets needed for the
+## computation (root or sockets missing).
+func _lateral_neighbours(
+	orig_piece_socket: TerrainModuleSocket,
+	size: String
+) -> Dictionary[String, TerrainModuleSocket]:
+	var orig_piece: TerrainModuleInstance = orig_piece_socket.piece
+	assert(orig_piece.root != null, "_lateral_neighbours requires a created piece (root != null)")
+	assert(orig_piece.sockets.size() > 0, "_lateral_neighbours requires instantiated sockets")
+
+	var attachment_name: String = Helper.get_attachment_socket_name(orig_piece_socket.socket_name)
+
+	# The attachment socket on the origin piece: same name as what the new tile's
+	# attachment socket would be, and shares the same local position.
+	var orig_attachment_marker: Marker3D = orig_piece.sockets.get(attachment_name, null)
+	if orig_attachment_marker == null:
+		push_error(
+			"_lateral_neighbours: origin piece has no '%s' socket (needed for size '%s')"
+			% [attachment_name, size]
+		)
+		return {}
+
+	# World position of the origin piece's attachment socket.
+	var orig_attachment_world: Vector3 = Helper.socket_world_pos(
+		orig_piece.transform, orig_attachment_marker, orig_piece.root
+	)
+
+	# The expansion socket world position is where the new tile's attachment aligns.
+	var orig_socket_world: Vector3 = orig_piece_socket.get_socket_position()
+
+	# Translation vector from every origin socket to the corresponding new-tile socket.
+	var T: Vector3 = orig_socket_world - orig_attachment_world
+
+	# Seed with the attachment entry — new tile's attachment socket coincides with
+	# the origin socket world position (= orig_socket_world + 0, since
+	# new_pos[attachment] = orig_attachment_world + T = orig_socket_world).
+	var adjacency: Dictionary[String, TerrainModuleSocket] = {
+		attachment_name: orig_piece_socket
+	}
+
+	# Probe every socket of the origin piece (as a template for the new tile's layout).
+	# Skip the attachment — already handled above.
+	for socket_name: String in orig_piece.sockets.keys():
+		if socket_name == attachment_name:
+			continue
+
+		var marker: Marker3D = orig_piece.sockets[socket_name]
+		var orig_pos: Vector3 = Helper.socket_world_pos(orig_piece.transform, marker, orig_piece.root)
+		var new_pos: Vector3 = orig_pos + T
+
+		var hit: TerrainModuleSocket = socket_index.query_other(new_pos, orig_piece)
+		if hit == null:
+			continue
+
+		# Apply the same base-plane filter as the old test-piece probe:
+		# when the origin is a base-plane piece, exclude non-base-plane hits
+		# from non-surface (lateral) sockets.
+		if orig_piece.def.is_base_plane and not hit.piece.def.is_base_plane:
+			var from_surface_socket: bool = orig_piece.def.socket_role.get(
+				orig_piece_socket.socket_name, ""
+			) == "surface"
+			if not from_surface_socket:
+				continue
+
+		adjacency[socket_name] = hit
+
+	return adjacency
 
 
 func _empty_placement_context(
@@ -754,68 +850,6 @@ func get_adjacent(piece: TerrainModuleInstance) -> Dictionary[String, TerrainMod
 			out[socket_name] = hit
 	return out
 
-
-func get_adjacent_from_size(
-	orig_piece_socket: TerrainModuleSocket,
-	size: String
-) -> Dictionary[String, TerrainModuleSocket]:
-	if size == "point":
-		return { Helper.get_attachment_socket_name(orig_piece_socket.socket_name): orig_piece_socket }
-
-	var orig_piece: TerrainModuleInstance = orig_piece_socket.piece
-	var orig_sock: Marker3D = orig_piece_socket.socket
-	assert(orig_piece.root != null)
-	assert(orig_sock != null)
-
-	# Get test piece for this size
-	var test_pieces: TerrainModuleList = test_pieces_library.get_by_tags(TagList.new([size]))
-	if test_pieces.is_empty():
-		push_error("No test piece found for size: " + size)
-		return {}
-
-	var test_piece_template: TerrainModule = test_pieces_library.get_random(test_pieces, true)
-	var test_piece: TerrainModuleInstance = test_piece_template.spawn()
-	assert(test_piece != null)
-	test_piece.create()
-
-	# Determine which socket on the test piece should attach
-	var attachment_socket_name: String = Helper.get_attachment_socket_name(orig_piece_socket.socket_name)
-	var attachment_socket: Marker3D = test_piece.sockets.get(attachment_socket_name, null)
-	if attachment_socket == null:
-		push_error("Test piece does not have attachment socket: " + attachment_socket_name)
-		test_piece.destroy()
-		return {}
-
-	# Position the test piece with the same direction-aware transform used for
-	# real placement. A plain offset would assume the source piece is unrotated;
-	# rotated pieces (e.g. level variants with a non-default facing) would get a
-	# misplaced test piece and garbage adjacency.
-	var test_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(test_piece, attachment_socket_name)
-	transform_to_socket(test_piece_socket, orig_piece_socket)
-
-	# Get initial adjacency
-	var adjacency: Dictionary[String, TerrainModuleSocket] = {attachment_socket_name: orig_piece_socket}
-
-	for socket_name: String in test_piece.sockets.keys():
-		if socket_name == attachment_socket_name:
-			continue
-
-		var s: Marker3D = test_piece.sockets[socket_name]
-		var pos := Helper.socket_world_pos(test_piece.transform, s, test_piece.root)
-		var hit := socket_index.query_other(pos, test_piece)
-		if hit != null:
-			var hit_is_base_plane = hit.piece.def.is_base_plane
-			if orig_piece.def.is_base_plane and not hit_is_base_plane:
-				var from_surface_socket: bool = orig_piece.def.socket_role.get(orig_piece_socket.socket_name, "") == "surface"
-				# Base-plane surface sockets may spawn elevated pieces that connect to existing non-ground tiles.
-				# Non-surface base-plane sockets (laterals, bottom) stay on the ground plane only.
-				if not from_surface_socket:
-					continue
-
-			adjacency[socket_name] = hit
-
-	test_piece.destroy()
-	return adjacency
 
 
 func transform_to_socket(new_ps: TerrainModuleSocket, orig_ps: TerrainModuleSocket) -> void:

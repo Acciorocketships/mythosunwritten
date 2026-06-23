@@ -11,11 +11,6 @@ func init() -> void:
 	sort_terrain_modules()
 
 
-func init_test_pieces() -> void:
-	load_test_pieces()
-	sort_terrain_modules()
-
-
 func load_terrain_modules() -> void:
 	terrain_modules.append(TerrainModuleDefinitions.load_ground_tile())
 	terrain_modules.append(TerrainModuleDefinitions.load_grass_tile())
@@ -31,13 +26,6 @@ func load_terrain_modules() -> void:
 		terrain_modules.append(m)
 	for m in TerrainModuleDefinitions.load_water_and_bank_modules():
 		terrain_modules.append(m)
-
-
-func load_test_pieces() -> void:
-	terrain_modules.append(TerrainModuleDefinitions.create_8x8_test_piece())
-	terrain_modules.append(TerrainModuleDefinitions.create_12x12_test_piece())
-	terrain_modules.append(TerrainModuleDefinitions.create_24x24_test_piece())
-	terrain_modules.append(TerrainModuleDefinitions.create_4x4x4_test_piece())
 
 
 ## Class Functions ##
