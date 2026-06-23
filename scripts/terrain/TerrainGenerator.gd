@@ -455,35 +455,36 @@ func _route_fill_prob(
 		# Decoration-capable sockets follow the biome flora density (forests
 		# dense, meadows open) on EVERY walkable surface — ground, level, and
 		# cliff tops share the same deco spawn rules. Checked before the
-		# level branch so level foliage doesn't fall into the structural
-		# curve below. Decorations (and stacked hills) on a NON-cliff surface
-		# inside a cliff contour core are doomed — the mesa rises over the
-		# base ground/hill and visibly displaces them — so they never spawn;
-		# the mesa's own plateau foliage replaces them. Cliff plateau tops are
-		# exempt (the final surface, not something the mesa eats), so foliage
+		# density-profile match so level foliage doesn't fall into the
+		# structural curve below. Decorations (and stacked hills) on a surface
+		# that does NOT grow inside cliff contour cores are doomed — the mesa
+		# rises over the base ground/hill and visibly displaces them — so they
+		# never spawn; the mesa's own plateau foliage replaces them. Cliff
+		# plateau tops are exempt (grows_in_cliff_core = true), so foliage
 		# still decorates mountains.
 		if _socket_can_spawn_point(piece, socket_name):
-			if _in_cliff_core(pos) and not piece.def.tags.has("cliff"):
+			if _in_cliff_core(pos) and not piece.def.grows_in_cliff_core:
 				return 0.0
 			return clampf(fill * Helper.biome_foliage_density(pos, world_seed), 0.0, 1.0)
-		# Level patches are the mid-altitude feature: the high-contrast macro
-		# curve that keeps cliffs out of the lowlands would crush their
-		# growth at the mid densities where they live, so level-family
-		# sockets and the ground topcenter seed keep the gentler legacy
-		# curve (lone cliff crags seeded outside cores are bounded anyway —
-		# the contour test stops their lateral growth immediately). Level
-		# growth into a contour core is doomed for the same reason as deco.
-		if piece.def.tags.has("level"):
-			if _in_cliff_core(pos):
-				return 0.0
-			return _level_scaled_fill(fill, pos)
-		if socket_name == "topcenter" and piece.def.tags.has("ground-plain"):
-			var seed_fill: float = _gentle_scaled_fill(fill, pos)
-			# Inside a contour core, seed eagerly so the core reliably grows
-			# its mountain (mesa fill is idempotent — extra seeds merge).
-			if _in_cliff_core(pos):
-				return maxf(seed_fill, TerrainSpawnConfig.CLIFF_CORE_SEED_FILL_PROB)
-			return seed_fill
+		# Dispatch on density_profile metadata instead of tag inspection.
+		# "level"  — flat curve for level-family lateral growth, core-suppressed.
+		# "gentle" — legacy gentler curve for ground topcenter seeding, with
+		#            cliff-core eager-seed boost (so every core grows its mountain).
+		# default  — high-contrast macro curve for cliffs and everything else.
+		match piece.def.density_profile:
+			"level":
+				# Level growth into a contour core is doomed for the same reason
+				# as deco (the mesa eats the patch), so suppress it early.
+				if _in_cliff_core(pos):
+					return 0.0
+				return _level_scaled_fill(fill, pos)
+			"gentle":
+				var seed_fill: float = _gentle_scaled_fill(fill, pos)
+				# Inside a contour core, seed eagerly so the core reliably
+				# grows its mountain (mesa fill is idempotent — extra seeds merge).
+				if _in_cliff_core(pos):
+					return maxf(seed_fill, TerrainSpawnConfig.CLIFF_CORE_SEED_FILL_PROB)
+				return seed_fill
 	return _macro_scaled_fill(fill, pos)
 
 

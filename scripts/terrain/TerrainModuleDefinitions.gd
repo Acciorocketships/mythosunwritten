@@ -118,6 +118,7 @@ static func load_ground_tile() -> TerrainModule:
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
 	m.is_base_plane = true
+	m.density_profile = "gentle"
 	return m
 
 static func load_grass_tile() -> TerrainModule:
@@ -622,6 +623,7 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 		surface["socket_suppressed_by"]
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
+	m.grows_in_cliff_core = true
 	return m
 
 
@@ -705,6 +707,7 @@ static func _build_cliff_tile(
 		surface["socket_suppressed_by"]
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
+	m.grows_in_cliff_core = true
 	return m
 
 
@@ -789,6 +792,7 @@ static func _build_level_tile(
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
 	m.vertical_stack_family = "level"
+	m.density_profile = "level"
 	return m
 
 

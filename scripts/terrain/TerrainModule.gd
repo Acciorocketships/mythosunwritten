@@ -51,6 +51,20 @@ extends Resource
 # to the heightfield plan as the sole structural source.
 @export var structural_socket_names: Array[String] = []
 
+# Which fill-probability curve to apply to non-foliage sockets with fill < 1.
+# "macro"   — high-contrast cliff/feature curve (_macro_scaled_fill). Default.
+# "gentle"  — legacy gentler curve used for ground-plain topcenter seeding
+#             (_gentle_scaled_fill + cliff-core eager-seed boost).
+# "level"   — flat curve for level tile lateral growth (_level_scaled_fill),
+#             with cliff-core suppression (returns 0 inside core).
+@export var density_profile: String = "macro"
+
+# If true, this module grows on cliff plateau tops and is NOT suppressed when
+# inside a cliff contour core. False (default) means non-cliff decoration:
+# foliage spawned inside a core on a non-cliff surface is suppressed (the mesa
+# will rise over it and displace it).
+@export var grows_in_cliff_core: bool = false
+
 func _init(
 	_scene: PackedScene = null,
 	_size: AABB = AABB(),
