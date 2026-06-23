@@ -3,8 +3,9 @@ extends Resource
 
 # Single source of truth for ground-spawn behaviour: which pieces spawn in which
 # sockets, with what probabilities, and the level/slope rule that keeps
-# structures off sloped surfaces. (Tuning constants + surface_spawn_sockets are
-# migrated here in a follow-up step; this block defines the gating contract.)
+# structures off sloped surfaces. This file is the authoritative home for all
+# spawn tuning constants, the shared surface socket builder, and the level/slope
+# gating rule.
 
 ### Level / slope socket gating ###
 

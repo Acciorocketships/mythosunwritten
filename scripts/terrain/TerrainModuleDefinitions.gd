@@ -534,7 +534,7 @@ static func load_cliff_interior_tile() -> TerrainModule:
 	# Cliff plateau interior: visually a ground tile, but tagged "cliff" so neighbour
 	# cliff-sides' required-tag filters remain satisfied. Lateral cardinals are
 	# non-expandable because the plateau perimeter is covered by cliff-sides.
-	# Topcenter seeds a cliff-stack-side with CLIFF_TOPCENTER_FILL_PROB so that
+	# Topcenter seeds a cliff-stack-side with TerrainSpawnConfig.CLIFF_TOPCENTER_FILL_PROB so that
 	# multi-storey cliff plateaus can grow upward, just like level-stack does for
 	# levels. Foliage spawns on the top cardinals/corners (grass/trees on the
 	# cliff plateau surface).
@@ -547,7 +547,7 @@ static func load_cliff_stack_interior_tile() -> TerrainModule:
 	# Cliff-stack interior: the plateau surface tile at the second (or higher)
 	# storey. Mirrors cliff-interior but is tagged "cliff-stack" so the next
 	# tier of stacking can attach. Seeds another cliff-stack-side from its
-	# topcenter, enabling infinite stacking limited by CLIFF_TOPCENTER_FILL_PROB.
+	# topcenter, enabling infinite stacking limited by TerrainSpawnConfig.CLIFF_TOPCENTER_FILL_PROB.
 	return _build_cliff_interior_module(
 		TagList.new(["cliff", "cliff-stack", "cliff-interior", "ground-type", "24x24x4"])
 	)
