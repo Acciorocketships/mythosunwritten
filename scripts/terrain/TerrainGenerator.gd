@@ -408,7 +408,7 @@ func _biome_scaled_dist(dist: Distribution, pos: Vector3) -> Distribution:
 	# single-entry lateral dists (which share the "24x24x0.5" size tag) are
 	# untouched because single-entry distributions skip scaling entirely.
 	if _in_cliff_core(pos):
-		var boost: float = TerrainModuleDefinitions.CLIFF_CORE_SEED_MIX_BOOST
+		var boost: float = TerrainSpawnConfig.CLIFF_CORE_SEED_MIX_BOOST
 		weights["cliff-base-side"] = weights.get("cliff-base-side", 1.0) * boost
 		weights["24x24x4"] = weights.get("24x24x4", 1.0) * boost
 		# Drop (not zero) the level/flat-ground entries: a level seeded inside
@@ -539,7 +539,7 @@ func _route_fill_prob(
 			# Inside a contour core, seed eagerly so the core reliably grows
 			# its mountain (mesa fill is idempotent — extra seeds merge).
 			if _in_cliff_core(pos):
-				return maxf(seed_fill, TerrainModuleDefinitions.CLIFF_CORE_SEED_FILL_PROB)
+				return maxf(seed_fill, TerrainSpawnConfig.CLIFF_CORE_SEED_FILL_PROB)
 			return seed_fill
 	return _macro_scaled_fill(fill, pos)
 
@@ -567,7 +567,7 @@ func _level_scaled_fill(fill: float, pos: Vector3) -> float:
 func _in_cliff_core(pos: Vector3) -> bool:
 	return (
 		Helper.macro_density01(pos, world_seed)
-		>= TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
+		>= TerrainSpawnConfig.CLIFF_CONTOUR_BASE
 	)
 
 
@@ -577,8 +577,8 @@ func _in_cliff_core(pos: Vector3) -> bool:
 func _cliff_storey_threshold(piece: TerrainModuleInstance) -> float:
 	var storey: float = maxf(0.0, (piece.transform.origin.y - 4.0) / 4.0)
 	return (
-		TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
-		+ TerrainModuleDefinitions.CLIFF_CONTOUR_STEP * storey
+		TerrainSpawnConfig.CLIFF_CONTOUR_BASE
+		+ TerrainSpawnConfig.CLIFF_CONTOUR_STEP * storey
 	)
 
 

@@ -1,94 +1,6 @@
 class_name TerrainModuleDefinitions
 extends Resource
 
-### Tuning knobs ###################################################
-# All terrain-rendering tuning lives here. Change values in this block to
-# adjust generation density / behavior without hunting through factories.
-
-# --- Level (second-level patches that sit on top of ground tiles) ---
-# Lateral expansion rate per cardinal socket — how aggressively level
-# clusters grow outward on the second tier. Each frontier tile exposes ~3 new
-# sockets, so keep this below 1/3 (subcritical) or patches grow unbounded and
-# blanket the map.
-const LEVEL_BASE_LATERAL_FILL_PROB: float = 0.33
-# Lateral expansion rate for the level-stack tier (third level and above).
-# Stacks can only sit on supported level tiles below, so this is intrinsically
-# bounded and can stay high — upper tiers fill out their support, producing
-# terraced slopes rather than spires.
-const LEVEL_STACK_LATERAL_FILL_PROB: float = 0.7
-# Vertical stacking rate from a level-center topcenter (seeds the level
-# directly above). Applies to both level-ground and level-stack centers.
-const LEVEL_TOPCENTER_FILL_PROB: float = 0.9
-# Whether placing a level tile removes overlapping non-ground pieces in
-# its footprint. True keeps LevelEdgeRule retiling clean.
-const LEVEL_REPLACE_EXISTING: bool = false
-
-# --- Cliff ---
-# Same subcritical rule as LEVEL_BASE_LATERAL_FILL_PROB: keep below ~1/3 or
-# cliff plateaus grow until they cover everything (they replace_existing, so
-# runaway growth eats the rest of the terrain too).
-# Authored lateral fill marks the socket expandable (>0); the actual growth
-# verdict is the contour test below (TerrainGenerator._cliff_contour_fill).
-const CLIFF_LATERAL_FILL_PROB: float = 0.3
-# --- Cliff mesa contours ---
-# Cliff plateaus are carved from the macro density field instead of rolled
-# per-socket: a cliff lateral expands iff the target position's macro density
-# exceeds the threshold for its storey. Mesas come out as solid field-shaped
-# blobs (independent rolls produce single-storey snake mazes that never form
-# the 3x3 interiors stacking needs), and each storey's threshold rises so
-# mountains terrace and taper like contour lines on a heightmap.
-const CLIFF_CONTOUR_BASE: float = 0.56
-# Small step: the 3x3-interior support requirement already insets each storey
-# by a tile, so mountains taper geometrically into stepped pyramids; the
-# threshold step only needs to fade the very top against the field falloff.
-# Lower step => more storeys clear the threshold => taller mountains.
-const CLIFF_CONTOUR_STEP: float = 0.012
-# Inside a contour core, ground topcenters seed much more eagerly (and the
-# seed mix skews toward cliffs) so every core actually grows its mountain —
-# the base rates alone can miss a whole core and leave it flat.
-const CLIFF_CORE_SEED_FILL_PROB: float = 0.5
-const CLIFF_CORE_SEED_MIX_BOOST: float = 3.0
-# Vertical stacking rate from a cliff-interior topcenter (seeds the next
-# cliff storey above the plateau). Bounded: a storey only stands on a
-# cliff-interior tile, which requires a >=3x3 plateau below, so each storey
-# shrinks and mountains taper naturally.
-# 1.0 = structural: every interior tile seeds the storey above. Vertical
-# growth is already bounded by the 3x3-interior requirement plus the rising
-# contour threshold, and a probabilistic roll here just leaves ragged holes
-# in upper tiers that block the NEXT tier's interiors from ever forming.
-const CLIFF_TOPCENTER_FILL_PROB: float = 1.0
-const CLIFF_REPLACE_EXISTING: bool = true
-
-# --- Ground topcenter (seeds level or cliff above each ground tile) ---
-# Per-tile chance that the topcenter socket attempts to place anything.
-const GROUND_TOPCENTER_FILL_PROB: float = 0.2
-# Probability split of what a ground topcenter seeds when it does fire.
-# Must sum to 1.0. Mirrors both the size and tag distributions used to
-# pick between a level-ground-center (small) and a cliff-side (tall).
-# The rocky biome multiplies the cliff side of both distributions at
-# placement time (Helper.biome_weights), so highlands skew further toward
-# cliffs than this base split.
-const GROUND_TOPCENTER_LEVEL_PROB: float = 0.7
-const GROUND_TOPCENTER_CLIFF_PROB: float = 0.3
-
-# --- Top-edge foliage (cardinals + corners on each walkable surface) ---
-# Shared by ground tiles, level tiles, and cliff plateau tops: every walkable
-# surface uses the same decoration spawn rules.
-const GROUND_FOLIAGE_FILL_PROB: float = 0.2
-# Sampled tag distribution for foliage tiles on top-edges. Reused for
-# cliff-interior plateau top-edges too. Weights need not sum to 1 — the
-# Distribution normalises.
-const FOLIAGE_TAG_WEIGHTS: Dictionary[String, float] = {
-	"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.25, "hill": 0.05,
-}
-
-# --- Hill stacking (small hills can stack on top of each other) ---
-# Per-hill chance that its topcenter seeds another (smaller) hill above.
-const HILL_8X8_STACK_FILL_PROB: float = 0.5
-const HILL_12X12_STACK_FILL_PROB: float = 0.3
-const HILL_4X4_STACK_FILL_PROB: float = 0.4
-####################################################################
-
 # Scene-name ↔ variant-tag tables. Each entry is loaded once per tier (level
 # emits both "level-ground" and "level-stack" tiers; cliff currently emits only
 # the base tier). The center/interior tiles carry extra tags and have their
@@ -137,87 +49,6 @@ const CLIFF_STACKED_VARIANT_TABLE: Array = [
 ]
 
 
-### Shared surface spawning ###
-
-# One source of truth for what spawns on top of a walkable surface tile
-# (ground tiles, level centers, cliff plateau interiors): foliage on the top
-# cardinal/corner sockets and a seeding distribution on topcenter.
-# Returns {"socket_size": ..., "socket_fill_prob": ..., "socket_tag_prob": ...};
-# callers merge each sub-dictionary into their socket dicts. Scenes that lack
-# some of these sockets filter the fill-prob entries via
-# _socket_fill_prob_for_scene; size/tag entries for absent sockets are inert.
-static func surface_spawn_sockets(
-	topcenter_size: Distribution,
-	topcenter_tag_prob: Distribution,
-	topcenter_fill_prob: Variant,
-	foliage_fill_prob: Variant,
-	topcenter_suppression_prob: Variant = null
-) -> Dictionary:
-	var corner_size: Distribution = Distribution.new({"point": 0.85, "12x12x2": 0.1, "4x4x4": 0.05})
-	var cardinal_size: Distribution = Distribution.new({"point": 0.85, "8x8x2": 0.1, "4x4x4": 0.05})
-	var foliage_tags: Distribution = Distribution.new(FOLIAGE_TAG_WEIGHTS)
-	var socket_size: Dictionary[String, Distribution] = {
-		"topfront": cardinal_size,
-		"topback": cardinal_size,
-		"topleft": cardinal_size,
-		"topright": cardinal_size,
-		"topfrontright": corner_size,
-		"topfrontleft": corner_size,
-		"topbackright": corner_size,
-		"topbackleft": corner_size,
-		"topcenter": topcenter_size,
-	}
-	var socket_fill_prob: Dictionary[String, Variant] = {
-		"topfront": foliage_fill_prob,
-		"topback": foliage_fill_prob,
-		"topleft": foliage_fill_prob,
-		"topright": foliage_fill_prob,
-		"topfrontright": foliage_fill_prob,
-		"topfrontleft": foliage_fill_prob,
-		"topbackright": foliage_fill_prob,
-		"topbackleft": foliage_fill_prob,
-		"topcenter": topcenter_fill_prob,
-	}
-	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"topfront": foliage_tags,
-		"topback": foliage_tags,
-		"topleft": foliage_tags,
-		"topright": foliage_tags,
-		"topfrontright": foliage_tags,
-		"topfrontleft": foliage_tags,
-		"topbackright": foliage_tags,
-		"topbackleft": foliage_tags,
-		"topcenter": topcenter_tag_prob,
-	}
-	# Foliage never spawns on a tile whose topcenter is (ever) going to seed a
-	# structure — the structure would visibly displace it. The suppression
-	# probability defaults to the actual topcenter fill, but variants whose
-	# topcenter is currently disabled (level edges) pass the prob their center
-	# form would have, so the verdict stays stable across retiles.
-	var suppression_prob: float = 0.0
-	if topcenter_suppression_prob != null:
-		suppression_prob = float(topcenter_suppression_prob)
-	elif topcenter_fill_prob != null:
-		suppression_prob = float(topcenter_fill_prob)
-	var suppression_entry: Dictionary = {"socket": "topcenter", "prob": suppression_prob}
-	var socket_suppressed_by: Dictionary[String, Dictionary] = {
-		"topfront": suppression_entry,
-		"topback": suppression_entry,
-		"topleft": suppression_entry,
-		"topright": suppression_entry,
-		"topfrontright": suppression_entry,
-		"topfrontleft": suppression_entry,
-		"topbackright": suppression_entry,
-		"topbackleft": suppression_entry,
-	}
-	return {
-		"socket_size": socket_size,
-		"socket_fill_prob": socket_fill_prob,
-		"socket_tag_prob": socket_tag_prob,
-		"socket_suppressed_by": socket_suppressed_by,
-	}
-
-
 ### Individual Terrain Modules ###
 
 static func load_ground_tile() -> TerrainModule:
@@ -229,17 +60,17 @@ static func load_ground_tile() -> TerrainModule:
 	# Override computed AABB to have height 0.5 instead of computed value
 	var bb: AABB = AABB(Vector3(-12.0, 0.0, -12.0), Vector3(24.0, 0.5, 24.0))
 
-	var surface: Dictionary = surface_spawn_sockets(
+	var surface: Dictionary = TerrainSpawnConfig.surface_spawn_sockets(
 		Distribution.new({
-			"24x24x0.5": GROUND_TOPCENTER_LEVEL_PROB,
-			"24x24x4": GROUND_TOPCENTER_CLIFF_PROB,
+			"24x24x0.5": TerrainSpawnConfig.GROUND_TOPCENTER_LEVEL_PROB,
+			"24x24x4": TerrainSpawnConfig.GROUND_TOPCENTER_CLIFF_PROB,
 		}),
 		Distribution.new({
-			"level-ground-center": GROUND_TOPCENTER_LEVEL_PROB,
-			"cliff-base-side": GROUND_TOPCENTER_CLIFF_PROB,
+			"level-ground-center": TerrainSpawnConfig.GROUND_TOPCENTER_LEVEL_PROB,
+			"cliff-base-side": TerrainSpawnConfig.GROUND_TOPCENTER_CLIFF_PROB,
 		}),
-		GROUND_TOPCENTER_FILL_PROB,
-		GROUND_FOLIAGE_FILL_PROB
+		TerrainSpawnConfig.GROUND_TOPCENTER_FILL_PROB,
+		TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB
 	)
 	var adjacent_tag_prob: Distribution = Distribution.new({"ground-plain": 1.0})
 
@@ -346,7 +177,7 @@ static func load_8x8x2_tile() -> TerrainModule:
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
-		"topcenter": HILL_8X8_STACK_FILL_PROB,
+		"topcenter": TerrainSpawnConfig.HILL_8X8_STACK_FILL_PROB,
 		"bottom": null,
 		"topfrontright": null,
 		"topfrontleft": null,
@@ -380,7 +211,7 @@ static func load_12x12x2_tile() -> TerrainModule:
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
-		"topcenter": HILL_12X12_STACK_FILL_PROB,
+		"topcenter": TerrainSpawnConfig.HILL_12X12_STACK_FILL_PROB,
 		"bottom": null,
 		"topfrontright": null,
 		"topfrontleft": null,
@@ -413,7 +244,7 @@ static func load_4x4x4_tile() -> TerrainModule:
 	}
 	var socket_required: Dictionary[String, TagList] = {}
 	var socket_fill_prob: Dictionary[String, Variant] = {
-		"topcenter": HILL_4X4_STACK_FILL_PROB,
+		"topcenter": TerrainSpawnConfig.HILL_4X4_STACK_FILL_PROB,
 		"bottom": null,
 	}
 	var socket_tag_prob: Dictionary[String, Distribution] = {
@@ -558,11 +389,11 @@ static func load_bank_variant(scene_name: String, variant_tag: String) -> Terrai
 	# foliage markers) and the walkable-surface decoration rules. The blocking
 	# topcenter above survives the merge (merge keeps existing keys), and no
 	# structure can ever land on a bank, so suppression stays 0.
-	var surface: Dictionary = surface_spawn_sockets(
+	var surface: Dictionary = TerrainSpawnConfig.surface_spawn_sockets(
 		Distribution.new({"24x24x0.5": 1.0}),
 		Distribution.new({"ground-plain": 1.0}),
 		0.0,
-		GROUND_FOLIAGE_FILL_PROB,
+		TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB,
 		0.0
 	)
 	socket_size.merge(surface["socket_size"])
@@ -626,12 +457,12 @@ static func load_level_variant(
 	# edge and is rejected by LevelEdgeRule afterwards, churning forever.
 	if tier == "level-ground":
 		return _build_level_tile(
-			scene_path, tags, LEVEL_BASE_LATERAL_FILL_PROB, 0.0, "level-ground-center",
-			GROUND_FOLIAGE_FILL_PROB
+			scene_path, tags, TerrainSpawnConfig.LEVEL_BASE_LATERAL_FILL_PROB, 0.0, "level-ground-center",
+			TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB
 		)
 	return _build_level_tile(
-		scene_path, tags, LEVEL_STACK_LATERAL_FILL_PROB, 0.0, "level-stack-center",
-		GROUND_FOLIAGE_FILL_PROB
+		scene_path, tags, TerrainSpawnConfig.LEVEL_STACK_LATERAL_FILL_PROB, 0.0, "level-stack-center",
+		TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB
 	)
 
 
@@ -639,20 +470,20 @@ static func load_level_middle_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelCenter.tscn",
 		TagList.new(["level", "level-ground", "level-center", "level-ground-center", "ground-type", "24x24x0.5"]),
-		LEVEL_BASE_LATERAL_FILL_PROB,
-		LEVEL_TOPCENTER_FILL_PROB,
+		TerrainSpawnConfig.LEVEL_BASE_LATERAL_FILL_PROB,
+		TerrainSpawnConfig.LEVEL_TOPCENTER_FILL_PROB,
 		"level-ground-center",
-		GROUND_FOLIAGE_FILL_PROB
+		TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB
 	)
 
 static func load_level_stack_middle_tile() -> TerrainModule:
 	return _build_level_tile(
 		"res://terrain/scenes/LevelCenter.tscn",
 		TagList.new(["level", "level-stack", "level-center", "level-stack-center", "24x24x0.5"]),
-		LEVEL_STACK_LATERAL_FILL_PROB,
-		LEVEL_TOPCENTER_FILL_PROB,
+		TerrainSpawnConfig.LEVEL_STACK_LATERAL_FILL_PROB,
+		TerrainSpawnConfig.LEVEL_TOPCENTER_FILL_PROB,
 		"level-stack-center",
-		GROUND_FOLIAGE_FILL_PROB
+		TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB
 	)
 
 
@@ -734,11 +565,11 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 
 	# Same surface spawning as ground tiles; topcenter seeds the next cliff
 	# storey instead of a level/cliff mix.
-	var surface: Dictionary = surface_spawn_sockets(
+	var surface: Dictionary = TerrainSpawnConfig.surface_spawn_sockets(
 		Distribution.new({"24x24x4": 1.0}),
 		Distribution.new({"cliff-stack-side": 1.0}),
-		CLIFF_TOPCENTER_FILL_PROB,
-		GROUND_FOLIAGE_FILL_PROB
+		TerrainSpawnConfig.CLIFF_TOPCENTER_FILL_PROB,
+		TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB
 	)
 
 	var socket_size: Dictionary[String, Distribution] = {
@@ -773,7 +604,7 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob,
-		CLIFF_REPLACE_EXISTING,
+		TerrainSpawnConfig.CLIFF_REPLACE_EXISTING,
 		false,  # displaceable
 		surface["socket_suppressed_by"]
 	)
@@ -802,11 +633,11 @@ static func _build_cliff_tile(
 	# generator suppresses cliff foliage geometrically instead (a tile whose
 	# whole neighbourhood is inside this storey's contour will retile to
 	# interior and be covered by the next storey).
-	var surface: Dictionary = surface_spawn_sockets(
+	var surface: Dictionary = TerrainSpawnConfig.surface_spawn_sockets(
 		Distribution.new({"24x24x0.5": 1.0}),
 		Distribution.new({tier + "-side": 1.0}),
 		0.0,
-		GROUND_FOLIAGE_FILL_PROB,
+		TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB,
 		0.0
 	)
 
@@ -827,10 +658,10 @@ static func _build_cliff_tile(
 		"bottom": TagList.new([bottom_required_tag]),
 	}
 	var socket_fill_prob: Dictionary[String, Variant] = {
-		"front": CLIFF_LATERAL_FILL_PROB,
-		"back": CLIFF_LATERAL_FILL_PROB,
-		"left": CLIFF_LATERAL_FILL_PROB,
-		"right": CLIFF_LATERAL_FILL_PROB,
+		"front": TerrainSpawnConfig.CLIFF_LATERAL_FILL_PROB,
+		"back": TerrainSpawnConfig.CLIFF_LATERAL_FILL_PROB,
+		"left": TerrainSpawnConfig.CLIFF_LATERAL_FILL_PROB,
+		"right": TerrainSpawnConfig.CLIFF_LATERAL_FILL_PROB,
 		"frontleft": null,
 		"frontright": null,
 		"backleft": null,
@@ -867,7 +698,7 @@ static func _build_cliff_tile(
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob,
-		CLIFF_REPLACE_EXISTING,
+		TerrainSpawnConfig.CLIFF_REPLACE_EXISTING,
 		false,  # displaceable
 		surface["socket_suppressed_by"]
 	)
@@ -889,12 +720,12 @@ static func _build_level_tile(
 	# Same surface spawning as ground tiles; topcenter seeds the stack tier
 	# above. Edge-variant scenes lack the foliage sockets, so those entries are
 	# filtered out by _socket_fill_prob_for_scene below.
-	var surface: Dictionary = surface_spawn_sockets(
+	var surface: Dictionary = TerrainSpawnConfig.surface_spawn_sockets(
 		Distribution.new({"24x24x0.5": 1.0}),
 		Distribution.new({"level-stack-center": 1.0}),
 		topcenter_fill_prob,
 		foliage_fill_prob,
-		LEVEL_TOPCENTER_FILL_PROB
+		TerrainSpawnConfig.LEVEL_TOPCENTER_FILL_PROB
 	)
 	var socket_size: Dictionary[String, Distribution] = {
 		"front": Distribution.new({"24x24x0.5": 1.0}),
@@ -963,7 +794,7 @@ static func _build_level_tile(
 		socket_required,
 		socket_fill_prob,
 		socket_tag_prob,
-		LEVEL_REPLACE_EXISTING,
+		TerrainSpawnConfig.LEVEL_REPLACE_EXISTING,
 		false,  # displaceable
 		surface["socket_suppressed_by"]
 	)
