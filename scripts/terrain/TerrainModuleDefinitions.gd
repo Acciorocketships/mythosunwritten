@@ -103,7 +103,7 @@ static func load_ground_tile() -> TerrainModule:
 	}
 	socket_tag_prob.merge(surface["socket_tag_prob"])
 
-	return TerrainModule.new(
+	var m := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -116,6 +116,8 @@ static func load_ground_tile() -> TerrainModule:
 		false,  # displaceable
 		surface["socket_suppressed_by"]
 	)
+	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
+	return m
 
 static func load_grass_tile() -> TerrainModule:
 	return _build_foliage_tile("res://terrain/scenes/Grass1.tscn", "grass", _load_scenes([
@@ -595,7 +597,7 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 	var socket_tag_prob: Dictionary[String, Distribution] = {}
 	socket_tag_prob.merge(surface["socket_tag_prob"])
 
-	return TerrainModule.new(
+	var m := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -608,6 +610,8 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 		false,  # displaceable
 		surface["socket_suppressed_by"]
 	)
+	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
+	return m
 
 
 static func _build_cliff_tile(
@@ -676,7 +680,7 @@ static func _build_cliff_tile(
 	var socket_tag_prob: Dictionary[String, Distribution] = {}
 	socket_tag_prob.merge(surface["socket_tag_prob"])
 
-	return TerrainModule.new(
+	var m := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -689,6 +693,8 @@ static func _build_cliff_tile(
 		false,  # displaceable
 		surface["socket_suppressed_by"]
 	)
+	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
+	return m
 
 
 static func _build_level_tile(
@@ -757,7 +763,7 @@ static func _build_level_tile(
 	var socket_fill_prob: Dictionary[String, Variant] = _socket_fill_prob_for_scene(scene, socket_fill_prob_policy)
 	var socket_tag_prob: Dictionary[String, Distribution] = {}
 	socket_tag_prob.merge(surface["socket_tag_prob"])
-	return TerrainModule.new(
+	var m := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -770,6 +776,8 @@ static func _build_level_tile(
 		false,  # displaceable
 		surface["socket_suppressed_by"]
 	)
+	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
+	return m
 
 
 

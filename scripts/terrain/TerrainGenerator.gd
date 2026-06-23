@@ -432,21 +432,12 @@ func _effective_fill_prob(piece: TerrainModuleInstance, socket_name: String, pos
 	return _route_fill_prob(piece, socket_name, pos, _get_socket_fill_prob(piece, socket_name))
 
 
-## A socket whose expansion would place a level/cliff structural tile: the
-## ground-topcenter seed, and any lateral/topcenter on a level or cliff tile
-## (this includes cliff-interior, whose topcenter seeds the next cliff storey).
-## Under the heightfield, ground-plain cardinal laterals are ALSO structural:
-## the moving place-region is the sole base-plane source, so emergent ground
-## lateral expansion would double-place at the region edge.
-## Foliage top sockets (topfront/…) are NOT structural and are left untouched.
+## Returns true when the socket is listed in the module's structural_socket_names
+## metadata. Structural sockets (lateral expansion and topcenter seeding on
+## ground-plain, level, and cliff tiles) are suppressed here so the heightfield
+## plan remains the sole structural source.
 func _is_structural_socket(piece: TerrainModuleInstance, socket_name: String) -> bool:
-	if piece.def.tags.has("level") or piece.def.tags.has("cliff"):
-		return socket_name in ["front", "back", "left", "right", "topcenter"]
-	if piece.def.tags.has("ground-plain"):
-		# Under the heightfield, the moving place-region is the sole base-plane
-		# source; emergent ground laterals would double-place at the region edge.
-		return socket_name in ["front", "back", "left", "right", "topcenter"]
-	return false
+	return socket_name in piece.def.structural_socket_names
 
 
 # Scale a raw probability the way the given socket's actual verdict is

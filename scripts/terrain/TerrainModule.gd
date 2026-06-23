@@ -31,6 +31,12 @@ extends Resource
 # them.
 @export var socket_suppressed_by: Dictionary[String, Dictionary] = {}
 
+# Socket names on this module that are structural (lateral expansion and
+# topcenter seeding on ground-plain, level, and cliff tiles). Used by
+# TerrainGenerator._is_structural_socket to suppress emergent growth and defer
+# to the heightfield plan as the sole structural source.
+@export var structural_socket_names: Array[String] = []
+
 func _init(
 	_scene: PackedScene = null,
 	_size: AABB = AABB(),
