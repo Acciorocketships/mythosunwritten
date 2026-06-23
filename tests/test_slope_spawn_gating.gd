@@ -5,6 +5,7 @@ extends GutTest
 
 func test_slope_sockets_cannot_roll_structures() -> void:
 	var modules: Array[TerrainModule] = TerrainModuleDefinitions.load_cliff_variants()
+	assert_gt(modules.size(), 0, "load_cliff_variants returned no modules")
 	var slope_sockets_checked := 0
 	for m: TerrainModule in modules:
 		var inst := TerrainModuleInstance.new(m)
@@ -24,9 +25,8 @@ func test_slope_sockets_cannot_roll_structures() -> void:
 				assert_false(
 					size_key in TerrainSpawnConfig.STRUCTURE_SIZES,
 					"%s socket %s can still roll structure size %s" % [
-						m.tags.tags[0], socket_name, size_key]
+						(m.tags.tags[0] if m.tags.size() > 0 else "<no_tag>"), socket_name, size_key]
 				)
 			slope_sockets_checked += 1
-		inst.destroy()
 	assert_gt(slope_sockets_checked, 0,
 		"expected at least one slope-categorized top socket across cliff variants")
