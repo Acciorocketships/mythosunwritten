@@ -5,6 +5,7 @@ var def: TerrainModule
 var root: Node3D = null
 var socket_node: Node3D = null
 var sockets: Dictionary = {}  # String -> Marker3D
+var socket_category: Dictionary = {}  # String name -> "level" | "slope"
 
 var transform: Transform3D = Transform3D.IDENTITY
 var aabb: AABB
@@ -67,14 +68,21 @@ func destroy() -> void:
 	root = null
 	socket_node = null
 	sockets.clear()
+	socket_category.clear()
 
 func _find_sockets() -> void:
 	sockets.clear()
+	socket_category.clear()
 	if socket_node == null:
 		return
 	for child in socket_node.get_children():
 		if child is Marker3D:
 			sockets[child.name] = child
+			socket_category[child.name] = TerrainSpawnConfig.category_for_y(child.transform.origin.y)
+
+
+func get_socket_category(socket_name: String) -> String:
+	return socket_category.get(socket_name, "level")
 
 
 func set_transform(tf: Transform3D) -> void:
