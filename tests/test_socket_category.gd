@@ -3,7 +3,7 @@ extends GutTest
 ## TerrainModuleInstance tags each socket level/slope from its baked marker Y.
 
 func test_socket_category_from_marker_y() -> void:
-	var inst := TerrainModuleInstance.new(TerrainModuleDefinitions.create_24x24_test_piece())
+	var inst := TerrainModuleInstance.new(TerrainModuleDefinitions.load_ground_tile())
 	var socket_root := Node3D.new()
 	var flat := Marker3D.new()
 	flat.name = "topfront"
