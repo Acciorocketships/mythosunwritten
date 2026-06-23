@@ -40,9 +40,13 @@ or juts into the air (downhill).
   foliage (grass/bush/tree/rock) may spawn anywhere.
 - **Refactor scope:** a central spawn registry — one source of truth for the
   socket→pieces mapping, probabilities, and the structure key set.
-- **Category source:** derive level-vs-slope from the socket's **baked local Y**
-  (recommended). No re-baking; relies on the grounding invariant the test suite
-  already enforces.
+- **Category source (decided — Option A, baked Y):** derive level-vs-slope from
+  the socket's **baked local Y**. No re-baking; relies on the grounding
+  invariant the test suite already enforces (plateau sockets at y≈0, slope-band
+  sockets below 0). Alternatives considered and rejected: B) map each socket to
+  its `SlopeVariantLayout` cell — semantic but adds a fiddly socket→cell mapping
+  for the same result; C) bake an explicit per-socket label — most explicit but
+  requires changing the baker and re-baking every slope scene.
 
 ## Architecture
 
@@ -57,11 +61,11 @@ helpers to read it:
   block: lateral/topcenter/foliage fill probs, `FOLIAGE_TAG_WEIGHTS`, topcenter
   seed splits (`GROUND_TOPCENTER_LEVEL_PROB` / `…_CLIFF_PROB`), hill-stack probs
   (`HILL_8X8_STACK_FILL_PROB`, …), cliff-core boosts.
-  - To avoid a churny rename across the codebase, the existing
-    `TerrainModuleDefinitions.CONST` references may be preserved as thin
-    forwarding `const`s (`const X := TerrainSpawnConfig.X`) — or updated to read
-    from the new file directly. Implementation plan decides; the *authoritative
-    values* live in `TerrainSpawnConfig`.
+  - **Full migration (decided):** the authoritative values live in
+    `TerrainSpawnConfig`. Every existing `TerrainModuleDefinitions.CONST`
+    reference across the codebase is updated to `TerrainSpawnConfig.CONST` — no
+    forwarding shims left behind. The tuning block is removed from
+    `TerrainModuleDefinitions.gd`.
 - **Socket-role config builders** — the Distributions currently constructed
   inline in factories, exposed as functions:
   - `foliage_size(is_corner: bool) -> Distribution`
