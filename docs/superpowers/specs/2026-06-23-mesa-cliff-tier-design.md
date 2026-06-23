@@ -36,14 +36,24 @@ Constants: `MESA_HEIGHT = 8.0`, `STOREYS_PER_MESA = 2` (mirrors `LEVELS_PER_STOR
 
 ### Why this is the right shape
 
-- **Uniform 8m faces, guaranteed.** Because the mesa tier keeps its own ±1 clamp, every mesa
-  boundary is exactly one 8m step. There are no mixed-height tiles (a cell dropping 8m on one
-  edge and 4m on another), which is what makes the authored single-height 8m tiles render
-  correctly with no new geometry. This is the central reason for a *nested tier* rather than
-  loosening the existing storey clamp to ±2.
-- **Storey saturates within a mesa.** Within one mesa, storey ranges `[0, STOREYS_PER_MESA - 1]`
-  = `[0, 1]`, so a full mesa step is always a single 8m sheer cliff, never two stacked 4m
-  cliffs — exactly as a full storey is one 4m cliff, never eight 0.5m level tiles today.
+- **Uniform 8m faces, guaranteed — by the mesa-distance ramp.** This is the crux. Today the
+  system guarantees uniform 4m faces *not* by the storey clamp alone, but by the
+  **cliff-distance ramp**: `level_at` pins `level = 0` within one tile of any storey cliff
+  (`cliff_cap = cliff_distance - 1`), so a cliff-edge cell has no 0.5m drops and its faces are
+  exactly 4m. The mesa tier needs the exact analogue: a **mesa-distance ramp** that pins
+  **storey-within-mesa = 0** (and hence level 0) within one tile of any mesa cliff. With it, a
+  mesa-edge cell sits on its mesa floor, its lower-mesa neighbour sits on the mesa floor below,
+  the drop is exactly `MESA_HEIGHT` (8m), and the cell has *no* 4m or 0.5m drops on its other
+  edges → uniform 8m faces, so the authored single-height 8m tiles render with no new geometry.
+  This nested-ramp structure (mesa-ramp → cliff-ramp → clamp) is why a *nested tier* is correct
+  rather than loosening the storey clamp to ±2 (which would produce mixed faces).
+- **Storey saturates within a mesa.** Within one mesa, storey-within-mesa ranges
+  `[0, STOREYS_PER_MESA - 1]` = `[0, 1]`, so a full mesa step is always a single 8m sheer cliff,
+  never two stacked 4m cliffs — exactly as a full storey is one 4m cliff, never eight 0.5m level
+  tiles today. **Absolute storey** = `mesa * STOREYS_PER_MESA + storey_within_mesa`, and the
+  rendered `surface_height` in absolute-storey terms is unchanged
+  (`abs_storey * 4 + level * 0.5`); the mesa tier only changes *how* the storey field is
+  derived and clamped.
 - **Natural landforms.** High mesa columns = plateaus; low channels between them = ravines /
   valleys. Gentle relief inside a mesa is still expressed by the existing 4m sloped cliffs and
   0.5m terraces. This matches every prior decision: sheer = deeper tier only; 4m sloped stays
@@ -68,23 +78,40 @@ Cost: slightly smoother mesa outlines (no two-deep diagonal notches). Accepted.
 
 ## Components & changes
 
-### 1. `HeightfieldPlan.gd` — plan math
+### 1. `HeightfieldPlan.gd` — plan math (three nested tiers)
 
-- Add `quantize_mesa(h) -> int` (same `_round_mode` aggregation as storey/level).
-- Add a mesa clamp. Unlike `clamp_field` (cardinal-only), the mesa clamp constrains **cardinal
-  and diagonal** neighbours to ±1. (New helper, e.g. `clamp_field_8way`, or a parameterized
-  clamp.)
-- Thread a settled **mesa map** through the window computations. Storey is now measured as the
-  residual **within a mesa**: `storey_in_mesa ∈ [0, STOREYS_PER_MESA - 1]`. The existing storey
-  clamp continues to operate, capped so it cannot cross a mesa boundary (mirrors how
-  `level_at` masks the level clamp by storey).
-- `surface_height(cx,cz) = mesa*MESA_HEIGHT + storey*STOREY_HEIGHT + level*LEVEL_HEIGHT`.
-  Note `MESA_HEIGHT == STOREYS_PER_MESA * STOREY_HEIGHT` (8 == 2*4), so the absolute height is
-  consistent whether expressed as mesas+storeys or total storeys.
-- `tile_plan(cx,cz)` returns `{mesa, storey, level, height}`.
-- Extend `compute_region` / margins so the mesa clamp's influence radius is covered (the mesa
-  clamp fans out one mega-step per tile, capped at the mesa range — same margin reasoning as the
-  storey clamp).
+Generalize today's two-tier (storey → level) pipeline into three tiers (mesa → storey → level),
+where each lower tier is the residual within the upper, pinned to 0 within one tile of the
+upper's cliffs:
+
+- **Mesa field** `mesa_at`: `quantize_mesa(h) = _round_mode(h / MESA_HEIGHT)` clamped to
+  `[0, max_mesas]`, then an **8-way clamp** (`clamp_field_8way`) constraining **cardinal *and*
+  diagonal** neighbours to ±1. (Today's `clamp_field` is cardinal-only; the mesa clamp adds the
+  four diagonals so no two-deep mesa diagonals form — see the diagonal-clamp section.)
+- **Storey-within-mesa** `storey_in_mesa`: the residual `quantize((raw - mesa*MESA_HEIGHT) /
+  STOREY_HEIGHT)`, capped by `min(detail, mesa_cap, STOREYS_PER_MESA - 1)` where
+  `mesa_cap = mesa_distance - 1` (the **mesa-distance ramp**, mirroring `cliff_cap`), pinned to 0
+  when a diagonal mesa cliff is present (mirroring `_has_diagonal_cliff`), then a **mesa-masked
+  cardinal clamp** (`|Δ| ≤ 1` only among same-mesa neighbours — cross-mesa is the 8m cliff,
+  owned by the mesa tier). Exactly the shape of today's `level_at`, one tier up.
+- **Absolute storey** = `mesa * STOREYS_PER_MESA + storey_in_mesa`. `storey_at` returns this, so
+  every existing downstream caller (`cell_descriptor`, instantiator, level tier) keeps working
+  in absolute-storey units. The level tier is unchanged: its `cliff_distance` already keys on
+  *different absolute storey*, which now includes mesa boundaries for free.
+- `surface_height = abs_storey * STOREY_HEIGHT + level * LEVEL_HEIGHT`
+  (`== mesa*8 + storey_in_mesa*4 + level*0.5`, since `MESA_HEIGHT == STOREYS_PER_MESA *
+  STOREY_HEIGHT`). **Unchanged formula** in absolute-storey terms.
+- `tile_plan` returns `{mesa, storey (absolute), storey_in_mesa, level, height}`. `mesa` is
+  exposed so the variant layer can detect 8m drops directly, though the magnitude test on the
+  surface-height delta is the primary signal.
+- Extend `compute_region` / margins: add the mesa clamp's influence radius (one mega-step per
+  tile, capped at `max_mesas`) plus the mesa-distance ramp radius (`STOREYS_PER_MESA`) to the
+  outer window, the same nested-window reasoning the storey/level margins already use. The
+  batched `compute_region` must equal the per-cell reference (existing equivalence tests
+  extended to the mesa tier).
+
+Constants: `MESA_HEIGHT = 8.0`, `STOREYS_PER_MESA = 2`, plus a `max_mesas` cap (=
+`max_storeys / STOREYS_PER_MESA`, rounded up) governing the mesa clamp window margin.
 
 **Determinism preserved:** every addition is a pure function of `(world_seed, cell)`. The
 churn-free guarantee (a tile's planned height is final before instantiation) is unchanged.
@@ -144,8 +171,11 @@ Mirror the existing `test_heightfield_*` / `test_slope_*` suites for the mesa ti
 - **Nesting:** storey saturates at `STOREYS_PER_MESA - 1` within a mesa; `surface_height`
   composes the three tiers correctly; a synthetic raw-height field (via
   `set_raw_height_override`) produces expected mesa/storey/level decomposition.
-- **Uniform face guarantee:** no cell has both an 8m and a 4m cardinal drop (the property that
-  lets single-height tiles render).
+- **Mesa-distance ramp:** `storey_in_mesa` is pinned to 0 within one tile of any mesa cliff
+  (cardinal and diagonal), mirroring the level cliff-distance ramp.
+- **Uniform face guarantee:** no cell has both an 8m and a 4m (or 8m and 0.5m) cardinal drop —
+  the property the mesa-distance ramp produces and that lets single-height tiles render. Assert
+  over a random field.
 - **Variant selection:** 8m drops → `cliff-tall-*` with correct rotation; 4m → existing
   `cliff-*`; 0.5m → `level-*`.
 - **Surface continuity:** adjacent mesa tiles form a gap-free surface at shared boundaries
