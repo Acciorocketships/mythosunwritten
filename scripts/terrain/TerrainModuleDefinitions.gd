@@ -454,7 +454,7 @@ static func load_level_variant(
 	var tags: TagList = TagList.new(["level", tier, variant_tag, "24x24x0.5"])
 	# Edge variants get a BLOCKING topcenter (0.0, not null): stacks may only
 	# be probed above center tiles, otherwise stack expansion places over an
-	# edge and is rejected by LevelEdgeRule afterwards, churning forever.
+	# edge and is rejected afterwards, churning forever.
 	if tier == "level-ground":
 		return _build_level_tile(
 			scene_path, tags, TerrainSpawnConfig.LEVEL_BASE_LATERAL_FILL_PROB, 0.0, "level-ground-center",
@@ -665,8 +665,8 @@ static func _build_cliff_tile(
 		"bottom": null,
 		# Blocking (0, not null): a stack tier must never be probed above an
 		# edge tile — only interiors support the next storey. Non-blocking
-		# would let stack lateral expansion place here and get rejected by
-		# CliffEdgeRule afterwards, churning forever.
+		# would let stack lateral expansion place here and get rejected
+		# afterwards, churning forever.
 		"topcenter": 0.0,
 	}
 	socket_fill_prob.merge(surface["socket_fill_prob"])

@@ -16,8 +16,8 @@ const VARIANT_MASKS := {
 	"CliffLine":             {"edges": ["front", "back"], "inner": []},
 	# Open side = back, matching HeightfieldVariant's canonical peninsula
 	# (["front","left","right"]); the heightfield drives cliff placement by
-	# computed rotation, so the slope geometry must use its convention, not the
-	# original sheer CliffEdgeRule (open = right) one. Outer corners: FL, FR.
+	# computed rotation, so the slope geometry must use its convention (open side =
+	# back, not right). Outer corners: FL, FR.
 	"CliffPeninsula":        {"edges": ["front", "left", "right"], "inner": []},
 	"CliffIsland":           {"edges": ["front", "back", "left", "right"], "inner": []},
 	"CliffInCorner":         {"edges": [], "inner": ["FL"]},

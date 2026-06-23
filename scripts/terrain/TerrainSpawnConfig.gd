@@ -91,7 +91,7 @@ const LEVEL_STACK_LATERAL_FILL_PROB: float = 0.7
 # directly above). Applies to both level-ground and level-stack centers.
 const LEVEL_TOPCENTER_FILL_PROB: float = 0.9
 # Whether placing a level tile removes overlapping non-ground pieces in
-# its footprint. True keeps LevelEdgeRule retiling clean.
+# its footprint. True keeps level-variant retiling clean.
 const LEVEL_REPLACE_EXISTING: bool = false
 
 # --- Cliff ---

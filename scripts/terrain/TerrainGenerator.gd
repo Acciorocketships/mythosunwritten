@@ -882,8 +882,8 @@ func _suppressor_roll_passes(piece: TerrainModuleInstance, entry: Variant) -> bo
 func register_piece(piece: TerrainModuleInstance, _attachment_socket_name: String) -> void:
 	# Index every socket. The attachment socket must be indexed too — otherwise a query
 	# from the parent piece's matching socket position finds only its own socket and
-	# falsely concludes the side has no neighbor, which causes LevelEdgeRule to choose
-	# the wrong variant for the parent (treating an attached neighbor as missing).
+	# falsely concludes the side has no neighbor, causing the wrong variant to be
+	# chosen for the parent (treating an attached neighbor as missing).
 	for socket_name: String in piece.sockets.keys():
 		var piece_other_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
 		socket_index.insert(piece_other_socket)
@@ -1048,7 +1048,7 @@ func get_adjacent_from_size(
 
 	# Position the test piece with the same direction-aware transform used for
 	# real placement. A plain offset would assume the source piece is unrotated;
-	# rotated pieces (e.g. level variants aligned by LevelEdgeRule) would get a
+	# rotated pieces (e.g. level variants with a non-default facing) would get a
 	# misplaced test piece and garbage adjacency.
 	var test_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(test_piece, attachment_socket_name)
 	transform_to_socket(test_piece_socket, orig_piece_socket)
