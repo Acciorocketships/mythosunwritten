@@ -673,3 +673,235 @@ func test_lateral_neighbours_over_water_end_to_end() -> void:
 	)
 
 	gen.free()
+
+
+# ---------------------------------------------------------------------------
+# REGRESSION TESTS for SP-3 fix: foliage→hill uses origin-only path, NOT
+# _lateral_neighbours. These tests FAIL on the old "if size == 'point'" code
+# and PASS after the fix ("if density.socket_can_spawn_point(...)").
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# TEST 5: Foliage→hill placement is origin-only (not lateral probe)
+# ---------------------------------------------------------------------------
+# _resolve_placement_context with a surface foliage socket (topfront) and a
+# HILL size ("8x8x2") must take the origin-only decoration path — not
+# _lateral_neighbours. The old code routed this via _lateral_neighbours because
+# size != "point", which probed the 24x24 ground tile's socket layout and
+# spuriously hit blocking sockets from water tiles at adjacent positions.
+#
+# Assertions:
+#   (a) _resolve_placement_context returns a non-empty context (hill not rejected).
+#   (b) The returned "adjacent" dict has exactly 1 entry (origin socket only).
+#   (c) "filtered" is non-empty (a hill module is selectable from origin tag dist).
+#
+# This test would FAIL on the old code when a water tile is indexed at the
+# ground tile's neighbour position, because _lateral_neighbours would find
+# water's blocking topcenter and _has_forbidden_adjacency would return true.
+# ---------------------------------------------------------------------------
+
+func test_resolve_placement_context_hill_from_foliage_socket_is_origin_only() -> void:
+	var gen = _make_gen_live()
+	var lib: TerrainModuleLibrary = gen.library
+
+	# Place a ground tile at origin with real sockets.
+	var ground_tmpl: TerrainModule = lib.get_random(lib.get_by_tags(TagList.new(["ground-plain"])), true)
+	var ground: TerrainModuleInstance = ground_tmpl.spawn()
+	ground.create()
+	ground.set_transform(Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, 0.0)))
+	gen.terrain_parent.add_child(ground.root)
+	gen.register_piece(ground, "")
+
+	# Compute the new-tile destination for the "front" lateral (where a water tile
+	# would land to create a spurious rejection on the old code).
+	var front_sock: Marker3D = ground.sockets.get("front", null)
+	assert_ne(front_sock, null, "ground tile must have a 'front' socket (precondition)")
+	var front_world: Vector3 = Helper.socket_world_pos(ground.transform, front_sock, ground.root)
+	var back_sock: Marker3D = ground.sockets.get("back", null)
+	assert_ne(back_sock, null, "ground tile must have a 'back' socket (precondition)")
+	var back_world: Vector3 = Helper.socket_world_pos(ground.transform, back_sock, ground.root)
+	var T: Vector3 = front_world - back_world
+	var neighbour_center: Vector3 = ground.transform.origin + T
+
+	# Place a water tile at the lateral neighbour position.
+	# Old code: _lateral_neighbours on a "8x8x2" topfront probe hit water's
+	# blocking topcenter (same position logic as the 24x24 lateral), triggering
+	# _has_forbidden_adjacency and returning an empty placement context.
+	var water_def: TerrainModule = lib.get_random(lib.get_by_tags(TagList.new(["water"])), true)
+	var water: TerrainModuleInstance = water_def.spawn()
+	water.create()
+	water.set_transform(Transform3D(Basis.IDENTITY, neighbour_center))
+	gen.terrain_parent.add_child(water.root)
+	gen.register_piece(water, "")
+
+	# Confirm "topfront" is a decoration socket (socket_can_spawn_point = true).
+	assert_true(
+		gen.density.socket_can_spawn_point(ground, "topfront"),
+		"ground 'topfront' must be a decoration socket (can_spawn_point = true) (precondition)"
+	)
+
+	# Verify socket_can_spawn_point returns FALSE for a true lateral (front) —
+	# confirms the new criterion correctly distinguishes the two paths.
+	assert_false(
+		gen.density.socket_can_spawn_point(ground, "front"),
+		"ground 'front' lateral socket must NOT be a decoration socket (can_spawn_point = false) (precondition)"
+	)
+
+	# Call _resolve_placement_context with the foliage socket and a hill size.
+	var topfront_socket := TerrainModuleSocket.new(ground, "topfront")
+	var ctx: Dictionary = gen._resolve_placement_context(topfront_socket, "8x8x2")
+
+	# (a) Context must be non-empty (hill not rejected by spurious water probe).
+	assert_false(
+		ctx.get("filtered", TerrainModuleList.new()).is_empty(),
+		"hill from foliage socket must NOT be rejected when water is at lateral neighbour (origin-only path)"
+	)
+
+	# (b) Adjacent dict must have exactly 1 entry (origin socket only — no probed neighbours).
+	var adjacent: Dictionary = ctx.get("adjacent", {})
+	assert_eq(
+		adjacent.size(), 1,
+		"decoration/foliage path must produce adjacent dict with exactly 1 entry (origin socket only)"
+	)
+
+	# (c) The sole entry is the attachment socket pointing to the ground tile's topfront.
+	var expected_attachment: String = Helper.get_attachment_socket_name("topfront")
+	assert_true(
+		adjacent.has(expected_attachment),
+		"adjacent dict must contain attachment key '%s'" % expected_attachment
+	)
+	var attach_val: TerrainModuleSocket = adjacent.get(expected_attachment, null)
+	assert_ne(attach_val, null, "attachment entry must not be null")
+	assert_true(
+		attach_val != null and attach_val.piece == ground,
+		"attachment entry must point to the origin ground tile (not a probed neighbour)"
+	)
+	assert_true(
+		attach_val != null and attach_val.socket_name == "topfront",
+		"attachment entry socket_name must be 'topfront'"
+	)
+
+	gen.free()
+
+
+# ---------------------------------------------------------------------------
+# TEST 6: Hill stacking (topcenter) is origin-only (not lateral probe)
+# ---------------------------------------------------------------------------
+# A hill's topcenter socket has size dist {"4x4x4": 0.4, "point": 0.6}.
+# _resolve_placement_context with size="4x4x4" must take the origin-only
+# decoration path (socket_can_spawn_point = true, since "point" is in the dist).
+#
+# The old code (size=="point" check) would route "4x4x4" through _lateral_neighbours.
+# ---------------------------------------------------------------------------
+
+func test_resolve_placement_context_hill_stacking_is_origin_only() -> void:
+	var gen = _make_gen_live()
+	var lib: TerrainModuleLibrary = gen.library
+
+	# We need to create a ground tile as the parent surface first so the hill
+	# can be placed via add_piece.
+	var ground_tmpl: TerrainModule = lib.get_random(lib.get_by_tags(TagList.new(["ground-plain"])), true)
+	var ground: TerrainModuleInstance = ground_tmpl.spawn()
+	ground.create()
+	ground.set_transform(Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, 0.0)))
+	gen.terrain_parent.add_child(ground.root)
+	gen.register_piece(ground, "")
+
+	# Now spawn an 8x8x2 hill and place it on the ground tile.
+	var hill_tmpl: TerrainModule = lib.get_random(lib.get_by_tags(TagList.new(["8x8x2"])), true)
+	var hill: TerrainModuleInstance = hill_tmpl.spawn()
+	hill.create()
+	hill.set_transform(Transform3D(Basis.IDENTITY, Vector3(0.0, 2.0, 0.0)))
+	gen.terrain_parent.add_child(hill.root)
+	gen.register_piece(hill, "")
+
+	# Confirm the hill's topcenter is a decoration socket (socket_can_spawn_point = true).
+	assert_true(
+		gen.density.socket_can_spawn_point(hill, "topcenter"),
+		"hill 'topcenter' must be a decoration socket (can_spawn_point = true, since size dist has 'point') (precondition)"
+	)
+
+	# Call _resolve_placement_context for hill stacking (topcenter, size="4x4x4").
+	var topcenter_socket := TerrainModuleSocket.new(hill, "topcenter")
+	var ctx: Dictionary = gen._resolve_placement_context(topcenter_socket, "4x4x4")
+
+	# The context must use the origin-only path: adjacent dict has exactly 1 entry.
+	var adjacent: Dictionary = ctx.get("adjacent", {})
+	assert_eq(
+		adjacent.size(), 1,
+		"hill stacking must produce adjacent dict with exactly 1 entry (origin-only, no lateral probe)"
+	)
+
+	# The attachment socket for "topcenter" is "bottom".
+	var expected_attachment: String = Helper.get_attachment_socket_name("topcenter")
+	assert_eq(expected_attachment, "bottom",
+		"attachment socket for 'topcenter' must be 'bottom' (precondition)")
+	assert_true(
+		adjacent.has(expected_attachment),
+		"adjacent dict must contain attachment key '%s'" % expected_attachment
+	)
+	var attach_val: TerrainModuleSocket = adjacent.get(expected_attachment, null)
+	assert_ne(attach_val, null, "attachment entry must not be null")
+	assert_true(
+		attach_val != null and attach_val.piece == hill,
+		"attachment entry must point to the origin hill tile (not a probed neighbour)"
+	)
+
+	gen.free()
+
+
+# ---------------------------------------------------------------------------
+# TEST 7: True ground lateral still probes neighbours (over-water guard intact)
+# ---------------------------------------------------------------------------
+# After the SP-3 fix, true laterals (ground "front", size dist = {"24x24x0.5":1.0},
+# no "point") still go through _lateral_neighbours. The over-water guard must
+# still reject a ground lateral expansion when a water tile is at the destination.
+# ---------------------------------------------------------------------------
+
+func test_resolve_placement_context_lateral_ground_rejects_over_water() -> void:
+	var gen = _make_gen_live()
+	var lib: TerrainModuleLibrary = gen.library
+
+	# Place a ground tile at origin with real sockets.
+	var ground_tmpl: TerrainModule = lib.get_random(lib.get_by_tags(TagList.new(["ground-plain"])), true)
+	var ground: TerrainModuleInstance = ground_tmpl.spawn()
+	ground.create()
+	ground.set_transform(Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, 0.0)))
+	gen.terrain_parent.add_child(ground.root)
+	gen.register_piece(ground, "")
+
+	# Compute the destination center for the "front" lateral.
+	var front_sock: Marker3D = ground.sockets.get("front", null)
+	assert_ne(front_sock, null, "ground tile must have 'front' socket (precondition)")
+	var front_world: Vector3 = Helper.socket_world_pos(ground.transform, front_sock, ground.root)
+	var back_sock: Marker3D = ground.sockets.get("back", null)
+	assert_ne(back_sock, null, "ground tile must have 'back' socket (precondition)")
+	var back_world: Vector3 = Helper.socket_world_pos(ground.transform, back_sock, ground.root)
+	var T: Vector3 = front_world - back_world
+	var neighbour_center: Vector3 = ground.transform.origin + T
+
+	# Place a water tile at the destination.
+	var water_def: TerrainModule = lib.get_random(lib.get_by_tags(TagList.new(["water"])), true)
+	var water: TerrainModuleInstance = water_def.spawn()
+	water.create()
+	water.set_transform(Transform3D(Basis.IDENTITY, neighbour_center))
+	gen.terrain_parent.add_child(water.root)
+	gen.register_piece(water, "")
+
+	# Confirm "front" is NOT a decoration socket (socket_can_spawn_point = false).
+	assert_false(
+		gen.density.socket_can_spawn_point(ground, "front"),
+		"ground 'front' must NOT be a decoration socket (takes lateral path) (precondition)"
+	)
+
+	# _resolve_placement_context for the ground "front" lateral (size = "24x24x0.5").
+	var front_socket := TerrainModuleSocket.new(ground, "front")
+	var ctx: Dictionary = gen._resolve_placement_context(front_socket, "24x24x0.5")
+
+	# Over-water guard must fire: filtered list must be empty (rejected).
+	assert_true(
+		ctx.get("filtered", TerrainModuleList.new()).is_empty(),
+		"ground lateral expansion over water must be rejected (over-water guard intact after SP-3 fix)"
+	)
+
+	gen.free()

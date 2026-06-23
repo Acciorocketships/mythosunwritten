@@ -348,16 +348,32 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 	var origin_world: Vector3 = piece_socket.get_socket_position()
 
 	# Build the adjacency dict via the appropriate path:
-	# - Decoration path (size == "point"): origin-only, no neighbour probe.
-	#   Test 3 in test_placement_pipeline_characterization pins this invariant:
-	#   decorations draw tag distribution solely from the ORIGIN socket's
-	#   socket_tag_prob — no neighbour probing is needed or performed.
-	# - Lateral / structural path (size != "point"): uses _lateral_neighbours to
-	#   probe real socket positions of the new tile. Preserves over-water guard.
+	# - Decoration / surface socket path: the socket's size distribution contains
+	#   "point" (foliage sockets like topfront/topback/… and hill stacking via
+	#   topcenter). Tag/size are drawn solely from the ORIGIN socket — no neighbour
+	#   probing. This covers:
+	#     • point foliage (size sampled to "point")
+	#     • hills spawned from a surface socket (size "8x8x2"/"12x12x2"/"4x4x4"
+	#       sampled from a FOLIAGE_CARDINAL/CORNER_SIZE_WEIGHTS dist that includes "point")
+	#     • hill stacking (hill topcenter size dist also includes "point")
+	#   Test 3 in test_placement_pipeline_characterization pins this invariant.
+	#   Using size=="point" here was wrong: it sent hill-sized decorations into
+	#   _lateral_neighbours which assumes same-size lateral socket layout (true for
+	#   24x24→24x24 laterals but NOT for a small hill from a 24x24 surface socket),
+	#   causing spurious over-water/edge rejections.
+	# - True lateral / structural expansion path: the socket's size distribution does
+	#   NOT contain "point" (ground/cliff/level/water/bank front/back/left/right).
+	#   Uses _lateral_neighbours to probe real same-size neighbour sockets. Preserves
+	#   the over-water forbidden-adjacency guard.
 	var adjacent: Dictionary[String, TerrainModuleSocket]
-	if size == "point":
+	if density.socket_can_spawn_point(piece_socket.piece, socket_name):
+		# Decoration/surface socket (point foliage, hills from a surface, hill
+		# stacking): the tag/size is drawn solely from this origin socket — no
+		# neighbour probing (proven by test 3 in the placement characterization).
 		adjacent = { attachment_socket_name: piece_socket }
 	else:
+		# True lateral/structural expansion (same-size neighbour tile): probe the
+		# real neighbour sockets; preserves the over-water forbidden-adjacency guard.
 		adjacent = _lateral_neighbours(piece_socket, size)
 		if adjacent.is_empty():
 			return _empty_placement_context(size, {}, attachment_socket_name, origin_world)
@@ -387,14 +403,20 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 	}
 
 
-## Compute the adjacency dict for a non-point lateral/structural expansion
+## Compute the adjacency dict for a true same-size lateral/structural expansion
 ## WITHOUT spawning a dummy test piece. Uses the origin piece's real socket
 ## geometry to derive where the new tile's sockets would land, then queries
 ## socket_index at those positions.
 ##
-## The new tile has the same socket layout as the origin tile (all lateral
-## expansions go piece-size → same-piece-size). After transform_to_socket
-## alignment the new tile's socket positions equal:
+## ONLY call for sockets whose size distribution does NOT contain "point"
+## (ground/cliff/level/water/bank front/back/left/right). The computation
+## assumes the new tile has the same socket layout as the origin tile —
+## valid for same-size laterals (24x24→24x24) but NOT for a small hill
+## spawned from a large 24x24 surface socket. Decoration sockets (whose
+## size dist includes "point") must take the origin-only path instead.
+##
+## The new tile has the same socket layout as the origin tile. After
+## transform_to_socket alignment the new tile's socket positions equal:
 ##
 ##   new_pos[X] = orig_socket_world[X] + T
 ##
