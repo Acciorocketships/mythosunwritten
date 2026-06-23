@@ -388,6 +388,9 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 	if socket != null and piece.root != null:
 		var pos: Vector3 = Helper.socket_world_pos(piece.transform, socket, piece.root)
 		size_prob_dist = _biome_scaled_dist(size_prob_dist, pos)
+	size_prob_dist = TerrainSpawnConfig.filter_for_category(
+		size_prob_dist, piece.get_socket_category(socket_name)
+	)
 	return size_prob_dist.sample()
 
 
@@ -409,25 +412,24 @@ func _biome_scaled_dist(dist: Distribution, pos: Vector3) -> Distribution:
 	# untouched because single-entry distributions skip scaling entirely.
 	if _in_cliff_core(pos):
 		var boost: float = TerrainSpawnConfig.CLIFF_CORE_SEED_MIX_BOOST
-		weights["cliff-base-side"] = weights.get("cliff-base-side", 1.0) * boost
-		weights["24x24x4"] = weights.get("24x24x4", 1.0) * boost
+		weights[TerrainSpawnConfig.SEED_TAG_CLIFF_BASE] = weights.get(TerrainSpawnConfig.SEED_TAG_CLIFF_BASE, 1.0) * boost
+		weights[TerrainSpawnConfig.SEED_SIZE_CLIFF] = weights.get(TerrainSpawnConfig.SEED_SIZE_CLIFF, 1.0) * boost
 		# Drop (not zero) the level/flat-ground entries: a level seeded inside
 		# a mesa footprint is eaten by it later (visible churn). Zeroing leaves
 		# a 0-weight key that sample_from_modules can strand — if the surviving
 		# cliff tag filters to no modules it removes it and is left with the
 		# unsamplable zero key (Distribution.sample asserts). Erasing avoids
 		# that entirely.
-		weights["level-ground-center"] = 0.0
-		weights["24x24x0.5"] = 0.0
+		weights[TerrainSpawnConfig.SEED_TAG_LEVEL_GROUND] = 0.0
+		weights[TerrainSpawnConfig.SEED_SIZE_LEVEL] = 0.0
 		# Hills are tall structures; one placed inside a core (on ground that
 		# becomes cliff, or on a plateau that gains another storey) is eaten by
 		# the rising mesa. Drop the hill SIZES from foliage/stacking rolls so
 		# only point decorations (trees, grass, rocks — the intended mountain
 		# vegetation) survive on plateau tops. "point" always remains in those
 		# dists, so this never nulls them.
-		weights["8x8x2"] = 0.0
-		weights["12x12x2"] = 0.0
-		weights["4x4x4"] = 0.0
+		for structure_size: String in TerrainSpawnConfig.STRUCTURE_SIZES:
+			weights[structure_size] = 0.0
 	var scaled: Distribution = dist.copy()
 	var changed: bool = false
 	for tag in scaled.dist.keys():
@@ -653,7 +655,10 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 		"attachment_socket_name": attachment_socket_name,
 		"required_tags": required_tags,
 		"filtered": filtered,
-		"dist": _biome_scaled_dist(library.get_combined_distribution(adjacent).copy(), origin_world),
+		"dist": TerrainSpawnConfig.filter_for_category(
+			_biome_scaled_dist(library.get_combined_distribution(adjacent).copy(), origin_world),
+			piece_socket.piece.get_socket_category(socket_name)
+		),
 		"origin_world": origin_world
 	}
 
