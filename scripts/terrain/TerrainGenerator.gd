@@ -1019,37 +1019,6 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 	return other_pieces.is_empty()
 
 
-## Collect all pieces stacked above `piece` via topcenter socket-links, recursively.
-## A piece P is "on top of" Q when P has a socket at Q's topcenter world position
-## AND P's origin.y is strictly above Q's origin.y. Populates `out_set` (keyed by
-## instance_id) and returns `out_list` in bottom-up removal order.
-func _collect_stacked_above(
-	piece: TerrainModuleInstance,
-	out_set: Dictionary,
-	out_list: Array
-) -> void:
-	if not piece.sockets.has("topcenter"):
-		return
-	var topcenter_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, "topcenter")
-	var topcenter_pos: Vector3 = topcenter_socket.get_socket_position()
-	var piece_y: float = piece.transform.origin.y
-	var candidates: Array[TerrainModuleSocket] = socket_index.query_others(topcenter_pos, piece)
-	for candidate_socket in candidates:
-		if candidate_socket == null or candidate_socket.piece == null:
-			continue
-		var stacked: TerrainModuleInstance = candidate_socket.piece
-		# Only remove pieces strictly above (structural dependency, not coincidental same-level).
-		if stacked.transform.origin.y <= piece_y:
-			continue
-		var stacked_id: int = stacked.get_instance_id()
-		if out_set.has(stacked_id):
-			continue
-		out_set[stacked_id] = true
-		# Recurse depth-first so the deepest dependent is queued for removal first.
-		_collect_stacked_above(stacked, out_set, out_list)
-		out_list.append(stacked)
-
-
 func remove_piece(piece: TerrainModuleInstance) -> void:
 	if piece == null or piece.root == null or not is_instance_valid(piece.root):
 		return
@@ -1234,19 +1203,7 @@ func add_piece(
 		if orig_piece_socket.piece != null:
 			overlapping_pieces.erase(orig_piece_socket.piece)
 		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.tags.has("ground"))
-		# Collect pieces stacked above each overlapping piece (e.g. a hill or grass on a
-		# ground tile's topcenter that sits above the new piece's AABB and would be missed
-		# by the query_box call). Gathered before any removal so the socket index is intact.
-		var stacked_set: Dictionary = {}
-		var stacked_to_remove: Array = []
 		for piece in overlapping_pieces:
-			stacked_set[piece.get_instance_id()] = true
-		for piece in overlapping_pieces:
-			_collect_stacked_above(piece, stacked_set, stacked_to_remove)
-		for piece in overlapping_pieces:
-			_recheck_neighbors_after_removal(piece)
-			remove_piece(piece)
-		for piece in stacked_to_remove:
 			_recheck_neighbors_after_removal(piece)
 			remove_piece(piece)
 
