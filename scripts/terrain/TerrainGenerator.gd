@@ -1361,15 +1361,6 @@ func _drive_heightfield_structure(player_pos: Vector3) -> void:
 		remove_piece(inst)
 
 
-func load_start_tile() -> TerrainModuleInstance:
-	var def : TerrainModule = TerrainModuleDefinitions.load_ground_tile()
-	var initial_tile := def.spawn()
-	initial_tile.set_transform(Transform3D.IDENTITY)
-	var root := initial_tile.create()
-	terrain_parent.add_child(root)
-	return initial_tile
-
-
 func _socket_queue_key(piece_socket: TerrainModuleSocket) -> String:
 	if piece_socket == null:
 		return ""
