@@ -25,6 +25,10 @@ func test_slope_drops_structure_tags() -> void:
 	assert_false(out.dist.has("cliff-base-side"), "seed tag should be dropped on a slope")
 	assert_true(out.dist.has("grass"), "foliage tag must survive on a slope")
 	assert_true(out.dist.has("rock"), "foliage tag must survive on a slope")
+	var total := 0.0
+	for k in out.dist.keys():
+		total += out.dist[k]
+	assert_almost_eq(total, 1.0, 0.0001, "surviving foliage weights must renormalise to 1")
 
 
 func test_level_returns_dist_unchanged() -> void:
@@ -42,3 +46,4 @@ func test_filter_never_empties_a_dist() -> void:
 func test_category_for_y() -> void:
 	assert_eq(TerrainSpawnConfig.category_for_y(0.0), "level", "plateau sockets at y~0 are level")
 	assert_eq(TerrainSpawnConfig.category_for_y(-2.0), "slope", "sockets dropped below the plateau are slope")
+	assert_eq(TerrainSpawnConfig.category_for_y(-0.5), "level", "boundary value is level (strict <)")

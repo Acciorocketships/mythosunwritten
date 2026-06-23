@@ -30,6 +30,7 @@ const SEED_TAG_CLIFF_STACK: String = "cliff-stack-side"
 
 # Tags dropped from a slope socket's roll: hills plus every structural seed.
 # Foliage tags (grass/rock/bush/tree) are intentionally absent so they survive.
+# Mirrors SEED_TAG_* consts above — GDScript 4 cannot reference consts inside a const array literal.
 const SLOPE_BLOCKED_TAGS: Array[String] = [
 	"hill",
 	"level-ground-center", "level-stack-center",
