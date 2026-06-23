@@ -947,14 +947,14 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 		func(p): return not p.def.is_base_plane 			and not (p.def.displaceable and not new_is_displaceable)
 	)
 
-	if new_piece.def.tags.has("level") and parent_piece != null and parent_piece.def.tags.has("level"):
-		# Only filter out level tiles that are strictly *below* the new piece (the support layer).
+	if new_piece.def.vertical_stack_family != "" and parent_piece != null and parent_piece.def.vertical_stack_family == new_piece.def.vertical_stack_family:
+		# Only filter out same-family tiles that are strictly *below* the new piece (the support layer).
 		# Using parent_y with `<=` here was wrong for lateral expansion (where new.y == parent.y):
 		# it also removed same-y level tiles from the blocker set, allowing the new tile to overlap
 		# an existing level tile at the same x/y/z when LEVEL_REPLACE_EXISTING is false.
 		var new_y: float = new_piece.transform.origin.y
 		other_pieces = other_pieces.filter(func(p):
-			return not (p.def.tags.has("level") and p.transform.origin.y < new_y - 0.1)
+			return not (p.def.vertical_stack_family == new_piece.def.vertical_stack_family and p.transform.origin.y < new_y - 0.1)
 		)
 
 	return other_pieces.is_empty()

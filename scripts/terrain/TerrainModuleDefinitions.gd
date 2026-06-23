@@ -788,6 +788,7 @@ static func _build_level_tile(
 		surface["socket_suppressed_by"]
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
+	m.vertical_stack_family = "level"
 	return m
 
 

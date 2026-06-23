@@ -29,6 +29,12 @@ extends Resource
 # alive (hill loaders). Orphan-sweep purges pieces whose surface vanishes.
 @export var requires_surface_support: bool = false
 
+# Family tag for vertical stacking: modules in the same family may stack
+# vertically without blocking each other (the lower layer is filtered out when
+# checking overlap). "level" for all level variants and centers; "" for all
+# other modules.
+@export var vertical_stack_family: String = ""
+
 # Optional per-socket suppression: socket name -> {"socket": String,
 # "prob": float}. If the suppressor socket's deterministic position roll would
 # pass at the given probability, the suppressed socket is never enqueued. The
