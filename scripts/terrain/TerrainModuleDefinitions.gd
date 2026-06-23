@@ -119,6 +119,7 @@ static func load_ground_tile() -> TerrainModule:
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
 	m.is_base_plane = true
 	m.density_profile = "gentle"
+	m.socket_role.merge(surface["socket_role"])
 	return m
 
 static func load_grass_tile() -> TerrainModule:
@@ -442,6 +443,7 @@ static func load_bank_variant(scene_name: String, variant_tag: String) -> Terrai
 		surface["socket_suppressed_by"]
 	)
 	m_bank.is_base_plane = true
+	m_bank.socket_role.merge(surface["socket_role"])
 	return m_bank
 
 
@@ -624,6 +626,7 @@ static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
 	m.grows_in_cliff_core = true
+	m.socket_role.merge(surface["socket_role"])
 	return m
 
 
@@ -708,6 +711,7 @@ static func _build_cliff_tile(
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
 	m.grows_in_cliff_core = true
+	m.socket_role.merge(surface["socket_role"])
 	return m
 
 
@@ -793,6 +797,7 @@ static func _build_level_tile(
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
 	m.vertical_stack_family = "level"
 	m.density_profile = "level"
+	m.socket_role.merge(surface["socket_role"])
 	return m
 
 

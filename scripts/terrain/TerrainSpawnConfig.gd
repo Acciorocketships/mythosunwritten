@@ -246,9 +246,25 @@ static func surface_spawn_sockets(
 		"topbackright": suppression_entry,
 		"topbackleft": suppression_entry,
 	}
+	# Mark every socket this function creates as a surface socket. This is the
+	# authoritative source of surface-socket identity — callers merge this into
+	# the module's socket_role dict so get_adjacent_from_size can test role
+	# instead of name-prefix heuristics.
+	var socket_role: Dictionary[String, String] = {
+		"topfront": "surface",
+		"topback": "surface",
+		"topleft": "surface",
+		"topright": "surface",
+		"topfrontright": "surface",
+		"topfrontleft": "surface",
+		"topbackright": "surface",
+		"topbackleft": "surface",
+		"topcenter": "surface",
+	}
 	return {
 		"socket_size": socket_size,
 		"socket_fill_prob": socket_fill_prob,
 		"socket_tag_prob": socket_tag_prob,
 		"socket_suppressed_by": socket_suppressed_by,
+		"socket_role": socket_role,
 	}

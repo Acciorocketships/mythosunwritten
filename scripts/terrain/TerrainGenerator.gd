@@ -1012,7 +1012,7 @@ func get_adjacent_from_size(
 	size: String
 ) -> Dictionary[String, TerrainModuleSocket]:
 	if size == "point":
-		return {"bottom": orig_piece_socket}
+		return { Helper.get_attachment_socket_name(orig_piece_socket.socket_name): orig_piece_socket }
 
 	var orig_piece: TerrainModuleInstance = orig_piece_socket.piece
 	var orig_sock: Marker3D = orig_piece_socket.socket
@@ -1056,12 +1056,12 @@ func get_adjacent_from_size(
 		var pos := Helper.socket_world_pos(test_piece.transform, s, test_piece.root)
 		var hit := socket_index.query_other(pos, test_piece)
 		if hit != null:
-			var is_hit_ground = hit.piece.def.tags.has("ground")
-			if orig_piece.def.tags.has("ground") and not is_hit_ground:
-				var from_top_socket: bool = orig_piece_socket.socket_name.begins_with("top")
-				# Ground top sockets may spawn elevated pieces that should connect to existing non-ground tiles.
-				# Keep legacy behavior for non-top ground sockets.
-				if not from_top_socket:
+			var hit_is_base_plane = hit.piece.def.is_base_plane
+			if orig_piece.def.is_base_plane and not hit_is_base_plane:
+				var from_surface_socket: bool = orig_piece.def.socket_role.get(orig_piece_socket.socket_name, "") == "surface"
+				# Base-plane surface sockets may spawn elevated pieces that connect to existing non-ground tiles.
+				# Non-surface base-plane sockets (laterals, bottom) stay on the ground plane only.
+				if not from_surface_socket:
 					continue
 
 			adjacency[socket_name] = hit

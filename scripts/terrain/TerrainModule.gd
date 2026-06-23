@@ -12,6 +12,14 @@ extends Resource
 @export var socket_tag_prob: Dictionary[String, Distribution]
 @export var visual_variants: Array[PackedScene]
 
+# Per-socket role metadata. "surface" marks walkable top sockets (foliage spawners).
+# Absent keys are treated as non-surface. Populated by merging surface_spawn_sockets output.
+@export var socket_role: Dictionary[String, String] = {}
+
+# Name of the socket on THIS module that acts as the point-attachment anchor
+# (the socket a spawned point-decoration's piece attaches its matching socket to).
+@export var attachment_socket: String = "bottom"
+
 
 # If true, this module can replace existing terrain pieces when placed.
 # Instead of failing placement due to AABB collisions, it will remove overlapping pieces.
