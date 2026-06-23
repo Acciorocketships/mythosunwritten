@@ -117,6 +117,7 @@ static func load_ground_tile() -> TerrainModule:
 		surface["socket_suppressed_by"]
 	)
 	m.structural_socket_names = ["front", "back", "left", "right", "topcenter"]
+	m.is_base_plane = true
 	return m
 
 static func load_grass_tile() -> TerrainModule:
@@ -190,7 +191,7 @@ static func load_8x8x2_tile() -> TerrainModule:
 		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_8X8_STACK_TAG_WEIGHTS)
 	}
 
-	return TerrainModule.new(
+	var m_8x8x2 := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -201,6 +202,8 @@ static func load_8x8x2_tile() -> TerrainModule:
 		socket_tag_prob,
 		false  # replace_existing = false
 	)
+	m_8x8x2.requires_surface_support = true
+	return m_8x8x2
 
 
 static func load_12x12x2_tile() -> TerrainModule:
@@ -224,7 +227,7 @@ static func load_12x12x2_tile() -> TerrainModule:
 		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_12X12_STACK_TAG_WEIGHTS),
 	}
 
-	return TerrainModule.new(
+	var m_12x12x2 := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -234,6 +237,8 @@ static func load_12x12x2_tile() -> TerrainModule:
 		socket_fill_prob,
 		socket_tag_prob
 	)
+	m_12x12x2.requires_surface_support = true
+	return m_12x12x2
 
 static func load_4x4x4_tile() -> TerrainModule:
 	var scene = load("res://terrain/scenes/Hill_4x4x4.tscn")
@@ -253,7 +258,7 @@ static func load_4x4x4_tile() -> TerrainModule:
 		"topcenter": Distribution.new(TerrainSpawnConfig.HILL_4X4_STACK_TAG_WEIGHTS),
 	}
 
-	return TerrainModule.new(
+	var m_4x4x4 := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -264,6 +269,8 @@ static func load_4x4x4_tile() -> TerrainModule:
 		socket_tag_prob,
 		false
 	)
+	m_4x4x4.requires_surface_support = true
+	return m_4x4x4
 
 
 ### Water and banks (data-driven) ###
@@ -336,7 +343,7 @@ static func load_water_tile() -> TerrainModule:
 		"left": lateral_tags,
 	}
 
-	return TerrainModule.new(
+	var m_water := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -347,6 +354,8 @@ static func load_water_tile() -> TerrainModule:
 		socket_tag_prob,
 		false
 	)
+	m_water.is_base_plane = true
+	return m_water
 
 
 static func load_bank_variant(scene_name: String, variant_tag: String) -> TerrainModule:
@@ -418,7 +427,7 @@ static func load_bank_variant(scene_name: String, variant_tag: String) -> Terrai
 	}
 	socket_tag_prob.merge(surface["socket_tag_prob"])
 
-	return TerrainModule.new(
+	var m_bank := TerrainModule.new(
 		scene,
 		bb,
 		tags,
@@ -431,6 +440,8 @@ static func load_bank_variant(scene_name: String, variant_tag: String) -> Terrai
 		false,  # displaceable
 		surface["socket_suppressed_by"]
 	)
+	m_bank.is_base_plane = true
+	return m_bank
 
 
 ### Level variants (data-driven) ###

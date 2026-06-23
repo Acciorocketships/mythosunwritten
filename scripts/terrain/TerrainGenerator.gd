@@ -239,7 +239,7 @@ func _purge_orphaned_stacks() -> void:
 		var swept_piece: TerrainModuleInstance = swept
 		if not terrain_index.all_modules.has(swept_piece):
 			continue  # removed since the slice was snapshotted
-		if not (swept_piece.def.tags.has("hill") or swept_piece.def.displaceable):
+		if not (swept_piece.def.requires_surface_support or swept_piece.def.displaceable):
 			continue
 		if not _has_surface_support(swept_piece):
 			to_remove.append(swept_piece)
@@ -930,7 +930,7 @@ var _hidden_set: Dictionary = {}
 
 func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInstance) -> bool:
 	assert(new_piece.def != null)
-	if new_piece.def.tags.has("ground"):
+	if new_piece.def.is_base_plane:
 		return true
 	if new_piece.def.replace_existing:
 		return true
@@ -944,7 +944,7 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 	# decorations at the same spot.
 	var new_is_displaceable: bool = new_piece.def.displaceable
 	other_pieces = other_pieces.filter(
-		func(p): return not p.def.tags.has("ground") 			and not (p.def.displaceable and not new_is_displaceable)
+		func(p): return not p.def.is_base_plane 			and not (p.def.displaceable and not new_is_displaceable)
 	)
 
 	if new_piece.def.tags.has("level") and parent_piece != null and parent_piece.def.tags.has("level"):
@@ -1123,7 +1123,7 @@ func add_piece(
 	# re-deferred by _process_socket (the spawn retries after the player
 	# moves away) — see _blocked_by_player.
 	_blocked_by_player = false
-	if player != null and not new_piece.def.tags.has("ground"):
+	if player != null and not new_piece.def.is_base_plane:
 		var player_footprint: AABB = AABB(
 			Vector3(
 				player.global_position.x - 0.5,
@@ -1143,7 +1143,7 @@ func add_piece(
 		var overlapping_pieces: Array = terrain_index.query_box(new_piece.aabb)
 		if orig_piece_socket.piece != null:
 			overlapping_pieces.erase(orig_piece_socket.piece)
-		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.tags.has("ground"))
+		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.is_base_plane)
 		for piece in overlapping_pieces:
 			_recheck_neighbors_after_removal(piece)
 			remove_piece(piece)
@@ -1250,7 +1250,7 @@ func _drive_heightfield_structure(player_pos: Vector3) -> void:
 		register_piece(inst, "")
 		add_piece_to_queue(inst)
 	for inst in spawned:
-		if inst != null and inst.def.tags.has("ground"):
+		if inst != null and inst.def.is_base_plane:
 			_run_rules_for_existing_piece(inst)
 			# NOTE: WaterRule may replace a tracked ground tile with a water/bank tile;
 			# the replacement is not re-tracked in the instantiator's placed-set, so it

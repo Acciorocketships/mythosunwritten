@@ -21,6 +21,14 @@ extends Resource
 # placement, and any piece placed over it removes it (e.g. grass, bushes, rocks).
 @export var displaceable: bool = false
 
+# If true, this module is a ground-plane tile (ground-plain, water, bank): it
+# always passes can_place and is never treated as a structure blocker.
+@export var is_base_plane: bool = false
+
+# If true, this module requires a solid surface directly beneath it to stay
+# alive (hill loaders). Orphan-sweep purges pieces whose surface vanishes.
+@export var requires_surface_support: bool = false
+
 # Optional per-socket suppression: socket name -> {"socket": String,
 # "prob": float}. If the suppressor socket's deterministic position roll would
 # pass at the given probability, the suppressed socket is never enqueued. The
