@@ -223,19 +223,6 @@ func _ensure_seed_under_player() -> void:
 ## rule evaluations are cleaned up even when no rule trigger fires nearby.
 func _purge_orphaned_stacks() -> void:
 	var to_remove: Array[TerrainModuleInstance] = []
-	for module in terrain_index.all_modules.keys():
-		if not (module is TerrainModuleInstance):
-			continue
-		var piece: TerrainModuleInstance = module
-		if piece.def.tags.has("level-stack"):
-			# 0.6u window = one level tier (0.5 thick + epsilon). Any wider and
-			# a stack with the tier directly below missing would find the next
-			# tier down as "support" — that's the cantilever bug.
-			if not _has_valid_stack_support(piece, "level", 0.6, "level-center"):
-				to_remove.append(piece)
-		elif piece.def.tags.has("cliff-stack"):
-			if not _has_valid_stack_support(piece, "cliff", 5.0, "cliff-interior"):
-				to_remove.append(piece)
 	# Hills and decorations whose surface vanished (e.g. the base of a hill
 	# stack removed by a bank conversion, leaving the upper hills and their
 	# grass floating) have no rule that re-checks them — probe their support
@@ -287,43 +274,6 @@ func _has_surface_support(piece: TerrainModuleInstance) -> bool:
 	for hit in terrain_index.query_box(probe):
 		if hit is TerrainModuleInstance and hit != piece and not hit.def.displaceable:
 			return true
-	return false
-
-
-# Returns true if `piece` has a valid stack support directly below: a
-# `family_tag`-tagged tile within `search_dy` units down that also carries
-# `support_tag` ("level-center" / "cliff-interior"). The variant tags encode
-# the support's neighbourhood, and the rules keep them consistent, so a tag
-# check is the full support invariant.
-func _has_valid_stack_support(
-	piece: TerrainModuleInstance,
-	family_tag: String,
-	search_dy: float,
-	support_tag: String
-) -> bool:
-	var piece_y: float = piece.transform.origin.y
-	var query_box: AABB = AABB(
-		Vector3(
-			piece.transform.origin.x - 0.5,
-			piece_y - search_dy,
-			piece.transform.origin.z - 0.5,
-		),
-		Vector3(1.0, search_dy - 0.1, 1.0)
-	)
-	for c in terrain_index.query_box(query_box):
-		if not (c is TerrainModuleInstance):
-			continue
-		var other: TerrainModuleInstance = c
-		if other == piece:
-			continue
-		if not other.def.tags.has(family_tag):
-			continue
-		if not other.def.tags.has(support_tag):
-			continue
-		var dy: float = piece_y - other.transform.origin.y
-		if dy <= 0.1:
-			continue
-		return true
 	return false
 
 
