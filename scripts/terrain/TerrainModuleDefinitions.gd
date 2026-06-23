@@ -651,10 +651,6 @@ static func _build_cliff_tile(
 	}
 	socket_size.merge(surface["socket_size"])
 	var socket_required: Dictionary[String, TagList] = {
-		"front": TagList.new(["cliff"]),
-		"back": TagList.new(["cliff"]),
-		"left": TagList.new(["cliff"]),
-		"right": TagList.new(["cliff"]),
 		"bottom": TagList.new([bottom_required_tag]),
 	}
 	var socket_fill_prob: Dictionary[String, Variant] = {
@@ -677,16 +673,7 @@ static func _build_cliff_tile(
 	# Cliff scenes carry only the 4 cardinal foliage markers (no corners);
 	# filter the merged policy down to the sockets the scene actually has.
 	socket_fill_prob = _socket_fill_prob_for_scene(scene, socket_fill_prob)
-	# Pin lateral growth to this tier's side variant: the bare "cliff" tag
-	# matches both tiers, and a cliff-stack placed at ground level (or vice
-	# versa) is invalid and gets removed by CliffEdgeRule's support check.
-	var cliff_lateral_dist: Distribution = Distribution.new({tier + "-side": 1.0})
-	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"front": cliff_lateral_dist,
-		"back": cliff_lateral_dist,
-		"left": cliff_lateral_dist,
-		"right": cliff_lateral_dist,
-	}
+	var socket_tag_prob: Dictionary[String, Distribution] = {}
 	socket_tag_prob.merge(surface["socket_tag_prob"])
 
 	return TerrainModule.new(
@@ -735,10 +722,6 @@ static func _build_level_tile(
 	}
 	socket_size.merge(surface["socket_size"])
 	var socket_required: Dictionary[String, TagList] = {
-		"front": TagList.new(["level"]),
-		"back": TagList.new(["level"]),
-		"left": TagList.new(["level"]),
-		"right": TagList.new(["level"]),
 		# Pin topcenter to "level-stack": topcenter expansion of any level
 		# tile must produce a level-stack tile, never ground or a level-ground
 		# variant. A wrong-tier tile placed at y > 0.5 is invisible to the
@@ -772,18 +755,7 @@ static func _build_level_tile(
 	}
 	socket_fill_prob_policy.merge(surface["socket_fill_prob"])
 	var socket_fill_prob: Dictionary[String, Variant] = _socket_fill_prob_for_scene(scene, socket_fill_prob_policy)
-	var socket_tag_prob: Dictionary[String, Distribution] = {
-		"front": null,
-		"back": null,
-		"left": null,
-		"right": null,
-	}
-	if cardinal_target_tag != "":
-		var cardinal_dist: Distribution = Distribution.new({cardinal_target_tag: 1.0})
-		socket_tag_prob["front"] = cardinal_dist
-		socket_tag_prob["back"] = cardinal_dist
-		socket_tag_prob["left"] = cardinal_dist
-		socket_tag_prob["right"] = cardinal_dist
+	var socket_tag_prob: Dictionary[String, Distribution] = {}
 	socket_tag_prob.merge(surface["socket_tag_prob"])
 	return TerrainModule.new(
 		scene,
