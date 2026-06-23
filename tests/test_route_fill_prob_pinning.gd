@@ -1,6 +1,6 @@
 extends GutTest
 
-## Pinning test for TerrainGenerator._route_fill_prob.
+## Pinning test for TerrainDensity.route_fill_prob.
 ## Captures the exact numeric outputs of the CURRENT implementation so that a
 ## density-profile metadata refactor can be verified byte-for-byte identical.
 ##
@@ -17,11 +17,9 @@ extends GutTest
 # Helpers
 # ---------------------------------------------------------------------------
 
-func _make_generator() -> Variant:
-	var gen = preload("res://scripts/terrain/TerrainGenerator.gd").new()
-	# world_seed is 0 before _ready() — kept at 0 explicitly for determinism.
-	gen.world_seed = 0
-	return gen
+func _make_density() -> TerrainDensity:
+	# world_seed 0 matches the prior gen.world_seed before _ready() was called.
+	return TerrainDensity.new(0)
 
 
 func _make_ground_piece() -> TerrainModuleInstance:
@@ -38,8 +36,8 @@ func _make_cliff_piece() -> TerrainModuleInstance:
 
 
 # Scan for the canonical low/core positions used in characterization tests.
-func _find_positions(gen: Variant) -> Dictionary:
-	var seed: int = gen.world_seed
+func _find_positions(density: TerrainDensity) -> Dictionary:
+	var seed: int = 0
 	var core_pos: Vector3 = Vector3.INF
 	var low_pos: Vector3 = Vector3.INF
 	for ix in range(60):
@@ -62,26 +60,24 @@ func _find_positions(gen: Variant) -> Dictionary:
 # ---------------------------------------------------------------------------
 
 func test_zero_fill_returns_zero() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var ground: TerrainModuleInstance = _make_ground_piece()
 	var pos: Vector3 = Vector3(300.0, 0.0, 300.0)
-	assert_eq(gen._route_fill_prob(ground, "topcenter", pos, 0.0), 0.0,
+	assert_eq(density.route_fill_prob(ground, "topcenter", pos, 0.0), 0.0,
 		"fill <= 0 must return 0.0")
-	assert_eq(gen._route_fill_prob(ground, "topcenter", pos, -1.0), 0.0,
+	assert_eq(density.route_fill_prob(ground, "topcenter", pos, -1.0), 0.0,
 		"negative fill must return 0.0")
-	gen.free()
 
 
 func test_fill_one_returns_macro_scaled_which_is_one_for_fill_one() -> void:
 	# _macro_scaled_fill short-circuits for fill>=1.0: returns fill unchanged.
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var pos: Vector3 = Vector3(300.0, 0.0, 300.0)
 	var cliff: TerrainModuleInstance = _make_cliff_piece()
 	# fill==1.0 skips the fill<1.0 branch; _macro_scaled_fill(1.0, pos) == 1.0.
-	var result: float = gen._route_fill_prob(cliff, "front", pos, 1.0)
+	var result: float = density.route_fill_prob(cliff, "front", pos, 1.0)
 	assert_almost_eq(result, 1.0, 1e-6,
 		"fill==1.0 falls through to _macro_scaled_fill which returns 1.0 for fill>=1")
-	gen.free()
 
 
 # ---------------------------------------------------------------------------
@@ -92,36 +88,34 @@ func test_fill_one_returns_macro_scaled_which_is_one_for_fill_one() -> void:
 # ---------------------------------------------------------------------------
 
 func test_ground_topcenter_at_low_density() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var ground: TerrainModuleInstance = _make_ground_piece()
-	var positions: Dictionary = _find_positions(gen)
+	var positions: Dictionary = _find_positions(density)
 	var low_pos: Vector3 = positions["low"]
 	var fill: float = TerrainSpawnConfig.GROUND_TOPCENTER_FILL_PROB  # 0.2
 
-	var result: float = gen._route_fill_prob(ground, "topcenter", low_pos, fill)
+	var result: float = density.route_fill_prob(ground, "topcenter", low_pos, fill)
 	# EXPECTED captured from pre-refactor code:
 	# _gentle_scaled_fill(0.2, low_pos) where low_pos macro < 0.35
 	# = clampf(0.2 * (0.25 + 2.2 * pow(macro, 3.0)), 0, 1)
 	# This value was read from the first run; hard-coded here.
 	assert_almost_eq(result, EXPECTED_GROUND_TOPCENTER_LOW, 1e-6,
 		"ground topcenter at low_pos must match pinned gentle-scaled value")
-	gen.free()
 
 
 func test_ground_topcenter_at_cliff_core() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var ground: TerrainModuleInstance = _make_ground_piece()
-	var positions: Dictionary = _find_positions(gen)
+	var positions: Dictionary = _find_positions(density)
 	var core_pos: Vector3 = positions["core"]
 	var fill: float = TerrainSpawnConfig.GROUND_TOPCENTER_FILL_PROB  # 0.2
 
-	var result: float = gen._route_fill_prob(ground, "topcenter", core_pos, fill)
+	var result: float = density.route_fill_prob(ground, "topcenter", core_pos, fill)
 	# EXPECTED: maxf(_gentle_scaled_fill(0.2, core_pos), CLIFF_CORE_SEED_FILL_PROB=0.5)
 	# Since core macro >= 0.56, gentle_scaled >= 0.2*(0.25+2.2*0.56^3) = large;
 	# result >= CLIFF_CORE_SEED_FILL_PROB.
 	assert_almost_eq(result, EXPECTED_GROUND_TOPCENTER_CORE, 1e-6,
 		"ground topcenter at cliff core must match pinned value (eager seed)")
-	gen.free()
 
 
 # ---------------------------------------------------------------------------
@@ -132,33 +126,31 @@ func test_ground_topcenter_at_cliff_core() -> void:
 # ---------------------------------------------------------------------------
 
 func test_ground_foliage_at_low_density() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var ground: TerrainModuleInstance = _make_ground_piece()
-	var positions: Dictionary = _find_positions(gen)
+	var positions: Dictionary = _find_positions(density)
 	var low_pos: Vector3 = positions["low"]
 	var fill: float = TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB  # 0.2
 
-	var result: float = gen._route_fill_prob(ground, "topfront", low_pos, fill)
+	var result: float = density.route_fill_prob(ground, "topfront", low_pos, fill)
 	# EXPECTED: clampf(0.2 * biome_foliage_density(low_pos, 0), 0, 1) > 0.0
 	assert_gt(result, 0.0,
 		"foliage fill at low_pos must be > 0 (foliage spawns in open meadows)")
 	assert_almost_eq(result, EXPECTED_GROUND_FOLIAGE_LOW, 1e-6,
 		"ground foliage (topfront) at low_pos must match pinned biome-density value")
-	gen.free()
 
 
 func test_ground_foliage_at_cliff_core() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var ground: TerrainModuleInstance = _make_ground_piece()
-	var positions: Dictionary = _find_positions(gen)
+	var positions: Dictionary = _find_positions(density)
 	var core_pos: Vector3 = positions["core"]
 	var fill: float = TerrainSpawnConfig.GROUND_FOLIAGE_FILL_PROB  # 0.2
 
-	var result: float = gen._route_fill_prob(ground, "topfront", core_pos, fill)
+	var result: float = density.route_fill_prob(ground, "topfront", core_pos, fill)
 	# EXPECTED: 0.0 — cliff core + non-cliff tile => suppressed
 	assert_eq(result, 0.0,
 		"foliage fill at cliff core must be 0.0 for non-cliff tile (suppression)")
-	gen.free()
 
 
 # ---------------------------------------------------------------------------
@@ -166,37 +158,35 @@ func test_ground_foliage_at_cliff_core() -> void:
 #   fill = LEVEL_BASE_LATERAL_FILL_PROB = 0.33
 #   - at low_pos (not cliff core)  => _level_scaled_fill(0.33, low_pos)
 #   - at core_pos (cliff core)      => 0.0
-# NOTE: We call _route_fill_prob directly (bypassing _effective_fill_prob's
+# NOTE: We call route_fill_prob directly (bypassing effective_fill_prob's
 # structural gate) so the level curve is exercised.
 # ---------------------------------------------------------------------------
 
 func test_level_lateral_at_low_density() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var level: TerrainModuleInstance = _make_level_piece()
-	var positions: Dictionary = _find_positions(gen)
+	var positions: Dictionary = _find_positions(density)
 	var low_pos: Vector3 = positions["low"]
 	var fill: float = TerrainSpawnConfig.LEVEL_BASE_LATERAL_FILL_PROB  # 0.33
 
-	var result: float = gen._route_fill_prob(level, "front", low_pos, fill)
+	var result: float = density.route_fill_prob(level, "front", low_pos, fill)
 	# EXPECTED: _level_scaled_fill(0.33, low_pos)
 	# = clampf(0.33 * (0.5 + 0.9 * macro), 0, 1), macro < 0.35 => small
 	assert_almost_eq(result, EXPECTED_LEVEL_LATERAL_LOW, 1e-6,
 		"level lateral at low_pos must match pinned level-scaled value")
-	gen.free()
 
 
 func test_level_lateral_at_cliff_core() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var level: TerrainModuleInstance = _make_level_piece()
-	var positions: Dictionary = _find_positions(gen)
+	var positions: Dictionary = _find_positions(density)
 	var core_pos: Vector3 = positions["core"]
 	var fill: float = TerrainSpawnConfig.LEVEL_BASE_LATERAL_FILL_PROB  # 0.33
 
-	var result: float = gen._route_fill_prob(level, "front", core_pos, fill)
+	var result: float = density.route_fill_prob(level, "front", core_pos, fill)
 	# EXPECTED: 0.0 — level tile inside cliff core is doomed
 	assert_eq(result, 0.0,
 		"level lateral at cliff core must be 0.0 (level growth inside core suppressed)")
-	gen.free()
 
 
 # ---------------------------------------------------------------------------
@@ -209,32 +199,30 @@ func test_level_lateral_at_cliff_core() -> void:
 # ---------------------------------------------------------------------------
 
 func test_cliff_lateral_at_low_density() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var cliff: TerrainModuleInstance = _make_cliff_piece()
-	var positions: Dictionary = _find_positions(gen)
+	var positions: Dictionary = _find_positions(density)
 	var low_pos: Vector3 = positions["low"]
 	var fill: float = TerrainSpawnConfig.CLIFF_LATERAL_FILL_PROB  # 0.3
 
-	var result: float = gen._route_fill_prob(cliff, "front", low_pos, fill)
+	var result: float = density.route_fill_prob(cliff, "front", low_pos, fill)
 	# EXPECTED: _macro_scaled_fill(0.3, low_pos)
 	# = clampf(0.3 * (0.15 + 3.2 * pow(macro, 3.2)), 0, 1), macro<0.35 => tiny
 	assert_almost_eq(result, EXPECTED_CLIFF_LATERAL_LOW, 1e-6,
 		"cliff lateral at low_pos must match pinned macro-scaled value")
-	gen.free()
 
 
 func test_cliff_lateral_at_cliff_core() -> void:
-	var gen: Variant = _make_generator()
+	var density: TerrainDensity = _make_density()
 	var cliff: TerrainModuleInstance = _make_cliff_piece()
-	var positions: Dictionary = _find_positions(gen)
+	var positions: Dictionary = _find_positions(density)
 	var core_pos: Vector3 = positions["core"]
 	var fill: float = TerrainSpawnConfig.CLIFF_LATERAL_FILL_PROB  # 0.3
 
-	var result: float = gen._route_fill_prob(cliff, "front", core_pos, fill)
+	var result: float = density.route_fill_prob(cliff, "front", core_pos, fill)
 	# EXPECTED: _macro_scaled_fill(0.3, core_pos), macro >= 0.56 => substantial
 	assert_almost_eq(result, EXPECTED_CLIFF_LATERAL_CORE, 1e-6,
 		"cliff lateral at cliff core must match pinned macro-scaled value")
-	gen.free()
 
 
 # ---------------------------------------------------------------------------
