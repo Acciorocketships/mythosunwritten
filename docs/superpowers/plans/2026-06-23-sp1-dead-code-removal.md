@@ -168,4 +168,19 @@ Verify `git status --short | grep 'scenes/Cliff'` shows the 14 `D` entries again
 
 ## SP-2 backlog (items deferred from Task 6 if any reverted)
 
-_Record here any structural-seed data that turned out to be live and was kept._
+- **Task 6 Item B — Topcenter seed size/tag distributions (DEFERRED to SP-2).**
+  `socket_size["topcenter"]` and `socket_tag_prob["topcenter"]` on ground/level/cliff
+  interior tiles cannot be safely replaced with null or empty distributions without
+  changing suppression behavior. Specifically, `_socket_can_spawn_point(piece, "topcenter")`
+  checks whether `socket_size["topcenter"]` contains "point". Currently the structural
+  seed distributions (e.g. `{"24x24x0.5": 0.7, "24x24x4": 0.3}` on ground,
+  `{"24x24x0.5": 1.0}` on level) do NOT contain "point", so `_socket_can_spawn_point`
+  returns false and `_route_fill_prob` routes the suppressor probability through the
+  correct structural curve (`_gentle_scaled_fill` / `_level_scaled_fill`). Replacing
+  the distribution with null causes `_socket_can_spawn_point` to return true (null →
+  default "point"), switching the suppressor to the foliage density branch and silently
+  changing where foliage spawns. Fix in SP-2 requires either: (a) a separate
+  `is_structural_topcenter` flag on TerrainModule, or (b) refactoring `_route_fill_prob`
+  so the suppression path doesn't gate on `_socket_can_spawn_point`, or (c) redesigning
+  socket metadata to separate seed-distribution from the point-spawn predicate.
+  Task 6 Item A (lateral socket_required/socket_tag_prob) was REMOVED successfully.
