@@ -24,8 +24,12 @@ material so banks and water fall out of the *same* placement pass. This deletes
 
 ## Goal
 
-- Fold `Helper.is_water` into `HeightfieldPlan` as part of the field, so a cell's
-  descriptor carries `material ∈ {land, water}` and water's surface/floor heights.
+- Fold water into `HeightfieldPlan` as part of the field, so a cell's descriptor
+  carries `material ∈ {land, water}` and water's surface/floor heights. Water is
+  **multi-elevation** — it exists wherever a deterministic *water-table* field
+  sits above the land surface, at any quantized level (valley pools, plateau
+  lakes), not only at y≈0. ("Water only at the base plane" was itself a special
+  case; the general rule removes it.)
 - Generalize `HeightfieldVariant.cell_descriptor` to emit a uniform descriptor —
   `(surface_height, material, edge_bitmask, corner_depths, drop_height)` — instead
   of a `(family, variant_tag)` string pair. "level vs cliff" becomes the
@@ -64,20 +68,42 @@ rotation_steps)` (the existing `variant_for_missing` + `_rotation_steps_to_align
 chooses the shape; the family is no longer in the tag — it is the `drop_height` +
 `material` parameters carried alongside.
 
-## Water as a field
+## Water as a field (multi-elevation)
 
-- Add water to `HeightfieldPlan`: a deterministic `material(cell)` from the same
-  `Helper.is_water` field already used by `WaterRule`. Water cells get a
-  surface_height at the water plane and a floor below; land cells keep their
-  quantized surface.
-- A **bank** is then not a special tile type: it is a *land* cell whose
-  `edge_bitmask` faces a `WATER` neighbour, with `drop_height` = the depth to the
-  water floor and a water-facing material on the wall. The same `cell_descriptor`
-  + `variant_for` pass that produces cliff edges produces bank edges — no rule,
-  no second pass.
-- The "field-water position not yet generated" lookahead that `WaterRule` needed
-  (`_field_water_near`) disappears: the descriptor reads the field, not placed
-  tiles, so it is correct before any tile exists.
+The general rule, with no y=0 special case:
+
+- **Land surface** `H(cell)` — the heightfield's quantized terrain, computed and
+  trickle-down-clamped exactly as today (water does not feed the land clamp;
+  material-overlay, not competing height).
+- **Water table** `T(cell)` — a deterministic, smoothly-varying field giving the
+  water-*surface* elevation in each region, quantized to the same step grid so
+  water surfaces align with terraces. Derived from the existing river/lake
+  footprint noise (`Helper.is_water`'s `_is_water_raw` river+lake fields),
+  reinterpreted as a per-region water level rather than a y=0 boolean.
+- **A cell is water iff `T(cell) > H(cell)`** — the table is above the land, so
+  the land there is submerged. The water surface renders at `T(cell)`; the floor
+  is `H(cell)`; depth = `T − H`. This yields water at ANY elevation: terrain that
+  dips below the local table becomes a valley river/pool; a basin whose floor sits
+  below a high regional table becomes a plateau lake.
+- **A bank is not a special tile type**: it is a *land* cell adjacent to a water
+  cell whose land surface is above the water table — the shore wall drops from the
+  land down to the water surface. The same `cell_descriptor` + `variant_for` pass
+  that produces cliff/level edges produces bank edges (drop = land − water
+  surface, material = water-facing) — no rule, no second pass.
+- The "field-water position not yet generated" lookahead `WaterRule` needed
+  (`_field_water_near`) disappears: the descriptor reads `T` and `H` (pure fields),
+  so it is correct before any tile exists.
+- **Spawn clear-radius:** shrink/remove `WATER_CLEAR_RADIUS`/`_FADE` so water is
+  visible near the start (the user wants to see/verify it). Keep just enough of a
+  guard that the spawn tile itself isn't underwater (e.g. ensure `H(spawn) ≥
+  T(spawn)` at the origin cell), or drop it entirely and let spawn pick a dry
+  cell.
+
+**Tuning to resolve in planning:** the exact `T` formulation (amplitude, how
+river channels vs lake basins map to table elevation, how `T` correlates with the
+macro-density field so lakes sit in lowlands and rivers carve channels) and
+whether water surfaces snap to storey or level granularity. The *model* above is
+fixed; the field tuning is a knob.
 
 ## What gets deleted
 
@@ -106,17 +132,24 @@ chooses the shape; the family is no longer in the tag — it is the `drop_height
 
 ## Risks
 
-- **River shape / water gameplay must be preserved.** Folding `is_water` into the
-  plan must reproduce the same river footprints. Mitigate: keep the exact
-  `Helper.is_water` field; only change *who consumes it* (the descriptor instead
-  of a post-pass rule).
+- **Multi-elevation water is a new feature, not just a refactor.** The water-table
+  field `T` is new; tuning it so lakes/rivers look natural (not water clinging to
+  hillsides or filling implausible spots) is the main creative risk. Mitigate:
+  correlate `T` with the macro-density/lowland field so water gravitates to basins
+  and channels; iterate visually with the clear-radius removed so it's on screen.
 - **Bank orientation / rotation parity.** `WaterRule` had careful
-  canonical-rotation alignment; the unified `variant_for` must produce the same
-  wall orientation facing water. Guard with a test mirroring `test_water_rule`'s
-  bank-orientation cases against the new descriptor.
-- **Trickle-down clamp vs water.** Decide whether water depth participates in the
-  ≤1-step clamp (it should not distort land terracing). Resolve in planning;
-  default: water is a material overlay on the land field, not a competing height.
+  canonical-rotation alignment; the unified `variant_for` must produce the wall
+  oriented to face the water. Guard with a test asserting bank shape+rotation for
+  representative land/water neighbourhoods (porting `test_water_rule`'s
+  orientation cases to the descriptor).
+- **Land terracing unaffected.** Water is a material overlay (`T` vs `H`), not a
+  competing height in the land clamp — so land terraces exactly as today. (This is
+  the resolved design choice, not an open question.)
+- **Waterfalls / adjacent water at different tables.** Two adjacent water regions
+  at different table heights, or water meeting a multi-storey cliff, can produce a
+  water-on-water step or a tall submerged wall. Decide in planning whether to clamp
+  `T` between neighbours (smooth shorelines) or allow stepped water; default: clamp
+  `T` with the same ≤1-step trickle-down so water surfaces terrace like land.
 - **Eviction/idempotence of water tiles.** WaterRule-swapped tiles previously
   escaped the placed-set (a known minor leak). Field-driven water tiles are placed
   by `place_region` and evicted normally — this *fixes* that leak.
@@ -129,9 +162,15 @@ chooses the shape; the family is no longer in the tag — it is the `drop_height
   for water cells. Port the meaningful bank-variant orientation cases.
 - Extend `test_heightfield_variant` / `test_heightfield_coverage` for the unified
   descriptor (every variant still has a mesh; water/bank cells covered).
+- New `tests/test_water_table.gd`: `T > H ⇒ water`, water surface at `T`, depth
+  `T − H`; a basin below a high table becomes a lake; the `T` trickle-down clamp
+  keeps adjacent water surfaces within one step.
 - Full GUT suite green (with `test_water_rule` removed/replaced).
-- **Visual:** run the game at a seed with rivers; confirm shorelines, banks, and
-  water look the same as before (screenshot before/after).
+- **Visual (primary, since water is new on-screen):** with the clear-radius
+  removed, run the game and confirm water appears near spawn; shorelines have
+  banks; lakes pool in basins and rivers run in channels; water at a raised
+  elevation (a plateau basin) renders correctly; no water clinging to slopes or
+  floating. Iterate the `T` tuning here.
 
 ## Dependencies
 
