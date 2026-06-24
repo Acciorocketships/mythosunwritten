@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://flhdgbdssnxi"]
 
-[ext_resource type="PackedScene" uid="uid://csaj7ruujgl3l" path="res://terrain/gltf/hill_12x_6x_8_color_12.tscn" id="1_dy1kb"]
+[ext_resource type="PackedScene" uid="uid://csaj7ruujgl3l" path="res://terrain/gltf/hill/hill_12x_6x_8_color_12.tscn" id="1_dy1kb"]
 
 [node name="Node3D" type="Node3D"]
 

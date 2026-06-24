@@ -4,7 +4,7 @@
 class_name SlopeAtlas
 extends RefCounted
 
-const TOP_PIECE := "res://terrain/gltf/hill_top_e_center_color_12.tscn"
+const TOP_PIECE := "res://terrain/gltf/hill/hill_top_e_center_color_12.tscn"
 
 static func grass_uv() -> Vector2:
 	var packed := load(TOP_PIECE) as PackedScene

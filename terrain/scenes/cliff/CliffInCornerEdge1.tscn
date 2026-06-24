@@ -1,10 +1,10 @@
 [gd_scene load_steps=6 format=3 uid="uid://66gf0tej1mm0"]
 
-[ext_resource type="PackedScene" uid="uid://s7hlq6puc3vl" path="res://terrain/gltf/hill_cliff_tall_h_side_color_12.tscn" id="1_wall"]
-[ext_resource type="PackedScene" uid="uid://72nb7fb13apc" path="res://terrain/gltf/hill_top_h_side_color_12.tscn" id="2_top"]
-[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill_top_e_center_color_12.tscn" id="3_center"]
-[ext_resource type="PackedScene" uid="uid://b8esdhwy7hfi1" path="res://terrain/gltf/hill_cliff_tall_i_inner_corner_color_12.tscn" id="4_inner_wall"]
-[ext_resource type="PackedScene" uid="uid://begwnakrt5py5" path="res://terrain/gltf/hill_top_a_inner_corner_color_12.tscn" id="5_inner_top"]
+[ext_resource type="PackedScene" uid="uid://s7hlq6puc3vl" path="res://terrain/gltf/hill/hill_cliff_tall_h_side_color_12.tscn" id="1_wall"]
+[ext_resource type="PackedScene" uid="uid://72nb7fb13apc" path="res://terrain/gltf/hill/hill_top_h_side_color_12.tscn" id="2_top"]
+[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill/hill_top_e_center_color_12.tscn" id="3_center"]
+[ext_resource type="PackedScene" uid="uid://b8esdhwy7hfi1" path="res://terrain/gltf/hill/hill_cliff_tall_i_inner_corner_color_12.tscn" id="4_inner_wall"]
+[ext_resource type="PackedScene" uid="uid://begwnakrt5py5" path="res://terrain/gltf/hill/hill_top_a_inner_corner_color_12.tscn" id="5_inner_top"]
 
 [node name="CliffInCornerEdge1" type="Node3D"]
 

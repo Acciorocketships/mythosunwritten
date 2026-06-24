@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://ctkcce2hyjo75"]
 
-[ext_resource type="PackedScene" uid="uid://d1gmnh2oqcftj" path="res://terrain/gltf/tree_1_c_color_12.tscn" id="1_hmmc8"]
+[ext_resource type="PackedScene" uid="uid://d1gmnh2oqcftj" path="res://terrain/gltf/tree/tree_1_c_color_12.tscn" id="1_hmmc8"]
 
 [node name="Tree1" type="Node3D"]
 

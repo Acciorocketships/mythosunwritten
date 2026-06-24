@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="PackedScene" path="res://terrain/gltf/tree_7_c_color_12.tscn" id="1_mesh"]
+[ext_resource type="PackedScene" path="res://terrain/gltf/tree/tree_7_c_color_12.tscn" id="1_mesh"]
 
 [node name="Tree7" type="Node3D"]
 

@@ -8,7 +8,7 @@ extends RefCounted
 ## tiles so the ground extends beneath their inset, overhanging walls — the tiles
 ## are hollow shells whose walls sit ~1.5m in from the footprint edge, so without
 ## this you see a void under the lip and into the hollow interior.
-const _BASE_FILL_SCENE: PackedScene = preload("res://terrain/gltf/hill_top_e_center_color_12.tscn")
+const _BASE_FILL_SCENE: PackedScene = preload("res://terrain/gltf/hill/hill_top_e_center_color_12.tscn")
 const _STOREY_DROP: float = 4.0
 const _LEVEL_DROP: float = 0.5
 

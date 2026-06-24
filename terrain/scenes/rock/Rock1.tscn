@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://vjwsebbl7jli"]
 
-[ext_resource type="PackedScene" uid="uid://dpqg7fxok332t" path="res://terrain/gltf/rock_1_e_color_12.tscn" id="1_yn4he"]
+[ext_resource type="PackedScene" uid="uid://dpqg7fxok332t" path="res://terrain/gltf/rock/rock_1_e_color_12.tscn" id="1_yn4he"]
 
 [node name="Rock1" type="Node3D"]
 

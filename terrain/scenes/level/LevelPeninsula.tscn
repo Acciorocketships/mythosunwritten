@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://b4mohn6cu0n4k"]
 
-[ext_resource type="PackedScene" uid="uid://d26h5651ssk36" path="res://terrain/gltf/hill_top_b_side_color_12.tscn" id="1_vj14l"]
-[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill_top_e_center_color_12.tscn" id="2_g5hsj"]
-[ext_resource type="PackedScene" uid="uid://bknoepwfsrkrk" path="res://terrain/gltf/hill_top_a_outer_corner_color_12.tscn" id="3_g5hsj"]
+[ext_resource type="PackedScene" uid="uid://d26h5651ssk36" path="res://terrain/gltf/hill/hill_top_b_side_color_12.tscn" id="1_vj14l"]
+[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill/hill_top_e_center_color_12.tscn" id="2_g5hsj"]
+[ext_resource type="PackedScene" uid="uid://bknoepwfsrkrk" path="res://terrain/gltf/hill/hill_top_a_outer_corner_color_12.tscn" id="3_g5hsj"]
 
 [node name="LevelSide2" type="Node3D"]
 

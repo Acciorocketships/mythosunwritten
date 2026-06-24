@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://e8nmu5r6uck0"]
 
-[ext_resource type="PackedScene" uid="uid://fa3wbgxmdyhl" path="res://terrain/gltf/grass_1_c_color_12.tscn" id="1_q5if4"]
+[ext_resource type="PackedScene" uid="uid://fa3wbgxmdyhl" path="res://terrain/gltf/grass/grass_1_c_color_12.tscn" id="1_q5if4"]
 
 [node name="Grass" type="Node3D"]
 

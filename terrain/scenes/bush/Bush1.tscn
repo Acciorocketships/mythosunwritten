@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://ceiukkgbb4vb"]
 
-[ext_resource type="PackedScene" uid="uid://bhxvt78mynjfb" path="res://terrain/gltf/bush_1_c_color_12.tscn" id="1_3hf4j"]
+[ext_resource type="PackedScene" uid="uid://bhxvt78mynjfb" path="res://terrain/gltf/bush/bush_1_c_color_12.tscn" id="1_3hf4j"]
 
 [node name="Bush" type="Node3D"]
 

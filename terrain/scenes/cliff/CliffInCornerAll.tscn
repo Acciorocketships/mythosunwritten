@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://c36ec14rvelf8"]
 
-[ext_resource type="PackedScene" uid="uid://b8esdhwy7hfi1" path="res://terrain/gltf/hill_cliff_tall_i_inner_corner_color_12.tscn" id="1_wall"]
-[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill_top_e_center_color_12.tscn" id="2_center"]
-[ext_resource type="PackedScene" uid="uid://begwnakrt5py5" path="res://terrain/gltf/hill_top_a_inner_corner_color_12.tscn" id="3_inner_top"]
+[ext_resource type="PackedScene" uid="uid://b8esdhwy7hfi1" path="res://terrain/gltf/hill/hill_cliff_tall_i_inner_corner_color_12.tscn" id="1_wall"]
+[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill/hill_top_e_center_color_12.tscn" id="2_center"]
+[ext_resource type="PackedScene" uid="uid://begwnakrt5py5" path="res://terrain/gltf/hill/hill_top_a_inner_corner_color_12.tscn" id="3_inner_top"]
 
 [node name="CliffInCornerAll" type="Node3D"]
 
