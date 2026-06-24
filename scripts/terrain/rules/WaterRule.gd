@@ -9,7 +9,7 @@ extends TerrainGenerationRule
 ## variants — the cliff scenes placed at ground depth, rotated so the rock
 ## wall faces the water — and back to plain ground when the water disappears
 ## from their neighbourhood. Islands and river bends fall out of the field
-## shape; the canonical-rotation machinery mirrors CliffEdgeRule.
+## shape; the canonical-rotation machinery mirrors the heightfield variant table.
 
 const CARDINAL_SOCKETS: Array[String] = ["front", "right", "back", "left"]
 const DIAGONAL_SOCKETS: Array[String] = ["frontright", "backright", "backleft", "frontleft"]

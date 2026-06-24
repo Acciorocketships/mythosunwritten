@@ -5,9 +5,9 @@ extends RefCounted
 ## (family / variant tag / 90-degree rotation / origin Y). No scene instantiation.
 ## See docs/superpowers/specs/2026-06-17-heightfield-terrain-design.md (Phase 3a).
 ##
-## The canonical "missing sockets" shapes mirror LevelEdgeRule/CliffEdgeRule but are
-## family-agnostic (bare tags). A side is "missing" (a wall) when its neighbour is a
-## step down. The live edge rules are subsumed in Phase 3c.
+## The canonical "missing sockets" shapes are family-agnostic (bare tags). A side is
+## "missing" (a wall) when its neighbour is a step down. Structural placement is
+## driven entirely by the heightfield (Phase 3c).
 
 const STOREY_HEIGHT: float = 4.0
 const LEVEL_HEIGHT: float = 0.5
@@ -26,11 +26,11 @@ const CANONICAL_MISSING_BY_TAG: Dictionary = {
 	"side": ["front"],
 	"line": ["front", "back"],
 	"corner": ["front", "left"],
-	# NOTE (Phase 3b): this peninsula orientation matches LevelEdgeRule
-	# (open side = back). CliffEdgeRule uses ["front","back","left"] (open side =
-	# right) — a 1-step difference. Before wiring cliff-peninsula rotation in 3b,
-	# verify the CliffPeninsula.tscn mesh's default open face; cliff tiles may need
-	# a per-family rotation offset relative to this table.
+	# NOTE (Phase 3b): this peninsula orientation has open side = back. The cliff
+	# family uses ["front","back","left"] (open side = right) — a 1-step difference.
+	# Before wiring cliff-peninsula rotation in 3b, verify the CliffPeninsula.tscn
+	# mesh's default open face; cliff tiles may need a per-family rotation offset
+	# relative to this table.
 	"peninsula": ["front", "left", "right"],
 	"island": ["front", "right", "back", "left"],
 	"inner-corner": ["frontleft"],
@@ -145,7 +145,7 @@ static func cell_descriptor(
 		family = "ground"
 	var origin_y: float = float(storey) * STOREY_HEIGHT + float(level) * LEVEL_HEIGHT
 	if family == "ground":
-		return {"family": "ground", "variant_tag": "ground", "rotation_steps": 0, "origin_y": origin_y}
+		return {"family": "ground", "variant_tag": "ground-plain", "rotation_steps": 0, "origin_y": origin_y}
 	var v: Dictionary = variant_for_missing(missing)
 	var bare: String = v["tag"]
 	var variant_tag: String

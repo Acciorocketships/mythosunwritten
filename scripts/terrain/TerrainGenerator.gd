@@ -25,10 +25,10 @@ const DECO_PRIORITY_PENALTY: float = 48.0
 
 var generation_rules: TerrainGenerationRuleLibrary
 var library: TerrainModuleLibrary
-var test_pieces_library: TerrainModuleLibrary
 # Seed for deterministic per-position probability rolls (see add_piece_to_queue).
 # Drawn in _ready() so a seed() call before setup yields a reproducible world.
 var world_seed: int = 0
+var density: TerrainDensity
 var terrain_index: TerrainIndex
 var socket_index: PositionIndex
 var queue: PriorityQueue
@@ -54,11 +54,9 @@ var _player_blocked_retry_at: Dictionary = {}
 
 func _ready() -> void:
 	world_seed = randi()
+	density = TerrainDensity.new(world_seed)
 	library = TerrainModuleLibrary.new()
 	library.init()
-
-	test_pieces_library = TerrainModuleLibrary.new()
-	test_pieces_library.init_test_pieces()
 
 	socket_index = PositionIndex.new()
 	terrain_index = TerrainIndex.new()
@@ -124,7 +122,7 @@ func load_terrain() -> void:
 				break  # real in-range work — run the normal pass below
 			queue.pop()
 			_mark_socket_dequeued(top_socket)
-			if _socket_can_spawn_point(top_socket.piece, top_socket.socket_name):
+			if density.socket_can_spawn_point(top_socket.piece, top_socket.socket_name):
 				top_dist += DECO_PRIORITY_PENALTY
 			_enqueue_socket(top_socket, top_dist)
 			repairs += 1
@@ -223,19 +221,6 @@ func _ensure_seed_under_player() -> void:
 ## rule evaluations are cleaned up even when no rule trigger fires nearby.
 func _purge_orphaned_stacks() -> void:
 	var to_remove: Array[TerrainModuleInstance] = []
-	for module in terrain_index.all_modules.keys():
-		if not (module is TerrainModuleInstance):
-			continue
-		var piece: TerrainModuleInstance = module
-		if piece.def.tags.has("level-stack"):
-			# 0.6u window = one level tier (0.5 thick + epsilon). Any wider and
-			# a stack with the tier directly below missing would find the next
-			# tier down as "support" — that's the cantilever bug.
-			if not _has_valid_stack_support(piece, "level", 0.6, "level-center"):
-				to_remove.append(piece)
-		elif piece.def.tags.has("cliff-stack"):
-			if not _has_valid_stack_support(piece, "cliff", 5.0, "cliff-interior"):
-				to_remove.append(piece)
 	# Hills and decorations whose surface vanished (e.g. the base of a hill
 	# stack removed by a bank conversion, leaving the upper hills and their
 	# grass floating) have no rule that re-checks them — probe their support
@@ -252,7 +237,7 @@ func _purge_orphaned_stacks() -> void:
 		var swept_piece: TerrainModuleInstance = swept
 		if not terrain_index.all_modules.has(swept_piece):
 			continue  # removed since the slice was snapshotted
-		if not (swept_piece.def.tags.has("hill") or swept_piece.def.displaceable):
+		if not (swept_piece.def.requires_surface_support or swept_piece.def.displaceable):
 			continue
 		if not _has_surface_support(swept_piece):
 			to_remove.append(swept_piece)
@@ -290,43 +275,6 @@ func _has_surface_support(piece: TerrainModuleInstance) -> bool:
 	return false
 
 
-# Returns true if `piece` has a valid stack support directly below: a
-# `family_tag`-tagged tile within `search_dy` units down that also carries
-# `support_tag` ("level-center" / "cliff-interior"). The variant tags encode
-# the support's neighbourhood, and the rules keep them consistent, so a tag
-# check is the full support invariant.
-func _has_valid_stack_support(
-	piece: TerrainModuleInstance,
-	family_tag: String,
-	search_dy: float,
-	support_tag: String
-) -> bool:
-	var piece_y: float = piece.transform.origin.y
-	var query_box: AABB = AABB(
-		Vector3(
-			piece.transform.origin.x - 0.5,
-			piece_y - search_dy,
-			piece.transform.origin.z - 0.5,
-		),
-		Vector3(1.0, search_dy - 0.1, 1.0)
-	)
-	for c in terrain_index.query_box(query_box):
-		if not (c is TerrainModuleInstance):
-			continue
-		var other: TerrainModuleInstance = c
-		if other == piece:
-			continue
-		if not other.def.tags.has(family_tag):
-			continue
-		if not other.def.tags.has(support_tag):
-			continue
-		var dy: float = piece_y - other.transform.origin.y
-		if dy <= 0.1:
-			continue
-		return true
-	return false
-
-
 func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool:
 	if piece_socket.piece.root == null or piece_socket.piece.sockets.is_empty():
 		return false
@@ -334,7 +282,7 @@ func _process_socket(piece_socket: TerrainModuleSocket, distance: float) -> bool
 		return false
 	if _defer_if_out_of_range(piece_socket, distance):
 		return false
-	if not _is_socket_expandable(piece_socket):
+	if not density.is_socket_expandable(piece_socket):
 		return false
 
 	# Sockets recently rejected because the player stood in their footprint
@@ -367,7 +315,7 @@ func _is_socket_connected(piece_socket: TerrainModuleSocket) -> bool:
 		piece_socket.piece
 	)
 	for existing_socket in existing_sockets:
-		if _is_socket_expandable(existing_socket):
+		if density.is_socket_expandable(existing_socket):
 			return true
 	return false
 
@@ -387,254 +335,48 @@ func _sample_socket_size(piece: TerrainModuleInstance, socket_name: String) -> S
 	var socket: Marker3D = piece.sockets.get(socket_name, null)
 	if socket != null and piece.root != null:
 		var pos: Vector3 = Helper.socket_world_pos(piece.transform, socket, piece.root)
-		size_prob_dist = _biome_scaled_dist(size_prob_dist, pos)
+		size_prob_dist = density.biome_scaled_dist(size_prob_dist, pos)
+	size_prob_dist = TerrainSpawnConfig.filter_for_category(
+		size_prob_dist, piece.get_socket_category(socket_name)
+	)
 	return size_prob_dist.sample()
-
-
-# Re-weight a tag/size distribution by the biome multipliers at `pos`. Tags
-# absent from the weights table keep their authored probability; the result is
-# renormalised. Both the size roll and the tag roll for the same socket pass
-# through this with the same weights, so they stay consistent (e.g. the
-# "24x24x4" size entry and the "cliff-base-side" tag entry carry the same
-# rocky-biome multiplier).
-func _biome_scaled_dist(dist: Distribution, pos: Vector3) -> Distribution:
-	if dist == null or dist.is_empty() or dist.dist.size() < 2:
-		return dist  # single-entry distributions renormalise to themselves
-	var weights: Dictionary[String, float] = Helper.biome_weights(pos, world_seed)
-	# Contour cores pin the structure seed mix to cliffs: a level patch
-	# seeded inside the mesa footprint would just be eaten by it later
-	# (visible appear-then-disappear churn). Zeroing the level entries makes
-	# multi-entry topcenter distributions sample cliffs exclusively; the
-	# single-entry lateral dists (which share the "24x24x0.5" size tag) are
-	# untouched because single-entry distributions skip scaling entirely.
-	if _in_cliff_core(pos):
-		var boost: float = TerrainModuleDefinitions.CLIFF_CORE_SEED_MIX_BOOST
-		weights["cliff-base-side"] = weights.get("cliff-base-side", 1.0) * boost
-		weights["24x24x4"] = weights.get("24x24x4", 1.0) * boost
-		# Drop (not zero) the level/flat-ground entries: a level seeded inside
-		# a mesa footprint is eaten by it later (visible churn). Zeroing leaves
-		# a 0-weight key that sample_from_modules can strand — if the surviving
-		# cliff tag filters to no modules it removes it and is left with the
-		# unsamplable zero key (Distribution.sample asserts). Erasing avoids
-		# that entirely.
-		weights["level-ground-center"] = 0.0
-		weights["24x24x0.5"] = 0.0
-		# Hills are tall structures; one placed inside a core (on ground that
-		# becomes cliff, or on a plateau that gains another storey) is eaten by
-		# the rising mesa. Drop the hill SIZES from foliage/stacking rolls so
-		# only point decorations (trees, grass, rocks — the intended mountain
-		# vegetation) survive on plateau tops. "point" always remains in those
-		# dists, so this never nulls them.
-		weights["8x8x2"] = 0.0
-		weights["12x12x2"] = 0.0
-		weights["4x4x4"] = 0.0
-	var scaled: Distribution = dist.copy()
-	var changed: bool = false
-	for tag in scaled.dist.keys():
-		if not weights.has(tag):
-			continue
-		changed = true
-		var w: float = weights[tag]
-		if w <= 0.0:
-			scaled.dist.erase(tag)
-		else:
-			scaled.dist[tag] *= w
-	if not changed:
-		return dist
-	# Scaling must never null a distribution (sample() asserts on an empty or
-	# zero-sum dist). A dist consisting only of fully-suppressed tags has
-	# nothing else to pick, so honour the original weights rather than crash.
-	if scaled.dist.is_empty():
-		return dist
-	scaled.normalise()
-	return scaled
-
-
-func _get_socket_fill_prob(piece: TerrainModuleInstance, socket_name: String) -> float:
-	if not piece.def.socket_fill_prob.has(socket_name):
-		return 0.0
-	var fill_prob: Variant = piece.def.socket_fill_prob[socket_name]
-	if fill_prob == null:
-		return 0.0
-	if fill_prob is float:
-		return fill_prob
-	if fill_prob is int:
-		return fill_prob
-	return 0.0
-
-
-func _is_socket_expandable(piece_socket: TerrainModuleSocket) -> bool:
-	return _get_socket_fill_prob(piece_socket.piece, piece_socket.socket_name) > 0.0
-
-
-# Fill probability modulated by the macro density field: probabilistic sockets
-# fire more in dense regions (mountain ranges, groves) and rarely in open
-# meadows, so features form coherent bounded clusters. The curve concentrates
-# the field into rare strong cores (~m^5): features grow aggressively inside a
-# core and die out quickly past its edge, which is what bounds cluster size.
-# Structural sockets (fill >= 1.0, e.g. ground lateral expansion) ignore the
-# field — ground must always fill for the world to be infinite.
-func _effective_fill_prob(piece: TerrainModuleInstance, socket_name: String, pos: Vector3) -> float:
-	if _is_structural_socket(piece, socket_name):
-		return 0.0
-	return _route_fill_prob(piece, socket_name, pos, _get_socket_fill_prob(piece, socket_name))
-
-
-## A socket whose expansion would place a level/cliff structural tile: the
-## ground-topcenter seed, and any lateral/topcenter on a level or cliff tile
-## (this includes cliff-interior, whose topcenter seeds the next cliff storey).
-## Under the heightfield, ground-plain cardinal laterals are ALSO structural:
-## the moving place-region is the sole base-plane source, so emergent ground
-## lateral expansion would double-place at the region edge.
-## Foliage top sockets (topfront/…) are NOT structural and are left untouched.
-func _is_structural_socket(piece: TerrainModuleInstance, socket_name: String) -> bool:
-	if piece.def.tags.has("level") or piece.def.tags.has("cliff"):
-		return socket_name in ["front", "back", "left", "right", "topcenter"]
-	if piece.def.tags.has("ground-plain"):
-		# Under the heightfield, the moving place-region is the sole base-plane
-		# source; emergent ground laterals would double-place at the region edge.
-		return socket_name in ["front", "back", "left", "right", "topcenter"]
-	return false
-
-
-# Scale a raw probability the way the given socket's actual verdict is
-# computed. Shared by the enqueue roll (_effective_fill_prob) and the
-# suppression roll (_suppressor_roll_passes) so suppression always mirrors the
-# suppressor socket's real verdict — a mismatch either suppresses foliage that
-# nothing will ever displace, or lets foliage spawn where a structure is
-# coming (visible pop-out).
-func _route_fill_prob(
-	piece: TerrainModuleInstance, socket_name: String, pos: Vector3, fill: float
-) -> float:
-	if fill <= 0.0:
-		return 0.0
-	if fill < 1.0:
-		# Decoration-capable sockets follow the biome flora density (forests
-		# dense, meadows open) on EVERY walkable surface — ground, level, and
-		# cliff tops share the same deco spawn rules. Checked before the
-		# level branch so level foliage doesn't fall into the structural
-		# curve below. Decorations (and stacked hills) on a NON-cliff surface
-		# inside a cliff contour core are doomed — the mesa rises over the
-		# base ground/hill and visibly displaces them — so they never spawn;
-		# the mesa's own plateau foliage replaces them. Cliff plateau tops are
-		# exempt (the final surface, not something the mesa eats), so foliage
-		# still decorates mountains.
-		if _socket_can_spawn_point(piece, socket_name):
-			if _in_cliff_core(pos) and not piece.def.tags.has("cliff"):
-				return 0.0
-			return clampf(fill * Helper.biome_foliage_density(pos, world_seed), 0.0, 1.0)
-		# Level patches are the mid-altitude feature: the high-contrast macro
-		# curve that keeps cliffs out of the lowlands would crush their
-		# growth at the mid densities where they live, so level-family
-		# sockets and the ground topcenter seed keep the gentler legacy
-		# curve (lone cliff crags seeded outside cores are bounded anyway —
-		# the contour test stops their lateral growth immediately). Level
-		# growth into a contour core is doomed for the same reason as deco.
-		if piece.def.tags.has("level"):
-			if _in_cliff_core(pos):
-				return 0.0
-			return _level_scaled_fill(fill, pos)
-		if socket_name == "topcenter" and piece.def.tags.has("ground-plain"):
-			var seed_fill: float = _gentle_scaled_fill(fill, pos)
-			# Inside a contour core, seed eagerly so the core reliably grows
-			# its mountain (mesa fill is idempotent — extra seeds merge).
-			if _in_cliff_core(pos):
-				return maxf(seed_fill, TerrainModuleDefinitions.CLIFF_CORE_SEED_FILL_PROB)
-			return seed_fill
-	return _macro_scaled_fill(fill, pos)
-
-
-# The original macro curve: moderate contrast, alive at mid densities. Used
-# for level patches and ground-topcenter seeds; cliff plateau growth uses the
-# contour test and everything else the high-contrast _macro_scaled_fill.
-func _gentle_scaled_fill(fill: float, pos: Vector3) -> float:
-	var macro: float = Helper.macro_density01(pos, world_seed)
-	return clampf(fill * (0.25 + 2.2 * pow(macro, 3.0)), 0.0, 1.0)
-
-
-# Flatter curve for level GROWTH (laterals + stacking on existing levels):
-# levels are a common mid-altitude terrace feature and should populate the
-# meadows the player crosses, not only mid-density bands. A generous floor
-# (0.5) lets a seeded level patch spread even where macro is low, while the
-# 0.33 authored lateral stays subcritical so patches still bound themselves.
-# Only applied once a level exists (the ground topcenter seed keeps the gentle
-# curve, so lone meadow cliffs stay rare).
-func _level_scaled_fill(fill: float, pos: Vector3) -> float:
-	var macro: float = Helper.macro_density01(pos, world_seed)
-	return clampf(fill * (0.5 + 0.9 * macro), 0.0, 1.0)
-
-
-func _in_cliff_core(pos: Vector3) -> bool:
-	return (
-		Helper.macro_density01(pos, world_seed)
-		>= TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
-	)
-
-
-# Cliff origins sit on the storey top plane (base tier y = 4.0: ground
-# topcenter at y = 0 plus one 4u storey), so the storey index falls out of
-# the origin height.
-func _cliff_storey_threshold(piece: TerrainModuleInstance) -> float:
-	var storey: float = maxf(0.0, (piece.transform.origin.y - 4.0) / 4.0)
-	return (
-		TerrainModuleDefinitions.CLIFF_CONTOUR_BASE
-		+ TerrainModuleDefinitions.CLIFF_CONTOUR_STEP * storey
-	)
-
-
-# Foliage on a cliff tile is pointless when the tile is destined to become a
-# plateau interior: the next storey lands on it and displaces the foliage
-# (visible pop-out). Interior-ness is deterministic for contour-carved mesas —
-# the tile and all 8 neighbours inside this storey's contour — so cliff
-# foliage is suppressed geometrically instead of by probability roll.
-func _cliff_foliage_covered_by_stack(
-	piece: TerrainModuleInstance, socket_name: String
-) -> bool:
-	if not piece.def.tags.has("cliff"):
-		return false
-	if not _socket_can_spawn_point(piece, socket_name):
-		return false
-	var threshold: float = _cliff_storey_threshold(piece)
-	var origin: Vector3 = piece.transform.origin
-	for dx in [-24.0, 0.0, 24.0]:
-		for dz in [-24.0, 0.0, 24.0]:
-			var neighbor: Vector3 = origin + Vector3(dx, 0.0, dz)
-			if Helper.macro_density01(neighbor, world_seed) < threshold:
-				return false
-	return true
-
-
-func _macro_scaled_fill(fill: float, pos: Vector3) -> float:
-	if fill >= 1.0:
-		return fill
-	var macro: float = Helper.macro_density01(pos, world_seed)
-	# High-contrast curve: lateral cluster growth (cliff 0.42, level 0.3) must
-	# cross criticality (~1/3 effective) only INSIDE range cores. Cores then
-	# fill into solid mesas — whose interior tiles enable vertical stacking —
-	# while mid-density terrain stays subcritical instead of sprawling into
-	# single-storey snake mazes.
-	var factor: float = 0.15 + 3.2 * pow(macro, 3.2)
-	return clampf(fill * factor, 0.0, 1.0)
-
-
-func _is_socket_blocking(piece_socket: TerrainModuleSocket) -> bool:
-	if piece_socket == null or piece_socket.piece == null or piece_socket.piece.def == null:
-		return false
-	var socket_name: String = piece_socket.socket_name
-	var fill_probs: Dictionary = piece_socket.piece.def.socket_fill_prob
-	if not fill_probs.has(socket_name):
-		return false
-	var fill_prob: Variant = fill_probs[socket_name]
-	if fill_prob == null:
-		return false
-	return _get_socket_fill_prob(piece_socket.piece, socket_name) <= 0.0
 
 
 func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String) -> Dictionary:
 	var socket_name: String = piece_socket.socket_name
-	var adjacent: Dictionary[String, TerrainModuleSocket] = get_adjacent_from_size(piece_socket, size)
 	var attachment_socket_name: String = Helper.get_attachment_socket_name(socket_name)
 	var origin_world: Vector3 = piece_socket.get_socket_position()
+
+	# Build the adjacency dict via the appropriate path:
+	# - Decoration / surface socket path: the socket's size distribution contains
+	#   "point" (foliage sockets like topfront/topback/… and hill stacking via
+	#   topcenter). Tag/size are drawn solely from the ORIGIN socket — no neighbour
+	#   probing. This covers:
+	#     • point foliage (size sampled to "point")
+	#     • hills spawned from a surface socket (size "8x8x2"/"12x12x2"/"4x4x4"
+	#       sampled from a FOLIAGE_CARDINAL/CORNER_SIZE_WEIGHTS dist that includes "point")
+	#     • hill stacking (hill topcenter size dist also includes "point")
+	#   Test 3 in test_placement_pipeline_characterization pins this invariant.
+	#   Using size=="point" here was wrong: it sent hill-sized decorations into
+	#   _lateral_neighbours which assumes same-size lateral socket layout (true for
+	#   24x24→24x24 laterals but NOT for a small hill from a 24x24 surface socket),
+	#   causing spurious over-water/edge rejections.
+	# - True lateral / structural expansion path: the socket's size distribution does
+	#   NOT contain "point" (ground/cliff/level/water/bank front/back/left/right).
+	#   Uses _lateral_neighbours to probe real same-size neighbour sockets. Preserves
+	#   the over-water forbidden-adjacency guard.
+	var adjacent: Dictionary[String, TerrainModuleSocket]
+	if density.socket_can_spawn_point(piece_socket.piece, socket_name):
+		# Decoration/surface socket (point foliage, hills from a surface, hill
+		# stacking): the tag/size is drawn solely from this origin socket — no
+		# neighbour probing (proven by test 3 in the placement characterization).
+		adjacent = { attachment_socket_name: piece_socket }
+	else:
+		# True lateral/structural expansion (same-size neighbour tile): probe the
+		# real neighbour sockets; preserves the over-water forbidden-adjacency guard.
+		adjacent = _lateral_neighbours(piece_socket, size)
+		if adjacent.is_empty():
+			return _empty_placement_context(size, {}, attachment_socket_name, origin_world)
 
 	if _has_forbidden_adjacency(adjacent):
 		return _empty_placement_context(size, adjacent, attachment_socket_name, origin_world)
@@ -653,9 +395,104 @@ func _resolve_placement_context(piece_socket: TerrainModuleSocket, size: String)
 		"attachment_socket_name": attachment_socket_name,
 		"required_tags": required_tags,
 		"filtered": filtered,
-		"dist": _biome_scaled_dist(library.get_combined_distribution(adjacent).copy(), origin_world),
+		"dist": TerrainSpawnConfig.filter_for_category(
+			density.biome_scaled_dist(library.get_combined_distribution(adjacent).copy(), origin_world),
+			piece_socket.piece.get_socket_category(socket_name)
+		),
 		"origin_world": origin_world
 	}
+
+
+## Compute the adjacency dict for a true same-size lateral/structural expansion
+## WITHOUT spawning a dummy test piece. Uses the origin piece's real socket
+## geometry to derive where the new tile's sockets would land, then queries
+## socket_index at those positions.
+##
+## ONLY call for sockets whose size distribution does NOT contain "point"
+## (ground/cliff/level/water/bank front/back/left/right). The computation
+## assumes the new tile has the same socket layout as the origin tile —
+## valid for same-size laterals (24x24→24x24) but NOT for a small hill
+## spawned from a large 24x24 surface socket. Decoration sockets (whose
+## size dist includes "point") must take the origin-only path instead.
+##
+## The new tile has the same socket layout as the origin tile. After
+## transform_to_socket alignment the new tile's socket positions equal:
+##
+##   new_pos[X] = orig_socket_world[X] + T
+##
+## where T = orig_piece_socket.get_socket_position()
+##           - Helper.socket_world_pos(orig.transform, orig.sockets[attachment_name], orig.root)
+##
+## This is a pure translation from the origin tile to the new tile, derived
+## entirely from the real piece's already-instantiated sockets.
+##
+## Returns {} (empty) if the origin piece lacks the sockets needed for the
+## computation (root or sockets missing).
+func _lateral_neighbours(
+	orig_piece_socket: TerrainModuleSocket,
+	size: String
+) -> Dictionary[String, TerrainModuleSocket]:
+	var orig_piece: TerrainModuleInstance = orig_piece_socket.piece
+	assert(orig_piece.root != null, "_lateral_neighbours requires a created piece (root != null)")
+	assert(orig_piece.sockets.size() > 0, "_lateral_neighbours requires instantiated sockets")
+
+	var attachment_name: String = Helper.get_attachment_socket_name(orig_piece_socket.socket_name)
+
+	# The attachment socket on the origin piece: same name as what the new tile's
+	# attachment socket would be, and shares the same local position.
+	var orig_attachment_marker: Marker3D = orig_piece.sockets.get(attachment_name, null)
+	if orig_attachment_marker == null:
+		push_error(
+			"_lateral_neighbours: origin piece has no '%s' socket (needed for size '%s')"
+			% [attachment_name, size]
+		)
+		return {}
+
+	# World position of the origin piece's attachment socket.
+	var orig_attachment_world: Vector3 = Helper.socket_world_pos(
+		orig_piece.transform, orig_attachment_marker, orig_piece.root
+	)
+
+	# The expansion socket world position is where the new tile's attachment aligns.
+	var orig_socket_world: Vector3 = orig_piece_socket.get_socket_position()
+
+	# Translation vector from every origin socket to the corresponding new-tile socket.
+	var T: Vector3 = orig_socket_world - orig_attachment_world
+
+	# Seed with the attachment entry — new tile's attachment socket coincides with
+	# the origin socket world position (= orig_socket_world + 0, since
+	# new_pos[attachment] = orig_attachment_world + T = orig_socket_world).
+	var adjacency: Dictionary[String, TerrainModuleSocket] = {
+		attachment_name: orig_piece_socket
+	}
+
+	# Probe every socket of the origin piece (as a template for the new tile's layout).
+	# Skip the attachment — already handled above.
+	for socket_name: String in orig_piece.sockets.keys():
+		if socket_name == attachment_name:
+			continue
+
+		var marker: Marker3D = orig_piece.sockets[socket_name]
+		var orig_pos: Vector3 = Helper.socket_world_pos(orig_piece.transform, marker, orig_piece.root)
+		var new_pos: Vector3 = orig_pos + T
+
+		var hit: TerrainModuleSocket = socket_index.query_other(new_pos, orig_piece)
+		if hit == null:
+			continue
+
+		# Apply the same base-plane filter as the old test-piece probe:
+		# when the origin is a base-plane piece, exclude non-base-plane hits
+		# from non-surface (lateral) sockets.
+		if orig_piece.def.is_base_plane and not hit.piece.def.is_base_plane:
+			var from_surface_socket: bool = orig_piece.def.socket_role.get(
+				orig_piece_socket.socket_name, ""
+			) == "surface"
+			if not from_surface_socket:
+				continue
+
+		adjacency[socket_name] = hit
+
+	return adjacency
 
 
 func _empty_placement_context(
@@ -679,7 +516,7 @@ func _has_forbidden_adjacency(adjacent: Dictionary[String, TerrainModuleSocket])
 	for hit in adjacent.values():
 		if hit == null:
 			continue
-		if _is_socket_blocking(hit):
+		if density.is_socket_blocking(hit):
 			return true
 	return false
 
@@ -865,7 +702,7 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 	_ensure_queue_tracking_current()
 	for socket_name: String in piece.sockets.keys():
 		var current_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
-		if not _is_socket_expandable(current_socket):
+		if not density.is_socket_expandable(current_socket):
 			continue
 		var socket: Marker3D = piece.sockets[socket_name]
 		var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
@@ -875,60 +712,36 @@ func add_piece_to_queue(piece: TerrainModuleInstance) -> void:
 		# (rule replacements) re-derive the same verdict instead of getting a
 		# fresh roll, otherwise frontier sockets would be re-rolled on every
 		# neighbour retile and any fill probability would ratchet toward 1.
-		if Helper.position_hash01(pos, world_seed) > _effective_fill_prob(piece, socket_name, pos):
+		if Helper.position_hash01(pos, world_seed) > density.effective_fill_prob(piece, socket_name, pos):
 			continue
 		# Suppression: don't enqueue a socket whose suppressor (e.g. topcenter
 		# seeding a structure on this tile) is going to fire — its placement
 		# would visibly displace whatever this socket spawns.
-		if _suppressor_roll_passes(piece, piece.def.socket_suppressed_by.get(socket_name)):
+		if density.suppressor_roll_passes(piece, piece.def.socket_suppressed_by.get(socket_name)):
 			continue
 		# Cliff foliage is suppressed geometrically: a tile whose whole
 		# neighbourhood is inside this storey's contour will retile to
 		# interior and be covered by the next storey.
-		if _cliff_foliage_covered_by_stack(piece, socket_name):
+		if density.cliff_foliage_covered_by_stack(piece, socket_name):
 			continue
 		var existing_socket: TerrainModuleSocket = socket_index.query_other(pos, piece)
-		if existing_socket != null and _is_socket_expandable(existing_socket):
+		if existing_socket != null and density.is_socket_expandable(existing_socket):
 			continue
 		var dist := get_dist_from_player(piece, socket_name)
 		# Decoration-capable sockets (size dist includes "point") are processed
 		# a couple of tiles later than structural work at the same distance, so
 		# decorations don't appear and then get displaced moments later by
 		# lateral growth arriving from a neighbouring tile.
-		if _socket_can_spawn_point(piece, socket_name):
+		if density.socket_can_spawn_point(piece, socket_name):
 			dist += DECO_PRIORITY_PENALTY
 		_enqueue_socket(current_socket, dist)
-
-
-func _socket_can_spawn_point(piece: TerrainModuleInstance, socket_name: String) -> bool:
-	var size_dist: Distribution = piece.def.socket_size.get(socket_name, null)
-	if size_dist == null:
-		return true  # sockets without a size dist default to "point"
-	return size_dist.dist.has("point")
-
-
-# Whether a suppression entry ({"socket": name, "prob": float}) fires: the
-# suppressor socket's deterministic position roll passes at the authored
-# probability, scaled exactly the way that socket's own enqueue verdict would
-# be (_route_fill_prob) — same position hash, same curve — so suppression
-# fires precisely where the suppressor socket actually fires.
-func _suppressor_roll_passes(piece: TerrainModuleInstance, entry: Variant) -> bool:
-	if not (entry is Dictionary):
-		return false
-	var suppressor_name: String = String(entry.get("socket", ""))
-	var socket: Marker3D = piece.sockets.get(suppressor_name, null)
-	if socket == null:
-		return false
-	var pos := Helper.socket_world_pos(piece.transform, socket, piece.root)
-	var prob: float = float(entry.get("prob", 0.0))
-	return Helper.position_hash01(pos, world_seed) <= _route_fill_prob(piece, suppressor_name, pos, prob)
 
 
 func register_piece(piece: TerrainModuleInstance, _attachment_socket_name: String) -> void:
 	# Index every socket. The attachment socket must be indexed too — otherwise a query
 	# from the parent piece's matching socket position finds only its own socket and
-	# falsely concludes the side has no neighbor, which causes LevelEdgeRule to choose
-	# the wrong variant for the parent (treating an attached neighbor as missing).
+	# falsely concludes the side has no neighbor, causing the wrong variant to be
+	# chosen for the parent (treating an attached neighbor as missing).
 	for socket_name: String in piece.sockets.keys():
 		var piece_other_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, socket_name)
 		socket_index.insert(piece_other_socket)
@@ -984,7 +797,7 @@ var _hidden_set: Dictionary = {}
 
 func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInstance) -> bool:
 	assert(new_piece.def != null)
-	if new_piece.def.tags.has("ground"):
+	if new_piece.def.is_base_plane:
 		return true
 	if new_piece.def.replace_existing:
 		return true
@@ -998,51 +811,20 @@ func can_place(new_piece: TerrainModuleInstance, parent_piece: TerrainModuleInst
 	# decorations at the same spot.
 	var new_is_displaceable: bool = new_piece.def.displaceable
 	other_pieces = other_pieces.filter(
-		func(p): return not p.def.tags.has("ground") 			and not (p.def.displaceable and not new_is_displaceable)
+		func(p): return not p.def.is_base_plane 			and not (p.def.displaceable and not new_is_displaceable)
 	)
 
-	if new_piece.def.tags.has("level") and parent_piece != null and parent_piece.def.tags.has("level"):
-		# Only filter out level tiles that are strictly *below* the new piece (the support layer).
+	if new_piece.def.vertical_stack_family != "" and parent_piece != null and parent_piece.def.vertical_stack_family == new_piece.def.vertical_stack_family:
+		# Only filter out same-family tiles that are strictly *below* the new piece (the support layer).
 		# Using parent_y with `<=` here was wrong for lateral expansion (where new.y == parent.y):
 		# it also removed same-y level tiles from the blocker set, allowing the new tile to overlap
 		# an existing level tile at the same x/y/z when LEVEL_REPLACE_EXISTING is false.
 		var new_y: float = new_piece.transform.origin.y
 		other_pieces = other_pieces.filter(func(p):
-			return not (p.def.tags.has("level") and p.transform.origin.y < new_y - 0.1)
+			return not (p.def.vertical_stack_family == new_piece.def.vertical_stack_family and p.transform.origin.y < new_y - 0.1)
 		)
 
 	return other_pieces.is_empty()
-
-
-## Collect all pieces stacked above `piece` via topcenter socket-links, recursively.
-## A piece P is "on top of" Q when P has a socket at Q's topcenter world position
-## AND P's origin.y is strictly above Q's origin.y. Populates `out_set` (keyed by
-## instance_id) and returns `out_list` in bottom-up removal order.
-func _collect_stacked_above(
-	piece: TerrainModuleInstance,
-	out_set: Dictionary,
-	out_list: Array
-) -> void:
-	if not piece.sockets.has("topcenter"):
-		return
-	var topcenter_socket: TerrainModuleSocket = TerrainModuleSocket.new(piece, "topcenter")
-	var topcenter_pos: Vector3 = topcenter_socket.get_socket_position()
-	var piece_y: float = piece.transform.origin.y
-	var candidates: Array[TerrainModuleSocket] = socket_index.query_others(topcenter_pos, piece)
-	for candidate_socket in candidates:
-		if candidate_socket == null or candidate_socket.piece == null:
-			continue
-		var stacked: TerrainModuleInstance = candidate_socket.piece
-		# Only remove pieces strictly above (structural dependency, not coincidental same-level).
-		if stacked.transform.origin.y <= piece_y:
-			continue
-		var stacked_id: int = stacked.get_instance_id()
-		if out_set.has(stacked_id):
-			continue
-		out_set[stacked_id] = true
-		# Recurse depth-first so the deepest dependent is queued for removal first.
-		_collect_stacked_above(stacked, out_set, out_list)
-		out_list.append(stacked)
 
 
 func remove_piece(piece: TerrainModuleInstance) -> void:
@@ -1090,68 +872,6 @@ func get_adjacent(piece: TerrainModuleInstance) -> Dictionary[String, TerrainMod
 			out[socket_name] = hit
 	return out
 
-
-func get_adjacent_from_size(
-	orig_piece_socket: TerrainModuleSocket,
-	size: String
-) -> Dictionary[String, TerrainModuleSocket]:
-	if size == "point":
-		return {"bottom": orig_piece_socket}
-
-	var orig_piece: TerrainModuleInstance = orig_piece_socket.piece
-	var orig_sock: Marker3D = orig_piece_socket.socket
-	assert(orig_piece.root != null)
-	assert(orig_sock != null)
-
-	# Get test piece for this size
-	var test_pieces: TerrainModuleList = test_pieces_library.get_by_tags(TagList.new([size]))
-	if test_pieces.is_empty():
-		push_error("No test piece found for size: " + size)
-		return {}
-
-	var test_piece_template: TerrainModule = test_pieces_library.get_random(test_pieces, true)
-	var test_piece: TerrainModuleInstance = test_piece_template.spawn()
-	assert(test_piece != null)
-	test_piece.create()
-
-	# Determine which socket on the test piece should attach
-	var attachment_socket_name: String = Helper.get_attachment_socket_name(orig_piece_socket.socket_name)
-	var attachment_socket: Marker3D = test_piece.sockets.get(attachment_socket_name, null)
-	if attachment_socket == null:
-		push_error("Test piece does not have attachment socket: " + attachment_socket_name)
-		test_piece.destroy()
-		return {}
-
-	# Position the test piece with the same direction-aware transform used for
-	# real placement. A plain offset would assume the source piece is unrotated;
-	# rotated pieces (e.g. level variants aligned by LevelEdgeRule) would get a
-	# misplaced test piece and garbage adjacency.
-	var test_piece_socket: TerrainModuleSocket = TerrainModuleSocket.new(test_piece, attachment_socket_name)
-	transform_to_socket(test_piece_socket, orig_piece_socket)
-
-	# Get initial adjacency
-	var adjacency: Dictionary[String, TerrainModuleSocket] = {attachment_socket_name: orig_piece_socket}
-
-	for socket_name: String in test_piece.sockets.keys():
-		if socket_name == attachment_socket_name:
-			continue
-
-		var s: Marker3D = test_piece.sockets[socket_name]
-		var pos := Helper.socket_world_pos(test_piece.transform, s, test_piece.root)
-		var hit := socket_index.query_other(pos, test_piece)
-		if hit != null:
-			var is_hit_ground = hit.piece.def.tags.has("ground")
-			if orig_piece.def.tags.has("ground") and not is_hit_ground:
-				var from_top_socket: bool = orig_piece_socket.socket_name.begins_with("top")
-				# Ground top sockets may spawn elevated pieces that should connect to existing non-ground tiles.
-				# Keep legacy behavior for non-top ground sockets.
-				if not from_top_socket:
-					continue
-
-			adjacency[socket_name] = hit
-
-	test_piece.destroy()
-	return adjacency
 
 
 func transform_to_socket(new_ps: TerrainModuleSocket, orig_ps: TerrainModuleSocket) -> void:
@@ -1208,7 +928,7 @@ func add_piece(
 	# re-deferred by _process_socket (the spawn retries after the player
 	# moves away) — see _blocked_by_player.
 	_blocked_by_player = false
-	if player != null and not new_piece.def.tags.has("ground"):
+	if player != null and not new_piece.def.is_base_plane:
 		var player_footprint: AABB = AABB(
 			Vector3(
 				player.global_position.x - 0.5,
@@ -1228,20 +948,8 @@ func add_piece(
 		var overlapping_pieces: Array = terrain_index.query_box(new_piece.aabb)
 		if orig_piece_socket.piece != null:
 			overlapping_pieces.erase(orig_piece_socket.piece)
-		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.tags.has("ground"))
-		# Collect pieces stacked above each overlapping piece (e.g. a hill or grass on a
-		# ground tile's topcenter that sits above the new piece's AABB and would be missed
-		# by the query_box call). Gathered before any removal so the socket index is intact.
-		var stacked_set: Dictionary = {}
-		var stacked_to_remove: Array = []
+		overlapping_pieces = overlapping_pieces.filter(func(p): return not p.def.is_base_plane)
 		for piece in overlapping_pieces:
-			stacked_set[piece.get_instance_id()] = true
-		for piece in overlapping_pieces:
-			_collect_stacked_above(piece, stacked_set, stacked_to_remove)
-		for piece in overlapping_pieces:
-			_recheck_neighbors_after_removal(piece)
-			remove_piece(piece)
-		for piece in stacked_to_remove:
 			_recheck_neighbors_after_removal(piece)
 			remove_piece(piece)
 
@@ -1285,7 +993,7 @@ func remove_linked_sockets_from_queue(new_piece_socket: TerrainModuleSocket) -> 
 		# Find any existing socket at this position (not belonging to our new piece)
 		var existing_socket := socket_index.query_other(socket_pos, new_piece)
 		if existing_socket != null:
-			if _is_socket_expandable(existing_socket):
+			if density.is_socket_expandable(existing_socket):
 				linked_sockets.append(existing_socket)
 				linked_socket_keys[_socket_queue_key(existing_socket)] = true
 
@@ -1329,6 +1037,7 @@ func init_for_test() -> void:
 		heightfield_plan = HeightfieldPlan.new(world_seed)
 	if _heightfield_placer == null:
 		_heightfield_placer = HeightfieldInstantiator.new()
+	density = TerrainDensity.new(world_seed)
 
 
 ## Place (and index) plan structural tiles around the player, then evict far ones.
@@ -1347,22 +1056,13 @@ func _drive_heightfield_structure(player_pos: Vector3) -> void:
 		register_piece(inst, "")
 		add_piece_to_queue(inst)
 	for inst in spawned:
-		if inst != null and inst.def.tags.has("ground"):
+		if inst != null and inst.def.is_base_plane:
 			_run_rules_for_existing_piece(inst)
 			# NOTE: WaterRule may replace a tracked ground tile with a water/bank tile;
 			# the replacement is not re-tracked in the instantiator's placed-set, so it
 			# is not evicted when the player leaves (minor leak — see Phase 3d results).
 	for inst in _heightfield_placer.evict_placed_outside(cx, cz, HEIGHTFIELD_PLACE_RADIUS + 2):
 		remove_piece(inst)
-
-
-func load_start_tile() -> TerrainModuleInstance:
-	var def : TerrainModule = TerrainModuleDefinitions.load_ground_tile()
-	var initial_tile := def.spawn()
-	initial_tile.set_transform(Transform3D.IDENTITY)
-	var root := initial_tile.create()
-	terrain_parent.add_child(root)
-	return initial_tile
 
 
 func _socket_queue_key(piece_socket: TerrainModuleSocket) -> String:

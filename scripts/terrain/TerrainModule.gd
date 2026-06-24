@@ -12,6 +12,14 @@ extends Resource
 @export var socket_tag_prob: Dictionary[String, Distribution]
 @export var visual_variants: Array[PackedScene]
 
+# Per-socket role metadata. "surface" marks walkable top sockets (foliage spawners).
+# Absent keys are treated as non-surface. Populated by merging surface_spawn_sockets output.
+@export var socket_role: Dictionary[String, String] = {}
+
+# Name of the socket on THIS module that acts as the point-attachment anchor
+# (the socket a spawned point-decoration's piece attaches its matching socket to).
+@export var attachment_socket: String = "bottom"
+
 
 # If true, this module can replace existing terrain pieces when placed.
 # Instead of failing placement due to AABB collisions, it will remove overlapping pieces.
@@ -20,6 +28,20 @@ extends Resource
 # If true, this module is a decoration that yields to structure: it never blocks
 # placement, and any piece placed over it removes it (e.g. grass, bushes, rocks).
 @export var displaceable: bool = false
+
+# If true, this module is a ground-plane tile (ground-plain, water, bank): it
+# always passes can_place and is never treated as a structure blocker.
+@export var is_base_plane: bool = false
+
+# If true, this module requires a solid surface directly beneath it to stay
+# alive (hill loaders). Orphan-sweep purges pieces whose surface vanishes.
+@export var requires_surface_support: bool = false
+
+# Family tag for vertical stacking: modules in the same family may stack
+# vertically without blocking each other (the lower layer is filtered out when
+# checking overlap). "level" for all level variants and centers; "" for all
+# other modules.
+@export var vertical_stack_family: String = ""
 
 # Optional per-socket suppression: socket name -> {"socket": String,
 # "prob": float}. If the suppressor socket's deterministic position roll would
@@ -30,6 +52,32 @@ extends Resource
 # topcenter is (ever) going to seed a structure, which would visibly displace
 # them.
 @export var socket_suppressed_by: Dictionary[String, Dictionary] = {}
+
+# Socket names on this module that are structural (lateral expansion and
+# topcenter seeding on ground-plain, level, and cliff tiles). Used by
+# TerrainGenerator._is_structural_socket to suppress emergent growth and defer
+# to the heightfield plan as the sole structural source.
+@export var structural_socket_names: Array[String] = []
+
+# Which fill-probability curve to apply to non-foliage sockets with fill < 1.
+# "macro"   — high-contrast cliff/feature curve (_macro_scaled_fill). Default.
+# "gentle"  — legacy gentler curve used for ground-plain topcenter seeding
+#             (_gentle_scaled_fill + cliff-core eager-seed boost).
+# "level"   — flat curve for level tile lateral growth (_level_scaled_fill),
+#             with cliff-core suppression (returns 0 inside core).
+@export var density_profile: String = "macro"
+
+# If true, this module grows on cliff plateau tops and is NOT suppressed when
+# inside a cliff contour core. False (default) means non-cliff decoration:
+# foliage spawned inside a core on a non-cliff surface is suppressed (the mesa
+# will rise over it and displace it).
+@export var grows_in_cliff_core: bool = false
+
+# If true, foliage sockets on this module may be covered by a storey landing
+# on top (only cliff-family tiles stack storeys). Used by
+# _cliff_foliage_covered_by_stack to geometrically suppress foliage that
+# would be displaced by the next storey.
+@export var covered_by_storey_above: bool = false
 
 func _init(
 	_scene: PackedScene = null,

@@ -8,7 +8,7 @@ extends RefCounted
 ## tiles so the ground extends beneath their inset, overhanging walls — the tiles
 ## are hollow shells whose walls sit ~1.5m in from the footprint edge, so without
 ## this you see a void under the lip and into the hollow interior.
-const _BASE_FILL_SCENE: PackedScene = preload("res://terrain/gltf/hill_top_e_center_color_12.tscn")
+const _BASE_FILL_SCENE: PackedScene = preload("res://terrain/gltf/hill/hill_top_e_center_color_12.tscn")
 const _STOREY_DROP: float = 4.0
 const _LEVEL_DROP: float = 0.5
 
@@ -17,7 +17,7 @@ const _LEVEL_DROP: float = 0.5
 ## understacked: the 2-storey diagonal-ramp corner (cliff-corner-stacked) descends
 ## both storeys across its own open diagonal to the pit floor, so no concave tile
 ## is stacked beneath it. (Levels are still sheer / out of scope for slopes.)
-const _LEVEL_INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/LevelInCorner.tscn")
+const _LEVEL_INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/level/LevelInCorner.tscn")
 # diagonal socket -> [adjoining cardinal offsets, diagonal cell offset]
 const _CORNER_DIAGS: Array = [
 	["frontright", Vector2i(0, -1), Vector2i(1, 0), Vector2i(1, -1)],
@@ -142,20 +142,13 @@ static func _canonical_corner(socket: String, rotation_steps: int) -> String:
 	return String(_DIAG_SOCKET_TO_CORNER[s])
 
 
-## HV variant_tag -> the module tag to look up in the library.
-static func _lookup_tag(variant_tag: String) -> String:
-	if variant_tag == "ground":
-		return "ground-plain"
-	return variant_tag
-
-
 ## Instantiate one placement record under `parent` and return the live instance,
 ## or null if no module matches the tag. Sets the transform directly (origin_y +
 ## a Y-axis yaw) — no socket attachment. Caller is responsible for indexing.
 static func spawn_placement(
 	record: Dictionary, library: TerrainModuleLibrary, parent: Node3D
 ) -> TerrainModuleInstance:
-	var tag: String = _lookup_tag(String(record["variant_tag"]))
+	var tag: String = String(record["variant_tag"])
 	var modules: TerrainModuleList = library.get_by_tags(TagList.new([tag]))
 	if modules.is_empty():
 		push_error("HeightfieldInstantiator: no module for tag '%s'" % tag)
@@ -333,7 +326,7 @@ func evict_placed_outside(center_cx: int, center_cz: int, keep_radius: int) -> A
 ## Do not "simplify" this to a bare spawn_placement delegation; it will break
 ## test_place_region_reports_dropped_cells_for_unknown_tag.
 func spawn_count_dropped(record: Dictionary, library: TerrainModuleLibrary, parent: Node3D) -> int:
-	var tag: String = _lookup_tag(String(record["variant_tag"]))
+	var tag: String = String(record["variant_tag"])
 	var modules: TerrainModuleList = library.get_by_tags(TagList.new([tag]))
 	if modules.is_empty():
 		return 1  # Dropped: no module for this tag.

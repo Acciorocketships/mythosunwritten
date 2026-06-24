@@ -57,7 +57,7 @@ func test_placement_flat_ground_interior() -> void:
 	var recs: Array = HeightfieldInstantiator.placements(plan, -5, 0, 0)
 	var r: Dictionary = recs[0]
 	assert_eq(r["family"], "ground", "interior of the lowland is ground")
-	assert_eq(r["variant_tag"], "ground", "flat ground => ground tile")
+	assert_eq(r["variant_tag"], "ground-plain", "flat ground => ground-plain tile")
 	assert_almost_eq(r["origin_y"], 0.0, 0.0001, "ground at y=0")
 
 
@@ -83,17 +83,17 @@ func test_spawn_placement_creates_a_tile_at_the_right_transform() -> void:
 	assert_almost_eq(inst.transform.origin.z, -24.0, 0.01, "z placed")
 	assert_eq(inst.root.get_parent(), parent, "tile parented under the target node")
 
-func test_spawn_placement_ground_uses_ground_plain() -> void:
+func test_spawn_placement_ground_plain_produces_tile() -> void:
 	var parent: Node3D = Node3D.new()
 	add_child_autofree(parent)
 	var lib: TerrainModuleLibrary = _library()
 	var rec: Dictionary = {
-		"variant_tag": "ground", "family": "ground",
+		"variant_tag": "ground-plain", "family": "ground",
 		"world_x": 0.0, "world_z": 0.0, "origin_y": 0.0, "yaw": 0.0,
 	}
 	var inst: TerrainModuleInstance = HeightfieldInstantiator.spawn_placement(rec, lib, parent)
-	assert_not_null(inst, "ground tile produced")
-	assert_true(inst.def.tags.has("ground-plain"), "ground maps to the ground-plain module")
+	assert_not_null(inst, "ground-plain tile produced")
+	assert_true(inst.def.tags.has("ground-plain"), "ground-plain tag resolves to the ground-plain module")
 
 func test_spawn_placement_applies_nonzero_yaw_to_basis() -> void:
 	# A dropped/zeroed basis would pass the other (yaw 0) tests; this asserts the

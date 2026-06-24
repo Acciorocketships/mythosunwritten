@@ -14,8 +14,7 @@ const _RADIUS: int = 30
 
 
 func _has_module(library: TerrainModuleLibrary, variant_tag: String) -> bool:
-	var tag: String = HeightfieldInstantiator._lookup_tag(variant_tag)
-	return not library.get_by_tags(TagList.new([tag])).is_empty()
+	return not library.get_by_tags(TagList.new([variant_tag])).is_empty()
 
 
 func test_every_possible_variant_has_a_module() -> void:
@@ -25,8 +24,8 @@ func test_every_possible_variant_has_a_module() -> void:
 	var library: TerrainModuleLibrary = TerrainModuleLibrary.new()
 	library.init()
 	var missing: Array = []
-	if not _has_module(library, "ground"):
-		missing.append("ground")
+	if not _has_module(library, "ground-plain"):
+		missing.append("ground-plain")
 	for bare in HeightfieldVariant.TAG_ORDER:
 		var cliff_tag: String = "cliff-interior" if bare == "center" else "cliff-" + bare
 		var level_tag: String = "level-center" if bare == "center" else "level-" + bare

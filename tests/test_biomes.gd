@@ -87,9 +87,9 @@ func test_biome_weights_shape() -> void:
 
 
 func test_biome_scaled_dist_preserves_unknown_tags_and_normalises() -> void:
-	var gen: Variant = _new_generator()
+	var density := TerrainDensity.new(424242)
 	var dist: Distribution = Distribution.new({"ground-plain": 0.5, "unknown-tag": 0.5})
-	var scaled: Distribution = gen._biome_scaled_dist(dist, Vector3(500, 0, 500))
+	var scaled: Distribution = density.biome_scaled_dist(dist, Vector3(500, 0, 500))
 	# Neither tag is in the biome weights table, so the distribution is
 	# returned untouched.
 	assert_eq(scaled.dist, dist.dist, "distributions without biome tags pass through unchanged")
@@ -97,7 +97,7 @@ func test_biome_scaled_dist_preserves_unknown_tags_and_normalises() -> void:
 	var foliage: Distribution = Distribution.new(
 		{"grass": 0.25, "rock": 0.25, "bush": 0.25, "tree": 0.25}
 	)
-	var foliage_scaled: Distribution = gen._biome_scaled_dist(foliage, Vector3(500, 0, 500))
+	var foliage_scaled: Distribution = density.biome_scaled_dist(foliage, Vector3(500, 0, 500))
 	var total: float = 0.0
 	for tag in foliage_scaled.dist.keys():
 		total += foliage_scaled.dist[tag]
@@ -106,9 +106,9 @@ func test_biome_scaled_dist_preserves_unknown_tags_and_normalises() -> void:
 
 
 func test_biome_scaled_dist_leaves_single_entry_untouched() -> void:
-	var gen: Variant = _new_generator()
+	var density := TerrainDensity.new(424242)
 	var dist: Distribution = Distribution.new({"tree": 1.0})
-	var scaled: Distribution = gen._biome_scaled_dist(dist, Vector3(123, 0, 456))
+	var scaled: Distribution = density.biome_scaled_dist(dist, Vector3(123, 0, 456))
 	assert_eq(scaled.prob("tree"), 1.0, "single-entry distributions renormalise to themselves")
 
 

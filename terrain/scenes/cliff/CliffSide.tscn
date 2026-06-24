@@ -1,0 +1,125 @@
+[gd_scene load_steps=4 format=3 uid="uid://dfgnqefug3201"]
+
+[ext_resource type="PackedScene" uid="uid://s7hlq6puc3vl" path="res://terrain/gltf/hill/hill_cliff_tall_h_side_color_12.tscn" id="1_wall"]
+[ext_resource type="PackedScene" uid="uid://72nb7fb13apc" path="res://terrain/gltf/hill/hill_top_h_side_color_12.tscn" id="2_top"]
+[ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill/hill_top_e_center_color_12.tscn" id="3_center"]
+
+[node name="CliffSide" type="Node3D"]
+
+[node name="Wall_1" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 10.5, -4, -10.5)
+
+[node name="Wall_2" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.5, -4, -10.5)
+
+[node name="Wall_3" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 4.5, -4, -10.5)
+
+[node name="Wall_4" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.5, -4, -10.5)
+
+[node name="Wall_5" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.5, -4, -10.5)
+
+[node name="Wall_6" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -4.5, -4, -10.5)
+
+[node name="Wall_7" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -7.5, -4, -10.5)
+
+[node name="Wall_8" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, -4, -10.5)
+
+[node name="Wall_9" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 10.5, -8, -10.5)
+
+[node name="Wall_10" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.5, -8, -10.5)
+
+[node name="Wall_11" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 4.5, -8, -10.5)
+
+[node name="Wall_12" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.5, -8, -10.5)
+
+[node name="Wall_13" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.5, -8, -10.5)
+
+[node name="Wall_14" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -4.5, -8, -10.5)
+
+[node name="Wall_15" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -7.5, -8, -10.5)
+
+[node name="Wall_16" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, -8, -10.5)
+
+[node name="Top_1" parent="." instance=ExtResource("2_top")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 10.5, 0, -10.5)
+
+[node name="Top_2" parent="." instance=ExtResource("2_top")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.5, 0, -10.5)
+
+[node name="Top_3" parent="." instance=ExtResource("2_top")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 4.5, 0, -10.5)
+
+[node name="Top_4" parent="." instance=ExtResource("2_top")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.5, 0, -10.5)
+
+[node name="Top_5" parent="." instance=ExtResource("2_top")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.5, 0, -10.5)
+
+[node name="Top_6" parent="." instance=ExtResource("2_top")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -4.5, 0, -10.5)
+
+[node name="Top_7" parent="." instance=ExtResource("2_top")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -7.5, 0, -10.5)
+
+[node name="Top_8" parent="." instance=ExtResource("2_top")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, 0, -10.5)
+
+[node name="Center" parent="." instance=ExtResource("3_center")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.9, 0, 0, 1.2)
+
+[node name="Sockets" type="Node3D" parent="."]
+
+[node name="front" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12)
+
+[node name="back" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
+
+[node name="left" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 0)
+
+[node name="right" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 0)
+
+[node name="frontleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -12)
+
+[node name="frontright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -12)
+
+[node name="backleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 12)
+
+[node name="backright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 12)
+
+[node name="bottom" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 0)
+
+[node name="topcenter" type="Marker3D" parent="Sockets"]
+
+[node name="topfront" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
+
+[node name="topback" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
+
+[node name="topleft" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 0)
+
+[node name="topright" type="Marker3D" parent="Sockets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 0)

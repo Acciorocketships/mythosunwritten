@@ -102,7 +102,7 @@ func test_descriptor_flat_ground() -> void:
 	var nb: Array = _flat(0.0)
 	var d: Dictionary = HeightfieldVariant.cell_descriptor(0.0, 0, 0, nb[0], nb[1])
 	assert_eq(d["family"], "ground", "storey 0 level 0 flat => ground")
-	assert_eq(d["variant_tag"], "ground", "ground tile tag")
+	assert_eq(d["variant_tag"], "ground-plain", "ground tile tag")
 	assert_almost_eq(d["origin_y"], 0.0, 0.0001, "ground at y=0")
 
 func test_descriptor_cliff_edge() -> void:

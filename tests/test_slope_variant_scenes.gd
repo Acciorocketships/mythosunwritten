@@ -18,7 +18,7 @@ func test_all_variant_scenes_load() -> void:
 
 func test_socket_parity_with_original() -> void:
 	for n in NAMES:
-		var orig := (load("res://terrain/scenes/%s.tscn" % n) as PackedScene).instantiate()
+		var orig := (load("res://terrain/scenes/cliff/%s.tscn" % n) as PackedScene).instantiate()
 		var slope := (load("res://terrain/scenes/slope/%s.tscn" % n) as PackedScene).instantiate()
 		var orig_sockets := _socket_names(orig)
 		var slope_sockets := _socket_names(slope)
@@ -35,7 +35,7 @@ func test_stacked_variant_scenes_load_with_socket_parity() -> void:
 		assert_not_null(inst, name)
 		# Compare against the AUTHORED original (what the bake copies sockets from),
 		# so this test is self-sufficient and matches the actual data flow.
-		var base := (load("res://terrain/scenes/%s.tscn" % pairs[name]) as PackedScene).instantiate()
+		var base := (load("res://terrain/scenes/cliff/%s.tscn" % pairs[name]) as PackedScene).instantiate()
 		assert_eq(_socket_names(inst), _socket_names(base), "socket mismatch %s" % name)
 		inst.free(); base.free()
 

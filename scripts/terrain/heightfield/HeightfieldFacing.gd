@@ -34,6 +34,6 @@ static func socket_to_offset(socket_name: String) -> Vector2i:
 
 
 ## Yaw (radians) to apply so a variant's canonical wall set lands on its actual
-## missing sides — matches LevelEdgeRule/CliffEdgeRule: PI/2 * ((4 - steps) % 4).
+## missing sides: PI/2 * ((4 - steps) % 4).
 static func yaw_for_rotation_steps(rotation_steps: int) -> float:
 	return PI * 0.5 * float((4 - rotation_steps) % 4)

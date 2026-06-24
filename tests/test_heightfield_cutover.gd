@@ -12,19 +12,18 @@ func _spawn(lib: TerrainModuleLibrary, tag: String) -> TerrainModuleInstance:
 	return lib.get_random(lib.get_by_tags(TagList.new([tag])), true).spawn()
 
 func test_is_structural_socket_classifies_seeds_vs_decoration() -> void:
-	var gen = _make_generator()
+	var density := TerrainDensity.new(0)
 	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
 	lib.init()
 	var ground: TerrainModuleInstance = _spawn(lib, "ground-plain")
-	assert_true(gen._is_structural_socket(ground, "topcenter"), "ground topcenter seeds structure")
-	assert_true(gen._is_structural_socket(ground, "front"), "under heightfield the plan owns the base plane, so ground laterals are suppressed")
+	assert_true(density.is_structural_socket(ground, "topcenter"), "ground topcenter seeds structure")
+	assert_true(density.is_structural_socket(ground, "front"), "under heightfield the plan owns the base plane, so ground laterals are suppressed")
 	var cliff: TerrainModuleInstance = _spawn(lib, "cliff-side")
-	assert_true(gen._is_structural_socket(cliff, "front"), "cliff lateral is structural")
-	assert_true(gen._is_structural_socket(cliff, "topcenter"), "cliff topcenter (stacking) is structural")
-	assert_false(gen._is_structural_socket(cliff, "topfront"), "cliff foliage socket is NOT structural")
+	assert_true(density.is_structural_socket(cliff, "front"), "cliff lateral is structural")
+	assert_true(density.is_structural_socket(cliff, "topcenter"), "cliff topcenter (stacking) is structural")
+	assert_false(density.is_structural_socket(cliff, "topfront"), "cliff foliage socket is NOT structural")
 	var water: TerrainModuleInstance = _spawn(lib, "water")
-	assert_false(gen._is_structural_socket(water, "topcenter"), "water is not structural")
-	gen.free()
+	assert_false(density.is_structural_socket(water, "topcenter"), "water is not structural")
 
 func test_heightfield_places_and_indexes_structural_tiles() -> void:
 	var gen = _make_generator()
@@ -72,14 +71,13 @@ func test_no_start_tile_when_heightfield_on() -> void:
 	assert_eq(gen.terrain_parent.get_child_count(), 0, "no start tile placed under heightfield")
 
 func test_ground_laterals_suppressed_under_heightfield() -> void:
-	var gen = _make_generator()
+	var density := TerrainDensity.new(0)
 	var lib: TerrainModuleLibrary = TerrainModuleLibrary.new()
 	lib.init()
 	var ground: TerrainModuleInstance = _spawn(lib, "ground-plain")
 	for s in ["front", "back", "left", "right", "topcenter"]:
-		assert_true(gen._is_structural_socket(ground, s),
+		assert_true(density.is_structural_socket(ground, s),
 			"ground %s is structural under the heightfield" % s)
-	gen.free()
 
 func test_heightfield_ground_becomes_water_in_water_field() -> void:
 	# On flat (all storey-0 ground) terrain, a heightfield ground tile placed at a
