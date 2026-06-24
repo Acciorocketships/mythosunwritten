@@ -52,7 +52,7 @@ const CLIFF_STACKED_VARIANT_TABLE: Array = [
 ### Individual Terrain Modules ###
 
 static func load_ground_tile() -> TerrainModule:
-	var scene = load("res://terrain/scenes/GroundTile.tscn")
+	var scene = load("res://terrain/scenes/base/GroundTile.tscn")
 	# "ground-plain" is the sampling tag: water and bank tiles also carry
 	# "ground"/"side" (so they satisfy neighbour requirements), but only the
 	# plain tile may be SAMPLED at the frontier — WaterRule swaps in the rest.
@@ -123,30 +123,30 @@ static func load_ground_tile() -> TerrainModule:
 	return m
 
 static func load_grass_tile() -> TerrainModule:
-	return _build_foliage_tile("res://terrain/scenes/Grass1.tscn", "grass", _load_scenes([
+	return _build_foliage_tile("res://terrain/scenes/grass/Grass1.tscn", "grass", _load_scenes("grass", [
 		"Grass2", "Grass3", "Grass4",
 	]))
 
 static func load_bush_tile() -> TerrainModule:
-	return _build_foliage_tile("res://terrain/scenes/Bush1.tscn", "bush", _load_scenes([
+	return _build_foliage_tile("res://terrain/scenes/bush/Bush1.tscn", "bush", _load_scenes("bush", [
 		"Bush2", "Bush3", "Bush4", "Bush5", "Bush6",
 	]))
 
 static func load_rock_tile() -> TerrainModule:
-	return _build_foliage_tile("res://terrain/scenes/Rock1.tscn", "rock", _load_scenes([
+	return _build_foliage_tile("res://terrain/scenes/rock/Rock1.tscn", "rock", _load_scenes("rock", [
 		"Rock2", "Rock3", "Rock4", "Rock5", "Rock6",
 	]))
 
 static func load_tree_tile() -> TerrainModule:
-	return _build_foliage_tile("res://terrain/scenes/Tree1.tscn", "tree", _load_scenes([
+	return _build_foliage_tile("res://terrain/scenes/tree/Tree1.tscn", "tree", _load_scenes("tree", [
 		"Tree2", "Tree3", "Tree4", "Tree5", "Tree6", "Tree7", "TreeBare1",
 	]))
 
 
-static func _load_scenes(names: Array) -> Array[PackedScene]:
+static func _load_scenes(subdir: String, names: Array) -> Array[PackedScene]:
 	var out: Array[PackedScene] = []
 	for scene_name in names:
-		out.append(load("res://terrain/scenes/%s.tscn" % scene_name))
+		out.append(load("res://terrain/scenes/%s/%s.tscn" % [subdir, scene_name]))
 	return out
 
 
@@ -173,7 +173,7 @@ static func _build_foliage_tile(
 	)
 
 static func load_8x8x2_tile() -> TerrainModule:
-	var scene = load("res://terrain/scenes/Hill_8x8x2.tscn")
+	var scene = load("res://terrain/scenes/hill/Hill_8x8x2.tscn")
 	var tags: TagList = TagList.new(["hill", "8x8x2"])
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
@@ -209,7 +209,7 @@ static func load_8x8x2_tile() -> TerrainModule:
 
 
 static func load_12x12x2_tile() -> TerrainModule:
-	var scene = load("res://terrain/scenes/Hill_12x12x2.tscn")
+	var scene = load("res://terrain/scenes/hill/Hill_12x12x2.tscn")
 	var tags: TagList = TagList.new(["hill", "12x12x2"])
 	var bb: AABB = Helper.compute_scene_mesh_aabb(scene)
 
@@ -243,7 +243,7 @@ static func load_12x12x2_tile() -> TerrainModule:
 	return m_12x12x2
 
 static func load_4x4x4_tile() -> TerrainModule:
-	var scene = load("res://terrain/scenes/Hill_4x4x4.tscn")
+	var scene = load("res://terrain/scenes/hill/Hill_4x4x4.tscn")
 	var tags: TagList = TagList.new(["hill", "4x4x4"])
 	# Origin at the top surface; the mesh hangs 4 units down (like cliffs).
 	var bb: AABB = AABB(Vector3(-2.0, -4.0, -2.0), Vector3(4.0, 4.0, 4.0))
@@ -307,7 +307,7 @@ static func load_water_and_bank_modules() -> Array[TerrainModule]:
 
 
 static func load_water_tile() -> TerrainModule:
-	var scene = load("res://terrain/scenes/WaterTile.tscn")
+	var scene = load("res://terrain/scenes/base/WaterTile.tscn")
 	# Rides the ground grid (origin at ground-top level); the water surface
 	# and floor hang below. Tagged "ground"/"side" so it satisfies neighbour
 	# requirements, but NOT "ground-plain" — it is only placed by WaterRule.
@@ -361,7 +361,8 @@ static func load_water_tile() -> TerrainModule:
 
 
 static func load_bank_variant(scene_name: String, variant_tag: String) -> TerrainModule:
-	var scene = load("res://terrain/scenes/%s.tscn" % scene_name)
+	# Banks reuse the sheer-cliff scenes (grouped under cliff/) at ground depth.
+	var scene = load("res://terrain/scenes/cliff/%s.tscn" % scene_name)
 	# Walkable land at ground level whose rock wall drops to the water floor.
 	var tags: TagList = TagList.new(
 		["ground", "ground-type", "side", "bank", variant_tag, "24x24x0.5"]
@@ -466,7 +467,7 @@ static func load_level_variants() -> Array[TerrainModule]:
 static func load_level_variant(
 	scene_name: String, tier: String, variant_tag: String
 ) -> TerrainModule:
-	var scene_path: String = "res://terrain/scenes/%s.tscn" % scene_name
+	var scene_path: String = "res://terrain/scenes/level/%s.tscn" % scene_name
 	var tags: TagList = TagList.new(["level", tier, variant_tag, "24x24x0.5"])
 	# Edge variants get a BLOCKING topcenter (0.0, not null): stacks may only
 	# be probed above center tiles, otherwise stack expansion places over an
@@ -484,7 +485,7 @@ static func load_level_variant(
 
 static func load_level_middle_tile() -> TerrainModule:
 	return _build_level_tile(
-		"res://terrain/scenes/LevelCenter.tscn",
+		"res://terrain/scenes/level/LevelCenter.tscn",
 		TagList.new(["level", "level-ground", "level-center", "level-ground-center", "ground-type", "24x24x0.5"]),
 		TerrainSpawnConfig.LEVEL_BASE_LATERAL_FILL_PROB,
 		TerrainSpawnConfig.LEVEL_TOPCENTER_FILL_PROB,
@@ -494,7 +495,7 @@ static func load_level_middle_tile() -> TerrainModule:
 
 static func load_level_stack_middle_tile() -> TerrainModule:
 	return _build_level_tile(
-		"res://terrain/scenes/LevelCenter.tscn",
+		"res://terrain/scenes/level/LevelCenter.tscn",
 		TagList.new(["level", "level-stack", "level-center", "level-stack-center", "24x24x0.5"]),
 		TerrainSpawnConfig.LEVEL_STACK_LATERAL_FILL_PROB,
 		TerrainSpawnConfig.LEVEL_TOPCENTER_FILL_PROB,
@@ -570,7 +571,7 @@ static func load_cliff_stack_interior_tile() -> TerrainModule:
 
 
 static func _build_cliff_interior_module(tags: TagList) -> TerrainModule:
-	var scene: PackedScene = load("res://terrain/scenes/GroundTile.tscn")
+	var scene: PackedScene = load("res://terrain/scenes/base/GroundTile.tscn")
 	# Full-storey logical bounds, same as the edge variants in
 	# _build_cliff_tile. The scene is visually a thin ground slab, but the
 	# bounds must claim the whole 4u storey volume below the walkable top:
@@ -831,5 +832,3 @@ static func _scene_socket_names(scene: PackedScene) -> Array[String]:
 			out.append(String(marker.name))
 	root_node.free()
 	return out
-
-

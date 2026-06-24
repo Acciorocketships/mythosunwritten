@@ -17,7 +17,7 @@ const _LEVEL_DROP: float = 0.5
 ## understacked: the 2-storey diagonal-ramp corner (cliff-corner-stacked) descends
 ## both storeys across its own open diagonal to the pit floor, so no concave tile
 ## is stacked beneath it. (Levels are still sheer / out of scope for slopes.)
-const _LEVEL_INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/LevelInCorner.tscn")
+const _LEVEL_INNER_CORNER_SCENE: PackedScene = preload("res://terrain/scenes/level/LevelInCorner.tscn")
 # diagonal socket -> [adjoining cardinal offsets, diagonal cell offset]
 const _CORNER_DIAGS: Array = [
 	["frontright", Vector2i(0, -1), Vector2i(1, 0), Vector2i(1, -1)],

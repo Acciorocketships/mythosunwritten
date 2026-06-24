@@ -90,7 +90,7 @@ func _bake_variant_cells(name: String, cells: Array, socket_source: String) -> v
 		node.owner = root
 		i += 1
 	# Copy sockets from the original scene for adjacency parity.
-	var orig := (load("res://terrain/scenes/%s.tscn" % socket_source) as PackedScene).instantiate()
+	var orig := (load("res://terrain/scenes/cliff/%s.tscn" % socket_source) as PackedScene).instantiate()
 	var sockets := orig.get_node_or_null("Sockets")
 	if sockets != null:
 		var dup := sockets.duplicate()

@@ -15,7 +15,7 @@ func test_offset_to_socket_matches_scene_for_all_cardinals() -> void:
 	# UNIT direction (sign included) of that marker's horizontal position in the
 	# real scene — so a front<->back or left<->right sign flip is caught, not just
 	# an axis swap.
-	var scene: PackedScene = load("res://terrain/scenes/CliffSide.tscn")
+	var scene: PackedScene = load("res://terrain/scenes/cliff/CliffSide.tscn")
 	var root: Node3D = scene.instantiate()
 	var sockets: Node = root.get_node("Sockets")
 	for socket_name in ["front", "right", "back", "left"]:

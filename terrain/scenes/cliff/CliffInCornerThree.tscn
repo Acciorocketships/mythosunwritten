@@ -1,19 +1,34 @@
-[gd_scene load_steps=4 format=3 uid="uid://r7ccxnxl64j8"]
+[gd_scene load_steps=4 format=3 uid="uid://occvgx08tdoj"]
 
 [ext_resource type="PackedScene" uid="uid://b8esdhwy7hfi1" path="res://terrain/gltf/hill_cliff_tall_i_inner_corner_color_12.tscn" id="1_wall"]
 [ext_resource type="PackedScene" uid="uid://bnpt5wxld3xvq" path="res://terrain/gltf/hill_top_e_center_color_12.tscn" id="2_center"]
 [ext_resource type="PackedScene" uid="uid://begwnakrt5py5" path="res://terrain/gltf/hill_top_a_inner_corner_color_12.tscn" id="3_inner_top"]
 
-[node name="CliffInCornerDiag" type="Node3D"]
+[node name="CliffInCornerThree" type="Node3D"]
 
 [node name="InnerWall_FL" parent="." instance=ExtResource("1_wall")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, -4, -10.5)
 
+[node name="InnerWall_BL" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -10.5, -4, 10.5)
+
 [node name="InnerWall_BR" parent="." instance=ExtResource("1_wall")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, -4, 10.5)
 
+[node name="InnerWall_FL2" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, -8, -10.5)
+
+[node name="InnerWall_BL2" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -10.5, -8, 10.5)
+
+[node name="InnerWall_BR2" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, -8, 10.5)
+
 [node name="InnerTop_FL" parent="." instance=ExtResource("3_inner_top")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -10.5)
+
+[node name="InnerTop_BL" parent="." instance=ExtResource("3_inner_top")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -10.5, 0, 10.5)
 
 [node name="InnerTop_BR" parent="." instance=ExtResource("3_inner_top")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 10.5, 0, 10.5)
@@ -22,13 +37,13 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 10.5
 transform = Transform3D(0.8, 0, 0, 0, 1, 0, 0, 0, 0.8, 0, 0, 0)
 
 [node name="Center_Strip_Left" parent="." instance=ExtResource("2_center")]
-transform = Transform3D(0.1, 0, 0, 0, 1, 0, 0, 0, 0.9, -10.8, 0, 1.2)
+transform = Transform3D(0.1, 0, 0, 0, 1, 0, 0, 0, 0.8, -10.8, 0, 0)
 
 [node name="Center_Strip_Right" parent="." instance=ExtResource("2_center")]
-transform = Transform3D(0.1, 0, 0, 0, 1, 0, 0, 0, 0.9, 10.8, 0, -1.2)
+transform = Transform3D(0.1, 0, 0, 0, 1, 0, 0, 0, 0.8, 10.8, 0, 0)
 
 [node name="Center_Strip_Front" parent="." instance=ExtResource("2_center")]
-transform = Transform3D(0.8, 0, 0, 0, 1, 0, 0, 0, 0.1, 0, 0, -10.8)
+transform = Transform3D(0.9, 0, 0, 0, 1, 0, 0, 0, 0.1, 1.2, 0, -10.8)
 
 [node name="Center_Strip_Back" parent="." instance=ExtResource("2_center")]
 transform = Transform3D(0.8, 0, 0, 0, 1, 0, 0, 0, 0.1, 0, 0, 10.8)

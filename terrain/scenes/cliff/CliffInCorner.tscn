@@ -9,13 +9,18 @@
 [node name="InnerWall_FL" parent="." instance=ExtResource("1_wall")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, -4, -10.5)
 
+[node name="InnerWall_FL2" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, -8, -10.5)
+
 [node name="InnerTop_FL" parent="." instance=ExtResource("3_inner_top")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -10.5)
 
 [node name="Center" parent="." instance=ExtResource("2_center")]
 transform = Transform3D(0.9, 0, 0, 0, 1, 0, 0, 0, 0.9, 1.2, 0, 1.2)
+
 [node name="Center_Strip_Left" parent="." instance=ExtResource("2_center")]
 transform = Transform3D(0.1, 0, 0, 0, 1, 0, 0, 0, 0.9, -10.8, 0, 1.2)
+
 [node name="Center_Strip_Front" parent="." instance=ExtResource("2_center")]
 transform = Transform3D(0.9, 0, 0, 0, 1, 0, 0, 0, 0.1, 1.2, 0, -10.8)
 
@@ -23,22 +28,31 @@ transform = Transform3D(0.9, 0, 0, 0, 1, 0, 0, 0, 0.1, 1.2, 0, -10.8)
 
 [node name="front" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12)
+
 [node name="back" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
+
 [node name="left" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 0)
+
 [node name="right" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 0)
+
 [node name="frontleft" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -12)
+
 [node name="frontright" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -12)
+
 [node name="backleft" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 12)
+
 [node name="backright" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 12)
+
 [node name="bottom" type="Marker3D" parent="Sockets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 0)
+
 [node name="topcenter" type="Marker3D" parent="Sockets"]
 
 [node name="topfront" type="Marker3D" parent="Sockets"]

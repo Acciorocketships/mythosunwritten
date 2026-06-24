@@ -62,6 +62,36 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.
 [node name="InnerWall_BL" parent="." instance=ExtResource("4_inner_wall")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -10.5, -4, 10.5)
 
+[node name="Wall_Right_9" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, -8, -10.5)
+
+[node name="Wall_Right_10" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, -8, -7.5)
+
+[node name="Wall_Right_11" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, -8, -4.5)
+
+[node name="Wall_Right_12" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, -8, -1.5)
+
+[node name="Wall_Right_13" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, -8, 1.5)
+
+[node name="Wall_Right_14" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, -8, 4.5)
+
+[node name="Wall_Right_15" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, -8, 7.5)
+
+[node name="Wall_Right_16" parent="." instance=ExtResource("1_wall")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.5, -8, 10.5)
+
+[node name="InnerWall_FL2" parent="." instance=ExtResource("4_inner_wall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -10.5, -8, -10.5)
+
+[node name="InnerWall_BL2" parent="." instance=ExtResource("4_inner_wall")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -10.5, -8, 10.5)
+
 [node name="InnerTop_FL" parent="." instance=ExtResource("5_inner_top")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -10.5)
 
