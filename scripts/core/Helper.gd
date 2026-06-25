@@ -157,8 +157,8 @@ static func biome_foliage_density(pos: Vector3, world_seed: int) -> float:
 const WATER_RIVER_SCALE: float = 220.0
 const WATER_LAKE_SCALE: float = 170.0
 const WATER_ISLAND_SCALE: float = 55.0
-const WATER_CLEAR_RADIUS: float = 130.0
-const WATER_CLEAR_FADE: float = 90.0
+const WATER_CLEAR_RADIUS: float = 40.0
+const WATER_CLEAR_FADE: float = 40.0
 
 static func is_water(pos: Vector3, world_seed: int) -> bool:
 	if not _is_water_raw(pos, world_seed):
