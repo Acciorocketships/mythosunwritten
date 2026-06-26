@@ -23,6 +23,14 @@ func test_chunk_has_collision():
 	assert_true(cs.shape is ConcavePolygonShape3D, "trimesh collision")
 	node.free()
 
+func test_water_surface_node_present_when_water_cells_exist():
+	# Use a seed/region known to contain water near origin is non-deterministic; instead
+	# assert the builder exposes a water child node container that is created (possibly
+	# empty) so the streamer can rely on it.
+	var node: Node3D = Mesher.new().build_chunk(_plan(), Vector2i(0, 0))
+	assert_not_null(node.find_child("Water", true, false), "chunk has a Water container")
+	node.free()
+
 func test_adjacent_chunks_share_boundary_height():
 	# The shared edge between chunk (0,0) and chunk (1,0) must sample identical heights
 	# (gap-free property): the field is single-valued, so the last column of chunk 0
