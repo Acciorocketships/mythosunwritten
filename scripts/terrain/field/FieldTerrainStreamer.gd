@@ -36,22 +36,34 @@ func _ready() -> void:
 	_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean")
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
+	# Build the chunk under the spawn point before the first physics frame, so the
+	# player lands on real collision instead of falling through unbuilt space.
+	if player != null:
+		_ensure_chunk(chunk_of(player.global_position))
+
+# Build chunk `c` immediately if it isn't built yet. Returns true if it built one.
+func _ensure_chunk(c: Vector2i) -> bool:
+	if _built.has(c):
+		return false
+	var node := _mesher.build_chunk(_plan, c)
+	terrain_parent.add_child(node)
+	_built[c] = node
+	return true
 
 func _process(_delta: float) -> void:
 	if _plan == null or player == null:
 		return
 	var centre := chunk_of(player.global_position)
-	# Build missing chunks within radius (budgeted).
+	# Always guarantee the player's own chunk exists (unbudgeted) so the player never
+	# falls through when spawning or crossing into a not-yet-streamed chunk.
+	_ensure_chunk(centre)
+	# Build the remaining missing chunks within radius (budgeted).
 	var built_this_frame := 0
 	for c: Vector2i in desired_chunks(centre, CHUNK_RADIUS):
-		if _built.has(c):
-			continue
-		var node := _mesher.build_chunk(_plan, c)
-		terrain_parent.add_child(node)
-		_built[c] = node
-		built_this_frame += 1
-		if built_this_frame >= MAX_BUILD_PER_FRAME:
-			break
+		if _ensure_chunk(c):
+			built_this_frame += 1
+			if built_this_frame >= MAX_BUILD_PER_FRAME:
+				break
 	# Evict chunks beyond keep radius (Chebyshev).
 	for c: Vector2i in _built.keys():
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:

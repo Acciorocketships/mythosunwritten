@@ -52,12 +52,12 @@ directional_shadow_blend_splits = true
 script = ExtResource("4_71j4m")
 player = NodePath("../Characters/Character")
 terrain_parent = NodePath(".")
+process_mode = 4
 
 [node name="FieldTerrain" type="Node3D" parent="." node_paths=PackedStringArray("player", "terrain_parent")]
 script = ExtResource("10_field")
 player = NodePath("../Characters/Character")
 terrain_parent = NodePath(".")
-process_mode = 4
 
 [node name="WaterSurface" parent="." instance=ExtResource("5_water")]
 

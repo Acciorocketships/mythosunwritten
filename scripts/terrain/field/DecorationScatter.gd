@@ -6,6 +6,10 @@ extends RefCounted
 const TILE := 24.0
 const HALF := 12.0
 const MAX_CANDIDATES := 9
+# Per-candidate base spawn probability, scaled by biome density. Tuned for a sparse,
+# natural scatter (~1 decoration per cell at typical density ~1.0) rather than the
+# dense thicket a higher value produces.
+const FILL_PER_CANDIDATE := 0.09
 # Mirrors TerrainSpawnConfig.FOLIAGE_TAG_WEIGHTS minus the socket-only "hill".
 const TAG_WEIGHTS := {"grass": 0.3, "rock": 0.2, "bush": 0.2, "tree": 0.25}
 
@@ -16,7 +20,7 @@ static func cell_decorations(cell: Vector2i, world_seed: int, surface_y: float) 
 	for i in MAX_CANDIDATES:
 		var h: float = Helper._cell_hash01(world_seed + 1000 + i, cell.x, cell.y)
 		# Probability this candidate exists scales with biome density.
-		if h > clampf(density / float(MAX_CANDIDATES) * 2.0, 0.0, 1.0):
+		if h > clampf(density * FILL_PER_CANDIDATE, 0.0, 1.0):
 			continue
 		var hx: float = Helper._cell_hash01(world_seed + 2000 + i, cell.x, cell.y)
 		var hz: float = Helper._cell_hash01(world_seed + 3000 + i, cell.x, cell.y)
