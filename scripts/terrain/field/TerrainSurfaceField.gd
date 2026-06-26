@@ -23,19 +23,34 @@ const _BAND := HALF * 0.5   # inner half flat, outer half ramps
 static func _edge_weight(off_along_dir: float) -> float:
 	return SlopeProfile.smootherstep(clampf((off_along_dir - _BAND) / _BAND, 0.0, 1.0))
 
+const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
+
 static func surface_y(region, x: float, z: float) -> float:
 	var cx := _cell_of(x)
 	var cz := _cell_of(z)
 	var h: float = region.surface_height(cx, cz)
-	var lx := x - float(cx) * TILE   # [-HALF, HALF]
+	var lx := x - float(cx) * TILE
 	var lz := z - float(cz) * TILE
+	# Per-direction lower-deltas (0 if neighbour not lower).
+	var dx_sign := 1 if lx >= 0.0 else -1
+	var dz_sign := 1 if lz >= 0.0 else -1
+	var a := _edge_weight(lx * float(dx_sign))                 # weight toward facing x-edge
+	var b := _edge_weight(lz * float(dz_sign))                 # weight toward facing z-edge
+	var d_x: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz))
+	var d_z: float = maxf(0.0, h - region.surface_height(cx, cz + dz_sign))
+	var d_d: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz + dz_sign))
 	var drop := 0.0
-	for dir in _CARDINALS:
-		var nh: float = region.surface_height(cx + dir.x, cz + dir.y)
-		var delta := h - nh
-		if delta <= 0.0:
-			continue   # neighbour is not lower → this side stays flat
-		# offset toward this neighbour: +x uses +lx, -x uses -lx, etc.
-		var off := lx * float(dir.x) + lz * float(dir.y)
-		drop = maxf(drop, delta * _edge_weight(off))
+	if d_x > 0.0 or d_z > 0.0:
+		# Convex corner (at least one cardinal drops). Gate each facing edge weight by
+		# whether THAT cardinal actually drops, so a direction with an equal-height
+		# neighbour contributes no ramp: the blend a+b-ab then reduces to the plain
+		# single-edge ramp beside an equal neighbour (matches SlopeProfile.outer_corner,
+		# where f(a,0)=a and f(0,b)=b — each edge seam stays the plain edge profile).
+		var wx := a if d_x > 0.0 else 0.0
+		var wz := b if d_z > 0.0 else 0.0
+		var delta := maxf(d_x, d_z)
+		drop = delta * (wx + wz - wx * wz)
+	elif d_d > 0.0:
+		# Concave corner (only the diagonal drops): a*b so just the far vertex dips.
+		drop = d_d * (a * b)
 	return h - drop
