@@ -14,6 +14,15 @@ func test_build_returns_meshinstance_with_geometry():
 	assert_gt(mi.mesh.get_surface_count(), 0, "mesh has geometry")
 	node.free()
 
+func test_chunk_has_collision():
+	var node: Node3D = Mesher.new().build_chunk(_plan(), Vector2i(0, 0))
+	var body := node.find_child("Body", true, false) as StaticBody3D
+	assert_not_null(body, "chunk has a StaticBody3D")
+	var cs := body.find_child("CollisionShape3D", true, false) as CollisionShape3D
+	assert_not_null(cs)
+	assert_true(cs.shape is ConcavePolygonShape3D, "trimesh collision")
+	node.free()
+
 func test_adjacent_chunks_share_boundary_height():
 	# The shared edge between chunk (0,0) and chunk (1,0) must sample identical heights
 	# (gap-free property): the field is single-valued, so the last column of chunk 0
