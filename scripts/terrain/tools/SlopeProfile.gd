@@ -4,8 +4,13 @@ extends RefCounted
 
 const HALF := 6.0       # half cell width (12u cell -> 50% slope band)
 const CELL := 12.0      # cell / slope band width
-const HEIGHT := 4.0     # total drop magnitude (single source of truth)
-const BOTTOM := -HEIGHT # plateau top is y=0, lower ground is y=-HEIGHT
+# Drop magnitude (single source of truth). A static var so the offline bake can
+# generate edge families at different drops: 4.0 for cliffs (one 4m storey),
+# 0.5 for levels (one 0.5m terrace step). Defaults to 4.0 so all runtime/cliff
+# callers are unchanged; only the level bake mutates it (then restores it).
+static var HEIGHT := 4.0
+static func bottom() -> float:    # plateau top is y=0, lower ground is y=-HEIGHT
+	return -HEIGHT
 
 static func smootherstep(t: float) -> float:
 	t = clampf(t, 0.0, 1.0)
@@ -18,20 +23,20 @@ static func _ramp(c: float) -> float:
 
 # Edge: ramps toward front (-z), flat across x.
 static func edge_height(_x: float, z: float) -> float:
-	return BOTTOM * _ramp(z)
+	return bottom() * _ramp(z)
 
 # Outer (convex) corner: ramps toward FL (-x,-z). a=front ramp, b=left ramp.
 # f(a,b)=a+b-ab so f(a,0)=a and f(0,b)=b -> seams match the two edges.
 static func outer_corner_height(x: float, z: float) -> float:
 	var a := _ramp(z)
 	var b := _ramp(x)
-	return BOTTOM * (a + b - a * b)
+	return bottom() * (a + b - a * b)
 
 # Inner (concave) corner: plateau wraps; only the far corner dips. f=a*b.
 static func inner_corner_height(x: float, z: float) -> float:
 	var a := _ramp(z)
 	var b := _ramp(x)
-	return BOTTOM * (a * b)
+	return bottom() * (a * b)
 
 # --- stacked (mating) corner profiles --------------------------------------
 # A 2-storey corner is ONE S: flat at both far ends, steepest at the storey seam.
@@ -96,7 +101,7 @@ static func _in_band(c: float) -> float:
 # the two halves vertically, so the lower half sat *under* the walkable surface
 # instead of continuing the descent — see HeightfieldInstantiator).
 static func outer_corner_stacked_height(x: float, z: float) -> float:
-	return BOTTOM * (_ramp(z) + _ramp(x))
+	return bottom() * (_ramp(z) + _ramp(x))
 
 # Inner (concave) LOWER tile: only the far (-,-) corner dips. The onset coordinate q
 # mixes the steep seam-band progress (`seam`, which has a non-zero slope right at the
@@ -111,7 +116,7 @@ static func inner_corner_stacked_height(x: float, z: float) -> float:
 		return 0.0
 	var seam := minf(_in_band(z), _in_band(x))   # steep onset right at the seam corner
 	var q := IN_MIX * seam + (1.0 - IN_MIX) * base
-	return BOTTOM * _bot_s(q)
+	return bottom() * _bot_s(q)
 
 # --- assembled-tile surface height -----------------------------------------
 # Walkable surface height at tile-local (x,z) for a variant's cell layout (from
