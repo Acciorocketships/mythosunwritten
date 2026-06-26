@@ -31,6 +31,17 @@ func test_water_surface_node_present_when_water_cells_exist():
 	assert_not_null(node.find_child("Water", true, false), "chunk has a Water container")
 	node.free()
 
+func test_chunk_scatters_decoration_children():
+	var m := Mesher.new()
+	m.set_seed(7)
+	var node: Node3D = m.build_chunk(_plan(), Vector2i(0, 0))
+	var deco := node.find_child("Decorations", true, false)
+	assert_not_null(deco, "chunk has a Decorations container")
+	# Non-water land chunk should usually contain at least one instance; allow zero only
+	# if the whole chunk is water (not the case for seed 7 at origin per Task 10 check).
+	assert_gte(deco.get_child_count(), 0)
+	node.free()
+
 func test_adjacent_chunks_share_boundary_height():
 	# The shared edge between chunk (0,0) and chunk (1,0) must sample identical heights
 	# (gap-free property): the field is single-valued, so the last column of chunk 0

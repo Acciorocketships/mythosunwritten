@@ -12,6 +12,13 @@ const STEP := TILE / SAMPLES_PER_CELL                # 6.0
 const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 32 quads per axis
 const SEA_LEVEL := 0.0
 
+const FOLIAGE_SCENES := {
+	"grass": ["res://terrain/scenes/grass/Grass1.tscn", "res://terrain/scenes/grass/Grass2.tscn", "res://terrain/scenes/grass/Grass3.tscn"],
+	"bush": ["res://terrain/scenes/bush/Bush1.tscn", "res://terrain/scenes/bush/Bush2.tscn"],
+	"rock": ["res://terrain/scenes/rock/Rock1.tscn", "res://terrain/scenes/rock/Rock2.tscn"],
+	"tree": ["res://terrain/scenes/tree/Tree1.tscn", "res://terrain/scenes/tree/Tree2.tscn"],
+}
+
 var _material: Material = load("res://terrain/materials/ground.tres")
 var _grass_uv: Vector2 = SlopeAtlas.grass_uv()
 var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
@@ -76,6 +83,26 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 		wst.set_material(_water_material)
 		water.mesh = wst.commit()
 	root.add_child(water)
+
+	# Decorations: scatter foliage on non-water land cells
+	var deco := Node3D.new()
+	deco.name = "Decorations"
+	for cz in range(chunk.y * CELLS_PER_CHUNK, chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
+		for cx in range(chunk.x * CELLS_PER_CHUNK, chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
+			var wc := Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
+			if Helper.is_water(wc, _water_seed):
+				continue
+			var sy := TerrainSurfaceField.surface_y(region, wc.x, wc.z)
+			for d: Dictionary in DecorationScatter.cell_decorations(Vector2i(cx, cz), _water_seed, sy):
+				var variants: Array = FOLIAGE_SCENES.get(d["tag"], [])
+				if variants.is_empty():
+					continue
+				var pick: int = int(d["yaw"] / TAU * variants.size()) % variants.size()
+				var inst: Node3D = (load(variants[pick]) as PackedScene).instantiate()
+				inst.position = d["pos"]
+				inst.rotation.y = d["yaw"]
+				deco.add_child(inst)
+	root.add_child(deco)
 
 	# Collision: trimesh from the surface mesh
 	var body := StaticBody3D.new()
