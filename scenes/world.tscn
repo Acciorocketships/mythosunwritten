@@ -1,9 +1,8 @@
-[gd_scene load_steps=11 format=3 uid="uid://ceognrw5418ks"]
+[gd_scene load_steps=10 format=3 uid="uid://ceognrw5418ks"]
 
 [ext_resource type="Script" uid="uid://dyg0hh4n6mt05" path="res://scripts/camera/camera.gd" id="1_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://1isaxxqlfqe8" path="res://characters/character.tscn" id="1_nnsk1"]
 [ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://scripts/controllers/player_controller.gd" id="2_rwgxs"]
-[ext_resource type="Script" uid="uid://b6hqfnlcjmmpl" path="res://scripts/terrain/TerrainGenerator.gd" id="4_71j4m"]
 [ext_resource type="PackedScene" path="res://terrain/water/WaterSurface.tscn" id="5_water"]
 [ext_resource type="Script" uid="uid://dys71w0rl7skp" path="res://scripts/terrain/field/FieldTerrainStreamer.gd" id="10_field"]
 
@@ -47,12 +46,6 @@ directional_shadow_mode = 1
 directional_shadow_split_1 = 0.3
 directional_shadow_split_2 = 0.3
 directional_shadow_blend_splits = true
-
-[node name="Terrain" type="Node3D" parent="." node_paths=PackedStringArray("player", "terrain_parent")]
-script = ExtResource("4_71j4m")
-player = NodePath("../Characters/Character")
-terrain_parent = NodePath(".")
-process_mode = 4
 
 [node name="FieldTerrain" type="Node3D" parent="." node_paths=PackedStringArray("player", "terrain_parent")]
 script = ExtResource("10_field")

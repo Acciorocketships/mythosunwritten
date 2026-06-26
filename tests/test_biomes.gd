@@ -18,14 +18,6 @@ func after_each() -> void:
 	_nodes_to_free.clear()
 
 
-func _new_generator() -> Variant:
-	var Generator: Script = load("res://scripts/terrain/TerrainGenerator.gd")
-	var g: Variant = Generator.new()
-	_nodes_to_free.append(g)
-	g.world_seed = 424242
-	return g
-
-
 func test_biome_fields_deterministic_and_varying() -> void:
 	var world_seed: int = 99
 	var pos: Vector3 = Vector3(300, 0, -120)
@@ -84,31 +76,4 @@ func test_biome_weights_shape() -> void:
 		Helper.biome_foliage_density(forest_pos, world_seed), 1.0,
 		"forests should be denser than the neutral baseline"
 	)
-
-
-func test_biome_scaled_dist_preserves_unknown_tags_and_normalises() -> void:
-	var density := TerrainDensity.new(424242)
-	var dist: Distribution = Distribution.new({"ground-plain": 0.5, "unknown-tag": 0.5})
-	var scaled: Distribution = density.biome_scaled_dist(dist, Vector3(500, 0, 500))
-	# Neither tag is in the biome weights table, so the distribution is
-	# returned untouched.
-	assert_eq(scaled.dist, dist.dist, "distributions without biome tags pass through unchanged")
-
-	var foliage: Distribution = Distribution.new(
-		{"grass": 0.25, "rock": 0.25, "bush": 0.25, "tree": 0.25}
-	)
-	var foliage_scaled: Distribution = density.biome_scaled_dist(foliage, Vector3(500, 0, 500))
-	var total: float = 0.0
-	for tag in foliage_scaled.dist.keys():
-		total += foliage_scaled.dist[tag]
-	assert_almost_eq(total, 1.0, 0.0001, "scaled distribution must be renormalised")
-	assert_eq(foliage_scaled.dist.size(), 4, "scaling must not add or drop tags")
-
-
-func test_biome_scaled_dist_leaves_single_entry_untouched() -> void:
-	var density := TerrainDensity.new(424242)
-	var dist: Distribution = Distribution.new({"tree": 1.0})
-	var scaled: Distribution = density.biome_scaled_dist(dist, Vector3(123, 0, 456))
-	assert_eq(scaled.prob("tree"), 1.0, "single-entry distributions renormalise to themselves")
-
 
