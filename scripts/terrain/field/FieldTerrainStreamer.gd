@@ -13,6 +13,9 @@ const CHUNK_WORLD := 192.0   # TerrainChunkMesher.CHUNK_WORLD
 @export var MAX_BUILD_PER_FRAME: int = 1
 @export var HEIGHTFIELD_AMPLITUDE: float = 56.0
 @export var HEIGHTFIELD_MAX_STOREYS: int = 12
+## Max storey difference between adjacent cells. 1 = all walkable slopes (SP1);
+## 3 = cliffs up to 3 storeys (12m) form where the field steps down steeply.
+@export var MAX_CLIFF_STEP: int = 3
 
 var _plan: HeightfieldPlan
 var _mesher: TerrainChunkMesher
@@ -33,7 +36,7 @@ func _ready() -> void:
 	if terrain_parent == null:
 		return   # bare instance (unit test)
 	world_seed = randi()
-	_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean")
+	_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean", MAX_CLIFF_STEP)
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
 	# Build the chunk under the spawn point before the first physics frame, so the
