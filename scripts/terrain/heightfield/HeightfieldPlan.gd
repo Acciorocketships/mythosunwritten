@@ -26,6 +26,7 @@ var world_seed: int
 var height_amplitude: float   # metres; macro field [0,1] -> [0, amplitude]
 var max_storeys: int          # caps column height -> bounds clamp margin
 var aggregation: String       # "min" (floor) | "mean" (nearest) | "max" (ceil)
+var max_step: int = 1         # max storey difference between cardinal neighbours (1=classic, 3=cliffs)
 
 var _raw_override: Callable = Callable()
 
@@ -34,7 +35,8 @@ func _init(
 	p_world_seed: int,
 	p_height_amplitude: float = 32.0,
 	p_max_storeys: int = 8,
-	p_aggregation: String = "mean"
+	p_aggregation: String = "mean",
+	p_max_step: int = 1
 ) -> void:
 	assert(p_height_amplitude > 0.0, "HeightfieldPlan: height_amplitude must be positive")
 	# max_storeys is the clamp window margin; a non-positive value collapses the
@@ -46,6 +48,7 @@ func _init(
 	height_amplitude = p_height_amplitude
 	max_storeys = p_max_storeys
 	aggregation = p_aggregation
+	max_step = p_max_step
 
 
 ## Replace the noise source with a synthetic field for tests. fn(cx, cz) -> float.
@@ -128,7 +131,7 @@ static func _has_diagonal_cliff(storeys: Dictionary, cell: Vector2i) -> bool:
 ## only lowers and is bounded below by the input, so it terminates; the fixpoint
 ## (each cell <= min_neighbour + 1) is unique regardless of sweep order. `targets`
 ## maps Vector2i(cx, cz) -> storey; returns a new clamped map.
-static func clamp_field(targets: Dictionary) -> Dictionary:
+static func clamp_field(targets: Dictionary, max_step: int = 1) -> Dictionary:
 	var out: Dictionary = targets.duplicate()
 	var changed: bool = true
 	while changed:
@@ -141,7 +144,7 @@ static func clamp_field(targets: Dictionary) -> Dictionary:
 					continue
 				# Reads the possibly-already-lowered neighbour (Gauss-Seidel): safe
 				# and faster to converge because values only ever decrease.
-				var cap: int = out[nb] + 1
+				var cap: int = out[nb] + max_step
 				if here > cap:
 					here = cap
 					changed = true
@@ -168,7 +171,7 @@ func storey_at(cx: int, cz: int) -> int:
 			# cell.x = cx, cell.y = cz (Vector2i stores the horizontal grid pair,
 			# NOT world Y / the up-axis).
 			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
-	var clamped: Dictionary = clamp_field(targets)
+	var clamped: Dictionary = clamp_field(targets, max_step)
 	return clamped[Vector2i(cx, cz)]
 
 
@@ -267,7 +270,7 @@ func _build_storey_map(cx: int, cz: int, radius: int) -> Dictionary:
 		for dx in range(-outer, outer + 1):
 			var cell: Vector2i = Vector2i(cx + dx, cz + dz)
 			targets[cell] = quantize_storey(raw_height(cell.x, cell.y))
-	return clamp_field(targets)
+	return clamp_field(targets, max_step)
 
 
 ## Final terrace level in [0, LEVELS_PER_STOREY - 1] for a cell. Builds a settled
@@ -352,7 +355,7 @@ func compute_region(center_cx: int, center_cz: int, radius: int, target_cache: D
 				q = quantize_storey(raw_height(cell.x, cell.y))
 				target_cache[cell] = q
 			targets[cell] = q
-	var storeys: Dictionary = clamp_field(targets)
+	var storeys: Dictionary = clamp_field(targets, max_step)
 
 	var cliff_field: Dictionary = _cliff_distance_field(storeys, _CLIFF_SEARCH_MAX)
 	var l0: Dictionary = {}
