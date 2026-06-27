@@ -6,10 +6,12 @@ extends RefCounted
 
 const TILE := 24.0
 const CELLS_PER_CHUNK := 8
-const SAMPLES_PER_CELL := 4
+# 8 samples/cell (3u resolution) tessellates the smootherstep slope band finely
+# enough to read as a smooth curve rather than a few flat facets.
+const SAMPLES_PER_CELL := 8
 const CHUNK_WORLD := TILE * CELLS_PER_CHUNK          # 192
-const STEP := TILE / SAMPLES_PER_CELL                # 6.0
-const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 32 quads per axis
+const STEP := TILE / SAMPLES_PER_CELL                # 3.0
+const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 64 quads per axis
 const SEA_LEVEL := 0.0
 
 const FOLIAGE_SCENES := {
@@ -51,6 +53,10 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var v01 := Vector3(x0, TerrainSurfaceField.surface_y(region, x0, z1), z1)
 			_tri(st, v00, v10, v11)
 			_tri(st, v00, v11, v01)
+	# Weld coincident grid vertices BEFORE generating normals so shared vertices get
+	# averaged (smooth) normals instead of per-face (flat) ones — this is what makes
+	# the slopes read as smooth curves rather than angular facets.
+	st.index()
 	st.generate_normals()
 	st.set_material(_material)
 	var root := Node3D.new()
@@ -99,7 +105,11 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 					continue
 				var pick: int = int(d["yaw"] / TAU * variants.size()) % variants.size()
 				var inst: Node3D = (load(variants[pick]) as PackedScene).instantiate()
-				inst.position = d["pos"]
+				# Sit each decoration on the surface at ITS OWN jittered position, not the
+				# cell centre — otherwise decorations on a slope float above / sink below
+				# the ground (the cell-centre height differs from the local height).
+				var dp: Vector3 = d["pos"]
+				inst.position = Vector3(dp.x, TerrainSurfaceField.surface_y(region, dp.x, dp.z), dp.z)
 				inst.rotation.y = d["yaw"]
 				deco.add_child(inst)
 	root.add_child(deco)
