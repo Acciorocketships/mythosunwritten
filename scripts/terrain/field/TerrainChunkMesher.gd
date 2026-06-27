@@ -8,7 +8,7 @@ const TILE := 24.0
 const CELLS_PER_CHUNK := 8
 # 8 samples/cell (3u resolution) tessellates the smootherstep slope band finely
 # enough to read as a smooth curve rather than a few flat facets.
-const SAMPLES_PER_CELL := 8
+const SAMPLES_PER_CELL := 12
 const CHUNK_WORLD := TILE * CELLS_PER_CHUNK          # 192
 const STEP := TILE / SAMPLES_PER_CELL                # 3.0
 const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 64 quads per axis
@@ -69,12 +69,14 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	var lo_cz := chunk.y * CELLS_PER_CHUNK
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
+			# Collision walls match CliffDressing: on a cliff cell, EVERY drop edge (≥1) is
+			# a wall the player can't pass (the cliff takes its whole drop).
+			if not TerrainSurfaceField._is_cliff_top(region, cx, cz):
+				continue
 			var s: int = region.storey_at(cx, cz)
 			var h_hi: float = region.surface_height(cx, cz)
-			# Walls only on ≥2-storey (cliff) drops; a 1-storey edge is a slope on the
-			# neighbour (no wall — see surface_y up-ramp).
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				if s - int(region.storey_at(cx + dir.x, cz + dir.y)) >= 2:
+				if s - int(region.storey_at(cx + dir.x, cz + dir.y)) >= 1:
 					_emit_wall(cwall, cx, cz, dir, h_hi, region.surface_height(cx + dir.x, cz + dir.y))
 					any_wall = true
 
@@ -167,7 +169,7 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 		st.add_vertex(v)
 
 const HALF := TILE * 0.5         # 12.0
-const LIP_DEPTH := 3.0           # outer strip of a cliff cell the grass lip occupies
+const LIP_DEPTH := 2.75          # = the KayKit lip piece depth, so field grass meets it (no gap)
 
 # Omit a grass quad ONLY on the cliff-TOP side, in the lip strip next to a ≥2 edge (so
 # the KayKit lip isn't z-fought by field grass). The LOW side renders fully so its slope
@@ -180,10 +182,10 @@ func _spans_cliff(region, x0: float, x1: float, z0: float, z1: float) -> bool:
 	var sc := int(region.storey_at(cx, cz))
 	var lxc := (x0 + x1) * 0.5 - float(cx) * TILE
 	var lzc := (z0 + z1) * 0.5 - float(cz) * TILE
-	if sc - int(region.storey_at(cx + 1, cz)) >= 2 and lxc > HALF - LIP_DEPTH: return true
-	if sc - int(region.storey_at(cx - 1, cz)) >= 2 and lxc < -HALF + LIP_DEPTH: return true
-	if sc - int(region.storey_at(cx, cz + 1)) >= 2 and lzc > HALF - LIP_DEPTH: return true
-	if sc - int(region.storey_at(cx, cz - 1)) >= 2 and lzc < -HALF + LIP_DEPTH: return true
+	if sc - int(region.storey_at(cx + 1, cz)) >= 1 and lxc > HALF - LIP_DEPTH: return true
+	if sc - int(region.storey_at(cx - 1, cz)) >= 1 and lxc < -HALF + LIP_DEPTH: return true
+	if sc - int(region.storey_at(cx, cz + 1)) >= 1 and lzc > HALF - LIP_DEPTH: return true
+	if sc - int(region.storey_at(cx, cz - 1)) >= 1 and lzc < -HALF + LIP_DEPTH: return true
 	return false
 
 # A vertical quad along the shared cell edge, rock UV, face toward `dir`.

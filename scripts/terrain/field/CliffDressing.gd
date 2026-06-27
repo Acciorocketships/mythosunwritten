@@ -43,12 +43,17 @@ static func _drop(region, cx: int, cz: int, dir: Vector2i) -> int:
 	return int(region.storey_at(cx, cz)) - int(region.storey_at(cx + dir.x, cz + dir.y))
 
 static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
+	# Only dress a CLIFF cell (a flat plateau with a ≥2 drop somewhere). Then EVERY drop
+	# off it — including a 1-storey edge — is wall, so the cliff takes its whole drop and
+	# adjacent slopes simply run into the wall face (no slope climbs to a cliff top).
+	if not TerrainSurfaceField._is_cliff_top(region, cx, cz):
+		return
 	var s: int = region.storey_at(cx, cz)
 	var h: float = region.surface_height(cx, cz)
 	var cellpos := Vector3(float(cx) * TILE, h, float(cz) * TILE)
 	var cliff := {}
 	for dir in CARDINALS:
-		cliff[dir] = _drop(region, cx, cz, dir) >= 2
+		cliff[dir] = _drop(region, cx, cz, dir) >= 1
 
 	# --- straight edges (with corner/slope-aware extent, issue 5) ---
 	for dir in CARDINALS:

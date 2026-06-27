@@ -26,12 +26,12 @@ static func _edge_weight(off_along_dir: float) -> float:
 
 const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 
-# A cell is a cliff TOP if any cardinal neighbour sits ≥2 storeys below it. Such a cell
-# is a plateau: flat across its whole top so the generated rock wall + grass lip align
-# with it, and the 4m slope to a 1-storey-lower neighbour lives on that neighbour.
+# A cell is a cliff TOP if any neighbour — cardinal OR diagonal — sits ≥2 storeys below
+# it. Such a cell is a flat plateau (the KayKit cliff tile draws its edges); keeping it
+# flat means a diagonal cliff (inner corner) never produces a >4m ramp into the pit.
 static func _is_cliff_top(region, cx: int, cz: int) -> bool:
 	var s: int = region.storey_at(cx, cz)
-	for d in _CARDINALS:
+	for d in (_CARDINALS + _DIAGONALS):
 		if s - int(region.storey_at(cx + d.x, cz + d.y)) >= 2:
 			return true
 	return false
@@ -45,7 +45,6 @@ static func surface_y(region, x: float, z: float) -> float:
 	# the boundary (the non-cliff neighbour ramps up to this flat height).
 	if _is_cliff_top(region, cx, cz):
 		return h
-	var s: int = region.storey_at(cx, cz)
 	var lx := x - float(cx) * TILE
 	var lz := z - float(cz) * TILE
 	var dx_sign := 1 if lx >= 0.0 else -1
@@ -64,10 +63,7 @@ static func surface_y(region, x: float, z: float) -> float:
 		drop = delta * (wx + wz - wx * wz)
 	elif d_d > 0.0:
 		drop = d_d * (a * b)
-	# Up-ramp to meet a facing 1-storey-higher cliff edge (the slope lives on this cell).
-	var rise := 0.0
-	if int(region.storey_at(cx + dx_sign, cz)) == s + 1 and _is_cliff_top(region, cx + dx_sign, cz):
-		rise = maxf(rise, (region.surface_height(cx + dx_sign, cz) - h) * a)
-	if int(region.storey_at(cx, cz + dz_sign)) == s + 1 and _is_cliff_top(region, cx, cz + dz_sign):
-		rise = maxf(rise, (region.surface_height(cx, cz + dz_sign) - h) * b)
-	return h - drop + rise
+	# NO up-ramp: a cell next to a higher cliff stays at its own height and just runs into
+	# the cliff face partway up — the cliff takes its whole drop as wall, so slopes never
+	# climb to a cliff top (keeps every slope ≤1 storey / 4m and walkable).
+	return h - drop
