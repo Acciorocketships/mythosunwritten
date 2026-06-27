@@ -48,24 +48,35 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var x1 := x0 + STEP
 			var z0 := o.y + iz * STEP
 			var z1 := z0 + STEP
+			# Omit grass quads where the KayKit wall/lip will sit (the vertical cliff face and
+			# the lip strip) so they don't z-fight the field grass.
+			if _spans_cliff(region, x0, x1, z0, z1):
+				continue
 			var v00 := Vector3(x0, TerrainSurfaceField.surface_y(region, x0, z0), z0)
 			var v10 := Vector3(x1, TerrainSurfaceField.surface_y(region, x1, z0), z0)
 			var v11 := Vector3(x1, TerrainSurfaceField.surface_y(region, x1, z1), z1)
 			var v01 := Vector3(x0, TerrainSurfaceField.surface_y(region, x0, z1), z1)
 			_tri(st, v00, v10, v11)
 			_tri(st, v00, v11, v01)
-	# Cliff walls: where a cardinal neighbour is ≥2 storeys lower, drop a vertical rock
-	# quad along the shared edge into the SAME SurfaceTool (so it welds + normals +
-	# collides as one mesh, one material).
+	# Cliff walls: where a cardinal neighbour is ≥2 storeys lower, drop a vertical quad
+	# along the shared edge into a SEPARATE, COLLISION-ONLY SurfaceTool. The visible
+	# cliff face comes from KayKit pieces (CliffDressing); these invisible quads only
+	# stop the player from walking through the cliff.
+	var cwall := SurfaceTool.new()
+	cwall.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var any_wall := false
 	var lo_cx := chunk.x * CELLS_PER_CHUNK
 	var lo_cz := chunk.y * CELLS_PER_CHUNK
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
 			var s: int = region.storey_at(cx, cz)
 			var h_hi: float = region.surface_height(cx, cz)
+			# Walls only on ≥2-storey (cliff) drops; a 1-storey edge is a slope on the
+			# neighbour (no wall — see surface_y up-ramp).
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				if s - int(region.storey_at(cx + dir.x, cz + dir.y)) >= 2:
-					_emit_wall(st, cx, cz, dir, h_hi, region.surface_height(cx + dir.x, cz + dir.y))
+					_emit_wall(cwall, cx, cz, dir, h_hi, region.surface_height(cx + dir.x, cz + dir.y))
+					any_wall = true
 
 	# Weld coincident grid vertices BEFORE generating normals so shared vertices get
 	# averaged (smooth) normals instead of per-face (flat) ones — this is what makes
@@ -128,13 +139,24 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 				deco.add_child(inst)
 	root.add_child(deco)
 
-	# Collision: trimesh from the surface mesh
+	# KayKit cliff dressing: real rock wall + grass-lip pieces on the cliff edges.
+	var dressing := CliffDressing.build(region, lo_cx, lo_cz, CELLS_PER_CHUNK)
+	root.add_child(dressing)
+
+	# Collision: trimesh from the walkable surface, plus a second trimesh of the
+	# (invisible) cliff-wall quads so the player can't walk through a cliff face.
 	var body := StaticBody3D.new()
 	body.name = "Body"
 	var cs := CollisionShape3D.new()
 	cs.name = "CollisionShape3D"
 	cs.shape = mi.mesh.create_trimesh_shape()
 	body.add_child(cs)
+	if any_wall:
+		var wall_mesh := cwall.commit()
+		var cs2 := CollisionShape3D.new()
+		cs2.name = "CollisionShape3D_walls"
+		cs2.shape = wall_mesh.create_trimesh_shape()
+		body.add_child(cs2)
 	root.add_child(body)
 
 	return root
@@ -143,6 +165,26 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 	for v in [a, b, c]:
 		st.set_uv(_grass_uv)
 		st.add_vertex(v)
+
+const HALF := TILE * 0.5         # 12.0
+const LIP_DEPTH := 3.0           # outer strip of a cliff cell the grass lip occupies
+
+# Omit a grass quad ONLY on the cliff-TOP side, in the lip strip next to a ≥2 edge (so
+# the KayKit lip isn't z-fought by field grass). The LOW side renders fully so its slope
+# runs right up to (and visually under) the wall — no gap beside the cliff.
+func _spans_cliff(region, x0: float, x1: float, z0: float, z1: float) -> bool:
+	var cx := int(roundf((x0 + x1) * 0.5 / TILE))
+	var cz := int(roundf((z0 + z1) * 0.5 / TILE))
+	if not TerrainSurfaceField._is_cliff_top(region, cx, cz):
+		return false
+	var sc := int(region.storey_at(cx, cz))
+	var lxc := (x0 + x1) * 0.5 - float(cx) * TILE
+	var lzc := (z0 + z1) * 0.5 - float(cz) * TILE
+	if sc - int(region.storey_at(cx + 1, cz)) >= 2 and lxc > HALF - LIP_DEPTH: return true
+	if sc - int(region.storey_at(cx - 1, cz)) >= 2 and lxc < -HALF + LIP_DEPTH: return true
+	if sc - int(region.storey_at(cx, cz + 1)) >= 2 and lzc > HALF - LIP_DEPTH: return true
+	if sc - int(region.storey_at(cx, cz - 1)) >= 2 and lzc < -HALF + LIP_DEPTH: return true
+	return false
 
 # A vertical quad along the shared cell edge, rock UV, face toward `dir`.
 func _emit_wall(st: SurfaceTool, cx: int, cz: int, dir: Vector2i, y_hi: float, y_lo: float) -> void:

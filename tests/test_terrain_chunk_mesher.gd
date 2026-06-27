@@ -55,19 +55,24 @@ func test_adjacent_chunks_share_boundary_height():
 	assert_eq(a, b, "field is single-valued at the shared boundary")
 
 func test_chunk_emits_cliff_wall():
+	# Cliff faces are now KayKit dressing pieces + a collision-only wall — NOT vertical
+	# faces in the visible grass surface. Verify: (a) the visible surface has no vertical
+	# grass sheet at the cliff, (b) a collision wall blocks it, (c) dressing pieces exist.
 	var p := Plan.new(11, 32.0, 8, "mean", 3)
 	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)  # cliff between cell 3 and 4
 	var m := Mesher.new()
 	var node := m.build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var aabb := mi.mesh.get_aabb()
-	# The surface mesh must span the full 12m vertical cliff (top 12 down to 0).
-	assert_almost_eq(aabb.position.y, 0.0, 0.5, "mesh reaches the cliff base")
-	assert_almost_eq(aabb.position.y + aabb.size.y, 12.0, 0.5, "mesh reaches the cliff top")
-	# And there must be near-vertical faces (a wall), i.e. some triangles with |normal.y|<0.3.
 	var normals: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]
 	var vertical := 0
 	for nrm in normals:
 		if absf(nrm.y) < 0.3: vertical += 1
-	assert_gt(vertical, 0, "cliff wall produced near-vertical faces")
+	assert_eq(vertical, 0, "no vertical grass sheet in the visible surface (wall is separate)")
+	# A second collision shape (the invisible wall) stops the player at the cliff.
+	var body := node.find_child("Body", true, false) as StaticBody3D
+	assert_not_null(body.get_node_or_null("CollisionShape3D_walls"), "collision wall present")
+	# KayKit cliff dressing produced rock-wall pieces for the cliff.
+	var cliffs := node.find_child("Cliffs", true, false)
+	var walls := cliffs.find_child("Walls", true, false) as MultiMeshInstance3D
+	assert_gt(walls.multimesh.instance_count, 0, "cliff dressing produced wall pieces")
 	node.free()

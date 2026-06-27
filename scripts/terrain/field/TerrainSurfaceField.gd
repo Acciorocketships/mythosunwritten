@@ -8,6 +8,7 @@ extends RefCounted
 
 const TILE := 24.0
 const HALF := TILE * 0.5   # 12.0
+const STOREY := 4.0        # one cliff storey; slopes ramp at most this much per cell
 
 const _CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
@@ -25,40 +26,48 @@ static func _edge_weight(off_along_dir: float) -> float:
 
 const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 
+# A cell is a cliff TOP if any cardinal neighbour sits ≥2 storeys below it. Such a cell
+# is a plateau: flat across its whole top so the generated rock wall + grass lip align
+# with it, and the 4m slope to a 1-storey-lower neighbour lives on that neighbour.
+static func _is_cliff_top(region, cx: int, cz: int) -> bool:
+	var s: int = region.storey_at(cx, cz)
+	for d in _CARDINALS:
+		if s - int(region.storey_at(cx + d.x, cz + d.y)) >= 2:
+			return true
+	return false
+
 static func surface_y(region, x: float, z: float) -> float:
 	var cx := _cell_of(x)
 	var cz := _cell_of(z)
 	var h: float = region.surface_height(cx, cz)
+	# A cliff cell takes the WHOLE drop: its top is flat (the KayKit tile draws it). The
+	# field mesh only draws non-cliff cells; here we keep returning h for continuity at
+	# the boundary (the non-cliff neighbour ramps up to this flat height).
+	if _is_cliff_top(region, cx, cz):
+		return h
+	var s: int = region.storey_at(cx, cz)
 	var lx := x - float(cx) * TILE
 	var lz := z - float(cz) * TILE
-	# Per-direction lower-deltas (0 if neighbour not lower).
 	var dx_sign := 1 if lx >= 0.0 else -1
 	var dz_sign := 1 if lz >= 0.0 else -1
 	var a := _edge_weight(lx * float(dx_sign))                 # weight toward facing x-edge
 	var b := _edge_weight(lz * float(dz_sign))                 # weight toward facing z-edge
-	var s: int = region.storey_at(cx, cz)
-	# A neighbour only contributes a (walkable) ramp when it's at most 1 storey lower;
-	# a ≥2-storey-lower neighbour is a CLIFF — this cell stays flat to that edge and the
-	# mesher drops a vertical wall there instead.
-	var step_x: int = s - region.storey_at(cx + dx_sign, cz)
-	var step_z: int = s - region.storey_at(cx, cz + dz_sign)
-	var step_d: int = s - region.storey_at(cx + dx_sign, cz + dz_sign)
-	var d_x: float = (h - region.surface_height(cx + dx_sign, cz)) if (step_x >= 0 and step_x <= 1) else 0.0
-	var d_z: float = (h - region.surface_height(cx, cz + dz_sign)) if (step_z >= 0 and step_z <= 1) else 0.0
-	var d_d: float = (h - region.surface_height(cx + dx_sign, cz + dz_sign)) if (step_d >= 0 and step_d <= 1) else 0.0
-	d_x = maxf(0.0, d_x); d_z = maxf(0.0, d_z); d_d = maxf(0.0, d_d)
+	# A non-cliff cell only has ≤1-storey drops; ramp toward each lower neighbour.
+	var d_x: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz))
+	var d_z: float = maxf(0.0, h - region.surface_height(cx, cz + dz_sign))
+	var d_d: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz + dz_sign))
 	var drop := 0.0
 	if d_x > 0.0 or d_z > 0.0:
-		# Convex corner (at least one cardinal drops). Gate each facing edge weight by
-		# whether THAT cardinal actually drops, so a direction with an equal-height
-		# neighbour contributes no ramp: the blend a+b-ab then reduces to the plain
-		# single-edge ramp beside an equal neighbour (matches SlopeProfile.outer_corner,
-		# where f(a,0)=a and f(0,b)=b — each edge seam stays the plain edge profile).
 		var wx := a if d_x > 0.0 else 0.0
 		var wz := b if d_z > 0.0 else 0.0
 		var delta := maxf(d_x, d_z)
 		drop = delta * (wx + wz - wx * wz)
 	elif d_d > 0.0:
-		# Concave corner (only the diagonal drops): a*b so just the far vertex dips.
 		drop = d_d * (a * b)
-	return h - drop
+	# Up-ramp to meet a facing 1-storey-higher cliff edge (the slope lives on this cell).
+	var rise := 0.0
+	if int(region.storey_at(cx + dx_sign, cz)) == s + 1 and _is_cliff_top(region, cx + dx_sign, cz):
+		rise = maxf(rise, (region.surface_height(cx + dx_sign, cz) - h) * a)
+	if int(region.storey_at(cx, cz + dz_sign)) == s + 1 and _is_cliff_top(region, cx, cz + dz_sign):
+		rise = maxf(rise, (region.surface_height(cx, cz + dz_sign) - h) * b)
+	return h - drop + rise
