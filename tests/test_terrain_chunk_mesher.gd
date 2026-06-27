@@ -53,3 +53,21 @@ func test_adjacent_chunks_share_boundary_height():
 	var a := Field.surface_y(r, boundary_x, 3.0)
 	var b := Field.surface_y(r, boundary_x, 3.0)
 	assert_eq(a, b, "field is single-valued at the shared boundary")
+
+func test_chunk_emits_cliff_wall():
+	var p := Plan.new(11, 32.0, 8, "mean", 3)
+	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)  # cliff between cell 3 and 4
+	var m := Mesher.new()
+	var node := m.build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var aabb := mi.mesh.get_aabb()
+	# The surface mesh must span the full 12m vertical cliff (top 12 down to 0).
+	assert_almost_eq(aabb.position.y, 0.0, 0.5, "mesh reaches the cliff base")
+	assert_almost_eq(aabb.position.y + aabb.size.y, 12.0, 0.5, "mesh reaches the cliff top")
+	# And there must be near-vertical faces (a wall), i.e. some triangles with |normal.y|<0.3.
+	var normals: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]
+	var vertical := 0
+	for nrm in normals:
+		if absf(nrm.y) < 0.3: vertical += 1
+	assert_gt(vertical, 0, "cliff wall produced near-vertical faces")
+	node.free()

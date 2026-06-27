@@ -23,6 +23,7 @@ const FOLIAGE_SCENES := {
 
 var _material: Material = load("res://terrain/materials/ground.tres")
 var _grass_uv: Vector2 = SlopeAtlas.grass_uv()
+var _cliff_uv: Vector2 = SlopeAtlas.cliff_uv()
 var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
 var _water_material: Material = load("res://terrain/materials/water.tres") if ResourceLoader.exists("res://terrain/materials/water.tres") else load("res://terrain/materials/ground.tres")
 
@@ -53,6 +54,19 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var v01 := Vector3(x0, TerrainSurfaceField.surface_y(region, x0, z1), z1)
 			_tri(st, v00, v10, v11)
 			_tri(st, v00, v11, v01)
+	# Cliff walls: where a cardinal neighbour is ≥2 storeys lower, drop a vertical rock
+	# quad along the shared edge into the SAME SurfaceTool (so it welds + normals +
+	# collides as one mesh, one material).
+	var lo_cx := chunk.x * CELLS_PER_CHUNK
+	var lo_cz := chunk.y * CELLS_PER_CHUNK
+	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
+		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
+			var s: int = region.storey_at(cx, cz)
+			var h_hi: float = region.surface_height(cx, cz)
+			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				if s - int(region.storey_at(cx + dir.x, cz + dir.y)) >= 2:
+					_emit_wall(st, cx, cz, dir, h_hi, region.surface_height(cx + dir.x, cz + dir.y))
+
 	# Weld coincident grid vertices BEFORE generating normals so shared vertices get
 	# averaged (smooth) normals instead of per-face (flat) ones — this is what makes
 	# the slopes read as smooth curves rather than angular facets.
@@ -129,3 +143,22 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 	for v in [a, b, c]:
 		st.set_uv(_grass_uv)
 		st.add_vertex(v)
+
+# A vertical quad along the shared cell edge, rock UV, face toward `dir`.
+func _emit_wall(st: SurfaceTool, cx: int, cz: int, dir: Vector2i, y_hi: float, y_lo: float) -> void:
+	var ccx := float(cx) * TILE
+	var ccz := float(cz) * TILE
+	# Edge endpoints (the boundary line perpendicular to dir), at the cell's +dir edge.
+	var ex := ccx + float(dir.x) * (TILE * 0.5)
+	var ez := ccz + float(dir.y) * (TILE * 0.5)
+	# Perp axis along the edge:
+	var perp := Vector2(float(dir.y), float(dir.x)) * (TILE * 0.5)   # half-edge offset
+	var p0 := Vector2(ex - perp.x, ez - perp.y)
+	var p1 := Vector2(ex + perp.x, ez + perp.y)
+	var t0 := Vector3(p0.x, y_hi, p0.y)
+	var t1 := Vector3(p1.x, y_hi, p1.y)
+	var b0 := Vector3(p0.x, y_lo, p0.y)
+	var b1 := Vector3(p1.x, y_lo, p1.y)
+	# Wind both triangles so the face points outward (+dir).
+	for v in [t0, t1, b1, t0, b1, b0]:
+		st.set_uv(_cliff_uv); st.add_vertex(v)
