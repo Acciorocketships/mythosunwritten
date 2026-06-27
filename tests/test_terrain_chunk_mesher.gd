@@ -76,3 +76,22 @@ func test_chunk_emits_cliff_wall():
 	var walls := cliffs.find_child("Walls", true, false) as MultiMeshInstance3D
 	assert_gt(walls.multimesh.instance_count, 0, "cliff dressing produced wall pieces")
 	node.free()
+
+func test_no_grass_quad_climbs_the_cliff_face():
+	# The grass surface must NOT include the boundary-straddling quad that climbs from the
+	# low ground up the cliff face (the "slope goes up into the cliff" bug). Such a triangle
+	# has a large vertical extent over a tiny horizontal footprint; legit slopes are gentle
+	# (≤1 storey spread over a full cell). Welded vertex normals hid this, so test geometry.
+	var p := Plan.new(11, 32.0, 8, "mean", 3)
+	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)  # 3-storey cliff at cell 3|4
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var idx: PackedInt32Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_INDEX]
+	var worst := 0.0
+	for t in range(0, idx.size(), 3):
+		var a := verts[idx[t]]; var b := verts[idx[t + 1]]; var c := verts[idx[t + 2]]
+		var y_ext: float = maxf(maxf(a.y, b.y), c.y) - minf(minf(a.y, b.y), c.y)
+		worst = maxf(worst, y_ext)
+	assert_lt(worst, 6.0, "no grass triangle spans a cliff's height (no climbing face)")
+	node.free()

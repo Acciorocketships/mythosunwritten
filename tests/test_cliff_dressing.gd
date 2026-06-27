@@ -44,12 +44,23 @@ func test_wall_extends_below_neighbour() -> void:
 	assert_gt((data["wall"] as Array).size(), 0, "a 2-storey cliff produces wall pieces")
 	assert_lt(_min_y(data["wall"]), 0.0, "wall over-extends below the neighbour ground (y=0)")
 
-# --- issue 4: low-side slope renders up to the wall --------------------------
-func test_low_side_slope_quad_not_skipped() -> void:
-	var r = _region_side(2)
-	var m = Mesher.new()
-	assert_false(m._spans_cliff(r, 21.0, 24.0, -3.0, 0.0), "low-side slope quad renders")
-	assert_true(m._spans_cliff(r, 9.5, 12.0, -3.0, 0.0), "cliff-top lip strip is omitted")
+# --- issue 4 (gap): the low ground tucks flat to the cliff wall base ----------
+func test_low_ground_reaches_the_cliff_wall_base() -> void:
+	# The boundary-straddling quad is tucked flat at the LOW height (not skipped, not a
+	# climbing ramp), so low grass reaches the cliff boundary and meets the wall base — no
+	# gap. Cliff at cell 3|4 → boundary world x = 84; low ground sits at y≈0.
+	var p := Plan.new(11, 32.0, 8, "mean", 3)
+	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var reaches := false
+	for v in verts:
+		if absf(v.x - 84.0) < 2.1 and v.y < 1.0:
+			reaches = true
+			break
+	assert_true(reaches, "low ground grass reaches the cliff boundary (no base gap)")
+	node.free()
 
 # --- issue 3: outer (convex) corner piece ------------------------------------
 func test_outer_corner_piece_present() -> void:

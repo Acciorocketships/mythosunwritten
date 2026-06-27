@@ -24,6 +24,8 @@ const STOREY := 4.0
 const EDGE := 12.0          # piece sits at the cell boundary (the low slope reaches it)
 const EXTRA_WALL_ROWS := 2  # over-extend the wall below the neighbour so a sloping base
                             # never exposes a gap under the wall
+const LIP_LIFT := 0.05      # raise the grass lip a hair so it cleanly overlays the field
+                            # grass (which now renders to the boundary) instead of z-fighting
 const END := 10.5           # the |offset| of an edge's two end pieces (the corner slots)
 const OFFSETS := [-10.5, -7.5, -4.5, -1.5, 1.5, 4.5, 7.5, 10.5]
 const CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -75,7 +77,7 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				if cliff.get(-pp, false) or int(region.storey_at(cx - pp.x, cz - pp.y)) < s:
 					continue
 			var base: Vector3 = cellpos + edge + perp * off
-			out["lip"].append(Transform3D(basis, base))
+			out["lip"].append(Transform3D(basis, base + Vector3(0.0, LIP_LIFT, 0.0)))
 			for k in (drop + EXTRA_WALL_ROWS):
 				out["wall"].append(Transform3D(basis, base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 
@@ -88,14 +90,14 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 		if cliff.get(ca, false) and cliff.get(cb, false):
 			# Convex (outer) corner where two cliff edges meet (issue 3).
 			var dr: int = maxi(_drop(region, cx, cz, ca), _drop(region, cx, cz, cb))
-			out["outer_lip"].append(Transform3D(cbasis, cpos))
+			out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, LIP_LIFT, 0.0)))
 			for k in (dr + EXTRA_WALL_ROWS):
 				out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 		elif (not cliff.get(ca, false)) and (not cliff.get(cb, false)):
 			# Concave (inner) corner: the diagonal neighbour drops but the cardinals don't (issue 2).
 			var ddrop: int = s - int(region.storey_at(cx + cdir.x, cz + cdir.y))
 			if ddrop >= 2:
-				out["inner_lip"].append(Transform3D(cbasis, cpos))
+				out["inner_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, LIP_LIFT, 0.0)))
 				for k in (ddrop + EXTRA_WALL_ROWS):
 					out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 

@@ -48,14 +48,24 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var x1 := x0 + STEP
 			var z0 := o.y + iz * STEP
 			var z1 := z0 + STEP
-			# Omit grass quads where the KayKit wall/lip will sit (the vertical cliff face and
-			# the lip strip) so they don't z-fight the field grass.
-			if _spans_cliff(region, x0, x1, z0, z1):
-				continue
-			var v00 := Vector3(x0, TerrainSurfaceField.surface_y(region, x0, z0), z0)
-			var v10 := Vector3(x1, TerrainSurfaceField.surface_y(region, x1, z0), z0)
-			var v11 := Vector3(x1, TerrainSurfaceField.surface_y(region, x1, z1), z1)
-			var v01 := Vector3(x0, TerrainSurfaceField.surface_y(region, x0, z1), z1)
+			var y00 := TerrainSurfaceField.surface_y(region, x0, z0)
+			var y10 := TerrainSurfaceField.surface_y(region, x1, z0)
+			var y11 := TerrainSurfaceField.surface_y(region, x1, z1)
+			var y01 := TerrainSurfaceField.surface_y(region, x0, z1)
+			# A quad whose corners straddle a CLIFF drop (a near-vertical face: >2m over one
+			# ~2u step, impossible for a real ≤18° slope) must not render as grass climbing the
+			# cliff. Flatten it to its CENTRE cell's height: this lands the cliff seam exactly on
+			# the cell boundary (where the wall + lip sit), so the plateau and the low ground
+			# each render right up to the boundary with no gap and no climbing face between them.
+			var y_lo: float = minf(minf(y00, y10), minf(y11, y01))
+			var y_hi: float = maxf(maxf(y00, y10), maxf(y11, y01))
+			if y_hi - y_lo > 2.0:
+				var yc := TerrainSurfaceField.surface_y(region, (x0 + x1) * 0.5, (z0 + z1) * 0.5)
+				y00 = yc; y10 = yc; y11 = yc; y01 = yc
+			var v00 := Vector3(x0, y00, z0)
+			var v10 := Vector3(x1, y10, z0)
+			var v11 := Vector3(x1, y11, z1)
+			var v01 := Vector3(x0, y01, z1)
 			_tri(st, v00, v10, v11)
 			_tri(st, v00, v11, v01)
 	# Cliff walls: where a cardinal neighbour is ≥2 storeys lower, drop a vertical quad
@@ -167,26 +177,6 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 	for v in [a, b, c]:
 		st.set_uv(_grass_uv)
 		st.add_vertex(v)
-
-const HALF := TILE * 0.5         # 12.0
-const LIP_DEPTH := 2.75          # = the KayKit lip piece depth, so field grass meets it (no gap)
-
-# Omit a grass quad ONLY on the cliff-TOP side, in the lip strip next to a ≥2 edge (so
-# the KayKit lip isn't z-fought by field grass). The LOW side renders fully so its slope
-# runs right up to (and visually under) the wall — no gap beside the cliff.
-func _spans_cliff(region, x0: float, x1: float, z0: float, z1: float) -> bool:
-	var cx := int(roundf((x0 + x1) * 0.5 / TILE))
-	var cz := int(roundf((z0 + z1) * 0.5 / TILE))
-	if not TerrainSurfaceField._is_cliff_top(region, cx, cz):
-		return false
-	var sc := int(region.storey_at(cx, cz))
-	var lxc := (x0 + x1) * 0.5 - float(cx) * TILE
-	var lzc := (z0 + z1) * 0.5 - float(cz) * TILE
-	if sc - int(region.storey_at(cx + 1, cz)) >= 1 and lxc > HALF - LIP_DEPTH: return true
-	if sc - int(region.storey_at(cx - 1, cz)) >= 1 and lxc < -HALF + LIP_DEPTH: return true
-	if sc - int(region.storey_at(cx, cz + 1)) >= 1 and lzc > HALF - LIP_DEPTH: return true
-	if sc - int(region.storey_at(cx, cz - 1)) >= 1 and lzc < -HALF + LIP_DEPTH: return true
-	return false
 
 # A vertical quad along the shared cell edge, rock UV, face toward `dir`.
 func _emit_wall(st: SurfaceTool, cx: int, cz: int, dir: Vector2i, y_hi: float, y_lo: float) -> void:

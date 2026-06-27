@@ -16,10 +16,14 @@ func test_flat_at_cell_centre():
 	# At the centre of a neighbour cell, its own height.
 	assert_almost_eq(Field.surface_y(r, 24.0, 0.0), r.surface_height(1, 0), 0.001)
 
-func test_flat_interior_is_constant():
-	var r := _region()
-	# Within the inner half of cell (0,0) the top is flat (no ramp yet near centre).
-	assert_almost_eq(Field.surface_y(r, 2.0, -2.0), r.surface_height(0, 0), 0.001)
+func test_slope_ramps_over_full_half_cell():
+	# A 1-storey slope must ramp the WHOLE half-cell like the old SlopeProfile.edge_height
+	# (4m drop over CELL=12u ≈ 18°), NOT cram it into the outer ~6u (≈34°, angular & hard
+	# to climb). At the half-way point (x=6 toward the lower +x edge) the surface should be
+	# ~half-dropped (≈2.0), and it must already be descending well before the outer band.
+	var r := _region()   # cell (0,0)=4.0, neighbours 0.0
+	assert_almost_eq(Field.surface_y(r, 6.0, 0.0), 2.0, 0.3, "half-way along the slope is ~half-dropped")
+	assert_lt(Field.surface_y(r, 3.0, 0.0), 3.9, "already descending in the inner half (gentle full-width ramp)")
 
 func test_ramps_down_to_lower_cardinal():
 	var r := _region()   # cell (0,0)=4.0, neighbours=0.0

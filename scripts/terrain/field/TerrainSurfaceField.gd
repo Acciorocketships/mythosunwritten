@@ -15,14 +15,14 @@ const _CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0
 static func _cell_of(v: float) -> int:
 	return int(roundf(v / TILE))
 
-# Ramp band occupies the OUTER half of the cell (matching SlopeProfile's 50% slope
-# band): weight 0 across the inner half (off <= HALF*0.5, cell stays flat), rising via
-# smootherstep to 1 at the cell edge (off == HALF) so it reaches the neighbour height
-# exactly at the shared seam. `off_along_dir` runs 0 (centre) .. HALF (edge); the
-# opposite half of the cell yields off < 0 → weight 0 (flat).
-const _BAND := HALF * 0.5   # inner half flat, outer half ramps
+# Ramp the full drop over the whole half-cell, EXACTLY like the old SlopeProfile.edge_height
+# (4m over CELL=12u ≈ 18°, smooth & walkable). `off_along_dir` runs 0 (centre, weight 0) ..
+# HALF (edge, weight 1) so the drop reaches the neighbour height at the shared seam.
+# smootherstep is flat at both ends, so the centre stays level and the seam tangent is 0.
+# (The previous outer-half-only band crammed the drop into ~6u ≈ 34° — angular & barely
+# climbable; this restores the gentle slopes the owner liked in the old slope tiles.)
 static func _edge_weight(off_along_dir: float) -> float:
-	return SlopeProfile.smootherstep(clampf((off_along_dir - _BAND) / _BAND, 0.0, 1.0))
+	return SlopeProfile.smootherstep(clampf(off_along_dir / HALF, 0.0, 1.0))
 
 const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 
