@@ -18,3 +18,9 @@ func test_grass_uv_samples_green() -> void:
 		int(clampf(uv.y, 0.0, 0.999) * img.get_height()))
 	assert_gt(px.g, px.r)
 	assert_gt(px.g, px.b)
+
+func test_cliff_uv_differs_from_grass():
+	var grass := SlopeAtlas.grass_uv()
+	var cliff := SlopeAtlas.cliff_uv()
+	assert_true(cliff is Vector2)
+	assert_false(grass.is_equal_approx(cliff), "rock swatch is a different texel than grass")
