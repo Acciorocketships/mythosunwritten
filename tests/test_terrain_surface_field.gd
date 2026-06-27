@@ -78,3 +78,21 @@ func test_concave_corner_only_far_vertex_dips():
 	assert_almost_eq(Field.surface_y(r, 0.0, 12.0), 4.0, 0.05)
 	# ...only the far +x+z corner dips toward the lower diagonal cell.
 	assert_lt(Field.surface_y(r, 11.5, 11.5), 4.0)
+
+func _region_cliff():
+	# cell (0,0) at storey 3 (12m); +x neighbour at storey 0 (a 3-storey cliff). max_step=3.
+	var plan := Plan.new(0, 32.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx, cz):
+		return 12.0 if cx <= 0 else 0.0)
+	return plan.compute_region(0, 0, 8)
+
+func test_cliff_top_is_flat_to_edge():
+	var r: HeightfieldRegion = _region_cliff()
+	# Across the whole cell toward the +x cliff edge the top stays at 12.0 (no ramp).
+	assert_almost_eq(Field.surface_y(r, 0.0, 0.0), 12.0, 0.01)
+	assert_almost_eq(Field.surface_y(r, 11.9, 0.0), 12.0, 0.01, "flat right up to the cliff edge")
+
+func test_one_storey_neighbour_still_ramps():
+	# Reuse the existing 1-storey region: it must still slope (SP1 behaviour preserved).
+	var r := _region()    # cell (0,0)=4.0, neighbours 0.0  (from earlier tests)
+	assert_lt(Field.surface_y(r, 11.9, 0.0), 4.0, "1-storey drop still ramps")

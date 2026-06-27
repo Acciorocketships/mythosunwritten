@@ -36,9 +36,17 @@ static func surface_y(region, x: float, z: float) -> float:
 	var dz_sign := 1 if lz >= 0.0 else -1
 	var a := _edge_weight(lx * float(dx_sign))                 # weight toward facing x-edge
 	var b := _edge_weight(lz * float(dz_sign))                 # weight toward facing z-edge
-	var d_x: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz))
-	var d_z: float = maxf(0.0, h - region.surface_height(cx, cz + dz_sign))
-	var d_d: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz + dz_sign))
+	var s: int = region.storey_at(cx, cz)
+	# A neighbour only contributes a (walkable) ramp when it's at most 1 storey lower;
+	# a ≥2-storey-lower neighbour is a CLIFF — this cell stays flat to that edge and the
+	# mesher drops a vertical wall there instead.
+	var step_x: int = s - region.storey_at(cx + dx_sign, cz)
+	var step_z: int = s - region.storey_at(cx, cz + dz_sign)
+	var step_d: int = s - region.storey_at(cx + dx_sign, cz + dz_sign)
+	var d_x: float = (h - region.surface_height(cx + dx_sign, cz)) if (step_x >= 0 and step_x <= 1) else 0.0
+	var d_z: float = (h - region.surface_height(cx, cz + dz_sign)) if (step_z >= 0 and step_z <= 1) else 0.0
+	var d_d: float = (h - region.surface_height(cx + dx_sign, cz + dz_sign)) if (step_d >= 0 and step_d <= 1) else 0.0
+	d_x = maxf(0.0, d_x); d_z = maxf(0.0, d_z); d_d = maxf(0.0, d_d)
 	var drop := 0.0
 	if d_x > 0.0 or d_z > 0.0:
 		# Convex corner (at least one cardinal drops). Gate each facing edge weight by
