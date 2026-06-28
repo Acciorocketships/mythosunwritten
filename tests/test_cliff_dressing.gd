@@ -125,6 +125,20 @@ func test_outer_corner_piece_present() -> void:
 	assert_gt((data["outer_wall"] as Array).size(), 0, "convex corner produces an outer-corner wall")
 	assert_gt((data["outer_lip"] as Array).size(), 0, "convex corner produces an outer-corner lip")
 
+# --- owner pic 1: a 1-storey edge + a ≥2 DIAGONAL drop must not see through -----
+func test_step_corner_covers_diagonal_cliff() -> void:
+	# (0,0) is a cliff top (its +x+z diagonal is 2 storeys below). +x drops 1 (a wall edge), +z
+	# is level. That corner is neither convex (both edges) nor concave (both level), so the
+	# diagonal cliff face used to get NO piece → see-through. It must now get an outer (step) corner.
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 12.0    # diagonal pit, 2 storeys down
+		if cx == 1 and cz == 0: return 16.0    # +x neighbour, 1 storey down
+		return 20.0)
+	var data = Dress.compute(plan.compute_region(0, 0, 8), 0, 0, 1)
+	assert_gt((data["outer_wall"] as Array).size(), 0, "step corner covers the diagonal cliff face")
+	assert_eq((data["inner_wall"] as Array).size(), 0, "it is an outer/step corner, not an inner one")
+
 # --- issue 2: inner (concave) corner piece -----------------------------------
 func test_inner_corner_piece_present() -> void:
 	var data = Dress.compute(_region_inner(2), -2, -2, 5)

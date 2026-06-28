@@ -84,19 +84,25 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 		var cb := Vector2i(0, cdir.y)
 		var cbasis := Basis(Vector3.UP, atan2(float(cdir.x), float(cdir.y)) - PI * 0.25)
 		var cpos: Vector3 = cellpos + Vector3(float(cdir.x) * EDGE, 0.0, float(cdir.y) * EDGE)
+		var ddrop: int = s - int(region.storey_at(cx + cdir.x, cz + cdir.y))
 		if cliff.get(ca, false) and cliff.get(cb, false):
-			# Convex (outer) corner where two cliff edges meet (issue 3).
-			var dr: int = maxi(_drop(region, cx, cz, ca), _drop(region, cx, cz, cb))
+			# Convex (outer) corner where two cliff edges meet.
+			var dr: int = maxi(maxi(_drop(region, cx, cz, ca), _drop(region, cx, cz, cb)), ddrop)
 			out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
-			for k in (dr + EXTRA_WALL_ROWS):
+			for k in dr:
 				out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-		elif (not cliff.get(ca, false)) and (not cliff.get(cb, false)):
-			# Concave (inner) corner: the diagonal neighbour drops but the cardinals don't (issue 2).
-			var ddrop: int = s - int(region.storey_at(cx + cdir.x, cz + cdir.y))
-			if ddrop >= 2:
-				out["inner_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
-				for k in (ddrop + EXTRA_WALL_ROWS):
-					out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+		elif ddrop >= 2 and (cliff.get(ca, false) or cliff.get(cb, false)):
+			# STEP corner: ONE cardinal is a cliff edge and the DIAGONAL drops ≥2 — the cliff
+			# turns the corner. Without a piece here that diagonal face is uncovered → you see
+			# through it (owner pic 1). An outer corner covers it.
+			out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+			for k in ddrop:
+				out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+		elif ddrop >= 2:
+			# Concave (inner) corner: the diagonal neighbour drops but the cardinals don't.
+			out["inner_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+			for k in ddrop:
+				out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 
 static func build(region, lo_cx: int, lo_cz: int, cells: int) -> Node3D:
 	_ensure_loaded()
