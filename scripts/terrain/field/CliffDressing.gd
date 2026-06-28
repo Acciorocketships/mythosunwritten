@@ -47,20 +47,27 @@ static func _drop(region, cx: int, cz: int, dir: Vector2i) -> int:
 	return int(region.storey_at(cx, cz)) - int(region.storey_at(cx + dir.x, cz + dir.y))
 
 static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
-	# Only a CLIFF TOP (flat plateau with a ≥2 drop somewhere) is dressed; its WALL EDGES get a
-	# rock wall + grass lip (TerrainSurfaceField._is_wall_edge: a ≥2 drop, or a 1-storey step to
-	# another cliff top). 1-storey drops to non-cliff cells are walkable slopes (no lip), so the
-	# flat top always backs every lip. A pure slope/flat cell has nothing to dress.
-	if not TerrainSurfaceField._is_cliff_top(region, cx, cz):
-		return
+	# Dress each CLIFF EDGE of this cell (TerrainSurfaceField._is_wall_edge: a ≥2 drop, or a
+	# 1-storey drop COLLINEAR with a ≥2 cliff — a cliff's tapering end). The lip follows the
+	# actual terrain height at each piece, so a cliff edge can run along a cell that also slopes.
+	# A cell with no cliff edge and no diagonal-cliff corner is pure slope → nothing to dress.
 	var s: int = region.storey_at(cx, cz)
 	var cliff := {}
+	var any := false
 	for dir in CARDINALS:
 		cliff[dir] = TerrainSurfaceField._is_wall_edge(region, cx, cz, dir)
+		if cliff[dir]:
+			any = true
+	var diag_cliff := false
+	for cdir in CORNERS:
+		if s - int(region.storey_at(cx + cdir.x, cz + cdir.y)) >= 2:
+			diag_cliff = true
+	if not any and not diag_cliff:
+		return
 	var h: float = region.surface_height(cx, cz)
 	var cellpos := Vector3(float(cx) * TILE, h, float(cz) * TILE)
 
-	# --- straight edges (with corner/slope-aware extent, issue 5) ---
+	# --- straight edges ---
 	for dir in CARDINALS:
 		if not cliff[dir]:
 			continue
@@ -68,15 +75,14 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 		var basis := Basis(Vector3.UP, _angle(dir))
 		var edge := Vector3(float(dir.x) * EDGE, 0.0, float(dir.y) * EDGE)
 		var perp := Vector3(float(dir.y), 0.0, float(dir.x))
-		# Cover the cell's FULL cliff-edge width (all offsets). Corner pieces overlap the end
-		# pieces (rock-on-rock, invisible) rather than the ends being dropped — dropping them
-		# left a gap between edge and corner. Corner lips sit slightly higher (see corners) so
-		# they win the small grass overlap without z-fighting.
+		var inset := Vector3(float(dir.x), 0.0, float(dir.y)) * 0.5   # toward cell interior
 		for off: float in OFFSETS:
 			var base: Vector3 = cellpos + edge + perp * off
-			out["lip"].append(Transform3D(basis, base + Vector3(0.0, LIP_LIFT, 0.0)))
+			# Lip sits at the terrain height just inside the edge (follows a sloping top).
+			var topy: float = TerrainSurfaceField.surface_y(region, base.x - inset.x, base.z - inset.z)
+			out["lip"].append(Transform3D(basis, Vector3(base.x, topy + LIP_LIFT, base.z)))
 			for k in (drop + EXTRA_WALL_ROWS):
-				out["wall"].append(Transform3D(basis, base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+				out["wall"].append(Transform3D(basis, Vector3(base.x, topy - STOREY * float(k + 1), base.z)))
 
 	# --- corners ---
 	for cdir in CORNERS:

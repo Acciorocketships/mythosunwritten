@@ -12,39 +12,23 @@ const Mesher := preload("res://scripts/terrain/field/TerrainChunkMesher.gd")
 const Plan := preload("res://scripts/terrain/heightfield/HeightfieldPlan.gd")
 const Field := preload("res://scripts/terrain/field/TerrainSurfaceField.gd")
 
-# Owner round 4: a grass lip must never overhang into midair or be undercut by a slope behind
-# it. Invariant that guarantees this: a cell that carries a lip is a CLIFF TOP, and a cliff top
-# is FLAT across its whole surface — so the terrain directly behind every lip is flat at the
-# lip's height. Checked over several real seeds AND every lip piece compute() emits.
-func test_every_lip_is_backed_by_flat_terrain() -> void:
+# A grass lip must sit ON the terrain — never float above it (midair) or below it (buried).
+# Cliff edges may now run along a SLOPING cell, so the lip FOLLOWS the surface height rather
+# than a flat cliff-top height. Invariant: every lip's y matches surface_y just behind it (into
+# the cell). Checked over several real seeds for every lip compute() emits.
+func test_every_lip_sits_on_the_terrain() -> void:
 	for seed in [1, 7, 13, 42, 99, 123]:
 		var plan := Plan.new(seed, 22.0, 8, "mean", 3)
 		var region = plan.compute_region(0, 0, 16)
-		# 1. Every cliff-top cell is flat across its whole top (so any lip on it is backed).
-		for cz in range(-7, 8):
-			for cx in range(-7, 8):
-				if not Field._is_cliff_top(region, cx, cz):
-					continue
-				var h: float = region.surface_height(cx, cz)
-				for oz in [-11.0, -6.0, 0.0, 6.0, 11.0]:
-					for ox in [-11.0, -6.0, 0.0, 6.0, 11.0]:
-						var y := Field.surface_y(region, cx * 24.0 + ox, cz * 24.0 + oz)
-						assert_almost_eq(y, h, 0.05,
-							"seed %d cliff-top (%d,%d) must be flat behind its lip" % [seed, cx, cz])
-		# 2. Every straight lip is anchored on a cliff top, and the terrain right behind it (into
-		#    the cell) is flat at the cliff height — no gap, no dip, no overhang into midair.
 		var data = Dress.compute(region, -6, -6, 13)
 		for t in (data["lip"] as Array):
 			var xf := t as Transform3D
 			var drop_dir := (xf.basis * Vector3(0, 0, 1)).normalized()   # toward the drop
-			var ccx := int(round((xf.origin.x - drop_dir.x * 12.0) / 24.0))
-			var ccz := int(round((xf.origin.z - drop_dir.z * 12.0) / 24.0))
-			assert_true(Field._is_cliff_top(region, ccx, ccz),
-				"seed %d lip at %s must sit on a cliff top" % [seed, str(xf.origin)])
-			var back := xf.origin - drop_dir * 2.0      # 2u behind the edge, into the cell
+			var back := xf.origin - drop_dir * 1.0      # 1u behind the edge, into the cell
 			var yb := Field.surface_y(region, back.x, back.z)
-			assert_almost_eq(yb, region.surface_height(ccx, ccz), 0.05,
-				"seed %d terrain behind lip at %s must be flat at cliff height" % [seed, str(xf.origin)])
+			# lip is lifted a hair (LIP_LIFT/CORNER_LIP_LIFT ≤ 0.1) above the terrain it follows
+			assert_almost_eq(xf.origin.y, yb, 0.35,
+				"seed %d lip at %s must sit on the terrain behind it (%.2f)" % [seed, str(xf.origin), yb])
 
 # cell (0,0) is a cliff top `drop` storeys above its +x neighbour (one straight cliff edge).
 func _region_side(drop: int):
@@ -85,17 +69,23 @@ func test_wall_spans_exactly_to_neighbour() -> void:
 	assert_almost_eq((ys as Array).min(), 0.0, 0.6, "wall bottom sits at the neighbour ground (y≈0)")
 	assert_gte((ys as Array).max(), 4.0, "wall covers up the cliff face")
 
-func test_one_storey_drop_to_noncliff_is_not_walled() -> void:
-	# Owner pic 3: a cliff top's 1-storey drop to a NON-cliff cell is a walkable slope, not a wall —
-	# so it must NOT spawn a wall (and hence no spurious corner) on that side. (0,0) is a cliff top
-	# via its ≥2 DIAGONAL drop; its +x neighbour is one storey down and is NOT a cliff top.
+func test_one_storey_taper_collinear_with_cliff_is_a_wall() -> void:
+	# Owner: a cliff's ≥2 face that tapers to a 1-storey drop should CONTINUE as one cliff edge
+	# down its tapering end (collinear), while a LONE 1-storey drop stays a slope.
+	# Row of +z drops along x: (-1,0)→3 storeys, (0,0)→1 storey (the taper), (1,0)→0 (flat).
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 8.0     # diagonal pit, 2 storeys down → (0,0) is a cliff top
-		if cx == 1 and cz == 0: return 12.0    # +x neighbour one storey down (a slope, NOT a cliff top)
-		return 16.0)
+		if cz >= 1: return 0.0                         # everything south is low
+		if cx == -1: return 12.0                       # the ≥2 cliff (storey3 → 0 south)
+		if cx == 0: return 4.0                          # the 1-storey taper (storey1 → 0 south)
+		return 4.0)                                     # cx≥1: storey1 but south is also storey1 → no drop
 	var r = plan.compute_region(0, 0, 8)
-	assert_false(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)), "1-storey drop to a non-cliff cell is a slope, not a wall")
+	# (0,0)'s +z is a 1-storey drop COLLINEAR with (-1,0)'s ≥2 +z cliff → a wall edge.
+	assert_true(Field._is_wall_edge(r, 0, 0, Vector2i(0, 1)), "1-storey taper collinear with a cliff continues the edge")
+	# A lone 1-storey drop with no cliff in line stays a slope.
+	var plan2 := Plan.new(0, 64.0, 12, "mean", 4)
+	plan2.set_raw_height_override(func(cx, cz): return 4.0 if cz <= 0 else 0.0)   # uniform 1-storey step
+	assert_false(Field._is_wall_edge(plan2.compute_region(0, 0, 8), 0, 0, Vector2i(0, 1)), "lone 1-storey drop is a slope")
 
 # --- issue 4 (gap): the low ground tucks flat to the cliff wall base ----------
 func test_low_ground_reaches_the_cliff_wall_base() -> void:
