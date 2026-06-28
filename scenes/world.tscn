@@ -1,10 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://ceognrw5418ks"]
+[gd_scene load_steps=11 format=3 uid="uid://ceognrw5418ks"]
 
 [ext_resource type="Script" uid="uid://dyg0hh4n6mt05" path="res://scripts/camera/camera.gd" id="1_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://1isaxxqlfqe8" path="res://characters/character.tscn" id="1_nnsk1"]
 [ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://scripts/controllers/player_controller.gd" id="2_rwgxs"]
 [ext_resource type="PackedScene" path="res://terrain/water/WaterSurface.tscn" id="5_water"]
 [ext_resource type="Script" uid="uid://dys71w0rl7skp" path="res://scripts/terrain/field/FieldTerrainStreamer.gd" id="10_field"]
+[ext_resource type="Script" path="res://scripts/terrain/tools/CoordOverlay.gd" id="20_overlay"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_world"]
 sky_top_color = Color(0.27, 0.46, 0.75, 1)
@@ -58,3 +59,6 @@ terrain_parent = NodePath(".")
 
 [node name="Character" parent="Characters" instance=ExtResource("1_nnsk1")]
 controller = SubResource("Resource_rwgxs")
+
+[node name="CoordOverlay" type="CanvasLayer" parent="."]
+script = ExtResource("20_overlay")
