@@ -12,7 +12,7 @@ const SAMPLES_PER_CELL := 12
 const CHUNK_WORLD := TILE * CELLS_PER_CHUNK          # 192
 const STEP := TILE / SAMPLES_PER_CELL                # 3.0
 const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 64 quads per axis
-const SEA_LEVEL := 0.0
+const SEA_LEVEL := 2.0   # water surface ~half a storey above the storey-0 basin floor (a shallow pool)
 
 const FOLIAGE_SCENES := {
 	"grass": ["res://terrain/scenes/grass/Grass1.tscn", "res://terrain/scenes/grass/Grass2.tscn", "res://terrain/scenes/grass/Grass3.tscn"],
@@ -100,7 +100,10 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	mi.mesh = st.commit()
 	root.add_child(mi)
 
-	# Water shim: flat quads at sea level over water cells
+	# Water shim: shallow pools in genuinely LOW basins only. The river/pond noise (is_water)
+	# is height-agnostic, so without this gate it drops a quad at sea level under high terrain
+	# too — which then peeks out as stray blue in adjacent low ground. Only emit water where the
+	# cell floor is at/below the water line, and sit the surface SEA_LEVEL above the floor.
 	var wst := SurfaceTool.new()
 	wst.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var any_water := false
@@ -108,6 +111,8 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 		for cx in range(chunk.x * CELLS_PER_CHUNK, chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
 			var wc := Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
 			if not Helper.is_water(wc, _water_seed):
+				continue
+			if region.surface_height(cx, cz) > SEA_LEVEL:   # only basins at/below the water line
 				continue
 			any_water = true
 			var x0 := wc.x - TILE * 0.5; var x1 := wc.x + TILE * 0.5

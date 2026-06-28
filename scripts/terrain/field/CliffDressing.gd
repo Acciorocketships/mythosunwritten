@@ -22,8 +22,9 @@ const SCENES := {
 const TILE := 24.0
 const STOREY := 4.0
 const EDGE := 12.0          # piece sits at the cell boundary (the low slope reaches it)
-const EXTRA_WALL_ROWS := 2  # over-extend the wall below the neighbour so a sloping base
-                            # never exposes a gap under the wall
+const EXTRA_WALL_ROWS := 0  # the wall spans exactly the storey drop (cliff top → neighbour
+                            # surface). Over-extending hangs the wall BELOW the neighbour's
+                            # thin surface, where it sticks out into open air (a visible slab).
 const LIP_LIFT := 0.05      # raise the grass lip a hair so it cleanly overlays the field
                             # grass (which now renders to the boundary) instead of z-fighting
 const CORNER_LIP_LIFT := 0.10  # corner lips sit above edge lips so they win the small overlap

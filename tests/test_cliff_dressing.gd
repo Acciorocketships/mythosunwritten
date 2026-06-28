@@ -73,11 +73,33 @@ func _min_y(transforms: Array) -> float:
 		out = minf(out, (t as Transform3D).origin.y)
 	return out
 
-# --- issue 1: wall extends all the way down ----------------------------------
-func test_wall_extends_below_neighbour() -> void:
-	var data = Dress.compute(_region_side(2), -2, -2, 5)
-	assert_gt((data["wall"] as Array).size(), 0, "a 2-storey cliff produces wall pieces")
-	assert_lt(_min_y(data["wall"]), 0.0, "wall over-extends below the neighbour ground (y=0)")
+# --- the wall spans the drop and STOPS at the neighbour (no jutting slab) ------
+func test_wall_spans_exactly_to_neighbour() -> void:
+	# Cliff top storey 2 (y=8) over a storey-0 neighbour (y=0). The wall must cover the whole
+	# face (8→0) and bottom out AT the neighbour — never hang far below it, which would stick
+	# out under the neighbour's thin surface as a visible slab (the owner's blue rectangle).
+	var ys := []
+	for t in (Dress.compute(_region_side(2), -2, -2, 5)["wall"] as Array):
+		ys.append((t as Transform3D).origin.y)
+	assert_gt(ys.size(), 0, "a 2-storey cliff produces wall pieces")
+	assert_almost_eq((ys as Array).min(), 0.0, 0.6, "wall bottom sits at the neighbour ground (y≈0)")
+	assert_gte((ys as Array).max(), 4.0, "wall covers up the cliff face")
+
+func test_one_storey_edge_wall_does_not_overhang() -> void:
+	# The owner's "blue rectangle": a cliff top (made so by a ≥2 DIAGONAL drop) with a 1-storey
+	# CARDINAL drop. That edge's wall must span only the one storey (16→12) and bottom out at the
+	# neighbour — not hang storeys below it (which juts out under the neighbour's thin surface).
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 8.0     # diagonal pit, 2 storeys down → (0,0) is a cliff top
+		if cx >= 1 or cz >= 1: return 12.0      # +x / +z neighbours one storey down
+		return 16.0)
+	var data = Dress.compute(plan.compute_region(0, 0, 8), 0, 0, 1)   # just cell (0,0)
+	var ys := []
+	for t in (data["wall"] as Array):
+		ys.append((t as Transform3D).origin.y)
+	assert_gt(ys.size(), 0, "the 1-storey edge is walled")
+	assert_gte((ys as Array).min(), 11.0, "wall bottoms at the neighbour (~12), not storeys below")
 
 # --- issue 4 (gap): the low ground tucks flat to the cliff wall base ----------
 func test_low_ground_reaches_the_cliff_wall_base() -> void:
