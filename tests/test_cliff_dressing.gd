@@ -85,21 +85,17 @@ func test_wall_spans_exactly_to_neighbour() -> void:
 	assert_almost_eq((ys as Array).min(), 0.0, 0.6, "wall bottom sits at the neighbour ground (y≈0)")
 	assert_gte((ys as Array).max(), 4.0, "wall covers up the cliff face")
 
-func test_one_storey_edge_wall_does_not_overhang() -> void:
-	# The owner's "blue rectangle": a cliff top (made so by a ≥2 DIAGONAL drop) with a 1-storey
-	# CARDINAL drop. That edge's wall must span only the one storey (16→12) and bottom out at the
-	# neighbour — not hang storeys below it (which juts out under the neighbour's thin surface).
+func test_one_storey_drop_to_noncliff_is_not_walled() -> void:
+	# Owner pic 3: a cliff top's 1-storey drop to a NON-cliff cell is a walkable slope, not a wall —
+	# so it must NOT spawn a wall (and hence no spurious corner) on that side. (0,0) is a cliff top
+	# via its ≥2 DIAGONAL drop; its +x neighbour is one storey down and is NOT a cliff top.
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
 		if cx == 1 and cz == 1: return 8.0     # diagonal pit, 2 storeys down → (0,0) is a cliff top
-		if cx >= 1 or cz >= 1: return 12.0      # +x / +z neighbours one storey down
+		if cx == 1 and cz == 0: return 12.0    # +x neighbour one storey down (a slope, NOT a cliff top)
 		return 16.0)
-	var data = Dress.compute(plan.compute_region(0, 0, 8), 0, 0, 1)   # just cell (0,0)
-	var ys := []
-	for t in (data["wall"] as Array):
-		ys.append((t as Transform3D).origin.y)
-	assert_gt(ys.size(), 0, "the 1-storey edge is walled")
-	assert_gte((ys as Array).min(), 11.0, "wall bottoms at the neighbour (~12), not storeys below")
+	var r = plan.compute_region(0, 0, 8)
+	assert_false(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)), "1-storey drop to a non-cliff cell is a slope, not a wall")
 
 # --- issue 4 (gap): the low ground tucks flat to the cliff wall base ----------
 func test_low_ground_reaches_the_cliff_wall_base() -> void:
@@ -133,7 +129,7 @@ func test_step_corner_covers_diagonal_cliff() -> void:
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
 		if cx == 1 and cz == 1: return 12.0    # diagonal pit, 2 storeys down
-		if cx == 1 and cz == 0: return 16.0    # +x neighbour, 1 storey down
+		if cx == 1 and cz == 0: return 12.0    # +x neighbour, 2 storeys down → a real wall edge
 		return 20.0)
 	var data = Dress.compute(plan.compute_region(0, 0, 8), 0, 0, 1)
 	assert_gt((data["outer_wall"] as Array).size(), 0, "step corner covers the diagonal cliff face")

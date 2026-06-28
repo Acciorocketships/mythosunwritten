@@ -101,23 +101,16 @@ func test_one_storey_neighbour_still_ramps():
 	var r := _region()    # cell (0,0)=4.0, neighbours 0.0  (from earlier tests)
 	assert_lt(Field.surface_y(r, 11.9, 0.0), 4.0, "1-storey drop still ramps")
 
-const RealPlan := preload("res://scripts/terrain/heightfield/HeightfieldPlan.gd")
-
-func test_no_cell_makes_a_dipping_slope_over_one_storey():
-	# Owner round 5: a cell must never produce a "dipping slope" that spans more than one storey
-	# (4m). A cliff top is flat; a non-cliff cell only ramps DOWN ≤1 storey (no up-ramp bulge to
-	# a higher cliff). So every cell's surface range is ≤4m. Checked across several real seeds.
-	for seed in [1, 7, 13, 42, 99, 20260628]:
-		var plan := RealPlan.new(seed, 22.0, 8, "mean", 3)
-		var region = plan.compute_region(0, 0, 16)
-		for cz in range(-7, 8):
-			for cx in range(-7, 8):
-				var lo := 1e9
-				var hi := -1e9
-				for oz in [-11.0, -5.0, 0.0, 5.0, 11.0]:
-					for ox in [-11.0, -5.0, 0.0, 5.0, 11.0]:
-						var y := Field.surface_y(region, cx * 24.0 + ox, cz * 24.0 + oz)
-						lo = minf(lo, y)
-						hi = maxf(hi, y)
-				assert_lte(hi - lo, 4.05,
-					"seed %d cell (%d,%d) surface spans >1 storey (dipping slope)" % [seed, cx, cz])
+func test_one_storey_drop_to_a_cliff_top_ramps_up_to_meet_it():
+	# A non-cliff cell one storey below a flat CLIFF TOP ramps UP to meet it (a walkable slope on
+	# this cell), so that side reads as a slope joining the top — NOT a walled corner (owner pic 3).
+	# cell (0,0)=4 (storey1); +x neighbour (1,0)=8 (storey2) which is a cliff top (it drops ≥2 to
+	# (2,0)=0). At the shared +x edge, (0,0) must rise to meet the top (≈8), not stay flat at 4.
+	var plan := Plan.new(0, 32.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 0 and cz == 0: return 4.0
+		if cx == 1 and cz == 0: return 8.0
+		return 0.0)   # (2,0)=0 makes (1,0) a cliff top; everything else low
+	var r = plan.compute_region(0, 0, 8)
+	assert_true(Field._is_cliff_top(r, 1, 0), "the +x neighbour is a cliff top")
+	assert_almost_eq(Field.surface_y(r, 11.5, 0.0), 8.0, 0.6, "cell ramps UP to meet the cliff top at the seam")
