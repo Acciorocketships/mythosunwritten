@@ -55,19 +55,20 @@ func test_adjacent_chunks_share_boundary_height():
 	assert_eq(a, b, "field is single-valued at the shared boundary")
 
 func test_chunk_emits_cliff_wall():
-	# Cliff faces are now KayKit dressing pieces + a collision-only wall — NOT vertical
-	# faces in the visible grass surface. Verify: (a) the visible surface has no vertical
-	# grass sheet at the cliff, (b) a collision wall blocks it, (c) dressing pieces exist.
+	# The cliff face is now a ROCK-textured part of the CONTINUOUS surface (so there's never a
+	# hole to see through) PLUS overlaid KayKit dressing + a collision wall. Verify: (a) the
+	# surface has rock-UV cliff-face triangles, (b) a collision wall blocks it, (c) dressing.
+	const Atlas := preload("res://scripts/terrain/tools/SlopeAtlas.gd")
+	var cliff_uv: Vector2 = Atlas.cliff_uv()
 	var p := Plan.new(11, 32.0, 8, "mean", 3)
 	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)  # cliff between cell 3 and 4
-	var m := Mesher.new()
-	var node := m.build_chunk(p, Vector2i(0, 0))
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var normals: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]
-	var vertical := 0
-	for nrm in normals:
-		if absf(nrm.y) < 0.3: vertical += 1
-	assert_eq(vertical, 0, "no vertical grass sheet in the visible surface (wall is separate)")
+	var uvs: PackedVector2Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+	var rock := 0
+	for uv in uvs:
+		if uv.is_equal_approx(cliff_uv): rock += 1
+	assert_gt(rock, 0, "cliff face is rendered as rock in the continuous surface (no hole)")
 	# A second collision shape (the invisible wall) stops the player at the cliff.
 	var body := node.find_child("Body", true, false) as StaticBody3D
 	assert_not_null(body.get_node_or_null("CollisionShape3D_walls"), "collision wall present")
@@ -77,21 +78,40 @@ func test_chunk_emits_cliff_wall():
 	assert_gt(walls.multimesh.instance_count, 0, "cliff dressing produced wall pieces")
 	node.free()
 
-func test_no_grass_quad_climbs_the_cliff_face():
-	# The grass surface must NOT include the boundary-straddling quad that climbs from the
-	# low ground up the cliff face (the "slope goes up into the cliff" bug). Such a triangle
-	# has a large vertical extent over a tiny horizontal footprint; legit slopes are gentle
-	# (≤1 storey spread over a full cell). Welded vertex normals hid this, so test geometry.
+func test_surface_is_gap_free_for_any_heightfield():
+	# The owner's requirement: gap-free terrain for ANY heightmap. The surface renders EVERY
+	# grid quad (grass or rock), so the triangle count is always GRID*GRID*2 — no quad skipped,
+	# no hole — even on wild, steep, cliff-riddled heightfields. Checked over several seeds.
+	var expected := Mesher.GRID * Mesher.GRID * 2
+	for seed in [1, 7, 42, 999]:
+		var p := Plan.new(seed, 40.0, 12, "mean", 3)
+		var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+		var mi := node.find_child("Surface", true, false) as MeshInstance3D
+		var idx: PackedInt32Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_INDEX]
+		assert_eq(idx.size() / 3, expected, "seed %d: every quad rendered (gap-free surface)" % seed)
+		node.free()
+
+func test_cliff_face_is_rock_not_climbing_grass():
+	# The surface is continuous (gap-free for any heightfield), but a boundary-straddling cliff
+	# face must be textured ROCK, not grass (the old "grass climbs the cliff" bug). So every
+	# STEEP triangle (large vertical extent over a tiny footprint) must carry the rock UV, and
+	# no grass-UV triangle may span more than a gentle slope.
+	const Atlas := preload("res://scripts/terrain/tools/SlopeAtlas.gd")
+	var grass_uv: Vector2 = Atlas.grass_uv()
 	var p := Plan.new(11, 32.0, 8, "mean", 3)
 	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)  # 3-storey cliff at cell 3|4
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var idx: PackedInt32Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_INDEX]
-	var worst := 0.0
+	var arr = mi.mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+	var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+	var worst_grass := 0.0
 	for t in range(0, idx.size(), 3):
 		var a := verts[idx[t]]; var b := verts[idx[t + 1]]; var c := verts[idx[t + 2]]
 		var y_ext: float = maxf(maxf(a.y, b.y), c.y) - minf(minf(a.y, b.y), c.y)
-		worst = maxf(worst, y_ext)
-	assert_lt(worst, 6.0, "no grass triangle spans a cliff's height (no climbing face)")
+		var is_grass := uvs[idx[t]].is_equal_approx(grass_uv)
+		if is_grass:
+			worst_grass = maxf(worst_grass, y_ext)
+	assert_lt(worst_grass, 6.0, "no GRASS triangle spans a cliff's height (cliff faces are rock)")
 	node.free()

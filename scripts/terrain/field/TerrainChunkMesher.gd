@@ -52,22 +52,20 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var y10 := TerrainSurfaceField.surface_y(region, x1, z0)
 			var y11 := TerrainSurfaceField.surface_y(region, x1, z1)
 			var y01 := TerrainSurfaceField.surface_y(region, x0, z1)
-			# A quad whose corners straddle a CLIFF drop (a near-vertical face: >2m over one
-			# ~2u step, impossible for a real ≤18° slope) must not render as grass climbing the
-			# cliff. Flatten it to its CENTRE cell's height: this lands the cliff seam exactly on
-			# the cell boundary (where the wall + lip sit), so the plateau and the low ground
-			# each render right up to the boundary with no gap and no climbing face between them.
+			# Render EVERY quad — the surface is continuous, so there is never a hole to see
+			# through, for ANY heightfield. A quad whose corners straddle a CLIFF drop (a near-
+			# vertical face: >2m over one ~2u step, impossible for a real ≤18° slope) is textured
+			# as ROCK rather than grass, so it reads as the cliff face instead of grass climbing
+			# it; the KayKit wall/lip pieces overlay this rock backing for the modelled look.
 			var y_lo: float = minf(minf(y00, y10), minf(y11, y01))
 			var y_hi: float = maxf(maxf(y00, y10), maxf(y11, y01))
-			if y_hi - y_lo > 2.0:
-				var yc := TerrainSurfaceField.surface_y(region, (x0 + x1) * 0.5, (z0 + z1) * 0.5)
-				y00 = yc; y10 = yc; y11 = yc; y01 = yc
+			var uv := _grass_uv if (y_hi - y_lo <= 2.0) else _cliff_uv
 			var v00 := Vector3(x0, y00, z0)
 			var v10 := Vector3(x1, y10, z0)
 			var v11 := Vector3(x1, y11, z1)
 			var v01 := Vector3(x0, y01, z1)
-			_tri(st, v00, v10, v11)
-			_tri(st, v00, v11, v01)
+			_tri(st, v00, v10, v11, uv)
+			_tri(st, v00, v11, v01, uv)
 	# Cliff walls: where a cardinal neighbour is ≥2 storeys lower, drop a vertical quad
 	# along the shared edge into a SEPARATE, COLLISION-ONLY SurfaceTool. The visible
 	# cliff face comes from KayKit pieces (CliffDressing); these invisible quads only
@@ -175,9 +173,9 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 
 	return root
 
-func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
+func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, uv: Vector2) -> void:
 	for v in [a, b, c]:
-		st.set_uv(_grass_uv)
+		st.set_uv(uv)
 		st.add_vertex(v)
 
 # A vertical quad along the shared cell edge, rock UV, face toward `dir`.
