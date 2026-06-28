@@ -73,14 +73,13 @@ func test_inner_corner_piece_present() -> void:
 	var data = Dress.compute(_region_inner(2), -2, -2, 5)
 	assert_gt((data["inner_wall"] as Array).size(), 0, "concave corner produces an inner-corner wall")
 
-# --- issue 5: outer corner replaces the shared edge ends ---------------------
-func test_outer_corner_replaces_edge_ends() -> void:
-	# A single straight cliff edge keeps all 8 lip pieces; the convex-corner cell drops the
-	# shared end pieces in favour of the corner piece, so it has FEWER straight edge lips
-	# per edge than the straight side.
+# --- issue 1: edges keep full coverage; the corner overlaps (no gap) ----------
+func test_edges_keep_full_width_and_corner_present() -> void:
+	# Each cliff edge is dressed across its FULL width (8 pieces) so nothing is dropped at the
+	# corner (which previously left a gap). A convex-corner cell has two full edges plus a
+	# dedicated corner piece that overlaps their ends.
 	var side = Dress.compute(_region_side(2), 0, 0, 1)    # just cell (0,0): one edge
 	var outer = Dress.compute(_region_outer(2), 0, 0, 1)  # cell (0,0): two edges + a corner
 	assert_eq((side["lip"] as Array).size(), 8, "a lone straight edge has 8 lip pieces")
-	assert_gt((outer["outer_lip"] as Array).size(), 0, "the corner is a dedicated corner piece")
-	# Each of the outer cell's two edges loses its shared corner end (8 -> 7 each = 14).
-	assert_eq((outer["lip"] as Array).size(), 14, "edges drop their shared corner end piece")
+	assert_eq((outer["lip"] as Array).size(), 16, "both edges keep full width (no dropped ends)")
+	assert_gt((outer["outer_lip"] as Array).size(), 0, "the corner has a dedicated corner piece")

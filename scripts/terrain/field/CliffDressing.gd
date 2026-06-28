@@ -26,6 +26,7 @@ const EXTRA_WALL_ROWS := 2  # over-extend the wall below the neighbour so a slop
                             # never exposes a gap under the wall
 const LIP_LIFT := 0.05      # raise the grass lip a hair so it cleanly overlays the field
                             # grass (which now renders to the boundary) instead of z-fighting
+const CORNER_LIP_LIFT := 0.10  # corner lips sit above edge lips so they win the small overlap
 const END := 10.5           # the |offset| of an edge's two end pieces (the corner slots)
 const OFFSETS := [-10.5, -7.5, -4.5, -1.5, 1.5, 4.5, 7.5, 10.5]
 const CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -45,17 +46,24 @@ static func _drop(region, cx: int, cz: int, dir: Vector2i) -> int:
 	return int(region.storey_at(cx, cz)) - int(region.storey_at(cx + dir.x, cz + dir.y))
 
 static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
-	# Only dress a CLIFF cell (a flat plateau with a ≥2 drop somewhere). Then EVERY drop
-	# off it — including a 1-storey edge — is wall, so the cliff takes its whole drop and
-	# adjacent slopes simply run into the wall face (no slope climbs to a cliff top).
-	if not TerrainSurfaceField._is_cliff_top(region, cx, cz):
-		return
+	# Dress each CLIFF EDGE of this cell (decided per edge by TerrainSurfaceField._is_cliff_edge:
+	# a ≥2 drop, or a 1-storey drop collinear with a cliff — e.g. a ramp's walled edge). A cell
+	# with no cliff edge and no diagonal-cliff corner is pure slope/flat → nothing to dress.
 	var s: int = region.storey_at(cx, cz)
+	var cliff := {}
+	var any := false
+	for dir in CARDINALS:
+		cliff[dir] = TerrainSurfaceField._is_cliff_edge(region, cx, cz, dir)
+		if cliff[dir]:
+			any = true
+	var diag_cliff := false
+	for cdir in CORNERS:
+		if s - int(region.storey_at(cx + cdir.x, cz + cdir.y)) >= 2:
+			diag_cliff = true
+	if not any and not diag_cliff:
+		return
 	var h: float = region.surface_height(cx, cz)
 	var cellpos := Vector3(float(cx) * TILE, h, float(cz) * TILE)
-	var cliff := {}
-	for dir in CARDINALS:
-		cliff[dir] = _drop(region, cx, cz, dir) >= 1
 
 	# --- straight edges (with corner/slope-aware extent, issue 5) ---
 	for dir in CARDINALS:
@@ -65,17 +73,11 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 		var basis := Basis(Vector3.UP, _angle(dir))
 		var edge := Vector3(float(dir.x) * EDGE, 0.0, float(dir.y) * EDGE)
 		var perp := Vector3(float(dir.y), 0.0, float(dir.x))
-		var pp := Vector2i(dir.y, dir.x)            # +offset perpendicular cardinal
+		# Cover the cell's FULL cliff-edge width (all offsets). Corner pieces overlap the end
+		# pieces (rock-on-rock, invisible) rather than the ends being dropped — dropping them
+		# left a gap between edge and corner. Corner lips sit slightly higher (see corners) so
+		# they win the small grass overlap without z-fighting.
 		for off: float in OFFSETS:
-			# Drop the end piece when its corner is owned by an outer-corner piece (the
-			# perpendicular neighbour is also a cliff) OR the perpendicular neighbour is
-			# lower (a slope) — so the wall doesn't run on past where the top is flat.
-			if off > END - 0.1:
-				if cliff.get(pp, false) or int(region.storey_at(cx + pp.x, cz + pp.y)) < s:
-					continue
-			if off < -(END - 0.1):
-				if cliff.get(-pp, false) or int(region.storey_at(cx - pp.x, cz - pp.y)) < s:
-					continue
 			var base: Vector3 = cellpos + edge + perp * off
 			out["lip"].append(Transform3D(basis, base + Vector3(0.0, LIP_LIFT, 0.0)))
 			for k in (drop + EXTRA_WALL_ROWS):
@@ -90,14 +92,14 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 		if cliff.get(ca, false) and cliff.get(cb, false):
 			# Convex (outer) corner where two cliff edges meet (issue 3).
 			var dr: int = maxi(_drop(region, cx, cz, ca), _drop(region, cx, cz, cb))
-			out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, LIP_LIFT, 0.0)))
+			out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			for k in (dr + EXTRA_WALL_ROWS):
 				out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 		elif (not cliff.get(ca, false)) and (not cliff.get(cb, false)):
 			# Concave (inner) corner: the diagonal neighbour drops but the cardinals don't (issue 2).
 			var ddrop: int = s - int(region.storey_at(cx + cdir.x, cz + cdir.y))
 			if ddrop >= 2:
-				out["inner_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, LIP_LIFT, 0.0)))
+				out["inner_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in (ddrop + EXTRA_WALL_ROWS):
 					out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 
