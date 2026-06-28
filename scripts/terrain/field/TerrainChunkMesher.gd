@@ -53,13 +53,12 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var y11 := TerrainSurfaceField.surface_y(region, x1, z1)
 			var y01 := TerrainSurfaceField.surface_y(region, x0, z1)
 			# Render EVERY quad — the surface is continuous, so there is never a hole to see
-			# through, for ANY heightfield. A quad whose corners straddle a CLIFF drop (a near-
-			# vertical face: >2m over one ~2u step, impossible for a real ≤18° slope) is textured
-			# as ROCK rather than grass, so it reads as the cliff face instead of grass climbing
-			# it; the KayKit wall/lip pieces overlay this rock backing for the modelled look.
-			var y_lo: float = minf(minf(y00, y10), minf(y11, y01))
-			var y_hi: float = maxf(maxf(y00, y10), maxf(y11, y01))
-			var uv := _grass_uv if (y_hi - y_lo <= 2.0) else _cliff_uv
+			# through, for ANY heightfield. Texture a quad as ROCK only at a real CLIFF FACE; a
+			# walkable slope (even a steep up-ramp one) stays grass. The cliff test is by CELL
+			# CONFIG, not height: corner cells span ≥2 storeys, OR a 1-storey step where every
+			# corner is a cliff top (a wall between two flat tiles). Up-ramp slope quads can reach
+			# ~4m tall but their cells differ ≤1 storey and aren't all cliff tops → grass.
+			var uv := _grass_uv if not _is_cliff_quad(region, x0, x1, z0, z1) else _cliff_uv
 			var v00 := Vector3(x0, y00, z0)
 			var v10 := Vector3(x1, y10, z0)
 			var v11 := Vector3(x1, y11, z1)
@@ -177,6 +176,33 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, uv: Vector2) -> v
 	for v in [a, b, c]:
 		st.set_uv(uv)
 		st.add_vertex(v)
+
+# Does this grid quad lie on a CLIFF FACE (→ rock) rather than a walkable slope (→ grass)?
+# By cell config: the quad's corner cells span ≥2 storeys (a cliff), or a 1-storey step where
+# every corner cell is a cliff top (a wall between two flat tiles). A slope — even a steep
+# up-ramp one whose vertices span several metres — has cells ≤1 storey apart and not all cliff
+# tops, so it stays grass.
+func _is_cliff_quad(region, x0: float, x1: float, z0: float, z1: float) -> bool:
+	var cells := [
+		[int(roundf(x0 / TILE)), int(roundf(z0 / TILE))],
+		[int(roundf(x1 / TILE)), int(roundf(z0 / TILE))],
+		[int(roundf(x1 / TILE)), int(roundf(z1 / TILE))],
+		[int(roundf(x0 / TILE)), int(roundf(z1 / TILE))],
+	]
+	var hi := -9999
+	var lo := 9999
+	for c in cells:
+		var s := int(region.storey_at(c[0], c[1]))
+		hi = maxi(hi, s)
+		lo = mini(lo, s)
+	if hi - lo >= 2:
+		return true
+	if hi - lo == 1:
+		for c in cells:
+			if not TerrainSurfaceField._is_cliff_top(region, c[0], c[1]):
+				return false
+		return true
+	return false
 
 # A vertical quad along the shared cell edge, rock UV, face toward `dir`.
 func _emit_wall(st: SurfaceTool, cx: int, cz: int, dir: Vector2i, y_hi: float, y_lo: float) -> void:

@@ -115,3 +115,20 @@ func test_cliff_face_is_rock_not_climbing_grass():
 			worst_grass = maxf(worst_grass, y_ext)
 	assert_lt(worst_grass, 6.0, "no GRASS triangle spans a cliff's height (cliff faces are rock)")
 	node.free()
+
+func test_steep_upramp_slope_is_grass_not_rock():
+	# Owner's grey diamonds: a cell one storey below a cliff top ramps UP to meet it — a steep but
+	# WALKABLE slope. Its quads must be classified grass, NOT rock (textured grey). Only a real
+	# cliff face (≥2 cell drop, or a 1-storey step between two cliff tops) is rock.
+	var p := Plan.new(0, 32.0, 8, "mean", 3)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 0: return 8.0    # cliff top (drops ≥2 to (2,0)=0)
+		if cx == 0 and cz == 0: return 4.0    # one storey below it → ramps up to meet it
+		return 0.0)
+	var region = p.compute_region(0, 0, 8)
+	var m = Mesher.new()
+	# a quad straddling cell (0,0)→(1,0): the up-ramp reaches the cliff-top height here (steep),
+	# but it's a walkable slope, so it must be grass.
+	assert_false(m._is_cliff_quad(region, 10.0, 12.0, -2.0, 0.0), "steep up-ramp slope quad is grass, not rock")
+	# the actual ≥2 cliff face (cell (1,0) storey 2 → (2,0) storey 0) IS rock.
+	assert_true(m._is_cliff_quad(region, 34.0, 36.0, -2.0, 0.0), "the ≥2 cliff face is rock")
