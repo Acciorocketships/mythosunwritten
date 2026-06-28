@@ -10,6 +10,41 @@ extends GutTest
 const Dress := preload("res://scripts/terrain/field/CliffDressing.gd")
 const Mesher := preload("res://scripts/terrain/field/TerrainChunkMesher.gd")
 const Plan := preload("res://scripts/terrain/heightfield/HeightfieldPlan.gd")
+const Field := preload("res://scripts/terrain/field/TerrainSurfaceField.gd")
+
+# Owner round 4: a grass lip must never overhang into midair or be undercut by a slope behind
+# it. Invariant that guarantees this: a cell that carries a lip is a CLIFF TOP, and a cliff top
+# is FLAT across its whole surface — so the terrain directly behind every lip is flat at the
+# lip's height. Checked over several real seeds AND every lip piece compute() emits.
+func test_every_lip_is_backed_by_flat_terrain() -> void:
+	for seed in [1, 7, 13, 42, 99, 123]:
+		var plan := Plan.new(seed, 22.0, 8, "mean", 3)
+		var region = plan.compute_region(0, 0, 16)
+		# 1. Every cliff-top cell is flat across its whole top (so any lip on it is backed).
+		for cz in range(-7, 8):
+			for cx in range(-7, 8):
+				if not Field._is_cliff_top(region, cx, cz):
+					continue
+				var h: float = region.surface_height(cx, cz)
+				for oz in [-11.0, -6.0, 0.0, 6.0, 11.0]:
+					for ox in [-11.0, -6.0, 0.0, 6.0, 11.0]:
+						var y := Field.surface_y(region, cx * 24.0 + ox, cz * 24.0 + oz)
+						assert_almost_eq(y, h, 0.05,
+							"seed %d cliff-top (%d,%d) must be flat behind its lip" % [seed, cx, cz])
+		# 2. Every straight lip is anchored on a cliff top, and the terrain right behind it (into
+		#    the cell) is flat at the cliff height — no gap, no dip, no overhang into midair.
+		var data = Dress.compute(region, -6, -6, 13)
+		for t in (data["lip"] as Array):
+			var xf := t as Transform3D
+			var drop_dir := (xf.basis * Vector3(0, 0, 1)).normalized()   # toward the drop
+			var ccx := int(round((xf.origin.x - drop_dir.x * 12.0) / 24.0))
+			var ccz := int(round((xf.origin.z - drop_dir.z * 12.0) / 24.0))
+			assert_true(Field._is_cliff_top(region, ccx, ccz),
+				"seed %d lip at %s must sit on a cliff top" % [seed, str(xf.origin)])
+			var back := xf.origin - drop_dir * 2.0      # 2u behind the edge, into the cell
+			var yb := Field.surface_y(region, back.x, back.z)
+			assert_almost_eq(yb, region.surface_height(ccx, ccz), 0.05,
+				"seed %d terrain behind lip at %s must be flat at cliff height" % [seed, str(xf.origin)])
 
 # cell (0,0) is a cliff top `drop` storeys above its +x neighbour (one straight cliff edge).
 func _region_side(drop: int):

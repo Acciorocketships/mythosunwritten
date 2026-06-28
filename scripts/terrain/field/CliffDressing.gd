@@ -46,22 +46,16 @@ static func _drop(region, cx: int, cz: int, dir: Vector2i) -> int:
 	return int(region.storey_at(cx, cz)) - int(region.storey_at(cx + dir.x, cz + dir.y))
 
 static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
-	# Dress each CLIFF EDGE of this cell (decided per edge by TerrainSurfaceField._is_cliff_edge:
-	# a ≥2 drop, or a 1-storey drop collinear with a cliff — e.g. a ramp's walled edge). A cell
-	# with no cliff edge and no diagonal-cliff corner is pure slope/flat → nothing to dress.
+	# Only a CLIFF TOP (flat plateau with a ≥2 drop somewhere) is dressed; its WALL EDGES get a
+	# rock wall + grass lip (TerrainSurfaceField._is_wall_edge: a ≥2 drop, or a 1-storey step to
+	# another cliff top). 1-storey drops to non-cliff cells are walkable slopes (no lip), so the
+	# flat top always backs every lip. A pure slope/flat cell has nothing to dress.
+	if not TerrainSurfaceField._is_cliff_top(region, cx, cz):
+		return
 	var s: int = region.storey_at(cx, cz)
 	var cliff := {}
-	var any := false
 	for dir in CARDINALS:
-		cliff[dir] = TerrainSurfaceField._is_cliff_edge(region, cx, cz, dir)
-		if cliff[dir]:
-			any = true
-	var diag_cliff := false
-	for cdir in CORNERS:
-		if s - int(region.storey_at(cx + cdir.x, cz + cdir.y)) >= 2:
-			diag_cliff = true
-	if not any and not diag_cliff:
-		return
+		cliff[dir] = TerrainSurfaceField._is_wall_edge(region, cx, cz, dir)
 	var h: float = region.surface_height(cx, cz)
 	var cellpos := Vector3(float(cx) * TILE, h, float(cz) * TILE)
 

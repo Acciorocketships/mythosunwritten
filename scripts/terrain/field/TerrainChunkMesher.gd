@@ -79,11 +79,11 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	var lo_cz := chunk.y * CELLS_PER_CHUNK
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
-			# Collision walls match CliffDressing exactly: one wall per CLIFF EDGE (≥2 drop,
-			# or a 1-drop collinear with a cliff — see TerrainSurfaceField._is_cliff_edge).
+			# Collision walls match CliffDressing exactly: one wall per cliff-top WALL EDGE
+			# (≥2 drop, or a 1-drop between two cliff tops — see _is_wall_edge).
 			var h_hi: float = region.surface_height(cx, cz)
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				if TerrainSurfaceField._is_cliff_edge(region, cx, cz, dir):
+				if TerrainSurfaceField._is_wall_edge(region, cx, cz, dir):
 					_emit_wall(cwall, cx, cz, dir, h_hi, region.surface_height(cx + dir.x, cz + dir.y))
 					any_wall = true
 
