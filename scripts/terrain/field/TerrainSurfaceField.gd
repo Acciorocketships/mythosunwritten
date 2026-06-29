@@ -38,36 +38,26 @@ static func _is_cliff_top(region, cx: int, cz: int) -> bool:
 			return true
 	return false
 
-# Whether the edge of cell (cx,cz) toward `d` carries a rock wall + grass lip (a CLIFF EDGE)
-# rather than a walkable slope. A ≥2 drop is always a cliff. A 1-storey drop is a cliff only when
-# it is COLLINEAR with a ≥2 cliff — i.e. walking the cliff LINE (perpendicular to `d`) reaches a
-# ≥2 drop before the drop tapers to 0. This lets a cliff continue as ONE edge down its tapering
-# 1-storey end (owner: "continue the cliff edge … until the slope merges with the flat surface")
-# while a lone 1-storey drop, not in line with any cliff, stays a slope.
+# Whether the edge of cliff top (cx,cz) toward `d` carries a rock wall + grass lip. A cliff
+# top walls a ≥2-storey drop, and ALSO a 1-storey drop to ANOTHER cliff top (two flat tiles a
+# storey apart can't be joined by a ramp, so the step is a wall). A 1-storey drop to a NON-cliff
+# cell is a walkable SLOPE — that cell ramps up to meet the flat top — so it gets no wall/corner
+# (a wall there would spawn a spurious corner on a side that should just be a slope).
 static func _is_wall_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
+	if not _is_cliff_top(region, cx, cz):
+		return false
 	var drop := int(region.storey_at(cx, cz)) - int(region.storey_at(cx + d.x, cz + d.y))
 	if drop >= 2:
 		return true
-	if drop != 1:
-		return false
-	var p := Vector2i(d.y, d.x)   # along the cliff line (perpendicular to the drop)
-	for step: Vector2i in [p, -p]:
-		var k := 1
-		while k < 12:
-			var ax: int = cx + step.x * k
-			var az: int = cz + step.y * k
-			var dd := int(region.storey_at(ax, az)) - int(region.storey_at(ax + d.x, az + d.y))
-			if dd <= 0:
-				break          # the cliff line ended (flat) on this side
-			if dd >= 2:
-				return true     # reached the ≥2 cliff → this 1-storey step is part of it
-			k += 1
-	return false
+	return drop == 1 and _is_cliff_top(region, cx + d.x, cz + d.y)
 
 static func surface_y(region, x: float, z: float) -> float:
 	var cx := _cell_of(x)
 	var cz := _cell_of(z)
 	var h: float = region.surface_height(cx, cz)
+	# A cliff top is FLAT (its lip needs flat backing); the KayKit tile draws its edges.
+	if _is_cliff_top(region, cx, cz):
+		return h
 	var s := int(region.storey_at(cx, cz))
 	var lx := x - float(cx) * TILE
 	var lz := z - float(cz) * TILE
@@ -75,19 +65,10 @@ static func surface_y(region, x: float, z: float) -> float:
 	var dz_sign := 1 if lz >= 0.0 else -1
 	var a := _edge_weight(lx * float(dx_sign))                 # weight toward facing x-edge
 	var b := _edge_weight(lz * float(dz_sign))                 # weight toward facing z-edge
-	# Ramp DOWN toward a lower neighbour ONLY across a walkable SLOPE edge; a CLIFF edge stays
-	# flat (the rock wall takes the whole drop). This makes a cell flat on its cliff sides and
-	# sloped on its slope sides — so a cliff edge can run on while the perpendicular side slopes.
-	var d_x := 0.0
-	if not _is_wall_edge(region, cx, cz, Vector2i(dx_sign, 0)):
-		d_x = maxf(0.0, h - region.surface_height(cx + dx_sign, cz))
-	var d_z := 0.0
-	if not _is_wall_edge(region, cx, cz, Vector2i(0, dz_sign)):
-		d_z = maxf(0.0, h - region.surface_height(cx, cz + dz_sign))
-	# Diagonal: ramp into a concave (≤1) corner; a ≥2 diagonal is an inner-corner cliff (flat).
-	var d_d := 0.0
-	if s - int(region.storey_at(cx + dx_sign, cz + dz_sign)) < 2:
-		d_d = maxf(0.0, h - region.surface_height(cx + dx_sign, cz + dz_sign))
+	# Ramp DOWN toward lower neighbours (≤1-storey slopes; a non-cliff cell has no ≥2 drop).
+	var d_x: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz))
+	var d_z: float = maxf(0.0, h - region.surface_height(cx, cz + dz_sign))
+	var d_d: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz + dz_sign))
 	var drop := 0.0
 	if d_x > 0.0 or d_z > 0.0:
 		var wx := a if d_x > 0.0 else 0.0
