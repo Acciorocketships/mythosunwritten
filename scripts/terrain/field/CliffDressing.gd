@@ -21,7 +21,13 @@ const SCENES := {
 
 const TILE := 24.0
 const STOREY := 4.0
-const EDGE := 12.0          # piece sits at the cell boundary (the low slope reaches it)
+const EDGE := 12.0          # WALL origin sits on the cell boundary so the KayKit wall's rock face
+                            # stays in FRONT of the field's own rock face (else the field face
+                            # occludes the modeled wall). The field cliff face is at the boundary.
+const LIP_EDGE := 11.0      # but the grass LIP origin sits 1 unit inside, so its flat grass-top
+                            # ends right AT the boundary and meets the flat field top seam-free
+                            # (its bevel laps just over the drop). At the boundary the lip overhangs
+                            # the drop and reads as detached from the flat surface behind it (owner).
 const EXTRA_WALL_ROWS := 0  # the wall spans exactly the storey drop (cliff top → neighbour
                             # surface). Over-extending hangs the wall BELOW the neighbour's
                             # thin surface, where it sticks out into open air (a visible slab).
@@ -66,36 +72,39 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 			continue
 		var drop: int = _drop(region, cx, cz, dir)
 		var basis := Basis(Vector3.UP, _angle(dir))
-		var edge := Vector3(float(dir.x) * EDGE, 0.0, float(dir.y) * EDGE)
+		var edge := Vector3(float(dir.x) * EDGE, 0.0, float(dir.y) * EDGE)          # wall: on the boundary
+		var lip_edge := Vector3(float(dir.x) * LIP_EDGE, 0.0, float(dir.y) * LIP_EDGE)  # lip: 1 unit inside
 		var perp := Vector3(float(dir.y), 0.0, float(dir.x))
 		# Cover the cell's FULL cliff-edge width (all offsets). Corner pieces overlap the end
 		# pieces (rock-on-rock, invisible) rather than the ends being dropped — dropping them
 		# left a gap between edge and corner. Corner lips sit slightly higher (see corners) so
 		# they win the small grass overlap without z-fighting.
 		for off: float in OFFSETS:
-			var base: Vector3 = cellpos + edge + perp * off
-			out["lip"].append(Transform3D(basis, base + Vector3(0.0, LIP_LIFT, 0.0)))
+			var lip_base: Vector3 = cellpos + lip_edge + perp * off
+			var wall_base: Vector3 = cellpos + edge + perp * off
+			out["lip"].append(Transform3D(basis, lip_base + Vector3(0.0, LIP_LIFT, 0.0)))
 			for k in (drop + EXTRA_WALL_ROWS):
-				out["wall"].append(Transform3D(basis, base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+				out["wall"].append(Transform3D(basis, wall_base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 
 	# --- corners ---
 	for cdir in CORNERS:
 		var ca := Vector2i(cdir.x, 0)
 		var cb := Vector2i(0, cdir.y)
 		var cbasis := Basis(Vector3.UP, atan2(float(cdir.x), float(cdir.y)) - PI * 0.25)
-		var cpos: Vector3 = cellpos + Vector3(float(cdir.x) * EDGE, 0.0, float(cdir.y) * EDGE)
+		var cpos: Vector3 = cellpos + Vector3(float(cdir.x) * EDGE, 0.0, float(cdir.y) * EDGE)          # wall
+		var clip: Vector3 = cellpos + Vector3(float(cdir.x) * LIP_EDGE, 0.0, float(cdir.y) * LIP_EDGE)  # lip (inset)
 		var ddrop: int = s - int(region.storey_at(cx + cdir.x, cz + cdir.y))
 		if cliff.get(ca, false) and cliff.get(cb, false):
 			# Convex (outer) corner where two cliff edges meet.
 			var dr: int = maxi(maxi(_drop(region, cx, cz, ca), _drop(region, cx, cz, cb)), ddrop)
-			out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+			out["outer_lip"].append(Transform3D(cbasis, clip + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			for k in dr:
 				out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 		elif TerrainSurfaceField._is_inner_corner(region, cx, cz, cdir):
 			# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level
 			# and wall that pocket. The high corner cell gets the modeled inner-corner piece (even
 			# for a 1-storey notch) instead of dipping into it as a slope (owner: "inner corner slope").
-			out["inner_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+			out["inner_lip"].append(Transform3D(cbasis, clip + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			for k in ddrop:
 				out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 		elif ddrop >= 2 and (cliff.get(ca, false) or cliff.get(cb, false)):
@@ -106,7 +115,7 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 			var wc: Vector2i = ca if cliff.get(ca, false) else cb
 			var lc: Vector2i = cb if cliff.get(ca, false) else ca
 			if not TerrainSurfaceField._is_wall_edge(region, cx + lc.x, cz + lc.y, wc):
-				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				out["outer_lip"].append(Transform3D(cbasis, clip + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in ddrop:
 					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 

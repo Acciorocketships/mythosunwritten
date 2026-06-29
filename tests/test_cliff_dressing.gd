@@ -152,6 +152,18 @@ func test_straight_cliff_has_no_midedge_corner() -> void:
 	assert_eq((data["inner_wall"] as Array).size(), 0, "and certainly no inner corner here")
 
 # --- owner: a real convex turn STILL gets a corner (we didn't suppress everything) ----
+func test_lip_is_inset_from_the_wall_to_meet_the_flat_top() -> void:
+	# Owner: the lip must not leave a gap with the flat surface behind it. The grass LIP sits 1 unit
+	# INSIDE the cell boundary (LIP_EDGE) so its flat top ends at the edge and meets the field's flat
+	# top seam-free; the rock WALL stays on the boundary (EDGE) in front of the field's own rock face
+	# (so the modeled wall isn't occluded). So every lip is inset from its wall.
+	var data = Dress.compute(_region_side(2), 0, 0, 1)   # cell (0,0): one +x cliff edge
+	assert_lt(Dress.LIP_EDGE, Dress.EDGE, "lip offset is inside the wall offset")
+	for t in (data["lip"] as Array):
+		assert_almost_eq(absf((t as Transform3D).origin.x), Dress.LIP_EDGE, 0.01, "each lip sits at LIP_EDGE")
+	for t in (data["wall"] as Array):
+		assert_almost_eq(absf((t as Transform3D).origin.x), Dress.EDGE, 0.01, "each wall sits on the boundary (EDGE)")
+
 func test_real_convex_turn_still_gets_corner() -> void:
 	var data = Dress.compute(_region_outer(2), 0, 0, 1)
 	assert_gt((data["outer_wall"] as Array).size(), 0, "a genuine convex corner is still dressed")
