@@ -199,7 +199,7 @@ func _is_cliff_quad(region, x0: float, x1: float, z0: float, z1: float) -> bool:
 		return true
 	if hi - lo == 1:
 		for c in cells:
-			if not TerrainSurfaceField._is_cliff_top(region, c[0], c[1]):
+			if not (TerrainSurfaceField._is_cliff_top(region, c[0], c[1]) or TerrainSurfaceField.has_inner_corner(region, c[0], c[1])):
 				return false
 		return true
 	return false

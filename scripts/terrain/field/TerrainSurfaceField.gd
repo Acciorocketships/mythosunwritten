@@ -62,6 +62,36 @@ static func _is_wall_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 		return false
 	return _is_cliff_top(region, cx + d.x, cz + d.y) or _has_lower_neighbour(region, cx + d.x, cz + d.y)
 
+# A concave INNER CORNER: the diagonal `cdir` neighbour is lower, BOTH adjoining cardinal arms
+# sit at this cell's level, and each arm walls the drop into that diagonal pocket. Then this cell
+# is the high corner of a clean cliff pocket — it must read as a vertical inner-corner cliff (flat
+# top + inner-corner piece), NOT a diagonal slope dipping into the notch. Mirrors the old tile
+# system's rule (HeightfieldVariant.missing_from_heights: a diagonal is an inner-corner notch only
+# when its neighbour is lower AND both adjoining cardinals are connected/level).
+static func _is_inner_corner(region, cx: int, cz: int, cdir: Vector2i) -> bool:
+	var s := int(region.storey_at(cx, cz))
+	if int(region.storey_at(cx + cdir.x, cz + cdir.y)) >= s:
+		return false
+	var ax := Vector2i(cdir.x, 0)
+	var az := Vector2i(0, cdir.y)
+	if int(region.storey_at(cx + ax.x, cz + ax.y)) != s:
+		return false
+	if int(region.storey_at(cx + az.x, cz + az.y)) != s:
+		return false
+	# each level arm must itself wall the drop into the diagonal (so the pocket is a real cliff)
+	if not _is_wall_edge(region, cx + ax.x, cz + ax.y, az):
+		return false
+	if not _is_wall_edge(region, cx + az.x, cz + az.y, ax):
+		return false
+	return true
+
+# Whether the cell is the high corner of any inner-corner pocket (so it must stay flat + be dressed).
+static func has_inner_corner(region, cx: int, cz: int) -> bool:
+	for d in _DIAGONALS:
+		if _is_inner_corner(region, cx, cz, d):
+			return true
+	return false
+
 static func surface_y(region, x: float, z: float) -> float:
 	var cx := _cell_of(x)
 	var cz := _cell_of(z)
@@ -87,7 +117,10 @@ static func surface_y(region, x: float, z: float) -> float:
 		var delta := maxf(d_x, d_z)
 		drop = delta * (wx + wz - wx * wz)
 	elif d_d > 0.0:
-		drop = d_d * (a * b)
+		# A lower diagonal normally pulls the corner down (concave slope). But if it's an inner-corner
+		# pocket, keep this corner FLAT — the inner-corner cliff piece + rock face span the drop.
+		if not _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
+			drop = d_d * (a * b)
 	# And ramp UP to MEET a facing cliff top exactly one storey higher: a 1-storey drop to a flat
 	# cliff top is a walkable slope ON THIS cell, not a wall — so the cliff edge there reads as a
 	# slope joining the top, not a spurious walled corner. BUT only for a pure low SHELF: if this

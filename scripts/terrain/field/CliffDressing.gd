@@ -51,7 +51,7 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 	# rock wall + grass lip (TerrainSurfaceField._is_wall_edge: a ≥2 drop, or a 1-storey step to
 	# another cliff top). 1-storey drops to non-cliff cells are walkable slopes (no lip), so the
 	# flat top always backs every lip. A pure slope/flat cell has nothing to dress.
-	if not TerrainSurfaceField._is_cliff_top(region, cx, cz):
+	if not TerrainSurfaceField._is_cliff_top(region, cx, cz) and not TerrainSurfaceField.has_inner_corner(region, cx, cz):
 		return
 	var s: int = region.storey_at(cx, cz)
 	var cliff := {}
@@ -91,18 +91,24 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 			out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			for k in dr:
 				out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-		elif ddrop >= 2 and (cliff.get(ca, false) or cliff.get(cb, false)):
-			# STEP corner: ONE cardinal is a cliff edge and the DIAGONAL drops ≥2 — the cliff
-			# turns the corner. Without a piece here that diagonal face is uncovered → you see
-			# through it (owner pic 1). An outer corner covers it.
-			out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
-			for k in ddrop:
-				out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-		elif ddrop >= 2:
-			# Concave (inner) corner: the diagonal neighbour drops but the cardinals don't.
+		elif TerrainSurfaceField._is_inner_corner(region, cx, cz, cdir):
+			# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level
+			# and wall that pocket. The high corner cell gets the modeled inner-corner piece (even
+			# for a 1-storey notch) instead of dipping into it as a slope (owner: "inner corner slope").
 			out["inner_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			for k in ddrop:
 				out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+		elif ddrop >= 2 and (cliff.get(ca, false) or cliff.get(cb, false)):
+			# STEP corner: ONE cardinal is a cliff edge and the DIAGONAL drops ≥2 — the cliff turns
+			# the corner, exposing the diagonal face. BUT if the wall continues STRAIGHT past this
+			# corner (the level-side neighbour walls the same way), the face is already covered and a
+			# piece here is a spurious corner lip mid-edge (owner). Only dress a real turn.
+			var wc: Vector2i = ca if cliff.get(ca, false) else cb
+			var lc: Vector2i = cb if cliff.get(ca, false) else ca
+			if not TerrainSurfaceField._is_wall_edge(region, cx + lc.x, cz + lc.y, wc):
+				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				for k in ddrop:
+					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 
 static func build(region, lo_cx: int, lo_cz: int, cells: int) -> Node3D:
 	_ensure_loaded()

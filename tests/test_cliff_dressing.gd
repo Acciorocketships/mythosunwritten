@@ -133,19 +133,56 @@ func test_outer_corner_piece_present() -> void:
 	assert_gt((data["outer_wall"] as Array).size(), 0, "convex corner produces an outer-corner wall")
 	assert_gt((data["outer_lip"] as Array).size(), 0, "convex corner produces an outer-corner lip")
 
-# --- owner pic 1: a 1-storey edge + a ≥2 DIAGONAL drop must not see through -----
-func test_step_corner_covers_diagonal_cliff() -> void:
-	# (0,0) is a cliff top (its +x+z diagonal is 2 storeys below). +x drops 1 (a wall edge), +z
-	# is level. That corner is neither convex (both edges) nor concave (both level), so the
-	# diagonal cliff face used to get NO piece → see-through. It must now get an outer (step) corner.
+# --- owner: NO spurious corner lip mid-edge where a straight cliff continues ------
+func test_straight_cliff_has_no_midedge_corner() -> void:
+	# A straight E-facing cliff spanning two cells (0,0) and (0,1), with the ground below dropping
+	# 2 storeys. Each cell's SE/NE corner has one wall edge (E) + a ≥2 diagonal — the OLD code put a
+	# step (outer) corner there, but the E wall CONTINUES straight from (0,0) to (0,1), so that
+	# corner sits mid-edge: a stray corner lip in the middle of the run (owner). It must be suppressed.
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 12.0    # diagonal pit, 2 storeys down
-		if cx == 1 and cz == 0: return 12.0    # +x neighbour, 2 storeys down → a real wall edge
-		return 20.0)
-	var data = Dress.compute(plan.compute_region(0, 0, 8), 0, 0, 1)
-	assert_gt((data["outer_wall"] as Array).size(), 0, "step corner covers the diagonal cliff face")
-	assert_eq((data["inner_wall"] as Array).size(), 0, "it is an outer/step corner, not an inner one")
+		if cx == 1 and (cz == 0 or cz == 1): return 12.0   # the low ground east of the straight cliff
+		return 20.0)                                        # the storey-5 plateau (cells x<=0)
+	var r = plan.compute_region(0, 0, 8)
+	# both cells wall E (the cliff is continuous), so the shared corner is covered by the collinear walls
+	assert_true(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)) and Field._is_wall_edge(r, 0, 1, Vector2i(1, 0)),
+		"the E cliff is continuous across (0,0) and (0,1)")
+	var data = Dress.compute(r, 0, 0, 1)   # dress only (0,0)
+	assert_eq((data["outer_wall"] as Array).size(), 0, "no spurious step/outer corner mid straight cliff")
+	assert_eq((data["inner_wall"] as Array).size(), 0, "and certainly no inner corner here")
+
+# --- owner: a real convex turn STILL gets a corner (we didn't suppress everything) ----
+func test_real_convex_turn_still_gets_corner() -> void:
+	var data = Dress.compute(_region_outer(2), 0, 0, 1)
+	assert_gt((data["outer_wall"] as Array).size(), 0, "a genuine convex corner is still dressed")
+
+# --- owner: a concave NOTCH is an inner-corner cliff, not a dipping slope -------------
+func test_inner_corner_notch_gets_inner_piece() -> void:
+	# Mirrors the owner's (-4,-3) spot: a cell whose four cardinals are LEVEL and whose diagonal
+	# neighbour is one storey lower AND a cliff top (its arms wall it). It is the high corner of a
+	# clean pocket, so it gets the modeled inner-corner piece — even though the drop is only 1 storey.
+	var plan := Plan.new(0, 32.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 8.0     # the notch, one storey below (0,0)
+		if cx == 2 and cz == 1: return 0.0     # E arm (1,0) drops ≥2 here → arm is a cliff top
+		if cx == 1 and cz == 2: return 0.0     # S arm (0,1) drops ≥2 here → arm is a cliff top
+		if cx == 2 and cz == 2: return 0.0     # notch (1,1) drops ≥2 here → notch is a cliff top
+		return 12.0)                            # (0,0) and its level arms
+	var r = plan.compute_region(0, 0, 8)
+	assert_true(Field._is_inner_corner(r, 0, 0, Vector2i(1, 1)), "the level-armed 1-storey pocket is an inner corner")
+	var data = Dress.compute(r, 0, 0, 1)
+	assert_gt((data["inner_wall"] as Array).size(), 0, "the inner-corner cell gets a modeled inner piece")
+	assert_eq((data["outer_wall"] as Array).size(), 0, "and not an outer/step corner")
+
+func test_open_one_storey_diagonal_is_not_an_inner_corner() -> void:
+	# Guard: a lone 1-storey diagonal dip whose arms do NOT wall it (an open slope, not a pocket)
+	# must stay a slope — NOT become a spurious inner corner.
+	var plan := Plan.new(0, 32.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 8.0   # diagonal one storey down, but arms (1,0)/(0,1) only 0 drop
+		return 12.0)
+	var r = plan.compute_region(0, 0, 8)
+	assert_false(Field._is_inner_corner(r, 0, 0, Vector2i(1, 1)), "an open 1-storey diagonal dip is not an inner corner")
 
 # --- issue 2: inner (concave) corner piece -----------------------------------
 func test_inner_corner_piece_present() -> void:

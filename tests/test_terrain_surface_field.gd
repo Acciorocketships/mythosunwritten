@@ -101,6 +101,21 @@ func test_one_storey_neighbour_still_ramps():
 	var r := _region()    # cell (0,0)=4.0, neighbours 0.0  (from earlier tests)
 	assert_lt(Field.surface_y(r, 11.9, 0.0), 4.0, "1-storey drop still ramps")
 
+func test_inner_corner_stays_flat_not_a_slope():
+	# Owner: a concave inner corner must be a vertical cliff, not a dipping slope. The high corner
+	# cell (0,0) has level cardinal arms and a 1-storey diagonal pocket (1,1) that the arms wall.
+	# Its SE quadrant must stay FLAT at the cell height (the cliff face spans the drop), NOT ramp
+	# down into the notch.
+	var plan := Plan.new(0, 32.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 8.0
+		if cx == 2 and cz == 1: return 0.0
+		if cx == 1 and cz == 2: return 0.0
+		if cx == 2 and cz == 2: return 0.0
+		return 12.0)
+	var r = plan.compute_region(0, 0, 8)
+	assert_almost_eq(Field.surface_y(r, 11.0, 11.0), 12.0, 0.05, "inner-corner cell stays flat into the notch corner")
+
 func test_pure_shelf_ramps_up_to_a_cliff_top():
 	# A non-cliff cell one storey below a flat CLIFF TOP — and FLAT everywhere else (a "pure shelf"
 	# at the cliff base, no other drop) — ramps UP to meet the top: that side reads as a walkable
