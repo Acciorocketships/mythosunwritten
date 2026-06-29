@@ -101,16 +101,32 @@ func test_one_storey_neighbour_still_ramps():
 	var r := _region()    # cell (0,0)=4.0, neighbours 0.0  (from earlier tests)
 	assert_lt(Field.surface_y(r, 11.9, 0.0), 4.0, "1-storey drop still ramps")
 
-func test_one_storey_drop_to_a_cliff_top_ramps_up_to_meet_it():
-	# A non-cliff cell one storey below a flat CLIFF TOP ramps UP to meet it (a walkable slope on
-	# this cell), so that side reads as a slope joining the top — NOT a walled corner (owner pic 3).
-	# cell (0,0)=4 (storey1); +x neighbour (1,0)=8 (storey2) which is a cliff top (it drops ≥2 to
-	# (2,0)=0). At the shared +x edge, (0,0) must rise to meet the top (≈8), not stay flat at 4.
+func test_pure_shelf_ramps_up_to_a_cliff_top():
+	# A non-cliff cell one storey below a flat CLIFF TOP — and FLAT everywhere else (a "pure shelf"
+	# at the cliff base, no other drop) — ramps UP to meet the top: that side reads as a walkable
+	# slope joining the top, not a walled corner. (0,0)=4 (storey1); +x neighbour (1,0)=8 (storey2,
+	# a cliff top, drops ≥2 to (2,0)=0); (0,0)'s OTHER neighbours are level at 4 (no lower side).
 	var plan := Plan.new(0, 32.0, 8, "mean", 3)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 0: return 4.0
-		if cx == 1 and cz == 0: return 8.0
-		return 0.0)   # (2,0)=0 makes (1,0) a cliff top; everything else low
+		if cx == 1 and cz == 0: return 8.0    # the cliff top
+		if cx == 2 and cz == 0: return 0.0    # makes (1,0) a cliff top (≥2 drop)
+		return 4.0)                            # (0,0) and its other neighbours all level → pure shelf
 	var r = plan.compute_region(0, 0, 8)
 	assert_true(Field._is_cliff_top(r, 1, 0), "the +x neighbour is a cliff top")
-	assert_almost_eq(Field.surface_y(r, 11.5, 0.0), 8.0, 0.6, "cell ramps UP to meet the cliff top at the seam")
+	assert_almost_eq(Field.surface_y(r, 11.5, 0.0), 8.0, 0.6, "pure shelf ramps UP to meet the cliff top")
+
+func test_funnel_cell_stays_flat_and_is_walled():
+	# Owner: cliff INNER CORNERS must be clean vertical cliffs, not thin dipping spikes. A cell that
+	# would ramp UP to a cliff top while ALSO dropping to lower ground is a 2-storey "funnel" — it
+	# pinches to a spike at the corner. So it does NOT ramp up; it stays flat and the cliff WALLS
+	# down to it (a clean terraced step). (0,0)=4 (storey1), +x (1,0)=8 (cliff top), but (0,0) drops
+	# to (-1,0)=0 — a funnel. Its +x seam must stay at 4 (no rise), and (1,0)'s -x edge is a wall.
+	var plan := Plan.new(0, 32.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 0: return 8.0    # the cliff top
+		if cx == 2 and cz == 0: return 0.0    # makes (1,0) a cliff top
+		if cx == -1 and cz == 0: return 0.0   # (0,0) drops away here → it is a funnel, not a shelf
+		return 4.0)
+	var r = plan.compute_region(0, 0, 8)
+	assert_almost_eq(Field.surface_y(r, 11.5, 0.0), 4.0, 0.6, "funnel cell stays flat toward the cliff (no spike)")
+	assert_true(Field._is_wall_edge(r, 1, 0, Vector2i(-1, 0)), "the cliff walls down to the funnel cell (terraced)")

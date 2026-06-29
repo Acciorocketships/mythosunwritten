@@ -38,18 +38,29 @@ static func _is_cliff_top(region, cx: int, cz: int) -> bool:
 			return true
 	return false
 
-# Whether the edge of cliff top (cx,cz) toward `d` carries a rock wall + grass lip. A cliff
-# top walls a ≥2-storey drop, and ALSO a 1-storey drop to ANOTHER cliff top (two flat tiles a
-# storey apart can't be joined by a ramp, so the step is a wall). A 1-storey drop to a NON-cliff
-# cell is a walkable SLOPE — that cell ramps up to meet the flat top — so it gets no wall/corner
-# (a wall there would spawn a spurious corner on a side that should just be a slope).
+# Does cell (cx,cz) have a strictly-lower cardinal neighbour? Such a cell already slopes DOWN
+# somewhere, so it must NOT also ramp UP to a higher cliff (that would funnel it across >1 storey
+# — the inner-corner spike). Instead the cliff walls down to it (a clean terraced step).
+static func _has_lower_neighbour(region, cx: int, cz: int) -> bool:
+	var s: int = region.storey_at(cx, cz)
+	for d in _CARDINALS:
+		if int(region.storey_at(cx + d.x, cz + d.y)) < s:
+			return true
+	return false
+
+# Whether the edge of cliff top (cx,cz) toward `d` carries a rock wall + grass lip. A cliff top
+# walls a ≥2-storey drop; and a 1-storey drop is a wall when the lower cell can't simply ramp up
+# to meet the top — i.e. the lower cell is itself a cliff top, or it already slopes down elsewhere
+# (so ramping up would funnel it). A 1-storey drop to a pure low SHELF stays a walkable slope.
 static func _is_wall_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 	if not _is_cliff_top(region, cx, cz):
 		return false
 	var drop := int(region.storey_at(cx, cz)) - int(region.storey_at(cx + d.x, cz + d.y))
 	if drop >= 2:
 		return true
-	return drop == 1 and _is_cliff_top(region, cx + d.x, cz + d.y)
+	if drop != 1:
+		return false
+	return _is_cliff_top(region, cx + d.x, cz + d.y) or _has_lower_neighbour(region, cx + d.x, cz + d.y)
 
 static func surface_y(region, x: float, z: float) -> float:
 	var cx := _cell_of(x)
@@ -79,7 +90,11 @@ static func surface_y(region, x: float, z: float) -> float:
 		drop = d_d * (a * b)
 	# And ramp UP to MEET a facing cliff top exactly one storey higher: a 1-storey drop to a flat
 	# cliff top is a walkable slope ON THIS cell, not a wall — so the cliff edge there reads as a
-	# slope joining the top, not a spurious walled corner.
+	# slope joining the top, not a spurious walled corner. BUT only for a pure low SHELF: if this
+	# cell ALSO drops away somewhere, ramping up would funnel it across >1 storey into a thin spike
+	# at the inner corner. Such a cell stays flat (the cliff walls down to it — _is_wall_edge).
+	if _has_lower_neighbour(region, cx, cz):
+		return h - drop
 	var rise := 0.0
 	if int(region.storey_at(cx + dx_sign, cz)) == s + 1 and _is_cliff_top(region, cx + dx_sign, cz):
 		rise = maxf(rise, (region.surface_height(cx + dx_sign, cz) - h) * a)
