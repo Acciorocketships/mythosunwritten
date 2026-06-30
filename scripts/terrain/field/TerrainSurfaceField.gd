@@ -38,29 +38,14 @@ static func _is_cliff_top(region, cx: int, cz: int) -> bool:
 			return true
 	return false
 
-# Does cell (cx,cz) have a strictly-lower cardinal neighbour? Such a cell already slopes DOWN
-# somewhere, so it must NOT also ramp UP to a higher cliff (that would funnel it across >1 storey
-# — the inner-corner spike). Instead the cliff walls down to it (a clean terraced step).
-static func _has_lower_neighbour(region, cx: int, cz: int) -> bool:
-	var s: int = region.storey_at(cx, cz)
-	for d in _CARDINALS:
-		if int(region.storey_at(cx + d.x, cz + d.y)) < s:
-			return true
-	return false
-
-# Whether the edge of cliff top (cx,cz) toward `d` carries a rock wall + grass lip. A cliff top
-# walls a ≥2-storey drop; and a 1-storey drop is a wall when the lower cell can't simply ramp up
-# to meet the top — i.e. the lower cell is itself a cliff top, or it already slopes down elsewhere
-# (so ramping up would funnel it). A 1-storey drop to a pure low SHELF stays a walkable slope.
+# Whether the edge of cliff top (cx,cz) toward `d` carries a rock wall + grass lip. A CLIFF TOP is
+# a flat plateau drawn level to its edges, so EVERY storey drop off it is a vertical wall — nothing
+# ramps the lower ground up to meet it. Non-cliff cells never wall; they only slope (surface_y ramps
+# them DOWN to their lower neighbours, so a ≤1-storey drop between them is a walkable slope).
 static func _is_wall_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 	if not _is_cliff_top(region, cx, cz):
 		return false
-	var drop := int(region.storey_at(cx, cz)) - int(region.storey_at(cx + d.x, cz + d.y))
-	if drop >= 2:
-		return true
-	if drop != 1:
-		return false
-	return _is_cliff_top(region, cx + d.x, cz + d.y) or _has_lower_neighbour(region, cx + d.x, cz + d.y)
+	return int(region.storey_at(cx, cz)) - int(region.storey_at(cx + d.x, cz + d.y)) >= 1
 
 # A concave INNER CORNER: the diagonal `cdir` neighbour is lower, BOTH adjoining cardinal arms
 # sit at this cell's level, and each arm walls the drop into that diagonal pocket. Then this cell
@@ -99,7 +84,6 @@ static func surface_y(region, x: float, z: float) -> float:
 	# A cliff top is FLAT (its lip needs flat backing); the KayKit tile draws its edges.
 	if _is_cliff_top(region, cx, cz):
 		return h
-	var s := int(region.storey_at(cx, cz))
 	var lx := x - float(cx) * TILE
 	var lz := z - float(cz) * TILE
 	var dx_sign := 1 if lx >= 0.0 else -1
@@ -110,6 +94,9 @@ static func surface_y(region, x: float, z: float) -> float:
 	var d_x: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz))
 	var d_z: float = maxf(0.0, h - region.surface_height(cx, cz + dz_sign))
 	var d_d: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz + dz_sign))
+	# Ramp DOWN toward lower neighbours only — there is NO up-ramp. A cell never rises to meet a
+	# higher cliff (that lean-to ramp produced mounds/spikes where the cell also dropped elsewhere);
+	# the higher cell is a flat cliff top and walls down to this one vertically instead.
 	var drop := 0.0
 	if d_x > 0.0 or d_z > 0.0:
 		var wx := a if d_x > 0.0 else 0.0
@@ -121,18 +108,4 @@ static func surface_y(region, x: float, z: float) -> float:
 		# pocket, keep this corner FLAT — the inner-corner cliff piece + rock face span the drop.
 		if not _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
 			drop = d_d * (a * b)
-	# And ramp UP to MEET a facing cliff top exactly one storey higher: a 1-storey drop to a flat
-	# cliff top is a walkable slope ON THIS cell, not a wall — so the cliff edge there reads as a
-	# slope joining the top, not a spurious walled corner. BUT only for a pure low SHELF: if this
-	# cell ALSO drops away somewhere, ramping up would funnel it across >1 storey into a thin spike
-	# at the inner corner. Such a cell stays flat (the cliff walls down to it — _is_wall_edge).
-	if _has_lower_neighbour(region, cx, cz):
-		return h - drop
-	var rise := 0.0
-	if int(region.storey_at(cx + dx_sign, cz)) == s + 1 and _is_cliff_top(region, cx + dx_sign, cz):
-		rise = maxf(rise, (region.surface_height(cx + dx_sign, cz) - h) * a)
-	if int(region.storey_at(cx, cz + dz_sign)) == s + 1 and _is_cliff_top(region, cx, cz + dz_sign):
-		rise = maxf(rise, (region.surface_height(cx, cz + dz_sign) - h) * b)
-	if int(region.storey_at(cx + dx_sign, cz + dz_sign)) == s + 1 and _is_cliff_top(region, cx + dx_sign, cz + dz_sign):
-		rise = maxf(rise, (region.surface_height(cx + dx_sign, cz + dz_sign) - h) * a * b)
-	return h - drop + rise
+	return h - drop

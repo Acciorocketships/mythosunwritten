@@ -116,32 +116,32 @@ func test_inner_corner_stays_flat_not_a_slope():
 	var r = plan.compute_region(0, 0, 8)
 	assert_almost_eq(Field.surface_y(r, 11.0, 11.0), 12.0, 0.05, "inner-corner cell stays flat into the notch corner")
 
-func test_pure_shelf_ramps_up_to_a_cliff_top():
-	# A non-cliff cell one storey below a flat CLIFF TOP — and FLAT everywhere else (a "pure shelf"
-	# at the cliff base, no other drop) — ramps UP to meet the top: that side reads as a walkable
-	# slope joining the top, not a walled corner. (0,0)=4 (storey1); +x neighbour (1,0)=8 (storey2,
-	# a cliff top, drops ≥2 to (2,0)=0); (0,0)'s OTHER neighbours are level at 4 (no lower side).
+func test_cell_below_a_cliff_stays_flat_and_the_cliff_walls_down():
+	# Vertical cliffs: a cell one storey below a flat CLIFF TOP does NOT ramp up to meet it (that
+	# lean-to ramp produced mounds/spikes). It stays flat at its OWN height and the cliff walls down
+	# to it. (0,0)=4 (storey1); +x neighbour (1,0)=8 (storey2 cliff top, drops ≥2 to (2,0)=0).
 	var plan := Plan.new(0, 32.0, 8, "mean", 3)
 	plan.set_raw_height_override(func(cx, cz):
 		if cx == 1 and cz == 0: return 8.0    # the cliff top
 		if cx == 2 and cz == 0: return 0.0    # makes (1,0) a cliff top (≥2 drop)
-		return 4.0)                            # (0,0) and its other neighbours all level → pure shelf
-	var r = plan.compute_region(0, 0, 8)
-	assert_true(Field._is_cliff_top(r, 1, 0), "the +x neighbour is a cliff top")
-	assert_almost_eq(Field.surface_y(r, 11.5, 0.0), 8.0, 0.6, "pure shelf ramps UP to meet the cliff top")
-
-func test_funnel_cell_stays_flat_and_is_walled():
-	# Owner: cliff INNER CORNERS must be clean vertical cliffs, not thin dipping spikes. A cell that
-	# would ramp UP to a cliff top while ALSO dropping to lower ground is a 2-storey "funnel" — it
-	# pinches to a spike at the corner. So it does NOT ramp up; it stays flat and the cliff WALLS
-	# down to it (a clean terraced step). (0,0)=4 (storey1), +x (1,0)=8 (cliff top), but (0,0) drops
-	# to (-1,0)=0 — a funnel. Its +x seam must stay at 4 (no rise), and (1,0)'s -x edge is a wall.
-	var plan := Plan.new(0, 32.0, 8, "mean", 3)
-	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 0: return 8.0    # the cliff top
-		if cx == 2 and cz == 0: return 0.0    # makes (1,0) a cliff top
-		if cx == -1 and cz == 0: return 0.0   # (0,0) drops away here → it is a funnel, not a shelf
 		return 4.0)
 	var r = plan.compute_region(0, 0, 8)
-	assert_almost_eq(Field.surface_y(r, 11.5, 0.0), 4.0, 0.6, "funnel cell stays flat toward the cliff (no spike)")
-	assert_true(Field._is_wall_edge(r, 1, 0, Vector2i(-1, 0)), "the cliff walls down to the funnel cell (terraced)")
+	assert_true(Field._is_cliff_top(r, 1, 0), "the +x neighbour is a cliff top")
+	assert_almost_eq(Field.surface_y(r, 11.5, 0.0), 4.0, 0.05, "cell stays flat at its height (no up-ramp)")
+	assert_true(Field._is_wall_edge(r, 1, 0, Vector2i(-1, 0)), "the cliff walls down to it (a vertical cliff)")
+
+func test_no_mound_where_a_cell_sits_below_a_diagonal_cliff():
+	# Owner's "weird mound": a storey-1 cell with a higher diagonal cliff-top neighbour used to bulge
+	# UP toward it (the diagonal up-ramp) while dropping on its other corners — a mound. With no
+	# up-ramp it stays at its own height. (0,0)=4; diagonal (1,1)=8 is a cliff top; (0,0) also has a
+	# lower diagonal (-1,1)=0. The surface over (0,0) must never exceed its own height (4).
+	var plan := Plan.new(0, 32.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 8.0    # higher diagonal
+		if cx == 2 and cz == 2: return 0.0    # makes (1,1) a cliff top
+		if cx == -1 and cz == 1: return 0.0   # a lower diagonal (the other corner)
+		return 4.0)
+	var r = plan.compute_region(0, 0, 8)
+	for oz in [-11.0, -6.0, 0.0, 6.0, 11.0]:
+		for ox in [-11.0, -6.0, 0.0, 6.0, 11.0]:
+			assert_lte(Field.surface_y(r, ox, oz), 4.05, "no mound: surface never rises above the cell height")

@@ -85,17 +85,16 @@ func test_wall_spans_exactly_to_neighbour() -> void:
 	assert_almost_eq((ys as Array).min(), 0.0, 0.6, "wall bottom sits at the neighbour ground (y≈0)")
 	assert_gte((ys as Array).max(), 4.0, "wall covers up the cliff face")
 
-func test_one_storey_drop_to_a_pure_shelf_is_not_walled() -> void:
-	# A cliff top's 1-storey drop to a NON-cliff cell that is itself a flat SHELF (no further drop)
-	# is a walkable slope, not a wall — no spurious corner there. (0,0) is a cliff top via its ≥2
-	# DIAGONAL drop to (-1,-1); its +x neighbour (1,0) is one storey down and otherwise level.
+func test_cliff_top_walls_every_drop_off_its_edge() -> void:
+	# Vertical cliffs: a cliff top is a flat plateau, so EVERY storey drop off it is a wall — even a
+	# 1-storey drop to an otherwise-flat shelf (nothing ramps the shelf up to meet the top anymore).
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
 		if cx == -1 and cz == -1: return 8.0   # diagonal pit (not adjacent to (1,0)) → (0,0) cliff top
-		if cx == 1 and cz == 0: return 12.0    # +x neighbour one storey down — a PURE shelf (level around it)
+		if cx == 1 and cz == 0: return 12.0    # +x neighbour one storey down — a flat shelf
 		return 16.0)
 	var r = plan.compute_region(0, 0, 8)
-	assert_false(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)), "1-storey drop to a pure flat shelf is a slope, not a wall")
+	assert_true(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)), "cliff top walls its 1-storey drop (a vertical cliff)")
 
 func test_one_storey_drop_to_a_funnel_cell_is_walled() -> void:
 	# Owner: inner corners must be clean vertical cliffs. The +x neighbour here is a FUNNEL — one
