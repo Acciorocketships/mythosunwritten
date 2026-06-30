@@ -66,27 +66,9 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 	var h: float = region.surface_height(cx, cz)
 	var cellpos := Vector3(float(cx) * TILE, h, float(cz) * TILE)
 
-	# --- straight edges (with corner/slope-aware extent, issue 5) ---
-	for dir in CARDINALS:
-		if not cliff[dir]:
-			continue
-		var drop: int = _drop(region, cx, cz, dir)
-		var basis := Basis(Vector3.UP, _angle(dir))
-		var edge := Vector3(float(dir.x) * EDGE, 0.0, float(dir.y) * EDGE)          # wall: on the boundary
-		var lip_edge := Vector3(float(dir.x) * LIP_EDGE, 0.0, float(dir.y) * LIP_EDGE)  # lip: 1 unit inside
-		var perp := Vector3(float(dir.y), 0.0, float(dir.x))
-		# Cover the cell's FULL cliff-edge width (all offsets). Corner pieces overlap the end
-		# pieces (rock-on-rock, invisible) rather than the ends being dropped — dropping them
-		# left a gap between edge and corner. Corner lips sit slightly higher (see corners) so
-		# they win the small grass overlap without z-fighting.
-		for off: float in OFFSETS:
-			var lip_base: Vector3 = cellpos + lip_edge + perp * off
-			var wall_base: Vector3 = cellpos + edge + perp * off
-			out["lip"].append(Transform3D(basis, lip_base + Vector3(0.0, LIP_LIFT, 0.0)))
-			for k in (drop + EXTRA_WALL_ROWS):
-				out["wall"].append(Transform3D(basis, wall_base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-
-	# --- corners ---
+	# --- corners FIRST: classify each corner so the straight edges can drop their end pieces where
+	# a corner piece will sit (no overlap — owner). ---
+	var corner_here := {}   # cdir -> true when a corner piece is placed there
 	for cdir in CORNERS:
 		var ca := Vector2i(cdir.x, 0)
 		var cb := Vector2i(0, cdir.y)
@@ -100,13 +82,15 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 			out["outer_lip"].append(Transform3D(cbasis, clip + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			for k in dr:
 				out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+			corner_here[cdir] = true
 		elif TerrainSurfaceField._is_inner_corner(region, cx, cz, cdir):
-			# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level
-			# and wall that pocket. The high corner cell gets the modeled inner-corner piece (even
-			# for a 1-storey notch) instead of dipping into it as a slope (owner: "inner corner slope").
+			# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level and
+			# wall that pocket. The high corner cell gets the modeled inner-corner piece (even for a
+			# 1-storey notch) instead of dipping into it as a slope (owner: "inner corner slope").
 			out["inner_lip"].append(Transform3D(cbasis, clip + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			for k in ddrop:
 				out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+			corner_here[cdir] = true
 		elif ddrop >= 2 and (cliff.get(ca, false) or cliff.get(cb, false)):
 			# STEP corner: ONE cardinal is a cliff edge and the DIAGONAL drops ≥2 — the cliff turns
 			# the corner, exposing the diagonal face. BUT if the wall continues STRAIGHT past this
@@ -118,6 +102,29 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				out["outer_lip"].append(Transform3D(cbasis, clip + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in ddrop:
 					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+				corner_here[cdir] = true
+
+	# --- straight edges: cover the edge, but DROP the end piece (|offset|==END) on a side where a
+	# corner piece already sits, so edge and corner butt together with no overlap. ---
+	for dir in CARDINALS:
+		if not cliff[dir]:
+			continue
+		var drop: int = _drop(region, cx, cz, dir)
+		var basis := Basis(Vector3.UP, _angle(dir))
+		var edge := Vector3(float(dir.x) * EDGE, 0.0, float(dir.y) * EDGE)          # wall: on the boundary
+		var lip_edge := Vector3(float(dir.x) * LIP_EDGE, 0.0, float(dir.y) * LIP_EDGE)  # lip: 1 unit inside
+		var perp := Vector3(float(dir.y), 0.0, float(dir.x))
+		var pdir := Vector2i(dir.y, dir.x)   # perpendicular cell step (which corner each end abuts)
+		for off: float in OFFSETS:
+			if absf(off) > END - 0.01:
+				var corner: Vector2i = dir + (pdir if off > 0.0 else -pdir)
+				if corner_here.get(corner, false):
+					continue   # the corner piece fills this slot — don't overlap it
+			var lip_base: Vector3 = cellpos + lip_edge + perp * off
+			var wall_base: Vector3 = cellpos + edge + perp * off
+			out["lip"].append(Transform3D(basis, lip_base + Vector3(0.0, LIP_LIFT, 0.0)))
+			for k in (drop + EXTRA_WALL_ROWS):
+				out["wall"].append(Transform3D(basis, wall_base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 
 static func build(region, lo_cx: int, lo_cz: int, cells: int) -> Node3D:
 	_ensure_loaded()

@@ -205,8 +205,10 @@ func test_edges_keep_full_width_and_corner_present() -> void:
 	# Each cliff edge is dressed across its FULL width (8 pieces) so nothing is dropped at the
 	# corner (which previously left a gap). A convex-corner cell has two full edges plus a
 	# dedicated corner piece that overlaps their ends.
-	var side = Dress.compute(_region_side(2), 0, 0, 1)    # just cell (0,0): one edge
-	var outer = Dress.compute(_region_outer(2), 0, 0, 1)  # cell (0,0): two edges + a corner
-	assert_eq((side["lip"] as Array).size(), 8, "a lone straight edge has 8 lip pieces")
-	assert_eq((outer["lip"] as Array).size(), 16, "both edges keep full width (no dropped ends)")
-	assert_gt((outer["outer_lip"] as Array).size(), 0, "the corner has a dedicated corner piece")
+	var side = Dress.compute(_region_side(2), 0, 0, 1)    # just cell (0,0): one edge, no corners
+	var outer = Dress.compute(_region_outer(2), 0, 0, 1)  # cell (0,0): two edges + ONE outer corner
+	assert_eq((side["lip"] as Array).size(), 8, "a lone straight edge with no corners keeps all 8 lip pieces")
+	# Each of the two edges DROPS its one end piece that abuts the outer corner (no overlap), so
+	# 7+7 = 14 straight lips PLUS the dedicated corner piece — they butt together, never overlap.
+	assert_eq((outer["lip"] as Array).size(), 14, "edges drop the end piece where the corner sits")
+	assert_eq((outer["outer_lip"] as Array).size(), 1, "exactly one corner piece fills that slot")
