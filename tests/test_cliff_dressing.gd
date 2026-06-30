@@ -221,8 +221,8 @@ func test_edges_keep_full_width_and_corner_present() -> void:
 	# dedicated corner piece that overlaps their ends.
 	var side = Dress.compute(_region_side(2), 0, 0, 1)    # just cell (0,0): one edge, no corners
 	var outer = Dress.compute(_region_outer(2), 0, 0, 1)  # cell (0,0): two edges + ONE outer corner
-	assert_eq((side["lip"] as Array).size(), 8, "a straight edge has 8 lip pieces")
-	# Both edges run FULL WIDTH (8+8 = 16); the dedicated corner piece overlaps their end slots
-	# (rock-on-rock) — the owner confirms full-width reads better than dropping the ends.
-	assert_eq((outer["lip"] as Array).size(), 16, "both edges keep full width (8+8)")
+	assert_eq((side["lip"] as Array).size(), 8, "a lone straight edge with no corners keeps all 8 lip pieces")
+	# Each of the two edges DROPS its one end slot that abuts the outer corner, so 7+7 = 14 straight
+	# lips PLUS the corner piece — they butt together with NO overlap (owner: corner edges overlap).
+	assert_eq((outer["lip"] as Array).size(), 14, "edges drop the end slot where the corner sits (no overlap)")
 	assert_eq((outer["outer_lip"] as Array).size(), 1, "plus exactly one outer corner piece")
