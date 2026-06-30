@@ -175,9 +175,19 @@ func storey_at(cx: int, cz: int) -> int:
 	return clamped[Vector2i(cx, cz)]
 
 
-## Rendered surface height (metres): storey tier (4m steps) plus level tier (0.5m).
+## Whether the 0.5m sub-storey LEVEL terraces contribute to the rendered surface. OFF for now:
+## the owner wants flat "level-texture" ground, not the smooth interpolation of the level field
+## ("mini slopes"). The level field is still computed (level_at/tile_plan) for the future feature
+## of dropping flat KayKit level tiles next to slopes; it just doesn't bend the walkable mesh yet.
+const RENDER_LEVELS: bool = false
+
+## Rendered surface height (metres): storey tier (4m steps), plus the level tier (0.5m) only when
+## RENDER_LEVELS is on. Flattened to the storey grid for now (which the cliff logic already uses).
 func surface_height(cx: int, cz: int) -> float:
-	return float(storey_at(cx, cz)) * STOREY_HEIGHT + float(level_at(cx, cz)) * LEVEL_HEIGHT
+	var h := float(storey_at(cx, cz)) * STOREY_HEIGHT
+	if RENDER_LEVELS:
+		h += float(level_at(cx, cz)) * LEVEL_HEIGHT
+	return h
 
 
 ## Read API for downstream instantiation: storey index, terrace level, and the

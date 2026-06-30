@@ -26,7 +26,13 @@ func level_at(cx: int, cz: int) -> int:
 
 
 func surface_height(cx: int, cz: int) -> float:
-	return float(storey_at(cx, cz)) * STOREY_HEIGHT + float(level_at(cx, cz)) * LEVEL_HEIGHT
+	# Levels are FLATTENED out of the rendered surface for now (HeightfieldPlan.RENDER_LEVELS) — the
+	# owner wants flat "level-texture" ground, not the smooth interpolation of the level field. The
+	# level map is still stored (level_at/tile_plan) for the future flat-terrace feature.
+	var h := float(storey_at(cx, cz)) * STOREY_HEIGHT
+	if HeightfieldPlan.RENDER_LEVELS:
+		h += float(level_at(cx, cz)) * LEVEL_HEIGHT
+	return h
 
 
 func tile_plan(cx: int, cz: int) -> Dictionary:

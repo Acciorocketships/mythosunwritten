@@ -328,12 +328,15 @@ func _level_at_with_extra_margin(plan: HeightfieldPlan, cx: int, cz: int, extra:
 	return leveled[Vector2i(cx, cz)]
 
 
-func test_surface_height_combines_storey_and_level() -> void:
-	# Flat 1.7m field: storey 0 (height 0) + level 3 (1.5m) = 1.5m. Far from any
-	# cliff so the level is the full detail terrace.
+func test_surface_height_is_flattened_to_storeys_for_now() -> void:
+	# RENDER_LEVELS is OFF: the 0.5m level terraces are flattened OUT of the rendered surface (the
+	# owner wants flat "level-texture" ground, not the smooth "mini slope" interpolation). So a
+	# storey-0 cell renders flat at 0m even though the level field still reports level 3 (kept for
+	# the future flat-terrace feature).
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.7)
-	assert_almost_eq(plan.surface_height(0, 0), 1.5, 0.0001, "0 storeys + 3 levels = 1.5m")
+	assert_almost_eq(plan.surface_height(0, 0), 0.0, 0.0001, "storey-0 surface is flat at 0m (level flattened out)")
+	assert_eq(plan.level_at(0, 0), 3, "but the level field still computes level 3")
 
 func test_tile_plan_reports_storey_level_and_height() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
@@ -359,21 +362,19 @@ func test_full_invariant_adjacent_surface_differs_by_0_half_or_4() -> void:
 					"adjacent surface heights differ by 0, 0.5, or 4m (got %.3f at %d,%d)" % [diff, cx, cz])
 
 
-func test_full_invariant_includes_half_metre_terraces() -> void:
-	# A pure storey-0 field whose residual ramps 0.5m/tile in x produces a run of
-	# 0.5m terrace steps, exercising the 0.5 case of the invariant (the seeded
-	# region test happened to contain only flats and 4m cliffs).
+func test_rendered_surface_is_flat_per_storey_with_levels_off() -> void:
+	# With RENDER_LEVELS off, a residual that WOULD ramp 0.5m/tile produces NO terrace steps in the
+	# rendered surface — it stays flat at the storey height — while the level FIELD still ramps
+	# (kept for the future flat-terrace feature). This is the fix for the owner's "mini slopes".
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
 		return clampf(0.5 * float(cx), 0.0, 1.9))
-	var saw_half: bool = false
 	for cx in range(0, 4):
 		var diff: float = absf(plan.surface_height(cx + 1, 0) - plan.surface_height(cx, 0))
-		assert_true(diff < 0.001 or absf(diff - 0.5) < 0.001,
-			"adjacent terrace heights differ by 0 or 0.5m (got %.3f at cx=%d)" % [diff, cx])
-		if absf(diff - 0.5) < 0.001:
-			saw_half = true
-	assert_true(saw_half, "the ramp produced at least one 0.5m terrace step")
+		assert_true(diff < 0.001,
+			"rendered surface is flat per storey, no 0.5m steps (got %.3f at cx=%d)" % [diff, cx])
+	assert_gt(plan.detail_level(3, 0), plan.detail_level(0, 0),
+		"the level FIELD still ramps (kept for the future flat-terrace feature)")
 
 
 func test_detail_level_uses_min_aggregation_rounding() -> void:
