@@ -151,17 +151,31 @@ func test_straight_cliff_has_no_midedge_corner() -> void:
 	assert_eq((data["inner_wall"] as Array).size(), 0, "and certainly no inner corner here")
 
 # --- owner: a real convex turn STILL gets a corner (we didn't suppress everything) ----
-func test_lip_is_inset_from_the_wall_to_meet_the_flat_top() -> void:
-	# Owner: the lip must not leave a gap with the flat surface behind it. The grass LIP sits 1 unit
-	# INSIDE the cell boundary (LIP_EDGE) so its flat top ends at the edge and meets the field's flat
-	# top seam-free; the rock WALL stays on the boundary (EDGE) in front of the field's own rock face
-	# (so the modeled wall isn't occluded). So every lip is inset from its wall.
+func test_lip_and_wall_share_the_kaykit_place_offset() -> void:
+	# Owner/KayKit: every wall AND lip node origin sits at PLACE (10.5) — 1.5 inside the ±12 boundary,
+	# exactly like the old tiles. The piece's own baked GLTF offset carries the rock face out to the
+	# boundary; placing the origin at 12 double-counts it (pieces too far out — the owner's spacing bug).
 	var data = Dress.compute(_region_side(2), 0, 0, 1)   # cell (0,0): one +x cliff edge
-	assert_lt(Dress.LIP_EDGE, Dress.EDGE, "lip offset is inside the wall offset")
 	for t in (data["lip"] as Array):
-		assert_almost_eq(absf((t as Transform3D).origin.x), Dress.LIP_EDGE, 0.01, "each lip sits at LIP_EDGE")
+		assert_almost_eq(absf((t as Transform3D).origin.x), Dress.PLACE, 0.01, "each lip sits at PLACE (10.5)")
 	for t in (data["wall"] as Array):
-		assert_almost_eq(absf((t as Transform3D).origin.x), Dress.EDGE, 0.01, "each wall sits on the boundary (EDGE)")
+		assert_almost_eq(absf((t as Transform3D).origin.x), Dress.PLACE, 0.01, "each wall sits at PLACE (10.5)")
+
+func test_inner_corner_lip_is_rotated_180_from_its_wall() -> void:
+	# Owner: the inner-corner LIP rendered rotated 180°. The KayKit inner lip is authored facing the
+	# OPPOSITE diagonal from the inner wall, so the lip yaw must be the wall yaw + 180°.
+	var plan := Plan.new(0, 32.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 8.0
+		if cx == 2 and cz == 1: return 0.0
+		if cx == 1 and cz == 2: return 0.0
+		if cx == 2 and cz == 2: return 0.0
+		return 12.0)
+	var data = Dress.compute(plan.compute_region(0, 0, 8), 0, 0, 1)
+	assert_gt((data["inner_wall"] as Array).size(), 0, "the test region has an inner corner")
+	var wf: Vector3 = ((data["inner_wall"][0] as Transform3D).basis) * Vector3(0, 0, 1)
+	var lf: Vector3 = ((data["inner_lip"][0] as Transform3D).basis) * Vector3(0, 0, 1)
+	assert_lt(wf.dot(lf), -0.9, "inner lip faces opposite the inner wall (180° apart)")
 
 func test_real_convex_turn_still_gets_corner() -> void:
 	var data = Dress.compute(_region_outer(2), 0, 0, 1)
@@ -207,8 +221,8 @@ func test_edges_keep_full_width_and_corner_present() -> void:
 	# dedicated corner piece that overlaps their ends.
 	var side = Dress.compute(_region_side(2), 0, 0, 1)    # just cell (0,0): one edge, no corners
 	var outer = Dress.compute(_region_outer(2), 0, 0, 1)  # cell (0,0): two edges + ONE outer corner
-	assert_eq((side["lip"] as Array).size(), 8, "a lone straight edge with no corners keeps all 8 lip pieces")
-	# Each of the two edges DROPS its one end piece that abuts the outer corner (no overlap), so
-	# 7+7 = 14 straight lips PLUS the dedicated corner piece — they butt together, never overlap.
-	assert_eq((outer["lip"] as Array).size(), 14, "edges drop the end piece where the corner sits")
-	assert_eq((outer["outer_lip"] as Array).size(), 1, "exactly one corner piece fills that slot")
+	assert_eq((side["lip"] as Array).size(), 8, "a straight edge has 8 lip pieces")
+	# Both edges run FULL WIDTH (8+8 = 16); the dedicated corner piece overlaps their end slots
+	# (rock-on-rock) — the owner confirms full-width reads better than dropping the ends.
+	assert_eq((outer["lip"] as Array).size(), 16, "both edges keep full width (8+8)")
+	assert_eq((outer["outer_lip"] as Array).size(), 1, "plus exactly one outer corner piece")
