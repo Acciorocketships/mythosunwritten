@@ -116,6 +116,22 @@ func test_inner_corner_stays_flat_not_a_slope():
 	var r = plan.compute_region(0, 0, 8)
 	assert_almost_eq(Field.surface_y(r, 11.0, 11.0), 12.0, 0.05, "inner-corner cell stays flat into the notch corner")
 
+func test_no_slope_dip_when_a_cardinal_arm_is_higher():
+	# Owner's slope "discontinuity": a cell dipped toward a lower DIAGONAL even though one adjoining
+	# cardinal arm was HIGHER (a cliff walls down to the cell) — which cracked the shared edge with
+	# the flat neighbour. The cell must stay FLAT toward that corner. (0,0)=storey4; diagonal (1,1)=3
+	# (1 lower); +x arm (1,0)=5 (HIGHER, a cliff); +z arm (0,1)=4 (level).
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 12.0   # lower diagonal
+		if cx == 1 and cz == 0: return 20.0   # HIGHER +x arm (a cliff)
+		if cx == 0 and cz == 2: return 8.0    # gives the level +z arm (0,1) its own ≥2 drop → flat cliff top
+		return 16.0)                           # the cell and its level +z arm
+	var r = plan.compute_region(0, 0, 8)
+	assert_almost_eq(Field.surface_y_in_cell(r, 11.5, 11.5, 0, 0), 16.0, 0.05, "no dip toward the diagonal when an arm is higher")
+	# the surface is continuous across the shared +z edge with the level (flat) arm (0,1) — no crack:
+	assert_almost_eq(Field.surface_y_in_cell(r, 11.5, 12.0, 0, 0), Field.surface_y_in_cell(r, 11.5, 12.0, 0, 1), 0.05, "slope continuous across the shared edge")
+
 func test_cell_below_a_cliff_stays_flat_and_the_cliff_walls_down():
 	# Vertical cliffs: a cell one storey below a flat CLIFF TOP does NOT ramp up to meet it (that
 	# lean-to ramp produced mounds/spikes). It stays flat at its OWN height and the cliff walls down

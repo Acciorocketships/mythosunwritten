@@ -109,8 +109,14 @@ static func surface_y_in_cell(region, x: float, z: float, cx: int, cz: int) -> f
 		var delta := maxf(d_x, d_z)
 		drop = delta * (wx + wz - wx * wz)
 	elif d_d > 0.0:
-		# A lower diagonal normally pulls the corner down (concave slope). But if it's an inner-corner
-		# pocket, keep this corner FLAT — the inner-corner cliff piece + rock face span the drop.
-		if not _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
+		# A lower diagonal pulls the corner down (concave slope) ONLY when BOTH adjoining cardinal
+		# arms sit at THIS cell's level — then the dip stays continuous with both edges. If an arm is
+		# HIGHER (a cliff walls down to this cell), dipping toward the diagonal would crack the shared
+		# edge with that flat cliff top (owner's slope "discontinuity"); stay flat and let the cliff's
+		# skirt span the drop. An inner-corner pocket also stays flat (its cliff piece spans the drop).
+		var s_here := int(region.storey_at(cx, cz))
+		var arm_x_level := int(region.storey_at(cx + dx_sign, cz)) == s_here
+		var arm_z_level := int(region.storey_at(cx, cz + dz_sign)) == s_here
+		if arm_x_level and arm_z_level and not _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
 			drop = d_d * (a * b)
 	return h - drop
