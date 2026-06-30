@@ -48,40 +48,41 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var x1 := x0 + STEP
 			var z0 := o.y + iz * STEP
 			var z1 := z0 + STEP
-			var y00 := TerrainSurfaceField.surface_y(region, x0, z0)
-			var y10 := TerrainSurfaceField.surface_y(region, x1, z0)
-			var y11 := TerrainSurfaceField.surface_y(region, x1, z1)
-			var y01 := TerrainSurfaceField.surface_y(region, x0, z1)
-			# Render EVERY quad — the surface is continuous, so there is never a hole to see
-			# through, for ANY heightfield. Texture a quad as ROCK only at a real CLIFF FACE; a
-			# walkable slope (even a steep up-ramp one) stays grass. The cliff test is by CELL
-			# CONFIG, not height: corner cells span ≥2 storeys, OR a 1-storey step where every
-			# corner is a cliff top (a wall between two flat tiles). Up-ramp slope quads can reach
-			# ~4m tall but their cells differ ≤1 storey and aren't all cliff tops → grass.
-			var uv := _grass_uv if not _is_cliff_quad(region, x0, x1, z0, z1) else _cliff_uv
+			# PIN the quad to its OWN cell: evaluate all four corners as if they belong to this
+			# quad's cell, so a cliff top renders FLAT right up to its boundary (no slanted face).
+			# Where two cells differ in height the shared boundary vertices land at different y and
+			# don't weld — leaving a clean vertical gap that the rock skirt (below) fills. On flats
+			# and slopes the pinned heights match the neighbour's, so vertices weld and stay smooth.
+			var qcx := TerrainSurfaceField._cell_of((x0 + x1) * 0.5)
+			var qcz := TerrainSurfaceField._cell_of((z0 + z1) * 0.5)
+			var y00 := TerrainSurfaceField.surface_y_in_cell(region, x0, z0, qcx, qcz)
+			var y10 := TerrainSurfaceField.surface_y_in_cell(region, x1, z0, qcx, qcz)
+			var y11 := TerrainSurfaceField.surface_y_in_cell(region, x1, z1, qcx, qcz)
+			var y01 := TerrainSurfaceField.surface_y_in_cell(region, x0, z1, qcx, qcz)
+			# Grid quads are the WALKABLE surface — flat tops + gentle (≤1 storey) slopes — always
+			# grass. Cliff FACES are the separate vertical rock skirts, not slanted grid quads.
+			var uv := _grass_uv
 			var v00 := Vector3(x0, y00, z0)
 			var v10 := Vector3(x1, y10, z0)
 			var v11 := Vector3(x1, y11, z1)
 			var v01 := Vector3(x0, y01, z1)
 			_tri(st, v00, v10, v11, uv)
 			_tri(st, v00, v11, v01, uv)
-	# Cliff walls: where a cardinal neighbour is ≥2 storeys lower, drop a vertical quad
-	# along the shared edge into a SEPARATE, COLLISION-ONLY SurfaceTool. The visible
-	# cliff face comes from KayKit pieces (CliffDressing); these invisible quads only
-	# stop the player from walking through the cliff.
-	var cwall := SurfaceTool.new()
-	cwall.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
+	# pinned grid leaves between a cliff top and the lower cell. This is the actual rock cliff face
+	# (replacing the old slanted grey quads); the KayKit wall pieces dress it, and it doubles as the
+	# collision wall so the player can't walk through. Double-sided so it never reads as see-through.
+	var skirt := SurfaceTool.new()
+	skirt.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var any_wall := false
 	var lo_cx := chunk.x * CELLS_PER_CHUNK
 	var lo_cz := chunk.y * CELLS_PER_CHUNK
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
-			# Collision walls match CliffDressing exactly: one wall per cliff-top WALL EDGE
-			# (≥2 drop, or a 1-drop between two cliff tops — see _is_wall_edge).
 			var h_hi: float = region.surface_height(cx, cz)
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				if TerrainSurfaceField._is_wall_edge(region, cx, cz, dir):
-					_emit_wall(cwall, cx, cz, dir, h_hi, region.surface_height(cx + dir.x, cz + dir.y))
+					_emit_wall(skirt, cx, cz, dir, h_hi, region.surface_height(cx + dir.x, cz + dir.y))
 					any_wall = true
 
 	# Weld coincident grid vertices BEFORE generating normals so shared vertices get
@@ -163,10 +164,16 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	cs.shape = mi.mesh.create_trimesh_shape()
 	body.add_child(cs)
 	if any_wall:
-		var wall_mesh := cwall.commit()
+		skirt.generate_normals()
+		skirt.set_material(_material)
+		var skirt_mesh := skirt.commit()
+		var sf := MeshInstance3D.new()
+		sf.name = "CliffFaces"
+		sf.mesh = skirt_mesh
+		root.add_child(sf)
 		var cs2 := CollisionShape3D.new()
 		cs2.name = "CollisionShape3D_walls"
-		cs2.shape = wall_mesh.create_trimesh_shape()
+		cs2.shape = skirt_mesh.create_trimesh_shape()
 		body.add_child(cs2)
 	root.add_child(body)
 
@@ -219,6 +226,7 @@ func _emit_wall(st: SurfaceTool, cx: int, cz: int, dir: Vector2i, y_hi: float, y
 	var t1 := Vector3(p1.x, y_hi, p1.y)
 	var b0 := Vector3(p0.x, y_lo, p0.y)
 	var b1 := Vector3(p1.x, y_lo, p1.y)
-	# Wind both triangles so the face points outward (+dir).
-	for v in [t0, t1, b1, t0, b1, b0]:
+	# Emit BOTH windings (front + back) so the rock skirt shows from either side and never reads as
+	# a see-through hole if a KayKit wall ever fails to cover it.
+	for v in [t0, t1, b1, t0, b1, b0, t0, b1, t1, t0, b0, b1]:
 		st.set_uv(_cliff_uv); st.add_vertex(v)

@@ -55,20 +55,28 @@ func test_adjacent_chunks_share_boundary_height():
 	assert_eq(a, b, "field is single-valued at the shared boundary")
 
 func test_chunk_emits_cliff_wall():
-	# The cliff face is now a ROCK-textured part of the CONTINUOUS surface (so there's never a
-	# hole to see through) PLUS overlaid KayKit dressing + a collision wall. Verify: (a) the
-	# surface has rock-UV cliff-face triangles, (b) a collision wall blocks it, (c) dressing.
+	# The cliff face is now a VERTICAL rock SKIRT (separate "CliffFaces" mesh) — not a slanted part
+	# of the walkable surface — PLUS overlaid KayKit dressing + a collision wall. Verify: (a) the
+	# CliffFaces skirt has rock-UV triangles, (b) a collision wall blocks it, (c) dressing.
 	const Atlas := preload("res://scripts/terrain/tools/SlopeAtlas.gd")
 	var cliff_uv: Vector2 = Atlas.cliff_uv()
 	var p := Plan.new(11, 32.0, 8, "mean", 3)
 	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)  # cliff between cell 3 and 4
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var uvs: PackedVector2Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
+	assert_not_null(faces, "a CliffFaces rock-skirt mesh is emitted at the cliff")
+	var uvs: PackedVector2Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
 	var rock := 0
 	for uv in uvs:
 		if uv.is_equal_approx(cliff_uv): rock += 1
-	assert_gt(rock, 0, "cliff face is rendered as rock in the continuous surface (no hole)")
+	assert_gt(rock, 0, "the cliff skirt is rock-textured")
+	# the walkable surface itself must carry NO rock (cliff faces are not slanted into it anymore)
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var suv: PackedVector2Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+	var surf_rock := 0
+	for uv in suv:
+		if uv.is_equal_approx(cliff_uv): surf_rock += 1
+	assert_eq(surf_rock, 0, "walkable surface is all grass; the cliff face is the separate skirt")
 	# A second collision shape (the invisible wall) stops the player at the cliff.
 	var body := node.find_child("Body", true, false) as StaticBody3D
 	assert_not_null(body.get_node_or_null("CollisionShape3D_walls"), "collision wall present")

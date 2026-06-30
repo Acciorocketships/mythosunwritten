@@ -78,8 +78,13 @@ static func has_inner_corner(region, cx: int, cz: int) -> bool:
 	return false
 
 static func surface_y(region, x: float, z: float) -> float:
-	var cx := _cell_of(x)
-	var cz := _cell_of(z)
+	return surface_y_in_cell(region, x, z, _cell_of(x), _cell_of(z))
+
+# Surface height at (x,z) evaluated as if the point belongs to cell (cx,cz) — even past the cell's
+# edge. The mesher pins each quad to its own cell so a cliff top renders FLAT right up to its
+# boundary (no slanted face); the vertical drop to the lower cell is then a separate rock skirt.
+# For a point inside its natural cell this is identical to surface_y.
+static func surface_y_in_cell(region, x: float, z: float, cx: int, cz: int) -> float:
 	var h: float = region.surface_height(cx, cz)
 	# A cliff top is FLAT (its lip needs flat backing); the KayKit tile draws its edges.
 	if _is_cliff_top(region, cx, cz):
