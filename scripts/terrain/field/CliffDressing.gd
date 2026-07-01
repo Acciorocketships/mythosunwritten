@@ -21,12 +21,11 @@ const SCENES := {
 
 const TILE := 24.0
 const STOREY := 4.0
-const PLACE := 10.5         # EVERY wall/lip/corner node origin sits 1.5 INSIDE the cell boundary
-                            # (±12), exactly like the old KayKit tiles (CliffSide/CliffCorner placed
-                            # all pieces at ±10.5). The piece's own baked GLTF offset carries the rock
-                            # face out to the boundary; placing the origin at 12 double-counts it and
-                            # pushes the piece ~1.5u too far over the drop. The cliff face (mesh skirt)
-                            # is recessed to match (TerrainChunkMesher.WALL_INSET) so the walls cover it.
+const PLACE := 11.0         # wall/lip/corner node origin. The piece's baked GLTF offset (~+1.0) carries
+                            # the rock FACE out to the cell boundary (±12), so the KayKit wall sits right
+                            # in FRONT of the mesh skirt (which is AT the boundary) and hides it, and the
+                            # grass lip's flat top ends at the boundary (sits on the plateau, doesn't
+                            # overhang into a gap). No recession/overhang — the skirt is at the boundary.
 const EXTRA_WALL_ROWS := 0  # the wall spans exactly the storey drop (cliff top → neighbour
                             # surface). Over-extending hangs the wall BELOW the neighbour's
                             # thin surface, where it sticks out into open air (a visible slab).

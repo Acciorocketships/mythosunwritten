@@ -86,6 +86,31 @@ func test_chunk_emits_cliff_wall():
 	assert_gt(walls.multimesh.instance_count, 0, "cliff dressing produced wall pieces")
 	node.free()
 
+func test_cliff_skirt_is_vertical_at_the_boundary_no_cap():
+	# The rock cliff-face skirt (CliffFaces) is a plain VERTICAL wall on a single plane just behind the
+	# cell boundary (SKIRT_RECESS behind the KayKit wall, which reaches the boundary and is the visible
+	# face) — NO horizontal cap and NO overhang. The old cap+overhang produced protruding planes and
+	# left the boundary drop unfilled (see-through voids). Cliff at cell 3|4 → E-edge boundary x=84, so
+	# every skirt vertex sits on x = 84 - SKIRT_RECESS and every triangle is near-vertical (no cap).
+	var p := Plan.new(11, 32.0, 8, "mean", 3)
+	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
+	assert_not_null(faces, "CliffFaces skirt present")
+	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	assert_gt(verts.size(), 0, "skirt has geometry")
+	var horiz := 0
+	var plane_x := 84.0 - Mesher.SKIRT_RECESS
+	for t in range(0, verts.size(), 3):
+		var a := verts[t]; var b := verts[t + 1]; var c := verts[t + 2]
+		var n := (b - a).cross(c - a).normalized()
+		if absf(n.y) > 0.3:
+			horiz += 1
+		for v in [a, b, c]:
+			assert_almost_eq(v.x, plane_x, 0.01, "skirt vertex on the single recessed boundary plane")
+	assert_eq(horiz, 0, "no horizontal cap triangles (those were the protruding planes)")
+	node.free()
+
 func test_surface_is_gap_free_for_any_heightfield():
 	# The owner's requirement: gap-free terrain for ANY heightmap. The surface renders EVERY
 	# grid quad (grass or rock), so the triangle count is always GRID*GRID*2 — no quad skipped,

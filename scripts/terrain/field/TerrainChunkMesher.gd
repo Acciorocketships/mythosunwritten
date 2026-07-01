@@ -13,9 +13,10 @@ const CHUNK_WORLD := TILE * CELLS_PER_CHUNK          # 192
 const STEP := TILE / SAMPLES_PER_CELL                # 3.0
 const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 64 quads per axis
 const SEA_LEVEL := 2.0   # water surface ~half a storey above the storey-0 basin floor (a shallow pool)
-const WALL_INSET := 1.5  # the rock cliff face (skirt) is recessed this far INSIDE the cell boundary,
-                         # matching the KayKit walls (CliffDressing.PLACE = 12 - 1.5). The walkable top
-                         # overhangs to the boundary (the grass lip curls over the recessed rock wall).
+const SKIRT_RECESS := 0.8 # the rock skirt sits this far behind the cell boundary — just behind the
+                          # KayKit wall pieces (whose scalloped face spans boundary..boundary-0.75) so
+                          # the flat skirt never pokes THROUGH the scallop valleys. The KayKit wall
+                          # reaches the boundary and is the visible face; the skirt is a hidden backstop.
 
 const FOLIAGE_SCENES := {
 	"grass": ["res://terrain/scenes/grass/Grass1.tscn", "res://terrain/scenes/grass/Grass2.tscn", "res://terrain/scenes/grass/Grass3.tscn"],
@@ -214,27 +215,20 @@ func _is_cliff_quad(region, x0: float, x1: float, z0: float, z1: float) -> bool:
 		return true
 	return false
 
-# The cliff face: a VERTICAL rock skirt recessed WALL_INSET inside the cell boundary (so the walkable
-# top overhangs it and the KayKit walls cover it), PLUS a horizontal cap flooring the overhang out to
-# the boundary so there's no see-through under the lip. Both double-sided. Rock UV.
+# The cliff face: a plain VERTICAL rock skirt at the cell BOUNDARY (exactly where the pinned surface
+# drops), from the cliff top down to the neighbour's height. It fills that vertical gap watertight and
+# is the collision wall; the KayKit walls sit just in front of it. Double-sided, rock UV. NO recession,
+# NO overhang, NO horizontal cap — those produced protruding planes and left the boundary drop unfilled
+# (see-through voids). The grass lip's own bevel provides the slight KayKit overhang instead.
 func _emit_wall(st: SurfaceTool, cx: int, cz: int, dir: Vector2i, y_hi: float, y_lo: float) -> void:
 	var ccx := float(cx) * TILE
 	var ccz := float(cz) * TILE
 	var perp := Vector2(float(dir.y), float(dir.x)) * (TILE * 0.5)   # half-edge offset along the edge
-	# recessed cliff-face line (the rock wall) and the cell boundary line:
-	var rx := ccx + float(dir.x) * (TILE * 0.5 - WALL_INSET)
-	var rz := ccz + float(dir.y) * (TILE * 0.5 - WALL_INSET)
-	var bx := ccx + float(dir.x) * (TILE * 0.5)
-	var bz := ccz + float(dir.y) * (TILE * 0.5)
-	var t0 := Vector3(rx - perp.x, y_hi, rz - perp.y)
-	var t1 := Vector3(rx + perp.x, y_hi, rz + perp.y)
-	var b0 := Vector3(rx - perp.x, y_lo, rz - perp.y)
-	var b1 := Vector3(rx + perp.x, y_lo, rz + perp.y)
-	# vertical skirt at the recessed line (both windings)
+	var ex := ccx + float(dir.x) * (TILE * 0.5 - SKIRT_RECESS)
+	var ez := ccz + float(dir.y) * (TILE * 0.5 - SKIRT_RECESS)
+	var t0 := Vector3(ex - perp.x, y_hi, ez - perp.y)
+	var t1 := Vector3(ex + perp.x, y_hi, ez + perp.y)
+	var b0 := Vector3(ex - perp.x, y_lo, ez - perp.y)
+	var b1 := Vector3(ex + perp.x, y_lo, ez + perp.y)
 	for v in [t0, t1, b1, t0, b1, b0, t0, b1, t1, t0, b0, b1]:
-		st.set_uv(_cliff_uv); st.add_vertex(v)
-	# horizontal cap from the skirt base out to the boundary at the low height (floors the overhang)
-	var c0 := Vector3(bx - perp.x, y_lo, bz - perp.y)
-	var c1 := Vector3(bx + perp.x, y_lo, bz + perp.y)
-	for v in [b0, b1, c1, b0, c1, c0, b0, c1, b1, b0, c0, c1]:
 		st.set_uv(_cliff_uv); st.add_vertex(v)
