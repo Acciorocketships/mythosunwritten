@@ -13,10 +13,18 @@ const CHUNK_WORLD := TILE * CELLS_PER_CHUNK          # 192
 const STEP := TILE / SAMPLES_PER_CELL                # 3.0
 const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 64 quads per axis
 const SEA_LEVEL := 2.0   # water surface ~half a storey above the storey-0 basin floor (a shallow pool)
-const SKIRT_RECESS := 0.8 # the rock skirt sits this far behind the cell boundary — just behind the
-                          # KayKit wall pieces (whose scalloped face spans boundary..boundary-0.75) so
-                          # the flat skirt never pokes THROUGH the scallop valleys. The KayKit wall
-                          # reaches the boundary and is the visible face; the skirt is a hidden backstop.
+const SKIRT_RECESS := 1.3 # the rock skirt sits this far behind the cell boundary — just behind the
+                          # KayKit wall pieces (old-tile spacing: scalloped face spans PLACE+0.25..
+                          # PLACE+1.0 = boundary-1.25..boundary-0.5) so the flat skirt never pokes
+                          # THROUGH the scallop valleys. The skirt is a hidden watertight backstop.
+const TOP_CLIP := 9.6     # the VISUAL cliff-top sheet stops here on lipped edges — 0.9 behind the
+                          # 10.5 lip line, exactly like the old tiles' ground Center piece. The lip
+                          # IS the edge from there out; a sheet running to ±12 poked out past/over
+                          # the lip pieces (owner's "plane over the cliff edge lips"). Collision
+                          # keeps the full extent so the lip band stays walkable.
+const APRON := 2.4        # ground/skirt continuation depth under a HIGHER flat neighbour, sealing
+                          # the recess band behind that neighbour's wall face + skirt (owner:
+                          # "extend the tile at the current level underneath the higher tile").
 
 const FOLIAGE_SCENES := {
 	"grass": ["res://terrain/scenes/grass/Grass1.tscn", "res://terrain/scenes/grass/Grass2.tscn", "res://terrain/scenes/grass/Grass3.tscn"],
@@ -28,8 +36,25 @@ const FOLIAGE_SCENES := {
 var _material: Material = load("res://terrain/materials/ground.tres")
 var _grass_uv: Vector2 = SlopeAtlas.grass_uv()
 var _cliff_uv: Vector2 = SlopeAtlas.cliff_uv()
+# The skirt renders with the KayKit wall piece's OWN material + a rock texel from its mesh, so
+# wherever it peeks out between the scalloped modules it blends with them — the terrain atlas
+# rock read as a clearly different colour (owner's round 3).
+var _skirt_material: Material = null
+var _skirt_uv := Vector2.ZERO
+
+func _ensure_skirt_style() -> void:
+	if _skirt_material != null:
+		return
+	CliffDressing._ensure_loaded()
+	var wall_mesh: Mesh = CliffDressing._pieces["wall"][0]
+	_skirt_material = wall_mesh.surface_get_material(0)
+	var uvs: PackedVector2Array = wall_mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+	if uvs.size() > 0:
+		_skirt_uv = uvs[0]
+	if _skirt_material == null:
+		_skirt_material = _material
+		_skirt_uv = _cliff_uv
 var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
-var _water_material: Material = load("res://terrain/materials/water.tres") if ResourceLoader.exists("res://terrain/materials/water.tres") else load("res://terrain/materials/ground.tres")
 
 func set_seed(seed: int) -> void:
 	_water_seed = seed
@@ -39,13 +64,17 @@ func _origin(chunk: Vector2i) -> Vector2:
 	return Vector2(float(chunk.x) * CHUNK_WORLD, float(chunk.y) * CHUNK_WORLD)
 
 func build_chunk(plan, chunk: Vector2i) -> Node3D:
+	_ensure_skirt_style()
 	# Region centred on the chunk; radius covers the chunk plus a neighbour ring for ramps.
 	var centre_cx := chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
 	var centre_cz := chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
 	var region = plan.compute_region(centre_cx, centre_cz, CELLS_PER_CHUNK)
 	var o := _origin(chunk)
-	var st := SurfaceTool.new()
+	var st := SurfaceTool.new()    # VISUAL sheet: clipped back to TOP_CLIP under the lips
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var stc := SurfaceTool.new()   # COLLISION sheet: full extent (the lip band stays walkable)
+	stc.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var clip_cache := {}           # per-cell lipped-slot masks for the visual clip
 	for iz in GRID:
 		for ix in GRID:
 			var x0 := o.x + ix * STEP
@@ -70,8 +99,16 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var v10 := Vector3(x1, y10, z0)
 			var v11 := Vector3(x1, y11, z1)
 			var v01 := Vector3(x0, y01, z1)
-			_tri(st, v00, v10, v11, uv)
-			_tri(st, v00, v11, v01, uv)
+			_tri(stc, v00, v10, v11, uv)
+			_tri(stc, v00, v11, v01, uv)
+			# The visual sheet pulls back to TOP_CLIP on lipped edges (the KayKit lip is the
+			# visible edge there — a sheet running to the boundary pokes out past/over it).
+			var c00 := _clip_vert(region, clip_cache, qcx, qcz, v00)
+			var c10 := _clip_vert(region, clip_cache, qcx, qcz, v10)
+			var c11 := _clip_vert(region, clip_cache, qcx, qcz, v11)
+			var c01 := _clip_vert(region, clip_cache, qcx, qcz, v01)
+			_tri(st, c00, c10, c11, uv)
+			_tri(st, c00, c11, c01, uv)
 	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
 	# pinned grid leaves between a cliff top and the lower cell. This is the actual rock cliff face
 	# (replacing the old slanted grey quads); the KayKit wall pieces dress it, and it doubles as the
@@ -83,11 +120,13 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	var lo_cz := chunk.y * CELLS_PER_CHUNK
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
+			if not TerrainSurfaceField.is_flat_cell(region, cx, cz):
+				continue   # only flat-rendered cells leave vertical gaps at their boundaries
 			var h_hi: float = region.surface_height(cx, cz)
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				if TerrainSurfaceField._is_wall_edge(region, cx, cz, dir):
-					_emit_wall(skirt, cx, cz, dir, h_hi, region.surface_height(cx + dir.x, cz + dir.y))
-					any_wall = true
+				if TerrainSurfaceField.own_edge_flat(region, cx, cz, dir):
+					if _emit_wall(skirt, region, cx, cz, dir, h_hi):
+						any_wall = true
 
 	# Weld coincident grid vertices BEFORE generating normals so shared vertices get
 	# averaged (smooth) normals instead of per-face (flat) ones — this is what makes
@@ -102,34 +141,30 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	mi.mesh = st.commit()
 	root.add_child(mi)
 
-	# Water shim: shallow pools in genuinely LOW basins only. The river/pond noise (is_water)
-	# is height-agnostic, so without this gate it drops a quad at sea level under high terrain
-	# too — which then peeks out as stray blue in adjacent low ground. Only emit water where the
-	# cell floor is at/below the water line, and sit the surface SEA_LEVEL above the floor.
-	var wst := SurfaceTool.new()
-	wst.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var any_water := false
-	for cz in range(chunk.y * CELLS_PER_CHUNK, chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
-		for cx in range(chunk.x * CELLS_PER_CHUNK, chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
-			var wc := Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
-			if not Helper.is_water(wc, _water_seed):
-				continue
-			if region.surface_height(cx, cz) > SEA_LEVEL:   # only basins at/below the water line
-				continue
-			any_water = true
-			var x0 := wc.x - TILE * 0.5; var x1 := wc.x + TILE * 0.5
-			var z0 := wc.z - TILE * 0.5; var z1 := wc.z + TILE * 0.5
-			var a := Vector3(x0, SEA_LEVEL, z0); var b := Vector3(x1, SEA_LEVEL, z0)
-			var c := Vector3(x1, SEA_LEVEL, z1); var d := Vector3(x0, SEA_LEVEL, z1)
-			for v in [a, b, c, a, c, d]:
-				wst.set_uv(Vector2.ZERO); wst.add_vertex(v)
-	var water := MeshInstance3D.new()
-	water.name = "Water"
-	if any_water:
-		wst.generate_normals()
-		wst.set_material(_water_material)
-		water.mesh = wst.commit()
-	root.add_child(water)
+	# Ground APRONS: continue each cell's ground sheet APRON deep under every HIGHER flat
+	# neighbour, sealing the slot floor behind that neighbour's recessed wall face (owner:
+	# "extend the tile at the current level underneath the higher tile"). Separate mesh so the
+	# Surface sheet keeps its exact one-quad-per-grid-cell structure.
+	var ast := SurfaceTool.new()
+	ast.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var any_apron := false
+	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
+		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
+			if _emit_aprons(ast, region, clip_cache, cx, cz):
+				any_apron = true
+	if any_apron:
+		# no index()/generate_normals(): normals are explicit verticals (welding the two
+		# windings would zero them out and break the lighting)
+		ast.set_material(_material)
+		var am := MeshInstance3D.new()
+		am.name = "Aprons"
+		am.mesh = ast.commit()
+		root.add_child(am)
+
+	# NO per-chunk water quads: they hovered at SEA_LEVEL over flat storey-0 ground with the
+	# ground-material fallback (water.tres doesn't exist) and read as floating brown planes
+	# (owner's screenshot). The global WaterSurface scene is the water visual; Helper.is_water
+	# still gates decorations below.
 
 	# Decorations: scatter foliage on non-water land cells
 	var deco := Node3D.new()
@@ -159,17 +194,17 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	var dressing := CliffDressing.build(region, lo_cx, lo_cz, CELLS_PER_CHUNK)
 	root.add_child(dressing)
 
-	# Collision: trimesh from the walkable surface, plus a second trimesh of the
-	# (invisible) cliff-wall quads so the player can't walk through a cliff face.
+	# Collision: trimesh from the FULL walkable sheet (not the lip-clipped visual — the player
+	# must still stand on the lip band), plus a second trimesh of the cliff-wall quads.
 	var body := StaticBody3D.new()
 	body.name = "Body"
 	var cs := CollisionShape3D.new()
 	cs.name = "CollisionShape3D"
-	cs.shape = mi.mesh.create_trimesh_shape()
+	cs.shape = stc.commit().create_trimesh_shape()
 	body.add_child(cs)
 	if any_wall:
 		skirt.generate_normals()
-		skirt.set_material(_material)
+		skirt.set_material(_skirt_material)
 		var skirt_mesh := skirt.commit()
 		var sf := MeshInstance3D.new()
 		sf.name = "CliffFaces"
@@ -187,6 +222,215 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, uv: Vector2) -> v
 	for v in [a, b, c]:
 		st.set_uv(uv)
 		st.add_vertex(v)
+
+const LIP_LIFT := 0.05    # matches CliffDressing.LIP_LIFT — clipped sheet edges rise to the lip
+                          # top plane so no hairline slit shows at the lip back
+
+# Which 3-unit slots of this flat cell's edges carry a lip — the same rule CliffDressing uses
+# (slot dips ≥ EXPOSE_EPS on a flat-backed edge). Slots are ordered along pdir=(dir.y,dir.x).
+# null when nothing on this cell is lipped.
+func _cell_clip_info(region, cache: Dictionary, cx: int, cz: int):
+	var key := Vector2i(cx, cz)
+	if cache.has(key):
+		return cache[key]
+	var out = null
+	if TerrainSurfaceField.is_flat_cell(region, cx, cz):
+		var h: float = region.surface_height(cx, cz)
+		var dirs := {}
+		for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if not TerrainSurfaceField.own_edge_flat(region, cx, cz, dir):
+				continue
+			var prof := TerrainSurfaceField.edge_profile(region, cx, cz, dir, CliffDressing.PROFILE_SAMPLES)
+			var lips := []
+			var any_lip := false
+			var any_dip := false
+			for slot in 8:
+				var dipped: bool = h - CliffDressing._slot_min(prof, -10.5 + 3.0 * float(slot)) >= TerrainSurfaceField.EXPOSE_EPS
+				lips.append(dipped)
+				any_lip = any_lip or dipped
+			for f in prof:
+				if f < h - 0.01:
+					any_dip = true
+					break
+			if any_lip or any_dip:
+				dirs[dir] = {"lips": lips if any_lip else [], "prof": prof}
+		if not dirs.is_empty():
+			out = dirs
+	cache[key] = out
+	return out
+
+# Pointwise neighbour surface from a cached 25-sample edge profile (1u spacing, along pdir).
+func _prof_at(prof: PackedFloat32Array, along: float) -> float:
+	var a := clampf(along + 12.0, 0.0, 24.0)
+	var i := int(floorf(a))
+	if i >= 24:
+		return prof[24]
+	return lerpf(prof[i], prof[i + 1], a - float(i))
+
+# Is slot s of this cell's `dir` edge lipped? Out-of-range slots look across the cell seam into
+# the CONTINUATION cell's colinear edge — so two cells always agree about their shared corner.
+func _slot_lipped(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, s: int) -> bool:
+	if s < 0 or s > 7:
+		var pdir := Vector2i(dir.y, dir.x)
+		var step := 1 if s > 7 else -1
+		cx += pdir.x * step
+		cz += pdir.y * step
+		s = 0 if s > 7 else 7
+	var info = _cell_clip_info(region, cache, cx, cz)
+	if info == null or not info.has(dir):
+		return false
+	var lips: Array = info[dir]["lips"]
+	return lips.size() > 0 and lips[s]
+
+# Feathered clip weight along the edge at along-position a (measured along pdir, -12..12):
+# 1 inside lipped slots, tapering linearly to 0 at any slot boundary shared with an UNLIPPED
+# slot — including across the cell seam. This keeps the sheet C0-continuous: a lipped cell
+# never tears away from an unclipped neighbour (the owner's triangular holes), and the clip
+# fades out exactly where the lip run ends.
+func _edge_w(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, a: float) -> float:
+	var s := clampi(int(floorf((a + 12.0) / 3.0)), 0, 7)
+	var w_c := 1.0 if _slot_lipped(region, cache, cx, cz, dir, s) else 0.0
+	var t := (a - (-10.5 + 3.0 * float(s))) / 1.5   # -1 at the slot's low corner, +1 at its high corner
+	var nb := s + 1 if t >= 0.0 else s - 1
+	var w_corner := w_c if _slot_lipped(region, cache, cx, cz, dir, nb) else 0.0
+	return lerpf(w_c, w_corner, clampf(absf(t), 0.0, 1.0))
+
+# Adjust a flat-top vertex for its cell's edges (visual sheet only):
+#  - PULL it back toward TOP_CLIP on lipped edges (the KayKit lip is the visible edge there),
+#    scaled by the feathered weight; the pulled edge rises by LIP_LIFT to tuck flush under the
+#    lip's raised top. Near-degenerate offsets (not zero) preserve the quad structure.
+#  - BLEND it down (capped at EXPOSE_EPS) onto a neighbour that has dipped LESS than the lip
+#    threshold, scaled by (1-w): sub-lip dips weld instead of opening a hairline slit at the
+#    boundary (the owner's dark dashes where a slope flattens out).
+func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Vector3:
+	var info = _cell_clip_info(region, cache, qcx, qcz)
+	if info == null:
+		return v
+	var h: float = region.surface_height(qcx, qcz)
+	var lx := v.x - float(qcx) * TILE
+	var lz := v.z - float(qcz) * TILE
+	var lift := 0.0
+	var down := 0.0
+	for dir in info:
+		var coord := lx * float(dir.x) + lz * float(dir.y)       # distance toward this edge
+		var along := lx * float(dir.y) + lz * float(dir.x)       # signed along pdir=(dir.y,dir.x)
+		var w := _edge_w(region, cache, qcx, qcz, dir, along)
+		var f := clampf((coord - TOP_CLIP) / (TILE * 0.5 - TOP_CLIP), 0.0, 1.0)
+		if f > 0.0 and w < 1.0:
+			var dip := clampf(h - _prof_at(info[dir]["prof"], along), 0.0, TerrainSurfaceField.EXPOSE_EPS)
+			down = maxf(down, dip * f * (1.0 - w))
+		if w <= 0.0:
+			continue
+		var target := TILE * 0.5 - (TILE * 0.5 - TOP_CLIP) * w
+		if coord > target:
+			# 0.02 keeps the compressed band a few cm wide — truly degenerate slivers get
+			# zero-area normals and render as dark dashes. The lift tucks the edge 1cm BELOW
+			# the lip's raised top: flush to the eye, no coplanar z-fight with the lip.
+			var pulled := target + (coord - target) * 0.02
+			if dir.x != 0:
+				lx = pulled * float(dir.x)
+			else:
+				lz = pulled * float(dir.y)
+			lift = maxf(lift, (LIP_LIFT - 0.01) * w)
+	return Vector3(float(qcx) * TILE + lx, v.y + lift - down, float(qcz) * TILE + lz)
+
+# Ground aprons: continue this cell's ground sheet APRON deep under each FLAT neighbour whose
+# edge toward us is EXPOSED — a higher cliff, or a same-level cliff top this cell's slope dips
+# under (the owner's "gap between slope and cliff at the same level"). The strip sits at this
+# cell's boundary profile (welding to the main sheet), floors the recess band behind the
+# neighbour's wall face, and is clamped by both cells' clips so its ends never poke out through
+# a perpendicular wall face (the owner's floating green planes).
+func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int) -> bool:
+	var emitted := false
+	var active := {}
+	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		active[dir] = TerrainSurfaceField.is_exposed_edge(region, cx + dir.x, cz + dir.y, Vector2i(-dir.x, -dir.y))
+	for dir in active:
+		if not active[dir]:
+			continue
+		var ncx: int = cx + dir.x
+		var ncz: int = cz + dir.y
+		var h_n: float = region.surface_height(ncx, ncz)
+		var pdir := Vector2i(dir.y, dir.x)
+		var bx := float(cx) * TILE + float(dir.x) * TILE * 0.5
+		var bz := float(cz) * TILE + float(dir.y) * TILE * 0.5
+		var out := Vector3(float(dir.x) * APRON, 0.0, float(dir.y) * APRON)
+		for i in SAMPLES_PER_CELL:
+			var a0 := -TILE * 0.5 + STEP * float(i)
+			var a1 := a0 + STEP
+			var p0 := Vector3(bx + float(pdir.x) * a0, 0.0, bz + float(pdir.y) * a0)
+			var p1 := Vector3(bx + float(pdir.x) * a1, 0.0, bz + float(pdir.y) * a1)
+			p0.y = TerrainSurfaceField.surface_y_in_cell(region, p0.x, p0.z, cx, cz)
+			p1.y = TerrainSurfaceField.surface_y_in_cell(region, p1.x, p1.z, cx, cz)
+			if p0.y > h_n - 0.05 and p1.y > h_n - 0.05:
+				continue   # flush with the neighbour's top — nothing to floor here
+			# inner verts weld to this cell's (possibly clipped) sheet edge; outer verts tuck
+			# under the neighbour's top and pull back from its perpendicular clip lines
+			var q0: Vector3 = p0 + out
+			var q1: Vector3 = p1 + out
+			q0.y = minf(q0.y, h_n - 0.05)
+			q1.y = minf(q1.y, h_n - 0.05)
+			p0 = _clip_vert(region, clip_cache, cx, cz, p0)
+			p1 = _clip_vert(region, clip_cache, cx, cz, p1)
+			q0 = _clip_perp(region, clip_cache, ncx, ncz, dir, q0)
+			q1 = _clip_perp(region, clip_cache, ncx, ncz, dir, q1)
+			_apron_quad(st, p0, p1, q0, q1)
+			emitted = true
+	for cdir in [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
+		if not (active[Vector2i(cdir.x, 0)] and active[Vector2i(0, cdir.y)]):
+			continue
+		if int(region.storey_at(cx + cdir.x, cz + cdir.y)) < int(region.storey_at(cx, cz)):
+			continue   # diagonal hole — a floating corner patch would poke into open air
+		var px := float(cx) * TILE + float(cdir.x) * TILE * 0.5
+		var pz := float(cz) * TILE + float(cdir.y) * TILE * 0.5
+		var y := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx, cz)
+		var a := Vector3(px, y, pz)
+		var b := a + Vector3(float(cdir.x) * APRON, 0.0, 0.0)
+		var c := a + Vector3(0.0, 0.0, float(cdir.y) * APRON)
+		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
+		_apron_quad(st, a, b, c, d2)
+		emitted = true
+	return emitted
+
+# Both windings with explicit vertical normals — indexing+generate_normals would weld the two
+# sides into ~zero normals and break the lighting. The down-facing side sits 2cm lower so the
+# two never z-fight (coplanar opposite-normal faces rendered as dark dashes — owner's round 3).
+func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3, q1: Vector3) -> void:
+	st.set_normal(Vector3.UP)
+	for v in [p0, q0, q1, p0, q1, p1]:
+		st.set_uv(_grass_uv)
+		st.add_vertex(v)
+	var drop := Vector3(0.0, -0.02, 0.0)
+	st.set_normal(Vector3.DOWN)
+	for v in [p0 + drop, q1 + drop, q0 + drop, p0 + drop, p1 + drop, q1 + drop]:
+		st.set_uv(_grass_uv)
+		st.add_vertex(v)
+
+# Clamp a point's ALONG coordinates by cell (ncx,ncz)'s clip on its two edges perpendicular to
+# `d` — used for apron ends reaching into that cell (never pull along d itself: the apron
+# legitimately extends past that cell's d-facing clip line).
+func _clip_perp(region, cache: Dictionary, ncx: int, ncz: int, d: Vector2i, v: Vector3) -> Vector3:
+	var info = _cell_clip_info(region, cache, ncx, ncz)
+	if info == null:
+		return v
+	var lx := v.x - float(ncx) * TILE
+	var lz := v.z - float(ncz) * TILE
+	for dir in info:
+		if dir == d or dir == Vector2i(-d.x, -d.y):
+			continue
+		var coord := lx * float(dir.x) + lz * float(dir.y)
+		var along := lx * float(dir.y) + lz * float(dir.x)
+		var w := _edge_w(region, cache, ncx, ncz, dir, along)
+		if w <= 0.0:
+			continue
+		var target := TILE * 0.5 - (TILE * 0.5 - TOP_CLIP) * w
+		if coord > target:
+			var pulled := target + (coord - target) * 0.001
+			if dir.x != 0:
+				lx = pulled * float(dir.x)
+			else:
+				lz = pulled * float(dir.y)
+	return Vector3(float(ncx) * TILE + lx, v.y, float(ncz) * TILE + lz)
 
 # Does this grid quad lie on a CLIFF FACE (→ rock) rather than a walkable slope (→ grass)?
 # By cell config: the quad's corner cells span ≥2 storeys (a cliff), or a 1-storey step where
@@ -215,20 +459,74 @@ func _is_cliff_quad(region, x0: float, x1: float, z0: float, z1: float) -> bool:
 		return true
 	return false
 
-# The cliff face: a plain VERTICAL rock skirt at the cell BOUNDARY (exactly where the pinned surface
-# drops), from the cliff top down to the neighbour's height. It fills that vertical gap watertight and
-# is the collision wall; the KayKit walls sit just in front of it. Double-sided, rock UV. NO recession,
-# NO overhang, NO horizontal cap — those produced protruding planes and left the boundary drop unfilled
-# (see-through voids). The grass lip's own bevel provides the slight KayKit overhang instead.
-func _emit_wall(st: SurfaceTool, cx: int, cz: int, dir: Vector2i, y_hi: float, y_lo: float) -> void:
-	var ccx := float(cx) * TILE
-	var ccz := float(cz) * TILE
-	var perp := Vector2(float(dir.y), float(dir.x)) * (TILE * 0.5)   # half-edge offset along the edge
-	var ex := ccx + float(dir.x) * (TILE * 0.5 - SKIRT_RECESS)
-	var ez := ccz + float(dir.y) * (TILE * 0.5 - SKIRT_RECESS)
-	var t0 := Vector3(ex - perp.x, y_hi, ez - perp.y)
-	var t1 := Vector3(ex + perp.x, y_hi, ez + perp.y)
-	var b0 := Vector3(ex - perp.x, y_lo, ez - perp.y)
-	var b1 := Vector3(ex + perp.x, y_lo, ez + perp.y)
+# The cliff face: a VERTICAL rock skirt just behind the cell boundary (SKIRT_RECESS, hidden
+# behind the KayKit wall pieces), spanning from the flat cliff top down to the NEIGHBOUR'S
+# ACTUAL surface along the shared edge — its boundary profile, not its cell-centre height. A
+# slope neighbour descends along the edge; stopping at the storey line left a see-through void
+# under the wall, and a SAME-storey slope neighbour got no wall at all (owner's screenshots).
+# Sampled on the same grid coordinates as the surface mesh so the skirt bottom tracks the
+# neighbour's rendered boundary, dipping SKIRT_UNDERHANG below it (hidden behind the neighbour's
+# ground sheet) so no razor-thin slit remains. Double-sided, rock UV; doubles as collision.
+const SKIRT_UNDERHANG := 1.0
+func _emit_wall(st: SurfaceTool, region, cx: int, cz: int, dir: Vector2i, y_hi: float) -> bool:
+	var prof := TerrainSurfaceField.edge_profile(region, cx, cz, dir, SAMPLES_PER_CELL)
+	var pdir := Vector2i(dir.y, dir.x)             # along-edge step (perpendicular to the drop)
+	var ex := float(cx) * TILE + float(dir.x) * (TILE * 0.5 - SKIRT_RECESS)
+	var ez := float(cz) * TILE + float(dir.y) * (TILE * 0.5 - SKIRT_RECESS)
+	# Where the cliff face TURNS at this cell's corner (the perpendicular edge drops too), stop
+	# at the perpendicular skirt plane — a full-width tail would run SKIRT_RECESS past it and
+	# poke out through the perpendicular KayKit wall face as a thin vertical fin (owner). Where
+	# the along-edge neighbour is instead a HIGHER flat cell, CONTINUE the skirt APRON deep
+	# into it: the perpendicular skirts cross behind the corner pieces (no open chimney).
+	var lo := -TILE * 0.5
+	var hi := TILE * 0.5
+	if _skirt_turns(region, cx, cz, dir, -1):
+		lo += SKIRT_RECESS
+	elif TerrainSurfaceField.is_higher_flat(region, cx, cz, Vector2i(-pdir.x, -pdir.y)):
+		lo -= APRON
+	if _skirt_turns(region, cx, cz, dir, +1):
+		hi -= SKIRT_RECESS
+	elif TerrainSurfaceField.is_higher_flat(region, cx, cz, pdir):
+		hi += APRON
+	var emitted := false
+	for i in SAMPLES_PER_CELL:
+		var f0 := minf(prof[i], y_hi)
+		var f1 := minf(prof[i + 1], y_hi)
+		if f0 > y_hi - 0.01 and f1 > y_hi - 0.01:
+			continue   # flush span — no exposed face here
+		var a0 := clampf(-TILE * 0.5 + STEP * float(i), lo, hi)
+		var a1 := clampf(-TILE * 0.5 + STEP * float(i + 1), lo, hi)
+		if _skirt_quad(st, ex, ez, pdir, a0, a1, y_hi, f0, f1):
+			emitted = true
+	# extension segments beyond the cell edge (under the higher neighbour), flat continuation
+	# of the end samples
+	if lo < -TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, lo, -TILE * 0.5, y_hi, minf(prof[0], y_hi), minf(prof[0], y_hi)):
+		emitted = true
+	if hi > TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, TILE * 0.5, hi, y_hi, minf(prof[SAMPLES_PER_CELL], y_hi), minf(prof[SAMPLES_PER_CELL], y_hi)):
+		emitted = true
+	return emitted
+
+func _skirt_quad(st: SurfaceTool, ex: float, ez: float, pdir: Vector2i, a0: float, a1: float, y_hi: float, f0: float, f1: float) -> bool:
+	if a1 - a0 < 0.001:
+		return false
+	if f0 > y_hi - 0.01 and f1 > y_hi - 0.01:
+		return false
+	var t0 := Vector3(ex + float(pdir.x) * a0, y_hi, ez + float(pdir.y) * a0)
+	var t1 := Vector3(ex + float(pdir.x) * a1, y_hi, ez + float(pdir.y) * a1)
+	var b0 := Vector3(t0.x, f0 - SKIRT_UNDERHANG, t0.z)
+	var b1 := Vector3(t1.x, f1 - SKIRT_UNDERHANG, t1.z)
 	for v in [t0, t1, b1, t0, b1, b0, t0, b1, t1, t0, b0, b1]:
-		st.set_uv(_cliff_uv); st.add_vertex(v)
+		st.set_uv(_skirt_uv); st.add_vertex(v)
+	return true
+
+# Does the cliff face turn the corner at the `sgn` end of this edge — i.e. will the
+# perpendicular edge carry its own skirt at the shared corner? True when the perpendicular
+# neighbour's surface at the corner point sits below this cell's flat top.
+func _skirt_turns(region, cx: int, cz: int, dir: Vector2i, sgn: int) -> bool:
+	var pd := Vector2i(dir.y * sgn, dir.x * sgn)
+	if not TerrainSurfaceField.own_edge_flat(region, cx, cz, pd):
+		return false
+	var px := float(cx) * TILE + (float(dir.x) + float(pd.x)) * TILE * 0.5
+	var pz := float(cz) * TILE + (float(dir.y) + float(pd.y)) * TILE * 0.5
+	var h: float = region.surface_height(cx, cz)
+	return TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + pd.x, cz + pd.y) < h - 0.05

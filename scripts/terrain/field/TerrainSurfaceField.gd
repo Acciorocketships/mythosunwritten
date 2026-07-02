@@ -77,6 +77,66 @@ static func has_inner_corner(region, cx: int, cz: int) -> bool:
 			return true
 	return false
 
+const EXPOSE_EPS := 0.25   # a neighbour surface this far below the flat top exposes the boundary
+
+# A cell that renders FLAT at its cell height: a cliff top, or the high corner of an
+# inner-corner pocket (kept flat so its corner piece is backed).
+static func is_flat_cell(region, cx: int, cz: int) -> bool:
+	return _is_cliff_top(region, cx, cz) or has_inner_corner(region, cx, cz)
+
+# The neighbour's pinned surface sampled along the shared edge of cell (cx,cz) toward d — the
+# profile a cliff face on this edge must cover. Returns samples+1 heights ordered along
+# pdir=(d.y,d.x) from the -pdir end to the +pdir end (the same along-edge axis the mesher grid
+# and the dressing slots use). Where this falls below the cell's flat height the boundary face
+# is exposed: a storey drop, a same-storey SLOPE neighbour descending along the edge toward its
+# own lower ground, or both — cell-centre storey differences alone miss the slope cases (owner's
+# see-through voids next to slopes).
+static func edge_profile(region, cx: int, cz: int, d: Vector2i, samples: int) -> PackedFloat32Array:
+	var bx := float(cx) * TILE + float(d.x) * HALF
+	var bz := float(cz) * TILE + float(d.y) * HALF
+	var out := PackedFloat32Array()
+	for i in samples + 1:
+		var t := (float(i) / float(samples)) * 2.0 - 1.0
+		out.append(surface_y_in_cell(region, bx + float(d.y) * HALF * t, bz + float(d.x) * HALF * t, cx + d.x, cz + d.y))
+	return out
+
+# Is the cell's OWN surface flat at its cell height along this edge? A cliff top always is; a
+# has_inner_corner cell that is not a cliff top ramps down toward its lower cardinals, and those
+# edges must not carry walls/lips pinned at the flat height.
+static func own_edge_flat(region, cx: int, cz: int, d: Vector2i) -> bool:
+	if _is_cliff_top(region, cx, cz):
+		return true
+	var h: float = region.surface_height(cx, cz)
+	var bx := float(cx) * TILE + float(d.x) * HALF
+	var bz := float(cz) * TILE + float(d.y) * HALF
+	for i in 9:
+		var t := (float(i) / 8.0) * 2.0 - 1.0
+		if surface_y_in_cell(region, bx + float(d.y) * HALF * t, bz + float(d.x) * HALF * t, cx, cz) < h - 0.01:
+			return false
+	return true
+
+# Neighbour d is a HIGHER flat cell: its recessed wall pieces will face this cell, so this
+# cell's terrain (ground sheet, wall/lip lines, skirts) must continue UNDERNEATH it to the back
+# of those pieces — otherwise the junction band shows a slit (owner: "extend the tile at the
+# current level underneath the higher tile so there aren't any gaps").
+static func is_higher_flat(region, cx: int, cz: int, d: Vector2i) -> bool:
+	return int(region.storey_at(cx + d.x, cz + d.y)) > int(region.storey_at(cx, cz)) \
+		and is_flat_cell(region, cx + d.x, cz + d.y)
+
+# The boundary face of flat cell (cx,cz) toward d is EXPOSED: the cell's own edge is flat at its
+# height while the neighbour's surface falls below it somewhere along the shared edge.
+# Generalises _is_wall_edge (a ≥1-storey drop off a cliff top) to same-storey slope neighbours.
+static func is_exposed_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
+	if not is_flat_cell(region, cx, cz):
+		return false
+	if not own_edge_flat(region, cx, cz, d):
+		return false
+	var h: float = region.surface_height(cx, cz)
+	for f in edge_profile(region, cx, cz, d, 8):
+		if f < h - EXPOSE_EPS:
+			return true
+	return false
+
 static func surface_y(region, x: float, z: float) -> float:
 	return surface_y_in_cell(region, x, z, _cell_of(x), _cell_of(z))
 

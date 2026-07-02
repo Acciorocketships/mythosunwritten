@@ -39,8 +39,8 @@ func test_every_lip_is_backed_by_flat_terrain() -> void:
 			var drop_dir := (xf.basis * Vector3(0, 0, 1)).normalized()   # toward the drop
 			var ccx := int(round((xf.origin.x - drop_dir.x * 12.0) / 24.0))
 			var ccz := int(round((xf.origin.z - drop_dir.z * 12.0) / 24.0))
-			assert_true(Field._is_cliff_top(region, ccx, ccz),
-				"seed %d lip at %s must sit on a cliff top" % [seed, str(xf.origin)])
+			assert_true(Field.is_flat_cell(region, ccx, ccz),
+				"seed %d lip at %s must sit on a flat cell (cliff top / inner-corner top)" % [seed, str(xf.origin)])
 			var back := xf.origin - drop_dir * 2.0      # 2u behind the edge, into the cell
 			var yb := Field.surface_y(region, back.x, back.z)
 			assert_almost_eq(yb, region.surface_height(ccx, ccz), 0.05,
@@ -213,6 +213,218 @@ func test_open_one_storey_diagonal_is_not_an_inner_corner() -> void:
 func test_inner_corner_piece_present() -> void:
 	var data = Dress.compute(_region_inner(2), -2, -2, 5)
 	assert_gt((data["inner_wall"] as Array).size(), 0, "concave corner produces an inner-corner wall")
+
+# --- owner screenshots (2026-07-01): corner pieces fill the dropped end slot EXACTLY --------
+# Ground truth = the old hand-built tiles (git 0bcc47ea CliffCorner.tscn): EVERY piece sits on
+# the 10.5 line and the corner piece occupies (±10.5, ±10.5) — the end slot the edges drop. The
+# KayKit pieces are 3-unit modules with recessed faces; only the 10.5 grid tiles them. At 11.0
+# the corner lip overshot the ±12 cell boundary (protruding planes at cliff-top corners) and
+# every corner left a 0.5 slit back to the last straight piece (the owner's lip gaps).
+func test_corner_piece_sits_in_the_dropped_end_slot() -> void:
+	var outer = Dress.compute(_region_outer(2), 0, 0, 1)   # cell (0,0): +x & +z edges + 1 corner
+	assert_eq((outer["outer_lip"] as Array).size(), 1, "one outer corner lip")
+	var lip := (outer["outer_lip"][0] as Transform3D).origin
+	assert_almost_eq(lip.x, 10.5, 0.01, "corner lip x sits in the end slot (old-tile spacing)")
+	assert_almost_eq(lip.z, 10.5, 0.01, "corner lip z sits in the end slot (old-tile spacing)")
+	for t in (outer["outer_wall"] as Array):
+		assert_almost_eq((t as Transform3D).origin.x, 10.5, 0.01, "corner wall x in the end slot")
+		assert_almost_eq((t as Transform3D).origin.z, 10.5, 0.01, "corner wall z in the end slot")
+
+func _world_boxes(data: Dictionary, keys: Array) -> Array:
+	var out: Array = []
+	for key in keys:
+		var piece: Array = Dress._piece(Dress.SCENES[key])
+		var local_aabb: AABB = (piece[1] as Transform3D) * (piece[0] as Mesh).get_aabb()
+		for t in (data[key] as Array):
+			out.append((t as Transform3D) * local_aabb)
+	return out
+
+func test_pieces_tile_the_edge_with_no_gap_and_no_boundary_overshoot() -> void:
+	# Sweep along the +x cliff edge of the outer-corner cell: the lip line (straight lips + the
+	# corner lip) must cover the edge with NO gap, and no piece may protrude past the ±12 cell
+	# boundary planes (the owner's "planes sticking out of the cliff top / walls").
+	var data = Dress.compute(_region_outer(2), 0, 0, 1)
+	var lips := _world_boxes(data, ["lip", "outer_lip"])
+	var walls := _world_boxes(data, ["wall", "outer_wall"])
+	for b in lips + walls:
+		assert_lte((b as AABB).end.x, 12.01, "no piece crosses the +x cell boundary")
+		assert_lte((b as AABB).end.z, 12.01, "no piece crosses the +z cell boundary")
+	# lip coverage along the +x edge (pieces reaching into the x-edge band), z from the far end
+	# up to the corner bevel margin (the module's rounded corner ends 0.25 inside the boundary)
+	for z in range(-119, 117):   # -11.9 .. 11.6 in 0.1 steps
+		var zz := float(z) * 0.1
+		var covered := false
+		for b in lips:
+			var bb := b as AABB
+			if bb.end.x > 10.6 and bb.position.z <= zz and bb.end.z >= zz:
+				covered = true
+				break
+		assert_true(covered, "lip line covers the +x edge at z=%.1f (no slit next to the corner)" % zz)
+	# wall coverage just below the top: the rock face may not have a vertical slit either
+	for z in range(-119, 114):   # -11.9 .. 11.3
+		var zz := float(z) * 0.1
+		var covered := false
+		for b in walls:
+			var bb := b as AABB
+			if bb.end.x > 10.6 and bb.position.z <= zz and bb.end.z >= zz:
+				covered = true
+				break
+		assert_true(covered, "wall face covers the +x edge at z=%.1f (no slit next to the corner)" % zz)
+
+# --- owner screenshot (2827641023 cell (2,4)): wall follows a DIPPING slope neighbour --------
+# C=(1,1) storey 3 is a cliff top over a storey-1 SLOPE neighbour (2,1) that ramps further down
+# to storey 0 at (2,0). Along C's east edge the neighbour's surface descends 4 → 0 toward the
+# north corner, but the wall rows only spanned the cell-centre storey drop (12→4) — leaving a
+# see-through void under the wall. The wall must extend down to the neighbour's actual surface.
+func _region_dipping_slope():
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 2 and cz == 1: return 4.0    # C's east neighbour: a slope cell
+		if cx == 2 and cz == 0: return 0.0    # ...ramping down to storey 0 on its north side
+		return 12.0)
+	return plan.compute_region(1, 1, 8)
+
+func test_wall_rows_follow_a_dipping_neighbour_slope() -> void:
+	var data = Dress.compute(_region_dipping_slope(), 1, 1, 1)   # dress only C=(1,1)
+	# the north-end slot of C's east edge (x=34.5, z=13.5) faces neighbour ground that falls to
+	# y=0 at the corner — the wall there must reach y=0 (3 rows), not stop at the storey drop (y=4)
+	var deepest := 1e9
+	for t in (data["wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 34.5) < 0.1 and o.z < 16.0:
+			deepest = minf(deepest, o.y)
+	assert_almost_eq(deepest, 0.0, 0.1, "east-edge wall extends down to the dipped neighbour surface (y=0)")
+
+# --- owner screenshot (2827641023 cell (4,12)): cliff wraps around to the slope-facing side --
+# C=(1,1) storey 3 cliff top (cliff via its storey-1 east neighbour) walls north over a 1-storey
+# drop. Its WEST neighbour W=(0,1) is at the SAME storey but is a slope ramping down to storey 2
+# on its north side — so along the C|W boundary W's surface descends 12 → 8 toward the north
+# corner while C stays flat at 12. That exposed face must be dressed: lip + wall on C's west
+# edge (where the slope has dipped) and an outer corner piece at C's NW corner.
+func _region_slope_beside_cliff():
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 2 and cz == 1: return 4.0    # C's cliff drop (east)
+		if cx == 1 and cz == 0: return 8.0    # C's north: storey 2 → C walls north
+		if cx == 0 and cz == 0: return 8.0    # W's north: storey 2 → W is a slope descending north
+		return 12.0)
+	return plan.compute_region(1, 1, 8)
+
+func test_cliff_wraps_around_to_the_slope_facing_side() -> void:
+	var data = Dress.compute(_region_slope_beside_cliff(), 1, 1, 1)   # dress only C=(1,1)
+	# (a) WEST-FACING lips appear on C's west edge where the slope has dipped (northern half)...
+	# (facing matters: the north edge's end pieces also sit at x=13.5 but face north)
+	var north_lips := 0
+	var south_lips := 0
+	for t in (data["lip"] as Array):
+		var xf := t as Transform3D
+		if (xf.basis * Vector3(0, 0, 1)).x > -0.9:
+			continue   # not west-facing
+		if xf.origin.z < 22.0: north_lips += 1
+		if xf.origin.z > 30.0: south_lips += 1
+	assert_gt(north_lips, 0, "west edge gets lip pieces where the neighbouring slope descends")
+	# (b) ...but NOT on the flush south half (same height, no exposed face — no lip spam)
+	assert_eq(south_lips, 0, "no lips where the same-storey neighbour is flush with the cliff top")
+	# (c) a west-facing wall row covers the exposed face (profile dips to 8 → one row at y=8)
+	var wall_found := false
+	for t in (data["wall"] as Array):
+		var xf := t as Transform3D
+		if (xf.basis * Vector3(0, 0, 1)).x < -0.9 and absf(xf.origin.y - 8.0) < 0.1 and xf.origin.z < 22.0:
+			wall_found = true
+	assert_true(wall_found, "west edge gets wall rows under the lip (down past the slope's dip)")
+	# (d) the NW corner (wall edge meets the wrapped edge) gets an outer corner piece
+	var corner_found := false
+	for t in (data["outer_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1:
+			corner_found = true
+	assert_true(corner_found, "an outer corner piece caps the turn from the north wall to the west edge")
+
+# --- owner (2026-07-01 round 2): extend tiles at the current level UNDER higher tiles -------
+# C=(1,1) storey 2 (h=8) walls south (low ground at cz>=2). Its WEST neighbour W=(0,1) is
+# storey 3 — higher and flat. W's own south wall is recessed 1.5 into W, so C's south wall
+# line stopping at C's cell edge left a vertical slit at the junction. C's wall+lip line must
+# continue one module INTO W (behind W's wall face) — "extend the tile at the current level
+# underneath the higher tile so there aren't any gaps".
+func _region_terrace():
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 0 and cz == 1: return 12.0
+		if cz >= 2: return 0.0
+		return 8.0)
+	return plan.compute_region(1, 1, 8)
+
+func test_junction_into_a_continuing_higher_wall_is_owned_by_its_corner() -> void:
+	# Round 3: when the HIGHER cell walls the same direction, its own outer corner covers the
+	# junction — a straight extension module from the lower cell would z-fight it (the owner's
+	# bright slab). The lower cell must emit NOTHING there; the higher cell's corner reaches down.
+	var data = Dress.compute(_region_terrace(), 0, 1, 2)   # dress W=(0,1) AND C=(1,1)
+	for t in (data["lip"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 10.0,
+			"no straight C-level lip inside W (the corner owns the junction)")
+	for t in (data["wall"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1,
+			"no straight C-level wall inside W (would z-fight W's corner walls)")
+	var deepest := 1e9
+	for t in (data["outer_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1:
+			deepest = minf(deepest, o.y)
+	assert_almost_eq(deepest, 0.0, 0.1, "W's SE corner walls reach the low ground, covering the junction")
+
+func test_lip_run_into_a_higher_cliff_ends_in_an_outer_corner() -> void:
+	# Owner (round 3): "cliff edge lips extending into higher cliffs should end in a corner."
+	# C=(1,1) storey 2 walls south; W=(0,1) is storey 3 flat but does NOT wall south (its south
+	# neighbour is at its own level) — C's lip line runs INTO W's east wall face and must be
+	# capped with an outer corner piece turning into that wall, not a bare butt-cut.
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx <= -1: return 4.0               # W's cliff-maker (west drop 2)
+		if cx == 0: return 12.0               # W's column: storey 3, flush to its south
+		if cz >= 2: return 0.0                # low ground south of C
+		return 8.0)                            # C=(1,1) and backdrop
+	var r = plan.compute_region(1, 1, 8)
+	var data = Dress.compute(r, 1, 1, 1)      # dress only C
+	var corner_found := false
+	for t in (data["outer_lip"] as Array):
+		var xf := t as Transform3D
+		if absf(xf.origin.x - 10.5) < 0.1 and absf(xf.origin.z - 34.5) < 0.1 and absf(xf.origin.y - 8.1) < 0.1:
+			corner_found = true
+			# the corner's two arms: native +z faces west (into the higher wall), native +x
+			# faces south (continuing the lip line's drop side)
+			assert_lt((xf.basis * Vector3(0, 0, 1)).x, -0.5, "one arm faces west (into the higher wall)")
+			assert_gt((xf.basis * Vector3(1, 0, 0)).z, 0.5, "the other continues the south-facing lip line")
+	assert_true(corner_found, "the lip run is capped with an outer corner at the higher wall")
+	for t in (data["lip"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1,
+			"no straight lip in the cap slot (the corner replaces it)")
+
+func test_ghost_inner_corner_joins_walls_over_a_terraced_pocket() -> void:
+	# Owner screenshot: C storey 2 with N and W both storey 3 (flat) and NW storey 4 — a
+	# TERRACED pocket. The classic inner-corner rule needs the arms level with the diagonal,
+	# so nothing joined N's and W's walls where they meet over C — a vertical slit. An inner
+	# corner piece must join them, spanning the [h(C), min(h(N),h(W))] band.
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 0 and cz == 0: return 16.0   # NW, storey 4
+		if cx == 1 and cz == 0: return 12.0   # N, storey 3 (cliff via (2,0))
+		if cx == 0 and cz == 1: return 12.0   # W, storey 3 (cliff via (0,2))
+		if cx == 2 and cz == 0: return 0.0
+		if cx == 0 and cz == 2: return 0.0
+		return 8.0)                            # C=(1,1) and backdrop
+	var r = plan.compute_region(1, 1, 8)
+	assert_false(Field._is_inner_corner(r, 0, 0, Vector2i(1, 1)),
+		"terraced pocket is NOT a classic inner corner (arms below the diagonal cell)")
+	var data = Dress.compute(r, 1, 1, 1)   # dress only C — it owns the ghost corner
+	var found := false
+	for t in (data["inner_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 8.0) < 0.1:
+			found = true
+	assert_true(found, "an inner corner joins N's and W's walls over the terraced pocket (span 8..12)")
 
 # --- issue 1: edges keep full coverage; the corner overlaps (no gap) ----------
 func test_edges_keep_full_width_and_corner_present() -> void:
