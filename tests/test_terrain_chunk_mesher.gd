@@ -190,6 +190,39 @@ func _terrace_plan():
 		return 8.0)                            # C=(1,1) and the flat backdrop
 	return p
 
+func test_collision_wall_is_flush_with_the_boundary_no_pocket():
+	# Owner (round 7): "when i jump i often get stuck in the wall — is this an issue with the
+	# collision shapes?" It was: the collision wall reused the VISUAL skirt mesh, recessed
+	# SKIRT_RECESS behind the boundary while the collision sheet keeps its full extent to the
+	# boundary — an overhang pocket under the lip band that wedged a jumping capsule, plus
+	# zigzag profile edges to catch on. The collision wall is now its own FLAT plane ON the
+	# boundary with its top flush at the cliff top, meeting the sheet collision in a clean
+	# convex edge. The visual skirt keeps its recess.
+	var p := Plan.new(11, 32.0, 8, "mean", 3)
+	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var body := node.find_child("Body", true, false) as StaticBody3D
+	var cs := body.get_node("CollisionShape3D_walls") as CollisionShape3D
+	var faces: PackedVector3Array = (cs.shape as ConcavePolygonShape3D).get_faces()
+	assert_gt(faces.size(), 0, "collision wall has geometry")
+	var top := -1e9
+	for v in faces:
+		assert_almost_eq(v.x, 84.0, 0.01, "collision wall sits ON the cell boundary plane")
+		top = maxf(top, v.y)
+	assert_almost_eq(top, 12.0, 0.01, "collision wall reaches the cliff top (no pocket under the lip band)")
+	node.free()
+
+func test_skirt_material_has_no_specular_sheen():
+	# Owner (round 7): "from some angles the skirt is a very different colour than the
+	# surrounding slopes" — the big flat skirt caught the wall material's specular sheen
+	# (roughness 0.6 / specular 0.5) that the curved modules never show at one angle. The
+	# skirt uses a de-sheened DUPLICATE of the wall material.
+	var m := Mesher.new()
+	m._ensure_skirt_style()
+	var mat := m._skirt_material as StandardMaterial3D
+	assert_almost_eq(mat.roughness, 1.0, 0.001, "skirt roughness maxed (no angle-dependent sheen)")
+	assert_almost_eq(mat.metallic_specular, 0.0, 0.001, "skirt specular removed")
+
 func test_cliff_top_visual_plane_stops_at_the_lip_back():
 	# Owner: "there is still a plane on the cliff top that extends past the cliff edge/corner
 	# lips. it should only go up to the back of the cliff edge lips" — like the old tiles, whose
@@ -409,9 +442,11 @@ func test_skirt_uses_the_kaykit_wall_material():
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
 	assert_not_null(faces)
-	var wall_mat: Material = (CliffDressing._pieces["wall"][0] as Mesh).surface_get_material(0)
+	var wall_mat := (CliffDressing._pieces["wall"][0] as Mesh).surface_get_material(0) as StandardMaterial3D
 	assert_not_null(wall_mat, "the KayKit wall piece has a material")
-	assert_eq(faces.mesh.surface_get_material(0), wall_mat, "the skirt shares the KayKit wall material")
+	# a de-sheened DUPLICATE of the wall material (round 7): same albedo texture, no specular
+	var skirt_mat := faces.mesh.surface_get_material(0) as StandardMaterial3D
+	assert_eq(skirt_mat.albedo_texture, wall_mat.albedo_texture, "the skirt shares the KayKit wall texture")
 	node.free()
 
 func test_apron_top_faces_use_the_sheet_winding():

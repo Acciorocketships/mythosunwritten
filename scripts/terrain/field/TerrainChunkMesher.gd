@@ -54,6 +54,13 @@ func _ensure_skirt_style() -> void:
 	if _skirt_material == null:
 		_skirt_material = _material
 		_skirt_uv = _cliff_uv
+	elif _skirt_material is StandardMaterial3D:
+		# De-sheen a COPY for the skirt: the wall material's specular (roughness 0.6 /
+		# specular 0.5) reads fine on the curved modules but lights the big flat skirt a
+		# very different colour at some view angles (owner round 7).
+		_skirt_material = _skirt_material.duplicate()
+		_skirt_material.roughness = 1.0
+		_skirt_material.metallic_specular = 0.0
 var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
 
 func set_seed(seed: int) -> void:
@@ -115,6 +122,8 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	# collision wall so the player can't walk through. Double-sided so it never reads as see-through.
 	var skirt := SurfaceTool.new()
 	skirt.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var skirtc := SurfaceTool.new()   # collision wall: flat planes ON the cell boundaries
+	skirtc.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var any_wall := false
 	var lo_cx := chunk.x * CELLS_PER_CHUNK
 	var lo_cz := chunk.y * CELLS_PER_CHUNK
@@ -125,7 +134,7 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var h_hi: float = region.surface_height(cx, cz)
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				if TerrainSurfaceField.own_edge_flat(region, cx, cz, dir):
-					if _emit_wall(skirt, region, cx, cz, dir, h_hi):
+					if _emit_wall(skirt, skirtc, region, cx, cz, dir, h_hi):
 						any_wall = true
 
 	# Weld coincident grid vertices BEFORE generating normals so shared vertices get
@@ -219,9 +228,11 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 		sf.name = "CliffFaces"
 		sf.mesh = skirt_mesh
 		root.add_child(sf)
+		# The collision wall is its own boundary-plane mesh, NOT the recessed visual skirt —
+		# see _emit_wall (owner round 7: jumping capsules wedged in the recess pocket).
 		var cs2 := CollisionShape3D.new()
 		cs2.name = "CollisionShape3D_walls"
-		cs2.shape = skirt_mesh.create_trimesh_shape()
+		cs2.shape = skirtc.commit().create_trimesh_shape()
 		body.add_child(cs2)
 	root.add_child(body)
 
@@ -516,26 +527,38 @@ func _is_cliff_quad(region, x0: float, x1: float, z0: float, z1: float) -> bool:
 # neighbour's rendered boundary, dipping SKIRT_UNDERHANG below it (hidden behind the neighbour's
 # ground sheet) so no razor-thin slit remains. Double-sided, rock UV; doubles as collision.
 const SKIRT_UNDERHANG := 1.0
-func _emit_wall(st: SurfaceTool, region, cx: int, cz: int, dir: Vector2i, y_hi: float) -> bool:
+func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, dir: Vector2i, y_hi: float) -> bool:
 	var prof := TerrainSurfaceField.edge_profile(region, cx, cz, dir, SAMPLES_PER_CELL)
 	var pdir := Vector2i(dir.y, dir.x)             # along-edge step (perpendicular to the drop)
 	var ex := float(cx) * TILE + float(dir.x) * (TILE * 0.5 - SKIRT_RECESS)
 	var ez := float(cz) * TILE + float(dir.y) * (TILE * 0.5 - SKIRT_RECESS)
+	# The COLLISION wall is a separate flat plane ON the cell boundary: it meets the full-extent
+	# collision sheet in a clean convex edge. Reusing the recessed visual skirt left an overhang
+	# pocket under the lip band that wedged a jumping capsule (owner round 7: "when i jump i
+	# often get stuck in the wall").
+	var cex := float(cx) * TILE + float(dir.x) * TILE * 0.5
+	var cez := float(cz) * TILE + float(dir.y) * TILE * 0.5
 	# Where the cliff face TURNS at this cell's corner (the perpendicular edge drops too), stop
 	# at the perpendicular skirt plane — a full-width tail would run SKIRT_RECESS past it and
 	# poke out through the perpendicular KayKit wall face as a thin vertical fin (owner). Where
 	# the along-edge neighbour is instead a HIGHER flat cell, CONTINUE the skirt APRON deep
 	# into it: the perpendicular skirts cross behind the corner pieces (no open chimney).
+	# Boundary-plane collision walls need no trims: perpendicular planes meet exactly at the
+	# shared corner.
 	var lo := -TILE * 0.5
 	var hi := TILE * 0.5
+	var lo_c := -TILE * 0.5
+	var hi_c := TILE * 0.5
 	if _skirt_turns(region, cx, cz, dir, -1):
 		lo += SKIRT_RECESS
 	elif TerrainSurfaceField.is_higher_flat(region, cx, cz, Vector2i(-pdir.x, -pdir.y)):
 		lo -= APRON
+		lo_c -= APRON
 	if _skirt_turns(region, cx, cz, dir, +1):
 		hi -= SKIRT_RECESS
 	elif TerrainSurfaceField.is_higher_flat(region, cx, cz, pdir):
 		hi += APRON
+		hi_c += APRON
 	var emitted := false
 	for i in SAMPLES_PER_CELL:
 		var f0 := minf(prof[i], y_hi)
@@ -546,12 +569,19 @@ func _emit_wall(st: SurfaceTool, region, cx: int, cz: int, dir: Vector2i, y_hi: 
 		var a1 := clampf(-TILE * 0.5 + STEP * float(i + 1), lo, hi)
 		if _skirt_quad(st, ex, ez, pdir, a0, a1, y_hi, f0, f1):
 			emitted = true
+		var c0 := clampf(-TILE * 0.5 + STEP * float(i), lo_c, hi_c)
+		var c1 := clampf(-TILE * 0.5 + STEP * float(i + 1), lo_c, hi_c)
+		_skirt_quad(stcol, cex, cez, pdir, c0, c1, y_hi, f0, f1)
 	# extension segments beyond the cell edge (under the higher neighbour), flat continuation
 	# of the end samples
 	if lo < -TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, lo, -TILE * 0.5, y_hi, minf(prof[0], y_hi), minf(prof[0], y_hi)):
 		emitted = true
 	if hi > TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, TILE * 0.5, hi, y_hi, minf(prof[SAMPLES_PER_CELL], y_hi), minf(prof[SAMPLES_PER_CELL], y_hi)):
 		emitted = true
+	if lo_c < -TILE * 0.5:
+		_skirt_quad(stcol, cex, cez, pdir, lo_c, -TILE * 0.5, y_hi, minf(prof[0], y_hi), minf(prof[0], y_hi))
+	if hi_c > TILE * 0.5:
+		_skirt_quad(stcol, cex, cez, pdir, TILE * 0.5, hi_c, y_hi, minf(prof[SAMPLES_PER_CELL], y_hi), minf(prof[SAMPLES_PER_CELL], y_hi))
 	return emitted
 
 func _skirt_quad(st: SurfaceTool, ex: float, ez: float, pdir: Vector2i, a0: float, a1: float, y_hi: float, f0: float, f1: float) -> bool:

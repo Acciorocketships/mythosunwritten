@@ -374,28 +374,55 @@ func test_junction_into_a_continuing_higher_wall_is_owned_by_its_corner() -> voi
 			deepest = minf(deepest, o.y)
 	assert_almost_eq(deepest, 0.0, 0.1, "W's SE corner walls reach the low ground, covering the junction")
 
-func test_step_junction_caps_the_lower_run_with_an_inner_turn() -> void:
-	# Owner (round 5, seed 1751195249): where a lower cliff's wall line runs into a HIGHER cliff
-	# that walls the SAME direction (a step), the lower run just stopped at the cell edge: the
-	# ledge-level notch ("edge doesn't extend all the way to the cliff... it should extend to
-	# the wall and end in a corner") plus a tall recess slit next to the higher cell's corner
-	# stack showing the bare skirt ("grey plane sticking out of wall"). The junction is CONCAVE
-	# from the lower run: it must end with an INNER turn into the higher wall's face — the
-	# recessed arc tucks inside the higher corner's convex stack (no z-fight, unlike a straight
-	# or outer module) and its wall rows fill the recess slit at each storey.
+func test_step_junction_is_owned_by_the_taller_cliffs_corner() -> void:
+	# Owner (rounds 6-7): wherever a run ends at a taller cliff that walls the SAME direction
+	# (a step), the taller cliff's own OUTER corner owns the junction — concave pieces wedged
+	# in there gouged its convex column ("this is still an inner corner, it needs to be
+	# converted to an outer corner"). The run keeps its end module out to the boundary and
+	# emits NOTHING of its own.
 	var data = Dress.compute(_region_terrace(), 0, 1, 2)   # dress W=(0,1) AND C=(1,1)
-	var cap := false
-	var rows := 0
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (8.0 + Dress.CORNER_LIP_LIFT)) < 0.05:
-			cap = true
-	for t in (data["inner_wall"] as Array):
+		assert_false(absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1,
+			"no concave piece at the step junction (W's outer corner owns it)")
+	var w_corner := false
+	var end_module := false
+	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 8.0:
-			rows += 1
-	assert_true(cap, "C's south run ends with an inner lip turning into W's wall face")
-	assert_eq(rows, 2, "inner wall rows fill the recess slit down to the low ground (8m = 2 rows)")
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y > 11.9:
+			w_corner = true
+	for t in (data["lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 34.5) < 0.1:
+			end_module = true
+	assert_true(w_corner, "W's own outer corner (at 12) stands at the junction")
+	assert_true(end_module, "C's run keeps its end module out to the boundary")
+
+func test_run_into_a_continuing_perpendicular_wall_is_straight() -> void:
+	# Owner (round 7, seed 2937296847 cell (-2,-4) NE junction): the run's line goes straight
+	# INTO a perpendicular wall that CONTINUES across the junction (the diagonal cell walls the
+	# same face line) — an outer cap's 0.5 corner inset left a bright slit beside it ("this is
+	# an outer corner and it leaves a gap. it should just be straight"). The run continues with
+	# a STRAIGHT module into the wall instead; the cap remains only for free-standing run ends.
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 12.0   # R: the run's ledge, walls east 12→8
+		if cx == 1 and cz == 0: return 16.0   # H: taller cliff north of R (flush toward D)
+		if cx == 2 and cz == 0: return 16.0   # D: continues the perpendicular wall line 16→8
+		if cx == 2 and cz == 2: return 0.0    # R's cliff-maker (SE diagonal)
+		return 8.0)
+	var r = plan.compute_region(1, 1, 8)
+	var data = Dress.compute(r, 1, 0, 2)      # dress R's and H's rows
+	var straight := false
+	for t in (data["lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 12.05) < 0.05:
+			straight = true
+	for t in (data["outer_lip"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and o.y < 14.0,
+			"no outer cap at a straight-into-the-wall junction (its inset leaves a slit)")
+	assert_true(straight, "the run continues with a straight module into the perpendicular wall")
 
 func test_corner_caps_sit_exactly_flush_with_straight_lips() -> void:
 	# Owner (rounds 5-6): corner caps floated above the straight lip modules they butt against —
@@ -443,11 +470,13 @@ func test_terraced_step_junction_is_owned_by_the_higher_outer_corner() -> void:
 	assert_true(h_corner, "H's own outer corner (at 24) stands at the junction")
 	assert_true(run_end_module, "L's run keeps its end module out to the boundary (a plain edge)")
 
-func test_lip_run_into_a_higher_cliff_ends_in_an_outer_corner() -> void:
-	# Owner (round 3): "cliff edge lips extending into higher cliffs should end in a corner."
-	# C=(1,1) storey 2 walls south; W=(0,1) is storey 3 flat but does NOT wall south (its south
-	# neighbour is at its own level) — C's lip line runs INTO W's east wall face and must be
-	# capped with an outer corner piece turning into that wall, not a bare butt-cut.
+func test_lip_run_into_a_higher_cliff_continues_straight_into_its_wall() -> void:
+	# Round 3 asked for an outer cap here; owner round 7 refined it: the run "goes straight
+	# into the wall", and a cap's 0.5 corner inset leaves a slit wherever the perpendicular
+	# wall line continues past the junction — which is ALWAYS: a flush colinear edge on the
+	# higher cell means the diagonal cell is at least as tall, and being ≥2 storeys above the
+	# run's low neighbour it is a walling cliff top. So the run continues with a STRAIGHT
+	# module (lip + wall) one slot into the higher cell, ending buried behind its wall face.
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
 		if cx <= -1: return 4.0               # W's cliff-maker (west drop 2)
@@ -456,20 +485,17 @@ func test_lip_run_into_a_higher_cliff_ends_in_an_outer_corner() -> void:
 		return 8.0)                            # C=(1,1) and backdrop
 	var r = plan.compute_region(1, 1, 8)
 	var data = Dress.compute(r, 1, 1, 1)      # dress only C
-	var corner_found := false
-	for t in (data["outer_lip"] as Array):
-		var xf := t as Transform3D
-		if absf(xf.origin.x - 10.5) < 0.1 and absf(xf.origin.z - 34.5) < 0.1 and absf(xf.origin.y - 8.1) < 0.1:
-			corner_found = true
-			# the corner's two arms: native +z faces west (into the higher wall), native +x
-			# faces south (continuing the lip line's drop side)
-			assert_lt((xf.basis * Vector3(0, 0, 1)).x, -0.5, "one arm faces west (into the higher wall)")
-			assert_gt((xf.basis * Vector3(1, 0, 0)).z, 0.5, "the other continues the south-facing lip line")
-	assert_true(corner_found, "the lip run is capped with an outer corner at the higher wall")
+	var straight := false
 	for t in (data["lip"] as Array):
+		var xf := t as Transform3D
+		if absf(xf.origin.x - 10.5) < 0.1 and absf(xf.origin.z - 34.5) < 0.1 and absf(xf.origin.y - 8.05) < 0.05:
+			straight = true
+			assert_gt((xf.basis * Vector3(0, 0, 1)).z, 0.5, "the module keeps the run's south-facing rotation")
+	assert_true(straight, "the lip run continues straight into the higher wall")
+	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
-		assert_false(absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1,
-			"no straight lip in the cap slot (the corner replaces it)")
+		assert_false(absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 10.0,
+			"no outer cap at the run's level (its inset leaves a slit)")
 
 func test_ghost_inner_corner_joins_walls_over_a_terraced_pocket() -> void:
 	# Owner screenshot: C storey 2 with N and W both storey 3 (flat) and NW storey 4 — a
