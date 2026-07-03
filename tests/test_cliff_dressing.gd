@@ -397,13 +397,51 @@ func test_step_junction_caps_the_lower_run_with_an_inner_turn() -> void:
 	assert_true(cap, "C's south run ends with an inner lip turning into W's wall face")
 	assert_eq(rows, 2, "inner wall rows fill the recess slit down to the low ground (8m = 2 rows)")
 
-func test_corner_caps_sit_nearly_flush_with_straight_lips() -> void:
-	# Owner (round 5): corner caps floated CORNER_LIP_LIFT−LIP_LIFT = 5cm above the straight lip
-	# modules they butt against — every butt joint showed a shadowed step that reads as a slit
-	# ("gap next to corner still there"). The old tiles set both at y=0; we keep just enough
-	# difference to win incidental overlaps without a visible step.
-	assert_lt(Dress.CORNER_LIP_LIFT - Dress.LIP_LIFT, 0.015,
-		"corner caps butt flush against straight lip runs (a taller step reads as a slit)")
+func test_corner_caps_sit_exactly_flush_with_straight_lips() -> void:
+	# Owner (rounds 5-6): corner caps floated above the straight lip modules they butt against —
+	# the step at every butt joint showed as a slit. The owner asked for ZERO difference ("can
+	# you just make it 0?"); pieces only ever BUTT (never overlap coplanar), so equal lift is
+	# safe — the old tiles set both at y=0.
+	assert_almost_eq(Dress.CORNER_LIP_LIFT, Dress.LIP_LIFT, 0.001,
+		"corner caps sit exactly flush with straight lip runs (no step at butt joints)")
+
+func test_terraced_step_junction_is_owned_by_the_higher_outer_corner() -> void:
+	# Owner (round 6, seed 15012585 cell (-11,-10) SE junction): where a run ends at a taller
+	# cliff and a TERRACE plateau sits at the junction's foot (the taller cliff's colinear wall
+	# stops one-plus storeys above the run's ground), the concave ext_inner piece gouged a notch
+	# into the taller cliff's convex corner column — "this is an inner corner but it should be an
+	# outer corner like this" / "should just be an edge like this". The higher cell's own OUTER
+	# corner owns such junctions: the run keeps its end module, holds its clip, and emits NO
+	# corner piece of its own. The concave crevice fill remains ONLY where the taller wall truly
+	# continues down to (within one storey of) the run's ground.
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 20.0   # L: the run's ledge (storey 5), walls south 20→8
+		if cx == 2 and cz == 1: return 24.0   # H: taller cliff east of L, walls south 24→16
+		if cx == 2 and cz == 2: return 16.0   # D: the terrace plateau at the junction's foot
+		return 8.0)
+	var r = plan.compute_region(1, 1, 8)
+	var data = Dress.compute(r, 1, 1, 2)      # dress L and H
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1,
+			"no concave piece notches the taller cliff's corner column (terraced junction)")
+	for t in (data["outer_lip"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 22.0,
+			"no run-level outer cap either (it would z-fight H's own corner stack)")
+	var h_corner := false
+	var run_end_module := false
+	for t in (data["outer_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y > 23.9:
+			h_corner = true
+	for t in (data["lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 34.5) < 0.1:
+			run_end_module = true
+	assert_true(h_corner, "H's own outer corner (at 24) stands at the junction")
+	assert_true(run_end_module, "L's run keeps its end module out to the boundary (a plain edge)")
 
 func test_lip_run_into_a_higher_cliff_ends_in_an_outer_corner() -> void:
 	# Owner (round 3): "cliff edge lips extending into higher cliffs should end in a corner."
