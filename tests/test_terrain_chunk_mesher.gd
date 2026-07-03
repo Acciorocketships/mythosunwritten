@@ -292,12 +292,15 @@ func test_clip_tapers_to_zero_at_a_neighbour_that_does_not_clip():
 	# Owner (round 3, seed 186412979): A clips its lipped south edge; its east neighbour B is
 	# flat with a FLUSH south edge (no clip). A's pulled corner vertex tore away from B's sheet,
 	# opening a triangular hole at the seam. The clip weight must taper to zero at any corner
-	# shared with an unclipped slot, so both sheets keep their shared vertex.
+	# shared with an unclipped slot, so both sheets keep their shared vertex. No corner piece
+	# sits on the shared point at A's level — (2,2) is HIGHER flat, so its own corner at that
+	# point belongs to another storey's junction and must not hold A's clip (a same-height cap
+	# would rightly HOLD it — see test_arm_lip_run_holds_at_a_classic_inner_corner_no_flap).
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
 		if cx == 0 and cz == 1: return 4.0    # A's cliff-maker (west drop 2)
-		if cx == 1 and cz == 2: return 8.0    # the pocket: A's south dip + B's inner-corner
-		if cx == 2 and cz == 3: return 0.0    # (2,2)'s cliff-maker so B is inner-corner flat
+		if cx == 1 and cz == 2: return 8.0    # the pocket: A's south dip
+		if cx == 2 and cz == 2: return 16.0   # higher flat SE of A — kills B's inner corner
 		return 12.0)
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
@@ -457,7 +460,7 @@ func test_taper_edge_drapes_onto_the_dipping_neighbour():
 	p.set_raw_height_override(func(cx, cz):
 		if cx == 0 and cz == 1: return 4.0    # A=(1,1)'s cliff-maker (west drop 2)
 		if cx == 1 and cz == 2: return 8.0    # A's south dip (lipped edge, dip 4)
-		if cx == 2 and cz == 3: return 0.0    # (2,2)'s cliff-maker so B=(2,1) is inner-corner flat
+		if cx == 2 and cz == 2: return 16.0   # higher flat SE of A: the run end stays UNCAPPED
 		return 12.0)
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
@@ -497,6 +500,30 @@ func test_capped_corner_holds_the_clip_no_draped_flap():
 		if v.x > 33.0 and v.x < 35.9 and v.z > 33.0 and v.z < 35.9:
 			assert_false(v.y > 8.5 and v.y < 11.9,
 				"sheet vert drapes behind the SE corner cap (the owner's 'slight gap'): %s" % v)
+	node.free()
+
+func test_arm_lip_run_holds_at_a_classic_inner_corner_no_flap():
+	# Owner (round 4, seed 1450085760 cell (8,-2) SW junction — "ground plane sticking out of
+	# inner corner lip"): at a CLASSIC inner corner the piece is owned by the DIAGONAL cell D,
+	# while the walling arms' lip runs end on the same corner point. Each arm's colinear
+	# continuation (one of D's flush edges) is unlipped, so the arm's clip tapered to 0 there
+	# and its sheet draped into a flap poking out through the inner piece. The cap check must
+	# consider ALL FOUR cells sharing the point, not just the run's own cell.
+	var p := Plan.new(0, 64.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 0 and cz == 0: return 0.0    # arm N=(1,1)'s cliff-maker (NW diagonal)
+		if cx == 1 and cz == 3: return 0.0    # arm E=(2,2)'s cliff-maker (SW diagonal)
+		if cx == 1 and cz == 2: return 4.0    # P: the pocket, one storey below the arms
+		return 8.0)                            # arms N/E at 8; D=(2,1) owns the inner corner
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	# Around the shared corner point (36,36): the arms' sheets sit clipped at ~8.04, P's slope
+	# at ~4, D's flat top at 8.0 — only a draped flap leaves verts at intermediate heights.
+	for v in verts:
+		if v.x > 33.5 and v.x < 38.5 and v.z > 33.5 and v.z < 38.5:
+			assert_false(v.y > 4.6 and v.y < 7.9,
+				"an arm's sheet drapes through the inner corner piece (the owner's protruding plane): %s" % v)
 	node.free()
 
 func test_surface_is_gap_free_for_any_heightfield():

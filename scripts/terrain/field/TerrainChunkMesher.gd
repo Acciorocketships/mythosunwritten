@@ -265,8 +265,12 @@ func _cell_clip_info(region, cache: Dictionary, cx: int, cz: int):
 					break
 			if any_lip or any_dip:
 				dirs[dir] = {"lips": lips if any_lip else [], "prof": prof}
-		if not dirs.is_empty():
-			out = {"dirs": dirs, "corners": CliffDressing.corner_flags(region, cx, cz)}
+		# corners are kept even when dirs is empty: a classic inner-corner cell has all-flush
+		# edges (nothing to clip on ITSELF) but its corner piece caps the point where the
+		# walling arms' lip runs end — _corner_capped must be able to see it.
+		var corners: Dictionary = CliffDressing.corner_flags(region, cx, cz)
+		if not dirs.is_empty() or not corners.is_empty():
+			out = {"dirs": dirs, "corners": corners}
 	cache[key] = out
 	return out
 
@@ -293,11 +297,22 @@ func _slot_lipped(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, s:
 	var lips: Array = info["dirs"][dir]["lips"]
 	return lips.size() > 0 and lips[s]
 
-# Does a dressing corner piece sit on cell corner `cdir` of (cx,cz)? Reads the cached clip info,
-# which carries CliffDressing.corner_flags — the dressing's own decision.
+# Does a dressing corner piece sit on the cell-corner POINT toward `cdir` — placed by ANY of
+# the FOUR same-height cells sharing it? A classic inner corner is owned by the DIAGONAL cell
+# while the walling arms' lip runs end on the same point (owner round 4: the arm's taper draped
+# a flap through the inner piece — "ground plane sticking out of inner corner lip"). The height
+# gate keeps a higher cell's own corner piece (a different storey's junction) from holding this
+# cell's clip open with nothing at this level to cover the band.
 func _corner_capped(region, cache: Dictionary, cx: int, cz: int, cdir: Vector2i) -> bool:
-	var info = _cell_clip_info(region, cache, cx, cz)
-	return info != null and info["corners"].has(cdir)
+	var h: float = region.surface_height(cx, cz)
+	for o in [Vector2i(0, 0), Vector2i(cdir.x, 0), Vector2i(0, cdir.y), cdir]:
+		var info = _cell_clip_info(region, cache, cx + o.x, cz + o.y)
+		if info == null:
+			continue
+		var oc := Vector2i(cdir.x - 2 * o.x, cdir.y - 2 * o.y)   # the same point, seen from that cell
+		if info["corners"].has(oc) and absf(region.surface_height(cx + o.x, cz + o.y) - h) < 0.01:
+			return true
+	return false
 
 # Feathered clip weight along the edge at along-position a (measured along pdir, -12..12):
 # 1 inside lipped slots, tapering linearly to 0 at any slot boundary shared with an UNLIPPED
