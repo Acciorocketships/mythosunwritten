@@ -152,13 +152,15 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
 			if _emit_aprons(ast, region, clip_cache, cx, cz):
 				any_apron = true
+	var apron_mesh: Mesh = null
 	if any_apron:
 		# no index()/generate_normals(): normals are explicit verticals (welding the two
 		# windings would zero them out and break the lighting)
 		ast.set_material(_material)
+		apron_mesh = ast.commit()
 		var am := MeshInstance3D.new()
 		am.name = "Aprons"
-		am.mesh = ast.commit()
+		am.mesh = apron_mesh
 		root.add_child(am)
 
 	# NO per-chunk water quads: they hovered at SEA_LEVEL over flat storey-0 ground with the
@@ -202,6 +204,13 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	cs.name = "CollisionShape3D"
 	cs.shape = stc.commit().create_trimesh_shape()
 	body.add_child(cs)
+	if apron_mesh != null:
+		# The apron can be the only floor in a recess band (beyond the cell boundary, where the
+		# main sheet ends) — without collision the player falls through it (owner round 4).
+		var cs3 := CollisionShape3D.new()
+		cs3.name = "CollisionShape3D_aprons"
+		cs3.shape = apron_mesh.create_trimesh_shape()
+		body.add_child(cs3)
 	if any_wall:
 		skirt.generate_normals()
 		skirt.set_material(_skirt_material)
@@ -227,8 +236,10 @@ const LIP_LIFT := 0.05    # matches CliffDressing.LIP_LIFT — clipped sheet edg
                           # top plane so no hairline slit shows at the lip back
 
 # Which 3-unit slots of this flat cell's edges carry a lip — the same rule CliffDressing uses
-# (slot dips ≥ EXPOSE_EPS on a flat-backed edge). Slots are ordered along pdir=(dir.y,dir.x).
-# null when nothing on this cell is lipped.
+# (slot dips ≥ EXPOSE_EPS on a flat-backed edge) — plus WHICH CELL CORNERS carry a dressing
+# corner piece (CliffDressing.corner_flags — the dressing's own decision, so sheet and pieces
+# always agree). Slots are ordered along pdir=(dir.y,dir.x). Returns {"dirs": {dir: {"lips",
+# "prof"}}, "corners": {cdir: kind}}, or null when nothing on this cell is lipped.
 func _cell_clip_info(region, cache: Dictionary, cx: int, cz: int):
 	var key := Vector2i(cx, cz)
 	if cache.has(key):
@@ -255,7 +266,7 @@ func _cell_clip_info(region, cache: Dictionary, cx: int, cz: int):
 			if any_lip or any_dip:
 				dirs[dir] = {"lips": lips if any_lip else [], "prof": prof}
 		if not dirs.is_empty():
-			out = dirs
+			out = {"dirs": dirs, "corners": CliffDressing.corner_flags(region, cx, cz)}
 	cache[key] = out
 	return out
 
@@ -277,10 +288,16 @@ func _slot_lipped(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, s:
 		cz += pdir.y * step
 		s = 0 if s > 7 else 7
 	var info = _cell_clip_info(region, cache, cx, cz)
-	if info == null or not info.has(dir):
+	if info == null or not info["dirs"].has(dir):
 		return false
-	var lips: Array = info[dir]["lips"]
+	var lips: Array = info["dirs"][dir]["lips"]
 	return lips.size() > 0 and lips[s]
+
+# Does a dressing corner piece sit on cell corner `cdir` of (cx,cz)? Reads the cached clip info,
+# which carries CliffDressing.corner_flags — the dressing's own decision.
+func _corner_capped(region, cache: Dictionary, cx: int, cz: int, cdir: Vector2i) -> bool:
+	var info = _cell_clip_info(region, cache, cx, cz)
+	return info != null and info["corners"].has(cdir)
 
 # Feathered clip weight along the edge at along-position a (measured along pdir, -12..12):
 # 1 inside lipped slots, tapering linearly to 0 at any slot boundary shared with an UNLIPPED
@@ -292,7 +309,16 @@ func _edge_w(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, a: floa
 	var w_c := 1.0 if _slot_lipped(region, cache, cx, cz, dir, s) else 0.0
 	var t := (a - (-10.5 + 3.0 * float(s))) / 1.5   # -1 at the slot's low corner, +1 at its high corner
 	var nb := s + 1 if t >= 0.0 else s - 1
-	var w_corner := w_c if _slot_lipped(region, cache, cx, cz, dir, nb) else 0.0
+	var nb_lipped := _slot_lipped(region, cache, cx, cz, dir, nb)
+	if not nb_lipped and (nb < 0 or nb > 7):
+		# This slot boundary IS a cell corner. When a dressing corner PIECE sits on it, the lip
+		# line TURNS there and keeps going — the clip must hold its weight, else the sheet
+		# drapes into a steep flap through/behind the cap (owner round 4: the "slight gap" slit
+		# at the lip back + a needle sliver poking from the wall at a slope-facing wrap corner).
+		# Only a truly uncapped run end tapers out.
+		var pdir := Vector2i(dir.y, dir.x)
+		nb_lipped = _corner_capped(region, cache, cx, cz, dir + (pdir if nb > 7 else -pdir))
+	var w_corner := w_c if nb_lipped else 0.0
 	return lerpf(w_c, w_corner, clampf(absf(t), 0.0, 1.0))
 
 # Adjust a flat-top vertex for its cell's edges (visual sheet only):
@@ -311,13 +337,16 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 	var lz := v.z - float(qcz) * TILE
 	var lift := 0.0
 	var down := 0.0
-	for dir in info:
+	for dir in info["dirs"]:
 		var coord := lx * float(dir.x) + lz * float(dir.y)       # distance toward this edge
 		var along := lx * float(dir.y) + lz * float(dir.x)       # signed along pdir=(dir.y,dir.x)
 		var w := _edge_w(region, cache, qcx, qcz, dir, along)
 		var f := clampf((coord - TOP_CLIP) / (TILE * 0.5 - TOP_CLIP), 0.0, 1.0)
 		if f > 0.0 and w < 1.0:
-			var dip := clampf(h - _prof_at(info[dir]["prof"], along), 0.0, TerrainSurfaceField.EXPOSE_EPS)
+			# UNCAPPED drape: where the clip fades out, the edge follows the neighbour all the
+			# way down (a hovering full-height flare read as "ground plane sticking out" at
+			# lip-run ends/steps — owner round 4). The cell's own wall modules back the fold.
+			var dip := maxf(h - _prof_at(info["dirs"][dir]["prof"], along), 0.0)
 			down = maxf(down, dip * f * (1.0 - w))
 		if w <= 0.0:
 			continue
@@ -392,19 +421,23 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		emitted = true
 	return emitted
 
-# Both windings with explicit vertical normals — indexing+generate_normals would weld the two
-# sides into ~zero normals and break the lighting. The down-facing side sits 2cm lower so the
-# two never z-fight (coplanar opposite-normal faces rendered as dark dashes — owner's round 3).
+# The TOP face must wind like the sheet's top faces (right-hand geometric normal DOWN — the
+# front side seen from above in this project), lit UP. Half the directions used to wind the
+# other way, so the face visible from above was the DOWN-lit copy — the owner's dark/wrong-
+# colour "ground skirt". The flipped copy sits 2cm lower (never z-fights) with a DOWN normal.
 func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3, q1: Vector3) -> void:
-	st.set_normal(Vector3.UP)
-	for v in [p0, q0, q1, p0, q1, p1]:
-		st.set_uv(_grass_uv)
-		st.add_vertex(v)
 	var drop := Vector3(0.0, -0.02, 0.0)
-	st.set_normal(Vector3.DOWN)
-	for v in [p0 + drop, q1 + drop, q0 + drop, p0 + drop, p1 + drop, q1 + drop]:
-		st.set_uv(_grass_uv)
-		st.add_vertex(v)
+	for tri in [[p0, q0, q1], [p0, q1, p1]]:
+		var n: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0])
+		var order: Array = tri if n.y < 0.0 else [tri[0], tri[2], tri[1]]
+		st.set_normal(Vector3.UP)
+		for v in order:
+			st.set_uv(_grass_uv)
+			st.add_vertex(v)
+		st.set_normal(Vector3.DOWN)
+		for i in [0, 2, 1]:
+			st.set_uv(_grass_uv)
+			st.add_vertex(order[i] + drop)
 
 # Clamp a point's ALONG coordinates by cell (ncx,ncz)'s clip on its two edges perpendicular to
 # `d` — used for apron ends reaching into that cell (never pull along d itself: the apron
@@ -415,7 +448,7 @@ func _clip_perp(region, cache: Dictionary, ncx: int, ncz: int, d: Vector2i, v: V
 		return v
 	var lx := v.x - float(ncx) * TILE
 	var lz := v.z - float(ncz) * TILE
-	for dir in info:
+	for dir in info["dirs"]:
 		if dir == d or dir == Vector2i(-d.x, -d.y):
 			continue
 		var coord := lx * float(dir.x) + lz * float(dir.y)

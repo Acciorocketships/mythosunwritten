@@ -426,6 +426,56 @@ func test_ghost_inner_corner_joins_walls_over_a_terraced_pocket() -> void:
 			found = true
 	assert_true(found, "an inner corner joins N's and W's walls over the terraced pocket (span 8..12)")
 
+# --- owner (round 4, seed 1450085760 cell (3,-2)): SLOPE pockets get inner corners too ------
+# In a diagonal terrace the pocket cell is usually a SLOPE (all its drops are 1-storey), but
+# its two cardinal arms are higher FLAT cells whose walls meet concavely over its corner. The
+# ghost-inner-corner rule only ran for flat pocket cells, so these junctions showed a bare
+# notch ("no inner corner tile as there should be"). It must run for EVERY cell.
+# Diagonal-descent config mirroring the owner's screenshot (storeys 3/2/1 stepping SW):
+# D=(2,0)=12 flat; arms N=(1,0)=8 and E=(2,1)=8 flat; pocket P=(1,1)=4 is a SLOPE.
+func _region_diagonal_descent():
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 0: return 8.0
+		if cx == 2 and cz == 1: return 8.0
+		if cx == 1 and cz == 1: return 4.0
+		if (cx == 0 and cz == 1) or (cx == 1 and cz == 2) or (cx == 0 and cz == 2): return 0.0
+		return 12.0)
+	return plan.compute_region(1, 1, 8)
+
+func test_slope_pocket_gets_a_ghost_inner_corner() -> void:
+	var r = _region_diagonal_descent()
+	assert_false(Field.is_flat_cell(r, 1, 1), "the pocket is a slope cell")
+	assert_true(Field.is_flat_cell(r, 1, 0), "the north arm is flat")
+	assert_true(Field.is_flat_cell(r, 2, 1), "the east arm is flat")
+	var data = Dress.compute(r, 1, 1, 1)   # dress only the pocket cell — it owns the ghost
+	var wall_found := false
+	var lip_found := false
+	for t in (data["inner_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 4.0) < 0.1:
+			wall_found = true
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1:
+			lip_found = true
+	assert_true(wall_found, "an inner corner wall joins the two arms' walls over the slope pocket")
+	assert_true(lip_found, "with its inner lip on top")
+
+func test_outer_corner_does_not_dive_below_its_arms() -> void:
+	# Round 4 counterpart: D=(2,0)=12's SW outer corner used to take its depth from the diagonal
+	# pocket sample, diving (convex-shaped, z-fighting the new inner piece) into the band that
+	# belongs to the pocket's concave junction. Its depth must come from its own arms' walls.
+	var r = _region_diagonal_descent()
+	var data = Dress.compute(r, 2, 0, 1)
+	var any := false
+	for t in (data["outer_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1:
+			any = true
+			assert_gt(o.y, 7.9, "D's outer corner stops with its arms (8..12); the pocket's inner piece owns the band below")
+	assert_true(any, "D still gets its outer corner")
+
 # --- issue 1: edges keep full coverage; the corner overlaps (no gap) ----------
 func test_edges_keep_full_width_and_corner_present() -> void:
 	# Each cliff edge is dressed across its FULL width (8 pieces) so nothing is dropped at the

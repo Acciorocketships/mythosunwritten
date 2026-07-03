@@ -411,6 +411,94 @@ func test_skirt_uses_the_kaykit_wall_material():
 	assert_eq(faces.mesh.surface_get_material(0), wall_mat, "the skirt shares the KayKit wall material")
 	node.free()
 
+func test_apron_top_faces_use_the_sheet_winding():
+	# Owner (round 4): aprons rendered DARK — the winding of the "up" side was backwards for
+	# half the directions, so the face visible from above was the down-normal copy. The sheet's
+	# up-facing triangles wind with a right-hand geometric normal pointing DOWN (Godot front =
+	# clockwise); every apron triangle lit as UP must use the same winding.
+	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
+	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
+	assert_not_null(aprons)
+	var arr = aprons.mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+	var up_faces := 0
+	for t in range(0, verts.size(), 3):
+		if normals[t].y > 0.9:
+			up_faces += 1
+			var n_geo := (verts[t + 1] - verts[t]).cross(verts[t + 2] - verts[t])
+			assert_lt(n_geo.y, 0.0, "an UP-lit apron face must wind like the sheet's top faces")
+	assert_gt(up_faces, 0, "aprons have up-lit faces")
+	node.free()
+
+func test_aprons_have_collision():
+	# Owner (round 4): "I think it's missing a collision shape (the player falls through)" —
+	# where the apron is the only floor (the recess band beyond the cell boundary), the player
+	# needs collision under their feet.
+	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
+	var body := node.find_child("Body", true, false) as StaticBody3D
+	var cs := body.get_node_or_null("CollisionShape3D_aprons") as CollisionShape3D
+	assert_not_null(cs, "aprons carry a collision shape")
+	if cs != null:
+		var found := false
+		for v in (cs.shape as ConcavePolygonShape3D).get_faces():
+			if absf(v.y - 8.0) < 0.3 and v.x > 9.4 and v.x < 12.1:
+				found = true
+				break
+		assert_true(found, "the apron band under the higher neighbour is walkable")
+	node.free()
+
+func test_taper_edge_drapes_onto_the_dipping_neighbour():
+	# Owner (round 4): where a lipped edge's clip weight tapers to 0 (at a step to an unclipped
+	# neighbour cell), the sheet flared back out to the boundary at FULL height — hovering over
+	# the drop as a "ground plane sticking out". The flared band must drape down to the
+	# neighbour's surface instead (A's own wall modules back the descending fold).
+	var p := Plan.new(0, 64.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 0 and cz == 1: return 4.0    # A=(1,1)'s cliff-maker (west drop 2)
+		if cx == 1 and cz == 2: return 8.0    # A's south dip (lipped edge, dip 4)
+		if cx == 2 and cz == 3: return 0.0    # (2,2)'s cliff-maker so B=(2,1) is inner-corner flat
+		return 12.0)
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var draped := false
+	for v in verts:
+		# A's boundary vert one grid step before the seam corner: previously hovered at y=12;
+		# draped it sits partway down (h − dip·f ≈ 11.33). The neighbours' own verts at this
+		# position are at 12.0 (B) and 8.0 ((1,2)), so this band is unique to the drape.
+		if absf(v.x - 36.0) < 0.01 and absf(v.z - 34.0) < 0.01 and v.y > 10.9 and v.y < 11.7:
+			draped = true
+	assert_true(draped, "the taper edge drapes down the step instead of hovering at the top")
+	node.free()
+
+func test_capped_corner_holds_the_clip_no_draped_flap():
+	# Owner (round 4, seed 1450085760 cell (16,-1) SE corner — "slight gap"): where a cliff top's
+	# lip line TURNS at an outer-corner cap (east: flat lower cliff top; south: same-storey slope
+	# dipping at the shared corner via the diagonal), the clip weight tapered to 0 at that corner —
+	# BOTH edges' colinear continuations are unlipped — so the sheet draped into a steep flap
+	# through/behind the corner cap: a dark slit along the lip back plus a needle sliver poking
+	# out of the wall. A corner PIECE occupies that slot: the run does not END there, it TURNS,
+	# so the clip must hold its weight across the capped corner.
+	var p := Plan.new(0, 64.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 0: return 0.0    # C's cliff-maker (3-storey north drop)
+		if cx == 2 and cz == 0: return 0.0    # E's cliff-maker (2-storey north drop)
+		if cx == 2 and cz == 1: return 8.0    # E: flat cliff top one storey below C
+		return 12.0)                           # C=(1,1); S=(1,2) slopes via the diagonal dip to E
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	# C's SE corner slot, strictly inside the cell (boundary columns x=36 / z=36 belong to E / S).
+	# Clipped, every C vert here sits at the lifted top (≈12.04); the bug's flap left verts at
+	# intermediate heights descending behind the cap. E's top is 8.0 and S's slope only reaches
+	# the box at its exact boundary, so the (8.5, 11.9) band is unique to the flap.
+	for v in verts:
+		if v.x > 33.0 and v.x < 35.9 and v.z > 33.0 and v.z < 35.9:
+			assert_false(v.y > 8.5 and v.y < 11.9,
+				"sheet vert drapes behind the SE corner cap (the owner's 'slight gap'): %s" % v)
+	node.free()
+
 func test_surface_is_gap_free_for_any_heightfield():
 	# The owner's requirement: gap-free terrain for ANY heightmap. The surface renders EVERY
 	# grid quad (grass or rock), so the triangle count is always GRID*GRID*2 — no quad skipped,

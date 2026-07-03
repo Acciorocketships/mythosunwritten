@@ -67,24 +67,46 @@ static func _slot_min(prof: PackedFloat32Array, off: float) -> float:
 	return m
 
 # The neighbour surface at the very corner `cdir` of the cell: min of both arm profiles over
-# their corner-end slot plus the diagonal cell's pinned surface at the corner point — how deep
-# the face is right where two exposed edges meet.
+# their corner-end slot — how deep the two arms' walls reach where they meet. The DIAGONAL
+# pocket's own deeper band is deliberately excluded: that band is a CONCAVE junction owned by
+# the pocket cell's ghost inner corner (an outer piece diving down there reads convex where the
+# walls turn concave, and z-fights the inner piece — owner round 4).
 static func _corner_min(region, cx: int, cz: int, cdir: Vector2i, prof: Dictionary) -> float:
 	var end_off := END if (cdir.x * cdir.y) == 1 else -END   # corner sits at the +pdir end iff x*y==1
-	var m := minf(_slot_min(prof[Vector2i(cdir.x, 0)], end_off), _slot_min(prof[Vector2i(0, cdir.y)], end_off))
-	var px := float(cx) * TILE + float(cdir.x) * TILE * 0.5
-	var pz := float(cz) * TILE + float(cdir.y) * TILE * 0.5
-	return minf(m, TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + cdir.x, cz + cdir.y))
+	return minf(_slot_min(prof[Vector2i(cdir.x, 0)], end_off), _slot_min(prof[Vector2i(0, cdir.y)], end_off))
 
-static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
-	# Only a FLAT-rendered cell (cliff top / inner-corner top) is dressed. Its EXPOSED edges get
-	# a rock wall + grass lip: any edge where the neighbour's boundary surface falls below this
-	# flat top — a storey drop, or a SAME-storey slope neighbour descending along the edge (the
-	# owner's "cliff next to a slope": the face must wrap around to the slope-facing side).
-	# A pure slope/flat cell has nothing to dress.
-	if not TerrainSurfaceField.is_flat_cell(region, cx, cz):
-		return
-	var s: int = region.storey_at(cx, cz)
+# Concave junctions over a POCKET cell — which in diagonal terraces is usually a SLOPE, so this
+# must run for EVERY cell, not just flat ones (owner round 4: "no inner corner tile as there
+# should be"). Both cardinal arms are HIGHER flat cells whose walls toward this cell meet over
+# its corner; an inner piece joins them, spanning from this cell's pinned corner surface up to
+# the lower arm's top. The classic rule (diagonal cell with LEVEL arms) is deduped away.
+static func _ghost_inner_corners(region, cx: int, cz: int, out: Dictionary) -> void:
+	for cdir in CORNERS:
+		var ca := Vector2i(cdir.x, 0)
+		var cb := Vector2i(0, cdir.y)
+		if not TerrainSurfaceField.is_higher_flat(region, cx, cz, ca):
+			continue
+		if not TerrainSurfaceField.is_higher_flat(region, cx, cz, cb):
+			continue
+		if TerrainSurfaceField._is_inner_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
+			continue   # the classic case — the diagonal cell emits this piece itself
+		var top_ref: float = minf(region.surface_height(cx + ca.x, cz + ca.y), region.surface_height(cx + cb.x, cz + cb.y))
+		var px := float(cx) * TILE + float(cdir.x) * TILE * 0.5
+		var pz := float(cz) * TILE + float(cdir.y) * TILE * 0.5
+		var base_y := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx, cz)
+		if top_ref - base_y <= TerrainSurfaceField.EXPOSE_EPS:
+			continue
+		var gbasis := Basis(Vector3.UP, atan2(-float(cdir.x), -float(cdir.y)) - PI * 0.25)
+		var glip_basis := Basis(Vector3.UP, atan2(-float(cdir.x), -float(cdir.y)) - PI * 0.25 + PI)
+		var gpos := Vector3(float(cx) * TILE + float(cdir.x) * (PLACE + 3.0), top_ref, float(cz) * TILE + float(cdir.y) * (PLACE + 3.0))
+		out["inner_lip"].append(Transform3D(glip_basis, gpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+		for k in _rows(top_ref - base_y):
+			out["inner_wall"].append(Transform3D(gbasis, gpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+
+# Per-edge exposure of a flat cell: each neighbour's boundary profile plus whether the edge is
+# EXPOSED (own edge flat at the top while the neighbour dips below it somewhere). Returns
+# [cliff: Dictionary(dir->bool), prof: Dictionary(dir->PackedFloat32Array)].
+static func _exposure(region, cx: int, cz: int) -> Array:
 	var h: float = region.surface_height(cx, cz)
 	var cliff := {}
 	var prof := {}
@@ -97,39 +119,28 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 					exposed = true
 					break
 		cliff[dir] = exposed
-	var cellpos := Vector3(float(cx) * TILE, h, float(cz) * TILE)
+	return [cliff, prof]
 
-	# --- corners FIRST: every wall/lip node sits at PLACE (±10.5,±10.5) where the two edges meet —
-	# like the old CliffCorner tile. The outer-corner WALL bridges the two edge walls. The inner-corner
-	# LIP is rotated 180° from the inner WALL (the GLTF lip faces the opposite diagonal). `corner_here`
-	# records which corners get a piece, so the straight edges drop their end slot there (no overlap). ---
-	var corner_here := {}
+# Which corners of flat cell (cx,cz) carry a corner PIECE, and which kind: "outer" (two exposed
+# edges meet), "inner" (level arms walling a diagonal pocket), "step" (one exposed edge turning
+# into a ≥2-storey diagonal). The SINGLE source of truth for corner pieces: _cell emits from this
+# map, and the mesher's sheet clip (TerrainChunkMesher._edge_w) holds its weight ACROSS capped
+# corners — the lip line TURNS there rather than ending, so tapering the clip to zero draped a
+# steep sheet flap through/behind the cap (owner round 4 "slight gap" + needle sliver).
+static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictionary) -> Dictionary:
+	var s: int = region.storey_at(cx, cz)
+	var h: float = region.surface_height(cx, cz)
+	var out := {}
 	for cdir in CORNERS:
 		var ca := Vector2i(cdir.x, 0)
 		var cb := Vector2i(0, cdir.y)
-		var cbasis := Basis(Vector3.UP, atan2(float(cdir.x), float(cdir.y)) - PI * 0.25)
-		var cpos: Vector3 = cellpos + Vector3(float(cdir.x) * PLACE, 0.0, float(cdir.y) * PLACE)
 		var ddrop: int = s - int(region.storey_at(cx + cdir.x, cz + cdir.y))
 		if cliff.get(ca, false) and cliff.get(cb, false):
 			# Convex (outer) corner where two exposed edges meet — deep as the face is AT the corner.
-			var cmin := _corner_min(region, cx, cz, cdir, prof)
-			if h - cmin > TerrainSurfaceField.EXPOSE_EPS:
-				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
-				for k in _rows(h - cmin):
-					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-				corner_here[cdir] = true
+			if h - _corner_min(region, cx, cz, cdir, prof) > TerrainSurfaceField.EXPOSE_EPS:
+				out[cdir] = "outer"
 		elif TerrainSurfaceField._is_inner_corner(region, cx, cz, cdir):
-			# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level and
-			# wall that pocket. The modeled inner piece spans it (even a 1-storey notch). The inner
-			# LIP faces the opposite diagonal from the inner WALL, so it needs +180° (owner's bug).
-			var lip_basis := Basis(Vector3.UP, atan2(float(cdir.x), float(cdir.y)) - PI * 0.25 + PI)
-			var px := float(cx) * TILE + float(cdir.x) * TILE * 0.5
-			var pz := float(cz) * TILE + float(cdir.y) * TILE * 0.5
-			var pocket_y := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + cdir.x, cz + cdir.y)
-			out["inner_lip"].append(Transform3D(lip_basis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
-			for k in _rows(h - pocket_y):
-				out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-			corner_here[cdir] = true
+			out[cdir] = "inner"
 		elif ddrop >= 2 and (cliff.get(ca, false) or cliff.get(cb, false)):
 			# STEP corner: ONE cardinal is an exposed edge and the DIAGONAL drops ≥2 — the cliff turns
 			# the corner, exposing the diagonal face. BUT if the wall continues STRAIGHT past this
@@ -138,29 +149,65 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 			var wc: Vector2i = ca if cliff.get(ca, false) else cb
 			var lc: Vector2i = cb if cliff.get(ca, false) else ca
 			if not TerrainSurfaceField.is_exposed_edge(region, cx + lc.x, cz + lc.y, wc):
-				var px2 := float(cx) * TILE + float(cdir.x) * TILE * 0.5
-				var pz2 := float(cz) * TILE + float(cdir.y) * TILE * 0.5
-				var diag_y := TerrainSurfaceField.surface_y_in_cell(region, px2, pz2, cx + cdir.x, cz + cdir.y)
+				out[cdir] = "step"
+	return out
+
+# Standalone corner_map for callers that don't already hold the exposure data (the mesher's
+# sheet clip). Empty for non-flat cells (they carry no dressing).
+static func corner_flags(region, cx: int, cz: int) -> Dictionary:
+	if not TerrainSurfaceField.is_flat_cell(region, cx, cz):
+		return {}
+	var e := _exposure(region, cx, cz)
+	return corner_map(region, cx, cz, e[0], e[1])
+
+static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
+	# Ghost inner corners first: they belong to pocket cells of ANY type (see above).
+	_ghost_inner_corners(region, cx, cz, out)
+	# Only a FLAT-rendered cell (cliff top / inner-corner top) is dressed further. Its EXPOSED
+	# edges get a rock wall + grass lip: any edge where the neighbour's boundary surface falls
+	# below this flat top — a storey drop, or a SAME-storey slope neighbour descending along the
+	# edge (the owner's "cliff next to a slope": the face must wrap around to the slope-facing
+	# side). A pure slope/flat cell has nothing else to dress.
+	if not TerrainSurfaceField.is_flat_cell(region, cx, cz):
+		return
+	var h: float = region.surface_height(cx, cz)
+	var e := _exposure(region, cx, cz)
+	var cliff: Dictionary = e[0]
+	var prof: Dictionary = e[1]
+	var cellpos := Vector3(float(cx) * TILE, h, float(cz) * TILE)
+
+	# --- corners FIRST: every wall/lip node sits at PLACE (±10.5,±10.5) where the two edges meet —
+	# like the old CliffCorner tile. The outer-corner WALL bridges the two edge walls. The inner-corner
+	# LIP is rotated 180° from the inner WALL (the GLTF lip faces the opposite diagonal). `corner_here`
+	# records which corners get a piece, so the straight edges drop their end slot there (no overlap). ---
+	var corner_here := corner_map(region, cx, cz, cliff, prof)
+	for cdir in corner_here:
+		var cbasis := Basis(Vector3.UP, atan2(float(cdir.x), float(cdir.y)) - PI * 0.25)
+		var cpos: Vector3 = cellpos + Vector3(float(cdir.x) * PLACE, 0.0, float(cdir.y) * PLACE)
+		var px := float(cx) * TILE + float(cdir.x) * TILE * 0.5
+		var pz := float(cz) * TILE + float(cdir.y) * TILE * 0.5
+		match corner_here[cdir]:
+			"outer":
+				var cmin := _corner_min(region, cx, cz, cdir, prof)
+				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				for k in _rows(h - cmin):
+					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+			"inner":
+				# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level
+				# and wall that pocket. The modeled inner piece spans it (even a 1-storey notch). The
+				# inner LIP faces the opposite diagonal from the inner WALL: +180° (owner's bug).
+				var lip_basis := Basis(Vector3.UP, atan2(float(cdir.x), float(cdir.y)) - PI * 0.25 + PI)
+				var pocket_y := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + cdir.x, cz + cdir.y)
+				out["inner_lip"].append(Transform3D(lip_basis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				for k in _rows(h - pocket_y):
+					out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+			"step":
+				var diag_y := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + cdir.x, cz + cdir.y)
 				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in _rows(h - diag_y):
 					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-				corner_here[cdir] = true
-		elif TerrainSurfaceField.is_higher_flat(region, cx, cz, ca) and TerrainSurfaceField.is_higher_flat(region, cx, cz, cb) \
-				and not TerrainSurfaceField._is_inner_corner(region, cx + cdir.x, cz + cdir.y, -cdir):
-			# TERRACED pocket (owner round 2): both cardinals are HIGHER flat cells whose recessed
-			# walls face this cell and meet over its corner — but the arms sit BELOW the diagonal
-			# cell, so the classic inner-corner rule (level arms) never fires there. Join the two
-			# walls with an inner piece at the crossing of their wall lines (one module past this
-			# cell's corner in both axes — the diagonal cell's own corner slot), spanning from this
-			# cell's top up to the lower of the two walls. (The dedupe guard skips the classic case,
-			# which the diagonal cell emits itself.)
-			var top_ref: float = minf(region.surface_height(cx + ca.x, cz + ca.y), region.surface_height(cx + cb.x, cz + cb.y))
-			var gbasis := Basis(Vector3.UP, atan2(-float(cdir.x), -float(cdir.y)) - PI * 0.25)
-			var glip_basis := Basis(Vector3.UP, atan2(-float(cdir.x), -float(cdir.y)) - PI * 0.25 + PI)
-			var gpos := Vector3(float(cx) * TILE + float(cdir.x) * (PLACE + 3.0), top_ref, float(cz) * TILE + float(cdir.y) * (PLACE + 3.0))
-			out["inner_lip"].append(Transform3D(glip_basis, gpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
-			for k in _rows(top_ref - h):
-				out["inner_wall"].append(Transform3D(gbasis, gpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+	# (terraced-pocket "ghost" inner corners are handled by _ghost_inner_corners above,
+	# which runs for every cell — the pocket is often a slope, not a flat cell)
 
 	# --- straight edges: at PLACE, but DROP the end slot (|offset|==END) on a side where a corner
 	# piece sits, so edge and corner butt together with no overlap (owner: corner edges must not
@@ -177,7 +224,7 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 		for off: float in OFFSETS:
 			if absf(off) > END - 0.01:
 				var corner: Vector2i = dir + (pdir if off > 0.0 else -pdir)
-				if corner_here.get(corner, false):
+				if corner_here.has(corner):
 					continue   # the corner piece fills this slot — don't overlap it
 			var dip: float = h - _slot_min(prof[dir], off)
 			if dip < TerrainSurfaceField.EXPOSE_EPS:
