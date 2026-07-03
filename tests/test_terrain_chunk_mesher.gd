@@ -212,6 +212,40 @@ func test_collision_wall_is_flush_with_the_boundary_no_pocket():
 	assert_almost_eq(top, 12.0, 0.01, "collision wall reaches the cliff top (no pocket under the lip band)")
 	node.free()
 
+func test_sheet_skirt_and_pieces_share_one_material():
+	# Owner (round 8): "the cliff lip, the skirt, and the slope are all different colours...
+	# it would be nice if they all used the same [texture] (so we could even change all of
+	# them at once in the future)". The walkable sheet and aprons now render with the SAME
+	# de-sheened KayKit material as the skirt — grass texel sampled from the lip piece's top,
+	# rock texel from the wall piece — so every terrain surface shares the KayKit palette.
+	var p := Plan.new(11, 32.0, 8, "mean", 3)
+	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
+	assert_eq(mi.mesh.surface_get_material(0), faces.mesh.surface_get_material(0),
+		"the sheet and the skirt share one material (the KayKit palette)")
+	var walls := node.find_child("Walls", true, false) as MultiMeshInstance3D
+	var lips := node.find_child("Lips", true, false) as MultiMeshInstance3D
+	assert_eq(walls.material_override, mi.mesh.surface_get_material(0),
+		"the wall pieces render with the same shared material")
+	assert_eq(lips.material_override, mi.mesh.surface_get_material(0),
+		"the lip pieces render with the same shared material")
+	# the sheet's grass texel comes from the lip piece's grass top, not the terrain atlas
+	var lip_mesh := CliffDressing._pieces["lip"][0] as Mesh
+	var arr = lip_mesh.surface_get_arrays(0)
+	var lverts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	var lnorms: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+	var luvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+	var m := Mesher.new()
+	m._ensure_skirt_style()
+	var from_lip_top := false
+	for i in lverts.size():
+		if lnorms[i].y > 0.9 and lverts[i].y > -0.05 and luvs[i].is_equal_approx(m._grass_uv):
+			from_lip_top = true
+	assert_true(from_lip_top, "the sheet's grass texel is sampled from the lip piece's top face")
+	node.free()
+
 func test_skirt_material_has_no_specular_sheen():
 	# Owner (round 7): "from some angles the skirt is a very different colour than the
 	# surrounding slopes" — the big flat skirt caught the wall material's specular sheen
@@ -352,7 +386,9 @@ func test_clip_tapers_to_zero_at_a_neighbour_that_does_not_clip():
 func test_apron_is_clamped_by_the_higher_cells_own_clip():
 	# Owner (round 3, seed 78498630): the apron strip spanned its cell's full edge width, so its
 	# ends poked out through the higher cell's PERPENDICULAR wall faces as floating green planes.
-	# The strip must pull back where the higher cell's own top sheet is clipped.
+	# The strip must pull back where the higher cell's own top sheet is clipped. The EDGE apron
+	# stops at W's clip line (33.6); the flush-step cap notch patch (round 8) may extend up to —
+	# but never past — the wall FACE plane (35.5), dying inside the wall slab.
 	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
 	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
 	assert_not_null(aprons)
@@ -360,7 +396,7 @@ func test_apron_is_clamped_by_the_higher_cells_own_clip():
 	for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
 		if absf(v.y - 8.0) < 0.2 and v.x > 9.4 and v.x < 12.1:
 			max_z = maxf(max_z, v.z)
-	assert_lt(max_z, 33.7, "apron stops behind W's south wall face (W's clip line), not at z=36")
+	assert_lt(max_z, 35.6, "no apron vert pokes past W's south wall FACE into open air (z=36)")
 	node.free()
 
 func test_apron_seals_the_base_slit_next_to_a_same_storey_slope():
@@ -639,3 +675,48 @@ func test_steep_upramp_slope_is_grass_not_rock():
 	assert_false(m._is_cliff_quad(region, 10.0, 12.0, -2.0, 0.0), "steep up-ramp slope quad is grass, not rock")
 	# the actual ≥2 cliff face (cell (1,0) storey 2 → (2,0) storey 0) IS rock.
 	assert_true(m._is_cliff_quad(region, 34.0, 36.0, -2.0, 0.0), "the ≥2 cliff face is rock")
+
+func test_flush_step_cap_notch_is_floored_by_a_grass_patch():
+	# Owner (round 8, seed 624196313 corner (-84,-84)): at a flush-step run end the turned cap
+	# lip stops 1.25 inside the end slot and the sheet stays clipped for the wall band, leaving
+	# a small open square at the run cell's top level between the lip, its own wall face, and
+	# the higher cell's wall — the recessed skirt showed through it as a dark notch. The apron
+	# pass floors that square with a grass patch at the cell's surface height.
+	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
+	var am := node.find_child("Aprons", true, false) as MeshInstance3D
+	assert_not_null(am, "chunk has aprons")
+	var covered := false
+	if am != null:
+		var arrays := am.mesh.surface_get_arrays(0)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var idx = arrays[Mesh.ARRAY_INDEX]   # Nil on non-indexed meshes
+		var tri_ids := []
+		if idx == null or (idx as PackedInt32Array).is_empty():
+			for i in range(0, verts.size(), 3):
+				tri_ids.append([i, i + 1, i + 2])
+		else:
+			for i in range(0, idx.size(), 3):
+				tri_ids.append([idx[i], idx[i + 1], idx[i + 2]])
+		# probe sits inside C=(1,1)'s SW notch square (x∈[9.6,12.25], z∈[33.6,35.5] at y=8),
+		# beyond both plain edge-apron bands (their clipped ends stop at x=12 / z=33.6)
+		var probe := Vector2(11.8, 35.0)
+		for t in tri_ids:
+			var a: Vector3 = verts[t[0]]
+			var b: Vector3 = verts[t[1]]
+			var c: Vector3 = verts[t[2]]
+			if absf(a.y - 8.0) > 0.3 or absf(b.y - 8.0) > 0.3 or absf(c.y - 8.0) > 0.3:
+				continue
+			if _tri_covers_xz(probe, a, b, c):
+				covered = true
+				break
+	assert_true(covered, "a grass patch at the run cell's top floors the flush-step cap notch")
+	node.free()
+
+func _tri_covers_xz(p: Vector2, a: Vector3, b: Vector3, c: Vector3) -> bool:
+	var a2 := Vector2(a.x, a.z)
+	var b2 := Vector2(b.x, b.z)
+	var c2 := Vector2(c.x, c.z)
+	var d1 := (b2 - a2).cross(p - a2)
+	var d2 := (c2 - b2).cross(p - b2)
+	var d3 := (a2 - c2).cross(p - c2)
+	return (d1 >= -0.001 and d2 >= -0.001 and d3 >= -0.001) or (d1 <= 0.001 and d2 <= 0.001 and d3 <= 0.001)

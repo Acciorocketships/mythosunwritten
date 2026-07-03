@@ -47,20 +47,30 @@ func _ensure_skirt_style() -> void:
 		return
 	CliffDressing._ensure_loaded()
 	var wall_mesh: Mesh = CliffDressing._pieces["wall"][0]
-	_skirt_material = wall_mesh.surface_get_material(0)
+	# THE shared de-sheened terrain material (also overridden onto every dressing piece)
+	_skirt_material = CliffDressing.shared_material()
 	var uvs: PackedVector2Array = wall_mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
 	if uvs.size() > 0:
 		_skirt_uv = uvs[0]
 	if _skirt_material == null:
 		_skirt_material = _material
 		_skirt_uv = _cliff_uv
-	elif _skirt_material is StandardMaterial3D:
-		# De-sheen a COPY for the skirt: the wall material's specular (roughness 0.6 /
-		# specular 0.5) reads fine on the curved modules but lights the big flat skirt a
-		# very different colour at some view angles (owner round 7).
-		_skirt_material = _skirt_material.duplicate()
-		_skirt_material.roughness = 1.0
-		_skirt_material.metallic_specular = 0.0
+		return
+	# ONE material for every terrain surface (owner round 8: "the cliff lip, the skirt, and
+	# the slope are all different colours... it would be nice if they all used the same
+	# [texture]"): the walkable sheet + aprons render with the same de-sheened KayKit palette,
+	# grass texel sampled from the lip piece's top face — so lips, walls, skirt, sheet and
+	# slopes all share one texture that can be retinted in one place.
+	var lip_mesh: Mesh = CliffDressing._pieces["lip"][0]
+	var larr := lip_mesh.surface_get_arrays(0)
+	var lverts: PackedVector3Array = larr[Mesh.ARRAY_VERTEX]
+	var lnorms: PackedVector3Array = larr[Mesh.ARRAY_NORMAL]
+	var luvs: PackedVector2Array = larr[Mesh.ARRAY_TEX_UV]
+	for i in lverts.size():
+		if lnorms[i].y > 0.9 and lverts[i].y > -0.05:
+			_material = _skirt_material
+			_grass_uv = luvs[i]
+			break
 var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
 
 func set_seed(seed: int) -> void:
@@ -445,6 +455,35 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
 		_apron_quad(st, a, b, c, d2)
 		emitted = true
+	# FLUSH-STEP cap notch (owner round 8 spot 3): where a run ends in an outer cap against a
+	# HIGHER flat neighbour, the turned cap lip stops 1.25 inside the end slot and the sheet
+	# stays clipped for the wall band — leaving a small open square at this cell's top level
+	# between the lip, its own wall face and the higher cell's wall, with the recessed skirt
+	# showing through as a dark notch. Floor it with a grass patch at the cell's surface:
+	# clip line → wall face along the run, lip edge → APRON under the higher cell across it.
+	var info = _cell_clip_info(region, clip_cache, cx, cz)
+	if info != null:
+		var h: float = region.surface_height(cx, cz)
+		for cdir in info["corners"]:
+			if info["corners"][cdir] != "outer":
+				continue
+			for pair in [[Vector2i(cdir.x, 0), Vector2i(0, cdir.y)], [Vector2i(0, cdir.y), Vector2i(cdir.x, 0)]]:
+				var d: Vector2i = pair[0]   # the run arm (this cell's cliff)
+				var p: Vector2i = pair[1]   # the junction arm (the higher flat neighbour)
+				if not TerrainSurfaceField.is_higher_flat(region, cx, cz, p):
+					continue   # classic convex corner: the corner lip itself covers the square
+				var dv := Vector3(float(d.x), 0.0, float(d.y))
+				var pv := Vector3(float(p.x), 0.0, float(p.y))
+				var base := Vector3(float(cx) * TILE, h, float(cz) * TILE)
+				var lip_edge := CliffDressing.PLACE + 1.25   # turned cap lip's inner face
+				var wall_face := CliffDressing.PLACE + 1.0   # the run's module face plane
+				var p0 := base + dv * TOP_CLIP + pv * lip_edge
+				var p1 := base + dv * wall_face + pv * lip_edge
+				var q0 := base + dv * TOP_CLIP + pv * (TILE * 0.5 + APRON)
+				var q1 := base + dv * wall_face + pv * (TILE * 0.5 + APRON)
+				_apron_quad(st, p0, p1, q0, q1)
+				emitted = true
+				break
 	return emitted
 
 # The TOP face must wind like the sheet's top faces (right-hand geometric normal DOWN — the

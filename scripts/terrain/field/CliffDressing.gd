@@ -46,6 +46,23 @@ const CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0,
 const CORNERS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 
 static var _pieces: Dictionary = {}   # name -> [mesh, local_transform]
+static var _shared_mat: Material = null
+
+# THE terrain material: a de-sheened duplicate of the KayKit wall material, shared by every
+# terrain surface — dressing pieces (via material_override), the walkable sheet, aprons and
+# the rock skirt. One texture/material to retint everything at once (owner round 8); specular
+# killed because it lit big flat surfaces a very different colour at some angles (round 7).
+static func shared_material() -> Material:
+	if _shared_mat != null:
+		return _shared_mat
+	_ensure_loaded()
+	var mat := (_pieces["wall"][0] as Mesh).surface_get_material(0)
+	if mat is StandardMaterial3D:
+		mat = mat.duplicate()
+		mat.roughness = 1.0
+		mat.metallic_specular = 0.0
+	_shared_mat = mat
+	return _shared_mat
 
 # Returns {wall, lip, outer_wall, outer_lip, inner_wall, inner_lip} -> Array[Transform3D].
 static func compute(region, lo_cx: int, lo_cz: int, cells: int) -> Dictionary:
@@ -179,19 +196,19 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 			var run_ground := _slot_min(prof[d], float(sgn) * END)
 			if h - run_ground < TerrainSurfaceField.EXPOSE_EPS:
 				continue   # the wall line has already faded out before the junction
-			# Owner rounds 6-7: NO concave/corner pieces at these junctions.
-			#  - The higher cell walls the SAME direction (a step): its own OUTER corner owns
-			#    the junction ("this is still an inner corner, it needs to be converted to an
-			#    outer corner") — register the corner as "abut" so the run keeps its end module
-			#    and the sheet clip holds, but emit nothing.
-			#  - Otherwise the run "goes straight into the wall": continue it with a STRAIGHT
-			#    module one slot into the higher cell, ending buried behind its wall face. An
-			#    outer cap's 0.5 corner inset left a slit here, because the perpendicular wall
-			#    line always continues past the junction: a flush colinear edge means the
-			#    diagonal cell is at least as tall as the higher cell, hence ≥2 storeys above
-			#    the run's low neighbour — a walling cliff top.
+			# Run-end junctions into a taller cliff (owner rounds 6-8):
+			#  - The taller cell walls the SAME direction (their sides are FLUSH — a step): the
+			#    run ends in an OUTER cap at its OWN end slot — "a corner (both wall and lip)
+			#    that attaches to the cliff edge on one side and goes into the wall on the
+			#    other side" (round 8). Plain "outer" emission does exactly that: the cap sits
+			#    at cellpos+cdir·PLACE, 3 units from the taller cell's own corner column (no
+			#    z-fight — the round-3 clash was a cap placed INTO the taller cell), and
+			#    _corner_min reduces to the run arm's end dip because the p-arm faces uphill.
+			#  - Otherwise the run "goes straight into the wall" (round 7): continue it with a
+			#    STRAIGHT module one slot into the taller cell, buried behind its wall face,
+			#    plus inner WALL rows merging the two perpendicular faces (round 8).
 			if TerrainSurfaceField.is_exposed_edge(region, cx + p.x, cz + p.y, d):
-				out[cdir] = "abut"
+				out[cdir] = "outer"
 			else:
 				out[cdir] = "ext_straight"
 			break
@@ -235,8 +252,30 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 			"outer":
 				var cmin := _corner_min(region, cx, cz, cdir, prof)
 				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				# The corner WALL module is 2.5 wide — 0.5 short of its slot at the post side. At
+				# a classic convex corner that inset faces air, but a row whose face is BURIED on
+				# one arm (the neighbour's grass tops the whole row: flush-step caps, terraced
+				# stacks) is a straight stretch of the OTHER arm's wall plane, and the inset there
+				# reads as a recessed-skirt slit (owner round 8 spot 3). Such rows use the
+				# full-width STRAIGHT module facing the exposed arm, tiling flush to the corner.
+				var end_off := END if (cdir.x * cdir.y) == 1 else -END
+				var ca := Vector2i(cdir.x, 0)
+				var cb := Vector2i(0, cdir.y)
+				var ga := _slot_min(prof[ca], end_off)
+				var gb := _slot_min(prof[cb], end_off)
 				for k in _rows(h - cmin):
-					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+					var row_top := h - STOREY * float(k)
+					var buried_a: bool = ga >= row_top - TerrainSurfaceField.EXPOSE_EPS
+					var buried_b: bool = gb >= row_top - TerrainSurfaceField.EXPOSE_EPS
+					var row_pos: Vector3 = cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)
+					if buried_a and buried_b:
+						continue
+					elif buried_a:
+						out["wall"].append(Transform3D(Basis(Vector3.UP, _angle(cb)), row_pos))
+					elif buried_b:
+						out["wall"].append(Transform3D(Basis(Vector3.UP, _angle(ca)), row_pos))
+					else:
+						out["outer_wall"].append(Transform3D(cbasis, row_pos))
 			"inner":
 				# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level
 				# and wall that pocket. The modeled inner piece spans it (even a 1-storey notch). The
@@ -251,14 +290,15 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in _rows(h - diag_y):
 					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-			"abut":
-				pass   # the higher cell's own corner owns this junction; registering the
-				       # corner keeps the run's end module and holds the sheet clip
 			"ext_straight":
 				# Run-end junction into a higher flat cell that doesn't wall this direction:
 				# the run "goes straight into the wall" (owner round 7) — continue it with a
 				# STRAIGHT module (lip + wall rows) one slot into the higher cell, keeping the
-				# run's own rotation; it ends buried behind the higher cell's wall face.
+				# run's own rotation; it ends buried behind the higher cell's wall face. The
+				# straight face and the taller PERPENDICULAR wall face meet concavely: inner
+				# WALL rows merge them at each storey (owner round 8 — "the wall should be an
+				# inner corner that merges the cliff outcropping with the taller cliff wall";
+				# the lip stays straight: "the lip part is good now").
 				var d: Vector2i = Vector2i(cdir.x, 0) if cliff.get(Vector2i(cdir.x, 0), false) else Vector2i(0, cdir.y)
 				var pp := Vector2i(cdir.x - d.x, cdir.y - d.y)
 				var edge2 := Vector3(float(d.x) * PLACE, 0.0, float(d.y) * PLACE)
@@ -269,8 +309,11 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				var end_dip: float = h - _slot_min(prof[d], float(sgn2) * END)
 				var sbasis := Basis(Vector3.UP, _angle(d))
 				out["lip"].append(Transform3D(sbasis, cpos2 + Vector3(0.0, LIP_LIFT, 0.0)))
+				var open := Vector2i(d.x - pp.x, d.y - pp.y)   # the concave opening's diagonal
+				var mbasis := Basis(Vector3.UP, atan2(float(open.x), float(open.y)) - PI * 0.25)
 				for k in _rows(end_dip):
 					out["wall"].append(Transform3D(sbasis, cpos2 + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+					out["inner_wall"].append(Transform3D(mbasis, cpos2 + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 	# (terraced-pocket "ghost" inner corners are handled by _ghost_inner_corners above,
 	# which runs for every cell — the pocket is often a slope, not a flat cell)
 
@@ -350,6 +393,9 @@ static func _multimesh(piece: Array, transforms: Array, nm: String) -> MultiMesh
 	var mmi := MultiMeshInstance3D.new()
 	mmi.name = nm
 	mmi.multimesh = mm
+	# every piece renders with THE shared de-sheened terrain material (owner round 8: the lip,
+	# skirt and slope must be visually continuous from every angle)
+	mmi.material_override = shared_material()
 	return mmi
 
 static func _find_mi(n: Node) -> MeshInstance3D:
