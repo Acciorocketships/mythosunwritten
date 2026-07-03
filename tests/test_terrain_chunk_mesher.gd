@@ -526,6 +526,30 @@ func test_arm_lip_run_holds_at_a_classic_inner_corner_no_flap():
 				"an arm's sheet drapes through the inner corner piece (the owner's protruding plane): %s" % v)
 	node.free()
 
+func test_run_end_at_a_higher_flat_neighbour_holds_the_clip():
+	# Owner (round 5, seed 1751195249 cell (-7,-5) NW junction — the "weird glitch" fold and the
+	# "gap next to skirt"): where a lipped run ends against a HIGHER flat neighbour, the dressing
+	# caps the junction with an extension corner one module into that cell — but the clip's
+	# corner check didn't know extension caps exist, so the sheet tapered to 0 and draped a
+	# crumpled fold through the cap, dipping away from the higher wall's base apron. Junction
+	# caps must hold the clip exactly like classic corner pieces.
+	var p := Plan.new(0, 64.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 0 and cz == 0: return 0.0    # H=(1,1)'s cliff-maker (NW diagonal)
+		if cx == 2 and cz == 0: return 0.0    # L=(2,1)'s cliff-maker and exposed north edge
+		if cx == 2 and cz == 1: return 8.0    # L: lower cliff top, its run ends against H
+		return 12.0)                           # H=(1,1) higher flat; (1,0)=12 keeps H's north flush
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	# L's NW junction box: held, L's verts sit clipped at ~8.04; the fold left verts draped to
+	# intermediate heights. The 0-ground's own verts are at ~0 and H's top at 12 — outside the band.
+	for v in verts:
+		if v.x > 35.9 and v.x < 38.5 and v.z > 11.5 and v.z < 14.5:
+			assert_false(v.y > 0.5 and v.y < 7.9,
+				"sheet vert drapes through the junction cap (the owner's fold): %s" % v)
+	node.free()
+
 func test_surface_is_gap_free_for_any_heightfield():
 	# The owner's requirement: gap-free terrain for ANY heightmap. The surface renders EVERY
 	# grid quad (grass or rock), so the triangle count is always GRID*GRID*2 — no quad skipped,

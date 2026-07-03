@@ -36,7 +36,10 @@ const PROFILE_SAMPLES := 24 # edge-profile resolution: 25 points, one per unit a
                             # slope neighbour dips along the edge (no see-through void — owner).
 const LIP_LIFT := 0.05      # raise the grass lip a hair so it cleanly overlays the field
                             # grass (which now renders to the boundary) instead of z-fighting
-const CORNER_LIP_LIFT := 0.10  # corner lips sit above edge lips so they win the small overlap
+const CORNER_LIP_LIFT := 0.06  # corner lips sit a hair above edge lips so they win incidental
+                               # overlaps — but only 1cm: at 0.10 the step at every cap/module
+                               # butt joint showed as a shadowed slit ("gap next to corner" —
+                               # owner round 5; the old tiles set both at y=0)
 const END := 10.5           # the |offset| of an edge's two end pieces (the corner slots)
 const OFFSETS := [-10.5, -7.5, -4.5, -1.5, 1.5, 4.5, 7.5, 10.5]
 const CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -123,10 +126,16 @@ static func _exposure(region, cx: int, cz: int) -> Array:
 
 # Which corners of flat cell (cx,cz) carry a corner PIECE, and which kind: "outer" (two exposed
 # edges meet), "inner" (level arms walling a diagonal pocket), "step" (one exposed edge turning
-# into a ≥2-storey diagonal). The SINGLE source of truth for corner pieces: _cell emits from this
-# map, and the mesher's sheet clip (TerrainChunkMesher._edge_w) holds its weight ACROSS capped
-# corners — the lip line TURNS there rather than ending, so tapering the clip to zero draped a
-# steep sheet flap through/behind the cap (owner round 4 "slight gap" + needle sliver).
+# into a ≥2-storey diagonal), or a RUN-END JUNCTION cap where a wall line runs into a HIGHER
+# flat neighbour — "ext_outer" (the higher cell does not wall this direction: the line ends in
+# an outer corner turning into that cell's wall face, owner round 3) or "ext_inner" (the higher
+# cell walls the SAME direction — a step: the junction is CONCAVE from the lower run, so it ends
+# with an INNER turn whose recessed arc tucks inside the higher corner's convex stack and whose
+# wall rows fill the recess slit; a straight/outer module there z-fights that stack — owner
+# rounds 3+5). The SINGLE source of truth for corner pieces: _cell emits from this map, and the
+# mesher's sheet clip (TerrainChunkMesher._edge_w) holds its weight ACROSS capped corners — the
+# lip line TURNS there rather than ending, so tapering the clip to zero draped a steep sheet
+# flap through/behind the cap (owner round 4 "slight gap"; round 5 "weird glitch" fold).
 static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictionary) -> Dictionary:
 	var s: int = region.storey_at(cx, cz)
 	var h: float = region.surface_height(cx, cz)
@@ -150,6 +159,23 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 			var lc: Vector2i = cb if cliff.get(ca, false) else ca
 			if not TerrainSurfaceField.is_exposed_edge(region, cx + lc.x, cz + lc.y, wc):
 				out[cdir] = "step"
+		if out.has(cdir):
+			continue
+		# Run-end junction: exactly one of this corner's edges carries the wall line, and the
+		# cell across the OTHER axis is a higher flat cell the line runs into.
+		for pair in [[ca, cb], [cb, ca]]:
+			var d: Vector2i = pair[0]
+			var p: Vector2i = pair[1]
+			if not cliff.get(d, false):
+				continue
+			if not TerrainSurfaceField.is_higher_flat(region, cx, cz, p):
+				continue
+			var pdir := Vector2i(d.y, d.x)
+			var sgn := pdir.x * p.x + pdir.y * p.y   # which end of the run this corner is
+			if h - _slot_min(prof[d], float(sgn) * END) < TerrainSurfaceField.EXPOSE_EPS:
+				continue   # the wall line has already faded out before the junction
+			out[cdir] = "ext_inner" if TerrainSurfaceField.is_exposed_edge(region, cx + p.x, cz + p.y, d) else "ext_outer"
+			break
 	return out
 
 # Standalone corner_map for callers that don't already hold the exposure data (the mesher's
@@ -206,6 +232,37 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in _rows(h - diag_y):
 					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+			"ext_outer", "ext_inner":
+				# Run-end junction: the wall line along edge `d` runs into the HIGHER flat cell
+				# across `p`; the cap sits one module INTO that cell (slot END+3, behind its wall
+				# face). ext_outer: the higher cell doesn't wall this direction — the line ends in
+				# an OUTER corner turning into its face ("cliff edge lips extending into higher
+				# cliffs should end in a corner", round 3). ext_inner: the higher cell walls the
+				# SAME direction (a step) — its corner stack owns the shared column, so the run
+				# ends with an INNER turn instead: the recessed concave arc tucks inside that
+				# convex stack (no coplanar faces) and its wall rows fill the recess slit that
+				# showed the bare skirt (owner round 5 "grey plane sticking out of wall" /
+				# "extend edge and add corner like this").
+				var d: Vector2i = Vector2i(cdir.x, 0) if cliff.get(Vector2i(cdir.x, 0), false) else Vector2i(0, cdir.y)
+				var pp := Vector2i(cdir.x - d.x, cdir.y - d.y)
+				var edge2 := Vector3(float(d.x) * PLACE, 0.0, float(d.y) * PLACE)
+				var perp2 := Vector3(float(d.y), 0.0, float(d.x))
+				var pdir2 := Vector2i(d.y, d.x)
+				var sgn2 := pdir2.x * pp.x + pdir2.y * pp.y
+				var cpos2: Vector3 = cellpos + edge2 + perp2 * (float(sgn2) * (END + 3.0))
+				var end_dip: float = h - _slot_min(prof[d], float(sgn2) * END)
+				if corner_here[cdir] == "ext_outer":
+					out["outer_lip"].append(Transform3D(cbasis, cpos2 + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+					for k in _rows(end_dip):
+						out["outer_wall"].append(Transform3D(cbasis, cpos2 + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+				else:
+					# concave opening: the run's drop side + away from the higher cell
+					var open := Vector2i(d.x - pp.x, d.y - pp.y)
+					var wb := Basis(Vector3.UP, atan2(float(open.x), float(open.y)) - PI * 0.25)
+					var lb := Basis(Vector3.UP, atan2(float(open.x), float(open.y)) - PI * 0.25 + PI)
+					out["inner_lip"].append(Transform3D(lb, cpos2 + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+					for k in _rows(end_dip):
+						out["inner_wall"].append(Transform3D(wb, cpos2 + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 	# (terraced-pocket "ghost" inner corners are handled by _ghost_inner_corners above,
 	# which runs for every cell — the pocket is often a slope, not a flat cell)
 
@@ -224,8 +281,11 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 		for off: float in OFFSETS:
 			if absf(off) > END - 0.01:
 				var corner: Vector2i = dir + (pdir if off > 0.0 else -pdir)
-				if corner_here.has(corner):
+				var kind: String = corner_here.get(corner, "")
+				if kind != "" and not kind.begins_with("ext"):
 					continue   # the corner piece fills this slot — don't overlap it
+				# (ext junction caps sit one module BEYOND the cell edge, so the end
+				# module stays: the run reaches the boundary and the cap continues it)
 			var dip: float = h - _slot_min(prof[dir], off)
 			if dip < TerrainSurfaceField.EXPOSE_EPS:
 				continue   # neighbour flush with the top here — nothing to cover
@@ -233,27 +293,8 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 			out["lip"].append(Transform3D(basis, base + Vector3(0.0, LIP_LIFT, 0.0)))
 			for k in _rows(dip):
 				out["wall"].append(Transform3D(basis, base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
-		# Owner round 2+3: where this wall line runs into a HIGHER flat neighbour, cap the run
-		# with an OUTER CORNER piece one module INTO that cell — turning into its wall face
-		# ("cliff edge lips extending into higher cliffs should end in a corner"). BUT when that
-		# neighbour walls the SAME direction (the line continues at the higher level), its own
-		# corner piece already owns the junction — emitting anything would z-fight it.
-		for sgn in [-1, 1]:
-			var p := Vector2i(pdir.x * sgn, pdir.y * sgn)
-			if not TerrainSurfaceField.is_higher_flat(region, cx, cz, p):
-				continue
-			var nb := Vector2i(cx + p.x, cz + p.y)
-			if TerrainSurfaceField.is_exposed_edge(region, nb.x, nb.y, dir):
-				continue   # the higher cell continues this wall — its corner covers the junction
-			var end_dip: float = h - _slot_min(prof[dir], float(sgn) * END)
-			if end_dip < TerrainSurfaceField.EXPOSE_EPS:
-				continue   # the wall line has already faded out before reaching the junction
-			var cdir2 := Vector2i(dir.x + p.x, dir.y + p.y)
-			var cbasis2 := Basis(Vector3.UP, atan2(float(cdir2.x), float(cdir2.y)) - PI * 0.25)
-			var cpos2: Vector3 = cellpos + edge + perp * (float(sgn) * (END + 3.0))
-			out["outer_lip"].append(Transform3D(cbasis2, cpos2 + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
-			for k in _rows(end_dip):
-				out["outer_wall"].append(Transform3D(cbasis2, cpos2 + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+		# (run-end junctions into higher flat neighbours — outer/inner extension caps — are
+		# emitted from corner_map above, so the mesher's clip can hold across them too)
 
 static func build(region, lo_cx: int, lo_cz: int, cells: int) -> Node3D:
 	_ensure_loaded()

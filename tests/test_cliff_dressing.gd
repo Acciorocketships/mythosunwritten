@@ -374,6 +374,37 @@ func test_junction_into_a_continuing_higher_wall_is_owned_by_its_corner() -> voi
 			deepest = minf(deepest, o.y)
 	assert_almost_eq(deepest, 0.0, 0.1, "W's SE corner walls reach the low ground, covering the junction")
 
+func test_step_junction_caps_the_lower_run_with_an_inner_turn() -> void:
+	# Owner (round 5, seed 1751195249): where a lower cliff's wall line runs into a HIGHER cliff
+	# that walls the SAME direction (a step), the lower run just stopped at the cell edge: the
+	# ledge-level notch ("edge doesn't extend all the way to the cliff... it should extend to
+	# the wall and end in a corner") plus a tall recess slit next to the higher cell's corner
+	# stack showing the bare skirt ("grey plane sticking out of wall"). The junction is CONCAVE
+	# from the lower run: it must end with an INNER turn into the higher wall's face — the
+	# recessed arc tucks inside the higher corner's convex stack (no z-fight, unlike a straight
+	# or outer module) and its wall rows fill the recess slit at each storey.
+	var data = Dress.compute(_region_terrace(), 0, 1, 2)   # dress W=(0,1) AND C=(1,1)
+	var cap := false
+	var rows := 0
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (8.0 + Dress.CORNER_LIP_LIFT)) < 0.05:
+			cap = true
+	for t in (data["inner_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 8.0:
+			rows += 1
+	assert_true(cap, "C's south run ends with an inner lip turning into W's wall face")
+	assert_eq(rows, 2, "inner wall rows fill the recess slit down to the low ground (8m = 2 rows)")
+
+func test_corner_caps_sit_nearly_flush_with_straight_lips() -> void:
+	# Owner (round 5): corner caps floated CORNER_LIP_LIFT−LIP_LIFT = 5cm above the straight lip
+	# modules they butt against — every butt joint showed a shadowed step that reads as a slit
+	# ("gap next to corner still there"). The old tiles set both at y=0; we keep just enough
+	# difference to win incidental overlaps without a visible step.
+	assert_lt(Dress.CORNER_LIP_LIFT - Dress.LIP_LIFT, 0.015,
+		"corner caps butt flush against straight lip runs (a taller step reads as a slit)")
+
 func test_lip_run_into_a_higher_cliff_ends_in_an_outer_corner() -> void:
 	# Owner (round 3): "cliff edge lips extending into higher cliffs should end in a corner."
 	# C=(1,1) storey 2 walls south; W=(0,1) is storey 3 flat but does NOT wall south (its south
