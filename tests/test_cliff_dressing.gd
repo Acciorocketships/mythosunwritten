@@ -851,3 +851,39 @@ func test_registered_inner_corner_holds_the_arm_clips_no_drape_notch() -> void:
 			gouged += 1
 	assert_eq(gouged, 0, "no draped fold gouges the plateau around the registered corner")
 	node.free()
+
+# Owner (round 14, seed 81574924, corner (-84,-60)): "is this just a smooth curve and not
+# the kaykit inner corner texture? can we try making it the kaykit inner corner texture?"
+# Unequal higher arms whose taller wall line CONTINUES past the corner get no ghost piece
+# (round 6: a concave LIP mid-line notches the walkable edge — that stays suppressed), but
+# the vertical seam where the two arms' walls meet concavely was left as a bare skirt
+# column — an obviously-flat strip against the sculpted KayKit modules, and the round-14
+# "smooth curve" up close. The seam now gets inner WALL rows (no lip), from the pocket
+# surface up to the lower arm's top, never above any walkable top.
+func test_continuing_taller_wall_junction_gets_seam_walls_but_no_lip() -> void:
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 16.0   # D: taller diagonal, continues the west arm's line
+		if cx == 2 and cz == 1: return 8.0    # N arm (lower)
+		if cx == 3 and cz == 1: return 0.0    # N's cliff-maker
+		if cx == 1 and cz == 2: return 12.0   # W arm (taller)
+		if cx == 2 and cz == 2: return 4.0    # P: the pocket (slope-class)
+		if cx == 1 and cz == 3: return 4.0    # W's cliff-maker
+		return 0.0)
+	var r = plan.compute_region(2, 2, 8)
+	assert_true(Field.is_flat_cell(r, 1, 2), "west arm is flat (fixture shape)")
+	assert_true(Field.is_flat_cell(r, 2, 1), "north arm is flat (fixture shape)")
+	assert_false(Field.is_flat_cell(r, 2, 2), "the pocket is not flat (fixture shape)")
+	var data = Dress.compute(r, 2, 2, 1)   # dress only the pocket — it owns the seam
+	var walls := 0
+	var lips := 0
+	for t in (data["inner_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - 4.0) < 0.1:
+			walls += 1
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 34.5) < 0.1:
+			lips += 1
+	assert_eq(walls, 1, "inner WALL rows round the bare seam between the two arms' walls")
+	assert_eq(lips, 0, "no inner LIP — the continuing taller line keeps its straight walkable edge")

@@ -95,32 +95,48 @@ static func _corner_min(region, cx: int, cz: int, cdir: Vector2i, prof: Dictiona
 	var end_off := END if (cdir.x * cdir.y) == 1 else -END   # corner sits at the +pdir end iff x*y==1
 	return minf(_slot_min(prof[Vector2i(cdir.x, 0)], end_off), _slot_min(prof[Vector2i(0, cdir.y)], end_off))
 
-# Does a GHOST inner corner fire at pocket (cx,cz)'s cdir corner? Both cardinal arms must be
-# HIGHER flat cells whose walls toward this cell meet concavely over its corner. Arms at
-# DIFFERENT storeys still form a true concave — the piece belongs at the LOWER arm's top,
-# rounding its wall into the taller arm's wall face (owner round 10: "missing an inner corner
-# (lip + wall)") — UNLESS the taller arm's wall CONTINUES past the corner across the lower
-# arm's side (the diagonal cell walls the same line): then the junction is a run into a
-# continuing wall / the diagonal's own corner column — owned by the run's ext_straight merge
-# rows or that column, and a concave piece would gouge it (owner round 6: "this is an inner
-# corner but it should just be an edge"). The classic case (level arms with the diagonal cell
-# the inner-corner owner) is deduped away — the diagonal emits it itself.
-static func _ghost_fires(region, cx: int, cz: int, cdir: Vector2i) -> bool:
+# What does the GHOST inner corner emit at pocket (cx,cz)'s cdir corner? Both cardinal arms
+# must be HIGHER flat cells whose walls toward this cell meet concavely over its corner.
+#   1 (full piece) — arms at DIFFERENT storeys still form a true concave: the piece belongs at
+#     the LOWER arm's top, rounding its wall into the taller arm's wall face (owner round 10:
+#     "missing an inner corner (lip + wall)").
+#   2 (seam WALLS only) — the taller arm's wall CONTINUES past the corner across the lower
+#     arm's side (the diagonal cell walls the same line). A concave LIP there would notch the
+#     continuing walkable edge (owner round 6: "this is an inner corner but it should just be
+#     an edge") — but the vertical seam where the two arms' walls meet concavely is otherwise
+#     bare SKIRT: a smooth flat column that reads nothing like the sculpted modules (owner
+#     round 14: "is this just a smooth curve and not the kaykit inner corner texture?").
+#     Inner WALL rows round the seam, kept below every walkable top.
+#   0 (nothing) — arms not both higher flat, or the classic case (level arms with the diagonal
+#     cell the inner-corner owner), which the diagonal emits itself.
+static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 	var ca := Vector2i(cdir.x, 0)
 	var cb := Vector2i(0, cdir.y)
 	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, ca):
-		return false
+		return 0
 	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, cb):
-		return false
+		return 0
+	if TerrainSurfaceField._is_inner_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
+		return 0
 	var sa := int(region.storey_at(cx + ca.x, cz + ca.y))
 	var sb := int(region.storey_at(cx + cb.x, cz + cb.y))
 	if sa != sb:
 		var ct := ca if sa > sb else cb   # the taller arm
+		var cl := cb if sa > sb else ca   # the lower arm
 		if TerrainSurfaceField.is_exposed_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-ct.x, -ct.y)):
-			return false
-	if TerrainSurfaceField._is_inner_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
-		return false
-	return true
+			# The lower arm's run ENDS at this junction. If the diagonal walls across its line
+			# too, that run gets an ext_outer cap (lip only — no walls) and the seam stays bare
+			# → seam walls. Otherwise the run's ext_straight MERGE rows already round the seam
+			# (round 8) — emitting more would double them.
+			if TerrainSurfaceField.is_exposed_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-cl.x, -cl.y)):
+				return 2
+			return 0
+	return 1
+
+# The full-piece predicate — what run-end junction logic means by "an inner corner joins the
+# runs here" (_inner_joined): seam-walls-only junctions keep their ext_outer run caps.
+static func _ghost_fires(region, cx: int, cz: int, cdir: Vector2i) -> bool:
+	return _ghost_mode(region, cx, cz, cdir) == 1
 
 # Concave junctions over a POCKET cell — which in diagonal terraces is usually a SLOPE, so this
 # must run for EVERY cell, not just flat ones (owner round 4: "no inner corner tile as there
@@ -130,18 +146,24 @@ static func _ghost_inner_corners(region, cx: int, cz: int, out: Dictionary) -> v
 	for cdir in CORNERS:
 		var ca := Vector2i(cdir.x, 0)
 		var cb := Vector2i(0, cdir.y)
-		if not _ghost_fires(region, cx, cz, cdir):
+		var mode := _ghost_mode(region, cx, cz, cdir)
+		if mode == 0:
 			continue
 		var top_ref: float = minf(region.surface_height(cx + ca.x, cz + ca.y), region.surface_height(cx + cb.x, cz + cb.y))
 		var px := float(cx) * TILE + float(cdir.x) * TILE * 0.5
 		var pz := float(cz) * TILE + float(cdir.y) * TILE * 0.5
+		if mode == 2:
+			# seam walls only: stay below the diagonal's walkable top too (a lower diagonal's
+			# own corner ghost owns the band above it — the round-10 gouge guard)
+			top_ref = minf(top_ref, TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + cdir.x, cz + cdir.y))
 		var base_y := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx, cz)
 		if top_ref - base_y <= TerrainSurfaceField.EXPOSE_EPS:
 			continue
 		var gbasis := Basis(Vector3.UP, atan2(-float(cdir.x), -float(cdir.y)) - PI * 0.25)
 		var glip_basis := Basis(Vector3.UP, atan2(-float(cdir.x), -float(cdir.y)) - PI * 0.25 + PI)
 		var gpos := Vector3(float(cx) * TILE + float(cdir.x) * (PLACE + 3.0), top_ref, float(cz) * TILE + float(cdir.y) * (PLACE + 3.0))
-		out["inner_lip"].append(Transform3D(glip_basis, gpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+		if mode == 1:
+			out["inner_lip"].append(Transform3D(glip_basis, gpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 		for k in _rows(top_ref - base_y):
 			out["inner_wall"].append(Transform3D(gbasis, gpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 
