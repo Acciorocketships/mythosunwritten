@@ -30,6 +30,10 @@ var max_step: int = 1         # max storey difference between cardinal neighbour
 
 var _raw_override: Callable = Callable()
 
+# Optional water carve (untyped to avoid a WaterPlan<->HeightfieldPlan
+# class-resolution cycle; duck-typed: needs carve_at_cell(cx, cz) -> float).
+var _water_plan = null
+
 
 func _init(
 	p_world_seed: int,
@@ -56,12 +60,24 @@ func set_raw_height_override(fn: Callable) -> void:
 	_raw_override = fn
 
 
-## Continuous height (metres) at a tile cell.
+## Attach the water network: raw_height subtracts its carve BEFORE storey
+## quantization, so banks/cliffs/slopes around water come from the existing
+## clamp + surface-field machinery with no downstream changes.
+func set_water_plan(p_water_plan) -> void:
+	_water_plan = p_water_plan
+
+
+## Continuous height (metres) at a tile cell, after the water carve.
 func raw_height(cx: int, cz: int) -> float:
+	var h: float
 	if _raw_override.is_valid():
-		return _raw_override.call(cx, cz)
-	var pos: Vector3 = Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
-	return _height01(pos) * height_amplitude
+		h = _raw_override.call(cx, cz)
+	else:
+		var pos: Vector3 = Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
+		h = _height01(pos) * height_amplitude
+	if _water_plan != null:
+		h -= _water_plan.carve_at_cell(cx, cz)
+	return h
 
 
 ## Layered terrain height in [0, 1]: broad landforms + rolling hills + fine

@@ -37,6 +37,7 @@ func _ready() -> void:
 		return   # bare instance (unit test)
 	world_seed = randi()
 	_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean", MAX_CLIFF_STEP)
+	_plan.set_water_plan(WaterPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS))
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
 	# Build the chunk under the spawn point before the first physics frame, so the

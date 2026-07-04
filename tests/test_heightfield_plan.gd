@@ -413,3 +413,28 @@ func test_height01_smooth_ignores_detail_octave() -> void:
 	var smooth: float = HeightfieldPlan.height01(pos, 7, false)
 	assert_almost_eq(with_detail, smooth, 0.25,
 		"variants track the same landform (only the fine octave differs)")
+
+
+# ------------------------------------------------------------
+# Water carve hook
+# ------------------------------------------------------------
+
+func test_water_plan_carve_lowers_raw_height() -> void:
+	var dry: HeightfieldPlan = HeightfieldPlan.new(991177, 22.0, 8)
+	var wet: HeightfieldPlan = HeightfieldPlan.new(991177, 22.0, 8)
+	wet.set_water_plan(WaterPlan.new(991177, 22.0, 8))
+	# Find a carved cell (same scan band as the WaterPlan tests).
+	var water: WaterPlan = WaterPlan.new(991177, 22.0, 8)
+	var hit: Vector2i = Vector2i.MAX
+	for cz in range(20, 120):
+		for cx in range(20, 120):
+			if water.carve_at_cell(cx, cz) > 0.5:
+				hit = Vector2i(cx, cz)
+				break
+		if hit != Vector2i.MAX:
+			break
+	assert_true(hit != Vector2i.MAX, "seed has a carved cell in the scan band")
+	assert_true(wet.raw_height(hit.x, hit.y) < dry.raw_height(hit.x, hit.y) - 0.4,
+		"carve lowers the raw field where water lives")
+	assert_almost_eq(wet.raw_height(0, 0), dry.raw_height(0, 0), 0.0001,
+		"spawn cell untouched")
