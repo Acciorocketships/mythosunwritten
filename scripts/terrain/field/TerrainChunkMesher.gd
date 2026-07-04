@@ -425,19 +425,10 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 # neighbour's wall face, and is clamped by both cells' clips so its ends never poke out through
 # a perpendicular wall face (the owner's floating green planes).
 #
-# LIP SHELF (owner round 11: "tiny gaps next to inner corner tile"): the lower cell's sheet
-# ends AT the boundary while the neighbour's wall face stands 0.5 INSIDE it, and the lip's
-# front overhang (hanging to h-0.655) roofs neither — a roofless slot dropping to the apron
-# floor deep in shadow. Sightlines aligned with the slot read it as dark hairline gaps beside
-# corner pieces. A second grass strip tucked just under the lip front roofs the slot.
-const LIP_SHELF_DROP := 0.75    # shelf top under the KayKit lip's hanging front (h-0.705+lift)
-const LIP_SHELF_SETBACK := 0.25 # outer edge at the LIP FRONT plane (PLACE+1.25), never past it:
-                                # a boundary-reaching shelf protruded 0.25 beyond the lip and read
-                                # from below as a second lip jutting out of tall cliffs (owner
-                                # round 12: "a plane sticking out just below the cliff lip")
-const LIP_SHELF_W := 1.0        # lip front → past the wall's deepest wave recess (the sculpt
-                                # recedes up to 0.75 behind the face plane; a narrower shelf left
-                                # dark pinholes at the wave troughs and lip module junctions)
+# (Round 11's "lip shelf" — a second grass strip up under the lip front roofing the slot
+# between the lower sheet's edge and the wall face — is GONE: at tall cliffs it read as a
+# plane jutting out below the lip from any low angle, owner rounds 12-13. The round-11
+# "tiny gaps" it papered over are handled at ground level where they actually live.)
 func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int) -> bool:
 	var emitted := false
 	var active := {}
@@ -462,21 +453,6 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 			p1.y = TerrainSurfaceField.surface_y_in_cell(region, p1.x, p1.z, cx, cz)
 			if p0.y > h_n - 0.05 and p1.y > h_n - 0.05:
 				continue   # flush with the neighbour's top — nothing to floor here
-			# lip shelf (see above) — placed from the UNCLIPPED boundary points, only where
-			# the ground sits clear below it (a shelf inside rising ground would poke out of
-			# the slope as a floating ledge); ends pull back from perpendicular clip lines
-			var sy := h_n - LIP_SHELF_DROP
-			if p0.y < sy - 0.05 and p1.y < sy - 0.05:
-				var set_in := Vector3(float(dir.x) * LIP_SHELF_SETBACK, 0.0, float(dir.y) * LIP_SHELF_SETBACK)
-				var s0 := Vector3(p0.x, sy, p0.z) + set_in
-				var s1 := Vector3(p1.x, sy, p1.z) + set_in
-				var shelf_out := Vector3(float(dir.x) * LIP_SHELF_W, 0.0, float(dir.y) * LIP_SHELF_W)
-				var r0 := _clip_perp(region, clip_cache, ncx, ncz, dir, s0 + shelf_out)
-				var r1 := _clip_perp(region, clip_cache, ncx, ncz, dir, s1 + shelf_out)
-				s0 = _clip_perp(region, clip_cache, ncx, ncz, dir, s0)
-				s1 = _clip_perp(region, clip_cache, ncx, ncz, dir, s1)
-				_apron_quad(st, s0, s1, r0, r1)
-				emitted = true
 			# inner verts weld to this cell's (possibly clipped) sheet edge; outer verts tuck
 			# under the neighbour's top and pull back from its perpendicular clip lines
 			var q0: Vector3 = p0 + out
@@ -502,15 +478,6 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var c := a + Vector3(0.0, 0.0, float(cdir.y) * APRON)
 		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
 		_apron_quad(st, a, b, c, d2)
-		# the slot the lip shelf roofs wraps around this corner too — a matching shelf patch,
-		# at the LOWER of the two walling neighbours' lips, set back behind their lip fronts
-		var sy_c := minf(region.surface_height(cx + cdir.x, cz), region.surface_height(cx, cz + cdir.y)) - LIP_SHELF_DROP
-		if y < sy_c - 0.05:
-			var sa := Vector3(px + float(cdir.x) * LIP_SHELF_SETBACK, sy_c, pz + float(cdir.y) * LIP_SHELF_SETBACK)
-			var sb := sa + Vector3(float(cdir.x) * LIP_SHELF_W, 0.0, 0.0)
-			var sc := sa + Vector3(0.0, 0.0, float(cdir.y) * LIP_SHELF_W)
-			var sd := sa + Vector3(float(cdir.x) * LIP_SHELF_W, 0.0, float(cdir.y) * LIP_SHELF_W)
-			_apron_quad(st, sa, sb, sc, sd)
 		emitted = true
 	# (Round 8 floored the flush-step cap notch with a flat grass patch here; the owner
 	# rejected it — round 9 extends the run's straight modules to the boundary and turns

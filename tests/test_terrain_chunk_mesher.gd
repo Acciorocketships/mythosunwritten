@@ -754,54 +754,20 @@ func test_no_drape_dip_where_a_run_ends_at_a_level_neighbour_under_a_taller_diag
 	assert_eq(dipped, 0, "no draped fold gouges A's walkable top at the run's end corner")
 	node.free()
 
-func test_lip_shelf_roofs_the_slot_between_boundary_and_wall_face():
-	# Owner (round 11, seed 3960904676): "tiny gaps next to inner corner tile". The lower
-	# cell's sheet ends AT the cell boundary while the higher cell's wall face stands 0.5
-	# INSIDE it, and the lip's front overhang (down to h-0.655) roofs neither — leaving a
-	# 0.25..0.75-wide roofless slot dropping ~4m to the shadowed apron floor. Sightlines
-	# that align with the slot read it as dark hairline gaps flanking corner pieces. The
-	# apron pass must roof the slot with a grass shelf tucked just under the lip front.
+func test_aprons_stay_at_ground_level_no_floating_shelf():
+	# Owner (rounds 12-13, seed 613274262): "a plane sticking out just below the cliff lip"
+	# / "that shelf is just below the lip... can you remove it". Round 11's lip shelf — a
+	# second apron strip up under the lip front — read as a jutting plane from any low angle
+	# at tall cliffs and is GONE. Every apron vertex must sit at the LOWER ground's level
+	# (the boundary-profile floor it welds to), never up at the higher cell's lip.
 	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
 	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	var found := false
-	if aprons != null and aprons.mesh != null:
-		for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-			# W=(0,1)@12's east wall face is at x=11.5, the boundary at x=12; the shelf top
-			# sits at 12-0.75=11.25, below the lip's hanging front (11.345) and above the
-			# wall top band, spanning the shared edge.
-			if v.y > 11.0 and v.y < 11.45 and v.x > 11.4 and v.x < 12.1 and v.z > 13.0 and v.z < 35.0:
-				found = true
-				break
-	assert_true(found, "a grass shelf under the lip front roofs the boundary slot (y~11.25)")
-	node.free()
-
-func test_lip_shelf_stays_out_of_rising_ground():
-	# The shelf must yield where the lower ground climbs to (or above) the shelf plane —
-	# a horizontal grass quad emitted inside a rising slope would slice out of the grass
-	# as a floating ledge. Round-3 same-storey-slope fixture: N=(1,1)@12 is a cliff top
-	# whose WEST neighbour W=(0,1) is a same-storey slope descending northward; W's
-	# boundary surface climbs from 8.0 (z=12) through the shelf plane (11.25, at z~20.2)
-	# to flush 12.0 at z=24.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 2 and cz == 1: return 4.0    # N's cliff drop (east)
-		if cx == 1 and cz == 0: return 8.0    # N's north: storey 2 → N walls north
-		if cx == 0 and cz == 0: return 8.0    # W's north: storey 2 → W slopes down north
-		return 12.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	var poking := 0
-	var present := false
-	if aprons != null and aprons.mesh != null:
-		for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-			if v.x < 11.9 or v.x > 12.6 or v.y < 11.2 or v.y > 11.45:
-				continue   # shelf band of N's west edge only (floor aprons sit lower)
-			if v.z > 21.0:
-				poking += 1   # ground is at/above the shelf plane here
-			elif v.z > 13.0:
-				present = true
-	assert_true(present, "the shelf roofs the slot where the slope has dipped below it")
-	assert_eq(poking, 0, "no shelf quad where the neighbour ground has risen to the shelf plane")
+	var floating := 0
+	for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+		# highest ground any apron welds to in this fixture is C=(1,1)'s 8.0
+		if v.y > 8.2:
+			floating += 1
+	assert_eq(floating, 0, "no apron geometry floats above the ground it welds to")
 	node.free()
 
 func test_inner_corner_pulls_the_diagonal_sheet_corner_under_the_piece():
@@ -831,19 +797,3 @@ func test_inner_corner_pulls_the_diagonal_sheet_corner_under_the_piece():
 	assert_true(near_zone, "the sheet still reaches up to the tuck line outside the corner")
 	node.free()
 
-func test_lip_shelf_stays_behind_the_lip_front():
-	# Owner (round 12, seed 613274262): "now theres a plane sticking out just below the cliff
-	# lip, please remove that". The round-11 shelf reached the cell BOUNDARY — 0.25 proud of
-	# the lip front (PLACE+1.25) and 0.5 proud of the wall face — so from below a tall cliff
-	# its underside read as a second lip jutting from the wall. The shelf must keep every
-	# vertex at or behind the lip front plane; the sliver beyond it stays open (the same thin
-	# shadow line the old tiles had under their lips).
-	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
-	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	var poking := 0
-	for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-		# the shelf band under W=(0,1)@12's east lip (front plane x=11.75)
-		if v.y > 11.0 and v.y < 11.45 and v.x > 11.80 and v.z > 12.0 and v.z < 36.0:
-			poking += 1
-	assert_eq(poking, 0, "no shelf vertex outside the lip front plane (x=11.75)")
-	node.free()
