@@ -64,6 +64,40 @@ static func _is_inner_corner(region, cx: int, cz: int, cdir: Vector2i) -> bool:
 	if int(region.storey_at(cx + az.x, cz + az.y)) != s:
 		return false
 	# each level arm must itself wall the drop into the diagonal (so the pocket is a real cliff)
+	if not _arm_walls(region, cx + ax.x, cz + ax.y, az):
+		return false
+	if not _arm_walls(region, cx + az.x, cz + az.y, ax):
+		return false
+	return true
+
+# Does the arm cell wall the storey drop toward `d`? It does when it renders FLAT: a cliff top,
+# or a cell held flat by an inner-corner pocket of its own — checked with CLIFF-TOP-ONLY arms
+# (first order) so this never recurses through has_inner_corner. Owner round 12 (seed 613274262,
+# corner (-156,-228)): an arm flat only via its own inner corner failed the old cliff-top-only
+# check, so the classic corner never fired while the slope pocket's unregistered GHOST did — and
+# the arms' held-nowhere sheet clips draped a notch into the plateau around the piece.
+static func _arm_walls(region, ax: int, az: int, d: Vector2i) -> bool:
+	if int(region.storey_at(ax, az)) - int(region.storey_at(ax + d.x, az + d.y)) < 1:
+		return false
+	if _is_cliff_top(region, ax, az):
+		return true
+	for dd in _DIAGONALS:
+		if _is_inner_corner_strict(region, ax, az, dd):
+			return true
+	return false
+
+# The pre-round-12 inner-corner rule (arms must be CLIFF TOPS) — the terminal, non-recursive
+# form _arm_walls falls back on.
+static func _is_inner_corner_strict(region, cx: int, cz: int, cdir: Vector2i) -> bool:
+	var s := int(region.storey_at(cx, cz))
+	if int(region.storey_at(cx + cdir.x, cz + cdir.y)) >= s:
+		return false
+	var ax := Vector2i(cdir.x, 0)
+	var az := Vector2i(0, cdir.y)
+	if int(region.storey_at(cx + ax.x, cz + ax.y)) != s:
+		return false
+	if int(region.storey_at(cx + az.x, cz + az.y)) != s:
+		return false
 	if not _is_wall_edge(region, cx + ax.x, cz + ax.y, az):
 		return false
 	if not _is_wall_edge(region, cx + az.x, cz + az.y, ax):

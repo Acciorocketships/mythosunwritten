@@ -830,3 +830,20 @@ func test_inner_corner_pulls_the_diagonal_sheet_corner_under_the_piece():
 	assert_eq(in_zone, 0, "no bare sheet vert survives within 1.0 of the inner corner point")
 	assert_true(near_zone, "the sheet still reaches up to the tuck line outside the corner")
 	node.free()
+
+func test_lip_shelf_stays_behind_the_lip_front():
+	# Owner (round 12, seed 613274262): "now theres a plane sticking out just below the cliff
+	# lip, please remove that". The round-11 shelf reached the cell BOUNDARY — 0.25 proud of
+	# the lip front (PLACE+1.25) and 0.5 proud of the wall face — so from below a tall cliff
+	# its underside read as a second lip jutting from the wall. The shelf must keep every
+	# vertex at or behind the lip front plane; the sliver beyond it stays open (the same thin
+	# shadow line the old tiles had under their lips).
+	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
+	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
+	var poking := 0
+	for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+		# the shelf band under W=(0,1)@12's east lip (front plane x=11.75)
+		if v.y > 11.0 and v.y < 11.45 and v.x > 11.80 and v.z > 12.0 and v.z < 36.0:
+			poking += 1
+	assert_eq(poking, 0, "no shelf vertex outside the lip front plane (x=11.75)")
+	node.free()

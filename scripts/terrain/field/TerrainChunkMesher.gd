@@ -430,10 +430,14 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 # front overhang (hanging to h-0.655) roofs neither — a roofless slot dropping to the apron
 # floor deep in shadow. Sightlines aligned with the slot read it as dark hairline gaps beside
 # corner pieces. A second grass strip tucked just under the lip front roofs the slot.
-const LIP_SHELF_DROP := 0.75   # shelf top under the KayKit lip's hanging front (h-0.705+lift)
-const LIP_SHELF_W := 1.25      # boundary → past the wall's deepest wave recess (face plane sits
-                               # 0.5 inside the boundary; the sculpt recedes up to 0.75 more —
-                               # a face-plane-wide shelf left dark pinholes at the wave troughs)
+const LIP_SHELF_DROP := 0.75    # shelf top under the KayKit lip's hanging front (h-0.705+lift)
+const LIP_SHELF_SETBACK := 0.25 # outer edge at the LIP FRONT plane (PLACE+1.25), never past it:
+                                # a boundary-reaching shelf protruded 0.25 beyond the lip and read
+                                # from below as a second lip jutting out of tall cliffs (owner
+                                # round 12: "a plane sticking out just below the cliff lip")
+const LIP_SHELF_W := 1.0        # lip front → past the wall's deepest wave recess (the sculpt
+                                # recedes up to 0.75 behind the face plane; a narrower shelf left
+                                # dark pinholes at the wave troughs and lip module junctions)
 func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int) -> bool:
 	var emitted := false
 	var active := {}
@@ -463,8 +467,9 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 			# the slope as a floating ledge); ends pull back from perpendicular clip lines
 			var sy := h_n - LIP_SHELF_DROP
 			if p0.y < sy - 0.05 and p1.y < sy - 0.05:
-				var s0 := Vector3(p0.x, sy, p0.z)
-				var s1 := Vector3(p1.x, sy, p1.z)
+				var set_in := Vector3(float(dir.x) * LIP_SHELF_SETBACK, 0.0, float(dir.y) * LIP_SHELF_SETBACK)
+				var s0 := Vector3(p0.x, sy, p0.z) + set_in
+				var s1 := Vector3(p1.x, sy, p1.z) + set_in
 				var shelf_out := Vector3(float(dir.x) * LIP_SHELF_W, 0.0, float(dir.y) * LIP_SHELF_W)
 				var r0 := _clip_perp(region, clip_cache, ncx, ncz, dir, s0 + shelf_out)
 				var r1 := _clip_perp(region, clip_cache, ncx, ncz, dir, s1 + shelf_out)
@@ -498,10 +503,10 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
 		_apron_quad(st, a, b, c, d2)
 		# the slot the lip shelf roofs wraps around this corner too — a matching shelf patch,
-		# at the LOWER of the two walling neighbours' lips
+		# at the LOWER of the two walling neighbours' lips, set back behind their lip fronts
 		var sy_c := minf(region.surface_height(cx + cdir.x, cz), region.surface_height(cx, cz + cdir.y)) - LIP_SHELF_DROP
 		if y < sy_c - 0.05:
-			var sa := Vector3(px, sy_c, pz)
+			var sa := Vector3(px + float(cdir.x) * LIP_SHELF_SETBACK, sy_c, pz + float(cdir.y) * LIP_SHELF_SETBACK)
 			var sb := sa + Vector3(float(cdir.x) * LIP_SHELF_W, 0.0, 0.0)
 			var sc := sa + Vector3(0.0, 0.0, float(cdir.y) * LIP_SHELF_W)
 			var sd := sa + Vector3(float(cdir.x) * LIP_SHELF_W, 0.0, float(cdir.y) * LIP_SHELF_W)

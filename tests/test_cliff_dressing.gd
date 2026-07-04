@@ -789,3 +789,65 @@ func test_edges_keep_full_width_and_corner_present() -> void:
 	# lips PLUS the corner piece — they butt together with NO overlap (owner: corner edges overlap).
 	assert_eq((outer["lip"] as Array).size(), 14, "edges drop the end slot where the corner sits (no overlap)")
 	assert_eq((outer["outer_lip"] as Array).size(), 1, "plus exactly one outer corner piece")
+
+# Owner (round 12, seed 613274262, corner (-156,-228)): "theres a weird inner corner here
+# where it shouldn't be". The classic inner-corner rule required BOTH level arms to pass
+# _is_wall_edge, which demands the arm be a CLIFF TOP (some >=2-storey drop). Here one arm
+# was flat only via its OWN inner-corner pocket, so the classic corner never fired — but the
+# slope pocket's GHOST did, at the exact classic position. Ghosts are not registered in
+# corner_map, so the arms' sheet clips tapered at the shared point and DRAPED a notch into
+# the flat 24m plateau around the piece. An arm walls the pocket when it renders flat and
+# drops toward it: a cliff top, or a cell held flat by a (first-order) inner corner.
+func _region_inner_corner_arm():
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		var m := {
+			Vector2i(0, 0): 16.0, Vector2i(1, 0): 20.0, Vector2i(2, 0): 20.0, Vector2i(3, 0): 16.0,
+			Vector2i(0, 1): 20.0, Vector2i(1, 1): 24.0, Vector2i(2, 1): 24.0, Vector2i(3, 1): 20.0,
+			Vector2i(0, 2): 20.0, Vector2i(1, 2): 20.0, Vector2i(2, 2): 24.0, Vector2i(3, 2): 24.0,
+			Vector2i(0, 3): 20.0, Vector2i(1, 3): 20.0, Vector2i(2, 3): 24.0, Vector2i(3, 3): 24.0,
+		}
+		return m.get(Vector2i(cx, cz), 16.0))
+	return plan.compute_region(2, 1, 8)
+
+func test_inner_corner_fires_when_an_arm_is_flat_via_its_own_inner_corner() -> void:
+	var r = _region_inner_corner_arm()
+	# the fixture's shape: D=(2,1)@24 owns the corner over slope pocket (1,2)@20; arm (1,1)
+	# is a cliff top; arm (2,2)@24 is flat ONLY via its own inner corner toward (3,1)@20
+	assert_false(Field._is_cliff_top(r, 2, 2), "east arm is not a cliff top (fixture shape)")
+	assert_true(Field.is_flat_cell(r, 2, 2), "east arm is flat via its own inner corner")
+	assert_false(Field.is_flat_cell(r, 1, 2), "the pocket is a slope cell")
+	var flags := Dress.corner_flags(r, 2, 1)
+	assert_eq(flags.get(Vector2i(-1, 1), ""), "inner",
+		"the diagonal owner registers a classic inner corner (so the arms' clips hold)")
+	# exactly one piece at the corner slot — the classic one; the ghost must dedupe itself
+	var data = Dress.compute(r, 0, 0, 5)
+	var pieces := 0
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1:
+			pieces += 1
+	assert_eq(pieces, 1, "one inner-corner piece at the point (classic, not a duplicate ghost)")
+
+func test_registered_inner_corner_holds_the_arm_clips_no_drape_notch() -> void:
+	# The mesher half of the same bug: with nothing registered at the point, both arms' lip
+	# runs tapered to w=0 there and the flared clip DRAPED ~4m folds into the walkable 24m
+	# plateau — the visible "weird inner corner" notch.
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		var m := {
+			Vector2i(0, 0): 16.0, Vector2i(1, 0): 20.0, Vector2i(2, 0): 20.0, Vector2i(3, 0): 16.0,
+			Vector2i(0, 1): 20.0, Vector2i(1, 1): 24.0, Vector2i(2, 1): 24.0, Vector2i(3, 1): 20.0,
+			Vector2i(0, 2): 20.0, Vector2i(1, 2): 20.0, Vector2i(2, 2): 24.0, Vector2i(3, 2): 24.0,
+			Vector2i(0, 3): 20.0, Vector2i(1, 3): 20.0, Vector2i(2, 3): 24.0, Vector2i(3, 3): 24.0,
+		}
+		return m.get(Vector2i(cx, cz), 16.0))
+	var node := Mesher.new().build_chunk(plan, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var gouged := 0
+	for v in (mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+		# the corner point is (36,36); the plateau top is 24 — no draped fold may gouge it
+		if v.x > 33.8 and v.x < 38.2 and v.z > 33.8 and v.z < 38.2 and v.y > 20.3 and v.y < 23.7:
+			gouged += 1
+	assert_eq(gouged, 0, "no draped fold gouges the plateau around the registered corner")
+	node.free()
