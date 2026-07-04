@@ -341,22 +341,36 @@ func carve_at_cell(cx: int, cz: int) -> float:
 
 ## Water bodies overlapping a cell window (for surface meshing + volumes).
 ## Returns {"ponds": Array[PondStamp], "rivers": Array[RiverTrace]} — rivers
-## come whole (the builder clips); ponds include source pools.
+## come whole (the builder clips); ponds include source pools. The window may
+## straddle super-cell borders, so it unions the regions of every super-cell
+## the window's corners fall in (≤4 for a window ≤ SUPER) and dedupes by source.
 func bodies_near(center_cell: Vector2i, radius_cells: int) -> Dictionary:
 	var world_r: float = float(radius_cells + 1) * TILE
-	assert(world_r * 2.0 <= SUPER, "bodies_near window exceeds one super-cell — widen REACH_SUPERS math first")
+	assert(world_r * 2.0 <= SUPER, "bodies_near window exceeds one super-cell — widen the union first")
 	var centre: Vector2 = Vector2(float(center_cell.x), float(center_cell.y)) * TILE
 	var window: Rect2 = Rect2(centre - Vector2.ONE * world_r, Vector2.ONE * world_r * 2.0)
-	var rc: Vector2i = Vector2i(int(floor(centre.x / SUPER)), int(floor(centre.y / SUPER)))
+	var corners: Array = [
+		window.position,
+		window.position + Vector2(window.size.x, 0.0),
+		window.position + Vector2(0.0, window.size.y),
+		window.position + window.size,
+	]
+	var super_cells: Dictionary = {}
+	for corner in corners:
+		super_cells[Vector2i(int(floor(corner.x / SUPER)), int(floor(corner.y / SUPER)))] = true
+	var seen: Dictionary = {}
 	var ponds: Array = []
 	var rivers: Array = []
-	for t in _region_for(rc).rivers:
-		var touches: bool = t.bounds().grow(FEATHER).intersects(window)
-		if not touches:
-			continue
-		rivers.append(t)
-		if t.source_pool != null:
-			ponds.append(t.source_pool)
-		if t.pond != null:
-			ponds.append(t.pond)
+	for rc in super_cells.keys():
+		for t in _region_for(rc).rivers:
+			if seen.has(t.source_cell):
+				continue
+			if not t.bounds().grow(FEATHER).intersects(window):
+				continue
+			seen[t.source_cell] = true
+			rivers.append(t)
+			if t.source_pool != null:
+				ponds.append(t.source_pool)
+			if t.pond != null:
+				ponds.append(t.pond)
 	return {"ponds": ponds, "rivers": rivers}

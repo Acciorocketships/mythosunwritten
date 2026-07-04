@@ -249,3 +249,45 @@ func test_bodies_near_finds_the_water_that_carved() -> void:
 	var bodies: Dictionary = plan.bodies_near(hit, 2)
 	assert_true(bodies.ponds.size() + bodies.rivers.size() > 0,
 		"bodies_near sees the water that carved cell %s" % hit)
+
+func test_bodies_near_covers_carved_cells_when_window_straddles_super_cells() -> void:
+	var plan: WaterPlan = _plan()
+	var radius: int = 5
+	# Super-cell corners sit at cell multiples of SUPER/TILE = 32. A window
+	# centered on a corner provably straddles 4 super-cells. Find one whose
+	# window holds carved cells, then assert each is covered by a bodies_near
+	# result — the union-across-super-cells guarantee.
+	for gz in range(-3, 4):
+		for gx in range(-3, 4):
+			var center_cell: Vector2i = Vector2i(gx * 32, gz * 32)
+			var cw: Vector2 = Vector2(center_cell.x * WaterPlan.TILE, center_cell.y * WaterPlan.TILE)
+			if cw.length() < WaterPlan.SPAWN_WATER_RADIUS + 200.0:
+				continue
+			var carved: Array = []
+			for dz in range(-radius, radius + 1):
+				for dx in range(-radius, radius + 1):
+					var cx: int = center_cell.x + dx
+					var cz: int = center_cell.y + dz
+					if plan.carve_at_cell(cx, cz) > 0.5:
+						carved.append(Vector2(cx * WaterPlan.TILE, cz * WaterPlan.TILE))
+			if carved.is_empty():
+				continue
+			var bodies: Dictionary = plan.bodies_near(center_cell, radius)
+			for p in carved:
+				var covered: bool = false
+				for pond in bodies.ponds:
+					if pond.footprint_t(p) < 1.0:
+						covered = true
+						break
+				if not covered:
+					for river in bodies.rivers:
+						for i in river.points.size():
+							if p.distance_to(river.points[i]) <= river.widths[i] + WaterPlan.FEATHER:
+								covered = true
+								break
+						if covered:
+							break
+				assert_true(covered,
+					"carved cell %s covered by a bodies_near body (corner window %s)" % [p, center_cell])
+			return
+	pass_test("no straddling-corner window held carved cells on this seed")
