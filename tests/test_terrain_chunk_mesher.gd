@@ -386,9 +386,8 @@ func test_clip_tapers_to_zero_at_a_neighbour_that_does_not_clip():
 func test_apron_is_clamped_by_the_higher_cells_own_clip():
 	# Owner (round 3, seed 78498630): the apron strip spanned its cell's full edge width, so its
 	# ends poked out through the higher cell's PERPENDICULAR wall faces as floating green planes.
-	# The strip must pull back where the higher cell's own top sheet is clipped. The EDGE apron
-	# stops at W's clip line (33.6); the flush-step cap notch patch (round 8) may extend up to —
-	# but never past — the wall FACE plane (35.5), dying inside the wall slab.
+	# The strip must pull back where the higher cell's own top sheet is clipped — HERE the apron
+	# (y=8) is level with W's south wall span (12→0), so poking past the clip would show.
 	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
 	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
 	assert_not_null(aprons)
@@ -396,7 +395,50 @@ func test_apron_is_clamped_by_the_higher_cells_own_clip():
 	for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
 		if absf(v.y - 8.0) < 0.2 and v.x > 9.4 and v.x < 12.1:
 			max_z = maxf(max_z, v.z)
-	assert_lt(max_z, 35.6, "no apron vert pokes past W's south wall FACE into open air (z=36)")
+	assert_lt(max_z, 33.7, "apron stops behind W's south wall face (W's clip line), not at z=36")
+	node.free()
+
+func test_buried_apron_end_is_not_clamped_no_ground_gap():
+	# Owner (round 9, seed 320048332, corner (-84,-84)): "there is a gap in the ground right
+	# here". The low shelf's apron tucks under the tall cell B; at the junction corner its end
+	# verts were pulled back by B's SOUTH sheet clip even though the apron (y=4) runs far BELOW
+	# B's south wall span (12→8) — buried inside the plateau D's solid ground. The height-blind
+	# clamp collapsed the last apron quad, opening a triangular hole at the corner point. An
+	# apron end below the across-cell's surface is buried and must NOT be clamped.
+	var p := Plan.new(0, 64.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 0: return 12.0   # B: tall cell, walls west over the shelf
+		if cx == 1 and cz == 1: return 8.0    # D: plateau south of B (flush west walls)
+		if cx == 2 and cz == 2: return 0.0    # D's cliff-maker (SE diagonal, 2 storeys down)
+		return 4.0)                            # the shelf west of both, and backdrop
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var am := node.find_child("Aprons", true, false) as MeshInstance3D
+	assert_not_null(am, "chunk has aprons")
+	var covered := false
+	if am != null:
+		var arrays := am.mesh.surface_get_arrays(0)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var idx = arrays[Mesh.ARRAY_INDEX]   # Nil on non-indexed meshes
+		var tri_ids := []
+		if idx == null or (idx as PackedInt32Array).is_empty():
+			for i in range(0, verts.size() - 2, 3):
+				tri_ids.append([i, i + 1, i + 2])
+		else:
+			for i in range(0, (idx as PackedInt32Array).size() - 2, 3):
+				tri_ids.append([idx[i], idx[i + 1], idx[i + 2]])
+		# probe inside the previously-collapsed zone: the shelf's apron band under B
+		# (x∈[12,14.4]) in the last 2.4 before the corner (z∈[9.6,12], B's south clip zone)
+		var probe := Vector2(13.5, 11.5)
+		for t in tri_ids:
+			var a: Vector3 = verts[t[0]]
+			var b: Vector3 = verts[t[1]]
+			var c: Vector3 = verts[t[2]]
+			if absf(a.y - 4.0) > 0.3 or absf(b.y - 4.0) > 0.3 or absf(c.y - 4.0) > 0.3:
+				continue
+			if _tri_covers_xz(probe, a, b, c):
+				covered = true
+				break
+	assert_true(covered, "the buried apron end reaches the corner (no ground gap)")
 	node.free()
 
 func test_apron_seals_the_base_slit_next_to_a_same_storey_slope():
@@ -675,42 +717,6 @@ func test_steep_upramp_slope_is_grass_not_rock():
 	assert_false(m._is_cliff_quad(region, 10.0, 12.0, -2.0, 0.0), "steep up-ramp slope quad is grass, not rock")
 	# the actual ≥2 cliff face (cell (1,0) storey 2 → (2,0) storey 0) IS rock.
 	assert_true(m._is_cliff_quad(region, 34.0, 36.0, -2.0, 0.0), "the ≥2 cliff face is rock")
-
-func test_flush_step_cap_notch_is_floored_by_a_grass_patch():
-	# Owner (round 8, seed 624196313 corner (-84,-84)): at a flush-step run end the turned cap
-	# lip stops 1.25 inside the end slot and the sheet stays clipped for the wall band, leaving
-	# a small open square at the run cell's top level between the lip, its own wall face, and
-	# the higher cell's wall — the recessed skirt showed through it as a dark notch. The apron
-	# pass floors that square with a grass patch at the cell's surface height.
-	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
-	var am := node.find_child("Aprons", true, false) as MeshInstance3D
-	assert_not_null(am, "chunk has aprons")
-	var covered := false
-	if am != null:
-		var arrays := am.mesh.surface_get_arrays(0)
-		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-		var idx = arrays[Mesh.ARRAY_INDEX]   # Nil on non-indexed meshes
-		var tri_ids := []
-		if idx == null or (idx as PackedInt32Array).is_empty():
-			for i in range(0, verts.size(), 3):
-				tri_ids.append([i, i + 1, i + 2])
-		else:
-			for i in range(0, idx.size(), 3):
-				tri_ids.append([idx[i], idx[i + 1], idx[i + 2]])
-		# probe sits inside C=(1,1)'s SW notch square (x∈[9.6,12.25], z∈[33.6,35.5] at y=8),
-		# beyond both plain edge-apron bands (their clipped ends stop at x=12 / z=33.6)
-		var probe := Vector2(11.8, 35.0)
-		for t in tri_ids:
-			var a: Vector3 = verts[t[0]]
-			var b: Vector3 = verts[t[1]]
-			var c: Vector3 = verts[t[2]]
-			if absf(a.y - 8.0) > 0.3 or absf(b.y - 8.0) > 0.3 or absf(c.y - 8.0) > 0.3:
-				continue
-			if _tri_covers_xz(probe, a, b, c):
-				covered = true
-				break
-	assert_true(covered, "a grass patch at the run cell's top floors the flush-step cap notch")
-	node.free()
 
 func _tri_covers_xz(p: Vector2, a: Vector3, b: Vector3, c: Vector3) -> bool:
 	var a2 := Vector2(a.x, a.z)

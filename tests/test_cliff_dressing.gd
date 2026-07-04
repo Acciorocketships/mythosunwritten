@@ -378,35 +378,43 @@ func test_junction_into_a_continuing_higher_wall_is_owned_by_its_corner() -> voi
 		assert_almost_eq(float(row_ys[0]), 0.0, 0.1, "W's SE corner column reaches the low ground, covering the junction")
 
 func test_flush_step_run_ends_in_an_outer_corner_into_the_taller_wall() -> void:
-	# Owner (round 8, seed 624196313): "cliff wall should end in a corner (both wall and lip)
-	# that attaches to the cliff edge on one side and goes into the wall on the other side.
-	# this is in cases where a lower cliff meets a taller cliff and their sides are flush."
-	# At a flush step the lower run now DROPS its end module and places an OUTER cap at its
-	# own end slot — one arm continues the run, the other turns into the taller wall's body.
-	# That column is 3 units from the taller cell's own corner column, so nothing z-fights.
+	# Owner (round 9, seed 320048332): "the edge should extend all the way to the cliff, and
+	# then the corner turns into the wall." At a flush step the run KEEPS its straight end
+	# module (lip + wall to the cell boundary) and the corner cap is a turned LIP one slot
+	# INTO the taller cell — the same column as the taller cell's own corner stack, whose
+	# wall rows already cover that column (the lip is proud of the wall face, no z-fight).
+	# Round 8's cap at the run's own end slot stopped 1.25 short of the taller wall and
+	# needed a flat patch behind it, which the owner rejected.
 	var data = Dress.compute(_region_terrace(), 0, 1, 2)   # dress W=(0,1) AND C=(1,1)
-	var cap := false
-	var cap_rows := 0
+	var ext_cap := false
+	var cap_walls := 0
+	var end_rows := 0
 	var end_module := false
 	var w_corner := false
 	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 13.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (8.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
-			cap = true
+		assert_false(absf(o.x - 13.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 10.0,
+			"no turned cap at the run's own end slot (it stops short of the taller wall)")
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (8.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
+			ext_cap = true
 		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y > 11.9:
 			w_corner = true
-	for bucket in ["outer_wall", "wall"]:   # rows are straight modules since the tiling rule
-		for t in (data[bucket] as Array):    # (see test_flush_junction_wall_rows_...)
-			var o := (t as Transform3D).origin
-			if absf(o.x - 13.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 8.0:
-				cap_rows += 1
+	for t in (data["outer_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 8.0:
+			cap_walls += 1
 	for t in (data["lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 13.5) < 0.1 and absf(o.z - 34.5) < 0.1:
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (8.0 + Dress.LIP_LIFT)) < 0.03:
 			end_module = true
-	assert_true(cap, "C's run ends in an outer cap at its own end slot (lip)")
-	assert_eq(cap_rows, 2, "the cap's wall rows reach the low ground (8m = 2 rows)")
-	assert_false(end_module, "the cap replaces the straight end module (no overlap)")
+	for t in (data["wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 8.0:
+			end_rows += 1
+	assert_true(end_module, "the run's straight end lip extends all the way to the taller cell")
+	assert_eq(end_rows, 2, "the end slot's wall rows reach the low ground (8m = 2 rows)")
+	assert_true(ext_cap, "a turned corner LIP sits one slot into the taller cell at the run's level")
+	assert_eq(cap_walls, 0, "the cap adds no wall rows of its own (W's stack owns that column)")
 	assert_true(w_corner, "W's own outer corner (at 12) still stands at its column")
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
@@ -522,20 +530,62 @@ func test_terraced_step_junction_is_owned_by_the_higher_outer_corner() -> void:
 		var o := (t as Transform3D).origin
 		assert_false(absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1,
 			"no concave piece notches the taller cliff's corner column (terraced junction)")
-	for t in (data["outer_lip"] as Array):
+	for t in (data["outer_wall"] as Array):
 		var o := (t as Transform3D).origin
-		assert_false(absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 22.0,
-			"no run-level outer cap either (it would z-fight H's own corner stack)")
+		assert_false(absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 19.9,
+			"no run-level corner WALLS at H's column (they would z-fight H's own stack)")
 	var h_corner := false
 	var run_cap := false
+	var end_module := false
 	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
 		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y > 23.9:
 			h_corner = true
-		if absf(o.x - 34.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (20.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (20.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
 			run_cap = true
+	for t in (data["lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (20.0 + Dress.LIP_LIFT)) < 0.03:
+			end_module = true
 	assert_true(h_corner, "H's own outer corner (at 24) stands at the junction")
-	assert_true(run_cap, "L's run ends in its own outer cap at its end slot (round 8: flush sides)")
+	assert_true(end_module, "L's run keeps its straight end module up to the boundary (round 9)")
+	assert_true(run_cap, "L's turned cap LIP sits one slot into H, at H's corner column (round 9)")
+
+func test_ghost_joined_flush_runs_stay_plain_straight_edges() -> void:
+	# Owner (round 9, seed 320048332, corner (-84,-108)): two flush-step runs meet over a low
+	# POCKET cell whose ghost inner corner already joins them — "these were converted to
+	# corners but they should stay as normal edges so they can connect to the inner corner
+	# piece between them". Such run ends keep their straight end modules and emit NO cap at
+	# all; only the ghost inner piece dresses the junction.
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 2 and cz == 0: return 16.0   # T: the taller flat both runs end against
+		if cx == 2 and cz == 1: return 12.0   # B: walls west over the pocket, run ends at T
+		if cx == 1 and cz == 0: return 12.0   # N: walls south over the pocket, run ends at T
+		return 4.0)                            # pocket P=(1,1) and backdrop
+	var r = plan.compute_region(1, 1, 8)
+	# Both run ends are flush steps into T, but P's ghost inner corner joins them.
+	var data = Dress.compute(r, 1, 0, 2)      # dress N and B (and T's row)
+	var b_end := false
+	var n_end := false
+	for t in (data["lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (12.0 + Dress.LIP_LIFT)) < 0.03:
+			b_end = true
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - (12.0 + Dress.LIP_LIFT)) < 0.03:
+			n_end = true
+	assert_true(b_end, "B's west run keeps its straight end module (no cap)")
+	assert_true(n_end, "N's south run keeps its straight end module (no cap)")
+	for t in (data["outer_lip"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(o.y < 13.0 and absf(o.x - 36.0) < 4.0 and absf(o.z - 12.0) < 4.0,
+			"no run-level outer cap anywhere at the ghost-joined junction")
+	var ghost := false
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - (12.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
+			ghost = true
+	assert_true(ghost, "the pocket's ghost inner corner piece joins the two runs")
 
 func test_lip_run_into_a_higher_cliff_continues_straight_into_its_wall() -> void:
 	# Round 3 asked for an outer cap here; owner round 7 refined it: the run "goes straight

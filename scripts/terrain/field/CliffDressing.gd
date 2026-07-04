@@ -196,23 +196,43 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 			var run_ground := _slot_min(prof[d], float(sgn) * END)
 			if h - run_ground < TerrainSurfaceField.EXPOSE_EPS:
 				continue   # the wall line has already faded out before the junction
-			# Run-end junctions into a taller cliff (owner rounds 6-8):
-			#  - The taller cell walls the SAME direction (their sides are FLUSH — a step): the
-			#    run ends in an OUTER cap at its OWN end slot — "a corner (both wall and lip)
-			#    that attaches to the cliff edge on one side and goes into the wall on the
-			#    other side" (round 8). Plain "outer" emission does exactly that: the cap sits
-			#    at cellpos+cdir·PLACE, 3 units from the taller cell's own corner column (no
-			#    z-fight — the round-3 clash was a cap placed INTO the taller cell), and
-			#    _corner_min reduces to the run arm's end dip because the p-arm faces uphill.
+			# Run-end junctions into a taller cliff (owner rounds 6-9):
+			#  - The taller cell walls the SAME direction (their sides are FLUSH — a step):
+			#    "the edge should extend all the way to the cliff, and then the corner turns
+			#    into the wall" (round 9). The run KEEPS its straight end module and a turned
+			#    corner LIP sits one slot INTO the taller cell ("ext_outer") — at the taller
+			#    cell's own corner column, whose wall rows already cover it (the lip is proud
+			#    of the wall face, no z-fight). Round 8's cap at the run's own end slot
+			#    stopped 1.25 short of the taller wall and needed a flat patch (rejected).
+			#    EXCEPT when an inner-corner piece (ghost or classic) joins the two runs over
+			#    the pocket cell: they "should stay as normal edges so they can connect to
+			#    the inner corner piece between them" — plain end modules, no cap ("abut").
 			#  - Otherwise the run "goes straight into the wall" (round 7): continue it with a
 			#    STRAIGHT module one slot into the taller cell, buried behind its wall face,
 			#    plus inner WALL rows merging the two perpendicular faces (round 8).
 			if TerrainSurfaceField.is_exposed_edge(region, cx + p.x, cz + p.y, d):
-				out[cdir] = "outer"
+				if _inner_joined(region, cx + d.x, cz + d.y, Vector2i(p.x - d.x, p.y - d.y)):
+					out[cdir] = "abut"
+				else:
+					out[cdir] = "ext_outer"
 			else:
 				out[cdir] = "ext_straight"
 			break
 	return out
+
+# An inner-corner piece (classic, from the diagonal cell, or a ghost from the pocket cell)
+# joins the two runs meeting over pocket (px,pz)'s qdir corner — their end modules butt into
+# it, so the runs carry no caps of their own. Mirrors _ghost_inner_corners' fire condition.
+static func _inner_joined(region, px: int, pz: int, qdir: Vector2i) -> bool:
+	if TerrainSurfaceField._is_inner_corner(region, px + qdir.x, pz + qdir.y, Vector2i(-qdir.x, -qdir.y)):
+		return true
+	var ca := Vector2i(qdir.x, 0)
+	var cb := Vector2i(0, qdir.y)
+	if not TerrainSurfaceField.is_higher_flat(region, px, pz, ca):
+		return false
+	if not TerrainSurfaceField.is_higher_flat(region, px, pz, cb):
+		return false
+	return region.storey_at(px + ca.x, pz + ca.y) == region.storey_at(px + cb.x, pz + cb.y)
 
 # Standalone corner_map for callers that don't already hold the exposure data (the mesher's
 # sheet clip). Empty for non-flat cells (they carry no dressing).
@@ -290,6 +310,23 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				out["outer_lip"].append(Transform3D(cbasis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in _rows(h - diag_y):
 					out["outer_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+			"ext_outer":
+				# Flush-step run end (round 9): the straight edge keeps its end module (the
+				# edge loop below emits it — ext kinds don't drop the end slot), and the
+				# turned corner LIP sits one slot INTO the taller cell, at the taller cell's
+				# own corner column. Its wall rows already cover that column down to the low
+				# ground (the per-row straight substitution), so the cap adds no walls; the
+				# lip is proud of the wall face and reads as the run's curb turning into it.
+				var de: Vector2i = Vector2i(cdir.x, 0) if cliff.get(Vector2i(cdir.x, 0), false) else Vector2i(0, cdir.y)
+				var pe := Vector2i(cdir.x - de.x, cdir.y - de.y)
+				var edge3 := Vector3(float(de.x) * PLACE, 0.0, float(de.y) * PLACE)
+				var perp3 := Vector3(float(de.y), 0.0, float(de.x))
+				var pdir3 := Vector2i(de.y, de.x)
+				var sgn3 := pdir3.x * pe.x + pdir3.y * pe.y
+				var cpos3: Vector3 = cellpos + edge3 + perp3 * (float(sgn3) * (END + 3.0))
+				var tdir := Vector2i(de.x - pe.x, de.y - pe.y)   # faces: the run's, plus back over the run cell
+				var tbasis := Basis(Vector3.UP, atan2(float(tdir.x), float(tdir.y)) - PI * 0.25)
+				out["outer_lip"].append(Transform3D(tbasis, cpos3 + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			"ext_straight":
 				# Run-end junction into a higher flat cell that doesn't wall this direction:
 				# the run "goes straight into the wall" (owner round 7) — continue it with a

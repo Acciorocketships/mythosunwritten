@@ -455,35 +455,9 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
 		_apron_quad(st, a, b, c, d2)
 		emitted = true
-	# FLUSH-STEP cap notch (owner round 8 spot 3): where a run ends in an outer cap against a
-	# HIGHER flat neighbour, the turned cap lip stops 1.25 inside the end slot and the sheet
-	# stays clipped for the wall band — leaving a small open square at this cell's top level
-	# between the lip, its own wall face and the higher cell's wall, with the recessed skirt
-	# showing through as a dark notch. Floor it with a grass patch at the cell's surface:
-	# clip line → wall face along the run, lip edge → APRON under the higher cell across it.
-	var info = _cell_clip_info(region, clip_cache, cx, cz)
-	if info != null:
-		var h: float = region.surface_height(cx, cz)
-		for cdir in info["corners"]:
-			if info["corners"][cdir] != "outer":
-				continue
-			for pair in [[Vector2i(cdir.x, 0), Vector2i(0, cdir.y)], [Vector2i(0, cdir.y), Vector2i(cdir.x, 0)]]:
-				var d: Vector2i = pair[0]   # the run arm (this cell's cliff)
-				var p: Vector2i = pair[1]   # the junction arm (the higher flat neighbour)
-				if not TerrainSurfaceField.is_higher_flat(region, cx, cz, p):
-					continue   # classic convex corner: the corner lip itself covers the square
-				var dv := Vector3(float(d.x), 0.0, float(d.y))
-				var pv := Vector3(float(p.x), 0.0, float(p.y))
-				var base := Vector3(float(cx) * TILE, h, float(cz) * TILE)
-				var lip_edge := CliffDressing.PLACE + 1.25   # turned cap lip's inner face
-				var wall_face := CliffDressing.PLACE + 1.0   # the run's module face plane
-				var p0 := base + dv * TOP_CLIP + pv * lip_edge
-				var p1 := base + dv * wall_face + pv * lip_edge
-				var q0 := base + dv * TOP_CLIP + pv * (TILE * 0.5 + APRON)
-				var q1 := base + dv * wall_face + pv * (TILE * 0.5 + APRON)
-				_apron_quad(st, p0, p1, q0, q1)
-				emitted = true
-				break
+	# (Round 8 floored the flush-step cap notch with a flat grass patch here; the owner
+	# rejected it — round 9 extends the run's straight modules to the boundary and turns
+	# the cap lip one slot INTO the taller cell instead, so there is no notch to floor.)
 	return emitted
 
 # The TOP face must wind like the sheet's top faces (right-hand geometric normal DOWN — the
@@ -515,6 +489,12 @@ func _clip_perp(region, cache: Dictionary, ncx: int, ncz: int, d: Vector2i, v: V
 	var lz := v.z - float(ncz) * TILE
 	for dir in info["dirs"]:
 		if dir == d or dir == Vector2i(-d.x, -d.y):
+			continue
+		# An apron end BELOW the surface of the cell across this edge is buried inside solid
+		# ground — clamping it collapses the last quad and opens a hole at the corner point
+		# (owner round 9: "there is a gap in the ground right here"). Only clamp ends level
+		# with or above that cell's airspace, where poking past the wall face would show.
+		if v.y < TerrainSurfaceField.surface_y_in_cell(region, v.x, v.z, ncx + dir.x, ncz + dir.y) - 0.1:
 			continue
 		var coord := lx * float(dir.x) + lz * float(dir.y)
 		var along := lx * float(dir.y) + lz * float(dir.x)
