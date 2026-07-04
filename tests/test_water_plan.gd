@@ -195,3 +195,57 @@ func test_join_target_hits_pond_footprint() -> void:
 		"point inside pond footprint and downhill joins")
 	assert_null(plan._join_target(Vector2(300, 300), 6.0, [other]),
 		"pond surface above our bed does not accept the join")
+
+# ------------------------------------------------------------
+# Carve field — window-independent, spawn-dry, lowers toward beds
+# ------------------------------------------------------------
+
+func test_carve_zero_in_spawn_disk() -> void:
+	var plan: WaterPlan = _plan()
+	for cell in [Vector2i(0, 0), Vector2i(3, -2), Vector2i(-5, 5)]:
+		assert_eq(plan.carve_at_cell(cell.x, cell.y), 0.0, "spawn cell %s dry" % cell)
+
+func test_carve_positive_under_a_terminal_pond() -> void:
+	var plan: WaterPlan = _plan()
+	var pond: PondStamp = null
+	for sz in range(-4, 5):
+		for sx in range(-4, 5):
+			var t: RiverTrace = plan.river_for(Vector2i(sx, sz))
+			if t != null and t.pond != null:
+				pond = t.pond
+				break
+		if pond != null:
+			break
+	assert_not_null(pond, "window contains a terminal pond")
+	var cx: int = roundi(pond.center.x / WaterPlan.TILE)
+	var cz: int = roundi(pond.center.y / WaterPlan.TILE)
+	var carve: float = plan.carve_at_cell(cx, cz)
+	var ground: float = plan.noise_h(Vector2(cx * WaterPlan.TILE, cz * WaterPlan.TILE))
+	assert_almost_eq(ground - carve, pond.bed_y(), 0.5,
+		"pond centre cell is carved to the bowl bed")
+
+func test_carve_identical_across_instances_and_query_order() -> void:
+	var a: WaterPlan = _plan()
+	var b: WaterPlan = _plan()
+	# Prime b with a far-away query first — result must not depend on history.
+	b.carve_at_cell(400, 400)
+	var cells: Array = [Vector2i(40, -60), Vector2i(-33, 21), Vector2i(90, 88)]
+	for c in cells:
+		assert_almost_eq(a.carve_at_cell(c.x, c.y), b.carve_at_cell(c.x, c.y), 0.0001,
+			"carve at %s is a pure function of (seed, cell)" % c)
+
+func test_bodies_near_finds_the_water_that_carved() -> void:
+	var plan: WaterPlan = _plan()
+	# Find a carved cell by scanning a band away from spawn.
+	var hit: Vector2i = Vector2i.MAX
+	for cz in range(20, 120):
+		for cx in range(20, 120):
+			if plan.carve_at_cell(cx, cz) > 0.5:
+				hit = Vector2i(cx, cz)
+				break
+		if hit != Vector2i.MAX:
+			break
+	assert_true(hit != Vector2i.MAX, "found a carved cell in the scan band")
+	var bodies: Dictionary = plan.bodies_near(hit, 2)
+	assert_true(bodies.ponds.size() + bodies.rivers.size() > 0,
+		"bodies_near sees the water that carved cell %s" % hit)

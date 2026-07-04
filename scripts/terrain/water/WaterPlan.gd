@@ -265,3 +265,98 @@ func _steer(dir: Vector2, p: Vector2, others: Array) -> Vector2:
 	var toward: Vector2 = (best_at - p).normalized()
 	var w: float = STEER * (1.0 - best_d / SENSE_RADIUS)
 	return (dir * (1.0 - w) + toward * w).normalized()
+
+
+# ---------------------------------------------------------------
+# Carve field (hot path: called for every cell of every region window)
+# ---------------------------------------------------------------
+
+var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers": Array, "buckets": Dictionary}
+
+## Rivers (full depth) whose bounds overlap super-cell `rc`, plus a bucket
+## index: tile cell -> Array of [RiverTrace, sample_index] for fast carve
+## lookups. Built lazily once per super-cell per session.
+func _region_for(rc: Vector2i) -> Dictionary:
+	if _region_cache.has(rc):
+		return _region_cache[rc]
+	var region_rect: Rect2 = Rect2(
+		Vector2(float(rc.x), float(rc.y)) * SUPER, Vector2(SUPER, SUPER)).grow(FEATHER + W_MAX)
+	var rivers: Array = []
+	var buckets: Dictionary = {}
+	# +1 ring: a source within REACH of a cell inside this super-cell can sit
+	# up to REACH + SUPER·√2 from the super-cell's own corner.
+	for dz in range(-(REACH_SUPERS + 1), REACH_SUPERS + 2):
+		for dx in range(-(REACH_SUPERS + 1), REACH_SUPERS + 2):
+			var t: RiverTrace = river_for(rc + Vector2i(dx, dz))
+			if t == null or not t.bounds().grow(FEATHER).intersects(region_rect):
+				continue
+			rivers.append(t)
+			for i in t.points.size():
+				var infl: float = t.widths[i] + FEATHER
+				var lo_x: int = int(floor((t.points[i].x - infl) / TILE + 0.5))
+				var hi_x: int = int(floor((t.points[i].x + infl) / TILE + 0.5))
+				var lo_z: int = int(floor((t.points[i].y - infl) / TILE + 0.5))
+				var hi_z: int = int(floor((t.points[i].y + infl) / TILE + 0.5))
+				for bz in range(lo_z, hi_z + 1):
+					for bx in range(lo_x, hi_x + 1):
+						var key: Vector2i = Vector2i(bx, bz)
+						if not buckets.has(key):
+							buckets[key] = []
+						buckets[key].append([t, i])
+	var out: Dictionary = {"rivers": rivers, "buckets": buckets}
+	_region_cache[rc] = out
+	return out
+
+
+## Metres to subtract from the raw noise height at tile cell (cx, cz).
+## Max over every pond bowl and channel sample that reaches the cell — pure
+## function of (world_seed, cell); the caches never change the value.
+func carve_at_cell(cx: int, cz: int) -> float:
+	var p: Vector2 = Vector2(float(cx) * TILE, float(cz) * TILE)
+	if p.length() < SPAWN_WATER_RADIUS:
+		return 0.0
+	var rc: Vector2i = Vector2i(int(floor(p.x / SUPER)), int(floor(p.y / SUPER)))
+	var region: Dictionary = _region_for(rc)
+	var ground: float = noise_h(p)
+	var best: float = 0.0
+	for t in region.rivers:
+		if t.source_pool != null:
+			best = maxf(best, t.source_pool.carve_at(p, ground))
+		if t.pond != null:
+			best = maxf(best, t.pond.carve_at(p, ground))
+	var key: Vector2i = Vector2i(cx, cz)
+	if region.buckets.has(key):
+		for entry in region.buckets[key]:
+			var t: RiverTrace = entry[0]
+			var i: int = entry[1]
+			var d: float = p.distance_to(t.points[i])
+			var infl: float = t.widths[i] + FEATHER
+			if d >= infl:
+				continue
+			# Full carve to the bed inside the width; smootherstep feather out.
+			var w: float = SlopeProfile.smootherstep(clampf((infl - d) / FEATHER, 0.0, 1.0))
+			best = maxf(best, maxf(0.0, ground - t.beds[i]) * w)
+	return best
+
+
+## Water bodies overlapping a cell window (for surface meshing + volumes).
+## Returns {"ponds": Array[PondStamp], "rivers": Array[RiverTrace]} — rivers
+## come whole (the builder clips); ponds include source pools.
+func bodies_near(center_cell: Vector2i, radius_cells: int) -> Dictionary:
+	var world_r: float = float(radius_cells + 1) * TILE
+	assert(world_r * 2.0 <= SUPER, "bodies_near window exceeds one super-cell — widen REACH_SUPERS math first")
+	var centre: Vector2 = Vector2(float(center_cell.x), float(center_cell.y)) * TILE
+	var window: Rect2 = Rect2(centre - Vector2.ONE * world_r, Vector2.ONE * world_r * 2.0)
+	var rc: Vector2i = Vector2i(int(floor(centre.x / SUPER)), int(floor(centre.y / SUPER)))
+	var ponds: Array = []
+	var rivers: Array = []
+	for t in _region_for(rc).rivers:
+		var touches: bool = t.bounds().grow(FEATHER).intersects(window)
+		if not touches:
+			continue
+		rivers.append(t)
+		if t.source_pool != null:
+			ponds.append(t.source_pool)
+		if t.pond != null:
+			ponds.append(t.pond)
+	return {"ponds": ponds, "rivers": rivers}
