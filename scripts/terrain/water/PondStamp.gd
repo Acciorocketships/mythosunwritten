@@ -9,7 +9,10 @@ extends RefCounted
 const STOREY := 4.0
 const WOBBLE := 0.3          # ±30% radial noise on the footprint boundary
 const SURFACE_DROP := 1.0    # water sits this far below the bank storey top
-const RIM_FEATHER := 0.35    # outer fraction of the footprint that eases to 0
+# Outer fraction of the footprint that eases to 0. Narrow: a wide feather
+# leaves a broad shallow shelf under the surface, and the depth-based shore
+# foam covers the whole shelf in white marbling instead of a thin lap line.
+const RIM_FEATHER := 0.22
 
 var center: Vector2          # world XZ
 var radius: float            # base radius, metres

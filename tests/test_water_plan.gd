@@ -221,8 +221,14 @@ func test_carve_positive_under_a_terminal_pond() -> void:
 	var cz: int = roundi(pond.center.y / WaterPlan.TILE)
 	var carve: float = plan.carve_at_cell(cx, cz)
 	var ground: float = plan.noise_h(Vector2(cx * WaterPlan.TILE, cz * WaterPlan.TILE))
-	assert_almost_eq(ground - carve, pond.bed_y(), 0.5,
-		"pond centre cell is carved to the bowl bed")
+	# The trace ends at the pond centre, so the river's inlet trench (down to
+	# bed - CHANNEL_DEPTH, floored at BED_MIN) may legitimately cut DEEPER than
+	# the bowl bed — like a river inlet through a lakebed. The invariants: the
+	# centre is carved at least bowl-deep, and never below the global bed floor.
+	assert_true(ground - carve <= pond.bed_y() + 0.5,
+		"pond centre cell carved at least to the bowl bed")
+	assert_true(ground - carve >= WaterPlan.BED_MIN - 0.5,
+		"carve never undershoots the global bed floor")
 
 func test_carve_identical_across_instances_and_query_order() -> void:
 	var a: WaterPlan = _plan()

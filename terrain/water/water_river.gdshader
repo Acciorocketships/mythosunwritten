@@ -12,7 +12,7 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 uniform vec3 color_deep : source_color = vec3(0.12, 0.45, 0.55);
 uniform vec3 color_shallow : source_color = vec3(0.32, 0.66, 0.69);
 uniform vec3 foam_color : source_color = vec3(0.93, 0.97, 1.0);
-uniform float foam_width : hint_range(0.0, 3.0) = 0.7;
+uniform float foam_width : hint_range(0.0, 3.0) = 0.4;
 uniform float depth_fade : hint_range(0.5, 8.0) = 1.8;
 uniform float wave_height : hint_range(0.0, 0.6) = 0.06;   // rivers barely swell
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
@@ -54,9 +54,11 @@ void fragment() {
 	float depth_t = clamp(depth / depth_fade, 0.0, 1.0);
 	vec3 base = mix(color_shallow, color_deep, depth_t);
 	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, foam_width);
-	// Rapids: steep reaches churn white, scrolled by the same stream noise.
-	foam += steepness * (0.55 + 0.45 * stream);
-	foam = clamp(foam, 0.0, 1.0);
+	// Rapids: steep reaches churn white streaks, scrolled by the stream noise.
+	// Noise-gated (not a flat add) so even a waterfall keeps blue between the
+	// streaks — a flat 0.55+ add saturated whole mountain ribbons solid white.
+	foam += steepness * smoothstep(0.45, 0.75, stream) * 0.8;
+	foam = clamp(foam, 0.0, 0.9);
 	ALBEDO = mix(base, foam_color, foam);
 	ALPHA = max(mix(0.65, 0.9, depth_t), foam * 0.95);
 	ROUGHNESS = mix(roughness, 0.5, foam);

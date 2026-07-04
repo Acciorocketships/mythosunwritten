@@ -25,7 +25,13 @@ const SENSE_RADIUS := 96.0        # junction steering bias range
 const STEER := 0.35               # max blend toward sensed water
 const W_MIN := 6.0                # ribbon half-width at the source
 const W_MAX := 16.0               # ... at max length
-const CHANNEL_DEPTH := 2.5        # bed below the smooth terrain
+# Bed below the smooth terrain. MUST exceed one 4m storey + quantization
+# slack (±2m), or the channel vanishes in storey rounding: floor and banks
+# land on the same storey and the ribbon reads as water lying on flat grass.
+const CHANNEL_DEPTH := 6.0
+# Beds never sink below this: quantize_storey clamps terrain to storey >= 0,
+# so a deeper bed would put the water surface underneath the rendered floor.
+const BED_MIN := -1.0
 const FEATHER := 12.0             # carve lateral falloff beyond the width
 const SOURCE_POOL_R := 36.0
 const POOL_DEPTH := 2.5
@@ -199,7 +205,7 @@ func _trace(sc: Vector2i, depth: int) -> RiverTrace:
 			break                                   # truncate at the spawn ring
 		p = q
 		arc += TRACE_STEP
-		bed = minf(bed, smooth_h(p) - CHANNEL_DEPTH)
+		bed = maxf(minf(bed, smooth_h(p) - CHANNEL_DEPTH), BED_MIN)
 	t.pond = _make_pond(p, arc)
 	return t
 

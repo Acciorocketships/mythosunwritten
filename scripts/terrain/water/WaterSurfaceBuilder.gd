@@ -10,7 +10,10 @@ const TILE := 24.0
 const CELLS_PER_CHUNK := 8            # = TerrainChunkMesher.CELLS_PER_CHUNK
 const CHUNK_WORLD := TILE * CELLS_PER_CHUNK
 const RIBBON_DEPTH_OFFSET := 1.5      # river surface above its carved bed
-const STEEP_RISE := 2.0               # bed drop per sample that reads as rapids=1
+const STOREY := 4.0                   # = HeightfieldPlan.STOREY_HEIGHT
+const FLOOR_CLEARANCE := 0.8          # river surface above the QUANTIZED floor estimate
+const STEEP_RISE := 5.0               # bed drop per sample that reads as rapids=1
+const POND_SKIP_T := 0.85             # drop ribbon samples this deep into a pond footprint
 const VOLUME_STRIDE := 4              # river swim-box every N samples
 const WATER_LAYER := 1 << 7
 
@@ -21,12 +24,16 @@ static var _river_material: ShaderMaterial = null
 ## Water surface height per polyline sample: bed + offset, flattened into the
 ## terminal pond (backwater) and made monotone by a single backward pass —
 ## walking upstream, the surface may only rise. Pure function of the trace.
+## The carved channel renders storey-QUANTIZED, and rounding can lift the
+## floor up to half a storey above the bed — clearing the quantized floor
+## estimate too keeps reaches just past a step from submerging under terrain.
 static func surface_profile(river: RiverTrace) -> PackedFloat32Array:
 	var n: int = river.points.size()
 	var prof: PackedFloat32Array = PackedFloat32Array()
 	prof.resize(n)
 	for i in n:
-		prof[i] = river.beds[i] + RIBBON_DEPTH_OFFSET
+		var floor_est: float = roundf(river.beds[i] / STOREY) * STOREY
+		prof[i] = maxf(river.beds[i] + RIBBON_DEPTH_OFFSET, floor_est + FLOOR_CLEARANCE)
 	if river.pond != null:
 		prof[n - 1] = maxf(river.pond.surface_y(), river.beds[n - 1] + 0.2)
 	for i in range(n - 2, -1, -1):
@@ -178,6 +185,34 @@ func _pond_volume(pond: PondStamp, cells: Array, root: Node3D) -> void:
 
 # --- rivers -----------------------------------------------------
 
+## Averaged unit tangent at sample i (mean of the adjacent segment tangents).
+## Both quads meeting at a sample use THIS tangent for their shared edge, so
+## the ribbon is crack-free at bends (per-quad perpendiculars left mitre gaps
+## and overlaps — overlapping translucent quads double-blended into hard-edged
+## bright patches).
+static func _tangent_at(river: RiverTrace, i: int) -> Vector2:
+	var n: int = river.points.size()
+	var t: Vector2 = Vector2.ZERO
+	if i > 0:
+		t += (river.points[i] - river.points[i - 1]).normalized()
+	if i < n - 1:
+		t += (river.points[i + 1] - river.points[i]).normalized()
+	if t.length_squared() < 0.000001:
+		return Vector2.RIGHT
+	return t.normalized()
+
+
+## Ribbon samples inside a pond footprint are dropped: the pond sheet owns
+## that water, and a ribbon continuing across it z-fights the sheet (the
+## bright plate over the pond in the owner's screenshot).
+static func _sample_in_pond(river: RiverTrace, p: Vector2) -> bool:
+	if river.source_pool != null and river.source_pool.footprint_t(p) < POND_SKIP_T:
+		return true
+	if river.pond != null and river.pond.footprint_t(p) < POND_SKIP_T:
+		return true
+	return false
+
+
 func _build_rivers(_water: WaterPlan, rivers: Array, chunk_rect: Rect2, root: Node3D) -> bool:
 	var grown: Rect2 = chunk_rect.grow(TILE)
 	var built: bool = false
@@ -189,8 +224,11 @@ func _build_rivers(_water: WaterPlan, rivers: Array, chunk_rect: Rect2, root: No
 		st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
 		var strip: int = 0
 		for i in range(0, river.points.size() - 1):
-			# Keep segments overlapping the grown chunk (1 tile skirt kills seams).
+			# Keep segments overlapping the grown chunk (1 tile skirt kills
+			# seams), outside pond footprints (the sheets own that water).
 			if not (grown.has_point(river.points[i]) or grown.has_point(river.points[i + 1])):
+				continue
+			if _sample_in_pond(river, river.points[i]) or _sample_in_pond(river, river.points[i + 1]):
 				continue
 			_ribbon_quad(st, river, prof, steep, i)
 			strip += 1
@@ -211,16 +249,18 @@ func _ribbon_quad(st: SurfaceTool, river: RiverTrace, prof: PackedFloat32Array,
 		steep: PackedFloat32Array, i: int) -> void:
 	var a: Vector2 = river.points[i]
 	var b: Vector2 = river.points[i + 1]
-	var tan2: Vector2 = (b - a).normalized()
-	var perp: Vector2 = Vector2(-tan2.y, tan2.x)
-	var la: Vector2 = a + perp * river.widths[i]
-	var ra: Vector2 = a - perp * river.widths[i]
-	var lb: Vector2 = b + perp * river.widths[i + 1]
-	var rb: Vector2 = b - perp * river.widths[i + 1]
+	var tan_a: Vector2 = WaterSurfaceBuilder._tangent_at(river, i)
+	var tan_b: Vector2 = WaterSurfaceBuilder._tangent_at(river, i + 1)
+	var perp_a: Vector2 = Vector2(-tan_a.y, tan_a.x)
+	var perp_b: Vector2 = Vector2(-tan_b.y, tan_b.x)
+	var la: Vector2 = a + perp_a * river.widths[i]
+	var ra: Vector2 = a - perp_a * river.widths[i]
+	var lb: Vector2 = b + perp_b * river.widths[i + 1]
+	var rb: Vector2 = b - perp_b * river.widths[i + 1]
 	var ya: float = prof[i]
 	var yb: float = prof[i + 1]
-	var ca: Color = Color(tan2.x, 0.0, tan2.y, steep[i])
-	var cb: Color = Color(tan2.x, 0.0, tan2.y, steep[i + 1])
+	var ca: Color = Color(tan_a.x, 0.0, tan_a.y, steep[i])
+	var cb: Color = Color(tan_b.x, 0.0, tan_b.y, steep[i + 1])
 	# two triangles, wound so generate_normals() yields +Y (la is LEFT of flow)
 	for v in [[la, ya, ca], [rb, yb, cb], [ra, ya, ca], [la, ya, ca], [lb, yb, cb], [rb, yb, cb]]:
 		st.set_custom(0, v[2])
