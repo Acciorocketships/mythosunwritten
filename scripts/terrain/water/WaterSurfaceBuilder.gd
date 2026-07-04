@@ -178,7 +178,7 @@ func _pond_volume(pond: PondStamp, cells: Array, root: Node3D) -> void:
 
 # --- rivers -----------------------------------------------------
 
-func _build_rivers(water: WaterPlan, rivers: Array, chunk_rect: Rect2, root: Node3D) -> bool:
+func _build_rivers(_water: WaterPlan, rivers: Array, chunk_rect: Rect2, root: Node3D) -> bool:
 	var grown: Rect2 = chunk_rect.grow(TILE)
 	var built: bool = false
 	for river in rivers:
