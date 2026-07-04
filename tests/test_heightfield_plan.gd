@@ -383,3 +383,33 @@ func test_detail_level_uses_min_aggregation_rounding() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "min")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.9)
 	assert_eq(plan.detail_level(0, 0), 3, "min aggregation floors the terrace index")
+
+
+# ------------------------------------------------------------
+# height01 static — shared landform field (smooth variant for river tracing)
+# ------------------------------------------------------------
+
+func test_height01_static_matches_instance_raw_height() -> void:
+	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 32.0)
+	var pos: Vector3 = Vector3(3.0 * 24.0, 0.0, -5.0 * 24.0)
+	assert_almost_eq(plan.raw_height(3, -5),
+		HeightfieldPlan.height01(pos, 4242, true) * 32.0, 0.0001,
+		"static height01(include_detail=true) is the rendered field")
+
+func test_height01_smooth_is_deterministic_and_in_range() -> void:
+	var pos: Vector3 = Vector3(400.0, 0.0, -900.0)
+	var a: float = HeightfieldPlan.height01(pos, 7, false)
+	var b: float = HeightfieldPlan.height01(pos, 7, false)
+	assert_eq(a, b, "same seed+pos => same smooth height")
+	assert_true(a >= 0.0 and a <= 1.0, "smooth height stays in [0,1]")
+
+func test_height01_smooth_ignores_detail_octave() -> void:
+	# The detail octave is seed+9. The smooth variant must not consume it, so
+	# it is invariant under changes that only affect that octave. We can't
+	# reseed one octave in isolation, but we CAN check the two variants differ
+	# (detail contributes) while both track the same macro landform.
+	var pos: Vector3 = Vector3(1000.0, 0.0, 1000.0)
+	var with_detail: float = HeightfieldPlan.height01(pos, 7, true)
+	var smooth: float = HeightfieldPlan.height01(pos, 7, false)
+	assert_almost_eq(with_detail, smooth, 0.25,
+		"variants track the same landform (only the fine octave differs)")

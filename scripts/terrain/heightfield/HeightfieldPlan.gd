@@ -69,20 +69,34 @@ func raw_height(cx: int, cz: int) -> float:
 ## steps on steep ground). Rocky highlands rise much taller/steeper — with a
 ## ridged spine for mountain ranges — while meadows stay low and flat. A flat
 ## clearing near the world origin keeps the spawn gentle.
-func _height01(pos: Vector3) -> float:
-	var base: float = Helper._value_noise01(pos, world_seed, 320.0)
-	var hills: float = Helper._value_noise01(pos, world_seed + 5, 120.0)
-	var detail: float = Helper._value_noise01(pos, world_seed + 9, 46.0)
-	var h: float = (base + hills * 0.5 + detail * 0.25) / 1.75
-	var rocky: float = Helper.biome_rocky01(pos, world_seed)
+##
+## Shared landform field in [0, 1]. include_detail=false is the SMOOTH field
+## (macro + hills + rocky/ridge shaping, origin falloff — no fine octave):
+## river tracing descends it so channels follow the rendered mountains
+## without jittering on the detail noise. include_detail=true is the exact
+## rendered terrain field (used by _height01 / raw_height).
+static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = true) -> float:
+	var base: float = Helper._value_noise01(pos, p_world_seed, 320.0)
+	var hills: float = Helper._value_noise01(pos, p_world_seed + 5, 120.0)
+	var h: float
+	if include_detail:
+		var detail: float = Helper._value_noise01(pos, p_world_seed + 9, 46.0)
+		h = (base + hills * 0.5 + detail * 0.25) / 1.75
+	else:
+		h = (base + hills * 0.5) / 1.5
+	var rocky: float = Helper.biome_rocky01(pos, p_world_seed)
 	h *= 0.35 + 1.5 * rocky
 	if rocky > 0.5:
 		# Ridged noise (sharp peaks) for mountain spines in rocky cores.
-		var n: float = Helper._value_noise01(pos, world_seed + 17, 190.0)
+		var n: float = Helper._value_noise01(pos, p_world_seed + 17, 190.0)
 		var ridge: float = 1.0 - absf(2.0 * n - 1.0)
 		h += ridge * ridge * (rocky - 0.5) * 0.9
 	var falloff: float = clampf((Vector2(pos.x, pos.z).length() - 60.0) / 120.0, 0.0, 1.0)
 	return clampf(h * falloff, 0.0, 1.0)
+
+
+func _height01(pos: Vector3) -> float:
+	return height01(pos, world_seed, true)
 
 
 ## Apply the aggregation rounding mode to a quotient: min=floor (hug valleys),
