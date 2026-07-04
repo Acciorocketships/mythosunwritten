@@ -84,3 +84,49 @@ func test_build_chunk_returns_null_when_dry() -> void:
 			break
 	assert_true(dry != Vector2i.MAX, "found a dry chunk in the scan band")
 	assert_null(WaterSurfaceBuilder.new().build_chunk(plan, dry), "dry chunk => no node")
+
+# ------------------------------------------------------------
+# Water field — the sheet reaches land at its own height
+# ------------------------------------------------------------
+
+func _river_chunk(plan: WaterPlan, river: RiverTrace) -> Vector2i:
+	var mid: Vector2 = river.points[river.points.size() / 2]
+	return Vector2i(int(floor(mid.x / 192.0)), int(floor(mid.y / 192.0)))
+
+func test_field_rim_overshoots_every_wet_cell() -> void:
+	var plan: WaterPlan = _water()
+	var river: RiverTrace = _a_river(plan)
+	var chunk: Vector2i = _river_chunk(plan, river)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk)
+	assert_true(field.size() > 0, "river chunk has a water field")
+	var lo: Vector2i = Vector2i(chunk.x * 8, chunk.y * 8)
+	var dirs: Array = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+		Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
+	for cell in field:
+		if not field[cell].wet:
+			continue
+		if cell.x < lo.x or cell.x >= lo.x + 8 or cell.y < lo.y or cell.y >= lo.y + 8:
+			continue
+		for d in dirs:
+			var nb: Vector2i = cell + d
+			if field.has(nb):
+				continue
+			# The only neighbours allowed OUTSIDE the sheet are drop-offs far
+			# below this cell's level (a lower reach owns that water; a plane
+			# there would hover in midair over the drop).
+			var g: float = WaterSurfaceBuilder.ground_estimate(plan, nb.x, nb.y)
+			assert_true(g < field[cell].level - WaterSurfaceBuilder.WET_EPS,
+				"neighbour %s of wet %s is in the sheet or is a drop-off" % [nb, cell])
+
+func test_field_wet_cells_sit_below_their_level() -> void:
+	var plan: WaterPlan = _water()
+	var river: RiverTrace = _a_river(plan)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	var wet_seen: int = 0
+	for cell in field:
+		if not field[cell].wet:
+			continue
+		wet_seen += 1
+		assert_true(WaterSurfaceBuilder.ground_estimate(plan, cell.x, cell.y) < field[cell].level,
+			"wet cell %s ground sits below its water level" % cell)
+	assert_true(wet_seen > 0, "field contains wet cells")

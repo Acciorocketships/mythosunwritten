@@ -32,7 +32,10 @@ const CHANNEL_DEPTH := 6.0
 # Beds never sink below this: quantize_storey clamps terrain to storey >= 0,
 # so a deeper bed would put the water surface underneath the rendered floor.
 const BED_MIN := -1.0
-const FEATHER := 12.0             # carve lateral falloff beyond the width
+# Carve lateral falloff beyond the width. Kept under half a tile so the
+# partial-carve band can't dither cells across the storey-rounding threshold
+# (alternating poke/submerge plates along the channel edges).
+const FEATHER := 8.0
 const SOURCE_POOL_R := 36.0
 const POOL_DEPTH := 2.5
 const POND_R_MIN := 60.0

@@ -1,8 +1,14 @@
 # scripts/terrain/water/WaterSurfaceBuilder.gd
-# Per-chunk water: pond quad sheets at storey-aligned levels, river ribbon
-# meshes following the monotone surface profile, and Area3D swim volumes.
-# Built beside each terrain chunk and parented under it, so streaming
-# eviction frees water with the ground it belongs to.
+# Per-chunk water as a SECOND HEIGHTFIELD: one sheet per chunk whose per-cell
+# level comes from the covering body (pond level, or the river's monotone
+# surface profile), flood-filled across every submerged cell and overshot one
+# cell INTO the banks — the depth buffer then clips the sheet exactly where
+# terrain rises through it, so the visible waterline is the true terrain/plane
+# intersection, never a mesh edge (water always reaches land at its own
+# height). A single unified shader renders still and flowing water; CUSTOM0
+# carries the per-vertex flow vector (zero in lakes) and steepness, so
+# lake→river transitions are seamless. Swim volumes ride along as Area3Ds.
+# Built beside each terrain chunk and parented under it (evicts together).
 class_name WaterSurfaceBuilder
 extends RefCounted
 
@@ -13,12 +19,20 @@ const RIBBON_DEPTH_OFFSET := 1.5      # river surface above its carved bed
 const STOREY := 4.0                   # = HeightfieldPlan.STOREY_HEIGHT
 const FLOOR_CLEARANCE := 0.8          # river surface above the QUANTIZED floor estimate
 const STEEP_RISE := 5.0               # bed drop per sample that reads as rapids=1
-const POND_SKIP_T := 0.85             # drop ribbon samples this deep into a pond footprint
+const WET_EPS := 0.15                 # ground this far under the level counts as wet
+const SHELF_DEPTH := 4.5              # flood only spreads over shelves this shallow
+const CHANNEL_MARGIN := TILE * 0.75   # river level reaches this far past the carve width
+const FLOOD_STEPS := 2                # submerged-shelf flood distance (cells)
+const FIELD_MARGIN := 3               # region margin = FLOOD_STEPS + rim ring
 const VOLUME_STRIDE := 4              # river swim-box every N samples
 const WATER_LAYER := 1 << 7
 
-static var _pond_material: ShaderMaterial = null
-static var _river_material: ShaderMaterial = null
+const _CARDINALS_8 := [
+	Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+	Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1),
+]
+
+static var _sheet_material: ShaderMaterial = null
 
 
 ## Water surface height per polyline sample: bed + offset, flattened into the
@@ -54,9 +68,150 @@ static func steepness_profile(river: RiverTrace) -> PackedFloat32Array:
 	return out
 
 
-static func _material(shader_path: String) -> ShaderMaterial:
+## The storey-quantized ground the mesher will roughly render at a cell (raw
+## noise minus carve, "mean"-rounded to the 4m grid, floored at storey 0).
+## The trickle-down clamp can only LOWER cells further, and the rim overshoot
+## absorbs that slack.
+static func ground_estimate(water: WaterPlan, cx: int, cz: int) -> float:
+	var raw: float = water.noise_h(Vector2(float(cx) * TILE, float(cz) * TILE)) \
+		- water.carve_at_cell(cx, cz)
+	return maxf(roundf(raw / STOREY) * STOREY, 0.0)
+
+
+## The per-cell water field over the chunk plus FIELD_MARGIN: for every cell
+## that ends up in the sheet, {level, flow: Vector2, steep: float, wet: bool}.
+## Three passes: (1) body influence assigns levels; (2) a bounded flood marks
+## submerged shelves wet even past the carve (quantization can sink bank cells
+## below the level); (3) every dry 8-neighbour of a wet cell joins as RIM at
+## the wet level — the bank overshoot the depth buffer clips to the waterline.
+## Pure function of (water plan, chunk): margin ≥ flood + rim keeps the field
+## identical for border cells no matter which chunk computes them.
+static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
+	var centre_cx: int = chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
+	var centre_cz: int = chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
+	var bodies: Dictionary = water.bodies_near(
+		Vector2i(centre_cx, centre_cz), CELLS_PER_CHUNK / 2 + 1 + FIELD_MARGIN)
+	if bodies.ponds.is_empty() and bodies.rivers.is_empty():
+		return {}
+	var profs: Array = []
+	var steeps: Array = []
+	for river in bodies.rivers:
+		profs.append(surface_profile(river))
+		steeps.append(steepness_profile(river))
+
+	# Pass 1: body influence.
+	var lo: Vector2i = Vector2i(
+		chunk.x * CELLS_PER_CHUNK - FIELD_MARGIN, chunk.y * CELLS_PER_CHUNK - FIELD_MARGIN)
+	var n: int = CELLS_PER_CHUNK + 2 * FIELD_MARGIN
+	var field: Dictionary = {}
+	var ground: Dictionary = {}
+	for dz in n:
+		for dx in n:
+			var cell: Vector2i = lo + Vector2i(dx, dz)
+			var p: Vector2 = Vector2(float(cell.x) * TILE, float(cell.y) * TILE)
+			var level: float = -INF
+			var flow: Vector2 = Vector2.ZERO
+			var steep: float = 0.0
+			for pond in bodies.ponds:
+				if pond.footprint_t(p) < 1.0:
+					level = maxf(level, pond.surface_y())
+			for r in bodies.rivers.size():
+				var river: RiverTrace = bodies.rivers[r]
+				var reach: float = WaterPlan.W_MAX + WaterPlan.FEATHER + CHANNEL_MARGIN
+				if not river.bounds().grow(reach).has_point(p):
+					continue
+				var best_j: int = -1
+				var best_d: float = INF
+				for j in river.points.size():
+					var d: float = p.distance_to(river.points[j])
+					if d < best_d:
+						best_d = d
+						best_j = j
+				if best_j >= 0 and best_d <= river.widths[best_j] + WaterPlan.FEATHER + CHANNEL_MARGIN:
+					var lv: float = profs[r][best_j]
+					if lv > level:
+						level = lv
+						steep = steeps[r][best_j]
+						var j1: int = maxi(best_j - 1, 0)
+						var j2: int = mini(best_j + 1, river.points.size() - 1)
+						if j2 > j1:
+							flow = (river.points[j2] - river.points[j1]).normalized()
+			if level == -INF:
+				continue
+			ground[cell] = ground_estimate(water, cell.x, cell.y)
+			field[cell] = {
+				"level": level, "flow": flow, "steep": steep,
+				"wet": ground[cell] < level - WET_EPS,
+			}
+
+	# Pass 2: bounded flood — submerged shelves continue the neighbouring level.
+	for _step in FLOOD_STEPS:
+		var grew: Array = []
+		for cell in field:
+			if not field[cell].wet:
+				continue
+			for d in _CARDINALS_8:
+				var nb: Vector2i = cell + d
+				if nb.x < lo.x or nb.y < lo.y or nb.x >= lo.x + n or nb.y >= lo.y + n:
+					continue
+				if field.has(nb) and field[nb].wet:
+					continue
+				if not ground.has(nb):
+					ground[nb] = ground_estimate(water, nb.x, nb.y)
+				var lv: float = field[cell].level
+				# Spread only over SHALLOW shelves (quantization sank a bank
+				# cell just under the level). A floor far below belongs to a
+				# lower reach/body — painting this level over it would hover
+				# a sheet above the drop (the floating plates at cascades).
+				if ground[nb] < lv - WET_EPS and ground[nb] > lv - SHELF_DEPTH:
+					if field.has(nb):
+						lv = maxf(lv, field[nb].level)
+					grew.append([nb, {
+						"level": lv, "flow": field[cell].flow,
+						"steep": field[cell].steep, "wet": true,
+					}])
+		for g in grew:
+			field[g[0]] = g[1]
+
+	# Pass 3: rim overshoot — dry 8-neighbours that rise ABOVE the wet level
+	# join at that level so the sheet dives into the bank and the depth buffer
+	# draws the true waterline (islands included). Neighbours far BELOW the
+	# level are skipped: they belong to a lower reach, and a plane there would
+	# hover in midair over the drop; corner averaging between wet cells of
+	# different levels bridges cascades on its own.
+	var rims: Dictionary = {}
+	for cell in field:
+		if not field[cell].wet:
+			continue
+		for d in _CARDINALS_8:
+			var nb: Vector2i = cell + d
+			if field.has(nb) and field[nb].wet:
+				continue
+			if not ground.has(nb):
+				ground[nb] = ground_estimate(water, nb.x, nb.y)
+			if ground[nb] < field[cell].level - WET_EPS:
+				continue   # a drop-off, not a bank
+			var prev = rims.get(nb)
+			if prev == null or field[cell].level > prev.level:
+				rims[nb] = {
+					"level": field[cell].level, "flow": field[cell].flow,
+					"steep": field[cell].steep, "wet": false,
+				}
+	for nb in rims:
+		field[nb] = rims[nb]
+
+	# Drop influence-only cells that are neither wet nor rim (dry banks whose
+	# own level never met water — e.g. island interiors).
+	var out: Dictionary = {}
+	for cell in field:
+		if field[cell].wet or rims.has(cell):
+			out[cell] = field[cell]
+	return out
+
+
+static func _make_material() -> ShaderMaterial:
 	var mat: ShaderMaterial = ShaderMaterial.new()
-	mat.shader = load(shader_path)
+	mat.shader = load("res://terrain/water/water_unified.gdshader")
 	var noise: FastNoiseLite = FastNoiseLite.new()
 	noise.seed = 7
 	noise.frequency = 0.008
@@ -67,94 +222,112 @@ static func _material(shader_path: String) -> ShaderMaterial:
 	return mat
 
 
-static func pond_material() -> ShaderMaterial:
-	if _pond_material == null:
-		_pond_material = _material("res://terrain/water/water_pond.gdshader")
-	return _pond_material
-
-
-static func river_material() -> ShaderMaterial:
-	if _river_material == null:
-		_river_material = _material("res://terrain/water/water_river.gdshader")
-	return _river_material
+static func sheet_material() -> ShaderMaterial:
+	if _sheet_material == null:
+		_sheet_material = _make_material()
+	return _sheet_material
 
 
 ## Build the water node for a chunk, or null when the chunk is dry.
 func build_chunk(water: WaterPlan, chunk: Vector2i) -> Node3D:
-	var centre_cx: int = chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var centre_cz: int = chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var bodies: Dictionary = water.bodies_near(Vector2i(centre_cx, centre_cz), CELLS_PER_CHUNK / 2 + 1)
-	if bodies.ponds.is_empty() and bodies.rivers.is_empty():
+	var field: Dictionary = compute_field(water, chunk)
+	if field.is_empty():
 		return null
-	var chunk_rect: Rect2 = Rect2(
-		Vector2(float(chunk.x), float(chunk.y)) * CHUNK_WORLD, Vector2(CHUNK_WORLD, CHUNK_WORLD))
+	var lo_cx: int = chunk.x * CELLS_PER_CHUNK
+	var lo_cz: int = chunk.y * CELLS_PER_CHUNK
+
+	# Shared corner heights/attributes: average level + flow, max steepness of
+	# the included cells around each corner — a watertight sheet that slopes
+	# smoothly along rivers and stays dead flat on lakes.
+	var corner_level: Dictionary = {}
+	var corner_flow: Dictionary = {}
+	var corner_steep: Dictionary = {}
+	var corner_count: Dictionary = {}
+	for cell in field:
+		for off in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+			var k: Vector2i = cell + off
+			corner_level[k] = corner_level.get(k, 0.0) + field[cell].level
+			corner_flow[k] = corner_flow.get(k, Vector2.ZERO) + field[cell].flow
+			corner_steep[k] = maxf(corner_steep.get(k, 0.0), field[cell].steep)
+			corner_count[k] = corner_count.get(k, 0) + 1
+
+	var st: SurfaceTool = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
+	var quads: int = 0
+	for cell in field:
+		if cell.x < lo_cx or cell.x >= lo_cx + CELLS_PER_CHUNK \
+				or cell.y < lo_cz or cell.y >= lo_cz + CELLS_PER_CHUNK:
+			continue   # margin cells only shape shared corners
+		_sheet_quad(st, cell, corner_level, corner_flow, corner_steep, corner_count)
+		quads += 1
+	if quads == 0:
+		return null
+
 	var root: Node3D = Node3D.new()
 	root.name = "Water"
-	var any: bool = false
-	any = _build_ponds(water, bodies.ponds, chunk_rect, root) or any
-	any = _build_rivers(water, bodies.rivers, chunk_rect, root) or any
-	if not any:
-		root.free()
-		return null
+	st.generate_normals()
+	var mi: MeshInstance3D = MeshInstance3D.new()
+	mi.name = "WaterSheet"
+	mi.mesh = st.commit()
+	mi.material_override = WaterSurfaceBuilder.sheet_material()
+	root.add_child(mi)
+	_build_volumes(water, chunk, field, root)
 	return root
 
 
-# --- ponds ------------------------------------------------------
+## One cell of the sheet: two triangles over the cell footprint with shared
+## corner heights (wound so generate_normals() yields +Y).
+func _sheet_quad(st: SurfaceTool, cell: Vector2i, corner_level: Dictionary,
+		corner_flow: Dictionary, corner_steep: Dictionary, corner_count: Dictionary) -> void:
+	var keys: Array = [
+		cell, cell + Vector2i(1, 0), cell + Vector2i(1, 1), cell + Vector2i(0, 1),
+	]   # min corner, +x, +xz, +z — walk order around the quad
+	var pos: Array = []
+	var cust: Array = []
+	for k in keys:
+		var cnt: float = float(corner_count[k])
+		var lvl: float = corner_level[k] / cnt
+		var fl: Vector2 = corner_flow[k] / cnt
+		pos.append(Vector3(
+			(float(k.x) - 0.5) * TILE, lvl, (float(k.y) - 0.5) * TILE))
+		cust.append(Color(fl.x, 0.0, fl.y, corner_steep[k]))
+	# triangles (0,3,2) and (0,2,1) face +Y
+	for idx in [0, 3, 2, 0, 2, 1]:
+		st.set_custom(0, cust[idx])
+		st.set_uv(Vector2(0.0, 0.0))
+		st.add_vertex(pos[idx])
 
-## Two upward-facing triangles for quad a-b-c-d (corners in walk order:
-## (x0,z0) → (x0+T,z0) → (x0+T,z0+T) → (x0,z0+T)). Winding chosen so
-## generate_normals() yields +Y.
-static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
-	st.add_vertex(a)
-	st.add_vertex(d)
-	st.add_vertex(c)
-	st.add_vertex(a)
-	st.add_vertex(c)
-	st.add_vertex(b)
 
+# --- swim volumes ------------------------------------------------
 
-func _build_ponds(water: WaterPlan, ponds: Array, chunk_rect: Rect2, root: Node3D) -> bool:
-	var st: SurfaceTool = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var quads: int = 0
-	var done: Dictionary = {}
-	for pond in ponds:
-		if done.has(pond):
+func _build_volumes(water: WaterPlan, chunk: Vector2i, field: Dictionary, root: Node3D) -> void:
+	var centre_cx: int = chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
+	var centre_cz: int = chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
+	var bodies: Dictionary = water.bodies_near(Vector2i(centre_cx, centre_cz), CELLS_PER_CHUNK / 2 + 1)
+	var lo_cx: int = chunk.x * CELLS_PER_CHUNK
+	var lo_cz: int = chunk.y * CELLS_PER_CHUNK
+	var grown: Rect2 = Rect2(
+		Vector2(float(chunk.x), float(chunk.y)) * CHUNK_WORLD,
+		Vector2(CHUNK_WORLD, CHUNK_WORLD)).grow(TILE)
+	var done_ponds: Dictionary = {}
+	for pond in bodies.ponds:
+		if done_ponds.has(pond):
 			continue
-		done[pond] = true
+		done_ponds[pond] = true
 		var cells: Array = []
-		var lo_cx: int = int(floor(chunk_rect.position.x / TILE + 0.5))
-		var lo_cz: int = int(floor(chunk_rect.position.y / TILE + 0.5))
-		for dz in CELLS_PER_CHUNK:
-			for dx in CELLS_PER_CHUNK:
-				var cx: int = lo_cx + dx
-				var cz: int = lo_cz + dz
-				var p: Vector2 = Vector2(float(cx) * TILE, float(cz) * TILE)
-				if pond.footprint_t(p) >= 1.0:
-					continue
-				# Islands: skip cells whose carved ground still clears the surface.
-				var ground: float = water.noise_h(p) - water.carve_at_cell(cx, cz)
-				if ground >= pond.surface_y() - 0.25:
-					continue
-				cells.append(Vector2i(cx, cz))
-		for c in cells:
-			var x0: float = float(c.x) * TILE - TILE * 0.5
-			var z0: float = float(c.y) * TILE - TILE * 0.5
-			var y: float = pond.surface_y()
-			_quad(st, Vector3(x0, y, z0), Vector3(x0 + TILE, y, z0),
-				Vector3(x0 + TILE, y, z0 + TILE), Vector3(x0, y, z0 + TILE))
-			quads += 1
+		for cell in field:
+			if not field[cell].wet:
+				continue
+			if cell.x < lo_cx or cell.x >= lo_cx + CELLS_PER_CHUNK \
+					or cell.y < lo_cz or cell.y >= lo_cz + CELLS_PER_CHUNK:
+				continue
+			if pond.footprint_t(Vector2(float(cell.x) * TILE, float(cell.y) * TILE)) < 1.2:
+				cells.append(cell)
 		if not cells.is_empty():
 			_pond_volume(pond, cells, root)
-	if quads == 0:
-		return false
-	st.generate_normals()
-	var mi: MeshInstance3D = MeshInstance3D.new()
-	mi.name = "PondSheet"
-	mi.mesh = st.commit()
-	mi.material_override = WaterSurfaceBuilder.pond_material()
-	root.add_child(mi)
-	return true
+	for river in bodies.rivers:
+		_river_volumes(river, WaterSurfaceBuilder.surface_profile(river), grown, root)
 
 
 func _pond_volume(pond: PondStamp, cells: Array, root: Node3D) -> void:
@@ -181,91 +354,6 @@ func _pond_volume(pond: PondStamp, cells: Array, root: Node3D) -> void:
 		(float(lo.y) + float(hi.y)) * 0.5 * TILE)
 	area.set_meta("surface_y", pond.surface_y())
 	root.add_child(area)
-
-
-# --- rivers -----------------------------------------------------
-
-## Averaged unit tangent at sample i (mean of the adjacent segment tangents).
-## Both quads meeting at a sample use THIS tangent for their shared edge, so
-## the ribbon is crack-free at bends (per-quad perpendiculars left mitre gaps
-## and overlaps — overlapping translucent quads double-blended into hard-edged
-## bright patches).
-static func _tangent_at(river: RiverTrace, i: int) -> Vector2:
-	var n: int = river.points.size()
-	var t: Vector2 = Vector2.ZERO
-	if i > 0:
-		t += (river.points[i] - river.points[i - 1]).normalized()
-	if i < n - 1:
-		t += (river.points[i + 1] - river.points[i]).normalized()
-	if t.length_squared() < 0.000001:
-		return Vector2.RIGHT
-	return t.normalized()
-
-
-## Ribbon samples inside a pond footprint are dropped: the pond sheet owns
-## that water, and a ribbon continuing across it z-fights the sheet (the
-## bright plate over the pond in the owner's screenshot).
-static func _sample_in_pond(river: RiverTrace, p: Vector2) -> bool:
-	if river.source_pool != null and river.source_pool.footprint_t(p) < POND_SKIP_T:
-		return true
-	if river.pond != null and river.pond.footprint_t(p) < POND_SKIP_T:
-		return true
-	return false
-
-
-func _build_rivers(_water: WaterPlan, rivers: Array, chunk_rect: Rect2, root: Node3D) -> bool:
-	var grown: Rect2 = chunk_rect.grow(TILE)
-	var built: bool = false
-	for river in rivers:
-		var prof: PackedFloat32Array = WaterSurfaceBuilder.surface_profile(river)
-		var steep: PackedFloat32Array = WaterSurfaceBuilder.steepness_profile(river)
-		var st: SurfaceTool = SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
-		var strip: int = 0
-		for i in range(0, river.points.size() - 1):
-			# Keep segments overlapping the grown chunk (1 tile skirt kills
-			# seams), outside pond footprints (the sheets own that water).
-			if not (grown.has_point(river.points[i]) or grown.has_point(river.points[i + 1])):
-				continue
-			if _sample_in_pond(river, river.points[i]) or _sample_in_pond(river, river.points[i + 1]):
-				continue
-			_ribbon_quad(st, river, prof, steep, i)
-			strip += 1
-		if strip == 0:
-			continue
-		st.generate_normals()
-		var mi: MeshInstance3D = MeshInstance3D.new()
-		mi.name = "River_%d_%d" % [river.source_cell.x, river.source_cell.y]
-		mi.mesh = st.commit()
-		mi.material_override = WaterSurfaceBuilder.river_material()
-		root.add_child(mi)
-		_river_volumes(river, prof, grown, root)
-		built = true
-	return built
-
-
-func _ribbon_quad(st: SurfaceTool, river: RiverTrace, prof: PackedFloat32Array,
-		steep: PackedFloat32Array, i: int) -> void:
-	var a: Vector2 = river.points[i]
-	var b: Vector2 = river.points[i + 1]
-	var tan_a: Vector2 = WaterSurfaceBuilder._tangent_at(river, i)
-	var tan_b: Vector2 = WaterSurfaceBuilder._tangent_at(river, i + 1)
-	var perp_a: Vector2 = Vector2(-tan_a.y, tan_a.x)
-	var perp_b: Vector2 = Vector2(-tan_b.y, tan_b.x)
-	var la: Vector2 = a + perp_a * river.widths[i]
-	var ra: Vector2 = a - perp_a * river.widths[i]
-	var lb: Vector2 = b + perp_b * river.widths[i + 1]
-	var rb: Vector2 = b - perp_b * river.widths[i + 1]
-	var ya: float = prof[i]
-	var yb: float = prof[i + 1]
-	var ca: Color = Color(tan_a.x, 0.0, tan_a.y, steep[i])
-	var cb: Color = Color(tan_b.x, 0.0, tan_b.y, steep[i + 1])
-	# two triangles, wound so generate_normals() yields +Y (la is LEFT of flow)
-	for v in [[la, ya, ca], [rb, yb, cb], [ra, ya, ca], [la, ya, ca], [lb, yb, cb], [rb, yb, cb]]:
-		st.set_custom(0, v[2])
-		st.set_uv(Vector2(0.0, float(i)))
-		st.add_vertex(Vector3(v[0].x, v[1], v[0].y))
 
 
 func _river_volumes(river: RiverTrace, prof: PackedFloat32Array, grown: Rect2, root: Node3D) -> void:
