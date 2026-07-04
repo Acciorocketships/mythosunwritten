@@ -158,3 +158,40 @@ func test_joined_rivers_touch_higher_priority_water() -> void:
 func test_every_river_still_ends_in_water_at_full_depth() -> void:
 	for t in _all_rivers(_plan(), 4):
 		assert_true(t.joined or t.pond != null, "river %s ends in water" % t.source_cell)
+
+# Direct unit tests of the join predicate with synthetic rivers — exercises
+# the join OUTCOME deterministically (the geometric-convergence test above is
+# vacuous on seeds where no two rivers happen to meet).
+
+func test_join_target_hits_channel_only_when_downhill() -> void:
+	var plan: WaterPlan = _plan()
+	var other: RiverTrace = RiverTrace.new()
+	other.source_cell = Vector2i(999, 999)
+	other.priority = 1
+	other.points = PackedVector2Array([Vector2(0, 0), Vector2(100, 0), Vector2(200, 0)])
+	other.widths = PackedFloat32Array([10.0, 10.0, 10.0])
+	other.beds = PackedFloat32Array([5.0, 5.0, 5.0])
+	# On the channel (within width) and our bed at/above theirs => join.
+	assert_eq(plan._join_target(Vector2(100, 3), 6.0, [other]), other,
+		"point within width and downhill joins the channel")
+	# Our bed well below theirs (uphill) => no join.
+	assert_null(plan._join_target(Vector2(100, 3), 4.0, [other]),
+		"cannot join water whose bed is above ours (uphill)")
+	# Beyond the channel width => no join.
+	assert_null(plan._join_target(Vector2(100, 50), 6.0, [other]),
+		"point beyond channel width does not join")
+
+func test_join_target_hits_pond_footprint() -> void:
+	var plan: WaterPlan = _plan()
+	var other: RiverTrace = RiverTrace.new()
+	other.source_cell = Vector2i(999, 998)
+	other.priority = 1
+	other.points = PackedVector2Array([Vector2(0, 0)])
+	other.widths = PackedFloat32Array([10.0])
+	other.beds = PackedFloat32Array([5.0])
+	other.pond = PondStamp.new(Vector2(300, 300), 60.0, 4242, 2, 3.5)
+	# pond.surface_y() = 2*4 - SURFACE_DROP(1) = 7. Inside footprint + bed>=7 => join.
+	assert_eq(plan._join_target(Vector2(300, 300), 8.0, [other]), other,
+		"point inside pond footprint and downhill joins")
+	assert_null(plan._join_target(Vector2(300, 300), 6.0, [other]),
+		"pond surface above our bed does not accept the join")
