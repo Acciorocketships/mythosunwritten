@@ -1,9 +1,8 @@
-[gd_scene load_steps=11 format=3 uid="uid://ceognrw5418ks"]
+[gd_scene load_steps=10 format=3 uid="uid://ceognrw5418ks"]
 
 [ext_resource type="Script" uid="uid://dyg0hh4n6mt05" path="res://scripts/camera/camera.gd" id="1_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://1isaxxqlfqe8" path="res://characters/character.tscn" id="1_nnsk1"]
 [ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://scripts/controllers/player_controller.gd" id="2_rwgxs"]
-[ext_resource type="PackedScene" path="res://terrain/water/WaterSurface.tscn" id="5_water"]
 [ext_resource type="Script" uid="uid://dys71w0rl7skp" path="res://scripts/terrain/field/FieldTerrainStreamer.gd" id="10_field"]
 [ext_resource type="Script" path="res://scripts/terrain/tools/CoordOverlay.gd" id="20_overlay"]
 
@@ -53,8 +52,6 @@ directional_shadow_blend_splits = true
 script = ExtResource("10_field")
 player = NodePath("../Characters/Character")
 terrain_parent = NodePath(".")
-
-[node name="WaterSurface" parent="." instance=ExtResource("5_water")]
 
 [node name="Characters" type="Node" parent="."]
 

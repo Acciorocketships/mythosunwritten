@@ -16,6 +16,9 @@ const CHUNK_WORLD := 192.0   # TerrainChunkMesher.CHUNK_WORLD
 ## Max storey difference between adjacent cells. 1 = all walkable slopes (SP1);
 ## 3 = cliffs up to 3 storeys (12m) form where the field steps down steeply.
 @export var MAX_CLIFF_STEP: int = 3
+## 0 = random each run. Set non-zero to pin the world for debugging (pairs
+## with the F3 coord overlay screenshot workflow).
+@export var SEED_OVERRIDE: int = 0
 
 var _plan: HeightfieldPlan
 var _mesher: TerrainChunkMesher
@@ -37,7 +40,7 @@ func desired_chunks(centre: Vector2i, radius: int) -> Array:
 func _ready() -> void:
 	if terrain_parent == null:
 		return   # bare instance (unit test)
-	world_seed = randi()
+	world_seed = SEED_OVERRIDE if SEED_OVERRIDE != 0 else randi()
 	_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean", MAX_CLIFF_STEP)
 	_water = WaterPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS)
 	_plan.set_water_plan(_water)
