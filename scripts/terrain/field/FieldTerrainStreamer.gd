@@ -19,6 +19,8 @@ const CHUNK_WORLD := 192.0   # TerrainChunkMesher.CHUNK_WORLD
 
 var _plan: HeightfieldPlan
 var _mesher: TerrainChunkMesher
+var _water: WaterPlan
+var _water_builder := WaterSurfaceBuilder.new()
 var _built: Dictionary = {}        # Vector2i -> Node3D
 var world_seed: int = 0
 
@@ -37,7 +39,8 @@ func _ready() -> void:
 		return   # bare instance (unit test)
 	world_seed = randi()
 	_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean", MAX_CLIFF_STEP)
-	_plan.set_water_plan(WaterPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS))
+	_water = WaterPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS)
+	_plan.set_water_plan(_water)
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
 	# Build the chunk under the spawn point before the first physics frame, so the
@@ -52,6 +55,9 @@ func _ensure_chunk(c: Vector2i) -> bool:
 	var node := _mesher.build_chunk(_plan, c)
 	terrain_parent.add_child(node)
 	_built[c] = node
+	var wnode := _water_builder.build_chunk(_water, c)
+	if wnode != null:
+		node.add_child(wnode)
 	return true
 
 func _process(_delta: float) -> void:
