@@ -19,7 +19,10 @@ extends CharacterBody3D
 # buoyancy and falls back in, so bobbing emerges naturally. Pressing toward
 # a nearby bank wall with jump launches the character out of the water.
 const WATER_LAYER_MASK: int = 1 << 7
-const WATER_SURFACE_Y: float = -1.5  # water tiles sit on the base plane (y=0)
+# Fallback surface for legacy water volumes that carry no surface_y meta
+# (the old flat-sheet water). Field-terrain volumes always set the meta.
+const WATER_SURFACE_Y: float = -1.5
+var water_surface_y: float = WATER_SURFACE_Y
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
 @export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
@@ -135,7 +138,7 @@ func _swim_vertical(delta: float, wants_jump: bool) -> void:
 	if _try_water_exit(wants_jump, delta):
 		return
 	var submerged: float = clampf(
-		(WATER_SURFACE_Y - global_position.y) / BODY_HEIGHT, 0.0, 1.0
+		(water_surface_y - global_position.y) / BODY_HEIGHT, 0.0, 1.0
 	)
 	var lift: float = BUOYANCY * submerged
 	if controller.jump_held(self, delta):
@@ -152,7 +155,7 @@ func _swim_vertical(delta: float, wants_jump: bool) -> void:
 func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 	if not (wants_jump or controller.jump_held(self, delta)):
 		return false
-	if global_position.y < WATER_SURFACE_Y - BODY_HEIGHT:
+	if global_position.y < water_surface_y - BODY_HEIGHT:
 		return false
 	var facing: Vector3 = global_transform.basis.z
 	facing.y = 0.0
@@ -166,14 +169,23 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 
 
 # The probe sits at knee height: standing on a dry bank keeps it above the
-# water volume, while floating at the surface keeps it inside.
+# water volume, while floating at the surface keeps it inside. The overlapped
+# volume's surface_y meta (per-body water level) drives buoyancy.
 func _update_in_water() -> void:
 	var params := PhysicsPointQueryParameters3D.new()
 	params.position = global_position + Vector3(0.0, 0.3, 0.0)
 	params.collide_with_areas = true
 	params.collide_with_bodies = false
 	params.collision_mask = WATER_LAYER_MASK
-	in_water = not get_world_3d().direct_space_state.intersect_point(params, 1).is_empty()
+	var hits: Array = get_world_3d().direct_space_state.intersect_point(params, 4)
+	in_water = not hits.is_empty()
+	if in_water:
+		var best: float = -INF
+		for h in hits:
+			var collider: Object = h.get("collider")
+			if collider != null and collider.has_meta("surface_y"):
+				best = maxf(best, float(collider.get_meta("surface_y")))
+		water_surface_y = best if best > -INF else WATER_SURFACE_Y
 
 
 func jump_animation(started_animation: bool):
