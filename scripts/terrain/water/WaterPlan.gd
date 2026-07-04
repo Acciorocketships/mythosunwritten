@@ -204,23 +204,64 @@ func _trace(sc: Vector2i, depth: int) -> RiverTrace:
 	return t
 
 
-## Higher-priority rivers within junction reach, resolved one depth lower.
-## Depth 0 = raw trace: sees nothing. Task 5 fills this in; the stub keeps
-## Task 4 green.
-func _neighbour_rivers(_sc: Vector2i, _depth: int) -> Array:
-	return []
+## Higher-priority rivers within junction reach of sc's river, each resolved
+## one depth lower. Depth 0 = raw trace (sees nothing) — the recursion floor.
+## Every trace is cached by (cell, depth), so the fan-out is bounded by the
+## number of distinct super-cells within REACH_SUPERS rings per depth level.
+func _neighbour_rivers(sc: Vector2i, depth: int) -> Array:
+	if depth <= 0:
+		return []
+	var mine: int = priority_of(sc)
+	var out: Array = []
+	for dz in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
+		for dx in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
+			var nb: Vector2i = sc + Vector2i(dx, dz)
+			if nb == sc or priority_of(nb) <= mine:
+				continue
+			var t: RiverTrace = river_for(nb, depth - 1)
+			if t != null:
+				out.append(t)
+	return out
 
 
-## Does p (with bed height `bed`) touch higher-priority water it can join?
-func _join_test(_p: Vector2, _bed: float, others: Array) -> bool:
-	return false if others.is_empty() else _join_target(_p, _bed, others) != null
-
-
-## Stub — implemented with junctions in Task 5.
-func _join_target(_p: Vector2, _bed: float, _others: Array) -> RiverTrace:
+## The higher-priority river whose water p lands in, or null. A join needs
+## the target's bed at the touch point to be at-or-below ours (+0.5 m slack)
+## — water never joins uphill. Pond/pool footprints count as their river.
+func _join_target(p: Vector2, bed: float, others: Array) -> RiverTrace:
+	for other in others:
+		if other.source_pool != null and other.source_pool.footprint_t(p) < 1.0 \
+				and other.source_pool.surface_y() <= bed + 0.5:
+			return other
+		if other.pond != null and other.pond.footprint_t(p) < 1.0 \
+				and other.pond.surface_y() <= bed + 0.5:
+			return other
+		for i in other.points.size():
+			if p.distance_to(other.points[i]) <= other.widths[i] \
+					and other.beds[i] <= bed + 0.5:
+				return other
 	return null
 
 
-## Steering bias toward nearby higher-priority water — stub until Task 5.
-func _steer(dir: Vector2, _p: Vector2, _others: Array) -> Vector2:
-	return dir
+func _join_test(p: Vector2, bed: float, others: Array) -> bool:
+	return _join_target(p, bed, others) != null
+
+
+## Bend `dir` toward the nearest higher-priority water sample within
+## SENSE_RADIUS, weighted by proximity — junctions become common instead of
+## coincidental, per the spec's "bias the tracing so they end in other water".
+func _steer(dir: Vector2, p: Vector2, others: Array) -> Vector2:
+	var best_d: float = SENSE_RADIUS
+	var best_at: Vector2 = Vector2.ZERO
+	var found: bool = false
+	for other in others:
+		for i in other.points.size():
+			var d: float = p.distance_to(other.points[i])
+			if d < best_d:
+				best_d = d
+				best_at = other.points[i]
+				found = true
+	if not found:
+		return dir
+	var toward: Vector2 = (best_at - p).normalized()
+	var w: float = STEER * (1.0 - best_d / SENSE_RADIUS)
+	return (dir * (1.0 - w) + toward * w).normalized()

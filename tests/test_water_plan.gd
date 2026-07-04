@@ -106,3 +106,55 @@ func test_trace_never_enters_spawn_disk() -> void:
 	for p in t.points:
 		assert_true(p.length() >= WaterPlan.SPAWN_WATER_RADIUS - 0.001,
 			"polyline stays out of the spawn disk")
+
+# ------------------------------------------------------------
+# Junctions — strict priority, bounded depth, joins land in real water
+# ------------------------------------------------------------
+
+func _all_rivers(plan: WaterPlan, r: int) -> Array:
+	var out: Array = []
+	for sz in range(-r, r + 1):
+		for sx in range(-r, r + 1):
+			var t: RiverTrace = plan.river_for(Vector2i(sx, sz))
+			if t != null:
+				out.append(t)
+	return out
+
+func test_full_depth_rivers_deterministic_across_instances() -> void:
+	var a: Array = _all_rivers(_plan(), 4)
+	var b: Array = _all_rivers(_plan(), 4)
+	assert_eq(a.size(), b.size(), "same river count")
+	for i in a.size():
+		assert_eq(a[i].points, b[i].points, "river %d identical polyline" % i)
+		assert_eq(a[i].joined, b[i].joined, "river %d identical join outcome" % i)
+
+func test_joined_rivers_touch_higher_priority_water() -> void:
+	var plan: WaterPlan = _plan()
+	var rivers: Array = _all_rivers(plan, 4)
+	var by_cell: Dictionary = {}
+	for t in rivers:
+		by_cell[t.source_cell] = t
+	for t in rivers:
+		if not t.joined:
+			continue
+		var tail: Vector2 = t.points[t.points.size() - 1]
+		var found: bool = false
+		for other in rivers:
+			if other.priority <= t.priority:
+				continue
+			# tail must lie inside the other's channel or a pond footprint
+			if other.source_pool != null and other.source_pool.footprint_t(tail) < 1.2:
+				found = true
+			if other.pond != null and other.pond.footprint_t(tail) < 1.2:
+				found = true
+			for i in other.points.size():
+				if tail.distance_to(other.points[i]) <= other.widths[i] + WaterPlan.FEATHER:
+					found = true
+					break
+			if found:
+				break
+		assert_true(found, "joined river %s tail sits in higher-priority water" % t.source_cell)
+
+func test_every_river_still_ends_in_water_at_full_depth() -> void:
+	for t in _all_rivers(_plan(), 4):
+		assert_true(t.joined or t.pond != null, "river %s ends in water" % t.source_cell)
