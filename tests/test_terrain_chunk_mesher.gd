@@ -357,17 +357,16 @@ func test_clip_uses_the_dipped_half_of_a_north_edge_not_its_mirror():
 
 func test_clip_tapers_to_zero_at_a_neighbour_that_does_not_clip():
 	# Owner (round 3, seed 186412979): A clips its lipped south edge; its east neighbour B is
-	# flat with a FLUSH south edge (no clip). A's pulled corner vertex tore away from B's sheet,
-	# opening a triangular hole at the seam. The clip weight must taper to zero at any corner
-	# shared with an unclipped slot, so both sheets keep their shared vertex. No corner piece
-	# sits on the shared point at A's level — (2,2) is HIGHER flat, so its own corner at that
-	# point belongs to another storey's junction and must not hold A's clip (a same-height cap
-	# would rightly HOLD it — see test_arm_lip_run_holds_at_a_classic_inner_corner_no_flap).
+	# a PLAIN cell with an unclipped south edge. A's pulled corner vertex tore away from B's
+	# sheet, opening a triangular hole at the seam. The clip weight must taper to zero at any
+	# corner shared with an unclipped slot, so both sheets keep their shared vertex. Nothing
+	# registers a piece on the shared point: B is not flat (no classic inner corner) and the
+	# diagonal (2,2) is LEVEL, not a taller walling flat (round 10's abut would rightly HOLD
+	# the clip there — see test_no_drape_dip_where_a_run_ends_at_a_level_neighbour...).
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
 		if cx == 0 and cz == 1: return 4.0    # A's cliff-maker (west drop 2)
 		if cx == 1 and cz == 2: return 8.0    # the pocket: A's south dip
-		if cx == 2 and cz == 2: return 16.0   # higher flat SE of A — kills B's inner corner
 		return 12.0)
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
@@ -573,19 +572,23 @@ func test_taper_edge_drapes_onto_the_dipping_neighbour():
 	p.set_raw_height_override(func(cx, cz):
 		if cx == 0 and cz == 1: return 4.0    # A=(1,1)'s cliff-maker (west drop 2)
 		if cx == 1 and cz == 2: return 8.0    # A's south dip (lipped edge, dip 4)
-		if cx == 2 and cz == 2: return 16.0   # higher flat SE of A: the run end stays UNCAPPED
-		return 12.0)
+		return 12.0)                           # B=(2,1) stays a PLAIN cell: the end is UNCAPPED
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
 	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var draped := false
+	var hovering := false
 	for v in verts:
-		# A's boundary vert one grid step before the seam corner: previously hovered at y=12;
-		# draped it sits partway down (h − dip·f ≈ 11.33). The neighbours' own verts at this
-		# position are at 12.0 (B) and 8.0 ((1,2)), so this band is unique to the drape.
-		if absf(v.x - 36.0) < 0.01 and absf(v.z - 34.0) < 0.01 and v.y > 10.9 and v.y < 11.7:
-			draped = true
+		# A's boundary vert one grid step before the seam corner: previously it hovered at
+		# y=12 over the drop; draped it descends toward the dipping neighbour's surface (B's
+		# corner sags to ~8 via the diagonal rule, so the weld sits low on the fold).
+		if absf(v.x - 36.0) < 0.01 and absf(v.z - 34.0) < 0.01:
+			if v.y > 7.5 and v.y < 11.7:
+				draped = true
+			elif v.y > 11.9:
+				hovering = true
 	assert_true(draped, "the taper edge drapes down the step instead of hovering at the top")
+	assert_false(hovering, "no flared vert hovers at full height over the drop")
 	node.free()
 
 func test_capped_corner_holds_the_clip_no_draped_flap():
@@ -726,3 +729,27 @@ func _tri_covers_xz(p: Vector2, a: Vector3, b: Vector3, c: Vector3) -> bool:
 	var d2 := (c2 - b2).cross(p - b2)
 	var d3 := (a2 - c2).cross(p - c2)
 	return (d1 >= -0.001 and d2 >= -0.001 and d3 >= -0.001) or (d1 <= 0.001 and d2 <= 0.001 and d3 <= 0.001)
+
+func test_no_drape_dip_where_a_run_ends_at_a_level_neighbour_under_a_taller_diagonal():
+	# Owner (round 10, seed 1408162484): "there is a weird dip right here that shouldn't be
+	# there". A=(1,1)=20 walls east over a plain 16m cell; at A's NE corner the plateau
+	# continues LEVEL onto (1,0)=20 while the taller diagonal (2,0)=24 walls across the run's
+	# line. Nothing registered a corner there, so the sheet clip TAPERED to w=0 at the run's
+	# end and the flared band DRAPED 4m down onto the walkable plateau top — the dip. The
+	# corner now registers as "abut" (clip held), so the top stays flat.
+	var p := Plan.new(0, 64.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 20.0   # A: the run's plateau
+		if cx == 1 and cz == 0: return 20.0   # level continuation north of A
+		if cx == 1 and cz == -1: return 8.0   # its cliff-maker (keeps it a FLUSH cliff top)
+		if cx == 2 and cz == 0: return 24.0   # the taller diagonal walling across the line
+		if cx == 1 and cz == 2: return 8.0    # A's cliff-maker
+		return 16.0)
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var dipped := 0
+	for v in (mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+		if v.x > 33.5 and v.x < 36.2 and v.z > 8.5 and v.z < 12.2 and v.y > 16.3 and v.y < 19.5:
+			dipped += 1
+	assert_eq(dipped, 0, "no draped fold gouges A's walkable top at the run's end corner")
+	node.free()

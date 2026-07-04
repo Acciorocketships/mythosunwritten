@@ -95,26 +95,43 @@ static func _corner_min(region, cx: int, cz: int, cdir: Vector2i, prof: Dictiona
 	var end_off := END if (cdir.x * cdir.y) == 1 else -END   # corner sits at the +pdir end iff x*y==1
 	return minf(_slot_min(prof[Vector2i(cdir.x, 0)], end_off), _slot_min(prof[Vector2i(0, cdir.y)], end_off))
 
+# Does a GHOST inner corner fire at pocket (cx,cz)'s cdir corner? Both cardinal arms must be
+# HIGHER flat cells whose walls toward this cell meet concavely over its corner. Arms at
+# DIFFERENT storeys still form a true concave — the piece belongs at the LOWER arm's top,
+# rounding its wall into the taller arm's wall face (owner round 10: "missing an inner corner
+# (lip + wall)") — UNLESS the taller arm's wall CONTINUES past the corner across the lower
+# arm's side (the diagonal cell walls the same line): then the junction is a run into a
+# continuing wall / the diagonal's own corner column — owned by the run's ext_straight merge
+# rows or that column, and a concave piece would gouge it (owner round 6: "this is an inner
+# corner but it should just be an edge"). The classic case (level arms with the diagonal cell
+# the inner-corner owner) is deduped away — the diagonal emits it itself.
+static func _ghost_fires(region, cx: int, cz: int, cdir: Vector2i) -> bool:
+	var ca := Vector2i(cdir.x, 0)
+	var cb := Vector2i(0, cdir.y)
+	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, ca):
+		return false
+	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, cb):
+		return false
+	var sa := int(region.storey_at(cx + ca.x, cz + ca.y))
+	var sb := int(region.storey_at(cx + cb.x, cz + cb.y))
+	if sa != sb:
+		var ct := ca if sa > sb else cb   # the taller arm
+		if TerrainSurfaceField.is_exposed_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-ct.x, -ct.y)):
+			return false
+	if TerrainSurfaceField._is_inner_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
+		return false
+	return true
+
 # Concave junctions over a POCKET cell — which in diagonal terraces is usually a SLOPE, so this
 # must run for EVERY cell, not just flat ones (owner round 4: "no inner corner tile as there
-# should be"). Both cardinal arms are HIGHER flat cells whose walls toward this cell meet over
-# its corner; an inner piece joins them, spanning from this cell's pinned corner surface up to
-# the lower arm's top. The classic rule (diagonal cell with LEVEL arms) is deduped away.
+# should be"). An inner piece joins the two arms' walls, spanning from this cell's pinned
+# corner surface up to the LOWER arm's top.
 static func _ghost_inner_corners(region, cx: int, cz: int, out: Dictionary) -> void:
 	for cdir in CORNERS:
 		var ca := Vector2i(cdir.x, 0)
 		var cb := Vector2i(0, cdir.y)
-		if not TerrainSurfaceField.is_higher_flat(region, cx, cz, ca):
+		if not _ghost_fires(region, cx, cz, cdir):
 			continue
-		if not TerrainSurfaceField.is_higher_flat(region, cx, cz, cb):
-			continue
-		if region.storey_at(cx + ca.x, cz + ca.y) != region.storey_at(cx + cb.x, cz + cb.y):
-			continue   # arms at DIFFERENT heights meet in a plain vertical seam, not a concave
-			           # piece — a ghost there notched the junction (owner round 6: "this is an
-			           # inner corner but it should just be an edge"); like the classic inner
-			           # corner, the ghost needs LEVEL arms
-		if TerrainSurfaceField._is_inner_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
-			continue   # the classic case — the diagonal cell emits this piece itself
 		var top_ref: float = minf(region.surface_height(cx + ca.x, cz + ca.y), region.surface_height(cx + cb.x, cz + cb.y))
 		var px := float(cx) * TILE + float(cdir.x) * TILE * 0.5
 		var pz := float(cz) * TILE + float(cdir.y) * TILE * 0.5
@@ -166,8 +183,14 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 		var cb := Vector2i(0, cdir.y)
 		var ddrop: int = s - int(region.storey_at(cx + cdir.x, cz + cdir.y))
 		if cliff.get(ca, false) and cliff.get(cb, false):
-			# Convex (outer) corner where two exposed edges meet — deep as the face is AT the corner.
-			if h - _corner_min(region, cx, cz, cdir, prof) > TerrainSurfaceField.EXPOSE_EPS:
+			# Convex (outer) corner where two exposed edges meet — BOTH arms must actually dip
+			# AT this corner. The cliff flags are edge-wide: a remote dip elsewhere on an edge
+			# (e.g. a level plain neighbour sagging at its far corner) must not turn a straight
+			# run's end into a corner piece cutting across the walkable strip (owner round 10:
+			# "this is an outer corner lip that should be a normal edge").
+			var off := END if (cdir.x * cdir.y) == 1 else -END
+			if h - _slot_min(prof[ca], off) > TerrainSurfaceField.EXPOSE_EPS \
+					and h - _slot_min(prof[cb], off) > TerrainSurfaceField.EXPOSE_EPS:
 				out[cdir] = "outer"
 		elif TerrainSurfaceField._is_inner_corner(region, cx, cz, cdir):
 			out[cdir] = "inner"
@@ -189,35 +212,45 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 			var p: Vector2i = pair[1]
 			if not cliff.get(d, false):
 				continue
-			if not TerrainSurfaceField.is_higher_flat(region, cx, cz, p):
-				continue
 			var pdir := Vector2i(d.y, d.x)
 			var sgn := pdir.x * p.x + pdir.y * p.y   # which end of the run this corner is
 			var run_ground := _slot_min(prof[d], float(sgn) * END)
 			if h - run_ground < TerrainSurfaceField.EXPOSE_EPS:
 				continue   # the wall line has already faded out before the junction
-			# Run-end junctions into a taller cliff (owner rounds 6-9):
-			#  - The taller cell walls the SAME direction (their sides are FLUSH — a step):
-			#    "the edge should extend all the way to the cliff, and then the corner turns
-			#    into the wall" (round 9). The run KEEPS its straight end module and a turned
-			#    corner LIP sits one slot INTO the taller cell ("ext_outer") — at the taller
-			#    cell's own corner column, whose wall rows already cover it (the lip is proud
-			#    of the wall face, no z-fight). Round 8's cap at the run's own end slot
-			#    stopped 1.25 short of the taller wall and needed a flat patch (rejected).
-			#    EXCEPT when an inner-corner piece (ghost or classic) joins the two runs over
-			#    the pocket cell: they "should stay as normal edges so they can connect to
-			#    the inner corner piece between them" — plain end modules, no cap ("abut").
-			#  - Otherwise the run "goes straight into the wall" (round 7): continue it with a
-			#    STRAIGHT module one slot into the taller cell, buried behind its wall face,
-			#    plus inner WALL rows merging the two perpendicular faces (round 8).
-			if TerrainSurfaceField.is_exposed_edge(region, cx + p.x, cz + p.y, d):
-				if _inner_joined(region, cx + d.x, cz + d.y, Vector2i(p.x - d.x, p.y - d.y)):
-					out[cdir] = "abut"
+			if TerrainSurfaceField.is_higher_flat(region, cx, cz, p):
+				# Run-end junctions into a taller cliff (owner rounds 6-9):
+				#  - The taller cell walls the SAME direction (their sides are FLUSH — a step):
+				#    "the edge should extend all the way to the cliff, and then the corner turns
+				#    into the wall" (round 9). The run KEEPS its straight end module and a turned
+				#    corner LIP sits one slot INTO the taller cell ("ext_outer") — at the taller
+				#    cell's own corner column, whose wall rows already cover it (the lip is proud
+				#    of the wall face, no z-fight). Round 8's cap at the run's own end slot
+				#    stopped 1.25 short of the taller wall and needed a flat patch (rejected).
+				#    EXCEPT when an inner-corner piece (ghost or classic) joins the two runs over
+				#    the pocket cell: they "should stay as normal edges so they can connect to
+				#    the inner corner piece between them" — plain end modules, no cap ("abut").
+				#  - Otherwise the run "goes straight into the wall" (round 7): continue it with a
+				#    STRAIGHT module one slot into the taller cell, buried behind its wall face,
+				#    plus inner WALL rows merging the two perpendicular faces (round 8).
+				if TerrainSurfaceField.is_exposed_edge(region, cx + p.x, cz + p.y, d):
+					if _inner_joined(region, cx + d.x, cz + d.y, Vector2i(p.x - d.x, p.y - d.y)):
+						out[cdir] = "abut"
+					else:
+						out[cdir] = "ext_outer"
 				else:
-					out[cdir] = "ext_outer"
-			else:
-				out[cdir] = "ext_straight"
-			break
+					out[cdir] = "ext_straight"
+				break
+			# The plateau continues LEVEL across the run's end, but the DIAGONAL cell is a
+			# taller flat walling across the run's line (owner round 10, seed 1408162484): the
+			# run dies against its perpendicular wall / corner column. Register the corner so
+			# the sheet clip HOLDS (an uncapped end tapers to w=0 and drapes a fold onto the
+			# walkable top — the owner's "weird dip") and keep the plain end module ("should
+			# be a normal edge"); the pocket cell's ghost inner corner rounds the seam.
+			if int(region.storey_at(cx + p.x, cz + p.y)) == s and \
+					TerrainSurfaceField.is_higher_flat(region, cx, cz, cdir) and \
+					TerrainSurfaceField.is_exposed_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-p.x, -p.y)):
+				out[cdir] = "abut"
+				break
 	return out
 
 # An inner-corner piece (classic, from the diagonal cell, or a ghost from the pocket cell)
@@ -226,13 +259,7 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 static func _inner_joined(region, px: int, pz: int, qdir: Vector2i) -> bool:
 	if TerrainSurfaceField._is_inner_corner(region, px + qdir.x, pz + qdir.y, Vector2i(-qdir.x, -qdir.y)):
 		return true
-	var ca := Vector2i(qdir.x, 0)
-	var cb := Vector2i(0, qdir.y)
-	if not TerrainSurfaceField.is_higher_flat(region, px, pz, ca):
-		return false
-	if not TerrainSurfaceField.is_higher_flat(region, px, pz, cb):
-		return false
-	return region.storey_at(px + ca.x, pz + ca.y) == region.storey_at(px + cb.x, pz + cb.y)
+	return _ghost_fires(region, px, pz, qdir)
 
 # Standalone corner_map for callers that don't already hold the exposure data (the mesher's
 # sheet clip). Empty for non-flat cells (they carry no dressing).
@@ -315,8 +342,11 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				# edge loop below emits it — ext kinds don't drop the end slot), and the
 				# turned corner LIP sits one slot INTO the taller cell, at the taller cell's
 				# own corner column. Its wall rows already cover that column down to the low
-				# ground (the per-row straight substitution), so the cap adds no walls; the
-				# lip is proud of the wall face and reads as the run's curb turning into it.
+				# ground (the per-row straight substitution), so the cap adds no walls. The
+				# cap is oriented like the RUN CELL's own corner at cdir (owner round 10:
+				# "corner turned the wrong way, it should line up with the edge"): its visible
+				# arm starts AT the boundary and continues the run's lip line along the taller
+				# column's face; the other arm points INTO the taller cell and stays buried.
 				var de: Vector2i = Vector2i(cdir.x, 0) if cliff.get(Vector2i(cdir.x, 0), false) else Vector2i(0, cdir.y)
 				var pe := Vector2i(cdir.x - de.x, cdir.y - de.y)
 				var edge3 := Vector3(float(de.x) * PLACE, 0.0, float(de.y) * PLACE)
@@ -324,9 +354,7 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				var pdir3 := Vector2i(de.y, de.x)
 				var sgn3 := pdir3.x * pe.x + pdir3.y * pe.y
 				var cpos3: Vector3 = cellpos + edge3 + perp3 * (float(sgn3) * (END + 3.0))
-				var tdir := Vector2i(de.x - pe.x, de.y - pe.y)   # faces: the run's, plus back over the run cell
-				var tbasis := Basis(Vector3.UP, atan2(float(tdir.x), float(tdir.y)) - PI * 0.25)
-				out["outer_lip"].append(Transform3D(tbasis, cpos3 + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				out["outer_lip"].append(Transform3D(cbasis, cpos3 + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 			"ext_straight":
 				# Run-end junction into a higher flat cell that doesn't wall this direction:
 				# the run "goes straight into the wall" (owner round 7) — continue it with a

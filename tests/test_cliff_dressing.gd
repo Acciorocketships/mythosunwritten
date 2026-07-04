@@ -392,11 +392,19 @@ func test_flush_step_run_ends_in_an_outer_corner_into_the_taller_wall() -> void:
 	var end_module := false
 	var w_corner := false
 	for t in (data["outer_lip"] as Array):
-		var o := (t as Transform3D).origin
+		var xf := t as Transform3D
+		var o := xf.origin
 		assert_false(absf(o.x - 13.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 10.0,
 			"no turned cap at the run's own end slot (it stops short of the taller wall)")
 		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (8.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
 			ext_cap = true
+			# Owner (round 10, seed 1408162484): "corner turned the wrong way, it should line
+			# up with the edge". The cap is oriented like the RUN CELL's own corner (cdir):
+			# its visible arm starts AT the boundary and continues the run's lip line; the
+			# other arm is buried inside the taller cell. C's SW cap (cdir (-1,1)) faces
+			# west+south → basis fwd = (-1,0,0).
+			assert_lt((xf.basis * Vector3(0, 0, 1)).x, -0.9,
+				"the cap lines up with the edge (oriented as the run cell's own corner)")
 		if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y > 11.9:
 			w_corner = true
 	for t in (data["outer_wall"] as Array):
@@ -673,6 +681,87 @@ func test_slope_pocket_gets_a_ghost_inner_corner() -> void:
 			lip_found = true
 	assert_true(wall_found, "an inner corner wall joins the two arms' walls over the slope pocket")
 	assert_true(lip_found, "with its inner lip on top")
+
+# Owner (round 10, seed 1408162484): "same issue, this is missing an inner corner" / "we are
+# missing an inner corner (lip + wall)". A pocket whose two higher flat arms sit at DIFFERENT
+# storeys still forms a true concave junction — the piece belongs at the LOWER arm's top,
+# rounding the lower arm's wall into the taller arm's wall face. Round 6 banned unequal arms
+# outright; its actual bad case was a diagonal cell TALLER THAN BOTH arms, whose own convex
+# corner column owns the slot (a concave piece there gouges it) — that guard remains.
+func _region_saddle():
+	# Mirror of the owner's cells around (-60,-132): pocket P=(1,1)=12; ledge E=(2,1)=16 walls
+	# west over P; N=(1,0)=20 walls south over P and east over NE; NE=(2,0)=16 is a PLAIN cell
+	# whose surface dips at its far (SE) corner toward (3,1)=12 — so E's north edge is
+	# "exposed" edge-wide while FLUSH at the junction corner itself.
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 12.0   # P: the pocket
+		if cx == 1 and cz == 0: return 20.0   # N: taller arm
+		if cx == 3 and cz == 1: return 12.0   # NE's diagonal dip-maker
+		if cx == 2 and cz == 2: return 8.0    # E's cliff-maker (south, 2 storeys)
+		return 16.0)                           # E=(2,1), NE=(2,0) and backdrop
+	return plan.compute_region(1, 1, 8)
+
+func test_unequal_arm_pocket_gets_an_inner_corner_at_the_lower_arms_top() -> void:
+	var r = _region_saddle()
+	var data = Dress.compute(r, 1, 1, 1)   # dress only the pocket — it owns the ghost
+	var lip := false
+	var wall := false
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - (16.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
+			lip = true
+	for t in (data["inner_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 12.0) < 0.1:
+			wall = true
+	assert_true(lip, "an inner lip joins the two arms' walls at the LOWER arm's top (16)")
+	assert_true(wall, "with inner wall rows spanning the pocket band (12..16)")
+
+func test_no_inner_corner_where_a_taller_diagonal_owns_the_slot() -> void:
+	# The round-6 guard, kept: pocket (1,2)=8 with arms L=20 and D=16 (unequal) but the
+	# DIAGONAL H=24 is taller than both — H's own convex corner column stands on the ghost's
+	# slot, and a concave piece there gouges it ("this is an inner corner but it should just
+	# be an edge").
+	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 20.0   # L
+		if cx == 2 and cz == 1: return 24.0   # H
+		if cx == 2 and cz == 2: return 16.0   # D
+		return 8.0)
+	var r = plan.compute_region(1, 1, 8)
+	var data = Dress.compute(r, 1, 2, 1)   # dress the pocket (1,2)
+	var gouges := 0
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 22.0:
+			gouges += 1
+	assert_eq(gouges, 0, "no concave piece where the taller diagonal's own corner column owns the slot")
+
+func test_run_end_at_a_level_neighbour_under_a_taller_diagonal_stays_plain() -> void:
+	# Owner (round 10): "this is an outer corner lip that should be a normal edge on the piece
+	# between the two cliffs". E's west run ends where the strip continues LEVEL (NE, a plain
+	# cell flush at the corner) under the taller diagonal N — no corner piece belongs to E:
+	# a remote dip on E's north edge made the edge-wide cliff flag fire a spurious classic
+	# OUTER there (its lip cut across the walkable strip). The corner registers as "abut"
+	# (plain end module, sheet clip held); the pocket's inner piece rounds the junction.
+	var r = _region_saddle()
+	var flags = Dress.corner_flags(r, 2, 1)
+	assert_eq(String(flags.get(Vector2i(-1, -1), "")), "abut",
+		"E's NW corner is a plain abut (no spurious outer at a corner-flush arm)")
+	var data = Dress.compute(r, 2, 1, 1)   # dress only E
+	var end_module := false
+	for t in (data["lip"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 37.5) < 0.1 and absf(o.z - 13.5) < 0.1 and o.y > 16.5,
+			"no corner-lip clutter above the strip")
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (16.0 + Dress.LIP_LIFT)) < 0.03:
+			end_module = true
+	for t in (data["outer_lip"] as Array):
+		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 37.5) < 0.5 and absf(o.z - 13.5) < 2.0,
+			"no outer corner lip at the run's end (it should be a normal edge)")
+	assert_true(end_module, "E's west run keeps its straight end module up to the level strip")
 
 func test_outer_corner_does_not_dive_below_its_arms() -> void:
 	# Round 4 counterpart: D=(2,0)=12's SW outer corner used to take its depth from the diagonal
