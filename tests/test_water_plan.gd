@@ -297,3 +297,11 @@ func test_bodies_near_covers_carved_cells_when_window_straddles_super_cells() ->
 					"carved cell %s covered by a bodies_near body (corner window %s)" % [p, center_cell])
 			return
 	pass_test("no straddling-corner window held carved cells on this seed")
+
+func test_sources_sit_on_hillsides() -> void:
+	# Headwaters need real local slope — rivers rise out of hills, never
+	# appear mid-plateau (they may still cross flat ground downstream).
+	var plan: WaterPlan = _plan()
+	for sc in _sources_in(plan, 6):
+		assert_true(plan.grad(plan.source_pos(sc)).length() >= WaterPlan.SOURCE_MIN_SLOPE,
+			"source %s rises from sloped ground" % sc)

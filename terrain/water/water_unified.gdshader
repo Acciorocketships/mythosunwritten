@@ -18,7 +18,7 @@ uniform float foam_width : hint_range(0.0, 3.0) = 0.6;
 uniform float depth_fade : hint_range(0.5, 8.0) = 1.8;
 uniform float wave_height : hint_range(0.0, 0.6) = 0.15;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
-uniform float flow_speed : hint_range(0.0, 12.0) = 3.0;    // metres/second scroll
+uniform float flow_speed : hint_range(0.0, 12.0) = 6.0;    // metres/second scroll
 uniform float roughness : hint_range(0.0, 1.0) = 0.05;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;

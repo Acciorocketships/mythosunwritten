@@ -129,6 +129,13 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 	# (owner: "should be a corner tile") — the sa != sb branch below owns it.
 	if sa == sb and int(region.storey_at(cx + cdir.x, cz + cdir.y)) < sa:
 		return 0
+	# CARVED pockets (water banks): the round-8 "run-merge rows already round
+	# the seam" assumption only holds for land runs — on water-carved banks
+	# the seam stays a bare notch. Always emit the full corner piece where a
+	# lower cliff run meets a higher one over water (owner: "should be a
+	# corner tile", twice). Land pockets keep the run-merge behaviour below.
+	if sa != sb and region.has_method("is_carved") and region.is_carved(cx, cz):
+		return 1
 	if sa != sb:
 		var ct := ca if sa > sb else cb   # the taller arm
 		var cl := cb if sa > sb else ca   # the lower arm

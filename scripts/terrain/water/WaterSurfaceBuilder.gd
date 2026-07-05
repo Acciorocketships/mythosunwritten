@@ -221,8 +221,12 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 				continue
 			if not ground.has(nb):
 				ground[nb] = ground_estimate(water, nb.x, nb.y)
-			if ground[nb] < field[cell].level - WET_EPS:
-				continue   # a drop-off, not a bank
+			# Skip only genuine DROP-OFFS (a lower reach owns that water).
+			# The shallow band just under the level (unanchored, so not wet)
+			# must still join as rim, or the sheet gets holes at the shore
+			# (owner: "missing a water tile here?").
+			if ground[nb] < field[cell].level - FLOOD_MIN_DEPTH:
+				continue
 			var prev = rims.get(nb)
 			if prev == null or field[cell].level > prev.level:
 				# Rim overshoot dives into the bank: still water (zero flow —

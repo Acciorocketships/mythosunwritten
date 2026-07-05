@@ -111,11 +111,12 @@ func test_field_rim_overshoots_every_wet_cell() -> void:
 			var nb: Vector2i = cell + d
 			if field.has(nb):
 				continue
-			# The only neighbours allowed OUTSIDE the sheet are drop-offs far
-			# below this cell's level (a lower reach owns that water; a plane
-			# there would hover in midair over the drop).
+			# The only neighbours allowed OUTSIDE the sheet are genuine
+			# DROP-OFFS (a lower reach owns that water). Anything shallower —
+			# including the just-under-level band — must be wet or rim, or
+			# the sheet gets missing tiles at the shore.
 			var g: float = WaterSurfaceBuilder.ground_estimate(plan, nb.x, nb.y)
-			assert_true(g < field[cell].level - WaterSurfaceBuilder.WET_EPS,
+			assert_true(g < field[cell].level - WaterSurfaceBuilder.FLOOD_MIN_DEPTH,
 				"neighbour %s of wet %s is in the sheet or is a drop-off" % [nb, cell])
 
 func test_field_wet_cells_sit_below_their_level() -> void:

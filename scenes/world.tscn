@@ -51,6 +51,7 @@ directional_shadow_blend_splits = true
 
 [node name="FieldTerrain" type="Node3D" parent="." node_paths=PackedStringArray("player", "terrain_parent")]
 script = ExtResource("10_field")
+SEED_OVERRIDE = 2697992464
 player = NodePath("../Characters/Character")
 terrain_parent = NodePath(".")
 

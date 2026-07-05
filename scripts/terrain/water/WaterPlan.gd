@@ -14,7 +14,11 @@ const TILE := 24.0
 const STOREY := 4.0
 
 const SOURCE_MIN01 := 0.55        # smooth height01 floor for a source
-const SOURCE_PROB := 0.6          # fraction of qualifying super-cells that fire
+# Headwaters sit on HILLSIDES: a source also needs real local slope, so
+# rivers visibly rise out of high ground instead of appearing mid-plateau
+# (they may still cross flat ground on the way down).
+const SOURCE_MIN_SLOPE := 0.035   # |grad| in m/m at the source point
+const SOURCE_PROB := 0.8          # fraction of qualifying super-cells that fire
 const TRACE_STEP := 12.0
 const MAX_STEPS := 220            # hard bound => max length 2640 u
 # Gentle, long-wavelength snaking. Amplitude/wavelength must stay small
@@ -133,6 +137,8 @@ func has_source(sc: Vector2i) -> bool:
 		return false
 	if smooth01(p) < SOURCE_MIN01:
 		return false
+	if grad(p).length() < SOURCE_MIN_SLOPE:
+		return false   # headwaters rise out of hillsides, never mid-plateau
 	return Helper._hash01(_hash_cell(sc, 103)) < SOURCE_PROB
 
 

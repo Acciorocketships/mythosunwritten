@@ -887,3 +887,48 @@ func test_continuing_taller_wall_junction_gets_seam_walls_but_no_lip() -> void:
 			lips += 1
 	assert_eq(walls, 1, "inner WALL rows round the bare seam between the two arms' walls")
 	assert_eq(lips, 0, "no inner LIP — the continuing taller line keeps its straight walkable edge")
+
+# ------------------------------------------------------------
+# Water-bank corner junctions (owner rounds: "should be a corner tile")
+# ------------------------------------------------------------
+
+## A carved pocket whose higher-flat arms differ in storey gets the FULL
+## corner piece: the land-only "run-merge rows already round the seam"
+## shortcut left bare notches on water banks. Synthetic region: pocket 0
+## (carved), arms 1 and 2, diagonal high — a lower cliff run meeting a
+## higher one over water.
+func test_carved_pocket_with_unequal_arms_gets_full_corner() -> void:
+	var storeys: Dictionary = {}
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			storeys[Vector2i(x, z)] = 2
+	storeys[Vector2i(0, 0)] = 0        # carved water pocket
+	storeys[Vector2i(1, 0)] = 1        # lower arm (east)
+	storeys[Vector2i(1, -1)] = 1       # keep the lower arm a flat cliff top
+	storeys[Vector2i(0, 1)] = 2        # taller arm (south)
+	var levels: Dictionary = {}
+	for cell in storeys:
+		levels[cell] = 0
+	var region: HeightfieldRegion = HeightfieldRegion.new(
+		storeys, levels, {Vector2i(0, 0): true})
+	assert_eq(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)), 1,
+		"carved pocket with arms of different storeys emits the full corner piece")
+
+## The same junction WITHOUT the carve keeps the land behaviour (no doubled
+## rows where run-merge geometry already rounds the seam).
+func test_dry_pocket_with_unequal_arms_keeps_land_behaviour() -> void:
+	var storeys: Dictionary = {}
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			storeys[Vector2i(x, z)] = 2
+	storeys[Vector2i(0, 0)] = 0
+	storeys[Vector2i(1, 0)] = 1
+	storeys[Vector2i(1, -1)] = 1
+	storeys[Vector2i(0, 1)] = 2
+	var levels: Dictionary = {}
+	for cell in storeys:
+		levels[cell] = 0
+	var region: HeightfieldRegion = HeightfieldRegion.new(storeys, levels, {})
+	assert_true(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)) != 1 \
+		or CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)) == 1,
+		"dry pocket behaviour unchanged (smoke)")
