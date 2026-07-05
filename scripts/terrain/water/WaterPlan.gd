@@ -341,7 +341,15 @@ func _region_for(rc: Vector2i) -> Dictionary:
 						if not buckets.has(key):
 							buckets[key] = []
 						buckets[key].append([t, i])
-	var out: Dictionary = {"rivers": rivers, "buckets": buckets}
+	# Flat pond index (source pools + terminal ponds) so carve_at_cell can
+	# distance-gate without re-walking every river per cell.
+	var ponds: Array = []
+	for t in rivers:
+		if t.source_pool != null:
+			ponds.append(t.source_pool)
+		if t.pond != null:
+			ponds.append(t.pond)
+	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds}
 	_region_cache[rc] = out
 	return out
 
@@ -349,19 +357,26 @@ func _region_for(rc: Vector2i) -> Dictionary:
 ## Metres to subtract from the raw noise height at tile cell (cx, cz).
 ## Max over every pond bowl and channel sample that reaches the cell — pure
 ## function of (world_seed, cell); the caches never change the value.
+## HOT PATH: called for every cell of every region window. Most cells have no
+## water in reach, so the expensive part — noise_h, a full landform sample —
+## is evaluated lazily, only once a pond footprint or channel bucket actually
+## covers the cell. Ponds beyond bound_radius contribute exactly 0
+## (footprint_t >= 1), so the distance gate never changes the result.
 func carve_at_cell(cx: int, cz: int) -> float:
 	var p: Vector2 = Vector2(float(cx) * TILE, float(cz) * TILE)
 	if p.length() < SPAWN_WATER_RADIUS:
 		return 0.0
 	var rc: Vector2i = Vector2i(int(floor(p.x / SUPER)), int(floor(p.y / SUPER)))
 	var region: Dictionary = _region_for(rc)
-	var ground: float = noise_h(p)
+	var ground: float = -INF   # evaluated on first real hit
 	var best: float = 0.0
-	for t in region.rivers:
-		if t.source_pool != null:
-			best = maxf(best, t.source_pool.carve_at(p, ground))
-		if t.pond != null:
-			best = maxf(best, t.pond.carve_at(p, ground))
+	for pond: PondStamp in region.ponds:
+		var bound: float = pond.bound_radius()
+		if p.distance_squared_to(pond.center) > bound * bound:
+			continue
+		if ground == -INF:
+			ground = noise_h(p)
+		best = maxf(best, pond.carve_at(p, ground))
 	var key: Vector2i = Vector2i(cx, cz)
 	if region.buckets.has(key):
 		for entry in region.buckets[key]:
@@ -371,6 +386,8 @@ func carve_at_cell(cx: int, cz: int) -> float:
 			var infl: float = t.widths[i] + FEATHER
 			if d >= infl:
 				continue
+			if ground == -INF:
+				ground = noise_h(p)
 			# Full carve to the bed inside the width; smootherstep feather out.
 			var w: float = SlopeProfile.smootherstep(clampf((infl - d) / FEATHER, 0.0, 1.0))
 			best = maxf(best, maxf(0.0, ground - t.beds[i]) * w)

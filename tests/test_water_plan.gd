@@ -305,3 +305,47 @@ func test_sources_sit_on_hillsides() -> void:
 	for sc in _sources_in(plan, 6):
 		assert_true(plan.grad(plan.source_pos(sc)).length() >= WaterPlan.SOURCE_MIN_SLOPE,
 			"source %s rises from sloped ground" % sc)
+
+# The lazy-gated carve must equal the exhaustive reference for every cell —
+# gated-out terms all contribute exactly 0. Sweeps a band far enough out to
+# cross rivers/ponds for this seed; the wet-count guard keeps the sweep honest.
+func test_carve_lazy_gates_match_reference():
+	var w := WaterPlan.new(991177, 22.0, 8)
+	var checked := 0
+	var wet := 0
+	for cz in range(-90, 91, 3):
+		for cx in range(-90, 91, 3):
+			var expect := _carve_reference(w, cx, cz)
+			var got: float = w.carve_at_cell(cx, cz)
+			assert_almost_eq(got, expect, 0.0001, "cell (%d,%d)" % [cx, cz])
+			checked += 1
+			if expect > 0.05:
+				wet += 1
+	assert_gt(wet, 5, "sweep found only %d/%d carved cells - widen it or change seed" % [wet, checked])
+
+# Pre-optimization carve logic, kept verbatim as the reference oracle.
+func _carve_reference(w: WaterPlan, cx: int, cz: int) -> float:
+	var p := Vector2(float(cx) * WaterPlan.TILE, float(cz) * WaterPlan.TILE)
+	if p.length() < WaterPlan.SPAWN_WATER_RADIUS:
+		return 0.0
+	var rc := Vector2i(int(floor(p.x / WaterPlan.SUPER)), int(floor(p.y / WaterPlan.SUPER)))
+	var region: Dictionary = w._region_for(rc)
+	var ground: float = w.noise_h(p)
+	var best := 0.0
+	for t in region.rivers:
+		if t.source_pool != null:
+			best = maxf(best, t.source_pool.carve_at(p, ground))
+		if t.pond != null:
+			best = maxf(best, t.pond.carve_at(p, ground))
+	var key := Vector2i(cx, cz)
+	if region.buckets.has(key):
+		for entry in region.buckets[key]:
+			var t: RiverTrace = entry[0]
+			var i: int = entry[1]
+			var d: float = p.distance_to(t.points[i])
+			var infl: float = t.widths[i] + WaterPlan.FEATHER
+			if d >= infl:
+				continue
+			var wgt: float = SlopeProfile.smootherstep(clampf((infl - d) / WaterPlan.FEATHER, 0.0, 1.0))
+			best = maxf(best, maxf(0.0, ground - t.beds[i]) * wgt)
+	return best
