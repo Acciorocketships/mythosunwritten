@@ -89,8 +89,12 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	var o := _origin(chunk)
 	var st := SurfaceTool.new()    # VISUAL sheet: clipped back to TOP_CLIP under the lips
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var stc := SurfaceTool.new()   # COLLISION sheet: full extent (the lip band stays walkable)
-	stc.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# COLLISION sheet: full extent (the lip band stays walkable). Raw triangle
+	# soup straight into a ConcavePolygonShape3D — no SurfaceTool, no ArrayMesh,
+	# no create_trimesh_shape re-extraction.
+	var col_faces := PackedVector3Array()
+	col_faces.resize(GRID * GRID * 6)
+	var col_i := 0
 	var clip_cache := {}           # per-cell lipped-slot masks for the visual clip
 	var baked_cache := {}          # per-cell baked surface samplers
 	for iz in GRID:
@@ -122,8 +126,13 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var v10 := Vector3(x1, y10, z0)
 			var v11 := Vector3(x1, y11, z1)
 			var v01 := Vector3(x0, y01, z1)
-			_tri(stc, v00, v10, v11, uv)
-			_tri(stc, v00, v11, v01, uv)
+			col_faces[col_i] = v00
+			col_faces[col_i + 1] = v10
+			col_faces[col_i + 2] = v11
+			col_faces[col_i + 3] = v00
+			col_faces[col_i + 4] = v11
+			col_faces[col_i + 5] = v01
+			col_i += 6
 			# The visual sheet pulls back to TOP_CLIP on lipped edges (the KayKit lip is the
 			# visible edge there — a sheet running to the boundary pokes out past/over it).
 			var c00 := _clip_vert(region, clip_cache, qcx, qcz, v00)
@@ -227,7 +236,9 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	body.name = "Body"
 	var cs := CollisionShape3D.new()
 	cs.name = "CollisionShape3D"
-	cs.shape = stc.commit().create_trimesh_shape()
+	var col_shape := ConcavePolygonShape3D.new()
+	col_shape.set_faces(col_faces)
+	cs.shape = col_shape
 	body.add_child(cs)
 	if apron_mesh != null:
 		# The apron can be the only floor in a recess band (beyond the cell boundary, where the

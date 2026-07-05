@@ -797,3 +797,21 @@ func test_inner_corner_pulls_the_diagonal_sheet_corner_under_the_piece():
 	assert_true(near_zone, "the sheet still reaches up to the tuck line outside the corner")
 	node.free()
 
+# The walkable collision sheet must cover the full chunk extent with exactly
+# two triangles per grid quad, tracking the pinned surface heights.
+func test_collision_sheet_faces_cover_full_grid():
+	var p := HeightfieldPlan.new(4242, 40.0, 8, "mean")
+	var m := TerrainChunkMesher.new()
+	var node := m.build_chunk(p, Vector2i(0, 0))
+	var cs: CollisionShape3D = node.get_node("Body/CollisionShape3D")
+	var faces: PackedVector3Array = (cs.shape as ConcavePolygonShape3D).get_faces()
+	assert_eq(faces.size(), TerrainChunkMesher.GRID * TerrainChunkMesher.GRID * 6,
+		"2 triangles (6 vertices) per grid quad, full extent")
+	# spot-check: the first quad's first vertex sits at the pinned surface height
+	var region = p.compute_region(4, 4, 8)
+	var qcx := TerrainSurfaceField._cell_of(TerrainChunkMesher.STEP * 0.5)
+	var qcz := TerrainSurfaceField._cell_of(TerrainChunkMesher.STEP * 0.5)
+	var expect := TerrainSurfaceField.surface_y_in_cell(region, 0.0, 0.0, qcx, qcz)
+	assert_almost_eq(faces[0].y, expect, 0.001, "collision tracks the pinned surface")
+	node.free()
+
