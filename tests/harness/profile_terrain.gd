@@ -81,18 +81,28 @@ func _init() -> void:
 	t0 = Time.get_ticks_usec()
 	var reg2 = plan.compute_region(ccx, ccz, cells)
 	print("  compute_region:        %s" % _ms(Time.get_ticks_usec() - t0))
+	# Mirror the mesher's ACTUAL grid path: bake each cell's sampler once, then
+	# read the four quad corners with sample_baked (pure float math). Sampling
+	# surface_y_in_cell directly here would measure the OLD, un-baked path and
+	# misreport what the mesher now does.
 	t0 = Time.get_ticks_usec()
 	var o := Vector2(float(worst_c.x) * 192.0, float(worst_c.y) * 192.0)
+	var baked_cache := {}
 	for iz in grid:
 		for ix in grid:
 			var x0 := o.x + float(ix) * step
 			var z0 := o.y + float(iz) * step
 			var qcx := TerrainSurfaceField._cell_of(x0 + step * 0.5)
 			var qcz := TerrainSurfaceField._cell_of(z0 + step * 0.5)
-			_acc += TerrainSurfaceField.surface_y_in_cell(reg2, x0, z0, qcx, qcz)
-			_acc += TerrainSurfaceField.surface_y_in_cell(reg2, x0 + step, z0, qcx, qcz)
-			_acc += TerrainSurfaceField.surface_y_in_cell(reg2, x0 + step, z0 + step, qcx, qcz)
-			_acc += TerrainSurfaceField.surface_y_in_cell(reg2, x0, z0 + step, qcx, qcz)
+			var qkey := Vector2i(qcx, qcz)
+			var baked: PackedFloat32Array = baked_cache.get(qkey, PackedFloat32Array())
+			if baked.is_empty():
+				baked = TerrainSurfaceField.bake_cell(reg2, qcx, qcz)
+				baked_cache[qkey] = baked
+			_acc += TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z0)
+			_acc += TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0 + step, z0)
+			_acc += TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0 + step, z0 + step)
+			_acc += TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z0 + step)
 	print("  grid sampling (4x%dx%d): %s" % [grid, grid, _ms(Time.get_ticks_usec() - t0)])
 	t0 = Time.get_ticks_usec()
 	var dd := CliffDressing.compute(reg2, worst_c.x * cells, worst_c.y * cells, cells)
