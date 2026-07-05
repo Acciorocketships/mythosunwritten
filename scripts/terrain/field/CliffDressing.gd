@@ -393,6 +393,17 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				var sgn3 := pdir3.x * pe.x + pdir3.y * pe.y
 				var cpos3: Vector3 = cellpos + edge3 + perp3 * (float(sgn3) * (END + 3.0))
 				out["outer_lip"].append(Transform3D(cbasis, cpos3 + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				# WATER-bank flush steps have no run-merge rows covering the
+				# seam (that shortcut is a land-run property): without walls the
+				# cap floats over a bare notch (owner, twice: "should be a
+				# corner tile"). Give the cap its turned wall rows down to the
+				# carved pocket, like a real outer corner.
+				if region.has_method("is_carved") and region.is_carved(cx + cdir.x, cz + cdir.y):
+					var pocket_y3: float = TerrainSurfaceField.surface_y_in_cell(
+						region, px, pz, cx + cdir.x, cz + cdir.y)
+					for k in _rows(h - pocket_y3):
+						out["outer_wall"].append(Transform3D(
+							cbasis, cpos3 + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 			"ext_straight":
 				# Run-end junction into a higher flat cell that doesn't wall this direction:
 				# the run "goes straight into the wall" (owner round 7) — continue it with a

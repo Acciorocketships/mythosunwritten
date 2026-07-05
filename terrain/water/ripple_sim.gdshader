@@ -51,12 +51,16 @@ void fragment() {
 			h += drops[i].z * exp(-d * d / max(drops[i].w * drops[i].w, 0.000001));
 		}
 	}
-	// WIDE rest band at the border: shifted-in rest strips must always abut
-	// near-zero field, or each shift steps a full-width discontinuity that
-	// the wave equation propagates inward as a straight wavefront.
-	float edge = smoothstep(0.0, 0.10, min(min(UV.x, 1.0 - UV.x), min(UV.y, 1.0 - UV.y)));
-	h *= edge;
-	v *= edge;
+	// GENTLE absorption toward the border. Hard zeroing was itself a wave
+	// source: in a MOVING domain the damping gradient sweeps across the
+	// field and chops it, radiating straight wavefronts along a line at
+	// fixed distance from the player. A few percent per frame over a wide
+	// band absorbs outgoing rings without exciting new ones; the water
+	// shader's fade hides the outermost band anyway.
+	float border = min(min(UV.x, 1.0 - UV.x), min(UV.y, 1.0 - UV.y));
+	float absorb = 1.0 - 0.06 * (1.0 - smoothstep(0.0, 0.15, border));
+	h *= absorb;
+	v *= absorb;
 	COLOR = vec4(h + 0.5, v + 0.5, 0.0, 1.0);
 	}
 }
