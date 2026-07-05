@@ -273,6 +273,16 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 				if TerrainSurfaceField.is_exposed_edge(region, cx + p.x, cz + p.y, d):
 					if _inner_joined(region, cx + d.x, cz + d.y, Vector2i(p.x - d.x, p.y - d.y)):
 						out[cdir] = "abut"
+					elif region.has_method("is_carved") and region.is_carved(cx + cdir.x, cz + cdir.y):
+						# WATER flush-step (the corner's diagonal is a carved
+						# pocket): an ext_outer cap leans one slot into the
+						# taller cell and drowns inside its rock face, while
+						# the run's end-slot lip hides under the corner-held
+						# sheet clip — a bare notch (owner, three rounds:
+						# "should be a corner tile"). A REAL outer corner at
+						# the run cell's OWN corner turns the lip visibly; its
+						# emission already handles rows buried on one arm.
+						out[cdir] = "outer"
 					else:
 						out[cdir] = "ext_outer"
 				else:

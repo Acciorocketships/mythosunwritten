@@ -1,5 +1,38 @@
 [
-	{"name": "FIXED: raised sheet over lake gone — pond owns its level (seed 2697992464)", "pos": [-201.1, 8.0, -252.1], "look": [-230.0, -310.0]},
-	{"name": "FIXED: collinear step-down corner now dressed (ext_outer cap)", "pos": [-570.0, 8.0, -476.0], "look": [-556.0, -462.0]},
-	{"name": "curved banks + faster flow + hillside headwaters: follow this shore", "pos": [-201.1, 8.0, -252.1], "look": [-180.0, -280.0]}
+ {
+  "name": "FIXED+VERIFIED: collinear corner \u2014 lip runs to a turned rock corner (walk to the edge)",
+  "pos": [
+   -550.0,
+   6.0,
+   -476.0
+  ],
+  "look": [
+   -541.5,
+   -468.0
+  ]
+ },
+ {
+  "name": "FIXED: raised sheet over lake gone \u2014 pond owns its level",
+  "pos": [
+   -201.1,
+   8.0,
+   -252.1
+  ],
+  "look": [
+   -230.0,
+   -310.0
+  ]
+ },
+ {
+  "name": "curved banks + faster flow + hillside headwaters: follow this shore",
+  "pos": [
+   -201.1,
+   8.0,
+   -252.1
+  ],
+  "look": [
+   -180.0,
+   -280.0
+  ]
+ }
 ]
