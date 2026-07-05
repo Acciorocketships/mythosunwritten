@@ -80,6 +80,36 @@ func set_seed(seed: int) -> void:
 func _origin(chunk: Vector2i) -> Vector2:
 	return Vector2(float(chunk.x) * CHUNK_WORLD, float(chunk.y) * CHUNK_WORLD)
 
+# Pure decoration placement for a chunk: scene path -> Array[Transform3D]
+# (position + yaw; the per-piece gltf local transform is applied at build).
+# Split from build_chunk so tests can assert placements headlessly, where
+# MultiMesh does not read back instance transforms (same pattern as
+# CliffDressing.compute/build).
+func compute_decorations(region, chunk: Vector2i) -> Dictionary:
+	var by_scene: Dictionary = {}
+	for cz in range(chunk.y * CELLS_PER_CHUNK, chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
+		for cx in range(chunk.x * CELLS_PER_CHUNK, chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
+			var wc := Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
+			if Helper.is_water(wc, _water_seed):
+				continue
+			var sy := TerrainSurfaceField.surface_y(region, wc.x, wc.z)
+			for d: Dictionary in DecorationScatter.cell_decorations(Vector2i(cx, cz), _water_seed, sy):
+				var variants: Array = FOLIAGE_SCENES.get(d["tag"], [])
+				if variants.is_empty():
+					continue
+				var pick: int = int(d["yaw"] / TAU * variants.size()) % variants.size()
+				var path: String = variants[pick]
+				# Sit each decoration on the surface at ITS OWN jittered position, not the
+				# cell centre — otherwise decorations on a slope float above / sink below
+				# the ground (the cell-centre height differs from the local height).
+				var dp: Vector3 = d["pos"]
+				var tf := Transform3D(Basis(Vector3.UP, d["yaw"]),
+					Vector3(dp.x, TerrainSurfaceField.surface_y(region, dp.x, dp.z), dp.z))
+				if not by_scene.has(path):
+					by_scene[path] = []
+				by_scene[path].append(tf)
+	return by_scene
+
 func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	_ensure_skirt_style()
 	# Region centred on the chunk; radius covers the chunk plus a neighbour ring for ramps.
@@ -205,25 +235,12 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	# Decorations: scatter foliage on non-water land cells
 	var deco := Node3D.new()
 	deco.name = "Decorations"
-	for cz in range(chunk.y * CELLS_PER_CHUNK, chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
-		for cx in range(chunk.x * CELLS_PER_CHUNK, chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
-			var wc := Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
-			if Helper.is_water(wc, _water_seed):
-				continue
-			var sy := TerrainSurfaceField.surface_y(region, wc.x, wc.z)
-			for d: Dictionary in DecorationScatter.cell_decorations(Vector2i(cx, cz), _water_seed, sy):
-				var variants: Array = FOLIAGE_SCENES.get(d["tag"], [])
-				if variants.is_empty():
-					continue
-				var pick: int = int(d["yaw"] / TAU * variants.size()) % variants.size()
-				var inst: Node3D = (load(variants[pick]) as PackedScene).instantiate()
-				# Sit each decoration on the surface at ITS OWN jittered position, not the
-				# cell centre — otherwise decorations on a slope float above / sink below
-				# the ground (the cell-centre height differs from the local height).
-				var dp: Vector3 = d["pos"]
-				inst.position = Vector3(dp.x, TerrainSurfaceField.surface_y(region, dp.x, dp.z), dp.z)
-				inst.rotation.y = d["yaw"]
-				deco.add_child(inst)
+	var by_scene := compute_decorations(region, chunk)
+	for path in by_scene:
+		for tf: Transform3D in by_scene[path]:
+			var inst: Node3D = (load(path) as PackedScene).instantiate()
+			inst.transform = tf
+			deco.add_child(inst)
 	root.add_child(deco)
 
 	# KayKit cliff dressing: real rock wall + grass-lip pieces on the cliff edges.

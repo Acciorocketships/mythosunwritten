@@ -815,3 +815,23 @@ func test_collision_sheet_faces_cover_full_grid():
 	assert_almost_eq(faces[0].y, expect, 0.001, "collision tracks the pinned surface")
 	node.free()
 
+# compute_decorations returns the pure placement data (scene path ->
+# Array[Transform3D]); deterministic and water-gated like the old inline loop.
+func test_compute_decorations_deterministic_and_grounded():
+	var p := HeightfieldPlan.new(4242, 40.0, 8, "mean")
+	var m := TerrainChunkMesher.new()
+	var region = p.compute_region(4, 4, 8)
+	var a: Dictionary = m.compute_decorations(region, Vector2i(0, 0))
+	var b: Dictionary = m.compute_decorations(region, Vector2i(0, 0))
+	assert_eq(a.keys(), b.keys(), "deterministic scene set")
+	var n := 0
+	for path in a:
+		assert_eq(a[path].size(), b[path].size(), "deterministic counts for %s" % path)
+		for i in a[path].size():
+			var tf: Transform3D = a[path][i]
+			assert_almost_eq(tf.origin.y,
+				TerrainSurfaceField.surface_y(region, tf.origin.x, tf.origin.z), 0.001,
+				"decoration sits on the surface")
+			n += 1
+	assert_gt(n, 0, "chunk (0,0) at this seed scatters at least one decoration")
+
