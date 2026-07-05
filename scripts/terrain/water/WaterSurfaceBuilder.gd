@@ -124,9 +124,14 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 			var level: float = -INF
 			var flow: Vector2 = Vector2.ZERO
 			var steep: float = 0.0
+			# Inside a pond footprint the POND owns the water level: a river's
+			# higher upstream profile leaking in via nearest-sample lookup
+			# painted raised rectangular sheets hovering over lakes.
+			var pond_level: float = -INF
 			for pond in bodies.ponds:
 				if pond.footprint_t(p) < 1.0:
-					level = maxf(level, pond.surface_y())
+					pond_level = maxf(pond_level, pond.surface_y())
+			level = pond_level
 			for r in bodies.rivers.size():
 				var river: RiverTrace = bodies.rivers[r]
 				var reach: float = WaterPlan.W_MAX + WaterPlan.FEATHER + CHANNEL_MARGIN
@@ -150,6 +155,11 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 				var infl_best: float = river.widths[best_j] + WaterPlan.FEATHER + CHANNEL_MARGIN if best_j >= 0 else 0.0
 				if best_j >= 0 and best_d <= infl_best:
 					var lv: float = profs[r][best_j]
+					# Rivers may not RAISE the level inside a pond footprint —
+					# the pond owns its surface (backwater already flattens the
+					# profile to the pond level at the mouth).
+					if pond_level > -INF:
+						lv = minf(lv, pond_level)
 					if lv > level:
 						level = lv
 						steep = steeps[r][best_j]

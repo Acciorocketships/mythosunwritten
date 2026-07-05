@@ -191,3 +191,32 @@ func test_wet_cells_are_anchored_no_floating_tiles() -> void:
 		var deep: bool = field[cell].ground < field[cell].level - WaterSurfaceBuilder.FLOOD_MIN_DEPTH
 		assert_true(carved or deep,
 			"wet cell %s is anchored (carved or >1m deep), not a floating tile" % cell)
+
+func test_pond_owns_its_surface_level() -> void:
+	# Regression: a river's higher upstream profile leaked into pond
+	# footprints via nearest-sample lookup, hovering raised sheets over lakes.
+	var plan: WaterPlan = _water()
+	var river: RiverTrace = null
+	for sz in range(-4, 5):
+		for sx in range(-4, 5):
+			var t: RiverTrace = plan.river_for(Vector2i(sx, sz))
+			if t != null and t.pond != null:
+				river = t
+				break
+		if river != null:
+			break
+	if river == null:
+		pass_test("no ponded river on this seed window")
+		return
+	var pond: PondStamp = river.pond
+	var cc: Vector2i = Vector2i(roundi(pond.center.x / 24.0), roundi(pond.center.y / 24.0))
+	var chunk: Vector2i = Vector2i(int(floor(pond.center.x / 192.0)), int(floor(pond.center.y / 192.0)))
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk)
+	var checked: int = 0
+	for cell in field:
+		var p: Vector2 = Vector2(cell.x * 24.0, cell.y * 24.0)
+		if pond.footprint_t(p) < 0.9:
+			checked += 1
+			assert_true(field[cell].level <= pond.surface_y() + 0.001,
+				"cell %s inside the pond never exceeds the pond level" % cell)
+	assert_true(checked > 0, "pond chunk has in-footprint cells")
