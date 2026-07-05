@@ -170,11 +170,17 @@ func _process(_delta: float) -> void:
 func _exit_tree() -> void:
 	if not _thread.is_started():
 		return
+	# Stop queuing work at a dead worker: after this point _process must not run.
+	set_process(false)
 	_mutex.lock()
 	_exit = true
 	_mutex.unlock()
 	_sem.post()
 	_thread.wait_to_finish()
 	for pair in _done:
-		pair[1].free()   # never entered the tree
+		# is_instance_valid guards the "freed exactly once" invariant: these nodes
+		# never entered the tree, so freeing them here is correct — the guard just
+		# keeps it robust if a future edit ever lets one also reach _built.
+		if is_instance_valid(pair[1]):
+			pair[1].free()
 	_done.clear()
