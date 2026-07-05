@@ -1,0 +1,5 @@
+[
+	{"name": "FIXED: missing water tile + curved banks (seed 2697992464)", "pos": [-201.1, 8.0, -252.1], "look": [-215.0, -230.0]},
+	{"name": "KNOWN OPEN: collinear step-down corner — next pass (seed 2697992464)", "pos": [-563.0, 8.0, -468.6], "look": [-553.0, -460.0]},
+	{"name": "river flow speed + hillside headwaters: follow this shore (seed 2697992464)", "pos": [-201.1, 8.0, -252.1], "look": [-180.0, -280.0]}
+]
