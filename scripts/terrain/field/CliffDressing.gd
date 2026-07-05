@@ -120,6 +120,13 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 		return 0
 	var sa := int(region.storey_at(cx + ca.x, cz + ca.y))
 	var sb := int(region.storey_at(cx + cb.x, cz + cb.y))
+	# X-JUNCTION guard: when the diagonal cell is lower than BOTH arms, the two
+	# plateaus touch only at the corner POINT — there is no concave pocket to
+	# round, and inner pieces here bridge the gap as floating plates (owner:
+	# "two cliff tiles touching just by a corner ... inner corner tiles need
+	# to be removed"). Each plateau's own outer corner dresses its point.
+	if int(region.storey_at(cx + cdir.x, cz + cdir.y)) < mini(sa, sb):
+		return 0
 	if sa != sb:
 		var ct := ca if sa > sb else cb   # the taller arm
 		var cl := cb if sa > sb else ca   # the lower arm

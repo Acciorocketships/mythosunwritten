@@ -27,6 +27,12 @@ const SHELF_DEPTH := 4.5              # flood only spreads over shelves this sha
 const CHANNEL_MARGIN := 4.0
 const FLOOD_STEPS := 2                # submerged-shelf flood distance (cells)
 const FIELD_MARGIN := 3               # region margin = FLOOD_STEPS + rim ring
+# Corners only average adjacent cells within this of the cell's own level:
+# bigger jumps SPLIT the sheet (two clean edges at the cliff the wall hides)
+# instead of bridging them with giant slanted curtain quads ("water coming
+# out of the wall", stray polygons on hillsides). Under a storey, so normal
+# sloping reaches stay watertight.
+const BRIDGE_MAX := 2.5
 const VOLUME_STRIDE := 4              # river swim-box every N samples
 const WATER_LAYER := 1 << 7
 
@@ -138,13 +144,17 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 					if d < infl and j < river.points.size() - 1:
 						var w: float = 1.0 - d / infl
 						flow_acc += (river.points[j + 1] - river.points[j]).normalized() * w * w
-				if best_j >= 0 and best_d <= river.widths[best_j] + WaterPlan.FEATHER + CHANNEL_MARGIN:
+				var infl_best: float = river.widths[best_j] + WaterPlan.FEATHER + CHANNEL_MARGIN if best_j >= 0 else 0.0
+				if best_j >= 0 and best_d <= infl_best:
 					var lv: float = profs[r][best_j]
 					if lv > level:
 						level = lv
 						steep = steeps[r][best_j]
 						if flow_acc.length_squared() > 0.000001:
-							flow = flow_acc.normalized()
+							# Flow fades to ZERO at the channel edge — no flux
+							# into or out of the banks; wide pools read still.
+							var edge_t: float = clampf(1.5 * (1.0 - best_d / infl_best), 0.0, 1.0)
+							flow = flow_acc.normalized() * edge_t
 			if level == -INF:
 				continue
 			ground[cell] = ground_estimate(water, cell.x, cell.y)
@@ -175,8 +185,9 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 				if ground[nb] < lv - WET_EPS and ground[nb] > lv - SHELF_DEPTH:
 					if field.has(nb):
 						lv = maxf(lv, field[nb].level)
+					# Flooded shelves are pool water: still (zero flow).
 					grew.append([nb, {
-						"level": lv, "flow": field[cell].flow,
+						"level": lv, "flow": Vector2.ZERO,
 						"steep": field[cell].steep, "wet": true,
 					}])
 		for g in grew:
@@ -202,8 +213,10 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 				continue   # a drop-off, not a bank
 			var prev = rims.get(nb)
 			if prev == null or field[cell].level > prev.level:
+				# Rim overshoot dives into the bank: still water (zero flow —
+				# flux through the shoreline must be zero).
 				rims[nb] = {
-					"level": field[cell].level, "flow": field[cell].flow,
+					"level": field[cell].level, "flow": Vector2.ZERO,
 					"steep": field[cell].steep, "wet": false,
 				}
 	for nb in rims:
@@ -245,20 +258,17 @@ func build_chunk(water: WaterPlan, chunk: Vector2i) -> Node3D:
 	var lo_cx: int = chunk.x * CELLS_PER_CHUNK
 	var lo_cz: int = chunk.y * CELLS_PER_CHUNK
 
-	# Shared corner heights/attributes: average level + flow, max steepness of
-	# the included cells around each corner — a watertight sheet that slopes
-	# smoothly along rivers and stays dead flat on lakes.
-	var corner_level: Dictionary = {}
-	var corner_flow: Dictionary = {}
-	var corner_steep: Dictionary = {}
-	var corner_count: Dictionary = {}
+	# Corner adjacency: which included cells surround each grid corner. Each
+	# cell's quad averages only the adjacent cells within BRIDGE_MAX of its
+	# OWN level — watertight along smoothly-sloping reaches and flat lakes,
+	# deliberately SPLIT at storey cascades (no giant bridging curtains).
+	var corner_cells: Dictionary = {}
 	for cell in field:
 		for off in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
 			var k: Vector2i = cell + off
-			corner_level[k] = corner_level.get(k, 0.0) + field[cell].level
-			corner_flow[k] = corner_flow.get(k, Vector2.ZERO) + field[cell].flow
-			corner_steep[k] = maxf(corner_steep.get(k, 0.0), field[cell].steep)
-			corner_count[k] = corner_count.get(k, 0) + 1
+			if not corner_cells.has(k):
+				corner_cells[k] = []
+			corner_cells[k].append(field[cell])
 
 	var st: SurfaceTool = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -268,7 +278,7 @@ func build_chunk(water: WaterPlan, chunk: Vector2i) -> Node3D:
 		if cell.x < lo_cx or cell.x >= lo_cx + CELLS_PER_CHUNK \
 				or cell.y < lo_cz or cell.y >= lo_cz + CELLS_PER_CHUNK:
 			continue   # margin cells only shape shared corners
-		_sheet_quad(st, cell, corner_level, corner_flow, corner_steep, corner_count)
+		_sheet_quad(st, cell, field[cell].level, corner_cells)
 		quads += 1
 	if quads == 0:
 		return null
@@ -285,22 +295,32 @@ func build_chunk(water: WaterPlan, chunk: Vector2i) -> Node3D:
 	return root
 
 
-## One cell of the sheet: two triangles over the cell footprint with shared
-## corner heights (wound so generate_normals() yields +Y).
-func _sheet_quad(st: SurfaceTool, cell: Vector2i, corner_level: Dictionary,
-		corner_flow: Dictionary, corner_steep: Dictionary, corner_count: Dictionary) -> void:
+## One cell of the sheet: two triangles over the cell footprint. Corner
+## heights average the adjacent cells within BRIDGE_MAX of this cell's own
+## level (the cell itself always qualifies), wound so normals face +Y.
+func _sheet_quad(st: SurfaceTool, cell: Vector2i, own_level: float, corner_cells: Dictionary) -> void:
 	var keys: Array = [
 		cell, cell + Vector2i(1, 0), cell + Vector2i(1, 1), cell + Vector2i(0, 1),
 	]   # min corner, +x, +xz, +z — walk order around the quad
 	var pos: Array = []
 	var cust: Array = []
 	for k in keys:
-		var cnt: float = float(corner_count[k])
-		var lvl: float = corner_level[k] / cnt
-		var fl: Vector2 = corner_flow[k] / cnt
+		var lvl_sum: float = 0.0
+		var fl: Vector2 = Vector2.ZERO
+		var stp: float = 0.0
+		var cnt: int = 0
+		for e in corner_cells[k]:
+			if absf(e.level - own_level) > BRIDGE_MAX:
+				continue
+			lvl_sum += e.level
+			fl += e.flow
+			stp = maxf(stp, e.steep)
+			cnt += 1
+		var lvl: float = lvl_sum / float(cnt)
+		fl /= float(cnt)
 		pos.append(Vector3(
 			(float(k.x) - 0.5) * TILE, lvl, (float(k.y) - 0.5) * TILE))
-		cust.append(Color(fl.x, 0.0, fl.y, corner_steep[k]))
+		cust.append(Color(fl.x, 0.0, fl.y, stp))
 	# triangles (0,3,2) and (0,2,1) face +Y
 	for idx in [0, 3, 2, 0, 2, 1]:
 		st.set_custom(0, cust[idx])

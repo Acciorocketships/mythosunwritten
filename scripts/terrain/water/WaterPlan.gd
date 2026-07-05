@@ -51,6 +51,10 @@ const POND_R_MIN := 60.0
 const POND_R_MAX := 140.0
 const POND_DEPTH := 3.5
 const FLAT_EPS := 0.012           # |grad| (m/m) below which a basin ends the trace
+# Basins/lowlands may only end a river after this many steps (~1.4 km): flat
+# ground keeps the trace meandering (bed simply stays level), so rivers are
+# LONG winding channels, not short chutes into the first hollow.
+const MIN_STEPS := 120
 const LOWLANDS01 := 0.08          # smooth height01 floor => terminal pond
 const SPAWN_WATER_RADIUS := 200.0 # dry spawn disk (spawn clear 60+120 + margin)
 const JOIN_DEPTH := 2             # junction dependency recursion cap
@@ -202,10 +206,10 @@ func _trace(sc: Vector2i, depth: int) -> RiverTrace:
 			t.joined = true
 			return t
 		var g: Vector2 = grad(p)
-		if i > 4 and g.length() < FLAT_EPS:
-			break                                   # basin floor
-		if smooth01(p) < LOWLANDS01:
-			break                                   # reached the lowlands
+		if i >= MIN_STEPS and g.length() < FLAT_EPS:
+			break                                   # basin floor (late only)
+		if i >= MIN_STEPS and smooth01(p) < LOWLANDS01:
+			break                                   # lowlands (late only)
 		var down: Vector2 = (-g).normalized() if g.length() > 0.000001 else dir
 		dir = (dir * MOMENTUM + down * (1.0 - MOMENTUM)).normalized()
 		var m01: float = Helper._value_noise01(
