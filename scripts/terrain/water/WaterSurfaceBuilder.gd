@@ -21,7 +21,10 @@ const FLOOR_CLEARANCE := 0.8          # river surface above the QUANTIZED floor 
 const STEEP_RISE := 5.0               # bed drop per sample that reads as rapids=1
 const WET_EPS := 0.15                 # ground this far under the level counts as wet
 const SHELF_DEPTH := 4.5              # flood only spreads over shelves this shallow
-const CHANNEL_MARGIN := TILE * 0.75   # river level reaches this far past the carve width
+# River level reaches only a hair past the CARVE width: the carve guarantees
+# those cells sit at the bed. A generous margin painted the river's level onto
+# terrain dips beyond the channel — water sheets embedded in hillsides.
+const CHANNEL_MARGIN := 4.0
 const FLOOD_STEPS := 2                # submerged-shelf flood distance (cells)
 const FIELD_MARGIN := 3               # region margin = FLOOD_STEPS + rim ring
 const VOLUME_STRIDE := 4              # river swim-box every N samples
@@ -122,20 +125,26 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 					continue
 				var best_j: int = -1
 				var best_d: float = INF
+				# Flow is the DISTANCE-WEIGHTED average tangent of every sample
+				# in reach — the nearest-sample tangent alone flips between
+				# adjacent reaches at bends, making water run bank-to-bank.
+				var flow_acc: Vector2 = Vector2.ZERO
 				for j in river.points.size():
 					var d: float = p.distance_to(river.points[j])
 					if d < best_d:
 						best_d = d
 						best_j = j
+					var infl: float = river.widths[j] + WaterPlan.FEATHER + CHANNEL_MARGIN
+					if d < infl and j < river.points.size() - 1:
+						var w: float = 1.0 - d / infl
+						flow_acc += (river.points[j + 1] - river.points[j]).normalized() * w * w
 				if best_j >= 0 and best_d <= river.widths[best_j] + WaterPlan.FEATHER + CHANNEL_MARGIN:
 					var lv: float = profs[r][best_j]
 					if lv > level:
 						level = lv
 						steep = steeps[r][best_j]
-						var j1: int = maxi(best_j - 1, 0)
-						var j2: int = mini(best_j + 1, river.points.size() - 1)
-						if j2 > j1:
-							flow = (river.points[j2] - river.points[j1]).normalized()
+						if flow_acc.length_squared() > 0.000001:
+							flow = flow_acc.normalized()
 			if level == -INF:
 				continue
 			ground[cell] = ground_estimate(water, cell.x, cell.y)

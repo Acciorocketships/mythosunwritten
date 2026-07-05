@@ -17,13 +17,22 @@ const SOURCE_MIN01 := 0.55        # smooth height01 floor for a source
 const SOURCE_PROB := 0.6          # fraction of qualifying super-cells that fire
 const TRACE_STEP := 12.0
 const MAX_STEPS := 220            # hard bound => max length 2640 u
-const MOMENTUM := 0.65
-const MEANDER_AMP := 0.6          # radians of curve wobble (~35°)
-const MEANDER_SCALE := 90.0       # along-arc metres per meander noise cell
+# Gentle, long-wavelength snaking. Amplitude/wavelength must stay small
+# relative to channel width or the trace switchbacks over itself: overlapping
+# reaches read as blobs, the sliver between passes stays uncarved (ground
+# protruding mid-river), and per-cell flow flips between reaches.
+const MOMENTUM := 0.75
+const MEANDER_AMP := 0.35         # radians of curve wobble (~20°)
+const MEANDER_SCALE := 150.0      # along-arc metres per meander noise cell
+const SELF_AVOID_R := 60.0        # steer away from own path within this range
+const SELF_AVOID := 0.5           # strength of the self-repulsion blend
+const SELF_AVOID_SKIP := 8        # ignore this many most-recent samples
 const GRAD_EPS := 6.0             # finite-difference step for the gradient
 const SENSE_RADIUS := 96.0        # junction steering bias range
 const STEER := 0.35               # max blend toward sensed water
-const W_MIN := 6.0                # ribbon half-width at the source
+# Min half-width covers the adjacent cell CENTRE (w + FEATHER > 17u), or
+# upstream reaches leave uncarved cells jutting into the channel.
+const W_MIN := 9.0
 const W_MAX := 16.0               # ... at max length
 # Bed below the smooth terrain. MUST exceed one 4m storey + quantization
 # slack (±2m), or the channel vanishes in storey rounding: floor and banks
@@ -36,7 +45,7 @@ const BED_MIN := -1.0
 # partial-carve band can't dither cells across the storey-rounding threshold
 # (alternating poke/submerge plates along the channel edges).
 const FEATHER := 8.0
-const SOURCE_POOL_R := 36.0
+const SOURCE_POOL_R := 52.0       # big enough to read as a flat spring pond
 const POOL_DEPTH := 2.5
 const POND_R_MIN := 60.0
 const POND_R_MAX := 140.0
@@ -202,6 +211,16 @@ func _trace(sc: Vector2i, depth: int) -> RiverTrace:
 		var m01: float = Helper._value_noise01(
 			Vector3(arc, 0.0, meander_offset), world_seed + 71, MEANDER_SCALE)
 		dir = dir.rotated((m01 - 0.5) * 2.0 * MEANDER_AMP)
+		# Self-avoidance: repel from the river's own OLDER samples so meanders
+		# never fold back onto an earlier reach (overlapping channels left
+		# uncarved slivers mid-river and flipped per-cell flow directions).
+		var rep: Vector2 = Vector2.ZERO
+		for k in range(0, t.points.size() - SELF_AVOID_SKIP):
+			var sd: float = p.distance_to(t.points[k])
+			if sd < SELF_AVOID_R:
+				rep += (p - t.points[k]) / maxf(sd, 1.0)
+		if rep.length_squared() > 0.000001:
+			dir = (dir + rep.normalized() * SELF_AVOID).normalized()
 		dir = _steer(dir, p, others)
 		var q: Vector2 = p + dir * TRACE_STEP
 		if q.length() < SPAWN_WATER_RADIUS:

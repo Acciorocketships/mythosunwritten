@@ -14,14 +14,24 @@ uniform vec4 drop_a = vec4(-1.0, -1.0, 0.0, 0.01);
 uniform vec4 drop_b = vec4(-1.0, -1.0, 0.0, 0.01);
 uniform vec4 drop_c = vec4(-1.0, -1.0, 0.0, 0.01);
 
+// Out-of-domain reads return REST STATE: after a domain shift, border texels
+// would otherwise clamp-sample the old edge and drag it inward as long
+// straight axis-aligned wavefronts whenever the player moves.
+vec2 state_at(sampler2D tex, vec2 uv) {
+	if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
+		return vec2(0.0);
+	}
+	return texture(tex, uv).rg - vec2(0.5);
+}
+
 void fragment() {
 	vec2 px = 1.0 / tex_size;
 	vec2 uv = UV + shift_texels * px;
-	vec2 hv = texture(prev_tex, uv).rg - vec2(0.5);
-	float lap = (texture(prev_tex, uv + vec2(px.x, 0.0)).r - 0.5)
-		+ (texture(prev_tex, uv - vec2(px.x, 0.0)).r - 0.5)
-		+ (texture(prev_tex, uv + vec2(0.0, px.y)).r - 0.5)
-		+ (texture(prev_tex, uv - vec2(0.0, px.y)).r - 0.5)
+	vec2 hv = state_at(prev_tex, uv);
+	float lap = state_at(prev_tex, uv + vec2(px.x, 0.0)).x
+		+ state_at(prev_tex, uv - vec2(px.x, 0.0)).x
+		+ state_at(prev_tex, uv + vec2(0.0, px.y)).x
+		+ state_at(prev_tex, uv - vec2(0.0, px.y)).x
 		- 4.0 * hv.x;
 	float v = (hv.y + wave_c * lap) * damping;
 	float h = (hv.x + v) * damping;
