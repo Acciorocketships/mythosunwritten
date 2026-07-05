@@ -411,4 +411,13 @@ func compute_region(center_cx: int, center_cz: int, radius: int, target_cache: D
 			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
 
 	var levels: Dictionary = _clamp_levels(l0, storeys)
-	return HeightfieldRegion.new(storeys, levels)
+	# Mark water-carved cells so the surface field can wall dry banks against
+	# them (crisp dressed shorelines instead of bare ramps into the water).
+	var carved: Dictionary = {}
+	if _water_plan != null:
+		for dz in range(-level_r, level_r + 1):
+			for dx in range(-level_r, level_r + 1):
+				var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
+				if _water_plan.carve_at_cell(cell.x, cell.y) > 0.05:
+					carved[cell] = true
+	return HeightfieldRegion.new(storeys, levels, carved)

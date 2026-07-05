@@ -33,8 +33,16 @@ const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(
 # to meet the flat cliff top — see surface_y.
 static func _is_cliff_top(region, cx: int, cz: int) -> bool:
 	var s: int = region.storey_at(cx, cz)
+	var dry_bank: bool = region.has_method("is_carved") and not region.is_carved(cx, cz)
 	for d in (_CARDINALS + _DIAGONALS):
-		if s - int(region.storey_at(cx + d.x, cz + d.y)) >= 2:
+		var nb_s: int = int(region.storey_at(cx + d.x, cz + d.y))
+		if s - nb_s >= 2:
+			return true
+		# A DRY cell overlooking a water-CARVED cell walls even a 1-storey
+		# drop: shorelines read as crisp dressed banks, not bare ramps dipping
+		# into the water (the shingle plates / extraneous-corner mess around
+		# carved channels). Inert without a water plan (carved map empty).
+		if s - nb_s >= 1 and dry_bank and region.is_carved(cx + d.x, cz + d.y):
 			return true
 	return false
 
