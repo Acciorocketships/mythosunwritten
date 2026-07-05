@@ -33,6 +33,36 @@ const FOLIAGE_SCENES := {
 	"tree": ["res://terrain/scenes/tree/Tree1.tscn", "res://terrain/scenes/tree/Tree2.tscn"],
 }
 
+# scene path -> Array of [mesh: Mesh, local_xform: Transform3D], one entry per
+# MeshInstance3D inside the foliage scene (KayKit gltf wrappers are visual-only:
+# no collision, no scripts — verified before batching them; if a future foliage
+# scene needs behaviour, it must not go through the MultiMesh path).
+static var _foliage_piece_cache: Dictionary = {}
+
+static func _foliage_pieces(path: String) -> Array:
+	var got = _foliage_piece_cache.get(path)
+	if got != null:
+		return got
+	var inst := (load(path) as PackedScene).instantiate()
+	var out: Array = []
+	var stack: Array = [inst]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for c in n.get_children():
+			stack.append(c)
+		var mi := n as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var xf := Transform3D.IDENTITY
+		var walk: Node = mi
+		while walk != null and walk != inst:
+			xf = (walk as Node3D).transform * xf
+			walk = walk.get_parent()
+		out.append([mi.mesh, xf])
+	inst.free()
+	_foliage_piece_cache[path] = out
+	return out
+
 var _material: Material = load("res://terrain/materials/ground.tres")
 var _grass_uv: Vector2 = SlopeAtlas.grass_uv()
 var _cliff_uv: Vector2 = SlopeAtlas.cliff_uv()
@@ -232,15 +262,25 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	# (owner's screenshot). The global WaterSurface scene is the water visual; Helper.is_water
 	# still gates decorations below.
 
-	# Decorations: scatter foliage on non-water land cells
+	# Decorations: foliage batched into one MultiMesh per (scene, mesh piece) —
+	# same pattern as CliffDressing. ~50 scene instantiations per chunk became
+	# a handful of MultiMeshes: fewer nodes, fewer draw calls, cheap eviction.
 	var deco := Node3D.new()
 	deco.name = "Decorations"
 	var by_scene := compute_decorations(region, chunk)
 	for path in by_scene:
-		for tf: Transform3D in by_scene[path]:
-			var inst: Node3D = (load(path) as PackedScene).instantiate()
-			inst.transform = tf
-			deco.add_child(inst)
+		var tfs: Array = by_scene[path]
+		for piece in _foliage_pieces(path):
+			var mm := MultiMesh.new()
+			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.mesh = piece[0]
+			mm.instance_count = tfs.size()
+			for i in tfs.size():
+				mm.set_instance_transform(i, tfs[i] * piece[1])
+			var mmi := MultiMeshInstance3D.new()
+			mmi.name = "%s_%d" % [String(path).get_file().get_basename(), deco.get_child_count()]
+			mmi.multimesh = mm
+			deco.add_child(mmi)
 	root.add_child(deco)
 
 	# KayKit cliff dressing: real rock wall + grass-lip pieces on the cliff edges.

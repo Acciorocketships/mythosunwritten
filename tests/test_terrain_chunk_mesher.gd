@@ -835,3 +835,23 @@ func test_compute_decorations_deterministic_and_grounded():
 			n += 1
 	assert_gt(n, 0, "chunk (0,0) at this seed scatters at least one decoration")
 
+# Decorations batch into one MultiMesh per (scene, mesh piece) — instance
+# counts must add up to placements x pieces-per-scene.
+func test_decorations_batch_into_multimeshes():
+	var p := HeightfieldPlan.new(4242, 40.0, 8, "mean")
+	var m := TerrainChunkMesher.new()
+	var region = p.compute_region(4, 4, 8)
+	var by_scene: Dictionary = m.compute_decorations(region, Vector2i(0, 0))
+	var node := m.build_chunk(p, Vector2i(0, 0))
+	var deco := node.find_child("Decorations", true, false)
+	var total := 0
+	for child in deco.get_children():
+		assert_true(child is MultiMeshInstance3D, "decoration child is a MultiMesh batch")
+		total += (child as MultiMeshInstance3D).multimesh.instance_count
+	var expected := 0
+	for path in by_scene:
+		expected += by_scene[path].size() * TerrainChunkMesher._foliage_pieces(path).size()
+	assert_eq(total, expected, "every placement instanced once per mesh piece")
+	assert_gt(total, 0, "chunk has decorations")
+	node.free()
+
