@@ -43,11 +43,10 @@ func _init() -> void:
 	print("[prof] level clamp: %.1f ms" % [float(t4 - t3) / 1000.0])
 	print("[prof] TOTAL: %.1f ms" % [float(t4 - t0) / 1000.0])
 
-	var cache: Dictionary = {}
 	var w0: int = Time.get_ticks_usec()
-	plan.compute_region(100, 100, 8, cache)   # cold: fills cache
+	plan.compute_region(100, 100, 8)   # cold: fills the plan's sample memo
 	var w1: int = Time.get_ticks_usec()
-	plan.compute_region(101, 100, 8, cache)   # warm: shifted one tile, ~98% cache hits
+	plan.compute_region(101, 100, 8)   # warm: shifted one tile, ~98% memo hits
 	var w2: int = Time.get_ticks_usec()
 	print("[prof] compute_region cold: %.1f ms ; warm (shifted 1 tile): %.1f ms" % [float(w1 - w0) / 1000.0, float(w2 - w1) / 1000.0])
 	quit()

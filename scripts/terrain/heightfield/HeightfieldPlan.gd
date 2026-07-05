@@ -34,6 +34,34 @@ var _raw_override: Callable = Callable()
 # class-resolution cycle; duck-typed: needs carve_at_cell(cx, cz) -> float).
 var _water_plan = null
 
+# Per-cell sample memo: Vector2i(cx,cz) -> [height_after_carve: float, carve: float].
+# Purely a performance cache — raw_height is a pure function of (seed, cell) —
+# persisted across compute_region calls so the ~77%-overlapping windows of
+# neighbouring chunks are sampled once. The raw carve amount is cached too so
+# compute_region can apply the water threshold without a third carve sweep.
+# Capped so an endless walk can't grow it forever (a full clear is always safe).
+const _SAMPLE_CACHE_MAX := 200_000
+var _samples: Dictionary = {}
+
+
+func _sample(cx: int, cz: int) -> Array:
+	var key := Vector2i(cx, cz)
+	var s = _samples.get(key)
+	if s == null:
+		var h: float
+		if _raw_override.is_valid():
+			h = _raw_override.call(cx, cz)
+		else:
+			h = _height01(Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)) * height_amplitude
+		var carve: float = 0.0
+		if _water_plan != null:
+			carve = _water_plan.carve_at_cell(cx, cz)
+		s = [h - carve, carve]
+		if _samples.size() >= _SAMPLE_CACHE_MAX:
+			_samples.clear()
+		_samples[key] = s
+	return s
+
 
 func _init(
 	p_world_seed: int,
@@ -58,6 +86,7 @@ func _init(
 ## Replace the noise source with a synthetic field for tests. fn(cx, cz) -> float.
 func set_raw_height_override(fn: Callable) -> void:
 	_raw_override = fn
+	_samples.clear()
 
 
 ## Attach the water network: raw_height subtracts its carve BEFORE storey
@@ -65,19 +94,12 @@ func set_raw_height_override(fn: Callable) -> void:
 ## clamp + surface-field machinery with no downstream changes.
 func set_water_plan(p_water_plan) -> void:
 	_water_plan = p_water_plan
+	_samples.clear()
 
 
-## Continuous height (metres) at a tile cell, after the water carve.
+## Continuous height (metres) at a tile cell, after the water carve. Memoized.
 func raw_height(cx: int, cz: int) -> float:
-	var h: float
-	if _raw_override.is_valid():
-		h = _raw_override.call(cx, cz)
-	else:
-		var pos: Vector3 = Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
-		h = _height01(pos) * height_amplitude
-	if _water_plan != null:
-		h -= _water_plan.carve_at_cell(cx, cz)
-	return h
+	return _sample(cx, cz)[0]
 
 
 ## Layered terrain height in [0, 1]: broad landforms + rolling hills + fine
@@ -373,12 +395,12 @@ static func _cliff_distance_field(storeys: Dictionary, max_r: int) -> Dictionary
 	return dist
 
 
-## Batched region computation (storey clamp + level clamp once). `target_cache`,
-## if provided, persists quantized storey targets across calls so the ~98%-
-## overlapping window of a moving player is not re-sampled (the noise step
-## dominates). Cliff distances use one BFS field. Returns values equal to the
-## per-cell reference.
-func compute_region(center_cx: int, center_cz: int, radius: int, target_cache: Dictionary = {}) -> HeightfieldRegion:
+## Batched region computation (storey clamp + level clamp once). All noise /
+## water sampling goes through the per-cell _sample memo, so the overlapping
+## windows of successive chunk builds are sampled once per cell per session.
+## Cliff distances use one BFS field. Returns values equal to the per-cell
+## reference.
+func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldRegion:
 	var place_r: int = radius + 1
 	var level_r: int = place_r + LEVELS_PER_STOREY
 	var storey_final_r: int = level_r + _CLIFF_SEARCH_MAX
@@ -388,40 +410,32 @@ func compute_region(center_cx: int, center_cz: int, radius: int, target_cache: D
 	for dz in range(-storey_outer, storey_outer + 1):
 		for dx in range(-storey_outer, storey_outer + 1):
 			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
-			var q: int
-			if target_cache.has(cell):
-				q = target_cache[cell]
-			else:
-				q = quantize_storey(raw_height(cell.x, cell.y))
-				target_cache[cell] = q
-			targets[cell] = q
+			targets[cell] = quantize_storey(_sample(cell.x, cell.y)[0])
 	var storeys: Dictionary = clamp_field(targets, max_step)
 
 	var cliff_field: Dictionary = _cliff_distance_field(storeys, _CLIFF_SEARCH_MAX)
 	var l0: Dictionary = {}
+	# Mark WATER cells (carved down toward the bed) so the surface field can wall
+	# dry banks against them. The threshold matters: the carve FEATHER grazes bank
+	# cells by a metre or two, and flagging those as water disqualified them from
+	# the bank-wall rule — leaving bare, undressed ledges right at shorelines
+	# (owner's collinear step-down notch). Only a near-bed carve (most of a storey)
+	# makes a cell "water". Folded into the level loop so the memoized carve amount
+	# is reused rather than re-sampled in a third pass.
+	var carved: Dictionary = {}
 	for dz in range(-level_r, level_r + 1):
 		for dx in range(-level_r, level_r + 1):
 			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
 			var s: int = int(storeys[cell])
-			var residual: float = raw_height(cell.x, cell.y) - float(s) * STOREY_HEIGHT
+			var smp: Array = _sample(cell.x, cell.y)
+			var residual: float = smp[0] - float(s) * STOREY_HEIGHT
 			var detail: int = clampi(_round_mode(residual / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
 			var cliff_cap: int = int(cliff_field.get(cell, _NO_CLIFF)) - 1
 			if _has_diagonal_cliff(storeys, cell):
 				cliff_cap = 0
 			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
+			if smp[1] > 3.0:
+				carved[cell] = true
 
 	var levels: Dictionary = _clamp_levels(l0, storeys)
-	# Mark WATER cells (carved down toward the bed) so the surface field can
-	# wall dry banks against them. The threshold matters: the carve FEATHER
-	# grazes bank cells by a metre or two, and flagging those as water
-	# disqualified them from the bank-wall rule — leaving bare, undressed
-	# ledges right at shorelines (owner's collinear step-down notch). Only a
-	# near-bed carve (most of a storey) makes a cell "water".
-	var carved: Dictionary = {}
-	if _water_plan != null:
-		for dz in range(-level_r, level_r + 1):
-			for dx in range(-level_r, level_r + 1):
-				var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
-				if _water_plan.carve_at_cell(cell.x, cell.y) > 3.0:
-					carved[cell] = true
 	return HeightfieldRegion.new(storeys, levels, carved)

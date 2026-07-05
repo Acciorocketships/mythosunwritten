@@ -438,3 +438,31 @@ func test_water_plan_carve_lowers_raw_height() -> void:
 		"carve lowers the raw field where water lives")
 	assert_almost_eq(wet.raw_height(0, 0), dry.raw_height(0, 0), 0.0001,
 		"spawn cell untouched")
+
+
+# ------------------------------------------------------------
+# Per-cell sample memo (performance-only; must not change results)
+# ------------------------------------------------------------
+
+# The sample memo persists across compute_region calls; a warm plan must give
+# byte-identical regions to a cold one (memo is performance-only).
+func test_sample_memo_consistent_across_overlapping_regions():
+	var warm := HeightfieldPlan.new(4242, 40.0, 8, "mean", 3)
+	warm.compute_region(0, 0, 4)                      # fills the memo
+	var r2: HeightfieldRegion = warm.compute_region(3, 2, 4)   # overlapping window, warm memo
+	var cold := HeightfieldPlan.new(4242, 40.0, 8, "mean", 3)
+	var f2: HeightfieldRegion = cold.compute_region(3, 2, 4)
+	for dz in range(-5, 6):
+		for dx in range(-5, 6):
+			assert_eq(r2.storey_at(3 + dx, 2 + dz), f2.storey_at(3 + dx, 2 + dz),
+				"storey (%d,%d)" % [3 + dx, 2 + dz])
+			assert_eq(r2.level_at(3 + dx, 2 + dz), f2.level_at(3 + dx, 2 + dz),
+				"level (%d,%d)" % [3 + dx, 2 + dz])
+
+# Setting a raw override (or water plan) after sampling must not leak stale
+# memo entries.
+func test_raw_override_invalidates_sample_memo():
+	var p := HeightfieldPlan.new(7, 40.0, 8, "mean")
+	var _warmup := p.raw_height(5, 5)
+	p.set_raw_height_override(func(_cx, _cz): return 12.0)
+	assert_almost_eq(p.raw_height(5, 5), 12.0, 0.0001, "stale memo entry leaked past the override")
