@@ -33,6 +33,9 @@ const FIELD_MARGIN := 3               # region margin = FLOOD_STEPS + rim ring
 # out of the wall", stray polygons on hillsides). Under a storey, so normal
 # sloping reaches stay watertight.
 const BRIDGE_MAX := 2.5
+# Unanchored water (no carve at the cell) must be at least this deep to count
+# as wet — deeper than FLOOR_CLEARANCE, or floor-storey terraces "flood".
+const FLOOD_MIN_DEPTH := 1.0
 const VOLUME_STRIDE := 4              # river swim-box every N samples
 const WATER_LAYER := 1 << 7
 
@@ -158,9 +161,16 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 			if level == -INF:
 				continue
 			ground[cell] = ground_estimate(water, cell.x, cell.y)
+			# ANCHORED water only: a wet cell must be carved (part of the basin/
+			# channel) or genuinely deep. River surfaces ride FLOOR_CLEARANCE
+			# (0.8m) above their floor storey, so every same-storey terrace
+			# nearby is "0.8m submerged" by the level test alone — that painted
+			# floating square water tiles onto dry terraces beside cascades.
+			var anchored: bool = water.carve_at_cell(cell.x, cell.y) > 0.05 \
+				or ground[cell] < level - FLOOD_MIN_DEPTH
 			field[cell] = {
 				"level": level, "flow": flow, "steep": steep,
-				"wet": ground[cell] < level - WET_EPS,
+				"wet": anchored and ground[cell] < level - WET_EPS,
 				"ground": ground[cell],
 			}
 
@@ -183,7 +193,7 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 				# cell just under the level). A floor far below belongs to a
 				# lower reach/body — painting this level over it would hover
 				# a sheet above the drop (the floating plates at cascades).
-				if ground[nb] < lv - WET_EPS and ground[nb] > lv - SHELF_DEPTH:
+				if ground[nb] < lv - FLOOD_MIN_DEPTH and ground[nb] > lv - SHELF_DEPTH:
 					if field.has(nb):
 						lv = maxf(lv, field[nb].level)
 					# Flooded shelves are pool water: still (zero flow).
@@ -225,16 +235,18 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 	for nb in rims:
 		field[nb] = rims[nb]
 
-	# Shore damping: wet cells TOUCHING the shore carry almost no flow — flux
-	# through the waterline is zero by construction, not by radius math (the
-	# lateral fade alone still pushed water visibly into banks on bends).
+	# Shore damping: wet cells TOUCHING the shore slow down; the waterline
+	# vertices themselves reach ZERO via corner-averaging with the rim cells
+	# (which always carry zero flow) — that is the actual no-flux boundary.
+	# Moderate, NOT heavy: narrow channels are entirely shore-adjacent cells,
+	# and heavy damping froze whole rivers still.
 	for cell in field:
 		if not field[cell].wet:
 			continue
 		for d in _CARDINALS_8:
 			var nb: Vector2i = cell + d
 			if not field.has(nb) or not field[nb].wet:
-				field[cell].flow *= 0.15
+				field[cell].flow *= 0.5
 				break
 
 	# Drop influence-only cells that are neither wet nor rim (dry banks whose

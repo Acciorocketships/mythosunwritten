@@ -149,6 +149,44 @@ func test_shore_adjacent_wet_cells_carry_almost_no_flow() -> void:
 				break
 		if at_shore:
 			shore_seen += 1
-			assert_true(field[cell].flow.length() <= 0.2,
-				"shore cell %s flow ~zero (no flux through the waterline)" % cell)
+			assert_true(field[cell].flow.length() <= 0.55,
+				"shore cell %s flow damped (waterline vertices reach zero via rim corners)" % cell)
 	assert_true(shore_seen > 0, "field has shore-adjacent wet cells")
+
+func test_rim_cells_carry_zero_flow() -> void:
+	# The rim IS the no-flux boundary: corner averaging blends these zeros
+	# into the waterline vertices.
+	var plan: WaterPlan = _water()
+	var river: RiverTrace = _a_river(plan)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	for cell in field:
+		if not field[cell].wet:
+			assert_eq(field[cell].flow, Vector2.ZERO, "rim cell %s is still water" % cell)
+
+func test_river_channel_actually_flows() -> void:
+	# Regression: heavy shore damping froze whole narrow rivers (every cell of
+	# a 1-3 cell channel is shore-adjacent). The channel must keep real flow.
+	var plan: WaterPlan = _water()
+	var river: RiverTrace = _a_river(plan)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	var max_flow: float = 0.0
+	for cell in field:
+		if field[cell].wet:
+			max_flow = maxf(max_flow, field[cell].flow.length())
+	assert_true(max_flow >= 0.35,
+		"a river chunk keeps visible flow (max %.2f)" % max_flow)
+
+func test_wet_cells_are_anchored_no_floating_tiles() -> void:
+	# Regression: river surfaces ride 0.8m above their floor storey, so bare
+	# level tests marked same-storey terraces "submerged" — floating square
+	# water tiles on dry land. Every wet cell must be carved or genuinely deep.
+	var plan: WaterPlan = _water()
+	var river: RiverTrace = _a_river(plan)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	for cell in field:
+		if not field[cell].wet:
+			continue
+		var carved: bool = plan.carve_at_cell(cell.x, cell.y) > 0.05
+		var deep: bool = field[cell].ground < field[cell].level - WaterSurfaceBuilder.FLOOD_MIN_DEPTH
+		assert_true(carved or deep,
+			"wet cell %s is anchored (carved or >1m deep), not a floating tile" % cell)
