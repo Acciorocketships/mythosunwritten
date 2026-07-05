@@ -130,3 +130,25 @@ func test_field_wet_cells_sit_below_their_level() -> void:
 		assert_true(WaterSurfaceBuilder.ground_estimate(plan, cell.x, cell.y) < field[cell].level,
 			"wet cell %s ground sits below its water level" % cell)
 	assert_true(wet_seen > 0, "field contains wet cells")
+
+func test_shore_adjacent_wet_cells_carry_almost_no_flow() -> void:
+	var plan: WaterPlan = _water()
+	var river: RiverTrace = _a_river(plan)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	var dirs: Array = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+		Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
+	var shore_seen: int = 0
+	for cell in field:
+		if not field[cell].wet:
+			continue
+		var at_shore: bool = false
+		for d in dirs:
+			var nb: Vector2i = cell + d
+			if not field.has(nb) or not field[nb].wet:
+				at_shore = true
+				break
+		if at_shore:
+			shore_seen += 1
+			assert_true(field[cell].flow.length() <= 0.2,
+				"shore cell %s flow ~zero (no flux through the waterline)" % cell)
+	assert_true(shore_seen > 0, "field has shore-adjacent wet cells")

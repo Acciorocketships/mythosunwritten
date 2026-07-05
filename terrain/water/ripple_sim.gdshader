@@ -13,6 +13,11 @@ uniform float wave_c : hint_range(0.0, 0.6) = 0.28;
 uniform vec4 drop_a = vec4(-1.0, -1.0, 0.0, 0.01);
 uniform vec4 drop_b = vec4(-1.0, -1.0, 0.0, 0.01);
 uniform vec4 drop_c = vec4(-1.0, -1.0, 0.0, 0.01);
+// First frames after startup output pure rest state: the viewport's initial
+// BLACK texture decodes as a -0.5 bias everywhere, and every domain shift
+// against a biased interior spawns a coherent straight wavefront (the long
+// horizontal ripples on player movement).
+uniform bool reset = false;
 
 // Out-of-domain reads return REST STATE: after a domain shift, border texels
 // would otherwise clamp-sample the old edge and drag it inward as long
@@ -25,6 +30,10 @@ vec2 state_at(sampler2D tex, vec2 uv) {
 }
 
 void fragment() {
+	// NOTE: 'return' is not allowed in fragment(); use if/else.
+	if (reset) {
+		COLOR = vec4(0.5, 0.5, 0.0, 1.0);
+	} else {
 	vec2 px = 1.0 / tex_size;
 	vec2 uv = UV + shift_texels * px;
 	vec2 hv = state_at(prev_tex, uv);
@@ -42,9 +51,12 @@ void fragment() {
 			h += drops[i].z * exp(-d * d / max(drops[i].w * drops[i].w, 0.000001));
 		}
 	}
-	// Hold the border at rest so domain shifts never smear rings.
-	float edge = smoothstep(0.0, 0.04, min(min(UV.x, 1.0 - UV.x), min(UV.y, 1.0 - UV.y)));
+	// WIDE rest band at the border: shifted-in rest strips must always abut
+	// near-zero field, or each shift steps a full-width discontinuity that
+	// the wave equation propagates inward as a straight wavefront.
+	float edge = smoothstep(0.0, 0.10, min(min(UV.x, 1.0 - UV.x), min(UV.y, 1.0 - UV.y)));
 	h *= edge;
 	v *= edge;
 	COLOR = vec4(h + 0.5, v + 0.5, 0.0, 1.0);
+	}
 }

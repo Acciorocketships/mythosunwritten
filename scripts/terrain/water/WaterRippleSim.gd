@@ -24,6 +24,7 @@ var _origin: Vector2 = Vector2.ZERO  # world XZ of the texture's (0,0) corner
 var _drop_timer: float = 0.0
 var _ambient_timer: float = 0.0
 var _ambient_n: int = 0
+var _boot: int = 0   # first frames render pure rest state into both buffers
 
 
 func _ready() -> void:
@@ -64,7 +65,12 @@ func _process(delta: float) -> void:
 	var new_origin: Vector2 = _snapped_origin()
 	var mat: ShaderMaterial = _mat[nxt]
 	mat.set_shader_parameter("prev_tex", _vp[_cur].get_texture())
-	mat.set_shader_parameter("shift_texels", (new_origin - _origin) / TEXEL)
+	mat.set_shader_parameter("shift_texels", ((new_origin - _origin) / TEXEL).round())
+	# Both buffers start as BLACK textures (-0.5 bias when decoded); render
+	# pure rest state into each once, or every later domain shift steps the
+	# border against the bias and launches straight wavefronts.
+	mat.set_shader_parameter("reset", _boot < 2)
+	_boot += 1
 
 	var drops: Array = [Vector4(-1, -1, 0, 0.01), Vector4(-1, -1, 0, 0.01), Vector4(-1, -1, 0, 0.01)]
 	var di: int = 0

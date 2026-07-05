@@ -161,6 +161,7 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 			field[cell] = {
 				"level": level, "flow": flow, "steep": steep,
 				"wet": ground[cell] < level - WET_EPS,
+				"ground": ground[cell],
 			}
 
 	# Pass 2: bounded flood — submerged shelves continue the neighbouring level.
@@ -189,6 +190,7 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 					grew.append([nb, {
 						"level": lv, "flow": Vector2.ZERO,
 						"steep": field[cell].steep, "wet": true,
+						"ground": ground[nb],
 					}])
 		for g in grew:
 			field[g[0]] = g[1]
@@ -218,9 +220,22 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 				rims[nb] = {
 					"level": field[cell].level, "flow": Vector2.ZERO,
 					"steep": field[cell].steep, "wet": false,
+					"ground": ground[nb],
 				}
 	for nb in rims:
 		field[nb] = rims[nb]
+
+	# Shore damping: wet cells TOUCHING the shore carry almost no flow — flux
+	# through the waterline is zero by construction, not by radius math (the
+	# lateral fade alone still pushed water visibly into banks on bends).
+	for cell in field:
+		if not field[cell].wet:
+			continue
+		for d in _CARDINALS_8:
+			var nb: Vector2i = cell + d
+			if not field.has(nb) or not field[nb].wet:
+				field[cell].flow *= 0.15
+				break
 
 	# Drop influence-only cells that are neither wet nor rim (dry banks whose
 	# own level never met water — e.g. island interiors).
@@ -309,6 +324,7 @@ func _sheet_quad(st: SurfaceTool, cell: Vector2i, own_level: float, corner_cells
 		var fl: Vector2 = Vector2.ZERO
 		var stp: float = 0.0
 		var cnt: int = 0
+		var bank_ground: float = INF
 		for e in corner_cells[k]:
 			if absf(e.level - own_level) > BRIDGE_MAX:
 				continue
@@ -316,7 +332,16 @@ func _sheet_quad(st: SurfaceTool, cell: Vector2i, own_level: float, corner_cells
 			fl += e.flow
 			stp = maxf(stp, e.steep)
 			cnt += 1
+			if not e.wet:
+				bank_ground = minf(bank_ground, e.ground)
 		var lvl: float = lvl_sum / float(cnt)
+		# SHORE DIP: corners touching a dry bank sink just below the lowest
+		# adjacent bank ground, so the sheet slopes down and buries its edge —
+		# the waterline is the smooth terrain intersection (no cell-staircase
+		# mesh edges), and shallow-apron shores / island rocks always meet the
+		# water. Cliff banks are far above the level, so they are unaffected.
+		if bank_ground < INF:
+			lvl = minf(lvl, bank_ground - 0.08)
 		fl /= float(cnt)
 		pos.append(Vector3(
 			(float(k.x) - 0.5) * TILE, lvl, (float(k.y) - 0.5) * TILE))

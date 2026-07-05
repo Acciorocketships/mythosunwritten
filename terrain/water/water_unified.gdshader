@@ -79,7 +79,9 @@ void fragment() {
 		float hr = texture(ripple_tex, ruv + vec2(rp, 0.0)).r;
 		float hd = texture(ripple_tex, ruv - vec2(0.0, rp)).r;
 		float hu = texture(ripple_tex, ruv + vec2(0.0, rp)).r;
-		float edge = smoothstep(0.0, 0.08,
+		// Fade wider than the sim's own rest band, so border texels (where
+		// shift discontinuities live) never contribute visible normals.
+		float edge = smoothstep(0.0, 0.12,
 			min(min(ruv.x, 1.0 - ruv.x), min(ruv.y, 1.0 - ruv.y)));
 		vec2 grad = vec2(hr - hl, hu - hd) * ripple_strength * edge;
 		n = normalize(n + vec3(-grad.x, 0.0, -grad.y));
