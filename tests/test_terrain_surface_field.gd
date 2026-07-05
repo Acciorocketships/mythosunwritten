@@ -161,3 +161,22 @@ func test_no_mound_where_a_cell_sits_below_a_diagonal_cliff():
 	for oz in [-11.0, -6.0, 0.0, 6.0, 11.0]:
 		for ox in [-11.0, -6.0, 0.0, 6.0, 11.0]:
 			assert_lte(Field.surface_y(r, ox, oz), 4.05, "no mound: surface never rises above the cell height")
+
+# sample_baked(bake_cell(...)) must equal surface_y_in_cell(...) for every
+# point, including pinned points past the cell edge (the mesher evaluates
+# quad corners as-if belonging to the quad's own cell).
+func test_baked_sampler_matches_surface_y_in_cell():
+	var plan := HeightfieldPlan.new(4242, 40.0, 8, "mean", 3)
+	var region: HeightfieldRegion = plan.compute_region(0, 0, 8)
+	seed(12345)
+	for cell_x in range(-6, 7):
+		for cell_z in range(-6, 7):
+			var baked := TerrainSurfaceField.bake_cell(region, cell_x, cell_z)
+			for k in 8:
+				var x := float(cell_x) * 24.0 + randf_range(-14.0, 14.0)
+				var z := float(cell_z) * 24.0 + randf_range(-14.0, 14.0)
+				assert_almost_eq(
+					TerrainSurfaceField.sample_baked(baked, cell_x, cell_z, x, z),
+					TerrainSurfaceField.surface_y_in_cell(region, x, z, cell_x, cell_z),
+					0.0001,
+					"cell (%d,%d) at (%.2f,%.2f)" % [cell_x, cell_z, x, z])

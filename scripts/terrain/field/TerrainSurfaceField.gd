@@ -222,3 +222,70 @@ static func surface_y_in_cell(region, x: float, z: float, cx: int, cz: int) -> f
 		if arm_x_level and arm_z_level and not _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
 			drop = d_d * (a * b)
 	return h - drop
+
+# --- baked per-cell sampler --------------------------------------------------
+# The mesher evaluates ~37k surface points per chunk; surface_y_in_cell
+# re-derives the cell's classification and neighbour heights from the region
+# dictionaries on EVERY call. bake_cell does that derivation once per cell;
+# sample_baked is then pure float math (and a single constant on flat cells).
+# sample_baked(bake_cell(r, cx, cz), cx, cz, x, z) == surface_y_in_cell(r, x, z, cx, cz)
+# for every point — guarded by test_baked_sampler_matches_surface_y_in_cell.
+#
+# Layout (PackedFloat32Array, 14 floats):
+#   [0]      1.0 = cliff top (surface is the constant [1])
+#   [1]      h, the cell surface height
+#   [2..3]   drop toward the x neighbour, sign - / +   (>= 0)
+#   [4..5]   drop toward the z neighbour, sign - / +
+#   [6..9]   drop toward the diagonal, (x,z) sign order --, -+, +-, ++
+#   [10..13] 1.0 = diagonal dip enabled (both arms level, no inner corner), same order
+
+static func bake_cell(region, cx: int, cz: int) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(14)
+	var h: float = region.surface_height(cx, cz)
+	out[1] = h
+	if _is_cliff_top(region, cx, cz):
+		out[0] = 1.0
+		return out
+	var s_here := int(region.storey_at(cx, cz))
+	for i in 2:
+		var sgn := -1 if i == 0 else 1
+		out[2 + i] = maxf(0.0, h - region.surface_height(cx + sgn, cz))
+		out[4 + i] = maxf(0.0, h - region.surface_height(cx, cz + sgn))
+	for ix in 2:
+		for iz in 2:
+			var k := ix * 2 + iz
+			var dxs := -1 if ix == 0 else 1
+			var dzs := -1 if iz == 0 else 1
+			out[6 + k] = maxf(0.0, h - region.surface_height(cx + dxs, cz + dzs))
+			var arm_x_level := int(region.storey_at(cx + dxs, cz)) == s_here
+			var arm_z_level := int(region.storey_at(cx, cz + dzs)) == s_here
+			if arm_x_level and arm_z_level and not _is_inner_corner(region, cx, cz, Vector2i(dxs, dzs)):
+				out[10 + k] = 1.0
+	return out
+
+
+# The ramp math of surface_y_in_cell, reading baked per-cell data. Keep the
+# two functions in lockstep — the equivalence test enforces it.
+static func sample_baked(baked: PackedFloat32Array, cx: int, cz: int, x: float, z: float) -> float:
+	if baked[0] > 0.5:
+		return baked[1]
+	var h := baked[1]
+	var lx := x - float(cx) * TILE
+	var lz := z - float(cz) * TILE
+	var ix := 1 if lx >= 0.0 else 0
+	var iz := 1 if lz >= 0.0 else 0
+	var a := _edge_weight(absf(lx))
+	var b := _edge_weight(absf(lz))
+	var d_x := baked[2 + ix]
+	var d_z := baked[4 + iz]
+	var drop := 0.0
+	if d_x > 0.0 or d_z > 0.0:
+		var wx := a if d_x > 0.0 else 0.0
+		var wz := b if d_z > 0.0 else 0.0
+		drop = maxf(d_x, d_z) * (wx + wz - wx * wz)
+	else:
+		var k := ix * 2 + iz
+		if baked[6 + k] > 0.0 and baked[10 + k] > 0.5:
+			drop = baked[6 + k] * (a * b)
+	return h - drop

@@ -92,6 +92,7 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	var stc := SurfaceTool.new()   # COLLISION sheet: full extent (the lip band stays walkable)
 	stc.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var clip_cache := {}           # per-cell lipped-slot masks for the visual clip
+	var baked_cache := {}          # per-cell baked surface samplers
 	for iz in GRID:
 		for ix in GRID:
 			var x0 := o.x + ix * STEP
@@ -105,10 +106,15 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			# and slopes the pinned heights match the neighbour's, so vertices weld and stay smooth.
 			var qcx := TerrainSurfaceField._cell_of((x0 + x1) * 0.5)
 			var qcz := TerrainSurfaceField._cell_of((z0 + z1) * 0.5)
-			var y00 := TerrainSurfaceField.surface_y_in_cell(region, x0, z0, qcx, qcz)
-			var y10 := TerrainSurfaceField.surface_y_in_cell(region, x1, z0, qcx, qcz)
-			var y11 := TerrainSurfaceField.surface_y_in_cell(region, x1, z1, qcx, qcz)
-			var y01 := TerrainSurfaceField.surface_y_in_cell(region, x0, z1, qcx, qcz)
+			var qkey := Vector2i(qcx, qcz)
+			var baked: PackedFloat32Array = baked_cache.get(qkey, PackedFloat32Array())
+			if baked.is_empty():
+				baked = TerrainSurfaceField.bake_cell(region, qcx, qcz)
+				baked_cache[qkey] = baked
+			var y00 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z0)
+			var y10 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x1, z0)
+			var y11 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x1, z1)
+			var y01 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z1)
 			# Grid quads are the WALKABLE surface — flat tops + gentle (≤1 storey) slopes — always
 			# grass. Cliff FACES are the separate vertical rock skirts, not slanted grid quads.
 			var uv := _grass_uv
