@@ -13,3 +13,29 @@ func test_desired_chunks_within_radius():
 	assert_eq(want.size(), 9, "3x3 block for radius 1")
 	assert_true(Vector2i(0, 0) in want)
 	assert_true(Vector2i(1, 1) in want)
+
+func test_background_builds_populate_radius():
+	var s := Streamer.new()
+	s.CHUNK_RADIUS = 1
+	s.KEEP_RADIUS = 2
+	s.MAX_BUILD_PER_FRAME = 4
+	s.SEED_OVERRIDE = 4242
+	var parent := Node3D.new()
+	var player := Node3D.new()
+	add_child_autofree(parent)
+	add_child_autofree(player)
+	s.terrain_parent = parent
+	s.player = player
+	# Deferred free (like the real game frees the streamer) so _exit_tree joins
+	# the worker thread before the node is deleted; a synchronous free() can't
+	# succeed while the worker is parked in a live call frame on the node.
+	add_child_autoqfree(s)
+	# the spawn chunk is guaranteed synchronously in _ready
+	assert_true(s._built.has(Vector2i(0, 0)), "spawn chunk built before first frame")
+	# the rest of the 3x3 radius arrives from the background thread
+	var deadline := Time.get_ticks_msec() + 60_000
+	while s._built.size() < 9 and Time.get_ticks_msec() < deadline:
+		await wait_seconds(0.25)
+	assert_eq(s._built.size(), 9, "radius-1 ring built in the background")
+	for c in s._built:
+		assert_true(is_instance_valid(s._built[c]), "chunk node alive: %s" % str(c))
