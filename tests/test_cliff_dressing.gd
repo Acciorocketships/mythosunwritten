@@ -961,6 +961,7 @@ func test_carved_pocket_level_diagonal_gets_a_pocket_cap() -> void:
 		"the diagonal's corner_map registers the corner (sheet tuck + piece emission)")
 	var data = Dress.compute(region, 0, 0, 2)
 	var caps := 0
+	var inner_lips := 0
 	var seam_walls := 0
 	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
@@ -973,23 +974,16 @@ func test_carved_pocket_level_diagonal_gets_a_pocket_cap() -> void:
 			"no cap floating mid-ground in the diagonal's own slot (read as a raised pad)")
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
-		assert_false(absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1,
-			"no flat inner tab at the junction slot (owner: 'currently a flat plane')")
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1:
+			inner_lips += 1
 	for t in (data["inner_wall"] as Array):
 		var o := (t as Transform3D).origin
 		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1:
 			seam_walls += 1
-	assert_eq(caps, 1, "the walkable top gets ONE convex cap wrapping the pocket point")
+	assert_eq(caps, 1, "the convex cap wraps the pocket point, one slot into the taller arm")
+	assert_eq(inner_lips, 1,
+		"the classic inner piece stays in the diagonal's slot, right next to the cap (owner)")
 	assert_gt(seam_walls, 0, "the concave wall seam below keeps its inner rows")
-	var shore_cont := false
-	for t in (data["lip"] as Array):
-		var xf := t as Transform3D
-		var o := xf.origin
-		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (4.0 + Dress.LIP_LIFT)) < 0.03:
-			shore_cont = true
-			assert_lt((xf.basis * Vector3(0, 0, 1)).x, -0.9,
-				"the continuation faces the pocket along the lower arm's shore line")
-	assert_true(shore_cont, "a straight module continues the shore line across the jog to the cap")
 
 ## EAST-junction shape (seed 2697992464, cells (-23,-20)/(-23,-19)): at a carved
 ## flush step the run keeps its straight END module and the turned cap sits one

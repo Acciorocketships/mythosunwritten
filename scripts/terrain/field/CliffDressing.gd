@@ -440,11 +440,13 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				var wdir: Vector2i = cdir - tdir * 2
 				var wbasis := Basis(Vector3.UP, atan2(float(wdir.x), float(wdir.y)) - PI * 0.25)
 				out["outer_lip"].append(Transform3D(wbasis, tpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
-				# A straight module in THIS cell's corner slot continues the lower
-				# arm's shore line across the 1-slot jog to the cap's turn (the
-				# lip line and the taller wall face are offset by the recess —
-				# without it a bare notch shows right at the turn).
-				out["lip"].append(Transform3D(Basis(Vector3.UP, _angle(tdir)), cpos + Vector3(0.0, LIP_LIFT, 0.0)))
+				# The classic INNER piece stays in THIS cell's corner slot, rounding
+				# the shore lip line concavely into the taller wall face — the outer
+				# cap sits right next to it (owner: "the outer corner should be
+				# right next to the inner corner"; and after it briefly went
+				# missing: "you have removed the inner corner tile, add that back").
+				var ilip_basis := Basis(Vector3.UP, atan2(float(cdir.x), float(cdir.y)) - PI * 0.25 + PI)
+				out["inner_lip"].append(Transform3D(ilip_basis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in _rows(h - pocket_y2):
 					out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 			"step":

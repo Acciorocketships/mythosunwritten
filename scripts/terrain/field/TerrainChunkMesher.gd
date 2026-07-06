@@ -482,7 +482,7 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 	# corners need no pull: their diagonal cell is a HIGHER flat, already edge-clipped.)
 	for cdir in info["corners"]:
 		var kind: String = info["corners"][cdir]
-		if kind == "inner":
+		if kind == "inner" or kind == "pocket_cap":
 			var tuck := TILE * 0.5 - 1.3
 			var ccx := lx * float(cdir.x)
 			var ccz := lz * float(cdir.y)
