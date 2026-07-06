@@ -113,6 +113,11 @@ static func biome_rocky01(pos: Vector3, world_seed: int) -> float:
 	return smoothstep(0.5, 0.8, _value_noise01(pos, world_seed + 37, BIOME_ROCKY_SCALE))
 
 
+# Render-only systems (atmosphere director, chunk FX) disable themselves headless.
+static func is_headless() -> bool:
+	return DisplayServer.get_name() == "headless"
+
+
 const BIOME_MOISTURE_SCALE: float = 230.0
 const BIOME_BLOSSOM_SCALE: float = 260.0
 const BIOME_MARSH_SCALE: float = 300.0

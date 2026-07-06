@@ -104,9 +104,13 @@ func _ensure_skirt_style() -> void:
 			_grass_uv = luvs[i]
 			break
 
-# Walkable-sheet material that multiplies the KayKit palette by the per-vertex biome tint.
+# Walkable-sheet material that multiplies the KayKit palette by the per-vertex
+# biome tint. Both tint materials derive from `_material`, which only becomes the
+# shared de-sheened KayKit palette after _ensure_skirt_style() — so call it first
+# (idempotent) rather than depending on the caller's ordering.
 func _ground_tinted_mat() -> Material:
 	if _ground_tinted == null:
+		_ensure_skirt_style()
 		var m := _material
 		if m is StandardMaterial3D:
 			m = (m as StandardMaterial3D).duplicate()
@@ -117,6 +121,7 @@ func _ground_tinted_mat() -> Material:
 # One shared foliage material: KayKit atlas × per-instance MultiMesh COLOR (biome tint).
 func _foliage_material() -> ShaderMaterial:
 	if _foliage_mat == null:
+		_ensure_skirt_style()
 		_foliage_mat = ShaderMaterial.new()
 		_foliage_mat.shader = load("res://terrain/materials/foliage_tint.gdshader")
 		if _material is StandardMaterial3D:
@@ -127,6 +132,14 @@ var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
 
 func set_seed(seed: int) -> void:
 	_water_seed = seed
+
+# The region for a chunk: centred on it, radius covers the chunk + a neighbour
+# ring. Exposed so the streamer can compute it once and share it with the FX
+# (orb ground heights) instead of recomputing.
+func chunk_region(plan, chunk: Vector2i):
+	var centre_cx := chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
+	var centre_cz := chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
+	return plan.compute_region(centre_cx, centre_cz, CELLS_PER_CHUNK)
 
 # Chunk (ccx,ccz) covers cells [ccx*8 .. ccx*8+7]; its world origin (min corner):
 func _origin(chunk: Vector2i) -> Vector2:
@@ -157,19 +170,19 @@ func compute_decorations(region, chunk: Vector2i) -> Dictionary:
 				var dp: Vector3 = d["pos"]
 				var tf := Transform3D(Basis(Vector3.UP, d["yaw"]),
 					Vector3(dp.x, TerrainSurfaceField.surface_y(region, dp.x, dp.z), dp.z))
-				var tint := BiomeRegistry.blended_foliage_tint(Helper.biome_weights5(dp, _water_seed), d["tag"])
 				if not by_scene.has(path):
 					by_scene[path] = {"tf": [], "tint": []}
 				by_scene[path]["tf"].append(tf)
-				by_scene[path]["tint"].append(tint)
+				by_scene[path]["tint"].append(d["tint"])   # computed once per cell in cell_decorations
 	return by_scene
 
-func build_chunk(plan, chunk: Vector2i) -> Node3D:
+func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 	_ensure_skirt_style()
-	# Region centred on the chunk; radius covers the chunk plus a neighbour ring for ramps.
-	var centre_cx := chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var centre_cz := chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var region = plan.compute_region(centre_cx, centre_cz, CELLS_PER_CHUNK)
+	# Region centred on the chunk; radius covers the chunk plus a neighbour ring
+	# for ramps. The caller may pass one in (the streamer computes it once and
+	# reuses it for orb ground heights); otherwise compute it here.
+	if region == null:
+		region = chunk_region(plan, chunk)
 	var o := _origin(chunk)
 	var st := SurfaceTool.new()    # VISUAL sheet: clipped back to TOP_CLIP under the lips
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)

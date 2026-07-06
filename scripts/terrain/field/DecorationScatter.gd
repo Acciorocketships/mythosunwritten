@@ -33,10 +33,14 @@ static func cell_decorations(cell: Vector2i, world_seed: int, surface_y: float) 
 			surface_y,
 			clampf(raw_z - world.z, -HALF, HALF) + world.z
 		)
+		var tag := _pick_tag(ht, tag_weights)
 		out.append({
-			"tag": _pick_tag(ht, tag_weights),
+			"tag": tag,
 			"pos": pos,
 			"yaw": hy * TAU,
+			# Per-decoration foliage tint, computed here from the cell's already-sampled
+			# biome weights so the mesher doesn't re-sample the noise field per decoration.
+			"tint": BiomeRegistry.blended_foliage_tint(w5, tag),
 		})
 	return out
 

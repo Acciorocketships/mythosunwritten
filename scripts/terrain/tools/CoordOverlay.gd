@@ -59,10 +59,15 @@ func _process(_dt: float) -> void:
 		if wseed != null and int(wseed) != 0:
 			var w5 := Helper.biome_weights5(pp, int(wseed))
 			var parts: Array[String] = []
+			var dominant: StringName = &""
+			var best := -1.0
 			for k: StringName in w5:
+				if w5[k] > best:
+					best = w5[k]
+					dominant = k
 				if w5[k] >= 0.05:
 					parts.append("%s %.2f" % [k, w5[k]])
-			lines.append("biome %s   (%s)" % [Helper.biome_at(pp, int(wseed)), ", ".join(parts)])
+			lines.append("biome %s   (%s)" % [dominant, ", ".join(parts)])
 	# Raycast from screen centre onto the terrain.
 	var vp := get_viewport().get_visible_rect().size
 	var centre := vp * 0.5

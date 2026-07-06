@@ -71,85 +71,94 @@ static func _make(name: StringName) -> BiomeProfile:
 	p.biome_name = name
 	return p
 
+# The five profiles trade on DISTINCT hue + clarity, not just light-vs-dark, so
+# each reads as a different place: bright-clear warm meadow, dark hazy green
+# forest, cool crisp grey highland, dreamy PINK blossom, dark teal marsh.
+# foliage_tints omit tags they don't tint — blended_foliage_tint falls back to
+# white (identity), so only deliberate tints are listed.
+
 static func _meadow() -> BiomeProfile:
+	# Bright warm clear day — almost no fog, saturated warm green.
 	var p := _make(&"meadow")
-	p.fog_color = Color("dcebdd")
-	p.fog_density = 0.0008
-	p.sky_top = Color("8ec9e8")
-	p.sky_horizon = Color("d7e8f2")
-	p.ambient_color = Color(0.72, 0.70, 0.62)
-	p.ambient_energy = 0.9
-	p.ground_tint = Color(1.05, 1.0, 0.85)
-	p.foliage_tints = {"grass": Color(1.05, 1.0, 0.8), "bush": Color(1.0, 1.0, 0.9),
-			"tree": Color(1.0, 1.0, 0.95), "rock": Color(1, 1, 1)}
+	p.fog_color = Color("d2ead9")
+	p.fog_density = 0.0003
+	p.sky_top = Color("5cb3ea")            # bright saturated blue
+	p.sky_horizon = Color("cdeaf6")
+	p.ambient_color = Color(0.80, 0.76, 0.62)
+	p.ambient_energy = 1.05
+	p.ground_tint = Color(1.12, 1.06, 0.78)   # warm saturated green
+	p.foliage_tints = {"grass": Color(1.1, 1.05, 0.75), "tree": Color(1.02, 1.0, 0.9)}
 	p.foliage_density = 0.8
 	p.tag_weights = {"grass": 0.45, "rock": 0.1, "bush": 0.2, "tree": 0.15}
 	p.particles = {&"motes": 0.3}
 	return p
 
 static func _deep_forest() -> BiomeProfile:
+	# Dark shaded woods — dense teal-green haze, saturated dark green.
 	var p := _make(&"deep_forest")
-	p.fog_color = Color("557567")
-	p.fog_density = 0.004
-	p.pocket_fog_density = 0.015
-	p.sky_top = Color("6e93a8")
-	p.sky_horizon = Color("87a5ad")
-	p.ambient_color = Color(0.45, 0.52, 0.48)
-	p.ambient_energy = 0.7
-	p.ground_tint = Color(0.55, 0.75, 0.55)
-	p.foliage_tints = {"grass": Color(0.6, 0.8, 0.6), "bush": Color(0.55, 0.75, 0.55),
-			"tree": Color(0.6, 0.8, 0.62), "rock": Color(0.85, 0.9, 0.85)}
+	p.fog_color = Color("3d6b50")
+	p.fog_density = 0.006
+	p.pocket_fog_density = 0.02
+	p.sky_top = Color("4f7a6a")            # muted green-grey, low
+	p.sky_horizon = Color("7ba28d")
+	p.ambient_color = Color(0.38, 0.50, 0.40)
+	p.ambient_energy = 0.62
+	p.ground_tint = Color(0.48, 0.72, 0.46)   # deep saturated green
+	p.foliage_tints = {"grass": Color(0.55, 0.78, 0.52), "bush": Color(0.5, 0.72, 0.5),
+			"tree": Color(0.55, 0.78, 0.58), "rock": Color(0.8, 0.88, 0.82)}
 	p.foliage_density = 1.9
 	p.tag_weights = {"grass": 0.15, "rock": 0.08, "bush": 0.22, "tree": 0.55}
 	p.particles = {&"fireflies": 0.4}
 	return p
 
 static func _highland() -> BiomeProfile:
+	# Cold windswept rock — crisp (nearly fog-free), cool blue-grey, desaturated.
 	var p := _make(&"highland")
-	p.fog_color = Color("c2ccc9")
-	p.fog_density = 0.0015
-	p.sky_top = Color("a8bcc8")
-	p.sky_horizon = Color("ccd6da")
-	p.ambient_color = Color(0.60, 0.63, 0.60)
-	p.ambient_energy = 0.85
-	p.ground_tint = Color(0.85, 0.9, 0.8)
-	p.foliage_tints = {"grass": Color(0.85, 0.9, 0.75), "bush": Color(0.8, 0.85, 0.72),
-			"tree": Color(0.8, 0.88, 0.78), "rock": Color(1, 1, 1)}
+	p.fog_color = Color("b6c6d6")
+	p.fog_density = 0.0005
+	p.sky_top = Color("6f9cc6")            # cool clear blue-grey
+	p.sky_horizon = Color("c2d6e6")
+	p.ambient_color = Color(0.62, 0.67, 0.74)   # cool
+	p.ambient_energy = 1.0
+	p.ground_tint = Color(0.80, 0.86, 0.86)     # desaturated cool grey-green
+	p.foliage_tints = {"grass": Color(0.82, 0.88, 0.8), "bush": Color(0.78, 0.84, 0.78),
+			"tree": Color(0.78, 0.86, 0.82)}
 	p.foliage_density = 1.2
-	p.tag_weights = {"grass": 0.2, "rock": 0.45, "bush": 0.12, "tree": 0.08,
-			"standing_stone": 0.03}
+	p.tag_weights = {"grass": 0.2, "rock": 0.5, "bush": 0.12, "tree": 0.08}
 	p.particles = {&"motes": 0.2}
 	return p
 
 static func _blossom_grove() -> BiomeProfile:
+	# Dreamy pink pocket — pink sky + fog (NOT blue), soft haze, pink canopies.
 	var p := _make(&"blossom_grove")
-	p.fog_color = Color("f2dce8")
-	p.fog_density = 0.0015
-	p.sky_top = Color("c8d8f0")
-	p.sky_horizon = Color("ecdce8")
-	p.ambient_color = Color(0.75, 0.68, 0.70)
-	p.ambient_energy = 0.9
-	p.ground_tint = Color(1.0, 0.95, 0.9)
-	p.foliage_tints = {"grass": Color(1.0, 0.95, 0.85), "bush": Color(1.05, 0.85, 0.95),
-			"tree": Color(1.35, 0.85, 1.05), "rock": Color(1, 1, 1)}
+	p.fog_color = Color("f4c9dd")
+	p.fog_density = 0.0022
+	p.sky_top = Color("e2add2")            # pink-lavender, not blue
+	p.sky_horizon = Color("f9d8ea")
+	p.ambient_color = Color(0.84, 0.66, 0.74)   # pink-warm
+	p.ambient_energy = 0.95
+	p.ground_tint = Color(1.08, 0.9, 0.94)      # pinkish
+	p.foliage_tints = {"grass": Color(1.02, 0.92, 0.86), "bush": Color(1.1, 0.8, 0.95),
+			"tree": Color(1.45, 0.78, 1.05)}     # strongly pink canopies
 	p.foliage_density = 1.1
 	p.tag_weights = {"grass": 0.3, "rock": 0.05, "bush": 0.15, "tree": 0.45}
 	p.particles = {&"petals": 0.6}
 	return p
 
 static func _twilight_marsh() -> BiomeProfile:
+	# Dark eerie hollow — dense dark teal fog, indigo sky, glowing orbs.
 	var p := _make(&"twilight_marsh")
-	p.fog_color = Color("24505c")
-	p.fog_density = 0.012
+	p.fog_color = Color("1f4a58")
+	p.fog_density = 0.014
 	p.pocket_fog_density = 0.06
-	p.sky_top = Color("2a3560")
-	p.sky_horizon = Color("24505c")
-	p.ambient_color = Color(0.30, 0.35, 0.45)
-	p.ambient_energy = 0.55
-	p.ground_tint = Color(0.45, 0.6, 0.55)
-	p.foliage_tints = {"grass": Color(0.4, 0.6, 0.55), "bush": Color(0.35, 0.55, 0.5),
-			"tree": Color(0.4, 0.55, 0.5), "rock": Color(0.7, 0.8, 0.8)}
+	p.sky_top = Color("232d52")
+	p.sky_horizon = Color("1f4a58")
+	p.ambient_color = Color(0.28, 0.34, 0.45)
+	p.ambient_energy = 0.5
+	p.ground_tint = Color(0.42, 0.58, 0.55)
+	p.foliage_tints = {"grass": Color(0.38, 0.58, 0.53), "bush": Color(0.33, 0.53, 0.48),
+			"tree": Color(0.38, 0.53, 0.48), "rock": Color(0.65, 0.78, 0.78)}
 	p.foliage_density = 0.9
-	p.tag_weights = {"grass": 0.35, "rock": 0.08, "bush": 0.3, "tree": 0.1, "lantern": 0.02}
+	p.tag_weights = {"grass": 0.35, "rock": 0.08, "bush": 0.35, "tree": 0.15}
 	p.particles = {&"orbs": 0.5, &"fireflies": 0.8}
 	return p

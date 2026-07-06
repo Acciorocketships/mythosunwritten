@@ -31,3 +31,13 @@ func test_blended_scatter_helpers() -> void:
 	assert_gt(tw["tree"], tw["rock"], "deep forest favours trees")
 	assert_almost_eq(BiomeRegistry.blended_density(pure_forest),
 			BiomeRegistry.profile(&"deep_forest").foliage_density, 1e-6)
+
+func test_every_profile_tag_has_a_foliage_scene() -> void:
+	# A tag_weights key with no FOLIAGE_SCENES entry silently drops decorations
+	# (compute_decorations skips empty variant lists) — fail loudly so a future
+	# biome/tag can't ghost. Any new scatter object type must be added to both.
+	for name: StringName in Helper.BIOME_NAMES:
+		var prof := BiomeRegistry.profile(name)
+		for tag: String in prof.tag_weights:
+			assert_true(TerrainChunkMesher.FOLIAGE_SCENES.has(tag),
+				"biome %s references tag '%s' with no FOLIAGE_SCENES entry" % [name, tag])

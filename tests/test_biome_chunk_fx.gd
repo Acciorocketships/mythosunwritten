@@ -27,3 +27,14 @@ func test_meadow_no_fog_no_orbs_one_emitter() -> void:
 			emitters += 1
 	assert_eq(emitters, 1, "meadow emits motes only")
 	fx.free()
+
+func test_orbs_are_emissive_spheres_not_flat_quads() -> void:
+	# Owner ask: orbs are floating glowing 3D spheres of light, not 2D squares.
+	var marsh := BiomeRegistry.profile(&"twilight_marsh")
+	var fx := BiomeChunkFx.build(marsh, [])
+	var orb := fx.find_child("orbs", true, false) as GPUParticles3D
+	assert_not_null(orb, "marsh has an orbs emitter")
+	assert_true(orb.draw_pass_1 is SphereMesh, "orbs draw as a 3D sphere mesh")
+	var mat := orb.draw_pass_1.material as StandardMaterial3D
+	assert_true(mat.emission_enabled, "orb spheres glow (emission on)")
+	fx.free()
