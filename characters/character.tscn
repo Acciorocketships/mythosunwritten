@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bhux0txcw1afy" path="res://characters/character.gd" id="1_qqr4u"]
 [ext_resource type="PackedScene" uid="uid://dawmb1kfgp2h2" path="res://characters/models/knight.tscn" id="2_3fwhk"]
-[ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://characters/controllers/player_controller.gd" id="2_mdkfl"]
+[ext_resource type="Script" uid="uid://bb8ia06ag8nwf" path="res://scripts/controllers/player_controller.gd" id="2_mdkfl"]
 [ext_resource type="AnimationLibrary" uid="uid://bhob00wxk8lp7" path="res://characters/animations/CharacterAnimationLibrary.tres" id="3_3fwhk"]
 [ext_resource type="PackedScene" uid="uid://b0a3k0rna7hj0" path="res://characters/models/rogue.tscn" id="3_jfi6v"]
 [ext_resource type="PackedScene" uid="uid://cubdm0f3gvl64" path="res://characters/models/ranger.tscn" id="3_ke030"]

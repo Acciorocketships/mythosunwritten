@@ -215,22 +215,29 @@ func test_collision_wall_is_flush_with_the_boundary_no_pocket():
 func test_sheet_skirt_and_pieces_share_one_material():
 	# Owner (round 8): "the cliff lip, the skirt, and the slope are all different colours...
 	# it would be nice if they all used the same [texture] (so we could even change all of
-	# them at once in the future)". The walkable sheet and aprons now render with the SAME
-	# de-sheened KayKit material as the skirt — grass texel sampled from the lip piece's top,
-	# rock texel from the wall piece — so every terrain surface shares the KayKit palette.
+	# them at once in the future)". The walkable sheet renders with a vertex-color-tinting
+	# DUPLICATE of the de-sheened KayKit material (per-vertex biome ground tint), so it's a
+	# distinct object — but it must stay the SAME KayKit palette texture + de-sheen, so every
+	# terrain surface remains one visually-continuous, retintable palette.
 	var p := Plan.new(11, 32.0, 8, "mean", 3)
 	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
 	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	assert_eq(mi.mesh.surface_get_material(0), faces.mesh.surface_get_material(0),
-		"the sheet and the skirt share one material (the KayKit palette)")
+	var sheet_mat := mi.mesh.surface_get_material(0) as StandardMaterial3D
+	var cliff_mat := faces.mesh.surface_get_material(0) as StandardMaterial3D
+	assert_eq(sheet_mat.albedo_texture, cliff_mat.albedo_texture,
+		"the sheet and the skirt share the KayKit palette texture")
+	assert_eq(sheet_mat.roughness, cliff_mat.roughness, "same de-sheened roughness")
+	assert_eq(sheet_mat.metallic_specular, cliff_mat.metallic_specular, "same killed specular")
+	assert_true(sheet_mat.vertex_color_use_as_albedo,
+		"the sheet multiplies the palette by the per-vertex biome tint")
 	var walls := node.find_child("Walls", true, false) as MultiMeshInstance3D
 	var lips := node.find_child("Lips", true, false) as MultiMeshInstance3D
-	assert_eq(walls.material_override, mi.mesh.surface_get_material(0),
-		"the wall pieces render with the same shared material")
-	assert_eq(lips.material_override, mi.mesh.surface_get_material(0),
-		"the lip pieces render with the same shared material")
+	assert_eq((walls.material_override as StandardMaterial3D).albedo_texture, cliff_mat.albedo_texture,
+		"the wall pieces render with the shared palette texture")
+	assert_eq((lips.material_override as StandardMaterial3D).albedo_texture, cliff_mat.albedo_texture,
+		"the lip pieces render with the shared palette texture")
 	# the sheet's grass texel comes from the lip piece's grass top, not the terrain atlas
 	var lip_mesh := CliffDressing._pieces["lip"][0] as Mesh
 	var arr = lip_mesh.surface_get_arrays(0)
@@ -820,7 +827,8 @@ func test_collision_sheet_faces_cover_full_grid():
 	node.free()
 
 # compute_decorations returns the pure placement data (scene path ->
-# Array[Transform3D]); deterministic and water-gated like the old inline loop.
+# {"tf": Array[Transform3D], "tint": Array[Color]}); deterministic and
+# water-gated like the old inline loop.
 func test_compute_decorations_deterministic_and_grounded():
 	var p := HeightfieldPlan.new(4242, 40.0, 8, "mean")
 	var m := TerrainChunkMesher.new()
@@ -830,9 +838,9 @@ func test_compute_decorations_deterministic_and_grounded():
 	assert_eq(a.keys(), b.keys(), "deterministic scene set")
 	var n := 0
 	for path in a:
-		assert_eq(a[path].size(), b[path].size(), "deterministic counts for %s" % path)
-		for i in a[path].size():
-			var tf: Transform3D = a[path][i]
+		assert_eq(a[path]["tf"].size(), b[path]["tf"].size(), "deterministic counts for %s" % path)
+		for i in a[path]["tf"].size():
+			var tf: Transform3D = a[path]["tf"][i]
 			assert_almost_eq(tf.origin.y,
 				TerrainSurfaceField.surface_y(region, tf.origin.x, tf.origin.z), 0.001,
 				"decoration sits on the surface")
@@ -854,7 +862,7 @@ func test_decorations_batch_into_multimeshes():
 		total += (child as MultiMeshInstance3D).multimesh.instance_count
 	var expected := 0
 	for path in by_scene:
-		expected += by_scene[path].size() * TerrainChunkMesher._foliage_pieces(path).size()
+		expected += by_scene[path]["tf"].size() * TerrainChunkMesher._foliage_pieces(path).size()
 	assert_eq(total, expected, "every placement instanced once per mesh piece")
 	assert_gt(total, 0, "chunk has decorations")
 	node.free()

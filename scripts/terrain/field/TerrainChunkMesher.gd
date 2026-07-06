@@ -64,6 +64,8 @@ static func _foliage_pieces(path: String) -> Array:
 	return out
 
 var _material: Material = load("res://terrain/materials/ground.tres")
+var _ground_tinted: Material = null
+var _foliage_mat: ShaderMaterial = null
 var _grass_uv: Vector2 = SlopeAtlas.grass_uv()
 var _cliff_uv: Vector2 = SlopeAtlas.cliff_uv()
 # The skirt renders with the KayKit wall piece's OWN material + a rock texel from its mesh, so
@@ -101,6 +103,26 @@ func _ensure_skirt_style() -> void:
 			_material = _skirt_material
 			_grass_uv = luvs[i]
 			break
+
+# Walkable-sheet material that multiplies the KayKit palette by the per-vertex biome tint.
+func _ground_tinted_mat() -> Material:
+	if _ground_tinted == null:
+		var m := _material
+		if m is StandardMaterial3D:
+			m = (m as StandardMaterial3D).duplicate()
+			m.vertex_color_use_as_albedo = true
+		_ground_tinted = m
+	return _ground_tinted
+
+# One shared foliage material: KayKit atlas × per-instance MultiMesh COLOR (biome tint).
+func _foliage_material() -> ShaderMaterial:
+	if _foliage_mat == null:
+		_foliage_mat = ShaderMaterial.new()
+		_foliage_mat.shader = load("res://terrain/materials/foliage_tint.gdshader")
+		if _material is StandardMaterial3D:
+			_foliage_mat.set_shader_parameter("albedo_tex", (_material as StandardMaterial3D).albedo_texture)
+	return _foliage_mat
+
 var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
 
 func set_seed(seed: int) -> void:
@@ -135,9 +157,11 @@ func compute_decorations(region, chunk: Vector2i) -> Dictionary:
 				var dp: Vector3 = d["pos"]
 				var tf := Transform3D(Basis(Vector3.UP, d["yaw"]),
 					Vector3(dp.x, TerrainSurfaceField.surface_y(region, dp.x, dp.z), dp.z))
+				var tint := BiomeRegistry.blended_foliage_tint(Helper.biome_weights5(dp, _water_seed), d["tag"])
 				if not by_scene.has(path):
-					by_scene[path] = []
-				by_scene[path].append(tf)
+					by_scene[path] = {"tf": [], "tint": []}
+				by_scene[path]["tf"].append(tf)
+				by_scene[path]["tint"].append(tint)
 	return by_scene
 
 func build_chunk(plan, chunk: Vector2i) -> Node3D:
@@ -157,6 +181,30 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	var col_i := 0
 	var clip_cache := {}           # per-cell lipped-slot masks for the visual clip
 	var baked_cache := {}          # per-cell baked surface samplers
+	# Biome ground tint sampled at the coarse cell-corner lattice (CELLS_PER_CHUNK+1
+	# per axis) then bilinearly expanded to the per-vertex lattice — the biome field
+	# is smooth, so this matches per-vertex sampling at ~1% of the noise cost and
+	# stays seam-continuous (chunk boundaries fall on shared cell corners).
+	var cn := CELLS_PER_CHUNK + 1
+	var corner_tints: Array[Color] = []
+	corner_tints.resize(cn * cn)
+	for ccz in cn:
+		for ccx in cn:
+			var cw := Vector3(o.x + ccx * TILE, 0.0, o.y + ccz * TILE)
+			corner_tints[ccz * cn + ccx] = BiomeRegistry.blended_ground_tint(Helper.biome_weights5(cw, _water_seed))
+	var tints: Array[Color] = []
+	tints.resize((GRID + 1) * (GRID + 1))
+	for tz in GRID + 1:
+		var fz := float(tz) / float(SAMPLES_PER_CELL)
+		var cz0 := mini(int(fz), cn - 2)
+		var dz := fz - float(cz0)
+		for tx in GRID + 1:
+			var fx := float(tx) / float(SAMPLES_PER_CELL)
+			var cx0 := mini(int(fx), cn - 2)
+			var dx := fx - float(cx0)
+			var a := (corner_tints[cz0 * cn + cx0] as Color).lerp(corner_tints[cz0 * cn + cx0 + 1], dx)
+			var b := (corner_tints[(cz0 + 1) * cn + cx0] as Color).lerp(corner_tints[(cz0 + 1) * cn + cx0 + 1], dx)
+			tints[tz * (GRID + 1) + tx] = a.lerp(b, dz)
 	for iz in GRID:
 		for ix in GRID:
 			var x0 := o.x + ix * STEP
@@ -199,8 +247,12 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 			var c10 := _clip_vert(region, clip_cache, qcx, qcz, v10)
 			var c11 := _clip_vert(region, clip_cache, qcx, qcz, v11)
 			var c01 := _clip_vert(region, clip_cache, qcx, qcz, v01)
-			_tri(st, c00, c10, c11, uv)
-			_tri(st, c00, c11, c01, uv)
+			var t00: Color = tints[iz * (GRID + 1) + ix]
+			var t10: Color = tints[iz * (GRID + 1) + ix + 1]
+			var t11: Color = tints[(iz + 1) * (GRID + 1) + ix + 1]
+			var t01: Color = tints[(iz + 1) * (GRID + 1) + ix]
+			_tri_tinted(st, [c00, c10, c11], uv, [t00, t10, t11])
+			_tri_tinted(st, [c00, c11, c01], uv, [t00, t11, t01])
 	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
 	# pinned grid leaves between a cliff top and the lower cell. This is the actual rock cliff face
 	# (replacing the old slanted grey quads); the KayKit wall pieces dress it, and it doubles as the
@@ -227,7 +279,7 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	# the slopes read as smooth curves rather than angular facets.
 	st.index()
 	st.generate_normals()
-	st.set_material(_material)
+	st.set_material(_ground_tinted_mat())
 	var root := Node3D.new()
 	root.name = "Chunk_%d_%d" % [chunk.x, chunk.y]
 	var mi := MeshInstance3D.new()
@@ -269,17 +321,22 @@ func build_chunk(plan, chunk: Vector2i) -> Node3D:
 	deco.name = "Decorations"
 	var by_scene := compute_decorations(region, chunk)
 	for path in by_scene:
-		var tfs: Array = by_scene[path]
+		var entry: Dictionary = by_scene[path]
+		var tfs: Array = entry["tf"]
+		var cts: Array = entry["tint"]
 		for piece in _foliage_pieces(path):
 			var mm := MultiMesh.new()
 			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.use_colors = true
 			mm.mesh = piece[0]
 			mm.instance_count = tfs.size()
 			for i in tfs.size():
 				mm.set_instance_transform(i, tfs[i] * piece[1])
+				mm.set_instance_color(i, cts[i])
 			var mmi := MultiMeshInstance3D.new()
 			mmi.name = "%s_%d" % [String(path).get_file().get_basename(), deco.get_child_count()]
 			mmi.multimesh = mm
+			mmi.material_override = _foliage_material()
 			deco.add_child(mmi)
 	root.add_child(deco)
 
@@ -326,6 +383,12 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, uv: Vector2) -> v
 	for v in [a, b, c]:
 		st.set_uv(uv)
 		st.add_vertex(v)
+
+func _tri_tinted(st: SurfaceTool, vs: Array[Vector3], uv: Vector2, cs: Array[Color]) -> void:
+	for i in 3:
+		st.set_uv(uv)
+		st.set_color(cs[i])
+		st.add_vertex(vs[i])
 
 const LIP_LIFT := 0.05    # matches CliffDressing.LIP_LIFT — clipped sheet edges rise to the lip
                           # top plane so no hairline slit shows at the lip back

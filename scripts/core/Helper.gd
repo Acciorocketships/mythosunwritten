@@ -113,6 +113,56 @@ static func biome_rocky01(pos: Vector3, world_seed: int) -> float:
 	return smoothstep(0.5, 0.8, _value_noise01(pos, world_seed + 37, BIOME_ROCKY_SCALE))
 
 
+const BIOME_MOISTURE_SCALE: float = 230.0
+const BIOME_BLOSSOM_SCALE: float = 260.0
+const BIOME_MARSH_SCALE: float = 300.0
+# Canonical biome order, consumed by BiomeRegistry for lookups/UI.
+const BIOME_NAMES: Array[StringName] = [
+	&"meadow", &"deep_forest", &"highland", &"blossom_grove", &"twilight_marsh",
+]
+
+# Moisture/mood axis (master §11.2): wet side boosts marsh; later gates reeds
+# and decorative meadow ponds.
+static func biome_moisture01(pos: Vector3, world_seed: int) -> float:
+	return _value_noise01(pos, world_seed + 41, BIOME_MOISTURE_SCALE)
+
+# Sparse pocket fields: high smoothstep thresholds carve isolated cores.
+static func biome_blossom_pocket01(pos: Vector3, world_seed: int) -> float:
+	return smoothstep(0.78, 0.90, _value_noise01(pos, world_seed + 43, BIOME_BLOSSOM_SCALE))
+
+static func biome_marsh_pocket01(pos: Vector3, world_seed: int) -> float:
+	var n := _value_noise01(pos, world_seed + 47, BIOME_MARSH_SCALE)
+	return smoothstep(0.89, 0.97, n + 0.15 * biome_moisture01(pos, world_seed))
+
+# Five normalized biome weights. Pockets claim their share first (their cores
+# saturate and suppress the rest); forest/rocky split what remains; meadow is
+# the leftover baseline — ≥ 0 by construction, so weights always sum to 1.
+static func biome_weights5(pos: Vector3, world_seed: int) -> Dictionary[StringName, float]:
+	var marsh := biome_marsh_pocket01(pos, world_seed)
+	var blossom := biome_blossom_pocket01(pos, world_seed) * (1.0 - marsh)
+	var rest := 1.0 - marsh - blossom
+	var f01 := biome_forest01(pos, world_seed)
+	var r01 := biome_rocky01(pos, world_seed)
+	var forest := f01 * rest
+	var highland := r01 * (1.0 - f01) * rest
+	var meadow := rest - forest - highland
+	return {
+		&"meadow": meadow, &"deep_forest": forest, &"highland": highland,
+		&"blossom_grove": blossom, &"twilight_marsh": marsh,
+	}
+
+# Dominant biome — for discrete choices only (fog volumes, F3 readout, prop sets).
+static func biome_at(pos: Vector3, world_seed: int) -> StringName:
+	var w := biome_weights5(pos, world_seed)
+	var best: StringName = &"meadow"
+	var best_w := -1.0
+	for k: StringName in w:
+		if w[k] > best_w:
+			best_w = w[k]
+			best = k
+	return best
+
+
 # Sampling-weight multipliers applied to socket tag/size distributions at
 # placement time (TerrainGenerator._biome_scaled_dist). Keys are the tag or
 # size strings that appear in those distributions; anything not listed keeps
