@@ -394,7 +394,11 @@ func test_apron_is_clamped_by_the_higher_cells_own_clip():
 	for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
 		if absf(v.y - 8.0) < 0.2 and v.x > 9.4 and v.x < 12.1:
 			max_z = maxf(max_z, v.z)
-	assert_lt(max_z, 33.7, "apron stops behind W's south wall face (W's clip line), not at z=36")
+	# At a capped run-end corner the strip now floors the recess right up to the
+	# wall-face line (SKIRT_RECESS behind the boundary, 0.05 behind the deepest
+	# scallop plane at 34.75) — stopping at the sheet clip line left a bare slot
+	# sliver at water flush-steps. Past 34.75 it would poke through the wall face.
+	assert_lt(max_z, 34.74, "apron stays behind W's south wall face, not at z=36")
 	node.free()
 
 func test_buried_apron_end_is_not_clamped_no_ground_gap():

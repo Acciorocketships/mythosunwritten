@@ -540,7 +540,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 				if ccdir.x * dir.x + ccdir.y * dir.y != 1:
 					continue   # corner not on this edge
 				var hi_end: bool = ccdir.x * pdir.x + ccdir.y * pdir.y > 0
-				if ckind == "outer":
+				if ckind == "outer" or ckind == "ext_outer" or ckind == "pocket_cap":
 					if info_own["dirs"].has(Vector2i(ccdir.x, 0)) and info_own["dirs"].has(Vector2i(0, ccdir.y)):
 						continue   # classic outer (both arms dressed): edge clips already retract
 					if hi_end:
@@ -550,9 +550,9 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 						a_lo = -(TILE * 0.5 - SKIRT_RECESS)
 						cap_lo = true
 				elif ckind == "inner":
-					# Carved-pocket diagonal corner: the inner piece roofs the band and
+					# Classic inner corner on this edge: the piece roofs the band and
 					# the strip legitimately runs to the boundary — only bypass the
-					# generic clips there (the inner tuck would drag the strip's end
+					# generic clips there (the corner tuck would drag the strip's end
 					# diagonally off the boundary and open a hole over the pocket).
 					if hi_end:
 						cap_hi = true

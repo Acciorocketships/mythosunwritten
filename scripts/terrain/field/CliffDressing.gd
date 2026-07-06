@@ -243,10 +243,13 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 			out[cdir] = "inner"
 		elif _diagonal_owns_pocket_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
 			# CARVED pocket (water) with unequal higher arms and this cell the
-			# level-with-lower-arm diagonal: classic-style ownership — the piece
-			# rounds the lower shore lip into the taller arm's wall face, and this
-			# entry makes the sheet clip tuck the corner point that buried it.
-			out[cdir] = "inner"
+			# level-with-lower-arm diagonal: classic-style ownership. The WALL seam
+			# below stays concave (inner rows), but the walkable TOP is a shore lip
+			# turning at the junction — a flat inner tab read as "currently a flat
+			# plane" (owner) — so the top piece is the convex outer cap wrapping
+			# the pocket point. This entry also makes the sheet clip tuck the
+			# corner point that buried the piece.
+			out[cdir] = "pocket_cap"
 		elif ddrop >= 2 and (cliff.get(ca, false) or cliff.get(cb, false)):
 			# STEP corner: ONE cardinal is an exposed edge and the DIAGONAL drops ≥2 — the cliff turns
 			# the corner, exposing the diagonal face. BUT if the wall continues STRAIGHT past this
@@ -288,17 +291,14 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 				if TerrainSurfaceField.is_exposed_edge(region, cx + p.x, cz + p.y, d):
 					if _inner_joined(region, cx + d.x, cz + d.y, Vector2i(p.x - d.x, p.y - d.y)):
 						out[cdir] = "abut"
-					elif region.has_method("is_carved") and region.is_carved(cx + cdir.x, cz + cdir.y):
-						# WATER flush-step (the corner's diagonal is a carved
-						# pocket): an ext_outer cap leans one slot into the
-						# taller cell and drowns inside its rock face, while
-						# the run's end-slot lip hides under the corner-held
-						# sheet clip — a bare notch (owner, three rounds:
-						# "should be a corner tile"). A REAL outer corner at
-						# the run cell's OWN corner turns the lip visibly; its
-						# emission already handles rows buried on one arm.
-						out[cdir] = "outer"
 					else:
+						# Carved (water) flush steps use this same arrangement: the
+						# run keeps its straight end module and the turned cap sits
+						# one slot into the taller cell, at its corner column — "the
+						# corner should go at the very end". (An "outer" cap at the
+						# run's own corner slot put the turn one module too early:
+						# owner drew the two pieces swapped.) The ext_outer emission
+						# adds the cap's wall rows on carved pockets.
 						out[cdir] = "ext_outer"
 				else:
 					out[cdir] = "ext_straight"
@@ -408,22 +408,6 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 						out["wall"].append(Transform3D(Basis(Vector3.UP, _angle(ca)), row_pos))
 					else:
 						out["outer_wall"].append(Transform3D(cbasis, row_pos))
-				# WATER flush-step (exactly one dressed arm): continue the run's lip
-				# line ONE slot into the taller cell so the turn dies into its corner
-				# column's base — lips ride proud of the wall face, so the line reads
-				# as running into the rock instead of stopping at the boundary with a
-				# bare notch (owner: "the edge should be extended so the corner piece
-				# goes into the wall").
-				if cliff.get(ca, false) != cliff.get(cb, false) \
-						and region.has_method("is_carved") and region.is_carved(cx + cdir.x, cz + cdir.y):
-					var d5: Vector2i = ca if cliff.get(ca, false) else cb
-					var p5 := Vector2i(cdir.x - d5.x, cdir.y - d5.y)
-					var edge5 := Vector3(float(d5.x) * PLACE, 0.0, float(d5.y) * PLACE)
-					var perp5 := Vector3(float(d5.y), 0.0, float(d5.x))
-					var pdir5 := Vector2i(d5.y, d5.x)
-					var sgn5 := pdir5.x * p5.x + pdir5.y * p5.y
-					var cpos5: Vector3 = cellpos + edge5 + perp5 * (float(sgn5) * (END + 3.0))
-					out["lip"].append(Transform3D(Basis(Vector3.UP, _angle(d5)), cpos5 + Vector3(0.0, LIP_LIFT, 0.0)))
 			"inner":
 				# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level
 				# and wall that pocket. The modeled inner piece spans it (even a 1-storey notch). The
@@ -432,6 +416,36 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				var pocket_y := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + cdir.x, cz + cdir.y)
 				out["inner_lip"].append(Transform3D(lip_basis, cpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				for k in _rows(h - pocket_y):
+					out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
+			"pocket_cap":
+				# Carved-pocket diagonal cap: the wall seam below is CONCAVE (the two
+				# arms' walls meet over the water pocket — inner rows round it), but
+				# the walkable TOP is a shore lip TURNING at the junction (owner:
+				# "should be a corner where the corner is in the lower right" — an
+				# inner tab there read as a bare flat plane, and a cap in this cell's
+				# own slot floats mid-ground as a raised pad). Like the flush-step's
+				# ext_outer cap, the turned lip sits one slot INTO the TALLER arm's
+				# cell at THIS cell's height: its lower-arm-facing side rides proud
+				# of the taller wall over the water, the taller-arm side stays
+				# buried, and the turn wraps the pocket point.
+				var pocket_y2 := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + cdir.x, cz + cdir.y)
+				var sa2 := int(region.storey_at(cx + cdir.x, cz))
+				var sb2 := int(region.storey_at(cx, cz + cdir.y))
+				var tdir := Vector2i(cdir.x, 0) if sa2 > sb2 else Vector2i(0, cdir.y)
+				var tpos: Vector3 = cpos + Vector3(float(tdir.x) * 3.0, 0.0, float(tdir.y) * 3.0)
+				# Arc at the POCKET POINT: arms face the water (lower-arm side) and
+				# the shore behind — flipping the taller-arm axis. With the arc on
+				# the taller side instead, it buries deep in the wall and a bare
+				# grey wedge shows at the jog between the shore line and the wall.
+				var wdir: Vector2i = cdir - tdir * 2
+				var wbasis := Basis(Vector3.UP, atan2(float(wdir.x), float(wdir.y)) - PI * 0.25)
+				out["outer_lip"].append(Transform3D(wbasis, tpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				# A straight module in THIS cell's corner slot continues the lower
+				# arm's shore line across the 1-slot jog to the cap's turn (the
+				# lip line and the taller wall face are offset by the recess —
+				# without it a bare notch shows right at the turn).
+				out["lip"].append(Transform3D(Basis(Vector3.UP, _angle(tdir)), cpos + Vector3(0.0, LIP_LIFT, 0.0)))
+				for k in _rows(h - pocket_y2):
 					out["inner_wall"].append(Transform3D(cbasis, cpos + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 			"step":
 				var diag_y := TerrainSurfaceField.surface_y_in_cell(region, px, pz, cx + cdir.x, cz + cdir.y)

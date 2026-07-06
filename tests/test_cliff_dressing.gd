@@ -935,11 +935,12 @@ func test_dry_pocket_with_unequal_arms_keeps_land_behaviour() -> void:
 
 ## WEST-junction shape (seed 2697992464, cells (-24,-19)/(-23,-20)): the carved
 ## pocket's DIAGONAL is a flat top LEVEL with the lower arm. The diagonal then
-## owns the corner classic-style: corner_map reports "inner" (so the sheet clip
-## tucks the corner point that buried the piece under flat grass — owner: "we
-## need to add a corner piece to blend the lower cliff into the upper cliff")
-## and the pocket's ghost stands down (no doubled piece).
-func test_carved_pocket_level_diagonal_owns_the_inner_corner() -> void:
+## owns the corner: corner_map reports "pocket_cap" (sheet clip tucks the corner
+## point), the pocket's ghost stands down (no doubled piece), and the emission is
+## a CONVEX outer cap on top (the shore lip turning at the junction — an inner
+## tab there read as "currently a flat plane", owner) over concave inner wall
+## rows (the two arms' walls still meet concavely below).
+func test_carved_pocket_level_diagonal_gets_a_pocket_cap() -> void:
 	var storeys: Dictionary = {}
 	for z in range(-2, 3):
 		for x in range(-2, 3):
@@ -956,21 +957,45 @@ func test_carved_pocket_level_diagonal_owns_the_inner_corner() -> void:
 	assert_eq(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)), 0,
 		"the pocket's ghost stands down (the diagonal emits the piece)")
 	var flags: Dictionary = CliffDressing.corner_flags(region, 1, 1)
-	assert_eq(str(flags.get(Vector2i(-1, -1), "")), "inner",
+	assert_eq(str(flags.get(Vector2i(-1, -1), "")), "pocket_cap",
 		"the diagonal's corner_map registers the corner (sheet tuck + piece emission)")
 	var data = Dress.compute(region, 0, 0, 2)
-	var lips := 0
+	var caps := 0
+	var seam_walls := 0
+	for t in (data["outer_lip"] as Array):
+		var o := (t as Transform3D).origin
+		# One slot INTO the taller arm's cell (west of the diagonal's corner slot
+		# here), at the diagonal's own height — proud of the taller wall over the
+		# water, turn wrapping the pocket point.
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 13.5) < 0.1 and o.y < 6.0:
+			caps += 1
+		assert_false(absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1 and o.y < 6.0,
+			"no cap floating mid-ground in the diagonal's own slot (read as a raised pad)")
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
+		assert_false(absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1,
+			"no flat inner tab at the junction slot (owner: 'currently a flat plane')")
+	for t in (data["inner_wall"] as Array):
+		var o := (t as Transform3D).origin
 		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1:
-			lips += 1
-	assert_eq(lips, 1, "exactly one inner corner piece at the junction slot (no ghost double)")
+			seam_walls += 1
+	assert_eq(caps, 1, "the walkable top gets ONE convex cap wrapping the pocket point")
+	assert_gt(seam_walls, 0, "the concave wall seam below keeps its inner rows")
+	var shore_cont := false
+	for t in (data["lip"] as Array):
+		var xf := t as Transform3D
+		var o := xf.origin
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (4.0 + Dress.LIP_LIFT)) < 0.03:
+			shore_cont = true
+			assert_lt((xf.basis * Vector3(0, 0, 1)).x, -0.9,
+				"the continuation faces the pocket along the lower arm's shore line")
+	assert_true(shore_cont, "a straight module continues the shore line across the jog to the cap")
 
 ## EAST-junction shape (seed 2697992464, cells (-23,-20)/(-23,-19)): at a carved
-## flush step the cap turns at the run cell's own corner AND the run's lip line
-## continues one slot into the taller cell, dying into its corner column's base
-## (owner: "the edge should be extended so the corner piece goes into the wall").
-func test_carved_flush_step_lip_continues_into_the_taller_wall() -> void:
+## flush step the run keeps its straight END module and the turned cap sits one
+## slot INTO the taller cell, at its corner column — "the corner should go at
+## the very end" (owner drew the cap and the straight module swapped).
+func test_carved_flush_step_cap_sits_at_the_very_end() -> void:
 	var storeys: Dictionary = {}
 	var carved: Dictionary = {}
 	for z in range(-2, 3):
@@ -987,15 +1012,30 @@ func test_carved_flush_step_lip_continues_into_the_taller_wall() -> void:
 		levels[cell] = 0
 	var region: HeightfieldRegion = HeightfieldRegion.new(storeys, levels, carved)
 	var flags: Dictionary = CliffDressing.corner_flags(region, 0, 0)
-	assert_eq(str(flags.get(Vector2i(1, 1), "")), "outer",
-		"the carved flush step registers a real outer corner at the run cell")
+	assert_eq(str(flags.get(Vector2i(1, 1), "")), "ext_outer",
+		"the carved flush step is a run-end junction with the cap beyond the boundary")
 	var data = Dress.compute(region, 0, 0, 2)
-	var cont := false
+	var end_module := false
 	for t in (data["lip"] as Array):
 		var xf := t as Transform3D
 		var o := xf.origin
-		if absf(o.x - 10.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (4.0 + Dress.LIP_LIFT)) < 0.03:
-			cont = true
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - (4.0 + Dress.LIP_LIFT)) < 0.03:
+			end_module = true
 			assert_gt((xf.basis * Vector3(0, 0, 1)).x, 0.9,
-				"the continuation keeps the run's east-facing rotation")
-	assert_true(cont, "the lip line continues one slot into the taller cell (into its corner column)")
+				"the end module keeps the run's east-facing rotation")
+	assert_true(end_module, "the run keeps its straight end module up to the boundary")
+	var end_cap := false
+	for t in (data["outer_lip"] as Array):
+		var xf := t as Transform3D
+		var o := xf.origin
+		assert_false(absf(o.x - 10.5) < 0.1 and absf(o.z - 10.5) < 0.1 and o.y < 6.0,
+			"no turned cap at the run's own corner slot (the turn was one module too early)")
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (4.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
+			end_cap = true
+	assert_true(end_cap, "the turned cap sits one slot into the taller cell — at the very end")
+	var cap_rows := 0
+	for t in (data["outer_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 13.5) < 0.1 and o.y < 4.0:
+			cap_rows += 1
+	assert_gt(cap_rows, 0, "the cap keeps its wall rows down to the carved pocket (no floating cap)")

@@ -1,50 +1,50 @@
 [
  {
-  "name": "FIX 1 of 2: WEST junction — inner corner piece now blends the shore lip into the tall cliff (was buried in flat grass)",
+  "name": "FIX 1: EAST flush-step — pieces swapped, corner at the very end into the wall",
   "pos": [
-   -562.5,
+   -543.8,
    6.0,
-   -474.0
+   -470.1
   ],
   "look": [
-   -563.2,
-   -467.8
+   -541.5,
+   -467.0
   ]
  },
  {
-  "name": "FIX 1 from the water side — the lip arc turns into the tall wall's base",
-  "pos": [
-   -570.0,
-   6.5,
-   -473.0
-  ],
-  "look": [
-   -563.3,
-   -468.0
-  ]
- },
- {
-  "name": "FIX 2 of 2: EAST flush-step — lip line now continues past the cap INTO the tall wall (your sketch)",
+  "name": "FIX 1 from over the water",
   "pos": [
    -534.5,
    7.0,
    -464.0
   ],
   "look": [
-   -541.8,
-   -467.8
+   -541.5,
+   -467.0
   ]
  },
  {
-  "name": "east flush-step from the shore run side",
+  "name": "FIX 2: WEST pocket — corner piece at the lower right, wrapping into the tall wall",
   "pos": [
-   -550.0,
-   6.0,
-   -476.0
+   -571.0,
+   6.5,
+   -471.5
   ],
   "look": [
-   -541.5,
-   -468.0
+   -562.8,
+   -468.8
+  ]
+ },
+ {
+  "name": "FIX 2 from the water side",
+  "pos": [
+   -573.0,
+   6.0,
+   -462.0
+  ],
+  "look": [
+   -563.5,
+   -467.5
   ]
  }
 ]
