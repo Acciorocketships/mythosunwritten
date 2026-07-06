@@ -293,16 +293,25 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 	return out
 
 
+static var _noise_texture: NoiseTexture2D = null
+static var _fall_material: ShaderMaterial = null
+
+
+static func _noise_tex() -> NoiseTexture2D:
+	if _noise_texture == null:
+		var noise: FastNoiseLite = FastNoiseLite.new()
+		noise.seed = 7
+		noise.frequency = 0.008
+		_noise_texture = NoiseTexture2D.new()
+		_noise_texture.noise = noise
+		_noise_texture.seamless = true
+	return _noise_texture
+
+
 static func _make_material() -> ShaderMaterial:
 	var mat: ShaderMaterial = ShaderMaterial.new()
 	mat.shader = load("res://terrain/water/water_unified.gdshader")
-	var noise: FastNoiseLite = FastNoiseLite.new()
-	noise.seed = 7
-	noise.frequency = 0.008
-	var tex: NoiseTexture2D = NoiseTexture2D.new()
-	tex.noise = noise
-	tex.seamless = true
-	mat.set_shader_parameter("noise_tex", tex)
+	mat.set_shader_parameter("noise_tex", _noise_tex())
 	return mat
 
 
@@ -310,6 +319,70 @@ static func sheet_material() -> ShaderMaterial:
 	if _sheet_material == null:
 		_sheet_material = _make_material()
 	return _sheet_material
+
+
+static func waterfall_material() -> ShaderMaterial:
+	if _fall_material == null:
+		_fall_material = ShaderMaterial.new()
+		_fall_material.shader = load("res://terrain/water/waterfall.gdshader")
+		_fall_material.set_shader_parameter("noise_tex", _noise_tex())
+	return _fall_material
+
+
+## Cascade ribbons: where the surface profile drops more than BRIDGE_MAX
+## between neighbouring samples the sheet deliberately SPLITS (no bridging
+## curtain) — that vertical face is a waterfall. Data-only (headless-testable):
+## {mid: Vector2, tangent: Vector2, half_width: float, top: float, bottom:
+## float} per drop, owned by the chunk containing the drop midpoint —
+## deterministic, no double emission from neighbouring chunks.
+static func compute_ribbons(water: WaterPlan, chunk: Vector2i) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var centre_cx: int = chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
+	var centre_cz: int = chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
+	var bodies: Dictionary = water.bodies_near(
+		Vector2i(centre_cx, centre_cz), CELLS_PER_CHUNK / 2 + 1 + FIELD_MARGIN)
+	var owner_rect := Rect2(
+		Vector2(float(chunk.x), float(chunk.y)) * CHUNK_WORLD,
+		Vector2(CHUNK_WORLD, CHUNK_WORLD))
+	for river in bodies.rivers:
+		var prof: PackedFloat32Array = surface_profile(river)
+		for i in river.points.size() - 1:
+			var drop: float = prof[i] - prof[i + 1]
+			if drop <= BRIDGE_MAX:
+				continue
+			var mid: Vector2 = (river.points[i] + river.points[i + 1]) * 0.5
+			if not owner_rect.has_point(mid):
+				continue
+			out.append({
+				"mid": mid,
+				"tangent": (river.points[i + 1] - river.points[i]).normalized(),
+				"half_width": river.widths[i],
+				"top": prof[i],
+				"bottom": prof[i + 1],
+			})
+	return out
+
+
+## One waterfall curtain: quads across the channel from just above the upper
+## surface down to a plunge just under the lower one, leaning downstream so it
+## reads as pouring. Double-sided like the rock skirts. UV.y runs 0 (crest) to
+## 1 (plunge) for the shader's falling bands.
+static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
+	var mid: Vector2 = r.mid
+	var tangent: Vector2 = r.tangent
+	var half_width: float = r.half_width
+	var top: float = r.top
+	var bottom: float = r.bottom
+	var across := Vector2(-tangent.y, tangent.x) * half_width
+	var lean := tangent * 1.8
+	var t0 := Vector3(mid.x - across.x, top + 0.15, mid.y - across.y)
+	var t1 := Vector3(mid.x + across.x, top + 0.15, mid.y + across.y)
+	var b0 := Vector3(t0.x + lean.x, bottom - 0.6, t0.z + lean.y)
+	var b1 := Vector3(t1.x + lean.x, bottom - 0.6, t1.z + lean.y)
+	var quad: Array = [[t0, 0.0, 0.0], [t1, 1.0, 0.0], [b1, 1.0, 1.0], [b0, 0.0, 1.0]]
+	for idx in [0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]:
+		st.set_uv(Vector2(quad[idx][1], quad[idx][2]))
+		st.add_vertex(quad[idx][0])
 
 
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
@@ -355,6 +428,18 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 	mi.mesh = st.commit()
 	mi.material_override = WaterSurfaceBuilder.sheet_material()
 	root.add_child(mi)
+	var ribbons: Array[Dictionary] = compute_ribbons(water, chunk)
+	if not ribbons.is_empty():
+		var rst: SurfaceTool = SurfaceTool.new()
+		rst.begin(Mesh.PRIMITIVE_TRIANGLES)
+		for r in ribbons:
+			_ribbon_mesh(rst, r)
+		rst.generate_normals()
+		var rmi: MeshInstance3D = MeshInstance3D.new()
+		rmi.name = "Waterfalls"
+		rmi.mesh = rst.commit()
+		rmi.material_override = WaterSurfaceBuilder.waterfall_material()
+		root.add_child(rmi)
 	_build_volumes(water, chunk, field, root)
 	return root
 

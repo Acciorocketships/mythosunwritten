@@ -11,10 +11,21 @@ func _water() -> WaterPlan:
 
 # The REAL rendered terrain for a chunk (clamped storeys, carve applied) — the
 # water field reasons against this, never against raw-noise estimates.
+# Plans/regions are cached per (seed, chunk) across tests: a fresh plan per
+# call re-traces every overlapping river cold and the file times out.
+static var _plan_cache: Dictionary = {}
+static var _region_cache: Dictionary = {}
+
 func _region(seed_v: int, chunk: Vector2i):
-	var hp := HeightfieldPlan.new(seed_v, 22.0, 8, "mean", 3)
-	hp.set_water_plan(WaterPlan.new(seed_v, 22.0, 8))
-	return hp.compute_region(chunk.x * 8 + 4, chunk.y * 8 + 4, 8)
+	var rk := [seed_v, chunk]
+	if _region_cache.has(rk):
+		return _region_cache[rk]
+	if not _plan_cache.has(seed_v):
+		var hp := HeightfieldPlan.new(seed_v, 22.0, 8, "mean", 3)
+		hp.set_water_plan(WaterPlan.new(seed_v, 22.0, 8))
+		_plan_cache[seed_v] = hp
+	_region_cache[rk] = _plan_cache[seed_v].compute_region(chunk.x * 8 + 4, chunk.y * 8 + 4, 8)
+	return _region_cache[rk]
 
 func _a_river(plan: WaterPlan) -> RiverTrace:
 	for sz in range(-4, 5):
@@ -292,3 +303,29 @@ func test_sheet_never_floats_over_the_rendered_terrain() -> void:
 				"%s cell %s floats %.1fm over the rendered terrain (level %.1f, real %.1f)" % [
 					"wet" if e.wet else "rim", cell, e.level - real, e.level, real])
 	assert_gt(wet_seen, 0, "the cascade chunks still hold water")
+
+func test_steep_profile_drops_emit_waterfall_ribbons() -> void:
+	# Owner: "where there is a drop, we should also work on waterfalls." The
+	# cascade chunks must yield ribbon data spanning each >BRIDGE_MAX profile
+	# drop, top/bottom matching the adjacent reach surfaces.
+	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
+	var total := 0
+	for chunk in [Vector2i(-1, -6), Vector2i(0, -6)]:
+		for r in WaterSurfaceBuilder.compute_ribbons(water, chunk):
+			total += 1
+			assert_gt(r.top - r.bottom, WaterSurfaceBuilder.BRIDGE_MAX,
+				"a ribbon spans a real drop (top %.1f bottom %.1f)" % [r.top, r.bottom])
+			assert_gt(r.half_width, 0.0, "ribbon carries the channel width")
+	assert_gt(total, 0, "the cascade chunks carry waterfall ribbons")
+
+func test_ribbons_are_deterministic_and_chunk_owned() -> void:
+	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
+	var a: Array = WaterSurfaceBuilder.compute_ribbons(water, Vector2i(-1, -6))
+	var b: Array = WaterSurfaceBuilder.compute_ribbons(water, Vector2i(-1, -6))
+	assert_eq(a.size(), b.size(), "pure function of (plan, chunk)")
+	for i in a.size():
+		assert_eq(a[i].mid, b[i].mid, "ribbon %d midpoint stable" % i)
+	# A drop owned by one chunk never re-emits from the neighbour.
+	for r in a:
+		var owner_chunk := Vector2i(int(floor(r.mid.x / 192.0)), int(floor(r.mid.y / 192.0)))
+		assert_eq(owner_chunk, Vector2i(-1, -6), "ribbon %s owned by its midpoint chunk" % r.mid)
