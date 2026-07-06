@@ -97,8 +97,10 @@ func test_pond_level_at_or_below_ring_minimum() -> void:
 			var p: Vector2 = Vector2(float(cc.x + dx) * WaterPlan.TILE, float(cc.y + dz) * WaterPlan.TILE)
 			if pond.footprint_t(p) <= 1.0 + WaterPlan.TILE / pond.radius:
 				min_h = minf(min_h, plan.noise_h(p))
-	assert_true(float(pond.level) * 4.0 <= roundi(min_h / 4.0) * 4.0 + 0.0001,
-		"pond bank storey never exceeds the footprint∪ring minimum")
+	# maxf mirrors _pond_level's floor of storey 1 (beds must stay above y=0);
+	# lowland basins can ring-round to storey 0 and still get a level-1 pond.
+	assert_true(float(pond.level) * 4.0 <= maxf(roundi(min_h / 4.0) * 4.0, 4.0) + 0.0001,
+		"pond bank storey never exceeds the footprint∪ring minimum (or the storey-1 floor)")
 
 func test_trace_never_enters_spawn_disk() -> void:
 	var plan: WaterPlan = _plan()
@@ -298,13 +300,31 @@ func test_bodies_near_covers_carved_cells_when_window_straddles_super_cells() ->
 			return
 	pass_test("no straddling-corner window held carved cells on this seed")
 
-func test_sources_sit_on_hillsides() -> void:
-	# Headwaters need real local slope — rivers rise out of hills, never
-	# appear mid-plateau (they may still cross flat ground downstream).
+func test_sources_sit_at_local_peaks() -> void:
+	# Sources gradient-ascend to a summit: near-zero local gradient, a
+	# prominent ring (real hill/mountain, not plateau), and no ring sample
+	# meaningfully higher than the source itself.
 	var plan: WaterPlan = _plan()
+	var checked: int = 0
 	for sc in _sources_in(plan, 6):
-		assert_true(plan.grad(plan.source_pos(sc)).length() >= WaterPlan.SOURCE_MIN_SLOPE,
-			"source %s rises from sloped ground" % sc)
+		checked += 1
+		var p: Vector2 = plan.source_pos(sc)
+		assert_true(plan.grad(p).length() < WaterPlan.SOURCE_PEAK_EPS,
+			"source %s gradient ~0 (summit)" % sc)
+		assert_true(plan._ring_prominence(p) >= WaterPlan.PROMINENCE_MIN,
+			"source %s ring is prominent (not plateau)" % sc)
+		for i in 8:
+			var q: Vector2 = p + Vector2.from_angle(TAU * float(i) / 8.0) * 24.0
+			assert_true(plan.smooth_h(q) <= plan.smooth_h(p) + 0.75,
+				"source %s is a local top (ring sample %d not above it)" % [sc, i])
+	assert_true(checked > 0, "window contains sources to check")
+
+func test_source_pos_is_cached_and_pure() -> void:
+	var a: WaterPlan = _plan()
+	var b: WaterPlan = _plan()
+	for sc in [Vector2i(2, 3), Vector2i(-4, 1), Vector2i(5, -5)]:
+		assert_eq(a.source_pos(sc), b.source_pos(sc), "ascent is a pure function of (seed, cell)")
+		assert_eq(a.source_pos(sc), a.source_pos(sc), "cache returns the same point")
 
 # The lazy-gated carve must equal the exhaustive reference for every cell —
 # gated-out terms all contribute exactly 0. Sweeps a band far enough out to

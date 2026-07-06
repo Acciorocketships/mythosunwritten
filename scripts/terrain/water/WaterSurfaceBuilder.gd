@@ -38,6 +38,9 @@ const BRIDGE_MAX := 2.5
 const FLOOD_MIN_DEPTH := 1.0
 const VOLUME_STRIDE := 4              # river swim-box every N samples
 const WATER_LAYER := 1 << 7
+# Sub-quads per cell edge. The shader displaces real chop waves (~14-26m
+# wavelength); 24m cell quads can't bend, 3m vertex pitch can.
+const SUBDIV := 8
 
 const _CARDINALS_8 := [
 	Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
@@ -372,11 +375,35 @@ func _sheet_quad(st: SurfaceTool, cell: Vector2i, own_level: float, corner_cells
 		pos.append(Vector3(
 			(float(k.x) - 0.5) * TILE, lvl, (float(k.y) - 0.5) * TILE))
 		cust.append(Color(fl.x, 0.0, fl.y, stp))
-	# triangles (0,3,2) and (0,2,1) face +Y
-	for idx in [0, 3, 2, 0, 2, 1]:
-		st.set_custom(0, cust[idx])
-		st.set_uv(Vector2(0.0, 0.0))
-		st.add_vertex(pos[idx])
+	# Bilinear SUBDIV grid over the quad: chop displacement in the vertex
+	# shader needs vertices far denser than the 24m cell pitch. Interpolation
+	# reproduces the exact corner values along the edges, so adjacent cells
+	# stay watertight. Sub-quad winding matches the old (0,3,2)(0,2,1) +Y quad.
+	for sz in SUBDIV:
+		for sx in SUBDIV:
+			var u0: float = float(sx) / float(SUBDIV)
+			var u1: float = float(sx + 1) / float(SUBDIV)
+			var v0: float = float(sz) / float(SUBDIV)
+			var v1: float = float(sz + 1) / float(SUBDIV)
+			var quad: Array = [
+				[_bilerp_pos(pos, u0, v0), _bilerp_cust(cust, u0, v0)],
+				[_bilerp_pos(pos, u0, v1), _bilerp_cust(cust, u0, v1)],
+				[_bilerp_pos(pos, u1, v1), _bilerp_cust(cust, u1, v1)],
+				[_bilerp_pos(pos, u1, v0), _bilerp_cust(cust, u1, v0)],
+			]   # sub-corners (0,0), (0,1), (1,1), (1,0) — walk order
+			for idx in [0, 1, 2, 0, 2, 3]:
+				st.set_custom(0, quad[idx][1])
+				st.set_uv(Vector2(0.0, 0.0))
+				st.add_vertex(quad[idx][0])
+
+
+## Bilinear blend of the quad's corner positions ([min, +x, +xz, +z] order).
+static func _bilerp_pos(pos: Array, u: float, v: float) -> Vector3:
+	return (pos[0].lerp(pos[1], u)).lerp(pos[3].lerp(pos[2], u), v)
+
+
+static func _bilerp_cust(cust: Array, u: float, v: float) -> Color:
+	return (cust[0].lerp(cust[1], u)).lerp(cust[3].lerp(cust[2], u), v)
 
 
 # --- swim volumes ------------------------------------------------

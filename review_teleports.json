@@ -1,6 +1,90 @@
 [
  {
-  "name": "FIX 1: EAST flush-step — pieces swapped, corner at the very end into the wall",
+  "look": [
+   40.5167503356934,
+   -1037.79296875
+  ],
+  "name": "WATER 0: mountain-top source pool",
+  "pos": [
+   29.3165073394775,
+   28.687201911293258,
+   -999.39306640625
+  ]
+ },
+ {
+  "look": [
+   -15.4974699020386,
+   -1144.07800292969
+  ],
+  "name": "WATER 0: mid-river reach",
+  "pos": [
+   6.89744186401367,
+   27.0,
+   -1148.62084960938
+  ]
+ },
+ {
+  "look": [
+   60.9221153259277,
+   -1118.2607421875
+  ],
+  "name": "WATER 0: steepest reach (steep=1.00)",
+  "pos": [
+   79.732307434082,
+   41.5091108135898,
+   -1094.29248046875
+  ]
+ },
+ {
+  "look": [
+   -84.1108245849609,
+   -1047.74584960938
+  ],
+  "name": "WATER 1: mountain-top source pool",
+  "pos": [
+   -68.294792175293,
+   27.0,
+   -1084.48620605469
+  ]
+ },
+ {
+  "look": [
+   22.0754547119141,
+   -903.611389160156
+  ],
+  "name": "WATER 1: mid-river reach",
+  "pos": [
+   27.6317119598389,
+   46.2225766937539,
+   -865.10546875
+  ]
+ },
+ {
+  "look": [
+   -112.316101074219,
+   -982.225524902344
+  ],
+  "name": "WATER 1: steepest reach (steep=1.00)",
+  "pos": [
+   -79.9793090820312,
+   27.0,
+   -1002.81195068359
+  ]
+ },
+ {
+  "look": [
+   331.224731445312,
+   -740.631958007812
+  ],
+  "name": "WATER 1: terminal pond",
+  "pos": [
+   460.58837890625,
+   31.0881059710164,
+   -740.631958007812
+  ]
+ },
+ {
+  "name": "FIX 1: EAST flush-step \u2014 pieces swapped, corner at the very end into the wall",
   "pos": [
    -543.8,
    6.0,
@@ -24,7 +108,7 @@
   ]
  },
  {
-  "name": "FIX 2: WEST pocket — corner piece at the lower right, wrapping into the tall wall",
+  "name": "FIX 2: WEST pocket \u2014 corner piece at the lower right, wrapping into the tall wall",
   "pos": [
    -571.0,
    6.5,

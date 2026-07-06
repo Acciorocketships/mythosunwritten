@@ -1,11 +1,13 @@
 # scripts/terrain/water/WaterPlan.gd
 # Deterministic water-network plan: river sources on a coarse super-grid,
+# each ascended to its local mountain/hill summit (spring pool at the top),
 # traced downhill on the smooth landform field, always ending in water —
 # a junction with a higher-priority river or a terminal pond. Pure function
 # of (world_seed, super_cell) with bounded windows: the same anti-churn
 # guarantee as HeightfieldPlan. Instance caches are performance only.
 #
 # Spec: docs/superpowers/specs/2026-07-04-water-rivers-lakes-design.md
+#       docs/superpowers/specs/2026-07-06-water-look-and-mountain-sources-design.md
 class_name WaterPlan
 extends RefCounted
 
@@ -14,10 +16,21 @@ const TILE := 24.0
 const STOREY := 4.0
 
 const SOURCE_MIN01 := 0.55        # smooth height01 floor for a source
-# Headwaters sit on HILLSIDES: a source also needs real local slope, so
-# rivers visibly rise out of high ground instead of appearing mid-plateau
-# (they may still cross flat ground on the way down).
-const SOURCE_MIN_SLOPE := 0.035   # |grad| in m/m at the source point
+# Sources ASCEND to the local summit: rivers rise from mountain/hill TOPS
+# (owner request), spring pool at the peak. A cell fires only when the climb
+# converges on a prominent top — plateaus never qualify (they may still
+# cross flat ground on the way down).
+const ASCEND_STEP := 12.0         # uphill stride of the summit climb
+# Climb budget caps REACH growth so REACH_SUPERS stays 4 (19*12 = 228 m —
+# candidates must land within ~a quarter super-cell of their summit).
+const ASCEND_MAX_STEPS := 19
+const SOURCE_PEAK_EPS := 0.02     # |grad| in m/m at an accepted summit
+# Cheap floor on the PRE-climb jitter point: the expensive ascent only runs
+# on candidates already on meaningfully high ground (the climb budget can't
+# lift lowland candidates to a qualifying peak anyway).
+const SOURCE_JITTER_MIN01 := 0.42
+const PROMINENCE_R := 48.0        # ring radius for the prominence test
+const PROMINENCE_MIN := 0.03      # mean ring |grad| — real hills only
 const SOURCE_PROB := 0.8          # fraction of qualifying super-cells that fire
 const TRACE_STEP := 12.0
 const MAX_STEPS := 220            # hard bound => max length 2640 u
@@ -49,7 +62,11 @@ const BED_MIN := -1.0
 # partial-carve band can't dither cells across the storey-rounding threshold
 # (alternating poke/submerge plates along the channel edges).
 const FEATHER := 8.0
-const SOURCE_POOL_R := 52.0       # big enough to read as a flat spring pond
+# Spring-pool radius. SMALL on purpose: the pool level clamps to the minimum
+# ground under footprint∪ring, so a wide pool on a peaked summit reads that
+# minimum far downhill and carves a crater lake into the mountain instead of
+# a tarn nestled at the top (seen on the pinned review seed).
+const SOURCE_POOL_R := 26.0
 const POOL_DEPTH := 2.5
 const POND_R_MIN := 60.0
 const POND_R_MAX := 140.0
@@ -62,9 +79,11 @@ const MIN_STEPS := 120
 const LOWLANDS01 := 0.08          # smooth height01 floor => terminal pond
 const SPAWN_WATER_RADIUS := 200.0 # dry spawn disk (spawn clear 60+120 + margin)
 const JOIN_DEPTH := 2             # junction dependency recursion cap
-# Any point a river can influence lies within MAX_STEPS*TRACE_STEP + the
-# largest pond bound + carve feather of its source ⇒ a fixed super-cell ring.
-const REACH := MAX_STEPS * TRACE_STEP + POND_R_MAX * (1.0 + PondStamp.WOBBLE) + FEATHER
+# Any point a river can influence lies within the summit ascent + the trace
+# length + the largest pond bound + carve feather of its source's JITTER
+# point ⇒ a fixed super-cell ring.
+const REACH := ASCEND_MAX_STEPS * ASCEND_STEP + MAX_STEPS * TRACE_STEP \
+	+ POND_R_MAX * (1.0 + PondStamp.WOBBLE) + FEATHER
 const REACH_SUPERS := int(ceil(REACH / SUPER))   # = 4
 
 var world_seed: int
@@ -72,6 +91,8 @@ var amplitude: float
 var max_storeys: int
 
 var _trace_cache: Dictionary = {}    # Vector3i(sc.x, sc.y, depth) -> RiverTrace | null
+var _source_pos_cache: Dictionary = {}   # Vector2i -> Vector2 (summit-ascended)
+var _has_source_cache: Dictionary = {}   # Vector2i -> bool
 
 
 func _init(p_world_seed: int, p_amplitude: float, p_max_storeys: int) -> void:
@@ -122,24 +143,83 @@ func priority_of(sc: Vector2i) -> int:
 	return _hash_cell(sc, 0x51ED)
 
 
-## Candidate source point, jittered inside the super-cell.
-func source_pos(sc: Vector2i) -> Vector2:
+## Deterministic hill-climb on the smooth field: fixed stride uphill, halving
+## on overshoot, until the gradient flattens (summit) or the budget runs out.
+func _ascend(start: Vector2) -> Vector2:
+	var p: Vector2 = start
+	var step: float = ASCEND_STEP
+	var h: float = smooth_h(p)
+	for i in ASCEND_MAX_STEPS:
+		var g: Vector2 = grad(p)
+		if g.length() < SOURCE_PEAK_EPS * 0.5:
+			break
+		var q: Vector2 = p + g.normalized() * step
+		var hq: float = smooth_h(q)
+		if hq <= h:
+			step *= 0.5   # overshot the summit — tighten the stride
+			if step < 1.0:
+				break
+			continue
+		p = q
+		h = hq
+	return p
+
+
+## Mean gradient magnitude on a ring around p — summit prominence: real
+## mountain/hill tops have steep flanks; plateau tops read ~0 and never fire.
+func _ring_prominence(p: Vector2) -> float:
+	var acc: float = 0.0
+	for i in 8:
+		acc += grad(p + Vector2.from_angle(TAU * float(i) / 8.0) * PROMINENCE_R).length()
+	return acc / 8.0
+
+
+## The jittered pre-climb candidate point inside the super-cell.
+func _jitter_pos(sc: Vector2i) -> Vector2:
 	var jx: float = Helper._hash01(_hash_cell(sc, 101))
 	var jz: float = Helper._hash01(_hash_cell(sc, 102))
 	return Vector2((float(sc.x) + jx) * SUPER, (float(sc.y) + jz) * SUPER)
 
 
-## Zero or one river source per super-cell: the jittered candidate must land
-## on high smooth ground, outside the spawn ring, and win a density roll.
+## Source point for a super-cell: the jittered candidate ascended to its
+## local summit. Pure function of (seed, cell); cached per instance.
+func source_pos(sc: Vector2i) -> Vector2:
+	if _source_pos_cache.has(sc):
+		return _source_pos_cache[sc]
+	var p: Vector2 = _ascend(_jitter_pos(sc))
+	_source_pos_cache[sc] = p
+	return p
+
+
+## Zero or one river source per super-cell: the ascended candidate must be a
+## genuine summit (converged climb, prominent ring) on high smooth ground,
+## outside the spawn ring, and win a density roll. HOT during region builds
+## (every super-cell in reach is asked, per depth) — cached, and gated
+## cheap-first so the climb only ever runs on plausibly-high candidates.
 func has_source(sc: Vector2i) -> bool:
+	if _has_source_cache.has(sc):
+		return _has_source_cache[sc]
+	var ok: bool = _has_source_uncached(sc)
+	_has_source_cache[sc] = ok
+	return ok
+
+
+func _has_source_uncached(sc: Vector2i) -> bool:
+	if Helper._hash01(_hash_cell(sc, 103)) >= SOURCE_PROB:
+		return false   # density roll — free, kills 20% before any noise eval
+	var j: Vector2 = _jitter_pos(sc)
+	if j.length() < SPAWN_WATER_RADIUS:
+		return false   # summit position re-checked below; this skips the climb
+	if smooth01(j) < SOURCE_JITTER_MIN01:
+		return false   # lowland candidate — the climb budget can't save it
 	var p: Vector2 = source_pos(sc)
 	if p.length() < SPAWN_WATER_RADIUS:
 		return false
 	if smooth01(p) < SOURCE_MIN01:
 		return false
-	if grad(p).length() < SOURCE_MIN_SLOPE:
-		return false   # headwaters rise out of hillsides, never mid-plateau
-	return Helper._hash01(_hash_cell(sc, 103)) < SOURCE_PROB
+	if grad(p).length() >= SOURCE_PEAK_EPS:
+		return false   # never converged — a vast flank; another cell owns this summit
+	return _ring_prominence(p) >= PROMINENCE_MIN   # plateau tops never fire
 
 
 # ---------------------------------------------------------------
