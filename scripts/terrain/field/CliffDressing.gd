@@ -61,6 +61,10 @@ static func shared_material() -> Material:
 		mat = mat.duplicate()
 		mat.roughness = 1.0
 		mat.metallic_specular = 0.0
+		# Albedo modulates by COLOR: the sheet's vertex tints and the dressing/
+		# skirt/apron biome tints all ride the ONE material — geometry that sets
+		# no colour stays palette-true (COLOR defaults white).
+		mat.vertex_color_use_as_albedo = true
 	_shared_mat = mat
 	return _shared_mat
 
@@ -70,6 +74,17 @@ static func compute(region, lo_cx: int, lo_cz: int, cells: int) -> Dictionary:
 	for cz in range(lo_cz, lo_cz + cells):
 		for cx in range(lo_cx, lo_cx + cells):
 			_cell(region, cx, cz, out)
+	return out
+
+# Per-instance biome tint, sampled at each piece's own origin — the SAME field
+# the walkable sheet tints by (BiomeRegistry ground tint), so lips/walls always
+# match the lawn they sit on. seed 0 (headless piece tests) = identity white.
+static func compute_tints(transforms: Array, world_seed: int) -> PackedColorArray:
+	var out := PackedColorArray()
+	out.resize(transforms.size())
+	for i in transforms.size():
+		out[i] = Color(1, 1, 1) if world_seed == 0 else BiomeRegistry.blended_ground_tint(
+			Helper.biome_weights5((transforms[i] as Transform3D).origin, world_seed))
 	return out
 
 # Rows needed to cover a face of height `dip` (storey-quantised, rounded UP so the wall always
@@ -539,17 +554,16 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 		# (run-end junctions into higher flat neighbours — outer/inner extension caps — are
 		# emitted from corner_map above, so the mesher's clip can hold across them too)
 
-static func build(region, lo_cx: int, lo_cz: int, cells: int) -> Node3D:
+static func build(region, lo_cx: int, lo_cz: int, cells: int, world_seed := 0) -> Node3D:
 	_ensure_loaded()
 	var data := compute(region, lo_cx, lo_cz, cells)
 	var root := Node3D.new()
 	root.name = "Cliffs"
-	root.add_child(_multimesh(_pieces["wall"], data["wall"], "Walls"))
-	root.add_child(_multimesh(_pieces["lip"], data["lip"], "Lips"))
-	root.add_child(_multimesh(_pieces["outer_wall"], data["outer_wall"], "OuterWalls"))
-	root.add_child(_multimesh(_pieces["outer_lip"], data["outer_lip"], "OuterLips"))
-	root.add_child(_multimesh(_pieces["inner_wall"], data["inner_wall"], "InnerWalls"))
-	root.add_child(_multimesh(_pieces["inner_lip"], data["inner_lip"], "InnerLips"))
+	var names := {"wall": "Walls", "lip": "Lips", "outer_wall": "OuterWalls",
+			"outer_lip": "OuterLips", "inner_wall": "InnerWalls", "inner_lip": "InnerLips"}
+	for key in names:
+		root.add_child(_multimesh(_pieces[key], data[key], names[key],
+				compute_tints(data[key], world_seed)))
 	return root
 
 # Rock face is native +z. Rotate so it points toward the drop direction `dir`.
@@ -607,15 +621,17 @@ static func _piece(path: String) -> Array:
 	inst.free()
 	return out
 
-static func _multimesh(piece: Array, transforms: Array, nm: String) -> MultiMeshInstance3D:
+static func _multimesh(piece: Array, transforms: Array, nm: String, tints: PackedColorArray) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true   # per-instance biome tint (compute_tints)
 	mm.mesh = piece[0]
 	mm.instance_count = transforms.size()
 	var local: Transform3D = piece[1]
 	for i in transforms.size():
 		var t: Transform3D = transforms[i]
 		mm.set_instance_transform(i, t * local)
+		mm.set_instance_color(i, tints[i])
 	var mmi := MultiMeshInstance3D.new()
 	mmi.name = nm
 	mmi.multimesh = mm

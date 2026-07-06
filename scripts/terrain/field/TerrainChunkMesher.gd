@@ -104,18 +104,18 @@ func _ensure_skirt_style() -> void:
 			_grass_uv = luvs[i]
 			break
 
-# Walkable-sheet material that multiplies the KayKit palette by the per-vertex
-# biome tint. Both tint materials derive from `_material`, which only becomes the
-# shared de-sheened KayKit palette after _ensure_skirt_style() — so call it first
-# (idempotent) rather than depending on the caller's ordering.
+# The walkable sheet renders with THE shared material itself (it already reads
+# COLOR — CliffDressing.shared_material sets vertex_color_use_as_albedo), so the
+# sheet, aprons, skirt and every dressing piece share literally ONE Material
+# instance: change the palette once, everything follows (owner: "pulling from
+# the exact same colour/material"). _ensure_skirt_style() first (idempotent) so
+# `_material` has become that shared palette.
 func _ground_tinted_mat() -> Material:
 	if _ground_tinted == null:
 		_ensure_skirt_style()
-		var m := _material
-		if m is StandardMaterial3D:
-			m = (m as StandardMaterial3D).duplicate()
-			m.vertex_color_use_as_albedo = true
-		_ground_tinted = m
+		if _material is StandardMaterial3D:
+			(_material as StandardMaterial3D).vertex_color_use_as_albedo = true
+		_ground_tinted = _material
 	return _ground_tinted
 
 # One shared foliage material: KayKit atlas × per-instance MultiMesh COLOR (biome tint).
@@ -282,9 +282,10 @@ func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 			if not TerrainSurfaceField.is_flat_cell(region, cx, cz):
 				continue   # only flat-rendered cells leave vertical gaps at their boundaries
 			var h_hi: float = region.surface_height(cx, cz)
+			var tint := _cell_tint(cx, cz)
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				if TerrainSurfaceField.own_edge_flat(region, cx, cz, dir):
-					if _emit_wall(skirt, skirtc, region, cx, cz, dir, h_hi):
+					if _emit_wall(skirt, skirtc, region, cx, cz, dir, h_hi, tint):
 						any_wall = true
 
 	# Weld coincident grid vertices BEFORE generating normals so shared vertices get
@@ -309,13 +310,13 @@ func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 	var any_apron := false
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
-			if _emit_aprons(ast, region, clip_cache, cx, cz):
+			if _emit_aprons(ast, region, clip_cache, cx, cz, _cell_tint(cx, cz)):
 				any_apron = true
 	var apron_mesh: Mesh = null
 	if any_apron:
 		# no index()/generate_normals(): normals are explicit verticals (welding the two
 		# windings would zero them out and break the lighting)
-		ast.set_material(_material)
+		ast.set_material(_ground_tinted_mat())
 		apron_mesh = ast.commit()
 		var am := MeshInstance3D.new()
 		am.name = "Aprons"
@@ -353,8 +354,9 @@ func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 			deco.add_child(mmi)
 	root.add_child(deco)
 
-	# KayKit cliff dressing: real rock wall + grass-lip pieces on the cliff edges.
-	var dressing := CliffDressing.build(region, lo_cx, lo_cz, CELLS_PER_CHUNK)
+	# KayKit cliff dressing: real rock wall + grass-lip pieces on the cliff edges,
+	# biome-tinted per instance from the same field as the sheet.
+	var dressing := CliffDressing.build(region, lo_cx, lo_cz, CELLS_PER_CHUNK, _water_seed)
 	root.add_child(dressing)
 
 	# Collision: trimesh from the FULL walkable sheet (not the lip-clipped visual — the player
@@ -402,6 +404,15 @@ func _tri_tinted(st: SurfaceTool, vs: Array[Vector3], uv: Vector2, cs: Array[Col
 		st.set_uv(uv)
 		st.set_color(cs[i])
 		st.add_vertex(vs[i])
+
+# The biome ground tint at a cell's centre — the ONE tint source shared with the
+# sheet lattice and the dressing instances (aprons + skirt sample per cell; the
+# field's 400-750m wavelengths make sub-cell variation invisible).
+func _cell_tint(cx: int, cz: int) -> Color:
+	if _water_seed == 0:
+		return Color(1, 1, 1)   # headless geometry tests: identity, like compute_tints
+	return BiomeRegistry.blended_ground_tint(Helper.biome_weights5(
+			Vector3(float(cx) * TILE, 0.0, float(cz) * TILE), _water_seed))
 
 const LIP_LIFT := 0.05    # matches CliffDressing.LIP_LIFT — clipped sheet edges rise to the lip
                           # top plane so no hairline slit shows at the lip back
@@ -585,7 +596,7 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 # between the lower sheet's edge and the wall face — is GONE: at tall cliffs it read as a
 # plane jutting out below the lip from any low angle, owner rounds 12-13. The round-11
 # "tiny gaps" it papered over are handled at ground level where they actually live.)
-func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int) -> bool:
+func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int, tint: Color) -> bool:
 	var emitted := false
 	var active := {}
 	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -661,7 +672,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 			if not ((cap_hi and a1 >= TOP_CLIP) or (cap_lo and a1 <= -TOP_CLIP)):
 				p1 = _clip_vert(region, clip_cache, cx, cz, p1)
 				q1 = _clip_perp(region, clip_cache, ncx, ncz, dir, q1)
-			_apron_quad(st, p0, p1, q0, q1)
+			_apron_quad(st, p0, p1, q0, q1, tint)
 			emitted = true
 	for cdir in [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
 		if not (active[Vector2i(cdir.x, 0)] and active[Vector2i(0, cdir.y)]):
@@ -675,7 +686,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var b := a + Vector3(float(cdir.x) * APRON, 0.0, 0.0)
 		var c := a + Vector3(0.0, 0.0, float(cdir.y) * APRON)
 		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
-		_apron_quad(st, a, b, c, d2)
+		_apron_quad(st, a, b, c, d2, tint)
 		emitted = true
 	# (Round 8 floored the flush-step cap notch with a flat grass patch here; the owner
 	# rejected it — round 9 extends the run's straight modules to the boundary and turns
@@ -686,7 +697,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 # front side seen from above in this project), lit UP. Half the directions used to wind the
 # other way, so the face visible from above was the DOWN-lit copy — the owner's dark/wrong-
 # colour "ground skirt". The flipped copy sits 2cm lower (never z-fights) with a DOWN normal.
-func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3, q1: Vector3) -> void:
+func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3, q1: Vector3, tint: Color) -> void:
 	var drop := Vector3(0.0, -0.02, 0.0)
 	for tri in [[p0, q0, q1], [p0, q1, p1]]:
 		var n: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0])
@@ -694,10 +705,12 @@ func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3, q1: Vec
 		st.set_normal(Vector3.UP)
 		for v in order:
 			st.set_uv(_grass_uv)
+			st.set_color(tint)
 			st.add_vertex(v)
 		st.set_normal(Vector3.DOWN)
 		for i in [0, 2, 1]:
 			st.set_uv(_grass_uv)
+			st.set_color(tint)
 			st.add_vertex(order[i] + drop)
 
 # Clamp a point's ALONG coordinates by cell (ncx,ncz)'s clip on its two edges perpendicular to
@@ -768,7 +781,7 @@ func _is_cliff_quad(region, x0: float, x1: float, z0: float, z1: float) -> bool:
 # neighbour's rendered boundary, dipping SKIRT_UNDERHANG below it (hidden behind the neighbour's
 # ground sheet) so no razor-thin slit remains. Double-sided, rock UV; doubles as collision.
 const SKIRT_UNDERHANG := 1.0
-func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, dir: Vector2i, y_hi: float) -> bool:
+func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, dir: Vector2i, y_hi: float, tint := Color(1, 1, 1)) -> bool:
 	var prof := TerrainSurfaceField.edge_profile(region, cx, cz, dir, SAMPLES_PER_CELL)
 	var pdir := Vector2i(dir.y, dir.x)             # along-edge step (perpendicular to the drop)
 	var ex := float(cx) * TILE + float(dir.x) * (TILE * 0.5 - SKIRT_RECESS)
@@ -808,16 +821,16 @@ func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, d
 			continue   # flush span — no exposed face here
 		var a0 := clampf(-TILE * 0.5 + STEP * float(i), lo, hi)
 		var a1 := clampf(-TILE * 0.5 + STEP * float(i + 1), lo, hi)
-		if _skirt_quad(st, ex, ez, pdir, a0, a1, y_hi, f0, f1):
+		if _skirt_quad(st, ex, ez, pdir, a0, a1, y_hi, f0, f1, tint):
 			emitted = true
 		var c0 := clampf(-TILE * 0.5 + STEP * float(i), lo_c, hi_c)
 		var c1 := clampf(-TILE * 0.5 + STEP * float(i + 1), lo_c, hi_c)
 		_skirt_quad(stcol, cex, cez, pdir, c0, c1, y_hi, f0, f1)
 	# extension segments beyond the cell edge (under the higher neighbour), flat continuation
 	# of the end samples
-	if lo < -TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, lo, -TILE * 0.5, y_hi, minf(prof[0], y_hi), minf(prof[0], y_hi)):
+	if lo < -TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, lo, -TILE * 0.5, y_hi, minf(prof[0], y_hi), minf(prof[0], y_hi), tint):
 		emitted = true
-	if hi > TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, TILE * 0.5, hi, y_hi, minf(prof[SAMPLES_PER_CELL], y_hi), minf(prof[SAMPLES_PER_CELL], y_hi)):
+	if hi > TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, TILE * 0.5, hi, y_hi, minf(prof[SAMPLES_PER_CELL], y_hi), minf(prof[SAMPLES_PER_CELL], y_hi), tint):
 		emitted = true
 	if lo_c < -TILE * 0.5:
 		_skirt_quad(stcol, cex, cez, pdir, lo_c, -TILE * 0.5, y_hi, minf(prof[0], y_hi), minf(prof[0], y_hi))
@@ -825,7 +838,7 @@ func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, d
 		_skirt_quad(stcol, cex, cez, pdir, TILE * 0.5, hi_c, y_hi, minf(prof[SAMPLES_PER_CELL], y_hi), minf(prof[SAMPLES_PER_CELL], y_hi))
 	return emitted
 
-func _skirt_quad(st: SurfaceTool, ex: float, ez: float, pdir: Vector2i, a0: float, a1: float, y_hi: float, f0: float, f1: float) -> bool:
+func _skirt_quad(st: SurfaceTool, ex: float, ez: float, pdir: Vector2i, a0: float, a1: float, y_hi: float, f0: float, f1: float, tint := Color(1, 1, 1)) -> bool:
 	if a1 - a0 < 0.001:
 		return false
 	if f0 > y_hi - 0.01 and f1 > y_hi - 0.01:
@@ -835,7 +848,7 @@ func _skirt_quad(st: SurfaceTool, ex: float, ez: float, pdir: Vector2i, a0: floa
 	var b0 := Vector3(t0.x, f0 - SKIRT_UNDERHANG, t0.z)
 	var b1 := Vector3(t1.x, f1 - SKIRT_UNDERHANG, t1.z)
 	for v in [t0, t1, b1, t0, b1, b0, t0, b1, t1, t0, b0, b1]:
-		st.set_uv(_skirt_uv); st.add_vertex(v)
+		st.set_uv(_skirt_uv); st.set_color(tint); st.add_vertex(v)
 	return true
 
 # Does the cliff face turn the corner at the `sgn` end of this edge — i.e. will the
