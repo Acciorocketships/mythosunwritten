@@ -932,3 +932,70 @@ func test_dry_pocket_with_unequal_arms_keeps_land_behaviour() -> void:
 	assert_true(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)) != 1 \
 		or CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)) == 1,
 		"dry pocket behaviour unchanged (smoke)")
+
+## WEST-junction shape (seed 2697992464, cells (-24,-19)/(-23,-20)): the carved
+## pocket's DIAGONAL is a flat top LEVEL with the lower arm. The diagonal then
+## owns the corner classic-style: corner_map reports "inner" (so the sheet clip
+## tucks the corner point that buried the piece under flat grass — owner: "we
+## need to add a corner piece to blend the lower cliff into the upper cliff")
+## and the pocket's ghost stands down (no doubled piece).
+func test_carved_pocket_level_diagonal_owns_the_inner_corner() -> void:
+	var storeys: Dictionary = {}
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			storeys[Vector2i(x, z)] = 1
+	storeys[Vector2i(0, 0)] = 0        # carved water pocket
+	storeys[Vector2i(0, 1)] = 2        # taller arm (south); east arm + diagonal stay 1
+	var levels: Dictionary = {}
+	for cell in storeys:
+		levels[cell] = 0
+	var region: HeightfieldRegion = HeightfieldRegion.new(
+		storeys, levels, {Vector2i(0, 0): true})
+	assert_true(CliffDressing._diagonal_owns_pocket_corner(region, 0, 0, Vector2i(1, 1)),
+		"level-with-lower-arm flat diagonal owns the carved pocket corner")
+	assert_eq(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)), 0,
+		"the pocket's ghost stands down (the diagonal emits the piece)")
+	var flags: Dictionary = CliffDressing.corner_flags(region, 1, 1)
+	assert_eq(str(flags.get(Vector2i(-1, -1), "")), "inner",
+		"the diagonal's corner_map registers the corner (sheet tuck + piece emission)")
+	var data = Dress.compute(region, 0, 0, 2)
+	var lips := 0
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1:
+			lips += 1
+	assert_eq(lips, 1, "exactly one inner corner piece at the junction slot (no ghost double)")
+
+## EAST-junction shape (seed 2697992464, cells (-23,-20)/(-23,-19)): at a carved
+## flush step the cap turns at the run cell's own corner AND the run's lip line
+## continues one slot into the taller cell, dying into its corner column's base
+## (owner: "the edge should be extended so the corner piece goes into the wall").
+func test_carved_flush_step_lip_continues_into_the_taller_wall() -> void:
+	var storeys: Dictionary = {}
+	var carved: Dictionary = {}
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			storeys[Vector2i(x, z)] = 1
+	for z in range(-2, 3):
+		for x in [1, 2]:
+			storeys[Vector2i(x, z)] = 0
+			carved[Vector2i(x, z)] = true
+	storeys[Vector2i(0, 1)] = 2        # the taller cliff south of the run cell
+	storeys[Vector2i(0, 2)] = 2
+	var levels: Dictionary = {}
+	for cell in storeys:
+		levels[cell] = 0
+	var region: HeightfieldRegion = HeightfieldRegion.new(storeys, levels, carved)
+	var flags: Dictionary = CliffDressing.corner_flags(region, 0, 0)
+	assert_eq(str(flags.get(Vector2i(1, 1), "")), "outer",
+		"the carved flush step registers a real outer corner at the run cell")
+	var data = Dress.compute(region, 0, 0, 2)
+	var cont := false
+	for t in (data["lip"] as Array):
+		var xf := t as Transform3D
+		var o := xf.origin
+		if absf(o.x - 10.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (4.0 + Dress.LIP_LIFT)) < 0.03:
+			cont = true
+			assert_gt((xf.basis * Vector3(0, 0, 1)).x, 0.9,
+				"the continuation keeps the run's east-facing rotation")
+	assert_true(cont, "the lip line continues one slot into the taller cell (into its corner column)")

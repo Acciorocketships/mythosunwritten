@@ -531,21 +531,33 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		# boundary) — the strip still floors the recess slot right up to the column.
 		var a_lo := -TILE * 0.5
 		var a_hi := TILE * 0.5
+		var cap_hi := false
+		var cap_lo := false
 		var info_own = _cell_clip_info(region, clip_cache, cx, cz)
 		if info_own != null:
 			for ccdir in info_own["corners"]:
-				if info_own["corners"][ccdir] != "outer":
-					continue
+				var ckind: String = info_own["corners"][ccdir]
 				if ccdir.x * dir.x + ccdir.y * dir.y != 1:
 					continue   # corner not on this edge
-				if info_own["dirs"].has(Vector2i(ccdir.x, 0)) and info_own["dirs"].has(Vector2i(0, ccdir.y)):
-					continue   # classic outer (both arms dressed): edge clips already retract
-				if ccdir.x * pdir.x + ccdir.y * pdir.y > 0:
-					a_hi = TILE * 0.5 - SKIRT_RECESS
-				else:
-					a_lo = -(TILE * 0.5 - SKIRT_RECESS)
-		var cap_hi := a_hi < TILE * 0.5 - 0.01
-		var cap_lo := a_lo > -TILE * 0.5 + 0.01
+				var hi_end: bool = ccdir.x * pdir.x + ccdir.y * pdir.y > 0
+				if ckind == "outer":
+					if info_own["dirs"].has(Vector2i(ccdir.x, 0)) and info_own["dirs"].has(Vector2i(0, ccdir.y)):
+						continue   # classic outer (both arms dressed): edge clips already retract
+					if hi_end:
+						a_hi = TILE * 0.5 - SKIRT_RECESS
+						cap_hi = true
+					else:
+						a_lo = -(TILE * 0.5 - SKIRT_RECESS)
+						cap_lo = true
+				elif ckind == "inner":
+					# Carved-pocket diagonal corner: the inner piece roofs the band and
+					# the strip legitimately runs to the boundary — only bypass the
+					# generic clips there (the inner tuck would drag the strip's end
+					# diagonally off the boundary and open a hole over the pocket).
+					if hi_end:
+						cap_hi = true
+					else:
+						cap_lo = true
 		for i in SAMPLES_PER_CELL:
 			var a0 := clampf(-TILE * 0.5 + STEP * float(i), a_lo, a_hi)
 			var a1 := clampf(-TILE * 0.5 + STEP * float(i + 1), a_lo, a_hi)

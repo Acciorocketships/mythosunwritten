@@ -135,6 +135,15 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 	# lower cliff run meets a higher one over water (owner: "should be a
 	# corner tile", twice). Land pockets keep the run-merge behaviour below.
 	if sa != sb and region.has_method("is_carved") and region.is_carved(cx, cz):
+		# ...unless the DIAGONAL cell is a flat top LEVEL with the lower arm: then
+		# it owns the corner classic-style (corner_map "inner"). Emitting from the
+		# pocket too would double the piece, and only the diagonal's map entry lets
+		# the sheet clip TUCK its corner point — a ghost piece under an untucked
+		# sheet is buried in flat grass (owner: "we need to add a corner piece to
+		# blend the lower cliff into the upper cliff", pointing at the buried
+		# fragment poking through the ground).
+		if _diagonal_owns_pocket_corner(region, cx, cz, cdir):
+			return 0
 		return 1
 	if sa != sb:
 		var ct := ca if sa > sb else cb   # the taller arm
@@ -232,6 +241,12 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 				out[cdir] = "outer"
 		elif TerrainSurfaceField._is_inner_corner(region, cx, cz, cdir):
 			out[cdir] = "inner"
+		elif _diagonal_owns_pocket_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
+			# CARVED pocket (water) with unequal higher arms and this cell the
+			# level-with-lower-arm diagonal: classic-style ownership — the piece
+			# rounds the lower shore lip into the taller arm's wall face, and this
+			# entry makes the sheet clip tuck the corner point that buried it.
+			out[cdir] = "inner"
 		elif ddrop >= 2 and (cliff.get(ca, false) or cliff.get(cb, false)):
 			# STEP corner: ONE cardinal is an exposed edge and the DIAGONAL drops ≥2 — the cliff turns
 			# the corner, exposing the diagonal face. BUT if the wall continues STRAIGHT past this
@@ -307,7 +322,29 @@ static func corner_map(region, cx: int, cz: int, cliff: Dictionary, prof: Dictio
 static func _inner_joined(region, px: int, pz: int, qdir: Vector2i) -> bool:
 	if TerrainSurfaceField._is_inner_corner(region, px + qdir.x, pz + qdir.y, Vector2i(-qdir.x, -qdir.y)):
 		return true
-	return _ghost_fires(region, px, pz, qdir)
+	return _ghost_fires(region, px, pz, qdir) or _diagonal_owns_pocket_corner(region, px, pz, qdir)
+
+# A carved unequal-arm pocket corner is owned by its DIAGONAL cell when that diagonal is a
+# flat top LEVEL with the lower arm: the piece lives in the diagonal's corner slot (the same
+# slot the pocket's ghost would use), so ownership moves into corner_map — the single source
+# of truth — and the mesher's inner tuck exposes the piece's front over the pocket point.
+# (cx,cz) is the POCKET cell; cdir the corner as seen from the pocket.
+static func _diagonal_owns_pocket_corner(region, cx: int, cz: int, cdir: Vector2i) -> bool:
+	if not (region.has_method("is_carved") and region.is_carved(cx, cz)):
+		return false
+	var ca := Vector2i(cdir.x, 0)
+	var cb := Vector2i(0, cdir.y)
+	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, ca):
+		return false
+	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, cb):
+		return false
+	if int(region.storey_at(cx + ca.x, cz + ca.y)) == int(region.storey_at(cx + cb.x, cz + cb.y)):
+		return false
+	if not TerrainSurfaceField.is_flat_cell(region, cx + cdir.x, cz + cdir.y):
+		return false
+	var lower_h: float = minf(region.surface_height(cx + ca.x, cz + ca.y),
+		region.surface_height(cx + cb.x, cz + cb.y))
+	return absf(region.surface_height(cx + cdir.x, cz + cdir.y) - lower_h) < 0.01
 
 # Standalone corner_map for callers that don't already hold the exposure data (the mesher's
 # sheet clip). Empty for non-flat cells (they carry no dressing).
@@ -371,6 +408,22 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 						out["wall"].append(Transform3D(Basis(Vector3.UP, _angle(ca)), row_pos))
 					else:
 						out["outer_wall"].append(Transform3D(cbasis, row_pos))
+				# WATER flush-step (exactly one dressed arm): continue the run's lip
+				# line ONE slot into the taller cell so the turn dies into its corner
+				# column's base — lips ride proud of the wall face, so the line reads
+				# as running into the rock instead of stopping at the boundary with a
+				# bare notch (owner: "the edge should be extended so the corner piece
+				# goes into the wall").
+				if cliff.get(ca, false) != cliff.get(cb, false) \
+						and region.has_method("is_carved") and region.is_carved(cx + cdir.x, cz + cdir.y):
+					var d5: Vector2i = ca if cliff.get(ca, false) else cb
+					var p5 := Vector2i(cdir.x - d5.x, cdir.y - d5.y)
+					var edge5 := Vector3(float(d5.x) * PLACE, 0.0, float(d5.y) * PLACE)
+					var perp5 := Vector3(float(d5.y), 0.0, float(d5.x))
+					var pdir5 := Vector2i(d5.y, d5.x)
+					var sgn5 := pdir5.x * p5.x + pdir5.y * p5.y
+					var cpos5: Vector3 = cellpos + edge5 + perp5 * (float(sgn5) * (END + 3.0))
+					out["lip"].append(Transform3D(Basis(Vector3.UP, _angle(d5)), cpos5 + Vector3(0.0, LIP_LIFT, 0.0)))
 			"inner":
 				# Concave (inner) corner: the diagonal pocket drops but BOTH cardinal arms stay level
 				# and wall that pocket. The modeled inner piece spans it (even a 1-storey notch). The

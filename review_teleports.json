@@ -1,6 +1,42 @@
 [
  {
-  "name": "FIXED+VERIFIED: collinear corner \u2014 lip runs to a turned rock corner (walk to the edge)",
+  "name": "FIX 1 of 2: WEST junction — inner corner piece now blends the shore lip into the tall cliff (was buried in flat grass)",
+  "pos": [
+   -562.5,
+   6.0,
+   -474.0
+  ],
+  "look": [
+   -563.2,
+   -467.8
+  ]
+ },
+ {
+  "name": "FIX 1 from the water side — the lip arc turns into the tall wall's base",
+  "pos": [
+   -570.0,
+   6.5,
+   -473.0
+  ],
+  "look": [
+   -563.3,
+   -468.0
+  ]
+ },
+ {
+  "name": "FIX 2 of 2: EAST flush-step — lip line now continues past the cap INTO the tall wall (your sketch)",
+  "pos": [
+   -534.5,
+   7.0,
+   -464.0
+  ],
+  "look": [
+   -541.8,
+   -467.8
+  ]
+ },
+ {
+  "name": "east flush-step from the shore run side",
   "pos": [
    -550.0,
    6.0,
@@ -9,30 +45,6 @@
   "look": [
    -541.5,
    -468.0
-  ]
- },
- {
-  "name": "FIXED: raised sheet over lake gone \u2014 pond owns its level",
-  "pos": [
-   -201.1,
-   8.0,
-   -252.1
-  ],
-  "look": [
-   -230.0,
-   -310.0
-  ]
- },
- {
-  "name": "curved banks + faster flow + hillside headwaters: follow this shore",
-  "pos": [
-   -201.1,
-   8.0,
-   -252.1
-  ],
-  "look": [
-   -180.0,
-   -280.0
   ]
  }
 ]
