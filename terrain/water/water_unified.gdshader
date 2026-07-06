@@ -18,7 +18,7 @@ uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
 uniform float foam_width : hint_range(0.0, 3.0) = 0.6;
 uniform float clarity_depth : hint_range(0.5, 12.0) = 5.0;   // metres to ~deep colour
 uniform float refraction_strength : hint_range(0.0, 0.2) = 0.05;
-uniform float wave_height : hint_range(0.0, 0.6) = 0.15;
+uniform float wave_height : hint_range(0.0, 0.6) = 0.22;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
 // Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
 // steep_v), never in a global playback rate — a raised base rate reads as
@@ -55,11 +55,13 @@ void vertex() {
 	// linearly on fs never appear. Saturate by 0.5: real channels read fully
 	// flowing, while the fade to zero at shores/lakes is preserved.
 	float ff = smoothstep(0.08, 0.5, fs);
-	// Rivers barely swell; lakes roll. REAL chop (travelling crest geometry)
-	// replaces swell as flow rises, and dies with the builder's flow fade at
-	// shores — the buried waterline edge never bobs above the banks.
-	float amp = wave_height * (1.0 - 0.7 * ff);
-	float camp = chop_height * ff * (0.55 + 0.45 * steep_v);
+	// MOVING SWELLS carry the motion everywhere — slightly deeper on flowing
+	// reaches (owner: "moving water should have moving swells", not streaks).
+	// Chop (travelling crest geometry) is reserved for genuinely steep reaches
+	// and dies with the builder's flow fade at shores — the buried waterline
+	// edge never bobs above the banks.
+	float amp = wave_height * (1.0 + 0.35 * ff);
+	float camp = chop_height * ff * steep_v * 0.6;
 	float e = 2.0;
 	float h = water_wave_h(noise_tex, world_pos.xz, t) * amp
 		+ water_chop_h(noise_tex, world_pos.xz, fdir, scroll, TIME) * camp;
@@ -79,20 +81,14 @@ void fragment() {
 	float scroll = flow_speed * (1.0 + rapids_boost * steep_v);
 	float ff = smoothstep(0.08, 0.5, fs);   // see vertex(): flow-visibility gate
 
-	// Dual-phase downstream scroll with a SPATIALLY DITHERED phase: each
-	// region resets at a different moment, so the reblend never reads as a
-	// global "video cut" pulse across the surface. Fast water samples in a
-	// flow-aligned basis stretched along-flow: ripples elongate into streaks.
-	vec2 fuv = vec2(dot(world_pos.xz, fdir), dot(world_pos.xz, vec2(-fdir.y, fdir.x)));
-	vec2 uvscale = mix(vec2(0.09), vec2(0.045, 0.13), ff);
-	float ph = fract(TIME * 0.5 + texture(noise_tex, world_pos.xz * 0.017).r);
-	float n1 = texture(noise_tex, fuv * uvscale - vec2(scroll * ph * uvscale.x, 0.0)).r;
-	float n2 = texture(noise_tex, fuv * uvscale - vec2(scroll * (ph - 0.5) * uvscale.x, 0.0)).r;
-	float stream = mix(n1, n2, abs(ph * 2.0 - 1.0));
-	// Detail perturbation rides ON TOP of the vertex normal (which already
-	// carries the chop geometry) instead of replacing it.
+	// Soft isotropic shimmer advected DOWNSTREAM: flow stays legible without
+	// the old flow-stretched dual-phase noise, whose foam gating read as ugly
+	// white streaks across every moving reach (owner). The swell geometry from
+	// the vertex pass carries the real motion; this only dapples the normal.
+	vec2 drift = fdir * TIME * (0.35 + 0.08 * scroll) * ff;
+	float rn = texture(noise_tex, world_pos.xz * 0.045 - drift).r;
 	vec3 n = still_normal;
-	n.xz += (stream - 0.5) * 0.35 * fdir * ff;
+	n.xz += (rn - 0.5) * 0.22;
 	n = normalize(n);
 
 	// Interactive ripples: sample the wave-sim height gradient inside the
@@ -132,9 +128,10 @@ void fragment() {
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
 	body = mix(body, color_deep, fres * 0.6);
 	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, foam_width);
-	// Rapids: noise-gated white streaks on steep flowing reaches — never a
-	// flat add (that saturates whole mountain rivers solid white).
-	foam += steep_v * smoothstep(0.45, 0.75, stream) * 0.8 * ff;
+	// White water only where the river is genuinely waterfall-steep — a soft
+	// breathing wash, never the streak bands (owner: "moving water shouldn't
+	// have white streaks in it").
+	foam += smoothstep(0.75, 1.0, steep_v) * (0.25 + 0.2 * sin(TIME * 2.1 + rn * 6.0)) * ff;
 	foam = clamp(foam, 0.0, 0.9);
 	ALBEDO = mix(body, foam_color, foam);
 	// Clarity comes from REFRACTION, not alpha blending; the ALPHA write
