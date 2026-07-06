@@ -62,7 +62,11 @@ const BED_MIN := -1.0
 # partial-carve band can't dither cells across the storey-rounding threshold
 # (alternating poke/submerge plates along the channel edges).
 const FEATHER := 8.0
-const SOURCE_POOL_R := 52.0       # big enough to read as a flat spring pond
+# Spring-pool radius. SMALL on purpose: the pool level clamps to the minimum
+# ground under footprint∪ring, so a wide pool on a peaked summit reads that
+# minimum far downhill and carves a crater lake into the mountain instead of
+# a tarn nestled at the top (seen on the pinned review seed).
+const SOURCE_POOL_R := 26.0
 const POOL_DEPTH := 2.5
 const POND_R_MIN := 60.0
 const POND_R_MAX := 140.0

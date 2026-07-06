@@ -12,11 +12,11 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 // CLEAR teal water (owner's reference image): the body is the REFRACTED
 // scene tinted by depth — shallow shows the bed through clean green glass,
 // deep saturates to a rich teal; depth still drives the foam lap line.
-uniform vec3 color_deep : source_color = vec3(0.10, 0.38, 0.36);
-uniform vec3 color_shallow : source_color = vec3(0.45, 0.74, 0.64);
+uniform vec3 color_deep : source_color = vec3(0.13, 0.46, 0.44);
+uniform vec3 color_shallow : source_color = vec3(0.50, 0.78, 0.68);
 uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
 uniform float foam_width : hint_range(0.0, 3.0) = 0.6;
-uniform float clarity_depth : hint_range(0.5, 12.0) = 3.5;   // metres to ~deep colour
+uniform float clarity_depth : hint_range(0.5, 12.0) = 5.0;   // metres to ~deep colour
 uniform float refraction_strength : hint_range(0.0, 0.2) = 0.05;
 uniform float wave_height : hint_range(0.0, 0.6) = 0.15;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
@@ -25,7 +25,7 @@ uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
 // the whole world running in fast-forward (owner regression report).
 uniform float flow_speed : hint_range(0.0, 12.0) = 3.0;    // metres/second scroll
 uniform float rapids_boost : hint_range(0.0, 4.0) = 1.5;   // extra scroll at steep_v=1
-uniform float chop_height : hint_range(0.0, 0.6) = 0.22;   // travelling crest amplitude
+uniform float chop_height : hint_range(0.0, 0.6) = 0.35;   // travelling crest amplitude
 uniform float roughness : hint_range(0.0, 1.0) = 0.03;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
@@ -50,11 +50,16 @@ void vertex() {
 	vec2 fdir = fs > 0.001 ? normalize(flow_v.xz) : vec2(1.0, 0.0);
 	float t = TIME * wave_speed;
 	float scroll = flow_speed * (1.0 + rapids_boost * steep_v);
+	// Flow-visibility gate: shore damping + corner averaging cap mid-channel
+	// flow around 0.3-0.5 in NARROW rivers (most rivers), so effects keyed
+	// linearly on fs never appear. Saturate by 0.5: real channels read fully
+	// flowing, while the fade to zero at shores/lakes is preserved.
+	float ff = smoothstep(0.08, 0.5, fs);
 	// Rivers barely swell; lakes roll. REAL chop (travelling crest geometry)
 	// replaces swell as flow rises, and dies with the builder's flow fade at
 	// shores — the buried waterline edge never bobs above the banks.
-	float amp = wave_height * (1.0 - 0.7 * fs);
-	float camp = chop_height * fs * (0.4 + 0.6 * steep_v);
+	float amp = wave_height * (1.0 - 0.7 * ff);
+	float camp = chop_height * ff * (0.55 + 0.45 * steep_v);
 	float e = 2.0;
 	float h = water_wave_h(noise_tex, world_pos.xz, t) * amp
 		+ water_chop_h(noise_tex, world_pos.xz, fdir, scroll, TIME) * camp;
@@ -72,13 +77,14 @@ void fragment() {
 	float fs = clamp(length(flow_v.xz), 0.0, 1.0);
 	vec2 fdir = fs > 0.001 ? normalize(flow_v.xz) : vec2(1.0, 0.0);
 	float scroll = flow_speed * (1.0 + rapids_boost * steep_v);
+	float ff = smoothstep(0.08, 0.5, fs);   // see vertex(): flow-visibility gate
 
 	// Dual-phase downstream scroll with a SPATIALLY DITHERED phase: each
 	// region resets at a different moment, so the reblend never reads as a
 	// global "video cut" pulse across the surface. Fast water samples in a
 	// flow-aligned basis stretched along-flow: ripples elongate into streaks.
 	vec2 fuv = vec2(dot(world_pos.xz, fdir), dot(world_pos.xz, vec2(-fdir.y, fdir.x)));
-	vec2 uvscale = mix(vec2(0.09), vec2(0.045, 0.13), fs);
+	vec2 uvscale = mix(vec2(0.09), vec2(0.045, 0.13), ff);
 	float ph = fract(TIME * 0.5 + texture(noise_tex, world_pos.xz * 0.017).r);
 	float n1 = texture(noise_tex, fuv * uvscale - vec2(scroll * ph * uvscale.x, 0.0)).r;
 	float n2 = texture(noise_tex, fuv * uvscale - vec2(scroll * (ph - 0.5) * uvscale.x, 0.0)).r;
@@ -86,7 +92,7 @@ void fragment() {
 	// Detail perturbation rides ON TOP of the vertex normal (which already
 	// carries the chop geometry) instead of replacing it.
 	vec3 n = still_normal;
-	n.xz += (stream - 0.5) * 0.35 * fdir * fs;
+	n.xz += (stream - 0.5) * 0.35 * fdir * ff;
 	n = normalize(n);
 
 	// Interactive ripples: sample the wave-sim height gradient inside the
@@ -128,7 +134,7 @@ void fragment() {
 	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, foam_width);
 	// Rapids: noise-gated white streaks on steep flowing reaches — never a
 	// flat add (that saturates whole mountain rivers solid white).
-	foam += steep_v * smoothstep(0.45, 0.75, stream) * 0.8 * fs;
+	foam += steep_v * smoothstep(0.45, 0.75, stream) * 0.8 * ff;
 	foam = clamp(foam, 0.0, 0.9);
 	ALBEDO = mix(body, foam_color, foam);
 	// Clarity comes from REFRACTION, not alpha blending; the ALPHA write
