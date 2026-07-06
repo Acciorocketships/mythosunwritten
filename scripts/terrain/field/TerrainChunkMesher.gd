@@ -407,15 +407,21 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 	# pulling just the point keeps all deformation under the piece's grass top. (Ghost
 	# corners need no pull: their diagonal cell is a HIGHER flat, already edge-clipped.)
 	for cdir in info["corners"]:
-		if info["corners"][cdir] != "inner":
-			continue
-		var tuck := TILE * 0.5 - 1.3
-		var ccx := lx * float(cdir.x)
-		var ccz := lz * float(cdir.y)
-		if ccx > tuck and ccz > tuck:
-			lx = (tuck + (ccx - tuck) * 0.02) * float(cdir.x)
-			lz = (tuck + (ccz - tuck) * 0.02) * float(cdir.y)
-			lift = maxf(lift, LIP_LIFT - 0.01)
+		var kind: String = info["corners"][cdir]
+		if kind == "inner":
+			var tuck := TILE * 0.5 - 1.3
+			var ccx := lx * float(cdir.x)
+			var ccz := lz * float(cdir.y)
+			if ccx > tuck and ccz > tuck:
+				lx = (tuck + (ccx - tuck) * 0.02) * float(cdir.x)
+				lz = (tuck + (ccz - tuck) * 0.02) * float(cdir.y)
+				lift = maxf(lift, LIP_LIFT - 0.01)
+		# ("outer" one-armed flush-step corners need NO corner pull here: the dressed
+		# arm's edge clip holds full weight through the corner — _slot_lipped's
+		# continuation rule sees the taller cell's collinear lip run — so the boundary
+		# row retracts along that axis alone and the cap's L-band covers the vacated
+		# strip. A diagonal tuck abandons ground the band can't roof: a water-blue
+		# wedge opened beside the cap.)
 	return Vector3(float(qcx) * TILE + lx, v.y + lift - down, float(qcz) * TILE + lz)
 
 # Ground aprons: continue this cell's ground sheet APRON deep under each FLAT neighbour whose
@@ -444,9 +450,33 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var bx := float(cx) * TILE + float(dir.x) * TILE * 0.5
 		var bz := float(cz) * TILE + float(dir.y) * TILE * 0.5
 		var out := Vector3(float(dir.x) * APRON, 0.0, float(dir.y) * APRON)
+		# A one-armed "outer" capped corner on this edge (water flush-step): the taller
+		# neighbour's perpendicular clip FADES OUT at its run end, so an unclamped strip
+		# pokes past the turned corner column's face as a flat green square over the
+		# water. Clamp the along-range to the wall-face line (SKIRT_RECESS behind the
+		# boundary) — the strip still floors the recess slot right up to the column.
+		var a_lo := -TILE * 0.5
+		var a_hi := TILE * 0.5
+		var info_own = _cell_clip_info(region, clip_cache, cx, cz)
+		if info_own != null:
+			for ccdir in info_own["corners"]:
+				if info_own["corners"][ccdir] != "outer":
+					continue
+				if ccdir.x * dir.x + ccdir.y * dir.y != 1:
+					continue   # corner not on this edge
+				if info_own["dirs"].has(Vector2i(ccdir.x, 0)) and info_own["dirs"].has(Vector2i(0, ccdir.y)):
+					continue   # classic outer (both arms dressed): edge clips already retract
+				if ccdir.x * pdir.x + ccdir.y * pdir.y > 0:
+					a_hi = TILE * 0.5 - SKIRT_RECESS
+				else:
+					a_lo = -(TILE * 0.5 - SKIRT_RECESS)
+		var cap_hi := a_hi < TILE * 0.5 - 0.01
+		var cap_lo := a_lo > -TILE * 0.5 + 0.01
 		for i in SAMPLES_PER_CELL:
-			var a0 := -TILE * 0.5 + STEP * float(i)
-			var a1 := a0 + STEP
+			var a0 := clampf(-TILE * 0.5 + STEP * float(i), a_lo, a_hi)
+			var a1 := clampf(-TILE * 0.5 + STEP * float(i + 1), a_lo, a_hi)
+			if a1 - a0 < 0.01:
+				continue   # segment fully behind the capped corner's wall face
 			var p0 := Vector3(bx + float(pdir.x) * a0, 0.0, bz + float(pdir.y) * a0)
 			var p1 := Vector3(bx + float(pdir.x) * a1, 0.0, bz + float(pdir.y) * a1)
 			p0.y = TerrainSurfaceField.surface_y_in_cell(region, p0.x, p0.z, cx, cz)
@@ -459,10 +489,16 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 			var q1: Vector3 = p1 + out
 			q0.y = minf(q0.y, h_n - 0.05)
 			q1.y = minf(q1.y, h_n - 0.05)
-			p0 = _clip_vert(region, clip_cache, cx, cz, p0)
-			p1 = _clip_vert(region, clip_cache, cx, cz, p1)
-			q0 = _clip_perp(region, clip_cache, ncx, ncz, dir, q0)
-			q1 = _clip_perp(region, clip_cache, ncx, ncz, dir, q1)
+			# Inside the capped-corner band the strip must reach the corner column's
+			# face: the cap piece roofs its inner edge and the a_hi/a_lo clamp already
+			# holds its end 0.05 behind the column's deepest face plane. The generic
+			# clips would pull both edges back to TOP_CLIP and reopen the slot floor.
+			if not ((cap_hi and a0 >= TOP_CLIP) or (cap_lo and a0 <= -TOP_CLIP)):
+				p0 = _clip_vert(region, clip_cache, cx, cz, p0)
+				q0 = _clip_perp(region, clip_cache, ncx, ncz, dir, q0)
+			if not ((cap_hi and a1 >= TOP_CLIP) or (cap_lo and a1 <= -TOP_CLIP)):
+				p1 = _clip_vert(region, clip_cache, cx, cz, p1)
+				q1 = _clip_perp(region, clip_cache, ncx, ncz, dir, q1)
 			_apron_quad(st, p0, p1, q0, q1)
 			emitted = true
 	for cdir in [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
