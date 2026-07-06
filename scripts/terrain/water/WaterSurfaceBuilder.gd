@@ -83,25 +83,21 @@ static func steepness_profile(river: RiverTrace) -> PackedFloat32Array:
 	return out
 
 
-## The storey-quantized ground the mesher will roughly render at a cell (raw
-## noise minus carve, "mean"-rounded to the 4m grid, floored at storey 0).
-## The trickle-down clamp can only LOWER cells further, and the rim overshoot
-## absorbs that slack.
-static func ground_estimate(water: WaterPlan, cx: int, cz: int) -> float:
-	var raw: float = water.noise_h(Vector2(float(cx) * TILE, float(cz) * TILE)) \
-		- water.carve_at_cell(cx, cz)
-	return maxf(roundf(raw / STOREY) * STOREY, 0.0)
-
-
 ## The per-cell water field over the chunk plus FIELD_MARGIN: for every cell
 ## that ends up in the sheet, {level, flow: Vector2, steep: float, wet: bool}.
-## Three passes: (1) body influence assigns levels; (2) a bounded flood marks
-## submerged shelves wet even past the carve (quantization can sink bank cells
+## `region` is the chunk's heightfield region (the REAL clamped/rendered
+## terrain): the raw-noise estimate this used to reason about sat storeys
+## ABOVE the rendered ground wherever the trickle-down clamp lowered cells —
+## exactly at cascade staircases — so rims and reach levels hung in mid-air
+## (the owner's floating planes). Three passes: (1) body influence assigns
+## levels — each cell takes the nearest FLOOR-CONSISTENT sample, and is wet
+## only if carved or inside the channel width; (2) a bounded flood marks
+## submerged shelves wet past the carve (quantization can sink bank cells
 ## below the level); (3) every dry 8-neighbour of a wet cell joins as RIM at
 ## the wet level — the bank overshoot the depth buffer clips to the waterline.
-## Pure function of (water plan, chunk): margin ≥ flood + rim keeps the field
-## identical for border cells no matter which chunk computes them.
-static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
+## Pure function of (water plan, chunk, region): margin ≥ flood + rim keeps
+## the field identical for border cells no matter which chunk computes them.
+static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	var centre_cx: int = chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
 	var centre_cz: int = chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
 	var bodies: Dictionary = water.bodies_near(
@@ -124,9 +120,11 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 		for dx in n:
 			var cell: Vector2i = lo + Vector2i(dx, dz)
 			var p: Vector2 = Vector2(float(cell.x) * TILE, float(cell.y) * TILE)
+			var real: float = region.surface_height(cell.x, cell.y)
 			var level: float = -INF
 			var flow: Vector2 = Vector2.ZERO
 			var steep: float = 0.0
+			var in_channel := false
 			# Inside a pond footprint the POND owns the water level: a river's
 			# higher upstream profile leaking in via nearest-sample lookup
 			# painted raised rectangular sheets hovering over lakes.
@@ -142,6 +140,8 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 					continue
 				var best_j: int = -1
 				var best_d: float = INF
+				var low_j: int = -1     # nearest sample whose surface the REAL floor supports
+				var low_d: float = INF
 				# Flow is the DISTANCE-WEIGHTED average tangent of every sample
 				# in reach — the nearest-sample tangent alone flips between
 				# adjacent reaches at bends, making water run bank-to-bank.
@@ -151,13 +151,31 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 					if d < best_d:
 						best_d = d
 						best_j = j
+					if profs[r][j] - real <= SHELF_DEPTH and d < low_d:
+						low_d = d
+						low_j = j
 					var infl: float = river.widths[j] + WaterPlan.FEATHER + CHANNEL_MARGIN
 					if d < infl and j < river.points.size() - 1:
 						var w: float = 1.0 - d / infl
 						flow_acc += (river.points[j + 1] - river.points[j]).normalized() * w * w
-				var infl_best: float = river.widths[best_j] + WaterPlan.FEATHER + CHANNEL_MARGIN if best_j >= 0 else 0.0
-				if best_j >= 0 and best_d <= infl_best:
-					var lv: float = profs[r][best_j]
+				if best_j < 0:
+					continue
+				# CASCADE consistency: a cell belongs to the reach whose surface
+				# its REAL rendered floor supports. At a drop lip the nearest
+				# sample is often the UPSTREAM one — its level would hover
+				# storeys above the clamped gorge floor (the owner's floating
+				# planes). Snap to the nearest floor-consistent sample instead;
+				# the waterfall ribbons span the face between the reaches.
+				var j_use: int = best_j
+				var d_use: float = best_d
+				if profs[r][best_j] - real > SHELF_DEPTH:
+					j_use = low_j
+					d_use = low_d
+				if j_use < 0:
+					continue
+				var infl_best: float = river.widths[j_use] + WaterPlan.FEATHER + CHANNEL_MARGIN
+				if d_use <= infl_best:
+					var lv: float = profs[r][j_use]
 					# Rivers may not RAISE the level inside a pond footprint —
 					# the pond owns its surface (backwater already flattens the
 					# profile to the pond level at the mouth).
@@ -165,26 +183,26 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 						lv = minf(lv, pond_level)
 					if lv > level:
 						level = lv
-						steep = steeps[r][best_j]
+						steep = steeps[r][j_use]
+						in_channel = d_use <= river.widths[j_use]
 						if flow_acc.length_squared() > 0.000001:
 							# Flow fades to ZERO at the channel edge — no flux
 							# into or out of the banks; wide pools read still.
-							var edge_t: float = clampf(1.5 * (1.0 - best_d / infl_best), 0.0, 1.0)
+							var edge_t: float = clampf(1.5 * (1.0 - d_use / infl_best), 0.0, 1.0)
 							flow = flow_acc.normalized() * edge_t
 			if level == -INF:
 				continue
-			ground[cell] = ground_estimate(water, cell.x, cell.y)
-			# ANCHORED water only: a wet cell must be carved (part of the basin/
-			# channel) or genuinely deep. River surfaces ride FLOOR_CLEARANCE
-			# (0.8m) above their floor storey, so every same-storey terrace
-			# nearby is "0.8m submerged" by the level test alone — that painted
-			# floating square water tiles onto dry terraces beside cascades.
-			var anchored: bool = water.carve_at_cell(cell.x, cell.y) > 0.05 \
-				or ground[cell] < level - FLOOD_MIN_DEPTH
+			ground[cell] = real
+			# ANCHORED water only: a wet cell is part of the water network —
+			# carved (basin/channel bed) or inside the channel's own width
+			# (flat-valley reaches carve ~0 where bed meets ground). DEPTH is
+			# NOT evidence: a dry terrace below an upstream reach's level is
+			# not water (the owner's floating tiles beside cascades).
+			var anchored: bool = in_channel or water.carve_at_cell(cell.x, cell.y) > 0.05
 			field[cell] = {
 				"level": level, "flow": flow, "steep": steep,
-				"wet": anchored and ground[cell] < level - WET_EPS,
-				"ground": ground[cell],
+				"wet": anchored and real < level - WET_EPS,
+				"ground": real,
 			}
 
 	# Pass 2: bounded flood — submerged shelves continue the neighbouring level.
@@ -200,7 +218,7 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 				if field.has(nb) and field[nb].wet:
 					continue
 				if not ground.has(nb):
-					ground[nb] = ground_estimate(water, nb.x, nb.y)
+					ground[nb] = region.surface_height(nb.x, nb.y)
 				var lv: float = field[cell].level
 				# Spread only over SHALLOW shelves (quantization sank a bank
 				# cell just under the level). A floor far below belongs to a
@@ -233,7 +251,7 @@ static func compute_field(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 			if field.has(nb) and field[nb].wet:
 				continue
 			if not ground.has(nb):
-				ground[nb] = ground_estimate(water, nb.x, nb.y)
+				ground[nb] = region.surface_height(nb.x, nb.y)
 			# Skip only genuine DROP-OFFS (a lower reach owns that water).
 			# The shallow band just under the level (unanchored, so not wet)
 			# must still join as rim, or the sheet gets holes at the shore
@@ -294,9 +312,11 @@ static func sheet_material() -> ShaderMaterial:
 	return _sheet_material
 
 
-## Build the water node for a chunk, or null when the chunk is dry.
-func build_chunk(water: WaterPlan, chunk: Vector2i) -> Node3D:
-	var field: Dictionary = compute_field(water, chunk)
+## Build the water node for a chunk, or null when the chunk is dry. `region`
+## is the chunk's heightfield region (the streamer computes it for the mesher
+## and shares it here — the water field must see the REAL rendered terrain).
+func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
+	var field: Dictionary = compute_field(water, chunk, region)
 	if field.is_empty():
 		return null
 	var lo_cx: int = chunk.x * CELLS_PER_CHUNK

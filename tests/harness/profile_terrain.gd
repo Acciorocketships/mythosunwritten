@@ -61,8 +61,10 @@ func _init() -> void:
 		for dx in range(-3, 4):
 			var c := Vector2i(dx, dz)
 			t0 = Time.get_ticks_usec()
-			var node := mesher.build_chunk(plan, c)
-			var wnode := wb.build_chunk(water, c)
+			# one region per chunk, shared by mesher and water — the streamer's path
+			var reg = mesher.chunk_region(plan, c)
+			var node := mesher.build_chunk(plan, c, reg)
+			var wnode := wb.build_chunk(water, c, reg)
 			var dt := Time.get_ticks_usec() - t0
 			total += dt
 			if dt > worst:

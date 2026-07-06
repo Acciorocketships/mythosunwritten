@@ -113,7 +113,7 @@ func _worker() -> void:
 			continue
 		var region = _mesher.chunk_region(_plan, c)
 		var node := _mesher.build_chunk(_plan, c, region)
-		var wnode := _water_builder.build_chunk(_water, c)
+		var wnode := _water_builder.build_chunk(_water, c, region)
 		if wnode != null:
 			node.add_child(wnode)
 		# FX *data* is computed here (needs the worker-confined _plan region for

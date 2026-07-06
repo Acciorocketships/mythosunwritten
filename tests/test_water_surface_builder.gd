@@ -9,6 +9,13 @@ const SEED := 991177
 func _water() -> WaterPlan:
 	return WaterPlan.new(SEED, 22.0, 8)
 
+# The REAL rendered terrain for a chunk (clamped storeys, carve applied) — the
+# water field reasons against this, never against raw-noise estimates.
+func _region(seed_v: int, chunk: Vector2i):
+	var hp := HeightfieldPlan.new(seed_v, 22.0, 8, "mean", 3)
+	hp.set_water_plan(WaterPlan.new(seed_v, 22.0, 8))
+	return hp.compute_region(chunk.x * 8 + 4, chunk.y * 8 + 4, 8)
+
 func _a_river(plan: WaterPlan) -> RiverTrace:
 	for sz in range(-4, 5):
 		for sx in range(-4, 5):
@@ -53,7 +60,7 @@ func test_build_chunk_makes_meshes_and_swim_volumes() -> void:
 	var river: RiverTrace = _a_river(plan)
 	var mid: Vector2 = river.points[river.points.size() / 2]
 	var chunk: Vector2i = Vector2i(int(floor(mid.x / 192.0)), int(floor(mid.y / 192.0)))
-	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(plan, chunk)
+	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(plan, chunk, _region(SEED, chunk))
 	assert_not_null(node, "chunk containing a river builds a water node")
 	var meshes: int = 0
 	var areas: int = 0
@@ -74,14 +81,14 @@ func test_sheet_quads_are_subdivided_for_shader_chop() -> void:
 	var plan: WaterPlan = _water()
 	var river: RiverTrace = _a_river(plan)
 	var chunk: Vector2i = _river_chunk(plan, river)
-	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(plan, chunk)
+	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(plan, chunk, _region(SEED, chunk))
 	assert_not_null(node, "river chunk builds")
 	var mesh: Mesh = null
 	for c in node.get_children():
 		if c is MeshInstance3D:
 			mesh = c.mesh
 	assert_not_null(mesh, "water sheet mesh present")
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk, _region(SEED, chunk))
 	var lo: Vector2i = Vector2i(chunk.x * 8, chunk.y * 8)
 	var quads: int = 0
 	for cell in field:
@@ -107,7 +114,7 @@ func test_build_chunk_returns_null_when_dry() -> void:
 		if dry != Vector2i.MAX:
 			break
 	assert_true(dry != Vector2i.MAX, "found a dry chunk in the scan band")
-	assert_null(WaterSurfaceBuilder.new().build_chunk(plan, dry), "dry chunk => no node")
+	assert_null(WaterSurfaceBuilder.new().build_chunk(plan, dry, _region(SEED, dry)), "dry chunk => no node")
 
 # ------------------------------------------------------------
 # Water field — the sheet reaches land at its own height
@@ -121,7 +128,8 @@ func test_field_rim_overshoots_every_wet_cell() -> void:
 	var plan: WaterPlan = _water()
 	var river: RiverTrace = _a_river(plan)
 	var chunk: Vector2i = _river_chunk(plan, river)
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk)
+	var region = _region(SEED, chunk)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk, region)
 	assert_true(field.size() > 0, "river chunk has a water field")
 	var lo: Vector2i = Vector2i(chunk.x * 8, chunk.y * 8)
 	var dirs: Array = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
@@ -139,27 +147,27 @@ func test_field_rim_overshoots_every_wet_cell() -> void:
 			# DROP-OFFS (a lower reach owns that water). Anything shallower —
 			# including the just-under-level band — must be wet or rim, or
 			# the sheet gets missing tiles at the shore.
-			var g: float = WaterSurfaceBuilder.ground_estimate(plan, nb.x, nb.y)
+			var g: float = region.surface_height(nb.x, nb.y)
 			assert_true(g < field[cell].level - WaterSurfaceBuilder.FLOOD_MIN_DEPTH,
 				"neighbour %s of wet %s is in the sheet or is a drop-off" % [nb, cell])
 
 func test_field_wet_cells_sit_below_their_level() -> void:
 	var plan: WaterPlan = _water()
 	var river: RiverTrace = _a_river(plan)
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river), _region(SEED, _river_chunk(plan, river)))
 	var wet_seen: int = 0
 	for cell in field:
 		if not field[cell].wet:
 			continue
 		wet_seen += 1
-		assert_true(WaterSurfaceBuilder.ground_estimate(plan, cell.x, cell.y) < field[cell].level,
+		assert_true(field[cell].ground < field[cell].level,
 			"wet cell %s ground sits below its water level" % cell)
 	assert_true(wet_seen > 0, "field contains wet cells")
 
 func test_shore_adjacent_wet_cells_carry_almost_no_flow() -> void:
 	var plan: WaterPlan = _water()
 	var river: RiverTrace = _a_river(plan)
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river), _region(SEED, _river_chunk(plan, river)))
 	var dirs: Array = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
 		Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 	var shore_seen: int = 0
@@ -183,7 +191,7 @@ func test_rim_cells_carry_zero_flow() -> void:
 	# into the waterline vertices.
 	var plan: WaterPlan = _water()
 	var river: RiverTrace = _a_river(plan)
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river), _region(SEED, _river_chunk(plan, river)))
 	for cell in field:
 		if not field[cell].wet:
 			assert_eq(field[cell].flow, Vector2.ZERO, "rim cell %s is still water" % cell)
@@ -193,7 +201,7 @@ func test_river_channel_actually_flows() -> void:
 	# a 1-3 cell channel is shore-adjacent). The channel must keep real flow.
 	var plan: WaterPlan = _water()
 	var river: RiverTrace = _a_river(plan)
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river), _region(SEED, _river_chunk(plan, river)))
 	var max_flow: float = 0.0
 	for cell in field:
 		if field[cell].wet:
@@ -204,17 +212,19 @@ func test_river_channel_actually_flows() -> void:
 func test_wet_cells_are_anchored_no_floating_tiles() -> void:
 	# Regression: river surfaces ride 0.8m above their floor storey, so bare
 	# level tests marked same-storey terraces "submerged" — floating square
-	# water tiles on dry land. Every wet cell must be carved or genuinely deep.
+	# water tiles on dry land. Every wet cell is either carved (part of the
+	# network's bed) or holds water within a shelf of its REAL ground; depth
+	# alone anchors nothing (a dry terrace under an upstream level is not water).
 	var plan: WaterPlan = _water()
 	var river: RiverTrace = _a_river(plan)
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river))
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, _river_chunk(plan, river), _region(SEED, _river_chunk(plan, river)))
 	for cell in field:
 		if not field[cell].wet:
 			continue
 		var carved: bool = plan.carve_at_cell(cell.x, cell.y) > 0.05
-		var deep: bool = field[cell].ground < field[cell].level - WaterSurfaceBuilder.FLOOD_MIN_DEPTH
-		assert_true(carved or deep,
-			"wet cell %s is anchored (carved or >1m deep), not a floating tile" % cell)
+		var shallow: bool = field[cell].level - field[cell].ground <= WaterSurfaceBuilder.SHELF_DEPTH + 0.01
+		assert_true(carved or shallow,
+			"wet cell %s is anchored (carved or within a shelf of real ground)" % cell)
 
 func test_pond_owns_its_surface_level() -> void:
 	# Regression: a river's higher upstream profile leaked into pond
@@ -235,7 +245,7 @@ func test_pond_owns_its_surface_level() -> void:
 	var pond: PondStamp = river.pond
 	var cc: Vector2i = Vector2i(roundi(pond.center.x / 24.0), roundi(pond.center.y / 24.0))
 	var chunk: Vector2i = Vector2i(int(floor(pond.center.x / 192.0)), int(floor(pond.center.y / 192.0)))
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk, _region(SEED, chunk))
 	var checked: int = 0
 	for cell in field:
 		var p: Vector2 = Vector2(cell.x * 24.0, cell.y * 24.0)
@@ -244,3 +254,41 @@ func test_pond_owns_its_surface_level() -> void:
 			assert_true(field[cell].level <= pond.surface_y() + 0.001,
 				"cell %s inside the pond never exceeds the pond level" % cell)
 	assert_true(checked > 0, "pond chunk has in-footprint cells")
+
+# ------------------------------------------------------------
+# Floating-sheet regression (owner, seed 2697992464): water hung in mid-air
+# over dry terraces beside steep reaches at cells (-3,-42) and (-1,-43).
+# ------------------------------------------------------------
+
+const OWNER_SEED := 2697992464
+
+func test_sheet_never_floats_over_the_rendered_terrain() -> void:
+	# Owner screenshots: sheets hovered over terraces at the cascades in these
+	# chunks — rim cells trusted a raw-noise ground estimate storeys above the
+	# CLAMPED terrain, and drop-lip cells took the upstream reach's level over
+	# a floor that had already fallen away. Every field cell (wet or rim) must
+	# hold its water within SHELF_DEPTH of the real rendered ground; only pond
+	# bowls (which carve their own depth) go deeper.
+	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
+	var wet_seen := 0
+	for chunk in [Vector2i(-1, -6), Vector2i(0, -6)]:
+		var region = _region(OWNER_SEED, chunk)
+		var field: Dictionary = WaterSurfaceBuilder.compute_field(water, chunk, region)
+		var bodies: Dictionary = water.bodies_near(Vector2i(chunk.x * 8 + 4, chunk.y * 8 + 4), 8)
+		for cell in field:
+			var e: Dictionary = field[cell]
+			if e.wet:
+				wet_seen += 1
+			var p := Vector2(float(cell.x) * 24.0, float(cell.y) * 24.0)
+			var in_pond := false
+			for pond in bodies.ponds:
+				if pond.footprint_t(p) < 1.1:
+					in_pond = true
+					break
+			if in_pond:
+				continue
+			var real: float = region.surface_height(cell.x, cell.y)
+			assert_true(e.level - real <= WaterSurfaceBuilder.SHELF_DEPTH + 0.01,
+				"%s cell %s floats %.1fm over the rendered terrain (level %.1f, real %.1f)" % [
+					"wet" if e.wet else "rim", cell, e.level - real, e.level, real])
+	assert_gt(wet_seen, 0, "the cascade chunks still hold water")
