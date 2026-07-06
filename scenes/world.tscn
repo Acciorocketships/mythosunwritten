@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://ceognrw5418ks"]
+[gd_scene load_steps=13 format=3 uid="uid://ceognrw5418ks"]
 
 [ext_resource type="Script" uid="uid://dyg0hh4n6mt05" path="res://scripts/camera/camera.gd" id="1_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://1isaxxqlfqe8" path="res://characters/character.tscn" id="1_nnsk1"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/terrain/tools/CoordOverlay.gd" id="20_overlay"]
 [ext_resource type="Script" path="res://scripts/terrain/tools/ReviewTeleporter.gd" id="31_review"]
 [ext_resource type="Script" path="res://scripts/terrain/water/WaterRippleSim.gd" id="30_ripples"]
+[ext_resource type="Script" path="res://scripts/terrain/biome/AtmosphereDirector.gd" id="32_atmo"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_world"]
 sky_top_color = Color(0.27, 0.46, 0.75, 1)
@@ -62,6 +63,14 @@ player = NodePath("../Characters/Character")
 
 [node name="WaterRipples" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("30_ripples")
+player = NodePath("../Characters/Character")
+
+[node name="AtmosphereDirector" type="Node" parent="." node_paths=PackedStringArray("environment_node", "sun", "camera", "streamer", "player")]
+script = ExtResource("32_atmo")
+environment_node = NodePath("../WorldEnvironment")
+sun = NodePath("../DirectionalLight3D")
+camera = NodePath("../Camera3D")
+streamer = NodePath("../FieldTerrain")
 player = NodePath("../Characters/Character")
 
 [node name="Characters" type="Node" parent="."]

@@ -56,6 +56,13 @@ func _process(_dt: float) -> void:
 	if player != null:
 		var pp: Vector3 = player.global_position
 		lines.append("player  world (%.1f, %.1f, %.1f)  cell (%d, %d)" % [pp.x, pp.y, pp.z, _cell_of(pp.x), _cell_of(pp.z)])
+		if wseed != null and int(wseed) != 0:
+			var w5 := Helper.biome_weights5(pp, int(wseed))
+			var parts: Array[String] = []
+			for k: StringName in w5:
+				if w5[k] >= 0.05:
+					parts.append("%s %.2f" % [k, w5[k]])
+			lines.append("biome %s   (%s)" % [Helper.biome_at(pp, int(wseed)), ", ".join(parts)])
 	# Raycast from screen centre onto the terrain.
 	var vp := get_viewport().get_visible_rect().size
 	var centre := vp * 0.5

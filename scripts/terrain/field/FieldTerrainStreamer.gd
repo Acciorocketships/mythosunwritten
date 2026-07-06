@@ -35,6 +35,7 @@ var _water_builder := WaterSurfaceBuilder.new()
 var _built: Dictionary = {}        # Vector2i -> Node3D          (main thread only)
 var _queued: Dictionary = {}       # Vector2i -> true, in-flight  (main thread only)
 var world_seed: int = 0
+var _headless: bool = DisplayServer.get_name() == "headless"
 
 var _thread := Thread.new()
 var _sem := Semaphore.new()
@@ -76,6 +77,11 @@ func _ready() -> void:
 	for tag in TerrainChunkMesher.FOLIAGE_SCENES:
 		for path: String in TerrainChunkMesher.FOLIAGE_SCENES[tag]:
 			TerrainChunkMesher._foliage_pieces(path)
+	# Warm the biome tint materials + profiles on the main thread too, so the
+	# worker only ever READS them (same no-locks confinement as above).
+	_mesher._ground_tinted_mat()
+	_mesher._foliage_material()
+	BiomeRegistry.profile(&"meadow")
 	# The spawn chunk is NOT built synchronously: the first build pays the
 	# whole cold water-trace cache (~10s) and blocking _ready held a blank
 	# grey window that long (owner). The worker builds it front-of-queue
@@ -109,9 +115,37 @@ func _worker() -> void:
 		var wnode := _water_builder.build_chunk(_water, c)
 		if wnode != null:
 			node.add_child(wnode)
+		_attach_biome_fx(node, c)
 		_mutex.lock()
 		_done.append([c, node])
 		_mutex.unlock()
+
+# Biome render FX (pocket fog + particles + orb lights), built on the WORKER
+# thread and attached to the detached chunk node — same off-tree pattern as the
+# mesh/water nodes, so it integrates on the main thread with the chunk. Uses
+# _plan (worker-confined) for orb ground heights. Render-only: skipped headless.
+func _attach_biome_fx(node: Node3D, c: Vector2i) -> void:
+	if _headless:
+		return
+	var origin := Vector3(float(c.x) * CHUNK_WORLD, 0.0, float(c.y) * CHUNK_WORLD)
+	var centre := origin + Vector3(CHUNK_WORLD * 0.5, 0.0, CHUNK_WORLD * 0.5)
+	var prof := BiomeRegistry.profile(Helper.biome_at(centre, world_seed))
+	var orb_points: Array = []
+	if prof.particles.has(&"orbs"):
+		for i in 3:
+			var hx := Helper._cell_hash01(world_seed + 7000 + i, c.x, c.y)
+			var hz := Helper._cell_hash01(world_seed + 8000 + i, c.x, c.y)
+			var lx := origin.x + hx * CHUNK_WORLD
+			var lz := origin.z + hz * CHUNK_WORLD
+			var lcx := int(floor(lx / 24.0))
+			var lcz := int(floor(lz / 24.0))
+			var reg = _plan.compute_region(lcx, lcz, 1)
+			var ly := TerrainSurfaceField.surface_y(reg, lx, lz) + 2.5
+			orb_points.append(Vector3(lx - origin.x, ly, lz - origin.z))
+	var fx := BiomeChunkFx.build(prof, orb_points)
+	fx.position = origin
+	node.add_child(fx)
+
 
 func _process(_delta: float) -> void:
 	if _plan == null or player == null:
