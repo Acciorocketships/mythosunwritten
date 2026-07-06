@@ -75,9 +75,13 @@ func _ready() -> void:
 	_plan_sync.set_water_plan(_water_sync)
 	_mesher_sync = TerrainChunkMesher.new()
 	_mesher_sync.set_seed(world_seed)
-	# Warm every shared static resource on the main thread before the worker
-	# starts (loading is thread-safe; warming here just keeps the first
-	# background build fast and shader compiles on the main thread).
+	# Warm every shared STATIC on the main thread before the worker starts —
+	# after this point the statics are read-only, which is what makes the
+	# no-locks pipeline safe. `load(path)` alone did NOT fill the mesher's
+	# static _foliage_piece_cache: the worker and a main-thread _build_now
+	# (player teleport during the initial wave) then raced their first
+	# `_foliage_piece_cache[path] = ...` insert — a String-keyed Dictionary
+	# corrupted across threads (SIGSEGV in StringLikeVariantComparator).
 	CliffDressing._ensure_loaded()
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
@@ -85,7 +89,7 @@ func _ready() -> void:
 	_mesher_sync._ensure_skirt_style()
 	for tag in TerrainChunkMesher.FOLIAGE_SCENES:
 		for path: String in TerrainChunkMesher.FOLIAGE_SCENES[tag]:
-			load(path)
+			TerrainChunkMesher._foliage_pieces(path)
 	# Build the chunk under the spawn point before the first physics frame, so
 	# the player lands on real collision instead of falling through.
 	if player != null:
