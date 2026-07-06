@@ -163,44 +163,6 @@ static func biome_at(pos: Vector3, world_seed: int) -> StringName:
 	return best
 
 
-# Sampling-weight multipliers applied to socket tag/size distributions at
-# placement time (TerrainGenerator._biome_scaled_dist). Keys are the tag or
-# size strings that appear in those distributions; anything not listed keeps
-# weight 1.0. Size entries mirror their tag counterparts ("24x24x4" is the
-# cliff seed size, hill sizes pair with the "hill" tag) so the size and tag
-# rolls stay consistent with each other.
-static func biome_weights(pos: Vector3, world_seed: int) -> Dictionary[String, float]:
-	var forest: float = biome_forest01(pos, world_seed)
-	var rocky: float = biome_rocky01(pos, world_seed)
-	var hill_weight: float = clampf(0.5 + 2.2 * rocky - 0.3 * forest, 0.1, 4.0)
-	var cliff_weight: float = 0.6 + 2.6 * rocky
-	return {
-		"tree": 0.4 + 4.6 * forest,
-		"bush": 0.6 + 1.6 * forest,
-		"grass": clampf(1.7 - 1.2 * forest - 0.9 * rocky, 0.15, 2.0),
-		"rock": 0.4 + 2.9 * rocky,
-		"hill": hill_weight,
-		"8x8x2": hill_weight,
-		"12x12x2": hill_weight,
-		"4x4x4": hill_weight,
-		"cliff-base-side": cliff_weight,
-		"24x24x4": cliff_weight,
-	}
-
-
-# Overall foliage density multiplier for decoration sockets: forests are
-# dense, meadows open, rocky ground in between. Replaces the macro factor for
-# point-capable sockets (structures keep the macro field) so flora clustering
-# follows biomes instead of the structural density field. The meadow floor is
-# deliberately generous: far terrain spends much of its area on mesas and
-# water, so a low floor reads as "empty plains" next to the structure-free
-# spawn meadow.
-static func biome_foliage_density(pos: Vector3, world_seed: int) -> float:
-	var forest: float = biome_forest01(pos, world_seed)
-	var rocky: float = biome_rocky01(pos, world_seed)
-	return 0.7 + 1.2 * forest + 0.45 * rocky
-
-
 # Deterministic water field: thin ridged-noise bands form winding rivers,
 # a second blob noise forms lakes, and a finer noise carves islands inside
 # water regions. Faded near the world origin so the spawn stays dry.
