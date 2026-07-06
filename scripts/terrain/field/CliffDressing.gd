@@ -144,33 +144,35 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 	# (owner: "should be a corner tile") — the sa != sb branch below owns it.
 	if sa == sb and int(region.storey_at(cx + cdir.x, cz + cdir.y)) < sa:
 		return 0
-	# CARVED pockets (water banks): the round-8 "run-merge rows already round
-	# the seam" assumption only holds for land runs — on water-carved banks
-	# the seam stays a bare notch. Always emit the full corner piece where a
-	# lower cliff run meets a higher one over water (owner: "should be a
-	# corner tile", twice). Land pockets keep the run-merge behaviour below.
-	if sa != sb and region.has_method("is_carved") and region.is_carved(cx, cz):
-		# ...unless the DIAGONAL cell is a flat top LEVEL with the lower arm: then
-		# it owns the corner classic-style (corner_map "inner"). Emitting from the
-		# pocket too would double the piece, and only the diagonal's map entry lets
-		# the sheet clip TUCK its corner point — a ghost piece under an untucked
-		# sheet is buried in flat grass (owner: "we need to add a corner piece to
-		# blend the lower cliff into the upper cliff", pointing at the buried
-		# fragment poking through the ground).
-		if _diagonal_owns_pocket_corner(region, cx, cz, cdir):
-			return 0
-		return 1
 	if sa != sb:
 		var ct := ca if sa > sb else cb   # the taller arm
 		var cl := cb if sa > sb else ca   # the lower arm
+		var carved: bool = region.has_method("is_carved") and region.is_carved(cx, cz)
+		# CARVED pockets whose DIAGONAL cell is a flat top LEVEL with the lower
+		# arm: the diagonal owns the corner classic-style (corner_map
+		# "pocket_cap"). Emitting from the pocket too would double the piece,
+		# and only the diagonal's map entry lets the sheet clip TUCK its corner
+		# point — a ghost piece under an untucked sheet is buried in flat grass.
+		if carved and _diagonal_owns_pocket_corner(region, cx, cz, cdir):
+			return 0
 		if TerrainSurfaceField.is_exposed_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-ct.x, -ct.y)):
-			# The lower arm's run ENDS at this junction. If the diagonal walls across its line
-			# too, that run gets an ext_outer cap (lip only — no walls) and the seam stays bare
-			# → seam walls. Otherwise the run's ext_straight MERGE rows already round the seam
-			# (round 8) — emitting more would double them.
+			# The taller arm's wall CONTINUES past the corner across the lower
+			# arm's side — land AND water: a full inner piece here notches the
+			# continuing walkable edge (owner, seed 2697992464 cell (4,-46):
+			# "the cliff lip edge should be extended here but instead there is
+			# an inner corner"). At most the vertical seam gets wall rows:
+			#  - the lower arm's run also ends here (diagonal walls across its
+			#    line too) → its ext_outer cap carries the lip; seam walls only.
+			#  - land runs' ext_straight MERGE rows already round the seam
+			#    (round 8) → nothing. CARVED banks have no merge rows — the
+			#    seam would stay a bare smooth notch (round 14) → seam walls.
 			if TerrainSurfaceField.is_exposed_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-cl.x, -cl.y)):
 				return 2
-			return 0
+			return 2 if carved else 0
+		# True concave junction (the taller wall does NOT continue): the full
+		# piece belongs at the LOWER arm's top, rounding its wall into the
+		# taller arm's face (round 10; carved: "should be a corner tile").
+		return 1
 	return 1
 
 # The full-piece predicate — what run-end junction logic means by "an inner corner joins the

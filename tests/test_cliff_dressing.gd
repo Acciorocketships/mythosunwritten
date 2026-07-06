@@ -892,12 +892,16 @@ func test_continuing_taller_wall_junction_gets_seam_walls_but_no_lip() -> void:
 # Water-bank corner junctions (owner rounds: "should be a corner tile")
 # ------------------------------------------------------------
 
-## A carved pocket whose higher-flat arms differ in storey gets the FULL
-## corner piece: the land-only "run-merge rows already round the seam"
-## shortcut left bare notches on water banks. Synthetic region: pocket 0
-## (carved), arms 1 and 2, diagonal high — a lower cliff run meeting a
-## higher one over water.
-func test_carved_pocket_with_unequal_arms_gets_full_corner() -> void:
+## A carved pocket whose taller arm's wall CONTINUES past the corner (the
+## diagonal walls the same line) gets seam WALLS but no lip: the wall rows
+## still round the water bank's bare notch (why carved pockets are special at
+## all), but a full piece's LIP would notch the continuing walkable edge —
+## exactly the regression the owner reported next (seed 2697992464 cell
+## (4,-46): "the cliff lip edge should be extended here but instead there is
+## an inner corner"). Full pieces are reserved for junctions where the taller
+## wall actually STOPS. Synthetic region: pocket 0 (carved), arms 1 and 2,
+## diagonal continuing the taller line at storey 2.
+func test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls() -> void:
 	var storeys: Dictionary = {}
 	for z in range(-2, 3):
 		for x in range(-2, 3):
@@ -911,8 +915,30 @@ func test_carved_pocket_with_unequal_arms_gets_full_corner() -> void:
 		levels[cell] = 0
 	var region: HeightfieldRegion = HeightfieldRegion.new(
 		storeys, levels, {Vector2i(0, 0): true})
+	assert_eq(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)), 2,
+		"carved pocket under a continuing taller wall: seam walls, no lip")
+
+## The same arms with the taller wall STOPPING at the corner (diagonal down in
+## the pocket basin): a true concave junction — the FULL corner piece joins the
+## two walls over the water (owner: "should be a corner tile").
+func test_carved_pocket_where_taller_wall_stops_gets_full_corner() -> void:
+	var storeys: Dictionary = {}
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			storeys[Vector2i(x, z)] = 2
+	storeys[Vector2i(0, 0)] = 0        # carved water pocket
+	storeys[Vector2i(1, 0)] = 1        # lower arm (east)
+	storeys[Vector2i(1, -1)] = 1       # keep the lower arm a flat cliff top
+	storeys[Vector2i(0, 1)] = 2        # taller arm (south)
+	storeys[Vector2i(1, 1)] = 0        # diagonal in the basin: taller wall STOPS here
+	storeys[Vector2i(1, 2)] = 0
+	var levels: Dictionary = {}
+	for cell in storeys:
+		levels[cell] = 0
+	var region: HeightfieldRegion = HeightfieldRegion.new(
+		storeys, levels, {Vector2i(0, 0): true})
 	assert_eq(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)), 1,
-		"carved pocket with arms of different storeys emits the full corner piece")
+		"taller wall stops at the corner: the full piece rounds the true concave")
 
 ## The same junction WITHOUT the carve keeps the land behaviour (no doubled
 ## rows where run-merge geometry already rounds the seam).
@@ -1033,3 +1059,60 @@ func test_carved_flush_step_cap_sits_at_the_very_end() -> void:
 		if absf(o.x - 10.5) < 0.1 and absf(o.z - 13.5) < 0.1 and o.y < 4.0:
 			cap_rows += 1
 	assert_gt(cap_rows, 0, "the cap keeps its wall rows down to the carved pocket (no floating cap)")
+
+## THE owner junction (seed 2697992464 around cell (4,-46), locally translated
+## so the carved pocket is (0,0)): a lower cliff run dies against a TALLER wall
+## over carved water, and the taller wall CONTINUES straight past the corner
+## (the diagonal walls the same line). Storeys, rows N->S (probe-verified):
+##    0  1  2
+##    2  4  5     <- pocket (0,0)=2 carved; run cell (1,0)=4
+##    5  6  6     <- taller arm (0,1)=5; diagonal (1,1)=6
+func _region_owner_junction() -> HeightfieldRegion:
+	var rows := [
+		[0, 0, 1, 2, 2, 2, 2],
+		[0, 0, 1, 2, 2, 2, 2],
+		[2, 2, 2, 4, 5, 5, 5],
+		[5, 5, 5, 6, 6, 6, 6],
+		[5, 5, 5, 6, 6, 6, 6],
+		[5, 5, 5, 6, 6, 6, 6],
+		[5, 5, 5, 6, 6, 6, 6],
+	]
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-2, 5):
+		for x in range(-2, 5):
+			storeys[Vector2i(x, z)] = rows[z + 2][x + 2]
+			levels[Vector2i(x, z)] = 0
+	var carved: Dictionary = {Vector2i(0, 0): true}
+	return HeightfieldRegion.new(storeys, levels, carved)
+
+func test_carved_junction_where_taller_wall_continues_keeps_the_edge_straight() -> void:
+	# Owner: "the cliff lip edge should be extended here but instead there is an
+	# inner corner." When the taller arm's wall continues past the corner, a full
+	# inner piece notches the continuing walkable edge — seam WALLS only (the
+	# carved bank has no run-merge rows), never an inner LIP.
+	var region := _region_owner_junction()
+	assert_eq(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)), 2,
+		"continuing taller wall over a carved pocket: seam walls only, no inner lip")
+	var data = Dress.compute(region, -1, -1, 4)
+	var ghost_lips := 0
+	var seam_walls := 0
+	for t in (data["inner_lip"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1:
+			ghost_lips += 1
+	for t in (data["inner_wall"] as Array):
+		var o := (t as Transform3D).origin
+		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1:
+			seam_walls += 1
+	assert_eq(ghost_lips, 0, "no inner lip notching the continuing edge (owner)")
+	assert_gt(seam_walls, 0, "the concave wall seam still gets its rows")
+
+func test_carved_run_end_into_taller_wall_gets_the_turned_cap() -> void:
+	# Owner: "this should be a corner tile" — with the spurious inner piece gone,
+	# the run's end at the taller wall is a flush-step junction: straight end
+	# module + the turned ext_outer cap one slot into the taller cell.
+	var region := _region_owner_junction()
+	var flags: Dictionary = CliffDressing.corner_flags(region, 1, 0)
+	assert_eq(str(flags.get(Vector2i(-1, 1), "")), "ext_outer",
+		"the run end into the taller wall carries the turned corner cap")
