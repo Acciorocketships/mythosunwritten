@@ -100,8 +100,8 @@ static func _value_noise01(pos: Vector3, world_seed: int, scale: float) -> float
 # stay deterministic per seed — infinite-terrain safe. The smoothstep remaps
 # carve distinct cores out of the noise so each biome covers a meaningful
 # share of the map instead of everything being a 50/50 blend.
-const BIOME_FOREST_SCALE: float = 190.0
-const BIOME_ROCKY_SCALE: float = 150.0
+const BIOME_FOREST_SCALE: float = 480.0
+const BIOME_ROCKY_SCALE: float = 380.0
 
 static func biome_forest01(pos: Vector3, world_seed: int) -> float:
 	# Lower, narrower ramp => forest cores saturate to 1.0 over more of their
@@ -118,9 +118,9 @@ static func is_headless() -> bool:
 	return DisplayServer.get_name() == "headless"
 
 
-const BIOME_MOISTURE_SCALE: float = 230.0
-const BIOME_BLOSSOM_SCALE: float = 260.0
-const BIOME_MARSH_SCALE: float = 300.0
+const BIOME_MOISTURE_SCALE: float = 575.0
+const BIOME_BLOSSOM_SCALE: float = 650.0
+const BIOME_MARSH_SCALE: float = 750.0
 # Canonical biome order, consumed by BiomeRegistry for lookups/UI.
 const BIOME_NAMES: Array[StringName] = [
 	&"meadow", &"deep_forest", &"highland", &"blossom_grove", &"twilight_marsh",

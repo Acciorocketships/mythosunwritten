@@ -78,10 +78,12 @@ static func _make(name: StringName) -> BiomeProfile:
 # white (identity), so only deliberate tints are listed.
 
 static func _meadow() -> BiomeProfile:
-	# Bright warm clear day — almost no fog, saturated warm green.
+	# Bright warm clear day — NO fog (owner: some biomes must be fog-free),
+	# saturated warm green. fog_color stays: it still tints blends with foggy
+	# neighbours at borders.
 	var p := _make(&"meadow")
 	p.fog_color = Color("d2ead9")
-	p.fog_density = 0.0003
+	p.fog_density = 0.0
 	p.sky_top = Color("5cb3ea")            # bright saturated blue
 	p.sky_horizon = Color("cdeaf6")
 	p.ambient_color = Color(0.80, 0.76, 0.62)
@@ -112,10 +114,10 @@ static func _deep_forest() -> BiomeProfile:
 	return p
 
 static func _highland() -> BiomeProfile:
-	# Cold windswept rock — crisp (nearly fog-free), cool blue-grey, desaturated.
+	# Cold windswept rock — crisp and truly fog-free, cool blue-grey, desaturated.
 	var p := _make(&"highland")
 	p.fog_color = Color("b6c6d6")
-	p.fog_density = 0.0005
+	p.fog_density = 0.0
 	p.sky_top = Color("6f9cc6")            # cool clear blue-grey
 	p.sky_horizon = Color("c2d6e6")
 	p.ambient_color = Color(0.62, 0.67, 0.74)   # cool

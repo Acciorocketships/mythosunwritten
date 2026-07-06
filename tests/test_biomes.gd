@@ -81,6 +81,21 @@ func test_biome_at_is_argmax() -> void:
 	assert_eq(Helper.biome_at(p, s), best)
 
 
+func test_biomes_persist_over_a_running_stretch() -> void:
+	# Owner: "the biomes are a bit too small, they change really fast when you
+	# run". Walk 25 straight 100m hops on the pinned owner seed; the dominant
+	# biome should survive most hops once wavelengths are ~2.5x longer.
+	var s := 2697992464
+	var changes := 0
+	var prev: StringName = Helper.biome_at(Vector3.ZERO, s)
+	for i in range(1, 26):
+		var b := Helper.biome_at(Vector3(float(i) * 100.0, 0.0, 0.0), s)
+		if b != prev:
+			changes += 1
+		prev = b
+	assert_lt(changes, 8, "biome flips every ~100m — biomes too small (%d changes)" % changes)
+
+
 func test_pocket_census() -> void:
 	var s := 991177
 	var marsh := 0
