@@ -30,12 +30,17 @@ func test_background_builds_populate_radius():
 	# the worker thread before the node is deleted; a synchronous free() can't
 	# succeed while the worker is parked in a live call frame on the node.
 	add_child_autoqfree(s)
-	# the spawn chunk is guaranteed synchronously in _ready
-	assert_true(s._built.has(Vector2i(0, 0)), "spawn chunk built before first frame")
-	# the rest of the 3x3 radius arrives from the background thread
+	# The spawn chunk is no longer built synchronously (a cold build blocked
+	# the first frame for ~10s — the owner's grey startup screen). Instead the
+	# player is HELD until the worker delivers their chunk.
+	assert_eq(player.process_mode, Node.PROCESS_MODE_DISABLED,
+		"player held from _ready until the spawn chunk lands")
+	# the whole 3x3 radius arrives from the background thread
 	var deadline := Time.get_ticks_msec() + 60_000
 	while s._built.size() < 9 and Time.get_ticks_msec() < deadline:
 		await wait_seconds(0.25)
 	assert_eq(s._built.size(), 9, "radius-1 ring built in the background")
 	for c in s._built:
 		assert_true(is_instance_valid(s._built[c]), "chunk node alive: %s" % str(c))
+	assert_eq(player.process_mode, Node.PROCESS_MODE_INHERIT,
+		"player released once their chunk landed")

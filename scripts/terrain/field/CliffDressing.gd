@@ -433,13 +433,12 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				var sb2 := int(region.storey_at(cx, cz + cdir.y))
 				var tdir := Vector2i(cdir.x, 0) if sa2 > sb2 else Vector2i(0, cdir.y)
 				var tpos: Vector3 = cpos + Vector3(float(tdir.x) * 3.0, 0.0, float(tdir.y) * 3.0)
-				# Arc at the POCKET POINT: arms face the water (lower-arm side) and
-				# the shore behind — flipping the taller-arm axis. With the arc on
-				# the taller side instead, it buries deep in the wall and a bare
-				# grey wedge shows at the jog between the shore line and the wall.
-				var wdir: Vector2i = cdir - tdir * 2
-				var wbasis := Basis(Vector3.UP, atan2(float(wdir.x), float(wdir.y)) - PI * 0.25)
-				out["outer_lip"].append(Transform3D(wbasis, tpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
+				# Cap arms face the water (lower-arm side) and the TALLER arm: the
+				# visible arm hugs the taller wall over the water and the arc dies
+				# into the rock, butting the inner piece at its near end (owner:
+				# "rotated 90 degrees to actually line up" — arms on the flipped
+				# axis left a cut end jutting along the boundary instead).
+				out["outer_lip"].append(Transform3D(cbasis, tpos + Vector3(0.0, CORNER_LIP_LIFT, 0.0)))
 				# The classic INNER piece stays in THIS cell's corner slot, rounding
 				# the shore lip line concavely into the taller wall face — the outer
 				# cap sits right next to it (owner: "the outer corner should be
@@ -558,9 +557,43 @@ static func _angle(dir: Vector2i) -> float:
 	return atan2(float(dir.x), float(dir.y))
 
 static func _ensure_loaded() -> void:
-	if _pieces.is_empty():
-		for key in SCENES:
-			_pieces[key] = _piece(SCENES[key])
+	if not _pieces.is_empty():
+		return
+	for key in SCENES:
+		_pieces[key] = _piece(SCENES[key])
+	# The corner lips' grass TOPS sample the palette's BRIGHT trim row across
+	# most of their area (straight lips keep the bright row to a thin front
+	# edge), so a cap sitting on open ground read as a brighter green patch
+	# than the surrounding tiles (owner). Remap their grass top texels to the
+	# straight lip's first top texel — the same one the ground sheet samples
+	# (TerrainChunkMesher._ensure_skirt_style), so cap tops match the lawn.
+	var lip_mesh: Mesh = _pieces["lip"][0]
+	var larr := lip_mesh.surface_get_arrays(0)
+	var lverts: PackedVector3Array = larr[Mesh.ARRAY_VERTEX]
+	var lnorms: PackedVector3Array = larr[Mesh.ARRAY_NORMAL]
+	var luvs: PackedVector2Array = larr[Mesh.ARRAY_TEX_UV]
+	for i in lverts.size():
+		if lnorms[i].y > 0.9 and lverts[i].y > -0.05:
+			for key in ["outer_lip", "inner_lip"]:
+				_pieces[key][0] = _retexel_grass_top(_pieces[key][0], luvs[i])
+			break
+
+# Rebuild a piece mesh with every upward-facing grass-region texel set to `uv`
+# (the palette's grass patches live in the low-uv corner; rock texels are
+# untouched). The GLTF meshes are shared resources — work on a copy.
+static func _retexel_grass_top(mesh: Mesh, uv: Vector2) -> Mesh:
+	if mesh.get_surface_count() != 1:
+		return mesh
+	var arr := mesh.surface_get_arrays(0)
+	var norms: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+	var uvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+	for i in norms.size():
+		if norms[i].y > 0.9 and uvs[i].x < 0.15 and uvs[i].y < 0.15:
+			uvs[i] = uv
+	arr[Mesh.ARRAY_TEX_UV] = uvs
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	return out
 
 static func _piece(path: String) -> Array:
 	var inst := (load(path) as PackedScene).instantiate()

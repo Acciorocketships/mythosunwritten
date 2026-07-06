@@ -32,14 +32,6 @@ var _plan: HeightfieldPlan
 var _water: WaterPlan
 var _mesher: TerrainChunkMesher
 var _water_builder := WaterSurfaceBuilder.new()
-# Main-thread pipeline instances for the synchronous player-chunk guarantee.
-# Separate objects with separate caches; same seed => identical output (the
-# pipeline is a pure function of (seed, cell)).
-var _plan_sync: HeightfieldPlan
-var _water_sync: WaterPlan
-var _mesher_sync: TerrainChunkMesher
-var _water_builder_sync := WaterSurfaceBuilder.new()
-
 var _built: Dictionary = {}        # Vector2i -> Node3D          (main thread only)
 var _queued: Dictionary = {}       # Vector2i -> true, in-flight  (main thread only)
 var world_seed: int = 0
@@ -70,43 +62,37 @@ func _ready() -> void:
 	_plan.set_water_plan(_water)
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
-	_plan_sync = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS, "mean", MAX_CLIFF_STEP)
-	_water_sync = WaterPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS)
-	_plan_sync.set_water_plan(_water_sync)
-	_mesher_sync = TerrainChunkMesher.new()
-	_mesher_sync.set_seed(world_seed)
 	# Warm every shared STATIC on the main thread before the worker starts —
 	# after this point the statics are read-only, which is what makes the
 	# no-locks pipeline safe. `load(path)` alone did NOT fill the mesher's
-	# static _foliage_piece_cache: the worker and a main-thread _build_now
-	# (player teleport during the initial wave) then raced their first
-	# `_foliage_piece_cache[path] = ...` insert — a String-keyed Dictionary
-	# corrupted across threads (SIGSEGV in StringLikeVariantComparator).
+	# static _foliage_piece_cache: the worker and the main thread then raced
+	# their first `_foliage_piece_cache[path] = ...` insert — a String-keyed
+	# Dictionary corrupted across threads (SIGSEGV in
+	# StringLikeVariantComparator).
 	CliffDressing._ensure_loaded()
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
 	_mesher._ensure_skirt_style()
-	_mesher_sync._ensure_skirt_style()
 	for tag in TerrainChunkMesher.FOLIAGE_SCENES:
 		for path: String in TerrainChunkMesher.FOLIAGE_SCENES[tag]:
 			TerrainChunkMesher._foliage_pieces(path)
-	# Build the chunk under the spawn point before the first physics frame, so
-	# the player lands on real collision instead of falling through.
-	if player != null:
-		_build_now(chunk_of(player.global_position))
+	# The spawn chunk is NOT built synchronously: the first build pays the
+	# whole cold water-trace cache (~10s) and blocking _ready held a blank
+	# grey window that long (owner). The worker builds it front-of-queue
+	# while the player is HELD (see _process), and the window renders.
+	_freeze_player(true)
 	_thread.start(_worker)
 
-# Synchronous build on the MAIN thread (spawn + the rare case of the player
-# outrunning the streamer). Uses the _sync pipeline instances exclusively.
-func _build_now(c: Vector2i) -> void:
-	if _built.has(c):
+# The player is HELD (physics + input off) whenever their chunk has no
+# terrain yet — spawn, teleports, or outrunning the streamer — so they never
+# fall through unbuilt ground while the worker catches up.
+var _player_frozen := false
+
+func _freeze_player(on: bool) -> void:
+	if player == null or _player_frozen == on:
 		return
-	var node := _mesher_sync.build_chunk(_plan_sync, c)
-	var wnode := _water_builder_sync.build_chunk(_water_sync, c)
-	if wnode != null:
-		node.add_child(wnode)
-	terrain_parent.add_child(node)
-	_built[c] = node
+	_player_frozen = on
+	player.process_mode = Node.PROCESS_MODE_DISABLED if on else Node.PROCESS_MODE_INHERIT
 
 func _worker() -> void:
 	while true:
@@ -131,8 +117,22 @@ func _process(_delta: float) -> void:
 	if _plan == null or player == null:
 		return
 	var centre := chunk_of(player.global_position)
-	# The player's own chunk never waits on the worker.
-	_build_now(centre)
+	# The player's chunk jumps the queue but never blocks the frame; the
+	# player stays held until it lands.
+	if _built.has(centre):
+		_freeze_player(false)
+	else:
+		_freeze_player(true)
+		_mutex.lock()
+		var qi := _jobs.find(centre)
+		if qi > 0:
+			_jobs.remove_at(qi)
+			_jobs.push_front(centre)
+		elif qi < 0 and not _queued.has(centre):
+			_queued[centre] = true
+			_jobs.push_front(centre)
+			_sem.post()
+		_mutex.unlock()
 	# Integrate finished background builds (budgeted).
 	var integrated := 0
 	while integrated < MAX_BUILD_PER_FRAME:
@@ -144,7 +144,7 @@ func _process(_delta: float) -> void:
 		var c: Vector2i = pair[0]
 		_queued.erase(c)
 		if _built.has(c) or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
-			pair[1].free()   # lost the race to _build_now, or stale — discard
+			pair[1].free()   # duplicate or stale (player moved on) — discard
 			continue
 		terrain_parent.add_child(pair[1])
 		_built[c] = pair[1]
