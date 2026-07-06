@@ -68,6 +68,30 @@ func test_build_chunk_makes_meshes_and_swim_volumes() -> void:
 	assert_true(areas > 0, "swim volumes present")
 	node.free()
 
+func test_sheet_quads_are_subdivided_for_shader_chop() -> void:
+	# The shader displaces real chop waves (~14-26m wavelength); 24m cell
+	# quads can't bend, so every cell must emit a SUBDIV x SUBDIV bilinear grid.
+	var plan: WaterPlan = _water()
+	var river: RiverTrace = _a_river(plan)
+	var chunk: Vector2i = _river_chunk(plan, river)
+	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(plan, chunk)
+	assert_not_null(node, "river chunk builds")
+	var mesh: Mesh = null
+	for c in node.get_children():
+		if c is MeshInstance3D:
+			mesh = c.mesh
+	assert_not_null(mesh, "water sheet mesh present")
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk)
+	var lo: Vector2i = Vector2i(chunk.x * 8, chunk.y * 8)
+	var quads: int = 0
+	for cell in field:
+		if cell.x >= lo.x and cell.x < lo.x + 8 and cell.y >= lo.y and cell.y < lo.y + 8:
+			quads += 1
+	var verts: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	assert_eq(verts.size(), quads * WaterSurfaceBuilder.SUBDIV * WaterSurfaceBuilder.SUBDIV * 6,
+		"every cell quad is a SUBDIV x SUBDIV bilinear grid")
+	node.free()
+
 func test_build_chunk_returns_null_when_dry() -> void:
 	var plan: WaterPlan = _water()
 	# Scan for a chunk whose window has no bodies (seed-independent), then

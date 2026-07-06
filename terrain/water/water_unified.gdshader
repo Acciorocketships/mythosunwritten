@@ -18,7 +18,12 @@ uniform float foam_width : hint_range(0.0, 3.0) = 0.6;
 uniform float depth_fade : hint_range(0.5, 8.0) = 1.8;
 uniform float wave_height : hint_range(0.0, 0.6) = 0.15;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
-uniform float flow_speed : hint_range(0.0, 12.0) = 6.0;    // metres/second scroll
+// Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
+// steep_v), never in a global playback rate — a raised base rate reads as
+// the whole world running in fast-forward (owner regression report).
+uniform float flow_speed : hint_range(0.0, 12.0) = 3.0;    // metres/second scroll
+uniform float rapids_boost : hint_range(0.0, 4.0) = 1.5;   // extra scroll at steep_v=1
+uniform float chop_height : hint_range(0.0, 0.6) = 0.22;   // travelling crest amplitude
 uniform float roughness : hint_range(0.0, 1.0) = 0.05;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
@@ -39,35 +44,47 @@ void vertex() {
 	flow_v = CUSTOM0.xyz;
 	steep_v = CUSTOM0.w;
 	float fs = clamp(length(flow_v.xz), 0.0, 1.0);
+	vec2 fdir = fs > 0.001 ? normalize(flow_v.xz) : vec2(1.0, 0.0);
 	float t = TIME * wave_speed;
-	// Rivers barely swell; lakes roll. Blend by flow strength.
+	float scroll = flow_speed * (1.0 + rapids_boost * steep_v);
+	// Rivers barely swell; lakes roll. REAL chop (travelling crest geometry)
+	// replaces swell as flow rises, and dies with the builder's flow fade at
+	// shores — the buried waterline edge never bobs above the banks.
 	float amp = wave_height * (1.0 - 0.7 * fs);
-	float h = water_wave_h(noise_tex, world_pos.xz, t);
-	VERTEX.y += h * amp;
-	world_pos.y += h * amp;
+	float camp = chop_height * fs * (0.4 + 0.6 * steep_v);
 	float e = 2.0;
-	float hx = water_wave_h(noise_tex, world_pos.xz + vec2(e, 0.0), t);
-	float hz = water_wave_h(noise_tex, world_pos.xz + vec2(0.0, e), t);
-	still_normal = normalize(vec3((h - hx) * amp / e, 1.0, (h - hz) * amp / e));
+	float h = water_wave_h(noise_tex, world_pos.xz, t) * amp
+		+ water_chop_h(noise_tex, world_pos.xz, fdir, scroll, TIME) * camp;
+	float hx = water_wave_h(noise_tex, world_pos.xz + vec2(e, 0.0), t) * amp
+		+ water_chop_h(noise_tex, world_pos.xz + vec2(e, 0.0), fdir, scroll, TIME) * camp;
+	float hz = water_wave_h(noise_tex, world_pos.xz + vec2(0.0, e), t) * amp
+		+ water_chop_h(noise_tex, world_pos.xz + vec2(0.0, e), fdir, scroll, TIME) * camp;
+	VERTEX.y += h;
+	world_pos.y += h;
+	still_normal = normalize(vec3((h - hx) / e, 1.0, (h - hz) / e));
 }
 
 void fragment() {
 	float t = TIME * wave_speed;
 	float fs = clamp(length(flow_v.xz), 0.0, 1.0);
-	vec2 fdir = fs > 0.001 ? normalize(flow_v.xz) : vec2(0.0);
+	vec2 fdir = fs > 0.001 ? normalize(flow_v.xz) : vec2(1.0, 0.0);
+	float scroll = flow_speed * (1.0 + rapids_boost * steep_v);
 
 	// Dual-phase downstream scroll with a SPATIALLY DITHERED phase: each
 	// region resets at a different moment, so the reblend never reads as a
-	// global "video cut" pulse across the surface.
-	vec2 fl = fdir * flow_speed;
+	// global "video cut" pulse across the surface. Fast water samples in a
+	// flow-aligned basis stretched along-flow: ripples elongate into streaks.
+	vec2 fuv = vec2(dot(world_pos.xz, fdir), dot(world_pos.xz, vec2(-fdir.y, fdir.x)));
+	vec2 uvscale = mix(vec2(0.09), vec2(0.045, 0.13), fs);
 	float ph = fract(TIME * 0.5 + texture(noise_tex, world_pos.xz * 0.017).r);
-	vec2 uv = world_pos.xz * 0.09;
-	float n1 = texture(noise_tex, uv - fl * ph * 0.09).r;
-	float n2 = texture(noise_tex, uv - fl * (ph - 0.5) * 0.09).r;
+	float n1 = texture(noise_tex, fuv * uvscale - vec2(scroll * ph * uvscale.x, 0.0)).r;
+	float n2 = texture(noise_tex, fuv * uvscale - vec2(scroll * (ph - 0.5) * uvscale.x, 0.0)).r;
 	float stream = mix(n1, n2, abs(ph * 2.0 - 1.0));
-	vec3 flow_n = normalize(vec3(
-		(stream - 0.5) * 0.35 * fdir.x, 1.0, (stream - 0.5) * 0.35 * fdir.y));
-	vec3 n = normalize(mix(still_normal, flow_n, fs));
+	// Detail perturbation rides ON TOP of the vertex normal (which already
+	// carries the chop geometry) instead of replacing it.
+	vec3 n = still_normal;
+	n.xz += (stream - 0.5) * 0.35 * fdir * fs;
+	n = normalize(n);
 
 	// Interactive ripples: sample the wave-sim height gradient inside the
 	// player-following domain (swim wakes + ambient droplets), fading at the
