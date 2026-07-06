@@ -9,13 +9,15 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 
 #include "res://terrain/water/water_common.gdshaderinc"
 
-// Pastel sage-teal palette, milky and near-opaque (owner's reference image);
-// depth still tints shores lighter and drives the foam lap line.
-uniform vec3 color_deep : source_color = vec3(0.30, 0.50, 0.47);
-uniform vec3 color_shallow : source_color = vec3(0.56, 0.73, 0.66);
+// CLEAR teal water (owner's reference image): the body is the REFRACTED
+// scene tinted by depth — shallow shows the bed through clean green glass,
+// deep saturates to a rich teal; depth still drives the foam lap line.
+uniform vec3 color_deep : source_color = vec3(0.10, 0.38, 0.36);
+uniform vec3 color_shallow : source_color = vec3(0.45, 0.74, 0.64);
 uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
 uniform float foam_width : hint_range(0.0, 3.0) = 0.6;
-uniform float depth_fade : hint_range(0.5, 8.0) = 1.8;
+uniform float clarity_depth : hint_range(0.5, 12.0) = 3.5;   // metres to ~deep colour
+uniform float refraction_strength : hint_range(0.0, 0.2) = 0.05;
 uniform float wave_height : hint_range(0.0, 0.6) = 0.15;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
 // Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
@@ -24,9 +26,10 @@ uniform float wave_speed : hint_range(0.0, 4.0) = 0.8;
 uniform float flow_speed : hint_range(0.0, 12.0) = 3.0;    // metres/second scroll
 uniform float rapids_boost : hint_range(0.0, 4.0) = 1.5;   // extra scroll at steep_v=1
 uniform float chop_height : hint_range(0.0, 0.6) = 0.22;   // travelling crest amplitude
-uniform float roughness : hint_range(0.0, 1.0) = 0.05;
+uniform float roughness : hint_range(0.0, 1.0) = 0.03;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
+uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
 // Ripple simulation domain (WaterRippleSim feeds these each frame; the far
 // default origin keeps the shader inert when no sim is running).
 uniform sampler2D ripple_tex : repeat_disable, filter_linear;
@@ -37,7 +40,7 @@ uniform float ripple_strength : hint_range(0.0, 20.0) = 8.0;
 varying vec3 world_pos;
 varying vec3 flow_v;        // downstream, world space; length = flow strength
 varying float steep_v;      // 0 calm .. 1 waterfall-ish
-varying vec3 still_normal;  // analytic swell normal (still-water half)
+varying vec3 still_normal;  // analytic swell+chop normal from the vertex pass
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -106,16 +109,31 @@ void fragment() {
 	NORMAL = (VIEW_MATRIX * vec4(n, 0.0)).xyz;
 
 	float depth = water_depth_world(depth_texture, SCREEN_UV, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
-	float depth_t = clamp(depth / depth_fade, 0.0, 1.0);
-	vec3 base = mix(color_shallow, color_deep, depth_t);
+	float depth_t = 1.0 - exp(-depth / clarity_depth);
+	// Refraction: offset the screen sample by the view-space normal, fading
+	// in over the first metre (shores don't smear). If the offset lands on
+	// geometry ABOVE the surface (a bank, the player), fall back to straight —
+	// dry things must never bleed into the water body.
+	vec2 roff = NORMAL.xy * refraction_strength * clamp(depth, 0.0, 1.0);
+	vec2 suv = SCREEN_UV + roff;
+	if (water_depth_world(depth_texture, suv, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y) <= 0.0) {
+		suv = SCREEN_UV;
+	}
+	vec3 scene = texture(screen_texture, suv).rgb;
+	// Clear body: the refracted scene through a green-glass tint, saturating
+	// to the deep teal with depth; fresnel leans glancing views reflective.
+	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.45), color_deep, depth_t);
+	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
+	body = mix(body, color_deep, fres * 0.6);
 	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, foam_width);
 	// Rapids: noise-gated white streaks on steep flowing reaches — never a
 	// flat add (that saturates whole mountain rivers solid white).
 	foam += steep_v * smoothstep(0.45, 0.75, stream) * 0.8 * fs;
 	foam = clamp(foam, 0.0, 0.9);
-	ALBEDO = mix(base, foam_color, foam);
-	// Milky, near-opaque body (reference look) — shores stay a touch clearer.
-	ALPHA = max(mix(0.82, 0.96, depth_t), foam * 0.97);
+	ALBEDO = mix(body, foam_color, foam);
+	// Clarity comes from REFRACTION, not alpha blending; the ALPHA write
+	// keeps the material in the transparent pass (screen texture needs it).
+	ALPHA = 1.0;
 	ROUGHNESS = mix(roughness, 0.5, foam);
-	SPECULAR = 0.7;
+	SPECULAR = mix(0.7, 1.0, fres);
 }
