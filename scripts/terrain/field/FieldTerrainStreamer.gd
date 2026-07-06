@@ -142,14 +142,28 @@ func _biome_fx_data(c: Vector2i, region) -> Dictionary:
 			var lz := origin.z + hz * CHUNK_WORLD
 			var ly := TerrainSurfaceField.surface_y(region, lx, lz) + 2.5
 			light_points.append(Vector3(lx - origin.x, ly, lz - origin.z))
-	return {"profile": prof, "lights": light_points, "origin": origin}
+	# The chunk's surface height band — particle emission + pocket fog hug the
+	# actual ground instead of a fixed 0..12 band (orbs on a storey-5 plateau
+	# floated inside the terrain / far underfoot before).
+	var surf_lo := INF
+	var surf_hi := -INF
+	var lo_cx := c.x * TerrainChunkMesher.CELLS_PER_CHUNK
+	var lo_cz := c.y * TerrainChunkMesher.CELLS_PER_CHUNK
+	for dz in TerrainChunkMesher.CELLS_PER_CHUNK:
+		for dx in TerrainChunkMesher.CELLS_PER_CHUNK:
+			var h: float = region.surface_height(lo_cx + dx, lo_cz + dz)
+			surf_lo = minf(surf_lo, h)
+			surf_hi = maxf(surf_hi, h)
+	return {"profile": prof, "lights": light_points, "origin": origin,
+			"surf_lo": surf_lo, "surf_hi": surf_hi}
 
 # Main-thread: build the FX nodes from the worker's data and parent them under
 # the (now in-tree) chunk node.
 func _build_fx(node: Node3D, fx_data: Dictionary) -> void:
 	if fx_data.is_empty():
 		return
-	var fx := BiomeChunkFx.build(fx_data["profile"], fx_data["lights"])
+	var fx := BiomeChunkFx.build(fx_data["profile"], fx_data["lights"],
+			fx_data["surf_lo"], fx_data["surf_hi"])
 	fx.position = fx_data["origin"]
 	node.add_child(fx)
 
