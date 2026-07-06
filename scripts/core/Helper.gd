@@ -101,7 +101,12 @@ static func _value_noise01(pos: Vector3, world_seed: int, scale: float) -> float
 # carve distinct cores out of the noise so each biome covers a meaningful
 # share of the map instead of everything being a 50/50 blend.
 const BIOME_FOREST_SCALE: float = 480.0
-const BIOME_ROCKY_SCALE: float = 380.0
+# ROCKY is TERRAIN-COUPLED: HeightfieldPlan.height01 multiplies the landform by
+# this field (mountain spines live in rocky cores), so its scale is part of the
+# world's shape — changing it re-rolls every seed's terrain. Mood biomes above/
+# below scale freely; rocky stays put. Highland "flips" along a run are real
+# geography (you climbed a mountain), not atmosphere churn.
+const BIOME_ROCKY_SCALE: float = 150.0
 
 static func biome_forest01(pos: Vector3, world_seed: int) -> float:
 	# Lower, narrower ramp => forest cores saturate to 1.0 over more of their

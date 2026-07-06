@@ -37,6 +37,11 @@ func test_biome_composition_shifts_with_fields() -> void:
 	var rocky_pos: Vector3 = Vector3.INF
 	for i in range(4000):
 		var p: Vector3 = Vector3((i % 64) * 53.0, 0.0, (i / 64) * 47.0)
+		# Pockets (marsh/blossom) claim weight first by design — sample outside
+		# them so the forest/rocky composition shift is what's measured.
+		if Helper.biome_marsh_pocket01(p, world_seed) > 0.05 \
+				or Helper.biome_blossom_pocket01(p, world_seed) > 0.05:
+			continue
 		if forest_pos == Vector3.INF and Helper.biome_forest01(p, world_seed) > 0.9 \
 				and Helper.biome_rocky01(p, world_seed) < 0.3:
 			forest_pos = p
