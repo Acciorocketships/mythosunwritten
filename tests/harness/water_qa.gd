@@ -13,18 +13,26 @@ const OUT := "/private/tmp/claude-501/-Users-ryko-story/0046d9dc-92a9-4d45-b8b3-
 # [name, character pos (streams chunks), camera from, camera look-at]
 const SPOTS: Array = [
 	["s1_floating_edges", Vector3(34.4, 12.0, -1103.4), Vector3(34, 13, -1114), Vector3(40, 7, -1088)],
+	["s1_low_across", Vector3(34.4, 12.0, -1103.4), Vector3(30, 9.5, -1112), Vector3(45, 7, -1092)],
+	["ryan_cascade", Vector3(34.3, 10.0, -1114.5), Vector3(34.5, 13.5, -1106.5), Vector3(33.5, 5, -1122)],
 	["s2_coast_close", Vector3(-140.0, 8.0, -960.0), Vector3(-152, 9, -952), Vector3(-118, 2.2, -963)],
 	["s2_coast_top", Vector3(-120.0, 8.0, -960.0), Vector3(-118, 30, -965), Vector3(-117, 2, -964)],
 	["s3_channel", Vector3(-80.3, 12.0, -981.0), Vector3(-70, 14, -968), Vector3(-98, 6, -1000)],
+	["river_upstream", Vector3(-91.0, 12.0, -1000.0), Vector3(-72, 24, -1018), Vector3(-102, 4, -984)],
 	["s4_plunge", Vector3(44.0, 8.0, -1101.0), Vector3(46, 8.5, -1106), Vector3(48, 6.5, -1091)],
-	["s4_mist_close", Vector3(44.0, 8.0, -1101.0), Vector3(53, 8, -1098.5), Vector3(47.5, 5.6, -1092)],
 	["s4_mist_front", Vector3(44.0, 8.0, -1101.0), Vector3(48, 8, -1104), Vector3(48, 6, -1093)],
+	["r4s4_crest_view", Vector3(35.1, 10.0, -1095.2), Vector3(30, 12, -1103), Vector3(44, 6, -1084)],
 	["s5_crest", Vector3(44.0, 11.0, -1085.0), Vector3(46, 10.6, -1077), Vector3(48, 8.8, -1092.5)],
+	["corner_close", Vector3(44.0, 8.0, -1101.0), Vector3(26, 10.5, -1120), Vector3(36, 7.5, -1113)],
 	["strip_probe", Vector3(44.0, 8.0, -1101.0), Vector3(72, 12, -1108), Vector3(50, 8.5, -1084)],
 	# Round-4 sites: bank skirt + swells, shoreline angles + white blob, ghost.
 	["s6_bank_swells", Vector3(226.8, 8.0, -1165.9), Vector3(214, 9.5, -1152), Vector3(234, 2, -1174)],
+	["r4s2_exact", Vector3(226.8, 8.0, -1165.9), Vector3(219, 10, -1173), Vector3(240, 1.5, -1152)],
 	["s7_shore_angles", Vector3(76.1, 8.0, -1156.5), Vector3(62, 11, -1145), Vector3(90, 2, -1166)],
+	["r4s3_exact", Vector3(76.1, 8.0, -1156.5), Vector3(76, 9, -1146), Vector3(76, 1.5, -1172)],
 	["s8_ghost", Vector3(113.3, 9.0, -1215.5), Vector3(104, 9, -1205), Vector3(119, 3.5, -1221)],
+	["lake_low_across", Vector3(113.0, 9.0, -1215.0), Vector3(96, 4.8, -1210), Vector3(130, 3.5, -1220)],
+	["lake_wide", Vector3(113.0, 9.0, -1215.0), Vector3(140, 18, -1240), Vector3(100, 3, -1200)],
 ]
 
 var _char: CharacterBody3D

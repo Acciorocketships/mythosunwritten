@@ -34,11 +34,13 @@ float water_view_z(sampler2D depth_tex, vec2 uv, mat4 inv_projection) {
 // decorrelated by world noise so crests never read as parallel bars.
 // Roughly zero-mean so the sheet's average level doesn't rise.
 float water_chop_h(sampler2D noise_tex, vec2 p, vec2 fdir, float speed, float t) {
+	// LONG and slow (λ ~26m / ~48m): the owner reads short crest trains as
+	// "mini ripples everywhere" — surface motion must be swells, not chop.
 	float along = dot(p, fdir);
 	float across = dot(p, vec2(-fdir.y, fdir.x));
 	float brk = textureLod(noise_tex, p * 0.03, 0.0).r;
-	float w1 = 1.0 - abs(sin((along - t * speed) * 0.45 + across * 0.18 + brk * 4.0));
-	float w2 = 1.0 - abs(sin((along - t * speed * 1.30) * 0.24 - across * 0.10 + brk * 2.5));
+	float w1 = 1.0 - abs(sin((along - t * speed) * 0.24 + across * 0.10 + brk * 4.0));
+	float w2 = 1.0 - abs(sin((along - t * speed * 1.30) * 0.13 - across * 0.06 + brk * 2.5));
 	return w1 * w1 * 0.65 + w2 * w2 * 0.35 - 0.45;
 }
 

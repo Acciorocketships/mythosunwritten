@@ -17,24 +17,28 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 // tint (the reference's pale reflective sheen), never a dark one. The
 // surface itself is SMOOTH: no noise dapple — motion comes entirely from
 // the travelling swells and the interactive ripple sim.
-uniform vec3 color_deep : source_color = vec3(0.26, 0.55, 0.52);
+uniform vec3 color_deep : source_color = vec3(0.46, 0.69, 0.62);
 uniform vec3 color_shallow : source_color = vec3(0.55, 0.82, 0.73);
-uniform vec3 color_sky : source_color = vec3(0.76, 0.89, 0.86);
-uniform float sky_reflect : hint_range(0.0, 1.0) = 0.42;
+uniform vec3 color_sky : source_color = vec3(0.85, 0.93, 0.89);
+uniform float sky_reflect : hint_range(0.0, 1.0) = 0.6;
 uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
 uniform float foam_width : hint_range(0.0, 3.0) = 0.3;
-uniform float clarity_depth : hint_range(0.5, 24.0) = 15.0;  // metres to ~deep colour
+uniform float clarity_depth : hint_range(0.5, 24.0) = 9.0;   // metres to full deep colour
+// The reference water is a soft OPAQUE pastel jade, not glass: past the
+// first half-metre the body colour takes over regardless of depth — only
+// the very rim (0..~10cm) clears to the ground like the reference's edge.
+uniform float body_floor : hint_range(0.0, 1.0) = 0.58;
 uniform float refraction_strength : hint_range(0.0, 0.2) = 0.035;
 // LOW frequency, HIGH amplitude, SLOW — the swells are the river's motion
 // (owner). Speed changes here must be mirrored in character.gd SWELL_SPEED.
-uniform float wave_height : hint_range(0.0, 1.5) = 0.85;
-uniform float wave_speed : hint_range(0.0, 4.0) = 0.35;
+uniform float wave_height : hint_range(0.0, 1.5) = 1.15;
+uniform float wave_speed : hint_range(0.0, 4.0) = 0.26;
 // Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
 // steep_v), never in a global playback rate — a raised base rate reads as
 // the whole world running in fast-forward (owner regression report).
-uniform float flow_speed : hint_range(0.0, 12.0) = 1.6;    // metres/second scroll
+uniform float flow_speed : hint_range(0.0, 12.0) = 1.2;    // metres/second scroll
 uniform float rapids_boost : hint_range(0.0, 4.0) = 1.2;   // extra scroll at steep_v=1
-uniform float chop_height : hint_range(0.0, 0.6) = 0.25;   // travelling crest amplitude
+uniform float chop_height : hint_range(0.0, 0.6) = 0.1;    // travelling crest amplitude
 // Not mirror-tight: 0.02 focused the sun into a huge white glare blob on
 // the swells (owner's screenshots all carry it).
 uniform float roughness : hint_range(0.0, 1.0) = 0.07;
@@ -121,7 +125,11 @@ void fragment() {
 	NORMAL = (VIEW_MATRIX * vec4(n, 0.0)).xyz;
 
 	float depth = water_depth_world(depth_texture, SCREEN_UV, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
-	float depth_t = 1.0 - exp(-depth / clarity_depth);
+	// Body fraction: depth ramp OR the body floor — ankle-deep flood shelves
+	// must still read as jade water (the grass showed straight through and
+	// looked like lawn), while the first ~10cm at the rim stay clear.
+	float depth_t = max(1.0 - exp(-depth / clarity_depth),
+			body_floor * smoothstep(0.05, 0.55, depth));
 	// Refraction: offset the screen sample by the view-space normal, fading
 	// in over the first metre (shores don't smear). Reject offsets landing
 	// on geometry ABOVE the surface (banks, the player) or NEARER than this
@@ -137,7 +145,7 @@ void fragment() {
 	// Clear body: the refracted scene through a light green-glass tint,
 	// saturating toward the soft teal with depth but NEVER fully opaque —
 	// the owner wants the near-shore clarity everywhere.
-	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.12), color_deep, min(depth_t, 0.88));
+	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.12), color_deep, min(depth_t, 0.92));
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
 	body = mix(body, color_sky, fres * sky_reflect);
 	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, shore_v, foam_width);

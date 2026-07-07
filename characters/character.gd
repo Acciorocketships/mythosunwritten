@@ -29,8 +29,8 @@ var water_surface_y: float = WATER_SURFACE_Y
 # wave_height/wave_speed uniform defaults in water_unified.gdshader (the noise
 # drift term is omitted — the travelling sines carry most of the swell).
 # Mirrors water_unified.gdshader's wave_height / wave_speed — keep in sync.
-const SWELL_HEIGHT: float = 0.85
-const SWELL_SPEED: float = 0.35
+const SWELL_HEIGHT: float = 1.15
+const SWELL_SPEED: float = 0.26
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
 @export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy

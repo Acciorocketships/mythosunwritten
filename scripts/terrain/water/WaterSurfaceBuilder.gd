@@ -317,7 +317,12 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 			var nb: Vector2i = cell + d
 			if not field.has(nb) or not field[nb].wet:
 				field[cell].flow *= 0.5
-				field[cell].shore = maxf(field[cell].shore, 0.6)
+				# 0.4 sits BELOW the shader's swell-fade start: merely
+				# touching a rim no longer flattens the whole cell (wide
+				# flood flats were mirror-still — owner: "swells still
+				# tiny"); the waterline band and corner shores still kill
+				# the swell right AT the line.
+				field[cell].shore = maxf(field[cell].shore, 0.4)
 				break
 		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var nb: Vector2i = cell + d
