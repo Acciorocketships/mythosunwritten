@@ -160,5 +160,10 @@
   "name": "REVIEW 6: X-junction - plateau corners meet diagonally, no bridging inner pieces",
   "pos": [10.6, 22.0, -1039.1],
   "look": [14.0, -1046.0]
+ },
+ {
+  "name": "REVIEW 7: no hairline ground gaps beside inner corner pieces",
+  "pos": [-27.0, 22.0, -1003.5],
+  "look": [-34.5, -997.5]
  }
 ]
