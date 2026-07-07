@@ -385,6 +385,7 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i, region) -> Array
 	var out: Array[Dictionary] = []
 	var lo_cx: int = chunk.x * CELLS_PER_CHUNK
 	var lo_cz: int = chunk.y * CELLS_PER_CHUNK
+	var keys: Dictionary = {}   # [cell, d] -> true, for side-continuation checks
 	for cell: Vector2i in field:
 		if not field[cell].wet:
 			continue
@@ -411,18 +412,45 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i, region) -> Array
 					continue
 				kind = "dry"
 				bottom = g - 0.5
+			keys[[cell, d]] = true
 			out.append({
+				"cell": cell,
 				"mid": Vector2((float(cell.x) + float(d.x) * 0.5) * TILE,
 						(float(cell.y) + float(d.y) * 0.5) * TILE),
 				"tangent": Vector2(float(d.x), float(d.y)),
-				# A hair wider than the cell: perpendicular slabs at an
-				# L-corner OVERLAP instead of butt-jointing with a notch
-				# (owner: "waterfalls not smoothly connected at corners").
-				"half_width": TILE * 0.5 + 0.7,
+				"half_width": TILE * 0.5,
 				"top": lvl,
 				"bottom": bottom,
 				"kind": kind,
 			})
+	# Per-side extents: where the crest line CONTINUES sideways (a parallel
+	# curtain in the neighbouring cell) or turns an L-CORNER (this same cell
+	# also drops perpendicular), the slab BODY reaches past the cell edge so
+	# the leaning front sheets overlap (a butt joint left a V-notch at
+	# corners); everywhere else the slab tucks slightly INSIDE, so fall ends
+	# die into their banks instead of jutting a square shoulder into the air.
+	# The crest cap itself stays tight either way (_ribbon_mesh clamps the
+	# first rows) — wide caps folded visibly over each other at corners.
+	for r in out:
+		var d: Vector2i = Vector2i(int(r.tangent.x), int(r.tangent.y))
+		var p: Vector2i = Vector2i(-d.y, d.x)   # +across side in _row_edge terms
+		var ext: Array = []
+		var corner: Array = []
+		for side: Vector2i in [p, -p]:
+			# L-corner: this same cell ALSO falls sideways — the two fronts
+			# lean apart in their own downstream directions, so the overlap
+			# must GROW with the forward reach (handled per-row in
+			# _row_edge via the corner flag); a fixed overlap only sealed
+			# the top of the V-notch.
+			corner.append(keys.has([r.cell, side]))
+			if keys.has([r.cell + side, d]) or keys.has([r.cell, side]):
+				ext.append(TILE * 0.5 + 0.7)
+			else:
+				ext.append(TILE * 0.5 - 0.25)
+		r["ext_hi"] = ext[0]
+		r["ext_lo"] = ext[1]
+		r["corner_hi"] = corner[0]
+		r["corner_lo"] = corner[1]
 	return out
 
 
@@ -513,26 +541,49 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 	var rows: Dictionary = fall_rows(r)
 	var front: Array = rows.front
 	var back: Array = rows.back
-	var across: Vector2 = Vector2(-r.tangent.y, r.tangent.x) * r.half_width
-	_layer_strip(st, front, across, false)
-	_layer_strip(st, back, across, true)
+	var across_u: Vector2 = Vector2(-r.tangent.y, r.tangent.x)
+	var prm: Dictionary = {
+		"mid": r.mid, "tangent": r.tangent,
+		"ext_hi": r.get("ext_hi", r.half_width),
+		"ext_lo": r.get("ext_lo", r.half_width),
+		"corner_hi": r.get("corner_hi", false),
+		"corner_lo": r.get("corner_lo", false),
+	}
+	_layer_strip(st, front, across_u, prm, false)
+	_layer_strip(st, back, across_u, prm, true)
 	for s in [-1.0, 1.0]:
 		for i in front.size() - 1:
 			_slab_quad(st,
-				[_row_edge(front[i], across, s), _row_edge(front[i + 1], across, s),
-					_row_edge(back[i + 1], across, s), _row_edge(back[i], across, s)],
+				[_row_edge(front[i], across_u, s, prm),
+					_row_edge(front[i + 1], across_u, s, prm),
+					_row_edge(back[i + 1], across_u, s, prm),
+					_row_edge(back[i], across_u, s, prm)],
 				[front[i][3], front[i + 1][3], back[i + 1][3], back[i][3]])
 	# Lip cap: closes the slab's top edge — the water rolling over the crest.
 	_slab_quad(st,
-		[_row_edge(front[0], across, -1.0), _row_edge(front[0], across, 1.0),
-			_row_edge(back[0], across, 1.0), _row_edge(back[0], across, -1.0)],
+		[_row_edge(front[0], across_u, -1.0, prm),
+			_row_edge(front[0], across_u, 1.0, prm),
+			_row_edge(back[0], across_u, 1.0, prm),
+			_row_edge(back[0], across_u, -1.0, prm)],
 		[0.0, 0.0, 0.0, 0.0])
 
 
 ## One row edge position: row = [centre: Vector2, y, width_scale, uv_y],
-## s = -1 (left) or +1 (right) across the flow.
-static func _row_edge(row: Array, across: Vector2, s: float) -> Vector3:
-	return Vector3(row[0].x + across.x * row[2] * s, row[1], row[0].y + across.y * row[2] * s)
+## s = -1 (left) or +1 (right) across the flow, with per-side extents. The
+## crest rows (uv < 0.06 — the overlap row, the lip and its cap) always stay
+## TIGHT to the cell edge: extended caps folded visibly over the neighbouring
+## slab at corners. On L-CORNER sides the body's extension GROWS with the
+## row's forward offset (the neighbouring fall's front leans away by its own
+## reach — a fixed overlap only sealed the top of the V-notch).
+static func _row_edge(row: Array, across_u: Vector2, s: float, prm: Dictionary) -> Vector3:
+	var ext: float = prm.ext_hi if s > 0.0 else prm.ext_lo
+	if row[3] < 0.06:
+		ext = minf(ext, TILE * 0.5 + 0.05)
+	elif (prm.corner_hi if s > 0.0 else prm.corner_lo):
+		var along: float = (row[0] - prm.mid).dot(prm.tangent)
+		ext += clampf(along, 0.0, 6.0)
+	return Vector3(row[0].x + across_u.x * ext * row[2] * s, row[1],
+		row[0].y + across_u.y * ext * row[2] * s)
 
 
 ## One quad, vertices in walk order with per-vertex uv.y (uv.x from position).
@@ -545,12 +596,15 @@ static func _slab_quad(st: SurfaceTool, vs: Array, uv_y: Array) -> void:
 
 ## Quads between consecutive rows ([centre: Vector2, y, width_scale, uv_y]);
 ## `flip` reverses the winding so the back layer faces away from the slab.
-static func _layer_strip(st: SurfaceTool, rows: Array, across: Vector2, flip: bool) -> void:
+static func _layer_strip(st: SurfaceTool, rows: Array, across_u: Vector2,
+		prm: Dictionary, flip: bool) -> void:
 	for i in rows.size() - 1:
 		var a: Array = rows[i]
 		var b: Array = rows[i + 1]
-		var vs: Array = [_row_edge(a, across, -1.0), _row_edge(a, across, 1.0),
-			_row_edge(b, across, 1.0), _row_edge(b, across, -1.0)]
+		var vs: Array = [_row_edge(a, across_u, -1.0, prm),
+			_row_edge(a, across_u, 1.0, prm),
+			_row_edge(b, across_u, 1.0, prm),
+			_row_edge(b, across_u, -1.0, prm)]
 		var uv_y: Array = [a[3], a[3], b[3], b[3]]
 		if flip:
 			vs = [vs[0], vs[3], vs[2], vs[1]]

@@ -35,7 +35,9 @@ uniform float wave_speed : hint_range(0.0, 4.0) = 0.35;
 uniform float flow_speed : hint_range(0.0, 12.0) = 1.6;    // metres/second scroll
 uniform float rapids_boost : hint_range(0.0, 4.0) = 1.2;   // extra scroll at steep_v=1
 uniform float chop_height : hint_range(0.0, 0.6) = 0.25;   // travelling crest amplitude
-uniform float roughness : hint_range(0.0, 1.0) = 0.02;
+// Not mirror-tight: 0.02 focused the sun into a huge white glare blob on
+// the swells (owner's screenshots all carry it).
+uniform float roughness : hint_range(0.0, 1.0) = 0.07;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
@@ -151,5 +153,5 @@ void fragment() {
 	// keeps the material in the transparent pass (screen texture needs it).
 	ALPHA = 1.0;
 	ROUGHNESS = mix(roughness, 0.5, foam);
-	SPECULAR = mix(0.7, 1.0, fres);
+	SPECULAR = mix(0.5, 0.85, fres);
 }

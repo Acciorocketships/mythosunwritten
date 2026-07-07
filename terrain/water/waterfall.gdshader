@@ -26,7 +26,9 @@ void fragment() {
 			UV.y * 0.6 - TIME * fall_speed * 0.25 + col)).r;
 	float band = smoothstep(0.35, 0.75, fall);
 	// Crest curls over white; the plunge whitens into the mist.
-	float ends = max(smoothstep(0.25, 0.0, UV.y), smoothstep(0.7, 1.0, UV.y));
+	// Crest whitening kept SOFT: at grazing angles the bright cap reads as a
+	// floating white hairline across the water behind it.
+	float ends = max(0.6 * smoothstep(0.22, 0.0, UV.y), smoothstep(0.7, 1.0, UV.y));
 	// Foam floor kept high: several translucent layers stack when looking
 	// through the slab (front + back + side walls) and a dark base colour
 	// compounds into a murky wedge at grazing side views.
