@@ -23,6 +23,13 @@ const WATER_LAYER_MASK: int = 1 << 7
 # (the old flat-sheet water). Field-terrain volumes always set the meta.
 const WATER_SURFACE_Y: float = -1.5
 var water_surface_y: float = WATER_SURFACE_Y
+# CPU mirror of the water shader's swell so the floating body RIDES the waves
+# (buoyancy tracks the displaced surface — rocking, like a boat). Keep in sync
+# with water_wave_h in terrain/water/water_common.gdshaderinc and the
+# wave_height/wave_speed uniform defaults in water_unified.gdshader (the noise
+# drift term is omitted — the travelling sines carry most of the swell).
+const SWELL_HEIGHT: float = 0.28
+const SWELL_SPEED: float = 0.8
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
 @export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
@@ -185,7 +192,18 @@ func _update_in_water() -> void:
 			var collider: Object = h.get("collider")
 			if collider != null and collider.has_meta("surface_y"):
 				best = maxf(best, float(collider.get_meta("surface_y")))
-		water_surface_y = best if best > -INF else WATER_SURFACE_Y
+		water_surface_y = (best if best > -INF else WATER_SURFACE_Y) + _swell_offset()
+
+
+# The water surface the buoyancy chases, displaced by the shader's travelling
+# swells at the character's position — floating bodies rock in the waves.
+func _swell_offset() -> float:
+	var p: Vector2 = Vector2(global_position.x, global_position.z)
+	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
+	var h: float = 0.9 * sin(p.dot(Vector2(0.100, 0.038)) - t * 1.25)
+	h += 0.6 * sin(p.dot(Vector2(-0.055, 0.088)) - t * 0.85 + 1.7)
+	h += 0.5 * sin(p.dot(Vector2(0.028, -0.074)) - t * 1.05 + 4.0)
+	return h * 0.55 * SWELL_HEIGHT
 
 
 func jump_animation(started_animation: bool):

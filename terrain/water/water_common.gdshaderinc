@@ -2,13 +2,17 @@
 // Water.gdshader so both surfaces keep one visual language: rolling world-
 // space waves, vertical-depth tinting, animated shore foam.
 
-// Long-wavelength swells: two crossing directional waves plus a broad noise
-// drift. Pure function of world position — seamless across chunk meshes.
+// Long-wavelength TRAVELLING swells: three directional waves with distinct
+// headings, wavelengths and speeds, plus a broad noise drift. Every term
+// MOVES across the surface — a standing sin·cos product pulses in place and
+// reads as frozen waves (owner: "completely static waves"). Pure function of
+// world position — seamless across chunk meshes.
 float water_wave_h(sampler2D noise_tex, vec2 p, float t) {
-	float h = sin(p.x * 0.11 + t * 0.9) * cos(p.y * 0.085 + t * 0.66);
-	h += 0.7 * sin(dot(p, vec2(0.071, 0.052)) - t * 1.05);
-	h += 1.0 * (textureLod(noise_tex, p * 0.0045 + vec2(t * 0.006, -t * 0.0045), 0.0).r - 0.5);
-	return h;
+	float h = 0.9 * sin(dot(p, vec2(0.100, 0.038)) - t * 1.25);
+	h += 0.6 * sin(dot(p, vec2(-0.055, 0.088)) - t * 0.85 + 1.7);
+	h += 0.5 * sin(dot(p, vec2(0.028, -0.074)) - t * 1.05 + 4.0);
+	h += 0.9 * (textureLod(noise_tex, p * 0.004 + vec2(t * 0.009, -t * 0.007), 0.0).r - 0.5);
+	return h * 0.55;
 }
 
 // Crest-sharpened wave trains advected downstream at `speed` (m/s): sharp
@@ -35,10 +39,14 @@ float water_depth_world(sampler2D depth_tex, vec2 screen_uv, mat4 inv_projection
 	return max(surface_world_y - scene_world.y, 0.0);
 }
 
-// Animated lapping shore-foam mask from vertical depth.
-float water_foam_mask(sampler2D noise_tex, vec2 world_xz, float t, float depth, float foam_width) {
-	float foam_noise = texture(noise_tex, world_xz * 0.11 + vec2(t * 0.03, -t * 0.022)).r;
-	float foam_edge = foam_width * (0.5 + 0.7 * foam_noise);
-	float mask = 1.0 - smoothstep(foam_edge * 0.55, foam_edge, depth);
-	return mask * (0.8 + 0.2 * sin(t * 1.9 + foam_noise * 6.0));
+// Foam lap line at the SHORELINE: a noise-broken band keyed on the baked
+// shore proximity (CUSTOM0.y) and pinched by vertical depth so the line hugs
+// the true waterline. Depth alone is NOT the trigger — shallow mid-pond
+// shelves read depth≈0 everywhere and used to flash as drifting white clouds
+// (owner: "weird white stuff that randomly appears").
+float water_foam_mask(sampler2D noise_tex, vec2 world_xz, float t, float depth, float shore, float foam_width) {
+	float breaks = texture(noise_tex, world_xz * 0.06 + vec2(t * 0.02, -t * 0.016)).r;
+	float lap = 1.0 - smoothstep(foam_width * 0.4, foam_width * (0.7 + 0.6 * breaks), depth);
+	float gate = smoothstep(0.12, 0.55, shore);
+	return lap * gate * (0.75 + 0.25 * sin(t * 1.6 + breaks * 6.283));
 }
