@@ -28,8 +28,8 @@ var water_surface_y: float = WATER_SURFACE_Y
 # with water_wave_h in terrain/water/water_common.gdshaderinc and the
 # wave_height/wave_speed uniform defaults in water_unified.gdshader (the noise
 # drift term is omitted — the travelling sines carry most of the swell).
-const SWELL_HEIGHT: float = 0.28
-const SWELL_SPEED: float = 0.8
+const SWELL_HEIGHT: float = 0.35
+const SWELL_SPEED: float = 0.6
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
 @export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
@@ -200,10 +200,10 @@ func _update_in_water() -> void:
 func _swell_offset() -> float:
 	var p: Vector2 = Vector2(global_position.x, global_position.z)
 	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
-	var h: float = 0.9 * sin(p.dot(Vector2(0.100, 0.038)) - t * 1.25)
-	h += 0.6 * sin(p.dot(Vector2(-0.055, 0.088)) - t * 0.85 + 1.7)
-	h += 0.5 * sin(p.dot(Vector2(0.028, -0.074)) - t * 1.05 + 4.0)
-	return h * 0.55 * SWELL_HEIGHT
+	var h: float = 1.0 * sin(p.dot(Vector2(0.055, 0.021)) - t * 0.33)
+	h += 0.7 * sin(p.dot(Vector2(-0.030, 0.048)) - t * 0.26 + 1.7)
+	h += 0.35 * sin(p.dot(Vector2(0.045, -0.123)) - t * 0.49 + 4.0)
+	return h * 0.5 * SWELL_HEIGHT
 
 
 func jump_animation(started_animation: bool):
