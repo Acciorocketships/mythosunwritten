@@ -104,6 +104,39 @@ func test_pond_level_at_or_below_ring_minimum() -> void:
 	assert_true(float(pond.level) * 4.0 <= maxf(min_h, 4.0) + 0.0001,
 		"pond bank storey never exceeds the footprint∪ring minimum (or the storey-1 floor)")
 
+func test_channel_water_is_contained_by_both_banks() -> void:
+	# Owner: "cut deep enough such that after we convert the heightmap to
+	# tiles, there is a channel for the water that is bounded on both sides."
+	# CONTAIN_DROP caps every bed a full storey below the lowest flanking
+	# bank's natural storey, so the water surface always sits well under both
+	# bank tops — never a sheet hanging off a hillside or cliff lip. Skips
+	# pond-backwater samples (the pond's own ring-minimum rule bounds those)
+	# and world-floor banks (BED_MIN forbids cutting deeper in lowlands).
+	var plan: WaterPlan = _plan()
+	var checked: int = 0
+	for sz in range(-3, 4):
+		for sx in range(-3, 4):
+			var t: RiverTrace = plan.river_for(Vector2i(sx, sz), 0)
+			if t == null:
+				continue
+			var prof: PackedFloat32Array = WaterSurfaceBuilder.surface_profile(t)
+			for i in range(1, t.points.size()):
+				if t.pond != null and prof[i] <= t.pond.surface_y() + 0.001:
+					continue   # backwater — pond level, pond containment rules
+				var dir: Vector2 = (t.points[i] - t.points[i - 1]).normalized()
+				var n: Vector2 = Vector2(-dir.y, dir.x)
+				var d0: float = t.widths[i] + WaterPlan.FEATHER + WaterPlan.TILE * 0.5
+				var bank: float = INF
+				for off in [n * d0, -n * d0, n * (d0 + WaterPlan.TILE), -n * (d0 + WaterPlan.TILE)]:
+					bank = minf(bank, roundf(plan.noise_h(t.points[i] + off) / 4.0) * 4.0)
+				if bank <= 0.0:
+					continue   # storey-0 world floor — containment impossible
+				checked += 1
+				assert_true(prof[i] <= bank - 2.5,
+					"river %s sample %d: surface %.1f under bank %.1f" % [
+						t.source_cell, i, prof[i], bank])
+	assert_true(checked > 0, "window has contained channel samples to check")
+
 func test_trace_locks_to_the_fall_line_on_steep_ground() -> void:
 	# Owner regression: free meander on steep hillsides let the trace contour
 	# ACROSS the slope, leaving the downhill bank below the water level —

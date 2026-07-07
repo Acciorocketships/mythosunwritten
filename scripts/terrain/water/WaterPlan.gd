@@ -63,6 +63,15 @@ const W_MAX := 16.0               # ... at max length
 # slack (±2m), or the channel vanishes in storey rounding: floor and banks
 # land on the same storey and the ribbon reads as water lying on flat grass.
 const CHANNEL_DEPTH := 6.0
+# CONTAINMENT: the bed must also quantize a full storey below the LOWEST
+# flanking bank's natural storey — smooth-relative depth alone is not enough
+# on slopes and at cliff lips, where the downhill bank quantizes level with
+# (or below) the floor and the water has no wall on that side: sheets hanging
+# off hillsides (owner: "a plane of water hanging off the side of a cliff…
+# cut deep enough that there is a channel bounded on both sides"). 4.5 =
+# one storey + rounding margin: floor storey lands ≥ 1 below both banks and
+# the surface (floor + 0.8, bed + 1.5) stays ≥ ~3m under the bank tops.
+const CONTAIN_DROP := 4.5
 # Beds never sink below this: quantize_storey clamps terrain to storey >= 0,
 # so a deeper bed would put the water surface underneath the rendered floor.
 const BED_MIN := -1.0
@@ -293,7 +302,7 @@ func _trace(sc: Vector2i, depth: int) -> RiverTrace:
 	var g0: Vector2 = grad(p)
 	if g0.length() > 0.000001:
 		dir = (-g0).normalized()
-	var bed: float = smooth_h(p) - CHANNEL_DEPTH
+	var bed: float = _contained_bed(INF, p, dir, W_MIN)
 	var arc: float = 0.0
 	for i in MAX_STEPS:
 		t.points.append(p)
@@ -329,9 +338,24 @@ func _trace(sc: Vector2i, depth: int) -> RiverTrace:
 			break                                   # truncate at the spawn ring
 		p = q
 		arc += TRACE_STEP
-		bed = maxf(minf(bed, smooth_h(p) - CHANNEL_DEPTH), BED_MIN)
+		bed = _contained_bed(bed, p, dir, lerpf(W_MIN, W_MAX, arc / (MAX_STEPS * TRACE_STEP)))
 	t.pond = _make_pond(p, arc)
 	return t
+
+
+## Bed candidate at p: CHANNEL_DEPTH under the smooth field, ALSO capped a
+## full storey below the lowest flanking bank (CONTAIN_DROP — the channel
+## must survive storey quantization bounded by ground on both sides),
+## monotone via prev, floored at BED_MIN. Banks are the natural pre-carve
+## field just past the carve feather on each side of the flow, sampled at two
+## rings so a cell-centre never slips between the probes.
+func _contained_bed(prev_bed: float, p: Vector2, dir: Vector2, half_w: float) -> float:
+	var n: Vector2 = Vector2(-dir.y, dir.x)
+	var d0: float = half_w + FEATHER + TILE * 0.5
+	var bank: float = INF
+	for off in [n * d0, -n * d0, n * (d0 + TILE), -n * (d0 + TILE)]:
+		bank = minf(bank, roundf(noise_h(p + off) / STOREY) * STOREY)
+	return maxf(minf(minf(prev_bed, smooth_h(p) - CHANNEL_DEPTH), bank - CONTAIN_DROP), BED_MIN)
 
 
 ## Higher-priority rivers within junction reach of sc's river, each resolved
