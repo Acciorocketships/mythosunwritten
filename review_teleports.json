@@ -155,5 +155,10 @@
   "name": "REVIEW 5: glow orbs soft + persistent, no 2d squares (deep forest)",
   "pos": [690.3, 6.0, -981.4],
   "look": [676.0, -975.0]
+ },
+ {
+  "name": "REVIEW 6: X-junction - plateau corners meet diagonally, no bridging inner pieces",
+  "pos": [10.6, 22.0, -1039.1],
+  "look": [14.0, -1046.0]
  }
 ]
