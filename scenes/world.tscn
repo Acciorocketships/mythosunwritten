@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://ceognrw5418ks"]
+[gd_scene load_steps=13 format=3 uid="uid://ceognrw5418ks"]
 
 [ext_resource type="Script" uid="uid://dyg0hh4n6mt05" path="res://scripts/camera/camera.gd" id="1_4wyf3"]
 [ext_resource type="PackedScene" uid="uid://1isaxxqlfqe8" path="res://characters/character.tscn" id="1_nnsk1"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://dys71w0rl7skp" path="res://scripts/terrain/field/FieldTerrainStreamer.gd" id="10_field"]
 [ext_resource type="Script" path="res://scripts/terrain/tools/CoordOverlay.gd" id="20_overlay"]
 [ext_resource type="Script" path="res://scripts/terrain/tools/ReviewTeleporter.gd" id="31_review"]
+[ext_resource type="Script" path="res://scripts/terrain/water/WaterRippleSim.gd" id="30_ripples"]
 [ext_resource type="Script" path="res://scripts/terrain/biome/AtmosphereDirector.gd" id="32_atmo"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_world"]
@@ -58,6 +59,10 @@ terrain_parent = NodePath(".")
 
 [node name="ReviewTeleporter" type="CanvasLayer" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("31_review")
+player = NodePath("../Characters/Character")
+
+[node name="WaterRipples" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("30_ripples")
 player = NodePath("../Characters/Character")
 
 [node name="AtmosphereDirector" type="Node" parent="." node_paths=PackedStringArray("environment_node", "sun", "camera", "streamer", "player")]

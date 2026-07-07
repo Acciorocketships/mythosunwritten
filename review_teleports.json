@@ -1,169 +1,182 @@
 [
  {
   "look": [
-   40.5167503356934,
-   -1037.79296875
+   48.0,
+   -1083.0
   ],
-  "name": "WATER 0: mountain-top source pool",
+  "name": "WATER v2: contained cascade slab (thick fall, C1 exit)",
   "pos": [
-   29.3165073394775,
-   28.687201911293258,
-   -999.39306640625
+   34.0,
+   16.0,
+   -1076.0
   ]
  },
  {
   "look": [
-   -15.4974699020386,
-   -1144.07800292969
+   120.0,
+   -1218.0
   ],
-  "name": "WATER 0: mid-river reach",
+  "name": "WATER v2: meadow reach - reference look, smooth swells",
   "pos": [
-   6.89744186401367,
-   27.0,
-   -1148.62084960938
+   109.0,
+   8.0,
+   -1212.0
   ]
  },
  {
   "look": [
-   60.9221153259277,
-   -1118.2607421875
+   -95.0,
+   -1010.0
   ],
-  "name": "WATER 0: steepest reach (steep=1.00)",
+  "name": "WATER v2: channel descent - bounded both sides",
   "pos": [
-   79.732307434082,
-   41.5091108135898,
-   -1094.29248046875
+   -91.0,
+   26.0,
+   -1000.0
   ]
  },
  {
   "look": [
-   -84.1108245849609,
-   -1047.74584960938
+   110.0,
+   -1215.0
   ],
-  "name": "WATER 1: mountain-top source pool",
+  "name": "WATER v2: swim here - entry splash + wake ripples",
   "pos": [
-   -68.294792175293,
-   27.0,
-   -1084.48620605469
+   88.0,
+   8.0,
+   -1213.0
   ]
  },
  {
   "look": [
-   22.0754547119141,
-   -903.611389160156
+   -541.5,
+   -467.0
   ],
-  "name": "WATER 1: mid-river reach",
-  "pos": [
-   27.6317119598389,
-   46.2225766937539,
-   -865.10546875
-  ]
- },
- {
-  "look": [
-   -112.316101074219,
-   -982.225524902344
-  ],
-  "name": "WATER 1: steepest reach (steep=1.00)",
-  "pos": [
-   -79.9793090820312,
-   27.0,
-   -1002.81195068359
-  ]
- },
- {
-  "look": [
-   331.224731445312,
-   -740.631958007812
-  ],
-  "name": "WATER 1: terminal pond",
-  "pos": [
-   460.58837890625,
-   31.0881059710164,
-   -740.631958007812
-  ]
- },
- {
   "name": "FIX 1: EAST flush-step \u2014 pieces swapped, corner at the very end into the wall",
   "pos": [
    -543.8,
    6.0,
    -470.1
-  ],
-  "look": [
-   -541.5,
-   -467.0
   ]
  },
  {
+  "look": [
+   -541.5,
+   -467.0
+  ],
   "name": "FIX 1 from over the water",
   "pos": [
    -534.5,
    7.0,
    -464.0
-  ],
-  "look": [
-   -541.5,
-   -467.0
   ]
  },
  {
+  "look": [
+   -562.8,
+   -468.8
+  ],
   "name": "FIX 2: WEST pocket \u2014 corner piece at the lower right, wrapping into the tall wall",
   "pos": [
    -571.0,
    6.5,
    -471.5
-  ],
-  "look": [
-   -562.8,
-   -468.8
   ]
  },
  {
+  "look": [
+   -563.5,
+   -467.5
+  ],
   "name": "FIX 2 from the water side",
   "pos": [
    -573.0,
    6.0,
    -462.0
-  ],
-  "look": [
-   -563.5,
-   -467.5
   ]
  },
  {
+  "look": [
+   100.0,
+   -1090.0
+  ],
   "name": "REVIEW 1: lip junction into taller cliff (corner cap + no spurious inner)",
-  "pos": [87.1, 18.0, -1094.4],
-  "look": [100.0, -1090.0]
+  "pos": [
+   87.1,
+   18.0,
+   -1094.4
+  ]
  },
  {
+  "look": [
+   -40.0,
+   -800.0
+  ],
   "name": "REVIEW 2: marsh colour seams - lip/apron/ground must match",
-  "pos": [-24.0, 27.0, -792.0],
-  "look": [-40.0, -800.0]
+  "pos": [
+   -24.0,
+   27.0,
+   -792.0
+  ]
  },
  {
+  "look": [
+   -95.0,
+   -985.0
+  ],
   "name": "REVIEW 3: floating water + streak texture (steep reach)",
-  "pos": [-79.5, 14.0, -997.7],
-  "look": [-95.0, -985.0]
+  "pos": [
+   -79.5,
+   14.0,
+   -997.7
+  ]
  },
  {
+  "look": [
+   -30.0,
+   -1052.0
+  ],
   "name": "REVIEW 4: floating pond sheet over terrace / waterfall site",
-  "pos": [-17.7, 22.0, -1041.5],
-  "look": [-30.0, -1052.0]
+  "pos": [
+   -17.7,
+   22.0,
+   -1041.5
+  ]
  },
  {
+  "look": [
+   676.0,
+   -975.0
+  ],
   "name": "REVIEW 5: glow orbs soft + persistent, no 2d squares (deep forest)",
-  "pos": [690.3, 6.0, -981.4],
-  "look": [676.0, -975.0]
+  "pos": [
+   690.3,
+   6.0,
+   -981.4
+  ]
  },
  {
+  "look": [
+   14.0,
+   -1046.0
+  ],
   "name": "REVIEW 6: X-junction - plateau corners meet diagonally, no bridging inner pieces",
-  "pos": [10.6, 22.0, -1039.1],
-  "look": [14.0, -1046.0]
+  "pos": [
+   10.6,
+   22.0,
+   -1039.1
+  ]
  },
  {
+  "look": [
+   -34.5,
+   -997.5
+  ],
   "name": "REVIEW 7: no hairline ground gaps beside inner corner pieces",
-  "pos": [-27.0, 22.0, -1003.5],
-  "look": [-34.5, -997.5]
+  "pos": [
+   -27.0,
+   22.0,
+   -1003.5
+  ]
  }
 ]

@@ -123,17 +123,24 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
 - **`terrain/tools/SlopeProfile.gd` / `SlopeAtlas.gd`** — the `smootherstep` slope profile math
   and grass/rock UV sampling from KayKit pieces, shared by the field and mesher.
 - **Water** (`scripts/terrain/water/`): a deterministic **river network carved into the
-  heightfield** — `WaterPlan` (sources on a super-grid, downhill traces, terminal
-  `PondStamp` bowls; carve applied inside `HeightfieldPlan.raw_height`), and
-  `WaterSurfaceBuilder`, which builds one per-chunk sheet from a per-cell water field.
-  The field reasons about the **rendered region** (clamped storeys), never raw-noise
-  estimates; a cell is wet only if carved or inside the channel width. Where adjacent wet
-  cells' levels differ by more than `BRIDGE_MAX` the sheet splits and a **waterfall
-  curtain** (`compute_ribbons`, `terrain/water/waterfall.gdshader`) fills exactly that
-  gap. `water_unified.gdshader` renders still + flowing water (moving swells; foam only
-  at shores and waterfall-steep reaches). Swim volumes ride along as `Area3D`s.
-  `tests/tools/water_review_spots.gd` emits F4 review teleports
-  (`ReviewTeleporter.gd` reads `review_teleports.json`).
+  heightfield** — `WaterPlan` (sources on a super-grid, downhill traces locked to the fall
+  line on steep ground, terminal `PondStamp` bowls; carve applied inside
+  `HeightfieldPlan.raw_height`). Beds obey **containment** (`CONTAIN_DROP`): every bed is
+  capped a full storey below the lowest flanking bank's natural storey, so channels always
+  quantize bounded by ground on both sides — never a sheet hanging off a hillside.
+  `WaterSurfaceBuilder` builds one per-chunk sheet from a per-cell water field that
+  reasons about the **rendered region** (clamped storeys), never raw-noise estimates; a
+  cell is wet only if carved or inside the channel width, and pond levels apply only where
+  the rendered floor supports them. Where adjacent wet cells' levels differ by more than
+  `BRIDGE_MAX` the sheet splits and a **waterfall slab** (`compute_ribbons` +
+  `_ribbon_mesh`: front/back parabola sheets that exit the lip horizontally, side walls,
+  splash apron past UV.y = 1; `terrain/water/waterfall.gdshader`) fills exactly that gap.
+  `water_unified.gdshader` renders still + flowing water: a SMOOTH surface (no noise
+  dapple) moved by travelling swells (CPU-mirrored in `character.gd::_swell_offset` for
+  buoyancy rocking) plus `WaterRippleSim` (SubViewport wave sim: swim wakes, entry
+  splashes, ambient raindrop rings); foam only at shores and waterfall-steep reaches.
+  Swim volumes ride along as `Area3D`s. `tests/tools/water_review_spots.gd` emits F4
+  review teleports (`ReviewTeleporter.gd` reads `review_teleports.json`).
 - **One tint field**: every terrain surface — walkable sheet, aprons, rock skirt, and all
   KayKit dressing pieces (per-instance colours) — multiplies THE shared material by
   `BiomeRegistry.blended_ground_tint` sampled at its own position. Change the palette or
