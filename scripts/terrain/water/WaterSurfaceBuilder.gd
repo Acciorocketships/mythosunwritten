@@ -137,11 +137,18 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 			var in_channel := false
 			# Inside a pond footprint the POND owns the water level: a river's
 			# higher upstream profile leaking in via nearest-sample lookup
-			# painted raised rectangular sheets hovering over lakes.
+			# painted raised rectangular sheets hovering over lakes. But only
+			# where the REAL rendered floor supports it — the trickle-down
+			# clamp can sink bowl cells at cliff staircases storeys below the
+			# stamp, and an unchecked pond level there hangs the sheet in
+			# mid-air (healthy bowls sit exactly 3.0m over their quantized
+			# floor, within SHELF_DEPTH).
 			var pond_level: float = -INF
 			for pond in bodies.ponds:
 				if pond.footprint_t(p) < 1.0:
 					pond_level = maxf(pond_level, pond.surface_y())
+			if pond_level - real > SHELF_DEPTH:
+				pond_level = -INF
 			level = pond_level
 			for r in bodies.rivers.size():
 				var river: RiverTrace = bodies.rivers[r]
@@ -381,61 +388,99 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i) -> Array[Diction
 	return out
 
 
-const FALL_ROWS := 8             # vertical segments of the curtain arc
-# Horizontal throw of the arc as a fraction of the drop, clamped. Crest water
-# leaves the lip moving downstream, so the curtain bulges outward near the
-# top and falls near-vertically at the plunge — projectile shape, horizontal
-# offset ∝ sqrt(fall fraction) (owner: "it should follow an arc").
+const FALL_ROWS := 8             # arc segments of the curtain
+# Horizontal throw of the arc as a fraction of the drop, clamped. The curtain
+# is a PROJECTILE parabola parametrized by flight time t: offset grows
+# linearly, fall quadratically — the water exits the lip travelling
+# HORIZONTALLY, tangent-continuous with the flat sheet above, then bends into
+# the drop (owner: "the water should exit the top travelling horizontally,
+# then curve down").
 const FALL_REACH := 0.35
 const FALL_REACH_MIN := 1.5
 const FALL_REACH_MAX := 6.0
 const SPLASH_LEN := 4.2          # downstream length of the plunge foam apron
 
 
-## One waterfall: an ARCED curtain across the channel from just above the
-## upper surface to just under the lower one, plus a churning foam apron
-## riding the lower surface where the fall lands (owner: "at the bottom it
-## should make splash/foam"). UV.y runs 0 (crest) to 1 (plunge); the apron
-## continues past 1 so the shader renders splash churn that dissolves
-## downstream. Double-sided like the rock skirts.
+## One waterfall: a THICK slab of falling water across the channel — a front
+## parabola sheet, a back sheet offset along the curve normal, side walls and
+## a rolled-over lip cap, so the fall reads as a volume of water, not a
+## curved plane (owner: "they need some depth") — plus a churning foam apron
+## riding the lower surface where the fall lands. UV.y runs 0 (crest) to 1
+## (plunge); the apron continues past 1 so the shader renders splash churn
+## that dissolves downstream. cull_disabled renders interiors when swimming.
 static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 	var mid: Vector2 = r.mid
 	var tangent: Vector2 = r.tangent
 	var top: float = r.top + 0.15
 	var bottom: float = r.bottom - 0.6
-	var reach: float = clampf((top - bottom) * FALL_REACH, FALL_REACH_MIN, FALL_REACH_MAX)
+	var h: float = top - bottom
+	var reach: float = clampf(h * FALL_REACH, FALL_REACH_MIN, FALL_REACH_MAX)
+	var thick: float = clampf(h * 0.10, 0.4, 1.2)
 	var across: Vector2 = Vector2(-tangent.y, tangent.x) * r.half_width
-	var rows: Array = []
+	var front: Array = []
+	var back: Array = []
 	for i in FALL_ROWS + 1:
-		var v: float = float(i) / float(FALL_ROWS)
-		rows.append([mid + tangent * (reach * sqrt(v)), lerpf(top, bottom, v), 1.0 + 0.18 * v, v])
-	_row_strip(st, rows, across)
+		var t: float = float(i) / float(FALL_ROWS)
+		# Curve point (offset reach·t, fall h·t²); its unit normal
+		# (2ht, reach)/L leans from straight-up at the crest to
+		# upstream-horizontal at the plunge — the back sheet hugs it.
+		var nrm: Vector2 = Vector2(2.0 * h * t, reach).normalized()
+		var wid: float = 1.0 + 0.18 * t
+		front.append([mid + tangent * (reach * t), top - h * t * t, wid, t])
+		back.append([mid + tangent * (reach * t - nrm.x * thick),
+			top - h * t * t - nrm.y * thick, wid, t])
+	_layer_strip(st, front, across, false)
+	_layer_strip(st, back, across, true)
+	for s in [-1.0, 1.0]:
+		for i in FALL_ROWS:
+			_slab_quad(st,
+				[_row_edge(front[i], across, s), _row_edge(front[i + 1], across, s),
+					_row_edge(back[i + 1], across, s), _row_edge(back[i], across, s)],
+				[front[i][3], front[i + 1][3], back[i + 1][3], back[i][3]])
+	# Lip cap: closes the slab's top edge — the water rolling over the crest.
+	_slab_quad(st,
+		[_row_edge(front[0], across, -1.0), _row_edge(front[0], across, 1.0),
+			_row_edge(back[0], across, 1.0), _row_edge(back[0], across, -1.0)],
+		[0.0, 0.0, 0.0, 0.0])
 	# Splash apron: its own strip just above the lower surface (the curtain's
 	# tail is submerged; the churn spreads downstream from the plunge point and
 	# widens as it dissolves). Sits a hair over the sheet so swells only bury
 	# it at crest peaks.
 	var surf: float = r.bottom + 0.72
-	_row_strip(st, [
+	_layer_strip(st, [
 		[mid + tangent * (reach - 0.4), surf + 0.04, 1.15, 1.02],
 		[mid + tangent * (reach + SPLASH_LEN * 0.45), surf + 0.02, 1.45, 1.15],
 		[mid + tangent * (reach + SPLASH_LEN), surf, 1.7, 1.3],
-	], across)
+	], across, false)
 
 
-## Quads between consecutive rows ([centre: Vector2, y, width_scale, uv_y]),
-## emitted with both windings (double-sided).
-static func _row_strip(st: SurfaceTool, rows: Array, across: Vector2) -> void:
+## One row edge position: row = [centre: Vector2, y, width_scale, uv_y],
+## s = -1 (left) or +1 (right) across the flow.
+static func _row_edge(row: Array, across: Vector2, s: float) -> Vector3:
+	return Vector3(row[0].x + across.x * row[2] * s, row[1], row[0].y + across.y * row[2] * s)
+
+
+## One quad, vertices in walk order with per-vertex uv.y (uv.x from position).
+static func _slab_quad(st: SurfaceTool, vs: Array, uv_y: Array) -> void:
+	var uv_x: Array = [0.0, 1.0, 1.0, 0.0]
+	for idx in [0, 1, 2, 0, 2, 3]:
+		st.set_uv(Vector2(uv_x[idx], uv_y[idx]))
+		st.add_vertex(vs[idx])
+
+
+## Quads between consecutive rows ([centre: Vector2, y, width_scale, uv_y]);
+## `flip` reverses the winding so the back layer faces away from the slab.
+static func _layer_strip(st: SurfaceTool, rows: Array, across: Vector2, flip: bool) -> void:
 	for i in rows.size() - 1:
 		var a: Array = rows[i]
 		var b: Array = rows[i + 1]
-		var a0 := Vector3(a[0].x - across.x * a[2], a[1], a[0].y - across.y * a[2])
-		var a1 := Vector3(a[0].x + across.x * a[2], a[1], a[0].y + across.y * a[2])
-		var b0 := Vector3(b[0].x - across.x * b[2], b[1], b[0].y - across.y * b[2])
-		var b1 := Vector3(b[0].x + across.x * b[2], b[1], b[0].y + across.y * b[2])
-		var quad: Array = [[a0, 0.0, a[3]], [a1, 1.0, a[3]], [b1, 1.0, b[3]], [b0, 0.0, b[3]]]
-		for idx in [0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]:
-			st.set_uv(Vector2(quad[idx][1], quad[idx][2]))
-			st.add_vertex(quad[idx][0])
+		var vs: Array = [_row_edge(a, across, -1.0), _row_edge(a, across, 1.0),
+			_row_edge(b, across, 1.0), _row_edge(b, across, -1.0)]
+		var uv_y: Array = [a[3], a[3], b[3], b[3]]
+		if flip:
+			vs = [vs[0], vs[3], vs[2], vs[1]]
+			uv_y = [uv_y[0], uv_y[3], uv_y[2], uv_y[1]]
+		_slab_quad(st, vs, uv_y)
 
 
 ## Build the water node for a chunk, or null when the chunk is dry. `region`

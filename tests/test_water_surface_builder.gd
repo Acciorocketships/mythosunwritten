@@ -277,27 +277,19 @@ func test_sheet_never_floats_over_the_rendered_terrain() -> void:
 	# Owner screenshots: sheets hovered over terraces at the cascades in these
 	# chunks — rim cells trusted a raw-noise ground estimate storeys above the
 	# CLAMPED terrain, and drop-lip cells took the upstream reach's level over
-	# a floor that had already fallen away. Every field cell (wet or rim) must
-	# hold its water within SHELF_DEPTH of the real rendered ground; only pond
-	# bowls (which carve their own depth) go deeper.
+	# a floor that had already fallen away. Every field cell (wet or rim) —
+	# POND CELLS INCLUDED (a healthy bowl floor quantizes exactly 3.0m under
+	# the surface; clamp-sunk bowl cells must drop out, not hover) — must hold
+	# its water within SHELF_DEPTH of the real rendered ground.
 	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
 	var wet_seen := 0
 	for chunk in [Vector2i(-1, -6), Vector2i(0, -6)]:
 		var region = _region(OWNER_SEED, chunk)
 		var field: Dictionary = WaterSurfaceBuilder.compute_field(water, chunk, region)
-		var bodies: Dictionary = water.bodies_near(Vector2i(chunk.x * 8 + 4, chunk.y * 8 + 4), 8)
 		for cell in field:
 			var e: Dictionary = field[cell]
 			if e.wet:
 				wet_seen += 1
-			var p := Vector2(float(cell.x) * 24.0, float(cell.y) * 24.0)
-			var in_pond := false
-			for pond in bodies.ponds:
-				if pond.footprint_t(p) < 1.1:
-					in_pond = true
-					break
-			if in_pond:
-				continue
 			var real: float = region.surface_height(cell.x, cell.y)
 			assert_true(e.level - real <= WaterSurfaceBuilder.SHELF_DEPTH + 0.01,
 				"%s cell %s floats %.1fm over the rendered terrain (level %.1f, real %.1f)" % [
@@ -326,12 +318,12 @@ func test_corner_dips_into_the_lip_at_drop_offs() -> void:
 	assert_almost_eq(WaterSurfaceBuilder._corner(k, 12.8, shore).y, 12.6 - 0.08, 0.001,
 		"shore corner sinks just under the lowest adjacent bank ground")
 
-func test_waterfall_curtain_arcs_and_carries_a_splash_apron() -> void:
-	# Owner: "waterfall currently goes down completely vertically… it should
-	# follow an arc… at the bottom it should make splash/foam." Curtain rows
-	# follow a projectile curve (horizontal offset = reach·sqrt(fall fraction))
-	# and a splash apron (UV.y > 1) rides just above the lower surface,
-	# spreading downstream from the plunge point.
+func test_waterfall_is_a_thick_horizontal_exit_parabola_with_splash() -> void:
+	# Owner round 2: "the water should exit the top travelling horizontally,
+	# then curve down" (C1 with the flat sheet) and "they need some depth" —
+	# the fall is a slab: front parabola x = reach·t, y = top − h·t², a back
+	# sheet offset along the curve normal, and a splash apron (UV.y > 1)
+	# riding just above the lower surface.
 	var st: SurfaceTool = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var r: Dictionary = {"mid": Vector2(0.0, 0.0), "tangent": Vector2(1.0, 0.0),
@@ -341,15 +333,47 @@ func test_waterfall_curtain_arcs_and_carries_a_splash_apron() -> void:
 	var mesh: ArrayMesh = st.commit()
 	var verts: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var uvs: PackedVector2Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
-	var reach: float = clampf((10.15 - 1.4) * WaterSurfaceBuilder.FALL_REACH,
+	var top: float = 10.0 + 0.15
+	var bottom: float = 2.0 - 0.6
+	var h: float = top - bottom
+	var reach: float = clampf(h * WaterSurfaceBuilder.FALL_REACH,
 		WaterSurfaceBuilder.FALL_REACH_MIN, WaterSurfaceBuilder.FALL_REACH_MAX)
+	var thick: float = clampf(h * 0.10, 0.4, 1.2)
+
+	# Front sheet ON the parabola: one vertex per row at (reach·t, top − h·t²).
+	var rows: int = WaterSurfaceBuilder.FALL_ROWS
+	for i in rows + 1:
+		var t: float = float(i) / float(rows)
+		var found: bool = false
+		for j in verts.size():
+			if absf(verts[j].x - reach * t) < 0.001 \
+					and absf(verts[j].y - (top - h * t * t)) < 0.001:
+				found = true
+				break
+		assert_true(found, "front row t=%.2f sits on the parabola" % t)
+	# HORIZONTAL exit: the first arc chord leaves the lip nearly flat (C1
+	# with the sheet above), far from the old 45°+ plunge.
+	var dx: float = reach / float(rows)
+	var dy: float = h / float(rows * rows)
+	assert_true(rad_to_deg(atan(dy / dx)) < 30.0,
+		"first chord leaves the lip near-horizontal (%.1f°)" % rad_to_deg(atan(dy / dx)))
+	# DEPTH: a back sheet hangs thick-below the crest and thick-behind the
+	# plunge (offset along the curve normal).
+	var crest_back: bool = false
+	var plunge_nrm: Vector2 = Vector2(2.0 * h, reach).normalized()
+	var plunge_back: bool = false
+	for j in verts.size():
+		if absf(verts[j].x) < 0.001 and absf(verts[j].y - (top - thick)) < 0.001:
+			crest_back = true
+		if absf(verts[j].x - (reach - plunge_nrm.x * thick)) < 0.001 \
+				and absf(verts[j].y - (bottom - plunge_nrm.y * thick)) < 0.001:
+			plunge_back = true
+	assert_true(crest_back, "back sheet gives the crest vertical thickness")
+	assert_true(plunge_back, "back sheet gives the plunge upstream thickness")
+	# Splash apron past uv.y = 1, above the lower surface, downstream.
 	var seen_apron: bool = false
 	for i in verts.size():
-		var v: float = uvs[i].y
-		if v <= 1.0:
-			assert_almost_eq(verts[i].x, reach * sqrt(v), 0.01,
-				"curtain vertex at uv.y=%.2f sits on the projectile arc" % v)
-		else:
+		if uvs[i].y > 1.0:
 			seen_apron = true
 			assert_true(verts[i].y >= 2.6,
 				"apron rides above the lower water surface (y=%.2f)" % verts[i].y)
