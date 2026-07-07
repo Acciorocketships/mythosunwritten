@@ -918,27 +918,28 @@ func test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls() 
 	assert_eq(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)), 2,
 		"carved pocket under a continuing taller wall: seam walls, no lip")
 
-## The same arms with the taller wall STOPPING at the corner (diagonal down in
-## the pocket basin): a true concave junction — the FULL corner piece joins the
-## two walls over the water (owner: "should be a corner tile").
-func test_carved_pocket_where_taller_wall_stops_gets_full_corner() -> void:
+## A TRUE concave junction keeps the full piece (round 10: "missing an inner
+## corner (lip + wall)"): unequal LAND arms whose diagonal is a flat top LEVEL
+## with the lower arm — the lower arm's walkable line continues across the
+## diagonal, and the piece rounds its wall into the taller arm's face. (Over
+## CARVED water the level-with-lower diagonal owns the corner instead —
+## pocket_cap; and a diagonal BELOW both arms is an open X-junction: no piece.)
+func test_land_pocket_with_level_diagonal_keeps_full_corner() -> void:
+	# Arms must be >=2-storey drops: on land a 1-storey drop renders as a
+	# walkable slope, not a flat cliff (is_higher_flat would fail).
 	var storeys: Dictionary = {}
 	for z in range(-2, 3):
 		for x in range(-2, 3):
 			storeys[Vector2i(x, z)] = 2
-	storeys[Vector2i(0, 0)] = 0        # carved water pocket
-	storeys[Vector2i(1, 0)] = 1        # lower arm (east)
-	storeys[Vector2i(1, -1)] = 1       # keep the lower arm a flat cliff top
-	storeys[Vector2i(0, 1)] = 2        # taller arm (south)
-	storeys[Vector2i(1, 1)] = 0        # diagonal in the basin: taller wall STOPS here
-	storeys[Vector2i(1, 2)] = 0
+	storeys[Vector2i(0, 0)] = 0        # land pocket (low cell)
+	storeys[Vector2i(0, 1)] = 3        # taller arm (south); east arm stays 2
 	var levels: Dictionary = {}
 	for cell in storeys:
 		levels[cell] = 0
-	var region: HeightfieldRegion = HeightfieldRegion.new(
-		storeys, levels, {Vector2i(0, 0): true})
+	var region: HeightfieldRegion = HeightfieldRegion.new(storeys, levels, {})
+	# diagonal (1,1) is the grid default 2 = LEVEL with the lower (east) arm.
 	assert_eq(CliffDressing._ghost_mode(region, 0, 0, Vector2i(1, 1)), 1,
-		"taller wall stops at the corner: the full piece rounds the true concave")
+		"diagonal level with the lower arm: the full piece rounds the true concave")
 
 ## The same junction WITHOUT the carve keeps the land behaviour (no doubled
 ## rows where run-merge geometry already rounds the seam).
@@ -1116,3 +1117,39 @@ func test_carved_run_end_into_taller_wall_gets_the_turned_cap() -> void:
 	var flags: Dictionary = CliffDressing.corner_flags(region, 1, 0)
 	assert_eq(str(flags.get(Vector2i(-1, 1), "")), "ext_outer",
 		"the run end into the taller wall carries the turned corner cap")
+
+## X-JUNCTION with UNEQUAL plateaus (owner, seed 2697992464 corner point
+## (12,-1044), cells 3/4/5/6): two plateaus of DIFFERENT storeys touch only at
+## the corner point, the diagonal ground lying BELOW both arms. Each plateau
+## wraps its own convex (outer) corner -- "there are currently inner corners on
+## the diagonals where there are no cliffs. those need to be removed". The old
+## guard only covered EQUAL arms; the rule is diag < min(arms) = open corner.
+## Fixture uses the REAL cell coordinates and probed storeys.
+func test_unequal_x_junction_emits_no_ghost_pieces() -> void:
+	var rows := [
+		[0, 0, 0, 3, 4],   # cz -45, cx -2..2
+		[3, 3, 3, 6, 4],   # cz -44
+		[5, 5, 5, 4, 4],   # cz -43   <- pocket (1,-43)=4 carved, W arm 5, N arm 6
+		[5, 5, 5, 5, 6],   # cz -42
+		[3, 5, 5, 5, 6],   # cz -41
+	]
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-46, -39):
+		for x in range(-3, 4):
+			var rz: int = clampi(z, -45, -41) + 45
+			var rx: int = clampi(x, -2, 2) + 2
+			storeys[Vector2i(x, z)] = rows[rz][rx]
+			levels[Vector2i(x, z)] = 0
+	var carved: Dictionary = {Vector2i(1, -43): true, Vector2i(0, -45): true,
+			Vector2i(2, -45): true}
+	var region: HeightfieldRegion = HeightfieldRegion.new(storeys, levels, carved)
+	# Guard the fixture: the junction cells must match the probed world.
+	assert_eq(int(region.storey_at(1, -43)), 4, "fixture: pocket is the s=4 notch")
+	assert_eq(int(region.storey_at(0, -43)), 5, "fixture: west arm s=5")
+	assert_eq(int(region.storey_at(1, -44)), 6, "fixture: north arm s=6")
+	assert_eq(int(region.storey_at(0, -44)), 3, "fixture: diagonal s=3 below both arms")
+	assert_eq(CliffDressing._ghost_mode(region, 1, -43, Vector2i(-1, -1)), 0,
+		"carved notch: diagonal below both arms = open X-junction, no piece")
+	assert_eq(CliffDressing._ghost_mode(region, 0, -44, Vector2i(1, 1)), 0,
+		"the opposite low cell may not emit the mirror piece either")

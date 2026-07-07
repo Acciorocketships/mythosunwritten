@@ -135,14 +135,18 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 		return 0
 	var sa := int(region.storey_at(cx + ca.x, cz + ca.y))
 	var sb := int(region.storey_at(cx + cb.x, cz + cb.y))
-	# X-JUNCTION guard: when two SAME-storey plateaus touch only at the corner
-	# POINT (equal arms, diagonal lower), there is no concave pocket to round,
-	# and inner pieces here bridge the gap as floating plates (owner: "two
+	# X-JUNCTION guard: when the DIAGONAL ground lies BELOW BOTH arms, the two
+	# plateaus touch only at the corner POINT — each wraps its own convex
+	# (outer) corner and there is no concave pocket to round; inner pieces
+	# here bridge the open gap as floating plates. Equal arms (owner: "two
 	# cliff tiles touching just by a corner ... inner corner tiles need to be
-	# removed"). ONLY for equal arms: a lower cliff run meeting a higher one
-	# (different-storey arms) IS a concave junction and keeps its corner piece
-	# (owner: "should be a corner tile") — the sa != sb branch below owns it.
-	if sa == sb and int(region.storey_at(cx + cdir.x, cz + cdir.y)) < sa:
+	# removed") AND unequal arms (owner, seed 2697992464 corner (12,-1044),
+	# cells 3/4/5/6: "inner corners on the diagonals where there are no
+	# cliffs. those need to be removed") — both low cells at such a corner
+	# would otherwise emit overlapping pieces at the same column. A true
+	# concave junction needs the diagonal AT OR ABOVE the lower arm, so the
+	# walls continue into each other instead of turning away.
+	if int(region.storey_at(cx + cdir.x, cz + cdir.y)) < mini(sa, sb):
 		return 0
 	if sa != sb:
 		var ct := ca if sa > sb else cb   # the taller arm
