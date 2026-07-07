@@ -98,9 +98,69 @@ func test_pond_level_at_or_below_ring_minimum() -> void:
 			if pond.footprint_t(p) <= 1.0 + WaterPlan.TILE / pond.radius:
 				min_h = minf(min_h, plan.noise_h(p))
 	# maxf mirrors _pond_level's floor of storey 1 (beds must stay above y=0);
-	# lowland basins can ring-round to storey 0 and still get a level-1 pond.
-	assert_true(float(pond.level) * 4.0 <= maxf(roundi(min_h / 4.0) * 4.0, 4.0) + 0.0001,
+	# lowland basins can floor to storey 0 and still get a level-1 pond.
+	# FLOOR semantics: the level itself never exceeds the raw ring minimum, so
+	# the surface (level*4 - 1) sits at least a metre under the lowest bank.
+	assert_true(float(pond.level) * 4.0 <= maxf(min_h, 4.0) + 0.0001,
 		"pond bank storey never exceeds the footprint∪ring minimum (or the storey-1 floor)")
+
+func test_trace_locks_to_the_fall_line_on_steep_ground() -> void:
+	# Owner regression: free meander on steep hillsides let the trace contour
+	# ACROSS the slope, leaving the downhill bank below the water level —
+	# hanging shelf water spilling on every side. Fully-locked steps (|grad| >=
+	# STEEP_HI) must follow the local downhill direction. Depth 0: no junction
+	# steering, so only self-avoidance can bend a step off the fall line.
+	var plan: WaterPlan = _plan()
+	var locked: int = 0
+	var dot_sum: float = 0.0
+	for sz in range(-4, 5):
+		for sx in range(-4, 5):
+			var t: RiverTrace = plan.river_for(Vector2i(sx, sz), 0)
+			if t == null:
+				continue
+			for i in range(0, t.points.size() - 1):
+				var g: Vector2 = plan.grad(t.points[i])
+				if g.length() < WaterPlan.STEEP_HI:
+					continue
+				var step_dir: Vector2 = (t.points[i + 1] - t.points[i]).normalized()
+				var d: float = step_dir.dot((-g).normalized())
+				locked += 1
+				dot_sum += d
+				assert_true(d >= 0.5,
+					"steep step %d of river %s heads downhill (dot %.2f)" % [i, t.source_cell, d])
+	assert_true(locked > 0, "the window has fully-locked steep reaches")
+	assert_true(dot_sum / float(locked) >= 0.9,
+		"steep reaches hug the fall line on average (mean dot %.2f)" % (dot_sum / float(locked)))
+
+func test_source_pool_never_overtops_its_ring() -> void:
+	# Owner: rivers starting on hills had "a waterfall on all sides" — the pool
+	# level ROUNDED to the nearest storey, up to half a storey above the lowest
+	# rim ground, so the whole pool overtopped its banks. Floor semantics: the
+	# pool surface always sits at least SURFACE_DROP under the raw ring minimum
+	# (storey-1 lowland clamp aside — sources sit on high ground anyway).
+	var plan: WaterPlan = _plan()
+	var checked: int = 0
+	for sc in _sources_in(plan, 4):
+		var t: RiverTrace = plan.river_for(sc, 0)
+		if t == null:
+			continue
+		var pool: PondStamp = t.source_pool
+		var bound: float = pool.bound_radius() + WaterPlan.TILE
+		var r_cells: int = int(ceil(bound / WaterPlan.TILE))
+		var cc: Vector2i = Vector2i(roundi(pool.center.x / WaterPlan.TILE), roundi(pool.center.y / WaterPlan.TILE))
+		var min_h: float = INF
+		for dz in range(-r_cells, r_cells + 1):
+			for dx in range(-r_cells, r_cells + 1):
+				var p: Vector2 = Vector2(float(cc.x + dx) * WaterPlan.TILE, float(cc.y + dz) * WaterPlan.TILE)
+				if p.distance_to(pool.center) <= bound:
+					min_h = minf(min_h, plan.noise_h(p))
+		if float(pool.level) * 4.0 <= 4.0 + 0.0001:
+			continue   # storey-1 clamp — not a rounding artefact
+		checked += 1
+		assert_true(pool.surface_y() <= min_h - 0.9,
+			"pool at %s stays under its lowest rim ground (surface %.1f, ring min %.1f)" % [
+				sc, pool.surface_y(), min_h])
+	assert_true(checked > 0, "window has unclamped source pools to check")
 
 func test_trace_never_enters_spawn_disk() -> void:
 	var plan: WaterPlan = _plan()

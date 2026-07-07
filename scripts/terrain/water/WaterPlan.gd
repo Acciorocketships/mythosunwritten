@@ -40,6 +40,14 @@ const MAX_STEPS := 220            # hard bound => max length 2640 u
 # protruding mid-river), and per-cell flow flips between reaches.
 const MOMENTUM := 0.75
 const MEANDER_AMP := 0.35         # radians of curve wobble (~20°)
+# Slope-adaptive steering: on steep ground the trace locks to the FALL LINE
+# (momentum and meander fade out with slope), carving a channel straight down
+# the hillside the way the old gradient-descent rivers did. Free meandering
+# there lets the trace contour ACROSS a slope, leaving the downhill bank
+# below the water level — hanging shelf water spilling on every side.
+# Flat ground keeps the full meander (rivers still wander and flow when flat).
+const STEEP_LO := 0.035           # |grad| (m/m) where fall-line locking starts
+const STEEP_HI := 0.10            # |grad| where the trace is fully locked
 const MEANDER_SCALE := 150.0      # along-arc metres per meander noise cell
 const SELF_AVOID_R := 60.0        # steer away from own path within this range
 const SELF_AVOID := 0.5           # strength of the self-repulsion blend
@@ -252,6 +260,9 @@ func _make_pond(p: Vector2, arc: float) -> PondStamp:
 ## Bank storey for a pond at p: storey-quantized minimum of the PRE-CARVE
 ## rendered field over the footprint ∪ one-tile ring. Endpoints already sit in
 ## local lows, so this is a safety clamp guaranteeing water below its banks.
+## FLOOR, never round: rounding UP put the level (and so the surface) half a
+## storey above the lowest rim ground — the whole pool overtopped its banks
+## and spilled a waterfall on every side (summit tarns especially).
 ## Floor of 1 keeps beds above y=0.
 func _pond_level(center: Vector2, radius: float) -> int:
 	var bound: float = radius * (1.0 + PondStamp.WOBBLE) + TILE
@@ -263,7 +274,7 @@ func _pond_level(center: Vector2, radius: float) -> int:
 			var p: Vector2 = Vector2(float(cc.x + dx) * TILE, float(cc.y + dz) * TILE)
 			if p.distance_to(center) <= bound:
 				min_h = minf(min_h, noise_h(p))
-	return clampi(roundi(min_h / STOREY), 1, max_storeys)
+	return clampi(int(floor(min_h / STOREY)), 1, max_storeys)
 
 
 ## One deterministic downhill trace. `depth` controls junction awareness:
@@ -297,10 +308,11 @@ func _trace(sc: Vector2i, depth: int) -> RiverTrace:
 		if i >= MIN_STEPS and smooth01(p) < LOWLANDS01:
 			break                                   # lowlands (late only)
 		var down: Vector2 = (-g).normalized() if g.length() > 0.000001 else dir
-		dir = (dir * MOMENTUM + down * (1.0 - MOMENTUM)).normalized()
+		var lock: float = clampf((g.length() - STEEP_LO) / (STEEP_HI - STEEP_LO), 0.0, 1.0)
+		dir = (dir * MOMENTUM * (1.0 - lock) + down * (1.0 - MOMENTUM * (1.0 - lock))).normalized()
 		var m01: float = Helper._value_noise01(
 			Vector3(arc, 0.0, meander_offset), world_seed + 71, MEANDER_SCALE)
-		dir = dir.rotated((m01 - 0.5) * 2.0 * MEANDER_AMP)
+		dir = dir.rotated((m01 - 0.5) * 2.0 * MEANDER_AMP * (1.0 - lock))
 		# Self-avoidance: repel from the river's own OLDER samples so meanders
 		# never fold back onto an earlier reach (overlapping channels left
 		# uncarved slivers mid-river and flipped per-cell flow directions).
