@@ -647,8 +647,13 @@ func test_arm_lip_run_holds_at_a_classic_inner_corner_no_flap():
 	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	# Around the shared corner point (36,36): the arms' sheets sit clipped at ~8.04, P's slope
 	# at ~4, D's flat top at 8.0 — only a draped flap leaves verts at intermediate heights.
+	# EXCEPTION: the corner-point vertex itself legitimately DIPS 0.6 under the piece's front
+	# (the sliver fix — an XZ tuck tore the cell boundaries open); a real flap leaves a TRAIL
+	# of intermediate verts along the taper, never just the single corner point.
 	for v in verts:
 		if v.x > 33.5 and v.x < 38.5 and v.z > 33.5 and v.z < 38.5:
+			if absf(v.x - 36.0) < 0.05 and absf(v.z - 36.0) < 0.05:
+				continue
 			assert_false(v.y > 4.6 and v.y < 7.9,
 				"an arm's sheet drapes through the inner corner piece (the owner's protruding plane): %s" % v)
 	node.free()
@@ -867,3 +872,79 @@ func test_decorations_batch_into_multimeshes():
 	assert_gt(total, 0, "chunk has decorations")
 	node.free()
 
+
+func test_ground_has_no_slivers_beside_inner_corner_pieces():
+	# Owner (batch 2): "there are tiny gaps in the ground next to inner corner
+	# tiles." The inner-corner sheet tuck pulled the shared corner-point vertex
+	# diagonally OFF both cell boundaries; the piece arms roof only 1.25 of the
+	# vacated 1.5, so two hairline slivers opened along the boundaries beside
+	# the piece. Every point of the flat top around the corner (outside the
+	# piece's own 3x3 box) must be covered by top-facing ground triangles.
+	# max_step 4: the default trickle-down clamp smooths a 2-storey step into
+	# 1-storey terraces and no inner corner forms (same as the cliff fixtures).
+	var p = Plan.new(7, 56.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		return 0.0 if (cx >= 1 and cz >= 1) else 8.0)
+	var m := Mesher.new()
+	var node: Node3D = m.build_chunk(p, Vector2i(0, 0))
+	var tris: Array = []
+	for child_name in ["Surface", "Aprons"]:
+		var mi := node.find_child(child_name, true, false) as MeshInstance3D
+		if mi == null:
+			continue
+		var arr: Array = mi.mesh.surface_get_arrays(0)
+		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var idx_v = arr[Mesh.ARRAY_INDEX]   # Nil on non-indexed meshes (Aprons)
+		var idx: PackedInt32Array = idx_v if idx_v != null else PackedInt32Array()
+		var order: Array = []
+		if idx.is_empty():
+			for i in verts.size():
+				order.append(i)
+		else:
+			for i in idx.size():
+				order.append(idx[i])
+		for i in range(0, order.size(), 3):
+			var a: Vector3 = verts[order[i]]
+			var b: Vector3 = verts[order[i + 1]]
+			var c: Vector3 = verts[order[i + 2]]
+			var nrm: Vector3 = (b - a).cross(c - a)
+			if absf(nrm.y) >= 0.3 * nrm.length():
+				tris.append([a, b, c])
+	# Inner corner of cell (0,0) is at (12,12); the piece covers ~[9.2,11.8]^2.
+	# Sample the two boundary-adjacent strips beside the piece on the flat top.
+	var holes: Array = []
+	for t_along in range(0, 19):
+		var along := 9.2 + 0.15 * float(t_along)   # 9.2 .. 11.9
+		for t_cross in range(0, 4):
+			var cross := 11.82 + 0.05 * float(t_cross)   # 11.82 .. 11.97
+			for pt: Vector2 in [Vector2(cross, along), Vector2(along, cross)]:
+				if maxf(pt.x, pt.y) > 11.99:
+					continue
+				if not _point_covered(tris, pt, 8.0):
+					holes.append(pt)
+	assert_eq(holes.size(), 0,
+		"ground beside the inner corner piece must be watertight (holes at %s)" % [holes])
+	node.free()
+
+func _point_covered(tris: Array, p: Vector2, h: float) -> bool:
+	for t: Array in tris:
+		var a: Vector3 = t[0]
+		var b: Vector3 = t[1]
+		var c: Vector3 = t[2]
+		if p.x < minf(a.x, minf(b.x, c.x)) - 0.01 or p.x > maxf(a.x, maxf(b.x, c.x)) + 0.01:
+			continue
+		if p.y < minf(a.z, minf(b.z, c.z)) - 0.01 or p.y > maxf(a.z, maxf(b.z, c.z)) + 0.01:
+			continue
+		var d1 := _tri_sign(p, Vector2(a.x, a.z), Vector2(b.x, b.z))
+		var d2 := _tri_sign(p, Vector2(b.x, b.z), Vector2(c.x, c.z))
+		var d3 := _tri_sign(p, Vector2(c.x, c.z), Vector2(a.x, a.z))
+		var has_neg := d1 < -0.0001 or d2 < -0.0001 or d3 < -0.0001
+		var has_pos := d1 > 0.0001 or d2 > 0.0001 or d3 > 0.0001
+		if has_neg and has_pos:
+			continue
+		if maxf(a.y, maxf(b.y, c.y)) >= h - 0.8 and minf(a.y, minf(b.y, c.y)) <= h + 0.3:
+			return true
+	return false
+
+func _tri_sign(p: Vector2, a: Vector2, b: Vector2) -> float:
+	return (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y)

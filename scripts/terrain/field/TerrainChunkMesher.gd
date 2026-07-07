@@ -558,15 +558,19 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 			else:
 				lz = pulled * float(dir.y)
 			lift = maxf(lift, (LIP_LIFT - 0.01) * w)
-	# INNER-CORNER pull: a flat cell that OWNS a classic inner corner (its diagonal is the
+	# INNER-CORNER dip: a flat cell that OWNS a classic inner corner (its diagonal is the
 	# pocket) has no dressed edge of its own there, so its bare sheet ran flat to the very
 	# corner point and poked out through the rounded front of the inner-corner piece as a
 	# green flap over the pocket (owner round 11: "corner of plane sticking out of cliff lip
-	# inner corner"). Tuck the corner-point VERTEX diagonally 1.3 under the piece. Only that
-	# one vertex: a wider (TOP_CLIP) zone deforms quads whose far verts reach past the
-	# piece's 3x3 footprint and tears an uncovered hole at the cell seam (the blue triangle);
-	# pulling just the point keeps all deformation under the piece's grass top. (Ghost
-	# corners need no pull: their diagonal cell is a HIGHER flat, already edge-clipped.)
+	# inner corner"). DIP the corner-point vertex under the piece's front curve (which
+	# overhangs to ~h-0.655) instead of pulling it in XZ: the old diagonal tuck moved the
+	# vertex OFF both cell boundaries while the level arms' sheets stayed ON them, and the
+	# piece arms roof only 1.25 of the vacated 1.5 — two hairline slivers opened along the
+	# boundaries beside the piece (owner batch 2: "tiny gaps in the ground next to inner
+	# corner tiles"). The dip keeps every boundary edge welded; the down-bent corner hides
+	# under the piece exactly like the flap it counters. Only the corner-point vertex dips
+	# (the 1.3 box holds just it on the 2m grid) so all deformation stays under the piece.
+	# (Ghost corners need no dip: their diagonal cell is a HIGHER flat, already edge-clipped.)
 	for cdir in info["corners"]:
 		var kind: String = info["corners"][cdir]
 		if kind == "inner" or kind == "pocket_cap":
@@ -574,9 +578,7 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 			var ccx := lx * float(cdir.x)
 			var ccz := lz * float(cdir.y)
 			if ccx > tuck and ccz > tuck:
-				lx = (tuck + (ccx - tuck) * 0.02) * float(cdir.x)
-				lz = (tuck + (ccz - tuck) * 0.02) * float(cdir.y)
-				lift = maxf(lift, LIP_LIFT - 0.01)
+				down = maxf(down, 0.6)
 		# ("outer" one-armed flush-step corners need NO corner pull here: the dressed
 		# arm's edge clip holds full weight through the corner — _slot_lipped's
 		# continuation rule sees the taller cell's collinear lip run — so the boundary
