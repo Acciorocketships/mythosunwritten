@@ -1,182 +1,62 @@
 [
  {
   "look": [
+   28.0,
+   -1088.0
+  ],
+  "name": "S1: floating water edges site (cascade, cell 1,-46)",
+  "pos": [
+   34.4,
+   8.0,
+   -1103.4
+  ]
+ },
+ {
+  "look": [
+   -146.0,
+   -968.0
+  ],
+  "name": "S2: coastline curves + no orphan slivers + no see-under gap",
+  "pos": [
+   -167.6,
+   4.0,
+   -952.8
+  ]
+ },
+ {
+  "look": [
+   -94.0,
+   -991.0
+  ],
+  "name": "S3: river is a bounded channel, no floating sections",
+  "pos": [
+   -80.3,
+   8.0,
+   -981.0
+  ]
+ },
+ {
+  "look": [
    48.0,
-   -1083.0
+   -1092.0
   ],
-  "name": "WATER v2: contained cascade slab (thick fall, C1 exit)",
+  "name": "S4: waterfall plunge - smooth ogee curve + mist (owner spot was inside the wall; moved into the plunge pool)",
   "pos": [
-   34.0,
-   16.0,
-   -1076.0
+   44.0,
+   5.6,
+   -1101.0
   ]
  },
  {
   "look": [
-   120.0,
-   -1218.0
+   48.0,
+   -1094.0
   ],
-  "name": "WATER v2: meadow reach - reference look, smooth swells",
+  "name": "S5: waterfall crest connects to its source water (in the upper pool)",
   "pos": [
-   109.0,
-   8.0,
-   -1212.0
-  ]
- },
- {
-  "look": [
-   -95.0,
-   -1010.0
-  ],
-  "name": "WATER v2: channel descent - bounded both sides",
-  "pos": [
-   -91.0,
-   26.0,
-   -1000.0
-  ]
- },
- {
-  "look": [
-   110.0,
-   -1215.0
-  ],
-  "name": "WATER v2: swim here - entry splash + wake ripples",
-  "pos": [
-   88.0,
-   8.0,
-   -1213.0
-  ]
- },
- {
-  "look": [
-   -541.5,
-   -467.0
-  ],
-  "name": "FIX 1: EAST flush-step \u2014 pieces swapped, corner at the very end into the wall",
-  "pos": [
-   -543.8,
-   6.0,
-   -470.1
-  ]
- },
- {
-  "look": [
-   -541.5,
-   -467.0
-  ],
-  "name": "FIX 1 from over the water",
-  "pos": [
-   -534.5,
-   7.0,
-   -464.0
-  ]
- },
- {
-  "look": [
-   -562.8,
-   -468.8
-  ],
-  "name": "FIX 2: WEST pocket \u2014 corner piece at the lower right, wrapping into the tall wall",
-  "pos": [
-   -571.0,
-   6.5,
-   -471.5
-  ]
- },
- {
-  "look": [
-   -563.5,
-   -467.5
-  ],
-  "name": "FIX 2 from the water side",
-  "pos": [
-   -573.0,
-   6.0,
-   -462.0
-  ]
- },
- {
-  "look": [
-   100.0,
-   -1090.0
-  ],
-  "name": "REVIEW 1: lip junction into taller cliff (corner cap + no spurious inner)",
-  "pos": [
-   87.1,
-   18.0,
-   -1094.4
-  ]
- },
- {
-  "look": [
-   -40.0,
-   -800.0
-  ],
-  "name": "REVIEW 2: marsh colour seams - lip/apron/ground must match",
-  "pos": [
-   -24.0,
-   27.0,
-   -792.0
-  ]
- },
- {
-  "look": [
-   -95.0,
-   -985.0
-  ],
-  "name": "REVIEW 3: floating water + streak texture (steep reach)",
-  "pos": [
-   -79.5,
-   14.0,
-   -997.7
-  ]
- },
- {
-  "look": [
-   -30.0,
-   -1052.0
-  ],
-  "name": "REVIEW 4: floating pond sheet over terrace / waterfall site",
-  "pos": [
-   -17.7,
-   22.0,
-   -1041.5
-  ]
- },
- {
-  "look": [
-   676.0,
-   -975.0
-  ],
-  "name": "REVIEW 5: glow orbs soft + persistent, no 2d squares (deep forest)",
-  "pos": [
-   690.3,
-   6.0,
-   -981.4
-  ]
- },
- {
-  "look": [
-   14.0,
-   -1046.0
-  ],
-  "name": "REVIEW 6: X-junction - plateau corners meet diagonally, no bridging inner pieces",
-  "pos": [
-   10.6,
-   22.0,
-   -1039.1
-  ]
- },
- {
-  "look": [
-   -34.5,
-   -997.5
-  ],
-  "name": "REVIEW 7: no hairline ground gaps beside inner corner pieces",
-  "pos": [
-   -27.0,
-   22.0,
-   -1003.5
+   44.0,
+   9.6,
+   -1085.0
   ]
  }
 ]

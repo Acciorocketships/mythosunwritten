@@ -6,15 +6,21 @@
 #   Godot --path . res://tests/harness/water_qa.tscn
 extends Node3D
 
-const OUT := "/private/tmp/claude-501/-Users-ryko-story/04fed697-7a32-4cb3-8153-ba1f64b6a94c/scratchpad/water_qa"
+const OUT := "/private/tmp/claude-501/-Users-ryko-story/0046d9dc-92a9-4d45-b8b3-c287bf30b3ef/scratchpad/water_qa"
 
+# The owner's five annotated round-3 review spots (seed 2697992464), cameras
+# framed to match his screenshots so the critic pass compares like-for-like.
 # [name, character pos (streams chunks), camera from, camera look-at]
 const SPOTS: Array = [
-	["ledge", Vector3(89.1, 20.0, -1114.7), Vector3(105, 26, -1095), Vector3(80, 12, -1120)],
-	["fall", Vector3(34.0, 24.0, -1089.1), Vector3(20, 27, -1073), Vector3(55, 10, -1100)],
-	["shoreline", Vector3(5.0, 20.0, -1074.0), Vector3(5, 21, -1058), Vector3(5, 13, -1082)],
-	["meadow", Vector3(109.0, 12.0, -1212.0), Vector3(88, 9, -1196), Vector3(120, 3, -1218)],
-	["channel", Vector3(-91.0, 30.0, -1000.0), Vector3(-40, 32, -960), Vector3(-95, 10, -1010)],
+	["s1_floating_edges", Vector3(34.4, 12.0, -1103.4), Vector3(34, 13, -1114), Vector3(40, 7, -1088)],
+	["s2_coast_close", Vector3(-140.0, 8.0, -960.0), Vector3(-152, 9, -952), Vector3(-118, 2.2, -963)],
+	["s2_coast_top", Vector3(-120.0, 8.0, -960.0), Vector3(-118, 30, -965), Vector3(-117, 2, -964)],
+	["s3_channel", Vector3(-80.3, 12.0, -981.0), Vector3(-70, 14, -968), Vector3(-98, 6, -1000)],
+	["s4_plunge", Vector3(44.0, 8.0, -1101.0), Vector3(46, 8.5, -1106), Vector3(48, 6.5, -1091)],
+	["s4_mist_close", Vector3(44.0, 8.0, -1101.0), Vector3(53, 8, -1098.5), Vector3(47.5, 5.6, -1092)],
+	["s4_mist_front", Vector3(44.0, 8.0, -1101.0), Vector3(48, 8, -1104), Vector3(48, 6, -1093)],
+	["s5_crest", Vector3(44.0, 11.0, -1085.0), Vector3(46, 10.6, -1077), Vector3(48, 8.8, -1092.5)],
+	["strip_probe", Vector3(44.0, 8.0, -1101.0), Vector3(72, 12, -1108), Vector3(50, 8.5, -1084)],
 ]
 
 var _char: CharacterBody3D
@@ -114,13 +120,15 @@ func _run() -> void:
 		_char.velocity = Vector3.ZERO
 		_char.set_physics_process(true)
 		var look: Vector3 = Vector3(wet.x, wet.y - 6.0, wet.z)
-		_cam.look_at_from_position(wet + Vector3(-13, -2.0, 9), look)
+		_cam.look_at_from_position(wet + Vector3(-8, -1.0, 5.5), look)
 		await get_tree().create_timer(1.2).timeout
 		_shot("splash_a")
 		await get_tree().create_timer(1.0).timeout
 		_shot("splash_b")
 		await get_tree().create_timer(1.5).timeout
 		_shot("splash_c")
+	var mists: Array = get_tree().root.find_children("PlungeMist", "GPUParticles3D", true, false)
+	print("[water_qa] plunge mist emitters in scene: ", mists.size())
 	print("[water_qa] done")
 	get_tree().quit()
 

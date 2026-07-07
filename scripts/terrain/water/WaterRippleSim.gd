@@ -13,7 +13,7 @@ const RES := 256
 const DOMAIN := 96.0                 # metres covered by the sim texture
 const TEXEL := DOMAIN / RES
 const DROP_PERIOD := 0.12            # min seconds between character wake drops
-const AMBIENT_PERIOD := 0.35         # seconds between ambient droplets
+const AMBIENT_PERIOD := 0.7          # seconds between ambient droplets
 
 @export var player: Node3D
 

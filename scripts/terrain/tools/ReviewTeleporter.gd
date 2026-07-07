@@ -18,6 +18,7 @@ var _spots: Array = []
 var _idx: int = -1
 var _label: Label
 var _label_until: float = 0.0
+var _snap_pending := false   # lift the player onto the ground once it streams
 
 
 func _ready() -> void:
@@ -55,6 +56,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if s.has("look"):
 		var l: Array = s["look"]
 		player.rotation.y = atan2(float(l[0]) - float(p[0]), float(l[1]) - float(p[2]))
+	_snap_pending = true
 	_label.text = "[%d/%d] %s" % [_idx + 1, _spots.size(), str(s.get("name", ""))]
 	_label_until = Time.get_ticks_msec() / 1000.0 + LABEL_SECS
 
@@ -62,3 +64,20 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	if _label.text != "" and Time.get_ticks_msec() / 1000.0 > _label_until:
 		_label.text = ""
+	if not _snap_pending or player == null:
+		return
+	# Spot heights go stale as the terrain evolves: once the chunk under the
+	# target streams in, lift the player out of the ground if the recorded y
+	# left them under it ("stuck underneath the terrain"). Water areas are not
+	# in the ray mask, so submerged spots keep their in-water y.
+	var pos: Vector3 = player.global_position
+	var hit: Dictionary = player.get_world_3d().direct_space_state.intersect_ray(
+		PhysicsRayQueryParameters3D.create(
+			pos + Vector3(0, 160, 0), pos + Vector3(0, -160, 0)))
+	if hit.is_empty():
+		return   # chunk still streaming — keep waiting
+	_snap_pending = false
+	if pos.y < hit.position.y - 0.05:
+		player.global_position.y = hit.position.y + 1.2
+		if player is CharacterBody3D:
+			player.velocity = Vector3.ZERO

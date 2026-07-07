@@ -7,8 +7,10 @@ shader_type canvas_item;
 uniform sampler2D prev_tex : repeat_disable, filter_linear;
 uniform vec2 tex_size = vec2(256.0);
 uniform vec2 shift_texels = vec2(0.0);
-uniform float damping : hint_range(0.9, 1.0) = 0.985;
-uniform float wave_c : hint_range(0.0, 0.6) = 0.28;
+// Slow propagation: rings that race outward read as fast-forward footage
+// (owner). wave_c is the sim's c² — 0.16 ≈ 0.6 texel/frame ring speed.
+uniform float damping : hint_range(0.9, 1.0) = 0.986;
+uniform float wave_c : hint_range(0.0, 0.6) = 0.16;
 // Impulses: xy = uv, z = strength (0 = unused), w = radius in uv.
 uniform vec4 drop_a = vec4(-1.0, -1.0, 0.0, 0.01);
 uniform vec4 drop_b = vec4(-1.0, -1.0, 0.0, 0.01);

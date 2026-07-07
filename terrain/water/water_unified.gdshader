@@ -17,22 +17,24 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 // tint (the reference's pale reflective sheen), never a dark one. The
 // surface itself is SMOOTH: no noise dapple — motion comes entirely from
 // the travelling swells and the interactive ripple sim.
-uniform vec3 color_deep : source_color = vec3(0.18, 0.52, 0.49);
+uniform vec3 color_deep : source_color = vec3(0.26, 0.55, 0.52);
 uniform vec3 color_shallow : source_color = vec3(0.55, 0.82, 0.73);
 uniform vec3 color_sky : source_color = vec3(0.76, 0.89, 0.86);
-uniform float sky_reflect : hint_range(0.0, 1.0) = 0.55;
+uniform float sky_reflect : hint_range(0.0, 1.0) = 0.42;
 uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
-uniform float foam_width : hint_range(0.0, 3.0) = 0.5;
-uniform float clarity_depth : hint_range(0.5, 12.0) = 6.5;   // metres to ~deep colour
+uniform float foam_width : hint_range(0.0, 3.0) = 0.4;
+uniform float clarity_depth : hint_range(0.5, 16.0) = 10.0;  // metres to ~deep colour
 uniform float refraction_strength : hint_range(0.0, 0.2) = 0.05;
-uniform float wave_height : hint_range(0.0, 0.8) = 0.35;
-uniform float wave_speed : hint_range(0.0, 4.0) = 0.6;
+// LOW frequency, HIGH amplitude, SLOW — the swells are the river's motion
+// (owner). Speed changes here must be mirrored in character.gd SWELL_SPEED.
+uniform float wave_height : hint_range(0.0, 0.8) = 0.5;
+uniform float wave_speed : hint_range(0.0, 4.0) = 0.35;
 // Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
 // steep_v), never in a global playback rate — a raised base rate reads as
 // the whole world running in fast-forward (owner regression report).
-uniform float flow_speed : hint_range(0.0, 12.0) = 3.0;    // metres/second scroll
-uniform float rapids_boost : hint_range(0.0, 4.0) = 1.5;   // extra scroll at steep_v=1
-uniform float chop_height : hint_range(0.0, 0.6) = 0.35;   // travelling crest amplitude
+uniform float flow_speed : hint_range(0.0, 12.0) = 1.6;    // metres/second scroll
+uniform float rapids_boost : hint_range(0.0, 4.0) = 1.2;   // extra scroll at steep_v=1
+uniform float chop_height : hint_range(0.0, 0.6) = 0.25;   // travelling crest amplitude
 uniform float roughness : hint_range(0.0, 1.0) = 0.02;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
@@ -66,12 +68,12 @@ void vertex() {
 	// flowing, while the fade to zero at shores/lakes is preserved.
 	float ff = smoothstep(0.08, 0.5, fs);
 	// TRAVELLING SWELLS carry the motion everywhere — slightly deeper on
-	// flowing reaches, faded near the shoreline so the buried waterline edge
-	// never bobs above its bank (rim quads poking over plateau tops read as
-	// water plates flashing on dry land). Chop (travelling crest geometry) is
+	// flowing reaches, KILLED at the shoreline so the buried waterline edge
+	// and the waterfall crests (shore=1 there) never bob above their banks
+	// or detach from the static slabs. Chop (travelling crest geometry) is
 	// reserved for genuinely steep reaches and dies with the builder's flow
 	// fade at shores.
-	float amp = wave_height * (1.0 + 0.35 * ff) * (1.0 - 0.7 * smoothstep(0.3, 0.9, shore_v));
+	float amp = wave_height * (1.0 + 0.35 * ff) * (1.0 - smoothstep(0.25, 0.8, shore_v));
 	float camp = chop_height * ff * steep_v * 0.6;
 	float e = 2.0;
 	float h = water_wave_h(noise_tex, world_pos.xz, t) * amp
@@ -127,7 +129,9 @@ void fragment() {
 	// Clear body: the refracted scene through a green-glass tint, saturating
 	// to the soft teal with depth; glancing views mirror the LIGHT sky tint
 	// (the reference's pale reflective sheen).
-	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.35), color_deep, depth_t);
+	// LIGHT tint only — the owner wants clear water: the refracted scene
+	// shows through nearly untinted in the shallows.
+	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.18), color_deep, depth_t);
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
 	body = mix(body, color_sky, fres * sky_reflect);
 	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, shore_v, foam_width);

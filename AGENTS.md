@@ -131,16 +131,26 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   `WaterSurfaceBuilder` builds one per-chunk sheet from a per-cell water field that
   reasons about the **rendered region** (clamped storeys), never raw-noise estimates; a
   cell is wet only if carved or inside the channel width, and pond levels apply only where
-  the rendered floor supports them. Where adjacent wet cells' levels differ by more than
-  `BRIDGE_MAX` the sheet splits and a **waterfall slab** (`compute_ribbons` +
-  `_ribbon_mesh`: front/back parabola sheets that exit the lip horizontally, side walls,
-  splash apron past UV.y = 1; `terrain/water/waterfall.gdshader`) fills exactly that gap.
+  the rendered floor supports them (pond INTERIORS are exempt — deep clamp-sunk cells stay
+  lake, never holes). The sheet's boundary sub-vertices dip under the banks along
+  `WaterPlan.shore_sdf` — a continuous wobbled waterline — so coastlines read as smooth
+  curves, never cell rectangles, and bank cells quantized just under the level render as
+  real shore water inside the line instead of hover films. Wherever a wet cell's level sits
+  more than `BRIDGE_MAX` above what lies across a cardinal edge — lower water OR dry
+  ground — the sheet splits and a **waterfall slab** fills exactly that face
+  (`compute_ribbons` + `fall_rows`/`_ribbon_mesh`: an upstream overlap row embedded under
+  the source sheet, a horizontal-exit parabola, a circular-arc **ogee** that flattens back
+  to horizontal just under the plunge pool, and a submerged runout; crest corners of the
+  sheet snap EXACTLY to the pool level so lip and water always meet). Plunge foam is
+  **particle mist** (`_mist_node` per ribbon), not painted churn.
   `water_unified.gdshader` renders still + flowing water: a SMOOTH surface (no noise
-  dapple) moved by travelling swells (CPU-mirrored in `character.gd::_swell_offset` for
-  buoyancy rocking) plus `WaterRippleSim` (SubViewport wave sim: swim wakes, entry
-  splashes, ambient raindrop rings); foam only at shores and waterfall-steep reaches.
-  Swim volumes ride along as `Area3D`s. `tests/tools/water_review_spots.gd` emits F4
-  review teleports (`ReviewTeleporter.gd` reads `review_teleports.json`).
+  dapple) moved by slow long travelling swells (CPU-mirrored in
+  `character.gd::_swell_offset` for buoyancy rocking — keep constants in sync) plus
+  `WaterRippleSim` (SubViewport wave sim: swim wakes, entry splashes, ambient raindrop
+  rings); foam only at shores and waterfall-steep reaches. Swim volumes ride along as
+  `Area3D`s. `tests/tools/water_review_spots.gd` emits F4 review teleports
+  (`ReviewTeleporter.gd` reads `review_teleports.json` and lifts the player onto streamed
+  ground if a stale spot height would bury them).
 - **One tint field**: every terrain surface — walkable sheet, aprons, rock skirt, and all
   KayKit dressing pieces (per-instance colours) — multiplies THE shared material by
   `BiomeRegistry.blended_ground_tint` sampled at its own position. Change the palette or

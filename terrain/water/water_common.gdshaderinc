@@ -3,17 +3,18 @@
 // space waves, vertical-depth tinting, animated shore foam.
 
 // Long-wavelength TRAVELLING swells: three directional waves with distinct
-// headings, wavelengths (~110m, ~110m, ~48m) and slow phase speeds
-// (~2-3.5 m/s), plus a broad noise drift. Every term MOVES across the
-// surface — swells ARE the water's motion (the owner's reference: a smooth
-// surface with gentle rolling swells; floating bodies rock in them).
-// Pure function of world position — seamless across chunk meshes. The
-// character's _swell_offset mirrors the three sines on CPU: keep in sync.
+// headings, LONG wavelengths (~110m, ~110m, ~76m) and SLOW phase speeds
+// (~1-2 m/s with the default wave_speed), plus a broad noise drift. Every
+// term MOVES across the surface — swells ARE the water's motion (the owner:
+// low frequency, high amplitude swells give rivers their movement; anything
+// faster reads as the world in fast-forward). Pure function of world
+// position — seamless across chunk meshes. The character's _swell_offset
+// mirrors the three sines on CPU: keep in sync.
 float water_wave_h(sampler2D noise_tex, vec2 p, float t) {
 	float h = 1.0 * sin(dot(p, vec2(0.055, 0.021)) - t * 0.33);
 	h += 0.7 * sin(dot(p, vec2(-0.030, 0.048)) - t * 0.26 + 1.7);
-	h += 0.35 * sin(dot(p, vec2(0.045, -0.123)) - t * 0.49 + 4.0);
-	h += 0.8 * (textureLod(noise_tex, p * 0.003 + vec2(t * 0.006, -t * 0.005), 0.0).r - 0.5);
+	h += 0.35 * sin(dot(p, vec2(0.032, -0.076)) - t * 0.36 + 4.0);
+	h += 0.8 * (textureLod(noise_tex, p * 0.003 + vec2(t * 0.0035, -t * 0.003), 0.0).r - 0.5);
 	return h * 0.5;
 }
 

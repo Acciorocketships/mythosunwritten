@@ -155,11 +155,12 @@ func test_field_rim_overshoots_every_wet_cell() -> void:
 			if field.has(nb):
 				continue
 			# The only neighbours allowed OUTSIDE the sheet are genuine
-			# DROP-OFFS (a lower reach owns that water). Anything shallower —
-			# including the just-under-level band — must be wet or rim, or
-			# the sheet gets missing tiles at the shore.
+			# DROP-OFFS (a lower reach owns that water; the wet cell's edge
+			# there carries a curtain). Anything shallower — submerged
+			# shelves and the near-flush band — must be wet or rim, or the
+			# sheet gets missing tiles at the shore.
 			var g: float = region.surface_height(nb.x, nb.y)
-			assert_true(g < field[cell].level - WaterSurfaceBuilder.FLOOD_MIN_DEPTH,
+			assert_true(g < field[cell].level - 0.5,
 				"neighbour %s of wet %s is in the sheet or is a drop-off" % [nb, cell])
 
 func test_field_wet_cells_sit_below_their_level() -> void:
@@ -286,99 +287,117 @@ func test_sheet_never_floats_over_the_rendered_terrain() -> void:
 	for chunk in [Vector2i(-1, -6), Vector2i(0, -6)]:
 		var region = _region(OWNER_SEED, chunk)
 		var field: Dictionary = WaterSurfaceBuilder.compute_field(water, chunk, region)
+		var bodies: Dictionary = water.bodies_near(
+			Vector2i(chunk.x * 8 + 4, chunk.y * 8 + 4), 5 + WaterSurfaceBuilder.FIELD_MARGIN)
 		for cell in field:
 			var e: Dictionary = field[cell]
 			if e.wet:
 				wet_seen += 1
+			# Pond INTERIORS are exempt: a clamp-sunk cell deep inside the
+			# footprint is deep lake (dropping it opened see-through holes);
+			# only the rim band must stay floor-consistent.
+			var interior := false
+			var p := Vector2(float(cell.x) * 24.0, float(cell.y) * 24.0)
+			for pond in bodies.ponds:
+				if pond.footprint_t(p) < 0.75:
+					interior = true
+					break
+			if interior:
+				continue
 			var real: float = region.surface_height(cell.x, cell.y)
 			assert_true(e.level - real <= WaterSurfaceBuilder.SHELF_DEPTH + 0.01,
 				"%s cell %s floats %.1fm over the rendered terrain (level %.1f, real %.1f)" % [
 					"wet" if e.wet else "rim", cell, e.level - real, e.level, real])
 	assert_gt(wet_seen, 0, "the cascade chunks still hold water")
 
-func test_corner_dips_into_the_lip_at_drop_offs() -> void:
-	# A corner with a MISSING member (sharer cell absent from the field — a
-	# genuine drop-off with no water below) must sink under the counted
-	# members' own ground so the sheet edge dives into the lip terrain instead
-	# of hanging in mid-air over the lower terrain (owner: "floating water").
+func test_corner_crest_shore_and_bury_rules() -> void:
+	# New round-3 corner semantics: interior corners average to the level;
+	# corners over a CURTAINED drop (a wet member cardinal to lower water or
+	# to a low missing cell) snap EXACTLY to the level so the slab lip always
+	# meets the sheet; shallow lower terrain with no curtain buries the edge
+	# under itself; rim members keep the shore dip.
 	var wet_a: Dictionary = {"level": 12.8, "flow": Vector2.ZERO, "steep": 0.0, "wet": true, "ground": 12.0}
 	var wet_b: Dictionary = {"level": 12.8, "flow": Vector2.ZERO, "steep": 0.0, "wet": true, "ground": 11.6}
 	var k := Vector2i(5, 5)
-	# Full corner (4 members): no dip — interior corners stay at the level.
-	var full: Dictionary = {k: [wet_a, wet_b, wet_a, wet_b]}
+	var sh := [k + Vector2i(-1, -1), k + Vector2i(0, -1), k + Vector2i(-1, 0), k]
+	# Full compatible corner: averages to the level.
+	var full: Dictionary = {k: {sh[0]: wet_a, sh[1]: wet_b, sh[2]: wet_a, sh[3]: wet_b}}
 	assert_almost_eq(WaterSurfaceBuilder._corner(k, 12.8, full).y, 12.8, 0.001,
 		"interior corner averages to the level")
-	# Missing members (drop-off beyond): dip under the lowest counted ground.
-	var edge: Dictionary = {k: [wet_a, wet_b]}
-	assert_true(WaterSurfaceBuilder._corner(k, 12.8, edge).y <= 11.6 - 0.07,
-		"drop-off corner dives under the counted members' own ground")
+	# Lower WATER cardinal to a wet member: crest — snaps to the level.
+	var low_wet: Dictionary = {"level": 6.0, "flow": Vector2.ZERO, "steep": 0.0, "wet": true, "ground": 5.0}
+	var crest: Dictionary = {k: {sh[0]: wet_a, sh[1]: low_wet, sh[2]: wet_a, sh[3]: wet_b}}
+	assert_almost_eq(WaterSurfaceBuilder._corner(k, 12.8, crest).y, 12.8, 0.001,
+		"curtained crest corner stays exactly at the pool level")
+	assert_almost_eq(WaterSurfaceBuilder._corner(k, 12.8, crest).shore, 1.0, 0.001,
+		"crest corner is full shore (swell-killed, foam-fed)")
+	# Missing cell with ground FAR below, cardinal to a wet member: also a
+	# curtained drop (compute_ribbons hangs a dry curtain there) — level.
+	var low_missing: Dictionary = {"level": -INF, "wet": false, "missing": true,
+		"ground": 4.0, "flow": Vector2.ZERO, "steep": 0.0, "shore": 0.0}
+	var weir: Dictionary = {k: {sh[0]: wet_a, sh[1]: low_missing, sh[2]: wet_a, sh[3]: wet_b}}
+	assert_almost_eq(WaterSurfaceBuilder._corner(k, 12.8, weir).y, 12.8, 0.001,
+		"weir crest corner stays at the pool level over the dry drop")
+	# Missing cell just under the level (no curtain — drop within BRIDGE_MAX):
+	# bury under that ground.
+	var shallow_missing: Dictionary = {"level": -INF, "wet": false, "missing": true,
+		"ground": 11.4, "flow": Vector2.ZERO, "steep": 0.0, "shore": 0.0}
+	var pocket: Dictionary = {k: {sh[0]: wet_a, sh[1]: shallow_missing, sh[2]: wet_a, sh[3]: wet_b}}
+	assert_true(WaterSurfaceBuilder._corner(k, 12.8, pocket).y <= 11.4 - 0.07,
+		"uncurtained shallow drop buries the edge under the lower ground")
 	# Dry (rim) member keeps the shore dip: just under the bank ground.
 	var rim: Dictionary = {"level": 12.8, "flow": Vector2.ZERO, "steep": 0.0, "wet": false, "ground": 12.6}
-	var shore: Dictionary = {k: [wet_a, wet_a, wet_b, rim]}
+	var shore: Dictionary = {k: {sh[0]: wet_a, sh[1]: wet_a, sh[2]: wet_b, sh[3]: rim}}
 	assert_almost_eq(WaterSurfaceBuilder._corner(k, 12.8, shore).y, 12.6 - 0.08, 0.001,
 		"shore corner sinks just under the lowest adjacent bank ground")
 
-func test_waterfall_is_a_thick_horizontal_exit_parabola_with_splash() -> void:
-	# Owner round 2: "the water should exit the top travelling horizontally,
-	# then curve down" (C1 with the flat sheet) and "they need some depth" —
-	# the fall is a slab: front parabola x = reach·t, y = top − h·t², a back
-	# sheet offset along the curve normal, and a splash apron (UV.y > 1)
-	# riding just above the lower surface.
+func test_waterfall_is_a_thick_ogee_slab_with_submerged_runout() -> void:
+	# Round 3: the fall is a THICK slab whose front sheet leaves the lip
+	# horizontally, drops, then FLATTENS back to horizontal right at the lower
+	# surface (ogee — owner: "a smooth curve back up to connect with the water
+	# at the bottom"), ending in a flat submerged runout. The painted splash
+	# apron is gone — plunge foam is particle mist now.
 	var st: SurfaceTool = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var r: Dictionary = {"mid": Vector2(0.0, 0.0), "tangent": Vector2(1.0, 0.0),
-		"half_width": 12.0, "top": 10.0, "bottom": 2.0}
+		"half_width": 12.0, "top": 10.0, "bottom": 2.0, "kind": "wet"}
 	WaterSurfaceBuilder._ribbon_mesh(st, r)
 	st.generate_normals()
 	var mesh: ArrayMesh = st.commit()
 	var verts: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var uvs: PackedVector2Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
-	var top: float = 10.0 + 0.15
-	var bottom: float = 2.0 - 0.6
-	var h: float = top - bottom
-	var reach: float = clampf(h * WaterSurfaceBuilder.FALL_REACH,
-		WaterSurfaceBuilder.FALL_REACH_MIN, WaterSurfaceBuilder.FALL_REACH_MAX)
-	var thick: float = clampf(h * 0.10, 0.4, 1.2)
-
-	# Front sheet ON the parabola: one vertex per row at (reach·t, top − h·t²).
-	var rows: int = WaterSurfaceBuilder.FALL_ROWS
-	for i in rows + 1:
-		var t: float = float(i) / float(rows)
-		var found: bool = false
-		for j in verts.size():
-			if absf(verts[j].x - reach * t) < 0.001 \
-					and absf(verts[j].y - (top - h * t * t)) < 0.001:
-				found = true
-				break
-		assert_true(found, "front row t=%.2f sits on the parabola" % t)
-	# HORIZONTAL exit: the first arc chord leaves the lip nearly flat (C1
-	# with the sheet above), far from the old 45°+ plunge.
-	var dx: float = reach / float(rows)
-	var dy: float = h / float(rows * rows)
-	assert_true(rad_to_deg(atan(dy / dx)) < 30.0,
-		"first chord leaves the lip near-horizontal (%.1f°)" % rad_to_deg(atan(dy / dx)))
-	# DEPTH: a back sheet hangs thick-below the crest and thick-behind the
-	# plunge (offset along the curve normal).
-	var crest_back: bool = false
-	var plunge_nrm: Vector2 = Vector2(2.0 * h, reach).normalized()
-	var plunge_back: bool = false
-	for j in verts.size():
-		if absf(verts[j].x) < 0.001 and absf(verts[j].y - (top - thick)) < 0.001:
-			crest_back = true
-		if absf(verts[j].x - (reach - plunge_nrm.x * thick)) < 0.001 \
-				and absf(verts[j].y - (bottom - plunge_nrm.y * thick)) < 0.001:
-			plunge_back = true
-	assert_true(crest_back, "back sheet gives the crest vertical thickness")
-	assert_true(plunge_back, "back sheet gives the plunge upstream thickness")
-	# Splash apron past uv.y = 1, above the lower surface, downstream.
-	var seen_apron: bool = false
-	for i in verts.size():
-		if uvs[i].y > 1.0:
-			seen_apron = true
-			assert_true(verts[i].y >= 2.6,
-				"apron rides above the lower water surface (y=%.2f)" % verts[i].y)
-			assert_true(verts[i].x > reach - 0.5, "apron spreads downstream of the plunge")
-	assert_true(seen_apron, "mesh carries a splash apron past uv.y = 1")
+	# The slab never rises above the upstream surface it pours from…
+	var y_max: float = -INF
+	var y_min: float = INF
+	var x_hi: float = -INF
+	for v in verts:
+		y_max = maxf(y_max, v.y)
+		y_min = minf(y_min, v.y)
+		x_hi = maxf(x_hi, v.x)
+	assert_true(y_max <= 10.0 + 0.001, "slab crest never pokes above the pool surface")
+	# …starts upstream of the lip (overlap row embedded under the sheet)…
+	var x_lo: float = INF
+	for v in verts:
+		x_lo = minf(x_lo, v.x)
+	assert_true(x_lo <= -WaterSurfaceBuilder.FALL_OVERLAP + 0.2,
+		"slab overlaps upstream under the sheet (x_min %.2f)" % x_lo)
+	# …reaches below the lower surface (submerged runout, no painted apron
+	# hovering above the pool)…
+	assert_true(y_min <= 2.0 - 0.05, "runout submerges under the plunge pool")
+	assert_true(x_hi >= 3.0, "runout carries downstream past the plunge")
+	# …and the LAST front chord is near-horizontal (C1 into the pool).
+	var rows: Dictionary = WaterSurfaceBuilder.fall_rows(r)
+	var fr: Array = rows.front
+	var runout_start: int = fr.size() - 3   # last curve row before the runout
+	var a: Array = fr[runout_start - 1]
+	var b: Array = fr[runout_start]
+	var slope: float = absf(b[1] - a[1]) / maxf(a[0].distance_to(b[0]), 0.001)
+	assert_true(slope <= 0.35, "plunge entry is near-horizontal (slope %.2f)" % slope)
+	# uv.y stays within the curtain band (no churn apron past ~1.1).
+	var uv_max: float = 0.0
+	for uv in uvs:
+		uv_max = maxf(uv_max, uv.y)
+	assert_true(uv_max <= 1.15, "no painted churn apron band (uv_max %.2f)" % uv_max)
 
 func test_every_sheet_split_gets_a_waterfall_curtain() -> void:
 	# Owner: "where there is a drop, we should also work on waterfalls." The
@@ -388,11 +407,13 @@ func test_every_sheet_split_gets_a_waterfall_curtain() -> void:
 	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
 	var total := 0
 	for chunk in [Vector2i(-1, -6), Vector2i(0, -6)]:
-		var field: Dictionary = WaterSurfaceBuilder.compute_field(
-			water, chunk, _region(OWNER_SEED, chunk))
-		var ribbons: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk)
+		var region = _region(OWNER_SEED, chunk)
+		var field: Dictionary = WaterSurfaceBuilder.compute_field(water, chunk, region)
+		var ribbons: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk, region)
+		var covered: Dictionary = {}
+		for r in ribbons:
+			covered[r.mid] = true
 		var lo := Vector2i(chunk.x * 8, chunk.y * 8)
-		var gaps := 0
 		for cell: Vector2i in field:
 			if not field[cell].wet:
 				continue
@@ -402,8 +423,10 @@ func test_every_sheet_split_gets_a_waterfall_curtain() -> void:
 				var nb: Vector2i = cell + d
 				if field.has(nb) and field[nb].wet \
 						and field[cell].level - field[nb].level > WaterSurfaceBuilder.BRIDGE_MAX:
-					gaps += 1
-		assert_eq(ribbons.size(), gaps, "one curtain per wet-wet sheet split in the chunk")
+					var mid := Vector2((float(cell.x) + float(d.x) * 0.5) * 24.0,
+							(float(cell.y) + float(d.y) * 0.5) * 24.0)
+					assert_true(covered.has(mid),
+						"wet-wet sheet split at %s carries a curtain" % str(mid))
 		for r in ribbons:
 			total += 1
 			assert_gt(r.top - r.bottom, WaterSurfaceBuilder.BRIDGE_MAX - 0.7,
@@ -413,9 +436,10 @@ func test_every_sheet_split_gets_a_waterfall_curtain() -> void:
 func test_ribbons_are_deterministic_and_chunk_owned() -> void:
 	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
 	var chunk := Vector2i(-1, -6)
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(water, chunk, _region(OWNER_SEED, chunk))
-	var a: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk)
-	var b: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk)
+	var region = _region(OWNER_SEED, chunk)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(water, chunk, region)
+	var a: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk, region)
+	var b: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk, region)
 	assert_eq(a.size(), b.size(), "pure function of (field, chunk)")
 	for i in a.size():
 		assert_eq(a[i].mid, b[i].mid, "ribbon %d midpoint stable" % i)
