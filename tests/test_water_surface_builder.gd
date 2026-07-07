@@ -304,6 +304,58 @@ func test_sheet_never_floats_over_the_rendered_terrain() -> void:
 					"wet" if e.wet else "rim", cell, e.level - real, e.level, real])
 	assert_gt(wet_seen, 0, "the cascade chunks still hold water")
 
+func test_corner_dips_into_the_lip_at_drop_offs() -> void:
+	# A corner with a MISSING member (sharer cell absent from the field — a
+	# genuine drop-off with no water below) must sink under the counted
+	# members' own ground so the sheet edge dives into the lip terrain instead
+	# of hanging in mid-air over the lower terrain (owner: "floating water").
+	var wet_a: Dictionary = {"level": 12.8, "flow": Vector2.ZERO, "steep": 0.0, "wet": true, "ground": 12.0}
+	var wet_b: Dictionary = {"level": 12.8, "flow": Vector2.ZERO, "steep": 0.0, "wet": true, "ground": 11.6}
+	var k := Vector2i(5, 5)
+	# Full corner (4 members): no dip — interior corners stay at the level.
+	var full: Dictionary = {k: [wet_a, wet_b, wet_a, wet_b]}
+	assert_almost_eq(WaterSurfaceBuilder._corner(k, 12.8, full).y, 12.8, 0.001,
+		"interior corner averages to the level")
+	# Missing members (drop-off beyond): dip under the lowest counted ground.
+	var edge: Dictionary = {k: [wet_a, wet_b]}
+	assert_true(WaterSurfaceBuilder._corner(k, 12.8, edge).y <= 11.6 - 0.07,
+		"drop-off corner dives under the counted members' own ground")
+	# Dry (rim) member keeps the shore dip: just under the bank ground.
+	var rim: Dictionary = {"level": 12.8, "flow": Vector2.ZERO, "steep": 0.0, "wet": false, "ground": 12.6}
+	var shore: Dictionary = {k: [wet_a, wet_a, wet_b, rim]}
+	assert_almost_eq(WaterSurfaceBuilder._corner(k, 12.8, shore).y, 12.6 - 0.08, 0.001,
+		"shore corner sinks just under the lowest adjacent bank ground")
+
+func test_waterfall_curtain_arcs_and_carries_a_splash_apron() -> void:
+	# Owner: "waterfall currently goes down completely vertically… it should
+	# follow an arc… at the bottom it should make splash/foam." Curtain rows
+	# follow a projectile curve (horizontal offset = reach·sqrt(fall fraction))
+	# and a splash apron (UV.y > 1) rides just above the lower surface,
+	# spreading downstream from the plunge point.
+	var st: SurfaceTool = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var r: Dictionary = {"mid": Vector2(0.0, 0.0), "tangent": Vector2(1.0, 0.0),
+		"half_width": 12.0, "top": 10.0, "bottom": 2.0}
+	WaterSurfaceBuilder._ribbon_mesh(st, r)
+	st.generate_normals()
+	var mesh: ArrayMesh = st.commit()
+	var verts: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+	var reach: float = clampf((10.15 - 1.4) * WaterSurfaceBuilder.FALL_REACH,
+		WaterSurfaceBuilder.FALL_REACH_MIN, WaterSurfaceBuilder.FALL_REACH_MAX)
+	var seen_apron: bool = false
+	for i in verts.size():
+		var v: float = uvs[i].y
+		if v <= 1.0:
+			assert_almost_eq(verts[i].x, reach * sqrt(v), 0.01,
+				"curtain vertex at uv.y=%.2f sits on the projectile arc" % v)
+		else:
+			seen_apron = true
+			assert_true(verts[i].y >= 2.6,
+				"apron rides above the lower water surface (y=%.2f)" % verts[i].y)
+			assert_true(verts[i].x > reach - 0.5, "apron spreads downstream of the plunge")
+	assert_true(seen_apron, "mesh carries a splash apron past uv.y = 1")
+
 func test_every_sheet_split_gets_a_waterfall_curtain() -> void:
 	# Owner: "where there is a drop, we should also work on waterfalls." The
 	# sheet deliberately splits between adjacent wet cells whose levels differ

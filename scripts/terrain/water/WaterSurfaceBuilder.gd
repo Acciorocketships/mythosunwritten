@@ -20,7 +20,12 @@ const STOREY := 4.0                   # = HeightfieldPlan.STOREY_HEIGHT
 const FLOOR_CLEARANCE := 0.8          # river surface above the QUANTIZED floor estimate
 const STEEP_RISE := 5.0               # bed drop per sample that reads as rapids=1
 const WET_EPS := 0.15                 # ground this far under the level counts as wet
-const SHELF_DEPTH := 4.5              # flood only spreads over shelves this shallow
+# Max hover of ANY field cell's level over its real rendered ground (pass-1
+# floor-consistency). Legit in-channel water reaches bed+RIBBON_DEPTH_OFFSET
+# with the bed up to half a storey (2m) above its quantized floor = 3.5m; a
+# neighbouring terrace one full storey (4m) down must NEVER qualify — levels
+# painted over it hover the sheet in mid-air (the owner's floating water).
+const SHELF_DEPTH := 3.7
 # River level reaches only a hair past the CARVE width: the carve guarantees
 # those cells sit at the bed. A generous margin painted the river's level onto
 # terrain dips beyond the channel — water sheets embedded in hillsides.
@@ -36,6 +41,11 @@ const BRIDGE_MAX := 2.5
 # Unanchored water (no carve at the cell) must be at least this deep to count
 # as wet — deeper than FLOOR_CLEARANCE, or floor-storey terraces "flood".
 const FLOOD_MIN_DEPTH := 1.0
+# Flood (pass 2) only rescues bank cells that storey QUANTIZATION sank just
+# under the level (at most half a storey + slack). It must sit well below one
+# full storey: with the old SHELF_DEPTH bound, terraces 4m down "flooded" at
+# the upper reach's level — the floating plates over every cliff lip.
+const FLOOD_MAX := 2.5
 const VOLUME_STRIDE := 4              # river swim-box every N samples
 const WATER_LAYER := 1 << 7
 # Sub-quads per cell edge. The shader displaces real chop waves (~14-26m
@@ -202,7 +212,7 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 			field[cell] = {
 				"level": level, "flow": flow, "steep": steep,
 				"wet": anchored and real < level - WET_EPS,
-				"ground": real,
+				"ground": real, "shore": 0.0,
 			}
 
 	# Pass 2: bounded flood — submerged shelves continue the neighbouring level.
@@ -224,14 +234,14 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 				# cell just under the level). A floor far below belongs to a
 				# lower reach/body — painting this level over it would hover
 				# a sheet above the drop (the floating plates at cascades).
-				if ground[nb] < lv - FLOOD_MIN_DEPTH and ground[nb] > lv - SHELF_DEPTH:
+				if ground[nb] < lv - FLOOD_MIN_DEPTH and ground[nb] > lv - FLOOD_MAX:
 					if field.has(nb):
 						lv = maxf(lv, field[nb].level)
 					# Flooded shelves are pool water: still (zero flow).
 					grew.append([nb, {
 						"level": lv, "flow": Vector2.ZERO,
 						"steep": field[cell].steep, "wet": true,
-						"ground": ground[nb],
+						"ground": ground[nb], "shore": 0.0,
 					}])
 		for g in grew:
 			field[g[0]] = g[1]
@@ -261,11 +271,14 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 			var prev = rims.get(nb)
 			if prev == null or field[cell].level > prev.level:
 				# Rim overshoot dives into the bank: still water (zero flow —
-				# flux through the shoreline must be zero).
+				# flux through the shoreline must be zero). shore=1: the rim IS
+				# the waterline — the shader's foam lap line keys on this baked
+				# proximity, never on raw depth (depth alone whitened every
+				# shallow mid-pond shelf into drifting white clouds).
 				rims[nb] = {
 					"level": field[cell].level, "flow": Vector2.ZERO,
 					"steep": field[cell].steep, "wet": false,
-					"ground": ground[nb],
+					"ground": ground[nb], "shore": 1.0,
 				}
 	for nb in rims:
 		field[nb] = rims[nb]
@@ -274,7 +287,8 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 	# vertices themselves reach ZERO via corner-averaging with the rim cells
 	# (which always carry zero flow) — that is the actual no-flux boundary.
 	# Moderate, NOT heavy: narrow channels are entirely shore-adjacent cells,
-	# and heavy damping froze whole rivers still.
+	# and heavy damping froze whole rivers still. The same touch also grades
+	# the baked shore proximity one cell into the water for the foam lap line.
 	for cell in field:
 		if not field[cell].wet:
 			continue
@@ -282,6 +296,7 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 			var nb: Vector2i = cell + d
 			if not field.has(nb) or not field[nb].wet:
 				field[cell].flow *= 0.5
+				field[cell].shore = 0.6
 				break
 
 	# Drop influence-only cells that are neither wet nor rim (dry banks whose
@@ -366,26 +381,61 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i) -> Array[Diction
 	return out
 
 
-## One waterfall curtain: quads across the channel from just above the upper
-## surface down to a plunge just under the lower one, leaning downstream so it
-## reads as pouring. Double-sided like the rock skirts. UV.y runs 0 (crest) to
-## 1 (plunge) for the shader's falling bands.
+const FALL_ROWS := 8             # vertical segments of the curtain arc
+# Horizontal throw of the arc as a fraction of the drop, clamped. Crest water
+# leaves the lip moving downstream, so the curtain bulges outward near the
+# top and falls near-vertically at the plunge — projectile shape, horizontal
+# offset ∝ sqrt(fall fraction) (owner: "it should follow an arc").
+const FALL_REACH := 0.35
+const FALL_REACH_MIN := 1.5
+const FALL_REACH_MAX := 6.0
+const SPLASH_LEN := 4.2          # downstream length of the plunge foam apron
+
+
+## One waterfall: an ARCED curtain across the channel from just above the
+## upper surface to just under the lower one, plus a churning foam apron
+## riding the lower surface where the fall lands (owner: "at the bottom it
+## should make splash/foam"). UV.y runs 0 (crest) to 1 (plunge); the apron
+## continues past 1 so the shader renders splash churn that dissolves
+## downstream. Double-sided like the rock skirts.
 static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 	var mid: Vector2 = r.mid
 	var tangent: Vector2 = r.tangent
-	var half_width: float = r.half_width
-	var top: float = r.top
-	var bottom: float = r.bottom
-	var across := Vector2(-tangent.y, tangent.x) * half_width
-	var lean := tangent * 1.8
-	var t0 := Vector3(mid.x - across.x, top + 0.15, mid.y - across.y)
-	var t1 := Vector3(mid.x + across.x, top + 0.15, mid.y + across.y)
-	var b0 := Vector3(t0.x + lean.x, bottom - 0.6, t0.z + lean.y)
-	var b1 := Vector3(t1.x + lean.x, bottom - 0.6, t1.z + lean.y)
-	var quad: Array = [[t0, 0.0, 0.0], [t1, 1.0, 0.0], [b1, 1.0, 1.0], [b0, 0.0, 1.0]]
-	for idx in [0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]:
-		st.set_uv(Vector2(quad[idx][1], quad[idx][2]))
-		st.add_vertex(quad[idx][0])
+	var top: float = r.top + 0.15
+	var bottom: float = r.bottom - 0.6
+	var reach: float = clampf((top - bottom) * FALL_REACH, FALL_REACH_MIN, FALL_REACH_MAX)
+	var across: Vector2 = Vector2(-tangent.y, tangent.x) * r.half_width
+	var rows: Array = []
+	for i in FALL_ROWS + 1:
+		var v: float = float(i) / float(FALL_ROWS)
+		rows.append([mid + tangent * (reach * sqrt(v)), lerpf(top, bottom, v), 1.0 + 0.18 * v, v])
+	_row_strip(st, rows, across)
+	# Splash apron: its own strip just above the lower surface (the curtain's
+	# tail is submerged; the churn spreads downstream from the plunge point and
+	# widens as it dissolves). Sits a hair over the sheet so swells only bury
+	# it at crest peaks.
+	var surf: float = r.bottom + 0.72
+	_row_strip(st, [
+		[mid + tangent * (reach - 0.4), surf + 0.04, 1.15, 1.02],
+		[mid + tangent * (reach + SPLASH_LEN * 0.45), surf + 0.02, 1.45, 1.15],
+		[mid + tangent * (reach + SPLASH_LEN), surf, 1.7, 1.3],
+	], across)
+
+
+## Quads between consecutive rows ([centre: Vector2, y, width_scale, uv_y]),
+## emitted with both windings (double-sided).
+static func _row_strip(st: SurfaceTool, rows: Array, across: Vector2) -> void:
+	for i in rows.size() - 1:
+		var a: Array = rows[i]
+		var b: Array = rows[i + 1]
+		var a0 := Vector3(a[0].x - across.x * a[2], a[1], a[0].y - across.y * a[2])
+		var a1 := Vector3(a[0].x + across.x * a[2], a[1], a[0].y + across.y * a[2])
+		var b0 := Vector3(b[0].x - across.x * b[2], b[1], b[0].y - across.y * b[2])
+		var b1 := Vector3(b[0].x + across.x * b[2], b[1], b[0].y + across.y * b[2])
+		var quad: Array = [[a0, 0.0, a[3]], [a1, 1.0, a[3]], [b1, 1.0, b[3]], [b0, 0.0, b[3]]]
+		for idx in [0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]:
+			st.set_uv(Vector2(quad[idx][1], quad[idx][2]))
+			st.add_vertex(quad[idx][0])
 
 
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
@@ -447,9 +497,46 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 	return root
 
 
-## One cell of the sheet: two triangles over the cell footprint. Corner
-## heights average the adjacent cells within BRIDGE_MAX of this cell's own
-## level (the cell itself always qualifies), wound so normals face +Y.
+## One sheet corner: average the adjacent field cells within BRIDGE_MAX of the
+## quad's own level (the cell itself always qualifies). Two dips bury edges:
+## SHORE DIP — corners touching a dry (rim) member sink just below the lowest
+## adjacent bank ground, so the sheet slopes down and buries its edge; the
+## waterline is the smooth terrain intersection (no cell-staircase mesh
+## edges), and shallow-apron shores / island rocks always meet the water.
+## DROP DIP — a corner with a MISSING member (a sharer cell absent from the
+## field: a genuine drop-off, no water below) sinks just below the counted
+## members' own ground, so the sheet edge dives into the lip's terrain and the
+## depth buffer clips it at the cliff face — never a plane hanging in mid-air
+## over the lower terrain (the owner's floating water at cliff edges).
+static func _corner(k: Vector2i, own_level: float, corner_cells: Dictionary) -> Dictionary:
+	var lvl_sum: float = 0.0
+	var fl: Vector2 = Vector2.ZERO
+	var stp: float = 0.0
+	var sho: float = 0.0
+	var cnt: int = 0
+	var bank_ground: float = INF
+	var own_ground: float = INF
+	for e in corner_cells[k]:
+		if absf(e.level - own_level) > BRIDGE_MAX:
+			continue
+		lvl_sum += e.level
+		fl += e.flow
+		stp = maxf(stp, e.steep)
+		sho += e.get("shore", 0.0)
+		cnt += 1
+		own_ground = minf(own_ground, e.ground)
+		if not e.wet:
+			bank_ground = minf(bank_ground, e.ground)
+	var lvl: float = lvl_sum / float(cnt)
+	if bank_ground < INF:
+		lvl = minf(lvl, bank_ground - 0.08)
+	if corner_cells[k].size() < 4 and own_ground < INF:
+		lvl = minf(lvl, own_ground - 0.08)
+	return {"y": lvl, "flow": fl / float(cnt), "steep": stp, "shore": sho / float(cnt)}
+
+
+## One cell of the sheet: two triangles over the cell footprint, corner values
+## from _corner, wound so normals face +Y.
 func _sheet_quad(st: SurfaceTool, cell: Vector2i, own_level: float, corner_cells: Dictionary) -> void:
 	var keys: Array = [
 		cell, cell + Vector2i(1, 0), cell + Vector2i(1, 1), cell + Vector2i(0, 1),
@@ -457,32 +544,11 @@ func _sheet_quad(st: SurfaceTool, cell: Vector2i, own_level: float, corner_cells
 	var pos: Array = []
 	var cust: Array = []
 	for k in keys:
-		var lvl_sum: float = 0.0
-		var fl: Vector2 = Vector2.ZERO
-		var stp: float = 0.0
-		var cnt: int = 0
-		var bank_ground: float = INF
-		for e in corner_cells[k]:
-			if absf(e.level - own_level) > BRIDGE_MAX:
-				continue
-			lvl_sum += e.level
-			fl += e.flow
-			stp = maxf(stp, e.steep)
-			cnt += 1
-			if not e.wet:
-				bank_ground = minf(bank_ground, e.ground)
-		var lvl: float = lvl_sum / float(cnt)
-		# SHORE DIP: corners touching a dry bank sink just below the lowest
-		# adjacent bank ground, so the sheet slopes down and buries its edge —
-		# the waterline is the smooth terrain intersection (no cell-staircase
-		# mesh edges), and shallow-apron shores / island rocks always meet the
-		# water. Cliff banks are far above the level, so they are unaffected.
-		if bank_ground < INF:
-			lvl = minf(lvl, bank_ground - 0.08)
-		fl /= float(cnt)
+		var c: Dictionary = _corner(k, own_level, corner_cells)
 		pos.append(Vector3(
-			(float(k.x) - 0.5) * TILE, lvl, (float(k.y) - 0.5) * TILE))
-		cust.append(Color(fl.x, 0.0, fl.y, stp))
+			(float(k.x) - 0.5) * TILE, c.y, (float(k.y) - 0.5) * TILE))
+		# CUSTOM0 = (flow.x, shore proximity, flow.y, steepness).
+		cust.append(Color(c.flow.x, c.shore, c.flow.y, c.steep))
 	# Bilinear SUBDIV grid over the quad: chop displacement in the vertex
 	# shader needs vertices far denser than the 24m cell pitch. Interpolation
 	# reproduces the exact corner values along the edges, so adjacent cells
