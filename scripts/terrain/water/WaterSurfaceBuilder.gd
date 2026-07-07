@@ -329,36 +329,39 @@ static func waterfall_material() -> ShaderMaterial:
 	return _fall_material
 
 
-## Cascade ribbons: where the surface profile drops more than BRIDGE_MAX
-## between neighbouring samples the sheet deliberately SPLITS (no bridging
-## curtain) — that vertical face is a waterfall. Data-only (headless-testable):
-## {mid: Vector2, tangent: Vector2, half_width: float, top: float, bottom:
-## float} per drop, owned by the chunk containing the drop midpoint —
-## deterministic, no double emission from neighbouring chunks.
-static func compute_ribbons(water: WaterPlan, chunk: Vector2i) -> Array[Dictionary]:
+## Waterfall curtains, derived from the FIELD itself: wherever two ADJACENT
+## WET cells' levels differ by more than BRIDGE_MAX the sheet deliberately
+## splits (corner averaging refuses to bridge — no giant slanted curtains),
+## and a waterfall curtain fills exactly that gap, spanning the two pools.
+## Same data source as the sheet, so curtains and splits can never disagree
+## (deriving them from profile drops missed steps and stranded curtains in
+## open ground). {mid, tangent, half_width, top, bottom}; a curtain is owned
+## by the chunk containing its HIGHER cell — margin boundaries belong to the
+## neighbouring chunk's identical field. Pure function of (field, chunk).
+static func compute_ribbons(field: Dictionary, chunk: Vector2i) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	var centre_cx: int = chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var centre_cz: int = chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var bodies: Dictionary = water.bodies_near(
-		Vector2i(centre_cx, centre_cz), CELLS_PER_CHUNK / 2 + 1 + FIELD_MARGIN)
-	var owner_rect := Rect2(
-		Vector2(float(chunk.x), float(chunk.y)) * CHUNK_WORLD,
-		Vector2(CHUNK_WORLD, CHUNK_WORLD))
-	for river in bodies.rivers:
-		var prof: PackedFloat32Array = surface_profile(river)
-		for i in river.points.size() - 1:
-			var drop: float = prof[i] - prof[i + 1]
+	var lo_cx: int = chunk.x * CELLS_PER_CHUNK
+	var lo_cz: int = chunk.y * CELLS_PER_CHUNK
+	for cell: Vector2i in field:
+		if not field[cell].wet:
+			continue
+		if cell.x < lo_cx or cell.x >= lo_cx + CELLS_PER_CHUNK \
+				or cell.y < lo_cz or cell.y >= lo_cz + CELLS_PER_CHUNK:
+			continue
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nb: Vector2i = cell + d
+			if not field.has(nb) or not field[nb].wet:
+				continue
+			var drop: float = field[cell].level - field[nb].level
 			if drop <= BRIDGE_MAX:
 				continue
-			var mid: Vector2 = (river.points[i] + river.points[i + 1]) * 0.5
-			if not owner_rect.has_point(mid):
-				continue
 			out.append({
-				"mid": mid,
-				"tangent": (river.points[i + 1] - river.points[i]).normalized(),
-				"half_width": river.widths[i],
-				"top": prof[i],
-				"bottom": prof[i + 1],
+				"mid": Vector2((float(cell.x) + float(d.x) * 0.5) * TILE,
+						(float(cell.y) + float(d.y) * 0.5) * TILE),
+				"tangent": Vector2(float(d.x), float(d.y)),
+				"half_width": TILE * 0.5,
+				"top": field[cell].level + 0.1,
+				"bottom": field[nb].level - 0.6,
 			})
 	return out
 
@@ -428,7 +431,7 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 	mi.mesh = st.commit()
 	mi.material_override = WaterSurfaceBuilder.sheet_material()
 	root.add_child(mi)
-	var ribbons: Array[Dictionary] = compute_ribbons(water, chunk)
+	var ribbons: Array[Dictionary] = compute_ribbons(field, chunk)
 	if not ribbons.is_empty():
 		var rst: SurfaceTool = SurfaceTool.new()
 		rst.begin(Mesh.PRIMITIVE_TRIANGLES)

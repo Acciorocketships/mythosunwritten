@@ -304,28 +304,51 @@ func test_sheet_never_floats_over_the_rendered_terrain() -> void:
 					"wet" if e.wet else "rim", cell, e.level - real, e.level, real])
 	assert_gt(wet_seen, 0, "the cascade chunks still hold water")
 
-func test_steep_profile_drops_emit_waterfall_ribbons() -> void:
+func test_every_sheet_split_gets_a_waterfall_curtain() -> void:
 	# Owner: "where there is a drop, we should also work on waterfalls." The
-	# cascade chunks must yield ribbon data spanning each >BRIDGE_MAX profile
-	# drop, top/bottom matching the adjacent reach surfaces.
+	# sheet deliberately splits between adjacent wet cells whose levels differ
+	# by more than BRIDGE_MAX; a curtain must fill EXACTLY each such gap —
+	# same data source, so splits and curtains can never disagree.
 	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
 	var total := 0
 	for chunk in [Vector2i(-1, -6), Vector2i(0, -6)]:
-		for r in WaterSurfaceBuilder.compute_ribbons(water, chunk):
+		var field: Dictionary = WaterSurfaceBuilder.compute_field(
+			water, chunk, _region(OWNER_SEED, chunk))
+		var ribbons: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk)
+		var lo := Vector2i(chunk.x * 8, chunk.y * 8)
+		var gaps := 0
+		for cell: Vector2i in field:
+			if not field[cell].wet:
+				continue
+			if cell.x < lo.x or cell.x >= lo.x + 8 or cell.y < lo.y or cell.y >= lo.y + 8:
+				continue
+			for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var nb: Vector2i = cell + d
+				if field.has(nb) and field[nb].wet \
+						and field[cell].level - field[nb].level > WaterSurfaceBuilder.BRIDGE_MAX:
+					gaps += 1
+		assert_eq(ribbons.size(), gaps, "one curtain per wet-wet sheet split in the chunk")
+		for r in ribbons:
 			total += 1
-			assert_gt(r.top - r.bottom, WaterSurfaceBuilder.BRIDGE_MAX,
-				"a ribbon spans a real drop (top %.1f bottom %.1f)" % [r.top, r.bottom])
-			assert_gt(r.half_width, 0.0, "ribbon carries the channel width")
-	assert_gt(total, 0, "the cascade chunks carry waterfall ribbons")
+			assert_gt(r.top - r.bottom, WaterSurfaceBuilder.BRIDGE_MAX - 0.7,
+				"a curtain spans its drop (top %.1f bottom %.1f)" % [r.top, r.bottom])
+	assert_gt(total, 0, "the cascade chunks carry waterfall curtains")
 
 func test_ribbons_are_deterministic_and_chunk_owned() -> void:
 	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
-	var a: Array = WaterSurfaceBuilder.compute_ribbons(water, Vector2i(-1, -6))
-	var b: Array = WaterSurfaceBuilder.compute_ribbons(water, Vector2i(-1, -6))
-	assert_eq(a.size(), b.size(), "pure function of (plan, chunk)")
+	var chunk := Vector2i(-1, -6)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(water, chunk, _region(OWNER_SEED, chunk))
+	var a: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk)
+	var b: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk)
+	assert_eq(a.size(), b.size(), "pure function of (field, chunk)")
 	for i in a.size():
 		assert_eq(a[i].mid, b[i].mid, "ribbon %d midpoint stable" % i)
-	# A drop owned by one chunk never re-emits from the neighbour.
+	# A curtain's HIGHER cell sits inside the owning chunk — the neighbour's
+	# field marks the same boundary but its higher cell is then in the margin.
+	var lo := Vector2i(chunk.x * 8, chunk.y * 8)
 	for r in a:
-		var owner_chunk := Vector2i(int(floor(r.mid.x / 192.0)), int(floor(r.mid.y / 192.0)))
-		assert_eq(owner_chunk, Vector2i(-1, -6), "ribbon %s owned by its midpoint chunk" % r.mid)
+		var hi_cell := Vector2i(roundi((r.mid.x - r.tangent.x * 12.0) / 24.0),
+				roundi((r.mid.y - r.tangent.y * 12.0) / 24.0))
+		assert_true(hi_cell.x >= lo.x and hi_cell.x < lo.x + 8 \
+				and hi_cell.y >= lo.y and hi_cell.y < lo.y + 8,
+			"curtain %s owned via its higher cell %s" % [r.mid, hi_cell])
