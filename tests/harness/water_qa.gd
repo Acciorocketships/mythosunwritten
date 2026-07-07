@@ -21,6 +21,10 @@ const SPOTS: Array = [
 	["s4_mist_front", Vector3(44.0, 8.0, -1101.0), Vector3(48, 8, -1104), Vector3(48, 6, -1093)],
 	["s5_crest", Vector3(44.0, 11.0, -1085.0), Vector3(46, 10.6, -1077), Vector3(48, 8.8, -1092.5)],
 	["strip_probe", Vector3(44.0, 8.0, -1101.0), Vector3(72, 12, -1108), Vector3(50, 8.5, -1084)],
+	# Round-4 sites: bank skirt + swells, shoreline angles + white blob, ghost.
+	["s6_bank_swells", Vector3(226.8, 8.0, -1165.9), Vector3(214, 9.5, -1152), Vector3(234, 2, -1174)],
+	["s7_shore_angles", Vector3(76.1, 8.0, -1156.5), Vector3(62, 11, -1145), Vector3(90, 2, -1166)],
+	["s8_ghost", Vector3(113.3, 9.0, -1215.5), Vector3(104, 9, -1205), Vector3(119, 3.5, -1221)],
 ]
 
 var _char: CharacterBody3D

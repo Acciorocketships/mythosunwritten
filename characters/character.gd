@@ -29,7 +29,7 @@ var water_surface_y: float = WATER_SURFACE_Y
 # wave_height/wave_speed uniform defaults in water_unified.gdshader (the noise
 # drift term is omitted — the travelling sines carry most of the swell).
 # Mirrors water_unified.gdshader's wave_height / wave_speed — keep in sync.
-const SWELL_HEIGHT: float = 0.5
+const SWELL_HEIGHT: float = 0.85
 const SWELL_SPEED: float = 0.35
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
@@ -201,8 +201,8 @@ func _update_in_water() -> void:
 func _swell_offset() -> float:
 	var p: Vector2 = Vector2(global_position.x, global_position.z)
 	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
-	var h: float = 1.0 * sin(p.dot(Vector2(0.055, 0.021)) - t * 0.33)
-	h += 0.7 * sin(p.dot(Vector2(-0.030, 0.048)) - t * 0.26 + 1.7)
+	var h: float = 1.0 * sin(p.dot(Vector2(0.042, 0.016)) - t * 0.33)
+	h += 0.7 * sin(p.dot(Vector2(-0.023, 0.037)) - t * 0.26 + 1.7)
 	h += 0.35 * sin(p.dot(Vector2(0.032, -0.076)) - t * 0.36 + 4.0)
 	return h * 0.5 * SWELL_HEIGHT
 

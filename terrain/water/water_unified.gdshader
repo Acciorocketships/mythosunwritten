@@ -22,12 +22,12 @@ uniform vec3 color_shallow : source_color = vec3(0.55, 0.82, 0.73);
 uniform vec3 color_sky : source_color = vec3(0.76, 0.89, 0.86);
 uniform float sky_reflect : hint_range(0.0, 1.0) = 0.42;
 uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
-uniform float foam_width : hint_range(0.0, 3.0) = 0.4;
-uniform float clarity_depth : hint_range(0.5, 16.0) = 10.0;  // metres to ~deep colour
-uniform float refraction_strength : hint_range(0.0, 0.2) = 0.05;
+uniform float foam_width : hint_range(0.0, 3.0) = 0.3;
+uniform float clarity_depth : hint_range(0.5, 24.0) = 15.0;  // metres to ~deep colour
+uniform float refraction_strength : hint_range(0.0, 0.2) = 0.035;
 // LOW frequency, HIGH amplitude, SLOW — the swells are the river's motion
 // (owner). Speed changes here must be mirrored in character.gd SWELL_SPEED.
-uniform float wave_height : hint_range(0.0, 0.8) = 0.5;
+uniform float wave_height : hint_range(0.0, 1.5) = 0.85;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.35;
 // Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
 // steep_v), never in a global playback rate — a raised base rate reads as
@@ -73,7 +73,11 @@ void vertex() {
 	// or detach from the static slabs. Chop (travelling crest geometry) is
 	// reserved for genuinely steep reaches and dies with the builder's flow
 	// fade at shores.
-	float amp = wave_height * (1.0 + 0.35 * ff) * (1.0 - smoothstep(0.25, 0.8, shore_v));
+	// Fade STARTS late (0.45): rivers are entirely shore-adjacent cells
+	// (baked shore 0.6) and an early fade flattened all of them — the owner
+	// wants big rollers mid-channel. Full kill by 0.9: waterline edges and
+	// waterfall crests (shore 1.0) stay pinned to their banks and slabs.
+	float amp = wave_height * (1.0 + 0.35 * ff) * (1.0 - smoothstep(0.45, 0.9, shore_v));
 	float camp = chop_height * ff * steep_v * 0.6;
 	float e = 2.0;
 	float h = water_wave_h(noise_tex, world_pos.xz, t) * amp
@@ -117,21 +121,21 @@ void fragment() {
 	float depth = water_depth_world(depth_texture, SCREEN_UV, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
 	float depth_t = 1.0 - exp(-depth / clarity_depth);
 	// Refraction: offset the screen sample by the view-space normal, fading
-	// in over the first metre (shores don't smear). If the offset lands on
-	// geometry ABOVE the surface (a bank, the player), fall back to straight —
-	// dry things must never bleed into the water body.
+	// in over the first metre (shores don't smear). Reject offsets landing
+	// on geometry ABOVE the surface (banks, the player) or NEARER than this
+	// fragment (foreground headlands) — both pasted ghost copies of dry
+	// things into the water (owner: "ghost image in the water").
 	vec2 roff = NORMAL.xy * refraction_strength * clamp(depth, 0.0, 1.0);
 	vec2 suv = SCREEN_UV + roff;
-	if (water_depth_world(depth_texture, suv, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y) <= 0.0) {
+	if (water_depth_world(depth_texture, suv, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y) <= 0.0
+			|| water_view_z(depth_texture, suv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.05) {
 		suv = SCREEN_UV;
 	}
 	vec3 scene = texture(screen_texture, suv).rgb;
-	// Clear body: the refracted scene through a green-glass tint, saturating
-	// to the soft teal with depth; glancing views mirror the LIGHT sky tint
-	// (the reference's pale reflective sheen).
-	// LIGHT tint only — the owner wants clear water: the refracted scene
-	// shows through nearly untinted in the shallows.
-	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.18), color_deep, depth_t);
+	// Clear body: the refracted scene through a light green-glass tint,
+	// saturating toward the soft teal with depth but NEVER fully opaque —
+	// the owner wants the near-shore clarity everywhere.
+	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.12), color_deep, min(depth_t, 0.88));
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
 	body = mix(body, color_sky, fres * sky_reflect);
 	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, shore_v, foam_width);

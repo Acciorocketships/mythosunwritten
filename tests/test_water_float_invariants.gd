@@ -202,7 +202,7 @@ func test_hover_rims_buried_outside_the_waterline() -> void:
 			if e.wet or e.level <= e.ground + 0.02:
 				continue   # rising-bank rim: sheet dives into the wall, fine
 			found += 1
-			var verts: Array = WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water)
+			var verts: Array = WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water, region)
 			var y_min: float = INF
 			var above := 0
 			for v in verts:
@@ -248,7 +248,7 @@ func test_submerged_shelves_keep_their_water() -> void:
 				continue
 			found += 1
 			var y_max: float = -INF
-			for v in WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water):
+			for v in WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water, region):
 				y_max = maxf(y_max, v.pos.y)
 			# (Corners shared with a higher compatible reach may average the
 			# sheet ABOVE this cell's own level — that is the watertight
@@ -296,6 +296,117 @@ func test_fall_rows_ogee_profile() -> void:
 		"curve flattens back up into the lower water (slope %.2f)" % entry_slope)
 	assert_almost_eq(front[front.size() - 1][1], r.bottom, 0.30,
 		"curve ends at the plunge surface, C1 into the pool")
+
+
+# ------------------------------------------------------------
+# Water only stops by touching ground (round-4 rule 3): every outer-ring
+# sub-vertex of the sheet — the rows of rim cells facing cells OUTSIDE the
+# field — must sit under the REAL RENDERED terrain at that exact point
+# (TerrainSurfaceField.surface_y — ramps included). Flat cell-top logic left
+# edges hovering over ramped banks ("water stops before touching the
+# ground", "water mysteriously missing").
+# ------------------------------------------------------------
+func test_outer_ring_buried_under_rendered_ground() -> void:
+	var water: WaterPlan = _water(SEED)
+	var checked := 0
+	for chunk: Vector2i in CHUNKS:
+		var field: Dictionary = _field(SEED, chunk)
+		if field.is_empty():
+			continue
+		var region = _region(SEED, chunk)
+		var cm: Dictionary = WaterSurfaceBuilder.corner_map(field, region)
+		for cell: Vector2i in field:
+			if field[cell].wet or not _interior(cell, chunk):
+				continue
+			var open: Array = []
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				if not field.has(cell + d):
+					open.append(d)
+			if open.is_empty():
+				continue
+			for v in WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water, region):
+				var lx: float = v.pos.x - (float(cell.x) - 0.5) * TILE
+				var lz: float = v.pos.z - (float(cell.y) - 0.5) * TILE
+				var on_open := false
+				for d in open:
+					if (d.x == 1 and lx > TILE - 0.01) or (d.x == -1 and lx < 0.01) \
+							or (d.y == 1 and lz > TILE - 0.01) or (d.y == -1 and lz < 0.01):
+						on_open = true
+						break
+				if not on_open:
+					continue
+				checked += 1
+				var rg: float = TerrainSurfaceField.surface_y(region, v.pos.x, v.pos.z)
+				assert_true(v.pos.y <= rg - 0.02,
+					"outer-ring vertex at %s buried under the rendered ground (y %.2f, ground %.2f)"
+					% [str(v.pos), v.pos.y, rg])
+	assert_true(checked > 0, "found outer-ring vertices to check")
+
+
+# ------------------------------------------------------------
+# The shoreline cap must never dig a trough through open water (round-4:
+# "small gap between the main water and the skirt water"): on WET shore
+# cells, sub-vertices over SUBMERGED rendered ground stay at the surface.
+# ------------------------------------------------------------
+func test_wet_shores_never_trough() -> void:
+	var water: WaterPlan = _water(SEED)
+	var checked := 0
+	for chunk: Vector2i in CHUNKS:
+		var field: Dictionary = _field(SEED, chunk)
+		if field.is_empty():
+			continue
+		var region = _region(SEED, chunk)
+		var cm: Dictionary = WaterSurfaceBuilder.corner_map(field, region)
+		for cell: Vector2i in field:
+			var e: Dictionary = field[cell]
+			if not e.wet or not _interior(cell, chunk):
+				continue
+			if e.get("shore", 0.0) <= 0.0:
+				continue   # only shore cells run the contour cap
+			# Sloping reaches legitimately tilt the sheet below the cell's own
+			# level (corner averaging with the downstream neighbour). The BUG
+			# is the CAP digging below the corner-bilinear surface over
+			# submerged ground — so the floor is the lowest corner anchor.
+			var floor_y: float = INF
+			for off in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+				floor_y = minf(floor_y,
+					WaterSurfaceBuilder._corner(cell + off, e.level, cm).y)
+			for v in WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water, region):
+				var rg: float = TerrainSurfaceField.surface_y(region, v.pos.x, v.pos.z)
+				if rg < e.level - 0.3:
+					checked += 1
+					assert_true(v.pos.y >= floor_y - 0.03,
+						"no cap trough through open water at %s (y %.2f, corner floor %.2f, ground %.2f)"
+						% [str(v.pos), v.pos.y, floor_y, rg])
+	if checked == 0:
+		pass_test("no submerged wet-shore vertices in the tested chunks")
+
+
+# ------------------------------------------------------------
+# Crest cells are swell-damped (round-4: "water not blending into
+# waterfall"): the sheet next to a static waterfall slab must barely move,
+# or the full-amplitude swell hinges against the pinned crest edge and opens
+# a slit. Both sides of every split carry high baked shore.
+# ------------------------------------------------------------
+func test_crest_cells_are_swell_damped() -> void:
+	var checked := 0
+	for chunk: Vector2i in CHUNKS:
+		var field: Dictionary = _field(SEED, chunk)
+		if field.is_empty():
+			continue
+		for cell: Vector2i in field:
+			if not field[cell].wet:
+				continue
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var nb: Vector2i = cell + d
+				if field.has(nb) and field[nb].wet \
+						and absf(field[cell].level - field[nb].level) > BRIDGE:
+					checked += 1
+					assert_true(field[cell].get("shore", 0.0) >= 0.75,
+						"crest-side cell %s is swell-damped (shore %.2f)"
+						% [str(cell), field[cell].get("shore", 0.0)])
+					break
+	assert_true(checked > 0, "found crest cells to check")
 
 
 # ------------------------------------------------------------

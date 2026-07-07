@@ -11,11 +11,22 @@
 // position — seamless across chunk meshes. The character's _swell_offset
 // mirrors the three sines on CPU: keep in sync.
 float water_wave_h(sampler2D noise_tex, vec2 p, float t) {
-	float h = 1.0 * sin(dot(p, vec2(0.055, 0.021)) - t * 0.33);
-	h += 0.7 * sin(dot(p, vec2(-0.030, 0.048)) - t * 0.26 + 1.7);
+	float h = 1.0 * sin(dot(p, vec2(0.042, 0.016)) - t * 0.33);
+	h += 0.7 * sin(dot(p, vec2(-0.023, 0.037)) - t * 0.26 + 1.7);
 	h += 0.35 * sin(dot(p, vec2(0.032, -0.076)) - t * 0.36 + 4.0);
 	h += 0.8 * (textureLod(noise_tex, p * 0.003 + vec2(t * 0.0035, -t * 0.003), 0.0).r - 0.5);
 	return h * 0.5;
+}
+
+// View-space Z of the opaque scene point at screen uv (negative; more
+// negative = farther from the camera). Lets the refraction guard reject
+// FOREGROUND geometry: offsetting the screen sample onto something nearer
+// than the water fragment pastes a ghost copy of it into the water.
+float water_view_z(sampler2D depth_tex, vec2 uv, mat4 inv_projection) {
+	float depth_raw = texture(depth_tex, uv).r;
+	vec3 ndc = vec3(uv * 2.0 - 1.0, depth_raw);
+	vec4 v = inv_projection * vec4(ndc, 1.0);
+	return v.z / v.w;
 }
 
 // Crest-sharpened wave trains advected downstream at `speed` (m/s): sharp
@@ -50,6 +61,9 @@ float water_depth_world(sampler2D depth_tex, vec2 screen_uv, mat4 inv_projection
 float water_foam_mask(sampler2D noise_tex, vec2 world_xz, float t, float depth, float shore, float foam_width) {
 	float breaks = texture(noise_tex, world_xz * 0.06 + vec2(t * 0.02, -t * 0.016)).r;
 	float lap = 1.0 - smoothstep(foam_width * 0.4, foam_width * (0.7 + 0.6 * breaks), depth);
-	float gate = smoothstep(0.12, 0.55, shore);
+	// TIGHT gate: only the waterline band itself laps white. A loose gate
+	// saturated whole shallow shelves into white blobs with hard edges at
+	// bed steps (owner: "white stuff not really connected to the water").
+	float gate = smoothstep(0.35, 0.8, shore);
 	return lap * gate * (0.75 + 0.25 * sin(t * 1.6 + breaks * 6.283));
 }

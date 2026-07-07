@@ -30,8 +30,11 @@ const SHELF_DEPTH := 3.7
 # those cells sit at the bed. A generous margin painted the river's level onto
 # terrain dips beyond the channel — water sheets embedded in hillsides.
 const CHANNEL_MARGIN := 4.0
-const FLOOD_STEPS := 2                # submerged-shelf flood distance (cells)
-const FIELD_MARGIN := 3               # region margin = FLOOD_STEPS + rim ring
+# Flood runs until it MEETS RISING GROUND (bounded here for purity/perf):
+# stopping mid-shelf left the sheet's dip boundary in open water — a sunken
+# edge band with the shelf continuing beyond it (owner's shore gaps).
+const FLOOD_STEPS := 6                # submerged-shelf flood distance (cells)
+const FIELD_MARGIN := 7               # region margin = FLOOD_STEPS + rim ring
 # Corners only average adjacent cells within this of the cell's own level:
 # bigger jumps SPLIT the sheet (two clean edges at the cliff the wall hides)
 # instead of bridging them with giant slanted curtain quads ("water coming
@@ -303,6 +306,10 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 	# Moderate, NOT heavy: narrow channels are entirely shore-adjacent cells,
 	# and heavy damping froze whole rivers still. The same touch also grades
 	# the baked shore proximity one cell into the water for the foam lap line.
+	# CREST cells (either side of a waterfall split) damp HARD: the sheet
+	# there must barely swell or the moving surface hinges against the pinned
+	# crest edge and the static slab — a visible crease and breathing slit
+	# (owner: "water not blending into waterfall").
 	for cell in field:
 		if not field[cell].wet:
 			continue
@@ -310,7 +317,13 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 			var nb: Vector2i = cell + d
 			if not field.has(nb) or not field[nb].wet:
 				field[cell].flow *= 0.5
-				field[cell].shore = 0.6
+				field[cell].shore = maxf(field[cell].shore, 0.6)
+				break
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nb: Vector2i = cell + d
+			if field.has(nb) and field[nb].wet \
+					and absf(field[cell].level - field[nb].level) > BRIDGE_MAX:
+				field[cell].shore = maxf(field[cell].shore, 0.8)
 				break
 
 	# Drop influence-only cells that are neither wet nor rim (dry banks whose
@@ -402,7 +415,10 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i, region) -> Array
 				"mid": Vector2((float(cell.x) + float(d.x) * 0.5) * TILE,
 						(float(cell.y) + float(d.y) * 0.5) * TILE),
 				"tangent": Vector2(float(d.x), float(d.y)),
-				"half_width": TILE * 0.5,
+				# A hair wider than the cell: perpendicular slabs at an
+				# L-corner OVERLAP instead of butt-jointing with a notch
+				# (owner: "waterfalls not smoothly connected at corners").
+				"half_width": TILE * 0.5 + 0.7,
 				"top": lvl,
 				"bottom": bottom,
 				"kind": kind,
@@ -561,7 +577,7 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 		if cell.x < lo_cx or cell.x >= lo_cx + CELLS_PER_CHUNK \
 				or cell.y < lo_cz or cell.y >= lo_cz + CELLS_PER_CHUNK:
 			continue   # margin cells only shape shared corners
-		for v in sheet_cell_grid(cell, field, cm, water):
+		for v in sheet_cell_grid(cell, field, cm, water, region):
 			st.set_custom(0, v.cust)
 			st.set_uv(Vector2(0.0, 0.0))
 			st.add_vertex(v.pos)
@@ -730,9 +746,15 @@ static func _corner_wetf(cm: Dictionary, k: Vector2i) -> float:
 
 
 static func _corner_wetf_smooth(cm: Dictionary, k: Vector2i) -> float:
-	return (2.0 * _corner_wetf(cm, k)
-		+ _corner_wetf(cm, k + Vector2i(1, 0)) + _corner_wetf(cm, k + Vector2i(-1, 0))
-		+ _corner_wetf(cm, k + Vector2i(0, 1)) + _corner_wetf(cm, k + Vector2i(0, -1))) / 6.0
+	# 3x3 gaussian over the corner lattice: the plain 5-point average left C1
+	# breaks at cell borders — the waterline turned in SHARP ANGLES there
+	# (owner). The wider kernel rounds the contour across cells.
+	var acc: float = 4.0 * _corner_wetf(cm, k)
+	acc += 2.0 * (_corner_wetf(cm, k + Vector2i(1, 0)) + _corner_wetf(cm, k + Vector2i(-1, 0))
+		+ _corner_wetf(cm, k + Vector2i(0, 1)) + _corner_wetf(cm, k + Vector2i(0, -1)))
+	acc += _corner_wetf(cm, k + Vector2i(1, 1)) + _corner_wetf(cm, k + Vector2i(1, -1)) \
+		+ _corner_wetf(cm, k + Vector2i(-1, 1)) + _corner_wetf(cm, k + Vector2i(-1, -1))
+	return acc / 16.0
 
 
 ## The rendered vertex grid for one cell of the sheet: SUBDIV² sub-quads as a
@@ -748,7 +770,7 @@ static func _corner_wetf_smooth(cm: Dictionary, k: Vector2i) -> float:
 ## over dry lawn. Ground clearly below the level is left alone — that water
 ## is genuinely submerged.
 static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
-		water: WaterPlan) -> Array:
+		water: WaterPlan, region) -> Array:
 	var e: Dictionary = field[cell]
 	var own_level: float = e.level
 	var keys: Array = [
@@ -756,7 +778,6 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 	]   # min corner, +x, +xz, +z — walk order around the quad
 	var pos: Array = []
 	var cust: Array = []
-	var gnds: Array = []
 	var wets: Array = []
 	for k in keys:
 		var c: Dictionary = _corner(k, own_level, cm)
@@ -764,15 +785,13 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 			(float(k.x) - 0.5) * TILE, c.y, (float(k.y) - 0.5) * TILE))
 		# CUSTOM0 = (flow.x, shore proximity, flow.y, steepness).
 		cust.append(Color(c.flow.x, c.shore, c.flow.y, c.steep))
-		var g: float = INF
-		for sh in cm[k]:
-			g = minf(g, cm[k][sh].ground)
-		gnds.append(g)
 		wets.append(_corner_wetf_smooth(cm, k))
-	# Only shoreline cells pay for the contour: rims and shore-touching wet
-	# cells whose own ground is within the flush band of the level.
-	var contour: bool = ((not e.wet) or e.get("shore", 0.0) > 0.0) \
-		and e.ground >= own_level - 1.05
+	# Only shoreline cells pay for the contour: rims, and wet cells that
+	# touch one. Ground checks are per-vertex against the REAL RENDERED
+	# surface (TerrainSurfaceField — ramps included), never flat cell tops:
+	# flat-top logic left edges hovering over ramped banks (owner: "water
+	# stops before touching the ground").
+	var contour: bool = (not e.wet) or e.get("shore", 0.0) > 0.0
 	var out: Array = []
 	for sz in SUBDIV:
 		for sx in SUBDIV:
@@ -785,24 +804,27 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 				var p: Vector3 = _bilerp_pos(pos, uv[0], uv[1])
 				var c: Color = _bilerp_cust(cust, uv[0], uv[1])
 				if contour:
-					var gv: float = _bilerp_gnd(gnds, uv[0], uv[1])
 					var wf: float = _bilerp_gnd(wets, uv[0], uv[1])
 					var wob: float = (Helper._value_noise01(
 						Vector3(p.x, 0.0, p.z), water.world_seed + 913,
 						SHORE_WOBBLE_SCALE) - 0.5) * 2.0 * SHORE_WOBBLE_AMP
 					var s: float = (0.5 - wf) * SHORE_SDF_SCALE + wob
 					if s > 0.0:
-						# Outside the waterline: dive fast (hover rims sit up
-						# to 1m over their ground — the edge must be under the
-						# grass within half a metre of the line), then hug just
-						# under the local ground (never exit a cliff face).
-						var cap: float = maxf(own_level - s * 3.2, gv - 0.35)
-						p.y = minf(p.y, cap)
-					if s > -2.4:
+						var rg: float = TerrainSurfaceField.surface_y(region, p.x, p.z)
+						# Rim cells always bury outside the waterline. WET
+						# cells bury only where the rendered ground rises to
+						# the surface (dive INTO the bank) — capping over
+						# submerged ground dug a visible trough through open
+						# water ("gap between the main water and the skirt").
+						if not e.wet or rg >= own_level - 0.1:
+							var cap: float = maxf(own_level - s * 3.2, rg - 0.35)
+							p.y = minf(p.y, cap)
+					if s > -1.2:
 						# Waterline band: full shore — the foam lap line hugs
-						# the curve and the shader kills the swell so the
-						# buried edge never bobs above its bank.
-						c.g = maxf(c.g, 1.0 - maxf(0.0, -s) * 0.4)
+						# the curve (TIGHT: a wide band read as white blobs
+						# over whole shelves) and the shader kills the swell
+						# so the buried edge never bobs above its bank.
+						c.g = maxf(c.g, 1.0 - maxf(0.0, -s) * 0.8)
 				quad.append([p, c])
 			# Sub-corners (0,0),(0,1),(1,1),(1,0); winding matches the +Y quad.
 			for idx in [0, 1, 2, 0, 2, 3]:
