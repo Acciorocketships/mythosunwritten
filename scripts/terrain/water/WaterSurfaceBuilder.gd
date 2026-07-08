@@ -442,56 +442,9 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i, region) -> Array
 				"bottom": bottom,
 				"kind": kind,
 			})
-	# Per-side extents: where the crest line CONTINUES sideways (a parallel
-	# curtain in the neighbouring cell) or turns an L-CORNER (this same cell
-	# also drops perpendicular), the slab BODY reaches past the cell edge so
-	# the leaning front sheets overlap (a butt joint left a V-notch at
-	# corners); everywhere else the slab tucks slightly INSIDE, so fall ends
-	# die into their banks instead of jutting a square shoulder into the air.
-	# The crest cap itself stays tight either way (_ribbon_mesh clamps the
-	# first rows) — wide caps folded visibly over each other at corners.
-	var by_key: Dictionary = {}
-	for r in out:
-		by_key[[r.cell, Vector2i(int(r.tangent.x), int(r.tangent.y))]] = r
-	for r in out:
-		var d: Vector2i = Vector2i(int(r.tangent.x), int(r.tangent.y))
-		var p: Vector2i = Vector2i(-d.y, d.x)   # +across side in _row_edge terms
-		var ext: Array = []
-		var caps: Array = []
-		var walls: Array = []
-		for side: Vector2i in [p, -p]:
-			# L-corner: this same cell ALSO falls sideways — the two fronts
-			# lean apart in their own downstream directions, so the overlap
-			# GROWS with the forward reach (per-row in _row_edge), but never
-			# past the NEIGHBOUR fall's own front: a shorter perpendicular
-			# fall left our grown side poking through it as a protruding
-			# piece (owner: "corners... have pieces protruding").
-			var cap: float = 0.0
-			if keys.has([r.cell, side]):
-				var other: Dictionary = by_key[[r.cell, side]]
-				cap = maxf(fall_x_end(other.top, other.bottom) - 0.4, 0.0)
-			if keys.has([r.cell + side, d]) or keys.has([r.cell, side]):
-				ext.append(TILE * 0.5 + 0.7)
-			else:
-				ext.append(TILE * 0.5 - 0.25)
-			caps.append(cap)
-			# WALLED flank: the ground across this side rises to (or above)
-			# the crest — the fall runs in a gorge. The slab must reach INTO
-			# the rock past the boundary skirt plane: sitting proud of it,
-			# the side wall rendered face-on as a translucent streaky
-			# triangle descending the wall — the owner's "detached diagonal
-			# skirt" hanging above the plunge pool (raycast-confirmed at the
-			# x=60 boundary plane on the pinned seed).
-			var nbs: Vector2i = r.cell + side
-			var gs: float = field[nbs].ground if field.has(nbs) \
-				else region.surface_height(nbs.x, nbs.y)
-			walls.append(gs >= r.top - 0.1)
-		r["ext_hi"] = ext[0]
-		r["ext_lo"] = ext[1]
-		r["corner_cap_hi"] = caps[0]
-		r["corner_cap_lo"] = caps[1]
-		r["wall_hi"] = walls[0]
-		r["wall_lo"] = walls[1]
+	# (Width, corner and flank shaping all come from the sheet's own edge
+	# profile now — the fall mesh WELDS to those vertices in _ribbon_mesh, so
+	# there is nothing to extend, cap or bury here.)
 	return out
 
 
@@ -601,106 +554,103 @@ static func fall_rows(r: Dictionary) -> Dictionary:
 		"plunge_half_width": r.half_width * 1.2}
 
 
-## One waterfall: a THICK slab of falling water across the channel — a front
-## ogee sheet, a back sheet offset along the curve normal, side walls and a
-## rolled-over lip cap, so the fall reads as a volume of water, not a curved
-## plane (owner: "they need some depth"). The plunge foam is PARTICLE mist
-## (built beside the mesh), not painted churn. cull_disabled renders
-## interiors when swimming.
-static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
-	var rows: Dictionary = fall_rows(r)
-	var front: Array = rows.front
-	var back: Array = rows.back
-	var across_u: Vector2 = Vector2(-r.tangent.y, r.tangent.x)
-	# UV2.y carries the fall's DROP HEIGHT: the shader keys foam development
-	# on metres below the crest (UV.y × height), not the uv fraction — on a
-	# tall fall the white started right at the lip, reading from above as a
-	# pale scalloped skirt hugging the crest line (owner's round-6 report).
+## One waterfall, WELDED to the sheet: every column of the fall starts at one
+## of the sheet's own crest-edge vertices (edge_profile — drooped, contour-
+## capped, corner-snapped), descends the shared ogee curve, and dissolves
+## into the pool below. Columns whose edge vertex was capped under the bank
+## (outside the waterline) PINCH to a point, so the fall is exactly as wide
+## as the water that actually spills — fall corners and pool corners are the
+## same vertices, nothing to line up (owner: "make it one cohesive thing").
+## A back sheet offset along the curve normal keeps the slab's volume; a lip
+## cap closes the top. cull_disabled renders interiors when swimming.
+static func _ribbon_mesh(st: SurfaceTool, r: Dictionary, field: Dictionary,
+		cm: Dictionary, water: WaterPlan, region) -> void:
+	var d := Vector2i(int(r.tangent.x), int(r.tangent.y))
+	var edge: Array = edge_profile(r.cell, d, field, cm, water, region)
+	var tangent: Vector2 = r.tangent
 	var drop_h: float = maxf(r.top - r.bottom, 0.5)
-	var prm: Dictionary = {
-		"mid": r.mid, "tangent": r.tangent,
-		"ext_hi": r.get("ext_hi", r.half_width),
-		"ext_lo": r.get("ext_lo", r.half_width),
-		"corner_cap_hi": r.get("corner_cap_hi", 0.0),
-		"corner_cap_lo": r.get("corner_cap_lo", 0.0),
-		"wall_hi": r.get("wall_hi", false),
-		"wall_lo": r.get("wall_lo", false),
-	}
-	_layer_strip(st, front, across_u, prm, false, drop_h)
-	_layer_strip(st, back, across_u, prm, true, drop_h)
-	for s in [-1.0, 1.0]:
-		for i in front.size() - 1:
-			_slab_quad(st,
-				[_row_edge(front[i], across_u, s, prm),
-					_row_edge(front[i + 1], across_u, s, prm),
-					_row_edge(back[i + 1], across_u, s, prm),
-					_row_edge(back[i], across_u, s, prm)],
-				[front[i][3], front[i + 1][3], back[i + 1][3], back[i][3]], 1.0, drop_h)
-	# Lip cap: closes the slab's top edge — the water rolling over the crest.
-	_slab_quad(st,
-		[_row_edge(front[0], across_u, -1.0, prm),
-			_row_edge(front[0], across_u, 1.0, prm),
-			_row_edge(back[0], across_u, 1.0, prm),
-			_row_edge(back[0], across_u, -1.0, prm)],
-		[0.0, 0.0, 0.0, 0.0], 1.0, drop_h)
+	var cv: Dictionary = _fall_curve(r.top, r.bottom)
+	# Reference curve rows as (along, y-offset-below-the-drooped-crest, uv_y):
+	# every column rides the same shape shifted to ITS edge vertex height.
+	var ref: Array = []
+	ref.append([-FALL_OVERLAP,
+		-(CREST_DROOP - crest_droop_at(FALL_OVERLAP)) + 0.03, 0.0])
+	for i in FALL_PAR_ROWS + 1:
+		var x: float = cv.x_star * float(i) / float(FALL_PAR_ROWS)
+		var y: float = cv.y0 - cv.s0 * x - cv.c * x * x
+		ref.append([x, cv.y0 - y, (r.top - y) / drop_h])
+	for j in range(1, FALL_FILLET_ROWS + 1):
+		var th: float = cv.th0 * (1.0 - float(j) / float(FALL_FILLET_ROWS))
+		var x: float = cv.x_star + cv.arc_r * (sin(cv.th0) - sin(th))
+		var y: float = cv.y_star - cv.arc_r * (cos(th) - cos(cv.th0))
+		ref.append([x, cv.y0 - y, (r.top - y) / drop_h])
+	ref.append([cv.x_end + 1.6, cv.y0 - (r.bottom - 0.12), 1.04])
+	ref.append([cv.x_end + 3.2, cv.y0 - (r.bottom - 0.28), 1.08])
+	# Column anchor points + spill test: a column spills only if its sheet
+	# edge vertex sits AT the drooped water surface; vertices the contour
+	# capped into the bank pinch the fall shut there.
+	var cols: Array = []
+	for i in edge.size():
+		var tv: Vector3 = edge[i].pos
+		var spill: bool = tv.y >= r.top - CREST_DROOP - 0.2
+		cols.append({"top": tv, "spill": spill})
+	# Front and back vertex lattices [column][row].
+	var thick: float = clampf(drop_h * 0.10, 0.4, 1.2)
+	var front: Array = []
+	var back: Array = []
+	for ci in cols.size():
+		var col: Dictionary = cols[ci]
+		var fcol: Array = []
+		for row in ref:
+			if col.spill:
+				fcol.append(Vector3(col.top.x + tangent.x * row[0],
+					col.top.y - row[1], col.top.z + tangent.y * row[0]))
+			else:
+				fcol.append(col.top)
+		front.append(fcol)
+		var bcol: Array = []
+		for i in fcol.size():
+			if not col.spill:
+				bcol.append(col.top)
+				continue
+			var a: int = maxi(i - 1, 0)
+			var b: int = mini(i + 1, fcol.size() - 1)
+			var da: float = (Vector2(fcol[b].x, fcol[b].z)
+				- Vector2(fcol[a].x, fcol[a].z)).dot(tangent)
+			var dy: float = fcol[b].y - fcol[a].y
+			var n: Vector2 = Vector2(-dy, da).normalized()   # (along, y) up-upstream
+			bcol.append(Vector3(fcol[i].x - tangent.x * n.x * thick,
+				fcol[i].y - n.y * thick, fcol[i].z - tangent.y * n.x * thick))
+		back.append(bcol)
+	# Quads: front sheet, back sheet (flipped), lip cap along the top.
+	for ci in cols.size() - 1:
+		if not (cols[ci].spill or cols[ci + 1].spill):
+			continue
+		var ux0: float = float(ci) / float(cols.size() - 1)
+		var ux1: float = float(ci + 1) / float(cols.size() - 1)
+		for i in ref.size() - 1:
+			_fall_quad(st,
+				[front[ci][i], front[ci + 1][i], front[ci + 1][i + 1], front[ci][i + 1]],
+				[ref[i][2], ref[i][2], ref[i + 1][2], ref[i + 1][2]],
+				[ux0, ux1, ux1, ux0], 0.0, drop_h)
+			_fall_quad(st,
+				[back[ci][i], back[ci][i + 1], back[ci + 1][i + 1], back[ci + 1][i]],
+				[ref[i][2], ref[i + 1][2], ref[i + 1][2], ref[i][2]],
+				[ux0, ux0, ux1, ux1], 0.0, drop_h)
+		_fall_quad(st,
+			[front[ci][0], back[ci][0], back[ci + 1][0], front[ci + 1][0]],
+			[0.0, 0.0, 0.0, 0.0], [ux0, ux0, ux1, ux1], 1.0, drop_h)
 
 
-## One row edge position: row = [centre: Vector2, y, width_scale, uv_y],
-## s = -1 (left) or +1 (right) across the flow, with per-side extents. WALLED
-## flanks reach a fixed depth INTO the rock (past the boundary skirt plane at
-## TILE/2) — proud edges rendered as detached diagonal skirts on the gorge
-## wall. Open crest rows (uv < 0.06 — the overlap row, the lip and its cap)
-## stay TIGHT to the cell edge: extended caps folded visibly over the
-## neighbouring slab at corners. On L-CORNER sides the body's extension GROWS
-## with the row's forward offset (the neighbouring fall's front leans away by
-## its own reach — a fixed overlap only sealed the top of the V-notch).
-static func _row_edge(row: Array, across_u: Vector2, s: float, prm: Dictionary) -> Vector3:
-	var ext: float = prm.ext_hi if s > 0.0 else prm.ext_lo
-	var cap: float = prm.corner_cap_hi if s > 0.0 else prm.corner_cap_lo
-	var walled: bool = prm.wall_hi if s > 0.0 else prm.wall_lo
-	if walled:
-		# Constant depth into the rock: width_scale must not modulate it or
-		# the runout rows poke back OUT of the wall face.
-		return Vector3(row[0].x + across_u.x * (TILE * 0.5 + 0.6) * s, row[1],
-			row[0].y + across_u.y * (TILE * 0.5 + 0.6) * s)
-	if row[3] < 0.06:
-		ext = minf(ext, TILE * 0.5 + 0.05)
-	elif cap > 0.0:
-		var along: float = (row[0] - prm.mid).dot(prm.tangent)
-		ext += clampf(along, 0.0, cap)
-	return Vector3(row[0].x + across_u.x * ext * row[2] * s, row[1],
-		row[0].y + across_u.y * ext * row[2] * s)
-
-
-## One quad, vertices in walk order with per-vertex uv.y (uv.x from position).
-## UV2 = (side, drop height): side 1 on side walls + lip cap — the shader
-## quiets foam and alpha there so edge-on wings never read as bright shards;
-## the height lets the shader convert UV.y into metres below the crest.
-static func _slab_quad(st: SurfaceTool, vs: Array, uv_y: Array, side: float = 0.0,
-		drop_h: float = 4.0) -> void:
-	var uv_x: Array = [0.0, 1.0, 1.0, 0.0]
+## One fall quad with per-vertex uv (uv.x across the fall, uv.y down it);
+## UV2 = (lip-cap flag, drop height) — the shader quiets the cap and keys
+## foam development on metres fallen.
+static func _fall_quad(st: SurfaceTool, vs: Array, uv_y: Array, uv_x: Array,
+		side: float, drop_h: float) -> void:
 	for idx in [0, 1, 2, 0, 2, 3]:
 		st.set_uv(Vector2(uv_x[idx], uv_y[idx]))
 		st.set_uv2(Vector2(side, drop_h))
 		st.add_vertex(vs[idx])
-
-
-## Quads between consecutive rows ([centre: Vector2, y, width_scale, uv_y]);
-## `flip` reverses the winding so the back layer faces away from the slab.
-static func _layer_strip(st: SurfaceTool, rows: Array, across_u: Vector2,
-		prm: Dictionary, flip: bool, drop_h: float = 4.0) -> void:
-	for i in rows.size() - 1:
-		var a: Array = rows[i]
-		var b: Array = rows[i + 1]
-		var vs: Array = [_row_edge(a, across_u, -1.0, prm),
-			_row_edge(a, across_u, 1.0, prm),
-			_row_edge(b, across_u, 1.0, prm),
-			_row_edge(b, across_u, -1.0, prm)]
-		var uv_y: Array = [a[3], a[3], b[3], b[3]]
-		if flip:
-			vs = [vs[0], vs[3], vs[2], vs[1]]
-			uv_y = [uv_y[0], uv_y[3], uv_y[2], uv_y[1]]
-		_slab_quad(st, vs, uv_y, 0.0, drop_h)
 
 
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
@@ -743,7 +693,7 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 		var rst: SurfaceTool = SurfaceTool.new()
 		rst.begin(Mesh.PRIMITIVE_TRIANGLES)
 		for r in ribbons:
-			_ribbon_mesh(rst, r)
+			_ribbon_mesh(rst, r, field, cm, water, region)
 		rst.generate_normals()
 		var rmi: MeshInstance3D = MeshInstance3D.new()
 		rmi.name = "Waterfalls"
@@ -914,8 +864,13 @@ static func _corner_wetf_smooth(cm: Dictionary, k: Vector2i) -> float:
 ## the level render as real shore water inside the line instead of filming
 ## over dry lawn. Ground clearly below the level is left alone — that water
 ## is genuinely submerged.
-static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
-		water: WaterPlan, region) -> Array:
+## Everything _sheet_vert needs, built once per cell: corner anchors, wetness,
+## contour flag, drooped edges. The FALL meshes build the same context and
+## sample the same function along the shared edge — sheet and fall boundary
+## vertices are IDENTICAL by construction (the owner's "make it one cohesive
+## thing instead of lining up pieces").
+static func sheet_ctx(cell: Vector2i, field: Dictionary, cm: Dictionary,
+		water: WaterPlan, region) -> Dictionary:
 	var e: Dictionary = field[cell]
 	var own_level: float = e.level
 	var keys: Array = [
@@ -954,6 +909,69 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 				dropped = own_level - g > BRIDGE_MAX
 			if dropped:
 				droops.append(d)
+	return {"cell": cell, "own_level": own_level, "pos": pos, "cust": cust,
+		"wets": wets, "contour": contour, "droops": droops, "water": water,
+		"region": region}
+
+
+## One rendered sheet vertex at cell-local (u, v) — corner bilinear, contour
+## cap, waterline band, crest droop. The single source of truth for sheet
+## geometry: the cell grid AND the fall edges both sample it.
+static func _sheet_vert(ctx: Dictionary, u: float, v: float) -> Dictionary:
+	var p: Vector3 = _bilerp_pos(ctx.pos, u, v)
+	var c: Color = _bilerp_cust(ctx.cust, u, v)
+	if ctx.contour:
+		var wf: float = _bilerp_gnd(ctx.wets, u, v)
+		var wob: float = (Helper._value_noise01(
+			Vector3(p.x, 0.0, p.z), ctx.water.world_seed + 913,
+			SHORE_WOBBLE_SCALE) - 0.5) * 2.0 * SHORE_WOBBLE_AMP
+		var s: float = (0.5 - wf) * SHORE_SDF_SCALE + wob
+		if s > 0.0:
+			var rg: float = TerrainSurfaceField.surface_y(ctx.region, p.x, p.z)
+			# Bury ONLY where the rendered ground actually rises to the
+			# surface — for rims too: a ramp's flat-top is above the water
+			# but its toe is SUBMERGED, and diving toward the toe built
+			# vertical water shards at ramp shores (owner's "weird glitch").
+			if rg >= ctx.own_level - 0.1:
+				p.y = minf(p.y, maxf(ctx.own_level - s * 1.8, rg - 0.3))
+		if s > -1.2:
+			# Waterline band: full shore — the foam lap line hugs the curve
+			# (TIGHT: a wide band read as white blobs over whole shelves) and
+			# the shader kills the swell so the edge never bobs off its bank.
+			c.g = maxf(c.g, 1.0 - maxf(0.0, -s) * 0.8)
+	for dd: Vector2i in ctx.droops:
+		var edge: float = (float(ctx.cell.x) + 0.5 * float(dd.x)) * TILE \
+			if dd.x != 0 else (float(ctx.cell.y) + 0.5 * float(dd.y)) * TILE
+		var dist: float = absf((p.x - edge) if dd.x != 0 else (p.z - edge))
+		p.y = minf(p.y, ctx.own_level - crest_droop_at(dist))
+	return {"pos": p, "cust": c}
+
+
+## The sheet's rendered vertices along one cardinal edge of a cell, at
+## SUBDIV+1 points ordered along +across (across = (-d.y, d.x)). These ARE
+## the vertices sheet_cell_grid emits on that edge — anything welded to them
+## shares the sheet's geometry exactly.
+static func edge_profile(cell: Vector2i, d: Vector2i, field: Dictionary,
+		cm: Dictionary, water: WaterPlan, region) -> Array:
+	var ctx: Dictionary = sheet_ctx(cell, field, cm, water, region)
+	var out: Array = []
+	for i in SUBDIV + 1:
+		var t: float = float(i) / float(SUBDIV)
+		var u: float
+		var v: float
+		if d.x != 0:
+			u = 1.0 if d.x > 0 else 0.0
+			v = t if d.x > 0 else 1.0 - t   # +across = (-d.y, d.x)
+		else:
+			v = 1.0 if d.y > 0 else 0.0
+			u = 1.0 - t if d.y > 0 else t
+		out.append(_sheet_vert(ctx, u, v))
+	return out
+
+
+static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
+		water: WaterPlan, region) -> Array:
+	var ctx: Dictionary = sheet_ctx(cell, field, cm, water, region)
 	var out: Array = []
 	for sz in SUBDIV:
 		for sx in SUBDIV:
@@ -963,40 +981,10 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 			var v1: float = float(sz + 1) / float(SUBDIV)
 			var quad: Array = []
 			for uv in [[u0, v0], [u0, v1], [u1, v1], [u1, v0]]:
-				var p: Vector3 = _bilerp_pos(pos, uv[0], uv[1])
-				var c: Color = _bilerp_cust(cust, uv[0], uv[1])
-				if contour:
-					var wf: float = _bilerp_gnd(wets, uv[0], uv[1])
-					var wob: float = (Helper._value_noise01(
-						Vector3(p.x, 0.0, p.z), water.world_seed + 913,
-						SHORE_WOBBLE_SCALE) - 0.5) * 2.0 * SHORE_WOBBLE_AMP
-					var s: float = (0.5 - wf) * SHORE_SDF_SCALE + wob
-					if s > 0.0:
-						var rg: float = TerrainSurfaceField.surface_y(region, p.x, p.z)
-						# Bury ONLY where the rendered ground actually rises
-						# to the surface — for rims too: a ramp's flat-top is
-						# above the water but its toe is SUBMERGED, and diving
-						# toward the toe built vertical water shards at ramp
-						# shores (owner's "weird glitch"). Gentle slope: 3.2
-						# stepped 2m+ inside one 3m sub-quad.
-						if rg >= own_level - 0.1:
-							var cap: float = maxf(own_level - s * 1.8, rg - 0.3)
-							p.y = minf(p.y, cap)
-					if s > -1.2:
-						# Waterline band: full shore — the foam lap line hugs
-						# the curve (TIGHT: a wide band read as white blobs
-						# over whole shelves) and the shader kills the swell
-						# so the buried edge never bobs above its bank.
-						c.g = maxf(c.g, 1.0 - maxf(0.0, -s) * 0.8)
-				for dd: Vector2i in droops:
-					var edge: float = (float(cell.x) + 0.5 * float(dd.x)) * TILE \
-						if dd.x != 0 else (float(cell.y) + 0.5 * float(dd.y)) * TILE
-					var dist: float = absf((p.x - edge) if dd.x != 0 else (p.z - edge))
-					p.y = minf(p.y, own_level - crest_droop_at(dist))
-				quad.append([p, c])
+				quad.append(_sheet_vert(ctx, uv[0], uv[1]))
 			# Sub-corners (0,0),(0,1),(1,1),(1,0); winding matches the +Y quad.
 			for idx in [0, 1, 2, 0, 2, 3]:
-				out.append({"pos": quad[idx][0], "cust": quad[idx][1]})
+				out.append(quad[idx])
 	return out
 
 

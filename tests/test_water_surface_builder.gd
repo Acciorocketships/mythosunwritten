@@ -352,39 +352,49 @@ func test_corner_crest_shore_and_bury_rules() -> void:
 		"shore corner sinks just under the lowest adjacent bank ground")
 
 func test_waterfall_is_a_thick_ogee_slab_with_submerged_runout() -> void:
-	# Round 3: the fall is a THICK slab whose front sheet leaves the lip
-	# horizontally, drops, then FLATTENS back to horizontal right at the lower
-	# surface (ogee — owner: "a smooth curve back up to connect with the water
-	# at the bottom"), ending in a flat submerged runout. The painted splash
-	# apron is gone — plunge foam is particle mist now.
+	# Round 3 shape + round 9 welding: the fall's columns leave the SHEET'S OWN
+	# drooped edge vertices, drop, then FLATTEN back to horizontal right at the
+	# lower surface (ogee — owner: "a smooth curve back up to connect with the
+	# water at the bottom"), ending in a flat submerged runout. Built against
+	# the real pinned-seed field (the welded mesh needs the sheet context).
+	var water := WaterPlan.new(OWNER_SEED, 22.0, 8)
+	var chunk := Vector2i(0, -6)
+	var region = _region(OWNER_SEED, chunk)
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(water, chunk, region)
+	var cm: Dictionary = WaterSurfaceBuilder.corner_map(field, region)
+	var ribbons: Array = WaterSurfaceBuilder.compute_ribbons(field, chunk, region)
+	assert_true(ribbons.size() > 0, "pinned chunk has at least one fall")
+	if ribbons.is_empty():
+		return
+	var r: Dictionary = ribbons[0]
 	var st: SurfaceTool = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var r: Dictionary = {"mid": Vector2(0.0, 0.0), "tangent": Vector2(1.0, 0.0),
-		"half_width": 12.0, "top": 10.0, "bottom": 2.0, "kind": "wet"}
-	WaterSurfaceBuilder._ribbon_mesh(st, r)
+	WaterSurfaceBuilder._ribbon_mesh(st, r, field, cm, water, region)
 	st.generate_normals()
 	var mesh: ArrayMesh = st.commit()
 	var verts: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var uvs: PackedVector2Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+	var mid3 := Vector3(r.mid.x, 0.0, r.mid.y)
+	var tan3 := Vector3(r.tangent.x, 0.0, r.tangent.y)
 	# The slab never rises above the upstream surface it pours from…
 	var y_max: float = -INF
 	var y_min: float = INF
-	var x_hi: float = -INF
+	var along_lo: float = INF
+	var along_hi: float = -INF
 	for v in verts:
 		y_max = maxf(y_max, v.y)
 		y_min = minf(y_min, v.y)
-		x_hi = maxf(x_hi, v.x)
-	assert_true(y_max <= 10.0 + 0.001, "slab crest never pokes above the pool surface")
+		var along: float = (v - mid3).dot(tan3)
+		along_lo = minf(along_lo, along)
+		along_hi = maxf(along_hi, along)
+	assert_true(y_max <= r.top + 0.001, "slab crest never pokes above the pool surface")
 	# …starts upstream of the lip (overlap row embedded under the sheet)…
-	var x_lo: float = INF
-	for v in verts:
-		x_lo = minf(x_lo, v.x)
-	assert_true(x_lo <= -WaterSurfaceBuilder.FALL_OVERLAP + 0.2,
-		"slab overlaps upstream under the sheet (x_min %.2f)" % x_lo)
+	assert_true(along_lo <= -WaterSurfaceBuilder.FALL_OVERLAP + 0.2,
+		"slab overlaps upstream under the sheet (along_min %.2f)" % along_lo)
 	# …reaches below the lower surface (submerged runout, no painted apron
 	# hovering above the pool)…
-	assert_true(y_min <= 2.0 - 0.05, "runout submerges under the plunge pool")
-	assert_true(x_hi >= 3.0, "runout carries downstream past the plunge")
+	assert_true(y_min <= r.bottom - 0.05, "runout submerges under the plunge pool")
+	assert_true(along_hi >= 3.0, "runout carries downstream past the plunge")
 	# …and the LAST front chord is near-horizontal (C1 into the pool).
 	var rows: Dictionary = WaterSurfaceBuilder.fall_rows(r)
 	var fr: Array = rows.front

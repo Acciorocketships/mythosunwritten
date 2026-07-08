@@ -299,6 +299,38 @@ func test_fall_rows_ogee_profile() -> void:
 
 
 # ------------------------------------------------------------
+# The fall is WELDED to the sheet (round-9, "one cohesive thing"): every fall
+# column anchors on one of the sheet's own crest-edge vertices (edge_profile
+# must reproduce sheet_cell_grid's edge vertices bit-for-bit), so fall
+# corners and pool corners can never disagree. Machine-checked — continuity
+# no longer depends on eyeballing screenshots.
+# ------------------------------------------------------------
+func test_falls_weld_to_sheet_edges() -> void:
+	var water: WaterPlan = _water(SEED)
+	var checked := 0
+	for chunk: Vector2i in CHUNKS:
+		var field: Dictionary = _field(SEED, chunk)
+		if field.is_empty():
+			continue
+		var region = _region(SEED, chunk)
+		var cm: Dictionary = WaterSurfaceBuilder.corner_map(field, region)
+		for r in WaterSurfaceBuilder.compute_ribbons(field, chunk, region):
+			var d := Vector2i(int(r.tangent.x), int(r.tangent.y))
+			var edge: Array = WaterSurfaceBuilder.edge_profile(
+				r.cell, d, field, cm, water, region)
+			var grid: Array = WaterSurfaceBuilder.sheet_cell_grid(
+				r.cell, field, cm, water, region)
+			for ev in edge:
+				var best: float = INF
+				for gv in grid:
+					best = minf(best, gv.pos.distance_to(ev.pos))
+				assert_lt(best, 0.005,
+					"fall anchor %s coincides with a sheet vertex" % str(ev.pos))
+				checked += 1
+	assert_true(checked > 0, "welded at least one crest edge")
+
+
+# ------------------------------------------------------------
 # The crest is C1: the sheet DROOPS quadratically into every curtained edge
 # and the fall's first row continues from exactly that height and slope — no
 # fold where still water becomes falling water (round-7: "make the tangent
