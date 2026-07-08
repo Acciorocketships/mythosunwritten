@@ -577,6 +577,11 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 	var front: Array = rows.front
 	var back: Array = rows.back
 	var across_u: Vector2 = Vector2(-r.tangent.y, r.tangent.x)
+	# UV2.y carries the fall's DROP HEIGHT: the shader keys foam development
+	# on metres below the crest (UV.y × height), not the uv fraction — on a
+	# tall fall the white started right at the lip, reading from above as a
+	# pale scalloped skirt hugging the crest line (owner's round-6 report).
+	var drop_h: float = maxf(r.top - r.bottom, 0.5)
 	var prm: Dictionary = {
 		"mid": r.mid, "tangent": r.tangent,
 		"ext_hi": r.get("ext_hi", r.half_width),
@@ -584,8 +589,8 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 		"corner_cap_hi": r.get("corner_cap_hi", 0.0),
 		"corner_cap_lo": r.get("corner_cap_lo", 0.0),
 	}
-	_layer_strip(st, front, across_u, prm, false)
-	_layer_strip(st, back, across_u, prm, true)
+	_layer_strip(st, front, across_u, prm, false, drop_h)
+	_layer_strip(st, back, across_u, prm, true, drop_h)
 	for s in [-1.0, 1.0]:
 		for i in front.size() - 1:
 			_slab_quad(st,
@@ -593,14 +598,14 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 					_row_edge(front[i + 1], across_u, s, prm),
 					_row_edge(back[i + 1], across_u, s, prm),
 					_row_edge(back[i], across_u, s, prm)],
-				[front[i][3], front[i + 1][3], back[i + 1][3], back[i][3]], 1.0)
+				[front[i][3], front[i + 1][3], back[i + 1][3], back[i][3]], 1.0, drop_h)
 	# Lip cap: closes the slab's top edge — the water rolling over the crest.
 	_slab_quad(st,
 		[_row_edge(front[0], across_u, -1.0, prm),
 			_row_edge(front[0], across_u, 1.0, prm),
 			_row_edge(back[0], across_u, 1.0, prm),
 			_row_edge(back[0], across_u, -1.0, prm)],
-		[0.0, 0.0, 0.0, 0.0], 1.0)
+		[0.0, 0.0, 0.0, 0.0], 1.0, drop_h)
 
 
 ## One row edge position: row = [centre: Vector2, y, width_scale, uv_y],
@@ -623,20 +628,22 @@ static func _row_edge(row: Array, across_u: Vector2, s: float, prm: Dictionary) 
 
 
 ## One quad, vertices in walk order with per-vertex uv.y (uv.x from position).
-## `side` rides UV2.x: 1 on side walls + lip cap — the shader quiets foam and
-## alpha there so edge-on wings never read as bright detached shards.
-static func _slab_quad(st: SurfaceTool, vs: Array, uv_y: Array, side: float = 0.0) -> void:
+## UV2 = (side, drop height): side 1 on side walls + lip cap — the shader
+## quiets foam and alpha there so edge-on wings never read as bright shards;
+## the height lets the shader convert UV.y into metres below the crest.
+static func _slab_quad(st: SurfaceTool, vs: Array, uv_y: Array, side: float = 0.0,
+		drop_h: float = 4.0) -> void:
 	var uv_x: Array = [0.0, 1.0, 1.0, 0.0]
 	for idx in [0, 1, 2, 0, 2, 3]:
 		st.set_uv(Vector2(uv_x[idx], uv_y[idx]))
-		st.set_uv2(Vector2(side, 0.0))
+		st.set_uv2(Vector2(side, drop_h))
 		st.add_vertex(vs[idx])
 
 
 ## Quads between consecutive rows ([centre: Vector2, y, width_scale, uv_y]);
 ## `flip` reverses the winding so the back layer faces away from the slab.
 static func _layer_strip(st: SurfaceTool, rows: Array, across_u: Vector2,
-		prm: Dictionary, flip: bool) -> void:
+		prm: Dictionary, flip: bool, drop_h: float = 4.0) -> void:
 	for i in rows.size() - 1:
 		var a: Array = rows[i]
 		var b: Array = rows[i + 1]
@@ -648,7 +655,7 @@ static func _layer_strip(st: SurfaceTool, rows: Array, across_u: Vector2,
 		if flip:
 			vs = [vs[0], vs[3], vs[2], vs[1]]
 			uv_y = [uv_y[0], uv_y[3], uv_y[2], uv_y[1]]
-		_slab_quad(st, vs, uv_y)
+		_slab_quad(st, vs, uv_y, 0.0, drop_h)
 
 
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
