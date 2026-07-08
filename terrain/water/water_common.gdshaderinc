@@ -2,24 +2,36 @@
 // Water.gdshader so both surfaces keep one visual language: rolling world-
 // space waves, vertical-depth tinting, animated shore foam.
 
-// Long-wavelength TRAVELLING swells: three directional waves with distinct
-// headings, LONG wavelengths (~110m, ~110m, ~76m) and SLOW phase speeds
-// (~1-2 m/s with the default wave_speed), plus a broad noise drift. Every
-// term MOVES across the surface — swells ARE the water's motion (the owner:
-// low frequency, high amplitude swells give rivers their movement; anything
-// faster reads as the world in fast-forward). Pure function of world
-// position — seamless across chunk meshes. The character's _swell_offset
-// mirrors the three sines on CPU: keep in sync.
+// TRAVELLING swells: two long waves carry the large rise/fall, three mid
+// rollers make the surface visibly bumpy, all at SLOW phase speeds (~0.6-1
+// m/s with the default wave_speed) — swells ARE the water's motion (the
+// owner: low frequency, high amplitude; anything faster reads as the world
+// in fast-forward). Pure function of world position — seamless across chunk
+// meshes. The character's _swell_offset mirrors the WHOLE sum exactly on
+// CPU (envelopes included): keep in sync.
 float water_wave_h(sampler2D noise_tex, vec2 p, float t) {
-	// FOUR travelling sines — every visible term MOVES. The old broad noise
-	// drift (λ~330m crawling at ~0.3 m/s) parked metre-tall humps that read
-	// as "a swell that is not moving at all" (owner). A whisper of noise
-	// stays for decorrelation only.
-	float h = 1.0 * sin(dot(p, vec2(0.042, 0.016)) - t * 0.33);
-	h += 0.7 * sin(dot(p, vec2(-0.023, 0.037)) - t * 0.26 + 1.7);
-	h += 0.35 * sin(dot(p, vec2(0.032, -0.076)) - t * 0.36 + 4.0);
-	h += 0.5 * sin(dot(p, vec2(-0.036, -0.014)) - t * 0.31 + 2.6);
-	h += 0.2 * (textureLod(noise_tex, p * 0.003 + vec2(t * 0.0035, -t * 0.003), 0.0).r - 0.5);
+	// TRAVELLING sines only — every visible term MOVES (the old broad noise
+	// drift read as "a swell that is not moving at all"; owner). Two LONG
+	// swells (λ~140/205m) carry the large rise and fall; three MID waves
+	// (λ~39/27/18m, distinct headings) are the visible rollers that make the
+	// surface bumpy inside one screen (owner: "large rising and falling
+	// waves... like a true water simulation"). The two big mid waves ride
+	// slow TRAVELLING sine envelopes (λ~89m): amplitude varies place to
+	// place and moment to moment — randomness via beat patterns, yet exactly
+	// CPU-mirrorable (characters/character.gd _swell_offset — KEEP IN SYNC).
+	// Mid-wave PERIODS are ~7-9s at a fixed point (t-coeffs ~3 with the
+	// default wave_speed): a floating body visibly rises and falls — "the
+	// boat should be rocking in the waves" (owner). Slower coefficients made
+	// a surface that was bumpy in SPACE but near-static in TIME (48s bob
+	// period reads frozen); these stay well under real dispersion (~4-5s),
+	// so nothing reads fast-forward.
+	float h = 0.9 * sin(dot(p, vec2(0.042, 0.016)) - t * 0.33);
+	h += 0.55 * sin(dot(p, vec2(-0.023, 0.037)) - t * 0.26 + 1.7);
+	float e1 = 0.75 + 0.45 * sin(dot(p, vec2(0.052, 0.048)) - t * 0.21 + 0.9);
+	float e2 = 0.75 + 0.45 * sin(dot(p, vec2(-0.061, 0.036)) - t * 0.24 + 3.4);
+	h += 0.5 * e1 * sin(dot(p, vec2(0.118, -0.112)) - t * 2.85 + 2.1);
+	h += 0.34 * e2 * sin(dot(p, vec2(-0.15, 0.178)) - t * 3.1 + 4.6);
+	h += 0.22 * sin(dot(p, vec2(0.27, 0.208)) - t * 3.45 + 1.3);
 	return h * 0.5;
 }
 
@@ -68,10 +80,10 @@ float water_depth_world(sampler2D depth_tex, vec2 screen_uv, mat4 inv_projection
 float water_foam_mask(sampler2D noise_tex, vec2 world_xz, float t, float depth, float shore, float foam_width) {
 	float breaks = texture(noise_tex, world_xz * 0.06 + vec2(t * 0.02, -t * 0.016)).r;
 	float lap = 1.0 - smoothstep(foam_width * 0.4, foam_width * (0.7 + 0.6 * breaks), depth);
-	// Gate rises over a WIDE shore range: crest cells (0.7) foam at partial
-	// strength grading to full at the lip corners (1.0) — the spill white
-	// dissolves into the pool instead of cutting off at a cell edge; plain
-	// bank-adjacency (0.4) stays foam-free so only true waterlines lap.
-	float gate = smoothstep(0.45, 1.0, shore);
+	// TIGHT gate: only the waterline band itself (shore -> 1 within ~25cm of
+	// the contour) laps white. A loose gate (0.45) painted every contour-cap
+	// dive band and crest cell solid pale — the "detached skirt" shelves the
+	// owner keeps circling are exactly those bands lit up by depth≈0 foam.
+	float gate = smoothstep(0.8, 1.0, shore);
 	return lap * gate * (0.75 + 0.25 * sin(t * 1.6 + breaks * 6.283));
 }

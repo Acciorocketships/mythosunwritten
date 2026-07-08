@@ -10,9 +10,9 @@ const TILE := 24.0
 const R := 6   # half window in cells
 
 const SPOTS := [
-	["N1 static dome / uneven", Vector2(216.6, -1145.9)],
-	["N2 shore glitch shard", Vector2(317.5, -1180.5)],
-	["N4 isolated puddle", Vector2(99.9, -1136.5)],
+	["R1 skirt/sudden-change/no-skirt (cell 1,-46)", Vector2(34.4, -1103.4)],
+	["R2 shoreline lensing (cell 6,-48)", Vector2(135.0, -1159.6)],
+	["R3 lip issues + floating char (cell 2,-46)", Vector2(49.3, -1110.6)],
 ]
 
 var _regions: Dictionary = {}
@@ -82,8 +82,15 @@ func _init() -> void:
 				if r.mid.distance_to(Vector2(float(cc.x), float(cc.y)) * TILE) < R * TILE:
 					print("  ribbon mid %s tan %s top %.2f bottom %.2f" %
 						[r.mid, r.tangent, r.top, r.bottom])
-		# Ponds near the spot: continuous outline vs the cell grid.
+		# River profile samples near the spot (fall shapes + swim-volume spans).
 		var bodies: Dictionary = water.bodies_near(cc, 8)
+		for river in bodies.rivers:
+			var prof: PackedFloat32Array = WaterSurfaceBuilder.surface_profile(river)
+			for j in river.points.size():
+				if river.points[j].distance_to(spot[1]) < 90.0:
+					print("  river sample %3d p %s bed %.2f prof %.2f w %.1f" %
+						[j, river.points[j], river.beds[j], prof[j], river.widths[j]])
+		# Ponds near the spot: continuous outline vs the cell grid.
 		for pond in bodies.ponds:
 			if pond.center.distance_to(spot[1]) < 300.0:
 				print("  pond centre %s r %.1f surface %.2f bed %.2f" %

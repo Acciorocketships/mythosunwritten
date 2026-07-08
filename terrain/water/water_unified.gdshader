@@ -23,15 +23,19 @@ uniform vec3 color_sky : source_color = vec3(0.78, 0.90, 0.87);
 uniform float sky_reflect : hint_range(0.0, 1.0) = 0.5;
 uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
 uniform float foam_width : hint_range(0.0, 3.0) = 0.3;
-uniform float clarity_depth : hint_range(0.5, 24.0) = 6.5;   // metres to full deep colour
+uniform float clarity_depth : hint_range(0.5, 24.0) = 8.0;   // metres to full deep colour
 // CLEAR, not light (owner): the scene shows through with a modest tint
 // floor so shallow shelves never read as bare lawn — it's the REFRACTION
 // DISTORTION that makes the clear water read as water.
 uniform float body_floor : hint_range(0.0, 1.0) = 0.22;
-uniform float refraction_strength : hint_range(0.0, 0.2) = 0.085;
+uniform float refraction_strength : hint_range(0.0, 0.2) = 0.09;
+// Animated wobble on the refraction offset only (never the lighting normal):
+// the see-through picture visibly swims like the reference, while the
+// surface itself stays matte-smooth.
+uniform float distort_anim : hint_range(0.0, 0.2) = 0.05;
 // LOW frequency, HIGH amplitude, SLOW — the swells are the river's motion
 // (owner). Speed changes here must be mirrored in character.gd SWELL_SPEED.
-uniform float wave_height : hint_range(0.0, 1.5) = 1.15;
+uniform float wave_height : hint_range(0.0, 1.5) = 1.0;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.26;
 // Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
 // steep_v), never in a global playback rate — a raised base rate reads as
@@ -39,9 +43,10 @@ uniform float wave_speed : hint_range(0.0, 4.0) = 0.26;
 uniform float flow_speed : hint_range(0.0, 12.0) = 1.2;    // metres/second scroll
 uniform float rapids_boost : hint_range(0.0, 4.0) = 1.2;   // extra scroll at steep_v=1
 uniform float chop_height : hint_range(0.0, 0.6) = 0.1;    // travelling crest amplitude
-// Not mirror-tight: 0.02 focused the sun into a huge white glare blob on
-// the swells (owner's screenshots all carry it).
-uniform float roughness : hint_range(0.0, 1.0) = 0.07;
+// Not mirror-tight: low roughness focuses the sun (and the wizard's light)
+// into a huge white glare blob on the swells (owner's screenshots carry it
+// at 0.07 too — soft pastel sheen wants a wider lobe).
+uniform float roughness : hint_range(0.0, 1.0) = 0.22;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
@@ -130,22 +135,31 @@ void fragment() {
 	// looked like lawn), while the first ~10cm at the rim stay clear.
 	float depth_t = max(1.0 - exp(-depth / clarity_depth),
 			body_floor * smoothstep(0.05, 0.55, depth));
-	// Refraction: offset the screen sample by the view-space normal, fading
-	// in over the first metre (shores don't smear). Reject offsets landing
-	// on geometry ABOVE the surface (banks, the player) or NEARER than this
-	// fragment (foreground headlands) — both pasted ghost copies of dry
-	// things into the water (owner: "ghost image in the water").
-	vec2 roff = NORMAL.xy * refraction_strength * clamp(depth * 1.5, 0.0, 1.3);
+	// Refraction: offset the screen sample by the view-space normal plus an
+	// ANIMATED wobble, scaled down with view distance — constant screen-space
+	// offsets smeared whole far-away banks while showing nothing up close.
+	// Fades in over the first metre of depth (shores don't smear).
+	float wa = texture(noise_tex, world_pos.xz * 0.045 + vec2(TIME * 0.021, -TIME * 0.017)).r;
+	float wb = texture(noise_tex, world_pos.xz * 0.045 + vec2(37.7, 11.3)
+			+ vec2(-TIME * 0.019, TIME * 0.023)).r;
+	vec2 roff = (NORMAL.xy * refraction_strength + (vec2(wa, wb) - 0.5) * distort_anim)
+			* clamp(depth * 1.5, 0.0, 1.3) / max(1.0, -VERTEX.z * 0.08);
 	vec2 suv = SCREEN_UV + roff;
-	if (water_depth_world(depth_texture, suv, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y) <= 0.0
-			|| water_view_z(depth_texture, suv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.05) {
-		suv = SCREEN_UV;
+	// GRADED guard: fade the offset out where it lands on geometry ABOVE the
+	// surface (banks, the player) — a binary fallback drew a hard "lens edge"
+	// band along every shore (owner's round-5 artifact). Foreground geometry
+	// (nearer than this fragment) still rejects outright: ghost copies.
+	float ok = smoothstep(0.0, 0.3, water_depth_world(depth_texture, suv,
+			INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y));
+	if (water_view_z(depth_texture, suv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.05) {
+		ok = 0.0;
 	}
+	suv = mix(SCREEN_UV, suv, ok);
 	vec3 scene = texture(screen_texture, suv).rgb;
 	// Clear body: the refracted scene through a light green-glass tint,
 	// saturating toward the soft teal with depth but NEVER fully opaque —
 	// the owner wants the near-shore clarity everywhere.
-	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.12), color_deep, min(depth_t, 0.92));
+	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.12), color_deep, min(depth_t, 0.88));
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
 	body = mix(body, color_sky, fres * sky_reflect);
 	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, shore_v, foam_width);
@@ -161,5 +175,5 @@ void fragment() {
 	// keeps the material in the transparent pass (screen texture needs it).
 	ALPHA = 1.0;
 	ROUGHNESS = mix(roughness, 0.5, foam);
-	SPECULAR = mix(0.5, 0.85, fres);
+	SPECULAR = mix(0.35, 0.6, fres);
 }

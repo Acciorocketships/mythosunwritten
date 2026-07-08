@@ -26,10 +26,11 @@ var water_surface_y: float = WATER_SURFACE_Y
 # CPU mirror of the water shader's swell so the floating body RIDES the waves
 # (buoyancy tracks the displaced surface — rocking, like a boat). Keep in sync
 # with water_wave_h in terrain/water/water_common.gdshaderinc and the
-# wave_height/wave_speed uniform defaults in water_unified.gdshader (the noise
-# drift term is omitted — the travelling sines carry most of the swell).
+# wave_height/wave_speed uniform defaults in water_unified.gdshader. The
+# mirror is EXACT — every term is a travelling sine (no noise), so the CPU
+# and GPU surfaces agree everywhere.
 # Mirrors water_unified.gdshader's wave_height / wave_speed — keep in sync.
-const SWELL_HEIGHT: float = 1.15
+const SWELL_HEIGHT: float = 1.0
 const SWELL_SPEED: float = 0.26
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
@@ -178,33 +179,52 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 
 # The probe sits at knee height: standing on a dry bank keeps it above the
 # water volume, while floating at the surface keeps it inside. The overlapped
-# volume's surface_y meta (per-body water level) drives buoyancy.
+# volume's surface_y meta (per-body water level) drives buoyancy. Volumes are
+# per-cell boxes with headroom for the swell, so BEING IN A BOX is not enough:
+# the probe must also sit under that volume's own swelled surface — otherwise
+# wading onto a bank fringe inside a box read as swimming on dry land (the
+# owner's floating character beside waterfalls).
 func _update_in_water() -> void:
 	var params := PhysicsPointQueryParameters3D.new()
+	var probe_y: float = global_position.y + 0.3
 	params.position = global_position + Vector3(0.0, 0.3, 0.0)
 	params.collide_with_areas = true
 	params.collide_with_bodies = false
 	params.collision_mask = WATER_LAYER_MASK
 	var hits: Array = get_world_3d().direct_space_state.intersect_point(params, 4)
-	in_water = not hits.is_empty()
+	var swell: float = _swell_offset()
+	var best: float = -INF
+	var legacy := false
+	for h in hits:
+		var collider: Object = h.get("collider")
+		if collider == null:
+			continue
+		if collider.has_meta("surface_y"):
+			var sy: float = float(collider.get_meta("surface_y"))
+			if probe_y <= sy + swell + 0.45:
+				best = maxf(best, sy)
+		else:
+			legacy = true
+	in_water = best > -INF or legacy
 	if in_water:
-		var best: float = -INF
-		for h in hits:
-			var collider: Object = h.get("collider")
-			if collider != null and collider.has_meta("surface_y"):
-				best = maxf(best, float(collider.get_meta("surface_y")))
-		water_surface_y = (best if best > -INF else WATER_SURFACE_Y) + _swell_offset()
+		water_surface_y = (best if best > -INF else WATER_SURFACE_Y) + swell
 
 
 # The water surface the buoyancy chases, displaced by the shader's travelling
 # swells at the character's position — floating bodies rock in the waves.
+# Exact mirror of water_wave_h in terrain/water/water_common.gdshaderinc
+# (two long swells + three mid rollers, two of them envelope-modulated by
+# slow travelling sines) — KEEP IN SYNC.
 func _swell_offset() -> float:
 	var p: Vector2 = Vector2(global_position.x, global_position.z)
 	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
-	var h: float = 1.0 * sin(p.dot(Vector2(0.042, 0.016)) - t * 0.33)
-	h += 0.7 * sin(p.dot(Vector2(-0.023, 0.037)) - t * 0.26 + 1.7)
-	h += 0.35 * sin(p.dot(Vector2(0.032, -0.076)) - t * 0.36 + 4.0)
-	h += 0.5 * sin(p.dot(Vector2(-0.036, -0.014)) - t * 0.31 + 2.6)
+	var h: float = 0.9 * sin(p.dot(Vector2(0.042, 0.016)) - t * 0.33)
+	h += 0.55 * sin(p.dot(Vector2(-0.023, 0.037)) - t * 0.26 + 1.7)
+	var e1: float = 0.75 + 0.45 * sin(p.dot(Vector2(0.052, 0.048)) - t * 0.21 + 0.9)
+	var e2: float = 0.75 + 0.45 * sin(p.dot(Vector2(-0.061, 0.036)) - t * 0.24 + 3.4)
+	h += 0.5 * e1 * sin(p.dot(Vector2(0.118, -0.112)) - t * 2.85 + 2.1)
+	h += 0.34 * e2 * sin(p.dot(Vector2(-0.15, 0.178)) - t * 3.1 + 4.6)
+	h += 0.22 * sin(p.dot(Vector2(0.27, 0.208)) - t * 3.45 + 1.3)
 	return h * 0.5 * SWELL_HEIGHT
 
 

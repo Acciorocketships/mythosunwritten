@@ -48,8 +48,10 @@ const BRIDGE_MAX := 2.5
 # shelves). Bounded well below one full storey: terraces 4m down belong to a
 # lower reach — flooding them hung plates over every cliff lip.
 const FLOOD_MAX := 2.5
-const VOLUME_STRIDE := 4              # river swim-box every N samples
 const WATER_LAYER := 1 << 7
+# Swim-volume headroom above the cell's level: a floating body riding a
+# swell crest keeps its knee probe inside the volume.
+const VOLUME_TOP_PAD := 1.7
 # Sub-quads per cell edge. The shader displaces real chop waves (~14-26m
 # wavelength); 24m cell quads can't bend, 3m vertex pitch can.
 const SUBDIV := 8
@@ -591,14 +593,14 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 					_row_edge(front[i + 1], across_u, s, prm),
 					_row_edge(back[i + 1], across_u, s, prm),
 					_row_edge(back[i], across_u, s, prm)],
-				[front[i][3], front[i + 1][3], back[i + 1][3], back[i][3]])
+				[front[i][3], front[i + 1][3], back[i + 1][3], back[i][3]], 1.0)
 	# Lip cap: closes the slab's top edge — the water rolling over the crest.
 	_slab_quad(st,
 		[_row_edge(front[0], across_u, -1.0, prm),
 			_row_edge(front[0], across_u, 1.0, prm),
 			_row_edge(back[0], across_u, 1.0, prm),
 			_row_edge(back[0], across_u, -1.0, prm)],
-		[0.0, 0.0, 0.0, 0.0])
+		[0.0, 0.0, 0.0, 0.0], 1.0)
 
 
 ## One row edge position: row = [centre: Vector2, y, width_scale, uv_y],
@@ -621,10 +623,13 @@ static func _row_edge(row: Array, across_u: Vector2, s: float, prm: Dictionary) 
 
 
 ## One quad, vertices in walk order with per-vertex uv.y (uv.x from position).
-static func _slab_quad(st: SurfaceTool, vs: Array, uv_y: Array) -> void:
+## `side` rides UV2.x: 1 on side walls + lip cap — the shader quiets foam and
+## alpha there so edge-on wings never read as bright detached shards.
+static func _slab_quad(st: SurfaceTool, vs: Array, uv_y: Array, side: float = 0.0) -> void:
 	var uv_x: Array = [0.0, 1.0, 1.0, 0.0]
 	for idx in [0, 1, 2, 0, 2, 3]:
 		st.set_uv(Vector2(uv_x[idx], uv_y[idx]))
+		st.set_uv2(Vector2(side, 0.0))
 		st.add_vertex(vs[idx])
 
 
@@ -698,7 +703,7 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 		# Stash the ribbon data; the streamer calls build_mist at main-thread
 		# integration, same pattern as the biome FX nodes.
 		root.set_meta("mist_ribbons", ribbons)
-	_build_volumes(water, chunk, field, root)
+	_build_volumes(chunk, field, root)
 	return root
 
 
@@ -1030,87 +1035,40 @@ static func _mist_node(r: Dictionary) -> GPUParticles3D:
 
 # --- swim volumes ------------------------------------------------
 
-func _build_volumes(water: WaterPlan, chunk: Vector2i, field: Dictionary, root: Node3D) -> void:
-	var centre_cx: int = chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var centre_cz: int = chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var bodies: Dictionary = water.bodies_near(Vector2i(centre_cx, centre_cz), CELLS_PER_CHUNK / 2 + 1)
+## One box per WET interior cell, straight from the field: the volume's
+## surface IS the rendered sheet's level, a box can never span a waterfall
+## (cell-pure), and flooded shelves/plunge pools are covered wall-to-wall.
+## The old trace-sample boxes spanned cascades — one box carried the upper
+## level across the plunge pool, so the character "swam" in mid-air beside
+## falls and sank unsupported in the pool itself (owner's round-5 report).
+func _build_volumes(chunk: Vector2i, field: Dictionary, root: Node3D) -> void:
 	var lo_cx: int = chunk.x * CELLS_PER_CHUNK
 	var lo_cz: int = chunk.y * CELLS_PER_CHUNK
-	var grown: Rect2 = Rect2(
-		Vector2(float(chunk.x), float(chunk.y)) * CHUNK_WORLD,
-		Vector2(CHUNK_WORLD, CHUNK_WORLD)).grow(TILE)
-	var done_ponds: Dictionary = {}
-	for pond in bodies.ponds:
-		if done_ponds.has(pond):
+	for cell in field:
+		var e: Dictionary = field[cell]
+		if not e.wet:
 			continue
-		done_ponds[pond] = true
-		var cells: Array = []
-		for cell in field:
-			if not field[cell].wet:
-				continue
-			if cell.x < lo_cx or cell.x >= lo_cx + CELLS_PER_CHUNK \
-					or cell.y < lo_cz or cell.y >= lo_cz + CELLS_PER_CHUNK:
-				continue
-			if pond.footprint_t(Vector2(float(cell.x) * TILE, float(cell.y) * TILE)) < 1.2:
-				cells.append(cell)
-		if not cells.is_empty():
-			_pond_volume(pond, cells, root)
-	for river in bodies.rivers:
-		_river_volumes(river, WaterSurfaceBuilder.surface_profile(river), grown, root)
-
-
-func _pond_volume(pond: PondStamp, cells: Array, root: Node3D) -> void:
-	var lo: Vector2i = cells[0]
-	var hi: Vector2i = cells[0]
-	for c in cells:
-		lo = Vector2i(mini(lo.x, c.x), mini(lo.y, c.y))
-		hi = Vector2i(maxi(hi.x, c.x), maxi(hi.y, c.y))
-	var area: Area3D = Area3D.new()
-	area.name = "PondVolume"
-	area.collision_layer = WATER_LAYER
-	area.collision_mask = 0
-	area.monitoring = false
-	var shape: CollisionShape3D = CollisionShape3D.new()
-	var box: BoxShape3D = BoxShape3D.new()
-	var span: Vector2 = Vector2(float(hi.x - lo.x + 1), float(hi.y - lo.y + 1)) * TILE
-	var height: float = pond.surface_y() - pond.bed_y() + 1.0
-	box.size = Vector3(span.x, height, span.y)
-	shape.shape = box
-	area.add_child(shape)
-	area.position = Vector3(
-		(float(lo.x) + float(hi.x)) * 0.5 * TILE,
-		pond.surface_y() - height * 0.5,
-		(float(lo.y) + float(hi.y)) * 0.5 * TILE)
-	area.set_meta("surface_y", pond.surface_y())
-	root.add_child(area)
-
-
-func _river_volumes(river: RiverTrace, prof: PackedFloat32Array, grown: Rect2, root: Node3D) -> void:
-	var i: int = 0
-	while i < river.points.size() - 1:
-		var j: int = mini(i + VOLUME_STRIDE, river.points.size() - 1)
-		var a: Vector2 = river.points[i]
-		var b: Vector2 = river.points[j]
-		if grown.has_point(a) or grown.has_point(b):
-			var area: Area3D = Area3D.new()
-			area.name = "RiverVolume"
-			area.collision_layer = WATER_LAYER
-			area.collision_mask = 0
-			area.monitoring = false
-			var shape: CollisionShape3D = CollisionShape3D.new()
-			var box: BoxShape3D = BoxShape3D.new()
-			var depth: float = prof[i] - river.beds[i] + 1.0
-			box.size = Vector3(a.distance_to(b) + 2.0, depth, river.widths[i] * 2.0 + 4.0)
-			shape.shape = box
-			area.add_child(shape)
-			var mid: Vector2 = (a + b) * 0.5
-			area.position = Vector3(mid.x, prof[i] - depth * 0.5, mid.y)
-			var ang: float = atan2(b.x - a.x, b.y - a.y)
-			area.rotation = Vector3(0.0, ang - PI * 0.5, 0.0)
-			area.set_meta("surface_y", maxf(prof[i], prof[j]))
-			var flow: Vector2 = (b - a).normalized()
-			area.set_meta("flow", Vector3(flow.x, 0.0, flow.y))
-			root.add_child(area)
-		i = j
-	# (Area boxes overlap slightly and hug the profile coarsely — swimming
-	# tolerance, not rendering. VOLUME_STRIDE=4 => one box per 48 u.)
+		if cell.x < lo_cx or cell.x >= lo_cx + CELLS_PER_CHUNK \
+				or cell.y < lo_cz or cell.y >= lo_cz + CELLS_PER_CHUNK:
+			continue
+		var area: Area3D = Area3D.new()
+		area.name = "WaterVolume"
+		area.collision_layer = WATER_LAYER
+		area.collision_mask = 0
+		area.monitoring = false
+		var shape: CollisionShape3D = CollisionShape3D.new()
+		var box: BoxShape3D = BoxShape3D.new()
+		var top: float = e.level + VOLUME_TOP_PAD
+		# The cell's rendered floor is FLAT only at its centre: half-cell
+		# ramps toward a lower neighbour dip up to one storey below `ground`
+		# inside this same cell — the box must reach the ramp toe or a body
+		# standing there reads dry under 3m of water (owner's sunk character).
+		var bottom: float = e.ground - STOREY - 1.0
+		box.size = Vector3(TILE, top - bottom, TILE)
+		shape.shape = box
+		area.add_child(shape)
+		area.position = Vector3(
+			float(cell.x) * TILE, (top + bottom) * 0.5, float(cell.y) * TILE)
+		area.set_meta("surface_y", e.level)
+		area.set_meta("flow", Vector3(e.flow.x, 0.0, e.flow.y))
+		root.add_child(area)

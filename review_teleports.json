@@ -1,14 +1,50 @@
 [
  {
   "look": [
-   28.0,
-   -1088.0
+   48.0,
+   -1092.0
   ],
-  "name": "S1: floating water edges site (cascade, cell 1,-46)",
+  "name": "R5-V1: skirt + sudden-change site — falls green at crest, no pale skirt (cell 1,-46)",
   "pos": [
    34.4,
-   8.0,
+   9.5,
    -1103.4
+  ]
+ },
+ {
+  "look": [
+   152.0,
+   -1178.0
+  ],
+  "name": "R5-V2: shore clarity — no lensing band, thin lap line, distortion over submerged bushes",
+  "pos": [
+   135.0,
+   4.6,
+   -1159.6
+  ]
+ },
+ {
+  "look": [
+   48.0,
+   -1092.0
+  ],
+  "name": "R5-V3: plunge pool — drop in: swims in the pool, never in mid-air beside the fall",
+  "pos": [
+   49.3,
+   6.0,
+   -1110.6
+  ]
+ },
+ {
+  "look": [
+   48.0,
+   -1094.0
+  ],
+  "name": "R5-V4: crest handoff from above — sheet spills over its own edge seamlessly",
+  "pos": [
+   48.0,
+   10.5,
+   -1084.0
   ]
  },
  {
@@ -33,30 +69,6 @@
    -80.3,
    8.0,
    -981.0
-  ]
- },
- {
-  "look": [
-   48.0,
-   -1092.0
-  ],
-  "name": "S4: waterfall plunge - smooth ogee curve + mist (owner spot was inside the wall; moved into the plunge pool)",
-  "pos": [
-   44.0,
-   5.6,
-   -1101.0
-  ]
- },
- {
-  "look": [
-   48.0,
-   -1094.0
-  ],
-  "name": "S5: waterfall crest connects to its source water (in the upper pool)",
-  "pos": [
-   44.0,
-   9.6,
-   -1085.0
   ]
  }
 ]

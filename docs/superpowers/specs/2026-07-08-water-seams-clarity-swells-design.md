@@ -39,17 +39,20 @@ refraction) instead of each symptom.
 
 ## Design
 
-### 1. Swim volumes split at falls (`WaterSurfaceBuilder._river_volumes`)
-Walk samples accumulating a run while `prof[start] - prof[j] ≤ 1.0` and run length <
-`VOLUME_STRIDE`; emit one box per run: x-span = run's samples (ends clamped to the
-crest/last sample, +1 m pad only at run-interior joints), y-span = `[min bed − 1,
-run prof + 1.6]` (swell headroom so a bobbing char stays inside), `surface_y` = run prof.
-Boxes never span a drop; the plunge pool gets its own hugging box. `_update_in_water`
-unchanged (overlaps at joints now agree within 1 m).
-**Test:** on the pinned seed river, build volumes and assert (a) the phantom point
-`(49.3, 7.0, -1110.6)` is inside no box, (b) `(49.3, 4.6, -1110.6)` is inside a box with
-`surface_y ≈ 5`, (c) for every box, `surface_y` minus min ground along its own samples ≤
-RIBBON_DEPTH_OFFSET + slack, and box top ≥ surface.
+### 1. Swim volumes from the FIELD, one box per wet cell (`_build_volumes`)
+*(Refined during implementation: sample-run boxes still disagreed with the rendered
+cell-quantized levels by up to 2 m on gentle slopes — the field IS the rendered truth.)*
+`_pond_volume`/`_river_volumes` deleted. One box per WET interior cell: xz = the cell,
+y = `[ground − 1, level + VOLUME_TOP_PAD 1.7]`, `surface_y` = the cell's level, `flow`
+meta = the cell's flow. Boxes can never span a fall (cell-pure), plunge pools and flood
+shelves are covered wall-to-wall, and rim/bank cells get no volume at all.
+`character._update_in_water` additionally requires the knee probe to sit under the hit
+volume's *swelled* surface (`probe ≤ surface_y + swell + 0.45`) — being inside a box's
+headroom no longer reads as swimming.
+**Test** (`test_water_swim_volumes.gd`, passing): (a) phantom point
+`(49.3, 7.0, -1110.6)` in no box, (b) `(49.3, 4.6, -1110.6)` in a box with
+`surface_y = 5`, (c) exactly one box per wet interior cell, surface == field level,
+ceiling == level + 1.7.
 
 ### 2. One visual language: fall = sheet (`waterfall.gdshader`)
 Body = refracted screen sample (offset scrolls downward with the fall + noise wobble,
