@@ -47,15 +47,23 @@ void fragment() {
 	float fall = texture(noise_tex, vec2((world_pos.x + world_pos.z) * 0.07,
 			UV.y * 0.6 - TIME * fall_speed * 0.25 + col)).r;
 	float band = smoothstep(0.35, 0.75, fall);
-	// The refracted scene through the fall: the offset wobbles with the
-	// streaks and scrolls downward — the glassy distortion IS the falling
-	// water. The crest passes the scene through UNDISTORTED (clean glass,
-	// continuous with the pool above); foreground geometry rejects, same
+	// The refracted scene through the fall. The distortion field is
+	// CONTINUOUS with the sheet's (same noise, same coords, same drift near
+	// the lip) and cross-fades into downward-scrolling fall motion as the
+	// water accelerates — one water pattern flowing over the edge, never two
+	// materials meeting at a line (owner: "make the texture/simulation
+	// continuous, not per element"). Foreground geometry rejects, same
 	// guard as the sheet.
+	float wa = texture(noise_tex, world_pos.xz * 0.045
+			+ vec2(TIME * 0.021, -TIME * 0.017)).r;
+	float wb = texture(noise_tex, world_pos.xz * 0.045 + vec2(37.7, 11.3)
+			+ vec2(-TIME * 0.019, TIME * 0.023)).r;
 	float scroll = texture(noise_tex, vec2((world_pos.x + world_pos.z) * 0.045,
 			UV.y * 0.35 - TIME * fall_speed * 0.16)).r;
-	vec2 roff = vec2(band - 0.5, scroll - 0.5) * refraction_strength
-			* smoothstep(0.15, 1.4, fallen) / max(1.0, -VERTEX.z * 0.08);
+	float develop = smoothstep(0.9, 3.2, fallen);
+	vec2 wob = mix(vec2(wa, wb) - 0.5, vec2(band, scroll) - 0.5, develop);
+	vec2 roff = wob * refraction_strength * smoothstep(0.1, 1.0, fallen)
+			/ max(1.0, -VERTEX.z * 0.08);
 	vec2 suv = SCREEN_UV + roff;
 	if (water_view_z(depth_texture, suv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.05) {
 		suv = SCREEN_UV;
@@ -67,13 +75,20 @@ void fragment() {
 	// above the crest, a hard diagonal seam right along the lip.
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
 	body = mix(body, color_sky, fres * sky_reflect);
-	// Foam DEVELOPS with the fall: clean glass for the first metre past the
-	// lip, streaks building as the water accelerates, full white into the
-	// plunge, then the slab dissolves into the pool from the fillet on (a
-	// streak texture stopping dead against the calm pool read as a seam).
-	float develop = smoothstep(0.9, 3.2, fallen);
+	// The base converges to the POOL'S body tone (the screen texture cannot
+	// see transparent water, so the fall's see-through showed the BED where
+	// the pool shows its own deep tint — the bottom never blended).
+	body = mix(body, color_deep, 0.30 * smoothstep(0.45, 1.0, UV.y));
+	// Foam DEVELOPS with the fall: a thin BREAK LINE right at the lip (marks
+	// every weir crest even at grazing angles, where a bare 2m step read as
+	// a mysterious tone seam), clean glass through the first metre, streaks
+	// building as the water accelerates, full white into the plunge, then
+	// the slab dissolves into the pool from the fillet on.
+	float lip_line = 0.22 * smoothstep(0.08, 0.28, fallen)
+			* (1.0 - smoothstep(0.5, 0.95, fallen));
 	float plunge = smoothstep(0.7, 1.0, UV.y);
-	float foam = clamp(develop * (0.18 + 0.55 * band) + 0.3 * plunge, 0.0, 1.0);
+	float foam = clamp(lip_line + develop * (0.18 + 0.55 * band) + 0.3 * plunge,
+			0.0, 1.0);
 	foam *= 1.0 - 0.6 * side_v;
 	ALBEDO = mix(body, foam_color, foam);
 	// The lower half grows TRANSLUCENT before the plunge dissolve: the pool's

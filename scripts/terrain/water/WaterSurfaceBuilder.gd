@@ -594,6 +594,20 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary, field: Dictionary,
 		var tv: Vector3 = edge[i].pos
 		var spill: bool = tv.y >= r.top - CREST_DROOP - 0.2
 		cols.append({"top": tv, "spill": spill})
+	# Only the END RUNS of a fall may pinch (where the waterline genuinely
+	# closes); an interior column dipped by the shoreline wobble is noise —
+	# a hole mid-fall read as "two waterfalls with a gap" (owner).
+	var first_spill: int = -1
+	var last_spill: int = -1
+	for i in cols.size():
+		if cols[i].spill:
+			if first_spill < 0:
+				first_spill = i
+			last_spill = i
+	for i in cols.size():
+		if i > first_spill and i < last_spill and not cols[i].spill:
+			cols[i].spill = true
+			cols[i].top.y = maxf(cols[i].top.y, r.top - CREST_DROOP - 0.2)
 	# Front and back vertex lattices [column][row].
 	var thick: float = clampf(drop_h * 0.10, 0.4, 1.2)
 	var front: Array = []
@@ -911,7 +925,7 @@ static func sheet_ctx(cell: Vector2i, field: Dictionary, cm: Dictionary,
 				droops.append(d)
 	return {"cell": cell, "own_level": own_level, "pos": pos, "cust": cust,
 		"wets": wets, "contour": contour, "droops": droops, "water": water,
-		"region": region}
+		"region": region, "field": field}
 
 
 ## One rendered sheet vertex at cell-local (u, v) — corner bilinear, contour
@@ -934,6 +948,17 @@ static func _sheet_vert(ctx: Dictionary, u: float, v: float) -> Dictionary:
 			# vertical water shards at ramp shores (owner's "weird glitch").
 			if rg >= ctx.own_level - 0.1:
 				p.y = minf(p.y, maxf(ctx.own_level - s * 1.8, rg - 0.3))
+			elif s > 0.9 and rg > ctx.own_level - 1.2 \
+					and _on_dry_cell(ctx, p) and _clear_of_droops(ctx, p):
+				# HOVER BAND: a bank whose top sits just under the surface
+				# gets neither rim nor curtain — the sheet edge floated with
+				# open air beneath (owner: "gap where you can see under the
+				# water... it can curve down if it needs to"). DRAPE the edge
+				# down onto the bank skin. Fires only clearly outside the
+				# waterline, over NON-WET cells (a shallow submerged bed is
+				# pool water, and draping there dug the pass-19 troughs),
+				# and away from crests (the fall covers those faces).
+				p.y = minf(p.y, maxf(ctx.own_level - s * 1.8, rg - 0.3))
 		if s > -1.2:
 			# Waterline band: full shore — the foam lap line hugs the curve
 			# (TIGHT: a wide band read as white blobs over whole shelves) and
@@ -945,6 +970,25 @@ static func _sheet_vert(ctx: Dictionary, u: float, v: float) -> Dictionary:
 		var dist: float = absf((p.x - edge) if dd.x != 0 else (p.z - edge))
 		p.y = minf(p.y, ctx.own_level - crest_droop_at(dist))
 	return {"pos": p, "cust": c}
+
+
+## True when the point sits over a cell that holds no water — the drape only
+## targets banks, never a wet cell's own shallow bed.
+static func _on_dry_cell(ctx: Dictionary, p: Vector3) -> bool:
+	var pcell := Vector2i(int(floor(p.x / TILE + 0.5)), int(floor(p.z / TILE + 0.5)))
+	return not (ctx.field.has(pcell) and ctx.field[pcell].wet)
+
+
+## True when the point is outside every drooped (curtained) edge's band —
+## the hover-band drape must never wobble a crest line the fall welds to.
+static func _clear_of_droops(ctx: Dictionary, p: Vector3) -> bool:
+	for dd: Vector2i in ctx.droops:
+		var edge: float = (float(ctx.cell.x) + 0.5 * float(dd.x)) * TILE \
+			if dd.x != 0 else (float(ctx.cell.y) + 0.5 * float(dd.y)) * TILE
+		var dist: float = absf((p.x - edge) if dd.x != 0 else (p.z - edge))
+		if dist < CREST_DROOP_RANGE + 0.5:
+			return false
+	return true
 
 
 ## The sheet's rendered vertices along one cardinal edge of a cell, at
