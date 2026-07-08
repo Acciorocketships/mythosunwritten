@@ -34,8 +34,10 @@ void fragment() {
 	// compounds into a murky wedge at grazing side views.
 	float foam = clamp(0.42 + 0.55 * band + 0.35 * ends, 0.0, 1.0);
 	ALBEDO = mix(color_deep, foam_color, foam);
-	// The submerged runout dissolves under the plunge pool's surface.
-	float fade = 1.0 - smoothstep(1.0, 1.09, UV.y);
+	// Dissolve into the plunge pool EARLY (from the fillet on): the curtain's
+	// streak texture stopping dead against the calm pool read as a sudden
+	// visual seam (owner) — now it fades through the last bend.
+	float fade = 1.0 - smoothstep(0.88, 1.06, UV.y);
 	ALPHA = (0.78 + 0.12 * band) * fade;
 	// Rough enough that direct sun never draws a hard specular beam across
 	// the curtain (0.35 left a white laser streak at grazing sun angles).

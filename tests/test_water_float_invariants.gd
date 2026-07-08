@@ -402,7 +402,7 @@ func test_crest_cells_are_swell_damped() -> void:
 				if field.has(nb) and field[nb].wet \
 						and absf(field[cell].level - field[nb].level) > BRIDGE:
 					checked += 1
-					assert_true(field[cell].get("shore", 0.0) >= 0.75,
+					assert_true(field[cell].get("shore", 0.0) >= 0.65,
 						"crest-side cell %s is swell-damped (shore %.2f)"
 						% [str(cell), field[cell].get("shore", 0.0)])
 					break

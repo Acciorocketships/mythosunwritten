@@ -10,10 +10,9 @@ const TILE := 24.0
 const R := 6   # half window in cells
 
 const SPOTS := [
-	["S1 floating edges", Vector2(34.4, -1103.4)],
-	["S2 pond coast/orphan/gap", Vector2(-167.6, -952.8)],
-	["S3 not-a-channel", Vector2(-80.3, -981.0)],
-	["S4+S5 waterfall", Vector2(35.6, -1089.3)],
+	["N1 static dome / uneven", Vector2(216.6, -1145.9)],
+	["N2 shore glitch shard", Vector2(317.5, -1180.5)],
+	["N4 isolated puddle", Vector2(99.9, -1136.5)],
 ]
 
 var _regions: Dictionary = {}
@@ -78,7 +77,7 @@ func _init() -> void:
 				chunks[_chunk_of_cell(Vector2i(cc.x + dx, cc.y + dz))] = true
 		for ch: Vector2i in chunks:
 			var ribs: Array[Dictionary] = WaterSurfaceBuilder.compute_ribbons(
-				_field(water, plan, ch), ch)
+				_field(water, plan, ch), ch, _region(plan, ch))
 			for r in ribs:
 				if r.mid.distance_to(Vector2(float(cc.x), float(cc.y)) * TILE) < R * TILE:
 					print("  ribbon mid %s tan %s top %.2f bottom %.2f" %

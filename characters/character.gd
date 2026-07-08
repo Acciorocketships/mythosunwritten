@@ -204,6 +204,7 @@ func _swell_offset() -> float:
 	var h: float = 1.0 * sin(p.dot(Vector2(0.042, 0.016)) - t * 0.33)
 	h += 0.7 * sin(p.dot(Vector2(-0.023, 0.037)) - t * 0.26 + 1.7)
 	h += 0.35 * sin(p.dot(Vector2(0.032, -0.076)) - t * 0.36 + 4.0)
+	h += 0.5 * sin(p.dot(Vector2(-0.036, -0.014)) - t * 0.31 + 2.6)
 	return h * 0.5 * SWELL_HEIGHT
 
 

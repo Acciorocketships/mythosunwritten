@@ -17,18 +17,18 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 // tint (the reference's pale reflective sheen), never a dark one. The
 // surface itself is SMOOTH: no noise dapple — motion comes entirely from
 // the travelling swells and the interactive ripple sim.
-uniform vec3 color_deep : source_color = vec3(0.46, 0.69, 0.62);
+uniform vec3 color_deep : source_color = vec3(0.33, 0.60, 0.55);
 uniform vec3 color_shallow : source_color = vec3(0.55, 0.82, 0.73);
-uniform vec3 color_sky : source_color = vec3(0.85, 0.93, 0.89);
-uniform float sky_reflect : hint_range(0.0, 1.0) = 0.6;
+uniform vec3 color_sky : source_color = vec3(0.78, 0.90, 0.87);
+uniform float sky_reflect : hint_range(0.0, 1.0) = 0.5;
 uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
 uniform float foam_width : hint_range(0.0, 3.0) = 0.3;
-uniform float clarity_depth : hint_range(0.5, 24.0) = 9.0;   // metres to full deep colour
-// The reference water is a soft OPAQUE pastel jade, not glass: past the
-// first half-metre the body colour takes over regardless of depth — only
-// the very rim (0..~10cm) clears to the ground like the reference's edge.
-uniform float body_floor : hint_range(0.0, 1.0) = 0.58;
-uniform float refraction_strength : hint_range(0.0, 0.2) = 0.035;
+uniform float clarity_depth : hint_range(0.5, 24.0) = 6.5;   // metres to full deep colour
+// CLEAR, not light (owner): the scene shows through with a modest tint
+// floor so shallow shelves never read as bare lawn — it's the REFRACTION
+// DISTORTION that makes the clear water read as water.
+uniform float body_floor : hint_range(0.0, 1.0) = 0.22;
+uniform float refraction_strength : hint_range(0.0, 0.2) = 0.085;
 // LOW frequency, HIGH amplitude, SLOW — the swells are the river's motion
 // (owner). Speed changes here must be mirrored in character.gd SWELL_SPEED.
 uniform float wave_height : hint_range(0.0, 1.5) = 1.15;
@@ -135,7 +135,7 @@ void fragment() {
 	// on geometry ABOVE the surface (banks, the player) or NEARER than this
 	// fragment (foreground headlands) — both pasted ghost copies of dry
 	// things into the water (owner: "ghost image in the water").
-	vec2 roff = NORMAL.xy * refraction_strength * clamp(depth, 0.0, 1.0);
+	vec2 roff = NORMAL.xy * refraction_strength * clamp(depth * 1.5, 0.0, 1.3);
 	vec2 suv = SCREEN_UV + roff;
 	if (water_depth_world(depth_texture, suv, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y) <= 0.0
 			|| water_view_z(depth_texture, suv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.05) {

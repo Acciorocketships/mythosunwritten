@@ -33,6 +33,13 @@ const SPOTS: Array = [
 	["s8_ghost", Vector3(113.3, 9.0, -1215.5), Vector3(104, 9, -1205), Vector3(119, 3.5, -1221)],
 	["lake_low_across", Vector3(113.0, 9.0, -1215.0), Vector3(96, 4.8, -1210), Vector3(130, 3.5, -1220)],
 	["lake_wide", Vector3(113.0, 9.0, -1215.0), Vector3(140, 18, -1240), Vector3(100, 3, -1200)],
+	# Round-6 owner framings: static dome, ramp shard, fall junction,
+	# isolated puddle, cascade skirt consistency.
+	["n1_dome", Vector3(216.6, 6.0, -1145.9), Vector3(216.5, 5.5, -1137), Vector3(216.5, 1.2, -1158)],
+	["n2_shard", Vector3(317.5, 6.0, -1180.5), Vector3(324, 6.5, -1174), Vector3(306, 1.5, -1190)],
+	["n3_junction", Vector3(56.0, 10.0, -1119.3), Vector3(63, 12, -1111), Vector3(48, 5, -1128)],
+	["n4_puddle", Vector3(99.9, 8.0, -1136.5), Vector3(95, 8, -1128), Vector3(108, 2, -1146)],
+	["n5_cascade", Vector3(34.4, 10.0, -1103.4), Vector3(34, 12.5, -1093), Vector3(34, 5, -1118)],
 ]
 
 var _char: CharacterBody3D

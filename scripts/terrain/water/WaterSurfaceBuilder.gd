@@ -232,13 +232,16 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 				"ground": real, "shore": 0.0,
 			}
 
-	# Pass 2: bounded flood — submerged shelves continue the neighbouring level.
+	# Pass 2: bounded flood — submerged shelves continue the neighbouring
+	# level. CARDINAL adjacency only: the 8-neighbour flood hopped DIAGONALLY
+	# over dry saddles into nearby dips, leaving visually isolated puddles on
+	# land (owner: "weird isolated patch of water").
 	for _step in FLOOD_STEPS:
 		var grew: Array = []
 		for cell in field:
 			if not field[cell].wet:
 				continue
-			for d in _CARDINALS_8:
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				var nb: Vector2i = cell + d
 				if nb.x < lo.x or nb.y < lo.y or nb.x >= lo.x + n or nb.y >= lo.y + n:
 					continue
@@ -328,7 +331,12 @@ static func compute_field(water: WaterPlan, chunk: Vector2i, region) -> Dictiona
 			var nb: Vector2i = cell + d
 			if field.has(nb) and field[nb].wet \
 					and absf(field[cell].level - field[nb].level) > BRIDGE_MAX:
-				field[cell].shore = maxf(field[cell].shore, 0.8)
+				# 0.7: still swell-killed near the slab, but the foam gate
+				# now GRADES across the cell instead of saturating — the
+				# white spill band dissolves into the pool rather than
+				# stopping at a hard cell edge (owner: "sudden visual
+				# change" at falls).
+				field[cell].shore = maxf(field[cell].shore, 0.7)
 				break
 
 	# Drop influence-only cells that are neither wet nor rim (dry banks whose
@@ -436,27 +444,47 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i, region) -> Array
 	# die into their banks instead of jutting a square shoulder into the air.
 	# The crest cap itself stays tight either way (_ribbon_mesh clamps the
 	# first rows) — wide caps folded visibly over each other at corners.
+	var by_key: Dictionary = {}
+	for r in out:
+		by_key[[r.cell, Vector2i(int(r.tangent.x), int(r.tangent.y))]] = r
 	for r in out:
 		var d: Vector2i = Vector2i(int(r.tangent.x), int(r.tangent.y))
 		var p: Vector2i = Vector2i(-d.y, d.x)   # +across side in _row_edge terms
 		var ext: Array = []
-		var corner: Array = []
+		var caps: Array = []
 		for side: Vector2i in [p, -p]:
 			# L-corner: this same cell ALSO falls sideways — the two fronts
 			# lean apart in their own downstream directions, so the overlap
-			# must GROW with the forward reach (handled per-row in
-			# _row_edge via the corner flag); a fixed overlap only sealed
-			# the top of the V-notch.
-			corner.append(keys.has([r.cell, side]))
+			# GROWS with the forward reach (per-row in _row_edge), but never
+			# past the NEIGHBOUR fall's own front: a shorter perpendicular
+			# fall left our grown side poking through it as a protruding
+			# piece (owner: "corners... have pieces protruding").
+			var cap: float = 0.0
+			if keys.has([r.cell, side]):
+				var other: Dictionary = by_key[[r.cell, side]]
+				cap = maxf(fall_x_end(other.top, other.bottom) - 0.4, 0.0)
 			if keys.has([r.cell + side, d]) or keys.has([r.cell, side]):
 				ext.append(TILE * 0.5 + 0.7)
 			else:
 				ext.append(TILE * 0.5 - 0.25)
+			caps.append(cap)
 		r["ext_hi"] = ext[0]
 		r["ext_lo"] = ext[1]
-		r["corner_hi"] = corner[0]
-		r["corner_lo"] = corner[1]
+		r["corner_cap_hi"] = caps[0]
+		r["corner_cap_lo"] = caps[1]
 	return out
+
+
+## Downstream offset of a fall's plunge end (crest edge -> runout start), the
+## same curve maths as fall_rows — compute_ribbons caps corner growth with it.
+static func fall_x_end(top: float, bottom: float) -> float:
+	var h: float = maxf(top - bottom, 0.5)
+	var reach: float = clampf(h * FALL_REACH, FALL_REACH_MIN, FALL_REACH_MAX)
+	var t_star: float = minf(FALL_BEND_SLOPE * reach / (2.0 * h), 0.97)
+	var fillet_h: float = h * (1.0 - t_star * t_star)
+	var th0: float = atan(2.0 * h * t_star / reach)
+	var arc_r: float = fillet_h / maxf(1.0 - cos(th0), 0.02)
+	return reach * t_star + arc_r * sin(th0)
 
 
 # Horizontal throw of the arc as a fraction of the drop, clamped. The curtain
@@ -551,8 +579,8 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 		"mid": r.mid, "tangent": r.tangent,
 		"ext_hi": r.get("ext_hi", r.half_width),
 		"ext_lo": r.get("ext_lo", r.half_width),
-		"corner_hi": r.get("corner_hi", false),
-		"corner_lo": r.get("corner_lo", false),
+		"corner_cap_hi": r.get("corner_cap_hi", 0.0),
+		"corner_cap_lo": r.get("corner_cap_lo", 0.0),
 	}
 	_layer_strip(st, front, across_u, prm, false)
 	_layer_strip(st, back, across_u, prm, true)
@@ -582,11 +610,12 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 ## reach — a fixed overlap only sealed the top of the V-notch).
 static func _row_edge(row: Array, across_u: Vector2, s: float, prm: Dictionary) -> Vector3:
 	var ext: float = prm.ext_hi if s > 0.0 else prm.ext_lo
+	var cap: float = prm.corner_cap_hi if s > 0.0 else prm.corner_cap_lo
 	if row[3] < 0.06:
 		ext = minf(ext, TILE * 0.5 + 0.05)
-	elif (prm.corner_hi if s > 0.0 else prm.corner_lo):
+	elif cap > 0.0:
 		var along: float = (row[0] - prm.mid).dot(prm.tangent)
-		ext += clampf(along, 0.0, 6.0)
+		ext += clampf(along, 0.0, cap)
 	return Vector3(row[0].x + across_u.x * ext * row[2] * s, row[1],
 		row[0].y + across_u.y * ext * row[2] * s)
 
@@ -786,7 +815,7 @@ static func _corner(k: Vector2i, own_level: float, cm: Dictionary) -> Dictionary
 # smoothed corner-wetness field (bilinear marching-squares over the wet
 # cells), wobbled by world noise so no segment is grid-straight.
 const SHORE_WOBBLE_SCALE := 17.0
-const SHORE_WOBBLE_AMP := 2.4
+const SHORE_WOBBLE_AMP := 1.8
 const SHORE_SDF_SCALE := TILE * 0.85   # wetness units -> approx metres
 
 
@@ -870,13 +899,14 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 					var s: float = (0.5 - wf) * SHORE_SDF_SCALE + wob
 					if s > 0.0:
 						var rg: float = TerrainSurfaceField.surface_y(region, p.x, p.z)
-						# Rim cells always bury outside the waterline. WET
-						# cells bury only where the rendered ground rises to
-						# the surface (dive INTO the bank) — capping over
-						# submerged ground dug a visible trough through open
-						# water ("gap between the main water and the skirt").
-						if not e.wet or rg >= own_level - 0.1:
-							var cap: float = maxf(own_level - s * 3.2, rg - 0.35)
+						# Bury ONLY where the rendered ground actually rises
+						# to the surface — for rims too: a ramp's flat-top is
+						# above the water but its toe is SUBMERGED, and diving
+						# toward the toe built vertical water shards at ramp
+						# shores (owner's "weird glitch"). Gentle slope: 3.2
+						# stepped 2m+ inside one 3m sub-quad.
+						if rg >= own_level - 0.1:
+							var cap: float = maxf(own_level - s * 1.8, rg - 0.3)
 							p.y = minf(p.y, cap)
 					if s > -1.2:
 						# Waterline band: full shore — the foam lap line hugs
