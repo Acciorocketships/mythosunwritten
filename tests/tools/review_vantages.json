@@ -1,0 +1,13 @@
+{
+  "comment": "Every camera the owner has ever reviewed water from, as (player, crosshair) pairs straight off his F3 overlays, plus structural views. After ANY water change: for each entry, ReviewCam.pose(player) -> wait for chunks -> ReviewCam.shoot(player, crosshair, out.png) (or place the camera manually for the cam/look entries) and REVIEW EVERY FRAME before returning. Artifacts only show from specific angle classes: plunge-side, above/behind-crest, crest-standing, and bank-side each fail independently.",
+  "seed": 2697992464,
+  "vantages": [
+    {"name": "r5-V1 bank-side at the cascade", "player": [34.4, 8.0, -1103.4], "crosshair": [34.1, 8.2, -1103.7]},
+    {"name": "r8 bank-side, fall left flank + 5-pool", "player": [34.3, 8.0, -1099.8], "crosshair": [34.0, 8.2, -1100.0]},
+    {"name": "r6 crest-standing at the 9->5 fall", "player": [56.6, 7.3, -1091.9], "crosshair": [56.2, 7.5, -1092.0]},
+    {"name": "r5-V2 flood-plain shore clarity", "player": [135.0, 4.6, -1159.6], "crosshair": [135.1, 4.2, -1159.9]},
+    {"name": "r5-V3 plunge-side, both falls head-on", "cam": [49.3, 12.0, -1118.6], "look": [49.3, 7.6, -1110.6]},
+    {"name": "above/behind crest looking downstream", "cam": [59.7, 11.9, -1084.5], "look": [54.0, 6.9, -1090.2]},
+    {"name": "2m weir (5->3) head-on", "cam": [49.0, 9.0, -1131.0], "look": [49.0, 3.5, -1114.0]}
+  ]
+}

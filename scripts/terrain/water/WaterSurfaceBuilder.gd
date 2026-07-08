@@ -38,9 +38,13 @@ const FIELD_MARGIN := 7               # region margin = FLOOD_STEPS + rim ring
 # Corners only average adjacent cells within this of the cell's own level:
 # bigger jumps SPLIT the sheet (two clean edges at the cliff the wall hides)
 # instead of bridging them with giant slanted curtain quads ("water coming
-# out of the wall", stray polygons on hillsides). Under a storey, so normal
-# sloping reaches stay watertight.
-const BRIDGE_MAX := 2.5
+# out of the wall", stray polygons on hillsides). BELOW the common 2.0m
+# junction/backwater step: bridging those tilted a whole plunge-pool cell
+# from its crest-snapped 5.0 edge down to ~3.9 — a big leaning plane reading
+# as a "detached skirt" beside the flat water (owner, rounds 5-8; raycast +
+# corner-math confirmed at cell (2,-46) on the pinned seed). 2.0m steps now
+# split into proper weir curtains, same visual language as the tall falls.
+const BRIDGE_MAX := 1.8
 # Flood (pass 2) rescues neighbour cells whose REAL rendered ground sits
 # under the level: quantization-sunk banks and side shelves are honest water
 # (they are below the surface!) — leaving the shallow band dry rendered the

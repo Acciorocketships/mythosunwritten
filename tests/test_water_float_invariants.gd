@@ -10,7 +10,7 @@ extends GutTest
 
 const SEED := 2697992464
 const TILE := 24.0
-const BRIDGE := 2.5          # = WaterSurfaceBuilder.BRIDGE_MAX
+const BRIDGE := WaterSurfaceBuilder.BRIDGE_MAX   # never drifts from the builder
 # Chunks covering the owner's five annotated spots (S1/S4/S5, S3, S2).
 const CHUNKS := [Vector2i(0, -6), Vector2i(-1, -6), Vector2i(-1, -5)]
 
