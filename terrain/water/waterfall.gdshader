@@ -73,11 +73,20 @@ void fragment() {
 	// streak texture stopping dead against the calm pool read as a seam).
 	float develop = smoothstep(0.9, 3.2, fallen);
 	float plunge = smoothstep(0.7, 1.0, UV.y);
-	float foam = clamp(develop * (0.18 + 0.55 * band) + 0.4 * plunge, 0.0, 1.0);
+	float foam = clamp(develop * (0.18 + 0.55 * band) + 0.3 * plunge, 0.0, 1.0);
 	foam *= 1.0 - 0.6 * side_v;
 	ALBEDO = mix(body, foam_color, foam);
-	float fade = 1.0 - smoothstep(0.88, 1.06, UV.y);
-	ALPHA = mix(0.92, 0.24, side_v) * fade;
+	// The lower half grows TRANSLUCENT before the plunge dissolve: the pool's
+	// own tone (often the terrain's shadow) bleeds through the falling water,
+	// so the fall grades into the pool instead of pinning bright white
+	// against a dark surface (owner: "not even close to blending here").
+	float sink = mix(1.0, 0.62, smoothstep(0.5, 0.95, UV.y));
+	float fade = 1.0 - smoothstep(0.85, 1.05, UV.y);
+	// The overlap strip tucked UNDER the drooped sheet is fully transparent:
+	// transparent-pass sorting sometimes draws it over the sheet, and its
+	// edge showed as a thin bright line crossing the crest (round-7 raycast).
+	float lip_in = smoothstep(0.0, 0.04, UV.y);
+	ALPHA = mix(0.92, 0.24, side_v) * fade * sink * lip_in;
 	// Glassy where clear (the sun path continues over the lip), rough where
 	// foamy — never mirror-tight (a hard specular beam at grazing sun).
 	ROUGHNESS = mix(0.28, 0.55, max(foam, 0.35 * side_v));

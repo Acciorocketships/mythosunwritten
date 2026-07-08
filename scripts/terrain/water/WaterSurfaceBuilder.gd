@@ -454,6 +454,7 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i, region) -> Array
 		var p: Vector2i = Vector2i(-d.y, d.x)   # +across side in _row_edge terms
 		var ext: Array = []
 		var caps: Array = []
+		var walls: Array = []
 		for side: Vector2i in [p, -p]:
 			# L-corner: this same cell ALSO falls sideways — the two fronts
 			# lean apart in their own downstream directions, so the overlap
@@ -470,81 +471,111 @@ static func compute_ribbons(field: Dictionary, chunk: Vector2i, region) -> Array
 			else:
 				ext.append(TILE * 0.5 - 0.25)
 			caps.append(cap)
+			# WALLED flank: the ground across this side rises to (or above)
+			# the crest — the fall runs in a gorge. The slab must reach INTO
+			# the rock past the boundary skirt plane: sitting proud of it,
+			# the side wall rendered face-on as a translucent streaky
+			# triangle descending the wall — the owner's "detached diagonal
+			# skirt" hanging above the plunge pool (raycast-confirmed at the
+			# x=60 boundary plane on the pinned seed).
+			var nbs: Vector2i = r.cell + side
+			var gs: float = field[nbs].ground if field.has(nbs) \
+				else region.surface_height(nbs.x, nbs.y)
+			walls.append(gs >= r.top - 0.1)
 		r["ext_hi"] = ext[0]
 		r["ext_lo"] = ext[1]
 		r["corner_cap_hi"] = caps[0]
 		r["corner_cap_lo"] = caps[1]
+		r["wall_hi"] = walls[0]
+		r["wall_lo"] = walls[1]
 	return out
 
 
 ## Downstream offset of a fall's plunge end (crest edge -> runout start), the
 ## same curve maths as fall_rows — compute_ribbons caps corner growth with it.
 static func fall_x_end(top: float, bottom: float) -> float:
-	var h: float = maxf(top - bottom, 0.5)
-	var reach: float = clampf(h * FALL_REACH, FALL_REACH_MIN, FALL_REACH_MAX)
-	var t_star: float = minf(FALL_BEND_SLOPE * reach / (2.0 * h), 0.97)
-	var fillet_h: float = h * (1.0 - t_star * t_star)
-	var th0: float = atan(2.0 * h * t_star / reach)
-	var arc_r: float = fillet_h / maxf(1.0 - cos(th0), 0.02)
-	return reach * t_star + arc_r * sin(th0)
+	return _fall_curve(top, bottom).x_end
 
 
-# Horizontal throw of the arc as a fraction of the drop, clamped. The curtain
-# is a PROJECTILE parabola parametrized by flight time t: offset grows
-# linearly, fall quadratically — the water exits the lip travelling
-# HORIZONTALLY, tangent-continuous with the flat sheet above, then bends into
-# the drop (owner: "the water should exit the top travelling horizontally,
-# then curve down").
+# Horizontal throw of the arc as a fraction of the drop, clamped. The sheet
+# DROOPS quadratically into every curtained edge and the fall's curve leaves
+# the drooped edge with the SAME height and slope — C1 across the lip, so
+# there is no visible fold where still water becomes falling water (owner:
+# "make the tangent continuous, looks like there is an angle").
 const FALL_REACH := 0.35
 const FALL_REACH_MIN := 1.5
 const FALL_REACH_MAX := 6.0
-const FALL_PAR_ROWS := 5         # parabola segments of the curtain
+const FALL_PAR_ROWS := 5         # accelerating-curve segments of the curtain
 const FALL_FILLET_ROWS := 5      # circular ease-out segments at the plunge
 const FALL_OVERLAP := 1.1        # upstream embed under the upper sheet
 const FALL_BEND_SLOPE := 4.0     # world slope where the plunge arc takes over
+const CREST_DROOP := 0.32        # sheet droop depth right at a curtained edge
+const CREST_DROOP_RANGE := 3.0   # droop begins this far inside the cell
+
+
+## The sheet's droop below its own level, `dist` metres before a curtained
+## edge. Quadratic: slope 0 where it starts, 2*DROOP/RANGE at the edge — the
+## fall curve continues from exactly that height and slope.
+static func crest_droop_at(dist: float) -> float:
+	var f: float = 1.0 - clampf(dist / CREST_DROOP_RANGE, 0.0, 1.0)
+	return CREST_DROOP * f * f
+
+
+## The fall's downstream curve shared by fall_rows and fall_x_end: an
+## accelerating quadratic leaving the drooped crest edge at slope s0, handed
+## to a circular arc at FALL_BEND_SLOPE that flattens into the plunge.
+static func _fall_curve(top: float, bottom: float) -> Dictionary:
+	var h: float = maxf(top - bottom, 0.5)
+	var reach: float = clampf(h * FALL_REACH, FALL_REACH_MIN, FALL_REACH_MAX)
+	var y0: float = top - CREST_DROOP
+	var s0: float = 2.0 * CREST_DROOP / CREST_DROOP_RANGE
+	var h_eff: float = maxf(y0 - bottom, 0.4)
+	var c: float = h_eff / (reach * reach)
+	var x_star: float = minf((FALL_BEND_SLOPE - s0) / (2.0 * c), 0.97 * reach)
+	# Never let the quadratic dive under the plunge before the arc takes over.
+	var x_floor: float = (-s0 + sqrt(s0 * s0 + 4.0 * c * maxf(h_eff - 0.2, 0.1))) \
+		/ (2.0 * c)
+	x_star = minf(x_star, x_floor)
+	var y_star: float = y0 - s0 * x_star - c * x_star * x_star
+	var slope_star: float = s0 + 2.0 * c * x_star
+	var th0: float = atan(slope_star)
+	var arc_r: float = maxf(y_star - bottom, 0.02) / maxf(1.0 - cos(th0), 0.02)
+	return {"y0": y0, "s0": s0, "c": c, "x_star": x_star, "y_star": y_star,
+		"th0": th0, "arc_r": arc_r, "x_end": x_star + arc_r * sin(th0)}
 
 
 ## Waterfall centreline rows: [centre: Vector2, y, width_scale, uv_y] for the
 ## front sheet plus the back sheet offset along the local curve normal. The
-## profile is an OGEE: an upstream overlap row embedded just under the upper
-## sheet (no slit can open when the sheet swells), a horizontal-exit parabola,
-## then a C1 mirrored-parabola FILLET that flattens back to horizontal right
-## at the lower surface — the fall bends smoothly into the pool instead of
-## stabbing it at an angle (owner: "a smooth curve back up to connect with
-## the water at the bottom") — and a flat submerged runout. uv_y == the
-## normalized height fraction (0 crest .. 1 plunge, >1 runout).
+## profile is an OGEE welded C1 to the DROOPED sheet: an upstream overlap row
+## riding the droop curve just under the sheet (no slit can open when the
+## sheet swells), an accelerating quadratic leaving the drooped crest edge at
+## the droop's own slope (no fold at the lip), then a circular-arc FILLET
+## that flattens back to horizontal right at the lower surface — the fall
+## bends smoothly into the pool instead of stabbing it at an angle — and a
+## flat submerged runout. uv_y == the normalized height fraction (0 crest ..
+## 1 plunge, >1 runout).
 static func fall_rows(r: Dictionary) -> Dictionary:
 	var mid: Vector2 = r.mid
 	var tangent: Vector2 = r.tangent
 	var top: float = r.top
 	var bottom: float = r.bottom
 	var h: float = maxf(top - bottom, 0.5)
-	var reach: float = clampf(h * FALL_REACH, FALL_REACH_MIN, FALL_REACH_MAX)
-	# Hand the parabola off to the fillet once it steepens to FALL_BEND_SLOPE;
-	# the fillet is a CIRCULAR ARC sampled uniformly in angle — its chords
-	# flatten progressively to exactly horizontal at the lower surface, so
-	# the fall never stabs the pool at an angle however tall the drop is.
-	var t_star: float = minf(FALL_BEND_SLOPE * reach / (2.0 * h), 0.97)
-	var fillet_h: float = h * (1.0 - t_star * t_star)   # drop the arc covers
-	var slope0: float = 2.0 * h * t_star / reach
-	var th0: float = atan(slope0)
-	var arc_r: float = fillet_h / maxf(1.0 - cos(th0), 0.02)
-	var x_star: float = reach * t_star
-	var y_star: float = bottom + fillet_h
+	var cv: Dictionary = _fall_curve(top, bottom)
 	var front: Array = []
-	front.append([mid - tangent * FALL_OVERLAP, top - 0.16, 1.0, 0.0])
+	front.append([mid - tangent * FALL_OVERLAP,
+		top - crest_droop_at(FALL_OVERLAP) - 0.03, 1.0, 0.0])
 	for i in FALL_PAR_ROWS + 1:
-		var t: float = t_star * float(i) / float(FALL_PAR_ROWS)
-		var y: float = top - h * t * t
-		front.append([mid + tangent * (reach * t), y,
-			1.0 + 0.20 * (top - y) / h, (top - y) / h])
-	for j in range(1, FALL_FILLET_ROWS + 1):
-		var th: float = th0 * (1.0 - float(j) / float(FALL_FILLET_ROWS))
-		var x: float = x_star + arc_r * (sin(th0) - sin(th))
-		var y: float = y_star - arc_r * (cos(th) - cos(th0))
+		var x: float = cv.x_star * float(i) / float(FALL_PAR_ROWS)
+		var y: float = cv.y0 - cv.s0 * x - cv.c * x * x
 		front.append([mid + tangent * x, y,
 			1.0 + 0.20 * (top - y) / h, (top - y) / h])
-	var x_end: float = x_star + arc_r * sin(th0)
+	for j in range(1, FALL_FILLET_ROWS + 1):
+		var th: float = cv.th0 * (1.0 - float(j) / float(FALL_FILLET_ROWS))
+		var x: float = cv.x_star + cv.arc_r * (sin(cv.th0) - sin(th))
+		var y: float = cv.y_star - cv.arc_r * (cos(th) - cos(cv.th0))
+		front.append([mid + tangent * x, y,
+			1.0 + 0.20 * (top - y) / h, (top - y) / h])
+	var x_end: float = cv.x_end
 	front.append([mid + tangent * (x_end + 1.6), bottom - 0.12, 1.36, 1.04])
 	front.append([mid + tangent * (x_end + 3.2), bottom - 0.28, 1.5, 1.08])
 	# Back sheet: each row pushed along the local curve normal (finite
@@ -588,6 +619,8 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 		"ext_lo": r.get("ext_lo", r.half_width),
 		"corner_cap_hi": r.get("corner_cap_hi", 0.0),
 		"corner_cap_lo": r.get("corner_cap_lo", 0.0),
+		"wall_hi": r.get("wall_hi", false),
+		"wall_lo": r.get("wall_lo", false),
 	}
 	_layer_strip(st, front, across_u, prm, false, drop_h)
 	_layer_strip(st, back, across_u, prm, true, drop_h)
@@ -609,15 +642,23 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary) -> void:
 
 
 ## One row edge position: row = [centre: Vector2, y, width_scale, uv_y],
-## s = -1 (left) or +1 (right) across the flow, with per-side extents. The
-## crest rows (uv < 0.06 — the overlap row, the lip and its cap) always stay
-## TIGHT to the cell edge: extended caps folded visibly over the neighbouring
-## slab at corners. On L-CORNER sides the body's extension GROWS with the
-## row's forward offset (the neighbouring fall's front leans away by its own
-## reach — a fixed overlap only sealed the top of the V-notch).
+## s = -1 (left) or +1 (right) across the flow, with per-side extents. WALLED
+## flanks reach a fixed depth INTO the rock (past the boundary skirt plane at
+## TILE/2) — proud edges rendered as detached diagonal skirts on the gorge
+## wall. Open crest rows (uv < 0.06 — the overlap row, the lip and its cap)
+## stay TIGHT to the cell edge: extended caps folded visibly over the
+## neighbouring slab at corners. On L-CORNER sides the body's extension GROWS
+## with the row's forward offset (the neighbouring fall's front leans away by
+## its own reach — a fixed overlap only sealed the top of the V-notch).
 static func _row_edge(row: Array, across_u: Vector2, s: float, prm: Dictionary) -> Vector3:
 	var ext: float = prm.ext_hi if s > 0.0 else prm.ext_lo
 	var cap: float = prm.corner_cap_hi if s > 0.0 else prm.corner_cap_lo
+	var walled: bool = prm.wall_hi if s > 0.0 else prm.wall_lo
+	if walled:
+		# Constant depth into the rock: width_scale must not modulate it or
+		# the runout rows poke back OUT of the wall face.
+		return Vector3(row[0].x + across_u.x * (TILE * 0.5 + 0.6) * s, row[1],
+			row[0].y + across_u.y * (TILE * 0.5 + 0.6) * s)
 	if row[3] < 0.06:
 		ext = minf(ext, TILE * 0.5 + 0.05)
 	elif cap > 0.0:
@@ -892,6 +933,23 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 	# flat-top logic left edges hovering over ramped banks (owner: "water
 	# stops before touching the ground").
 	var contour: bool = (not e.wet) or e.get("shore", 0.0) > 0.0
+	# Curtained edges (same predicate as compute_ribbons): the sheet DROOPS
+	# quadratically toward them and the fall's curve continues from exactly
+	# that height and slope — C1 across the lip, no fold where still water
+	# becomes falling water (owner: "make the tangent continuous").
+	var droops: Array = []
+	if e.wet:
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nb: Vector2i = cell + d
+			var dropped: bool
+			if field.has(nb) and field[nb].wet:
+				dropped = own_level - field[nb].level > BRIDGE_MAX
+			else:
+				var g: float = field[nb].ground if field.has(nb) \
+					else region.surface_height(nb.x, nb.y)
+				dropped = own_level - g > BRIDGE_MAX
+			if dropped:
+				droops.append(d)
 	var out: Array = []
 	for sz in SUBDIV:
 		for sx in SUBDIV:
@@ -926,6 +984,11 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 						# over whole shelves) and the shader kills the swell
 						# so the buried edge never bobs above its bank.
 						c.g = maxf(c.g, 1.0 - maxf(0.0, -s) * 0.8)
+				for dd: Vector2i in droops:
+					var edge: float = (float(cell.x) + 0.5 * float(dd.x)) * TILE \
+						if dd.x != 0 else (float(cell.y) + 0.5 * float(dd.y)) * TILE
+					var dist: float = absf((p.x - edge) if dd.x != 0 else (p.z - edge))
+					p.y = minf(p.y, own_level - crest_droop_at(dist))
 				quad.append([p, c])
 			# Sub-corners (0,0),(0,1),(1,1),(1,0); winding matches the +Y quad.
 			for idx in [0, 1, 2, 0, 2, 3]:

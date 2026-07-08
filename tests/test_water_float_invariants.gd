@@ -299,6 +299,50 @@ func test_fall_rows_ogee_profile() -> void:
 
 
 # ------------------------------------------------------------
+# The crest is C1: the sheet DROOPS quadratically into every curtained edge
+# and the fall's first row continues from exactly that height and slope — no
+# fold where still water becomes falling water (round-7: "make the tangent
+# continuous, looks like there is an angle").
+# ------------------------------------------------------------
+func test_crest_droop_welds_sheet_to_fall() -> void:
+	var droop: float = WaterSurfaceBuilder.CREST_DROOP
+	# Fall side: the x=0 row starts at the drooped height and leaves near the
+	# droop's own slope (then steepens).
+	var r := {"mid": Vector2(0.0, 0.0), "tangent": Vector2(0.0, -1.0),
+		"half_width": 12.0, "top": 9.0, "bottom": 4.55, "kind": "wet"}
+	var front: Array = WaterSurfaceBuilder.fall_rows(r).front
+	assert_almost_eq(front[1][1], r.top - droop, 0.01,
+		"fall's crest row starts at the drooped sheet height")
+	var s0: float = 2.0 * droop / WaterSurfaceBuilder.CREST_DROOP_RANGE
+	var dx: float = front[2][0].distance_to(front[1][0])
+	var slope: float = (front[1][1] - front[2][1]) / maxf(dx, 0.001)
+	assert_true(slope >= s0 - 0.02 and slope <= s0 + 1.0,
+		"fall leaves the crest near the droop slope (got %.2f vs s0 %.2f)" % [slope, s0])
+	# Sheet side: crest-edge sub-vertices of the pinned 9->5 crest cell sit at
+	# level - droop — exactly where the fall's first row welds on.
+	var chunk := Vector2i(0, -6)
+	var field: Dictionary = _field(SEED, chunk)
+	var cell := Vector2i(2, -45)
+	assert_true(field.has(cell) and field[cell].wet, "pinned crest cell present")
+	if not field.has(cell):
+		return
+	var cm: Dictionary = WaterSurfaceBuilder.corner_map(field, _region(SEED, chunk))
+	var lvl: float = field[cell].level
+	var edge_z: float = (float(cell.y) - 0.5) * TILE   # the 9->5 crest at z=-1092
+	var found := 0
+	for v in WaterSurfaceBuilder.sheet_cell_grid(
+			cell, field, cm, _water(SEED), _region(SEED, chunk)):
+		if absf(v.pos.z - edge_z) > 0.01:
+			continue
+		if absf(v.pos.x - float(cell.x) * TILE) > 9.0:
+			continue   # side corners may carry extra contour capping
+		assert_almost_eq(v.pos.y, lvl - droop, 0.05,
+			"crest edge sub-vert drooped (x=%.1f)" % v.pos.x)
+		found += 1
+	assert_true(found > 0, "found crest-edge sub-vertices to check")
+
+
+# ------------------------------------------------------------
 # Water only stops by touching ground (round-4 rule 3): every outer-ring
 # sub-vertex of the sheet — the rows of rim cells facing cells OUTSIDE the
 # field — must sit under the REAL RENDERED terrain at that exact point
@@ -367,10 +411,13 @@ func test_wet_shores_never_trough() -> void:
 			# level (corner averaging with the downstream neighbour). The BUG
 			# is the CAP digging below the corner-bilinear surface over
 			# submerged ground — so the floor is the lowest corner anchor.
+			# The crest DROOP is a deliberate, curtain-welded dip: allow up to
+			# CREST_DROOP below the floor (the fall slab covers that face).
 			var floor_y: float = INF
 			for off in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
 				floor_y = minf(floor_y,
 					WaterSurfaceBuilder._corner(cell + off, e.level, cm).y)
+			floor_y -= WaterSurfaceBuilder.CREST_DROOP
 			for v in WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water, region):
 				var rg: float = TerrainSurfaceField.surface_y(region, v.pos.x, v.pos.z)
 				if rg < e.level - 0.3:
