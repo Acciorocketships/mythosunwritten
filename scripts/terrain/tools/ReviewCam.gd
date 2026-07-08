@@ -46,6 +46,34 @@ static func pose(player: Vector3) -> void:
 	ch.set_physics_process(false)
 
 
+## Debug material swap: every water SHEET renders flat yellow, every FALL
+## flat magenta, unshaded — a screenshot then labels each pixel's owner, so
+## artifact attribution is read straight off the image instead of guessed
+## (owner: "try highlighting the pieces so you can identify the correct
+## piece"). Call highlight(false) to restore the real materials.
+static func highlight(on: bool) -> void:
+	var root: Node = (Engine.get_main_loop() as SceneTree).root
+	var sheet_m: Material = _flat(Color(1.0, 0.9, 0.1)) if on \
+		else WaterSurfaceBuilder.sheet_material()
+	var fall_m: Material = _flat(Color(1.0, 0.15, 0.9)) if on \
+		else WaterSurfaceBuilder.waterfall_material()
+	for mi in root.find_children("WaterSheet", "MeshInstance3D", true, false):
+		mi.material_override = sheet_m
+	for mi in root.find_children("Waterfalls", "MeshInstance3D", true, false):
+		mi.material_override = fall_m
+
+
+static func _flat(c: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = c
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	# The real water materials are cull_disabled and the sheet winds facing
+	# DOWN — with default backface culling the debug view hid every sheet
+	# seen from above and mimicked "missing water" (a full debugging detour).
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return m
+
+
 ## Step 2: place the camera on the solved orbit pose and save the frame.
 static func shoot(player: Vector3, crosshair: Vector3, path: String) -> void:
 	var root: Node = (Engine.get_main_loop() as SceneTree).root

@@ -828,7 +828,19 @@ static func _corner(k: Vector2i, own_level: float, cm: Dictionary) -> Dictionary
 	if bank_ground < INF:
 		lvl = minf(lvl, bank_ground - 0.08)
 	if low_gnd < INF:
-		lvl = minf(lvl, low_gnd - 0.08)
+		if lvl - low_gnd <= BRIDGE_MAX or wet_cells.is_empty():
+			# Shallow neighbouring dip — or a RIM-only corner (outer ring,
+			# nothing welds there): bury the edge just under that ground.
+			lvl = minf(lvl, low_gnd - 0.08)
+		else:
+			# DEEP drop at this corner: hold the surface (a droop-deep dip at
+			# most) — the welded falls' pinched end columns close onto this
+			# very vertex. Burying dove the sheet 4-6m down one sub-edge: a
+			# giant slanted ribbon along every fall flank, the owner's
+			# "diagonal water skirt" since round 5 (highlight-tool-confirmed
+			# to be SHEET geometry, not the fall).
+			lvl = minf(lvl, lvl_sum / float(cnt) - CREST_DROOP)
+			sho = maxf(sho, 0.9 * float(cnt))
 	return {"y": lvl, "flow": fl / float(cnt), "steep": stp, "shore": sho / float(cnt)}
 
 
