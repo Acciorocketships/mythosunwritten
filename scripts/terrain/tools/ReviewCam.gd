@@ -74,6 +74,96 @@ static func _flat(c: Color) -> StandardMaterial3D:
 	return m
 
 
+## Isolate the SKIRT from the pools (owner: "highlight *just* the water
+## skirt, excluding the pool"). A sheet vertex is SKIRT-class when it rides
+## proud of the physics terrain by more than 0.25m while sitting OUTSIDE
+## every swim volume — real pools carry a volume, detached water never
+## does, so the test needs no builder internals. Triangles containing a
+## skirt vertex are rebuilt into a flat red unshaded overlay; the pools
+## keep their normal look. Every skirt vertex prints as a `SKIRT` log line
+## (position, ground height, proud metres); pass log_pool=true to also
+## print deduped `POOL` lines for side-by-side reading. Returns the skirt
+## vertex count. Run from a godot-MCP eval while the game is running:
+##   var RC = load("res://scripts/terrain/tools/ReviewCam.gd")
+##   RC.skirt_debug(Vector3(33.9, 8.0, -1097.4), 40.0)
+##   RC.skirt_debug(Vector3(33.9, 8.0, -1097.4), 40.0, true)  # + POOL lines
+##   RC.clear_skirt_debug()
+static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> int:
+	clear_skirt_debug()
+	var root: Node = (Engine.get_main_loop() as SceneTree).root
+	var space := root.get_viewport().get_world_3d().direct_space_state
+	var vol_q := PhysicsPointQueryParameters3D.new()
+	vol_q.collide_with_areas = true
+	vol_q.collide_with_bodies = false
+	vol_q.collision_mask = 1 << 7
+	var seen: Dictionary = {}
+	var skirt_n: int = 0
+	var pool_n: int = 0
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var tris: int = 0
+	for mi: MeshInstance3D in root.find_children("WaterSheet", "MeshInstance3D", true, false):
+		var aabb: AABB = mi.global_transform * mi.get_aabb()
+		if aabb.position.distance_to(center) - aabb.size.length() > radius:
+			continue
+		var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		var xf: Transform3D = mi.global_transform
+		var i: int = 0
+		while i < verts.size():
+			var w: Array = []
+			for k in 3:
+				w.append(xf * verts[i + k])
+			i += 3
+			if (w[0] as Vector3).distance_to(center) > radius:
+				continue
+			var tri_skirt: bool = false
+			for k in 3:
+				var p: Vector3 = w[k]
+				var key: Vector3i = Vector3i((p * 4.0).round())
+				var cls: int
+				if seen.has(key):
+					cls = seen[key]
+				else:
+					var ray := PhysicsRayQueryParameters3D.create(
+						p + Vector3.UP * 30.0, p - Vector3.UP * 60.0)
+					var hit: Dictionary = space.intersect_ray(ray)
+					var ground: float = hit.position.y if not hit.is_empty() else -INF
+					vol_q.position = p
+					var in_pool: bool = not space.intersect_point(vol_q, 1).is_empty()
+					cls = 1 if (p.y > ground + 0.25 and not in_pool) else 0
+					seen[key] = cls
+					if cls == 1:
+						skirt_n += 1
+						print("SKIRT (%.1f, %.2f, %.1f) ground %.2f proud %.2f" % [
+							p.x, p.y, p.z, ground, p.y - ground])
+					else:
+						pool_n += 1
+						if log_pool:
+							print("POOL  (%.1f, %.2f, %.1f) ground %.2f" % [
+								p.x, p.y, p.z, ground])
+				if cls == 1:
+					tri_skirt = true
+			if tri_skirt:
+				for k in 3:
+					st.add_vertex((w[k] as Vector3) + Vector3.UP * 0.04)
+				tris += 1
+	if tris > 0:
+		var mi := MeshInstance3D.new()
+		mi.name = "SkirtDebugOverlay"
+		mi.mesh = st.commit()
+		mi.material_override = _flat(Color(1.0, 0.1, 0.1))
+		root.add_child(mi)
+	print("SKIRT DEBUG: %d skirt verts, %d pool verts, %d overlay tris" % [
+		skirt_n, pool_n, tris])
+	return skirt_n
+
+
+static func clear_skirt_debug() -> void:
+	var root: Node = (Engine.get_main_loop() as SceneTree).root
+	for n in root.find_children("SkirtDebugOverlay", "MeshInstance3D", true, false):
+		n.queue_free()
+
+
 ## Step 2: place the camera on the solved orbit pose and save the frame.
 static func shoot(player: Vector3, crosshair: Vector3, path: String) -> void:
 	var root: Node = (Engine.get_main_loop() as SceneTree).root
