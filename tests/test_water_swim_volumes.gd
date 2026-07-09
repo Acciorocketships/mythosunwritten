@@ -216,21 +216,39 @@ func test_volumes_carry_the_sampled_surface_plane() -> void:
 ## column, e.g. the site's own (2,-46) cascade split) the two are allowed to
 ## legitimately disagree; the gate (agreement within 2.0m) is the same one
 ## the brief's own probe-point check uses, applied first to the centre too.
-## The offset-point check is gated on the field reading near-flat between
-## centre and probe (|plvl - lvl| < 0.6) — the pinned site's only non-zero
-## surface_g on this chunk sits on an anchored pond/plateau level where
-## level_at is PROVABLY flat for 24m+ (scanned every 2m: constant 15.0) yet
-## WaterMesher's finite-difference gradient carries g.x = -0.1083 of
-## sub-grid noise, extrapolating to a 0.65m error over 6m — a known
-## mesher gradient-precision gap, not a Task 10 defect (Task 10 only
-## consumes surface_g, it does not compute it; flagged in the task report).
-## The comparison tolerance (0.7) absorbs exactly that one artifact while
-## still catching a wrong sign/slope or a stale/garbage gradient.
+##
+## The 6m probe's 0.7 tolerance exists because of a claim-boundary STEP
+## interacting with linear-plane extrapolation, NOT gradient noise — the
+## mesher is working correctly. At the pinned chunk's one non-flat cell
+## (centre x=36, z=-1068) level_at is flat at 15.0 out to x≈+12m, where it
+## steps down 1.3m to 13.7 at a claim boundary; WaterMesher's finite
+## difference spans exactly that 12m (grad = (level_at(+4S) - lvl)/(4S),
+## S=3.0 — see WaterMesher._attributes), so g.x = (13.7-15.0)/12 = -0.1083
+## faithfully records the step. A linear plane cannot represent a step: a
+## probe SHORT of it (+6m) reads the 15.0 plateau from the field but 14.35
+## from the plane — the 0.65m gap the tolerance absorbs.
+##
+## Coverage gap, stated plainly: this pinned chunk has NO genuinely-sloped
+## river cell — every gated cell except the step cell above is flat with
+## g == (0,0), so the 6m probe mostly verifies g≈0 on flat cells. The
+## transcription-exact 12m probes below are what actually pin the gradient:
+## they resample level_at at the mesher's own finite-difference distance
+## (exactly 4*S = 12m in +x and +z), where the plane MUST reproduce the
+## field by construction — catching store/sign/divisor bugs in the metas
+## with no fudge factor. Skipped for stacked cells (split entries carry
+## grad ZERO by design, never a finite difference) and where the probe
+## point gets no valid claim.
 func test_volume_surface_matches_field_at_probe_points() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
 	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(water, SITE_CHUNK, region)
+	var boxes_at: Dictionary = {}
+	for ch in node.get_children():
+		if ch is Area3D:
+			var cc: Vector3 = ch.get_meta("surface_c")
+			var key := Vector2(cc.x, cc.z)
+			boxes_at[key] = int(boxes_at.get(key, 0)) + 1
 	var checked := 0
 	for ch in node.get_children():
 		if ch is Area3D:
@@ -246,5 +264,18 @@ func test_volume_surface_matches_field_at_probe_points() -> void:
 				assert_almost_eq(c.y + g.dot(px - Vector2(c.x, c.z)), plvl, 0.7,
 					"sampled plane tracks the sloped surface")
 				checked += 1
+			# Transcription-exact gradient probes: 12m is the mesher's own
+			# finite-difference span, so the plane must reproduce level_at
+			# there exactly (single-entry cells only — split cells zero
+			# their grad by design).
+			if centre_agrees and int(boxes_at[Vector2(c.x, c.z)]) == 1:
+				var qx: float = WaterField.level_at(ctx, Vector2(c.x + 12.0, c.z))
+				if qx > -INF:
+					assert_almost_eq(c.y + g.x * 12.0, qx, 0.1,
+						"g.x is the field's own 12m finite difference")
+				var qz: float = WaterField.level_at(ctx, Vector2(c.x, c.z + 12.0))
+				if qz > -INF:
+					assert_almost_eq(c.y + g.y * 12.0, qz, 0.1,
+						"g.y is the field's own 12m finite difference")
 	assert_true(checked > 0, "at least one sloped/flat cell verified")
 	node.free()
