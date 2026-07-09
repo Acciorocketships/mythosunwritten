@@ -123,3 +123,36 @@ func _on_chunk_border(v: Vector3) -> bool:
 	var lx: float = fposmod(v.x, span)
 	var lz: float = fposmod(v.z, span)
 	return lx < 0.01 or lx > span - 0.01 or lz < 0.01 or lz > span - 0.01
+
+
+func test_no_triangle_bridges_a_fall() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
+	var tri: int = 0
+	while tri < m.idx.size():
+		var lo: float = INF
+		var hi: float = -INF
+		for k in 3:
+			var y: float = m.verts[m.idx[tri + k]].y
+			lo = minf(lo, y)
+			hi = maxf(hi, y)
+		assert_true(hi - lo < WaterMesher.CUT_JUMP + 0.5,
+			"triangle spans %.2f vertically — bridges a fall" % (hi - lo))
+		tri += 3
+
+
+func test_cut_records_have_welded_lips() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
+	assert_true(m.cuts.size() >= 1, "site records its falls")
+	var vset: Dictionary = {}
+	for v in m.verts:
+		vset[v] = true
+	for rec: Dictionary in m.cuts:
+		assert_true(rec.lip.size() >= 2, "lip is a polyline")
+		for v: Vector3 in rec.lip:
+			assert_true(vset.has(v), "lip vert %s is bit-equal to a sheet vert" % v)
+		for v: Vector3 in rec.base:
+			assert_true(vset.has(v), "base vert %s is bit-equal to a sheet vert" % v)

@@ -49,6 +49,20 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 			_mesh_cell(st, i, j)
 	_hem(st)          # no-op until Task 6
 	_attributes(st)   # no-op until Task 7
+	var cut_records: Array = []
+	for ci: int in st.cut_hits:
+		var cut: Dictionary = st.cuts[ci]
+		var rec := {"cut": cut, "lip": PackedVector3Array(), "base": PackedVector3Array()}
+		for side_key in ["lip", "base"]:
+			var vis: Array = st.cut_hits[ci][side_key]
+			vis.sort_custom(func(x, y):
+				var px := Vector2(st.verts[x].x, st.verts[x].z)
+				var py := Vector2(st.verts[y].x, st.verts[y].z)
+				return (px - cut.p).dot(cut.across) < (py - cut.p).dot(cut.across))
+			for vi: int in vis:
+				rec[side_key].append(st.verts[vi])
+		cut_records.append(rec)
+	st["cut_records"] = cut_records
 	return {"verts": st.verts, "idx": st.idx, "cust": st.cust,
 		"cuts": st.get("cut_records", []), "wet_cells": st.get("wet_cells", {})}
 
@@ -190,13 +204,78 @@ static func _edge_vert(st: Dictionary, a: Vector2i, b: Vector2i) -> int:
 	return vi
 
 
-static func _mesh_cut_cell(_st: Dictionary, _i: int, _j: int,
-		_corners: Array, _wet: Array) -> void:
-	pass   # Task 5
+## A cell straddling a fall: mesh each side separately. Corner membership =
+## wet AND on this side of the cut line; edges crossing the cut get one
+## vertex PER SIDE at the cut line (same XZ, that side's level) — the two
+## sides deliberately do NOT weld across the jump; FallMesher's curtain
+## owns the face between them.
+static func _mesh_cut_cell(st: Dictionary, i: int, j: int,
+		corners: Array, wet_flags: Array) -> void:
+	var ci: int = _cell_cut(st, i, j)
+	var cut: Dictionary = st.cuts[ci]
+	for side in [1, -1]:   # 1 = upstream of the cut (higher), -1 = downstream
+		var poly: Array = []
+		for k in 4:
+			var a: Vector2i = corners[k]
+			var b: Vector2i = corners[(k + 1) % 4]
+			var a_in: bool = wet_flags[k] and _side_of(st, cut, a) == side
+			var b_in: bool = wet_flags[(k + 1) % 4] and _side_of(st, cut, b) == side
+			if a_in:
+				poly.append(_lattice_vert(st, a.x, a.y))
+			if a_in != b_in:
+				# Crossing the waterline or the cut? Cut when both wet.
+				if wet_flags[k] and wet_flags[(k + 1) % 4]:
+					poly.append(_cut_vert(st, ci, a, b, side))
+				else:
+					poly.append(_edge_vert(st, a, b))
+		# Perimeter order is clockwise from above; reversed fan -> +Y (same
+		# convention as _mesh_cell's general fan).
+		for k in range(1, poly.size() - 1):
+			st.idx.append(poly[0])
+			st.idx.append(poly[k + 1])
+			st.idx.append(poly[k])
+
+
+static func _side_of(st: Dictionary, cut: Dictionary, c: Vector2i) -> int:
+	var p: Vector2 = st.base + Vector2(c) * S
+	return 1 if (p - cut.p).dot(cut.dir) < 0.0 else -1
+
+
+## Vertex where lattice edge a-b crosses the cut line, at `side`'s level.
+## Registered into cut_hits so build() can assemble ordered lip/base
+## polylines afterwards.
+static func _cut_vert(st: Dictionary, ci: int, a: Vector2i, b: Vector2i, side: int) -> int:
+	var key := "C:%d:%d:%d:%d:%d:%d" % [ci, side, mini(a.x, b.x), mini(a.y, b.y),
+		absi(b.x - a.x), absi(b.y - a.y)]
+	if st.weld.has(key):
+		return st.weld[key]
+	var cut: Dictionary = st.cuts[ci]
+	var pa: Vector2 = st.base + Vector2(a) * S
+	var pb: Vector2 = st.base + Vector2(b) * S
+	# Intersect edge with the cut line (point cut.p, normal cut.dir).
+	var da: float = (pa - cut.p).dot(cut.dir)
+	var db: float = (pb - cut.p).dot(cut.dir)
+	var t: float = clampf(da / (da - db), 0.0, 1.0) if absf(da - db) > 0.0001 else 0.5
+	var p: Vector2 = pa.lerp(pb, t)
+	var lvl: float = cut.top if side == 1 else cut.bottom
+	var vi: int = st.verts.size()
+	st.verts.append(Vector3(p.x, lvl, p.y))
+	st.weld[key] = vi
+	if not st.cut_hits.has(ci):
+		st.cut_hits[ci] = {"lip": [], "base": []}
+	st.cut_hits[ci]["lip" if side == 1 else "base"].append(vi)
+	return vi
 
 
 ## Index of a fall cut affecting this cell, or -1. A cell is cut when any
-## of its four edges jumps more than CUT_JUMP between wet samples.
+## of its four edges jumps more than CUT_JUMP between wet samples AND the
+## cell sits near an actual recorded cut's line — a level jump alone isn't
+## enough (two unrelated bodies with different levels can claim adjacent
+## lattice samples at a body seam, far from any fall; picking the "nearest"
+## cut with no distance gate there would slice the cell along a cut plane
+## that has nothing to do with the jump, corrupting both that geometry and
+## the real cut's lip/base records). Gate by the cut's own across-line half
+## extent (channel half-width + feather) plus one lattice step of slack.
 static func _cell_cut(st: Dictionary, i: int, j: int) -> int:
 	var l00: float = st.lvl[j * (N + 1) + i]
 	var l10: float = st.lvl[j * (N + 1) + i + 1]
@@ -214,9 +293,13 @@ static func _cell_cut(st: Dictionary, i: int, j: int) -> int:
 	var best := -1
 	var best_d := INF
 	for ci in st.cuts.size():
-		var d: float = absf((centre - st.cuts[ci].p).dot(st.cuts[ci].dir))
-		if d < best_d:
-			best_d = d
+		var cut: Dictionary = st.cuts[ci]
+		var along: float = absf((centre - cut.p).dot(cut.dir))
+		var across: float = absf((centre - cut.p).dot(cut.across))
+		if along > S * 1.5 or across > cut.half + S * 1.5:
+			continue
+		if along < best_d:
+			best_d = along
 			best = ci
 	return best
 
