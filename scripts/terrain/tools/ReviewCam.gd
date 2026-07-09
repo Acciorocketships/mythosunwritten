@@ -74,16 +74,19 @@ static func _flat(c: Color) -> StandardMaterial3D:
 	return m
 
 
-## Isolate the SKIRT from the pools (owner: "highlight *just* the water
-## skirt, excluding the pool"). A sheet vertex is SKIRT-class when it rides
-## proud of the physics terrain by more than 0.25m while sitting OUTSIDE
-## every swim volume — real pools carry a volume, detached water never
-## does, so the test needs no builder internals. Triangles containing a
-## skirt vertex are rebuilt into a flat red unshaded overlay; the pools
-## keep their normal look. Every skirt vertex prints as a `SKIRT` log line
-## (position, ground height, proud metres); pass log_pool=true to also
-## print deduped `POOL` lines for side-by-side reading. Returns the skirt
-## vertex count. Run from a godot-MCP eval while the game is running:
+## Isolate the SKIRT from the pools (owner's definition: "the thin piece of
+## water that sits on the edge of a pool to connect it to the land"). A
+## sheet vertex is SKIRT-class when NO swim volume covers its column —
+## volumes span exactly the wet cells, so "no water below me" means this
+## vertex is the land-connecting film, not pool surface. The probe point
+## sits just above the physics ground so a volume is hit whenever one
+## exists at any height. Skirt triangles render as a flat red unshaded
+## overlay; the pools keep their normal look. Visible skirt vertices print
+## as `SKIRT` log lines (position, ground height, proud metres — buried
+## film is skipped in the log but still drawn, terrain occludes it);
+## log_pool=true also prints deduped `POOL` lines for side-by-side
+## reading. Returns the visible skirt vertex count. Run from a godot-MCP
+## eval while the game is running:
 ##   var RC = load("res://scripts/terrain/tools/ReviewCam.gd")
 ##   RC.skirt_debug(Vector3(33.9, 8.0, -1097.4), 40.0)
 ##   RC.skirt_debug(Vector3(33.9, 8.0, -1097.4), 40.0, true)  # + POOL lines
@@ -128,14 +131,15 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 						p + Vector3.UP * 30.0, p - Vector3.UP * 60.0)
 					var hit: Dictionary = space.intersect_ray(ray)
 					var ground: float = hit.position.y if not hit.is_empty() else -INF
-					vol_q.position = p
-					var in_pool: bool = not space.intersect_point(vol_q, 1).is_empty()
-					cls = 1 if (p.y > ground + 0.25 and not in_pool) else 0
+					vol_q.position = Vector3(p.x, ground + 0.5, p.z)
+					var over_water: bool = not space.intersect_point(vol_q, 1).is_empty()
+					cls = 1 if not over_water else 0
 					seen[key] = cls
 					if cls == 1:
-						skirt_n += 1
-						print("SKIRT (%.1f, %.2f, %.1f) ground %.2f proud %.2f" % [
-							p.x, p.y, p.z, ground, p.y - ground])
+						if p.y > ground - 0.05:
+							skirt_n += 1
+							print("SKIRT (%.1f, %.2f, %.1f) ground %.2f proud %.2f" % [
+								p.x, p.y, p.z, ground, p.y - ground])
 					else:
 						pool_n += 1
 						if log_pool:
@@ -153,7 +157,7 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 		mi.mesh = st.commit()
 		mi.material_override = _flat(Color(1.0, 0.1, 0.1))
 		root.add_child(mi)
-	print("SKIRT DEBUG: %d skirt verts, %d pool verts, %d overlay tris" % [
+	print("SKIRT DEBUG: %d visible skirt verts, %d pool verts, %d overlay tris" % [
 		skirt_n, pool_n, tris])
 	return skirt_n
 
