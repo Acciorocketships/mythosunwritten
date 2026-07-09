@@ -124,10 +124,12 @@ static func _mesh_cell(st: Dictionary, i: int, j: int) -> void:
 			poly.append(_lattice_vert(st, a.x, a.y))
 		if wet_flags[k] != wet_flags[(k + 1) % 4]:
 			poly.append(_edge_vert(st, a, b))
+	# Perimeter order is clockwise from above in Godot axes; the fan is
+	# reversed so all sheet triangles wind +Y like the quad branch.
 	for k in range(1, poly.size() - 1):   # fan
 		st.idx.append(poly[0])
-		st.idx.append(poly[k])
 		st.idx.append(poly[k + 1])
+		st.idx.append(poly[k])
 
 
 ## Waterline vertex on the lattice edge a-b. XZ: linear interp on f refined

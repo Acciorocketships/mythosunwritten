@@ -94,6 +94,30 @@ func test_boundary_verts_sit_on_the_waterline() -> void:
 	assert_true(checked > 20, "site has a real shoreline (%d verts)" % checked)
 
 
+## The sheet's winding convention is +Y (upward normals); later tasks (hem,
+## cut cells) must keep it — near-vertical hem/wall faces added by later
+## tasks may relax this test to skip triangles whose |n.y| is tiny relative
+## to |n|, but for now every sheet triangle is upward.
+func test_all_triangles_wind_up() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
+	assert_false(m.is_empty(), "site chunk builds water")
+	var verts: PackedVector3Array = m.verts
+	var idx: PackedInt32Array = m.idx
+	var tri_count: int = idx.size() / 3
+	for t in tri_count:
+		var i0: int = idx[t * 3]
+		var i1: int = idx[t * 3 + 1]
+		var i2: int = idx[t * 3 + 2]
+		var v0: Vector3 = verts[i0]
+		var v1: Vector3 = verts[i1]
+		var v2: Vector3 = verts[i2]
+		var n: Vector3 = (v1 - v0).cross(v2 - v0)
+		assert_true(n.y > -0.0001,
+			"triangle %d winds down: %s, %s, %s (n=%s)" % [t, v0, v1, v2, n])
+
+
 func _on_chunk_border(v: Vector3) -> bool:
 	var span: float = 24.0 * 8.0
 	var lx: float = fposmod(v.x, span)
