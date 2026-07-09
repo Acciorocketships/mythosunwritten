@@ -37,6 +37,7 @@ uniform float distort_anim : hint_range(0.0, 0.2) = 0.05;
 // (owner). Speed changes here must be mirrored in character.gd SWELL_SPEED.
 uniform float wave_height : hint_range(0.0, 1.5) = 1.0;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.26;
+uniform float wobble_speed : hint_range(0.0, 2.0) = 0.5;
 // Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
 // steep_v), never in a global playback rate — a raised base rate reads as
 // the whole world running in fast-forward (owner regression report).
@@ -84,11 +85,9 @@ void vertex() {
 	// or detach from the static slabs. Chop (travelling crest geometry) is
 	// reserved for genuinely steep reaches and dies with the builder's flow
 	// fade at shores.
-	// Fade STARTS late (0.45): rivers are entirely shore-adjacent cells
-	// (baked shore 0.6) and an early fade flattened all of them — the owner
-	// wants big rollers mid-channel. Full kill by 0.9: waterline edges and
-	// waterfall crests (shore 1.0) stay pinned to their banks and slabs.
-	float amp = wave_height * (1.0 + 0.35 * ff) * (1.0 - smoothstep(0.45, 0.9, shore_v));
+	// The buried hem owns the edge now: the whole surface rides the swell
+	// and the waterline slides up and down the bank with it.
+	float amp = wave_height * (1.0 + 0.35 * ff);
 	float camp = chop_height * ff * steep_v * 0.6;
 	float e = 2.0;
 	float h = water_wave_h(noise_tex, world_pos.xz, t) * amp
@@ -139,9 +138,11 @@ void fragment() {
 	// ANIMATED wobble, scaled down with view distance — constant screen-space
 	// offsets smeared whole far-away banks while showing nothing up close.
 	// Fades in over the first metre of depth (shores don't smear).
-	float wa = texture(noise_tex, world_pos.xz * 0.045 + vec2(TIME * 0.021, -TIME * 0.017)).r;
-	float wb = texture(noise_tex, world_pos.xz * 0.045 + vec2(37.7, 11.3)
-			+ vec2(-TIME * 0.019, TIME * 0.023)).r;
+	vec2 adv = flow_v.xz * TIME * 0.35;
+	float wa = texture(noise_tex, world_pos.xz * 0.045 - adv
+			+ vec2(TIME * 0.021, -TIME * 0.017) * wobble_speed).r;
+	float wb = texture(noise_tex, world_pos.xz * 0.045 + vec2(37.7, 11.3) - adv * 1.15
+			+ vec2(-TIME * 0.019, TIME * 0.023) * wobble_speed).r;
 	vec2 roff = (NORMAL.xy * refraction_strength + (vec2(wa, wb) - 0.5) * distort_anim)
 			* clamp(depth * 1.5, 0.0, 1.3) / max(1.0, -VERTEX.z * 0.08);
 	vec2 suv = SCREEN_UV + roff;
