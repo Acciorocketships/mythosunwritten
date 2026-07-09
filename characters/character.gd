@@ -199,7 +199,13 @@ func _update_in_water() -> void:
 		var collider: Object = h.get("collider")
 		if collider == null:
 			continue
-		if collider.has_meta("surface_y"):
+		if collider.has_meta("surface_c"):
+			var c: Vector3 = collider.get_meta("surface_c")
+			var g: Vector2 = collider.get_meta("surface_g")
+			var sy: float = c.y + g.dot(Vector2(global_position.x - c.x, global_position.z - c.z))
+			if probe_y <= sy + swell + 0.45:
+				best = maxf(best, sy)
+		elif collider.has_meta("surface_y"):
 			var sy: float = float(collider.get_meta("surface_y"))
 			if probe_y <= sy + swell + 0.45:
 				best = maxf(best, sy)
