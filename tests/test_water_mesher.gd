@@ -142,6 +142,55 @@ func test_no_triangle_bridges_a_fall() -> void:
 		tri += 3
 
 
+## A single cell can span >= 3 level clusters (two seams crossing one 3m
+## cell at a 3-body corner). A 2-way split then necessarily groups two
+## far-apart levels into one side; the guard must DROP that folded
+## polygon (a loud hole) rather than emit bridging triangles (a silent
+## fold). Hand-built st — no world plan needed; empty cuts forces the
+## synthetic seam path.
+func test_multi_seam_cell_never_folds() -> void:
+	var n1: int = WaterMesher.N + 1
+	var lvl := PackedFloat32Array()
+	lvl.resize(n1 * n1)
+	lvl.fill(-INF)
+	var gnd := PackedFloat32Array()
+	gnd.resize(n1 * n1)
+	gnd.fill(0.0)
+	lvl[0] = 3.0          # corner (0,0)
+	lvl[1] = 9.0          # corner (1,0)
+	lvl[n1 + 1] = 15.0    # corner (1,1)
+	lvl[n1] = 9.0         # corner (0,1)
+	var st: Dictionary = {
+		"region": null,
+		"ctx": {"ponds": [], "rivers": [], "buckets": {}, "region": null},
+		"base": Vector2.ZERO, "lvl": lvl, "gnd": gnd,
+		"verts": PackedVector3Array(), "idx": PackedInt32Array(),
+		"cust": PackedFloat32Array(), "weld": {},
+		"cuts": [], "cut_hits": {},
+	}
+	WaterMesher._mesh_cell(st, 0, 0)
+	# The drop must be LOUD: expect the guard's push_warning (and mark it
+	# handled so GUT does not fail the test for it).
+	var warned := false
+	for e in GutUtils.get_error_tracker().get_current_test_errors():
+		if e.contains_text("multi-seam cell"):
+			e.handled = true
+			warned = true
+	assert_true(warned, "the dropped polygon warns loudly")
+	assert_true(st.idx.size() > 0, "the cell still emits its clean side")
+	var tri: int = 0
+	while tri < st.idx.size():
+		var lo: float = INF
+		var hi: float = -INF
+		for k in 3:
+			var y: float = st.verts[st.idx[tri + k]].y
+			lo = minf(lo, y)
+			hi = maxf(hi, y)
+		assert_true(hi - lo < WaterMesher.CUT_JUMP + 0.5,
+			"triangle spans %.2f — multi-seam cell folded" % (hi - lo))
+		tri += 3
+
+
 func test_cut_records_have_welded_lips() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)

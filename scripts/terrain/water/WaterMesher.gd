@@ -237,6 +237,32 @@ static func _mesh_cut_cell(st: Dictionary, i: int, j: int,
 					poly.append(_cut_vert(st, ci, a, b, side))
 				else:
 					poly.append(_edge_vert(st, a, b))
+		# Guard: a cell whose wet corners span >= 3 level clusters (two
+		# seams/cuts crossing one 3m cell at a 3-body corner) cannot 2-way
+		# split cleanly — one side necessarily groups two far-apart levels
+		# and its fan would fold across the jump. Drop that polygon LOUDLY
+		# instead of emitting it: a rare hole at a triple seam beats a
+		# silent bridge, and Task 6's free-edge accounting will surface it
+		# if it ever occurs in practice.
+		var span_lo: float = INF
+		var span_hi: float = -INF
+		for vi: int in poly:
+			span_lo = minf(span_lo, st.verts[vi].y)
+			span_hi = maxf(span_hi, st.verts[vi].y)
+		if span_hi - span_lo > CUT_JUMP + 0.5:
+			var lvls: Array = []
+			for k in 4:
+				if wet_flags[k]:
+					lvls.append(st.lvl[corners[k].y * (N + 1) + corners[k].x])
+			lvls.sort()
+			var clusters: int = 1
+			for k in range(1, lvls.size()):
+				if lvls[k] - lvls[k - 1] > CUT_JUMP:
+					clusters += 1
+			push_warning(
+				"WaterMesher: %d-level cell at (%d,%d) — polygon spread %.1f dropped (multi-seam cell, see Task 5 review)"
+				% [clusters, i, j, span_hi - span_lo])
+			continue
 		# Perimeter order is clockwise from above; reversed fan -> +Y (same
 		# convention as _mesh_cell's general fan).
 		for k in range(1, poly.size() - 1):
@@ -246,6 +272,18 @@ static func _mesh_cut_cell(st: Dictionary, i: int, j: int,
 
 
 ## Which side of the jump a corner's own level puts it on.
+## Cross-cell staircase note (Task 5 review adjudication): on a level
+## staircase (3 -> 9 -> 15 across two adjacent cells) the shared 9-corner
+## classifies HIGH in the 3|9 cell and LOW in the 9|15 cell. That is
+## BENIGN: the corner vertex is welded at its OWN lattice level (9) and
+## both cells emit surface at 9 around it — the low cell's top terrace
+## and the high cell's bottom terrace. The no-weld-across-jump invariant
+## is carried by the side-keyed "S:" cut verts, never by side labels on
+## lattice corners.
+## Single-cell limitation: wet corners spanning >= 3 level clusters
+## (two seams crossing ONE cell) cannot 2-way split cleanly — one side
+## groups two far-apart levels; _mesh_cut_cell's spread guard drops that
+## polygon loudly instead of emitting a fold.
 static func _lvl_side(st: Dictionary, cut: Dictionary, c: Vector2i) -> int:
 	var lvl: float = st.lvl[c.y * (N + 1) + c.x]
 	return 1 if absf(lvl - cut.top) <= absf(lvl - cut.bottom) else -1
@@ -256,6 +294,10 @@ static func _lvl_side(st: Dictionary, cut: Dictionary, c: Vector2i) -> int:
 ## dir (downhill gradient of the corner levels, high -> low) describe the
 ## local jump line for anything downstream that inspects the dict. Never
 ## registered into cut_records — no fall curtain is built at a body seam.
+## top/bottom are the cell's EXTREMES: with >= 3 level clusters in one
+## cell the middle level lands on whichever side it is nearer to and that
+## side's polygon over-spreads — see _lvl_side's note and the spread
+## guard in _mesh_cut_cell that degrades it loudly.
 static func _synth_cut(st: Dictionary, i: int, j: int, corners: Array) -> Dictionary:
 	var lo: float = INF
 	var hi: float = -INF
