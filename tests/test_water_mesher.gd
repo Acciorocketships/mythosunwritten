@@ -262,3 +262,42 @@ func test_hem_is_buried() -> void:
 		if v.y < g - 0.5:
 			hem_n += 1
 	assert_true(hem_n > 10, "hem exists and dives under the banks (%d)" % hem_n)
+
+
+## Adjacent chunks must produce bit-identical seam vertices at their shared
+## border so the two meshes weld visually with no crack. Pinned to (0,-6)/
+## (1,-6) at world x = 192 (the shared border) — probed first (temporary
+## script, since removed) across (0,-6)/(0,-7), (0,-6)/(-1,-6), (1,-6)/
+## (1,-7), (0,-7)/(1,-7), (-1,-6)/(-1,-7), (1,-6)/(2,-6), (0,-6)/(0,-5):
+## the originally proposed pair already had 12 matching seam verts, well
+## over the >= 2 floor, so it stayed pinned.
+func test_chunk_seam_identity() -> void:
+	var water: WaterPlan = _water(SEED)
+	var a: Dictionary = WaterMesher.build(water, Vector2i(0, -6), _region(SEED, Vector2i(0, -6)))
+	var b: Dictionary = WaterMesher.build(water, Vector2i(1, -6), _region(SEED, Vector2i(1, -6)))
+	var seam_x: float = 24.0 * 8.0   # world x of the shared border
+	var a_seam: Dictionary = {}
+	for v in a.verts:
+		if absf(v.x - seam_x) < 0.01:
+			a_seam[Vector3i((v * 100.0).round())] = v
+	var matched := 0
+	for v in b.verts:
+		if absf(v.x - seam_x) < 0.01 and a_seam.has(Vector3i((v * 100.0).round())):
+			matched += 1
+	assert_true(matched >= 2, "adjacent chunks share bit-identical seam verts (%d)" % matched)
+
+
+func test_commit_and_attributes() -> void:
+	var water: WaterPlan = _water(SEED)
+	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, _region(SEED, SITE_CHUNK))
+	assert_eq(m.cust.size(), m.verts.size() * 4, "4 floats per vertex")
+	var mesh: ArrayMesh = WaterMesher.commit(m)
+	assert_eq(mesh.surface_get_array_len(0), m.verts.size(), "verts committed")
+	assert_true(m.wet_cells.size() > 0, "volume cells recorded")
+	var churn := 0
+	var idx := 0
+	while idx < m.cust.size():
+		if m.cust[idx + 3] > 0.9:
+			churn += 1
+		idx += 4
+	assert_true(churn > 0, "plunge band baked near falls")

@@ -58,7 +58,7 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	# skirts, silently un-covering cut-cell triangles (review finding).
 	var hem_start: int = st.idx.size()
 	_hem(st)
-	_attributes(st)   # no-op until Task 7
+	_attributes(st)   # CUSTOM0 (flow/shore/steep) + wet_cells (Task 7)
 	var cut_records: Array = []
 	for ci: int in st.cut_hits:
 		var cut: Dictionary = st.cuts[ci]
@@ -600,9 +600,77 @@ static func _third_vert(st: Dictionary, a: int, b: int) -> int:
 	return a
 
 
+## CUSTOM0 per vertex: (flow.x, shore, flow.y, steep) — the water shader's
+## existing contract. shore is 1.0 at/under the ground sample (the very
+## shoreline) and fades over 1.2m of depth above it; steep is the level
+## gradient scaled for a foam/turbulence read, clamped below the plunge
+## band's own ceiling so the band (below) is always the strongest signal.
+## Plunge band: within 3.5m downstream of a REAL fall cut's base line
+## (st.cuts — synthetic body-seam cuts are deliberately excluded, see
+## _synth_cut: no fall is built there, so no churn should render there
+## either), steep and shore both ramp up over the last 2m of approach so
+## the mesh alone hints at the drop before FallMesher's own geometry takes
+## over. Hem verts (emitted after every real vertex, see build()'s
+## hem_start) fall through to the same per-vertex loop below and pick up
+## shore = 1.0 from the v.y <= g branch, same as the brief's else-case.
 static func _attributes(st: Dictionary) -> void:
-	st["cust"] = PackedFloat32Array()
-	st.cust.resize(st.verts.size() * 4)   # zeros until Task 7
+	var cust := PackedFloat32Array()
+	cust.resize(st.verts.size() * 4)
+	for vi in st.verts.size():
+		var v: Vector3 = st.verts[vi]
+		var p := Vector2(v.x, v.z)
+		var fl: Vector2 = WaterField.flow_at(st.ctx, p)
+		var g: float = TerrainSurfaceField.surface_y(st.region, v.x, v.z)
+		var shore: float = clampf(1.0 - (v.y - g) * 1.2, 0.0, 1.0) \
+			if v.y > g - 0.5 else 1.0   # near/below ground = the very shoreline
+		var steep: float = clampf(WaterField.grade_at(st.ctx, p) * 8.0, 0.0, 0.85)
+		for cut: Dictionary in st.cuts:
+			var along: float = (p - cut.p).dot(cut.dir)
+			if along > -0.5 and absf((p - cut.p).dot(cut.across)) < cut.half + S:
+				var w: float = clampf((3.5 - along) / 2.0, 0.0, 1.0)
+				steep = maxf(steep, w)
+				shore = maxf(shore, 0.85 * w)
+		cust[vi * 4 + 0] = fl.x
+		cust[vi * 4 + 1] = shore
+		cust[vi * 4 + 2] = fl.y
+		cust[vi * 4 + 3] = steep
+	st["cust"] = cust
+	var wet_cells: Dictionary = {}
+	for j in range(0, N + 1, 8):
+		for i in range(0, N + 1, 8):
+			var lvl: float = st.lvl[j * (N + 1) + i]
+			if lvl == -INF or lvl <= st.gnd[j * (N + 1) + i] + EPS:
+				continue
+			var cell := Vector2i(int(floor((st.base.x + i * S) / TILE)),
+				int(floor((st.base.y + j * S) / TILE)))
+			var pr: Vector2 = st.base + Vector2(i + 4, j) * S
+			var pd: Vector2 = st.base + Vector2(i, j + 4) * S
+			var gx: float = (WaterField.level_at(st.ctx, pr) - lvl) / (4.0 * S)
+			var gz: float = (WaterField.level_at(st.ctx, pd) - lvl) / (4.0 * S)
+			wet_cells[cell] = {"lvl": lvl,
+				"grad": Vector2(gx if absf(gx) < 1.0 else 0.0, gz if absf(gz) < 1.0 else 0.0),
+				"gnd_lo": st.gnd[j * (N + 1) + i]}
+	st["wet_cells"] = wet_cells
+
+
+## Assembles the committed ArrayMesh: positions/indices from build(), UP
+## normals (the water shader computes its own from the flow/steep custom
+## attributes, not from mesh geometry), and CUSTOM0 as RGBA float carrying
+## (flow.x, shore, flow.y, steep) per _attributes' layout above.
+static func commit(m: Dictionary) -> ArrayMesh:
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = m.verts
+	arrays[Mesh.ARRAY_INDEX] = m.idx
+	var normals := PackedVector3Array()
+	normals.resize(m.verts.size())
+	normals.fill(Vector3.UP)
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_CUSTOM0] = m.cust
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {},
+		Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT)
+	return mesh
 
 
 ## Edges used by exactly one triangle — the continuity oracle.
