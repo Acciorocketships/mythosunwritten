@@ -103,17 +103,14 @@ func test_boundary_verts_sit_on_the_waterline() -> void:
 
 
 ## The sheet's winding convention is +Y (upward normals); later tasks (hem,
-## cut cells) must keep it. Task 6's hem quads fold the shore down under the
-## terrain, so a triangle whose normal is nearly horizontal (|n.y| < 0.05 *
-## |n|) is exempt as a near-vertical hem/wall face. That alone is not
-## enough on this cliff-heavy terrain (vertical skirts, not slants — see
-## terrain-cliff-architecture): a hem quad's outward drop can be a shallow
-## ramp rather than a wall when the ground under it isn't sheer, and its
-## normal then tilts down without being near-vertical. Any triangle
-## touching a buried vertex (Task 6's own invariant: hem verts sit below
-## their own ground) is a hem/wall face by construction, not a sheet
-## triangle, so it is exempt outright — the strict assert still applies to
-## every sheet triangle.
+## cut cells) must keep it. Task 6's hem quads are DELIBERATE near-vertical/
+## downward folds — exempt, identified by emission position: _hem runs last
+## of the triangle emitters, so every triangle at index >= m.hem_start is
+## hem geometry. Everything below hem_start (sheet AND cut-cell triangles,
+## including cut verts pinned to water levels beside cliff skirts) is
+## checked STRICTLY — no geometric proxy (near-vertical or buried-vertex)
+## exemptions, which would also match legitimate cut-cell geometry near
+## cliffs and silently un-cover it (review finding).
 func test_all_triangles_wind_up() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -121,7 +118,7 @@ func test_all_triangles_wind_up() -> void:
 	assert_false(m.is_empty(), "site chunk builds water")
 	var verts: PackedVector3Array = m.verts
 	var idx: PackedInt32Array = m.idx
-	var tri_count: int = idx.size() / 3
+	var tri_count: int = m.hem_start / 3   # strict check below the hem mark
 	for t in tri_count:
 		var i0: int = idx[t * 3]
 		var i1: int = idx[t * 3 + 1]
@@ -130,15 +127,6 @@ func test_all_triangles_wind_up() -> void:
 		var v1: Vector3 = verts[i1]
 		var v2: Vector3 = verts[i2]
 		var n: Vector3 = (v1 - v0).cross(v2 - v0)
-		if absf(n.y) < 0.05 * n.length():
-			continue   # near-vertical hem/wall face — exempt (Task 6)
-		var touches_hem := false
-		for v in [v0, v1, v2]:
-			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
-			if v.y < g - 0.3:
-				touches_hem = true
-		if touches_hem:
-			continue   # buried hem/wall face on a gentler slope — exempt (Task 6)
 		assert_true(n.y > -0.0001,
 			"triangle %d winds down: %s, %s, %s (n=%s)" % [t, v0, v1, v2, n])
 
@@ -150,35 +138,26 @@ func _on_chunk_border(v: Vector3) -> bool:
 	return lx < 0.01 or lx > span - 0.01 or lz < 0.01 or lz > span - 0.01
 
 
+## Hem triangles (index >= m.hem_start, _hem emits last) are exempt: a hem
+## step legitimately spans more than CUT_JUMP where the ground itself drops
+## a wall's height within HEM_W — buried water-to-ground geometry, not two
+## disjoint water surfaces bridged by one triangle (the failure mode this
+## test guards against). Everything below hem_start — sheet AND cut-cell
+## triangles — is checked strictly with no geometric exemptions.
 func test_no_triangle_bridges_a_fall() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
 	var tri: int = 0
-	while tri < m.idx.size():
+	while tri < m.hem_start:   # strict check below the hem mark
 		var lo: float = INF
 		var hi: float = -INF
-		var touches_hem := false
 		for k in 3:
-			var v: Vector3 = m.verts[m.idx[tri + k]]
-			var y: float = v.y
+			var y: float = m.verts[m.idx[tri + k]].y
 			lo = minf(lo, y)
 			hi = maxf(hi, y)
-			# A hem outer vertex is buried below its own ground (Task 6): it
-			# targets min(shore_y, g) - HEM_DROP, so on this cliff-heavy
-			# terrain (vertical skirts, not slants — see
-			# terrain-cliff-architecture) a single hem step can legitimately
-			# span more than CUT_JUMP where the ground itself drops a wall's
-			# height within HEM_W. That is buried-hem geometry (water surface
-			# meeting ground), not two disjoint water surfaces bridged by one
-			# triangle — the failure mode this test actually guards against —
-			# so triangles touching a buried vertex are exempt.
-			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
-			if y < g - 0.3:
-				touches_hem = true
-		if not touches_hem:
-			assert_true(hi - lo < WaterMesher.CUT_JUMP + 0.5,
-				"triangle spans %.2f vertically — bridges a fall" % (hi - lo))
+		assert_true(hi - lo < WaterMesher.CUT_JUMP + 0.5,
+			"triangle spans %.2f vertically — bridges a fall" % (hi - lo))
 		tri += 3
 
 

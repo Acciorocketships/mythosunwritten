@@ -47,7 +47,17 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	for j in N:
 		for i in N:
 			_mesh_cell(st, i, j)
-	_hem(st)          # no-op until Task 6
+	# _hem runs LAST of the triangle emitters (nothing after it appends to
+	# idx), so every triangle at index >= hem_start is hem geometry and
+	# everything below is sheet/cut geometry. Exposed in the returned dict:
+	# hem faces are DELIBERATE near-vertical/downward folds, exempt from the
+	# sheet invariants (+Y winding, no vertical span > CUT_JUMP) that the
+	# tests enforce strictly on everything below the mark. An emission tag
+	# beats any geometric proxy for "is this a hem face" — a buried-vertex
+	# test also matches cut verts pinned to water levels beside 4m cliff
+	# skirts, silently un-covering cut-cell triangles (review finding).
+	var hem_start: int = st.idx.size()
+	_hem(st)
 	_attributes(st)   # no-op until Task 7
 	var cut_records: Array = []
 	for ci: int in st.cut_hits:
@@ -64,7 +74,8 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 		cut_records.append(rec)
 	st["cut_records"] = cut_records
 	return {"verts": st.verts, "idx": st.idx, "cust": st.cust,
-		"cuts": st.get("cut_records", []), "wet_cells": st.get("wet_cells", {})}
+		"cuts": st.get("cut_records", []), "wet_cells": st.get("wet_cells", {}),
+		"hem_start": hem_start}
 
 
 static func _f(st: Dictionary, i: int, j: int) -> float:
