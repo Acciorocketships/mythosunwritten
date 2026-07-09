@@ -689,9 +689,10 @@ static func _fall_quad(st: SurfaceTool, vs: Array, uv_y: Array, uv_x: Array,
 ## Boundary-conforming path (WaterMesher/FallMesher): the sheet is a marching-
 ## squares mesh whose free edges are welded to the ArrayMesh FallMesher sweeps
 ## from the sheet's own lip contour, so crest and curtain share vertices by
-## construction. Swim volumes ride one Area3D per wet cell (WaterMesher's
-## wet_cells), carrying the sampled surface plane (Task 10's contract) instead
-## of a single scalar level — the plane lets a probe interpolate the true
+## construction. Swim volumes ride one Area3D per wet-cell SURFACE entry
+## (WaterMesher's wet_cells; a cut-straddling cell gets two stacked volumes),
+## each carrying the sampled surface plane (Task 10's contract) instead of a
+## single scalar level — the plane lets a probe interpolate the true
 ## swell-free surface height anywhere inside the cell.
 func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 	var m: Dictionary = WaterMesher.build(water, chunk, region)
@@ -712,23 +713,31 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 		fi.material_override = WaterSurfaceBuilder.waterfall_material()
 		root.add_child(fi)
 	for cell: Vector2i in m.wet_cells:
-		var wc: Dictionary = m.wet_cells[cell]
-		var area := Area3D.new()
-		area.collision_layer = 1 << 7
-		area.collision_mask = 0
-		var shape := CollisionShape3D.new()
-		var box := BoxShape3D.new()
-		var top: float = wc.lvl + 1.7
-		var bottom: float = wc.gnd_lo - 5.0
-		box.size = Vector3(TILE, top - bottom, TILE)
-		shape.shape = box
-		area.add_child(shape)
-		area.position = Vector3((float(cell.x) + 0.5) * TILE,
-			(top + bottom) * 0.5, (float(cell.y) + 0.5) * TILE)
-		area.set_meta("surface_c", Vector3((float(cell.x) + 0.5) * TILE,
-			wc.lvl, (float(cell.y) + 0.5) * TILE))
-		area.set_meta("surface_g", wc.grad)
-		root.add_child(area)
+		# One Area3D per SURFACE ENTRY (usually one; a cell crossed by a fall
+		# cut carries two stacked volumes, upper and lower, so no box ever
+		# reports the upper level over the plunge pool — the owner's phantom
+		# mid-air swim).
+		for wc: Dictionary in m.wet_cells[cell]:
+			var area := Area3D.new()
+			area.collision_layer = 1 << 7
+			area.collision_mask = 0
+			var shape := CollisionShape3D.new()
+			var box := BoxShape3D.new()
+			var top: float = wc.lvl + 1.7
+			# A straddling cell's UPPER entry floors just above the lower
+			# surface (its "floor" key) so containment at pool height picks
+			# the pool volume; plain entries reach the cell's lowest ground
+			# minus clearance (half-cell ramps dip below the centre ground).
+			var bottom: float = wc.get("floor", wc.gnd_lo - 5.0)
+			box.size = Vector3(TILE, top - bottom, TILE)
+			shape.shape = box
+			area.add_child(shape)
+			area.position = Vector3((float(cell.x) + 0.5) * TILE,
+				(top + bottom) * 0.5, (float(cell.y) + 0.5) * TILE)
+			area.set_meta("surface_c", Vector3((float(cell.x) + 0.5) * TILE,
+				wc.lvl, (float(cell.y) + 0.5) * TILE))
+			area.set_meta("surface_g", wc.grad)
+			root.add_child(area)
 	return root
 
 

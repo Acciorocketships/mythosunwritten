@@ -294,10 +294,15 @@ static func _mesh_cut_cell(st: Dictionary, i: int, j: int,
 			span_lo = minf(span_lo, st.verts[vi].y)
 			span_hi = maxf(span_hi, st.verts[vi].y)
 		if span_hi - span_lo > CUT_JUMP + 0.5:
+			# Cluster count over every LEVELED corner, wet or not: the dropped
+			# polygon's spread includes cut verts pinned at a DRY corner's
+			# level, and wet-only counting printed "1-level cell" for a real
+			# 3m spread (in-game finding, task-9 review).
 			var lvls: Array = []
 			for k in 4:
-				if wet_flags[k]:
-					lvls.append(st.lvl[corners[k].y * (N + 1) + corners[k].x])
+				var cl: float = st.lvl[corners[k].y * (N + 1) + corners[k].x]
+				if cl > -INF:
+					lvls.append(cl)
 			lvls.sort()
 			var clusters: int = 1
 			for k in range(1, lvls.size()):
@@ -635,21 +640,69 @@ static func _attributes(st: Dictionary) -> void:
 		cust[vi * 4 + 2] = fl.y
 		cust[vi * 4 + 3] = steep
 	st["cust"] = cust
+	# wet_cells: swim-volume source data, keyed by 24m cell, value = ARRAY of
+	# surface entries (usually one). AGGREGATED over the cell's full sub-grid
+	# (9x9 lattice samples, shared edge rows included — a cut within one
+	# lattice step of the cell edge must still register): the old single-
+	# corner probe let a cell straddling a fall cut report its corner's level
+	# across the whole cell — a swim volume carrying the UPPER surface over
+	# the plunge pool (the owner's phantom mid-air swim class). gnd_lo is the
+	# MIN ground over the cell (half-cell ramps dip well below the corner
+	# sample; the volume floor must reach the ramp toe). A cell whose wet
+	# levels span more than CUT_JUMP is crossed by a cut or body seam: TWO
+	# entries, one per surface, both flat (a gradient probed across the jump
+	# is meaningless). The upper entry carries "floor" = lower level + 1.0 so
+	# its box stops just above the pool surface and containment at pool
+	# height picks the pool volume. Only cells OWNED by this chunk emit —
+	# border cells belong to the neighbour that meshes them (same ownership
+	# rule as the retired _build_volumes).
 	var wet_cells: Dictionary = {}
-	for j in range(0, N + 1, 8):
-		for i in range(0, N + 1, 8):
-			var lvl: float = st.lvl[j * (N + 1) + i]
-			if lvl == -INF or lvl <= st.gnd[j * (N + 1) + i] + EPS:
+	var cell0 := Vector2i(int(roundf(st.base.x / TILE)), int(roundf(st.base.y / TILE)))
+	for cz in 8:
+		for cx in 8:
+			var lo_i: int = cx * 8
+			var lo_j: int = cz * 8
+			var gnd_lo: float = INF
+			var wet_lo: float = INF
+			var wet_hi: float = -INF
+			var c_lvl: float = -INF   # level at the most central wet sample
+			var c_i: int = 0
+			var c_j: int = 0
+			var c_d: int = 1 << 30
+			for dj in 9:
+				for di in 9:
+					var i2: int = lo_i + di
+					var j2: int = lo_j + dj
+					var lvl: float = st.lvl[j2 * (N + 1) + i2]
+					var g: float = st.gnd[j2 * (N + 1) + i2]
+					gnd_lo = minf(gnd_lo, g)
+					if lvl == -INF or lvl <= g + EPS:
+						continue
+					wet_lo = minf(wet_lo, lvl)
+					wet_hi = maxf(wet_hi, lvl)
+					var d2: int = (di - 4) * (di - 4) + (dj - 4) * (dj - 4)
+					if d2 < c_d:
+						c_d = d2
+						c_lvl = lvl
+						c_i = i2
+						c_j = j2
+			if wet_hi == -INF:
 				continue
-			var cell := Vector2i(int(floor((st.base.x + i * S) / TILE)),
-				int(floor((st.base.y + j * S) / TILE)))
-			var pr: Vector2 = st.base + Vector2(i + 4, j) * S
-			var pd: Vector2 = st.base + Vector2(i, j + 4) * S
-			var gx: float = (WaterField.level_at(st.ctx, pr) - lvl) / (4.0 * S)
-			var gz: float = (WaterField.level_at(st.ctx, pd) - lvl) / (4.0 * S)
-			wet_cells[cell] = {"lvl": lvl,
+			var cell: Vector2i = cell0 + Vector2i(cx, cz)
+			if wet_hi - wet_lo > CUT_JUMP:
+				wet_cells[cell] = [
+					{"lvl": wet_hi, "grad": Vector2.ZERO, "gnd_lo": gnd_lo,
+						"floor": wet_lo + 1.0},
+					{"lvl": wet_lo, "grad": Vector2.ZERO, "gnd_lo": gnd_lo},
+				]
+				continue
+			var pr: Vector2 = st.base + Vector2(c_i + 4, c_j) * S
+			var pd: Vector2 = st.base + Vector2(c_i, c_j + 4) * S
+			var gx: float = (WaterField.level_at(st.ctx, pr) - c_lvl) / (4.0 * S)
+			var gz: float = (WaterField.level_at(st.ctx, pd) - c_lvl) / (4.0 * S)
+			wet_cells[cell] = [{"lvl": c_lvl,
 				"grad": Vector2(gx if absf(gx) < 1.0 else 0.0, gz if absf(gz) < 1.0 else 0.0),
-				"gnd_lo": st.gnd[j * (N + 1) + i]}
+				"gnd_lo": gnd_lo}]
 	st["wet_cells"] = wet_cells
 
 
