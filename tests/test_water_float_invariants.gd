@@ -299,6 +299,53 @@ func test_fall_rows_ogee_profile() -> void:
 
 
 # ------------------------------------------------------------
+# RIM quads exist to dive INTO banks — no rim vertex may ride PROUD of
+# rendered ground that lies more than BRIDGE below the rim's level. A
+# high-reach rim spanning down a terraced hillside rode metres above the
+# lower terraces: the pale slanted ribbon beside every cascade — the
+# owner's "diagonal water skirt" (round 12; rim (1,-45) corners 15/15/8/4).
+# ------------------------------------------------------------
+func test_rim_quads_never_proud_over_deep_ground() -> void:
+	var water: WaterPlan = _water(SEED)
+	var checked := 0
+	for chunk: Vector2i in CHUNKS:
+		var field: Dictionary = _field(SEED, chunk)
+		if field.is_empty():
+			continue
+		var region = _region(SEED, chunk)
+		var cm: Dictionary = WaterSurfaceBuilder.corner_map(field, region)
+		for cell: Vector2i in field:
+			if field[cell].wet or not _interior(cell, chunk):
+				continue
+			var lvl: float = field[cell].level
+			var verts: Array = WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water, region)
+			for v in verts:
+				var rg: float = TerrainSurfaceField.surface_y(region, v.pos.x, v.pos.z)
+				if rg < lvl - BRIDGE:
+					checked += 1
+					assert_true(v.pos.y <= rg - 0.2,
+						"rim vert %s hides under deep-below ground (y %.2f, ground %.2f, level %.2f)"
+						% [str(v.pos), v.pos.y, rg, lvl])
+			# A rim triangle may only exist over ground AT the waterline —
+			# any corner over ground clearly below the level means the
+			# triangle drapes down a step or channel wall as the
+			# disconnected diagonal skirt ribbon.
+			var i := 0
+			while i < verts.size():
+				var g_lo: float = INF
+				for k in 3:
+					g_lo = minf(g_lo, TerrainSurfaceField.surface_y(
+						region, verts[i + k].pos.x, verts[i + k].pos.z))
+				assert_true(g_lo >= lvl - 0.65,
+					"rim triangle over sub-waterline ground (min ground %.2f, level %.2f, at %s)"
+					% [g_lo, lvl, verts[i].pos])
+				checked += 1
+				i += 3
+	if checked == 0:
+		pass_test("no rim vertices over deep ground in the tested chunks")
+
+
+# ------------------------------------------------------------
 # The fall is WELDED to the sheet (round-9, "one cohesive thing"): every fall
 # column anchors on one of the sheet's own crest-edge vertices (edge_profile
 # must reproduce sheet_cell_grid's edge vertices bit-for-bit), so fall

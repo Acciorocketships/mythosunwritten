@@ -937,7 +937,7 @@ static func sheet_ctx(cell: Vector2i, field: Dictionary, cm: Dictionary,
 				droops.append(d)
 	return {"cell": cell, "own_level": own_level, "pos": pos, "cust": cust,
 		"wets": wets, "contour": contour, "droops": droops, "water": water,
-		"region": region, "field": field}
+		"region": region, "field": field, "wet": e.wet}
 
 
 ## One rendered sheet vertex at cell-local (u, v) — corner bilinear, contour
@@ -981,7 +981,18 @@ static func _sheet_vert(ctx: Dictionary, u: float, v: float) -> Dictionary:
 			if dd.x != 0 else (float(ctx.cell.y) + 0.5 * float(dd.y)) * TILE
 		var dist: float = absf((p.x - edge) if dd.x != 0 else (p.z - edge))
 		p.y = minf(p.y, ctx.own_level - crest_droop_at(dist))
-	return {"pos": p, "cust": c}
+	var rgr: float = INF
+	if not ctx.wet:
+		# RIM quads exist to dive INTO banks. Over rendered ground that lies
+		# far below the rim's level they must hide beneath it: a high-reach
+		# rim spanning down a terraced hillside rode metres proud of the
+		# lower terraces — the pale slanted ribbon beside every cascade, the
+		# owner's "diagonal water skirt" (round 12: rim (1,-45), corners
+		# 15/15/8/4 after the corner bury).
+		rgr = TerrainSurfaceField.surface_y(ctx.region, p.x, p.z)
+		if rgr < ctx.own_level - BRIDGE_MAX:
+			p.y = minf(p.y, rgr - 0.3)
+	return {"pos": p, "cust": c, "rg": rgr}
 
 
 ## True when the point sits over a cell that holds no water — the drape only
@@ -1038,6 +1049,22 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 			var quad: Array = []
 			for uv in [[u0, v0], [u0, v1], [u1, v1], [u1, v0]]:
 				quad.append(_sheet_vert(ctx, uv[0], uv[1]))
+			# A RIM exists to overshoot into ground AT the waterline. Any rim
+			# sub-quad over ground clearly BELOW its level has no waterline
+			# function — whatever height its vertices take (level, buried,
+			# or ground-hugging), its triangles drape down steps and channel
+			# walls as a disconnected diagonal ribbon: the owner's "diagonal
+			# water skirt", finally located by the steep-triangle probe and
+			# the piece-highlight (rounds 12-13: rims (1,-45)/(1,-46) beside
+			# the falls). The welded falls and the pools below own those
+			# faces; the rim keeps only its shore film and its dive into
+			# rising banks.
+			if not ctx.wet:
+				var rg_lo: float = INF
+				for q in quad:
+					rg_lo = minf(rg_lo, q.rg)
+				if rg_lo < ctx.own_level - 0.6:
+					continue
 			# Sub-corners (0,0),(0,1),(1,1),(1,0); winding matches the +Y quad.
 			for idx in [0, 1, 2, 0, 2, 3]:
 				out.append(quad[idx])

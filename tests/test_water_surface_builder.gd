@@ -88,26 +88,38 @@ func test_build_chunk_makes_meshes_and_swim_volumes() -> void:
 
 func test_sheet_quads_are_subdivided_for_shader_chop() -> void:
 	# The shader displaces real chop waves (~14-26m wavelength); 24m cell
-	# quads can't bend, so every cell must emit a SUBDIV x SUBDIV bilinear grid.
+	# quads can't bend, so wet cells must emit a FULL SUBDIV x SUBDIV bilinear
+	# grid. RIM (dry) cells are the exception: sub-quads whose ground dives
+	# below the waterline are skipped — emitting them drapes a detached "water
+	# skirt" down steps and channel walls — so rim cells may emit fewer, but
+	# only whole sub-quads, and the mesh must be exactly the per-cell union.
 	var plan: WaterPlan = _water()
 	var river: RiverTrace = _a_river(plan)
 	var chunk: Vector2i = _river_chunk(plan, river)
-	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(plan, chunk, _region(SEED, chunk))
+	var region = _region(SEED, chunk)
+	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(plan, chunk, region)
 	assert_not_null(node, "river chunk builds")
 	var mesh: Mesh = null
 	for c in node.get_children():
 		if c is MeshInstance3D:
 			mesh = c.mesh
 	assert_not_null(mesh, "water sheet mesh present")
-	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk, _region(SEED, chunk))
+	var field: Dictionary = WaterSurfaceBuilder.compute_field(plan, chunk, region)
+	var cm: Dictionary = WaterSurfaceBuilder.corner_map(field, region)
 	var lo: Vector2i = Vector2i(chunk.x * 8, chunk.y * 8)
-	var quads: int = 0
+	var full: int = WaterSurfaceBuilder.SUBDIV * WaterSurfaceBuilder.SUBDIV * 6
+	var expect: int = 0
 	for cell in field:
-		if cell.x >= lo.x and cell.x < lo.x + 8 and cell.y >= lo.y and cell.y < lo.y + 8:
-			quads += 1
+		if cell.x < lo.x or cell.x >= lo.x + 8 or cell.y < lo.y or cell.y >= lo.y + 8:
+			continue
+		var g: Array = WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, plan, region)
+		if field[cell].wet:
+			assert_eq(g.size(), full, "wet cell %s emits the full grid" % cell)
+		elif g.size() > full or g.size() % 6 != 0:
+			fail_test("rim cell %s must emit whole sub-quads within the grid" % cell)
+		expect += g.size()
 	var verts: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	assert_eq(verts.size(), quads * WaterSurfaceBuilder.SUBDIV * WaterSurfaceBuilder.SUBDIV * 6,
-		"every cell quad is a SUBDIV x SUBDIV bilinear grid")
+	assert_eq(verts.size(), expect, "sheet mesh is exactly the union of per-cell grids")
 	node.free()
 
 func test_build_chunk_returns_null_when_dry() -> void:
