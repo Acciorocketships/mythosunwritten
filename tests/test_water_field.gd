@@ -40,7 +40,7 @@ func test_profiles_monotone_and_continuous() -> void:
 				"water never flows uphill (trace %s sample %d)" % [tr.source_cell, i])
 			var drop: float = levels[i - 1] - levels[i]
 			if not prof.cuts.has(i - 1):
-				assert_true(drop < WaterField.FALL_DROP_MIN,
+				assert_true(drop < WaterField.FALL_DROP_MIN + 0.02,
 					"continuous stretch drops %0.2f >= FALL_DROP_MIN at sample %d" % [drop, i])
 			checked += 1
 	assert_true(checked > 0, "site chunk has river samples")
@@ -53,7 +53,7 @@ func test_cuts_only_at_big_drops() -> void:
 		var prof: Dictionary = WaterField.profile(tr)
 		for ci in prof.cuts:
 			var drop: float = prof.levels[ci] - prof.levels[ci + 1]
-			assert_true(drop > WaterField.FALL_DROP_MIN - 0.001,
+			assert_true(drop > WaterField.FALL_DROP_MIN + 0.009,
 				"cut %d drops only %0.2f" % [ci, drop])
 
 

@@ -51,13 +51,10 @@ static func profile(trace: RiverTrace) -> Dictionary:
 	levels[0] = lvl
 	for i in range(1, n):
 		var raw: float = trace.beds[i] + SURFACE_RIDE
-		# >= FALL_DROP_MIN - EPS (not a bare >): a drop of EXACTLY FALL_DROP_MIN
-		# must count as a cut, or it fails to satisfy either "cut" (drop >
-		# FALL_DROP_MIN - eps) or "continuous" (drop < FALL_DROP_MIN) — beds are
-		# storey-quantized, so exact 4.0 drops are common, not a rare edge case.
-		# The EPS slack also absorbs float32 bed noise (chained subtraction on
-		# PackedFloat32Array values can land a hair under an exact 4.0 drop).
-		if lvl - raw >= FALL_DROP_MIN - EPS:
+		# Falls are strictly > FALL_DROP_MIN (4.0 m). An exact one-storey (4.0)
+		# drop stays a slope by owner decision. The +0.01 guards float32
+		# chained-subtraction noise so exact 4.0 drops never become falls.
+		if lvl - raw > FALL_DROP_MIN + 0.01:
 			cuts.append(i - 1)
 			lvl = raw
 		else:
@@ -66,7 +63,7 @@ static func profile(trace: RiverTrace) -> Dictionary:
 	if trace.pond != null:
 		# Meet the pond surface continuously (or with a fall if the drop is big).
 		var ps: float = trace.pond.surface_y()
-		if levels[n - 1] - ps >= FALL_DROP_MIN - EPS:
+		if levels[n - 1] - ps > FALL_DROP_MIN + 0.01:
 			cuts.append(n - 1)
 		else:
 			# The trace must end exactly at the pond surface. Levels are already
@@ -82,7 +79,7 @@ static func profile(trace: RiverTrace) -> Dictionary:
 			# Raising the tail up to ps can shrink the drop across the cut just
 			# upstream of it (index i) below FALL_DROP_MIN — it's no longer a
 			# real fall once the water below it was lifted to meet the pond.
-			if i >= 0 and cuts.has(i) and levels[i] - levels[i + 1] < FALL_DROP_MIN - EPS:
+			if i >= 0 and cuts.has(i) and levels[i] - levels[i + 1] <= FALL_DROP_MIN + 0.01:
 				cuts.remove_at(cuts.find(i))
 	var out := {"levels": levels, "cuts": cuts}
 	_profiles[trace.source_cell] = out
