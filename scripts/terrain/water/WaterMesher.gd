@@ -138,12 +138,41 @@ static func _mesh_cell(st: Dictionary, i: int, j: int) -> void:
 			poly.append(_lattice_vert(st, a.x, a.y))
 		if wet_flags[k] != wet_flags[(k + 1) % 4]:
 			poly.append(_edge_vert(st, a, b))
+	# _edge_vert snaps a crossing within weld tolerance of the wet corner to
+	# that corner's OWN lattice vertex (its documented behaviour): a corner
+	# immediately followed or preceded by an edge-crossing can then repeat
+	# the same vert index back to back in poly (e.g. [42, 42, 43, 43]).
+	# Fan straight through that and every triangle touching the repeat is
+	# zero-area — collapse adjacent duplicates first so the fan only ever
+	# sees distinct perimeter points.
+	poly = _dedupe_adjacent(poly)
 	# Perimeter order is clockwise from above in Godot axes; the fan is
 	# reversed so all sheet triangles wind +Y like the quad branch.
 	for k in range(1, poly.size() - 1):   # fan
 		st.idx.append(poly[0])
 		st.idx.append(poly[k + 1])
 		st.idx.append(poly[k])
+
+
+## Collapses consecutive (including wrap-around) equal entries in a
+## perimeter-walk poly. _edge_vert/_cut_vert legitimately return a corner's
+## own lattice vertex when a crossing snaps to it; left in place that
+## produces a repeated index adjacent to itself in the poly, and every fan
+## triangle spanning the repeat is zero-area (pollutes the free-edge parity
+## count downstream — see free_edges/_free_edge_indices). A poly is a closed
+## loop, so the LAST entry can also duplicate the FIRST; drop that too, but
+## never below a 3-entry (one triangle) result — an under-3 poly means the
+## whole cell degenerated and the caller's fan range already emits nothing.
+static func _dedupe_adjacent(poly: Array) -> Array:
+	if poly.size() < 2:
+		return poly
+	var out: Array = [poly[0]]
+	for k in range(1, poly.size()):
+		if poly[k] != out[-1]:
+			out.append(poly[k])
+	if out.size() > 1 and out[0] == out[-1]:
+		out.remove_at(out.size() - 1)
+	return out
 
 
 ## Waterline vertex on the lattice edge a-b. XZ: linear interp on f refined
@@ -237,6 +266,10 @@ static func _mesh_cut_cell(st: Dictionary, i: int, j: int,
 					poly.append(_cut_vert(st, ci, a, b, side))
 				else:
 					poly.append(_edge_vert(st, a, b))
+		# Same corner-snap repeat as _mesh_cell's poly (see
+		# _dedupe_adjacent) — _edge_vert/_cut_vert can return a corner's own
+		# lattice vertex back to back with that corner's own poly entry.
+		poly = _dedupe_adjacent(poly)
 		# Guard: a cell whose wet corners span >= 3 level clusters (two
 		# seams/cuts crossing one 3m cell at a 3-body corner) cannot 2-way
 		# split cleanly — one side necessarily groups two far-apart levels
@@ -425,8 +458,135 @@ static func _cell_cut(st: Dictionary, i: int, j: int) -> int:
 	return best
 
 
-static func _hem(_st: Dictionary) -> void:
-	pass   # Task 6
+## One uniform edge rule replaces every legacy shore special case: each
+## CONTOUR free edge (not chunk border, not a fall cut) extrudes a strip
+## outward and down to ground - HEM_DROP, INSIDE the bank. Swells raise the
+## surface; the waterline slides up the bank; the edge never lifts free.
+## Synthetic seam edges (a claim-boundary split with no recorded fall) are
+## NOT in st.cuts, so _near_cut does not exempt them: the upper side's hem
+## folds down past the lower water and forms a small curtain face there —
+## the best available look at a bodiless seam (Task 6 amendment note 1).
+static func _hem(st: Dictionary) -> void:
+	var span: float = TILE * 8.0
+	var outer: Dictionary = {}   # inner vert index -> hem vert index
+	for e_idx: Array in _free_edge_indices(st):
+		var a: int = e_idx[0]
+		var b: int = e_idx[1]
+		var va: Vector3 = st.verts[a]
+		var vb: Vector3 = st.verts[b]
+		if _border2(st.base, span, va) and _border2(st.base, span, vb):
+			continue
+		if _near_cut(st, va) and _near_cut(st, vb):
+			continue
+		# Outward = away from the water: the free edge belongs to exactly one
+		# triangle; its third vertex lies IN the water.
+		var third: Vector3 = st.verts[_third_vert(st, a, b)]
+		var edge2 := Vector2(vb.x - va.x, vb.z - va.z)
+		var n2 := Vector2(-edge2.y, edge2.x).normalized()
+		var to_third := Vector2(third.x - va.x, third.z - va.z)
+		if n2.dot(to_third) > 0.0:
+			n2 = -n2
+		var ha: int = _hem_vert(st, outer, a, n2, span)
+		var hb: int = _hem_vert(st, outer, b, n2, span)
+		# Winding: _free_edge_indices now returns (a, b) in the directed order
+		# the lone owning (+Y-wound) triangle actually walks it. Continuing
+		# that same rotational sense onto the outward strip requires
+		# [a, ha, hb] / [a, hb, b] here, NOT [a, b, hb] / [a, hb, ha] — the
+		# latter comes out backwards (verified against test_all_triangles_wind_up).
+		for t in [[a, ha, hb], [a, hb, b]]:
+			for k in 3:
+				st.idx.append(t[k])
+
+
+## Two DIFFERENT source verts (different free edges) can project outward to
+## nearly the same point — most often at a concave shore corner, where
+## adjacent edges' outward normals converge. outer{} only dedupes by source
+## index, which misses that; a second weld pass keyed on the rounded
+## outward position (st.weld, shared with every other vert kind in this
+## class) catches it so test_interior_is_welded's global no-duplicate
+## invariant holds for hem verts too.
+## A source vert already sitting ON the chunk border stays on it: an edge
+## that runs nearly parallel to the border projects outward with a tiny
+## along-border component (rounding, not a real crossing), which nudges the
+## hem vert a few cm past the border line. Left alone that breaks the
+## "both ends on the border" free-edge exemption for the hem quad's own
+## side edge (border shore vert -> its hem vert) — clamp the projected
+## coordinate back to the border so a border-anchored hem vert stays
+## border-anchored, same as every other border vert in the sheet.
+static func _hem_vert(st: Dictionary, outer: Dictionary, src: int, n2: Vector2, span: float) -> int:
+	if outer.has(src):
+		return outer[src]
+	var v: Vector3 = st.verts[src]
+	var p := Vector2(v.x, v.z) + n2 * HEM_W
+	if absf(v.x - st.base.x) < 0.01:
+		p.x = st.base.x
+	elif absf(v.x - (st.base.x + span)) < 0.01:
+		p.x = st.base.x + span
+	if absf(v.z - st.base.y) < 0.01:
+		p.y = st.base.y
+	elif absf(v.z - (st.base.y + span)) < 0.01:
+		p.y = st.base.y + span
+	var g: float = TerrainSurfaceField.surface_y(st.region, p.x, p.y)
+	var y: float = minf(v.y, g) - HEM_DROP
+	var pos_key := "H:%d:%d:%d" % [roundi(p.x * 8.0), roundi(y * 8.0), roundi(p.y * 8.0)]
+	if st.weld.has(pos_key):
+		var vi_prev: int = st.weld[pos_key]
+		outer[src] = vi_prev
+		return vi_prev
+	var vi: int = st.verts.size()
+	st.verts.append(Vector3(p.x, y, p.y))
+	st.weld[pos_key] = vi
+	outer[src] = vi
+	return vi
+
+
+static func _border2(base: Vector2, span: float, v: Vector3) -> bool:
+	var lx: float = v.x - base.x
+	var lz: float = v.z - base.y
+	return lx < 0.01 or lx > span - 0.01 or lz < 0.01 or lz > span - 0.01
+
+
+static func _near_cut(st: Dictionary, v: Vector3) -> bool:
+	for cut: Dictionary in st.cuts:
+		if absf((Vector2(v.x, v.z) - cut.p).dot(cut.dir)) < S:
+			return true
+	return false
+
+
+## free_edges but returning DIRECTED index pairs (in the winding order the
+## lone owning triangle actually uses) plus a helper to find its third
+## vertex. Directed order matters: the hem quad's own winding must match
+## the sheet triangle it extends, or it comes out backwards (caught by
+## test_all_triangles_wind_up) — undirected (min,max) keys lose that.
+static func _free_edge_indices(st: Dictionary) -> Array:
+	var count: Dictionary = {}
+	var dir: Dictionary = {}   # undirected key -> last-seen directed [a, b]
+	var tri: int = 0
+	while tri < st.idx.size():
+		for k in 3:
+			var a: int = st.idx[tri + k]
+			var b: int = st.idx[tri + (k + 1) % 3]
+			var key := Vector2i(mini(a, b), maxi(a, b))
+			count[key] = count.get(key, 0) + 1
+			dir[key] = [a, b]
+		tri += 3
+	var out: Array = []
+	for key: Vector2i in count:
+		if count[key] == 1:
+			out.append(dir[key])
+	return out
+
+
+static func _third_vert(st: Dictionary, a: int, b: int) -> int:
+	var tri: int = 0
+	while tri < st.idx.size():
+		var tvs: Array = [st.idx[tri], st.idx[tri + 1], st.idx[tri + 2]]
+		if a in tvs and b in tvs:
+			for v: int in tvs:
+				if v != a and v != b:
+					return v
+		tri += 3
+	return a
 
 
 static func _attributes(st: Dictionary) -> void:

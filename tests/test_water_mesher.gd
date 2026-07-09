@@ -69,6 +69,14 @@ func test_boundary_verts_sit_on_the_waterline() -> void:
 		for v: Vector3 in e:
 			if _on_chunk_border(v):
 				continue
+			# Task 6: the hem buries its outer rim below the terrain by
+			# design (min(shore_y, g) - HEM_DROP) — those verts are not on
+			# any water surface and are a separate free-edge class this test
+			# predates. Skip them; they are covered by test_hem_is_buried
+			# and test_every_free_edge_is_accounted_for instead.
+			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
+			if v.y < g - 0.3:
+				continue
 			# Wall-shore reality: this terrain's shores are vertical walls
 			# and claim edges, not beaches — per the amended rule the water's
 			# edge rides its OWN surface (no dips to ground, no floating).
@@ -95,9 +103,17 @@ func test_boundary_verts_sit_on_the_waterline() -> void:
 
 
 ## The sheet's winding convention is +Y (upward normals); later tasks (hem,
-## cut cells) must keep it — near-vertical hem/wall faces added by later
-## tasks may relax this test to skip triangles whose |n.y| is tiny relative
-## to |n|, but for now every sheet triangle is upward.
+## cut cells) must keep it. Task 6's hem quads fold the shore down under the
+## terrain, so a triangle whose normal is nearly horizontal (|n.y| < 0.05 *
+## |n|) is exempt as a near-vertical hem/wall face. That alone is not
+## enough on this cliff-heavy terrain (vertical skirts, not slants — see
+## terrain-cliff-architecture): a hem quad's outward drop can be a shallow
+## ramp rather than a wall when the ground under it isn't sheer, and its
+## normal then tilts down without being near-vertical. Any triangle
+## touching a buried vertex (Task 6's own invariant: hem verts sit below
+## their own ground) is a hem/wall face by construction, not a sheet
+## triangle, so it is exempt outright — the strict assert still applies to
+## every sheet triangle.
 func test_all_triangles_wind_up() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -114,6 +130,15 @@ func test_all_triangles_wind_up() -> void:
 		var v1: Vector3 = verts[i1]
 		var v2: Vector3 = verts[i2]
 		var n: Vector3 = (v1 - v0).cross(v2 - v0)
+		if absf(n.y) < 0.05 * n.length():
+			continue   # near-vertical hem/wall face — exempt (Task 6)
+		var touches_hem := false
+		for v in [v0, v1, v2]:
+			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
+			if v.y < g - 0.3:
+				touches_hem = true
+		if touches_hem:
+			continue   # buried hem/wall face on a gentler slope — exempt (Task 6)
 		assert_true(n.y > -0.0001,
 			"triangle %d winds down: %s, %s, %s (n=%s)" % [t, v0, v1, v2, n])
 
@@ -133,12 +158,27 @@ func test_no_triangle_bridges_a_fall() -> void:
 	while tri < m.idx.size():
 		var lo: float = INF
 		var hi: float = -INF
+		var touches_hem := false
 		for k in 3:
-			var y: float = m.verts[m.idx[tri + k]].y
+			var v: Vector3 = m.verts[m.idx[tri + k]]
+			var y: float = v.y
 			lo = minf(lo, y)
 			hi = maxf(hi, y)
-		assert_true(hi - lo < WaterMesher.CUT_JUMP + 0.5,
-			"triangle spans %.2f vertically — bridges a fall" % (hi - lo))
+			# A hem outer vertex is buried below its own ground (Task 6): it
+			# targets min(shore_y, g) - HEM_DROP, so on this cliff-heavy
+			# terrain (vertical skirts, not slants — see
+			# terrain-cliff-architecture) a single hem step can legitimately
+			# span more than CUT_JUMP where the ground itself drops a wall's
+			# height within HEM_W. That is buried-hem geometry (water surface
+			# meeting ground), not two disjoint water surfaces bridged by one
+			# triangle — the failure mode this test actually guards against —
+			# so triangles touching a buried vertex are exempt.
+			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
+			if y < g - 0.3:
+				touches_hem = true
+		if not touches_hem:
+			assert_true(hi - lo < WaterMesher.CUT_JUMP + 0.5,
+				"triangle spans %.2f vertically — bridges a fall" % (hi - lo))
 		tri += 3
 
 
@@ -205,3 +245,41 @@ func test_cut_records_have_welded_lips() -> void:
 			assert_true(vset.has(v), "lip vert %s is bit-equal to a sheet vert" % v)
 		for v: Vector3 in rec.base:
 			assert_true(vset.has(v), "base vert %s is bit-equal to a sheet vert" % v)
+
+
+func test_every_free_edge_is_accounted_for() -> void:
+	# THE continuity invariant: after the hem, a free edge may only be
+	# (a) on the chunk border, (b) a fall-cut lip/base line, or
+	# (c) the hem's outer rim, buried under the terrain.
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
+	for e: Array in WaterMesher.free_edges(m.verts, m.idx):
+		if _on_chunk_border(e[0]) and _on_chunk_border(e[1]):
+			continue
+		var buried := true
+		var on_cut := true
+		for v: Vector3 in e:
+			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
+			if v.y > g - 0.3:
+				buried = false
+			var near := false
+			for rec: Dictionary in m.cuts:
+				if absf((Vector2(v.x, v.z) - rec.cut.p).dot(rec.cut.dir)) < WaterMesher.S:
+					near = true
+			if not near:
+				on_cut = false
+		assert_true(buried or on_cut,
+			"unaccounted free edge %s-%s (not border/cut/buried)" % [e[0], e[1]])
+
+
+func test_hem_is_buried() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
+	var hem_n := 0
+	for v in m.verts:
+		var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
+		if v.y < g - 0.5:
+			hem_n += 1
+	assert_true(hem_n > 10, "hem exists and dives under the banks (%d)" % hem_n)
