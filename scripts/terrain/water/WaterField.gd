@@ -173,3 +173,73 @@ static func _sample_level(tr: RiverTrace, si: int, p: Vector2) -> float:
 static func wet(c: Dictionary, region, p: Vector2) -> bool:
 	var lvl: float = level_at(c, p)
 	return lvl > -INF and lvl > TerrainSurfaceField.surface_y(region, p.x, p.y) + EPS
+
+
+## Nearest-claimant helper shared by flow/grade: returns
+## [trace, sample_i, margin] or [] when a pond wins / nothing claims.
+static func _claim(c: Dictionary, p: Vector2) -> Array:
+	var best_m: float = CLAIM_FEATHER
+	var best: Array = []
+	for pond: PondStamp in c.ponds:
+		var m: float = (pond.footprint_t(p) - 1.0) * pond.radius
+		if m < best_m:
+			best_m = m
+			best = []          # pond claims: still water
+	var cell := Vector2i(int(floor(p.x / TILE)), int(floor(p.y / TILE)))
+	for dz in range(-1, 2):
+		for dx in range(-1, 2):
+			for ref: Vector2i in c.buckets.get(cell + Vector2i(dx, dz), []):
+				var tr: RiverTrace = c.rivers[ref.x]
+				var m: float = p.distance_to(tr.points[ref.y]) - tr.widths[ref.y]
+				if m < best_m:
+					best_m = m
+					best = [tr, ref.y]
+	return best
+
+
+static func flow_at(c: Dictionary, p: Vector2) -> Vector2:
+	var cl: Array = _claim(c, p)
+	if cl.is_empty():
+		return Vector2.ZERO
+	var tr: RiverTrace = cl[0]
+	var si: int = cl[1]
+	var j: int = mini(si + 1, tr.points.size() - 1)
+	if j == si:
+		return Vector2.ZERO
+	# Fade to zero at the channel edge (shore water is calm).
+	var edge: float = clampf(1.0 - p.distance_to(tr.points[si]) / maxf(tr.widths[si], 1.0), 0.0, 1.0)
+	return (tr.points[j] - tr.points[si]).normalized() * edge
+
+
+static func grade_at(c: Dictionary, p: Vector2) -> float:
+	var cl: Array = _claim(c, p)
+	if cl.is_empty():
+		return 0.0
+	var tr: RiverTrace = cl[0]
+	var si: int = cl[1]
+	var prof: Dictionary = profile(tr)
+	var j: int = mini(si + 1, tr.points.size() - 1)
+	if j == si or prof.cuts.has(si):
+		return 0.0
+	var run: float = tr.points[si].distance_to(tr.points[j])
+	return (prof.levels[si] - prof.levels[j]) / maxf(run, 0.001)
+
+
+## Fall cut segments whose midpoint lies inside rect (grown by one tile so
+## chunk-border cuts appear for both neighbouring chunks).
+static func fall_cuts(c: Dictionary, rect: Rect2) -> Array:
+	var out: Array = []
+	var grown: Rect2 = rect.grow(TILE)
+	for tr: RiverTrace in c.rivers:
+		var prof: Dictionary = profile(tr)
+		for ci in prof.cuts:
+			var j: int = mini(ci + 1, tr.points.size() - 1)
+			var mid: Vector2 = (tr.points[ci] + tr.points[j]) * 0.5
+			if not grown.has_point(mid):
+				continue
+			var dirv: Vector2 = (tr.points[j] - tr.points[ci]).normalized()
+			out.append({"p": mid, "dir": dirv,
+				"across": Vector2(-dirv.y, dirv.x),
+				"half": tr.widths[ci] + CLAIM_FEATHER,
+				"top": prof.levels[ci], "bottom": prof.levels[j]})
+	return out

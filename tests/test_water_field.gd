@@ -105,3 +105,25 @@ func test_level_continuous_away_from_cuts() -> void:
 	# The site has 2 real falls on this line historically (9->5, 5->3 was a
 	# weir and must now be CONTINUOUS, so at most the >4m cuts remain).
 	assert_true(big_steps <= 2, "at most the true falls jump; got %d" % big_steps)
+
+
+func test_fall_cuts_geometry() -> void:
+	var water: WaterPlan = _water(SEED)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)
+	var rect := Rect2(Vector2(0, -1152), Vector2(192, 192))
+	var cuts: Array = WaterField.fall_cuts(ctx, rect)
+	assert_true(cuts.size() >= 1, "the site keeps its big falls")
+	for cut: Dictionary in cuts:
+		assert_true(cut.top - cut.bottom > WaterField.FALL_DROP_MIN - 0.001,
+			"every cut is a true fall (drop %.2f)" % (cut.top - cut.bottom))
+		assert_almost_eq(cut.dir.length(), 1.0, 0.001, "dir is unit")
+		assert_almost_eq(cut.dir.dot(cut.across), 0.0, 0.001, "across is perpendicular")
+
+
+func test_flow_and_grade() -> void:
+	var water: WaterPlan = _water(SEED)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)
+	var p := Vector2(54.0, -1100.0)   # mid-channel at the site
+	if WaterField.level_at(ctx, p) > -INF:
+		assert_true(WaterField.flow_at(ctx, p).length() <= 1.001, "flow bounded")
+		assert_true(WaterField.grade_at(ctx, p) >= 0.0, "grade non-negative")
