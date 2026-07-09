@@ -9,6 +9,7 @@ const TILE := 24.0
 const FALL_DROP_MIN := 4.0    # the only fall threshold in the system
 const SURFACE_RIDE := 2.2     # river surface height above the traced bed
 const CLAIM_FEATHER := 8.0    # metres past the channel half-width a reach claims
+const FLOOD_EXT := 24.0       # hard bound of the flooded-shelf extension
 const EPS := 0.05
 
 static var _profiles: Dictionary = {}   # trace.source_cell -> profile dict
@@ -17,7 +18,10 @@ static var _profiles: Dictionary = {}   # trace.source_cell -> profile dict
 ## Everything the samplers need for one chunk, fetched once (bodies_near is
 ## too expensive per point). Also builds a 24m spatial bucket over river
 ## samples so level_at is O(nearby samples), not O(all samples).
-static func ctx(water: WaterPlan, chunk: Vector2i) -> Dictionary:
+## region is optional: when provided, level_at gains the flood extension
+## (water reaches over ground that sits below its level — see level_at);
+## null keeps the legacy hard-margin behaviour for existing callers.
+static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
 	var centre := Vector2i(chunk.x * 8 + 4, chunk.y * 8 + 4)
 	var bodies: Dictionary = water.bodies_near(centre, 8)
 	var buckets: Dictionary = {}
@@ -30,7 +34,7 @@ static func ctx(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 				buckets[cell] = []
 			buckets[cell].append(Vector2i(ti, si))
 	return {"water": water, "ponds": bodies.ponds, "rivers": bodies.rivers,
-		"buckets": buckets}
+		"buckets": buckets, "region": region}
 
 
 ## Continuous, monotone level per trace sample + fall cut indices.
@@ -131,14 +135,33 @@ static func profile(trace: RiverTrace) -> Dictionary:
 
 ## Surface height at p, or -INF when no pond/reach claims the point.
 ## Claimant = smallest signed margin (distance past the body's edge).
+## FLOOD EXTENSION (only when the ctx carries a region): a candidate that
+## fails the hard CLAIM_FEATHER margin still claims the point while the
+## ground there sits below its level — water may not end mid-air over
+## ground beneath its surface; it ends where the ground rises (a wall or a
+## beach) or at the hard FLOOD_EXT bound. This restores the old system's
+## flooded-shelf coverage on cliff terrain. Best-claimant selection stays
+## smallest-margin-first.
 static func level_at(c: Dictionary, p: Vector2) -> float:
-	var best_m: float = CLAIM_FEATHER
+	var region = c.get("region")
+	var best_m: float = INF
 	var best_lvl: float = -INF
+	var gy: float = INF          # ground height, fetched lazily (flood test)
+	var have_gy := false
 	for pond: PondStamp in c.ponds:
 		var m: float = (pond.footprint_t(p) - 1.0) * pond.radius
-		if m < best_m:
+		if m >= best_m:
+			continue
+		var ok: bool = m < CLAIM_FEATHER
+		var lvl: float = pond.surface_y()
+		if not ok and region != null and m <= CLAIM_FEATHER + FLOOD_EXT:
+			if not have_gy:
+				gy = TerrainSurfaceField.surface_y(region, p.x, p.y)
+				have_gy = true
+			ok = gy < lvl - EPS
+		if ok:
 			best_m = m
-			best_lvl = pond.surface_y()
+			best_lvl = lvl
 	var cell := Vector2i(int(floor(p.x / TILE)), int(floor(p.y / TILE)))
 	for dz in range(-1, 2):
 		for dx in range(-1, 2):
@@ -148,9 +171,20 @@ static func level_at(c: Dictionary, p: Vector2) -> float:
 				var si: int = ref.y
 				var d: float = p.distance_to(tr.points[si])
 				var m: float = d - tr.widths[si]
-				if m < best_m:
+				if m >= best_m:
+					continue
+				var ok: bool = m < CLAIM_FEATHER
+				if not ok and (region == null or m > CLAIM_FEATHER + FLOOD_EXT):
+					continue
+				var lvl: float = _sample_level(tr, si, p)
+				if not ok:
+					if not have_gy:
+						gy = TerrainSurfaceField.surface_y(region, p.x, p.y)
+						have_gy = true
+					ok = gy < lvl - EPS
+				if ok:
 					best_m = m
-					best_lvl = _sample_level(tr, si, p)
+					best_lvl = lvl
 	return best_lvl
 
 

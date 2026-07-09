@@ -57,3 +57,45 @@ func test_dry_chunk_builds_nothing() -> void:
 	assert_true(dry != Vector2i.MAX, "found a dry chunk")
 	assert_true(WaterMesher.build(water, dry, _region(SEED, dry)).is_empty(),
 		"dry chunk => empty build")
+
+
+func test_boundary_verts_sit_on_the_waterline() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
+	var checked := 0
+	for e: Array in WaterMesher.free_edges(m.verts, m.idx):
+		for v: Vector3 in e:
+			if _on_chunk_border(v):
+				continue
+			# Wall-shore reality: this terrain's shores are vertical walls
+			# and claim edges, not beaches — per the amended rule the water's
+			# edge rides its OWN surface (no dips to ground, no floating).
+			# Near fall cuts and body seams two surfaces coexist within the
+			# 1.5m cross, so the vert must match the nearest-in-height one
+			# (its own side), not the highest.
+			var lvl_near: float = -INF
+			var diff_min: float = INF
+			for q: Vector2 in [Vector2(v.x, v.z),
+					Vector2(v.x + 1.5, v.z), Vector2(v.x - 1.5, v.z),
+					Vector2(v.x, v.z + 1.5), Vector2(v.x, v.z - 1.5)]:
+				var l: float = WaterField.level_at(ctx, q)
+				if l == -INF:
+					continue
+				lvl_near = maxf(lvl_near, l)
+				diff_min = minf(diff_min, absf(v.y - l))
+			checked += 1
+			assert_true(lvl_near > -INF,
+				"free-edge vert claims no water nearby: %s" % v)
+			if lvl_near > -INF:
+				assert_true(diff_min <= 0.6,
+					"vert off its water surface: %s (nearest lvl diff %.2f)" % [v, diff_min])
+	assert_true(checked > 20, "site has a real shoreline (%d verts)" % checked)
+
+
+func _on_chunk_border(v: Vector3) -> bool:
+	var span: float = 24.0 * 8.0
+	var lx: float = fposmod(v.x, span)
+	var lz: float = fposmod(v.z, span)
+	return lx < 0.01 or lx > span - 0.01 or lz < 0.01 or lz > span - 0.01

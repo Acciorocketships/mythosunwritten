@@ -17,7 +17,9 @@ const HEM_W := 1.5
 
 ## st: shared build state. One per build() call.
 static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
-	var c: Dictionary = WaterField.ctx(water, chunk)
+	# ctx built WITH region so the lattice and _edge_vert see the flooded
+	# field (level_at's flood extension over low ground).
+	var c: Dictionary = WaterField.ctx(water, chunk, region)
 	if c.ponds.is_empty() and c.rivers.is_empty():
 		return {}
 	var base := Vector2(chunk.x, chunk.y) * (TILE * 8.0)
@@ -71,20 +73,124 @@ static func _lattice_vert(st: Dictionary, i: int, j: int) -> int:
 	return vi
 
 
-## Task 3 handles only fully-wet, cut-free cells: one welded quad.
+## Perimeter-walk marching squares. Corners in CCW order; walking the cell
+## boundary and inserting a waterline vertex at every wet/dry sign change
+## yields the wet polygon directly (fan-triangulated). Saddle rule: the
+## cell-centre sample decides connectivity (documented spec choice).
 static func _mesh_cell(st: Dictionary, i: int, j: int) -> void:
-	if not (_wet(st, i, j) and _wet(st, i + 1, j)
-			and _wet(st, i + 1, j + 1) and _wet(st, i, j + 1)):
+	var corners: Array = [
+		Vector2i(i, j), Vector2i(i + 1, j),
+		Vector2i(i + 1, j + 1), Vector2i(i, j + 1)]
+	var wet_flags: Array = []
+	var wet_n := 0
+	for cnr: Vector2i in corners:
+		var w: bool = _wet(st, cnr.x, cnr.y)
+		wet_flags.append(w)
+		wet_n += 1 if w else 0
+	if wet_n == 0:
 		return
 	if _cell_cut(st, i, j) != -1:
-		return   # Task 5
-	var a: int = _lattice_vert(st, i, j)
-	var b: int = _lattice_vert(st, i + 1, j)
-	var cc: int = _lattice_vert(st, i + 1, j + 1)
-	var d: int = _lattice_vert(st, i, j + 1)
-	for t in [[a, d, cc], [a, cc, b]]:   # +Y winding matches the old sheet
-		for k in 3:
-			st.idx.append(t[k])
+		_mesh_cut_cell(st, i, j, corners, wet_flags)   # Task 5
+		return
+	if wet_n == 4:
+		var a: int = _lattice_vert(st, i, j)
+		var b: int = _lattice_vert(st, i + 1, j)
+		var cc: int = _lattice_vert(st, i + 1, j + 1)
+		var d: int = _lattice_vert(st, i, j + 1)
+		for t in [[a, d, cc], [a, cc, b]]:
+			for k in 3:
+				st.idx.append(t[k])
+		return
+	# Saddle: wet at opposite corners only -> centre sample picks joined/split.
+	var saddle: bool = wet_n == 2 and wet_flags[0] == wet_flags[2]
+	var centre_wet := false
+	if saddle:
+		var cp: Vector2 = st.base + Vector2(float(i) + 0.5, float(j) + 0.5) * S
+		var clvl: float = WaterField.level_at(st.ctx, cp)
+		centre_wet = clvl > -INF \
+			and clvl > TerrainSurfaceField.surface_y(st.region, cp.x, cp.y) + EPS
+	if saddle and not centre_wet:
+		for k in 4:   # two separate corner triangles
+			if wet_flags[k]:
+				st.idx.append(_lattice_vert(st, corners[k].x, corners[k].y))
+				st.idx.append(_edge_vert(st, corners[k], corners[(k + 3) % 4]))
+				st.idx.append(_edge_vert(st, corners[k], corners[(k + 1) % 4]))
+		return
+	var poly: Array = []
+	for k in 4:
+		var a: Vector2i = corners[k]
+		var b: Vector2i = corners[(k + 1) % 4]
+		if wet_flags[k]:
+			poly.append(_lattice_vert(st, a.x, a.y))
+		if wet_flags[k] != wet_flags[(k + 1) % 4]:
+			poly.append(_edge_vert(st, a, b))
+	for k in range(1, poly.size() - 1):   # fan
+		st.idx.append(poly[0])
+		st.idx.append(poly[k])
+		st.idx.append(poly[k + 1])
+
+
+## Waterline vertex on the lattice edge a-b. XZ: linear interp on f refined
+## by bisection against the real fields — [lo, hi] narrows until tight, and
+## lo (the last verified-wet t, by loop invariant) is the reported position,
+## so the vertex is guaranteed on the water side of the crossing (a wall
+## face, a claim edge, or a beach). Y: the vertex RIDES THE WATER LEVEL,
+## never the ground (amended rule) — on this cliff-heavy terrain most shores
+## are vertical walls, and the waterline there IS the wall face at water
+## height. Welded by edge key so both cells sharing the edge reuse it.
+static func _edge_vert(st: Dictionary, a: Vector2i, b: Vector2i) -> int:
+	var key := "X:%d:%d:%d:%d" % [mini(a.x, b.x), mini(a.y, b.y),
+		absi(b.x - a.x), absi(b.y - a.y)]
+	if st.weld.has(key):
+		return st.weld[key]
+	var fa: float = _f(st, a.x, a.y)
+	var fb: float = _f(st, b.x, b.y)
+	if fa == -INF:
+		fa = -1.0
+	if fb == -INF:
+		fb = -1.0
+	var t: float = clampf(fa / (fa - fb), 0.05, 0.95)
+	var pa: Vector2 = st.base + Vector2(a) * S
+	var pb: Vector2 = st.base + Vector2(b) * S
+	var wet_c: Vector2i = a
+	var lo: float = 0.0
+	var hi: float = 1.0
+	if fa < 0.0:   # ensure lo is the wet end
+		var tmp: Vector2 = pa
+		pa = pb
+		pb = tmp
+		wet_c = b
+		t = 1.0 - t
+	for _pass in 20:
+		if hi - lo < 0.0005:
+			break
+		var p: Vector2 = pa.lerp(pb, t)
+		var lvl: float = WaterField.level_at(st.ctx, p)
+		var g: float = TerrainSurfaceField.surface_y(st.region, p.x, p.y)
+		if lvl > -INF and lvl - g > 0.0:
+			lo = t
+		else:
+			hi = t
+		t = (lo + hi) * 0.5
+	var p: Vector2 = pa.lerp(pb, lo)
+	var lvl: float = WaterField.level_at(st.ctx, p)
+	if lvl == -INF:
+		lvl = st.lvl[wet_c.y * (N + 1) + wet_c.x]   # wet end's own level
+	# A crossing within the weld/dedup tolerance of the wet corner IS that
+	# corner — reuse its lattice vertex instead of a near-duplicate.
+	if p.distance_to(pa) < 0.05:
+		var vi_corner: int = _lattice_vert(st, wet_c.x, wet_c.y)
+		st.weld[key] = vi_corner
+		return vi_corner
+	var vi: int = st.verts.size()
+	st.verts.append(Vector3(p.x, lvl, p.y))
+	st.weld[key] = vi
+	return vi
+
+
+static func _mesh_cut_cell(_st: Dictionary, _i: int, _j: int,
+		_corners: Array, _wet: Array) -> void:
+	pass   # Task 5
 
 
 ## Index of a fall cut affecting this cell, or -1. A cell is cut when any
