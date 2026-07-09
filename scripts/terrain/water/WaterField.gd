@@ -35,9 +35,18 @@ static func ctx(water: WaterPlan, chunk: Vector2i) -> Dictionary:
 
 ## Continuous, monotone level per trace sample + fall cut indices.
 ## levels[i] = min(levels[i-1], beds[i] + SURFACE_RIDE), anchored to the
-## source pool at the top and the terminal pond at the bottom; a cut is
-## recorded wherever one step drops more than FALL_DROP_MIN (upstream holds
-## its level to the lip; the jump IS the waterfall).
+## source pool at the top and the terminal pond at the bottom. Falls are
+## detected over a short along-window (spec "Falls" bullet, docs/superpowers/
+## specs/2026-07-09-water-boundary-mesh-design.md): a genuine cliff can
+## descend over 2-3 samples (~12 m apart) without any single step exceeding
+## FALL_DROP_MIN, so before committing the held level at sample i we also
+## peek at sample i+1 (a ~24 m lookahead). If the held level clears either
+## raw_i or raw_{i+1} by more than FALL_DROP_MIN, one cut is placed at the
+## single step with the largest drop inside the held window; the samples
+## between the anchor and that step are the lip (held at the anchor level),
+## and scanning resumes just downstream of the cut with lvl = raw at the cut.
+## Windows never overlap — once a cut is placed, the next window starts
+## fresh from the sample after it.
 static func profile(trace: RiverTrace) -> Dictionary:
 	if _profiles.has(trace.source_cell):
 		return _profiles[trace.source_cell]
@@ -49,17 +58,51 @@ static func profile(trace: RiverTrace) -> Dictionary:
 	if trace.source_pool != null:
 		lvl = minf(lvl, trace.source_pool.surface_y())
 	levels[0] = lvl
-	for i in range(1, n):
-		var raw: float = trace.beds[i] + SURFACE_RIDE
+	var si: int = 1
+	while si < n:
+		var i: int = si
+		var raw_i: float = trace.beds[i] + SURFACE_RIDE
 		# Falls are strictly > FALL_DROP_MIN (4.0 m). An exact one-storey (4.0)
 		# drop stays a slope by owner decision. The +0.01 guards float32
 		# chained-subtraction noise so exact 4.0 drops never become falls.
-		if lvl - raw > FALL_DROP_MIN + 0.01:
-			cuts.append(i - 1)
-			lvl = raw
-		else:
-			lvl = minf(lvl, raw)
+		var drop_i: float = lvl - raw_i
+		var drop_j: float = drop_i
+		var j: int = i
+		if i + 1 < n:
+			var raw_next: float = trace.beds[i + 1] + SURFACE_RIDE
+			var drop_next: float = lvl - raw_next
+			if drop_next > drop_j:
+				drop_j = drop_next
+				j = i + 1
+		if drop_i > FALL_DROP_MIN + 0.01 or drop_j > FALL_DROP_MIN + 0.01:
+			# One of the two lookahead samples clears the threshold — place a
+			# single cut at the step (within the anchor..j window) with the
+			# largest drop measured from the held anchor level, holding the
+			# lip level up to it. Measuring from the anchor (not step-to-step)
+			# guarantees the recorded jump itself exceeds the threshold —
+			# two sub-threshold single steps (e.g. 4.0 + 4.0) that only trip
+			# the window *together* must still cut at the point that carries
+			# the whole qualifying drop, not at whichever half-step is
+			# nominally larger.
+			var cut_at: int = i - 1
+			var best_drop: float = drop_i
+			for k in range(i + 1, j + 1):
+				var raw_k: float = trace.beds[k] + SURFACE_RIDE
+				var drop_k: float = lvl - raw_k
+				if drop_k > best_drop:
+					best_drop = drop_k
+					cut_at = k - 1
+			for fill in range(i, cut_at + 1):
+				levels[fill] = lvl
+			cuts.append(cut_at)
+			var raw_after: float = trace.beds[cut_at + 1] + SURFACE_RIDE
+			lvl = raw_after
+			levels[cut_at + 1] = lvl
+			si = cut_at + 2
+			continue
+		lvl = minf(lvl, raw_i)
 		levels[i] = lvl
+		si += 1
 	if trace.pond != null:
 		# Meet the pond surface continuously (or with a fall if the drop is big).
 		var ps: float = trace.pond.surface_y()

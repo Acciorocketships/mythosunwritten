@@ -43,18 +43,31 @@ func test_profiles_monotone_and_continuous() -> void:
 				assert_true(drop < WaterField.FALL_DROP_MIN + 0.02,
 					"continuous stretch drops %0.2f >= FALL_DROP_MIN at sample %d" % [drop, i])
 			checked += 1
+		# Window bound: with no cut inside a 2-sample span (i, i+1), the whole
+		# span's drop must also stay under the threshold — a multi-sample
+		# cliff that never trips the per-step bound above must still be
+		# caught by the lookahead window in WaterField.profile().
+		for i in range(0, levels.size() - 2):
+			if not prof.cuts.has(i) and not prof.cuts.has(i + 1):
+				var window_drop: float = levels[i] - levels[i + 2]
+				assert_true(window_drop <= WaterField.FALL_DROP_MIN + 0.02,
+					"window drops %0.2f >= FALL_DROP_MIN across samples %d..%d" % [window_drop, i, i + 2])
 	assert_true(checked > 0, "site chunk has river samples")
 
 
 func test_cuts_only_at_big_drops() -> void:
 	var water: WaterPlan = _water(SEED)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)
+	var total_cuts := 0
 	for tr: RiverTrace in ctx.rivers:
 		var prof: Dictionary = WaterField.profile(tr)
 		for ci in prof.cuts:
+			total_cuts += 1
 			var drop: float = prof.levels[ci] - prof.levels[ci + 1]
 			assert_true(drop > WaterField.FALL_DROP_MIN + 0.009,
 				"cut %d drops only %0.2f" % [ci, drop])
+	if total_cuts == 0:
+		pass_test("no >4m windows near the site on this seed")
 
 
 func test_level_at_known_water_and_dry_land() -> void:
