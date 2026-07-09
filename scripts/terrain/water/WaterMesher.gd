@@ -651,11 +651,15 @@ static func _attributes(st: Dictionary) -> void:
 	# sample; the volume floor must reach the ramp toe). A cell whose wet
 	# levels span more than CUT_JUMP is crossed by a cut or body seam: TWO
 	# entries, one per surface, both flat (a gradient probed across the jump
-	# is meaningless). The upper entry carries "floor" = lower level + 1.0 so
-	# its box stops just above the pool surface and containment at pool
-	# height picks the pool volume. Only cells OWNED by this chunk emit —
-	# border cells belong to the neighbour that meshes them (same ownership
-	# rule as the retired _build_volumes).
+	# is meaningless). The upper entry carries "floor" = lower level + 1.75,
+	# STRICTLY ABOVE the lower box's ceiling (lower level + the 1.7 headroom
+	# pad): the two boxes must not overlap, or the character's maxf-gating
+	# over passing volumes picks the upper surface anywhere in the overlap
+	# band — a band-limited recurrence of the phantom mid-air swim. The 5cm
+	# gap between them is fine; nothing swims in a sliver at a waterfall lip.
+	# Only cells OWNED by this chunk emit — border cells belong to the
+	# neighbour that meshes them (same ownership rule as the retired
+	# _build_volumes).
 	var wet_cells: Dictionary = {}
 	var cell0 := Vector2i(int(roundf(st.base.x / TILE)), int(roundf(st.base.y / TILE)))
 	for cz in 8:
@@ -690,9 +694,13 @@ static func _attributes(st: Dictionary) -> void:
 				continue
 			var cell: Vector2i = cell0 + Vector2i(cx, cz)
 			if wet_hi - wet_lo > CUT_JUMP:
+				# floor = wet_lo + 1.75 > the lower box's top (wet_lo + 1.7):
+				# the upper volume must start above the lower volume's ceiling
+				# or maxf-gating resurrects the phantom surface in the overlap
+				# band (task-9 re-review).
 				wet_cells[cell] = [
 					{"lvl": wet_hi, "grad": Vector2.ZERO, "gnd_lo": gnd_lo,
-						"floor": wet_lo + 1.0},
+						"floor": wet_lo + 1.75},
 					{"lvl": wet_lo, "grad": Vector2.ZERO, "gnd_lo": gnd_lo},
 				]
 				continue

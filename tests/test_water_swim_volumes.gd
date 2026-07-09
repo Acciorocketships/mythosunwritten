@@ -124,9 +124,9 @@ func test_volumes_are_cell_pure_and_cover_the_pool() -> void:
 			var shape: BoxShape3D = matched.get_child(0).shape
 			var top: float = matched.position.y + shape.size.y * 0.5
 			assert_almost_eq(top, float(wc.lvl) + 1.7, 0.001, "ceiling hugs the level at %s" % cell)
-			# A straddling cell's UPPER entry floors just above the lower
-			# surface (its own "floor" key); plain entries reach the cell's
-			# lowest ground minus clearance.
+			# A straddling cell's UPPER entry floors above the lower box's
+			# ceiling (its own "floor" key — stacked boxes must not overlap);
+			# plain entries reach the cell's lowest ground minus clearance.
 			var bottom: float = matched.position.y - shape.size.y * 0.5
 			assert_almost_eq(bottom, float(wc.get("floor", wc.gnd_lo - 5.0)), 0.001,
 				"floor per entry at %s" % cell)
@@ -175,6 +175,19 @@ func test_cascade_volumes_report_their_own_surface() -> void:
 			assert_almost_eq(_sampled_surface(v, lip.x, lip.z), 13.7, 0.8,
 				"upstream volume reports the lip surface")
 	assert_gt(lip_hits, 0, "upstream point inside a volume")
+	# Overlap-band probe: just above the pool surface but below the pool
+	# box's ceiling (5.7 + 1.7 = 7.4). The stacked UPPER volume must start
+	# strictly ABOVE that ceiling — if the boxes overlap, the character's
+	# maxf-gating over passing volumes picks the upper surface in the band:
+	# a band-limited recurrence of the phantom mid-air swim.
+	var band := Vector3(54.0, 6.9, -1092.0)
+	var band_hits := 0
+	for v in vols:
+		if _box_contains(v, band):
+			band_hits += 1
+			assert_almost_eq(_sampled_surface(v, band.x, band.z), 5.7, 0.8,
+				"band point sees only the pool surface, never the 13.7 lip")
+	assert_eq(band_hits, 1, "band point inside the LOWER box only")
 	root.free()
 
 

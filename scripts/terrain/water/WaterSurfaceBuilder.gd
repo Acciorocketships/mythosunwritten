@@ -724,10 +724,13 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 			var shape := CollisionShape3D.new()
 			var box := BoxShape3D.new()
 			var top: float = wc.lvl + 1.7
-			# A straddling cell's UPPER entry floors just above the lower
-			# surface (its "floor" key) so containment at pool height picks
-			# the pool volume; plain entries reach the cell's lowest ground
-			# minus clearance (half-cell ramps dip below the centre ground).
+			# A straddling cell's UPPER entry floors at its "floor" key —
+			# STRICTLY ABOVE the lower box's ceiling (lower level + 1.7), so
+			# the stacked boxes never overlap: in the character's maxf-gating
+			# over passing volumes an overlap band would pick the upper
+			# surface, resurrecting the phantom mid-air swim. Plain entries
+			# reach the cell's lowest ground minus clearance (half-cell ramps
+			# dip below the centre ground).
 			var bottom: float = wc.get("floor", wc.gnd_lo - 5.0)
 			box.size = Vector3(TILE, top - bottom, TILE)
 			shape.shape = box
