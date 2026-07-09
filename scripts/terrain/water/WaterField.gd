@@ -10,6 +10,7 @@ const FALL_DROP_MIN := 4.0    # the only fall threshold in the system
 const SURFACE_RIDE := 2.2     # river surface height above the traced bed
 const CLAIM_FEATHER := 8.0    # metres past the channel half-width a reach claims
 const FLOOD_EXT := 24.0       # hard bound of the flooded-shelf extension
+const FLOOD_DEPTH_MAX := 2.5  # flooded ground sits at most this far under the level
 const EPS := 0.05
 
 static var _profiles: Dictionary = {}   # trace.source_cell -> profile dict
@@ -141,7 +142,12 @@ static func profile(trace: RiverTrace) -> Dictionary:
 ## ground beneath its surface; it ends where the ground rises (a wall or a
 ## beach) or at the hard FLOOD_EXT bound. This restores the old system's
 ## flooded-shelf coverage on cliff terrain. Best-claimant selection stays
-## smallest-margin-first.
+## smallest-margin-first. Flood covers SHALLOW shelves only (legacy
+## FLOOD_MAX semantics): the ground must sit within FLOOD_DEPTH_MAX under
+## the candidate's level — deep water exists only where the channel/pond
+## carve contains it. Without the depth bound a high body's flood reaches
+## over DEEP low ground toward a lower body, creating a bodiless level
+## seam (an un-recorded jump in the lattice) between unrelated claimants.
 static func level_at(c: Dictionary, p: Vector2) -> float:
 	var region = c.get("region")
 	var best_m: float = INF
@@ -158,7 +164,8 @@ static func level_at(c: Dictionary, p: Vector2) -> float:
 			if not have_gy:
 				gy = TerrainSurfaceField.surface_y(region, p.x, p.y)
 				have_gy = true
-			ok = gy < lvl - EPS
+			# Shallow shelves only: flooded ground rides just under the level.
+			ok = gy < lvl - EPS and gy > lvl - FLOOD_DEPTH_MAX
 		if ok:
 			best_m = m
 			best_lvl = lvl
@@ -181,7 +188,8 @@ static func level_at(c: Dictionary, p: Vector2) -> float:
 					if not have_gy:
 						gy = TerrainSurfaceField.surface_y(region, p.x, p.y)
 						have_gy = true
-					ok = gy < lvl - EPS
+					# Shallow shelves only (see the flood note above).
+					ok = gy < lvl - EPS and gy > lvl - FLOOD_DEPTH_MAX
 				if ok:
 					best_m = m
 					best_lvl = lvl
