@@ -14,6 +14,11 @@ const FLOOD_DEPTH_MAX := 2.5  # flooded ground sits at most this far under the l
 const EPS := 0.05
 
 static var _profiles: Dictionary = {}   # trace.source_cell -> profile dict
+# The streamer calls build_chunk (and therefore profile()) from a worker
+# thread, and teleports can trigger a main-thread build concurrently — the
+# same lazily-filled-static-Dictionary race that has crashed this codebase
+# before (the foliage-cache incident). Guard every check-compute-store access.
+static var _profiles_lock := Mutex.new()
 
 
 ## Everything the samplers need for one chunk, fetched once (bodies_near is
@@ -53,8 +58,15 @@ static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
 ## Windows never overlap — once a cut is placed, the next window starts
 ## fresh from the sample after it.
 static func profile(trace: RiverTrace) -> Dictionary:
+	# Check-compute-store guarded end to end: the streamer's worker thread and
+	# a teleport-triggered main-thread build can both call profile() for the
+	# same trace at once. Profiles are small, so holding the lock across the
+	# compute (not just the dictionary ops) costs nothing measurable.
+	_profiles_lock.lock()
 	if _profiles.has(trace.source_cell):
-		return _profiles[trace.source_cell]
+		var cached: Dictionary = _profiles[trace.source_cell]
+		_profiles_lock.unlock()
+		return cached
 	var n: int = trace.points.size()
 	var levels := PackedFloat32Array()
 	levels.resize(n)
@@ -131,6 +143,7 @@ static func profile(trace: RiverTrace) -> Dictionary:
 				cuts.remove_at(cuts.find(i))
 	var out := {"levels": levels, "cuts": cuts}
 	_profiles[trace.source_cell] = out
+	_profiles_lock.unlock()
 	return out
 
 

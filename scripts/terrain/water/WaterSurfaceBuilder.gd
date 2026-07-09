@@ -686,56 +686,49 @@ static func _fall_quad(st: SurfaceTool, vs: Array, uv_y: Array, uv_x: Array,
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
 ## is the chunk's heightfield region (the streamer computes it for the mesher
 ## and shares it here — the water field must see the REAL rendered terrain).
+## Boundary-conforming path (WaterMesher/FallMesher): the sheet is a marching-
+## squares mesh whose free edges are welded to the ArrayMesh FallMesher sweeps
+## from the sheet's own lip contour, so crest and curtain share vertices by
+## construction. Swim volumes ride one Area3D per wet cell (WaterMesher's
+## wet_cells), carrying the sampled surface plane (Task 10's contract) instead
+## of a single scalar level — the plane lets a probe interpolate the true
+## swell-free surface height anywhere inside the cell.
 func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
-	var field: Dictionary = compute_field(water, chunk, region)
-	if field.is_empty():
+	var m: Dictionary = WaterMesher.build(water, chunk, region)
+	if m.is_empty():
 		return null
-	var lo_cx: int = chunk.x * CELLS_PER_CHUNK
-	var lo_cz: int = chunk.y * CELLS_PER_CHUNK
-	var cm: Dictionary = corner_map(field, region)
-
-	var st: SurfaceTool = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
-	var quads: int = 0
-	for cell in field:
-		if cell.x < lo_cx or cell.x >= lo_cx + CELLS_PER_CHUNK \
-				or cell.y < lo_cz or cell.y >= lo_cz + CELLS_PER_CHUNK:
-			continue   # margin cells only shape shared corners
-		for v in sheet_cell_grid(cell, field, cm, water, region):
-			st.set_custom(0, v.cust)
-			st.set_uv(Vector2(0.0, 0.0))
-			st.add_vertex(v.pos)
-		quads += 1
-	if quads == 0:
-		return null
-
-	var root: Node3D = Node3D.new()
+	var root := Node3D.new()
 	root.name = "Water"
-	st.generate_normals()
-	var mi: MeshInstance3D = MeshInstance3D.new()
+	var mi := MeshInstance3D.new()
 	mi.name = "WaterSheet"
-	mi.mesh = st.commit()
+	mi.mesh = WaterMesher.commit(m)
 	mi.material_override = WaterSurfaceBuilder.sheet_material()
 	root.add_child(mi)
-	var ribbons: Array[Dictionary] = compute_ribbons(field, chunk, region)
-	if not ribbons.is_empty():
-		var rst: SurfaceTool = SurfaceTool.new()
-		rst.begin(Mesh.PRIMITIVE_TRIANGLES)
-		for r in ribbons:
-			_ribbon_mesh(rst, r, field, cm, water, region)
-		rst.generate_normals()
-		var rmi: MeshInstance3D = MeshInstance3D.new()
-		rmi.name = "Waterfalls"
-		rmi.mesh = rst.commit()
-		rmi.material_override = WaterSurfaceBuilder.waterfall_material()
-		root.add_child(rmi)
-		# Plunge mist rides each fall, but GPUParticles3D allocates renderer
-		# objects — NEVER construct them on the worker thread (SIGABRT race).
-		# Stash the ribbon data; the streamer calls build_mist at main-thread
-		# integration, same pattern as the biome FX nodes.
-		root.set_meta("mist_ribbons", ribbons)
-	_build_volumes(chunk, field, root)
+	var falls: ArrayMesh = FallMesher.build(m.cuts, region)
+	if falls != null:
+		var fi := MeshInstance3D.new()
+		fi.name = "Waterfalls"
+		fi.mesh = falls
+		fi.material_override = WaterSurfaceBuilder.waterfall_material()
+		root.add_child(fi)
+	for cell: Vector2i in m.wet_cells:
+		var wc: Dictionary = m.wet_cells[cell]
+		var area := Area3D.new()
+		area.collision_layer = 1 << 7
+		area.collision_mask = 0
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		var top: float = wc.lvl + 1.7
+		var bottom: float = wc.gnd_lo - 5.0
+		box.size = Vector3(TILE, top - bottom, TILE)
+		shape.shape = box
+		area.add_child(shape)
+		area.position = Vector3((float(cell.x) + 0.5) * TILE,
+			(top + bottom) * 0.5, (float(cell.y) + 0.5) * TILE)
+		area.set_meta("surface_c", Vector3((float(cell.x) + 0.5) * TILE,
+			wc.lvl, (float(cell.y) + 0.5) * TILE))
+		area.set_meta("surface_g", wc.grad)
+		root.add_child(area)
 	return root
 
 

@@ -301,3 +301,20 @@ func test_commit_and_attributes() -> void:
 			churn += 1
 		idx += 4
 	assert_true(churn > 0, "plunge band baked near falls")
+
+
+func test_build_chunk_scene_contract() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(water, SITE_CHUNK, region)
+	assert_not_null(node, "site builds")
+	assert_not_null(node.get_node_or_null("WaterSheet"), "sheet present")
+	var areas := 0
+	for ch in node.get_children():
+		if ch is Area3D:
+			areas += 1
+			assert_true(ch.has_meta("surface_c") and ch.has_meta("surface_g"),
+				"volume carries the sampled surface plane")
+			assert_eq(ch.collision_layer, 1 << 7, "water layer")
+	assert_true(areas > 0, "swim volumes present")
+	node.free()
