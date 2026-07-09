@@ -321,28 +321,76 @@ func test_rim_quads_never_proud_over_deep_ground() -> void:
 			var verts: Array = WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water, region)
 			for v in verts:
 				var rg: float = TerrainSurfaceField.surface_y(region, v.pos.x, v.pos.z)
-				if rg < lvl - BRIDGE:
+				if rg < lvl - BRIDGE - 0.8:
 					checked += 1
 					assert_true(v.pos.y <= rg - 0.2,
 						"rim vert %s hides under deep-below ground (y %.2f, ground %.2f, level %.2f)"
 						% [str(v.pos), v.pos.y, rg, lvl])
-			# A rim triangle may only exist over ground AT the waterline —
-			# any corner over ground clearly below the level means the
-			# triangle drapes down a step or channel wall as the
-			# disconnected diagonal skirt ribbon.
+			# A rim triangle may only exist over ground within a fall-height
+			# of the waterline (shallow margins are legitimate shelves) —
+			# deeper ground means the triangle drapes down a step or channel
+			# wall as the disconnected diagonal skirt ribbon. Mirrors the
+			# emission threshold BRIDGE_MAX + 0.8.
 			var i := 0
 			while i < verts.size():
 				var g_lo: float = INF
 				for k in 3:
 					g_lo = minf(g_lo, TerrainSurfaceField.surface_y(
 						region, verts[i + k].pos.x, verts[i + k].pos.z))
-				assert_true(g_lo >= lvl - 0.65,
-					"rim triangle over sub-waterline ground (min ground %.2f, level %.2f, at %s)"
+				assert_true(g_lo >= lvl - BRIDGE - 0.85,
+					"rim triangle over deep-below ground (min ground %.2f, level %.2f, at %s)"
 					% [g_lo, lvl, verts[i].pos])
 				checked += 1
 				i += 3
 	if checked == 0:
 		pass_test("no rim vertices over deep ground in the tested chunks")
+
+
+# ------------------------------------------------------------
+# The round-14 skirt was FLAT and came from WET cells: patches are
+# corner-centered and reach half a cell into their neighbours, so a pool's
+# own grid rode at level down descending dry banks (4.7m above the grass at
+# the owner's frame) — every rim-keyed gate missed it. Static water more
+# than a fall-height (BRIDGE_MAX) above dry-bank ground is fiction and must
+# hide under the terrain, whichever cell emitted it. Exemptions mirror the
+# fiction-tuck: fall-welded droop bands (the curtain owns those faces) and
+# carve-feather dips (real bed cell-flagged dry).
+# ------------------------------------------------------------
+func test_no_sheet_vert_floats_a_fall_height_over_dry_banks() -> void:
+	var water: WaterPlan = _water(SEED)
+	var checked := 0
+	for chunk: Vector2i in CHUNKS:
+		var field: Dictionary = _field(SEED, chunk)
+		if field.is_empty():
+			continue
+		var region = _region(SEED, chunk)
+		var cm: Dictionary = WaterSurfaceBuilder.corner_map(field, region)
+		for cell: Vector2i in field:
+			if not _interior(cell, chunk):
+				continue
+			var lvl: float = field[cell].level
+			var ctx: Dictionary = WaterSurfaceBuilder.sheet_ctx(cell, field, cm, water, region)
+			var verts: Array = WaterSurfaceBuilder.sheet_cell_grid(cell, field, cm, water, region)
+			for v in verts:
+				var pcell := Vector2i(
+					int(floor(v.pos.x / 24.0)), int(floor(v.pos.z / 24.0)))
+				if field.has(pcell) and field[pcell].wet:
+					continue
+				var rg: float = TerrainSurfaceField.surface_y(region, v.pos.x, v.pos.z)
+				if rg >= lvl - BRIDGE - 0.8:
+					continue
+				var cg: float = field[pcell].ground if field.has(pcell) \
+					else region.surface_height(pcell.x, pcell.y)
+				if cg - rg >= 1.5:
+					continue
+				if not WaterSurfaceBuilder._clear_of_droops(ctx, v.pos):
+					continue
+				checked += 1
+				assert_true(v.pos.y <= rg - 0.2,
+					"sheet vert floats over a dry bank (%s, ground %.2f, level %.2f)"
+					% [str(v.pos), rg, lvl])
+	if checked == 0:
+		pass_test("no deep dry-bank overhangs in the tested chunks")
 
 
 # ------------------------------------------------------------

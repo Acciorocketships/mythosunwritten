@@ -169,6 +169,16 @@ void fragment() {
 	float ff = smoothstep(0.08, 0.5, fs);
 	foam += smoothstep(0.75, 1.0, steep_v)
 		* (0.25 + 0.2 * sin(TIME * 2.1 + (world_pos.x + world_pos.z) * 0.37)) * ff;
+	// PLUNGE CHURN: the builder bakes steep_v to 1 in a band along fall
+	// landing lines (rapids corner-averaging never reaches 1, so 0.9+ is the
+	// plunge signature). NOT flow-gated — plunge pools are calm reaches. A
+	// drifting boil pattern carries the fall's white base out into the pool,
+	// so falling water hands off to churning water instead of ending at a
+	// line (owner: "texture/simulation continuous over all water").
+	float churn = smoothstep(0.9, 1.0, steep_v);
+	float boil = texture(noise_tex, world_pos.xz * 0.17
+			+ vec2(TIME * 0.07, -TIME * 0.06)).r;
+	foam += churn * (0.40 + 0.5 * smoothstep(0.35, 0.7, boil));
 	foam = clamp(foam, 0.0, 0.9);
 	ALBEDO = mix(body, foam_color, foam);
 	// Clarity comes from REFRACTION, not alpha blending; the ALPHA write

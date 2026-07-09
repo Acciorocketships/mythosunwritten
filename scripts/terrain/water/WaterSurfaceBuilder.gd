@@ -608,6 +608,24 @@ static func _ribbon_mesh(st: SurfaceTool, r: Dictionary, field: Dictionary,
 		if i > first_spill and i < last_spill and not cols[i].spill:
 			cols[i].spill = true
 			cols[i].top.y = maxf(cols[i].top.y, r.top - CREST_DROOP - 0.2)
+	# WALL-SIDE ENDS don't pinch in open air: when the ground just beyond an
+	# end run rises to the crest, the water meets a bank — pinching there
+	# left a tall taper sliver with a slit you could see under at the fall's
+	# top corner (owner). Instead the column past the run rides its own
+	# contour-capped anchor, which the cap has already dived UNDER that
+	# bank: the curtain's side edge curves around and goes down into the
+	# ground (owner's requested shape, verbatim).
+	if first_spill >= 0:
+		var across := Vector2(-tangent.y, tangent.x)
+		for e in [[first_spill, -1], [last_spill, 1]]:
+			var wi: int = e[0] + e[1]
+			if wi < 0 or wi >= cols.size() or cols[wi].spill:
+				continue
+			var a: Vector3 = cols[e[0]].top
+			var gb: float = TerrainSurfaceField.surface_y(region,
+				a.x + across.x * 2.0 * float(e[1]), a.z + across.y * 2.0 * float(e[1]))
+			if gb >= r.top - 0.5:
+				cols[wi].spill = true
 	# Front and back vertex lattices [column][row].
 	var thick: float = clampf(drop_h * 0.10, 0.4, 1.2)
 	var front: Array = []
@@ -923,12 +941,17 @@ static func sheet_ctx(cell: Vector2i, field: Dictionary, cm: Dictionary,
 	# that height and slope — C1 across the lip, no fold where still water
 	# becomes falling water (owner: "make the tangent continuous").
 	var droops: Array = []
+	var plunges: Array = []
 	if e.wet:
 		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var nb: Vector2i = cell + d
 			var dropped: bool
 			if field.has(nb) and field[nb].wet:
 				dropped = own_level - field[nb].level > BRIDGE_MAX
+				# A HIGHER wet neighbour pours a fall onto this cell: its
+				# landing band churns (baked below as shore + steepness).
+				if field[nb].level - own_level > BRIDGE_MAX:
+					plunges.append(d)
 			else:
 				var g: float = field[nb].ground if field.has(nb) \
 					else region.surface_height(nb.x, nb.y)
@@ -936,8 +959,8 @@ static func sheet_ctx(cell: Vector2i, field: Dictionary, cm: Dictionary,
 			if dropped:
 				droops.append(d)
 	return {"cell": cell, "own_level": own_level, "pos": pos, "cust": cust,
-		"wets": wets, "contour": contour, "droops": droops, "water": water,
-		"region": region, "field": field, "wet": e.wet}
+		"wets": wets, "contour": contour, "droops": droops, "plunges": plunges,
+		"water": water, "region": region, "field": field, "wet": e.wet}
 
 
 ## One rendered sheet vertex at cell-local (u, v) — corner bilinear, contour
@@ -981,17 +1004,50 @@ static func _sheet_vert(ctx: Dictionary, u: float, v: float) -> Dictionary:
 			if dd.x != 0 else (float(ctx.cell.y) + 0.5 * float(dd.y)) * TILE
 		var dist: float = absf((p.x - edge) if dd.x != 0 else (p.z - edge))
 		p.y = minf(p.y, ctx.own_level - crest_droop_at(dist))
+	# The landing band of an incoming fall CHURNS: steepness (c.a) 1 at the
+	# fall's foot fading out by ~3.5m drives the shader's plunge boil (the
+	# fall's white base hands off to live churning pool, not a cutoff), and
+	# shore (c.g) damps the swell so the pool never bobs against the static
+	# curtain's foot — the same pinning the crest side already bakes.
+	for dd: Vector2i in ctx.plunges:
+		var edge: float = (float(ctx.cell.x) + 0.5 * float(dd.x)) * TILE \
+			if dd.x != 0 else (float(ctx.cell.y) + 0.5 * float(dd.y)) * TILE
+		var dist: float = absf((p.x - edge) if dd.x != 0 else (p.z - edge))
+		var w: float = clampf((3.5 - dist) / 2.0, 0.0, 1.0)
+		if w > 0.0:
+			c.a = maxf(c.a, w)
+			c.g = maxf(c.g, 0.85 * w)
 	var rgr: float = INF
 	if not ctx.wet:
-		# RIM quads exist to dive INTO banks. Over rendered ground that lies
-		# far below the rim's level they must hide beneath it: a high-reach
-		# rim spanning down a terraced hillside rode metres proud of the
-		# lower terraces — the pale slanted ribbon beside every cascade, the
-		# owner's "diagonal water skirt" (round 12: rim (1,-45), corners
-		# 15/15/8/4 after the corner bury).
 		rgr = TerrainSurfaceField.surface_y(ctx.region, p.x, p.z)
-		if rgr < ctx.own_level - BRIDGE_MAX:
-			p.y = minf(p.y, rgr - 0.3)
+	# Static water more than a fall-height above its ground is fiction: past
+	# BRIDGE_MAX the system itself says one surface cannot span — a fall
+	# must exist — yet verts over dry BANKS kept riding at level down
+	# descending hillsides as a flat pale ribbon: the owner's diagonal
+	# skirt, round-14 edition (FLAT, so the steep-triangle probe missed it —
+	# and emitted by WET cells too, whose corner-centered patches reach half
+	# a cell into their dry neighbours; every round-13 gate keyed on
+	# ctx.wet and never touched those). Tuck such verts under the ground.
+	# Deliberately NOT tucked: shallow margins (level - rg ≤ BRIDGE_MAX —
+	# unflooded shelves the corner lattice legitimately covers; digging
+	# there re-opens the pass-19 troughs), carve-feather dips (ground far
+	# below its own cell's bank height is channel bed cell-flagged dry),
+	# and fall-welded crest bands (the curtain owns those faces). Nominal
+	# cell = plain floor, not _on_dry_cell's +0.5 dual-patch owner: the
+	# overhang must reason about the ground it actually hangs over.
+	# Subsumes the round-12 deep-rim clamp.
+	if _clear_of_droops(ctx, p):
+		var pcell := Vector2i(int(floor(p.x / TILE)), int(floor(p.z / TILE)))
+		if not (ctx.field.has(pcell) and ctx.field[pcell].wet):
+			var rg2: float = rgr if rgr < INF \
+				else TerrainSurfaceField.surface_y(ctx.region, p.x, p.z)
+			var cg: float = ctx.field[pcell].ground if ctx.field.has(pcell) \
+				else ctx.region.surface_height(pcell.x, pcell.y)
+			if cg - rg2 < 1.5:
+				var sink: float = smoothstep(
+					BRIDGE_MAX, BRIDGE_MAX + 0.8, ctx.own_level - rg2)
+				if sink > 0.0:
+					p.y = minf(p.y, lerpf(ctx.own_level, rg2 - 0.3, sink))
 	return {"pos": p, "cust": c, "rg": rgr}
 
 
@@ -1063,7 +1119,12 @@ static func sheet_cell_grid(cell: Vector2i, field: Dictionary, cm: Dictionary,
 				var rg_lo: float = INF
 				for q in quad:
 					rg_lo = minf(rg_lo, q.rg)
-				if rg_lo < ctx.own_level - 0.6:
+				# Threshold matches the round-14 fiction-tuck (BRIDGE_MAX +
+				# 0.8, where the tuck fully buries the verts): rim and wet
+				# patches must agree over the same margin strip — the round-13
+				# rim-only 0.6 cut left sawtooth coverage at shallow margins
+				# that wet patches still render.
+				if rg_lo < ctx.own_level - BRIDGE_MAX - 0.8:
 					continue
 			# Sub-corners (0,0),(0,1),(1,1),(1,0); winding matches the +Y quad.
 			for idx in [0, 1, 2, 0, 2, 3]:

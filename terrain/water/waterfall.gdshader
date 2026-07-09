@@ -86,8 +86,11 @@ void fragment() {
 	// the slab dissolves into the pool from the fillet on.
 	float lip_line = 0.22 * smoothstep(0.08, 0.28, fallen)
 			* (1.0 - smoothstep(0.5, 0.95, fallen));
-	float plunge = smoothstep(0.7, 1.0, UV.y);
-	float foam = clamp(lip_line + develop * (0.18 + 0.55 * band) + 0.3 * plunge,
+	// The base rises toward the sheet's plunge-churn whiteness (0.3..0.75
+	// boil) so the alpha cross-fade at the pool lands white-on-white — the
+	// hand-off line disappears into shared churn.
+	float plunge = smoothstep(0.6, 1.0, UV.y);
+	float foam = clamp(lip_line + develop * (0.18 + 0.55 * band) + 0.45 * plunge,
 			0.0, 1.0);
 	foam *= 1.0 - 0.6 * side_v;
 	ALBEDO = mix(body, foam_color, foam);
