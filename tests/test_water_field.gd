@@ -866,3 +866,154 @@ func _on_chunk_border_f(v: Vector3) -> bool:
 	var lx: float = fposmod(v.x, span)
 	var lz: float = fposmod(v.z, span)
 	return lx < 0.01 or lx > span - 0.01 or lz < 0.01 or lz > span - 0.01
+
+
+# ============================================================================
+# h-task-4 diagnosis oracle (.superpowers/sdd/h-task-4-brief.md, I4 "strangely
+# missing water" wedge at a wall inside a pool). Fix-independent — written
+# against the issue definition, no knowledge of any fix — must be RED at HEAD.
+#
+# INSTRUMENT-FIRST VERDICT (recorded per the brief's mandate, decided BEFORE
+# committing to this oracle's final shape — see this task's own report for
+# the full grid dump and the reinvestigation this section documents):
+#
+# H-A's specific mechanism (the fill's 6m lattice ground memo landing on a
+# FICTIONAL wall/ridge that the true, finer-grained collision ground does not
+# have) is FALSIFIED at this site. Exhaustively verified four independent
+# ways — this task's own headless dumps (fill-lattice memo_ground, mesher's
+# own 3m subgrid via TerrainSurfaceField.surface_y, a full triangle-centroid
+# dump of WaterMesher.build's output), a background agent's LIVE in-game
+# triple-check (mesh-vertex dump + physics raycast scan + wide-area scan),
+# and a second independent background agent's from-scratch reproduction
+# (headless probe + live raycast after teleporting to the owner's exact
+# coordinate) — all four agree: 24m terrain cell (cx=1, cz=-46), world
+# x∈[24,36) z∈[-1104,-1080), is a GENUINE, correctly-classified cliff top
+# (storey=2, h=8.0, uncarved, TerrainSurfaceField._is_cliff_top=true), flat
+# at exactly 8.0 for the WHOLE x<36 sub-range at these z values, with a hard
+# vertical step to ~2-4m at the real cell boundary x=36.0 — matching the
+# fill's own memo_ground exactly (both read TerrainSurfaceField.surface_y at
+# the same points and agree bit-for-bit). There is no fictional wall; the
+# wall is real, and the fill/mesher both already know it correctly (dry
+# rendering there is CORRECT — H-B's first clause). The specific "1.71 /
+# 1.13 / 0.00" collision-ground figures in the brief's evidence section for
+# x=35.2/34.5/31.0 could not be reproduced by either investigation; the
+# reproducible evidence points to a methodology mix-up in the prior
+# evidence-gathering pass (see progress.md's "RUN 2 — CORRECTION" entry) —
+# most likely WaterField.level_at's own bilinear fill-lattice VALUE (which
+# genuinely does read ~3.0 there via harmless-on-its-own bleed across the
+# coarse lattice, since wet()'s ground-gate correctly suppresses it) misread
+# as a terrain-collision raycast.
+#
+# FIRST DRAFT OF THIS ORACLE (superseded, kept in this comment as the
+# reinvestigation trail the brief's own red-first mandate requires): a literal
+# "dry sample under a wet_cells plane reading > 0.5m above its own ground"
+# check, walking the site's full 3m subgrid, went GREEN at HEAD (0
+# violations) — per the brief's own "if it does not fail, your understanding
+# is wrong" rule, this was a signal to reinvestigate, not a green light to
+# proceed. A full-chunk scan of every (true field-depth class) vs (wet_cells
+# plane-depth class) pair confirms WHY: this site has ZERO dry→swim
+# transitions anywhere (the plane never claims water over land the mesher
+# renders dry — the cliff top's real ground, 8.0m, is simply too high for any
+# neighbouring cell's plane to reach). So "dry pocket under a wet plane" is
+# not a real defect class on this seed; forcing the oracle to find one here
+# would misdiagnose the fix.
+#
+# What the SAME scan DOES find, 84 times across the chunk including AT the
+# owner's own reported site: wade→swim and swim→wade misclassifications
+# WITHIN genuinely wet water. At (36.0, -1107.0) — one cell-row over from the
+# owner's exact stand point, same cell — the field's true depth is 0.76m
+# (WADING: shallow, at/under the character's own 0.8 swim-enter threshold),
+# but wet_cells' single linear plane for that 24m cell reads 1.44m there
+# (confidently SWIMMING) — a real depth-doubling, not a rounding fuzz. This
+# is H-B's second clause made precise: "the volume/classification is still
+# wrong" — not because the volume paints water over land the mesh shows dry,
+# but because ONE flat/linear plane per 24m cell cannot represent the field's
+# true (non-linear, sub-cell) surface curvature near a cell edge, and the
+# owner's own site sits exactly in that error band. This is also the
+# mechanism test_water_swim_volumes.gd's own
+# test_volume_surface_matches_field_at_probe_points already documents in
+# general ("one flat plane per 24m cell can diverge from the true local level
+# near a cell edge") — this oracle is the first to show it flipping an actual
+# swim/wade/dry CLASSIFICATION, not just a numeric plane-vs-field gap.
+#
+# The chosen test name (test_no_dry_pocket_below_adjacent_water_level, per
+# the brief) is kept, but its BODY checks the mechanism the reinvestigation
+# actually found: no wet_cells-plane-driven classification may read "more
+# submerged" (swim where the field says wade/dry, or wade where the field
+# says dry) than the field's own true depth at that point — the volume must
+# never promise a character MORE water than genuinely exists under their
+# feet. "dry pocket below adjacent water level" is the right description of
+# the DEFECT CLASS (a spot that reads wetter than it should relative to its
+# neighbours' honest water), even though the concrete mechanism here is
+# plane-depth-inflation rather than a mesh coverage hole.
+const _SUBGRID_STEP := 3.0   # == WaterMesher.S
+const _SWIM_ENTER := 0.8     # character.gd's own swim ENTER depth gate
+const _WADE_ENTER := 0.05    # character.gd's own wading ENTER depth gate
+
+
+## True depth class at p using WaterField's own true level_at (character.gd's
+## ENTER thresholds — this oracle deliberately uses ENTER, not the
+## hysteretic EXIT band, since it is comparing two static classifications,
+## not modelling frame-to-frame state).
+func _depth_class(depth: float) -> String:
+	if depth > _SWIM_ENTER:
+		return "swim"
+	if depth > _WADE_ENTER:
+		return "wade"
+	return "dry"
+
+
+## test_no_dry_pocket_below_adjacent_water_level (I4): walks the mesher's own
+## 3m subgrid over the site chunk. At every point inside a wet_cells entry's
+## 24m footprint, compares the FIELD's true depth class (WaterField.level_at
+## minus real ground) against the class a character probing that same
+## wet_cells entry's own SAMPLED PLANE (the exact character.gd/
+## WaterSurfaceBuilder formula: c.y + g.dot(p - c)) would read. Flags any
+## point where the plane reads a STRICTLY WETTER class than the field's own
+## truth (dry->wade, dry->swim, or wade->swim) — the volume promising a
+## character more water than genuinely exists under their feet, whether that
+## shows up as land reading wet (a coverage hole) or shallow water reading
+## deep (a plane-slope error) — both are the same owner-visible defect: swim
+## controls where the ground truth doesn't support them. Predicted red site:
+## I4, (36.0, -1107.0) and neighbours — true depth 0.76 (wade) vs plane depth
+## 1.44 (swim), one cell-row from the owner's own (36.4, 3.2, -1108.7).
+func test_no_dry_pocket_below_adjacent_water_level() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
+	assert_false(m.is_empty(), "site chunk builds water")
+	var wet_cells: Dictionary = m.wet_cells
+	var base: Vector2 = Vector2(SITE_CHUNK) * (WaterField.TILE * 8.0)
+	var n: int = int(WaterField.TILE * 8.0 / _SUBGRID_STEP)
+	var order := {"dry": 0, "wade": 1, "swim": 2}
+	var violations := 0
+	var checked := 0
+	var offenders: Array = []
+	for j in range(0, n + 1):
+		for i in range(0, n + 1):
+			var p: Vector2 = base + Vector2(i, j) * _SUBGRID_STEP
+			var cell: Vector2i = Vector2i(int(floor(p.x / WaterField.TILE)),
+				int(floor(p.y / WaterField.TILE)))
+			if not wet_cells.has(cell):
+				continue
+			var ground: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			var true_lvl: float = WaterField.level_at(ctx, p)
+			var true_depth: float = (true_lvl - ground) if true_lvl > -INF else -999.0
+			var true_class: String = _depth_class(true_depth)
+			for wc: Dictionary in wet_cells[cell]:
+				checked += 1
+				var cell_centre: Vector2 = (Vector2(cell) + Vector2(0.5, 0.5)) * WaterField.TILE
+				var plane_y: float = wc.lvl + wc.grad.dot(p - cell_centre)
+				var plane_depth: float = plane_y - ground
+				var plane_class: String = _depth_class(plane_depth)
+				if order[plane_class] > order[true_class]:
+					violations += 1
+					if offenders.size() < 10:
+						offenders.append("p=%s ground=%.2f true_depth=%.2f(%s) plane_depth=%.2f(%s) cell=%s" % [
+							p, ground, true_depth, true_class, plane_depth, plane_class, cell])
+	print("test_no_dry_pocket_below_adjacent_water_level: %d violations (of %d wet_cells-covered subgrid samples checked)" % [
+		violations, checked])
+	assert_eq(violations, 0,
+		"%d samples read a WETTER depth class from their wet_cells plane than the field's own true depth supports (e.g. %s)" % [
+			violations, offenders])

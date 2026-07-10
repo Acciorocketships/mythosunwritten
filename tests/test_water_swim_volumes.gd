@@ -277,26 +277,39 @@ func test_volumes_carry_the_sampled_surface_plane() -> void:
 ## legitimately disagree; the gate (agreement within 2.0m) is the same one
 ## the brief's own probe-point check uses, applied first to the centre too.
 ##
-## The 6m probe's 0.7 tolerance exists because of a claim-boundary STEP
-## interacting with linear-plane extrapolation, NOT gradient noise — the
-## mesher is working correctly. At the pinned chunk's one non-flat cell
-## (centre x=36, z=-1068) level_at is flat at 15.0 out to x≈+12m, where it
-## steps down 1.3m to 13.7 at a claim boundary; WaterMesher's finite
-## difference spans exactly that 12m (grad = (level_at(+4S) - lvl)/(4S),
-## S=3.0 — see WaterMesher._attributes), so g.x = (13.7-15.0)/12 = -0.1083
-## faithfully records the step. A linear plane cannot represent a step: a
-## probe SHORT of it (+6m) reads the 15.0 plateau from the field but 14.35
-## from the plane — the 0.65m gap the tolerance absorbs.
+## h-task-4 RE-BASELINE (WaterMesher._attributes' gradient finite-difference
+## span changed from 4*S=12m to S=3m — see WaterMesher.gd's own comment on
+## the change, and this task's report): the SAME two probe distances below
+## (6m and the "transcription-exact" span) are kept, re-derived against the
+## NEW baseline rather than dropped, because they test different things —
+## the 6m probe is an INDEPENDENT sanity check (does the plane still track
+## the field a bit past the gradient's own sample point, not just AT it),
+## while the transcription-exact probe pins the exact finite-difference
+## construction with no fudge factor.
 ##
-## Coverage gap, stated plainly: this pinned chunk has NO genuinely-sloped
-## river cell — every gated cell except the step cell above is flat with
-## g == (0,0), so the 6m probe mostly verifies g≈0 on flat cells. The
-## transcription-exact 12m probes below are what actually pin the gradient:
-## they resample level_at at the mesher's own finite-difference distance
-## (exactly 4*S = 12m in +x and +z), where the plane MUST reproduce the
-## field by construction — catching store/sign/divisor bugs in the metas
-## with no fudge factor. Skipped for stacked cells (split entries carry
-## grad ZERO by design, never a finite difference) and where the probe
+## The OLD 12m-baseline version of this docstring explained the 6m probe's
+## 0.7 tolerance via a claim-boundary STEP inside the old 12m span (the
+## site's one non-flat cell at the time, centre x=36 z=-1068, stepped from
+## 15.0 to 13.7 partway through the old secant). That step is now OUTSIDE
+## the new, much shorter S=3m gradient span entirely, so it no longer
+## pollutes the finite difference at all — re-verified this task: the 6m
+## probe's real-data gap is now 0.000 at every one of this seed's checked
+## points (both flat and the two genuinely non-flat cells), so the
+## tolerance below is tightened to 0.05 (float-precision headroom only, not
+## a "step" fudge factor) rather than loosened to absorb one.
+##
+## Coverage note updated: the site's non-flat wet_cells entries moved
+## location under the new baseline (the "most central wet sample" plus a
+## short local difference lands on cells whose gradient is now non-zero at
+## (36, -1092) and (36, -1068), each g=(0, 0.667) — the two genuinely
+## flat-then-rising reaches on this seed — rather than the old baseline's
+## different pair). The transcription-exact probes below are re-derived at
+## S=3.0 (WaterMesher's OWN new finite-difference span, mirrored here as a
+## literal constant so a future baseline change breaks this test loudly,
+## same discipline as the old 12m version) — the plane MUST reproduce the
+## field exactly there BY CONSTRUCTION, catching store/sign/divisor bugs in
+## the metas with no fudge factor. Skipped for stacked cells (split entries
+## carry grad ZERO by design, never a finite difference) and where the probe
 ## point gets no valid claim.
 func test_volume_surface_matches_field_at_probe_points() -> void:
 	var water: WaterPlan = _water(SEED)
@@ -310,6 +323,11 @@ func test_volume_surface_matches_field_at_probe_points() -> void:
 			var key := Vector2(cc.x, cc.z)
 			boxes_at[key] = int(boxes_at.get(key, 0)) + 1
 	var checked := 0
+	# WaterMesher's OWN finite-difference span (WaterMesher._attributes) —
+	# mirrored here as a literal so this test breaks loudly (not silently
+	# passes with a stale probe distance) if that baseline ever changes
+	# again.
+	var grad_span := 3.0
 	for ch in node.get_children():
 		if ch is Area3D:
 			var c: Vector3 = ch.get_meta("surface_c")
@@ -321,21 +339,21 @@ func test_volume_surface_matches_field_at_probe_points() -> void:
 			var px := Vector2(c.x + 6.0, c.z)
 			var plvl: float = WaterField.level_at(ctx, px)
 			if centre_agrees and plvl > -INF and absf(plvl - lvl) < 0.6:
-				assert_almost_eq(c.y + g.dot(px - Vector2(c.x, c.z)), plvl, 0.7,
+				assert_almost_eq(c.y + g.dot(px - Vector2(c.x, c.z)), plvl, 0.05,
 					"sampled plane tracks the sloped surface")
 				checked += 1
-			# Transcription-exact gradient probes: 12m is the mesher's own
-			# finite-difference span, so the plane must reproduce level_at
-			# there exactly (single-entry cells only — split cells zero
-			# their grad by design).
+			# Transcription-exact gradient probes: grad_span (3.0) is the
+			# mesher's own finite-difference span post-h-task-4, so the plane
+			# must reproduce level_at there exactly (single-entry cells
+			# only — split cells zero their grad by design).
 			if centre_agrees and int(boxes_at[Vector2(c.x, c.z)]) == 1:
-				var qx: float = WaterField.level_at(ctx, Vector2(c.x + 12.0, c.z))
+				var qx: float = WaterField.level_at(ctx, Vector2(c.x + grad_span, c.z))
 				if qx > -INF:
-					assert_almost_eq(c.y + g.x * 12.0, qx, 0.1,
-						"g.x is the field's own 12m finite difference")
-				var qz: float = WaterField.level_at(ctx, Vector2(c.x, c.z + 12.0))
+					assert_almost_eq(c.y + g.x * grad_span, qx, 0.1,
+						"g.x is the field's own S=3m finite difference")
+				var qz: float = WaterField.level_at(ctx, Vector2(c.x, c.z + grad_span))
 				if qz > -INF:
-					assert_almost_eq(c.y + g.y * 12.0, qz, 0.1,
-						"g.y is the field's own 12m finite difference")
+					assert_almost_eq(c.y + g.y * grad_span, qz, 0.1,
+						"g.y is the field's own S=3m finite difference")
 	assert_true(checked > 0, "at least one sloped/flat cell verified")
 	node.free()

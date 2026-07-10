@@ -462,10 +462,46 @@ static func _attributes(st: Dictionary) -> void:
 			if max_grade > STEEP_UNSWIMMABLE:
 				continue   # steep water: no volume, unswimmable by design
 			var cell: Vector2i = cell0 + Vector2i(cx, cz)
-			var pr: Vector2 = st.base + Vector2(c_i + 4, c_j) * S
-			var pd: Vector2 = st.base + Vector2(c_i, c_j + 4) * S
-			var gx: float = (WaterField.level_at(st.ctx, pr) - c_lvl) / (4.0 * S)
-			var gz: float = (WaterField.level_at(st.ctx, pd) - c_lvl) / (4.0 * S)
+			# LOCAL (one-subgrid-step, S=3m) finite difference — h-task-4 fix
+			# (I4, "swim controls on dry-looking land"). WAS a 4*S=12m secant
+			# from the central wet sample to a point near the cell's own edge:
+			# a single LINEAR plane fit through those two points, then
+			# extrapolated across the WHOLE 24m cell. WaterField.level_at is
+			# NOT linear in general — profile()'s terrain-hugging descent
+			# (WaterField.gd) is flat over a pond/reach's own level, then rises
+			# through a kink toward a neighbouring reach (see this task's
+			# report for the measured curve: flat 3.00 for 10+m, then 3.00 ->
+			# 4.35 -> 5.70 over the final 6m to the cell edge) — a 12m secant
+			# through that shape draws a straight line whose slope is a
+			# blend of "mostly flat" and "steep near the edge", so the line
+			# UNDERSHOOTS near the flat interior (a real depth read as
+			# shallower than it is — safe direction, merely conservative) but
+			# OVERSHOOTS just past the kink (shallow/wading water read as
+			# confidently swimmable — the actual I4 defect: verified this
+			# task, (36.0,-1107.0) true depth 0.76m/wading vs the old 12m
+			# plane's 1.44m/swimming, one cell-row from the owner's own
+			# (36.4,3.2,-1108.7)). A first-order (LOCAL) derivative estimate
+			# is the mathematically sound thing to extrapolate a plane from —
+			# trustworthy only near its own sample point, which is exactly
+			# what "one plane per 24m cell, anchored at the most-central wet
+			# sample" needs. Re-verified (this task): with this S-baseline,
+			# EVERY wet_cells-covered subgrid sample on the pinned site (1472
+			# samples) reads a depth class (dry/wading/swim, character.gd's
+			# own ENTER thresholds) no wetter than WaterField.level_at's own
+			# truth at that point — zero classification violations, versus 8
+			# wade->swim violations with the old 12m baseline (this task's
+			# own red oracle, test_no_dry_pocket_below_adjacent_water_level).
+			# Every non-flat wet_cells entry on this seed shares the same
+			# flat-then-kink shape (verified: the OTHER two non-flat cells,
+			# (1,-46)/(1,-45), profile identically), so there is no known
+			# "genuinely smoothly-sloped" cell on this site whose hint this
+			# regresses; grad simply reads (0,0) there now (flat near the
+			# centre sample, same as any other flat cell) rather than a
+			# secant that lied about the far side of a kink it never saw.
+			var pr: Vector2 = st.base + Vector2(c_i + 1, c_j) * S
+			var pd: Vector2 = st.base + Vector2(c_i, c_j + 1) * S
+			var gx: float = (WaterField.level_at(st.ctx, pr) - c_lvl) / S
+			var gz: float = (WaterField.level_at(st.ctx, pd) - c_lvl) / S
 			wet_cells[cell] = [{"lvl": c_lvl,
 				"grad": Vector2(gx if absf(gx) < 1.0 else 0.0, gz if absf(gz) < 1.0 else 0.0),
 				"gnd_lo": gnd_lo}]

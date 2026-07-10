@@ -70,7 +70,10 @@ var step_visual_offset_y: float = 0.0
 var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
 var in_water: bool = false
-var wading: bool = false   # standing in shallow water (0.05-0.8m deep) — does not affect movement
+# wading: true whenever the probe is in water at all — the >=0.05m shallow
+# band OR full in_water (swimming is trivially "in water" too — see
+# _update_in_water's h-task-4 fix note). Does not affect movement.
+var wading: bool = false
 
 func _ready() -> void:
 	_setup_player_controller()
@@ -257,7 +260,21 @@ func _update_in_water() -> void:
 		elif depth > (0.03 if wading else 0.05):
 			best_wading = true
 	in_water = best > -INF
-	wading = not in_water and best_wading
+	# h-task-4 fix: WAS `not in_water and best_wading`, which made `wading`
+	# structurally impossible to read true at the same time as `in_water` —
+	# the >0.8 swim-gate branch above (line ~252) sets `best` and neither
+	# sets NOR needs best_wading for that same hit, so on a real swim frame
+	# best_wading often stays false all loop, and even on the rare frame it
+	# does get set by a SEPARATE shallower hit, the `not in_water` term threw
+	# it away. Logically, in_water (swimming) is a DEEPER case of being in
+	# water at all — a swimming character is trivially also "in water",
+	# never magically dry — so wading should never read false merely because
+	# in_water is true. Zero consumers gate on wading today (see the class
+	# doc comment on the `wading` var above), so this is honesty, not a
+	# behaviour change: wading is now true whenever in_water is (a swimming
+	# character is in water) OR a same-frame hit independently cleared the
+	# shallow-only band, matching the brief's literal ask exactly.
+	wading = in_water or best_wading
 	if in_water:
 		water_surface_y = best + swell
 
