@@ -308,74 +308,165 @@ func test_waterline_is_a_terrain_contour() -> void:
 			violations, offenders])
 
 
-## Which river trace/sample claims p, re-deriving level_at's own selection
-## (level_at only returns the winning level, not its identity) — kept in
-## lockstep with WaterField.level_at's structure. Returns {} when a pond
-## wins or nothing claims p (out of scope for the source-provenance check).
+## test_fill_is_deterministic_across_chunks (Phase 1 window-determinism
+## requirement, controller amendment 2): the fill runs on a BOUNDED lattice
+## per ctx (chunk + FILL_MARGIN cells of margin — see WaterField.FILL_MARGIN)
+## rather than over the whole world at once, so two neighbouring chunks each
+## build their OWN independent fill window. Seam identity (WaterMesher's own
+## chunk-seam weld) depends on both windows agreeing BIT-EXACTLY on any
+## world point both windows cover — if they didn't, adjacent chunks' meshes
+## would visibly crack at the border. This is guaranteed by construction
+## (the fill's lower-level-wins relaxation converges to a unique fixpoint
+## regardless of seed/BFS order — see _build_fill's own docstring: for a
+## FIXED level, reachability through the ground-clearance gate is a static,
+## history-independent subgraph, so two windows that both fully contain a
+## basin must independently discover the identical fixpoint there), but
+## this test verifies it holds in practice, not just in the algorithm's
+## design: sample a dense line straddling two adjacent chunks' shared world-
+## space border (both comfortably inside each ctx's own FILL_MARGIN
+## overlap — see the margin math in WaterField.gd) and require bit-exact
+## (0.0 tolerance) agreement.
+func test_fill_is_deterministic_across_chunks() -> void:
+	var water: WaterPlan = _water(SEED)
+	var a_chunk: Vector2i = SITE_CHUNK
+	var b_chunk: Vector2i = SITE_CHUNK + Vector2i(1, 0)
+	var a_ctx: Dictionary = WaterField.ctx(water, a_chunk, _region(SEED, a_chunk))
+	var b_ctx: Dictionary = WaterField.ctx(water, b_chunk, _region(SEED, b_chunk))
+	var border_x: float = float(b_chunk.x) * (WaterField.TILE * 8.0)   # shared world-space border
+	var span: float = WaterField.TILE * 8.0
+	var checked := 0
+	var mismatches := 0
+	var offenders: Array = []
+	# +/- one FILL lattice step either side of the border, well inside both
+	# ctxs' FILL_MARGIN overlap (10 lattice cells = 30m each side of a
+	# chunk's own span), across the chunk's full z extent.
+	for dx in [-9.0, -6.0, -3.0, 0.0, 3.0, 6.0, 9.0]:
+		var x: float = border_x + dx
+		var z: float = float(a_chunk.y) * span
+		while z <= float(a_chunk.y + 1) * span:
+			var p := Vector2(x, z)
+			var a_lvl: float = WaterField.level_at(a_ctx, p)
+			var b_lvl: float = WaterField.level_at(b_ctx, p)
+			checked += 1
+			if a_lvl != b_lvl:
+				mismatches += 1
+				if offenders.size() < 10:
+					offenders.append("p=%s a_lvl=%s b_lvl=%s" % [
+						p, ("-INF" if a_lvl == -INF else "%.6f" % a_lvl),
+						("-INF" if b_lvl == -INF else "%.6f" % b_lvl)])
+			z += 3.0
+	assert_true(checked > 100, "sampled a real cross-border line (%d points)" % checked)
+	assert_eq(mismatches, 0,
+		"%d/%d points disagree bit-exactly between neighbouring chunks' fills (e.g. %s)" % [
+			mismatches, checked, offenders])
+
+
+## Which river trace p's wetness is attributable to, post-fill. The fill
+## (WaterField._build_fill) no longer selects a single "claimant" per point —
+## wetness is reachable-by-relaxation from any seed — so this is an
+## INDEPENDENT re-derivation from the issue definition (H2: "a wet sample's
+## level must be <= the level of the channel/pond sample it is hydraulically
+## connected to"), not a mirror of the fill's internals: p's claimed level is
+## simply WaterField.level_at's own public answer (the field's real output,
+## exactly what any consumer reads).
+##
+## "The channel sample it is hydraulically connected to" needs its own
+## independent, physically-grounded selection post-fill: nearest-by-distance
+## is NOT automatically hydraulically connected any more (the fill can
+## legitimately serve p from a farther, HIGHER seed when the nearest sample
+## is walled off from p by a ridge that sample's own water cannot cross —
+## verified against this seed's real data: every violation a naive pure-
+## nearest form of this oracle raised turns out to be exactly that, a
+## ground rise between the nearest sample and p sitting AT/ABOVE that
+## sample's own level). So "connected" means DEMONSTRABLY connected: the
+## nearest sample, among ALL traces, whose own level clears the ground
+## along the straight line from that sample to p (sampled densely) — a
+## real, independent (not fix-mirroring) lower bound on physical
+## reachability, strictly weaker than full path-connectivity (a clear
+## straight line is a SUFFICIENT, not necessary, condition for
+## reachability, so this never over-credits a candidate that's actually
+## blocked).
+##
+## Searches every trace's every sample directly (not per-trace via
+## _nearest_sample first, then picking the nearest TRACE — an earlier
+## version of this helper did that and it silently let an unreachable
+## trace win the cross-trace comparison whenever ITS OWN nearest-but-
+## unreachable sample happened to be geometrically closer than any other
+## trace's reachable one; searching flat across every sample avoids that).
+## Returns {} when p is dry, when NO sample anywhere has a ground-clear
+## line to p (out of scope — nothing to compare against, not a violation
+## by omission), or when a pond sits closer than the winning river sample
+## (pond claims are out of scope for this river-source-provenance check).
 func _claim_river(c: Dictionary, p: Vector2) -> Dictionary:
+	var lvl: float = WaterField.level_at(c, p)
+	if lvl == -INF:
+		return {}
 	var region = c.get("region")
-	var best_m: float = INF
-	var best_lvl: float = -INF
-	var best_is_river := false
-	var best_tr: RiverTrace = null
-	var best_si := -1
-	var gy: float = INF
-	var have_gy := false
+	var best_pond_m: float = INF
 	for pond: PondStamp in c.ponds:
 		var m: float = (pond.footprint_t(p) - 1.0) * pond.radius
-		if m >= best_m:
-			continue
-		var ok: bool = m < WaterField.CLAIM_FEATHER
-		var lvl: float = pond.surface_y()
-		if not ok and region != null and m <= WaterField.CLAIM_FEATHER + WaterField.FLOOD_EXT:
-			if not have_gy:
-				gy = TerrainSurfaceField.surface_y(region, p.x, p.y)
-				have_gy = true
-			ok = gy < lvl - WaterField.EPS and gy > lvl - WaterField.FLOOD_DEPTH_MAX
-		if ok:
-			best_m = m
-			best_lvl = lvl
-			best_is_river = false
-	var cell := Vector2i(int(floor(p.x / WaterField.TILE)), int(floor(p.y / WaterField.TILE)))
-	for dz in range(-1, 2):
-		for dx in range(-1, 2):
-			var b: Array = c.buckets.get(cell + Vector2i(dx, dz), [])
-			for ref: Vector2i in b:
-				var tr: RiverTrace = c.rivers[ref.x]
-				var si: int = ref.y
-				var d: float = p.distance_to(tr.points[si])
-				var m: float = d - tr.widths[si]
-				if m >= best_m:
-					continue
-				var ok: bool = m < WaterField.CLAIM_FEATHER
-				if not ok and (region == null or m > WaterField.CLAIM_FEATHER + WaterField.FLOOD_EXT):
-					continue
-				var lvl: float = WaterField._sample_level(tr, si, p)
-				if not ok:
-					if not have_gy:
-						gy = TerrainSurfaceField.surface_y(region, p.x, p.y)
-						have_gy = true
-					ok = gy < lvl - WaterField.EPS and gy > lvl - WaterField.FLOOD_DEPTH_MAX
-				if ok:
-					best_m = m
-					best_lvl = lvl
-					best_is_river = true
-					best_tr = tr
-					best_si = si
-	if not best_is_river:
-		return {}
-	return {"tr": best_tr, "si": best_si, "lvl": best_lvl}
-
-
-func _nearest_sample(tr: RiverTrace, p: Vector2) -> int:
-	var best_d := INF
-	var best_i := 0
-	for i in tr.points.size():
-		var d: float = tr.points[i].distance_to(p)
-		if d < best_d:
+		best_pond_m = minf(best_pond_m, m)
+	var best_tr: RiverTrace = null
+	var best_si := -1
+	var best_d: float = INF
+	for tr: RiverTrace in c.rivers:
+		var prof: Dictionary = WaterField.profile(tr)
+		for si in tr.points.size():
+			var d: float = tr.points[si].distance_to(p)
+			if d >= best_d:
+				continue
+			if not _ground_clear_line(region, tr.points[si], p, prof.levels[si]):
+				continue
 			best_d = d
-			best_i = i
-	return best_i
+			best_tr = tr
+			best_si = si
+	if best_tr == null:
+		return {}
+	# A pond's own margin (footprint_t - 1) * radius is directly comparable to
+	# a river margin (distance - width) — both are "signed distance past the
+	# body's own edge." If the pond is the closer explanation, this point's
+	# wetness is pond-sourced, not river-sourced: out of scope here.
+	var river_m: float = best_d - best_tr.widths[best_si]
+	if best_pond_m < river_m:
+		return {}
+	return {"tr": best_tr, "si": best_si, "lvl": lvl}
+
+
+## Sample on `tr` p is hydraulically connected to — the nearest sample on
+## `tr` whose own level clears the ground along the straight line to p (see
+## _claim_river's docstring for the full reasoning). Only ever called with
+## the SAME `tr` _claim_river itself selected as `claim.tr`, which by
+## construction already has at least one reachable sample (best_si above)
+## — so unlike an earlier version of this helper, there is no "nothing
+## reachable" fallback path to get wrong; if this is ever called with a
+## trace that truly has no reachable sample, that is a caller bug, not a
+## degenerate case to paper over, so it is left unguarded (would return
+## the last-checked index, index 0, on an empty trace — GDScript's own
+## array-bounds error is the right signal for that, not a silent fallback).
+func _nearest_sample(tr: RiverTrace, p: Vector2) -> int:
+	var region = _region(SEED, SITE_CHUNK)
+	var prof: Dictionary = WaterField.profile(tr)
+	var order: Array = range(tr.points.size())
+	order.sort_custom(func(a, b): return tr.points[a].distance_to(p) < tr.points[b].distance_to(p))
+	for i: int in order:
+		if _ground_clear_line(region, tr.points[i], p, prof.levels[i]):
+			return i
+	return order[0]
+
+
+## True when every ground sample along the straight line from `a` to `b`
+## sits below `lvl - EPS` — a real (if conservative) reachability check:
+## water AT `lvl` demonstrably CAN flood the direct line from its own seed
+## to `b`. Sampled at ~1m steps (finer than any gap that would hide a
+## lattice-scale ridge), at least 4 samples even for a short segment.
+func _ground_clear_line(region, a: Vector2, b: Vector2, lvl: float) -> bool:
+	var steps := maxi(4, int(a.distance_to(b)))
+	for k in range(steps + 1):
+		var t: float = float(k) / float(steps)
+		var q: Vector2 = a.lerp(b, t)
+		if TerrainSurfaceField.surface_y(region, q.x, q.y) >= lvl - WaterField.EPS:
+			return false
+	return true
 
 
 func _on_chunk_border_f(v: Vector3) -> bool:

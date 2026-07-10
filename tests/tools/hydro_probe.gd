@@ -333,38 +333,28 @@ func _probe_d(water: WaterPlan) -> void:
 
 
 ## ---------------------------------------------------------------------
-## Shared claimant helper: re-derives WHICH claimant level_at picked
-## (level_at itself only returns the winning level, not its identity) by
-## running the identical selection logic against WaterField's own
-## constants. Kept in lockstep with WaterField.level_at's structure —
-## any change there must be mirrored here.
+## Shared claimant helper (Phase 1 update): the field's wetness is now a
+## hydrostatic FILL (WaterField._build_fill) — there is no single per-point
+## "claimant" to re-derive a selection for any more, wetness is reachable-
+## by-relaxation from any seed. `lvl` is therefore just level_at's own real
+## answer (the field's actual public output); `kind`/`id`/`si`/`m` are a
+## best-effort DESCRIPTIVE label for the printed trace only (which body is
+## geometrically nearest p — never fed back into `lvl`), so the H2/H4
+## sections below still read "which river/pond is this point near" the same
+## way they did pre-fix.
 ## ---------------------------------------------------------------------
 func _claim_info(c: Dictionary, p: Vector2) -> Dictionary:
-	var best_m: float = INF
-	var best_lvl: float = -INF
-	var best_kind := "none"
-	var best_id := ""
-	var best_si := -1
-	var gy: float = INF
-	var have_gy := false
-	var region = c.get("region")
+	var lvl: float = WaterField.level_at(c, p)
+	var best_pond_m: float = INF
+	var best_pond: PondStamp = null
 	for pond: PondStamp in c.ponds:
 		var m: float = (pond.footprint_t(p) - 1.0) * pond.radius
-		if m >= best_m:
-			continue
-		var ok: bool = m < WaterField.CLAIM_FEATHER
-		var lvl: float = pond.surface_y()
-		if not ok and region != null and m <= WaterField.CLAIM_FEATHER + WaterField.FLOOD_EXT:
-			if not have_gy:
-				gy = TerrainSurfaceField.surface_y(region, p.x, p.y)
-				have_gy = true
-			ok = gy < lvl - WaterField.EPS and gy > lvl - WaterField.FLOOD_DEPTH_MAX
-		if ok:
-			best_m = m
-			best_lvl = lvl
-			best_kind = "pond"
-			best_id = str(pond.center)
-			best_si = -1
+		if m < best_pond_m:
+			best_pond_m = m
+			best_pond = pond
+	var best_river_m: float = INF
+	var best_tr: RiverTrace = null
+	var best_si := -1
 	var cell := Vector2i(int(floor(p.x / WaterField.TILE)), int(floor(p.y / WaterField.TILE)))
 	for dz in range(-1, 2):
 		for dx in range(-1, 2):
@@ -372,26 +362,18 @@ func _claim_info(c: Dictionary, p: Vector2) -> Dictionary:
 			for ref: Vector2i in b:
 				var tr: RiverTrace = c.rivers[ref.x]
 				var si: int = ref.y
-				var d: float = p.distance_to(tr.points[si])
-				var m: float = d - tr.widths[si]
-				if m >= best_m:
-					continue
-				var ok: bool = m < WaterField.CLAIM_FEATHER
-				if not ok and (region == null or m > WaterField.CLAIM_FEATHER + WaterField.FLOOD_EXT):
-					continue
-				var lvl: float = WaterField._sample_level(tr, si, p)
-				if not ok:
-					if not have_gy:
-						gy = TerrainSurfaceField.surface_y(region, p.x, p.y)
-						have_gy = true
-					ok = gy < lvl - WaterField.EPS and gy > lvl - WaterField.FLOOD_DEPTH_MAX
-				if ok:
-					best_m = m
-					best_lvl = lvl
-					best_kind = "river"
-					best_id = str(tr.source_cell)
+				var m: float = p.distance_to(tr.points[si]) - tr.widths[si]
+				if m < best_river_m:
+					best_river_m = m
+					best_tr = tr
 					best_si = si
-	return {"kind": best_kind, "id": best_id, "si": best_si, "lvl": best_lvl, "m": best_m}
+	if lvl == -INF:
+		return {"kind": "none", "id": "", "si": -1, "lvl": -INF,
+			"m": minf(best_pond_m, best_river_m)}
+	if best_pond != null and best_pond_m <= best_river_m:
+		return {"kind": "pond", "id": str(best_pond.center), "si": -1, "lvl": lvl, "m": best_pond_m}
+	return {"kind": "river", "id": str(best_tr.source_cell) if best_tr != null else "",
+		"si": best_si, "lvl": lvl, "m": best_river_m}
 
 
 func _nearest_index(tr: RiverTrace, target: Vector2) -> int:
