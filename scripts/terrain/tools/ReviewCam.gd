@@ -109,13 +109,18 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 		var aabb: AABB = mi.global_transform * mi.get_aabb()
 		if aabb.position.distance_to(center) - aabb.size.length() > radius:
 			continue
-		var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		var arrays: Array = mi.mesh.surface_get_arrays(0)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		# The boundary mesh is INDEXED; legacy soups have no index buffer.
+		var midx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+		if midx.is_empty():
+			midx = PackedInt32Array(range(verts.size()))
 		var xf: Transform3D = mi.global_transform
 		var i: int = 0
-		while i < verts.size():
+		while i < midx.size():
 			var w: Array = []
 			for k in 3:
-				w.append(xf * verts[i + k])
+				w.append(xf * verts[midx[i + k]])
 			i += 3
 			if (w[0] as Vector3).distance_to(center) > radius:
 				continue
@@ -131,8 +136,16 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 						p + Vector3.UP * 30.0, p - Vector3.UP * 60.0)
 					var hit: Dictionary = space.intersect_ray(ray)
 					var ground: float = hit.position.y if not hit.is_empty() else -INF
-					vol_q.position = Vector3(p.x, ground + 0.5, p.z)
-					var over_water: bool = not space.intersect_point(vol_q, 1).is_empty()
+					# Point queries are exclusive on box faces, and swim boxes
+					# tile at exact 24m cell lines — a vert ON the line misses
+					# both neighbours. Probe nudged into each side.
+					var over_water := false
+					for nud in [Vector3(0.11, 0.5, 0.11), Vector3(-0.11, 0.5, -0.11),
+							Vector3(0.11, 0.5, -0.11), Vector3(-0.11, 0.5, 0.11)]:
+						vol_q.position = Vector3(p.x, ground, p.z) + nud
+						if not space.intersect_point(vol_q, 1).is_empty():
+							over_water = true
+							break
 					cls = 1 if not over_water else 0
 					seen[key] = cls
 					if cls == 1:
