@@ -70,6 +70,7 @@ var step_visual_offset_y: float = 0.0
 var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
 var in_water: bool = false
+var wading: bool = false   # standing in shallow water (0.05-0.8m deep) — does not affect movement
 
 func _ready() -> void:
 	_setup_player_controller()
@@ -184,6 +185,29 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 # the probe must also sit under that volume's own swelled surface — otherwise
 # wading onto a bank fringe inside a box read as swimming on dry land (the
 # owner's floating character beside waterfalls).
+#
+# DEPTH GATE (Phase 2b, item 6): in_water additionally requires real depth —
+# (sy - ground_under_feet) > 0.8 — not just "probe point sits under a
+# volume's swelled headroom." A shallow puddle/ankle-deep flood shelf can
+# satisfy the headroom containment test above while the character is
+# plainly STANDING, not swimming; the owner's I5 misclassification (a dry
+# bank inside a coarse 24m volume box reading as "in water") is exactly
+# this class of false positive, now closed by depth rather than by deleting
+# volumes on bank cells (a further defence, not a replacement — a genuinely
+# dry point still fails the headroom gate above and never reaches here at
+# all). Mechanism: `ground_under_feet` reuses the EXISTING floor raycast
+# (`raycast`, the same RayCast3D _get_ground_dist()/on_ground already read
+# this same physics frame — see _physics_process, which calls
+# _update_in_water() before those) rather than casting a second ray: it is
+# anchored at the character's own feet and points straight down 2m
+# (character.tscn), defaults to collide_with_areas=false so it only ever
+# hits solid terrain, never a water Area3D itself, and is already the
+# codebase's one "how far down is the ground" primitive. No collision
+# within 2m below the feet reads as -INF ground (bottomless from here) so
+# depth trivially clears 0.8 — a real, if conservative, "this is deep"
+# default. 0.05 < depth <= 0.8 is WADING: shallow enough that movement is
+# unaffected (no swim-control switch), but flagged for effects/animation
+# to read later.
 func _update_in_water() -> void:
 	var params := PhysicsPointQueryParameters3D.new()
 	var probe_y: float = global_position.y + 0.3
@@ -193,27 +217,37 @@ func _update_in_water() -> void:
 	params.collision_mask = WATER_LAYER_MASK
 	var hits: Array = get_world_3d().direct_space_state.intersect_point(params, 4)
 	var swell: float = _swell_offset()
+	var ground_under_feet: float = raycast.get_collision_point().y if raycast.is_colliding() else -INF
 	var best: float = -INF
-	var legacy := false
+	var best_wading := false
 	for h in hits:
 		var collider: Object = h.get("collider")
 		if collider == null:
 			continue
+		var sy: float = INF
+		var contained := false
 		if collider.has_meta("surface_c"):
 			var c: Vector3 = collider.get_meta("surface_c")
 			var g: Vector2 = collider.get_meta("surface_g")
-			var sy: float = c.y + g.dot(Vector2(global_position.x - c.x, global_position.z - c.z))
-			if probe_y <= sy + swell + 0.45:
-				best = maxf(best, sy)
+			sy = c.y + g.dot(Vector2(global_position.x - c.x, global_position.z - c.z))
+			contained = probe_y <= sy + swell + 0.45
 		elif collider.has_meta("surface_y"):
-			var sy: float = float(collider.get_meta("surface_y"))
-			if probe_y <= sy + swell + 0.45:
-				best = maxf(best, sy)
+			sy = float(collider.get_meta("surface_y"))
+			contained = probe_y <= sy + swell + 0.45
 		else:
-			legacy = true
-	in_water = best > -INF or legacy
+			sy = WATER_SURFACE_Y
+			contained = true   # legacy volumes carry no plane/scalar to gate containment on
+		if not contained:
+			continue
+		var depth: float = sy - ground_under_feet
+		if depth > 0.8:
+			best = maxf(best, sy)
+		elif depth > 0.05:
+			best_wading = true
+	in_water = best > -INF
+	wading = not in_water and best_wading
 	if in_water:
-		water_surface_y = (best if best > -INF else WATER_SURFACE_Y) + swell
+		water_surface_y = best + swell
 
 
 # The water surface the buoyancy chases, displaced by the shader's travelling

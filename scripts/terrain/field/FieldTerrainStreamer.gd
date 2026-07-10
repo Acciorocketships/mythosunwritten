@@ -73,7 +73,6 @@ func _ready() -> void:
 	CliffDressing._ensure_loaded()
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
-	WaterSurfaceBuilder.waterfall_material()
 	_mesher._ensure_skirt_style()
 	for tag in TerrainChunkMesher.FOLIAGE_SCENES:
 		for path: String in TerrainChunkMesher.FOLIAGE_SCENES[tag]:

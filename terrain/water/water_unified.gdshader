@@ -44,6 +44,12 @@ uniform float wobble_speed : hint_range(0.0, 2.0) = 0.5;
 uniform float flow_speed : hint_range(0.0, 12.0) = 1.2;    // metres/second scroll
 uniform float rapids_boost : hint_range(0.0, 4.0) = 1.2;   // extra scroll at steep_v=1
 uniform float chop_height : hint_range(0.0, 0.6) = 0.1;    // travelling crest amplitude
+// Falling-look blend (Phase 2b: falls are steep surface, not a separate
+// ogee mesh — see the FALLING-LOOK BLEND block in fragment() below). SLOW:
+// band scroll is the only self-motion a steep stretch has beyond the
+// ordinary swells; anything fast reads as fast-forward footage (same
+// reasoning as the retired waterfall.gdshader's own fall_speed default).
+uniform float fall_speed : hint_range(0.5, 8.0) = 1.6;
 // Not mirror-tight: low roughness focuses the sun (and the wizard's light)
 // into a huge white glare blob on the swells (owner's screenshots carry it
 // at 0.07 too — soft pastel sheen wants a wider lobe).
@@ -170,12 +176,41 @@ void fragment() {
 	float ff = smoothstep(0.08, 0.5, fs);
 	foam += smoothstep(0.75, 1.0, steep_v)
 		* (0.25 + 0.2 * sin(TIME * 2.1 + (world_pos.x + world_pos.z) * 0.37)) * ff;
-	// PLUNGE CHURN: the builder bakes steep_v to 1 in a band along fall
-	// landing lines (rapids corner-averaging never reaches 1, so 0.9+ is the
-	// plunge signature). NOT flow-gated — plunge pools are calm reaches. A
-	// drifting boil pattern carries the fall's white base out into the pool,
-	// so falling water hands off to churning water instead of ending at a
-	// line (owner: "texture/simulation continuous over all water").
+	// FALLING-LOOK BLEND (Phase 2b): a fall is now a steep STRETCH of the
+	// same continuous sheet, not a separate ogee mesh/material
+	// (waterfall.gdshader is retired) — the look is carried entirely by this
+	// steepness-driven blend instead. `steep` is defensively re-clamped here
+	// even though WaterMesher._attributes already clamps its own bake
+	// (0..0.85 ordinarily, 0..1 in the plunge band) — the shader must not
+	// assume every CUSTOM0.w it is ever handed stays in range.
+	float steep = clamp(steep_v, 0.0, 1.0);
+	// (a) Downhill streak scroll: the SAME noise/band pattern
+	// waterfall.gdshader used for its falling streaks (`fall`/`band`),
+	// ported onto the sheet's flat surface — sampled along the local FLOW
+	// direction (the sheet has no swept along-fall UV.y to scroll; flow_v's
+	// own downstream direction is the equivalent continuous axis) and
+	// scrolled at fall_speed * steep, so a calm reach (steep≈0) shows no
+	// motion here at all and only a genuinely steep stretch streaks.
+	vec2 flow_dir = fs > 0.001 ? normalize(flow_v.xz) : vec2(1.0, 0.0);
+	float along = dot(world_pos.xz, flow_dir);
+	float streak_col = texture(noise_tex, vec2((world_pos.x + world_pos.z) * 0.11, 0.0)).r;
+	float streak_fall = texture(noise_tex, vec2((world_pos.x + world_pos.z) * 0.07,
+			along * 0.07 - TIME * fall_speed * steep + streak_col)).r;
+	float streak_band = smoothstep(0.35, 0.75, streak_fall);
+	foam += streak_band * smoothstep(0.25, 0.7, steep) * 0.35;
+	// (b) Foam ramp: a steep stretch simply carries more foam, continuously
+	// with steepness — no branch/threshold discontinuity, just another
+	// smoothstep term blended in alongside (a) and the plunge churn below.
+	foam += 0.5 * smoothstep(0.45, 0.9, steep);
+	// (c) PLUNGE CHURN: the builder bakes steep_v to 1 in a band along fall
+	// landing lines, now re-keyed on WaterField.steep_spans' own lip/base
+	// bands instead of the retired cut records (see WaterMesher._attributes'
+	// Phase 2b docstring) — rapids corner-averaging never reaches 1, so 0.9+
+	// is still the plunge signature. NOT flow-gated — plunge pools are calm
+	// reaches. A drifting boil pattern carries the fall's white base out
+	// into the pool, so falling water hands off to churning water instead
+	// of ending at a line (owner: "texture/simulation continuous over all
+	// water").
 	float churn = smoothstep(0.9, 1.0, steep_v);
 	float boil = texture(noise_tex, world_pos.xz * 0.17
 			+ vec2(TIME * 0.07, -TIME * 0.06)).r;

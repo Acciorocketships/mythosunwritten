@@ -449,21 +449,30 @@ func _segment_envelope_level(tr: RiverTrace, region, nearest_i: int, p: Vector2)
 ## test in the first place (verified directly: every one of the ORIGINAL
 ## code's 32 checked vertices sits at z=-1088.91, y in {5.7, 13.7} — the
 ## exact recorded cut's own top/bottom, not "the shoreline" generally).
-## Phase 2a (H1 fixed): the site's steep_spans()/fall_cuts() shim returns
-## ZERO spans (see test_steep_spans_empty_at_the_site) — there is no cut
-## left anywhere on this chunk, so `checked` is legitimately, structurally
-## 0 (nothing left to hem-exempt, since nothing is near a nonexistent cut).
-## That is the fully-fixed state this whole invariant was chasing (no
-## floating claim-radius/false-cliff artifact anywhere), not a broken
-## precondition — treated as an explicit pass (matching the same
-## empty-case convention test_steep_spans_empty_at_the_site and the
+## Phase 2a (H1 fixed): the site's steep_spans()/fall_cuts() shim returned
+## ZERO spans (see test_steep_spans_empty_at_the_site) — there was no cut
+## left anywhere on this chunk, so `checked` was legitimately, structurally
+## 0 AT THAT PHASE (nothing left to hem-exempt, since nothing was near a
+## nonexistent cut) — treated as an explicit pass at the time (matching the
+## same empty-case convention test_steep_spans_empty_at_the_site and the
 ## now-deleted test_cuts_only_at_big_drops used for "nothing to check on
-## this seed"). The strict per-vertex check below still runs in full and
-## un-weakened whenever checked > 0 (any seed/chunk that DOES carry a real
-## fall — this site pre-fix, or a different seed — is still held to the
-## exact original standard). See .superpowers/sdd/h-task-2a-report.md for
-## the full investigation (this is the direct analogue of the Phase 1
-## report's OWN documented, un-fudged tension on this exact test).
+## this seed"). Phase 2b superseded that specific "checked==0" outcome: with
+## WaterMesher._near_cut ALSO fully deleted (no cut exemption left at all —
+## every non-border free edge is hemmed unconditionally now, see
+## WaterMesher._hem's own docstring), the free-edge accounting itself
+## changed shape and `checked` is now genuinely, non-vacuously non-zero
+## (verified this task: test_shoreline_hugs_terrain_contour, the new
+## hem-independent field-level oracle this same task adds, finds 325 real
+## shoreline crossings with 0 violations) — the `checked == 0` branch below
+## is left in place (harmless, still a valid empty-case fallback for any
+## future dry seed/chunk) but is no longer the branch this test's own site
+## actually exercises. The strict per-vertex check below still runs in full
+## and un-weakened whenever checked > 0 (any seed/chunk that DOES carry a
+## real fall — this site included, now — is still held to the exact
+## original standard). See .superpowers/sdd/h-task-2a-report.md and
+## h-task-2b-report.md for the full investigation (this is the direct
+## analogue of the Phase 1 report's OWN documented, un-fudged tension on
+## this exact test).
 func test_waterline_is_a_terrain_contour() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -554,6 +563,151 @@ func test_no_steep_span_without_terrain_drop() -> void:
 			"span at %s has no matching ground window-drop nearby (max found %.2f)" % [span.p, max_window_drop])
 	if checked == 0:
 		pass_test("zero steep spans at the site (H1 fixed) — vacuously satisfies the I1 rule; see test_steep_spans_finds_a_real_hand_built_cliff for the non-empty case")
+
+
+## Phase 2b coverage-restoration oracle (reviewer-mandated, run BEFORE any
+## Phase 2b mesher/shader/volume/character change — see this task's brief):
+## a HEM-INDEPENDENT shoreline check against the FIELD itself, not mesh
+## topology. test_waterline_is_a_terrain_contour (above) reads WaterMesher's
+## free edges, so its coverage lives or dies with WaterMesher._hem's own
+## exemption rules (structurally 0 non-border free edges to check on this
+## seed post-H1, as that test's own docstring documents at length) — this
+## oracle instead walks WaterField.level_at directly on a fine (1.5m, half
+## WaterMesher.S) lattice independent of any mesh, so it has real teeth
+## regardless of what the mesher's hem does or doesn't exempt.
+##
+## Method: walk every lattice ROW (fixed z, x varying) and every lattice
+## COLUMN (fixed x, z varying) covering the site chunk's own 192x192 span at
+## 1.5m spacing (the brief's literal grid — rows AND columns together find
+## shore crossings in both principal directions, since a pure row-walk alone
+## would miss a shoreline that runs exactly along x). At every WET -> DRY (or
+## DRY -> WET) sign change of level_at along one of these lines, bisect
+## (20 passes, matching WaterMesher._edge_vert's own bisection depth) between
+## the wet and dry samples until the crossing is pinned to <= 0.4m, using
+## `wet(p) := level_at(p) > -INF and level_at(p) > surface_y(p) + EPS` as the
+## sign function (the same wetness predicate WaterField.wet itself uses) so
+## the crossing found is a genuine WATERLINE (level crosses ground), not just
+## a level_at claim-radius boundary. At that crossing, the check is EITHER:
+##   (a) the WET side's own level closely tracks the ground right at the
+##       crossing (|level_at(wet sample) - surface_y(crossing)| <= 0.6) — an
+##       ordinary contour shore, water's edge rides the terrain it touches, OR
+##   (b) a wall shore: the ground within 1.5m of the crossing (either side,
+##       both axes, matching test_waterline_is_a_terrain_contour's own 8-point
+##       wall-exemption ring) rises above the wet level — a vertical bank the
+##       water simply presses against, not a contour to hug.
+## Any crossing satisfying neither is a genuine floating-claim artifact: water
+## whose edge neither follows the ground nor presses against a wall.
+func test_shoreline_hugs_terrain_contour() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var base: Vector2 = Vector2(SITE_CHUNK) * (WaterField.TILE * 8.0)
+	var span: float = WaterField.TILE * 8.0
+	var step := 1.5
+	var n: int = int(span / step)
+	var crossings := 0
+	var violations := 0
+	var offenders: Array = []
+	# Rows: fixed z, walk x. Columns: fixed x, walk z. Together these catch a
+	# shoreline running in either principal direction.
+	for j in range(0, n + 1):
+		var z: float = base.y + float(j) * step
+		var line: Array = []
+		for i in range(0, n + 1):
+			line.append(base.x + float(i) * step)
+		var res: Dictionary = _walk_line_for_shore(ctx, region, line, z, true)
+		crossings += res.crossings
+		violations += res.violations
+		offenders.append_array(res.offenders)
+	for i in range(0, n + 1):
+		var x: float = base.x + float(i) * step
+		var line: Array = []
+		for j in range(0, n + 1):
+			line.append(base.y + float(j) * step)
+		var res: Dictionary = _walk_line_for_shore(ctx, region, line, x, false)
+		crossings += res.crossings
+		violations += res.violations
+		offenders.append_array(res.offenders)
+	print("test_shoreline_hugs_terrain_contour: %d crossings found, %d violations" % [crossings, violations])
+	assert_true(crossings > 0, "site chunk has a real shoreline to walk")
+	assert_eq(violations, 0,
+		"%d shoreline crossings neither track the terrain contour nor press against a wall (e.g. %s)" % [
+			violations, offenders])
+
+
+## Walks one lattice line (either a row at fixed `cross` = z with `coords` =
+## x values, or a column at fixed `cross` = x with `coords` = z values,
+## selected by `is_row`), finds every wet/dry sign change, bisects each to a
+## world point, and classifies it (a) contour or (b) wall. Returns
+## {crossings, violations, offenders}.
+func _walk_line_for_shore(ctx: Dictionary, region, coords: Array, cross: float, is_row: bool) -> Dictionary:
+	var crossings := 0
+	var violations := 0
+	var offenders: Array = []
+	var prev_wet: bool = false
+	var prev_c: float = coords[0]
+	var have_prev := false
+	for c: float in coords:
+		var p: Vector2 = Vector2(c, cross) if is_row else Vector2(cross, c)
+		var w: bool = WaterField.wet(ctx, region, p)
+		if have_prev and w != prev_wet:
+			crossings += 1
+			var cross_c: float = _bisect_shore(ctx, region, prev_c, c, cross, is_row, prev_wet)
+			var wet_c: float = prev_c if prev_wet else c
+			var wet_p: Vector2 = Vector2(wet_c, cross) if is_row else Vector2(cross, wet_c)
+			var cross_p: Vector2 = Vector2(cross_c, cross) if is_row else Vector2(cross, cross_c)
+			var wet_lvl: float = WaterField.level_at(ctx, wet_p)
+			var g_cross: float = TerrainSurfaceField.surface_y(region, cross_p.x, cross_p.y)
+			if absf(wet_lvl - g_cross) <= 0.6:
+				pass   # (a) contour: the wet side's level tracks the ground here
+			else:
+				# (b) wall exemption: ground within 1.5m (either axis) of the
+				# crossing rises above the wet level — same 8-point ring
+				# test_waterline_is_a_terrain_contour's own wall check uses.
+				var wall := false
+				for d: Vector2 in [Vector2(1.5, 0), Vector2(-1.5, 0),
+						Vector2(0, 1.5), Vector2(0, -1.5),
+						Vector2(1.06, 1.06), Vector2(-1.06, 1.06),
+						Vector2(1.06, -1.06), Vector2(-1.06, -1.06)]:
+					var q: Vector2 = cross_p + d
+					var gq: float = TerrainSurfaceField.surface_y(region, q.x, q.y)
+					if gq > wet_lvl:
+						wall = true
+						break
+				if not wall:
+					violations += 1
+					if offenders.size() < 5:
+						offenders.append("crossing=%s wet_lvl=%.2f ground_at_crossing=%.2f (no nearby wall)" % [
+							cross_p, wet_lvl, g_cross])
+		prev_wet = w
+		prev_c = c
+		have_prev = true
+	return {"crossings": crossings, "violations": violations, "offenders": offenders}
+
+
+## Bisects the wet/dry sign change between (prev_c, cross) and (c, cross) (row)
+## or (cross, prev_c) and (cross, c) (column) to <= 0.4m, using
+## WaterField.wet as the sign function (the same predicate the line walk
+## itself uses, so the bisection agrees with what found the crossing).
+## 20 passes matches WaterMesher._edge_vert's own bisection depth (that
+## function halves its interval every pass regardless of the interval's
+## initial width, so 20 passes comfortably clears 0.4m from a 1.5m start:
+## 1.5 / 2^20 is far below 0.4m; the loop below still exits early once the
+## interval itself narrows under 0.4m, so it never over-iterates).
+func _bisect_shore(ctx: Dictionary, region, prev_c: float, c: float, cross: float,
+		is_row: bool, prev_wet: bool) -> float:
+	var lo: float = prev_c if prev_wet else c   # lo is always the WET end
+	var hi: float = c if prev_wet else prev_c
+	for _pass in 20:
+		if absf(hi - lo) < 0.4:
+			break
+		var mid: float = (lo + hi) * 0.5
+		var p: Vector2 = Vector2(mid, cross) if is_row else Vector2(cross, mid)
+		if WaterField.wet(ctx, region, p):
+			lo = mid
+		else:
+			hi = mid
+	return lo
 
 
 ## test_fill_is_deterministic_across_chunks (Phase 1 window-determinism

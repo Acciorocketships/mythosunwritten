@@ -771,10 +771,17 @@ static func steep_spans(c: Dictionary, rect: Rect2) -> Array:
 			var seg_i: int = walk.seg_of[lo]
 			var top_lvl: float = _sample_level(tr, seg_i, p, region)
 			var bot_lvl: float = _sample_level(tr, walk.seg_of[hi], walk.pos[hi], region)
+			# base_p (Phase 2b addition): the world position at the span's own
+			# base/plunge end (walk.pos[hi], already computed above for dirv) —
+			# exposed alongside `p` (the lip) so a shader-baking consumer
+			# (WaterMesher._attributes' plunge-churn band) can measure "near the
+			# base" directly instead of "far downstream of the lip," which for
+			# a tall span is not the same distance at all. Purely additive: no
+			# existing reader destructures this dict positionally.
 			out.append({"p": p, "dir": dirv, "across": Vector2(-dirv.y, dirv.x),
 				"half": tr.widths[seg_i] + CLAIM_FEATHER,
 				"top": maxf(top_lvl, bot_lvl), "bottom": minf(top_lvl, bot_lvl),
-				"drop": span.drop})
+				"drop": span.drop, "base_p": walk.pos[hi]})
 	return out
 
 

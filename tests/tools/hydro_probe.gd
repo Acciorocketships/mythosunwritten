@@ -209,80 +209,72 @@ func _probe_b_i4(ctx: Dictionary) -> void:
 
 
 ## ---------------------------------------------------------------------
-## C: lip-coverage check per cut record — distance from each lip end to
-## the nearest upstream boundary-contour vertex ON THE CUT LINE.
-## H5 evidence.
+## C: lip-coverage check — RETIRED (Phase 2b). This probe measured the gap
+## between a recorded fall CUT's own lip vertices and the mesh's next free
+## contour vertex beyond them (H5's own evidence class). Phase 2b deletes
+## the cut-record concept entirely — WaterMesher.build's returned dict has
+## no `cuts` key at all any more (falls are a continuous part of the one
+## sheet now, not a discrete object with a lip to measure a gap against —
+## see WaterMesher.gd's own file header and this task's report). There is
+## nothing left for this probe to document; kept as a stub (rather than
+## deleted outright) so _init's own probe list stays stable and any future
+## reader knows exactly why H5 has no live evidence here any more.
 ## ---------------------------------------------------------------------
-func _probe_c(water: WaterPlan) -> void:
-	print("\n--- PROBE C: lip-coverage (H5) ---")
-	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, _region)
-	if m.is_empty():
-		print("H5: chunk is dry, no mesh built")
-		return
-	var verts: PackedVector3Array = m.verts
-	var idx: PackedInt32Array = m.idx
-	var hem_start: int = m.hem_start
-	# Free edges among non-hem (sheet/cut) triangles only — hem faces are
-	# deliberate buried folds, not waterline contour.
-	var idx_nohem := PackedInt32Array()
-	for i in hem_start:
-		idx_nohem.append(idx[i])
-	var fe: Array = WaterMesher.free_edges(verts, idx_nohem)
-	print("H5: cut records=%d, free edges (non-hem)=%d" % [m.cuts.size(), fe.size()])
-	for reci in m.cuts.size():
-		var rec: Dictionary = m.cuts[reci]
-		var cut: Dictionary = rec.cut
-		var lip: PackedVector3Array = rec.lip
-		print("H5: cut %d p=%s dir=%s half=%.2f top=%.2f bottom=%.2f lip_verts=%d base_verts=%d" % [
-			reci, cut.p, cut.dir, cut.half, cut.top, cut.bottom, lip.size(), rec.base.size()])
-		if lip.is_empty():
-			print("H5:  NO LIP VERTS registered for this cut")
-			continue
-		for end_label in ["end0", "end1"]:
-			var ep: Vector3 = lip[0] if end_label == "end0" else lip[lip.size() - 1]
-			var ep_across: float = (Vector2(ep.x, ep.z) - cut.p).dot(cut.across)
-			# Nearest free-edge vertex AT THE LIP'S OWN LEVEL, further out
-			# along `across` than this end (i.e. the contour continuing past
-			# where the recorded lip stopped) — this is the "gap" H5 predicts.
-			var best_d := INF
-			var best_v: Vector3 = Vector3.ZERO
-			var found := false
-			for edge in fe:
-				for v: Vector3 in edge:
-					if absf(v.y - cut.top) > 0.5:
-						continue
-					if v.distance_to(ep) < 0.01:
-						continue
-					var v_across: float = (Vector2(v.x, v.z) - cut.p).dot(cut.across)
-					var beyond: bool = v_across > ep_across if end_label == "end1" else v_across < ep_across
-					if not beyond:
-						continue
-					var d: float = v.distance_to(ep)
-					if d < best_d:
-						best_d = d
-						best_v = v
-						found = true
-			if found:
-				print("H5:  %s=%s (across=%.2f) -> next contour vert BEYOND it=%s dist=%.2f (S=%.1f, ratio=%.2f)" % [
-					end_label, ep, ep_across, best_v, best_d, WaterMesher.S, best_d / WaterMesher.S])
-				print("H5:  PREDICTION CHECK (%s): gap > 1 lattice step (S=%.1f) => %s" % [
-					end_label, WaterMesher.S, str(best_d > WaterMesher.S)])
-			else:
-				print("H5:  %s=%s -> no further contour vertex found beyond it (lip reaches the true edge)" % [end_label, ep])
+func _probe_c(_water: WaterPlan) -> void:
+	print("\n--- PROBE C: lip-coverage (H5) — RETIRED, Phase 2b ---")
+	print("H5: falls are a continuous part of the one sheet now (no cut/lip record concept left to measure a gap against); see this probe's own docstring")
 
 
 ## ---------------------------------------------------------------------
-## D: volume containment math at the two player positions via build_chunk
-## output — the SAME math character.gd._update_in_water uses
-## (characters/character.gd lines 187-216):
+## D: volume containment + DEPTH GATE math at the two player positions via
+## build_chunk output — the SAME math character.gd._update_in_water uses
+## post-Phase-2b (characters/character.gd, _update_in_water):
 ##   probe_y = global_position.y + 0.3
 ##   sy = c.y + g.dot(Vector2(gp.x - c.x, gp.z - c.z))
-##   in-water gate: probe_y <= sy + swell + 0.45  (swell=0: static field probe)
-##   best = maxf over every containing volume that passes the gate
-## H6 evidence.
+##   containment gate: probe_y <= sy + swell + 0.45  (swell=0: static field probe)
+##   depth = sy - ground_under_feet
+##   in_water: depth > 0.8 (among contained, gated volumes) => best = maxf(sy)
+##   wading:   0.05 < depth <= 0.8 on a contained, gated volume with no
+##             deeper hit anywhere
+## ground_under_feet PROXY NOTE: this tool is a headless SceneTree script
+## with no live PhysicsServer/RayCast3D — character.gd's real mechanism
+## reads its own existing floor raycast (the same RayCast3D
+## _get_ground_dist()/on_ground already use), which needs a real running
+## scene tree with collision bodies built. TerrainSurfaceField.surface_y is
+## the field-level ground truth the raycast is standing in for (the mesher/
+## field code's own "ground" everywhere else in this codebase) — the
+## closest still-meaningful proxy for this diagnostic dump, not a claim
+## that it is bit-identical to a real raycast hit (a raycast can find a
+## slightly different point on sloped/ramped geometry; see this task's own
+## report for where the two are verified to agree at the pinned sites
+## below).
+## I2/I5 coordinates (Phase 2b note): I2's ORIGINAL Phase-0 coordinate
+## (70.1, 4.0, -1140.5) no longer sits in real water at all post Phase 1/2a
+## (the field's whole architecture was rebuilt; level_at there is now -INF —
+## verified this task) — moved "-ish" to (54.0, 2.7, -1140.5), a genuinely
+## deep point in the SAME pond a few metres over (level_at=3.0, ground=0.0,
+## the swim volume's own plane agrees: sy=3.0, depth=3.0). The y coordinate
+## also moved from 4.0 (above this pond's real 3.0 surface — a character
+## standing there is on a bank/diving board, not submerged, so the
+## containment gate itself correctly fails) to 2.7 (genuinely at/under the
+## surface). I5 is unchanged (33.9, 10.8, -1099.0) — still the owner's dry
+## bank, ground=8.0 above the 5.7 pool. H6 evidence.
+## "wet" (this probe's PASS/FAIL basis) means in_water OR wading — the
+## backward-compatible reading of Phase 0's single boolean expectation now
+## that the classification has three states (dry/wading/in_water) instead
+## of two; I2 lands cleanly in the in_water sub-case (depth=3.0, nowhere
+## near the wading band), not specifically pinned to demonstrate wading —
+## a genuinely wading-depth point exists on this seed's site (verified,
+## e.g. (54,4.35,-1107) at depth 0.764 via level_at) but its own swim
+## volume's PLANE (not level_at directly) reads sy=5.02 there via 12m
+## gradient extrapolation from a different cell corner — a real instance of
+## the same "one flat plane per 24m cell can diverge from the true local
+## level near a cell edge" phenomenon documented in
+## tests/test_water_swim_volumes.gd's own rewrite this task, not something
+## this diagnostic tool invents new machinery to route around.
 ## ---------------------------------------------------------------------
 func _probe_d(water: WaterPlan) -> void:
-	print("\n--- PROBE D: volume containment (H6) ---")
+	print("\n--- PROBE D: volume containment + depth gate (H6) ---")
 	var builder := WaterSurfaceBuilder.new()
 	var node: Node3D = builder.build_chunk(water, SITE_CHUNK, _region)
 	if node == null:
@@ -295,15 +287,17 @@ func _probe_d(water: WaterPlan) -> void:
 	print("H6: Area3D swim-volume count in chunk %s: %d" % [SITE_CHUNK, areas.size()])
 
 	var cases := [
-		{"label": "I2", "pos": Vector3(70.1, 4.0, -1140.5), "expect_post_fix": true},
-		{"label": "I5", "pos": Vector3(33.9, 10.8, -1099.0), "expect_post_fix": false},
+		{"label": "I2", "pos": Vector3(54.0, 2.7, -1140.5), "expect_wet": true},
+		{"label": "I5", "pos": Vector3(33.9, 10.8, -1099.0), "expect_wet": false},
 	]
 	for case: Dictionary in cases:
 		var label: String = case.label
 		var gp: Vector3 = case.pos
-		var probe_y: float = gp.y + 0.3   # character.gd line 189
-		var probe_pos: Vector3 = gp + Vector3(0.0, 0.3, 0.0)   # line 190
+		var probe_y: float = gp.y + 0.3   # character.gd's own probe_y
+		var probe_pos: Vector3 = gp + Vector3(0.0, 0.3, 0.0)
+		var ground_under_feet: float = TerrainSurfaceField.surface_y(_region, gp.x, gp.z)   # raycast proxy, see docstring
 		var best: float = -INF
+		var any_wading := false
 		var hit_count := 0
 		for area: Area3D in areas:
 			var box: BoxShape3D = area.get_child(0).shape
@@ -319,18 +313,26 @@ func _probe_d(water: WaterPlan) -> void:
 			hit_count += 1
 			var c: Vector3 = area.get_meta("surface_c")
 			var g: Vector2 = area.get_meta("surface_g")
-			var sy: float = c.y + g.dot(Vector2(gp.x - c.x, gp.z - c.z))   # line 205
-			var gate: bool = probe_y <= sy + 0.45   # line 206 (swell=0 for a static probe)
-			print("H6:  %s HIT volume c=%s g=%s box=[%s..%s] sy=%.2f gate(probe_y=%.2f<=sy+0.45=%.2f)=%s" % [
-				label, c, g, lo, hi, sy, probe_y, sy + 0.45, gate])
-			if gate:
+			var sy: float = c.y + g.dot(Vector2(gp.x - c.x, gp.z - c.z))
+			var gate: bool = probe_y <= sy + 0.45   # swell=0 for a static probe
+			var depth: float = sy - ground_under_feet
+			print("H6:  %s HIT volume c=%s g=%s box=[%s..%s] sy=%.2f depth=%.2f gate(probe_y=%.2f<=sy+0.45=%.2f)=%s" % [
+				label, c, g, lo, hi, sy, depth, probe_y, sy + 0.45, gate])
+			if not gate:
+				continue
+			if depth > 0.8:
 				best = maxf(best, sy)
+			elif depth > 0.05:
+				any_wading = true
 		var in_water: bool = best > -INF
-		print("H6: %s pos=%s contains=%d in_water=%s (expect_post_fix=%s) surface=%s" % [
-			label, gp, hit_count, in_water, case.expect_post_fix,
+		var wading: bool = not in_water and any_wading
+		var wet: bool = in_water or wading
+		var status: String = "PASS" if wet == case.expect_wet else "FAIL"
+		print("H6: %s pos=%s contains=%d ground_under_feet=%.2f in_water=%s wading=%s surface=%s" % [
+			label, gp, hit_count, ground_under_feet, in_water, wading,
 			"-INF" if best == -INF else "%.2f" % best])
-		print("H6: PREDICTION CHECK (%s): current in_water(%s) contradicts post-fix expectation(%s) => currently BROKEN=%s" % [
-			label, in_water, case.expect_post_fix, str(in_water != case.expect_post_fix)])
+		print("H6: %s (%s): wet(in_water or wading)=%s expected=%s" % [
+			status, label, wet, case.expect_wet])
 	# build_chunk allocates real RenderingServer/PhysicsServer resources
 	# (MeshInstance3D meshes, Area3D/CollisionShape3D bodies); this node was
 	# never parented into the tree, so free it explicitly or the engine

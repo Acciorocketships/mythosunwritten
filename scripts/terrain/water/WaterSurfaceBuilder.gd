@@ -1,13 +1,15 @@
 # scripts/terrain/water/WaterSurfaceBuilder.gd
 # Thin adapter over the boundary-mesh water pipeline: WaterField computes the
-# per-cell water field, WaterMesher turns it into a marching-squares sheet
-# mesh (welded free edges + a submerged hem), and FallMesher sweeps waterfall
-# geometry from the sheet's own crest-edge vertices. This class owns the two
-# shared materials, the river-trace profile helpers other callers still read
-# (surface_profile/steepness_profile — pure functions of a RiverTrace, used
-# by WaterPlan tests and the review-spot tool), and build_chunk, which wires
-# the three pieces into one Node3D: a MeshInstance3D for the sheet, one for
-# the falls, and one Area3D per wet-cell surface entry (swim volumes). Built
+# per-cell water field and WaterMesher turns it into a marching-squares sheet
+# mesh (welded free edges + a submerged hem). Phase 2b: falls are no longer
+# a separate swept mesh (FallMesher.gd is deleted) — the sheet shader itself
+# blends a continuous falling-look into the one water_unified.gdshader
+# material, keyed on the mesh's own baked steepness attribute. This class
+# owns the one shared sheet material, the river-trace profile helpers other
+# callers still read (surface_profile/steepness_profile — pure functions of
+# a RiverTrace, used by WaterPlan tests and the review-spot tool), and
+# build_chunk, which wires the pieces into one Node3D: a MeshInstance3D for
+# the sheet, and one Area3D per wet-cell surface entry (swim volumes). Built
 # beside each terrain chunk and parented under it (evicts together).
 class_name WaterSurfaceBuilder
 extends RefCounted
@@ -60,7 +62,6 @@ static func steepness_profile(river: RiverTrace) -> PackedFloat32Array:
 
 
 static var _noise_texture: NoiseTexture2D = null
-static var _fall_material: ShaderMaterial = null
 
 
 static func _noise_tex() -> NoiseTexture2D:
@@ -87,25 +88,21 @@ static func sheet_material() -> ShaderMaterial:
 	return _sheet_material
 
 
-static func waterfall_material() -> ShaderMaterial:
-	if _fall_material == null:
-		_fall_material = ShaderMaterial.new()
-		_fall_material.shader = load("res://terrain/water/waterfall.gdshader")
-		_fall_material.set_shader_parameter("noise_tex", _noise_tex())
-	return _fall_material
-
-
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
 ## is the chunk's heightfield region (the streamer computes it for the mesher
 ## and shares it here — the water field must see the REAL rendered terrain).
-## Boundary-conforming path (WaterMesher/FallMesher): the sheet is a marching-
-## squares mesh whose free edges are welded to the ArrayMesh FallMesher sweeps
-## from the sheet's own lip contour, so crest and curtain share vertices by
-## construction. Swim volumes ride one Area3D per wet-cell SURFACE entry
-## (WaterMesher's wet_cells; a cut-straddling cell gets two stacked volumes),
-## each carrying the sampled surface plane (Task 10's contract) instead of a
-## single scalar level — the plane lets a probe interpolate the true
-## swell-free surface height anywhere inside the cell.
+## Boundary-conforming path (WaterMesher): the sheet is a marching-squares
+## mesh whose free edges are welded to a buried hem — every surface,
+## including a fall, is ONE continuous mesh with ONE material (Phase 2b: no
+## separate Waterfalls node — the falling-look blend lives in
+## water_unified.gdshader itself, keyed on the mesh's own baked steepness
+## attribute). Swim volumes ride one Area3D per wet-cell SURFACE entry
+## (WaterMesher's wet_cells is back to exactly one entry per cell — the
+## split/stacked-volume machinery is deleted; a steep, unswimmable cell
+## simply has NO entry at all), each carrying the sampled surface plane
+## (Task 10's contract) instead of a single scalar level — the plane lets a
+## probe interpolate the true swell-free surface height anywhere inside the
+## cell.
 func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 	var m: Dictionary = WaterMesher.build(water, chunk, region)
 	if m.is_empty():
@@ -117,18 +114,10 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 	mi.mesh = WaterMesher.commit(m)
 	mi.material_override = WaterSurfaceBuilder.sheet_material()
 	root.add_child(mi)
-	var falls: ArrayMesh = FallMesher.build(m.cuts, region)
-	if falls != null:
-		var fi := MeshInstance3D.new()
-		fi.name = "Waterfalls"
-		fi.mesh = falls
-		fi.material_override = WaterSurfaceBuilder.waterfall_material()
-		root.add_child(fi)
 	for cell: Vector2i in m.wet_cells:
-		# One Area3D per SURFACE ENTRY (usually one; a cell crossed by a fall
-		# cut carries two stacked volumes, upper and lower, so no box ever
-		# reports the upper level over the plunge pool — the owner's phantom
-		# mid-air swim).
+		# One Area3D per wet_cells entry — always exactly one per cell now
+		# (Phase 2b: no stacked upper/lower split; steep cells have no entry
+		# at all, see WaterMesher._attributes' STEEP_UNSWIMMABLE gate).
 		for wc: Dictionary in m.wet_cells[cell]:
 			var area := Area3D.new()
 			area.collision_layer = 1 << 7
@@ -136,14 +125,9 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 			var shape := CollisionShape3D.new()
 			var box := BoxShape3D.new()
 			var top: float = wc.lvl + 1.7
-			# A straddling cell's UPPER entry floors at its "floor" key —
-			# STRICTLY ABOVE the lower box's ceiling (lower level + 1.7), so
-			# the stacked boxes never overlap: in the character's maxf-gating
-			# over passing volumes an overlap band would pick the upper
-			# surface, resurrecting the phantom mid-air swim. Plain entries
-			# reach the cell's lowest ground minus clearance (half-cell ramps
-			# dip below the centre ground).
-			var bottom: float = wc.get("floor", wc.gnd_lo - 5.0)
+			# Floor reaches the cell's lowest ground minus clearance (half-cell
+			# ramps dip below the centre ground).
+			var bottom: float = wc.gnd_lo - 5.0
 			box.size = Vector3(TILE, top - bottom, TILE)
 			shape.shape = box
 			area.add_child(shape)

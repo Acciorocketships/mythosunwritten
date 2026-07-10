@@ -1,8 +1,18 @@
 # Boundary-conforming water sheet: marching squares over the 3m sub-grid on
 # f(x,z) = level(x,z) - ground(x,z). Interior cells emit welded grid quads;
 # boundary cells emit contour polygons whose edge vertices sit ON the
-# waterline (Task 4); fall cuts split cells into upstream/downstream parts
-# (Task 5); every contour free edge grows a buried hem (Task 6).
+# waterline (Task 4); every contour free edge grows a buried hem (Task 6).
+# Phase 2b: falls are no longer a discrete cut object split into two sheets —
+# WaterField.profile() now shapes a continuous, monotone descent even across
+# what used to be a fall (see WaterField.gd's own docstring), so every cell
+# meshes through the ordinary _mesh_cell path; there is nothing left to
+# detect or split (_cell_jump/_cell_cut/_mesh_cut_cell/_synth_cut/_lvl_side/
+# _cut_vert/_register_cut_hit and the multi-seam spread guard they fed are
+# all deleted — see this task's report). CUT_JUMP survives only as the
+# vertical-span sanity bound test_no_triangle_bridges_a_fall still checks
+# (a max-slope proxy: adjacent lattice samples 3m apart cannot legitimately
+# jump more than this without the terrain-hugging profile itself being
+# broken), not as a splitting threshold.
 class_name WaterMesher
 extends Object
 
@@ -10,9 +20,10 @@ const TILE := 24.0
 const N := 64                 # marching cells per chunk side
 const S := 3.0                # sub-grid step (TILE * 8 cells / 64)
 const EPS := 0.05
-const CUT_JUMP := 2.0         # adjacent-sample level jump that marks a cut
+const CUT_JUMP := 2.0         # vertical-span sanity bound only (see file header) — no longer a split trigger
 const HEM_DROP := 1.2
 const HEM_W := 1.5
+const STEEP_UNSWIMMABLE := 0.35   # max |grade_at| a wet cell may carry and still get a swim volume
 
 
 ## st: shared build state. One per build() call.
@@ -28,8 +39,11 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 		"lvl": PackedFloat32Array(), "gnd": PackedFloat32Array(),
 		"verts": PackedVector3Array(), "idx": PackedInt32Array(),
 		"cust": PackedFloat32Array(), "weld": {},
-		"cuts": WaterField.fall_cuts(c, Rect2(base, Vector2.ONE * TILE * 8.0)),
-		"cut_hits": {},   # cut index -> Array of lip/base vert records (Task 5)
+		# steep_spans, NOT part of the returned dict (Phase 2b: no geometry
+		# consumer left — FallMesher is deleted). Kept on st only so
+		# _attributes can re-key its plunge-churn bake on it without
+		# recomputing (see _attributes' own docstring).
+		"steep": WaterField.steep_spans(c, Rect2(base, Vector2.ONE * TILE * 8.0)),
 	}
 	st.lvl.resize((N + 1) * (N + 1))
 	st.gnd.resize((N + 1) * (N + 1))
@@ -49,33 +63,15 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 			_mesh_cell(st, i, j)
 	# _hem runs LAST of the triangle emitters (nothing after it appends to
 	# idx), so every triangle at index >= hem_start is hem geometry and
-	# everything below is sheet/cut geometry. Exposed in the returned dict:
-	# hem faces are DELIBERATE near-vertical/downward folds, exempt from the
+	# everything below is sheet geometry. Exposed in the returned dict: hem
+	# faces are DELIBERATE near-vertical/downward folds, exempt from the
 	# sheet invariants (+Y winding, no vertical span > CUT_JUMP) that the
-	# tests enforce strictly on everything below the mark. An emission tag
-	# beats any geometric proxy for "is this a hem face" — a buried-vertex
-	# test also matches cut verts pinned to water levels beside 4m cliff
-	# skirts, silently un-covering cut-cell triangles (review finding).
+	# tests enforce strictly on everything below the mark.
 	var hem_start: int = st.idx.size()
 	_hem(st)
 	_attributes(st)   # CUSTOM0 (flow/shore/steep) + wet_cells (Task 7)
-	var cut_records: Array = []
-	for ci: int in st.cut_hits:
-		var cut: Dictionary = st.cuts[ci]
-		var rec := {"cut": cut, "lip": PackedVector3Array(), "base": PackedVector3Array()}
-		for side_key in ["lip", "base"]:
-			var vis: Array = st.cut_hits[ci][side_key]
-			vis.sort_custom(func(x, y):
-				var px := Vector2(st.verts[x].x, st.verts[x].z)
-				var py := Vector2(st.verts[y].x, st.verts[y].z)
-				return (px - cut.p).dot(cut.across) < (py - cut.p).dot(cut.across))
-			for vi: int in vis:
-				rec[side_key].append(st.verts[vi])
-		cut_records.append(rec)
-	st["cut_records"] = cut_records
 	return {"verts": st.verts, "idx": st.idx, "cust": st.cust,
-		"cuts": st.get("cut_records", []), "wet_cells": st.get("wet_cells", {}),
-		"hem_start": hem_start}
+		"wet_cells": st.get("wet_cells", {}), "hem_start": hem_start}
 
 
 static func _f(st: Dictionary, i: int, j: int) -> float:
@@ -113,9 +109,6 @@ static func _mesh_cell(st: Dictionary, i: int, j: int) -> void:
 		wet_flags.append(w)
 		wet_n += 1 if w else 0
 	if wet_n == 0:
-		return
-	if _cell_jump(st, i, j):
-		_mesh_cut_cell(st, i, j, corners, wet_flags)   # Task 5
 		return
 	if wet_n == 4:
 		var a: int = _lattice_vert(st, i, j)
@@ -166,8 +159,8 @@ static func _mesh_cell(st: Dictionary, i: int, j: int) -> void:
 
 
 ## Collapses consecutive (including wrap-around) equal entries in a
-## perimeter-walk poly. _edge_vert/_cut_vert legitimately return a corner's
-## own lattice vertex when a crossing snaps to it; left in place that
+## perimeter-walk poly. _edge_vert legitimately returns a corner's own
+## lattice vertex when a crossing snaps to it; left in place that
 ## produces a repeated index adjacent to itself in the poly, and every fan
 ## triangle spanning the repeat is zero-area (pollutes the free-edge parity
 ## count downstream — see free_edges/_free_edge_indices). A poly is a closed
@@ -244,244 +237,14 @@ static func _edge_vert(st: Dictionary, a: Vector2i, b: Vector2i) -> int:
 	return vi
 
 
-## A cell whose corner levels jump more than CUT_JUMP: two water surfaces
-## meet inside it. Mesh each side separately. Near a recorded fall cut the
-## sides are the fall's lip and base sheets and the seam verts are
-## registered for FallMesher; elsewhere (a body seam — two claimants with
-## different levels meeting where no fall exists) the cell is split the
-## same way against a synthetic local cut but records nothing: no fall
-## will be built there (Task 6's hem owns those free edges).
-## Corner membership is by LEVEL (nearer top vs bottom), NOT by cut-plane
-## side: at a cut's lateral extremity the claim boundary bends away from
-## the plane, and plane-side classification puts wrong-level corners into
-## a side's poly, bridging it vertically. Edges crossing between the
-## sides get one vertex PER SIDE at the claim boundary, each riding its
-## own side's level — the two sides deliberately do NOT weld across the
-## jump; FallMesher's curtain (or the hem) owns the face between them.
-static func _mesh_cut_cell(st: Dictionary, i: int, j: int,
-		corners: Array, wet_flags: Array) -> void:
-	var ci: int = _cell_cut(st, i, j)
-	var cut: Dictionary = st.cuts[ci] if ci != -1 else _synth_cut(st, i, j, corners)
-	for side in [1, -1]:   # 1 = the higher surface, -1 = the lower
-		var poly: Array = []
-		for k in 4:
-			var a: Vector2i = corners[k]
-			var b: Vector2i = corners[(k + 1) % 4]
-			var a_in: bool = wet_flags[k] and _lvl_side(st, cut, a) == side
-			var b_in: bool = wet_flags[(k + 1) % 4] and _lvl_side(st, cut, b) == side
-			if a_in:
-				poly.append(_lattice_vert(st, a.x, a.y))
-			if a_in != b_in:
-				# Crossing the waterline or the seam? Seam when both wet.
-				if wet_flags[k] and wet_flags[(k + 1) % 4]:
-					poly.append(_cut_vert(st, ci, a, b, side))
-				else:
-					poly.append(_edge_vert(st, a, b))
-		# Same corner-snap repeat as _mesh_cell's poly (see
-		# _dedupe_adjacent) — _edge_vert/_cut_vert can return a corner's own
-		# lattice vertex back to back with that corner's own poly entry.
-		poly = _dedupe_adjacent(poly)
-		# Guard: a cell whose wet corners span >= 3 level clusters (two
-		# seams/cuts crossing one 3m cell at a 3-body corner) cannot 2-way
-		# split cleanly — one side necessarily groups two far-apart levels
-		# and its fan would fold across the jump. Drop that polygon LOUDLY
-		# instead of emitting it: a rare hole at a triple seam beats a
-		# silent bridge, and Task 6's free-edge accounting will surface it
-		# if it ever occurs in practice.
-		var span_lo: float = INF
-		var span_hi: float = -INF
-		for vi: int in poly:
-			span_lo = minf(span_lo, st.verts[vi].y)
-			span_hi = maxf(span_hi, st.verts[vi].y)
-		if span_hi - span_lo > CUT_JUMP + 0.5:
-			# Cluster count over every LEVELED corner, wet or not: the dropped
-			# polygon's spread includes cut verts pinned at a DRY corner's
-			# level, and wet-only counting printed "1-level cell" for a real
-			# 3m spread (in-game finding, task-9 review).
-			var lvls: Array = []
-			for k in 4:
-				var cl: float = st.lvl[corners[k].y * (N + 1) + corners[k].x]
-				if cl > -INF:
-					lvls.append(cl)
-			lvls.sort()
-			var clusters: int = 1
-			for k in range(1, lvls.size()):
-				if lvls[k] - lvls[k - 1] > CUT_JUMP:
-					clusters += 1
-			push_warning(
-				"WaterMesher: %d-level cell at (%d,%d) — polygon spread %.1f dropped (multi-seam cell, see Task 5 review)"
-				% [clusters, i, j, span_hi - span_lo])
-			continue
-		# Perimeter order is clockwise from above; reversed fan -> +Y (same
-		# convention as _mesh_cell's general fan).
-		for k in range(1, poly.size() - 1):
-			st.idx.append(poly[0])
-			st.idx.append(poly[k + 1])
-			st.idx.append(poly[k])
-
-
-## Which side of the jump a corner's own level puts it on.
-## Cross-cell staircase note (Task 5 review adjudication): on a level
-## staircase (3 -> 9 -> 15 across two adjacent cells) the shared 9-corner
-## classifies HIGH in the 3|9 cell and LOW in the 9|15 cell. That is
-## BENIGN: the corner vertex is welded at its OWN lattice level (9) and
-## both cells emit surface at 9 around it — the low cell's top terrace
-## and the high cell's bottom terrace. The no-weld-across-jump invariant
-## is carried by the side-keyed "S:" cut verts, never by side labels on
-## lattice corners.
-## Single-cell limitation: wet corners spanning >= 3 level clusters
-## (two seams crossing ONE cell) cannot 2-way split cleanly — one side
-## groups two far-apart levels; _mesh_cut_cell's spread guard drops that
-## polygon loudly instead of emitting a fold.
-static func _lvl_side(st: Dictionary, cut: Dictionary, c: Vector2i) -> int:
-	var lvl: float = st.lvl[c.y * (N + 1) + c.x]
-	return 1 if absf(lvl - cut.top) <= absf(lvl - cut.bottom) else -1
-
-
-## Local synthetic cut for a body seam with no recorded fall nearby: the
-## split machinery needs top/bottom (the cell's own level extremes); p and
-## dir (downhill gradient of the corner levels, high -> low) describe the
-## local jump line for anything downstream that inspects the dict. Never
-## registered into cut_records — no fall curtain is built at a body seam.
-## top/bottom are the cell's EXTREMES: with >= 3 level clusters in one
-## cell the middle level lands on whichever side it is nearer to and that
-## side's polygon over-spreads — see _lvl_side's note and the spread
-## guard in _mesh_cut_cell that degrades it loudly.
-static func _synth_cut(st: Dictionary, i: int, j: int, corners: Array) -> Dictionary:
-	var lo: float = INF
-	var hi: float = -INF
-	for c: Vector2i in corners:
-		var l: float = st.lvl[c.y * (N + 1) + c.x]
-		if l > -INF:
-			lo = minf(lo, l)
-			hi = maxf(hi, l)
-	var mid: float = (hi + lo) * 0.5
-	var centre := Vector2(float(i) + 0.5, float(j) + 0.5)
-	var g := Vector2.ZERO
-	for c: Vector2i in corners:
-		var l: float = st.lvl[c.y * (N + 1) + c.x]
-		if l == -INF:
-			l = mid
-		g += (Vector2(c) - centre) * (mid - l)   # high corners push away: high -> low
-	var dirv: Vector2 = g.normalized() if g.length() > 0.001 else Vector2.RIGHT
-	return {"p": st.base + centre * S, "dir": dirv,
-		"across": Vector2(-dirv.y, dirv.x), "half": S * 2.0,
-		"top": hi, "bottom": lo}
-
-
-## Vertex where lattice edge a-b crosses the seam between two water
-## levels, at `side`'s level. XZ: bisection on level_at from `side`'s own
-## corner finds the true claim boundary — the recorded cut plane is only
-## right within the channel; at the cut's lateral edge and at body seams
-## the boundary is the claimants' own edge, so intersecting the plane
-## would drop verts where that side's water does not exist. Y: the edge's
-## own side level (== cut.top/bottom on the channel edges, where corners
-## sit exactly at the cut levels). t is clamped off the corners so the
-## vert never lands in a lattice vert's weld bucket. Real cuts (ci >= 0)
-## register the vert into cut_hits for the lip/base records; synthetic
-## seams (ci == -1) record nothing.
-static func _cut_vert(st: Dictionary, ci: int, a: Vector2i, b: Vector2i, side: int) -> int:
-	var key := "S:%d:%d:%d:%d:%d" % [side, mini(a.x, b.x), mini(a.y, b.y),
-		absi(b.x - a.x), absi(b.y - a.y)]
-	if st.weld.has(key):
-		var vi_prev: int = st.weld[key]
-		_register_cut_hit(st, ci, side, vi_prev)   # neighbour may be the real cut
-		return vi_prev
-	var la: float = st.lvl[a.y * (N + 1) + a.x]
-	var lb: float = st.lvl[b.y * (N + 1) + b.x]
-	var top_e: float = maxf(la, lb)
-	var bot_e: float = minf(la, lb)
-	var lvl: float = top_e if side == 1 else bot_e
-	var other: float = bot_e if side == 1 else top_e
-	var pa: Vector2 = st.base + Vector2(a) * S
-	var pb: Vector2 = st.base + Vector2(b) * S
-	if (side == 1) != (la >= lb):   # walk out from this side's own corner
-		var tmp: Vector2 = pa
-		pa = pb
-		pb = tmp
-	var lo: float = 0.0
-	var hi: float = 1.0
-	var t: float = 0.5
-	for _pass in 20:
-		if hi - lo < 0.0005:
-			break
-		var q: Vector2 = pa.lerp(pb, t)
-		var l: float = WaterField.level_at(st.ctx, q)
-		if l > -INF and absf(l - lvl) < absf(l - other):
-			lo = t   # still on our side of the seam
-		else:
-			hi = t
-		t = (lo + hi) * 0.5
-	var p: Vector2 = pa.lerp(pb, clampf(lo, 0.03, 0.97))
-	var vi: int = st.verts.size()
-	st.verts.append(Vector3(p.x, lvl, p.y))
-	st.weld[key] = vi
-	_register_cut_hit(st, ci, side, vi)
-	return vi
-
-
-static func _register_cut_hit(st: Dictionary, ci: int, side: int, vi: int) -> void:
-	if ci < 0:
-		return
-	if not st.cut_hits.has(ci):
-		st.cut_hits[ci] = {"lip": [], "base": []}
-	var arr: Array = st.cut_hits[ci]["lip" if side == 1 else "base"]
-	if not arr.has(vi):
-		arr.append(vi)
-
-
-## True when the cell's corner levels jump more than CUT_JUMP — two water
-## surfaces (a fall's lip/base, or two bodies at a seam) meet inside it.
-static func _cell_jump(st: Dictionary, i: int, j: int) -> bool:
-	var l00: float = st.lvl[j * (N + 1) + i]
-	var l10: float = st.lvl[j * (N + 1) + i + 1]
-	var l11: float = st.lvl[(j + 1) * (N + 1) + i + 1]
-	var l01: float = st.lvl[(j + 1) * (N + 1) + i]
-	var lo: float = INF
-	var hi: float = -INF
-	for l in [l00, l10, l11, l01]:
-		if l > -INF:
-			lo = minf(lo, l)
-			hi = maxf(hi, l)
-	return hi - lo > CUT_JUMP
-
-
-## Index of a fall cut affecting this cell, or -1. A jumping cell only
-## matches a cut when it sits near that cut's line — a level jump alone
-## isn't enough (two unrelated bodies with different levels can claim
-## adjacent lattice samples at a body seam, far from any fall; picking the
-## "nearest" cut with no distance gate there would slice the cell along a
-## cut plane that has nothing to do with the jump, corrupting both that
-## geometry and the real cut's lip/base records — those cells get a
-## synthetic seam split instead, see _mesh_cut_cell). Gate by the cut's
-## own across-line half extent (channel half-width + feather) plus one
-## lattice step of slack.
-static func _cell_cut(st: Dictionary, i: int, j: int) -> int:
-	if not _cell_jump(st, i, j):
-		return -1
-	var centre: Vector2 = st.base + Vector2(float(i) + 0.5, float(j) + 0.5) * S
-	var best := -1
-	var best_d := INF
-	for ci in st.cuts.size():
-		var cut: Dictionary = st.cuts[ci]
-		var along: float = absf((centre - cut.p).dot(cut.dir))
-		var across: float = absf((centre - cut.p).dot(cut.across))
-		if along > S * 1.5 or across > cut.half + S * 1.5:
-			continue
-		if along < best_d:
-			best_d = along
-			best = ci
-	return best
-
-
 ## One uniform edge rule replaces every legacy shore special case: each
-## CONTOUR free edge (not chunk border, not a fall cut) extrudes a strip
-## outward and down to ground - HEM_DROP, INSIDE the bank. Swells raise the
-## surface; the waterline slides up the bank; the edge never lifts free.
-## Synthetic seam edges (a claim-boundary split with no recorded fall) are
-## NOT in st.cuts, so _near_cut does not exempt them: the upper side's hem
-## folds down past the lower water and forms a small curtain face there —
-## the best available look at a bodiless seam (Task 6 amendment note 1).
+## CONTOUR free edge (not chunk border) extrudes a strip outward and down to
+## ground - HEM_DROP, INSIDE the bank. Swells raise the surface; the
+## waterline slides up the bank; the edge never lifts free. Phase 2b: falls
+## are an ordinary sheet + hem now (there is no cut left to exempt) — EVERY
+## non-border free edge gets hemmed, including what used to be a fall's own
+## lip/base line (_near_cut and its exemption are deleted; see the file
+## header).
 static func _hem(st: Dictionary) -> void:
 	var span: float = TILE * 8.0
 	var outer: Dictionary = {}   # inner vert index -> hem vert index
@@ -491,8 +254,6 @@ static func _hem(st: Dictionary) -> void:
 		var va: Vector3 = st.verts[a]
 		var vb: Vector3 = st.verts[b]
 		if _border2(st.base, span, va) and _border2(st.base, span, vb):
-			continue
-		if _near_cut(st, va) and _near_cut(st, vb):
 			continue
 		# Outward = away from the water: the free edge belongs to exactly one
 		# triangle; its third vertex lies IN the water.
@@ -562,15 +323,6 @@ static func _border2(base: Vector2, span: float, v: Vector3) -> bool:
 	return lx < 0.01 or lx > span - 0.01 or lz < 0.01 or lz > span - 0.01
 
 
-static func _near_cut(st: Dictionary, v: Vector3) -> bool:
-	for cut: Dictionary in st.cuts:
-		var p2 := Vector2(v.x, v.z)
-		if absf((p2 - cut.p).dot(cut.dir)) < S \
-				and absf((p2 - cut.p).dot(cut.across)) < cut.half + S:
-			return true
-	return false
-
-
 ## free_edges but returning DIRECTED index pairs (in the winding order the
 ## lone owning triangle actually uses) plus a helper to find its third
 ## vertex. Directed order matters: the hem quad's own winding must match
@@ -612,14 +364,20 @@ static func _third_vert(st: Dictionary, a: int, b: int) -> int:
 ## shoreline) and fades over 1.2m of depth above it; steep is the level
 ## gradient scaled for a foam/turbulence read, clamped below the plunge
 ## band's own ceiling so the band (below) is always the strongest signal.
-## Plunge band: within 3.5m downstream of a REAL fall cut's base line
-## (st.cuts — synthetic body-seam cuts are deliberately excluded, see
-## _synth_cut: no fall is built there, so no churn should render there
-## either), steep and shore both ramp up over the last 2m of approach so
-## the mesh alone hints at the drop before FallMesher's own geometry takes
-## over. Hem verts (emitted after every real vertex, see build()'s
-## hem_start) fall through to the same per-vertex loop below and pick up
-## shore = 1.0 from the v.y <= g branch, same as the brief's else-case.
+## Plunge band (Phase 2b: re-keyed on WaterField.steep_spans — `st.steep`,
+## computed once in build() — instead of the retired cut records): within
+## 3.5m of a real steep span's OWN BASE point (span.base_p — the span's
+## plunge/landing end, not the lip; see steep_spans' own docstring on why
+## `base_p` exists), steep and shore both ramp up over the last 2m of
+## approach so the mesh alone hints at the drop before the shader's own
+## continuous falling-look blend (water_unified.gdshader) takes over.
+## Direction is measured from the LIP along `dir` (still the right axis: the
+## channel run from lip to base), but the falloff distance itself is
+## measured from the BASE, not the lip — a tall span's plunge band must not
+## start 3.5m past the lip and never reach the base at all. Hem verts
+## (emitted after every real vertex, see build()'s hem_start) fall through
+## to the same per-vertex loop below and pick up shore = 1.0 from the
+## v.y <= g branch, same as the brief's else-case.
 static func _attributes(st: Dictionary) -> void:
 	var cust := PackedFloat32Array()
 	cust.resize(st.verts.size() * 4)
@@ -631,37 +389,33 @@ static func _attributes(st: Dictionary) -> void:
 		var shore: float = clampf(1.0 - (v.y - g) * 1.2, 0.0, 1.0) \
 			if v.y > g - 0.5 else 1.0   # near/below ground = the very shoreline
 		var steep: float = clampf(WaterField.grade_at(st.ctx, p) * 8.0, 0.0, 0.85)
-		for cut: Dictionary in st.cuts:
-			var along: float = (p - cut.p).dot(cut.dir)
-			if along > -0.5 and absf((p - cut.p).dot(cut.across)) < cut.half + S:
-				var w: float = clampf((3.5 - along) / 2.0, 0.0, 1.0)
-				steep = maxf(steep, w)
-				shore = maxf(shore, 0.85 * w)
+		for span: Dictionary in st.steep:
+			var along: float = (p - span.p).dot(span.dir)
+			if absf((p - span.p).dot(span.across)) < span.half + S:
+				var dist_from_base: float = (span.base_p - p).length()
+				var w: float = clampf((3.5 - dist_from_base) / 2.0, 0.0, 1.0)
+				if along > -0.5:   # only downstream of the lip, same as before
+					steep = maxf(steep, w)
+					shore = maxf(shore, 0.85 * w)
 		cust[vi * 4 + 0] = fl.x
 		cust[vi * 4 + 1] = shore
 		cust[vi * 4 + 2] = fl.y
 		cust[vi * 4 + 3] = steep
 	st["cust"] = cust
 	# wet_cells: swim-volume source data, keyed by 24m cell, value = ARRAY of
-	# surface entries (usually one). AGGREGATED over the cell's full sub-grid
-	# (9x9 lattice samples, shared edge rows included — a cut within one
-	# lattice step of the cell edge must still register): the old single-
-	# corner probe let a cell straddling a fall cut report its corner's level
-	# across the whole cell — a swim volume carrying the UPPER surface over
-	# the plunge pool (the owner's phantom mid-air swim class). gnd_lo is the
-	# MIN ground over the cell (half-cell ramps dip well below the corner
-	# sample; the volume floor must reach the ramp toe). A cell whose wet
-	# levels span more than CUT_JUMP is crossed by a cut or body seam: TWO
-	# entries, one per surface, both flat (a gradient probed across the jump
-	# is meaningless). The upper entry carries "floor" = lower level + 1.75,
-	# STRICTLY ABOVE the lower box's ceiling (lower level + the 1.7 headroom
-	# pad): the two boxes must not overlap, or the character's maxf-gating
-	# over passing volumes picks the upper surface anywhere in the overlap
-	# band — a band-limited recurrence of the phantom mid-air swim. The 5cm
-	# gap between them is fine; nothing swims in a sliver at a waterfall lip.
-	# Only cells OWNED by this chunk emit — border cells belong to the
-	# neighbour that meshes them (same ownership rule as the retired
-	# _build_volumes).
+	# ONE surface entry (Phase 2b: the split/stacked-volume machinery is
+	# deleted — falls are a continuous surface now, not two disjoint sheets
+	# meeting at a cut, so there is no "upper surface over the plunge pool"
+	# to guard against with a second stacked box; see this task's report).
+	# AGGREGATED over the cell's full sub-grid (9x9 lattice samples, shared
+	# edge rows included). gnd_lo is the MIN ground over the cell (half-cell
+	# ramps dip well below the corner sample; the volume floor must reach the
+	# ramp toe). STEEP GATE (Phase 2b, new): a cell whose max |grade_at| over
+	# its own sub-grid exceeds STEEP_UNSWIMMABLE gets NO volume at all — a
+	# steep fall face is not swimmable water (the owner's rule), so a
+	# character must fall/slide through it rather than float. Only cells
+	# OWNED by this chunk emit — border cells belong to the neighbour that
+	# meshes them (same ownership rule as the retired _build_volumes).
 	var wet_cells: Dictionary = {}
 	var cell0 := Vector2i(int(roundf(st.base.x / TILE)), int(roundf(st.base.y / TILE)))
 	for cz in 8:
@@ -669,12 +423,12 @@ static func _attributes(st: Dictionary) -> void:
 			var lo_i: int = cx * 8
 			var lo_j: int = cz * 8
 			var gnd_lo: float = INF
-			var wet_lo: float = INF
-			var wet_hi: float = -INF
 			var c_lvl: float = -INF   # level at the most central wet sample
 			var c_i: int = 0
 			var c_j: int = 0
 			var c_d: int = 1 << 30
+			var any_wet_cell := false
+			var max_grade := 0.0
 			for dj in 9:
 				for di in 9:
 					var i2: int = lo_i + di
@@ -684,28 +438,20 @@ static func _attributes(st: Dictionary) -> void:
 					gnd_lo = minf(gnd_lo, g)
 					if lvl == -INF or lvl <= g + EPS:
 						continue
-					wet_lo = minf(wet_lo, lvl)
-					wet_hi = maxf(wet_hi, lvl)
+					any_wet_cell = true
+					var p2: Vector2 = st.base + Vector2(i2, j2) * S
+					max_grade = maxf(max_grade, absf(WaterField.grade_at(st.ctx, p2)))
 					var d2: int = (di - 4) * (di - 4) + (dj - 4) * (dj - 4)
 					if d2 < c_d:
 						c_d = d2
 						c_lvl = lvl
 						c_i = i2
 						c_j = j2
-			if wet_hi == -INF:
+			if not any_wet_cell:
 				continue
+			if max_grade > STEEP_UNSWIMMABLE:
+				continue   # steep water: no volume, unswimmable by design
 			var cell: Vector2i = cell0 + Vector2i(cx, cz)
-			if wet_hi - wet_lo > CUT_JUMP:
-				# floor = wet_lo + 1.75 > the lower box's top (wet_lo + 1.7):
-				# the upper volume must start above the lower volume's ceiling
-				# or maxf-gating resurrects the phantom surface in the overlap
-				# band (task-9 re-review).
-				wet_cells[cell] = [
-					{"lvl": wet_hi, "grad": Vector2.ZERO, "gnd_lo": gnd_lo,
-						"floor": wet_lo + 1.75},
-					{"lvl": wet_lo, "grad": Vector2.ZERO, "gnd_lo": gnd_lo},
-				]
-				continue
 			var pr: Vector2 = st.base + Vector2(c_i + 4, c_j) * S
 			var pd: Vector2 = st.base + Vector2(c_i, c_j + 4) * S
 			var gx: float = (WaterField.level_at(st.ctx, pr) - c_lvl) / (4.0 * S)

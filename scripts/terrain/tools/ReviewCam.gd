@@ -46,21 +46,19 @@ static func pose(player: Vector3) -> void:
 	ch.set_physics_process(false)
 
 
-## Debug material swap: every water SHEET renders flat yellow, every FALL
-## flat magenta, unshaded — a screenshot then labels each pixel's owner, so
-## artifact attribution is read straight off the image instead of guessed
-## (owner: "try highlighting the pieces so you can identify the correct
-## piece"). Call highlight(false) to restore the real materials.
+## Debug material swap: every water SHEET renders flat yellow, unshaded — a
+## screenshot then labels each pixel's owner, so artifact attribution is read
+## straight off the image instead of guessed (owner: "try highlighting the
+## pieces so you can identify the correct piece"). Call highlight(false) to
+## restore the real material. Phase 2b: falls are no longer a separate
+## "Waterfalls" node/material (see WaterSurfaceBuilder.build_chunk) — the
+## sheet highlight alone now covers every water surface, falls included.
 static func highlight(on: bool) -> void:
 	var root: Node = (Engine.get_main_loop() as SceneTree).root
 	var sheet_m: Material = _flat(Color(1.0, 0.9, 0.1)) if on \
 		else WaterSurfaceBuilder.sheet_material()
-	var fall_m: Material = _flat(Color(1.0, 0.15, 0.9)) if on \
-		else WaterSurfaceBuilder.waterfall_material()
 	for mi in root.find_children("WaterSheet", "MeshInstance3D", true, false):
 		mi.material_override = sheet_m
-	for mi in root.find_children("Waterfalls", "MeshInstance3D", true, false):
-		mi.material_override = fall_m
 
 
 static func _flat(c: Color) -> StandardMaterial3D:
