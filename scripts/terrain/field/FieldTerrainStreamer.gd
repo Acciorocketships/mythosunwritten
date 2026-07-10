@@ -74,7 +74,6 @@ func _ready() -> void:
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
 	WaterSurfaceBuilder.waterfall_material()
-	WaterSurfaceBuilder.mist_resources()
 	_mesher._ensure_skirt_style()
 	for tag in TerrainChunkMesher.FOLIAGE_SCENES:
 		for path: String in TerrainChunkMesher.FOLIAGE_SCENES[tag]:
@@ -205,7 +204,6 @@ func _process(_delta: float) -> void:
 			continue
 		terrain_parent.add_child(pair[1])
 		_build_fx(pair[1], pair[2])   # main thread: particles/fog/lights
-		WaterSurfaceBuilder.build_mist(pair[1])   # main thread: plunge mist
 		_built[c] = pair[1]
 		integrated += 1
 	# Queue missing chunks nearest-first, so terrain grows outward from the player.

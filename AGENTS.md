@@ -128,29 +128,41 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   `HeightfieldPlan.raw_height`). Beds obey **containment** (`CONTAIN_DROP`): every bed is
   capped a full storey below the lowest flanking bank's natural storey, so channels always
   quantize bounded by ground on both sides — never a sheet hanging off a hillside.
-  `WaterSurfaceBuilder` builds one per-chunk sheet from a per-cell water field that
-  reasons about the **rendered region** (clamped storeys), never raw-noise estimates; a
-  cell is wet only if carved or inside the channel width, and pond levels apply only where
-  the rendered floor supports them (pond INTERIORS are exempt — deep clamp-sunk cells stay
-  lake, never holes). The sheet's boundary sub-vertices dip under the banks along
-  `WaterPlan.shore_sdf` — a continuous wobbled waterline — so coastlines read as smooth
-  curves, never cell rectangles, and bank cells quantized just under the level render as
-  real shore water inside the line instead of hover films. Wherever a wet cell's level sits
-  more than `BRIDGE_MAX` above what lies across a cardinal edge — lower water OR dry
-  ground — the sheet splits and a **waterfall slab** fills exactly that face
-  (`compute_ribbons` + `fall_rows`/`_ribbon_mesh`: an upstream overlap row embedded under
-  the source sheet, a horizontal-exit parabola, a circular-arc **ogee** that flattens back
-  to horizontal just under the plunge pool, and a submerged runout; crest corners of the
-  sheet snap EXACTLY to the pool level so lip and water always meet). Plunge foam is
-  **particle mist** (`_mist_node` per ribbon), not painted churn.
+  Three pure/mesh layers replace the old patch-and-carve field:
+  - `WaterField` — the continuous water surface as ONE height field `level_at(x,z)`,
+    discontinuous only at true waterfalls (bed drop > `FALL_DROP_MIN` == 4m between
+    adjacent trace samples — falls under 4m are just steep flow, no cut). Ponds are flat;
+    river reaches slope monotonically between anchors; a bounded flood extension
+    (`FLOOD_EXT`/`FLOOD_DEPTH_MAX`) covers submerged shelves. Pure and deterministic — no
+    rendering, no nodes.
+  - `WaterMesher` — a **boundary-conforming** sheet: marching squares over a 3m sub-grid on
+    `f(x,z) = level(x,z) - ground(x,z)`. Interior cells emit welded grid quads; boundary
+    cells emit contour polygons whose edge vertices sit ON the waterline (never a cell-grid
+    rectangle), so coastlines read as smooth curves and bank cells quantized just under the
+    level render as real shore water. Fall cuts (from `WaterField.fall_cuts`) split cells
+    into upstream/downstream parts; every contour free edge grows a buried hem so no edge
+    is ever left hanging in mid-air over the terrain.
+  - `FallMesher` — swept ogee waterfall geometry (>4m drops only) built directly from
+    `WaterMesher`'s own cut/lip records: the SAME `Vector3` lip vertices the sheet emits,
+    so crest continuity is data flow, not float-matching. An accelerating parabola leaves
+    the lip, a circular-arc fillet flattens back to horizontal just under the plunge pool,
+    and the mesh dives ~0.5m below the plunge surface so the visible intersection is
+    submerged.
+  `WaterSurfaceBuilder` is now a thin adapter: `build_chunk` calls `WaterMesher.build`/
+  `commit`, hands the fall cuts to `FallMesher.build`, and emits one `Area3D` swim volume
+  per wet-cell surface entry (a fall-straddled cell gets two stacked volumes, so no box
+  ever reports the upper level over a plunge pool). It also still owns the two shared
+  `ShaderMaterial`s and the river-trace `surface_profile`/`steepness_profile` helpers.
   `water_unified.gdshader` renders still + flowing water: a SMOOTH surface (no noise
   dapple) moved by slow long travelling swells (CPU-mirrored in
   `character.gd::_swell_offset` for buoyancy rocking — keep constants in sync) plus
   `WaterRippleSim` (SubViewport wave sim: swim wakes, entry splashes, ambient raindrop
   rings); foam only at shores and waterfall-steep reaches. Swim volumes ride along as
-  `Area3D`s. `tests/tools/water_review_spots.gd` emits F4 review teleports
-  (`ReviewTeleporter.gd` reads `review_teleports.json` and lifts the player onto streamed
-  ground if a stale spot height would bury them).
+  `Area3D`s. Plunge mist (particle spray at fall landings) is currently unwired — a
+  follow-up; the shared particle resources it needs are no longer warmed on startup.
+  `tests/tools/water_review_spots.gd` emits F4 review teleports (`ReviewTeleporter.gd`
+  reads `review_teleports.json` and lifts the player onto streamed ground if a stale spot
+  height would bury them).
 - **One tint field**: every terrain surface — walkable sheet, aprons, rock skirt, and all
   KayKit dressing pieces (per-instance colours) — multiplies THE shared material by
   `BiomeRegistry.blended_ground_tint` sampled at its own position. Change the palette or
