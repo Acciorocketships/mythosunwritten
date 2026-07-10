@@ -51,6 +51,30 @@ const _EASE_BAND := 2.0       # metres of (ground-hug - smooth-trend) level gap 
 # differently by two neighbours' windows (mitigation (b)) — see the
 # WaterField section of the Phase 1 report for the derivation.
 #
+# I-1 (final-review-run2.md): the plan also specifies the fill as "unlimited
+# distance, no depth cap," which is in tension with ANY fixed window — a
+# flood reaching >30m past a chunk border from its own seeds (a pond near
+# POND_R_MAX=140m, or a long still-water flood over storey-flat ground)
+# could in principle leave its own seeds outside a neighbouring chunk's
+# window, so that chunk would mesh the flooded ground dry: a hard wet/dry
+# crack at the border. MEASURED, not assumed: tests/test_water_field.gd's
+# test_wet_agreement_across_all_chunk_borders walks all four borders of
+# several chunks (including a pond at bound_radius=139.0, right at
+# POND_R_MAX's own ceiling) on two independently-generated seeds (the pinned
+# 2697992464 plus 991177), comparing wet() between neighbouring chunks at
+# every 3m step across the FULL 0-30m margin on both sides of each shared
+# border — 8712 points checked, ZERO mismatches. The margin is therefore
+# promoted from "the brief said so" to measured-adequate on the seeds this
+# suite exercises; it remains a WINDOWING HAZARD in principle (a pond whose
+# true reach exceeds this margin, or a still-water flood over unusually flat
+# terrain, could still crack on some future seed) — named in the
+# known-limitations roll-up (final-review-run2.md's own roll-up, item 8) as
+# the same class as roll-up item 1 (the 6m fill lattice's own blind spot),
+# not fixed proactively since no live instance has been found. The oracle
+# above is the regression gate: if a future seed/site DOES trip it, the fix
+# is a seed-aware adaptive window (extend the margin to cover any in-ctx
+# body's own footprint + slack) rather than a blind margin bump.
+#
 # PERF (Phase 1 report): the 3m lattice (85x85=7225 samples) measured a
 # median 59.8ms per ctx() on this machine — ~4x over the 15ms budget (the
 # brief's own escape hatch: "if the 3m lattice fill exceeds budget, fill at

@@ -821,6 +821,140 @@ func test_fill_is_deterministic_across_chunks() -> void:
 			mismatches, checked, offenders])
 
 
+## I-1 (final-review-run2.md Important 1): the fill's _FILL_MARGIN_WORLD is a
+## fixed 30m — the plan's own spec calls the fill "unlimited distance, no
+## depth cap," which is in tension with any fixed window. A flood that
+## reaches farther than 30m past a chunk border from ITS OWN seeds (a pond
+## near POND_R_MAX=140m, or a long still-water flood over storey-flat
+## ground) could in principle leave the seeds themselves outside the
+## NEIGHBOURING chunk's own window — that neighbour would then mesh the
+## flooded ground as dry, a hard wet/dry crack plus an unhemmed free edge
+## hanging over dry-rendered ground at the border.
+##
+## test_fill_is_deterministic_across_chunks (above) cannot see this class at
+## all — it samples only dx in [-9,+9], deliberately INSIDE the overlap band,
+## and only one chunk pair on one seed. This oracle is the cross-chunk
+## WET-AGREEMENT border check the finding calls for: walk ALL FOUR borders
+## (not just one axis) of SEVERAL chunk pairs, on TWO SEEDS (the pinned
+## 2697992464 plus 991177 — an independently-generated river/pond network),
+## comparing wet(a_ctx) vs wet(b_ctx) (not raw level_at — a crack is
+## specifically "one side reads water, the other reads land," the boolean
+## the mesher's own wet gate keys off of) at points spanning the FULL 0-30m
+## margin on both sides of each shared border (not just the overlap band
+## test_fill_is_deterministic_across_chunks already covers) — this is what
+## gives the oracle real teeth beyond what already exists.
+##
+## Verdict recorded in this task's own report per the finding's own
+## instruction: if this never fires, the 30m margin is promoted from
+## "brief said so" to "measured adequate" (documented in WaterField's own
+## comment + the known-limitations roll-up); if it fires, the fix is a
+## seed-aware adaptive window (extend the fill to cover any in-ctx body's
+## own footprint + slack), keeping this oracle as the regression gate either
+## way.
+func test_wet_agreement_across_all_chunk_borders() -> void:
+	var offenders: Array = []
+	var total_checked := 0
+	var total_mismatches := 0
+	# One cluster per seed: the pinned site (2 real traces, zero steep spans)
+	# plus a 2x4 wet cluster discovered near the origin for 991177 (1 river +
+	# 2 ponds per chunk, one pond at bound_radius=139.0 — right at
+	# POND_R_MAX's own ceiling, the exact "flood near the margin's limit"
+	# case I-1 is concerned about).
+	var clusters := [
+		{"seed": SEED, "chunks": [SITE_CHUNK, SITE_CHUNK + Vector2i(1, 0), SITE_CHUNK + Vector2i(0, 1)]},
+		{"seed": 991177, "chunks": [Vector2i(-8, 5), Vector2i(-7, 5), Vector2i(-8, 6), Vector2i(-7, 6),
+			Vector2i(-8, 7), Vector2i(-7, 7), Vector2i(-8, 8), Vector2i(-7, 8)]},
+	]
+	for cluster: Dictionary in clusters:
+		var seed_v: int = cluster.seed
+		var chunks: Array = cluster.chunks
+		var water: WaterPlan = _water(seed_v)
+		# Every adjacent PAIR within this cluster (both x- and z-neighbours),
+		# each shared border walked once, both directions covered because
+		# `chunks` already lists neighbours on both axes.
+		var pairs: Array = []
+		for a: Vector2i in chunks:
+			for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+				var b: Vector2i = a + d
+				if b in chunks:
+					pairs.append([a, b])
+		for pair: Array in pairs:
+			var res: Dictionary = _check_border_wet_agreement(water, pair[0], pair[1], seed_v)
+			total_checked += res.checked
+			total_mismatches += res.mismatches
+			offenders.append_array(res.offenders)
+	print("test_wet_agreement_across_all_chunk_borders: %d points checked across all borders/seeds, %d mismatches" % [
+		total_checked, total_mismatches])
+	assert_true(total_checked > 500, "walked real cross-border lines across multiple chunks/seeds (%d points)" % total_checked)
+	assert_eq(total_mismatches, 0,
+		"%d/%d points disagree on wet()-ness between neighbouring chunks within the 30m margin (e.g. %s)" % [
+			total_mismatches, total_checked, offenders])
+
+
+## Walks the ONE shared border between adjacent chunks a_chunk/b_chunk
+## (a_chunk + (1,0) or a_chunk + (0,1) — asserts the pair really is
+## axis-adjacent) at points spanning the FULL margin (0..30m, 3m step) on
+## BOTH sides of the border, across the border's whole length. Compares
+## WaterField.wet(ctx, region, p) — the mesher's own wet/dry gate — between
+## the two chunks' independently-built ctxs at the SAME world point p.
+## Returns {checked, mismatches, offenders}.
+func _check_border_wet_agreement(water: WaterPlan, a_chunk: Vector2i, b_chunk: Vector2i, seed_v: int) -> Dictionary:
+	var d: Vector2i = b_chunk - a_chunk
+	assert_true((absi(d.x) == 1 and d.y == 0) or (d.x == 0 and absi(d.y) == 1),
+		"chunk pair %s/%s must be axis-adjacent" % [a_chunk, b_chunk])
+	var a_region = _region(seed_v, a_chunk)
+	var b_region = _region(seed_v, b_chunk)
+	var a_ctx: Dictionary = WaterField.ctx(water, a_chunk, a_region)
+	var b_ctx: Dictionary = WaterField.ctx(water, b_chunk, b_region)
+	var span: float = WaterField.TILE * 8.0
+	var checked := 0
+	var mismatches := 0
+	var offenders: Array = []
+	var margins: Array = [0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0, 24.0, 27.0, 30.0]
+	if d.x == 1:
+		# Vertical border: shared world-space x, walk z along the chunk's own
+		# span, at every margin BOTH sides of the border (negative = inside
+		# a_chunk, positive = inside b_chunk).
+		var border_x: float = float(b_chunk.x) * span
+		var z0: float = float(a_chunk.y) * span
+		var z1: float = float(a_chunk.y + 1) * span
+		var z: float = z0
+		while z <= z1:
+			for m: float in margins:
+				for sgn in [-1.0, 1.0]:
+					var p := Vector2(border_x + sgn * m, z)
+					var a_wet: bool = WaterField.wet(a_ctx, a_region, p)
+					var b_wet: bool = WaterField.wet(b_ctx, b_region, p)
+					checked += 1
+					if a_wet != b_wet:
+						mismatches += 1
+						if offenders.size() < 10:
+							offenders.append("p=%s a_wet=%s b_wet=%s (a=%s b=%s)" % [
+								p, a_wet, b_wet, a_chunk, b_chunk])
+			z += 6.0
+	else:
+		# Horizontal border: shared world-space z, walk x along the chunk's
+		# own span.
+		var border_z: float = float(b_chunk.y) * span
+		var x0: float = float(a_chunk.x) * span
+		var x1: float = float(a_chunk.x + 1) * span
+		var x: float = x0
+		while x <= x1:
+			for m: float in margins:
+				for sgn in [-1.0, 1.0]:
+					var p := Vector2(x, border_z + sgn * m)
+					var a_wet: bool = WaterField.wet(a_ctx, a_region, p)
+					var b_wet: bool = WaterField.wet(b_ctx, b_region, p)
+					checked += 1
+					if a_wet != b_wet:
+						mismatches += 1
+						if offenders.size() < 10:
+							offenders.append("p=%s a_wet=%s b_wet=%s (a=%s b=%s)" % [
+								p, a_wet, b_wet, a_chunk, b_chunk])
+			x += 6.0
+	return {"checked": checked, "mismatches": mismatches, "offenders": offenders}
+
+
 ## Which river trace p's wetness is attributable to, post-fill. The fill
 ## (WaterField._build_fill) no longer selects a single "claimant" per point —
 ## wetness is reachable-by-relaxation from any seed — so this is an
