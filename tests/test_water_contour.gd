@@ -51,6 +51,35 @@ static func _rect(chunk: Vector2i) -> Rect2:
 	return Rect2(Vector2(chunk) * (WaterField.TILE * 8.0), Vector2.ONE * WaterField.TILE * 8.0)
 
 
+## INDEPENDENT wall cross-check (hardening pass): the same 8-ring scan Task
+## 2's oracle used, kept as a GROUND-TRUTH witness against WaterContour's
+## own single-outward-normal wall probe — NOT as the primary wall source
+## (the curve's own flag is; see _curve_turn_stats). Rise is measured
+## relative to the point's own water level, the same anchor Task 2's
+## _is_wall used (a mesh boundary vert's v.y rides the water level, per
+## WaterMesher._edge_vert's own docstring). MAX over 8 directions at both
+## probe distances is the most GENEROUS wall reading: a point only reads
+## non-wall here if EVERY direction around it is gentle — so
+## formula-wall && !ring-wall is a structural impossibility for a correct
+## formula (the formula probes ONE direction; if that one direction rises,
+## some ring direction rises too on this quantized terrain) and any such
+## point is evidence of over-tagging.
+const _RING: Array[Vector2] = [
+	Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1),
+	Vector2(0.70710678, 0.70710678), Vector2(-0.70710678, 0.70710678),
+	Vector2(0.70710678, -0.70710678), Vector2(-0.70710678, -0.70710678),
+]
+
+
+static func _ring_wall(region, p: Vector2, lvl: float) -> bool:
+	for d: Vector2 in _RING:
+		var g05: float = TerrainSurfaceField.surface_y(region, p.x + d.x * 0.5, p.y + d.y * 0.5)
+		var g15: float = TerrainSurfaceField.surface_y(region, p.x + d.x * 1.5, p.y + d.y * 1.5)
+		if (g05 - lvl) / 0.5 > WaterContour.WALL_SLOPE or (g15 - lvl) / 1.5 > WaterContour.WALL_SLOPE:
+			return true
+	return false
+
+
 ## Max turn angle (degrees, XZ plane) between consecutive segment direction
 ## vectors along one curve's own point array, restricted to NON-WALL points
 ## (curve.wall[i] == 0) per the brief's own "for non-wall points" framing —
@@ -114,7 +143,11 @@ static func _curve_spacing_range(c: Dictionary) -> Vector2:
 ## test_pond_yields_smooth_closed_curve — the GREEN half of the r3-task-2 red
 ## evidence: WaterContour.curves() on a pinned, VERIFIED-isolated pond chunk
 ## must produce at least one CLOSED curve whose non-wall points turn less
-## than 25 degrees and whose spacing sits in [1.0, 2.0]m.
+## than 25 degrees and whose spacing sits in [1.0, 2.0]m. Hardening pass
+## adds a wall-flag sanity block (fraction printed; zero over-tagging vs an
+## independent 8-ring ground-truth witness; non-wall points must exist) —
+## see the inline comment there for why the review's literal "fraction <
+## 0.25" premise is false for this pond.
 ##
 ## Site choice: SITE_CHUNK (0,-6) itself does NOT work for this test — probed
 ## directly (this task): every water body reaching SITE_CHUNK's own mesh
@@ -170,68 +203,186 @@ func test_pond_yields_smooth_closed_curve() -> void:
 	assert_true(max_turn_nonwall < 25.0,
 		"non-wall points turn < 25deg (max %.1fdeg): %s" % [max_turn_nonwall, all_offenders])
 
+	# --- Wall-flag sanity (hardening pass): over-tagging must fail loudly ---
+	#
+	# The review asked for "wall fraction < 0.25, shores are known-gentle" —
+	# that premise is FALSE for this pond and the fraction assert would fail
+	# on reality, not on a defect: probed directly (r3-task-3-report.md,
+	# Hardening section), this pond sits in a sheer rock bowl — ground steps
+	# from 8.0 (3m BELOW its 11.0 surface) to 20.0 (9m ABOVE it) within
+	# 0.5m across almost the whole shoreline, i.e. a 12m canyon wall at the
+	# waterline. That is the terrain's own design, not an artifact:
+	# TerrainSurfaceField._is_cliff_top walls ANY dry cell overlooking a
+	# water-carved cell ("shorelines read as crisp dressed banks"), so on
+	# this terrain nearly every carved shore is a genuine wall. Measured
+	# fraction here: 122/124 = 0.984, with EVERY formula-wall point
+	# independently confirmed steep by the generous 8-ring witness
+	# (over_tag = 0).
+	#
+	# What actually catches systematic over-tagging (the review's real
+	# concern — points exempted from the turn oracle that shouldn't be):
+	# assert ZERO points where the curve's own wall flag is set but the
+	# independent 8-ring ground-truth witness (_ring_wall, max over all
+	# directions — the most generous non-wall reading) finds no steep
+	# direction at all. Any such point means the formula tagged wall where
+	# the terrain is verifiably gentle in every direction — the exact
+	# failure mode the review named, failing loudly with coordinates.
+	# Plus: at least one genuine non-wall point must exist (anti-vacuity —
+	# the turn oracle above must keep real teeth; this pond has 2).
+	var wall_ct := 0
+	var pt_total := 0
+	var over_tags: Array = []
+	var region = _region(SEED, pond_chunk)
+	for c: Dictionary in closed_curves:
+		var pts: PackedVector2Array = c.pts
+		for i in pts.size():
+			pt_total += 1
+			if c.wall[i] == 1:
+				wall_ct += 1
+				if not _ring_wall(region, pts[i], c.levels[i]):
+					over_tags.append("i=%d p=%s lvl=%.2f" % [i, pts[i], c.levels[i]])
+	var frac: float = float(wall_ct) / maxf(1.0, float(pt_total))
+	print("MEAS test_pond_yields_smooth_closed_curve: wall fraction = %d/%d = %.3f, over_tagged (formula wall, ring gentle) = %d" % [
+		wall_ct, pt_total, frac, over_tags.size()])
+	assert_true(over_tags.is_empty(),
+		"no curve point is wall-flagged where the independent 8-ring witness reads gentle in EVERY direction: %s" % str(over_tags))
+	assert_true(wall_ct < pt_total,
+		"at least one genuine non-wall point survives (anti-vacuity: the non-wall turn oracle must have teeth; %d/%d wall)" % [wall_ct, pt_total])
 
-## test_border_curves_weld — the plan's Free-edge/chunk-seam-determinism
-## constraint made concrete: two neighbouring chunks' own curves() calls must
-## agree bit-exactly (tolerance 1e-4) on every point that lands on their
-## shared border. Both pairs are VERIFIED wet-crossing borders (probed this
-## task): (0,-6)|(1,-6) on the pinned SEED (the SITE_CHUNK's own east curve
-## genuinely reaches x=192), and (-8,6)|(-8,7) on 991177 (a real north-south
-## river crossing at z=1344 inside the seed's own known water cluster,
-## tests/test_water_field.gd's test_wet_agreement_across_all_chunk_borders
-## cluster list) — chosen because the brief's literal chunk pair
-## ((0,-47),(0,-46)) carries ZERO water on 2697992464 (verified: bodies_near
-## on both chunks returns 0 ponds/0 rivers) so it cannot exercise a weld at
-## all; these two pairs are real, checked substitutes covering both pinned
-## seeds as the brief intended.
+
+## Border-curve points of one chunk's curves() output lying on the border
+## line `p[axis] == coord` (0.01 gather tolerance), each with its "arc
+## inside" — the arc length from the border point to the FARTHER end of its
+## own piece, i.e. how much curve genuinely lives on this chunk's side. Used
+## by test_border_curves_weld's mid-arc gate: a crossing with a large arc on
+## BOTH sides sits mid-arc of the underlying waterline, far from either
+## side's natural polyline endpoints (where each chunk anchors its own
+## resample phase) — exactly the crossings where an endpoint/phase-alignment
+## coincidence CANNOT explain a weld match.
+static func _border_pts(curves: Array, axis: int, coord: float) -> Array:
+	var out: Array = []
+	for c: Dictionary in curves:
+		var pts: PackedVector2Array = c.pts
+		var n: int = pts.size()
+		for i in n:
+			var p: Vector2 = pts[i]
+			if absf(p[axis] - coord) >= 0.01:
+				continue
+			var arc_fwd := 0.0
+			for k in range(i, n - 1):
+				arc_fwd += pts[k].distance_to(pts[k + 1])
+			var arc_bwd := 0.0
+			for k in range(1, i + 1):
+				arc_bwd += pts[k - 1].distance_to(pts[k])
+			out.append({"p": p, "arc_inside": maxf(arc_fwd, arc_bwd)})
+	return out
+
+
+## test_border_curves_weld — the plan's chunk-seam-determinism constraint
+## made concrete: two neighbouring chunks' own curves() calls must agree on
+## every point that lands on their shared border, at an EXPLICIT 1e-4
+## distance ceiling (the brief's own "bit-equality target; tolerance 1e-4
+## max"). NOTE: the first version of this test used Vector2.is_equal_approx,
+## which is a RELATIVE comparison — at world coordinates ~1000-4000 its
+## effective tolerance is ~0.01-0.04m, far looser than 1e-4; the hardened
+## assert below measures the actual distance and holds it to 1e-4.
+##
+## HARDENED (post-review): the original two-pair/one-crossing-each oracle
+## was flagged as thin ("plausible, not proven" for crossings far from a
+## polyline's natural resample-phase alignment — each chunk clips its OWN
+## independently-phased resample of a differently-truncated polyline). This
+## version scans every adjacent pair inside two VERIFIED wet clusters (all
+## cardinal borders where water actually crosses), covering both pinned
+## seeds, accumulating 13 crossings (measured; asserted >= 6) of which 12
+## are MID-ARC (>= 10m — measured range 45-330m — of curve inside BOTH
+## chunks; asserted >= 6): crossings that deep into both sides' curves
+## cannot be explained by endpoint/phase coincidence. Probe evidence
+## (r3-task-3-report.md, Hardening section): all 13 measured distances are
+## 0.000000000 at 9 printed decimals — genuinely bit-equal, not merely
+## inside 1e-4.
+##
+## Residual limitation, stated honestly: every real crossing on both pinned
+## seeds sits on a locally STRAIGHT waterline reach (max nearby turn 0.0deg
+## at all 13 — storey-quantized terrain crosses chunk borders along straight
+## contour runs; rounded corner arcs are a few metres long and none coincide
+## with a border line on these seeds). A crossing ON a curved arc — where
+## the two sides' 1.5m chords could in principle disagree up to
+## O(spacing^2 * curvature) — is therefore not exercised by any real site
+## this suite can pin; if a future seed produces one, this oracle (explicit
+## 1e-4 distance, no is_equal_approx slack) is what will catch it.
+##
+## The brief's literal chunk pair ((0,-47),(0,-46)) carries ZERO water on
+## 2697992464 (verified: bodies_near on both chunks returns 0 ponds/0
+## rivers) so it cannot exercise a weld at all; the clusters below are real,
+## probed substitutes covering both pinned seeds as the brief intended.
 func test_border_curves_weld() -> void:
-	var pairs := [
-		{"seed": SEED, "a": Vector2i(0, -6), "b": Vector2i(1, -6), "axis": 0},
-		{"seed": 991177, "a": Vector2i(-8, 6), "b": Vector2i(-8, 7), "axis": 1},
+	var weld_tol := 0.0001   # 1e-4 — the brief's explicit ceiling
+	var mid_arc_min := 10.0  # metres of curve inside BOTH chunks => mid-arc crossing
+	var clusters := [
+		# The pinned site's river/lake system (flood bbox spans chunk columns
+		# -1..2, rows -7..-6 — verified by flood-fill, see the report).
+		{"seed": SEED, "chunks": [
+			Vector2i(-1, -7), Vector2i(0, -7), Vector2i(1, -7), Vector2i(2, -7),
+			Vector2i(-1, -6), Vector2i(0, -6), Vector2i(1, -6), Vector2i(2, -6)]},
+		# 991177's known water cluster (test_water_field.gd's own border-
+		# agreement cluster); of its adjacent pairs only (-8,6)|(-8,7) has a
+		# wet border crossing (probed: the other pair borders are dry), so
+		# only those two chunks are built here.
+		{"seed": 991177, "chunks": [Vector2i(-8, 6), Vector2i(-8, 7)]},
 	]
-	for pair: Dictionary in pairs:
-		var seed_v: int = pair.seed
-		var a_chunk: Vector2i = pair.a
-		var b_chunk: Vector2i = pair.b
-		var axis: int = pair.axis
-		var a_ctx: Dictionary = _ctx(seed_v, a_chunk)
-		var b_ctx: Dictionary = _ctx(seed_v, b_chunk)
-		var a_rect: Rect2 = _rect(a_chunk)
-		var b_rect: Rect2 = _rect(b_chunk)
-		var border_coord: float = b_rect.position.x if axis == 0 else b_rect.position.y
-
-		var a_curves: Array = WaterContour.curves(a_ctx, a_rect)
-		var b_curves: Array = WaterContour.curves(b_ctx, b_rect)
-
-		var a_pts: Array = []
-		for c: Dictionary in a_curves:
-			for p: Vector2 in c.pts:
-				if absf(p[axis] - border_coord) < 0.01:
-					a_pts.append(p)
-		var b_pts: Array = []
-		for c: Dictionary in b_curves:
-			for p: Vector2 in c.pts:
-				if absf(p[axis] - border_coord) < 0.01:
-					b_pts.append(p)
-
-		print("MEAS test_border_curves_weld: seed=%d pair=%s|%s border_coord=%.1f a_border_pts=%d b_border_pts=%d" % [
-			seed_v, a_chunk, b_chunk, border_coord, a_pts.size(), b_pts.size()])
-		assert_true(a_pts.size() > 0, "%s|%s: chunk a has at least one border-curve point" % [a_chunk, b_chunk])
-		assert_eq(a_pts.size(), b_pts.size(),
-			"%s|%s: both sides report the same number of border-crossing points" % [a_chunk, b_chunk])
-
-		var unmatched: Array = []
-		for ap: Vector2 in a_pts:
-			var found := false
-			for bp: Vector2 in b_pts:
-				if ap.is_equal_approx(bp):
-					found = true
-					break
-			if not found:
-				unmatched.append(ap)
-		assert_true(unmatched.is_empty(),
-			"%s|%s: every a-side border point has a matching (is_equal_approx) b-side point — unmatched: %s" % [
-				a_chunk, b_chunk, unmatched])
+	var total := 0
+	var mid_arc_ct := 0
+	var worst := 0.0
+	for cluster: Dictionary in clusters:
+		var seed_v: int = cluster.seed
+		var chunks: Array = cluster.chunks
+		var curve_cache: Dictionary = {}
+		for chunk: Vector2i in chunks:
+			for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+				var nb: Vector2i = chunk + d
+				if not (nb in chunks):
+					continue
+				var axis: int = 0 if d.x == 1 else 1
+				var coord: float = float(nb.x if axis == 0 else nb.y) * (WaterField.TILE * 8.0)
+				if not curve_cache.has(chunk):
+					curve_cache[chunk] = WaterContour.curves(_ctx(seed_v, chunk), _rect(chunk))
+				if not curve_cache.has(nb):
+					curve_cache[nb] = WaterContour.curves(_ctx(seed_v, nb), _rect(nb))
+				var a_pts: Array = _border_pts(curve_cache[chunk], axis, coord)
+				var b_pts: Array = _border_pts(curve_cache[nb], axis, coord)
+				if a_pts.is_empty() and b_pts.is_empty():
+					continue
+				assert_eq(a_pts.size(), b_pts.size(),
+					"%s|%s (seed %d): both sides report the same number of border points" % [chunk, nb, seed_v])
+				for ap: Dictionary in a_pts:
+					var best_d := INF
+					var best_bp = null
+					for bp: Dictionary in b_pts:
+						var dd: float = ap.p.distance_to(bp.p)
+						if dd < best_d:
+							best_d = dd
+							best_bp = bp
+					total += 1
+					worst = maxf(worst, best_d if best_d < INF else 999.0)
+					var is_mid: bool = best_bp != null \
+						and ap.arc_inside >= mid_arc_min and best_bp.arc_inside >= mid_arc_min
+					if is_mid:
+						mid_arc_ct += 1
+					if best_bp != null:
+						print("MEAS test_border_curves_weld: seed=%d %s|%s coord=%.1f a=(%.9f, %.9f) b=(%.9f, %.9f) dist=%.9f a_arc=%.1f b_arc=%.1f mid_arc=%s" % [
+							seed_v, chunk, nb, coord, ap.p.x, ap.p.y, best_bp.p.x, best_bp.p.y,
+							best_d, ap.arc_inside, best_bp.arc_inside, is_mid])
+					else:
+						print("MEAS test_border_curves_weld: seed=%d %s|%s coord=%.1f a=(%.9f, %.9f) UNMATCHED (no b-side point)" % [
+							seed_v, chunk, nb, coord, ap.p.x, ap.p.y])
+					assert_true(best_bp != null and best_d <= weld_tol,
+						"%s|%s (seed %d): border point %s matches the neighbour within 1e-4 (dist %.9f)" % [
+							chunk, nb, seed_v, ap.p, best_d])
+	print("MEAS test_border_curves_weld: %d total crossings (%d mid-arc), worst distance %.9f" % [
+		total, mid_arc_ct, worst])
+	assert_true(total >= 6, "at least 6 border crossings accumulated across both seeds (got %d)" % total)
+	assert_true(mid_arc_ct >= 6, "at least 6 crossings are mid-arc (>= %.0fm of curve inside BOTH chunks; got %d)" % [
+		mid_arc_min, mid_arc_ct])
 
 
 ## test_wall_stays_straight — the I4 wall reach (VERIFIED this task: a
