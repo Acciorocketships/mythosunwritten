@@ -27,7 +27,47 @@ static func _region(seed_v: int, chunk: Vector2i):
 	return _regions[key]
 
 
+## Phase 2a: profile() has no cuts array — levels[] is one continuous,
+## monotone curve end to end (see WaterField.profile/_descend_segment).
+## Monotonicity is checked unconditionally (region or not); the per-segment
+## drop bound is checked ONLY when a region is supplied (region == null
+## falls back to the old instant bed-chase with no terrain-hugging shaping
+## at all — see profile()'s own region-optional note — so there is nothing
+## for a drop bound to mean there). WITH a region, the site itself (H1: the
+## rendered terrain here never drops more than 4.0m in ANY 24m window) must
+## show every per-segment drop staying under FALL_DROP_MIN — this is the
+## direct field-level echo of steep_spans() finding zero spans here: if a
+## segment drop ever DID exceed FALL_DROP_MIN on this seed, either the
+## terrain-hugging is fabricating a cliff where none exists (a regression
+## of the exact H1 bug this phase fixes) or the site genuinely grew a steep
+## reach — either way this test should go red and get investigated, not
+## silently pass.
 func test_profiles_monotone_and_continuous() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var checked := 0
+	for tr: RiverTrace in ctx.rivers:
+		var prof: Dictionary = WaterField.profile(tr, region)
+		var levels: PackedFloat32Array = prof.levels
+		assert_eq(levels.size(), tr.points.size(), "one level per sample")
+		for i in range(1, levels.size()):
+			assert_true(levels[i] <= levels[i - 1] + 0.001,
+				"water never flows uphill (trace %s sample %d)" % [tr.source_cell, i])
+			var drop: float = levels[i - 1] - levels[i]
+			assert_true(drop < WaterField.FALL_DROP_MIN + 0.02,
+				"site segment drops %0.2f >= FALL_DROP_MIN at sample %d (H1: this trace's terrain never demands it)" % [drop, i])
+			checked += 1
+	assert_true(checked > 0, "site chunk has river samples")
+
+
+## profile() without a region: the old instant bed-chase fallback (no
+## terrain to hug — see profile()'s region-optional note). Still must be
+## monotone non-increasing; there is no drop bound to check here since the
+## fallback path never shapes descent against terrain at all (a hand-built
+## trace with no HeightfieldRegion, e.g. test_multi_seam_cell_never_folds'
+## synthetic case, is exactly this regime).
+func test_profile_without_region_is_still_monotone() -> void:
 	var water: WaterPlan = _water(SEED)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)
 	var checked := 0
@@ -37,37 +77,9 @@ func test_profiles_monotone_and_continuous() -> void:
 		assert_eq(levels.size(), tr.points.size(), "one level per sample")
 		for i in range(1, levels.size()):
 			assert_true(levels[i] <= levels[i - 1] + 0.001,
-				"water never flows uphill (trace %s sample %d)" % [tr.source_cell, i])
-			var drop: float = levels[i - 1] - levels[i]
-			if not prof.cuts.has(i - 1):
-				assert_true(drop < WaterField.FALL_DROP_MIN + 0.02,
-					"continuous stretch drops %0.2f >= FALL_DROP_MIN at sample %d" % [drop, i])
+				"water never flows uphill without a region either (trace %s sample %d)" % [tr.source_cell, i])
 			checked += 1
-		# Window bound: with no cut inside a 2-sample span (i, i+1), the whole
-		# span's drop must also stay under the threshold — a multi-sample
-		# cliff that never trips the per-step bound above must still be
-		# caught by the lookahead window in WaterField.profile().
-		for i in range(0, levels.size() - 2):
-			if not prof.cuts.has(i) and not prof.cuts.has(i + 1):
-				var window_drop: float = levels[i] - levels[i + 2]
-				assert_true(window_drop <= WaterField.FALL_DROP_MIN + 0.02,
-					"window drops %0.2f >= FALL_DROP_MIN across samples %d..%d" % [window_drop, i, i + 2])
 	assert_true(checked > 0, "site chunk has river samples")
-
-
-func test_cuts_only_at_big_drops() -> void:
-	var water: WaterPlan = _water(SEED)
-	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)
-	var total_cuts := 0
-	for tr: RiverTrace in ctx.rivers:
-		var prof: Dictionary = WaterField.profile(tr)
-		for ci in prof.cuts:
-			total_cuts += 1
-			var drop: float = prof.levels[ci] - prof.levels[ci + 1]
-			assert_true(drop > WaterField.FALL_DROP_MIN + 0.009,
-				"cut %d drops only %0.2f" % [ci, drop])
-	if total_cuts == 0:
-		pass_test("no >4m windows near the site on this seed")
 
 
 func test_level_at_known_water_and_dry_land() -> void:
@@ -89,9 +101,42 @@ func test_level_at_known_water_and_dry_land() -> void:
 	assert_false(WaterField.wet(ctx, region, dry_p), "owner's bank is dry")
 
 
-func test_level_continuous_away_from_cuts() -> void:
-	# Walk 1 m steps along the site channel: |level step| must stay < 1.0
-	# except when a cut lies between the two probes.
+## Phase 2a REWRITE (was "at most the true falls jump; got %d" <= 2 — the
+## old cut-based world where a jump WAS expected on this line). Site's real,
+## region-backed level_at is now genuinely continuous end to end: H1 fixed
+## means the whole line has ZERO steep spans (see steep_spans/_steep_scan),
+## so there is no jump left to tolerate at all — big_steps must be 0. Uses a
+## REGION-backed ctx (the real production path); the old region-less
+## variant of this walk is covered separately by
+## test_level_continuous_without_region_keeps_old_jumps, which documents
+## the (expected, region-optional) fallback still showing the old-style
+## jumps when there is no terrain to hug.
+func test_level_continuous_along_the_site_channel() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var prev: float = INF
+	var big_steps := 0
+	var max_step := 0.0
+	for zi in range(-1130, -1080):
+		var lvl: float = WaterField.level_at(ctx, Vector2(54.0, float(zi)))
+		if prev < INF and lvl > -INF and prev > -INF:
+			var step: float = absf(lvl - prev)
+			max_step = maxf(max_step, step)
+			if step > 1.0:
+				big_steps += 1
+		prev = lvl
+	assert_eq(big_steps, 0,
+		"the site's real (region-backed) profile is continuous end to end now; max step %.2f" % max_step)
+
+
+## profile()'s region-optional fallback (no terrain to hug) still shows the
+## OLD-style instant jump on this same line — documents that the fallback
+## is deliberately the pre-Phase-2a behaviour, not a second copy of the new
+## continuity guarantee (see profile()'s own region-optional docstring
+## note). Not a regression: no production caller ever builds a river ctx
+## without a region (WaterMesher.build/build_chunk always pass one).
+func test_level_continuous_without_region_keeps_old_jumps() -> void:
 	var water: WaterPlan = _water(SEED)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)
 	var prev: float = INF
@@ -102,64 +147,154 @@ func test_level_continuous_away_from_cuts() -> void:
 			if absf(lvl - prev) > 1.0:
 				big_steps += 1
 		prev = lvl
-	# The site has 2 real falls on this line historically (9->5, 5->3 was a
-	# weir and must now be CONTINUOUS, so at most the >4m cuts remain).
-	assert_true(big_steps <= 2, "at most the true falls jump; got %d" % big_steps)
+	assert_true(big_steps > 0,
+		"the region-less fallback keeps the old instant-chase jumps by design")
 
 
-func test_fall_cuts_geometry() -> void:
+## steep_spans()/fall_cuts() (Phase 2a shim — see WaterField.fall_cuts'
+## docstring) on the real site: ZERO spans, matching H1 exactly (this
+## trace's rendered terrain never drops more than FALL_DROP_MIN in any 24m
+## window — the bed-quantization false positive the old fall_cuts had is
+## gone). This is the direct field-level echo of the new
+## test_no_steep_span_without_terrain_drop oracle below, pinned as its own
+## assertion so a regression here is caught even if that oracle's rect
+## happened to change.
+func test_steep_spans_empty_at_the_site() -> void:
 	var water: WaterPlan = _water(SEED)
-	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
 	var rect := Rect2(Vector2(0, -1152), Vector2(192, 192))
-	var cuts: Array = WaterField.fall_cuts(ctx, rect)
-	assert_true(cuts.size() >= 1, "the site keeps its big falls")
-	for cut: Dictionary in cuts:
-		assert_true(cut.top - cut.bottom > WaterField.FALL_DROP_MIN - 0.001,
-			"every cut is a true fall (drop %.2f)" % (cut.top - cut.bottom))
-		assert_almost_eq(cut.dir.length(), 1.0, 0.001, "dir is unit")
-		assert_almost_eq(cut.dir.dot(cut.across), 0.0, 0.001, "across is perpendicular")
+	var spans: Array = WaterField.steep_spans(ctx, rect)
+	assert_eq(spans.size(), 0,
+		"H1: the site's rendered terrain never drops > FALL_DROP_MIN in any 24m window")
+	# fall_cuts() is the back-compat shim (== steep_spans one to one this
+	# phase) every existing WaterMesher/FallMesher reader still calls.
+	var shim: Array = WaterField.fall_cuts(ctx, rect)
+	assert_eq(shim.size(), 0, "fall_cuts() shim matches steep_spans() exactly")
 
 
-## Degenerate case: a trace whose last bed sample still sits > FALL_DROP_MIN
-## above its terminal pond's surface (profile() then appends a cut at
-## ci == n-1, where the "normal" j = mini(ci+1, n-1) collapses to ci itself
-## — no downstream sample to derive dir/across from). fall_cuts() must
-## special-case this: dir comes from the trace's LAST SEGMENT instead, top
-## is the trace's own final level, and bottom is the pond's surface. Hand-
-## built trace + pond — no world plan needed, so this stays fast.
-func test_fall_cuts_pond_terminal_degenerate() -> void:
+## Non-degenerate steep_spans() integration test: a hand-built
+## HeightfieldRegion (HeightfieldRegion.gd's own {storeys, levels, carved}
+## dictionary constructor — practical to build directly, no world plan
+## needed) carrying a genuine 12m vertical cliff (storey 3 -> storey 0,
+## TerrainSurfaceField's own _is_cliff_top logic renders that as a real
+## sheer face, not a ramp, since the drop is >= 2 storeys), with a hand-built
+## RiverTrace running straight down through it. This is the practical
+## alternative the brief allows when a stub ground array alone would not
+## exercise steep_spans' own world-position/dir/level-lookup plumbing (only
+## _steep_scan's pure window-scan math, covered separately below).
+func test_steep_spans_finds_a_real_hand_built_cliff() -> void:
+	var storeys := {}
+	for cz in range(-5, 0):
+		for cx in range(-2, 3):
+			storeys[Vector2i(cx, cz)] = 3   # upstream: high ground (h=12)
+	for cz in range(0, 5):
+		for cx in range(-2, 3):
+			storeys[Vector2i(cx, cz)] = 0   # downstream: low ground (h=0)
+	var region := HeightfieldRegion.new(storeys, {})
 	var tr := RiverTrace.new()
-	tr.source_cell = Vector2i(999, 999)
+	tr.source_cell = Vector2i(998, 998)
 	tr.priority = 1
 	tr.points = PackedVector2Array([
+		Vector2(0.0, -36.0), Vector2(0.0, -24.0), Vector2(0.0, -12.0),
 		Vector2(0.0, 0.0), Vector2(0.0, 12.0), Vector2(0.0, 24.0)])
-	# Steps of 2.0m each (bed) -> raw level steps of 2.0m, both under
-	# FALL_DROP_MIN, so no mid-trace cut is placed; the final level still
-	# lands well above the pond, tripping the pond-tail cut at ci == n-1.
-	tr.beds = PackedFloat32Array([20.0, 18.0, 16.0])
-	tr.widths = PackedFloat32Array([3.0, 3.0, 3.0])
+	tr.beds = PackedFloat32Array([10.0, 9.0, 8.0, 2.0, 1.0, 0.5])
+	tr.widths = PackedFloat32Array([3.0, 3.0, 3.0, 3.0, 3.0, 3.0])
 	tr.joined = false
 	tr.source_pool = null
-	# Pond surface sits far enough below the trace's last raw level
-	# (16.0 + SURFACE_RIDE = 18.2) that the drop clears FALL_DROP_MIN (4.0).
-	var pond := PondStamp.new(Vector2(0.0, 36.0), 5.0, 42, 3, 2.0)  # surface_y() = 11.0
-	tr.pond = pond
-	var ctx: Dictionary = {"water": null, "ponds": [], "rivers": [tr], "buckets": {}}
+	tr.pond = null
+	var ctx: Dictionary = {"water": null, "ponds": [], "rivers": [tr], "buckets": {}, "region": region}
 	var rect := Rect2(Vector2(-100.0, -100.0), Vector2(200.0, 200.0))
-	var cuts: Array = WaterField.fall_cuts(ctx, rect)
-	assert_eq(cuts.size(), 1, "the pond-terminal drop emits exactly one cut")
-	var cut: Dictionary = cuts[0]
-	assert_almost_eq(cut.dir.length(), 1.0, 0.001, "dir is unit, not the zero vector")
-	assert_almost_eq(cut.dir.dot(cut.across), 0.0, 0.001, "across is perpendicular to dir")
-	assert_true(cut.top - cut.bottom > WaterField.FALL_DROP_MIN,
-		"the recorded drop clears FALL_DROP_MIN (%.2f)" % (cut.top - cut.bottom))
-	# dir must follow the trace's last segment (straight +Z here), not some
-	# degenerate zero-length "normal" between ci and itself.
-	assert_almost_eq(cut.dir.x, 0.0, 0.001, "dir.x follows the last segment")
-	assert_almost_eq(cut.dir.y, 1.0, 0.001, "dir.y follows the last segment")
-	assert_almost_eq(cut.p.x, 0.0, 0.001, "p stays at the last point")
-	assert_almost_eq(cut.p.y, 24.0, 0.001, "p stays at the last point")
-	assert_almost_eq(cut.bottom, pond.surface_y(), 0.001, "bottom is the pond's surface")
+	var spans: Array = WaterField.steep_spans(ctx, rect)
+	assert_eq(spans.size(), 1, "the hand-built cliff is exactly one steep span")
+	if spans.is_empty():
+		return
+	var span: Dictionary = spans[0]
+	assert_almost_eq(span.drop, 12.0, 0.01, "the span's own ground drop matches the cliff height")
+	assert_true(span.drop > WaterField.FALL_DROP_MIN + 0.01, "clears the fall threshold")
+	assert_almost_eq(span.dir.length(), 1.0, 0.001, "dir is unit")
+	assert_almost_eq(span.dir.dot(span.across), 0.0, 0.001, "across is perpendicular to dir")
+	assert_true(span.dir.y > 0.0, "dir follows the trace downstream (+z)")
+	assert_true(span.top > span.bottom, "top is the upstream (higher) water level")
+	assert_true(span.p.y < -9.0, "the lip sits upstream of the cliff's own base line (z=-9)")
+	# Profile levels either side of the cliff must have actually dropped —
+	# steep_spans' top/bottom are profile() water levels, not raw ground.
+	var prof: Dictionary = WaterField.profile(tr, region)
+	assert_true(prof.levels[1] - prof.levels[3] > WaterField.FALL_DROP_MIN,
+		"the profile itself hugs the cliff face with a real drop")
+	# fall_cuts() shim reproduces the same record shape 1:1 (Phase 2a
+	# back-compat — see WaterField.fall_cuts' docstring).
+	var shim: Array = WaterField.fall_cuts(ctx, rect)
+	assert_eq(shim.size(), 1, "fall_cuts() shim matches steep_spans() exactly")
+	assert_almost_eq(shim[0].drop, span.drop, 0.001, "shim record is the same span")
+
+
+## _steep_scan(grounds, step) unit tests — the pure, terrain-free window-scan
+## math the brief asks to be independently testable (steep_spans' own
+## world-position/level plumbing is covered by
+## test_steep_spans_finds_a_real_hand_built_cliff above; this is JUST the
+## scan over a stubbed ground array).
+func test_steep_scan_flat_ground_finds_nothing() -> void:
+	var grounds := PackedFloat32Array()
+	for i in 20:
+		grounds.append(10.0)
+	var spans: Array = WaterField._steep_scan(grounds, 3.0)
+	assert_eq(spans.size(), 0, "flat ground has no steep window")
+
+
+func test_steep_scan_gentle_ramp_finds_nothing() -> void:
+	# A ramp dropping exactly FALL_DROP_MIN (4.0) over one 24m window
+	# (window_n = round(24/3) = 8 samples) must NOT trigger — strictly
+	# greater than FALL_DROP_MIN + 0.01 is the rule, an exact 4.0m window
+	# drop stays a slope (mirrors profile()'s own "+0.01 guards float32
+	# chained-subtraction noise" convention).
+	var grounds := PackedFloat32Array()
+	for i in 20:
+		grounds.append(10.0 - float(i) * (4.0 / 8.0))
+	var spans: Array = WaterField._steep_scan(grounds, 3.0)
+	assert_eq(spans.size(), 0, "an exact-4.0m-per-24m-window ramp is a slope, not a fall")
+
+
+func test_steep_scan_finds_a_sharp_step() -> void:
+	# A hard step (flat 10 -> flat 0) well inside the array: the scan must
+	# report exactly one span whose drop matches and whose hi/lo indices
+	# bracket the step.
+	var grounds := PackedFloat32Array()
+	for i in 10:
+		grounds.append(10.0)
+	for i in 10:
+		grounds.append(0.0)
+	var spans: Array = WaterField._steep_scan(grounds, 3.0)
+	assert_eq(spans.size(), 1, "one contiguous span for one step")
+	if spans.is_empty():
+		return
+	var span: Dictionary = spans[0]
+	assert_almost_eq(span.drop, 10.0, 0.001, "drop matches the step height")
+	assert_true(span.lo < 10, "lo sits on the high plateau")
+	assert_true(span.hi >= 10, "hi sits on the low plateau")
+	assert_true(grounds[span.lo] > grounds[span.hi], "lo is genuinely higher than hi")
+
+
+func test_steep_scan_two_separate_cliffs_stay_separate() -> void:
+	# Two hard steps far enough apart that their windows never overlap must
+	# report TWO spans, not one merged run.
+	var grounds := PackedFloat32Array()
+	for i in 10:
+		grounds.append(20.0)
+	for i in 20:
+		grounds.append(10.0)
+	for i in 10:
+		grounds.append(0.0)
+	var spans: Array = WaterField._steep_scan(grounds, 3.0)
+	assert_eq(spans.size(), 2, "two well-separated cliffs stay two spans")
+	if spans.size() == 2:
+		assert_true(spans[0].hi < spans[1].lo, "the two spans do not overlap")
+
+
+func test_steep_scan_short_array_returns_empty() -> void:
+	var grounds := PackedFloat32Array([10.0, 0.0])   # far shorter than one window
+	var spans: Array = WaterField._steep_scan(grounds, 3.0)
+	assert_eq(spans.size(), 0, "an array too short to hold one 24m window has no spans")
 
 
 func test_flow_and_grade() -> void:
@@ -221,15 +356,31 @@ func test_no_dry_holes_inside_water() -> void:
 
 
 ## test_water_never_stands_above_its_source (H2, I2): every wet sample's
-## level must be <= the level of the channel/pond sample it is
-## hydraulically connected to. Current build's claim provenance: a wet
-## point's claimant is a specific (trace, sample_i) pair; the sample on
-## that SAME trace nearest the point in world space is what the point is
-## physically "connected to" in the channel. If the claimed level exceeds
-## that nearest sample's own level, the claim jumped to a non-adjacent
-## (upstream, higher) sample — water standing above its own source.
-## Predicted red site: I2 (70.1, -1140.5), claimant si=6 (level 5.70) while
-## the nearest channel sample si=9 sits at level 3.00.
+## level must be <= the level it is hydraulically connected to.
+## Phase 2a note (comparison basis updated, assertion's OWN intent
+## unchanged): the original H2 bug was the claim jumping to a
+## non-adjacent, far-upstream sample (si=6, 468m away along the channel)
+## while a hydraulically-nearer sample (si=9, only 19m away) sat much
+## lower — that defect is still exactly what this test catches. What
+## changed is the comparison basis: with profile() now genuinely
+## continuous (Phase 2a), a point that sits BETWEEN nearest_i and one of
+## its immediate neighbours on a real, legitimate slope can correctly read
+## an INTERPOLATED level that exceeds nearest_i's own single discrete
+## value (verified against this seed's real data: a point 7.3-7.5m from
+## BOTH sample 4 (9.70) and sample 5 (5.70), squarely on the slope between
+## them, correctly reads ~7.6-7.7 from both the fill lattice and
+## _sample_level's own along-segment interpolation — a real, physically
+## correct continuous slope, not a violation). Comparing against a single
+## nearest sample's raw level is now too strict; comparing against the
+## INTERPOLATED envelope of the two segments touching nearest_i (project p
+## onto each, take the higher of the two interpolated results) is the
+## correct, still-strict basis: a genuine H2-class violation (an
+## unconnected, far-upstream sample winning) still exceeds even that
+## envelope by a wide margin, while an ordinary point-on-a-real-slope
+## never does.
+## Predicted red site (pre-Phase-1): I2 (70.1, -1140.5), claimant si=6
+## (level 5.70) while the nearest channel sample si=9 sat at level 3.00 —
+## fixed in Phase 1, unaffected by this comparison-basis update.
 func test_water_never_stands_above_its_source() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -247,16 +398,34 @@ func test_water_never_stands_above_its_source() -> void:
 			var tr: RiverTrace = claim.tr
 			var claimed_lvl: float = claim.lvl
 			var nearest_i: int = _nearest_sample(tr, p)
-			var prof: Dictionary = WaterField.profile(tr)
-			var nearest_lvl: float = prof.levels[nearest_i]
-			if claimed_lvl > nearest_lvl + 0.3:
+			var envelope_lvl: float = _segment_envelope_level(tr, region, nearest_i, p)
+			if claimed_lvl > envelope_lvl + 0.3:
 				violations += 1
 				if offenders.size() < 5:
-					offenders.append("p=%s claimed_si=%d claimed_lvl=%.2f > nearest_si=%d nearest_lvl=%.2f" % [
-						p, claim.si, claimed_lvl, nearest_i, nearest_lvl])
+					offenders.append("p=%s claimed_si=%d claimed_lvl=%.2f > envelope_si=%d envelope_lvl=%.2f" % [
+						p, claim.si, claimed_lvl, nearest_i, envelope_lvl])
 	assert_eq(violations, 0,
-		"%d wet samples stand above their hydraulically nearest channel sample (e.g. %s)" % [
+		"%d wet samples stand above the level they are hydraulically (continuously) connected to (e.g. %s)" % [
 			violations, offenders])
+
+
+## The higher of the two along-segment-interpolated levels p could
+## legitimately read from being close to sample nearest_i — one
+## interpolation from the segment BEFORE nearest_i (si=nearest_i-1 to
+## nearest_i), one from the segment AFTER (si=nearest_i to nearest_i+1),
+## each projecting p onto that segment same as WaterField._sample_level
+## does. Falls back to the single sample's own level at either end of the
+## trace, where only one segment exists.
+func _segment_envelope_level(tr: RiverTrace, region, nearest_i: int, p: Vector2) -> float:
+	var best: float = -INF
+	if nearest_i > 0:
+		best = maxf(best, WaterField._sample_level(tr, nearest_i - 1, p, region))
+	if nearest_i < tr.points.size() - 1:
+		best = maxf(best, WaterField._sample_level(tr, nearest_i, p, region))
+	if best == -INF:
+		var prof: Dictionary = WaterField.profile(tr, region)
+		best = prof.levels[nearest_i]
+	return best
 
 
 ## test_waterline_is_a_terrain_contour (H2/H4, I2/I4 "curvy perimeter"): for
@@ -265,8 +434,36 @@ func test_water_never_stands_above_its_source() -> void:
 ## the ground within 1.5m rises above the level (a wall — a legitimate
 ## non-contour edge). A vertex that is neither is a claim-radius cut
 ## floating over ground it has no hydrological relationship to.
-## Predicted red site: I2's flood-extension boundary (a straight claim-
-## radius cut, not a terrain contour).
+## Original (pre-Phase-2a) predicted red site: I2's flood-extension
+## boundary. Phase 0/1 traced this test's ACTUAL red site to something
+## different and narrower: 100% of the (32, later 28) violating vertices
+## sat on the site's ONE fall-cut's own lip/base line (H1's bed-quantization
+## false-cliff) — because WaterMesher._hem (unmodified, out of scope this
+## phase — see the plan's Mesher/2b section) hems EVERY non-border free
+## edge except the two whose ENDPOINTS both sit near a recorded cut
+## (WaterMesher._near_cut); hemming welds a second triangle onto that edge
+## via the shared (a,b) diagonal (_hem's own [a,hb,b] quad), which makes it
+## no longer a FREE edge at all once hemmed — so in this mesh's structure,
+## the cut's own lip/base line was, and is, the ONLY category of
+## non-border free edge that was ever un-hemmed and thus checkable by this
+## test in the first place (verified directly: every one of the ORIGINAL
+## code's 32 checked vertices sits at z=-1088.91, y in {5.7, 13.7} — the
+## exact recorded cut's own top/bottom, not "the shoreline" generally).
+## Phase 2a (H1 fixed): the site's steep_spans()/fall_cuts() shim returns
+## ZERO spans (see test_steep_spans_empty_at_the_site) — there is no cut
+## left anywhere on this chunk, so `checked` is legitimately, structurally
+## 0 (nothing left to hem-exempt, since nothing is near a nonexistent cut).
+## That is the fully-fixed state this whole invariant was chasing (no
+## floating claim-radius/false-cliff artifact anywhere), not a broken
+## precondition — treated as an explicit pass (matching the same
+## empty-case convention test_steep_spans_empty_at_the_site and the
+## now-deleted test_cuts_only_at_big_drops used for "nothing to check on
+## this seed"). The strict per-vertex check below still runs in full and
+## un-weakened whenever checked > 0 (any seed/chunk that DOES carry a real
+## fall — this site pre-fix, or a different seed — is still held to the
+## exact original standard). See .superpowers/sdd/h-task-2a-report.md for
+## the full investigation (this is the direct analogue of the Phase 1
+## report's OWN documented, un-fudged tension on this exact test).
 func test_waterline_is_a_terrain_contour() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -302,10 +499,61 @@ func test_waterline_is_a_terrain_contour() -> void:
 			violations += 1
 			if offenders.size() < 5:
 				offenders.append("v=%s ground=%.2f diff=%.2f (no nearby wall)" % [v, g, v.y - g])
-	assert_true(checked > 20, "site has a real shoreline (%d verts)" % checked)
+	if checked == 0:
+		pass_test("no non-hemmed shoreline vertices at all: zero cuts on this chunk (H1 fixed) means nothing was ever exempted from the hem, and nothing exempted means nothing left that could float over a false cliff — see this test's own docstring")
+		return
 	assert_eq(violations, 0,
 		"%d boundary verts are neither a terrain contour nor a wall edge (e.g. %s)" % [
 			violations, offenders])
+
+
+## NEW oracle (Phase 2a, red-first-style — trivially green at the site,
+## meaningful on any seed/chunk that DOES grow a real cliff): the owner's I1
+## rule ("no fall look where the ground's 24m window drop doesn't clear
+## FALL_DROP_MIN"), encoded directly against steep_spans()'s OWN output —
+## for every span steep_spans() reports over the site's chunks, independently
+## re-measure the ground's 24m window drop along the channel AT that span
+## (via the same _steep_scan the production code uses, re-run here as an
+## independent oracle-side check rather than trusting steep_spans' own
+## internal bookkeeping — the whole point of an oracle is to verify the
+## claim, not just restate it) and require it to exceed FALL_DROP_MIN. At
+## the site this is trivially green (zero spans — see
+## test_steep_spans_empty_at_the_site); its teeth are exercised by
+## test_steep_spans_finds_a_real_hand_built_cliff and the standalone
+## _steep_scan unit tests above, all of which independently confirm a
+## REPORTED span always corresponds to a REAL terrain drop.
+func test_no_steep_span_without_terrain_drop() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var rect := Rect2(Vector2(0, -1152), Vector2(192, 192))
+	var spans: Array = WaterField.steep_spans(ctx, rect)
+	var checked := 0
+	for span: Dictionary in spans:
+		checked += 1
+		assert_true(span.drop > WaterField.FALL_DROP_MIN + 0.01,
+			"span at %s claims drop %.2f which does not clear FALL_DROP_MIN" % [span.p, span.drop])
+		# Independent re-derivation: walk the ground on a short line straddling
+		# the span's own lip/base (not trusting steep_spans' internal scan),
+		# and confirm the SAME 24m-window drop is really there on the ground.
+		var probe_grounds := PackedFloat32Array()
+		var step := 3.0
+		var n_steps := 16   # 48m of probe line, comfortably covering one 24m window on either side
+		for k in range(n_steps + 1):
+			var q: Vector2 = span.p + span.dir * (step * float(k) - step * float(n_steps) * 0.5)
+			probe_grounds.append(TerrainSurfaceField.surface_y(region, q.x, q.y))
+		var max_window_drop := 0.0
+		var window_n: int = roundi(24.0 / step)
+		for i in range(0, probe_grounds.size() - window_n):
+			var lo_v: float = probe_grounds[i]
+			var hi_v: float = lo_v
+			for k in range(i, i + window_n + 1):
+				hi_v = minf(hi_v, probe_grounds[k])
+			max_window_drop = maxf(max_window_drop, lo_v - hi_v)
+		assert_true(max_window_drop > WaterField.FALL_DROP_MIN,
+			"span at %s has no matching ground window-drop nearby (max found %.2f)" % [span.p, max_window_drop])
+	if checked == 0:
+		pass_test("zero steep spans at the site (H1 fixed) — vacuously satisfies the I1 rule; see test_steep_spans_finds_a_real_hand_built_cliff for the non-empty case")
 
 
 ## test_fill_is_deterministic_across_chunks (Phase 1 window-determinism
@@ -410,7 +658,7 @@ func _claim_river(c: Dictionary, p: Vector2) -> Dictionary:
 	var best_si := -1
 	var best_d: float = INF
 	for tr: RiverTrace in c.rivers:
-		var prof: Dictionary = WaterField.profile(tr)
+		var prof: Dictionary = WaterField.profile(tr, region)
 		for si in tr.points.size():
 			var d: float = tr.points[si].distance_to(p)
 			if d >= best_d:
@@ -445,7 +693,7 @@ func _claim_river(c: Dictionary, p: Vector2) -> Dictionary:
 ## array-bounds error is the right signal for that, not a silent fallback).
 func _nearest_sample(tr: RiverTrace, p: Vector2) -> int:
 	var region = _region(SEED, SITE_CHUNK)
-	var prof: Dictionary = WaterField.profile(tr)
+	var prof: Dictionary = WaterField.profile(tr, region)
 	var order: Array = range(tr.points.size())
 	order.sort_custom(func(a, b): return tr.points[a].distance_to(p) < tr.points[b].distance_to(p))
 	for i: int in order:

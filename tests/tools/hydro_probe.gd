@@ -43,13 +43,19 @@ func _probe_a(ctx: Dictionary) -> void:
 		return
 	print("H1: trace=%s samples=%d (nearest to target: dist=%.2f)" % [
 		tr.source_cell, tr.points.size(), tr.points[_nearest_index(tr, target)].distance_to(target)])
-	var prof: Dictionary = WaterField.profile(tr)
+	# Phase 2a: profile() has no cuts array any more (continuous, terrain-
+	# aware descent — see WaterField.profile's own docstring); "cut=" is
+	# reported here as whether the STEP into this sample cleared
+	# FALL_DROP_MIN, the closest still-meaningful per-sample echo of the old
+	# field for this diagnostic dump.
+	var prof: Dictionary = WaterField.profile(tr, _region)
 	print("H1: per-sample bed/level/surface_y —")
 	for i in tr.points.size():
 		var p: Vector2 = tr.points[i]
 		var sy: float = TerrainSurfaceField.surface_y(_region, p.x, p.y)
-		print("H1:  i=%d p=(%.1f,%.1f) bed=%.2f level=%.2f surface_y=%.2f cut=%s" % [
-			i, p.x, p.y, tr.beds[i], prof.levels[i], sy, prof.cuts.has(i)])
+		var step_drop: float = (prof.levels[i - 1] - prof.levels[i]) if i > 0 else 0.0
+		print("H1:  i=%d p=(%.1f,%.1f) bed=%.2f level=%.2f surface_y=%.2f step_drop=%.2f" % [
+			i, p.x, p.y, tr.beds[i], prof.levels[i], sy, step_drop])
 	print("H1: 24m-window drops (sample i vs i+2; ~12m spacing x2) —")
 	var max_bed_drop := -INF
 	var max_bed_drop_i := -1

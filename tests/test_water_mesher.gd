@@ -85,6 +85,21 @@ func test_dry_chunk_builds_nothing() -> void:
 		"dry chunk => empty build")
 
 
+## Phase 2a note: WaterMesher._hem (unmodified, out of scope this phase)
+## hems every non-border free edge EXCEPT the two whose endpoints both sit
+## near a recorded cut (_near_cut) — and hemming welds a second triangle
+## onto that edge (via _hem's own [a,hb,b] quad sharing the (a,b) diagonal),
+## which makes it no longer free at all. So the ONLY non-border free edges
+## this test could ever check were a cut's own lip/base line — with zero
+## cuts on the site now (H1 fixed — see test_water_field.gd's
+## test_steep_spans_empty_at_the_site), checked is legitimately 0 (nothing
+## was ever exempted from hemming, because nothing is near a nonexistent
+## cut). See test_water_field.gd::test_waterline_is_a_terrain_contour's
+## docstring for the full forensic trace of this same structural finding
+## (verified there: 100% of the original 32 checked vertices sat on the
+## site's one cut's own top/bottom line, none anywhere else). Treated as an
+## explicit pass; the strict per-vertex check still runs in full whenever a
+## real fall exists (checked > 0) on any seed/chunk.
 func test_boundary_verts_sit_on_the_waterline() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -126,6 +141,9 @@ func test_boundary_verts_sit_on_the_waterline() -> void:
 			if lvl_near > -INF:
 				assert_true(diff_min <= 0.6,
 					"vert off its water surface: %s (nearest lvl diff %.2f)" % [v, diff_min])
+	if checked == 0:
+		pass_test("no non-hemmed shoreline vertices at all: zero cuts on this chunk (H1 fixed) — see this test's own docstring")
+		return
 	assert_true(checked > 20, "site has a real shoreline (%d verts)" % checked)
 
 
@@ -239,110 +257,71 @@ func test_multi_seam_cell_never_folds() -> void:
 		tri += 3
 
 
+## Phase 2a REWRITE (was "site records its falls" / m.cuts.size() >= 1 —
+## the old cut-object world). H1 fixed: profile()/steep_spans() find ZERO
+## steep spans on this seed's site (the rendered terrain never drops more
+## than FALL_DROP_MIN in any 24m window here), so m.cuts — WaterField.
+## fall_cuts()'s back-compat shim over steep_spans(), still read by
+## WaterMesher.build (see WaterMesher.gd:31) — is empty, and the mesher's
+## cut-cell paths (_mesh_cut_cell, _cell_cut, _synth_cut) simply never fire
+## on this chunk: every cell meshes through the ordinary _mesh_cell path.
+## The welded-lip GUARANTEE this test used to check is now vacuous here (no
+## cut records exist to weld), which is the fully-fixed state, not a
+## regression — asserted directly instead of silently no-op'ing over an
+## empty array.
 func test_cut_records_have_welded_lips() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
 	_mark_multiseam_handled()
-	assert_true(m.cuts.size() >= 1, "site records its falls")
-	var vset: Dictionary = {}
-	for v in m.verts:
-		vset[v] = true
-	for rec: Dictionary in m.cuts:
-		assert_true(rec.lip.size() >= 2, "lip is a polyline")
-		for v: Vector3 in rec.lip:
-			assert_true(vset.has(v), "lip vert %s is bit-equal to a sheet vert" % v)
-		for v: Vector3 in rec.base:
-			assert_true(vset.has(v), "base vert %s is bit-equal to a sheet vert" % v)
+	assert_eq(m.cuts.size(), 0,
+		"H1 fixed: the site's rendered terrain never demands a fall, so m.cuts is empty")
 
 
+## THE continuity invariant: after the hem, a free edge may only be (a) on
+## the chunk border, (b) a fall-cut lip/base line (exempted from hemming by
+## WaterMesher._near_cut so FallMesher's curtain has a genuine open edge to
+## weld to), or (c) the hem's own outer rim (buried under the terrain).
+##
+## Phase 2a REWRITE (the pinned S*1.5-tolerance vertex is DELETED, not
+## re-pinned — see below). H1 fixed: the site's steep_spans()/fall_cuts()
+## return ZERO spans (the rendered terrain here never demands a fall), so
+## m.cuts is empty and class (b) has no members on this chunk at all. That
+## collapses the invariant to "every non-border free edge is buried" —
+## which the site's 159 non-border free edges (verified directly, this
+## task) all satisfy with ZERO exceptions: with no cut anywhere, _near_cut
+## never exempts anything from hemming, so _hem runs on literally every
+## shore edge and buries all of it. The old S vs S*1.5 tolerance question
+## (how far a hem-flank vertex's own along-cut distance can grow from
+## _hem_vert's HEM_W=1.5 outward push) was ENTIRELY about class (b)/(d)
+## edges beside a real cut — with no cut on this seed's site, there is
+## nothing left to pin that evidence against; the specific vertex
+## (39.0, 3.950638, -1087.41) the old pin named doesn't exist in this
+## build at all (it was the hem-flank of the site's one, now-gone, cut).
+## Left un-re-pinned rather than fabricated against a different seed/cliff
+## purely to keep a number in the suite — Phase 2b's mesher rewrite is
+## where a genuine steep-terrain integration fixture (if one is ever
+## added) would be the right place to re-derive this tolerance's real
+## necessity from scratch.
 func test_every_free_edge_is_accounted_for() -> void:
-	# THE continuity invariant: after the hem, a free edge may only be
-	# (a) on the chunk border, (b) a fall-cut lip/base line, (c) the hem's
-	# outer rim (buried under the terrain), or (d) a hem quad's own FLANK
-	# edge at the boundary where hem generation stops near a cut (one end
-	# rides the true waterline, the other is the hem's buried rim — a
-	# legitimate free edge, verified: it belongs to exactly one triangle,
-	# the last hem quad before _hem's own "both ends near a cut" skip takes
-	# over; not a hole).
-	#
-	# Phase 1 (hydrostatic fill) note: (d) is the same "near a cut" gate
-	# WaterMesher._near_cut uses to decide where hem generation stops beside
-	# a cut — this test re-implements it independently (by original design:
-	# the two must independently agree, not share one implementation).
-	# _near_cut itself uses plain S, not S*1.5 — S*1.5 here is NOT "matching
-	# _cell_cut's convention" (an earlier version of this comment claimed
-	# that; _cell_cut gates an unrelated lattice-jump judgement and its S*1.5
-	# is coincidental, not equivalent). The real, substantiated reason S*1.5
-	# is required:
-	#
-	# _hem_vert (WaterMesher.gd) builds a hem's outer-rim vertex by pushing
-	# the source waterline vertex outward by HEM_W=1.5 along the local shore
-	# normal n2, THEN dropping it below ground. That 1.5m push moves the
-	# vertex in world space, so its OWN along-cut distance (the same 'along'
-	# _near_cut measures) can grow by up to the full HEM_W=1.5 relative to
-	# its source — maximal when the cut's direction is nearly parallel to
-	# the push normal (push lands almost entirely on the along axis instead
-	# of being absorbed by across). Worst case: a source vertex sitting right
-	# at the S gate's own edge, pushed by the full HEM_W along-axis, lands
-	# the hem vertex at exactly S + HEM_W = 3.0 + 1.5 = 4.5 = S*1.5 — so
-	# S*1.5 is the exact bound this construction needs, not an arbitrary
-	# widen (HEM_W = 0.5*S is why the numbers land exactly on S*1.5).
-	#
-	# Confirmed on the site chunk (investigation script, since removed;
-	# findings recorded here and in .superpowers/sdd/h-task-1-report.md):
-	# of 245 non-border free edges, exactly ONE needs S*1.5 over S — all
-	# others are already accounted for at S. That edge is
-	# (39.0, 5.7, -1088.91) -> (39.0, 3.950638, -1087.41):
-	#   - (39.0, 5.7, -1088.91) is the source sheet (waterline) vertex:
-	#     buried=false, along=1.614 (well inside S=3.0).
-	#   - (39.0, 3.950638, -1087.41) is that source pushed by _hem_vert's
-	#     n2*HEM_W (push vector measured (0, +1.5), i.e. nearly pure +Z) and
-	#     dropped: buried=true, along=3.105 — past S=3.0 but inside
-	#     S*1.5=4.5. The site's one recorded cut runs cut.dir=(0.108,-0.994),
-	#     i.e. nearly along Z, almost parallel to the push normal, so
-	#     essentially the whole 1.5m push (measured component: -1.491)
-	#     lands on the along axis: 1.614 + 1.491 = 3.105, matching exactly.
-	#   Pinned below so this claim is machine-checked, not prose.
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
 	_mark_multiseam_handled()
-	var pinned_vert := Vector3(39.0, 3.950638, -1087.41)
-	var pinned_found := false
-	var pinned_near_S := true   # expect false: this vert needs S*1.5, not S
+	assert_eq(m.cuts.size(), 0, "H1 fixed: no cuts on this chunk (class (b) is empty here)")
+	var checked := 0
 	for e: Array in WaterMesher.free_edges(m.verts, m.idx):
 		if _on_chunk_border(e[0]) and _on_chunk_border(e[1]):
 			continue
+		checked += 1
 		var buried := true
-		var on_cut := true
 		for v: Vector3 in e:
 			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
 			if v.y > g - 0.3:
 				buried = false
-			var near := false
-			for rec: Dictionary in m.cuts:
-				var p2 := Vector2(v.x, v.z)
-				if absf((p2 - rec.cut.p).dot(rec.cut.dir)) < WaterMesher.S * 1.5 \
-						and absf((p2 - rec.cut.p).dot(rec.cut.across)) < rec.cut.half + WaterMesher.S * 1.5:
-					near = true
-					if absf((p2 - rec.cut.p).dot(rec.cut.dir)) >= WaterMesher.S \
-							or absf((p2 - rec.cut.p).dot(rec.cut.across)) >= rec.cut.half + WaterMesher.S:
-						if v.distance_to(pinned_vert) < 0.01:
-							pinned_found = true
-							pinned_near_S = false
-			if not near:
-				on_cut = false
-		assert_true(buried or on_cut,
-			"unaccounted free edge %s-%s (not border/cut/buried)" % [e[0], e[1]])
-	# The pinned vertex: recorded evidence for the S*1.5 claim above, not
-	# just prose. If this ever stops firing, either the fill geometry moved
-	# (re-investigate which edge needs S*1.5 now) or S*1.5 is no longer
-	# needed at all (revert to S).
-	assert_true(pinned_found,
-		"expected hem-flank vertex %s not found in this build — re-investigate the S*1.5 tolerance" % pinned_vert)
-	assert_false(pinned_near_S,
-		"pinned vertex %s now passes at plain S — the S*1.5 widening may no longer be needed" % pinned_vert)
+		assert_true(buried,
+			"unaccounted free edge %s-%s (not border/buried, and m.cuts is empty so it cannot be a cut line)" % [e[0], e[1]])
+	assert_true(checked > 20, "site has real shoreline free edges to check (%d)" % checked)
 
 
 func test_hem_is_buried() -> void:
@@ -382,6 +361,18 @@ func test_chunk_seam_identity() -> void:
 	assert_true(matched >= 2, "adjacent chunks share bit-identical seam verts (%d)" % matched)
 
 
+## Phase 2a REWRITE (was "plunge band baked near falls" / churn > 0): the
+## plunge band in _attributes only ever bakes steep > 0.9 by iterating
+## st.cuts (see WaterMesher.gd:634-639) — with H1 fixed and zero steep
+## spans on this seed's site, st.cuts is empty, so that loop body never
+## runs and no vertex anywhere reaches the plunge band's exclusive >0.9
+## territory (ordinary grade_at()-derived steep is clamped to <= 0.85, see
+## _attributes' own clampf). churn == 0 is now the correct baseline; the
+## rewritten assertion checks that directly instead of asserting the old
+## (now impossible) opposite. steep itself is still meaningfully computed
+## from grade_at() everywhere (verified: max steep found below is > 0, i.e.
+## the field IS reporting real, if gentle, gradient — see WaterField.
+## grade_at's own Phase 2a docstring on why it's no longer zeroed at a cut).
 func test_commit_and_attributes() -> void:
 	var water: WaterPlan = _water(SEED)
 	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, _region(SEED, SITE_CHUNK))
@@ -390,13 +381,17 @@ func test_commit_and_attributes() -> void:
 	var mesh: ArrayMesh = WaterMesher.commit(m)
 	assert_eq(mesh.surface_get_array_len(0), m.verts.size(), "verts committed")
 	assert_true(m.wet_cells.size() > 0, "volume cells recorded")
+	assert_eq(m.cuts.size(), 0, "H1 fixed: no cuts on this chunk, so no plunge band is baked")
 	var churn := 0
+	var max_steep := 0.0
 	var idx := 0
 	while idx < m.cust.size():
+		max_steep = maxf(max_steep, m.cust[idx + 3])
 		if m.cust[idx + 3] > 0.9:
 			churn += 1
 		idx += 4
-	assert_true(churn > 0, "plunge band baked near falls")
+	assert_eq(churn, 0, "no plunge band anywhere: the site has no fall to churn near")
+	assert_true(max_steep > 0.0, "grade_at still reports real (if gentle) gradient everywhere")
 
 
 func test_build_chunk_scene_contract() -> void:

@@ -153,26 +153,36 @@ func test_volumes_are_cell_pure_and_cover_the_pool() -> void:
 	root.free()
 
 
-## Regression probes at the site's real cascade. The recorded cut sits at
-## world (58.3, -1088.4) with dir ~ (0.11, -0.99) (flow toward -z), top 13.7
-## -> bottom 5.7, crossing cell (2,-46) mid-cell — so that one 24m cell holds
-## BOTH surfaces. Probe points pinned by sampling WaterField.level_at with
-## the region ctx (see task-9 report): (54, -1092) claims the 5.7 pool
-## (ground 4.0), (54, -1083) claims the 13.7 lip reach (ground 7.6). The
-## volume containing the pool point must report the DOWNSTREAM surface —
-## never the upper level carried over the plunge pool (the owner's phantom
-## mid-air swim) — and the upstream point must get the lip surface from the
-## stacked upper volume of the same cell.
+## Regression probes at the site's real cascade. Phase 2a REPIN (H1 fixed —
+## the old top level here was 13.7, produced by a bed-quantization false
+## cliff the site's rendered terrain never actually had; the continuous,
+## terrain-aware profile now lands the same reach at 9.7 instead — verified
+## directly: WaterField.level_at(54,-1083) == 9.7, and
+## WaterMesher.wet_cells[(2,-46)] == [{lvl:9.7,...}, {lvl:5.7,...}], the
+## SAME two-entry stacked-cell shape as before, just with the corrected
+## upstream number). The reach still legitimately straddles WaterMesher.
+## CUT_JUMP=2.0 within one 24m cell (9.7-5.7=4.0 > 2.0) even with zero
+## fall/cut records — cell-level stacking (_attributes' own wet_cells logic,
+## unmodified, out of scope this phase) triggers on any corner-level spread
+## regardless of whether a fall was ever recorded there, so this probe
+## still meaningfully exercises the stacked-volume/no-phantom-swim
+## contract Phase 1 pinned, just against the corrected (post-H1) numbers.
+## (54, -1092) claims the 5.7 pool (ground 4.0), (54, -1083) claims the 9.7
+## upstream reach (ground 7.6). The volume containing the pool point must
+## report the DOWNSTREAM surface — never the upper level carried over the
+## plunge pool (the owner's phantom mid-air swim) — and the upstream point
+## must get the reach's own surface from the stacked upper volume of the
+## same cell.
 func test_cascade_volumes_report_their_own_surface() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
 	var pool := Vector3(54.0, 6.0, -1092.0)
-	var lip := Vector3(54.0, 13.4, -1083.0)
+	var lip := Vector3(54.0, 9.4, -1083.0)
 	assert_almost_eq(WaterField.level_at(ctx, Vector2(pool.x, pool.z)), 5.7, 0.3,
 		"pool probe claims the downstream level")
-	assert_almost_eq(WaterField.level_at(ctx, Vector2(lip.x, lip.z)), 13.7, 0.3,
-		"lip probe claims the upstream level")
+	assert_almost_eq(WaterField.level_at(ctx, Vector2(lip.x, lip.z)), 9.7, 0.3,
+		"upstream probe claims the (corrected, post-H1) upstream level")
 	var root: Node3D = WaterSurfaceBuilder.new().build_chunk(water, SITE_CHUNK, region)
 	_mark_multiseam_handled()
 	var vols: Array = _volumes(root)
@@ -181,14 +191,14 @@ func test_cascade_volumes_report_their_own_surface() -> void:
 		if _box_contains(v, pool):
 			pool_hits += 1
 			assert_almost_eq(_sampled_surface(v, pool.x, pool.z), 5.7, 0.8,
-				"pool volume reports the pool surface, not the 13.7 lip")
+				"pool volume reports the pool surface, not the 9.7 upstream reach")
 	assert_gt(pool_hits, 0, "pool point inside a volume")
 	var lip_hits := 0
 	for v in vols:
 		if _box_contains(v, lip):
 			lip_hits += 1
-			assert_almost_eq(_sampled_surface(v, lip.x, lip.z), 13.7, 0.8,
-				"upstream volume reports the lip surface")
+			assert_almost_eq(_sampled_surface(v, lip.x, lip.z), 9.7, 0.8,
+				"upstream volume reports the upstream reach's surface")
 	assert_gt(lip_hits, 0, "upstream point inside a volume")
 	# Overlap-band probe: just above the pool surface but below the pool
 	# box's ceiling (5.7 + 1.7 = 7.4). The stacked UPPER volume must start
@@ -201,7 +211,7 @@ func test_cascade_volumes_report_their_own_surface() -> void:
 		if _box_contains(v, band):
 			band_hits += 1
 			assert_almost_eq(_sampled_surface(v, band.x, band.z), 5.7, 0.8,
-				"band point sees only the pool surface, never the 13.7 lip")
+				"band point sees only the pool surface, never the 9.7 upstream reach")
 	assert_eq(band_hits, 1, "band point inside the LOWER box only")
 	root.free()
 
