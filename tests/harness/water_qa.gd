@@ -93,40 +93,47 @@ func _run() -> void:
 		_shot(s[0] + "_a")
 		await get_tree().create_timer(1.8).timeout
 		_shot(s[0] + "_b")
-	# Waterfall slab close-up: aim at a REAL curtain mesh (scene query, no
-	# coordinate guessing) from two angles — thickness + horizontal exit.
+	# Waterfall slab close-up: the falling look is baked into the ONE
+	# WaterSheet mesh now (steep attribute band, see WaterMesher._attributes /
+	# water_unified.gdshader) — there is no separate curtain node left to
+	# query, so "find the fall" means "find the WaterSheet whose AABB actually
+	# covers the known plunge site," and the shot anchor is that fixed world
+	# coordinate itself (still a real measured point, not a guess) rather than
+	# a mesh-local AABB centre. Two angles — thickness + horizontal exit.
+	var plunge := Vector3(58, 12, -1096)
 	var fall_mi: MeshInstance3D = null
-	var fall_d: float = INF
-	for mi in get_tree().root.find_children("Waterfalls", "MeshInstance3D", true, false):
-		var d: float = mi.global_position.distance_to(Vector3(58, 12, -1096))
-		if d < fall_d:
-			fall_d = d
+	for mi in get_tree().root.find_children("WaterSheet", "MeshInstance3D", true, false):
+		var aabb: AABB = mi.global_transform * mi.get_aabb()
+		if aabb.has_point(plunge):
 			fall_mi = mi
+			break
 	if fall_mi != null:
-		var aabb: AABB = fall_mi.mesh.get_aabb()
-		var c: Vector3 = fall_mi.global_transform * aabb.get_center()
+		var c: Vector3 = plunge
 		print("[water_qa] slab at ", c)
-		# The curtain's ACROSS axis is its long horizontal AABB axis; the flow
-		# tangent is the short one. Shoot from the tangent side whose ground
-		# drops farthest (the open plunge pool, not the cliff wall).
-		var t_dir: Vector3 = Vector3(1, 0, 0) if aabb.size.z > aabb.size.x else Vector3(0, 0, 1)
-		var best: Vector3 = t_dir
+		# No curtain-local AABB left to read an "across" axis from — try both
+		# cardinal tangents (and both signs of each) and shoot from whichever
+		# side has the most open drop below it (the plunge pool, not the
+		# cliff wall).
+		var best: Vector3 = Vector3(1, 0, 0)
 		var best_drop: float = -INF
-		for s in [1.0, -1.0]:
-			var probe: Vector3 = c + t_dir * s * 10.0 + Vector3(0, 8, 0)
-			var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(
-				PhysicsRayQueryParameters3D.create(probe, probe + Vector3(0, -60, 0)))
-			var drop: float = probe.y - (hit.position.y if not hit.is_empty() else probe.y - 60.0)
-			if drop > best_drop:
-				best_drop = drop
-				best = t_dir * s
-		var a_dir: Vector3 = Vector3(0, 0, 1) if absf(t_dir.x) > 0.5 else Vector3(1, 0, 0)
+		for t_dir in [Vector3(1, 0, 0), Vector3(0, 0, 1)]:
+			for s in [1.0, -1.0]:
+				var probe: Vector3 = c + t_dir * s * 10.0 + Vector3(0, 8, 0)
+				var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(
+					PhysicsRayQueryParameters3D.create(probe, probe + Vector3(0, -60, 0)))
+				var drop: float = probe.y - (hit.position.y if not hit.is_empty() else probe.y - 60.0)
+				if drop > best_drop:
+					best_drop = drop
+					best = t_dir * s
+		var a_dir: Vector3 = Vector3(0, 0, 1) if absf(best.x) > 0.5 else Vector3(1, 0, 0)
 		_cam.look_at_from_position(c + best * 11.0 + Vector3(0, 2.5, 0), c)
 		await get_tree().create_timer(0.6).timeout
 		_shot("slab_front")
 		_cam.look_at_from_position(c + best * 6.0 + a_dir * 10.0 + Vector3(0, 1.5, 0), c)
 		await get_tree().create_timer(0.6).timeout
 		_shot("slab_side")
+	else:
+		print("[water_qa] WARNING: no WaterSheet found covering the plunge site")
 	# Entry-splash ripples: drop into REAL water (probe the swim-volume layer
 	# — never a guessed shoreline), NO input held — rings must appear on
 	# impact and keep expanding across the frames.

@@ -151,8 +151,7 @@ func test_level_continuous_without_region_keeps_old_jumps() -> void:
 		"the region-less fallback keeps the old instant-chase jumps by design")
 
 
-## steep_spans()/fall_cuts() (Phase 2a shim — see WaterField.fall_cuts'
-## docstring) on the real site: ZERO spans, matching H1 exactly (this
+## steep_spans() on the real site: ZERO spans, matching H1 exactly (this
 ## trace's rendered terrain never drops more than FALL_DROP_MIN in any 24m
 ## window — the bed-quantization false positive the old fall_cuts had is
 ## gone). This is the direct field-level echo of the new
@@ -167,10 +166,6 @@ func test_steep_spans_empty_at_the_site() -> void:
 	var spans: Array = WaterField.steep_spans(ctx, rect)
 	assert_eq(spans.size(), 0,
 		"H1: the site's rendered terrain never drops > FALL_DROP_MIN in any 24m window")
-	# fall_cuts() is the back-compat shim (== steep_spans one to one this
-	# phase) every existing WaterMesher/FallMesher reader still calls.
-	var shim: Array = WaterField.fall_cuts(ctx, rect)
-	assert_eq(shim.size(), 0, "fall_cuts() shim matches steep_spans() exactly")
 
 
 ## Non-degenerate steep_spans() integration test: a hand-built
@@ -222,11 +217,6 @@ func test_steep_spans_finds_a_real_hand_built_cliff() -> void:
 	var prof: Dictionary = WaterField.profile(tr, region)
 	assert_true(prof.levels[1] - prof.levels[3] > WaterField.FALL_DROP_MIN,
 		"the profile itself hugs the cliff face with a real drop")
-	# fall_cuts() shim reproduces the same record shape 1:1 (Phase 2a
-	# back-compat — see WaterField.fall_cuts' docstring).
-	var shim: Array = WaterField.fall_cuts(ctx, rect)
-	assert_eq(shim.size(), 1, "fall_cuts() shim matches steep_spans() exactly")
-	assert_almost_eq(shim[0].drop, span.drop, 0.001, "shim record is the same span")
 
 
 ## _steep_scan(grounds, step) unit tests — the pure, terrain-free window-scan

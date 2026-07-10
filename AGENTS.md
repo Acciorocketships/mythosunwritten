@@ -128,44 +128,52 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   `HeightfieldPlan.raw_height`). Beds obey **containment** (`CONTAIN_DROP`): every bed is
   capped a full storey below the lowest flanking bank's natural storey, so channels always
   quantize bounded by ground on both sides — never a sheet hanging off a hillside.
-  Three pure/mesh layers replace the old patch-and-carve field:
-  - `WaterField` — the continuous water surface as ONE height field `level_at(x,z)`,
-    discontinuous only at true waterfalls (bed drop > `FALL_DROP_MIN` == 4m between
-    adjacent trace samples — falls under 4m are just steep flow, no cut). Ponds are flat;
-    river reaches slope monotonically between anchors; beyond the channel/pond seeds
-    themselves, coverage comes from a **hydrostatic fill**: seeds placed in channels and
-    ponds spread by BFS (lower level wins) over connected ground sitting below its own
-    level, rasterized on a 6m world-space lattice with a 30m margin around each chunk —
-    so the waterline follows a real terrain contour instead of stopping at a fixed claim
-    radius. Pure and deterministic — no rendering, no nodes.
+  Two pure/mesh layers, one shader:
+  - `WaterField` — the continuous water surface as ONE height field `level_at(x,z)`, with
+    **no cuts anywhere**: `profile()` produces a single monotone, continuous curve per
+    river even across what looks like a waterfall — a "fall" is just the stretch of that
+    curve where the level hugs a steep rendered face instead of riding a gentle smooth
+    trend between anchors (`steep_spans()` reports WHERE that happens — a real rendered-
+    terrain drop of more than `FALL_DROP_MIN` == 4m inside any 24m sliding window along the
+    channel — purely for the shader/mesh attribute bake below, never to fork geometry).
+    Static wetness beyond the channel/pond seeds themselves comes from a **hydrostatic
+    fill**: seeds placed in channels and ponds spread outward only DOWNHILL-OR-LEVEL over
+    connected ground sitting below the seed's own level (never uphill), with the LOWER
+    level winning wherever two spreads meet, rasterized on a 6m world-space lattice with a
+    30m margin around each chunk — so the waterline follows a real terrain contour instead
+    of stopping at a fixed claim radius. Pure and deterministic — no rendering, no nodes.
   - `WaterMesher` — a **boundary-conforming** sheet: marching squares over a 3m sub-grid on
     `f(x,z) = level(x,z) - ground(x,z)`. Interior cells emit welded grid quads; boundary
     cells emit contour polygons whose edge vertices sit ON the waterline (never a cell-grid
     rectangle), so coastlines read as smooth curves and bank cells quantized just under the
-    level render as real shore water. Fall cuts (from `WaterField.fall_cuts`) split cells
-    into upstream/downstream parts; every contour free edge grows a buried hem so no edge
-    is ever left hanging in mid-air over the terrain.
-  - `FallMesher` — swept ogee waterfall geometry (>4m drops only) built directly from
-    `WaterMesher`'s own cut/lip records: the SAME `Vector3` lip vertices the sheet emits,
-    so crest continuity is data flow, not float-matching. An accelerating parabola leaves
-    the lip, a circular-arc fillet flattens back to horizontal just under the plunge pool,
-    and the mesh dives ~0.5m below the plunge surface so the visible intersection is
-    submerged.
-  `WaterSurfaceBuilder` is now a thin adapter: `build_chunk` calls `WaterMesher.build`/
-  `commit`, hands the fall cuts to `FallMesher.build`, and emits one `Area3D` swim volume
-  per wet-cell surface entry (a fall-straddled cell gets two stacked volumes, so no box
-  ever reports the upper level over a plunge pool). It also still owns the two shared
-  `ShaderMaterial`s and the river-trace `surface_profile`/`steepness_profile` helpers.
-  `water_unified.gdshader` renders still + flowing water: a SMOOTH surface (no noise
-  dapple) moved by slow long travelling swells (CPU-mirrored in
+    level render as real shore water. The whole chunk is ONE welded mesh — no fall cuts, no
+    split upstream/downstream pieces — and every free edge grows a buried hem
+    unconditionally, so no edge is ever left hanging in mid-air over the terrain. Per-vertex
+    CUSTOM0 bakes `(flow.x, shore, flow.y, steep)`; `steep` is the level gradient (clamped),
+    boosted near a `steep_spans()` plunge base so the mesh itself hints at a drop before the
+    shader's own blend takes over. A cell whose own max grade exceeds
+    `STEEP_UNSWIMMABLE` gets **no swim volume at all** — a steep fall face is not swimmable
+    water, so a character falls/slides through it rather than floats; every other wet cell
+    gets exactly one.
+  `WaterSurfaceBuilder` is a thin adapter: `build_chunk` calls `WaterMesher.build`/`commit`
+  and emits one `Area3D` swim volume per wet-cell surface entry (never more than one — the
+  steep gate above means a cell either has one volume or none). It also still owns the
+  shared `ShaderMaterial` and the river-trace `surface_profile`/`steepness_profile` helpers.
+  `water_unified.gdshader` is the ONLY water shader and renders still, flowing, AND falling
+  water from the one baked `steep` attribute × depth — no separate waterfall shader or
+  swept mesh exists any more, the falling look is a blend on the one sheet material: a
+  SMOOTH surface (no noise dapple) moved by slow long travelling swells (CPU-mirrored in
   `character.gd::_swell_offset` for buoyancy rocking — keep constants in sync) plus
   `WaterRippleSim` (SubViewport wave sim: swim wakes, entry splashes, ambient raindrop
-  rings); foam only at shores and waterfall-steep reaches. Swim volumes ride along as
-  `Area3D`s. Plunge mist (particle spray at fall landings) is currently unwired — a
-  follow-up; the shared particle resources it needs are no longer warmed on startup.
-  `tests/tools/water_review_spots.gd` emits F4 review teleports (`ReviewTeleporter.gd`
-  reads `review_teleports.json` and lifts the player onto streamed ground if a stale spot
-  height would bury them).
+  rings); foam only at shores and steep reaches. Plunge mist (particle spray at fall
+  landings) is currently unwired — a follow-up; the shared particle resources it needs are
+  no longer warmed on startup. `tests/tools/water_review_spots.gd` emits F4 review
+  teleports (`ReviewTeleporter.gd` reads `review_teleports.json` and lifts the player onto
+  streamed ground if a stale spot height would bury them).
+  **Character depth gate** (`characters/character.gd`): swimming and wading are each
+  independently hysteretic against the knee-probe's depth below the water surface — swim
+  ENTER at depth > 0.8m, EXIT at < 0.6m; wade ENTER at depth > 0.05m, EXIT at < 0.03m — so a
+  reading sitting right on one boundary can't dither the state every frame.
 - **One tint field**: every terrain surface — walkable sheet, aprons, rock skirt, and all
   KayKit dressing pieces (per-instance colours) — multiplies THE shared material by
   `BiomeRegistry.blended_ground_tint` sampled at its own position. Change the palette or

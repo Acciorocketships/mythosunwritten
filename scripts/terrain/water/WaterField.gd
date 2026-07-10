@@ -783,22 +783,3 @@ static func steep_spans(c: Dictionary, rect: Rect2) -> Array:
 				"top": maxf(top_lvl, bot_lvl), "bottom": minf(top_lvl, bot_lvl),
 				"drop": span.drop, "base_p": walk.pos[hi]})
 	return out
-
-
-## Back-compat shim (Phase 2a): fall_cuts() is retired as the SOURCE of
-## fall geometry — see steep_spans' own docstring — but WaterMesher.build,
-## FallMesher, and the plunge-band code in _attributes all still read the
-## old `{p, dir, across, half, top, bottom}` record shape this phase (the
-## mesher/shader/volume rewrite that deletes those readers is Phase 2b).
-## Mapping steep_spans() 1:1 into that shape keeps every existing caller
-## compiling and behaviourally inert where it matters: this seed's site has
-## ZERO steep spans (H1: the rendered terrain here never drops more than
-## 4.0m in any 24m window), so this returns [] at the site exactly like the
-## old fall_cuts() no longer would have (its bed-quantization false
-## positive is gone) — WaterMesher's cut-cell paths simply never fire,
-## FallMesher.build([]) returns null, and the multi-seam-cell guard's own
-## site trigger (a real, pre-existing lateral body seam at a cliff base —
-## see the Phase 1 report — unrelated to falls) is the only remaining
-## WARNING source, unaffected by this shim either way.
-static func fall_cuts(c: Dictionary, rect: Rect2) -> Array:
-	return steep_spans(c, rect)

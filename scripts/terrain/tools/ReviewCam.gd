@@ -17,6 +17,14 @@ extends Object
 
 const DIST := 8.0
 const HEIGHT := 5.0
+# skirt_debug's STEEP threshold: CUSTOM0's `steep` float (see
+# WaterMesher._attributes) is clampf(grade*8, 0, 0.85) — saturated at 0.85
+# means grade >= ~0.106, and every cell WaterMesher gates out of swim volumes
+# entirely (STEEP_UNSWIMMABLE, WaterMesher.gd — the only reason a sheet
+# vertex has no volume under it besides real skirt) sits at that same 0.85
+# ceiling on every one of its faces. 0.84 catches the saturated value with a
+# hair of float slop. See skirt_debug's own docstring.
+const STEEP_ATTR_THRESHOLD := 0.84
 
 
 ## The orbit-camera position whose centre ray (toward the player origin)
@@ -74,17 +82,27 @@ static func _flat(c: Color) -> StandardMaterial3D:
 
 ## Isolate the SKIRT from the pools (owner's definition: "the thin piece of
 ## water that sits on the edge of a pool to connect it to the land"). A
-## sheet vertex is SKIRT-class when NO swim volume covers its column —
-## volumes span exactly the wet cells, so "no water below me" means this
-## vertex is the land-connecting film, not pool surface. The probe point
-## sits just above the physics ground so a volume is hit whenever one
+## sheet vertex with NO swim volume under its column is either SKIRT (the
+## land-connecting film) or STEEP (a fall/chute face — WaterMesher's
+## STEEP_UNSWIMMABLE gate deliberately gives these cells no volume at all,
+## see WaterMesher._attributes; that is expected, not a false "skirt"). The
+## two are told apart by the mesh's own baked CUSTOM0 `steep` attribute
+## (flow.x, shore, flow.y, steep — see WaterMesher._attributes/commit):
+## saturated (>= STEEP_ATTR_THRESHOLD) means this vertex belongs to a cell
+## the gate rejected, so it is classed STEEP even though it has no volume
+## below it. volumes still span exactly every wet, SWIMMABLE cell, so
+## "no volume AND not steep" is the actual land-connecting film. The probe
+## point sits just above the physics ground so a volume is hit whenever one
 ## exists at any height. Skirt triangles render as a flat red unshaded
-## overlay; the pools keep their normal look. Visible skirt vertices print
-## as `SKIRT` log lines (position, ground height, proud metres — buried
-## film is skipped in the log but still drawn, terrain occludes it);
-## log_pool=true also prints deduped `POOL` lines for side-by-side
-## reading. Returns the visible skirt vertex count. Run from a godot-MCP
-## eval while the game is running:
+## overlay, steep triangles as a flat blue one; the pools keep their normal
+## look. Visible skirt vertices print as `SKIRT` log lines, visible steep
+## vertices as `STEEP` log lines (both: position, ground height, proud
+## metres — buried film is skipped in the log but still drawn, terrain
+## occludes it); log_pool=true also prints deduped `POOL` lines for
+## side-by-side reading. Returns the visible skirt vertex count only (STEEP
+## verts are expected-absent-volume, not skirt, and are excluded — read the
+## printed summary line for the steep count). Run from a godot-MCP eval
+## while the game is running:
 ##   var RC = load("res://scripts/terrain/tools/ReviewCam.gd")
 ##   RC.skirt_debug(Vector3(33.9, 8.0, -1097.4), 40.0)
 ##   RC.skirt_debug(Vector3(33.9, 8.0, -1097.4), 40.0, true)  # + POOL lines
@@ -99,16 +117,26 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 	vol_q.collision_mask = 1 << 7
 	var seen: Dictionary = {}
 	var skirt_n: int = 0
+	var steep_n: int = 0
 	var pool_n: int = 0
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var tris: int = 0
+	var st_steep := SurfaceTool.new()
+	st_steep.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var steep_tris: int = 0
+	# cls values: 0 = pool (volume present), 1 = skirt (no volume, not steep),
+	# 2 = steep (no volume, CUSTOM0 steep attribute saturated — expected).
 	for mi: MeshInstance3D in root.find_children("WaterSheet", "MeshInstance3D", true, false):
 		var aabb: AABB = mi.global_transform * mi.get_aabb()
 		if aabb.position.distance_to(center) - aabb.size.length() > radius:
 			continue
 		var arrays: Array = mi.mesh.surface_get_arrays(0)
 		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		# CUSTOM0 (see WaterMesher.commit): a flat PackedFloat32Array, 4 floats
+		# per vertex in the SAME index space as ARRAY_VERTEX — (flow.x, shore,
+		# flow.y, steep), steep is float index 3 of each vertex's group of 4.
+		var custom0: PackedFloat32Array = arrays[Mesh.ARRAY_CUSTOM0]
 		# The boundary mesh is INDEXED; legacy soups have no index buffer.
 		var midx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
 		if midx.is_empty():
@@ -116,15 +144,18 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 		var xf: Transform3D = mi.global_transform
 		var i: int = 0
 		while i < midx.size():
-			var w: Array = []
+			var w: Array = []       # [Vector3 world pos, int raw vertex index]
 			for k in 3:
-				w.append(xf * verts[midx[i + k]])
+				var vidx: int = midx[i + k]
+				w.append([xf * verts[vidx], vidx])
 			i += 3
-			if (w[0] as Vector3).distance_to(center) > radius:
+			if (w[0][0] as Vector3).distance_to(center) > radius:
 				continue
 			var tri_skirt: bool = false
+			var tri_steep: bool = false
 			for k in 3:
-				var p: Vector3 = w[k]
+				var p: Vector3 = w[k][0]
+				var vidx: int = w[k][1]
 				var key: Vector3i = Vector3i((p * 4.0).round())
 				var cls: int
 				if seen.has(key):
@@ -144,12 +175,21 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 						if not space.intersect_point(vol_q, 1).is_empty():
 							over_water = true
 							break
-					cls = 1 if not over_water else 0
+					if over_water:
+						cls = 0
+					else:
+						var steep_attr: float = custom0[vidx * 4 + 3]
+						cls = 2 if steep_attr >= STEEP_ATTR_THRESHOLD else 1
 					seen[key] = cls
 					if cls == 1:
 						if p.y > ground - 0.05:
 							skirt_n += 1
 							print("SKIRT (%.1f, %.2f, %.1f) ground %.2f proud %.2f" % [
+								p.x, p.y, p.z, ground, p.y - ground])
+					elif cls == 2:
+						if p.y > ground - 0.05:
+							steep_n += 1
+							print("STEEP (%.1f, %.2f, %.1f) ground %.2f proud %.2f" % [
 								p.x, p.y, p.z, ground, p.y - ground])
 					else:
 						pool_n += 1
@@ -158,24 +198,38 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 								p.x, p.y, p.z, ground])
 				if cls == 1:
 					tri_skirt = true
+				elif cls == 2:
+					tri_steep = true
 			if tri_skirt:
 				for k in 3:
-					st.add_vertex((w[k] as Vector3) + Vector3.UP * 0.04)
+					st.add_vertex((w[k][0] as Vector3) + Vector3.UP * 0.04)
 				tris += 1
+			if tri_steep:
+				for k in 3:
+					st_steep.add_vertex((w[k][0] as Vector3) + Vector3.UP * 0.04)
+				steep_tris += 1
 	if tris > 0:
 		var mi := MeshInstance3D.new()
 		mi.name = "SkirtDebugOverlay"
 		mi.mesh = st.commit()
 		mi.material_override = _flat(Color(1.0, 0.1, 0.1))
 		root.add_child(mi)
-	print("SKIRT DEBUG: %d visible skirt verts, %d pool verts, %d overlay tris" % [
-		skirt_n, pool_n, tris])
+	if steep_tris > 0:
+		var mi_s := MeshInstance3D.new()
+		mi_s.name = "SteepDebugOverlay"
+		mi_s.mesh = st_steep.commit()
+		mi_s.material_override = _flat(Color(0.1, 0.3, 1.0))
+		root.add_child(mi_s)
+	print("SKIRT DEBUG: %d visible skirt verts, %d visible steep verts, %d pool verts, %d skirt tris, %d steep tris" % [
+		skirt_n, steep_n, pool_n, tris, steep_tris])
 	return skirt_n
 
 
 static func clear_skirt_debug() -> void:
 	var root: Node = (Engine.get_main_loop() as SceneTree).root
 	for n in root.find_children("SkirtDebugOverlay", "MeshInstance3D", true, false):
+		n.queue_free()
+	for n in root.find_children("SteepDebugOverlay", "MeshInstance3D", true, false):
 		n.queue_free()
 
 
