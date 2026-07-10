@@ -193,6 +193,119 @@ func test_no_triangle_bridges_a_fall() -> void:
 		tri += 3
 
 
+## I-2 (final-review-run2.md Important 2): test_no_triangle_bridges_a_fall
+## above is only ever exercised on the pinned SITE_CHUNK, which H1 confirmed
+## has ZERO steep spans — the strict CUT_JUMP+0.5=2.5m bound has never once
+## been checked against a real cliff, and it does NOT hold there: a genuine
+## storey cliff (up to MAX_CLIFF_STEP*STOREY_HEIGHT=12m at one tile boundary)
+## legitimately produces a much larger triangle span once bilinear'd through
+## the 6m fill lattice down to the mesher's own 3m sample spacing — this is
+## the water surface correctly following real terrain, not a bridging bug.
+##
+## Chose option (b) from the finding (keep 2.5m strict, exempt triangles
+## that are LEGITIMATELY steep) over option (a) (derive one honest bound
+## from design) after measuring the real worst case on production seed
+## 991177 (this task's own investigation, see the report): the TRUE
+## worst-case span is not bounded by a single clean "one storey-cliff over
+## one FILL_STEP" formula the way the finding's own framing suggests — the
+## hydrostatic fill's flood-adjacency mechanism (_relax_fill, WaterField.gd)
+## can place a HIGH-level flood cell directly next to unrelated low ground
+## via lateral spread, not just along the channel's own hug — so a formula
+## tight enough to stay useful as a bridging-bug detector cannot also
+## safely bound every legitimate steep triangle (measured real spans on
+## seed 991177: 1.70m / 3.35m / 6.97m across three different real steep
+## chunks — the honest design bound would have to be very loose, at which
+## point it stops usefully catching anything). A GROUND-TRUTH exemption
+## (does the real, independently-resampled terrain show a genuine nearby
+## drop?) covers both mechanisms at once (verified: 0 of 90 offending
+## triangles on chunk (-2,10) below survive this exemption) without needing
+## to know WHICH mechanism produced the span.
+##
+## Deliberately NOT anchored on WaterField.steep_spans()'s own reported
+## corridor (measured: a lip/base corridor around steep_spans' output
+## covers only 64/90 offending triangles here — steep_spans only scans
+## ALONG THE CHANNEL, so it misses spans from the fill's lateral flood
+## against a nearby cliff the channel itself never touches) — that would
+## also be closer to mirroring the fix's own internals than an
+## independently-verifiable ground fact. The exemption re-samples raw
+## TerrainSurfaceField ground in a ring around each offending triangle and
+## independently re-applies the same "24m-window drop > FALL_DROP_MIN" I1
+## rule _steep_scan encodes (WaterField.gd), exactly as
+## test_no_steep_span_without_terrain_drop already does for a different
+## purpose — an issue-level property (real terrain has a real cliff there),
+## not a re-derivation of steep_spans' bookkeeping.
+##
+## Runs on a REAL production chunk (seed 991177, chunk (-2,10) — discovered
+## by scanning both pinned seeds for a chunk with non-empty steep_spans;
+## drop=12.00, the theoretical max at one MAX_CLIFF_STEP boundary) rather
+## than a synthetic hand-built one: WaterMesher.build always resolves its
+## own rivers via water.bodies_near, so there is no injection point for a
+## hand-placed RiverTrace the way WaterField.steep_spans' own hand-built-
+## cliff fixture (test_water_field.gd) can use directly — a real seed/chunk
+## with a genuine steep reach is the practical equivalent for exercising the
+## mesher's own pipeline end to end, matching the sibling fixture's own
+## "practical alternative when a stub input would not exercise the real
+## plumbing" reasoning.
+func test_no_triangle_bridges_a_fall_except_legitimate_steep_terrain() -> void:
+	var water: WaterPlan = _water(991177)
+	var chunk := Vector2i(-2, 10)
+	var region = _region(991177, chunk)
+	var m: Dictionary = WaterMesher.build(water, chunk, region)
+	assert_false(m.is_empty(), "the steep chunk builds real water")
+	var tri: int = 0
+	var checked := 0
+	var exempted := 0
+	var violations := 0
+	var offenders: Array = []
+	while tri < m.hem_start:
+		var lo: float = INF
+		var hi: float = -INF
+		var cx := 0.0
+		var cz := 0.0
+		for k in 3:
+			var v: Vector3 = m.verts[m.idx[tri + k]]
+			lo = minf(lo, v.y)
+			hi = maxf(hi, v.y)
+			cx += v.x
+			cz += v.z
+		cx /= 3.0
+		cz /= 3.0
+		var span: float = hi - lo
+		checked += 1
+		if span >= WaterMesher.CUT_JUMP + 0.5:
+			if _has_real_nearby_ground_drop(region, cx, cz):
+				exempted += 1
+			else:
+				violations += 1
+				if offenders.size() < 5:
+					offenders.append("centroid=(%.1f,%.1f) span=%.3f — no real terrain drop nearby" % [cx, cz, span])
+		tri += 3
+	print("test_no_triangle_bridges_a_fall_except_legitimate_steep_terrain: %d triangles checked, %d exempted (real cliff), %d violations" % [
+		checked, exempted, violations])
+	assert_true(checked > 0, "the steep chunk has real sheet triangles to check")
+	assert_true(exempted > 0, "at least one triangle on this known-steep chunk actually needed the exemption (otherwise this test exercises nothing new)")
+	assert_eq(violations, 0,
+		"%d triangles span >= CUT_JUMP+0.5 with no real nearby terrain drop to justify it — a genuine bridge (%s)" % [
+			violations, offenders])
+
+
+## Independent ground-truth re-derivation (NOT a call into
+## WaterField.steep_spans or _steep_scan — see the caller's own docstring on
+## why this must be independently verifiable, not a mirror of steep_spans'
+## channel-anchored bookkeeping): true when the REAL terrain within a 24m
+## window centred on (cx,cz) drops more than WaterField.FALL_DROP_MIN,
+## re-applying the same I1 rule directly against TerrainSurfaceField.
+func _has_real_nearby_ground_drop(region, cx: float, cz: float) -> bool:
+	var g_lo := INF
+	var g_hi := -INF
+	for dz in range(-12, 13, 3):
+		for dx in range(-12, 13, 3):
+			var g: float = TerrainSurfaceField.surface_y(region, cx + float(dx), cz + float(dz))
+			g_lo = minf(g_lo, g)
+			g_hi = maxf(g_hi, g)
+	return (g_hi - g_lo) > WaterField.FALL_DROP_MIN
+
+
 ## THE continuity invariant: after the hem, a free edge may only be (a) on
 ## the chunk border, or (b) the hem's own outer rim (buried under the
 ## terrain).

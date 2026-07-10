@@ -9,10 +9,18 @@
 # detect or split (_cell_jump/_cell_cut/_mesh_cut_cell/_synth_cut/_lvl_side/
 # _cut_vert/_register_cut_hit and the multi-seam spread guard they fed are
 # all deleted — see this task's report). CUT_JUMP survives only as the
-# vertical-span sanity bound test_no_triangle_bridges_a_fall still checks
-# (a max-slope proxy: adjacent lattice samples 3m apart cannot legitimately
-# jump more than this without the terrain-hugging profile itself being
-# broken), not as a splitting threshold.
+# vertical-span sanity bound test_no_triangle_bridges_a_fall (pinned
+# SITE_CHUNK, which H1 confirmed has zero steep spans — so the strict bound
+# there really does mean "this triangle should never span this far") and
+# test_no_triangle_bridges_a_fall_except_legitimate_steep_terrain (a REAL
+# steep chunk, seed 991177) still check, not as a splitting threshold. I-2
+# (final-review-run2.md): a genuine storey cliff CAN legitimately produce a
+# triangle span well past CUT_JUMP+0.5 (measured on real production
+# terrain: up to ~7m) — the bound is not a universal "this can never happen"
+# ceiling, only a bridging-bug detector for ORDINARY (non-cliff) terrain;
+# the second test above independently re-verifies real ground truth (not
+# WaterField.steep_spans' own channel-anchored bookkeeping — see that
+# test's own docstring) before exempting a wide triangle.
 class_name WaterMesher
 extends Object
 
