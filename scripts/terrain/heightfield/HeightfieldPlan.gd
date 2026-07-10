@@ -438,4 +438,4 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 				carved[cell] = true
 
 	var levels: Dictionary = _clamp_levels(l0, storeys)
-	return HeightfieldRegion.new(storeys, levels, carved)
+	return HeightfieldRegion.new(storeys, levels, carved, self)

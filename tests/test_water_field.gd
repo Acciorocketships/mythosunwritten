@@ -219,6 +219,74 @@ func test_steep_spans_finds_a_real_hand_built_cliff() -> void:
 		"the profile itself hugs the cliff face with a real drop")
 
 
+## C1 regression (final-review-run2.md Critical 1): profile()'s cache key was
+## [trace.source_cell, region != null] — sound-LOOKING, but the terrain walk
+## inside _descend_segment reads whichever REGION happened to be passed on
+## the FIRST call for that source_cell, and every later caller (a different
+## chunk, with its own region window) gets that same cached, potentially
+## WRONG-WINDOW result back. HeightfieldRegion.storey_at defaults out-of-
+## window cells to storey 0 (_storeys.get(key, 0)) — a region centred far
+## from this trace's real cliff has NO storey data there at all, so the
+## whole trace reads flat-0 ground and the hug never engages: the level does
+## the old instant smooth chase straight across the cliff instead of hugging
+## it. This must be a genuine root-cause fix, not the oracle re-deriving
+## profile()'s own internals — the assertion below is exactly the ISSUE-
+## LEVEL property C1 names ("profile() becomes a pure function of (trace,
+## plan)"), independent of which HeightfieldRegion window a caller happens
+## to hand it.
+##
+## Uses a REAL HeightfieldPlan (raw_height override, not a hand-built
+## {storeys} dict) so compute_region's own window-defaulting mechanics are
+## genuinely exercised — a hand-built HeightfieldRegion has no true
+## "out-of-window" cells at all (every queried key is explicitly present),
+## so it cannot reproduce the out-of-window-reads-storey-0 mechanism this
+## bug depends on. Two regions from the SAME plan: one centred ON the
+## trace's own cliff (an accurate window — what the FIRST-touching chunk
+## would have if it happened to be nearby), one centred 72km away (a window
+## with zero real data near the trace — what a distant first-touching chunk
+## would have). A trace-owned profile must be IDENTICAL either way; at HEAD
+## (before the fix) it is not — the far region bakes flat ground into the
+## cached result and pollutes every future caller, including the accurate
+## one.
+func test_profile_is_independent_of_which_region_first_computed_it() -> void:
+	var plan := HeightfieldPlan.new(13579, 40.0, 8, "mean", 3)
+	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
+		return 48.0 if cz < 0 else 0.0)   # storey 3 (h=12) upstream, storey 0 downstream — the same cliff shape as the hand-built fixture above
+	var water := WaterPlan.new(13579, 40.0, 8)
+	plan.set_water_plan(water)
+
+	var tr := RiverTrace.new()
+	tr.source_cell = Vector2i(996, 996)   # distinct from the sibling fixture's 998,998 — must not collide in the static _profiles cache
+	tr.priority = 1
+	tr.points = PackedVector2Array([
+		Vector2(0.0, -36.0), Vector2(0.0, -24.0), Vector2(0.0, -12.0),
+		Vector2(0.0, 0.0), Vector2(0.0, 12.0), Vector2(0.0, 24.0)])
+	tr.beds = PackedFloat32Array([10.0, 9.0, 8.0, 2.0, 1.0, 0.5])
+	tr.widths = PackedFloat32Array([3.0, 3.0, 3.0, 3.0, 3.0, 3.0])
+	tr.joined = false
+	tr.source_pool = null
+	tr.pond = null
+
+	var region_near = plan.compute_region(0, -1, 4)        # accurate window, centred on the cliff
+	var region_far = plan.compute_region(3000, 3000, 4)    # 72km away — zero real data near the trace
+
+	WaterField._profiles.clear()
+	var prof_near_first: Dictionary = WaterField.profile(tr, region_near)
+	var levels_near_first: PackedFloat32Array = prof_near_first.levels.duplicate()
+
+	WaterField._profiles.clear()   # simulate a DIFFERENT chunk touching this trace FIRST this time
+	var prof_far_first: Dictionary = WaterField.profile(tr, region_far)
+	var levels_far_first: PackedFloat32Array = prof_far_first.levels.duplicate()
+
+	assert_eq(levels_near_first.size(), levels_far_first.size(), "same trace, same sample count either way")
+	var offenders: Array = []
+	for i in levels_near_first.size():
+		if absf(levels_near_first[i] - levels_far_first[i]) > 0.0001:
+			offenders.append("i=%d near-first=%.4f far-first=%.4f" % [i, levels_near_first[i], levels_far_first[i]])
+	assert_eq(offenders.size(), 0,
+		"profile() must be a pure function of (trace, plan) — whichever region touches it first must not change the result (%s)" % [offenders])
+
+
 ## _steep_scan(grounds, step) unit tests — the pure, terrain-free window-scan
 ## math the brief asks to be independently testable (steep_spans' own
 ## world-position/level plumbing is covered by

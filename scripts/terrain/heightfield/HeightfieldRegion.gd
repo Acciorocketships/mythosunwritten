@@ -12,11 +12,24 @@ var _storeys: Dictionary  # Vector2i -> int
 var _levels: Dictionary   # Vector2i -> int
 var _carved: Dictionary   # Vector2i -> true (water carve removed ground here)
 
+## Back-pointer to the HeightfieldPlan this region was computed from (null
+## for hand-built test fixtures that construct a HeightfieldRegion directly
+## from a {storeys} dict with no real plan behind it). Untyped, duck-typed,
+## to avoid a HeightfieldPlan<->HeightfieldRegion class-resolution cycle —
+## the same convention HeightfieldPlan._water_plan already uses for its own
+## cross-class back-pointer. Read by WaterField.profile() (C1 fix,
+## .superpowers/sdd/final-review-run2.md): a region built by a real plan can
+## be traded for a TRACE-OWNED canonical region from that SAME plan, so
+## profile()'s terrain hug no longer depends on which caller's chunk-window
+## happened to reach it first.
+var plan = null
 
-func _init(storeys: Dictionary, levels: Dictionary, carved: Dictionary = {}) -> void:
+
+func _init(storeys: Dictionary, levels: Dictionary, carved: Dictionary = {}, p_plan = null) -> void:
 	_storeys = storeys
 	_levels = levels
 	_carved = carved
+	plan = p_plan
 
 
 func storey_at(cx: int, cz: int) -> int:

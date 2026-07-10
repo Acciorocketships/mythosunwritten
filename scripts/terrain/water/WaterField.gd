@@ -71,6 +71,70 @@ static var _profiles: Dictionary = {}   # trace.source_cell -> profile dict
 # before (the foliage-cache incident). Guard every check-compute-store access.
 static var _profiles_lock := Mutex.new()
 
+# C1 fix (final-review-run2.md Critical 1): a TRACE-OWNED canonical ground
+# source, memoized per source_cell exactly like _profiles itself, so
+# profile()'s terrain hug is a pure function of (trace, plan) instead of
+# whichever caller's chunk-window happened to reach it first. Guarded by the
+# SAME _profiles_lock — both caches are populated together inside profile()'s
+# one critical section, so a second lock would only add contention without
+# adding safety (see profile()'s own comment on why the lock spans the
+# compute, not just the dict ops).
+static var _trace_regions: Dictionary = {}   # trace.source_cell -> HeightfieldRegion
+# Radius (in HeightfieldPlan tile-cells) around a trace's own bbox centre
+# passed to compute_region when building its canonical region. compute_region
+# ALREADY pads any requested radius by a fixed ~25-cell margin internally
+# (LEVELS_PER_STOREY + _CLIFF_SEARCH_MAX + max_storeys, independent of the
+# requested radius — see HeightfieldPlan.compute_region), and that margin
+# alone comfortably covers everything ONE _DESCENT_STEP-spaced segment walk
+# needs (a 12m TRACE_STEP segment plus TerrainSurfaceField's own 1-cell
+# cardinal/diagonal neighbour reads). This constant only needs to cover the
+# WORST-CASE segment's own extent — a small, fixed value — never the whole
+# trace: see _trace_owned_region's own docstring for why one region per
+# trace, sized to the trace's bbox (not one per segment), is the right unit.
+const _TRACE_REGION_MARGIN_CELLS := 4
+
+
+## Trace-owned canonical HeightfieldRegion, built once per source_cell (and
+## reused by every caller thereafter — hand in hand with _profiles' own
+## per-source_cell memoization) from the trace's OWN world-space bbox
+## (RiverTrace.bounds(), which already folds in source_pool/pond extents),
+## not from any caller's chunk. This is what makes profile()'s cache key
+## sound again: every plan-backed caller for a given source_cell computes
+## (or reuses) the exact SAME region, so the terrain hug can no longer
+## depend on caller order.
+##
+## COST (measured this task, see the report): compute_region's cost is
+## dominated by a ~25-cell FIXED internal margin (LEVELS_PER_STOREY +
+## _CLIFF_SEARCH_MAX + max_storeys), not by the requested radius — radius=0
+## already costs ~65ms cold on this machine, radius=8 ~120ms. A single
+## region sized to cover a trace's full bbox (up to ~2640m/110 tile-cells
+## for the longest legal trace) would need radius~110-135 and cost
+## 2-3 SECONDS (quadratic in radius: ~27-32us/cell, confirmed by direct
+## measurement) — real, but this is a ONE-TIME cost per trace, paid once
+## ever and cached forever after in _trace_regions/_profiles, exactly like
+## the existing "whole-session static cache" design this fix restores the
+## soundness of (see _profiles' own comment) — not a per-chunk-build cost.
+## It is comparable in order of magnitude to the codebase's OTHER existing
+## one-time cold cost (FieldTerrainStreamer._ready's own comment: "the first
+## build pays the whole cold water-trace cache (~10s)" for WaterPlan's trace
+## generation alone). It does NOT run on the steady-state per-chunk path
+## profile()'s own PERF comments budget against (~9ms/chunk fill) — that
+## budget is for the FILL, which reads the trace's already-computed,
+## already-cached profile.levels; this cost is paid once per trace, the
+## first time ANY chunk anywhere touches it, not once per chunk.
+static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan) -> HeightfieldRegion:
+	if _trace_regions.has(trace.source_cell):
+		return _trace_regions[trace.source_cell]
+	var bounds: Rect2 = trace.bounds()
+	var centre: Vector2 = bounds.get_center()
+	var half_span: float = maxf(bounds.size.x, bounds.size.y) * 0.5
+	var radius: int = int(ceil(half_span / TILE)) + _TRACE_REGION_MARGIN_CELLS
+	var cx: int = int(roundf(centre.x / TILE))
+	var cz: int = int(roundf(centre.y / TILE))
+	var region: HeightfieldRegion = plan.compute_region(cx, cz, radius)
+	_trace_regions[trace.source_cell] = region
+	return region
+
 
 ## Everything the samplers need for one chunk, fetched once (bodies_near is
 ## too expensive per point). Also builds a 24m spatial bucket over river
@@ -309,22 +373,49 @@ static func _relax_fill(region, base: Vector2, m1: int,
 ## so the only sound behaviour is the plain monotone chase. Every real
 ## production caller (ctx() with a region, WaterMesher.build) always passes
 ## one.
+##
+## C1 fix (final-review-run2.md Critical 1): a `region` that carries a real
+## `plan` back-pointer (built by HeightfieldPlan.compute_region — see
+## HeightfieldRegion.plan's own docstring; hand-built test fixtures that
+## construct a HeightfieldRegion directly leave `plan` null) is traded here
+## for a TRACE-OWNED canonical region from that SAME plan (_trace_owned_
+## region), sized to the trace's own bbox rather than any caller's chunk
+## window. This is what makes profile() a pure function of (trace, plan)
+## again: every plan-backed caller for a given source_cell ends up shaping
+## the descent against the exact same ground data regardless of which
+## chunk/region reached this function first — the bug this fixes (see the
+## final review) was exactly that the FIRST caller's chunk-scoped region won
+## and poisoned the cache for every later caller, including ones whose own
+## region would have been accurate. A region with no plan (or no region at
+## all) keeps the OLD region-identity behaviour unchanged — see the
+## region-optional note above; those callers have no plan to build a
+## canonical source from in the first place.
 static func profile(trace: RiverTrace, region = null) -> Dictionary:
 	# Check-compute-store guarded end to end: the streamer's worker thread and
 	# a teleport-triggered main-thread build can both call profile() for the
 	# same trace at once. Profiles are small, so holding the lock across the
 	# compute (not just the dictionary ops) costs nothing measurable.
-	# Cache key includes whether a region was supplied: a region-less probe
-	# (rare, test-only) must never poison the cache for the same trace's
-	# later terrain-aware call, or vice versa — see the region-optional note
-	# above. Real per-chunk builds always pass the same (non-null) region
-	# family, so this never doubles real work.
-	var cache_key: Array = [trace.source_cell, region != null]
+	var plan_backed: bool = region != null and region.plan != null
+	# Cache key: a plan-backed call is keyed on source_cell ALONE — sound,
+	# because _trace_owned_region guarantees every plan-backed caller for
+	# this source_cell shapes against the identical canonical region (see
+	# that function's own docstring), so there is no longer a "which region"
+	# axis left to disambiguate. A non-plan-backed call (region-less probe,
+	# or a hand-built-fixture region with no plan) keeps the OLD key
+	# (region != null) so it can never collide with, or be shadowed by, a
+	# plan-backed call for the same trace — the two regimes are disjoint by
+	# construction (different Array shapes never compare equal as Dictionary
+	# keys), matching the region-optional note above: a region-less probe
+	# must never poison the cache for the same trace's later terrain-aware
+	# call, or vice versa.
+	var cache_key = trace.source_cell if plan_backed else [trace.source_cell, region != null]
 	_profiles_lock.lock()
 	if _profiles.has(cache_key):
 		var cached: Dictionary = _profiles[cache_key]
 		_profiles_lock.unlock()
 		return cached
+	if plan_backed:
+		region = _trace_owned_region(trace, region.plan)
 	var n: int = trace.points.size()
 	var levels := PackedFloat32Array()
 	levels.resize(n)
