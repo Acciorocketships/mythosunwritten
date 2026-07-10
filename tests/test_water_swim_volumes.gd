@@ -11,14 +11,15 @@ extends GutTest
 # spread past CUT_JUMP used to emit TWO boxes, upper and lower) is DELETED —
 # wet_cells is back to exactly ONE entry per cell (see WaterMesher.gd's
 # _attributes docstring and this task's report). In its place: a cell whose
-# max |grade_at| over its own wet samples exceeds STEEP_UNSWIMMABLE (0.35)
+# max |grade_at| over its own wet samples exceeds STEEP_UNSWIMMABLE (0.45)
 # gets NO volume at all — steep water is not swimmable by design, so a
 # character falls/slides through it instead of floating. The site's real
 # cascade (verified this task, headless probe over the full pinned 3x3
-# chunk neighbourhood) never exceeds 0.3333 anywhere — comfortably under
-# 0.35 — so the site itself has NO steep cells to gate; see
-# test_no_volume_on_steep_water below for the synthetic (hand-built,
-# non-vacuous) coverage of the gate itself.
+# chunk neighbourhood) never exceeds 0.3333 anywhere — the legal-reach
+# ceiling itself (FALL_DROP_MIN/TRACE_STEP, see WaterMesher.gd's own
+# STEEP_UNSWIMMABLE comment), comfortably under 0.45 — so the site itself
+# has NO steep cells to gate; see test_no_volume_on_steep_water below for
+# the synthetic (hand-built, non-vacuous) coverage of the gate itself.
 # Pinned review seed/chunk; the site chunk carries the R3 cascade.
 # ------------------------------------------------------------
 
@@ -158,7 +159,7 @@ func test_volumes_are_cell_pure_and_cover_the_pool() -> void:
 ## at 9.7) starts at z=-1080, short of z=-1083 — the old point falls in a
 ## real (if narrow) coverage seam between two single-plane boxes on a
 ## reach with a real internal gradient (0.333, still well under
-## STEEP_UNSWIMMABLE=0.35, so neither cell is gated out — this is a genuine
+## STEEP_UNSWIMMABLE=0.45, so neither cell is gated out — this is a genuine
 ## consequence of "one flat plane per 24m cell," not a bug this task
 ## introduces new coverage machinery to fix). Replaced with an upstream
 ## point well inside cell (2,-45)'s own footprint (54, 10.0, -1068) —
@@ -214,7 +215,7 @@ func test_no_volume_on_steep_water() -> void:
 	gnd.resize(n1 * n1)
 	gnd.fill(0.0)
 	# A steep corner run: level drops 12.0 over one 3m cell edge (grade 4.0,
-	# far past STEEP_UNSWIMMABLE=0.35) along a single row so _claim/grade_at
+	# far past STEEP_UNSWIMMABLE=0.45) along a single row so _claim/grade_at
 	# has a real trace to read from.
 	var water := WaterPlan.new(1, 22.0, 8)
 	var tr := RiverTrace.new()

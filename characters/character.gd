@@ -187,8 +187,9 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 # owner's floating character beside waterfalls).
 #
 # DEPTH GATE (Phase 2b, item 6): in_water additionally requires real depth —
-# (sy - ground_under_feet) > 0.8 — not just "probe point sits under a
-# volume's swelled headroom." A shallow puddle/ankle-deep flood shelf can
+# (sy - ground_under_feet) > 0.8 to ENTER, staying swimming down to > 0.6
+# (hysteresis, see the thresholds inline below) — not just "probe point sits
+# under a volume's swelled headroom." A shallow puddle/ankle-deep flood shelf can
 # satisfy the headroom containment test above while the character is
 # plainly STANDING, not swimming; the owner's I5 misclassification (a dry
 # bank inside a coarse 24m volume box reading as "in water") is exactly
@@ -205,9 +206,9 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 # codebase's one "how far down is the ground" primitive. No collision
 # within 2m below the feet reads as -INF ground (bottomless from here) so
 # depth trivially clears 0.8 — a real, if conservative, "this is deep"
-# default. 0.05 < depth <= 0.8 is WADING: shallow enough that movement is
-# unaffected (no swim-control switch), but flagged for effects/animation
-# to read later.
+# default. Roughly 0.05-0.8 depth is WADING (exact edges hysteretic, see
+# below): shallow enough that movement is unaffected (no swim-control
+# switch), but flagged for effects/animation to read later.
 func _update_in_water() -> void:
 	var params := PhysicsPointQueryParameters3D.new()
 	var probe_y: float = global_position.y + 0.3
@@ -240,9 +241,20 @@ func _update_in_water() -> void:
 		if not contained:
 			continue
 		var depth: float = sy - ground_under_feet
-		if depth > 0.8:
+		# HYSTERESIS: distinct enter/exit thresholds per state rather than one
+		# boundary re-evaluated fresh each frame. WaterRippleSim.gd fires a
+		# splash ripple on every false->true edge of in_water (its
+		# _was_in_water gate); a single 0.8 boundary lets depth dither by a
+		# few cm across a shallow shelf lip, re-triggering that edge and
+		# spraying spurious splashes. Swim ENTER > 0.8, EXIT < 0.6 (stays
+		# swimming in between).
+		var swim_gate: float = 0.6 if in_water else 0.8
+		if depth > swim_gate:
 			best = maxf(best, sy)
-		elif depth > 0.05:
+		# Wading mirrors the same shape, ENTER > 0.05 / EXIT < 0.03: no
+		# consumer currently gates on wading's own edges, but the same
+		# hysteresis keeps both readings equally stable on one shelf.
+		elif depth > (0.03 if wading else 0.05):
 			best_wading = true
 	in_water = best > -INF
 	wading = not in_water and best_wading

@@ -23,7 +23,17 @@ const EPS := 0.05
 const CUT_JUMP := 2.0         # vertical-span sanity bound only (see file header) — no longer a split trigger
 const HEM_DROP := 1.2
 const HEM_W := 1.5
-const STEEP_UNSWIMMABLE := 0.35   # max |grade_at| a wet cell may carry and still get a swim volume
+# Max |grade_at| a wet cell may carry and still get a swim volume. grade_at
+# is a secant over one TRACE_STEP=12m river-trace segment (WaterField.gd);
+# the legal ceiling for an ordinary (non-fall) reach is FALL_DROP_MIN/
+# TRACE_STEP = 4.0/12.0 = 0.3333 — anything steeper is already classified a
+# fall face by WaterField's own FALL_DROP_MIN rule, so no legitimate
+# swimmable reach can secant above ~0.333. True fall faces plunge far
+# harder, producing secants of ~0.5 or more. 0.45 sits between the two with
+# margin on both sides: comfortably above the legal-reach ceiling (no
+# swimmable water gets gated by accident) and comfortably below real fall
+# secants (no fall face slips through and gets a volume).
+const STEEP_UNSWIMMABLE := 0.45
 
 
 ## st: shared build state. One per build() call.
