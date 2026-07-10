@@ -226,11 +226,15 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 
 
 static func clear_skirt_debug() -> void:
+	# free() (immediate), not queue_free(): a force_draw + save_png later in
+	# the same or a stale frame can still render a deferred-freed overlay —
+	# one battery frame (r4_I2) caught the red/blue tris 60m away at the
+	# horizon. These are plain root-owned MeshInstances; immediate free is safe.
 	var root: Node = (Engine.get_main_loop() as SceneTree).root
 	for n in root.find_children("SkirtDebugOverlay", "MeshInstance3D", true, false):
-		n.queue_free()
+		n.free()
 	for n in root.find_children("SteepDebugOverlay", "MeshInstance3D", true, false):
-		n.queue_free()
+		n.free()
 
 
 ## Step 2: place the camera on the solved orbit pose and save the frame.
