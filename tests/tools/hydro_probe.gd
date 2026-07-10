@@ -234,8 +234,11 @@ func _probe_c(_water: WaterPlan) -> void:
 ##   containment gate: probe_y <= sy + swell + 0.45  (swell=0: static field probe)
 ##   depth = sy - ground_under_feet
 ##   in_water: depth > 0.8 (among contained, gated volumes) => best = maxf(sy)
-##   wading:   0.05 < depth <= 0.8 on a contained, gated volume with no
-##             deeper hit anywhere
+##   wading:   in_water OR 0.05 < depth <= 0.8 on some contained, gated
+##             volume (h-task-4 fix: swimming is a DEEPER case of being in
+##             water at all, so wading is never independently false while
+##             in_water is true — see AGENTS.md's Character depth gate
+##             clause)
 ## ground_under_feet PROXY NOTE: this tool is a headless SceneTree script
 ## with no live PhysicsServer/RayCast3D — character.gd's real mechanism
 ## reads its own existing floor raycast (the same RayCast3D
@@ -325,7 +328,16 @@ func _probe_d(water: WaterPlan) -> void:
 			elif depth > 0.05:
 				any_wading = true
 		var in_water: bool = best > -INF
-		var wading: bool = not in_water and any_wading
+		# h-task-4 fix mirror (character.gd._update_in_water): WAS
+		# `not in_water and any_wading`, which made wading structurally
+		# impossible to read true while in_water was also true. Swimming is a
+		# DEEPER case of being in water at all, so wading should never read
+		# false merely because in_water is true — see AGENTS.md's own
+		# Character depth gate clause. This probe's PASS basis (`wet =
+		# in_water or wading`, below) is UNCHANGED either way: `in_water or
+		# (in_water or any_wading)` reduces to the same `in_water or
+		# any_wading` the old formula already produced there.
+		var wading: bool = in_water or any_wading
 		var wet: bool = in_water or wading
 		var status: String = "PASS" if wet == case.expect_wet else "FAIL"
 		print("H6: %s pos=%s contains=%d ground_under_feet=%.2f in_water=%s wading=%s surface=%s" % [

@@ -543,11 +543,13 @@ static func _descend_segment(region, a: Vector2, b: Vector2, start_lvl: float, e
 ##    tests/callers still do this) OR p falls outside the fill window (the
 ##    fill only covers chunk+FILL_MARGIN — see FILL_MARGIN's comment): fall
 ##    back to CHANNEL-MEMBERSHIP ONLY, i.e. exactly the old nearest-claimant
-##    search but with NO flood/margin competition — a point only claims
-##    water when it is within a channel sample's width or a pond's
-##    footprint (m < 0), smallest-margin wins among those. This never
-##    fabricates flood coverage outside the window; it just answers "is this
-##    point literally inside the carved channel/pond," which is always safe
+##    search but with NO flood/margin competition — a point claims water
+##    when it is within a channel sample's width or a pond's footprint, OR
+##    up to CLAIM_FEATHER (8m) past that edge (m < CLAIM_FEATHER, not a
+##    literal m < 0 — see _channel_membership_level's own margin math and
+##    Minor 4, final-review-run2.md), smallest-margin wins among those. This
+##    never fabricates flood coverage outside the window; it just answers
+##    "is this point at/near the carved channel/pond," which is always safe
 ##    to ask regardless of whether a fill was ever computed for the point's
 ##    neighbourhood (callers probing far from any built ctx must not crash
 ##    — see the Phase 1 report).

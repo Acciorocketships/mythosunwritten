@@ -47,7 +47,9 @@ const STEEP_UNSWIMMABLE := 0.45
 ## st: shared build state. One per build() call.
 static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	# ctx built WITH region so the lattice and _edge_vert see the flooded
-	# field (level_at's flood extension over low ground).
+	# field (level_at's hydrostatic fill over low ground — see WaterField.gd's
+	# own _build_fill; the old point-wise "flood extension" claim geometry was
+	# deleted in Phase 1).
 	var c: Dictionary = WaterField.ctx(water, chunk, region)
 	if c.ponds.is_empty() and c.rivers.is_empty():
 		return {}

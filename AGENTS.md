@@ -173,7 +173,10 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   **Character depth gate** (`characters/character.gd`): swimming and wading are each
   independently hysteretic against the knee-probe's depth below the water surface — swim
   ENTER at depth > 0.8m, EXIT at < 0.6m; wade ENTER at depth > 0.05m, EXIT at < 0.03m — so a
-  reading sitting right on one boundary can't dither the state every frame.
+  reading sitting right on one boundary can't dither the state every frame. `wading = in_water
+  or best_wading` (since h-task-4): swimming is a DEEPER case of being in water at all, so a
+  swimming character always reads wading too — never independently false while `in_water` is
+  true.
 - **One tint field**: every terrain surface — walkable sheet, aprons, rock skirt, and all
   KayKit dressing pieces (per-instance colours) — multiplies THE shared material by
   `BiomeRegistry.blended_ground_tint` sampled at its own position. Change the palette or
