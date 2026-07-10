@@ -67,13 +67,14 @@ const _EASE_BAND := 2.0       # metres of (ground-hug - smooth-trend) level gap 
 # promoted from "the brief said so" to measured-adequate on the seeds this
 # suite exercises; it remains a WINDOWING HAZARD in principle (a pond whose
 # true reach exceeds this margin, or a still-water flood over unusually flat
-# terrain, could still crack on some future seed) — named in the
-# known-limitations roll-up (final-review-run2.md's own roll-up, item 8) as
-# the same class as roll-up item 1 (the 6m fill lattice's own blind spot),
-# not fixed proactively since no live instance has been found. The oracle
-# above is the regression gate: if a future seed/site DOES trip it, the fix
-# is a seed-aware adaptive window (extend the margin to cover any in-ctx
-# body's own footprint + slack) rather than a blind margin bump.
+# terrain, could still crack on some future seed) — named as a known
+# limitation in .superpowers/sdd/progress.md's own running ledger, the same
+# CLASS of hazard as final-review-run2.md's known-limitations roll-up item 1
+# (the 6m fill lattice's own blind spot), not fixed proactively since no
+# live instance has been found. The oracle above is the regression gate: if
+# a future seed/site DOES trip it, the fix is a seed-aware adaptive window
+# (extend the margin to cover any in-ctx body's own footprint + slack)
+# rather than a blind margin bump.
 #
 # PERF (Phase 1 report): the 3m lattice (85x85=7225 samples) measured a
 # median 59.8ms per ctx() on this machine — ~4x over the 15ms budget (the
