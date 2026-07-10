@@ -409,6 +409,19 @@ static func _in_fill_window(c: Dictionary, p: Vector2) -> bool:
 ## not read from WaterMesher directly (WaterField is the lower-level module;
 ## the dependency would point the wrong way), just the same physically-
 ## motivated threshold restated here.
+## Safety-margin check against the steepest LEGAL (non-fall) reach: a
+## continuous river slope may drop up to FALL_DROP_MIN (4.0m, exclusive) per
+## TRACE_STEP (12.0m, WaterPlan.gd) before profile() cuts a fall — so over
+## one FILL_STEP=6m fill-lattice cell, the steepest legal slope reaches
+## 4.0/12.0*6.0 = 2.0m, i.e. it lands EXACTLY at FILL_JUMP, not comfortably
+## under it. Because the corner-mixing gate above is strict '>' (wet_hi -
+## wet_lo > FILL_JUMP), an exact 2.0m difference still blends; only a
+## difference exceeding 2.0m snaps — so there is zero slack, not a margin,
+## between the steepest legal reach and the different-body snap threshold.
+## No test currently exercises _fill_bilinear against a near-4.0m/12m legal
+## slope resampled onto the 6m lattice to confirm it blends rather than
+## snaps at this boundary — a real gap, not yet covered by
+## test_water_field.gd or test_water_mesher.gd.
 const FILL_JUMP := 2.0
 
 ## Bilinear over the fill lattice, with two corrections against the raw

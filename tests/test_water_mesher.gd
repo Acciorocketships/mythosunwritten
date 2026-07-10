@@ -267,24 +267,50 @@ func test_every_free_edge_is_accounted_for() -> void:
 	# over; not a hole).
 	#
 	# Phase 1 (hydrostatic fill) note: (d) is the same "near a cut" gate
-	# WaterMesher._near_cut/_cell_cut use to decide hem/cut-cell membership
-	# — this test re-implements it independently (S, not S*1.5) rather than
-	# calling the production function, by original design (the two must
-	# independently agree, not share one implementation). The fill now
-	# extends water slightly farther along one cut's flank than the pre-fill
-	# claim-radius field did, landing one real hem-flank vertex just past
-	# this test's OWN S-wide gate (WaterMesher._cell_cut already uses
-	# S*1.5 for the equivalent along-cut proximity judgement elsewhere in
-	# the same file — this test's re-implementation is widened to match
-	# that existing convention, not invented new). Verified directly (Phase
-	# 1 investigation, .superpowers/sdd/h-task-1-report.md): the specific
-	# edge this covers is a real, correctly-welded hem-quad flank triangle
-	# in the committed mesh, not a gap — WaterMesher.gd itself is
-	# unmodified; only this test's own tolerance moved.
+	# WaterMesher._near_cut uses to decide where hem generation stops beside
+	# a cut — this test re-implements it independently (by original design:
+	# the two must independently agree, not share one implementation).
+	# _near_cut itself uses plain S, not S*1.5 — S*1.5 here is NOT "matching
+	# _cell_cut's convention" (an earlier version of this comment claimed
+	# that; _cell_cut gates an unrelated lattice-jump judgement and its S*1.5
+	# is coincidental, not equivalent). The real, substantiated reason S*1.5
+	# is required:
+	#
+	# _hem_vert (WaterMesher.gd) builds a hem's outer-rim vertex by pushing
+	# the source waterline vertex outward by HEM_W=1.5 along the local shore
+	# normal n2, THEN dropping it below ground. That 1.5m push moves the
+	# vertex in world space, so its OWN along-cut distance (the same 'along'
+	# _near_cut measures) can grow by up to the full HEM_W=1.5 relative to
+	# its source — maximal when the cut's direction is nearly parallel to
+	# the push normal (push lands almost entirely on the along axis instead
+	# of being absorbed by across). Worst case: a source vertex sitting right
+	# at the S gate's own edge, pushed by the full HEM_W along-axis, lands
+	# the hem vertex at exactly S + HEM_W = 3.0 + 1.5 = 4.5 = S*1.5 — so
+	# S*1.5 is the exact bound this construction needs, not an arbitrary
+	# widen (HEM_W = 0.5*S is why the numbers land exactly on S*1.5).
+	#
+	# Confirmed on the site chunk (investigation script, since removed;
+	# findings recorded here and in .superpowers/sdd/h-task-1-report.md):
+	# of 245 non-border free edges, exactly ONE needs S*1.5 over S — all
+	# others are already accounted for at S. That edge is
+	# (39.0, 5.7, -1088.91) -> (39.0, 3.950638, -1087.41):
+	#   - (39.0, 5.7, -1088.91) is the source sheet (waterline) vertex:
+	#     buried=false, along=1.614 (well inside S=3.0).
+	#   - (39.0, 3.950638, -1087.41) is that source pushed by _hem_vert's
+	#     n2*HEM_W (push vector measured (0, +1.5), i.e. nearly pure +Z) and
+	#     dropped: buried=true, along=3.105 — past S=3.0 but inside
+	#     S*1.5=4.5. The site's one recorded cut runs cut.dir=(0.108,-0.994),
+	#     i.e. nearly along Z, almost parallel to the push normal, so
+	#     essentially the whole 1.5m push (measured component: -1.491)
+	#     lands on the along axis: 1.614 + 1.491 = 3.105, matching exactly.
+	#   Pinned below so this claim is machine-checked, not prose.
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
 	_mark_multiseam_handled()
+	var pinned_vert := Vector3(39.0, 3.950638, -1087.41)
+	var pinned_found := false
+	var pinned_near_S := true   # expect false: this vert needs S*1.5, not S
 	for e: Array in WaterMesher.free_edges(m.verts, m.idx):
 		if _on_chunk_border(e[0]) and _on_chunk_border(e[1]):
 			continue
@@ -300,10 +326,23 @@ func test_every_free_edge_is_accounted_for() -> void:
 				if absf((p2 - rec.cut.p).dot(rec.cut.dir)) < WaterMesher.S * 1.5 \
 						and absf((p2 - rec.cut.p).dot(rec.cut.across)) < rec.cut.half + WaterMesher.S * 1.5:
 					near = true
+					if absf((p2 - rec.cut.p).dot(rec.cut.dir)) >= WaterMesher.S \
+							or absf((p2 - rec.cut.p).dot(rec.cut.across)) >= rec.cut.half + WaterMesher.S:
+						if v.distance_to(pinned_vert) < 0.01:
+							pinned_found = true
+							pinned_near_S = false
 			if not near:
 				on_cut = false
 		assert_true(buried or on_cut,
 			"unaccounted free edge %s-%s (not border/cut/buried)" % [e[0], e[1]])
+	# The pinned vertex: recorded evidence for the S*1.5 claim above, not
+	# just prose. If this ever stops firing, either the fill geometry moved
+	# (re-investigate which edge needs S*1.5 now) or S*1.5 is no longer
+	# needed at all (revert to S).
+	assert_true(pinned_found,
+		"expected hem-flank vertex %s not found in this build — re-investigate the S*1.5 tolerance" % pinned_vert)
+	assert_false(pinned_near_S,
+		"pinned vertex %s now passes at plain S — the S*1.5 widening may no longer be needed" % pinned_vert)
 
 
 func test_hem_is_buried() -> void:

@@ -132,9 +132,12 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   - `WaterField` — the continuous water surface as ONE height field `level_at(x,z)`,
     discontinuous only at true waterfalls (bed drop > `FALL_DROP_MIN` == 4m between
     adjacent trace samples — falls under 4m are just steep flow, no cut). Ponds are flat;
-    river reaches slope monotonically between anchors; a bounded flood extension
-    (`FLOOD_EXT`/`FLOOD_DEPTH_MAX`) covers submerged shelves. Pure and deterministic — no
-    rendering, no nodes.
+    river reaches slope monotonically between anchors; beyond the channel/pond seeds
+    themselves, coverage comes from a **hydrostatic fill**: seeds placed in channels and
+    ponds spread by BFS (lower level wins) over connected ground sitting below its own
+    level, rasterized on a 6m world-space lattice with a 30m margin around each chunk —
+    so the waterline follows a real terrain contour instead of stopping at a fixed claim
+    radius. Pure and deterministic — no rendering, no nodes.
   - `WaterMesher` — a **boundary-conforming** sheet: marching squares over a 3m sub-grid on
     `f(x,z) = level(x,z) - ground(x,z)`. Interior cells emit welded grid quads; boundary
     cells emit contour polygons whose edge vertices sit ON the waterline (never a cell-grid
