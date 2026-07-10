@@ -244,7 +244,9 @@ func test_every_free_edge_is_accounted_for() -> void:
 				buried = false
 			var near := false
 			for rec: Dictionary in m.cuts:
-				if absf((Vector2(v.x, v.z) - rec.cut.p).dot(rec.cut.dir)) < WaterMesher.S:
+				var p2 := Vector2(v.x, v.z)
+				if absf((p2 - rec.cut.p).dot(rec.cut.dir)) < WaterMesher.S \
+						and absf((p2 - rec.cut.p).dot(rec.cut.across)) < rec.cut.half + WaterMesher.S:
 					near = true
 			if not near:
 				on_cut = false

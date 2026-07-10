@@ -120,6 +120,48 @@ func test_fall_cuts_geometry() -> void:
 		assert_almost_eq(cut.dir.dot(cut.across), 0.0, 0.001, "across is perpendicular")
 
 
+## Degenerate case: a trace whose last bed sample still sits > FALL_DROP_MIN
+## above its terminal pond's surface (profile() then appends a cut at
+## ci == n-1, where the "normal" j = mini(ci+1, n-1) collapses to ci itself
+## — no downstream sample to derive dir/across from). fall_cuts() must
+## special-case this: dir comes from the trace's LAST SEGMENT instead, top
+## is the trace's own final level, and bottom is the pond's surface. Hand-
+## built trace + pond — no world plan needed, so this stays fast.
+func test_fall_cuts_pond_terminal_degenerate() -> void:
+	var tr := RiverTrace.new()
+	tr.source_cell = Vector2i(999, 999)
+	tr.priority = 1
+	tr.points = PackedVector2Array([
+		Vector2(0.0, 0.0), Vector2(0.0, 12.0), Vector2(0.0, 24.0)])
+	# Steps of 2.0m each (bed) -> raw level steps of 2.0m, both under
+	# FALL_DROP_MIN, so no mid-trace cut is placed; the final level still
+	# lands well above the pond, tripping the pond-tail cut at ci == n-1.
+	tr.beds = PackedFloat32Array([20.0, 18.0, 16.0])
+	tr.widths = PackedFloat32Array([3.0, 3.0, 3.0])
+	tr.joined = false
+	tr.source_pool = null
+	# Pond surface sits far enough below the trace's last raw level
+	# (16.0 + SURFACE_RIDE = 18.2) that the drop clears FALL_DROP_MIN (4.0).
+	var pond := PondStamp.new(Vector2(0.0, 36.0), 5.0, 42, 3, 2.0)  # surface_y() = 11.0
+	tr.pond = pond
+	var ctx: Dictionary = {"water": null, "ponds": [], "rivers": [tr], "buckets": {}}
+	var rect := Rect2(Vector2(-100.0, -100.0), Vector2(200.0, 200.0))
+	var cuts: Array = WaterField.fall_cuts(ctx, rect)
+	assert_eq(cuts.size(), 1, "the pond-terminal drop emits exactly one cut")
+	var cut: Dictionary = cuts[0]
+	assert_almost_eq(cut.dir.length(), 1.0, 0.001, "dir is unit, not the zero vector")
+	assert_almost_eq(cut.dir.dot(cut.across), 0.0, 0.001, "across is perpendicular to dir")
+	assert_true(cut.top - cut.bottom > WaterField.FALL_DROP_MIN,
+		"the recorded drop clears FALL_DROP_MIN (%.2f)" % (cut.top - cut.bottom))
+	# dir must follow the trace's last segment (straight +Z here), not some
+	# degenerate zero-length "normal" between ci and itself.
+	assert_almost_eq(cut.dir.x, 0.0, 0.001, "dir.x follows the last segment")
+	assert_almost_eq(cut.dir.y, 1.0, 0.001, "dir.y follows the last segment")
+	assert_almost_eq(cut.p.x, 0.0, 0.001, "p stays at the last point")
+	assert_almost_eq(cut.p.y, 24.0, 0.001, "p stays at the last point")
+	assert_almost_eq(cut.bottom, pond.surface_y(), 0.001, "bottom is the pond's surface")
+
+
 func test_flow_and_grade() -> void:
 	var water: WaterPlan = _water(SEED)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)

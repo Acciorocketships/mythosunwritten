@@ -225,6 +225,10 @@ static func _sample_level(tr: RiverTrace, si: int, p: Vector2) -> float:
 	return lerpf(prof.levels[si], prof.levels[j], t)
 
 
+## ctx must be built WITH region (see ctx()'s region param) for flooded
+## shelves to count as wet: level_at's flood extension only activates when
+## c.region is non-null, so a ctx built without region evaluates the
+## unflooded field and under-reports wetness over shallow flooded ground.
 static func wet(c: Dictionary, region, p: Vector2) -> bool:
 	var lvl: float = level_at(c, p)
 	return lvl > -INF and lvl > TerrainSurfaceField.surface_y(region, p.x, p.y) + EPS
@@ -282,13 +286,42 @@ static func grade_at(c: Dictionary, p: Vector2) -> float:
 
 ## Fall cut segments whose midpoint lies inside rect (grown by one tile so
 ## chunk-border cuts appear for both neighbouring chunks).
+## Degenerate case: profile() can append a cut at ci == n-1 (the trace ends
+## more than FALL_DROP_MIN above its terminal pond — see profile()'s pond
+## tail-fixup). There j == mini(ci+1, n-1) == ci, so the "normal" (points[j]
+## - points[ci]) direction is the zero vector — a poisoned record: dir.
+## normalized() would come back ZERO, and downstream consumers key exemption/
+## gating on dot products against dir/across, so a zero dir silently exempts
+## or matches EVERYTHING (WaterMesher._near_cut, the plunge band in
+## _attributes, _cell_cut's gate). Handle it explicitly: derive dir from the
+## trace's last real segment instead of the (degenerate) cut segment, and
+## drop straight to the terminal pond's surface as the bottom.
 static func fall_cuts(c: Dictionary, rect: Rect2) -> Array:
 	var out: Array = []
 	var grown: Rect2 = rect.grow(TILE)
 	for tr: RiverTrace in c.rivers:
 		var prof: Dictionary = profile(tr)
+		var n: int = tr.points.size()
 		for ci in prof.cuts:
-			var j: int = mini(ci + 1, tr.points.size() - 1)
+			var j: int = mini(ci + 1, n - 1)
+			if j == ci:
+				# Pond-terminal cut: no downstream sample to point at. Need at
+				# least 2 points to form a direction from the last segment.
+				if n < 2:
+					push_warning("WaterField.fall_cuts: trace %s has < 2 points, skipping degenerate terminal cut" % [tr.source_cell])
+					continue
+				if tr.pond == null:
+					push_warning("WaterField.fall_cuts: trace %s terminal cut at %d has no pond, skipping" % [tr.source_cell, ci])
+					continue
+				var p: Vector2 = tr.points[n - 1]
+				var dirv: Vector2 = (tr.points[n - 1] - tr.points[n - 2]).normalized()
+				if not grown.has_point(p):
+					continue
+				out.append({"p": p, "dir": dirv,
+					"across": Vector2(-dirv.y, dirv.x),
+					"half": tr.widths[n - 1] + CLAIM_FEATHER,
+					"top": prof.levels[n - 1], "bottom": tr.pond.surface_y()})
+				continue
 			var mid: Vector2 = (tr.points[ci] + tr.points[j]) * 0.5
 			if not grown.has_point(mid):
 				continue

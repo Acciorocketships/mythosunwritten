@@ -564,7 +564,9 @@ static func _border2(base: Vector2, span: float, v: Vector3) -> bool:
 
 static func _near_cut(st: Dictionary, v: Vector3) -> bool:
 	for cut: Dictionary in st.cuts:
-		if absf((Vector2(v.x, v.z) - cut.p).dot(cut.dir)) < S:
+		var p2 := Vector2(v.x, v.z)
+		if absf((p2 - cut.p).dot(cut.dir)) < S \
+				and absf((p2 - cut.p).dot(cut.across)) < cut.half + S:
 			return true
 	return false
 

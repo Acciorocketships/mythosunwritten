@@ -43,7 +43,7 @@ static func _fall_curve(top: float, bottom: float) -> Dictionary:
 # -------------------------------------------------------------------------
 
 
-static func build(cuts: Array, region) -> ArrayMesh:
+static func build(cuts: Array, _region) -> ArrayMesh:
 	if cuts.is_empty():
 		return null
 	var st := SurfaceTool.new()
@@ -51,7 +51,7 @@ static func build(cuts: Array, region) -> ArrayMesh:
 	var any := false
 	for rec: Dictionary in cuts:
 		if rec.lip.size() >= 2:
-			_sweep(st, rec, region)
+			_sweep(st, rec, _region)
 			any = true
 	if not any:
 		return null
@@ -59,7 +59,7 @@ static func build(cuts: Array, region) -> ArrayMesh:
 	return st.commit()
 
 
-static func _sweep(st: SurfaceTool, rec: Dictionary, region) -> void:
+static func _sweep(st: SurfaceTool, rec: Dictionary, _region) -> void:
 	var cut: Dictionary = rec.cut
 	var drop_h: float = maxf(cut.top - cut.bottom, 0.5)
 	var cv: Dictionary = _fall_curve(cut.top, cut.bottom)

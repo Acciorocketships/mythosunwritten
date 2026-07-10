@@ -21,6 +21,11 @@ const STEEP_RISE := 5.0               # bed drop per sample that reads as rapids
 static var _sheet_material: ShaderMaterial = null
 
 
+## LEGACY surface definition (bed + 1.5, quantized-clamped): kept only for
+## test_water_plan and the water_review_spots tool, which still read it.
+## WaterField's profile() (bed + SURFACE_RIDE == 2.2, continuous) is the
+## rendered truth for the current boundary-mesh pipeline — do not reuse this
+## for new code.
 ## Water surface height per polyline sample: bed + offset, flattened into the
 ## terminal pond (backwater) and made monotone by a single backward pass —
 ## walking upstream, the surface may only rise. Pure function of the trace.
