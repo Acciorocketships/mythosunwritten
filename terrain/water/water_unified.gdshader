@@ -184,6 +184,10 @@ void fragment() {
 	// (0..0.85 ordinarily, 0..1 in the plunge band) — the shader must not
 	// assume every CUSTOM0.w it is ever handed stays in range.
 	float steep = clamp(steep_v, 0.0, 1.0);
+	// Thin sheet flow is transparent and un-aerated; only real depth whitens —
+	// gate the steep look by depth so an ankle-film on a slope reads as a
+	// faint wet sheen, not a full waterfall (reuses `depth`, no new samples).
+	float film = smoothstep(0.15, 0.9, depth);
 	// (a) Downhill streak scroll: the SAME noise/band pattern
 	// waterfall.gdshader used for its falling streaks (`fall`/`band`),
 	// ported onto the sheet's flat surface — sampled along the local FLOW
@@ -197,11 +201,11 @@ void fragment() {
 	float streak_fall = texture(noise_tex, vec2((world_pos.x + world_pos.z) * 0.07,
 			along * 0.07 - TIME * fall_speed * steep + streak_col)).r;
 	float streak_band = smoothstep(0.35, 0.75, streak_fall);
-	foam += streak_band * smoothstep(0.25, 0.7, steep) * 0.35;
+	foam += streak_band * smoothstep(0.25, 0.7, steep) * 0.35 * mix(0.25, 1.0, film);
 	// (b) Foam ramp: a steep stretch simply carries more foam, continuously
 	// with steepness — no branch/threshold discontinuity, just another
 	// smoothstep term blended in alongside (a) and the plunge churn below.
-	foam += 0.5 * smoothstep(0.45, 0.9, steep);
+	foam += 0.5 * smoothstep(0.45, 0.9, steep) * mix(0.3, 1.0, film);
 	// (c) PLUNGE CHURN: the builder bakes steep_v to 1 in a band along fall
 	// landing lines, now re-keyed on WaterField.steep_spans' own lip/base
 	// bands instead of the retired cut records (see WaterMesher._attributes'
@@ -215,7 +219,7 @@ void fragment() {
 	float boil = texture(noise_tex, world_pos.xz * 0.17
 			+ vec2(TIME * 0.07, -TIME * 0.06)).r;
 	foam += churn * (0.40 + 0.5 * smoothstep(0.35, 0.7, boil));
-	foam = clamp(foam, 0.0, 0.9);
+	foam = clamp(foam, 0.0, 0.85);
 	ALBEDO = mix(body, foam_color, foam);
 	// Clarity comes from REFRACTION, not alpha blending; the ALPHA write
 	// keeps the material in the transparent pass (screen texture needs it).
