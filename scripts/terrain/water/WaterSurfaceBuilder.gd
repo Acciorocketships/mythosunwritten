@@ -1,9 +1,12 @@
 # scripts/terrain/water/WaterSurfaceBuilder.gd
-# Thin adapter over the boundary-mesh water pipeline: WaterField computes the
-# per-cell water field and WaterMesher turns it into a marching-squares sheet
-# mesh (welded free edges + a submerged hem). Phase 2b: falls are no longer
-# a separate swept mesh (FallMesher.gd is deleted) — the sheet shader itself
-# blends a continuous falling-look into the one water_unified.gdshader
+# Thin adapter over the water pipeline: WaterField computes the per-cell
+# water field; the SHEET mesh comes from WaterSkin (r3 Task 4 — interior
+# lattice + boundary strip conforming to WaterContour's smooth curves), with
+# WaterMesher's marching-squares sheet as the defensive fallback until Task 7
+# deletes it; swim VOLUMES still come from WaterMesher's wet_cells until the
+# same task migrates them to sampler-backed triggers. Phase 2b: falls are no
+# longer a separate swept mesh (FallMesher.gd is deleted) — the sheet shader
+# itself blends a continuous falling-look into the one water_unified.gdshader
 # material, keyed on the mesh's own baked steepness attribute. This class
 # owns the one shared sheet material, the river-trace profile helpers other
 # callers still read (surface_profile/steepness_profile — pure functions of
@@ -91,18 +94,20 @@ static func sheet_material() -> ShaderMaterial:
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
 ## is the chunk's heightfield region (the streamer computes it for the mesher
 ## and shares it here — the water field must see the REAL rendered terrain).
-## Boundary-conforming path (WaterMesher): the sheet is a marching-squares
-## mesh whose free edges are welded to a buried hem — every surface,
-## including a fall, is ONE continuous mesh with ONE material (Phase 2b: no
-## separate Waterfalls node — the falling-look blend lives in
-## water_unified.gdshader itself, keyed on the mesh's own baked steepness
-## attribute). Swim volumes ride one Area3D per wet-cell SURFACE entry
-## (WaterMesher's wet_cells is back to exactly one entry per cell — the
-## split/stacked-volume machinery is deleted; a steep, unswimmable cell
-## simply has NO entry at all), each carrying the sampled surface plane
-## (Task 10's contract) instead of a single scalar level — the plane lets a
-## probe interpolate the true swell-free surface height anywhere inside the
-## cell.
+## SHEET (r3 Task 4): WaterSkin — interior 3m lattice + a boundary strip
+## conforming to WaterContour's smooth curves, so the waterline renders as
+## a real curve instead of WaterMesher's marching-squares corners. When the
+## skin returns empty despite the mesher building (defensive: a chunk whose
+## water never produces a contour curve), the old WaterMesher sheet is the
+## fallback — that whole fallback path AND the mesher itself are deleted at
+## Task 7, not before (plan docs/superpowers/plans/
+## 2026-07-10-water-continuous-surface.md).
+## SWIM VOLUMES: still WaterMesher's wet_cells (one Area3D per wet-cell
+## SURFACE entry carrying the sampled surface plane metas — Task 10's
+## contract); they migrate to WaterSkin's sampler-backed triggers at Task 7.
+## Until then BOTH builders run per wet chunk — an accepted interim cost
+## (each shares the profile/trace caches; the double ctx() build is the real
+## overhead, gone at Task 7 with the mesher).
 func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 	var m: Dictionary = WaterMesher.build(water, chunk, region)
 	if m.is_empty():
@@ -111,7 +116,8 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 	root.name = "Water"
 	var mi := MeshInstance3D.new()
 	mi.name = "WaterSheet"
-	mi.mesh = WaterMesher.commit(m)
+	var skin: Dictionary = WaterSkin.build(water, chunk, region)
+	mi.mesh = WaterSkin.commit(skin.arrays) if not skin.is_empty() else WaterMesher.commit(m)
 	mi.material_override = WaterSurfaceBuilder.sheet_material()
 	root.add_child(mi)
 	for cell: Vector2i in m.wet_cells:
