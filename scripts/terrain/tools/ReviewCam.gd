@@ -249,3 +249,35 @@ static func shoot(player: Vector3, crosshair: Vector3, path: String) -> void:
 	RenderingServer.force_draw()
 	root.get_viewport().get_texture().get_image().save_png(path)
 	print("MEAS ReviewCam shot -> ", path, " cam ", cam.global_position)
+
+
+## Motion-pair capture: two frames dt apart from the SAME fixed camera pose
+## (solved once, per solve_cam — the camera itself never moves between the
+## two shots), with real wall-clock time allowed to pass between them via a
+## SceneTree timer. Water motion (travelling swells, flow-scrolled foam/film)
+## reads directly off the pixel delta between path_a and path_b, isolated
+## from any camera-motion confound a re-solved or drifting pose would add.
+## static func CAN await in Godot 4.5 (confirmed) — the await itself suspends
+## on the SceneTree timer's own timeout signal, same mechanism a Node's
+## `await get_tree().create_timer(dt).timeout` uses.
+## Usage from a godot-MCP eval (same battery pattern as shoot() itself):
+##   var RC = load("res://scripts/terrain/tools/ReviewCam.gd")
+##   await RC.shoot_pair(Vector3(px, py, pz), Vector3(cx, cy, cz), "/path/a.png", "/path/b.png")
+static func shoot_pair(player: Vector3, crosshair: Vector3, path_a: String, path_b: String, dt := 0.7) -> void:
+	var root: Node = (Engine.get_main_loop() as SceneTree).root
+	var cam: Camera3D = root.get_viewport().get_camera_3d()
+	cam.set_physics_process(false)
+	cam.set_process(false)
+	cam.global_position = solve_cam(player, crosshair)   # solved ONCE, held fixed across both frames
+	cam.look_at(player, Vector3.UP)
+	cam.force_update_transform()
+
+	RenderingServer.force_draw()
+	root.get_viewport().get_texture().get_image().save_png(path_a)
+	print("MEAS ReviewCam shot_pair frame A -> ", path_a, " cam ", cam.global_position)
+
+	await (Engine.get_main_loop() as SceneTree).create_timer(dt).timeout
+
+	RenderingServer.force_draw()
+	root.get_viewport().get_texture().get_image().save_png(path_b)
+	print("MEAS ReviewCam shot_pair frame B -> ", path_b, " cam ", cam.global_position, " dt ", dt)
