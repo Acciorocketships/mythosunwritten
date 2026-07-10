@@ -34,8 +34,13 @@
 #     and one edge on each polyline — no T-junction is possible by
 #     construction, because the interior grid's own quad triangulation never
 #     touches a boundary vertex directly; only the strip does.
-# No rim/hem exists yet (Task 6) — until then the boundary strip's own outer
-# edge (the curve itself) IS the waterline's free edge, by design.
+# MENISCUS RIM (Task 5, see _rim): three more rows per curve point, curling
+# OUTWARD (dry side) and DOWN from the strip's own curve vertex (reused as
+# row0) to a buried seal under the terrain. This is what heals the strip's
+# own former free edge (the curve itself, Task 4's documented "no rim yet"
+# waterline) into interior geometry — the free-edge invariant TIGHTENS here:
+# only the rim's own buried outer row (row3) and true chunk borders may be
+# free edges from this task onward.
 class_name WaterSkin
 extends Object
 
@@ -47,6 +52,20 @@ const WELD_XZ_Q := 100.0      # 1cm horizontal precision — finer than WELD_Q s
 const TILE := 24.0            # trigger tiling — matches WaterMesher.TILE / WaterSurfaceBuilder.TILE
 const TRIGGER_TOP_CLEAR := 1.7
 const TRIGGER_BOTTOM_CLEAR := 5.0
+
+# --- Meniscus rim (Task 5) — brief's own literal per-point profile, local
+# frame (outward normal n, level L, ground g): row0 = the strip's own curve
+# vertex (weld-reused, not a new position); row1 = p, y=L-ROW1_DROP; row2 =
+# p + reach2*n, y=L-ROW2_DROP; row3 = p + reach3*n, y = min(L-ROW3_DROP,
+# g-GROUND_BURY). reach2/reach3 default to (ROW2_REACH, ROW3_REACH) and pinch
+# toward WALL_PINCH at wall-flagged points — see _rim's own docstring.
+const RIM_ROW1_DROP := 0.02
+const RIM_ROW2_DROP := 0.18
+const RIM_ROW3_DROP := 0.30
+const RIM_ROW2_REACH := 0.35
+const RIM_ROW3_REACH := 0.55
+const RIM_WALL_PINCH := 0.05
+const RIM_GROUND_BURY := 0.30
 
 
 ## build(water, chunk, region) -> {} when dry, else:
@@ -79,6 +98,7 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	_interior_mesh(st, lattice)
 	for c: Dictionary in curves:
 		_boundary_strip(st, lattice, c)
+		_rim(st, c)
 	if st.idx.is_empty():
 		return {}
 
@@ -466,6 +486,147 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary) 
 		ring_vi[k] = _weld_vert(st, ring_pts[oi], ring_y[oi])
 
 	_zip_strip(st, curve_vi, ring_vi, c.closed)
+
+
+## Meniscus rim (Task 5): three new vertex rows per curve point, curling the
+## water's visible edge DOWN and OUTWARD (toward the dry bank, +normal) from
+## the boundary strip's own curve vertex, then diving under the terrain so
+## the sheet always seals against the ground with no gap — the brief's own
+## literal per-point profile (local frame: outward normal n, level L, ground
+## g):
+##   row0 = the EXISTING strip curve vertex (p, L) itself — reused by weld
+##          key, NOT a new vertex. This is the load-bearing seam: row0 must
+##          resolve to the exact same index _boundary_strip already put in
+##          curve_vi (guaranteed by _weld_vert's own key = quantized (x,z,y),
+##          identical inputs here (pts[i], levels[i]) to what _boundary_strip
+##          just used two lines above the call site in build()). Without this
+##          reuse, Task 4's own documented free edge (the curve itself — "no
+##          rim yet, the boundary strip's own outer edge IS the waterline's
+##          free edge") never gets covered by the row0-row1 band below, and
+##          would stay free forever instead of healing into interior mesh —
+##          this is the concrete mechanism behind this task's tightened
+##          free-edge invariant (see test_free_edges_only_buried_rim_or_border).
+##   row1 = p,             y = L - 0.02   (the meniscus crest: a hairline dip
+##          right at the water's own edge before the surface curls away —
+##          same xz as row0, so this first "riser" is a near-vertical 2cm lip)
+##   row2 = p + reach2*n,  y = L - 0.18
+##   row3 = p + reach3*n,  y = min(L - 0.30, g(p + reach3*n) - 0.30) (buried
+##          seal, ALWAYS >=0.30m under both the water level AND the actual
+##          ground sample at its own xz, so it can never pop back above
+##          either regardless of local terrain undulation — the "ALWAYS
+##          under ground" the brief itself calls out).
+## reach2/reach3 default to (RIM_ROW2_REACH, RIM_ROW3_REACH) and pinch toward
+## a flush RIM_WALL_PINCH at wall-flagged points (brief: "water meets wall
+## flush, no bulge into rock") — SMOOTHED across neighbouring curve points
+## (_smoothed_wall, a 3-tap tent filter over the raw wall flags) rather than
+## switched hard per point: a lone wall flag flapping true/false between
+## adjacent ~1.5m-spaced curve points (a real occurrence near the WALL_SLOPE
+## threshold, see WaterContour._attributes' own rise-from-level probe) would
+## otherwise zigzag the rim's outer silhouette in and out every segment; the
+## smoothed reach eases the pinch in/out over roughly one segment either side
+## of a transition instead of jumping.
+## Triangulation: 3 "bands" (row0-row1, row1-row2, row2-row3), each a
+## standard quad split per curve segment — same [a,d,cc],[a,cc,b] corner
+## convention _interior_mesh's own quad split uses (a=row_k[i], b=row_k[j],
+## d=row_{k+1}[i], cc=row_{k+1}[j]) — through _emit_tri, so winding stays
+## whatever consistent rule the rest of this file already applies; this
+## function never picks triangle order by hand. Closed curves wrap (j wraps
+## to 0 at the last segment); open curves stop one segment short and instead
+## get an end cap at each of their two exposed ends (_rim_end_cap) — without
+## it the three riser edges at an open end (row0-row1, row1-row2, row2-row3)
+## are each used by exactly one band triangle (no i-1 column to share the
+## other side), a real free-edge defect caught directly on SITE_CHUNK's own
+## three open (border-to-border) curves before the cap existed (this task's
+## report has the transcript).
+static func _rim(st: Dictionary, c: Dictionary) -> void:
+	var pts: PackedVector2Array = c.pts
+	var levels: PackedFloat32Array = c.levels
+	var normals: PackedVector2Array = c.normals
+	var wall: PackedByteArray = c.wall
+	var n: int = pts.size()
+	if n < 2:
+		return
+	var closed: bool = c.closed
+	var wf: PackedFloat32Array = _smoothed_wall(wall, closed)
+
+	var row0 := PackedInt32Array()
+	var row1 := PackedInt32Array()
+	var row2 := PackedInt32Array()
+	var row3 := PackedInt32Array()
+	row0.resize(n)
+	row1.resize(n)
+	row2.resize(n)
+	row3.resize(n)
+	for i in n:
+		var p: Vector2 = pts[i]
+		var nrm: Vector2 = normals[i]
+		var lvl: float = levels[i]
+		row0[i] = _weld_vert(st, p, lvl)
+		row1[i] = _weld_vert(st, p, lvl - RIM_ROW1_DROP)
+		var reach2: float = lerpf(RIM_ROW2_REACH, RIM_WALL_PINCH, wf[i])
+		var reach3: float = lerpf(RIM_ROW3_REACH, RIM_WALL_PINCH, wf[i])
+		var p2: Vector2 = p + nrm * reach2
+		row2[i] = _weld_vert(st, p2, lvl - RIM_ROW2_DROP)
+		var p3: Vector2 = p + nrm * reach3
+		var g3: float = TerrainSurfaceField.surface_y(st.region, p3.x, p3.y)
+		var y3: float = minf(lvl - RIM_ROW3_DROP, g3 - RIM_GROUND_BURY)
+		row3[i] = _weld_vert(st, p3, y3)
+
+	var lim: int = n if closed else n - 1
+	for i in lim:
+		var j: int = (i + 1) % n
+		_emit_tri(st, row0[i], row1[i], row1[j])
+		_emit_tri(st, row0[i], row1[j], row0[j])
+		_emit_tri(st, row1[i], row2[i], row2[j])
+		_emit_tri(st, row1[i], row2[j], row1[j])
+		_emit_tri(st, row2[i], row3[i], row3[j])
+		_emit_tri(st, row2[i], row3[j], row2[j])
+
+	if not closed:
+		_rim_end_cap(st, row0[0], row1[0], row2[0], row3[0])
+		var last: int = n - 1
+		_rim_end_cap(st, row0[last], row1[last], row2[last], row3[last])
+
+
+## Caps an open curve's rim ladder at one exposed end (see _rim's own
+## docstring for why this is needed). A 2-triangle fan from row0 through
+## row1/row2/row3 — (row0,row1,row2) and (row0,row2,row3) — shares an edge
+## with each of the three band triangles that otherwise left row0-row1,
+## row1-row2, row2-row3 single-used (now double-used, healed), at the cost of
+## exactly one NEW free edge: the fan's own closing diagonal row0-row3. That
+## is the minimum any triangulation of an open 4-point profile can achieve —
+## the quad (row0,row1,row2,row3) has 4 boundary edges, 3 already carry one
+## use each from the bands, so 2 triangles can heal those 3 but must open a
+## 4th boundary edge to close the shape (any 2-triangle fan, from any apex,
+## has this same count — verified by hand for all four apex choices before
+## picking row0, the simplest to reach from this call site). The remaining
+## row0-row3 edge is itself accounted for under this task's tightened
+## invariant: row0 sits exactly at the curve's own point, which for every
+## open curve WaterContour._clip_to_rect produces is an exact chunk-border
+## crossing (verified directly on both pinned sites — SITE_CHUNK's three
+## open curves and the pond chunk's horseshoe — this task's report has the
+## coordinates), and row3 trivially satisfies the buried-outer-row test at
+## distance 0 from itself.
+static func _rim_end_cap(st: Dictionary, i0: int, i1: int, i2: int, i3: int) -> void:
+	_emit_tri(st, i0, i1, i2)
+	_emit_tri(st, i0, i2, i3)
+
+
+## Tent-filtered (0.25/0.5/0.25) copy of `wall` as a continuous per-point
+## blend weight for _rim's own reach2/reach3 lerp — see _rim's docstring for
+## why a hard per-point pinch switch zigzags the rim at wall/shore
+## transitions. Open curves clamp at their own ends (duplicate the edge
+## value, the standard fixed-boundary convention for a 1D filter); closed
+## curves wrap.
+static func _smoothed_wall(wall: PackedByteArray, closed: bool) -> PackedFloat32Array:
+	var n: int = wall.size()
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		var prev_i: int = (i - 1 + n) % n if closed else maxi(i - 1, 0)
+		var next_i: int = (i + 1) % n if closed else mini(i + 1, n - 1)
+		out[i] = 0.25 * float(wall[prev_i]) + 0.5 * float(wall[i]) + 0.25 * float(wall[next_i])
+	return out
 
 
 ## Position lookup for a welded vertex index — used by the zipper's own

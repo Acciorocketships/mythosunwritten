@@ -1,18 +1,26 @@
 extends GutTest
 
-# r3-task-4 (plan docs/superpowers/plans/2026-07-10-water-continuous-surface.md,
-# brief .superpowers/sdd/r3-task-4-brief.md): WaterSkin welds a 3.0m interior
-# lattice to a conforming boundary strip whose outer rim sits directly ON
-# WaterContour's own smooth curves (Task 3) — this is the mesh that actually
-# fixes the marching-squares corners test_water_contour.gd's own header
-# documents (WaterMesher's raw perimeter walk). No rim/hem exists yet (Task
-# 6): until then the boundary strip's own outer edge IS the waterline, so
-# test_no_free_edges_except_border's "accounted for" class is curve-or-border,
-# not buried-hem as in test_water_mesher.gd's post-hem version of the same
-# oracle.
+# r3-task-4/5 (plan docs/superpowers/plans/2026-07-10-water-continuous-surface.md,
+# briefs .superpowers/sdd/r3-task-4-brief.md, r3-task-5-brief.md): WaterSkin
+# welds a 3.0m interior lattice to a conforming boundary strip whose outer
+# rim sits directly ON WaterContour's own smooth curves (Task 3) — this is
+# the mesh that actually fixes the marching-squares corners
+# test_water_contour.gd's own header documents (WaterMesher's raw perimeter
+# walk) — PLUS (Task 5) a meniscus rim that curls the strip's own curve edge
+# down and outward into a buried seal under the terrain. Task 4 left the
+# curve itself as the mesh's free edge ("no rim yet"); Task 5's rim heals
+# that edge into interior geometry and TIGHTENS the invariant:
+# test_free_edges_only_buried_rim_or_border's "accounted for" class is now
+# buried-outer-row(row3)-or-border, replacing Task 4's curve-or-border.
 
 const SEED := 2697992464
 const SITE_CHUNK := Vector2i(0, -6)
+
+# --- Task 5 rim classification (mirrors WaterSkin's OWN row2/row3 numeric
+# structure, not its reach/pinch formula — see _on_rim_outer_row) ---
+const RIM_MAX_REACH := 0.7    # >= WaterSkin.RIM_ROW3_REACH (0.55) with slack
+const RIM_ROW3_Y_GATE := 0.25 # strictly between row2's fixed -0.18 and row3's -0.30 ceiling
+const RIM_BURY_GATE := 0.25   # brief's own "test_rim_outer_row_is_buried ... >= 0.25"
 
 static var _plans: Dictionary = {}
 static var _waters: Dictionary = {}
@@ -89,6 +97,42 @@ static func _dist_to_curves(curves: Array, p: Vector2) -> float:
 	return best
 
 
+## Nearest curve point to p across every curve, returning both its distance
+## and its own water level — the level is what _on_rim_outer_row needs (row3
+## is defined relative to ITS OWN curve point's level, not a global constant).
+static func _nearest_curve_pt(curves: Array, p: Vector2) -> Dictionary:
+	var best := INF
+	var best_level := 0.0
+	for c: Dictionary in curves:
+		var pts: PackedVector2Array = c.pts
+		var levels: PackedFloat32Array = c.levels
+		for i in pts.size():
+			var d: float = pts[i].distance_to(p)
+			if d < best:
+				best = d
+				best_level = levels[i]
+	return {"dist": best, "level": best_level}
+
+
+## True when v is a meniscus-rim OUTER (row3) vertex — Task 5's one allowed
+## off-curve free-edge class. Deliberately does NOT reproduce WaterSkin's own
+## reach/pinch/wall-blend formula (that would test the implementation against
+## itself and could never catch a reach/pinch bug); instead it exploits the
+## brief's own NUMERIC structure, which is a property of the row DEFINITIONS,
+## not of any particular implementation: row0 sits at level L, row1 at
+## L-0.02, row2 at a FIXED L-0.18 (no ground dependency), and row3 at
+## min(L-0.30, ground-0.30) <= L-0.30 always. A y-gate strictly between
+## row2's ceiling (-0.18) and row3's ceiling (-0.30) — RIM_ROW3_Y_GATE=0.25 —
+## therefore admits row3 and ONLY row3, regardless of what reach WaterSkin
+## chose at a wall-pinched or blended point; RIM_MAX_REACH (0.7, comfortably
+## past the brief's own max reach of 0.55) scopes the search to "near some
+## curve point" so an unrelated low-lying vertex elsewhere in the mesh (e.g.
+## a different curve reach downstream at a lower level) can't false-positive.
+static func _on_rim_outer_row(curves: Array, v: Vector3) -> bool:
+	var near: Dictionary = _nearest_curve_pt(curves, Vector2(v.x, v.z))
+	return near.dist <= RIM_MAX_REACH and v.y <= near.level - RIM_ROW3_Y_GATE
+
+
 ## test_skin_builds_on_site_chunk — non-empty, indexed, welded-shape output;
 ## tri count printed alongside WaterMesher's own for the same chunk (this
 ## task's report needs both numbers — the brief's own "print both" — as the
@@ -136,15 +180,16 @@ func test_skin_builds_on_site_chunk() -> void:
 		"skin tri count (%d) within 2x of mesher's (%d)" % [skin_tris, mesher_tris])
 
 
-## test_no_free_edges_except_border — until Task 5's rim exists, the skin's
-## boundary strip has no further geometry stitched past its own outer curve
-## edge, so every free edge in the mesh must lie EITHER on the chunk border
-## OR directly on one of this chunk's own WaterContour curves (within a
-## small tolerance for the strip's own vertex-on-curve placement). Ports the
-## free-edge-walker convention from test_water_mesher.gd
-## (test_every_free_edge_is_accounted_for) but swaps its post-hem "buried"
-## class for "on a curve," since there is no hem in this task.
-func test_no_free_edges_except_border() -> void:
+## test_free_edges_only_buried_rim_or_border (r3-task-5-brief.md's own name —
+## the FINAL form of the free-edge invariant): now that the meniscus rim
+## exists, Task 4's old "on a curve" class is GONE — the rim's row0-row1 band
+## covers every curve-chain edge the strip used to leave free (see
+## WaterSkin._rim's own docstring on this exact healing mechanism), so a
+## surviving non-border free edge may only lie on the rim's own buried OUTER
+## row (row3; _on_rim_outer_row). Ports the free-edge-walker convention from
+## test_water_mesher.gd (test_every_free_edge_is_accounted_for), same as
+## Task 4's version, with the accounted-for class swapped.
+func test_free_edges_only_buried_rim_or_border() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
@@ -156,7 +201,6 @@ func test_no_free_edges_except_border() -> void:
 	var free: Array = _free_edges(skin.arrays)
 	var checked := 0
 	var offenders: Array = []
-	var curve_tol := 0.06   # boundary-strip vertices sit ON curve points; small float slack
 	for e: Array in free:
 		var a: Vector3 = e[0]
 		var b: Vector3 = e[1]
@@ -165,18 +209,98 @@ func test_no_free_edges_except_border() -> void:
 		if a_border and b_border:
 			continue
 		checked += 1
-		var a_on_curve: bool = a_border or _dist_to_curves(curves, Vector2(a.x, a.z)) <= curve_tol
-		var b_on_curve: bool = b_border or _dist_to_curves(curves, Vector2(b.x, b.z)) <= curve_tol
-		if not (a_on_curve and b_on_curve):
+		var a_ok: bool = a_border or _on_rim_outer_row(curves, a)
+		var b_ok: bool = b_border or _on_rim_outer_row(curves, b)
+		if not (a_ok and b_ok):
 			if offenders.size() < 10:
-				offenders.append("%s-%s (a_border=%s a_curve_d=%.3f b_border=%s b_curve_d=%.3f)" % [
-					a, b, a_border, _dist_to_curves(curves, Vector2(a.x, a.z)),
-					b_border, _dist_to_curves(curves, Vector2(b.x, b.z))])
-	print("MEAS test_no_free_edges_except_border: %d non-border-pair free edges checked, %d offenders" % [
+				offenders.append("%s-%s (a_border=%s a_rim=%s b_border=%s b_rim=%s)" % [
+					a, b, a_border, _on_rim_outer_row(curves, a), b_border, _on_rim_outer_row(curves, b)])
+	print("MEAS test_free_edges_only_buried_rim_or_border: %d non-border-pair free edges checked, %d offenders" % [
 		checked, offenders.size()])
 	assert_true(checked > 5, "site has real boundary free edges to check (%d)" % checked)
 	assert_true(offenders.is_empty(),
-		"every non-border free edge lies on a WaterContour curve: %s" % str(offenders))
+		"every non-border free edge lies on the meniscus rim's buried outer row: %s" % str(offenders))
+
+
+## test_rim_outer_row_is_buried (brief's own name) — every row3 vertex sits
+## >= 0.25m below the region's own ground at that xz (brief's literal
+## formula guarantees >=0.30; 0.25 matches the brief's own stated threshold,
+## leaving slack for the structural classifier above rather than for any
+## real precision gap — row3's own y = min(L-0.30, g-0.30) is exact). Row3
+## verts are the SAME _on_rim_outer_row structural class the free-edge test
+## uses, so this test independently checks the ONE property that class is
+## named for (burial), keeping the two tests from validating each other in a
+## circle.
+func test_rim_outer_row_is_buried() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(SITE_CHUNK))
+	var skin: Dictionary = WaterSkin.build(water, SITE_CHUNK, region)
+	assert_false(skin.is_empty(), "site chunk builds a skin")
+	if skin.is_empty():
+		return
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var checked := 0
+	var offenders: Array = []
+	for v: Vector3 in verts:
+		if not _on_rim_outer_row(curves, v):
+			continue
+		checked += 1
+		var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
+		var buried: float = g - v.y
+		if buried < RIM_BURY_GATE and offenders.size() < 10:
+			offenders.append("%s buried=%.3f (ground=%.3f)" % [v, buried, g])
+	print("MEAS test_rim_outer_row_is_buried: %d row3 verts checked, %d offenders" % [checked, offenders.size()])
+	assert_true(checked > 5, "site has real rim outer-row verts to check (%d)" % checked)
+	assert_true(offenders.is_empty(),
+		"every rim outer-row vert sits >=%.2fm under ground: %s" % [RIM_BURY_GATE, str(offenders)])
+
+
+## test_rim_welds_to_strip (brief's own name) — row0 (the rim's innermost
+## row, reused from _boundary_strip's own curve_vi — see WaterSkin._rim's
+## docstring) never duplicates the strip's own vertex: exactly one mesh
+## vertex exists at each curve point's own (p, level) position. This is the
+## externally-observable proxy for "row0 index == strip index" (the weld
+## dict's own semantics make index equality automatic once the position+level
+## key matches, per _weld_vert; what could actually go WRONG — and what this
+## test actually catches — is a stray near-duplicate from an off-by-epsilon
+## position or level mismatch between the two call sites).
+func test_rim_welds_to_strip() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(SITE_CHUNK))
+	var skin: Dictionary = WaterSkin.build(water, SITE_CHUNK, region)
+	assert_false(skin.is_empty(), "site chunk builds a skin")
+	if skin.is_empty():
+		return
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	# Tight on purpose: row1 sits exactly RIM_ROW1_DROP=0.02 BELOW row0 at the
+	# SAME xz (the brief's own hairline meniscus-crest lip) — a tolerance at
+	# or above 0.02 double-counts row1 as a "hit" for row0's own target
+	# (caught directly: 10 offenders each reporting hits=2 at exactly the
+	# 0.02 boundary before this was tightened). 0.005 sits safely below that
+	# real intentional neighbour and comfortably above float weld noise.
+	var tol := 0.005
+	var checked := 0
+	var offenders: Array = []
+	for c: Dictionary in curves:
+		var pts: PackedVector2Array = c.pts
+		var levels: PackedFloat32Array = c.levels
+		for i in pts.size():
+			var target := Vector3(pts[i].x, levels[i], pts[i].y)
+			var hits := 0
+			for v: Vector3 in verts:
+				if v.distance_to(target) <= tol:
+					hits += 1
+			checked += 1
+			if hits != 1 and offenders.size() < 10:
+				offenders.append("%s hits=%d" % [target, hits])
+	print("MEAS test_rim_welds_to_strip: %d curve points checked, %d offenders" % [checked, offenders.size()])
+	assert_true(checked > 5, "site has real curve points to check (%d)" % checked)
+	assert_true(offenders.is_empty(),
+		"every curve point has exactly one welded vertex (row0 reuses the strip's own index): %s" % str(offenders))
 
 
 ## test_interior_rides_field — 50 random KEPT interior lattice verts (not
@@ -266,8 +390,12 @@ func test_skin_handles_closed_and_border_exit_curves() -> void:
 		if _on_chunk_border(a, pond_chunk) and _on_chunk_border(b, pond_chunk):
 			continue
 		checked += 1
-		var a_ok: bool = _on_chunk_border(a, pond_chunk) or _dist_to_curves(curves, Vector2(a.x, a.z)) <= 0.06
-		var b_ok: bool = _on_chunk_border(b, pond_chunk) or _dist_to_curves(curves, Vector2(b.x, b.z)) <= 0.06
+		# Tightened per Task 5 (test_free_edges_only_buried_rim_or_border's own
+		# class): the rim heals every curve-level free edge Task 4 left behind,
+		# so a surviving non-border free edge must lie on the rim's buried
+		# outer row instead of merely "near a curve point."
+		var a_ok: bool = _on_chunk_border(a, pond_chunk) or _on_rim_outer_row(curves, a)
+		var b_ok: bool = _on_chunk_border(b, pond_chunk) or _on_rim_outer_row(curves, b)
 		if not (a_ok and b_ok) and offenders.size() < 10:
 			offenders.append("%s-%s" % [a, b])
 	print("MEAS test_skin_handles_closed_and_border_exit_curves: %d free edges checked, %d offenders" % [
