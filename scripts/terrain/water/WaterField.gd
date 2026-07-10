@@ -805,22 +805,46 @@ static func _steep_scan(grounds: PackedFloat32Array, step: float) -> Array:
 
 
 ## Ground samples (+ parallel world positions, + which trace segment each
-## came from) walking the WHOLE trace polyline at `step` spacing — shared
+## came from) walking the trace polyline at `step` spacing — shared
 ## ground-truth for steep_spans' terrain scan. Segment-local t=0 is shared
 ## with the previous segment's t=1 (no duplicate sample at sample points),
 ## so the array is one continuous along-channel walk, exactly what
 ## _steep_scan's sliding window needs to see a drop that straddles a trace
 ## sample boundary.
-static func _channel_ground_walk(tr: RiverTrace, region, step: float) -> Dictionary:
+##
+## Minor 8 (final-review-run2.md, pairs with C1): steep_spans' own rect gate
+## (grown by TILE, plus base_p per Minor 5) already discards any span whose
+## BOTH ends fall outside the window — walking the WHOLE ~2640m trace's
+## ground every chunk build was mostly wasted work over out-of-window
+## ground the caller was going to throw away anyway (C1 fixed the separate,
+## more serious bug where profile()'s CACHED result depended on that
+## out-of-window data; this is the pure performance follow-up: don't walk
+## it at all when a caller-scoped rect is available). `clip_rect` is
+## optional (null = walk the whole trace, UNCHANGED — steep_spans' own
+## hand-built-fixture callers and any future caller with no natural window
+## keep exactly today's behaviour): when supplied, this function first
+## builds the (cheap) positions-only walk, finds the first/last sample
+## index whose position falls inside `clip_rect` GROWN BY ONE MORE 24m
+## WINDOW (window_n * step — _steep_scan's own sliding-window lookahead: a
+## triggering run just inside the rect's own edge still needs a FULL 24m of
+## ground data ahead of it to correctly measure the drop, or the scan would
+## silently truncate a real cliff's window at the clip boundary), and only
+## pays the expensive TerrainSurfaceField.surface_y call for that
+## CONTIGUOUS sub-range (no gaps — a gap would corrupt _steep_scan's
+## sliding-window index semantics). Behaviour inside the (doubly-grown)
+## window is IDENTICAL to the unclipped walk — this only skips computing
+## ground the caller could never have used.
+static func _channel_ground_walk(tr: RiverTrace, region, step: float, clip_rect = null) -> Dictionary:
 	var grounds := PackedFloat32Array()
 	var pos := PackedVector2Array()
 	var seg_of := PackedInt32Array()
 	var n: int = tr.points.size()
 	if n == 0:
 		return {"grounds": grounds, "pos": pos, "seg_of": seg_of}
-	grounds.append(TerrainSurfaceField.surface_y(region, tr.points[0].x, tr.points[0].y))
-	pos.append(tr.points[0])
-	seg_of.append(0)
+	# Full positions-only walk first (cheap — no surface_y calls yet) so a
+	# clip range can be found before paying for any ground sample.
+	var all_pos := PackedVector2Array([tr.points[0]])
+	var all_seg_of := PackedInt32Array([0])
 	for i in range(1, n):
 		var a: Vector2 = tr.points[i - 1]
 		var b: Vector2 = tr.points[i]
@@ -828,19 +852,42 @@ static func _channel_ground_walk(tr: RiverTrace, region, step: float) -> Diction
 		var steps: int = maxi(1, int(ceil(seg_len / step)))
 		for k in range(1, steps + 1):
 			var t: float = float(k) / float(steps)
-			var p: Vector2 = a.lerp(b, t)
-			grounds.append(TerrainSurfaceField.surface_y(region, p.x, p.y))
-			pos.append(p)
-			seg_of.append(i - 1)
+			all_pos.append(a.lerp(b, t))
+			all_seg_of.append(i - 1)
+	var lo_idx := 0
+	var hi_idx := all_pos.size() - 1
+	if clip_rect != null:
+		var window_n: int = maxi(1, roundi(24.0 / step))
+		var padded: Rect2 = clip_rect.grow(float(window_n) * step)
+		lo_idx = -1
+		hi_idx = -1
+		for i in all_pos.size():
+			if padded.has_point(all_pos[i]):
+				if lo_idx < 0:
+					lo_idx = i
+				hi_idx = i
+		if lo_idx < 0:
+			# No sample anywhere on this trace falls in the padded window —
+			# nothing steep_spans could ever report for this trace/chunk.
+			return {"grounds": grounds, "pos": pos, "seg_of": seg_of}
+	for i in range(lo_idx, hi_idx + 1):
+		grounds.append(TerrainSurfaceField.surface_y(region, all_pos[i].x, all_pos[i].y))
+		pos.append(all_pos[i])
+		seg_of.append(all_seg_of[i])
 	return {"grounds": grounds, "pos": pos, "seg_of": seg_of}
 
 
-## Steep terrain stretches along every river channel in c, whose lip (`p`)
-## lies inside rect (grown by one tile so chunk-border spans appear for both
-## neighbouring chunks) — the terrain-scan replacement for the old
-## bed-cut-derived fall_cuts (Phase 2a: falls are a PROFILE SHAPE now, not a
-## cut object; this feeds ONLY the shader churn band and (later) mist, never
-## geometry — see the file header and profile()'s own docstring). Each
+## Steep terrain stretches along every river channel in c, whose LIP (`p`) OR
+## BASE (`base_p`) lies inside rect (grown by one tile so chunk-border spans
+## appear for both neighbouring chunks — Minor 5, final-review-run2.md:
+## lip-only gating dropped a span whose base sits in this chunk but whose lip
+## lies >TILE outside the rect, leaving the plunge-churn band baked into one
+## chunk and not its neighbour, a CUSTOM0 seam at the border for any steep
+## stretch taller than the lip-to-base horizontal run) — the terrain-scan
+## replacement for the old bed-cut-derived fall_cuts (Phase 2a: falls are a
+## PROFILE SHAPE now, not a cut object; this feeds ONLY the shader churn band
+## and (later) mist, never geometry — see the file header and profile()'s own
+## docstring). Each
 ## entry: {p: Vector2 (lip position), dir (unit, downstream), across (unit,
 ## perpendicular), half (channel half-width + CLAIM_FEATHER at the lip),
 ## top: WATER level at the lip, bottom: WATER level at the base, drop: the
@@ -861,7 +908,7 @@ static func steep_spans(c: Dictionary, rect: Rect2) -> Array:
 		var n: int = tr.points.size()
 		if n < 2:
 			continue
-		var walk: Dictionary = _channel_ground_walk(tr, region, _DESCENT_STEP)
+		var walk: Dictionary = _channel_ground_walk(tr, region, _DESCENT_STEP, grown)
 		var spans: Array = _steep_scan(walk.grounds, _DESCENT_STEP)
 		if spans.is_empty():
 			continue
@@ -870,9 +917,19 @@ static func steep_spans(c: Dictionary, rect: Rect2) -> Array:
 			var lo: int = span.lo
 			var hi: int = span.hi
 			var p: Vector2 = walk.pos[lo]
-			if not grown.has_point(p):
+			var base_pos: Vector2 = walk.pos[hi]
+			# Minor 5 (final-review-run2.md): gating on the LIP alone dropped a
+			# span whose base (plunge) sits in THIS chunk but whose lip lies
+			# >TILE outside the grown rect — the plunge-churn shader band then
+			# baked in one chunk and not its neighbour, a CUSTOM0 seam at the
+			# border for any steep stretch taller than the lip-to-base
+			# horizontal run (~24m). Include the span when EITHER end is
+			# in-window — the correct rect test for a span that straddles a
+			# chunk border, matching how a river SAMPLE itself is windowed
+			# (any endpoint in range keeps it) rather than only its start.
+			if not (grown.has_point(p) or grown.has_point(base_pos)):
 				continue
-			var dirv: Vector2 = (walk.pos[hi] - p)
+			var dirv: Vector2 = (base_pos - p)
 			if dirv.length_squared() < 0.000001:
 				# The scan's own lo/hi collapsed to the same point (a
 				# vanishingly short merged range) — fall back to the trace's
@@ -885,16 +942,16 @@ static func steep_spans(c: Dictionary, rect: Rect2) -> Array:
 			dirv = dirv.normalized()
 			var seg_i: int = walk.seg_of[lo]
 			var top_lvl: float = _sample_level(tr, seg_i, p, region)
-			var bot_lvl: float = _sample_level(tr, walk.seg_of[hi], walk.pos[hi], region)
+			var bot_lvl: float = _sample_level(tr, walk.seg_of[hi], base_pos, region)
 			# base_p (Phase 2b addition): the world position at the span's own
-			# base/plunge end (walk.pos[hi], already computed above for dirv) —
-			# exposed alongside `p` (the lip) so a shader-baking consumer
-			# (WaterMesher._attributes' plunge-churn band) can measure "near the
-			# base" directly instead of "far downstream of the lip," which for
-			# a tall span is not the same distance at all. Purely additive: no
-			# existing reader destructures this dict positionally.
+			# base/plunge end — exposed alongside `p` (the lip) so a
+			# shader-baking consumer (WaterMesher._attributes' plunge-churn
+			# band) can measure "near the base" directly instead of "far
+			# downstream of the lip," which for a tall span is not the same
+			# distance at all. Purely additive: no existing reader
+			# destructures this dict positionally.
 			out.append({"p": p, "dir": dirv, "across": Vector2(-dirv.y, dirv.x),
 				"half": tr.widths[seg_i] + CLAIM_FEATHER,
 				"top": maxf(top_lvl, bot_lvl), "bottom": minf(top_lvl, bot_lvl),
-				"drop": span.drop, "base_p": walk.pos[hi]})
+				"drop": span.drop, "base_p": base_pos})
 	return out
