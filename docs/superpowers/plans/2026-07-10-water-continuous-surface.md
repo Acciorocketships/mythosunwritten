@@ -233,3 +233,7 @@ const float PLUNGE_RING_AMP = 0.10;       // fades over 4 m from steep-span base
 - Spec coverage: every spec section maps to a task (contour §2→T3; skin/rim §2→T4-5; flow §2→T6; triggers/sampler §6→T7,9; shader §3-4→T8; bugs §5→T1,10; verification §7→T2,11). No gaps found.
 - Type consistency: `WaterContour.curves(ctx, rect)`, `WaterSkin.build(water, chunk, region)`, `WaterSampler.level_at(xz)/flow_frame_at(xz)`, CUSTOM0 (s,d,slope,shore_dist) — names used identically across Tasks 3–9.
 - Known judgment points delegated to implementers WITH the decision recorded in reports: boundary-strip stitch tactic (Task 4), junction blend falloff (Task 6), plunge-ring keying without new vertex streams (Task 8).
+
+## Erratum (2026-07-10, during Task 3)
+
+Task 3's test coordinates confused 24 m CELLS with 192 m streamer CHUNKS: "lake chunk (0,-47)" and the weld pair "((0,-47),(0,-46))" are dry as chunks (they were cell ids). Task 3's implementer verified substitutes and documented them in tests/test_water_contour.gd docstrings + r3-task-3-report.md: isolated pond chunk (-4,-18) for the closed-curve test, and verified wet border pairs (one per seed) for the weld test. Later tasks: all `Vector2i` chunk arguments are 192 m streamer chunks (site = (0,-6), which also contains the I3 lake at world (9.3, -1120.6)); world-coordinate frames in Tasks 1/5/9/11 are unaffected.
