@@ -61,6 +61,101 @@ func test_profiles_monotone_and_continuous() -> void:
 	assert_true(checked > 0, "site chunk has river samples")
 
 
+## r3 Task 12 (round-4 addendum, RED-FIRST): the owner's own directive,
+## reversing run-2's terrain-hugging descent — a steep span must render as
+## ONE continuous ramp from the upper pool's level to the lower pool's
+## level, never echoing the storey-quantized terrain underneath as a
+## staircase (his annotated frame: (34.5,8.0,-1097.9) crosshair
+## (34.4,8.2,-1098.2), the site cascade — see WaterField._find_descent_spans/
+## _dense_span_curve's own docstrings and this task's report for the full
+## derivation of which trace/span that frame is looking at).
+##
+## Oracle: walk the site chute's own descent span (trace source_cell
+## (0,-2), samples 1..8 — the 15.0 -> 1.2 descent the owner's screenshot
+## frames) at _DESCENT_STEP=4m resolution via WaterField._dense_span_curve
+## — the SAME dense curve profile() itself builds internally, exposed
+## directly so the oracle can work at finer-than-TRACE_STEP=12m resolution
+## (see that function's own docstring for why: "second differences...per 4m
+## sample" is only meaningful at _DESCENT_STEP's own granularity, not a
+## trace's much coarser natural sample spacing). SECOND differences (the
+## CHANGE in per-4m drop from one interval to the next) must never exceed
+## 0.5m — a steep-but-CONSTANT slope is fine (a steep ramp is still one
+## smooth curve); an abrupt CHANGE in slope is the "sharp angle"/"stepped"
+## look the owner rejected.
+##
+## RED at HEAD (2069f24, before this task — see r3-task-12-report.md's own
+## transcript): _find_descent_spans/_dense_span_curve do not exist yet, so
+## the equivalent HEAD-era signal is the OLD profile() loop's own dense
+## _descend_segment substep walk over the SAME sample range, reproduced
+## verbatim (not reimplemented) in the report's red-evidence script — max
+## |second_diff| = 1.172 there (7 offending points > 0.5), and the raw
+## per-sample profile().levels[] for the same range is an outright
+## staircase (drops of 0, 1.3, 0, 4.0, 4.0, 0, 2.7, 0 — flat, cliff, flat,
+## cliff, flat). GREEN after this task's fix.
+func test_descent_is_smooth_pool_to_pool() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var tr: RiverTrace = null
+	for cand: RiverTrace in ctx.rivers:
+		if cand.source_cell == Vector2i(0, -2):
+			tr = cand
+			break
+	assert_not_null(tr, "site chute trace (source_cell (0,-2)) present in this chunk")
+	if tr == null:
+		return
+
+	# Reconstruct EXACTLY the two region-independent arrays profile() itself
+	# builds (raw bed-chase + cumulative arc length) so span detection reads
+	# the identical signal production code does.
+	var n: int = tr.points.size()
+	var raw := PackedFloat32Array()
+	raw.resize(n)
+	raw[0] = tr.beds[0] + WaterField.SURFACE_RIDE
+	if tr.source_pool != null:
+		raw[0] = minf(raw[0], tr.source_pool.surface_y())
+	for i in range(1, n):
+		raw[i] = minf(raw[i - 1], tr.beds[i] + WaterField.SURFACE_RIDE)
+	var arclen := PackedFloat32Array()
+	arclen.resize(n)
+	for i in range(1, n):
+		arclen[i] = arclen[i - 1] + tr.points[i - 1].distance_to(tr.points[i])
+	var spans: Array = WaterField._find_descent_spans(raw, arclen)
+	assert_true(spans.size() > 0, "the site chute trace has at least one real descent span")
+
+	var trace_region = WaterField._trace_owned_region(tr, region.plan)
+	var max_second := 0.0
+	var offenders: Array = []
+	var dense_checked := 0
+	var spans_checked := 0
+	for span: Dictionary in spans:
+		var lo: int = span.lo
+		var hi: int = span.hi
+		if raw[lo] - raw[hi] < 1.0:
+			continue   # a trivial/negligible span -- not the chute, skip
+		spans_checked += 1
+		var ground_lo: float = TerrainSurfaceField.surface_y(trace_region, tr.points[lo].x, tr.points[lo].y)
+		var ground_hi: float = TerrainSurfaceField.surface_y(trace_region, tr.points[hi].x, tr.points[hi].y)
+		var anchor_start: float = maxf(raw[lo], ground_lo + WaterField.DESCENT_CLAMP)
+		var anchor_end: float = maxf(raw[hi], ground_hi + WaterField.DESCENT_CLAMP)
+		var dense: PackedFloat32Array = WaterField._dense_span_curve(
+			trace_region, tr, lo, hi, anchor_start, anchor_end, arclen)
+		dense_checked += dense.size()
+		for k in range(1, dense.size() - 1):
+			var d_prev: float = dense[k - 1] - dense[k]
+			var d_next: float = dense[k] - dense[k + 1]
+			var second: float = absf(d_next - d_prev)
+			max_second = maxf(max_second, second)
+			if second > 0.5 and offenders.size() < 12:
+				offenders.append("span[%d,%d] k=%d d_prev=%.3f d_next=%.3f second_diff=%.3f" % [
+					lo, hi, k, d_prev, d_next, second])
+	print("MEAS test_descent_is_smooth_pool_to_pool: %d span(s) checked, %d dense samples, max |second_diff|=%.3f (bound 0.5)" % [
+		spans_checked, dense_checked, max_second])
+	assert_true(spans_checked > 0, "the site chute's own real descent (>1.0m total drop) was found and checked")
+	assert_true(offenders.is_empty(),
+		"the descent is one smooth curve -- no second-difference step > 0.5m per 4m sample: %s" % str(offenders))
+
+
 ## profile() without a region: the old instant bed-chase fallback (no
 ## terrain to hug — see profile()'s region-optional note). Still must be
 ## monotone non-increasing; there is no drop bound to check here since the

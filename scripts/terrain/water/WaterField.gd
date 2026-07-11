@@ -35,7 +35,48 @@ const FILM := 0.3             # minimum clearance the descending level keeps abo
 # zero multi-seam-cell warnings, and all 4 water suites green (see this
 # task's own report).
 const _DESCENT_STEP := 4.0
-const _EASE_BAND := 2.0       # metres of (ground-hug - smooth-trend) level gap over which profile() soft-blends the two curves — the substep-level stand-in for the brief's "~2m C1 easing"; see _descend_segment
+const _EASE_BAND := 2.0       # metres of (ground-hug - smooth-trend) level gap over which profile() soft-blends the two curves — the substep-level stand-in for the brief's "~2m C1 easing"; see _descend_segment (now used OUTSIDE descent spans only — see _find_descent_spans/_shape_descent_span)
+# r3 Task 12 (round-4 addendum): the owner REVERSED run-2's terrain-hugging
+# descent after seeing it render as a staircase down a real multi-storey
+# slope — the site chute's beds (WaterPlan._contained_bed, itself following
+# storey-quantized banks; see that function's own docstring) drop in
+# discrete ~4m jumps every single TRACE_STEP=12m, and _descend_segment's OWN
+# per-segment ease resets to ZERO SLOPE at every trace sample (smootherstep's
+# defining property), so stacking several of those segments back to back
+# reads as a staircase of independent S-curves, not one curve, even though
+# each one is individually C1. Fix: identify the WHOLE descent (see
+# _find_descent_spans) and ease it in ONE smootherstep from the upper pool's
+# held level to the lower pool's own target — ground is consulted only as a
+# floor afterward (DESCENT_CLAMP), never as the shaping signal.
+# 0.05m: the brief's own literal "ground + 0.05" — deliberately its own named
+# constant, not a reuse of EPS (0.05 too, but EPS is the FILL's containment
+# epsilon, a different concern; a shared numeric value here is coincidence,
+# not an intended coupling).
+const DESCENT_CLAMP := 0.05
+# ">=8m window" (brief's own words) re-smooths the clamp's own bumps (a dry-
+# rock face breaking the surface mid-ramp) back into the ramp so THAT step
+# doesn't reintroduce a kink. Implemented as a symmetric box filter; radius
+# is metres-based (see _box_smooth) so this constant is the true window
+# width regardless of _DESCENT_STEP's own value.
+const DESCENT_RESMOOTH_WINDOW := 8.0
+# Arc-length (metres) a FLAT run in the naive, region-independent bed chase
+# (see _find_descent_spans' own `raw`) must reach to count as a genuine
+# intervening pool that ends a descent span. Shorter flat runs (a storey
+# ledge/shelf mid-slope, not a real landing) are ABSORBED into the
+# surrounding span instead, merging what would otherwise be two-plus short,
+# steep, independently-eased drops into one longer, gentler one — measured
+# necessary at the site (r3-task-12-report.md): the chute's own 12m flat
+# blip between two ~4m storey drops, left un-merged, eases each drop over
+# just one ~12-24m segment on its own, which is short enough relative to a
+# single storey's drop that even a smootherstep's OWN peak curvature (at its
+# midpoint, 1.875x the span's average slope) breaches the "no second-
+# difference step > 0.5m per 4m sample" bound the red test measures; merged
+# into one span, the SAME total drop spreads over enough arc length that the
+# peak curvature drops comfortably under it (see the report's own
+# before/after numbers). 24.0 reuses this file's own existing 24m feature
+# scale (FALL_DROP_MIN's own window, steep_scan's own sliding window) rather
+# than inventing an unrelated new one.
+const DESCENT_POOL_GAP := 24.0
 
 # Fill lattice: chunk span (TILE*8 = 192m) plus a margin on every side so a
 # basin whose flood extends past the chunk's own border is fully resolved
@@ -448,10 +489,47 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 	if trace.source_pool != null:
 		lvl = minf(lvl, trace.source_pool.surface_y())
 	levels[0] = lvl
-	for i in range(1, n):
-		var target: float = minf(lvl, trace.beds[i] + SURFACE_RIDE)
-		lvl = _descend_segment(region, trace.points[i - 1], trace.points[i], lvl, target)
-		levels[i] = lvl
+	if region == null:
+		# OLD instant bed-chase fallback, unchanged (see the region-optional
+		# note above): no terrain at all, so there is nothing to shape a span
+		# against either — span detection needs a ground CLAMP just as much
+		# as the ordinary per-segment hug does.
+		for i in range(1, n):
+			lvl = minf(lvl, trace.beds[i] + SURFACE_RIDE)
+			levels[i] = lvl
+	else:
+		# r3 Task 12: two passes. First, the naive monotone chase over beds[]
+		# ALONE (no region, no shaping) — a pure function of the trace's own
+		# data, exactly the region==null fallback above. This `raw` sequence
+		# is what span detection reads (see _find_descent_spans): it is where
+		# the trace WANTS to end up, before any terrain-hugging or easing
+		# decides how it gets there.
+		var raw := PackedFloat32Array()
+		raw.resize(n)
+		raw[0] = levels[0]
+		for i in range(1, n):
+			raw[i] = minf(raw[i - 1], trace.beds[i] + SURFACE_RIDE)
+		var arclen := PackedFloat32Array()
+		arclen.resize(n)
+		for i in range(1, n):
+			arclen[i] = arclen[i - 1] + trace.points[i - 1].distance_to(trace.points[i])
+		var spans: Array = _find_descent_spans(raw, arclen)
+		var i: int = 1
+		var span_idx: int = 0
+		while i < n:
+			if span_idx < spans.size() and int(spans[span_idx].lo) == i - 1:
+				var lo: int = spans[span_idx].lo
+				var hi: int = spans[span_idx].hi
+				var shaped: PackedFloat32Array = _shape_descent_span(
+					region, trace, lo, hi, levels[lo], raw[hi], arclen)
+				for k in range(lo + 1, hi + 1):
+					levels[k] = shaped[k - lo]
+				i = hi + 1
+				span_idx += 1
+			else:
+				var target: float = minf(levels[i - 1], trace.beds[i] + SURFACE_RIDE)
+				levels[i] = _descend_segment(region, trace.points[i - 1], trace.points[i], levels[i - 1], target)
+				i += 1
 	if trace.pond != null:
 		var ps: float = trace.pond.surface_y()
 		if levels[n - 1] - ps <= FALL_DROP_MIN + 0.01:
@@ -517,6 +595,20 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 ## smooth(t) for the whole segment, so the level just rides the smooth
 ## trend end to end — ordinary continuous-reach behaviour, unchanged from
 ## before in outcome (only in mechanism).
+##
+## r3 Task 12 (round-4 addendum): this per-SEGMENT hug is now used only for
+## segments OUTSIDE a descent span (see _find_descent_spans/
+## _shape_descent_span, both called from profile()) — ordinary reaches,
+## exactly the "gentle terrain" case this docstring already describes, where
+## end_target never moves far from start_lvl and hugging essentially never
+## engages. Segments INSIDE a span are shaped by _shape_descent_span instead:
+## chasing each segment's own LOCAL end_target (as this function does) is
+## exactly the behaviour the owner rejected for a real multi-segment
+## descent — end_target itself follows the storey-quantized bed sample by
+## sample, so even a perfectly-smooth per-segment ease reproduces a
+## staircase across several segments (smootherstep's own zero-slope
+## endpoints reset the curve flat at every trace sample). This function's
+## own code is otherwise unchanged.
 static func _descend_segment(region, a: Vector2, b: Vector2, start_lvl: float, end_target: float) -> float:
 	if region == null:
 		return end_target
@@ -532,6 +624,196 @@ static func _descend_segment(region, a: Vector2, b: Vector2, start_lvl: float, e
 		var w: float = SlopeProfile.smootherstep(clampf((hug_t - smooth_t) / _EASE_BAND, 0.0, 1.0))
 		held = minf(held, lerpf(smooth_t, hug_t, w))
 	return held
+
+
+## r3 Task 12: maximal DESCENT SPANS over the naive, region-independent
+## target chase `raw` (profile()'s own `raw[i] = min(raw[i-1], beds[i] +
+## SURFACE_RIDE)`, i.e. exactly what profile() would produce with no
+## terrain-aware shaping at all — see profile()'s own two-pass comment). A
+## span [lo, hi] is a run of trace-sample indices across which `raw` is
+## actively dropping, merging across any FLAT gap shorter than
+## DESCENT_POOL_GAP (a storey ledge mid-slope, not a real landing — see that
+## constant's own derivation) so the whole stretch between two GENUINE flat
+## reaches becomes ONE span. `raw` (not the shaped `levels`) is deliberately
+## the signal read here: span detection must not depend on shaping decisions
+## made for an EARLIER span on the same trace, and `raw` is a pure function
+## of trace.beds alone, independent of any of that.
+## Returns Array of {lo: int, hi: int}, ordered by lo ascending, non-
+## overlapping (each ends before the next begins — see the `i = hi + 1`
+## resume below). Empty when the trace never drops (a flat/joined trace, or
+## one still short of its first descent).
+static func _find_descent_spans(raw: PackedFloat32Array, arclen: PackedFloat32Array) -> Array:
+	var n: int = raw.size()
+	var spans: Array = []
+	var i: int = 1
+	while i < n:
+		if raw[i - 1] - raw[i] <= EPS:
+			i += 1
+			continue
+		var lo: int = i - 1
+		var hi: int = i
+		while hi + 1 < n:
+			if raw[hi] - raw[hi + 1] > EPS:
+				hi += 1
+				continue
+			# raw goes flat starting at hi -- measure how far the flat run
+			# reaches before deciding whether it is a real pool.
+			var flat_end: int = hi
+			while flat_end + 1 < n and raw[flat_end] - raw[flat_end + 1] <= EPS:
+				flat_end += 1
+			if arclen[flat_end] - arclen[hi] >= DESCENT_POOL_GAP or flat_end + 1 >= n:
+				break   # a genuine pool (or the trace ends) -- span ends at hi
+			hi = flat_end + 1   # short blip -- absorb it, keep descending
+		spans.append({"lo": lo, "hi": hi})
+		i = hi + 1
+	return spans
+
+
+## r3 Task 12: shapes ONE descent span [lo, hi] (trace-sample indices) as
+## ONE continuous, C1 curve from `anchor_start` (the level already HELD at
+## lo — the flat pool immediately upstream, already resolved by profile()'s
+## own walk up to this point) to `anchor_end` (the naive `raw[hi]` target —
+## the flat pool immediately downstream). This is the owner's reversal of
+## run-2's terrain-hugging descent (see this task's brief): the ramp is a
+## pure function of arc length between the two anchors — ground is
+## consulted only as a FLOOR (the clamp below), never as the shaping signal,
+## so intermediate storey ledges inside the span no longer echo into the
+## water surface as steps.
+## Three passes over a dense _DESCENT_STEP-spaced walk of the span's own
+## polyline (not a straight line — follows trace.points exactly like
+## _descend_segment's own substep walk does):
+##  1. EASE: smootherstep-shaped monotone interpolation from anchor_start to
+##     anchor_end, parameterised by FRACTIONAL ARC LENGTH — C1 by
+##     construction, since smootherstep's own derivative is exactly zero at
+##     both t=0 and t=1, matching the flat (zero-slope) pools it welds into.
+##  2. CLAMP: max(ease, ground + DESCENT_CLAMP) wherever the rendered
+##     terrain (TerrainSurfaceField over the SAME `region` _descend_segment
+##     already uses) pokes through the ramp.
+##  3. RE-SMOOTH: a box filter over DESCENT_RESMOOTH_WINDOW (_box_smooth) so
+##     the clamp's own step (dry rock breaking the surface mid-ramp) doesn't
+##     reintroduce a kink — padded with the two anchors themselves (both
+##     exactly flat pools) so the filter needs no invented edge condition and
+##     both endpoints stay pinned exactly (see _box_smooth's own docstring).
+## A final forward monotone pass guarantees non-increasing even though the
+## clamp (which can only push the level UP relative to the ease) is not
+## itself guaranteed monotone if the ground rises then falls inside the span.
+## anchor_start/anchor_end are ALSO floored against their own sample's
+## ground (defensive — profile()'s callers already keep both safely above
+## ground by construction, but this function does not need to trust that).
+## Split into two: _dense_span_curve (the actual shaping, at _DESCENT_STEP
+## resolution — the granularity the brief's own smoothness oracle measures,
+## "second differences... per 4m sample", finer than a trace's own
+## TRACE_STEP=12m sample spacing) and this wrapper, which floors the anchors
+## against ground and resamples the dense curve down to profile()'s
+## contractual one-level-per-trace-sample shape. Kept separate so the dense
+## curve itself is directly testable (test_descent_is_smooth_pool_to_pool)
+## without reaching through the coarser resample.
+## Returns one level per trace sample lo..hi (size hi-lo+1; index 0 is
+## trace.points[lo], last is trace.points[hi]).
+static func _shape_descent_span(region, trace: RiverTrace, lo: int, hi: int,
+		anchor_start: float, anchor_end: float, arclen: PackedFloat32Array) -> PackedFloat32Array:
+	var ground_lo: float = TerrainSurfaceField.surface_y(region, trace.points[lo].x, trace.points[lo].y)
+	var ground_hi: float = TerrainSurfaceField.surface_y(region, trace.points[hi].x, trace.points[hi].y)
+	anchor_start = maxf(anchor_start, ground_lo + DESCENT_CLAMP)
+	anchor_end = maxf(anchor_end, ground_hi + DESCENT_CLAMP)
+	var span_len: float = arclen[hi] - arclen[lo]
+	if span_len < 0.001:
+		var flat := PackedFloat32Array()
+		flat.resize(hi - lo + 1)
+		flat.fill(anchor_start)
+		return flat
+	var smoothed: PackedFloat32Array = _dense_span_curve(region, trace, lo, hi, anchor_start, anchor_end, arclen)
+	var steps: int = smoothed.size() - 1
+	# Resample the dense (fixed _DESCENT_STEP-spaced) curve at each trace
+	# sample's OWN arc offset -- profile()'s levels[] contract is one entry
+	# per trace point, not per dense substep.
+	var out := PackedFloat32Array()
+	out.resize(hi - lo + 1)
+	out[0] = anchor_start
+	out[hi - lo] = anchor_end
+	for idx in range(lo + 1, hi):
+		var d2: float = arclen[idx] - arclen[lo]
+		var kf: float = clampf(d2 / _DESCENT_STEP, 0.0, float(steps))
+		var k0: int = int(floor(kf))
+		var k1: int = mini(k0 + 1, steps)
+		var tt: float = kf - float(k0)
+		out[idx - lo] = lerpf(smoothed[k0], smoothed[k1], tt)
+	return out
+
+
+## r3 Task 12: the dense, _DESCENT_STEP-spaced, FULLY SHAPED curve for span
+## [lo,hi] — ease (arc-length-parameterised smootherstep between the two
+## already-floored anchors) + ground clamp + re-smooth (_box_smooth) + a
+## final forward monotone pass. `anchor_start`/`anchor_end` are taken as
+## given (already floored against ground by the caller — see
+## _shape_descent_span); called directly (bypassing the coarser trace-sample
+## resample) by test_water_field.gd's test_descent_is_smooth_pool_to_pool,
+## which is what "second differences... per 4m sample" actually measures.
+## Returns steps+1 samples (steps = ceil(span_len/_DESCENT_STEP)) at arc
+## offsets 0, _DESCENT_STEP, 2*_DESCENT_STEP, ..., span_len from
+## trace.points[lo]; index 0 == anchor_start exactly, last == anchor_end
+## exactly (see _box_smooth's own docstring for why the pin is exact, not
+## approximate).
+static func _dense_span_curve(region, trace: RiverTrace, lo: int, hi: int,
+		anchor_start: float, anchor_end: float, arclen: PackedFloat32Array) -> PackedFloat32Array:
+	var span_len: float = arclen[hi] - arclen[lo]
+	var steps: int = maxi(1, int(ceil(span_len / _DESCENT_STEP)))
+	var dense := PackedFloat32Array()
+	dense.resize(steps + 1)
+	var seg_i: int = lo
+	for k in range(steps + 1):
+		var d: float = span_len * float(k) / float(steps)
+		var target_arc: float = arclen[lo] + d
+		while seg_i < hi - 1 and arclen[seg_i + 1] < target_arc:
+			seg_i += 1
+		var seg_start: float = arclen[seg_i]
+		var seg_end: float = arclen[seg_i + 1]
+		var seg_t: float = 0.0 if seg_end - seg_start < 0.001 else \
+			clampf((target_arc - seg_start) / (seg_end - seg_start), 0.0, 1.0)
+		var p: Vector2 = trace.points[seg_i].lerp(trace.points[seg_i + 1], seg_t)
+		var t: float = d / span_len
+		var ground: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+		var ease: float = lerpf(anchor_start, anchor_end, SlopeProfile.smootherstep(t))
+		dense[k] = maxf(ease, ground + DESCENT_CLAMP)
+	dense[0] = anchor_start
+	dense[steps] = anchor_end
+	var smoothed: PackedFloat32Array = _box_smooth(dense, _DESCENT_STEP, DESCENT_RESMOOTH_WINDOW, anchor_start, anchor_end)
+	smoothed[0] = anchor_start
+	smoothed[steps] = anchor_end
+	for k in range(1, steps + 1):
+		smoothed[k] = minf(smoothed[k], smoothed[k - 1])
+	return smoothed
+
+
+## Symmetric box filter over a dense, evenly _DESCENT_STEP-spaced array,
+## window >= window_m metres wide (radius rounded UP so the true width is
+## never less than requested). Pads virtual samples beyond both ends with
+## `pad_lo`/`pad_hi` (the span's own two anchors, both exactly flat pools)
+## rather than replicating the nearest in-range sample, so the filtered
+## value AT the first/last index converges to EXACTLY that anchor
+## (averaging N copies of the same constant returns that constant) instead
+## of drifting off it by a hair — the span stays continuous with its pools
+## exactly, not approximately (profile()'s own final pin after calling this
+## is therefore belt-and-braces, not load-bearing).
+static func _box_smooth(dense: PackedFloat32Array, step: float, window_m: float,
+		pad_lo: float, pad_hi: float) -> PackedFloat32Array:
+	var n: int = dense.size()
+	var radius: int = maxi(1, int(ceil((window_m * 0.5) / step)))
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in range(n):
+		var s: float = 0.0
+		var count: int = 0
+		for k in range(i - radius, i + radius + 1):
+			if k < 0:
+				s += pad_lo
+			elif k >= n:
+				s += pad_hi
+			else:
+				s += dense[k]
+			count += 1
+		out[i] = s / float(count)
+	return out
 
 
 ## Surface height at p, or -INF when the water can't be shown to reach p.
