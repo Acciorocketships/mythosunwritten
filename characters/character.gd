@@ -19,8 +19,11 @@ extends CharacterBody3D
 # buoyancy and falls back in, so bobbing emerges naturally. Pressing toward
 # a nearby bank wall with jump launches the character out of the water.
 const WATER_LAYER_MASK: int = 1 << 7
-# Fallback surface for legacy water volumes that carry no surface_y meta
-# (the old flat-sheet water). Field-terrain volumes always set the meta.
+# water_surface_y's own value before the character has ever touched water
+# this session (nothing reads it until in_water first goes true, which
+# always overwrites it — see _update_in_water). Not a "legacy volume"
+# fallback any more: r3 Task 9 deleted the last code path that could reach a
+# water Area3D without a sampler meta (see _update_in_water's own docstring).
 const WATER_SURFACE_Y: float = -1.5
 var water_surface_y: float = WATER_SURFACE_Y
 # CPU mirror of the water shader's swell so the floating body RIDES the waves
@@ -32,6 +35,24 @@ var water_surface_y: float = WATER_SURFACE_Y
 # Mirrors water_unified.gdshader's wave_height / wave_speed — keep in sync.
 const SWELL_HEIGHT: float = 1.0
 const SWELL_SPEED: float = 0.26
+# River-train mirror (r3 Task 9) — named constants copied VERBATIM from
+# terrain/water/water_waves.gdshaderinc's own "mirror block" header comment
+# (that file is the single source of truth; GDScript cannot #include a
+# .gdshaderinc, so this table is its hand-kept CPU twin — retune there, copy
+# the values back here, never the reverse). Only feeds water_surface_y (the
+# float-height/buoyancy surface, via _swell_offset/_river_h) — classification
+# (in_water/wading) is STATIC field depth and never reads these; see
+# _update_in_water's own docstring.
+const RIVER_K1: float = 1.9          # λ≈3.3 m primary train
+const RIVER_K2: float = 3.4          # λ≈1.8 m crossed train (steep only)
+const RIVER_SPEED1: float = 2.6      # m/s downstream
+const RIVER_SPEED2: float = 3.8
+const RIVER_AMP_BASE: float = 0.055
+const RIVER_AMP_SLOPE_GAIN: float = 2.4     # A = BASE*(1+GAIN*slope)
+const RIVER_CROSS_RAD: float = 0.31         # ~18 deg cross angle for train 2
+const PLUNGE_RING_K: float = 2.2
+const PLUNGE_RING_SPEED: float = 3.1
+const PLUNGE_RING_AMP: float = 0.10
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
 @export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
@@ -181,133 +202,106 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 	return true
 
 
-# The probe sits at knee height: standing on a dry bank keeps it above the
-# water volume, while floating at the surface keeps it inside. The overlapped
-# volume's surface_y meta (per-body water level) drives buoyancy. Volumes are
-# per-cell boxes with headroom for the swell, so BEING IN A BOX is not enough:
-# the probe must also sit under that volume's own swelled surface — otherwise
-# wading onto a bank fringe inside a box read as swimming on dry land (the
-# owner's floating character beside waterfalls).
+# The probe sits at knee height for HIT DETECTION only (finding which
+# trigger boxes overlap the character at all — unrelated to the depth math
+# below, which reads global_position.y directly; see the r3 Task 9 note).
 #
-# DEPTH GATE (Phase 2b, item 6): in_water additionally requires real depth —
-# (sy - ground_under_feet) > 0.8 to ENTER, staying swimming down to > 0.6
-# (hysteresis, see the thresholds inline below) — not just "probe point sits
-# under a volume's swelled headroom." A shallow puddle/ankle-deep flood shelf can
-# satisfy the headroom containment test above while the character is
-# plainly STANDING, not swimming; the owner's I5 misclassification (a dry
-# bank inside a coarse 24m volume box reading as "in water") is exactly
-# this class of false positive, now closed by depth rather than by deleting
-# volumes on bank cells (a further defence, not a replacement — a genuinely
-# dry point still fails the headroom gate above and never reaches here at
-# all). Mechanism: `ground_under_feet` reuses the EXISTING floor raycast
-# (`raycast`, the same RayCast3D _get_ground_dist()/on_ground already read
-# this same physics frame — see _physics_process, which calls
-# _update_in_water() before those) rather than casting a second ray: it is
-# anchored at the character's own feet and points straight down 2m
-# (character.tscn), defaults to collide_with_areas=false so it only ever
-# hits solid terrain, never a water Area3D itself, and is already the
-# codebase's one "how far down is the ground" primitive. No collision
-# within 2m below the feet reads as -INF ground (bottomless from here) so
-# depth trivially clears 0.8 — a real, if conservative, "this is deep"
-# default. Roughly 0.05-0.8 depth is WADING (exact edges hysteretic, see
-# below): shallow enough that movement is unaffected (no swim-control
-# switch), but flagged for effects/animation to read later.
+# r3 Task 9 — SWIM FROM THE FIELD ITSELF: classification (in_water/wading)
+# is now STATIC field depth, full stop — `depth = sampler.level_at(xz) -
+# global_position.y`, the exact water column between the sampler's frozen
+# snapshot of WaterField and the character's own feet (global_position sits
+# at the CAPSULE'S BASE — see character.tscn's CollisionShape3D offset — so
+# this needs no separate ground raycast the way the pre-Task-9 bridge did).
+# The swell (_swell_offset, now carrying BOTH the pond spectrum AND the new
+# river-train mirror) contributes ONLY to water_surface_y, the float height
+# buoyancy/animation chase — NEVER to this depth, per the controller's own
+# swell-entry redesign (r3-task-9-brief.md controller addition 1):
+#
+#   at (36.4, 2.82, -1108.7) [I4] static depth measures 0.7685 — correctly
+#   BELOW the 0.8 swim-enter gate — but the pond swell's own crest can add
+#   well over 0.1m at times, and mixing it into the GATE let a crest push
+#   depth past 0.8 on land's own edge: hysteresis then LATCHED swim there
+#   (in_water only exits below 0.6, so one crest-timed frame was enough to
+#   stick), regressing run 2's own verified false/true state at that exact
+#   spot. Gating on STATIC depth alone makes the hysteresis deterministic —
+#   whether I4 reads wading or swimming depends only on where the character
+#   stands, never on what phase the swell animation happens to be in when
+#   _update_in_water runs.
+#
+# Every overlapping trigger is tried; the one with the greatest STATIC depth
+# wins (both for the swim/wade classification and for which trigger's
+# sampler feeds water_surface_y) — "take the deepest reading" is the same
+# generous-toward-swimming rule the pre-Task-9 bridge's own `best = maxf(...)`
+# already applied, now over one number (depth) instead of a per-hit
+# contained/not-contained test (there is no more separate "containment" step:
+# a NAN sampler reading — the field itself reads dry at this (x,z), or the
+# point falls outside the trigger's own chunk snapshot — is the only way a
+# hit is skipped, exactly mirroring the pre-Task-9 bridge's own NAN-skip).
+#
+# HYSTERESIS unchanged (same thresholds, same enter/exit asymmetry — WaterRippleSim.gd
+# fires a splash ripple on every false->true edge of in_water, and a single
+# boundary re-evaluated fresh each frame would let depth dither by a few cm
+# across a shallow shelf lip and re-trigger it): swim ENTER > 0.8, EXIT >
+# 0.6; wading ENTER > 0.05, EXIT > 0.03; wading = in_water or a same-frame
+# hit independently cleared the shallow-only band (wading ⊇ swimming — a
+# swimming character is trivially also "in water", see the h-task-4 fix this
+# formula still carries).
+#
+# The legacy surface_c/surface_g/surface_y/bare-else branches (the old
+# marching-squares mesher's per-cell sampled-plane metas and the flat-sheet
+# fallback) are DELETED outright, not just the surface_c one controller
+# addition 4 name-checks: r3 Task 7 deleted every producer of ALL of them
+# (WaterSurfaceBuilder.build_chunk is the water layer's ONE Area3D producer
+# and always sets exactly `sampler`, verified by repo-wide grep this task —
+# see r3-task-9-report.md), so all three are equally, provably dead, not
+# just the one item 4 happened to name.
 func _update_in_water() -> void:
 	var params := PhysicsPointQueryParameters3D.new()
-	var probe_y: float = global_position.y + 0.3
 	params.position = global_position + Vector3(0.0, 0.3, 0.0)
 	params.collide_with_areas = true
 	params.collide_with_bodies = false
 	params.collision_mask = WATER_LAYER_MASK
 	var hits: Array = get_world_3d().direct_space_state.intersect_point(params, 4)
-	var swell: float = _swell_offset()
-	var ground_under_feet: float = raycast.get_collision_point().y if raycast.is_colliding() else -INF
-	var best: float = -INF
-	var best_wading := false
+	var gp: Vector3 = global_position
+	var xz := Vector2(gp.x, gp.z)
+	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
+	var best_depth: float = -INF
+	var best_level: float = -INF
+	var best_sampler: WaterSampler = null
 	for h in hits:
 		var collider: Object = h.get("collider")
-		if collider == null:
+		if collider == null or not collider.has_meta("sampler"):
 			continue
-		var sy: float = INF
-		var contained := false
-		if collider.has_meta("sampler"):
-			# TEMP bridge until r3 Task 9 (river-train mirror + parity test):
-			# the new trigger boxes (r3 Task 7) carry a frozen WaterSampler
-			# instead of a sampled-plane meta pair (the elif branch right
-			# below, kept untouched for any legacy volume) — read the exact
-			# water height at this point straight from it. The sampler covers
-			# the FULL wet footprint including the shoreline band (Task 7
-			# review MEDIUM fix — see WaterSampler.gd's own BACKING DATA
-			# note), so NAN means the FIELD itself reads dry at this exact
-			# (x,z) (or the point is outside this chunk's own snapshot): the
-			# trigger box is a coarse 24m tile, and a character standing on
-			# the genuinely-dry fringe inside the box correctly reads
-			# not-in-water — treated as not contained here, same as any other
-			# miss; `contained` stays false and the shared check below skips
-			# this hit exactly as it already does for every other
-			# non-containing case.
-			var sampler: WaterSampler = collider.get_meta("sampler")
-			var lvl: float = sampler.level_at(Vector2(global_position.x, global_position.z))
-			if not is_nan(lvl):
-				sy = lvl
-				contained = probe_y <= sy + swell + 0.45
-		elif collider.has_meta("surface_c"):
-			var c: Vector3 = collider.get_meta("surface_c")
-			var g: Vector2 = collider.get_meta("surface_g")
-			sy = c.y + g.dot(Vector2(global_position.x - c.x, global_position.z - c.z))
-			contained = probe_y <= sy + swell + 0.45
-		elif collider.has_meta("surface_y"):
-			sy = float(collider.get_meta("surface_y"))
-			contained = probe_y <= sy + swell + 0.45
-		else:
-			sy = WATER_SURFACE_Y
-			contained = true   # legacy volumes carry no plane/scalar to gate containment on
-		if not contained:
-			continue
-		var depth: float = sy - ground_under_feet
-		# HYSTERESIS: distinct enter/exit thresholds per state rather than one
-		# boundary re-evaluated fresh each frame. WaterRippleSim.gd fires a
-		# splash ripple on every false->true edge of in_water (its
-		# _was_in_water gate); a single 0.8 boundary lets depth dither by a
-		# few cm across a shallow shelf lip, re-triggering that edge and
-		# spraying spurious splashes. Swim ENTER > 0.8, EXIT < 0.6 (stays
-		# swimming in between).
-		var swim_gate: float = 0.6 if in_water else 0.8
-		if depth > swim_gate:
-			best = maxf(best, sy)
-		# Wading mirrors the same shape, ENTER > 0.05 / EXIT < 0.03: no
-		# consumer currently gates on wading's own edges, but the same
-		# hysteresis keeps both readings equally stable on one shelf.
-		elif depth > (0.03 if wading else 0.05):
-			best_wading = true
-	in_water = best > -INF
-	# h-task-4 fix: WAS `not in_water and best_wading`, which made `wading`
-	# structurally impossible to read true at the same time as `in_water` —
-	# the >0.8 swim-gate branch above (line ~252) sets `best` and neither
-	# sets NOR needs best_wading for that same hit, so on a real swim frame
-	# best_wading often stays false all loop, and even on the rare frame it
-	# does get set by a SEPARATE shallower hit, the `not in_water` term threw
-	# it away. Logically, in_water (swimming) is a DEEPER case of being in
-	# water at all — a swimming character is trivially also "in water",
-	# never magically dry — so wading should never read false merely because
-	# in_water is true. Zero consumers gate on wading today (see the class
-	# doc comment on the `wading` var above), so this is honesty, not a
-	# behaviour change: wading is now true whenever in_water is (a swimming
-	# character is in water) OR a same-frame hit independently cleared the
-	# shallow-only band, matching the brief's literal ask exactly.
-	wading = in_water or best_wading
+		var sampler: WaterSampler = collider.get_meta("sampler")
+		var lvl: float = sampler.level_at(xz)
+		if is_nan(lvl):
+			continue   # field itself reads dry here (or outside this chunk's snapshot) — same skip as every other miss
+		var depth: float = lvl - gp.y   # STATIC — no swell term, see this function's own docstring
+		if depth > best_depth:
+			best_depth = depth
+			best_level = lvl
+			best_sampler = sampler
+	var swim_gate: float = 0.6 if in_water else 0.8
+	var wade_gate: float = 0.03 if wading else 0.05
+	in_water = best_depth > swim_gate
+	wading = in_water or best_depth > wade_gate
 	if in_water:
-		water_surface_y = best + swell
+		water_surface_y = best_level + _swell_offset(xz, t, best_sampler)
 
 
 # The water surface the buoyancy chases, displaced by the shader's travelling
 # swells at the character's position — floating bodies rock in the waves.
-# Exact mirror of water_wave_h in terrain/water/water_common.gdshaderinc
+# POND term: exact mirror of water_wave_h in terrain/water/water_common.gdshaderinc
 # (two long swells + three mid rollers, two of them envelope-modulated by
-# slow travelling sines) — KEEP IN SYNC.
-func _swell_offset() -> float:
-	var p: Vector2 = Vector2(global_position.x, global_position.z)
-	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
+# slow travelling sines) — KEEP IN SYNC. RIVER term (r3 Task 9, `sampler`
+# optional — null skips it, e.g. no trigger context available): _river_h at
+# the character's own flow frame, read from `sampler.flow_frame_at` (bilinear
+# over WaterSkin's own baked (s, d, slope) grid — the same "frozen chunk
+# snapshot" contract level_at already has). `t` is the caller's own
+# TIME*SWELL_SPEED (matches the shader's `t = TIME * wave_speed` exactly —
+# computed ONCE per _update_in_water call, not re-read here, so a frame's
+# depth gate and its water_surface_y agree on "now").
+func _swell_offset(p: Vector2, t: float, sampler: WaterSampler = null) -> float:
 	var h: float = 0.9 * sin(p.dot(Vector2(0.042, 0.016)) - t * 0.33)
 	h += 0.55 * sin(p.dot(Vector2(-0.023, 0.037)) - t * 0.26 + 1.7)
 	var e1: float = 0.75 + 0.45 * sin(p.dot(Vector2(0.052, 0.048)) - t * 0.21 + 0.9)
@@ -315,7 +309,35 @@ func _swell_offset() -> float:
 	h += 0.5 * e1 * sin(p.dot(Vector2(0.118, -0.112)) - t * 2.85 + 2.1)
 	h += 0.34 * e2 * sin(p.dot(Vector2(-0.15, 0.178)) - t * 3.1 + 4.6)
 	h += 0.22 * sin(p.dot(Vector2(0.27, 0.208)) - t * 3.45 + 1.3)
-	return h * 0.5 * SWELL_HEIGHT
+	var total: float = h * 0.5 * SWELL_HEIGHT
+	if sampler != null:
+		var frame: Vector3 = sampler.flow_frame_at(p)
+		total += _river_h(frame.x, frame.y, frame.z, t)
+	return total
+
+
+# Exact GDScript mirror of water_river_h(s, d, slope, t) in
+# terrain/water/water_waves.gdshaderinc — train1 (always, self-gated to zero
+# away from any trace by river_present) + train2 (gated to steep reaches
+# only, smoothstep(0.15,0.45,slope)) + a plunge-ring term
+# (smoothstep(0.3,0.5,slope)). Added UNSCALED to the pond sum, exactly like
+# the shader's own `h += water_river_h(...)` in vertex() — no extra
+# SWELL_HEIGHT/wave_height factor; water_river_h's own RIVER_AMP_* constants
+# already set its scale. KEEP IN SYNC with that function's own formula.
+func _river_h(s: float, d: float, slope: float, t: float) -> float:
+	var river_present: float = smoothstep(0.0, 0.03, absf(s) + absf(d))
+	# slope is intentionally UNCLAMPED at the bake (real waterfall reaches
+	# read well past 1.0); clamp only the LOCAL amplitude-gain input, same
+	# guard the shader's own water_river_h applies.
+	var slope_amp: float = clampf(slope, 0.0, 2.0)
+	var amp: float = RIVER_AMP_BASE * (1.0 + RIVER_AMP_SLOPE_GAIN * slope_amp)
+	var h: float = amp * sin(RIVER_K1 * s - RIVER_SPEED1 * RIVER_K1 * t)
+	var gate2: float = smoothstep(0.15, 0.45, slope)
+	var phase2: float = RIVER_K2 * (s * cos(RIVER_CROSS_RAD) + d * sin(RIVER_CROSS_RAD)) - RIVER_SPEED2 * RIVER_K2 * t
+	h += gate2 * amp * sin(phase2)
+	var ring_gate: float = smoothstep(0.3, 0.5, slope)
+	h += ring_gate * PLUNGE_RING_AMP * sin(PLUNGE_RING_K * absf(d) - PLUNGE_RING_SPEED * t)
+	return h * river_present
 
 
 func jump_animation(started_animation: bool):

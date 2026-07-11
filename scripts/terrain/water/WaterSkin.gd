@@ -112,13 +112,64 @@ const STEEP_UNSWIMMABLE := 0.45
 # real margin on both sides, and is deliberately the codebase's historical
 # "two different water bodies, not one slope" level-step order (the old
 # fill-lattice jump constant carried exactly this value for exactly this
-# meaning before Phase 2a retired its blending role). TRADE-OFF, disclosed:
-# a suppressed tile loses its trigger WHOLESALE — including any swimmable
-# pool fraction inside it (the pinned site: 6 of 25 tiles, the cascade
-# steps). Safe direction (never phantom-swim; a character wades/falls
-# through un-triggered water), matches "steep water is unswimmable by
-# design", and r3 Task 9's parity work re-visits classification wholesale.
+# meaning before Phase 2a retired its blending role).
+#
+# r3 Task 9 RECONCILIATION (controller addition 2 — Task 7 re-review Medium):
+# this WHOLE-TILE spread, gating a single 24m box, over-suppresses: a
+# sustained-but-LEGAL sloped reach (grade in (0.083, 0.333], i.e. up to
+# FALL_DROP_MIN/TRACE_STEP — see STEEP_UNSWIMMABLE's own derivation) can
+# accumulate up to 8.0m of real, swimmable rise across a whole 24m tile,
+# comfortably exceeding 2.0 despite never containing a genuine local step.
+# `_triggers` therefore uses THIS constant/function as a cheap FAST-PATH
+# pre-check only (whole tile spread <= 2.0 => one 24m box, unchanged from
+# Task 7 — the common case, every pond/lake/calm-river tile in the game);
+# a tile that fails it falls through to `_sub_tile_triggers`, which makes
+# the REAL keep/suppress decision at TRIGGER_SUB_TILE(6m) resolution
+# against a SEPARATE, larger constant (TRIGGER_SUB_TILE_SPREAD_MAX, below —
+# see its own docstring for why 2.0 turned out too strict there). This
+# constant staying at 2.0 for the fast path ONLY is deliberate: it is a
+# perf shortcut (skip sub-tile work when the tile is obviously calm), not a
+# correctness boundary — a tile that fails it merely PAYS for the slower,
+# more precise sub-tile pass; it does not get suppressed by this number
+# alone.
 const TRIGGER_LEVEL_SPREAD_MAX := 2.0
+# Fine-grained trigger granularity used ONLY when a 24m tile fails the
+# whole-tile fast path above (see _sub_tile_triggers). 24/6 = 4 sub-tiles
+# per axis, TRIGGER_SUB_PER_TILE — an exact division, no remainder/rounding
+# to worry about at a tile's own far edge.
+const TRIGGER_SUB_TILE := 6.0
+const TRIGGER_SUB_PER_TILE := 4
+# The REAL native-hot threshold _sub_tile_triggers uses (see that function's
+# own docstring for the propagation mechanism this feeds). NOT derived from
+# the legal-reach ceiling (0.3333*6=2.0) the way TRIGGER_LEVEL_SPREAD_MAX
+# is — a live-gate check at I4 (36.4,2.82,-1108.7, r3-task-9-brief.md
+# controller addition 1's own pinned point) caught that derivation too
+# strict: I4 sits in a REAL, INTENDED-swimmable local transition whose own
+# 6m sub-tile measures spread 2.7000 (an exact, resolution-independent
+# reading — verified at 5/9/25-sample density, r3-task-9-report.md), and at
+# 2.0 that sub-tile was natively "hot", suppressing a spot the controller's
+# own evidence requires read wading=true (static depth 0.7685, correctly
+# below the 0.8 swim gate). Investigated further: the WORST depth anywhere
+# in I4's own sub-tile is 1.7m (matching the calm pool immediately upstream
+# of it — a real, modest, non-phantom reading, not the "up to the full
+# inter-reach step of phantom standing depth" Concern Resolution 2
+# documents), while the site's five genuine cascade-step sub-tiles (I1's own
+# and its four siblings, all still correctly suppressed) measure spread
+# EXACTLY 4.0 (worst depth up to 3.7m). I4's own 2.7 is not a coincidence:
+# 0.45 (STEEP_UNSWIMMABLE) * TRIGGER_SUB_TILE(6) = 2.7 EXACTLY — I4's local
+# transition sits precisely AT the whole-tile grade gate's own "genuinely
+# unswimmable" bar, not the stricter "still-technically-legal" one. Sitting
+# a sub-tile gate's threshold AT that same bar double-suppresses the grade
+# gate's own gray zone; TRIGGER_SUB_TILE_SPREAD_MAX instead sits at the
+# midpoint between the two MEASURED site values (2.7 and 4.0), equal margin
+# (0.65) either side — comfortably above the "AT STEEP_UNSWIMMABLE" case
+# (which the whole-tile grade gate, run first and using the same constant,
+# already has the authority to judge) and comfortably below the genuine
+# multi-reach cascade steps this gate exists to catch (the class the grade
+# gate structurally cannot: TRACE_STEP=12m secants read the legal-reach
+# ceiling 0.3333 everywhere on this site, per Concern Resolution 2, "no
+# matter how densely sampled").
+const TRIGGER_SUB_TILE_SPREAD_MAX := 3.35
 
 # --- Meniscus rim (Task 5) — brief's own literal per-point profile, local
 # frame (outward normal n, level L, ground g): row0 = the strip's own curve
@@ -248,9 +299,46 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	# Sampler bake: the FIELD across this chunk, on the lattice's own grid
 	# geometry (Task 7 review MEDIUM fix — the interior lattice itself insets
 	# INSET away from the waterline, so it is NOT a full-coverage height
-	# source; see WaterSampler.gd's own BACKING DATA note).
-	var sampler := WaterSampler.build(ctx, region, lattice.origin, STEP, lattice.nx, lattice.nz)
+	# source; see WaterSampler.gd's own BACKING DATA note). r3 Task 9: also
+	# bake the flow frame (s, d, slope) onto the SAME grid via this file's
+	# own _flow_frame_at (the CUSTOM0 bake's own per-vertex function, reused
+	# here rather than duplicated — see _flow_frame_grid) so the sampler can
+	# answer flow_frame_at for any (x,z), not just a mesh vertex; the
+	# character's river-train mirror needs s/d/slope AT ITS OWN POSITION,
+	# which is continuous, not vertex-snapped.
+	var flow: Dictionary = _flow_frame_grid(st, lattice.origin, STEP, lattice.nx, lattice.nz)
+	var sampler := WaterSampler.build(ctx, region, lattice.origin, STEP, lattice.nx, lattice.nz,
+		flow.s, flow.d, flow.slope)
 	return {"arrays": arrays, "triggers": _triggers(st), "sampler": sampler}
+
+
+## Bakes _flow_frame_at onto the SAMPLER's grid geometry (same origin/step/
+## nx/nz as the level bake immediately above — see WaterSampler.build's own
+## flow-grid params) instead of the mesh's own vertex positions, so
+## WaterSampler.flow_frame_at (r3 Task 9) can answer "what river frame
+## applies HERE" for ANY (x,z) in the chunk. One extra _flow_frame_at call
+## per grid corner (nx*nz, the same cost class as the level bake right next
+## to it, and reusing the SAME per-build arclen/profile memo caches on `st`
+## — see _trace_arclen/_trace_profile) — a second full field-density bake
+## paid once per chunk build on the worker thread (Task 11 perf-pass item,
+## same bucket as _custom0's own per-vertex call and the trigger gates'
+## per-vertex grade_at reads).
+static func _flow_frame_grid(st: Dictionary, origin: Vector2, step: float, nx: int, nz: int) -> Dictionary:
+	var s := PackedFloat32Array()
+	var d := PackedFloat32Array()
+	var slope := PackedFloat32Array()
+	s.resize(nx * nz)
+	d.resize(nx * nz)
+	slope.resize(nx * nz)
+	for j in nz:
+		for i in nx:
+			var p: Vector2 = origin + Vector2(i, j) * step
+			var frame: Dictionary = _flow_frame_at(st, p)
+			var idx: int = j * nx + i
+			s[idx] = frame.s
+			d[idx] = frame.d
+			slope[idx] = frame.slope
+	return {"s": s, "d": d, "slope": slope}
 
 
 ## Per-vertex CUSTOM0 = (s, d, slope, shore_dist) — Task 6's flow-frame bake,
@@ -1198,22 +1286,32 @@ static func _weld_vert(st: Dictionary, p: Vector2, y: float, nrm: Vector3) -> in
 	return idx
 
 
-## Triggers (r3 Task 7 — real wiring, not scaffolding): one box per 24m TILE
-## touched by any built vertex (kept interior, boundary-strip, OR rim),
-## footprint from this class's own presence data (`st.verts`) — top = max
-## level in the tile + TRIGGER_TOP_CLEAR, bottom = min ground in the tile -
-## TRIGGER_BOTTOM_CLEAR (this codebase's existing swim-trigger tiling/
-## clearance convention). A tile whose max |grade_at| exceeds
-## STEEP_UNSWIMMABLE gets NO trigger at all — see that constant's own
-## docstring; a fall face is not swimmable water by design, so a character
-## must fall/slide through it rather than float. WaterSurfaceBuilder.
-## build_chunk turns every entry here into an Area3D carrying
-## set_meta("sampler", sampler) (build()'s own single frozen WaterSampler for
-## the whole chunk) — there is no more per-cell sampled-plane meta pair; a
-## query anywhere inside the box reads that one snapshot instead (see
-## WaterSampler.gd).
+## Triggers (r3 Task 7 — real wiring, not scaffolding; r3 Task 9 — sub-tile
+## reconciliation): one box per 24m TILE touched by any built vertex (kept
+## interior, boundary-strip, OR rim), footprint from this class's own
+## presence data (`st.verts`) — top = max level in the tile + TRIGGER_TOP_
+## CLEAR, bottom = min ground in the tile - TRIGGER_BOTTOM_CLEAR (this
+## codebase's existing swim-trigger tiling/clearance convention). A tile
+## whose max |grade_at| exceeds STEEP_UNSWIMMABLE gets NO trigger at all —
+## see that constant's own docstring; a fall face is not swimmable water by
+## design, so a character must fall/slide through it rather than float. A
+## tile that passes the grade gate but fails the whole-tile level-spread
+## fast path (TRIGGER_LEVEL_SPREAD_MAX) is no longer dropped wholesale — it
+## falls through to _sub_tile_triggers, which may emit SEVERAL smaller
+## TRIGGER_SUB_TILE boxes covering only its swimmable fraction (see that
+## function's own docstring). WaterSurfaceBuilder.build_chunk turns every
+## entry here — 24m or 6m alike, it only ever reads `rect`/`top`/`bottom` —
+## into an Area3D carrying set_meta("sampler", sampler) (build()'s own
+## single frozen WaterSampler for the whole chunk) — there is no more
+## per-cell sampled-plane meta pair; a query anywhere inside the box reads
+## that one snapshot instead (see WaterSampler.gd).
 static func _triggers(st: Dictionary) -> Array:
 	var cells: Dictionary = {}   # Vector2i cell -> {top: float, bottom: float, max_grade: float}
+	# Vector2i cell -> Dictionary[Vector2i sub -> true]: which TRIGGER_SUB_TILE
+	# sub-cells of a candidate tile actually carry a built vertex (r3 Task 9
+	# — only populated/consulted for tiles that reach the sub-tile fallback
+	# below; harmless to build unconditionally, one extra bucket per vertex).
+	var sub_present: Dictionary = {}
 	for v: Vector3 in st.verts:
 		var cell := Vector2i(int(floor(v.x / TILE)), int(floor(v.z / TILE)))
 		var g: float = TerrainSurfaceField.surface_y(st.region, v.x, v.z)
@@ -1224,25 +1322,39 @@ static func _triggers(st: Dictionary) -> Array:
 			cells[cell].top = maxf(cells[cell].top, v.y)
 			cells[cell].bottom = minf(cells[cell].bottom, g)
 			cells[cell].max_grade = maxf(cells[cell].max_grade, grade)
+		var local := Vector2(v.x - float(cell.x) * TILE, v.z - float(cell.y) * TILE)
+		var sub := Vector2i(
+			clampi(int(floor(local.x / TRIGGER_SUB_TILE)), 0, TRIGGER_SUB_PER_TILE - 1),
+			clampi(int(floor(local.y / TRIGGER_SUB_TILE)), 0, TRIGGER_SUB_PER_TILE - 1))
+		if not sub_present.has(cell):
+			sub_present[cell] = {}
+		sub_present[cell][sub] = true
+
 	var out: Array = []
 	for cell: Vector2i in cells:
 		var e: Dictionary = cells[cell]
 		if e.max_grade > STEEP_UNSWIMMABLE:
 			continue   # steep water: no trigger, unswimmable by design
-		if _tile_level_spread(st, cell) > TRIGGER_LEVEL_SPREAD_MAX:
-			continue   # cascade-step tile: phantom fill depth over its face, no trigger
-		out.append({
-			"rect": Rect2(Vector2(cell) * TILE, Vector2.ONE * TILE),
-			"top": e.top + TRIGGER_TOP_CLEAR,
-			"bottom": e.bottom - TRIGGER_BOTTOM_CLEAR,
-		})
+		if _tile_level_spread(st, cell) <= TRIGGER_LEVEL_SPREAD_MAX:
+			out.append({
+				"rect": Rect2(Vector2(cell) * TILE, Vector2.ONE * TILE),
+				"top": e.top + TRIGGER_TOP_CLEAR,
+				"bottom": e.bottom - TRIGGER_BOTTOM_CLEAR,
+			})
+		else:
+			# Whole-tile spread failed: this tile straddles EITHER a genuine
+			# cascade step OR a merely-long sloped-but-legal reach (see
+			# TRIGGER_LEVEL_SPREAD_MAX's own r3 Task 9 note) — reconcile at
+			# sub-tile resolution instead of dropping the whole tile.
+			out.append_array(_sub_tile_triggers(st, cell, e, sub_present.get(cell, {})))
 	return out
 
 
 ## Max spread of WaterField.level_at over one 24m tile's own wet footprint,
-## sampled on a dense 9x9 (3m) grid across the tile bbox — the input to the
-## TRIGGER_LEVEL_SPREAD_MAX gate (see that constant's own derivation +
-## trade-off note). "Wet" here is level > ground with NO epsilon: the
+## sampled on a dense 9x9 (3m) grid across the tile bbox — the FAST-PATH
+## input to the TRIGGER_LEVEL_SPREAD_MAX gate (see that constant's own
+## derivation + trade-off note; see _sub_tile_triggers for the fallback this
+## feeds when it fails). "Wet" here is level > ground with NO epsilon: the
 ## phantom band this gate exists to find IS fill water standing barely-to-
 ## deeply over a face, and excluding thin readings would blind the gate to
 ## its own target's edges. Samples the FIELD directly (not built verts) so
@@ -1254,13 +1366,21 @@ static func _triggers(st: Dictionary) -> Array:
 ## thread (Task 11 perf-pass item, same bucket as the per-vertex grade_at
 ## reads above).
 static func _tile_level_spread(st: Dictionary, cell: Vector2i) -> float:
-	var lo: Vector2 = Vector2(cell) * TILE
-	var step: float = TILE / 8.0
+	return _level_spread_over(st, Vector2(cell) * TILE, TILE, 9)
+
+
+## Same dense min/max-spread scan as _tile_level_spread, generalized to any
+## square footprint (origin/size) and grid resolution `n` — shared by the
+## whole-tile fast path (TILE, 9x9) and the sub-tile fallback (TRIGGER_
+## SUB_TILE, 5x5) so the two only differ in what rectangle/density they scan,
+## not in the min/max/wet-filter logic itself.
+static func _level_spread_over(st: Dictionary, origin: Vector2, size: float, n: int) -> float:
+	var step: float = size / float(n - 1)
 	var lmin := INF
 	var lmax := -INF
-	for jj in 9:
-		for ii in 9:
-			var p: Vector2 = lo + Vector2(ii, jj) * step
+	for jj in n:
+		for ii in n:
+			var p: Vector2 = origin + Vector2(ii, jj) * step
 			var lvl: float = WaterField.level_at(st.ctx, p)
 			if lvl == -INF:
 				continue
@@ -1269,3 +1389,70 @@ static func _tile_level_spread(st: Dictionary, cell: Vector2i) -> float:
 			lmin = minf(lmin, lvl)
 			lmax = maxf(lmax, lvl)
 	return (lmax - lmin) if lmax > lmin else 0.0
+
+
+## Reconciles a whole-tile-spread-failing 24m cell (controller addition 2,
+## r3 Task 9) into its own TRIGGER_SUB_PER_TILE x TRIGGER_SUB_PER_TILE grid
+## of TRIGGER_SUB_TILE(6m) boxes, instead of dropping the tile wholesale —
+## restoring the swimmable fractions Task 7's own whole-tile gate had to
+## sacrifice (its own disclosed trade-off; see TRIGGER_LEVEL_SPREAD_MAX).
+##
+## A sub-tile is suppressed (no box) when EITHER:
+##  - its OWN 6m footprint's level spread exceeds TRIGGER_SUB_TILE_SPREAD_MAX
+##    ("natively hot" — a genuine local jump inside its own 6m span; see that
+##    constant's own docstring for why this is a DIFFERENT, larger number
+##    than the whole-tile fast path's 2.0 — a live-gate regression at I4
+##    forced the correction), OR
+##  - an immediate 4-neighbour sub-tile WITHIN THE SAME 24m cell is natively
+##    hot ("one-hop propagation"; does not cross into a neighbouring 24m
+##    cell — a disclosed scope limit, see r3-task-9-report.md).
+## Own-footprint alone is NOT enough, empirically: at the pinned site's own
+## I1 chute (r3-task-9-report.md has the full probe transcript), the fill's
+## quantization pins a short shelf at the UPPER reach's OWN level for a few
+## extra metres past where its local rise actually happens — the sub-tile
+## touching the I1 film point (53.0,-1083.9) measures 0.000 spread in its
+## OWN 6m footprint (level is locally flat there) even though it carries up
+## to 2.5m of phantom depth over sloping ground; only comparison with its
+## immediate (natively-hot) neighbour catches it. A wider single-tile window
+## (checking spread over a 12-18m box instead of 6m) was tried and rejected:
+## it also flags the MIDDLE of a smooth, legal, whole-tile-spanning slope
+## (up to 6.0m of real rise inside an 18m window at the legal ceiling grade),
+## which item 2 explicitly requires to stay swimmable — propagating a
+## boolean "hot" flag (not diluting a spread NUMBER over a bigger footprint)
+## is what keeps the legal-reach case unaffected: nothing is natively hot
+## there (every sub-tile's OWN 6m spread sits at/under 2.0, comfortably under
+## TRIGGER_SUB_TILE_SPREAD_MAX too), so propagation never fires.
+## Every emitted sub-box reuses the PARENT tile's own top/bottom (`e`, from
+## ALL of its verts) rather than a tighter per-sub-tile recompute: Task 9
+## moves classification to STATIC sampler depth (character.gd), so the
+## trigger box only needs to be a generous, cheap broad-phase spatial index
+## — its exact vertical span no longer drives the swim/wade decision the
+## way it did pre-Task-9 (see character.gd's own _update_in_water).
+static func _sub_tile_triggers(st: Dictionary, cell: Vector2i, e: Dictionary, present: Dictionary) -> Array:
+	var hot: Dictionary = {}
+	for si in TRIGGER_SUB_PER_TILE:
+		for sj in TRIGGER_SUB_PER_TILE:
+			var key := Vector2i(si, sj)
+			if not present.has(key):
+				continue
+			var origin: Vector2 = Vector2(cell) * TILE + Vector2(key) * TRIGGER_SUB_TILE
+			if _level_spread_over(st, origin, TRIGGER_SUB_TILE, 5) > TRIGGER_SUB_TILE_SPREAD_MAX:
+				hot[key] = true
+	var suppressed: Dictionary = {}
+	for key: Vector2i in hot:
+		suppressed[key] = true
+		for delta in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nb: Vector2i = key + delta
+			if nb.x >= 0 and nb.x < TRIGGER_SUB_PER_TILE and nb.y >= 0 and nb.y < TRIGGER_SUB_PER_TILE:
+				suppressed[nb] = true
+	var out: Array = []
+	for key: Vector2i in present:
+		if suppressed.has(key):
+			continue
+		var origin: Vector2 = Vector2(cell) * TILE + Vector2(key) * TRIGGER_SUB_TILE
+		out.append({
+			"rect": Rect2(origin, Vector2.ONE * TRIGGER_SUB_TILE),
+			"top": e.top + TRIGGER_TOP_CLEAR,
+			"bottom": e.bottom - TRIGGER_BOTTOM_CLEAR,
+		})
+	return out

@@ -1,25 +1,33 @@
 extends GutTest
 
 # ------------------------------------------------------------
-# r3 Task 7: swim volumes are now TRIGGER BOXES straight from WaterSkin's own
-# `triggers` list (one per 24m wet TILE, footprint = union of every built
-# vertex in that tile — see WaterSkin._triggers), each carrying
-# set_meta("sampler", <the chunk's one frozen WaterSampler>) instead of a
-# per-cell sampled plane (the old marching-squares mesher's per-cell swim
-# data and the plane meta pair it produced are both deleted outright this
-# task — see that task's report). A probe anywhere inside a box reads its
-# real water height straight from the sampler (WaterSampler.level_at), not
-# from a linear extrapolation off one centre sample.
+# TRIGGERS (r3 Task 7, sub-tile-reconciled r3 Task 9 — this file's own
+# rename-of-intent, per that task's brief: it was never really about
+# "volumes" any more, it is entirely about the TRIGGER wiring): swim volumes
+# are TRIGGER BOXES straight from WaterSkin's own `triggers` list — one per
+# 24m wet TILE (footprint = union of every built vertex in that tile — see
+# WaterSkin._triggers) on the common/fast path, or SEVERAL finer 6m boxes for
+# a tile whose whole-tile level spread fails but reconciles cleanly at
+# sub-tile resolution (WaterSkin._sub_tile_triggers, r3 Task 9's own
+# controller-addition-2 fix for Task 7's disclosed "suppressed tile loses
+# EVERYTHING" trade-off) — each entry carrying set_meta("sampler", <the
+# chunk's one frozen WaterSampler>) instead of a per-cell sampled plane (the
+# old marching-squares mesher's per-cell swim data and the plane meta pair it
+# produced are both deleted outright, r3 Task 7). A probe anywhere inside a
+# box reads its real water height straight from the sampler
+# (WaterSampler.level_at), not from a linear extrapolation off one centre
+# sample.
 #
-# This suite checks the SHAPE of that wiring: tile coverage, the top/bottom
-# clearance arithmetic, sampler meta presence (a single shared instance per
-# chunk), and level_at sanity against WaterField's own ground truth at real
-# probe points. The STEEP-tile no-trigger gate itself moved to
-# test_water_skin.gd (test_no_trigger_where_unswimmably_steep) per the task
-# brief. The full depth-CLASSIFICATION parity oracle (does a character's
-# actual swim/wade/dry read ever disagree with the field?) is r3 Task 9's
-# contract (river-train mirror + parity test) — deliberately not duplicated
-# here.
+# This suite checks the SHAPE of that wiring: tile/sub-tile coverage, the
+# top/bottom clearance arithmetic, sampler meta presence (a single shared
+# instance per chunk), and level_at sanity against WaterField's own ground
+# truth at real probe points. The STEEP-tile no-trigger gate and the r3 Task
+# 9 sub-tile reconciliation's own site pins (I1 chute film / 5.7 plunge pool
+# centre) live in test_water_skin.gd (test_no_trigger_where_unswimmably_steep,
+# test_sub_tile_reconciliation_keeps_a_legal_sloped_reach) per the task
+# briefs. The full depth-CLASSIFICATION parity oracle (does a character's
+# actual swim/wade/dry read ever disagree with the field?) is r3 Task 9's own
+# tests/test_water_classification.gd — deliberately not duplicated here.
 # Pinned review seed/chunk; the site chunk carries the R3 cascade.
 # ------------------------------------------------------------
 
@@ -72,8 +80,18 @@ func _cell_of(area: Area3D) -> Vector2i:
 ## TRIGGER_TOP_CLEAR, bottom = the tile's own min ground - TRIGGER_BOTTOM_
 ## CLEAR — WaterSkin's own constants, read live rather than as literals so
 ## this test breaks loudly if either clearance ever changes), and every
-## WaterSkin-reported tile is covered by exactly one box (no lost/duplicated
-## tiles in either direction).
+## WaterSkin-reported entry is covered by exactly one box (no lost/duplicated
+## entries in either direction).
+## r3 Task 9: matched by RECT POSITION (a stable, collision-free key —
+## Rect2.position is unique per entry by construction, whether the entry is
+## a 24m tile or one of _sub_tile_triggers' own finer 6m boxes), not by
+## coarse 24m "cell" — a cell-level key went vacuous the moment a single
+## cascade cell could legitimately carry SEVERAL small boxes at once (r3 Task
+## 9's own sub-tile reconciliation; see WaterSkin._sub_tile_triggers). List
+## order is also preserved 1:1 (WaterSurfaceBuilder.build_chunk iterates
+## skin.triggers directly, appending one Area3D per entry with no reorder),
+## so a plain index zip is an equally valid, simpler alternative match this
+## test cross-checks against as a sanity guard.
 func test_triggers_match_skin_tile_coverage_and_clearance() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -83,39 +101,51 @@ func test_triggers_match_skin_tile_coverage_and_clearance() -> void:
 	assert_not_null(root, "site builds")
 	var vols: Array = _volumes(root)
 	assert_gt(vols.size(), 0, "trigger boxes emitted")
+	assert_eq(vols.size(), skin.triggers.size(),
+		"one Area3D per skin.triggers entry, no more, no fewer")
 
-	var by_cell: Dictionary = {}
+	var by_pos: Dictionary = {}   # Vector2 rect.position -> Area3D
 	for v in vols:
-		var cell: Vector2i = _cell_of(v)
-		assert_false(by_cell.has(cell), "exactly one box per tile (%s already seen)" % cell)
-		by_cell[cell] = v
+		var shape: BoxShape3D = v.get_child(0).shape
+		var pos := Vector2(v.position.x - shape.size.x * 0.5, v.position.z - shape.size.z * 0.5)
+		var key: Vector2i = Vector2i(roundi(pos.x * 100.0), roundi(pos.y * 100.0))   # cm-quantized, avoids float-eq flakiness
+		assert_false(by_pos.has(key), "exactly one box per rect position (%s already seen)" % pos)
+		by_pos[key] = v
 
-	var skin_cells: Dictionary = {}
-	for trig: Dictionary in skin.triggers:
+	var checked := 0
+	var sub_tile_entries := 0
+	for i in skin.triggers.size():
+		var trig: Dictionary = skin.triggers[i]
 		var rect: Rect2 = trig.rect
-		var cell := Vector2i(int(round(rect.position.x / WaterSkin.TILE)),
-			int(round(rect.position.y / WaterSkin.TILE)))
-		skin_cells[cell] = trig
-		assert_true(by_cell.has(cell), "skin tile %s has a matching trigger box" % cell)
-		if not by_cell.has(cell):
+		if absf(rect.size.x - WaterSkin.TRIGGER_SUB_TILE) < 0.01:
+			sub_tile_entries += 1
+		var key: Vector2i = Vector2i(roundi(rect.position.x * 100.0), roundi(rect.position.y * 100.0))
+		assert_true(by_pos.has(key), "skin trigger at %s has a matching trigger box" % rect.position)
+		if not by_pos.has(key):
 			continue
-		var area: Area3D = by_cell[cell]
+		var area: Area3D = by_pos[key]
+		# Index-order cross-check (see docstring): build_chunk's own append
+		# order must match skin.triggers' order exactly.
+		assert_true(vols[i] == area, "build order matches skin.triggers order at index %d" % i)
+		checked += 1
 		var shape: BoxShape3D = area.get_child(0).shape
 		var top: float = area.position.y + shape.size.y * 0.5
 		var bottom: float = area.position.y - shape.size.y * 0.5
-		assert_almost_eq(top, float(trig.top), 0.001, "top matches skin trigger at %s" % cell)
-		assert_almost_eq(bottom, float(trig.bottom), 0.001, "bottom matches skin trigger at %s" % cell)
-		assert_almost_eq(shape.size.x, rect.size.x, 0.001, "box width matches tile width at %s" % cell)
-		assert_almost_eq(shape.size.z, rect.size.y, 0.001, "box depth matches tile depth at %s" % cell)
+		assert_almost_eq(top, float(trig.top), 0.001, "top matches skin trigger at %s" % rect.position)
+		assert_almost_eq(bottom, float(trig.bottom), 0.001, "bottom matches skin trigger at %s" % rect.position)
+		assert_almost_eq(shape.size.x, rect.size.x, 0.001, "box width matches tile width at %s" % rect.position)
+		assert_almost_eq(shape.size.z, rect.size.y, 0.001, "box depth matches tile depth at %s" % rect.position)
 		assert_almost_eq(area.position.x, rect.position.x + rect.size.x * 0.5, 0.001,
-			"box centred on tile x at %s" % cell)
+			"box centred on tile x at %s" % rect.position)
 		assert_almost_eq(area.position.z, rect.position.y + rect.size.y * 0.5, 0.001,
-			"box centred on tile z at %s" % cell)
-		assert_eq(area.collision_layer, 1 << 7, "water trigger layer at %s" % cell)
-		assert_eq(area.collision_mask, 0, "trigger has no collision mask at %s" % cell)
-	for cell in by_cell:
-		assert_true(skin_cells.has(cell), "built box %s has a matching skin tile (no phantom boxes)" % cell)
-	print("MEAS test_triggers_match_skin_tile_coverage_and_clearance: %d tiles, all matched" % by_cell.size())
+			"box centred on tile z at %s" % rect.position)
+		assert_eq(area.collision_layer, 1 << 7, "water trigger layer at %s" % rect.position)
+		assert_eq(area.collision_mask, 0, "trigger has no collision mask at %s" % rect.position)
+	print("MEAS test_triggers_match_skin_tile_coverage_and_clearance: %d entries matched (%d fine sub-tile boxes among them)" % [
+		checked, sub_tile_entries])
+	assert_eq(checked, skin.triggers.size(), "every skin trigger entry matched exactly one box")
+	assert_gt(sub_tile_entries, 0,
+		"the site chunk's own cascade tiles exercise the sub-tile path — precondition for this test to cover r3 Task 9's own reconciliation, not just the unchanged 24m fast path")
 	root.free()
 
 
@@ -156,8 +186,8 @@ func test_triggers_carry_a_shared_sampler() -> void:
 ## precision note (the sampler bilinear-interpolates over a 3.0m grid finer
 ## than the field's own 6.0m fill lattice). This is a sanity check on the
 ## WIRING (does the frozen snapshot actually track the live field it was
-## baked from), not the full swim/wade/dry classification parity oracle (r3
-## Task 9's contract).
+## baked from), not the full swim/wade/dry classification parity oracle —
+## see tests/test_water_classification.gd (r3 Task 9).
 func test_sampler_level_at_tracks_the_field() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
