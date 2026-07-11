@@ -41,6 +41,18 @@
 # waterline) into interior geometry — the free-edge invariant TIGHTENS here:
 # only the rim's own buried outer row (row3) and true chunk borders may be
 # free edges from this task onward.
+# FLOW FRAMES + REAL NORMALS (Task 6, see _flow_frame_at/_weld_vert): CUSTOM0
+# is rebaked from Task 4's (flow.x, shore, flow.y, steep) to (s, d, slope,
+# shore_dist) — continuous arc length/cross distance/profile slope along the
+# nearest river trace (ponds: all zero), plus shore distance for every
+# vertex regardless of mode. ARRAY_NORMAL stops being a blanket Vector3.UP:
+# interior verts get a real heightfield normal (WaterField.level_at central
+# differences); rim/strip rows get the meniscus curl's own local frame (UP
+# rotated toward the curve's outward normal, more so per row, pinched back to
+# UP at walls) — see _interior_normal/_curl_normal. _weld_vert now AVERAGES
+# normals for verts that weld together (a parallel normal_accum array, summed
+# on every weld hit, normalized once at the end by _bake_normals) instead of
+# picking whichever call site happened to create the vertex first.
 class_name WaterSkin
 extends Object
 
@@ -67,6 +79,33 @@ const RIM_ROW3_REACH := 0.55
 const RIM_WALL_PINCH := 0.05
 const RIM_GROUND_BURY := 0.30
 
+# --- Flow frames (Task 6) — brief's own CUSTOM0 = (s, d, slope, shore_dist):
+# s = arc length from source along the nearest river trace, d = signed
+# cross-channel distance, slope = continuous profile slope at s, shore_dist =
+# distance to the nearest curve point (clamped). RIVER_MAX_DIST is the
+# brief's own pond/river gate ("no trace within 18m" => calm pond frame);
+# JUNCTION_RADIUS is the brief's own "two traces within 12m" junction-blend
+# gate. See _flow_frame_at's own docstring for the full derivation.
+const RIVER_MAX_DIST := 18.0
+const JUNCTION_RADIUS := 12.0
+const SHORE_DIST_MAX := 8.0
+const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp radius with slack — mirrors _nearest_curve_dist's own "radius=1 covers INSET=2.0 since BUCKET=3.0" derivation, scaled up (8.0/3.0 -> 3 cells, +1 slack for a query point sitting at its own cell's far edge)
+
+# --- Rim normals (controller addition) — curl-rotation angle per rim row,
+# about the curve tangent, sweeping from UP toward the curve's own outward
+# normal n̂: row0 is always exactly UP (the meniscus crest reads as flat
+# water, matching the interior lattice it welds into — see _rim's own row0 =
+# strip-vertex reuse); rows 1-3 rotate UP toward n̂ by an increasing angle,
+# pinched back toward 0 (UP) at wall-flagged points by the SAME
+# _smoothed_wall blend _rim already uses for its reach2/reach3 pinch — a
+# flush wall curtain reads as near-UP, not as a horizontal cliff face, per
+# the controller brief's own "wall-pinched near-UP" rule. Expressed as
+# PI-based literals (not deg_to_rad calls) so they fold to true GDScript
+# constants.
+const RIM_NORMAL_ANGLE1 := PI / 18.0          # 10 deg — row1, hairline crest dip
+const RIM_NORMAL_ANGLE2 := PI * 2.0 / 9.0     # 40 deg — row2, the visible curl
+const RIM_NORMAL_ANGLE3 := PI * 13.0 / 36.0   # 65 deg — row3, buried seal (invisible; kept continuous, not visually tuned)
+
 
 ## build(water, chunk, region) -> {} when dry, else:
 ##   arrays: Array           # Mesh.ARRAY_MAX arrays, indexed, welded (VERTEX/NORMAL/INDEX/CUSTOM0)
@@ -91,6 +130,18 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	var st: Dictionary = {
 		"ctx": ctx, "region": region, "rect": rect, "curves": curves, "buckets": buckets,
 		"verts": PackedVector3Array(), "idx": PackedInt32Array(), "weld": {},
+		# Task 6: normal accumulator parallel to `verts` (grown in lockstep by
+		# _weld_vert — see its own docstring on why welded verts AVERAGE their
+		# contributors' normals rather than picking one arbitrarily), plus two
+		# per-build memo caches (trace source_cell -> cumulative arc length /
+		# WaterField.profile() result) so a 2.6km trace's O(n) arc-length walk
+		# and profile() lookup are each paid ONCE per build, not once per
+		# vertex (WaterField.profile itself is ALSO cached whole-session by
+		# source_cell — see WaterField._profiles — but that cache still costs a
+		# mutex lock + dictionary hit per call; memoizing the result here
+		# avoids even that per vertex/per candidate trace).
+		"normal_accum": PackedVector3Array(),
+		"arclen": {}, "profiles": {},
 	}
 	var lattice: Dictionary = _interior_lattice(st)
 	if lattice.kept.is_empty():
@@ -106,42 +157,284 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = st.verts
 	arrays[Mesh.ARRAY_INDEX] = st.idx
-	var normals := PackedVector3Array()
-	normals.resize(st.verts.size())
-	normals.fill(Vector3.UP)
-	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_NORMAL] = _bake_normals(st)
 	arrays[Mesh.ARRAY_CUSTOM0] = _custom0(st)
 
 	return {"arrays": arrays, "triggers": _triggers(st), "sampler": null}
 
 
-## Per-vertex CUSTOM0 = (flow.x, shore, flow.y, steep) — the water shader's
-## CURRENT contract (water_unified.gdshader reads flow_v/steep_v/shore_v from
-## exactly these lanes), mirroring WaterMesher._attributes' own per-vertex
-## loop minus its plunge-churn band (steep_spans is empty at the pinned site
-## per H1, and Task 6/8 replace both the band and these CUSTOM0 semantics
-## outright — baking the retiring band into the NEW mesher would be dead
-## code on arrival). Without this array the skin renders with flow/shore/
-## steep all zero — visibly flow-dead water and no shore fade, which would
-## corrupt this task's own visual-gate comparison against the WaterMesher
-## look for reasons that have nothing to do with the waterline shape under
-## review.
+## Per-vertex CUSTOM0 = (s, d, slope, shore_dist) — Task 6's flow-frame bake,
+## REPLACING Task 4's (flow.x, shore, flow.y, steep) contract (this file's
+## OLD docstring here predicted exactly this: "Task 6/8 replace both the band
+## and these CUSTOM0 semantics outright"). The water shader itself
+## (water_unified.gdshader) is NOT updated by this task — that is Task 8's
+## own deliverable — so between this commit and Task 8's, the shader reads
+## these new lanes under its old flow_v/steep_v/shore_v names; a sequenced
+## regression the plan itself schedules (see r3-task-6-report.md).
+##   s: arc length (metres) along the nearest river trace's polyline, at the
+##      vertex's own projected point.
+##   d: signed cross-channel distance from that same nearest trace.
+##   slope: continuous profile slope at s (central difference of
+##      WaterField.profile's levels, interpolated continuously across the
+##      projected segment — see _project_on_trace).
+##   shore_dist: distance to the nearest curve point, clamped [0, 8].
+## Ponds/lakes (no trace within RIVER_MAX_DIST=18m of the vertex): s=d=
+## slope=0 (brief's own literal "calm" rule) — shore_dist is still baked
+## normally, since it is a shore-proximity signal independent of river/pond
+## mode. See _flow_frame_at for the full per-vertex derivation, including
+## junction blending where two traces both lie within JUNCTION_RADIUS=12m.
 static func _custom0(st: Dictionary) -> PackedFloat32Array:
 	var cust := PackedFloat32Array()
 	cust.resize(st.verts.size() * 4)
 	for vi in st.verts.size():
 		var v: Vector3 = st.verts[vi]
 		var p := Vector2(v.x, v.z)
-		var fl: Vector2 = WaterField.flow_at(st.ctx, p)
-		var g: float = TerrainSurfaceField.surface_y(st.region, v.x, v.z)
-		var shore: float = clampf(1.0 - (v.y - g) * 1.2, 0.0, 1.0) \
-			if v.y > g - 0.5 else 1.0
-		var steep: float = clampf(WaterField.grade_at(st.ctx, p) * 8.0, 0.0, 0.85)
-		cust[vi * 4 + 0] = fl.x
-		cust[vi * 4 + 1] = shore
-		cust[vi * 4 + 2] = fl.y
-		cust[vi * 4 + 3] = steep
+		var frame: Dictionary = _flow_frame_at(st, p)
+		cust[vi * 4 + 0] = frame.s
+		cust[vi * 4 + 1] = frame.d
+		cust[vi * 4 + 2] = frame.slope
+		cust[vi * 4 + 3] = frame.shore_dist
 	return cust
+
+
+## Cumulative arc length per trace sample (PackedFloat32Array, same size as
+## tr.points), memoized on `st` by source_cell so a 2.6km trace's O(n) walk is
+## paid once per build, not once per vertex (brief's own explicit warning —
+## see this file's Task 6 header note). Purely a sum of consecutive-sample
+## Euclidean XZ distances — no field queries, so even the FIRST computation is
+## cheap (unlike WaterField.profile's own terrain-walk cost).
+static func _trace_arclen(st: Dictionary, tr: RiverTrace) -> PackedFloat32Array:
+	if st.arclen.has(tr.source_cell):
+		return st.arclen[tr.source_cell]
+	var n: int = tr.points.size()
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in range(1, n):
+		out[i] = out[i - 1] + tr.points[i - 1].distance_to(tr.points[i])
+	st.arclen[tr.source_cell] = out
+	return out
+
+
+## Per-build memo over WaterField.profile (itself already cached whole-session
+## by source_cell — see WaterField._profiles — but every call still pays a
+## mutex lock + dictionary hit; this avoids that per vertex/per candidate
+## trace too). Safe to call from the chunk worker thread: profile() already
+## guards its own cache end-to-end (see WaterField.gd's own comment on why).
+static func _trace_profile(st: Dictionary, tr: RiverTrace) -> Dictionary:
+	if st.profiles.has(tr.source_cell):
+		return st.profiles[tr.source_cell]
+	var prof: Dictionary = WaterField.profile(tr, st.region)
+	st.profiles[tr.source_cell] = prof
+	return prof
+
+
+## Central-difference profile slope AT sample index i (one-sided at either
+## end of the trace) — metres of level drop per metre of arc length, positive
+## downstream (matches WaterField.grade_at's own upstream-minus-downstream
+## sign convention). Shared by _project_on_trace, which lerps this between a
+## segment's two endpoint samples so the baked slope is continuous in s (no
+## jump at a sample boundary) rather than the plan's literal single-segment
+## secant.
+static func _central_slope(arclen: PackedFloat32Array, levels: PackedFloat32Array, i: int) -> float:
+	var n: int = levels.size()
+	var lo: int = maxi(i - 1, 0)
+	var hi: int = mini(i + 1, n - 1)
+	if hi <= lo:
+		return 0.0
+	return (levels[lo] - levels[hi]) / maxf(arclen[hi] - arclen[lo], 0.001)
+
+
+## Projects p onto trace `tr`'s polyline near sample index `near_si` (a
+## nearby-sample hint from the caller's own bucket scan — see
+## _flow_frame_at), checking only the (up to) two segments touching that
+## sample rather than the whole polyline: TRACE_STEP=12m sample spacing and
+## the caller's bucket search radius together mean `near_si` sits within one
+## segment of the true nearest point for any query point this file calls with
+## (same trust the rest of this file already extends to WaterField's own
+## identically-shaped bucket scans — see _flow_frame_at). Returns {} when
+## `tr` has no valid segment at all near near_si (a single-sample trace —
+## callers already filter tr.points.size()<2 before reaching here, so this is
+## defensive, not a real production case on this codebase's traces).
+static func _project_on_trace(st: Dictionary, tr: RiverTrace, p: Vector2, near_si: int) -> Dictionary:
+	var n: int = tr.points.size()
+	var best_d2 := INF
+	var best_seg := -1
+	var best_t := 0.0
+	var best_proj := Vector2.ZERO
+	for j in [near_si - 1, near_si]:
+		if j < 0 or j + 1 >= n:
+			continue
+		var a: Vector2 = tr.points[j]
+		var b: Vector2 = tr.points[j + 1]
+		var seg: Vector2 = b - a
+		var seg_len2: float = seg.length_squared()
+		var t: float = clampf((p - a).dot(seg) / seg_len2, 0.0, 1.0) if seg_len2 > 0.000001 else 0.0
+		var proj: Vector2 = a + seg * t
+		var d2: float = p.distance_squared_to(proj)
+		if d2 < best_d2:
+			best_d2 = d2
+			best_seg = j
+			best_t = t
+			best_proj = proj
+	if best_seg == -1:
+		return {}
+	var arclen: PackedFloat32Array = _trace_arclen(st, tr)
+	var prof: Dictionary = _trace_profile(st, tr)
+	var levels: PackedFloat32Array = prof.levels
+	var sa: Vector2 = tr.points[best_seg]
+	var sb: Vector2 = tr.points[best_seg + 1]
+	var seg_len: float = sa.distance_to(sb)
+	var tangent: Vector2 = ((sb - sa) / seg_len) if seg_len > 0.000001 else Vector2(1, 0)
+	var perp := Vector2(-tangent.y, tangent.x)
+	var s: float = lerpf(arclen[best_seg], arclen[best_seg + 1], best_t)
+	var d: float = (p - best_proj).dot(perp)
+	var slope0: float = _central_slope(arclen, levels, best_seg)
+	var slope1: float = _central_slope(arclen, levels, best_seg + 1)
+	var slope: float = lerpf(slope0, slope1, best_t)
+	return {"dist": sqrt(best_d2), "s": s, "d": d, "slope": slope, "tangent": tangent, "proj": best_proj}
+
+
+## Per-vertex flow frame — the brief's own CUSTOM0 payload (s, d, slope,
+## shore_dist), Task 6's core deliverable. Candidate traces are found via
+## ctx.buckets (WaterField.ctx's OWN TILE=24m spatial hash over every river
+## sample — see WaterField.gd's own `_claim`/`_channel_membership_level` for
+## the identical "3x3 bucket-cell scan, one nearest sample per candidate
+## trace" pattern mirrored here, per this task's own brief: reuse WaterField's
+## existing spatial patterns rather than inventing new ones), then refined to
+## a precise segment projection per candidate trace (_project_on_trace).
+## Ponds/lakes: no candidate trace within RIVER_MAX_DIST=18m => s=d=slope=0
+## (brief's own literal rule) — shore_dist is computed unconditionally, since
+## it means "distance to shore" regardless of river/pond mode.
+## Junction blending (brief: "two traces within 12m: weight by 1/d^2, blend s
+## direction only"): with CUSTOM0 carrying no separate direction channel, "s
+## direction" is read here as the LOCAL TANGENT the s axis is measured
+## along — s and slope themselves still come entirely from the nearest trace
+## alone (the plan doc's own words: "nearest-trace wins"; blending two
+## different traces' raw arc-length numbers would be physically meaningless,
+## e.g. averaging "1200m along the main stem" with "40m along a tributary").
+## What DOES need blending is the axis d's sign is measured against: at a
+## confluence, nearest-trace selection flips abruptly from one trace to the
+## other as the query point crosses the zone's own midline, and each trace's
+## raw tangent can point a different way — an unblended, hard-switched cross
+## axis would show as a visible seam in the Task 8 wave direction right at
+## that flip line. Blending the tangent (1/d^2-weighted, oriented onto the
+## nearest trace's own tangent sense first so a tributary's "downstream"
+## doesn't fight the main stem's) makes that axis rotate smoothly through the
+## junction instead of snapping, while d's magnitude still reflects the true
+## (nearest-trace) cross distance. Recorded here per the plan's own "Known
+## judgment points delegated to implementers" note (junction blend falloff,
+## Task 6) — see r3-task-6-report.md for the full rationale.
+static func _flow_frame_at(st: Dictionary, p: Vector2) -> Dictionary:
+	var shore_dist: float = clampf(_nearest_curve_dist(st, p, SHORE_RADIUS_CELLS), 0.0, SHORE_DIST_MAX)
+	var ctx: Dictionary = st.ctx
+	var cell := Vector2i(int(floor(p.x / WaterField.TILE)), int(floor(p.y / WaterField.TILE)))
+	var near_si_by_trace: Dictionary = {}   # river index -> {si, d} nearest SAMPLE (not yet segment-projected)
+	for dz in range(-1, 2):
+		for dx in range(-1, 2):
+			var b: Array = ctx.buckets.get(cell + Vector2i(dx, dz), [])
+			for ref: Vector2i in b:
+				var ti: int = ref.x
+				var si: int = ref.y
+				var sample_d: float = ctx.rivers[ti].points[si].distance_to(p)
+				if not near_si_by_trace.has(ti) or sample_d < near_si_by_trace[ti].d:
+					near_si_by_trace[ti] = {"si": si, "d": sample_d}
+	var projections: Array = []
+	for ti in near_si_by_trace:
+		var tr: RiverTrace = ctx.rivers[ti]
+		if tr.points.size() < 2:
+			continue
+		var proj: Dictionary = _project_on_trace(st, tr, p, near_si_by_trace[ti].si)
+		if not proj.is_empty():
+			projections.append(proj)
+	if projections.is_empty():
+		return {"s": 0.0, "d": 0.0, "slope": 0.0, "shore_dist": shore_dist}
+	projections.sort_custom(func(pa, pb): return pa.dist < pb.dist)
+	var nearest: Dictionary = projections[0]
+	if nearest.dist >= RIVER_MAX_DIST:
+		return {"s": 0.0, "d": 0.0, "slope": 0.0, "shore_dist": shore_dist}
+	var s: float = nearest.s
+	var slope: float = nearest.slope
+	var d: float = nearest.d
+	if projections.size() > 1 and nearest.dist < JUNCTION_RADIUS and projections[1].dist < JUNCTION_RADIUS:
+		var second: Dictionary = projections[1]
+		var w1: float = 1.0 / maxf(nearest.dist * nearest.dist, 0.01)
+		var w2: float = 1.0 / maxf(second.dist * second.dist, 0.01)
+		var t2: Vector2 = second.tangent
+		if t2.dot(nearest.tangent) < 0.0:
+			t2 = -t2
+		var blended: Vector2 = nearest.tangent * w1 + t2 * w2
+		if blended.length_squared() > 0.000001:
+			var bt: Vector2 = blended.normalized()
+			var bperp := Vector2(-bt.y, bt.x)
+			d = (p - nearest.proj).dot(bperp)
+	return {"s": s, "d": d, "slope": slope, "shore_dist": shore_dist}
+
+
+## Interior water-surface normal at (p, center_level): a heightfield normal
+## from WaterField.level_at central differences at +-1.5m (controller brief's
+## own literal probe width), i.e. Vector3(-dh/dx, 1, -dh/dz) normalized. Falls
+## back to a ONE-SIDED difference on whichever axis has a dry (-INF) probe
+## (an interior lattice point can legitimately sit close enough to INSET=2.0m
+## from a curve that one +-1.5m probe crosses it — see _slope_component) so a
+## near-shore interior vertex still gets a real, if less precise, slope
+## estimate instead of silently dropping to flat UP.
+static func _interior_normal(st: Dictionary, p: Vector2, center_level: float) -> Vector3:
+	var ctx: Dictionary = st.ctx
+	var e := 1.5
+	var hx1: float = WaterField.level_at(ctx, p + Vector2(e, 0.0))
+	var hx0: float = WaterField.level_at(ctx, p - Vector2(e, 0.0))
+	var hz1: float = WaterField.level_at(ctx, p + Vector2(0.0, e))
+	var hz0: float = WaterField.level_at(ctx, p - Vector2(0.0, e))
+	var dhdx: float = _slope_component(hx0, center_level, hx1, e)
+	var dhdz: float = _slope_component(hz0, center_level, hz1, e)
+	return Vector3(-dhdx, 1.0, -dhdz).normalized()
+
+
+## One axis of a central difference, degrading gracefully to a one-sided
+## difference when either probe is dry (WaterField.level_at == -INF) and to
+## flat (0.0) only when BOTH are — see _interior_normal's own docstring.
+static func _slope_component(h_minus: float, h0: float, h_plus: float, e: float) -> float:
+	var minus_ok: bool = h_minus > -INF
+	var plus_ok: bool = h_plus > -INF
+	if minus_ok and plus_ok:
+		return (h_plus - h_minus) / (2.0 * e)
+	if plus_ok:
+		return (h_plus - h0) / e
+	if minus_ok:
+		return (h0 - h_minus) / e
+	return 0.0
+
+
+## Rim-row normal: UP rotated toward the curve's own outward normal n̂ by
+## `angle`, about the (implicit) curve tangent axis — the controller brief's
+## own "curl's outward-and-down rotation about the curve tangent". n̂ is
+## already a unit Vector2 (WaterContour._outward_normal's own contract) and
+## is horizontal (y=0) by construction, so {UP, outward} is an orthonormal
+## pair and cos/sin naturally produce a unit result (the .normalized() below
+## is defensive against float drift only). angle=0 => exactly UP (row0's own
+## case, and every row at a fully wall-pinched point — see _rim's own call
+## sites, which lerp `angle` toward 0.0 by the SAME _smoothed_wall blend that
+## already pinches reach2/reach3).
+static func _curl_normal(nrm2d: Vector2, angle: float) -> Vector3:
+	var outward := Vector3(nrm2d.x, 0.0, nrm2d.y)
+	return (Vector3.UP * cos(angle) + outward * sin(angle)).normalized()
+
+
+## Sums accumulated per-weld-key normal contributions (see _weld_vert) into
+## one final unit normal per vertex. Summing unit-ish vectors then
+## normalizing is the standard vertex-normal-averaging identity (dividing by
+## the contributor COUNT first would point the same direction — normalize is
+## scale-invariant — so _weld_vert accumulates a running sum only, no count
+## needed). A vertex whose contributors happen to cancel exactly (a
+## vanishingly unlikely, purely theoretical opposite-pair) falls back to UP
+## rather than a zero-length/NaN normal.
+static func _bake_normals(st: Dictionary) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	out.resize(st.normal_accum.size())
+	for i in out.size():
+		var acc: Vector3 = st.normal_accum[i]
+		out[i] = acc.normalized() if acc.length_squared() > 0.000001 else Vector3.UP
+	return out
 
 
 ## Assembles the committed ArrayMesh from build()'s own `arrays` — the same
@@ -285,7 +578,8 @@ static func _interior_mesh(st: Dictionary, lattice: Dictionary) -> void:
 		if vi.has(ij):
 			return vi[ij]
 		var e: Dictionary = kept[ij]
-		var idx: int = _weld_vert(st, e.p, e.y)
+		var nrm: Vector3 = _interior_normal(st, e.p, e.y)
+		var idx: int = _weld_vert(st, e.p, e.y, nrm)
 		vi[ij] = idx
 		return idx
 
@@ -444,10 +738,12 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary) 
 	if n < 2:
 		return
 	# Curve-chain vertices: one per curve point, ON the curve, at its own level.
+	# Normal is always exactly UP — this IS row0 (see _rim's own docstring on
+	# the weld-key reuse), and row0's curl angle is 0 by design (_curl_normal).
 	var curve_vi := PackedInt32Array()
 	curve_vi.resize(n)
 	for i in n:
-		curve_vi[i] = _weld_vert(st, pts[i], levels[i])
+		curve_vi[i] = _weld_vert(st, pts[i], levels[i], Vector3.UP)
 
 	# Ring: interior edge-ring points within a short capture radius of THIS
 	# curve (a chunk can carry multiple curves — a ring point must only zip
@@ -483,7 +779,8 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary) 
 	ring_vi.resize(order.size())
 	for k in order.size():
 		var oi: int = order[k]
-		ring_vi[k] = _weld_vert(st, ring_pts[oi], ring_y[oi])
+		var nrm: Vector3 = _interior_normal(st, ring_pts[oi], ring_y[oi])
+		ring_vi[k] = _weld_vert(st, ring_pts[oi], ring_y[oi], nrm)
 
 	_zip_strip(st, curve_vi, ring_vi, c.closed)
 
@@ -561,16 +858,22 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		var p: Vector2 = pts[i]
 		var nrm: Vector2 = normals[i]
 		var lvl: float = levels[i]
-		row0[i] = _weld_vert(st, p, lvl)
-		row1[i] = _weld_vert(st, p, lvl - RIM_ROW1_DROP)
+		# Curl angle per row, about the curve tangent, pinched toward 0 (UP) at
+		# wall points by the SAME wf[i] blend that already pinches reach2/
+		# reach3 — see _curl_normal's own docstring.
+		var ang1: float = lerpf(RIM_NORMAL_ANGLE1, 0.0, wf[i])
+		var ang2: float = lerpf(RIM_NORMAL_ANGLE2, 0.0, wf[i])
+		var ang3: float = lerpf(RIM_NORMAL_ANGLE3, 0.0, wf[i])
+		row0[i] = _weld_vert(st, p, lvl, Vector3.UP)
+		row1[i] = _weld_vert(st, p, lvl - RIM_ROW1_DROP, _curl_normal(nrm, ang1))
 		var reach2: float = lerpf(RIM_ROW2_REACH, RIM_WALL_PINCH, wf[i])
 		var reach3: float = lerpf(RIM_ROW3_REACH, RIM_WALL_PINCH, wf[i])
 		var p2: Vector2 = p + nrm * reach2
-		row2[i] = _weld_vert(st, p2, lvl - RIM_ROW2_DROP)
+		row2[i] = _weld_vert(st, p2, lvl - RIM_ROW2_DROP, _curl_normal(nrm, ang2))
 		var p3: Vector2 = p + nrm * reach3
 		var g3: float = TerrainSurfaceField.surface_y(st.region, p3.x, p3.y)
 		var y3: float = minf(lvl - RIM_ROW3_DROP, g3 - RIM_GROUND_BURY)
-		row3[i] = _weld_vert(st, p3, y3)
+		row3[i] = _weld_vert(st, p3, y3, _curl_normal(nrm, ang3))
 
 	var lim: int = n if closed else n - 1
 	for i in lim:
@@ -737,13 +1040,21 @@ static func _dist_point_to_curve(c: Dictionary, p: Vector2) -> float:
 ## referenced by every triangle touching that point along the strip) and
 ## must resolve to one shared index, while two merely-nearby interior lattice
 ## points must NOT collapse into each other.
-static func _weld_vert(st: Dictionary, p: Vector2, y: float) -> int:
+## Task 6: also accumulates `nrm` into the parallel normal_accum array (see
+## _bake_normals) — a weld HIT adds another contributor to the SAME index's
+## running sum (welded verts average, per the controller brief) instead of
+## keeping whichever call site happened to create the vertex first; a weld
+## MISS seeds the new vertex's own first (and often only) contributor.
+static func _weld_vert(st: Dictionary, p: Vector2, y: float, nrm: Vector3) -> int:
 	var key := Vector3i(roundi(p.x * WELD_XZ_Q), roundi(p.y * WELD_XZ_Q), roundi(y * WELD_Q))
 	if st.weld.has(key):
-		return st.weld[key]
+		var idx: int = st.weld[key]
+		st.normal_accum[idx] = st.normal_accum[idx] + nrm
+		return idx
 	var idx: int = st.verts.size()
 	st.verts.append(Vector3(p.x, y, p.y))
 	st.weld[key] = idx
+	st.normal_accum.append(nrm)
 	return idx
 
 

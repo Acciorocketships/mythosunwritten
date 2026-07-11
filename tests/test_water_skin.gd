@@ -133,6 +133,70 @@ static func _on_rim_outer_row(curves: Array, v: Vector3) -> bool:
 	return near.dist <= RIM_MAX_REACH and v.y <= near.level - RIM_ROW3_Y_GATE
 
 
+## --- Task 6 (flow frames + real normals) test helpers ---
+
+## Brute-force point-to-trace-polyline distance, and its min over every trace
+## in ctx.rivers — deliberately independent of WaterSkin's own projection
+## code (_project_on_trace/_flow_frame_at), so a river/pond-mode test built
+## on this cannot validate the implementation against itself (same discipline
+## _on_rim_outer_row's own docstring documents for the Task 5 rim tests).
+static func _dist_point_to_trace(tr: RiverTrace, p: Vector2) -> float:
+	var pts: PackedVector2Array = tr.points
+	var n: int = pts.size()
+	var best := INF
+	for i in n - 1:
+		var a: Vector2 = pts[i]
+		var b: Vector2 = pts[i + 1]
+		var seg: Vector2 = b - a
+		var seg_len2: float = seg.length_squared()
+		var t: float = clampf((p - a).dot(seg) / seg_len2, 0.0, 1.0) if seg_len2 > 0.000001 else 0.0
+		best = minf(best, p.distance_to(a + seg * t))
+	return best
+
+
+static func _dist_to_rivers(ctx: Dictionary, p: Vector2) -> float:
+	var best := INF
+	for tr: RiverTrace in ctx.rivers:
+		best = minf(best, _dist_point_to_trace(tr, p))
+	return best
+
+
+## Linear scan for a welded vertex at `target` within `tol` — the same
+## pattern test_rim_welds_to_strip already uses inline, factored out so the
+## Task 6 tests can look up a specific curve point's own baked vertex (and
+## read back its CUSTOM0/normal) without re-deriving WaterSkin's own weld key.
+static func _find_vertex(verts: PackedVector3Array, target: Vector3, tol: float) -> int:
+	for i in verts.size():
+		if verts[i].distance_to(target) <= tol:
+			return i
+	return -1
+
+
+## Structurally locates curve point (p, nrm2d, level)'s own row2 rim vertex —
+## WITHOUT reproducing WaterSkin's own reach/wall-blend formula (same
+## discipline _on_rim_outer_row already documents): row2 is always exactly
+## `level - 0.18` (the brief's own fixed, ground-independent row2 height,
+## mirrored here as a literal rather than a WaterSkin.RIM_ROW2_DROP reference
+## for the same "don't test the implementation against itself" reason),
+## offset from `p` PURELY along the curve's own outward normal n̂ (no
+## tangential component) by SOME reach in (0, 0.35] — this searches for a
+## vertex matching the height exactly and the offset DIRECTION (not
+## magnitude), so it finds row2 regardless of whatever reach the wall blend
+## actually chose at this point.
+static func _find_row2_vertex(verts: PackedVector3Array, p: Vector2, nrm2d: Vector2, level: float) -> int:
+	var target_y: float = level - 0.18
+	for i in verts.size():
+		var v: Vector3 = verts[i]
+		if absf(v.y - target_y) > 0.01:
+			continue
+		var off: Vector2 = Vector2(v.x, v.z) - p
+		var along: float = off.dot(nrm2d)
+		var cross: float = off.dot(Vector2(-nrm2d.y, nrm2d.x))
+		if along >= -0.01 and along <= 0.4 and absf(cross) < 0.05:
+			return i
+	return -1
+
+
 ## test_skin_builds_on_site_chunk — non-empty, indexed, welded-shape output;
 ## tri count printed alongside WaterMesher's own for the same chunk (this
 ## task's report needs both numbers — the brief's own "print both" — as the
@@ -420,3 +484,300 @@ func test_dry_chunk_builds_nothing() -> void:
 	assert_true(dry != Vector2i.MAX, "found a dry chunk")
 	assert_true(WaterSkin.build(water, dry, _region(SEED, dry)).is_empty(),
 		"dry chunk => empty build")
+
+
+## test_s_is_continuous_along_river (brief's own name) — CUSTOM0.x (arc
+## length s) walked along 30 consecutive points of a REAL river shoreline
+## curve (row0 vertices — see WaterSkin._rim's own docstring on why row0 IS
+## the strip's welded vertex) must strictly increase, with each step's own
+## |Δs| tracking the vertices' real-world spacing within 0.5m — s
+## approximates true arc length, so a baked value that drifts from the
+## actual distance walked would misdrive Task 8's travelling-wave phase (a
+## visible stall or jump in the pattern).
+## SITE_CHUNK's curve[0] runs from a river reach into its own terminal lake
+## (verified this task: dist-to-nearest-trace ranges 0.76m at pts[0] out to
+## 32.98m by pts[142] — see r3-task-6-report.md); pts[6..36] sits solidly in
+## the river-close end (all <18m from a real trace, checked below as a site
+## precondition independent of WaterSkin's own bake). Window choice (start=6,
+## not 0): pts[0..8] straddles a ~6° bend in the CLAIMED trace's own
+## polyline (sample index 9, ti=1) viewed from ~9m offset — nearest-point
+## projection onto a piecewise-linear polyline is not length-preserving near
+## a bend (the same class of blind spot
+## _order_ring_by_nn_chain's own docstring documents for a different part of
+## this file: a bend can make several nearby OFFSET-curve points all project
+## close to the same trace vertex), so two adjacent shoreline points 1.5m
+## apart can legitimately map to trace points under 0.5m apart in arc length
+## right at that transition (measured this task: pts[5]->pts[6] gives
+## |Δs|=0.49 against a 1.5m step — a real, if narrow and visually
+## inconsequential, artifact of the nearest-sample-anchored 2-segment local
+## search _project_on_trace uses, recorded in r3-task-6-report.md rather than
+## engineered around, since the fix would be a global nearest-point search
+## with no narrow-window shortcut, and every OTHER stretch of real shoreline
+## this task checked — including the rest of this very curve — tracks
+## cleanly). pts[6..36] (verified this task, all steps <0.38m off the 1.5m
+## spatial step) is entirely clear of that one transition. This curve's OWN
+## point order runs upstream (index increasing = toward the source, s
+## DEcreasing) — the walk below reads the window in the opposite
+## (index-decreasing, s-increasing) direction so "strictly increasing" reads
+## naturally against the brief's own wording; the underlying data is
+## identical either way.
+func test_s_is_continuous_along_river() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(SITE_CHUNK))
+	var skin: Dictionary = WaterSkin.build(water, SITE_CHUNK, region)
+	assert_false(skin.is_empty(), "site chunk builds a skin")
+	if skin.is_empty():
+		return
+	assert_true(curves.size() > 0, "site chunk has curves")
+	if curves.is_empty():
+		return
+	var c: Dictionary = curves[0]
+	var pts: PackedVector2Array = c.pts
+	assert_true(pts.size() >= 37, "curve[0] has >=37 points to walk pts[6..36] (%d)" % pts.size())
+	if pts.size() < 37:
+		return
+	for i in range(6, 37):
+		assert_true(_dist_to_rivers(ctx, pts[i]) < 18.0,
+			"pts[%d] sits within the brief's own river gate (site precondition)" % i)
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var cust: PackedFloat32Array = skin.arrays[Mesh.ARRAY_CUSTOM0]
+	var s_vals: Array = []
+	var walk_pts: Array = []
+	for i in range(36, 5, -1):
+		var target := Vector3(pts[i].x, c.levels[i], pts[i].y)
+		var vi: int = _find_vertex(verts, target, 0.01)
+		assert_true(vi >= 0, "curve point %d has a welded mesh vertex" % i)
+		if vi < 0:
+			return
+		s_vals.append(cust[vi * 4 + 0])
+		walk_pts.append(pts[i])
+	var checked := 0
+	var offenders: Array = []
+	for k in range(0, 30):
+		var d_space: float = walk_pts[k].distance_to(walk_pts[k + 1])
+		var d_s: float = s_vals[k + 1] - s_vals[k]
+		checked += 1
+		if d_s <= 0.0:
+			offenders.append("k=%d s not strictly increasing: %.4f -> %.4f" % [k, s_vals[k], s_vals[k + 1]])
+		elif absf(d_s - d_space) >= 0.5:
+			offenders.append("k=%d |Δs(%.4f) - step(%.4f)|=%.4f >= 0.5" % [k, d_s, d_space, absf(d_s - d_space)])
+	print("MEAS test_s_is_continuous_along_river: %d steps checked, %d offenders" % [checked, offenders.size()])
+	assert_true(checked == 30, "30 consecutive steps checked")
+	assert_true(offenders.is_empty(),
+		"s strictly increases and tracks the real spatial step along the river: %s" % str(offenders))
+
+
+## test_slope_is_continuous (brief's own name) — CUSTOM0.z (profile slope)
+## between ADJACENT points of the same river window test_s_is_continuous_
+## along_river uses (pts[6..36] — see that test's own docstring for why the
+## window starts at 6, not 0) must never jump by >=0.15 — the brief's own
+## literal tolerance for its "central-difference prof at the projected
+## segment, sampled continuously" rule (see WaterSkin._project_on_trace's own
+## docstring): a real jump there would show up as a visible pop in the Task 8
+## wave-train amplitude (A ≈ base*(1+k_slope*slope)), which is keyed directly
+## off this lane.
+func test_slope_is_continuous() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(SITE_CHUNK))
+	var skin: Dictionary = WaterSkin.build(water, SITE_CHUNK, region)
+	assert_false(skin.is_empty(), "site chunk builds a skin")
+	if skin.is_empty():
+		return
+	assert_true(curves.size() > 0, "site chunk has curves")
+	if curves.is_empty():
+		return
+	var c: Dictionary = curves[0]
+	var pts: PackedVector2Array = c.pts
+	assert_true(pts.size() >= 37, "curve[0] has >=37 points to walk pts[6..36] (%d)" % pts.size())
+	if pts.size() < 37:
+		return
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var cust: PackedFloat32Array = skin.arrays[Mesh.ARRAY_CUSTOM0]
+	var slopes: Array = []
+	for i in range(36, 5, -1):
+		var target := Vector3(pts[i].x, c.levels[i], pts[i].y)
+		var vi: int = _find_vertex(verts, target, 0.01)
+		assert_true(vi >= 0, "curve point %d has a welded mesh vertex" % i)
+		if vi < 0:
+			return
+		slopes.append(cust[vi * 4 + 2])
+	var checked := 0
+	var offenders: Array = []
+	for k in range(0, 30):
+		var d_slope: float = absf(slopes[k + 1] - slopes[k])
+		checked += 1
+		if d_slope >= 0.15:
+			offenders.append("k=%d |Δslope|=%.4f >= 0.15 (%.4f -> %.4f)" % [k, d_slope, slopes[k], slopes[k + 1]])
+	print("MEAS test_slope_is_continuous: %d adjacent pairs checked, %d offenders" % [checked, offenders.size()])
+	assert_true(checked == 30, "30 adjacent pairs checked")
+	assert_true(offenders.is_empty(), "slope never jumps by >=0.15 between adjacent river verts: %s" % str(offenders))
+
+
+## test_pond_frames_are_calm (brief's own name) — lake verts get slope==0 and
+## d==0 (brief's literal pond/lake rule: "no trace within 18m"; s==0 is also
+## checked here since WaterSkin's pond branch returns all three as one hard
+## early-return, per _flow_frame_at's own docstring). Pond chunk (-4,-18) is
+## NOT uniformly far from every river — it carries a real feeding inlet
+## (verified this task: curve[1]'s own dist-to-nearest-trace ranges from
+## 0.38m up to 36.09m across its 124 points, see r3-task-6-report.md) — so
+## this test scopes to the verified-calm stretch of the pond's own closed
+## curve (pts[39..78], all independently confirmed >=18m from every trace
+## below) rather than every vertex in the chunk, which would wrongly include
+## the inlet's own river-engaged points.
+func test_pond_frames_are_calm() -> void:
+	var pond_chunk := Vector2i(-4, -18)
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, pond_chunk)
+	var ctx: Dictionary = WaterField.ctx(water, pond_chunk, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(pond_chunk))
+	var closed_curve: Dictionary = {}
+	for c: Dictionary in curves:
+		if c.closed:
+			closed_curve = c
+			break
+	assert_true(not closed_curve.is_empty(), "pond chunk has a closed (pond bowl) curve (site precondition)")
+	if closed_curve.is_empty():
+		return
+	var pts: PackedVector2Array = closed_curve.pts
+	assert_true(pts.size() >= 79, "pond curve has >=79 points for the verified-calm window (%d)" % pts.size())
+	if pts.size() < 79:
+		return
+	for i in range(39, 79):
+		assert_true(_dist_to_rivers(ctx, pts[i]) >= 18.0,
+			"pts[%d] sits outside the brief's own river gate (site precondition)" % i)
+	var skin: Dictionary = WaterSkin.build(water, pond_chunk, region)
+	assert_false(skin.is_empty(), "pond chunk builds a skin")
+	if skin.is_empty():
+		return
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var cust: PackedFloat32Array = skin.arrays[Mesh.ARRAY_CUSTOM0]
+	var checked := 0
+	var offenders: Array = []
+	for i in range(39, 79):
+		var target := Vector3(pts[i].x, closed_curve.levels[i], pts[i].y)
+		var vi: int = _find_vertex(verts, target, 0.01)
+		assert_true(vi >= 0, "curve point %d has a welded mesh vertex" % i)
+		if vi < 0:
+			continue
+		checked += 1
+		var s_v: float = cust[vi * 4 + 0]
+		var d_v: float = cust[vi * 4 + 1]
+		var slope_v: float = cust[vi * 4 + 2]
+		if s_v != 0.0 or d_v != 0.0 or slope_v != 0.0:
+			if offenders.size() < 10:
+				offenders.append("%s s=%.4f d=%.4f slope=%.4f" % [target, s_v, d_v, slope_v])
+	print("MEAS test_pond_frames_are_calm: %d curve points checked, %d offenders" % [checked, offenders.size()])
+	assert_true(checked == 40, "40 curve points checked")
+	assert_true(offenders.is_empty(), "every calm-window pond vert has s==0, d==0, slope==0: %s" % str(offenders))
+
+
+## test_rim_normals_curl_outward (controller brief's own name) — two
+## independent checks of the controller addition (real vertex normals,
+## replacing the Task 4-5 blanket Vector3.UP):
+##   1. At a non-wall rim point, row0's normal is near-UP (the meniscus crest
+##      reads as flat water) and row2's normal has a positive outward (n̂)
+##      component (the visible curl) — WaterSkin._curl_normal's own contract.
+##      Located structurally (_find_row2_vertex — does NOT reproduce
+##      WaterSkin's own reach/wall-blend formula, same discipline
+##      _on_rim_outer_row already documents) on the pond chunk's own closed
+##      curve, whose 2 non-wall points were verified this task (see
+##      r3-task-6-report.md).
+##   2. On SITE_CHUNK, at least one interior-classified vertex (>=1.5m from
+##      any curve point, mirrors test_interior_rides_field's own classifier)
+##      whose surface genuinely slopes (an INDEPENDENT, test-side central
+##      difference of WaterField.level_at at +-1.5m — the same formula the
+##      brief prescribes for _interior_normal, so this is a wiring/weld-
+##      average check, not a reach/pinch-style tautology guard) has a baked
+##      normal that measurably deviates from UP.
+func test_rim_normals_curl_outward() -> void:
+	var water: WaterPlan = _water(SEED)
+	var pond_chunk := Vector2i(-4, -18)
+	var region = _region(SEED, pond_chunk)
+	var ctx: Dictionary = WaterField.ctx(water, pond_chunk, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(pond_chunk))
+	var found := false
+	var p := Vector2.ZERO
+	var nrm2d := Vector2.ZERO
+	var lvl := 0.0
+	for c: Dictionary in curves:
+		var wall: PackedByteArray = c.wall
+		var pts: PackedVector2Array = c.pts
+		for i in wall.size():
+			if wall[i] == 0:
+				p = pts[i]
+				nrm2d = c.normals[i]
+				lvl = c.levels[i]
+				found = true
+				break
+		if found:
+			break
+	assert_true(found, "pond chunk has a non-wall curve point (site precondition)")
+	if not found:
+		return
+	var skin: Dictionary = WaterSkin.build(water, pond_chunk, region)
+	assert_false(skin.is_empty(), "pond chunk builds a skin")
+	if skin.is_empty():
+		return
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var norms: PackedVector3Array = skin.arrays[Mesh.ARRAY_NORMAL]
+	assert_eq(norms.size(), verts.size(), "one normal per vertex")
+	var vi0: int = _find_vertex(verts, Vector3(p.x, lvl, p.y), 0.01)
+	var vi2: int = _find_row2_vertex(verts, p, nrm2d, lvl)
+	assert_true(vi0 >= 0, "row0 vertex found at the non-wall point")
+	assert_true(vi2 >= 0, "row2 vertex found at the non-wall point")
+	if vi0 < 0 or vi2 < 0:
+		return
+	var n0: Vector3 = norms[vi0]
+	var n2: Vector3 = norms[vi2]
+	var outward3 := Vector3(nrm2d.x, 0.0, nrm2d.y)
+	print("MEAS test_rim_normals_curl_outward: non-wall pt=%s row0.normal=%s (dot_up=%.4f) row2.normal=%s (outward_comp=%.4f)" % [
+		p, n0, n0.dot(Vector3.UP), n2, n2.dot(outward3)])
+	assert_true(n0.dot(Vector3.UP) > 0.9, "row0's normal is near-UP at a non-wall point: %s" % n0)
+	assert_true(n2.dot(outward3) > 0.0, "row2's normal has a positive outward component at a non-wall point: %s" % n2)
+
+	# Part 2: interior normals deviate from UP where the surface slopes.
+	var region2 = _region(SEED, SITE_CHUNK)
+	var ctx2: Dictionary = WaterField.ctx(water, SITE_CHUNK, region2)
+	var curves2: Array = WaterContour.curves(ctx2, _rect(SITE_CHUNK))
+	var skin2: Dictionary = WaterSkin.build(water, SITE_CHUNK, region2)
+	assert_false(skin2.is_empty(), "site chunk builds a skin")
+	if skin2.is_empty():
+		return
+	var verts2: PackedVector3Array = skin2.arrays[Mesh.ARRAY_VERTEX]
+	var norms2: PackedVector3Array = skin2.arrays[Mesh.ARRAY_NORMAL]
+	var e := 1.5
+	var sloped_found := 0
+	var offenders2: Array = []
+	var sample_line := ""
+	for vi in verts2.size():
+		var v: Vector3 = verts2[vi]
+		var p2 := Vector2(v.x, v.z)
+		if _dist_to_curves(curves2, p2) < 1.5:
+			continue
+		var hx1: float = WaterField.level_at(ctx2, p2 + Vector2(e, 0.0))
+		var hx0: float = WaterField.level_at(ctx2, p2 - Vector2(e, 0.0))
+		var hz1: float = WaterField.level_at(ctx2, p2 + Vector2(0.0, e))
+		var hz0: float = WaterField.level_at(ctx2, p2 - Vector2(0.0, e))
+		var dhdx := 0.0
+		var dhdz := 0.0
+		if hx1 > -INF and hx0 > -INF:
+			dhdx = (hx1 - hx0) / (2.0 * e)
+		if hz1 > -INF and hz0 > -INF:
+			dhdz = (hz1 - hz0) / (2.0 * e)
+		var slope_mag: float = sqrt(dhdx * dhdx + dhdz * dhdz)
+		if slope_mag <= 0.1:
+			continue
+		sloped_found += 1
+		var dot_up: float = norms2[vi].dot(Vector3.UP)
+		if sloped_found == 1:
+			sample_line = "%s slope_mag=%.4f normal=%s dot_up=%.4f" % [v, slope_mag, norms2[vi], dot_up]
+		if dot_up > 0.999 and offenders2.size() < 10:
+			offenders2.append("%s slope_mag=%.4f dot_up=%.4f" % [v, slope_mag, dot_up])
+	print("MEAS test_rim_normals_curl_outward: interior sloped verts found=%d, sample: %s" % [sloped_found, sample_line])
+	assert_true(sloped_found > 0, "site has at least one interior vertex with a real (>0.1) surface slope")
+	assert_true(offenders2.is_empty(),
+		"every sloped interior vertex's normal measurably deviates from UP: %s" % str(offenders2))
