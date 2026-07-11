@@ -291,3 +291,7 @@ Owner spec (2026-07-11, verbatim intent): "the scroll motion should not have any
 
 ### Sequencing (round 5)
 Task 12-v2 (in flight) → Task 15 (contour bug; small) → Task 14 (rim) → Task 13 (texture redesign) → Task 11 battery grows to 24 frames (+R5-A, R5-B exact frames, each with motion pairs).
+
+### Round-6 look directive (2026-07-11, owner references: tropical clear-shallow shot + Sea of Solitude re-annotation)
+- CLEARER water (binding on Task 13's look pass): the bed/refracted scene must read plainly through the body — targets to tune at battery frames against BOTH references: body_floor ≈0.07 (from 0.12), clarity_depth ≈18 (from 12), shallow_tint ≈0.06, refraction_strength stays 0.11. "Match as closely as possible" = the SoS reference remains the master for tone; the tropical shot is the clarity/sun-glitter benchmark (sun sparkle comes from the existing specular — may brighten spec slightly at glancing; still zero albedo white).
+- "Dynamic waves — the boat should be rocking" = the existing geometric pond swell spectrum (owner-approved, CPU-mirrored) is the carrier; no change needed now; note for future boat feature: buoyancy reads the same mirror.
