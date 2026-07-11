@@ -53,12 +53,18 @@ const _EASE_BAND := 2.0       # metres of (ground-hug - smooth-trend) level gap 
 # epsilon, a different concern; a shared numeric value here is coincidence,
 # not an intended coupling).
 const DESCENT_CLAMP := 0.05
-# ">=8m window" (brief's own words) re-smooths the clamp's own bumps (a dry-
-# rock face breaking the surface mid-ramp) back into the ramp so THAT step
-# doesn't reintroduce a kink. Implemented as a symmetric box filter; radius
-# is metres-based (see _box_smooth) so this constant is the true window
-# width regardless of _DESCENT_STEP's own value.
-const DESCENT_RESMOOTH_WINDOW := 8.0
+# r3 Task 12a: the ORIGINAL "ease, then clamp to ground+DESCENT_CLAMP, then
+# re-smooth over an >=8m box window" pipeline (3cd407d) was self-defeating —
+# the resmooth pass, run AFTER the clamp, is a plain average with the clamp's
+# OWN unclamped neighbours, so it routinely pulled a just-clamped sample back
+# UNDER the very floor it had just been pinned to (measured at the site: the
+# resmoothed curve landed 0.2228m BELOW ground+DESCENT_CLAMP at one dense
+# sample — see this task's report). Replaced by the monotone knot envelope
+# below (_find_descent_knots/_eval_descent_knots): the ground clamp is no
+# longer a post-hoc correction that something else can undo — a ground
+# contact the naive ease would under-run becomes a KNOT the curve is fit
+# THROUGH, and nothing runs after that fit to disturb it. DESCENT_RESMOOTH_
+# WINDOW and _box_smooth are deleted along with the pass they configured.
 # Arc-length (metres) a FLAT run in the naive, region-independent bed chase
 # (see _find_descent_spans' own `raw`) must reach to count as a genuine
 # intervening pool that ends a descent span. Shorter flat runs (a storey
@@ -303,15 +309,53 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 ## whose own ground sits below that sample's level (see _seed_disc) wet at
 ## that sample's own profile level, for every trace/sample in ctx. Iterates
 ## only the lattice index box around each sample (not the whole lattice).
+##
+## r3 Task 12 follow-up (seeding): within a DESCENT SPAN the seeds ride the
+## profile's own dense smooth curve (prof.descents — cached by profile()
+## from _dense_span_curve/_dense_span_points) at _DESCENT_STEP (~4m)
+## spacing, replacing the span-interior 12m trace-sample discs. The
+## per-12m-sample discs' hard lowest-wins competition was exactly what
+## re-quantized the smooth ramp back into flat-ramp-flat kinks at
+## fill-lattice boundaries — and, worse, fragmented the flood where the
+## redistributed plateau levels dipped below a connecting cell's ground
+## (r3-task-12-report.md, "Root cause"). Adjacent dense seeds disagree by at
+## most the curve's own local 4m slope step, so the fill's bilinear surface
+## tracks the ramp instead of stair-casing it. Span ENDPOINT samples (lo,
+## hi) keep their ordinary per-sample discs too — their levels coincide with
+## the dense curve's own pinned anchors, so the duplicate is a no-op under
+## lower-wins (belt and braces, not a second opinion). ONLY the seed set
+## changes here: _relax_fill's rule (4-connected spread, ground < level -
+## EPS, ascending lower-level-wins) is untouched, so the unique-fixpoint
+## argument (Phase 0 controller ruling — see _build_fill's docstring)
+## survives verbatim: it never depended on the seed set's density or
+## placement, only on its determinism, and the dense seeds are the same
+## pure function of (trace, plan) the per-sample seeds were (levels cached
+## in _profiles under the canonical-region key; positions/widths from the
+## trace alone — see _dense_span_points). Ponds' seeding (_seed_ponds) is
+## unchanged.
 static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 		levels: PackedFloat32Array, gnd: PackedFloat32Array, pq: PriorityQueue) -> void:
 	for tr: RiverTrace in c.rivers:
 		var prof: Dictionary = profile(tr, region)
+		var descents: Array = prof.get("descents", [])
+		var in_span := PackedByteArray()
+		in_span.resize(tr.points.size())
+		for d: Dictionary in descents:
+			for si in range(int(d.lo) + 1, int(d.hi)):
+				in_span[si] = 1   # strictly interior — endpoints keep their per-sample disc
 		for si in tr.points.size():
+			if in_span[si] == 1:
+				continue
 			var p: Vector2 = tr.points[si]
 			var w: float = tr.widths[si]
 			var lvl: float = prof.levels[si]
 			_seed_disc(region, base, m1, levels, gnd, pq, p, w, lvl)
+		for d: Dictionary in descents:
+			var dpos: PackedVector2Array = d.pos
+			var dw: PackedFloat32Array = d.w
+			var dlvl: PackedFloat32Array = d.lvl
+			for k in dpos.size():
+				_seed_disc(region, base, m1, levels, gnd, pq, dpos[k], dw[k], dlvl[k])
 
 
 ## Marks every lattice sample inside a pond's wobbled footprint AND below the
@@ -485,6 +529,16 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 	var n: int = trace.points.size()
 	var levels := PackedFloat32Array()
 	levels.resize(n)
+	# r3 Task 12 follow-up (seeding): the descent spans' own dense shaped
+	# curves, cached alongside levels[] under the SAME key — one entry per
+	# span: {lo, hi, pos, w, lvl} where pos/w come from _dense_span_points
+	# (pure function of the trace) and lvl is the exact _dense_span_curve
+	# output levels[] was resampled from (post pond-reconciliation, below).
+	# _seed_rivers reads these so the fill's seeds ride the smooth curve at
+	# ~_DESCENT_STEP spacing instead of re-quantizing it through the 12m
+	# trace samples — same purity as levels[] itself (plan-backed callers all
+	# shape against the canonical trace-owned region).
+	var descents: Array = []
 	var lvl: float = trace.beds[0] + SURFACE_RIDE
 	if trace.source_pool != null:
 		lvl = minf(lvl, trace.source_pool.surface_y())
@@ -520,10 +574,14 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 			if span_idx < spans.size() and int(spans[span_idx].lo) == i - 1:
 				var lo: int = spans[span_idx].lo
 				var hi: int = spans[span_idx].hi
-				var shaped: PackedFloat32Array = _shape_descent_span(
+				var shaped: Dictionary = _shape_descent_span(
 					region, trace, lo, hi, levels[lo], raw[hi], arclen)
+				var samples: PackedFloat32Array = shaped.samples
 				for k in range(lo + 1, hi + 1):
-					levels[k] = shaped[k - lo]
+					levels[k] = samples[k - lo]
+				var walk: Dictionary = _dense_span_points(trace, lo, hi, arclen)
+				descents.append({"lo": lo, "hi": hi, "pos": walk.pos,
+					"w": walk.w, "lvl": shaped.dense})
 				i = hi + 1
 				span_idx += 1
 			else:
@@ -544,6 +602,20 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 				levels[i] = maxf(levels[i], ps)
 				i -= 1
 			levels[n - 1] = ps
+			# r3 Task 12 follow-up (seeding): mirror the raise into the cached
+			# dense descent curves — seeds read THOSE (see _seed_rivers), so a
+			# dense tail left below ps would seed water below the pond it
+			# feeds, exactly what the per-sample raise above forbids. Each
+			# dense curve is monotone non-increasing, so its below-ps values
+			# are a trailing contiguous run — maxf over every value raises
+			# exactly that run (everything above ps is untouched by maxf) and
+			# keeps the curve monotone; the same argument the per-sample
+			# backward walk relies on, applied dense.
+			for d: Dictionary in descents:
+				var dl: PackedFloat32Array = d.lvl
+				for k in dl.size():
+					dl[k] = maxf(dl[k], ps)
+				d["lvl"] = dl
 		elif n >= 2:
 			# A genuine steep drop into the pond: re-run the LAST segment's
 			# descent targeting the pond surface instead of beds[n-1]+RIDE, so
@@ -557,7 +629,22 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 			# reintroduce an artificial instant jump at the last sample.
 			levels[n - 1] = _descend_segment(region, trace.points[n - 2], trace.points[n - 1],
 				levels[n - 2], ps)
-	var out := {"levels": levels}
+			# r3 Task 12 follow-up (seeding): mirror into the dense cache. Only
+			# the trace's own LAST sample was just overwritten (hugged down
+			# toward ps), so only a span that ends exactly at that sample can
+			# disagree — pin its final dense value down to the same hugged
+			# level (minf keeps the curve monotone: lowering the last value of
+			# a non-increasing sequence cannot break it). The step this leaves
+			# in the dense tail is the SAME step the per-sample profile now
+			# carries at n-1 — a genuine cliff at the shore, welded by the
+			# fill's relaxation exactly as the comment above describes.
+			for d: Dictionary in descents:
+				if int(d.hi) == n - 1:
+					var dl: PackedFloat32Array = d.lvl
+					if dl.size() > 0:
+						dl[dl.size() - 1] = minf(dl[dl.size() - 1], levels[n - 1])
+						d["lvl"] = dl
+	var out := {"levels": levels, "descents": descents}
 	_profiles[cache_key] = out
 	_profiles_lock.unlock()
 	return out
@@ -669,34 +756,20 @@ static func _find_descent_spans(raw: PackedFloat32Array, arclen: PackedFloat32Ar
 	return spans
 
 
-## r3 Task 12: shapes ONE descent span [lo, hi] (trace-sample indices) as
-## ONE continuous, C1 curve from `anchor_start` (the level already HELD at
-## lo — the flat pool immediately upstream, already resolved by profile()'s
-## own walk up to this point) to `anchor_end` (the naive `raw[hi]` target —
-## the flat pool immediately downstream). This is the owner's reversal of
-## run-2's terrain-hugging descent (see this task's brief): the ramp is a
-## pure function of arc length between the two anchors — ground is
-## consulted only as a FLOOR (the clamp below), never as the shaping signal,
-## so intermediate storey ledges inside the span no longer echo into the
-## water surface as steps.
-## Three passes over a dense _DESCENT_STEP-spaced walk of the span's own
-## polyline (not a straight line — follows trace.points exactly like
-## _descend_segment's own substep walk does):
-##  1. EASE: smootherstep-shaped monotone interpolation from anchor_start to
-##     anchor_end, parameterised by FRACTIONAL ARC LENGTH — C1 by
-##     construction, since smootherstep's own derivative is exactly zero at
-##     both t=0 and t=1, matching the flat (zero-slope) pools it welds into.
-##  2. CLAMP: max(ease, ground + DESCENT_CLAMP) wherever the rendered
-##     terrain (TerrainSurfaceField over the SAME `region` _descend_segment
-##     already uses) pokes through the ramp.
-##  3. RE-SMOOTH: a box filter over DESCENT_RESMOOTH_WINDOW (_box_smooth) so
-##     the clamp's own step (dry rock breaking the surface mid-ramp) doesn't
-##     reintroduce a kink — padded with the two anchors themselves (both
-##     exactly flat pools) so the filter needs no invented edge condition and
-##     both endpoints stay pinned exactly (see _box_smooth's own docstring).
-## A final forward monotone pass guarantees non-increasing even though the
-## clamp (which can only push the level UP relative to the ease) is not
-## itself guaranteed monotone if the ground rises then falls inside the span.
+## r3 Task 12 (round-4), reshaped r3 Task 12a (sill-riding envelope): shapes
+## ONE descent span [lo, hi] (trace-sample indices) as ONE continuous, C1
+## curve from `anchor_start` (the level already HELD at lo — the flat pool
+## immediately upstream, already resolved by profile()'s own walk up to this
+## point) to `anchor_end` (the naive `raw[hi]` target — the flat pool
+## immediately downstream). This is the owner's reversal of run-2's
+## terrain-hugging descent (see this task's brief): the ramp is a pure
+## function of arc length between the two anchors and the ground it must
+## clear — ground is never the shaping signal for the DROP itself, only for
+## where the curve is forced to bulge up and ride over a sill (see
+## _dense_span_curve), so intermediate storey ledges inside the span no
+## longer echo into the water surface as steps, AND no longer poke through
+## it either (see DESCENT_CLAMP's own comment for why the round-4 pipeline's
+## post-clamp re-smooth broke that second guarantee).
 ## anchor_start/anchor_end are ALSO floored against their own sample's
 ## ground (defensive — profile()'s callers already keep both safely above
 ## ground by construction, but this function does not need to trust that).
@@ -708,10 +781,17 @@ static func _find_descent_spans(raw: PackedFloat32Array, arclen: PackedFloat32Ar
 ## contractual one-level-per-trace-sample shape. Kept separate so the dense
 ## curve itself is directly testable (test_descent_is_smooth_pool_to_pool)
 ## without reaching through the coarser resample.
-## Returns one level per trace sample lo..hi (size hi-lo+1; index 0 is
-## trace.points[lo], last is trace.points[hi]).
+## Returns {"samples": PackedFloat32Array (one level per trace sample
+## lo..hi, size hi-lo+1; index 0 is trace.points[lo], last is
+## trace.points[hi]), "dense": PackedFloat32Array (the _DESCENT_STEP-spaced
+## shaped curve those samples were resampled FROM — steps+1 values on
+## _dense_span_points' k-grid)}. The dense curve rides along because the
+## fill's seeding now consumes it directly (r3 Task 12 follow-up — see
+## _seed_rivers): seeds must carry the smooth curve's own values, not the
+## coarser per-sample resample, or the 12m-granularity lowest-wins disc
+## competition re-quantizes the ramp right back into steps.
 static func _shape_descent_span(region, trace: RiverTrace, lo: int, hi: int,
-		anchor_start: float, anchor_end: float, arclen: PackedFloat32Array) -> PackedFloat32Array:
+		anchor_start: float, anchor_end: float, arclen: PackedFloat32Array) -> Dictionary:
 	var ground_lo: float = TerrainSurfaceField.surface_y(region, trace.points[lo].x, trace.points[lo].y)
 	var ground_hi: float = TerrainSurfaceField.surface_y(region, trace.points[hi].x, trace.points[hi].y)
 	anchor_start = maxf(anchor_start, ground_lo + DESCENT_CLAMP)
@@ -721,7 +801,9 @@ static func _shape_descent_span(region, trace: RiverTrace, lo: int, hi: int,
 		var flat := PackedFloat32Array()
 		flat.resize(hi - lo + 1)
 		flat.fill(anchor_start)
-		return flat
+		# degenerate dense twin: _dense_span_points' k-grid for a zero-length
+		# span is steps=1 -> 2 samples, both at trace.points[lo]
+		return {"samples": flat, "dense": PackedFloat32Array([anchor_start, anchor_start])}
 	var smoothed: PackedFloat32Array = _dense_span_curve(region, trace, lo, hi, anchor_start, anchor_end, arclen)
 	var steps: int = smoothed.size() - 1
 	# Resample the dense (fixed _DESCENT_STEP-spaced) curve at each trace
@@ -738,82 +820,282 @@ static func _shape_descent_span(region, trace: RiverTrace, lo: int, hi: int,
 		var k1: int = mini(k0 + 1, steps)
 		var tt: float = kf - float(k0)
 		out[idx - lo] = lerpf(smoothed[k0], smoothed[k1], tt)
-	return out
+	return {"samples": out, "dense": smoothed}
 
 
-## r3 Task 12: the dense, _DESCENT_STEP-spaced, FULLY SHAPED curve for span
-## [lo,hi] — ease (arc-length-parameterised smootherstep between the two
-## already-floored anchors) + ground clamp + re-smooth (_box_smooth) + a
-## final forward monotone pass. `anchor_start`/`anchor_end` are taken as
-## given (already floored against ground by the caller — see
-## _shape_descent_span); called directly (bypassing the coarser trace-sample
-## resample) by test_water_field.gd's test_descent_is_smooth_pool_to_pool,
-## which is what "second differences... per 4m sample" actually measures.
+## r3 Task 12a: the dense, _DESCENT_STEP-spaced, FULLY SHAPED curve for span
+## [lo,hi] — the smooth monotone UPPER ENVELOPE of (straight pool-to-pool
+## ease) ∨ (ground + DESCENT_CLAMP), fit THROUGH a set of KNOTS rather than
+## clamped-then-corrected (see DESCENT_CLAMP's own comment for why a
+## post-clamp correction pass is what broke the round-4 version of this
+## function). `anchor_start`/`anchor_end` are taken as given (already floored
+## against ground by the caller — see _shape_descent_span); called directly
+## (bypassing the coarser trace-sample resample) by test_water_field.gd's
+## test_descent_is_smooth_pool_to_pool, which is what "second differences...
+## per 4m sample" actually measures.
+## Two steps:
+##  1. _find_descent_knots discovers the knot set: the two anchors, plus
+##     every ground contact the naive straight (2-knot) ease would under-run
+##     — iterated to a fixpoint (a knot can shift where the NEXT under-run is
+##     found, but never removes a knot, so the search only ever adds; see
+##     that function's own docstring for the termination argument).
+##  2. _eval_descent_knots fits ONE monotone cubic Hermite spline (Fritsch-
+##     Carlson tangents) through every knot — provably monotone and C1 by
+##     construction (see that function's own docstring for the proof) — and
+##     NOTHING runs afterward to disturb the fit. The knots themselves are
+##     the only ground consultation; once placed, they ARE the curve.
 ## Returns steps+1 samples (steps = ceil(span_len/_DESCENT_STEP)) at arc
 ## offsets 0, _DESCENT_STEP, 2*_DESCENT_STEP, ..., span_len from
 ## trace.points[lo]; index 0 == anchor_start exactly, last == anchor_end
-## exactly (see _box_smooth's own docstring for why the pin is exact, not
-## approximate).
+## exactly (both are the first/last knot by construction — see
+## _find_descent_knots). World positions come from _dense_span_points — the
+## SAME k-grid walk the fill's dense seeding reads (r3 Task 12 follow-up),
+## one implementation so curve levels and seed positions can never drift
+## apart.
 static func _dense_span_curve(region, trace: RiverTrace, lo: int, hi: int,
 		anchor_start: float, anchor_end: float, arclen: PackedFloat32Array) -> PackedFloat32Array:
+	var pos: PackedVector2Array = _dense_span_points(trace, lo, hi, arclen).pos
+	var steps: int = pos.size() - 1
+	var ground := PackedFloat32Array()
+	ground.resize(steps + 1)
+	for k in range(steps + 1):
+		ground[k] = TerrainSurfaceField.surface_y(region, pos[k].x, pos[k].y)
+	var knots: Array = _find_descent_knots(ground, steps, anchor_start, anchor_end)
+	var dense: PackedFloat32Array = _eval_descent_knots(knots, steps)
+	dense[0] = anchor_start
+	dense[steps] = anchor_end
+	return dense
+
+
+## r3 Task 12a: discovers the knot set for one descent span's dense
+## _DESCENT_STEP grid (indices 0..steps against `ground`, the rendered
+## terrain sampled at each — see _dense_span_curve). Starts from JUST the two
+## span anchors (k=0 -> anchor_start, k=steps -> anchor_end) and repeatedly:
+##  1. evaluates the monotone curve through the CURRENT knot set
+##     (_eval_descent_knots);
+##  2. scans for maximal runs of dense indices where that curve under-runs
+##     ground + DESCENT_CLAMP (a 1e-4 slack absorbs float noise at an exact
+##     touch);
+##  3. for each such run, inserts ONE new knot at the run's own highest
+##     `ground + DESCENT_CLAMP` point — the single point most likely to pull
+##     the WHOLE run clear in one shot (it is at least as tall as every
+##     other point in the run), a fast-convergence heuristic, not a hard
+##     per-insertion guarantee: inserting an interior knot can shift its
+##     NEIGHBOURS' own Fritsch-Carlson tangents too (see
+##     _descent_knot_tangents), so correctness does not rest on any single
+##     insertion clearing its run — it rests on the OUTER loop, which
+##     re-scans the FRESH curve (step 1, above) against EVERY dense index
+##     again next pass and keeps adding knots until a full scan finds zero
+##     violations;
+## and repeats until that fixpoint (a pass adds no knot). TERMINATION: knots
+## are only ever ADDED, never removed or moved, and there are at most
+## `steps - 1` interior dense indices that could ever become one (each index
+## becomes a knot at most once — see the `is_knot` guard below) — so the
+## outer loop runs at most `steps - 1` times even in the worst case
+## (`guard`'s own budget is one wider, `steps + 2`, purely so an off-by-one
+## in this argument fails LOUD, as an assert-shaped print, rather than
+## silently under-iterating); empirically (this task's report) real spans
+## converge in a single pass.
+## A new knot's value is `ground + DESCENT_CLAMP` at its own point, CLAMPED
+## into [next-knot's value, previous-knot's value] before insertion — the
+## span's upstream/downstream neighbours in the knot list at the moment of
+## insertion, which by induction already bracket every value in between
+## (base case: the two anchors bracket everything, by profile()'s own
+## monotone chase; inductive step: a new knot is only ever inserted STRICTLY
+## between two existing knots and clamped to their own values). This is what
+## keeps the KNOT VALUES themselves monotone non-increasing by construction —
+## the property _eval_descent_knots' own monotonicity proof depends on —
+## without needing to trust that `ground + DESCENT_CLAMP` itself happens to
+## be monotone (it isn't; the terrain is storey-jagged).
+## Returns Array of {k: int, val: float} ordered by k ascending, first entry
+## always {k: 0, val: anchor_start}, last always {k: steps, val: anchor_end}.
+static func _find_descent_knots(ground: PackedFloat32Array, steps: int,
+		anchor_start: float, anchor_end: float) -> Array:
+	var knots: Array = [{"k": 0, "val": anchor_start}, {"k": steps, "val": anchor_end}]
+	var guard: int = steps + 2
+	while guard > 0:
+		guard -= 1
+		var curve: PackedFloat32Array = _eval_descent_knots(knots, steps)
+		var is_knot := {}
+		for kn: Dictionary in knots:
+			is_knot[int(kn.k)] = true
+		var added := false
+		var k: int = 1
+		while k < steps:
+			if is_knot.has(k) or curve[k] >= ground[k] + DESCENT_CLAMP - 0.0001:
+				k += 1
+				continue
+			var run_end: int = k
+			while run_end + 1 < steps and not is_knot.has(run_end + 1) \
+					and curve[run_end + 1] < ground[run_end + 1] + DESCENT_CLAMP - 0.0001:
+				run_end += 1
+			var peak_k: int = k
+			var peak_v: float = ground[k] + DESCENT_CLAMP
+			for kk in range(k, run_end + 1):
+				var fv: float = ground[kk] + DESCENT_CLAMP
+				if fv >= peak_v:   # ">=", not ">": a TIE prefers the LATER (more downstream) point
+					peak_v = fv
+					peak_k = kk
+			var insert_at: int = knots.size()
+			for i in range(knots.size()):
+				if int(knots[i].k) > peak_k:
+					insert_at = i
+					break
+			peak_v = clampf(peak_v, knots[insert_at].val, knots[insert_at - 1].val)
+			knots.insert(insert_at, {"k": peak_k, "val": peak_v})
+			added = true
+			k = run_end + 1
+		if not added:
+			break
+	return knots
+
+
+## r3 Task 12a: evaluates the piecewise curve through `knots` (Array of
+## {k, val}, k ascending, first/last at 0/steps — see _find_descent_knots) at
+## every dense index 0..steps, as a MONOTONE CUBIC HERMITE spline with
+## Fritsch-Carlson tangents (Fritsch & Carlson, "Monotone Piecewise Cubic
+## Interpolation," SIAM J. Numer. Anal. 17(2), 1980) — the brief's OTHER
+## sanctioned option alongside plain smoothstep segments. Chosen over a
+## zero-slope-at-every-knot scheme (every consecutive pair independently
+## smootherstep-eased) because forcing the curve to a dead stop at EVERY
+## ground-contact knot, not just the two flat-pool anchors, concentrates
+## curvature into a shorter usable arc either side of each knot — measured
+## regression: it pushed one real 12m trace-sample hop on the site chute to
+## 4.04m, over test_profiles_monotone_and_continuous's own 4.02 ceiling.
+## Letting the curve keep flowing (non-zero slope) through an interior sill
+## knot is also the physically sensible shape — water riding over a
+## submerged ridge doesn't pause there — and spreads the same total drop
+## over more effective arc length (measured: max per-trace-sample drop
+## 2.80m vs 4.04m, same span, same knots — see this task's report).
+## _descent_knot_tangents computes one tangent per knot; both OUTER
+## (anchor) tangents are pinned to zero (C1 with the flat pools either side
+## of the span), interior tangents follow the standard FC rule.
+## PROOF OF C1: cubic Hermite basis functions are C1 by construction WHEN
+## consecutive segments agree on the tangent at their shared knot — which
+## they do here by definition (`tangents[seg]` is read once per knot, used
+## as the outgoing m1 of the segment ending there and the incoming m0 of
+## the segment starting there).
+## PROOF OF MONOTONICITY (Fritsch-Carlson's own sufficient condition): a
+## cubic Hermite segment with secant slope Δ=(y1-y0)/h and endpoint tangents
+## (m0,m1) is monotone on [0,1] whenever m0/Δ and m1/Δ both lie in [0,3].
+## _descent_knot_tangents guarantees this for EVERY segment: an interior
+## tangent m_i is either exactly 0 (always safe — (0, anything in [0,3]) is
+## inside the FC region) or shares the sign of both flanking secants
+## delta[i-1]/delta[i] (the sign-disagreement branch already zeroed it
+## otherwise) with |m_i| <= 3*min(|delta[i-1]|, |delta[i]|) <= 3*|delta[i-1]|
+## AND <= 3*|delta[i]| simultaneously (a min is <= either operand) — exactly
+## m_i/delta[i-1] and m_i/delta[i] both in [0,3]. The two OUTER tangents are
+## pinned to 0, trivially in-range against their own single flanking Δ. Knot
+## VALUES are monotone non-increasing by construction (see
+## _find_descent_knots' own proof), so Δ <= 0 for every segment — combined
+## with the tangent bound above, every segment is monotone non-increasing,
+## and segments agree exactly at every shared knot, so the concatenated
+## curve is monotone non-increasing end to end. No post-hoc clamp pass is
+## needed or run (contrast the round-4 version's final `minf` sweep) — see
+## DESCENT_CLAMP's own comment for why a pass like that is exactly the
+## mechanism that broke sill-riding before.
+static func _eval_descent_knots(knots: Array, steps: int) -> PackedFloat32Array:
+	var tangents: PackedFloat32Array = _descent_knot_tangents(knots)
+	var out := PackedFloat32Array()
+	out.resize(steps + 1)
+	for seg in range(knots.size() - 1):
+		var k0: int = knots[seg].k
+		var k1: int = knots[seg + 1].k
+		var y0: float = knots[seg].val
+		var y1: float = knots[seg + 1].val
+		var m0: float = tangents[seg]
+		var m1: float = tangents[seg + 1]
+		var h: float = float(k1 - k0)
+		for k in range(k0, k1 + 1):
+			var t: float = 0.0 if k1 == k0 else float(k - k0) / h
+			var t2: float = t * t
+			var t3: float = t2 * t
+			var hb00: float = 2.0 * t3 - 3.0 * t2 + 1.0
+			var hb10: float = t3 - 2.0 * t2 + t
+			var hb01: float = -2.0 * t3 + 3.0 * t2
+			var hb11: float = t3 - t2
+			out[k] = hb00 * y0 + hb10 * h * m0 + hb01 * y1 + hb11 * h * m1
+	return out
+
+
+## r3 Task 12a: one Fritsch-Carlson tangent per knot (see _eval_descent_knots
+## for the monotonicity proof this feeds). `delta[i]` is the secant slope of
+## segment i (knot i to knot i+1), in value-per-dense-INDEX units (uniform
+## _DESCENT_STEP spacing, so this is the true slope up to a constant global
+## scale — the Hermite evaluator multiplies back by the segment's own `h`,
+## so the scale cancels exactly). Both outer tangents are 0 (the span's two
+## anchors are flat pools — C1 with the water either side of this span, same
+## contract the round-4 version's smootherstep ease already guaranteed).
+## Every interior tangent is either 0 (at a local extremum in the KNOT
+## sequence — one flanking secant flat, or the two disagreeing in sign; a
+## flat secant is reachable in practice, e.g. two adjacent knots clamped to
+## the same value, and is always safe to zero — see _eval_descent_knots' own
+## proof for why (0, anything in [0,3]) is always inside the monotone
+## region; a sign DISAGREEMENT cannot actually occur here since knot values
+## are monotone non-increasing by construction, so every delta is already
+## <= 0, but the guard is kept for robustness/reuse) or the average of its
+## two flanking secants, magnitude-limited to 3x the SMALLER of their
+## magnitudes — the textbook Fritsch-Carlson sufficient condition (see
+## _eval_descent_knots' own proof for why this specific bound is what keeps
+## every segment monotone).
+static func _descent_knot_tangents(knots: Array) -> PackedFloat32Array:
+	var m: int = knots.size() - 1
+	var delta := PackedFloat32Array()
+	delta.resize(m)
+	for i in range(m):
+		var h: float = float(int(knots[i + 1].k) - int(knots[i].k))
+		delta[i] = (float(knots[i + 1].val) - float(knots[i].val)) / h
+	var tangents := PackedFloat32Array()
+	tangents.resize(knots.size())
+	tangents[0] = 0.0
+	tangents[knots.size() - 1] = 0.0
+	for i in range(1, knots.size() - 1):
+		var d0: float = delta[i - 1]
+		var d1: float = delta[i]
+		if d0 == 0.0 or d1 == 0.0 or (d0 > 0.0) != (d1 > 0.0):
+			tangents[i] = 0.0
+			continue
+		var mi: float = (d0 + d1) * 0.5
+		var min_d: float = minf(absf(d0), absf(d1))
+		if absf(mi) > 3.0 * min_d:
+			mi = signf(mi) * 3.0 * min_d
+		tangents[i] = mi
+	return tangents
+
+
+## r3 Task 12 follow-up (seeding): world positions + channel half-widths for
+## span [lo,hi] on the SAME k-grid _dense_span_curve shapes levels on
+## (steps = ceil(span_len/_DESCENT_STEP); arc offsets span_len*k/steps from
+## trace.points[lo]) — factored out so the curve's own ground sampling and
+## the fill's dense seed placement (_seed_rivers) read one identical walk;
+## two copies of the seg_i-advance loop would inevitably drift. Widths are
+## lerped between the two flanking trace samples' own widths (widths grow
+## linearly downstream — WaterPlan._trace — so lerp is exact, not an
+## approximation). A PURE function of the trace alone (no region, no plan):
+## seed positions must be identical for every chunk whose fill window
+## overlaps this trace, or the border-weld/fill-determinism oracles break
+## (test_fill_is_deterministic_across_chunks / test_wet_agreement_across_
+## all_chunk_borders).
+static func _dense_span_points(trace: RiverTrace, lo: int, hi: int,
+		arclen: PackedFloat32Array) -> Dictionary:
 	var span_len: float = arclen[hi] - arclen[lo]
 	var steps: int = maxi(1, int(ceil(span_len / _DESCENT_STEP)))
-	var dense := PackedFloat32Array()
-	dense.resize(steps + 1)
+	var pos := PackedVector2Array()
+	pos.resize(steps + 1)
+	var w := PackedFloat32Array()
+	w.resize(steps + 1)
 	var seg_i: int = lo
 	for k in range(steps + 1):
-		var d: float = span_len * float(k) / float(steps)
-		var target_arc: float = arclen[lo] + d
+		var target_arc: float = arclen[lo] + span_len * float(k) / float(steps)
 		while seg_i < hi - 1 and arclen[seg_i + 1] < target_arc:
 			seg_i += 1
 		var seg_start: float = arclen[seg_i]
 		var seg_end: float = arclen[seg_i + 1]
 		var seg_t: float = 0.0 if seg_end - seg_start < 0.001 else \
 			clampf((target_arc - seg_start) / (seg_end - seg_start), 0.0, 1.0)
-		var p: Vector2 = trace.points[seg_i].lerp(trace.points[seg_i + 1], seg_t)
-		var t: float = d / span_len
-		var ground: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
-		var ease: float = lerpf(anchor_start, anchor_end, SlopeProfile.smootherstep(t))
-		dense[k] = maxf(ease, ground + DESCENT_CLAMP)
-	dense[0] = anchor_start
-	dense[steps] = anchor_end
-	var smoothed: PackedFloat32Array = _box_smooth(dense, _DESCENT_STEP, DESCENT_RESMOOTH_WINDOW, anchor_start, anchor_end)
-	smoothed[0] = anchor_start
-	smoothed[steps] = anchor_end
-	for k in range(1, steps + 1):
-		smoothed[k] = minf(smoothed[k], smoothed[k - 1])
-	return smoothed
-
-
-## Symmetric box filter over a dense, evenly _DESCENT_STEP-spaced array,
-## window >= window_m metres wide (radius rounded UP so the true width is
-## never less than requested). Pads virtual samples beyond both ends with
-## `pad_lo`/`pad_hi` (the span's own two anchors, both exactly flat pools)
-## rather than replicating the nearest in-range sample, so the filtered
-## value AT the first/last index converges to EXACTLY that anchor
-## (averaging N copies of the same constant returns that constant) instead
-## of drifting off it by a hair — the span stays continuous with its pools
-## exactly, not approximately (profile()'s own final pin after calling this
-## is therefore belt-and-braces, not load-bearing).
-static func _box_smooth(dense: PackedFloat32Array, step: float, window_m: float,
-		pad_lo: float, pad_hi: float) -> PackedFloat32Array:
-	var n: int = dense.size()
-	var radius: int = maxi(1, int(ceil((window_m * 0.5) / step)))
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for i in range(n):
-		var s: float = 0.0
-		var count: int = 0
-		for k in range(i - radius, i + radius + 1):
-			if k < 0:
-				s += pad_lo
-			elif k >= n:
-				s += pad_hi
-			else:
-				s += dense[k]
-			count += 1
-		out[i] = s / float(count)
-	return out
+		pos[k] = trace.points[seg_i].lerp(trace.points[seg_i + 1], seg_t)
+		w[k] = lerpf(trace.widths[seg_i], trace.widths[seg_i + 1], seg_t)
+	return {"pos": pos, "w": w}
 
 
 ## Surface height at p, or -INF when the water can't be shown to reach p.
