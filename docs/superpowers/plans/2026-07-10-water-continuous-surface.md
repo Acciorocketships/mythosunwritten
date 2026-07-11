@@ -263,3 +263,31 @@ Owner directive (verbatim intent): the down slope must NOT be based on the shape
 
 ### Sequencing
 Task 12 → 13 → 14 (12 changes the field that 13/14 render); Task 10 (ghost, in flight) is independent; Task 11's battery grows to 22 frames (+R4-A/B/C exact frames) and runs LAST as before.
+
+## Round-5 addendum (2026-07-11, owner feedback at 3cd407d-era build)
+
+Owner frames: R5-A maze texture + dry band, player (46.2, 4.0, -1102.9) crosshair (46.1, 4.2, -1103.3); R5-B edges + diagonal corner, player (129.6, 4.0, -1166.1) crosshair (129.7, 4.2, -1165.8). Binding process (owner, verbatim intent): failing tests first that try to prove it's still failing; screenshots from HIS exact positions trying to prove the issues are NOT fixed.
+
+### Task 13 (REWRITTEN — owner-specified): moving water = flow-advected, slowly-morphing refraction distortion, entirely clear
+
+Owner spec (2026-07-11, verbatim intent): "the scroll motion should not have any white in it, it should be entirely clear. the only thing that will make it visible is changes in refraction (a bit like the distortion effect in the water right now, but the distortion pattern moves). also the distortion should slowly morph as it moves."
+- DELETE from the shader: all geometric river trains (RIVER_K1/K2 vertex displacement — the maze/moiré source) and the slope-gated train2 seam. Geometry keeps ONLY the pond swell spectrum (long λ, owner-approved) shore-faded as today.
+- The refraction distortion field becomes the sole river-motion carrier: advect the distortion-noise sampling along the flow frame — u = (s − flow_speed(slope)·t, d) — with the TWO-PHASE half-offset blend (phase A and phase B offset by half a cycle, triangle-wave crossfade) so the scroll never visibly resets; each phase samples an independently TIME-EVOLVING noise coordinate so the pattern MORPHS while travelling (no rigid conveyor look).
+- Ponds/trace-free water: the same distortion field with slow isotropic drift + morph — ONE code path; direction/speed vary continuously via the flow frame (river↔pool discontinuity structurally impossible).
+- ZERO albedo modulation from motion. Distortion perturbs the refraction offset ONLY (never the lighting normal — existing convention); rides the hardened above-surface sample guard.
+- Constants into water_waves.gdshaderinc (mirror-block style); the character mirror needs NO river term anymore (geometric river displacement is gone — float height = level + pond swells only where present); update character.gd mirror accordingly (deletion).
+- Verify falsification-first at R5-A's exact frame: the maze class (parallel right-angle interference lines) unfindable in stills AND in a motion pair; the pool/chute texture seam unfindable (walk the crosshair across the slope-gate line).
+
+### Task 14 (UPGRADED): water reaches every shore — universal overshoot + bulgier meniscus
+
+- Rim overshoot into RISING ground everywhere (not walls only): outer rows extend +0.40·n̂ into any bank whose ground rises above the level within 1 m of the waterline (the pre-refactor film behaviour the owner cited as better); buried row3 seals as today. Over falling/level ground the rim keeps the current profile (no films over drops).
+- Meniscus bulge: row1/row2 gain a slight positive bulge (+0.04/+0.02 above L) before curling down — the blob/surface-tension read.
+- Red-first at R5-B's exact frame: a probe ray from the annotated gap must currently find bank pixels between waterline and wall (prove the gap), then not (fixed). Free-edge invariant maintained.
+
+### Task 15 (NEW): diagonal saddle corners
+
+- WaterContour._presence_segments: resolve marching-squares SADDLE cells (two wet + two dry corners diagonally) by sampling the field at the CELL CENTRE (standard disambiguation) instead of the current fixed tie-break; the chosen topology must connect the water wedge where two land corners meet diagonally.
+- Red-first: reproduce the R5-B junction (find the saddle cell near (129.7, -1165.8)-adjacent water); test asserts the contour connects the wedge (no missing corner); show RED at HEAD with the saddle cell's coordinates, then GREEN.
+
+### Sequencing (round 5)
+Task 12-v2 (in flight) → Task 15 (contour bug; small) → Task 14 (rim) → Task 13 (texture redesign) → Task 11 battery grows to 24 frames (+R5-A, R5-B exact frames, each with motion pairs).
