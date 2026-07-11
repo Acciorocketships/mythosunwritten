@@ -237,3 +237,29 @@ const float PLUNGE_RING_AMP = 0.10;       // fades over 4 m from steep-span base
 ## Erratum (2026-07-10, during Task 3)
 
 Task 3's test coordinates confused 24 m CELLS with 192 m streamer CHUNKS: "lake chunk (0,-47)" and the weld pair "((0,-47),(0,-46))" are dry as chunks (they were cell ids). Task 3's implementer verified substitutes and documented them in tests/test_water_contour.gd docstrings + r3-task-3-report.md: isolated pond chunk (-4,-18) for the closed-curve test, and verified wet border pairs (one per seed) for the weld test. Later tasks: all `Vector2i` chunk arguments are 192 m streamer chunks (site = (0,-6), which also contains the I3 lake at world (9.3, -1120.6)); world-coordinate frames in Tasks 1/5/9/11 are unaffected.
+
+## Round-4 addendum (2026-07-11, owner feedback at fa7925f)
+
+### Task 12: smooth pool-to-pool descent (R4-C)
+
+**Files:** modify `scripts/terrain/water/WaterField.gd` (`_descend_segment` and its callers), `tests/test_water_field.gd`.
+Owner directive (verbatim intent): the down slope must NOT be based on the shape of the terrain below — one continuous curve from the higher pool to the lower pool; no sharp angles anywhere in water. This REVERSES run-2's terrain-hugging descent.
+- New descent: anchors = span start (upper level) and span end (lower pool level). Surface = C1 monotone smoothstep-shaped ease between anchors. Clamp ≥ ground + 0.05 where terrain pokes through the ramp, then re-smooth the clamped profile with a ≥8 m window so clamp bumps stay soft (target: max |Δslope| per 1.5 m below the turn-angle oracle's threshold when projected into the contour).
+- The stepped-cascade tiles' level spreads change → re-derive/re-verify TRIGGER_SUB_TILE_SPREAD_MAX semantics (the I1 chute pin and I4 pin MUST still hold — they are the regression net; if the smooth ramp legitimately changes a pin's static depth, STOP and report, don't retune silently).
+- Red-first: `test_descent_is_smooth_pool_to_pool` — along the site chute's descent line, second differences of the profile bounded (no step > 0.5 m per 4 m sample); must FAIL at fa7925f (stepped) then pass. Keep `test_profiles_monotone_and_continuous` green.
+
+### Task 13: river motion rework — flow-advected normals, no geometric aliasing (R4-A + R4-D)
+
+**Files:** modify `terrain/water/water_waves.gdshaderinc`, `terrain/water/water_unified.gdshader`, `characters/character.gd` (mirror), `tests/` (mirror parity if asserted).
+- Root cause of R4-A: λ1.8/3.3 m trains vertex-displace a 3 m lattice (below Nyquist) → moiré terraces. Fix structurally: river trains LEAVE the vertex domain. Geometry displaces only pond swells + ONE long river undulation (λ ≥ 8 m, gentle). CPU float mirror updated identically (constants stay name-mirrored).
+- R4-D: fragment-side **flow-map-style normal advection** (Valve/Portal-2 two-phase technique): advect the detail normal texture along the baked flow direction (from CUSTOM0 (s,d) frame — analytic, no flow-map texture needed), TWO phases offset by half a cycle, triangle-wave crossfade to hide resets; advection speed scales with slope (rapids rush); ponds keep isotropic ripple drift. Zero white stays absolute.
+- Verify: moiré unfindable at R4-A's exact frame (44.2, 7.0, -1084.4)/(44.2, 7.2, -1084.1); motion-pair diff still shows coherent downstream movement; compile check.
+
+### Task 14: water touches walls (R4-B)
+
+**Files:** modify `scripts/terrain/water/WaterSkin.gd` (`_rim` wall branch), `tests/test_water_skin.gd`.
+- Wall-flagged rim rows currently pinch to +0.05·n̂ at the exact waterline, leaving a visible slot at vertical faces. Fix: wall-flagged rows 2-3 extend INTO the rising face (+0.40·n̂ at surface level, row3 buried as usual) — the depth buffer clips the overshoot invisibly; water meets the wall flush (pre-refactor behaviour, but only where the wall flag says ground RISES — never over drops).
+- Test: `test_wall_rim_reaches_the_face` — at the R4-B frame's wall reach (62.1, -1138.5 area), rim outer verts' xz sit ≥ 0.3 beyond the waterline into the wall; free-edge invariant still holds. Visual gate at the exact frame: no gap.
+
+### Sequencing
+Task 12 → 13 → 14 (12 changes the field that 13/14 render); Task 10 (ghost, in flight) is independent; Task 11's battery grows to 22 frames (+R4-A/B/C exact frames) and runs LAST as before.
