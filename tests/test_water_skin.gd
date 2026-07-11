@@ -954,7 +954,7 @@ func test_no_trigger_where_unswimmably_steep() -> void:
 	assert_false(film_covered,
 		"no trigger footprint covers the I1 film point (53,-1083.9) — a character standing there must read dry, matching run 2's verified live behaviour and the owner's own I1 report (a false waterfall, not swimmable water)")
 	assert_true(pool_covered,
-		"the 5.7 plunge pool centre (54,-1101) — 2 sub-tiles from the chute jump, inside the SAME 24m cell Task 7 suppressed wholesale — now gets a real trigger (r3 Task 9 controller addition 3: fine-grained coverage restored)")
+		"the 5.7 plunge pool centre (56,-1101) — 2 sub-tiles from the chute jump, inside the SAME 24m cell Task 7 suppressed wholesale — now gets a real trigger (r3 Task 9 controller addition 3: fine-grained coverage restored)")
 
 
 ## test_sub_tile_reconciliation_keeps_a_legal_sloped_reach (r3 Task 9,

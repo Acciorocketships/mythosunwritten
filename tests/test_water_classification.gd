@@ -238,15 +238,26 @@ func test_dry_bank() -> void:
 
 
 ## --- Class 4: steep chute (the one INTENTIONAL divergence class) ---
-## Scans the whole site chunk's own 24m cells on a 3m grid (WaterSkin.STEP)
-## for points that are genuinely field-WET (naive depth > 0.05 — some are
-## even naively >0.8, a naive "SWIM") but NOT covered by any real emitted
-## trigger — derived from the ACTUAL skin.triggers output, not a hand-copied
-## list of "which sub-tile is hot" (that would drift the moment the
-## reconciliation's own numbers changed; asking the real output "were you
-## covered" cannot drift). Character-math must read DRY at every one of
-## these — the field's naive depth is explicitly NOT the oracle for this
-## class; see this file's header for why.
+## Candidates come from FIELD/GEOMETRY data ONLY — pinned chute coordinates
+## plus a field-static-depth filter — never from skin.triggers. (Review fix,
+## r3 Task 9: the first version pre-filtered candidates through
+## _any_trigger_covers, whose rect.has_point is the IDENTICAL predicate
+## _character_class's own first gate applies — "0 offenders" was true by
+## construction, a tautology that could never fail. This version is
+## falsifiable: if a future gate change re-serves the chute with triggers,
+## the character-math class here flips to SWIM/WADE and the test fails —
+## demonstrated red by construction, see r3-task-9-report.md's "Review
+## fixes" section for the TRIGGER_SUB_TILE_SPREAD_MAX=999 transcript.)
+##
+## The point set walks the I1 chute face itself: x in [44, 58], z in
+## {-1083, -1084, -1085} — inside the cascade-step band where the
+## hydrostatic fill stands the 9.7 reach's level over sloping ground (the
+## owner's I1 "a waterfall stands where the terrain has only slopes"; film
+## point (53, -1083.9) pinned live at static depth ~2.5 over a ~0.3m film)
+## — filtered to points the FIELD itself claims wet at static depth > 0.5:
+## water the field claims but triggers must never serve. Character-math must
+## read DRY (the specific suppression outcome — no trigger box may cover any
+## of these points, so the sampler is never even consulted) at every one.
 func test_steep_chute() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -258,41 +269,70 @@ func test_steep_chute() -> void:
 	var candidates: Array = []
 	var naive_would_swim := 0
 	var naive_would_wade := 0
-	var cell_range: Dictionary = _site_cell_range()
-	for cz in cell_range.cz:
-		for cx in cell_range.cx:
-			var lo: Vector2 = Vector2(cx, cz) * WaterSkin.TILE
-			for jj in range(0, 9):
-				for ii in range(0, 9):
-					var p: Vector2 = lo + Vector2(ii, jj) * 3.0
-					var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
-					var lvl: float = WaterField.level_at(ctx, p)
-					if lvl == -INF or lvl - g <= 0.05:
-						continue   # not genuinely wet — not an interesting chute probe
-					if _any_trigger_covers(skin, p):
-						continue   # a real trigger covers this point — not suppressed, not this class
-					candidates.append(p)
-					var d: float = lvl - g
-					if d > 0.8:
-						naive_would_swim += 1
-					else:
-						naive_would_wade += 1
-			if candidates.size() >= 200:
-				break
-		if candidates.size() >= 200:
-			break
-	print("MEAS test_steep_chute: %d suppressed-but-field-wet candidates found (naive truth: %d would SWIM, %d would WADE — the exact divergence the trigger gate exists to close)" % [
+	for z: float in [-1083.0, -1084.0, -1085.0]:
+		var x := 44.0
+		while x <= 58.0 + 0.001:
+			var p := Vector2(x, z)
+			var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			var lvl: float = WaterField.level_at(ctx, p)
+			if lvl != -INF and lvl - g > 0.5:
+				candidates.append(p)
+				if lvl - g > 0.8:
+					naive_would_swim += 1
+				else:
+					naive_would_wade += 1
+			x += 0.5
+	print("MEAS test_steep_chute: %d field-wet chute-line points (static depth > 0.5; naive truth: %d would SWIM, %d would WADE — the exact divergence the trigger gate exists to close)" % [
 		candidates.size(), naive_would_swim, naive_would_wade])
 	assert_true(candidates.size() >= MIN_PER_CLASS,
-		"at least %d points to check (%d)" % [MIN_PER_CLASS, candidates.size()])
+		"at least %d chute-line points to check (%d)" % [MIN_PER_CLASS, candidates.size()])
 	var offenders: Array = []
 	for p: Vector2 in candidates:
 		var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
 		var got: String = _character_class(skin, Vector3(p.x, g, p.y))
 		if got != "DRY" and offenders.size() < 10:
-			offenders.append("p=%s got=%s" % [p, got])
+			offenders.append("p=%s got=%s (field static depth %.3f)" % [
+				p, got, WaterField.level_at(ctx, p) - g])
 	assert_true(offenders.is_empty(),
-		"every suppressed-but-field-wet chute point reads DRY through the real trigger+sampler path: %s" % str(offenders))
+		"the chute face stays unserved: every field-wet chute-line point reads DRY through the real trigger+sampler path (anything else re-opens the I1 phantom-swim class): %s" % str(offenders))
+
+
+## --- Permanent I4 regression pin (review fix, r3 Task 9) ---
+## The motivating live-gate case for BOTH of this task's classification
+## changes, pinned deterministically at the owner's exact coordinates
+## (36.4, -1108.7): the FIELD's static depth there sits in the wading band
+## (0.05, 0.8] — measured 0.7976, the knife-edge the controller's own
+## evidence cited at 0.7685-0.80 — so character-math must read WADE:
+##  - NOT SWIM: static gating's whole point (controller addition 1) — under
+##    the old swell-in-the-gate math any crest could push past 0.8 here and
+##    hysteresis latched swim on land's edge. Static depth has no swell term
+##    and no time dependence, so this assertion is fully deterministic.
+##  - NOT DRY: the first cut of the sub-tile reconciliation reused the
+##    whole-tile 2.0 spread threshold as the native-hot gate and suppressed
+##    I4's own sub-tile (its spread is exactly 2.7 = STEEP_UNSWIMMABLE * 6m
+##    — a legitimate transition, not a cascade step), regressing this exact
+##    spot live to false/false; see WaterSkin.TRIGGER_SUB_TILE_SPREAD_MAX's
+##    own docstring. This pin fails on any future re-tune that pushes that
+##    threshold back at or under 2.7.
+func test_i4_waterline_pin() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var skin: Dictionary = WaterSkin.build(water, SITE_CHUNK, region)
+	assert_false(skin.is_empty(), "site chunk builds a skin")
+	if skin.is_empty():
+		return
+	var p := Vector2(36.4, -1108.7)
+	var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+	var lvl: float = WaterField.level_at(ctx, p)
+	var depth: float = lvl - g
+	print("MEAS test_i4_waterline_pin: field level=%.4f ground=%.4f static depth=%.4f (wading band (0.05, 0.8])" % [
+		lvl, g, depth])
+	assert_true(depth > 0.05 and depth <= 0.8,
+		"site precondition: I4's field static depth (%.4f) sits in the wading band (0.05, 0.8]" % depth)
+	var got: String = _character_class(skin, Vector3(p.x, g, p.y))
+	assert_eq(got, "WADE",
+		"I4 (36.4,-1108.7) reads WADE through the real trigger+sampler path — NOT SWIM (no swell in the gate) and NOT DRY (its legitimate-transition sub-tile, spread 2.7, must keep its trigger)")
 
 
 ## --- Class 5: plunge pool centre (controller addition 3) ---
