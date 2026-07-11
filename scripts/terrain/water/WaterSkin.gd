@@ -54,9 +54,10 @@
 # on every weld hit, normalized once at the end by _bake_normals) instead of
 # picking whichever call site happened to create the vertex first.
 # TRIGGERS + SAMPLER (Task 7, see _triggers/WaterSampler.gd): build() now
-# returns a REAL `sampler` (a frozen WaterSampler snapshot of this chunk's
-# own interior lattice — see WaterSampler.build's own docstring on why it is
-# built from that data specifically) instead of Task 4-6's `null`
+# returns a REAL `sampler` (a frozen WaterSampler snapshot of the water
+# FIELD across this chunk, baked on the interior lattice's own grid geometry
+# but covering the FULL wet footprint including the INSET shoreline band —
+# see WaterSampler.gd's own BACKING DATA note) instead of Task 4-6's `null`
 # placeholder. `_triggers` gained the STEEP_UNSWIMMABLE gate the old
 # marching-squares mesher's own volume builder used to enforce per 24m
 # CELL: a tile whose max |grade_at| exceeds the gate gets no trigger box at
@@ -163,10 +164,11 @@ const RIM_NORMAL_ANGLE3 := PI * 13.0 / 36.0   # 65 deg — row3, buried seal (in
 ## build(water, chunk, region) -> {} when dry, else:
 ##   arrays: Array           # Mesh.ARRAY_MAX arrays, indexed, welded (VERTEX/NORMAL/INDEX/CUSTOM0)
 ##   triggers: Array[Dictionary]  # {rect: Rect2, top: float, bottom: float}
-##   sampler: WaterSampler   # r3 Task 7: a frozen snapshot of this chunk's own interior
-##                           # lattice (see WaterSampler.build) — every trigger Area3D this
-##                           # build feeds WaterSurfaceBuilder.build_chunk shares this ONE
-##                           # instance via set_meta("sampler", sampler).
+##   sampler: WaterSampler   # r3 Task 7: a frozen snapshot of the FIELD across this chunk
+##                           # (full wet footprint, shoreline band included — see
+##                           # WaterSampler.build) — every trigger Area3D this build feeds
+##                           # WaterSurfaceBuilder.build_chunk shares this ONE instance via
+##                           # set_meta("sampler", sampler).
 ## chunk is a 192m streamer chunk (site (0,-6)) — same convention this
 ## codebase's water pipeline uses everywhere (see e.g. WaterField.ctx's own
 ## `base := Vector2(chunk.x, chunk.y) * (TILE * 8.0) - ...` calc; plan erratum,
@@ -215,7 +217,11 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	arrays[Mesh.ARRAY_NORMAL] = _bake_normals(st)
 	arrays[Mesh.ARRAY_CUSTOM0] = _custom0(st)
 
-	var sampler := WaterSampler.build(lattice, STEP)
+	# Sampler bake: the FIELD across this chunk, on the lattice's own grid
+	# geometry (Task 7 review MEDIUM fix — the interior lattice itself insets
+	# INSET away from the waterline, so it is NOT a full-coverage height
+	# source; see WaterSampler.gd's own BACKING DATA note).
+	var sampler := WaterSampler.build(ctx, region, lattice.origin, STEP, lattice.nx, lattice.nz)
 	return {"arrays": arrays, "triggers": _triggers(st), "sampler": sampler}
 
 

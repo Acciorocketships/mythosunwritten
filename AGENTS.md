@@ -156,8 +156,9 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
     `triggers` (one box per 24m wet tile, footprint from the mesh's own built vertices; a
     tile whose own max grade exceeds `STEEP_UNSWIMMABLE` gets **no trigger at all** — a
     steep fall face is not swimmable water, so a character falls/slides through it rather
-    than floats) and a single frozen `WaterSampler` snapshot of the chunk's own interior
-    lattice for swim-depth queries.
+    than floats) and a single frozen `WaterSampler` snapshot of the water FIELD across the
+    chunk (full wet footprint, shoreline band included; NaN only where the field itself
+    says dry) for swim-depth queries.
   `WaterSurfaceBuilder` is a thin adapter: `build_chunk` calls `WaterSkin.build`/`commit`
   and emits one `Area3D` swim trigger per `triggers` entry (never more than one per tile —
   the steep gate above means a tile either has one trigger or none), each carrying

@@ -235,15 +235,17 @@ func _update_in_water() -> void:
 			# the new trigger boxes (r3 Task 7) carry a frozen WaterSampler
 			# instead of a sampled-plane meta pair (the elif branch right
 			# below, kept untouched for any legacy volume) — read the exact
-			# water height at this point straight from it. NAN means this
-			# precise (x,z) sits outside the sampler's own kept footprint
-			# (e.g. within the shoreline band the interior lattice doesn't
-			# cover — see WaterSampler.gd's own precision note) even though
-			# the coarser trigger box says "maybe wet somewhere in this
-			# tile" — treated as not contained here, same as any other miss;
-			# `contained` stays false and the shared check below skips this
-			# hit exactly as it already does for every other non-containing
-			# case.
+			# water height at this point straight from it. The sampler covers
+			# the FULL wet footprint including the shoreline band (Task 7
+			# review MEDIUM fix — see WaterSampler.gd's own BACKING DATA
+			# note), so NAN means the FIELD itself reads dry at this exact
+			# (x,z) (or the point is outside this chunk's own snapshot): the
+			# trigger box is a coarse 24m tile, and a character standing on
+			# the genuinely-dry fringe inside the box correctly reads
+			# not-in-water — treated as not contained here, same as any other
+			# miss; `contained` stays false and the shared check below skips
+			# this hit exactly as it already does for every other
+			# non-containing case.
 			var sampler: WaterSampler = collider.get_meta("sampler")
 			var lvl: float = sampler.level_at(Vector2(global_position.x, global_position.z))
 			if not is_nan(lvl):

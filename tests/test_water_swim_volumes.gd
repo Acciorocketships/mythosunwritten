@@ -187,9 +187,80 @@ func test_sampler_level_at_tracks_the_field() -> void:
 				var err: float = absf(sampled - truth)
 				if err > 0.5 and offenders.size() < 10:
 					offenders.append("p=%s sampled=%.3f truth=%.3f err=%.3f" % [p, sampled, truth, err])
-	print("MEAS test_sampler_level_at_tracks_the_field: %d probes agree with the field, %d returned NAN (shore band/gap), %d offenders" % [
+	print("MEAS test_sampler_level_at_tracks_the_field: %d probes agree with the field, %d returned NAN (field-dry part of the tile), %d offenders" % [
 		checked, nan_n, offenders.size()])
 	assert_true(checked > 50, "a meaningful share of the tile-grid probes got a real (non-NAN) sampler reading to check (%d)" % checked)
 	assert_true(offenders.is_empty(),
 		"every non-NAN sampler reading tracks the field within its own bilinear tolerance: %s" % str(offenders))
+	root.free()
+
+
+## Task 7 review MEDIUM (shoreline-band coverage): the ~2m band of real,
+## rendered, field-wet water between the waterline curve and WaterSkin's
+## INSET-ed interior lattice must be answerable by the trigger's sampler —
+## a character wading right at the water's edge stands exactly there, and a
+## NaN answer makes character.gd's bridge read them as fully dry (neither
+## swimming nor wading; the old per-cell sampled planes covered the whole
+## cell, so this is a classification regression class, same render-vs-
+## classification divergence family as run 2's I4). Probe points are built
+## from WaterContour.curves' own points: p = pt - k*n̂ for k in 0.3..1.8
+## (n̂ is the OUTWARD/dry-side unit normal per WaterContour's contract, so
+## -n̂ steps into the water), filtered to points the FIELD itself calls wet
+## (level - ground > 0.02, the same gate WaterSkin._lattice_wet uses) and
+## whose 24m tile actually carries a trigger (a steep-gated tile has no box
+## by design — no sampler is responsible there). Each surviving point must
+## get a non-NaN sampler answer within 0.1 of WaterField.level_at.
+## RED-FIRST evidence: against the Task 7 interior-lattice-only sampler this
+## fails (the whole k<=1.8 band is inside INSET=2.0, where that bake kept no
+## lattice points at all) — transcript in r3-task-7-report.md's concern-
+## resolution section; the fix rebakes the sampler from the FIELD (see
+## WaterSampler.build).
+func test_sampler_covers_the_shoreline_band() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var span: float = WaterField.TILE * 8.0
+	var rect := Rect2(Vector2(SITE_CHUNK) * span, Vector2.ONE * span)
+	var curves: Array = WaterContour.curves(ctx, rect)
+	assert_gt(curves.size(), 0, "site chunk has waterline curves (precondition)")
+	var root: Node3D = WaterSurfaceBuilder.new().build_chunk(water, SITE_CHUNK, region)
+	var vols: Array = _volumes(root)
+	assert_gt(vols.size(), 0, "trigger boxes emitted")
+	# One shared sampler per chunk (pinned by test_triggers_carry_a_shared_
+	# sampler above) — any trigger's meta is THE chunk sampler.
+	var sampler: WaterSampler = vols[0].get_meta("sampler")
+	var covered: Dictionary = {}
+	for v in vols:
+		covered[_cell_of(v)] = true
+	var checked := 0
+	var nan_n := 0
+	var offenders: Array = []
+	for c: Dictionary in curves:
+		var pts: PackedVector2Array = c.pts
+		var normals: PackedVector2Array = c.normals
+		for i in range(0, pts.size(), 5):
+			for k: float in [0.3, 0.8, 1.3, 1.8]:
+				var p: Vector2 = pts[i] - normals[i] * k
+				var cell := Vector2i(int(floor(p.x / WaterSkin.TILE)), int(floor(p.y / WaterSkin.TILE)))
+				if not covered.has(cell):
+					continue   # steep-gated/unbuilt tile: no trigger box is responsible here
+				var truth: float = WaterField.level_at(ctx, p)
+				var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+				if truth == -INF or truth <= g + 0.02:
+					continue   # not genuinely wet per the field (bend/normal cases) — not a fair band sample
+				checked += 1
+				var got: float = sampler.level_at(p)
+				if is_nan(got):
+					nan_n += 1
+					if offenders.size() < 10:
+						offenders.append("p=%s k=%.1f NaN (field level %.2f, depth %.2f)" % [p, k, truth, truth - g])
+				elif absf(got - truth) > 0.1 and offenders.size() < 10:
+					offenders.append("p=%s k=%.1f got=%.3f truth=%.3f err=%.3f" % [p, k, got, truth, absf(got - truth)])
+	print("MEAS test_sampler_covers_the_shoreline_band: %d band points checked, %d NaN, %d total offenders" % [
+		checked, nan_n, offenders.size()])
+	assert_true(checked >= 10, "at least 10 genuine shoreline-band points found to check (%d)" % checked)
+	assert_eq(nan_n, 0,
+		"no shoreline-band point may read NaN — a character wading at the water's edge would classify as dry (e.g. %s)" % str(offenders))
+	assert_true(offenders.is_empty(),
+		"every band point's sampler reading is within 0.1 of WaterField.level_at: %s" % str(offenders))
 	root.free()

@@ -4,93 +4,115 @@
 # Task 7). Read-only after build(): level_at is a pure function over its own
 # packed primitive arrays, with NO live reference back to the WaterPlan,
 # HeightfieldRegion, or WaterField ctx Dictionary that built it — those are
-# owned by the chunk streamer and freed on eviction. Safe to call from the
-# main thread every physics frame: no field query, no mutex, no dictionary
-# walk — just two array reads and a lerp.
+# owned by the chunk streamer and freed on eviction (build() reads them
+# during the bake only; nothing but plain floats/ints/Vector2s survives into
+# the instance). Safe to call from the main thread every physics frame: no
+# field query, no mutex, no dictionary walk — just a handful of array reads.
 #
-# BACKING DATA (controller brief item 3): built directly from
-# WaterSkin._interior_lattice's own return shape — the exact presence/level
-# data WaterSkin.build() already computes for the interior mesh (position +
-# WaterField.level_at height per point >= WaterSkin.INSET metres inside a
-# curve, on WaterSkin.STEP's 3.0m world-aligned grid) — rather than
-# re-querying WaterField a second time. That dictionary is copied wholesale
-# into two plain arrays (origin/step/nx/nz + a flat PackedFloat32Array of
-# heights, NAN where the lattice point was never kept), so nothing here
-# retains the ctx/region/water objects the original query used.
+# BACKING DATA (r3 Task 7 review MEDIUM fix — supersedes the first bake):
+# a snapshot of the FIELD, not the mesh. The first version copied
+# WaterSkin._interior_lattice's kept points, but that lattice deliberately
+# insets WaterSkin.INSET (2.0m) away from every waterline curve — so the
+# ~2-5m band of real, rendered, field-wet water between the inset interior
+# and the waterline (the boundary strip + meniscus rim zone) had no data and
+# read NaN, and character.gd's bridge classified a character wading right at
+# the water's edge as fully dry (the old per-cell sampled planes covered the
+# whole cell; render-vs-classification divergence, the same defect family as
+# run 2's I4). build() now samples WaterField.level_at itself on the SAME
+# 3.0m world-snapped grid across the chunk: every grid corner the field
+# calls wet (level - ground > WET_EPS, the same gate WaterSkin._lattice_wet
+# uses) stores its exact level_at value regardless of any INSET; NaN only
+# where the field itself says dry (or beyond the chunk's own snapshot).
 #
-# PRECISION: level_at bilinear-interpolates over this frozen 3.0m grid — the
-# SAME resolution WaterSkin's own interior mesh already renders at, and
-# finer than WaterField.level_at's own hydrostatic-fill lattice
-# (WaterField.FILL_STEP = 6.0m, itself already bilinear — see
-# WaterField._fill_bilinear). Interpolating a second time over a grid that is
-# a strict refinement of the field's own bilinear source cannot introduce
-# error of a different ORDER than the field's own answer already carries at
-# that point — verified directly (tests/test_water_swim_volumes.gd's
-# test_sampler_level_at_tracks_the_field): every non-NAN sampler reading on
-# the pinned site tracks WaterField.level_at within a small fraction of a
-# metre. Two honest gaps, both by design, both read the same fail-safe way
-# (NAN = "no swimmable depth answer here", the same direction the trigger
-# boxes themselves already round toward — see WaterSurfaceBuilder.build_chunk):
-#   1. Within roughly WaterSkin.INSET (2.0m) of a shoreline curve, where the
-#      interior lattice deliberately keeps no point (that band is real
-#      water — it renders as the boundary strip/meniscus rim — but this
-#      sampler was built from the INTERIOR lattice alone, per the
-#      controller brief's own "presence/level data the skin already
-#      computes").
-#   2. Outside the chunk's own kept footprint entirely (dry, or a
-#      neighbouring chunk's water — each chunk's sampler only knows its own
-#      snapshot).
+# PRECISION: level_at interpolates over this frozen 3.0m grid with the SAME
+# renormalized-over-wet-corners bilinear rule WaterField._fill_bilinear
+# itself uses over its own 6.0m fill lattice (dry corners excluded, their
+# weight redistributed over the wet ones; NaN when no corner is wet) — see
+# that function's own docstring for why plain weighted summation cannot be
+# trusted once any corner is dry. The 3.0m grid is world-snapped and
+# phase-aligned with the fill's own lattice, and bilinear interpolation of
+# corner samples of a bilinear function on an aligned subgrid reproduces the
+# parent function EXACTLY — so on fully-wet cells the sampler equals
+# WaterField.level_at (measured: max_err 0.000 across the pinned site's
+# interior), and on mixed wet/dry cells (the shoreline band) it applies the
+# same renormalization family the field itself does, measured within 0.1 of
+# level_at at 260 real shoreline-band points (tests/
+# test_water_swim_volumes.gd::test_sampler_covers_the_shoreline_band, the
+# review-MEDIUM regression pin).
 class_name WaterSampler
 extends RefCounted
+
+# Same wetness gate WaterSkin._lattice_wet applies to ITS lattice (level at
+# or under ground + 2cm reads as dry): the sampler must agree with the
+# skin's own wet/dry oracle so the sampler's coverage is exactly the water
+# the skin renders — including the shoreline band the skin covers with
+# strip/rim geometry rather than lattice points.
+const WET_EPS := 0.02
 
 var _origin: Vector2
 var _step: float
 var _nx: int
 var _nz: int
-var _h: PackedFloat32Array   # nx*nz, row-major (j*_nx+i), NAN where not kept
+var _h: PackedFloat32Array   # nx*nz, row-major (j*_nx+i), NAN where field-dry
 
 
-## Builds a sampler from WaterSkin._interior_lattice's own return shape
-## ({kept: Dictionary[Vector2i -> {p: Vector2, y: float}], nx: int, nz: int,
-## origin: Vector2} — see that function's own docstring). `step` is the
-## lattice spacing (WaterSkin.STEP), passed explicitly rather than read off
-## WaterSkin itself so this class stays a plain, reusable "frozen bilinear
-## grid" with no compile-time dependency on its one current producer. Copies
-## only plain Vector2/float/int primitives out of `lattice` — no reference to
-## the WaterSkin build state `st` (which holds ctx/region/water) crosses into
-## the sampler.
-static func build(lattice: Dictionary, step: float) -> WaterSampler:
+## Bakes a sampler by sampling WaterField.level_at across the given grid
+## (origin/step/nx/nz — WaterSkin.build passes its OWN interior-lattice grid
+## geometry, so sampler coverage and mesh lattice stay column-aligned). Every
+## grid corner the field calls wet stores its exact level; dry corners stay
+## NAN. `ctx`/`region` are read during this call only — no reference to
+## either survives into the returned instance (chunk eviction frees them).
+static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int, nz: int) -> WaterSampler:
 	var s := WaterSampler.new()
-	s._origin = lattice.origin
+	s._origin = origin
 	s._step = step
-	s._nx = lattice.nx
-	s._nz = lattice.nz
+	s._nx = nx
+	s._nz = nz
 	s._h = PackedFloat32Array()
-	s._h.resize(s._nx * s._nz)
+	s._h.resize(nx * nz)
 	s._h.fill(NAN)
-	var kept: Dictionary = lattice.kept
-	for ij: Vector2i in kept:
-		var e: Dictionary = kept[ij]
-		s._h[ij.y * s._nx + ij.x] = e.y
+	for j in nz:
+		for i in nx:
+			var p: Vector2 = origin + Vector2(i, j) * step
+			var lvl: float = WaterField.level_at(ctx, p)
+			if lvl == -INF:
+				continue
+			var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			if lvl <= g + WET_EPS:
+				continue
+			s._h[j * nx + i] = lvl
 	return s
 
 
-## Bilinear height at world (x,z); NAN when any of the query's 4 surrounding
-## lattice corners is dry/unkept, or the point falls outside the chunk's own
-## snapshot entirely (see this file's header for the two NAN cases).
+## Water height at world (x,z); NAN when the field itself said dry here at
+## bake time, or the point falls outside this chunk's own snapshot entirely.
+## Mixed wet/dry cells renormalize the bilinear weights over the wet corners
+## only — the exact rule WaterField._fill_bilinear applies to its own -INF
+## corners (see this file's header PRECISION note); a fully-wet cell reduces
+## to plain bilinear (weights already sum to 1).
 func level_at(xz: Vector2) -> float:
 	var fx: float = (xz.x - _origin.x) / _step
 	var fz: float = (xz.y - _origin.y) / _step
-	var i0: int = int(floor(fx))
-	var j0: int = int(floor(fz))
-	if i0 < 0 or j0 < 0 or i0 + 1 >= _nx or j0 + 1 >= _nz:
+	if fx < 0.0 or fz < 0.0 or fx > float(_nx - 1) or fz > float(_nz - 1):
 		return NAN
-	var h00: float = _h[j0 * _nx + i0]
-	var h10: float = _h[j0 * _nx + i0 + 1]
-	var h01: float = _h[(j0 + 1) * _nx + i0]
-	var h11: float = _h[(j0 + 1) * _nx + i0 + 1]
-	if is_nan(h00) or is_nan(h10) or is_nan(h01) or is_nan(h11):
-		return NAN
+	var i0: int = mini(int(floor(fx)), _nx - 2)
+	var j0: int = mini(int(floor(fz)), _nz - 2)
 	var tx: float = fx - float(i0)
 	var tz: float = fz - float(j0)
-	return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), tz)
+	var corners := [
+		[i0, j0, (1.0 - tx) * (1.0 - tz)],
+		[i0 + 1, j0, tx * (1.0 - tz)],
+		[i0, j0 + 1, (1.0 - tx) * tz],
+		[i0 + 1, j0 + 1, tx * tz],
+	]
+	var wsum := 0.0
+	var acc := 0.0
+	for cnr: Array in corners:
+		var h: float = _h[cnr[1] * _nx + cnr[0]]
+		if is_nan(h):
+			continue
+		acc += h * cnr[2]
+		wsum += cnr[2]
+	if wsum <= 0.0:
+		return NAN
+	return acc / wsum
