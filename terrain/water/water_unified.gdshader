@@ -49,7 +49,10 @@ uniform float body_floor : hint_range(0.0, 1.0) = 0.12;
 // its own uniform (was a hardcoded 0.12 literal pre-Task-8) so the battery
 // pass can live-tune it same as every other clarity param.
 uniform float shallow_tint : hint_range(0.0, 1.0) = 0.10;
-uniform float refraction_strength : hint_range(0.0, 0.2) = 0.09;
+// 0.11 (R3-B, raised from 0.09 — Task 8 deliberately held this back until
+// the guard below was hardened: a stronger offset without the hardening
+// would have made the ghost worse, not just more visible).
+uniform float refraction_strength : hint_range(0.0, 0.2) = 0.11;
 // Animated wobble on the refraction offset only (never the lighting normal):
 // the see-through picture visibly swims like the reference, while the
 // surface itself stays matte-smooth.
@@ -64,6 +67,12 @@ uniform float wobble_speed : hint_range(0.0, 2.0) = 0.5;
 // at 0.07 too — soft pastel sheen wants a wider lobe).
 uniform float roughness : hint_range(0.0, 1.0) = 0.12;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
+// R3-B ghost fix (Task 1 verdict: REFRACTION): filter_nearest here was
+// checked against Task 1's mechanism lead (linear filtering interpolating
+// across the hat/water depth discontinuity) and confirmed already correct —
+// this uniform has carried filter_nearest since the very first refraction
+// commit (0dd49e2); depth values were never blended by this sampler. The
+// residual ghost lived entirely in the fragment() guard below.
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
 // Ripple simulation domain (WaterRippleSim feeds these each frame; the far
@@ -188,11 +197,25 @@ void fragment() {
 	vec2 suv = SCREEN_UV + roff;
 	// GRADED guard: fade the offset out where it lands on geometry ABOVE the
 	// surface (banks, the player) — a binary fallback drew a hard "lens edge"
-	// band along every shore (owner's round-5 artifact). Foreground geometry
-	// (nearer than this fragment) still rejects outright: ghost copies.
-	float ok = smoothstep(0.0, 0.3, water_depth_world(depth_texture, suv,
-			INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y));
-	if (water_view_z(depth_texture, suv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.05) {
+	// band along every shore (owner's round-5 artifact). That graded ramp is
+	// for genuinely BELOW-surface depth fading ONLY (0..0.3m shallow reads);
+	// R3-B ghost fix (Task 1 verdict: REFRACTION, see progress.md "RUN 3 —
+	// Task 1"): an ABOVE-surface sample must never enter the ramp even
+	// fractionally, so test the unclamped signed height explicitly instead
+	// of relying on water_depth_world's max(...,0.0) landing exactly on
+	// smoothstep's zero (a silhouette-adjacent depth read at the character's
+	// edge could nudge that clamped value into a tiny positive "depth" and
+	// leak a sliver of them through — the hat ghost).
+	float suv_h = water_signed_height_world(depth_texture, suv,
+			INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
+	float ok = suv_h < 0.0 ? 0.0 : smoothstep(0.0, 0.3, suv_h);
+	// Foreground geometry (nearer than this fragment) still rejects outright:
+	// ghost copies. Margin widened +0.05 -> +0.35 (R3-B): the tight margin
+	// only vetoed samples unambiguously nearer than the water, leaving
+	// silhouette-adjacent reads (nearer by a few cm, inside the old
+	// tolerance) to fall through to the height check above at exactly the
+	// pixels most likely to carry ambiguous, AA-softened depth.
+	if (water_view_z(depth_texture, suv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.35) {
 		ok = 0.0;
 	}
 	suv = mix(SCREEN_UV, suv, ok);
