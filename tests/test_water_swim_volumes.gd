@@ -264,3 +264,48 @@ func test_sampler_covers_the_shoreline_band() -> void:
 	assert_true(offenders.is_empty(),
 		"every band point's sampler reading is within 0.1 of WaterField.level_at: %s" % str(offenders))
 	root.free()
+
+
+## Task 7 live-gate follow-up (coordinator's "Defect A" oracle): the sampler
+## must never report a level the FIELD does not itself report at the same
+## (x,z) — pinned at the exact steep-face-adjacent points from the live
+## evidence (the I1 chute at (53,-1083.9) and its neighbourhood down the
+## 9.7 -> 5.7 cascade step). HONESTY NOTE (probe evidence, r3-task-7-report.md
+## concern resolution 2): this oracle was NEVER red — the prescribed
+## "sampler bleeds across steep faces" mechanism was unreproducible, because
+## the sampler's corner values are point-samples of WaterField.level_at and
+## its interpolation mirrors _fill_bilinear's own (guard-free since Phase 2a;
+## the old FILL_JUMP constant no longer exists). Measured divergence at every
+## probed chute point: 0.0000 — the 9.700 the live gate saw IS level_at's own
+## answer there (the hydrostatic fill floods the face at the upstream level;
+## wet()=true). The phantom-depth defect is therefore a TRIGGER-shape issue,
+## fixed by the tile level-spread gate (see test_water_skin.gd::
+## test_no_trigger_where_unswimmably_steep's site stanza); this test stays as
+## the permanent guarantee that the sampler itself never ADDS divergence on
+## top of the field near a chute.
+func test_sampler_matches_the_field_at_the_chute() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var skin: Dictionary = WaterSkin.build(water, SITE_CHUNK, region)
+	assert_false(skin.is_empty(), "site chunk builds (precondition)")
+	var sampler: WaterSampler = skin.sampler
+	var checked := 0
+	var offenders: Array = []
+	for p: Vector2 in [Vector2(53.0, -1083.9), Vector2(53.0, -1085.0), Vector2(53.0, -1087.0),
+			Vector2(53.0, -1082.5), Vector2(51.0, -1084.0), Vector2(57.0, -1084.0),
+			Vector2(53.0, -1090.0), Vector2(54.0, -1092.0)]:
+		var truth: float = WaterField.level_at(ctx, p)
+		var got: float = sampler.level_at(p)
+		if truth == -INF:
+			assert_true(is_nan(got), "field-dry chute point %s must read NaN from the sampler" % p)
+			continue
+		checked += 1
+		var err: float = absf(got - truth) if not is_nan(got) else INF
+		if err > 0.3 and offenders.size() < 8:
+			offenders.append("p=%s got=%s truth=%.4f" % [p, ("NaN" if is_nan(got) else "%.4f" % got), truth])
+	print("MEAS test_sampler_matches_the_field_at_the_chute: %d wet chute points checked, %d offenders" % [
+		checked, offenders.size()])
+	assert_true(checked >= 5, "the chute probe points are genuinely field-wet (%d)" % checked)
+	assert_true(offenders.is_empty(),
+		"the sampler tracks WaterField.level_at within 0.3 at every steep-face-adjacent point: %s" % str(offenders))

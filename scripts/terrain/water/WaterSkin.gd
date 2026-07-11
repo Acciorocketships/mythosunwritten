@@ -91,6 +91,34 @@ const TRIGGER_BOTTOM_CLEAR := 5.0
 # per-24m-CELL steep gate (r3 Task 7's own straggler grep is why the old
 # class name doesn't appear in this comment — only the math is unchanged).
 const STEEP_UNSWIMMABLE := 0.45
+# Second, INDEPENDENT trigger gate (Task 7 live-gate fix, "Defect B"): max
+# spread of WaterField.level_at across one tile's own wet footprint (dense
+# 3m scan, see _tile_level_spread). Catches the phantom-depth class the
+# grade gate above structurally CANNOT: a cascade-step tile — one whose
+# footprint straddles two reaches (e.g. the pinned site's 9.7 reach stepping
+# to its 5.7 pool at the I1 chute) — carries fill water at the UPPER reach's
+# level over the face between them (the hydrostatic fill's downhill-or-level
+# relaxation floods a face whose ground sits below the upper level, and the
+# lower reach can never spread uphill to reclaim it), i.e. up to the full
+# inter-reach step of phantom standing depth over what renders as a thin
+# film. |grade_at| on such faces is exactly FALL_DROP_MIN/TRACE_STEP = 0.3333
+# at the pinned site — AT the legal-reach ceiling, permanently below the
+# 0.45 gate, no matter how densely sampled (measured: dense 3m grid and all
+# 94 built verts of the I1 tile agree, 0.3333). The LEVEL spread separates
+# the two cases cleanly because the hydrostatic fill is FLAT per reach:
+# measured across every trigger-candidate tile of the pinned site chunk,
+# single-reach tiles read spread 0.000 (even the sloped-looking ones) while
+# cascade-step tiles read the full step (2.7 / 4.0). 2.0 sits between with
+# real margin on both sides, and is deliberately the codebase's historical
+# "two different water bodies, not one slope" level-step order (the old
+# fill-lattice jump constant carried exactly this value for exactly this
+# meaning before Phase 2a retired its blending role). TRADE-OFF, disclosed:
+# a suppressed tile loses its trigger WHOLESALE — including any swimmable
+# pool fraction inside it (the pinned site: 6 of 25 tiles, the cascade
+# steps). Safe direction (never phantom-swim; a character wades/falls
+# through un-triggered water), matches "steep water is unswimmable by
+# design", and r3 Task 9's parity work re-visits classification wholesale.
+const TRIGGER_LEVEL_SPREAD_MAX := 2.0
 
 # --- Meniscus rim (Task 5) — brief's own literal per-point profile, local
 # frame (outward normal n, level L, ground g): row0 = the strip's own curve
@@ -1201,9 +1229,43 @@ static func _triggers(st: Dictionary) -> Array:
 		var e: Dictionary = cells[cell]
 		if e.max_grade > STEEP_UNSWIMMABLE:
 			continue   # steep water: no trigger, unswimmable by design
+		if _tile_level_spread(st, cell) > TRIGGER_LEVEL_SPREAD_MAX:
+			continue   # cascade-step tile: phantom fill depth over its face, no trigger
 		out.append({
 			"rect": Rect2(Vector2(cell) * TILE, Vector2.ONE * TILE),
 			"top": e.top + TRIGGER_TOP_CLEAR,
 			"bottom": e.bottom - TRIGGER_BOTTOM_CLEAR,
 		})
 	return out
+
+
+## Max spread of WaterField.level_at over one 24m tile's own wet footprint,
+## sampled on a dense 9x9 (3m) grid across the tile bbox — the input to the
+## TRIGGER_LEVEL_SPREAD_MAX gate (see that constant's own derivation +
+## trade-off note). "Wet" here is level > ground with NO epsilon: the
+## phantom band this gate exists to find IS fill water standing barely-to-
+## deeply over a face, and excluding thin readings would blind the gate to
+## its own target's edges. Samples the FIELD directly (not built verts) so
+## a face that contributed no mesh vertex to this tile still counts —
+## deterministic, independent of where the mesh happened to keep points.
+## Returns 0.0 for a tile with fewer than two wet samples (nothing to
+## spread). Cost: 81 level_at + surface_y reads per candidate tile, against
+## the already-cached fill lattice, once per chunk build on the worker
+## thread (Task 11 perf-pass item, same bucket as the per-vertex grade_at
+## reads above).
+static func _tile_level_spread(st: Dictionary, cell: Vector2i) -> float:
+	var lo: Vector2 = Vector2(cell) * TILE
+	var step: float = TILE / 8.0
+	var lmin := INF
+	var lmax := -INF
+	for jj in 9:
+		for ii in 9:
+			var p: Vector2 = lo + Vector2(ii, jj) * step
+			var lvl: float = WaterField.level_at(st.ctx, p)
+			if lvl == -INF:
+				continue
+			if lvl <= TerrainSurfaceField.surface_y(st.region, p.x, p.y):
+				continue
+			lmin = minf(lmin, lvl)
+			lmax = maxf(lmax, lvl)
+	return (lmax - lmin) if lmax > lmin else 0.0

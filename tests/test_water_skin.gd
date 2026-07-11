@@ -877,3 +877,46 @@ func test_no_trigger_where_unswimmably_steep() -> void:
 		"steep tile (grade 4.0 >> 0.45) gets no trigger box at all")
 	assert_true(by_cell.has(Vector2i(4, 0)),
 		"calm control tile still gets a trigger — the gate is selective, not indiscriminate")
+
+	# --- Task 7 live-gate finding (Defect B, coordinator's in-game evidence at
+	# HEAD 08cdff6): the SITE CHUNK's own cascade-step tile (2,-46) — world
+	# x in [48,72), z in [-1104,-1080), containing the I1 chute face where the
+	# 9.7 reach steps down to the 5.7 pool — carried a trigger whose sampler
+	# read 9.700 at the film point (53, -1083.9), i.e. 2.48m of phantom swim
+	# depth over a ~0.3m film (ground 7.21). The grade gate above CANNOT catch
+	# this tile: its max |grade_at| is exactly 0.3333 (= FALL_DROP_MIN /
+	# TRACE_STEP, the legal-reach ceiling — measured over all 94 built verts
+	# AND over a dense 3m grid; the site's falls sit exactly AT the legal
+	# ceiling, below the 0.45 gate, by construction). The discriminating
+	# signal is the tile's wet-LEVEL spread: the hydrostatic fill is FLAT per
+	# reach, so a single-reach tile measures spread ~0.000 (verified across
+	# every trigger tile on this chunk) while a tile straddling a cascade
+	# step measures the full inter-reach step (4.0 here) — see
+	# WaterSkin.TRIGGER_LEVEL_SPREAD_MAX. RED against the pre-fix gate (this
+	# tile had a trigger; transcript in r3-task-7-report.md concern
+	# resolution 2), GREEN with the spread gate.
+	var site_water: WaterPlan = _water(SEED)
+	var site_region = _region(SEED, SITE_CHUNK)
+	var site_skin: Dictionary = WaterSkin.build(site_water, SITE_CHUNK, site_region)
+	assert_false(site_skin.is_empty(), "site chunk builds (precondition)")
+	var film := Vector2(53.0, -1083.9)
+	var chute_cell := Vector2i(2, -46)
+	var chute_trigger := false
+	var film_covered := false
+	var site_tiles := 0
+	for t: Dictionary in site_skin.triggers:
+		site_tiles += 1
+		var rect: Rect2 = t.rect
+		var t_cell := Vector2i(int(round(rect.position.x / WaterSkin.TILE)),
+			int(round(rect.position.y / WaterSkin.TILE)))
+		if t_cell == chute_cell:
+			chute_trigger = true
+		if rect.has_point(film):
+			film_covered = true
+	print("MEAS test_no_trigger_where_unswimmably_steep: site chunk emits %d tiles; chute tile (2,-46) trigger=%s, film point covered=%s" % [
+		site_tiles, chute_trigger, film_covered])
+	assert_true(site_tiles > 0, "site chunk still emits real triggers (the gate is not suppressing everything)")
+	assert_false(chute_trigger,
+		"the cascade-step tile (2,-46) gets NO trigger — its face carries phantom fill depth (level 9.7 over ground ~7.2)")
+	assert_false(film_covered,
+		"no trigger footprint covers the I1 film point (53,-1083.9) — a character standing there must read dry, matching run 2's verified live behaviour")
