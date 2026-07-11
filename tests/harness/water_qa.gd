@@ -94,7 +94,7 @@ func _run() -> void:
 		await get_tree().create_timer(1.8).timeout
 		_shot(s[0] + "_b")
 	# Waterfall slab close-up: the falling look is baked into the ONE
-	# WaterSheet mesh now (steep attribute band, see WaterMesher._attributes /
+	# WaterSheet mesh now (steep attribute band, see WaterSkin._custom0 /
 	# water_unified.gdshader) — there is no separate curtain node left to
 	# query, so "find the fall" means "find the WaterSheet whose AABB actually
 	# covers the known plunge site," and the shot anchor is that fixed world

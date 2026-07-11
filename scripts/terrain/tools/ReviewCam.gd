@@ -17,14 +17,23 @@ extends Object
 
 const DIST := 8.0
 const HEIGHT := 5.0
-# skirt_debug's STEEP threshold: CUSTOM0's `steep` float (see
-# WaterMesher._attributes) is clampf(grade*8, 0, 0.85) — saturated at 0.85
-# means grade >= ~0.106, and every cell WaterMesher gates out of swim volumes
-# entirely (STEEP_UNSWIMMABLE, WaterMesher.gd — the only reason a sheet
-# vertex has no volume under it besides real skirt) sits at that same 0.85
-# ceiling on every one of its faces. 0.84 catches the saturated value with a
-# hair of float slop. See skirt_debug's own docstring.
-const STEEP_ATTR_THRESHOLD := 0.84
+# skirt_debug's STEEP threshold — r3 Task 7 CUSTOM0 migration. The mesh's
+# CUSTOM0 layout changed at Task 6 from (flow.x, shore, flow.y, steep) to
+# (s, d, slope, shore_dist); this threshold used to read the old `steep`
+# lane (index 3), which is GONE — under the new layout, index 3 is
+# shore_dist (0..8m), and reading it as a steepness signal would misclassify
+# nearly every nearby vertex as STEEP. Index 2 (slope) is the real steepness
+# signal now: the nearest-trace profile slope at that vertex's own projected
+# point (WaterSkin._flow_frame_at). The trigger-box gate itself
+# (WaterSkin._triggers) suppresses a whole 24m TILE's trigger on max
+# |grade_at| > STEEP_UNSWIMMABLE (0.45, WaterSkin.gd) — that constant's own
+# docstring derives the legal (non-fall, swimmable) reach ceiling as
+# FALL_DROP_MIN/TRACE_STEP = 0.3333; 0.35 sits just past that same ceiling,
+# so a vertex whose own baked slope already clears it is reading the SAME
+# "steeper than any ordinary swimmable reach" signal the trigger gate uses,
+# read off CUSTOM0 instead of a fresh WaterField.grade_at call. See
+# skirt_debug's own docstring.
+const STEEP_ATTR_THRESHOLD := 0.35
 
 
 ## The orbit-camera position whose centre ray (toward the player origin)
@@ -82,26 +91,27 @@ static func _flat(c: Color) -> StandardMaterial3D:
 
 ## Isolate the SKIRT from the pools (owner's definition: "the thin piece of
 ## water that sits on the edge of a pool to connect it to the land"). A
-## sheet vertex with NO swim volume under its column is either SKIRT (the
-## land-connecting film) or STEEP (a fall/chute face — WaterMesher's
-## STEEP_UNSWIMMABLE gate deliberately gives these cells no volume at all,
-## see WaterMesher._attributes; that is expected, not a false "skirt"). The
-## two are told apart by the mesh's own baked CUSTOM0 `steep` attribute
-## (flow.x, shore, flow.y, steep — see WaterMesher._attributes/commit):
-## saturated (>= STEEP_ATTR_THRESHOLD) means this vertex belongs to a cell
-## the gate rejected, so it is classed STEEP even though it has no volume
-## below it. volumes still span exactly every wet, SWIMMABLE cell, so
-## "no volume AND not steep" is the actual land-connecting film. The probe
-## point sits just above the physics ground so a volume is hit whenever one
-## exists at any height. Skirt triangles render as a flat red unshaded
-## overlay, steep triangles as a flat blue one; the pools keep their normal
-## look. Visible skirt vertices print as `SKIRT` log lines, visible steep
-## vertices as `STEEP` log lines (both: position, ground height, proud
-## metres — buried film is skipped in the log but still drawn, terrain
-## occludes it); log_pool=true also prints deduped `POOL` lines for
-## side-by-side reading. Returns the visible skirt vertex count only (STEEP
-## verts are expected-absent-volume, not skirt, and are excluded — read the
-## printed summary line for the steep count). Run from a godot-MCP eval
+## sheet vertex with NO swim trigger under its column is either SKIRT (the
+## land-connecting film) or STEEP (a fall/chute face — WaterSkin's own
+## STEEP_UNSWIMMABLE gate deliberately gives these tiles no trigger at all,
+## see WaterSkin._triggers; that is expected, not a false "skirt"). The two
+## are told apart by the mesh's own baked CUSTOM0 `slope` lane (index 2 of
+## (s, d, slope, shore_dist) — see WaterSkin._custom0/_flow_frame_at):
+## past STEEP_ATTR_THRESHOLD means this vertex reads a slope steeper than
+## any ordinary swimmable reach, so it is classed STEEP even though it has
+## no trigger below it. Triggers still span exactly every wet, SWIMMABLE
+## tile, so "no trigger AND not steep" is the actual land-connecting film.
+## The probe point sits just above the physics ground so a trigger is hit
+## whenever one exists at any height. Skirt triangles render as a flat red
+## unshaded overlay, steep triangles as a flat blue one; the pools keep
+## their normal look. Visible skirt vertices print as `SKIRT` log lines,
+## visible steep vertices as `STEEP` log lines (both: position, ground
+## height, proud metres — buried film is skipped in the log but still
+## drawn, terrain occludes it); log_pool=true also prints deduped `POOL`
+## lines for side-by-side reading. Returns the visible skirt vertex count
+## only (STEEP verts are expected-absent-trigger, not skirt, and are
+## excluded — read the printed summary line for the steep count). Run from
+## a godot-MCP eval
 ## while the game is running:
 ##   var RC = load("res://scripts/terrain/tools/ReviewCam.gd")
 ##   RC.skirt_debug(Vector3(33.9, 8.0, -1097.4), 40.0)
@@ -125,17 +135,17 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 	var st_steep := SurfaceTool.new()
 	st_steep.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var steep_tris: int = 0
-	# cls values: 0 = pool (volume present), 1 = skirt (no volume, not steep),
-	# 2 = steep (no volume, CUSTOM0 steep attribute saturated — expected).
+	# cls values: 0 = pool (trigger present), 1 = skirt (no trigger, not steep),
+	# 2 = steep (no trigger, CUSTOM0 slope lane past threshold — expected).
 	for mi: MeshInstance3D in root.find_children("WaterSheet", "MeshInstance3D", true, false):
 		var aabb: AABB = mi.global_transform * mi.get_aabb()
 		if aabb.position.distance_to(center) - aabb.size.length() > radius:
 			continue
 		var arrays: Array = mi.mesh.surface_get_arrays(0)
 		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-		# CUSTOM0 (see WaterMesher.commit): a flat PackedFloat32Array, 4 floats
-		# per vertex in the SAME index space as ARRAY_VERTEX — (flow.x, shore,
-		# flow.y, steep), steep is float index 3 of each vertex's group of 4.
+		# CUSTOM0 (see WaterSkin._custom0): a flat PackedFloat32Array, 4 floats
+		# per vertex in the SAME index space as ARRAY_VERTEX — (s, d, slope,
+		# shore_dist); slope is float index 2 of each vertex's group of 4.
 		var custom0: PackedFloat32Array = arrays[Mesh.ARRAY_CUSTOM0]
 		# The boundary mesh is INDEXED; legacy soups have no index buffer.
 		var midx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
@@ -178,8 +188,8 @@ static func skirt_debug(center: Vector3, radius: float, log_pool := false) -> in
 					if over_water:
 						cls = 0
 					else:
-						var steep_attr: float = custom0[vidx * 4 + 3]
-						cls = 2 if steep_attr >= STEEP_ATTR_THRESHOLD else 1
+						var slope_attr: float = custom0[vidx * 4 + 2]
+						cls = 2 if slope_attr > STEEP_ATTR_THRESHOLD else 1
 					seen[key] = cls
 					if cls == 1:
 						if p.y > ground - 0.05:

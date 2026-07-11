@@ -180,7 +180,7 @@ void fragment() {
 	// same continuous sheet, not a separate ogee mesh/material
 	// (waterfall.gdshader is retired) — the look is carried entirely by this
 	// steepness-driven blend instead. `steep` is defensively re-clamped here
-	// even though WaterMesher._attributes already clamps its own bake
+	// even though the mesh builder already clamps its own bake
 	// (0..0.85 ordinarily, 0..1 in the plunge band) — the shader must not
 	// assume every CUSTOM0.w it is ever handed stays in range.
 	float steep = clamp(steep_v, 0.0, 1.0);
@@ -206,11 +206,12 @@ void fragment() {
 	// with steepness — no branch/threshold discontinuity, just another
 	// smoothstep term blended in alongside (a) and the plunge churn below.
 	foam += 0.5 * smoothstep(0.45, 0.9, steep) * mix(0.3, 1.0, film);
-	// (c) PLUNGE CHURN: the builder bakes steep_v to 1 in a band along fall
-	// landing lines, now re-keyed on WaterField.steep_spans' own lip/base
-	// bands instead of the retired cut records (see WaterMesher._attributes'
-	// Phase 2b docstring) — rapids corner-averaging never reaches 1, so 0.9+
-	// is still the plunge signature. NOT flow-gated — plunge pools are calm
+	// (c) PLUNGE CHURN: the (now-retired, pending the Task 8 shader rebuild —
+	// see r3-task-6-report.md's own note on this exact CUSTOM0 mismatch) mesh
+	// builder used to bake steep_v to 1 in a band along fall landing lines,
+	// keyed on WaterField.steep_spans' own lip/base bands — rapids
+	// corner-averaging never reaches 1, so 0.9+ is still the plunge
+	// signature. NOT flow-gated — plunge pools are calm
 	// reaches. A drifting boil pattern carries the fall's white base out
 	// into the pool, so falling water hands off to churning water instead
 	// of ending at a line (owner: "texture/simulation continuous over all

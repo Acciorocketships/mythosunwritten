@@ -230,7 +230,26 @@ func _update_in_water() -> void:
 			continue
 		var sy: float = INF
 		var contained := false
-		if collider.has_meta("surface_c"):
+		if collider.has_meta("sampler"):
+			# TEMP bridge until r3 Task 9 (river-train mirror + parity test):
+			# the new trigger boxes (r3 Task 7) carry a frozen WaterSampler
+			# instead of a sampled-plane meta pair (the elif branch right
+			# below, kept untouched for any legacy volume) — read the exact
+			# water height at this point straight from it. NAN means this
+			# precise (x,z) sits outside the sampler's own kept footprint
+			# (e.g. within the shoreline band the interior lattice doesn't
+			# cover — see WaterSampler.gd's own precision note) even though
+			# the coarser trigger box says "maybe wet somewhere in this
+			# tile" — treated as not contained here, same as any other miss;
+			# `contained` stays false and the shared check below skips this
+			# hit exactly as it already does for every other non-containing
+			# case.
+			var sampler: WaterSampler = collider.get_meta("sampler")
+			var lvl: float = sampler.level_at(Vector2(global_position.x, global_position.z))
+			if not is_nan(lvl):
+				sy = lvl
+				contained = probe_y <= sy + swell + 0.45
+		elif collider.has_meta("surface_c"):
 			var c: Vector3 = collider.get_meta("surface_c")
 			var g: Vector2 = collider.get_meta("surface_g")
 			sy = c.y + g.dot(Vector2(global_position.x - c.x, global_position.z - c.z))

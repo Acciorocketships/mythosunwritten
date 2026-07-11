@@ -142,23 +142,31 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
     level winning wherever two spreads meet, rasterized on a 6m world-space lattice with a
     30m margin around each chunk — so the waterline follows a real terrain contour instead
     of stopping at a fixed claim radius. Pure and deterministic — no rendering, no nodes.
-  - `WaterMesher` — a **boundary-conforming** sheet: marching squares over a 3m sub-grid on
-    `f(x,z) = level(x,z) - ground(x,z)`. Interior cells emit welded grid quads; boundary
-    cells emit contour polygons whose edge vertices sit ON the waterline (never a cell-grid
-    rectangle), so coastlines read as smooth curves and bank cells quantized just under the
-    level render as real shore water. The whole chunk is ONE welded mesh — no fall cuts, no
-    split upstream/downstream pieces — and every free edge grows a buried hem
-    unconditionally, so no edge is ever left hanging in mid-air over the terrain. Per-vertex
-    CUSTOM0 bakes `(flow.x, shore, flow.y, steep)`; `steep` is the level gradient (clamped),
-    boosted near a `steep_spans()` plunge base so the mesh itself hints at a drop before the
-    shader's own blend takes over. A cell whose own max grade exceeds
-    `STEEP_UNSWIMMABLE` gets **no swim volume at all** — a steep fall face is not swimmable
-    water, so a character falls/slides through it rather than floats; every other wet cell
-    gets exactly one.
-  `WaterSurfaceBuilder` is a thin adapter: `build_chunk` calls `WaterMesher.build`/`commit`
-  and emits one `Area3D` swim volume per wet-cell surface entry (never more than one — the
-  steep gate above means a cell either has one volume or none). It also still owns the
-  shared `ShaderMaterial` and the river-trace `surface_profile`/`steepness_profile` helpers.
+  - `WaterSkin` — the ONE mesh builder (the old marching-squares mesher is retired, r3 Task
+    7; its own boundary was raw ~45-90° grid corners). `WaterContour.curves()` turns the
+    level/ground presence grid into smooth, chunk-welded G1 polylines first; `WaterSkin`
+    then welds a 3m world-aligned interior lattice to a boundary strip that sits directly ON
+    those curves, plus a meniscus rim that curls the strip's own edge down and outward into
+    a buried seal under the terrain — every free edge is accounted for (a chunk border, or
+    the rim's own buried outer row), so no edge is ever left hanging in mid-air over the
+    terrain. Per-vertex CUSTOM0 bakes `(s, d, slope, shore_dist)` — arc length / signed
+    cross-channel distance / continuous profile slope along the nearest river trace, plus
+    shore distance — and vertex normals are real (heightfield-derived interior, rim-curl
+    frame on the meniscus), not a blanket up vector. `WaterSkin.build()` also returns
+    `triggers` (one box per 24m wet tile, footprint from the mesh's own built vertices; a
+    tile whose own max grade exceeds `STEEP_UNSWIMMABLE` gets **no trigger at all** — a
+    steep fall face is not swimmable water, so a character falls/slides through it rather
+    than floats) and a single frozen `WaterSampler` snapshot of the chunk's own interior
+    lattice for swim-depth queries.
+  `WaterSurfaceBuilder` is a thin adapter: `build_chunk` calls `WaterSkin.build`/`commit`
+  and emits one `Area3D` swim trigger per `triggers` entry (never more than one per tile —
+  the steep gate above means a tile either has one trigger or none), each carrying
+  `set_meta("sampler", sampler)` so a probe anywhere inside reads its exact water height
+  from that one shared, chunk-frozen sampler instead of a per-cell plane. It also still owns
+  the shared `ShaderMaterial` and the river-trace `surface_profile`/`steepness_profile`
+  helpers. (This section still omits `WaterContour`'s own six-step curve pipeline and
+  `WaterSkin`'s flow-frame/normal machinery in detail — a fuller doc-sync pass is a
+  follow-up, not this task's own scope.)
   `water_unified.gdshader` is the ONLY water shader and renders still, flowing, AND falling
   water from the one baked `steep` attribute × depth — no separate waterfall shader or
   swept mesh exists any more, the falling look is a blend on the one sheet material: a

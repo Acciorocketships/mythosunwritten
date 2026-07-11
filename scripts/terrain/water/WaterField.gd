@@ -83,7 +83,7 @@ const _EASE_BAND := 2.0       # metres of (ground-hug - smooth-trend) level gap 
 # level_at's existing bilinear (_fill_bilinear) already interpolates at
 # whatever FILL_STEP is configured, so no other code changed — only these
 # constants. Both timings are in the Phase 1 report.
-const FILL_STEP := 6.0        # coarsened from 3.0 (WaterMesher.S) — see PERF above
+const FILL_STEP := 6.0        # coarsened from 3.0 (the mesh's own lattice step) — see PERF above
 const _FILL_MARGIN_WORLD := 30.0   # fixed world-space margin, independent of FILL_STEP
 const FILL_MARGIN := int(_FILL_MARGIN_WORLD / FILL_STEP)   # margin in FILL_STEP cells
 const FILL_N := int(TILE * 8.0 / FILL_STEP)   # chunk lattice cells per side at FILL_STEP
@@ -396,7 +396,7 @@ static func _relax_fill(region, base: Vector2, m1: int,
 ## trace with no HeightfieldRegion) fall back to the OLD instant bed-chase
 ## (lvl = min(lvl, raw_i) with no terrain walk) — there is no ground to hug,
 ## so the only sound behaviour is the plain monotone chase. Every real
-## production caller (ctx() with a region, WaterMesher.build) always passes
+## production caller (ctx() with a region, WaterSkin.build) always passes
 ## one.
 ##
 ## C1 fix (final-review-run2.md Critical 1): a `region` that carries a real
@@ -727,9 +727,10 @@ static func flow_at(c: Dictionary, p: Vector2) -> Vector2:
 ## no cut left to probe "across" (a gradient over a real fall face is now a
 ## perfectly well-defined, and meaningful, large number: exactly the signal
 ## a future steep-look shader keys foam/scroll off, per the plan's Phase 2
-## shader item). grade_at is unbounded on purpose; callers that need a
-## display-safe range (WaterMesher._attributes' `steep` attribute) already
-## clamp it themselves.
+## shader item). grade_at is unbounded on purpose; r3 Task 7's own caller
+## (WaterSkin._triggers' STEEP_UNSWIMMABLE gate) reads it raw as a magnitude
+## threshold, not a display value — any FUTURE caller that needs a
+## display-safe range is responsible for clamping it itself.
 static func grade_at(c: Dictionary, p: Vector2) -> float:
 	var cl: Array = _claim(c, p)
 	if cl.is_empty():
@@ -947,12 +948,11 @@ static func steep_spans(c: Dictionary, rect: Rect2) -> Array:
 			var top_lvl: float = _sample_level(tr, seg_i, p, region)
 			var bot_lvl: float = _sample_level(tr, walk.seg_of[hi], base_pos, region)
 			# base_p (Phase 2b addition): the world position at the span's own
-			# base/plunge end — exposed alongside `p` (the lip) so a
-			# shader-baking consumer (WaterMesher._attributes' plunge-churn
-			# band) can measure "near the base" directly instead of "far
-			# downstream of the lip," which for a tall span is not the same
-			# distance at all. Purely additive: no existing reader
-			# destructures this dict positionally.
+			# base/plunge end — exposed alongside `p` (the lip) so a future
+			# shader/mist-baking consumer can measure "near the base"
+			# directly instead of "far downstream of the lip," which for a
+			# tall span is not the same distance at all. Purely additive: no
+			# existing reader destructures this dict positionally.
 			out.append({"p": p, "dir": dirv, "across": Vector2(-dirv.y, dirv.x),
 				"half": tr.widths[seg_i] + CLAIM_FEATHER,
 				"top": maxf(top_lvl, bot_lvl), "bottom": minf(top_lvl, bot_lvl),

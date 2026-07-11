@@ -1,23 +1,23 @@
 # scripts/terrain/water/WaterSurfaceBuilder.gd
 # Thin adapter over the water pipeline: WaterField computes the per-cell
-# water field; the SHEET mesh comes from WaterSkin (r3 Task 4 — interior
-# lattice + boundary strip conforming to WaterContour's smooth curves), with
-# WaterMesher's marching-squares sheet as the defensive fallback until Task 7
-# deletes it; swim VOLUMES still come from WaterMesher's wet_cells until the
-# same task migrates them to sampler-backed triggers. Phase 2b: falls are no
-# longer a separate swept mesh (FallMesher.gd is deleted) — the sheet shader
-# itself blends a continuous falling-look into the one water_unified.gdshader
-# material, keyed on the mesh's own baked steepness attribute. This class
-# owns the one shared sheet material, the river-trace profile helpers other
+# water field; WaterContour turns its wet/dry boundary into smooth curves
+# (r3 Task 3); WaterSkin welds those curves to an interior lattice + a
+# meniscus rim into the one rendered SHEET (r3 Task 4-6) and bakes its own
+# trigger footprints + a frozen WaterSampler snapshot (r3 Task 7 — the old
+# marching-squares mesher, its fallback sheet path, and the per-cell
+# sampled-plane volumes it used to build are all deleted; see that task's
+# report for the removal). Falls are not a separate swept mesh — the sheet
+# shader blends a continuous falling-look into the one water_unified.gdshader
+# material, keyed on the mesh's own baked CUSTOM0 attributes. This class owns
+# the one shared sheet material, the river-trace profile helpers other
 # callers still read (surface_profile/steepness_profile — pure functions of
 # a RiverTrace, used by WaterPlan tests and the review-spot tool), and
 # build_chunk, which wires the pieces into one Node3D: a MeshInstance3D for
-# the sheet, and one Area3D per wet-cell surface entry (swim volumes). Built
-# beside each terrain chunk and parented under it (evicts together).
+# the sheet, and one Area3D per trigger (swim triggers). Built beside each
+# terrain chunk and parented under it (evicts together).
 class_name WaterSurfaceBuilder
 extends RefCounted
 
-const TILE := 24.0
 const RIBBON_DEPTH_OFFSET := 1.5      # river surface above its carved bed
 const STOREY := 4.0                   # = HeightfieldPlan.STOREY_HEIGHT
 const FLOOR_CLEARANCE := 0.8          # river surface above the QUANTIZED floor estimate
@@ -92,55 +92,45 @@ static func sheet_material() -> ShaderMaterial:
 
 
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
-## is the chunk's heightfield region (the streamer computes it for the mesher
-## and shares it here — the water field must see the REAL rendered terrain).
-## SHEET (r3 Task 4): WaterSkin — interior 3m lattice + a boundary strip
-## conforming to WaterContour's smooth curves, so the waterline renders as
-## a real curve instead of WaterMesher's marching-squares corners. When the
-## skin returns empty despite the mesher building (defensive: a chunk whose
-## water never produces a contour curve), the old WaterMesher sheet is the
-## fallback — that whole fallback path AND the mesher itself are deleted at
-## Task 7, not before (plan docs/superpowers/plans/
-## 2026-07-10-water-continuous-surface.md).
-## SWIM VOLUMES: still WaterMesher's wet_cells (one Area3D per wet-cell
-## SURFACE entry carrying the sampled surface plane metas — Task 10's
-## contract); they migrate to WaterSkin's sampler-backed triggers at Task 7.
-## Until then BOTH builders run per wet chunk — an accepted interim cost
-## (each shares the profile/trace caches; the double ctx() build is the real
-## overhead, gone at Task 7 with the mesher).
+## is the chunk's heightfield region (the streamer computes it and shares it
+## here — the water field must see the REAL rendered terrain).
+## SHEET (r3 Task 4-6): WaterSkin — interior 3m lattice + a boundary strip
+## conforming to WaterContour's smooth curves + a meniscus rim, so the
+## waterline renders as a real curve with no bare edge.
+## TRIGGERS (r3 Task 7): one Area3D per WaterSkin.build's own `triggers`
+## entry (one per 24m wet tile; steep tiles excluded — see
+## WaterSkin.STEEP_UNSWIMMABLE), each carrying set_meta("sampler", sampler)
+## — a single frozen WaterSampler shared by every trigger this chunk emits
+## (WaterSkin.build's own `sampler` return value). A character probe reads
+## the exact water height at its own (x,z) from that sampler instead of a
+## per-cell sampled plane; see WaterSampler.gd and characters/character.gd's
+## own bridge comment in _update_in_water.
 func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
-	var m: Dictionary = WaterMesher.build(water, chunk, region)
-	if m.is_empty():
+	var skin: Dictionary = WaterSkin.build(water, chunk, region)
+	if skin.is_empty():
 		return null
 	var root := Node3D.new()
 	root.name = "Water"
 	var mi := MeshInstance3D.new()
 	mi.name = "WaterSheet"
-	var skin: Dictionary = WaterSkin.build(water, chunk, region)
-	mi.mesh = WaterSkin.commit(skin.arrays) if not skin.is_empty() else WaterMesher.commit(m)
+	mi.mesh = WaterSkin.commit(skin.arrays)
 	mi.material_override = WaterSurfaceBuilder.sheet_material()
 	root.add_child(mi)
-	for cell: Vector2i in m.wet_cells:
-		# One Area3D per wet_cells entry — always exactly one per cell now
-		# (Phase 2b: no stacked upper/lower split; steep cells have no entry
-		# at all, see WaterMesher._attributes' STEEP_UNSWIMMABLE gate).
-		for wc: Dictionary in m.wet_cells[cell]:
-			var area := Area3D.new()
-			area.collision_layer = 1 << 7
-			area.collision_mask = 0
-			var shape := CollisionShape3D.new()
-			var box := BoxShape3D.new()
-			var top: float = wc.lvl + 1.7
-			# Floor reaches the cell's lowest ground minus clearance (half-cell
-			# ramps dip below the centre ground).
-			var bottom: float = wc.gnd_lo - 5.0
-			box.size = Vector3(TILE, top - bottom, TILE)
-			shape.shape = box
-			area.add_child(shape)
-			area.position = Vector3((float(cell.x) + 0.5) * TILE,
-				(top + bottom) * 0.5, (float(cell.y) + 0.5) * TILE)
-			area.set_meta("surface_c", Vector3((float(cell.x) + 0.5) * TILE,
-				wc.lvl, (float(cell.y) + 0.5) * TILE))
-			area.set_meta("surface_g", wc.grad)
-			root.add_child(area)
+	var sampler: WaterSampler = skin.sampler
+	for trig: Dictionary in skin.triggers:
+		var area := Area3D.new()
+		area.collision_layer = 1 << 7
+		area.collision_mask = 0
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		var rect: Rect2 = trig.rect
+		var top: float = trig.top
+		var bottom: float = trig.bottom
+		box.size = Vector3(rect.size.x, top - bottom, rect.size.y)
+		shape.shape = box
+		area.add_child(shape)
+		area.position = Vector3(rect.position.x + rect.size.x * 0.5,
+			(top + bottom) * 0.5, rect.position.y + rect.size.y * 0.5)
+		area.set_meta("sampler", sampler)
+		root.add_child(area)
 	return root

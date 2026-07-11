@@ -2,17 +2,17 @@ extends GutTest
 
 # r3-task-2 (plan docs/superpowers/plans/2026-07-10-water-continuous-surface.md,
 # brief .superpowers/sdd/r3-task-2-brief.md) recorded the RED evidence that the
-# pre-WaterContour boundary (WaterMesher's own perimeter-walk marching squares
-# on a 3m sub-grid) produces angular, grid-quantized corners: max_turn_deg
-# (raw, all corners) = 90.00 at SITE_CHUNK, isolated skip-guard active,
-# transcript preserved in .superpowers/sdd/r3-task-2-report.md ("Red run
-# transcript" section — 9 offending corners, 45-90 degree turns, all on the
-# OLD WaterMesher.build() boundary). r3-task-3 (.superpowers/sdd/
+# pre-WaterContour boundary (the old marching-squares mesher's own
+# perimeter-walk on a 3m sub-grid) produces angular, grid-quantized corners:
+# max_turn_deg (raw, all corners) = 90.00 at SITE_CHUNK, isolated skip-guard
+# active, transcript preserved in .superpowers/sdd/r3-task-2-report.md ("Red
+# run transcript" section — 9 offending corners, 45-90 degree turns, all on
+# the OLD mesher's own boundary). r3-task-3 (.superpowers/sdd/
 # r3-task-3-brief.md) is what makes this GREEN: WaterContour.curves() now
 # EXISTS and replaces the boundary source entirely — this file's
 # test_pond_yields_smooth_closed_curve below is the direct GREEN half of that
 # red-green pair, measuring the NEW curve's own turn angle instead of walking
-# WaterMesher's free edges (the old _sheet_free_edges/_chain_edges/_is_wall
+# the old mesher's free edges (the old _sheet_free_edges/_chain_edges/_is_wall
 # mesh-walking helpers this file used to carry are gone: WaterContour.curves()
 # supplies pts/wall/normals directly, so there is no mesh to walk any more).
 
@@ -56,8 +56,8 @@ static func _rect(chunk: Vector2i) -> Rect2:
 ## own single-outward-normal wall probe — NOT as the primary wall source
 ## (the curve's own flag is; see _curve_turn_stats). Rise is measured
 ## relative to the point's own water level, the same anchor Task 2's
-## _is_wall used (a mesh boundary vert's v.y rides the water level, per
-## WaterMesher._edge_vert's own docstring). MAX over 8 directions at both
+## _is_wall used (a mesh boundary vert's v.y rides the water level, the old
+## mesher's own boundary-vertex convention). MAX over 8 directions at both
 ## probe distances is the most GENEROUS wall reading: a point only reads
 ## non-wall here if EVERY direction around it is gentle — so
 ## formula-wall && !ring-wall is a structural impossibility for a correct

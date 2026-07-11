@@ -1,13 +1,14 @@
 # Waterline -> smooth, chunk-welded curves. Pure function of (ctx, rect); no
 # nodes, no mesh. Consumed by WaterSkin (plan Task 4+): the boundary a mesher
 # stitches into a conforming strip must be a small set of clean G1 polylines,
-# not the raw ~45-90 degree marching-squares corners WaterMesher's own
-# perimeter walk produces (see tests/test_water_contour.gd's red evidence,
+# not the raw ~45-90 degree marching-squares corners the old mesher's own
+# perimeter walk produced (see tests/test_water_contour.gd's red evidence,
 # .superpowers/sdd/r3-task-2-report.md). Six-step pipeline (brief's own
 # numbering, .superpowers/sdd/r3-task-3-brief.md):
 #   1. presence grid (STEP=3.0) over rect.grow(MARGIN)
 #   2. per-edge crossing refinement (3 bisection steps against the REAL
-#      fields, not the coarse grid — same discipline as WaterMesher._edge_vert)
+#      fields, not the coarse grid — same discipline the old mesher's own
+#      edge-vertex bisection used)
 #   3. chain crossings into polylines (marching-squares-style per-cell
 #      segment extraction, then position-keyed chaining)
 #   4. two Chaikin passes + uniform 1.5m resample
@@ -36,8 +37,8 @@ const _WELD_EPS := 0.01       # position-key rounding for chaining segment endpo
 
 
 ## Ground height at p (thin wrapper kept local so every field read in this
-## file goes through one name — mirrors WaterField.gd/WaterMesher.gd's own
-## per-file `_ground`-style helpers rather than repeating the ctx.region
+## file goes through one name — mirrors this codebase's own per-file
+## `_ground`-style helper convention rather than repeating the ctx.region
 ## destructure at every call site).
 static func _ground(ctx: Dictionary, p: Vector2) -> float:
 	return TerrainSurfaceField.surface_y(ctx.region, p.x, p.y)
@@ -61,7 +62,7 @@ static func _is_wet(ctx: Dictionary, p: Vector2) -> bool:
 ##   wall: PackedByteArray        # 1 where local ground slope across the line > WALL_SLOPE
 ##   closed: bool
 ## ctx MUST carry a region (WaterField.ctx(water, chunk, region)) — ground()
-## reads ctx.region directly, same requirement WaterMesher.build's own ctx has.
+## reads ctx.region directly, same requirement every production ctx caller has.
 static func curves(ctx: Dictionary, rect: Rect2) -> Array:
 	var grown: Rect2 = rect.grow(MARGIN)
 	var segments: Array = _presence_segments(ctx, grown)
@@ -89,7 +90,7 @@ static func curves(ctx: Dictionary, rect: Rect2) -> Array:
 ##
 ## One "segment" is a single waterline stroke through one grid cell (its two
 ## endpoints are refined edge-crossings, see _refine_crossing), exactly
-## mirroring WaterMesher._mesh_cell's own corner/edge classification but
+## mirroring the old mesher's own per-cell corner/edge classification but
 ## emitting a boundary STROKE instead of a triangulated wet polygon — the
 ## saddle tie-break (opposite-corner wet, centre sample decides
 ## joined/split) is copied verbatim from that function for the same reason
@@ -169,8 +170,8 @@ static func _presence_segments(ctx: Dictionary, grown: Rect2) -> Array:
 ## width (3.0 -> 1.5 -> 0.75 -> 0.375), matching the brief's "1.5 m -> 0.4 m
 ## resolution" sequence. `lo` (the last verified-wet parameter, loop
 ## invariant) is returned so the crossing always sits marginally on the wet
-## side, same convention WaterMesher._edge_vert uses for its own waterline
-## vertex.
+## side, the same convention the old mesher's own edge-vertex bisection
+## used for its own waterline vertex.
 static func _refine_crossing(ctx: Dictionary, origin: Vector2, a: Vector2i, b: Vector2i) -> Vector2:
 	var pa: Vector2 = origin + Vector2(a) * STEP
 	var pb: Vector2 = origin + Vector2(b) * STEP
@@ -195,11 +196,11 @@ static func _refine_crossing(ctx: Dictionary, origin: Vector2, a: Vector2i, b: V
 
 ## --- Step 3: chain segments into polylines ---
 ##
-## Segments are position pairs, not indices (unlike WaterMesher, which welds
-## into one shared vertex buffer) — chaining keys on a rounded position
-## string, the same "quantize a float position into a dictionary key"
-## pattern WaterMesher._hem_vert already uses for its own weld pass
-## (pos_key), reused here because two segments from adjacent cells share
+## Segments are position pairs, not indices (unlike a welded mesh's own
+## shared vertex buffer) — chaining keys on a rounded position string, the
+## same "quantize a float position into a dictionary key" pattern this
+## codebase's own weld passes already use elsewhere (pos_key-style), reused
+## here because two segments from adjacent cells share
 ## their crossing point only up to float rounding, never bit-exact from two
 ## independent bisection walks starting at different cell corners.
 static func _pos_key(p: Vector2) -> String:

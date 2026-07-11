@@ -135,7 +135,7 @@ func test_level_continuous_along_the_site_channel() -> void:
 ## is deliberately the pre-Phase-2a behaviour, not a second copy of the new
 ## continuity guarantee (see profile()'s own region-optional docstring
 ## note). Not a regression: no production caller ever builds a river ctx
-## without a region (WaterMesher.build/build_chunk always pass one).
+## without a region (WaterSkin.build/build_chunk always pass one).
 func test_level_continuous_without_region_keeps_old_jumps() -> void:
 	var water: WaterPlan = _water(SEED)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK)
@@ -374,7 +374,7 @@ func test_flow_and_grade() -> void:
 # finding, not a bug in the oracle.
 # ============================================================================
 
-const _LATTICE_STEP := 3.0   # matches WaterMesher.S — the mesh's own resolution
+const _LATTICE_STEP := 3.0   # matches WaterSkin.STEP — the mesh's own resolution
 
 
 ## test_no_dry_holes_inside_water (H3/H4, I3/I4): for every lattice sample S
@@ -492,60 +492,59 @@ func _segment_envelope_level(tr: RiverTrace, region, nearest_i: int, p: Vector2)
 ## the ground within 1.5m rises above the level (a wall — a legitimate
 ## non-contour edge). A vertex that is neither is a claim-radius cut
 ## floating over ground it has no hydrological relationship to.
-## Original (pre-Phase-2a) predicted red site: I2's flood-extension
-## boundary. Phase 0/1 traced this test's ACTUAL red site to something
-## different and narrower: 100% of the (32, later 28) violating vertices
-## sat on the site's ONE fall-cut's own lip/base line (H1's bed-quantization
-## false-cliff) — because WaterMesher._hem (unmodified, out of scope this
-## phase — see the plan's Mesher/2b section) hems EVERY non-border free
-## edge except the two whose ENDPOINTS both sit near a recorded cut
-## (WaterMesher._near_cut); hemming welds a second triangle onto that edge
-## via the shared (a,b) diagonal (_hem's own [a,hb,b] quad), which makes it
-## no longer a FREE edge at all once hemmed — so in this mesh's structure,
-## the cut's own lip/base line was, and is, the ONLY category of
-## non-border free edge that was ever un-hemmed and thus checkable by this
-## test in the first place (verified directly: every one of the ORIGINAL
-## code's 32 checked vertices sits at z=-1088.91, y in {5.7, 13.7} — the
-## exact recorded cut's own top/bottom, not "the shoreline" generally).
-## Phase 2a (H1 fixed): the site's steep_spans()/fall_cuts() shim returned
-## ZERO spans (see test_steep_spans_empty_at_the_site) — there was no cut
-## left anywhere on this chunk, so `checked` was legitimately, structurally
-## 0 AT THAT PHASE (nothing left to hem-exempt, since nothing was near a
-## nonexistent cut) — treated as an explicit pass at the time (matching the
-## same empty-case convention test_steep_spans_empty_at_the_site and the
-## now-deleted test_cuts_only_at_big_drops used for "nothing to check on
-## this seed"). Phase 2b superseded that specific "checked==0" outcome: with
-## WaterMesher._near_cut ALSO fully deleted (no cut exemption left at all —
-## every non-border free edge is hemmed unconditionally now, see
-## WaterMesher._hem's own docstring), the free-edge accounting itself
-## changed shape and `checked` is now genuinely, non-vacuously non-zero
-## (verified this task: test_shoreline_hugs_terrain_contour, the new
-## hem-independent field-level oracle this same task adds, finds 325 real
-## shoreline crossings with 0 violations) — the `checked == 0` branch below
-## is left in place (harmless, still a valid empty-case fallback for any
-## future dry seed/chunk) but is no longer the branch this test's own site
-## actually exercises. The strict per-vertex check below still runs in full
-## and un-weakened whenever checked > 0 (any seed/chunk that DOES carry a
-## real fall — this site included, now — is still held to the exact
-## original standard). See .superpowers/sdd/h-task-2a-report.md and
-## h-task-2b-report.md for the full investigation (this is the direct
-## analogue of the Phase 1 report's OWN documented, un-fudged tension on
-## this exact test).
+## History (condensed; see .superpowers/sdd/h-task-2a-report.md and
+## h-task-2b-report.md for the full investigation): this test predates the
+## current mesh entirely. Through Phase 2a/2b of the prior run, `checked`
+## went from "32 vertices, all on one fall-cut's own lip/base line" (the
+## ONLY category of non-border free edge the mesher of that era ever left
+## un-hemmed) to genuinely, non-vacuously non-zero once that era's mesher
+## started hemming EVERY non-border free edge unconditionally — confirmed
+## independently by test_shoreline_hugs_terrain_contour below (a
+## hem-independent field-level oracle that finds 325 real shoreline
+## crossings with 0 violations on this same site).
+## r3 Task 7 PORT: the old marching-squares mesher this test originally read
+## (build/free_edges) is deleted this task; the SAME structural property is
+## now checked against WaterSkin.build's own arrays. WaterSkin's meniscus rim
+## (Task 5) is at least as strict as the old hem — it buries EVERY non-border
+## free edge unconditionally too (see
+## test_water_skin.gd::test_free_edges_only_buried_rim_or_border, the
+## dedicated non-vacuous oracle for that exact invariant on the current
+## pipeline, structurally 0 offenders there). First guess was that `checked`
+## would therefore again read 0 here, like the old mesher's hem-era empty
+## case — WRONG, verified directly (a standalone headless probe reproducing
+## this test's own loop): `checked` is 40, not 0. Root cause: this test's own
+## buried-skip is a value comparison (`v.y < g - 0.3`), while WaterSkin's
+## own rim row3 vertex is `y = min(L - 0.30, g3 - 0.30)` sampled at the
+## row3 point's OWN offset xz (g3, not g at the CURVE point) — for any
+## genuinely wet curve point (L > g), the ground-anchored branch wins
+## (`g3 - 0.30 < L - 0.30`), so row3 lands EXACTLY on `g3 - 0.30`;
+## re-sampling ground at that SAME (v.x, v.z) here reproduces `g3` bit-for-
+## bit, so `v.y == g - 0.3` EXACTLY — a tie the strict `<` skip does not
+## catch (by one ULP of "not less than", not by a wide margin). Those 40
+## verts fall through to the main check instead of being skipped, but still
+## correctly read `absf(v.y - g) == 0.30 <= 0.6` — a real, if boundary-case,
+## PASS through the "rides the real terrain" branch, not a bug: row3 IS
+## genuinely 0.3m off the ground it was built from, so the contour check's
+## own verdict is right regardless of which branch found it. The `checked
+## == 0` fallback is kept (harmless, a valid empty-case guard for any future
+## dry seed/chunk) but is not what THIS site exercises any more.
 func test_waterline_is_a_terrain_contour() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
-	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
-	assert_false(m.is_empty(), "site chunk builds water")
+	var skin: Dictionary = WaterSkin.build(water, SITE_CHUNK, region)
+	assert_false(skin.is_empty(), "site chunk builds water")
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var idx: PackedInt32Array = skin.arrays[Mesh.ARRAY_INDEX]
 	var checked := 0
 	var violations := 0
 	var offenders: Array = []
-	for e: Array in WaterMesher.free_edges(m.verts, m.idx):
+	for e: Array in _free_edges_vi(verts, idx):
 		for v: Vector3 in e:
 			if _on_chunk_border_f(v):
 				continue
 			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
 			if v.y < g - 0.3:
-				continue   # buried hem rim — not a waterline vertex
+				continue   # buried rim — not a waterline vertex
 			checked += 1
 			if absf(v.y - g) <= 0.6:
 				continue   # rides the real terrain: a true contour
@@ -566,12 +565,34 @@ func test_waterline_is_a_terrain_contour() -> void:
 			violations += 1
 			if offenders.size() < 5:
 				offenders.append("v=%s ground=%.2f diff=%.2f (no nearby wall)" % [v, g, v.y - g])
+	print("MEAS test_waterline_is_a_terrain_contour: %d checked, %d violations" % [checked, violations])
 	if checked == 0:
-		pass_test("no non-hemmed shoreline vertices at all: zero cuts on this chunk (H1 fixed) means nothing was ever exempted from the hem, and nothing exempted means nothing left that could float over a false cliff — see this test's own docstring")
+		pass_test("no non-hemmed shoreline vertices at all: WaterSkin's meniscus rim hems every non-border free edge unconditionally, so nothing is ever exempted and nothing exempted means nothing left that could float over a false cliff — see this test's own docstring")
 		return
 	assert_eq(violations, 0,
 		"%d boundary verts are neither a terrain contour nor a wall edge (e.g. %s)" % [
 			violations, offenders])
+
+
+## Edges used by exactly one triangle — ported from the old (now deleted, r3
+## Task 7) marching-squares mesher's own free_edges oracle, verts/idx-shaped
+## to match this file's own locals with a minimal diff against the
+## pre-Task-7 test body above.
+func _free_edges_vi(verts: PackedVector3Array, idx: PackedInt32Array) -> Array:
+	var count: Dictionary = {}
+	var tri: int = 0
+	while tri < idx.size():
+		for k in 3:
+			var a: int = idx[tri + k]
+			var b: int = idx[tri + (k + 1) % 3]
+			var key := Vector2i(mini(a, b), maxi(a, b))
+			count[key] = count.get(key, 0) + 1
+		tri += 3
+	var out: Array = []
+	for key: Vector2i in count:
+		if count[key] == 1:
+			out.append([verts[key.x], verts[key.y]])
+	return out
 
 
 ## NEW oracle (Phase 2a, red-first-style — trivially green at the site,
@@ -625,14 +646,15 @@ func test_no_steep_span_without_terrain_drop() -> void:
 
 ## Phase 2b coverage-restoration oracle (reviewer-mandated, run BEFORE any
 ## Phase 2b mesher/shader/volume/character change — see this task's brief):
-## a HEM-INDEPENDENT shoreline check against the FIELD itself, not mesh
-## topology. test_waterline_is_a_terrain_contour (above) reads WaterMesher's
-## free edges, so its coverage lives or dies with WaterMesher._hem's own
-## exemption rules (structurally 0 non-border free edges to check on this
-## seed post-H1, as that test's own docstring documents at length) — this
-## oracle instead walks WaterField.level_at directly on a fine (1.5m, half
-## WaterMesher.S) lattice independent of any mesh, so it has real teeth
-## regardless of what the mesher's hem does or doesn't exempt.
+## a MESH-INDEPENDENT shoreline check against the FIELD itself, not mesh
+## topology. test_waterline_is_a_terrain_contour (above) reads the mesh's own
+## free edges, so its coverage lives or dies with whatever that mesh's own
+## rim/hem exemption rules leave un-buried (structurally 0 non-border free
+## edges to check on this seed, as that test's own docstring documents at
+## length) — this oracle instead walks WaterField.level_at directly on a
+## fine (1.5m, half the mesh's own 3.0m lattice step) lattice independent of
+## any mesh, so it has real teeth regardless of what the mesh's own rim does
+## or doesn't exempt.
 ##
 ## Method: walk every lattice ROW (fixed z, x varying) and every lattice
 ## COLUMN (fixed x, z varying) covering the site chunk's own 192x192 span at
@@ -640,8 +662,8 @@ func test_no_steep_span_without_terrain_drop() -> void:
 ## shore crossings in both principal directions, since a pure row-walk alone
 ## would miss a shoreline that runs exactly along x). At every WET -> DRY (or
 ## DRY -> WET) sign change of level_at along one of these lines, bisect
-## (20 passes, matching WaterMesher._edge_vert's own bisection depth) between
-## the wet and dry samples until the crossing is pinned to <= 0.4m, using
+## (20 passes — see _bisect_shore's own docstring for the depth derivation)
+## between the wet and dry samples until the crossing is pinned to <= 0.4m, using
 ## `wet(p) := level_at(p) > -INF and level_at(p) > surface_y(p) + EPS` as the
 ## sign function (the same wetness predicate WaterField.wet itself uses) so
 ## the crossing found is a genuine WATERLINE (level crosses ground), not just
@@ -747,11 +769,11 @@ func _walk_line_for_shore(ctx: Dictionary, region, coords: Array, cross: float, 
 ## or (cross, prev_c) and (cross, c) (column) to <= 0.4m, using
 ## WaterField.wet as the sign function (the same predicate the line walk
 ## itself uses, so the bisection agrees with what found the crossing).
-## 20 passes matches WaterMesher._edge_vert's own bisection depth (that
-## function halves its interval every pass regardless of the interval's
-## initial width, so 20 passes comfortably clears 0.4m from a 1.5m start:
-## 1.5 / 2^20 is far below 0.4m; the loop below still exits early once the
-## interval itself narrows under 0.4m, so it never over-iterates).
+## 20 passes: a plain binary search halves its interval every pass
+## regardless of the interval's initial width, so 20 passes comfortably
+## clears 0.4m from a 1.5m start: 1.5 / 2^20 is far below 0.4m; the loop
+## below still exits early once the interval itself narrows under 0.4m, so
+## it never over-iterates.
 func _bisect_shore(ctx: Dictionary, region, prev_c: float, c: float, cross: float,
 		is_row: bool, prev_wet: bool) -> float:
 	var lo: float = prev_c if prev_wet else c   # lo is always the WET end
@@ -772,7 +794,7 @@ func _bisect_shore(ctx: Dictionary, region, prev_c: float, c: float, cross: floa
 ## requirement, controller amendment 2): the fill runs on a BOUNDED lattice
 ## per ctx (chunk + FILL_MARGIN cells of margin — see WaterField.FILL_MARGIN)
 ## rather than over the whole world at once, so two neighbouring chunks each
-## build their OWN independent fill window. Seam identity (WaterMesher's own
+## build their OWN independent fill window. Seam identity (the mesh's own
 ## chunk-seam weld) depends on both windows agreeing BIT-EXACTLY on any
 ## world point both windows cover — if they didn't, adjacent chunks' meshes
 ## would visibly crack at the border. This is guaranteed by construction
@@ -1070,152 +1092,3 @@ func _on_chunk_border_f(v: Vector3) -> bool:
 	return lx < 0.01 or lx > span - 0.01 or lz < 0.01 or lz > span - 0.01
 
 
-# ============================================================================
-# h-task-4 diagnosis oracle (.superpowers/sdd/h-task-4-brief.md, I4 "strangely
-# missing water" wedge at a wall inside a pool). Fix-independent — written
-# against the issue definition, no knowledge of any fix — must be RED at HEAD.
-#
-# INSTRUMENT-FIRST VERDICT (recorded per the brief's mandate, decided BEFORE
-# committing to this oracle's final shape — see this task's own report for
-# the full grid dump and the reinvestigation this section documents):
-#
-# H-A's specific mechanism (the fill's 6m lattice ground memo landing on a
-# FICTIONAL wall/ridge that the true, finer-grained collision ground does not
-# have) is FALSIFIED at this site. Exhaustively verified four independent
-# ways — this task's own headless dumps (fill-lattice memo_ground, mesher's
-# own 3m subgrid via TerrainSurfaceField.surface_y, a full triangle-centroid
-# dump of WaterMesher.build's output), a background agent's LIVE in-game
-# triple-check (mesh-vertex dump + physics raycast scan + wide-area scan),
-# and a second independent background agent's from-scratch reproduction
-# (headless probe + live raycast after teleporting to the owner's exact
-# coordinate) — all four agree: 24m terrain cell (cx=1, cz=-46), world
-# x∈[24,36) z∈[-1104,-1080), is a GENUINE, correctly-classified cliff top
-# (storey=2, h=8.0, uncarved, TerrainSurfaceField._is_cliff_top=true), flat
-# at exactly 8.0 for the WHOLE x<36 sub-range at these z values, with a hard
-# vertical step to ~2-4m at the real cell boundary x=36.0 — matching the
-# fill's own memo_ground exactly (both read TerrainSurfaceField.surface_y at
-# the same points and agree bit-for-bit). There is no fictional wall; the
-# wall is real, and the fill/mesher both already know it correctly (dry
-# rendering there is CORRECT — H-B's first clause). The specific "1.71 /
-# 1.13 / 0.00" collision-ground figures in the brief's evidence section for
-# x=35.2/34.5/31.0 could not be reproduced by either investigation; the
-# reproducible evidence points to a methodology mix-up in the prior
-# evidence-gathering pass (see progress.md's "RUN 2 — CORRECTION" entry) —
-# most likely WaterField.level_at's own bilinear fill-lattice VALUE (which
-# genuinely does read ~3.0 there via harmless-on-its-own bleed across the
-# coarse lattice, since wet()'s ground-gate correctly suppresses it) misread
-# as a terrain-collision raycast.
-#
-# FIRST DRAFT OF THIS ORACLE (superseded, kept in this comment as the
-# reinvestigation trail the brief's own red-first mandate requires): a literal
-# "dry sample under a wet_cells plane reading > 0.5m above its own ground"
-# check, walking the site's full 3m subgrid, went GREEN at HEAD (0
-# violations) — per the brief's own "if it does not fail, your understanding
-# is wrong" rule, this was a signal to reinvestigate, not a green light to
-# proceed. A full-chunk scan of every (true field-depth class) vs (wet_cells
-# plane-depth class) pair confirms WHY: this site has ZERO dry→swim
-# transitions anywhere (the plane never claims water over land the mesher
-# renders dry — the cliff top's real ground, 8.0m, is simply too high for any
-# neighbouring cell's plane to reach). So "dry pocket under a wet plane" is
-# not a real defect class on this seed; forcing the oracle to find one here
-# would misdiagnose the fix.
-#
-# What the SAME scan DOES find, 84 times across the chunk including AT the
-# owner's own reported site: wade→swim and swim→wade misclassifications
-# WITHIN genuinely wet water. At (36.0, -1107.0) — one cell-row over from the
-# owner's exact stand point, same cell — the field's true depth is 0.76m
-# (WADING: shallow, at/under the character's own 0.8 swim-enter threshold),
-# but wet_cells' single linear plane for that 24m cell reads 1.44m there
-# (confidently SWIMMING) — a real depth-doubling, not a rounding fuzz. This
-# is H-B's second clause made precise: "the volume/classification is still
-# wrong" — not because the volume paints water over land the mesh shows dry,
-# but because ONE flat/linear plane per 24m cell cannot represent the field's
-# true (non-linear, sub-cell) surface curvature near a cell edge, and the
-# owner's own site sits exactly in that error band. This is also the
-# mechanism test_water_swim_volumes.gd's own
-# test_volume_surface_matches_field_at_probe_points already documents in
-# general ("one flat plane per 24m cell can diverge from the true local level
-# near a cell edge") — this oracle is the first to show it flipping an actual
-# swim/wade/dry CLASSIFICATION, not just a numeric plane-vs-field gap.
-#
-# The chosen test name (test_no_dry_pocket_below_adjacent_water_level, per
-# the brief) is kept, but its BODY checks the mechanism the reinvestigation
-# actually found: no wet_cells-plane-driven classification may read "more
-# submerged" (swim where the field says wade/dry, or wade where the field
-# says dry) than the field's own true depth at that point — the volume must
-# never promise a character MORE water than genuinely exists under their
-# feet. "dry pocket below adjacent water level" is the right description of
-# the DEFECT CLASS (a spot that reads wetter than it should relative to its
-# neighbours' honest water), even though the concrete mechanism here is
-# plane-depth-inflation rather than a mesh coverage hole.
-const _SUBGRID_STEP := 3.0   # == WaterMesher.S
-const _SWIM_ENTER := 0.8     # character.gd's own swim ENTER depth gate
-const _WADE_ENTER := 0.05    # character.gd's own wading ENTER depth gate
-
-
-## True depth class at p using WaterField's own true level_at (character.gd's
-## ENTER thresholds — this oracle deliberately uses ENTER, not the
-## hysteretic EXIT band, since it is comparing two static classifications,
-## not modelling frame-to-frame state).
-func _depth_class(depth: float) -> String:
-	if depth > _SWIM_ENTER:
-		return "swim"
-	if depth > _WADE_ENTER:
-		return "wade"
-	return "dry"
-
-
-## test_no_dry_pocket_below_adjacent_water_level (I4): walks the mesher's own
-## 3m subgrid over the site chunk. At every point inside a wet_cells entry's
-## 24m footprint, compares the FIELD's true depth class (WaterField.level_at
-## minus real ground) against the class a character probing that same
-## wet_cells entry's own SAMPLED PLANE (the exact character.gd/
-## WaterSurfaceBuilder formula: c.y + g.dot(p - c)) would read. Flags any
-## point where the plane reads a STRICTLY WETTER class than the field's own
-## truth (dry->wade, dry->swim, or wade->swim) — the volume promising a
-## character more water than genuinely exists under their feet, whether that
-## shows up as land reading wet (a coverage hole) or shallow water reading
-## deep (a plane-slope error) — both are the same owner-visible defect: swim
-## controls where the ground truth doesn't support them. Predicted red site:
-## I4, (36.0, -1107.0) and neighbours — true depth 0.76 (wade) vs plane depth
-## 1.44 (swim), one cell-row from the owner's own (36.4, 3.2, -1108.7).
-func test_no_dry_pocket_below_adjacent_water_level() -> void:
-	var water: WaterPlan = _water(SEED)
-	var region = _region(SEED, SITE_CHUNK)
-	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
-	var m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
-	assert_false(m.is_empty(), "site chunk builds water")
-	var wet_cells: Dictionary = m.wet_cells
-	var base: Vector2 = Vector2(SITE_CHUNK) * (WaterField.TILE * 8.0)
-	var n: int = int(WaterField.TILE * 8.0 / _SUBGRID_STEP)
-	var order := {"dry": 0, "wade": 1, "swim": 2}
-	var violations := 0
-	var checked := 0
-	var offenders: Array = []
-	for j in range(0, n + 1):
-		for i in range(0, n + 1):
-			var p: Vector2 = base + Vector2(i, j) * _SUBGRID_STEP
-			var cell: Vector2i = Vector2i(int(floor(p.x / WaterField.TILE)),
-				int(floor(p.y / WaterField.TILE)))
-			if not wet_cells.has(cell):
-				continue
-			var ground: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
-			var true_lvl: float = WaterField.level_at(ctx, p)
-			var true_depth: float = (true_lvl - ground) if true_lvl > -INF else -999.0
-			var true_class: String = _depth_class(true_depth)
-			for wc: Dictionary in wet_cells[cell]:
-				checked += 1
-				var cell_centre: Vector2 = (Vector2(cell) + Vector2(0.5, 0.5)) * WaterField.TILE
-				var plane_y: float = wc.lvl + wc.grad.dot(p - cell_centre)
-				var plane_depth: float = plane_y - ground
-				var plane_class: String = _depth_class(plane_depth)
-				if order[plane_class] > order[true_class]:
-					violations += 1
-					if offenders.size() < 10:
-						offenders.append("p=%s ground=%.2f true_depth=%.2f(%s) plane_depth=%.2f(%s) cell=%s" % [
-							p, ground, true_depth, true_class, plane_depth, plane_class, cell])
-	print("test_no_dry_pocket_below_adjacent_water_level: %d violations (of %d wet_cells-covered subgrid samples checked)" % [
-		violations, checked])
-	assert_eq(violations, 0,
-		"%d samples read a WETTER depth class from their wet_cells plane than the field's own true depth supports (e.g. %s)" % [
-			violations, offenders])

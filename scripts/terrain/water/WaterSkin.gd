@@ -1,6 +1,6 @@
 # A boundary-conforming water sheet whose outer rim sits directly on
-# WaterContour's smooth curves (Task 3), not on WaterMesher's own
-# marching-squares grid corners — this is the mesh that actually fixes the
+# WaterContour's smooth curves (Task 3), not on the old marching-squares
+# mesher's own grid corners — this is the mesh that actually fixes the
 # angular shoreline test_water_contour.gd's header documents. Two vertex
 # families welded into one indexed surface:
 #   - INTERIOR: a 3.0m world-aligned lattice, kept only at points >= 2.0m
@@ -53,6 +53,18 @@
 # normals for verts that weld together (a parallel normal_accum array, summed
 # on every weld hit, normalized once at the end by _bake_normals) instead of
 # picking whichever call site happened to create the vertex first.
+# TRIGGERS + SAMPLER (Task 7, see _triggers/WaterSampler.gd): build() now
+# returns a REAL `sampler` (a frozen WaterSampler snapshot of this chunk's
+# own interior lattice — see WaterSampler.build's own docstring on why it is
+# built from that data specifically) instead of Task 4-6's `null`
+# placeholder. `_triggers` gained the STEEP_UNSWIMMABLE gate the old
+# marching-squares mesher's own volume builder used to enforce per 24m
+# CELL: a tile whose max |grade_at| exceeds the gate gets no trigger box at
+# all (steep water is not swimmable by design). This is the class's own
+# terminal deliverable — WaterSurfaceBuilder.build_chunk now consumes
+# `triggers`/`sampler` directly and the old mesher (and the per-cell sampled
+# plane pair of metas it used to hang off each volume) is deleted outright;
+# see r3 Task 7's report for the removal.
 class_name WaterSkin
 extends Object
 
@@ -61,9 +73,23 @@ const INSET := 2.0            # brief's own "points >= 2.0m inside a curve"
 const BUCKET := 3.0           # presence-grid bucket size for nearest-curve-point acceleration
 const WELD_Q := 64.0          # position-quantize scale for the shared vertex weld (brief: "y*64")
 const WELD_XZ_Q := 100.0      # 1cm horizontal precision — finer than WELD_Q since strip verts must weld exactly
-const TILE := 24.0            # trigger tiling — matches WaterMesher.TILE / WaterSurfaceBuilder.TILE
+const TILE := 24.0            # trigger tiling — matches WaterField.TILE
 const TRIGGER_TOP_CLEAR := 1.7
 const TRIGGER_BOTTOM_CLEAR := 5.0
+# Max |grade_at| a wet TILE may carry and still get a trigger box. grade_at
+# is a secant over one TRACE_STEP=12m river-trace segment (WaterField.gd);
+# the legal ceiling for an ordinary (non-fall) reach is FALL_DROP_MIN/
+# TRACE_STEP = 4.0/12.0 = 0.3333 — anything steeper is already classified a
+# fall face by WaterField's own FALL_DROP_MIN rule, so no legitimate
+# swimmable reach can secant above ~0.333. True fall faces plunge far
+# harder, producing secants of ~0.5 or more. 0.45 sits between the two with
+# margin on both sides: comfortably above the legal-reach ceiling (no
+# swimmable water gets gated by accident) and comfortably below real fall
+# secants (no fall face slips through and gets a trigger). Ported verbatim
+# (constant + rationale) from the retired marching-squares mesher's own
+# per-24m-CELL steep gate (r3 Task 7's own straggler grep is why the old
+# class name doesn't appear in this comment — only the math is unchanged).
+const STEEP_UNSWIMMABLE := 0.45
 
 # --- Meniscus rim (Task 5) — brief's own literal per-point profile, local
 # frame (outward normal n, level L, ground g): row0 = the strip's own curve
@@ -137,11 +163,13 @@ const RIM_NORMAL_ANGLE3 := PI * 13.0 / 36.0   # 65 deg — row3, buried seal (in
 ## build(water, chunk, region) -> {} when dry, else:
 ##   arrays: Array           # Mesh.ARRAY_MAX arrays, indexed, welded (VERTEX/NORMAL/INDEX/CUSTOM0)
 ##   triggers: Array[Dictionary]  # {rect: Rect2, top: float, bottom: float}
-##   sampler: WaterSampler   # Task 7 deliverable — null until then (interface is forward-declared
-##                           # by the plan's own Produces contract; this task's own checklist
-##                           # tests arrays/tri-count/free-edges/interior-height only, never sampler)
-## chunk is a 192m streamer chunk (site (0,-6)) — same convention
-## WaterMesher.build's own `base := Vector2(chunk.x, chunk.y) * (TILE * 8.0)` uses (plan erratum,
+##   sampler: WaterSampler   # r3 Task 7: a frozen snapshot of this chunk's own interior
+##                           # lattice (see WaterSampler.build) — every trigger Area3D this
+##                           # build feeds WaterSurfaceBuilder.build_chunk shares this ONE
+##                           # instance via set_meta("sampler", sampler).
+## chunk is a 192m streamer chunk (site (0,-6)) — same convention this
+## codebase's water pipeline uses everywhere (see e.g. WaterField.ctx's own
+## `base := Vector2(chunk.x, chunk.y) * (TILE * 8.0) - ...` calc; plan erratum,
 ## docs/superpowers/plans/2026-07-10-water-continuous-surface.md).
 static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	var ctx: Dictionary = WaterField.ctx(water, chunk, region)
@@ -187,7 +215,8 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	arrays[Mesh.ARRAY_NORMAL] = _bake_normals(st)
 	arrays[Mesh.ARRAY_CUSTOM0] = _custom0(st)
 
-	return {"arrays": arrays, "triggers": _triggers(st), "sampler": null}
+	var sampler := WaterSampler.build(lattice, STEP)
+	return {"arrays": arrays, "triggers": _triggers(st), "sampler": sampler}
 
 
 ## Per-vertex CUSTOM0 = (s, d, slope, shore_dist) — Task 6's flow-frame bake,
@@ -517,9 +546,8 @@ static func _bake_normals(st: Dictionary) -> PackedVector3Array:
 	return out
 
 
-## Assembles the committed ArrayMesh from build()'s own `arrays` — the same
-## surface format WaterMesher.commit produces (CUSTOM0 as RGBA float), so the
-## one shared sheet material reads either mesh identically.
+## Assembles the committed ArrayMesh from build()'s own `arrays` — CUSTOM0 as
+## RGBA float, the one shared sheet material's own expected surface format.
 static func commit(arrays: Array) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {},
@@ -601,8 +629,8 @@ static func _lattice_wet(st: Dictionary, p: Vector2) -> Dictionary:
 ## `rect`, each point tested by _lattice_wet, height = WaterField.level_at
 ## (the brief's own rule for interior vertices).
 ## Index bounds are computed directly from the rect span (a 192m chunk is
-## EXACTLY 64 * STEP, same as WaterMesher's own N=64/S=3.0 lattice), NOT
-## filtered through Rect2.has_point: an earlier version used has_point as a
+## EXACTLY 64 * STEP), NOT filtered through Rect2.has_point: an earlier
+## version used has_point as a
 ## belt-and-braces bounds check and it silently dropped the entire i=64 /
 ## j=64 column and row — Godot's Rect2.has_point treats the far edge as
 ## EXCLUSIVE (verified directly: has_point(rect.position+rect.size) is
@@ -641,9 +669,8 @@ static func _interior_lattice(st: Dictionary) -> Dictionary:
 
 
 ## Emits the interior sheet: for every 2x2 lattice-cell block whose all 4
-## corners are kept, two triangles (a standard quad split, +Y winding to
-## match every other water mesh in this codebase — see WaterMesher._mesh_cell
-## and its own "+Y like the quad branch" comment). A kept point missing ANY
+## corners are kept, two triangles (a standard quad split, +Y winding — this
+## codebase's one water-mesh convention). A kept point missing ANY
 ## of its 4 potential quads (i.e. it borders at least one dropped neighbour
 ## or the lattice edge) is recorded into lattice.edge_ring — the jagged
 ## interior boundary the boundary strip zips onto next.
@@ -690,9 +717,9 @@ static func _interior_mesh(st: Dictionary, lattice: Dictionary) -> void:
 	# in-chunk quads all exist needs no strip coverage (its missing quads lie
 	# ACROSS the chunk border, where the NEIGHBOUR chunk's own lattice —
 	# world-aligned, same columns — provides the geometry; a free edge along
-	# the border line is the one legitimately-free class this pipeline has,
-	# same as WaterMesher's own border exemption). Injecting such points into
-	# a curve's ring is not just wasted work — it FOLDS the ring chain:
+	# the border line is the one legitimately-free class this pipeline has).
+	# Injecting such points into a curve's ring is not just wasted work — it
+	# FOLDS the ring chain:
 	# caught red-handed on pond chunk (-4,-18)'s south border, where a wet
 	# inlet's horseshoe curve exits the chunk and fully-quad-covered border
 	# point (-606,-3456) (5.6m from the curve, inside capture) got chained
@@ -1078,8 +1105,7 @@ static func _zip_strip(st: Dictionary, a: PackedInt32Array, b: PackedInt32Array,
 
 ## Emits one strip triangle. Winding: the curve chain `a` runs along the
 ## WATER'S edge and the ring chain `b` runs along the interior (wet) side —
-## for the sheet to wind +Y (this codebase's universal water-mesh
-## convention, see WaterMesher._mesh_cell's "+Y like the quad branch"), the
+## for the sheet to wind +Y (this codebase's one water-mesh convention), the
 ## triangle order (p0, p1, p2) must place the INTERIOR vertex so the
 ## computed normal points up; empirically fixed against the interior mesh's
 ## own known-+Y quads (see test_all_triangles_wind_up-style check in this
@@ -1138,30 +1164,37 @@ static func _weld_vert(st: Dictionary, p: Vector2, y: float, nrm: Vector3) -> in
 	return idx
 
 
-## Triggers: one box per 24m TILE cell touched by any built vertex (kept
-## interior OR boundary-strip), matching WaterSurfaceBuilder's EXISTING
-## swim-volume tiling/clearance convention (top = max level + 1.7, bottom =
-## min ground - 5.0) so a future adapter swap-in is a drop-in shape match.
-## This is scaffolding for Task 7's real sampler-backed trigger wiring (the
-## plan's own Task 7 brief: "one box per 24m wet coverage tile... every
-## Area3D carries set_meta('sampler', sampler)") — this task's own checklist
-## never exercises `triggers` (WaterSurfaceBuilder keeps using WaterMesher's
-## wet_cells for volumes until Task 7, per this task's own context brief), so
-## the shape only needs to satisfy the documented dict contract, not yet
-## drive real gameplay.
+## Triggers (r3 Task 7 — real wiring, not scaffolding): one box per 24m TILE
+## touched by any built vertex (kept interior, boundary-strip, OR rim),
+## footprint from this class's own presence data (`st.verts`) — top = max
+## level in the tile + TRIGGER_TOP_CLEAR, bottom = min ground in the tile -
+## TRIGGER_BOTTOM_CLEAR (this codebase's existing swim-trigger tiling/
+## clearance convention). A tile whose max |grade_at| exceeds
+## STEEP_UNSWIMMABLE gets NO trigger at all — see that constant's own
+## docstring; a fall face is not swimmable water by design, so a character
+## must fall/slide through it rather than float. WaterSurfaceBuilder.
+## build_chunk turns every entry here into an Area3D carrying
+## set_meta("sampler", sampler) (build()'s own single frozen WaterSampler for
+## the whole chunk) — there is no more per-cell sampled-plane meta pair; a
+## query anywhere inside the box reads that one snapshot instead (see
+## WaterSampler.gd).
 static func _triggers(st: Dictionary) -> Array:
-	var cells: Dictionary = {}   # Vector2i cell -> {top: float, bottom: float}
+	var cells: Dictionary = {}   # Vector2i cell -> {top: float, bottom: float, max_grade: float}
 	for v: Vector3 in st.verts:
 		var cell := Vector2i(int(floor(v.x / TILE)), int(floor(v.z / TILE)))
 		var g: float = TerrainSurfaceField.surface_y(st.region, v.x, v.z)
+		var grade: float = absf(WaterField.grade_at(st.ctx, Vector2(v.x, v.z)))
 		if not cells.has(cell):
-			cells[cell] = {"top": v.y, "bottom": g}
+			cells[cell] = {"top": v.y, "bottom": g, "max_grade": grade}
 		else:
 			cells[cell].top = maxf(cells[cell].top, v.y)
 			cells[cell].bottom = minf(cells[cell].bottom, g)
+			cells[cell].max_grade = maxf(cells[cell].max_grade, grade)
 	var out: Array = []
 	for cell: Vector2i in cells:
 		var e: Dictionary = cells[cell]
+		if e.max_grade > STEEP_UNSWIMMABLE:
+			continue   # steep water: no trigger, unswimmable by design
 		out.append({
 			"rect": Rect2(Vector2(cell) * TILE, Vector2.ONE * TILE),
 			"top": e.top + TRIGGER_TOP_CLEAR,

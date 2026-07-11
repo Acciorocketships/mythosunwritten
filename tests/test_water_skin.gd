@@ -5,11 +5,11 @@ extends GutTest
 # welds a 3.0m interior lattice to a conforming boundary strip whose outer
 # rim sits directly ON WaterContour's own smooth curves (Task 3) — this is
 # the mesh that actually fixes the marching-squares corners
-# test_water_contour.gd's own header documents (WaterMesher's raw perimeter
-# walk) — PLUS (Task 5) a meniscus rim that curls the strip's own curve edge
-# down and outward into a buried seal under the terrain. Task 4 left the
-# curve itself as the mesh's free edge ("no rim yet"); Task 5's rim heals
-# that edge into interior geometry and TIGHTENS the invariant:
+# test_water_contour.gd's own header documents (the old mesher's raw
+# perimeter walk) — PLUS (Task 5) a meniscus rim that curls the strip's own
+# curve edge down and outward into a buried seal under the terrain. Task 4
+# left the curve itself as the mesh's free edge ("no rim yet"); Task 5's rim
+# heals that edge into interior geometry and TIGHTENS the invariant:
 # test_free_edges_only_buried_rim_or_border's "accounted for" class is now
 # buried-outer-row(row3)-or-border, replacing Task 4's curve-or-border.
 
@@ -46,16 +46,16 @@ static func _region(seed_v: int, chunk: Vector2i):
 	return _regions[key]
 
 
-## 192m streamer-chunk rect — MUST match WaterMesher.build's own
+## 192m streamer-chunk rect — MUST match WaterField.ctx's own
 ## `base := Vector2(chunk.x, chunk.y) * (TILE * 8.0)` convention exactly (the
 ## plan's erratum: Vector2i chunk args are 192m chunks, not 24m cells).
 static func _rect(chunk: Vector2i) -> Rect2:
 	return Rect2(Vector2(chunk) * (WaterField.TILE * 8.0), Vector2.ONE * WaterField.TILE * 8.0)
 
 
-## Edges used by exactly one triangle — ported verbatim from
-## WaterMesher.free_edges (tests/test_water_mesher.gd's own oracle pattern),
-## ARRAY-shaped so it works directly against WaterSkin's Mesh.ARRAY_MAX
+## Edges used by exactly one triangle — ported verbatim from the old
+## marching-squares mesher's own free_edges oracle pattern (now deleted,
+## r3 Task 7), ARRAY-shaped so it works directly against WaterSkin's Mesh.ARRAY_MAX
 ## `arrays` output (ARRAY_VERTEX/ARRAY_INDEX) without needing WaterSkin to
 ## also expose a bespoke verts/idx dict shape.
 static func _free_edges(arrays: Array) -> Array:
@@ -197,10 +197,12 @@ static func _find_row2_vertex(verts: PackedVector3Array, p: Vector2, nrm2d: Vect
 	return -1
 
 
-## test_skin_builds_on_site_chunk — non-empty, indexed, welded-shape output;
-## tri count printed alongside WaterMesher's own for the same chunk (this
-## task's report needs both numbers — the brief's own "print both" — as the
-## Task 11 perf-budget baseline).
+## test_skin_builds_on_site_chunk — non-empty, indexed, welded-shape output.
+## r3 Task 7: the old marching-squares mesher this test used to print a
+## tri-count comparison against (the Task 11 perf-budget baseline) is
+## deleted along with the rest of its class this task — the comparison print
+## goes with it; the skin's own tri/vert/timing numbers are still printed
+## standalone for continuity with that baseline's own MEAS line format.
 func test_skin_builds_on_site_chunk() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -221,8 +223,7 @@ func test_skin_builds_on_site_chunk() -> void:
 	assert_true(idx.size() % 3 == 0, "indices form whole triangles")
 	for i in idx:
 		assert_true(i >= 0 and i < verts.size(), "index %d in range [0,%d)" % [i, verts.size()])
-	# Welded: no two verts share a position (mirrors
-	# test_water_mesher.gd::test_interior_is_welded's own dedupe check).
+	# Welded: no two verts share a position.
 	var seen: Dictionary = {}
 	var dup_ct := 0
 	for v: Vector3 in verts:
@@ -232,16 +233,9 @@ func test_skin_builds_on_site_chunk() -> void:
 		seen[key] = true
 	assert_eq(dup_ct, 0, "no duplicate-position verts survive the weld")
 
-	var t1: int = Time.get_ticks_usec()
-	var mesher_m: Dictionary = WaterMesher.build(water, SITE_CHUNK, region)
-	var mesher_us: int = Time.get_ticks_usec() - t1
 	var skin_tris: int = idx.size() / 3
-	var mesher_tris: int = mesher_m.idx.size() / 3 if not mesher_m.is_empty() else 0
-	print("MEAS test_skin_builds_on_site_chunk: skin=%d tris (%d verts, %.2fms) mesher=%d tris (%d verts, %.2fms)" % [
-		skin_tris, verts.size(), skin_us / 1000.0, mesher_tris, mesher_m.get("verts", PackedVector3Array()).size(), mesher_us / 1000.0])
-	assert_true(mesher_tris > 0, "mesher itself builds real geometry on this chunk to compare against")
-	assert_true(skin_tris <= mesher_tris * 2,
-		"skin tri count (%d) within 2x of mesher's (%d)" % [skin_tris, mesher_tris])
+	print("MEAS test_skin_builds_on_site_chunk: skin=%d tris (%d verts, %.2fms)" % [
+		skin_tris, verts.size(), skin_us / 1000.0])
 
 
 ## test_free_edges_only_buried_rim_or_border (r3-task-5-brief.md's own name —
@@ -794,3 +788,92 @@ func test_rim_normals_curl_outward() -> void:
 	assert_true(sloped_found > 0, "site has at least one interior vertex with a real (>0.1) surface slope")
 	assert_true(offenders2.is_empty(),
 		"every sloped interior vertex's normal measurably deviates from UP: %s" % str(offenders2))
+
+
+## --- r3 Task 7 (triggers + sampler; the old marching-squares mesher's own
+## test suite is deleted) — two tests ported here per the task brief: this
+## one verbatim (build_chunk's own contract is unchanged by this task), the
+## other (below) retargeted from a per-24m-CELL swim-volume gate to the
+## equivalent per-24m-TILE trigger gate. ---
+
+## test_no_waterfall_nodes (ported verbatim from the deleted mesher suite) —
+## falls are not a separate swept mesh with its own MeshInstance3D:
+## build_chunk emits exactly one "WaterSheet" node and never a "Waterfalls"
+## node, on ANY chunk (steep terrain included) — the falling look is a
+## shader blend on the one sheet material, not additional geometry. Checked
+## on the site chunk AND structurally by asserting build_chunk's own source
+## has no code path that could ever add a second MeshInstance3D.
+func test_no_waterfall_nodes() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var node: Node3D = WaterSurfaceBuilder.new().build_chunk(water, SITE_CHUNK, region)
+	assert_not_null(node, "site still builds its water sheet")
+	assert_null(node.get_node_or_null("Waterfalls"),
+		"build_chunk never adds a Waterfalls node — falls are a shader blend on the one sheet now")
+	var mesh_instances := 0
+	for ch in node.get_children():
+		if ch is MeshInstance3D:
+			mesh_instances += 1
+			assert_eq(ch.name, "WaterSheet", "the only MeshInstance3D child is the sheet")
+	assert_eq(mesh_instances, 1, "exactly one mesh (the sheet) — no second fall mesh, ever")
+	node.free()
+
+
+## test_no_trigger_where_unswimmably_steep — the swim-STEEP no-volume rule,
+## retargeted from the deleted mesher's own per-24m-CELL swim-cell gate
+## (test_no_volume_on_steep_water, formerly in the swim-volumes suite) to
+## WaterSkin._triggers' own per-24m-TILE gate: a tile whose max |grade_at|
+## exceeds STEEP_UNSWIMMABLE gets no trigger box at all — same 0.45 constant,
+## same rationale comment (see WaterSkin.STEEP_UNSWIMMABLE's own docstring),
+## just ported from "cell" to "tile" vocabulary (both are the same 24m
+## magic number under a new name).
+##
+## Same fixture shape as the original: a real RiverTrace whose bed drops
+## 12.0 over one 3m segment (grade 4.0, far past the 0.45 gate), claimed via
+## ctx.buckets so WaterField.grade_at has a real trace to read from rather
+## than a stubbed number. `_triggers` is called directly on a hand-built
+## minimal `st` (only the three keys it actually reads: verts/region/ctx) —
+## there is no curve/contour injection point for a synthetic steep
+## RiverTrace the way a full WaterSkin.build() pass would need one, mirroring
+## the original test's own "call the private function directly on a
+## hand-built st" pattern.
+##
+## Anti-vacuity (new — the original test had no equivalent, since its own
+## single fixture WAS the whole check): a SECOND, calm control tile 100m
+## away (no trace nearby, grade_at reads 0) proves the gate is selective —
+## it must still emit a trigger there, not swallow every tile indiscriminately.
+func test_no_trigger_where_unswimmably_steep() -> void:
+	var water := WaterPlan.new(1, 22.0, 8)
+	var tr := RiverTrace.new()
+	tr.source_cell = Vector2i(997, 997)
+	tr.priority = 1
+	tr.points = PackedVector2Array([Vector2(1.5, 1.5), Vector2(4.5, 1.5)])
+	tr.beds = PackedFloat32Array([9.0, -3.0])
+	tr.widths = PackedFloat32Array([3.0, 3.0])
+	tr.joined = false
+	tr.source_pool = null
+	tr.pond = null
+	# A real (if trivially flat, storey-0-everywhere) HeightfieldRegion —
+	# TerrainSurfaceField.surface_y needs a real region object, not null
+	# (unlike WaterField.grade_at, which tolerates a null region gracefully
+	# via profile()'s own region-optional fallback).
+	var region := HeightfieldRegion.new({}, {})
+	var ctx: Dictionary = {"water": water, "ponds": [], "rivers": [tr],
+		"buckets": {Vector2i(0, 0): [Vector2i(0, 0), Vector2i(0, 1)]}, "region": region}
+	assert_true(absf(WaterField.grade_at(ctx, Vector2(1.5, 1.5))) > WaterSkin.STEEP_UNSWIMMABLE,
+		"sanity: this fixture's own grade genuinely exceeds the gate")
+	var verts := PackedVector3Array([
+		Vector3(1.5, 9.0, 1.5), Vector3(4.5, 9.0, 1.5),        # steep tile (0,0)
+		Vector3(101.5, 3.0, 1.5), Vector3(104.5, 3.0, 1.5),    # calm control tile (4,0) — no trace nearby
+	])
+	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx}
+	var triggers: Array = WaterSkin._triggers(st)
+	var by_cell: Dictionary = {}
+	for t: Dictionary in triggers:
+		var cell := Vector2i(int(t.rect.position.x / WaterSkin.TILE), int(t.rect.position.y / WaterSkin.TILE))
+		by_cell[cell] = t
+	print("MEAS test_no_trigger_where_unswimmably_steep: %d tiles emitted (of 2 candidate tiles)" % triggers.size())
+	assert_false(by_cell.has(Vector2i(0, 0)),
+		"steep tile (grade 4.0 >> 0.45) gets no trigger box at all")
+	assert_true(by_cell.has(Vector2i(4, 0)),
+		"calm control tile still gets a trigger — the gate is selective, not indiscriminate")
