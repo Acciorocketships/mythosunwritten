@@ -1,33 +1,54 @@
 // Unified water for the whole network — lakes, rivers, and the transition
-// between them are ONE material on ONE sheet. Per-vertex CUSTOM0 carries the
-// flow vector in .xz (zero in still water, downstream elsewhere), the baked
-// shore proximity in .y (1 at the waterline, 0 inland — feeds the foam lap
-// line) and the local steepness in .w; flow strength blends still-water
-// swells into downstream scrolling, so a river mouth fades into its lake
-// seamlessly. No baked flow maps. cull_disabled: the player swims and looks
-// up from below.
+// between them are ONE material on ONE sheet. Per-vertex CUSTOM0 (r3 Task
+// 6/7's flow-frame bake, see WaterSkin._flow_frame_at) carries a continuous
+// curvilinear frame instead of a flow vector: .x = s (arc length downstream
+// along the nearest river trace; identically 0 away from any trace), .y = d
+// (signed cross-channel distance; identically 0 away from any trace), .z =
+// slope (continuous profile slope, unclamped; identically 0 away from any
+// trace), .w = shore_dist (distance to the nearest waterline curve point,
+// clamped 0..8, valid everywhere regardless of river/pond mode). "Away from
+// any trace" covers ponds/lakes AND any river vertex more than 18m from a
+// trace — WaterSkin's own literal "calm" rule.
+//
+// r3 Task 8: motion comes ENTIRELY from travelling wave trains — see
+// terrain/water/water_waves.gdshaderinc, the single wave-constants table
+// this shader and the character's CPU mirror both read by name. ZERO albedo
+// whitening anywhere (the owner's hardest rule): no foam mask, no steep
+// wash, no streak scroll, no plunge whitening. "Falling" and "rapids" are
+// conveyed purely by wave amplitude/frequency riding `slope`, never by
+// brightening ALBEDO. The mesh also carries REAL vertex normals (Task 6:
+// interior heightfield slope + meniscus rim curl) — fragment() blends those
+// with the wave motion instead of replacing them outright (the previous,
+// now-deleted analytic-only normal ignored the rim curl entirely, which is
+// why the meniscus never caught fresnel). No baked flow maps. cull_disabled:
+// the player swims and looks up from below.
 shader_type spatial;
 render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 
 #include "res://terrain/water/water_common.gdshaderinc"
+#include "res://terrain/water/water_waves.gdshaderinc"
 
 // CLEAR pastel water (owner's reference image): the body is the REFRACTED
 // scene tinted by depth — shallow shows the bed through clean green glass,
 // deep saturates to a soft teal — and glancing views mirror a LIGHT sky
 // tint (the reference's pale reflective sheen), never a dark one. The
 // surface itself is SMOOTH: no noise dapple — motion comes entirely from
-// the travelling swells and the interactive ripple sim.
+// the travelling wave trains (pond spectrum + river trains, both baked in
+// water_waves.gdshaderinc) and the interactive ripple sim.
 uniform vec3 color_deep : source_color = vec3(0.33, 0.60, 0.55);
 uniform vec3 color_shallow : source_color = vec3(0.55, 0.82, 0.73);
 uniform vec3 color_sky : source_color = vec3(0.78, 0.90, 0.87);
 uniform float sky_reflect : hint_range(0.0, 1.0) = 0.5;
-uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 0.98);
-uniform float foam_width : hint_range(0.0, 3.0) = 0.3;
-uniform float clarity_depth : hint_range(0.5, 24.0) = 8.0;   // metres to full deep colour
+uniform float clarity_depth : hint_range(0.5, 24.0) = 12.0;   // metres to full deep colour
 // CLEAR, not light (owner): the scene shows through with a modest tint
 // floor so shallow shelves never read as bare lawn — it's the REFRACTION
 // DISTORTION that makes the clear water read as water.
-uniform float body_floor : hint_range(0.0, 1.0) = 0.22;
+uniform float body_floor : hint_range(0.0, 1.0) = 0.12;
+// How much the refracted scene tints toward color_shallow even at the very
+// shallowest reads (the r3 Task 8 "shallow tint" clarity target) — kept as
+// its own uniform (was a hardcoded 0.12 literal pre-Task-8) so the battery
+// pass can live-tune it same as every other clarity param.
+uniform float shallow_tint : hint_range(0.0, 1.0) = 0.10;
 uniform float refraction_strength : hint_range(0.0, 0.2) = 0.09;
 // Animated wobble on the refraction offset only (never the lighting normal):
 // the see-through picture visibly swims like the reference, while the
@@ -38,22 +59,10 @@ uniform float distort_anim : hint_range(0.0, 0.2) = 0.05;
 uniform float wave_height : hint_range(0.0, 1.5) = 1.0;
 uniform float wave_speed : hint_range(0.0, 4.0) = 0.26;
 uniform float wobble_speed : hint_range(0.0, 2.0) = 0.5;
-// Calm-reach scroll. Speed lives WHERE THE RIVER IS STEEP (rapids_boost x
-// steep_v), never in a global playback rate — a raised base rate reads as
-// the whole world running in fast-forward (owner regression report).
-uniform float flow_speed : hint_range(0.0, 12.0) = 1.2;    // metres/second scroll
-uniform float rapids_boost : hint_range(0.0, 4.0) = 1.2;   // extra scroll at steep_v=1
-uniform float chop_height : hint_range(0.0, 0.6) = 0.1;    // travelling crest amplitude
-// Falling-look blend (Phase 2b: falls are steep surface, not a separate
-// ogee mesh — see the FALLING-LOOK BLEND block in fragment() below). SLOW:
-// band scroll is the only self-motion a steep stretch has beyond the
-// ordinary swells; anything fast reads as fast-forward footage (same
-// reasoning as the retired waterfall.gdshader's own fall_speed default).
-uniform float fall_speed : hint_range(0.5, 8.0) = 1.6;
 // Not mirror-tight: low roughness focuses the sun (and the wizard's light)
 // into a huge white glare blob on the swells (owner's screenshots carry it
 // at 0.07 too — soft pastel sheen wants a wider lobe).
-uniform float roughness : hint_range(0.0, 1.0) = 0.22;
+uniform float roughness : hint_range(0.0, 1.0) = 0.12;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
@@ -66,54 +75,78 @@ uniform float ripple_size = 96.0;
 uniform float ripple_strength : hint_range(0.0, 20.0) = 8.0;
 
 varying vec3 world_pos;
-varying vec3 flow_v;        // downstream, world space; length = flow strength
-varying float steep_v;      // 0 calm .. 1 waterfall-ish
-varying float shore_v;      // baked shore proximity, 1 at the waterline
-varying vec3 still_normal;  // analytic swell+chop normal from the vertex pass
+varying float river_s;       // CUSTOM0.x — arc length downstream; 0 away from any trace
+varying float river_d;       // CUSTOM0.y — signed cross-channel distance; 0 away from any trace
+varying float river_slope;   // CUSTOM0.z — continuous profile slope, unclamped; 0 away from any trace
+varying float shore_dist;    // CUSTOM0.w — distance to nearest waterline curve point, clamped 0..8
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	flow_v = CUSTOM0.xyz;
-	steep_v = CUSTOM0.w;
-	shore_v = CUSTOM0.y;
-	float fs = clamp(length(flow_v.xz), 0.0, 1.0);
-	vec2 fdir = fs > 0.001 ? normalize(flow_v.xz) : vec2(1.0, 0.0);
+	river_s = CUSTOM0.x;
+	river_d = CUSTOM0.y;
+	river_slope = CUSTOM0.z;
+	shore_dist = CUSTOM0.w;
 	float t = TIME * wave_speed;
-	float scroll = flow_speed * (1.0 + rapids_boost * steep_v);
-	// Flow-visibility gate: shore damping + corner averaging cap mid-channel
-	// flow around 0.3-0.5 in NARROW rivers (most rivers), so effects keyed
-	// linearly on fs never appear. Saturate by 0.5: real channels read fully
-	// flowing, while the fade to zero at shores/lakes is preserved.
-	float ff = smoothstep(0.08, 0.5, fs);
-	// TRAVELLING SWELLS carry the motion everywhere — slightly deeper on
-	// flowing reaches, KILLED at the shoreline so the buried waterline edge
-	// and the waterfall crests (shore=1 there) never bob above their banks
-	// or detach from the static slabs. Chop (travelling crest geometry) is
-	// reserved for genuinely steep reaches and dies with the builder's flow
-	// fade at shores.
-	// The buried hem owns the edge now: the whole surface rides the swell
-	// and the waterline slides up and down the bank with it.
-	float amp = wave_height * (1.0 + 0.35 * ff);
-	float camp = chop_height * ff * steep_v * 0.6;
-	float e = 2.0;
-	float h = water_wave_h(noise_tex, world_pos.xz, t) * amp
-		+ water_chop_h(noise_tex, world_pos.xz, fdir, scroll, TIME) * camp;
-	float hx = water_wave_h(noise_tex, world_pos.xz + vec2(e, 0.0), t) * amp
-		+ water_chop_h(noise_tex, world_pos.xz + vec2(e, 0.0), fdir, scroll, TIME) * camp;
-	float hz = water_wave_h(noise_tex, world_pos.xz + vec2(0.0, e), t) * amp
-		+ water_chop_h(noise_tex, world_pos.xz + vec2(0.0, e), fdir, scroll, TIME) * camp;
+	// Pond spectrum, world xz, KILLED at the shoreline over a 4m band so the
+	// buried waterline hem never bobs above its bank (same reasoning the
+	// pre-Task-8 flow-gated amplitude used to cover, now keyed on the baked
+	// shore distance instead of a flow strength that no longer exists).
+	float shore_fade = smoothstep(0.0, 4.0, shore_dist);
+	float h = water_wave_h(noise_tex, world_pos.xz, t) * wave_height * shore_fade;
+	// River trains (train1 + gated train2 + gated plunge ring), a pure
+	// function of the baked (s, d, slope) frame — see water_river_h's own
+	// docstring in water_waves.gdshaderinc for why it self-gates to zero
+	// away from any trace instead of needing a shore-style fade here.
+	h += water_river_h(river_s, river_d, river_slope, t);
 	VERTEX.y += h;
 	world_pos.y += h;
-	still_normal = normalize(vec3((h - hx) / e, 1.0, (h - hz) / e));
 }
 
 void fragment() {
 	float t = TIME * wave_speed;
 
-	// SMOOTH surface: the normal is the analytic swell normal plus the local
-	// ripple-sim gradient — no noise dapple (its fine quasi-static lines were
-	// exactly what the owner wants gone; "the surface should look smooth").
-	vec3 n = still_normal;
+	// Base normal: the REAL mesh normal (Task 6 bake: interior heightfield
+	// slope + meniscus rim curl). vertex() never writes NORMAL, so Godot's
+	// own normal-matrix transform carries the untouched per-vertex bake
+	// straight through — by the time fragment() reads it here it is already
+	// in VIEW space. Converted back to world space so the wave/ripple
+	// perturbations below (both naturally world-space-ish) can sum into it,
+	// then transformed to view space ONCE at the end — letting the mesh
+	// normal breathe (instead of being wholesale overwritten by a flat-water
+	// analytic normal, the pre-Task-8 bug) is what makes the meniscus rim
+	// actually catch light/fresnel.
+	vec3 n = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+
+	// Wave-driven shading detail: a small gradient of the SAME height
+	// functions vertex() displaces the surface by (never generic noise), so
+	// the shading visibly tracks the travelling trains — this is what reads
+	// as "waveform shading" even in a still frame, and it stays correct at
+	// any mesh resolution since it is evaluated per-fragment from the closed
+	// form, not finite-differenced across coarse vertex spacing. Rivers
+	// differentiate in the curvilinear (s, d) frame baked per vertex — the
+	// shader has no world-space tangent direction available to rotate that
+	// into world xz (CUSTOM0 carries no direction channel, and s/d are not a
+	// world-continuous field a vertex-side finite difference could sample
+	// off-vertex) — ponds differentiate in world (x, z), the domain
+	// water_wave_h is actually smooth over. Both are evaluated and
+	// cross-faded continuously by river_gate (river_slope's own smoothstep)
+	// rather than hard-switched on slope > 0, so the crossover never draws a
+	// seam where a river reach happens to run calm (slope near 0).
+	float river_gate = smoothstep(0.0, 0.05, river_slope);
+	float er = 0.15; // << the shortest train's own wavelength (~1.8m, RIVER_K2) — resolves it cleanly
+	float h0r = water_river_h(river_s, river_d, river_slope, t);
+	float hsr = water_river_h(river_s + er, river_d, river_slope, t);
+	float hdr = water_river_h(river_s, river_d + er, river_slope, t);
+	vec2 grad_r = vec2(hsr - h0r, hdr - h0r) / er;
+	float ep = 2.0;
+	float shore_fade = smoothstep(0.0, 4.0, shore_dist);
+	vec2 wp = world_pos.xz;
+	float h0p = water_wave_h(noise_tex, wp, t);
+	float hxp = water_wave_h(noise_tex, wp + vec2(ep, 0.0), t);
+	float hzp = water_wave_h(noise_tex, wp + vec2(0.0, ep), t);
+	vec2 grad_p = vec2(hxp - h0p, hzp - h0p) / ep * wave_height * shore_fade;
+	vec2 grad = mix(grad_p, grad_r, river_gate);
+	n = normalize(n + vec3(-grad.x, 0.0, -grad.y));
 
 	// Interactive ripples: sample the wave-sim height gradient inside the
 	// player-following domain (swim wakes, entry splashes, raindrop rings),
@@ -129,8 +162,8 @@ void fragment() {
 		// shift discontinuities live) never contribute visible normals.
 		float edge = smoothstep(0.0, 0.12,
 			min(min(ruv.x, 1.0 - ruv.x), min(ruv.y, 1.0 - ruv.y)));
-		vec2 grad = vec2(hr - hl, hu - hd) * ripple_strength * edge;
-		n = normalize(n + vec3(-grad.x, 0.0, -grad.y));
+		vec2 rgrad = vec2(hr - hl, hu - hd) * ripple_strength * edge;
+		n = normalize(n + vec3(-rgrad.x, 0.0, -rgrad.y));
 	}
 	NORMAL = (VIEW_MATRIX * vec4(n, 0.0)).xyz;
 
@@ -140,14 +173,15 @@ void fragment() {
 	// looked like lawn), while the first ~10cm at the rim stay clear.
 	float depth_t = max(1.0 - exp(-depth / clarity_depth),
 			body_floor * smoothstep(0.05, 0.55, depth));
-	// Refraction: offset the screen sample by the view-space normal plus an
-	// ANIMATED wobble, scaled down with view distance — constant screen-space
-	// offsets smeared whole far-away banks while showing nothing up close.
-	// Fades in over the first metre of depth (shores don't smear).
-	vec2 adv = flow_v.xz * TIME * 0.35;
-	float wa = texture(noise_tex, world_pos.xz * 0.045 - adv
+	// Refraction wobble: TIME-driven noise offset only. Pre-Task-8 this also
+	// advected with the old flow vector (flow_v.xz * TIME) so the distortion
+	// visibly scrolled downstream; CUSTOM0 no longer carries a flow vector
+	// (Task 6/7), and the time-driven wobble alone still keeps the
+	// see-through picture visibly swimming, so it is not replaced with a
+	// (s, d)-driven equivalent.
+	float wa = texture(noise_tex, world_pos.xz * 0.045
 			+ vec2(TIME * 0.021, -TIME * 0.017) * wobble_speed).r;
-	float wb = texture(noise_tex, world_pos.xz * 0.045 + vec2(37.7, 11.3) - adv * 1.15
+	float wb = texture(noise_tex, world_pos.xz * 0.045 + vec2(37.7, 11.3)
 			+ vec2(-TIME * 0.019, TIME * 0.023) * wobble_speed).r;
 	vec2 roff = (NORMAL.xy * refraction_strength + (vec2(wa, wb) - 0.5) * distort_anim)
 			* clamp(depth * 1.5, 0.0, 1.3) / max(1.0, -VERTEX.z * 0.08);
@@ -165,66 +199,16 @@ void fragment() {
 	vec3 scene = texture(screen_texture, suv).rgb;
 	// Clear body: the refracted scene through a light green-glass tint,
 	// saturating toward the soft teal with depth but NEVER fully opaque —
-	// the owner wants the near-shore clarity everywhere.
-	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, 0.12), color_deep, min(depth_t, 0.88));
+	// the owner wants the near-shore clarity everywhere. ZERO whitening:
+	// ALBEDO is this body colour and nothing else, at every depth and
+	// every slope.
+	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, shallow_tint), color_deep, min(depth_t, 0.88));
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
 	body = mix(body, color_sky, fres * sky_reflect);
-	float foam = water_foam_mask(noise_tex, world_pos.xz, t, depth, shore_v, foam_width);
-	// White water only where the river is genuinely waterfall-steep — a soft
-	// breathing wash, never streak bands.
-	float fs = clamp(length(flow_v.xz), 0.0, 1.0);
-	float ff = smoothstep(0.08, 0.5, fs);
-	foam += smoothstep(0.75, 1.0, steep_v)
-		* (0.25 + 0.2 * sin(TIME * 2.1 + (world_pos.x + world_pos.z) * 0.37)) * ff;
-	// FALLING-LOOK BLEND (Phase 2b): a fall is now a steep STRETCH of the
-	// same continuous sheet, not a separate ogee mesh/material
-	// (waterfall.gdshader is retired) — the look is carried entirely by this
-	// steepness-driven blend instead. `steep` is defensively re-clamped here
-	// even though the mesh builder already clamps its own bake
-	// (0..0.85 ordinarily, 0..1 in the plunge band) — the shader must not
-	// assume every CUSTOM0.w it is ever handed stays in range.
-	float steep = clamp(steep_v, 0.0, 1.0);
-	// Thin sheet flow is transparent and un-aerated; only real depth whitens —
-	// gate the steep look by depth so an ankle-film on a slope reads as a
-	// faint wet sheen, not a full waterfall (reuses `depth`, no new samples).
-	float film = smoothstep(0.15, 0.9, depth);
-	// (a) Downhill streak scroll: the SAME noise/band pattern
-	// waterfall.gdshader used for its falling streaks (`fall`/`band`),
-	// ported onto the sheet's flat surface — sampled along the local FLOW
-	// direction (the sheet has no swept along-fall UV.y to scroll; flow_v's
-	// own downstream direction is the equivalent continuous axis) and
-	// scrolled at fall_speed * steep, so a calm reach (steep≈0) shows no
-	// motion here at all and only a genuinely steep stretch streaks.
-	vec2 flow_dir = fs > 0.001 ? normalize(flow_v.xz) : vec2(1.0, 0.0);
-	float along = dot(world_pos.xz, flow_dir);
-	float streak_col = texture(noise_tex, vec2((world_pos.x + world_pos.z) * 0.11, 0.0)).r;
-	float streak_fall = texture(noise_tex, vec2((world_pos.x + world_pos.z) * 0.07,
-			along * 0.07 - TIME * fall_speed * steep + streak_col)).r;
-	float streak_band = smoothstep(0.35, 0.75, streak_fall);
-	foam += streak_band * smoothstep(0.25, 0.7, steep) * 0.35 * mix(0.25, 1.0, film);
-	// (b) Foam ramp: a steep stretch simply carries more foam, continuously
-	// with steepness — no branch/threshold discontinuity, just another
-	// smoothstep term blended in alongside (a) and the plunge churn below.
-	foam += 0.5 * smoothstep(0.45, 0.9, steep) * mix(0.3, 1.0, film);
-	// (c) PLUNGE CHURN: the (now-retired, pending the Task 8 shader rebuild —
-	// see r3-task-6-report.md's own note on this exact CUSTOM0 mismatch) mesh
-	// builder used to bake steep_v to 1 in a band along fall landing lines,
-	// keyed on WaterField.steep_spans' own lip/base bands — rapids
-	// corner-averaging never reaches 1, so 0.9+ is still the plunge
-	// signature. NOT flow-gated — plunge pools are calm
-	// reaches. A drifting boil pattern carries the fall's white base out
-	// into the pool, so falling water hands off to churning water instead
-	// of ending at a line (owner: "texture/simulation continuous over all
-	// water").
-	float churn = smoothstep(0.9, 1.0, steep_v);
-	float boil = texture(noise_tex, world_pos.xz * 0.17
-			+ vec2(TIME * 0.07, -TIME * 0.06)).r;
-	foam += churn * (0.40 + 0.5 * smoothstep(0.35, 0.7, boil));
-	foam = clamp(foam, 0.0, 0.85);
-	ALBEDO = mix(body, foam_color, foam);
+	ALBEDO = body;
 	// Clarity comes from REFRACTION, not alpha blending; the ALPHA write
 	// keeps the material in the transparent pass (screen texture needs it).
 	ALPHA = 1.0;
-	ROUGHNESS = mix(roughness, 0.5, foam);
+	ROUGHNESS = roughness;
 	SPECULAR = mix(0.35, 0.6, fres);
 }
