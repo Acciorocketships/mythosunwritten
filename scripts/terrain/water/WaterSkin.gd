@@ -88,6 +88,33 @@ const RIM_GROUND_BURY := 0.30
 # gate. See _flow_frame_at's own docstring for the full derivation.
 const RIVER_MAX_DIST := 18.0
 const JUNCTION_RADIUS := 12.0
+# Same-trace segment-tie blend band (Task 6 review fix — see _project_on_
+# trace's own docstring for the mechanism and r3-task-6-report.md "Fix: bend
+# s-compression" for the red->green evidence). When the two candidate
+# segments' clamped distances are within this band of each other, their
+# UNCLAMPED arc-length/tangent/slope contributions are blended instead of
+# hard-picked, spreading a polyline corner's intrinsic projection stall over
+# the band instead of concentrating it in one shoreline step. DERIVED, not
+# tuned:
+#   - UPPER bound: must sit below the smallest mid-segment tie gap anywhere
+#     in the river-frame domain, so the blend is strictly a corner-local
+#     device and is exactly zero at every near-sample pair-flip locus (where
+#     _flow_frame_at's bucket scan swaps near_si and the candidate PAIR
+#     changes its minor member — any nonzero weight there would step).
+#     Mid-segment, the minor candidate clamps to the shared sample at
+#     distance sqrt(d^2 + (L/2)^2) against the major's perpendicular d, so
+#     the gap is sqrt(d^2 + (L/2)^2) - d — smallest at the largest relevant
+#     offset: d = RIVER_MAX_DIST = 18, L = 12m trace spacing gives 0.974m.
+#     0.75 sits under that with margin.
+#   - LOWER bound: the band must cover a corner's whole stall wedge plus
+#     roughly a curve step either side to have room to spread the deficit.
+#     Walking past a wedge boundary the tie gap grows quadratically
+#     (~w^2/2d at walk distance w): at the pinned site's own bend (d~9m,
+#     theta~6.2 deg) the gap reaches 0.75 only ~3.7m out, so the band spans
+#     ~2.5 steps either side of the corner — the measured ~0.96m wedge
+#     deficit spreads at <=~0.3m per 1.5m step, inside the test's own 0.5
+#     tolerance with margin.
+const SEG_TIE_BAND := 0.75
 const SHORE_DIST_MAX := 8.0
 const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp radius with slack — mirrors _nearest_curve_dist's own "radius=1 covers INSET=2.0 since BUCKET=3.0" derivation, scaled up (8.0/3.0 -> 3 cells, +1 slack for a query point sitting at its own cell's far edge)
 
@@ -255,12 +282,47 @@ static func _central_slope(arclen: PackedFloat32Array, levels: PackedFloat32Arra
 ## `tr` has no valid segment at all near near_si (a single-sample trace —
 ## callers already filter tr.points.size()<2 before reaching here, so this is
 ## defensive, not a real production case on this codebase's traces).
+##
+## SEGMENT-TIE BLEND (Task 6 review fix — the "bend s-compression" defect,
+## caught red on the pinned site and quantified by the reviewer as a third to
+## half a wave cycle of Task 8 phase error; r3-task-6-report.md has the
+## red->green transcripts). Nearest-point projection onto a polyline is
+## genuinely FLAT across the outside wedge of any corner: for a corner C
+## between segment directions w1/w2 (exterior angle theta), every query in
+## the wedge {r.w1 >= 0, r.w2 <= 0} clamps BOTH candidate feet to C itself,
+## so s reads exactly s(C) for the wedge's whole angular width — a shoreline
+## walker at offset d crosses d*theta metres of walk (0.96m at the pinned
+## site's own bend: d~8.8m, theta~6.2 deg) with ZERO s advance, which
+## concentrated the polyline's intrinsic corner arc-length deficit into one
+## 1.5m step (measured red: |Δs - step| = 1.008 against the test's 0.5
+## bound). The first version hard-picked the strictly-nearest candidate,
+## which cannot help — INSIDE the wedge both candidates' clamped s values
+## are identical (s(C)), so no pick OR blend of clamped values ever advances.
+## The fix blends the two candidates' UNCLAMPED (raw-t extrapolated) arc
+## lengths whenever their clamped distances tie within SEG_TIE_BAND: the raw
+## extrapolations straddle s(C) by ±d*sin(angle-into-wedge), so their blend
+## advances at ~the walk rate through the wedge, spreading the deficit over
+## the whole tie band (~2.5 steps either side at this site) instead of one
+## step — measured post-fix worst |Δs - step| in the bend window: see the
+## report (analytic prediction ~0.30). Blend weight mu = 0.5*(1 - tie/BAND),
+## LINEAR in the distance DIFFERENCE, deliberately NOT the junction blend's
+## literal 1/d^2: a same-trace tie's two distances are near-EQUAL by
+## construction (both ~= the corner distance), so 1/d^2 degenerates to ~50/50
+## across the entire band and then snaps to 0 at the band edge — a step of
+## ~0.5*(s_far - s_near) ~= 0.46m, i.e. it would reintroduce the very
+## discontinuity class being fixed. The difference-driven taper reaches 0
+## continuously at the band edge (C0 with the pure-nearest region), and
+## SEG_TIE_BAND's own derivation guarantees mu == 0 at every near-sample
+## pair-flip locus (see the constant's comment), so the pair swap stays
+## seamless. tangent and slope blend by the same mu (tangent renormalized;
+## consecutive same-trace segment tangents never oppose, so no sign fix is
+## needed, unlike the cross-trace junction blend); `dist`/`proj` stay the
+## TRUE nearest's (the RIVER_MAX_DIST gate and the junction 1/d^2 weights
+## must read real distances). The blended s clamps to [0, total] as a rail
+## against raw-t extrapolation past the trace's global endpoints.
 static func _project_on_trace(st: Dictionary, tr: RiverTrace, p: Vector2, near_si: int) -> Dictionary:
 	var n: int = tr.points.size()
-	var best_d2 := INF
-	var best_seg := -1
-	var best_t := 0.0
-	var best_proj := Vector2.ZERO
+	var cands: Array = []
 	for j in [near_si - 1, near_si]:
 		if j < 0 or j + 1 >= n:
 			continue
@@ -268,30 +330,48 @@ static func _project_on_trace(st: Dictionary, tr: RiverTrace, p: Vector2, near_s
 		var b: Vector2 = tr.points[j + 1]
 		var seg: Vector2 = b - a
 		var seg_len2: float = seg.length_squared()
-		var t: float = clampf((p - a).dot(seg) / seg_len2, 0.0, 1.0) if seg_len2 > 0.000001 else 0.0
-		var proj: Vector2 = a + seg * t
-		var d2: float = p.distance_squared_to(proj)
-		if d2 < best_d2:
-			best_d2 = d2
-			best_seg = j
-			best_t = t
-			best_proj = proj
-	if best_seg == -1:
+		var t_raw: float = ((p - a).dot(seg) / seg_len2) if seg_len2 > 0.000001 else 0.0
+		var t_c: float = clampf(t_raw, 0.0, 1.0)
+		var proj: Vector2 = a + seg * t_c
+		var tangent: Vector2 = (seg / sqrt(seg_len2)) if seg_len2 > 0.000001 else Vector2(1, 0)
+		cands.append({"j": j, "t_raw": t_raw, "t_c": t_c, "proj": proj,
+			"dist": p.distance_to(proj), "tangent": tangent})
+	if cands.is_empty():
 		return {}
+	if cands.size() == 2 and cands[1].dist < cands[0].dist:
+		cands.reverse()
+	var near: Dictionary = cands[0]
 	var arclen: PackedFloat32Array = _trace_arclen(st, tr)
 	var prof: Dictionary = _trace_profile(st, tr)
 	var levels: PackedFloat32Array = prof.levels
-	var sa: Vector2 = tr.points[best_seg]
-	var sb: Vector2 = tr.points[best_seg + 1]
-	var seg_len: float = sa.distance_to(sb)
-	var tangent: Vector2 = ((sb - sa) / seg_len) if seg_len > 0.000001 else Vector2(1, 0)
+	var s: float = lerpf(arclen[near.j], arclen[near.j + 1], near.t_c)
+	var slope: float = _cand_slope(arclen, levels, near)
+	var tangent: Vector2 = near.tangent
+	if cands.size() == 2:
+		var far: Dictionary = cands[1]
+		var tie: float = far.dist - near.dist
+		if tie < SEG_TIE_BAND:
+			var mu: float = 0.5 * (1.0 - tie / SEG_TIE_BAND)
+			var s_near_raw: float = lerpf(arclen[near.j], arclen[near.j + 1], near.t_raw)
+			var s_far_raw: float = lerpf(arclen[far.j], arclen[far.j + 1], far.t_raw)
+			s = clampf(lerpf(s_near_raw, s_far_raw, mu), 0.0, arclen[arclen.size() - 1])
+			slope = lerpf(slope, _cand_slope(arclen, levels, far), mu)
+			var tb: Vector2 = near.tangent.lerp(far.tangent, mu)
+			if tb.length_squared() > 0.000001:
+				tangent = tb.normalized()
 	var perp := Vector2(-tangent.y, tangent.x)
-	var s: float = lerpf(arclen[best_seg], arclen[best_seg + 1], best_t)
-	var d: float = (p - best_proj).dot(perp)
-	var slope0: float = _central_slope(arclen, levels, best_seg)
-	var slope1: float = _central_slope(arclen, levels, best_seg + 1)
-	var slope: float = lerpf(slope0, slope1, best_t)
-	return {"dist": sqrt(best_d2), "s": s, "d": d, "slope": slope, "tangent": tangent, "proj": best_proj}
+	var d: float = (p - near.proj).dot(perp)
+	return {"dist": near.dist, "s": s, "d": d, "slope": slope, "tangent": tangent, "proj": near.proj}
+
+
+## One candidate's continuous profile slope: _central_slope at the segment's
+## two endpoint samples, lerped by the candidate's own CLAMPED t (slope is
+## defined pointwise ALONG the trace, so the tie blend above mixes the two
+## candidates' in-range slope reads rather than extrapolating the central-
+## difference lerp past a segment end the way the raw-t arc length must).
+static func _cand_slope(arclen: PackedFloat32Array, levels: PackedFloat32Array, cand: Dictionary) -> float:
+	return lerpf(_central_slope(arclen, levels, cand.j),
+		_central_slope(arclen, levels, cand.j + 1), cand.t_c)
 
 
 ## Per-vertex flow frame — the brief's own CUSTOM0 payload (s, d, slope,

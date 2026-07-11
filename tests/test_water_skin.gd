@@ -486,40 +486,77 @@ func test_dry_chunk_builds_nothing() -> void:
 		"dry chunk => empty build")
 
 
+## Shared walker for test_s_is_continuous_along_river: reads curve c's own
+## welded row0 vertices over curve indices [lo..hi], walking hi -> lo (this
+## curve's index order runs upstream, so the reversed walk reads downstream /
+## s-INcreasing, matching the brief's "strictly increasing" wording), and
+## asserts per step: s strictly increases AND |Δs − spatial step| < 0.5 (the
+## brief's own tolerance).
+func _assert_s_window(skin: Dictionary, c: Dictionary, lo: int, hi: int, label: String) -> void:
+	var pts: PackedVector2Array = c.pts
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var cust: PackedFloat32Array = skin.arrays[Mesh.ARRAY_CUSTOM0]
+	var s_vals: Array = []
+	var walk_pts: Array = []
+	for i in range(hi, lo - 1, -1):
+		var target := Vector3(pts[i].x, c.levels[i], pts[i].y)
+		var vi: int = _find_vertex(verts, target, 0.01)
+		assert_true(vi >= 0, "%s: curve point %d has a welded mesh vertex" % [label, i])
+		if vi < 0:
+			return
+		s_vals.append(cust[vi * 4 + 0])
+		walk_pts.append(pts[i])
+	var checked := 0
+	var worst := 0.0
+	var offenders: Array = []
+	for k in range(0, s_vals.size() - 1):
+		var d_space: float = walk_pts[k].distance_to(walk_pts[k + 1])
+		var d_s: float = s_vals[k + 1] - s_vals[k]
+		checked += 1
+		worst = maxf(worst, absf(d_s - d_space))
+		if d_s <= 0.0:
+			offenders.append("%s k=%d s not strictly increasing: %.4f -> %.4f" % [label, k, s_vals[k], s_vals[k + 1]])
+		elif absf(d_s - d_space) >= 0.5:
+			offenders.append("%s k=%d |Δs(%.4f) - step(%.4f)|=%.4f >= 0.5" % [label, k, d_s, d_space, absf(d_s - d_space)])
+	print("MEAS test_s_is_continuous_along_river[%s]: %d steps checked, worst |Δs-step|=%.4f, %d offenders" % [
+		label, checked, worst, offenders.size()])
+	assert_eq(checked, hi - lo, "%s: %d consecutive steps checked" % [label, hi - lo])
+	assert_true(offenders.is_empty(),
+		"%s: s strictly increases and tracks the real spatial step along the river: %s" % [label, str(offenders)])
+
+
 ## test_s_is_continuous_along_river (brief's own name) — CUSTOM0.x (arc
 ## length s) walked along 30 consecutive points of a REAL river shoreline
 ## curve (row0 vertices — see WaterSkin._rim's own docstring on why row0 IS
 ## the strip's welded vertex) must strictly increase, with each step's own
 ## |Δs| tracking the vertices' real-world spacing within 0.5m — s
 ## approximates true arc length, so a baked value that drifts from the
-## actual distance walked would misdrive Task 8's travelling-wave phase (a
-## visible stall or jump in the pattern).
+## actual distance walked would misdrive Task 8's travelling-wave phase (the
+## Task 6 reviewer quantified it: a 1.0m per-step shortfall is ~109° of phase
+## error on the λ≈3.3m river train and ~185° on the λ≈1.8m crossed train — a
+## third to half a wave cycle of crests bunching at one shoreline spot).
 ## SITE_CHUNK's curve[0] runs from a river reach into its own terminal lake
 ## (verified this task: dist-to-nearest-trace ranges 0.76m at pts[0] out to
-## 32.98m by pts[142] — see r3-task-6-report.md); pts[6..36] sits solidly in
-## the river-close end (all <18m from a real trace, checked below as a site
-## precondition independent of WaterSkin's own bake). Window choice (start=6,
-## not 0): pts[0..8] straddles a ~6° bend in the CLAIMED trace's own
-## polyline (sample index 9, ti=1) viewed from ~9m offset — nearest-point
-## projection onto a piecewise-linear polyline is not length-preserving near
-## a bend (the same class of blind spot
-## _order_ring_by_nn_chain's own docstring documents for a different part of
-## this file: a bend can make several nearby OFFSET-curve points all project
-## close to the same trace vertex), so two adjacent shoreline points 1.5m
-## apart can legitimately map to trace points under 0.5m apart in arc length
-## right at that transition (measured this task: pts[5]->pts[6] gives
-## |Δs|=0.49 against a 1.5m step — a real, if narrow and visually
-## inconsequential, artifact of the nearest-sample-anchored 2-segment local
-## search _project_on_trace uses, recorded in r3-task-6-report.md rather than
-## engineered around, since the fix would be a global nearest-point search
-## with no narrow-window shortcut, and every OTHER stretch of real shoreline
-## this task checked — including the rest of this very curve — tracks
-## cleanly). pts[6..36] (verified this task, all steps <0.38m off the 1.5m
-## spatial step) is entirely clear of that one transition. This curve's OWN
-## point order runs upstream (index increasing = toward the source, s
-## DEcreasing) — the walk below reads the window in the opposite
-## (index-decreasing, s-increasing) direction so "strictly increasing" reads
-## naturally against the brief's own wording; the underlying data is
+## 32.98m by pts[142] — see r3-task-6-report.md); pts[0..36] sits in the
+## river-close end (all <18m from a real trace, checked below as a site
+## precondition independent of WaterSkin's own bake).
+## TWO windows assert, per the Task 6 review verdict (r3-task-6-report.md,
+## "Fix: bend s-compression"):
+##   - pts[0..30], the BEND stretch: pts[4..8] sweeps past a ~6.2° bend in
+##     the claimed trace's polyline (trace ti=1, sample 9) from ~9m offset.
+##     Nearest-point projection stalls at a polyline corner (the whole
+##     outside wedge of angular width θ projects onto the corner vertex, so
+##     s stops advancing for d·θ ≈ 0.96m of shoreline walk) — this window
+##     was RED against the un-blended Task 6 projection (worst
+##     |Δs−step|=1.008, transcript in the report) and is the regression pin
+##     for WaterSkin._project_on_trace's segment-tie blend, which spreads
+##     that geometric arc-length deficit over the tie band instead of
+##     concentrating it in one step.
+##   - pts[6..36], the CLEAN stretch (no wedge transition mid-window): pins
+##     that the blend does not degrade ordinary shoreline tracking.
+## This curve's OWN point order runs upstream (index increasing = toward the
+## source, s DEcreasing) — _assert_s_window walks each window in the opposite
+## (index-decreasing, s-increasing) direction; the underlying data is
 ## identical either way.
 func test_s_is_continuous_along_river() -> void:
 	var water: WaterPlan = _water(SEED)
@@ -535,38 +572,14 @@ func test_s_is_continuous_along_river() -> void:
 		return
 	var c: Dictionary = curves[0]
 	var pts: PackedVector2Array = c.pts
-	assert_true(pts.size() >= 37, "curve[0] has >=37 points to walk pts[6..36] (%d)" % pts.size())
+	assert_true(pts.size() >= 37, "curve[0] has >=37 points to walk pts[0..36] (%d)" % pts.size())
 	if pts.size() < 37:
 		return
-	for i in range(6, 37):
+	for i in range(0, 37):
 		assert_true(_dist_to_rivers(ctx, pts[i]) < 18.0,
 			"pts[%d] sits within the brief's own river gate (site precondition)" % i)
-	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
-	var cust: PackedFloat32Array = skin.arrays[Mesh.ARRAY_CUSTOM0]
-	var s_vals: Array = []
-	var walk_pts: Array = []
-	for i in range(36, 5, -1):
-		var target := Vector3(pts[i].x, c.levels[i], pts[i].y)
-		var vi: int = _find_vertex(verts, target, 0.01)
-		assert_true(vi >= 0, "curve point %d has a welded mesh vertex" % i)
-		if vi < 0:
-			return
-		s_vals.append(cust[vi * 4 + 0])
-		walk_pts.append(pts[i])
-	var checked := 0
-	var offenders: Array = []
-	for k in range(0, 30):
-		var d_space: float = walk_pts[k].distance_to(walk_pts[k + 1])
-		var d_s: float = s_vals[k + 1] - s_vals[k]
-		checked += 1
-		if d_s <= 0.0:
-			offenders.append("k=%d s not strictly increasing: %.4f -> %.4f" % [k, s_vals[k], s_vals[k + 1]])
-		elif absf(d_s - d_space) >= 0.5:
-			offenders.append("k=%d |Δs(%.4f) - step(%.4f)|=%.4f >= 0.5" % [k, d_s, d_space, absf(d_s - d_space)])
-	print("MEAS test_s_is_continuous_along_river: %d steps checked, %d offenders" % [checked, offenders.size()])
-	assert_true(checked == 30, "30 consecutive steps checked")
-	assert_true(offenders.is_empty(),
-		"s strictly increases and tracks the real spatial step along the river: %s" % str(offenders))
+	_assert_s_window(skin, c, 0, 30, "bend pts[0..30]")
+	_assert_s_window(skin, c, 6, 36, "clean pts[6..36]")
 
 
 ## test_slope_is_continuous (brief's own name) — CUSTOM0.z (profile slope)
