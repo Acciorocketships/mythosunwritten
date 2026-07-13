@@ -203,8 +203,9 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 # snapshot of WaterField and the character's own feet (global_position sits
 # at the CAPSULE'S BASE — see character.tscn's CollisionShape3D offset — so
 # this needs no separate ground raycast the way the pre-Task-9 bridge did).
-# The swell (_swell_offset, now carrying BOTH the pond spectrum AND the new
-# river-train mirror) contributes ONLY to water_surface_y, the float height
+# The swell (_swell_offset — the pond spectrum only; the river-train mirror
+# was deleted in r3 Task 13 when river motion moved entirely into the shader's
+# refraction distortion) contributes ONLY to water_surface_y, the float height
 # buoyancy/animation chase — NEVER to this depth, per the controller's own
 # swell-entry redesign (r3-task-9-brief.md controller addition 1):
 #

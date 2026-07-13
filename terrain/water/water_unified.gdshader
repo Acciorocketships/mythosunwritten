@@ -44,7 +44,7 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 uniform vec3 color_deep : source_color = vec3(0.33, 0.60, 0.55);
 uniform vec3 color_shallow : source_color = vec3(0.55, 0.82, 0.73);
 uniform vec3 color_sky : source_color = vec3(0.78, 0.90, 0.87);
-uniform float sky_reflect : hint_range(0.0, 1.0) = 0.5;
+uniform float sky_reflect : hint_range(0.0, 1.0) = 0.3;   // r3 round-6 clarity: 0.5 washed a milky pale-sky sheen over the body at grazing angles (hid the bed — owner's "make it clearer"); 0.3 lets the refracted bed read through while keeping the soft SoS-style reflection. Live-tuned at the clarity frame (25,8,-1128).
 // r3 Task 13 round-6 clarity push (owner references: tropical clear-shallow
 // shot + Sea of Solitude re-annotation) — 12.0 -> 18.0: the bed/refracted
 // scene must read plainly through the body at ordinary depths, not just the
