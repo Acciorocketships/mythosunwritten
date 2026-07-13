@@ -154,15 +154,17 @@ const STEEP_UNSWIMMABLE := 0.45
 # — per-point profile, local frame (outward normal n, level L, ground g):
 # row0 = the strip's own curve vertex (weld-reused, not a new position);
 # row1 = p, y=L+ROW1_BULGE (a hairline meniscus crest, now bulging slightly
-# ABOVE the water level instead of dipping below it); row2 = p + reach2*n,
-# y=L+ROW2_BULGE; row3 = p + reach3*n, y = min(L-ROW3_DROP, g-GROUND_BURY)
-# (unchanged — "row3 buried as today" per r3 Task 14's own brief). reach2/
-# reach3 default to (ROW2_REACH, ROW3_REACH) over falling/level ground, and
-# extend all the way to RISE_REACH wherever the bank genuinely RISES within
-# RISE_PROBE_DIST of the waterline (r3 Task 14's universal shore-overshoot
-# rule, which SUBSUMES the old wall-only pinch — a wall is just the
-# steepest case of "rising ground" — see _rim's own docstring and
-# _rising_flags).
+# ABOVE the water level instead of dipping below it — at the waterline itself,
+# where ground==level, so never over a drop); row2 = p + reach2*n,
+# y=min(L+ROW2_BULGE, g(p+reach2*n)-ROW2_GROUND_EPS) (the bulge, but CLAMPED
+# to always sit under its own landing ground — see the clamp note below);
+# row3 = p + reach3*n, y = min(L-ROW3_DROP, g-GROUND_BURY) (unchanged — "row3
+# buried as today" per r3 Task 14's own brief). reach2/reach3 default to
+# (ROW2_REACH, ROW3_REACH) over falling/level ground, and extend to RISE_REACH
+# wherever the bank genuinely RISES across the span the overshoot covers (r3
+# Task 14's universal shore-overshoot rule, which SUBSUMES the old wall-only
+# pinch — a wall is just the steepest case of "rising ground" — see _rim's own
+# docstring and _rising_flags).
 const RIM_ROW1_BULGE := 0.04
 const RIM_ROW2_BULGE := 0.02
 const RIM_ROW3_DROP := 0.30
@@ -170,8 +172,21 @@ const RIM_ROW2_REACH := 0.35
 const RIM_ROW3_REACH := 0.55
 const RIM_RISE_REACH := 0.40
 const RIM_GROUND_BURY := 0.30
-const RISE_PROBE_DIST := 1.0   # brief's own "rises above the water level within ~1m of the waterline"
-const RISE_MARGIN := 0.05      # required clearance above L before a ground probe counts as a genuine rise (not float/interpolation noise on near-flat ground)
+# r3 Task 14 review fix (drop-misfire): "rising" is confirmed along the SPAN
+# the overshoot actually covers, sampled at the row's own landing distances —
+# NOT at a far 1m probe that can sit past a local dip the overshoot floats
+# over. RISE_PROBE_NEAR (row2's near half) and RIM_RISE_REACH (row2's landing)
+# bracket the covered span; BOTH must clear the water level for the point to
+# count as rising (an AND, replacing the review-flagged far-probe OR).
+const RISE_PROBE_NEAR := RIM_RISE_REACH * 0.5   # 0.20 — the near end of the covered span
+const RISE_MARGIN := 0.05      # clearance above L before a ground sample counts as a genuine rise (not float/interp noise on near-flat ground)
+# row2's belt-and-suspenders burial (r3 Task 14 review fix): even if the
+# rising gate ever misfires, row2's Y is clamped to sit at least this far
+# UNDER its own landing ground, so it can NEVER float above the terrain (the
+# "film over a drop" artifact this whole redesign exists to kill). Inactive
+# over a genuine rising bank, where the landing ground sits above the water
+# level anyway (ground - EPS > L + BULGE) — see _rim.
+const RIM_ROW2_GROUND_EPS := 0.02
 
 # --- Flow frames (Task 6) — brief's own CUSTOM0 = (s, d, slope, shore_dist):
 # s = arc length from source along the nearest river trace, d = signed
@@ -1088,11 +1103,18 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary, 
 ##          before the surface curls away and down; was a small DIP below L
 ##          pre-Task-14, the owner's own "surface-tension/blob" note asked
 ##          for the bulge instead)
-##   row2 = p + reach2*n,  y = L + RIM_ROW2_BULGE (same bulge treatment,
-##          UNCONDITIONAL — rising bank or not; a few cm of bulge cannot
-##          reintroduce the "film over a drop" artifact the way overshooting
-##          reach2's own XZ position over a real drop-off would, which is why
-##          only the horizontal reach below is gated on rising-vs-falling)
+##   row2 = p + reach2*n,  y = min(L + RIM_ROW2_BULGE,
+##          g(p+reach2*n) - RIM_ROW2_GROUND_EPS) — the meniscus bulge, but
+##          CLAMPED to always sit under its own landing ground (r3 Task 14
+##          review fix). The unclamped bulge (L+0.02) floats above the terrain
+##          wherever row2 lands over ground BELOW the water level — a falling
+##          shore, or a rising gate that misfires — which is exactly the "film
+##          over a drop" artifact this redesign exists to kill. The clamp is
+##          inactive over a genuine rising bank (there g(p+reach2*n) sits above
+##          L, so g-EPS > L+BULGE and the min picks the bulge); over a drop it
+##          forces burial instead — the safe direction either way. This is the
+##          per-vertex hard guarantee that backs up the _rising_flags gate; see
+##          this function's own "RISING vs FALLING" paragraph.
 ##   row3 = p + reach3*n,  y = min(L - RIM_ROW3_DROP, g(p + reach3*n) -
 ##          RIM_GROUND_BURY) (buried seal, UNCHANGED by r3 Task 14 — "row3
 ##          buried as today" is the brief's own words — ALWAYS >=0.30m under
@@ -1101,27 +1123,31 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary, 
 ##          undulation, whatever reach3 the rising/falling blend below chose)
 ## reach2/reach3 default to (RIM_ROW2_REACH, RIM_ROW3_REACH) over FALLING or
 ## level ground, and OVERSHOOT all the way to RIM_RISE_REACH wherever the
-## bank genuinely RISES within RISE_PROBE_DIST (~1m) of the waterline (r3
-## Task 14, round-5 addendum — the owner's own repeated complaint, "water
-## still not going all the way up to the edges of the terrain": a
-## wall-flagged point used to PINCH reach2/reach3 IN to a flush
-## RIM_WALL_PINCH, leaving a visible slot between the rim's own pinched-in
-## outer edge and the actual rising face beyond it; the fix instead pushes
-## the outer rows OUT, past the waterline and into the bank, relying on the
-## depth buffer to clip the overshoot invisibly against whatever solid
-## ground/wall geometry occupies that space — "water meets the bank flush").
+## bank genuinely RISES across the span the overshoot covers (r3 Task 14,
+## round-5 addendum — the owner's own repeated complaint, "water still not
+## going all the way up to the edges of the terrain": a wall-flagged point
+## used to PINCH reach2/reach3 IN to a flush RIM_WALL_PINCH, leaving a visible
+## slot between the rim's own pinched-in outer edge and the actual rising face
+## beyond it; the fix instead pushes the outer rows OUT, past the waterline
+## and into the bank, relying on the depth buffer to clip the overshoot
+## invisibly against whatever solid ground/wall geometry occupies that space —
+## "water meets the bank flush").
 ## RISING vs FALLING is decided per point by _rising_flags — the curve's OWN
 ## wall flag (already a strict, if narrow, rising signal: WALL_SLOPE=1.2
-## comfortably implies a rise) OR'd with a dedicated ground probe, so an
-## ordinary sloped, non-wall bank overshoots too, not just near-vertical
-## faces — this SUBSUMES the pre-Task-14 wall-only pinch mechanism (a wall
-## is just the steepest case of "rising ground"; there is no more separate
+## comfortably implies a rise) OR'd with a ground probe ACROSS THE COVERED
+## SPAN (r3 Task 14 review fix: sampled at the row's own landing distances
+## RISE_PROBE_NEAR and RIM_RISE_REACH, both of which must clear the level — a
+## far 1m probe alone could authorize the overshoot while ground dipped UNDER
+## row2's actual 0.40m landing, floating a film over that local dip). So an
+## ordinary sloped, non-wall bank overshoots too, not just near-vertical faces
+## — this SUBSUMES the pre-Task-14 wall-only pinch mechanism (a wall is just
+## the steepest case of "rising ground"; there is no more separate
 ## RIM_WALL_PINCH constant). Over FALLING or level ground (a real drop-off,
-## not a rising bank) reach2/reach3 keep the OLD default — overshooting
-## there would extend the sheet's outer edge out over open air past the true
-## shore, reintroducing the "film floating over a drop" artifact run-1
-## already rejected (see the water-architecture memory's own "Rejected
-## designs").
+## not a rising bank) reach2/reach3 keep the OLD default AND row2's own Y is
+## clamped under its landing ground (see row2 above) — overshooting there
+## would extend the sheet's outer edge out over open air past the true shore,
+## reintroducing the "film floating over a drop" artifact run-1 already
+## rejected (see the water-architecture memory's own "Rejected designs").
 ## Both `wall` (angle pinch, see the Rim-normals constants block above) and
 ## `rise` (reach blend, this docstring) are SMOOTHED across neighbouring
 ## curve points (_smoothed_flags, a 3-tap tent filter) rather than switched
@@ -1184,7 +1210,14 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		var reach2: float = lerpf(RIM_ROW2_REACH, RIM_RISE_REACH, rf[i])
 		var reach3: float = lerpf(RIM_ROW3_REACH, RIM_RISE_REACH, rf[i])
 		var p2: Vector2 = p + nrm * reach2
-		row2[i] = _weld_vert(st, p2, lvl + RIM_ROW2_BULGE, _curl_normal(nrm, ang2))
+		# Belt-and-suspenders (r3 Task 14 review fix): the bulge, but never
+		# above its own landing ground — over a rising bank g2 sits above the
+		# level so the min picks the bulge (clamp inactive); over a drop or a
+		# misfired gate it forces burial (no film). See the constants block's
+		# RIM_ROW2_GROUND_EPS note and this function's own row2 docstring.
+		var g2: float = TerrainSurfaceField.surface_y(st.region, p2.x, p2.y)
+		var y2: float = minf(lvl + RIM_ROW2_BULGE, g2 - RIM_ROW2_GROUND_EPS)
+		row2[i] = _weld_vert(st, p2, y2, _curl_normal(nrm, ang2))
 		var p3: Vector2 = p + nrm * reach3
 		var g3: float = TerrainSurfaceField.surface_y(st.region, p3.x, p3.y)
 		var y3: float = minf(lvl - RIM_ROW3_DROP, g3 - RIM_GROUND_BURY)
@@ -1252,23 +1285,35 @@ static func _smoothed_flags(flags: PackedByteArray, closed: bool) -> PackedFloat
 
 
 ## Per-point RISING flag (r3 Task 14 — universal shore overshoot, round-5
-## addendum): true when the bank genuinely climbs above the water level
-## within RISE_PROBE_DIST (~1m) of the waterline along the curve's own
-## outward normal n̂, OR the point is already wall-flagged. Folding `wall` in
-## is never redundant risk and sometimes strictly helps: WaterContour's own
-## wall probe (WALL_SLOPE=1.2 at 0.5m/1.5m) already implies a rise clearing
-## RISE_MARGIN by a wide margin wherever it fires (0.5m of run at slope 1.2
-## is 0.6m of rise, comfortably past RISE_MARGIN=0.05), so OR-ing it in costs
-## nothing on the common path — but it also catches the rare case where a
-## genuinely near-vertical face's OWN RISE_PROBE_DIST sample happens to land
-## on a locally stepped/quantized rock shelf that reads flat there (the same
+## addendum; gate hardened by the review's drop-misfire fix): true when the
+## bank genuinely climbs above the water level ACROSS THE SPAN the overshoot
+## covers along the curve's own outward normal n̂, OR the point is already
+## wall-flagged.
+##
+## The covered span is [0, RIM_RISE_REACH] — where row2 (the only rim row
+## whose Y is the bulge, not a buried seal) actually lands. It is sampled at
+## RISE_PROBE_NEAR (the near half, 0.20m) AND RIM_RISE_REACH (the landing,
+## 0.40m); BOTH must clear the level by RISE_MARGIN (an AND). The FIRST
+## submission used a far OR — ground at 0.5m OR 1.0m above level — which the
+## review caught as unsound: RIM_RISE_REACH (0.40m) sits BEFORE either of
+## those probes, so on a curve point whose ground DIPS at 0.2-0.5m then rises
+## again by 1.0m, the 1.0m probe alone authorised the overshoot while row2
+## floated over the un-sampled local dip — a film over a drop, the exact
+## artifact this redesign exists to kill. Gating on the covered span instead
+## means a dip anywhere the overshoot actually reaches vetoes it. (row2 also
+## carries an independent per-vertex ground clamp as belt-and-suspenders — see
+## _rim — so a residual misfire buries rather than floats; this gate is the
+## first line, the clamp the hard backstop.)
+##
+## Folding `wall` in is never redundant risk and sometimes strictly helps:
+## WaterContour's own wall probe (WALL_SLOPE=1.2 at 0.5m/1.5m) already implies
+## a rise clearing RISE_MARGIN by a wide margin wherever it fires (0.5m of run
+## at slope 1.2 is 0.6m of rise, comfortably past RISE_MARGIN=0.05), so OR-ing
+## it in costs nothing on the common path — but it also catches the rare case
+## where a genuinely near-vertical face's OWN span samples happen to land on a
+## locally stepped/quantized rock shelf that reads flat there (the same
 ## corner-crest hazard WaterContour._attributes' own docstring documents for
 ## the wall flag's rise-from-level anchor).
-## Two probes, at RISE_PROBE_DIST*0.5 and RISE_PROBE_DIST (mirroring
-## WaterContour._attributes' own two-distance wall check), rather than one:
-## a bank's rise is not always monotonic in the first metre (a small lip or
-## grassy shelf can dip before climbing) — either probe clearing the water
-## level by RISE_MARGIN is enough to call the point a rising bank.
 static func _rising_flags(st: Dictionary, c: Dictionary) -> PackedByteArray:
 	var pts: PackedVector2Array = c.pts
 	var levels: PackedFloat32Array = c.levels
@@ -1284,11 +1329,11 @@ static func _rising_flags(st: Dictionary, c: Dictionary) -> PackedByteArray:
 		var p: Vector2 = pts[i]
 		var nrm: Vector2 = normals[i]
 		var lvl: float = levels[i]
-		var pmid: Vector2 = p + nrm * (RISE_PROBE_DIST * 0.5)
-		var pfar: Vector2 = p + nrm * RISE_PROBE_DIST
-		var gmid: float = TerrainSurfaceField.surface_y(st.region, pmid.x, pmid.y)
-		var gfar: float = TerrainSurfaceField.surface_y(st.region, pfar.x, pfar.y)
-		out[i] = 1 if (gmid > lvl + RISE_MARGIN or gfar > lvl + RISE_MARGIN) else 0
+		var pnear: Vector2 = p + nrm * RISE_PROBE_NEAR
+		var pland: Vector2 = p + nrm * RIM_RISE_REACH
+		var gnear: float = TerrainSurfaceField.surface_y(st.region, pnear.x, pnear.y)
+		var gland: float = TerrainSurfaceField.surface_y(st.region, pland.x, pland.y)
+		out[i] = 1 if (gnear > lvl + RISE_MARGIN and gland > lvl + RISE_MARGIN) else 0
 	return out
 
 

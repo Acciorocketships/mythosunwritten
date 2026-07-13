@@ -19,7 +19,7 @@ const SITE_CHUNK := Vector2i(0, -6)
 # --- Task 5 rim classification (mirrors WaterSkin's OWN row2/row3 numeric
 # structure, not its reach/pinch formula — see _on_rim_outer_row) ---
 const RIM_MAX_REACH := 0.7    # >= WaterSkin.RIM_ROW3_REACH (0.55) with slack
-const RIM_ROW3_Y_GATE := 0.25 # strictly between row2's fixed -0.18 and row3's -0.30 ceiling
+const RIM_ROW3_Y_GATE := 0.25 # strictly between row2's ceiling (now +0.02, was -0.18) and row3's -0.30 ceiling
 const RIM_BURY_GATE := 0.25   # brief's own "test_rim_outer_row_is_buried ... >= 0.25"
 
 static var _plans: Dictionary = {}
@@ -176,32 +176,44 @@ static func _find_vertex(verts: PackedVector3Array, target: Vector3, tol: float)
 	return -1
 
 
-## Structurally locates curve point (p, nrm2d, level)'s own row2 rim vertex —
-## WITHOUT reproducing WaterSkin's own reach/wall-blend formula (same
-## discipline _on_rim_outer_row already documents): row2 is always exactly
-## `level + 0.02` (r3 Task 14's own fixed, ground-independent row2 bulge
-## height — was `level - 0.18` pre-Task-14, mirrored here as a literal
-## rather than a WaterSkin.RIM_ROW2_BULGE reference for the same "don't test
-## the implementation against itself" reason), offset from `p` PURELY along
-## the curve's own outward normal n̂ (no tangential component) by SOME reach
-## in (0, 0.40] (r3 Task 14 widened the ceiling from 0.35 to 0.40 — its own
-## RIM_RISE_REACH — this search range already covered 0.4 before that
-## constant existed, so no change needed here) — this searches for a vertex
-## matching the height exactly and the offset DIRECTION (not magnitude), so
-## it finds row2 regardless of whatever reach the rising/falling blend
-## actually chose at this point.
-static func _find_row2_vertex(verts: PackedVector3Array, p: Vector2, nrm2d: Vector2, level: float) -> int:
-	var target_y: float = level + 0.02
+## Structurally locates curve point (p, nrm2d)'s own row2 rim vertex — WITHOUT
+## reproducing WaterSkin's own reach/wall-blend formula (same discipline
+## _on_rim_outer_row already documents). row2 and row3 are the only two rim
+## vertices sitting on p's own outward-normal COLUMN (cross ~ 0) at a positive
+## offset (row0/row1 sit AT p, offset ~ 0); of those two, row2 is the INNER
+## one — the smaller outward offset (row2 reaches 0.35-0.40m, row3 reaches
+## 0.40-0.55m). So "the near-column vertex with the smallest positive along"
+## is row2, structurally, regardless of its Y.
+## r3 Task 14 review fix: this used to key on Y == level + 0.02 (row2's bulge
+## height). That broke once row2 gained its ground clamp (min(L+0.02,
+## g-0.02) — see WaterSkin._rim): at a falling / near-level non-wall point the
+## clamp lowers row2's Y below level+0.02, so the Y key no longer matched.
+## Locating by column POSITION instead is stable under the clamp and stays
+## non-circular (it reads only the structural "row2 is the inner outer-column
+## vertex," never WaterSkin's reach or Y formula). The one point the callers
+## use it on is a NON-rising (falling) shore, where reach2 (~0.35) and reach3
+## (~0.55) are well separated so "smallest along" is unambiguously row2; a tie
+## is broken toward the HIGHER vertex (row2 always sits above the buried row3).
+static func _find_row2_vertex(verts: PackedVector3Array, p: Vector2, nrm2d: Vector2) -> int:
+	var perp := Vector2(-nrm2d.y, nrm2d.x)
+	var best_i: int = -1
 	for i in verts.size():
 		var v: Vector3 = verts[i]
-		if absf(v.y - target_y) > 0.01:
-			continue
 		var off: Vector2 = Vector2(v.x, v.z) - p
-		var along: float = off.dot(nrm2d)
-		var cross: float = off.dot(Vector2(-nrm2d.y, nrm2d.x))
-		if along >= -0.01 and along <= 0.4 and absf(cross) < 0.05:
-			return i
-	return -1
+		if absf(off.dot(perp)) > 0.05:
+			continue
+		var reach: float = off.dot(nrm2d)
+		if reach < 0.15 or reach > 0.7:
+			continue
+		if best_i < 0:
+			best_i = i
+			continue
+		var best_reach: float = (Vector2(verts[best_i].x, verts[best_i].z) - p).dot(nrm2d)
+		if reach < best_reach - 0.02:
+			best_i = i                        # clearly the inner (row2) vertex
+		elif reach <= best_reach + 0.02 and v.y > verts[best_i].y:
+			best_i = i                        # a tie: row2 sits above the buried row3
+	return best_i
 
 
 ## Max outward reach (distance along the curve's own outward normal n̂, PAST
@@ -333,6 +345,18 @@ func test_free_edges_only_buried_rim_or_border() -> void:
 ## uses, so this test independently checks the ONE property that class is
 ## named for (burial), keeping the two tests from validating each other in a
 ## circle.
+##
+## r3 Task 14 review fix: scoped to the actual FREE-EDGE endpoints (row3 is
+## the buried free-edge outer row — the class this test's own docstring names)
+## rather than every vertex. row2 now carries a shallow ground clamp
+## (min(L+0.02, g-0.02), see WaterSkin._rim) that can pull a wall-point row2
+## down to just under a dip at a set-back wall's base; that clamped row2 is
+## _on_rim_outer_row-positive by its Y but is NOT a free edge (all its edges
+## are shared by the rim bands), so it would fail this row3-only burial gate
+## spuriously. Every genuine row3 vertex sits on its own outer free edge
+## (row3[i]-row3[j], used by exactly one band triangle), so iterating free
+## edges covers every row3 with no loss while correctly excluding the
+## band-interior clamped row2.
 func test_rim_outer_row_is_buried() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -342,21 +366,26 @@ func test_rim_outer_row_is_buried() -> void:
 	assert_false(skin.is_empty(), "site chunk builds a skin")
 	if skin.is_empty():
 		return
-	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var seen: Dictionary = {}
 	var checked := 0
 	var offenders: Array = []
-	for v: Vector3 in verts:
-		if not _on_rim_outer_row(curves, v):
-			continue
-		checked += 1
-		var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
-		var buried: float = g - v.y
-		if buried < RIM_BURY_GATE and offenders.size() < 10:
-			offenders.append("%s buried=%.3f (ground=%.3f)" % [v, buried, g])
-	print("MEAS test_rim_outer_row_is_buried: %d row3 verts checked, %d offenders" % [checked, offenders.size()])
-	assert_true(checked > 5, "site has real rim outer-row verts to check (%d)" % checked)
+	for e: Array in _free_edges(skin.arrays):
+		for v: Vector3 in [e[0], e[1]]:
+			var key: Vector3i = Vector3i((v * 64.0).round())
+			if seen.has(key):
+				continue
+			seen[key] = true
+			if _on_chunk_border(v, SITE_CHUNK) or not _on_rim_outer_row(curves, v):
+				continue
+			checked += 1
+			var g: float = TerrainSurfaceField.surface_y(region, v.x, v.z)
+			var buried: float = g - v.y
+			if buried < RIM_BURY_GATE and offenders.size() < 10:
+				offenders.append("%s buried=%.3f (ground=%.3f)" % [v, buried, g])
+	print("MEAS test_rim_outer_row_is_buried: %d row3 free-edge verts checked, %d offenders" % [checked, offenders.size()])
+	assert_true(checked > 5, "site has real rim outer-row free-edge verts to check (%d)" % checked)
 	assert_true(offenders.is_empty(),
-		"every rim outer-row vert sits >=%.2fm under ground: %s" % [RIM_BURY_GATE, str(offenders)])
+		"every rim outer-row (buried free-edge) vert sits >=%.2fm under ground: %s" % [RIM_BURY_GATE, str(offenders)])
 
 
 ## test_rim_welds_to_strip (brief's own name) — row0 (the rim's innermost
@@ -791,7 +820,7 @@ func test_rim_normals_curl_outward() -> void:
 	var norms: PackedVector3Array = skin.arrays[Mesh.ARRAY_NORMAL]
 	assert_eq(norms.size(), verts.size(), "one normal per vertex")
 	var vi0: int = _find_vertex(verts, Vector3(p.x, lvl, p.y), 0.01)
-	var vi2: int = _find_row2_vertex(verts, p, nrm2d, lvl)
+	var vi2: int = _find_row2_vertex(verts, p, nrm2d)   # located by column position (clamp-stable); the curl NORMAL it reads is set independently of row2's clamped Y
 	assert_true(vi0 >= 0, "row0 vertex found at the non-wall point")
 	assert_true(vi2 >= 0, "row2 vertex found at the non-wall point")
 	if vi0 < 0 or vi2 < 0:
@@ -861,10 +890,10 @@ func test_rim_normals_curl_outward() -> void:
 ## assertion); the fix overshoots any genuinely rising bank (wall-flagged or
 ## not) to RIM_RISE_REACH=0.40 instead.
 ## Site precondition scanned directly against WaterContour's own curve
-## output (own ground probe at RISE_PROBE_DIST=1.0m along n̂, comparing
-## against the curve's own baked level) — NOT via WaterSkin's own
-## _rising_flags — so confirming "this is really a rising bank, not a drop"
-## is not circular with the fix under test. Reach is measured via
+## output (own ground probe at 1.0m along n̂, comparing against the curve's
+## own baked level) — NOT via WaterSkin's own _rising_flags — so confirming
+## "this is really a rising bank, not a drop" is not circular with the fix
+## under test. Reach is measured via
 ## _max_outward_reach, which (per its own docstring) also does not reproduce
 ## WaterSkin's own reach/rising-blend formula, and is unaffected by this
 ## task's OTHER change (the row1/row2 meniscus bulge) since it locates
@@ -951,6 +980,107 @@ func test_wall_rim_reaches_the_face() -> void:
 		checked, offenders.size()])
 	assert_true(offenders.is_empty(),
 		"the overshoot does not break the buried-rim free-edge invariant: %s" % str(offenders))
+
+
+## test_rim_never_floats_over_a_drop (r3 Task 14 review fix — the drop-misfire
+## regression pin the review's core ask names). The complement of
+## test_wall_rim_reaches_the_face: at a NON-wall shore point where the ground
+## genuinely DROPS below the water level within the rim's own reach (a
+## falling shore / drop-off), row2's meniscus bulge must NOT float above that
+## ground — it must be buried, or the sheet shows a "film over a drop," the
+## exact artifact this whole water redesign exists to kill.
+##
+## This is the class the review flagged as having ZERO coverage: the non-wall
+## ground-probe path (test_wall_rim_reaches_the_face only exercises a
+## wall-flagged point, which short-circuits _rising_flags before the ground
+## probe ever runs). The pinned seed's SITE_CHUNK is entirely wall-flagged
+## (verified: 0 non-wall curve points), so this runs on the POND_CHUNK, whose
+## shoreline carries real non-wall drop-off points (17 of them, verified).
+##
+## The drop point is scanned dynamically and its "drop" character is confirmed
+## by an INDEPENDENT ground probe (TerrainSurfaceField.surface_y at the rim's
+## own ~0.35m reach vs the curve's baked level) — NOT via WaterSkin's own
+## _rising_flags — so the precondition is not circular with the gate under
+## test. row2 is located by _find_row2_vertex (column position, clamp-stable —
+## see its docstring) and its world Y is asserted at/under its own landing
+## ground.
+##
+## RED at HEAD (the committed first Task 14): row2's Y is an unconditional
+## lvl + RIM_ROW2_BULGE (0.02 above the level), so over a drop it floats ~the
+## whole drop height above the ground. GREEN with the fix: the ground clamp
+## (min(L+0.02, g-0.02)) buries it. (The gate change is a second line of
+## defence; the CLAMP is what this vertex-level assertion pins, because the
+## pure gate-misfire geometry — ground that DIPS then RISES within 1m — is not
+## reproducible on this terrain field, whose surface is monotonic within each
+## 24m cell; the reproducible artifact is the falling-shore bulge float, which
+## the clamp fixes unconditionally. See r3-task-14-report.md's review-fix
+## appendix.)
+func test_rim_never_floats_over_a_drop() -> void:
+	var pond_chunk := Vector2i(-4, -18)
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, pond_chunk)
+	var ctx: Dictionary = WaterField.ctx(water, pond_chunk, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(pond_chunk))
+	assert_true(curves.size() > 0, "pond chunk has curves")
+	if curves.is_empty():
+		return
+
+	# Scan for the first NON-wall point whose ground genuinely drops below the
+	# water level at the rim's own ~0.35m reach — an independent drop probe, not
+	# WaterSkin's _rising_flags. reach 0.35 is RIM_ROW2_REACH (row2's default,
+	# non-rising landing); a drop of >0.15m there is unambiguous (well past any
+	# float/interp noise) and guarantees the pre-fix bulge (level+0.02) floats.
+	var probe_reach := 0.35
+	var drop_margin := 0.15
+	var dp := Vector2.ZERO
+	var dnrm := Vector2.ZERO
+	var dlvl := 0.0
+	var dground := 0.0
+	var found := false
+	for c: Dictionary in curves:
+		var pts: PackedVector2Array = c.pts
+		var wall: PackedByteArray = c.wall
+		for i in pts.size():
+			if wall[i] == 1:
+				continue
+			var pp: Vector2 = pts[i]
+			var nn: Vector2 = c.normals[i]
+			var ll: float = c.levels[i]
+			var land: Vector2 = pp + nn * probe_reach
+			var g: float = TerrainSurfaceField.surface_y(region, land.x, land.y)
+			if g < ll - drop_margin:
+				dp = pp
+				dnrm = nn
+				dlvl = ll
+				dground = g
+				found = true
+				break
+		if found:
+			break
+	assert_true(found, "pond chunk has a non-wall drop-off shore point (ground drops >%.2fm below level within %.2fm) — the site precondition" % [drop_margin, probe_reach])
+	if not found:
+		return
+	print("MEAS test_rim_never_floats_over_a_drop: drop pt=%s nrm=%s level=%.3f ground@%.2f=%.3f (drops %.3fm)" % [
+		dp, dnrm, dlvl, probe_reach, dground, dlvl - dground])
+
+	var skin: Dictionary = WaterSkin.build(water, pond_chunk, region)
+	assert_false(skin.is_empty(), "pond chunk builds a skin")
+	if skin.is_empty():
+		return
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var vi2: int = _find_row2_vertex(verts, dp, dnrm)
+	assert_true(vi2 >= 0, "row2 vertex located in the drop point's own normal column")
+	if vi2 < 0:
+		return
+	var row2: Vector3 = verts[vi2]
+	# Ground directly under row2's OWN landing xz (not the 0.35m probe above —
+	# the smoothed rise blend can nudge the real reach a few cm, so read ground
+	# at where the vertex actually sits).
+	var g_row2: float = TerrainSurfaceField.surface_y(region, row2.x, row2.z)
+	print("MEAS test_rim_never_floats_over_a_drop: row2=%s ground_under_row2=%.3f (float=%.3f, must be <=0)" % [
+		row2, g_row2, row2.y - g_row2])
+	assert_true(row2.y <= g_row2,
+		"row2's meniscus bulge is buried under (never floating above) its own drop-off ground: row2.y=%.3f > ground=%.3f (a film over a drop)" % [row2.y, g_row2])
 
 
 ## --- r3 Task 7 (triggers + sampler; the old marching-squares mesher's own
