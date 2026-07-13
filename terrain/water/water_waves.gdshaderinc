@@ -1,40 +1,37 @@
 // r3 Task 8 — the SINGLE wave-constants table. water_unified.gdshader's
 // vertex() (displacement) and fragment() (shading-detail gradient) both
-// #include this file and call the SAME two height functions below — no
-// wave math is duplicated between the two stages. GDScript cannot #include
-// a .gdshaderinc, so the CPU mirror (characters/character.gd _swell_offset)
-// copies these constants BY NAME instead: the pond spectrum is already
-// mirrored there (verbatim, see water_wave_h's own comment below); the
-// river-train mirror is r3 Task 9's own deliverable, reading the ten names
-// listed here.
+// #include this file and call the SAME height function below — no wave
+// math is duplicated between the two stages. GDScript cannot #include a
+// .gdshaderinc, so the CPU mirror (characters/character.gd _swell_offset)
+// copies the pond spectrum constants BY NAME (verbatim, see water_wave_h's
+// own comment below) — keep the two in sync.
 //
-// Mirror block (name = value — the copy-paste source for the GDScript
-// mirror; keep this list and the `const` block right below it in sync if
-// either ever changes):
-//   RIVER_K1            = 1.9
-//   RIVER_K2             = 3.4
-//   RIVER_SPEED1          = 2.6
-//   RIVER_SPEED2           = 3.8
-//   RIVER_AMP_BASE          = 0.055
-//   RIVER_AMP_SLOPE_GAIN     = 2.4
-//   RIVER_CROSS_RAD          = 0.31
-//   PLUNGE_RING_K            = 2.2
-//   PLUNGE_RING_SPEED        = 3.1
-//   PLUNGE_RING_AMP          = 0.10
-
-// River trains (s = CUSTOM0.x, d = CUSTOM0.y, slope = CUSTOM0.z, shore =
-// CUSTOM0.w — see WaterSkin._flow_frame_at's own docstring for the bake).
-// Values are OWNER-APPROVED (round-3 plan Task 8) — do not retune.
-const float RIVER_K1 = 1.9;        // λ≈3.3 m primary train
-const float RIVER_K2 = 3.4;        // λ≈1.8 m crossed train (steep only)
-const float RIVER_SPEED1 = 2.6;    // m/s downstream
-const float RIVER_SPEED2 = 3.8;
-const float RIVER_AMP_BASE = 0.055;
-const float RIVER_AMP_SLOPE_GAIN = 2.4;   // A = BASE*(1+GAIN*slope)
-const float RIVER_CROSS_RAD = 0.31;       // ~18 deg cross angle for train 2
-const float PLUNGE_RING_K = 2.2;
-const float PLUNGE_RING_SPEED = 3.1;
-const float PLUNGE_RING_AMP = 0.10;       // fades away from a steep span (see water_river_h)
+// r3 Task 13 (owner rewrite, 2026-07-11 verbatim): "the scroll motion
+// should not have any white in it, it should be entirely clear. the only
+// thing that will make it visible is changes in refraction ... also the
+// distortion should slowly morph as it moves." The geometric river trains
+// that used to live here (RIVER_K1/K2 vertex displacement, the
+// slope-gated train2, the plunge ring — r3 Task 8/9's own deliverable)
+// are DELETED wholesale: they vertex-displaced the 3 m mesh lattice at
+// wavelengths (1.8/3.3 m) below its Nyquist limit, which is exactly what
+// aliased into the maze/moiré pattern the owner rejected (R4-A/R5-A).
+// Geometry now carries ONLY the pond swell spectrum below, everywhere
+// (river and pond alike, shore-faded exactly as before) — see
+// water_unified.gdshader's vertex(). ALL visible river/rapids motion
+// moves to the fragment-side refraction-distortion advection instead:
+// water_distort_wobble below, called from water_unified.gdshader's
+// fragment(), perturbs the refraction offset ONLY (never VERTEX, never
+// this file's pond height) — it needs NO character.gd mirror, so the
+// float-height CPU mirror lost its river term outright (see
+// character.gd's own _swell_offset — the deletion is documented there).
+//
+// Mirror block (name = value — the copy-paste source for the pond-only
+// GDScript mirror; keep this list and the pond `const`s below in sync if
+// either ever changes). The distortion constants further down have no
+// CPU twin (fragment-only, never touches float height) so they are NOT
+// part of this mirror block.
+//   (no river constants any more — see r3-task-13-report.md for the
+//   deletion inventory)
 
 
 // ---- Pond spectrum -------------------------------------------------------
@@ -68,54 +65,85 @@ float water_wave_h(sampler2D noise_tex, vec2 p, float t) {
 }
 
 
-// ---- River trains + plunge rings -----------------------------------------
-// A river's downstream motion is two crest-free sine TRAINS advected along
-// the channel's own curvilinear (s, d) frame — CUSTOM0 no longer carries a
-// flow VECTOR (Task 6/7 replaced the old flow.xyz/steep_v layout), so
-// motion direction comes from arc length (s) and cross distance (d)
-// instead of a world-space heading. train1 always rides the channel at
-// RIVER_AMP_BASE and gains amplitude with slope; train2 is a second,
-// ~18-degree-crossed train gated on past FALLS/rapids only (slope in
-// [0.15, 0.45]) — a second train everywhere read as "mini-ripples
-// everywhere", which is exactly what the owner rejected about the old
-// per-cell chop.
+// ---- Refraction-distortion advection (r3 Task 13) -------------------------
+// The SOLE carrier of river/rapids motion. ONE code path serves river and
+// pond water alike — never an if/else on river-vs-pond — because the two
+// terms below are each independently continuous and just fade into one
+// another:
+//   - `base` is a world-space noise coordinate (same domain, same
+//     frequency the pre-Task-13 refraction wobble already sampled) that is
+//     ALWAYS defined and ALWAYS continuous, everywhere, regardless of the
+//     baked flow frame. This alone carries a pond's own slow drift+morph
+//     (nothing about it depends on (s, d, slope)) and is what makes a
+//     structural seam impossible: even in the worst case below, this term
+//     never tears.
+//   - `push` rides the baked curvilinear (s, d) frame (CUSTOM0.xy — arc
+//     length downstream / signed cross-channel distance) so a river's
+//     advection direction bends with the channel itself instead of fighting
+//     a fixed world-space vector (CUSTOM0 carries no such vector — Task
+//     6/7). It is weighted by `flow_gate`, a smoothstep on slope using the
+//     SAME threshold the pre-Task-13 shading-gradient blend used
+//     (river_gate) — i.e. already near 0 for calm reaches well before
+//     WaterSkin's own s=d=slope=0 "calm" cutoff at 18 m (_flow_frame_at),
+//     so the one case that COULD show a seam (a still-steep reach right at
+//     that 18 m ring) is the same tolerance this codebase already ships,
+//     now bounded to a fade in the smaller PUSH layer only — the base
+//     layer under it never interrupts.
 //
-// river_present is NOT decorative. WaterSkin bakes s=d=slope=0.0 IDENTICALLY
-// at every vertex more than RIVER_MAX_DIST(18m) from any trace (its own
-// literal "calm" rule — see _flow_frame_at) — every such vertex, pond or
-// lake, shares the EXACT same (0, 0, 0) frame. Without a gate, train1's
-// slope-independent RIVER_AMP_BASE floor would then evaluate to the SAME
-// sin(-RIVER_SPEED1*RIVER_K1*t) at every one of those vertices simultaneously
-// (same phase, since s is pinned to the same 0.0 everywhere) — an entire
-// lake rising and falling together as one rigid plate instead of staying
-// inert. train2 and the plunge ring already self-gate on slope, which
-// happens to cover their own pond case too, but river_present is applied
-// once to the whole function as a single, explicit safety net rather than
-// three separate implicit ones.
+// TWO-PHASE half-offset blend (phaseA/phaseB, triangle-wave crossfade):
+// `push`'s own advection is bounded to one DIST_PERIOD before it wraps
+// (mod, not raw TIME) because slope varies along a river — an UNBOUNDED
+// advection would shear the pattern apart faster wherever the local slope
+// (hence speed) is bigger, the classic flow-map problem. Wrapping hides
+// that reset by crossfading two phases offset by half a cycle: each phase's
+// blend weight is a triangle wave that troughs to exactly 0 at its OWN
+// reset instant (phaseA at t=0/DIST_PERIOD, phaseB exactly half a cycle
+// later) and peaks at 1 at its own mid-cycle — so whichever phase is about
+// to pop is invisible, and the visible one is never mid-reset.
 //
-// Plunge rings: no baked proximity-to-a-steep-span-base stream exists, and
-// this task deliberately does NOT add one (a "how far downstream of the
-// nearest fall's base" scalar would be a new per-vertex stream — see
-// r3-task-8-report.md's own judgment-call note on this exact point).
-// Approximated train-based instead: a d-keyed radial-ish ripple gated on
-// slope > 0.3 (a plunge pool's own profile slope tapers down from the fall
-// above it through this exact band before levelling to a calm reach), so
-// the ring reads as "just past a steep drop" without any new geometry.
-float water_river_h(float s, float d, float slope, float t) {
-	float river_present = smoothstep(0.0, 0.03, abs(s) + abs(d));
-	// CUSTOM0.z (slope) is intentionally UNCLAMPED at the bake (WaterSkin —
-	// real waterfall reaches read well past 1.0); clamp only the LOCAL
-	// amplitude-gain input so one outlier vertex can't spike a train's
-	// height far past every other constant's own scale. The named
-	// RIVER_* constants themselves are untouched.
-	float slope_amp = clamp(slope, 0.0, 2.0);
-	float amp = RIVER_AMP_BASE * (1.0 + RIVER_AMP_SLOPE_GAIN * slope_amp);
-	float h = amp * sin(RIVER_K1 * s - RIVER_SPEED1 * RIVER_K1 * t);
-	float gate2 = smoothstep(0.15, 0.45, slope);
-	float phase2 = RIVER_K2 * (s * cos(RIVER_CROSS_RAD) + d * sin(RIVER_CROSS_RAD))
-			- RIVER_SPEED2 * RIVER_K2 * t;
-	h += gate2 * amp * sin(phase2);
-	float ring_gate = smoothstep(0.3, 0.5, slope);
-	h += ring_gate * PLUNGE_RING_AMP * sin(PLUNGE_RING_K * abs(d) - PLUNGE_RING_SPEED * t);
-	return h * river_present;
+// MORPH: each phase's `base` term ALSO drifts along its own fixed,
+// decorrelated velocity (DIST_MORPH_VEL_A / _B — literally the two
+// pre-Task-13 wobble scroll vectors, one per phase) — unlike the bounded
+// `push` advection, morph is intentionally UNBOUNDED (never wrapped): a
+// bounded, wrapped-only motion would still read as a rigid conveyor
+// (the same tile sliding, then popping back). Two independently-drifting
+// morph velocities mean the pattern the two phases sample keeps changing
+// SHAPE, not just position, while it travels (the owner's own "the
+// distortion should slowly morph as it moves").
+//
+// noise_tex is GRAYSCALE: every 2D distortion vector below is built from
+// TWO offset samples (a, b), never a single sample's .rg (that would read
+// one channel diagonally — see water_unified.gdshader's own uniform
+// comment).
+const float DIST_FREQ = 0.045;            // world-space base frequency — matches the pre-Task-13 wobble's own scale
+const float DIST_DRIFT_SPEED = 0.45;      // pond/calm floor (flow_speed at slope=0) — close to the old wobble's own effective drift rate
+const float DIST_FLOW_GAIN = 2.5;         // flow_speed = DIST_DRIFT_SPEED + DIST_FLOW_GAIN*clamp(slope,0,2); ~2.6 m/s at slope=1, matching the deleted RIVER_SPEED1's own scale
+const float DIST_FLOW_GATE = 0.05;        // river_slope smoothstep upper bound gating the (s,d) push — same threshold the deleted shading-gradient river_gate used
+const float DIST_PERIOD = 10.0;           // seconds per phase cycle before the bounded push-advection wraps
+const vec2 DIST_MORPH_VEL_A = vec2(0.021, -0.017);   // phase A's own unbounded morph drift (== the pre-Task-13 wa scroll vector)
+const vec2 DIST_MORPH_VEL_B = vec2(-0.019, 0.023);   // phase B's own unbounded morph drift (== the pre-Task-13 wb scroll vector) — decorrelated from A by construction
+const vec2 DIST_SAMPLE_OFFSET = vec2(37.7, 11.3);    // 2nd sample's UV offset within a phase, building a 2D vector from the grayscale texture
+
+vec2 water_distort_wobble(sampler2D noise_tex, vec2 world_xz, float s, float d, float slope, float t, float speed_mul) {
+	float slope_amp = clamp(slope, 0.0, 2.0);   // slope is UNCLAMPED at the bake (real waterfalls read well past 1.0) — clamp only this local gain input, same discipline the deleted water_river_h used
+	float flow_speed = (DIST_DRIFT_SPEED + DIST_FLOW_GAIN * slope_amp) * speed_mul;
+	float flow_gate = smoothstep(0.0, DIST_FLOW_GATE, slope);
+	vec2 base = world_xz * DIST_FREQ;
+
+	float dist_phase = fract(t / DIST_PERIOD);
+	float phaseA_adv = dist_phase * DIST_PERIOD;
+	float phaseB_adv = fract(dist_phase + 0.5) * DIST_PERIOD;
+	float wA = 1.0 - abs(dist_phase * 2.0 - 1.0);   // triangle wave: 0 at the reset instant, 1 at this phase's own mid-cycle
+	float wB = 1.0 - wA;                            // phase B is exactly half a cycle offset, so it peaks when A resets and vice versa
+
+	vec2 uvA = base + t * DIST_MORPH_VEL_A * speed_mul
+			+ flow_gate * vec2(s - flow_speed * phaseA_adv, d) * DIST_FREQ;
+	vec2 uvB = base + t * DIST_MORPH_VEL_B * speed_mul
+			+ flow_gate * vec2(s - flow_speed * phaseB_adv, d) * DIST_FREQ;
+
+	float waA = texture(noise_tex, uvA).r;
+	float wbA = texture(noise_tex, uvA + DIST_SAMPLE_OFFSET).r;
+	float waB = texture(noise_tex, uvB).r;
+	float wbB = texture(noise_tex, uvB + DIST_SAMPLE_OFFSET).r;
+	return (vec2(waA, wbA) - 0.5) * wA + (vec2(waB, wbB) - 0.5) * wB;
 }

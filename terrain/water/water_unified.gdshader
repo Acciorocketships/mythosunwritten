@@ -10,18 +10,23 @@
 // any trace" covers ponds/lakes AND any river vertex more than 18m from a
 // trace — WaterSkin's own literal "calm" rule.
 //
-// r3 Task 8: motion comes ENTIRELY from travelling wave trains — see
-// terrain/water/water_waves.gdshaderinc, the single wave-constants table
-// this shader and the character's CPU mirror both read by name. ZERO albedo
-// whitening anywhere (the owner's hardest rule): no foam mask, no steep
-// wash, no streak scroll, no plunge whitening. "Falling" and "rapids" are
-// conveyed purely by wave amplitude/frequency riding `slope`, never by
-// brightening ALBEDO. The mesh also carries REAL vertex normals (Task 6:
-// interior heightfield slope + meniscus rim curl) — fragment() blends those
-// with the wave motion instead of replacing them outright (the previous,
-// now-deleted analytic-only normal ignored the rim curl entirely, which is
-// why the meniscus never caught fresnel). No baked flow maps. cull_disabled:
-// the player swims and looks up from below.
+// r3 Task 13 (owner rewrite, supersedes Task 8's river trains): geometry
+// displaces ONLY the pond swell spectrum now (water_waves.gdshaderinc's
+// water_wave_h — long λ, owner-approved, shore-faded) — the geometric
+// river trains that used to ride the (s, d, slope) frame are DELETED (they
+// vertex-displaced the 3m mesh lattice below its Nyquist limit, aliasing
+// into the maze/moiré pattern the owner rejected). ALL river/rapids motion
+// now comes from the fragment-side refraction-distortion advection instead
+// (water_distort_wobble, same include) — the SOLE carrier of "the water is
+// moving": it perturbs the refraction offset ONLY, never ALBEDO and never
+// the lighting NORMAL. ZERO albedo whitening anywhere (the owner's hardest
+// rule): no foam mask, no steep wash, no streak scroll, no plunge
+// whitening. The mesh also carries REAL vertex normals (Task 6: interior
+// heightfield slope + meniscus rim curl) — fragment() blends those with the
+// pond-spectrum wave motion instead of replacing them outright (the
+// previous, now-deleted analytic-only normal ignored the rim curl entirely,
+// which is why the meniscus never caught fresnel). No baked flow maps.
+// cull_disabled: the player swims and looks up from below.
 shader_type spatial;
 render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 
@@ -32,23 +37,31 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 // scene tinted by depth — shallow shows the bed through clean green glass,
 // deep saturates to a soft teal — and glancing views mirror a LIGHT sky
 // tint (the reference's pale reflective sheen), never a dark one. The
-// surface itself is SMOOTH: no noise dapple — motion comes entirely from
-// the travelling wave trains (pond spectrum + river trains, both baked in
-// water_waves.gdshaderinc) and the interactive ripple sim.
+// surface itself is SMOOTH: no noise dapple — geometric motion comes from
+// the travelling pond swells (water_waves.gdshaderinc) and the interactive
+// ripple sim; river/rapids motion (r3 Task 13) comes entirely from the
+// refraction-distortion advection in fragment(), never from geometry.
 uniform vec3 color_deep : source_color = vec3(0.33, 0.60, 0.55);
 uniform vec3 color_shallow : source_color = vec3(0.55, 0.82, 0.73);
 uniform vec3 color_sky : source_color = vec3(0.78, 0.90, 0.87);
 uniform float sky_reflect : hint_range(0.0, 1.0) = 0.5;
-uniform float clarity_depth : hint_range(0.5, 24.0) = 12.0;   // metres to full deep colour
+// r3 Task 13 round-6 clarity push (owner references: tropical clear-shallow
+// shot + Sea of Solitude re-annotation) — 12.0 -> 18.0: the bed/refracted
+// scene must read plainly through the body at ordinary depths, not just the
+// shallows.
+uniform float clarity_depth : hint_range(0.5, 24.0) = 18.0;   // metres to full deep colour
 // CLEAR, not light (owner): the scene shows through with a modest tint
 // floor so shallow shelves never read as bare lawn — it's the REFRACTION
-// DISTORTION that makes the clear water read as water.
-uniform float body_floor : hint_range(0.0, 1.0) = 0.12;
+// DISTORTION that makes the clear water read as water. Round-6: 0.12 ->
+// 0.07 (clarity push — the floor was still reading too opaque against both
+// owner references).
+uniform float body_floor : hint_range(0.0, 1.0) = 0.07;
 // How much the refracted scene tints toward color_shallow even at the very
 // shallowest reads (the r3 Task 8 "shallow tint" clarity target) — kept as
 // its own uniform (was a hardcoded 0.12 literal pre-Task-8) so the battery
-// pass can live-tune it same as every other clarity param.
-uniform float shallow_tint : hint_range(0.0, 1.0) = 0.10;
+// pass can live-tune it same as every other clarity param. Round-6: 0.10 ->
+// 0.06.
+uniform float shallow_tint : hint_range(0.0, 1.0) = 0.06;
 // 0.11 (R3-B, raised from 0.09 — Task 8 deliberately held this back until
 // the guard below was hardened: a stronger offset without the hardening
 // would have made the ghost worse, not just more visible).
@@ -100,13 +113,12 @@ void vertex() {
 	// buried waterline hem never bobs above its bank (same reasoning the
 	// pre-Task-8 flow-gated amplitude used to cover, now keyed on the baked
 	// shore distance instead of a flow strength that no longer exists).
+	// r3 Task 13: this is the ONLY geometric displacement left — the river
+	// trains that used to add here are DELETED (see water_waves.gdshaderinc's
+	// own header); river motion now lives entirely in fragment()'s
+	// refraction-distortion advection, never in VERTEX.
 	float shore_fade = smoothstep(0.0, 4.0, shore_dist);
 	float h = water_wave_h(noise_tex, world_pos.xz, t) * wave_height * shore_fade;
-	// River trains (train1 + gated train2 + gated plunge ring), a pure
-	// function of the baked (s, d, slope) frame — see water_river_h's own
-	// docstring in water_waves.gdshaderinc for why it self-gates to zero
-	// away from any trace instead of needing a shore-style fade here.
-	h += water_river_h(river_s, river_d, river_slope, t);
 	VERTEX.y += h;
 	world_pos.y += h;
 }
@@ -126,35 +138,24 @@ void fragment() {
 	// actually catch light/fresnel.
 	vec3 n = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
 
-	// Wave-driven shading detail: a small gradient of the SAME height
-	// functions vertex() displaces the surface by (never generic noise), so
-	// the shading visibly tracks the travelling trains — this is what reads
-	// as "waveform shading" even in a still frame, and it stays correct at
-	// any mesh resolution since it is evaluated per-fragment from the closed
-	// form, not finite-differenced across coarse vertex spacing. Rivers
-	// differentiate in the curvilinear (s, d) frame baked per vertex — the
-	// shader has no world-space tangent direction available to rotate that
-	// into world xz (CUSTOM0 carries no direction channel, and s/d are not a
-	// world-continuous field a vertex-side finite difference could sample
-	// off-vertex) — ponds differentiate in world (x, z), the domain
-	// water_wave_h is actually smooth over. Both are evaluated and
-	// cross-faded continuously by river_gate (river_slope's own smoothstep)
-	// rather than hard-switched on slope > 0, so the crossover never draws a
-	// seam where a river reach happens to run calm (slope near 0).
-	float river_gate = smoothstep(0.0, 0.05, river_slope);
-	float er = 0.15; // << the shortest train's own wavelength (~1.8m, RIVER_K2) — resolves it cleanly
-	float h0r = water_river_h(river_s, river_d, river_slope, t);
-	float hsr = water_river_h(river_s + er, river_d, river_slope, t);
-	float hdr = water_river_h(river_s, river_d + er, river_slope, t);
-	vec2 grad_r = vec2(hsr - h0r, hdr - h0r) / er;
+	// Wave-driven shading detail: a small gradient of the SAME pond-spectrum
+	// height function vertex() displaces the surface by (never generic
+	// noise), so the shading visibly tracks the travelling swells — this is
+	// what reads as "waveform shading" even in a still frame, and it stays
+	// correct at any mesh resolution since it is evaluated per-fragment from
+	// the closed form, not finite-differenced across coarse vertex spacing.
+	// r3 Task 13: the river-train half of this gradient (the old grad_r,
+	// cross-faded in by river_slope) is DELETED along with water_river_h
+	// itself — geometry (hence this shading gradient) now carries only the
+	// pond spectrum everywhere; river motion lives entirely in the
+	// refraction-distortion advection below, which never touches NORMAL.
 	float ep = 2.0;
 	float shore_fade = smoothstep(0.0, 4.0, shore_dist);
 	vec2 wp = world_pos.xz;
 	float h0p = water_wave_h(noise_tex, wp, t);
 	float hxp = water_wave_h(noise_tex, wp + vec2(ep, 0.0), t);
 	float hzp = water_wave_h(noise_tex, wp + vec2(0.0, ep), t);
-	vec2 grad_p = vec2(hxp - h0p, hzp - h0p) / ep * wave_height * shore_fade;
-	vec2 grad = mix(grad_p, grad_r, river_gate);
+	vec2 grad = vec2(hxp - h0p, hzp - h0p) / ep * wave_height * shore_fade;
 	n = normalize(n + vec3(-grad.x, 0.0, -grad.y));
 
 	// Interactive ripples: sample the wave-sim height gradient inside the
@@ -182,17 +183,18 @@ void fragment() {
 	// looked like lawn), while the first ~10cm at the rim stay clear.
 	float depth_t = max(1.0 - exp(-depth / clarity_depth),
 			body_floor * smoothstep(0.05, 0.55, depth));
-	// Refraction wobble: TIME-driven noise offset only. Pre-Task-8 this also
-	// advected with the old flow vector (flow_v.xz * TIME) so the distortion
-	// visibly scrolled downstream; CUSTOM0 no longer carries a flow vector
-	// (Task 6/7), and the time-driven wobble alone still keeps the
-	// see-through picture visibly swimming, so it is not replaced with a
-	// (s, d)-driven equivalent.
-	float wa = texture(noise_tex, world_pos.xz * 0.045
-			+ vec2(TIME * 0.021, -TIME * 0.017) * wobble_speed).r;
-	float wb = texture(noise_tex, world_pos.xz * 0.045 + vec2(37.7, 11.3)
-			+ vec2(-TIME * 0.019, TIME * 0.023) * wobble_speed).r;
-	vec2 roff = (NORMAL.xy * refraction_strength + (vec2(wa, wb) - 0.5) * distort_anim)
+	// Refraction wobble: r3 Task 13 — the SOLE carrier of river/rapids
+	// motion now (the geometric river trains are deleted; see this shader's
+	// own header and water_waves.gdshaderinc's water_distort_wobble for the
+	// full two-phase/morph derivation). CUSTOM0's curvilinear (s, d, slope)
+	// frame (Task 6/7) advects the distortion sampling along the channel —
+	// a world-space flow vector was never baked, but the curvilinear frame
+	// does not need one — while a world-space base layer keeps ponds
+	// textured and drifting and guarantees the field can never seam where
+	// the flow frame fades to its baked "calm" zero. Still perturbs the
+	// refraction offset ONLY — never ALBEDO, never NORMAL.
+	vec2 wobble = water_distort_wobble(noise_tex, world_pos.xz, river_s, river_d, river_slope, TIME, wobble_speed);
+	vec2 roff = (NORMAL.xy * refraction_strength + wobble * distort_anim)
 			* clamp(depth * 1.5, 0.0, 1.3) / max(1.0, -VERTEX.z * 0.08);
 	vec2 suv = SCREEN_UV + roff;
 	// GRADED guard: fade the offset out where it lands on geometry ABOVE the

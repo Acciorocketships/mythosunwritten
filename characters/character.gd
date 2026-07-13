@@ -28,31 +28,22 @@ const WATER_SURFACE_Y: float = -1.5
 var water_surface_y: float = WATER_SURFACE_Y
 # CPU mirror of the water shader's swell so the floating body RIDES the waves
 # (buoyancy tracks the displaced surface — rocking, like a boat). Keep in sync
-# with water_wave_h in terrain/water/water_common.gdshaderinc and the
+# with water_wave_h in terrain/water/water_waves.gdshaderinc and the
 # wave_height/wave_speed uniform defaults in water_unified.gdshader. The
 # mirror is EXACT — every term is a travelling sine (no noise), so the CPU
 # and GPU surfaces agree everywhere.
 # Mirrors water_unified.gdshader's wave_height / wave_speed — keep in sync.
 const SWELL_HEIGHT: float = 1.0
 const SWELL_SPEED: float = 0.26
-# River-train mirror (r3 Task 9) — named constants copied VERBATIM from
-# terrain/water/water_waves.gdshaderinc's own "mirror block" header comment
-# (that file is the single source of truth; GDScript cannot #include a
-# .gdshaderinc, so this table is its hand-kept CPU twin — retune there, copy
-# the values back here, never the reverse). Only feeds water_surface_y (the
-# float-height/buoyancy surface, via _swell_offset/_river_h) — classification
-# (in_water/wading) is STATIC field depth and never reads these; see
-# _update_in_water's own docstring.
-const RIVER_K1: float = 1.9          # λ≈3.3 m primary train
-const RIVER_K2: float = 3.4          # λ≈1.8 m crossed train (steep only)
-const RIVER_SPEED1: float = 2.6      # m/s downstream
-const RIVER_SPEED2: float = 3.8
-const RIVER_AMP_BASE: float = 0.055
-const RIVER_AMP_SLOPE_GAIN: float = 2.4     # A = BASE*(1+GAIN*slope)
-const RIVER_CROSS_RAD: float = 0.31         # ~18 deg cross angle for train 2
-const PLUNGE_RING_K: float = 2.2
-const PLUNGE_RING_SPEED: float = 3.1
-const PLUNGE_RING_AMP: float = 0.10
+# r3 Task 13 (owner rewrite): the river-train mirror that used to live here
+# (r3 Task 9's RIVER_K1/K2 etc. + _river_h) is DELETED — the geometric river
+# trains it mirrored are themselves deleted from the shader (they aliased
+# into a maze/moiré pattern below the mesh lattice's Nyquist limit). River
+# motion now lives entirely in the shader's fragment-side refraction
+# distortion (water_waves.gdshaderinc's water_distort_wobble), which never
+# touches VERTEX/surface height, so it has nothing to mirror here: a
+# floating body's height is the pond spectrum ONLY, everywhere, river or
+# pond alike. See _swell_offset below and r3-task-13-report.md.
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
 @export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
@@ -267,7 +258,6 @@ func _update_in_water() -> void:
 	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
 	var best_depth: float = -INF
 	var best_level: float = -INF
-	var best_sampler: WaterSampler = null
 	for h in hits:
 		var collider: Object = h.get("collider")
 		if collider == null or not collider.has_meta("sampler"):
@@ -280,28 +270,29 @@ func _update_in_water() -> void:
 		if depth > best_depth:
 			best_depth = depth
 			best_level = lvl
-			best_sampler = sampler
 	var swim_gate: float = 0.6 if in_water else 0.8
 	var wade_gate: float = 0.03 if wading else 0.05
 	in_water = best_depth > swim_gate
 	wading = in_water or best_depth > wade_gate
 	if in_water:
-		water_surface_y = best_level + _swell_offset(xz, t, best_sampler)
+		water_surface_y = best_level + _swell_offset(xz, t)
 
 
 # The water surface the buoyancy chases, displaced by the shader's travelling
 # swells at the character's position — floating bodies rock in the waves.
-# POND term: exact mirror of water_wave_h in terrain/water/water_common.gdshaderinc
-# (two long swells + three mid rollers, two of them envelope-modulated by
-# slow travelling sines) — KEEP IN SYNC. RIVER term (r3 Task 9, `sampler`
-# optional — null skips it, e.g. no trigger context available): _river_h at
-# the character's own flow frame, read from `sampler.flow_frame_at` (bilinear
-# over WaterSkin's own baked (s, d, slope) grid — the same "frozen chunk
-# snapshot" contract level_at already has). `t` is the caller's own
-# TIME*SWELL_SPEED (matches the shader's `t = TIME * wave_speed` exactly —
-# computed ONCE per _update_in_water call, not re-read here, so a frame's
-# depth gate and its water_surface_y agree on "now").
-func _swell_offset(p: Vector2, t: float, sampler: WaterSampler = null) -> float:
+# Exact mirror of water_wave_h in terrain/water/water_waves.gdshaderinc (two
+# long swells + three mid rollers, two of them envelope-modulated by slow
+# travelling sines) — KEEP IN SYNC. `t` is the caller's own TIME*SWELL_SPEED
+# (matches the shader's `t = TIME * wave_speed` exactly — computed ONCE per
+# _update_in_water call, not re-read here, so a frame's depth gate and its
+# water_surface_y agree on "now"). r3 Task 13 (owner rewrite): the RIVER term
+# this function used to add (_river_h, fed by a `sampler.flow_frame_at`
+# lookup) is DELETED along with the shader's own geometric river trains — a
+# floating body's height is the pond spectrum ONLY now, everywhere (river
+# reaches included), since river motion lives entirely in the shader's
+# fragment-side refraction distortion, which perturbs the refraction offset
+# only and never touches vertex/surface height.
+func _swell_offset(p: Vector2, t: float) -> float:
 	var h: float = 0.9 * sin(p.dot(Vector2(0.042, 0.016)) - t * 0.33)
 	h += 0.55 * sin(p.dot(Vector2(-0.023, 0.037)) - t * 0.26 + 1.7)
 	var e1: float = 0.75 + 0.45 * sin(p.dot(Vector2(0.052, 0.048)) - t * 0.21 + 0.9)
@@ -309,35 +300,7 @@ func _swell_offset(p: Vector2, t: float, sampler: WaterSampler = null) -> float:
 	h += 0.5 * e1 * sin(p.dot(Vector2(0.118, -0.112)) - t * 2.85 + 2.1)
 	h += 0.34 * e2 * sin(p.dot(Vector2(-0.15, 0.178)) - t * 3.1 + 4.6)
 	h += 0.22 * sin(p.dot(Vector2(0.27, 0.208)) - t * 3.45 + 1.3)
-	var total: float = h * 0.5 * SWELL_HEIGHT
-	if sampler != null:
-		var frame: Vector3 = sampler.flow_frame_at(p)
-		total += _river_h(frame.x, frame.y, frame.z, t)
-	return total
-
-
-# Exact GDScript mirror of water_river_h(s, d, slope, t) in
-# terrain/water/water_waves.gdshaderinc — train1 (always, self-gated to zero
-# away from any trace by river_present) + train2 (gated to steep reaches
-# only, smoothstep(0.15,0.45,slope)) + a plunge-ring term
-# (smoothstep(0.3,0.5,slope)). Added UNSCALED to the pond sum, exactly like
-# the shader's own `h += water_river_h(...)` in vertex() — no extra
-# SWELL_HEIGHT/wave_height factor; water_river_h's own RIVER_AMP_* constants
-# already set its scale. KEEP IN SYNC with that function's own formula.
-func _river_h(s: float, d: float, slope: float, t: float) -> float:
-	var river_present: float = smoothstep(0.0, 0.03, absf(s) + absf(d))
-	# slope is intentionally UNCLAMPED at the bake (real waterfall reaches
-	# read well past 1.0); clamp only the LOCAL amplitude-gain input, same
-	# guard the shader's own water_river_h applies.
-	var slope_amp: float = clampf(slope, 0.0, 2.0)
-	var amp: float = RIVER_AMP_BASE * (1.0 + RIVER_AMP_SLOPE_GAIN * slope_amp)
-	var h: float = amp * sin(RIVER_K1 * s - RIVER_SPEED1 * RIVER_K1 * t)
-	var gate2: float = smoothstep(0.15, 0.45, slope)
-	var phase2: float = RIVER_K2 * (s * cos(RIVER_CROSS_RAD) + d * sin(RIVER_CROSS_RAD)) - RIVER_SPEED2 * RIVER_K2 * t
-	h += gate2 * amp * sin(phase2)
-	var ring_gate: float = smoothstep(0.3, 0.5, slope)
-	h += ring_gate * PLUNGE_RING_AMP * sin(PLUNGE_RING_K * absf(d) - PLUNGE_RING_SPEED * t)
-	return h * river_present
+	return h * 0.5 * SWELL_HEIGHT
 
 
 func jump_animation(started_animation: bool):
