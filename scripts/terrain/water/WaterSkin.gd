@@ -66,6 +66,29 @@
 # `triggers`/`sampler` directly and the old mesher (and the per-cell sampled
 # plane pair of metas it used to hang off each volume) is deleted outright;
 # see r3 Task 7's report for the removal.
+# UNIVERSAL SHORE OVERSHOOT + MENISCUS BULGE (r3 Task 14, round-5 addendum —
+# see _rim/_rising_flags): the owner's own repeated post-refactor complaint
+# ("water still not going all the way up to the edges of the terrain," a
+# visible slot between the sheet and the bank) traced to _rim's own
+# wall-only pinch, which PULLED rows 2-3 IN to +0.05·n̂ at the exact
+# waterline on a wall-flagged point instead of extending them OUT to meet
+# the rising face — the opposite of the pre-refactor film behaviour the
+# owner cited as better. Fixed two ways: (1) reach2/reach3 now OVERSHOOT to
+# RIM_RISE_REACH (0.40) wherever the bank genuinely RISES above the water
+# level within ~1m of the waterline — decided per point by _rising_flags
+# (the curve's own wall flag OR a dedicated ground probe), so an ordinary
+# sloped (non-wall) bank overshoots too, not just near-vertical faces; a
+# genuine drop-off (FALLING/level ground) keeps the old default reach
+# instead, deliberately — overshooting there would reintroduce the "film
+# floating over a drop" artifact run-1 already rejected (see
+# water-architecture memory's own "Rejected designs"). Row3 stays buried
+# exactly as before regardless of which reach row2/row3 chose — the
+# ground-relative min() clamp already makes it safe under any xz. (2)
+# row1/row2 gain a small positive BULGE above the water level L
+# (+0.04/+0.02, replacing the old -0.02/-0.18 dip) before curling down to
+# row3 — the surface-tension/blob read the owner liked, applied universally
+# (rising or not; a few cm of bulge does not reintroduce the drop-film
+# artifact the way a horizontal overshoot would).
 class_name WaterSkin
 extends Object
 
@@ -127,19 +150,28 @@ const STEEP_UNSWIMMABLE := 0.45
 # exclusive by construction — see r3-task-12-report.md's own follow-up
 # section and r3-task-12b-report.md for the closing argument).
 
-# --- Meniscus rim (Task 5) — brief's own literal per-point profile, local
-# frame (outward normal n, level L, ground g): row0 = the strip's own curve
-# vertex (weld-reused, not a new position); row1 = p, y=L-ROW1_DROP; row2 =
-# p + reach2*n, y=L-ROW2_DROP; row3 = p + reach3*n, y = min(L-ROW3_DROP,
-# g-GROUND_BURY). reach2/reach3 default to (ROW2_REACH, ROW3_REACH) and pinch
-# toward WALL_PINCH at wall-flagged points — see _rim's own docstring.
-const RIM_ROW1_DROP := 0.02
-const RIM_ROW2_DROP := 0.18
+# --- Meniscus rim (Task 5, reshaped r3 Task 14 — see _rim's own docstring)
+# — per-point profile, local frame (outward normal n, level L, ground g):
+# row0 = the strip's own curve vertex (weld-reused, not a new position);
+# row1 = p, y=L+ROW1_BULGE (a hairline meniscus crest, now bulging slightly
+# ABOVE the water level instead of dipping below it); row2 = p + reach2*n,
+# y=L+ROW2_BULGE; row3 = p + reach3*n, y = min(L-ROW3_DROP, g-GROUND_BURY)
+# (unchanged — "row3 buried as today" per r3 Task 14's own brief). reach2/
+# reach3 default to (ROW2_REACH, ROW3_REACH) over falling/level ground, and
+# extend all the way to RISE_REACH wherever the bank genuinely RISES within
+# RISE_PROBE_DIST of the waterline (r3 Task 14's universal shore-overshoot
+# rule, which SUBSUMES the old wall-only pinch — a wall is just the
+# steepest case of "rising ground" — see _rim's own docstring and
+# _rising_flags).
+const RIM_ROW1_BULGE := 0.04
+const RIM_ROW2_BULGE := 0.02
 const RIM_ROW3_DROP := 0.30
 const RIM_ROW2_REACH := 0.35
 const RIM_ROW3_REACH := 0.55
-const RIM_WALL_PINCH := 0.05
+const RIM_RISE_REACH := 0.40
 const RIM_GROUND_BURY := 0.30
+const RISE_PROBE_DIST := 1.0   # brief's own "rises above the water level within ~1m of the waterline"
+const RISE_MARGIN := 0.05      # required clearance above L before a ground probe counts as a genuine rise (not float/interpolation noise on near-flat ground)
 
 # --- Flow frames (Task 6) — brief's own CUSTOM0 = (s, d, slope, shore_dist):
 # s = arc length from source along the nearest river trace, d = signed
@@ -186,9 +218,13 @@ const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp
 # water, matching the interior lattice it welds into — see _rim's own row0 =
 # strip-vertex reuse); rows 1-3 rotate UP toward n̂ by an increasing angle,
 # pinched back toward 0 (UP) at wall-flagged points by the SAME
-# _smoothed_wall blend _rim already uses for its reach2/reach3 pinch — a
-# flush wall curtain reads as near-UP, not as a horizontal cliff face, per
-# the controller brief's own "wall-pinched near-UP" rule. Expressed as
+# _smoothed_flags(wall, ...) blend _rim already uses — a flush wall curtain
+# reads as near-UP, not as a horizontal cliff face, per the controller
+# brief's own "wall-pinched near-UP" rule. r3 Task 14: this angle pinch stays
+# WALL-flag-only, deliberately NOT keyed off the broader `rise` signal that
+# now drives reach2/reach3's own overshoot (see _rim's own docstring) — a
+# gently rising, non-wall bank should still curl its shading normal outward
+# normally; only a near-vertical wall wants the flush-UP read. Expressed as
 # PI-based literals (not deg_to_rad calls) so they fold to true GDScript
 # constants.
 const RIM_NORMAL_ANGLE1 := PI / 18.0          # 10 deg — row1, hairline crest dip
@@ -608,8 +644,10 @@ static func _slope_component(h_minus: float, h0: float, h_plus: float, e: float)
 ## pair and cos/sin naturally produce a unit result (the .normalized() below
 ## is defensive against float drift only). angle=0 => exactly UP (row0's own
 ## case, and every row at a fully wall-pinched point — see _rim's own call
-## sites, which lerp `angle` toward 0.0 by the SAME _smoothed_wall blend that
-## already pinches reach2/reach3).
+## sites, which lerp `angle` toward 0.0 by the SAME _smoothed_flags(wall, ...)
+## blend — r3 Task 14: this pinch is STILL wall-only, unlike reach2/reach3's
+## own overshoot blend below, which now runs on the broader `rise` signal;
+## see the Rim-normals constants block's own note on why the two stayed split).
 static func _curl_normal(nrm2d: Vector2, angle: float) -> Vector3:
 	var outward := Vector3(nrm2d.x, 0.0, nrm2d.y)
 	return (Vector3.UP * cos(angle) + outward * sin(angle)).normalized()
@@ -1026,11 +1064,11 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary, 
 	_zip_strip(st, curve_vi, ring_vi, c.closed)
 
 
-## Meniscus rim (Task 5): three new vertex rows per curve point, curling the
-## water's visible edge DOWN and OUTWARD (toward the dry bank, +normal) from
-## the boundary strip's own curve vertex, then diving under the terrain so
-## the sheet always seals against the ground with no gap — the brief's own
-## literal per-point profile (local frame: outward normal n, level L, ground
+## Meniscus rim (Task 5, reshaped r3 Task 14): three new vertex rows per
+## curve point, curling the water's visible edge OUTWARD (toward the dry
+## bank, +normal) from the boundary strip's own curve vertex, then diving
+## under the terrain so the sheet always seals against the ground with no
+## gap — per-point profile (local frame: outward normal n, level L, ground
 ## g):
 ##   row0 = the EXISTING strip curve vertex (p, L) itself — reused by weld
 ##          key, NOT a new vertex. This is the load-bearing seam: row0 must
@@ -1044,25 +1082,54 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary, 
 ##          would stay free forever instead of healing into interior mesh —
 ##          this is the concrete mechanism behind this task's tightened
 ##          free-edge invariant (see test_free_edges_only_buried_rim_or_border).
-##   row1 = p,             y = L - 0.02   (the meniscus crest: a hairline dip
-##          right at the water's own edge before the surface curls away —
-##          same xz as row0, so this first "riser" is a near-vertical 2cm lip)
-##   row2 = p + reach2*n,  y = L - 0.18
-##   row3 = p + reach3*n,  y = min(L - 0.30, g(p + reach3*n) - 0.30) (buried
-##          seal, ALWAYS >=0.30m under both the water level AND the actual
-##          ground sample at its own xz, so it can never pop back above
-##          either regardless of local terrain undulation — the "ALWAYS
-##          under ground" the brief itself calls out).
-## reach2/reach3 default to (RIM_ROW2_REACH, RIM_ROW3_REACH) and pinch toward
-## a flush RIM_WALL_PINCH at wall-flagged points (brief: "water meets wall
-## flush, no bulge into rock") — SMOOTHED across neighbouring curve points
-## (_smoothed_wall, a 3-tap tent filter over the raw wall flags) rather than
-## switched hard per point: a lone wall flag flapping true/false between
-## adjacent ~1.5m-spaced curve points (a real occurrence near the WALL_SLOPE
-## threshold, see WaterContour._attributes' own rise-from-level probe) would
+##   row1 = p,             y = L + RIM_ROW1_BULGE (r3 Task 14: the meniscus
+##          crest now bulges slightly ABOVE the water's own edge — same xz as
+##          row0, so this first "riser" is a near-vertical hairline lip —
+##          before the surface curls away and down; was a small DIP below L
+##          pre-Task-14, the owner's own "surface-tension/blob" note asked
+##          for the bulge instead)
+##   row2 = p + reach2*n,  y = L + RIM_ROW2_BULGE (same bulge treatment,
+##          UNCONDITIONAL — rising bank or not; a few cm of bulge cannot
+##          reintroduce the "film over a drop" artifact the way overshooting
+##          reach2's own XZ position over a real drop-off would, which is why
+##          only the horizontal reach below is gated on rising-vs-falling)
+##   row3 = p + reach3*n,  y = min(L - RIM_ROW3_DROP, g(p + reach3*n) -
+##          RIM_GROUND_BURY) (buried seal, UNCHANGED by r3 Task 14 — "row3
+##          buried as today" is the brief's own words — ALWAYS >=0.30m under
+##          both the water level AND the actual ground sample at its own xz,
+##          so it can never pop back above either regardless of local terrain
+##          undulation, whatever reach3 the rising/falling blend below chose)
+## reach2/reach3 default to (RIM_ROW2_REACH, RIM_ROW3_REACH) over FALLING or
+## level ground, and OVERSHOOT all the way to RIM_RISE_REACH wherever the
+## bank genuinely RISES within RISE_PROBE_DIST (~1m) of the waterline (r3
+## Task 14, round-5 addendum — the owner's own repeated complaint, "water
+## still not going all the way up to the edges of the terrain": a
+## wall-flagged point used to PINCH reach2/reach3 IN to a flush
+## RIM_WALL_PINCH, leaving a visible slot between the rim's own pinched-in
+## outer edge and the actual rising face beyond it; the fix instead pushes
+## the outer rows OUT, past the waterline and into the bank, relying on the
+## depth buffer to clip the overshoot invisibly against whatever solid
+## ground/wall geometry occupies that space — "water meets the bank flush").
+## RISING vs FALLING is decided per point by _rising_flags — the curve's OWN
+## wall flag (already a strict, if narrow, rising signal: WALL_SLOPE=1.2
+## comfortably implies a rise) OR'd with a dedicated ground probe, so an
+## ordinary sloped, non-wall bank overshoots too, not just near-vertical
+## faces — this SUBSUMES the pre-Task-14 wall-only pinch mechanism (a wall
+## is just the steepest case of "rising ground"; there is no more separate
+## RIM_WALL_PINCH constant). Over FALLING or level ground (a real drop-off,
+## not a rising bank) reach2/reach3 keep the OLD default — overshooting
+## there would extend the sheet's outer edge out over open air past the true
+## shore, reintroducing the "film floating over a drop" artifact run-1
+## already rejected (see the water-architecture memory's own "Rejected
+## designs").
+## Both `wall` (angle pinch, see the Rim-normals constants block above) and
+## `rise` (reach blend, this docstring) are SMOOTHED across neighbouring
+## curve points (_smoothed_flags, a 3-tap tent filter) rather than switched
+## hard per point: a lone flag flapping true/false between adjacent
+## ~1.5m-spaced curve points (a real occurrence near either threshold) would
 ## otherwise zigzag the rim's outer silhouette in and out every segment; the
-## smoothed reach eases the pinch in/out over roughly one segment either side
-## of a transition instead of jumping.
+## smoothed blend eases the transition over roughly one segment either side
+## instead of jumping.
 ## Triangulation: 3 "bands" (row0-row1, row1-row2, row2-row3), each a
 ## standard quad split per curve segment — same [a,d,cc],[a,cc,b] corner
 ## convention _interior_mesh's own quad split uses (a=row_k[i], b=row_k[j],
@@ -1085,7 +1152,9 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 	if n < 2:
 		return
 	var closed: bool = c.closed
-	var wf: PackedFloat32Array = _smoothed_wall(wall, closed)
+	var wf: PackedFloat32Array = _smoothed_flags(wall, closed)
+	var rise: PackedByteArray = _rising_flags(st, c)
+	var rf: PackedFloat32Array = _smoothed_flags(rise, closed)
 
 	var row0 := PackedInt32Array()
 	var row1 := PackedInt32Array()
@@ -1100,17 +1169,22 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		var nrm: Vector2 = normals[i]
 		var lvl: float = levels[i]
 		# Curl angle per row, about the curve tangent, pinched toward 0 (UP) at
-		# wall points by the SAME wf[i] blend that already pinches reach2/
-		# reach3 — see _curl_normal's own docstring.
+		# wall points by the SAME wf[i] blend — see _curl_normal's own
+		# docstring. Deliberately wall-only (not rf[i]): see the Rim-normals
+		# constants block's own r3 Task 14 note.
 		var ang1: float = lerpf(RIM_NORMAL_ANGLE1, 0.0, wf[i])
 		var ang2: float = lerpf(RIM_NORMAL_ANGLE2, 0.0, wf[i])
 		var ang3: float = lerpf(RIM_NORMAL_ANGLE3, 0.0, wf[i])
 		row0[i] = _weld_vert(st, p, lvl, Vector3.UP)
-		row1[i] = _weld_vert(st, p, lvl - RIM_ROW1_DROP, _curl_normal(nrm, ang1))
-		var reach2: float = lerpf(RIM_ROW2_REACH, RIM_WALL_PINCH, wf[i])
-		var reach3: float = lerpf(RIM_ROW3_REACH, RIM_WALL_PINCH, wf[i])
+		row1[i] = _weld_vert(st, p, lvl + RIM_ROW1_BULGE, _curl_normal(nrm, ang1))
+		# reach2/reach3: the default (falling/level ground) reach, OR
+		# overshoot to RIM_RISE_REACH wherever rf[i] says the bank RISES — r3
+		# Task 14's universal shore-overshoot; see _rising_flags and this
+		# function's own docstring.
+		var reach2: float = lerpf(RIM_ROW2_REACH, RIM_RISE_REACH, rf[i])
+		var reach3: float = lerpf(RIM_ROW3_REACH, RIM_RISE_REACH, rf[i])
 		var p2: Vector2 = p + nrm * reach2
-		row2[i] = _weld_vert(st, p2, lvl - RIM_ROW2_DROP, _curl_normal(nrm, ang2))
+		row2[i] = _weld_vert(st, p2, lvl + RIM_ROW2_BULGE, _curl_normal(nrm, ang2))
 		var p3: Vector2 = p + nrm * reach3
 		var g3: float = TerrainSurfaceField.surface_y(st.region, p3.x, p3.y)
 		var y3: float = minf(lvl - RIM_ROW3_DROP, g3 - RIM_GROUND_BURY)
@@ -1156,20 +1230,65 @@ static func _rim_end_cap(st: Dictionary, i0: int, i1: int, i2: int, i3: int) -> 
 	_emit_tri(st, i0, i2, i3)
 
 
-## Tent-filtered (0.25/0.5/0.25) copy of `wall` as a continuous per-point
-## blend weight for _rim's own reach2/reach3 lerp — see _rim's docstring for
-## why a hard per-point pinch switch zigzags the rim at wall/shore
-## transitions. Open curves clamp at their own ends (duplicate the edge
+## Tent-filtered (0.25/0.5/0.25) copy of a per-point PackedByteArray flag
+## (either `wall`, for _rim's own curl-angle pinch, or r3 Task 14's own
+## `rise` — see _rim's two call sites) as a continuous per-point blend
+## weight — see _rim's docstring for why a hard per-point flag switch
+## zigzags the rim's outer silhouette at a wall/shore or rise/fall
+## transition. Open curves clamp at their own ends (duplicate the edge
 ## value, the standard fixed-boundary convention for a 1D filter); closed
-## curves wrap.
-static func _smoothed_wall(wall: PackedByteArray, closed: bool) -> PackedFloat32Array:
-	var n: int = wall.size()
+## curves wrap. (Renamed from _smoothed_wall, r3 Task 14: the filter itself
+## is generic — it never reads anything wall-specific — and is now called on
+## two different flag arrays.)
+static func _smoothed_flags(flags: PackedByteArray, closed: bool) -> PackedFloat32Array:
+	var n: int = flags.size()
 	var out := PackedFloat32Array()
 	out.resize(n)
 	for i in n:
 		var prev_i: int = (i - 1 + n) % n if closed else maxi(i - 1, 0)
 		var next_i: int = (i + 1) % n if closed else mini(i + 1, n - 1)
-		out[i] = 0.25 * float(wall[prev_i]) + 0.5 * float(wall[i]) + 0.25 * float(wall[next_i])
+		out[i] = 0.25 * float(flags[prev_i]) + 0.5 * float(flags[i]) + 0.25 * float(flags[next_i])
+	return out
+
+
+## Per-point RISING flag (r3 Task 14 — universal shore overshoot, round-5
+## addendum): true when the bank genuinely climbs above the water level
+## within RISE_PROBE_DIST (~1m) of the waterline along the curve's own
+## outward normal n̂, OR the point is already wall-flagged. Folding `wall` in
+## is never redundant risk and sometimes strictly helps: WaterContour's own
+## wall probe (WALL_SLOPE=1.2 at 0.5m/1.5m) already implies a rise clearing
+## RISE_MARGIN by a wide margin wherever it fires (0.5m of run at slope 1.2
+## is 0.6m of rise, comfortably past RISE_MARGIN=0.05), so OR-ing it in costs
+## nothing on the common path — but it also catches the rare case where a
+## genuinely near-vertical face's OWN RISE_PROBE_DIST sample happens to land
+## on a locally stepped/quantized rock shelf that reads flat there (the same
+## corner-crest hazard WaterContour._attributes' own docstring documents for
+## the wall flag's rise-from-level anchor).
+## Two probes, at RISE_PROBE_DIST*0.5 and RISE_PROBE_DIST (mirroring
+## WaterContour._attributes' own two-distance wall check), rather than one:
+## a bank's rise is not always monotonic in the first metre (a small lip or
+## grassy shelf can dip before climbing) — either probe clearing the water
+## level by RISE_MARGIN is enough to call the point a rising bank.
+static func _rising_flags(st: Dictionary, c: Dictionary) -> PackedByteArray:
+	var pts: PackedVector2Array = c.pts
+	var levels: PackedFloat32Array = c.levels
+	var normals: PackedVector2Array = c.normals
+	var wall: PackedByteArray = c.wall
+	var n: int = pts.size()
+	var out := PackedByteArray()
+	out.resize(n)
+	for i in n:
+		if wall[i] == 1:
+			out[i] = 1
+			continue
+		var p: Vector2 = pts[i]
+		var nrm: Vector2 = normals[i]
+		var lvl: float = levels[i]
+		var pmid: Vector2 = p + nrm * (RISE_PROBE_DIST * 0.5)
+		var pfar: Vector2 = p + nrm * RISE_PROBE_DIST
+		var gmid: float = TerrainSurfaceField.surface_y(st.region, pmid.x, pmid.y)
+		var gfar: float = TerrainSurfaceField.surface_y(st.region, pfar.x, pfar.y)
+		out[i] = 1 if (gmid > lvl + RISE_MARGIN or gfar > lvl + RISE_MARGIN) else 0
 	return out
 
 

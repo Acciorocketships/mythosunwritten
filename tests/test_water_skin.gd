@@ -120,14 +120,18 @@ static func _nearest_curve_pt(curves: Array, p: Vector2) -> Dictionary:
 ## itself and could never catch a reach/pinch bug); instead it exploits the
 ## brief's own NUMERIC structure, which is a property of the row DEFINITIONS,
 ## not of any particular implementation: row0 sits at level L, row1 at
-## L-0.02, row2 at a FIXED L-0.18 (no ground dependency), and row3 at
+## L+0.04, row2 at a FIXED L+0.02 (no ground dependency; r3 Task 14 changed
+## both from a small DIP below L to a small BULGE above it, but neither ever
+## gets remotely close to row3's own ceiling either way), and row3 at
 ## min(L-0.30, ground-0.30) <= L-0.30 always. A y-gate strictly between
-## row2's ceiling (-0.18) and row3's ceiling (-0.30) — RIM_ROW3_Y_GATE=0.25 —
-## therefore admits row3 and ONLY row3, regardless of what reach WaterSkin
-## chose at a wall-pinched or blended point; RIM_MAX_REACH (0.7, comfortably
-## past the brief's own max reach of 0.55) scopes the search to "near some
-## curve point" so an unrelated low-lying vertex elsewhere in the mesh (e.g.
-## a different curve reach downstream at a lower level) can't false-positive.
+## row2's ceiling (now +0.02, was -0.18) and row3's ceiling (-0.30) —
+## RIM_ROW3_Y_GATE=0.25 — therefore admits row3 and ONLY row3, regardless of
+## what reach WaterSkin chose at a wall-pinched, rising-overshot, or default
+## point; RIM_MAX_REACH (0.7, comfortably past the brief's own max reach of
+## 0.55 and r3 Task 14's own RIM_RISE_REACH=0.40) scopes the search to "near
+## some curve point" so an unrelated low-lying vertex elsewhere in the mesh
+## (e.g. a different curve reach downstream at a lower level) can't
+## false-positive.
 static func _on_rim_outer_row(curves: Array, v: Vector3) -> bool:
 	var near: Dictionary = _nearest_curve_pt(curves, Vector2(v.x, v.z))
 	return near.dist <= RIM_MAX_REACH and v.y <= near.level - RIM_ROW3_Y_GATE
@@ -175,16 +179,19 @@ static func _find_vertex(verts: PackedVector3Array, target: Vector3, tol: float)
 ## Structurally locates curve point (p, nrm2d, level)'s own row2 rim vertex —
 ## WITHOUT reproducing WaterSkin's own reach/wall-blend formula (same
 ## discipline _on_rim_outer_row already documents): row2 is always exactly
-## `level - 0.18` (the brief's own fixed, ground-independent row2 height,
-## mirrored here as a literal rather than a WaterSkin.RIM_ROW2_DROP reference
-## for the same "don't test the implementation against itself" reason),
-## offset from `p` PURELY along the curve's own outward normal n̂ (no
-## tangential component) by SOME reach in (0, 0.35] — this searches for a
-## vertex matching the height exactly and the offset DIRECTION (not
-## magnitude), so it finds row2 regardless of whatever reach the wall blend
+## `level + 0.02` (r3 Task 14's own fixed, ground-independent row2 bulge
+## height — was `level - 0.18` pre-Task-14, mirrored here as a literal
+## rather than a WaterSkin.RIM_ROW2_BULGE reference for the same "don't test
+## the implementation against itself" reason), offset from `p` PURELY along
+## the curve's own outward normal n̂ (no tangential component) by SOME reach
+## in (0, 0.40] (r3 Task 14 widened the ceiling from 0.35 to 0.40 — its own
+## RIM_RISE_REACH — this search range already covered 0.4 before that
+## constant existed, so no change needed here) — this searches for a vertex
+## matching the height exactly and the offset DIRECTION (not magnitude), so
+## it finds row2 regardless of whatever reach the rising/falling blend
 ## actually chose at this point.
 static func _find_row2_vertex(verts: PackedVector3Array, p: Vector2, nrm2d: Vector2, level: float) -> int:
-	var target_y: float = level - 0.18
+	var target_y: float = level + 0.02
 	for i in verts.size():
 		var v: Vector3 = verts[i]
 		if absf(v.y - target_y) > 0.01:
@@ -195,6 +202,43 @@ static func _find_row2_vertex(verts: PackedVector3Array, p: Vector2, nrm2d: Vect
 		if along >= -0.01 and along <= 0.4 and absf(cross) < 0.05:
 			return i
 	return -1
+
+
+## Max outward reach (distance along the curve's own outward normal n̂, PAST
+## the waterline point p) among any mesh vertex whose xz sits in p's own
+## normal COLUMN — i.e. offset-from-p projects almost entirely onto n̂ with
+## near-zero cross (tangential) component. r3-task-14: used to measure how
+## far the rim's outer rows (row2/row3 — whichever reaches furthest) extend
+## into the bank, WITHOUT reproducing WaterSkin's own reach/rising-blend
+## formula (same "don't test the implementation against itself" discipline
+## _find_row2_vertex/_on_rim_outer_row already document above): row2 and
+## row3 both sit EXACTLY on this column by construction (p + reach*n̂ has a
+## cross component of precisely zero, up to float weld quantization), so
+## whichever row WaterSkin chose to push furthest out is exactly what this
+## finds — a fix that overshoots XZ shows up here regardless of whatever Y
+## value or curl-normal angle it also happens to use. cross_tol=0.02 is
+## comfortably above WELD_XZ_Q's own 1cm quantization noise and comfortably
+## below the ~1.5m curve-point spacing that separates this column from its
+## neighbours' own rim columns (verified structurally: two adjacent curve
+## points 1.5m apart, each with up to a ~0.55m reach, cannot cross-contaminate
+## a 0.02m-wide column centred on either one — see WaterContour.SPACING).
+## reach_cap bounds the scan to a small neighbourhood of p (comfortably above
+## any legal reach, RIM_ROW3_REACH=0.55 or the new RIM_RISE_REACH=0.40, with
+## slack) so a coincidental far-away alignment could never false-positive.
+static func _max_outward_reach(verts: PackedVector3Array, p: Vector2, nrm2d: Vector2, cross_tol: float) -> float:
+	var perp := Vector2(-nrm2d.y, nrm2d.x)
+	var reach_cap := 5.0
+	var best := -INF
+	for v: Vector3 in verts:
+		var off: Vector2 = Vector2(v.x, v.z) - p
+		if off.length() > reach_cap:
+			continue
+		var along: float = off.dot(nrm2d)
+		var cross: float = off.dot(perp)
+		if absf(cross) > cross_tol:
+			continue
+		best = maxf(best, along)
+	return best
 
 
 ## test_skin_builds_on_site_chunk — non-empty, indexed, welded-shape output.
@@ -334,12 +378,15 @@ func test_rim_welds_to_strip() -> void:
 	if skin.is_empty():
 		return
 	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
-	# Tight on purpose: row1 sits exactly RIM_ROW1_DROP=0.02 BELOW row0 at the
-	# SAME xz (the brief's own hairline meniscus-crest lip) — a tolerance at
-	# or above 0.02 double-counts row1 as a "hit" for row0's own target
-	# (caught directly: 10 offenders each reporting hits=2 at exactly the
-	# 0.02 boundary before this was tightened). 0.005 sits safely below that
-	# real intentional neighbour and comfortably above float weld noise.
+	# Tight on purpose: row1 sits exactly RIM_ROW1_BULGE=0.04 ABOVE row0 at the
+	# SAME xz (the brief's own hairline meniscus-crest lip — r3 Task 14
+	# changed this from a 0.02 DIP below to a 0.04 BULGE above, only widening
+	# the real neighbour distance this guards against) — a tolerance at or
+	# above that gap double-counts row1 as a "hit" for row0's own target
+	# (caught directly pre-Task-14: 10 offenders each reporting hits=2 at
+	# exactly the then-0.02 boundary before this was tightened). 0.005 sits
+	# safely below that real intentional neighbour and comfortably above
+	# float weld noise.
 	var tol := 0.005
 	var checked := 0
 	var offenders: Array = []
@@ -799,6 +846,111 @@ func test_rim_normals_curl_outward() -> void:
 	assert_true(sloped_found > 0, "site has at least one interior vertex with a real (>0.1) surface slope")
 	assert_true(offenders2.is_empty(),
 		"every sloped interior vertex's normal measurably deviates from UP: %s" % str(offenders2))
+
+
+## test_wall_rim_reaches_the_face (r3-task-14-brief.md, UPGRADED round-5
+## addendum — the BINDING version; the original walls-only wording earlier in
+## that same file is superseded) — at a genuinely RISING wall reach near the
+## owner's own R5-B frame (player (129.6,4.0,-1166.1) crosshair
+## (129.7,4.2,-1165.8); owner complaint: "water still not going all the way
+## up to the edges of the terrain," a visible slot between the sheet and the
+## bank), the rim's own outer-row verts must extend >= 0.3m PAST the
+## waterline INTO the bank along the curve's own outward normal n̂.
+## Pre-fix, a wall-flagged point pinches reach2/reach3 down to the old
+## RIM_WALL_PINCH=0.05 (the owner's own gap, reproduced here as a failing
+## assertion); the fix overshoots any genuinely rising bank (wall-flagged or
+## not) to RIM_RISE_REACH=0.40 instead.
+## Site precondition scanned directly against WaterContour's own curve
+## output (own ground probe at RISE_PROBE_DIST=1.0m along n̂, comparing
+## against the curve's own baked level) — NOT via WaterSkin's own
+## _rising_flags — so confirming "this is really a rising bank, not a drop"
+## is not circular with the fix under test. Reach is measured via
+## _max_outward_reach, which (per its own docstring) also does not reproduce
+## WaterSkin's own reach/rising-blend formula, and is unaffected by this
+## task's OTHER change (the row1/row2 meniscus bulge) since it locates
+## vertices purely by xz column, never by y.
+func test_wall_rim_reaches_the_face() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(SITE_CHUNK))
+	assert_true(curves.size() > 0, "site chunk has curves")
+	if curves.is_empty():
+		return
+
+	# Nearest WALL-flagged curve point to the R5-B owner frame's own wall
+	# reach — scanned directly rather than hard-coding an index, so this
+	# survives future curve reshaping (same discipline
+	# test_pond_frames_are_calm's own "select the calm window DYNAMICALLY"
+	# note documents for the identical reason).
+	var hint := Vector2(129.6, -1138.5)
+	var best_p := Vector2.ZERO
+	var best_nrm := Vector2.ZERO
+	var best_lvl := 0.0
+	var best_d := INF
+	var found := false
+	for c: Dictionary in curves:
+		var pts: PackedVector2Array = c.pts
+		var wall: PackedByteArray = c.wall
+		for i in pts.size():
+			if wall[i] != 1:
+				continue
+			var d: float = pts[i].distance_to(hint)
+			if d < best_d:
+				best_d = d
+				best_p = pts[i]
+				best_nrm = c.normals[i]
+				best_lvl = c.levels[i]
+				found = true
+	assert_true(found, "SITE_CHUNK has a wall-flagged curve point near the R5-B frame (site precondition)")
+	if not found:
+		return
+	assert_true(best_d < 5.0,
+		"the nearest wall point sits close to the R5-B frame's own wall reach (dist=%.2f)" % best_d)
+
+	# Confirm it is a genuinely RISING bank (not a drop) — independent ground
+	# probe at the brief's own ~1m distance, comparing against the curve's
+	# OWN baked water level.
+	var probe_pt: Vector2 = best_p + best_nrm * 1.0
+	var g_probe: float = TerrainSurfaceField.surface_y(region, probe_pt.x, probe_pt.y)
+	print("MEAS test_wall_rim_reaches_the_face: wall pt=%s nrm=%s level=%.3f ground@1m=%.3f" % [
+		best_p, best_nrm, best_lvl, g_probe])
+	assert_true(g_probe > best_lvl,
+		"site precondition: ground genuinely RISES above the waterline within 1m along +n̂ (ground=%.2f > level=%.2f) — a rising bank, not a drop" % [g_probe, best_lvl])
+
+	var skin: Dictionary = WaterSkin.build(water, SITE_CHUNK, region)
+	assert_false(skin.is_empty(), "site chunk builds a skin")
+	if skin.is_empty():
+		return
+	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var reach: float = _max_outward_reach(verts, best_p, best_nrm, 0.02)
+	print("MEAS test_wall_rim_reaches_the_face: max outward reach past the waterline=%.4f (gate >=0.3)" % reach)
+	assert_true(reach >= 0.3,
+		"the rim's outer verts overshoot >=0.3m past the waterline into the rising bank at %s (measured reach=%.4f) — no visible slot at the wall face" % [best_p, reach])
+
+	# Free-edge invariant unaffected by the overshoot — same class, same
+	# assertion shape as test_free_edges_only_buried_rim_or_border, re-run
+	# here against SITE_CHUNK's own build so this test is a self-contained
+	# regression pin even if that test is ever run in isolation elsewhere.
+	var free: Array = _free_edges(skin.arrays)
+	var checked := 0
+	var offenders: Array = []
+	for e: Array in free:
+		var a: Vector3 = e[0]
+		var b: Vector3 = e[1]
+		var a_border: bool = _on_chunk_border(a, SITE_CHUNK)
+		var b_border: bool = _on_chunk_border(b, SITE_CHUNK)
+		if a_border and b_border:
+			continue
+		checked += 1
+		var a_ok: bool = a_border or _on_rim_outer_row(curves, a)
+		var b_ok: bool = b_border or _on_rim_outer_row(curves, b)
+		if not (a_ok and b_ok) and offenders.size() < 10:
+			offenders.append("%s-%s" % [a, b])
+	print("MEAS test_wall_rim_reaches_the_face: free-edge invariant re-check: %d checked, %d offenders" % [
+		checked, offenders.size()])
+	assert_true(offenders.is_empty(),
+		"the overshoot does not break the buried-rim free-edge invariant: %s" % str(offenders))
 
 
 ## --- r3 Task 7 (triggers + sampler; the old marching-squares mesher's own
