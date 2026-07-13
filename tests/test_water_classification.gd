@@ -15,18 +15,19 @@ extends GutTest
 # no "previous frame" to hold a hysteresis band open, so ENTER is the only
 # meaningful threshold for a oneshot classification)?
 #
-# For FIVE of the six classes (deep interior, waterline band, dry bank,
-# plunge pool centre, sloped-reach mid-channel) parity is a real equality:
-# field truth and character-math must read the IDENTICAL class at every
-# probed point, zero mismatches. The SIXTH (steep chute) is the one place
-# they are SUPPOSED to diverge — that divergence IS r3 Task 7/9's whole
-# suppression mechanism working (see WaterSkin._triggers/_sub_tile_triggers):
-# a genuinely wet-per-field point over a cascade step must still read DRY
-# through the character's own trigger+sampler path, on purpose. That class's
-# own assertion is therefore "character-math reads DRY here", not "==field
-# truth" — asserting the latter would assert a known falsehood. The MEAS
-# lines for that class report the naive-divergence count explicitly so the
-# trade-off stays visible, not hidden inside a passing assert.
+# ALL SIX classes (deep interior, waterline band, dry bank, steep chute,
+# plunge pool centre, sloped-reach mid-channel) are real parity: field truth
+# and character-math must read the IDENTICAL class at every probed point,
+# zero mismatches. Historically (r3 Task 7/9) the steep-chute class was the
+# ONE deliberate exception — a level-SPREAD suppression mechanism forced
+# character-math to read DRY over a field-claimed depth, because the OLD
+# stepped profile model's flat upstream shelves really could stand phantom
+# depth over a downstream face. r3 Task 12/12a's smooth monotone descent
+# removed the flat shelves that phantom class depended on; r3 Task 12b
+# proved the suppression mechanism dead by construction on this site and
+# deleted it outright (see WaterSkin.STEEP_UNSWIMMABLE's own neighbouring
+# docstring and r3-task-12b-report.md) — test_steep_chute below is now
+# ordinary parity too, see its own docstring for the measured before/after.
 #
 # Pinned review seed/chunk — the site chunk carries the R3 cascade this task
 # reconciles (see WaterSkin.gd's own TRIGGER_LEVEL_SPREAD_MAX docstring and
@@ -237,27 +238,51 @@ func test_dry_bank() -> void:
 	_assert_parity("test_dry_bank", skin, ctx, region, candidates)
 
 
-## --- Class 4: steep chute (the one INTENTIONAL divergence class) ---
+## --- Class 4: steep chute (HISTORICALLY the one INTENTIONAL divergence
+## class — RECONCILED r3 Task 12b) ---
 ## Candidates come from FIELD/GEOMETRY data ONLY — pinned chute coordinates
 ## plus a field-static-depth filter — never from skin.triggers. (Review fix,
 ## r3 Task 9: the first version pre-filtered candidates through
 ## _any_trigger_covers, whose rect.has_point is the IDENTICAL predicate
 ## _character_class's own first gate applies — "0 offenders" was true by
-## construction, a tautology that could never fail. This version is
-## falsifiable: if a future gate change re-serves the chute with triggers,
-## the character-math class here flips to SWIM/WADE and the test fails —
-## demonstrated red by construction, see r3-task-9-report.md's "Review
-## fixes" section for the TRIGGER_SUB_TILE_SPREAD_MAX=999 transcript.)
+## construction, a tautology that could never fail. Keeping candidate
+## selection FIELD-only, never trigger-gated, is what keeps THIS version
+## falsifiable too, see below.)
 ##
 ## The point set walks the I1 chute face itself: x in [44, 58], z in
-## {-1083, -1084, -1085} — inside the cascade-step band where the
-## hydrostatic fill stands the 9.7 reach's level over sloping ground (the
-## owner's I1 "a waterfall stands where the terrain has only slopes"; film
-## point (53, -1083.9) pinned live at static depth ~2.5 over a ~0.3m film)
-## — filtered to points the FIELD itself claims wet at static depth > 0.5:
-## water the field claims but triggers must never serve. Character-math must
-## read DRY (the specific suppression outcome — no trigger box may cover any
-## of these points, so the sampler is never even consulted) at every one.
+## {-1083, -1084, -1085} — the cascade-step band where, under the OLD
+## stepped profile model, the hydrostatic fill stood the 9.7 reach's flat
+## level over sloping ground (the owner's I1 "a waterfall stands where the
+## terrain has only slopes"; film point (53, -1083.9) pinned live at static
+## depth ~2.5 over a ~0.3m film) — filtered to points the FIELD itself
+## claims wet at static depth > 0.5.
+##
+## r3 Task 12b RECONCILIATION: this class's old premise — that character-
+## math must deliberately DIVERGE from field truth here (reading DRY over a
+## field-claimed depth) — was true only because the OLD model's flat
+## upstream shelf made the field's own reading a lie (phantom depth over a
+## real thin film). r3 Task 12/12a's smooth monotone descent removes that
+## lie structurally: this span has ZERO interior sill knots
+## (r3-task-12a-report.md), so there is no flat shelf anywhere along it, and
+## the Task-7/9 level-SPREAD suppression that used to force the divergence
+## is RETIRED (r3-task-12b-report.md's own proof — see WaterSkin.
+## STEEP_UNSWIMMABLE's neighbouring docstring). Measured directly on this
+## EXACT 87-point candidate set: character-math (the real trigger+sampler
+## path) and field truth now agree at EVERY point — 29 read SWIM, 58 read
+## WADE, 0 DRY, on BOTH sides, 0 mismatches. The assertion is therefore full
+## PARITY (the same oracle every other class in this file uses), not "must
+## read DRY" — asserting DRY here would now assert a MEASURED FALSEHOOD (29
+## of these 87 points are genuinely, honestly >0.8m deep: small pool-like
+## pockets the smooth ramp legitimately carries partway down the descent,
+## not a suppressed phantom).
+##
+## FALSIFIABILITY (without the old TRIGGER_SUB_TILE_SPREAD_MAX=999
+## induced-red mechanism, whose constant no longer exists to bump):
+## candidates are selected from FIELD data alone, never through
+## skin.triggers — so if a future regression left this band un-triggered
+## (the OLD, correct-for-its-time behaviour), every candidate would read DRY
+## against a SWIM/WADE truth and this test would fail loudly, exactly as it
+## would have caught the opposite direction before r3 Task 12.
 func test_steep_chute() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -282,19 +307,9 @@ func test_steep_chute() -> void:
 				else:
 					naive_would_wade += 1
 			x += 0.5
-	print("MEAS test_steep_chute: %d field-wet chute-line points (static depth > 0.5; naive truth: %d would SWIM, %d would WADE — the exact divergence the trigger gate exists to close)" % [
+	print("MEAS test_steep_chute: %d field-wet chute-line points (static depth > 0.5; naive truth: %d would SWIM, %d would WADE)" % [
 		candidates.size(), naive_would_swim, naive_would_wade])
-	assert_true(candidates.size() >= MIN_PER_CLASS,
-		"at least %d chute-line points to check (%d)" % [MIN_PER_CLASS, candidates.size()])
-	var offenders: Array = []
-	for p: Vector2 in candidates:
-		var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
-		var got: String = _character_class(skin, Vector3(p.x, g, p.y))
-		if got != "DRY" and offenders.size() < 10:
-			offenders.append("p=%s got=%s (field static depth %.3f)" % [
-				p, got, WaterField.level_at(ctx, p) - g])
-	assert_true(offenders.is_empty(),
-		"the chute face stays unserved: every field-wet chute-line point reads DRY through the real trigger+sampler path (anything else re-opens the I1 phantom-swim class): %s" % str(offenders))
+	_assert_parity("test_steep_chute", skin, ctx, region, candidates)
 
 
 ## --- Permanent I4 regression pin (review fix, r3 Task 9) ---
@@ -370,16 +385,34 @@ func test_plunge_pool_centre() -> void:
 			break
 	print("MEAS test_plunge_pool_centre: %d covered-and-deep candidates found on site" % candidates.size())
 	_assert_parity("test_plunge_pool_centre", skin, ctx, region, candidates)
-	# Controller addition 3's own pinned probe. x=56.0, not the tile's own
-	# 54.0 (a sub-tile box edge, not its centre) — see test_water_skin.gd's
-	# identical pin for why: a live-gate check found a real BoxShape3D +
-	# PhysicsServer can exclude a point sitting EXACTLY on a box face even
-	# though this test's own Rect2.has_point-based oracle includes it
-	# (r3-task-9-report.md has the measured live contrast).
+	# --- Third pin re-derivation (r3 Task 12b) ---
+	# Controller addition 3's own pinned probe, historically labelled "the
+	# 5.7 plunge pool centre" (the OLD stepped model's own flat reach value
+	# at this spot). x=56.0, not the tile's own 54.0 (a tile-box edge, not
+	# its centre) — see test_water_skin.gd's identical pin for why: a
+	# live-gate check found a real BoxShape3D + PhysicsServer can exclude a
+	# point sitting EXACTLY on a box face even though this test's own
+	# Rect2.has_point-based oracle includes it (r3-task-9-report.md has the
+	# measured live contrast).
+	# r3 Task 12/12a's smooth monotone descent MERGED this pool into one
+	# continuous ramp with the chute above and the sill below (no more
+	# separate 5.7 flat reach) — its static depth legitimately dropped from
+	# the OLD model's ~1.7m swim depth, THROUGH an intermediate under-run
+	# artifact (~0.1286, since fixed by 12a's sill-riding envelope), TO the
+	# honest measurement below: still real, still positive, but inside the
+	# WADING band, not deep enough to swim. This is not a suppressed defect —
+	# the class's own field-truth candidate scan above independently confirms
+	# nearby points DO still legitimately SWIM (this exact xz just isn't one
+	# of them under the new profile) — so the pin is re-derived to the
+	# honest class, per the brief's own instruction, not edited to preserve
+	# the old expectation.
 	var pool_centre := Vector2(56.0, -1101.0)
 	var g2: float = TerrainSurfaceField.surface_y(region, pool_centre.x, pool_centre.y)
-	assert_eq(_character_class(skin, Vector3(pool_centre.x, g2, pool_centre.y)), "SWIM",
-		"the 5.7 plunge pool centre (56,-1101) reads SWIM through the real trigger+sampler path")
+	var lvl2: float = WaterField.level_at(ctx, pool_centre)
+	print("MEAS test_plunge_pool_centre: third pin (56,-1101) level=%.4f ground=%.4f static depth=%.4f" % [
+		lvl2, g2, lvl2 - g2])
+	assert_eq(_character_class(skin, Vector3(pool_centre.x, g2, pool_centre.y)), "WADE",
+		"the historical '5.7' plunge pool centre (56,-1101) now reads WADE through the real trigger+sampler path (static depth %.4f, inside the (0.05,0.8] wading band under the smooth ramp)" % (lvl2 - g2))
 
 
 ## --- Class 6: sloped-reach mid-channel ---
@@ -410,7 +443,14 @@ func test_sloped_reach_mid_channel() -> void:
 			verts.append(Vector3(xx, WaterField.level_at(ctx, Vector2(xx, zz)), zz))
 	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx}
 	var triggers: Array = WaterSkin._triggers(st)
-	assert_eq(triggers.size(), 4, "precondition: the legal sloped reach keeps all 4 of its sub-tiles (see test_water_skin.gd's own pin)")
+	# r3 Task 12b: the spread gate (whole-tile + sub-tile suppression) is
+	# RETIRED — triggers are now simple wet-tile coverage, so a legal sloped
+	# reach can no longer be suppressed AT ALL (the property this test guarded
+	# is now structural, not gate-dependent). This synthetic reach (x in
+	# [13,15], z in [1,22], fill_base origin) lies wholly inside the single
+	# 24m tile (0,0), so it keeps exactly ONE trigger — was 4 under the old
+	# sub-tile model. The load-bearing content is the parity assertion below.
+	assert_eq(triggers.size(), 1, "precondition: the legal sloped reach keeps its (single wet-tile) trigger — not suppressed")
 
 	# A real sampler over the reach's own grid (3m step, matching WaterSkin's
 	# interior lattice spacing) — exercises WaterSampler.level_at exactly as

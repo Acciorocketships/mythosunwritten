@@ -1,33 +1,29 @@
 extends GutTest
 
 # ------------------------------------------------------------
-# TRIGGERS (r3 Task 7, sub-tile-reconciled r3 Task 9 — this file's own
-# rename-of-intent, per that task's brief: it was never really about
-# "volumes" any more, it is entirely about the TRIGGER wiring): swim volumes
-# are TRIGGER BOXES straight from WaterSkin's own `triggers` list — one per
-# 24m wet TILE (footprint = union of every built vertex in that tile — see
-# WaterSkin._triggers) on the common/fast path, or SEVERAL finer 6m boxes for
-# a tile whose whole-tile level spread fails but reconciles cleanly at
-# sub-tile resolution (WaterSkin._sub_tile_triggers, r3 Task 9's own
-# controller-addition-2 fix for Task 7's disclosed "suppressed tile loses
-# EVERYTHING" trade-off) — each entry carrying set_meta("sampler", <the
-# chunk's one frozen WaterSampler>) instead of a per-cell sampled plane (the
-# old marching-squares mesher's per-cell swim data and the plane meta pair it
-# produced are both deleted outright, r3 Task 7). A probe anywhere inside a
-# box reads its real water height straight from the sampler
-# (WaterSampler.level_at), not from a linear extrapolation off one centre
-# sample.
+# TRIGGERS (r3 Task 7, sub-tile-reconciled r3 Task 9, sub-tile mechanism
+# RETIRED r3 Task 12b — see WaterSkin.STEEP_UNSWIMMABLE's own neighbouring
+# docstring and r3-task-12b-report.md for the full proof): swim volumes are
+# TRIGGER BOXES straight from WaterSkin's own `triggers` list — one per 24m
+# wet TILE (footprint = union of every built vertex in that tile — see
+# WaterSkin._triggers), no further splitting — each entry carrying
+# set_meta("sampler", <the chunk's one frozen WaterSampler>) instead of a
+# per-cell sampled plane (the old marching-squares mesher's per-cell swim
+# data and the plane meta pair it produced are both deleted outright, r3
+# Task 7). A probe anywhere inside a box reads its real water height
+# straight from the sampler (WaterSampler.level_at), not from a linear
+# extrapolation off one centre sample.
 #
-# This suite checks the SHAPE of that wiring: tile/sub-tile coverage, the
-# top/bottom clearance arithmetic, sampler meta presence (a single shared
-# instance per chunk), and level_at sanity against WaterField's own ground
-# truth at real probe points. The STEEP-tile no-trigger gate and the r3 Task
-# 9 sub-tile reconciliation's own site pins (I1 chute film / 5.7 plunge pool
-# centre) live in test_water_skin.gd (test_no_trigger_where_unswimmably_steep,
-# test_sub_tile_reconciliation_keeps_a_legal_sloped_reach) per the task
-# briefs. The full depth-CLASSIFICATION parity oracle (does a character's
-# actual swim/wade/dry read ever disagree with the field?) is r3 Task 9's own
-# tests/test_water_classification.gd — deliberately not duplicated here.
+# This suite checks the SHAPE of that wiring: tile coverage, the top/bottom
+# clearance arithmetic, sampler meta presence (a single shared instance per
+# chunk), and level_at sanity against WaterField's own ground truth at real
+# probe points. The STEEP-tile no-trigger gate and the site pins (I1 chute
+# film / the historical "5.7" plunge pool centre) live in
+# test_water_skin.gd (test_no_trigger_where_unswimmably_steep,
+# test_legal_sloped_reach_keeps_its_trigger) per the task briefs. The full
+# depth-CLASSIFICATION parity oracle (does a character's actual swim/wade/
+# dry read ever disagree with the field?) is tests/test_water_classification.gd
+# — deliberately not duplicated here.
 # Pinned review seed/chunk; the site chunk carries the R3 cascade.
 # ------------------------------------------------------------
 
@@ -82,13 +78,13 @@ func _cell_of(area: Area3D) -> Vector2i:
 ## this test breaks loudly if either clearance ever changes), and every
 ## WaterSkin-reported entry is covered by exactly one box (no lost/duplicated
 ## entries in either direction).
-## r3 Task 9: matched by RECT POSITION (a stable, collision-free key —
-## Rect2.position is unique per entry by construction, whether the entry is
-## a 24m tile or one of _sub_tile_triggers' own finer 6m boxes), not by
-## coarse 24m "cell" — a cell-level key went vacuous the moment a single
-## cascade cell could legitimately carry SEVERAL small boxes at once (r3 Task
-## 9's own sub-tile reconciliation; see WaterSkin._sub_tile_triggers). List
-## order is also preserved 1:1 (WaterSurfaceBuilder.build_chunk iterates
+## r3 Task 9 introduced sub-tile (6m) boxes for a cascade tile whose
+## whole-tile level spread failed a fast path (RETIRED r3 Task 12b — see
+## WaterSkin.STEEP_UNSWIMMABLE's own neighbouring docstring); matched here by
+## RECT POSITION (a stable, collision-free key — Rect2.position is unique per
+## entry by construction), kept unchanged since it is still the simpler,
+## still-correct match key now that every entry is uniformly one 24m tile.
+## List order is also preserved 1:1 (WaterSurfaceBuilder.build_chunk iterates
 ## skin.triggers directly, appending one Area3D per entry with no reorder),
 ## so a plain index zip is an equally valid, simpler alternative match this
 ## test cross-checks against as a sanity guard.
@@ -113,12 +109,15 @@ func test_triggers_match_skin_tile_coverage_and_clearance() -> void:
 		by_pos[key] = v
 
 	var checked := 0
-	var sub_tile_entries := 0
 	for i in skin.triggers.size():
 		var trig: Dictionary = skin.triggers[i]
 		var rect: Rect2 = trig.rect
-		if absf(rect.size.x - WaterSkin.TRIGGER_SUB_TILE) < 0.01:
-			sub_tile_entries += 1
+		# r3 Task 12b: sub-tile splitting is gone — every emitted trigger is
+		# now exactly one whole WaterSkin.TILE square. A regression here (a
+		# smaller-than-TILE rect reappearing) would mean the retired
+		# mechanism came back without an accompanying test update.
+		assert_almost_eq(rect.size.x, WaterSkin.TILE, 0.001, "trigger at %s is a full TILE-wide box (no sub-tile splitting)" % rect.position)
+		assert_almost_eq(rect.size.y, WaterSkin.TILE, 0.001, "trigger at %s is a full TILE-deep box (no sub-tile splitting)" % rect.position)
 		var key: Vector2i = Vector2i(roundi(rect.position.x * 100.0), roundi(rect.position.y * 100.0))
 		assert_true(by_pos.has(key), "skin trigger at %s has a matching trigger box" % rect.position)
 		if not by_pos.has(key):
@@ -141,11 +140,8 @@ func test_triggers_match_skin_tile_coverage_and_clearance() -> void:
 			"box centred on tile z at %s" % rect.position)
 		assert_eq(area.collision_layer, 1 << 7, "water trigger layer at %s" % rect.position)
 		assert_eq(area.collision_mask, 0, "trigger has no collision mask at %s" % rect.position)
-	print("MEAS test_triggers_match_skin_tile_coverage_and_clearance: %d entries matched (%d fine sub-tile boxes among them)" % [
-		checked, sub_tile_entries])
+	print("MEAS test_triggers_match_skin_tile_coverage_and_clearance: %d entries matched (all full-tile, no sub-tile splitting)" % checked)
 	assert_eq(checked, skin.triggers.size(), "every skin trigger entry matched exactly one box")
-	assert_gt(sub_tile_entries, 0,
-		"the site chunk's own cascade tiles exercise the sub-tile path — precondition for this test to cover r3 Task 9's own reconciliation, not just the unchanged 24m fast path")
 	root.free()
 
 
@@ -308,11 +304,19 @@ func test_sampler_covers_the_shoreline_band() -> void:
 ## the old FILL_JUMP constant no longer exists). Measured divergence at every
 ## probed chute point: 0.0000 — the 9.700 the live gate saw IS level_at's own
 ## answer there (the hydrostatic fill floods the face at the upstream level;
-## wet()=true). The phantom-depth defect is therefore a TRIGGER-shape issue,
-## fixed by the tile level-spread gate (see test_water_skin.gd::
+## wet()=true). The phantom-depth defect was therefore a TRIGGER-shape issue,
+## historically fixed by the tile level-spread gate (see test_water_skin.gd::
 ## test_no_trigger_where_unswimmably_steep's site stanza); this test stays as
 ## the permanent guarantee that the sampler itself never ADDS divergence on
 ## top of the field near a chute.
+## r3 Task 12b UPDATE: the trigger-shape suppression this note refers to
+## (WaterSkin's level-spread gate) is now RETIRED — the phantom-depth class
+## it existed to catch is dead by construction under the smooth monotone
+## descent (r3-task-12b-report.md). This test's own guarantee (the sampler
+## never diverges from the field) is now the PRIMARY anti-regression for
+## phantom depth at the chute, not a secondary belt-and-braces check — see
+## test_water_skin.gd::test_no_trigger_where_unswimmably_steep's own direct
+## phantom-depth pin for the sibling assertion at the exact film point.
 func test_sampler_matches_the_field_at_the_chute() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)

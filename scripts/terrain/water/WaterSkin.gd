@@ -91,85 +91,41 @@ const TRIGGER_BOTTOM_CLEAR := 5.0
 # per-24m-CELL steep gate (r3 Task 7's own straggler grep is why the old
 # class name doesn't appear in this comment — only the math is unchanged).
 const STEEP_UNSWIMMABLE := 0.45
-# Second, INDEPENDENT trigger gate (Task 7 live-gate fix, "Defect B"): max
-# spread of WaterField.level_at across one tile's own wet footprint (dense
-# 3m scan, see _tile_level_spread). Catches the phantom-depth class the
-# grade gate above structurally CANNOT: a cascade-step tile — one whose
-# footprint straddles two reaches (e.g. the pinned site's 9.7 reach stepping
-# to its 5.7 pool at the I1 chute) — carries fill water at the UPPER reach's
-# level over the face between them (the hydrostatic fill's downhill-or-level
-# relaxation floods a face whose ground sits below the upper level, and the
-# lower reach can never spread uphill to reclaim it), i.e. up to the full
-# inter-reach step of phantom standing depth over what renders as a thin
-# film. |grade_at| on such faces is exactly FALL_DROP_MIN/TRACE_STEP = 0.3333
-# at the pinned site — AT the legal-reach ceiling, permanently below the
-# 0.45 gate, no matter how densely sampled (measured: dense 3m grid and all
-# 94 built verts of the I1 tile agree, 0.3333). The LEVEL spread separates
-# the two cases cleanly because the hydrostatic fill is FLAT per reach:
-# measured across every trigger-candidate tile of the pinned site chunk,
-# single-reach tiles read spread 0.000 (even the sloped-looking ones) while
-# cascade-step tiles read the full step (2.7 / 4.0). 2.0 sits between with
-# real margin on both sides, and is deliberately the codebase's historical
-# "two different water bodies, not one slope" level-step order (the old
-# fill-lattice jump constant carried exactly this value for exactly this
-# meaning before Phase 2a retired its blending role).
+# Second trigger gate (Task 7 "Defect B", sub-tile-reconciled Task 9,
+# RETIRED r3 Task 12b — see r3-task-12b-report.md for the full proof): a
+# level-SPREAD heuristic (a whole-tile fast path, then a finer 6m sub-tile
+# fallback) used to catch a cascade-step tile carrying fill water at an
+# UPSTREAM reach's flat level over the face between it and a downstream
+# reach — up to the full inter-reach step of phantom standing depth over
+# what rendered as a thin film. That shape was a direct consequence of the
+# OLD stepped profile model (pre r3 Task 12): one flat level per reach, a
+# hard cut at each trace sample, so a whole shelf could stand unblended over
+# a downstream face the fill could not otherwise reach.
 #
-# r3 Task 9 RECONCILIATION (controller addition 2 — Task 7 re-review Medium):
-# this WHOLE-TILE spread, gating a single 24m box, over-suppresses: a
-# sustained-but-LEGAL sloped reach (grade in (0.083, 0.333], i.e. up to
-# FALL_DROP_MIN/TRACE_STEP — see STEEP_UNSWIMMABLE's own derivation) can
-# accumulate up to 8.0m of real, swimmable rise across a whole 24m tile,
-# comfortably exceeding 2.0 despite never containing a genuine local step.
-# `_triggers` therefore uses THIS constant/function as a cheap FAST-PATH
-# pre-check only (whole tile spread <= 2.0 => one 24m box, unchanged from
-# Task 7 — the common case, every pond/lake/calm-river tile in the game);
-# a tile that fails it falls through to `_sub_tile_triggers`, which makes
-# the REAL keep/suppress decision at TRIGGER_SUB_TILE(6m) resolution
-# against a SEPARATE, larger constant (TRIGGER_SUB_TILE_SPREAD_MAX, below —
-# see its own docstring for why 2.0 turned out too strict there). This
-# constant staying at 2.0 for the fast path ONLY is deliberate: it is a
-# perf shortcut (skip sub-tile work when the tile is obviously calm), not a
-# correctness boundary — a tile that fails it merely PAYS for the slower,
-# more precise sub-tile pass; it does not get suppressed by this number
-# alone.
-const TRIGGER_LEVEL_SPREAD_MAX := 2.0
-# Fine-grained trigger granularity used ONLY when a 24m tile fails the
-# whole-tile fast path above (see _sub_tile_triggers). 24/6 = 4 sub-tiles
-# per axis, TRIGGER_SUB_PER_TILE — an exact division, no remainder/rounding
-# to worry about at a tile's own far edge.
-const TRIGGER_SUB_TILE := 6.0
-const TRIGGER_SUB_PER_TILE := 4
-# The REAL native-hot threshold _sub_tile_triggers uses (see that function's
-# own docstring for the propagation mechanism this feeds). NOT derived from
-# the legal-reach ceiling (0.3333*6=2.0) the way TRIGGER_LEVEL_SPREAD_MAX
-# is — a live-gate check at I4 (36.4,2.82,-1108.7, r3-task-9-brief.md
-# controller addition 1's own pinned point) caught that derivation too
-# strict: I4 sits in a REAL, INTENDED-swimmable local transition whose own
-# 6m sub-tile measures spread 2.7000 (an exact, resolution-independent
-# reading — verified at 5/9/25-sample density, r3-task-9-report.md), and at
-# 2.0 that sub-tile was natively "hot", suppressing a spot the controller's
-# own evidence requires read wading=true (static depth 0.7685, correctly
-# below the 0.8 swim gate). Investigated further: the WORST depth anywhere
-# in I4's own sub-tile is 1.7m (matching the calm pool immediately upstream
-# of it — a real, modest, non-phantom reading, not the "up to the full
-# inter-reach step of phantom standing depth" Concern Resolution 2
-# documents), while the site's five genuine cascade-step sub-tiles (I1's own
-# and its four siblings, all still correctly suppressed) measure spread
-# EXACTLY 4.0 (worst depth up to 3.7m). I4's own 2.7 is not a coincidence:
-# 0.45 (STEEP_UNSWIMMABLE) * TRIGGER_SUB_TILE(6) = 2.7 EXACTLY — I4's local
-# transition sits precisely AT the whole-tile grade gate's own "genuinely
-# unswimmable" bar, not the stricter "still-technically-legal" one. Sitting
-# a sub-tile gate's threshold AT that same bar double-suppresses the grade
-# gate's own gray zone; TRIGGER_SUB_TILE_SPREAD_MAX instead sits at the
-# midpoint between the two MEASURED site values (2.7 and 4.0), equal margin
-# (0.65) either side — comfortably above the "AT STEEP_UNSWIMMABLE" case
-# (which the whole-tile grade gate, run first and using the same constant,
-# already has the authority to judge) and comfortably below the genuine
-# multi-reach cascade steps this gate exists to catch (the class the grade
-# gate structurally cannot: TRACE_STEP=12m secants read the legal-reach
-# ceiling 0.3333 everywhere on this site, per Concern Resolution 2, "no
-# matter how densely sampled").
-const TRIGGER_SUB_TILE_SPREAD_MAX := 3.35
+# r3 Task 12/12a's smooth monotone descent (WaterField._dense_span_curve, a
+# sill-riding Fritsch-Carlson-tangent envelope) removes the flat shelf this
+# heuristic depended on: every point along a descent now gets its OWN
+# locally-fit level instead of a shared plateau, so WaterField.level_at (and
+# this class's own WaterSampler snapshot) already reads the honest LOCAL
+# value everywhere a trigger might cover — proven at the site's own
+# historical phantom points (the I1 chute film point, the 5.7 plunge-pool
+# centre, and a third cascade cell this task's own audit found still gated)
+# via level_at landing close to the local profile trend, never the old
+# upstream shelf (~9.7). Deleting the whole mechanism outright — the
+# whole-tile AND sub-tile constants, the _tile_level_spread/
+# _level_spread_over dense scan, and _sub_tile_triggers' hot/one-hop-
+# propagate logic — was the owner's own preference once the class it existed
+# to catch was proven dead by construction, over carrying dead machinery
+# "just in case". Triggers are simple wet-tile coverage now: STEEP_UNSWIMMABLE
+# (above) is the ONLY remaining exclusion, because it is the one gate keyed
+# on real TERRAIN steepness (a genuine unswimmable fall face), not on the
+# fill's own internal level bookkeeping — which a smooth ramp can no longer
+# use to distinguish "phantom shelf" from "ordinary legal slope" (a
+# sustained-but-legal sloped reach can concentrate real, swimmable rise
+# inside a small window exactly the same way a genuine cascade step does;
+# smoothness and spread-based suppression turned out to be mutually
+# exclusive by construction — see r3-task-12-report.md's own follow-up
+# section and r3-task-12b-report.md for the closing argument).
 
 # --- Meniscus rim (Task 5) — brief's own literal per-point profile, local
 # frame (outward normal n, level L, ground g): row0 = the strip's own curve
@@ -283,8 +239,16 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	if lattice.kept.is_empty():
 		return {}
 	_interior_mesh(st, lattice)
-	for c: Dictionary in curves:
-		_boundary_strip(st, lattice, c)
+	# r3 Task 12c: each edge-ring point is assigned to its SINGLE nearest
+	# curve up front (see _assign_ring_owners) — do NOT let _boundary_strip
+	# re-derive per-curve capture independently (that let two curves within
+	# capture distance of EACH OTHER both claim the same ring points; see
+	# _assign_ring_owners' own docstring for the narrow sill-lip defect this
+	# fixes, r3-task-12b-report.md's "12c" section for the red->green trace).
+	lattice["ring_owner"] = _assign_ring_owners(lattice, curves)
+	for ci in curves.size():
+		var c: Dictionary = curves[ci]
+		_boundary_strip(st, lattice, c, ci)
 		_rim(st, c)
 	if st.idx.is_empty():
 		return {}
@@ -944,6 +908,64 @@ static func _order_ring_by_nn_chain(ring_pts: Array, start_ref: Vector2) -> Arra
 	return order
 
 
+## r3 Task 12c: assigns every edge-ring lattice point to the SINGLE curve it
+## actually borders — its nearest curve by polyline distance (_dist_point_to_
+## curve), gated at `capture`. Capture radius is DERIVED from the worst-case
+## edge-ring geometry, not tuned: a kept point lands on the edge ring because
+## one of its quad neighbours was dropped, and an inset-dropped neighbour
+## sits < INSET (2.0m) from the curve; the kept point itself sits at most one
+## lattice diagonal (STEP*sqrt(2) ~= 4.24m) from that neighbour, so a genuine
+## edge-ring point can legitimately lie up to INSET + STEP*sqrt(2) ~= 6.24m
+## from the curve it borders. The first version used STEP*1.8 = 5.4m
+## ("comfortably catches the adjacent lattice row") and was caught
+## under-derived on the isolated-pond chunk (-4,-18): a real edge-ring point
+## at 5.625m (diagonally inside the pond bowl's corner) missed capture,
+## stranding 3 free edges on interior lattice points (r3-task-4-report.md).
+## INSET + STEP*1.5 = 6.5m covers the true bound with slack.
+##
+## WHY NEAREST-ONLY (not "every curve within capture", the original rule):
+## a chunk can carry multiple curves, and this file's own prior version of
+## _boundary_strip let EACH curve independently claim any ring point within
+## ITS OWN capture radius — correct when curves run far apart, but wherever
+## two curves' own shorelines face each other across a gap under 2*capture
+## (a sill lip a few metres from the pool it drops into, still its own
+## separate curve because the ground genuinely steps between them — see
+## r3-task-12c-report.md's pond-chunk (-4,-18) sill-hump geometry) a ring
+## point belonging to curve B legitimately also fell inside curve A's own
+## capture radius, so curve A's OWN _order_ring_by_nn_chain call absorbed it
+## too. That contamination is what actually broke the mesh: it didn't merely
+## add a stray point, it starved curve A's greedy nearest-neighbour chain at
+## the one corner where the chain's own start (nearest ring point to the
+## curve's pts[0], which can sit exactly on an "L" where the ring branches
+## two ways — see _order_ring_by_nn_chain's own tie-break) ties two directions
+## at equal distance: with contamination present, the tie's losing branch
+## gets postponed past the ENTIRE rest of curve A's genuine ring and is
+## finally forced to bridge to a contaminated point instead of doubling back
+## to its own true neighbour (5 stranded free edges, all within 3m of the
+## pond chunk's sill lip). Gating each ring point to its single nearest curve
+## removes the contamination outright — the stranded corner point then
+## legitimately becomes the chain's own LAST entry again, which the existing
+## closed-curve wraparound triangle (_zip_strip's own "CLOSED-ANNULUS CLOSING
+## TRIANGLE") already bridges back to the chain's first entry, healing the
+## corner with no separate fix needed. Assigned ONCE per build (not
+## per-curve) since ownership doesn't depend on which curve is asking.
+static func _assign_ring_owners(lattice: Dictionary, curves: Array) -> Dictionary:
+	var capture: float = INSET + STEP * 1.5
+	var owners: Dictionary = {}
+	for ij: Vector2i in lattice.edge_ring:
+		var e: Dictionary = lattice.kept[ij]
+		var best_ci := -1
+		var best_d := INF
+		for ci in curves.size():
+			var d: float = _dist_point_to_curve(curves[ci], e.p)
+			if d < best_d:
+				best_d = d
+				best_ci = ci
+		if best_ci >= 0 and best_d <= capture:
+			owners[ij] = best_ci
+	return owners
+
+
 ## Bridges curve `c`'s own point chain (one vertex per point, ON the curve,
 ## at the curve's OWN baked level — the brief's literal rule) to the interior
 ## lattice's edge-ring vertices that lie near this curve, via a greedy
@@ -960,7 +982,7 @@ static func _order_ring_by_nn_chain(ring_pts: Array, start_ref: Vector2) -> Arra
 ## triangle touching a boundary vertex at all, so the strip is the ONLY
 ## geometry connecting the two, and every strip triangle shares a full edge
 ## with its neighbour in the strip, never a partial one.
-static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary) -> void:
+static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary, ci: int) -> void:
 	var pts: PackedVector2Array = c.pts
 	var levels: PackedFloat32Array = c.levels
 	var n: int = pts.size()
@@ -974,31 +996,21 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary) 
 	for i in n:
 		curve_vi[i] = _weld_vert(st, pts[i], levels[i], Vector3.UP)
 
-	# Ring: interior edge-ring points within a short capture radius of THIS
-	# curve (a chunk can carry multiple curves — a ring point must only zip
-	# to the curve it actually borders, not a distant unrelated one), ordered
-	# by 2D nearest-neighbour chaining (_order_ring_by_nn_chain — see its own
-	# docstring for why this replaced an arc-length-projection sort).
-	# Capture radius is DERIVED from the worst-case edge-ring geometry, not
-	# tuned: a kept point lands on the edge ring because one of its quad
-	# neighbours was dropped, and an inset-dropped neighbour sits < INSET
-	# (2.0m) from the curve; the kept point itself sits at most one lattice
-	# diagonal (STEP*sqrt(2) ~= 4.24m) from that neighbour, so a genuine
-	# edge-ring point can legitimately lie up to INSET + STEP*sqrt(2) ~= 6.24m
-	# from the curve it borders. The first version used STEP*1.8 = 5.4m
-	# ("comfortably catches the adjacent lattice row") and was caught
-	# under-derived on the isolated-pond chunk (-4,-18): a real edge-ring
-	# point at 5.625m (diagonally inside the pond bowl's corner) missed
-	# capture, stranding 3 free edges on interior lattice points (this task's
-	# report). INSET + STEP*1.5 = 6.5m covers the true bound with slack.
-	var capture: float = INSET + STEP * 1.5
+	# Ring: interior edge-ring points OWNED by THIS curve (r3 Task 12c —
+	# _assign_ring_owners, called once in build(), already resolved each
+	# edge-ring point to its single nearest curve; see that function's own
+	# docstring for why "every curve within capture" — the original rule —
+	# let two curves facing each other across a narrow gap both claim the
+	# same points), ordered by 2D nearest-neighbour chaining
+	# (_order_ring_by_nn_chain — see its own docstring for why this replaced
+	# an arc-length-projection sort).
+	var owners: Dictionary = lattice.ring_owner
 	var ring_pts: Array = []
 	var ring_y: Array = []
 	for ij: Vector2i in lattice.edge_ring:
-		var e: Dictionary = lattice.kept[ij]
-		var d: float = _dist_point_to_curve(c, e.p)
-		if d > capture:
+		if int(owners.get(ij, -1)) != ci:
 			continue
+		var e: Dictionary = lattice.kept[ij]
 		ring_pts.append(e.p)
 		ring_y.append(e.y)
 	if ring_pts.is_empty():
@@ -1287,31 +1299,29 @@ static func _weld_vert(st: Dictionary, p: Vector2, y: float, nrm: Vector3) -> in
 
 
 ## Triggers (r3 Task 7 — real wiring, not scaffolding; r3 Task 9 — sub-tile
-## reconciliation): one box per 24m TILE touched by any built vertex (kept
-## interior, boundary-strip, OR rim), footprint from this class's own
-## presence data (`st.verts`) — top = max level in the tile + TRIGGER_TOP_
-## CLEAR, bottom = min ground in the tile - TRIGGER_BOTTOM_CLEAR (this
-## codebase's existing swim-trigger tiling/clearance convention). A tile
-## whose max |grade_at| exceeds STEEP_UNSWIMMABLE gets NO trigger at all —
-## see that constant's own docstring; a fall face is not swimmable water by
-## design, so a character must fall/slide through it rather than float. A
-## tile that passes the grade gate but fails the whole-tile level-spread
-## fast path (TRIGGER_LEVEL_SPREAD_MAX) is no longer dropped wholesale — it
-## falls through to _sub_tile_triggers, which may emit SEVERAL smaller
-## TRIGGER_SUB_TILE boxes covering only its swimmable fraction (see that
-## function's own docstring). WaterSurfaceBuilder.build_chunk turns every
-## entry here — 24m or 6m alike, it only ever reads `rect`/`top`/`bottom` —
-## into an Area3D carrying set_meta("sampler", sampler) (build()'s own
-## single frozen WaterSampler for the whole chunk) — there is no more
-## per-cell sampled-plane meta pair; a query anywhere inside the box reads
-## that one snapshot instead (see WaterSampler.gd).
+## reconciliation, RETIRED r3 Task 12b): one box per 24m TILE touched by any
+## built vertex (kept interior, boundary-strip, OR rim), footprint from this
+## class's own presence data (`st.verts`) — top = max level in the tile +
+## TRIGGER_TOP_CLEAR, bottom = min ground in the tile - TRIGGER_BOTTOM_CLEAR
+## (this codebase's existing swim-trigger tiling/clearance convention). A
+## tile whose max |grade_at| exceeds STEEP_UNSWIMMABLE gets NO trigger at
+## all — see that constant's own docstring; a fall face is not swimmable
+## water by design, so a character must fall/slide through it rather than
+## float.
+##
+## r3 Task 12b: this is back to simple wet-tile coverage, one box per
+## touched TILE with no further splitting — the whole-tile/sub-tile level-
+## SPREAD suppression Tasks 7/9 layered on top (TRIGGER_LEVEL_SPREAD_MAX,
+## TRIGGER_SUB_TILE_SPREAD_MAX, _tile_level_spread/_level_spread_over,
+## _sub_tile_triggers) is DELETED — see STEEP_UNSWIMMABLE's own neighbouring
+## docstring (above) for why, and r3-task-12b-report.md for the proof.
+## WaterSurfaceBuilder.build_chunk turns every entry here into an Area3D
+## carrying set_meta("sampler", sampler) (build()'s own single frozen
+## WaterSampler for the whole chunk) — there is no more per-cell sampled-
+## plane meta pair; a query anywhere inside the box reads that one snapshot
+## instead (see WaterSampler.gd).
 static func _triggers(st: Dictionary) -> Array:
 	var cells: Dictionary = {}   # Vector2i cell -> {top: float, bottom: float, max_grade: float}
-	# Vector2i cell -> Dictionary[Vector2i sub -> true]: which TRIGGER_SUB_TILE
-	# sub-cells of a candidate tile actually carry a built vertex (r3 Task 9
-	# — only populated/consulted for tiles that reach the sub-tile fallback
-	# below; harmless to build unconditionally, one extra bucket per vertex).
-	var sub_present: Dictionary = {}
 	for v: Vector3 in st.verts:
 		var cell := Vector2i(int(floor(v.x / TILE)), int(floor(v.z / TILE)))
 		var g: float = TerrainSurfaceField.surface_y(st.region, v.x, v.z)
@@ -1322,136 +1332,14 @@ static func _triggers(st: Dictionary) -> Array:
 			cells[cell].top = maxf(cells[cell].top, v.y)
 			cells[cell].bottom = minf(cells[cell].bottom, g)
 			cells[cell].max_grade = maxf(cells[cell].max_grade, grade)
-		var local := Vector2(v.x - float(cell.x) * TILE, v.z - float(cell.y) * TILE)
-		var sub := Vector2i(
-			clampi(int(floor(local.x / TRIGGER_SUB_TILE)), 0, TRIGGER_SUB_PER_TILE - 1),
-			clampi(int(floor(local.y / TRIGGER_SUB_TILE)), 0, TRIGGER_SUB_PER_TILE - 1))
-		if not sub_present.has(cell):
-			sub_present[cell] = {}
-		sub_present[cell][sub] = true
 
 	var out: Array = []
 	for cell: Vector2i in cells:
 		var e: Dictionary = cells[cell]
 		if e.max_grade > STEEP_UNSWIMMABLE:
 			continue   # steep water: no trigger, unswimmable by design
-		if _tile_level_spread(st, cell) <= TRIGGER_LEVEL_SPREAD_MAX:
-			out.append({
-				"rect": Rect2(Vector2(cell) * TILE, Vector2.ONE * TILE),
-				"top": e.top + TRIGGER_TOP_CLEAR,
-				"bottom": e.bottom - TRIGGER_BOTTOM_CLEAR,
-			})
-		else:
-			# Whole-tile spread failed: this tile straddles EITHER a genuine
-			# cascade step OR a merely-long sloped-but-legal reach (see
-			# TRIGGER_LEVEL_SPREAD_MAX's own r3 Task 9 note) — reconcile at
-			# sub-tile resolution instead of dropping the whole tile.
-			out.append_array(_sub_tile_triggers(st, cell, e, sub_present.get(cell, {})))
-	return out
-
-
-## Max spread of WaterField.level_at over one 24m tile's own wet footprint,
-## sampled on a dense 9x9 (3m) grid across the tile bbox — the FAST-PATH
-## input to the TRIGGER_LEVEL_SPREAD_MAX gate (see that constant's own
-## derivation + trade-off note; see _sub_tile_triggers for the fallback this
-## feeds when it fails). "Wet" here is level > ground with NO epsilon: the
-## phantom band this gate exists to find IS fill water standing barely-to-
-## deeply over a face, and excluding thin readings would blind the gate to
-## its own target's edges. Samples the FIELD directly (not built verts) so
-## a face that contributed no mesh vertex to this tile still counts —
-## deterministic, independent of where the mesh happened to keep points.
-## Returns 0.0 for a tile with fewer than two wet samples (nothing to
-## spread). Cost: 81 level_at + surface_y reads per candidate tile, against
-## the already-cached fill lattice, once per chunk build on the worker
-## thread (Task 11 perf-pass item, same bucket as the per-vertex grade_at
-## reads above).
-static func _tile_level_spread(st: Dictionary, cell: Vector2i) -> float:
-	return _level_spread_over(st, Vector2(cell) * TILE, TILE, 9)
-
-
-## Same dense min/max-spread scan as _tile_level_spread, generalized to any
-## square footprint (origin/size) and grid resolution `n` — shared by the
-## whole-tile fast path (TILE, 9x9) and the sub-tile fallback (TRIGGER_
-## SUB_TILE, 5x5) so the two only differ in what rectangle/density they scan,
-## not in the min/max/wet-filter logic itself.
-static func _level_spread_over(st: Dictionary, origin: Vector2, size: float, n: int) -> float:
-	var step: float = size / float(n - 1)
-	var lmin := INF
-	var lmax := -INF
-	for jj in n:
-		for ii in n:
-			var p: Vector2 = origin + Vector2(ii, jj) * step
-			var lvl: float = WaterField.level_at(st.ctx, p)
-			if lvl == -INF:
-				continue
-			if lvl <= TerrainSurfaceField.surface_y(st.region, p.x, p.y):
-				continue
-			lmin = minf(lmin, lvl)
-			lmax = maxf(lmax, lvl)
-	return (lmax - lmin) if lmax > lmin else 0.0
-
-
-## Reconciles a whole-tile-spread-failing 24m cell (controller addition 2,
-## r3 Task 9) into its own TRIGGER_SUB_PER_TILE x TRIGGER_SUB_PER_TILE grid
-## of TRIGGER_SUB_TILE(6m) boxes, instead of dropping the tile wholesale —
-## restoring the swimmable fractions Task 7's own whole-tile gate had to
-## sacrifice (its own disclosed trade-off; see TRIGGER_LEVEL_SPREAD_MAX).
-##
-## A sub-tile is suppressed (no box) when EITHER:
-##  - its OWN 6m footprint's level spread exceeds TRIGGER_SUB_TILE_SPREAD_MAX
-##    ("natively hot" — a genuine local jump inside its own 6m span; see that
-##    constant's own docstring for why this is a DIFFERENT, larger number
-##    than the whole-tile fast path's 2.0 — a live-gate regression at I4
-##    forced the correction), OR
-##  - an immediate 4-neighbour sub-tile WITHIN THE SAME 24m cell is natively
-##    hot ("one-hop propagation"; does not cross into a neighbouring 24m
-##    cell — a disclosed scope limit, see r3-task-9-report.md).
-## Own-footprint alone is NOT enough, empirically: at the pinned site's own
-## I1 chute (r3-task-9-report.md has the full probe transcript), the fill's
-## quantization pins a short shelf at the UPPER reach's OWN level for a few
-## extra metres past where its local rise actually happens — the sub-tile
-## touching the I1 film point (53.0,-1083.9) measures 0.000 spread in its
-## OWN 6m footprint (level is locally flat there) even though it carries up
-## to 2.5m of phantom depth over sloping ground; only comparison with its
-## immediate (natively-hot) neighbour catches it. A wider single-tile window
-## (checking spread over a 12-18m box instead of 6m) was tried and rejected:
-## it also flags the MIDDLE of a smooth, legal, whole-tile-spanning slope
-## (up to 6.0m of real rise inside an 18m window at the legal ceiling grade),
-## which item 2 explicitly requires to stay swimmable — propagating a
-## boolean "hot" flag (not diluting a spread NUMBER over a bigger footprint)
-## is what keeps the legal-reach case unaffected: nothing is natively hot
-## there (every sub-tile's OWN 6m spread sits at/under 2.0, comfortably under
-## TRIGGER_SUB_TILE_SPREAD_MAX too), so propagation never fires.
-## Every emitted sub-box reuses the PARENT tile's own top/bottom (`e`, from
-## ALL of its verts) rather than a tighter per-sub-tile recompute: Task 9
-## moves classification to STATIC sampler depth (character.gd), so the
-## trigger box only needs to be a generous, cheap broad-phase spatial index
-## — its exact vertical span no longer drives the swim/wade decision the
-## way it did pre-Task-9 (see character.gd's own _update_in_water).
-static func _sub_tile_triggers(st: Dictionary, cell: Vector2i, e: Dictionary, present: Dictionary) -> Array:
-	var hot: Dictionary = {}
-	for si in TRIGGER_SUB_PER_TILE:
-		for sj in TRIGGER_SUB_PER_TILE:
-			var key := Vector2i(si, sj)
-			if not present.has(key):
-				continue
-			var origin: Vector2 = Vector2(cell) * TILE + Vector2(key) * TRIGGER_SUB_TILE
-			if _level_spread_over(st, origin, TRIGGER_SUB_TILE, 5) > TRIGGER_SUB_TILE_SPREAD_MAX:
-				hot[key] = true
-	var suppressed: Dictionary = {}
-	for key: Vector2i in hot:
-		suppressed[key] = true
-		for delta in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-			var nb: Vector2i = key + delta
-			if nb.x >= 0 and nb.x < TRIGGER_SUB_PER_TILE and nb.y >= 0 and nb.y < TRIGGER_SUB_PER_TILE:
-				suppressed[nb] = true
-	var out: Array = []
-	for key: Vector2i in present:
-		if suppressed.has(key):
-			continue
-		var origin: Vector2 = Vector2(cell) * TILE + Vector2(key) * TRIGGER_SUB_TILE
 		out.append({
-			"rect": Rect2(origin, Vector2.ONE * TRIGGER_SUB_TILE),
+			"rect": Rect2(Vector2(cell) * TILE, Vector2.ONE * TILE),
 			"top": e.top + TRIGGER_TOP_CLEAR,
 			"bottom": e.bottom - TRIGGER_BOTTOM_CLEAR,
 		})

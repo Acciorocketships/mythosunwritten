@@ -48,11 +48,27 @@ const _EASE_BAND := 2.0       # metres of (ground-hug - smooth-trend) level gap 
 # _find_descent_spans) and ease it in ONE smootherstep from the upper pool's
 # held level to the lower pool's own target — ground is consulted only as a
 # floor afterward (DESCENT_CLAMP), never as the shaping signal.
-# 0.05m: the brief's own literal "ground + 0.05" — deliberately its own named
-# constant, not a reuse of EPS (0.05 too, but EPS is the FILL's containment
-# epsilon, a different concern; a shared numeric value here is coincidence,
-# not an intended coupling).
-const DESCENT_CLAMP := 0.05
+# 0.10m descent floor, applied UNIFORMLY (every floor-pinned point: both span
+# anchors and every inserted sill knot). It MUST strictly exceed the FILL's
+# own wetness epsilon EPS(0.05) — the fill settles a cell wet only when
+# `level > ground + EPS` (see _relax_fill/_seed_rivers' shared gate). r3
+# Task 12b found (report): with DESCENT_CLAMP==EPS==0.05, a point the envelope
+# pins to `ground + DESCENT_CLAMP` reads `level - ground == EPS` EXACTLY — not
+# strictly greater — so the fill DRIES the very band the envelope shaped to
+# keep wet (reproduced at the far pond chunk (-4,-18)'s sill knot
+# (-606.135,-3432.959): curve 4.0320, ground 3.9820, depth 0.0500 == EPS). The
+# fix is a UNIFORM floor lift, NOT a knot-local margin: an earlier 12b cut
+# added the margin only at ground-DERIVED knot assignments, which raised a
+# sill knot ABOVE its own eased-curve neighbours — a level discontinuity that
+# left unhealed free edges at the pond (test_skin_handles_closed_and_border_
+# exit_curves went red). Lifting the WHOLE floor together keeps the sill-ride
+# C1 (no local peak), so floor-pinned verts read depth 0.10 (comfortably >
+# EPS, wet) with the mesh still watertight. Dormant on the pinned SITE_CHUNK
+# (its chute resolves to zero interior knots, r3-task-12a-report.md) — a
+# geometry coincidence, not an algorithm property; the pond is where it bites.
+# Sill-ride floor `dense[k] >= ground[k] + DESCENT_CLAMP` and the second-diff
+# bound move WITH the constant, so both stay consistent.
+const DESCENT_CLAMP := 0.10
 # r3 Task 12a: the ORIGINAL "ease, then clamp to ground+DESCENT_CLAMP, then
 # re-smooth over an >=8m box window" pipeline (3cd407d) was self-defeating —
 # the resmooth pass, run AFTER the clamp, is a plain average with the clamp's
@@ -930,6 +946,11 @@ static func _find_descent_knots(ground: PackedFloat32Array, steps: int,
 					and curve[run_end + 1] < ground[run_end + 1] + DESCENT_CLAMP - 0.0001:
 				run_end += 1
 			var peak_k: int = k
+			# The knot's stored value is ground + DESCENT_CLAMP (uniform floor,
+			# now 0.10 > EPS so a floor-pinned vert reads strictly wet — see
+			# DESCENT_CLAMP's docstring). Every candidate in the run shares the
+			# same constant offset, so it cannot change WHICH point is the peak
+			# (a constant shift preserves argmax) or the tie-break below.
 			var peak_v: float = ground[k] + DESCENT_CLAMP
 			for kk in range(k, run_end + 1):
 				var fv: float = ground[kk] + DESCENT_CLAMP

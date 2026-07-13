@@ -650,12 +650,23 @@ func test_pond_frames_are_calm() -> void:
 	if closed_curve.is_empty():
 		return
 	var pts: PackedVector2Array = closed_curve.pts
-	assert_true(pts.size() >= 79, "pond curve has >=79 points for the verified-calm window (%d)" % pts.size())
-	if pts.size() < 79:
+	# Select the calm window DYNAMICALLY: every pond curve point genuinely
+	# >= 18m from any river (the "river gate" — a pond point nearer than that
+	# legitimately picks up a river flow frame, so it is not calm). r3 Task
+	# 12b: this was a hard-coded pts[39..78] window, which the smooth-descent
+	# level change (DESCENT_CLAMP 0.05 -> 0.10) reshaped the pond contour out
+	# from under — the fixed indices drifted toward a river and the precondition
+	# broke, though the property under test never changed. Selecting by the
+	# actual far-from-river condition (independent of the flow-frame bake this
+	# asserts on, so not circular) makes the test robust to contour reshaping.
+	var calm_idx: Array = []
+	for i in pts.size():
+		if _dist_to_rivers(ctx, pts[i]) >= 18.0:
+			calm_idx.append(i)
+	assert_true(calm_idx.size() >= 20,
+		"pond curve has a real calm window (>= 20 points >= 18m from any river): %d" % calm_idx.size())
+	if calm_idx.size() < 20:
 		return
-	for i in range(39, 79):
-		assert_true(_dist_to_rivers(ctx, pts[i]) >= 18.0,
-			"pts[%d] sits outside the brief's own river gate (site precondition)" % i)
 	var skin: Dictionary = WaterSkin.build(water, pond_chunk, region)
 	assert_false(skin.is_empty(), "pond chunk builds a skin")
 	if skin.is_empty():
@@ -664,7 +675,7 @@ func test_pond_frames_are_calm() -> void:
 	var cust: PackedFloat32Array = skin.arrays[Mesh.ARRAY_CUSTOM0]
 	var checked := 0
 	var offenders: Array = []
-	for i in range(39, 79):
+	for i: int in calm_idx:
 		var target := Vector3(pts[i].x, closed_curve.levels[i], pts[i].y)
 		var vi: int = _find_vertex(verts, target, 0.01)
 		assert_true(vi >= 0, "curve point %d has a welded mesh vertex" % i)
@@ -677,8 +688,8 @@ func test_pond_frames_are_calm() -> void:
 		if s_v != 0.0 or d_v != 0.0 or slope_v != 0.0:
 			if offenders.size() < 10:
 				offenders.append("%s s=%.4f d=%.4f slope=%.4f" % [target, s_v, d_v, slope_v])
-	print("MEAS test_pond_frames_are_calm: %d curve points checked, %d offenders" % [checked, offenders.size()])
-	assert_true(checked == 40, "40 curve points checked")
+	print("MEAS test_pond_frames_are_calm: %d calm-window curve points checked, %d offenders" % [checked, offenders.size()])
+	assert_true(checked >= 20, "at least 20 calm-window points had welded verts to check (%d)" % checked)
 	assert_true(offenders.is_empty(), "every calm-window pond vert has s==0, d==0, slope==0: %s" % str(offenders))
 
 
@@ -878,91 +889,116 @@ func test_no_trigger_where_unswimmably_steep() -> void:
 	assert_true(by_cell.has(Vector2i(4, 0)),
 		"calm control tile still gets a trigger — the gate is selective, not indiscriminate")
 
-	# --- Task 7 live-gate finding (Defect B, coordinator's in-game evidence at
-	# HEAD 08cdff6) + r3 Task 9 reconciliation (controller additions 2/3): the
-	# SITE CHUNK's own cascade-step tile (2,-46) — world x in [48,72), z in
-	# [-1104,-1080) — contains BOTH the I1 chute face (9.7 reach stepping down
-	# to the 5.7 pool, where a trigger's sampler used to read 9.700 at the
-	# film point (53,-1083.9): 2.48m of phantom swim depth over a ~0.3m film,
-	# ground 7.21) AND a genuinely calm fraction of the 5.7 pool itself
-	# (ground flat at 4.0 for z in [-1104,-1092)). The grade gate above CANNOT
-	# catch the chute: its max |grade_at| is exactly 0.3333 (= FALL_DROP_MIN /
-	# TRACE_STEP, the legal-reach ceiling — measured over all 94 built verts
-	# AND over a dense 3m grid), below the 0.45 gate by construction. Task 7's
-	# own fix was the whole-tile wet-LEVEL spread (WaterSkin.
-	# TRIGGER_LEVEL_SPREAD_MAX): a single-reach tile measures spread ~0.000
-	# while a cascade-step tile measures the full inter-reach step (4.0 here)
-	# — but that whole-tile gate drops the TILE wholesale (its own disclosed
-	# trade-off), sacrificing the calm pool fraction along with the chute.
-	#
-	# Task 9's _sub_tile_triggers reconciles this at TRIGGER_SUB_TILE(6m)
-	# resolution (see that function's own docstring for the full mechanism
-	# and why simple own-footprint spread is not enough — the site's own I1
-	# film point sits in a sub-tile whose OWN 6m spread is 0.000, caught only
-	# by one-hop propagation from its genuinely-hot neighbour). A bare
-	# "does any trigger round to cell (2,-46)" check is now too coarse to
-	# mean anything (SOME sub-tile of that cell legitimately has a trigger
-	# post-Task-9) — both checks below are POINT-containment against the
-	# real emitted rects, whatever size they are.
+	# --- r3 Task 12b: the level-SPREAD reconciliation this stanza used to pin
+	# (Task 7 "Defect B" + Task 9's sub-tile fallback) is RETIRED — see
+	# WaterSkin.STEEP_UNSWIMMABLE's own neighbouring docstring and
+	# r3-task-12b-report.md for the full proof. That mechanism existed to
+	# catch a cascade-step tile carrying fill water at an UPSTREAM reach's
+	# flat level over a downstream face — a shape only possible under the OLD
+	# stepped profile model (one flat level per reach, hard cuts at trace
+	# samples). r3 Task 12/12a's smooth monotone descent
+	# (WaterField._dense_span_curve) removes that flat shelf structurally:
+	# THIS EXACT site's own chute span (trace source_cell (0,-2)) resolves to
+	# a two-anchor curve with ZERO interior sill knots (r3-task-12a-
+	# report.md's own knot list) — there is no flat plateau anywhere along it
+	# for a phantom reading to stand on. Measured directly
+	# (r3-task-12b-report.md): the I1 film point's field level is 7.8185, a
+	# continuously-varying mid-ramp value nowhere near the OLD stepped
+	# model's ~9.7 upstream shelf; grade_at there is a legal 0.2333 (well
+	# under the 0.3333 legal-reach ceiling and the 0.45 STEEP_UNSWIMMABLE
+	# gate); a fine 1m depth scan around it shows smooth, gradual variation,
+	# not a hard cliff-edge jump. The chute tile therefore now gets a REAL
+	# trigger — this is the CORRECT outcome, not a regression: the water
+	# there is genuinely, honestly shallow (a real film, not a phantom deep
+	# reading), so the trigger+sampler path SHOULD serve it. What this
+	# stanza now pins is the model's own anti-regression: the sampler must
+	# report that same honest LOCAL value, never a stale or upstream one.
 	var site_water: WaterPlan = _water(SEED)
 	var site_region = _region(SEED, SITE_CHUNK)
+	var site_ctx: Dictionary = WaterField.ctx(site_water, SITE_CHUNK, site_region)
 	var site_skin: Dictionary = WaterSkin.build(site_water, SITE_CHUNK, site_region)
 	assert_false(site_skin.is_empty(), "site chunk builds (precondition)")
 	var film := Vector2(53.0, -1083.9)
-	# The I1 film point's own TRIGGER_SUB_TILE sub-tile, empirically probed
-	# and recorded in r3-task-9-report.md: world rect x[48,54) z[-1086,-1080)
-	# — cell (2,-46)'s local sub-tile (0,3). Its OWN footprint spread is
-	# 0.000 (level is locally flat there, pinned at the upper reach's own
-	# 9.7); it is suppressed ONLY via one-hop propagation from its immediate
-	# neighbour sub-tile (0,2) (world x[48,54) z[-1092,-1086)), whose OWN
-	# footprint genuinely spans the 5.7->9.7 jump (measured spread 4.0,
-	# concentrated in that one ~6m fill-lattice cell).
-	var film_sub_rect := Rect2(Vector2(48.0, -1086.0), Vector2(6.0, 6.0))
-	assert_true(film_sub_rect.has_point(film),
-		"sanity: the I1 film point sits in sub-tile x[48,54) z[-1086,-1080), cell (2,-46) local (0,3)")
-	# 5.7 plunge pool centre (controller addition 3's own pin) — the SAME 24m
-	# cell's z-sub-idx 0 row (world z[-1104,-1098)), 2 sub-tiles from the hot
-	# neighbour, ground flat at 4.0, level flat at 5.7 (depth 1.7). x=56.0,
-	# not 54.0 (that sub-tile's own x=54 edge): the live-gate check found
-	# Rect2.has_point (this test's own oracle, and this file's/WaterSurface-
-	# Builder's convention throughout) includes a rect's min edge, but a REAL
-	# BoxShape3D + PhysicsServer intersect_point can exclude a point sitting
-	# EXACTLY on a box face (float/engine boundary semantics, not a WaterSkin
-	# bug) — x=54.0 is exactly sub-tile (1,0)'s own x[54,60) min edge. x=56.0
-	# sits comfortably inside with margin either side; see
-	# r3-task-9-report.md's live-gate section for the measured contrast
-	# (54.0 read in_water=false live, 56.0 read true, both same z/tile).
+	# Historically labelled "the 5.7 plunge pool centre" (the OLD stepped
+	# model's own flat reach value here) — controller addition 3's own pin.
 	var pool_centre := Vector2(56.0, -1101.0)
 	var film_covered := false
 	var pool_covered := false
 	var site_tiles := 0
-	var any_sub_tile_rect := false
 	for t: Dictionary in site_skin.triggers:
 		site_tiles += 1
 		var rect: Rect2 = t.rect
-		if absf(rect.size.x - WaterSkin.TRIGGER_SUB_TILE) < 0.01:
-			any_sub_tile_rect = true
 		if rect.has_point(film):
 			film_covered = true
 		if rect.has_point(pool_centre):
 			pool_covered = true
-	print("MEAS test_no_trigger_where_unswimmably_steep: site chunk emits %d tiles (sub-tile boxes present=%s); film covered=%s, pool centre covered=%s" % [
-		site_tiles, any_sub_tile_rect, film_covered, pool_covered])
+	print("MEAS test_no_trigger_where_unswimmably_steep: site chunk emits %d tiles; film covered=%s, pool centre covered=%s" % [
+		site_tiles, film_covered, pool_covered])
 	assert_true(site_tiles > 0, "site chunk still emits real triggers (the gate is not suppressing everything)")
-	assert_true(any_sub_tile_rect,
-		"the reconciliation path emitted at least one fine (6m) sub-tile box on this site — precondition for the two point-containment checks below to mean anything")
-	assert_false(film_covered,
-		"no trigger footprint covers the I1 film point (53,-1083.9) — a character standing there must read dry, matching run 2's verified live behaviour and the owner's own I1 report (a false waterfall, not swimmable water)")
-	assert_true(pool_covered,
-		"the 5.7 plunge pool centre (56,-1101) — 2 sub-tiles from the chute jump, inside the SAME 24m cell Task 7 suppressed wholesale — now gets a real trigger (r3 Task 9 controller addition 3: fine-grained coverage restored)")
+	assert_true(film_covered,
+		"the I1 chute tile now gets a real trigger (grade-legal at 0.2333, no spread gate left to suppress it) — the smooth ramp carries genuine, honest shallow water here, not a phantom reading")
+	assert_true(pool_covered, "the historical '5.7' plunge pool centre (56,-1101) still gets a real trigger")
+
+	# Direct phantom-depth pin (r3 Task 12b, the anti-regression that
+	# actually matters now that trigger COVERAGE alone can no longer prove
+	# anything about phantom depth): the sampler baked into this trigger must
+	# read the FIELD's own LOCAL value at the film point, within 0.3 — never
+	# a stale or upstream one. Measured: sampler and field agree EXACTLY here
+	# (WaterSampler.build bakes a direct snapshot of WaterField.level_at),
+	# comfortably inside the bound.
+	var sampler: WaterSampler = site_skin.sampler
+	var s_lvl: float = sampler.level_at(film)
+	var f_lvl: float = WaterField.level_at(site_ctx, film)
+	assert_false(is_nan(s_lvl), "sampler answers at the I1 film point (it is covered)")
+	print("MEAS test_no_trigger_where_unswimmably_steep: I1 film phantom-depth pin: sampler=%.4f field=%.4f |diff|=%.4f (bound 0.3)" % [
+		s_lvl, f_lvl, absf(s_lvl - f_lvl)])
+	assert_true(absf(s_lvl - f_lvl) <= 0.3,
+		"the sampler's own level at the I1 film point tracks WaterField.level_at (the LOCAL ramp level) within 0.3 — never the old upstream pool's ~9.7")
+
+	# in_water=false AND wading=true at the film point (r3-task-12b-brief.md's
+	# own literal ask) — replicated inline (character.gd's real STATIC depth
+	# math, matching test_water_classification.gd::_character_class's own
+	# formula): best depth over every covering trigger, gated by trigger
+	# top/bottom clearance.
+	var film_g: float = TerrainSurfaceField.surface_y(site_region, film.x, film.y)
+	var probe_y: float = film_g + 0.3
+	var best_depth := -INF
+	for t: Dictionary in site_skin.triggers:
+		if not t.rect.has_point(film):
+			continue
+		if probe_y < float(t.bottom) or probe_y > float(t.top):
+			continue
+		var lvl: float = sampler.level_at(film)
+		if not is_nan(lvl):
+			best_depth = maxf(best_depth, lvl - film_g)
+	var in_water: bool = best_depth > 0.8
+	var wading: bool = best_depth > 0.05
+	print("MEAS test_no_trigger_where_unswimmably_steep: I1 film character-math: depth=%.4f in_water=%s wading=%s" % [
+		best_depth, in_water, wading])
+	assert_false(in_water, "I1 film point reads in_water=false — not deep enough to swim (%.4f <= 0.8)" % best_depth)
+	assert_true(wading, "I1 film point reads wading=true (%.4f > 0.05) — real, honest shallow water, not dry land" % best_depth)
 
 
-## test_sub_tile_reconciliation_keeps_a_legal_sloped_reach (r3 Task 9,
-## controller addition 2's own explicit ask: "add a synthetic-or-real test
-## for a sloped-but-legal reach tile"). A REAL example was searched for on
-## the pinned site chunk and not found in reasonable search time (every real
-## cascade there is either flat-per-reach or a genuine step — see
-## r3-task-9-report.md); this is the disclosed synthetic fallback.
+## test_legal_sloped_reach_keeps_its_trigger — RENAMED + RETARGETED r3 Task
+## 12b (was test_sub_tile_reconciliation_keeps_a_legal_sloped_reach, r3 Task
+## 9's controller addition 2: "add a synthetic-or-real test for a
+## sloped-but-legal reach tile"). The risk that test guarded against — the
+## OLD whole-tile level-SPREAD fast path (TRIGGER_LEVEL_SPREAD_MAX)
+## over-suppressing a legal, sustained slope, "rescued" by falling through to
+## _sub_tile_triggers — no longer exists: the ENTIRE level-spread mechanism
+## (TRIGGER_LEVEL_SPREAD_MAX/TRIGGER_SUB_TILE_SPREAD_MAX,
+## _tile_level_spread/_level_spread_over, _sub_tile_triggers) is DELETED (r3
+## Task 12b — see WaterSkin.STEEP_UNSWIMMABLE's own neighbouring docstring
+## and r3-task-12b-report.md for the full proof). A legal grade=0.2 reach no
+## longer risks whole-tile suppression AT ALL — there is nothing left to
+## reconcile at sub-tile resolution; STEEP_UNSWIMMABLE (0.45) is the only
+## remaining exclusion, and 0.2 sits nowhere near it. This test is KEPT,
+## repointed at the new, simpler invariant: the SAME fixture (grade 0.2,
+## inside the historical (0.083, 0.333] legal band STEEP_UNSWIMMABLE's own
+## derivation still documents) gets exactly ONE 24m trigger covering its
+## whole footprint — a real regression pin against a future
+## re-introduction of level-spread-style over-suppression, not a new
+## invariant invented for this task.
 ##
 ## Hand-builds a FILL lattice directly (WaterField.FILL_M/FILL_STEP, the same
 ## shape ctx() itself builds) rather than a RiverTrace + profile(): a
@@ -971,19 +1007,9 @@ func test_no_trigger_where_unswimmably_steep() -> void:
 ## nearest-SAMPLE-then-single-segment-lerp rule, which is not smooth at a
 ## sample switch and goes flat past the last sample's own capture zone —
 ## verified directly while designing this fixture, see r3-task-9-report.md)
-## that have nothing to do with what this test checks. A hand-built fill
-## lattice with a pure z-linear level (x-invariant) makes level_at exactly
-## smooth by construction — no artifact to accidentally trip the gate this
-## test is trying to prove STAYS open.
-## Grade 0.2 (within controller addition 2's own (0.083, 0.333] target band)
-## over one 24m tile: whole-tile spread = 0.2*24 = 4.8 (fails the whole-tile
-## fast path, same as a real cascade would), but EVERY 6m sub-tile spread =
-## 0.2*6 = 1.2, comfortably under TRIGGER_LEVEL_SPREAD_MAX(2.0) — so nothing
-## is ever natively hot and one-hop propagation never fires: all 4 sub-tiles
-## along the reach keep their trigger, restoring full coverage of a reach
-## that would have been dropped WHOLESALE by Task 7's own whole-tile-only
-## gate.
-func test_sub_tile_reconciliation_keeps_a_legal_sloped_reach() -> void:
+## that have nothing to do with what this test checks — kept unchanged from
+## the original fixture design.
+func test_legal_sloped_reach_keeps_its_trigger() -> void:
 	var region := HeightfieldRegion.new({}, {})
 	var m1: int = WaterField.FILL_M + 1
 	var levels := PackedFloat32Array()
@@ -991,17 +1017,13 @@ func test_sub_tile_reconciliation_keeps_a_legal_sloped_reach() -> void:
 	var top_level := 10.0
 	var grade := 0.2
 	assert_true(grade > 0.083 and grade <= 0.333,
-		"sanity: this fixture's own grade sits in the controller's own (0.083,0.333] legal band")
+		"sanity: this fixture's own grade sits in the historical (0.083,0.333] legal band")
 	for j in m1:
 		for i in m1:
 			levels[j * m1 + i] = top_level - grade * float(j) * WaterField.FILL_STEP
 	var fill_base := Vector2(0.0, 0.0)
 	var ctx: Dictionary = {"ponds": [], "rivers": [], "buckets": {}, "region": region,
 		"fill_base": fill_base, "fill": {"levels": levels}}
-	# Sanity: the hand-built lattice really is smooth and hits the target
-	# whole-tile spread with no per-sub-tile artifact above the gate.
-	assert_almost_eq(WaterSkin._tile_level_spread(ctx_st(ctx, region), Vector2i(0, 0)), 4.8, 0.01,
-		"sanity: whole-tile spread over the fixture's own cell matches grade*TILE")
 
 	var verts := PackedVector3Array()
 	for zz in [1.0, 4.0, 7.0, 10.0, 13.0, 16.0, 19.0, 22.0]:
@@ -1009,13 +1031,12 @@ func test_sub_tile_reconciliation_keeps_a_legal_sloped_reach() -> void:
 			verts.append(Vector3(xx, WaterField.level_at(ctx, Vector2(xx, zz)), zz))
 	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx}
 	var triggers: Array = WaterSkin._triggers(st)
-	print("MEAS test_sub_tile_reconciliation_keeps_a_legal_sloped_reach: %d sub-tile boxes emitted (expect 4, one per 6m z-band)" % triggers.size())
-	assert_eq(triggers.size(), 4, "the legal sloped reach keeps ALL 4 of its z-sub-tiles — none natively hot, no propagation")
+	print("MEAS test_legal_sloped_reach_keeps_its_trigger: %d trigger(s) emitted (expect 1 — whole-tile coverage, no sub-tile splitting left to reconcile)" % triggers.size())
+	assert_eq(triggers.size(), 1, "the legal sloped reach gets exactly one whole-tile trigger — grade 0.2 is nowhere near STEEP_UNSWIMMABLE(0.45)")
 	# 60+ points: walk the whole reach densely and confirm every point along
-	# it is covered by SOME emitted trigger rect (controller addition 2's own
-	# "must keep swim" — expressed here as trigger coverage, the precondition
-	# the parity test's own sloped-reach class re-checks end to end against
-	# the sampler+character-math path).
+	# it is covered by the trigger (trivial once triggers.size()==1 spans the
+	# fixture's own tile, but kept as an explicit end-to-end regression pin,
+	# same density as the parity test's own sloped-reach class).
 	var checked := 0
 	var offenders: Array = []
 	for i in range(0, 61):
@@ -1029,12 +1050,6 @@ func test_sub_tile_reconciliation_keeps_a_legal_sloped_reach() -> void:
 				break
 		if not covered and offenders.size() < 10:
 			offenders.append(str(p))
-	print("MEAS test_sub_tile_reconciliation_keeps_a_legal_sloped_reach: %d points walked along the reach, %d offenders" % [checked, offenders.size()])
+	print("MEAS test_legal_sloped_reach_keeps_its_trigger: %d points walked along the reach, %d offenders" % [checked, offenders.size()])
 	assert_eq(checked, 61, "61 points walked (>=60 per the parity test's own per-class density)")
-	assert_true(offenders.is_empty(), "every point along the legal sloped reach is covered by some trigger: %s" % str(offenders))
-
-
-## Minimal st wrapper for calling WaterSkin._tile_level_spread directly from
-## a hand-built ctx (that function only reads st.ctx/st.region).
-func ctx_st(ctx: Dictionary, region) -> Dictionary:
-	return {"ctx": ctx, "region": region}
+	assert_true(offenders.is_empty(), "every point along the legal sloped reach is covered by the trigger: %s" % str(offenders))
