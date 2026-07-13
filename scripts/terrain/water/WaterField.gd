@@ -17,7 +17,7 @@ const TILE := 24.0
 const FALL_DROP_MIN := 4.0    # the only "this is a fall face" threshold in the system — now purely a TERRAIN classification (steep_spans), not a level-cut trigger
 const SURFACE_RIDE := 2.2     # river surface height above the traced bed
 const CLAIM_FEATHER := 8.0    # metres past the channel half-width a reach claims (channel membership + steep-span geometry only)
-const EPS := 0.05
+const EPS := 0.05            # fill wetness threshold: a cell settles wet only when level > ground + EPS. COUPLED to DESCENT_CLAMP (0.10): the descent floor MUST strictly exceed EPS or the fill dries the band the envelope shaped to keep wet — see DESCENT_CLAMP's docstring before raising this.
 const FILM := 0.3             # minimum clearance the descending level keeps above the rendered ground when hugging a steep face (profile()'s "downstream_target" floor)
 # PERF (this task's report): the brief's own "~3m steps" for the descent-
 # shaping terrain walk measured a site-chunk ctx() COLD median (profile
