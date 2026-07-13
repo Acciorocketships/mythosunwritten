@@ -474,3 +474,127 @@ func test_curve_levels_match_field() -> void:
 	# <Array> (GDScript's splat semantics) breaks whenever the array isn't
 	# exactly 1 element, including the empty (success-path) case.
 	assert_true(max_err < 0.05, "every curve point's baked level matches field truth within 0.05: %s" % str(offenders))
+
+
+## test_saddle_cells_connect_the_wedge — r3-task-15 (.superpowers/sdd/
+## r3-task-15-brief.md): the owner's R5-B screenshot annotated a missing
+## water corner where two land corners meet diagonally (player world
+## (129.6,4.0,-1166.1), crosshair (129.7,4.2,-1165.8) — "corners missing,
+## fix this issue"). Scanning the presence grid over chunk (0,-7)'s own
+## grown rect (mirroring _presence_segments' exact STEP/MARGIN/origin-snap
+## math — see this task's report for the scan) found exactly one genuine
+## diagonal saddle cell within a few metres of that site (3.71m from the F3
+## player-world xz): grid cell world corners (129,-1164)-(132,-1164)-
+## (132,-1161)-(129,-1161), wf = [dry,wet,dry,wet] — corners 0 and 2 (the
+## (129,-1164)/(132,-1161) diagonal) are the OWNER'S "two land corners";
+## corners 1 and 3 (the (132,-1164)/(129,-1161) diagonal) are wet — centre
+## (130.5,-1162.5) is WET (the "joined" case).
+##
+## At HEAD, _presence_segments' saddle branch only special-cases
+## centre_wet==false (split: isolate each WET corner with its own stroke).
+## centre_wet==true falls through to the generic "exactly two edges change
+## sign" loop, which is never true for a genuine saddle (all four edges
+## change sign, by definition of two diagonally-opposite pairs alternating
+## wet/dry) — pts.size() ends up 4, the `if pts.size() == 2` guard silently
+## drops the whole cell, and it contributes ZERO segments. Directly probed
+## (this task): the two neighbour strokes that SHOULD meet here each dangle
+## at a degree-1 dead end instead of reaching the shared hub point
+## (132.0,-1164.0) — corner1, already wired to the south/east neighbour
+## strokes:
+##   corner0's notch: WEST neighbour stroke dead-ends at (129.0,-1163.625)
+##   corner2's notch: NORTH neighbour stroke dead-ends at (131.625,-1161.0)
+## An isolate-the-DRY-corner branch (mirroring the existing isolate-the-WET-
+## corner split branch with the corner selection flipped) connects both
+## dangling points to the hub, bridging the wedge across the diagonal.
+## curves() confirms this is a REAL, visible gap at HEAD: two separate open-
+## ended polylines each dead-end within 2m of this cell's centre instead of
+## joining into one continuous shore line through it.
+func test_saddle_cells_connect_the_wedge() -> void:
+	var chunk := Vector2i(0, -7)
+	var ctx: Dictionary = _ctx(SEED, chunk)
+	var rect: Rect2 = _rect(chunk)
+	var grown: Rect2 = rect.grow(WaterContour.MARGIN)
+
+	# --- pin the fixture: sanity-assert this cell is STILL a genuine
+	# diagonal saddle with a wet centre before trusting the connectivity
+	# assertions below — fails loudly (rather than silently passing or
+	# misreporting) if terrain generation ever shifts this cell.
+	var c0 := Vector2(129.0, -1164.0)   # dry — the owner's "land corner" 1
+	var c1 := Vector2(132.0, -1164.0)   # wet
+	var c2 := Vector2(132.0, -1161.0)   # dry — the owner's "land corner" 2
+	var c3 := Vector2(129.0, -1161.0)   # wet
+	var centre := Vector2(130.5, -1162.5)
+	var wf: Array = [WaterContour._is_wet(ctx, c0), WaterContour._is_wet(ctx, c1),
+		WaterContour._is_wet(ctx, c2), WaterContour._is_wet(ctx, c3)]
+	var centre_wet: bool = WaterContour._is_wet(ctx, centre)
+	print("MEAS test_saddle_cells_connect_the_wedge: cell corners wf=%s centre_wet=%s" % [wf, centre_wet])
+	var is_pinned_saddle: bool = wf[0] == false and wf[1] == true and wf[2] == false and wf[3] == true
+	assert_true(is_pinned_saddle, "fixture cell is still the diagonal saddle wf=[dry,wet,dry,wet] this test was pinned against (got %s)" % [wf])
+	assert_true(centre_wet, "fixture cell's centre is still wet (the 'joined' saddle case)")
+	if not is_pinned_saddle or not centre_wet:
+		return   # fixture drifted — the asserts above already failed loudly; nothing more to measure
+
+	# --- the actual bug: do the two dry-corner notches reach the shared hub? ---
+	var segs: Array = WaterContour._presence_segments(ctx, grown)
+	var wedge_a := Vector2(129.0, -1163.625)   # corner0's notch: west neighbour's dangling end
+	var wedge_b := Vector2(131.625, -1161.0)   # corner2's notch: north neighbour's dangling end
+	var hub := Vector2(132.0, -1164.0)         # == c1, already wired to the south/east neighbour strokes
+
+	var touch_eps := 0.01
+	var deg_a := 0
+	var deg_b := 0
+	var bridge_a_hub := false
+	var bridge_b_hub := false
+	for seg: Array in segs:
+		var p0: Vector2 = seg[0]
+		var p1: Vector2 = seg[1]
+		var touches_a: bool = p0.distance_to(wedge_a) < touch_eps or p1.distance_to(wedge_a) < touch_eps
+		var touches_b: bool = p0.distance_to(wedge_b) < touch_eps or p1.distance_to(wedge_b) < touch_eps
+		var touches_hub: bool = p0.distance_to(hub) < touch_eps or p1.distance_to(hub) < touch_eps
+		if touches_a:
+			deg_a += 1
+		if touches_b:
+			deg_b += 1
+		if touches_a and touches_hub:
+			bridge_a_hub = true
+		if touches_b and touches_hub:
+			bridge_b_hub = true
+	print("MEAS test_saddle_cells_connect_the_wedge: deg(wedge_a)=%d deg(wedge_b)=%d bridge_a_hub=%s bridge_b_hub=%s (segs=%d)" % [
+		deg_a, deg_b, bridge_a_hub, bridge_b_hub, segs.size()])
+	assert_true(bridge_a_hub, "corner0's notch (%s) is bridged to the shared hub (%s) — the water wedge joins across the diagonal instead of leaving corner0's approach a dead end" % [wedge_a, hub])
+	assert_true(bridge_b_hub, "corner2's notch (%s) is bridged to the shared hub (%s) — the water wedge joins across the diagonal instead of leaving corner2's approach a dead end" % [wedge_b, hub])
+
+	# --- independent higher-level witness: curves() should no longer show a
+	# dangling open end AT EITHER WEDGE POINT specifically (both fragments
+	# the raw-segment check above verified are now bridged get absorbed as
+	# INTERIOR points of a longer chain instead of terminating there). This
+	# deliberately does NOT forbid an open end at the HUB itself
+	# (132,-1164): once bridged, the hub legitimately becomes a degree-4
+	# junction (its pre-existing south/east strokes plus the two new bridge
+	# strokes), and _chain_segments' walk starts a fresh polyline down each
+	# branch from a degree!=2 vertex — that is correct marching-squares
+	# topology (four strokes meeting at one exact shared point), not a gap:
+	# every fragment ending there ends at the SAME coordinate, so Chaikin's
+	# own endpoint-preservation (see _chaikin's docstring) keeps them
+	# meeting exactly after smoothing too — measured directly (this task):
+	# post-fix, curves() reports its nearby open ends AT the hub (dist
+	# 2.12m from centre) rather than at either wedge point, confirming the
+	# wedges themselves are no longer where anything dangles.
+	var curves: Array = WaterContour.curves(ctx, rect)
+	var dangling_near_wedge := 0
+	var dangling_reports: Array = []
+	for c: Dictionary in curves:
+		if c.closed:
+			continue
+		var pts: PackedVector2Array = c.pts
+		if pts.size() == 0:
+			continue
+		for idx in [0, pts.size() - 1]:
+			var d_a: float = pts[idx].distance_to(wedge_a)
+			var d_b: float = pts[idx].distance_to(wedge_b)
+			if d_a < 2.0 or d_b < 2.0:
+				dangling_near_wedge += 1
+				dangling_reports.append("%s (d_a=%.2f d_b=%.2f)" % [pts[idx], d_a, d_b])
+	print("MEAS test_saddle_cells_connect_the_wedge: open curve ends within 2.0m of either wedge point = %d %s" % [
+		dangling_near_wedge, str(dangling_reports)])
+	assert_eq(dangling_near_wedge, 0, "no open (dangling) curve end survives near either wedge point once the diagonal is bridged")

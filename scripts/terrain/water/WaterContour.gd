@@ -91,12 +91,27 @@ static func curves(ctx: Dictionary, rect: Rect2) -> Array:
 ## One "segment" is a single waterline stroke through one grid cell (its two
 ## endpoints are refined edge-crossings, see _refine_crossing), exactly
 ## mirroring the old mesher's own per-cell corner/edge classification but
-## emitting a boundary STROKE instead of a triangulated wet polygon — the
-## saddle tie-break (opposite-corner wet, centre sample decides
-## joined/split) is copied verbatim from that function for the same reason
-## documented there: it is the one place a marching-squares grid is
-## genuinely ambiguous, and the two consumers must resolve it identically or
-## a saddle cell would mesh one shape while the contour walks another.
+## emitting a boundary STROKE instead of a triangulated wet polygon.
+##
+## SADDLE cells (marching-squares case 5/10: two diagonally-opposite corners
+## wet, the other two dry — wet_n==2 and wf[0]==wf[2]) are the one place this
+## grid is genuinely ambiguous: the four edge crossings could pair up either
+## way. Resolved by the standard asymptotic-decider / centre-sample
+## disambiguation (r3-task-15, .superpowers/sdd/r3-task-15-brief.md): sample
+## the field at the cell CENTRE (world-grid-aligned, so neighbouring chunks
+## agree on it too — same determinism argument as the corner grid itself,
+## see the origin-snap comment below). Centre DRY: the two wet corners are
+## NOT connected — isolate each as its own short stroke (a separate wet
+## island poking into the cell). Centre WET: the two wet corners ARE
+## connected — the water wedge joins across the diagonal through the centre
+## — so instead the two DRY corners are isolated, one short stroke each,
+## leaving the rest of the cell (both wet corners plus the centre) as one
+## continuous region. A prior version of this function only special-cased
+## the centre-dry split and let centre-wet fall through to the generic
+## "exactly two edges change sign" path below — which is never true for a
+## genuine saddle (all four edges change sign, by construction) — so that
+## cell silently contributed NO segments at all: the owner's missing
+## diagonal corner (r3-task-15-report.md).
 static func _presence_segments(ctx: Dictionary, grown: Rect2) -> Array:
 	var nx: int = int(ceil(grown.size.x / STEP))
 	var nz: int = int(ceil(grown.size.y / STEP))
@@ -131,24 +146,26 @@ static func _presence_segments(ctx: Dictionary, grown: Rect2) -> Array:
 			if wet_n == 0 or wet_n == 4:
 				continue   # fully dry or fully wet: no waterline crosses this cell
 			var saddle: bool = wet_n == 2 and wf[0] == wf[2]
-			var centre_wet := false
 			if saddle:
 				var cp: Vector2 = origin + Vector2(float(i) + 0.5, float(j) + 0.5) * STEP
-				centre_wet = _is_wet(ctx, cp)
-			if saddle and not centre_wet:
-				# Split saddle: two disjoint crossings, one per wet corner —
-				# each wet corner contributes its own short stroke between
-				# its two adjacent edges (mirrors _mesh_cell's two
-				# corner-triangle branch).
+				var centre_wet: bool = _is_wet(ctx, cp)
+				# Isolate whichever pair of diagonal corners the centre sample
+				# disagrees with: centre dry -> isolate the two WET corners
+				# (split, not connected); centre wet -> isolate the two DRY
+				# corners (joined, the wet diagonal band stays one region).
+				# Exactly two of the four corners satisfy wf[k] != centre_wet
+				# by construction (two wet, two dry, one fixed centre value),
+				# so this always emits exactly two strokes, same as the split
+				# branch it generalizes.
 				for k in 4:
-					if not wf[k]:
+					if wf[k] == centre_wet:
 						continue
 					var a: Vector2 = _refine_crossing(ctx, origin, corners[k], corners[(k + 3) % 4])
 					var b: Vector2 = _refine_crossing(ctx, origin, corners[k], corners[(k + 1) % 4])
 					segs.append([a, b])
 				continue
-			# Ordinary (or joined-saddle) cell: exactly two edges change sign;
-			# the crossings on those two edges are the segment endpoints.
+			# Ordinary (non-saddle) cell: exactly two edges change sign; the
+			# crossings on those two edges are the segment endpoints.
 			var pts: Array = []
 			for k in 4:
 				var a: Vector2i = corners[k]
