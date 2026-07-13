@@ -2,8 +2,10 @@
 # (.superpowers/sdd/h-task-0-brief.md). Prints four evidence sections
 # (A profile-vs-terrain, B claimant dump, C lip-coverage, D volume
 # containment) against the pinned seed at the owner's exact issue sites.
-# This tool DOCUMENTS current WaterField/WaterMesher/WaterSurfaceBuilder
-# behaviour — it must not "fix" anything it observes.
+# This tool DOCUMENTS WaterField/WaterSurfaceBuilder behaviour as it stood
+# at Phase 0 (run 2) — probe C is a retired stub (WaterMesher itself is
+# gone, r3 Task 7; see its own comment below) — it must not "fix" anything
+# it observes.
 # Run: Godot --headless --path . -s tests/tools/hydro_probe.gd
 extends SceneTree
 

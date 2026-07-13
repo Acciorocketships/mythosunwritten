@@ -1310,9 +1310,9 @@ static func flow_at(c: Dictionary, p: Vector2) -> Vector2:
 
 ## Phase 2a: the old "prof.cuts.has(si) -> 0.0" exemption is gone — there is
 ## no cut left to probe "across" (a gradient over a real fall face is now a
-## perfectly well-defined, and meaningful, large number: exactly the signal
-## a future steep-look shader keys foam/scroll off, per the plan's Phase 2
-## shader item). grade_at is unbounded on purpose; r3 Task 7's own caller
+## perfectly well-defined, and meaningful, large number). No foam/scroll
+## shader consumer was ever built (r3 Task 13 rejected all albedo whitening
+## outright); grade_at is unbounded on purpose; r3 Task 7's own caller
 ## (WaterSkin._triggers' STEEP_UNSWIMMABLE gate) reads it raw as a magnitude
 ## threshold, not a display value — any FUTURE caller that needs a
 ## display-safe range is responsible for clamping it itself.

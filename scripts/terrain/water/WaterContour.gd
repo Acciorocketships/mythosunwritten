@@ -396,9 +396,10 @@ static func _resample(pts: PackedVector2Array, closed: bool, spacing: float) -> 
 ## Even-arc resample of a CLOSED ring (points are a cycle: the last connects
 ## back to the first). Returns `cnt` points, all consecutive gaps equal to
 ## `circ/cnt` (~spacing), with NO remainder segment. cnt >= 3 so the loop is
-## always a valid polygon; a loop whose circumference is under 3*spacing keeps
-## 3 points (its gaps then fall below spacing, but such a sub-~4.5m puddle is
-## already at the resolution floor and none occurs on the pinned seeds).
+## always a valid polygon; the floor pins cnt at 3 for any small loop, so eff
+## only risks dropping under the 1.0m resample floor when circumference itself
+## is under 3.0m — a puddle that tiny is already at the resolution floor and
+## none occurs on the pinned seeds.
 static func _resample_closed(pts: PackedVector2Array, spacing: float) -> PackedVector2Array:
 	var m: int = pts.size()
 	if m < 3:

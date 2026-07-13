@@ -264,8 +264,9 @@ static func shoot(player: Vector3, crosshair: Vector3, path: String) -> void:
 ## Motion-pair capture: two frames dt apart from the SAME fixed camera pose
 ## (solved once, per solve_cam — the camera itself never moves between the
 ## two shots), with real wall-clock time allowed to pass between them via a
-## SceneTree timer. Water motion (travelling swells, flow-scrolled foam/film)
-## reads directly off the pixel delta between path_a and path_b, isolated
+## SceneTree timer. Water motion (travelling pond swells, fragment-side
+## refraction-distortion advection — r3 Task 13; no foam/film exists any
+## more) reads directly off the pixel delta between path_a and path_b, isolated
 ## from any camera-motion confound a re-solved or drifting pose would add.
 ## static func CAN await in Godot 4.5 (confirmed) — the await itself suspends
 ## on the SceneTree timer's own timeout signal, same mechanism a Node's

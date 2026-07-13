@@ -293,13 +293,14 @@ static func _border_pts(curves: Array, axis: int, coord: float) -> Array:
 ## independently-phased resample of a differently-truncated polyline). This
 ## version scans every adjacent pair inside two VERIFIED wet clusters (all
 ## cardinal borders where water actually crosses), covering both pinned
-## seeds, accumulating 13 crossings (measured; asserted >= 6) of which 12
-## are MID-ARC (>= 10m — measured range 45-330m — of curve inside BOTH
-## chunks; asserted >= 6): crossings that deep into both sides' curves
-## cannot be explained by endpoint/phase coincidence. Probe evidence
-## (r3-task-3-report.md, Hardening section): all 13 measured distances are
-## 0.000000000 at 9 printed decimals — genuinely bit-equal, not merely
-## inside 1e-4.
+## seeds, accumulating border crossings past the assert floor (total >= 6),
+## most of them MID-ARC (>= 10m — measured range 45-330m — of curve inside
+## BOTH chunks; also gated at >= 6 — see mid_arc_ct below, not a frozen
+## count): crossings that deep into both sides' curves cannot be explained
+## by endpoint/phase coincidence. Probe evidence (r3-task-3-report.md,
+## Hardening section, 13 crossings/12 mid-arc at the time): all measured
+## distances were 0.000000000 at 9 printed decimals — genuinely bit-equal,
+## not merely inside 1e-4.
 ##
 ## Residual limitation, stated honestly: every real crossing on both pinned
 ## seeds sits on a locally STRAIGHT waterline reach (max nearby turn 0.0deg
