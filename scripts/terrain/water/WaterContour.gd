@@ -343,14 +343,22 @@ static func _resample(pts: PackedVector2Array, closed: bool, spacing: float) -> 
 	var n: int = pts.size()
 	if n < 2:
 		return pts
-	var ring: PackedVector2Array = pts.duplicate()
+	# CLOSED curves resample by EVEN DIVISION of the circumference — a fixed
+	# `spacing` walk leaves the wrap-back segment as an arbitrary remainder in
+	# (0, spacing), which fails "every segment in [1.0, 2.0]m" whenever the
+	# circumference is not a clean multiple of spacing (e.g. the 117m pond
+	# bowl's own 0.185m leftover, tipped below 1.0m by the descent-level
+	# change). Dividing the loop into `cnt` equal arcs of `eff = circ/cnt`
+	# (eff ~ spacing) removes the remainder entirely and keeps determinism —
+	# same circumference -> same cnt/eff/points on both sides of a chunk
+	# border, so the weld still holds.
 	if closed:
-		ring.append(pts[0])
-	var out := PackedVector2Array([ring[0]])
+		return _resample_closed(pts, spacing)
+	var out := PackedVector2Array([pts[0]])
 	var carry := 0.0
-	for i in ring.size() - 1:
-		var a: Vector2 = ring[i]
-		var b: Vector2 = ring[i + 1]
+	for i in n - 1:
+		var a: Vector2 = pts[i]
+		var b: Vector2 = pts[i + 1]
 		var seg_len: float = a.distance_to(b)
 		if seg_len < 0.000001:
 			continue
@@ -360,20 +368,45 @@ static func _resample(pts: PackedVector2Array, closed: bool, spacing: float) -> 
 			out.append(a + d * t)
 			t += spacing
 		carry = seg_len - (t - spacing)
-	if closed:
-		# The wrap-around duplicate of ring[0] was only a walking aid; the
-		# resampled ring already implicitly closes back to out[0] (the
-		# consumer treats a closed poly's point array as a cycle, no
-		# explicit repeat of the first point at the end — same convention
-		# _chain_segments' own closed output already uses).
-		if out.size() > 1 and out[0].distance_to(out[-1]) < 0.001:
-			out.remove_at(out.size() - 1)
-	else:
-		# Preserve the exact original open endpoint (the resample's own
-		# drip stops just short of it — see t < seg_len above) so an open
-		# polyline's tip never drifts before clipping runs.
-		if out[-1].distance_to(ring[-1]) > 0.001:
-			out.append(ring[-1])
+	# Preserve the exact original open endpoint (the resample's own drip stops
+	# just short of it — see t < seg_len above) so an open polyline's tip never
+	# drifts before clipping runs.
+	if out[-1].distance_to(pts[n - 1]) > 0.001:
+		out.append(pts[n - 1])
+	return out
+
+
+## Even-arc resample of a CLOSED ring (points are a cycle: the last connects
+## back to the first). Returns `cnt` points, all consecutive gaps equal to
+## `circ/cnt` (~spacing), with NO remainder segment. cnt >= 3 so the loop is
+## always a valid polygon; a loop whose circumference is under 3*spacing keeps
+## 3 points (its gaps then fall below spacing, but such a sub-~4.5m puddle is
+## already at the resolution floor and none occurs on the pinned seeds).
+static func _resample_closed(pts: PackedVector2Array, spacing: float) -> PackedVector2Array:
+	var m: int = pts.size()
+	if m < 3:
+		return pts
+	var cum := PackedFloat32Array()
+	cum.resize(m)
+	var circ := 0.0
+	for i in m:
+		cum[i] = circ
+		circ += pts[i].distance_to(pts[(i + 1) % m])
+	if circ < 0.000001:
+		return pts
+	var cnt: int = maxi(3, roundi(circ / spacing))
+	var eff: float = circ / float(cnt)
+	var out := PackedVector2Array()
+	var seg := 0
+	for k in cnt:
+		var target: float = eff * float(k)
+		while seg + 1 < m and cum[seg + 1] <= target:
+			seg += 1
+		var a: Vector2 = pts[seg]
+		var b: Vector2 = pts[(seg + 1) % m]
+		var seg_len: float = a.distance_to(b)
+		var d: Vector2 = (b - a) / seg_len if seg_len > 0.000001 else Vector2.ZERO
+		out.append(a + d * (target - cum[seg]))
 	return out
 
 
