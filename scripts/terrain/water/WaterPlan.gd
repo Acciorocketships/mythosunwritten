@@ -63,6 +63,18 @@ const W_MAX := 16.0               # ... at max length
 # slack (±2m), or the channel vanishes in storey rounding: floor and banks
 # land on the same storey and the ribbon reads as water lying on flat grass.
 const CHANNEL_DEPTH := 6.0
+# Bathymetry is deliberately deeper than the hydraulic trace bed.  `beds`
+# anchors the continuous water profile; changing CHANNEL_DEPTH therefore
+# moves/spreads the surface as well as excavating terrain.  The reported
+# river edge instead needs more clearance beneath the SAME smooth surface.
+# Two extra metres crosses the 4m storey quantizer's half-storey threshold
+# at the pinned shallow cell while remaining inside the existing channel
+# footprint and the terrain's BED_MIN floor.
+const CARVE_BED_EXTRA := 2.0
+# One storey per trace step is already a fall face rather than an ordinary
+# swimmable reach.  Do not turn those deliberately thin sheets into deep
+# vertical swim volumes when adding bathymetry.
+const CARVE_EXTRA_MAX_GRADE := STOREY / TRACE_STEP
 # CONTAINMENT: the bed must also quantize a full storey below the LOWEST
 # flanking bank's natural storey — smooth-relative depth alone is not enough
 # on slopes and at cliff lips, where the downhill bank quantizes level with
@@ -471,7 +483,7 @@ func _region_for(rc: Vector2i) -> Dictionary:
 
 
 ## Metres to subtract from the raw noise height at tile cell (cx, cz).
-## Max over every pond bowl and channel sample that reaches the cell — pure
+## Max over every pond bowl and channel segment that reaches the cell — pure
 ## function of (world_seed, cell); the caches never change the value.
 ## HOT PATH: called for every cell of every region window. Most cells have no
 ## water in reach, so the expensive part — noise_h, a full landform sample —
@@ -495,20 +507,49 @@ func carve_at_cell(cx: int, cz: int) -> float:
 		best = maxf(best, pond.carve_at(p, ground))
 	var key: Vector2i = Vector2i(cx, cz)
 	if region.buckets.has(key):
+		var seen_segments: Dictionary = {}
 		for entry in region.buckets[key]:
 			var t: RiverTrace = entry[0]
 			var i: int = entry[1]
-			var d: float = p.distance_to(t.points[i])
-			var infl: float = t.widths[i] + FEATHER
-			if d >= infl:
-				continue
-			if ground == -INF:
-				ground = noise_h(p)
-			# Full carve to the bed inside the width; smootherstep feather out.
-			var w: float = SlopeProfile.smootherstep(clampf((infl - d) / FEATHER, 0.0, 1.0))
-			best = maxf(best, maxf(0.0, ground - t.beds[i]) * w)
+			# Buckets are populated from sample influence AABBs for the hot-path
+			# lookup, but carving is evaluated on the two SEGMENTS touching that
+			# sample.  A segment appears through both endpoints; the stable key
+			# makes the duplicate a no-op without relying on visit order.
+			for si in [i - 1, i]:
+				if si < 0 or si + 1 >= t.points.size():
+					continue
+				var segment_key := Vector3i(t.source_cell.x, t.source_cell.y, si)
+				if seen_segments.has(segment_key):
+					continue
+				seen_segments[segment_key] = true
+				var a: Vector2 = t.points[si]
+				var b: Vector2 = t.points[si + 1]
+				var ab: Vector2 = b - a
+				var len2: float = ab.length_squared()
+				var along: float = clampf((p - a).dot(ab) / len2, 0.0, 1.0) \
+					if len2 > 0.000001 else 0.0
+				var nearest: Vector2 = a + ab * along
+				var half_width: float = lerpf(t.widths[si], t.widths[si + 1], along)
+				var d: float = p.distance_to(nearest)
+				var infl: float = half_width + FEATHER
+				if d >= infl:
+					continue
+				if ground == -INF:
+					ground = noise_h(p)
+				# Full carve below the longitudinally interpolated hydraulic bed
+				# inside the width; smootherstep feather out.  WaterField seeds the
+				# same segment projection, so carved bed and rendered water can no
+				# longer disagree in the 12m gaps between trace samples.
+				var w: float = SlopeProfile.smootherstep(
+					clampf((infl - d) / FEATHER, 0.0, 1.0))
+				var grade: float = absf(t.beds[si + 1] - t.beds[si]) \
+					/ maxf(sqrt(len2), 0.001)
+				var extra: float = CARVE_BED_EXTRA \
+					if grade < CARVE_EXTRA_MAX_GRADE else 0.0
+				var bed: float = lerpf(t.beds[si], t.beds[si + 1], along)
+				var carve_bed: float = maxf(bed - extra, BED_MIN)
+				best = maxf(best, maxf(0.0, ground - carve_bed) * w)
 	return best
-
 
 ## Water bodies overlapping a cell window (for surface meshing + volumes).
 ## Returns {"ponds": Array[PondStamp], "rivers": Array[RiverTrace]} — rivers

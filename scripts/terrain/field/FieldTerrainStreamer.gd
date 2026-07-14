@@ -1,10 +1,10 @@
 # scripts/terrain/field/FieldTerrainStreamer.gd
 # Slim per-chunk streaming driver: builds field chunks within a radius of the
-# player on ONE background thread (the whole pipeline is scene-free RefCounted,
-# so build_chunk runs off-thread as-is and returns a detached Node3D), then
-# integrates finished chunks on the main thread, budgeted per frame. Evicts
-# beyond a keep radius. The player's own chunk is still built synchronously
-# when missing, so the player can never fall through unbuilt space.
+# player on ONE background thread. The worker returns CPU-side mesh arrays,
+# collision faces, transforms, and sampler data only; the main thread commits
+# those payloads into render/physics resources and nodes, budgeted per frame. Evicts
+# beyond a keep radius. The player is held whenever their own chunk is missing,
+# so they can never fall through unbuilt space while its payload is computed.
 class_name FieldTerrainStreamer
 extends Node3D
 
@@ -41,7 +41,7 @@ var _thread := Thread.new()
 var _sem := Semaphore.new()
 var _mutex := Mutex.new()          # guards _jobs, _done, _exit
 var _jobs: Array = []              # Vector2i, nearest-first at enqueue time
-var _done: Array = []              # [Vector2i, Node3D] finished builds
+var _done: Array = []              # [Vector2i, terrain data, water data, FX data]
 var _exit := false
 
 static func chunk_of(pos: Vector3) -> Vector2i:
@@ -63,24 +63,18 @@ func _ready() -> void:
 	_plan.set_water_plan(_water)
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
-	# Warm every shared STATIC on the main thread before the worker starts —
-	# after this point the statics are read-only, which is what makes the
-	# no-locks pipeline safe. `load(path)` alone did NOT fill the mesher's
-	# static _foliage_piece_cache: the worker and the main thread then raced
-	# their first `_foliage_piece_cache[path] = ...` insert — a String-keyed
-	# Dictionary corrupted across threads (SIGSEGV in
-	# StringLikeVariantComparator).
+	# Warm render resources and caches on the main thread before the worker
+	# starts. The worker never touches them; this also keeps the first payload
+	# commit from paying a visible resource-load hitch.
 	CliffDressing._ensure_loaded()
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
-	_mesher._ensure_skirt_style()
+	_mesher.prepare_resources()
 	for tag in TerrainChunkMesher.FOLIAGE_SCENES:
 		for path: String in TerrainChunkMesher.FOLIAGE_SCENES[tag]:
 			TerrainChunkMesher._foliage_pieces(path)
 	# Warm the biome tint materials + profiles on the main thread too, so the
 	# worker only ever READS them (same no-locks confinement as above).
-	_mesher._ground_tinted_mat()
-	_mesher._foliage_material()
 	BiomeRegistry.profile(&"meadow")
 	# The spawn chunk is NOT built synchronously: the first build pays the
 	# whole cold water-trace cache (~10s) and blocking _ready held a blank
@@ -112,16 +106,14 @@ func _worker() -> void:
 		if c == Vector2i.MAX:
 			continue
 		var region = _mesher.chunk_region(_plan, c)
-		var node := _mesher.build_chunk(_plan, c, region)
-		var wnode := _water_builder.build_chunk(_water, c, region)
-		if wnode != null:
-			node.add_child(wnode)
+		var terrain_data := _mesher.compute_chunk(_plan, c, region)
+		var water_data := _water_builder.compute_chunk(_water, c, region)
 		# FX *data* is computed here (needs the worker-confined _plan region for
 		# ground heights), but the FX *nodes* (particles/fog/lights touch the
 		# renderer) are built on the main thread at integration — see _build_fx.
 		var fx_data := _biome_fx_data(c, region)
 		_mutex.lock()
-		_done.append([c, node, fx_data])
+		_done.append([c, terrain_data, water_data, fx_data])
 		_mutex.unlock()
 
 # Worker-thread: pure data for the chunk's biome FX (dominant profile + ground-
@@ -199,11 +191,16 @@ func _process(_delta: float) -> void:
 		var c: Vector2i = pair[0]
 		_queued.erase(c)
 		if _built.has(c) or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
-			pair[1].free()   # duplicate or stale (player moved on) — discard
+			# Duplicate or stale (player moved on): payloads own no nodes or
+			# server resources, so dropping the last references is enough.
 			continue
-		terrain_parent.add_child(pair[1])
-		_build_fx(pair[1], pair[2])   # main thread: particles/fog/lights
-		_built[c] = pair[1]
+		var node: Node3D = _mesher.commit_chunk(pair[1])
+		var water_node: Node3D = _water_builder.commit_chunk(pair[2])
+		if water_node != null:
+			node.add_child(water_node)
+		terrain_parent.add_child(node)
+		_build_fx(node, pair[3])   # main thread: particles/fog/lights
+		_built[c] = node
 		integrated += 1
 	# Queue missing chunks nearest-first, so terrain grows outward from the player.
 	var want: Array = []
@@ -237,10 +234,6 @@ func _exit_tree() -> void:
 	_mutex.unlock()
 	_sem.post()
 	_thread.wait_to_finish()
-	for pair in _done:
-		# is_instance_valid guards the "freed exactly once" invariant: these nodes
-		# never entered the tree, so freeing them here is correct — the guard just
-		# keeps it robust if a future edit ever lets one also reach _built.
-		if is_instance_valid(pair[1]):
-			pair[1].free()
+	# Pending entries are CPU-side payloads only; releasing the arrays and
+	# RefCounted samplers is sufficient and safe on the main thread.
 	_done.clear()

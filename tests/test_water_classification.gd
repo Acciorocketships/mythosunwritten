@@ -312,23 +312,12 @@ func test_steep_chute() -> void:
 	_assert_parity("test_steep_chute", skin, ctx, region, candidates)
 
 
-## --- Permanent I4 regression pin (review fix, r3 Task 9) ---
-## The motivating live-gate case for BOTH of this task's classification
-## changes, pinned deterministically at the owner's exact coordinates
-## (36.4, -1108.7): the FIELD's static depth there sits in the wading band
-## (0.05, 0.8] — measured 0.7976, the knife-edge the controller's own
-## evidence cited at 0.7685-0.80 — so character-math must read WADE:
-##  - NOT SWIM: static gating's whole point (controller addition 1) — under
-##    the old swell-in-the-gate math any crest could push past 0.8 here and
-##    hysteresis latched swim on land's edge. Static depth has no swell term
-##    and no time dependence, so this assertion is fully deterministic.
-##  - NOT DRY: the first cut of the sub-tile reconciliation reused the
-##    whole-tile 2.0 spread threshold as the native-hot gate and suppressed
-##    I4's own sub-tile (its spread is exactly 2.7 = STEEP_UNSWIMMABLE * 6m
-##    — a legitimate transition, not a cascade step), regressing this exact
-##    spot live to false/false; see WaterSkin.TRIGGER_SUB_TILE_SPREAD_MAX's
-##    own docstring. This pin fails on any future re-tune that pushes that
-##    threshold back at or under 2.7.
+## --- Permanent reported-river depth pin ---
+## This coordinate was formerly a 0.7976m knife-edge wade and could falsely
+## latch swimming on one swell crest. The water overhaul deliberately
+## separated rendered bathymetry from the hydraulic trace bed; it now has
+## 3m of static cover and must honestly classify SWIM. The load-bearing
+## invariant remains static-field parity: swell never enters the depth gate.
 func test_i4_waterline_pin() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -341,13 +330,13 @@ func test_i4_waterline_pin() -> void:
 	var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
 	var lvl: float = WaterField.level_at(ctx, p)
 	var depth: float = lvl - g
-	print("MEAS test_i4_waterline_pin: field level=%.4f ground=%.4f static depth=%.4f (wading band (0.05, 0.8])" % [
+	print("MEAS test_i4_waterline_pin: field level=%.4f ground=%.4f static depth=%.4f" % [
 		lvl, g, depth])
-	assert_true(depth > 0.05 and depth <= 0.8,
-		"site precondition: I4's field static depth (%.4f) sits in the wading band (0.05, 0.8]" % depth)
+	assert_true(depth > 0.8,
+		"reported river pin keeps genuinely swimmable static depth (%.4f > 0.8)" % depth)
 	var got: String = _character_class(skin, Vector3(p.x, g, p.y))
-	assert_eq(got, "WADE",
-		"I4 (36.4,-1108.7) reads WADE through the real trigger+sampler path — NOT SWIM (no swell in the gate) and NOT DRY (its legitimate-transition sub-tile, spread 2.7, must keep its trigger)")
+	assert_eq(got, "SWIM",
+		"I4 (36.4,-1108.7) matches its genuinely deep static field through the real trigger+sampler path")
 
 
 ## --- Class 5: plunge pool centre (controller addition 3) ---
@@ -394,25 +383,18 @@ func test_plunge_pool_centre() -> void:
 	# point sitting EXACTLY on a box face even though this test's own
 	# Rect2.has_point-based oracle includes it (r3-task-9-report.md has the
 	# measured live contrast).
-	# r3 Task 12/12a's smooth monotone descent MERGED this pool into one
-	# continuous ramp with the chute above and the sill below (no more
-	# separate 5.7 flat reach) — its static depth legitimately dropped from
-	# the OLD model's ~1.7m swim depth, THROUGH an intermediate under-run
-	# artifact (~0.1286, since fixed by 12a's sill-riding envelope), TO the
-	# honest measurement below: still real, still positive, but inside the
-	# WADING band, not deep enough to swim. This is not a suppressed defect —
-	# the class's own field-truth candidate scan above independently confirms
-	# nearby points DO still legitimately SWIM (this exact xz just isn't one
-	# of them under the new profile) — so the pin is re-derived to the
-	# honest class, per the brief's own instruction, not edited to preserve
-	# the old expectation.
+	# The continuous profile still owns the surface height, while the deeper
+	# rendered bathymetry now gives this historical pool pin ample cover. It
+	# therefore joins the class's deep candidates instead of retaining its
+	# stale pre-bathymetry WADE expectation.
 	var pool_centre := Vector2(56.0, -1101.0)
 	var g2: float = TerrainSurfaceField.surface_y(region, pool_centre.x, pool_centre.y)
 	var lvl2: float = WaterField.level_at(ctx, pool_centre)
 	print("MEAS test_plunge_pool_centre: third pin (56,-1101) level=%.4f ground=%.4f static depth=%.4f" % [
 		lvl2, g2, lvl2 - g2])
-	assert_eq(_character_class(skin, Vector3(pool_centre.x, g2, pool_centre.y)), "WADE",
-		"the historical '5.7' plunge pool centre (56,-1101) now reads WADE through the real trigger+sampler path (static depth %.4f, inside the (0.05,0.8] wading band under the smooth ramp)" % (lvl2 - g2))
+	assert_true(lvl2 - g2 > 0.8, "historical plunge-pool pin retains swimmable depth")
+	assert_eq(_character_class(skin, Vector3(pool_centre.x, g2, pool_centre.y)), "SWIM",
+		"historical plunge-pool pin matches its %.4fm static field depth" % (lvl2 - g2))
 
 
 ## --- Class 6: sloped-reach mid-channel ---

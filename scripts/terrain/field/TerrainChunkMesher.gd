@@ -176,8 +176,24 @@ func compute_decorations(region, chunk: Vector2i) -> Dictionary:
 				by_scene[path]["tint"].append(d["tint"])   # computed once per cell in cell_decorations
 	return by_scene
 
-func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
+## Main-thread resource warm-up. The streamer calls this before starting its
+## worker; compute_chunk then touches only worker-owned data and SurfaceTool's
+## CPU-side arrays. Keeping lazy resource loads out of compute_chunk is
+## load-bearing: render resources may not be created or modified on the
+## project's default render model from a background thread.
+func prepare_resources() -> void:
 	_ensure_skirt_style()
+	_ground_tinted_mat()
+	_foliage_material()
+
+
+## Worker-safe half of chunk generation. Returns CPU-side mesh arrays,
+## collision faces, transforms, and colours only. commit_chunk owns every
+## Node/ArrayMesh/MultiMesh/Shape creation and must run on the main thread.
+func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
+	if _skirt_material == null:
+		push_error("TerrainChunkMesher.prepare_resources() must run on the main thread before compute_chunk()")
+		return {}
 	# Region centred on the chunk; radius covers the chunk plus a neighbour ring
 	# for ramps. The caller may pass one in (the streamer computes it once and
 	# reuses it for orb ground heights); otherwise compute it here.
@@ -264,8 +280,18 @@ func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 			var t10: Color = tints[iz * (GRID + 1) + ix + 1]
 			var t11: Color = tints[(iz + 1) * (GRID + 1) + ix + 1]
 			var t01: Color = tints[(iz + 1) * (GRID + 1) + ix]
-			_tri_tinted(st, [c00, c10, c11], uv, [t00, t10, t11])
-			_tri_tinted(st, [c00, c11, c01], uv, [t00, t11, t01])
+			var i00: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v00)
+			var i10: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v10)
+			var i11: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v11)
+			var i01: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v01)
+			# A corner-tuck triangle can remain exposed below the rounded piece in
+			# a low camera view. It is the cliff's backing surface, not walkable
+			# turf: use the shared rock atlas texel so it merges with the wall
+			# instead of reading as a bright green ground plane.
+			var uv0: Vector2 = _cliff_uv if (i00 or i10 or i11) else uv
+			var uv1: Vector2 = _cliff_uv if (i00 or i11 or i01) else uv
+			_tri_tinted(st, [c00, c10, c11], uv0, [t00, t10, t11])
+			_tri_tinted(st, [c00, c11, c01], uv1, [t00, t11, t01])
 	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
 	# pinned grid leaves between a cliff top and the lower cell. This is the actual rock cliff face
 	# (replacing the old slanted grey quads); the KayKit wall pieces dress it, and it doubles as the
@@ -293,13 +319,7 @@ func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 	# the slopes read as smooth curves rather than angular facets.
 	st.index()
 	st.generate_normals()
-	st.set_material(_ground_tinted_mat())
-	var root := Node3D.new()
-	root.name = "Chunk_%d_%d" % [chunk.x, chunk.y]
-	var mi := MeshInstance3D.new()
-	mi.name = "Surface"
-	mi.mesh = st.commit()
-	root.add_child(mi)
+	var surface_arrays: Array = st.commit_to_arrays()
 
 	# Ground APRONS: continue each cell's ground sheet APRON deep under every HIGHER flat
 	# neighbour, sealing the slot floor behind that neighbour's recessed wall face (owner:
@@ -312,28 +332,63 @@ func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
 			if _emit_aprons(ast, region, clip_cache, cx, cz, _cell_tint(cx, cz)):
 				any_apron = true
-	var apron_mesh: Mesh = null
+	var apron_arrays: Array = []
 	if any_apron:
 		# no index()/generate_normals(): normals are explicit verticals (welding the two
 		# windings would zero them out and break the lighting)
-		ast.set_material(_ground_tinted_mat())
-		apron_mesh = ast.commit()
-		var am := MeshInstance3D.new()
-		am.name = "Aprons"
-		am.mesh = apron_mesh
-		root.add_child(am)
+		apron_arrays = ast.commit_to_arrays()
 
 	# NO per-chunk water quads: they hovered at SEA_LEVEL over flat storey-0 ground with the
 	# ground-material fallback (water.tres doesn't exist) and read as floating brown planes
 	# (owner's screenshot). The global WaterSurface scene is the water visual; Helper.is_water
 	# still gates decorations below.
 
-	# Decorations: foliage batched into one MultiMesh per (scene, mesh piece) —
-	# same pattern as CliffDressing. ~50 scene instantiations per chunk became
-	# a handful of MultiMeshes: fewer nodes, fewer draw calls, cheap eviction.
+	var wall_arrays: Array = []
+	var wall_collision_arrays: Array = []
+	if any_wall:
+		skirt.generate_normals()
+		wall_arrays = skirt.commit_to_arrays()
+		wall_collision_arrays = skirtc.commit_to_arrays()
+
+	return {
+		"chunk": chunk,
+		"surface_arrays": surface_arrays,
+		"collision_faces": col_faces,
+		"apron_arrays": apron_arrays,
+		"wall_arrays": wall_arrays,
+		"wall_collision_arrays": wall_collision_arrays,
+		"decorations": compute_decorations(region, chunk),
+		"cliffs": CliffDressing.compute(region, lo_cx, lo_cz, CELLS_PER_CHUNK),
+		"world_seed": _water_seed,
+	}
+
+
+## Main-thread half of chunk generation. This is deliberately the only path
+## below that creates render/physics resources and nodes.
+func commit_chunk(data: Dictionary) -> Node3D:
+	assert(not data.is_empty())
+	var chunk: Vector2i = data["chunk"]
+	var root := Node3D.new()
+	root.name = "Chunk_%d_%d" % [chunk.x, chunk.y]
+
+	var mi := MeshInstance3D.new()
+	mi.name = "Surface"
+	mi.mesh = _mesh_from_arrays(data["surface_arrays"], _ground_tinted_mat())
+	root.add_child(mi)
+
+	var apron_mesh: ArrayMesh = null
+	var apron_arrays: Array = data["apron_arrays"]
+	if not apron_arrays.is_empty():
+		apron_mesh = _mesh_from_arrays(apron_arrays, _ground_tinted_mat())
+		var am := MeshInstance3D.new()
+		am.name = "Aprons"
+		am.mesh = apron_mesh
+		root.add_child(am)
+
+	# Decorations: foliage batched into one MultiMesh per (scene, mesh piece).
 	var deco := Node3D.new()
 	deco.name = "Decorations"
-	var by_scene := compute_decorations(region, chunk)
+	var by_scene: Dictionary = data["decorations"]
 	for path in by_scene:
 		var entry: Dictionary = by_scene[path]
 		var tfs: Array = entry["tf"]
@@ -354,45 +409,51 @@ func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 			deco.add_child(mmi)
 	root.add_child(deco)
 
-	# KayKit cliff dressing: real rock wall + grass-lip pieces on the cliff edges,
-	# biome-tinted per instance from the same field as the sheet.
-	var dressing := CliffDressing.build(region, lo_cx, lo_cz, CELLS_PER_CHUNK, _water_seed)
-	root.add_child(dressing)
+	root.add_child(CliffDressing.build_from_data(data["cliffs"], data["world_seed"]))
 
-	# Collision: trimesh from the FULL walkable sheet (not the lip-clipped visual — the player
-	# must still stand on the lip band), plus a second trimesh of the cliff-wall quads.
+	# Collision: the full walkable sheet plus apron and cliff-wall trimeshes.
 	var body := StaticBody3D.new()
 	body.name = "Body"
 	var cs := CollisionShape3D.new()
 	cs.name = "CollisionShape3D"
 	var col_shape := ConcavePolygonShape3D.new()
-	col_shape.set_faces(col_faces)
+	col_shape.set_faces(data["collision_faces"])
 	cs.shape = col_shape
 	body.add_child(cs)
 	if apron_mesh != null:
-		# The apron can be the only floor in a recess band (beyond the cell boundary, where the
-		# main sheet ends) — without collision the player falls through it (owner round 4).
 		var cs3 := CollisionShape3D.new()
 		cs3.name = "CollisionShape3D_aprons"
 		cs3.shape = apron_mesh.create_trimesh_shape()
 		body.add_child(cs3)
-	if any_wall:
-		skirt.generate_normals()
-		skirt.set_material(_skirt_material)
-		var skirt_mesh := skirt.commit()
+
+	var wall_arrays: Array = data["wall_arrays"]
+	if not wall_arrays.is_empty():
+		var skirt_mesh := _mesh_from_arrays(wall_arrays, _skirt_material)
 		var sf := MeshInstance3D.new()
 		sf.name = "CliffFaces"
 		sf.mesh = skirt_mesh
 		root.add_child(sf)
-		# The collision wall is its own boundary-plane mesh, NOT the recessed visual skirt —
-		# see _emit_wall (owner round 7: jumping capsules wedged in the recess pocket).
+		var collision_mesh := _mesh_from_arrays(data["wall_collision_arrays"], null)
 		var cs2 := CollisionShape3D.new()
 		cs2.name = "CollisionShape3D_walls"
-		cs2.shape = skirtc.commit().create_trimesh_shape()
+		cs2.shape = collision_mesh.create_trimesh_shape()
 		body.add_child(cs2)
 	root.add_child(body)
-
 	return root
+
+
+## Main-thread compatibility wrapper used by unit tests and offline harnesses.
+func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
+	prepare_resources()
+	return commit_chunk(compute_chunk(plan, chunk, region))
+
+
+func _mesh_from_arrays(arrays: Array, material: Material) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if material != null:
+		mesh.surface_set_material(0, material)
+	return mesh
 
 func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, uv: Vector2) -> void:
 	for v in [a, b, c]:
@@ -518,6 +579,23 @@ func _edge_w(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, a: floa
 	var w_corner := w_c if nb_lipped else 0.0
 	return lerpf(w_c, w_corner, clampf(absf(t), 0.0, 1.0))
 
+
+func _inner_corner_vertex(region, cache: Dictionary, qcx: int, qcz: int,
+		v: Vector3) -> bool:
+	var info = _cell_clip_info(region, cache, qcx, qcz)
+	if info == null:
+		return false
+	var lx: float = v.x - float(qcx) * TILE
+	var lz: float = v.z - float(qcz) * TILE
+	var tuck := TILE * 0.5 - 1.3
+	for cdir in info["corners"]:
+		var kind: String = info["corners"][cdir]
+		if kind != "inner" and kind != "pocket_cap":
+			continue
+		if lx * float(cdir.x) > tuck and lz * float(cdir.y) > tuck:
+			return true
+	return false
+
 # Adjust a flat-top vertex for its cell's edges (visual sheet only):
 #  - PULL it back toward TOP_CLIP on lipped edges (the KayKit lip is the visible edge there),
 #    scaled by the feathered weight; the pulled edge rises by LIP_LIFT to tuck flush under the
@@ -562,23 +640,19 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 	# pocket) has no dressed edge of its own there, so its bare sheet ran flat to the very
 	# corner point and poked out through the rounded front of the inner-corner piece as a
 	# green flap over the pocket (owner round 11: "corner of plane sticking out of cliff lip
-	# inner corner"). DIP the corner-point vertex under the piece's front curve (which
-	# overhangs to ~h-0.655) instead of pulling it in XZ: the old diagonal tuck moved the
+	# inner corner"). DIP the corner-point vertex well under the piece's front curve instead
+	# of pulling it in XZ: the old diagonal tuck moved the
 	# vertex OFF both cell boundaries while the level arms' sheets stayed ON them, and the
 	# piece arms roof only 1.25 of the vacated 1.5 — two hairline slivers opened along the
 	# boundaries beside the piece (owner batch 2: "tiny gaps in the ground next to inner
 	# corner tiles"). The dip keeps every boundary edge welded; the down-bent corner hides
 	# under the piece exactly like the flap it counters. Only the corner-point vertex dips
-	# (the 1.3 box holds just it on the 2m grid) so all deformation stays under the piece.
+	# (the 1.3 box holds just it on the 2m grid) so all deformation stays under the piece;
+	# build_chunk assigns its incident triangles the rock atlas texel in case a low camera
+	# can still see that cliff-backing fold.
 	# (Ghost corners need no dip: their diagonal cell is a HIGHER flat, already edge-clipped.)
-	for cdir in info["corners"]:
-		var kind: String = info["corners"][cdir]
-		if kind == "inner" or kind == "pocket_cap":
-			var tuck := TILE * 0.5 - 1.3
-			var ccx := lx * float(cdir.x)
-			var ccz := lz * float(cdir.y)
-			if ccx > tuck and ccz > tuck:
-				down = maxf(down, 0.6)
+	if _inner_corner_vertex(region, cache, qcx, qcz, v):
+		down = maxf(down, 1.3)
 		# ("outer" one-armed flush-step corners need NO corner pull here: the dressed
 		# arm's edge clip holds full weight through the corner — _slot_lipped's
 		# continuation rule sees the taller cell's collinear lip run — so the boundary

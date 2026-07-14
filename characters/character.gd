@@ -259,6 +259,7 @@ func _update_in_water() -> void:
 	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
 	var best_depth: float = -INF
 	var best_level: float = -INF
+	var best_wave_scale := 0.0
 	for h in hits:
 		var collider: Object = h.get("collider")
 		if collider == null or not collider.has_meta("sampler"):
@@ -271,12 +272,13 @@ func _update_in_water() -> void:
 		if depth > best_depth:
 			best_depth = depth
 			best_level = lvl
+			best_wave_scale = sampler.wave_scale_at(xz)
 	var swim_gate: float = 0.6 if in_water else 0.8
 	var wade_gate: float = 0.03 if wading else 0.05
 	in_water = best_depth > swim_gate
 	wading = in_water or best_depth > wade_gate
 	if in_water:
-		water_surface_y = best_level + _swell_offset(xz, t)
+		water_surface_y = best_level + _swell_offset(xz, t) * best_wave_scale
 
 
 # The water surface the buoyancy chases, displaced by the shader's travelling

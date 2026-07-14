@@ -105,8 +105,14 @@ static func sheet_material() -> ShaderMaterial:
 ## the exact water height at its own (x,z) from that sampler instead of a
 ## per-cell sampled plane; see WaterSampler.gd and characters/character.gd's
 ## own bridge comment in _update_in_water.
-func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
-	var skin: Dictionary = WaterSkin.build(water, chunk, region)
+## Worker-safe phase: field, contour, mesh-array, trigger, and sampler data.
+## No render/physics resource or Node is created here.
+func compute_chunk(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
+	return WaterSkin.build(water, chunk, region)
+
+
+## Main-thread phase: turns a worker payload into render and physics nodes.
+func commit_chunk(skin: Dictionary) -> Node3D:
 	if skin.is_empty():
 		return null
 	var root := Node3D.new()
@@ -134,3 +140,8 @@ func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
 		area.set_meta("sampler", sampler)
 		root.add_child(area)
 	return root
+
+
+## Main-thread compatibility wrapper for tests and offline harnesses.
+func build_chunk(water: WaterPlan, chunk: Vector2i, region) -> Node3D:
+	return commit_chunk(compute_chunk(water, chunk, region))

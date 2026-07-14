@@ -18,6 +18,11 @@ const FALL_DROP_MIN := 4.0    # the only "this is a fall face" threshold in the 
 const SURFACE_RIDE := 2.2     # river surface height above the traced bed
 const CLAIM_FEATHER := 8.0    # metres past the channel half-width a reach claims (channel membership + steep-span geometry only)
 const EPS := 0.05            # fill wetness threshold: a cell settles wet only when level > ground + EPS. COUPLED to DESCENT_CLAMP (0.10): the descent floor MUST strictly exceed EPS or the fill dries the band the envelope shaped to keep wet — see DESCENT_CLAMP's docstring before raising this.
+# A dry fill-lattice corner represents a small NEGATIVE water depth during
+# interpolation, not an infinitely deep void.  This makes mixed wet/dry
+# cells thin continuously to zero depth before disappearing, so the shore is
+# a contour inside the 6m cell instead of a hard, axis-aligned cell edge.
+const SHORE_DRY_DEPTH := 0.50
 const FILM := 0.3             # minimum clearance the descending level keeps above the rendered ground when hugging a steep face (profile()'s "downstream_target" floor)
 # PERF (this task's report): the brief's own "~3m steps" for the descent-
 # shaping terrain walk measured a site-chunk ctx() COLD median (profile
@@ -147,10 +152,11 @@ const DESCENT_POOL_GAP := 24.0
 # whatever FILL_STEP is configured, so no other code changed — only these
 # constants. Both timings are in the Phase 1 report.
 const FILL_STEP := 6.0        # coarsened from 3.0 (the mesh's own lattice step) — see PERF above
-const _FILL_MARGIN_WORLD := 30.0   # fixed world-space margin, independent of FILL_STEP
+const _FILL_MARGIN_WORLD := 42.0   # covers the 5-pass, 30m local surface relaxation plus interpolation slack at chunk seams
 const FILL_MARGIN := int(_FILL_MARGIN_WORLD / FILL_STEP)   # margin in FILL_STEP cells
 const FILL_N := int(TILE * 8.0 / FILL_STEP)   # chunk lattice cells per side at FILL_STEP
 const FILL_M := FILL_N + 2 * FILL_MARGIN      # window lattice cells per side
+const FILL_SURFACE_PASSES := 5
 
 static var _profiles: Dictionary = {}   # trace.source_cell -> profile dict
 # The streamer calls build_chunk (and therefore profile()) from a worker
@@ -295,17 +301,70 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 	var gnd := PackedFloat32Array()
 	gnd.resize(m1 * m1)
 	gnd.fill(INF)
+	# Flowing-channel samples are not hydrostatic pools: their longitudinal
+	# level is fixed by profile(), and a lower downstream flood must not settle
+	# them first.  -INF means "not a river-channel sample"; finite values are
+	# authoritative seeds consumed by _relax_fill.
+	var river_levels := PackedFloat32Array()
+	river_levels.resize(m1 * m1)
+	river_levels.fill(-INF)
 	# PriorityQueue extends Object (not RefCounted, see scripts/core/
 	# PriorityQueue.gd) — it does not get automatically freed when it goes
 	# out of scope, and _build_fill runs once per ctx() call (every chunk
 	# build), so leaving this unfreed leaks one Object per chunk over a play
 	# session. free() explicitly once relaxation is done.
 	var pq := PriorityQueue.new()
-	_seed_rivers(c, region, base, m1, levels, gnd, pq)
+	_seed_rivers(c, region, base, m1, levels, gnd, river_levels, pq)
 	_seed_ponds(c, region, base, m1, levels, gnd, pq)
-	_relax_fill(region, base, m1, levels, gnd, pq)
+	_relax_fill(region, base, m1, levels, gnd, river_levels, pq)
+	_smooth_fill_surface(region, base, m1, levels, gnd, river_levels)
 	pq.free()
 	return {"levels": levels}
+
+
+## The flood above answers the topological question "which lattice points
+## can water reach?".  Its ascending, lower-level-wins queue is deliberately
+## conservative for that job, but its settled labels are not a suitable
+## flowing surface by themselves: a low pond can walk sideways around the
+## edge of a higher river seed and leave two adjacent wet nodes 7-8m apart in
+## height.  Bilinear interpolation then renders a one-cell diagonal cliff —
+## exactly the one-sided dip in the owner's (53.6,-1079.7) view.
+##
+## Keep the wet mask unchanged and solve the separate surface problem with a
+## small, fixed Jacobi relaxation.  Flowing-channel nodes are Dirichlet
+## anchors at their projected continuous profile levels; every other wet node
+## averages its wet cardinal neighbourhood, retaining a tiny clearance over
+## its own ground.  Uniform ponds remain exactly uniform, while river/pond
+## joins spread over a 30m band instead of inheriting the flood queue's source
+## boundary.  Five passes are intentionally finite and local (not a
+## convergence loop): output at a point depends on at most 30m of input, less
+## than the 42m fill margin, so overlapping chunk windows compute identical
+## values without order dependence or scene state.
+static func _smooth_fill_surface(region, base: Vector2, m1: int,
+		levels: PackedFloat32Array, gnd: PackedFloat32Array,
+		river_levels: PackedFloat32Array) -> void:
+	for _pass in FILL_SURFACE_PASSES:
+		var previous: PackedFloat32Array = levels.duplicate()
+		for j in m1:
+			for i in m1:
+				var idx: int = j * m1 + i
+				if previous[idx] == -INF or river_levels[idx] != -INF:
+					continue
+				var acc: float = previous[idx]
+				var weight := 1.0
+				for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0),
+						Vector2i(0, 1), Vector2i(0, -1)]:
+					var ni: int = i + d.x
+					var nj: int = j + d.y
+					if ni < 0 or ni >= m1 or nj < 0 or nj >= m1:
+						continue
+					var neighbour: float = previous[nj * m1 + ni]
+					if neighbour == -INF:
+						continue
+					acc += neighbour
+					weight += 1.0
+				var ground: float = _ground_at(region, base, m1, gnd, i, j)
+				levels[idx] = maxf(acc / weight, ground + EPS + 0.01)
 
 
 ## Ground height at lattice index (i,j), memoized in `gnd` (INF = uncomputed
@@ -321,10 +380,14 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 	return g
 
 
-## Marks every lattice sample within tr.widths[si] of a channel sample AND
-## whose own ground sits below that sample's level (see _seed_disc) wet at
-## that sample's own profile level, for every trace/sample in ctx. Iterates
-## only the lattice index box around each sample (not the whole lattice).
+## Rasterizes the flowing channel as variable-width SEGMENT CAPSULES, not
+## overlapping sample discs.  A disc gives one level to a circular area; on
+## a slope, a lower downstream disc overlaps far upstream and wins the
+## hydrostatic queue, re-quantizing a continuous profile into flat shelves.
+## Segment projection instead gives each lattice point the level at its own
+## along-channel position.  Within overlaps (bends/confluences), the segment
+## with the smallest signed margin wins deterministically; a tie takes the
+## lower level.
 ##
 ## r3 Task 12 follow-up (seeding): within a DESCENT SPAN the seeds ride the
 ## profile's own dense smooth curve (prof.descents — cached by profile()
@@ -350,28 +413,81 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 ## trace alone — see _dense_span_points). Ponds' seeding (_seed_ponds) is
 ## unchanged.
 static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
-		levels: PackedFloat32Array, gnd: PackedFloat32Array, pq: PriorityQueue) -> void:
+		levels: PackedFloat32Array, gnd: PackedFloat32Array,
+		river_levels: PackedFloat32Array, pq: PriorityQueue) -> void:
+	var margins := PackedFloat32Array()
+	margins.resize(m1 * m1)
+	margins.fill(INF)
 	for tr: RiverTrace in c.rivers:
 		var prof: Dictionary = profile(tr, region)
 		var descents: Array = prof.get("descents", [])
-		var in_span := PackedByteArray()
-		in_span.resize(tr.points.size())
+		var in_span := PackedByteArray() # one flag per ORIGINAL trace segment
+		in_span.resize(maxi(0, tr.points.size() - 1))
 		for d: Dictionary in descents:
-			for si in range(int(d.lo) + 1, int(d.hi)):
-				in_span[si] = 1   # strictly interior — endpoints keep their per-sample disc
-		for si in tr.points.size():
-			if in_span[si] == 1:
-				continue
-			var p: Vector2 = tr.points[si]
-			var w: float = tr.widths[si]
-			var lvl: float = prof.levels[si]
-			_seed_disc(region, base, m1, levels, gnd, pq, p, w, lvl)
-		for d: Dictionary in descents:
+			for si in range(int(d.lo), int(d.hi)):
+				in_span[si] = 1
 			var dpos: PackedVector2Array = d.pos
 			var dw: PackedFloat32Array = d.w
 			var dlvl: PackedFloat32Array = d.lvl
-			for k in dpos.size():
-				_seed_disc(region, base, m1, levels, gnd, pq, dpos[k], dw[k], dlvl[k])
+			for k in range(dpos.size() - 1):
+				_claim_river_segment(base, m1, margins, river_levels,
+					dpos[k], dpos[k + 1], dw[k], dw[k + 1], dlvl[k], dlvl[k + 1])
+		for si in range(tr.points.size() - 1):
+			if in_span[si] == 1:
+				continue
+			_claim_river_segment(base, m1, margins, river_levels,
+				tr.points[si], tr.points[si + 1], tr.widths[si], tr.widths[si + 1],
+				prof.levels[si], prof.levels[si + 1])
+		if tr.points.size() == 1:
+			_claim_river_segment(base, m1, margins, river_levels,
+				tr.points[0], tr.points[0], tr.widths[0], tr.widths[0],
+				prof.levels[0], prof.levels[0])
+	# Ground containment is evaluated once after every trace has offered its
+	# geometry.  Every accepted river node queues exactly its own projected
+	# level; _relax_fill treats river_levels as authoritative if a lower
+	# hydrostatic entry happens to reach the same index first.
+	for j in m1:
+		for i in m1:
+			var idx: int = j * m1 + i
+			var lvl: float = river_levels[idx]
+			if lvl == -INF:
+				continue
+			if _ground_at(region, base, m1, gnd, i, j) >= lvl - EPS:
+				river_levels[idx] = -INF
+				continue
+			_settle(m1, levels, pq, i, j, lvl)
+
+
+## Offers every fill-lattice point inside one variable-width segment
+## capsule.  Level and width both interpolate at the closest point on the
+## segment.  `margins` makes the result independent of trace/segment visit
+## order: strictly more-inside geometry wins, with lower level as a stable
+## tie-break at a true overlap.
+static func _claim_river_segment(base: Vector2, m1: int,
+		margins: PackedFloat32Array, river_levels: PackedFloat32Array,
+		a: Vector2, b: Vector2, wa: float, wb: float, la: float, lb: float) -> void:
+	var reach: float = maxf(wa, wb)
+	var lo_i: int = maxi(0, int(floor((minf(a.x, b.x) - reach - base.x) / FILL_STEP)))
+	var hi_i: int = mini(FILL_M, int(ceil((maxf(a.x, b.x) + reach - base.x) / FILL_STEP)))
+	var lo_j: int = maxi(0, int(floor((minf(a.y, b.y) - reach - base.y) / FILL_STEP)))
+	var hi_j: int = mini(FILL_M, int(ceil((maxf(a.y, b.y) + reach - base.y) / FILL_STEP)))
+	var ab: Vector2 = b - a
+	var len2: float = ab.length_squared()
+	for j in range(lo_j, hi_j + 1):
+		for i in range(lo_i, hi_i + 1):
+			var q: Vector2 = base + Vector2(i, j) * FILL_STEP
+			var t: float = clampf((q - a).dot(ab) / len2, 0.0, 1.0) if len2 > 0.000001 else 0.0
+			var nearest: Vector2 = a + ab * t
+			var width: float = lerpf(wa, wb, t)
+			var margin: float = q.distance_to(nearest) - width
+			if margin > 0.0:
+				continue
+			var idx: int = j * m1 + i
+			var lvl: float = lerpf(la, lb, t)
+			if margin < margins[idx] - 0.0001 \
+					or (absf(margin - margins[idx]) <= 0.0001 and lvl < river_levels[idx]):
+				margins[idx] = margin
+				river_levels[idx] = lvl
 
 
 ## Marks every lattice sample inside a pond's wobbled footprint AND below the
@@ -410,28 +526,6 @@ static func _seed_ponds(c: Dictionary, region, base: Vector2, m1: int,
 				_settle(m1, levels, pq, i, j, lvl)
 
 
-## Shared disc-seed helper: every lattice sample within `w` of `p` AND whose
-## own ground sits below `lvl - EPS` (see _seed_ponds' ground-clearance note
-## — the same reasoning applies to a channel sample's width-disc: the disc
-## is a geometric circle, and can graze terrain the channel itself never
-## carved, e.g. a bank cutting the corner of a meander) is offered to the
-## relax queue at `lvl` (final value decided at pop time — see _settle).
-static func _seed_disc(region, base: Vector2, m1: int, levels: PackedFloat32Array,
-		gnd: PackedFloat32Array, pq: PriorityQueue, p: Vector2, w: float, lvl: float) -> void:
-	var lo_i: int = maxi(0, int(floor((p.x - w - base.x) / FILL_STEP)))
-	var hi_i: int = mini(FILL_M, int(ceil((p.x + w - base.x) / FILL_STEP)))
-	var lo_j: int = maxi(0, int(floor((p.y - w - base.y) / FILL_STEP)))
-	var hi_j: int = mini(FILL_M, int(ceil((p.y + w - base.y) / FILL_STEP)))
-	for j in range(lo_j, hi_j + 1):
-		for i in range(lo_i, hi_i + 1):
-			var q: Vector2 = base + Vector2(i, j) * FILL_STEP
-			if q.distance_to(p) > w:
-				continue
-			if _ground_at(region, base, m1, gnd, i, j) >= lvl - EPS:
-				continue
-			_settle(m1, levels, pq, i, j, lvl)
-
-
 ## Offers (i,j) to the relax queue at `lvl`. Called only during seeding,
 ## while `levels[]` (the OUTPUT/settled array) is still all -INF — a sample
 ## seeded by two overlapping discs (e.g. two channel reaches' width-discs
@@ -453,13 +547,16 @@ static func _settle(m1: int, levels: PackedFloat32Array, pq: PriorityQueue,
 ## Each settled sample floods its 4 neighbours at its own level when the
 ## neighbour's ground sits below level - EPS.
 static func _relax_fill(region, base: Vector2, m1: int,
-		levels: PackedFloat32Array, gnd: PackedFloat32Array, pq: PriorityQueue) -> void:
+		levels: PackedFloat32Array, gnd: PackedFloat32Array,
+		river_levels: PackedFloat32Array, pq: PriorityQueue) -> void:
 	while not pq.is_empty():
 		var entry: Array = pq.pop()
 		var idx: int = entry[0]
 		var lvl: float = entry[1]
 		if levels[idx] != -INF:
 			continue   # a lower level already settled this index — stale
+		if river_levels[idx] != -INF:
+			lvl = river_levels[idx] # flowing channel owns its longitudinal level
 		levels[idx] = lvl
 		var i: int = idx % m1
 		var j: int = idx / m1
@@ -471,6 +568,8 @@ static func _relax_fill(region, base: Vector2, m1: int,
 			var nidx: int = nj * m1 + ni
 			if levels[nidx] != -INF:
 				continue
+			if river_levels[nidx] != -INF:
+				continue # its own authoritative seed is already queued
 			if _ground_at(region, base, m1, gnd, ni, nj) < lvl - EPS:
 				pq.push([nidx, lvl], lvl)
 
@@ -1153,17 +1252,15 @@ static func _in_fill_window(c: Dictionary, p: Vector2) -> bool:
 	return p.x >= base.x and p.x <= base.x + span and p.y >= base.y and p.y <= base.y + span
 
 
-## Bilinear over the fill lattice, with one correction against the raw
-## lattice's own discreteness: WET-vs-DRY (-INF) mixing is renormalized over
-## only the wet corners (raw IEEE754 0.0 * -INF is NaN, not 0.0, so plain
-## weighted summation cannot be trusted once any corner is -INF) — a
-## corner's own weight only ever pulls the result toward THAT corner's real
-## level, dry corners are excluded and their weight redistributed over the
-## remaining wet ones. -INF when no corner is wet, or the point's weight
-## lands entirely on dry corners. This is the ONE guard the wall-ramp logic
-## still needs: fabricating water toward DRY land (a corner that is
-## genuinely -INF) is the actual bug class it prevents, so it applies only
-## at a wet/dry pair.
+## Bilinear over the fill lattice. A mixed wet/dry cell is interpreted as a
+## signed-depth field: wet corners keep their exact settled surface, while a
+## dry corner contributes `ground + EPS - SHORE_DRY_DEPTH` (capped at the
+## wet-only interpolant so a high bank can never pull water uphill). The
+## result tapers through zero depth inside the cell instead of holding the
+## wet value to a hard 6m lattice edge. This is the field-level source of
+## the blob-like shoreline: contour smoothing receives a real depth crossing
+## rather than an axis-aligned claim boundary. -INF remains the answer when
+## the query has zero weighted contact with any wet corner.
 ##
 ## Phase 1's FILL_JUMP snap (superseded, Phase 2a): an earlier version of
 ## this function ALSO snapped to the nearest corner instead of blending
@@ -1205,17 +1302,28 @@ static func _fill_bilinear(c: Dictionary, p: Vector2) -> float:
 		[i0, j0 + 1, (1.0 - tx) * tz],
 		[i0 + 1, j0 + 1, tx * tz],
 	]
-	var wsum := 0.0
-	var acc := 0.0
+	var wet_weight := 0.0
+	var wet_acc := 0.0
 	for cnr: Array in corners:
 		var lvl: float = levels[cnr[1] * m1 + cnr[0]]
 		if lvl == -INF:
 			continue
-		acc += lvl * cnr[2]
-		wsum += cnr[2]
-	if wsum <= 0.0:
+		wet_acc += lvl * cnr[2]
+		wet_weight += cnr[2]
+	if wet_weight <= 0.0:
 		return -INF
-	return acc / wsum
+	if wet_weight >= 1.0 - 0.000001:
+		return wet_acc
+	var wet_ref: float = wet_acc / wet_weight
+	var acc := 0.0
+	for cnr: Array in corners:
+		var lvl: float = levels[cnr[1] * m1 + cnr[0]]
+		if lvl == -INF:
+			var q: Vector2 = base + Vector2(cnr[0], cnr[1]) * FILL_STEP
+			var ground: float = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+			lvl = minf(wet_ref, ground + EPS - SHORE_DRY_DEPTH)
+		acc += lvl * cnr[2]
+	return acc
 
 
 ## Channel-membership-only claim: a point claims water only when it is

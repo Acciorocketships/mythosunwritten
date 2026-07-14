@@ -562,7 +562,13 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 
 static func build(region, lo_cx: int, lo_cz: int, cells: int, world_seed := 0) -> Node3D:
 	_ensure_loaded()
-	var data := compute(region, lo_cx, lo_cz, cells)
+	return build_from_data(compute(region, lo_cx, lo_cz, cells), world_seed)
+
+
+## Main-thread adapter for worker-computed placement data. MultiMesh and its
+## render nodes must never be created by FieldTerrainStreamer._worker.
+static func build_from_data(data: Dictionary, world_seed := 0) -> Node3D:
+	_ensure_loaded()
 	var root := Node3D.new()
 	root.name = "Cliffs"
 	var names := {"wall": "Walls", "lip": "Lips", "outer_wall": "OuterWalls",

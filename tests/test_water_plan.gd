@@ -436,7 +436,9 @@ func test_carve_lazy_gates_match_reference():
 				wet += 1
 	assert_gt(wet, 5, "sweep found only %d/%d carved cells - widen it or change seed" % [wet, checked])
 
-# Pre-optimization carve logic, kept verbatim as the reference oracle.
+# Exhaustive reference for the lazy pond/channel gates. Channel samples are
+# only the bucket acceleration structure; the hydraulic footprint is the
+# continuous variable-width segment between samples, matching WaterField.
 func _carve_reference(w: WaterPlan, cx: int, cz: int) -> float:
 	var p := Vector2(float(cx) * WaterPlan.TILE, float(cz) * WaterPlan.TILE)
 	if p.length() < WaterPlan.SPAWN_WATER_RADIUS:
@@ -452,13 +454,36 @@ func _carve_reference(w: WaterPlan, cx: int, cz: int) -> float:
 			best = maxf(best, t.pond.carve_at(p, ground))
 	var key := Vector2i(cx, cz)
 	if region.buckets.has(key):
+		var seen_segments: Dictionary = {}
 		for entry in region.buckets[key]:
 			var t: RiverTrace = entry[0]
 			var i: int = entry[1]
-			var d: float = p.distance_to(t.points[i])
-			var infl: float = t.widths[i] + WaterPlan.FEATHER
-			if d >= infl:
-				continue
-			var wgt: float = SlopeProfile.smootherstep(clampf((infl - d) / WaterPlan.FEATHER, 0.0, 1.0))
-			best = maxf(best, maxf(0.0, ground - t.beds[i]) * wgt)
+			for si in [i - 1, i]:
+				if si < 0 or si + 1 >= t.points.size():
+					continue
+				var segment_key := Vector3i(t.source_cell.x, t.source_cell.y, si)
+				if seen_segments.has(segment_key):
+					continue
+				seen_segments[segment_key] = true
+				var a: Vector2 = t.points[si]
+				var b: Vector2 = t.points[si + 1]
+				var ab: Vector2 = b - a
+				var len2: float = ab.length_squared()
+				var along: float = clampf((p - a).dot(ab) / len2, 0.0, 1.0) \
+					if len2 > 0.000001 else 0.0
+				var nearest: Vector2 = a + ab * along
+				var width: float = lerpf(t.widths[si], t.widths[si + 1], along)
+				var d: float = p.distance_to(nearest)
+				var infl: float = width + WaterPlan.FEATHER
+				if d >= infl:
+					continue
+				var wgt: float = SlopeProfile.smootherstep(
+					clampf((infl - d) / WaterPlan.FEATHER, 0.0, 1.0))
+				var grade: float = absf(t.beds[si + 1] - t.beds[si]) \
+					/ maxf(sqrt(len2), 0.001)
+				var extra: float = WaterPlan.CARVE_BED_EXTRA \
+					if grade < WaterPlan.CARVE_EXTRA_MAX_GRADE else 0.0
+				var bed: float = lerpf(t.beds[si], t.beds[si + 1], along)
+				var carve_bed: float = maxf(bed - extra, WaterPlan.BED_MIN)
+				best = maxf(best, maxf(0.0, ground - carve_bed) * wgt)
 	return best

@@ -41,27 +41,27 @@ render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 // the travelling pond swells (water_waves.gdshaderinc) and the interactive
 // ripple sim; river/rapids motion (r3 Task 13) comes entirely from the
 // refraction-distortion advection in fragment(), never from geometry.
-uniform vec3 color_deep : source_color = vec3(0.33, 0.60, 0.55);
-uniform vec3 color_shallow : source_color = vec3(0.55, 0.82, 0.73);
-uniform vec3 color_sky : source_color = vec3(0.78, 0.90, 0.87);
-uniform float sky_reflect : hint_range(0.0, 1.0) = 0.3;   // r3 round-6 clarity: 0.5 washed a milky pale-sky sheen over the body at grazing angles (hid the bed — owner's "make it clearer"); 0.3 lets the refracted bed read through while keeping the soft SoS-style reflection. Live-tuned at the clarity frame (25,8,-1128).
+uniform vec3 color_deep : source_color = vec3(0.22, 0.52, 0.53);
+uniform vec3 color_shallow : source_color = vec3(0.45, 0.76, 0.68);
+uniform vec3 color_sky : source_color = vec3(0.70, 0.85, 0.84);
+uniform float sky_reflect : hint_range(0.0, 1.0) = 0.18;  // soft grazing reflection without the pale-sky milk wash that hid the bed
 // r3 Task 13 round-6 clarity push (owner references: tropical clear-shallow
 // shot + Sea of Solitude re-annotation) — 12.0 -> 18.0: the bed/refracted
 // scene must read plainly through the body at ordinary depths, not just the
 // shallows.
-uniform float clarity_depth : hint_range(0.5, 24.0) = 18.0;   // metres to full deep colour
+uniform float clarity_depth : hint_range(0.5, 24.0) = 24.0;   // metres to full deep colour; refracted scenery dominates ordinary river depths
 // CLEAR, not light (owner): the scene shows through with a modest tint
 // floor so shallow shelves never read as bare lawn — it's the REFRACTION
 // DISTORTION that makes the clear water read as water. Round-6: 0.12 ->
 // 0.07 (clarity push — the floor was still reading too opaque against both
 // owner references).
-uniform float body_floor : hint_range(0.0, 1.0) = 0.07;
+uniform float body_floor : hint_range(0.0, 1.0) = 0.04;
 // How much the refracted scene tints toward color_shallow even at the very
 // shallowest reads (the r3 Task 8 "shallow tint" clarity target) — kept as
 // its own uniform (was a hardcoded 0.12 literal pre-Task-8) so the battery
 // pass can live-tune it same as every other clarity param. Round-6: 0.10 ->
 // 0.06.
-uniform float shallow_tint : hint_range(0.0, 1.0) = 0.06;
+uniform float shallow_tint : hint_range(0.0, 1.0) = 0.035;
 // 0.11 (R3-B, raised from 0.09 — Task 8 deliberately held this back until
 // the guard below was hardened: a stronger offset without the hardening
 // would have made the ghost worse, not just more visible).
@@ -69,7 +69,7 @@ uniform float refraction_strength : hint_range(0.0, 0.2) = 0.11;
 // Animated wobble on the refraction offset only (never the lighting normal):
 // the see-through picture visibly swims like the reference, while the
 // surface itself stays matte-smooth.
-uniform float distort_anim : hint_range(0.0, 0.2) = 0.05;
+uniform float distort_anim : hint_range(0.0, 0.2) = 0.10;
 // LOW frequency, HIGH amplitude, SLOW — the swells are the river's motion
 // (owner). Speed changes here must be mirrored in character.gd SWELL_SPEED.
 uniform float wave_height : hint_range(0.0, 1.5) = 1.0;
@@ -117,8 +117,11 @@ void vertex() {
 	// trains that used to add here are DELETED (see water_waves.gdshaderinc's
 	// own header); river motion now lives entirely in fragment()'s
 	// refraction-distortion advection, never in VERTEX.
-	float shore_fade = smoothstep(0.0, 4.0, shore_dist);
-	float h = water_wave_h(noise_tex, world_pos.xz, t) * wave_height * shore_fade;
+	// COLOR.r is baked from BOTH shore distance and actual static bed
+	// clearance. A broad shallow river can be far from shore, so distance
+	// alone cannot prevent the trough from exposing its bed.
+	float swell_scale = COLOR.r;
+	float h = water_wave_h(noise_tex, world_pos.xz, t) * wave_height * swell_scale;
 	VERTEX.y += h;
 	world_pos.y += h;
 }
@@ -150,12 +153,12 @@ void fragment() {
 	// pond spectrum everywhere; river motion lives entirely in the
 	// refraction-distortion advection below, which never touches NORMAL.
 	float ep = 2.0;
-	float shore_fade = smoothstep(0.0, 4.0, shore_dist);
+	float swell_scale = COLOR.r;
 	vec2 wp = world_pos.xz;
 	float h0p = water_wave_h(noise_tex, wp, t);
 	float hxp = water_wave_h(noise_tex, wp + vec2(ep, 0.0), t);
 	float hzp = water_wave_h(noise_tex, wp + vec2(0.0, ep), t);
-	vec2 grad = vec2(hxp - h0p, hzp - h0p) / ep * wave_height * shore_fade;
+	vec2 grad = vec2(hxp - h0p, hzp - h0p) / ep * wave_height * swell_scale;
 	n = normalize(n + vec3(-grad.x, 0.0, -grad.y));
 
 	// Interactive ripples: sample the wave-sim height gradient inside the

@@ -229,6 +229,114 @@ func test_descent_is_smooth_pool_to_pool() -> void:
 		"the descent is one smooth curve -- no second-difference step beyond the (openly relaxed near a sill knot) bound: %s" % str(offenders))
 
 
+## The profile test above does not prove what is rendered: WaterSkin samples
+## WaterField.level_at(), which reads the hydrostatic fill after its
+## lower-level-wins relaxation.  Pin the owner's visible chute directly and
+## compare that final field to the same trace's continuous dense descent.
+## This catches a smooth profile being re-quantized into flat shelves later
+## in the pipeline.
+func test_reported_rendered_field_follows_one_continuous_descent() -> void:
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, SITE_CHUNK)
+	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
+	var tr: RiverTrace = null
+	for cand: RiverTrace in ctx.rivers:
+		if cand.source_cell == Vector2i(0, -2):
+			tr = cand
+			break
+	assert_not_null(tr, "reported chute trace is present")
+	if tr == null:
+		return
+	var prof: Dictionary = WaterField.profile(tr, region)
+	assert_true(prof.descents.size() > 0, "reported chute has a dense descent")
+	if prof.descents.is_empty():
+		return
+	var descent: Dictionary = prof.descents[0]
+	var pts: PackedVector2Array = descent.pos
+	var target: PackedFloat32Array = descent.lvl
+	var actual := PackedFloat32Array()
+	var max_err := 0.0
+	var max_second := 0.0
+	var offenders: Array[String] = []
+	for i in pts.size():
+		var lvl: float = WaterField.level_at(ctx, pts[i])
+		actual.append(lvl)
+		var err: float = absf(lvl - target[i]) if lvl != -INF else INF
+		max_err = maxf(max_err, err)
+		if (lvl == -INF or err > 0.25) and offenders.size() < 16:
+			offenders.append("i=%d p=%s field=%.3f curve=%.3f err=%.3f" % [
+				i, pts[i], lvl, target[i], err])
+	for i in range(1, actual.size() - 1):
+		if actual[i - 1] == -INF or actual[i] == -INF or actual[i + 1] == -INF:
+			continue
+		var second: float = absf((actual[i] - actual[i + 1]) - (actual[i - 1] - actual[i]))
+		max_second = maxf(max_second, second)
+	print("MEAS reported rendered descent: samples=%d max_field_curve_err=%.3f max_second=%.3f offenders=%s" % [
+		pts.size(), max_err, max_second, str(offenders)])
+	assert_true(pts.size() >= 20, "the full long reported slope is sampled")
+	assert_true(offenders.is_empty(),
+		"the final rendered water field follows the one continuous descent curve: %s" % str(offenders))
+	assert_true(max_second < 0.50,
+		"the final rendered field has no angular grade step (max second difference %.3f)" % max_second)
+
+
+## Exact 2026-07-13 21:59 view: player (53.6,8.5,-1079.7), crosshair
+## (53.9,8.8,-1079.9).  Flat-yellow mesh rays found the upper water at
+## y=10.74 and the terminal pool at y=3.0, with the transition squeezed into
+## the asymmetric trace-to-pond overlap.  The earlier descent test above
+## follows source_cell (0,-2)'s first dense span and therefore cannot prove
+## the terminal join is smooth.  Falsify the visible final field directly on
+## a 1m lattice: wherever three consecutive samples are genuinely wet, both
+## the first difference (no near-vertical step) and second difference (no
+## angular grade break) must stay bounded in either world axis.
+func test_reported_terminal_chute_is_one_smooth_surface() -> void:
+	var chunk := Vector2i(0, -6)
+	var region = _region(SEED, chunk)
+	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
+	var max_first := 0.0
+	var max_second := 0.0
+	var first_at := Vector2.ZERO
+	var second_at := Vector2.ZERO
+	var checked := 0
+	for dir: Vector2 in [Vector2.RIGHT, Vector2.DOWN]:
+		for zi in range(-1100, -1069):
+			for xi in range(28, 65):
+				var p := Vector2(float(xi), float(zi))
+				var levels := PackedFloat32Array()
+				var deep := true
+				for k in 3:
+					var q: Vector2 = p + dir * float(k)
+					var level: float = WaterField.level_at(ctx, q)
+					var ground: float = TerrainSurfaceField.surface_y(region, q.x, q.y)
+					levels.append(level)
+					deep = deep and level != -INF and level - ground >= 0.20
+				if not deep:
+					continue
+				checked += 1
+				var first: float = maxf(absf(levels[1] - levels[0]),
+					absf(levels[2] - levels[1]))
+				var second: float = absf((levels[2] - levels[1]) -
+					(levels[1] - levels[0]))
+				if first > max_first:
+					max_first = first
+					first_at = p
+				if second > max_second:
+					max_second = second
+					second_at = p
+	print("MEAS exact terminal chute: checked=%d max_first=%.3f at %s max_second=%.3f at %s" % [
+		checked, max_first, first_at, max_second, second_at])
+	for z in [-1092.0, -1086.0, -1080.0, -1074.0]:
+		var q := Vector2(36.0, z)
+		print("MEAS exact terminal chute lattice p=%s fill=%.3f channel=%.3f ground=%.3f" % [
+			q, WaterField.level_at(ctx, q), WaterField._channel_membership_level(ctx, q),
+			TerrainSurfaceField.surface_y(region, q.x, q.y)])
+	assert_true(checked > 100, "the exact chute window exercises a substantial wet surface")
+	assert_true(max_first < 0.75,
+		"the terminal river-to-pool join has no one-metre cliff (%.3fm at %s)" % [max_first, first_at])
+	assert_true(max_second < 0.35,
+		"the terminal river-to-pool join has no angular grade break (%.3fm at %s)" % [max_second, second_at])
+
+
 ## Closed-form peak second-difference of a smootherstep-eased segment of
 ## total `drop` over `n` _DESCENT_STEP substeps — an INDEPENDENT
 ## re-derivation (from the same public formula SlopeProfile.smootherstep
@@ -339,21 +447,18 @@ func test_level_continuous_without_region_keeps_old_jumps() -> void:
 		"the region-less fallback keeps the old instant-chase jumps by design")
 
 
-## steep_spans() on the real site: ZERO spans, matching H1 exactly (this
-## trace's rendered terrain never drops more than FALL_DROP_MIN in any 24m
-## window — the bed-quantization false positive the old fall_cuts had is
-## gone). This is the direct field-level echo of the new
-## test_no_steep_span_without_terrain_drop oracle below, pinned as its own
-## assertion so a regression here is caught even if that oracle's rect
-## happened to change.
-func test_steep_spans_empty_at_the_site() -> void:
+## The continuous segment carve removes the old uncarved gap beneath this
+## reported chute. Its rendered bed is now a continuous excavated reach, so
+## it must not be classified as a separate fall face. Genuine fall detection
+## remains covered by the hand-built 12m cliff immediately below.
+func test_reported_site_continuous_bathymetry_has_no_false_fall_span() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
 	var rect := Rect2(Vector2(0, -1152), Vector2(192, 192))
 	var spans: Array = WaterField.steep_spans(ctx, rect)
-	assert_eq(spans.size(), 0,
-		"H1: the site's rendered terrain never drops > FALL_DROP_MIN in any 24m window")
+	assert_true(spans.is_empty(),
+		"the reported continuous chute has no stale rendered-terrain fall span: %s" % str(spans))
 
 
 ## Non-degenerate steep_spans() integration test: a hand-built
@@ -830,11 +935,11 @@ func _free_edges_vi(verts: PackedVector3Array, idx: PackedInt32Array) -> Array:
 ## independent oracle-side check rather than trusting steep_spans' own
 ## internal bookkeeping — the whole point of an oracle is to verify the
 ## claim, not just restate it) and require it to exceed FALL_DROP_MIN. At
-## the site this is trivially green (zero spans — see
-## test_steep_spans_empty_at_the_site); its teeth are exercised by
-## test_steep_spans_finds_a_real_hand_built_cliff and the standalone
-## _steep_scan unit tests above, all of which independently confirm a
-## REPORTED span always corresponds to a REAL terrain drop.
+## the site this now checks the genuine 8m span pinned by
+## test_steep_spans_at_the_site_match_the_real_drop; its teeth are also
+## exercised by test_steep_spans_finds_a_real_hand_built_cliff and the
+## standalone _steep_scan unit tests above. Together they independently
+## confirm a REPORTED span always corresponds to a REAL terrain drop.
 func test_no_steep_span_without_terrain_drop() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -893,9 +998,12 @@ func test_no_steep_span_without_terrain_drop() -> void:
 ## sign function (the same wetness predicate WaterField.wet itself uses) so
 ## the crossing found is a genuine WATERLINE (level crosses ground), not just
 ## a level_at claim-radius boundary. At that crossing, the check is EITHER:
-##   (a) the WET side's own level closely tracks the ground right at the
-##       crossing (|level_at(wet sample) - surface_y(crossing)| <= 0.6) — an
-##       ordinary contour shore, water's edge rides the terrain it touches, OR
+##   (a) the bisected WET crossing's own level closely tracks the ground
+##       there (|level_at(crossing) - surface_y(crossing)| <= 0.6) — an
+##       ordinary contour shore, water's edge rides the terrain it touches.
+##       The original oracle accidentally used the coarse 1.5m lattice
+##       endpoint instead; that is deliberately still body water and can be
+##       deep even when the actual bisected edge has tapered to zero depth. OR
 ##   (b) a wall shore: the ground within 1.5m of the crossing (either side,
 ##       both axes, matching test_waterline_is_a_terrain_contour's own 8-point
 ##       wall-exemption ring) rises above the wet level — a vertical bank the
@@ -962,9 +1070,10 @@ func _walk_line_for_shore(ctx: Dictionary, region, coords: Array, cross: float, 
 			var wet_p: Vector2 = Vector2(wet_c, cross) if is_row else Vector2(cross, wet_c)
 			var cross_p: Vector2 = Vector2(cross_c, cross) if is_row else Vector2(cross, cross_c)
 			var wet_lvl: float = WaterField.level_at(ctx, wet_p)
+			var cross_lvl: float = WaterField.level_at(ctx, cross_p)
 			var g_cross: float = TerrainSurfaceField.surface_y(region, cross_p.x, cross_p.y)
-			if absf(wet_lvl - g_cross) <= 0.6:
-				pass   # (a) contour: the wet side's level tracks the ground here
+			if absf(cross_lvl - g_cross) <= 0.6:
+				pass   # (a) contour: the bisected edge level tracks ground here
 			else:
 				# (b) wall exemption: ground within 1.5m (either axis) of the
 				# crossing rises above the wet level — same 8-point ring
@@ -982,8 +1091,8 @@ func _walk_line_for_shore(ctx: Dictionary, region, coords: Array, cross: float, 
 				if not wall:
 					violations += 1
 					if offenders.size() < 5:
-						offenders.append("crossing=%s wet_lvl=%.2f ground_at_crossing=%.2f (no nearby wall)" % [
-							cross_p, wet_lvl, g_cross])
+						offenders.append("crossing=%s wet_p=%s wet_lvl=%.2f cross_lvl=%.2f ground_at_crossing=%.2f (no nearby wall)" % [
+							cross_p, wet_p, wet_lvl, cross_lvl, g_cross])
 		prev_wet = w
 		prev_c = c
 		have_prev = true
@@ -1315,5 +1424,3 @@ func _on_chunk_border_f(v: Vector3) -> bool:
 	var lx: float = fposmod(v.x, span)
 	var lz: float = fposmod(v.z, span)
 	return lx < 0.01 or lx > span - 0.01 or lz < 0.01 or lz > span - 0.01
-
-

@@ -42,9 +42,11 @@ churn suppression to hide the settling. **That socket engine is gone.** If you f
 referring to `TerrainGenerator`, `TerrainModule*`, sockets, `WaterRule`, `PositionIndex`,
 or generation "rules", they describe the retired system (see "Historical docs" below).
 
-Keep the pipeline pure: the plan, field, mesher, scatter, and dressing classes are plain
-`RefCounted` with **no scene-tree access**, which is what makes them headless-unit-testable.
-Only `FieldTerrainStreamer` touches the scene tree.
+Keep the worker pipeline pure: plan, field, mesher/scatter/dressing `compute*` methods return
+plain CPU-side data and are headless-unit-testable. Render/physics resources and nodes are
+created only by the explicit main-thread `commit*` adapters; only `FieldTerrainStreamer`
+attaches those nodes to the active scene tree. Never create `MeshInstance3D`, `MultiMesh`,
+`ArrayMesh`, collision shapes, or other server-backed resources in the streamer worker.
 
 ## Terrain pipeline (`scripts/terrain/`)
 
@@ -75,14 +77,18 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   `edge_profile`. Single-valued everywhere ⇒ sampled on a shared grid, adjacent cells/chunks
   share identical boundary vertices ⇒ **gap-free by construction**.
 - **`field/TerrainChunkMesher.gd`** — builds one chunk (8×8 cells = 192 m, sampled at 3 m).
-  Produces, as children of a chunk `Node3D`: `Surface` (walkable grass mesh, visually clipped
+  `compute_chunk()` produces CPU-side mesh arrays, collision faces, decoration transforms, and
+  cliff placement data on the worker; `commit_chunk()` turns that payload into the chunk
+  `Node3D` on the main thread. Its children are `Surface` (walkable grass mesh, visually clipped
   behind the cliff lips), a separate full-extent **collision** trimesh (the lip band stays
   walkable), `CliffFaces` (vertical **rock skirts** filling the gap under each flat cliff edge,
   double as wall collision), `Aprons` (ground continued under higher neighbours to seal recess
   slits), `Decorations` (foliage **batched into one `MultiMesh` per scene/mesh piece**, like the
-  dressing — `compute_decorations()` returns pure `Transform3D` data, `build_chunk` batches it),
+  dressing — `compute_decorations()` returns pure `Transform3D` data, the main-thread commit batches it),
   and `Cliffs` (the dressing). Quads are **pinned to their own cell** so cliff tops render flat
-  to their boundary; the vertical gap is filled by the skirt. The walkable collision sheet is a
+  to their boundary; the vertical gap is filled by the skirt. Classic inner-corner sheet points
+  tuck below the rounded piece; any part of that tuck exposed by a low camera uses the same rock
+  atlas texel as the wall, never bright grass. The walkable collision sheet is a
   raw `PackedVector3Array` fed to `ConcavePolygonShape3D.set_faces` (no `SurfaceTool`/trimesh
   cook). Much of this file is edge/lip/corner clip geometry — read the inline comments first.
 - **`field/CliffDressing.gd`** — hangs real **KayKit** rock-wall + beveled grass-lip + inner/
@@ -94,14 +100,14 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   no scene access). Density and tag mix come from biome fields in `Helper`.
 - **`field/FieldTerrainStreamer.gd`** — the only scene-tree node (`Node3D` in `world.tscn`,
   wired to the player). Builds field chunks within `CHUNK_RADIUS` of the player on **one
-  background worker thread** (the whole pipeline is scene-free `RefCounted`, so `build_chunk`
-  runs off-thread as-is and returns a detached `Node3D`); the main thread only **integrates**
-  finished chunks (`add_child`), `MAX_BUILD_PER_FRAME` per frame, nearest-first, evicting beyond
+  background worker thread**. The worker returns only arrays/transforms/sampler payloads; the
+  main thread **commits and integrates** them (`commit_chunk`, then `add_child`),
+  `MAX_BUILD_PER_FRAME` per frame, nearest-first, evicting beyond
   `KEEP_RADIUS`. The worker exclusively owns its `_plan`/`_water`/`_mesher` instances, so their
-  caches need no locks; the player's own chunk is still built **synchronously** when missing (on
-  separate `_sync` pipeline instances — same seed ⇒ identical output) so the player never falls
-  through unstreamed space, and the cold river-trace spike moves off the main thread with the
-  rest. Owns the `world_seed` (random per run) and the tuning exports: `HEIGHTFIELD_AMPLITUDE`,
+  caches need no locks. While the player's chunk is missing (spawn, teleport, or outrunning the
+  worker), the player is frozen until that chunk's payload is committed, so they never fall
+  through unstreamed space; the cold river-trace spike stays off the main thread. Owns the
+  `world_seed` (random per run) and the tuning exports: `HEIGHTFIELD_AMPLITUDE`,
   `HEIGHTFIELD_MAX_STOREYS`, `MAX_CLIFF_STEP` (1 = all slopes, 3 = cliffs up to 12 m).
 
 ## Shared fields & utilities (`scripts/core/`)
@@ -125,9 +131,16 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
 - **Water** (`scripts/terrain/water/`): a deterministic **river network carved into the
   heightfield** — `WaterPlan` (sources on a super-grid, downhill traces locked to the fall
   line on steep ground, terminal `PondStamp` bowls; carve applied inside
-  `HeightfieldPlan.raw_height`). Beds obey **containment** (`CONTAIN_DROP`): every bed is
+  `HeightfieldPlan.raw_height`). Channel carving projects each terrain sample onto the same
+  variable-width trace **segment capsule** used by `WaterField` (not isolated trace-point
+  discs), so bathymetry cannot leave uncarved 12m gaps beneath continuous rendered water.
+  Beds obey **containment** (`CONTAIN_DROP`): every bed is
   capped a full storey below the lowest flanking bank's natural storey, so channels always
-  quantize bounded by ground on both sides — never a sheet hanging off a hillside.
+  quantize bounded by ground on both sides — never a sheet hanging off a hillside. The
+  hydraulic trace bed and rendered bathymetry are intentionally separate: ordinary reaches
+  excavate another `CARVE_BED_EXTRA` below the trace bed so 4m storey quantization cannot
+  leave only centimetres of cover, while reaches whose trace-bed grade is already a fall face
+  keep the original shallow carve (never turn a vertical film into a deep swim volume).
   Pure data flows `WaterField → WaterContour → WaterSkin`, turned into nodes by
   `WaterSurfaceBuilder`; one shader renders it all:
   - `WaterField` — the continuous water surface as ONE height field `level_at(x,z)`, with
@@ -145,16 +158,30 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
     separately reports where the RENDERED terrain (not the level curve) drops more than
     `FALL_DROP_MIN` == 4m inside a 24m sliding window — purely a shader/mesh attribute bake,
     never geometry-forking. Static wetness beyond the channel/pond seeds themselves comes
-    from a **hydrostatic fill**: seeds placed in channels and ponds spread outward only
+    from a **hydrostatic fill**: river seeds are variable-width **segment capsules** whose
+    levels interpolate at each lattice point's own longitudinal projection (not overlapping
+    constant-level sample discs, which rebuilt terraces after the smooth profile); those
+    flowing-channel lattice values are authoritative against a lower downstream flood. Seeds
+    placed in channels and ponds spread outward only
     DOWNHILL-OR-LEVEL over connected ground sitting below the seed's own level (never
-    uphill), with the LOWER level winning wherever two spreads meet, rasterized on a 6m
-    world-space lattice with a 30m margin around each chunk — so the waterline follows a
-    real terrain contour instead of stopping at a fixed claim radius. Pure and deterministic
-    — no rendering, no nodes.
+    uphill), with the LOWER level winning wherever two spreads meet. Those flood labels decide
+    the deterministic **wet mask**, not the final flowing surface: five fixed Jacobi passes,
+    anchored by the continuous river profile, relax the wet labels across river/pond joins so a
+    lower flood cannot leave a one-cell sideways water cliff. The pass radius is 30m inside a
+    42m chunk margin, preserving bit-identical overlap between chunks. Everything is rasterized
+    on a 6m world-space lattice. Across a mixed wet/dry lattice
+    cell the field interpolates **signed depth**: dry corners contribute a small negative
+    depth, capped so a high bank never pulls the surface uphill. Water therefore thins to
+    zero depth on a contour inside the cell instead of ending as a square fill-grid edge —
+    the field source of the rounded/blob-like shoreline. Pure and deterministic — no
+    rendering, no nodes.
   - `WaterContour` — waterline → smooth, chunk-welded G1 polylines. Six-step pipeline:
     presence grid → per-edge crossing refinement → chain into polylines → two Chaikin
     passes + uniform 1.5m resample → clip to rect LAST → per-point level/normal/wall
-    attributes from the curve's own frame. Clipping LAST (after smoothing) is what makes
+    attributes from the curve's own frame. Wall detection probes the outward normal plus
+    ±45° corner guards, so a gradient that bisects two cliff faces cannot look through their
+    diagonal notch and misclassify the corner as a gentle blob shore; a 1–3-sample gap bracketed
+    by real walls is closed only when their normals form a turn. Clipping LAST (after smoothing) is what makes
     the chunk weld: two neighbouring chunks both smooth the SAME margin-grown polyline
     before either clips it, so they land on bit-identical border-crossing points. SADDLE
     cells (marching-squares' standard ambiguous case: two diagonally-opposite corners wet)
@@ -167,14 +194,32 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
     7; its own boundary was raw ~45-90° grid corners). Welds a 3m world-aligned interior
     lattice to a boundary strip that sits directly ON `WaterContour`'s curves (zip-stitched
     via nearest-curve ring ownership — narrow-channel safe), plus a **meniscus rim** that
-    curls the strip's own outer edge: it OVERSHOOTS into banks that genuinely rise within
-    reach of the waterline (water laps flush to the shore, never a gap) and BURIES itself
-    under drops (clamped to landing ground, so it can never float a film over a dip) — every
-    free edge is accounted for (a chunk border, or the rim's own buried outer row), so no
-    edge is ever left hanging in mid-air over the terrain. Per-vertex CUSTOM0 bakes `(s, d,
+    curls the strip's own outer edge. Rising banks receive a compact overshoot; a wall-flagged
+    point reaches the KayKit wall's true 1.5m recess (`TILE/2 - CliffDressing.PLACE`) only when
+    its own outward column confirms high ground there. Because the signed-depth contour can sit
+    short of the terrain boundary, a confirmed column first measures that missing contact distance,
+    then stays at water level through the 1.5m recess and another 0.3m behind the visible face before
+    curling down. Adjacent confirmed columns whose wall normals turn use the intersection of their
+    wall tangents as a bounded miter, so their outer edge follows the actual L-shaped cliff corner
+    instead of cutting it off with a diagonal chord. The visible surface therefore meets rounded
+    cliff corners flat instead of using the lower curl to fill them. That direct-contact
+    gate stops a flanking wall from stretching a genuinely unbounded edge into a skirt. Free/drop
+    edges instead form a finite rounded lobe: a +4cm crest followed by -6/-28/-55/-65cm rows over
+    only 0.56m. Every
+    free edge is accounted for (a chunk border, a bank-buried outer row, or that compact lobe),
+    so no zero-thickness plane ends sharply in open air. The first rim row also advances
+    outward (no vertical repair-skirt seam). Open contours may border several disconnected
+    interior-lattice rings where a narrow channel falls below the 3m grid; the boundary zipper
+    splits those into local components and partitions the contour among them instead of joining
+    them with non-local fan triangles. Remaining over-scale faces are adaptively subdivided, and
+    only tiny local closed surface holes are triangulated. Per-vertex CUSTOM0 bakes `(s, d,
     slope, shore_dist)` — arc length / signed cross-channel distance / continuous profile
     slope along the nearest river trace, plus shore distance — and vertex normals are real
     (heightfield-derived interior, rim-curl frame on the meniscus), not a blanket up vector.
+    `ARRAY_COLOR.r` bakes a swell-amplitude scale from BOTH shore distance and actual static
+    bed clearance; the shader and `WaterSampler.wave_scale_at()`/character buoyancy use the
+    same scale, so a swell trough can never uncover a shallow bed while the CPU float height
+    claims otherwise.
     `WaterSkin.build()` also returns `triggers`: one box per 24m wet tile, footprint from
     the mesh's own built vertices. r3 Task 12b RETIRED the whole-tile/sub-tile level-SPREAD
     suppression Tasks 7/9 had layered on top (`_tile_level_spread`,
@@ -186,11 +231,15 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
     `WaterSampler` snapshot of the water FIELD across the chunk (full wet footprint,
     shoreline band included; NaN only where the field itself says dry) backs every trigger
     for swim-depth queries.
-  `WaterSurfaceBuilder` is a thin adapter: `build_chunk` calls `WaterSkin.build`/`commit`
-  and emits one `Area3D` swim trigger per `triggers` entry (never more than one per tile —
+  `WaterSurfaceBuilder` is a thin adapter: worker-safe `compute_chunk` calls `WaterSkin.build`;
+  main-thread `commit_chunk` calls `WaterSkin.commit` and emits one `Area3D` swim trigger per
+  `triggers` entry (never more than one per tile —
   the steep gate above means a tile either has one trigger or none), each carrying
   `set_meta("sampler", sampler)` so a probe anywhere inside reads its exact water height
-  from that one shared, chunk-frozen sampler instead of a per-cell plane. It also still owns
+  from that one shared, chunk-frozen sampler instead of a per-cell plane. The sampler freezes
+  the field's native 6m fill lattice plus its terrain-height twin and applies the identical
+  signed-depth shoreline evaluation; do not resample levels through the 3m mesh grid, which
+  double-interpolates steep shorelines and can turn dry/wade probes into false swimming. It also still owns
   the shared `ShaderMaterial` and the river-trace `surface_profile`/`steepness_profile`
   helpers.
   `water_unified.gdshader` is the ONLY water shader and renders still, flowing, AND falling
@@ -206,10 +255,11 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   wave trains riding the CUSTOM0 flow frame) are DELETED — they aliased the 3m mesh lattice
   below Nyquist into a maze/moiré pattern the owner rejected. **ZERO albedo whitening
   anywhere** (the owner's hardest rule): no foam mask, no steep wash, no streak scroll, no
-  plunge whitening. Clarity comes from `sky_reflect` (0.5 → 0.3, r3 round-6): the higher
-  value washed a milky pale-sky sheen over the body at grazing angles and hid the bed; 0.3
-  lets the refracted, depth-tinted bed read through while keeping a soft SoS-style
-  reflection. Plus `WaterRippleSim` (SubViewport wave sim: swim wakes, entry splashes,
+  plunge whitening. The current clear-water budget is `clarity_depth=24`, `body_floor=0.04`,
+  `shallow_tint=0.035`, and `sky_reflect=0.18`: the refracted scene dominates ordinary river
+  depths while a restrained teal sky sheen remains at grazing angles. `distort_anim=0.10`
+  makes the two-phase downstream refraction readable without adding an albedo carrier. Plus
+  `WaterRippleSim` (SubViewport wave sim: swim wakes, entry splashes,
   ambient raindrop rings). Plunge mist (particle spray at fall landings) is currently
   unwired — a follow-up; the shared particle resources it needs are no longer warmed on
   startup. `tests/tools/water_review_spots.gd` emits F4 review teleports
@@ -287,6 +337,16 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
 
 - **Run the tests** (`godot-test`) and fix regressions before considering a change done. For
   anything visual, also open a relevant `tests/harness/` scene (or the game) and look.
+- **For a reported visual defect, use red-first TDD plus active falsification.** Pin the exact
+  seed/world coordinates and camera pose, write the smallest failing invariant before the fix,
+  then rerun it green. When an F3 screenshot supplies `player world` + `crosshair world`, use
+  `ReviewCam.solve_cam`/`ReviewCam.shoot`; never substitute a hand-authored camera transform.
+  Capture the same-angle before/after view and deliberately
+  try to prove the defect still exists: inspect alternate times/nearby angles, paired animation
+  frames, seams, and likely collateral regressions. Reject a change if the unit test passes but
+  the matched render exposes the original problem or a new artifact. Keep a deterministic
+  self-driving harness for recurring review sites; `tests/harness/water_reported_qa.tscn` is the
+  water example and accepts `-- --spot <name>` for a focused run.
 - If you rename/move a `class_name` script, run the `--import` step above.
 
 ## Historical docs (stale — do not follow as current)

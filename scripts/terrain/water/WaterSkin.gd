@@ -34,13 +34,14 @@
 #     and one edge on each polyline — no T-junction is possible by
 #     construction, because the interior grid's own quad triangulation never
 #     touches a boundary vertex directly; only the strip does.
-# MENISCUS RIM (Task 5, see _rim): three more rows per curve point, curling
+# MENISCUS RIM (Task 5, see _rim): five more rows per curve point, curling
 # OUTWARD (dry side) and DOWN from the strip's own curve vertex (reused as
-# row0) to a buried seal under the terrain. This is what heals the strip's
+# row0) into either a buried bank seal or a compact rounded free/drop edge.
+# This is what heals the strip's
 # own former free edge (the curve itself, Task 4's documented "no rim yet"
 # waterline) into interior geometry — the free-edge invariant TIGHTENS here:
-# only the rim's own buried outer row (row3) and true chunk borders may be
-# free edges from this task onward.
+# only true chunk borders or row5 (buried beneath a bank, or the bottom of a
+# finite 65cm free-edge lobe) may be free edges from this task onward.
 # FLOW FRAMES + REAL NORMALS (Task 6, see _flow_frame_at/_weld_vert): CUSTOM0
 # is rebaked from Task 4's (flow.x, shore, flow.y, steep) to (s, d, slope,
 # shore_dist) — continuous arc length/cross distance/profile slope along the
@@ -53,6 +54,11 @@
 # normals for verts that weld together (a parallel normal_accum array, summed
 # on every weld hit, normalized once at the end by _bake_normals) instead of
 # picking whichever call site happened to create the vertex first.
+# ARRAY_COLOR.r carries a depth-limited swell-amplitude scale.  The shader's
+# five-sine spectrum can trough by at most 1.34m, so shallow water scales its
+# geometric motion to retain a 2cm cover over the rendered bed.  This is
+# independent of river motion: downstream flow remains fragment-side
+# refraction advection, while only the pond-style vertical swell is limited.
 # TRIGGERS + SAMPLER (Task 7, see _triggers/WaterSampler.gd): build() now
 # returns a REAL `sampler` (a frozen WaterSampler snapshot of the water
 # FIELD across this chunk, baked on the interior lattice's own grid geometry
@@ -66,29 +72,13 @@
 # `triggers`/`sampler` directly and the old mesher (and the per-cell sampled
 # plane pair of metas it used to hang off each volume) is deleted outright;
 # see r3 Task 7's report for the removal.
-# UNIVERSAL SHORE OVERSHOOT + MENISCUS BULGE (r3 Task 14, round-5 addendum —
-# see _rim/_rising_flags): the owner's own repeated post-refactor complaint
-# ("water still not going all the way up to the edges of the terrain," a
-# visible slot between the sheet and the bank) traced to _rim's own
-# wall-only pinch, which PULLED rows 2-3 IN to +0.05·n̂ at the exact
-# waterline on a wall-flagged point instead of extending them OUT to meet
-# the rising face — the opposite of the pre-refactor film behaviour the
-# owner cited as better. Fixed two ways: (1) reach2/reach3 now OVERSHOOT to
-# RIM_RISE_REACH (0.40) wherever the bank genuinely RISES above the water
-# level within ~1m of the waterline — decided per point by _rising_flags
-# (the curve's own wall flag OR a dedicated ground probe), so an ordinary
-# sloped (non-wall) bank overshoots too, not just near-vertical faces; a
-# genuine drop-off (FALLING/level ground) keeps the old default reach
-# instead, deliberately — overshooting there would reintroduce the "film
-# floating over a drop" artifact run-1 already rejected (see
-# water-architecture memory's own "Rejected designs"). Row3 stays buried
-# exactly as before regardless of which reach row2/row3 chose — the
-# ground-relative min() clamp already makes it safe under any xz. (2)
-# row1/row2 gain a small positive BULGE above the water level L
-# (+0.04/+0.02, replacing the old -0.02/-0.18 dip) before curling down to
-# row3 — the surface-tension/blob read the owner liked, applied universally
-# (rising or not; a few cm of bulge does not reintroduce the drop-film
-# artifact the way a horizontal overshoot would).
+# SHORE CONTACT + FREE-EDGE BODY: ordinary rising banks use a compact
+# overshoot; a contour wall flag earns the 1.5m KayKit recess reach only when
+# that point's own outward column actually contacts high ground there. This
+# prevents a flanking wall from stretching an unbounded edge into a skirt.
+# A true drop instead keeps a compact 0.56m profile: 4cm crest, then rows at
+# -6cm, -28cm, -55cm, and -65cm. It reads as finite rounded substance rather than a
+# zero-thickness plane or a row teleported to the landing ground.
 class_name WaterSkin
 extends Object
 
@@ -153,25 +143,61 @@ const STEEP_UNSWIMMABLE := 0.45
 # --- Meniscus rim (Task 5, reshaped r3 Task 14 — see _rim's own docstring)
 # — per-point profile, local frame (outward normal n, level L, ground g):
 # row0 = the strip's own curve vertex (weld-reused, not a new position);
-# row1 = p, y=L+ROW1_BULGE (a hairline meniscus crest, now bulging slightly
-# ABOVE the water level instead of dipping below it — at the waterline itself,
-# where ground==level, so never over a drop); row2 = p + reach2*n,
-# y=min(L+ROW2_BULGE, g(p+reach2*n)-ROW2_GROUND_EPS) (the bulge, but CLAMPED
-# to always sit under its own landing ground — see the clamp note below);
-# row3 = p + reach3*n, y = min(L-ROW3_DROP, g-GROUND_BURY) (unchanged — "row3
-# buried as today" per r3 Task 14's own brief). reach2/reach3 default to
-# (ROW2_REACH, ROW3_REACH) over falling/level ground, and extend to RISE_REACH
-# wherever the bank genuinely RISES across the span the overshoot covers (r3
-# Task 14's universal shore-overshoot rule, which SUBSUMES the old wall-only
-# pinch — a wall is just the steepest case of "rising ground" — see _rim's own
-# docstring and _rising_flags).
+# row1 = p + 0.12n, y=L+0.04 (rounded crest, no vertical seam);
+# rows2..5 curl down through L-0.06, L-0.28, L-0.55, L-0.65. Their default
+# reaches are 0.30/0.48/0.52/0.56m. Rising banks extend to
+# 0.40/0.60/0.70/0.78m; confirmed recessed walls first measure the distance
+# from the signed-depth contour to the real terrain boundary, then continue a
+# further 1.5m through the recessed KayKit face.  Their level shelf extends
+# 0.30m behind that visible face before curling down. A point whose own 0.40m column
+# drops below L forcibly keeps the compact profile unless its own 1.50m
+# column really contacts the recessed wall.
 const RIM_ROW1_BULGE := 0.04
-const RIM_ROW2_BULGE := 0.02
-const RIM_ROW3_DROP := 0.30
-const RIM_ROW2_REACH := 0.35
-const RIM_ROW3_REACH := 0.55
+const RIM_ROW2_DROP := 0.06
+const RIM_ROW3_DROP := 0.28
+const RIM_ROW4_DROP := 0.55
+const RIM_ROW5_DROP := 0.65
+const RIM_ROW1_REACH := 0.12
+const RIM_ROW2_REACH := 0.30
+const RIM_ROW3_REACH := 0.48
+const RIM_ROW4_REACH := 0.52
+const RIM_ROW5_REACH := 0.56
 const RIM_RISE_REACH := 0.40
-const RIM_GROUND_BURY := 0.30
+const RIM_RISE_BURY_REACH := 0.60
+# KayKit's visible wall/lip line is 1.5m inside the high cell from its true
+# +/-12m terrain boundary. Wall shores therefore reach the measured terrain
+# contact first, then continue another 1.5m before they physically meet the
+# visible rock. Ordinary rising banks retain the compact blob profile above;
+# only WaterContour's independently-probed wall points use this.
+const RIM_WALL_REACH := WaterField.TILE * 0.5 - CliffDressing.PLACE
+const RIM_WALL_SHELF_BURY := 0.30
+const RIM_WALL_OUTER_BURY := 0.40
+# The waterline is a signed-depth contour interpolated on WaterField's 6m
+# lattice, so it does not necessarily sit on the terrain cell boundary.  A
+# fixed RIM_WALL_REACH therefore accounts for the KayKit recess but can omit
+# the additional contour-to-boundary distance.  Search only within the old
+# direct-contact gate (1.5m): this still rejects a merely flanking wall, while
+# measuring the missing distance for a wall genuinely in this point's own
+# outward column.
+const WALL_CONTACT_SCAN_STEP := 0.05
+const WALL_CONTACT_SCAN_MAX := RIM_WALL_REACH
+# At a convex wall turn, independently extruded columns form a diagonal chord
+# across the L-shaped contact and omit the corner.  Intersect their wall
+# tangents to form a proper miter, but reject pathologically distant
+# intersections. WaterField.FILL_STEP is the natural upper bound: no valid
+# signed-depth contour can retreat more than one source lattice cell from the
+# boundary it interpolates.
+const WALL_MITER_DOT_MAX := 0.8
+const WALL_MITER_LIMIT := WaterField.FILL_STEP
+const WALL_MITER_BURY := 0.10
+
+# The boundary zipper bridges a smooth 1.5m contour to a 3m interior
+# lattice.  Its old greedy walk could emit a single ~6-7m fan at a narrow
+# corner even though both chains were locally valid.  Such a face is large
+# enough for its interpolated normal/refraction to read as a separate water
+# polygon (the owner's cell (5,-49) screenshot).  Boundary faces are now
+# adaptively split back to the interior lattice's own maximum edge scale.
+const STRIP_EDGE_MAX := STEP * 1.41421356237 + 0.01
 # r3 Task 14 review fix (drop-misfire): "rising" is confirmed along the SPAN
 # the overshoot actually covers, sampled at the row's own landing distances —
 # NOT at a far 1m probe that can sit past a local dip the overshoot floats
@@ -180,13 +206,6 @@ const RIM_GROUND_BURY := 0.30
 # count as rising (an AND, replacing the review-flagged far-probe OR).
 const RISE_PROBE_NEAR := RIM_RISE_REACH * 0.5   # 0.20 — the near end of the covered span
 const RISE_MARGIN := 0.05      # clearance above L before a ground sample counts as a genuine rise (not float/interp noise on near-flat ground)
-# row2's belt-and-suspenders burial (r3 Task 14 review fix): even if the
-# rising gate ever misfires, row2's Y is clamped to sit at least this far
-# UNDER its own landing ground, so it can NEVER float above the terrain (the
-# "film over a drop" artifact this whole redesign exists to kill). Inactive
-# over a genuine rising bank, where the landing ground sits above the water
-# level anyway (ground - EPS > L + BULGE) — see _rim.
-const RIM_ROW2_GROUND_EPS := 0.02
 
 # --- Flow frames (Task 6) — brief's own CUSTOM0 = (s, d, slope, shore_dist):
 # s = arc length from source along the nearest river trace, d = signed
@@ -226,6 +245,9 @@ const JUNCTION_RADIUS := 12.0
 const SEG_TIE_BAND := 0.75
 const SHORE_DIST_MAX := 8.0
 const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp radius with slack — mirrors _nearest_curve_dist's own "radius=1 covers INSET=2.0 since BUCKET=3.0" derivation, scaled up (8.0/3.0 -> 3 cells, +1 slack for a query point sitting at its own cell's far edge)
+const SWELL_SHORE_FADE := 4.0
+const SWELL_TROUGH_BOUND := 1.34 # conservative abs-min of water_wave_h's five sine terms at wave_height=1
+const SWELL_BED_COVER := 0.02    # never let a trough uncover rendered terrain
 
 # --- Rim normals (controller addition) — curl-rotation angle per rim row,
 # about the curve tangent, sweeping from UP toward the curve's own outward
@@ -242,13 +264,13 @@ const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp
 # normally; only a near-vertical wall wants the flush-UP read. Expressed as
 # PI-based literals (not deg_to_rad calls) so they fold to true GDScript
 # constants.
-const RIM_NORMAL_ANGLE1 := PI / 18.0          # 10 deg — row1, hairline crest dip
+const RIM_NORMAL_ANGLE1 := PI / 18.0          # 10 deg — row1, short outward crest
 const RIM_NORMAL_ANGLE2 := PI * 2.0 / 9.0     # 40 deg — row2, the visible curl
 const RIM_NORMAL_ANGLE3 := PI * 13.0 / 36.0   # 65 deg — row3, buried seal (invisible; kept continuous, not visually tuned)
 
 
 ## build(water, chunk, region) -> {} when dry, else:
-##   arrays: Array           # Mesh.ARRAY_MAX arrays, indexed, welded (VERTEX/NORMAL/INDEX/CUSTOM0)
+##   arrays: Array           # Mesh.ARRAY_MAX arrays, indexed, welded (VERTEX/NORMAL/INDEX/CUSTOM0/COLOR)
 ##   triggers: Array[Dictionary]  # {rect: Rect2, top: float, bottom: float}
 ##   sampler: WaterSampler   # r3 Task 7: a frozen snapshot of the FIELD across this chunk
 ##                           # (full wet footprint, shoreline band included — see
@@ -290,17 +312,12 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	if lattice.kept.is_empty():
 		return {}
 	_interior_mesh(st, lattice)
-	# r3 Task 12c: each edge-ring point is assigned to its SINGLE nearest
-	# curve up front (see _assign_ring_owners) — do NOT let _boundary_strip
-	# re-derive per-curve capture independently (that let two curves within
-	# capture distance of EACH OTHER both claim the same ring points; see
-	# _assign_ring_owners' own docstring for the narrow sill-lip defect this
-	# fixes, r3-task-12b-report.md's "12c" section for the red->green trace).
 	lattice["ring_owner"] = _assign_ring_owners(lattice, curves)
 	for ci in curves.size():
 		var c: Dictionary = curves[ci]
 		_boundary_strip(st, lattice, c, ci)
 		_rim(st, c)
+	_seal_local_surface_holes(st)
 	if st.idx.is_empty():
 		return {}
 
@@ -309,7 +326,9 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	arrays[Mesh.ARRAY_VERTEX] = st.verts
 	arrays[Mesh.ARRAY_INDEX] = st.idx
 	arrays[Mesh.ARRAY_NORMAL] = _bake_normals(st)
-	arrays[Mesh.ARRAY_CUSTOM0] = _custom0(st)
+	var payload: Dictionary = _vertex_payload(st)
+	arrays[Mesh.ARRAY_CUSTOM0] = payload.custom0
+	arrays[Mesh.ARRAY_COLOR] = payload.colors
 
 	# Sampler bake: the FIELD across this chunk, on the lattice's own grid
 	# geometry (Task 7 review MEDIUM fix — the interior lattice itself insets
@@ -323,7 +342,7 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	# which is continuous, not vertex-snapped.
 	var flow: Dictionary = _flow_frame_grid(st, lattice.origin, STEP, lattice.nx, lattice.nz)
 	var sampler := WaterSampler.build(ctx, region, lattice.origin, STEP, lattice.nx, lattice.nz,
-		flow.s, flow.d, flow.slope)
+		flow.s, flow.d, flow.slope, flow.wave_scale)
 	return {"arrays": arrays, "triggers": _triggers(st), "sampler": sampler}
 
 
@@ -342,9 +361,11 @@ static func _flow_frame_grid(st: Dictionary, origin: Vector2, step: float, nx: i
 	var s := PackedFloat32Array()
 	var d := PackedFloat32Array()
 	var slope := PackedFloat32Array()
+	var wave_scale := PackedFloat32Array()
 	s.resize(nx * nz)
 	d.resize(nx * nz)
 	slope.resize(nx * nz)
+	wave_scale.resize(nx * nz)
 	for j in nz:
 		for i in nx:
 			var p: Vector2 = origin + Vector2(i, j) * step
@@ -353,7 +374,9 @@ static func _flow_frame_grid(st: Dictionary, origin: Vector2, step: float, nx: i
 			s[idx] = frame.s
 			d[idx] = frame.d
 			slope[idx] = frame.slope
-	return {"s": s, "d": d, "slope": slope}
+			var lvl: float = WaterField.level_at(st.ctx, p)
+			wave_scale[idx] = _swell_scale(st, p, lvl, frame.shore_dist) if lvl != -INF else 0.0
+	return {"s": s, "d": d, "slope": slope, "wave_scale": wave_scale}
 
 
 ## Per-vertex CUSTOM0 = (s, d, slope, shore_dist) — Task 6's flow-frame bake,
@@ -376,9 +399,11 @@ static func _flow_frame_grid(st: Dictionary, origin: Vector2, step: float, nx: i
 ## normally, since it is a shore-proximity signal independent of river/pond
 ## mode. See _flow_frame_at for the full per-vertex derivation, including
 ## junction blending where two traces both lie within JUNCTION_RADIUS=12m.
-static func _custom0(st: Dictionary) -> PackedFloat32Array:
+static func _vertex_payload(st: Dictionary) -> Dictionary:
 	var cust := PackedFloat32Array()
+	var colors := PackedColorArray()
 	cust.resize(st.verts.size() * 4)
+	colors.resize(st.verts.size())
 	for vi in st.verts.size():
 		var v: Vector3 = st.verts[vi]
 		var p := Vector2(v.x, v.z)
@@ -387,7 +412,24 @@ static func _custom0(st: Dictionary) -> PackedFloat32Array:
 		cust[vi * 4 + 1] = frame.d
 		cust[vi * 4 + 2] = frame.slope
 		cust[vi * 4 + 3] = frame.shore_dist
-	return cust
+		var scale: float = _swell_scale(st, p, v.y, frame.shore_dist)
+		colors[vi] = Color(scale, 1.0, 1.0, 1.0)
+	return {"custom0": cust, "colors": colors}
+
+
+## Geometric swell amplitude at one surface sample.  Shore distance still
+## kills bobbing at the meniscus, but it is not a depth proxy: a broad river
+## shelf can sit far from every shore and remain only centimetres deep.  The
+## second gate therefore derives directly from static water-to-bed clearance.
+## Multiplying the spectrum's conservative trough bound by this scale can
+## never lower the vertex past ground+SWELL_BED_COVER.
+static func _swell_scale(st: Dictionary, p: Vector2, water_y: float, shore_dist: float) -> float:
+	var shore_t: float = clampf(shore_dist / SWELL_SHORE_FADE, 0.0, 1.0)
+	var shore_scale: float = shore_t * shore_t * (3.0 - 2.0 * shore_t)
+	var ground: float = TerrainSurfaceField.surface_y(st.region, p.x, p.y)
+	var room: float = maxf(0.0, water_y - ground - SWELL_BED_COVER)
+	var depth_scale: float = clampf(room / SWELL_TROUGH_BOUND, 0.0, 1.0)
+	return minf(shore_scale, depth_scale)
 
 
 ## Cumulative arc length per trace sample (PackedFloat32Array, same size as
@@ -686,7 +728,8 @@ static func _bake_normals(st: Dictionary) -> PackedVector3Array:
 
 
 ## Assembles the committed ArrayMesh from build()'s own `arrays` — CUSTOM0 as
-## RGBA float, the one shared sheet material's own expected surface format.
+## RGBA float plus COLOR.r's depth-limited swell scale, the one shared sheet
+## material's expected surface format.
 static func commit(arrays: Array) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {},
@@ -870,6 +913,12 @@ static func _interior_mesh(st: Dictionary, lattice: Dictionary) -> void:
 	lattice["vi"] = vi
 
 
+static func _point_on_rect_border(p: Vector2, rect: Rect2) -> bool:
+	var hi: Vector2 = rect.position + rect.size
+	return absf(p.x - rect.position.x) < 0.02 or absf(p.x - hi.x) < 0.02 \
+		or absf(p.y - rect.position.y) < 0.02 or absf(p.y - hi.y) < 0.02
+
+
 ## Orders a scattered set of ring points into a "necklace" by greedy nearest-
 ## neighbour chaining in plain 2D space, starting from whichever ring point
 ## sits closest to the curve's own first point (so the chain's own start end
@@ -961,20 +1010,15 @@ static func _order_ring_by_nn_chain(ring_pts: Array, start_ref: Vector2) -> Arra
 	return order
 
 
-## r3 Task 12c: assigns every edge-ring lattice point to the SINGLE curve it
-## actually borders — its nearest curve by polyline distance (_dist_point_to_
-## curve), gated at `capture`. Capture radius is DERIVED from the worst-case
-## edge-ring geometry, not tuned: a kept point lands on the edge ring because
-## one of its quad neighbours was dropped, and an inset-dropped neighbour
-## sits < INSET (2.0m) from the curve; the kept point itself sits at most one
-## lattice diagonal (STEP*sqrt(2) ~= 4.24m) from that neighbour, so a genuine
-## edge-ring point can legitimately lie up to INSET + STEP*sqrt(2) ~= 6.24m
-## from the curve it borders. The first version used STEP*1.8 = 5.4m
-## ("comfortably catches the adjacent lattice row") and was caught
-## under-derived on the isolated-pond chunk (-4,-18): a real edge-ring point
-## at 5.625m (diagonally inside the pond bowl's corner) missed capture,
-## stranding 3 free edges on interior lattice points (r3-task-4-report.md).
-## INSET + STEP*1.5 = 6.5m covers the true bound with slack.
+## Assigns every INTERNAL edge-ring lattice point to the SINGLE contour it
+## actually borders: its nearest curve by polyline distance (_dist_point_to_
+## curve). There is deliberately no distance cutoff. `edge_ring` contains
+## only kept points beside a missing IN-RANGE quad, so every entry is by
+## construction part of a real wet/dry boundary represented by one of this
+## chunk's contours. A former 6.5m capture cutoff assumed the raw marching
+## contour could never move farther from the lattice; the later smoothing
+## and blob-like meniscus make that assumption false at long concave descents,
+## leaving genuine ring points unowned and exposed as free interior edges.
 ##
 ## WHY NEAREST-ONLY (not "every curve within capture", the original rule):
 ## a chunk can carry multiple curves, and this file's own prior version of
@@ -1003,7 +1047,6 @@ static func _order_ring_by_nn_chain(ring_pts: Array, start_ref: Vector2) -> Arra
 ## corner with no separate fix needed. Assigned ONCE per build (not
 ## per-curve) since ownership doesn't depend on which curve is asking.
 static func _assign_ring_owners(lattice: Dictionary, curves: Array) -> Dictionary:
-	var capture: float = INSET + STEP * 1.5
 	var owners: Dictionary = {}
 	for ij: Vector2i in lattice.edge_ring:
 		var e: Dictionary = lattice.kept[ij]
@@ -1014,7 +1057,7 @@ static func _assign_ring_owners(lattice: Dictionary, curves: Array) -> Dictionar
 			if d < best_d:
 				best_d = d
 				best_ci = ci
-		if best_ci >= 0 and best_d <= capture:
+		if best_ci >= 0:
 			owners[ij] = best_ci
 	return owners
 
@@ -1069,127 +1112,170 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary, 
 	if ring_pts.is_empty():
 		return   # nothing nearby yet kept (e.g. a sliver curve with no adjacent interior) — no strip to build
 	var order: Array = _order_ring_by_nn_chain(ring_pts, pts[0])
+	if c.closed:
+		var closed_ring := _weld_ring_order(st, ring_pts, ring_y, order)
+		_zip_strip(st, curve_vi, closed_ring, true)
+		return
+
+	# One open contour can border several disconnected kept-lattice rings
+	# where the channel narrows below the 3m interior grid. The old zipper
+	# forced those rings into one necklace, creating 53m triangles across dry
+	# terrain at the reported descent. Split both at spatial gaps and at jumps
+	# between distant portions of a self-approaching contour, then partition
+	# the contour among the resulting local runs.
+	var runs: Array = _open_ring_runs(ring_pts, order, pts)
+	if runs.is_empty():
+		return
+	runs.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.lo < b.lo)
+	var boundaries: Array[int] = [0]
+	for ri in runs.size() - 1:
+		var cut: int = clampi(roundi((float(runs[ri].hi) + float(runs[ri + 1].lo)) * 0.5),
+			boundaries[-1], n - 1)
+		boundaries.append(cut)
+	boundaries.append(n - 1)
+
+	var previous_ring_end := -1
+	for ri in runs.size():
+		var run: Dictionary = runs[ri]
+		var run_order: Array = run.order
+		if _nearest_curve_vertex(pts, ring_pts[run_order[0]]) \
+			> _nearest_curve_vertex(pts, ring_pts[run_order[-1]]):
+			run_order.reverse()
+		var ring_vi: PackedInt32Array = _weld_ring_order(st, ring_pts, ring_y, run_order)
+		var start_i: int = boundaries[ri]
+		var end_i: int = boundaries[ri + 1]
+		if end_i <= start_i:
+			end_i = mini(n - 1, start_i + 1)
+		var local_curve := PackedInt32Array()
+		for curve_i in range(start_i, end_i + 1):
+			local_curve.append(curve_vi[curve_i])
+		_zip_strip(st, local_curve, ring_vi, false)
+		if previous_ring_end >= 0:
+			# Both neighbouring strips share curve_vi[start_i]. This cap heals
+			# their two local connector edges and the lattice edge between runs.
+			_emit_strip_tri(st, curve_vi[start_i], previous_ring_end, ring_vi[0])
+		previous_ring_end = ring_vi[-1]
+
+
+static func _weld_ring_order(st: Dictionary, ring_pts: Array, ring_y: Array,
+		order: Array) -> PackedInt32Array:
 	var ring_vi := PackedInt32Array()
 	ring_vi.resize(order.size())
 	for k in order.size():
 		var oi: int = order[k]
 		var nrm: Vector3 = _interior_normal(st, ring_pts[oi], ring_y[oi])
 		ring_vi[k] = _weld_vert(st, ring_pts[oi], ring_y[oi], nrm)
+	return ring_vi
 
-	_zip_strip(st, curve_vi, ring_vi, c.closed)
+
+static func _open_ring_runs(ring_pts: Array, order: Array,
+		pts: PackedVector2Array) -> Array:
+	const CURVE_INDEX_JUMP := 8
+	var runs: Array = []
+	var current: Array[int] = [order[0]]
+	var previous_curve_i: int = _nearest_curve_vertex(pts, ring_pts[order[0]])
+	for k in range(1, order.size()):
+		var oi: int = order[k]
+		var previous_oi: int = order[k - 1]
+		var curve_i: int = _nearest_curve_vertex(pts, ring_pts[oi])
+		var spatial_gap: float = ring_pts[previous_oi].distance_to(ring_pts[oi])
+		if spatial_gap > STRIP_EDGE_MAX or absi(curve_i - previous_curve_i) > CURVE_INDEX_JUMP:
+			runs.append(_ring_run(current, ring_pts, pts))
+			current = [oi]
+		else:
+			current.append(oi)
+		previous_curve_i = curve_i
+	if not current.is_empty():
+		runs.append(_ring_run(current, ring_pts, pts))
+	return runs
 
 
-## Meniscus rim (Task 5, reshaped r3 Task 14): three new vertex rows per
-## curve point, curling the water's visible edge OUTWARD (toward the dry
-## bank, +normal) from the boundary strip's own curve vertex, then diving
-## under the terrain so the sheet always seals against the ground with no
-## gap — per-point profile (local frame: outward normal n, level L, ground
-## g):
-##   row0 = the EXISTING strip curve vertex (p, L) itself — reused by weld
-##          key, NOT a new vertex. This is the load-bearing seam: row0 must
-##          resolve to the exact same index _boundary_strip already put in
-##          curve_vi (guaranteed by _weld_vert's own key = quantized (x,z,y),
-##          identical inputs here (pts[i], levels[i]) to what _boundary_strip
-##          just used two lines above the call site in build()). Without this
-##          reuse, Task 4's own documented free edge (the curve itself — "no
-##          rim yet, the boundary strip's own outer edge IS the waterline's
-##          free edge") never gets covered by the row0-row1 band below, and
-##          would stay free forever instead of healing into interior mesh —
-##          this is the concrete mechanism behind this task's tightened
-##          free-edge invariant (see test_free_edges_only_buried_rim_or_border).
-##   row1 = p,             y = L + RIM_ROW1_BULGE (r3 Task 14: the meniscus
-##          crest now bulges slightly ABOVE the water's own edge — same xz as
-##          row0, so this first "riser" is a near-vertical hairline lip —
-##          before the surface curls away and down; was a small DIP below L
-##          pre-Task-14, the owner's own "surface-tension/blob" note asked
-##          for the bulge instead)
-##   row2 = p + reach2*n,  y = min(L + RIM_ROW2_BULGE,
-##          g(p+reach2*n) - RIM_ROW2_GROUND_EPS) — the meniscus bulge, but
-##          CLAMPED to always sit under its own landing ground (r3 Task 14
-##          review fix). The unclamped bulge (L+0.02) floats above the terrain
-##          wherever row2 lands over ground BELOW the water level — a falling
-##          shore, or a rising gate that misfires — which is exactly the "film
-##          over a drop" artifact this redesign exists to kill. The clamp is
-##          inactive over a genuine rising bank (there g(p+reach2*n) sits above
-##          L, so g-EPS > L+BULGE and the min picks the bulge); over a drop it
-##          forces burial instead — the safe direction either way. This is the
-##          per-vertex hard guarantee that backs up the _rising_flags gate; see
-##          this function's own "RISING vs FALLING" paragraph.
-##   row3 = p + reach3*n,  y = min(L - RIM_ROW3_DROP, g(p + reach3*n) -
-##          RIM_GROUND_BURY) (buried seal, UNCHANGED by r3 Task 14 — "row3
-##          buried as today" is the brief's own words — ALWAYS >=0.30m under
-##          both the water level AND the actual ground sample at its own xz,
-##          so it can never pop back above either regardless of local terrain
-##          undulation, whatever reach3 the rising/falling blend below chose)
-## reach2/reach3 default to (RIM_ROW2_REACH, RIM_ROW3_REACH) over FALLING or
-## level ground, and OVERSHOOT all the way to RIM_RISE_REACH wherever the
-## bank genuinely RISES across the span the overshoot covers (r3 Task 14,
-## round-5 addendum — the owner's own repeated complaint, "water still not
-## going all the way up to the edges of the terrain": a wall-flagged point
-## used to PINCH reach2/reach3 IN to a flush RIM_WALL_PINCH, leaving a visible
-## slot between the rim's own pinched-in outer edge and the actual rising face
-## beyond it; the fix instead pushes the outer rows OUT, past the waterline
-## and into the bank, relying on the depth buffer to clip the overshoot
-## invisibly against whatever solid ground/wall geometry occupies that space —
-## "water meets the bank flush").
-## RISING vs FALLING is decided per point by _rising_flags — the curve's OWN
-## wall flag (already a strict, if narrow, rising signal: WALL_SLOPE=1.2
-## comfortably implies a rise) OR'd with a ground probe ACROSS THE COVERED
-## SPAN (r3 Task 14 review fix: sampled at the row's own landing distances
-## RISE_PROBE_NEAR and RIM_RISE_REACH, both of which must clear the level — a
-## far 1m probe alone could authorize the overshoot while ground dipped UNDER
-## row2's actual 0.40m landing, floating a film over that local dip). So an
-## ordinary sloped, non-wall bank overshoots too, not just near-vertical faces
-## — this SUBSUMES the pre-Task-14 wall-only pinch mechanism (a wall is just
-## the steepest case of "rising ground"; there is no more separate
-## RIM_WALL_PINCH constant). Over FALLING or level ground (a real drop-off,
-## not a rising bank) reach2/reach3 keep the OLD default AND row2's own Y is
-## clamped under its landing ground (see row2 above) — overshooting there
-## would extend the sheet's outer edge out over open air past the true shore,
-## reintroducing the "film floating over a drop" artifact run-1 already
-## rejected (see the water-architecture memory's own "Rejected designs").
-## Both `wall` (angle pinch, see the Rim-normals constants block above) and
-## `rise` (reach blend, this docstring) are SMOOTHED across neighbouring
-## curve points (_smoothed_flags, a 3-tap tent filter) rather than switched
-## hard per point: a lone flag flapping true/false between adjacent
-## ~1.5m-spaced curve points (a real occurrence near either threshold) would
-## otherwise zigzag the rim's outer silhouette in and out every segment; the
-## smoothed blend eases the transition over roughly one segment either side
-## instead of jumping.
-## Triangulation: 3 "bands" (row0-row1, row1-row2, row2-row3), each a
-## standard quad split per curve segment — same [a,d,cc],[a,cc,b] corner
-## convention _interior_mesh's own quad split uses (a=row_k[i], b=row_k[j],
-## d=row_{k+1}[i], cc=row_{k+1}[j]) — through _emit_tri, so winding stays
-## whatever consistent rule the rest of this file already applies; this
-## function never picks triangle order by hand. Closed curves wrap (j wraps
-## to 0 at the last segment); open curves stop one segment short and instead
-## get an end cap at each of their two exposed ends (_rim_end_cap) — without
-## it the three riser edges at an open end (row0-row1, row1-row2, row2-row3)
-## are each used by exactly one band triangle (no i-1 column to share the
-## other side), a real free-edge defect caught directly on SITE_CHUNK's own
-## three open (border-to-border) curves before the cap existed (this task's
-## report has the transcript).
+static func _ring_run(order: Array[int], ring_pts: Array,
+		pts: PackedVector2Array) -> Dictionary:
+	var lo := pts.size() - 1
+	var hi := 0
+	for oi in order:
+		var curve_i: int = _nearest_curve_vertex(pts, ring_pts[oi])
+		lo = mini(lo, curve_i)
+		hi = maxi(hi, curve_i)
+	return {"order": order, "lo": lo, "hi": hi}
+
+
+static func _nearest_curve_vertex(pts: PackedVector2Array, p: Vector2) -> int:
+	var best_i := 0
+	var best_d := INF
+	for i in pts.size():
+		var d: float = pts[i].distance_squared_to(p)
+		if d < best_d:
+			best_d = d
+			best_i = i
+	return best_i
+
+
+## Five-band meniscus profile in the contour's outward-normal frame:
+##   row0: (p, L), weld-reusing the boundary strip's curve vertex;
+##   row1: +0.12m, L+0.04m — a short crest that removes the old vertical seam;
+##   row2: default +0.30m, L-0.06m;
+##   row3: default +0.48m, L-0.28m;
+##   row4: default +0.52m, L-0.55m;
+##   row5: default +0.56m, L-0.65m.
+##
+## Rising banks extend rows2..5 to 0.40/0.60/0.70/0.78m. A contour wall flag is
+## only allowed to extend them through the KayKit face when the point's own
+## outward column finds high ground within 1.5m.  The measured contact distance
+## is added to the KayKit face's own 1.5m recess: the signed-depth waterline can
+## sit between the terrain boundary and the contour, so a fixed 1.5m extrusion
+## alone is not enough. At confirmed walls rows2..4 remain a water-level shelf
+## through the visible face and another 0.30m behind it; the downward curl starts
+## only between row4 and row5.  When adjacent wall normals turn, their outer
+## tangent lines are intersected and the level shelf is mitred through that
+## point instead of cutting the corner off with a diagonal chord. This keeps
+## rounded cliff turns visibly full instead of meeting the wall with the bottom
+## of a sloping meniscus. It also avoids letting an off-axis wall stretch a
+## genuine free edge into a skirt. Smoothing the reach flags avoids sawteeth, but a
+## local drop at 0.40m overrides that smoothing unless the direct wall-contact
+## test succeeded. Free/drop edges consequently keep the compact four-step
+## curl; bank edges disappear below terrain. Five quad bands connect adjacent
+## columns, and open contours receive a four-triangle six-vertex end cap.
 static func _rim(st: Dictionary, c: Dictionary) -> void:
 	var pts: PackedVector2Array = c.pts
 	var levels: PackedFloat32Array = c.levels
 	var normals: PackedVector2Array = c.normals
-	var wall: PackedByteArray = c.wall
 	var n: int = pts.size()
 	if n < 2:
 		return
 	var closed: bool = c.closed
-	var wf: PackedFloat32Array = _smoothed_flags(wall, closed)
-	var rise: PackedByteArray = _rising_flags(st, c)
+	var contacts: Dictionary = _wall_contacts(st, c)
+	var wall_contact: PackedByteArray = contacts.flags
+	var wall_face_reach: PackedFloat32Array = contacts.face_reach
+	var wf: PackedFloat32Array = _smoothed_flags(wall_contact, closed)
+	var rise: PackedByteArray = _rising_flags(st, c, wall_contact)
 	var rf: PackedFloat32Array = _smoothed_flags(rise, closed)
+	# A wall/rise flag is deliberately smoothed along the contour so the bank
+	# contact silhouette does not sawtooth.  That blend must stop at a genuine
+	# free edge, however: otherwise one adjacent wall column can stretch the
+	# drop column toward the cliff and recreate the sharp skirt this rim exists
+	# to remove.  The point's own outward span is authoritative for a drop.
+	for i in n:
+		var drop_probe: Vector2 = pts[i] + normals[i] * RIM_RISE_REACH
+		var drop_ground: float = TerrainSurfaceField.surface_y(
+			st.region, drop_probe.x, drop_probe.y)
+		if drop_ground < levels[i] - RISE_MARGIN and wall_contact[i] == 0:
+			wf[i] = 0.0
+			rf[i] = 0.0
 
 	var row0 := PackedInt32Array()
 	var row1 := PackedInt32Array()
 	var row2 := PackedInt32Array()
 	var row3 := PackedInt32Array()
+	var row4 := PackedInt32Array()
+	var row5 := PackedInt32Array()
 	row0.resize(n)
 	row1.resize(n)
 	row2.resize(n)
 	row3.resize(n)
+	row4.resize(n)
+	row5.resize(n)
 	for i in n:
 		var p: Vector2 = pts[i]
 		var nrm: Vector2 = normals[i]
@@ -1198,30 +1284,68 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		# wall points by the SAME wf[i] blend — see _curl_normal's own
 		# docstring. Deliberately wall-only (not rf[i]): see the Rim-normals
 		# constants block's own r3 Task 14 note.
-		var ang1: float = lerpf(RIM_NORMAL_ANGLE1, 0.0, wf[i])
-		var ang2: float = lerpf(RIM_NORMAL_ANGLE2, 0.0, wf[i])
-		var ang3: float = lerpf(RIM_NORMAL_ANGLE3, 0.0, wf[i])
+		# A direct contact is authoritative at full strength. `wf` may extend a
+		# fractional transition into neighbouring columns, but filtering must
+		# never shorten a point that independently proved it hits the wall.
+		var wall_strength: float = maxf(wf[i], float(wall_contact[i]))
+		var ang1: float = lerpf(RIM_NORMAL_ANGLE1, 0.0, wall_strength)
+		var ang2: float = lerpf(RIM_NORMAL_ANGLE2, 0.0, wall_strength)
+		var ang3: float = lerpf(RIM_NORMAL_ANGLE3, 0.0, wall_strength)
+		var ang4: float = lerpf(PI * 4.0 / 9.0, 0.0, wall_strength)
 		row0[i] = _weld_vert(st, p, lvl, Vector3.UP)
-		row1[i] = _weld_vert(st, p, lvl + RIM_ROW1_BULGE, _curl_normal(nrm, ang1))
+		# Start moving outward immediately.  The old row1 reused p.xz and only
+		# changed Y, which made the meniscus begin with a literal vertical
+		# repair seam.  A short outward crest reads as one rounded body instead.
+		var p1: Vector2 = p + nrm * RIM_ROW1_REACH
+		row1[i] = _weld_vert(st, p1, lvl + RIM_ROW1_BULGE, _curl_normal(nrm, ang1))
 		# reach2/reach3: the default (falling/level ground) reach, OR
 		# overshoot to RIM_RISE_REACH wherever rf[i] says the bank RISES — r3
 		# Task 14's universal shore-overshoot; see _rising_flags and this
 		# function's own docstring.
 		var reach2: float = lerpf(RIM_ROW2_REACH, RIM_RISE_REACH, rf[i])
-		var reach3: float = lerpf(RIM_ROW3_REACH, RIM_RISE_REACH, rf[i])
+		# The buried row must remain farther out than the visible row.  The old
+		# rising-bank path collapsed both to 0.40m, creating a second vertical
+		# skirt edge precisely where the water met a cliff face.
+		var reach3: float = lerpf(RIM_ROW3_REACH, RIM_RISE_BURY_REACH, rf[i])
+		var reach4: float = lerpf(RIM_ROW4_REACH,
+			RIM_RISE_BURY_REACH + 0.10, rf[i])
+		var reach5: float = lerpf(RIM_ROW5_REACH,
+			RIM_RISE_BURY_REACH + 0.18, rf[i])
+		# `wf` is smoothed to keep neighbouring wall/non-wall columns from
+		# forming a sawtooth silhouette.  It upgrades only a true wall reach;
+		# rf's ordinary rising-bank path stays at 0.40/0.60m.
+		var face_reach: float = wall_face_reach[i] \
+			if wall_face_reach[i] >= 0.0 else RIM_WALL_REACH
+		reach2 = lerpf(reach2, face_reach, wall_strength)
+		# At a confirmed wall row3 and row4 share the same XZ landing behind
+		# the rock and both belong to the level shelf. Giving the lower contact
+		# row an extra 10cm of horizontal reach used the curl, rather than the
+		# shelf, to fill the outside of rounded corners.
+		reach3 = lerpf(reach3, face_reach + RIM_WALL_SHELF_BURY, wall_strength)
+		reach4 = lerpf(reach4, face_reach + RIM_WALL_SHELF_BURY, wall_strength)
+		reach5 = lerpf(reach5, face_reach + RIM_WALL_OUTER_BURY, wall_strength)
 		var p2: Vector2 = p + nrm * reach2
-		# Belt-and-suspenders (r3 Task 14 review fix): the bulge, but never
-		# above its own landing ground — over a rising bank g2 sits above the
-		# level so the min picks the bulge (clamp inactive); over a drop or a
-		# misfired gate it forces burial (no film). See the constants block's
-		# RIM_ROW2_GROUND_EPS note and this function's own row2 docstring.
-		var g2: float = TerrainSurfaceField.surface_y(st.region, p2.x, p2.y)
-		var y2: float = minf(lvl + RIM_ROW2_BULGE, g2 - RIM_ROW2_GROUND_EPS)
+		# A genuine bank keeps the old under-ground landing.  A falling shore is
+		# deliberately different: row2 remains close to the surface and starts a
+		# compact rounded sidewall instead of teleporting to the landing ground.
+		# That short exposed curl is thickness, not a horizontal water film.
+		# A confirmed recessed wall needs a horizontal TOP contact sheet all the
+		# way through the visible face.  Extending XZ alone left row2/row3 at their
+		# free-edge drop heights, so the mesh technically reached the corner using
+		# only its lower curl while the visible surface dipped by ~0.5m.  Lift the
+		# three contact rows back to L with the same smoothed wall weight; row5
+		# turns down behind the face and seals the mesh.
+		var y2: float = lerpf(lvl - RIM_ROW2_DROP, lvl, wall_strength)
 		row2[i] = _weld_vert(st, p2, y2, _curl_normal(nrm, ang2))
 		var p3: Vector2 = p + nrm * reach3
-		var g3: float = TerrainSurfaceField.surface_y(st.region, p3.x, p3.y)
-		var y3: float = minf(lvl - RIM_ROW3_DROP, g3 - RIM_GROUND_BURY)
+		var y3: float = lerpf(lvl - RIM_ROW3_DROP, lvl, wall_strength)
 		row3[i] = _weld_vert(st, p3, y3, _curl_normal(nrm, ang3))
+		var p4: Vector2 = p + nrm * reach4
+		var y4: float = lerpf(lvl - RIM_ROW4_DROP, lvl, wall_strength)
+		row4[i] = _weld_vert(st, p4, y4, _curl_normal(nrm, ang4))
+		var p5: Vector2 = p + nrm * reach5
+		row5[i] = _weld_vert(st, p5, lvl - RIM_ROW5_DROP,
+			_curl_normal(nrm, PI * 4.0 / 9.0))
 
 	var lim: int = n if closed else n - 1
 	for i in lim:
@@ -1232,35 +1356,45 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		_emit_tri(st, row1[i], row2[j], row1[j])
 		_emit_tri(st, row2[i], row3[i], row3[j])
 		_emit_tri(st, row2[i], row3[j], row2[j])
+		var miter: Dictionary = _wall_turn_miter(
+			st, row4, normals, levels, wall_contact, i, j)
+		if miter.is_empty():
+			_emit_tri(st, row3[i], row4[i], row4[j])
+			_emit_tri(st, row3[i], row4[j], row3[j])
+			_emit_tri(st, row4[i], row5[i], row5[j])
+			_emit_tri(st, row4[i], row5[j], row4[j])
+		else:
+			# The ordinary row3->row4 band ends on the old diagonal chord.
+			# Add the missing level triangle out to the true L-corner, then
+			# route the buried curl around that same miter. These three faces
+			# deliberately share the unsplit row4 chord: recursively splitting
+			# each triangle independently can choose a different longest edge,
+			# producing T-junctions along the shared chord. The miter distance is
+			# already bounded below the reported non-local-face limit.
+			_emit_tri(st, row3[i], row4[i], row4[j])
+			_emit_tri(st, row3[i], row4[j], row3[j])
+			_emit_tri(st, row4[i], miter.top, row4[j])
+			_emit_tri(st, row4[i], row5[i], miter.buried)
+			_emit_tri(st, row4[i], miter.buried, miter.top)
+			_emit_tri(st, miter.top, miter.buried, row5[j])
+			_emit_tri(st, miter.top, row5[j], row4[j])
 
 	if not closed:
-		_rim_end_cap(st, row0[0], row1[0], row2[0], row3[0])
+		_rim_end_cap(st, row0[0], row1[0], row2[0], row3[0], row4[0], row5[0])
 		var last: int = n - 1
-		_rim_end_cap(st, row0[last], row1[last], row2[last], row3[last])
+		_rim_end_cap(st, row0[last], row1[last], row2[last], row3[last], row4[last], row5[last])
 
 
-## Caps an open curve's rim ladder at one exposed end (see _rim's own
-## docstring for why this is needed). A 2-triangle fan from row0 through
-## row1/row2/row3 — (row0,row1,row2) and (row0,row2,row3) — shares an edge
-## with each of the three band triangles that otherwise left row0-row1,
-## row1-row2, row2-row3 single-used (now double-used, healed), at the cost of
-## exactly one NEW free edge: the fan's own closing diagonal row0-row3. That
-## is the minimum any triangulation of an open 4-point profile can achieve —
-## the quad (row0,row1,row2,row3) has 4 boundary edges, 3 already carry one
-## use each from the bands, so 2 triangles can heal those 3 but must open a
-## 4th boundary edge to close the shape (any 2-triangle fan, from any apex,
-## has this same count — verified by hand for all four apex choices before
-## picking row0, the simplest to reach from this call site). The remaining
-## row0-row3 edge is itself accounted for under this task's tightened
-## invariant: row0 sits exactly at the curve's own point, which for every
-## open curve WaterContour._clip_to_rect produces is an exact chunk-border
-## crossing (verified directly on both pinned sites — SITE_CHUNK's three
-## open curves and the pond chunk's horseshoe — this task's report has the
-## coordinates), and row3 trivially satisfies the buried-outer-row test at
-## distance 0 from itself.
-static func _rim_end_cap(st: Dictionary, i0: int, i1: int, i2: int, i3: int) -> void:
+## Four-triangle fan closing the six-point rim ladder at an open contour
+## endpoint. It pairs each of the five band-end edges and leaves only the
+## row0-row5 diagonal, which is accounted for by the endpoint's exact chunk
+## border plus the outer-row invariant.
+static func _rim_end_cap(st: Dictionary, i0: int, i1: int, i2: int, i3: int,
+		i4: int, i5: int) -> void:
 	_emit_tri(st, i0, i1, i2)
 	_emit_tri(st, i0, i2, i3)
+	_emit_tri(st, i0, i3, i4)
+	_emit_tri(st, i0, i4, i5)
 
 
 ## Tent-filtered (0.25/0.5/0.25) copy of a per-point PackedByteArray flag
@@ -1284,11 +1418,9 @@ static func _smoothed_flags(flags: PackedByteArray, closed: bool) -> PackedFloat
 	return out
 
 
-## Per-point RISING flag (r3 Task 14 — universal shore overshoot, round-5
-## addendum; gate hardened by the review's drop-misfire fix): true when the
-## bank genuinely climbs above the water level ACROSS THE SPAN the overshoot
-## covers along the curve's own outward normal n̂, OR the point is already
-## wall-flagged.
+## Per-point RISING flag: true when the bank genuinely climbs above the water
+## level across the span the compact overshoot covers, or direct recessed-wall
+## contact has already been confirmed.
 ##
 ## The covered span is [0, RIM_RISE_REACH] — where row2 (the only rim row
 ## whose Y is the bulge, not a buried seal) actually lands. It is sampled at
@@ -1300,10 +1432,8 @@ static func _smoothed_flags(flags: PackedByteArray, closed: bool) -> PackedFloat
 ## again by 1.0m, the 1.0m probe alone authorised the overshoot while row2
 ## floated over the un-sampled local dip — a film over a drop, the exact
 ## artifact this redesign exists to kill. Gating on the covered span instead
-## means a dip anywhere the overshoot actually reaches vetoes it. (row2 also
-## carries an independent per-vertex ground clamp as belt-and-suspenders — see
-## _rim — so a residual misfire buries rather than floats; this gate is the
-## first line, the clamp the hard backstop.)
+## means a dip anywhere the overshoot actually reaches vetoes it. _rim also
+## gives a local drop final authority over neighbouring smoothed flags.
 ##
 ## Folding `wall` in is never redundant risk and sometimes strictly helps:
 ## WaterContour's own wall probe (WALL_SLOPE=1.2 at 0.5m/1.5m) already implies
@@ -1314,16 +1444,16 @@ static func _smoothed_flags(flags: PackedByteArray, closed: bool) -> PackedFloat
 ## locally stepped/quantized rock shelf that reads flat there (the same
 ## corner-crest hazard WaterContour._attributes' own docstring documents for
 ## the wall flag's rise-from-level anchor).
-static func _rising_flags(st: Dictionary, c: Dictionary) -> PackedByteArray:
+static func _rising_flags(st: Dictionary, c: Dictionary,
+		wall_contact: PackedByteArray) -> PackedByteArray:
 	var pts: PackedVector2Array = c.pts
 	var levels: PackedFloat32Array = c.levels
 	var normals: PackedVector2Array = c.normals
-	var wall: PackedByteArray = c.wall
 	var n: int = pts.size()
 	var out := PackedByteArray()
 	out.resize(n)
 	for i in n:
-		if wall[i] == 1:
+		if wall_contact[i] == 1:
 			out[i] = 1
 			continue
 		var p: Vector2 = pts[i]
@@ -1335,6 +1465,93 @@ static func _rising_flags(st: Dictionary, c: Dictionary) -> PackedByteArray:
 		var gland: float = TerrainSurfaceField.surface_y(st.region, pland.x, pland.y)
 		out[i] = 1 if (gnear > lvl + RISE_MARGIN and gland > lvl + RISE_MARGIN) else 0
 	return out
+
+
+## WaterContour deliberately checks the outward normal and its +/-45-degree
+## flanks so a rounded cliff turn inherits both wall arms. That generous flag
+## must not turn a genuinely unbounded edge into a bank skirt merely because a
+## wall exists off to one side. Search only the old direct-contact span (the
+## 1.5m KayKit recess) for the first high-ground sample in THIS point's outward
+## column. A hit both confirms the wall and measures the signed-depth contour's
+## retreat from the real terrain boundary. The visible face is another 1.5m
+## inside the high cell, so `face_reach = contact + RIM_WALL_REACH`; omitting
+## `contact` was the fixed-distance bug that left exact recessed corners dry.
+static func _wall_contacts(st: Dictionary, c: Dictionary) -> Dictionary:
+	var pts: PackedVector2Array = c.pts
+	var levels: PackedFloat32Array = c.levels
+	var normals: PackedVector2Array = c.normals
+	var wall: PackedByteArray = c.wall
+	var flags := PackedByteArray()
+	var face_reach := PackedFloat32Array()
+	flags.resize(pts.size())
+	face_reach.resize(pts.size())
+	face_reach.fill(-1.0)
+	for i in pts.size():
+		if wall[i] == 0:
+			continue
+		# Preserve the old direct-column gate at the end of the span. A small
+		# intervening bump followed by low ground is not a recessed wall and
+		# must keep the rounded free-shore profile.
+		var far_q: Vector2 = pts[i] + normals[i] * WALL_CONTACT_SCAN_MAX
+		var far_ground: float = TerrainSurfaceField.surface_y(
+			st.region, far_q.x, far_q.y)
+		if far_ground <= levels[i] + RISE_MARGIN:
+			continue
+		var contact := -1.0
+		var d := 0.0
+		while d <= WALL_CONTACT_SCAN_MAX + 0.0001:
+			var q: Vector2 = pts[i] + normals[i] * d
+			var ground: float = TerrainSurfaceField.surface_y(st.region, q.x, q.y)
+			if ground > levels[i] + RISE_MARGIN:
+				contact = d
+				break
+			d += WALL_CONTACT_SCAN_STEP
+		if contact >= 0.0:
+			flags[i] = 1
+			face_reach[i] = contact + RIM_WALL_REACH
+	return {"flags": flags, "face_reach": face_reach}
+
+
+## Builds the missing convex join between two directly-confirmed wall
+## columns whose outward directions turn. Each row4 endpoint already sits on
+## its own buried wall-contact line. Intersecting the two lines tangent to
+## those walls gives the L-corner's proper miter; a direct segment between the
+## endpoints is merely a diagonal chord and cuts that corner off. Returns one
+## level `top` vertex plus a slightly farther/lower `buried` vertex used to
+## route the terminal curl around it. The caller owns the surrounding faces.
+static func _wall_turn_miter(st: Dictionary, row4: PackedInt32Array,
+		normals: PackedVector2Array, levels: PackedFloat32Array,
+		wall_contact: PackedByteArray, i: int, j: int) -> Dictionary:
+	if wall_contact[i] == 0 or wall_contact[j] == 0:
+		return {}
+	var ni: Vector2 = normals[i]
+	var nj: Vector2 = normals[j]
+	if ni.dot(nj) >= WALL_MITER_DOT_MAX:
+		return {}
+	var ti := Vector2(-ni.y, ni.x)
+	var tj := Vector2(-nj.y, nj.x)
+	var denom: float = ti.cross(tj)
+	if absf(denom) < 0.0001:
+		return {}
+	var ai3: Vector3 = st.verts[row4[i]]
+	var aj3: Vector3 = st.verts[row4[j]]
+	var ai := Vector2(ai3.x, ai3.z)
+	var aj := Vector2(aj3.x, aj3.z)
+	var along_i: float = (aj - ai).cross(tj) / denom
+	var corner: Vector2 = ai + ti * along_i
+	if corner.distance_to(ai) > WALL_MITER_LIMIT \
+		or corner.distance_to(aj) > WALL_MITER_LIMIT:
+		return {}
+	var level: float = (levels[i] + levels[j]) * 0.5
+	var top: int = _weld_vert(st, corner, level, Vector3.UP)
+	var bisector: Vector2 = ni + nj
+	if bisector.length_squared() < 0.0001:
+		return {}
+	bisector = bisector.normalized()
+	var buried_p: Vector2 = corner + bisector * WALL_MITER_BURY
+	var buried: int = _weld_vert(st, buried_p, level - RIM_ROW5_DROP,
+		_curl_normal(bisector, PI * 4.0 / 9.0))
+	return {"top": top, "buried": buried}
 
 
 ## Position lookup for a welded vertex index — used by the zipper's own
@@ -1385,20 +1602,56 @@ static func _zip_strip(st: Dictionary, a: PackedInt32Array, b: PackedInt32Array,
 			# Candidate 2: advance B — triangle (a[i], b[j+1], b[j]).
 			var d2: float = _vpos(st, a[i % n]).distance_to(_vpos(st, b[j + 1]))
 			if d1 <= d2:
-				_emit_tri(st, a[i % n], a_next, b[j])
+				_emit_strip_tri(st, a[i % n], a_next, b[j])
 				i += 1
 			else:
-				_emit_tri(st, a[i % n], b[j + 1], b[j])
+				_emit_strip_tri(st, a[i % n], b[j + 1], b[j])
 				j += 1
 		elif can_adv_a:
 			var a_next2: int = a[(i + 1) % n]
-			_emit_tri(st, a[i % n], a_next2, b[j])
+			_emit_strip_tri(st, a[i % n], a_next2, b[j])
 			i += 1
 		else:
-			_emit_tri(st, a[i % n], b[j + 1], b[j])
+			_emit_strip_tri(st, a[i % n], b[j + 1], b[j])
 			j += 1
 	if closed and m >= 2:
-		_emit_tri(st, a[0], b[m - 1], b[0])
+		_emit_strip_tri(st, a[0], b[m - 1], b[0])
+
+
+## Emits a boundary-strip face at the same local scale as the 3m interior
+## lattice.  The greedy zipper decides topology, but it does not constrain
+## the width of the triangle it creates: at a tight corner one contour step
+## could fan directly to a ring point 6-7m away.  Recursively bisecting the
+## longest horizontal edge preserves that topology and watertight weld while
+## sampling the real water field at each new point, so normals/refraction and
+## descent height no longer interpolate across a giant polygon.
+static func _emit_strip_tri(st: Dictionary, i0: int, i1: int, i2: int) -> void:
+	var ids: Array[int] = [i0, i1, i2]
+	var longest_k := -1
+	var longest := 0.0
+	for k in 3:
+		var a: Vector3 = _vpos(st, ids[k])
+		var b: Vector3 = _vpos(st, ids[(k + 1) % 3])
+		var span: float = Vector2(a.x, a.z).distance_to(Vector2(b.x, b.z))
+		if span > longest:
+			longest = span
+			longest_k = k
+	if longest <= STRIP_EDGE_MAX:
+		_emit_tri(st, i0, i1, i2)
+		return
+
+	var ia: int = ids[longest_k]
+	var ib: int = ids[(longest_k + 1) % 3]
+	var ic: int = ids[(longest_k + 2) % 3]
+	var va: Vector3 = _vpos(st, ia)
+	var vb: Vector3 = _vpos(st, ib)
+	var p := Vector2(va.x + vb.x, va.z + vb.z) * 0.5
+	var level: float = WaterField.level_at(st.ctx, p)
+	if level == -INF:
+		level = (va.y + vb.y) * 0.5
+	var mid: int = _weld_vert(st, p, level, _interior_normal(st, p, level))
+	_emit_strip_tri(st, ia, mid, ic)
+	_emit_strip_tri(st, mid, ib, ic)
 
 
 ## Emits one strip triangle. Winding: the curve chain `a` runs along the
@@ -1416,6 +1669,136 @@ static func _emit_tri(st: Dictionary, i0: int, i1: int, i2: int) -> void:
 	var order: Array = [i0, i1, i2] if nrm.y >= 0.0 else [i0, i2, i1]
 	for k in order:
 		st.idx.append(k)
+
+
+## Closes small water-level loops left where two independently zipped
+## contour strips meet.  This operates on the finished mesh edge graph—the
+## actual topology—rather than trying to infer a junction from nearest-curve
+## ownership.  It is deliberately narrow: only closed loops of at most 12
+## vertices, made entirely of local-scale edges, whose centroid is genuinely
+## wet in WaterField may be triangulated.  Chunk borders, buried rim edges,
+## open seams, and large regions are never eligible.
+static func _seal_local_surface_holes(st: Dictionary) -> void:
+	var count: Dictionary = {}
+	var idx: PackedInt32Array = st.idx
+	for ti in range(0, idx.size(), 3):
+		for k in 3:
+			var a: int = idx[ti + k]
+			var b: int = idx[ti + (k + 1) % 3]
+			var key := Vector2i(mini(a, b), maxi(a, b))
+			count[key] = int(count.get(key, 0)) + 1
+
+	var unused: Dictionary = {}
+	var adjacency: Dictionary = {}
+	for edge: Vector2i in count:
+		if int(count[edge]) != 1:
+			continue
+		var a: Vector3 = st.verts[edge.x]
+		var b: Vector3 = st.verts[edge.y]
+		if _point_on_rect_border(Vector2(a.x, a.z), st.rect) \
+			and _point_on_rect_border(Vector2(b.x, b.z), st.rect):
+			continue
+		if not _at_visible_water_level(st, a) or not _at_visible_water_level(st, b):
+			continue
+		unused[edge] = true
+		if not adjacency.has(edge.x):
+			adjacency[edge.x] = []
+		if not adjacency.has(edge.y):
+			adjacency[edge.y] = []
+		adjacency[edge.x].append(edge.y)
+		adjacency[edge.y].append(edge.x)
+
+	while not unused.is_empty():
+		var first: Vector2i = unused.keys()[0]
+		var component_edges: Array[Vector2i] = []
+		var pending: Array[Vector2i] = [first]
+		var component_vertices: Dictionary = {}
+		unused.erase(first)
+		while not pending.is_empty():
+			var edge: Vector2i = pending.pop_back()
+			component_edges.append(edge)
+			component_vertices[edge.x] = true
+			component_vertices[edge.y] = true
+			for vi: int in [edge.x, edge.y]:
+				for other: int in adjacency.get(vi, []):
+					var neighbour := Vector2i(mini(vi, other), maxi(vi, other))
+					if unused.has(neighbour):
+						unused.erase(neighbour)
+						pending.append(neighbour)
+
+		if component_vertices.size() < 3 or component_vertices.size() > 12:
+			continue
+		var closed := true
+		for vi: int in component_vertices:
+			var degree := 0
+			for other: int in adjacency.get(vi, []):
+				var edge := Vector2i(mini(vi, other), maxi(vi, other))
+				if component_edges.has(edge):
+					degree += 1
+			if degree != 2:
+				closed = false
+				break
+		if not closed:
+			continue
+
+		var cycle: Array[int] = [component_vertices.keys()[0]]
+		var previous := -1
+		var current: int = cycle[0]
+		while true:
+			var next := -1
+			for candidate: int in adjacency[current]:
+				if candidate != previous:
+					next = candidate
+					break
+			if next < 0 or next == cycle[0]:
+				break
+			cycle.append(next)
+			previous = current
+			current = next
+		if cycle.size() != component_vertices.size():
+			continue
+
+		var polygon := PackedVector2Array()
+		var centroid := Vector2.ZERO
+		var max_edge := 0.0
+		for vi: int in cycle:
+			var v: Vector3 = st.verts[vi]
+			var p := Vector2(v.x, v.z)
+			polygon.append(p)
+			centroid += p
+		centroid /= float(cycle.size())
+		for i in cycle.size():
+			max_edge = maxf(max_edge, polygon[i].distance_to(polygon[(i + 1) % cycle.size()]))
+		if max_edge > STRIP_EDGE_MAX:
+			continue
+		var level: float = WaterField.level_at(st.ctx, centroid)
+		var ground: float = TerrainSurfaceField.surface_y(st.region, centroid.x, centroid.y)
+		if level == -INF or level <= ground + 0.02:
+			continue
+		if absf(_polygon_area(polygon)) > STEP * STEP * 4.0:
+			continue
+		var triangles: PackedInt32Array = Geometry2D.triangulate_polygon(polygon)
+		for ti in range(0, triangles.size(), 3):
+			# Polygon edges are local by the gate above, but an ear-clipping
+			# diagonal can still span two 3m cells (6.7m at this reported corner).
+			# Route fills through the same bounded-face emitter as the zipper.
+			_emit_strip_tri(st, cycle[triangles[ti]], cycle[triangles[ti + 1]],
+				cycle[triangles[ti + 2]])
+
+
+static func _at_visible_water_level(st: Dictionary, v: Vector3) -> bool:
+	var p := Vector2(v.x, v.z)
+	var level: float = WaterField.level_at(st.ctx, p)
+	return level != -INF and absf(v.y - level) <= 0.08
+
+
+static func _polygon_area(polygon: PackedVector2Array) -> float:
+	var twice_area := 0.0
+	for i in polygon.size():
+		var a: Vector2 = polygon[i]
+		var b: Vector2 = polygon[(i + 1) % polygon.size()]
+		twice_area += a.x * b.y - b.x * a.y
+	return twice_area * 0.5
 
 
 ## Distance from p to curve c's own polyline (segment-nearest, not just

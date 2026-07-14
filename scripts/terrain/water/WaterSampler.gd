@@ -24,21 +24,15 @@
 # uses) stores its exact level_at value regardless of any INSET; NaN only
 # where the field itself says dry (or beyond the chunk's own snapshot).
 #
-# PRECISION: level_at interpolates over this frozen 3.0m grid with the SAME
-# renormalized-over-wet-corners bilinear rule WaterField._fill_bilinear
-# itself uses over its own 6.0m fill lattice (dry corners excluded, their
-# weight redistributed over the wet ones; NaN when no corner is wet) — see
-# that function's own docstring for why plain weighted summation cannot be
-# trusted once any corner is dry. The 3.0m grid is world-snapped and
-# phase-aligned with the fill's own lattice, and bilinear interpolation of
-# corner samples of a bilinear function on an aligned subgrid reproduces the
-# parent function EXACTLY — so on fully-wet cells the sampler equals
-# WaterField.level_at (measured: max_err 0.000 across the pinned site's
-# interior), and on mixed wet/dry cells (the shoreline band) it applies the
-# same renormalization family the field itself does, measured within 0.1 of
-# level_at at 260 real shoreline-band points (tests/
-# test_water_swim_volumes.gd::test_sampler_covers_the_shoreline_band, the
-# review-MEDIUM regression pin).
+# PRECISION: level_at stores and evaluates the fill's NATIVE 6m lattice,
+# using the exact same signed-depth shoreline interpolation as
+# WaterField._fill_bilinear. An earlier sampler resampled the field onto the
+# mesh's 3m lattice and bilinearly interpolated that second grid. That is
+# exact inside fully-wet bilinear cells, but NOT across wet/dry cells: two
+# successive renormalizations changed steep shoreline values by up to 0.44m
+# and could classify a dry/wading point as swimming. Keeping the native fill
+# array is both smaller and bit-for-bit faithful to WaterField.level_at over
+# the entire chunk. The mesh-aligned grid remains only for flow/wave payloads.
 #
 # FLOW FRAME (r3 Task 9): alongside the level grid, build() now ALSO bakes
 # WaterSkin's own per-vertex flow frame (_flow_frame_at: arc length s, cross
@@ -67,9 +61,14 @@ var _step: float
 var _nx: int
 var _nz: int
 var _h: PackedFloat32Array   # nx*nz, row-major (j*_nx+i), NAN where field-dry
+var _fill_origin: Vector2
+var _fill_n: int
+var _fill_levels: PackedFloat32Array # native WaterField fill snapshot; empty only for legacy no-fill fixtures
+var _fill_ground: PackedFloat32Array # native terrain heights for the mixed wet/dry taper
 var _fs: PackedFloat32Array      # nx*nz, arc length s (r3 Task 9)
 var _fd: PackedFloat32Array      # nx*nz, cross distance d
 var _fslope: PackedFloat32Array  # nx*nz, profile slope
+var _wave_scale: PackedFloat32Array # nx*nz, GPU-matched depth-limited swell amplitude
 
 
 ## Bakes a sampler by sampling WaterField.level_at across the given grid
@@ -84,25 +83,44 @@ var _fslope: PackedFloat32Array  # nx*nz, profile slope
 static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int, nz: int,
 		flow_s: PackedFloat32Array = PackedFloat32Array(),
 		flow_d: PackedFloat32Array = PackedFloat32Array(),
-		flow_slope: PackedFloat32Array = PackedFloat32Array()) -> WaterSampler:
+		flow_slope: PackedFloat32Array = PackedFloat32Array(),
+		wave_scale: PackedFloat32Array = PackedFloat32Array()) -> WaterSampler:
 	var s := WaterSampler.new()
 	s._origin = origin
 	s._step = step
 	s._nx = nx
 	s._nz = nz
 	s._h = PackedFloat32Array()
-	s._h.resize(nx * nz)
-	s._h.fill(NAN)
-	for j in nz:
-		for i in nx:
-			var p: Vector2 = origin + Vector2(i, j) * step
-			var lvl: float = WaterField.level_at(ctx, p)
-			if lvl == -INF:
-				continue
-			var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
-			if lvl <= g + WET_EPS:
-				continue
-			s._h[j * nx + i] = lvl
+	# Exact static-level snapshot. Packed arrays retain their primitive backing
+	# data independently of the ctx Dictionary's lifetime (copy-on-write), so
+	# this remains scene-free and safe after the streamer evicts its build ctx.
+	if ctx.has("fill") and ctx.has("fill_base"):
+		s._fill_origin = ctx.fill_base
+		s._fill_n = WaterField.FILL_M + 1
+		s._fill_levels = PackedFloat32Array(ctx.fill.levels)
+		s._fill_ground = PackedFloat32Array()
+		s._fill_ground.resize(s._fill_n * s._fill_n)
+		for j in s._fill_n:
+			for i in s._fill_n:
+				var p: Vector2 = s._fill_origin + Vector2(i, j) * WaterField.FILL_STEP
+				s._fill_ground[j * s._fill_n + i] = \
+					TerrainSurfaceField.surface_y(region, p.x, p.y)
+	else:
+		# Legacy/synthetic no-fill context: retain the older mesh-grid snapshot
+		# as a safe fallback. Production chunk contexts always take the exact,
+		# smaller native-fill path above.
+		s._h.resize(nx * nz)
+		s._h.fill(NAN)
+		for j in nz:
+			for i in nx:
+				var p: Vector2 = origin + Vector2(i, j) * step
+				var lvl: float = WaterField.level_at(ctx, p)
+				if lvl == -INF:
+					continue
+				var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+				if lvl <= g + WET_EPS:
+					continue
+				s._h[j * nx + i] = lvl
 	# Flow frame: same grid, zero-filled when the caller didn't supply one
 	# (e.g. pre-Task-9 test fixtures that build a sampler without a flow
 	# bake) — a zero frame is exactly WaterSkin's own "calm" convention, so
@@ -111,12 +129,20 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 	s._fs = flow_s if flow_s.size() == n else _zeros(n)
 	s._fd = flow_d if flow_d.size() == n else _zeros(n)
 	s._fslope = flow_slope if flow_slope.size() == n else _zeros(n)
+	s._wave_scale = wave_scale if wave_scale.size() == n else _ones(n)
 	return s
 
 
 static func _zeros(n: int) -> PackedFloat32Array:
 	var a := PackedFloat32Array()
 	a.resize(n)
+	return a
+
+
+static func _ones(n: int) -> PackedFloat32Array:
+	var a := PackedFloat32Array()
+	a.resize(n)
+	a.fill(1.0)
 	return a
 
 
@@ -145,14 +171,14 @@ func _corners(xz: Vector2) -> Array:
 
 ## Water height at world (x,z); NAN when the field itself said dry here at
 ## bake time, or the point falls outside this chunk's own snapshot entirely.
-## Mixed wet/dry cells renormalize the bilinear weights over the wet corners
-## only — the exact rule WaterField._fill_bilinear applies to its own -INF
-## corners (see this file's header PRECISION note); a fully-wet cell reduces
-## to plain bilinear (weights already sum to 1).
+## Mixed wet/dry cells use WaterField's signed-depth shoreline taper; a
+## fully-wet cell reduces to plain bilinear.
 func level_at(xz: Vector2) -> float:
 	var corners: Array = _corners(xz)
 	if corners.is_empty():
 		return NAN
+	if not _fill_levels.is_empty():
+		return _native_fill_level_at(xz)
 	var wsum := 0.0
 	var acc := 0.0
 	for cnr: Array in corners:
@@ -164,6 +190,46 @@ func level_at(xz: Vector2) -> float:
 	if wsum <= 0.0:
 		return NAN
 	return acc / wsum
+
+
+## Exact frozen equivalent of WaterField._fill_bilinear. `xz` has already
+## passed the chunk-snapshot bounds gate in level_at; the native fill itself
+## extends another 30m around that chunk, so these indices are always valid.
+func _native_fill_level_at(xz: Vector2) -> float:
+	var fx: float = (xz.x - _fill_origin.x) / WaterField.FILL_STEP
+	var fz: float = (xz.y - _fill_origin.y) / WaterField.FILL_STEP
+	var i0: int = clampi(int(floor(fx)), 0, _fill_n - 2)
+	var j0: int = clampi(int(floor(fz)), 0, _fill_n - 2)
+	var tx: float = clampf(fx - float(i0), 0.0, 1.0)
+	var tz: float = clampf(fz - float(j0), 0.0, 1.0)
+	var native_corners: Array = [
+		[i0, j0, (1.0 - tx) * (1.0 - tz)],
+		[i0 + 1, j0, tx * (1.0 - tz)],
+		[i0, j0 + 1, (1.0 - tx) * tz],
+		[i0 + 1, j0 + 1, tx * tz],
+	]
+	var wet_weight := 0.0
+	var wet_acc := 0.0
+	for cnr: Array in native_corners:
+		var h: float = _fill_levels[cnr[1] * _fill_n + cnr[0]]
+		if h == -INF:
+			continue
+		wet_acc += h * cnr[2]
+		wet_weight += cnr[2]
+	if wet_weight <= 0.0:
+		return NAN
+	if wet_weight >= 1.0 - 0.000001:
+		return wet_acc
+	var wet_ref: float = wet_acc / wet_weight
+	var acc := 0.0
+	for cnr: Array in native_corners:
+		var idx: int = cnr[1] * _fill_n + cnr[0]
+		var h: float = _fill_levels[idx]
+		if h == -INF:
+			h = minf(wet_ref,
+				_fill_ground[idx] + WaterField.EPS - WaterField.SHORE_DRY_DEPTH)
+		acc += h * cnr[2]
+	return acc
 
 
 ## Flow frame (arc length s, cross distance d, profile slope), packed as
@@ -189,3 +255,17 @@ func flow_frame_at(xz: Vector2) -> Vector3:
 		d += _fd[idx] * w
 		slope += _fslope[idx] * w
 	return Vector3(s, d, slope)
+
+
+## GPU-matched vertical-swell amplitude at world (x,z).  Plain bilinear
+## interpolation is correct because the mesh's COLOR.r varies linearly over
+## its faces too.  Outside this chunk snapshot, return zero so an invalid
+## lookup cannot add unbounded buoyancy motion.
+func wave_scale_at(xz: Vector2) -> float:
+	var corners: Array = _corners(xz)
+	if corners.is_empty():
+		return 0.0
+	var scale := 0.0
+	for cnr: Array in corners:
+		scale += _wave_scale[cnr[1] * _nx + cnr[0]] * cnr[2]
+	return clampf(scale, 0.0, 1.0)

@@ -55,6 +55,20 @@ static func _is_wet(ctx: Dictionary, p: Vector2) -> bool:
 	return _wet_f(ctx, p) > _WET_EPS
 
 
+## Marching-squares saddle decider: return the two corners that the centre
+## sample says are isolated. A wet centre isolates DRY corners (the wet
+## diagonal stays joined); a dry centre isolates WET corners. Kept as a pure
+## helper so both ambiguous topologies remain testable even when a particular
+## procedural seed no longer happens to contain a saddle after bathymetry
+## changes.
+static func _saddle_isolated_corners(wf: Array, centre_wet: bool) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	for k in 4:
+		if wf[k] != centre_wet:
+			out.append(k)
+	return out
+
+
 ## curves(ctx, rect) -> Array[Dictionary], each:
 ##   pts: PackedVector2Array      # world xz, ~1.5 m spacing, G1-smooth
 ##   levels: PackedFloat32Array   # water level at each pt (field truth)
@@ -157,9 +171,7 @@ static func _presence_segments(ctx: Dictionary, grown: Rect2) -> Array:
 				# by construction (two wet, two dry, one fixed centre value),
 				# so this always emits exactly two strokes, same as the split
 				# branch it generalizes.
-				for k in 4:
-					if wf[k] == centre_wet:
-						continue
+				for k: int in _saddle_isolated_corners(wf, centre_wet):
 					var a: Vector2 = _refine_crossing(ctx, origin, corners[k], corners[(k + 3) % 4])
 					var b: Vector2 = _refine_crossing(ctx, origin, corners[k], corners[(k + 1) % 4])
 					segs.append([a, b])
@@ -322,7 +334,7 @@ static func _chain_segments(segments: Array) -> Array:
 	return out
 
 
-## --- Step 4: Chaikin corner-cutting (2 passes) + uniform resample ---
+## --- Step 4: Chaikin corner-cutting + uniform resample ---
 ##
 ## Corner-cutting 1/4-3/4: each edge (p0,p1) contributes two new points at
 ## t=0.25 and t=0.75, replacing the original vertices — the standard Chaikin
@@ -565,10 +577,11 @@ static func _outward_normal(ctx: Dictionary, p: Vector2) -> Vector2:
 
 
 ## Per-point level/normal/wall attributes. Wall flag probes ground at +0.5m
-## and +1.5m along the outward normal (brief's own two probe distances):
+## and +1.5m along the outward normal and its +/-45-degree corner guards:
 ## either sample rising past WALL_SLOPE metres-per-metre flags the point a
-## wall (probing both catches a wall whose face sits slightly set back from
-## the sampled waterline point as well as one that rises immediately).
+## wall. The flanking directions matter after smoothing at a cliff corner:
+## the wetness gradient can bisect the two real faces and send the centre
+## probe through the diagonal notch even though both adjacent faces rise.
 ##
 ## Rise is measured from the point's own WATER LEVEL, not its own ground
 ## sample (`g_here`) — found necessary (not the brief's literal first
@@ -603,9 +616,45 @@ static func _attributes(ctx: Dictionary, pts: PackedVector2Array, closed: bool) 
 		levels[i] = lvl
 		var nrm: Vector2 = _outward_normal(ctx, p)
 		normals[i] = nrm
-		var g05: float = _ground(ctx, p + nrm * 0.5)
-		var g15: float = _ground(ctx, p + nrm * 1.5)
-		var slope05: float = (g05 - lvl) / 0.5
-		var slope15: float = (g15 - lvl) / 1.5
-		wall[i] = 1 if (slope05 > WALL_SLOPE or slope15 > WALL_SLOPE) else 0
+		var is_wall := false
+		var probes: Array[Vector2] = [nrm, nrm.rotated(PI * 0.25), nrm.rotated(-PI * 0.25)]
+		for probe: Vector2 in probes:
+			var g05: float = _ground(ctx, p + probe * 0.5)
+			var g15: float = _ground(ctx, p + probe * 1.5)
+			var slope05: float = (g05 - lvl) / 0.5
+			var slope15: float = (g15 - lvl) / 1.5
+			if slope05 > WALL_SLOPE or slope15 > WALL_SLOPE:
+				is_wall = true
+				break
+		wall[i] = 1 if is_wall else 0
+	# A rounded 90-degree corner can briefly point its probes through the low
+	# diagonal pocket even though both straight reaches on either side are the
+	# same dressed cliff.  Leaving those 2-3 smoothed samples untagged retracts
+	# the meniscus precisely at the corner and opens a diagonal slot.  Close
+	# only short gaps bracketed by proven wall samples; a genuinely gentle shore
+	# (no wall on one side) is untouched.
+	var original: PackedByteArray = wall.duplicate()
+	for i in n:
+		if original[i] == 1:
+			continue
+		var before := -1
+		var after := -1
+		var before_i := -1
+		var after_i := -1
+		for d in range(1, 5):
+			var bi: int = i - d
+			var ai: int = i + d
+			if closed:
+				bi = posmod(bi, n)
+				ai = posmod(ai, n)
+			if before < 0 and bi >= 0 and bi < n and original[bi] == 1:
+				before = d
+				before_i = bi
+			if after < 0 and ai >= 0 and ai < n and original[ai] == 1:
+				after = d
+				after_i = ai
+		var turns_corner: bool = before_i >= 0 and after_i >= 0 \
+			and normals[before_i].dot(normals[after_i]) < 0.8
+		if before > 0 and after > 0 and before + after <= 4 and turns_corner:
+			wall[i] = 1
 	return {"pts": pts, "levels": levels, "normals": normals, "wall": wall, "closed": closed}

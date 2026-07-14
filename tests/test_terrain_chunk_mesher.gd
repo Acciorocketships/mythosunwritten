@@ -6,6 +6,83 @@ func _plan():
 	var p := Plan.new(7, 56.0, 12, "mean")
 	return p
 
+
+static func _triangle_y_at_xz(a: Vector3, b: Vector3, c: Vector3,
+		p: Vector2) -> float:
+	var denom: float = (b.z - c.z) * (a.x - c.x) \
+		+ (c.x - b.x) * (a.z - c.z)
+	if absf(denom) < 0.000001:
+		return -INF
+	var wa: float = ((b.z - c.z) * (p.x - c.x)
+		+ (c.x - b.x) * (p.y - c.z)) / denom
+	var wb: float = ((c.z - a.z) * (p.x - c.x)
+		+ (a.x - c.x) * (p.y - c.z)) / denom
+	var wc: float = 1.0 - wa - wb
+	if wa < -0.0001 or wb < -0.0001 or wc < -0.0001:
+		return -INF
+	return wa * a.y + wb * b.y + wc * c.y
+
+
+static func _surface_y_at(mi: MeshInstance3D, p: Vector2) -> float:
+	var arrays: Array = mi.mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var idx_v: Variant = arrays[Mesh.ARRAY_INDEX]
+	var idx: PackedInt32Array = idx_v if idx_v != null else PackedInt32Array()
+	var count: int = idx.size() if not idx.is_empty() else verts.size()
+	var best := -INF
+	for ti in range(0, count, 3):
+		var ia: int = idx[ti] if not idx.is_empty() else ti
+		var ib: int = idx[ti + 1] if not idx.is_empty() else ti + 1
+		var ic: int = idx[ti + 2] if not idx.is_empty() else ti + 2
+		best = maxf(best, _triangle_y_at_xz(verts[ia], verts[ib], verts[ic], p))
+	return best
+
+
+static func _surface_uv_at(mi: MeshInstance3D, p: Vector2) -> Vector2:
+	var arrays: Array = mi.mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var idx_v: Variant = arrays[Mesh.ARRAY_INDEX]
+	var idx: PackedInt32Array = idx_v if idx_v != null else PackedInt32Array()
+	var count: int = idx.size() if not idx.is_empty() else verts.size()
+	var best_y := -INF
+	var best_uv := Vector2.INF
+	for ti in range(0, count, 3):
+		var ia: int = idx[ti] if not idx.is_empty() else ti
+		var ib: int = idx[ti + 1] if not idx.is_empty() else ti + 1
+		var ic: int = idx[ti + 2] if not idx.is_empty() else ti + 2
+		var y: float = _triangle_y_at_xz(verts[ia], verts[ib], verts[ic], p)
+		if y > best_y:
+			best_y = y
+			best_uv = uvs[ia]
+	return best_uv
+
+
+static func _contains_scene_or_server_resource(value: Variant) -> bool:
+	if value is Node or value is Mesh or value is Shape3D \
+			or value is Material or value is MultiMesh:
+		return true
+	if value is Array:
+		for item: Variant in value:
+			if _contains_scene_or_server_resource(item):
+				return true
+	elif value is Dictionary:
+		for item: Variant in value.values():
+			if _contains_scene_or_server_resource(item):
+				return true
+	return false
+
+
+func test_compute_chunk_payload_is_safe_to_cross_the_worker_boundary():
+	var p = _plan()
+	var m := Mesher.new()
+	m.prepare_resources()
+	var region = m.chunk_region(p, Vector2i.ZERO)
+	var payload: Dictionary = m.compute_chunk(p, Vector2i.ZERO, region)
+	assert_false(payload.is_empty(), "worker produces a terrain payload")
+	assert_false(_contains_scene_or_server_resource(payload),
+		"worker payload contains data only; nodes, meshes, materials, and shapes are committed on the main thread")
+
 func test_build_returns_meshinstance_with_geometry():
 	var p = _plan()
 	var node: Node3D = Mesher.new().build_chunk(p, Vector2i(0, 0))
@@ -811,6 +888,55 @@ func test_inner_corner_pulls_the_diagonal_sheet_corner_under_the_piece():
 			near_zone = true
 	assert_eq(in_zone, 0, "no bare sheet vert survives within 1.0 of the inner corner point")
 	assert_true(near_zone, "the sheet still reaches up to the tuck line outside the corner")
+	node.free()
+
+
+func test_inner_corner_sheet_corner_sits_below_the_rounded_lip_front():
+	# Exact 2026-07-13 22:00 ownership view: the protrusion is the same
+	# classic-inner-corner Surface corner this fixture isolates.  Merely moving
+	# it below 11.9 made the old broad test green while its 11.4m triangle still
+	# showed beneath the rounded lip.  The lip front descends about 0.65m; keep
+	# the sheet another 0.15m below that visual silhouette.
+	var p := Plan.new(0, 64.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 2 and cz == 2: return 4.0
+		return 12.0)
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var corner_max := -INF
+	for v in (mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+		if v.x > 35.0 and v.x < 36.05 and v.z > 35.0 and v.z < 36.05:
+			corner_max = maxf(corner_max, v.y)
+	print("MEAS classic inner-corner sheet max y=%.3f (top=12, required <=11.2)" % corner_max)
+	assert_true(corner_max > -INF, "fixture emits the inner-corner sheet vertex")
+	assert_true(corner_max <= 11.20,
+		"inner-corner sheet is hidden below the rounded lip front (got %.3f)" % corner_max)
+	node.free()
+
+
+func test_inner_corner_exposed_tuck_uses_rock_backing_not_grass():
+	# Exact same local triangle as the remaining red Surface shard in the
+	# 2026-07-13 22:00 owner render. Its vertices were measured at
+	# (156,4,-1214), (158,4,-1212), (156,3.1,-1212); sampling 5cm/36cm from
+	# the corner still read y=3.283 above the y=3 water and remained visible.
+	# Translate that camera-ray sample to this isolated fixture. The full visual
+	# and collision sheets stay watertight, but this dipped backing triangle is
+	# part of the cliff and must use rock rather than bright grass.
+	var p := Plan.new(0, 64.0, 12, "mean", 4)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 2 and cz == 2: return 4.0
+		return 12.0)
+	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+	var mi := node.find_child("Surface", true, false) as MeshInstance3D
+	var sample := Vector2(35.95, 35.64)
+	var sample_y: float = _surface_y_at(mi, sample)
+	var sample_uv: Vector2 = _surface_uv_at(mi, sample)
+	var rock_uv: Vector2 = SlopeAtlas.cliff_uv()
+	print("MEAS exact inner-corner backing sample y=%.3f uv=%s rock=%s" % [
+		sample_y, sample_uv, rock_uv])
+	assert_true(sample_y > -INF, "visual sheet stays watertight under the corner piece")
+	assert_true(sample_uv.is_equal_approx(rock_uv),
+		"the reported exposed corner backing blends into the rock wall, never grass")
 	node.free()
 
 # The walkable collision sheet must cover the full chunk extent with exactly
