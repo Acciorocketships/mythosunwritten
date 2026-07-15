@@ -190,8 +190,17 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
     used to silently drop the diagonal wedge (r3 Task 15). CLOSED curves resample by EVEN
     DIVISION of the circumference (`cnt = round(circ/spacing)` equal arcs, no remainder)
     instead of a fixed-spacing walk that left an arbitrary leftover segment.
+  - `WaterCurrentField` — pure deterministic horizontal current constraints. `WaterSkin`
+    seeds a world-aligned 3m lattice from downstream trace tangents; width/depth provide a
+    readable base current even on flat reaches (about 2.3m/s at the pinned representative
+    reach, clamped 1.4–6.5m/s) and grade only adds speed. A finite two-cell
+    signed-distance bank field zeros dry samples and removes bank-entering velocity, then
+    finite differences derive vorticity and compression for turning packets and generated
+    foam. Production chunks solve with a two-cell halo, so adjacent chunks bake bit-identical
+    retained border values. The velocity/diagnostics live in mesh `CUSTOM1` and the frozen
+    `WaterSampler`; GPU and CPU consumers never reconstruct separate flow fields.
   - `WaterSkin` — the ONE mesh builder (the old marching-squares mesher is retired, r3 Task
-    7; its own boundary was raw ~45-90° grid corners). Welds a 3m world-aligned interior
+    7; its own boundary was raw ~45-90° grid corners). Welds a 2m world-aligned render
     lattice to a boundary strip that sits directly ON `WaterContour`'s curves (zip-stitched
     via nearest-curve ring ownership — narrow-channel safe), plus a **meniscus rim** that
     curls the strip's own outer edge. Rising banks receive a compact overshoot; a wall-flagged
@@ -209,17 +218,18 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
     free edge is accounted for (a chunk border, a bank-buried outer row, or that compact lobe),
     so no zero-thickness plane ends sharply in open air. The first rim row also advances
     outward (no vertical repair-skirt seam). Open contours may border several disconnected
-    interior-lattice rings where a narrow channel falls below the 3m grid; the boundary zipper
+    interior-lattice rings where a narrow channel falls below the render grid; the boundary zipper
     splits those into local components and partitions the contour among them instead of joining
     them with non-local fan triangles. Remaining over-scale faces are adaptively subdivided, and
     only tiny local closed surface holes are triangulated. Per-vertex CUSTOM0 bakes `(s, d,
     slope, shore_dist)` — arc length / signed cross-channel distance / continuous profile
-    slope along the nearest river trace, plus shore distance — and vertex normals are real
+    slope along the nearest river trace, plus shore distance. `CUSTOM1` bakes `(velocity.x,
+    velocity.z, vorticity, compression)` from the shared `WaterCurrentField`. Vertex normals are real
     (heightfield-derived interior, rim-curl frame on the meniscus), not a blanket up vector.
-    `ARRAY_COLOR.r` bakes a swell-amplitude scale from BOTH shore distance and actual static
-    bed clearance; the shader and `WaterSampler.wave_scale_at()`/character buoyancy use the
-    same scale, so a swell trough can never uncover a shallow bed while the CPU float height
-    claims otherwise.
+    `ARRAY_COLOR.r` bakes a displacement scale from BOTH shore distance and actual static
+    bed clearance; it covers the ambient spectrum plus packet-field trough bound. The shader,
+    `WaterSampler.wave_scale_at()`, and character buoyancy use the same scale, so dynamic
+    geometry cannot uncover a shallow bed while the CPU float height claims otherwise.
     `WaterSkin.build()` also returns `triggers`: one box per 24m wet tile, footprint from
     the mesh's own built vertices. r3 Task 12b RETIRED the whole-tile/sub-tile level-SPREAD
     suppression Tasks 7/9 had layered on top (`_tile_level_spread`,
@@ -238,29 +248,35 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   `set_meta("sampler", sampler)` so a probe anywhere inside reads its exact water height
   from that one shared, chunk-frozen sampler instead of a per-cell plane. The sampler freezes
   the field's native 6m fill lattice plus its terrain-height twin and applies the identical
-  signed-depth shoreline evaluation; do not resample levels through the 3m mesh grid, which
+  signed-depth shoreline evaluation; do not resample levels through the render mesh grid, which
   double-interpolates steep shorelines and can turn dry/wade probes into false swimming. It also still owns
   the shared `ShaderMaterial` and the river-trace `surface_profile`/`steepness_profile`
   helpers.
-  `water_unified.gdshader` is the ONLY water shader and renders still, flowing, AND falling
-  water from the one baked `steep` attribute × depth — no separate waterfall shader or
-  swept mesh exists, the falling look is a blend on the one sheet material. Motion has two
-  independent carriers (r3 Task 13, owner rewrite): mesh **geometry** displaces ONLY with
-  the travelling **pond swell spectrum** (`water_waves.gdshaderinc::water_wave_h`,
-  CPU-mirrored in `character.gd::_swell_offset` for buoyancy rocking, everywhere — river
-  reaches included, keep constants in sync); ALL river/rapids motion instead comes from a
-  fragment-side **two-phase morphing refraction-distortion** advection
-  (`water_distort_wobble`) that perturbs the refraction offset only — never vertex height,
-  never albedo, never the lighting normal. The old geometric river trains (vertex-displaced
-  wave trains riding the CUSTOM0 flow frame) are DELETED — they aliased the 3m mesh lattice
-  below Nyquist into a maze/moiré pattern the owner rejected. **ZERO albedo whitening
-  anywhere** (the owner's hardest rule): no foam mask, no steep wash, no streak scroll, no
-  plunge whitening. The current clear-water budget is `clarity_depth=24`, `body_floor=0.04`,
-  `shallow_tint=0.035`, and `sky_reflect=0.18`: the refracted scene dominates ordinary river
-  depths while a restrained teal sky sheen remains at grazing angles. `distort_anim=0.10`
-  makes the two-phase downstream refraction readable without adding an albedo carrier. Plus
-  `WaterRippleSim` (SubViewport wave sim: swim wakes, entry splashes,
-  ambient raindrop rings). Plunge mist (particle spray at fall landings) is currently
+  `water_unified.gdshader` is the ONLY water shader and renders the whole continuous network;
+  no river/pond material fork or separate swept waterfall mesh exists. Its one
+  `water_dynamic_height()` combines the slow ambient spectrum, persistent compact asymmetric
+  wavelets, and interactive ripple height. Both vertex and fragment stages sample that SAME
+  height: it displaces the 2m mesh and derives normals, refraction, curvature caustics, and
+  reflection tilt, so a moving feature cannot become a detached albedo scroll. The old
+  repeated river trains and fragment-only `water_distort_wobble` are deleted. Water is
+  spectrally manual-composited: Beer–Lambert transmission
+  (`absorption=(0.003,0.001,0.0005)`) stays in `EMISSION` because the refracted scene is
+  already lit, while the real displaced normal uses Godot's PBR specular response. That split
+  keeps the bottom dominant without losing the old clear swim-ripple highlight. Weak depth
+  scattering and a broad Fresnel sky sheen supply the remaining body read. A short screen-space reflection
+  ray march was actively rejected in the exact review view because its finite hit iterations
+  formed concentric far-bank bands. White is legal only from generated energy:
+  packet breaking or local flow compression. Swim/entry/ambient ripple impulses stay clear;
+  their narrow height gradients refract and reflect the sky, and there is no foam/streak texture.
+  `WaterRippleSim` owns two player-centred GPU fields. Its ping-pong wave equation carries
+  swim wakes, entry splashes, and ambient clear rings; semi-Lagrangian backtracing advects it
+  through a 32×32 current texture over the restored 96m interaction domain. Its second pass
+  rasterizes at most 16 persistent world-space Morlet-style wavelets (compact, Gaussian-
+  windowed 6–10m oscillating crests, not closed blur bubbles or repeated trains). Their CPU
+  centres/lifetimes/directions/phases are transported through the same
+  `WaterSampler.velocity_at()` field and turn with the shared vorticity as that field bends.
+  The packet height is
+  CPU-mirrored to character buoyancy. Plunge mist (particle spray at fall landings) is currently
   unwired — a follow-up; the shared particle resources it needs are no longer warmed on
   startup. `tests/tools/water_review_spots.gd` emits F4 review teleports
   (`ReviewTeleporter.gd` reads `review_teleports.json` and lifts the player onto streamed
@@ -274,9 +290,8 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   can't dither the state every frame. `wading = in_water or (deepest static depth clears the
   wade gate)` (since h-task-4): swimming is a DEEPER case of being in water at all, so a
   swimming character always reads wading too — never independently false while `in_water` is
-  true. The **swell** (`_swell_offset`, pond spectrum only — the river-term mirror was
-  deleted alongside the shader's own geometric river trains, r3 Task 13) feeds ONLY
-  `water_surface_y`, the float-height buoyancy chases — NEVER the depth gate: letting the
+  true. The **dynamic height** (ambient `_swell_offset` plus `WaterRippleSim`'s exact CPU
+  packet mirror) feeds ONLY `water_surface_y`, the float-height buoyancy chase — NEVER the depth gate: letting the
   swell's own crest nudge the gate used to be able to latch a false swim state on a single
   crest-timed frame at a knife-edge shoreline depth, which is why classification reads the
   static field alone.

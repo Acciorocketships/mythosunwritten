@@ -33,17 +33,11 @@ var water_surface_y: float = WATER_SURFACE_Y
 # mirror is EXACT — every term is a travelling sine (no noise), so the CPU
 # and GPU surfaces agree everywhere.
 # Mirrors water_unified.gdshader's wave_height / wave_speed — keep in sync.
-const SWELL_HEIGHT: float = 1.0
+const SWELL_HEIGHT: float = 0.38
 const SWELL_SPEED: float = 0.26
-# r3 Task 13 (owner rewrite): the river-train mirror that used to live here
-# (r3 Task 9's RIVER_K1/K2 etc. + _river_h) is DELETED — the geometric river
-# trains it mirrored are themselves deleted from the shader (they aliased
-# into a maze/moiré pattern below the mesh lattice's Nyquist limit). River
-# motion now lives entirely in the shader's fragment-side refraction
-# distortion (water_waves.gdshaderinc's water_distort_wobble), which never
-# touches VERTEX/surface height, so it has nothing to mirror here: a
-# floating body's height is the pond spectrum ONLY, everywhere, river or
-# pond alike. See _swell_offset below and r3-task-13-report.md.
+# The slow ambient spectrum is mirrored below. WaterRippleSim separately
+# mirrors its persistent flow-transported packet height through
+# packet_height_at(), so buoyancy rides the broad river wavelets as well.
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
 @export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
@@ -203,10 +197,9 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 # snapshot of WaterField and the character's own feet (global_position sits
 # at the CAPSULE'S BASE — see character.tscn's CollisionShape3D offset — so
 # this needs no separate ground raycast the way the pre-Task-9 bridge did).
-# The swell (_swell_offset — the pond spectrum only; the river-train mirror
-# was deleted in r3 Task 13 when river motion moved entirely into the shader's
-# refraction distortion) contributes ONLY to water_surface_y, the float height
-# buoyancy/animation chase — NEVER to this depth, per the controller's own
+# Dynamic motion (_swell_offset plus WaterRippleSim's transported packet
+# mirror) contributes ONLY to water_surface_y, the float-height buoyancy/
+# animation chase — NEVER to this depth, per the controller's own
 # swell-entry redesign (r3-task-9-brief.md controller addition 1):
 #
 #   at (36.4, 2.82, -1108.7) [I4] static depth measures 0.7685 — correctly
@@ -278,7 +271,11 @@ func _update_in_water() -> void:
 	in_water = best_depth > swim_gate
 	wading = in_water or best_depth > wade_gate
 	if in_water:
-		water_surface_y = best_level + _swell_offset(xz, t) * best_wave_scale
+		var dynamic_offset := _swell_offset(xz, t)
+		var water_dynamics: Node = get_tree().get_first_node_in_group("water_dynamics")
+		if water_dynamics != null and water_dynamics.has_method("packet_height_at"):
+			dynamic_offset += float(water_dynamics.call("packet_height_at", xz))
+		water_surface_y = best_level + dynamic_offset * best_wave_scale
 
 
 # The water surface the buoyancy chases, displaced by the shader's travelling
@@ -288,13 +285,8 @@ func _update_in_water() -> void:
 # travelling sines) — KEEP IN SYNC. `t` is the caller's own TIME*SWELL_SPEED
 # (matches the shader's `t = TIME * wave_speed` exactly — computed ONCE per
 # _update_in_water call, not re-read here, so a frame's depth gate and its
-# water_surface_y agree on "now"). r3 Task 13 (owner rewrite): the RIVER term
-# this function used to add (_river_h, fed by a `sampler.flow_frame_at`
-# lookup) is DELETED along with the shader's own geometric river trains — a
-# floating body's height is the pond spectrum ONLY now, everywhere (river
-# reaches included), since river motion lives entirely in the shader's
-# fragment-side refraction distortion, which perturbs the refraction offset
-# only and never touches vertex/surface height.
+# water_surface_y agree on "now"). Persistent river packets are added by the
+# caller from WaterRippleSim's exact CPU mirror, not duplicated here.
 func _swell_offset(p: Vector2, t: float) -> float:
 	var h: float = 0.9 * sin(p.dot(Vector2(0.042, 0.016)) - t * 0.33)
 	h += 0.55 * sin(p.dot(Vector2(-0.023, 0.037)) - t * 0.26 + 1.7)

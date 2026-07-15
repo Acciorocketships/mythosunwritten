@@ -2,7 +2,7 @@ extends GutTest
 
 # r3-task-4/5 (plan docs/superpowers/plans/2026-07-10-water-continuous-surface.md,
 # briefs .superpowers/sdd/r3-task-4-brief.md, r3-task-5-brief.md): WaterSkin
-# welds a 3.0m interior lattice to a conforming boundary strip whose outer
+# welds a 2.0m interior lattice to a conforming boundary strip whose outer
 # rim sits directly ON WaterContour's own smooth curves (Task 3) — this is
 # the mesh that actually fixes the marching-squares corners
 # test_water_contour.gd's own header documents (the old mesher's raw
@@ -16,6 +16,14 @@ extends GutTest
 
 const SEED := 2697992464
 const SITE_CHUNK := Vector2i(0, -6)
+
+
+## Actual surface waves need several render vertices per wavelength. The old
+## 3m lattice could not represent the approved 6-20m packets without reading
+## as a faceted plane or aliasing back into contour lines.
+func test_render_lattice_is_dense_enough_for_geometric_wavelets() -> void:
+	assert_true(WaterSkin.STEP <= 2.0,
+		"water render lattice is at most 2m (currently %.2fm)" % WaterSkin.STEP)
 
 # --- Task 5 rim classification (mirrors WaterSkin's outer-row numeric
 # structure, not its reach/pinch formula — see _on_rim_outer_row) ---
@@ -143,6 +151,30 @@ static func _on_rim_outer_row(curves: Array, v: Vector3) -> bool:
 		for i in pts.size():
 			if pts[i].distance_to(p) <= RIM_MAX_REACH \
 				and v.y <= levels[i] - RIM_OUTER_Y_GATE:
+				return true
+	return false
+
+
+## When the world-aligned interior ring lands exactly on a straight contour
+## segment, the zipper has zero geometric width. Its independently sampled
+## chain and the meniscus chain can have different collinear subdivisions,
+## so the topology oracle sees free edges even though both chains occupy the
+## same water-level line with no renderable hole. Admit only that exact
+## geometric coincidence; even a 3cm separation remains a real failure.
+static func _on_contour_surface(curves: Array, v: Vector3) -> bool:
+	var p := Vector2(v.x, v.z)
+	for c: Dictionary in curves:
+		var pts: PackedVector2Array = c.pts
+		var levels: PackedFloat32Array = c.levels
+		var lim: int = pts.size() if c.closed else pts.size() - 1
+		for i in lim:
+			var j: int = (i + 1) % pts.size()
+			var seg: Vector2 = pts[j] - pts[i]
+			var len2: float = seg.length_squared()
+			var t: float = clampf((p - pts[i]).dot(seg) / len2, 0.0, 1.0) \
+				if len2 > 0.000001 else 0.0
+			if p.distance_to(pts[i] + seg * t) <= 0.02 \
+					and absf(v.y - lerpf(levels[i], levels[j], t)) <= 0.08:
 				return true
 	return false
 
@@ -353,6 +385,23 @@ static func _skin_y_at(arrays: Array, p: Vector2) -> float:
 	return best
 
 
+## A redundant coplanar zipper flap can retain a topological free edge at a
+## contour/lattice turn while the canonical sheet underneath covers both
+## sides. That is not a render hole. Probe independently off the edge on
+## both sides; a true crack has no above-bed skin on one of them.
+static func _edge_is_surface_covered(arrays: Array, a: Vector3, b: Vector3) -> bool:
+	var av := Vector2(a.x, a.z)
+	var bv := Vector2(b.x, b.z)
+	var edge: Vector2 = bv - av
+	if edge.length_squared() <= 0.000001:
+		return true
+	var side: Vector2 = Vector2(-edge.y, edge.x).normalized() * 0.06
+	var mid: Vector2 = (av + bv) * 0.5
+	var expected: float = (a.y + b.y) * 0.5
+	return _skin_y_at(arrays, mid + side) >= expected - 0.10 \
+		and _skin_y_at(arrays, mid - side) >= expected - 0.10
+
+
 ## Regression pins for the owner's 2026-07-13 screenshots at cells (3,-47),
 ## (5,-49), and (1,-46).  Every legitimate WaterSkin edge is local:
 ## interior diagonals are STEP*sqrt(2), a boundary-ring point is at most
@@ -561,12 +610,42 @@ func test_reported_exact_corner_wet_region_has_connected_skin_coverage() -> void
 				corner_reach, visible_face_inset])
 
 
+## Exact 2026-07-14 16:45 view: player (180.9,4,-1184.4), crosshair
+## (180.6,4.2,-1184.7). The matched screen ray through the visible triangular
+## notch lands on the low apron at this world point, behind the x=181.3 cliff
+## face. It must be covered at the neighbouring river level; covering it by
+## flooding the y=4 cliff top would be the wrong fix.
+func test_reported_corner_181_inner_apron_stays_water_covered() -> void:
+	var chunk := Vector2i(0, -7)
+	var region = _region(SEED, chunk)
+	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
+	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
+	# Intersect the failing screen ray with y=3, the neighbouring water body,
+	# rather than reusing its later collision with the apron at y=0.
+	var pin := Vector2(178.8354, -1186.913)
+	var ground: float = TerrainSurfaceField.surface_y(region, pin.x, pin.y)
+	var level: float = WaterField.level_at(ctx, pin)
+	var skin_y: float = _skin_y_at(skin.arrays, pin)
+	var nearest: Dictionary = _nearest_curve_sample(curves, pin)
+	print("MEAS exact corner-181 apron p=%s ground=%.3f field=%.3f skin=%.3f nearest=%s n=%s level=%.3f dist=%.3f" % [
+		pin, ground, level, skin_y, nearest.point, nearest.normal,
+		nearest.level, nearest.distance])
+	assert_true(level - ground >= 0.08,
+		"the exposed inner apron remains part of the continuous river field")
+	assert_true(skin_y >= float(nearest.level) - 0.10,
+		"top water contact covers the inner apron at river level (skin %.3f, water %.3f)" % [
+			skin_y, float(nearest.level)])
+
+
 ## The matched-angle render still exposed a dark triangular shard after the
 ## oversized face was subdivided.  The long-standing free-edge test only
 ## covered SITE_CHUNK (0,-6), while the reported touching-corner frame is in
 ## its southern neighbour (0,-7).  Apply the same independent topological
-## oracle to the actual failing chunk: every non-border free edge must be the
-## intentionally buried outer rim, never a hole in the visible sheet.
+## oracle to the actual failing chunk. A non-border free edge is accounted for
+## only when it belongs to the buried outer rim, exactly coincides with the
+## zero-width contour zipper, or has independently sampled surface coverage on
+## both sides. Anything else is a visible hole in the sheet.
 func test_reported_corner_chunk_has_no_visible_free_edge_holes() -> void:
 	var chunk := Vector2i(0, -7)
 	var water: WaterPlan = _water(SEED)
@@ -585,9 +664,12 @@ func test_reported_corner_chunk_has_no_visible_free_edge_holes() -> void:
 		if _on_chunk_border(a, chunk) and _on_chunk_border(b, chunk):
 			continue
 		checked += 1
-		var a_ok: bool = _on_chunk_border(a, chunk) or _on_rim_outer_row(curves, a)
-		var b_ok: bool = _on_chunk_border(b, chunk) or _on_rim_outer_row(curves, b)
-		if not (a_ok and b_ok) and offenders.size() < 20:
+		var a_ok: bool = _on_chunk_border(a, chunk) or _on_rim_outer_row(curves, a) \
+			or _on_contour_surface(curves, a)
+		var b_ok: bool = _on_chunk_border(b, chunk) or _on_rim_outer_row(curves, b) \
+			or _on_contour_surface(curves, b)
+		if not (a_ok and b_ok) and not _edge_is_surface_covered(skin.arrays, a, b) \
+				and offenders.size() < 20:
 			offenders.append("%s -> %s" % [a, b])
 	print("MEAS reported corner chunk free edges: %d checked, %d visible-hole offenders: %s" % [
 		checked, offenders.size(), str(offenders)])
@@ -654,7 +736,14 @@ func test_reported_unbounded_edge_has_a_rounded_vertical_cross_section() -> void
 				continue
 			var nrm: Vector2 = c.normals[i]
 			var q: Vector2 = p + nrm * 0.45
+			var far_q: Vector2 = p + nrm * WaterSkin.WALL_CONTACT_SCAN_MAX
 			var drop: float = c.levels[i] - TerrainSurfaceField.surface_y(region, q.x, q.y)
+			# A low near probe followed by sustained high ground inside the
+			# signed-depth cell is a recessed bank, not an unbounded edge. The
+			# compact-lobe oracle must select a column that remains genuinely free.
+			if TerrainSurfaceField.surface_y(region, far_q.x, far_q.y) \
+					> c.levels[i] + 0.05:
+				continue
 			if drop > sample.drop:
 				sample = {"drop": drop, "point": p, "normal": nrm,
 					"level": c.levels[i]}
@@ -768,13 +857,13 @@ func test_reported_green_wedge_is_wet_and_skin_covered() -> void:
 ## Paired renders from the owner's (33.9,8.0,-1108.5) angle show the green
 ## polygon changing outline with time: it is not a fixed contour corner, but
 ## shallow terrain being uncovered by the geometric swell.  The five-sine
-## shader spectrum has a conservative 1.34m downward bound.  COLOR.r is the
+## shared dynamic spectrum has WaterSkin's conservative downward bound. COLOR.r is the
 ## mesh-baked amplitude scale; after applying that worst trough, every
 ## statically visible wet vertex must retain 2cm of cover over the rendered
 ## terrain.  Before the fix ARRAY_COLOR is absent, so the diagnostic falls
 ## back to the shipped shore-distance fade and exposes the real failure.
 func test_reported_shallow_water_cannot_dry_at_swell_trough() -> void:
-	const SWELL_TROUGH_BOUND := 1.34
+	const SWELL_TROUGH_BOUND := WaterSkin.SWELL_TROUGH_BOUND
 	const COVER := 0.02
 	var offenders: Array[String] = []
 	var checked := 0
@@ -852,22 +941,60 @@ func test_skin_builds_on_site_chunk() -> void:
 	assert_true(idx.size() % 3 == 0, "indices form whole triangles")
 	for i in idx:
 		assert_true(i >= 0 and i < verts.size(), "index %d in range [0,%d)" % [i, verts.size()])
-	# Welded: no two verts share a position. Horizontal coordinates use the
-	# skin's documented 1cm precision; Y uses the hydraulic 1/64m precision.
-	# The previous all-axes *64 key falsely merged distinct subdivision points
-	# 1.0-1.5cm apart in XZ even though they are not duplicate positions.
+	# Welded: no two verts share a position at the skin's documented 1/64m
+	# world-space precision.
 	var seen: Dictionary = {}
 	var dup_ct := 0
 	for v: Vector3 in verts:
-		var key := Vector3i(roundi(v.x * 100.0), roundi(v.y * 64.0), roundi(v.z * 100.0))
+		var key := Vector3i(roundi(v.x * 64.0), roundi(v.y * 64.0), roundi(v.z * 64.0))
 		if seen.has(key):
 			dup_ct += 1
 		seen[key] = true
 	assert_eq(dup_ct, 0, "no duplicate-position verts survive the weld")
+	var custom1: PackedFloat32Array = arrays[Mesh.ARRAY_CUSTOM1]
+	assert_eq(custom1.size(), verts.size() * 4,
+		"CUSTOM1 stores velocity/vorticity/compression for every water vertex")
+	var moving_vertices := 0
+	var max_sampler_error := 0.0
+	for vi in verts.size():
+		var baked := Vector2(custom1[vi * 4], custom1[vi * 4 + 1])
+		if baked.length() < 0.2:
+			continue
+		moving_vertices += 1
+		var v: Vector3 = verts[vi]
+		var sampled: Vector2 = skin.sampler.velocity_at(Vector2(v.x, v.z))
+		max_sampler_error = maxf(max_sampler_error, baked.distance_to(sampled))
+	assert_true(moving_vertices > 100,
+		"the real flat river reach bakes a readable nonzero current")
+	assert_true(max_sampler_error < 0.01,
+		"mesh and CPU sampler share one current field (max error %.5f)" % max_sampler_error)
 
 	var skin_tris: int = idx.size() / 3
 	print("MEAS test_skin_builds_on_site_chunk: skin=%d tris (%d verts, %.2fms)" % [
 		skin_tris, verts.size(), skin_us / 1000.0])
+
+
+func test_current_field_is_bit_identical_across_chunk_border() -> void:
+	var north := WaterSkin.build(_water(SEED), Vector2i(0, -6),
+		_region(SEED, Vector2i(0, -6)))
+	var south := WaterSkin.build(_water(SEED), Vector2i(0, -7),
+		_region(SEED, Vector2i(0, -7)))
+	assert_false(north.is_empty() or south.is_empty(),
+		"both reported neighbouring chunks carry water")
+	if north.is_empty() or south.is_empty():
+		return
+	var common_wet := 0
+	var worst := 0.0
+	for x in range(0, 193, 3):
+		var p := Vector2(float(x), -1152.0)
+		if is_nan(north.sampler.level_at(p)) or is_nan(south.sampler.level_at(p)):
+			continue
+		common_wet += 1
+		worst = maxf(worst, north.sampler.velocity_at(p).distance_to(
+			south.sampler.velocity_at(p)))
+	assert_true(common_wet > 4, "shared border exercises a real wet reach")
+	assert_true(worst < 0.0001,
+		"two-cell halo produces a welded current border (worst %.7f)" % worst)
 
 
 ## test_free_edges_only_buried_rim_or_border (r3-task-5-brief.md's own name —

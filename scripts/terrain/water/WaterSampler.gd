@@ -27,25 +27,18 @@
 # PRECISION: level_at stores and evaluates the fill's NATIVE 6m lattice,
 # using the exact same signed-depth shoreline interpolation as
 # WaterField._fill_bilinear. An earlier sampler resampled the field onto the
-# mesh's 3m lattice and bilinearly interpolated that second grid. That is
+# old render lattice and bilinearly interpolated that second grid. That is
 # exact inside fully-wet bilinear cells, but NOT across wet/dry cells: two
 # successive renormalizations changed steep shoreline values by up to 0.44m
 # and could classify a dry/wading point as swimming. Keeping the native fill
 # array is both smaller and bit-for-bit faithful to WaterField.level_at over
-# the entire chunk. The mesh-aligned grid remains only for flow/wave payloads.
+# the entire chunk. A separate world-aligned 3m grid carries flow/wave payloads.
 #
-# FLOW FRAME (r3 Task 9): alongside the level grid, build() now ALSO bakes
-# WaterSkin's own per-vertex flow frame (_flow_frame_at: arc length s, cross
-# distance d, profile slope) onto the IDENTICAL grid geometry, so
-# flow_frame_at(xz) can answer "what river frame applies HERE" for any
-# character position, not just a mesh vertex. The frame arrays are supplied
-# ALREADY BAKED by the caller (WaterSkin.build, via its own private
-# _flow_frame_at — kept a WaterSkin-internal call so this file doesn't need a
-# reverse dependency on WaterSkin's class_name) rather than recomputed here;
-# this file only stores and bilinear-interpolates them, exactly mirroring how
-# it already treats `_h`. Unlike level, s/d/slope are never NAN (WaterSkin's
-# own "calm" rule bakes a literal 0,0,0 away from any trace) — so this grid
-# needs no wet/dry renormalization, plain bilinear suffices.
+# FLOW PAYLOAD: alongside the legacy curvilinear frame, build() stores the
+# continuous world-XZ current and its vorticity/compression diagnostics on
+# the identical grid. Mesh CUSTOM1, wave-particle transport, foam generation,
+# and CPU consumers therefore read one frozen field rather than independently
+# reconstructing motion.
 class_name WaterSampler
 extends RefCounted
 
@@ -68,12 +61,15 @@ var _fill_ground: PackedFloat32Array # native terrain heights for the mixed wet/
 var _fs: PackedFloat32Array      # nx*nz, arc length s (r3 Task 9)
 var _fd: PackedFloat32Array      # nx*nz, cross distance d
 var _fslope: PackedFloat32Array  # nx*nz, profile slope
-var _wave_scale: PackedFloat32Array # nx*nz, GPU-matched depth-limited swell amplitude
+var _wave_scale: PackedFloat32Array # nx*nz, GPU-matched depth-limited dynamic-height amplitude
+var _velocity: PackedVector2Array   # nx*nz, world-XZ current
+var _vorticity: PackedFloat32Array  # nx*nz, dv/dx-du/dz
+var _compression: PackedFloat32Array # nx*nz, max(0,-divergence)
 
 
 ## Bakes a sampler by sampling WaterField.level_at across the given grid
-## (origin/step/nx/nz — WaterSkin.build passes its OWN interior-lattice grid
-## geometry, so sampler coverage and mesh lattice stay column-aligned). Every
+## (origin/step/nx/nz — WaterSkin.build passes its fixed world-aligned CPU
+## grid, independent of render tessellation). Every
 ## grid corner the field calls wet stores its exact level; dry corners stay
 ## NAN. `ctx`/`region` are read during this call only — no reference to
 ## either survives into the returned instance (chunk eviction frees them).
@@ -84,7 +80,10 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 		flow_s: PackedFloat32Array = PackedFloat32Array(),
 		flow_d: PackedFloat32Array = PackedFloat32Array(),
 		flow_slope: PackedFloat32Array = PackedFloat32Array(),
-		wave_scale: PackedFloat32Array = PackedFloat32Array()) -> WaterSampler:
+		wave_scale: PackedFloat32Array = PackedFloat32Array(),
+		flow_velocity: PackedVector2Array = PackedVector2Array(),
+		flow_vorticity: PackedFloat32Array = PackedFloat32Array(),
+		flow_compression: PackedFloat32Array = PackedFloat32Array()) -> WaterSampler:
 	var s := WaterSampler.new()
 	s._origin = origin
 	s._step = step
@@ -130,6 +129,9 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 	s._fd = flow_d if flow_d.size() == n else _zeros(n)
 	s._fslope = flow_slope if flow_slope.size() == n else _zeros(n)
 	s._wave_scale = wave_scale if wave_scale.size() == n else _ones(n)
+	s._velocity = flow_velocity if flow_velocity.size() == n else _zero_vectors(n)
+	s._vorticity = flow_vorticity if flow_vorticity.size() == n else _zeros(n)
+	s._compression = flow_compression if flow_compression.size() == n else _zeros(n)
 	return s
 
 
@@ -143,6 +145,12 @@ static func _ones(n: int) -> PackedFloat32Array:
 	var a := PackedFloat32Array()
 	a.resize(n)
 	a.fill(1.0)
+	return a
+
+
+static func _zero_vectors(n: int) -> PackedVector2Array:
+	var a := PackedVector2Array()
+	a.resize(n)
 	return a
 
 
@@ -237,10 +245,9 @@ func _native_fill_level_at(xz: Vector2) -> float:
 ## bilinear (no wet/dry renormalization needed: s/d/slope are never NAN,
 ## WaterSkin bakes a literal 0,0,0 "calm" frame away from any trace — see
 ## this file's header) over the SAME grid level_at interpolates. Also
-## Vector3.ZERO outside this chunk's own snapshot; the character's
-## river-train mirror treats that identically to a genuine calm frame (its
-## own river_present gate already zeroes the whole term at (0,0,0)), so no
-## separate "out of bounds" signal is needed here the way NAN is for level.
+## Vector3.ZERO outside this chunk's own snapshot, identical to a genuine
+## calm frame; no separate "out of bounds" signal is needed here the way NAN
+## is for level.
 func flow_frame_at(xz: Vector2) -> Vector3:
 	var corners: Array = _corners(xz)
 	if corners.is_empty():
@@ -257,7 +264,32 @@ func flow_frame_at(xz: Vector2) -> Vector3:
 	return Vector3(s, d, slope)
 
 
-## GPU-matched vertical-swell amplitude at world (x,z).  Plain bilinear
+## World-XZ current used by the wave-particle and foam simulations. Calm
+## water and points outside this chunk snapshot return zero.
+func velocity_at(xz: Vector2) -> Vector2:
+	var corners: Array = _corners(xz)
+	if corners.is_empty():
+		return Vector2.ZERO
+	var velocity := Vector2.ZERO
+	for cnr: Array in corners:
+		velocity += _velocity[cnr[1] * _nx + cnr[0]] * cnr[2]
+	return velocity
+
+
+## (vorticity, compression) paired with velocity_at for wave turning and
+## physically generated foam.
+func flow_diagnostics_at(xz: Vector2) -> Vector2:
+	var corners: Array = _corners(xz)
+	if corners.is_empty():
+		return Vector2.ZERO
+	var diagnostics := Vector2.ZERO
+	for cnr: Array in corners:
+		var idx: int = cnr[1] * _nx + cnr[0]
+		diagnostics += Vector2(_vorticity[idx], _compression[idx]) * cnr[2]
+	return diagnostics
+
+
+## GPU-matched vertical dynamic-height amplitude at world (x,z). Plain bilinear
 ## interpolation is correct because the mesh's COLOR.r varies linearly over
 ## its faces too.  Outside this chunk snapshot, return zero so an invalid
 ## lookup cannot add unbounded buoyancy motion.

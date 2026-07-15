@@ -2,6 +2,8 @@
   "comment": "Every camera the owner has ever reviewed water from, as (player, crosshair) pairs straight off his F3 overlays, plus structural views. After ANY water change: for each entry, ReviewCam.pose(player) -> wait for chunks -> ReviewCam.shoot(player, crosshair, out.png) (or place the camera manually for the cam/look entries) and REVIEW EVERY FRAME before returning. Artifacts only show from specific angle classes: plunge-side, above/behind-crest, crest-standing, and bank-side each fail independently.",
   "seed": 2697992464,
   "vantages": [
+	{"name": "owner-2026-07-14 20:33 rejected static-lines view", "player": [34.8, 8.0, -1105.2], "crosshair": [34.9, 8.2, -1105.5]},
+	{"name": "owner-2026-07-14 16:45 missing water corner", "player": [180.9, 4.0, -1184.4], "crosshair": [180.6, 4.2, -1184.7]},
     {"name": "r5-V1 bank-side at the cascade", "player": [34.4, 8.0, -1103.4], "crosshair": [34.1, 8.2, -1103.7]},
     {"name": "r8 bank-side, fall left flank + 5-pool", "player": [34.3, 8.0, -1099.8], "crosshair": [34.0, 8.2, -1100.0]},
     {"name": "r6 crest-standing at the 9->5 fall", "player": [56.6, 7.3, -1091.9], "crosshair": [56.2, 7.5, -1092.0]},

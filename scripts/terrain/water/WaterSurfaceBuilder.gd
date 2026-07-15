@@ -94,7 +94,7 @@ static func sheet_material() -> ShaderMaterial:
 ## Build the water node for a chunk, or null when the chunk is dry. `region`
 ## is the chunk's heightfield region (the streamer computes it and shares it
 ## here — the water field must see the REAL rendered terrain).
-## SHEET (r3 Task 4-6): WaterSkin — interior 3m lattice + a boundary strip
+## SHEET (r3 Task 4-6): WaterSkin — interior 2m render lattice + a boundary strip
 ## conforming to WaterContour's smooth curves + a meniscus rim, so the
 ## waterline renders as a real curve with no bare edge.
 ## TRIGGERS (r3 Task 7): one Area3D per WaterSkin.build's own `triggers`
@@ -125,6 +125,7 @@ func commit_chunk(skin: Dictionary) -> Node3D:
 	var sampler: WaterSampler = skin.sampler
 	for trig: Dictionary in skin.triggers:
 		var area := Area3D.new()
+		area.add_to_group("water_volume")
 		area.collision_layer = 1 << 7
 		area.collision_mask = 0
 		var shape := CollisionShape3D.new()

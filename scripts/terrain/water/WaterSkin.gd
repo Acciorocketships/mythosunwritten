@@ -3,7 +3,7 @@
 # mesher's own grid corners — this is the mesh that actually fixes the
 # angular shoreline test_water_contour.gd's header documents. Two vertex
 # families welded into one indexed surface:
-#   - INTERIOR: a 3.0m world-aligned lattice, kept only at points >= 2.0m
+#   - INTERIOR: a 2.0m world-aligned render lattice, kept only at points >= 2.0m
 #     inside a curve. "Inside" = WaterField.level_at's OWN field-truth
 #     wetness (the exact same wet/dry oracle WaterContour._is_wet uses to
 #     place the curves in the first place — see _lattice_wet below), gated by
@@ -54,14 +54,13 @@
 # normals for verts that weld together (a parallel normal_accum array, summed
 # on every weld hit, normalized once at the end by _bake_normals) instead of
 # picking whichever call site happened to create the vertex first.
-# ARRAY_COLOR.r carries a depth-limited swell-amplitude scale.  The shader's
-# five-sine spectrum can trough by at most 1.34m, so shallow water scales its
-# geometric motion to retain a 2cm cover over the rendered bed.  This is
-# independent of river motion: downstream flow remains fragment-side
-# refraction advection, while only the pond-style vertical swell is limited.
+# ARRAY_COLOR.r carries a depth-limited displacement scale. The ambient
+# spectrum plus packet-field clamp can trough by at most 1.0m, so shallow
+# water retains 2cm of cover over the rendered bed. CUSTOM1 separately bakes
+# the continuous current/vorticity/compression shared by GPU and CPU users.
 # TRIGGERS + SAMPLER (Task 7, see _triggers/WaterSampler.gd): build() now
 # returns a REAL `sampler` (a frozen WaterSampler snapshot of the water
-# FIELD across this chunk, baked on the interior lattice's own grid geometry
+# FIELD across this chunk, baked on a separate world-aligned 3m CPU grid
 # but covering the FULL wet footprint including the INSET shoreline band —
 # see WaterSampler.gd's own BACKING DATA note) instead of Task 4-6's `null`
 # placeholder. `_triggers` gained the STEEP_UNSWIMMABLE gate the old
@@ -82,11 +81,13 @@
 class_name WaterSkin
 extends Object
 
-const STEP := 3.0             # interior lattice spacing — brief's own "3.0m world-aligned lattice"
+const STEP := 2.0             # render lattice: resolves broad geometric wave packets without aliasing
+const SAMPLER_STEP := 3.0     # CPU/current lattice: stable gameplay resolution and bounded worker cost
+const CURRENT_HALO := 2       # matches WaterCurrentField's finite signed-distance support
 const INSET := 2.0            # brief's own "points >= 2.0m inside a curve"
 const BUCKET := 3.0           # presence-grid bucket size for nearest-curve-point acceleration
 const WELD_Q := 64.0          # position-quantize scale for the shared vertex weld (brief: "y*64")
-const WELD_XZ_Q := 100.0      # 1cm horizontal precision — finer than WELD_Q since strip verts must weld exactly
+const WELD_XZ_Q := WELD_Q     # one 1/64m world-space weld cell on every axis
 const TILE := 24.0            # trigger tiling — matches WaterField.TILE
 const TRIGGER_TOP_CLEAR := 1.7
 const TRIGGER_BOTTOM_CLEAR := 5.0
@@ -175,12 +176,12 @@ const RIM_WALL_OUTER_BURY := 0.40
 # The waterline is a signed-depth contour interpolated on WaterField's 6m
 # lattice, so it does not necessarily sit on the terrain cell boundary.  A
 # fixed RIM_WALL_REACH therefore accounts for the KayKit recess but can omit
-# the additional contour-to-boundary distance.  Search only within the old
-# direct-contact gate (1.5m): this still rejects a merely flanking wall, while
-# measuring the missing distance for a wall genuinely in this point's own
-# outward column.
+# the additional contour-to-boundary distance. Search within the same finite
+# 6m support that created the signed-depth contour: the sustained-high probe
+# at the end of the span still rejects a small bump or merely flanking wall,
+# while a genuine wall in this point's own column yields its true contact.
 const WALL_CONTACT_SCAN_STEP := 0.05
-const WALL_CONTACT_SCAN_MAX := RIM_WALL_REACH
+const WALL_CONTACT_SCAN_MAX := WaterField.FILL_STEP
 # At a convex wall turn, independently extruded columns form a diagonal chord
 # across the L-shaped contact and omit the corner.  Intersect their wall
 # tangents to form a proper miter, but reject pathologically distant
@@ -191,7 +192,7 @@ const WALL_MITER_DOT_MAX := 0.8
 const WALL_MITER_LIMIT := WaterField.FILL_STEP
 const WALL_MITER_BURY := 0.10
 
-# The boundary zipper bridges a smooth 1.5m contour to a 3m interior
+# The boundary zipper bridges a smooth 1.5m contour to a 2m interior
 # lattice.  Its old greedy walk could emit a single ~6-7m fan at a narrow
 # corner even though both chains were locally valid.  Such a face is large
 # enough for its interpolated normal/refraction to read as a separate water
@@ -246,7 +247,7 @@ const SEG_TIE_BAND := 0.75
 const SHORE_DIST_MAX := 8.0
 const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp radius with slack — mirrors _nearest_curve_dist's own "radius=1 covers INSET=2.0 since BUCKET=3.0" derivation, scaled up (8.0/3.0 -> 3 cells, +1 slack for a query point sitting at its own cell's far edge)
 const SWELL_SHORE_FADE := 4.0
-const SWELL_TROUGH_BOUND := 1.34 # conservative abs-min of water_wave_h's five sine terms at wave_height=1
+const SWELL_TROUGH_BOUND := 1.40 # 0.51m ambient + 0.48m packets + 0.375m interactive ripple, rounded up
 const SWELL_BED_COVER := 0.02    # never let a trough uncover rendered terrain
 
 # --- Rim normals (controller addition) — curl-rotation angle per rim row,
@@ -321,29 +322,47 @@ static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
 	if st.idx.is_empty():
 		return {}
 
+	var sampler_grid: Dictionary = _sampler_grid(rect)
+	var current: Dictionary = _current_grid(st, sampler_grid.origin, SAMPLER_STEP,
+		sampler_grid.nx, sampler_grid.nz)
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = st.verts
 	arrays[Mesh.ARRAY_INDEX] = st.idx
 	arrays[Mesh.ARRAY_NORMAL] = _bake_normals(st)
-	var payload: Dictionary = _vertex_payload(st)
+	var payload: Dictionary = _vertex_payload(st, current)
 	arrays[Mesh.ARRAY_CUSTOM0] = payload.custom0
+	arrays[Mesh.ARRAY_CUSTOM1] = payload.custom1
 	arrays[Mesh.ARRAY_COLOR] = payload.colors
 
-	# Sampler bake: the FIELD across this chunk, on the lattice's own grid
-	# geometry (Task 7 review MEDIUM fix — the interior lattice itself insets
+	# Sampler bake: the FIELD across this chunk, on a fixed 3m CPU grid
+	# independent of render tessellation (Task 7 review MEDIUM fix — the render lattice insets
 	# INSET away from the waterline, so it is NOT a full-coverage height
 	# source; see WaterSampler.gd's own BACKING DATA note). r3 Task 9: also
 	# bake the flow frame (s, d, slope) onto the SAME grid via this file's
 	# own _flow_frame_at (the CUSTOM0 bake's own per-vertex function, reused
 	# here rather than duplicated — see _flow_frame_grid) so the sampler can
-	# answer flow_frame_at for any (x,z), not just a mesh vertex; the
-	# character's river-train mirror needs s/d/slope AT ITS OWN POSITION,
-	# which is continuous, not vertex-snapped.
-	var flow: Dictionary = _flow_frame_grid(st, lattice.origin, STEP, lattice.nx, lattice.nz)
-	var sampler := WaterSampler.build(ctx, region, lattice.origin, STEP, lattice.nx, lattice.nz,
-		flow.s, flow.d, flow.slope, flow.wave_scale)
+	# answer flow_frame_at for any (x,z), not just a mesh vertex. Current and
+	# future gameplay consumers therefore read a continuous, non-vertex-snapped
+	# hydraulic frame.
+	var flow: Dictionary = _flow_frame_grid(st, sampler_grid.origin, SAMPLER_STEP,
+		sampler_grid.nx, sampler_grid.nz)
+	var sampler := WaterSampler.build(ctx, region, sampler_grid.origin, SAMPLER_STEP,
+		sampler_grid.nx, sampler_grid.nz, flow.s, flow.d, flow.slope, flow.wave_scale,
+		current.velocity, current.vorticity, current.compression)
 	return {"arrays": arrays, "triggers": _triggers(st), "sampler": sampler}
+
+
+## Fixed world-aligned CPU grid. It deliberately stays independent of the
+## denser render tessellation: current queries do not become more expensive
+## merely because visual wavelets need more vertices.
+static func _sampler_grid(rect: Rect2) -> Dictionary:
+	var origin: Vector2 = rect.position
+	origin.x = floor(origin.x / SAMPLER_STEP) * SAMPLER_STEP
+	origin.y = floor(origin.y / SAMPLER_STEP) * SAMPLER_STEP
+	var nx: int = int(round((rect.end.x - origin.x) / SAMPLER_STEP)) + 1
+	var nz: int = int(round((rect.end.y - origin.y) / SAMPLER_STEP)) + 1
+	return {"origin": origin, "nx": nx, "nz": nz}
 
 
 ## Bakes _flow_frame_at onto the SAMPLER's grid geometry (same origin/step/
@@ -379,6 +398,91 @@ static func _flow_frame_grid(st: Dictionary, origin: Vector2, step: float, nx: i
 	return {"s": s, "d": d, "slope": slope, "wave_scale": wave_scale}
 
 
+## Builds one continuous horizontal current from the hydraulic trace frame
+## and a two-cell signed-distance halo. The halo is sampled from the shared
+## WaterField/terrain fields, then discarded after the local bank projection;
+## neighbouring chunks therefore bake the same retained border values.
+static func _current_grid(st: Dictionary, origin: Vector2, step: float,
+		nx: int, nz: int) -> Dictionary:
+	var h: int = CURRENT_HALO
+	var hnx: int = nx + h * 2
+	var hnz: int = nz + h * 2
+	var horigin: Vector2 = origin - Vector2.ONE * (step * float(h))
+	var desired := PackedVector2Array()
+	var wet := PackedByteArray()
+	desired.resize(hnx * hnz)
+	wet.resize(hnx * hnz)
+	for j in hnz:
+		for i in hnx:
+			var k: int = j * hnx + i
+			var p: Vector2 = horigin + Vector2(i, j) * step
+			var lvl: float = WaterField.level_at(st.ctx, p)
+			if lvl == -INF:
+				continue
+			var ground: float = TerrainSurfaceField.surface_y(st.region, p.x, p.y)
+			var depth: float = lvl - ground
+			if depth <= WaterSampler.WET_EPS:
+				continue
+			wet[k] = 1
+			var frame: Dictionary = _flow_frame_at(st, p)
+			if frame.width <= 0.0 or frame.tangent.length_squared() <= 0.000001:
+				continue
+			var speed: float = WaterCurrentField.trace_speed(depth, frame.width,
+				absf(frame.slope))
+			var centre: float = clampf(1.0 - absf(frame.d) / maxf(frame.width, 1.0), 0.0, 1.0)
+			var channel_scale: float = lerpf(0.55, 1.0,
+				smoothstep(0.0, 1.0, centre))
+			desired[k] = frame.tangent * speed * channel_scale
+	var signed_bank: PackedFloat32Array = WaterCurrentField.signed_distance(
+		wet, hnx, hnz, step)
+	var solved: Dictionary = WaterCurrentField.solve_local(desired, signed_bank,
+		hnx, hnz, step)
+	var velocity := PackedVector2Array()
+	var vorticity := PackedFloat32Array()
+	var compression := PackedFloat32Array()
+	velocity.resize(nx * nz)
+	vorticity.resize(nx * nz)
+	compression.resize(nx * nz)
+	for j in nz:
+		for i in nx:
+			var dst: int = j * nx + i
+			var src: int = (j + h) * hnx + i + h
+			velocity[dst] = solved.velocity[src]
+			vorticity[dst] = solved.vorticity[src]
+			compression[dst] = solved.compression[src]
+	return {
+		"origin": origin, "step": step, "nx": nx, "nz": nz,
+		"velocity": velocity, "vorticity": vorticity, "compression": compression,
+	}
+
+
+## Bilinear current lookup for arbitrary render vertices, including the
+## contour/rim vertices that do not lie on the CPU grid.
+static func _current_at(current: Dictionary, p: Vector2) -> Dictionary:
+	var fx: float = clampf((p.x - current.origin.x) / current.step,
+		0.0, float(current.nx - 1))
+	var fz: float = clampf((p.y - current.origin.y) / current.step,
+		0.0, float(current.nz - 1))
+	var i0: int = mini(int(floor(fx)), current.nx - 2)
+	var j0: int = mini(int(floor(fz)), current.nz - 2)
+	var tx: float = fx - float(i0)
+	var tz: float = fz - float(j0)
+	var velocity := Vector2.ZERO
+	var vorticity := 0.0
+	var compression := 0.0
+	for corner: Vector3 in [
+		Vector3(i0, j0, (1.0 - tx) * (1.0 - tz)),
+		Vector3(i0 + 1, j0, tx * (1.0 - tz)),
+		Vector3(i0, j0 + 1, (1.0 - tx) * tz),
+		Vector3(i0 + 1, j0 + 1, tx * tz),
+	]:
+		var idx: int = int(corner.y) * current.nx + int(corner.x)
+		velocity += current.velocity[idx] * corner.z
+		vorticity += current.vorticity[idx] * corner.z
+		compression += current.compression[idx] * corner.z
+	return {"velocity": velocity, "vorticity": vorticity, "compression": compression}
+
+
 ## Per-vertex CUSTOM0 = (s, d, slope, shore_dist) — Task 6's flow-frame bake,
 ## REPLACING Task 4's (flow.x, shore, flow.y, steep) contract (this file's
 ## OLD docstring here predicted exactly this: "Task 6/8 replace both the band
@@ -399,10 +503,12 @@ static func _flow_frame_grid(st: Dictionary, origin: Vector2, step: float, nx: i
 ## normally, since it is a shore-proximity signal independent of river/pond
 ## mode. See _flow_frame_at for the full per-vertex derivation, including
 ## junction blending where two traces both lie within JUNCTION_RADIUS=12m.
-static func _vertex_payload(st: Dictionary) -> Dictionary:
+static func _vertex_payload(st: Dictionary, current: Dictionary) -> Dictionary:
 	var cust := PackedFloat32Array()
+	var cust1 := PackedFloat32Array()
 	var colors := PackedColorArray()
 	cust.resize(st.verts.size() * 4)
+	cust1.resize(st.verts.size() * 4)
 	colors.resize(st.verts.size())
 	for vi in st.verts.size():
 		var v: Vector3 = st.verts[vi]
@@ -412,12 +518,17 @@ static func _vertex_payload(st: Dictionary) -> Dictionary:
 		cust[vi * 4 + 1] = frame.d
 		cust[vi * 4 + 2] = frame.slope
 		cust[vi * 4 + 3] = frame.shore_dist
+		var flow: Dictionary = _current_at(current, p)
+		cust1[vi * 4 + 0] = flow.velocity.x
+		cust1[vi * 4 + 1] = flow.velocity.y
+		cust1[vi * 4 + 2] = flow.vorticity
+		cust1[vi * 4 + 3] = flow.compression
 		var scale: float = _swell_scale(st, p, v.y, frame.shore_dist)
 		colors[vi] = Color(scale, 1.0, 1.0, 1.0)
-	return {"custom0": cust, "colors": colors}
+	return {"custom0": cust, "custom1": cust1, "colors": colors}
 
 
-## Geometric swell amplitude at one surface sample.  Shore distance still
+## Geometric dynamic-height amplitude at one surface sample. Shore distance still
 ## kills bobbing at the meniscus, but it is not a depth proxy: a broad river
 ## shelf can sit far from every shore and remain only centimetres deep.  The
 ## second gate therefore derives directly from static water-to-bed clearance.
@@ -555,6 +666,7 @@ static func _project_on_trace(st: Dictionary, tr: RiverTrace, p: Vector2, near_s
 	var s: float = lerpf(arclen[near.j], arclen[near.j + 1], near.t_c)
 	var slope: float = _cand_slope(arclen, levels, near)
 	var tangent: Vector2 = near.tangent
+	var width: float = lerpf(tr.widths[near.j], tr.widths[near.j + 1], near.t_c)
 	if cands.size() == 2:
 		var far: Dictionary = cands[1]
 		var tie: float = far.dist - near.dist
@@ -564,12 +676,15 @@ static func _project_on_trace(st: Dictionary, tr: RiverTrace, p: Vector2, near_s
 			var s_far_raw: float = lerpf(arclen[far.j], arclen[far.j + 1], far.t_raw)
 			s = clampf(lerpf(s_near_raw, s_far_raw, mu), 0.0, arclen[arclen.size() - 1])
 			slope = lerpf(slope, _cand_slope(arclen, levels, far), mu)
+			var far_width: float = lerpf(tr.widths[far.j], tr.widths[far.j + 1], far.t_c)
+			width = lerpf(width, far_width, mu)
 			var tb: Vector2 = near.tangent.lerp(far.tangent, mu)
 			if tb.length_squared() > 0.000001:
 				tangent = tb.normalized()
 	var perp := Vector2(-tangent.y, tangent.x)
 	var d: float = (p - near.proj).dot(perp)
-	return {"dist": near.dist, "s": s, "d": d, "slope": slope, "tangent": tangent, "proj": near.proj}
+	return {"dist": near.dist, "s": s, "d": d, "slope": slope,
+		"tangent": tangent, "width": width, "proj": near.proj}
 
 
 ## One candidate's continuous profile slope: _central_slope at the segment's
@@ -635,14 +750,17 @@ static func _flow_frame_at(st: Dictionary, p: Vector2) -> Dictionary:
 		if not proj.is_empty():
 			projections.append(proj)
 	if projections.is_empty():
-		return {"s": 0.0, "d": 0.0, "slope": 0.0, "shore_dist": shore_dist}
+		return {"s": 0.0, "d": 0.0, "slope": 0.0, "shore_dist": shore_dist,
+			"tangent": Vector2.ZERO, "width": 0.0}
 	projections.sort_custom(func(pa, pb): return pa.dist < pb.dist)
 	var nearest: Dictionary = projections[0]
 	if nearest.dist >= RIVER_MAX_DIST:
-		return {"s": 0.0, "d": 0.0, "slope": 0.0, "shore_dist": shore_dist}
+		return {"s": 0.0, "d": 0.0, "slope": 0.0, "shore_dist": shore_dist,
+			"tangent": Vector2.ZERO, "width": 0.0}
 	var s: float = nearest.s
 	var slope: float = nearest.slope
 	var d: float = nearest.d
+	var tangent: Vector2 = nearest.tangent
 	if projections.size() > 1 and nearest.dist < JUNCTION_RADIUS and projections[1].dist < JUNCTION_RADIUS:
 		var second: Dictionary = projections[1]
 		var w1: float = 1.0 / maxf(nearest.dist * nearest.dist, 0.01)
@@ -653,9 +771,11 @@ static func _flow_frame_at(st: Dictionary, p: Vector2) -> Dictionary:
 		var blended: Vector2 = nearest.tangent * w1 + t2 * w2
 		if blended.length_squared() > 0.000001:
 			var bt: Vector2 = blended.normalized()
+			tangent = bt
 			var bperp := Vector2(-bt.y, bt.x)
 			d = (p - nearest.proj).dot(bperp)
-	return {"s": s, "d": d, "slope": slope, "shore_dist": shore_dist}
+	return {"s": s, "d": d, "slope": slope, "shore_dist": shore_dist,
+		"tangent": tangent, "width": nearest.width}
 
 
 ## Interior water-surface normal at (p, center_level): a heightfield normal
@@ -727,13 +847,14 @@ static func _bake_normals(st: Dictionary) -> PackedVector3Array:
 	return out
 
 
-## Assembles the committed ArrayMesh from build()'s own `arrays` — CUSTOM0 as
-## RGBA float plus COLOR.r's depth-limited swell scale, the one shared sheet
-## material's expected surface format.
+## Assembles the committed ArrayMesh from build()'s own `arrays`: CUSTOM0 is
+## the curvilinear river frame; CUSTOM1 is the shared current plus its local
+## vorticity/compression; COLOR.r is the depth-limited displacement scale.
 static func commit(arrays: Array) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {},
-		Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT)
+		(Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT)
+		| (Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT))
 	return mesh
 
 
@@ -804,14 +925,14 @@ static func _lattice_wet(st: Dictionary, p: Vector2) -> Dictionary:
 	return {"wet": dist >= INSET, "dist": dist}
 
 
-## Builds the kept-point set: 3.0m world-aligned lattice (origin snapped to
+## Builds the kept-point set: 2.0m world-aligned render lattice (origin snapped to
 ## the world STEP grid, same "floor(x/STEP)*STEP" convention WaterContour's
 ## own presence grid uses — this is what makes two neighbouring chunks'
 ## lattices land on IDENTICAL world columns/rows at their shared border) over
 ## `rect`, each point tested by _lattice_wet, height = WaterField.level_at
 ## (the brief's own rule for interior vertices).
 ## Index bounds are computed directly from the rect span (a 192m chunk is
-## EXACTLY 64 * STEP), NOT filtered through Rect2.has_point: an earlier
+## an exact integer multiple of STEP), NOT filtered through Rect2.has_point: an earlier
 ## version used has_point as a
 ## belt-and-braces bounds check and it silently dropped the entire i=64 /
 ## j=64 column and row — Godot's Rect2.has_point treats the far edge as
@@ -1118,7 +1239,7 @@ static func _boundary_strip(st: Dictionary, lattice: Dictionary, c: Dictionary, 
 		return
 
 	# One open contour can border several disconnected kept-lattice rings
-	# where the channel narrows below the 3m interior grid. The old zipper
+	# where the channel narrows below the 2m interior grid. The old zipper
 	# forced those rings into one necklace, creating 53m triangles across dry
 	# terrain at the reported descent. Split both at spatial gaps and at jumps
 	# between distant portions of a self-approaching contour, then partition
@@ -1222,7 +1343,7 @@ static func _nearest_curve_vertex(pts: PackedVector2Array, p: Vector2) -> int:
 ##
 ## Rising banks extend rows2..5 to 0.40/0.60/0.70/0.78m. A contour wall flag is
 ## only allowed to extend them through the KayKit face when the point's own
-## outward column finds high ground within 1.5m.  The measured contact distance
+## outward column finds sustained high ground within one 6m fill cell. The measured contact distance
 ## is added to the KayKit face's own 1.5m recess: the signed-depth waterline can
 ## sit between the terrain boundary and the contour, so a fixed 1.5m extrusion
 ## alone is not enough. At confirmed walls rows2..4 remain a water-level shelf
@@ -1470,9 +1591,9 @@ static func _rising_flags(st: Dictionary, c: Dictionary,
 ## WaterContour deliberately checks the outward normal and its +/-45-degree
 ## flanks so a rounded cliff turn inherits both wall arms. That generous flag
 ## must not turn a genuinely unbounded edge into a bank skirt merely because a
-## wall exists off to one side. Search only the old direct-contact span (the
-## 1.5m KayKit recess) for the first high-ground sample in THIS point's outward
-## column. A hit both confirms the wall and measures the signed-depth contour's
+## wall exists off to one side. Search only the signed-depth field's finite 6m
+## interpolation support for the first high-ground sample in THIS point's
+## outward column. A hit both confirms the wall and measures the contour's
 ## retreat from the real terrain boundary. The visible face is another 1.5m
 ## inside the high cell, so `face_reach = contact + RIM_WALL_REACH`; omitting
 ## `contact` was the fixed-distance bug that left exact recessed corners dry.
@@ -1618,7 +1739,7 @@ static func _zip_strip(st: Dictionary, a: PackedInt32Array, b: PackedInt32Array,
 		_emit_strip_tri(st, a[0], b[m - 1], b[0])
 
 
-## Emits a boundary-strip face at the same local scale as the 3m interior
+## Emits a boundary-strip face at the same local scale as the 2m interior
 ## lattice.  The greedy zipper decides topology, but it does not constrain
 ## the width of the triangle it creates: at a tight corner one contour step
 ## could fan directly to a ring point 6-7m away.  Recursively bisecting the
@@ -1662,10 +1783,14 @@ static func _emit_strip_tri(st: Dictionary, i0: int, i1: int, i2: int) -> void:
 ## own known-+Y quads (see test_all_triangles_wind_up-style check in this
 ## task's own test suite) as (p_a_first, p_b_or_a_next, p_ring_or_a) below.
 static func _emit_tri(st: Dictionary, i0: int, i1: int, i2: int) -> void:
+	if i0 == i1 or i1 == i2 or i2 == i0:
+		return
 	var v0: Vector3 = st.verts[i0]
 	var v1: Vector3 = st.verts[i1]
 	var v2: Vector3 = st.verts[i2]
 	var nrm: Vector3 = (v1 - v0).cross(v2 - v0)
+	if nrm.length_squared() <= 0.00000001:
+		return
 	var order: Array = [i0, i1, i2] if nrm.y >= 0.0 else [i0, i2, i1]
 	for k in order:
 		st.idx.append(k)
@@ -1779,11 +1904,51 @@ static func _seal_local_surface_holes(st: Dictionary) -> void:
 			continue
 		var triangles: PackedInt32Array = Geometry2D.triangulate_polygon(polygon)
 		for ti in range(0, triangles.size(), 3):
-			# Polygon edges are local by the gate above, but an ear-clipping
-			# diagonal can still span two 3m cells (6.7m at this reported corner).
-			# Route fills through the same bounded-face emitter as the zipper.
-			_emit_strip_tri(st, cycle[triangles[ti]], cycle[triangles[ti + 1]],
-				cycle[triangles[ti + 2]])
+			_emit_fill_triangle(st, cycle, triangles[ti], triangles[ti + 1],
+				triangles[ti + 2])
+
+
+## Geometry2D's ear clipper is allowed to omit collinear polygon vertices.
+## That is geometrically harmless but topologically wrong here: the omitted
+## contour point is also used by the meniscus, so replacing A-M-B by A-B
+## leaves both chains as coincident free edges (and a crack-prone T-junction).
+## Reinsert every cycle vertex lying on each ear edge, then triangulate that
+## still-convex subdivided ear as a fan. The fill therefore shares the exact
+## boundary segmentation already owned by the strip/rim.
+static func _emit_fill_triangle(st: Dictionary, cycle: Array[int], ia: int,
+		ib: int, ic: int) -> void:
+	var corners: Array[int] = [cycle[ia], cycle[ib], cycle[ic]]
+	var perimeter: Array[int] = []
+	for edge_i in 3:
+		var a: int = corners[edge_i]
+		var b: int = corners[(edge_i + 1) % 3]
+		var av3: Vector3 = st.verts[a]
+		var bv3: Vector3 = st.verts[b]
+		var av := Vector2(av3.x, av3.z)
+		var bv := Vector2(bv3.x, bv3.z)
+		var edge: Vector2 = bv - av
+		var edge_len2: float = edge.length_squared()
+		var between: Array[Dictionary] = []
+		if edge_len2 > 0.000001:
+			for vi: int in cycle:
+				if vi == a or vi == b:
+					continue
+				var v3: Vector3 = st.verts[vi]
+				var v := Vector2(v3.x, v3.z)
+				var t: float = (v - av).dot(edge) / edge_len2
+				if t <= 0.0001 or t >= 0.9999:
+					continue
+				if v.distance_to(av + edge * t) <= 0.02:
+					between.append({"vi": vi, "t": t})
+		between.sort_custom(func(a_item: Dictionary, b_item: Dictionary) -> bool:
+			return a_item.t < b_item.t)
+		perimeter.append(a)
+		for item: Dictionary in between:
+			perimeter.append(item.vi)
+	for k in range(1, perimeter.size() - 1):
+		# Polygon edges are local by the caller's gate, but an ear diagonal can
+		# span two render cells. Keep the existing bounded-face subdivision.
+		_emit_strip_tri(st, perimeter[0], perimeter[k], perimeter[k + 1])
 
 
 static func _at_visible_water_level(st: Dictionary, v: Vector3) -> bool:
@@ -1821,8 +1986,7 @@ static func _dist_point_to_curve(c: Dictionary, p: Vector2) -> float:
 
 
 ## Shared weld: dedupes by quantized (x, z, y*64) per the brief's explicit
-## key — WELD_XZ_Q (1cm) horizontal precision is finer than the y*64
-## (~1.6cm) vertical precision because two DIFFERENT strip triangles
+## key — the same 1/64m precision on every world axis. Two DIFFERENT strip triangles
 ## legitimately reuse the exact SAME curve point (a curve-chain vertex is
 ## referenced by every triangle touching that point along the strip) and
 ## must resolve to one shared index, while two merely-nearby interior lattice

@@ -7,6 +7,9 @@ shader_type canvas_item;
 uniform sampler2D prev_tex : repeat_disable, filter_linear;
 uniform vec2 tex_size = vec2(256.0);
 uniform vec2 shift_texels = vec2(0.0);
+uniform sampler2D flow_tex : repeat_disable, filter_linear;
+uniform float flow_dt = 0.016;
+uniform float domain_size = 96.0;
 // Slow propagation: rings that race outward read as fast-forward footage
 // (owner). wave_c is the sim's c² — 0.16 ≈ 0.6 texel/frame ring speed.
 uniform float damping : hint_range(0.9, 1.0) = 0.986;
@@ -37,7 +40,10 @@ void fragment() {
 		COLOR = vec4(0.5, 0.5, 0.0, 1.0);
 	} else {
 	vec2 px = 1.0 / tex_size;
-	vec2 uv = UV + shift_texels * px;
+	vec2 current = texture(flow_tex, UV).rg;
+	// Semi-Lagrangian backtrace: the ripple state is carried by the same
+	// current that transports the persistent wave packets.
+	vec2 uv = UV + shift_texels * px - current * flow_dt / domain_size;
 	vec2 hv = state_at(prev_tex, uv);
 	float lap = state_at(prev_tex, uv + vec2(px.x, 0.0)).x
 		+ state_at(prev_tex, uv - vec2(px.x, 0.0)).x
@@ -50,7 +56,8 @@ void fragment() {
 	for (int i = 0; i < 3; i++) {
 		if (drops[i].z != 0.0) {
 			float d = distance(UV, drops[i].xy);
-			h += drops[i].z * exp(-d * d / max(drops[i].w * drops[i].w, 0.000001));
+			float impulse = drops[i].z * exp(-d * d / max(drops[i].w * drops[i].w, 0.000001));
+			h += impulse;
 		}
 	}
 	// GENTLE absorption toward the border. Hard zeroing was itself a wave
@@ -63,6 +70,9 @@ void fragment() {
 	float absorb = 1.0 - 0.06 * (1.0 - smoothstep(0.0, 0.15, border));
 	h *= absorb;
 	v *= absorb;
+	// Bounded height gives WaterSkin a hard worst-case trough for bed cover.
+	h = clamp(h, -0.5, 0.5);
+	v = clamp(v, -0.5, 0.5);
 	COLOR = vec4(h + 0.5, v + 0.5, 0.0, 1.0);
 	}
 }

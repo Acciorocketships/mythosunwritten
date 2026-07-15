@@ -1,242 +1,201 @@
-// Unified water for the whole network — lakes, rivers, and the transition
-// between them are ONE material on ONE sheet. Per-vertex CUSTOM0 (r3 Task
-// 6/7's flow-frame bake, see WaterSkin._flow_frame_at) carries a continuous
-// curvilinear frame instead of a flow vector: .x = s (arc length downstream
-// along the nearest river trace; identically 0 away from any trace), .y = d
-// (signed cross-channel distance; identically 0 away from any trace), .z =
-// slope (continuous profile slope, unclamped; identically 0 away from any
-// trace), .w = shore_dist (distance to the nearest waterline curve point,
-// clamped 0..8, valid everywhere regardless of river/pond mode). "Away from
-// any trace" covers ponds/lakes AND any river vertex more than 18m from a
-// trace — WaterSkin's own literal "calm" rule.
-//
-// r3 Task 13 (owner rewrite, supersedes Task 8's river trains): geometry
-// displaces ONLY the pond swell spectrum now (water_waves.gdshaderinc's
-// water_wave_h — long λ, owner-approved, shore-faded) — the geometric
-// river trains that used to ride the (s, d, slope) frame are DELETED (they
-// vertex-displaced the 3m mesh lattice below its Nyquist limit, aliasing
-// into the maze/moiré pattern the owner rejected). ALL river/rapids motion
-// now comes from the fragment-side refraction-distortion advection instead
-// (water_distort_wobble, same include) — the SOLE carrier of "the water is
-// moving": it perturbs the refraction offset ONLY, never ALBEDO and never
-// the lighting NORMAL. ZERO albedo whitening anywhere (the owner's hardest
-// rule): no foam mask, no steep wash, no streak scroll, no plunge
-// whitening. The mesh also carries REAL vertex normals (Task 6: interior
-// heightfield slope + meniscus rim curl) — fragment() blends those with the
-// pond-spectrum wave motion instead of replacing them outright (the
-// previous, now-deleted analytic-only normal ignored the rim curl entirely,
-// which is why the meniscus never caught fresnel). No baked flow maps.
-// cull_disabled: the player swims and looks up from below.
+// One clear, stylized material for still water, currents, and falls. Dynamic
+// height has three continuous contributors: the slow ambient swell shared by
+// every water body, persistent packets transported through the current, and
+// interactive ripple simulation. The SAME height displaces geometry and
+// derives normals, refraction and caustics; there is no independent scrolling
+// streak/noise layer.
 shader_type spatial;
 render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 
 #include "res://terrain/water/water_common.gdshaderinc"
 #include "res://terrain/water/water_waves.gdshaderinc"
 
-// CLEAR pastel water (owner's reference image): the body is the REFRACTED
-// scene tinted by depth — shallow shows the bed through clean green glass,
-// deep saturates to a soft teal — and glancing views mirror a LIGHT sky
-// tint (the reference's pale reflective sheen), never a dark one. The
-// surface itself is SMOOTH: no noise dapple — geometric motion comes from
-// the travelling pond swells (water_waves.gdshaderinc) and the interactive
-// ripple sim; river/rapids motion (r3 Task 13) comes entirely from the
-// refraction-distortion advection in fragment(), never from geometry.
-uniform vec3 color_deep : source_color = vec3(0.22, 0.52, 0.53);
-uniform vec3 color_shallow : source_color = vec3(0.45, 0.76, 0.68);
-uniform vec3 color_sky : source_color = vec3(0.70, 0.85, 0.84);
-uniform float sky_reflect : hint_range(0.0, 1.0) = 0.18;  // soft grazing reflection without the pale-sky milk wash that hid the bed
-// r3 Task 13 round-6 clarity push (owner references: tropical clear-shallow
-// shot + Sea of Solitude re-annotation) — 12.0 -> 18.0: the bed/refracted
-// scene must read plainly through the body at ordinary depths, not just the
-// shallows.
-uniform float clarity_depth : hint_range(0.5, 24.0) = 24.0;   // metres to full deep colour; refracted scenery dominates ordinary river depths
-// CLEAR, not light (owner): the scene shows through with a modest tint
-// floor so shallow shelves never read as bare lawn — it's the REFRACTION
-// DISTORTION that makes the clear water read as water. Round-6: 0.12 ->
-// 0.07 (clarity push — the floor was still reading too opaque against both
-// owner references).
-uniform float body_floor : hint_range(0.0, 1.0) = 0.04;
-// How much the refracted scene tints toward color_shallow even at the very
-// shallowest reads (the r3 Task 8 "shallow tint" clarity target) — kept as
-// its own uniform (was a hardcoded 0.12 literal pre-Task-8) so the battery
-// pass can live-tune it same as every other clarity param. Round-6: 0.10 ->
-// 0.06.
-uniform float shallow_tint : hint_range(0.0, 1.0) = 0.035;
-// 0.11 (R3-B, raised from 0.09 — Task 8 deliberately held this back until
-// the guard below was hardened: a stronger offset without the hardening
-// would have made the ghost worse, not just more visible).
-uniform float refraction_strength : hint_range(0.0, 0.2) = 0.11;
-// Animated wobble on the refraction offset only (never the lighting normal):
-// the see-through picture visibly swims like the reference, while the
-// surface itself stays matte-smooth.
-uniform float distort_anim : hint_range(0.0, 0.2) = 0.10;
-// LOW frequency, HIGH amplitude, SLOW — the swells are the river's motion
-// (owner). Speed changes here must be mirrored in character.gd SWELL_SPEED.
-uniform float wave_height : hint_range(0.0, 1.5) = 1.0;
-uniform float wave_speed : hint_range(0.0, 4.0) = 0.26;
-uniform float wobble_speed : hint_range(0.0, 2.0) = 0.5;
-// Not mirror-tight: low roughness focuses the sun (and the wizard's light)
-// into a huge white glare blob on the swells (owner's screenshots carry it
-// at 0.07 too — soft pastel sheen wants a wider lobe).
-uniform float roughness : hint_range(0.0, 1.0) = 0.12;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
-// R3-B ghost fix (Task 1 verdict: REFRACTION): filter_nearest here was
-// checked against Task 1's mechanism lead (linear filtering interpolating
-// across the hat/water depth discontinuity) and confirmed already correct —
-// this uniform has carried filter_nearest since the very first refraction
-// commit (0dd49e2); depth values were never blended by this sampler. The
-// residual ghost lived entirely in the fragment() guard below.
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
-// Ripple simulation domain (WaterRippleSim feeds these each frame; the far
-// default origin keeps the shader inert when no sim is running). Swim wakes,
-// entry splashes and ambient raindrop rings all live in this texture.
+
+// Persistent flow-transported packet field: R = signed height around 0.5,
+// G = local breaking energy.
+uniform sampler2D packet_tex : repeat_disable, filter_linear;
+uniform vec2 packet_origin = vec2(1000000.0, 1000000.0);
+uniform float packet_size = 192.0;
+
+// Interactive and current-forced wave simulation: R/G = height/velocity
+// around 0.5. Player impulses remain clear; no colour/foam channel exists.
 uniform sampler2D ripple_tex : repeat_disable, filter_linear;
 uniform vec2 ripple_origin = vec2(1000000.0, 1000000.0);
 uniform float ripple_size = 96.0;
-uniform float ripple_strength : hint_range(0.0, 20.0) = 8.0;
+uniform float ripple_height : hint_range(0.0, 2.0) = 0.75;
+uniform float ripple_normal_strength : hint_range(0.0, 20.0) = 8.0;
+
+// Ambient spectrum remains CPU-mirrored by character.gd for buoyancy.
+uniform float wave_height : hint_range(0.0, 1.5) = 0.38;
+uniform float wave_speed : hint_range(0.0, 4.0) = 0.26;
+
+// Spectral clear-water budget. Red attenuates first, leaving a restrained
+// blue-green cast only with real optical depth; shallow water is almost pure
+// transmitted scene light.
+uniform vec3 absorption = vec3(0.003, 0.001, 0.0005);
+uniform vec3 scatter_color : source_color = vec3(0.16, 0.55, 0.56);
+uniform float scatter_strength : hint_range(0.0, 1.0) = 0.02;
+uniform vec3 sky_color : source_color = vec3(0.25, 0.55, 0.58);
+uniform float reflection_strength : hint_range(0.0, 1.0) = 0.035;
+uniform float refraction_strength : hint_range(0.0, 0.12) = 0.045;
+uniform float caustic_strength : hint_range(0.0, 1.0) = 0.18;
+uniform float surface_roughness : hint_range(0.0, 1.0) = 0.22;
+uniform float surface_specular : hint_range(0.0, 1.0) = 0.35;
 
 varying vec3 world_pos;
-varying float river_s;       // CUSTOM0.x — arc length downstream; 0 away from any trace
-varying float river_d;       // CUSTOM0.y — signed cross-channel distance; 0 away from any trace
-varying float river_slope;   // CUSTOM0.z — continuous profile slope, unclamped; 0 away from any trace
-varying float shore_dist;    // CUSTOM0.w — distance to nearest waterline curve point, clamped 0..8
+varying float surface_scale;
+varying float flow_compression;
 
-void vertex() {
-	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	river_s = CUSTOM0.x;
-	river_d = CUSTOM0.y;
-	river_slope = CUSTOM0.z;
-	shore_dist = CUSTOM0.w;
-	float t = TIME * wave_speed;
-	// Pond spectrum, world xz, KILLED at the shoreline over a 4m band so the
-	// buried waterline hem never bobs above its bank (same reasoning the
-	// pre-Task-8 flow-gated amplitude used to cover, now keyed on the baked
-	// shore distance instead of a flow strength that no longer exists).
-	// r3 Task 13: this is the ONLY geometric displacement left — the river
-	// trains that used to add here are DELETED (see water_waves.gdshaderinc's
-	// own header); river motion now lives entirely in fragment()'s
-	// refraction-distortion advection, never in VERTEX.
-	// COLOR.r is baked from BOTH shore distance and actual static bed
-	// clearance. A broad shallow river can be far from shore, so distance
-	// alone cannot prevent the trough from exposing its bed.
-	float swell_scale = COLOR.r;
-	float h = water_wave_h(noise_tex, world_pos.xz, t) * wave_height * swell_scale;
-	VERTEX.y += h;
-	world_pos.y += h;
+
+float domain_fade(vec2 uv) {
+	if (uv.x <= 0.0 || uv.y <= 0.0 || uv.x >= 1.0 || uv.y >= 1.0) {
+		return 0.0;
+	}
+	float edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+	return smoothstep(0.0, 0.10, edge);
 }
 
+
+float packet_height_at(vec2 world_xz) {
+	vec2 uv = (world_xz - packet_origin) / packet_size;
+	return (texture(packet_tex, uv).r - 0.5) * domain_fade(uv);
+}
+
+
+float ripple_height_at(vec2 world_xz) {
+	vec2 uv = (world_xz - ripple_origin) / ripple_size;
+	return (texture(ripple_tex, uv).r - 0.5) * ripple_height * domain_fade(uv);
+}
+
+
+// Exact restoration of the old interaction-ripple read: adjacent simulation
+// texels form a strong clear normal/refraction ring. The simulated height is
+// ALSO present in water_dynamic_height(), so the same ring displaces geometry.
+vec2 ripple_normal_gradient(vec2 world_xz) {
+	vec2 uv = (world_xz - ripple_origin) / ripple_size;
+	float fade = domain_fade(uv);
+	if (fade <= 0.0) {
+		return vec2(0.0);
+	}
+	float px = 1.0 / 256.0;
+	float hl = texture(ripple_tex, uv - vec2(px, 0.0)).r;
+	float hr = texture(ripple_tex, uv + vec2(px, 0.0)).r;
+	float hd = texture(ripple_tex, uv - vec2(0.0, px)).r;
+	float hu = texture(ripple_tex, uv + vec2(0.0, px)).r;
+	return vec2(hr - hl, hu - hd) * ripple_normal_strength * fade;
+}
+
+
+// The single surface truth used in BOTH shader stages.
+float water_dynamic_height(vec2 world_xz) {
+	float ambient = water_wave_h(noise_tex, world_xz, TIME * wave_speed) * wave_height;
+	return ambient + packet_height_at(world_xz) + ripple_height_at(world_xz);
+}
+
+
+void vertex() {
+	vec3 base_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	surface_scale = COLOR.r;
+	flow_compression = CUSTOM1.w;
+	float dynamic_height = water_dynamic_height(base_world.xz) * surface_scale;
+	VERTEX += NORMAL * dynamic_height;
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+
 void fragment() {
-	float t = TIME * wave_speed;
+	vec2 p = world_pos.xz;
+	float ep = 0.75;
+	float hx1 = water_dynamic_height(p + vec2(ep, 0.0)) * surface_scale;
+	float hx0 = water_dynamic_height(p - vec2(ep, 0.0)) * surface_scale;
+	float hz1 = water_dynamic_height(p + vec2(0.0, ep)) * surface_scale;
+	float hz0 = water_dynamic_height(p - vec2(0.0, ep)) * surface_scale;
+	vec2 height_gradient = vec2(hx1 - hx0, hz1 - hz0) / (2.0 * ep);
+	vec2 interaction_gradient = ripple_normal_gradient(p) * surface_scale;
+	vec2 optical_gradient = height_gradient + interaction_gradient;
+	// Only compact flow-transported packets generate the stylized bright
+	// focusing pockets. Using the ambient spectrum's curvature here creates
+	// endless parallel bands—the rejected streak look—even though it is real
+	// geometry rather than a texture.
+	float packet_h = packet_height_at(p);
+	float packet_hx1 = packet_height_at(p + vec2(ep, 0.0));
+	float packet_hx0 = packet_height_at(p - vec2(ep, 0.0));
+	float packet_hz1 = packet_height_at(p + vec2(0.0, ep));
+	float packet_hz0 = packet_height_at(p - vec2(0.0, ep));
+	float packet_curvature = (packet_hx1 + packet_hx0 + packet_hz1
+		+ packet_hz0 - 4.0 * packet_h) / (ep * ep) * surface_scale;
 
-	// Base normal: the REAL mesh normal (Task 6 bake: interior heightfield
-	// slope + meniscus rim curl). vertex() never writes NORMAL, so Godot's
-	// own normal-matrix transform carries the untouched per-vertex bake
-	// straight through — by the time fragment() reads it here it is already
-	// in VIEW space. Converted back to world space so the wave/ripple
-	// perturbations below (both naturally world-space-ish) can sum into it,
-	// then transformed to view space ONCE at the end — letting the mesh
-	// normal breathe (instead of being wholesale overwritten by a flat-water
-	// analytic normal, the pre-Task-8 bug) is what makes the meniscus rim
-	// actually catch light/fresnel.
-	vec3 n = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	vec3 mesh_world_normal = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	vec3 water_world_normal = normalize(mesh_world_normal
+		+ vec3(-optical_gradient.x, 0.0, -optical_gradient.y));
+	vec3 water_view_normal = normalize((VIEW_MATRIX * vec4(water_world_normal, 0.0)).xyz);
+	NORMAL = water_view_normal;
 
-	// Wave-driven shading detail: a small gradient of the SAME pond-spectrum
-	// height function vertex() displaces the surface by (never generic
-	// noise), so the shading visibly tracks the travelling swells — this is
-	// what reads as "waveform shading" even in a still frame, and it stays
-	// correct at any mesh resolution since it is evaluated per-fragment from
-	// the closed form, not finite-differenced across coarse vertex spacing.
-	// r3 Task 13: the river-train half of this gradient (the old grad_r,
-	// cross-faded in by river_slope) is DELETED along with water_river_h
-	// itself — geometry (hence this shading gradient) now carries only the
-	// pond spectrum everywhere; river motion lives entirely in the
-	// refraction-distortion advection below, which never touches NORMAL.
-	float ep = 2.0;
-	float swell_scale = COLOR.r;
-	vec2 wp = world_pos.xz;
-	float h0p = water_wave_h(noise_tex, wp, t);
-	float hxp = water_wave_h(noise_tex, wp + vec2(ep, 0.0), t);
-	float hzp = water_wave_h(noise_tex, wp + vec2(0.0, ep), t);
-	vec2 grad = vec2(hxp - h0p, hzp - h0p) / ep * wave_height * swell_scale;
-	n = normalize(n + vec3(-grad.x, 0.0, -grad.y));
-
-	// Interactive ripples: sample the wave-sim height gradient inside the
-	// player-following domain (swim wakes, entry splashes, raindrop rings),
-	// fading at the domain border.
-	vec2 ruv = (world_pos.xz - ripple_origin) / ripple_size;
-	if (ruv.x > 0.0 && ruv.y > 0.0 && ruv.x < 1.0 && ruv.y < 1.0) {
-		float rp = 1.0 / 256.0;
-		float hl = texture(ripple_tex, ruv - vec2(rp, 0.0)).r;
-		float hr = texture(ripple_tex, ruv + vec2(rp, 0.0)).r;
-		float hd = texture(ripple_tex, ruv - vec2(0.0, rp)).r;
-		float hu = texture(ripple_tex, ruv + vec2(0.0, rp)).r;
-		// Fade wider than the sim's own rest band, so border texels (where
-		// shift discontinuities live) never contribute visible normals.
-		float edge = smoothstep(0.0, 0.12,
-			min(min(ruv.x, 1.0 - ruv.x), min(ruv.y, 1.0 - ruv.y)));
-		vec2 rgrad = vec2(hr - hl, hu - hd) * ripple_strength * edge;
-		n = normalize(n + vec3(-rgrad.x, 0.0, -rgrad.y));
+	float depth = water_depth_world(depth_texture, SCREEN_UV,
+		INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
+	// Refraction bends with the gradient of the very height that moved this
+	// fragment. Low frequency and modest amplitude keep the bottom legible.
+	vec3 mesh_view_normal = normalize((VIEW_MATRIX * vec4(mesh_world_normal, 0.0)).xyz);
+	vec2 normal_delta = water_view_normal.xy - mesh_view_normal.xy;
+	vec2 refraction_offset = (normal_delta * 1.15
+		+ vec2(optical_gradient.x, -optical_gradient.y) * 0.25)
+		* refraction_strength * smoothstep(0.02, 0.9, depth)
+		/ max(1.0, -VERTEX.z * 0.06);
+	vec2 refracted_uv = SCREEN_UV + refraction_offset;
+	float refracted_height = water_signed_height_world(depth_texture, refracted_uv,
+		INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
+	float valid_refraction = refracted_height < 0.0
+		? 0.0 : smoothstep(0.0, 0.25, refracted_height);
+	if (water_view_z(depth_texture, refracted_uv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.35) {
+		valid_refraction = 0.0;
 	}
-	NORMAL = (VIEW_MATRIX * vec4(n, 0.0)).xyz;
+	refracted_uv = mix(SCREEN_UV, refracted_uv, valid_refraction);
+	vec3 scene = texture(screen_texture, refracted_uv).rgb;
 
-	float depth = water_depth_world(depth_texture, SCREEN_UV, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
-	// Body fraction: depth ramp OR the body floor — ankle-deep flood shelves
-	// must still read as jade water (the grass showed straight through and
-	// looked like lawn), while the first ~10cm at the rim stay clear.
-	float depth_t = max(1.0 - exp(-depth / clarity_depth),
-			body_floor * smoothstep(0.05, 0.55, depth));
-	// Refraction wobble: r3 Task 13 — the SOLE carrier of river/rapids
-	// motion now (the geometric river trains are deleted; see this shader's
-	// own header and water_waves.gdshaderinc's water_distort_wobble for the
-	// full two-phase/morph derivation). CUSTOM0's curvilinear (s, d, slope)
-	// frame (Task 6/7) advects the distortion sampling along the channel —
-	// a world-space flow vector was never baked, but the curvilinear frame
-	// does not need one — while a world-space base layer keeps ponds
-	// textured and drifting and guarantees the field can never seam where
-	// the flow frame fades to its baked "calm" zero. Still perturbs the
-	// refraction offset ONLY — never ALBEDO, never NORMAL.
-	vec2 wobble = water_distort_wobble(noise_tex, world_pos.xz, river_s, river_d, river_slope, TIME, wobble_speed);
-	vec2 roff = (NORMAL.xy * refraction_strength + wobble * distort_anim)
-			* clamp(depth * 1.5, 0.0, 1.3) / max(1.0, -VERTEX.z * 0.08);
-	vec2 suv = SCREEN_UV + roff;
-	// GRADED guard: fade the offset out where it lands on geometry ABOVE the
-	// surface (banks, the player) — a binary fallback drew a hard "lens edge"
-	// band along every shore (owner's round-5 artifact). That graded ramp is
-	// for genuinely BELOW-surface depth fading ONLY (0..0.3m shallow reads);
-	// R3-B ghost fix (Task 1 verdict: REFRACTION, see progress.md "RUN 3 —
-	// Task 1"): an ABOVE-surface sample must never enter the ramp even
-	// fractionally, so test the unclamped signed height explicitly instead
-	// of relying on water_depth_world's max(...,0.0) landing exactly on
-	// smoothstep's zero (a silhouette-adjacent depth read at the character's
-	// edge could nudge that clamped value into a tiny positive "depth" and
-	// leak a sliver of them through — the hat ghost).
-	float suv_h = water_signed_height_world(depth_texture, suv,
-			INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
-	float ok = suv_h < 0.0 ? 0.0 : smoothstep(0.0, 0.3, suv_h);
-	// Foreground geometry (nearer than this fragment) still rejects outright:
-	// ghost copies. Margin widened +0.05 -> +0.35 (R3-B): the tight margin
-	// only vetoed samples unambiguously nearer than the water, leaving
-	// silhouette-adjacent reads (nearer by a few cm, inside the old
-	// tolerance) to fall through to the height check above at exactly the
-	// pixels most likely to carry ambiguous, AA-softened depth.
-	if (water_view_z(depth_texture, suv, INV_PROJECTION_MATRIX) > VERTEX.z + 0.35) {
-		ok = 0.0;
-	}
-	suv = mix(SCREEN_UV, suv, ok);
-	vec3 scene = texture(screen_texture, suv).rgb;
-	// Clear body: the refracted scene through a light green-glass tint,
-	// saturating toward the soft teal with depth but NEVER fully opaque —
-	// the owner wants the near-shore clarity everywhere. ZERO whitening:
-	// ALBEDO is this body colour and nothing else, at every depth and
-	// every slope.
-	vec3 body = mix(scene * mix(vec3(1.0), color_shallow, shallow_tint), color_deep, min(depth_t, 0.88));
-	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), VIEW), 0.0, 1.0), 5.0);
-	body = mix(body, color_sky, fres * sky_reflect);
-	ALBEDO = body;
-	// Clarity comes from REFRACTION, not alpha blending; the ALPHA write
-	// keeps the material in the transparent pass (screen texture needs it).
+	// Surface curvature focuses the transmitted image into soft moving
+	// caustics. It cannot become a detached texture because curvature comes
+	// from water_dynamic_height itself.
+	float caustic = smoothstep(0.0015, 0.025, abs(packet_curvature))
+		* exp(-depth * 0.025) * caustic_strength;
+	scene *= 1.0 + caustic;
+
+	vec3 transmittance = exp(-absorption * depth);
+	vec3 body = scene * transmittance
+		+ scatter_color * (vec3(1.0) - transmittance) * scatter_strength;
+
+	// Broad sky reflection. Dynamic detail enters only through the physical
+	// surface normal, matching the reference's calm painterly sheen instead of
+	// high-frequency shimmer. A screen/depth ray march was actively rejected:
+	// its finite hit iterations became concentric bands at the far bank.
+	float fresnel = pow(1.0 - clamp(dot(water_view_normal, VIEW), 0.0, 1.0), 5.0);
+	float reflection_weight = (0.025 + fresnel * 0.975) * reflection_strength;
+	body = mix(body, sky_color, reflection_weight);
+	// The old swimmer ripple was readable because its narrow normal-gradient
+	// ring caught the sky. Restore that optical cue explicitly while keeping
+	// the height impulse colourless: the flat centre contributes nothing, so
+	// this can never become the filled white blur produced by ripple foam.
+	float interaction_reflection = smoothstep(0.008, 0.05,
+		length(interaction_gradient)) * 0.10;
+	body = mix(body, sky_color, interaction_reflection);
+
+	// White exists only where persistent wavelets break or the continuous
+	// current compresses. Player swim/entry ripples stay entirely clear.
+	vec2 packet_uv = (p - packet_origin) / packet_size;
+	float packet_breaking = texture(packet_tex, packet_uv).g * domain_fade(packet_uv);
+	float foam_amount = clamp(packet_breaking * 0.20
+		+ smoothstep(0.18, 0.65, flow_compression) * 0.04, 0.0, 0.30);
+	body = mix(body, vec3(0.93, 0.97, 0.94), foam_amount);
+
+	// Keep the refracted scene as emission so it is not lit a second time,
+	// while returning the old PBR specular response to the REAL displaced
+	// surface normal. This is what makes a clear swim ring and geometric
+	// wavelet readable without turning either one into a white albedo decal.
+	ALBEDO = vec3(0.0);
+	EMISSION = body;
+	ROUGHNESS = surface_roughness;
+	SPECULAR = surface_specular;
 	ALPHA = 1.0;
-	ROUGHNESS = roughness;
-	SPECULAR = mix(0.35, 0.6, fres);
 }
