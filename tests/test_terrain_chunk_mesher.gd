@@ -256,6 +256,42 @@ func test_skirt_covers_the_slope_facing_side_of_a_cliff_top():
 	assert_true(found, "the slope-facing side of the cliff top gets a skirt down the exposed face")
 	node.free()
 
+
+func test_locally_flat_edge_seals_against_an_orthogonal_neighbour_slope():
+	# Owner screenshot 2026-07-15, seed 2697992464 around corner
+	# (36,-1044): same-storey cells A/E both sit at 12m, but E slopes north
+	# toward an 8m cell while A's north neighbour is a 20m cliff. A is not a
+	# globally-flat cliff cell, yet its EAST edge is locally flat at 12m. The
+	# old mesher skipped every non-flat cell before checking its individual
+	# edges, leaving the 12m->E-slope vertical wedge open to the sky underwater.
+	var p := Plan.new(0, 64.0, 12, "mean", 3)
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 12.0  # A: locally-flat east edge
+		if cx == 2 and cz == 1: return 12.0  # E: same storey, slopes north
+		if cx == 2 and cz == 0: return 8.0   # E's one-storey north drop
+		return 20.0)                          # A's north side is higher
+	var region = Mesher.new().chunk_region(p, Vector2i.ZERO)
+	assert_false(TerrainSurfaceField.is_flat_cell(region, 1, 1),
+		"fixture A is not globally flat")
+	assert_true(TerrainSurfaceField.own_edge_flat(region, 1, 1, Vector2i(1, 0)),
+		"A's east edge itself is flat")
+	var node := Mesher.new().build_chunk(p, Vector2i.ZERO, region)
+	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
+	assert_not_null(faces, "fixture has terrain skirts")
+	var sealed := false
+	if faces != null:
+		# This edge has no KayKit dressing, so its backing face must sit on
+		# the real boundary. A recessed face can still be looked under.
+		var plane_x := 36.0
+		for v in (faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+			if absf(v.x - plane_x) < 0.01 and v.z > 13.0 and v.z < 23.0 \
+					and v.y < 11.5:
+				sealed = true
+				break
+	assert_true(sealed,
+		"a vertical backing skirt closes the locally-flat edge against E's slope")
+	node.free()
+
 # C=(1,1) storey 2 (h=8) is a cliff top (its south neighbour row cz>=2 is storey 0). Its WEST
 # neighbour W=(0,1) is storey 3 — HIGHER, and itself a cliff top. The junction band between C's
 # terrain and W's recessed south wall used to show see-through slits (owner's terrace gaps).

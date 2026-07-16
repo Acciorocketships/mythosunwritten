@@ -40,7 +40,16 @@ uniform vec3 scatter_color : source_color = vec3(0.16, 0.55, 0.56);
 uniform float scatter_strength : hint_range(0.0, 1.0) = 0.02;
 uniform vec3 sky_color : source_color = vec3(0.25, 0.55, 0.58);
 uniform float reflection_strength : hint_range(0.0, 1.0) = 0.035;
-uniform float refraction_strength : hint_range(0.0, 0.12) = 0.045;
+// Keep the transmitted scene crystal clear, but bend it enough that a
+// submerged character reads through a water surface instead of as if the
+// sheet were absent.  The pre-clarity material's 0.11 response was the
+// proven readable range; opacity/tint—not refraction—was what obscured the
+// bottom, so restoring this does not undo the clarity pass.
+uniform float refraction_strength : hint_range(0.0, 0.2) = 0.10;
+// Screen-space optics cannot reveal disoccluded pixels. A hard UV radius
+// keeps steep wave normals from folding one opaque silhouette into two or
+// reaching sideways through a cliff edge; 0.012 is still ~13 px at 1080p.
+uniform float max_refraction_offset : hint_range(0.0, 0.03) = 0.012;
 uniform float caustic_strength : hint_range(0.0, 1.0) = 0.18;
 uniform float surface_roughness : hint_range(0.0, 1.0) = 0.22;
 uniform float surface_specular : hint_range(0.0, 1.0) = 0.35;
@@ -136,15 +145,22 @@ void fragment() {
 
 	float depth = water_depth_world(depth_texture, SCREEN_UV,
 		INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
-	// Refraction bends with the gradient of the very height that moved this
-	// fragment. Low frequency and modest amplitude keep the bottom legible.
+	// A screen offset represents only the surface's DISPLACED slope. Adding
+	// the complete view-space normal also adds camera tilt; at an oblique view
+	// that became a huge constant offset which duplicated swimmers and pasted
+	// grass through cliff walls. The slope delta keeps animated wave/ripple
+	// distortion, while the finite screen-space radius prevents folds where a
+	// renderer has no disocclusion data to recover.
 	vec3 mesh_view_normal = normalize((VIEW_MATRIX * vec4(mesh_world_normal, 0.0)).xyz);
-	vec2 normal_delta = water_view_normal.xy - mesh_view_normal.xy;
-	vec2 refraction_offset = (normal_delta * 1.15
-		+ vec2(optical_gradient.x, -optical_gradient.y) * 0.25)
-		* refraction_strength * smoothstep(0.02, 0.9, depth)
+	vec2 refraction_slope = water_view_normal.xy - mesh_view_normal.xy;
+	vec2 raw_refraction_offset = refraction_slope * refraction_strength
+		* smoothstep(0.02, 0.9, depth)
 		/ max(1.0, -VERTEX.z * 0.06);
-	vec2 refracted_uv = SCREEN_UV + refraction_offset;
+	float raw_offset_length = length(raw_refraction_offset);
+	vec2 refraction_offset = raw_refraction_offset * min(1.0,
+		max_refraction_offset / max(raw_offset_length, 0.00001));
+	vec2 refracted_uv = clamp(SCREEN_UV + refraction_offset,
+		vec2(0.001), vec2(0.999));
 	float refracted_height = water_signed_height_world(depth_texture, refracted_uv,
 		INV_PROJECTION_MATRIX, INV_VIEW_MATRIX, world_pos.y);
 	float valid_refraction = refracted_height < 0.0

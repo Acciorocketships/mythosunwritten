@@ -305,11 +305,15 @@ func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
 	var lo_cz := chunk.y * CELLS_PER_CHUNK
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
-			if not TerrainSurfaceField.is_flat_cell(region, cx, cz):
-				continue   # only flat-rendered cells leave vertical gaps at their boundaries
 			var h_hi: float = region.surface_height(cx, cz)
 			var tint := _cell_tint(cx, cz)
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				# Flatness is an EDGE property here, not a whole-cell property. A
+				# cell may slope toward its north neighbour while its west/east
+				# boundary stays level; the same-storey cell across that boundary
+				# can have a different orthogonal slope and expose a vertical wedge.
+				# Skipping the entire non-flat cell left that wedge open (the
+				# reported cliff-next-to-slope underwater sky hole).
 				if TerrainSurfaceField.own_edge_flat(region, cx, cz, dir):
 					if _emit_wall(skirt, skirtc, region, cx, cz, dir, h_hi, tint):
 						any_wall = true
@@ -860,8 +864,15 @@ const SKIRT_UNDERHANG := 1.0
 func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, dir: Vector2i, y_hi: float, tint := Color(1, 1, 1)) -> bool:
 	var prof := TerrainSurfaceField.edge_profile(region, cx, cz, dir, SAMPLES_PER_CELL)
 	var pdir := Vector2i(dir.y, dir.x)             # along-edge step (perpendicular to the drop)
-	var ex := float(cx) * TILE + float(dir.x) * (TILE * 0.5 - SKIRT_RECESS)
-	var ez := float(cz) * TILE + float(dir.y) * (TILE * 0.5 - SKIRT_RECESS)
+	# Globally-flat cliff tops have KayKit wall modules in front, so their mesh
+	# backing remains recessed. A locally-flat edge on an otherwise sloped cell
+	# has no dressing: recessing that face lets an oblique ray fall below it in
+	# the 1.3m trip from the true boundary (the residual gray wedge at the
+	# reported cliff/slope site). Put those undressed backing faces directly on
+	# the boundary, identical to collision, so the terrain remains volumetric.
+	var visual_recess := SKIRT_RECESS if TerrainSurfaceField.is_flat_cell(region, cx, cz) else 0.0
+	var ex := float(cx) * TILE + float(dir.x) * (TILE * 0.5 - visual_recess)
+	var ez := float(cz) * TILE + float(dir.y) * (TILE * 0.5 - visual_recess)
 	# The COLLISION wall is a separate flat plane ON the cell boundary: it meets the full-extent
 	# collision sheet in a clean convex edge. Reusing the recessed visual skirt left an overhang
 	# pocket under the lip band that wedged a jumping capsule (owner round 7: "when i jump i
@@ -880,12 +891,12 @@ func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, d
 	var lo_c := -TILE * 0.5
 	var hi_c := TILE * 0.5
 	if _skirt_turns(region, cx, cz, dir, -1):
-		lo += SKIRT_RECESS
+		lo += visual_recess
 	elif TerrainSurfaceField.is_higher_flat(region, cx, cz, Vector2i(-pdir.x, -pdir.y)):
 		lo -= APRON
 		lo_c -= APRON
 	if _skirt_turns(region, cx, cz, dir, +1):
-		hi -= SKIRT_RECESS
+		hi -= visual_recess
 	elif TerrainSurfaceField.is_higher_flat(region, cx, cz, pdir):
 		hi += APRON
 		hi_c += APRON

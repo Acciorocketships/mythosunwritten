@@ -10,6 +10,12 @@ const OUT := "/tmp/mythos-water-reported-qa"
 
 # [name, exact reported player position, exact reported crosshair position]
 const SPOTS: Array = [
+	["refraction_crossing_21_exact", Vector3(20.8, 12.5, -1037.2),
+		Vector3(21.1, 12.7, -1037.3)],
+	["underwater_cliff_slope_33_exact", Vector3(33.2, 12.0, -1034.6),
+		Vector3(33.5, 12.2, -1034.5)],
+	["bank_refraction_plane_223_exact", Vector3(223.3, 4.0, -1166.7),
+		Vector3(223.0, 4.2, -1166.5)],
 	["bank_62_exact", Vector3(62.5, 4.0, -1130.3),
 		Vector3(62.4, 4.2, -1130.0)],
 	["chute_52_exact", Vector3(52.2, 8.0, -1091.6),
@@ -126,8 +132,8 @@ func _probe_screen(label: String, pixels: Array[Vector2]) -> void:
 			PhysicsRayQueryParameters3D.create(origin, origin + direction * 200.0))
 		var collider: Object = hit.get("collider", null)
 		var hp: Vector3 = hit.get("position", Vector3.INF)
-		print("[water_reported_qa] probe %s px=%s plane_y3=%s water=%s hit=(%.9f, %.9f, %.9f) collider=%s" % [
-			label, px, str(water_plane), str(water_hit), hp.x, hp.y, hp.z,
+		print("[water_reported_qa] probe %s px=%s origin=%s dir=%s plane_y3=%s water=%s hit=(%.9f, %.9f, %.9f) collider=%s" % [
+			label, px, str(origin), str(direction), str(water_plane), str(water_hit), hp.x, hp.y, hp.z,
 			str(collider.get_path()) if collider is Node else str(collider)])
 
 
@@ -292,28 +298,32 @@ func _run() -> void:
 			dynamic_a = sim_a.debug_state()
 		await get_tree().create_timer(1.8).timeout
 		_shot(spot[0] + "_real_b")
-		if spot[0] == "look_river_34_1105_exact":
+		if spot[0] in ["look_river_34_1105_exact",
+				"underwater_cliff_slope_33_exact", "bank_refraction_plane_223_exact"]:
+			# Refraction can make valid terrain look like detached geometry. Keep
+			# an identical-pose opaque-scene truth frame for every reported
+			# underwater terrain artifact so the two causes cannot be confused.
 			var frame_delta: Dictionary = _frame_delta(
-				spot[0] + "_real_a", spot[0] + "_real_b",
-				Rect2i(0, 0, 760, 1080))
-			print("[water_reported_qa] left-water paired-frame delta=", frame_delta)
-			if frame_delta.mean < 0.002 or frame_delta.changed_fraction < 0.08:
-				push_error("Exact river beauty frames remain visually static: %s" % frame_delta)
-			var sim: WaterRippleSim = find_child("WaterRipples", true, false)
-			var dynamic_b: Dictionary = sim.debug_state()
-			var a_by_id: Dictionary = {}
-			for i in dynamic_a.ids.size():
-				a_by_id[dynamic_a.ids[i]] = dynamic_a.positions[i]
-			var travel := PackedFloat32Array()
-			for i in dynamic_b.ids.size():
-				if a_by_id.has(dynamic_b.ids[i]):
-					travel.append(a_by_id[dynamic_b.ids[i]].distance_to(dynamic_b.positions[i]))
-			print("[water_reported_qa] dynamic state ", dynamic_b,
-				" packet_travel_1.8s=", travel)
-			sim.save_debug_images(OUT + "/" + String(spot[0]))
-			for frame in 8:
-				await get_tree().create_timer(0.25).timeout
-				_shot(spot[0] + "_motion_%02d" % frame)
+				spot[0] + "_real_a", spot[0] + "_real_b", Rect2i(0, 0, 760, 1080))
+			if spot[0] == "look_river_34_1105_exact":
+				print("[water_reported_qa] left-water paired-frame delta=", frame_delta)
+				if frame_delta.mean < 0.002 or frame_delta.changed_fraction < 0.08:
+					push_error("Exact river beauty frames remain visually static: %s" % frame_delta)
+				var sim: WaterRippleSim = find_child("WaterRipples", true, false)
+				var dynamic_b: Dictionary = sim.debug_state()
+				var a_by_id: Dictionary = {}
+				for i in dynamic_a.ids.size():
+					a_by_id[dynamic_a.ids[i]] = dynamic_a.positions[i]
+				var travel := PackedFloat32Array()
+				for i in dynamic_b.ids.size():
+					if a_by_id.has(dynamic_b.ids[i]):
+						travel.append(a_by_id[dynamic_b.ids[i]].distance_to(dynamic_b.positions[i]))
+				print("[water_reported_qa] dynamic state ", dynamic_b,
+					" packet_travel_1.8s=", travel)
+				sim.save_debug_images(OUT + "/" + String(spot[0]))
+				for frame in 8:
+					await get_tree().create_timer(0.25).timeout
+					_shot(spot[0] + "_motion_%02d" % frame)
 			for water: MeshInstance3D in find_children("WaterSheet", "MeshInstance3D", true, false):
 				water.visible = false
 			await get_tree().process_frame
@@ -348,6 +358,16 @@ func _run() -> void:
 				Vector2(930, 790), Vector2(1050, 600), Vector2(1260, 470)])
 			_probe_visual_terrain(spot[0], [Vector2(650, 690),
 				Vector2(820, 650), Vector2(930, 790), Vector2(1050, 600)])
+			_highlight_terrain_owners()
+			await get_tree().process_frame
+			_shot(spot[0] + "_all_owners")
+		elif spot[0] == "underwater_cliff_slope_33_exact":
+			_probe_screen(spot[0], [Vector2(850, 735), Vector2(1050, 735),
+				Vector2(1300, 735), Vector2(1400, 740), Vector2(1480, 740),
+				Vector2(1510, 715), Vector2(1500, 680)])
+			_probe_visual_terrain(spot[0], [Vector2(850, 735),
+				Vector2(1050, 735), Vector2(1300, 735), Vector2(1400, 740),
+				Vector2(1480, 740), Vector2(1510, 715), Vector2(1500, 680)])
 			_highlight_terrain_owners()
 			await get_tree().process_frame
 			_shot(spot[0] + "_all_owners")

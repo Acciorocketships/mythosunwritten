@@ -45,6 +45,23 @@ func test_dynamic_height_couples_geometry_normals_and_refraction() -> void:
 		"the simulated ripple height physically displaces the shared mesh")
 
 
+## Clear water must still behave like a refractive surface, but screen-space
+## refraction may use only the displaced SURFACE SLOPE.  Feeding the whole
+## view-space plane normal into UV offset adds camera tilt, folding a submerged
+## silhouette into a second copy and pulling bank pixels through cliff walls.
+func test_refraction_is_readable_but_cannot_fold_with_camera_tilt() -> void:
+	assert_true(_float_default("refraction_strength") >= 0.09,
+		"submerged silhouettes retain the proven readable refraction amplitude")
+	assert_true(_source.contains("water_view_normal.xy - mesh_view_normal.xy"),
+		"only displaced slope—not the plane's camera tilt—bends screen UVs")
+	assert_false(_source.contains("water_view_normal.xy * refraction_strength"),
+		"the whole view-space normal cannot become a large constant screen offset")
+	assert_true(_source.contains("max_refraction_offset"),
+		"screen-space displacement has a hard fold/disocclusion bound")
+	assert_true(_source.contains("water_signed_height_world(depth_texture, refracted_uv"),
+		"the restored refraction still rejects samples above the water surface")
+
+
 ## Restore the pre-overhaul interaction read: a swimmer creates a crisp,
 ## clear normal/refraction ring. It must not be replaced by an albedo-white
 ## impulse blob, and the old 8x texture-gradient response remains explicit.

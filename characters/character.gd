@@ -13,11 +13,12 @@ extends CharacterBody3D
 # ---------- Swimming ----------
 # Water tiles expose an Area3D volume on WATER_LAYER. While the character's
 # probe point is inside one it swims with force-based control: buoyancy
-# proportional to the submerged fraction of the body counteracts gravity
-# (slightly losing when fully submerged, so idling sinks slowly), holding
-# jump adds a constant upward kick. The body rising out of the water loses
-# buoyancy and falls back in, so bobbing emerges naturally. Pressing toward
-# a nearby bank wall with jump launches the character out of the water.
+# proportional to the submerged fraction of the body counteracts gravity.
+# Full-submersion lift exceeds gravity, so an idle body settles partly
+# submerged without input. Holding jump adds a constant upward kick. The
+# body rising out of the water loses buoyancy and falls back in, so bobbing
+# emerges naturally. Pressing toward a nearby bank wall with jump launches
+# the character out of the water.
 const WATER_LAYER_MASK: int = 1 << 7
 # water_surface_y's own value before the character has ever touched water
 # this session (nothing reads it until in_water first goes true, which
@@ -41,9 +42,10 @@ const SWELL_SPEED: float = 0.26
 @export var SWIM_SPEED_FACTOR := 0.45
 @export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
 @export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
-@export var BUOYANCY := 17.0  # < gravity (18) fully submerged: idle = slow sink
+@export var BUOYANCY := 24.0  # > gravity (18): stable idle float at 75% submersion
 @export var SWIM_THRUST := 8.0  # extra upward force while holding jump
 @export var WATER_LINEAR_DRAG := 1.4
+@export var WATER_CURRENT_DRAG := 1.6  # seconds^-1 coupling to WaterSampler velocity
 @export var MAX_SWIM_RISE := 2.5
 @export var MAX_SWIM_SINK := 4.0
 @export var WATER_EXIT_PROBE := 1.3  # how far ahead a bank wall triggers the leap
@@ -76,6 +78,7 @@ var step_visual_offset_y: float = 0.0
 var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
 var in_water: bool = false
+var water_current := Vector2.ZERO
 # wading: true whenever the probe is in water at all — the >=0.05m shallow
 # band OR full in_water (swimming is trivially "in water" too — see
 # _update_in_water's h-task-4 fix note). Does not affect movement.
@@ -123,21 +126,27 @@ func _physics_process(delta: float) -> void:
 		var turn_speed: float = TURN_SPEED if (on_ground or in_water) else TURN_SPEED_AIR
 		rotation.y = lerp_angle(rotation.y, target_yaw, turn_speed * delta)
 
-	# accel/ friction on XZ
+	# Accel/friction on XZ. Swimming control is relative to the surrounding
+	# water: without input, no artificial brake fights the current. The shared
+	# drag force below carries the body toward WaterSampler.velocity_at().
 	var max_speed: float = MAX_SPEED * SWIM_SPEED_FACTOR if in_water else MAX_SPEED
 	var target_speed := max_speed * mv2.length()
 	var target_vxz := desired_dir * target_speed
 	var vxz := Vector2(velocity.x, velocity.z)
 	var tv := Vector2(target_vxz.x, target_vxz.z)
-	var changing_direction: bool = vxz.dot(tv) < 0.8
-	var rate: float = ACCEL
 	if in_water:
-		rate = SWIM_ACCEL
-	elif !on_ground:
-		rate = ACCEL_AIR
-	elif !has_input or changing_direction:
-		rate = FRICTION
-	vxz = vxz.move_toward(tv, rate * delta)
+		var relative_velocity := vxz - water_current
+		if has_input:
+			relative_velocity = relative_velocity.move_toward(tv, SWIM_ACCEL * delta)
+		vxz = water_current + relative_velocity
+		vxz += WaterForces.current_acceleration(
+			water_current, vxz, WATER_CURRENT_DRAG) * delta
+	else:
+		var changing_direction: bool = vxz.dot(tv) < 0.8
+		var rate: float = ACCEL_AIR if not on_ground else ACCEL
+		if on_ground and (!has_input or changing_direction):
+			rate = FRICTION
+		vxz = vxz.move_toward(tv, rate * delta)
 	velocity.x = vxz.x
 	velocity.z = vxz.y
 
@@ -148,22 +157,23 @@ func _physics_process(delta: float) -> void:
 	movement_animation(target_speed)
 
 
-# Swimming verticals, force based: gravity always pulls; buoyancy pushes up
-# in proportion to how much of the body is under the surface; holding jump
-# adds a constant kick. As the body rises out it loses buoyancy and drops
-# back in — the bobbing falls out of the physics. Drag keeps speeds low and
-# damps the splash-in plunge.
+# Swimming verticals, force based: gravity always pulls; reusable buoyancy
+# pushes up in proportion to displaced body height and wins at full
+# submersion, giving an idle body a stable partly-submerged equilibrium.
+# Holding jump adds a deliberate kick. Drag damps entry plunges and bobbing.
 func _swim_vertical(delta: float, wants_jump: bool) -> void:
 	if _try_water_exit(wants_jump, delta):
 		return
-	var submerged: float = clampf(
-		(water_surface_y - global_position.y) / BODY_HEIGHT, 0.0, 1.0
-	)
-	var lift: float = BUOYANCY * submerged
+	var gravity := get_gravity()
+	var submerged := WaterForces.submerged_fraction(
+		water_surface_y, global_position.y, BODY_HEIGHT)
+	var acceleration := gravity + WaterForces.buoyancy_acceleration(
+		gravity, BUOYANCY, submerged)
 	if controller.jump_held(self, delta):
-		lift += SWIM_THRUST
-	velocity.y += (get_gravity().y + lift) * delta
-	velocity.y -= velocity.y * WATER_LINEAR_DRAG * delta
+		acceleration += -gravity.normalized() * SWIM_THRUST
+	acceleration.y += WaterForces.vertical_drag_acceleration(
+		velocity.y, WATER_LINEAR_DRAG)
+	velocity += acceleration * delta
 	velocity.y = clampf(velocity.y, -MAX_SWIM_SINK, MAX_SWIM_RISE)
 
 
@@ -253,6 +263,7 @@ func _update_in_water() -> void:
 	var best_depth: float = -INF
 	var best_level: float = -INF
 	var best_wave_scale := 0.0
+	var best_current := Vector2.ZERO
 	for h in hits:
 		var collider: Object = h.get("collider")
 		if collider == null or not collider.has_meta("sampler"):
@@ -266,10 +277,12 @@ func _update_in_water() -> void:
 			best_depth = depth
 			best_level = lvl
 			best_wave_scale = sampler.wave_scale_at(xz)
+			best_current = sampler.velocity_at(xz)
 	var swim_gate: float = 0.6 if in_water else 0.8
 	var wade_gate: float = 0.03 if wading else 0.05
 	in_water = best_depth > swim_gate
 	wading = in_water or best_depth > wade_gate
+	water_current = best_current if in_water else Vector2.ZERO
 	if in_water:
 		var dynamic_offset := _swell_offset(xz, t)
 		var water_dynamics: Node = get_tree().get_first_node_in_group("water_dynamics")

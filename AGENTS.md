@@ -199,6 +199,10 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
     foam. Production chunks solve with a two-cell halo, so adjacent chunks bake bit-identical
     retained border values. The velocity/diagnostics live in mesh `CUSTOM1` and the frozen
     `WaterSampler`; GPU and CPU consumers never reconstruct separate flow fields.
+  - `WaterForces` — pure, scene-free force laws shared by water consumers: displaced-column
+    buoyancy, horizontal drag toward `WaterSampler.velocity_at()`, and vertical water drag.
+    Bodies keep their own volume-to-mass/drag tuning and integration adapter; never copy a
+    separate approximation of the current or character-only buoyancy math into future props.
   - `WaterSkin` — the ONE mesh builder (the old marching-squares mesher is retired, r3 Task
     7; its own boundary was raw ~45-90° grid corners). Welds a 2m world-aligned render
     lattice to a boundary strip that sits directly ON `WaterContour`'s curves (zip-stitched
@@ -305,9 +309,11 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
 - **`characters/character.gd`** (`CharacterBody3D`) — movement (accel / friction / turn),
   `_try_step_up` (climb ≤ `MAX_STEP_HEIGHT` ledges), jump, and **force-based swimming**: water
   tiles expose an `Area3D` on collision layer 8; while a knee-height probe is inside it,
-  buoyancy proportional to submerged fraction fights gravity (idle sinks slowly), holding jump
-  adds thrust, and pressing toward a nearby bank wall launches the character out. Verified by
-  `tests/harness/swim_harness.tscn`.
+  `WaterForces` supplies buoyancy proportional to submerged fraction and enough full-submersion
+  lift for a stable passive float. Horizontal drag carries the character toward the exact
+  `WaterSampler` current while player steering remains relative to that moving water. Holding
+  jump adds thrust, and pressing toward a nearby bank wall launches the character out. Verified
+  by `tests/harness/swim_harness.tscn`.
 - **`scripts/controllers/`** — a pluggable `CharacterController` resource: `PlayerController`
   (keyboard, camera-relative) and `TestController` (steers toward a target node, for harnesses).
 - **`scripts/camera/camera.gd`** — orbit camera (Q/E orbit, scroll zoom) following the character.
