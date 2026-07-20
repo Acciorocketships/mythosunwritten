@@ -233,7 +233,7 @@ func test_corner_piece_sits_in_the_dropped_end_slot() -> void:
 func _world_boxes(data: Dictionary, keys: Array) -> Array:
 	var out: Array = []
 	for key in keys:
-		var piece: Array = Dress._piece(Dress.SCENES[key])
+		var piece: Array = Dress._piece(Dress.VISUALS[key])
 		var local_aabb: AABB = (piece[1] as Transform3D) * (piece[0] as Mesh).get_aabb()
 		for t in (data[key] as Array):
 			out.append((t as Transform3D) * local_aabb)

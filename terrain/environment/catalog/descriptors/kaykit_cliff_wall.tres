@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_pm617"]
+
+[resource]
+script = ExtResource("1_pm617")
+id = &"kaykit.cliff.wall"
+visual_path = "res://terrain/environment/visuals/kaykit/kaykit_cliff_wall.tres"
+tags = Array[StringName]([&"cliff", &"terrain"])
+measured_aabb = AABB(-1.5, -0.29999995, 0.25000596, 3, 3.9999998, 0.74999213)
+tint_group = &"ground"
+supports_instance_color = true
+provenance_id = &"kaykit:kaykit.cliff.wall"

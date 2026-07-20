@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_gsiti"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_4hr7v"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_grass_04_piece_00.res" id="3_0111l"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_h8f6m"]
+
+[sub_resource type="Resource" id="Resource_em5qm"]
+script = ExtResource("2_4hr7v")
+mesh = ExtResource("3_0111l")
+
+[resource]
+script = ExtResource("4_h8f6m")
+pieces = Array[ExtResource("2_4hr7v")]([SubResource("Resource_em5qm")])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_gww5o"]
+
+[resource]
+script = ExtResource("1_gww5o")
+id = &"kaykit.tree.06"
+visual_path = "res://terrain/environment/visuals/kaykit/kaykit_tree_06.tres"
+tags = Array[StringName]([&"catalog_only", &"nature", &"tree"])
+measured_aabb = AABB(-3.810204, -1.1169304, -3.0391626, 7.5619864, 21.057787, 5.7500005)
+collision_piece_count = 1
+tint_group = &"tree"
+supports_instance_color = true
+provenance_id = &"kaykit:kaykit.tree.06"

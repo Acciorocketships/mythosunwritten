@@ -1,0 +1,92 @@
+[gd_resource type="Resource" script_class="DressingSet" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingHabitatLayer.gd" id="3_habitat"]
+
+[sub_resource type="Resource" id="KayKit_1"]
+script = ExtResource("1_choice")
+asset_id = &"kaykit.tree.01"
+weight = 0.5
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 0.7, &"highland": 1.0, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+
+[sub_resource type="Resource" id="LPFV_1"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.01"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+scale_multiplier = 1.45
+spacing_radius = 8.0
+
+[sub_resource type="Resource" id="LPFV_2"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.02"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+scale_multiplier = 1.45
+spacing_radius = 11.0
+
+[sub_resource type="Resource" id="LPFV_3"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.03"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+
+[sub_resource type="Resource" id="LPFV_4"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.04"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+
+[sub_resource type="Resource" id="LPFV_5"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.05"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+
+[sub_resource type="Resource" id="LPFV_6"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.06"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+scale_multiplier = 1.35
+spacing_radius = 7.0
+
+[sub_resource type="Resource" id="LPFV_7"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.07"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+scale_multiplier = 2.1
+spacing_radius = 11.0
+
+[sub_resource type="Resource" id="LPFV_8"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.08"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+
+[sub_resource type="Resource" id="LPFV_9"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.tree.09"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+scale_multiplier = 1.65
+spacing_radius = 11.0
+
+[sub_resource type="Resource" id="Canopy"]
+script = ExtResource("3_habitat")
+channel = &"woodland_canopy"
+scale = 132.0
+coverage = {&"meadow": 0.22, &"deep_forest": 0.82, &"highland": 0.14, &"blossom_grove": 0.72, &"twilight_marsh": 0.42}
+edge_softness = 0.075
+
+[resource]
+script = ExtResource("2_set")
+id = &"ambient.tree"
+choices = Array[ExtResource("1_choice")]([SubResource("KayKit_1"), SubResource("LPFV_1"), SubResource("LPFV_2"), SubResource("LPFV_3"), SubResource("LPFV_4"), SubResource("LPFV_5"), SubResource("LPFV_6"), SubResource("LPFV_7"), SubResource("LPFV_8"), SubResource("LPFV_9")])
+fill_per_cell = {&"meadow": 0.45, &"deep_forest": 1.15, &"highland": 0.38, &"blossom_grove": 0.95, &"twilight_marsh": 0.55}
+habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy")])
+community_channel = &"forest_species"
+community_scale = 84.0
+community_strength = 0.78
+surface_mode = 1
+shore_distance_range = Vector2(1.0, 1.0)
+support_radius = 0.75
+max_support_height_span = 0.75
+max_grade = 0.5
+spacing_group = &"natural_structural"
+spacing_radius = 4.0
+scale_range = Vector2(0.92, 1.08)
+brightness_range = Vector2(0.92, 1.08)

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_rm7ep"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_rajl3"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_bush_02_piece_00.res" id="3_0oa2b"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_5a7nq"]
+
+[sub_resource type="Resource" id="Resource_h7bx2"]
+script = ExtResource("2_rajl3")
+mesh = ExtResource("3_0oa2b")
+local_transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
+
+[resource]
+script = ExtResource("4_5a7nq")
+pieces = Array[ExtResource("2_rajl3")]([SubResource("Resource_h7bx2")])

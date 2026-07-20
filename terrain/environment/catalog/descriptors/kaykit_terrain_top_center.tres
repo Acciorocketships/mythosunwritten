@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_gf571"]
+
+[resource]
+script = ExtResource("1_gf571")
+id = &"kaykit.terrain.top_center"
+visual_path = "res://terrain/environment/visuals/kaykit/kaykit_terrain_top_center.tres"
+tags = Array[StringName]([&"terrain"])
+measured_aabb = AABB(-1.5000007, 0, -1.5, 3.0000005, 1e-05, 3.000001)
+tint_group = &"ground"
+supports_instance_color = true
+provenance_id = &"kaykit:kaykit.terrain.top_center"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ayy1o"]
+
+[resource]
+script = ExtResource("1_ayy1o")
+id = &"sfv.lily_pad.01"
+visual_path = "res://terrain/environment/visuals/fantasy_village/sfv_lily_pad_01.tres"
+tags = Array[StringName]([&"floating", &"lily_pad", &"nature"])
+measured_aabb = AABB(-0.080149665, 2.4537625e-08, -0.06710883, 0.1326102, 0.52948064, 0.13421766)
+tint_group = &"grass"
+supports_instance_color = true
+provenance_id = &"fantasy_village:sfv.lily_pad.01"

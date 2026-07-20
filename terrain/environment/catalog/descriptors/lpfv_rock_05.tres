@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_msmv2"]
+
+[resource]
+script = ExtResource("1_msmv2")
+id = &"lpfv.rock.05"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_05.tres"
+tags = Array[StringName]([&"nature", &"rock", &"walkover"])
+measured_aabb = AABB(-0.5503411, -0.28802627, -1.5592843, 2.1184165, 1.0139939, 2.1282392)
+collision_piece_count = 1
+tint_group = &"rock"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village:lpfv.rock.05"

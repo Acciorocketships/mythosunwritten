@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="DressingSet" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingHabitatLayer.gd" id="3_habitat"]
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("1_choice")
+asset_id = &"kaykit.bush.01"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0}
+
+[sub_resource type="Resource" id="Choice_2"]
+script = ExtResource("1_choice")
+asset_id = &"kaykit.bush.02"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0}
+
+[sub_resource type="Resource" id="CanopyEdge"]
+script = ExtResource("3_habitat")
+channel = &"woodland_canopy"
+scale = 132.0
+preference = 1
+coverage = {&"meadow": 0.22, &"deep_forest": 0.82, &"highland": 0.14, &"blossom_grove": 0.72, &"twilight_marsh": 0.42}
+edge_softness = 0.12
+
+[resource]
+script = ExtResource("2_set")
+id = &"ambient.bush"
+choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2")])
+fill_per_cell = {&"meadow": 0.45, &"deep_forest": 0.7, &"highland": 0.35, &"blossom_grove": 0.6, &"twilight_marsh": 0.85}
+habitat_layers = Array[ExtResource("3_habitat")]([SubResource("CanopyEdge")])
+community_channel = &"shrub_species"
+community_scale = 48.0
+community_strength = 0.6
+shore_distance_range = Vector2(0.5, 0.5)
+max_grade = 0.8
+spacing_radius = 0.8
+scale_range = Vector2(0.9, 1.1)
+brightness_range = Vector2(0.92, 1.08)

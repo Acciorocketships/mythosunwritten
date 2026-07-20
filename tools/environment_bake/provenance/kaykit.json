@@ -1,0 +1,673 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_01.tres",
+      "id": "kaykit.bush.01",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.bush.01",
+        "scale": [
+          4.0,
+          4.0,
+          4.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_1_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "bush",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_1_C_Color1.gltf",
+      "source_sha256": "b67ad1166a944eab3d1c88a3255216784848fca45a3a0d1eef6e56c05f4474e7",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_bush_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_02.tres",
+      "id": "kaykit.bush.02",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.bush.02",
+        "scale": [
+          4.0,
+          4.0,
+          4.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_1_G_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "bush",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_1_G_Color1.gltf",
+      "source_sha256": "4979a6a515beb25a0a5e1987fccc6f47ac5d15baf7148a8fb63a3f10a17074be",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_bush_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_03.tres",
+      "id": "kaykit.bush.03",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.bush.03",
+        "scale": [
+          4.0,
+          4.0,
+          4.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_2_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "bush",
+          "catalog_only",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_2_C_Color1.gltf",
+      "source_sha256": "e63dd744f0c7da4f72117afa53eeeda44cc4d66f8d6b9c7b8bb2fae4dfe1da93",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_bush_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_04.tres",
+      "id": "kaykit.bush.04",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.bush.04",
+        "scale": [
+          4.0,
+          4.0,
+          4.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_3_B_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "bush",
+          "catalog_only",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_3_B_Color1.gltf",
+      "source_sha256": "76fa503c91e86a2689e6fd630ff201d7eb285f7f28da70542c34d65a1cd5f59f",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_bush_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_05.tres",
+      "id": "kaykit.bush.05",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.bush.05",
+        "scale": [
+          4.0,
+          4.0,
+          4.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_4_B_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "bush",
+          "catalog_only",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_4_B_Color1.gltf",
+      "source_sha256": "e5e67884c2746f229586d5e342a4e603c6345800ea54afff847aab2bdc16f03b",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_bush_05.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_06.tres",
+      "id": "kaykit.bush.06",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.bush.06",
+        "scale": [
+          4.0,
+          4.0,
+          4.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_1_F_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "bush",
+          "catalog_only",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Bush_1_F_Color1.gltf",
+      "source_sha256": "dbbbb5bf67e76492ad8caeee35e487dbaae4a33ad649d01899b6edcb28a3aba8",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_bush_06.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_inner_lip.tres",
+      "id": "kaykit.cliff.inner_lip",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.cliff.inner_lip",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_A_InnerCorner_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_A_InnerCorner_Color1.gltf",
+      "source_sha256": "24d5e15dd913835da12fb5526949f707ea8ce78283e6f1b76a711e0426b73819",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_lip.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_inner_wall.tres",
+      "id": "kaykit.cliff.inner_wall",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.cliff.inner_wall",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_I_InnerCorner_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_I_InnerCorner_Color1.gltf",
+      "source_sha256": "605b42dfed616eea9ddf7f1e7241b96a427e9259cc7590964ce736173901a7bc",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_wall.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_lip.tres",
+      "id": "kaykit.cliff.lip",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.cliff.lip",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_H_Side_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_H_Side_Color1.gltf",
+      "source_sha256": "4f2dedfcf096677428706e7431e24cb2a362f5aea3765a8fe1cbc82f902069e8",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_cliff_lip.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_outer_lip.tres",
+      "id": "kaykit.cliff.outer_lip",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.cliff.outer_lip",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_I_OuterCorner_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_I_OuterCorner_Color1.gltf",
+      "source_sha256": "00d49636cd5a327d767e9c6f9f1778de42717a8c13c0f6a961277e1c4b673ea4",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_lip.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_outer_wall.tres",
+      "id": "kaykit.cliff.outer_wall",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.cliff.outer_wall",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_I_OuterCorner_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_I_OuterCorner_Color1.gltf",
+      "source_sha256": "dddbe696d170538bf3c85f2df1939d2416ae71307fcccfd12a51ba480b442a1b",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_wall.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_wall.tres",
+      "id": "kaykit.cliff.wall",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.cliff.wall",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_H_Side_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_H_Side_Color1.gltf",
+      "source_sha256": "d37028c13c50518d5b4f129bdbf385820d6c185a45fed1177eaa176c10d19b0e",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_cliff_wall.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_grass_01.tres",
+      "id": "kaykit.grass.01",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.grass.01",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Grass_1_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "grass",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Grass_1_C_Color1.gltf",
+      "source_sha256": "449d1a5cc0e808eccdad297bd45d4c86439ceb97703c66db940f36879d242dd1",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_grass_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_grass_02.tres",
+      "id": "kaykit.grass.02",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.grass.02",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Grass_2_B_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "grass",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Grass_2_B_Color1.gltf",
+      "source_sha256": "c95c9aa402330cb1f1950a5c6fa467f9714d5ebeb257731bc4e0567951e08032",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_grass_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_grass_03.tres",
+      "id": "kaykit.grass.03",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.grass.03",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Grass_1_A_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "grass",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Grass_1_A_Color1.gltf",
+      "source_sha256": "58686904164d636e8731544fbb6911bf1ebc068841fe6c127f0c509b1449212b",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_grass_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_grass_04.tres",
+      "id": "kaykit.grass.04",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.grass.04",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Grass_2_D_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "grass",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Grass_2_D_Color1.gltf",
+      "source_sha256": "4dc6242c70bcdf5e040b9e039679dc518f76d29dc9d770692bf72b3e6b4c1d2f",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_grass_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_01.tres",
+      "id": "kaykit.rock.01",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/rock/rock_1_e_color_12.tscn",
+        "id": "kaykit.rock.01",
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_E_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_E_Color1.gltf",
+      "source_sha256": "f61da3a25bd8098832d1240008928c32b864c81b7f17ee75524310ea73bb8bea",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_rock_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_02.tres",
+      "id": "kaykit.rock.02",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_profile": "flat_rock",
+        "id": "kaykit.rock.02",
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_H_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_H_Color1.gltf",
+      "source_sha256": "0605b9ccb31940363ebf13b66a562c94de809efd01a7498e8b330a0198171237",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_rock_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_03.tres",
+      "id": "kaykit.rock.03",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/rock/rock_4_g_color_12.tscn",
+        "id": "kaykit.rock.03",
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_G_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_G_Color1.gltf",
+      "source_sha256": "9aade80f1c5fbb300226893e81d9a4f167f10ac3cf2bb4ef37449fa02c424801",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_rock_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_04.tres",
+      "id": "kaykit.rock.04",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/rock/rock_6_a_color_12.tscn",
+        "id": "kaykit.rock.04",
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_A_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_A_Color1.gltf",
+      "source_sha256": "83638d9d40fbd11ed6a5c2f889b17bbc670a61129e727b86d73bc20be2085c26",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_rock_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_05.tres",
+      "id": "kaykit.rock.05",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/rock/rock_2_e_color_12.tscn",
+        "id": "kaykit.rock.05",
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_E_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_E_Color1.gltf",
+      "source_sha256": "89158bd76e8ebb3c7d0615bee0c8f5b856c81c80d2710eef4a2c4c8b3231862d",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_rock_05.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_06.tres",
+      "id": "kaykit.rock.06",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/rock/rock_5_c_color_12.tscn",
+        "id": "kaykit.rock.06",
+        "scale": [
+          3.0,
+          3.0,
+          3.0
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_C_Color1.gltf",
+      "source_sha256": "8596ec995d74ff66c06af249194e054deaaaabeadd30402e7046e46f41cb60b8",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_rock_06.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrain_top_center.tres",
+      "id": "kaykit.terrain.top_center",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "id": "kaykit.terrain.top_center",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_E_Center_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "terrain"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_E_Center_Color1.gltf",
+      "source_sha256": "aa75e49e218f5c8c6e973cc31679969c3284ad3181ee02767ec2bb5ab1f92fcd",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_terrain_top_center.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_01.tres",
+      "id": "kaykit.tree.01",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/tree/tree_1_c_color_12.tscn",
+        "id": "kaykit.tree.01",
+        "scale": [
+          2.5,
+          2.5,
+          2.5
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_1_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_1_C_Color1.gltf",
+      "source_sha256": "ffb1e44646cd8dbe9902dd31bf94e64e1a3de5523d1b1f819acdbef09b42d45f",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_tree_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_03.tres",
+      "id": "kaykit.tree.03",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/tree/tree_3_c_color_12.tscn",
+        "id": "kaykit.tree.03",
+        "scale": [
+          2.5,
+          2.5,
+          2.5
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_3_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_3_C_Color1.gltf",
+      "source_sha256": "a1da502f099639153a6fa02c01b61f684f9c674754da71fe6939dc0b92e97b13",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_tree_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_05.tres",
+      "id": "kaykit.tree.05",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/tree/tree_5_c_color_12.tscn",
+        "id": "kaykit.tree.05",
+        "scale": [
+          2.5,
+          2.5,
+          2.5
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_5_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_5_C_Color1.gltf",
+      "source_sha256": "474fc9298d077ad11559668f1d366bbbae26438d244450491405768e8a292402",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_tree_05.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_06.tres",
+      "id": "kaykit.tree.06",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/tree/tree_6_c_color_12.tscn",
+        "id": "kaykit.tree.06",
+        "scale": [
+          2.5,
+          2.5,
+          2.5
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_6_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_6_C_Color1.gltf",
+      "source_sha256": "59669b4b3974e2d529d3296b1441d2a5432e37a5a6863fbb1529e8bd69bce45c",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_tree_06.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_07.tres",
+      "id": "kaykit.tree.07",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/tree/tree_7_c_color_12.tscn",
+        "id": "kaykit.tree.07",
+        "scale": [
+          2.5,
+          2.5,
+          2.5
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_7_C_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_7_C_Color1.gltf",
+      "source_sha256": "a33e0e64ccc8acfa58824be67cd589843e269b8277a8e2edf06589fb68078a19",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_tree_07.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_bare_01.tres",
+      "id": "kaykit.tree_bare.01",
+      "license": "KayKit CC0",
+      "pack": "kaykit",
+      "parameters": {
+        "collision_source": "res://terrain/gltf/tree/tree_bare_1_b_color_12.tscn",
+        "id": "kaykit.tree_bare.01",
+        "scale": [
+          2.5,
+          2.5,
+          2.5
+        ],
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_Bare_1_B_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "catalog_only",
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Tree_Bare_1_B_Color1.gltf",
+      "source_sha256": "2f2ce28371025026808141f0765f01fd20ce727c381bf472f40ba63adc501ae8",
+      "visual": "res://terrain/environment/visuals/kaykit/kaykit_tree_bare_01.tres"
+    }
+  ],
+  "license": "KayKit CC0",
+  "pack": "kaykit",
+  "tool_version": 10
+}

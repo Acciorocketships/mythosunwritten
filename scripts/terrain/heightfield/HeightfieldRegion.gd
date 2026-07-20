@@ -6,7 +6,7 @@ extends RefCounted
 ## Built by HeightfieldPlan.compute_region; values equal the per-cell reference.
 
 const STOREY_HEIGHT: float = 4.0
-const LEVEL_HEIGHT: float = 0.5
+const LEVEL_HEIGHT: float = 1.0
 
 var _storeys: Dictionary  # Vector2i -> int
 var _levels: Dictionary   # Vector2i -> int
@@ -48,9 +48,9 @@ func level_at(cx: int, cz: int) -> int:
 
 
 func surface_height(cx: int, cz: int) -> float:
-	# Levels are FLATTENED out of the rendered surface for now (HeightfieldPlan.RENDER_LEVELS) — the
-	# owner wants flat "level-texture" ground, not the smooth interpolation of the level field. The
-	# level map is still stored (level_at/tile_plan) for the future flat-terrace feature.
+	# Level terraces are IN the rendered surface (HeightfieldPlan.RENDER_LEVELS, owner 2026-07-15):
+	# each 1m level step ramps through the same half-cell slope profile as the 4m storey slopes —
+	# short slope tiles, no KayKit dressing (walls/lips/skirts key off storey_at only).
 	var h := float(storey_at(cx, cz)) * STOREY_HEIGHT
 	if HeightfieldPlan.RENDER_LEVELS:
 		h += float(level_at(cx, cz)) * LEVEL_HEIGHT

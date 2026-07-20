@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_unu20"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_f68rf"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village/sfv_lily_pad_03_piece_00.res" id="3_x5yq0"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_0ijkw"]
+
+[sub_resource type="Resource" id="Resource_25qfm"]
+script = ExtResource("2_f68rf")
+mesh = ExtResource("3_x5yq0")
+local_transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 0, 0)
+
+[resource]
+script = ExtResource("4_0ijkw")
+pieces = Array[ExtResource("2_f68rf")]([SubResource("Resource_25qfm")])

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_4xkch"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_u2lvv"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village/lpfv_flower_01_piece_00.res" id="3_0y6yf"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_ffcap"]
+
+[sub_resource type="Resource" id="Resource_7qm8a"]
+script = ExtResource("2_u2lvv")
+mesh = ExtResource("3_0y6yf")
+local_transform = Transform3D(3.25, 0, 0, 0, 3.25, 0, 0, 0, 3.25, 0, 0, 0)
+
+[resource]
+script = ExtResource("4_ffcap")
+pieces = Array[ExtResource("2_u2lvv")]([SubResource("Resource_7qm8a")])

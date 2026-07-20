@@ -51,6 +51,77 @@ func test_shared_edge_agrees_from_both_cells():
 	var from_low := Field.surface_y(r, 12.01, 0.0)
 	assert_almost_eq(from_high, from_low, 0.05, "no discontinuity across the cell seam")
 
+func test_level_t_junction_has_one_shared_seam_profile():
+	# Reported level-lip shape (seed 2697992464 around cells (1,-61)..(1,-64)),
+	# reduced to its smallest height pattern. A=(1,0), level 2, slopes south to
+	# B=(1,1), level 1. B also slopes west to C=(0,1), level 0. Both A and B own
+	# vertices on their shared z=12 seam, so they must compute the SAME Y at every
+	# x sample. The old cell-local patch made A's edge a flat 4.5m while B's copy
+	# dipped toward C, leaving the original photographed 0.5m lip.
+	var plan := Plan.new(0, 64.0, 12, "mean")
+	plan.set_raw_height_override(func(cx, cz):
+		if cx == 0 and cz == 1: return 4.1
+		if cx == 1 and cz == 1: return 4.9
+		return 5.6)
+	var r := plan.compute_region(0, 0, 8)
+	assert_eq(r.level_at(1, 0), 2, "A is level 2")
+	assert_eq(r.level_at(1, 1), 1, "B is level 1")
+	assert_eq(r.level_at(0, 1), 0, "C is level 0")
+	for x in range(12, 37, 3):
+		var from_a := Field.surface_y_in_cell(r, float(x), 12.0, 1, 0)
+		var from_b := Field.surface_y_in_cell(r, float(x), 12.0, 1, 1)
+		assert_almost_eq(from_a, from_b, 0.0001,
+			"both tiles own one seam profile at x=%d (A %.3f, B %.3f)" % [x, from_a, from_b])
+
+func test_level_surfaces_agree_across_every_non_cliff_edge_at_reported_seed():
+	# Exact owner screenshot seed and neighbourhood. Test every sampled boundary
+	# around both F3 pins, not only the synthetic T-junction above. Storey cliff
+	# tops intentionally own a vertical discontinuity; every other edge must be
+	# single-valued before the mesher sees it.
+	var plan := Plan.new(2697992464, 22.0, 8, "mean", 3)
+	var r := plan.compute_region(1, -63, 6)
+	for cz in range(-67, -58):
+		for cx in range(-2, 5):
+			for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+				if Field.is_flat_cell(r, cx, cz) or Field.is_flat_cell(r, cx + d.x, cz + d.y):
+					continue
+				var bx := float(cx) * Field.TILE + float(d.x) * Field.HALF
+				var bz := float(cz) * Field.TILE + float(d.y) * Field.HALF
+				for i in 9:
+					var t := (float(i) / 8.0) * 2.0 - 1.0
+					var x := bx + float(d.y) * Field.HALF * t
+					var z := bz + float(d.x) * Field.HALF * t
+					var mine := Field.surface_y_in_cell(r, x, z, cx, cz)
+					var theirs := Field.surface_y_in_cell(r, x, z, cx + d.x, cz + d.y)
+					assert_almost_eq(mine, theirs, 0.0001,
+						"reported seed seam (%d,%d)->%s sample %d" % [cx, cz, d, i])
+
+func test_every_ordinary_edge_is_single_valued_across_varied_fields():
+	# The invariant behind the fix is field-wide, not seed-specific. Exercise
+	# ordinary storey and level slopes from several unrelated deterministic
+	# fields. Only an edge explicitly classified as an exposed flat cliff may
+	# have two heights (the rock skirt owns that vertical face).
+	for world_seed in [17, 4242, 918273]:
+		var plan := Plan.new(world_seed, 40.0, 8, "mean", 3)
+		var r := plan.compute_region(0, 0, 7)
+		for cz in range(-5, 5):
+			for cx in range(-5, 5):
+				for d in [Vector2i(1, 0), Vector2i(0, 1)]:
+					if Field.is_exposed_edge(r, cx, cz, d) \
+						or Field.is_exposed_edge(r, cx + d.x, cz + d.y, -d):
+						continue
+					var bx := float(cx) * Field.TILE + float(d.x) * Field.HALF
+					var bz := float(cz) * Field.TILE + float(d.y) * Field.HALF
+					for i in 5:
+						var t := (float(i) / 4.0) * 2.0 - 1.0
+						var x := bx + float(d.y) * Field.HALF * t
+						var z := bz + float(d.x) * Field.HALF * t
+						var mine := Field.surface_y_in_cell(r, x, z, cx, cz)
+						var theirs := Field.surface_y_in_cell(r, x, z, cx + d.x, cz + d.y)
+						assert_almost_eq(mine, theirs, 0.0001,
+							"seed %d ordinary seam (%d,%d)->%s sample %d" % [
+								world_seed, cx, cz, d, i])
+
 func _region_convex() -> HeightfieldRegion:
 	# cell (0,0) high; the +x, +z, and +x+z neighbours are all lower → convex corner.
 	var plan := Plan.new(0, 32.0, 8, "mean")

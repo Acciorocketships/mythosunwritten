@@ -26,46 +26,8 @@ const APRON := 2.4        # ground/skirt continuation depth under a HIGHER flat 
                           # the recess band behind that neighbour's wall face + skirt (owner:
                           # "extend the tile at the current level underneath the higher tile").
 
-const FOLIAGE_SCENES := {
-	"grass": ["res://terrain/scenes/grass/Grass1.tscn", "res://terrain/scenes/grass/Grass2.tscn", "res://terrain/scenes/grass/Grass3.tscn"],
-	"bush": ["res://terrain/scenes/bush/Bush1.tscn", "res://terrain/scenes/bush/Bush2.tscn"],
-	"rock": ["res://terrain/scenes/rock/Rock1.tscn", "res://terrain/scenes/rock/Rock2.tscn"],
-	"tree": ["res://terrain/scenes/tree/Tree1.tscn", "res://terrain/scenes/tree/Tree2.tscn"],
-}
-
-# scene path -> Array of [mesh: Mesh, local_xform: Transform3D], one entry per
-# MeshInstance3D inside the foliage scene (KayKit gltf wrappers are visual-only:
-# no collision, no scripts — verified before batching them; if a future foliage
-# scene needs behaviour, it must not go through the MultiMesh path).
-static var _foliage_piece_cache: Dictionary = {}
-
-static func _foliage_pieces(path: String) -> Array:
-	var got = _foliage_piece_cache.get(path)
-	if got != null:
-		return got
-	var inst := (load(path) as PackedScene).instantiate()
-	var out: Array = []
-	var stack: Array = [inst]
-	while not stack.is_empty():
-		var n: Node = stack.pop_back()
-		for c in n.get_children():
-			stack.append(c)
-		var mi := n as MeshInstance3D
-		if mi == null or mi.mesh == null:
-			continue
-		var xf := Transform3D.IDENTITY
-		var walk: Node = mi
-		while walk != null and walk != inst:
-			xf = (walk as Node3D).transform * xf
-			walk = walk.get_parent()
-		out.append([mi.mesh, xf])
-	inst.free()
-	_foliage_piece_cache[path] = out
-	return out
-
-var _material: Material = load("res://terrain/materials/ground.tres")
+var _material: Material = null
 var _ground_tinted: Material = null
-var _foliage_mat: ShaderMaterial = null
 var _grass_uv: Vector2 = SlopeAtlas.grass_uv()
 var _cliff_uv: Vector2 = SlopeAtlas.cliff_uv()
 # The skirt renders with the KayKit wall piece's OWN material + a rock texel from its mesh, so
@@ -118,16 +80,6 @@ func _ground_tinted_mat() -> Material:
 		_ground_tinted = _material
 	return _ground_tinted
 
-# One shared foliage material: KayKit atlas × per-instance MultiMesh COLOR (biome tint).
-func _foliage_material() -> ShaderMaterial:
-	if _foliage_mat == null:
-		_ensure_skirt_style()
-		_foliage_mat = ShaderMaterial.new()
-		_foliage_mat.shader = load("res://terrain/materials/foliage_tint.gdshader")
-		if _material is StandardMaterial3D:
-			_foliage_mat.set_shader_parameter("albedo_tex", (_material as StandardMaterial3D).albedo_texture)
-	return _foliage_mat
-
 var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
 
 func set_seed(seed: int) -> void:
@@ -145,37 +97,6 @@ func chunk_region(plan, chunk: Vector2i):
 func _origin(chunk: Vector2i) -> Vector2:
 	return Vector2(float(chunk.x) * CHUNK_WORLD, float(chunk.y) * CHUNK_WORLD)
 
-# Pure decoration placement for a chunk: scene path -> Array[Transform3D]
-# (position + yaw; the per-piece gltf local transform is applied at build).
-# Split from build_chunk so tests can assert placements headlessly, where
-# MultiMesh does not read back instance transforms (same pattern as
-# CliffDressing.compute/build).
-func compute_decorations(region, chunk: Vector2i) -> Dictionary:
-	var by_scene: Dictionary = {}
-	for cz in range(chunk.y * CELLS_PER_CHUNK, chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
-		for cx in range(chunk.x * CELLS_PER_CHUNK, chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK):
-			var wc := Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)
-			if Helper.is_water(wc, _water_seed):
-				continue
-			var sy := TerrainSurfaceField.surface_y(region, wc.x, wc.z)
-			for d: Dictionary in DecorationScatter.cell_decorations(Vector2i(cx, cz), _water_seed, sy):
-				var variants: Array = FOLIAGE_SCENES.get(d["tag"], [])
-				if variants.is_empty():
-					continue
-				var pick: int = int(d["yaw"] / TAU * variants.size()) % variants.size()
-				var path: String = variants[pick]
-				# Sit each decoration on the surface at ITS OWN jittered position, not the
-				# cell centre — otherwise decorations on a slope float above / sink below
-				# the ground (the cell-centre height differs from the local height).
-				var dp: Vector3 = d["pos"]
-				var tf := Transform3D(Basis(Vector3.UP, d["yaw"]),
-					Vector3(dp.x, TerrainSurfaceField.surface_y(region, dp.x, dp.z), dp.z))
-				if not by_scene.has(path):
-					by_scene[path] = {"tf": [], "tint": []}
-				by_scene[path]["tf"].append(tf)
-				by_scene[path]["tint"].append(d["tint"])   # computed once per cell in cell_decorations
-	return by_scene
-
 ## Main-thread resource warm-up. The streamer calls this before starting its
 ## worker; compute_chunk then touches only worker-owned data and SurfaceTool's
 ## CPU-side arrays. Keeping lazy resource loads out of compute_chunk is
@@ -184,7 +105,6 @@ func compute_decorations(region, chunk: Vector2i) -> Dictionary:
 func prepare_resources() -> void:
 	_ensure_skirt_style()
 	_ground_tinted_mat()
-	_foliage_material()
 
 
 ## Worker-safe half of chunk generation. Returns CPU-side mesh arrays,
@@ -308,12 +228,9 @@ func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
 			var h_hi: float = region.surface_height(cx, cz)
 			var tint := _cell_tint(cx, cz)
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				# Flatness is an EDGE property here, not a whole-cell property. A
-				# cell may slope toward its north neighbour while its west/east
-				# boundary stays level; the same-storey cell across that boundary
-				# can have a different orthogonal slope and expose a vertical wedge.
-				# Skipping the entire non-flat cell left that wedge open (the
-				# reported cliff-next-to-slope underwater sky hole).
+				# Only a genuinely flat edge can own a vertical wall. Ordinary
+				# storey and level slopes now share one boundary patch with their
+				# neighbour, so covering those seams would create a visible lip.
 				if TerrainSurfaceField.own_edge_flat(region, cx, cz, dir):
 					if _emit_wall(skirt, skirtc, region, cx, cz, dir, h_hi, tint):
 						any_wall = true
@@ -344,8 +261,7 @@ func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
 
 	# NO per-chunk water quads: they hovered at SEA_LEVEL over flat storey-0 ground with the
 	# ground-material fallback (water.tres doesn't exist) and read as floating brown planes
-	# (owner's screenshot). The global WaterSurface scene is the water visual; Helper.is_water
-	# still gates decorations below.
+	# (owner's screenshot). WaterSurfaceBuilder owns the one water visual.
 
 	var wall_arrays: Array = []
 	var wall_collision_arrays: Array = []
@@ -361,7 +277,6 @@ func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
 		"apron_arrays": apron_arrays,
 		"wall_arrays": wall_arrays,
 		"wall_collision_arrays": wall_collision_arrays,
-		"decorations": compute_decorations(region, chunk),
 		"cliffs": CliffDressing.compute(region, lo_cx, lo_cz, CELLS_PER_CHUNK),
 		"world_seed": _water_seed,
 	}
@@ -388,30 +303,6 @@ func commit_chunk(data: Dictionary) -> Node3D:
 		am.name = "Aprons"
 		am.mesh = apron_mesh
 		root.add_child(am)
-
-	# Decorations: foliage batched into one MultiMesh per (scene, mesh piece).
-	var deco := Node3D.new()
-	deco.name = "Decorations"
-	var by_scene: Dictionary = data["decorations"]
-	for path in by_scene:
-		var entry: Dictionary = by_scene[path]
-		var tfs: Array = entry["tf"]
-		var cts: Array = entry["tint"]
-		for piece in _foliage_pieces(path):
-			var mm := MultiMesh.new()
-			mm.transform_format = MultiMesh.TRANSFORM_3D
-			mm.use_colors = true
-			mm.mesh = piece[0]
-			mm.instance_count = tfs.size()
-			for i in tfs.size():
-				mm.set_instance_transform(i, tfs[i] * piece[1])
-				mm.set_instance_color(i, cts[i])
-			var mmi := MultiMeshInstance3D.new()
-			mmi.name = "%s_%d" % [String(path).get_file().get_basename(), deco.get_child_count()]
-			mmi.multimesh = mm
-			mmi.material_override = _foliage_material()
-			deco.add_child(mmi)
-	root.add_child(deco)
 
 	root.add_child(CliffDressing.build_from_data(data["cliffs"], data["world_seed"]))
 

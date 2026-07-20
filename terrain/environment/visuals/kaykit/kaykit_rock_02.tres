@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yfmql"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_02_piece_00.res" id="2_3we1r"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_nuyi7"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_rock_02_piece_00.res" id="4_a5xng"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_jm68j"]
+
+[sub_resource type="Resource" id="Resource_cnrya"]
+script = ExtResource("1_yfmql")
+shape = ExtResource("2_3we1r")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
+
+[sub_resource type="Resource" id="Resource_e5km4"]
+script = ExtResource("3_nuyi7")
+mesh = ExtResource("4_a5xng")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
+
+[resource]
+script = ExtResource("5_jm68j")
+pieces = Array[ExtResource("3_nuyi7")]([SubResource("Resource_e5km4")])
+collisions = Array[ExtResource("1_yfmql")]([SubResource("Resource_cnrya")])

@@ -10,8 +10,8 @@ func _init() -> void:
 	var ccz: int = 100
 	var radius: int = 8
 	var place_r: int = radius + 1
-	var level_r: int = place_r + 8          # LEVELS_PER_STOREY
-	var storey_final_r: int = level_r + 8   # _CLIFF_SEARCH_MAX
+	var level_r: int = place_r + HeightfieldPlan.LEVELS_PER_STOREY
+	var storey_final_r: int = level_r + HeightfieldPlan._CLIFF_SEARCH_MAX
 	var storey_outer: int = storey_final_r + plan.max_storeys
 
 	var t0: int = Time.get_ticks_usec()
@@ -23,16 +23,20 @@ func _init() -> void:
 	var t1: int = Time.get_ticks_usec()
 	var storeys: Dictionary = HeightfieldPlan.clamp_field(targets)
 	var t2: int = Time.get_ticks_usec()
-	var cliff_field: Dictionary = HeightfieldPlan._cliff_distance_field(storeys, 8)
+	var cliff_field: Dictionary = HeightfieldPlan._cliff_distance_field(
+		storeys, HeightfieldPlan._CLIFF_SEARCH_MAX)
 	var l0: Dictionary = {}
 	for dz in range(-level_r, level_r + 1):
 		for dx in range(-level_r, level_r + 1):
 			var cell: Vector2i = Vector2i(ccx + dx, ccz + dz)
 			var s: int = int(storeys[cell])
-			var residual: float = plan.raw_height(cell.x, cell.y) - float(s) * 4.0
-			var detail: int = clampi(plan._round_mode(residual / 0.5), 0, 7)
+			var residual: float = plan.raw_height(cell.x, cell.y) \
+				- float(s) * HeightfieldPlan.STOREY_HEIGHT
+			var detail: int = clampi(plan._round_mode(residual / HeightfieldPlan.LEVEL_HEIGHT),
+				0, HeightfieldPlan.LEVELS_PER_STOREY - 1)
 			var cliff_cap: int = cliff_field.get(cell, 999) - 1
-			l0[cell] = clampi(mini(detail, cliff_cap), 0, 7)
+			l0[cell] = clampi(mini(detail, cliff_cap), 0,
+				HeightfieldPlan.LEVELS_PER_STOREY - 1)
 	var t3: int = Time.get_ticks_usec()
 	var levels: Dictionary = HeightfieldPlan._clamp_levels(l0, storeys)
 	var t4: int = Time.get_ticks_usec()

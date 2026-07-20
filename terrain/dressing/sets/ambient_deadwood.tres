@@ -1,0 +1,71 @@
+[gd_resource type="Resource" script_class="DressingSet" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingHabitatLayer.gd" id="3_habitat"]
+
+[sub_resource type="Resource" id="B1"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.branch.01"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 1.3, &"highland": 0.6, &"blossom_grove": 0.8, &"twilight_marsh": 1.0}
+[sub_resource type="Resource" id="L1"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.log.01"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 1.3, &"highland": 0.6, &"blossom_grove": 0.8, &"twilight_marsh": 1.0}
+[sub_resource type="Resource" id="L2"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.log.02"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 1.3, &"highland": 0.6, &"blossom_grove": 0.8, &"twilight_marsh": 1.0}
+[sub_resource type="Resource" id="L3"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.log.03"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 1.3, &"highland": 0.6, &"blossom_grove": 0.8, &"twilight_marsh": 1.0}
+[sub_resource type="Resource" id="S1"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.stump.01"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 1.3, &"highland": 0.6, &"blossom_grove": 0.8, &"twilight_marsh": 1.0}
+[sub_resource type="Resource" id="S2"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.stump.02"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 1.3, &"highland": 0.6, &"blossom_grove": 0.8, &"twilight_marsh": 1.0}
+[sub_resource type="Resource" id="S3"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.stump.03"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 1.3, &"highland": 0.6, &"blossom_grove": 0.8, &"twilight_marsh": 1.0}
+[sub_resource type="Resource" id="S4"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.stump.04"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 1.3, &"highland": 0.6, &"blossom_grove": 0.8, &"twilight_marsh": 1.0}
+
+[sub_resource type="Resource" id="Canopy"]
+script = ExtResource("3_habitat")
+channel = &"woodland_canopy"
+scale = 132.0
+coverage = {&"meadow": 0.22, &"deep_forest": 0.82, &"highland": 0.14, &"blossom_grove": 0.72, &"twilight_marsh": 0.42}
+edge_softness = 0.075
+
+[sub_resource type="Resource" id="Disturbance"]
+script = ExtResource("3_habitat")
+channel = &"forest_disturbance"
+scale = 70.0
+coverage = {&"meadow": 0.25, &"deep_forest": 0.45, &"highland": 0.3, &"blossom_grove": 0.35, &"twilight_marsh": 0.55}
+edge_softness = 0.1
+
+[resource]
+script = ExtResource("2_set")
+id = &"ambient.deadwood"
+choices = Array[ExtResource("1_choice")]([SubResource("B1"), SubResource("L1"), SubResource("L2"), SubResource("L3"), SubResource("S1"), SubResource("S2"), SubResource("S3"), SubResource("S4")])
+fill_per_cell = {&"meadow": 0.25, &"deep_forest": 0.6, &"highland": 0.3, &"blossom_grove": 0.45, &"twilight_marsh": 0.55}
+habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy"), SubResource("Disturbance")])
+community_channel = &"deadwood_fall"
+community_scale = 42.0
+community_strength = 0.65
+surface_mode = 1
+shore_distance_range = Vector2(0.75, 0.75)
+support_radius = 1.0
+max_support_height_span = 0.65
+max_grade = 0.35
+spacing_group = &"natural_structural"
+spacing_radius = 2.5
+scale_range = Vector2(0.9, 1.1)
+brightness_range = Vector2(0.92, 1.05)

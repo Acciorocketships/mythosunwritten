@@ -107,8 +107,9 @@ static func sheet_material() -> ShaderMaterial:
 ## own bridge comment in _update_in_water.
 ## Worker-safe phase: field, contour, mesh-array, trigger, and sampler data.
 ## No render/physics resource or Node is created here.
-func compute_chunk(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
-	return WaterSkin.build(water, chunk, region)
+func compute_chunk(water: WaterPlan, chunk: Vector2i, region,
+		field_context: WaterFieldContext = null) -> Dictionary:
+	return WaterSkin.build(water, chunk, region, field_context)
 
 
 ## Main-thread phase: turns a worker payload into render and physics nodes.

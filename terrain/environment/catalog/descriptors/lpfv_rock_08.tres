@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_pl5yn"]
+
+[resource]
+script = ExtResource("1_pl5yn")
+id = &"lpfv.rock.08"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_08.tres"
+tags = Array[StringName]([&"nature", &"rock"])
+measured_aabb = AABB(-1.02529, -0.3358518, -1.3888181, 3.6327972, 2.542986, 2.811604)
+collision_piece_count = 2
+tint_group = &"rock"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village:lpfv.rock.08"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ydvgv"]
+
+[resource]
+script = ExtResource("1_ydvgv")
+id = &"lpfv.log.02"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_log_02.tres"
+tags = Array[StringName]([&"deadwood", &"nature"])
+measured_aabb = AABB(-0.60931575, -0.111036755, -2.652871, 1.7727516, 2.0586917, 5.3365173)
+collision_piece_count = 1
+tint_group = &"tree"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village:lpfv.log.02"

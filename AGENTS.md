@@ -42,7 +42,7 @@ churn suppression to hide the settling. **That socket engine is gone.** If you f
 referring to `TerrainGenerator`, `TerrainModule*`, sockets, `WaterRule`, `PositionIndex`,
 or generation "rules", they describe the retired system (see "Historical docs" below).
 
-Keep the worker pipeline pure: plan, field, mesher/scatter/dressing `compute*` methods return
+Keep the worker pipeline pure: plan, field, mesher/dressing `compute*` methods return
 plain CPU-side data and are headless-unit-testable. Render/physics resources and nodes are
 created only by the explicit main-thread `commit*` adapters; only `FieldTerrainStreamer`
 attaches those nodes to the active scene tree. Never create `MeshInstance3D`, `MultiMesh`,
@@ -50,12 +50,13 @@ attaches those nodes to the active scene tree. Never create `MeshInstance3D`, `M
 
 ## Terrain pipeline (`scripts/terrain/`)
 
-Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → TerrainChunkMesher
-(+ CliffDressing, DecorationScatter)**, driven per-chunk by **FieldTerrainStreamer**.
+Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → TerrainChunkMesher**,
+with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
+**FieldTerrainStreamer**.
 
 - **`heightfield/HeightfieldPlan.gd`** — the deterministic plan. A continuous height field
   `H(cell)` (layered value noise + rocky-biome mountain spines, faded flat near spawn) is
-  quantized into integer **storeys** (4 m each) and sub-storey **levels** (0.5 m). A monotone
+  quantized into integer **storeys** (4 m each) and sub-storey **levels** (1 m). A monotone
   trickle-down **clamp** lowers each cell to at most `max_step` storeys above its lowest
   cardinal neighbour (diagonals may drop two — a valid formation). The clamp has a unique,
   order-independent fixpoint, so results are seed-stable. `compute_region()` batches a whole
@@ -63,29 +64,31 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   samples are **memoized on the plan instance** (`_sample`, cleared by `set_raw_height_override`/
   `set_water_plan`) so the ~77 %-overlapping windows of successive chunk builds are sampled once
   — a pure-performance cache, output-identical.
-  - **Levels are computed but NOT rendered** (`RENDER_LEVELS = false`): the surface is
-    flattened to the 4 m storey grid for now (owner wants flat "level-texture" ground, not
-    smooth 0.5 m interpolation). The level field is kept for a future flat-terrace feature.
+  - **Levels are rendered** (`RENDER_LEVELS = true`): adjacent same-storey cells may differ
+    by one 1 m level, and that short step uses the same shared smootherstep surface patch as
+    a 4 m storey slope. Levels do not emit cliff dressing or vertical backing walls.
 - **`heightfield/HeightfieldRegion.gd`** — precomputed storey/level dictionaries with O(1)
   `storey_at` / `level_at` / `surface_height`. Same read API as the plan.
 - **`field/TerrainSurfaceField.gd`** — reconstructs the **continuous walkable height** from a
-  region. Cell interiors are flat; a cell **ramps down** toward lower neighbours with a
-  `smootherstep` half-cell slope (≤1 storey → walkable grass slope). There is **no up-ramp**:
-  a cell never rises to meet a higher neighbour — the higher cell is a flat **cliff top** and
-  walls down vertically. Also the classifier for everything downstream: `_is_cliff_top`,
+  region. Each non-cliff cell quadrant is a smootherstep patch through four shared controls:
+  its centre, the pairwise-minimum height at each adjoining edge midpoint, and the four-cell
+  minimum at the corner. Both owners of an ordinary storey/level seam therefore compute the
+  exact same boundary curve, including T-junctions where one neighbour slopes in a transverse
+  direction. There is **no up-ramp**: a cell never rises to meet a higher neighbour — the
+  higher cell is a flat **cliff top** and walls down vertically. Deliberate cliff/inner-corner
+  discontinuities are filled by the mesher's rock skirts. Also the classifier for everything downstream: `_is_cliff_top`,
   `has_inner_corner`, `is_flat_cell`, `own_edge_flat`, `is_exposed_edge`, `is_higher_flat`,
-  `edge_profile`. Single-valued everywhere ⇒ sampled on a shared grid, adjacent cells/chunks
-  share identical boundary vertices ⇒ **gap-free by construction**.
+  `edge_profile`. Ordinary slopes are single-valued on the shared grid, and adjacent chunks
+  sample the same controls ⇒ **gap-free by construction** without miniature level walls.
 - **`field/TerrainChunkMesher.gd`** — builds one chunk (8×8 cells = 192 m, sampled at 3 m).
-  `compute_chunk()` produces CPU-side mesh arrays, collision faces, decoration transforms, and
-  cliff placement data on the worker; `commit_chunk()` turns that payload into the chunk
+  `compute_chunk()` produces CPU-side mesh arrays, collision faces, and cliff placement data on
+  the worker; `commit_chunk()` turns that payload into the chunk
   `Node3D` on the main thread. Its children are `Surface` (walkable grass mesh, visually clipped
   behind the cliff lips), a separate full-extent **collision** trimesh (the lip band stays
   walkable), `CliffFaces` (vertical **rock skirts** filling the gap under each flat cliff edge,
   double as wall collision), `Aprons` (ground continued under higher neighbours to seal recess
-  slits), `Decorations` (foliage **batched into one `MultiMesh` per scene/mesh piece**, like the
-  dressing — `compute_decorations()` returns pure `Transform3D` data, the main-thread commit batches it),
-  and `Cliffs` (the dressing). Quads are **pinned to their own cell** so cliff tops render flat
+  slits), and `Cliffs` (the fixed cliff dressing). Ambient environment dressing is intentionally
+  not part of the terrain payload. Quads are **pinned to their own cell** so cliff tops render flat
   to their boundary; the vertical gap is filled by the skirt. Classic inner-corner sheet points
   tuck below the rounded piece; any part of that tuck exposed by a low camera uses the same rock
   atlas texel as the wall, never bright grass. The walkable collision sheet is a
@@ -96,12 +99,62 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
   type per chunk. Visual only; the mesh skirt is the collision. `compute()` returns plain
   `Transform3D` arrays (unit-testable headless); `build()` turns them into nodes. Pieces snap to
   the **old-tile 10.5 grid** (3 m KayKit modules at ±1.5…±10.5, corners at ±10.5,±10.5).
-- **`field/DecorationScatter.gd`** — pure per-cell deterministic foliage scatter (returns data,
-  no scene access). Density and tag mix come from biome fields in `Helper`.
+- **`dressing/DressingField.gd`** — the pure deterministic ambient-nature field. Sets author
+  direct per-biome fill rates, then shared `DressingHabitatLayer` fields form correlated groves,
+  clearings, ecotones, rock exposures, and small colonies with true negative space. Optional
+  jittered-Voronoi community fields keep nearby visual choices related instead of confetti-like.
+  A separate world-wide `DressingEcology.land_occupancy01` mask is multiplied into every
+  ground population, so broad clearings and the connected edges of a jittered-Voronoi graph form
+  paths that no independent set can sprinkle back into. Mushrooms deliberately use a dense
+  colony set plus a rare singleton set. Reeds are `EMERGENT` content: wet, inside the shoreline,
+  and never scattered over dry land.
+  Final jittered anchors are qualified against terrain and the shared `WaterFieldContext`, then
+  bounded Matérn-II arbitration supplies local and cross-population spacing. Chunk ownership is
+  half-open, so overlapping queries agree and seams cannot duplicate or omit an anchor. Worker
+  payloads contain only asset IDs, transforms, and colours. `DressingCollisionBuilder` commits
+  baked static physics for structural nature before chunk readiness; `DressingCommitQueue`
+  creates one visual `MultiMesh` per `(asset_id, visual piece)` under a separate per-frame budget,
+  and discards stale chunk generations. Dressing still owns no gameplay identity, interaction,
+  persistence, navigation, or world-feature planning.
+- **Environment assets** (`scripts/terrain/environment/`, `terrain/environment/`) — source-pack
+  scenes are editor-baked into lightweight descriptors plus self-contained meshes, materials,
+  textures, typed visual pieces, and optional typed collision pieces. Manifest scale is applied
+  exactly once at bake time: KayKit retains its legacy wrapper scales and LPFV nature uses a 3.25×
+  pack correction. Reviewed KayKit primitives are preserved from bake-only collision templates
+  where they fit: the owner's original three-cylinder proxy remains on KayKit rock 1, while
+  rock 2's oversized sphere is replaced by a mesh-derived flat-topped hull. KayKit trees 2 and 4
+  are intentionally absent from the catalogue.
+  LPFV rigid assets normally use one snag-free primitive per disconnected hard component. Trees use
+  a rotated capsule around only the grounded lower trunk, fitted from true mesh cross-sections so
+  sparse/leaning low-poly vertices cannot pull it off-centre. The strongly curved LPFV tree 2 uses
+  an explicit four-capsule chain instead: short capsules follow successive cross-sections and
+  adjacent capsule axis endpoints are the exact same point, making their hemispherical caps
+  concentric at each rounded joint; one global chord can no longer protrude from the bend. Logs use
+  flat-ended rotated cylinders, the
+  fallen branch uses a rotated capsule, stumps use flat-topped cylinders, and rocks use an inset
+  box or a convex hull whose top is flattened into a face. Multi-rock source clusters declare their
+  hard-component count in the manifest, so each visible stone receives its own disjoint hull rather
+  than one collider bridging the empty space between them. Decorative foliage and mushrooms never
+  enlarge physics. This deliberately avoids overlapping compound-shape lips, point-topped walkable
+  objects, and collision that bridges empty space. Low rocks tagged `walkover` cap their collision
+  height so their largest authored dressing scale remains below the character's step height; a
+  catalogue test couples those values and prevents later tuning from breaking traversal. Assets
+  tagged `tree`, `rock`, or `deadwood` are rejected by
+  the bake unless they declare collision, so rigid dressing cannot silently become non-blocking.
+  Runtime consumers use
+  stable asset IDs through the
+  lightweight `EnvironmentCatalog`; the main-thread `EnvironmentRenderCache` selectively loads
+  only active visuals. Environment runtime resources never depend on the source packs under
+  `assets/`. `tools/environment_bake/` is the only owner of those source paths. Generated palette
+  variants may selectively recolour foliage texels, while every active material still multiplies
+  the independent per-instance biome tint. `terrain/materials/forest.tres` is a self-contained
+  bake-compatibility path for Godot's imported KayKit scene UID, not a runtime material owner.
 - **`field/FieldTerrainStreamer.gd`** — the only scene-tree node (`Node3D` in `world.tscn`,
   wired to the player). Builds field chunks within `CHUNK_RADIUS` of the player on **one
-  background worker thread**. The worker returns only arrays/transforms/sampler payloads; the
-  main thread **commits and integrates** them (`commit_chunk`, then `add_child`),
+  background worker thread**. It compiles dressing sets and selectively warms their visuals on
+  the main thread before starting the worker. The worker returns only arrays/transforms/sampler payloads; the
+  main thread **commits and integrates** them (terrain/water, structural dressing collision, then
+  `add_child`),
   `MAX_BUILD_PER_FRAME` per frame, nearest-first, evicting beyond
   `KEEP_RADIUS`. The worker exclusively owns its `_plan`/`_water`/`_mesher` instances, so their
   caches need no locks. While the player's chunk is missing (spawn, teleport, or outrunning the
@@ -114,7 +167,7 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
 
 - **`Helper.gd`** — deterministic, infinite-terrain-safe noise fields, all pure functions of
   `(pos, world_seed)`: `macro_density01`, biome fields `biome_forest01` / `biome_rocky01` /
-  `biome_foliage_density` / `biome_weights`, the water field `is_water`, value-noise
+  `biome_foliage_density` / `biome_weights5`, value-noise
   (`_value_noise01`), and hashing helpers (`_cell_hash01`, splitmix64 `_mix64`). Also
   transform/AABB/collision helpers. `HeightfieldPlan._height01` samples these for landform shape.
   (Some doc comments here still name the retired `TerrainGenerator` — ignore those references.)
@@ -322,7 +375,7 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
 
 - **Typed GDScript.** Annotate function signatures, exported vars, and members. Inline `:=`
   type inference is used freely for locals — match the surrounding code.
-- **Purity boundary.** Terrain computation (plan / field / mesher / scatter / dressing) stays
+- **Purity boundary.** Terrain computation (plan / field / mesher / dressing) stays
   scene-free and deterministic so it can be unit-tested headless. Push scene-tree work into the
   streamer or scene glue.
 - **Simplify — the owner strongly prefers root-cause re-architecture over band-aids.** If the
@@ -335,21 +388,48 @@ Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → 
 
 - Unit tests mirror the pipeline: `test_heightfield_plan`, `test_heightfield_region`,
   `test_heightfield_clamp_step`, `test_terrain_surface_field`, `test_terrain_chunk_mesher`,
-  `test_cliff_dressing`, `test_decoration_scatter`, `test_field_streamer`, `test_biomes`,
+  `test_cliff_dressing`, `test_dressing_field`, `test_dressing_ecology`,
+  `test_dressing_collision_builder`, `test_dressing_commit_queue`,
+  `test_environment_catalog`, `test_water_field_context`, `test_field_streamer`, `test_biomes`,
   `test_helper`, and the `test_slope_*` profile/geometry guards. Continuity guards
   (`test_slope_tile_continuity`, `test_diag_seams`, `test_slope_socket_grounding`) assert the
-  surface is gap-free and decorations sit on the mesh — the invariants above, encoded.
+  surface is gap-free and dressing sits on the mesh — the invariants above, encoded.
 - **`tests/harness/`** — visual/screenshot scenes for eyeballing behavior a unit test can't
-  (`heightfield_shot.tscn`, `hf_shapes.tscn`, `swim_harness.tscn`, `teleport_deco_harness.tscn`,
-  `debug_water.tscn`, …).
+  (`heightfield_shot.tscn`, `hf_shapes.tscn`, `swim_harness.tscn`,
+  `environment_lineup.tscn`, `teleport_deco_harness.tscn`, `debug_water.tscn`, …). The lineup
+  pages the full generated catalogue with stable IDs, provenance, measured AABBs, a one-metre
+  scale marker, and optional collision overlays (`--show-collision`). The teleport harness streams
+  a fixed nine-chunk site through the real world pipeline, requires structural collision, and
+  waits for both terrain integration and the independent dressing commit queue before capturing it.
 
 ## Adding terrain content
 
-- **New foliage look**: wrap the KayKit gltf under `terrain/gltf/<kind>/`, make a
-  `terrain/scenes/<kind>/<Name>.tscn`, and add its path to the matching list in
-  `TerrainChunkMesher.FOLIAGE_SCENES`. Tag mix/weights live in `DecorationScatter.TAG_WEIGHTS`.
-- **Different cliff dressing**: swap the KayKit scene paths in `CliffDressing.SCENES` (they must
-  tile on the 3 m / 10.5 grid — mismatched module widths leave slits at the corners).
+- **New environment visual**: add a stable-ID entry to the relevant manifest under
+  `tools/environment_bake/manifests/`, including its canonical bake scale and either
+  `collision_source`, a supported `collision_profile`, or intentionally neither. `tree`, `rock`,
+  and `deadwood` tags require collision by construction. Prefer one close-fitting simple shape:
+  `trunk_capsule` for a straight grounded lower trunk or `trunk_capsule_chain` for a reviewed
+  curved trunk. A forked or root-heavy silhouette can explicitly provide
+  `collision_joint_points_m` and `collision_segment_radii_m` in corrected asset-local metres,
+  keeping asset-specific art direction in the manifest rather than the generic baker.
+  Use `oriented_cylinder` for a log,
+  `stump_cylinder` for a flat cut, `flat_box`/`flat_rock` for a walkable rock, and set
+  `collision_component_count` when one source visual contains several disconnected stones; use
+  `collision_max_height` plus the `walkover` tag for a low obstacle that must remain below the
+  character step at every active population scale; use `oriented_capsule` for a branch. Use
+  `collision_source` only for reviewed authored primitives.
+  Run the bake tool and review every rigid asset beside its mesh in
+  `environment_lineup.tscn -- --show-collision`; a proxy must not stray materially outside the
+  mesh or collapse to an unusably thin line. Never add a runtime wrapper scene or a source-pack
+  path.
+- **New ambient population or variant**: author a `DressingSet`/`DressingChoice` under
+  `terrain/dressing/` and add it to `terrain/dressing/index.tres`. The set owns direct per-biome
+  fill and may share habitat/community channels with related sets; visual choices affect mix,
+  never population. Structural sets must share the appropriate spacing group so their collision
+  cannot overlap. The compiler derives proposal slots and margins and rejects illegal
+  water/support/radius combinations.
+- **Different cliff dressing**: change the stable asset IDs in `CliffDressing.ASSETS` (pieces
+  must tile on the 3 m / 10.5 grid — mismatched module widths leave slits at the corners).
 - **Tuning terrain shape**: `FieldTerrainStreamer` exports (amplitude, storey cap, cliff step,
   radii), `HeightfieldPlan` constants (`STOREY_HEIGHT`, `LEVELS_PER_STOREY`, aggregation), and
   `Helper` field scales (`MACRO_SCALE`, biome/water scales).

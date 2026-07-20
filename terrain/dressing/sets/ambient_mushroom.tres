@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="DressingSet" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingHabitatLayer.gd" id="3_habitat"]
+
+[sub_resource type="Resource" id="C1"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.mushroom.01"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+[sub_resource type="Resource" id="C2"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.mushroom.02"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+[sub_resource type="Resource" id="C3"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.mushroom.03"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+[sub_resource type="Resource" id="C4"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.mushroom.04"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+[sub_resource type="Resource" id="C5"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.mushroom.05"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+[sub_resource type="Resource" id="C6"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.mushroom.06"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+[sub_resource type="Resource" id="C7"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.mushroom.07"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+
+[sub_resource type="Resource" id="Canopy"]
+script = ExtResource("3_habitat")
+channel = &"woodland_canopy"
+scale = 132.0
+coverage = {&"meadow": 0.22, &"deep_forest": 0.82, &"highland": 0.14, &"blossom_grove": 0.72, &"twilight_marsh": 0.42}
+edge_softness = 0.075
+
+[sub_resource type="Resource" id="FungalColony"]
+script = ExtResource("3_habitat")
+channel = &"fungal_colonies"
+scale = 18.0
+coverage = {&"meadow": 0.12, &"deep_forest": 0.38, &"highland": 0.08, &"blossom_grove": 0.3, &"twilight_marsh": 0.42}
+edge_softness = 0.045
+
+[resource]
+script = ExtResource("2_set")
+id = &"ambient.mushroom.patch"
+choices = Array[ExtResource("1_choice")]([SubResource("C1"), SubResource("C2"), SubResource("C3"), SubResource("C4"), SubResource("C5"), SubResource("C6"), SubResource("C7")])
+fill_per_cell = {&"meadow": 4.0, &"deep_forest": 12.0, &"highland": 2.0, &"blossom_grove": 8.0, &"twilight_marsh": 10.0}
+habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy"), SubResource("FungalColony")])
+community_channel = &"mushroom_colony_species"
+community_scale = 14.0
+community_strength = 0.95
+shore_distance_range = Vector2(0.25, 0.25)
+max_grade = 0.8
+spacing_group = &"mushrooms"
+spacing_radius = 0.45
+scale_range = Vector2(0.95, 1.25)
+brightness_range = Vector2(0.92, 1.08)

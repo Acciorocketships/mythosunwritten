@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_aladi"]
+
+[resource]
+script = ExtResource("1_aladi")
+id = &"lpfv.rock.07"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_07.tres"
+tags = Array[StringName]([&"nature", &"rock"])
+measured_aabb = AABB(-1.3939952, -0.2903964, -2.3736484, 2.9846005, 2.214531, 3.1182084)
+collision_piece_count = 2
+tint_group = &"rock"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village:lpfv.rock.07"

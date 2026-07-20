@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=22 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_mc1ka"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_05_piece_00.res" id="2_o0oxu"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_05_piece_01.res" id="3_3ie73"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_05_piece_02.res" id="4_odjs7"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_05_piece_03.res" id="5_wjvv5"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_05_piece_04.res" id="6_ja51r"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_05_piece_05.res" id="7_mycpr"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_05_piece_06.res" id="8_8qxcn"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_05_piece_07.res" id="9_3cp00"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="10_8ejt7"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_rock_05_piece_00.res" id="11_6rfnx"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="12_p5nvf"]
+
+[sub_resource type="Resource" id="Resource_yq1ke"]
+script = ExtResource("1_mc1ka")
+shape = ExtResource("2_o0oxu")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 4.2, 0.39, 1.677)
+
+[sub_resource type="Resource" id="Resource_yc6g6"]
+script = ExtResource("1_mc1ka")
+shape = ExtResource("3_3ie73")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 3.0708547, 0.39, -2.9670944)
+
+[sub_resource type="Resource" id="Resource_krh7b"]
+script = ExtResource("1_mc1ka")
+shape = ExtResource("4_odjs7")
+local_transform = Transform3D(2.9981725, 0, -0.10469849, 0, 3, 0, 0.10469849, 0, 2.9981725, 1.069324, 2.0694695, 3.6493793)
+
+[sub_resource type="Resource" id="Resource_odoq3"]
+script = ExtResource("1_mc1ka")
+shape = ExtResource("5_wjvv5")
+local_transform = Transform3D(2.6488428, 0, -1.4084147, 0, 3, 0, 1.4084147, 0, 2.6488428, -3.125597, 1.5561676, -1.6309751)
+
+[sub_resource type="Resource" id="Resource_qp4ik"]
+script = ExtResource("1_mc1ka")
+shape = ExtResource("6_ja51r")
+local_transform = Transform3D(2.67302, 0, -1.3619716, 0, 3, 0, 1.3619716, 0, 2.67302, 1.1154819, 4.735987, 3.6415114)
+
+[sub_resource type="Resource" id="Resource_feym8"]
+script = ExtResource("1_mc1ka")
+shape = ExtResource("7_mycpr")
+local_transform = Transform3D(2.6488428, 0, -1.4084147, 0, 3, 0, 1.4084147, 0, 2.6488428, 0.0054991273, 3.2625275, -0.033710346)
+
+[sub_resource type="Resource" id="Resource_gbqd1"]
+script = ExtResource("1_mc1ka")
+shape = ExtResource("8_8qxcn")
+local_transform = Transform3D(2.1213202, 0, -2.1213202, 0, 3, 0, 2.1213202, 0, 2.1213202, -0.39525685, 7.5328646, 0.2590952)
+
+[sub_resource type="Resource" id="Resource_rov75"]
+script = ExtResource("1_mc1ka")
+shape = ExtResource("9_3cp00")
+local_transform = Transform3D(2.2641287, 0, -1.9681771, 0, 3, 0, 1.9681771, 0, 2.2641287, 0.69200325, 7.255042, -0.7694033)
+
+[sub_resource type="Resource" id="Resource_xfhld"]
+script = ExtResource("10_8ejt7")
+mesh = ExtResource("11_6rfnx")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
+
+[resource]
+script = ExtResource("12_p5nvf")
+pieces = Array[ExtResource("10_8ejt7")]([SubResource("Resource_xfhld")])
+collisions = Array[ExtResource("1_mc1ka")]([SubResource("Resource_yq1ke"), SubResource("Resource_yc6g6"), SubResource("Resource_krh7b"), SubResource("Resource_odoq3"), SubResource("Resource_qp4ik"), SubResource("Resource_feym8"), SubResource("Resource_gbqd1"), SubResource("Resource_rov75")])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_56tgu"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_4u3cv"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_cliff_inner_wall_piece_00.res" id="3_qrbcl"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_tjgge"]
+
+[sub_resource type="Resource" id="Resource_qghp0"]
+script = ExtResource("2_4u3cv")
+mesh = ExtResource("3_qrbcl")
+
+[resource]
+script = ExtResource("4_tjgge")
+pieces = Array[ExtResource("2_4u3cv")]([SubResource("Resource_qghp0")])

@@ -113,15 +113,10 @@ func test_no_floating_water_planes():
 	assert_true(water == null or water.mesh == null, "chunks emit no floating water quads")
 	node.free()
 
-func test_chunk_scatters_decoration_children():
-	var m := Mesher.new()
-	m.set_seed(7)
-	var node: Node3D = m.build_chunk(_plan(), Vector2i(0, 0))
-	var deco := node.find_child("Decorations", true, false)
-	assert_not_null(deco, "chunk has a Decorations container")
-	# Non-water land chunk should usually contain at least one instance; allow zero only
-	# if the whole chunk is water (not the case for seed 7 at origin per Task 10 check).
-	assert_gte(deco.get_child_count(), 0)
+func test_terrain_mesher_does_not_own_dressing():
+	var node: Node3D = Mesher.new().build_chunk(_plan(), Vector2i(0, 0))
+	assert_null(node.find_child("Decorations", true, false),
+		"visual dressing is a sibling streamer payload, not terrain geometry")
 	node.free()
 
 func test_adjacent_chunks_share_boundary_height():
@@ -233,6 +228,23 @@ func test_skirt_follows_a_dipping_neighbour_slope():
 			min_y = minf(min_y, v.y)
 	assert_lt(min_y, 0.5, "east skirt reaches the dipped neighbour surface (y≈0), not the storey line (y=4)")
 	node.free()
+
+func test_level_step_is_continuous_without_a_vertical_wall():
+	# Same minimal T-junction as test_level_t_junction_has_one_shared_seam_profile.
+	# A level transition is a short walkable slope, not a miniature cliff. Its two
+	# surface owners must meet directly; emitting a grass-textured backing wall only
+	# changes a crack into the visible lip from the owner's screenshots.
+	var p := Plan.new(0, 64.0, 12, "mean")
+	p.set_raw_height_override(func(cx, cz):
+		if cx == 0 and cz == 1: return 4.1    # C: storey 1, level 0
+		if cx == 1 and cz == 1: return 4.9    # B: storey 1, level 1
+		return 5.6)                           # A=(1,0) and the rest: storey 1, level 2
+	var m := Mesher.new()
+	m.set_seed(0)
+	m.prepare_resources()
+	var data: Dictionary = m.compute_chunk(p, Vector2i(0, 0))
+	var wall: Array = data["wall_arrays"]
+	assert_true(wall.is_empty(), "pure level slopes meet as one sheet; no vertical lip wall exists")
 
 func test_skirt_covers_the_slope_facing_side_of_a_cliff_top():
 	# Owner screenshot (2827641023 cell (4,12)): a SAME-storey slope neighbour descends along a
@@ -992,48 +1004,6 @@ func test_collision_sheet_faces_cover_full_grid():
 	var expect := TerrainSurfaceField.surface_y_in_cell(region, 0.0, 0.0, qcx, qcz)
 	assert_almost_eq(faces[0].y, expect, 0.001, "collision tracks the pinned surface")
 	node.free()
-
-# compute_decorations returns the pure placement data (scene path ->
-# {"tf": Array[Transform3D], "tint": Array[Color]}); deterministic and
-# water-gated like the old inline loop.
-func test_compute_decorations_deterministic_and_grounded():
-	var p := HeightfieldPlan.new(4242, 40.0, 8, "mean")
-	var m := TerrainChunkMesher.new()
-	var region = p.compute_region(4, 4, 8)
-	var a: Dictionary = m.compute_decorations(region, Vector2i(0, 0))
-	var b: Dictionary = m.compute_decorations(region, Vector2i(0, 0))
-	assert_eq(a.keys(), b.keys(), "deterministic scene set")
-	var n := 0
-	for path in a:
-		assert_eq(a[path]["tf"].size(), b[path]["tf"].size(), "deterministic counts for %s" % path)
-		for i in a[path]["tf"].size():
-			var tf: Transform3D = a[path]["tf"][i]
-			assert_almost_eq(tf.origin.y,
-				TerrainSurfaceField.surface_y(region, tf.origin.x, tf.origin.z), 0.001,
-				"decoration sits on the surface")
-			n += 1
-	assert_gt(n, 0, "chunk (0,0) at this seed scatters at least one decoration")
-
-# Decorations batch into one MultiMesh per (scene, mesh piece) — instance
-# counts must add up to placements x pieces-per-scene.
-func test_decorations_batch_into_multimeshes():
-	var p := HeightfieldPlan.new(4242, 40.0, 8, "mean")
-	var m := TerrainChunkMesher.new()
-	var region = p.compute_region(4, 4, 8)
-	var by_scene: Dictionary = m.compute_decorations(region, Vector2i(0, 0))
-	var node := m.build_chunk(p, Vector2i(0, 0))
-	var deco := node.find_child("Decorations", true, false)
-	var total := 0
-	for child in deco.get_children():
-		assert_true(child is MultiMeshInstance3D, "decoration child is a MultiMesh batch")
-		total += (child as MultiMeshInstance3D).multimesh.instance_count
-	var expected := 0
-	for path in by_scene:
-		expected += by_scene[path]["tf"].size() * TerrainChunkMesher._foliage_pieces(path).size()
-	assert_eq(total, expected, "every placement instanced once per mesh piece")
-	assert_gt(total, 0, "chunk has decorations")
-	node.free()
-
 
 func test_ground_has_no_slivers_beside_inner_corner_pieces():
 	# Owner (batch 2): "there are tiny gaps in the ground next to inner corner

@@ -14,6 +14,8 @@ static func _contains_scene_or_server_resource(value: Variant) -> bool:
 		for item: Variant in value.values():
 			if _contains_scene_or_server_resource(item):
 				return true
+	elif value is DressingPayload:
+		return _contains_scene_or_server_resource((value as DressingPayload).batches)
 	return false
 
 
@@ -67,14 +69,18 @@ func test_background_builds_populate_radius():
 	s._mutex.unlock()
 	assert_false(first_payload.is_empty(), "worker produced a chunk payload")
 	if not first_payload.is_empty():
-		assert_true(first_payload[1] is Dictionary,
-			"terrain crosses the worker boundary as CPU-side data, never a Node")
 		assert_true(first_payload[2] is Dictionary,
+			"terrain crosses the worker boundary as CPU-side data, never a Node")
+		assert_true(first_payload[3] is Dictionary,
 			"water crosses the worker boundary as CPU-side data, never a Node")
-		assert_false(_contains_scene_or_server_resource(first_payload[1]),
-			"terrain worker payload has no scene/render/physics resources")
+		assert_true(first_payload[5] is DressingPayload,
+			"dressing crosses the worker boundary as a typed CPU payload")
 		assert_false(_contains_scene_or_server_resource(first_payload[2]),
+			"terrain worker payload has no scene/render/physics resources")
+		assert_false(_contains_scene_or_server_resource(first_payload[3]),
 			"water worker payload has no scene/render/physics resources")
+		assert_false(_contains_scene_or_server_resource(first_payload[5]),
+			"dressing worker payload has IDs, transforms and colours only")
 	s.MAX_BUILD_PER_FRAME = 4
 	# the whole 3x3 radius arrives from the background thread
 	var deadline := Time.get_ticks_msec() + 60_000

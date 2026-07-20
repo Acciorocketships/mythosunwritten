@@ -176,7 +176,7 @@ static var _profiles_lock := Mutex.new()
 static var _trace_regions: Dictionary = {}   # trace.source_cell -> HeightfieldRegion
 # Radius (in HeightfieldPlan tile-cells) around a trace's own bbox centre
 # passed to compute_region when building its canonical region. compute_region
-# ALREADY pads any requested radius by a fixed ~25-cell margin internally
+# ALREADY pads any requested radius by a fixed ~17-cell margin internally
 # (LEVELS_PER_STOREY + _CLIFF_SEARCH_MAX + max_storeys, independent of the
 # requested radius — see HeightfieldPlan.compute_region), and that margin
 # alone comfortably covers everything ONE _DESCENT_STEP-spaced segment walk
@@ -197,10 +197,9 @@ const _TRACE_REGION_MARGIN_CELLS := 4
 ## (or reuses) the exact SAME region, so the terrain hug can no longer
 ## depend on caller order.
 ##
-## COST (measured this task, see the report): compute_region's cost is
-## dominated by a ~25-cell FIXED internal margin (LEVELS_PER_STOREY +
-## _CLIFF_SEARCH_MAX + max_storeys), not by the requested radius — radius=0
-## already costs ~65ms cold on this machine, radius=8 ~120ms. A single
+## COST: compute_region always pays a ~17-cell FIXED internal margin
+## (LEVELS_PER_STOREY + _CLIFF_SEARCH_MAX + max_storeys), so that fixed work
+## dominates small requested radii. A single
 ## region sized to cover a trace's full bbox (up to ~2640m/110 tile-cells
 ## for the longest legal trace) would need radius~110-135 and cost
 ## 2-3 SECONDS (quadratic in radius: ~27-32us/cell, confirmed by direct

@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="DressingSet" load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingHabitatLayer.gd" id="3_habitat"]
+
+[sub_resource type="Resource" id="B1"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.big_rock.01"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 0.7, &"highland": 1.5, &"blossom_grove": 0.3, &"twilight_marsh": 0.7}
+[sub_resource type="Resource" id="B2"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.big_rock.02"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 0.7, &"highland": 1.5, &"blossom_grove": 0.3, &"twilight_marsh": 0.7}
+[sub_resource type="Resource" id="B3"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.big_rock.03"
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 0.7, &"highland": 1.5, &"blossom_grove": 0.3, &"twilight_marsh": 0.7}
+[sub_resource type="Resource" id="R1"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.01"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+[sub_resource type="Resource" id="R2"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.02"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+[sub_resource type="Resource" id="R3"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.03"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+[sub_resource type="Resource" id="R4"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.04"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+[sub_resource type="Resource" id="R5"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.05"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+[sub_resource type="Resource" id="R6"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.06"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+[sub_resource type="Resource" id="R7"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.07"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+[sub_resource type="Resource" id="R8"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.08"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+[sub_resource type="Resource" id="R9"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.rock.09"
+biome_affinity = {&"meadow": 0.6, &"deep_forest": 0.8, &"highland": 1.3, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+
+[sub_resource type="Resource" id="Exposure"]
+script = ExtResource("3_habitat")
+channel = &"rocky_exposure"
+scale = 110.0
+coverage = {&"meadow": 0.24, &"deep_forest": 0.28, &"highland": 0.82, &"blossom_grove": 0.18, &"twilight_marsh": 0.58}
+edge_softness = 0.1
+
+[resource]
+script = ExtResource("2_set")
+id = &"ambient.rock_large"
+choices = Array[ExtResource("1_choice")]([SubResource("B1"), SubResource("B2"), SubResource("B3"), SubResource("R1"), SubResource("R2"), SubResource("R3"), SubResource("R4"), SubResource("R5"), SubResource("R6"), SubResource("R7"), SubResource("R8"), SubResource("R9")])
+fill_per_cell = {&"meadow": 0.22, &"deep_forest": 0.32, &"highland": 0.9, &"blossom_grove": 0.16, &"twilight_marsh": 0.38}
+habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Exposure")])
+community_channel = &"rock_formations"
+community_scale = 54.0
+community_strength = 0.65
+surface_mode = 1
+shore_distance_range = Vector2(0.75, 0.75)
+support_radius = 1.25
+max_support_height_span = 0.8
+max_grade = 0.4
+spacing_group = &"natural_structural"
+spacing_radius = 3.0
+scale_range = Vector2(0.85, 1.15)
+brightness_range = Vector2(0.9, 1.08)

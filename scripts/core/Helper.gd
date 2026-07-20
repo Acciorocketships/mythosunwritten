@@ -173,41 +173,6 @@ static func biome_at(pos: Vector3, world_seed: int) -> StringName:
 	return best
 
 
-# Deterministic water field: thin ridged-noise bands form winding rivers,
-# a second blob noise forms lakes, and a finer noise carves islands inside
-# water regions. Faded near the world origin so the spawn stays dry.
-const WATER_RIVER_SCALE: float = 220.0
-const WATER_LAKE_SCALE: float = 170.0
-const WATER_ISLAND_SCALE: float = 55.0
-const WATER_CLEAR_RADIUS: float = 40.0
-const WATER_CLEAR_FADE: float = 40.0
-
-static func is_water(pos: Vector3, world_seed: int) -> bool:
-	if not _is_water_raw(pos, world_seed):
-		return false
-	# Erode isolated single-tile ponds: a water tile must have at least one
-	# water neighbour (tile grid is 24u), or it reads as a square puddle.
-	for offset in [Vector3(24, 0, 0), Vector3(-24, 0, 0), Vector3(0, 0, 24), Vector3(0, 0, -24)]:
-		if _is_water_raw(pos + offset, world_seed):
-			return true
-	return false
-
-
-static func _is_water_raw(pos: Vector3, world_seed: int) -> bool:
-	var n: float = _value_noise01(pos, world_seed + 7, WATER_RIVER_SCALE)
-	var river: float = (1.0 - absf(2.0 * n - 1.0)) - 0.865
-	var lake: float = (_value_noise01(pos, world_seed + 13, WATER_LAKE_SCALE) - 0.78) * 1.5
-	var wetness: float = maxf(river, lake)
-	# Islands: pockets of high fine-noise stay land even inside water regions.
-	wetness -= maxf(_value_noise01(pos, world_seed + 23, WATER_ISLAND_SCALE) - 0.72, 0.0) * 1.2
-	# Keep the spawn area dry.
-	wetness -= clampf(
-		(WATER_CLEAR_RADIUS + WATER_CLEAR_FADE - Vector2(pos.x, pos.z).length()) / WATER_CLEAR_FADE,
-		0.0, 1.0
-	)
-	return wetness > 0.0
-
-
 static func _cell_hash01(world_seed: int, cx: int, cz: int) -> float:
 	return _hash01(_mix64(world_seed ^ _mix64(cx ^ _mix64(cz))))
 

@@ -7,9 +7,13 @@ func test_grass_uv_in_range() -> void:
 	assert_between(uv.y, 0.0, 1.0)
 
 func test_grass_uv_samples_green() -> void:
-	# The sampled texel in the forest palette must read as green (G dominant).
+	# The sampled texel in the self-contained baked palette must read as green
+	# (G dominant). Tests must not keep source-pack dependencies alive.
 	var uv := SlopeAtlas.grass_uv()
-	var tex := load("res://assets/KayKitNature/Assets/gltf/Color1/forest_texture.png") as Texture2D
+	var visual := load(SlopeAtlas.TOP_VISUAL) as EnvironmentVisual
+	var material := visual.pieces[0].mesh.surface_get_material(0) as StandardMaterial3D
+	var tex := material.albedo_texture
+	assert_not_null(tex)
 	var img := tex.get_image()
 	if img.is_compressed():
 		img.decompress()  # palette png is imported VRAM-compressed; get_pixel needs raw

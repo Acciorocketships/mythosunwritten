@@ -1,0 +1,87 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_lily_pad_01.tres",
+      "id": "sfv.lily_pad.01",
+      "license": "FantasyVillageFBX source-pack license",
+      "pack": "fantasy_village",
+      "parameters": {
+        "id": "sfv.lily_pad.01",
+        "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "floating",
+          "lily_pad",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_001.fbx",
+      "source_sha256": "e16eb50e7fb35a672689398b0b5430f731888cf6c6ea7b86138b699586443baf",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_lily_pad_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_lily_pad_02.tres",
+      "id": "sfv.lily_pad.02",
+      "license": "FantasyVillageFBX source-pack license",
+      "pack": "fantasy_village",
+      "parameters": {
+        "id": "sfv.lily_pad.02",
+        "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "floating",
+          "lily_pad",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_002.fbx",
+      "source_sha256": "16c2764baa196c38b74d791a82d8fe9c6ee4478f63aed6c26a6b58d926b31402",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_lily_pad_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_lily_pad_03.tres",
+      "id": "sfv.lily_pad.03",
+      "license": "FantasyVillageFBX source-pack license",
+      "pack": "fantasy_village",
+      "parameters": {
+        "id": "sfv.lily_pad.03",
+        "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "floating",
+          "lily_pad",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_003.fbx",
+      "source_sha256": "b897c58b067fd00a09d20a7d755ea9278c44c9eccd2a6d5b5ac006929e0b84a2",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_lily_pad_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_lily_pads_01.tres",
+      "id": "sfv.lily_pads.01",
+      "license": "FantasyVillageFBX source-pack license",
+      "pack": "fantasy_village",
+      "parameters": {
+        "id": "sfv.lily_pads.01",
+        "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pads_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "floating",
+          "lily_pad",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pads_001.fbx",
+      "source_sha256": "cd692eb061341bad32f120f467552353713ea2f2d534b1b42b1ad8e126e643b6",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_lily_pads_01.tres"
+    }
+  ],
+  "license": "FantasyVillageFBX source-pack license",
+  "pack": "fantasy_village",
+  "tool_version": 10
+}

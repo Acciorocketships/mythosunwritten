@@ -282,8 +282,10 @@ const RIM_NORMAL_ANGLE3 := PI * 13.0 / 36.0   # 65 deg — row3, buried seal (in
 ## codebase's water pipeline uses everywhere (see e.g. WaterField.ctx's own
 ## `base := Vector2(chunk.x, chunk.y) * (TILE * 8.0) - ...` calc; plan erratum,
 ## docs/superpowers/plans/2026-07-10-water-continuous-surface.md).
-static func build(water: WaterPlan, chunk: Vector2i, region) -> Dictionary:
-	var ctx: Dictionary = WaterField.ctx(water, chunk, region)
+static func build(water: WaterPlan, chunk: Vector2i, region,
+		field_context: WaterFieldContext = null) -> Dictionary:
+	var ctx: Dictionary = field_context.raw_context() if field_context != null \
+		else WaterField.ctx(water, chunk, region)
 	if ctx.ponds.is_empty() and ctx.rivers.is_empty():
 		return {}
 	var span: float = WaterField.TILE * 8.0

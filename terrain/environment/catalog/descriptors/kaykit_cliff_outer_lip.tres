@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_8k0cf"]
+
+[resource]
+script = ExtResource("1_8k0cf")
+id = &"kaykit.cliff.outer_lip"
+visual_path = "res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_lip.tres"
+tags = Array[StringName]([&"cliff", &"terrain"])
+measured_aabb = AABB(-1.5000001, -0.7051859, -1.5000004, 2.75, 0.7051859, 2.7500005)
+tint_group = &"ground"
+supports_instance_color = true
+provenance_id = &"kaykit:kaykit.cliff.outer_lip"

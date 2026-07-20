@@ -52,10 +52,6 @@ func test_biome_composition_shifts_with_fields() -> void:
 			break
 	assert_ne(forest_pos, Vector3.INF)
 	assert_ne(rocky_pos, Vector3.INF)
-	var fw := BiomeRegistry.blended_tag_weights(Helper.biome_weights5(forest_pos, world_seed))
-	var rw := BiomeRegistry.blended_tag_weights(Helper.biome_weights5(rocky_pos, world_seed))
-	assert_gt(fw["tree"], rw["tree"], "forests favour trees")
-	assert_gt(rw["rock"], fw["rock"], "highlands favour rocks")
 	assert_gt(BiomeRegistry.blended_density(Helper.biome_weights5(forest_pos, world_seed)), 1.0)
 
 
@@ -115,4 +111,3 @@ func test_pocket_census() -> void:
 				&"blossom_grove": blossom += 1
 	assert_between(float(marsh) / float(n), 0.01, 0.06, "marsh pockets ~2-4%% of area")
 	assert_between(float(blossom) / float(n), 0.02, 0.08, "blossom groves ~4-6%% of area")
-

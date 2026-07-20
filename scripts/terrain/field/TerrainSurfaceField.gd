@@ -1,8 +1,10 @@
 # scripts/terrain/field/TerrainSurfaceField.gd
-# Pure, continuous walkable-surface height reconstructed from a HeightfieldRegion.
-# Flat on cell interiors; ramps toward lower neighbours (added in later tasks).
-# Single-valued everywhere ⇒ when sampled on a shared grid, adjacent cells/chunks
-# share identical boundary vertices ⇒ the mesh is gap-free by construction.
+# Pure walkable-surface height reconstructed from a HeightfieldRegion. Each cell
+# quadrant is a smootherstep patch through four SHARED controls: its centre, the
+# minima at its two edge midpoints, and the minimum of the four cells meeting at
+# its corner. Adjacent cell owners therefore evaluate the exact same boundary
+# curve. Only deliberate flat cliff/inner-corner tops are multi-valued; their
+# vertical difference is filled by the rock skirt.
 class_name TerrainSurfaceField
 extends RefCounted
 
@@ -182,6 +184,28 @@ static func is_exposed_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 static func surface_y(region, x: float, z: float) -> float:
 	return surface_y_in_cell(region, x, z, _cell_of(x), _cell_of(z))
 
+# Height of the shared corner control in one cell quadrant. Normally this is
+# simply the minimum of the four centres meeting there: the no-up-ramp rule in
+# a symmetric form, so every owner gets the same value. Two deliberate cliff
+# configurations keep the current cell's corner flat instead:
+#   * a classic inner corner, whose vertical pocket is dressed; and
+#   * the historical higher-cardinal guard, where dipping toward a lower
+#     diagonal would cut a crack beside a higher flat cliff arm.
+# The guard only applies when neither cardinal edge is already descending.
+static func _quadrant_corner_height(region, cx: int, cz: int,
+		dx_sign: int, dz_sign: int, h: float, edge_x: float, edge_z: float) -> float:
+	var diag: float = region.surface_height(cx + dx_sign, cz + dz_sign)
+	var corner := minf(minf(h, edge_x), minf(edge_z, diag))
+	if corner >= h - 0.0001 or edge_x < h - 0.0001 or edge_z < h - 0.0001:
+		return corner
+	var s_here := int(region.storey_at(cx, cz))
+	var arms_share_storey := int(region.storey_at(cx + dx_sign, cz)) == s_here \
+		and int(region.storey_at(cx, cz + dz_sign)) == s_here
+	if not arms_share_storey \
+		or _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
+		return h
+	return corner
+
 # Surface height at (x,z) evaluated as if the point belongs to cell (cx,cz) — even past the cell's
 # edge. The mesher pins each quad to its own cell so a cliff top renders FLAT right up to its
 # boundary (no slanted face); the vertical drop to the lower cell is then a separate rock skirt.
@@ -197,31 +221,18 @@ static func surface_y_in_cell(region, x: float, z: float, cx: int, cz: int) -> f
 	var dz_sign := 1 if lz >= 0.0 else -1
 	var a := _edge_weight(lx * float(dx_sign))                 # weight toward facing x-edge
 	var b := _edge_weight(lz * float(dz_sign))                 # weight toward facing z-edge
-	# Ramp DOWN toward lower neighbours (≤1-storey slopes; a non-cliff cell has no ≥2 drop).
-	var d_x: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz))
-	var d_z: float = maxf(0.0, h - region.surface_height(cx, cz + dz_sign))
-	var d_d: float = maxf(0.0, h - region.surface_height(cx + dx_sign, cz + dz_sign))
-	# Ramp DOWN toward lower neighbours only — there is NO up-ramp. A cell never rises to meet a
-	# higher cliff (that lean-to ramp produced mounds/spikes where the cell also dropped elsewhere);
-	# the higher cell is a flat cliff top and walls down to this one vertically instead.
-	var drop := 0.0
-	if d_x > 0.0 or d_z > 0.0:
-		var wx := a if d_x > 0.0 else 0.0
-		var wz := b if d_z > 0.0 else 0.0
-		var delta := maxf(d_x, d_z)
-		drop = delta * (wx + wz - wx * wz)
-	elif d_d > 0.0:
-		# A lower diagonal pulls the corner down (concave slope) ONLY when BOTH adjoining cardinal
-		# arms sit at THIS cell's level — then the dip stays continuous with both edges. If an arm is
-		# HIGHER (a cliff walls down to this cell), dipping toward the diagonal would crack the shared
-		# edge with that flat cliff top (owner's slope "discontinuity"); stay flat and let the cliff's
-		# skirt span the drop. An inner-corner pocket also stays flat (its cliff piece spans the drop).
-		var s_here := int(region.storey_at(cx, cz))
-		var arm_x_level := int(region.storey_at(cx + dx_sign, cz)) == s_here
-		var arm_z_level := int(region.storey_at(cx, cz + dz_sign)) == s_here
-		if arm_x_level and arm_z_level and not _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
-			drop = d_d * (a * b)
-	return h - drop
+	# Shared controls. Edge midpoint heights are pairwise minima: a higher cell
+	# ramps down, a lower cell never ramps up, and BOTH owners nevertheless name
+	# the same seam value. The corner is the corresponding four-cell minimum.
+	# Bilerping the controls with smootherstep coordinates preserves the old 1-D
+	# slope profile while making every 2-D seam profile single-valued.
+	var edge_x := minf(h, region.surface_height(cx + dx_sign, cz))
+	var edge_z := minf(h, region.surface_height(cx, cz + dz_sign))
+	var corner := _quadrant_corner_height(
+		region, cx, cz, dx_sign, dz_sign, h, edge_x, edge_z)
+	var near_edge := lerpf(h, edge_x, a)
+	var far_edge := lerpf(edge_z, corner, a)
+	return lerpf(near_edge, far_edge, b)
 
 # --- baked per-cell sampler --------------------------------------------------
 # The mesher evaluates ~37k surface points per chunk; surface_y_in_cell
@@ -231,23 +242,21 @@ static func surface_y_in_cell(region, x: float, z: float, cx: int, cz: int) -> f
 # sample_baked(bake_cell(r, cx, cz), cx, cz, x, z) == surface_y_in_cell(r, x, z, cx, cz)
 # for every point — guarded by test_baked_sampler_matches_surface_y_in_cell.
 #
-# Layout (PackedFloat32Array, 14 floats):
+# Layout (PackedFloat32Array, 10 floats):
 #   [0]      1.0 = cliff top (surface is the constant [1])
 #   [1]      h, the cell surface height
 #   [2..3]   drop toward the x neighbour, sign - / +   (>= 0)
 #   [4..5]   drop toward the z neighbour, sign - / +
-#   [6..9]   drop toward the diagonal, (x,z) sign order --, -+, +-, ++
-#   [10..13] 1.0 = diagonal dip enabled (both arms level, no inner corner), same order
+#   [6..9]   drop at the shared corner control, (x,z) order --, -+, +-, ++
 
 static func bake_cell(region, cx: int, cz: int) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
-	out.resize(14)
+	out.resize(10)
 	var h: float = region.surface_height(cx, cz)
 	out[1] = h
 	if _is_cliff_top(region, cx, cz):
 		out[0] = 1.0
 		return out
-	var s_here := int(region.storey_at(cx, cz))
 	for i in 2:
 		var sgn := -1 if i == 0 else 1
 		out[2 + i] = maxf(0.0, h - region.surface_height(cx + sgn, cz))
@@ -257,11 +266,11 @@ static func bake_cell(region, cx: int, cz: int) -> PackedFloat32Array:
 			var k := ix * 2 + iz
 			var dxs := -1 if ix == 0 else 1
 			var dzs := -1 if iz == 0 else 1
-			out[6 + k] = maxf(0.0, h - region.surface_height(cx + dxs, cz + dzs))
-			var arm_x_level := int(region.storey_at(cx + dxs, cz)) == s_here
-			var arm_z_level := int(region.storey_at(cx, cz + dzs)) == s_here
-			if arm_x_level and arm_z_level and not _is_inner_corner(region, cx, cz, Vector2i(dxs, dzs)):
-				out[10 + k] = 1.0
+			var edge_x := h - out[2 + ix]
+			var edge_z := h - out[4 + iz]
+			var corner := _quadrant_corner_height(
+				region, cx, cz, dxs, dzs, h, edge_x, edge_z)
+			out[6 + k] = h - corner
 	return out
 
 
@@ -279,13 +288,8 @@ static func sample_baked(baked: PackedFloat32Array, cx: int, cz: int, x: float, 
 	var b := _edge_weight(absf(lz))
 	var d_x := baked[2 + ix]
 	var d_z := baked[4 + iz]
-	var drop := 0.0
-	if d_x > 0.0 or d_z > 0.0:
-		var wx := a if d_x > 0.0 else 0.0
-		var wz := b if d_z > 0.0 else 0.0
-		drop = maxf(d_x, d_z) * (wx + wz - wx * wz)
-	else:
-		var k := ix * 2 + iz
-		if baked[6 + k] > 0.0 and baked[10 + k] > 0.5:
-			drop = baked[6 + k] * (a * b)
+	var d_corner := baked[6 + ix * 2 + iz]
+	var near_drop := lerpf(0.0, d_x, a)
+	var far_drop := lerpf(d_z, d_corner, a)
+	var drop := lerpf(near_drop, far_drop, b)
 	return h - drop

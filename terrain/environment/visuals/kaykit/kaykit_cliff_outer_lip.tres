@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_f34ap"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_jnlm4"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_cliff_outer_lip_piece_00.res" id="3_d4rbr"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_6x041"]
+
+[sub_resource type="Resource" id="Resource_o8j6t"]
+script = ExtResource("2_jnlm4")
+mesh = ExtResource("3_d4rbr")
+
+[resource]
+script = ExtResource("4_6x041")
+pieces = Array[ExtResource("2_jnlm4")]([SubResource("Resource_o8j6t")])

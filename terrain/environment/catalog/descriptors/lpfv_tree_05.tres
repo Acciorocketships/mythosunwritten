@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_brmkd"]
+
+[resource]
+script = ExtResource("1_brmkd")
+id = &"lpfv.tree.05"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_05.tres"
+tags = Array[StringName]([&"nature", &"tree"])
+measured_aabb = AABB(-1.453802, -0.064691335, -1.3801383, 2.4978764, 5.991347, 2.1418939)
+collision_piece_count = 1
+tint_group = &"tree"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village:lpfv.tree.05"

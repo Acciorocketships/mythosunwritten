@@ -16,6 +16,9 @@ const CHUNK_WORLD := 192.0   # TerrainChunkMesher.CHUNK_WORLD
 @export var KEEP_RADIUS: int = 4
 ## Finished background chunks INTEGRATED (added to the tree) per frame.
 @export var MAX_BUILD_PER_FRAME: int = 1
+## Render-only dressing batches committed per frame. Terrain/water readiness
+## never waits for this queue.
+@export var MAX_DRESSING_BATCHES_PER_FRAME: int = 2
 @export var HEIGHTFIELD_AMPLITUDE: float = 22.0
 @export var HEIGHTFIELD_MAX_STOREYS: int = 8
 ## Max storey difference between adjacent cells. 1 = all walkable slopes (SP1);
@@ -32,16 +35,21 @@ var _plan: HeightfieldPlan
 var _water: WaterPlan
 var _mesher: TerrainChunkMesher
 var _water_builder := WaterSurfaceBuilder.new()
+var _environment_catalog: EnvironmentCatalog
+var _environment_cache: EnvironmentRenderCache
+var _dressing_program: DressingProgram
+var _dressing_queue: DressingCommitQueue
 var _built: Dictionary = {}        # Vector2i -> Node3D          (main thread only)
-var _queued: Dictionary = {}       # Vector2i -> true, in-flight  (main thread only)
+var _queued: Dictionary = {}       # Vector2i -> generation, in-flight (main thread only)
+var _generation: Dictionary = {}   # Vector2i -> latest requested generation
 var world_seed: int = 0
 var _headless: bool = Helper.is_headless()
 
 var _thread := Thread.new()
 var _sem := Semaphore.new()
 var _mutex := Mutex.new()          # guards _jobs, _done, _exit
-var _jobs: Array = []              # Vector2i, nearest-first at enqueue time
-var _done: Array = []              # [Vector2i, terrain data, water data, FX data]
+var _jobs: Array = []              # [Vector2i, generation], nearest-first
+var _done: Array = []              # [chunk, generation, terrain, water, FX, dressing]
 var _exit := false
 
 static func chunk_of(pos: Vector3) -> Vector2i:
@@ -63,16 +71,25 @@ func _ready() -> void:
 	_plan.set_water_plan(_water)
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
+	_environment_catalog = EnvironmentCatalog.load_default()
+	assert(_environment_catalog != null)
+	var dressing_index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
+	assert(dressing_index != null)
+	_dressing_program = DressingCompiler.compile(dressing_index, _environment_catalog)
+	assert(_dressing_program != null)
+	_environment_cache = EnvironmentRenderCache.new(_environment_catalog)
+	var active_visuals := _dressing_program.referenced_asset_ids.duplicate()
+	for asset_id: StringName in CliffDressing.ASSETS.values():
+		active_visuals.append(asset_id)
+	assert(_environment_cache.prepare(active_visuals))
+	_dressing_queue = DressingCommitQueue.new(_environment_cache)
 	# Warm render resources and caches on the main thread before the worker
 	# starts. The worker never touches them; this also keeps the first payload
 	# commit from paying a visible resource-load hitch.
-	CliffDressing._ensure_loaded()
+	CliffDressing.prepare(_environment_cache)
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
 	_mesher.prepare_resources()
-	for tag in TerrainChunkMesher.FOLIAGE_SCENES:
-		for path: String in TerrainChunkMesher.FOLIAGE_SCENES[tag]:
-			TerrainChunkMesher._foliage_pieces(path)
 	# Warm the biome tint materials + profiles on the main thread too, so the
 	# worker only ever READS them (same no-locks confinement as above).
 	BiomeRegistry.profile(&"meadow")
@@ -101,19 +118,27 @@ func _worker() -> void:
 		if _exit:
 			_mutex.unlock()
 			return
-		var c: Vector2i = _jobs.pop_front() if not _jobs.is_empty() else Vector2i.MAX
+		var job: Array = _jobs.pop_front() if not _jobs.is_empty() else []
 		_mutex.unlock()
-		if c == Vector2i.MAX:
+		if job.is_empty():
 			continue
+		var c: Vector2i = job[0]
+		var generation: int = job[1]
 		var region = _mesher.chunk_region(_plan, c)
+		var core := Rect2(Vector2(c) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
+		var water_context := WaterFieldContext.build(_water,
+			core.grow(_dressing_program.query_margin), region,
+			_dressing_program.shore_distance_limit)
 		var terrain_data := _mesher.compute_chunk(_plan, c, region)
-		var water_data := _water_builder.compute_chunk(_water, c, region)
+		var water_data := _water_builder.compute_chunk(_water, c, region, water_context)
+		var dressing_data := DressingField.compute(_dressing_program, world_seed,
+			core, region, water_context)
 		# FX *data* is computed here (needs the worker-confined _plan region for
 		# ground heights), but the FX *nodes* (particles/fog/lights touch the
 		# renderer) are built on the main thread at integration — see _build_fx.
 		var fx_data := _biome_fx_data(c, region)
 		_mutex.lock()
-		_done.append([c, terrain_data, water_data, fx_data])
+		_done.append([c, generation, terrain_data, water_data, fx_data, dressing_data])
 		_mutex.unlock()
 
 # Worker-thread: pure data for the chunk's biome FX (dominant profile + ground-
@@ -164,6 +189,7 @@ func _process(_delta: float) -> void:
 	if _plan == null or player == null:
 		return
 	var centre := chunk_of(player.global_position)
+	_dressing_queue.drain(MAX_DRESSING_BATCHES_PER_FRAME)
 	# The player's chunk jumps the queue but never blocks the frame; the
 	# player stays held until it lands.
 	if _built.has(centre):
@@ -171,13 +197,12 @@ func _process(_delta: float) -> void:
 	else:
 		_freeze_player(true)
 		_mutex.lock()
-		var qi := _jobs.find(centre)
+		var qi := _job_index(centre)
 		if qi > 0:
-			_jobs.remove_at(qi)
-			_jobs.push_front(centre)
+			var centred_job: Array = _jobs.pop_at(qi)
+			_jobs.push_front(centred_job)
 		elif qi < 0 and not _queued.has(centre):
-			_queued[centre] = true
-			_jobs.push_front(centre)
+			_queue_job_locked(centre, true)
 			_sem.post()
 		_mutex.unlock()
 	# Integrate finished background builds (budgeted).
@@ -189,18 +214,26 @@ func _process(_delta: float) -> void:
 		if pair.is_empty():
 			break
 		var c: Vector2i = pair[0]
-		_queued.erase(c)
-		if _built.has(c) or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
+		var generation: int = pair[1]
+		if int(_queued.get(c, -1)) == generation:
+			_queued.erase(c)
+		if int(_generation.get(c, -1)) != generation or _built.has(c) \
+				or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
 			# Duplicate or stale (player moved on): payloads own no nodes or
 			# server resources, so dropping the last references is enough.
 			continue
-		var node: Node3D = _mesher.commit_chunk(pair[1])
-		var water_node: Node3D = _water_builder.commit_chunk(pair[2])
+		var node: Node3D = _mesher.commit_chunk(pair[2])
+		var water_node: Node3D = _water_builder.commit_chunk(pair[3])
 		if water_node != null:
 			node.add_child(water_node)
+		# Structural environment physics is part of chunk readiness even though
+		# its batched visuals stay independently budgeted.
+		DressingCollisionBuilder.commit(node, pair[5], _environment_cache)
 		terrain_parent.add_child(node)
-		_build_fx(node, pair[3])   # main thread: particles/fog/lights
+		_build_fx(node, pair[4])   # main thread: particles/fog/lights
 		_built[c] = node
+		_dressing_queue.register_chunk(c, generation)
+		_dressing_queue.enqueue(c, generation, node, pair[5])
 		integrated += 1
 	# Queue missing chunks nearest-first, so terrain grows outward from the player.
 	var want: Array = []
@@ -213,16 +246,34 @@ func _process(_delta: float) -> void:
 				< maxi(absi(b.x - centre.x), absi(b.y - centre.y)))
 		_mutex.lock()
 		for c: Vector2i in want:
-			_queued[c] = true
-			_jobs.append(c)
+			_queue_job_locked(c, false)
 		_mutex.unlock()
 		for i in want.size():
 			_sem.post()
 	# Evict chunks beyond keep radius (Chebyshev).
 	for c: Vector2i in _built.keys():
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
+			_dressing_queue.invalidate_chunk(c)
 			_built[c].queue_free()
 			_built.erase(c)
+
+func _job_index(chunk: Vector2i) -> int:
+	for index in _jobs.size():
+		if (_jobs[index] as Array)[0] == chunk:
+			return index
+	return -1
+
+## Caller holds _mutex. Generation is assigned once, at request time, and
+## crosses the worker boundary with every payload.
+func _queue_job_locked(chunk: Vector2i, front: bool) -> void:
+	var generation := int(_generation.get(chunk, 0)) + 1
+	_generation[chunk] = generation
+	_queued[chunk] = generation
+	var job: Array = [chunk, generation]
+	if front:
+		_jobs.push_front(job)
+	else:
+		_jobs.append(job)
 
 func _exit_tree() -> void:
 	if not _thread.is_started():
@@ -237,3 +288,5 @@ func _exit_tree() -> void:
 	# Pending entries are CPU-side payloads only; releasing the arrays and
 	# RefCounted samplers is sufficient and safe on the main thread.
 	_done.clear()
+	if _dressing_queue != null:
+		_dressing_queue.clear()

@@ -1,5 +1,7 @@
 extends CharacterBody3D
 
+const DEFAULT_MAX_STEP_HEIGHT := 0.5
+
 # ---------- Inspector ----------
 @export var MAX_SPEED := 10.0
 @export var TURN_SPEED := 14.0
@@ -8,7 +10,7 @@ extends CharacterBody3D
 @export var ACCEL_AIR := 12.0
 @export var FRICTION := 500.0
 @export var JUMP_VELOCITY := 13.0
-@export var MAX_STEP_HEIGHT := 0.5
+@export var MAX_STEP_HEIGHT := DEFAULT_MAX_STEP_HEIGHT
 
 # ---------- Swimming ----------
 # Water tiles expose an Area3D volume on WATER_LAYER. While the character's

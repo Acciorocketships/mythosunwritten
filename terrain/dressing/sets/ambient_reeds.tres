@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DressingSet" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+
+[sub_resource type="Resource" id="C1"]
+script = ExtResource("1_choice")
+asset_id = &"lpfv.reeds.01"
+biome_affinity = {&"meadow": 0.7, &"deep_forest": 0.8, &"highland": 0.15, &"blossom_grove": 0.6, &"twilight_marsh": 1.5}
+scale_multiplier = 1.55
+
+[resource]
+script = ExtResource("2_set")
+id = &"ambient.reeds"
+choices = Array[ExtResource("1_choice")]([SubResource("C1")])
+fill_per_cell = {&"meadow": 6.0, &"deep_forest": 7.0, &"highland": 2.0, &"blossom_grove": 6.0, &"twilight_marsh": 10.0}
+water_mode = 3
+depth_range = Vector2(0.05, 3.2)
+shore_distance_range = Vector2(0.0, 4.0)
+max_grade = 0.7
+spacing_radius = 0.8
+scale_range = Vector2(0.95, 1.15)
+brightness_range = Vector2(0.9, 1.05)

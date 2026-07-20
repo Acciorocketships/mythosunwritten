@@ -6,7 +6,7 @@ const HALF := 6.0       # half cell width (12u cell -> 50% slope band)
 const CELL := 12.0      # cell / slope band width
 # Drop magnitude (single source of truth). A static var so the offline bake can
 # generate edge families at different drops: 4.0 for cliffs (one 4m storey),
-# 0.5 for levels (one 0.5m terrace step). Defaults to 4.0 so all runtime/cliff
+# 1.0 for levels (one 1m terrace step). Defaults to 4.0 so all runtime/cliff
 # callers are unchanged; only the level bake mutates it (then restores it).
 static var HEIGHT := 4.0
 static func bottom() -> float:    # plateau top is y=0, lower ground is y=-HEIGHT

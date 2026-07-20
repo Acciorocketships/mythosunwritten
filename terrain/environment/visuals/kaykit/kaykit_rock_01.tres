@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_2l1dl"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_00.res" id="2_dqm4u"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_01.res" id="3_1s46x"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_02.res" id="4_f7hbd"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="5_cb2io"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_rock_01_piece_00.res" id="6_vjkuh"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="7_ars5k"]
+
+[sub_resource type="Resource" id="Resource_n72gk"]
+script = ExtResource("1_2l1dl")
+shape = ExtResource("2_dqm4u")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, -0.11717597, 1.3199999, -0.39978772)
+
+[sub_resource type="Resource" id="Resource_fcxrp"]
+script = ExtResource("1_2l1dl")
+shape = ExtResource("3_1s46x")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0.81000006, 0.174)
+
+[sub_resource type="Resource" id="Resource_wchis"]
+script = ExtResource("1_2l1dl")
+shape = ExtResource("4_f7hbd")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 1.6949999, 0)
+
+[sub_resource type="Resource" id="Resource_1jpb3"]
+script = ExtResource("5_cb2io")
+mesh = ExtResource("6_vjkuh")
+local_transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
+
+[resource]
+script = ExtResource("7_ars5k")
+pieces = Array[ExtResource("5_cb2io")]([SubResource("Resource_1jpb3")])
+collisions = Array[ExtResource("1_2l1dl")]([SubResource("Resource_n72gk"), SubResource("Resource_fcxrp"), SubResource("Resource_wchis")])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_q6u8e"]
+
+[resource]
+script = ExtResource("1_q6u8e")
+id = &"kaykit.rock.06"
+visual_path = "res://terrain/environment/visuals/kaykit/kaykit_rock_06.tres"
+tags = Array[StringName]([&"catalog_only", &"nature", &"rock"])
+measured_aabb = AABB(-1.3823298, 2.8651098e-06, -1.3823285, 2.76466, 1.8513389, 2.7646575)
+collision_piece_count = 1
+tint_group = &"rock"
+supports_instance_color = true
+provenance_id = &"kaykit:kaykit.rock.06"

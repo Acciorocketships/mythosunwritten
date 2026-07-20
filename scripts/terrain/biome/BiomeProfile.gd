@@ -19,6 +19,5 @@ extends Resource
 @export var foliage_tints: Dictionary = {}    # tag (String) → Color multiplier
 # scatter
 @export var foliage_density: float = 1.0
-@export var tag_weights: Dictionary = {}      # tag (String) → weight
 # particles: recipe → density (marsh carries two: orbs + fireflies)
 @export var particles: Dictionary = {}        # StringName → float

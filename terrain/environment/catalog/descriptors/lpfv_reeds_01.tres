@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_56vyl"]
+
+[resource]
+script = ExtResource("1_56vyl")
+id = &"lpfv.reeds.01"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_reeds_01.tres"
+tags = Array[StringName]([&"nature", &"reeds"])
+measured_aabb = AABB(-0.32215247, -0.016174683, -0.37492839, 0.78550804, 2.237456, 0.5928524)
+tint_group = &"grass"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village:lpfv.reeds.01"

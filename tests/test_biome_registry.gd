@@ -8,7 +8,6 @@ func test_all_five_profiles_load_complete() -> void:
 		assert_gte(p.fog_density, 0.0)
 		assert_gt(p.ambient_energy, 0.0)
 		assert_gt(p.foliage_density, 0.0)
-		assert_gt(p.tag_weights.size(), 0)
 		assert_ne(p.ground_tint, Color.WHITE, "ground tint must be set, not default white")
 
 func test_meadow_and_highland_are_fog_free() -> void:
@@ -33,20 +32,14 @@ func test_blend_atmosphere_endpoints_and_midpoint() -> void:
 	var m := BiomeRegistry.blend_atmosphere(half)
 	assert_almost_eq(m[&"fog_density"], (meadow.fog_density + marsh.fog_density) * 0.5, 1e-6)
 
-func test_blended_scatter_helpers() -> void:
+func test_blended_density_uses_the_profile_budget() -> void:
 	var pure_forest := {&"meadow": 0.0, &"deep_forest": 1.0, &"highland": 0.0,
 			&"blossom_grove": 0.0, &"twilight_marsh": 0.0}
-	var tw := BiomeRegistry.blended_tag_weights(pure_forest)
-	assert_gt(tw["tree"], tw["rock"], "deep forest favours trees")
 	assert_almost_eq(BiomeRegistry.blended_density(pure_forest),
 			BiomeRegistry.profile(&"deep_forest").foliage_density, 1e-6)
 
-func test_every_profile_tag_has_a_foliage_scene() -> void:
-	# A tag_weights key with no FOLIAGE_SCENES entry silently drops decorations
-	# (compute_decorations skips empty variant lists) — fail loudly so a future
-	# biome/tag can't ghost. Any new scatter object type must be added to both.
-	for name: StringName in Helper.BIOME_NAMES:
-		var prof := BiomeRegistry.profile(name)
-		for tag: String in prof.tag_weights:
-			assert_true(TerrainChunkMesher.FOLIAGE_SCENES.has(tag),
-				"biome %s references tag '%s' with no FOLIAGE_SCENES entry" % [name, tag])
+func test_biome_id_order_and_density_bound_are_explicit() -> void:
+	assert_eq(BiomeRegistry.biome_ids(), Helper.BIOME_NAMES)
+	for biome_id: StringName in BiomeRegistry.biome_ids():
+		assert_lte(BiomeRegistry.profile(biome_id).foliage_density,
+			BiomeRegistry.max_foliage_density())

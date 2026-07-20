@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://c5lp6i3q2yte4"]
 
-[ext_resource type="Texture2D" uid="uid://cq61yip6xtobk" path="res://assets/KayKitNature/Assets/gltf/Color1/forest_texture.png" id="1_32mxw"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/kaykit/db6c409d41d895cfc2ac.res" id="1"]
 
 [resource]
-resource_name = "forest"
-albedo_texture = ExtResource("1_32mxw")
+resource_name = "forest_bake_compat"
+albedo_texture = ExtResource("1")
 roughness = 0.6

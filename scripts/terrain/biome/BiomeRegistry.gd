@@ -5,6 +5,16 @@ extends RefCounted
 
 static var _profiles: Dictionary = {}
 
+static func biome_ids() -> Array[StringName]:
+	return Helper.BIOME_NAMES.duplicate()
+
+static func max_foliage_density() -> float:
+	_ensure()
+	var maximum := 0.0
+	for biome_id: StringName in Helper.BIOME_NAMES:
+		maximum = maxf(maximum, (_profiles[biome_id] as BiomeProfile).foliage_density)
+	return maximum
+
 static func profile(name: StringName) -> BiomeProfile:
 	_ensure()
 	return _profiles.get(name)
@@ -36,15 +46,6 @@ static func blended_density(w: Dictionary) -> float:
 		d += (_profiles[name] as BiomeProfile).foliage_density * w[name]
 	return d
 
-static func blended_tag_weights(w: Dictionary) -> Dictionary:
-	_ensure()
-	var out: Dictionary = {}
-	for name: StringName in w:
-		var p: BiomeProfile = _profiles[name]
-		for tag: String in p.tag_weights:
-			out[tag] = out.get(tag, 0.0) + p.tag_weights[tag] * w[name]
-	return out
-
 static func blended_ground_tint(w: Dictionary) -> Color:
 	_ensure()
 	var c := Color(0, 0, 0, 0)
@@ -59,6 +60,15 @@ static func blended_foliage_tint(w: Dictionary, tag: String) -> Color:
 		var p: BiomeProfile = _profiles[name]
 		c += (p.foliage_tints.get(tag, Color(1, 1, 1)) as Color) * w[name]
 	return c
+
+## Descriptor-driven tint lookup. Keeping the mapping here means placement
+## code never guesses how a pack-specific asset should react to a biome.
+static func blended_environment_tint(w: Dictionary, tint_group: StringName) -> Color:
+	if tint_group == &"identity":
+		return Color.WHITE
+	if tint_group == &"ground":
+		return blended_ground_tint(w)
+	return blended_foliage_tint(w, String(tint_group))
 
 static func _ensure() -> void:
 	if not _profiles.is_empty():
@@ -91,7 +101,6 @@ static func _meadow() -> BiomeProfile:
 	p.ground_tint = Color(1.12, 1.06, 0.78)   # warm saturated green
 	p.foliage_tints = {"grass": Color(1.1, 1.05, 0.75), "tree": Color(1.02, 1.0, 0.9)}
 	p.foliage_density = 0.8
-	p.tag_weights = {"grass": 0.45, "rock": 0.1, "bush": 0.2, "tree": 0.15}
 	p.particles = {&"motes": 0.3}
 	return p
 
@@ -109,7 +118,6 @@ static func _deep_forest() -> BiomeProfile:
 	p.foliage_tints = {"grass": Color(0.55, 0.78, 0.52), "bush": Color(0.5, 0.72, 0.5),
 			"tree": Color(0.55, 0.78, 0.58), "rock": Color(0.8, 0.88, 0.82)}
 	p.foliage_density = 1.9
-	p.tag_weights = {"grass": 0.15, "rock": 0.08, "bush": 0.22, "tree": 0.55}
 	p.particles = {&"fireflies": 0.4}
 	return p
 
@@ -126,7 +134,6 @@ static func _highland() -> BiomeProfile:
 	p.foliage_tints = {"grass": Color(0.82, 0.88, 0.8), "bush": Color(0.78, 0.84, 0.78),
 			"tree": Color(0.78, 0.86, 0.82)}
 	p.foliage_density = 1.2
-	p.tag_weights = {"grass": 0.2, "rock": 0.5, "bush": 0.12, "tree": 0.08}
 	p.particles = {&"motes": 0.2}
 	return p
 
@@ -143,7 +150,6 @@ static func _blossom_grove() -> BiomeProfile:
 	p.foliage_tints = {"grass": Color(1.02, 0.92, 0.86), "bush": Color(1.1, 0.8, 0.95),
 			"tree": Color(1.45, 0.78, 1.05)}     # strongly pink canopies
 	p.foliage_density = 1.1
-	p.tag_weights = {"grass": 0.3, "rock": 0.05, "bush": 0.15, "tree": 0.45}
 	p.particles = {&"petals": 0.6}
 	return p
 
@@ -161,6 +167,5 @@ static func _twilight_marsh() -> BiomeProfile:
 	p.foliage_tints = {"grass": Color(0.38, 0.58, 0.53), "bush": Color(0.33, 0.53, 0.48),
 			"tree": Color(0.38, 0.53, 0.48), "rock": Color(0.65, 0.78, 0.78)}
 	p.foliage_density = 0.9
-	p.tag_weights = {"grass": 0.35, "rock": 0.08, "bush": 0.35, "tree": 0.15}
 	p.particles = {&"orbs": 0.5, &"fireflies": 0.8}
 	return p

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_b405d"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_ot1es"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village/lpfv_mushroom_06_piece_00.res" id="3_mnmfy"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_jea5j"]
+
+[sub_resource type="Resource" id="Resource_wv70w"]
+script = ExtResource("2_ot1es")
+mesh = ExtResource("3_mnmfy")
+local_transform = Transform3D(3.25, 0, 0, 0, 3.25, 0, 0, 0, 3.25, 0, 0, 0)
+
+[resource]
+script = ExtResource("4_jea5j")
+pieces = Array[ExtResource("2_ot1es")]([SubResource("Resource_wv70w")])

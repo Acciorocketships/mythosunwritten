@@ -1,0 +1,962 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_big_rock_01.tres",
+      "id": "lpfv.big_rock.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "flat_rock",
+        "id": "lpfv.big_rock.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_01.glb",
+      "source_sha256": "6bc81d54417f069a3940c59d61f95fedcff462d532009c27ed54bd999017a9dd",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_big_rock_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_big_rock_02.tres",
+      "id": "lpfv.big_rock.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "flat_rock",
+        "id": "lpfv.big_rock.02",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_02.glb",
+      "source_sha256": "318f65ccadaa0666d7dd2adb57c196569ada2185b409d3ab7efcdd3073e4f237",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_big_rock_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_big_rock_03.tres",
+      "id": "lpfv.big_rock.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "flat_rock",
+        "id": "lpfv.big_rock.03",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_03.glb",
+      "source_sha256": "fa25a2386b4e933e69375e552e60b2b8c7ee53f3716bbc4be8ebf5a64a24ec04",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_big_rock_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_branch_01.tres",
+      "id": "lpfv.branch.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "oriented_capsule",
+        "collision_radius_fraction": 0.28,
+        "id": "lpfv.branch.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Branch.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "deadwood",
+          "nature"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Branch.glb",
+      "source_sha256": "0f9ae715676075b3f56a8602be4a495cab23b713e718d125160aee35eb8a4b9f",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_branch_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_01.tres",
+      "id": "lpfv.flower.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.flower.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "flower",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_01.glb",
+      "source_sha256": "56033cc271b4b9d13229fd85222b9a7a522c18f3cd0df2fae611e6363d734109",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_flower_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_02.tres",
+      "id": "lpfv.flower.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.flower.02",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "flower",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_02.glb",
+      "source_sha256": "44c059e2118e3b7601805b82c3333a600eb8bc79b0a3603ade18c2075101f8dc",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_flower_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_03.tres",
+      "id": "lpfv.flower.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.flower.03",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "flower",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_03.glb",
+      "source_sha256": "2f604dd5eff080acf1a57a6af5f5f24b77f142752d602d3d714a34836ac7f547",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_flower_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_04.tres",
+      "id": "lpfv.flower.04",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.flower.04",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_04.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "flower",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_04.glb",
+      "source_sha256": "0c625b297807cc3cef8b41490fb05da1bff3125fdc34794b4c2d5e70399fbf4b",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_flower_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_05.tres",
+      "id": "lpfv.flower.05",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.flower.05",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_05.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "flower",
+          "nature"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Flower_05.glb",
+      "source_sha256": "fb4b8e715194e85718767b814e77bfa33265dbadd01f8cc0e232d63c8ab59c39",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_flower_05.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_log_01.tres",
+      "id": "lpfv.log.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "oriented_cylinder",
+        "collision_radius_fraction": 0.48,
+        "id": "lpfv.log.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Log_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "deadwood",
+          "nature"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Log_01.glb",
+      "source_sha256": "bf344cb8a70d0893e1d12f953bd3600642ca5f06fb1a0870d0e5adb663173929",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_log_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_log_02.tres",
+      "id": "lpfv.log.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "oriented_cylinder",
+        "collision_radius_fraction": 0.44,
+        "id": "lpfv.log.02",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Log_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "deadwood",
+          "nature"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Log_02.glb",
+      "source_sha256": "644bb8e08d4651f6900e5e78863b4cf8c71fb121685e8891c414df63498e91f7",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_log_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_log_03.tres",
+      "id": "lpfv.log.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "oriented_cylinder",
+        "collision_radius_fraction": 0.32,
+        "id": "lpfv.log.03",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Log_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "deadwood",
+          "nature"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Log_03.glb",
+      "source_sha256": "ab63911ff895193935d4043afa67244099e22518bc59c9ab4f9c84e7daadb060",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_log_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_01.tres",
+      "id": "lpfv.mushroom.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.mushroom.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "mushroom",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_01.glb",
+      "source_sha256": "14618e6d742aa6171624738dca5cce0f384f0760590c969d59680890bd618d69",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_mushroom_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_02.tres",
+      "id": "lpfv.mushroom.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.mushroom.02",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "mushroom",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_02.glb",
+      "source_sha256": "29c8926cadae123c2947fea0c6891fc9d0d8bf701a311dddb59525c1e5df8d21",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_mushroom_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_03.tres",
+      "id": "lpfv.mushroom.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.mushroom.03",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "mushroom",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_03.glb",
+      "source_sha256": "3895ebac0a57ebc06e90b32e20326bccb3c0039995975f8ad3eae689bfbf5b0d",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_mushroom_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_04.tres",
+      "id": "lpfv.mushroom.04",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.mushroom.04",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_04.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "mushroom",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_04.glb",
+      "source_sha256": "187663c51142ea37d5a0a31f33d04af0778fd1d76fe34446970007a87efc1b2a",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_mushroom_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_05.tres",
+      "id": "lpfv.mushroom.05",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.mushroom.05",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_05.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "mushroom",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_05.glb",
+      "source_sha256": "a2faf4a01c76ce841f609a9d02298d57888950219712d774977ee5ae0012351e",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_mushroom_05.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_06.tres",
+      "id": "lpfv.mushroom.06",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.mushroom.06",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_06.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "mushroom",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_06.glb",
+      "source_sha256": "3d05c081700214982f09e0c92a9dae9dfd41709fee7aead8dc58ea63ff0cc4a1",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_mushroom_06.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_07.tres",
+      "id": "lpfv.mushroom.07",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.mushroom.07",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_07.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "mushroom",
+          "nature"
+        ],
+        "tint_group": "bush"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Mushroom_07.glb",
+      "source_sha256": "7a278c07accc292652c986d98a81e52503832c87bbdada0aebbc0b6bfcc1d60c",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_mushroom_07.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_plant_01.tres",
+      "id": "lpfv.plant.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.plant.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "plant"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb",
+      "source_sha256": "9dedda86861af433774932540a9ead08b73bad7b4580e53d3f53f8f525775808",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_plant_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_plant_02.tres",
+      "id": "lpfv.plant.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.plant.02",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "plant"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_02.glb",
+      "source_sha256": "17dcae7e9747c2123ce1ab216b9f7d9e7013ed05c2fd1474f454b9aec0576054",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_plant_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_plant_03.tres",
+      "id": "lpfv.plant.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.plant.03",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "plant"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb",
+      "source_sha256": "25c8234f575b14b0cf26cb0be3e9b26154a59cf922c1b00f847823f54a577ed1",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_plant_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_plant_04.tres",
+      "id": "lpfv.plant.04",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.plant.04",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_04.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "plant"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_04.glb",
+      "source_sha256": "8757f9d299c4a52fee47b46b20b06300cc42f00151697ffb262b451c2e161fd2",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_plant_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_reeds_01.tres",
+      "id": "lpfv.reeds.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "id": "lpfv.reeds.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Reeds_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "reeds"
+        ],
+        "tint_group": "grass"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Reeds_01.glb",
+      "source_sha256": "395771c386c8933ded93146618d09cc7a2be600e784c4a82d54487695ccdd15e",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_reeds_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_01.tres",
+      "id": "lpfv.rock.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "flat_rock",
+        "id": "lpfv.rock.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_01.glb",
+      "source_sha256": "f4d608f9262b08b9730c2e2855d622adee4fe45eab9a5aff94f21c6c698d43e3",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_02.tres",
+      "id": "lpfv.rock.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "flat_rock",
+        "id": "lpfv.rock.02",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_02.glb",
+      "source_sha256": "7b69cb7a5c160ba4a79ff1315a4db1bd742711d1dbb62940d3981df60a14b3c1",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_03.tres",
+      "id": "lpfv.rock.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "flat_rock",
+        "id": "lpfv.rock.03",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_03.glb",
+      "source_sha256": "ee57a390626a58c3b2e899e80119fa54fcf7b6bbad7b201d52f879f9c918f2fe",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_04.tres",
+      "id": "lpfv.rock.04",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_footprint": 0.88,
+        "collision_max_height": 0.42,
+        "collision_profile": "flat_box",
+        "id": "lpfv.rock.04",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_04.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock",
+          "walkover"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_04.glb",
+      "source_sha256": "8ea733bb8d4e46448a8db65560fa4d5e83427f81aadda53fc30645aab5d23107",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_05.tres",
+      "id": "lpfv.rock.05",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_footprint": 0.88,
+        "collision_max_height": 0.42,
+        "collision_profile": "flat_box",
+        "id": "lpfv.rock.05",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_05.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock",
+          "walkover"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_05.glb",
+      "source_sha256": "00082440bcd10beda84df9cb68e4a6c83d352b93fdee0dcfe645f257e134bf3c",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_05.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_06.tres",
+      "id": "lpfv.rock.06",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_max_height": 0.42,
+        "collision_profile": "flat_rock",
+        "id": "lpfv.rock.06",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_06.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock",
+          "walkover"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_06.glb",
+      "source_sha256": "330e5e1c255bf94d875c400b0aa790552d487f969012a1dd0d93cf42a6261191",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_06.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_07.tres",
+      "id": "lpfv.rock.07",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_component_count": 2.0,
+        "collision_profile": "flat_rock",
+        "id": "lpfv.rock.07",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_07.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_07.glb",
+      "source_sha256": "672bee636e12ccba1bc75ec6f0ec452e4f9b2f30e6ab3e2d12826240d61e92eb",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_07.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_08.tres",
+      "id": "lpfv.rock.08",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_component_count": 2.0,
+        "collision_profile": "flat_rock",
+        "id": "lpfv.rock.08",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_08.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_08.glb",
+      "source_sha256": "0f3beb9852598e41f91d613a9aebd60e7d62468fd1aef1a55baa7be378ed3cb5",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_08.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_09.tres",
+      "id": "lpfv.rock.09",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_component_count": 2.0,
+        "collision_profile": "flat_rock",
+        "id": "lpfv.rock.09",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_09.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "rock"
+        ],
+        "tint_group": "rock"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_09.glb",
+      "source_sha256": "28862d1c5f5a1a85052890f007aef6c962be1548c89e7379a8bf7d67f610471c",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_rock_09.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_stump_01.tres",
+      "id": "lpfv.stump.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "stump_cylinder",
+        "id": "lpfv.stump.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Stump_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "deadwood",
+          "nature"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Stump_01.glb",
+      "source_sha256": "2f3bc8b4b27fa369e40f630dad45c2e57fc2644286e46b400419d3cd98713ba8",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_stump_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_stump_02.tres",
+      "id": "lpfv.stump.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "stump_cylinder",
+        "id": "lpfv.stump.02",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Stump_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "deadwood",
+          "nature"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Stump_02.glb",
+      "source_sha256": "f1fb617fdfe78615189d472a1b9a8c5e539c9de36d2de21cb7368baf5f60578c",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_stump_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_stump_03.tres",
+      "id": "lpfv.stump.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "stump_cylinder",
+        "id": "lpfv.stump.03",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Stump_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "deadwood",
+          "nature"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Stump_03.glb",
+      "source_sha256": "accfe023b6258285932592706431480fcb8ca4959c975709f4d8ceffeda603ef",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_stump_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_stump_04.tres",
+      "id": "lpfv.stump.04",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "stump_cylinder",
+        "id": "lpfv.stump.04",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Stump_04.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "deadwood",
+          "nature"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Stump_04.glb",
+      "source_sha256": "44f8d301e6ded2ffde4ff12b28bd624a7181fa43a683519d66f7c8fc24dce835",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_stump_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_01.tres",
+      "id": "lpfv.tree.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "trunk_capsule",
+        "id": "lpfv.tree.01",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_01.glb",
+      "source_sha256": "7a11eebd5d0a1669edac6f949979265eec83d08dde3d65ff44c8c44d76a70e5a",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_02.tres",
+      "id": "lpfv.tree.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_joint_points_m": [
+          [
+            0.23,
+            0.43,
+            0.16
+          ],
+          [
+            0.21,
+            1.92,
+            1.0
+          ],
+          [
+            -0.58,
+            3.5,
+            1.15
+          ],
+          [
+            -0.98,
+            4.1,
+            1.02
+          ],
+          [
+            -1.5,
+            5.0,
+            0.68
+          ]
+        ],
+        "collision_profile": "trunk_capsule_chain",
+        "collision_segment_radii_m": [
+          1.1,
+          1.1,
+          1.05,
+          0.8
+        ],
+        "id": "lpfv.tree.02",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_02.glb",
+      "source_sha256": "730cc5d6059749cac3ad8383c7e73205ae45bec3fb5ff3b328dbfa8313d2f3c4",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_03.tres",
+      "id": "lpfv.tree.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_height_fraction": 0.2,
+        "collision_profile": "trunk_capsule",
+        "collision_radius_scale": 0.9,
+        "id": "lpfv.tree.03",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_03.glb",
+      "source_sha256": "e3691e6583af46f3ffd3743793e59d923f01ea30189034b607f959b35eefeb59",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_03.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_04.tres",
+      "id": "lpfv.tree.04",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "trunk_capsule",
+        "id": "lpfv.tree.04",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_04.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_04.glb",
+      "source_sha256": "1bf1055d61a3aadbe0d1882d558b2de74ad572ebb352f77735405daabc895f3b",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_04.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_05.tres",
+      "id": "lpfv.tree.05",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "trunk_capsule",
+        "id": "lpfv.tree.05",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_05.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_05.glb",
+      "source_sha256": "5e74033d11403881db54ae54af50db10b84bb2371353a029c8eecce2d211a998",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_05.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_06.tres",
+      "id": "lpfv.tree.06",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "trunk_capsule",
+        "id": "lpfv.tree.06",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_06.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_06.glb",
+      "source_sha256": "9efc15a0c7901f0377436e25fc7870c33f7c652255b06f73fb21512990979038",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_06.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_07.tres",
+      "id": "lpfv.tree.07",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "trunk_capsule",
+        "id": "lpfv.tree.07",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_07.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_07.glb",
+      "source_sha256": "db87aeab476aff748ac7069ad711990b8af1c6d653acfd0299ae50df4b750db2",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_07.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_08.tres",
+      "id": "lpfv.tree.08",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_profile": "trunk_capsule",
+        "id": "lpfv.tree.08",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_08.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_08.glb",
+      "source_sha256": "a5079ed5d01b74c559907429ffa4625644e100d2a55588f1d19d78ea036e2e85",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_08.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_09.tres",
+      "id": "lpfv.tree.09",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "pack": "low_poly_fantasy_village",
+      "parameters": {
+        "collision_height_fraction": 0.2,
+        "collision_profile": "trunk_capsule",
+        "collision_radius_scale": 0.9,
+        "id": "lpfv.tree.09",
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_09.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "nature",
+          "tree"
+        ],
+        "tint_group": "tree"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Tree_09.glb",
+      "source_sha256": "e048baeb535f4b64e675b09c4a4c9d93ed3e2ec064df056378e2ae15118ba8ef",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_09.tres"
+    }
+  ],
+  "license": "LowPolyFantasyVillage source-pack license",
+  "pack": "low_poly_fantasy_village",
+  "tool_version": 10
+}

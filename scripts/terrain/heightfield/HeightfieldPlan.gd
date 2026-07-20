@@ -12,10 +12,10 @@ extends RefCounted
 
 const TILE: float = 24.0
 const STOREY_HEIGHT: float = 4.0
-const LEVEL_HEIGHT: float = 0.5
-# 4.0 / 0.5. Level saturates at LEVELS_PER_STOREY - 1 (=7), so a full storey is
-# always a single cliff, never a stack of 8 level tiles.
-const LEVELS_PER_STOREY: int = 8
+const LEVEL_HEIGHT: float = 1.0
+# 4.0 / 1.0. Level saturates at LEVELS_PER_STOREY - 1 (=3), so a full storey is
+# always a single cliff, never a stack of 4 level tiles.
+const LEVELS_PER_STOREY: int = 4
 # Search radius for the nearest different storey. Levels saturate at
 # LEVELS_PER_STOREY - 1, so a cliff farther than LEVELS_PER_STOREY tiles can never
 # affect a cell's level — no need to look past it.
@@ -165,7 +165,7 @@ const _DIAGONALS: Array[Vector2i] = [
 ## True if a DIAGONAL neighbour is a different storey (a cliff on the diagonal).
 ## The cardinal cliff ramp already pins cells next to a cardinal cliff to level 0;
 ## this extends that pin to diagonal cliffs. Without it, a cell whose only cliff is
-## diagonal keeps a 0.5m terrace bump (cardinal cliff-distance is 2 there, capping
+## diagonal keeps a 1m terrace bump (cardinal cliff-distance is 2 there, capping
 ## level at 1), comes out level-family, and the diagonal cliff's interior corner is
 ## never rendered — leaving a gap at the corner.
 static func _has_diagonal_cliff(storeys: Dictionary, cell: Vector2i) -> bool:
@@ -227,14 +227,15 @@ func storey_at(cx: int, cz: int) -> int:
 	return clamped[Vector2i(cx, cz)]
 
 
-## Whether the 0.5m sub-storey LEVEL terraces contribute to the rendered surface. OFF for now:
-## the owner wants flat "level-texture" ground, not the smooth interpolation of the level field
-## ("mini slopes"). The level field is still computed (level_at/tile_plan) for the future feature
-## of dropping flat KayKit level tiles next to slopes; it just doesn't bend the walkable mesh yet.
-const RENDER_LEVELS: bool = false
+## Whether the 1m sub-storey LEVEL terraces contribute to the rendered surface. ON (owner,
+## 2026-07-16): level steps render through the SAME half-cell smootherstep ramp as the 4m storey
+## slopes (TerrainSurfaceField._edge_weight), at one quarter of the storey height. No
+## KayKit dressing is involved: walls/lips/skirts key off storey_at/is_flat_cell, and level_at
+## pins to 0 near storey boundaries, so levels only ever read as short procedural slopes.
+const RENDER_LEVELS: bool = true
 
-## Rendered surface height (metres): storey tier (4m steps), plus the level tier (0.5m) only when
-## RENDER_LEVELS is on. Flattened to the storey grid for now (which the cliff logic already uses).
+## Rendered surface height (metres): storey tier (4m steps), plus the level tier (1m) only when
+## RENDER_LEVELS is on (the cliff logic keys off the storey tier alone either way).
 func surface_height(cx: int, cz: int) -> float:
 	var h := float(storey_at(cx, cz)) * STOREY_HEIGHT
 	if RENDER_LEVELS:
@@ -315,7 +316,7 @@ static func _clamp_levels(levels: Dictionary, storeys: Dictionary) -> Dictionary
 ## Window radius over which the level field is assembled and clamped around a
 ## query cell. The cliff-distance ramp reaches _CLIFF_SEARCH_MAX (= LEVELS_PER_STOREY)
 ## tiles; the masked level clamp reaches at most LEVELS_PER_STOREY - 1 (a level
-## saturates at 7, so a spike settles within 7 tiles). LEVELS_PER_STOREY thus has
+## saturates at 3, so a spike settles within 3 tiles). LEVELS_PER_STOREY thus has
 ## one tile of spare margin — do NOT shrink it.
 func level_margin() -> int:
 	return LEVELS_PER_STOREY

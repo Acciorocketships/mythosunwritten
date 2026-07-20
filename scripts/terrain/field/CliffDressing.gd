@@ -10,13 +10,21 @@
 class_name CliffDressing
 extends RefCounted
 
-const SCENES := {
-	"wall": "res://terrain/gltf/hill/hill_cliff_tall_h_side_color_12.tscn",
-	"lip": "res://terrain/gltf/hill/hill_top_h_side_color_12.tscn",
-	"outer_wall": "res://terrain/gltf/hill/hill_cliff_tall_i_outer_corner_color_12.tscn",
-	"outer_lip": "res://terrain/gltf/hill/hill_top_i_outer_corner_color_12.tscn",
-	"inner_wall": "res://terrain/gltf/hill/hill_cliff_tall_i_inner_corner_color_12.tscn",
-	"inner_lip": "res://terrain/gltf/hill/hill_top_a_inner_corner_color_12.tscn",
+const VISUALS := {
+	"wall": "res://terrain/environment/visuals/kaykit/kaykit_cliff_wall.tres",
+	"lip": "res://terrain/environment/visuals/kaykit/kaykit_cliff_lip.tres",
+	"outer_wall": "res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_wall.tres",
+	"outer_lip": "res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_lip.tres",
+	"inner_wall": "res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_wall.tres",
+	"inner_lip": "res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_lip.tres",
+}
+const ASSETS := {
+	"wall": &"kaykit.cliff.wall",
+	"lip": &"kaykit.cliff.lip",
+	"outer_wall": &"kaykit.cliff.outer_wall",
+	"outer_lip": &"kaykit.cliff.outer_lip",
+	"inner_wall": &"kaykit.cliff.inner_wall",
+	"inner_lip": &"kaykit.cliff.inner_lip",
 }
 
 const TILE := 24.0
@@ -47,6 +55,16 @@ const CORNERS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1,
 
 static var _pieces: Dictionary = {}   # name -> [mesh, local_transform]
 static var _shared_mat: Material = null
+
+static func prepare(render_cache: EnvironmentRenderCache) -> void:
+	if not _pieces.is_empty():
+		return
+	for key in ASSETS:
+		var visual := render_cache.visual(ASSETS[key])
+		assert(visual != null and visual.pieces.size() == 1)
+		var piece := visual.pieces[0]
+		_pieces[key] = [piece.mesh, piece.local_transform]
+	_finish_piece_setup()
 
 # THE terrain material: a de-sheened duplicate of the KayKit wall material, shared by every
 # terrain surface — dressing pieces (via material_override), the walkable sheet, aprons and
@@ -585,8 +603,11 @@ static func _angle(dir: Vector2i) -> float:
 static func _ensure_loaded() -> void:
 	if not _pieces.is_empty():
 		return
-	for key in SCENES:
-		_pieces[key] = _piece(SCENES[key])
+	for key in VISUALS:
+		_pieces[key] = _piece(VISUALS[key])
+	_finish_piece_setup()
+
+static func _finish_piece_setup() -> void:
 	# The corner lips' grass TOPS sample the palette's BRIGHT trim row across
 	# most of their area (straight lips keep the bright row to a thin front
 	# edge), so a cap sitting on open ground read as a brighter green patch
@@ -622,16 +643,11 @@ static func _retexel_grass_top(mesh: Mesh, uv: Vector2) -> Mesh:
 	return out
 
 static func _piece(path: String) -> Array:
-	var inst := (load(path) as PackedScene).instantiate()
-	var mi := _find_mi(inst)
-	var xf := Transform3D.IDENTITY
-	var n: Node = mi
-	while n != null and n != inst:
-		xf = (n as Node3D).transform * xf
-		n = n.get_parent()
-	var out := [mi.mesh, xf]
-	inst.free()
-	return out
+	var visual := load(path) as EnvironmentVisual
+	assert(visual != null and visual.pieces.size() == 1,
+		"cliff visuals must contain exactly one piece: %s" % path)
+	var piece := visual.pieces[0]
+	return [piece.mesh, piece.local_transform]
 
 static func _multimesh(piece: Array, transforms: Array, nm: String, tints: PackedColorArray) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
@@ -651,10 +667,3 @@ static func _multimesh(piece: Array, transforms: Array, nm: String, tints: Packe
 	# skirt and slope must be visually continuous from every angle)
 	mmi.material_override = shared_material()
 	return mmi
-
-static func _find_mi(n: Node) -> MeshInstance3D:
-	if n is MeshInstance3D: return n
-	for c in n.get_children():
-		var r := _find_mi(c)
-		if r != null: return r
-	return null

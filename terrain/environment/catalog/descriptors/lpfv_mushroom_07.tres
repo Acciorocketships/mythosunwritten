@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_mld85"]
+
+[resource]
+script = ExtResource("1_mld85")
+id = &"lpfv.mushroom.07"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_mushroom_07.tres"
+tags = Array[StringName]([&"mushroom", &"nature"])
+measured_aabb = AABB(-0.2974012, -0.03246343, -0.16436872, 0.5564323, 1.0862577, 0.30267036)
+tint_group = &"bush"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village:lpfv.mushroom.07"

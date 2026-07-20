@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_7wy05"]
+
+[resource]
+script = ExtResource("1_7wy05")
+id = &"lpfv.flower.05"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_flower_05.tres"
+tags = Array[StringName]([&"flower", &"nature"])
+measured_aabb = AABB(-0.5647804, -0.01177115, -0.4332373, 1.1224395, 1.0451376, 0.82043535)
+tint_group = &"grass"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village:lpfv.flower.05"

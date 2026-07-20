@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="DressingCatalogIndex" load_steps=13 format=3]
+
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_bush.tres" id="1_bush"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_deadwood.tres" id="2_deadwood"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_flower.tres" id="3_flower"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_grass.tres" id="4_grass"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_lily_pad.tres" id="5_lily"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_mushroom.tres" id="6_mushroom"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_mushroom_single.tres" id="6b_mushroom_single"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_reeds.tres" id="7_reeds"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_rock.tres" id="8_rock"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_rock_large.tres" id="9_rock_large"]
+[ext_resource type="Resource" path="res://terrain/dressing/sets/ambient_tree.tres" id="10_tree"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingCatalogIndex.gd" id="11_index"]
+
+[resource]
+script = ExtResource("11_index")
+sets = [ExtResource("1_bush"), ExtResource("2_deadwood"), ExtResource("3_flower"), ExtResource("4_grass"), ExtResource("5_lily"), ExtResource("6_mushroom"), ExtResource("6b_mushroom_single"), ExtResource("7_reeds"), ExtResource("8_rock"), ExtResource("9_rock_large"), ExtResource("10_tree")]

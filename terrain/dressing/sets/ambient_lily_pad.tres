@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="DressingSet" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingHabitatLayer.gd" id="3_habitat"]
+
+[sub_resource type="Resource" id="C1"]
+script = ExtResource("1_choice")
+asset_id = &"sfv.lily_pad.01"
+biome_affinity = {&"meadow": 0.7, &"deep_forest": 0.8, &"highland": 0.1, &"blossom_grove": 1.0, &"twilight_marsh": 1.4}
+[sub_resource type="Resource" id="C2"]
+script = ExtResource("1_choice")
+asset_id = &"sfv.lily_pad.02"
+biome_affinity = {&"meadow": 0.7, &"deep_forest": 0.8, &"highland": 0.1, &"blossom_grove": 1.0, &"twilight_marsh": 1.4}
+[sub_resource type="Resource" id="C3"]
+script = ExtResource("1_choice")
+asset_id = &"sfv.lily_pad.03"
+biome_affinity = {&"meadow": 0.7, &"deep_forest": 0.8, &"highland": 0.1, &"blossom_grove": 1.0, &"twilight_marsh": 1.4}
+[sub_resource type="Resource" id="C4"]
+script = ExtResource("1_choice")
+asset_id = &"sfv.lily_pads.01"
+weight = 0.35
+biome_affinity = {&"meadow": 0.7, &"deep_forest": 0.8, &"highland": 0.1, &"blossom_grove": 1.0, &"twilight_marsh": 1.4}
+
+[sub_resource type="Resource" id="PondColony"]
+script = ExtResource("3_habitat")
+channel = &"pond_colonies"
+scale = 38.0
+coverage = {&"meadow": 0.35, &"deep_forest": 0.45, &"highland": 0.08, &"blossom_grove": 0.55, &"twilight_marsh": 0.78}
+edge_softness = 0.1
+
+[resource]
+script = ExtResource("2_set")
+id = &"ambient.lily_pad"
+choices = Array[ExtResource("1_choice")]([SubResource("C1"), SubResource("C2"), SubResource("C3"), SubResource("C4")])
+fill_per_cell = {&"meadow": 0.2, &"deep_forest": 0.25, &"highland": 0.05, &"blossom_grove": 0.35, &"twilight_marsh": 0.75}
+habitat_layers = Array[ExtResource("3_habitat")]([SubResource("PondColony")])
+community_channel = &"lily_species"
+community_scale = 26.0
+community_strength = 0.85
+surface_mode = 2
+water_mode = 4
+spacing_radius = 2.5
+scale_range = Vector2(0.9, 1.15)
+brightness_range = Vector2(0.95, 1.05)

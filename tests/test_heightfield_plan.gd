@@ -177,30 +177,30 @@ func test_tile_plan_reports_storey_and_height() -> void:
 
 func test_storey_region_still_satisfies_the_full_invariant() -> void:
 	# Over a seeded region, every cardinal-adjacent pair of rendered surface
-	# heights differs by exactly 0, 0.5, or 4m — the full storey+level invariant.
+	# heights differs by exactly 0, 1, or 4m — the full storey+level invariant.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 48.0, 8, "mean")
 	for cz in range(-3, 4):
 		for cx in range(-3, 4):
 			var here: float = plan.surface_height(cx, cz)
 			for d in [Vector2i(1, 0), Vector2i(0, 1)]:
 				var diff: float = absf(here - plan.surface_height(cx + d.x, cz + d.y))
-				assert_true(diff < 0.001 or absf(diff - 0.5) < 0.001 or absf(diff - 4.0) < 0.001,
-					"adjacent surface heights differ by 0, 0.5, or 4m (got %.3f at %d,%d)" % [diff, cx, cz])
+				assert_true(diff < 0.001 or absf(diff - 1.0) < 0.001 or absf(diff - 4.0) < 0.001,
+					"adjacent surface heights differ by 0, 1, or 4m (got %.3f at %d,%d)" % [diff, cx, cz])
 
 
 func test_detail_level_quantizes_residual_above_the_storey_base() -> void:
 	# Flat field at 1.7m: storey 0 (mean: round(1.7/4)=0), residual 1.7m,
-	# detail level = round(1.7/0.5) = 3.
+	# detail level = round(1.7/1.0) = 2.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.7)
-	assert_eq(plan.detail_level(0, 0), 3, "residual 1.7m => 3 half-metre terraces")
+	assert_eq(plan.detail_level(0, 0), 2, "residual 1.7m => level 2 on the 1m grid")
 
 func test_detail_level_caps_below_a_full_storey() -> void:
-	# A column far above its (clamped) storey must not produce 8+ stacked levels;
-	# detail level saturates at LEVELS_PER_STOREY - 1 = 7 (a full storey is a cliff).
+	# A column far above its (clamped) storey must not produce 4+ stacked levels;
+	# detail level saturates at LEVELS_PER_STOREY - 1 = 3 (a full storey is a cliff).
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 1000.0, 8, "mean")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 100.0)
-	assert_eq(plan.detail_level(0, 0), 7, "detail level never reaches a full storey")
+	assert_eq(plan.detail_level(0, 0), 3, "detail level never reaches a full storey")
 
 func test_quantize_storey_still_correct_after_refactor() -> void:
 	# Guards the _round_mode extraction: storey quantization is unchanged.
@@ -251,10 +251,10 @@ func test_cliff_distance_respects_the_search_radius() -> void:
 
 
 func test_clamp_levels_trickles_within_a_storey() -> void:
-	# All one storey: a level-5 spike among 0s must trickle to <=1 per step,
+	# All one storey: a maximum level-3 spike among 0s must trickle to <=1 per step,
 	# exactly like the storey clamp.
 	var storeys: Dictionary = _grid([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-	var levels: Dictionary = _grid([[0, 0, 0], [0, 5, 0], [0, 0, 0]])
+	var levels: Dictionary = _grid([[0, 0, 0], [0, 3, 0], [0, 0, 0]])
 	var out: Dictionary = HeightfieldPlan._clamp_levels(levels, storeys)
 	assert_eq(out[Vector2i(1, 1)], 1, "level spike trickled to one above neighbours")
 
@@ -273,8 +273,8 @@ func test_level_at_pins_cliff_edges_to_zero() -> void:
 	# either side of the storey boundary cardinally touches a different storey, so
 	# its level is pinned to 0 — which is what makes the cliff face exactly 4m.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
-	# H = 1.7m on the left (storey 0, residual would be level 3), 5.7m on the right
-	# (storey 1). Without the pin the left edge would terrace up to 3.
+	# H = 1.7m on the left (storey 0, residual would be level 2), 5.7m on the right
+	# (storey 1). Without the pin the left edge would terrace up to 2.
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
 		return 5.7 if cx >= 1 else 1.7)
 	assert_eq(plan.level_at(0, 0), 0, "storey-0 cell touching the storey-1 step is pinned to level 0")
@@ -288,17 +288,17 @@ func test_level_at_pins_cliff_edges_to_zero() -> void:
 
 func test_level_at_terraces_a_flat_storey_interior() -> void:
 	# Single storey everywhere (H stays under 2m so storey 0), with a gentle
-	# residual ramp in x that rises ~0.5m per tile. Far from any cliff, levels
+	# residual ramp in x that rises ~1m per tile. Far from any cliff, levels
 	# follow the ramp in single steps.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
-		return clampf(0.5 * float(cx), 0.0, 1.9))
-	# At x=2, residual ~1.0m => level ~2; at x=3, ~1.5m => level ~3. Adjacent
+		return clampf(1.0 * float(cx), 0.0, 1.9))
+	# At x=1, residual ~1.0m => level 1; at x=2, ~1.9m => level 2. Adjacent
 	# interior levels differ by at most one.
+	var l1: int = plan.level_at(1, 0)
 	var l2: int = plan.level_at(2, 0)
-	var l3: int = plan.level_at(3, 0)
-	assert_true(absi(l3 - l2) <= 1, "interior terraces step by at most one level")
-	assert_true(l3 >= 1, "the ramp produces some terracing in the interior")
+	assert_true(absi(l2 - l1) <= 1, "interior terraces step by at most one level")
+	assert_true(l2 >= 1, "the ramp produces some terracing in the interior")
 
 func test_level_at_is_window_independent() -> void:
 	# Like the storey determinism test: the level at a cell is final, independent
@@ -328,28 +328,26 @@ func _level_at_with_extra_margin(plan: HeightfieldPlan, cx: int, cz: int, extra:
 	return leveled[Vector2i(cx, cz)]
 
 
-func test_surface_height_is_flattened_to_storeys_for_now() -> void:
-	# RENDER_LEVELS is OFF: the 0.5m level terraces are flattened OUT of the rendered surface (the
-	# owner wants flat "level-texture" ground, not the smooth "mini slope" interpolation). So a
-	# storey-0 cell renders flat at 0m even though the level field still reports level 3 (kept for
-	# the future flat-terrace feature).
+func test_surface_height_includes_level_terraces() -> void:
+	# RENDER_LEVELS is ON: 1m level terraces contribute to the rendered surface
+	# as short slope ramps. A storey-0 cell at level 2 renders at 2m.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.7)
-	assert_almost_eq(plan.surface_height(0, 0), 0.0, 0.0001, "storey-0 surface is flat at 0m (level flattened out)")
-	assert_eq(plan.level_at(0, 0), 3, "but the level field still computes level 3")
+	assert_almost_eq(plan.surface_height(0, 0), 2.0, 0.0001, "storey-0 surface renders its 2 * 1m level tier")
+	assert_eq(plan.level_at(0, 0), 2, "matching the computed level field")
 
 func test_tile_plan_reports_storey_level_and_height() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.7)
 	var tp: Dictionary = plan.tile_plan(0, 0)
 	assert_eq(tp["storey"], 0, "storey 0")
-	assert_eq(tp["level"], 3, "level 3")
-	assert_almost_eq(tp["height"], 1.5, 0.0001, "height = storey*4 + level*0.5")
+	assert_eq(tp["level"], 2, "level 2")
+	assert_almost_eq(tp["height"], 2.0, 0.0001, "height = storey*4 + level*1")
 
-func test_full_invariant_adjacent_surface_differs_by_0_half_or_4() -> void:
+func test_full_invariant_adjacent_surface_differs_by_0_1_or_4() -> void:
 	# Over a seeded region, every cardinal-adjacent pair of rendered surface
-	# heights differs by exactly 0, 0.5, or 4m — the Phase-2 invariant: clean 4m
-	# cliffs (both sides pinned to level 0) and clean 0.5m terraces. Region kept
+	# heights differs by exactly 0, 1, or 4m — clean 4m cliffs (both sides pinned
+	# to level 0) and clean 1m terraces. Region kept
 	# small because level_at is the (slow) reference implementation.
 	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 24.0, 6, "mean")
 	for cz in range(-3, 4):
@@ -357,32 +355,32 @@ func test_full_invariant_adjacent_surface_differs_by_0_half_or_4() -> void:
 			var here: float = plan.surface_height(cx, cz)
 			for d in [Vector2i(1, 0), Vector2i(0, 1)]:
 				var diff: float = absf(here - plan.surface_height(cx + d.x, cz + d.y))
-				var ok: bool = diff < 0.001 or absf(diff - 0.5) < 0.001 or absf(diff - 4.0) < 0.001
+				var ok: bool = diff < 0.001 or absf(diff - 1.0) < 0.001 or absf(diff - 4.0) < 0.001
 				assert_true(ok,
-					"adjacent surface heights differ by 0, 0.5, or 4m (got %.3f at %d,%d)" % [diff, cx, cz])
+					"adjacent surface heights differ by 0, 1, or 4m (got %.3f at %d,%d)" % [diff, cx, cz])
 
 
-func test_rendered_surface_is_flat_per_storey_with_levels_off() -> void:
-	# With RENDER_LEVELS off, a residual that WOULD ramp 0.5m/tile produces NO terrace steps in the
-	# rendered surface — it stays flat at the storey height — while the level FIELD still ramps
-	# (kept for the future flat-terrace feature). This is the fix for the owner's "mini slopes".
-	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean")
+func test_rendered_surface_steps_by_levels_within_a_storey() -> void:
+	# With RENDER_LEVELS on, a residual ramping 1m/tile produces 1m terrace steps in the
+	# rendered surface within a storey.
+	# The surface field then ramps each step over the half-cell exactly like a 4m storey slope.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "min")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
-		return clampf(0.5 * float(cx), 0.0, 1.9))
-	for cx in range(0, 4):
-		var diff: float = absf(plan.surface_height(cx + 1, 0) - plan.surface_height(cx, 0))
-		assert_true(diff < 0.001,
-			"rendered surface is flat per storey, no 0.5m steps (got %.3f at cx=%d)" % [diff, cx])
+		return clampf(1.0 * float(cx), 0.0, 3.9))
+	for cx in range(0, 3):
+		var diff: float = plan.surface_height(cx + 1, 0) - plan.surface_height(cx, 0)
+		assert_almost_eq(diff, 1.0, 0.001,
+			"rendered surface steps up one 1m level per tile (got %.3f at cx=%d)" % [diff, cx])
 	assert_gt(plan.detail_level(3, 0), plan.detail_level(0, 0),
-		"the level FIELD still ramps (kept for the future flat-terrace feature)")
+		"the level FIELD ramps underneath the rendered steps")
 
 
 func test_detail_level_uses_min_aggregation_rounding() -> void:
 	# "min" floors the level quantization just like the storey tier. Flat 1.9m:
-	# storey 0 (floor(1.9/4)=0), residual 1.9 => floor(1.9/0.5)=3 (mean would give 4).
+	# storey 0 (floor(1.9/4)=0), residual 1.9 => floor(1.9/1.0)=1 (mean gives 2).
 	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "min")
 	plan.set_raw_height_override(func(cx: int, cz: int) -> float: return 1.9)
-	assert_eq(plan.detail_level(0, 0), 3, "min aggregation floors the terrace index")
+	assert_eq(plan.detail_level(0, 0), 1, "min aggregation floors the terrace index")
 
 
 # ------------------------------------------------------------

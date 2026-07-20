@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_48321"]
+
+[resource]
+script = ExtResource("1_48321")
+id = &"kaykit.bush.03"
+visual_path = "res://terrain/environment/visuals/kaykit/kaykit_bush_03.tres"
+tags = Array[StringName]([&"bush", &"catalog_only", &"nature"])
+measured_aabb = AABB(-2.6399999, -3.1471257e-07, -2.64, 5.2799997, 5.28, 5.28)
+tint_group = &"bush"
+supports_instance_color = true
+provenance_id = &"kaykit:kaykit.bush.03"

@@ -13,62 +13,26 @@
  },
  {
   "look": [
-   152.0,
-   -1178.0
+   20.0,
+   -1494.0
   ],
-  "name": "R5-V2: shore clarity — no lensing band, thin lap line, distortion over submerged bushes",
+  "name": "L1: level terraces — meadow ridge steps 4.5->5.0->4.5 as short grass slopes, seams sealed green (cell 1,-62)",
   "pos": [
-   135.0,
-   4.6,
-   -1159.6
+   48.0,
+   6.5,
+   -1500.0
   ]
  },
  {
   "look": [
-   48.0,
-   -1092.0
+   1080.0,
+   -960.0
   ],
-  "name": "R5-V3: plunge pool — drop in: swims in the pool, never in mid-air beside the fall",
+  "name": "L2: level terraces — meadow band, 0.5m steps ramp like slope tiles, no rock dressing (cell 45,-42)",
   "pos": [
-   49.3,
+   1080.0,
    6.0,
-   -1110.6
-  ]
- },
- {
-  "look": [
-   48.0,
-   -1094.0
-  ],
-  "name": "R5-V4: crest handoff from above — sheet spills over its own edge seamlessly",
-  "pos": [
-   48.0,
-   10.5,
-   -1084.0
-  ]
- },
- {
-  "look": [
-   -146.0,
-   -968.0
-  ],
-  "name": "S2: coastline curves + no orphan slivers + no see-under gap",
-  "pos": [
-   -167.6,
-   4.0,
-   -952.8
-  ]
- },
- {
-  "look": [
-   -94.0,
-   -991.0
-  ],
-  "name": "S3: river is a bounded channel, no floating sections",
-  "pos": [
-   -80.3,
-   8.0,
-   -981.0
+   -1008.0
   ]
  }
 ]

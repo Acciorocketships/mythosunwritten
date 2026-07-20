@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_62qhh"]
+
+[resource]
+script = ExtResource("1_62qhh")
+id = &"kaykit.grass.04"
+visual_path = "res://terrain/environment/visuals/kaykit/kaykit_grass_04.tres"
+tags = Array[StringName]([&"catalog_only", &"grass", &"nature"])
+measured_aabb = AABB(-0.57277113, -0.047736127, -0.7120616, 1.1044984, 0.93522584, 1.3664204)
+tint_group = &"grass"
+supports_instance_color = true
+provenance_id = &"kaykit:kaykit.grass.04"

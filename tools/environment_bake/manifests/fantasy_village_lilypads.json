@@ -1,0 +1,11 @@
+{
+  "pack": "fantasy_village",
+  "license": "FantasyVillageFBX source-pack license",
+  "default_scale": [1.5, 1.5, 1.5],
+  "assets": [
+    {"id":"sfv.lily_pad.01","source":"res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_001.fbx","tags":["floating","lily_pad","nature"],"tint_group":"grass","supports_instance_color":true},
+    {"id":"sfv.lily_pad.02","source":"res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_002.fbx","tags":["floating","lily_pad","nature"],"tint_group":"grass","supports_instance_color":true},
+    {"id":"sfv.lily_pad.03","source":"res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_003.fbx","tags":["floating","lily_pad","nature"],"tint_group":"grass","supports_instance_color":true},
+    {"id":"sfv.lily_pads.01","source":"res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pads_001.fbx","tags":["floating","lily_pad","nature"],"tint_group":"grass","supports_instance_color":true}
+  ]
+}
