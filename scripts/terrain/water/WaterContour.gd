@@ -545,26 +545,15 @@ static func _rect_crossing(a: Vector2, b: Vector2, rect: Rect2) -> Vector2:
 
 ## --- Step 6: per-point level/normal/wall attributes ---
 ##
-## Outward (dry-side) normal from a CENTRAL-DIFFERENCE gradient of the
-## wetness field `_wet_f` (level-ground) at p, not from the polyline's own
-## tangent — the tangent-perpendicular approach was tried first and found
-## unreliable exactly at a sharp (near-90-degree) convex wall corner: after
-## 2 Chaikin passes a corner-adjacent point can sit on a stepped/quantized
-## rock shelf whose LOCAL tangent bisects the two real wall faces, so a
-## single probe along that bisector can miss both (measured directly on
-## this seed's site: point (12.79,-1043.53), tangent-normal (0.47,0.88)
-## read a flat 0.0 m/m slope in that one direction while ground genuinely
-## rises past WALL_SLOPE in every OTHER direction around the same point —
-## see this task's report). The wetness gradient has no such blind spot: it
-## is a property of the CONTINUOUS field itself (independent of how the
-## smoothed polyline happens to be parameterized at that point), always
-## points toward increasing wetness by construction, and at the same
-## offending corner correctly resolves to the wall-facing direction
-## (verified: -gradient there triggers the +1.5m wall probe at slope 5.33,
-## comfortably past WALL_SLOPE). `h=1.0` central difference (four
-## WaterField.level_at + TerrainSurfaceField.surface_y calls per point) is
-## the natural sample width for a boundary lying on a STEP=3.0m grid.
-static func _outward_normal(ctx: Dictionary, p: Vector2) -> Vector2:
+## Pointwise wetness-gradient fallback used only when an entire clipped
+## curve has no decisive wet/dry side samples.  A gradient is a useful side
+## witness, but it is NOT a stable moving frame: at a centre-wet diagonal
+## saddle it can pass through zero and reverse 180 degrees between adjacent
+## 1.5m contour samples.  WaterSkin then extrudes neighbouring rim columns to
+## opposite sides, forming a bow tie and leaving the genuinely wet saddle
+## unmeshed.  `_curve_outward_side` below therefore chooses one consistent
+## side of the G1 curve and this helper is only the degenerate fallback.
+static func _gradient_outward_normal(ctx: Dictionary, p: Vector2) -> Vector2:
 	var h := 1.0
 	var fx1: float = _wet_f(ctx, p + Vector2(h, 0.0))
 	var fx0: float = _wet_f(ctx, p - Vector2(h, 0.0))
@@ -574,6 +563,58 @@ static func _outward_normal(ctx: Dictionary, p: Vector2) -> Vector2:
 	if grad.length_squared() < 0.000001:
 		return Vector2(1, 0)   # degenerate (locally flat wetness — no direction to derive) — arbitrary but fixed
 	return -grad.normalized()   # outward = away from increasing wetness = toward dry
+
+
+## Unit tangent of the already-smoothed/resampled curve.  Central difference
+## is used in the interior and one-sided differences at open endpoints.  A
+## closed curve wraps, so its frame stays continuous across point 0.
+static func _curve_tangent(pts: PackedVector2Array, closed: bool, i: int) -> Vector2:
+	var n: int = pts.size()
+	var lo: int = (i - 1 + n) % n if closed else maxi(i - 1, 0)
+	var hi: int = (i + 1) % n if closed else mini(i + 1, n - 1)
+	var tangent: Vector2 = pts[hi] - pts[lo]
+	if tangent.length_squared() < 0.000001:
+		return Vector2(1, 0)
+	return tangent.normalized()
+
+
+## Selects one globally consistent side of a clipped G1 contour as outward.
+## `+1` means the tangent's left normal, `-1` its right normal. Each point
+## walks 0.5/1.5/3/6m probes on both sides and votes at the FIRST distance
+## that distinguishes them; the long probes are necessary because two
+## Chaikin passes can move the visual curve more than 1.5m inside a broad
+## wet fill. Magnitudes are intentionally discarded so one very tall cliff
+## cannot outweigh a long run of ordinary shoreline. The contour separates
+## wet from dry by construction, so all decisive votes should agree. Using one
+## side for the whole curve makes a 180-degree adjacent-frame reversal
+## impossible while still letting the frame turn smoothly with the curve.
+##
+## The old concern with tangent normals was wall CLASSIFICATION at a convex
+## corner whose tangent bisected two cliff arms. `_attributes` now probes
+## this normal plus +/-45-degree guards, so either real arm is still seen;
+## the tangent frame here controls geometry, while those guarded probes
+## control the wall flag.
+static func _curve_outward_side(ctx: Dictionary, pts: PackedVector2Array,
+		closed: bool) -> float:
+	var votes := 0
+	for i in pts.size():
+		var tangent: Vector2 = _curve_tangent(pts, closed, i)
+		var left := Vector2(-tangent.y, tangent.x)
+		for d in [0.5, 1.5, 3.0, WaterField.FILL_STEP]:
+			var left_score: float = _wet_f(ctx, pts[i] + left * float(d))
+			var right_score: float = _wet_f(ctx, pts[i] - left * float(d))
+			if left_score < right_score - 0.01:
+				votes += 1
+				break
+			if right_score < left_score - 0.01:
+				votes -= 1
+				break
+	if votes != 0:
+		return 1.0 if votes > 0 else -1.0
+	var mid: int = pts.size() / 2
+	var tangent: Vector2 = _curve_tangent(pts, closed, mid)
+	var left := Vector2(-tangent.y, tangent.x)
+	return 1.0 if left.dot(_gradient_outward_normal(ctx, pts[mid])) >= 0.0 else -1.0
 
 
 ## Per-point level/normal/wall attributes. Wall flag probes ground at +0.5m
@@ -610,11 +651,13 @@ static func _attributes(ctx: Dictionary, pts: PackedVector2Array, closed: bool) 
 	levels.resize(n)
 	normals.resize(n)
 	wall.resize(n)
+	var outward_side: float = _curve_outward_side(ctx, pts, closed)
 	for i in n:
 		var p: Vector2 = pts[i]
 		var lvl: float = WaterField.level_at(ctx, p)
 		levels[i] = lvl
-		var nrm: Vector2 = _outward_normal(ctx, p)
+		var tangent: Vector2 = _curve_tangent(pts, closed, i)
+		var nrm := Vector2(-tangent.y, tangent.x) * outward_side
 		normals[i] = nrm
 		var is_wall := false
 		var probes: Array[Vector2] = [nrm, nrm.rotated(PI * 0.25), nrm.rotated(-PI * 0.25)]

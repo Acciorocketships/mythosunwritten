@@ -25,6 +25,36 @@ func test_render_lattice_is_dense_enough_for_geometric_wavelets() -> void:
 	assert_true(WaterSkin.STEP <= 2.0,
 		"water render lattice is at most 2m (currently %.2fm)" % WaterSkin.STEP)
 
+
+## A genuine free shore is allowed to curl, but its visible cross-section
+## must be one outward-bulging cap: as reach increases, the tangent may only
+## rotate from the small crest toward vertical/down.  If a later segment
+## becomes shallower again the profile has an inflection—an inward/concave
+## hook like the owner explicitly rejected.  This is a geometric invariant
+## over the authored free-rim control polygon, independent of terrain.
+func test_free_meniscus_has_no_concave_inflection() -> void:
+	var profile: Array[Vector2] = [
+		Vector2(0.0, 0.0),
+		Vector2(WaterSkin.RIM_ROW1_REACH, WaterSkin.RIM_ROW1_BULGE),
+		Vector2(WaterSkin.RIM_ROW2_REACH, -WaterSkin.RIM_ROW2_DROP),
+		Vector2(WaterSkin.RIM_ROW3_REACH, -WaterSkin.RIM_ROW3_DROP),
+		Vector2(WaterSkin.RIM_ROW4_REACH, -WaterSkin.RIM_ROW4_DROP),
+		Vector2(WaterSkin.RIM_ROW5_REACH, -WaterSkin.RIM_ROW5_DROP),
+	]
+	var previous_angle := INF
+	var offenders: Array[String] = []
+	for i in range(profile.size() - 1):
+		var edge: Vector2 = profile[i + 1] - profile[i]
+		var angle: float = atan2(edge.y, edge.x)
+		if i > 0 and angle > previous_angle + 0.001:
+			offenders.append("segment %d angle %.2fdeg follows %.2fdeg" % [
+				i, rad_to_deg(angle), rad_to_deg(previous_angle)])
+		previous_angle = angle
+	print("MEAS free meniscus profile=%s concave inflections=%s" % [
+		str(profile), str(offenders)])
+	assert_true(offenders.is_empty(),
+		"free meniscus tangent turns monotonically outward/down with no concave hook: %s" % str(offenders))
+
 # --- Task 5 rim classification (mirrors WaterSkin's outer-row numeric
 # structure, not its reach/pinch formula — see _on_rim_outer_row) ---
 const RIM_MAX_REACH := WaterField.FILL_STEP \
@@ -242,7 +272,13 @@ static func _find_row2_vertex(verts: PackedVector3Array, p: Vector2, nrm2d: Vect
 		if absf(off.dot(perp)) > 0.05:
 			continue
 		var reach: float = off.dot(nrm2d)
-		if reach < 0.15 or reach > 1.9:
+		# A smoothed contour can sit several metres inside field-truth water.
+		# WaterSkin now carries a level shelf across that wet run before row2,
+		# so the structural search must include one full 6m fill cell plus the
+		# recessed-wall allowance rather than assuming every rim starts within
+		# 1.9m of the smoothed curve.
+		if reach < 0.15 or reach > WaterSkin.WET_SHELF_SCAN_MAX \
+				+ WaterSkin.RIM_WALL_REACH + 1.0:
 			continue
 		if best_i < 0:
 			best_i = i
@@ -261,7 +297,8 @@ static func _column_diagnostic(verts: PackedVector3Array, p: Vector2,
 	var out: Array[String] = []
 	for v: Vector3 in verts:
 		var off: Vector2 = Vector2(v.x, v.z) - p
-		if off.length() > 2.0 or absf(off.dot(perp)) > 0.12:
+		if off.length() > WaterSkin.WET_SHELF_SCAN_MAX \
+				+ WaterSkin.RIM_WALL_REACH + 1.0 or absf(off.dot(perp)) > 0.12:
 			continue
 		out.append("along=%.3f cross=%.3f y=%.3f" % [
 			off.dot(nrm2d), off.dot(perp), v.y - level])
@@ -323,13 +360,33 @@ static func _bank_contact_distance(region, p: Vector2, nrm: Vector2, level: floa
 	return INF
 
 
+## Test-side field-truth counterpart to the renderer's contact concept:
+## distance along one outward column until the first dry sample. This reads
+## WaterField/TerrainSurfaceField directly and deliberately knows nothing
+## about the rim's row layout.
+static func _field_wet_reach(ctx: Dictionary, region, p: Vector2,
+		nrm: Vector2, max_reach: float = WaterField.FILL_STEP) -> float:
+	var last_wet := 0.0
+	var d := 0.0
+	while d <= max_reach + 0.0001:
+		var q: Vector2 = p + nrm * d
+		var level: float = WaterField.level_at(ctx, q)
+		var ground: float = TerrainSurfaceField.surface_y(region, q.x, q.y)
+		if level == -INF or level <= ground + WaterField.EPS:
+			break
+		last_wet = d
+		d += 0.05
+	return last_wet
+
+
 ## Returns the nearest contour sample to a reported world-space failure pin.
 ## The test deliberately discovers the sample instead of copying a production
 ## curve index, so contour reshaping cannot make the pin silently inspect an
 ## unrelated old index.
 static func _nearest_curve_sample(curves: Array, hint: Vector2) -> Dictionary:
 	var out := {"distance": INF}
-	for c: Dictionary in curves:
+	for curve_i in curves.size():
+		var c: Dictionary = curves[curve_i]
 		var pts: PackedVector2Array = c.pts
 		for i in pts.size():
 			var d: float = pts[i].distance_to(hint)
@@ -339,6 +396,9 @@ static func _nearest_curve_sample(curves: Array, hint: Vector2) -> Dictionary:
 					"point": pts[i],
 					"normal": c.normals[i],
 					"level": c.levels[i],
+					"curve": curve_i,
+					"index": i,
+					"wall": c.wall[i],
 				}
 	return out
 
@@ -400,6 +460,129 @@ static func _edge_is_surface_covered(arrays: Array, a: Vector3, b: Vector3) -> b
 	var expected: float = (a.y + b.y) * 0.5
 	return _skin_y_at(arrays, mid + side) >= expected - 0.10 \
 		and _skin_y_at(arrays, mid - side) >= expected - 0.10
+
+
+## Minimal scene-free invocation of WaterSkin's real rim emitter over flat
+## low ground with no field water beyond the supplied curve. This is a true
+## free edge by construction, unlike the reported inner-corner tongue that
+## the refined hydrostatic field correctly proves is connected water.
+static func _synthetic_free_rim() -> Dictionary:
+	var region := HeightfieldRegion.new({}, {})
+	var ctx: Dictionary = {"ponds": [], "rivers": [], "buckets": {},
+		"region": region}
+	var c: Dictionary = {
+		"pts": PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.0, 1.5)]),
+		"levels": PackedFloat32Array([3.0, 3.0]),
+		"normals": PackedVector2Array([Vector2(1.0, 0.0), Vector2(1.0, 0.0)]),
+		"wall": PackedByteArray([0, 0]),
+		"closed": false,
+	}
+	var st: Dictionary = {
+		"ctx": ctx,
+		"region": region,
+		"verts": PackedVector3Array(),
+		"idx": PackedInt32Array(),
+		"weld": {},
+		"normal_accum": PackedVector3Array(),
+	}
+	WaterSkin._rim(st, c)
+	return {"st": st, "curve": c, "normals": WaterSkin._bake_normals(st)}
+
+
+## Exact 2026-07-21 owner view at cell (-17,-20).  The opaque-water replay
+## proves the pale bulb is the emitted rim itself, not refraction.  These rays
+## land on that bulb before it reaches the adjoining inner cliff corner.  This
+## is a contact/join, so the visible surface must remain at the neighbouring
+## contour level; satisfying the probe with the lower curl is the bug.
+func test_reported_inner_corner_minus17_keeps_level_contact() -> void:
+	var chunk := Vector2i(-3, -3)
+	var region = _region(SEED, chunk)
+	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
+	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
+	var pins: Array[Vector2] = [
+		Vector2(-401.5849, -488.5688),
+		Vector2(-401.0370, -486.5928),
+		Vector2(-399.6116, -485.2105),
+	]
+	for pin: Vector2 in pins:
+		var nearest: Dictionary = _nearest_curve_sample(curves, pin)
+		var skin_y: float = _skin_y_at(skin.arrays, pin)
+		var ground: float = TerrainSurfaceField.surface_y(region, pin.x, pin.y)
+		var field: float = WaterField.level_at(ctx, pin)
+		var side: float = (pin - Vector2(nearest.point)).dot(Vector2(nearest.normal))
+		var contact: Dictionary = WaterSkin._wall_contacts(
+			{"region": region}, curves[nearest.curve])
+		print("MEAS 2026-07-21 inner-corner p=%s ground=%.3f field=%.3f skin=%.3f contour=%s normal=%s level=%.3f dist=%.3f side=%.3f wall=%d contact=%d reach=%.3f" % [
+			pin, ground, field, skin_y, nearest.point, nearest.normal,
+			nearest.level, nearest.distance, side, nearest.wall,
+			contact.flags[nearest.index], contact.face_reach[nearest.index]])
+		assert_true(skin_y >= float(nearest.level) - 0.10,
+			"inner-corner water reaches its contact at level at %s (skin %.3f, level %.3f)" % [
+				pin, skin_y, float(nearest.level)])
+
+
+## Exact 2026-07-21 owner view at cell (-9,-31).  The middle screen ray is
+## the narrow visible slot at the recessed cliff tip: its neighbours hit
+## level-water triangles, but this point has no water hit.  Probe a short
+## world-space transect across the slot and require a level shelf rather than
+## accepting a buried/free-edge curl.
+func test_reported_cliff_shore_minus9_has_level_tip_coverage() -> void:
+	var chunk := Vector2i(-2, -4)
+	var region = _region(SEED, chunk)
+	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
+	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
+	var pins: Array[Vector2] = [
+		Vector2(-227.80, -755.56),
+		Vector2(-228.04, -755.63),
+		Vector2(-228.28, -755.70),
+	]
+	for pin: Vector2 in pins:
+		var nearest: Dictionary = _nearest_curve_sample(curves, pin)
+		var skin_y: float = _skin_y_at(skin.arrays, pin)
+		var ground: float = TerrainSurfaceField.surface_y(region, pin.x, pin.y)
+		var field: float = WaterField.level_at(ctx, pin)
+		var side: float = (pin - Vector2(nearest.point)).dot(Vector2(nearest.normal))
+		var contact: Dictionary = WaterSkin._wall_contacts(
+			{"region": region}, curves[nearest.curve])
+		print("MEAS 2026-07-21 cliff-tip p=%s ground=%.3f field=%.3f skin=%.3f contour=%s normal=%s level=%.3f dist=%.3f side=%.3f wall=%d contact=%d reach=%.3f" % [
+			pin, ground, field, skin_y, nearest.point, nearest.normal,
+			nearest.level, nearest.distance, side, nearest.wall,
+			contact.flags[nearest.index], contact.face_reach[nearest.index]])
+		assert_true(skin_y >= float(nearest.level) - 0.10,
+			"cliff-shore tip remains level through %s (skin %.3f, level %.3f)" % [
+				pin, skin_y, float(nearest.level)])
+
+
+## Exact 2026-07-21 owner view at cell (-11,-31).  Two screen rays through
+## the large triangular saddle gap hit y=0 terrain while adjacent rays hit
+## y=3 water.  The saddle lies inside the connected low basin, so it must be
+## represented by both the hydrostatic field and a level mesh surface.
+func test_reported_saddle_minus11_is_wet_and_level_covered() -> void:
+	var chunk := Vector2i(-2, -4)
+	var region = _region(SEED, chunk)
+	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
+	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
+	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
+	var pins: Array[Vector2] = [
+		Vector2(-250.4063, -754.8383),
+		Vector2(-250.9008, -754.5195),
+	]
+	for pin: Vector2 in pins:
+		var nearest: Dictionary = _nearest_curve_sample(curves, pin)
+		var skin_y: float = _skin_y_at(skin.arrays, pin)
+		var ground: float = TerrainSurfaceField.surface_y(region, pin.x, pin.y)
+		var field: float = WaterField.level_at(ctx, pin)
+		var side: float = (pin - Vector2(nearest.point)).dot(Vector2(nearest.normal))
+		print("MEAS 2026-07-21 saddle p=%s ground=%.3f field=%.3f skin=%.3f contour=%s normal=%s level=%.3f dist=%.3f side=%.3f" % [
+			pin, ground, field, skin_y, nearest.point, nearest.normal,
+			nearest.level, nearest.distance, side])
+		assert_true(field != -INF and field - ground >= 0.25,
+			"saddle point %s belongs to the connected water basin" % pin)
+		assert_true(skin_y >= float(nearest.level) - 0.10,
+			"saddle point %s has level water coverage (skin %.3f, level %.3f)" % [
+				pin, skin_y, float(nearest.level)])
 
 
 ## Regression pins for the owner's 2026-07-13 screenshots at cells (3,-47),
@@ -714,64 +897,42 @@ func test_reported_normal_corner_rim_reaches_recessed_turn() -> void:
 				pin, skin_y, float(nearest.level)])
 
 
-## In the same exact view, an unbounded water edge ends over a terrain drop.
-## The old safety clamp sends row2 directly from the 4cm crest to the landing
-## ground, creating the sharp vertical polygon the owner marked.  A rounded,
-## substance-like edge must contain a visible shoulder and a lower curl within
-## the first 0.8m of its own outward-normal column; neither assertion copies
-## WaterSkin's row count, reach constants, or production branch condition.
-func test_reported_unbounded_edge_has_a_rounded_vertical_cross_section() -> void:
-	var chunk := Vector2i(0, -7)
-	var region = _region(SEED, chunk)
-	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
-	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
-	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
-	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
-	var hint := Vector2(151.0, -1213.6)
-	var sample := {"drop": -INF}
-	for c: Dictionary in curves:
-		for i in c.pts.size():
-			var p: Vector2 = c.pts[i]
-			if p.distance_to(hint) > 30.0:
-				continue
-			var nrm: Vector2 = c.normals[i]
-			var q: Vector2 = p + nrm * 0.45
-			var far_q: Vector2 = p + nrm * WaterSkin.WALL_CONTACT_SCAN_MAX
-			var drop: float = c.levels[i] - TerrainSurfaceField.surface_y(region, q.x, q.y)
-			# A low near probe followed by sustained high ground inside the
-			# signed-depth cell is a recessed bank, not an unbounded edge. The
-			# compact-lobe oracle must select a column that remains genuinely free.
-			if TerrainSurfaceField.surface_y(region, far_q.x, far_q.y) \
-					> c.levels[i] + 0.05:
-				continue
-			if drop > sample.drop:
-				sample = {"drop": drop, "point": p, "normal": nrm,
-					"level": c.levels[i]}
-	assert_true(sample.drop > 1.0,
-		"the exact view contains a genuinely unbounded/drop shore (drop %.3f)" % sample.drop)
-	if sample.drop <= 1.0:
-		return
-	var perp := Vector2(-sample.normal.y, sample.normal.x)
-	var shoulder := false
-	var lower_curl := false
-	var column: Array[String] = []
-	for v: Vector3 in verts:
-		var off: Vector2 = Vector2(v.x, v.z) - sample.point
-		var reach: float = off.dot(sample.normal)
-		if reach < 0.0 or reach > 0.8 or absf(off.dot(perp)) > 0.04:
-			continue
-		var rel_y: float = v.y - sample.level
-		column.append("(r=%.3f,y=%.3f)" % [reach, rel_y])
-		if reach >= 0.20 and rel_y <= 0.06 and rel_y >= -0.30:
-			shoulder = true
-		if reach >= 0.30 and rel_y < -0.30 and rel_y >= -0.85:
-			lower_curl = true
-	print("MEAS exact unbounded-edge sample p=%s n=%s drop=%.3f column=%s" % [
-		sample.point, sample.normal, sample.drop, str(column)])
-	assert_true(shoulder,
-		"unbounded edge has a visible rounded shoulder instead of jumping straight to landing ground")
-	assert_true(lower_curl,
-		"unbounded edge curls down by a finite body thickness before its terminal edge")
+## Falsification barrier for the owner's reported corpus: a first-dry field
+## sample beyond a contour is not a legitimate drop shore when the terrain is
+## still meaningfully below the water level. That was precisely the false-dry
+## 6m-lattice tongue at (-17,-20). Meniscus geometry must not be used to hide
+## this topology error; the field must remain wet and level instead.
+func test_reported_seed_has_no_unbounded_false_dry_shore() -> void:
+	var worst := {"drop": -INF}
+	var dry_contacts := 0
+	for chunk: Vector2i in [Vector2i(0, -6), Vector2i(0, -7),
+			Vector2i(-4, -18), Vector2i(-2, -4), Vector2i(-3, -3)]:
+		var region = _region(SEED, chunk)
+		var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
+		var curves: Array = WaterContour.curves(ctx, _rect(chunk))
+		for c: Dictionary in curves:
+			for i in c.pts.size():
+				var p: Vector2 = c.pts[i]
+				var nrm: Vector2 = c.normals[i]
+				var wet_reach: float = _field_wet_reach(ctx, region, p, nrm)
+				if wet_reach >= WaterField.FILL_STEP - 0.001:
+					continue
+				var q: Vector2 = p + nrm * (wet_reach + 0.15)
+				var drop: float = c.levels[i] \
+					- TerrainSurfaceField.surface_y(region, q.x, q.y)
+				if WaterField.wet(ctx, region, q):
+					continue
+				dry_contacts += 1
+				if drop > worst.drop:
+					worst = {"drop": drop, "point": p, "normal": nrm,
+						"level": c.levels[i], "wet_reach": wet_reach,
+						"chunk": chunk}
+	print("MEAS reported-corpus first-dry contacts=%d worst unsupported drop=%s" % [
+		dry_contacts, str(worst)])
+	assert_true(dry_contacts > 0,
+		"reported-seed scan exercised at least one ordinary dry shoreline contact")
+	assert_true(worst.drop <= 0.10,
+		"reported water never terminates over connected low ground; worst dry contact may be at most 10cm below its level: %s" % str(worst))
 
 
 ## The visible shoreline must be one continuous rounded surface.  The old
@@ -1484,9 +1645,8 @@ func test_pond_frames_are_calm() -> void:
 ##      component (the visible curl) — WaterSkin._curl_normal's own contract.
 ##      Located structurally (_find_row2_vertex — does NOT reproduce
 ##      WaterSkin's own reach/wall-blend formula, same discipline
-##      _on_rim_outer_row already documents) on the pond chunk's own closed
-##      curve, whose 2 non-wall points were verified this task (see
-##      r3-task-6-report.md).
+##      _on_rim_outer_row already documents) on a deliberately synthetic
+##      free edge. The reported inner corner is connected water, not a rim.
 ##   2. On SITE_CHUNK, at least one interior-classified vertex (>=1.5m from
 ##      any curve point, mirrors test_interior_rides_field's own classifier)
 ##      whose surface genuinely slopes (an INDEPENDENT, test-side central
@@ -1496,54 +1656,35 @@ func test_pond_frames_are_calm() -> void:
 ##      normal that measurably deviates from UP.
 func test_rim_normals_curl_outward() -> void:
 	var water: WaterPlan = _water(SEED)
-	var pond_chunk := Vector2i(-4, -18)
-	var region = _region(SEED, pond_chunk)
-	var ctx: Dictionary = WaterField.ctx(water, pond_chunk, region)
-	var curves: Array = WaterContour.curves(ctx, _rect(pond_chunk))
-	var found := false
-	var p := Vector2.ZERO
-	var nrm2d := Vector2.ZERO
-	var lvl := 0.0
-	for c: Dictionary in curves:
-		var pts: PackedVector2Array = c.pts
-		for i in pts.size():
-			var q: Vector2 = pts[i] + c.normals[i] * WaterSkin.RIM_WALL_REACH
-			var g: float = TerrainSurfaceField.surface_y(region, q.x, q.y)
-			if g > c.levels[i] + WaterSkin.RISE_MARGIN:
-				continue
-			p = pts[i]
-			nrm2d = c.normals[i]
-			lvl = c.levels[i]
-			found = true
-			break
-		if found:
-			break
-	assert_true(found, "pond chunk has a non-wall curve point (site precondition)")
-	if not found:
-		return
-	var skin: Dictionary = WaterSkin.build(water, pond_chunk, region)
-	assert_false(skin.is_empty(), "pond chunk builds a skin")
-	if skin.is_empty():
-		return
-	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
-	var norms: PackedVector3Array = skin.arrays[Mesh.ARRAY_NORMAL]
+	# Part 1 uses a deliberately free, flat, low-ground edge. The reported
+	# inner-corner point is no longer a valid fixture: it is connected water,
+	# and therefore must not emit a free meniscus at all.
+	var fixture: Dictionary = _synthetic_free_rim()
+	var st: Dictionary = fixture.st
+	var verts: PackedVector3Array = st.verts
+	var norms: PackedVector3Array = fixture.normals
+	var p := Vector2(0.0, 0.0)
+	var nrm2d := Vector2(1.0, 0.0)
+	var lvl := 3.0
 	assert_eq(norms.size(), verts.size(), "one normal per vertex")
 	var vi0: int = _find_vertex(verts, Vector3(p.x, lvl, p.y), 0.01)
-	var vi2: int = _find_row2_vertex(verts, p, nrm2d)   # located by column position (clamp-stable); the curl NORMAL it reads is set independently of row2's clamped Y
-	assert_true(vi0 >= 0, "row0 vertex found at the non-wall point")
-	assert_true(vi2 >= 0, "row2 vertex found at the non-wall point")
+	var vi2: int = _find_row2_vertex(verts, p, nrm2d)
+	assert_true(vi0 >= 0, "row0 vertex found at the synthetic free point")
+	assert_true(vi2 >= 0, "row2 vertex found at the synthetic free point")
 	if vi2 < 0:
-		print("MEAS missing pond row2 column: %s" % str(
+		print("MEAS missing synthetic row2 column: %s" % str(
 			_column_diagnostic(verts, p, nrm2d, lvl)))
 	if vi0 < 0 or vi2 < 0:
 		return
 	var n0: Vector3 = norms[vi0]
 	var n2: Vector3 = norms[vi2]
 	var outward3 := Vector3(nrm2d.x, 0.0, nrm2d.y)
-	print("MEAS test_rim_normals_curl_outward: non-wall pt=%s row0.normal=%s (dot_up=%.4f) row2.normal=%s (outward_comp=%.4f)" % [
+	print("MEAS test_rim_normals_curl_outward: synthetic free pt=%s row0.normal=%s (dot_up=%.4f) row2.normal=%s (outward_comp=%.4f)" % [
 		p, n0, n0.dot(Vector3.UP), n2, n2.dot(outward3)])
-	assert_true(n0.dot(Vector3.UP) > 0.9, "row0's normal is near-UP at a non-wall point: %s" % n0)
-	assert_true(n2.dot(outward3) > 0.0, "row2's normal has a positive outward component at a non-wall point: %s" % n2)
+	assert_true(n0.dot(Vector3.UP) > 0.9,
+		"row0's normal is near-UP at a true free point: %s" % n0)
+	assert_true(n2.dot(outward3) > 0.0,
+		"row2's normal has a positive outward component at a true free point: %s" % n2)
 
 	# Part 2: interior normals deviate from UP where the surface slopes.
 	var region2 = _region(SEED, SITE_CHUNK)
@@ -1699,78 +1840,46 @@ func test_wall_rim_reaches_the_face() -> void:
 		"the overshoot does not break the buried-rim free-edge invariant: %s" % str(offenders))
 
 
-## Complement of test_wall_rim_reaches_the_face: find a genuinely unbounded
-## column whose ground drops inside 0.35m and is still low at the 1.5m wall
-## reach. Its row2 must be the compact rounded shoulder (about 0.30m outward,
-## 0.06m down), never the long recessed-wall skirt. Both terrain probes and
-## the row lookup are test-side, independent of WaterSkin's branch condition.
+## Complement of test_wall_rim_reaches_the_face: a deliberately synthetic
+## free edge over flat low ground must keep the compact convex lobe. Reported
+## inner-corner water is intentionally not the fixture: the hydrostatic field
+## now proves that location is connected and level, so emitting any free rim
+## there would itself be a regression.
 func test_drop_rim_is_a_compact_rounded_lobe() -> void:
-	var pond_chunk := Vector2i(-4, -18)
-	var water: WaterPlan = _water(SEED)
-	var region = _region(SEED, pond_chunk)
-	var ctx: Dictionary = WaterField.ctx(water, pond_chunk, region)
-	var curves: Array = WaterContour.curves(ctx, _rect(pond_chunk))
-	assert_true(curves.size() > 0, "pond chunk has curves")
-	if curves.is_empty():
-		return
-
-	# Scan for a true free edge: low ground both near the crest and at the full
-	# recessed-wall distance. A local dip followed by rock at 1.5m is a bank
-	# contact and intentionally takes the longer profile.
-	var probe_reach := 0.35
-	var drop_margin := 0.15
-	var dp := Vector2.ZERO
-	var dnrm := Vector2.ZERO
-	var dlvl := 0.0
-	var dground := 0.0
-	var found := false
-	for c: Dictionary in curves:
-		var pts: PackedVector2Array = c.pts
-		for i in pts.size():
-			var pp: Vector2 = pts[i]
-			var nn: Vector2 = c.normals[i]
-			var ll: float = c.levels[i]
-			var land: Vector2 = pp + nn * probe_reach
-			var g: float = TerrainSurfaceField.surface_y(region, land.x, land.y)
-			var far: Vector2 = pp + nn * WaterSkin.RIM_WALL_REACH
-			var gfar: float = TerrainSurfaceField.surface_y(region, far.x, far.y)
-			if g < ll - drop_margin and gfar <= ll + WaterSkin.RISE_MARGIN:
-				dp = pp
-				dnrm = nn
-				dlvl = ll
-				dground = g
-				found = true
-				break
-		if found:
-			break
-	assert_true(found, "pond chunk has a non-wall drop-off shore point (ground drops >%.2fm below level within %.2fm) — the site precondition" % [drop_margin, probe_reach])
-	if not found:
-		return
-	print("MEAS test_drop_rim_is_a_compact_rounded_lobe: drop pt=%s nrm=%s level=%.3f ground@%.2f=%.3f (drops %.3fm)" % [
-		dp, dnrm, dlvl, probe_reach, dground, dlvl - dground])
-
-	var skin: Dictionary = WaterSkin.build(water, pond_chunk, region)
-	assert_false(skin.is_empty(), "pond chunk builds a skin")
-	if skin.is_empty():
-		return
-	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var fixture: Dictionary = _synthetic_free_rim()
+	var st: Dictionary = fixture.st
+	var verts: PackedVector3Array = st.verts
+	var dp := Vector2(0.0, 0.0)
+	var dnrm := Vector2(1.0, 0.0)
+	var dlvl := 3.0
 	var vi2: int = _find_row2_vertex(verts, dp, dnrm)
-	assert_true(vi2 >= 0, "row2 vertex located in the drop point's own normal column")
+	var vi5: int = _find_vertex(verts, Vector3(
+		WaterSkin.RIM_ROW5_REACH, dlvl - WaterSkin.RIM_ROW5_DROP, 0.0), 0.01)
+	assert_true(vi2 >= 0,
+		"row2 vertex located in the synthetic free point's own normal column")
+	assert_true(vi5 >= 0,
+		"terminal row5 vertex is emitted at the compact free-rim endpoint")
 	if vi2 < 0:
-		print("MEAS missing drop row2 column: %s" % str(
+		print("MEAS missing synthetic drop row2 column: %s" % str(
 			_column_diagnostic(verts, dp, dnrm, dlvl)))
-	if vi2 < 0:
+	if vi2 < 0 or vi5 < 0:
 		return
 	var row2: Vector3 = verts[vi2]
-	var g_row2: float = TerrainSurfaceField.surface_y(region, row2.x, row2.z)
-	var reach: float = (Vector2(row2.x, row2.z) - dp).dot(dnrm)
-	var rel_y: float = row2.y - dlvl
-	print("MEAS test_drop_rim_is_a_compact_rounded_lobe: row2=%s ground=%.3f reach=%.3f rel_y=%.3f" % [
-		row2, g_row2, reach, rel_y])
-	assert_true(reach >= 0.20 and reach <= 0.70,
-		"drop shoulder stays a compact edge, not a horizontal film (reach %.3f)" % reach)
-	assert_true(rel_y <= 0.06 and rel_y >= -0.30,
-		"drop shoulder begins with a finite rounded descent (relative y %.3f)" % rel_y)
+	var row5: Vector3 = verts[vi5]
+	var reach2: float = (Vector2(row2.x, row2.z) - dp).dot(dnrm)
+	var reach5: float = (Vector2(row5.x, row5.z) - dp).dot(dnrm)
+	var rel_y2: float = row2.y - dlvl
+	var rel_y5: float = row5.y - dlvl
+	print("MEAS test_drop_rim_is_a_compact_rounded_lobe: row2=%s reach=%.3f rel_y=%.3f row5=%s reach=%.3f rel_y=%.3f" % [
+		row2, reach2, rel_y2, row5, reach5, rel_y5])
+	assert_true(reach2 >= 0.15 and reach2 <= 0.70,
+		"free shoulder stays compact, not a horizontal film (reach %.3f)" % reach2)
+	assert_true(rel_y2 <= 0.06 and rel_y2 >= -0.30,
+		"free shoulder begins with a finite rounded descent (relative y %.3f)" % rel_y2)
+	assert_true(reach5 > reach2 and reach5 <= 0.80,
+		"free rim continues outward to one compact terminal edge (row5 reach %.3f)" % reach5)
+	assert_true(rel_y5 < rel_y2 and rel_y5 >= -0.85,
+		"free rim curls monotonically down to finite body thickness (row5 relative y %.3f)" % rel_y5)
 
 
 ## --- r3 Task 7 (triggers + sampler; the old marching-squares mesher's own

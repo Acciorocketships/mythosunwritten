@@ -221,6 +221,27 @@ func test_sampler_level_at_tracks_the_field() -> void:
 	root.free()
 
 
+## The sparse 3m topology repair is part of field truth, so the frozen
+## sampler must retain it after the worker context/terrain region disappear.
+## This is the exact submerged passage from the 2026-07-21 inner-corner
+## screenshot; the old native-6m-only snapshot returned NaN here.
+func test_sampler_preserves_reported_sub_lattice_rescue() -> void:
+	var chunk := Vector2i(-3, -3)
+	var water: WaterPlan = _water(SEED)
+	var region = _region(SEED, chunk)
+	var ctx: Dictionary = WaterField.ctx(water, chunk, region)
+	var skin: Dictionary = WaterSkin.build(water, chunk, region)
+	var p := Vector2(-402.0981, -489.6676)
+	var truth: float = WaterField.level_at(ctx, p)
+	var got: float = skin.sampler.level_at(p)
+	assert_true(WaterField.wet(ctx, region, p),
+		"reported sub-lattice passage is field-wet")
+	assert_false(is_nan(got),
+		"frozen sampler retains the rescued passage")
+	assert_almost_eq(got, truth, 0.001,
+		"frozen sampler exactly matches the refined field")
+
+
 ## Task 7 review MEDIUM (shoreline-band coverage): the ~2m band of real,
 ## rendered, field-wet water between the waterline curve and WaterSkin's
 ## INSET-ed interior lattice must be answerable by the trigger's sampler —

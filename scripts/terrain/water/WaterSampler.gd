@@ -12,27 +12,17 @@
 # BACKING DATA (r3 Task 7 review MEDIUM fix — supersedes the first bake):
 # a snapshot of the FIELD, not the mesh. The first version copied
 # WaterSkin._interior_lattice's kept points, but that lattice deliberately
-# insets WaterSkin.INSET (2.0m) away from every waterline curve — so the
-# ~2-5m band of real, rendered, field-wet water between the inset interior
-# and the waterline (the boundary strip + meniscus rim zone) had no data and
-# read NaN, and character.gd's bridge classified a character wading right at
-# the water's edge as fully dry (the old per-cell sampled planes covered the
-# whole cell; render-vs-classification divergence, the same defect family as
-# run 2's I4). build() now samples WaterField.level_at itself on the SAME
-# 3.0m world-snapped grid across the chunk: every grid corner the field
-# calls wet (level - ground > WET_EPS, the same gate WaterSkin._lattice_wet
-# uses) stores its exact level_at value regardless of any INSET; NaN only
-# where the field itself says dry (or beyond the chunk's own snapshot).
+# insets away from every waterline curve, so real field-wet shoreline water
+# read NaN. Production build() now freezes WaterField's own fill arrays and
+# terrain twin. The independent 3m flow/wave grid remains separate; it is not
+# used to reconstruct static water height.
 #
-# PRECISION: level_at stores and evaluates the fill's NATIVE 6m lattice,
-# using the exact same signed-depth shoreline interpolation as
-# WaterField._fill_bilinear. An earlier sampler resampled the field onto the
-# old render lattice and bilinearly interpolated that second grid. That is
-# exact inside fully-wet bilinear cells, but NOT across wet/dry cells: two
-# successive renormalizations changed steep shoreline values by up to 0.44m
-# and could classify a dry/wading point as swimming. Keeping the native fill
-# array is both smaller and bit-for-bit faithful to WaterField.level_at over
-# the entire chunk. A separate world-aligned 3m grid carries flow/wave payloads.
+# PRECISION: level_at evaluates the native 6m surface plus WaterField's sparse
+# topology-only 3m rescue, using the exact same signed-depth interpolation at
+# both resolutions. An earlier sampler resampled static height onto another
+# grid; across wet/dry cells that second interpolation changed levels by up to
+# 0.44m and could classify a dry/wading point as swimming. Freezing the actual
+# dual-resolution field is bit-for-bit faithful to WaterField.level_at.
 #
 # FLOW PAYLOAD: alongside the legacy curvilinear frame, build() stores the
 # continuous world-XZ current and its vorticity/compression diagnostics on
@@ -58,6 +48,8 @@ var _fill_origin: Vector2
 var _fill_n: int
 var _fill_levels: PackedFloat32Array # native WaterField fill snapshot; empty only for legacy no-fill fixtures
 var _fill_ground: PackedFloat32Array # native terrain heights for the mixed wet/dry taper
+var _fill_sub_levels: PackedFloat32Array # sparse 3m topology rescues, -INF elsewhere
+var _fill_sub_ground: PackedFloat32Array # frozen one-ring terrain for rescued cells
 var _fs: PackedFloat32Array      # nx*nz, arc length s (r3 Task 9)
 var _fd: PackedFloat32Array      # nx*nz, cross distance d
 var _fslope: PackedFloat32Array  # nx*nz, profile slope
@@ -67,12 +59,11 @@ var _vorticity: PackedFloat32Array  # nx*nz, dv/dx-du/dz
 var _compression: PackedFloat32Array # nx*nz, max(0,-divergence)
 
 
-## Bakes a sampler by sampling WaterField.level_at across the given grid
-## (origin/step/nx/nz — WaterSkin.build passes its fixed world-aligned CPU
-## grid, independent of render tessellation). Every
-## grid corner the field calls wet stores its exact level; dry corners stay
-## NAN. `ctx`/`region` are read during this call only — no reference to
-## either survives into the returned instance (chunk eviction frees them).
+## Bakes a sampler from WaterField's own native fill arrays. The supplied
+## origin/step/nx/nz grid is retained for flow, waves, and legacy no-fill test
+## contexts; production static height is not resampled through it. `ctx` and
+## `region` are read during this call only — no reference to either survives
+## into the returned instance (chunk eviction frees them).
 ## `flow_s`/`flow_d`/`flow_slope` (r3 Task 9): the SAME grid's own baked flow
 ## frame, PRE-COMPUTED by the caller (see this file's header) — must be
 ## nx*nz, row-major (j*_nx+i), matching `origin`/`step`/`nx`/`nz` exactly.
@@ -97,6 +88,9 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 		s._fill_origin = ctx.fill_base
 		s._fill_n = WaterField.FILL_M + 1
 		s._fill_levels = PackedFloat32Array(ctx.fill.levels)
+		if ctx.fill.has("sub_levels"):
+			s._fill_sub_levels = PackedFloat32Array(ctx.fill.sub_levels)
+			s._fill_sub_ground = PackedFloat32Array(ctx.fill.sub_ground)
 		s._fill_ground = PackedFloat32Array()
 		s._fill_ground.resize(s._fill_n * s._fill_n)
 		for j in s._fill_n:
@@ -204,6 +198,26 @@ func level_at(xz: Vector2) -> float:
 ## passed the chunk-snapshot bounds gate in level_at; the native fill itself
 ## extends another 30m around that chunk, so these indices are always valid.
 func _native_fill_level_at(xz: Vector2) -> float:
+	var coarse: float = _native_coarse_fill_level_at(xz)
+	if _fill_sub_levels.is_empty():
+		return coarse
+	var sub_n := WaterField.FILL_SUB_M + 1
+	var fx: float = (xz.x - _fill_origin.x) / WaterField.FILL_SUB_STEP
+	var fz: float = (xz.y - _fill_origin.y) / WaterField.FILL_SUB_STEP
+	var i0: int = clampi(int(floor(fx)), 0, WaterField.FILL_SUB_M - 1)
+	var j0: int = clampi(int(floor(fz)), 0, WaterField.FILL_SUB_M - 1)
+	var touched := false
+	for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0),
+			Vector2i(0, 1), Vector2i(1, 1)]:
+		if _fill_sub_levels[(j0 + d.y) * sub_n + i0 + d.x] != -INF:
+			touched = true
+			break
+	if not touched:
+		return coarse
+	return _native_sub_fill_level_at(xz, i0, j0, fx, fz)
+
+
+func _native_coarse_fill_level_at(xz: Vector2) -> float:
 	var fx: float = (xz.x - _fill_origin.x) / WaterField.FILL_STEP
 	var fz: float = (xz.y - _fill_origin.y) / WaterField.FILL_STEP
 	var i0: int = clampi(int(floor(fx)), 0, _fill_n - 2)
@@ -237,6 +251,60 @@ func _native_fill_level_at(xz: Vector2) -> float:
 			h = minf(wet_ref,
 				_fill_ground[idx] + WaterField.EPS - WaterField.SHORE_DRY_DEPTH)
 		acc += h * cnr[2]
+	return acc
+
+
+## Frozen equivalent of WaterField._fill_bilinear_sub. Only cells touching
+## a sparse topology rescue take this path; all other samples retain the
+## native 6m evaluation above exactly.
+func _native_sub_fill_level_at(xz: Vector2, i0: int, j0: int,
+		fx: float, fz: float) -> float:
+	var sub_n := WaterField.FILL_SUB_M + 1
+	var tx: float = clampf(fx - float(i0), 0.0, 1.0)
+	var tz: float = clampf(fz - float(j0), 0.0, 1.0)
+	var corners := [
+		[i0, j0, (1.0 - tx) * (1.0 - tz)],
+		[i0 + 1, j0, tx * (1.0 - tz)],
+		[i0, j0 + 1, (1.0 - tx) * tz],
+		[i0 + 1, j0 + 1, tx * tz],
+	]
+	var corner_levels := PackedFloat32Array()
+	corner_levels.resize(4)
+	var corner_ground := PackedFloat32Array()
+	corner_ground.resize(4)
+	var wet_weight := 0.0
+	var wet_acc := 0.0
+	for k in corners.size():
+		var cnr: Array = corners[k]
+		var idx: int = cnr[1] * sub_n + cnr[0]
+		var ground: float = _fill_sub_ground[idx]
+		if ground == INF:
+			# WaterField freezes a complete one-ring around every rescue. An
+			# absent value means this is not a valid refined cell; preserve the
+			# canonical coarse answer rather than inventing terrain at runtime.
+			return _native_coarse_fill_level_at(xz)
+		var h: float = _fill_sub_levels[idx]
+		if h == -INF:
+			var q: Vector2 = _fill_origin \
+				+ Vector2(cnr[0], cnr[1]) * WaterField.FILL_SUB_STEP
+			h = _native_coarse_fill_level_at(q)
+		corner_levels[k] = h
+		corner_ground[k] = ground
+		if not is_nan(h) and h > ground + WaterField.EPS:
+			wet_acc += h * cnr[2]
+			wet_weight += cnr[2]
+	if wet_weight <= 0.0:
+		return NAN
+	if wet_weight >= 1.0 - 0.000001:
+		return wet_acc
+	var wet_ref: float = wet_acc / wet_weight
+	var acc := 0.0
+	for k in corners.size():
+		var h: float = corner_levels[k]
+		if is_nan(h) or h <= corner_ground[k] + WaterField.EPS:
+			h = minf(wet_ref, corner_ground[k] + WaterField.EPS \
+				- WaterField.SHORE_DRY_DEPTH)
+		acc += h * corners[k][2]
 	return acc
 
 

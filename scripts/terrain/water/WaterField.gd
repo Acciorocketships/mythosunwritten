@@ -136,10 +136,11 @@ const DESCENT_POOL_GAP := 24.0
 # suite exercises; it remains a WINDOWING HAZARD in principle (a pond whose
 # true reach exceeds this margin, or a still-water flood over unusually flat
 # terrain, could still crack on some future seed) — named as a known
-# limitation in .superpowers/sdd/progress.md's own running ledger, the same
-# CLASS of hazard as final-review-run2.md's known-limitations roll-up item 1
-# (the 6m fill lattice's own blind spot), not fixed proactively since no
-# live instance has been found. The oracle above is the regression gate: if
+# limitation in .superpowers/sdd/progress.md's own running ledger. This
+# finite-window risk is distinct from the now-fixed 6m topology blind spot:
+# the reported (-17,-20) inner corner proved a real submerged 3m passage can
+# lie between two dry 6m endpoints, so `_build_sub_lattice_rescue` handles
+# that case adaptively. The border oracle above remains the window regression gate: if
 # a future seed/site DOES trip it, the fix is a seed-aware adaptive window
 # (extend the margin to cover any in-ctx body's own footprint + slack)
 # rather than a blind margin bump.
@@ -152,10 +153,17 @@ const DESCENT_POOL_GAP := 24.0
 # whatever FILL_STEP is configured, so no other code changed — only these
 # constants. Both timings are in the Phase 1 report.
 const FILL_STEP := 6.0        # coarsened from 3.0 (the mesh's own lattice step) — see PERF above
+## Sparse topology-only refinement used at coarse wet/dry boundaries. The
+## 6m fill remains the canonical surface/performance lattice; mixed cells
+## seed a 3m flood only into points the coarse signed-depth field calls dry.
+## This catches a narrow submerged pass whose two 6m endpoints both sit on
+## high ground without paying the old full 3m-fill cost across every basin.
+const FILL_SUB_STEP := FILL_STEP * 0.5
 const _FILL_MARGIN_WORLD := 42.0   # covers the 5-pass, 30m local surface relaxation plus interpolation slack at chunk seams
 const FILL_MARGIN := int(_FILL_MARGIN_WORLD / FILL_STEP)   # margin in FILL_STEP cells
 const FILL_N := int(TILE * 8.0 / FILL_STEP)   # chunk lattice cells per side at FILL_STEP
 const FILL_M := FILL_N + 2 * FILL_MARGIN      # window lattice cells per side
+const FILL_SUB_M := FILL_M * 2
 const FILL_SURFACE_PASSES := 5
 
 static var _profiles: Dictionary = {}   # trace.source_cell -> profile dict
@@ -318,7 +326,11 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 	_relax_fill(region, base, m1, levels, gnd, river_levels, pq)
 	_smooth_fill_surface(region, base, m1, levels, gnd, river_levels)
 	pq.free()
-	return {"levels": levels}
+	var sub_fill: Dictionary = _build_sub_lattice_rescue(
+		region, base, levels)
+	return {"levels": levels,
+		"sub_levels": sub_fill.levels,
+		"sub_ground": sub_fill.ground}
 
 
 ## The flood above answers the topological question "which lattice points
@@ -377,6 +389,131 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 		g = TerrainSurfaceField.surface_y(region, p.x, p.y)
 		gnd[idx] = g
 	return g
+
+
+## Repairs only TOPOLOGY the 6m lattice demonstrably cannot see. Every
+## coarse mixed wet/dry cell contributes its actually-wet 3m midpoint/centre
+## samples as deterministic sources. A lower-level-first 4-neighbour flood
+## then walks only through 3m samples the coarse continuous field calls dry
+## but whose real terrain remains below the source level. The resulting
+## sparse array therefore adds narrow connected passages; it never changes a
+## fully-coarse-wet basin's surface and cannot cross a sampled ridge.
+##
+## This is intentionally not a second full-resolution water opinion. Source
+## levels come from the settled/smoothed coarse field, lower still wins, and
+## `_fill_bilinear` consults these samples only in a 3m cell touching an
+## actual rescue. `sub_ground` is populated for the rescued cell's complete
+## one-ring so WaterSampler can freeze the identical signed-depth evaluation
+## without retaining the terrain region.
+static func _build_sub_lattice_rescue(region, base: Vector2,
+		coarse_levels: PackedFloat32Array) -> Dictionary:
+	var coarse_n := FILL_M + 1
+	var sub_n := FILL_SUB_M + 1
+	var sub_levels := PackedFloat32Array()
+	sub_levels.resize(sub_n * sub_n)
+	sub_levels.fill(-INF)
+	var sub_ground := PackedFloat32Array()
+	sub_ground.resize(sub_n * sub_n)
+	sub_ground.fill(INF)
+	var settled := PackedFloat32Array()
+	settled.resize(sub_n * sub_n)
+	settled.fill(-INF)
+	var queued := PackedByteArray()
+	queued.resize(sub_n * sub_n)
+	var coarse_ctx := {
+		"fill_base": base,
+		"fill": {"levels": coarse_levels},
+		"region": region,
+	}
+	var pq := PriorityQueue.new()
+	# Only mixed coarse cells own a shoreline. Seed every 3m point in those
+	# cells that the existing field itself already considers wet. Neighbouring
+	# mixed cells duplicate candidates harmlessly; `queued` keeps one offer.
+	for cj in FILL_M:
+		for ci in FILL_M:
+			var wet_corners := 0
+			for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0),
+					Vector2i(0, 1), Vector2i(1, 1)]:
+				if coarse_levels[(cj + d.y) * coarse_n + ci + d.x] != -INF:
+					wet_corners += 1
+			if wet_corners == 0 or wet_corners == 4:
+				continue
+			for sj in range(cj * 2, cj * 2 + 3):
+				for si in range(ci * 2, ci * 2 + 3):
+					var sidx: int = sj * sub_n + si
+					if queued[sidx] == 1:
+						continue
+					var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
+					var lvl: float = _fill_bilinear_coarse(coarse_ctx, p)
+					var ground: float = TerrainSurfaceField.surface_y(
+						region, p.x, p.y)
+					sub_ground[sidx] = ground
+					if lvl == -INF or lvl <= ground + EPS:
+						continue
+					queued[sidx] = 1
+					pq.push([sidx, lvl], lvl)
+	while not pq.is_empty():
+		var entry: Array = pq.pop()
+		var idx: int = entry[0]
+		var lvl: float = entry[1]
+		if settled[idx] != -INF:
+			continue
+		settled[idx] = lvl
+		var si: int = idx % sub_n
+		var sj: int = idx / sub_n
+		var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
+		var own_ground: float = sub_ground[idx]
+		if own_ground == INF:
+			own_ground = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			sub_ground[idx] = own_ground
+		var own_coarse_level: float = _fill_bilinear_coarse(coarse_ctx, p)
+		if (own_coarse_level == -INF or own_coarse_level <= own_ground + EPS) \
+				and own_ground < lvl - EPS:
+			sub_levels[idx] = lvl
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0),
+				Vector2i(0, 1), Vector2i(0, -1)]:
+			var ni: int = si + d.x
+			var nj: int = sj + d.y
+			if ni < 0 or ni > FILL_SUB_M or nj < 0 or nj > FILL_SUB_M:
+				continue
+			var nidx: int = nj * sub_n + ni
+			if settled[nidx] != -INF:
+				continue
+			var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
+			var coarse_level: float = _fill_bilinear_coarse(coarse_ctx, q)
+			var ground: float = sub_ground[nidx]
+			if ground == INF:
+				ground = TerrainSurfaceField.surface_y(region, q.x, q.y)
+				sub_ground[nidx] = ground
+			# Existing coarse-wet territory needs no rescue and every shoreline
+			# point in a mixed cell was independently seeded above. Stop this
+			# branch rather than re-settling the canonical surface.
+			if coarse_level != -INF and coarse_level > ground + EPS:
+				continue
+			if ground >= lvl - EPS:
+				continue
+			pq.push([nidx, lvl], lvl)
+	pq.free()
+	# A rescued vertex can affect any of four adjacent 3m interpolation
+	# cells. Freeze terrain for their complete corner one-ring now.
+	for idx in sub_levels.size():
+		if sub_levels[idx] == -INF:
+			continue
+		var si: int = idx % sub_n
+		var sj: int = idx / sub_n
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var ni: int = si + dx
+				var nj: int = sj + dz
+				if ni < 0 or ni > FILL_SUB_M or nj < 0 or nj > FILL_SUB_M:
+					continue
+				var nidx: int = nj * sub_n + ni
+				if sub_ground[nidx] != INF:
+					continue
+				var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
+				sub_ground[nidx] = TerrainSurfaceField.surface_y(
+					region, q.x, q.y)
+	return {"levels": sub_levels, "ground": sub_ground}
 
 
 ## Rasterizes the flowing channel as variable-width SEGMENT CAPSULES, not
@@ -1258,8 +1395,10 @@ static func _in_fill_window(c: Dictionary, p: Vector2) -> bool:
 ## result tapers through zero depth inside the cell instead of holding the
 ## wet value to a hard 6m lattice edge. This is the field-level source of
 ## the blob-like shoreline: contour smoothing receives a real depth crossing
-## rather than an axis-aligned claim boundary. -INF remains the answer when
-## the query has zero weighted contact with any wet corner.
+## rather than an axis-aligned claim boundary. A 3m cell touching an actual
+## topology rescue applies this same rule through `_fill_bilinear_sub`; every
+## untouched sample remains the original 6m answer. -INF remains the answer
+## when the query has zero weighted contact with any wet corner.
 ##
 ## Phase 1's FILL_JUMP snap (superseded, Phase 2a): an earlier version of
 ## this function ALSO snapped to the nearest corner instead of blending
@@ -1286,6 +1425,33 @@ static func _in_fill_window(c: Dictionary, p: Vector2) -> bool:
 ## the wet/dry renormalization above already handles correctly; there is no
 ## longer a case where two WET-WET neighbours need special-casing.
 static func _fill_bilinear(c: Dictionary, p: Vector2) -> float:
+	var coarse: float = _fill_bilinear_coarse(c, p)
+	if not c.fill.has("sub_levels"):
+		return coarse
+	var sub_levels: PackedFloat32Array = c.fill.sub_levels
+	if sub_levels.is_empty():
+		return coarse
+	var base: Vector2 = c.fill_base
+	var sub_n := FILL_SUB_M + 1
+	var fx: float = (p.x - base.x) / FILL_SUB_STEP
+	var fz: float = (p.y - base.y) / FILL_SUB_STEP
+	var i0: int = clampi(int(floor(fx)), 0, FILL_SUB_M - 1)
+	var j0: int = clampi(int(floor(fz)), 0, FILL_SUB_M - 1)
+	var touched := false
+	for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0),
+			Vector2i(0, 1), Vector2i(1, 1)]:
+		if sub_levels[(j0 + d.y) * sub_n + i0 + d.x] != -INF:
+			touched = true
+			break
+	if not touched:
+		return coarse
+	return _fill_bilinear_sub(c, p, i0, j0, fx, fz)
+
+
+## Original 6m signed-depth surface. Kept separate so the sparse 3m rescue
+## can sample the canonical field at its own corners without recursing back
+## through itself.
+static func _fill_bilinear_coarse(c: Dictionary, p: Vector2) -> float:
 	var base: Vector2 = c.fill_base
 	var levels: PackedFloat32Array = c.fill.levels
 	var m1 := FILL_M + 1
@@ -1322,6 +1488,61 @@ static func _fill_bilinear(c: Dictionary, p: Vector2) -> float:
 			var ground: float = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
 			lvl = minf(wet_ref, ground + EPS - SHORE_DRY_DEPTH)
 		acc += lvl * cnr[2]
+	return acc
+
+
+## Signed-depth interpolation within one 3m cell touched by an actual rescue.
+## Non-rescued corners sample the unchanged coarse surface; rescued corners
+## carry the connected source level. Dry corners retain the same finite
+## negative-depth convention as the coarse field, so the repaired shoreline
+## meets terrain continuously instead of acquiring a new hard edge.
+static func _fill_bilinear_sub(c: Dictionary, p: Vector2, i0: int, j0: int,
+		fx: float, fz: float) -> float:
+	var base: Vector2 = c.fill_base
+	var sub_n := FILL_SUB_M + 1
+	var sub_levels: PackedFloat32Array = c.fill.sub_levels
+	var sub_ground: PackedFloat32Array = c.fill.sub_ground
+	var tx: float = clampf(fx - float(i0), 0.0, 1.0)
+	var tz: float = clampf(fz - float(j0), 0.0, 1.0)
+	var corners := [
+		[i0, j0, (1.0 - tx) * (1.0 - tz)],
+		[i0 + 1, j0, tx * (1.0 - tz)],
+		[i0, j0 + 1, (1.0 - tx) * tz],
+		[i0 + 1, j0 + 1, tx * tz],
+	]
+	var corner_levels := PackedFloat32Array()
+	corner_levels.resize(4)
+	var corner_ground := PackedFloat32Array()
+	corner_ground.resize(4)
+	var wet_weight := 0.0
+	var wet_acc := 0.0
+	for k in corners.size():
+		var cnr: Array = corners[k]
+		var idx: int = cnr[1] * sub_n + cnr[0]
+		var q: Vector2 = base + Vector2(cnr[0], cnr[1]) * FILL_SUB_STEP
+		var ground: float = sub_ground[idx]
+		if ground == INF:
+			ground = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+		var lvl: float = sub_levels[idx]
+		if lvl == -INF:
+			lvl = _fill_bilinear_coarse(c, q)
+		corner_levels[k] = lvl
+		corner_ground[k] = ground
+		if lvl != -INF and lvl > ground + EPS:
+			wet_acc += lvl * cnr[2]
+			wet_weight += cnr[2]
+	if wet_weight <= 0.0:
+		return -INF
+	if wet_weight >= 1.0 - 0.000001:
+		return wet_acc
+	var wet_ref: float = wet_acc / wet_weight
+	var acc := 0.0
+	for k in corners.size():
+		var lvl: float = corner_levels[k]
+		if lvl == -INF or lvl <= corner_ground[k] + EPS:
+			lvl = minf(wet_ref,
+				corner_ground[k] + EPS - SHORE_DRY_DEPTH)
+		acc += lvl * corners[k][2]
 	return acc
 
 

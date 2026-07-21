@@ -60,9 +60,9 @@
 # the continuous current/vorticity/compression shared by GPU and CPU users.
 # TRIGGERS + SAMPLER (Task 7, see _triggers/WaterSampler.gd): build() now
 # returns a REAL `sampler` (a frozen WaterSampler snapshot of the water
-# FIELD across this chunk, baked on a separate world-aligned 3m CPU grid
-# but covering the FULL wet footprint including the INSET shoreline band —
-# see WaterSampler.gd's own BACKING DATA note) instead of Task 4-6's `null`
+# FIELD across this chunk: native 6m fill plus sparse 3m topology rescue,
+# covering the FULL wet footprint including the INSET shoreline band — see
+# WaterSampler.gd's own BACKING DATA note) instead of Task 4-6's `null`
 # placeholder. `_triggers` gained the STEEP_UNSWIMMABLE gate the old
 # marching-squares mesher's own volume builder used to enforce per 24m
 # CELL: a tile whose max |grade_at| exceeds the gate gets no trigger box at
@@ -75,7 +75,7 @@
 # overshoot; a contour wall flag earns the 1.5m KayKit recess reach only when
 # that point's own outward column actually contacts high ground there. This
 # prevents a flanking wall from stretching an unbounded edge into a skirt.
-# A true drop instead keeps a compact 0.56m profile: 4cm crest, then rows at
+# A true drop instead keeps a compact 0.64m profile: 4cm crest, then rows at
 # -6cm, -28cm, -55cm, and -65cm. It reads as finite rounded substance rather than a
 # zero-thickness plane or a row teleported to the landing ground.
 class_name WaterSkin
@@ -146,7 +146,10 @@ const STEEP_UNSWIMMABLE := 0.45
 # row0 = the strip's own curve vertex (weld-reused, not a new position);
 # row1 = p + 0.12n, y=L+0.04 (rounded crest, no vertical seam);
 # rows2..5 curl down through L-0.06, L-0.28, L-0.55, L-0.65. Their default
-# reaches are 0.30/0.48/0.52/0.56m. Rising banks extend to
+# reaches are 0.30/0.48/0.60/0.64m. The last two reaches are deliberately
+# spaced so successive tangents keep rotating outward/down; the former
+# 0.52/0.56 pair made the penultimate segment nearly vertical and the final
+# segment shallower again, an inward/concave hook. Rising banks extend to
 # 0.40/0.60/0.70/0.78m; confirmed recessed walls first measure the distance
 # from the signed-depth contour to the real terrain boundary, then continue a
 # further 1.5m through the recessed KayKit face.  Their level shelf extends
@@ -161,8 +164,8 @@ const RIM_ROW5_DROP := 0.65
 const RIM_ROW1_REACH := 0.12
 const RIM_ROW2_REACH := 0.30
 const RIM_ROW3_REACH := 0.48
-const RIM_ROW4_REACH := 0.52
-const RIM_ROW5_REACH := 0.56
+const RIM_ROW4_REACH := 0.60
+const RIM_ROW5_REACH := 0.64
 const RIM_RISE_REACH := 0.40
 const RIM_RISE_BURY_REACH := 0.60
 # KayKit's visible wall/lip line is 1.5m inside the high cell from its true
@@ -177,11 +180,20 @@ const RIM_WALL_OUTER_BURY := 0.40
 # lattice, so it does not necessarily sit on the terrain cell boundary.  A
 # fixed RIM_WALL_REACH therefore accounts for the KayKit recess but can omit
 # the additional contour-to-boundary distance. Search within the same finite
-# 6m support that created the signed-depth contour: the sustained-high probe
-# at the end of the span still rejects a small bump or merely flanking wall,
-# while a genuine wall in this point's own column yields its true contact.
+# 6m support that created the signed-depth contour. A straight wall stays
+# high at the far probe; a diagonal corner arm can leave this normal column
+# before 6m, so a separately bounded local-sustain probe accepts a real face
+# without turning a one-sample spike into a recessed wall.
 const WALL_CONTACT_SCAN_STEP := 0.05
 const WALL_CONTACT_SCAN_MAX := WaterField.FILL_STEP
+const WALL_CONTACT_LOCAL_SUSTAIN := 0.25
+# Chaikin smoothing deliberately improves the contour silhouette, but can
+# move its curve inward from the field's actual signed-depth zero. The rim
+# must stay level across any still-wet part of its own outward column and
+# begin its curl only after field truth becomes dry. This uses the same scan
+# resolution/support as wall contact so the two contact mechanisms agree.
+const WET_SHELF_SCAN_STEP := WALL_CONTACT_SCAN_STEP
+const WET_SHELF_SCAN_MAX := WALL_CONTACT_SCAN_MAX
 # At a convex wall turn, independently extruded columns form a diagonal chord
 # across the L-shaped contact and omit the corner.  Intersect their wall
 # tangents to form a proper miter, but reject pathologically distant
@@ -818,7 +830,7 @@ static func _slope_component(h_minus: float, h0: float, h_plus: float, e: float)
 ## Rim-row normal: UP rotated toward the curve's own outward normal n̂ by
 ## `angle`, about the (implicit) curve tangent axis — the controller brief's
 ## own "curl's outward-and-down rotation about the curve tangent". n̂ is
-## already a unit Vector2 (WaterContour._outward_normal's own contract) and
+## already a unit Vector2 (WaterContour's curve-frame contract) and
 ## is horizontal (y=0) by construction, so {UP, outward} is an orthonormal
 ## pair and cos/sin naturally produce a unit result (the .normalized() below
 ## is defensive against float drift only). angle=0 => exactly UP (row0's own
@@ -1057,8 +1069,8 @@ static func _point_on_rect_border(p: Vector2, rect: Rect2) -> bool:
 ## identical (or, with an unclamped-projection variant tried next,
 ## unreliably ordered) arc values. Measured directly on this task's own
 ## pinned site (see the report): a genuine L-shaped shore corner at
-## (35.23,-1044.02) — already WaterContour's own documented hard case, see
-## that file's _outward_normal docstring — produced 2-4 ring points whose
+## (35.23,-1044.02) — already WaterContour's own documented hard case —
+## produced 2-4 ring points whose
 ## nearest curve segments were all >2m away at wildly extrapolated
 ## projection parameters (measured t_raw up to 5.48 on a ~1.5m segment,
 ## meaningless that far out), so NEITHER arc-projection variant could order
@@ -1340,8 +1352,8 @@ static func _nearest_curve_vertex(pts: PackedVector2Array, p: Vector2) -> int:
 ##   row1: +0.12m, L+0.04m — a short crest that removes the old vertical seam;
 ##   row2: default +0.30m, L-0.06m;
 ##   row3: default +0.48m, L-0.28m;
-##   row4: default +0.52m, L-0.55m;
-##   row5: default +0.56m, L-0.65m.
+##   row4: default +0.60m, L-0.55m;
+##   row5: default +0.64m, L-0.65m.
 ##
 ## Rising banks extend rows2..5 to 0.40/0.60/0.70/0.78m. A contour wall flag is
 ## only allowed to extend them through the KayKit face when the point's own
@@ -1371,6 +1383,7 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 	var contacts: Dictionary = _wall_contacts(st, c)
 	var wall_contact: PackedByteArray = contacts.flags
 	var wall_face_reach: PackedFloat32Array = contacts.face_reach
+	var wet_shelf_reach: PackedFloat32Array = _wet_shelf_reaches(st, c)
 	var wf: PackedFloat32Array = _smoothed_flags(wall_contact, closed)
 	var rise: PackedByteArray = _rising_flags(st, c, wall_contact)
 	var rf: PackedFloat32Array = _smoothed_flags(rise, closed)
@@ -1411,6 +1424,9 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		# fractional transition into neighbouring columns, but filtering must
 		# never shorten a point that independently proved it hits the wall.
 		var wall_strength: float = maxf(wf[i], float(wall_contact[i]))
+		var wet_shelf_strength := 1.0 \
+			if wet_shelf_reach[i] > RIM_ROW1_REACH else 0.0
+		var level_strength: float = maxf(wall_strength, wet_shelf_strength)
 		var ang1: float = lerpf(RIM_NORMAL_ANGLE1, 0.0, wall_strength)
 		var ang2: float = lerpf(RIM_NORMAL_ANGLE2, 0.0, wall_strength)
 		var ang3: float = lerpf(RIM_NORMAL_ANGLE3, 0.0, wall_strength)
@@ -1420,7 +1436,9 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		# changed Y, which made the meniscus begin with a literal vertical
 		# repair seam.  A short outward crest reads as one rounded body instead.
 		var p1: Vector2 = p + nrm * RIM_ROW1_REACH
-		row1[i] = _weld_vert(st, p1, lvl + RIM_ROW1_BULGE, _curl_normal(nrm, ang1))
+		row1[i] = _weld_vert(st, p1,
+			lvl + RIM_ROW1_BULGE * (1.0 - level_strength),
+			_curl_normal(nrm, ang1))
 		# reach2/reach3: the default (falling/level ground) reach, OR
 		# overshoot to RIM_RISE_REACH wherever rf[i] says the bank RISES — r3
 		# Task 14's universal shore-overshoot; see _rising_flags and this
@@ -1434,6 +1452,17 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 			RIM_RISE_BURY_REACH + 0.10, rf[i])
 		var reach5: float = lerpf(RIM_ROW5_REACH,
 			RIM_RISE_BURY_REACH + 0.18, rf[i])
+		# The smoothed curve is a visual boundary, not permission to contradict
+		# the underlying signed-depth field. If the outward column remains wet,
+		# carry a level shelf to its first dry transition. The small increasing
+		# offsets keep the buried rows ordered without creating a visible slope;
+		# on a rising bank they are below terrain, while a true free edge has a
+		# zero wet reach and retains the compact meniscus below.
+		if wet_shelf_strength > 0.0:
+			reach2 = maxf(reach2, wet_shelf_reach[i])
+			reach3 = maxf(reach3, wet_shelf_reach[i] + 0.05)
+			reach4 = maxf(reach4, wet_shelf_reach[i] + 0.10)
+			reach5 = maxf(reach5, wet_shelf_reach[i] + 0.20)
 		# `wf` is smoothed to keep neighbouring wall/non-wall columns from
 		# forming a sawtooth silhouette.  It upgrades only a true wall reach;
 		# rf's ordinary rising-bank path stays at 0.40/0.60m.
@@ -1458,13 +1487,13 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		# only its lower curl while the visible surface dipped by ~0.5m.  Lift the
 		# three contact rows back to L with the same smoothed wall weight; row5
 		# turns down behind the face and seals the mesh.
-		var y2: float = lerpf(lvl - RIM_ROW2_DROP, lvl, wall_strength)
+		var y2: float = lerpf(lvl - RIM_ROW2_DROP, lvl, level_strength)
 		row2[i] = _weld_vert(st, p2, y2, _curl_normal(nrm, ang2))
 		var p3: Vector2 = p + nrm * reach3
-		var y3: float = lerpf(lvl - RIM_ROW3_DROP, lvl, wall_strength)
+		var y3: float = lerpf(lvl - RIM_ROW3_DROP, lvl, level_strength)
 		row3[i] = _weld_vert(st, p3, y3, _curl_normal(nrm, ang3))
 		var p4: Vector2 = p + nrm * reach4
-		var y4: float = lerpf(lvl - RIM_ROW4_DROP, lvl, wall_strength)
+		var y4: float = lerpf(lvl - RIM_ROW4_DROP, lvl, level_strength)
 		row4[i] = _weld_vert(st, p4, y4, _curl_normal(nrm, ang4))
 		var p5: Vector2 = p + nrm * reach5
 		row5[i] = _weld_vert(st, p5, lvl - RIM_ROW5_DROP,
@@ -1590,6 +1619,43 @@ static func _rising_flags(st: Dictionary, c: Dictionary,
 	return out
 
 
+## Distance for which each smoothed contour point's own outward column is
+## still visibly wet according to the final field. WaterContour smooths and
+## resamples the raw signed-depth zero, so a point can legitimately land up
+## to nearly a metre inside the true wet region (the reported (-17,-20)
+## inner corner measured 0.75m of continuous water past the curve). Starting
+## a downward meniscus at the smoothed point then draws a concave-looking
+## bulb over water that should still be level.
+##
+## Scan only the first continuous wet run. A narrow dry cliff arm may be
+## followed by water again on the far side; that arm is handled as a recessed
+## wall by `_wall_contacts`, not flooded across at terrain-top height. This
+## distinction is what fixes the reported cliff/saddle joins without turning
+## a real island into a water sheet.
+static func _wet_shelf_reaches(st: Dictionary, c: Dictionary) -> PackedFloat32Array:
+	var pts: PackedVector2Array = c.pts
+	var normals: PackedVector2Array = c.normals
+	var out := PackedFloat32Array()
+	out.resize(pts.size())
+	for i in pts.size():
+		var last_wet := 0.0
+		var saw_wet := false
+		var d := 0.0
+		while d <= WET_SHELF_SCAN_MAX + 0.0001:
+			var q: Vector2 = pts[i] + normals[i] * d
+			var wet: bool = WaterField.wet(st.ctx, st.region, q)
+			if wet:
+				saw_wet = true
+				last_wet = d
+			elif saw_wet:
+				break
+			else:
+				break
+			d += WET_SHELF_SCAN_STEP
+		out[i] = last_wet
+	return out
+
+
 ## WaterContour deliberately checks the outward normal and its +/-45-degree
 ## flanks so a rounded cliff turn inherits both wall arms. That generous flag
 ## must not turn a genuinely unbounded edge into a bank skirt merely because a
@@ -1612,14 +1678,13 @@ static func _wall_contacts(st: Dictionary, c: Dictionary) -> Dictionary:
 	for i in pts.size():
 		if wall[i] == 0:
 			continue
-		# Preserve the old direct-column gate at the end of the span. A small
-		# intervening bump followed by low ground is not a recessed wall and
-		# must keep the rounded free-shore profile.
+		# A straight wall remains high at the far end of the finite field span.
+		# A diagonal corner arm may cross this normal column only locally, so
+		# the far probe is one of two independent sustain witnesses below.
 		var far_q: Vector2 = pts[i] + normals[i] * WALL_CONTACT_SCAN_MAX
 		var far_ground: float = TerrainSurfaceField.surface_y(
 			st.region, far_q.x, far_q.y)
-		if far_ground <= levels[i] + RISE_MARGIN:
-			continue
+		var far_high: bool = far_ground > levels[i] + RISE_MARGIN
 		var contact := -1.0
 		var d := 0.0
 		while d <= WALL_CONTACT_SCAN_MAX + 0.0001:
@@ -1629,7 +1694,14 @@ static func _wall_contacts(st: Dictionary, c: Dictionary) -> Dictionary:
 				contact = d
 				break
 			d += WALL_CONTACT_SCAN_STEP
+		var sustained_local := false
 		if contact >= 0.0:
+			var sustain_q: Vector2 = pts[i] + normals[i] \
+				* (contact + WALL_CONTACT_LOCAL_SUSTAIN)
+			var sustain_ground: float = TerrainSurfaceField.surface_y(
+				st.region, sustain_q.x, sustain_q.y)
+			sustained_local = sustain_ground > levels[i] + RISE_MARGIN
+		if contact >= 0.0 and (far_high or sustained_local):
 			flags[i] = 1
 			face_reach[i] = contact + RIM_WALL_REACH
 	return {"flags": flags, "face_reach": face_reach}

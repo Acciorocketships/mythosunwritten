@@ -743,6 +743,42 @@ func test_no_dry_holes_inside_water() -> void:
 			holes, offenders])
 
 
+## Exact 2026-07-21 foreground tongue at cell (-17,-20). The smoothed
+## contour point is wet, and a short outward segment remains continuously
+## below that same water level, yet the 6m fill lattice currently makes its
+## endpoint dry. A hydrostatic surface cannot terminate over demonstrably
+## connected submerged ground; doing so forces WaterSkin to draw the large
+## exposed terminal curtain visible in the owner's exact camera.
+func test_reported_inner_corner_has_no_false_dry_sub_lattice_passage() -> void:
+	var chunk := Vector2i(-3, -3)
+	var region = _region(SEED, chunk)
+	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
+	var wet_start := Vector2(-401.0702, -489.2760)
+	var outward := Vector2(-0.934489, -0.355992)
+	var target: Vector2 = wet_start + outward * 1.10
+	var level: float = WaterField.level_at(ctx, wet_start)
+	var rescued := 0
+	for sub_level: float in ctx.fill.sub_levels:
+		if sub_level != -INF:
+			rescued += 1
+	assert_true(WaterField.wet(ctx, region, wet_start),
+		"reported contour-side start is wet")
+	assert_true(_ground_clear_line(region, wet_start, target, level),
+		"the entire 1.1m passage remains below the connected water level")
+	var target_ground: float = TerrainSurfaceField.surface_y(
+		region, target.x, target.y)
+	var target_level: float = WaterField.level_at(ctx, target)
+	print("MEAS 2026-07-21 inner false-dry start=%s level=%.3f target=%s ground=%.3f field=%s rescued=%d/%d" % [
+		wet_start, level, target, target_ground, str(target_level), rescued,
+		ctx.fill.sub_levels.size()])
+	assert_true(WaterField.wet(ctx, region, target),
+		"hydrostatic fill crosses the submerged sub-lattice passage (ground %.3f, source level %.3f)" % [
+			target_ground, level])
+	assert_true(rescued > 0 and rescued < ctx.fill.sub_levels.size() / 4,
+		"topology repair stays sparse (%d of %d sub-lattice points)" % [
+			rescued, ctx.fill.sub_levels.size()])
+
+
 ## test_water_never_stands_above_its_source (H2, I2): every wet sample's
 ## level must be <= the level it is hydraulically connected to.
 ## Phase 2a note (comparison basis updated, assertion's OWN intent

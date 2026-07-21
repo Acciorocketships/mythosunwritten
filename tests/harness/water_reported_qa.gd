@@ -1,4 +1,4 @@
-# Focused, self-driving falsification harness for the owner's 2026-07-13
+# Focused, self-driving falsification harness for the owner's reported water
 # screenshots.  A review site is defined ONLY by the two values printed by
 # CoordOverlay: player world and crosshair world.  ReviewCam.solve_cam recovers
 # the actual orbit pose from that pair; do not replace it with a hand-authored
@@ -32,6 +32,12 @@ const SPOTS: Array = [
 		Vector3(36.5, 3.0, -1109.0)],
 	["corner_181_exact", Vector3(180.9, 4.0, -1184.4),
 		Vector3(180.6, 4.2, -1184.7)],
+	["inner_corner_minus17_exact", Vector3(-403.4, 3.2, -487.6),
+		Vector3(-403.8, 3.5, -487.6)],
+	["cliff_shore_minus9_exact", Vector3(-225.8, 4.0, -754.2),
+		Vector3(-226.2, 4.2, -754.4)],
+	["saddle_minus11_exact", Vector3(-253.1, 4.0, -753.1),
+		Vector3(-253.0, 4.2, -753.4)],
 ]
 
 var _character: CharacterBody3D
@@ -368,6 +374,28 @@ func _run() -> void:
 			_probe_visual_terrain(spot[0], [Vector2(850, 735),
 				Vector2(1050, 735), Vector2(1300, 735), Vector2(1400, 740),
 				Vector2(1480, 740), Vector2(1510, 715), Vector2(1500, 680)])
+			_highlight_terrain_owners()
+			await get_tree().process_frame
+			_shot(spot[0] + "_all_owners")
+		elif spot[0] == "inner_corner_minus17_exact":
+			_probe_screen(spot[0], [Vector2(740, 470), Vector2(800, 500),
+				Vector2(900, 520), Vector2(1020, 500), Vector2(1090, 455)])
+			_highlight_terrain_owners()
+			await get_tree().process_frame
+			_shot(spot[0] + "_all_owners")
+		elif spot[0] == "cliff_shore_minus9_exact":
+			_probe_screen(spot[0], [Vector2(910, 665), Vector2(925, 705),
+				Vector2(935, 745), Vector2(945, 785)])
+			_probe_visual_terrain(spot[0], [Vector2(910, 665),
+				Vector2(925, 705), Vector2(935, 745), Vector2(945, 785)])
+			_highlight_terrain_owners()
+			await get_tree().process_frame
+			_shot(spot[0] + "_all_owners")
+		elif spot[0] == "saddle_minus11_exact":
+			_probe_screen(spot[0], [Vector2(780, 735), Vector2(820, 705),
+				Vector2(860, 675), Vector2(900, 650)])
+			_probe_visual_terrain(spot[0], [Vector2(780, 735),
+				Vector2(820, 705), Vector2(860, 675), Vector2(900, 650)])
 			_highlight_terrain_owners()
 			await get_tree().process_frame
 			_shot(spot[0] + "_all_owners")

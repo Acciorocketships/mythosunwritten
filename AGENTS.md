@@ -221,8 +221,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
     the deterministic **wet mask**, not the final flowing surface: five fixed Jacobi passes,
     anchored by the continuous river profile, relax the wet labels across river/pond joins so a
     lower flood cannot leave a one-cell sideways water cliff. The pass radius is 30m inside a
-    42m chunk margin, preserving bit-identical overlap between chunks. Everything is rasterized
-    on a 6m world-space lattice. Across a mixed wet/dry lattice
+    42m chunk margin, preserving bit-identical overlap between chunks. The canonical surface stays
+    on a 6m world-space lattice; mixed coarse cells seed a sparse, topology-only 3m rescue where
+    real terrain exposes a submerged passage between dry 6m endpoints. The rescue walks only
+    downhill-or-level through points the coarse continuous field calls dry, lower level still wins,
+    and untouched samples remain bit-identical to the 6m field. Across a mixed wet/dry lattice
     cell the field interpolates **signed depth**: dry corners contribute a small negative
     depth, capped so a high bank never pulls the surface uphill. Water therefore thins to
     zero depth on a contour inside the cell instead of ending as a square fill-grid edge —
@@ -231,9 +234,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   - `WaterContour` — waterline → smooth, chunk-welded G1 polylines. Six-step pipeline:
     presence grid → per-edge crossing refinement → chain into polylines → two Chaikin
     passes + uniform 1.5m resample → clip to rect LAST → per-point level/normal/wall
-    attributes from the curve's own frame. Wall detection probes the outward normal plus
-    ±45° corner guards, so a gradient that bisects two cliff faces cannot look through their
-    diagonal notch and misclassify the corner as a gentle blob shore; a 1–3-sample gap bracketed
+    attributes from the curve's own frame. One dry-side orientation is chosen for the whole
+    G1 curve, so a zero-gradient saddle cannot reverse adjacent outward normals and fold the
+    rim into a bow tie. Wall detection probes that outward normal plus ±45° corner guards, so
+    a tangent that bisects two cliff faces cannot look through their diagonal notch and
+    misclassify the corner as a gentle blob shore; a 1–3-sample gap bracketed
     by real walls is closed only when their normals form a turn. Clipping LAST (after smoothing) is what makes
     the chunk weld: two neighbouring chunks both smooth the SAME margin-grown polyline
     before either clips it, so they land on bit-identical border-crossing points. SADDLE
@@ -262,16 +267,20 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
     via nearest-curve ring ownership — narrow-channel safe), plus a **meniscus rim** that
     curls the strip's own outer edge. Rising banks receive a compact overshoot; a wall-flagged
     point reaches the KayKit wall's true 1.5m recess (`TILE/2 - CliffDressing.PLACE`) only when
-    its own outward column confirms high ground there. Because the signed-depth contour can sit
-    short of the terrain boundary, a confirmed column first measures that missing contact distance,
+    its own outward column confirms high ground there. A short sustained-high witness handles
+    diagonal cliff arms that leave the normal column before the long probe. Because contour
+    smoothing can move the visual curve inside the final signed-depth wet region, every column
+    first stays level through its initial continuous wet run; this closes inner-corner and saddle
+    gaps without bridging a dry cliff arm to water on its far side. A confirmed wall column then
+    measures any remaining contact distance,
     then stays at water level through the 1.5m recess and another 0.3m behind the visible face before
     curling down. Adjacent confirmed columns whose wall normals turn use the intersection of their
     wall tangents as a bounded miter, so their outer edge follows the actual L-shaped cliff corner
     instead of cutting it off with a diagonal chord. The visible surface therefore meets rounded
     cliff corners flat instead of using the lower curl to fill them. That direct-contact
     gate stops a flanking wall from stretching a genuinely unbounded edge into a skirt. Free/drop
-    edges instead form a finite rounded lobe: a +4cm crest followed by -6/-28/-55/-65cm rows over
-    only 0.56m. Every
+    edges instead form a finite convex lobe: a +4cm crest followed by -6/-28/-55/-65cm rows over
+    only 0.64m, with monotonically outward/downward-turning tangents. Every
     free edge is accounted for (a chunk border, a bank-buried outer row, or that compact lobe),
     so no zero-thickness plane ends sharply in open air. The first rim row also advances
     outward (no vertical repair-skirt seam). Open contours may border several disconnected
@@ -304,8 +313,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   the steep gate above means a tile either has one trigger or none), each carrying
   `set_meta("sampler", sampler)` so a probe anywhere inside reads its exact water height
   from that one shared, chunk-frozen sampler instead of a per-cell plane. The sampler freezes
-  the field's native 6m fill lattice plus its terrain-height twin and applies the identical
-  signed-depth shoreline evaluation; do not resample levels through the render mesh grid, which
+  the field's native 6m fill lattice, sparse 3m topology rescue, and required terrain-height twins,
+  then applies the identical dual-resolution signed-depth shoreline evaluation; do not resample
+  levels through the render mesh grid, which
   double-interpolates steep shorelines and can turn dry/wade probes into false swimming. It also still owns
   the shared `ShaderMaterial` and the river-trace `surface_profile`/`steepness_profile`
   helpers.

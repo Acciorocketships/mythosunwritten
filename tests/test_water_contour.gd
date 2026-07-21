@@ -501,3 +501,74 @@ func test_saddle_cells_connect_the_wedge() -> void:
 		"dry centre isolates the wet corners into separate islands")
 	assert_eq(WaterContour._saddle_isolated_corners(wet_13, false), PackedInt32Array([1, 3]),
 		"dry centre handles the opposite diagonal symmetrically")
+
+
+## Exact 2026-07-21 saddle at cell (-11,-31).  The contour is G1 after its
+## two smoothing passes, so its dry-side frame cannot reverse by 180 degrees
+## between adjacent 1.5m samples.  The old pointwise wetness gradient does
+## exactly that at the saddle's zero-gradient centre, turning the wall shelf
+## into a self-crossing bow tie and leaving the connected wet wedge unmeshed.
+func test_reported_saddle_outward_frame_does_not_reverse() -> void:
+	var chunk := Vector2i(-2, -4)
+	var curves: Array = WaterContour.curves(_ctx(SEED, chunk), _rect(chunk))
+	var pin := Vector2(-250.6, -754.0)
+	var checked := 0
+	var worst_dot := 1.0
+	var offenders: Array[String] = []
+	for c: Dictionary in curves:
+		for i in range(1, c.pts.size()):
+			if Vector2(c.pts[i]).distance_to(pin) > 5.0 \
+					and Vector2(c.pts[i - 1]).distance_to(pin) > 5.0:
+				continue
+			checked += 1
+			var d: float = Vector2(c.normals[i - 1]).dot(Vector2(c.normals[i]))
+			worst_dot = minf(worst_dot, d)
+			if d < 0.0:
+				offenders.append("%s n=%s -> %s n=%s dot=%.3f" % [
+					c.pts[i - 1], c.normals[i - 1], c.pts[i], c.normals[i], d])
+	print("MEAS 2026-07-21 saddle frame checked=%d worst_dot=%.3f offenders=%s" % [
+		checked, worst_dot, str(offenders)])
+	assert_true(checked >= 3, "reported saddle exercises several adjacent contour frames")
+	assert_true(offenders.is_empty(),
+		"a smooth contour's outward frame never reverses across the reported saddle: %s" % str(offenders))
+
+
+## The curve-consistent frame must also choose the correct one of its two
+## possible sides. This isolated-pond pin was the existing free-drop fixture;
+## an inward frame sees six metres of pond water and makes the renderer build
+## a bogus long shelf instead of the compact outer meniscus.
+func test_outward_frame_points_to_the_drier_side() -> void:
+	var chunk := Vector2i(-4, -18)
+	var ctx: Dictionary = _ctx(SEED, chunk)
+	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
+	var hint := Vector2(-633.9844, -3394.641)
+	var nearest := {"distance": INF}
+	for ci in curves.size():
+		var c: Dictionary = curves[ci]
+		for i in c.pts.size():
+			var d: float = Vector2(c.pts[i]).distance_to(hint)
+			if d < nearest.distance:
+				nearest = {"distance": d, "curve": ci, "index": i,
+					"point": c.pts[i], "normal": c.normals[i]}
+	assert_true(nearest.distance < 0.2,
+		"stable isolated-pond contour pin still exists (distance %.3f)" % nearest.distance)
+	if nearest.distance >= 0.2:
+		return
+	var p: Vector2 = nearest.point
+	var nrm: Vector2 = nearest.normal
+	var probe := WaterField.FILL_STEP
+	var outward: Vector2 = p + nrm * probe
+	var inward: Vector2 = p - nrm * probe
+	var out_level: float = WaterField.level_at(ctx, outward)
+	var in_level: float = WaterField.level_at(ctx, inward)
+	var out_depth: float = out_level - TerrainSurfaceField.surface_y(
+		ctx.region, outward.x, outward.y) \
+		if out_level != -INF else -INF
+	var in_depth: float = in_level - TerrainSurfaceField.surface_y(
+		ctx.region, inward.x, inward.y) \
+		if in_level != -INF else -INF
+	print("MEAS pond outward-frame p=%s n=%s out_depth=%.3f in_depth=%.3f curve=%d index=%d" % [
+		p, nrm, out_depth, in_depth, nearest.curve, nearest.index])
+	assert_true(out_depth < in_depth - 0.05,
+		"outward frame points toward the drier side (out %.3f, in %.3f)" % [
+			out_depth, in_depth])
