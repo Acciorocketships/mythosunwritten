@@ -1,87 +1,133 @@
 {
   "assets": [
     {
-      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_lily_pad_01.tres",
-      "id": "sfv.lily_pad.01",
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_arch_001.tres",
+      "id": "sfv.arch.001",
       "license": "FantasyVillageFBX source-pack license",
       "pack": "fantasy_village",
       "parameters": {
-        "id": "sfv.lily_pad.01",
-        "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_001.fbx",
+        "collision_source": "res://tools/environment_bake/collision_sources/fantasy_village/arch_gate.tscn",
+        "id": "sfv.arch.001",
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Arch_001.fbx",
         "supports_instance_color": true,
         "tags": [
-          "floating",
-          "lily_pad",
-          "nature"
+          "arch",
+          "feature"
         ],
-        "tint_group": "grass"
+        "tint_group": "identity"
       },
-      "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_001.fbx",
-      "source_sha256": "e16eb50e7fb35a672689398b0b5430f731888cf6c6ea7b86138b699586443baf",
-      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_lily_pad_01.tres"
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Arch_001.fbx",
+      "source_sha256": "57e6b30c576e2426e2a2ab2b5d4a6258fdf41bf31b1443b454afd60b8dd7b253",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_arch_001.tres"
     },
     {
-      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_lily_pad_02.tres",
-      "id": "sfv.lily_pad.02",
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_arch_002.tres",
+      "id": "sfv.arch.002",
       "license": "FantasyVillageFBX source-pack license",
       "pack": "fantasy_village",
       "parameters": {
-        "id": "sfv.lily_pad.02",
-        "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_002.fbx",
+        "collision_source": "res://tools/environment_bake/collision_sources/fantasy_village/arch_gate.tscn",
+        "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
+        "id": "sfv.arch.002",
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Arch_002.fbx",
         "supports_instance_color": true,
         "tags": [
-          "floating",
-          "lily_pad",
-          "nature"
+          "arch",
+          "feature"
         ],
-        "tint_group": "grass"
+        "tint_group": "identity"
       },
-      "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_002.fbx",
-      "source_sha256": "16c2764baa196c38b74d791a82d8fe9c6ee4478f63aed6c26a6b58d926b31402",
-      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_lily_pad_02.tres"
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Arch_002.fbx",
+      "source_sha256": "54b8e47d399277cd4e1f04e94c1fa810796f8911f2e37119e8710502a7481916",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_arch_002.tres"
     },
     {
-      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_lily_pad_03.tres",
-      "id": "sfv.lily_pad.03",
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_bridge_001.tres",
+      "id": "sfv.bridge.001",
       "license": "FantasyVillageFBX source-pack license",
       "pack": "fantasy_village",
       "parameters": {
-        "id": "sfv.lily_pad.03",
-        "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_003.fbx",
+        "collision_source": "res://tools/environment_bake/collision_sources/fantasy_village/bridge_001.tscn",
+        "id": "sfv.bridge.001",
+        "scale": [
+          1.2,
+          1.0,
+          6.0
+        ],
+        "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Bridge/SFV_Bridge_001.fbx",
         "supports_instance_color": true,
         "tags": [
-          "floating",
-          "lily_pad",
-          "nature"
+          "bridge",
+          "feature"
         ],
-        "tint_group": "grass"
+        "tint_group": "identity"
       },
-      "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pad_003.fbx",
-      "source_sha256": "b897c58b067fd00a09d20a7d755ea9278c44c9eccd2a6d5b5ac006929e0b84a2",
-      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_lily_pad_03.tres"
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Bridge/SFV_Bridge_001.fbx",
+      "source_sha256": "2cb83d84dde508fc0fb0410df52703f2f953837b67d4e837231c2e8910d623e4",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_bridge_001.tres"
     },
     {
-      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_lily_pads_01.tres",
-      "id": "sfv.lily_pads.01",
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_entrance_arch_001.tres",
+      "id": "sfv.entrance_arch.001",
       "license": "FantasyVillageFBX source-pack license",
       "pack": "fantasy_village",
       "parameters": {
-        "id": "sfv.lily_pads.01",
-        "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pads_001.fbx",
+        "collision_source": "res://tools/environment_bake/collision_sources/fantasy_village/entrance_arch.tscn",
+        "id": "sfv.entrance_arch.001",
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Entrance_Arch_001.fbx",
         "supports_instance_color": true,
         "tags": [
-          "floating",
-          "lily_pad",
-          "nature"
+          "arch",
+          "feature"
         ],
-        "tint_group": "grass"
+        "tint_group": "identity"
       },
-      "source": "res://assets/FantasyVillageFBX/FBX/Nature/Lilypads/SFV_Lily_Pads_001.fbx",
-      "source_sha256": "cd692eb061341bad32f120f467552353713ea2f2d534b1b42b1ad8e126e643b6",
-      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_lily_pads_01.tres"
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Entrance_Arch_001.fbx",
+      "source_sha256": "45659184bbe53d79022372cd9dadef975e9df3109aa310728a2681c6b82b1d47",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_entrance_arch_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_light_pole_001.tres",
+      "id": "sfv.light_pole.001",
+      "license": "FantasyVillageFBX source-pack license",
+      "pack": "fantasy_village",
+      "parameters": {
+        "collision_source": "res://tools/environment_bake/collision_sources/fantasy_village/light_pole.tscn",
+        "id": "sfv.light_pole.001",
+        "scale": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Light Pole/SFV_Light_Pole_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "feature",
+          "lamp"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Light Pole/SFV_Light_Pole_001.fbx",
+      "source_sha256": "147db3432c614ab95391ac495631af62dc4dcd41f1ba66ef8b9303def4a821c3",
+      "visual": "res://terrain/environment/visuals/fantasy_village/sfv_light_pole_001.tres"
     }
   ],
   "license": "FantasyVillageFBX source-pack license",
   "pack": "fantasy_village",
-  "tool_version": 10
+  "tool_version": 11
 }

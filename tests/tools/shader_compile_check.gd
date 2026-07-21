@@ -6,6 +6,7 @@ extends SceneTree
 func _init() -> void:
 	for path in [
 		"res://terrain/water/water_unified.gdshader",
+		"res://ui/loading_screens/mythos_loading_screen.gdshader",
 	]:
 		var sh: Shader = load(path)
 		if sh == null or sh.get_code().is_empty():

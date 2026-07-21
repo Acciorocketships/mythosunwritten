@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_pwuts"]
+
+[resource]
+script = ExtResource("1_pwuts")
+id = &"sfv.light_pole.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village/sfv_light_pole_001.tres"
+tags = Array[StringName]([&"feature", &"lamp"])
+measured_aabb = AABB(-0.35353106, -1.1694932e-08, -1.3550928, 0.6921341, 5.9396696, 2.710178)
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village:sfv.light_pole.001"

@@ -1,0 +1,12 @@
+{
+  "pack": "fantasy_village",
+  "license": "FantasyVillageFBX source-pack license",
+  "default_scale": [2.0, 2.0, 2.0],
+  "assets": [
+    {"id":"sfv.arch.001","source":"res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Arch_001.fbx","scale":[2.0,2.0,2.0],"tags":["arch","feature"],"tint_group":"identity","supports_instance_color":true,"collision_source":"res://tools/environment_bake/collision_sources/fantasy_village/arch_gate.tscn"},
+    {"id":"sfv.arch.002","source":"res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Arch_002.fbx","scale":[2.0,2.0,2.0],"tags":["arch","feature"],"tint_group":"identity","supports_instance_color":true,"fallback_albedo_texture":"res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png","collision_source":"res://tools/environment_bake/collision_sources/fantasy_village/arch_gate.tscn"},
+    {"id":"sfv.bridge.001","source":"res://assets/FantasyVillageFBX/FBX/Exterior Props/Bridge/SFV_Bridge_001.fbx","scale":[1.2,1.0,6.0],"tags":["bridge","feature"],"tint_group":"identity","supports_instance_color":true,"collision_source":"res://tools/environment_bake/collision_sources/fantasy_village/bridge_001.tscn"},
+    {"id":"sfv.entrance_arch.001","source":"res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Entrance_Arch_001.fbx","scale":[2.0,2.0,2.0],"tags":["arch","feature"],"tint_group":"identity","supports_instance_color":true,"collision_source":"res://tools/environment_bake/collision_sources/fantasy_village/entrance_arch.tscn"},
+    {"id":"sfv.light_pole.001","source":"res://assets/FantasyVillageFBX/FBX/Exterior Props/Light Pole/SFV_Light_Pole_001.fbx","scale":[2.0,2.0,2.0],"tags":["feature","lamp"],"tint_group":"identity","supports_instance_color":true,"collision_source":"res://tools/environment_bake/collision_sources/fantasy_village/light_pole.tscn"}
+  ]
+}

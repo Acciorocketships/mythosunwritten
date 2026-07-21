@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_hdhvo"]
+
+[resource]
+script = ExtResource("1_hdhvo")
+id = &"sfv.bridge.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village/sfv_bridge_001.tres"
+tags = Array[StringName]([&"bridge", &"feature"])
+measured_aabb = AABB(-2.8117058, -1.4126925e-07, -31.520273, 5.6234117, 2.265844, 63.040546)
+collision_piece_count = 5
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village:sfv.bridge.001"

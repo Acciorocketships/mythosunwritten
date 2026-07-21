@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_vm5ll"]
+
+[resource]
+script = ExtResource("1_vm5ll")
+id = &"sfv.arch.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village/sfv_arch_001.tres"
+tags = Array[StringName]([&"arch", &"feature"])
+measured_aabb = AABB(-10.55333, -0.0025765505, -3.8447251, 21.10617, 16.30839, 7.655455)
+collision_piece_count = 12
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village:sfv.arch.001"

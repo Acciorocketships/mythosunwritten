@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[sub_resource type="BoxShape3D" id="Box_leg"]
+size = Vector3(0.42, 3.6, 0.24)
+
+[node name="EntranceArchCollision" type="Node3D"]
+
+[node name="LegLeft" type="CollisionShape3D" parent="."]
+position = Vector3(-1.7, 1.8, 0)
+shape = SubResource("Box_leg")
+
+[node name="LegRight" type="CollisionShape3D" parent="."]
+position = Vector3(1.7, 1.8, 0)
+shape = SubResource("Box_leg")

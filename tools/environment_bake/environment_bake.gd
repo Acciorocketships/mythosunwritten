@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 10
+const TOOL_VERSION := 11
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -63,6 +63,9 @@ func _bake_manifest(path: String) -> void:
 	if pack.is_empty() or entries.is_empty():
 		_fail("Manifest %s requires pack and assets" % path)
 		return
+	if not _valid_scale(default_scale):
+		_fail("Manifest %s requires a finite positive three-axis default_scale" % path)
+		return
 	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.get("id", "")) < String(b.get("id", "")))
 	var provenance: Array = []
@@ -102,11 +105,29 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		_fail("Source is not an imported scene: %s" % source_path)
 		return {}
 	var root := packed.instantiate()
-	var scale := _vector3(entry.get("scale", default_scale), Vector3.ONE)
+	var scale_value = entry.get("scale", default_scale)
+	if not _valid_scale(scale_value):
+		_fail("Bake entry %s requires a finite positive three-axis scale" % asset_id)
+		root.free()
+		return {}
+	var scale := _vector3(scale_value, Vector3.ONE)
 	var pivot := _vector3(entry.get("pivot", [0.0, 0.0, 0.0]), Vector3.ZERO)
 	var correction := Transform3D(Basis.IDENTITY.scaled(scale), -pivot)
 	var supports_color := bool(entry.get("supports_instance_color", false))
 	var material_tint := _color(entry.get("material_tint", [1.0, 1.0, 1.0, 1.0]))
+	var fallback_albedo: Texture2D = null
+	var fallback_albedo_path := String(entry.get("fallback_albedo_texture", ""))
+	if not fallback_albedo_path.is_empty():
+		if not fallback_albedo_path.begins_with("res://"):
+			_fail("fallback_albedo_texture must be a res:// path: %s" % asset_id)
+			root.free()
+			return {}
+		fallback_albedo = load(fallback_albedo_path) as Texture2D
+		if fallback_albedo == null:
+			_fail("Cannot load fallback albedo texture for %s: %s" % [
+				asset_id, fallback_albedo_path])
+			root.free()
+			return {}
 	var green_hue := float(entry.get("green_hue", -1.0))
 	if green_hue != -1.0 and (green_hue < 0.0 or green_hue > 1.0):
 		_fail("green_hue must be absent or in [0,1]: %s" % asset_id)
@@ -126,7 +147,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 			continue
 		var local := correction * _relative_transform(mesh_instance, root)
 		var baked_mesh := _bake_mesh(mesh_instance.mesh, pack, asset_id, piece_index,
-			supports_color, material_tint, green_hue)
+			supports_color, material_tint, green_hue, fallback_albedo)
 		if baked_mesh == null:
 			root.free()
 			return {}
@@ -997,7 +1018,8 @@ func _relative_transform(node: Node3D, root: Node) -> Transform3D:
 	return out
 
 func _bake_mesh(source: Mesh, pack: String, asset_id: String, piece_index: int,
-		supports_color: bool, material_tint: Color, green_hue: float) -> ArrayMesh:
+		supports_color: bool, material_tint: Color, green_hue: float,
+		fallback_albedo: Texture2D) -> ArrayMesh:
 	var source_array := source as ArrayMesh
 	if source_array == null:
 		_fail("Only ArrayMesh source pieces are supported: %s" % asset_id)
@@ -1012,7 +1034,7 @@ func _bake_mesh(source: Mesh, pack: String, asset_id: String, piece_index: int,
 		if material == null:
 			continue
 		var baked_material := _bake_material(material, pack, asset_id, piece_index,
-			surface_index, supports_color, material_tint, green_hue)
+			surface_index, supports_color, material_tint, green_hue, fallback_albedo)
 		if baked_material == null:
 			return null
 		mesh.surface_set_material(surface_index, baked_material)
@@ -1043,8 +1065,16 @@ func _remap_mesh_green_hue(source: ArrayMesh, green_hue: float) -> ArrayMesh:
 
 func _bake_material(source: Material, pack: String, asset_id: String, piece_index: int,
 		surface_index: int, supports_color: bool, material_tint: Color,
-		green_hue: float) -> Material:
+		green_hue: float, fallback_albedo: Texture2D) -> Material:
 	var material := source.duplicate(true) as Material
+	if fallback_albedo != null:
+		var standard := material as StandardMaterial3D
+		if standard == null:
+			_fail("Fallback albedo asset %s uses unsupported material %s" % [
+				asset_id, source.get_class()])
+			return null
+		if standard.albedo_texture == null:
+			standard.albedo_texture = fallback_albedo
 	if supports_color:
 		var standard := material as StandardMaterial3D
 		if standard == null:
@@ -1246,6 +1276,16 @@ func _vector3(value, fallback: Vector3) -> Vector3:
 	if not value is Array or value.size() != 3:
 		return fallback
 	return Vector3(float(value[0]), float(value[1]), float(value[2]))
+
+func _valid_scale(value: Variant) -> bool:
+	if not value is Array or value.size() != 3:
+		return false
+	for component: Variant in value:
+		if not component is float and not component is int:
+			return false
+		if not is_finite(float(component)) or float(component) <= 0.0:
+			return false
+	return true
 
 func _color(value) -> Color:
 	if not value is Array or value.size() != 4:

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_he7ee"]
+
+[resource]
+script = ExtResource("1_he7ee")
+id = &"sfv.entrance_arch.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village/sfv_entrance_arch_001.tres"
+tags = Array[StringName]([&"arch", &"feature"])
+measured_aabb = AABB(-3.8709297, 2.7142482e-07, -0.2508042, 7.7418594, 8.39015, 0.5016082)
+collision_piece_count = 2
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village:sfv.entrance_arch.001"

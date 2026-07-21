@@ -16,6 +16,7 @@ const CELL := Vector2(24.0, 21.0)
 
 var _catalog: EnvironmentCatalog
 var _cache: EnvironmentRenderCache
+var _path_program: PathProgram
 var _content := Node3D.new()
 var _page := 0
 var _capture_path := ""
@@ -33,6 +34,8 @@ func _ready() -> void:
 	_catalog = EnvironmentCatalog.load_default()
 	assert(_catalog != null)
 	_cache = EnvironmentRenderCache.new(_catalog)
+	_path_program = PathProgram.compile(_catalog)
+	assert(_path_program != null)
 	_read_args()
 	_build_stage()
 	add_child(_content)
@@ -203,11 +206,12 @@ func _add_asset(asset_id: StringName, page_index: int) -> void:
 			_content.add_child(debug_instance)
 
 	var label := Label3D.new()
-	label.text = "%s\n%s\n%.1f × %.1f × %.1f m  |  %d collider%s" % [
+	label.text = "%s\n%s\n%.1f × %.1f × %.1f m  |  %d collider%s%s" % [
 		String(asset_id), String(descriptor.provenance_id),
 		aabb.size.x, aabb.size.y, aabb.size.z,
 		descriptor.collision_piece_count,
-		"" if descriptor.collision_piece_count == 1 else "s"]
+		"" if descriptor.collision_piece_count == 1 else "s",
+		_path_metric_text(asset_id)]
 	label.position = cell_origin + Vector3(0.0, 0.75, 7.0)
 	if not String(_asset_id).is_empty():
 		label.position = cell_origin + Vector3(0.0, aabb.size.y + 1.2, 0.0)
@@ -233,6 +237,25 @@ func _add_asset(asset_id: StringName, page_index: int) -> void:
 		_content.add_child(marker)
 	else:
 		marker.free()
+	if _path_program.assets.has(asset_id):
+		var character_mesh := CapsuleMesh.new()
+		character_mesh.radius = 0.35
+		character_mesh.height = 1.8
+		var character := MeshInstance3D.new()
+		character.mesh = character_mesh
+		character.position = cell_origin + Vector3(-8.8, 0.9, 7.0)
+		_content.add_child(character)
+
+func _path_metric_text(asset_id: StringName) -> String:
+	if not _path_program.assets.has(asset_id):
+		return ""
+	var metrics: Dictionary = _path_program.assets[asset_id]
+	if asset_id == &"sfv.bridge.001":
+		return "\nusable %.1fm  opening %.2fm  deck %.2fm" % [metrics.usable_span,
+			metrics.opening, metrics.deck_height]
+	if metrics.has("opening"):
+		return "\nopening %.2fm" % metrics.opening
+	return "\narm → path: %s" % metrics.arm_direction
 
 func _frame_asset(aabb: AABB) -> void:
 	var focus := Vector3(0.0, aabb.size.y * 0.48, 0.0)
