@@ -1,0 +1,41 @@
+<h2>What does "one action" buy?</h2>
+<p class="subtitle">Agreed turn economy: each round, every player activates <b>★ their Character + one minion</b>. The remaining question is how much a single activation does — this sets your combo depth.</p>
+
+<div class="mockup" style="margin-bottom:18px">
+  <div class="mockup-header">One player-turn</div>
+  <div class="mockup-body" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:10px">
+    <span style="background:#4f81bd;color:#fff;border-radius:6px;padding:4px 10px">★ Character acts</span>
+    <span style="color:#888">+</span>
+    <span style="background:#9bbb59;color:#000;border-radius:6px;padding:4px 10px">1 minion acts</span>
+  </div>
+</div>
+
+<div class="options">
+
+  <div class="option" data-choice="oractatk" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Move <u>or</u> attack <span class="label">(purest)</span></h3>
+      <p>Each activated unit does exactly one: relocate, <i>or</i> strike from where it stands. Most chess-like (a turn is one deliberate act). Aggression is slow — you must walk into range one turn, hit the next. Maximizes "every step is committal."</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="andatk" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Move <u>and</u> attack <span class="label">(most dynamic)</span></h3>
+      <p>Each activated unit may reposition <i>then</i> strike. Enables the "approach → hit," "hit → retreat," kite, and dive plays. Snappier, more action-RPG. Slightly less boardlike since a unit covers more ground per turn.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid: hero moves+acts, minion does a chess move <span class="label">(recommended — fits the two tiers)</span></h3>
+      <p>The <b>Character</b> gets move <i>and</i> one weapon action (the action-RPG protagonist). A <b>minion</b> gets a single chess move — <i>either</i> step to a move-square <i>or</i> capture on a capture-square (exactly how your Toadstool already works). Heroes feel fluid; minions stay clean, readable, and pure. Internally consistent with everything we've built.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="label" style="margin-top:14px">I lean <b>C</b>: it keeps the hero exciting while preserving the crisp, plannable minion board — and it falls straight out of "minions have separate move vs capture patterns." Which feels right?</p>

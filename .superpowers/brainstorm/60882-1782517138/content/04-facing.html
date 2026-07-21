@@ -1,0 +1,63 @@
+<h2>Do units have a facing?</h2>
+<p class="subtitle">Your spear ("front") and dagger ("diagonal") patterns only have meaning relative to a direction. So the question is whether attack patterns <b>rotate with the unit</b>. This one choice decides whether you get flanking, backstabs, and "turn to guard" — or a cleaner, purer board.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="relative" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Relative facing <span class="label">(recommended — more emergence)</span></h3>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin:6px 0">
+        <svg viewBox="0 0 150 150" style="width:140px;height:140px;background:rgba(255,255,255,0.03);border-radius:8px">
+          <g stroke="#444" stroke-width="0.6" opacity="0.4">
+            <line x1="15" y1="15" x2="135" y2="15"/><line x1="15" y1="55" x2="135" y2="55"/><line x1="15" y1="95" x2="135" y2="95"/><line x1="15" y1="135" x2="135" y2="135"/>
+            <line x1="15" y1="15" x2="15" y2="135"/><line x1="55" y1="15" x2="55" y2="135"/><line x1="95" y1="15" x2="95" y2="135"/><line x1="135" y1="15" x2="135" y2="135"/>
+          </g>
+          <rect x="55" y="15" width="40" height="40" fill="#9bbb59" opacity="0.4"/>
+          <rect x="15" y="15" width="40" height="40" fill="#9bbb59" opacity="0.4"/>
+          <rect x="95" y="15" width="40" height="40" fill="#9bbb59" opacity="0.4"/>
+          <circle cx="75" cy="75" r="13" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+          <path d="M75,75 L75,58" stroke="#fff" stroke-width="3" marker-end="url(#f1)"/>
+          <defs><marker id="f1" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#fff"/></marker></defs>
+          <text x="75" y="148" font-size="9" fill="#bbb" text-anchor="middle">sword: front + diagonals</text>
+        </svg>
+        <svg viewBox="0 0 150 150" style="width:140px;height:140px;background:rgba(255,255,255,0.03);border-radius:8px">
+          <g stroke="#444" stroke-width="0.6" opacity="0.4">
+            <line x1="15" y1="15" x2="135" y2="15"/><line x1="15" y1="55" x2="135" y2="55"/><line x1="15" y1="95" x2="135" y2="95"/><line x1="15" y1="135" x2="135" y2="135"/>
+            <line x1="15" y1="15" x2="15" y2="135"/><line x1="55" y1="15" x2="55" y2="135"/><line x1="95" y1="15" x2="95" y2="135"/><line x1="135" y1="15" x2="135" y2="135"/>
+          </g>
+          <rect x="95" y="55" width="40" height="40" fill="#9bbb59" opacity="0.4"/>
+          <rect x="95" y="15" width="40" height="40" fill="#9bbb59" opacity="0.4"/>
+          <rect x="95" y="95" width="40" height="40" fill="#9bbb59" opacity="0.4"/>
+          <circle cx="75" cy="75" r="13" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+          <path d="M75,75 L92,75" stroke="#fff" stroke-width="3" marker-end="url(#f1)"/>
+          <text x="75" y="148" font-size="9" fill="#bbb" text-anchor="middle">same sword, turned east</text>
+        </svg>
+      </div>
+      <p>The pattern is locked to where the unit <b>looks</b>. Unlocks: <b>backstab</b> (hit the unguarded rear for bonus), <b>flanking</b>, "spend an action to turn and guard a lane," and ranged attacks that punish exposed facings. Cost: facing is one more thing to manage (turning may cost part of a turn).</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="absolute" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Absolute patterns <span class="label">(simpler, purer)</span></h3>
+      <svg viewBox="0 0 150 150" style="width:140px;height:140px;background:rgba(255,255,255,0.03);border-radius:8px;margin:6px 0">
+        <g stroke="#444" stroke-width="0.6" opacity="0.4">
+          <line x1="15" y1="15" x2="135" y2="15"/><line x1="15" y1="55" x2="135" y2="55"/><line x1="15" y1="95" x2="135" y2="95"/><line x1="15" y1="135" x2="135" y2="135"/>
+          <line x1="15" y1="15" x2="15" y2="135"/><line x1="55" y1="15" x2="55" y2="135"/><line x1="95" y1="15" x2="95" y2="135"/><line x1="135" y1="15" x2="135" y2="135"/>
+        </g>
+        <rect x="55" y="15" width="40" height="40" fill="#8064a2" opacity="0.4"/>
+        <rect x="55" y="95" width="40" height="40" fill="#8064a2" opacity="0.4"/>
+        <rect x="15" y="55" width="40" height="40" fill="#8064a2" opacity="0.4"/>
+        <rect x="95" y="55" width="40" height="40" fill="#8064a2" opacity="0.4"/>
+        <circle cx="75" cy="75" r="13" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+        <text x="75" y="148" font-size="9" fill="#bbb" text-anchor="middle">pattern never rotates</text>
+      </svg>
+      <p>Attack shapes are fixed to the board's compass; units have no orientation. Closer to literal chess. <b>No backstab/flank depth</b>, but one fewer system and the board reads instantly. Positioning still matters, just less richly.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="label" style="margin-top:14px">I lean <b>A</b> — facing roughly doubles your emergent vocabulary (it's how "defended pieces" and "discovered attacks" get teeth) and it fits the BG/tactics feel. But it's real added complexity. Which appeals?</p>

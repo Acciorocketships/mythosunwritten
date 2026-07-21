@@ -1,0 +1,43 @@
+<h2>First fork in the road: who are the "pieces"?</h2>
+<p class="subtitle">Chess emergence comes from multiple heterogeneous pieces interacting. The single biggest question that shapes everything else: in a fight, how many units does the player control?</p>
+
+<div class="options">
+  <div class="option" data-choice="solo" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Solo hero (or hero + small entourage)</h3>
+      <svg viewBox="0 0 240 150" style="width:100%;max-width:320px;height:auto;background:rgba(255,255,255,0.03);border-radius:8px;margin:8px 0">
+        <!-- enemies -->
+        <circle cx="60" cy="40" r="12" fill="#c0504d"/>
+        <circle cx="180" cy="50" r="12" fill="#c0504d"/>
+        <circle cx="190" cy="110" r="12" fill="#c0504d"/>
+        <circle cx="55" cy="115" r="12" fill="#c0504d"/>
+        <!-- hero -->
+        <circle cx="120" cy="78" r="16" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+        <text x="120" y="83" font-size="13" fill="#fff" text-anchor="middle">★</text>
+      </svg>
+      <p>Emergence lives in <b>your kit</b>: sequencing attacks across cooldowns, positioning one body against many, chaining status effects. The "multi-step plan" is a combo you set up over several turns.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="party" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Party / squad (Baldur's Gate-style)</h3>
+      <svg viewBox="0 0 240 150" style="width:100%;max-width:320px;height:auto;background:rgba(255,255,255,0.03);border-radius:8px;margin:8px 0">
+        <!-- enemies -->
+        <circle cx="180" cy="40" r="12" fill="#c0504d"/>
+        <circle cx="195" cy="90" r="12" fill="#c0504d"/>
+        <circle cx="170" cy="120" r="12" fill="#c0504d"/>
+        <!-- party -->
+        <circle cx="50" cy="50" r="13" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+        <circle cx="55" cy="100" r="13" fill="#9bbb59" stroke="#fff" stroke-width="2"/>
+        <circle cx="95" cy="75" r="13" fill="#8064a2" stroke="#fff" stroke-width="2"/>
+        <!-- a line showing one covering another -->
+        <line x1="50" y1="50" x2="95" y2="75" stroke="#fff" stroke-dasharray="3 3" stroke-width="1.5" opacity="0.6"/>
+      </svg>
+      <p>Emergence lives <b>between units</b>: covering each other, forks, body-blocking lines of attack, baiting — the most literal chess analog. Each unit is a "piece" with its own weapons.</p>
+    </div>
+  </div>
+</div>
+
+<p class="label" style="margin-top:14px">You can also tell me it's a hybrid (e.g. one main hero + 1–2 summons/companions). Just describe it in the terminal.</p>

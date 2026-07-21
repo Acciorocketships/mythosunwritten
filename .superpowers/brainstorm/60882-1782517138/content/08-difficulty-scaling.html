@@ -1,0 +1,50 @@
+<h2>What does the difficulty gradient actually scale?</h2>
+<p class="subtitle">Distance from spawn = enemy level. But "level" can express itself as bigger numbers <i>or</i> as harder tactics. Lean toward tactics and the chess stays alive; lean toward numbers and it turns spongy. Which levers should the gradient pull? (Multi-select.)</p>
+
+<div class="mockup" style="margin-bottom:18px">
+  <div class="mockup-header">The difficulty gradient (top-down, spawn at center)</div>
+  <div class="mockup-body" style="display:flex;justify-content:center;padding:6px">
+    <svg viewBox="0 0 420 200" style="width:100%;max-width:520px;height:auto">
+      <ellipse cx="80" cy="100" rx="330" ry="95" fill="#5a2a5a" opacity="0.5"/>
+      <ellipse cx="80" cy="100" rx="250" ry="90" fill="#7a3030" opacity="0.6"/>
+      <ellipse cx="80" cy="100" rx="170" ry="80" fill="#8a6a2a" opacity="0.6"/>
+      <ellipse cx="80" cy="100" rx="95" ry="65" fill="#3a6a3a" opacity="0.7"/>
+      <circle cx="80" cy="100" r="9" fill="#fff"/><text x="80" y="125" font-size="10" fill="#fff" text-anchor="middle">spawn</text>
+      <text x="150" y="104" font-size="9" fill="#dfe" text-anchor="middle">lone Toadstools</text>
+      <text x="225" y="104" font-size="9" fill="#fed" text-anchor="middle">small mixed squads</text>
+      <text x="305" y="104" font-size="9" fill="#fdd" text-anchor="middle">coordinated + geared cmdr</text>
+      <text x="385" y="60" font-size="9" fill="#fdf" text-anchor="middle">elite rosters,</text>
+      <text x="385" y="72" font-size="9" fill="#fdf" text-anchor="middle">held high ground,</text>
+      <text x="385" y="84" font-size="9" fill="#fdf" text-anchor="middle">many commanders</text>
+    </svg>
+  </div>
+</div>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="stats" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>Raw stats — HP / DEF / DMG <span class="label" style="color:#e0b070">keep modest</span></h3><p>A gentle numeric floor so frontier foes aren't one-shot. But over-rely on it and you get bullet sponges that flatten tactics into grind. Necessary seasoning, not the main dish.</p></div>
+  </div>
+  <div class="option" data-choice="composition" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Enemy composition / piece variety <span class="label" style="color:#9bd17a">lean on</span></h3><p>Further out = nastier <i>combinations</i> (Frog + Ent + Cat covering each other) instead of bigger blobs. Difficulty becomes a tactical puzzle that demands better play, not just better gear.</p></div>
+  </div>
+  <div class="option" data-choice="numbers" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content"><h3>Squad size & number of commanders <span class="label" style="color:#9bd17a">lean on</span></h3><p>More enemy commanders = more board-change between your turns = genuinely harder to plan (ties to your one-minion activation economy). Scales pressure without inflating any single stat.</p></div>
+  </div>
+  <div class="option" data-choice="gear" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content"><h3>Enemy commander gear budget <span class="label" style="color:#9bd17a">lean on</span></h3><p>Frontier commanders wear higher-budget gear — so they're literally stronger pieces, <i>and</i> that gear is the loot you came for. The difficulty and the reward are the same object. Closed loop.</p></div>
+  </div>
+  <div class="option" data-choice="ai" onclick="toggleSelect(this)">
+    <div class="letter">E</div>
+    <div class="content"><h3>Enemy AI sophistication <span class="label" style="color:#7fb0d6">lean on if feasible</span></h3><p>Smarter focus-fire, flanking, terrain use further out. Highest payoff for "feels harder, not just bigger" — but the most work to author well.</p></div>
+  </div>
+  <div class="option" data-choice="terrain" onclick="toggleSelect(this)">
+    <div class="letter">F</div>
+    <div class="content"><h3>Battlefield / terrain hazard <span class="label">optional spice</span></h3><p>Frontier fights start with the enemy holding the high ground, more chasms, hazards. Cheap way to vary fights and force you to earn position.</p></div>
+  </div>
+</div>
+
+<p class="label" style="margin-top:14px">My recommended blend: <b>B + C + D</b> as the backbone (composition, numbers, enemy gear), <b>A</b> kept light, <b>E</b> as the long-term aspiration, <b>F</b> as free spice. Select what you want the gradient to lean on.</p>

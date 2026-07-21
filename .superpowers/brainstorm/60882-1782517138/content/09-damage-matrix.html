@@ -1,0 +1,37 @@
+<h2>The damage matrix — two layers, one of them infinite</h2>
+<p class="subtitle">Green cells = tactical layer (binary, numbers don't apply, never spongy). Orange cells = progression layer (numeric, scales forever). You defined the two diagonal cells; I've proposed the other two — confirm or tweak.</p>
+
+<div style="display:grid;grid-template-columns:90px 1fr 1fr;gap:8px;margin:10px 0 18px">
+  <div></div>
+  <div class="label" style="text-align:center">target: MINION</div>
+  <div class="label" style="text-align:center">target: PLAYER</div>
+
+  <div class="label" style="display:flex;align-items:center">atk: MINION</div>
+  <div style="background:rgba(155,187,89,0.18);border:1px solid #9bbb59;border-radius:8px;padding:10px">
+    <b>Binary capture</b><br><span style="font-size:0.9em;color:#ccc">Captured minion dies, attacker takes the square. Level &amp; HP irrelevant — pure chess. <i>(your rule)</i></span>
+  </div>
+  <div style="background:rgba(192,80,77,0.18);border:1px solid #c0504d;border-radius:8px;padding:10px">
+    <b>Damage = f(minion level)</b><br><span style="font-size:0.9em;color:#ccc">Reduced by player defense. <b>The unbounded scaling axis.</b> <i>(your rule)</i></span>
+  </div>
+
+  <div class="label" style="display:flex;align-items:center">atk: PLAYER</div>
+  <div style="background:rgba(155,187,89,0.18);border:1px solid #9bbb59;border-radius:8px;padding:10px">
+    <b>Pattern wipe (proposed)</b><br><span style="font-size:0.9em;color:#ccc">A hero's weapon removes minion(s) in its target pattern — heroes are lethal to chaff. Stays binary so the board reads cleanly. <i>(open — confirm?)</i></span>
+  </div>
+  <div style="background:rgba(192,80,77,0.18);border:1px solid #c0504d;border-radius:8px;padding:10px">
+    <b>Weapon dmg vs defense (proposed)</b><br><span style="font-size:0.9em;color:#ccc">The PvP duel layer — scales with both players' gear. Same numeric axis as minion→player. <i>(open — confirm?)</i></span>
+  </div>
+</div>
+
+<h3>Where do terrain bonuses live now?</h3>
+<p class="subtitle">Binary capture has no "damage" to buff — so high ground / flanking split by layer:</p>
+<div class="pros-cons">
+  <div class="pros"><h4>Tactical layer (m-v-m)</h4><ul>
+    <li>Terrain acts as <b>positional rules</b>, not numbers: high ground <b>extends a slider's reach</b>; uphill lines can be <b>blocked</b>; a unit on a cliff edge can be <b>shoved into a chasm</b> (instant removal).</li>
+  </ul></div>
+  <div class="cons" style="background:rgba(192,80,77,0.12)"><h4>Progression layer (vs players)</h4><ul>
+    <li>Terrain is a <b>damage multiplier</b>: high-ground / flank / backstab attacks deal bonus damage to players and commanders. The numeric edge you maneuver for.</li>
+  </ul></div>
+</div>
+
+<p class="label" style="margin-top:14px">Does this matrix match your intent? Two things to confirm: <b>(1)</b> player→minion = clean pattern-wipe? <b>(2)</b> player→player = weapon-dmg-vs-defense duel? And does the terrain split feel right?</p>

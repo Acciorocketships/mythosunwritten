@@ -1,0 +1,64 @@
+<h2>Combat design — at a glance</h2>
+<p class="subtitle">The whole system assembled. Read it as one machine — if anything's off, point at it and we'll fix before I write the doc.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+  <div class="section" style="background:rgba(79,129,189,0.10);border:1px solid #4f81bd;border-radius:8px;padding:12px">
+    <div class="label">Core frame</div>
+    <p style="font-size:0.92em">Continuous BG-style overworld; <b>snap to a soft grid</b> when battle starts. Terrain carries into the fight: elevation, obstacles, chasms/water gaps. Renders fluid, resolves discrete.</p>
+  </div>
+
+  <div class="section" style="background:rgba(128,100,162,0.10);border:1px solid #8064a2;border-radius:8px;padding:12px">
+    <div class="label">Two-tier army</div>
+    <p style="font-size:0.92em"><b>Characters</b> (have facing; gear-driven; the wildcards) + <b>Minions</b> (facing-free chess pieces). Player = the "king": kill a commander and their whole army despawns.</p>
+  </div>
+
+  <div class="section" style="background:rgba(155,187,89,0.10);border:1px solid #9bbb59;border-radius:8px;padding:12px">
+    <div class="label">The pieces (start with 4)</div>
+    <p style="font-size:0.92em"><b>Toadstool</b> (pawn: move cardinal / capture diagonal) · <b>Cat</b> (bishop) · <b>Ent</b> (rook) · <b>Frog</b> (knight-leaper, ignores terrain). Sliders blockable; Frog unblockable.</p>
+  </div>
+
+  <div class="section" style="background:rgba(74,163,163,0.10);border:1px solid #4aa3a3;border-radius:8px;padding:12px">
+    <div class="label">Movement = gear</div>
+    <p style="font-size:0.92em">Player starts at 1 cardinal step. Armor pieces add movement (boots→diagonal, leggings→knight, chest→queen-2). Grants <b>union</b> into hybrid pieces.</p>
+  </div>
+
+  <div class="section" style="background:rgba(192,80,77,0.10);border:1px solid #c0504d;border-radius:8px;padding:12px">
+    <div class="label">Item power budget</div>
+    <p style="font-size:0.92em">One budget = <b>rarity × dropper's level</b>, split across movement + defense + effects. Movement &amp; defense <b>trade off</b> on the same item. Nothing lasts forever.</p>
+  </div>
+
+  <div class="section" style="background:rgba(224,176,112,0.10);border:1px solid #e0b070;border-radius:8px;padding:12px">
+    <div class="label">Weapons</div>
+    <p style="font-size:0.92em">Each has 1+ attacks targeting <b>square patterns</b> (spear=front, dagger=diagonal, bow=ring, fireball=3×3 AOE, flail=all-around-but-weak). <b>Cooldowns</b>, not spell slots.</p>
+  </div>
+
+  <div class="section" style="background:rgba(120,140,200,0.10);border:1px solid #788cc8;border-radius:8px;padding:12px">
+    <div class="label">Turn economy (per player, per round)</div>
+    <p style="font-size:0.92em"><b>Character: move + one weapon action.</b> Plus <b>one minion: a single chess move</b> (step or capture). Limited activations = "command" is a resource (loot can grant +1).</p>
+  </div>
+
+  <div class="section" style="background:rgba(180,120,180,0.10);border:1px solid #b478b4;border-radius:8px;padding:12px">
+    <div class="label">Many players, no fixed sides</div>
+    <p style="font-size:0.92em">Free-for-all: alliances, betrayal, gang-up-on-the-leader. Tactical layer is N-aware now; formal pacts + netcode are a <b>separate</b> design pass.</p>
+  </div>
+
+  <div class="section" style="grid-column:1 / 3;background:rgba(255,255,255,0.03);border:1px solid #666;border-radius:8px;padding:12px">
+    <div class="label">Damage matrix — two layers</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.88em;margin-top:6px">
+      <div style="border-left:3px solid #9bbb59;padding-left:8px"><b>Minion → Minion:</b> binary capture (chess; level-independent; capturer survives &amp; takes the square)</div>
+      <div style="border-left:3px solid #c0504d;padding-left:8px"><b>Minion → Player:</b> damage = f(level) vs defense — the infinite axis</div>
+      <div style="border-left:3px solid #c0504d;padding-left:8px"><b>Player → Minion:</b> normal weapon damage vs minion HP/def (attack <i>type</i> matters; no free AOE wipe)</div>
+      <div style="border-left:3px solid #c0504d;padding-left:8px"><b>Player → Player:</b> weapon damage vs defense (the duel layer)</div>
+    </div>
+    <p style="font-size:0.85em;color:#aaa;margin-top:8px">Terrain: positional rules in m-v-m (extend reach, block uphill, <b>shove off cliffs</b>); damage multiplier vs players (high-ground/flank/backstab).</p>
+  </div>
+
+  <div class="section" style="grid-column:1 / 3;background:rgba(155,187,89,0.08);border:1px solid #9bbb59;border-radius:8px;padding:12px">
+    <div class="label">Difficulty &amp; progression — and the keystone</div>
+    <p style="font-size:0.92em">Enemy level rises with <b>distance from spawn</b> (raw numbers = the unbounded axis; composition/AI/terrain = texture). Your gear comes from <i>behind</i> the frontier, so it's always tougher ahead — never invincible, can't be cheesed by grinding low zones. <b>Keystone:</b> brute force gets out-scaled at the frontier, but chess captures are level-independent — so beating a stronger foe <i>requires</i> winning the chess match. Emergent planning is the mandatory path to victory.</p>
+  </div>
+
+</div>
+
+<p class="label" style="margin-top:16px">If this machine looks right, I'll write it up as the design doc (and we'll spin <b>territory capture</b> into its own follow-up). Anything to change first?</p>

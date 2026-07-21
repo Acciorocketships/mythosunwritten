@@ -1,0 +1,64 @@
+<h2>First-draft minion roster (chess → your game)</h2>
+<p class="subtitle"><span style="color:#7fa6d6">■ move</span> &nbsp; <span style="color:#d08a87">■ capture</span> &nbsp; <span style="color:#a48cc4">■ both</span>. The twist that makes terrain matter: <b>sliders are blocked by walls/units/gaps; the leaper ignores them.</b> A chasm is a wall to your Rook but a highway to your Knight.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="pawn" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 140 140" style="width:120px;height:auto">
+        <g fill="#7fa6d6" opacity="0.45"><rect x="58" y="34" width="24" height="24"/><rect x="58" y="82" width="24" height="24"/><rect x="34" y="58" width="24" height="24"/><rect x="82" y="58" width="24" height="24"/></g>
+        <g fill="#d08a87" opacity="0.45"><rect x="34" y="34" width="24" height="24"/><rect x="82" y="34" width="24" height="24"/><rect x="34" y="82" width="24" height="24"/><rect x="82" y="82" width="24" height="24"/></g>
+        <g stroke="#444" stroke-width="0.6" opacity="0.35"><line x1="10" y1="10" x2="10" y2="130"/><line x1="34" y1="10" x2="34" y2="130"/><line x1="58" y1="10" x2="58" y2="130"/><line x1="82" y1="10" x2="82" y2="130"/><line x1="106" y1="10" x2="106" y2="130"/><line x1="130" y1="10" x2="130" y2="130"/><line x1="10" y1="10" x2="130" y2="10"/><line x1="10" y1="34" x2="130" y2="34"/><line x1="10" y1="58" x2="130" y2="58"/><line x1="10" y1="82" x2="130" y2="82"/><line x1="10" y1="106" x2="130" y2="106"/><line x1="10" y1="130" x2="130" y2="130"/></g>
+        <circle cx="70" cy="70" r="11" fill="#9bbb59" stroke="#fff" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="card-body"><h3>Pawn</h3><p>Move 1 cardinal, capture 1 diagonal. Cheap, low HP, numerous. Your <b>zone-control chaff</b> — bodies to block lanes and bait trades.</p></div>
+  </div>
+
+  <div class="card" data-choice="knight" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 140 140" style="width:120px;height:auto">
+        <g fill="#a48cc4" opacity="0.45"><rect x="10" y="34" width="24" height="24"/><rect x="10" y="82" width="24" height="24"/><rect x="106" y="34" width="24" height="24"/><rect x="106" y="82" width="24" height="24"/><rect x="34" y="10" width="24" height="24"/><rect x="82" y="10" width="24" height="24"/><rect x="34" y="106" width="24" height="24"/><rect x="82" y="106" width="24" height="24"/></g>
+        <g stroke="#444" stroke-width="0.6" opacity="0.35"><line x1="10" y1="10" x2="10" y2="130"/><line x1="34" y1="10" x2="34" y2="130"/><line x1="58" y1="10" x2="58" y2="130"/><line x1="82" y1="10" x2="82" y2="130"/><line x1="106" y1="10" x2="106" y2="130"/><line x1="130" y1="10" x2="130" y2="130"/><line x1="10" y1="10" x2="130" y2="10"/><line x1="10" y1="34" x2="130" y2="34"/><line x1="10" y1="58" x2="130" y2="58"/><line x1="10" y1="82" x2="130" y2="82"/><line x1="10" y1="106" x2="130" y2="106"/><line x1="10" y1="130" x2="130" y2="130"/></g>
+        <circle cx="70" cy="70" r="11" fill="#8064a2" stroke="#fff" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="card-body"><h3>Knight · Leaper</h3><p>L-hop, move=capture. <b>Jumps over everything</b> — unblockable, crosses gaps/walls. The terrain-ignoring assassin. Hard to wall out.</p></div>
+  </div>
+
+  <div class="card" data-choice="rook" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 140 140" style="width:120px;height:auto">
+        <g fill="#a48cc4" opacity="0.45"><rect x="10" y="58" width="24" height="24"/><rect x="34" y="58" width="24" height="24"/><rect x="82" y="58" width="24" height="24"/><rect x="106" y="58" width="24" height="24"/><rect x="58" y="10" width="24" height="24"/><rect x="58" y="34" width="24" height="24"/><rect x="58" y="82" width="24" height="24"/><rect x="58" y="106" width="24" height="24"/></g>
+        <g stroke="#444" stroke-width="0.6" opacity="0.35"><line x1="10" y1="10" x2="10" y2="130"/><line x1="34" y1="10" x2="34" y2="130"/><line x1="58" y1="10" x2="58" y2="130"/><line x1="82" y1="10" x2="82" y2="130"/><line x1="106" y1="10" x2="106" y2="130"/><line x1="130" y1="10" x2="130" y2="130"/><line x1="10" y1="10" x2="130" y2="10"/><line x1="10" y1="34" x2="130" y2="34"/><line x1="10" y1="58" x2="130" y2="58"/><line x1="10" y1="82" x2="130" y2="82"/><line x1="10" y1="106" x2="130" y2="106"/><line x1="10" y1="130" x2="130" y2="130"/></g>
+        <circle cx="70" cy="70" r="11" fill="#4f81bd" stroke="#fff" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="card-body"><h3>Rook · Charger</h3><p>Straight cardinal lines until blocked, move=capture. <b>Blockable</b> → enables discovered attacks & choke-point control. Loves open corridors.</p></div>
+  </div>
+
+  <div class="card" data-choice="bishop" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 140 140" style="width:120px;height:auto">
+        <g fill="#a48cc4" opacity="0.45"><rect x="10" y="10" width="24" height="24"/><rect x="34" y="34" width="24" height="24"/><rect x="82" y="82" width="24" height="24"/><rect x="106" y="106" width="24" height="24"/><rect x="10" y="106" width="24" height="24"/><rect x="34" y="82" width="24" height="24"/><rect x="82" y="34" width="24" height="24"/><rect x="106" y="10" width="24" height="24"/></g>
+        <g stroke="#444" stroke-width="0.6" opacity="0.35"><line x1="10" y1="10" x2="10" y2="130"/><line x1="34" y1="10" x2="34" y2="130"/><line x1="58" y1="10" x2="58" y2="130"/><line x1="82" y1="10" x2="82" y2="130"/><line x1="106" y1="10" x2="106" y2="130"/><line x1="130" y1="10" x2="130" y2="130"/><line x1="10" y1="10" x2="130" y2="10"/><line x1="10" y1="34" x2="130" y2="34"/><line x1="10" y1="58" x2="130" y2="58"/><line x1="10" y1="82" x2="130" y2="82"/><line x1="10" y1="106" x2="130" y2="106"/><line x1="10" y1="130" x2="130" y2="130"/></g>
+        <circle cx="70" cy="70" r="11" fill="#4aa3a3" stroke="#fff" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="card-body"><h3>Bishop · Glider</h3><p>Diagonal lines until blocked, move=capture. Blockable. Covers a different geometry than the Rook — pair them and few squares are safe.</p></div>
+  </div>
+
+  <div class="card" data-choice="queen" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 140 140" style="width:120px;height:auto">
+        <g fill="#a48cc4" opacity="0.45"><rect x="10" y="58" width="24" height="24"/><rect x="34" y="58" width="24" height="24"/><rect x="82" y="58" width="24" height="24"/><rect x="106" y="58" width="24" height="24"/><rect x="58" y="10" width="24" height="24"/><rect x="58" y="34" width="24" height="24"/><rect x="58" y="82" width="24" height="24"/><rect x="58" y="106" width="24" height="24"/><rect x="10" y="10" width="24" height="24"/><rect x="34" y="34" width="24" height="24"/><rect x="82" y="82" width="24" height="24"/><rect x="106" y="106" width="24" height="24"/><rect x="10" y="106" width="24" height="24"/><rect x="34" y="82" width="24" height="24"/><rect x="82" y="34" width="24" height="24"/><rect x="106" y="10" width="24" height="24"/></g>
+        <g stroke="#444" stroke-width="0.6" opacity="0.35"><line x1="10" y1="10" x2="10" y2="130"/><line x1="34" y1="10" x2="34" y2="130"/><line x1="58" y1="10" x2="58" y2="130"/><line x1="82" y1="10" x2="82" y2="130"/><line x1="106" y1="10" x2="106" y2="130"/><line x1="130" y1="10" x2="130" y2="130"/><line x1="10" y1="10" x2="130" y2="10"/><line x1="10" y1="34" x2="130" y2="34"/><line x1="10" y1="58" x2="130" y2="58"/><line x1="10" y1="82" x2="130" y2="82"/><line x1="10" y1="106" x2="130" y2="106"/><line x1="10" y1="130" x2="130" y2="130"/></g>
+        <circle cx="70" cy="70" r="11" fill="#c0504d" stroke="#fff" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="card-body"><h3>Queen</h3><p>All 8 lines until blocked. High HP, <b>expensive summon + long cooldown</b>. The capstone — but with the symmetric trade rule, even she dies to two well-placed pawns on a flank.</p></div>
+  </div>
+
+</div>
+
+<p class="label" style="margin-top:14px">Two things to react to: <b>(1)</b> do these patterns + terrain niches feel right? <b>(2)</b> Stay chess-pure, or also invent <b>original pieces</b> with asymmetric move/capture like the pawn (e.g. a "Lancer" that drifts slowly but captures in a long telegraphed line)?</p>

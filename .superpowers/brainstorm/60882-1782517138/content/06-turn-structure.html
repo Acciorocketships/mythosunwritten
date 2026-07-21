@@ -1,0 +1,50 @@
+<h2>Turn structure — the skeleton of "multi-step planning"</h2>
+<p class="subtitle">How many of your units act per turn, and how much can each do? This single choice sets the depth, the pace, and how "chess-like" it feels. Three coherent packages:</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="purechess" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 220 120" style="width:100%;height:auto">
+        <rect width="220" height="120" fill="rgba(255,255,255,0.02)"/>
+        <circle cx="30" cy="40" r="12" fill="#4f81bd"/><text x="30" y="44" font-size="10" fill="#fff" text-anchor="middle">1</text>
+        <circle cx="70" cy="40" r="12" fill="#c0504d"/><text x="70" y="44" font-size="10" fill="#fff" text-anchor="middle">1</text>
+        <circle cx="110" cy="40" r="12" fill="#4f81bd"/><text x="110" y="44" font-size="10" fill="#fff" text-anchor="middle">1</text>
+        <circle cx="150" cy="40" r="12" fill="#c0504d"/><text x="150" y="44" font-size="10" fill="#fff" text-anchor="middle">1</text>
+        <text x="190" y="44" font-size="16" fill="#888">…</text>
+        <text x="110" y="90" font-size="10" fill="#aaa" text-anchor="middle">one unit each, strictly alternating</text>
+      </svg>
+    </div>
+    <div class="card-body"><h3>1 · Pure chess</h3><p>You move <b>one unit</b>, then the foe moves one. Deepest calculation, most literal chess. But slow, and an army + a cooldown-juggling hero can feel tedious turn-to-turn.</p></div>
+  </div>
+
+  <div class="card" data-choice="squad" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 220 120" style="width:100%;height:auto">
+        <rect width="220" height="120" fill="rgba(255,255,255,0.02)"/>
+        <rect x="18" y="26" width="80" height="42" rx="6" fill="#4f81bd" opacity="0.25" stroke="#4f81bd"/>
+        <circle cx="38" cy="47" r="9" fill="#4f81bd"/><circle cx="58" cy="47" r="9" fill="#4f81bd"/><circle cx="78" cy="47" r="9" fill="#4f81bd"/>
+        <rect x="120" y="26" width="80" height="42" rx="6" fill="#c0504d" opacity="0.25" stroke="#c0504d"/>
+        <circle cx="140" cy="47" r="9" fill="#c0504d"/><circle cx="160" cy="47" r="9" fill="#c0504d"/><circle cx="180" cy="47" r="9" fill="#c0504d"/>
+        <text x="58" y="88" font-size="10" fill="#aaa" text-anchor="middle">your whole side</text>
+        <text x="160" y="88" font-size="10" fill="#aaa" text-anchor="middle">then theirs</text>
+      </svg>
+    </div>
+    <div class="card-body"><h3>2 · Squad I-go / you-go <span class="label">(recommended)</span></h3><p>Activate <b>all your units</b> (each: move + one attack), then the foe does. Fire Emblem / Wargroove feel. You see the full board and plan a coordinated multi-unit play each turn — forks, screens, combos — at a workable pace.</p></div>
+  </div>
+
+  <div class="card" data-choice="initiative" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 220 120" style="width:100%;height:auto">
+        <rect width="220" height="120" fill="rgba(255,255,255,0.02)"/>
+        <circle cx="28" cy="38" r="11" fill="#4f81bd"/><circle cx="62" cy="38" r="11" fill="#c0504d"/><circle cx="96" cy="38" r="11" fill="#4f81bd"/><circle cx="130" cy="38" r="11" fill="#4f81bd"/><circle cx="164" cy="38" r="11" fill="#c0504d"/><text x="192" y="42" font-size="15" fill="#888">…</text>
+        <rect x="18" y="58" width="20" height="6" rx="2" fill="#9bbb59"/><rect x="52" y="58" width="20" height="6" rx="2" fill="#9bbb59"/><rect x="86" y="58" width="20" height="6" rx="2" fill="#9bbb59"/>
+        <text x="110" y="92" font-size="10" fill="#aaa" text-anchor="middle">interleaved by initiative · spend an AP pool</text>
+      </svg>
+    </div>
+    <div class="card-body"><h3>3 · Initiative + action points</h3><p>Units act in initiative order; each spends an <b>AP pool</b> across move/attack/abilities (Divinity, BG3). Most fluid and combo-rich per unit, biggest loot-stat surface — but least "boardlike" and the most complex to balance.</p></div>
+  </div>
+
+</div>
+
+<p class="label" style="margin-top:14px">My pick: <b>#2</b>. It keeps perfect-information board planning (the source of your forks/pins) while supporting the hero's "reposition → strike → cooldowns" combos and a brisk pace. #1 if you want maximum purity; #3 if you want maximum RPG fluidity. Which fits the feel you're after?</p>

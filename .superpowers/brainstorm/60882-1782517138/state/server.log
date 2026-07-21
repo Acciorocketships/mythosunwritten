@@ -1,0 +1,8 @@
+{"type":"server-started","port":62748,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:62748","screen_dir":"/Users/ryko/story/.superpowers/brainstorm/60882-1782517138/content","state_dir":"/Users/ryko/story/.superpowers/brainstorm/60882-1782517138/state"}
+{"type":"screen-added","file":"/Users/ryko/story/.superpowers/brainstorm/60882-1782517138/content/03-tactical-ontology.html"}
+{"source":"user-event","type":"click","text":"the fork is unambiguous — both cells threatened\n      \n    \n    \n      3 · Soft grid (recommended)\n      One discrete lattice for all combatants; movement snaps & animates smoothly so the world still looks continuous. Threat = highlighted cells. Forks are exact. Clean to code. Into-the-Breach legibility.","choice":"softgrid","id":null,"timestamp":1782517295698}
+{"type":"screen-added","file":"/Users/ryko/story/.superpowers/brainstorm/60882-1782517138/content/04-facing.html"}
+{"type":"screen-added","file":"/Users/ryko/story/.superpowers/brainstorm/60882-1782517138/content/05-minion-roster.html"}
+{"type":"screen-added","file":"/Users/ryko/story/.superpowers/brainstorm/60882-1782517138/content/06-turn-structure.html"}
+{"type":"screen-added","file":"/Users/ryko/story/.superpowers/brainstorm/60882-1782517138/content/07-action-granularity.html"}
+{"type":"server-stopped","reason":"owner process exited"}

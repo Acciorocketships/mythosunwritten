@@ -1,0 +1,64 @@
+<h2>Movement archetypes in a gridless world</h2>
+<p class="subtitle">The trick: don't copy chess geometry — copy what makes chess geometry interesting. Each archetype is a <b>constraint</b> on how a unit relocates. Constraints are what make movement predictable enough to plan around. Which of these excite you? (Select any number — a roster usually mixes several.)</p>
+
+<div class="options" data-multiselect>
+
+  <div class="option" data-choice="charger" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Charger <span class="label">(the Rook / Lance)</span></h3>
+      <svg viewBox="0 0 200 120" style="width:100%;max-width:280px;height:auto;background:rgba(255,255,255,0.03);border-radius:8px;margin:6px 0">
+        <circle cx="100" cy="60" r="13" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+        <line x1="100" y1="60" x2="185" y2="60" stroke="#9bbb59" stroke-width="3" marker-end="url(#ar)"/>
+        <line x1="100" y1="60" x2="15" y2="60" stroke="#9bbb59" stroke-width="3"/>
+        <line x1="100" y1="60" x2="100" y2="10" stroke="#9bbb59" stroke-width="3"/>
+        <line x1="100" y1="60" x2="100" y2="112" stroke="#9bbb59" stroke-width="3"/>
+        <defs><marker id="ar" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9bbb59"/></marker></defs>
+      </svg>
+      <p>Moves in a <b>straight line</b>, far, but stops at the first obstacle. Telegraphs its direction; <b>can be body-blocked</b>. Great for "wall it off" play.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="leaper" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Leaper <span class="label">(the Knight)</span></h3>
+      <svg viewBox="0 0 200 120" style="width:100%;max-width:280px;height:auto;background:rgba(255,255,255,0.03);border-radius:8px;margin:6px 0">
+        <circle cx="100" cy="60" r="13" fill="#8064a2" stroke="#fff" stroke-width="2"/>
+        <circle cx="100" cy="60" r="45" fill="none" stroke="#8064a2" stroke-width="2" stroke-dasharray="5 5"/>
+        <circle cx="145" cy="60" r="5" fill="#fff"/>
+        <circle cx="78" cy="100" r="5" fill="#fff"/>
+        <circle cx="68" cy="28" r="5" fill="#fff"/>
+      </svg>
+      <p>Teleport-hops to any point on a <b>ring at fixed distance</b>, ignoring everything between. <b>Cannot be blocked</b>, jumps walls/units. Unpredictable, slippery.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="skirmisher" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Skirmisher <span class="label">(the King)</span></h3>
+      <svg viewBox="0 0 200 120" style="width:100%;max-width:280px;height:auto;background:rgba(255,255,255,0.03);border-radius:8px;margin:6px 0">
+        <circle cx="100" cy="60" r="38" fill="#4f81bd" opacity="0.25"/>
+        <circle cx="100" cy="60" r="13" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+      </svg>
+      <p>Free movement, any direction, but <b>short range</b>. Reliable and flexible — the "infantry." Boring alone, but the glue that holds a formation together.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="drifter" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Drifter <span class="label">(momentum / the Glider)</span></h3>
+      <svg viewBox="0 0 200 120" style="width:100%;max-width:280px;height:auto;background:rgba(255,255,255,0.03);border-radius:8px;margin:6px 0">
+        <path d="M30,100 Q70,20 120,60 T185,40" fill="none" stroke="#c0504d" stroke-width="3" marker-end="url(#ar2)"/>
+        <circle cx="30" cy="100" r="13" fill="#c0504d" stroke="#fff" stroke-width="2"/>
+        <defs><marker id="ar2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c0504d"/></marker></defs>
+      </svg>
+      <p>Carries <b>momentum</b> — can't stop on a dime, turns in arcs. You plan its path 2 turns ahead. Wonderful for "lure it into overshooting" traps.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="label" style="margin-top:14px">Note the deeper point: movement here is a property attached to a <b>unit type</b> — so a summon-weapon brings a Leaper onto the field, and enemies can be Chargers you must wall off. Tell me which resonate, or pitch your own.</p>
