@@ -1,0 +1,75 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://ui/loading_screens/MythosLoadingScreen.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://ui/loading_screens/mythos_mythic_atlas.png" id="2_atlas"]
+[ext_resource type="Shader" path="res://ui/loading_screens/mythos_loading_screen.gdshader" id="3_shader"]
+[ext_resource type="Script" path="res://ui/loading_screens/MythosTaperedProgressBar.gd" id="4_progress"]
+[ext_resource type="Texture2D" path="res://ui/loading_screens/mythos_mythic_atlas_background_cloudless.png" id="5_background"]
+[ext_resource type="Texture2D" path="res://ui/loading_screens/layers/cities.png" id="6_cities"]
+[ext_resource type="Texture2D" path="res://ui/loading_screens/layers/clouds.png" id="7_clouds"]
+[ext_resource type="Texture2D" path="res://ui/loading_screens/layers/chart.png" id="9_chart"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_atlas"]
+shader = ExtResource("3_shader")
+shader_parameter/background_plate = ExtResource("5_background")
+shader_parameter/city_layer = ExtResource("6_cities")
+shader_parameter/cloud_layer = ExtResource("7_clouds")
+shader_parameter/chart_layer = ExtResource("9_chart")
+shader_parameter/city_speed = 0.11
+shader_parameter/city_drift = 0.0025
+shader_parameter/city_opacity = 0.88
+shader_parameter/cloud_speed = 0.72
+shader_parameter/cloud_drift = 0.016
+shader_parameter/cloud_opacity = 0.92
+shader_parameter/water_speed = 2.4
+shader_parameter/water_strength = 0.32
+shader_parameter/river_opacity = 1.0
+shader_parameter/river_overlay_opacity = 0.84
+shader_parameter/chart_speed = 0.018
+shader_parameter/chart_opacity = 0.52
+shader_parameter/water_tint = Color(0.47, 0.63, 0.68, 1)
+shader_parameter/chart_tint = Color(0.82, 0.7, 0.48, 1)
+
+[node name="MythosLoadingScreen" type="Node"]
+process_mode = 3
+script = ExtResource("1_script")
+
+[node name="LoadingCanvas" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="Overlay" type="Control" parent="LoadingCanvas"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Background" type="TextureRect" parent="LoadingCanvas/Overlay"]
+material = SubResource("ShaderMaterial_atlas")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_atlas")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="ProgressBar" type="Control" parent="LoadingCanvas/Overlay"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 1
+anchors_preset = 0
+anchor_left = 0.18
+anchor_top = 0.914
+anchor_right = 0.84
+anchor_bottom = 0.914
+offset_bottom = 8.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("4_progress")
