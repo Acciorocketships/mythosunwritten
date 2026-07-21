@@ -32,6 +32,7 @@ edge_softness = 0.1
 [resource]
 script = ExtResource("2_set")
 id = &"ambient.lily_pad"
+feature_clearance = 0.0
 choices = Array[ExtResource("1_choice")]([SubResource("C1"), SubResource("C2"), SubResource("C3"), SubResource("C4")])
 fill_per_cell = {&"meadow": 0.2, &"deep_forest": 0.25, &"highland": 0.05, &"blossom_grove": 0.35, &"twilight_marsh": 0.75}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("PondColony")])

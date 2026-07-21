@@ -15,7 +15,7 @@ func _dry_context(region: HeightfieldRegion, coverage: Rect2,
 	context._shore_limit = shore_limit
 	return context
 
-func _signature(payload: DressingPayload, filter_rect: Rect2 = Rect2()) -> Array:
+func _signature(payload: EnvironmentInstancePayload, filter_rect: Rect2 = Rect2()) -> Array:
 	var out: Array = []
 	for asset_id: StringName in payload.asset_ids():
 		var batch: Dictionary = payload.batches[asset_id]
@@ -41,6 +41,7 @@ func test_compiler_produces_resource_free_bounded_program() -> void:
 	assert_eq(program.sets.size(), 11)
 	assert_lte(program.maximum_spacing_radius, DressingCompiler.LOCAL_SPACING_CAP)
 	assert_gt(program.query_margin, program.maximum_spacing_radius)
+	assert_almost_eq(program.maximum_feature_clearance, 2.0, 0.001)
 	assert_lte(program.query_margin + program.shore_distance_limit,
 		WaterField.FILL_MARGIN * WaterField.FILL_STEP - WaterContour.MARGIN,
 		"compiled dressing is guaranteed to fit its canonical water context")
@@ -55,7 +56,20 @@ func test_compiler_produces_resource_free_bounded_program() -> void:
 		assert_true(asset_id in program.referenced_asset_ids,
 			"nature wave asset is active: %s" % asset_id)
 	for set_data: Dictionary in program.sets:
+		assert_gte(float(set_data.feature_clearance), 0.0)
 		assert_false(_contains_resource(set_data), "compiled sets contain primitive worker data only")
+
+func test_path_reservation_rejects_every_population_including_zero_margin() -> void:
+	var plan := HeightfieldPlan.new(4242, 1.0, 1, "mean")
+	var region := plan.compute_region(4, 4, 12)
+	var program := _program()
+	var water := _dry_context(region, CORE.grow(program.query_margin + 2.0),
+		program.shore_distance_limit)
+	var paths := PathContext.new(CORE, [CORE], [CORE],
+		EnvironmentInstancePayload.new(), program.maximum_feature_clearance)
+	var payload := DressingField.compute(program, 4242, CORE, region, water, paths)
+	assert_eq(payload.instance_count, 0,
+		"zero clearance still rejects the reservation interior")
 
 func test_field_is_deterministic_grounded_and_half_open() -> void:
 	var plan := HeightfieldPlan.new(4242, 40.0, 8, "mean")

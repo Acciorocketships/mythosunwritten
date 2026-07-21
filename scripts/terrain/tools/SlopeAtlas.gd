@@ -6,6 +6,16 @@ extends RefCounted
 
 const TOP_VISUAL := "res://terrain/environment/visuals/kaykit/kaykit_terrain_top_center.tres"
 const CLIFF_VISUAL := "res://terrain/environment/visuals/kaykit/kaykit_cliff_wall.tres"
+# Centre of the warm tan swatch in the baked 4x4 KayKit forest palette.
+# Sampling the island centre leaves a full 1/8 UV of filter/mipmap padding.
+const PATH_UV := Vector2(0.625, 0.375)
+const PATH_SPOT_UV := PATH_UV + Vector2(0.0, 0.008)
+
+static func path_uv() -> Vector2:
+	return PATH_UV
+
+static func path_spot_uv() -> Vector2:
+	return PATH_SPOT_UV
 
 static func grass_uv() -> Vector2:
 	var mesh := _mesh(TOP_VISUAL)

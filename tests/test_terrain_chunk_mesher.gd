@@ -2,9 +2,20 @@ extends GutTest
 const Mesher := preload("res://scripts/terrain/field/TerrainChunkMesher.gd")
 const Plan := preload("res://scripts/terrain/heightfield/HeightfieldPlan.gd")
 
+class DryWaterPlan extends WaterPlan:
+	func _init() -> void:
+		super(7, 1.0, 1)
+	func bodies_near(_center_cell: Vector2i, _radius_cells: int) -> Dictionary:
+		return {"ponds": [], "rivers": []}
+
 func _plan():
 	var p := Plan.new(7, 56.0, 12, "mean")
 	return p
+
+func _region_for(plan, chunk: Vector2i) -> HeightfieldRegion:
+	var centre := chunk * Mesher.CELLS_PER_CHUNK \
+		+ Vector2i.ONE * (Mesher.CELLS_PER_CHUNK / 2)
+	return plan.compute_region(centre.x, centre.y, Mesher.CELLS_PER_CHUNK)
 
 
 static func _triangle_y_at_xz(a: Vector3, b: Vector3, c: Vector3,
@@ -77,11 +88,56 @@ func test_compute_chunk_payload_is_safe_to_cross_the_worker_boundary():
 	var p = _plan()
 	var m := Mesher.new()
 	m.prepare_resources()
-	var region = m.chunk_region(p, Vector2i.ZERO)
-	var payload: Dictionary = m.compute_chunk(p, Vector2i.ZERO, region)
+	var region = _region_for(p, Vector2i.ZERO)
+	var payload: Dictionary = m.compute_chunk(Vector2i.ZERO, region)
 	assert_false(payload.is_empty(), "worker produces a terrain payload")
 	assert_false(_contains_scene_or_server_resource(payload),
 		"worker payload contains data only; nodes, meshes, materials, and shapes are committed on the main thread")
+
+func test_path_paint_changes_only_walkable_sheet_uvs() -> void:
+	var p = _plan()
+	var m := Mesher.new()
+	m.prepare_resources()
+	var region: HeightfieldRegion = _region_for(p, Vector2i.ZERO)
+	var core := Rect2(Vector2.ZERO, Vector2.ONE * Mesher.CHUNK_WORLD)
+	var water := WaterFieldContext.build(DryWaterPlan.new(), core, region, 0.0)
+	var paths := PathContext.new(core, [core], [core],
+		EnvironmentInstancePayload.new(), 2.0)
+	var grass := m.compute_chunk(Vector2i.ZERO, region)
+	var painted := m.compute_chunk(Vector2i.ZERO, region, water, paths)
+	var before: Array = grass.surface_arrays
+	var after: Array = painted.surface_arrays
+	assert_eq(painted.collision_faces, grass.collision_faces,
+		"path styling never changes physical terrain")
+	var before_vertices: PackedVector3Array = before[Mesh.ARRAY_VERTEX]
+	var after_vertices: PackedVector3Array = after[Mesh.ARRAY_VERTEX]
+	var before_bounds := AABB(before_vertices[0], Vector3.ZERO)
+	var after_bounds := AABB(after_vertices[0], Vector3.ZERO)
+	for vertex: Vector3 in before_vertices:
+		before_bounds = before_bounds.expand(vertex)
+	for vertex: Vector3 in after_vertices:
+		after_bounds = after_bounds.expand(vertex)
+	assert_almost_eq(after_bounds.position.x, before_bounds.position.x, 0.0001)
+	assert_almost_eq(after_bounds.position.z, before_bounds.position.z, 0.0001)
+	assert_almost_eq(after_bounds.size.x, before_bounds.size.x, 0.0001)
+	assert_almost_eq(after_bounds.size.z, before_bounds.size.z, 0.0001)
+	assert_lte(after_bounds.end.y, before_bounds.end.y + Mesher.PATH_SPOT_LIFT + 0.0001,
+		"visual-only path spots add no meaningful terrain height")
+	var uvs: PackedVector2Array = after[Mesh.ARRAY_TEX_UV]
+	var colors: PackedColorArray = after[Mesh.ARRAY_COLOR]
+	assert_true(uvs.has(SlopeAtlas.path_uv()))
+	assert_true(uvs.has(m._grass_uv),
+		"path paint overlays the unchanged continuous grass sheet")
+	assert_true(uvs.has(SlopeAtlas.path_spot_uv()),
+		"sparse darker circles are folded into the same terrain surface")
+	var found_darker_spot := false
+	for i in uvs.size():
+		if uvs[i].is_equal_approx(SlopeAtlas.path_spot_uv()) \
+				and colors[i].r <= Mesher.PATH_SPOT_DARKEN + 0.0001:
+			found_darker_spot = true
+			break
+	assert_true(found_darker_spot,
+		"circle vertices explicitly darken the nearby path hue")
 
 func test_build_returns_meshinstance_with_geometry():
 	var p = _plan()
@@ -242,7 +298,8 @@ func test_level_step_is_continuous_without_a_vertical_wall():
 	var m := Mesher.new()
 	m.set_seed(0)
 	m.prepare_resources()
-	var data: Dictionary = m.compute_chunk(p, Vector2i(0, 0))
+	var data: Dictionary = m.compute_chunk(Vector2i(0, 0),
+		_region_for(p, Vector2i(0, 0)))
 	var wall: Array = data["wall_arrays"]
 	assert_true(wall.is_empty(), "pure level slopes meet as one sheet; no vertical lip wall exists")
 
@@ -282,7 +339,7 @@ func test_locally_flat_edge_seals_against_an_orthogonal_neighbour_slope():
 		if cx == 2 and cz == 1: return 12.0  # E: same storey, slopes north
 		if cx == 2 and cz == 0: return 8.0   # E's one-storey north drop
 		return 20.0)                          # A's north side is higher
-	var region = Mesher.new().chunk_region(p, Vector2i.ZERO)
+	var region = _region_for(p, Vector2i.ZERO)
 	assert_false(TerrainSurfaceField.is_flat_cell(region, 1, 1),
 		"fixture A is not globally flat")
 	assert_true(TerrainSurfaceField.own_edge_flat(region, 1, 1, Vector2i(1, 0)),

@@ -75,6 +75,7 @@ edge_softness = 0.075
 [resource]
 script = ExtResource("2_set")
 id = &"ambient.tree"
+feature_clearance = 2.0
 choices = Array[ExtResource("1_choice")]([SubResource("KayKit_1"), SubResource("LPFV_1"), SubResource("LPFV_2"), SubResource("LPFV_3"), SubResource("LPFV_4"), SubResource("LPFV_5"), SubResource("LPFV_6"), SubResource("LPFV_7"), SubResource("LPFV_8"), SubResource("LPFV_9")])
 fill_per_cell = {&"meadow": 0.45, &"deep_forest": 1.15, &"highland": 0.38, &"blossom_grove": 0.95, &"twilight_marsh": 0.55}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy")])

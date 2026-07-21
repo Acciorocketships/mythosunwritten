@@ -59,6 +59,7 @@ edge_softness = 0.09
 [resource]
 script = ExtResource("2_set")
 id = &"ambient.flower"
+feature_clearance = 0.3
 choices = Array[ExtResource("1_choice")]([SubResource("F1"), SubResource("F2"), SubResource("F3"), SubResource("F4"), SubResource("F5"), SubResource("P1"), SubResource("P2"), SubResource("P3"), SubResource("P4")])
 fill_per_cell = {&"meadow": 1.2, &"deep_forest": 0.5, &"highland": 0.45, &"blossom_grove": 1.5, &"twilight_marsh": 0.35}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("CanopyOpening"), SubResource("FlowerColony")])

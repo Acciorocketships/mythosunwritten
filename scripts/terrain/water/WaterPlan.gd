@@ -108,6 +108,14 @@ const MIN_STEPS := 120
 const LOWLANDS01 := 0.08          # smooth height01 floor => terminal pond
 const SPAWN_WATER_RADIUS := 200.0 # dry spawn disk (spawn clear 60+120 + margin)
 const JOIN_DEPTH := 2             # junction dependency recursion cap
+# Route planning deliberately sees a slightly wider version of the source
+# geometry than the rendered-water seed. Exact validation still reads the
+# hydrostatic field through WaterFieldContext.
+const PATH_WATER_GUARD := 6.0
+const PATH_QUERY_MAX := SUPER
+const PATH_INTERVAL_TOLERANCE := 0.05
+const _PATH_DISTANCE_LIPSCHITZ := 2.0
+const _PATH_INSIDE_EPS := 0.0001
 # Any point a river can influence lies within the summit ascent + the trace
 # length + the largest pond bound + carve feather of its source's JITTER
 # point ⇒ a fixed super-cell ring.
@@ -122,12 +130,34 @@ var max_storeys: int
 var _trace_cache: Dictionary = {}    # Vector3i(sc.x, sc.y, depth) -> RiverTrace | null
 var _source_pos_cache: Dictionary = {}   # Vector2i -> Vector2 (summit-ascended)
 var _has_source_cache: Dictionary = {}   # Vector2i -> bool
+## Optional worker-thread observer used only by startup progress reporting.
+## It receives the completed fraction of the currently cold region's fixed
+## source-candidate sweep; it never changes planning output or cache order.
+var _planning_progress_callback := Callable()
+var _planning_progress_last := -1.0
 
 
 func _init(p_world_seed: int, p_amplitude: float, p_max_storeys: int) -> void:
 	world_seed = p_world_seed
 	amplitude = p_amplitude
 	max_storeys = p_max_storeys
+
+
+func set_planning_progress_callback(callback: Callable) -> void:
+	_planning_progress_callback = callback
+
+
+func _report_planning_progress(progress: float, force := false) -> void:
+	progress = clampf(progress, 0.0, 1.0)
+	# A cold trace tree contains many thousands of deterministic sub-steps. Keep
+	# enough resolution for a smooth bar without taking the mutex for every
+	# individual river sample.
+	if not force and _planning_progress_last >= 0.0 \
+		and progress - _planning_progress_last < 0.001:
+		return
+	_planning_progress_last = progress
+	if _planning_progress_callback.is_valid():
+		_planning_progress_callback.call(progress)
 
 
 # ---------------------------------------------------------------
@@ -258,12 +288,17 @@ func _has_source_uncached(sc: Vector2i) -> bool:
 ## The river for a source super-cell, resolved with `depth` levels of junction
 ## awareness (depth 0 = raw trace, no junctions — Task 5 wires depths > 0).
 ## Returns null when the super-cell has no source. Cached per (cell, depth).
-func river_for(sc: Vector2i, depth: int = JOIN_DEPTH) -> RiverTrace:
+func river_for(sc: Vector2i, depth: int = JOIN_DEPTH,
+		progress_start := -1.0, progress_end := -1.0) -> RiverTrace:
 	var key: Vector3i = Vector3i(sc.x, sc.y, depth)
 	if _trace_cache.has(key):
+		if progress_start >= 0.0:
+			_report_planning_progress(progress_end)
 		return _trace_cache[key]
-	var t: RiverTrace = _trace(sc, depth)
+	var t: RiverTrace = _trace(sc, depth, progress_start, progress_end)
 	_trace_cache[key] = t
+	if progress_start >= 0.0:
+		_report_planning_progress(progress_end)
 	return t
 
 
@@ -300,13 +335,17 @@ func _pond_level(center: Vector2, radius: float) -> int:
 
 ## One deterministic downhill trace. `depth` controls junction awareness:
 ## _neighbour_rivers returns [] at depth 0, so raw traces ignore other water.
-func _trace(sc: Vector2i, depth: int) -> RiverTrace:
+func _trace(sc: Vector2i, depth: int,
+		progress_start := -1.0, progress_end := -1.0) -> RiverTrace:
 	if not has_source(sc):
 		return null
 	var t: RiverTrace = RiverTrace.new()
 	t.source_cell = sc
 	t.priority = priority_of(sc)
-	var others: Array = _neighbour_rivers(sc, depth)
+	var neighbour_end := lerpf(progress_start, progress_end, 0.84) \
+		if progress_start >= 0.0 else -1.0
+	var others: Array = _neighbour_rivers(sc, depth,
+		progress_start, neighbour_end)
 	var p: Vector2 = source_pos(sc)
 	t.source_pool = _make_pool(p)
 	var meander_offset: float = float(absi(t.priority) % 4096) * 37.0
@@ -317,6 +356,9 @@ func _trace(sc: Vector2i, depth: int) -> RiverTrace:
 	var bed: float = _contained_bed(INF, p, dir, W_MIN)
 	var arc: float = 0.0
 	for i in MAX_STEPS:
+		if progress_start >= 0.0 and i % 8 == 0:
+			_report_planning_progress(lerpf(neighbour_end, progress_end,
+				float(i) / float(MAX_STEPS)))
 		t.points.append(p)
 		t.beds.append(bed)
 		t.widths.append(lerpf(W_MIN, W_MAX, arc / (MAX_STEPS * TRACE_STEP)))
@@ -374,17 +416,31 @@ func _contained_bed(prev_bed: float, p: Vector2, dir: Vector2, half_w: float) ->
 ## one depth lower. Depth 0 = raw trace (sees nothing) — the recursion floor.
 ## Every trace is cached by (cell, depth), so the fan-out is bounded by the
 ## number of distinct super-cells within REACH_SUPERS rings per depth level.
-func _neighbour_rivers(sc: Vector2i, depth: int) -> Array:
+func _neighbour_rivers(sc: Vector2i, depth: int,
+		progress_start := -1.0, progress_end := -1.0) -> Array:
 	if depth <= 0:
+		if progress_start >= 0.0:
+			_report_planning_progress(progress_end)
 		return []
 	var mine: int = priority_of(sc)
 	var out: Array = []
+	var side := REACH_SUPERS * 4 + 1
+	var total := side * side
+	var done := 0
 	for dz in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
 		for dx in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
 			var nb: Vector2i = sc + Vector2i(dx, dz)
+			var child_start := lerpf(progress_start, progress_end,
+				float(done) / float(total)) if progress_start >= 0.0 else -1.0
+			done += 1
+			var child_end := lerpf(progress_start, progress_end,
+				float(done) / float(total)) if progress_start >= 0.0 else -1.0
 			if nb == sc or priority_of(nb) <= mine:
+				if progress_start >= 0.0:
+					_report_planning_progress(child_end)
 				continue
-			var t: RiverTrace = river_for(nb, depth - 1)
+			var t: RiverTrace = river_for(nb, depth - 1,
+				child_start, child_end)
 			if t != null:
 				out.append(t)
 	return out
@@ -451,9 +507,18 @@ func _region_for(rc: Vector2i) -> Dictionary:
 	var buckets: Dictionary = {}
 	# +1 ring: a source within REACH of a cell inside this super-cell can sit
 	# up to REACH + SUPER·√2 from the super-cell's own corner.
+	var candidate_side := (REACH_SUPERS + 1) * 2 + 1
+	var candidate_total := candidate_side * candidate_side
+	var candidate_done := 0
+	_planning_progress_last = -1.0
+	_report_planning_progress(0.0, true)
 	for dz in range(-(REACH_SUPERS + 1), REACH_SUPERS + 2):
 		for dx in range(-(REACH_SUPERS + 1), REACH_SUPERS + 2):
-			var t: RiverTrace = river_for(rc + Vector2i(dx, dz))
+			var candidate_start := float(candidate_done) / float(candidate_total)
+			candidate_done += 1
+			var candidate_end := float(candidate_done) / float(candidate_total)
+			var t: RiverTrace = river_for(rc + Vector2i(dx, dz), JOIN_DEPTH,
+				candidate_start, candidate_end)
 			if t == null or not t.bounds().grow(FEATHER).intersects(region_rect):
 				continue
 			rivers.append(t)
@@ -479,7 +544,117 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			ponds.append(t.pond)
 	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds}
 	_region_cache[rc] = out
+	_report_planning_progress(1.0, true)
 	return out
+
+
+## Signed radial clearance from the guarded river/pond source footprint.
+## Negative is inside. This is the cheap planning approximation; it never
+## builds the hydrostatic fill or a shoreline contour.
+func planning_signed_distance(point: Vector2) -> float:
+	assert(is_finite(point.x) and is_finite(point.y))
+	var rc := Vector2i(int(floor(point.x / SUPER)), int(floor(point.y / SUPER)))
+	var region: Dictionary = _region_for(rc)
+	var best := PATH_QUERY_MAX
+	for pond: PondStamp in region.ponds:
+		var from_centre := point - pond.center
+		var radius := pond.radius_at(atan2(from_centre.y, from_centre.x))
+		best = minf(best, (pond.footprint_t(point) - 1.0) * radius - PATH_WATER_GUARD)
+	for trace: RiverTrace in region.rivers:
+		if trace.points.size() == 1:
+			best = minf(best, point.distance_to(trace.points[0])
+				- trace.widths[0] - PATH_WATER_GUARD)
+			continue
+		for i in trace.points.size() - 1:
+			var a := trace.points[i]
+			var delta := trace.points[i + 1] - a
+			var length_squared := delta.length_squared()
+			var along := clampf((point - a).dot(delta) / length_squared, 0.0, 1.0) \
+				if length_squared > 0.000001 else 0.0
+			var width := lerpf(trace.widths[i], trace.widths[i + 1], along)
+			best = minf(best, point.distance_to(a + delta * along)
+				- width - PATH_WATER_GUARD)
+	return best
+
+
+## Sorted, disjoint guarded-source intervals along a->b, expressed as t in
+## [0,1]. Adaptive subdivision uses the distance field's conservative
+## Lipschitz bound, so even a sub-sample-width tangent cannot be skipped.
+func planning_intervals(a: Vector2, b: Vector2) -> Array[Vector2]:
+	assert(is_finite(a.x) and is_finite(a.y) and is_finite(b.x) and is_finite(b.y))
+	var delta := b - a
+	var length := delta.length()
+	assert(length <= PATH_QUERY_MAX,
+		"Planning water segment exceeds the supported %.1fm look-ahead" % PATH_QUERY_MAX)
+	if length <= 0.000001:
+		return [Vector2.ZERO] if planning_signed_distance(a) <= _PATH_INSIDE_EPS else []
+
+	var samples: Array[Vector2] = [Vector2(0.0, planning_signed_distance(a))]
+	_append_planning_samples(a, delta, length, 0.0, samples[0].y,
+		1.0, planning_signed_distance(b), samples, 0)
+	var intervals: Array[Vector2] = []
+	var threshold := _PATH_INSIDE_EPS
+	var inside := samples[0].y <= threshold
+	var enter := 0.0 if inside else -1.0
+	for i in range(1, samples.size()):
+		var next_inside := samples[i].y <= threshold
+		if next_inside != inside:
+			var crossing := _refine_planning_boundary(a, delta, length,
+				samples[i - 1], samples[i], threshold, inside)
+			if next_inside:
+				enter = crossing
+			else:
+				_append_planning_interval(intervals, Vector2(enter, crossing), length)
+				enter = -1.0
+		inside = next_inside
+	if inside:
+		_append_planning_interval(intervals, Vector2(enter, 1.0), length)
+	return intervals
+
+
+func _append_planning_samples(a: Vector2, delta: Vector2, length: float,
+		t0: float, d0: float, t1: float, d1: float,
+		out: Array[Vector2], depth: int) -> void:
+	assert(depth < 24, "Planning water interval refinement exceeded its fixed bound")
+	var world_span := (t1 - t0) * length
+	if minf(d0, d1) > _PATH_DISTANCE_LIPSCHITZ * world_span + PATH_INTERVAL_TOLERANCE:
+		out.append(Vector2(t1, d1))
+		return
+	if maxf(d0, d1) < -_PATH_DISTANCE_LIPSCHITZ * world_span - PATH_INTERVAL_TOLERANCE:
+		out.append(Vector2(t1, d1))
+		return
+	var tm := (t0 + t1) * 0.5
+	var dm := planning_signed_distance(a + delta * tm)
+	if world_span <= PATH_INTERVAL_TOLERANCE:
+		out.append(Vector2(tm, dm))
+		out.append(Vector2(t1, d1))
+		return
+	_append_planning_samples(a, delta, length, t0, d0, tm, dm, out, depth + 1)
+	_append_planning_samples(a, delta, length, tm, dm, t1, d1, out, depth + 1)
+
+
+func _refine_planning_boundary(a: Vector2, delta: Vector2, length: float,
+		lo_sample: Vector2, hi_sample: Vector2, threshold: float,
+		lo_inside: bool) -> float:
+	var lo := lo_sample.x
+	var hi := hi_sample.x
+	while (hi - lo) * length > PATH_INTERVAL_TOLERANCE:
+		var mid := (lo + hi) * 0.5
+		var mid_inside := planning_signed_distance(a + delta * mid) <= threshold
+		if mid_inside == lo_inside:
+			lo = mid
+		else:
+			hi = mid
+	return (lo + hi) * 0.5
+
+
+static func _append_planning_interval(out: Array[Vector2], interval: Vector2,
+		length: float) -> void:
+	var t_tolerance := PATH_INTERVAL_TOLERANCE / maxf(length, PATH_INTERVAL_TOLERANCE)
+	if not out.is_empty() and interval.x <= out[-1].y + t_tolerance:
+		out[-1] = Vector2(out[-1].x, maxf(out[-1].y, interval.y))
+	else:
+		out.append(interval)
 
 
 ## Metres to subtract from the raw noise height at tile cell (cx, cz).

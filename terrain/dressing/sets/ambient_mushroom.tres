@@ -50,6 +50,7 @@ edge_softness = 0.045
 [resource]
 script = ExtResource("2_set")
 id = &"ambient.mushroom.patch"
+feature_clearance = 0.3
 choices = Array[ExtResource("1_choice")]([SubResource("C1"), SubResource("C2"), SubResource("C3"), SubResource("C4"), SubResource("C5"), SubResource("C6"), SubResource("C7")])
 fill_per_cell = {&"meadow": 4.0, &"deep_forest": 12.0, &"highland": 2.0, &"blossom_grove": 8.0, &"twilight_marsh": 10.0}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy"), SubResource("FungalColony")])

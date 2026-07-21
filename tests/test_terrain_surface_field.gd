@@ -172,6 +172,40 @@ func test_one_storey_neighbour_still_ramps():
 	var r := _region()    # cell (0,0)=4.0, neighbours 0.0  (from earlier tests)
 	assert_lt(Field.surface_y(r, 11.9, 0.0), 4.0, "1-storey drop still ramps")
 
+func test_walkability_is_derived_from_the_rendered_boundary():
+	var slope := _region()
+	assert_true(Field.is_walkable_edge(slope, Vector2i.ZERO, Vector2i.RIGHT),
+		"an ordinary one-storey slope is walkable")
+	assert_true(Field.is_walkable_edge(slope, Vector2i.RIGHT, Vector2i.LEFT),
+		"edge ownership is symmetric")
+
+	var cliff: HeightfieldRegion = _region_cliff()
+	assert_false(Field.is_walkable_edge(cliff, Vector2i.ZERO, Vector2i.RIGHT),
+		"a rendered cliff face is not walkable")
+	assert_false(Field.is_walkable_edge(cliff, Vector2i.RIGHT, Vector2i.LEFT),
+		"the low owner sees the same blocked edge")
+
+	var level_plan := Plan.new(0, 32.0, 8, "mean")
+	level_plan.set_raw_height_override(func(cx, cz):
+		return 4.9 if cx <= 0 else 4.1)
+	var level_region := level_plan.compute_region(0, 0, 8)
+	assert_true(Field.is_walkable_edge(level_region, Vector2i.ZERO, Vector2i.RIGHT),
+		"sub-storey level slopes are walkable")
+
+func test_walkability_matches_exposed_edges_across_varied_fields():
+	for world_seed in [17, 4242, 918273]:
+		var plan := Plan.new(world_seed, 40.0, 8, "mean", 3)
+		var region := plan.compute_region(-9, 7, 7)
+		for cz in range(-14, -3):
+			for cx in range(2, 13):
+				for d in [Vector2i.RIGHT, Vector2i.DOWN]:
+					var expected := not Field.is_exposed_edge(region, cx, cz, d) \
+						and not Field.is_exposed_edge(region, cx + d.x, cz + d.y, -d)
+					assert_eq(Field.is_walkable_edge(region, Vector2i(cx, cz), d), expected,
+						"flat, slope, cliff, inner, diagonal, and higher-flat edges share one fact")
+					assert_eq(Field.is_walkable_edge(region, Vector2i(cx, cz) + d, -d), expected,
+						"walkability is translation- and direction-symmetric")
+
 func test_inner_corner_stays_flat_not_a_slope():
 	# Owner: a concave inner corner must be a vertical cliff, not a dipping slope. The high corner
 	# cell (0,0) has level cardinal arms and a 1-storey diagonal pocket (1,1) that the arms wall.

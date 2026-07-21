@@ -1,13 +1,12 @@
-class_name DressingCollisionBuilder
+class_name EnvironmentCollisionBuilder
 extends RefCounted
 
-## Main-thread adapter for structural dressing. Visual MultiMeshes may arrive
-## later, but collision is committed before the chunk becomes ready, so a
-## player can never enter an object while its physics proxy is still pending.
-static func commit(parent: Node3D, payload: DressingPayload,
-		render_cache: EnvironmentRenderCache) -> int:
+## Main-thread adapter for structural environment instances. Collision is
+## committed before readiness; render-only MultiMeshes may arrive later.
+static func commit(parent: Node3D, payload: EnvironmentInstancePayload,
+		render_cache: EnvironmentRenderCache, body_name: StringName) -> int:
 	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
-	assert(parent != null and payload != null and render_cache != null)
+	assert(parent != null and payload != null and payload.validate() and render_cache != null)
 	var body: StaticBody3D
 	var count := 0
 	for asset_id: StringName in payload.asset_ids():
@@ -17,7 +16,7 @@ static func commit(parent: Node3D, payload: DressingPayload,
 			continue
 		if body == null:
 			body = StaticBody3D.new()
-			body.name = "DressingCollision"
+			body.name = body_name
 			parent.add_child(body)
 		var placements: Array = payload.batches[asset_id].transforms
 		for placement: Transform3D in placements:

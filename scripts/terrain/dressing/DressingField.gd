@@ -15,11 +15,12 @@ const SALT_SCALE := 0x299F31D0
 const SALT_BRIGHTNESS := 0x082EFA98
 
 static func compute(program: DressingProgram, world_seed: int, core: Rect2,
-		region: HeightfieldRegion, water: WaterFieldContext) -> DressingPayload:
+		region: HeightfieldRegion, water: WaterFieldContext,
+		paths: PathContext = null) -> EnvironmentInstancePayload:
 	assert(program != null and region != null and water != null)
 	var eligible: Array[Dictionary] = []
 	for set_data: Dictionary in program.sets:
-		eligible.append_array(_eligible_for_set(set_data, world_seed, core, region, water))
+		eligible.append_array(_eligible_for_set(set_data, world_seed, core, region, water, paths))
 	var winners: Array[Dictionary] = []
 	for candidate: Dictionary in eligible:
 		var survives := true
@@ -37,13 +38,14 @@ static func compute(program: DressingProgram, world_seed: int, core: Rect2,
 		if survives and _contains_half_open(core, candidate.anchor):
 			winners.append(candidate)
 	winners.sort_custom(_key_less)
-	var payload := DressingPayload.new()
+	var payload := EnvironmentInstancePayload.new()
 	for candidate: Dictionary in winners:
 		payload.add(candidate.asset_id, candidate.transform, candidate.color)
 	return payload
 
 static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2,
-		region: HeightfieldRegion, water: WaterFieldContext) -> Array[Dictionary]:
+		region: HeightfieldRegion, water: WaterFieldContext,
+		paths: PathContext = null) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var query: Rect2 = core.grow(float(set_data.group_radius))
 	var min_cell := Vector2i(int(floor(query.position.x / PROPOSAL_CELL)),
@@ -72,7 +74,7 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 						layer.preference, layer.softness)
 				if _roll(identity, SALT_ELIGIBILITY) >= clampf(intensity / set_data.slot_count, 0.0, 1.0):
 					continue
-				var qualification: Dictionary = _qualify(set_data, anchor, region, water)
+				var qualification: Dictionary = _qualify(set_data, anchor, region, water, paths)
 				if qualification.is_empty():
 					continue
 				var choice_roll := _roll(identity, SALT_CHOICE)
@@ -108,7 +110,10 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 	return out
 
 static func _qualify(set_data: Dictionary, anchor: Vector2,
-		region: HeightfieldRegion, water: WaterFieldContext) -> Dictionary:
+		region: HeightfieldRegion, water: WaterFieldContext,
+		paths: PathContext = null) -> Dictionary:
+	if paths != null and paths.clearance_at(anchor) < float(set_data.feature_clearance):
+		return {}
 	var points: Array[Vector2] = [anchor]
 	if set_data.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT:
 		var radius: float = set_data.support_radius

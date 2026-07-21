@@ -45,18 +45,17 @@ func _process(_dt: float) -> void:
 	if not _enabled:
 		return
 	var cam := get_viewport().get_camera_3d()
-	var ft := get_node_or_null("/root/World/FieldTerrain")
+	var ft := get_node_or_null("/root/World/FieldTerrain") as FieldTerrainStreamer
 	var player := get_node_or_null("/root/World/Characters/Character")
 	if cam == null or ft == null:
 		return
 	var lines: Array[String] = []
-	var plan = ft.get("_plan")
-	var wseed = ft.get("world_seed")
+	var wseed := ft.world_seed
 	lines.append("seed %s   (F3 to toggle)" % str(wseed))
 	if player != null:
 		var pp: Vector3 = player.global_position
 		lines.append("player  world (%.1f, %.1f, %.1f)  cell (%d, %d)" % [pp.x, pp.y, pp.z, _cell_of(pp.x), _cell_of(pp.z)])
-		if wseed != null and int(wseed) != 0:
+		if wseed != 0:
 			var w5 := Helper.biome_weights5(pp, int(wseed))
 			var parts: Array[String] = []
 			var dominant: StringName = &""
@@ -83,12 +82,12 @@ func _process(_dt: float) -> void:
 		var cx := _cell_of(wp.x)
 		var cz := _cell_of(wp.z)
 		lines.append("crosshair world (%.1f, %.1f, %.1f)  cell (%d, %d)" % [wp.x, wp.y, wp.z, cx, cz])
-		if plan != null:
-			lines.append("storeys (3×3 around crosshair cell, +z down):")
-			for dz in [-1, 0, 1]:
-				var row := "  "
-				for dx in [-1, 0, 1]:
-					var s: int = plan.storey_at(cx + dx, cz + dz)
-					row += ("[%2d]" % s) if (dx == 0 and dz == 0) else (" %2d " % s)
-				lines.append(row)
+		lines.append("storeys (3×3 around crosshair cell, +z down):")
+		for dz in [-1, 0, 1]:
+			var row := "  "
+			for dx in [-1, 0, 1]:
+				var s: Variant = ft.loaded_storey_at(Vector2i(cx + dx, cz + dz))
+				var value := "%2d" % int(s) if s != null else "--"
+				row += ("[%s]" % value) if (dx == 0 and dz == 0) else (" %s " % value)
+			lines.append(row)
 	_label.text = "\n".join(lines)

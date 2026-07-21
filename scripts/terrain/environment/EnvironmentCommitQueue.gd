@@ -1,15 +1,16 @@
-class_name DressingCommitQueue
+class_name EnvironmentCommitQueue
 extends RefCounted
 
-## Focused main-thread queue: each item creates exactly one
-## (asset_id, visual_piece) MultiMesh batch. Terrain readiness never waits on
-## this render-only work.
+## Main-thread visual queue. Each item creates one (asset, visual-piece)
+## MultiMesh batch; generation checks discard stale work.
 var _render_cache: EnvironmentRenderCache
+var _container_name: StringName
 var _items: Array[Dictionary] = []
 var _current_generation: Dictionary = {}
 
-func _init(render_cache: EnvironmentRenderCache) -> void:
+func _init(render_cache: EnvironmentRenderCache, container_name: StringName) -> void:
 	_render_cache = render_cache
+	_container_name = container_name
 
 func register_chunk(chunk: Vector2i, generation: int) -> void:
 	_current_generation[chunk] = generation
@@ -18,9 +19,10 @@ func invalidate_chunk(chunk: Vector2i) -> void:
 	_current_generation.erase(chunk)
 
 func enqueue(chunk: Vector2i, generation: int, parent: Node3D,
-		payload: DressingPayload) -> void:
+		payload: EnvironmentInstancePayload) -> void:
 	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
-	if payload == null or payload.instance_count == 0:
+	assert(payload != null and payload.validate())
+	if payload.instance_count == 0:
 		return
 	for asset_id: StringName in payload.asset_ids():
 		var visual := _render_cache.visual(asset_id)
@@ -80,10 +82,10 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	for index in composed.size():
 		multimesh.set_instance_transform(index, composed[index])
 		multimesh.set_instance_color(index, colors[index])
-	var container := parent.get_node_or_null("Dressing") as Node3D
+	var container := parent.get_node_or_null(String(_container_name)) as Node3D
 	if container == null:
 		container = Node3D.new()
-		container.name = "Dressing"
+		container.name = _container_name
 		parent.add_child(container)
 	var instance := MultiMeshInstance3D.new()
 	instance.name = "%s_%02d" % [String(item.asset_id).replace(".", "_"), item.piece_index]

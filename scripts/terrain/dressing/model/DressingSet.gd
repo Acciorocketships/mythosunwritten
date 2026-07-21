@@ -22,6 +22,9 @@ enum WaterMode { LAND, SHORE, SHALLOW, EMERGENT, FLOATING }
 @export var support_radius: float = 0.0
 @export var max_support_height_span: float = 0.0
 @export var max_grade: float = 1.0
+## Extra distance beyond path/feature footprints. Zero still rejects anchors
+## inside a reservation; this is authored per population, never inferred from tags.
+@export var feature_clearance: float = 0.0
 
 @export var spacing_group: StringName
 @export var spacing_radius: float = 0.0

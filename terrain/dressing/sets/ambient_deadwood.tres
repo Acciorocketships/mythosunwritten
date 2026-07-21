@@ -54,6 +54,7 @@ edge_softness = 0.1
 [resource]
 script = ExtResource("2_set")
 id = &"ambient.deadwood"
+feature_clearance = 2.0
 choices = Array[ExtResource("1_choice")]([SubResource("B1"), SubResource("L1"), SubResource("L2"), SubResource("L3"), SubResource("S1"), SubResource("S2"), SubResource("S3"), SubResource("S4")])
 fill_per_cell = {&"meadow": 0.25, &"deep_forest": 0.6, &"highland": 0.3, &"blossom_grove": 0.45, &"twilight_marsh": 0.55}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy"), SubResource("Disturbance")])

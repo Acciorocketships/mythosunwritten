@@ -29,6 +29,8 @@ const APRON := 2.4        # ground/skirt continuation depth under a HIGHER flat 
 var _material: Material = null
 var _ground_tinted: Material = null
 var _grass_uv: Vector2 = SlopeAtlas.grass_uv()
+var _path_uv: Vector2 = SlopeAtlas.path_uv()
+var _path_spot_uv: Vector2 = SlopeAtlas.path_spot_uv()
 var _cliff_uv: Vector2 = SlopeAtlas.cliff_uv()
 # The skirt renders with the KayKit wall piece's OWN material + a rock texel from its mesh, so
 # wherever it peeks out between the scalloped modules it blends with them — the terrain atlas
@@ -85,14 +87,6 @@ var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
 func set_seed(seed: int) -> void:
 	_water_seed = seed
 
-# The region for a chunk: centred on it, radius covers the chunk + a neighbour
-# ring. Exposed so the streamer can compute it once and share it with the FX
-# (orb ground heights) instead of recomputing.
-func chunk_region(plan, chunk: Vector2i):
-	var centre_cx := chunk.x * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	var centre_cz := chunk.y * CELLS_PER_CHUNK + CELLS_PER_CHUNK / 2
-	return plan.compute_region(centre_cx, centre_cz, CELLS_PER_CHUNK)
-
 # Chunk (ccx,ccz) covers cells [ccx*8 .. ccx*8+7]; its world origin (min corner):
 func _origin(chunk: Vector2i) -> Vector2:
 	return Vector2(float(chunk.x) * CHUNK_WORLD, float(chunk.y) * CHUNK_WORLD)
@@ -110,15 +104,12 @@ func prepare_resources() -> void:
 ## Worker-safe half of chunk generation. Returns CPU-side mesh arrays,
 ## collision faces, transforms, and colours only. commit_chunk owns every
 ## Node/ArrayMesh/MultiMesh/Shape creation and must run on the main thread.
-func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
+func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
+		water: WaterFieldContext = null, paths: PathContext = null) -> Dictionary:
 	if _skirt_material == null:
 		push_error("TerrainChunkMesher.prepare_resources() must run on the main thread before compute_chunk()")
 		return {}
-	# Region centred on the chunk; radius covers the chunk plus a neighbour ring
-	# for ramps. The caller may pass one in (the streamer computes it once and
-	# reuses it for orb ground heights); otherwise compute it here.
-	if region == null:
-		region = chunk_region(plan, chunk)
+	assert(region != null)
 	var o := _origin(chunk)
 	var st := SurfaceTool.new()    # VISUAL sheet: clipped back to TOP_CLIP under the lips
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -178,7 +169,12 @@ func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
 			var y01 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z1)
 			# Grid quads are the WALKABLE surface — flat tops + gentle (≤1 storey) slopes — always
 			# grass. Cliff FACES are the separate vertical rock skirts, not slanted grid quads.
-			var uv := _grass_uv
+			var quad_centre := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
+			# The ground remains the continuous grass sheet. Path paint is a
+			# conforming, finely sampled overlay emitted below; keeping it separate
+			# lets round joins retain their curve inside this 2 m terrain quad.
+			var uv0 := _grass_uv
+			var uv1 := _grass_uv
 			var v00 := Vector3(x0, y00, z0)
 			var v10 := Vector3(x1, y10, z0)
 			var v11 := Vector3(x1, y11, z1)
@@ -208,10 +204,15 @@ func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
 			# a low camera view. It is the cliff's backing surface, not walkable
 			# turf: use the shared rock atlas texel so it merges with the wall
 			# instead of reading as a bright green ground plane.
-			var uv0: Vector2 = _cliff_uv if (i00 or i10 or i11) else uv
-			var uv1: Vector2 = _cliff_uv if (i00 or i11 or i01) else uv
+			uv0 = _cliff_uv if (i00 or i10 or i11) else uv0
+			uv1 = _cliff_uv if (i00 or i11 or i01) else uv1
 			_tri_tinted(st, [c00, c10, c11], uv0, [t00, t10, t11])
 			_tri_tinted(st, [c00, c11, c01], uv1, [t00, t11, t01])
+			var path_here := _emit_path_overlay(st, region, water, paths,
+				qkey, x0, z0, clip_cache, [t00, t10, t11, t01])
+			if path_here:
+				_emit_path_spot(st, region, water, paths, quad_centre, qcx, qcz,
+					x0, z0, [t00, t10, t11, t01])
 	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
 	# pinned grid leaves between a cliff top and the lower cell. This is the actual rock cliff face
 	# (replacing the old slanted grey quads); the KayKit wall pieces dress it, and it doubles as the
@@ -251,7 +252,8 @@ func compute_chunk(plan, chunk: Vector2i, region = null) -> Dictionary:
 	var any_apron := false
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
-			if _emit_aprons(ast, region, clip_cache, cx, cz, _cell_tint(cx, cz)):
+			if _emit_aprons(ast, region, clip_cache, cx, cz, _cell_tint(cx, cz),
+					water, paths):
 				any_apron = true
 	var apron_arrays: Array = []
 	if any_apron:
@@ -340,7 +342,10 @@ func commit_chunk(data: Dictionary) -> Node3D:
 ## Main-thread compatibility wrapper used by unit tests and offline harnesses.
 func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
 	prepare_resources()
-	return commit_chunk(compute_chunk(plan, chunk, region))
+	var centre := chunk * CELLS_PER_CHUNK + Vector2i.ONE * (CELLS_PER_CHUNK / 2)
+	var block_region: HeightfieldRegion = region if region != null \
+		else plan.compute_region(centre.x, centre.y, CELLS_PER_CHUNK)
+	return commit_chunk(compute_chunk(chunk, block_region))
 
 
 func _mesh_from_arrays(arrays: Array, material: Material) -> ArrayMesh:
@@ -360,6 +365,125 @@ func _tri_tinted(st: SurfaceTool, vs: Array[Vector3], uv: Vector2, cs: Array[Col
 		st.set_uv(uv)
 		st.set_color(cs[i])
 		st.add_vertex(vs[i])
+
+const PATH_OVERLAY_DIVISIONS := 8
+const PATH_SURFACE_LIFT := 0.010
+const PATH_SPOT_CHANCE := 0.30
+const PATH_SPOT_RADIUS_MIN := 0.24
+const PATH_SPOT_RADIUS_MAX := 0.72
+const PATH_SPOT_JITTER := 0.26
+const PATH_SPOT_LIFT := 0.020
+const PATH_SPOT_DARKEN := 0.94
+const PATH_SPOT_SIDES := 12
+
+# Emit a 0.25 m visual overlay only where a path is present. Terrain collision and
+# the underlying continuous sheet remain untouched. The finer visual lattice is
+# what lets PathContext's circular join read as a curve instead of one 2 m square.
+# It is world aligned and uses the same half-open chunk surface, so neighbouring
+# chunks generate bit-identical boundary vertices.
+func _emit_path_overlay(st: SurfaceTool, region: HeightfieldRegion,
+		water: WaterFieldContext, paths: PathContext, qkey: Vector2i,
+		x0: float, z0: float, clip_cache: Dictionary,
+		quad_tints: Array[Color]) -> bool:
+	if paths == null or water == null:
+		return false
+	# Most terrain quads are nowhere near a path. Centre/corner rejection avoids
+	# the 4x4 subdivision there while still admitting a circular join that merely
+	# clips a coarse quad's corner.
+	var x1 := x0 + STEP
+	var z1 := z0 + STEP
+	var candidate := false
+	for probe: Vector2 in [
+			Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5),
+			Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]:
+		if paths.corridor_at_cell(probe, qkey):
+			candidate = true
+			break
+	if not candidate:
+		return false
+	var sub_step := STEP / float(PATH_OVERLAY_DIVISIONS)
+	var emitted := false
+	for sz in PATH_OVERLAY_DIVISIONS:
+		for sx in PATH_OVERLAY_DIVISIONS:
+			var sx0 := x0 + float(sx) * sub_step
+			var sz0 := z0 + float(sz) * sub_step
+			var sx1 := sx0 + sub_step
+			var sz1 := sz0 + sub_step
+			var centre := Vector2((sx0 + sx1) * 0.5, (sz0 + sz1) * 0.5)
+			if not paths.corridor_at_cell(centre, qkey) or water.is_wet(centre):
+				continue
+			var p00 := Vector3(sx0,
+				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz0, qkey.x, qkey.y)
+					+ PATH_SURFACE_LIFT, sz0)
+			var p10 := Vector3(sx1,
+				TerrainSurfaceField.surface_y_in_cell(region, sx1, sz0, qkey.x, qkey.y)
+					+ PATH_SURFACE_LIFT, sz0)
+			var p11 := Vector3(sx1,
+				TerrainSurfaceField.surface_y_in_cell(region, sx1, sz1, qkey.x, qkey.y)
+					+ PATH_SURFACE_LIFT, sz1)
+			var p01 := Vector3(sx0,
+				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz1, qkey.x, qkey.y)
+					+ PATH_SURFACE_LIFT, sz1)
+			p00 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p00)
+			p10 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p10)
+			p11 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p11)
+			p01 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p01)
+			var c00 := _quad_tint(Vector2(sx0, sz0), x0, z0, quad_tints)
+			var c10 := _quad_tint(Vector2(sx1, sz0), x0, z0, quad_tints)
+			var c11 := _quad_tint(Vector2(sx1, sz1), x0, z0, quad_tints)
+			var c01 := _quad_tint(Vector2(sx0, sz1), x0, z0, quad_tints)
+			_tri_tinted(st, [p00, p10, p11], _path_uv, [c00, c10, c11])
+			_tri_tinted(st, [p00, p11, p01], _path_uv, [c00, c11, c01])
+			emitted = true
+	return emitted
+
+# World-hashed discs make the path read as softly speckled without adding a
+# material or draw call. Their broader size range stays stylized and legible at
+# gameplay distance. Every rim point must remain inside the dry corridor, so no
+# spot can bleed across a rounded edge, a water crossing, or a concave join.
+func _emit_path_spot(st: SurfaceTool, region: HeightfieldRegion,
+		water: WaterFieldContext, paths: PathContext, quad_centre: Vector2,
+		qcx: int, qcz: int, x0: float, z0: float, quad_tints: Array[Color]) -> void:
+	var gx := floori(quad_centre.x / STEP)
+	var gz := floori(quad_centre.y / STEP)
+	if Helper._cell_hash01(_water_seed + 9107, gx, gz) >= PATH_SPOT_CHANCE:
+		return
+	var centre := quad_centre + Vector2(
+		(Helper._cell_hash01(_water_seed + 12653, gx, gz) * 2.0 - 1.0) * PATH_SPOT_JITTER,
+		(Helper._cell_hash01(_water_seed + 17159, gx, gz) * 2.0 - 1.0) * PATH_SPOT_JITTER)
+	var radius := lerpf(PATH_SPOT_RADIUS_MIN, PATH_SPOT_RADIUS_MAX,
+		Helper._cell_hash01(_water_seed + 22273, gx, gz))
+	var rim: Array[Vector2] = []
+	for i in PATH_SPOT_SIDES:
+		var angle := TAU * float(i) / float(PATH_SPOT_SIDES)
+		var p := centre + Vector2(cos(angle), sin(angle)) * radius
+		if not paths.corridor_at_cell(p, Vector2i(qcx, qcz)) or water.is_wet(p):
+			return
+		rim.append(p)
+	var centre3 := Vector3(centre.x,
+		TerrainSurfaceField.surface_y_in_cell(region, centre.x, centre.y, qcx, qcz)
+			+ PATH_SPOT_LIFT, centre.y)
+	var centre_tint := _quad_tint(centre, x0, z0, quad_tints)
+	for i in PATH_SPOT_SIDES:
+		var a: Vector2 = rim[i]
+		var b: Vector2 = rim[(i + 1) % PATH_SPOT_SIDES]
+		var a3 := Vector3(a.x,
+			TerrainSurfaceField.surface_y_in_cell(region, a.x, a.y, qcx, qcz)
+				+ PATH_SPOT_LIFT, a.y)
+		var b3 := Vector3(b.x,
+			TerrainSurfaceField.surface_y_in_cell(region, b.x, b.y, qcx, qcz)
+				+ PATH_SPOT_LIFT, b.y)
+		var dark := Color(PATH_SPOT_DARKEN, PATH_SPOT_DARKEN,
+			PATH_SPOT_DARKEN, 1.0)
+		_tri_tinted(st, [centre3, a3, b3], _path_spot_uv,
+			[centre_tint * dark, _quad_tint(a, x0, z0, quad_tints) * dark,
+			_quad_tint(b, x0, z0, quad_tints) * dark])
+
+func _quad_tint(point: Vector2, x0: float, z0: float,
+		cs: Array[Color]) -> Color:
+	var dx := clampf((point.x - x0) / STEP, 0.0, 1.0)
+	var dz := clampf((point.y - z0) / STEP, 0.0, 1.0)
+	return cs[0].lerp(cs[1], dx).lerp(cs[3].lerp(cs[2], dx), dz)
 
 # The biome ground tint at a cell's centre — the ONE tint source shared with the
 # sheet lattice and the dressing instances (aprons + skirt sample per cell; the
@@ -567,7 +691,8 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 # between the lower sheet's edge and the wall face — is GONE: at tall cliffs it read as a
 # plane jutting out below the lip from any low angle, owner rounds 12-13. The round-11
 # "tiny gaps" it papered over are handled at ground level where they actually live.)
-func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int, tint: Color) -> bool:
+func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int,
+		tint: Color, water: WaterFieldContext, paths: PathContext) -> bool:
 	var emitted := false
 	var active := {}
 	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -643,7 +768,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 			if not ((cap_hi and a1 >= TOP_CLIP) or (cap_lo and a1 <= -TOP_CLIP)):
 				p1 = _clip_vert(region, clip_cache, cx, cz, p1)
 				q1 = _clip_perp(region, clip_cache, ncx, ncz, dir, q1)
-			_apron_quad(st, p0, p1, q0, q1, tint)
+			_apron_quad(st, p0, p1, q0, q1, tint, water, paths)
 			emitted = true
 	for cdir in [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
 		if not (active[Vector2i(cdir.x, 0)] and active[Vector2i(0, cdir.y)]):
@@ -657,7 +782,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var b := a + Vector3(float(cdir.x) * APRON, 0.0, 0.0)
 		var c := a + Vector3(0.0, 0.0, float(cdir.y) * APRON)
 		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
-		_apron_quad(st, a, b, c, d2, tint)
+		_apron_quad(st, a, b, c, d2, tint, water, paths)
 		emitted = true
 	# (Round 8 floored the flush-step cap notch with a flat grass patch here; the owner
 	# rejected it — round 9 extends the run's straight modules to the boundary and turns
@@ -668,19 +793,25 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 # front side seen from above in this project), lit UP. Half the directions used to wind the
 # other way, so the face visible from above was the DOWN-lit copy — the owner's dark/wrong-
 # colour "ground skirt". The flipped copy sits 2cm lower (never z-fights) with a DOWN normal.
-func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3, q1: Vector3, tint: Color) -> void:
+func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3,
+		q1: Vector3, tint: Color, water: WaterFieldContext,
+		paths: PathContext) -> void:
 	var drop := Vector3(0.0, -0.02, 0.0)
+	var centre := (p0 + p1 + q0 + q1) * 0.25
+	var point := Vector2(centre.x, centre.z)
+	var uv := _path_uv if paths != null and water != null \
+		and paths.corridor_at(point) and not water.is_wet(point) else _grass_uv
 	for tri in [[p0, q0, q1], [p0, q1, p1]]:
 		var n: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0])
 		var order: Array = tri if n.y < 0.0 else [tri[0], tri[2], tri[1]]
 		st.set_normal(Vector3.UP)
 		for v in order:
-			st.set_uv(_grass_uv)
+			st.set_uv(uv)
 			st.set_color(tint)
 			st.add_vertex(v)
 		st.set_normal(Vector3.DOWN)
 		for i in [0, 2, 1]:
-			st.set_uv(_grass_uv)
+			st.set_uv(uv)
 			st.set_color(tint)
 			st.add_vertex(order[i] + drop)
 

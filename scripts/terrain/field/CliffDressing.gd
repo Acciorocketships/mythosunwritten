@@ -608,6 +608,15 @@ static func _ensure_loaded() -> void:
 	_finish_piece_setup()
 
 static func _finish_piece_setup() -> void:
+	# Straight and outer wall modules are authored as vertically tileable: both
+	# boundary rings sample the exact same atlas row. The inner wall alone used
+	# dark bottom UVs (v≈.671) and bright top UVs (v≈.581), so every 4 m stacked
+	# instance exposed a hard light/dark stripe despite matching geometry and
+	# normals. Retile only its two boundary rings to the established wall seam
+	# row; interior UVs and the sculpted concave profile remain unchanged.
+	var seam_v := _vertical_seam_v(_pieces["wall"][0])
+	_pieces["inner_wall"][0] = _retile_vertical_seam(
+		_pieces["inner_wall"][0], seam_v)
 	# The corner lips' grass TOPS sample the palette's BRIGHT trim row across
 	# most of their area (straight lips keep the bright row to a thin front
 	# edge), so a cap sitting on open ground read as a brighter green patch
@@ -624,6 +633,45 @@ static func _finish_piece_setup() -> void:
 			for key in ["outer_lip", "inner_lip"]:
 				_pieces[key][0] = _retexel_grass_top(_pieces[key][0], luvs[i])
 			break
+
+static func _vertical_seam_v(mesh: Mesh) -> float:
+	if mesh.get_surface_count() != 1:
+		return 0.0
+	var arr := mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+	var lo := INF
+	var hi := -INF
+	for vertex: Vector3 in verts:
+		lo = minf(lo, vertex.y)
+		hi = maxf(hi, vertex.y)
+	var total := 0.0
+	var count := 0
+	for i in verts.size():
+		if absf(verts[i].y - lo) < 0.001 or absf(verts[i].y - hi) < 0.001:
+			total += uvs[i].y
+			count += 1
+	return total / float(count) if count > 0 else 0.0
+
+static func _retile_vertical_seam(mesh: Mesh, seam_v: float) -> Mesh:
+	if mesh.get_surface_count() != 1:
+		return mesh
+	var arr := mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+	var lo := INF
+	var hi := -INF
+	for vertex: Vector3 in verts:
+		lo = minf(lo, vertex.y)
+		hi = maxf(hi, vertex.y)
+	for i in verts.size():
+		if absf(verts[i].y - lo) < 0.001 or absf(verts[i].y - hi) < 0.001:
+			uvs[i].y = seam_v
+	arr[Mesh.ARRAY_TEX_UV] = uvs
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	out.surface_set_material(0, mesh.surface_get_material(0))
+	return out
 
 # Rebuild a piece mesh with every upward-facing grass-region texel set to `uv`
 # (the palette's grass patches live in the low-uv corner; rock texels are

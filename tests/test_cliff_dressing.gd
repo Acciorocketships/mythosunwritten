@@ -214,6 +214,39 @@ func test_inner_corner_piece_present() -> void:
 	var data = Dress.compute(_region_inner(2), -2, -2, 5)
 	assert_gt((data["inner_wall"] as Array).size(), 0, "concave corner produces an inner-corner wall")
 
+func test_inner_corner_wall_texture_tiles_without_a_light_dark_stack_seam() -> void:
+	Dress._ensure_loaded()
+	var mesh: Mesh = Dress._pieces["inner_wall"][0]
+	var arrays := mesh.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var lo := INF
+	var hi := -INF
+	for vertex: Vector3 in vertices:
+		lo = minf(lo, vertex.y)
+		hi = maxf(hi, vertex.y)
+	var bottom: Dictionary = {}
+	var top: Dictionary = {}
+	var interior_v: Dictionary = {}
+	for i in vertices.size():
+		var key := Vector2(snappedf(vertices[i].x, 0.0001),
+			snappedf(vertices[i].z, 0.0001))
+		if absf(vertices[i].y - lo) < 0.001:
+			bottom[key] = uvs[i]
+		elif absf(vertices[i].y - hi) < 0.001:
+			top[key] = uvs[i]
+		else:
+			interior_v[snappedf(uvs[i].y, 0.0001)] = true
+	assert_eq(bottom.size(), top.size(),
+		"stacked inner modules expose matching boundary rings")
+	for key: Vector2 in bottom:
+		assert_true(top.has(key), "top and bottom rings share the same sculpted profile")
+		if top.has(key):
+			assert_true((bottom[key] as Vector2).is_equal_approx(top[key] as Vector2),
+				"stacked rings sample the same atlas texel, removing the hard stripe")
+	assert_gt(interior_v.size(), 4,
+		"only the seam rings are retiled; the inner wall keeps its interior texture")
+
 # --- owner screenshots (2026-07-01): corner pieces fill the dropped end slot EXACTLY --------
 # Ground truth = the old hand-built tiles (git 0bcc47ea CliffCorner.tscn): EVERY piece sits on
 # the 10.5 line and the corner piece occupies (±10.5, ±10.5) — the end slot the edges drop. The

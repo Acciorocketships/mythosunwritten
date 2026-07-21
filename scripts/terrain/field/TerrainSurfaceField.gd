@@ -181,6 +181,16 @@ static func is_exposed_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 			return true
 	return false
 
+# Traversal uses the same boundary fact as rendering: a cardinal edge is
+# walkable exactly when neither owner exposes a vertical face there. Ordinary
+# storey/level slopes remain legal, while cliffs, inner-corner walls, diagonal
+# cliff shoulders, and edges facing a higher flat cell are rejected without a
+# second terrain classifier that could drift from the mesh.
+static func is_walkable_edge(region: HeightfieldRegion, cell: Vector2i, d: Vector2i) -> bool:
+	assert(absi(d.x) + absi(d.y) == 1, "walkability requires a cardinal unit direction")
+	return not is_exposed_edge(region, cell.x, cell.y, d) \
+		and not is_exposed_edge(region, cell.x + d.x, cell.y + d.y, -d)
+
 static func surface_y(region, x: float, z: float) -> float:
 	return surface_y_in_cell(region, x, z, _cell_of(x), _cell_of(z))
 

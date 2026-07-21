@@ -29,6 +29,8 @@ static func compile(index: DressingCatalogIndex,
 			float(group_radius.get(compiled.spacing_group, 0.0)), compiled.spacing_radius)
 		program.maximum_spacing_radius = maxf(program.maximum_spacing_radius,
 			compiled.spacing_radius)
+		program.maximum_feature_clearance = maxf(program.maximum_feature_clearance,
+			compiled.feature_clearance)
 		program.shore_distance_limit = maxf(program.shore_distance_limit,
 			compiled.shore_limit)
 		for choice: Dictionary in compiled.choices:
@@ -72,8 +74,9 @@ static func _compile_set(source: DressingSet,
 		return {}
 	if not is_finite(source.max_grade) or source.max_grade < 0.0 \
 			or not is_finite(source.spacing_radius) or source.spacing_radius < 0.0 \
+			or not is_finite(source.feature_clearance) or source.feature_clearance < 0.0 \
 			or source.spacing_radius > LOCAL_SPACING_CAP:
-		_fail("Dressing set %s has invalid grade or local spacing" % set_id)
+		_fail("Dressing set %s has invalid grade, clearance, or local spacing" % set_id)
 		return {}
 	if source.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT:
 		if not is_finite(source.support_radius) or source.support_radius <= 0.0 \
@@ -197,6 +200,7 @@ static func _compile_set(source: DressingSet,
 		"support_radius": source.support_radius,
 		"max_support_height_span": source.max_support_height_span,
 		"max_grade": source.max_grade,
+		"feature_clearance": source.feature_clearance,
 		"spacing_group": resolved_group,
 		"spacing_radius": compiled_spacing_radius,
 		"scale_range": source.scale_range,

@@ -12,6 +12,7 @@ scale_multiplier = 1.55
 [resource]
 script = ExtResource("2_set")
 id = &"ambient.reeds"
+feature_clearance = 0.3
 choices = Array[ExtResource("1_choice")]([SubResource("C1")])
 fill_per_cell = {&"meadow": 6.0, &"deep_forest": 7.0, &"highland": 2.0, &"blossom_grove": 6.0, &"twilight_marsh": 10.0}
 water_mode = 3

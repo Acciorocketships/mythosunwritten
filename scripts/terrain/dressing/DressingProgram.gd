@@ -8,6 +8,7 @@ var referenced_asset_ids: Array[StringName] = []
 var query_margin: float = 0.0
 var shore_distance_limit: float = 0.0
 var maximum_spacing_radius: float = 0.0
+var maximum_feature_clearance: float = 0.0
 var estimated_proposals_per_chunk: int = 0
 
 func is_empty() -> bool:

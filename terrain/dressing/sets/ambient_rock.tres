@@ -24,6 +24,7 @@ edge_softness = 0.1
 [resource]
 script = ExtResource("2_set")
 id = &"ambient.rock"
+feature_clearance = 2.0
 choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2")])
 fill_per_cell = {&"meadow": 0.2, &"deep_forest": 0.18, &"highland": 0.75, &"blossom_grove": 0.12, &"twilight_marsh": 0.25}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Exposure")])
