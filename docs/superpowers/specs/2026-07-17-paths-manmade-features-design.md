@@ -1,13 +1,13 @@
 # Paths & Manmade Features (v1) — Design Spec
 
 **Date:** 2026-07-17
-**Last revised:** 2026-07-19
-**Status:** Final design, ready for implementation.
+**Last revised:** 2026-07-21
+**Status:** Implemented; final review amendments incorporated.
 **Scope:** The first slice of the master design's settlement-and-path layer (§11.6): a
 deterministic, terrain-aware **path network** painted into the terrain surface, plus three
 contextual feature types — **bridges** at water crossings, **lamp posts** along routes, and
-**arches** as gateways. Network nodes are published as future settlement candidates; no
-settlement content, terrain flattening, or gameplay interaction is built here.
+**arches** as gateways. Settlement planning identifies future village sites but never reshapes
+the landscape; buildings and gameplay interaction remain out of scope.
 
 ---
 
@@ -15,11 +15,11 @@ settlement content, terrain flattening, or gameplay interaction is built here.
 
 | Question | Decision |
 |---|---|
-| What paths are | A tan atlas swatch painted onto existing walkable terrain quads — not separate path meshes or tile scenes |
-| Path geometry | Centred, axis-aligned 4 m corridors on the 24 m cell graph; straight runs, corners, T/X junctions, and 12 m node plazas emerge from merged per-cell connection masks |
-| Network model | Candidate nodes on a 768 m super-grid; feasible neighbouring nodes connect through a deterministic local backbone plus optional loops, using a bounded solve over the monotone cell DAG |
-| Terrain reshaping | None in v1. Paths follow existing walkable slopes. A signed pre-quantization target-height field is deferred as its own design |
-| One feature owner | `PathPlan` owns nodes, routes, bridge sites, lamps, arches, stable feature IDs, reservations, and clearance. No sibling system recreates those decisions |
+| What paths are | The original tan atlas texel painted onto existing walkable terrain triangles, plus sparse varied-size circular decals in one slightly darker tan — all in the same mesh/material/draw call |
+| Path geometry | Centred 4 m corridors on the 24 m cell graph; bends use constant-width quarter-circle fillets with curved inner and outer edges. A future-village node validates a 12 m support footprint and paints a separate 16 m circular path plaza without changing terrain height |
+| Network model | `SettlementPlan` publishes one candidate site per accepted 768 m super-cell; feasible neighbouring sites connect through a deterministic local backbone plus optional loops, using a bounded solve over the monotone cell DAG |
+| Terrain reshaping | None. Villages and paths never flatten, raise, carve, or stamp the heightfield. Routes follow the natural rendered slopes and reject exposed cliff faces |
+| Decision ownership | `SettlementPlan` owns only site identity/cell; `PathPlan` owns validation, routes, bridge sites, lamps, arches, feature IDs, reservations, and clearance. No downstream consumer recreates either decision |
 | One worker query | `PathPlan.context_for(chunk)` returns one cached immutable `PathContext`; terrain painting, dressing suppression, and feature payload extraction all read it |
 | Field cost | Route search reads exact terrain plus a cheap water-owned planning footprint. Full hydrostatic `WaterFieldContext`s are lazy and used only for exact validation and streamed production |
 | Streaming | Props live in canonical 192 m feature blocks owned by anchor position. A demand-driven footprint halo is the complete readiness proof; empty blocks become ready keys without scene nodes |
@@ -125,8 +125,9 @@ route validation and bridge profiling, so neither consumer implements its own sh
 
 ```text
 scripts/terrain/features/
+  SettlementPlan.gd # seed-only village site identities/cells; no terrain API
   PathProgram.gd      # validated primitive asset metrics + tuning; main-thread compiled
-  PathPlan.gd         # canonical nodes, routes, props, reservations, bounded route caches
+  PathPlan.gd         # canonical routes, props, reservations, bounded route caches
   PathContext.gd      # immutable bounded view: masks, sites, clearance, owned payload
 ```
 
@@ -135,10 +136,13 @@ scripts/terrain/features/
   authored bridge contacts/clearances, footprint radii, probabilities, limits, and margins.
   Compilation rejects missing collision, invalid metrics, a derived halo above the explicit
   `MAX_FEATURE_HALO` budget, and a query margin beyond the canonical water-field contract.
-- **`PathPlan`** is worker-owned and receives `WaterPlan`, the shared `WorldFieldBlockCache`, and
-  the compiled `PathProgram`. It is the sole implementation of node selection, canonical bridge
-  sites, route solving, local backbone/loop selection, route merge, prop placement, and stable
-  feature identity.
+- **`SettlementPlan`** is worker-owned and uses only seed, biome fields, the base landform, and
+  water's bounded planning footprint to choose site identities/cells. It exposes no height or
+  terrain-mutation API, and `HeightfieldPlan` has no settlement hook.
+- **`PathPlan`** receives that same settlement plan, `WaterPlan`, the shared
+  `WorldFieldBlockCache`, and the compiled `PathProgram`. It validates published sites against
+  exact final fields, then solely owns bridge sites, route solving, backbone/loop selection,
+  route merge, prop placement, and stable feature identity.
 - **`PathContext`** covers one canonical 192 m chunk core plus a compiler-derived reservation
   margin. `PathPlan.context_for(chunk)` memoizes it by `Vector2i`; there are no caller-shaped
   windows or duplicate terrain/feature contexts. It exposes:
@@ -149,7 +153,7 @@ clearance_at(world_xz: Vector2) -> float
 placements() -> EnvironmentInstancePayload
 ```
 
-`clearance_at` is signed distance to the union of painted corridors, plazas, and prop footprints:
+`clearance_at` is signed distance to the union of painted corridors and prop footprints:
 negative inside, zero on the boundary, positive outside, saturated at a small compiled limit.
 A consumer with required margin `m` accepts a point iff `clearance_at(point) >= m`.
 
@@ -177,41 +181,42 @@ Ambient dressing may leave instance IDs empty. Feature batches carry a stable ID
 transform so a later entity/persistence layer can adopt a feature without changing generation.
 The v1 renderer and collision builder do not interpret that ID.
 
-`PathProgram`, `PathPlan`, and `PathContext` intentionally remain path-specific. A future
-`SettlementPlan` or `LandmarkPlan` may emit the same `EnvironmentInstancePayload` into the same
-feature-block pipeline. Introduce a thin context/reservation aggregator only when that second plan
-exists; v1 has no base-plan hierarchy, plugin registry, or speculative feature interface.
+`SettlementPlan`, `PathProgram`, `PathPlan`, and `PathContext` remain concrete and narrow. A
+future village-content pass consumes the existing settlement IDs/sites and may emit the same
+`EnvironmentInstancePayload`; it does not need to replace path generation. Introduce a thin
+context/reservation aggregator only when a second payload-producing plan exists.
 
 ---
 
 ## 4. Path network
 
-`PATH_SEED_VERSION = 1` participates in every node, route, and feature identity. Named salts keep
-unrelated decisions stable; bump the version only for an intentional full network reshuffle.
+`SettlementPlan.SEED_VERSION` owns site identity; `PATH_SEED_VERSION` owns routes and contextual
+features. Named salts keep unrelated decisions stable; bump a version only for an intentional
+reshuffle of its own domain.
 
 ### 4.1 Nodes and settlement candidacy
 
-Each 768 m super-cell uses distinct named salts. All five candidates use cached exact terrain plus
-the cheap planning-water field; only the provisional winner materializes exact water:
+`SettlementPlan` owns distinct named salts for each 768 m super-cell. Its five candidates use the
+base continuous landform, biome fields, and cheap planning-water clearance:
 
 1. Existence roll, initially `NODE_PROBABILITY = 0.75`.
 2. Five candidate terrain cells hashed into the central half of the super-cell.
-3. Each candidate is scored using:
-   - surface-height/storey span over the 12 m plaza support;
-   - planning dryness and guarded source-shore clearance;
-   - meadow and rocky biome weights.
+3. Each candidate is scored using local continuous-height span plus meadow/rocky weights and is
+   rejected inside the bounded settlement-water clearance.
 4. The lowest passing score is the provisional winner; the candidate hash is the final tie-break.
-5. Validate only that 12 m plaza footprint through `WorldFieldBlockCache.water_at()`. If it is not
-   exactly dry with the required shore clearance, the super-cell has no node. There is no fallback
-   candidate or retry sequence.
+5. The site publishes only a stable settlement ID and cell. It never publishes or applies a
+   height target, plateau, ridge, pass, or village layout stencil.
+6. `PathPlan` validates only that the published site's 12 m future-village support footprint is
+   supported and dry in the untouched
+   final terrain through `WorldFieldBlockCache`. Failure produces no node; there is no fallback or
+   retry.
 
 There is no feature-specific spawn exclusion; the existing flat/dry origin fields participate in
 the normal score, and a route crossing the starting clearing is allowed.
 
-The node publishes only its stable ID and cell. It is a **settlement candidate**, not a guarantee
-that a future village fits: a future `SettlementPlan` evaluates its own footprint against the same
-canonical fields. V1 reserves only the visible 12 m plaza and contains no settlement-specific
-stencil or data contract.
+The path node publishes only the stable settlement ID and cell. Future village content may use
+that identity and must adapt its layout to the natural final terrain; v1 does not place buildings
+or encode a building layout.
 
 ### 4.2 Canonical bridge sites
 
@@ -311,7 +316,12 @@ covers exactly two 2 m columns without a second offset coordinate system.
 - Each connection contributes a centred 4 m wide rectangle from the cell centre to its connected
   edge.
 - Unioning the rectangles yields stubs, straights, corners, T/X junctions, and overlapping routes.
-- Node cells add a 12 × 12 m plaza.
+- Each perpendicular arm pair contributes one tangent quarter-annulus: the path centreline bends
+  at 4 m radius and its inner/outer edges follow 2 m/6 m radii. Incoming strips stop at the
+  tangency, so the result is a constant-width ribbon rather than a disk stamped over the pivot.
+- A node remains a logical village identity only. Independently of its 12 m validation footprint,
+  it paints a 16 m circular path plaza around the connected road. This is surface styling only;
+  it is not a village heightfield/layout stamp.
 - `corridor_at()` is evaluated at each terrain quad centre. A 4 m corridor covers two 2 m quads.
 - Nodes, route segments, bridge centre lines, and feature offsets all use this one centred graph.
 
@@ -323,13 +333,17 @@ var uv := _path_uv if features.corridor_at(quad_centre) \
     and not water.is_wet(quad_centre) else _grass_uv
 ```
 
-The selected UV is constant over the emitted triangle, matching the current atlas-swatch mesh
-contract. Inner-corner backing triangles still force `_cliff_uv`; skirts and aprons are unchanged.
-The path UV is the centre of a verified tan atlas island so filtering and mipmaps cannot bleed an
-adjacent colour.
+Every path triangle uses the original centre tan texel. A sparse world-hashed subset of its 2m
+quads also emits a terrain-conforming 12-sided circular decal, with continuously varied 0.18–0.52m
+radius and one slightly darker sample from the same padded tan island. Each circle must fit wholly
+inside the dry corridor. The decals join the same surface, material, and draw call: there is no
+texture, shader, or material fork. Inner-corner backing triangles still force `_cliff_uv`; an apron
+under a path uses the base path tan so a cliff corner cannot expose a green square inside the dirt
+corridor.
 
 World-space predicates and half-open route ownership make adjacent chunks agree without a seam
-protocol. Painting changes no height, collision, normal, or surface classification.
+protocol. Painting changes no terrain height, collision, or surface classification; the circles
+sit 8mm above only the visual sheet to avoid z-fighting.
 
 ---
 
@@ -342,11 +356,11 @@ hash(world_seed, PATH_SEED_VERSION, feature_type, canonical_site_key)
 ```
 
 Bridge site keys include axis plus quantized dry landing endpoints; they are not keyed by an
-arbitrary cell inside the wet run. Lamp and arch candidates read the final merged route mask.
-Placement precedence is fixed: shared bridges, gate arches, entrance arches, then lamps. Each
-later class rejects earlier footprints. Arch and lamp candidates are keyed by final network cell,
-not emitted once per contributing route, so overlaps deduplicate before placement rather than at
-commit time.
+arbitrary cell inside the wet run. Lamps and biome arches read the final merged route mask; village
+gates walk accepted routes outward from each endpoint because a merged mask cannot distinguish two
+routes that share one arm and split early. Placement precedence is fixed: shared bridges, village
+gates, biome gates, then lamps. Each later class rejects earlier footprints. Shared village-gate
+segments and final network cells deduplicate before placement rather than at commit time.
 
 ### 5.1 Bridges — `sfv.bridge.001`
 
@@ -401,18 +415,25 @@ modular bridge rather than stretching this asset further.
 
 ### 5.3 Arches — `sfv.arch.001/002`, `sfv.entrance_arch.001`
 
-- A gate arch may appear one or two straight cells out from a node on an accepted approach. A
-  stable node-level selection chooses at most two approaches.
+- Every accepted route is walked outward from both village endpoints. The first candidate is the
+  fourth segment, centred 84 m from the node; later segments through step 12 are bounded support/
+  water fallback. Routes still sharing that segment deduplicate to one physical gate, while routes
+  that split earlier each retain their own gate.
+- Existing cliffs beside that segment are welcome but optional. Gate placement never creates
+  cliffs or side walls, and simply declines when the asset's real supports do not fit the terrain.
 - Gate placement checks the full leg footprints and opening, not one centre stencil. Both legs
   must be dry and supported; the clear opening must contain the 4 m corridor plus authored margin.
-- Rare entrance arches use the same dry/support footprint rule on straight mid-route cells, but
-  their intentionally smaller opening only has to exceed authored character clearance; their legs
-  may stand inside the tan corridor.
-- Yaw places the opening along the route axis. Collision contains leg primitives only.
+- Small-arch candidates begin on path connections whose endpoint dominant biomes differ. Eight
+  fixed bisections refine the transition along the 24 m edge. Stable-priority 96 m spacing collapses
+  rapid ecotone oscillations, and a 144 m village clearance prevents biome gates from stacking with
+  the more important village threshold.
+- Yaw places the opening along the route axis. Small-arch collision stays on its legs. Large-arch
+  collision follows four posts, two beams, four diagonal braces, and two roof slopes; the
+  character-height opening remains empty while collision bounds reach the visual roof and depth.
 
 ### 5.4 Reservations and dressing
 
-`PathContext.clearance_at()` includes corridor/plaza geometry and the compiled horizontal
+`PathContext.clearance_at()` includes corridor geometry and the compiled horizontal
 footprint of every nearby prop. `DressingSet` gains one explicit authored
 `feature_clearance: float`, compiled into `DressingProgram`:
 
@@ -533,21 +554,25 @@ Feature blocks live under one streamer-owned `ManmadeFeatures` root, not under t
 ## 7. Assets and bake
 
 Add `tools/environment_bake/manifests/fantasy_village_features.json` with pack
-`fantasy_village`, the pack's existing license label, `default_scale: [1,1,1]`, and JSON vector
-scales:
+`fantasy_village`, the pack's existing license label, `default_scale: [2,2,2]`, and JSON vector
+scales. In-game review established the 2× correction for the freestanding assets; the bridge keeps
+its independently calibrated proportions and crossing span:
 
 | ID | Source under `FantasyVillageFBX/FBX/Exterior Props/` | Scale | Collision | Tint |
 |---|---|---|---|---|
-| `sfv.light_pole.001` | `Light Pole/SFV_Light_Pole_001.fbx` | `[1,1,1]` | pole primitive | identity |
-| `sfv.arch.001` | `Arch/SFV_Arch_001.fbx` | `[1,1,1]` | leg primitives | identity |
-| `sfv.arch.002` | `Arch/SFV_Arch_002.fbx` | `[1,1,1]` | leg primitives | identity |
-| `sfv.entrance_arch.001` | `Arch/SFV_Entrance_Arch_001.fbx` | `[1,1,1]` | leg primitives | identity |
-| `sfv.bridge.001` | `Bridge/SFV_Bridge_001.fbx` | explicit vector from statistics | deck + rail primitives | identity |
+| `sfv.light_pole.001` | `Light Pole/SFV_Light_Pole_001.fbx` | `[2,2,2]` | pole primitive | identity |
+| `sfv.arch.001` | `Arch/SFV_Arch_001.fbx` | `[2,2,2]` | posts + beams + braces + roof | identity |
+| `sfv.arch.002` | `Arch/SFV_Arch_002.fbx` | `[2,2,2]` | posts + beams + braces + roof | identity |
+| `sfv.entrance_arch.001` | `Arch/SFV_Entrance_Arch_001.fbx` | `[2,2,2]` | leg primitives | identity |
+| `sfv.bridge.001` | `Bridge/SFV_Bridge_001.fbx` | `[1.2,1,6]` | deck + rail primitives | identity |
 
 Tags are `feature` plus `lamp`, `arch`, or `bridge`. Every entry declares
 `supports_instance_color: true` and a `collision_source`. Authored placement metrics live in
 `PathProgram`'s compile-time validation data and are checked against baked descriptors;
 generated runtime meshes and shapes remain normal environment assets.
+`sfv.arch.002` also declares the pack's orange atlas as a fallback albedo because that FBX
+surface imports with UVs but no texture; the baker applies the fallback only to textureless
+standard-material surfaces and bakes it into the normal self-contained runtime material.
 
 Lineup QA uses the one-metre marker, a character, measured AABBs, and collision overlays. It must
 verify bridge deck contacts, under-deck swim clearance, rail height, arch opening width, lamp-arm
@@ -564,9 +589,9 @@ yaw, pivots, and every authored footprint sample.
   same independently lazy region/water objects.
 - **Planning water:** capsule/pond ownership and continuous segment intervals; bounded look-ahead;
   endpoint-order equality; known planning/exact mismatches fail only final candidate validation.
-- **Nodes:** seed/version determinism, candidate tie-breaks, score-floor rejection, and a minimal
-  stable-ID/cell output with no settlement-specific data; only the provisional winner receives
-  exact water validation, and its failure does not fall through to another candidate.
+- **Settlements/nodes:** seed/version determinism, candidate tie-breaks, bounded terrain influence,
+  final exact-water validation without fallback, minimal public node output, and a quantized test
+  proving each gate has two real three-storey unwalkable cliff faces with an open road axis.
 - **Route solver:** compare small synthetic DAGs with an exhaustive oracle; prove containment,
   endpoint-order independence, the one-value vertical-variation equivalence to separate ascent and
   descent, dominance pruning, deterministic ties, exact-final-validation absence, and no rerun.
@@ -580,9 +605,12 @@ yaw, pivots, and every authored footprint sample.
 - **Path context:** one cached context per canonical chunk key; half-open owned placements, stable
   IDs, signed clearance at interior/edge/exterior, prop footprints included, and cold/warm/evicted
   query equality.
-- **Terrain painting:** inspect emitted triangle UVs on the real 2 m grid for every mask shape,
-  centred two-column 4 m width, node plaza, dry/wet boundary, inner-corner override,
-  positive/negative chunk seams, and mip-safe atlas UV. No path-grid offset exists.
+- **Terrain painting:** inspect emitted triangle UVs on the real path overlay for every mask shape,
+  centred 4 m width, constant-width inner/outer bend fillets, a 16 m circular village plaza,
+  dry/wet boundary, inner-corner override,
+  positive/negative chunk seams, the bounded junction join, path-coloured aprons, and all
+  circular spot UV staying inside the mip-safe tan island, varied deterministic radii, and every
+  disc contained by the dry path. No path-grid offset exists.
 - **Dressing suppression:** authored margins work; hashes stay unchanged; anchors beyond the
   reservation plus arbitration radius remain bit-identical to a feature-free run.
 - **Shared commits:** existing dressing tests pass through generalized payload/builder/queue;
@@ -596,7 +624,7 @@ yaw, pivots, and every authored footprint sample.
 
 Use a fixed checked-in seed list spanning all biomes. Report:
 
-- nodes per km², rejected-node reasons including planning/exact mismatch, and plaza flatness/shore
+- nodes per km², rejected-node reasons including planning/exact mismatch, and node-support span/shore
   distributions;
 - feasible/backbone/loop/accepted edges, isolated-node reasons, connected-component sizes, route
   length, turn frequency, vertical variation, planning/exact validation mismatch, and route-drop
@@ -613,7 +641,7 @@ density.
 
 ### 8.3 Visual and performance battery
 
-Pinned review teleports cover: straight/L/T/X masks, node plaza, long slope, mountain rejection,
+Pinned review teleports cover: straight/L/T/X masks, a 16 m circular village plaza, long slope, mountain rejection,
 merged routes, lamp spacing and true alternation, both arch sizes, perpendicular and oblique
 bridges, walk-over/swim-under/wade-at-bank behavior, path/dressing/grass clearance, all chunk-edge
 bridge orientations, and a seam pan.
@@ -643,7 +671,7 @@ Each implementation phase lands runnable with the full existing GUT suite green.
 1. **Consolidation + bake:** generalize the environment payload/collision/queue with dressing
    behavior unchanged; add feature assets, collision templates, program validation, and lineup QA.
 2. **Pure planning core:** implement independently lazy canonical fields, water-owned planning
-   queries, node selection, canonical bridge sites, the one-value DAG solver, exact validation,
+   queries, seed-only settlement sites/final node validation, canonical bridge sites, the one-value DAG solver, exact validation,
    backbone/loops, route merge, `PathContext`, and exhaustive headless tests. No scene nodes.
 3. **Atomic world integration:** add centred 2 m-quad painting, explicit dressing clearance, keyed
    terrain/feature job flags, demand-driven halo readiness/eviction, empty-block elision, and
@@ -658,8 +686,9 @@ Each implementation phase lands runnable with the full existing GUT suite green.
 
 ## 10. Explicitly deferred
 
-- Signed target-height terrain shaping, path flattening, cuttings, and retaining walls.
-- Settlement acceptance, settlement terrain preparation, buildings, and plaza content.
+- Village-layout height stamps, manufactured gateway cliffs, route-wide flattening, cuttings, and
+  retaining walls. Uphill routes use the natural walkable slope geometry instead.
+- Village buildings, procedural lot/layout acceptance, and plaza content.
 - Fences, signs, carts, and other route furniture.
 - Real lamp lights derived from the existing lamp sites, day/night behavior, and settlement
   warm-light orchestration.

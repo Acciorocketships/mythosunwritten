@@ -62,8 +62,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   order-independent fixpoint, so results are seed-stable. `compute_region()` batches a whole
   chunk's storeys+levels in two clamps and returns a `HeightfieldRegion`. Per-cell noise+carve
   samples are **memoized on the plan instance** (`_sample`, cleared by `set_raw_height_override`/
-  `set_water_plan`) so the ~77 %-overlapping windows of successive chunk builds are sampled once
-  — a pure-performance cache, output-identical.
+  `set_water_plan`) so the ~77 %-overlapping windows of successive chunk builds are sampled once —
+  a pure-performance cache, output-identical. Settlement and village layout never feed this plan:
+  the natural heightfield has no village stamp or settlement mutation hook.
   - **Levels are rendered** (`RENDER_LEVELS = true`): adjacent same-storey cells may differ
     by one 1 m level, and that short step uses the same shared smootherstep surface patch as
     a 4 m storey slope. Levels do not emit cliff dressing or vertical backing walls.
@@ -111,11 +112,47 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   Final jittered anchors are qualified against terrain and the shared `WaterFieldContext`, then
   bounded Matérn-II arbitration supplies local and cross-population spacing. Chunk ownership is
   half-open, so overlapping queries agree and seams cannot duplicate or omit an anchor. Worker
-  payloads contain only asset IDs, transforms, and colours. `DressingCollisionBuilder` commits
-  baked static physics for structural nature before chunk readiness; `DressingCommitQueue`
+  payloads contain only asset IDs, transforms, and colours. `EnvironmentCollisionBuilder` commits
+  baked static physics for structural nature before chunk readiness; `EnvironmentCommitQueue`
   creates one visual `MultiMesh` per `(asset_id, visual piece)` under a separate per-frame budget,
   and discards stale chunk generations. Dressing still owns no gameplay identity, interaction,
   persistence, navigation, or world-feature planning.
+- **Paths and man-made features** (`scripts/terrain/features/`) — pure `SettlementPlan` owns only
+  deterministic 768m future-village site identities and cells; it has no terrain API. `PathPlan`
+  validates those sites against the untouched final fields, then owns canonical dry-landing bridge
+  sites, monotone bounded route
+  solves, local backbone/loop selection, and bridge/arch/lamp identities. `PathProgram` compiles
+  the five selectively warmed assets and their primitive placement metrics; it contains no
+  resources. `PathContext` is the immutable per-block projection: centred 4 m corridor masks,
+  16 m-diameter circular village plazas, signed reservation clearance, and one half-open-owned
+  `EnvironmentInstancePayload`. Future-village nodes validate a compact dry, supported footprint;
+  their circular path surface provides a gathering place without mutating terrain.
+  Its hot predicates use the same connection masks plus a local
+  reservation bucket, so terrain UV and dressing queries are O(1) in route length; lattice callers
+  pass their already-known terrain cell to avoid repeating coordinate division. Each perpendicular
+  arm pair adds a bounded quarter-annulus fillet, so both inner and outer path edges curve through
+  turns and branches without a circle stamped over the junction. Path
+  triangles keep the original tan; sparse varied-size world-hashed circular decals use one
+  slightly darker tan from the same atlas island. The circles conform to the sheet and share its
+  mesh, material, and draw call; exposed aprons use the base path tan. Bridges are
+  exact-water-validated before becoming atomic route macro-edges; ordinary routes use cheap
+  planning water, then validate only the selected corridor against exact water. Every ordinary
+  route edge uses `TerrainSurfaceField.is_walkable_edge`, so a hill may be climbed over the same
+  continuous sub-storey/storey slopes the mesher renders, but a route can never cut through an
+  exposed cliff face. Existing cliffs beside an approach remain natural and optional; no shelf,
+  ridge, cutting, or flanking cliff is manufactured for a village. Lamps face inward over the road.
+  Large arches walk every accepted route from both village endpoints: the first attempt is centred
+  84 m from the node, later segments supply bounded support fallback, and shared segments deduplicate
+  while routes that split early each retain a gate. Small arches mark refined dominant-biome
+  crossings, stay at least 144 m from a village and 96 m from another arch, so ecotone oscillation
+  cannot make a gate stack. Precedence is
+  bridge → village gate → biome gate → lamp. Stable feature
+  IDs never include a streaming chunk or contributing route.
+- **`field/WorldFieldBlockCache.gd`** — the worker-confined canonical owner of independently lazy
+  terrain regions and exact water contexts. Half-open 192 m keys and deterministic bounded LRU
+  make planning, meshing, water, and dressing share the same live field objects without locks or
+  output dependence on query order. `TerrainSurfaceField.is_walkable_edge` is likewise the one
+  symmetric exposed-boundary fact shared by path traversal and the rendered mesh.
 - **Environment assets** (`scripts/terrain/environment/`, `terrain/environment/`) — source-pack
   scenes are editor-baked into lightweight descriptors plus self-contained meshes, materials,
   textures, typed visual pieces, and optional typed collision pieces. Manifest scale is applied
@@ -146,20 +183,35 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   lightweight `EnvironmentCatalog`; the main-thread `EnvironmentRenderCache` selectively loads
   only active visuals. Environment runtime resources never depend on the source packs under
   `assets/`. `tools/environment_bake/` is the only owner of those source paths. Generated palette
-  variants may selectively recolour foliage texels, while every active material still multiplies
+  variants may selectively recolour foliage texels. The Fantasy Village man-made feature pack uses
+  a reviewed 2× human-scale bake correction for its freestanding arches and lamp. A manifest
+  fallback supplies the orange atlas missing from the second large arch's source material, so the
+  correction is baked into the self-contained runtime asset. Its bridge
+  retains the independently calibrated `[1.2, 1.0, 6.0]` vector scale that supplies a human-scale
+  deck and rails plus the required crossing span. Large arches use compound collision following
+  four posts, upper beams, diagonal braces, and both roof slopes; the character-height opening
+  stays clear while collision reaches the visual top and depth.
+  Every active material still multiplies
   the independent per-instance biome tint. `terrain/materials/forest.tres` is a self-contained
   bake-compatibility path for Godot's imported KayKit scene UID, not a runtime material owner.
 - **`field/FieldTerrainStreamer.gd`** — the only scene-tree node (`Node3D` in `world.tscn`,
   wired to the player). Builds field chunks within `CHUNK_RADIUS` of the player on **one
-  background worker thread**. It compiles dressing sets and selectively warms their visuals on
-  the main thread before starting the worker. The worker returns only arrays/transforms/sampler payloads; the
-  main thread **commits and integrates** them (terrain/water, structural dressing collision, then
-  `add_child`),
+  background worker thread**. It compiles dressing plus `PathProgram` and selectively warms their
+  sorted asset union on the main thread before starting the worker. The worker returns only
+  arrays/transforms/sampler payloads. Terrain and feature generations are independent, but queued
+  requests for one block widen into one job. A completed terrain payload waits in one nearest-first
+  list until every key in its footprint-derived feature halo is ready; v1's maximum footprint
+  yields exactly the lexicographically sorted 3×3 square. Empty feature blocks are explicit ready
+  records and allocate no node/resource. Non-empty feature collision commits under the one
+  `ManmadeFeatures` root before readiness, with visuals independently budgeted. Terrain then
+  commits in terrain → water → dressing collision → `add_child` → FX → dressing visual order,
   `MAX_BUILD_PER_FRAME` per frame, nearest-first, evicting beyond
-  `KEEP_RADIUS`. The worker exclusively owns its `_plan`/`_water`/`_mesher` instances, so their
-  caches need no locks. While the player's chunk is missing (spawn, teleport, or outrunning the
-  worker), the player is frozen until that chunk's payload is committed, so they never fall
-  through unstreamed space; the cold river-trace spike stays off the main thread. Owns the
+  `KEEP_RADIUS` (features use `KEEP_RADIUS + feature_halo`). The worker exclusively owns its
+  `_settlements`/`_plan`/`_water`/field/path/mesher instances, so their
+  caches need no locks. At startup the player is frozen until every chunk beneath their footprint
+  (four quadrants at the origin corner) and its feature square is ready; later, a missing current
+  chunk freezes them during teleports or when outrunning the worker. Collision therefore cannot
+  pop in after movement starts, and the cold river/path spike stays off the main thread. Owns the
   `world_seed` (random per run) and the tuning exports: `HEIGHTFIELD_AMPLITUDE`,
   `HEIGHTFIELD_MAX_STOREYS`, `MAX_CLIFF_STEP` (1 = all slopes, 3 = cliffs up to 12 m).
 
@@ -178,7 +230,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
 - **`terrain/tools/CoordOverlay.gd`** — the F3 debug HUD (in `world.tscn`): a crosshair plus a
   readout of the seed, the player's cell, the crosshair-target cell, and the 3×3 storey grid
   around it. A screenshot alone then pins down exactly where a terrain issue is — use it to
-  reproduce a reported bug by its seed and coordinates.
+  reproduce a reported bug by its seed and coordinates. Storeys come from immutable snapshots
+  attached to committed chunks; the main-thread HUD never reads the worker-owned plan or caches.
 - **`terrain/tools/SlopeProfile.gd` / `SlopeAtlas.gd`** — the `smootherstep` slope profile math
   and grass/rock UV sampling from KayKit pieces, shared by the field and mesher.
 - **Water** (`scripts/terrain/water/`): a deterministic **river network carved into the
@@ -187,6 +240,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `HeightfieldPlan.raw_height`). Channel carving projects each terrain sample onto the same
   variable-width trace **segment capsule** used by `WaterField` (not isolated trace-point
   discs), so bathymetry cannot leave uncarved 12m gaps beneath continuous rendered water.
+  `WaterPlan.planning_signed_distance` / `planning_intervals` expose that same source geometry
+  with one fixed guard for cheap route planning; they never build hydrostatic water.
+  `WaterFieldContext.wet_intervals` is the exact, lazily contour-cached counterpart for final
+  route and bridge validation, so feature consumers never reproduce water geometry.
   Beds obey **containment** (`CONTAIN_DROP`): every bed is
   capped a full storey below the lowest flanking bank's natural storey, so channels always
   quantize bounded by ground on both sides — never a sheet hanging off a hillside. The
@@ -381,6 +438,26 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   (keyboard, camera-relative) and `TestController` (steers toward a target node, for harnesses).
 - **`scripts/camera/camera.gd`** — orbit camera (Q/E orbit, scroll zoom) following the character.
 
+## Startup loading screen
+
+- **`ui/loading_screens/mythos_loading_screen.tscn`** is the project main scene. It loads
+  `world.tscn` on Godot's threaded resource loader, installs the live world behind a high
+  `CanvasLayer`, and keeps its animated atlas visible until `FieldTerrainStreamer` reports
+  every chunk under the player's startup footprint integrated. The origin is a four-chunk
+  corner. Startup progress is real weighted work: threaded scene-resource loading, worker
+  PathContext/feature/heightfield/mesh/water/dressing milestones for those support jobs and
+  their required feature halo, then main-thread integration. Never replace it with elapsed-time
+  progress. `MythosLoadingScreen.gd` owns the handoff,
+  `MythosTaperedProgressBar.gd` draws the hairline/tapered fill, and
+  `mythos_loading_screen.gdshader` composites transparent city/cloud/chart textures from
+  `ui/loading_screens/layers/` over the genuinely cloud-free
+  `mythos_mythic_atlas_background_cloudless.png` plate; never restore the older plate's static
+  corner-cloud duplicates. Only the chart texture rotates; four cloud groups translate
+  independently. The stationary river is the actual original atlas painting, with a second atlas
+  sample travelling downstream along a hand-fitted river spine for most of each cycle and
+  cross-fading only at wrap; both are clipped to its local width. The title/progress Control
+  remain outside every rotation.
+
 ## Conventions & code style
 
 - **Typed GDScript.** Annotate function signatures, exported vars, and members. Inline `:=`
@@ -401,7 +478,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `test_cliff_dressing`, `test_dressing_field`, `test_dressing_ecology`,
   `test_dressing_collision_builder`, `test_dressing_commit_queue`,
   `test_environment_catalog`, `test_water_field_context`, `test_field_streamer`, `test_biomes`,
-  `test_helper`, and the `test_slope_*` profile/geometry guards. Continuity guards
+  `test_helper`, `test_world_field_block_cache`, `test_water_path_queries`, `test_settlement_plan`, `test_path_program`,
+  `test_path_plan_nodes`, `test_path_bridge_sites`, `test_path_route_solver`,
+  `test_path_context`, `test_path_features`, and the `test_slope_*` profile/geometry guards. Continuity guards
   (`test_slope_tile_continuity`, `test_diag_seams`, `test_slope_socket_grounding`) assert the
   surface is gap-free and dressing sits on the mesh — the invariants above, encoded.
 - **`tests/harness/`** — visual/screenshot scenes for eyeballing behavior a unit test can't
@@ -411,6 +490,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   scale marker, and optional collision overlays (`--show-collision`). The teleport harness streams
   a fixed nine-chunk site through the real world pipeline, requires structural collision, and
   waits for both terrain integration and the independent dressing commit queue before capturing it.
+  `path_review.tscn` renders straight/L/T/X/logical-node masks through the real terrain mesher beside the
+  rejected offset-width alternative; `path_corpus.gd` is the deterministic smoke/full path gate.
 
 ## Adding terrain content
 
@@ -437,7 +518,18 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   fill and may share habitat/community channels with related sets; visual choices affect mix,
   never population. Structural sets must share the appropriate spacing group so their collision
   cannot overlap. The compiler derives proposal slots and margins and rejects illegal
-  water/support/radius combinations.
+  water/support/radius combinations. Author `feature_clearance` explicitly (`2.0` m for rigid
+  structure, `0.3` m for small ground cover, `0.0` for floating lilies); the compiler rejects a
+  margin outside `PathProgram`'s saturated clearance coverage.
+- **New man-made path feature**: add its self-contained visual/collision through the environment
+  manifest, then add only primitive footprint/support/opening semantics to `PathProgram`. Keep the
+  decision inside `PathPlan` after final route-mask merge, add its footprint to the shared
+  reservation union, derive its stable ID from the canonical world site, and let the existing
+  environment payload/builder/queue and derived feature halo handle streaming. Do not add a
+  sibling planner, scene wrapper, feature-specific streamer dependency list, or alternate water/
+  terrain classifier. Review paths in `tests/harness/path_review.tscn`, assets in
+  `environment_lineup.tscn -- --show-collision`, and deterministic statistics with
+  `tests/harness/path_corpus.gd`.
 - **Different cliff dressing**: change the stable asset IDs in `CliffDressing.ASSETS` (pieces
   must tile on the 3 m / 10.5 grid — mismatched module widths leave slits at the corners).
 - **Tuning terrain shape**: `FieldTerrainStreamer` exports (amplitude, storey cap, cliff step,
