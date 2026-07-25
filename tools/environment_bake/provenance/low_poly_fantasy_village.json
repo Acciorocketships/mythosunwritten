@@ -534,7 +534,7 @@
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_footprint": 0.88,
-        "collision_max_height": 0.42,
+        "collision_max_height": 0.4347826,
         "collision_profile": "flat_box",
         "id": "lpfv.rock.04",
         "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_04.glb",
@@ -557,7 +557,7 @@
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_footprint": 0.88,
-        "collision_max_height": 0.42,
+        "collision_max_height": 0.4347826,
         "collision_profile": "flat_box",
         "id": "lpfv.rock.05",
         "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_05.glb",
@@ -579,7 +579,7 @@
       "license": "LowPolyFantasyVillage source-pack license",
       "pack": "low_poly_fantasy_village",
       "parameters": {
-        "collision_max_height": 0.42,
+        "collision_max_height": 0.4347826,
         "collision_profile": "flat_rock",
         "id": "lpfv.rock.06",
         "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_06.glb",
@@ -958,5 +958,5 @@
   ],
   "license": "LowPolyFantasyVillage source-pack license",
   "pack": "low_poly_fantasy_village",
-  "tool_version": 10
+  "tool_version": 15
 }

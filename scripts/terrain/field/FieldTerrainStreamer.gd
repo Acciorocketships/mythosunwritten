@@ -25,7 +25,6 @@ const STARTUP_COMMIT_WEIGHT := 0.08
 ## every few seconds is enough to distinguish slow progress from a dead worker.
 const DIAGNOSTIC_INTERVAL_MSEC := 5000
 const SLOW_WORKER_PHASE_MSEC := 15000
-
 signal startup_loading_progress_changed(progress: float, ready_chunks: int,
 	total_chunks: int)
 signal startup_loading_completed
@@ -39,6 +38,9 @@ signal startup_loading_completed
 ## Render-only dressing batches committed per frame. Terrain/water readiness
 ## never waits for this queue.
 @export var MAX_DRESSING_BATCHES_PER_FRAME: int = 2
+## Dense grass is visual-only and is skipped by headless terrain/test runs.
+## Its field and renderer have direct headless tests; production enables it.
+@export var GRASS_ENABLED: bool = true
 @export var HEIGHTFIELD_AMPLITUDE: float = 22.0
 @export var HEIGHTFIELD_MAX_STOREYS: int = 8
 ## Max storey difference between adjacent cells. 1 = all walkable slopes (SP1);
@@ -65,6 +67,13 @@ var _fields: WorldFieldBlockCache
 var _paths: PathPlan
 var _feature_queue: EnvironmentCommitQueue
 var _features_root: Node3D
+var _grass_program: GrassProgram
+var _grass_streamer: GrassStreamer
+var _grass_root: Node3D
+var _trample_field: TrampleField
+var _grass_runtime_enabled := false
+var _dressing_trample_by_chunk: Dictionary = {} # Vector2i -> Array[Dictionary]
+var _static_trample_dirty := false
 var _built: Dictionary = {}        # Vector2i -> Node3D          (main thread only)
 var _storey_snapshots: Dictionary = {} # Vector2i -> PackedInt32Array (main thread only)
 var _feature_ready: Dictionary = {} # Vector2i -> generation, including empty blocks
@@ -72,6 +81,7 @@ var _feature_nodes: Dictionary = {} # Vector2i -> non-empty Node3D
 var _terrain_generation: Dictionary = {}
 var _feature_generation: Dictionary = {}
 var _queued: Dictionary = {}       # Vector2i -> job Dictionary
+var _grass_queued: Dictionary = {} # Vector2i tile -> grass job Dictionary
 var _active_job: Dictionary = {}
 var _followups: Dictionary = {}
 var _pending_terrain: Array[Dictionary] = []
@@ -91,6 +101,7 @@ var _worker_phase: StringName = &"idle"
 var _worker_phase_chunk := Vector2i.ZERO
 var _worker_phase_started_msec: int = 0
 var _worker_job_started_msec: int = 0
+var _worker_job_kind: StringName = &"chunk"
 var _diagnostic_started_msec: int = 0
 var _last_diagnostic_msec: int = 0
 var world_seed: int = 0
@@ -141,12 +152,18 @@ func _ready() -> void:
 	_mesher.set_seed(world_seed)
 	_environment_catalog = EnvironmentCatalog.load_default()
 	assert(_environment_catalog != null)
+	_environment_cache = EnvironmentRenderCache.new(_environment_catalog)
 	var dressing_index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
 	assert(dressing_index != null)
 	_dressing_program = DressingCompiler.compile(dressing_index, _environment_catalog)
 	assert(_dressing_program != null)
 	_path_program = PathProgram.compile(_environment_catalog)
 	assert(_path_program != null)
+	if GRASS_ENABLED:
+		var grass_settings := load("res://terrain/grass/settings.tres") as GrassSettings
+		_grass_program = GrassProgram.compile(grass_settings, _environment_catalog,
+			_environment_cache)
+		assert(_grass_program != null)
 	assert(_dressing_program.maximum_feature_clearance \
 		<= _path_program.maximum_clearance,
 		"PathProgram clearance coverage must contain every dressing margin")
@@ -154,6 +171,11 @@ func _ready() -> void:
 		_path_program.query_margin)
 	var combined_shore_limit := maxf(_dressing_program.shore_distance_limit,
 		_path_program.shore_distance_limit)
+	if _grass_program != null:
+		combined_query_margin = maxf(combined_query_margin,
+			_grass_program.query_margin)
+		combined_shore_limit = maxf(combined_shore_limit,
+			_grass_program.shore_distance_limit)
 	assert(combined_query_margin + combined_shore_limit \
 		<= WaterField.FILL_MARGIN * WaterField.FILL_STEP - WaterContour.MARGIN)
 	_fields = WorldFieldBlockCache.new(_plan, _water, combined_query_margin,
@@ -166,12 +188,14 @@ func _ready() -> void:
 	_startup_feature_keys = _startup_required_feature_keys()
 	print("[terrain-streamer] startup_plan seed=%d feature_keys=%d" % [
 		world_seed, _startup_feature_keys.size()])
-	_environment_cache = EnvironmentRenderCache.new(_environment_catalog)
 	var active_set: Dictionary = {}
 	for asset_id: StringName in _dressing_program.referenced_asset_ids:
 		active_set[asset_id] = true
 	for asset_id: StringName in _path_program.referenced_asset_ids:
 		active_set[asset_id] = true
+	if _grass_program != null:
+		for asset_id: StringName in _grass_program.referenced_asset_ids:
+			active_set[asset_id] = true
 	for asset_id: StringName in CliffDressing.ASSETS.values():
 		active_set[asset_id] = true
 	var active_visuals: Array[StringName] = []
@@ -184,13 +208,27 @@ func _ready() -> void:
 	_features_root = Node3D.new()
 	_features_root.name = &"ManmadeFeatures"
 	add_child(_features_root)
-	# Warm render resources and caches on the main thread before the worker
-	# starts. The worker never touches them; this also keeps the first payload
-	# commit from paying a visible resource-load hitch.
+	# Warm the one shared terrain palette before constructing grass materials;
+	# grass binds its live texture/UV instead of copying a sampled colour.
 	CliffDressing.prepare(_environment_cache)
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
 	_mesher.prepare_resources()
+	_grass_runtime_enabled = GRASS_ENABLED and not _headless
+	if _grass_runtime_enabled:
+		_grass_streamer = GrassStreamer.new(_grass_program, _environment_cache)
+		_grass_root = Node3D.new()
+		_grass_root.name = &"Grass"
+		add_child(_grass_root)
+		_trample_field = TrampleField.new()
+		_trample_field.name = &"TrampleField"
+		_trample_field.player = player
+		# Observe the character after ordinary gameplay _process callbacks.
+		_trample_field.process_priority = 100
+		add_child(_trample_field)
+	# Warm render resources and caches on the main thread before the worker
+	# starts. The worker never touches them; this also keeps the first payload
+	# commit from paying a visible resource-load hitch.
 	# Warm the biome tint materials + profiles on the main thread too, so the
 	# worker only ever READS them (same no-locks confinement as above).
 	BiomeRegistry.profile(&"meadow")
@@ -343,55 +381,82 @@ func _worker() -> void:
 			return
 		var job: Dictionary = _jobs.pop_front() if not _jobs.is_empty() else {}
 		if not job.is_empty():
-			_queued.erase(job.chunk)
+			if StringName(job.get("kind", &"chunk")) == &"grass":
+				_grass_queued.erase(job.tile)
+			else:
+				_queued.erase(job.chunk)
 			_active_job = job
 		_mutex.unlock()
 		if job.is_empty():
 			continue
+		var kind: StringName = job.get("kind", &"chunk")
 		var c: Vector2i = job.chunk
 		_begin_worker_job(c, job)
-		_begin_worker_phase(c, &"path_context")
-		var paths := _paths.context_for(c)
-		_set_startup_worker_progress(c, 0.55)
-		var result := {
-			"chunk": c,
-			"build_terrain": bool(job.build_terrain),
-			"terrain_generation": int(job.terrain_generation),
-			"build_features": bool(job.build_features),
-			"feature_generation": int(job.feature_generation),
-		}
-		if job.build_features:
-			_begin_worker_phase(c, &"feature_placements")
-			result["features"] = paths.placements()
-			_set_startup_worker_progress(c, 0.58)
-		if job.build_terrain:
-			_begin_worker_phase(c, &"heightfield_region")
-			var region := _fields.region(c)
-			_set_startup_worker_progress(c, 0.62)
-			_begin_worker_phase(c, &"water_context")
-			var water_context := _fields.water(c)
-			_set_startup_worker_progress(c, 0.67)
-			var core := Rect2(Vector2(c) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
-			result["storeys"] = _storey_snapshot(c, region)
-			_begin_worker_phase(c, &"terrain_mesh")
-			result["terrain"] = _mesher.compute_chunk(c, region, water_context, paths)
-			_set_startup_worker_progress(c, 0.82)
-			_begin_worker_phase(c, &"water_mesh")
-			result["water"] = _water_builder.compute_chunk(_water, c, region, water_context)
-			_set_startup_worker_progress(c, 0.88)
-			_begin_worker_phase(c, &"dressing")
-			result["dressing"] = DressingField.compute(_dressing_program, world_seed,
-				core, region, water_context, paths)
-			_set_startup_worker_progress(c, 0.97)
-			# FX data stays worker-side; nodes are built during integration.
-			_begin_worker_phase(c, &"biome_fx")
-			result["fx"] = _biome_fx_data(c, region)
-			_set_startup_worker_progress(c, 1.0)
+		var result: Dictionary
+		if kind == &"grass":
+			var tile: Vector2i = job.tile
+			var grass_started := Time.get_ticks_usec()
+			_begin_worker_phase(c, &"grass_path_context")
+			var grass_paths := _paths.context_for(c)
+			_begin_worker_phase(c, &"grass_fields")
+			var grass_region := _fields.region(c)
+			var grass_water := _fields.water(c)
+			_begin_worker_phase(c, &"grass_placement")
+			var grass_payload := GrassField.compute(_grass_program, world_seed, tile,
+				grass_region, grass_water, grass_paths)
+			result = {
+				"kind": &"grass",
+				"tile": tile,
+				"chunk": c,
+				"generation": int(job.generation),
+				"grass": grass_payload,
+				"compute_usec": Time.get_ticks_usec() - grass_started,
+			}
+		else:
+			_begin_worker_phase(c, &"path_context")
+			var paths := _paths.context_for(c)
+			_set_startup_worker_progress(c, 0.55)
+			result = {
+				"kind": &"chunk",
+				"chunk": c,
+				"build_terrain": bool(job.build_terrain),
+				"terrain_generation": int(job.terrain_generation),
+				"build_features": bool(job.build_features),
+				"feature_generation": int(job.feature_generation),
+			}
+			if job.build_features:
+				_begin_worker_phase(c, &"feature_placements")
+				result["features"] = paths.placements()
+				_set_startup_worker_progress(c, 0.58)
+			if job.build_terrain:
+				_begin_worker_phase(c, &"heightfield_region")
+				var region := _fields.region(c)
+				_set_startup_worker_progress(c, 0.62)
+				_begin_worker_phase(c, &"water_context")
+				var water_context := _fields.water(c)
+				_set_startup_worker_progress(c, 0.67)
+				var core := Rect2(Vector2(c) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
+				result["storeys"] = _storey_snapshot(c, region)
+				_begin_worker_phase(c, &"terrain_mesh")
+				result["terrain"] = _mesher.compute_chunk(c, region, water_context, paths)
+				_set_startup_worker_progress(c, 0.82)
+				_begin_worker_phase(c, &"water_mesh")
+				result["water"] = _water_builder.compute_chunk(_water, c, region,
+					water_context)
+				_set_startup_worker_progress(c, 0.88)
+				_begin_worker_phase(c, &"dressing")
+				result["dressing"] = DressingField.compute(_dressing_program, world_seed,
+					core, region, water_context, paths)
+				_set_startup_worker_progress(c, 0.97)
+				# FX data stays worker-side; nodes are built during integration.
+				_begin_worker_phase(c, &"biome_fx")
+				result["fx"] = _biome_fx_data(c, region)
+				_set_startup_worker_progress(c, 1.0)
 		_finish_worker_job(c)
 		_mutex.lock()
 		_done.append(result)
 		_active_job = {}
-		if _followups.has(c):
+		if kind == &"chunk" and _followups.has(c):
 			var followup: Dictionary = _followups[c]
 			_followups.erase(c)
 			_queued[c] = followup
@@ -410,11 +475,12 @@ func _begin_worker_job(chunk: Vector2i, job: Dictionary) -> void:
 	_worker_phase = &"starting"
 	_worker_phase_started_msec = now
 	_worker_job_started_msec = now
+	_worker_job_kind = job.get("kind", &"chunk")
 	_mutex.unlock()
-	if _is_startup_diagnostic_chunk(chunk):
+	if _worker_job_kind == &"chunk" and _is_startup_diagnostic_chunk(chunk):
 		print("[terrain-streamer] worker_job_begin seed=%d chunk=%d,%d terrain=%s features=%s" % [
-			world_seed, chunk.x, chunk.y, str(bool(job.build_terrain)),
-			str(bool(job.build_features))])
+			world_seed, chunk.x, chunk.y, str(bool(job.get("build_terrain", false))),
+			str(bool(job.get("build_features", false)))])
 
 
 func _begin_worker_phase(chunk: Vector2i, phase: StringName) -> void:
@@ -422,15 +488,18 @@ func _begin_worker_phase(chunk: Vector2i, phase: StringName) -> void:
 	var previous: StringName
 	var previous_elapsed: int
 	var job_elapsed: int
+	var kind: StringName
 	_mutex.lock()
 	previous = _worker_phase
 	previous_elapsed = now - _worker_phase_started_msec
 	job_elapsed = now - _worker_job_started_msec
+	kind = _worker_job_kind
 	_worker_phase_chunk = chunk
 	_worker_phase = phase
 	_worker_phase_started_msec = now
 	_mutex.unlock()
-	if _is_startup_diagnostic_chunk(chunk) or previous_elapsed >= SLOW_WORKER_PHASE_MSEC:
+	if (kind == &"chunk" and _is_startup_diagnostic_chunk(chunk)) \
+			or previous_elapsed >= SLOW_WORKER_PHASE_MSEC:
 		print("[terrain-streamer] worker_phase seed=%d chunk=%d,%d phase=%s previous=%s previous_ms=%d job_ms=%d" % [
 			world_seed, chunk.x, chunk.y, String(phase), String(previous),
 			previous_elapsed, job_elapsed])
@@ -441,15 +510,18 @@ func _finish_worker_job(chunk: Vector2i) -> void:
 	var phase: StringName
 	var phase_elapsed: int
 	var job_elapsed: int
+	var kind: StringName
 	_mutex.lock()
 	phase = _worker_phase
 	phase_elapsed = now - _worker_phase_started_msec
 	job_elapsed = now - _worker_job_started_msec
+	kind = _worker_job_kind
 	_worker_phase = &"idle"
 	_worker_phase_started_msec = now
 	_worker_job_started_msec = 0
 	_mutex.unlock()
-	if _is_startup_diagnostic_chunk(chunk) or phase_elapsed >= SLOW_WORKER_PHASE_MSEC:
+	if (kind == &"chunk" and _is_startup_diagnostic_chunk(chunk)) \
+			or phase_elapsed >= SLOW_WORKER_PHASE_MSEC:
 		print("[terrain-streamer] worker_job_complete seed=%d chunk=%d,%d final_phase=%s phase_ms=%d job_ms=%d" % [
 			world_seed, chunk.x, chunk.y, String(phase), phase_elapsed, job_elapsed])
 
@@ -505,10 +577,21 @@ func _process(_delta: float) -> void:
 	if _plan == null or player == null:
 		return
 	var centre := chunk_of(player.global_position)
+	var lod_origin := Vector2(player.global_position.x, player.global_position.z)
+	if _grass_runtime_enabled:
+		for node: Node3D in _grass_streamer.begin_frame(lod_origin):
+			if node != null:
+				node.queue_free()
+		_mutex.lock()
+		_cancel_far_grass_jobs_locked(lod_origin)
+		_mutex.unlock()
 	_dressing_queue.drain(MAX_DRESSING_BATCHES_PER_FRAME)
 	_feature_queue.drain(MAX_DRESSING_BATCHES_PER_FRAME)
 	_drain_results(centre)
 	_integrate_pending_terrain(centre)
+	if _grass_runtime_enabled:
+		for item: Dictionary in _grass_streamer.drain_commits():
+			_grass_root.add_child(item.node)
 	_emit_startup_loading_progress()
 	_log_worker_diagnostics()
 	var current_chunk_ready := _built.has(centre) and _feature_square_ready(centre)
@@ -522,8 +605,8 @@ func _process(_delta: float) -> void:
 		for chunk: Vector2i in _startup_support_chunks:
 			if _built.has(chunk) or _has_pending_terrain(chunk):
 				continue
-			var priority := -2 if chunk == centre else -1
-			if _request_job_locked(chunk, true, true, priority):
+			var priority := maxi(absi(chunk.x - centre.x), absi(chunk.y - centre.y))
+			if _request_job_locked(chunk, true, true, priority, 0):
 				startup_wakes += 1
 		_mutex.unlock()
 		for _i in startup_wakes:
@@ -531,7 +614,7 @@ func _process(_delta: float) -> void:
 	# The player's terrain request receives distance zero. It stays asynchronous.
 	if not _built.has(centre) and not _has_pending_terrain(centre):
 		_mutex.lock()
-		var wake := _request_job_locked(centre, true, true, 0)
+		var wake := _request_job_locked(centre, true, true, 0, 0)
 		_mutex.unlock()
 		if wake:
 			_sem.post()
@@ -542,11 +625,14 @@ func _process(_delta: float) -> void:
 			continue
 		_mutex.lock()
 		if _request_job_locked(c, true, true,
-				maxi(absi(c.x - centre.x), absi(c.y - centre.y))):
+				maxi(absi(c.x - centre.x), absi(c.y - centre.y)),
+				_terrain_priority_tier(c, centre, lod_origin)):
 			requested += 1
 		_mutex.unlock()
 	for _i in requested:
 		_sem.post()
+	if _grass_runtime_enabled:
+		_queue_grass_jobs(lod_origin)
 	# Evict chunks beyond keep radius (Chebyshev).
 	for c: Vector2i in _built.keys():
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
@@ -554,6 +640,8 @@ func _process(_delta: float) -> void:
 			_built[c].queue_free()
 			_built.erase(c)
 			_storey_snapshots.erase(c)
+			if _dressing_trample_by_chunk.erase(c):
+				_static_trample_dirty = true
 			_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
 	var feature_keep := KEEP_RADIUS + _path_program.feature_halo
 	for c: Vector2i in _feature_ready.keys():
@@ -564,6 +652,8 @@ func _process(_delta: float) -> void:
 				_feature_nodes.erase(c)
 			_feature_ready.erase(c)
 			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
+	if _grass_runtime_enabled and _static_trample_dirty:
+		_refresh_static_dressing()
 
 
 ## Main-thread durable heartbeat. During startup it proves that the window is
@@ -615,12 +705,19 @@ func _drain_results(centre: Vector2i) -> void:
 	results.assign(_done)
 	_done.clear()
 	_mutex.unlock()
+	if _grass_runtime_enabled:
+		for result: Dictionary in results:
+			if StringName(result.get("kind", &"chunk")) == &"grass":
+				_grass_streamer.accept_result(result.tile, int(result.generation),
+					result.grass, int(result.compute_usec))
 	# Features first: a result may make several completed terrain payloads ready.
 	for result: Dictionary in results:
-		if result.build_features:
+		if StringName(result.get("kind", &"chunk")) == &"chunk" \
+				and bool(result.get("build_features", false)):
 			_commit_feature_result(result, centre)
 	for result: Dictionary in results:
-		if not result.build_terrain:
+		if StringName(result.get("kind", &"chunk")) != &"chunk" \
+				or not bool(result.get("build_terrain", false)):
 			continue
 		var c: Vector2i = result.chunk
 		if int(_terrain_generation.get(c, 0)) != int(result.terrain_generation) \
@@ -633,7 +730,9 @@ func _drain_results(centre: Vector2i) -> void:
 		for key: Vector2i in _feature_halo_keys(c):
 			if not _feature_ready.has(key) \
 				and _request_job_locked(key, false, true,
-					maxi(absi(c.x - centre.x), absi(c.y - centre.y))):
+					maxi(absi(c.x - centre.x), absi(c.y - centre.y)),
+					_terrain_priority_tier(c, centre,
+						Vector2(player.global_position.x, player.global_position.z))):
 				requested += 1
 		_mutex.unlock()
 		for _i in requested:
@@ -685,11 +784,55 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 		_build_fx(node, result.fx)
 		_built[c] = node
 		_storey_snapshots[c] = result.storeys
+		_dressing_trample_by_chunk[c] = _dressing_trample_stamps(result.dressing)
+		_static_trample_dirty = true
 		var generation: int = result.terrain_generation
 		_dressing_queue.register_chunk(c, generation)
 		_dressing_queue.enqueue(c, generation, node, result.dressing)
 		integrated += 1
 	_pending_terrain = remaining
+
+## Publish loaded structural dressing as a persistent layer, separate from the
+## recovering player trail. Rebuilding only when chunks change avoids the old
+## two-second overwrite that snapped walked grass back to a fixed direction.
+func _refresh_static_dressing() -> void:
+	if _trample_field == null:
+		return
+	var chunk_keys: Array[Vector2i] = []
+	chunk_keys.assign(_dressing_trample_by_chunk.keys())
+	chunk_keys.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x < b.x or (a.x == b.x and a.y < b.y))
+	var all_stamps: Array[Dictionary] = []
+	for chunk: Vector2i in chunk_keys:
+		for stamp: Dictionary in _dressing_trample_by_chunk[chunk]:
+			all_stamps.append(stamp)
+	_trample_field.set_static_stamps(all_stamps)
+	_static_trample_dirty = false
+
+func _dressing_trample_stamps(payload: EnvironmentInstancePayload) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if payload == null or _dressing_program == null:
+		return out
+	for asset_id: StringName in payload.asset_ids():
+		var local_points: PackedVector2Array = \
+			_dressing_program.ground_stencil_by_asset.get(asset_id, PackedVector2Array())
+		if local_points.size() < 3:
+			continue
+		for placement: Transform3D in payload.batches[asset_id].transforms:
+			var world_points := PackedVector2Array()
+			var centre := Vector2(placement.origin.x, placement.origin.z)
+			var radius := 0.0
+			for local_point: Vector2 in local_points:
+				var world_point := placement * Vector3(local_point.x, 0.0, local_point.y)
+				var world_xz := Vector2(world_point.x, world_point.z)
+				world_points.append(world_xz)
+				radius = maxf(radius, world_xz.distance_to(centre))
+			out.append({
+				"position": placement.origin,
+				"points": world_points,
+				"radius": radius,
+			})
+	return out
 
 ## Main-thread debug query over immutable data delivered with each committed
 ## chunk. This deliberately never reaches into the worker-owned plan or its
@@ -735,9 +878,59 @@ func _has_pending_terrain(chunk: Vector2i) -> bool:
 			return true
 	return false
 
+static func distance_to_chunk(origin: Vector2, chunk: Vector2i) -> float:
+	var rect := Rect2(Vector2(chunk) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
+	var dx := maxf(maxf(rect.position.x - origin.x, 0.0), origin.x - rect.end.x)
+	var dz := maxf(maxf(rect.position.y - origin.y, 0.0), origin.y - rect.end.y)
+	return Vector2(dx, dz).length()
+
+func _terrain_priority_tier(chunk: Vector2i, centre: Vector2i,
+		lod_origin: Vector2) -> int:
+	if chunk == centre:
+		return 0
+	if _grass_runtime_enabled \
+			and distance_to_chunk(lod_origin, chunk) < GrassStreamer.GRASS_RADIUS:
+		return 1
+	return 3
+
+func _queue_grass_jobs(lod_origin: Vector2) -> void:
+	var wakes := 0
+	for tile: Vector2i in GrassStreamer.desired_tiles(lod_origin):
+		if not _grass_streamer.needs_request(tile):
+			continue
+		var parent := GrassField.parent_chunk(tile)
+		if not _built.has(parent):
+			continue
+		_mutex.lock()
+		var generation := _grass_streamer.generation(tile)
+		var wake := _request_grass_job_locked(tile, generation,
+			int(round(GrassStreamer.distance_to_tile(lod_origin, tile) * 1000.0)))
+		# An existing queued job was updated in place and needs no new semaphore
+		# wake, but it still becomes this generation's tracked request.
+		if wake or _grass_queued.has(tile):
+			_grass_streamer.mark_requested(tile)
+		if wake:
+			wakes += 1
+		_mutex.unlock()
+	for _i in wakes:
+		_sem.post()
+
+## Caller holds _mutex. Running jobs are allowed to finish and become stale;
+## queued jobs beyond hysteresis are cheap to cancel on a teleport.
+func _cancel_far_grass_jobs_locked(lod_origin: Vector2) -> void:
+	for index in range(_jobs.size() - 1, -1, -1):
+		var job: Dictionary = _jobs[index]
+		if StringName(job.get("kind", &"chunk")) != &"grass" \
+				or GrassStreamer.distance_to_tile(lod_origin, job.tile) \
+				<= GrassStreamer.KEEP_RADIUS:
+			continue
+		_grass_queued.erase(job.tile)
+		_jobs.remove_at(index)
+
 ## Caller holds _mutex. Returns true only when a new semaphore wake is needed.
 func _request_job_locked(chunk: Vector2i, build_terrain: bool,
-		build_features: bool, priority_distance: int) -> bool:
+		build_features: bool, priority_distance: int,
+		priority_tier: int = 3) -> bool:
 	if build_terrain and _built.has(chunk):
 		build_terrain = false
 	if build_features and _feature_ready.has(chunk):
@@ -753,6 +946,7 @@ func _request_job_locked(chunk: Vector2i, build_terrain: bool,
 		queued.build_terrain = bool(queued.build_terrain) or build_terrain
 		queued.build_features = bool(queued.build_features) or build_features
 		queued.priority_distance = mini(int(queued.priority_distance), priority_distance)
+		queued.priority_tier = mini(int(queued.priority_tier), priority_tier)
 		_queued[chunk] = queued
 		for i in _jobs.size():
 			if _jobs[i].chunk == chunk:
@@ -760,38 +954,83 @@ func _request_job_locked(chunk: Vector2i, build_terrain: bool,
 				break
 		_sort_jobs_locked()
 		return false
-	if not _active_job.is_empty() and _active_job.chunk == chunk:
+	if not _active_job.is_empty() \
+			and StringName(_active_job.get("kind", &"chunk")) == &"chunk" \
+			and _active_job.chunk == chunk:
 		var followup: Dictionary = _followups.get(chunk, _new_job(chunk, false, false,
-			priority_distance))
+			priority_distance, priority_tier))
 		followup.build_terrain = bool(followup.build_terrain) \
 			or (build_terrain and not bool(_active_job.build_terrain))
 		followup.build_features = bool(followup.build_features) \
 			or (build_features and not bool(_active_job.build_features))
 		followup.priority_distance = mini(int(followup.priority_distance), priority_distance)
+		followup.priority_tier = mini(int(followup.priority_tier), priority_tier)
 		if followup.build_terrain or followup.build_features:
 			_followups[chunk] = followup
 		return false
-	var job := _new_job(chunk, build_terrain, build_features, priority_distance)
+	var job := _new_job(chunk, build_terrain, build_features, priority_distance,
+		priority_tier)
 	_queued[chunk] = job
 	_jobs.append(job)
 	_sort_jobs_locked()
 	return true
 
 func _new_job(chunk: Vector2i, build_terrain: bool,
-		build_features: bool, priority_distance: int) -> Dictionary:
-	return {"chunk": chunk, "build_terrain": build_terrain,
+		build_features: bool, priority_distance: int,
+		priority_tier: int = 3) -> Dictionary:
+	return {"kind": &"chunk", "chunk": chunk, "build_terrain": build_terrain,
 		"terrain_generation": int(_terrain_generation.get(chunk, 1)),
 		"build_features": build_features,
 		"feature_generation": int(_feature_generation.get(chunk, 1)),
+		"priority_tier": priority_tier,
 		"priority_distance": priority_distance}
+
+## Caller holds _mutex. Returns true only when a new semaphore wake is needed.
+func _request_grass_job_locked(tile: Vector2i, generation: int,
+		priority_distance: int) -> bool:
+	if _grass_queued.has(tile):
+		var queued: Dictionary = _grass_queued[tile]
+		queued.generation = generation
+		queued.priority_distance = mini(int(queued.priority_distance), priority_distance)
+		_grass_queued[tile] = queued
+		for index in _jobs.size():
+			if StringName(_jobs[index].get("kind", &"chunk")) == &"grass" \
+					and _jobs[index].tile == tile:
+				_jobs[index] = queued
+				break
+		_sort_jobs_locked()
+		return false
+	if not _active_job.is_empty() \
+			and StringName(_active_job.get("kind", &"chunk")) == &"grass" \
+			and _active_job.tile == tile:
+		return false
+	var job := {
+		"kind": &"grass",
+		"tile": tile,
+		"chunk": GrassField.parent_chunk(tile),
+		"generation": generation,
+		"priority_tier": 2,
+		"priority_distance": priority_distance,
+	}
+	_grass_queued[tile] = job
+	_jobs.append(job)
+	_sort_jobs_locked()
+	return true
 
 func _sort_jobs_locked() -> void:
 	_jobs.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.priority_tier) != int(b.priority_tier):
+			return int(a.priority_tier) < int(b.priority_tier)
 		if int(a.priority_distance) != int(b.priority_distance):
 			return int(a.priority_distance) < int(b.priority_distance)
-		if bool(a.build_features) != bool(b.build_features):
-			return bool(a.build_features)
-		return _key_less(a.chunk, b.chunk))
+		if bool(a.get("build_features", false)) \
+				!= bool(b.get("build_features", false)):
+			return bool(a.get("build_features", false))
+		return _key_less(_job_key(a), _job_key(b)))
+
+static func _job_key(job: Dictionary) -> Vector2i:
+	return job.tile if StringName(job.get("kind", &"chunk")) == &"grass" \
+		else job.chunk
 
 static func _key_less(a: Vector2i, b: Vector2i) -> bool:
 	return a.x < b.x or (a.x == b.x and a.y < b.y)

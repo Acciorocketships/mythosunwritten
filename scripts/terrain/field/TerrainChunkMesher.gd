@@ -57,16 +57,8 @@ func _ensure_skirt_style() -> void:
 	# [texture]"): the walkable sheet + aprons render with the same de-sheened KayKit palette,
 	# grass texel sampled from the lip piece's top face — so lips, walls, skirt, sheet and
 	# slopes all share one texture that can be retinted in one place.
-	var lip_mesh: Mesh = CliffDressing._pieces["lip"][0]
-	var larr := lip_mesh.surface_get_arrays(0)
-	var lverts: PackedVector3Array = larr[Mesh.ARRAY_VERTEX]
-	var lnorms: PackedVector3Array = larr[Mesh.ARRAY_NORMAL]
-	var luvs: PackedVector2Array = larr[Mesh.ARRAY_TEX_UV]
-	for i in lverts.size():
-		if lnorms[i].y > 0.9 and lverts[i].y > -0.05:
-			_material = _skirt_material
-			_grass_uv = luvs[i]
-			break
+	_material = _skirt_material
+	_grass_uv = CliffDressing.ground_uv()
 
 # The walkable sheet renders with THE shared material itself (it already reads
 # COLOR — CliffDressing.shared_material sets vertex_color_use_as_albedo), so the
@@ -131,7 +123,7 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	for ccz in cn:
 		for ccx in cn:
 			var cw := Vector3(o.x + ccx * TILE, 0.0, o.y + ccz * TILE)
-			corner_tints[ccz * cn + ccx] = BiomeRegistry.blended_ground_tint(Helper.biome_weights5(cw, _water_seed))
+			corner_tints[ccz * cn + ccx] = BiomeRegistry.ground_tint_at(cw, _water_seed)
 	var tints: Array[Color] = []
 	tints.resize((GRID + 1) * (GRID + 1))
 	for tz in GRID + 1:
@@ -196,21 +188,27 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			var t10: Color = tints[iz * (GRID + 1) + ix + 1]
 			var t11: Color = tints[(iz + 1) * (GRID + 1) + ix + 1]
 			var t01: Color = tints[(iz + 1) * (GRID + 1) + ix]
-			var i00: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v00)
-			var i10: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v10)
-			var i11: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v11)
-			var i01: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v01)
-			# A corner-tuck triangle can remain exposed below the rounded piece in
-			# a low camera view. It is the cliff's backing surface, not walkable
-			# turf: use the shared rock atlas texel so it merges with the wall
-			# instead of reading as a bright green ground plane.
-			uv0 = _cliff_uv if (i00 or i10 or i11) else uv0
-			uv1 = _cliff_uv if (i00 or i11 or i01) else uv1
-			_tri_tinted(st, [c00, c10, c11], uv0, [t00, t10, t11])
-			_tri_tinted(st, [c00, c11, c01], uv1, [t00, t11, t01])
-			var path_here := _emit_path_overlay(st, region, water, paths,
+			# A path quad is subdivided IN PLACE, with each fine patch choosing
+			# grass or path UV. The former second sheet sat only 1 cm above this
+			# one and depth-fought into detached strips at gameplay distance.
+			# One surface layer cannot z-fight with itself and still preserves the
+			# rounded 0.25 m path boundary.
+			var path_state := _emit_path_surface(st, region, water, paths,
 				qkey, x0, z0, clip_cache, [t00, t10, t11, t01])
-			if path_here:
+			if path_state == 0:
+				var i00: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v00)
+				var i10: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v10)
+				var i11: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v11)
+				var i01: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v01)
+				# A corner-tuck triangle can remain exposed below the rounded piece in
+				# a low camera view. It is the cliff's backing surface, not walkable
+				# turf: use the shared rock atlas texel so it merges with the wall
+				# instead of reading as a bright green ground plane.
+				uv0 = _cliff_uv if (i00 or i10 or i11) else uv0
+				uv1 = _cliff_uv if (i00 or i11 or i01) else uv1
+				_tri_tinted(st, [c00, c10, c11], uv0, [t00, t10, t11])
+				_tri_tinted(st, [c00, c11, c01], uv1, [t00, t11, t01])
+			if path_state == 2:
 				_emit_path_spot(st, region, water, paths, quad_centre, qcx, qcz,
 					x0, z0, [t00, t10, t11, t01])
 	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
@@ -367,42 +365,54 @@ func _tri_tinted(st: SurfaceTool, vs: Array[Vector3], uv: Vector2, cs: Array[Col
 		st.add_vertex(vs[i])
 
 const PATH_OVERLAY_DIVISIONS := 8
-const PATH_SURFACE_LIFT := 0.010
 const PATH_SPOT_CHANCE := 0.30
 const PATH_SPOT_RADIUS_MIN := 0.24
 const PATH_SPOT_RADIUS_MAX := 0.72
 const PATH_SPOT_JITTER := 0.26
-const PATH_SPOT_LIFT := 0.020
+const PATH_SPOT_LIFT := 0.030
 const PATH_SPOT_DARKEN := 0.94
 const PATH_SPOT_SIDES := 12
 
-# Emit a 0.25 m visual overlay only where a path is present. Terrain collision and
-# the underlying continuous sheet remain untouched. The finer visual lattice is
-# what lets PathContext's circular join read as a curve instead of one 2 m square.
-# It is world aligned and uses the same half-open chunk surface, so neighbouring
-# chunks generate bit-identical boundary vertices.
-func _emit_path_overlay(st: SurfaceTool, region: HeightfieldRegion,
+# Emit one finely subdivided ground surface where a path may be present. Each
+# fine patch chooses either grass or path UV; there is never a second coplanar
+# path sheet. Terrain collision remains the unchanged coarse continuous sheet.
+# Return 0 when the caller should emit its ordinary coarse grass quad, 1 when a
+# fine all-grass quad was emitted, and 2 when at least one fine patch is path.
+# The lattice is world aligned and neighbouring chunks therefore retain
+# bit-identical boundary vertices.
+func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 		water: WaterFieldContext, paths: PathContext, qkey: Vector2i,
 		x0: float, z0: float, clip_cache: Dictionary,
-		quad_tints: Array[Color]) -> bool:
+		quad_tints: Array[Color]) -> int:
 	if paths == null or water == null:
-		return false
+		return 0
 	# Most terrain quads are nowhere near a path. Centre/corner rejection avoids
-	# the 4x4 subdivision there while still admitting a circular join that merely
+	# the 8x8 subdivision there while still admitting a circular join that merely
 	# clips a coarse quad's corner.
-	var x1 := x0 + STEP
-	var z1 := z0 + STEP
-	var candidate := false
-	for probe: Vector2 in [
-			Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5),
-			Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]:
-		if paths.corridor_at_cell(probe, qkey):
-			candidate = true
-			break
+	var candidate := _path_quad_candidate(paths, qkey, x0, z0)
 	if not candidate:
-		return false
+		# A finely divided neighbour would otherwise terminate in T-junctions
+		# along this coarse edge. GPU rasterization exposed those as long white
+		# hairlines at the reported path pins. A triangle fan adds the matching
+		# edge vertices only on the sides that need them.
+		var transition_sides := PackedByteArray([0, 0, 0, 0]) # north,east,south,west
+		for side_index in 4:
+			var direction: Vector2 = [Vector2.UP, Vector2.RIGHT,
+				Vector2.DOWN, Vector2.LEFT][side_index]
+			var nx0 := x0 + direction.x * STEP
+			var nz0 := z0 + direction.y * STEP
+			var neighbour_centre := Vector2(nx0 + STEP * 0.5, nz0 + STEP * 0.5)
+			var neighbour_cell := Vector2i(roundi(neighbour_centre.x / TILE),
+				roundi(neighbour_centre.y / TILE))
+			transition_sides[side_index] = 1 if _path_quad_candidate(paths,
+				neighbour_cell, nx0, nz0) else 0
+		if transition_sides.has(1):
+			_emit_path_transition(st, region, qkey, x0, z0, clip_cache,
+				quad_tints, transition_sides)
+			return 1
+		return 0
 	var sub_step := STEP / float(PATH_OVERLAY_DIVISIONS)
-	var emitted := false
+	var emitted_path := false
 	for sz in PATH_OVERLAY_DIVISIONS:
 		for sx in PATH_OVERLAY_DIVISIONS:
 			var sx0 := x0 + float(sx) * sub_step
@@ -410,20 +420,16 @@ func _emit_path_overlay(st: SurfaceTool, region: HeightfieldRegion,
 			var sx1 := sx0 + sub_step
 			var sz1 := sz0 + sub_step
 			var centre := Vector2((sx0 + sx1) * 0.5, (sz0 + sz1) * 0.5)
-			if not paths.corridor_at_cell(centre, qkey) or water.is_wet(centre):
-				continue
+			var is_path := paths.corridor_at_cell(centre, qkey) \
+				and not water.is_wet(centre)
 			var p00 := Vector3(sx0,
-				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz0, qkey.x, qkey.y)
-					+ PATH_SURFACE_LIFT, sz0)
+				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz0, qkey.x, qkey.y), sz0)
 			var p10 := Vector3(sx1,
-				TerrainSurfaceField.surface_y_in_cell(region, sx1, sz0, qkey.x, qkey.y)
-					+ PATH_SURFACE_LIFT, sz0)
+				TerrainSurfaceField.surface_y_in_cell(region, sx1, sz0, qkey.x, qkey.y), sz0)
 			var p11 := Vector3(sx1,
-				TerrainSurfaceField.surface_y_in_cell(region, sx1, sz1, qkey.x, qkey.y)
-					+ PATH_SURFACE_LIFT, sz1)
+				TerrainSurfaceField.surface_y_in_cell(region, sx1, sz1, qkey.x, qkey.y), sz1)
 			var p01 := Vector3(sx0,
-				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz1, qkey.x, qkey.y)
-					+ PATH_SURFACE_LIFT, sz1)
+				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz1, qkey.x, qkey.y), sz1)
 			p00 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p00)
 			p10 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p10)
 			p11 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p11)
@@ -432,10 +438,79 @@ func _emit_path_overlay(st: SurfaceTool, region: HeightfieldRegion,
 			var c10 := _quad_tint(Vector2(sx1, sz0), x0, z0, quad_tints)
 			var c11 := _quad_tint(Vector2(sx1, sz1), x0, z0, quad_tints)
 			var c01 := _quad_tint(Vector2(sx0, sz1), x0, z0, quad_tints)
-			_tri_tinted(st, [p00, p10, p11], _path_uv, [c00, c10, c11])
-			_tri_tinted(st, [p00, p11, p01], _path_uv, [c00, c11, c01])
-			emitted = true
-	return emitted
+			var uv0 := _path_uv if is_path else _grass_uv
+			var uv1 := uv0
+			if not is_path:
+				var i00 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p00)
+				var i10 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p10)
+				var i11 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p11)
+				var i01 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p01)
+				uv0 = _cliff_uv if (i00 or i10 or i11) else uv0
+				uv1 = _cliff_uv if (i00 or i11 or i01) else uv1
+			_tri_tinted(st, [p00, p10, p11], uv0, [c00, c10, c11])
+			_tri_tinted(st, [p00, p11, p01], uv1, [c00, c11, c01])
+			emitted_path = emitted_path or is_path
+	return 2 if emitted_path else 1
+
+func _path_quad_candidate(paths: PathContext, qkey: Vector2i,
+		x0: float, z0: float) -> bool:
+	var x1 := x0 + STEP
+	var z1 := z0 + STEP
+	for probe: Vector2 in [
+			Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5),
+			Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]:
+		if paths.corridor_at_cell(probe, qkey):
+			return true
+	return false
+
+func _emit_path_transition(st: SurfaceTool, region: HeightfieldRegion,
+		qkey: Vector2i, x0: float, z0: float, clip_cache: Dictionary,
+		quad_tints: Array[Color], sides: PackedByteArray) -> void:
+	var x1 := x0 + STEP
+	var z1 := z0 + STEP
+	var sub_step := STEP / float(PATH_OVERLAY_DIVISIONS)
+	var perimeter: Array[Vector2] = [Vector2(x0, z0)]
+	# Clockwise in XZ, matching the terrain sheet's established winding.
+	if sides[0] != 0:
+		for index in range(1, PATH_OVERLAY_DIVISIONS + 1):
+			perimeter.append(Vector2(x0 + float(index) * sub_step, z0))
+	else:
+		perimeter.append(Vector2(x1, z0))
+	if sides[1] != 0:
+		for index in range(1, PATH_OVERLAY_DIVISIONS + 1):
+			perimeter.append(Vector2(x1, z0 + float(index) * sub_step))
+	else:
+		perimeter.append(Vector2(x1, z1))
+	if sides[2] != 0:
+		for index in range(PATH_OVERLAY_DIVISIONS - 1, -1, -1):
+			perimeter.append(Vector2(x0 + float(index) * sub_step, z1))
+	else:
+		perimeter.append(Vector2(x0, z1))
+	if sides[3] != 0:
+		for index in range(PATH_OVERLAY_DIVISIONS - 1, 0, -1):
+			perimeter.append(Vector2(x0, z0 + float(index) * sub_step))
+	var centre2 := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
+	var centre3 := _path_surface_vertex(region, qkey, centre2, clip_cache)
+	var centre_tint := _quad_tint(centre2, x0, z0, quad_tints)
+	for index in perimeter.size():
+		var a2: Vector2 = perimeter[index]
+		var b2: Vector2 = perimeter[(index + 1) % perimeter.size()]
+		var a3 := _path_surface_vertex(region, qkey, a2, clip_cache)
+		var b3 := _path_surface_vertex(region, qkey, b2, clip_cache)
+		var uv := _grass_uv
+		if _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, centre3) \
+				or _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, a3) \
+				or _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, b3):
+			uv = _cliff_uv
+		_tri_tinted(st, [centre3, a3, b3], uv, [centre_tint,
+			_quad_tint(a2, x0, z0, quad_tints),
+			_quad_tint(b2, x0, z0, quad_tints)])
+
+func _path_surface_vertex(region: HeightfieldRegion, qkey: Vector2i,
+		point: Vector2, clip_cache: Dictionary) -> Vector3:
+	return _clip_vert(region, clip_cache, qkey.x, qkey.y, Vector3(point.x,
+		TerrainSurfaceField.surface_y_in_cell(region, point.x, point.y,
+			qkey.x, qkey.y), point.y))
 
 # World-hashed discs make the path read as softly speckled without adding a
 # material or draw call. Their broader size range stays stylized and legible at
@@ -491,8 +566,8 @@ func _quad_tint(point: Vector2, x0: float, z0: float,
 func _cell_tint(cx: int, cz: int) -> Color:
 	if _water_seed == 0:
 		return Color(1, 1, 1)   # headless geometry tests: identity, like compute_tints
-	return BiomeRegistry.blended_ground_tint(Helper.biome_weights5(
-			Vector3(float(cx) * TILE, 0.0, float(cz) * TILE), _water_seed))
+	return BiomeRegistry.ground_tint_at(
+		Vector3(float(cx) * TILE, 0.0, float(cz) * TILE), _water_seed)
 
 const LIP_LIFT := 0.05    # matches CliffDressing.LIP_LIFT — clipped sheet edges rise to the lip
                           # top plane so no hairline slit shows at the lip back

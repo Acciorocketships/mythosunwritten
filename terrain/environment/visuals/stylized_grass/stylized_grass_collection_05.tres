@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3 uid="uid://bg6jtpp2lhdkj"]
+
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_flq4v"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_lx8tc"]
+[ext_resource type="ArrayMesh" uid="uid://cpt6ilra1c3ov" path="res://terrain/environment/meshes/stylized_grass/stylized_grass_collection_05_piece_00.res" id="3_825ff"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_q7ire"]
+
+[sub_resource type="Resource" id="Resource_i26dw"]
+script = ExtResource("2_lx8tc")
+mesh = ExtResource("3_825ff")
+local_transform = Transform3D(520, 0, 0, 0, 520, 0, 0, 0, 520, 0, 0, 0)
+
+[resource]
+script = ExtResource("4_q7ire")
+pieces = Array[ExtResource("2_lx8tc")]([SubResource("Resource_i26dw")])

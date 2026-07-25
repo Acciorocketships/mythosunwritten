@@ -179,6 +179,79 @@ func test_queued_feature_request_widens_existing_terrain_job() -> void:
 	assert_eq(s._jobs[0].priority_distance, 1)
 	s.free()
 
+func test_typed_worker_priorities_protect_ground_without_starving_grass() -> void:
+	var s := Streamer.new()
+	assert_true(s._request_job_locked(Vector2i(8, 8), true, true, 1, 3))
+	assert_true(s._request_grass_job_locked(Vector2i(2, 2), 1, 1000))
+	assert_true(s._request_job_locked(Vector2i(1, 0), true, true, 1, 1))
+	assert_true(s._request_job_locked(Vector2i.ZERO, true, true, 0, 0))
+	assert_eq(s._jobs.map(func(job: Dictionary) -> int:
+		return int(job.priority_tier)), [0, 1, 2, 3])
+	assert_eq(s._jobs[0].kind, &"chunk")
+	assert_eq(s._jobs[2].kind, &"grass")
+	s.free()
+
+func test_grass_jobs_wait_for_their_committed_parent_terrain() -> void:
+	var settings := load("res://terrain/grass/settings.tres") as GrassSettings
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	var program := GrassProgram.compile(settings, catalog, cache)
+	var s := Streamer.new()
+	s._grass_runtime_enabled = true
+	s._grass_streamer = GrassStreamer.new(program, cache)
+	s._queue_grass_jobs(Vector2(96.0, 96.0))
+	assert_true(s._jobs.is_empty(), "grass cannot be queued over missing ground")
+	s._built[Vector2i.ZERO] = true
+	s._queue_grass_jobs(Vector2(96.0, 96.0))
+	assert_gt(s._jobs.size(), 0)
+	var every_parent_is_committed := true
+	for job: Dictionary in s._jobs:
+		every_parent_is_committed = every_parent_is_committed \
+			and job.kind == &"grass" and s._built.has(job.chunk)
+	assert_true(every_parent_is_committed)
+	s.free()
+
+func test_collidable_dressing_becomes_shape_accurate_static_trample_stamps() -> void:
+	var s := Streamer.new()
+	s._dressing_program = DressingProgram.new()
+	s._dressing_program.ground_stencil_by_asset[&"test.rock"] = PackedVector2Array([
+		Vector2(-1.0, -0.5), Vector2(1.0, -0.5),
+		Vector2(1.0, 0.5), Vector2(-1.0, 0.5),
+	])
+	var payload := EnvironmentInstancePayload.new()
+	payload.add(&"test.rock", Transform3D(Basis.IDENTITY.scaled(Vector3(2.0, 1.0, 0.5)),
+		Vector3(7.0, 2.0, -9.0)), Color.WHITE)
+	payload.add(&"test.flower", Transform3D.IDENTITY, Color.WHITE)
+	var stamps := s._dressing_trample_stamps(payload)
+	assert_eq(stamps.size(), 1, "only collidable ground footprints suppress grass")
+	assert_eq(stamps[0].position, Vector3(7.0, 2.0, -9.0))
+	assert_eq(stamps[0].points, PackedVector2Array([
+		Vector2(5.0, -9.25), Vector2(9.0, -9.25),
+		Vector2(9.0, -8.75), Vector2(5.0, -8.75),
+	]))
+	assert_almost_eq(stamps[0].radius, Vector2(2.0, 0.25).length(), 0.001)
+	s.free()
+
+func test_static_dressing_publishes_a_persistent_layer_separate_from_footsteps() -> void:
+	var s := Streamer.new()
+	s._trample_field = TrampleField.new()
+	s._trample_field._initialize(Vector2.ZERO)
+	s._dressing_trample_by_chunk[Vector2i.ZERO] = [{
+		"position": Vector3.ZERO,
+		"points": PackedVector2Array([
+			Vector2(-1.0, -1.0), Vector2(1.0, -1.0),
+			Vector2(1.0, 1.0), Vector2(-1.0, 1.0),
+		]),
+		"radius": sqrt(2.0),
+	}]
+	s._static_trample_dirty = true
+	s._refresh_static_dressing()
+	assert_gt(s._trample_field.static_strength(Vector2.ZERO), 0.99)
+	assert_eq(s._trample_field.effective_strength(Vector2.ZERO), 0.0,
+		"structural crushing must not rewrite the recovering player image")
+	s._trample_field.free()
+	s.free()
+
 func test_empty_feature_result_becomes_ready_without_scene_resources() -> void:
 	var s := Streamer.new()
 	s._path_program = PathProgram.compile(EnvironmentCatalog.load_default())

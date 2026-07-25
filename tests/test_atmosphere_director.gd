@@ -32,6 +32,10 @@ func test_apply_grade_sets_render_stack() -> void:
 	assert_true(d.camera.attributes is CameraAttributesPractical, "tilt-shift DoF attributes set")
 	assert_true((d.camera.attributes as CameraAttributesPractical).dof_blur_far_enabled, "far DoF on")
 	assert_eq(d.sun.light_color, AtmosphereDirector.SUN_COLOR, "warm key light")
+	assert_almost_eq(d.sun.light_energy, AtmosphereDirector.SUN_ENERGY, 0.000001,
+		"key light remains restrained enough for the shared ground palette")
+	assert_almost_eq(d.sun.shadow_opacity, AtmosphereDirector.SUN_SHADOW_OPACITY, 0.000001,
+		"low sun keeps readable but non-dominating terrain shadows")
 	_free_director(d)
 
 func test_process_eases_env_toward_biome_blend() -> void:

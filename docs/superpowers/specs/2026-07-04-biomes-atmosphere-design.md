@@ -187,7 +187,9 @@ profile's `particles` dictionary — one emitter per recipe entry (emission box
 Constants live in one config block on `AtmosphereDirector`, applied at ready:
 
 - **Key light:** warm color (~`#FFEACC`), lowered golden-hour angle, soft
-  shadows (existing splits kept), long-shadow look.
+  shadows (existing splits kept), long-shadow look. Key energy is 1.1 and
+  shadow opacity is 0.40 so large cliff shadows retain form without dividing
+  an open meadow into a dark band and an over-bright background.
 - **Ambient:** warm-neutral (per master §11.9 — not sky blue), sky
   contribution reduced so shadowed rock still reads as rock.
 - **Glow/bloom:** enabled, HDR threshold tuned so only genuine emissives

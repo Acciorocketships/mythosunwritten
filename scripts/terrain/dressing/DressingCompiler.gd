@@ -5,6 +5,11 @@ const PROPOSAL_CELL := 24.0
 const PROPOSAL_HALF := PROPOSAL_CELL * 0.5
 const SURFACE_STENCIL := 1.0
 const LOCAL_SPACING_CAP := 12.0
+const AUTO_SUPPORT_HEIGHT_SPAN := 0.65
+const GROUND_BAND_MIN := 0.35
+const GROUND_BAND_MAX := 1.0
+const GROUND_BAND_HEIGHT_FRACTION := 0.12
+const SUPPORT_DIRECTION_COUNT := 16
 
 static func compile(index: DressingCatalogIndex,
 		environment_catalog: EnvironmentCatalog) -> DressingProgram:
@@ -17,8 +22,9 @@ static func compile(index: DressingCatalogIndex,
 	var seen: Dictionary = {}
 	var referenced: Dictionary = {}
 	var group_radius: Dictionary = {}
+	var support_cache: Dictionary = {}
 	for set_resource: DressingSet in authored:
-		var compiled := _compile_set(set_resource, environment_catalog)
+		var compiled := _compile_set(set_resource, environment_catalog, support_cache)
 		if compiled.is_empty():
 			return null
 		if seen.has(compiled.id):
@@ -35,14 +41,27 @@ static func compile(index: DressingCatalogIndex,
 			compiled.shore_limit)
 		for choice: Dictionary in compiled.choices:
 			referenced[choice.asset_id] = true
+			program.ground_radius_by_asset[choice.asset_id] = maxf(
+				float(program.ground_radius_by_asset.get(choice.asset_id, 0.0)),
+				choice.ground_radius)
+			if not choice.support_points.is_empty():
+				# _ground_support_points is cached per asset, so repeated choices
+				# share one deterministic resource-free outline.
+				program.ground_stencil_by_asset[choice.asset_id] = choice.support_points
 	for compiled: Dictionary in program.sets:
 		compiled["group_radius"] = float(group_radius[compiled.spacing_group])
+		# _eligible_for_set rejects every jittered anchor outside core grown by
+		# group_radius. The proposal cell is only an enumeration device, so its
+		# 12 m half-size is not part of the field sampling footprint. Coverage
+		# needs the admitted anchor reach plus its actual visual support stencil.
 		program.query_margin = maxf(program.query_margin,
-			PROPOSAL_HALF + compiled.group_radius + compiled.support_radius + SURFACE_STENCIL)
+			compiled.group_radius + compiled.query_support_radius \
+				+ SURFACE_STENCIL)
 	var water_context_margin := WaterField.FILL_MARGIN * WaterField.FILL_STEP \
 		- WaterContour.MARGIN
 	if program.query_margin + program.shore_distance_limit > water_context_margin:
-		return _fail("Dressing query, spacing, and shore margins exceed the canonical water field window")
+		return _fail("Dressing query %.2f plus shore %.2f exceeds canonical water margin %.2f" % [
+			program.query_margin, program.shore_distance_limit, water_context_margin])
 	# Proposal cost is a program-level estimate, so derive every set from the
 	# final common margin rather than whichever partial maximum happened to be
 	# visible while compiling that set.
@@ -55,7 +74,8 @@ static func compile(index: DressingCatalogIndex,
 	return program
 
 static func _compile_set(source: DressingSet,
-		environment_catalog: EnvironmentCatalog) -> Dictionary:
+		environment_catalog: EnvironmentCatalog,
+		support_cache: Dictionary = {}) -> Dictionary:
 	if source == null:
 		_fail("Active dressing index contains a null set")
 		return {}
@@ -131,6 +151,7 @@ static func _compile_set(source: DressingSet,
 		return {}
 	var choices: Array[Dictionary] = []
 	var compiled_spacing_radius := source.spacing_radius
+	var query_support_radius := source.support_radius
 	var authored_choices: Array[DressingChoice] = source.choices.duplicate()
 	authored_choices.sort_custom(func(a: DressingChoice, b: DressingChoice) -> bool:
 		return String(a.asset_id) < String(b.asset_id))
@@ -157,6 +178,10 @@ static func _compile_set(source: DressingSet,
 			return {}
 		var choice_spacing := maxf(source.spacing_radius, choice_resource.spacing_radius)
 		compiled_spacing_radius = maxf(compiled_spacing_radius, choice_spacing)
+		var support_points := _ground_support_points(descriptor, support_cache)
+		var ground_radius := _maximum_radius(support_points)
+		query_support_radius = maxf(query_support_radius,
+			ground_radius * choice_resource.scale_multiplier * source.scale_range.y)
 		choices.append({
 			"asset_id": choice_resource.asset_id,
 			"weight": choice_resource.weight,
@@ -164,6 +189,8 @@ static func _compile_set(source: DressingSet,
 			"tint_group": descriptor.tint_group,
 			"scale_multiplier": choice_resource.scale_multiplier,
 			"spacing_radius": choice_spacing,
+			"support_points": support_points,
+			"ground_radius": ground_radius,
 		})
 	if choices.is_empty():
 		_fail("Dressing set %s has no choices" % set_id)
@@ -198,7 +225,10 @@ static func _compile_set(source: DressingSet,
 		"shore_range": source.shore_distance_range,
 		"shore_limit": shore_limit,
 		"support_radius": source.support_radius,
-		"max_support_height_span": source.max_support_height_span,
+		"query_support_radius": query_support_radius,
+		"max_support_height_span": source.max_support_height_span \
+			if source.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT \
+			else AUTO_SUPPORT_HEIGHT_SPAN,
 		"max_grade": source.max_grade,
 		"feature_clearance": source.feature_clearance,
 		"spacing_group": resolved_group,
@@ -207,6 +237,75 @@ static func _compile_set(source: DressingSet,
 		"brightness_range": source.brightness_range,
 		"slot_count": slot_count,
 	}
+
+## Compile-time only: reduce each collidable visual to the radial extrema of
+## its actual near-ground vertices. Trees therefore include authored roots,
+## rocks include their visible base, and the worker receives only Vector2 data.
+## Foliage high above the ground cannot inflate this footprint.
+static func _ground_support_points(descriptor: EnvironmentAssetDescriptor,
+		cache: Dictionary) -> PackedVector2Array:
+	if descriptor.collision_piece_count <= 0:
+		return PackedVector2Array()
+	if cache.has(descriptor.id):
+		return cache[descriptor.id]
+	assert(OS.get_thread_caller_id() == OS.get_main_thread_id(),
+		"Dressing support stencils must be compiled while visuals are main-thread resources")
+	var visual := load(descriptor.visual_path) as EnvironmentVisual
+	if visual == null:
+		_fail("Dressing asset %s has no readable visual" % descriptor.id)
+		return PackedVector2Array()
+	var vertices: Array[Vector3] = []
+	var minimum_y := INF
+	var maximum_y := -INF
+	for piece: EnvironmentVisualPiece in visual.pieces:
+		if piece == null or piece.mesh == null:
+			continue
+		for surface_index in piece.mesh.get_surface_count():
+			var arrays := piece.mesh.surface_get_arrays(surface_index)
+			var vertex_value: Variant = arrays[Mesh.ARRAY_VERTEX]
+			if not vertex_value is PackedVector3Array:
+				continue
+			for vertex: Vector3 in vertex_value:
+				var transformed := piece.local_transform * vertex
+				vertices.append(transformed)
+				minimum_y = minf(minimum_y, transformed.y)
+				maximum_y = maxf(maximum_y, transformed.y)
+	if vertices.is_empty():
+		_fail("Dressing asset %s has no visual vertices" % descriptor.id)
+		return PackedVector2Array()
+	var band_height := clampf((maximum_y - minimum_y) * GROUND_BAND_HEIGHT_FRACTION,
+		GROUND_BAND_MIN, GROUND_BAND_MAX)
+	var band_top := minimum_y + band_height
+	var out := PackedVector2Array()
+	for direction_index in SUPPORT_DIRECTION_COUNT:
+		var angle := TAU * float(direction_index) / float(SUPPORT_DIRECTION_COUNT)
+		var direction := Vector2(cos(angle), sin(angle))
+		var best := Vector2.ZERO
+		var best_projection := -INF
+		for vertex: Vector3 in vertices:
+			if vertex.y > band_top:
+				continue
+			var point := Vector2(vertex.x, vertex.z)
+			var projection := point.dot(direction)
+			if projection > best_projection:
+				best_projection = projection
+				best = point
+		if best_projection > -INF:
+			var duplicate := false
+			for existing: Vector2 in out:
+				if existing.is_equal_approx(best):
+					duplicate = true
+					break
+			if not duplicate:
+				out.append(best)
+	cache[descriptor.id] = out
+	return out
+
+static func _maximum_radius(points: PackedVector2Array) -> float:
+	var result := 0.0
+	for point: Vector2 in points:
+		result = maxf(result, point.length())
+	return result
 
 static func stable_id_hash(value: StringName) -> int:
 	var hash_value: int = -3750763034362895579 # FNV-1a 64-bit offset, signed

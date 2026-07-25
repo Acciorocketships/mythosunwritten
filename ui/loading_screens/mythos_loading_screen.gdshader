@@ -18,9 +18,12 @@ uniform float cloud_speed : hint_range(0.0, 1.0, 0.005) = 0.72;
 uniform float cloud_drift : hint_range(0.0, 0.03, 0.0001) = 0.016;
 uniform float cloud_opacity : hint_range(0.0, 1.0, 0.01) = 0.92;
 uniform float water_speed : hint_range(0.0, 4.0, 0.05) = 2.4;
-uniform float water_strength : hint_range(0.0, 0.5, 0.005) = 0.32;
+uniform float water_strength : hint_range(0.0, 0.5, 0.005) = 0.14;
 uniform float river_opacity : hint_range(0.0, 1.0, 0.01) = 1.0;
-uniform float river_overlay_opacity : hint_range(0.0, 1.0, 0.01) = 0.84;
+uniform float river_overlay_opacity : hint_range(0.0, 1.0, 0.01) = 0.58;
+uniform float river_flow_width : hint_range(0.2, 1.0, 0.01) = 0.56;
+uniform float river_wave_strength : hint_range(0.0, 0.25, 0.005) = 0.055;
+uniform float river_wave_frequency : hint_range(200.0, 1200.0, 5.0) = 900.0;
 uniform float chart_speed : hint_range(-0.08, 0.08, 0.001) = 0.018;
 uniform float chart_opacity : hint_range(0.0, 1.0, 0.01) = 0.52;
 uniform vec4 water_tint : source_color = vec4(0.47, 0.63, 0.68, 1.0);
@@ -227,8 +230,16 @@ void fragment() {
 	animated_color = alpha_over(animated_color,
 		vec4(original.rgb, river_alpha), river_opacity);
 
-	float scroll = fract(TIME * water_speed * 0.085);
-	float scroll_span = 0.036;
+	// The animated texture occupies only the inner channel. The stationary base
+	// above keeps the complete painted river and banks, but motion never reaches
+	// the broad watercolor fringe.
+	float flow_half_width = river_half_width * river_flow_width;
+	float flow_spine_alpha = 1.0 - smoothstep(flow_half_width * 0.78,
+		flow_half_width, river_distance);
+	float flow_alpha = flow_spine_alpha * mix(0.30, 1.0, river_paint);
+
+	float scroll = fract(TIME * water_speed * 0.07);
+	float scroll_span = 0.018;
 	vec2 flow_uv_a = UV - river_tangent * (scroll * scroll_span);
 	vec2 flow_uv_b = UV - river_tangent * ((scroll - 1.0) * scroll_span);
 	vec3 flow_a = texture(TEXTURE, clamp(flow_uv_a, vec2(0.0), vec2(1.0))).rgb;
@@ -236,18 +247,23 @@ void fragment() {
 	// Keep one sample travelling downstream for most of its cycle. Cross-fade
 	// only near the wrap; blending the two opposite offsets for the entire old
 	// cycle visually cancelled the motion and made the river appear static.
-	float reset_blend = smoothstep(0.72, 1.0, scroll);
+	float reset_blend = smoothstep(0.80, 1.0, scroll);
 	vec3 moving_river = mix(flow_a, flow_b, reset_blend);
 	float flow_noise = fbm(vec2(river_along * 18.0,
 		river_distance * 140.0) + vec2(-TIME * 0.14, TIME * 0.025));
-	float flow_phase = river_along * 92.0 - TIME * water_speed * 3.6
-		+ flow_noise * 2.4;
-	float highlight = pow(0.5 + 0.5 * sin(flow_phase), 7.0);
+	// Perspective view: texture advection follows the river tangent, but distant
+	// wave fronts remain horizontal on screen. Their spacing grows only slightly
+	// toward the foreground and their noise breaks intensity, never orientation.
+	float screen_wave_y = UV.y * river_wave_frequency - UV.y * UV.y * 160.0;
+	float wave_phase = screen_wave_y - TIME * water_speed * 1.5;
+	float highlight = pow(0.5 + 0.5 * sin(wave_phase), 15.0);
+	highlight *= mix(0.45, 1.0, flow_noise);
+	moving_river = mix(original.rgb, moving_river, 0.62);
 	moving_river = mix(moving_river, water_tint.rgb,
-		water_strength * (0.14 + highlight * 0.38));
-	moving_river += vec3(0.95, 0.90, 0.76) * highlight * water_strength * 0.46;
+		water_strength * (0.08 + highlight * 0.10));
+	moving_river += vec3(0.95, 0.90, 0.76) * highlight * river_wave_strength;
 	animated_color = alpha_over(animated_color,
-		vec4(moving_river, river_alpha), river_overlay_opacity);
+		vec4(moving_river, flow_alpha), river_overlay_opacity);
 
 	// Preserve the exact baked wordmark and its immediate glow, motionless.
 	animated_color = mix(animated_color, original.rgb, title_protection(UV));

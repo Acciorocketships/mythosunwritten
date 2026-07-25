@@ -112,11 +112,71 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   Final jittered anchors are qualified against terrain and the shared `WaterFieldContext`, then
   bounded Matérn-II arbitration supplies local and cross-population spacing. Chunk ownership is
   half-open, so overlapping queries agree and seams cannot duplicate or omit an anchor. Worker
-  payloads contain only asset IDs, transforms, and colours. `EnvironmentCollisionBuilder` commits
+  payloads contain only asset IDs, transforms, and colours. At compile time every collidable
+  choice is reduced to a resource-free radial stencil of its actual near-ground visual vertices;
+  qualification rotates/scales that stencil and rejects roots, rock bases, or deadwood whose
+  visible footprint would overhang a cliff, span excessive height, or cross water. That ordered
+  compiled outline is transformed into a persistent static layer of the live grass deformation
+  field around loaded structural dressing. It follows each asset's rotated/non-uniformly-scaled
+  base instead of an oversized circular radius, keeping blades from passing through its mesh
+  without coupling the worker fields. `EnvironmentCollisionBuilder` commits
   baked static physics for structural nature before chunk readiness; `EnvironmentCommitQueue`
   creates one visual `MultiMesh` per `(asset_id, visual piece)` under a separate per-frame budget,
   and discards stale chunk generations. Dressing still owns no gameplay identity, interaction,
-  persistence, navigation, or world-feature planning.
+  persistence, navigation, or world-feature planning. Dense grass is intentionally separate;
+  the former sparse `ambient_grass` dressing set is retired.
+- **`grass/GrassField.gd` / `grass/GrassStreamer.gd`** — the deterministic, visual-only dense
+  ground-cover pipeline. The pure worker field places a primary 17×17 jittered candidate lattice
+  per 24 m tile, plus a deterministic supplemental lattice admitted in exact proportion to a
+  slope's additional surface area. Instances use the sampled terrain normal as local up, so hills
+  retain the flat-ground carpet density instead of exposing stretched XZ gaps. The field projects
+  the slow biome/canopy/tint owners from a canonical world-aligned 3 m lattice,
+  converts viable habitat through a narrow 0.20–0.42 monotone carpet curve while preserving
+  exact-zero shared clearings. Open marsh and stronger habitat saturate, while weak margins reach
+  zero quickly instead of exposing isolated repeated patches. It qualifies exact jittered anchors
+  against paths, water, grade, and terrain.
+  Path rejection covers the selected patch's full baked footprint, not just its centre. One
+  generalized edge scale uniformly shrinks patches toward every ecological grass-bed margin and
+  exposed upper cliff lip (both to 55% over the final 3 m), preserving blade proportions. Additional
+  hashed layers are visited only by tiles containing such an edge. Moderate edges use
+  `(1 + slope_area_extra) / edge_scale²`; total density is capped at four layers. Cliff
+  classification is symmetric for one-sided surface-normal sampling, so the vertical discontinuity
+  cannot falsely reject a strip as over-grade. The lower side is ordinary full-size carpet meeting
+  an opaque rock wall; only upper-lip candidates taper, and their final shrunken footprint must
+  stay on the walkable sheet. This prevents both a bare perimeter band and overhanging blades.
+  Each tile selects one compiled asset variant and returns at most one packed CPU buffer. The
+  current `stylized_grass.collection_05` source patch is bake-selected from a multi-variant FBX.
+  All 311 blade silhouettes remain, but each indexed 18-triangle ribbon is reduced to a four-
+  triangle root/bend/tip strip. The bake also moves complete blades 25% radially from the patch
+  centre, producing one self-contained 1,244-triangle, roughly 3.11 m-wide mesh. Its large
+  overlapping footprint closes the bed at far fewer instances than the former tuft grid. The main-thread
+  service streams a 60 m full-density / 84 m fade / 108 m eviction ring and commits one shadowless
+  MultiMesh per tile under an elapsed-time budget. Player distance owns deterministic population
+  dropout and conservative CPU prefix caps; camera distance independently removes unreadable
+  wind detail over 32–48 m, so an orbit camera cannot leave screen-distant blades
+  sparkling. One double-sided shader also owns gentle height-relative sway, broad rolling gusts,
+  and `TrampleField`'s world-anchored deformation. The bake stores each authored
+  ribbon's local root in UV2, so trampling resolves blade groups instead of moving a whole 3.11 m
+  patch as one tuft. A 1.1 m actor wake bends/drops grass strongly, retains at least 72% strength
+  while moving, and recovers over 10 s. A separate persistent texture presses grass mostly
+  vertically under loaded structural assets with a small radial outward spread. A fresh player
+  trail owns the lateral direction and continuously blends back to that static crush as it
+  recovers; no periodic obstacle stamp can snap it back. Both textures and their shared scrolled
+  world origin publish atomically. Its base albedo directly samples
+  the live texture object and grass-island UV owned by `terrain/materials/ground_palette.tres`,
+  exactly like the terrain sheet. Collection 5 has no albedo
+  texture; its relative light/dark structure comes from retained blade normals plus a nonlinear
+  ground-matched contact/shaded-lower-growth/warm-tip ramp. Subtle root-group value variation fades out with camera
+  detail, and the far field converges to the exact terrain value instead of retaining tiny tip
+  marks or drawing a dark ring before the population cutoff. An 82% up-normal bias preserves nearby
+  blade shading, then converges to the terrain normal with the same camera-detail fade; full
+  roughness and zero specular bring the base colour into
+  the terrain's lighting family. Back-facing ribbon cards flip their fragment normal into the
+  same lighting hemisphere, avoiding dark double-sided stipple. The same projected
+  `BiomeRegistry.ground_tint_at` field makes blades follow every biome transition and the shared
+  broad 108/156 m intra-biome value/warmth patches.
+  Grass has no
+  collision, navigation, gameplay identity, persistence, or separate worker.
 - **Paths and man-made features** (`scripts/terrain/features/`) — pure `SettlementPlan` owns only
   deterministic 768m future-village site identities and cells; it has no terrain API. `PathPlan`
   validates those sites against the untouched final fields, then owns canonical dry-landing bridge
@@ -134,7 +194,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   turns and branches without a circle stamped over the junction. Path
   triangles keep the original tan; sparse varied-size world-hashed circular decals use one
   slightly darker tan from the same atlas island. The circles conform to the sheet and share its
-  mesh, material, and draw call; exposed aprons use the base path tan. Bridges are
+  mesh, material, and draw call; exposed aprons use the base path tan. Path colour replaces the
+  local 0.25m ground patches in-place rather than riding on a second depth-fighting sheet;
+  transition fans give adjacent coarse grass quads the same boundary vertices, so adaptive path
+  edges cannot open T-junction hairlines. Bridges are
   exact-water-validated before becoming atomic route macro-edges; ordinary routes use cheap
   planning water, then validate only the selected corridor against exact water. Every ordinary
   route edge uses `TerrainSurfaceField.is_walkable_edge`, so a hill may be climbed over the same
@@ -183,7 +246,13 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   lightweight `EnvironmentCatalog`; the main-thread `EnvironmentRenderCache` selectively loads
   only active visuals. Environment runtime resources never depend on the source packs under
   `assets/`. `tools/environment_bake/` is the only owner of those source paths. Generated palette
-  variants may selectively recolour foliage texels. The Fantasy Village man-made feature pack uses
+  variants may selectively recolour foliage texels. The dense-grass bake may select an authored
+  subtree and merge/simplify either separate or indexed-component ribbon leaves, optionally
+  spreading whole components radially and retaining per-component root XZ in UV2 for local
+  deformation; the current
+  collision-free Collection 5 patch is about 1.10–1.27 m tall after authored variation and does
+  not participate in ordinary dressing. The
+  Fantasy Village man-made feature pack uses
   a reviewed 2× human-scale bake correction for its freestanding arches and lamp. A manifest
   fallback supplies the orange atlas missing from the second large arch's source material, so the
   correction is baked into the self-contained runtime asset. Its bridge
@@ -196,10 +265,13 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   bake-compatibility path for Godot's imported KayKit scene UID, not a runtime material owner.
 - **`field/FieldTerrainStreamer.gd`** — the only scene-tree node (`Node3D` in `world.tscn`,
   wired to the player). Builds field chunks within `CHUNK_RADIUS` of the player on **one
-  background worker thread**. It compiles dressing plus `PathProgram` and selectively warms their
-  sorted asset union on the main thread before starting the worker. The worker returns only
-  arrays/transforms/sampler payloads. Terrain and feature generations are independent, but queued
-  requests for one block widen into one job. A completed terrain payload waits in one nearest-first
+  background worker thread**. It compiles dressing, grass, and `PathProgram`, then selectively
+  warms their sorted asset union and grass materials on the main thread before starting the worker.
+  The worker returns only arrays/transforms/sampler payloads. Terrain and feature generations are
+  independent, but queued requests for one block widen into one job. Typed grass jobs reuse the
+  canonical `WorldFieldBlockCache`/`PathPlan`, are eligible only after their containing terrain is
+  committed, and sit behind player-critical and grass-underlay terrain but ahead of the outer
+  terrain ring. Grass never gates terrain readiness. A completed terrain payload waits in one nearest-first
   list until every key in its footprint-derived feature halo is ready; v1's maximum footprint
   yields exactly the lexicographically sorted 3×3 square. Empty feature blocks are explicit ready
   records and allocate no node/resource. Non-empty feature collision commits under the one
@@ -208,7 +280,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `MAX_BUILD_PER_FRAME` per frame, nearest-first, evicting beyond
   `KEEP_RADIUS` (features use `KEEP_RADIUS + feature_halo`). The worker exclusively owns its
   `_settlements`/`_plan`/`_water`/field/path/mesher instances, so their
-  caches need no locks. At startup the player is frozen until every chunk beneath their footprint
+  caches need no locks. `FieldTerrainStreamer` also remains the only owner allowed to attach the
+  grass and trample roots to the scene tree; grass runtime is skipped in headless terrain runs.
+  At startup the player is frozen until every chunk beneath their footprint
   (four quadrants at the origin corner) and its feature square is ready; later, a missing current
   chunk freezes them during teleports or when outrunning the worker. Collision therefore cannot
   pop in after movement starts, and the cold river/path spike stays off the main thread. Owns the
@@ -420,9 +494,20 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   crest-timed frame at a knife-edge shoreline depth, which is why classification reads the
   static field alone.
 - **One tint field**: every terrain surface — walkable sheet, aprons, rock skirt, and all
-  KayKit dressing pieces (per-instance colours) — multiplies THE shared material by
-  `BiomeRegistry.blended_ground_tint` sampled at its own position. Change the palette or
-  a biome tint once and every surface follows; never give a surface its own colour.
+  KayKit dressing pieces (per-instance colours) — plus dense grass multiplies THE shared
+  `terrain/materials/ground_palette.tres` texture by `BiomeRegistry.ground_tint_at` sampled at
+  its own position. That pure field combines the biome multiplier with deterministic subtle
+  108 m value and 156 m warmth patches, so colour can vary within one biome without chunk seams.
+  Change the palette texture, biome tint, or shared patch field once and every consumer follows;
+  never give a ground consumer its own copied colour.
+  Meadow deliberately uses the sub-unity `(0.72, 0.66, 1.0)` ground multiplier: the shared atlas
+  swatch is already saturated green, and its former above-one boost clipped into neon under clear
+  daylight.
+- **Global sun shadows**: `AtmosphereDirector` keeps the low golden-hour direction with restrained
+  `SUN_ENERGY = 1.1` and `SUN_SHADOW_OPACITY = 0.40`. Stronger full-opacity lighting on 4–12 m
+  terrain cliffs formed broad dark bands across open meadows while equally distant lit ground
+  clipped bright; use the shared sun controls rather than grass-specific colour compensation for
+  that lighting contrast.
 
 ## Character & camera
 
@@ -455,8 +540,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   corner-cloud duplicates. Only the chart texture rotates; four cloud groups translate
   independently. The stationary river is the actual original atlas painting, with a second atlas
   sample travelling downstream along a hand-fitted river spine for most of each cycle and
-  cross-fading only at wrap; both are clipped to its local width. The title/progress Control
-  remain outside every rotation.
+  cross-fading only at wrap. Its moving mask is the narrower inner channel, never the full painted
+  bank width. Fine distant wavelets are low-contrast and screen-horizontal for perspective even
+  though the underlying texture advection follows the spline. The title/progress Control remains
+  outside every rotation.
 
 ## Conventions & code style
 

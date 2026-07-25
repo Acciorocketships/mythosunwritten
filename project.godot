@@ -78,3 +78,54 @@ zoom_out={
 [physics]
 
 3d/default_gravity=18.0
+
+[shader_globals]
+
+grass_lod_origin={
+"type": "vec2",
+"value": Vector2(0, 0)
+}
+grass_trample_epoch={
+"type": "float",
+"value": 0.0
+}
+grass_trample_origin={
+"type": "vec2",
+"value": Vector2(0, 0)
+}
+grass_trample_size={
+"type": "float",
+"value": 64.0
+}
+grass_trample_texture={
+"type": "sampler2D",
+"value": "res://icon.svg"
+}
+grass_static_trample_texture={
+"type": "sampler2D",
+"value": "res://icon.svg"
+}
+wind_direction={
+"type": "vec2",
+"value": Vector2(0.940377, 0.340562)
+}
+wind_gust_bend={
+"type": "float",
+"value": 0.27
+}
+wind_gust_scale={
+"type": "float",
+"value": 110.0
+}
+wind_gust_speed={
+"type": "float",
+"value": 4.2
+}
+wind_gust_texture={
+"type": "sampler2D",
+"value": "res://icon.svg"
+}
+wind_idle_bend={
+"type": "float",
+"value": 0.055
+}

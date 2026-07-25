@@ -69,6 +69,70 @@ static func _surface_uv_at(mi: MeshInstance3D, p: Vector2) -> Vector2:
 	return best_uv
 
 
+static func _surface_uv_layers_at(arrays: Array, p: Vector2,
+		skip_uv := Vector2.INF) -> Array[Vector2]:
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var idx_v: Variant = arrays[Mesh.ARRAY_INDEX]
+	var idx: PackedInt32Array = idx_v if idx_v != null else PackedInt32Array()
+	var count: int = idx.size() if not idx.is_empty() else verts.size()
+	var found: Array[Vector2] = []
+	for ti in range(0, count, 3):
+		var ia: int = idx[ti] if not idx.is_empty() else ti
+		var ib: int = idx[ti + 1] if not idx.is_empty() else ti + 1
+		var ic: int = idx[ti + 2] if not idx.is_empty() else ti + 2
+		if _triangle_y_at_xz(verts[ia], verts[ib], verts[ic], p) == -INF \
+				or uvs[ia].is_equal_approx(skip_uv):
+			continue
+		var already := false
+		for value: Vector2 in found:
+			already = already or value.is_equal_approx(uvs[ia])
+		if not already:
+			found.append(uvs[ia])
+	return found
+
+static func _has_axis_aligned_t_junction(arrays: Array) -> bool:
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var idx_v: Variant = arrays[Mesh.ARRAY_INDEX]
+	var idx: PackedInt32Array = idx_v if idx_v != null else PackedInt32Array()
+	var horizontal: Dictionary = {} # quantized (z,y) -> x coordinates
+	var vertical: Dictionary = {} # quantized (x,y) -> z coordinates
+	for vertex: Vector3 in verts:
+		var hkey := Vector2i(roundi(vertex.z * 4096.0), roundi(vertex.y * 4096.0))
+		var vkey := Vector2i(roundi(vertex.x * 4096.0), roundi(vertex.y * 4096.0))
+		if not horizontal.has(hkey):
+			horizontal[hkey] = []
+		if not vertical.has(vkey):
+			vertical[vkey] = []
+		if not (horizontal[hkey] as Array).has(vertex.x):
+			(horizontal[hkey] as Array).append(vertex.x)
+		if not (vertical[vkey] as Array).has(vertex.z):
+			(vertical[vkey] as Array).append(vertex.z)
+	var count: int = idx.size() if not idx.is_empty() else verts.size()
+	for ti in range(0, count, 3):
+		var triangle := [
+			idx[ti] if not idx.is_empty() else ti,
+			idx[ti + 1] if not idx.is_empty() else ti + 1,
+			idx[ti + 2] if not idx.is_empty() else ti + 2,
+		]
+		for edge_index in 3:
+			var a: Vector3 = verts[triangle[edge_index]]
+			var b: Vector3 = verts[triangle[(edge_index + 1) % 3]]
+			if absf(a.z - b.z) <= 0.00001 and absf(a.y - b.y) <= 0.00001:
+				var hkey := Vector2i(roundi(a.z * 4096.0), roundi(a.y * 4096.0))
+				for x: float in horizontal[hkey]:
+					if x > minf(a.x, b.x) + 0.00001 \
+							and x < maxf(a.x, b.x) - 0.00001:
+						return true
+			elif absf(a.x - b.x) <= 0.00001 and absf(a.y - b.y) <= 0.00001:
+				var vkey := Vector2i(roundi(a.x * 4096.0), roundi(a.y * 4096.0))
+				for z: float in vertical[vkey]:
+					if z > minf(a.z, b.z) + 0.00001 \
+							and z < maxf(a.z, b.z) - 0.00001:
+						return true
+	return false
+
+
 static func _contains_scene_or_server_resource(value: Variant) -> bool:
 	if value is Node or value is Mesh or value is Shape3D \
 			or value is Material or value is MultiMesh:
@@ -101,7 +165,8 @@ func test_path_paint_changes_only_walkable_sheet_uvs() -> void:
 	var region: HeightfieldRegion = _region_for(p, Vector2i.ZERO)
 	var core := Rect2(Vector2.ZERO, Vector2.ONE * Mesher.CHUNK_WORLD)
 	var water := WaterFieldContext.build(DryWaterPlan.new(), core, region, 0.0)
-	var paths := PathContext.new(core, [core], [core],
+	var corridor := Rect2(Vector2(46.0, 0.0), Vector2(4.0, Mesher.CHUNK_WORLD))
+	var paths := PathContext.new(core, [corridor], [corridor],
 		EnvironmentInstancePayload.new(), 2.0)
 	var grass := m.compute_chunk(Vector2i.ZERO, region)
 	var painted := m.compute_chunk(Vector2i.ZERO, region, water, paths)
@@ -127,7 +192,7 @@ func test_path_paint_changes_only_walkable_sheet_uvs() -> void:
 	var colors: PackedColorArray = after[Mesh.ARRAY_COLOR]
 	assert_true(uvs.has(SlopeAtlas.path_uv()))
 	assert_true(uvs.has(m._grass_uv),
-		"path paint overlays the unchanged continuous grass sheet")
+		"ground outside the path keeps the shared grass palette")
 	assert_true(uvs.has(SlopeAtlas.path_spot_uv()),
 		"sparse darker circles are folded into the same terrain surface")
 	var found_darker_spot := false
@@ -138,6 +203,14 @@ func test_path_paint_changes_only_walkable_sheet_uvs() -> void:
 			break
 	assert_true(found_darker_spot,
 		"circle vertices explicitly darken the nearby path hue")
+	var layers := _surface_uv_layers_at(after, Vector2(48.37, 48.37),
+		SlopeAtlas.path_spot_uv())
+	assert_eq(layers.size(), 1,
+		"path paint replaces the local grass patch instead of adding a depth-fighting sheet")
+	assert_true(not layers.is_empty() and layers[0].is_equal_approx(SlopeAtlas.path_uv()),
+		"the single ground layer at the reported path is the path palette")
+	assert_false(_has_axis_aligned_t_junction(after),
+		"adaptive path patches stitch every fine boundary vertex into coarse grass")
 
 func test_build_returns_meshinstance_with_geometry():
 	var p = _plan()
@@ -397,10 +470,9 @@ func test_collision_wall_is_flush_with_the_boundary_no_pocket():
 func test_sheet_skirt_and_pieces_share_one_material():
 	# Owner (round 8): "the cliff lip, the skirt, and the slope are all different colours...
 	# it would be nice if they all used the same [texture] (so we could even change all of
-	# them at once in the future)". The walkable sheet renders with a vertex-color-tinting
-	# DUPLICATE of the de-sheened KayKit material (per-vertex biome ground tint), so it's a
-	# distinct object — but it must stay the SAME KayKit palette texture + de-sheen, so every
-	# terrain surface remains one visually-continuous, retintable palette.
+	# them at once in the future)". Every surface now uses the dedicated runtime
+	# ground-palette material itself, with per-vertex/instance tinting layered on
+	# top, so the palette stays visually continuous and globally retintable.
 	var p := Plan.new(11, 32.0, 8, "mean", 3)
 	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))

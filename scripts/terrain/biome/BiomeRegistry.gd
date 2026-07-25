@@ -3,6 +3,15 @@
 class_name BiomeRegistry
 extends RefCounted
 
+## Ground appearance has two orthogonal owners: the shared KayKit palette
+## texture supplies the global base swatch, while this pure field supplies
+## biome and world-patch multipliers. Keep the patches broad enough for the
+## terrain's 24 m tint lattice to interpolate them without visible facets.
+const GROUND_PATCH_SCALE := 108.0
+const GROUND_PATCH_WARMTH_SCALE := 156.0
+const GROUND_PATCH_VALUE_RANGE := Vector2(0.96, 1.04)
+const GROUND_PATCH_WARMTH := 0.025
+
 static var _profiles: Dictionary = {}
 
 static func biome_ids() -> Array[StringName]:
@@ -53,6 +62,25 @@ static func blended_ground_tint(w: Dictionary) -> Color:
 		c += (_profiles[name] as BiomeProfile).ground_tint * w[name]
 	return c
 
+## Canonical continuous ground multiplier for terrain, cliff dressing, and
+## dense grass. Changing the palette texture changes their base colour at
+## once; this field adds only deterministic, low-amplitude local variation.
+static func ground_tint_at(pos: Vector3, world_seed: int) -> Color:
+	var tint := blended_ground_tint(Helper.biome_weights5(pos, world_seed))
+	return tint * ground_patch_tint(pos, world_seed)
+
+static func ground_patch_tint(pos: Vector3, world_seed: int) -> Color:
+	var value_noise := Helper._value_noise01(pos, world_seed + 83,
+		GROUND_PATCH_SCALE)
+	var warmth_noise := Helper._value_noise01(pos, world_seed + 89,
+		GROUND_PATCH_WARMTH_SCALE)
+	var value := lerpf(GROUND_PATCH_VALUE_RANGE.x,
+		GROUND_PATCH_VALUE_RANGE.y, value_noise)
+	var warmth := lerpf(-GROUND_PATCH_WARMTH,
+		GROUND_PATCH_WARMTH, warmth_noise)
+	return Color(value * (1.0 + warmth), value,
+		value * (1.0 - warmth * 0.7), 1.0)
+
 static func blended_foliage_tint(w: Dictionary, tag: String) -> Color:
 	_ensure()
 	var c := Color(0, 0, 0, 0)
@@ -98,7 +126,10 @@ static func _meadow() -> BiomeProfile:
 	p.sky_horizon = Color("cdeaf6")
 	p.ambient_color = Color(0.80, 0.76, 0.62)
 	p.ambient_energy = 1.05
-	p.ground_tint = Color(1.12, 1.06, 0.78)   # warm saturated green
+	# The atlas grass swatch is already strongly green. Keep meadow below 1.0
+	# in value and lift its blue relative to green; the former >1 boost clipped
+	# into a flat neon field under the clear biome's bright daylight.
+	p.ground_tint = Color(0.72, 0.66, 1.0)
 	p.foliage_tints = {"grass": Color(1.1, 1.05, 0.75), "tree": Color(1.02, 1.0, 0.9)}
 	p.foliage_density = 0.8
 	p.particles = {&"motes": 0.3}

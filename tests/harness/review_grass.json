@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Grass meadow carpet, broad clearing, fade and closed Collection 5 beds",
+    "pos": [48.0, 30.0, -1500.0],
+    "look": [68.0, -1490.0]
+  },
+  {
+    "name": "Grass deep-forest canopy-opening agreement",
+    "pos": [-3840.0, 30.0, -3840.0],
+    "look": [-3816.0, -3840.0]
+  },
+  {
+    "name": "Grass highland sparse coverage and slope qualification",
+    "pos": [-2688.0, 40.0, -3840.0],
+    "look": [-2664.0, -3840.0]
+  },
+  {
+    "name": "Grass blossom-grove colour blend and shared openings",
+    "pos": [1920.0, 30.0, -3840.0],
+    "look": [1944.0, -3840.0]
+  },
+  {
+    "name": "Grass twilight-marsh coverage",
+    "pos": [-864.0, 30.0, -3840.0],
+    "look": [-840.0, -3840.0]
+  },
+  {
+    "name": "Grass shoreline clearance band",
+    "pos": [-672.0, 30.0, -3360.0],
+    "look": [-648.0, -3360.0]
+  }
+]

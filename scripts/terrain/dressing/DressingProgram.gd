@@ -5,6 +5,13 @@ extends RefCounted
 ## member is a primitive value/container; no authored Resource crosses over.
 var sets: Array[Dictionary] = []
 var referenced_asset_ids: Array[StringName] = []
+## Unscaled near-ground visual radius per collidable asset. Runtime systems
+## may use this worker-safe metadata without loading the authored mesh again.
+var ground_radius_by_asset: Dictionary = {}
+## Ordered radial outline of the same near-ground visual vertices. Keeping the
+## actual stencil lets main-thread grass suppression follow a long rock/tree
+## base instead of replacing every asset with an oversized circle.
+var ground_stencil_by_asset: Dictionary = {}
 var query_margin: float = 0.0
 var shore_distance_limit: float = 0.0
 var maximum_spacing_radius: float = 0.0

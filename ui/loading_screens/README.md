@@ -26,7 +26,10 @@ cities, clouds, and celestial chart:
 - the left and right settlements move on separate slow parallax paths;
 - the stationary river is the original atlas painting; a second sample of those
   exact pixels scrolls downstream along a hand-fitted centreline for most of a
-  cycle, cross-fading only at wrap, and is clipped to the river's local width;
+  cycle, cross-fading only at wrap. Its motion is clipped to a narrower inner
+  channel than the stationary painted banks. Fine low-contrast wavelets stay
+  horizontal in screen space for the atlas perspective while texture advection
+  continues to follow the spline;
 - only `layers/chart.png` rotates, carrying its constellations with it;
 - the parchment plate, title, and separate progress Control never rotate.
 

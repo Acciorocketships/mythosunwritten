@@ -46,6 +46,7 @@ transform = Transform3D(1, 0, 0, 0, -0.94776845, 0.3189592, 0, -0.3189592, -0.94
 light_volumetric_fog_energy = 3.0
 light_angular_distance = 1.0
 shadow_enabled = true
+shadow_opacity = 0.4
 directional_shadow_mode = 1
 directional_shadow_split_1 = 0.3
 directional_shadow_split_2 = 0.3

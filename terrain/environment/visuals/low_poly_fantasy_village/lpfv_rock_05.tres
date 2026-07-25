@@ -9,7 +9,7 @@
 [sub_resource type="Resource" id="Resource_5ajad"]
 script = ExtResource("1_xcn2n")
 shape = ExtResource("2_e8ghp")
-local_transform = Transform3D(3.25, 0, 0, 0, 3.25, 0, 0, 0, 3.25, 0.50886714, -0.07802629, -0.49516475)
+local_transform = Transform3D(3.25, 0, 0, 0, 3.25, 0, 0, 0, 3.25, 0.50886714, -0.07063498, -0.49516475)
 
 [sub_resource type="Resource" id="Resource_bj4u2"]
 script = ExtResource("3_vohu8")

@@ -26,8 +26,12 @@ func test_scene_has_animated_atlas_and_progress_contract() -> void:
 		"moving clouds must not sit over a stationary baked duplicate")
 	assert_gt(float(material.get_shader_parameter("cloud_drift")), 0.01,
 		"cloud displacement is subtle but visibly larger than texture shimmer")
-	assert_gt(float(material.get_shader_parameter("water_strength")), 0.25,
-		"river flow remains readable against the low-contrast watercolor base")
+	assert_lt(float(material.get_shader_parameter("river_flow_width")), 0.65,
+		"animated texture stays inside the stationary painted river banks")
+	assert_lt(float(material.get_shader_parameter("river_wave_strength")), 0.08,
+		"far-away wavelets remain subtle")
+	assert_gt(float(material.get_shader_parameter("river_wave_frequency")), 800.0,
+		"far-away wavelets are small and closely spaced")
 	assert_almost_eq(progress.fill_thickness, 1.35, 0.001)
 	assert_eq(progress.progress, 0.0)
 	assert_eq(progress.rotation, 0.0)
@@ -44,7 +48,8 @@ func test_shader_keeps_motion_channels_independently_tunable() -> void:
 		"background_plate", "city_layer", "cloud_layer", "chart_layer",
 		"cloud_speed", "cloud_drift", "cloud_opacity", "city_speed", "city_drift",
 		"water_speed", "water_strength", "river_opacity",
-		"river_overlay_opacity", "chart_speed", "chart_opacity",
+		"river_overlay_opacity", "river_flow_width", "river_wave_strength",
+		"river_wave_frequency", "chart_speed", "chart_opacity",
 	]:
 		assert_has(uniform_names, required)
 	assert_does_not_have(uniform_names, "river_layer",
@@ -64,8 +69,12 @@ func test_shader_rotates_only_the_explicit_chart_texture() -> void:
 		"the base river uses the actual atlas painting")
 	assert_true(source.contains("texture(TEXTURE, clamp(flow_uv_a"),
 		"the moving overlay scrolls a second sample of the actual atlas texture")
-	assert_true(source.contains("float reset_blend = smoothstep(0.72, 1.0, scroll)"),
+	assert_true(source.contains("float reset_blend = smoothstep(0.80, 1.0, scroll)"),
 		"opposing wrap samples cross-fade only near reset instead of cancelling motion")
+	assert_true(source.contains("float screen_wave_y = UV.y * river_wave_frequency"),
+		"perspective wave fronts are horizontal in screen space, not spline-normal")
+	assert_true(source.contains("vec4(moving_river, flow_alpha)"),
+		"moving texture uses the narrower inner-channel mask")
 	assert_eq(source.count("river_tangent *"), 2,
 		"both wraparound samples move along the local river tangent")
 

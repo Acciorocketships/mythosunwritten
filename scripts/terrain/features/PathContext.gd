@@ -50,6 +50,10 @@ func corridor_at(world_xz: Vector2) -> bool:
 			return true
 	return false
 
+func has_corridors() -> bool:
+	return not connection_masks.is_empty() or not node_cells.is_empty() \
+		or not _corridors.is_empty()
+
 # Same classifier when a lattice consumer already knows the nearest terrain
 # cell. Terrain meshing calls this for every 2m quad, avoiding two divisions and
 # rounds per sample without introducing a second path representation.

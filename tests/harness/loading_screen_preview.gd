@@ -65,7 +65,7 @@ func _ready() -> void:
 
 	material.set_shader_parameter("cloud_opacity", 0.0)
 	material.set_shader_parameter("river_opacity", 1.0)
-	material.set_shader_parameter("river_overlay_opacity", 0.84)
+	material.set_shader_parameter("river_overlay_opacity", 0.58)
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var river_first := get_viewport().get_texture().get_image()

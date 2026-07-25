@@ -389,6 +389,8 @@ func test_walkover_colliders_stay_below_the_character_step_at_largest_spawn_scal
 		var largest_height := (top - bottom) * float(max_spawn_scale_by_asset[asset_id])
 		assert_lte(largest_height, CharacterMovement.DEFAULT_MAX_STEP_HEIGHT,
 			"%s remains step-able at its largest authored instance scale" % asset_id)
+		assert_gte(largest_height, CharacterMovement.DEFAULT_MAX_STEP_HEIGHT - 0.002,
+			"%s uses the available 0.5 m walk-over profile instead of sinking far below its mesh" % asset_id)
 
 func test_reviewed_kaykit_colliders_preserve_the_primitive_policy() -> void:
 	var catalog := EnvironmentCatalog.load_default()

@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 11
+const TOOL_VERSION := 15
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -105,6 +105,15 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		_fail("Source is not an imported scene: %s" % source_path)
 		return {}
 	var root := packed.instantiate()
+	var visual_root: Node = root
+	var source_root_path := String(entry.get("source_root", ""))
+	if not source_root_path.is_empty():
+		visual_root = root.get_node_or_null(NodePath(source_root_path))
+		if visual_root == null:
+			_fail("Source root %s does not exist for %s" % [
+				source_root_path, asset_id])
+			root.free()
+			return {}
 	var scale_value = entry.get("scale", default_scale)
 	if not _valid_scale(scale_value):
 		_fail("Bake entry %s requires a finite positive three-axis scale" % asset_id)
@@ -136,8 +145,54 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 	var pieces: Array[EnvironmentVisualPiece] = []
 	var bounds := AABB()
 	var has_bounds := false
-	var stack: Array[Node] = [root]
+	var ribbon_stride := int(entry.get("ribbon_stride", 0))
+	if ribbon_stride < 0:
+		_fail("ribbon_stride must be zero or positive: %s" % asset_id)
+		root.free()
+		return {}
+	var component_ribbon_rows := int(entry.get("component_ribbon_rows", 0))
+	if component_ribbon_rows != 0 and component_ribbon_rows < 2:
+		_fail("component_ribbon_rows must be zero or at least two: %s" % asset_id)
+		root.free()
+		return {}
+	var component_root_spread := float(entry.get("component_root_spread", 1.0))
+	if not is_finite(component_root_spread) or component_root_spread <= 0.0:
+		_fail("component_root_spread must be finite and positive: %s" % asset_id)
+		root.free()
+		return {}
+	if component_ribbon_rows == 0 and not is_equal_approx(component_root_spread, 1.0):
+		_fail("component_root_spread requires component_ribbon_rows: %s" % asset_id)
+		root.free()
+		return {}
+	if ribbon_stride > 0 and component_ribbon_rows > 0:
+		_fail("Asset %s cannot combine ribbon simplifiers" % asset_id)
+		root.free()
+		return {}
+	var stack: Array[Node] = [visual_root]
 	var piece_index := 0
+	if ribbon_stride > 0 or component_ribbon_rows > 0:
+		var merged: ArrayMesh
+		if component_ribbon_rows > 0:
+			merged = _merge_component_ribbons(visual_root, asset_id,
+				component_ribbon_rows, component_root_spread)
+		else:
+			merged = _merge_simplified_ribbons(visual_root, asset_id,
+				ribbon_stride)
+		if merged == null:
+			root.free()
+			return {}
+		var baked_mesh := _bake_mesh(merged, pack, asset_id, piece_index,
+			supports_color, material_tint, green_hue, fallback_albedo)
+		if baked_mesh == null:
+			root.free()
+			return {}
+		var piece := EnvironmentVisualPiece.new()
+		piece.mesh = baked_mesh
+		piece.local_transform = correction
+		pieces.append(piece)
+		bounds = correction * baked_mesh.get_aabb()
+		has_bounds = true
+		stack.clear()
 	while not stack.is_empty():
 		var node: Node = stack.pop_back()
 		for child: Node in node.get_children():
@@ -145,7 +200,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		var mesh_instance := node as MeshInstance3D
 		if mesh_instance == null or mesh_instance.mesh == null:
 			continue
-		var local := correction * _relative_transform(mesh_instance, root)
+		var local := correction * _relative_transform(mesh_instance, visual_root)
 		var baked_mesh := _bake_mesh(mesh_instance.mesh, pack, asset_id, piece_index,
 			supports_color, material_tint, green_hue, fallback_albedo)
 		if baked_mesh == null:
@@ -203,6 +258,296 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		"license": license_label,
 		"parameters": entry.duplicate(true),
 	}
+
+## Some authored grass FBXs store one clump as many independently named ribbon
+## meshes. The runtime needs one mesh per MultiMesh batch, so the bake selects
+## that subtree, removes redundant centre vertices and height rings, and merges
+## the result into one self-contained surface. This is deliberately an import
+## concern: neither the worker nor the runtime catalogue knows about the FBX.
+func _merge_simplified_ribbons(source_root: Node, asset_id: String,
+		stride: int) -> ArrayMesh:
+	var out_vertices := PackedVector3Array()
+	var out_normals := PackedVector3Array()
+	var out_uvs := PackedVector2Array()
+	var out_indices := PackedInt32Array()
+	var source_material: Material
+	var stack: Array[Node] = [source_root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		for child: Node in node.get_children():
+			stack.append(child)
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var transform := _relative_transform(mesh_instance, source_root)
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			if mesh_instance.mesh.surface_get_primitive_type(surface_index) \
+					!= Mesh.PRIMITIVE_TRIANGLES:
+				_fail("Ribbon grass requires triangle surfaces: %s" % asset_id)
+				return null
+			var arrays := mesh_instance.mesh.surface_get_arrays(surface_index)
+			var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+			var normals := arrays[Mesh.ARRAY_NORMAL] as PackedVector3Array
+			var uvs := arrays[Mesh.ARRAY_TEX_UV] as PackedVector2Array
+			if vertices.is_empty() or normals.size() != vertices.size() \
+					or uvs.size() != vertices.size():
+				_fail("Ribbon grass requires positions, normals, and UVs: %s" % asset_id)
+				return null
+			var rows := _ribbon_edge_rows(uvs, asset_id)
+			if rows.is_empty():
+				return null
+			var selected_rows: Array[Vector2i] = []
+			for row_index in range(0, rows.size(), maxi(stride, 1)):
+				selected_rows.append(rows[row_index])
+			if selected_rows[-1] != rows[-1]:
+				selected_rows.append(rows[-1])
+			var base_index := out_vertices.size()
+			var normal_basis := transform.basis.inverse().transposed()
+			for row: Vector2i in selected_rows:
+				for vertex_index: int in [row.x, row.y]:
+					out_vertices.append(transform * vertices[vertex_index])
+					out_normals.append((normal_basis * normals[vertex_index]).normalized())
+					out_uvs.append(uvs[vertex_index])
+			for row_index in selected_rows.size() - 1:
+				var left := base_index + row_index * 2
+				var right := left + 1
+				var next_left := left + 2
+				var next_right := left + 3
+				out_indices.append_array(PackedInt32Array([
+					left, right, next_right, left, next_right, next_left]))
+			var material := mesh_instance.mesh.surface_get_material(surface_index)
+			if source_material == null:
+				source_material = material
+			elif material != source_material \
+					and material.resource_path != source_material.resource_path:
+				_fail("Merged ribbon grass must share one material: %s" % asset_id)
+				return null
+	if out_vertices.is_empty() or source_material == null:
+		_fail("Source root contains no ribbon grass: %s" % asset_id)
+		return null
+	var bounds := AABB(out_vertices[0], Vector3.ZERO)
+	for vertex: Vector3 in out_vertices:
+		bounds = bounds.expand(vertex)
+	var anchor := Vector3(bounds.get_center().x, bounds.position.y,
+		bounds.get_center().z)
+	for index in out_vertices.size():
+		out_vertices[index] -= anchor
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = out_vertices
+	arrays[Mesh.ARRAY_NORMAL] = out_normals
+	arrays[Mesh.ARRAY_TEX_UV] = out_uvs
+	arrays[Mesh.ARRAY_INDEX] = out_indices
+	var merged := ArrayMesh.new()
+	merged.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	merged.surface_set_material(0, source_material)
+	return merged
+
+func _ribbon_edge_rows(uvs: PackedVector2Array,
+		asset_id: String) -> Array[Vector2i]:
+	var indices_by_height: Dictionary = {}
+	for vertex_index in uvs.size():
+		var key := roundi(uvs[vertex_index].y * 100000.0)
+		if not indices_by_height.has(key):
+			indices_by_height[key] = []
+		(indices_by_height[key] as Array).append(vertex_index)
+	var heights: Array = indices_by_height.keys()
+	heights.sort()
+	heights.reverse()
+	var rows: Array[Vector2i] = []
+	for height: int in heights:
+		var row: Array = indices_by_height[height]
+		if row.size() < 2:
+			_fail("Ribbon grass row has fewer than two vertices: %s" % asset_id)
+			return []
+		row.sort_custom(func(a: int, b: int) -> bool:
+			return uvs[a].x < uvs[b].x)
+		rows.append(Vector2i(int(row[0]), int(row[-1])))
+	if rows.size() < 2:
+		_fail("Ribbon grass requires at least two height rows: %s" % asset_id)
+		return []
+	return rows
+
+## Some source patches merge hundreds of blades into one indexed surface.
+## Every connected component is still a regular two-edge ribbon. Keep a fixed
+## number of evenly spaced rows per blade, preserving all silhouettes and their
+## authored normals while removing redundant subdivisions along each curve.
+func _merge_component_ribbons(source_root: Node, asset_id: String,
+		keep_row_count: int, root_spread: float = 1.0) -> ArrayMesh:
+	var out_vertices := PackedVector3Array()
+	var out_normals := PackedVector3Array()
+	var out_uvs := PackedVector2Array()
+	var out_uv2s := PackedVector2Array()
+	var out_indices := PackedInt32Array()
+	var source_material: Material
+	var stack: Array[Node] = [source_root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		for child: Node in node.get_children():
+			stack.append(child)
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var transform := _relative_transform(mesh_instance, source_root)
+		var normal_basis := transform.basis.inverse().transposed()
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			if mesh_instance.mesh.surface_get_primitive_type(surface_index) \
+					!= Mesh.PRIMITIVE_TRIANGLES:
+				_fail("Component ribbon grass requires triangle surfaces: %s" % asset_id)
+				return null
+			var arrays := mesh_instance.mesh.surface_get_arrays(surface_index)
+			var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+			var normals := arrays[Mesh.ARRAY_NORMAL] as PackedVector3Array
+			var uvs := arrays[Mesh.ARRAY_TEX_UV] as PackedVector2Array
+			var indices := arrays[Mesh.ARRAY_INDEX] as PackedInt32Array
+			if vertices.is_empty() or normals.size() != vertices.size() \
+					or uvs.size() != vertices.size() or indices.is_empty() \
+					or indices.size() % 3 != 0:
+				_fail("Component ribbon grass requires indexed positions, normals, and UVs: %s" % asset_id)
+				return null
+			var components := _indexed_components(vertices.size(), indices)
+			for component: PackedInt32Array in components:
+				var rows := _component_ribbon_edge_rows(component, uvs, asset_id)
+				if rows.is_empty():
+					return null
+				if rows.size() < keep_row_count:
+					_fail("Component ribbon has fewer source rows than requested: %s" % asset_id)
+					return null
+				# UV2 stores this blade's authored root in mesh-local XZ. All
+				# retained vertices share it, so runtime deformation can sample
+				# trample state once per blade instead of once per 311-blade patch.
+				var root := Vector3.ZERO
+				var root_y := INF
+				for source_row: Vector2i in rows:
+					var midpoint := transform * ((vertices[source_row.x]
+						+ vertices[source_row.y]) * 0.5)
+					if midpoint.y < root_y:
+						root = midpoint
+						root_y = midpoint.y
+				# Move each complete blade radially from the patch origin. This
+				# preserves its authored silhouette while breaking up the tight,
+				# visibly repeated clump that the source mesh otherwise forms.
+				var root_offset := Vector3(root.x, 0.0, root.z) * (root_spread - 1.0)
+				var spread_root := root + root_offset
+				var base_index := out_vertices.size()
+				for selected_index in keep_row_count:
+					var row_index := roundi(float(selected_index)
+						* float(rows.size() - 1) / float(keep_row_count - 1))
+					var row: Vector2i = rows[row_index]
+					for vertex_index: int in [row.x, row.y]:
+						out_vertices.append(
+							transform * vertices[vertex_index] + root_offset)
+						out_normals.append((normal_basis * normals[vertex_index]).normalized())
+						out_uvs.append(uvs[vertex_index])
+						out_uv2s.append(Vector2(spread_root.x, spread_root.z))
+				for row_index in keep_row_count - 1:
+					var left := base_index + row_index * 2
+					var right := left + 1
+					var next_left := left + 2
+					var next_right := left + 3
+					out_indices.append_array(PackedInt32Array([
+						left, right, next_right, left, next_right, next_left]))
+			var material := mesh_instance.mesh.surface_get_material(surface_index)
+			if source_material == null:
+				source_material = material
+			elif material != source_material \
+					and material.resource_path != source_material.resource_path:
+				_fail("Component ribbon grass must share one material: %s" % asset_id)
+				return null
+	if out_vertices.is_empty() or source_material == null:
+		_fail("Source root contains no component ribbon grass: %s" % asset_id)
+		return null
+	var bounds := AABB(out_vertices[0], Vector3.ZERO)
+	for vertex: Vector3 in out_vertices:
+		bounds = bounds.expand(vertex)
+	var anchor := Vector3(bounds.get_center().x, bounds.position.y,
+		bounds.get_center().z)
+	for index in out_vertices.size():
+		out_vertices[index] -= anchor
+		out_uv2s[index] -= Vector2(anchor.x, anchor.z)
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = out_vertices
+	arrays[Mesh.ARRAY_NORMAL] = out_normals
+	arrays[Mesh.ARRAY_TEX_UV] = out_uvs
+	arrays[Mesh.ARRAY_TEX_UV2] = out_uv2s
+	arrays[Mesh.ARRAY_INDEX] = out_indices
+	var merged := ArrayMesh.new()
+	merged.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	merged.surface_set_material(0, source_material)
+	return merged
+
+func _indexed_components(vertex_count: int,
+		indices: PackedInt32Array) -> Array[PackedInt32Array]:
+	var adjacency: Array = []
+	adjacency.resize(vertex_count)
+	var used := PackedByteArray()
+	used.resize(vertex_count)
+	for vertex_index in vertex_count:
+		adjacency[vertex_index] = []
+	for triangle_index in range(0, indices.size(), 3):
+		var a := indices[triangle_index]
+		var b := indices[triangle_index + 1]
+		var c := indices[triangle_index + 2]
+		used[a] = 1
+		used[b] = 1
+		used[c] = 1
+		(adjacency[a] as Array).append_array([b, c])
+		(adjacency[b] as Array).append_array([a, c])
+		(adjacency[c] as Array).append_array([a, b])
+	var visited := PackedByteArray()
+	visited.resize(vertex_count)
+	var out: Array[PackedInt32Array] = []
+	for start in vertex_count:
+		if used[start] == 0 or visited[start] != 0:
+			continue
+		var component := PackedInt32Array()
+		var pending: Array[int] = [start]
+		visited[start] = 1
+		while not pending.is_empty():
+			var current: int = pending.pop_back()
+			component.append(current)
+			for value: int in adjacency[current]:
+				if visited[value] == 0:
+					visited[value] = 1
+					pending.append(value)
+		out.append(component)
+	return out
+
+func _component_ribbon_edge_rows(component: PackedInt32Array,
+		uvs: PackedVector2Array, asset_id: String) -> Array[Vector2i]:
+	var unique_u: Dictionary = {}
+	var unique_v: Dictionary = {}
+	for vertex_index: int in component:
+		# The importer leaves the two sides of a nominal row a few 1e-5 UV
+		# units apart. Millitexel grouping joins that authored seam while the
+		# next along-blade row remains more than 0.1 UV units away.
+		unique_u[roundi(uvs[vertex_index].x * 1000.0)] = true
+		unique_v[roundi(uvs[vertex_index].y * 1000.0)] = true
+	var along_u := unique_u.size() > unique_v.size()
+	var indices_by_row: Dictionary = {}
+	for vertex_index: int in component:
+		var uv := uvs[vertex_index]
+		var key := roundi((uv.x if along_u else uv.y) * 1000.0)
+		if not indices_by_row.has(key):
+			indices_by_row[key] = []
+		(indices_by_row[key] as Array).append(vertex_index)
+	var row_keys: Array = indices_by_row.keys()
+	row_keys.sort()
+	var rows: Array[Vector2i] = []
+	for key: int in row_keys:
+		var row: Array = indices_by_row[key]
+		if row.size() != 2:
+			_fail("Component ribbon row must have exactly two vertices: %s" % asset_id)
+			return []
+		row.sort_custom(func(a: int, b: int) -> bool:
+			return (uvs[a].y if along_u else uvs[a].x) \
+				< (uvs[b].y if along_u else uvs[b].x))
+		rows.append(Vector2i(int(row[0]), int(row[1])))
+	if rows.size() < 2:
+		_fail("Component ribbon requires at least two rows: %s" % asset_id)
+		return []
+	return rows
 
 func _bake_collisions(pack: String, asset_id: String, entry: Dictionary,
 		visual_pieces: Array[EnvironmentVisualPiece],

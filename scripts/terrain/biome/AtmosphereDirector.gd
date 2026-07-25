@@ -15,8 +15,9 @@ const EASE_SPEED := 1.5          # fraction of remaining distance per second
 
 # — the global grade, one place to tune —
 const SUN_COLOR := Color("ffeacc")
-const SUN_ENERGY := 1.3
+const SUN_ENERGY := 1.1
 const SUN_ANGLE_DEG := Vector3(-35.0, 40.0, 0.0)   # low golden hour
+const SUN_SHADOW_OPACITY := 0.40
 const GLOW_BLOOM := 0.15
 const GLOW_HDR_THRESHOLD := 1.05
 # Fog tints the sky toward the fog colour; keep it low so each biome's sky KEEPS
@@ -54,6 +55,10 @@ func _apply_grade() -> void:
 	sun.light_color = SUN_COLOR
 	sun.light_energy = SUN_ENERGY
 	sun.rotation_degrees = SUN_ANGLE_DEG
+	# Low-angle cliffs cast intentionally long shadows. Full-opacity shadow maps
+	# divided open meadows into a dark foreground band and blown-out background;
+	# retain readable grounding without letting large terrain shadows dominate.
+	sun.shadow_opacity = SUN_SHADOW_OPACITY
 	var attrs := CameraAttributesPractical.new()
 	attrs.dof_blur_far_enabled = true
 	attrs.dof_blur_far_distance = DOF_FAR_DISTANCE

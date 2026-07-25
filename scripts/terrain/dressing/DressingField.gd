@@ -74,9 +74,6 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 						layer.preference, layer.softness)
 				if _roll(identity, SALT_ELIGIBILITY) >= clampf(intensity / set_data.slot_count, 0.0, 1.0):
 					continue
-				var qualification: Dictionary = _qualify(set_data, anchor, region, water, paths)
-				if qualification.is_empty():
-					continue
 				var choice_roll := _roll(identity, SALT_CHOICE)
 				if set_data.community_hash != 0:
 					var community_roll := DressingEcology.community_roll(anchor, world_seed,
@@ -93,6 +90,10 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 					_roll(identity, SALT_BRIGHTNESS))
 				var tint: Color = BiomeRegistry.blended_environment_tint(weights, choice.tint_group)
 				var basis: Basis = Basis(Vector3.UP, yaw).scaled(Vector3.ONE * scale)
+				var qualification: Dictionary = _qualify(set_data, anchor, region, water,
+					paths, choice, basis)
+				if qualification.is_empty():
+					continue
 				out.append({
 					"set_id": set_data.id,
 					"cell": proposal_cell,
@@ -111,9 +112,8 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 
 static func _qualify(set_data: Dictionary, anchor: Vector2,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		paths: PathContext = null) -> Dictionary:
-	if paths != null and paths.clearance_at(anchor) < float(set_data.feature_clearance):
-		return {}
+		paths: PathContext = null, choice: Dictionary = {},
+		basis: Basis = Basis.IDENTITY) -> Dictionary:
 	var points: Array[Vector2] = [anchor]
 	if set_data.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT:
 		var radius: float = set_data.support_radius
@@ -121,7 +121,16 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 			Vector2(1, 1).normalized(), Vector2(1, -1).normalized(),
 			Vector2(-1, 1).normalized(), Vector2(-1, -1).normalized()]:
 			points.append(anchor + direction * radius)
+	# Collidable dressing uses its visible, yawed and scaled near-ground mesh
+	# footprint in every set. This is the global overhang guard: an asset cannot
+	# balance from its origin while roots, rock base, or a log cross a drop.
+	for local_point: Vector2 in choice.get("support_points", PackedVector2Array()):
+		var offset := basis * Vector3(local_point.x, 0.0, local_point.y)
+		points.append(anchor + Vector2(offset.x, offset.z))
 	for point: Vector2 in points:
+		if paths != null \
+				and paths.clearance_at(point) < float(set_data.feature_clearance):
+			return {}
 		if not water.covers(point) or not _water_ok(set_data, water, point):
 			return {}
 	if set_data.surface_mode == DressingSet.SurfaceMode.WATER_SURFACE:
@@ -135,10 +144,15 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 	for height: float in heights:
 		min_height = minf(min_height, height)
 		max_height = maxf(max_height, height)
-	if set_data.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT:
+	var visual_support: PackedVector2Array = choice.get("support_points",
+		PackedVector2Array())
+	var has_visual_support: bool = not visual_support.is_empty()
+	if set_data.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT or has_visual_support:
 		if max_height - min_height > set_data.max_support_height_span:
 			return {}
 		var radius: float = set_data.support_radius
+		for point: Vector2 in points:
+			radius = maxf(radius, point.distance_to(anchor))
 		if radius > 0.0 and (max_height - min_height) / (2.0 * radius) > set_data.max_grade:
 			return {}
 	else:

@@ -43,3 +43,11 @@ func test_biome_id_order_and_density_bound_are_explicit() -> void:
 	for biome_id: StringName in BiomeRegistry.biome_ids():
 		assert_lte(BiomeRegistry.profile(biome_id).foliage_density,
 			BiomeRegistry.max_foliage_density())
+
+func test_ground_tint_combines_biome_and_shared_patch_fields() -> void:
+	var point := Vector3(-174.7, 0.0, 315.7)
+	var seed := 2697992464
+	var biome := BiomeRegistry.blended_ground_tint(
+		Helper.biome_weights5(point, seed))
+	var patch := BiomeRegistry.ground_patch_tint(point, seed)
+	assert_eq(BiomeRegistry.ground_tint_at(point, seed), biome * patch)

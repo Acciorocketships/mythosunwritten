@@ -38,7 +38,9 @@ func _signature(payload: EnvironmentInstancePayload, filter_rect: Rect2 = Rect2(
 func test_compiler_produces_resource_free_bounded_program() -> void:
 	var program := _program()
 	assert_not_null(program)
-	assert_eq(program.sets.size(), 11)
+	assert_eq(program.sets.size(), 10)
+	assert_false(&"kaykit.grass.01" in program.referenced_asset_ids,
+		"dense GrassField is the sole runtime owner of grass ground cover")
 	assert_lte(program.maximum_spacing_radius, DressingCompiler.LOCAL_SPACING_CAP)
 	assert_gt(program.query_margin, program.maximum_spacing_radius)
 	assert_almost_eq(program.maximum_feature_clearance, 2.0, 0.001)
@@ -58,6 +60,42 @@ func test_compiler_produces_resource_free_bounded_program() -> void:
 	for set_data: Dictionary in program.sets:
 		assert_gte(float(set_data.feature_clearance), 0.0)
 		assert_false(_contains_resource(set_data), "compiled sets contain primitive worker data only")
+		for choice: Dictionary in set_data.choices:
+			var descriptor := EnvironmentCatalog.load_default().descriptor(choice.asset_id)
+			if descriptor.collision_piece_count <= 0:
+				continue
+			assert_false(choice.support_points.is_empty(),
+				"collidable %s has an automatic visible support stencil" % choice.asset_id)
+			assert_gt(float(program.ground_radius_by_asset[choice.asset_id]), 0.0)
+			assert_eq(program.ground_stencil_by_asset[choice.asset_id],
+				choice.support_points,
+				"the runtime grass mask reuses the qualified visual outline")
+
+func test_visible_support_stencil_rejects_a_collidable_asset_across_a_cliff() -> void:
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-4, 5):
+		for x in range(-4, 5):
+			storeys[Vector2i(x, z)] = 1 if x >= 0 else 0
+			levels[Vector2i(x, z)] = 0
+	var region := HeightfieldRegion.new(storeys, levels)
+	var water := _dry_context(region, Rect2(Vector2(-96, -96), Vector2(192, 192)), 0.0)
+	var set_data := {
+		"surface_mode": DressingSet.SurfaceMode.GROUND_POINT,
+		"water_mode": DressingSet.WaterMode.LAND,
+		"shore_range": Vector2.ZERO,
+		"support_radius": 0.0,
+		"max_support_height_span": DressingCompiler.AUTO_SUPPORT_HEIGHT_SPAN,
+		"max_grade": 1.0,
+		"feature_clearance": 0.0,
+	}
+	var anchor := Vector2(-13.0, 12.0)
+	var choice := {"support_points": PackedVector2Array([Vector2(5.0, 0.0)])}
+	assert_true(DressingField._qualify(set_data, anchor, region, water).has("y"),
+		"a point-only placement would incorrectly accept its grounded origin")
+	assert_true(DressingField._qualify(set_data, anchor, region, water, null,
+		choice, Basis.IDENTITY).is_empty(),
+		"the same placement is rejected when its visible base crosses the drop")
 
 func test_path_reservation_rejects_every_population_including_zero_margin() -> void:
 	var plan := HeightfieldPlan.new(4242, 1.0, 1, "mean")

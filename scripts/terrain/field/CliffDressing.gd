@@ -18,6 +18,7 @@ const VISUALS := {
 	"inner_wall": "res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_wall.tres",
 	"inner_lip": "res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_lip.tres",
 }
+const GROUND_PALETTE := "res://terrain/materials/ground_palette.tres"
 const ASSETS := {
 	"wall": &"kaykit.cliff.wall",
 	"lip": &"kaykit.cliff.lip",
@@ -55,6 +56,8 @@ const CORNERS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1,
 
 static var _pieces: Dictionary = {}   # name -> [mesh, local_transform]
 static var _shared_mat: Material = null
+static var _ground_uv := Vector2.ZERO
+static var _has_ground_uv := false
 
 static func prepare(render_cache: EnvironmentRenderCache) -> void:
 	if not _pieces.is_empty():
@@ -66,25 +69,33 @@ static func prepare(render_cache: EnvironmentRenderCache) -> void:
 		_pieces[key] = [piece.mesh, piece.local_transform]
 	_finish_piece_setup()
 
-# THE terrain material: a de-sheened duplicate of the KayKit wall material, shared by every
-# terrain surface — dressing pieces (via material_override), the walkable sheet, aprons and
-# the rock skirt. One texture/material to retint everything at once (owner round 8); specular
-# killed because it lit big flat surfaces a very different colour at some angles (round 7).
+# THE terrain material, shared by every terrain surface — dressing pieces (via
+# material_override), the walkable sheet, aprons, rock skirt, and dense-grass
+# palette binding. Its dedicated resource is the single global editing point;
+# specular stays killed because it lit big flat surfaces a different colour at
+# some angles (owner round 7).
 static func shared_material() -> Material:
 	if _shared_mat != null:
 		return _shared_mat
-	_ensure_loaded()
-	var mat := (_pieces["wall"][0] as Mesh).surface_get_material(0)
-	if mat is StandardMaterial3D:
-		mat = mat.duplicate()
-		mat.roughness = 1.0
-		mat.metallic_specular = 0.0
-		# Albedo modulates by COLOR: the sheet's vertex tints and the dressing/
-		# skirt/apron biome tints all ride the ONE material — geometry that sets
-		# no colour stays palette-true (COLOR defaults white).
-		mat.vertex_color_use_as_albedo = true
+	var mat := load(GROUND_PALETTE) as StandardMaterial3D
+	assert(mat != null and mat.albedo_texture != null)
+	assert(mat.vertex_color_use_as_albedo and is_equal_approx(mat.roughness, 1.0)
+		and is_zero_approx(mat.metallic_specular))
 	_shared_mat = mat
 	return _shared_mat
+
+## The one palette binding consumed by the terrain sheet and dense grass.
+## Both the texture object and its grass-island UV come from the same lip mesh,
+## so changing the shared atlas can never leave grass with a copied swatch.
+static func ground_texture() -> Texture2D:
+	var material := shared_material() as StandardMaterial3D
+	assert(material != null and material.albedo_texture != null)
+	return material.albedo_texture
+
+static func ground_uv() -> Vector2:
+	_ensure_loaded()
+	assert(_has_ground_uv)
+	return _ground_uv
 
 # Returns {wall, lip, outer_wall, outer_lip, inner_wall, inner_lip} -> Array[Transform3D].
 static func compute(region, lo_cx: int, lo_cz: int, cells: int) -> Dictionary:
@@ -101,8 +112,8 @@ static func compute_tints(transforms: Array, world_seed: int) -> PackedColorArra
 	var out := PackedColorArray()
 	out.resize(transforms.size())
 	for i in transforms.size():
-		out[i] = Color(1, 1, 1) if world_seed == 0 else BiomeRegistry.blended_ground_tint(
-			Helper.biome_weights5((transforms[i] as Transform3D).origin, world_seed))
+		out[i] = Color(1, 1, 1) if world_seed == 0 else BiomeRegistry.ground_tint_at(
+			(transforms[i] as Transform3D).origin, world_seed)
 	return out
 
 # Rows needed to cover a face of height `dip` (storey-quantised, rounded UP so the wall always
@@ -617,12 +628,15 @@ static func _finish_piece_setup() -> void:
 	var seam_v := _vertical_seam_v(_pieces["wall"][0])
 	_pieces["inner_wall"][0] = _retile_vertical_seam(
 		_pieces["inner_wall"][0], seam_v)
-	# The corner lips' grass TOPS sample the palette's BRIGHT trim row across
-	# most of their area (straight lips keep the bright row to a thin front
-	# edge), so a cap sitting on open ground read as a brighter green patch
-	# than the surrounding tiles (owner). Remap their grass top texels to the
-	# straight lip's first top texel — the same one the ground sheet samples
-	# (TerrainChunkMesher._ensure_skirt_style), so cap tops match the lawn.
+	# The authored lips use five nearby grass texels across their upward faces.
+	# They look compatible in the source atlas, but texture-only render probes
+	# show that their different values/mips form the bright band photographed at
+	# seed 2697992464, cell (43,-50), even with lighting disabled. Remap EVERY
+	# lip's entire grass region to one interior texel — the exact one the ground
+	# sheet samples (TerrainChunkMesher._ensure_skirt_style). The curved front
+	# bevel keeps its authored normals, so lighting still describes the curve
+	# without painting a second lawn colour along the walkable top or the triangular
+	# flare at a run end.
 	var lip_mesh: Mesh = _pieces["lip"][0]
 	var larr := lip_mesh.surface_get_arrays(0)
 	var lverts: PackedVector3Array = larr[Mesh.ARRAY_VERTEX]
@@ -630,8 +644,10 @@ static func _finish_piece_setup() -> void:
 	var luvs: PackedVector2Array = larr[Mesh.ARRAY_TEX_UV]
 	for i in lverts.size():
 		if lnorms[i].y > 0.9 and lverts[i].y > -0.05:
-			for key in ["outer_lip", "inner_lip"]:
-				_pieces[key][0] = _retexel_grass_top(_pieces[key][0], luvs[i])
+			_ground_uv = luvs[i]
+			_has_ground_uv = true
+			for key in ["lip", "outer_lip", "inner_lip"]:
+				_pieces[key][0] = _retexel_grass_region(_pieces[key][0], luvs[i])
 			break
 
 static func _vertical_seam_v(mesh: Mesh) -> float:
@@ -673,17 +689,18 @@ static func _retile_vertical_seam(mesh: Mesh, seam_v: float) -> Mesh:
 	out.surface_set_material(0, mesh.surface_get_material(0))
 	return out
 
-# Rebuild a piece mesh with every upward-facing grass-region texel set to `uv`
-# (the palette's grass patches live in the low-uv corner; rock texels are
-# untouched). The GLTF meshes are shared resources — work on a copy.
-static func _retexel_grass_top(mesh: Mesh, uv: Vector2) -> Mesh:
+# Rebuild a piece mesh with every grass-region texel set to `uv` (the palette's
+# grass patches live in the low-uv corner; rock texels are untouched). Restricting
+# this to upward normals left the photographed bright triangle on the lip's sloped
+# run-end face. Geometry/normals still shade the bevel; its albedo must not change.
+# The GLTF meshes are shared resources — work on a copy.
+static func _retexel_grass_region(mesh: Mesh, uv: Vector2) -> Mesh:
 	if mesh.get_surface_count() != 1:
 		return mesh
 	var arr := mesh.surface_get_arrays(0)
-	var norms: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
 	var uvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
-	for i in norms.size():
-		if norms[i].y > 0.9 and uvs[i].x < 0.15 and uvs[i].y < 0.15:
+	for i in uvs.size():
+		if uvs[i].x < 0.15 and uvs[i].y < 0.15:
 			uvs[i] = uv
 	arr[Mesh.ARRAY_TEX_UV] = uvs
 	var out := ArrayMesh.new()
