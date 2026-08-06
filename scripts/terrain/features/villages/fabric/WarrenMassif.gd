@@ -112,9 +112,19 @@ func _is_single_component() -> bool:
 
 
 func _find_interior_hole() -> Variant:
-	## A missing column fully surrounded by present columns: not the natural
-	## boundary taper, but a puncture through the middle of the solid.
+	## A pocket of missing columns that is unreachable from outside the
+	## footprint: not the natural boundary taper, but a puncture through the
+	## middle of the solid, of ANY size or shape. A 4-neighbour-presence
+	## heuristic here only ever catches a puncture that is exactly one cell
+	## wide -- a 2-or-more-cell void has at least one interior cell whose
+	## neighbour is another missing cell, so that heuristic misses it
+	## entirely. Detected instead by flood-filling the empty space starting
+	## one cell outside the bounding box (a cell that is empty by
+	## construction, since it lies past every column's min/max): whatever
+	## empty cell inside the box that fill never reaches is enclosed.
 	## Returns the first such column found, or null if there is none.
+	if columns.is_empty():
+		return null
 	var min_x := 2147483647
 	var max_x := -2147483648
 	var min_z := 2147483647
@@ -124,12 +134,32 @@ func _find_interior_hole() -> Variant:
 		max_x = maxi(max_x, column.x)
 		min_z = mini(min_z, column.y)
 		max_z = maxi(max_z, column.y)
-	for z in range(min_z + 1, max_z):
-		for x in range(min_x + 1, max_x):
-			var cell := Vector2i(x, z)
-			if columns.has(cell):
+	var outer_min_x := min_x - 1
+	var outer_max_x := max_x + 1
+	var outer_min_z := min_z - 1
+	var outer_max_z := max_z + 1
+
+	var reached_from_outside: Dictionary = {}
+	var start := Vector2i(outer_min_x, outer_min_z)
+	reached_from_outside[start] = true
+	var frontier: Array[Vector2i] = [start]
+	while not frontier.is_empty():
+		var cell: Vector2i = frontier.pop_back()
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+				Vector2i.UP, Vector2i.DOWN]:
+			var neighbor := cell + direction
+			if neighbor.x < outer_min_x or neighbor.x > outer_max_x \
+					or neighbor.y < outer_min_z or neighbor.y > outer_max_z:
 				continue
-			if columns.has(cell + Vector2i.RIGHT) and columns.has(cell + Vector2i.LEFT) \
-					and columns.has(cell + Vector2i.UP) and columns.has(cell + Vector2i.DOWN):
-				return cell
+			if reached_from_outside.has(neighbor) or columns.has(neighbor):
+				continue
+			reached_from_outside[neighbor] = true
+			frontier.append(neighbor)
+
+	for z in range(min_z, max_z + 1):
+		for x in range(min_x, max_x + 1):
+			var cell := Vector2i(x, z)
+			if columns.has(cell) or reached_from_outside.has(cell):
+				continue
+			return cell
 	return null

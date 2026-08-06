@@ -73,3 +73,22 @@ func test_seal_rejects_a_hand_built_disjoint_massif() -> void:
 		"two disjoint clusters must not seal as one solid massif")
 	assert_ne(massif.last_rejection, "",
 		"a rejected seal must explain why, like the sibling envelope class")
+
+
+func test_seal_rejects_a_solid_block_with_a_multi_cell_interior_void() -> void:
+	var massif := WarrenMassif.new(100)
+	for z in range(5):
+		for x in range(5):
+			massif.columns[Vector2i(x, z)] = {"base": 0, "top": 5, "terrace": 5}
+	# Two ADJACENT interior cells removed: every single missing cell still
+	# has at least one missing neighbour, so a 4-neighbour-presence
+	# heuristic never flags either of them, even though the pair together
+	# forms one fully enclosed void with no path to the outside.
+	massif.columns.erase(Vector2i(2, 2))
+	massif.columns.erase(Vector2i(2, 3))
+	assert_true(massif._is_single_component(),
+		"the ring surrounding the void is still one connected component")
+	assert_false(massif.seal(),
+		"a fully enclosed multi-cell void must not seal as solid")
+	assert_ne(massif.last_rejection, "",
+		"a rejected seal must explain why, like the sibling envelope class")
