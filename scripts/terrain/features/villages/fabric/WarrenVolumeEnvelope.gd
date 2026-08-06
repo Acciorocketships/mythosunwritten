@@ -56,6 +56,18 @@ static func build(p_world_seed: int,
 	return envelope if sealed or allow_unsealed_diagnostic else null
 
 
+func seal_synthesised() -> bool:
+	## Sibling entry point for an envelope whose world_seed/radius/height/
+	## ground/mass fields were copied from an already-accepted external solid
+	## (see WarrenExcavationVolumeAdapter.envelope_from_massif) rather than
+	## grown from this class's own warped Gaussian in build(). The caller is
+	## responsible for populating every field build() would otherwise
+	## generate; this runs the IDENTICAL _seal() contract so a synthesised
+	## envelope can never reach a caller in a state the Gaussian path could
+	## not also have produced. Generation is skipped here; validation never is.
+	return _seal()
+
+
 func contains_column(column: Vector2i) -> bool:
 	return height_bands.has(column)
 
