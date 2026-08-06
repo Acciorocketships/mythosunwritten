@@ -64,8 +64,63 @@ func seal() -> bool:
 		if not seen.has(portal):
 			last_rejection = "portal %s is not on the route" % portal
 			return false
+	if not _transitions_tile_the_route():
+		return false
 	_sealed = true
 	return true
+
+
+func _transitions_tile_the_route() -> bool:
+	## The transitions must decompose the walk exactly: consecutive, gapless,
+	## first starting at the route's mouth and last ending at its terminus,
+	## with every span a rise/run that its own Kind actually permits.
+	##
+	## This is the excavation's half of a contract WarrenVolumeTransition
+	## enforces on the other side. If a span here were, say, a one-cell rise,
+	## the adapter that builds the real transition would have to invent a
+	## route cell to stretch it over -- and the carved void would then
+	## disagree with the sealed plan about where the stair is.
+	var cursor := 0
+	for index in transitions.size():
+		var spec := transitions[index]
+		var from_cell := spec["from"] as Vector3i
+		var to_cell := spec["to"] as Vector3i
+		if from_cell != route[cursor]:
+			last_rejection = "transition %d starts at %s, walk is at %s" \
+				% [index, from_cell, route[cursor]]
+			return false
+		var delta := to_cell - from_cell
+		var run := absi(delta.x) + absi(delta.z)
+		if cursor + run > route.size() - 1 or route[cursor + run] != to_cell:
+			last_rejection = "transition %d to %s does not land on the walk" \
+				% [index, to_cell]
+			return false
+		if not kind_allows(int(spec["kind"]), absi(delta.y), run):
+			last_rejection = "transition %d is a rise of %d over a run of " \
+				% [index, absi(delta.y)] + "%d, which kind %d forbids" \
+				% [run, int(spec["kind"])]
+			return false
+		cursor += run
+	if cursor != route.size() - 1:
+		last_rejection = "transitions cover %d of %d walk cells" \
+			% [cursor + 1, route.size()]
+		return false
+	return true
+
+
+static func kind_allows(kind: int, rise: int, run: int) -> bool:
+	## The rise/run each WarrenVolumeTransition.Kind accepts, mirroring that
+	## class's own seal(). Kept here so the excavation can refuse to emit a
+	## span no transition could ever be built from, without depending on a
+	## transition instance to find out.
+	match kind:
+		WarrenVolumeTransition.Kind.LEVEL:
+			return rise == 0 and run == 1
+		WarrenVolumeTransition.Kind.STAIR:
+			return rise == 1 and run == 2
+		WarrenVolumeTransition.Kind.RAMP:
+			return rise == 1 and run >= 3
+	return false
 
 
 func is_sealed() -> bool:

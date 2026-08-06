@@ -28,6 +28,38 @@ func _carved(world_seed: int) -> WarrenExcavation:
 	return WarrenExcavationCarver.carve(world_seed, massif)
 
 
+func _hand_built(route: Array, transitions: Array) -> WarrenExcavation:
+	## A minimal excavation with valid headroom and a portal, so seal() can
+	## only be rejecting the walk or transition shape under test.
+	var excavation := WarrenExcavation.new(0)
+	for cell_value: Variant in route:
+		var cell := cell_value as Vector3i
+		excavation.route.append(cell)
+		for band: Vector3i in excavation.headroom_slot(cell):
+			excavation.carved[band] = true
+	for spec_value: Variant in transitions:
+		excavation.transitions.append(spec_value as Dictionary)
+	excavation.portals.append(route[0] as Vector3i)
+	return excavation
+
+
+func _reordered(massif: WarrenMassif) -> WarrenMassif:
+	## The same solid with its column Dictionary built in the opposite order.
+	## Iteration order over a Dictionary is insertion order, so any carver
+	## decision that reads `columns.keys()` without imposing its own ordering
+	## will diverge here while looking perfectly deterministic to a test that
+	## just carves the same massif twice.
+	var clone := WarrenMassif.new(massif.world_seed)
+	var keys: Array = massif.columns.keys()
+	keys.reverse()
+	for column_value: Variant in keys:
+		var column := column_value as Vector2i
+		clone.columns[column] = (massif.columns[column] as Dictionary).duplicate()
+	clone.core_top_bands = massif.core_top_bands
+	clone.seal()
+	return clone
+
+
 func _full_height_walls(massif: WarrenMassif, excavation: WarrenExcavation,
 		cell: Vector3i) -> int:
 	## Sides where mass still stands the whole height of the street slot,
@@ -167,32 +199,98 @@ func test_cover_flags_are_reproducible_from_the_massif_alone() -> void:
 			% world_seed)
 
 
-func test_transitions_mark_exactly_the_floor_band_changes() -> void:
+func test_transitions_tile_the_route_and_build_real_transitions() -> void:
+	## The strongest statement available about this output: construct the
+	## actual WarrenVolumeTransition each spec describes, over swept air taken
+	## from the excavation's own removed volume, and require it to seal. A
+	## span no transition can be built from is a span the Task-3 adapter would
+	## have to invent an uncarved route cell to stretch over -- at which point
+	## the carved void and the sealed plan disagree about where the stair is.
 	for world_seed: int in PROBE_SEEDS:
 		var excavation := _carved(world_seed)
 		if excavation == null:
 			continue
-		var expected: Dictionary = {}
-		for index in range(1, excavation.route.size()):
-			var from_cell := excavation.route[index - 1]
-			var to_cell := excavation.route[index]
-			if from_cell.y != to_cell.y:
-				expected["%s>%s" % [from_cell, to_cell]] = true
-		var emitted: Dictionary = {}
-		for spec: Dictionary in excavation.transitions:
-			var key := "%s>%s" % [spec["from"], spec["to"]]
-			assert_false(emitted.has(key),
-				"transition %s emitted twice (seed %d)" % [key, world_seed])
-			emitted[key] = true
-			assert_eq(int(spec["kind"]), int(WarrenVolumeTransition.Kind.STAIR),
-				"a one-band excavated step is a stair (seed %d)" % world_seed)
-		assert_eq(emitted.size(), expected.size(),
-			"transition count must match the floor-band changes (seed %d)" \
+		assert_gt(excavation.transitions.size(), 0,
+			"a walk with no transitions describes no movement (seed %d)" \
 			% world_seed)
-		for key: String in expected:
-			assert_true(emitted.has(key),
-				"floor band changes at %s with no transition (seed %d)" \
-				% [key, world_seed])
+		var cursor := 0
+		var kinds: Dictionary = {}
+		for index in excavation.transitions.size():
+			var spec := excavation.transitions[index]
+			var from_cell := spec["from"] as Vector3i
+			var to_cell := spec["to"] as Vector3i
+			assert_eq(from_cell, excavation.route[cursor],
+				("transition %d must start where the previous one ended " \
+				+ "(seed %d)") % [index, world_seed])
+			var delta := to_cell - from_cell
+			var run := absi(delta.x) + absi(delta.z)
+			if cursor + run > excavation.route.size() - 1:
+				assert_lte(cursor + run, excavation.route.size() - 1,
+					"transition %d runs off the end of the walk (seed %d)" \
+					% [index, world_seed])
+				break
+			assert_eq(excavation.route[cursor + run], to_cell,
+				"transition %d must land on the walk (seed %d)" \
+				% [index, world_seed])
+			var swept: Array[Vector3i] = []
+			for offset in range(run + 1):
+				for band: Vector3i in excavation.headroom_slot(
+						excavation.route[cursor + offset]):
+					swept.append(band)
+			var transition := WarrenVolumeTransition.new(
+				StringName("excavation.transition.%02d" % index),
+				from_cell, to_cell,
+				int(spec["kind"]) as WarrenVolumeTransition.Kind, swept)
+			assert_true(transition.seal(),
+				("transition %d (%s -> %s, kind %d) cannot be built as a " \
+				+ "WarrenVolumeTransition (seed %d)") % [index, from_cell,
+				to_cell, int(spec["kind"]), world_seed])
+			kinds[int(spec["kind"])] = true
+			cursor += run
+		assert_eq(cursor, excavation.route.size() - 1,
+			"transitions must tile the whole walk, gapless (seed %d)" \
+			% world_seed)
+		assert_true(kinds.has(int(WarrenVolumeTransition.Kind.STAIR)),
+			"a street that climbs 8 bands must use stairs (seed %d)" \
+			% world_seed)
+
+
+func test_seal_rejects_a_span_no_transition_could_be_built_from() -> void:
+	## The tiling above is only as strong as seal(), which is what enforces it
+	## in production. Both failures are reproduced by hand so that deleting
+	## either check fails a test instead of passing quietly.
+	var teleport := _hand_built(
+		[Vector3i(0, 0, 0), Vector3i(3, 0, 0)],
+		[{"from": Vector3i(0, 0, 0), "to": Vector3i(3, 0, 0),
+			"kind": WarrenVolumeTransition.Kind.RAMP}])
+	assert_false(teleport.seal(),
+		"a walk that jumps three cells in one step is not a walk")
+	assert_ne(teleport.last_rejection, "",
+		"a rejected seal must explain why, like the sibling massif")
+
+	var one_cell_rise := _hand_built(
+		[Vector3i(0, 0, 0), Vector3i(1, 1, 0)],
+		[{"from": Vector3i(0, 0, 0), "to": Vector3i(1, 1, 0),
+			"kind": WarrenVolumeTransition.Kind.STAIR}])
+	assert_false(one_cell_rise.seal(),
+		("a one-cell rise seals as no Kind at all, so the excavation must " \
+		+ "never emit one -- this is the exact defect the run-2 stair " \
+		+ "vocabulary exists to prevent"))
+
+	var untiled := _hand_built(
+		[Vector3i(0, 0, 0), Vector3i(1, 0, 0), Vector3i(2, 0, 0)],
+		[{"from": Vector3i(0, 0, 0), "to": Vector3i(1, 0, 0),
+			"kind": WarrenVolumeTransition.Kind.LEVEL}])
+	assert_false(untiled.seal(),
+		"transitions that stop short of the terminus do not describe the walk")
+
+	var legal := _hand_built(
+		[Vector3i(0, 0, 0), Vector3i(1, 0, 0), Vector3i(2, 1, 0)],
+		[{"from": Vector3i(0, 0, 0), "to": Vector3i(2, 1, 0),
+			"kind": WarrenVolumeTransition.Kind.STAIR}])
+	assert_true(legal.seal(),
+		("a one-band rise over a two-cell run IS a stair; the rejections " \
+		+ "above must be specific, not a seal that refuses everything"))
 
 
 func test_route_reads_as_a_canyon_climbing_into_the_town() -> void:
@@ -221,22 +319,36 @@ func test_route_reads_as_a_canyon_climbing_into_the_town() -> void:
 			+ "point and descend (seed %d)") % world_seed)
 
 
-func test_carve_is_deterministic_for_one_seed() -> void:
+func test_carve_does_not_depend_on_massif_column_order() -> void:
+	## Carving the same massif twice cannot fail while any Dictionary keeps
+	## its insertion order, so it proves nothing about determinism. Carving
+	## the same SOLID presented in the opposite column order does: it is the
+	## real hazard here, since the carver enumerates `massif.columns` to find
+	## its portals and a Dictionary's key order is an implementation detail
+	## no consumer should be pinned to.
 	for world_seed: int in PROBE_SEEDS:
-		var first := _carved(world_seed)
-		var second := _carved(world_seed)
-		if first == null:
-			assert_null(second, "acceptance itself must be deterministic")
+		var massif := WarrenMassifBuilder.build(world_seed)
+		if massif == null:
+			continue
+		var first := WarrenExcavationCarver.carve(world_seed, massif)
+		var second := WarrenExcavationCarver.carve(world_seed,
+			_reordered(massif))
+		assert_eq(first == null, second == null,
+			"acceptance itself must not depend on column order (seed %d)" \
+			% world_seed)
+		if first == null or second == null:
 			continue
 		assert_eq(first.route, second.route,
-			"same seed must bore the same route (seed %d)" % world_seed)
+			"column order must not change the route (seed %d)" % world_seed)
 		assert_eq(first.portals, second.portals,
-			"same seed must open the same portals (seed %d)" % world_seed)
+			"column order must not change the portals (seed %d)" % world_seed)
 		assert_eq(first.carved.size(), second.carved.size(),
-			"same seed must remove the same volume (seed %d)" % world_seed)
+			"column order must not change the removed volume (seed %d)" \
+			% world_seed)
 		for cell_value: Variant in first.carved.keys():
 			assert_true(second.carved.has(cell_value as Vector3i),
 				"removed volume differs at %s (seed %d)" \
 				% [cell_value, world_seed])
 		assert_eq(first.transitions.size(), second.transitions.size(),
-			"same seed must emit the same transitions (seed %d)" % world_seed)
+			"column order must not change the transitions (seed %d)" \
+			% world_seed)

@@ -31,20 +31,34 @@ const MAX_STRAIGHT_RUN := 4
 ## because the acceptance band is narrow in two directions at once (covered
 ## ratio has a ceiling as well as a floor), so most attempts land outside it
 ## and are discarded rather than nudged.
-const ATTEMPTS := 192
+const ATTEMPTS := 256
 ## Radius the inward ambition aims at. Not 0: the last two or three cells of
 ## the massif's peak are a plateau of at most MAX_PLATEAU_CELLS columns, and
 ## a route that reaches dead centre has nowhere left to be flanked.
-const INNER_RADIUS_CELLS := 3.0
+const INNER_RADIUS_CELLS := 5.0
 ## The cover feedback aims at the middle of the acceptance band rather than
 ## either edge, so an attempt that drifts still has room on both sides.
 const TARGET_COVERED_RATIO := 0.62
 const DIRECTIONS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
 ]
-const RISES: Array[int] = [1, 0, -1]
+## The move vocabulary IS the WarrenVolumeTransition contract, not a lattice
+## convenience that an adapter is expected to reconcile later: a band change
+## advances two cells (stair) or three (ramp), never one. A one-cell rise
+## seals as no Kind at all, and expanding it downstream would mean inventing
+## a route cell this carver never removed -- the carved void and the plan
+## would then disagree about where the stair physically is. Every cell the
+## stride passes through is carved and joins the route, so a transition's
+## swept volume is void that was actually taken out.
+const ACTIONS: Array[Dictionary] = [
+	{"kind": WarrenVolumeTransition.Kind.LEVEL, "rise": 0, "run": 1},
+	{"kind": WarrenVolumeTransition.Kind.STAIR, "rise": 1, "run": 2},
+	{"kind": WarrenVolumeTransition.Kind.STAIR, "rise": -1, "run": 2},
+	{"kind": WarrenVolumeTransition.Kind.RAMP, "rise": 1, "run": 3},
+	{"kind": WarrenVolumeTransition.Kind.RAMP, "rise": -1, "run": 3},
+]
 
-const WEIGHT_RADIUS := 120.0
+const WEIGHT_RADIUS := 85.0
 const WEIGHT_DEPTH := 210.0
 const WEIGHT_FLANK := 140.0
 ## A flank is any mass standing beside the floor band, which a one-band kerb
@@ -52,14 +66,19 @@ const WEIGHT_FLANK := 140.0
 ## street slot -- the thing that actually makes a canyon read as a canyon
 ## rather than as a belvedere. Steered for separately and harder, because
 ## every gate in the brief is satisfied by kerbs alone.
-const WEIGHT_WALL := 190.0
+const WEIGHT_WALL := 240.0
 const PENALTY_UNWALLED := 420.0
 const PENALTY_UNFLANKED := 900.0
 const PENALTY_REVERSE := 700.0
 const PENALTY_STRAIGHT := 110.0
 const PENALTY_STRAIGHT_CAP := 900.0
 const BONUS_TURN := 60.0
-const BONUS_RISE := 90.0
+const BONUS_RISE := 260.0
+## Charged per cell a stride consumes. Route length is the scarce resource
+## once a band costs two cells: without this a three-cell ramp and a two-cell
+## stair reaching the same band score alike, and the corpus spends its 22-26
+## cells before the span gate is met.
+const COST_PER_STRIDE_CELL := 55.0
 const PENALTY_EXTRA_PORTAL := 600.0
 const PENALTY_SAME_DATUM_FOLD := 400.0
 ## Cover rhythm: desired depth is DEPTH_MID + DEPTH_SWING * sin(...), floored
@@ -67,7 +86,7 @@ const PENALTY_SAME_DATUM_FOLD := 400.0
 ## spends below it is the fraction of the route that surfaces, so the pair
 ## sets the open/roofed mix directly instead of hoping the terrain supplies
 ## one.
-const DEPTH_MID := 1.1
+const DEPTH_MID := 0.8
 const DEPTH_SWING := 2.6
 ## How hard the running covered ratio pulls the desired depth back toward
 ## TARGET_COVERED_RATIO, in bands per unit of ratio error.
@@ -133,30 +152,37 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 	var target := MIN_ROUTE_CELLS + posmod(_hash(world_seed, attempt, 3, 0),
 		MAX_ROUTE_CELLS - MIN_ROUTE_CELLS + 1)
 	var style := _style(world_seed, attempt, portal)
+	var route_set: Dictionary = {}
 	var current := portal
 	var direction := Vector2i.ZERO
 	var straight_run := 0
 	var roofed := 0
-	_carve_cell(excavation, current)
+	_carve_cell(excavation, route_set, current)
 	roofed += int(_depth_of(massif, current) > 0)
-	for step in range(1, target):
-		var selected := _best_move(world_seed, attempt, step, target, style,
-			current, direction, straight_run, roofed, massif, excavation)
+	var move_index := 0
+	while excavation.route.size() < target:
+		var selected := _best_move(world_seed, attempt, move_index, target,
+			style, current, direction, straight_run, roofed, massif,
+			excavation, route_set, target - excavation.route.size())
 		if selected.is_empty():
 			break
-		var destination := selected["destination"] as Vector3i
+		var stride: Array = selected["cells"]
 		var move_direction := selected["direction"] as Vector2i
-		if destination.y != current.y:
-			excavation.transitions.append({
-				"from": current,
-				"to": destination,
-				"kind": WarrenVolumeTransition.Kind.STAIR,
-			})
-		straight_run = straight_run + 1 if move_direction == direction else 1
+		var endpoint := stride[stride.size() - 1] as Vector3i
+		excavation.transitions.append({
+			"from": current,
+			"to": endpoint,
+			"kind": int(selected["kind"]),
+		})
+		for cell_value: Variant in stride:
+			var cell := cell_value as Vector3i
+			_carve_cell(excavation, route_set, cell)
+			roofed += int(_depth_of(massif, cell) > 0)
+		straight_run = straight_run + stride.size() \
+			if move_direction == direction else stride.size()
 		direction = move_direction
-		current = destination
-		_carve_cell(excavation, current)
-		roofed += int(_depth_of(massif, current) > 0)
+		current = endpoint
+		move_index += 1
 	_finalize(excavation, massif)
 	if excavation.route.size() < MIN_ROUTE_CELLS \
 			or excavation.route.size() > MAX_ROUTE_CELLS:
@@ -192,8 +218,10 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 	return excavation
 
 
-static func _carve_cell(excavation: WarrenExcavation, cell: Vector3i) -> void:
+static func _carve_cell(excavation: WarrenExcavation, route_set: Dictionary,
+		cell: Vector3i) -> void:
 	excavation.route.append(cell)
+	route_set[cell] = true
 	for band in range(cell.y, cell.y + HEADROOM_BANDS):
 		excavation.carved[Vector3i(cell.x, band, cell.z)] = true
 
@@ -264,35 +292,65 @@ static func _style(world_seed: int, attempt: int,
 			/ 1000.0 * TAU,
 		"cycles": 1.0 + float(posmod(_hash(world_seed, attempt, 7, 0), 5)) \
 			* 0.5,
-		"radius_rush": 0.9 + float(posmod(_hash(world_seed, attempt, 11, 0),
-			8)) * 0.1,
+		"radius_rush": 0.45 + float(posmod(_hash(world_seed, attempt, 11, 0),
+			8)) * 0.07,
 		"portal_radius": Vector2(float(portal.x), float(portal.z)).length(),
 	}
 
 
-static func _best_move(world_seed: int, attempt: int, step: int, target: int,
-		style: Dictionary, current: Vector3i, current_direction: Vector2i,
-		straight_run: int, roofed: int, massif: WarrenMassif,
-		excavation: WarrenExcavation) -> Dictionary:
+static func _best_move(world_seed: int, attempt: int, move_index: int,
+		target: int, style: Dictionary, current: Vector3i,
+		current_direction: Vector2i, straight_run: int, roofed: int,
+		massif: WarrenMassif, excavation: WarrenExcavation,
+		route_set: Dictionary, budget: int) -> Dictionary:
 	## Single-pass minimum rather than a sort: sort_custom is not stable, and
 	## a stable winner is a determinism requirement, not a nicety.
 	var best: Dictionary = {}
 	var best_score := INF
 	for direction_index in DIRECTIONS.size():
 		var direction := DIRECTIONS[direction_index]
-		for rise_index in RISES.size():
-			var destination := current + Vector3i(direction.x,
-				RISES[rise_index], direction.y)
-			if not _slot_is_borable(massif, excavation, destination):
+		for action_index in ACTIONS.size():
+			var action := ACTIONS[action_index]
+			var run := int(action["run"])
+			if run > budget:
 				continue
-			var score := _move_score(world_seed, attempt, step, target, style,
-				current, destination, direction, current_direction,
-				straight_run, roofed, massif, excavation,
-				direction_index * RISES.size() + rise_index)
+			var stride := _stride_cells(massif, excavation, current, direction,
+				int(action["rise"]), run)
+			if stride.is_empty():
+				continue
+			var score := _move_score(world_seed, attempt, move_index, target,
+				style, current, stride, direction, current_direction,
+				straight_run, roofed, massif, excavation, route_set,
+				direction_index * ACTIONS.size() + action_index)
 			if score < best_score:
 				best_score = score
-				best = {"destination": destination, "direction": direction}
+				best = {
+					"cells": stride,
+					"direction": direction,
+					"kind": int(action["kind"]),
+				}
 	return best
+
+
+static func _stride_cells(massif: WarrenMassif, excavation: WarrenExcavation,
+		current: Vector3i, direction: Vector2i, rise: int,
+		run: int) -> Array[Vector3i]:
+	## Every cell a move passes through, floors interpolated the same way
+	## WarrenVolumeTransition.surface_cells() interpolates its own span, so
+	## the excavated slot and the transition later built over it agree about
+	## which band the walking surface is on at each cell of the run. Returns
+	## empty if any cell of the stride cannot be bored -- a partially legal
+	## stride is not a legal move.
+	var out: Array[Vector3i] = []
+	for offset in range(1, run + 1):
+		var band := current.y + roundi(lerpf(0.0, float(rise),
+			float(offset) / float(run)))
+		var cell := Vector3i(current.x + direction.x * offset, band,
+			current.z + direction.y * offset)
+		if not _slot_is_borable(massif, excavation, cell):
+			return [] as Array[Vector3i]
+		out.append(cell)
+	return out
 
 
 static func _slot_is_borable(massif: WarrenMassif,
@@ -317,68 +375,101 @@ static func _slot_is_borable(massif: WarrenMassif,
 	return true
 
 
-static func _move_score(world_seed: int, attempt: int, step: int, target: int,
-		style: Dictionary, current: Vector3i, destination: Vector3i,
-		direction: Vector2i, current_direction: Vector2i, straight_run: int,
-		roofed: int, massif: WarrenMassif, excavation: WarrenExcavation,
-		move_index: int) -> float:
-	var progress := float(step) / float(maxi(1, target - 1))
+static func _move_score(world_seed: int, attempt: int, move_index: int,
+		target: int, style: Dictionary, current: Vector3i,
+		stride: Array[Vector3i], direction: Vector2i,
+		current_direction: Vector2i, straight_run: int, roofed: int,
+		massif: WarrenMassif, excavation: WarrenExcavation,
+		route_set: Dictionary, action_index: int) -> float:
+	## Scored per MOVE, not per cell: a stair spends two of the route's cells
+	## and a ramp three, so the terms that describe where the street ends up
+	## are read at the endpoint while the terms that describe what it is like
+	## to walk along it are averaged over the stride. Without that split a
+	## three-cell ramp would collect three cells' worth of enclosure reward
+	## and outbid a stair that reaches the same band for one cell less.
+	var run := stride.size()
+	var endpoint := stride[run - 1]
+	var travelled := excavation.route.size() + run
+	var progress := minf(1.0, float(travelled) / float(maxi(1, target - 1)))
 	var portal_radius: float = style["portal_radius"]
 	var radius_rush: float = style["radius_rush"]
 	var phase: float = style["phase"]
 	var cycles: float = style["cycles"]
 
-	var radius := Vector2(float(destination.x), float(destination.z)).length()
+	var radius := Vector2(float(endpoint.x), float(endpoint.z)).length()
 	var target_radius := lerpf(portal_radius, INNER_RADIUS_CELLS,
 		minf(1.0, progress * radius_rush))
 	var score := absf(radius - target_radius) * WEIGHT_RADIUS
 
-	var achieved := float(roofed) / float(maxi(1, step))
+	var achieved := float(roofed) / float(maxi(1, excavation.route.size()))
 	var balance := clampf(achieved - TARGET_COVERED_RATIO, -1.0, 1.0)
 	var desired_depth := maxi(0, roundi(DEPTH_MID
 		+ DEPTH_SWING * sin(progress * TAU * cycles + phase)
 		- balance * BALANCE_PULL))
-	score += absf(float(_depth_of(massif, destination) - desired_depth)) \
-		* WEIGHT_DEPTH
-
-	var flanks := _flank_count(massif, excavation, destination)
-	score -= float(flanks) * WEIGHT_FLANK
-	if flanks < 1:
-		score += PENALTY_UNFLANKED
-	var walls := _wall_count(massif, excavation, destination)
-	score -= float(walls) * WEIGHT_WALL
-	if walls < 1:
-		score += PENALTY_UNWALLED
+	var depth_error := 0.0
+	var flanks := 0
+	var walls := 0
+	var unflanked := 0
+	var unwalled := 0
+	var exposed := false
+	var folded := false
+	for cell: Vector3i in stride:
+		depth_error += absf(float(_depth_of(massif, cell) - desired_depth))
+		var cell_flanks := _flank_count(massif, excavation, cell)
+		var cell_walls := _wall_count(massif, excavation, cell)
+		flanks += cell_flanks
+		walls += cell_walls
+		unflanked += int(cell_flanks < 1)
+		unwalled += int(cell_walls < 1)
+		exposed = exposed or _opens_to_exterior(massif, cell)
+		folded = folded or _folds_onto_route(route_set, current, cell)
+	var span := float(run)
+	score += depth_error / span * WEIGHT_DEPTH
+	score -= float(flanks) / span * WEIGHT_FLANK
+	score -= float(walls) / span * WEIGHT_WALL
+	score += float(unflanked) * PENALTY_UNFLANKED
+	score += float(unwalled) * PENALTY_UNWALLED
 
 	if current_direction != Vector2i.ZERO:
 		if direction == -current_direction:
 			score += PENALTY_REVERSE
 		elif direction == current_direction:
-			score += float(maxi(0, straight_run - 1)) * PENALTY_STRAIGHT
-			if straight_run >= MAX_STRAIGHT_RUN:
+			score += float(maxi(0, straight_run + run - 1)) * PENALTY_STRAIGHT
+			if straight_run + run > MAX_STRAIGHT_RUN:
 				score += PENALTY_STRAIGHT_CAP
 		else:
 			score -= BONUS_TURN
-	score -= float(destination.y - current.y) * BONUS_RISE
+	# Climb is now rationed: a band costs two route cells at best, and the
+	# span gate wants eight of them out of a 22-26 cell budget. Reward the
+	# rise and charge for the cells it took, or the search spends its budget
+	# on level cells and lands short.
+	score -= float(endpoint.y - current.y) * BONUS_RISE
+	score += float(run) * COST_PER_STRIDE_CELL
 
 	# A second mouth is allowed but never sought: only the last stretch of the
 	# walk may pay its way back out to daylight.
-	if _opens_to_exterior(massif, destination) and progress < 0.85:
+	if exposed and progress < 0.85:
 		score += PENALTY_EXTRA_PORTAL
 	# A cell that lands 4-adjacent to an earlier cell at the same floor band
 	# widens the street into a plaza when the two lanes are materialised. An
 	# over/under crossing is the point of a warren; a fold is not.
-	for prior: Vector3i in excavation.route:
-		if prior.y == destination.y \
-				and absi(prior.x - destination.x) \
-					+ absi(prior.z - destination.z) == 1 \
-				and prior != current:
-			score += PENALTY_SAME_DATUM_FOLD
-			break
+	if folded:
+		score += PENALTY_SAME_DATUM_FOLD
 
-	var tie := posmod(_hash(world_seed, attempt, step * 31 + move_index,
-		destination.y * 131 + destination.x * 17 + destination.z), 997)
+	var tie := posmod(_hash(world_seed, attempt,
+		move_index * 31 + action_index,
+		endpoint.y * 131 + endpoint.x * 17 + endpoint.z), 997)
 	return score + float(tie) * 0.05
+
+
+static func _folds_onto_route(route_set: Dictionary, current: Vector3i,
+		cell: Vector3i) -> bool:
+	for direction: Vector2i in DIRECTIONS:
+		var neighbour := Vector3i(cell.x + direction.x, cell.y,
+			cell.z + direction.y)
+		if neighbour != current and route_set.has(neighbour):
+			return true
+	return false
 
 
 static func _depth_of(massif: WarrenMassif, cell: Vector3i) -> int:
@@ -439,7 +530,7 @@ static func _candidate_score(excavation: WarrenExcavation,
 		run = run + 1 if direction == previous else 1
 		previous = direction
 		straightest = maxi(straightest, run)
-	return -float(excavation.route_span_bands()) * 90.0 \
+	return -float(excavation.route_span_bands()) * 200.0 \
 		- float(walled) / float(excavation.route.size()) * 500.0 \
 		- float(excavation.transitions.size()) * 12.0 \
 		+ absf(excavation.covered_ratio() - TARGET_COVERED_RATIO) \
