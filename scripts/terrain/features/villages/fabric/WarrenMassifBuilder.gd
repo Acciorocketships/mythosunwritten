@@ -14,10 +14,23 @@ const MIN_COLUMN_BANDS := 2
 # just inside the MIN_COLUMN_BANDS cutoff barely changes in raw height over
 # many cells; a narrow jitter (e.g. +/-1) leaves that ring's pre-quantisation
 # value constant across a wide arc and produces >6-cell plateaus. Widened to
-# +/-8 empirically clears seeds 1-3 and holds a >99% pass rate over 1000
-# probe seeds (see task-1-report.md) without touching the core/level gates,
-# which keep wide margin (observed core 16-22, levels 15-20) at this span.
+# +/-8 to break those rings up (see task-1-report.md for the seed sweep).
 const TERRACE_JITTER_SPAN := 17
+# IMPORTANT: existence (whether a column is in the massif at all) is decided
+# from the smooth pre-jitter `raw` value, never from the jittered terrace.
+# An earlier version gated existence on the jittered value directly, which
+# tied column presence to the same per-cell noise breaking up plateaus and
+# fractured the mass into 30-60 disconnected islands (largest as small as
+# ~75% of the columns) -- the opposite of "solid". Because `raw` is monotonic
+# along every ray from the centre (the angular warp only rescales radius, it
+# never makes height increase outward), thresholding on it alone yields one
+# simply-connected, hole-free footprint regardless of jitter magnitude.
+# TERRACE_UNDERSHOOT_FOLD then wraps (never clamps) any jittered terrace that
+# would otherwise dip below MIN_COLUMN_BANDS back into a small, still-varied
+# band above it -- clamping every undershoot to one fixed floor recreates a
+# giant same-height ring around the whole boundary (worst case seen: 48
+# cells); wrapping keeps the per-cell variation that avoids that.
+const TERRACE_UNDERSHOOT_FOLD := 16
 
 static var last_failure := ""
 
@@ -42,11 +55,14 @@ static func build(world_seed: int,
 			var gaussian := exp(-pow(warped / float(RADIUS_CELLS) * 1.9,
 				2.0))
 			var raw := float(core) * gaussian
+			if raw < float(MIN_COLUMN_BANDS):
+				continue
 			var jitter := posmod(_hash(world_seed, 13, x, z),
 				TERRACE_JITTER_SPAN) - TERRACE_JITTER_SPAN / 2
 			var terrace := _quantise_terrace(raw, world_seed, x, z) + jitter
 			if terrace < MIN_COLUMN_BANDS:
-				continue
+				terrace = MIN_COLUMN_BANDS + posmod(
+					terrace - MIN_COLUMN_BANDS, TERRACE_UNDERSHOOT_FOLD)
 			var base := int(ground_bands.get(column, 0))
 			massif.columns[column] = {
 				"base": base,
