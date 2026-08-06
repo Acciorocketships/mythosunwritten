@@ -1637,9 +1637,11 @@ static func _corner_wrap_outcrop_recipe(recipe_id: StringName,
 	## cells, two 3 m window faces, two 1.5 m cheeks, a symmetric corner post,
 	## and the gallery-deck cap.
 	assert(hand == -1 or hand == 1)
+	# Not a capped_outcropping: review round 5 showed the bare deck cap reads as
+	# an unfinished open frame from above, so the oriel owns a compact roof.
 	var role_tags: Array[StringName] = [
 		&"room", &"outcropping", &"overhead_occupied", &"corner_wrap_bay",
-		&"capped_outcropping", &"wood_walled_bay", &"corner_jetty",
+		&"wood_walled_bay", &"corner_jetty",
 	]
 	var recipe_value := FabricRecipe.new(recipe_id, role_tags, 1)
 	var wall := _wood_window(theme)
@@ -1666,19 +1668,31 @@ static func _corner_wrap_outcrop_recipe(recipe_id: StringName,
 			Vector3i.BACK, 0.75))
 	recipe_value.add_placement(&"post.outer", WALL_WOOD_CORNER_S,
 		_pose(Vector3(sign_x * 1.95, 0.0, -1.95), 0.0))
-	recipe_value.add_placement(&"cap", FLOOR,
-		modules.walk_aligned_transform(FLOOR,
-			_pose(Vector3(square_centre_x, 3.0, -0.75), 0.0), 3.0))
+	# A closed compact gable finishes the turret; the former flat deck cap read
+	# as a bare tabletop over an open frame from every above vantage. The 3.66 m
+	# eave span overhangs the 3 m square like the projection bays.
+	var roof_asset := COMPACT_ROOF_03 if theme == &"orange" else COMPACT_ROOF_06
+	recipe_value.add_placement(&"roof", roof_asset,
+		_pose(Vector3(square_centre_x, 3.0, -0.75), 0.0))
 	recipe_value.add_placement(&"brace.north", BRACE,
 		_pose(Vector3(square_centre_x, -0.55, -1.8), 0.0))
 	recipe_value.add_placement(&"brace.outer", BRACE,
 		_pose(Vector3(sign_x * 1.8, -0.55, -0.75), sign_x * PI * 0.5))
+	# Solid cells stay the two-band room body: extending them to four bands for
+	# the roof rejected the pinned production seed 4242 (embedding shrank).
+	# The roof mass is declared through occluder_cells below instead.
 	recipe_value.solid_cells = [
 		Vector3i(0, 0, -1), Vector3i(0, 1, -1),
 		Vector3i(hand, 0, -1), Vector3i(hand, 1, -1),
 		Vector3i(hand, 0, 0), Vector3i(hand, 1, 0),
 	]
+	# The compact gable extends two visual bands above the body; declare that
+	# mass for occlusion honesty without shrinking the embeddable volume.
 	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
+	for column: Vector3i in [Vector3i(0, 0, -1), Vector3i(hand, 0, -1),
+			Vector3i(hand, 0, 0)]:
+		recipe_value.occluder_cells.append(column + Vector3i(0, 2, 0))
+		recipe_value.occluder_cells.append(column + Vector3i(0, 3, 0))
 	recipe_value.add_socket(&"bearing.back", FabricRecipe.SocketKind.BEARING,
 		Vector3i(0, 0, -1), Vector3i(0, 0, -1))
 	recipe_value.add_socket(&"room.back", FabricRecipe.SocketKind.ROOM,

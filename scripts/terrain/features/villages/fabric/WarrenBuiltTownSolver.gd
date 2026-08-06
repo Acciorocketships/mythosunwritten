@@ -7,7 +7,7 @@ extends RefCounted
 ## Streets should pass beneath occupied links often enough that a covered
 ## alley is the norm; five bounded bridges over a 10-16 building town stays
 ## far from a canopy field while doubling tunnel opportunities.
-const MAX_SKYWALKS := 5
+const MAX_SKYWALKS := 7
 ## Complete source-pack houses are admitted only where an exact unbounded
 ## public-realm obligation supplies their exterior threshold. They therefore
 ## tighten a street wall instead of becoming detached outskirts decoration.

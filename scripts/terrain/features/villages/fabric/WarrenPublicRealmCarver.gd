@@ -239,11 +239,17 @@ static func _move_score(world_seed: int, attempt: int, step_index: int,
 	var column := Vector2i(destination.x, destination.z)
 	var available_relative_height := envelope.top_at(column) \
 		- envelope.ground_at(column) - WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS
+	# Ceiling -3 (was -4) and amplitude 1.6 (was 1.25): review round 5 asked for
+	# routes that genuinely snake UP through the mass; the extra band of ambition
+	# and deeper undulation buy more climb without touching hard gates.
 	var target_relative_y := clampi(roundi(lerpf(0.0,
-		float(maxi(2, envelope.max_height_bands - 4)), progress)
-		+ sin(progress * TAU * 2.0 + phase) * 1.25),
+		float(maxi(2, envelope.max_height_bands - 3)), progress)
+		+ sin(progress * TAU * 2.0 + phase) * 1.6),
 		0, maxi(0, available_relative_height))
 	var relative_y := destination.y - envelope.ground_at(column)
+	# Route-shape weights are corpus-calibrated: 100/90 height weight and
+	# -705/-680 revisit both cost two corpus seeds ("no exact optional-infill
+	# variant"); 82/-650/-180 keeps 6/12 acceptance with the best overpass mix.
 	var score := absf(radius - target_radius) * 105.0 \
 		+ absf(float(relative_y - target_relative_y)) * 82.0
 	var address_side_count := _envelope_address_side_count(destination,
@@ -261,9 +267,9 @@ static func _move_score(world_seed: int, attempt: int, step_index: int,
 		else:
 			score -= 70.0
 	if destination.y != current.y:
-		score -= 45.0 if kind == WarrenVolumeTransition.Kind.RAMP else 0.0
+		score -= 70.0 if kind == WarrenVolumeTransition.Kind.RAMP else 0.0
 	else:
-		score += 35.0 if relative_y != target_relative_y else 0.0
+		score += 55.0 if relative_y != target_relative_y else 0.0
 	var column_key := _column_key(column)
 	if column_heights.has(column_key):
 		for prior_y_value: Variant in column_heights[column_key] as Array:
@@ -271,9 +277,8 @@ static func _move_score(world_seed: int, attempt: int, step_index: int,
 					>= WarrenVolumePlan.HEADROOM_BANDS:
 				# A column the route visits at two separated heights is the seed
 				# of a tunnel: mass fills between the passes and the lower street
-				# runs under it. This is the primary covered-path lever; -780
-				# bought tunnels but cost a corpus seed, so -650 holds the line
-				# between fold pressure and viable envelopes.
+				# runs under it. This is the primary covered-path lever; -780 and
+				# -705 both cost corpus seeds, so -650 stands.
 				score -= 650.0
 				break
 	# A route folded beside itself at the same datum coalesces into a broad slab

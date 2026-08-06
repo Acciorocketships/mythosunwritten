@@ -65,6 +65,37 @@ full transaction. The current four-seed construction slice has unique signatures
 zero unrelated visual-envelope intersections, zero public-air/occupied overlap, and at
 least one occupied skywalk in every seed.
 
+**Known regression (2026-08-06, pinned seed 4242):** The production canary
+test_village_plan (seed 4242, flat frame) fails with "no ranked town survived
+exact construction". Verified pre-existing at commit 7f8bba4 via stash-toggle
+(NOT caused by the round-5 changes). Diagnosis: all three frontier volumes
+produce 15-24 occupied-link motifs, but every motif dies in
+_best_connection_pair's followup gates — chiefly _followup_packing failing to
+reach MIN_PARCELS=10 with the motif seeded (under_capacity 14/15/20, rest
+no-opposing). The empty-best branch now records these counts in
+last_diagnostic["connection"]. Root-cause investigation spun off as its own
+task; suspects are round-4 feasibility predicates (visual compatibility with
+enlarged bay/roof envelopes, tall-construction step-neighbor gate).
+
+**Implementation checkpoint (2026-08-06, round-5 remediation):** Three review
+notes landed. (1) Corner-wrap oriels read from above as open frames with bare
+plank tabletops; they now wear the closed compact gable (theme-mapped 03/06),
+left the capped_outcropping family, and carry a four-band solid envelope like
+the roofed projection bays — pinned by
+test_corner_wrap_bays_are_roofed_turrets. (2) Route-climb and overpass levers
+were calibrated across five 12-seed sweeps: the aggressive settings (height
+weight 100/90, revisit -705/-680, crossover -215/-200) each cost two corpus
+seeds via "no exact optional-infill variant", while TARGET_OVERHEAD_RATIO was
+proven irrelevant to those failures (0.45 and 0.35 sweeps identical); the
+shipping config keeps the 82/-650/-180 route weights, raises MAX_SKYWALKS to
+7, extends the parcelizer overpass reward to a sixth rung, and lifts the
+composition demand to four occupied overpasses — 6/12 corpus acceptance with
+five overpasses across accepted towns (baseline: 5/12, five overpasses, three
+towns with none). (3) Open items recorded: route_y_span plateaus at 4-6 bands
+regardless of weight pressure — genuine snaking ascent needs a structural
+change (route length families or envelope shaping), and overhead ratio remains
+below the 45-65% spec band on most seeds (one seed reached 0.64).
+
 **Implementation checkpoint (2026-08-05, walkway colour unification):** Review
 captures showed some walkways as normal wood while stair/ramp transitions and
 their side guards read essentially white. Instance-colour falsification renders

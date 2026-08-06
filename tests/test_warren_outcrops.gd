@@ -152,6 +152,29 @@ func test_capped_jetties_stay_roofless_and_capped() -> void:
 			"a capped jetty closes its top with the reviewed deck module")
 
 
+func test_corner_wrap_bays_are_roofed_turrets() -> void:
+	## A corner oriel seen from above must read as a finished roofed turret,
+	## never as an open frame with a bare plank tabletop (review round 5).
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	var checked := 0
+	for recipe_value: FabricRecipe in program.recipes():
+		if not recipe_value.has_tag(&"corner_wrap_bay"):
+			continue
+		checked += 1
+		var has_compact_roof := false
+		for placement: Dictionary in recipe_value.placements:
+			var asset_text := String(placement.asset_id)
+			assert_false(StringName(placement.id) == &"cap",
+				"corner oriel %s still carries a bare deck cap" \
+				% recipe_value.recipe_id)
+			has_compact_roof = has_compact_roof \
+				or asset_text.contains("roof.compact")
+		assert_true(has_compact_roof,
+			"corner oriel %s owns no compact roof" % recipe_value.recipe_id)
+	assert_gt(checked, 0, "no corner-wrap recipes registered")
+
+
 func test_a_stack_facade_carries_at_most_one_outcropping() -> void:
 	## Bays on different faces of one column articulate it; two bays on the
 	## SAME face of one column read as a stamped repeat.

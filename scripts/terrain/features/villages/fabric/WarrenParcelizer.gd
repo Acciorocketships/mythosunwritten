@@ -361,7 +361,8 @@ static func _solve(source: WarrenVolumePlan,
 					else 4000.0 if selected_overpass_count == 1 else 2600.0 \
 					if selected_overpass_count == 2 else 1600.0 \
 					if selected_overpass_count == 3 else 900.0 \
-					if selected_overpass_count == 4 else 0.0
+					if selected_overpass_count == 4 else 600.0 \
+					if selected_overpass_count == 5 else 0.0
 			if selected_half_level_pair_count == 0 \
 					and _forms_half_level_pair(parcel, selected):
 				dynamic_score -= 620.0
@@ -973,6 +974,8 @@ static func _best_connection_pair(source: WarrenVolumePlan,
 	if motifs.size() > CONNECTION_PAIR_FRONTIER:
 		motifs.resize(CONNECTION_PAIR_FRONTIER)
 	var best: Dictionary = {}
+	var no_opposing_motif_count := 0
+	var under_capacity_motif_count := 0
 	var best_packing_capacity := -1
 	var best_unstepped_tall := 2147483647
 	var best_ground_primary_two_sided := -1
@@ -1001,6 +1004,7 @@ static func _best_connection_pair(source: WarrenVolumePlan,
 			pair_compatibility, pair_selected, reservation,
 			reservation_compatibility)
 		if opposing_candidates.is_empty():
+			no_opposing_motif_count += 1
 			continue
 		var motif_selected := pair_selected.duplicate()
 		for opposing_value: Dictionary in opposing_candidates:
@@ -1045,6 +1049,7 @@ static func _best_connection_pair(source: WarrenVolumePlan,
 			cover_capacity_maximum.get(cover_count, 0)), capacity)
 		var local_score := float(motif.local_score)
 		if packing_capacity < MIN_PARCELS:
+			under_capacity_motif_count += 1
 			continue
 		# The dry skyline count is only a proxy: the exact vertical solver may repair
 		# it after all height variants are visible. Preserve the physical contact
@@ -1069,6 +1074,17 @@ static func _best_connection_pair(source: WarrenVolumePlan,
 			best_cover_count = cover_count
 			best_local_score = local_score
 	if best.is_empty():
+		# Motifs existed but every one died in the followup gates; without this
+		# record the failure reads as "no pair" when pairs were plentiful.
+		last_diagnostic["connection"] = {
+			"considered_pairs": considered_pair_count,
+			"reservation_pairs": reservation_pair_count,
+			"motifs": motifs.size(),
+			"no_opposing_motif_count": no_opposing_motif_count,
+			"under_capacity_motif_count": under_capacity_motif_count,
+			"enumeration_ms": enumeration_finished - started,
+			"capacity_ms": Time.get_ticks_msec() - enumeration_finished,
+		}
 		return {}
 	last_diagnostic["connection"] = {
 		"considered_pairs": considered_pair_count,
@@ -1528,7 +1544,7 @@ static func _packing_composition_penalty(composition: Dictionary) -> int:
 		+ maxi(0, 7 - int(composition.largest_contact_component_count)) \
 			* 160000 \
 		+ maxi(0, int(composition.contact_component_count) - 3) * 20000 \
-		+ maxi(0, 3 - int(composition.occupied_overpass_count)) * 30000 \
+		+ maxi(0, 4 - int(composition.occupied_overpass_count)) * 30000 \
 		+ maxi(0, 2 - int(composition.ground_primary_two_sided_count)) * 80000 \
 		+ maxi(0, 4 - int(composition.ground_primary_bounded_count)) * 30000 \
 		+ int(composition.repeated_row_pair_count) * 100000 \
