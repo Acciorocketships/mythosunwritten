@@ -1,36 +1,31 @@
 class_name WarrenMassifBuilder
 extends RefCounted
 
-## Builds the terraced solid massif. Heights come from a warped Gaussian
-## quantised into 1-2 band terrace risers, with radial spur/notch warping so
-## silhouettes vary per seed. Gates reject domes, low cores, and plateaus.
+## Builds the terraced solid massif. Existence is a warped Gaussian
+## threshold (unchanged shape as the raw radial bump, so the footprint stays
+## one simply-connected, hole-free blob -- see WarrenMassif.seal()). Terrace
+## LEVELS are assigned by a capacity-limited flood fill outward from the
+## peak: each terrace "district" is grown one column at a time up to
+## MAX_PLATEAU_CELLS, and every new district's level is chosen within
+## MAX_NEIGHBOR_STEP_BANDS of every already-assigned neighbour. This
+## guarantees both the plateau gate and the neighbour-step gate by
+## construction rather than by hoping randomised per-cell noise happens to
+## satisfy them -- per-cell/per-district noise wide enough to break up the
+## Gaussian's flat outer tail (see fix-round-1 in task-1-report.md) either
+## fractured the footprint (when it also gated existence) or produced
+## cliffs of up to 20 bands between neighbours (when it only touched level).
 const RADIUS_CELLS := 12
 const MIN_CORE_BANDS := 16
 const MAX_CORE_BANDS := 20
 const MIN_TERRACE_LEVELS := 5
 const MAX_PLATEAU_CELLS := 6
 const MIN_COLUMN_BANDS := 2
-# A Gaussian's outer tail is asymptotically flat by construction, so the ring
-# just inside the MIN_COLUMN_BANDS cutoff barely changes in raw height over
-# many cells; a narrow jitter (e.g. +/-1) leaves that ring's pre-quantisation
-# value constant across a wide arc and produces >6-cell plateaus. Widened to
-# +/-8 to break those rings up (see task-1-report.md for the seed sweep).
-const TERRACE_JITTER_SPAN := 17
-# IMPORTANT: existence (whether a column is in the massif at all) is decided
-# from the smooth pre-jitter `raw` value, never from the jittered terrace.
-# An earlier version gated existence on the jittered value directly, which
-# tied column presence to the same per-cell noise breaking up plateaus and
-# fractured the mass into 30-60 disconnected islands (largest as small as
-# ~75% of the columns) -- the opposite of "solid". Because `raw` is monotonic
-# along every ray from the centre (the angular warp only rescales radius, it
-# never makes height increase outward), thresholding on it alone yields one
-# simply-connected, hole-free footprint regardless of jitter magnitude.
-# TERRACE_UNDERSHOOT_FOLD then wraps (never clamps) any jittered terrace that
-# would otherwise dip below MIN_COLUMN_BANDS back into a small, still-varied
-# band above it -- clamping every undershoot to one fixed floor recreates a
-# giant same-height ring around the whole boundary (worst case seen: 48
-# cells); wrapping keeps the per-cell variation that avoids that.
-const TERRACE_UNDERSHOOT_FOLD := 16
+## A neighbouring pair of existing columns may step by at most this many
+## bands. Riser steps are 1-2 bands, so this comfortably allows a normal
+## riser, an occasional doubled riser, or a fresh district settling one step
+## away from two different neighbours -- it forbids the multi-riser cliffs
+## per-cell noise produced.
+const MAX_NEIGHBOR_STEP_BANDS := 4
 
 static var last_failure := ""
 
@@ -45,9 +40,15 @@ static func build(world_seed: int,
 		/ 1000.0 * TAU
 	var warp_strength := 0.22 + float(posmod(_hash(world_seed, 11, 0, 0),
 		100)) / 100.0 * 0.18
+
+	# Pass 1: existence only, from the smooth field. `raw` is monotonic along
+	# every ray from the centre (the angular warp only rescales the radius
+	# fed into the Gaussian; it never makes height increase outward), so
+	# thresholding it alone yields one star-shaped, simply-connected,
+	# hole-free footprint regardless of how terrace levels are later chosen.
+	var raw_at: Dictionary = {}
 	for z in range(-RADIUS_CELLS, RADIUS_CELLS + 1):
 		for x in range(-RADIUS_CELLS, RADIUS_CELLS + 1):
-			var column := Vector2i(x, z)
 			var radius := Vector2(float(x), float(z)).length()
 			var angle := atan2(float(z), float(x))
 			var warped := radius * (1.0 + warp_strength \
@@ -57,18 +58,19 @@ static func build(world_seed: int,
 			var raw := float(core) * gaussian
 			if raw < float(MIN_COLUMN_BANDS):
 				continue
-			var jitter := posmod(_hash(world_seed, 13, x, z),
-				TERRACE_JITTER_SPAN) - TERRACE_JITTER_SPAN / 2
-			var terrace := _quantise_terrace(raw, world_seed, x, z) + jitter
-			if terrace < MIN_COLUMN_BANDS:
-				terrace = MIN_COLUMN_BANDS + posmod(
-					terrace - MIN_COLUMN_BANDS, TERRACE_UNDERSHOOT_FOLD)
-			var base := int(ground_bands.get(column, 0))
-			massif.columns[column] = {
-				"base": base,
-				"top": base + terrace,
-				"terrace": terrace,
-			}
+			raw_at[Vector2i(x, z)] = raw
+
+	# Pass 2: capacity-limited flood fill assigns the actual terrace bands.
+	var terrace_at := _assign_terraces(raw_at, world_seed)
+
+	for column: Vector2i in raw_at:
+		var base := int(ground_bands.get(column, 0))
+		var terrace: int = terrace_at[column]
+		massif.columns[column] = {
+			"base": base,
+			"top": base + terrace,
+			"terrace": terrace,
+		}
 	massif.core_top_bands = 0
 	for column: Vector2i in massif.columns:
 		massif.core_top_bands = maxi(massif.core_top_bands,
@@ -85,18 +87,195 @@ static func build(world_seed: int,
 		last_failure = "plateau of %d cells exceeds %d" % [
 			massif.widest_plateau_cells(), MAX_PLATEAU_CELLS]
 		return null
+	var worst_step := _worst_neighbor_step(massif)
+	if worst_step > MAX_NEIGHBOR_STEP_BANDS:
+		last_failure = "neighbour step of %d bands exceeds %d" % [
+			worst_step, MAX_NEIGHBOR_STEP_BANDS]
+		return null
 	if not massif.seal():
-		last_failure = "empty massif"
+		last_failure = massif.last_rejection
 		return null
 	return massif
 
 
-static func _quantise_terrace(raw_bands: float, world_seed: int, x: int,
-		z: int) -> int:
-	## Snap to 1-2 band risers; the riser rhythm itself is seed-varied so
-	## terraces do not repeat one global step size.
-	var riser := 1 + posmod(_hash(world_seed, 17, x / 4, z / 4), 2)
-	return int(floorf(raw_bands / float(riser))) * riser
+static func _worst_neighbor_step(massif: WarrenMassif) -> int:
+	var worst := 0
+	for column: Vector2i in massif.columns:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+			var neighbor := column + direction
+			if not massif.has_column(neighbor):
+				continue
+			worst = maxi(worst, absi(massif.top_at(column)
+				- massif.top_at(neighbor)))
+	return worst
+
+
+static func _assign_terraces(raw_at: Dictionary, world_seed: int) -> Dictionary:
+	## Processes columns from the peak outward (highest raw first, hash
+	## tie-broken for determinism). Each column either joins an adjacent
+	## district whose resulting size stays within MAX_PLATEAU_CELLS and
+	## whose level is within MAX_NEIGHBOR_STEP_BANDS of every other
+	## neighbouring district, or starts a new district one riser away from
+	## its neighbours. Districts are tracked with a union-find so that two
+	## districts discovered to share a level (e.g. a later column bridges
+	## them) are merged immediately -- capping each union-find set, not each
+	## column group in isolation, is what actually keeps same-level
+	## connected regions small; capping in isolation lets two same-level
+	## districts merge past the cap the moment a column touches both.
+	var order: Array = raw_at.keys()
+	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		var ra: float = raw_at[a]
+		var rb: float = raw_at[b]
+		if not is_equal_approx(ra, rb):
+			return ra > rb
+		return _hash(world_seed, 301, a.x, a.y) < _hash(world_seed, 301, b.x, b.y))
+
+	var dsu_parent: Dictionary = {}
+	var dsu_size: Dictionary = {}
+	var dsu_level: Dictionary = {}
+	var next_id := 0
+	var region_of: Dictionary = {}
+
+	for cell: Vector2i in order:
+		var roots_by_level: Dictionary = {}
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+				Vector2i.UP, Vector2i.DOWN]:
+			var n: Vector2i = cell + direction
+			if not region_of.has(n):
+				continue
+			var root := _dsu_find(dsu_parent, int(region_of[n]))
+			var lvl := int(dsu_level[root])
+			if not roots_by_level.has(lvl):
+				roots_by_level[lvl] = []
+			var arr: Array = roots_by_level[lvl]
+			if not arr.has(root):
+				arr.append(root)
+		var neighbor_levels: Array = roots_by_level.keys()
+
+		var chosen_level: Variant = null
+		for lvl_key: Variant in roots_by_level.keys():
+			var lvl: int = lvl_key
+			var roots: Array = roots_by_level[lvl]
+			var total_size := 1
+			for r: int in roots:
+				total_size += int(dsu_size[r])
+			if total_size > MAX_PLATEAU_CELLS:
+				continue
+			var ok := true
+			for other_key: Variant in neighbor_levels:
+				var other: int = other_key
+				if other == lvl:
+					continue
+				if absi(lvl - other) > MAX_NEIGHBOR_STEP_BANDS:
+					ok = false
+					break
+			if ok:
+				chosen_level = lvl
+				break
+
+		if chosen_level == null:
+			chosen_level = _new_district_level(cell, raw_at, world_seed,
+				neighbor_levels)
+
+		var cl: int = chosen_level
+		var cur_root: int
+		if roots_by_level.has(cl):
+			var roots: Array = roots_by_level[cl]
+			cur_root = roots[0]
+			for i in range(1, roots.size()):
+				cur_root = _dsu_union(dsu_parent, dsu_size, cur_root, roots[i])
+			cur_root = _dsu_find(dsu_parent, cur_root)
+			dsu_size[cur_root] = int(dsu_size[cur_root]) + 1
+		else:
+			var rid := next_id
+			next_id += 1
+			dsu_parent[rid] = rid
+			dsu_size[rid] = 1
+			dsu_level[rid] = cl
+			cur_root = rid
+
+		region_of[cell] = cur_root
+
+	var level_of: Dictionary = {}
+	for cell: Vector2i in region_of:
+		level_of[cell] = int(dsu_level[_dsu_find(dsu_parent, int(region_of[cell]))])
+	return level_of
+
+
+static func _new_district_level(cell: Vector2i, raw_at: Dictionary,
+		world_seed: int, neighbor_levels: Array) -> int:
+	## Starts a fresh district a riser away from its neighbours. The riser
+	## rhythm (1 or 2 bands) is seed-and-cell-varied so terraces do not
+	## repeat one global step size.
+	var riser := 1 + posmod(_hash(world_seed, 17, cell.x, cell.y), 2)
+	var raw_here: float = raw_at[cell]
+	var lvl := int(floor(raw_here / float(riser))) * riser
+	if neighbor_levels.is_empty():
+		return lvl
+	var lo := -2147483648
+	var hi := 2147483647
+	for other_key: Variant in neighbor_levels:
+		var other: int = other_key
+		lo = maxi(lo, other - MAX_NEIGHBOR_STEP_BANDS)
+		hi = mini(hi, other + MAX_NEIGHBOR_STEP_BANDS)
+	if lo > hi:
+		# Two already-assigned neighbours are themselves more than
+		# 2*MAX_NEIGHBOR_STEP_BANDS apart (rare: two flood-fill fronts
+		# meeting on opposite sides of a warped lobe with different
+		# accumulated step counts). No single level satisfies both; centre
+		# on whichever is closest to minimise the unavoidable violation
+		# rather than leaving the raw value unclamped against neither.
+		var closest: int = int(neighbor_levels[0])
+		for other_key2: Variant in neighbor_levels:
+			var other2: int = other_key2
+			if absi(lvl - other2) < absi(lvl - closest):
+				closest = other2
+		lo = closest - MAX_NEIGHBOR_STEP_BANDS
+		hi = closest + MAX_NEIGHBOR_STEP_BANDS
+	lvl = clampi(lvl, lo, hi)
+	# Nudge away from exactly matching a neighbour's level: an exact match
+	# here would silently bridge two districts before the union-find has a
+	# chance to size-check the merge.
+	var attempts := 0
+	while neighbor_levels.has(lvl) and attempts < 8:
+		if lvl + riser <= hi and not neighbor_levels.has(lvl + riser):
+			lvl += riser
+		elif lvl - riser >= lo and not neighbor_levels.has(lvl - riser):
+			lvl -= riser
+		elif lvl + riser <= hi:
+			lvl += riser
+		elif lvl - riser >= lo:
+			lvl -= riser
+		else:
+			break
+		attempts += 1
+	return lvl
+
+
+static func _dsu_find(parent: Dictionary, rid: int) -> int:
+	var root := rid
+	while int(parent[root]) != root:
+		root = int(parent[root])
+	var cur := rid
+	while int(parent[cur]) != root:
+		var next_cur: int = int(parent[cur])
+		parent[cur] = root
+		cur = next_cur
+	return root
+
+
+static func _dsu_union(parent: Dictionary, size: Dictionary, a: int, b: int) -> int:
+	var ra := _dsu_find(parent, a)
+	var rb := _dsu_find(parent, b)
+	if ra == rb:
+		return ra
+	if int(size[ra]) < int(size[rb]):
+		var tmp := ra
+		ra = rb
+		rb = tmp
+	parent[rb] = ra
+	size[ra] = int(size[ra]) + int(size[rb])
+	return ra
 
 
 static func _hash(world_seed: int, salt: int, x: int, z: int) -> int:
