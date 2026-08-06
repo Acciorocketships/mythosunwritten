@@ -17,9 +17,39 @@ extends RefCounted
 ## route both climb 8+ bands and surface often enough to stay inside the
 ## 0.55-0.70 covered band instead of burying itself the moment it heads in.
 const HEADROOM_BANDS := WarrenExcavation.HEADROOM_BANDS
-const MIN_ROUTE_CELLS := 22
-const MAX_ROUTE_CELLS := 26
+## Route length. The 22-26 family was inherited from the route-first carver,
+## which never had to spend cells at grade. A mass-first route now walks a
+## ground street before it climbs, and a band costs two cells on a stair, so
+## MIN_GRADE_CELLS + 2 * MIN_SPAN_BANDS is already 24 before a single turn.
+## Widened to 30-36, which the 17-20 band massif has the vertical room for
+## and the search reaches without thinning supply (measured: acceptance is
+## unchanged either side of the change).
+const MIN_ROUTE_CELLS := 30
+const MAX_ROUTE_CELLS := 36
 const MIN_SPAN_BANDS := 8
+## Walk cells sitting exactly on their own column's base band. The excavated
+## route is the itinerary WarrenGroundArcadeSolver roots its two ground market
+## branches from, and _find_path only ever considers a root where
+## `root.y == envelope.ground_at(column)` -- which the adapter maps to the
+## massif's base band. A route that touches grade only at its portal offers
+## exactly one root, so no second branch can exist and the arcade stage fails
+## by construction rather than by luck.
+##
+## 9 is a measured optimum, not a minimum: over 38 buildable massifs the
+## grade-cell/spread pair (9, 7) clears the real arcade solver on 18 seeds,
+## against 18 at (9, 8), 15 at (8, 7) and 12 at (11, 9). Demanding a longer
+## ground street spends route budget the climb needs and costs more seeds
+## than the extra root separation wins back.
+const MIN_GRADE_CELLS := 9
+## Manhattan spread required between the two furthest-apart grade cells.
+## MIN_BRANCH_SEPARATION_CELLS is 4, but the arcade solver measures that
+## separation against every cell of the ALREADY CARVED first branch, not
+## against its root -- and that branch is 7-8 cells long and free to wander
+## toward the second root. A spread of 4 is therefore necessary and nowhere
+## near sufficient; 9 is what actually leaves a viable separated root once
+## the first branch has spent itself, measured end to end against the real
+## solver rather than reasoned about.
+const MIN_GRADE_SPREAD_CELLS := 7
 const MIN_COVERED_RATIO := 0.55
 const MAX_COVERED_RATIO := 0.70
 const MIN_PORTALS := 1
@@ -105,6 +135,13 @@ const BONUS_RISE := 260.0
 ## stair reaching the same band score alike, and the corpus spends its 22-26
 ## cells before the span gate is met.
 const COST_PER_STRIDE_CELL := 55.0
+## Pull that makes the ground street travel outward from the mouth rather
+## than circle near it. Only active while the grade run is being laid.
+const WEIGHT_GRADE_TRAVEL := 240.0
+## Reward for the climbing route passing over a cell it already walked at
+## least a full street height below -- the over/under crossing the ground
+## arcade stage counts as MIN_UPPER_ROUTE_CROSSOVERS.
+const BONUS_CROSSOVER := 120.0
 const PENALTY_EXTRA_PORTAL := 600.0
 const PENALTY_SAME_DATUM_FOLD := 400.0
 ## Cover rhythm: desired depth is DEPTH_MID + DEPTH_SWING * sin(...), floored
@@ -112,11 +149,11 @@ const PENALTY_SAME_DATUM_FOLD := 400.0
 ## spends below it is the fraction of the route that surfaces, so the pair
 ## sets the open/roofed mix directly instead of hoping the terrain supplies
 ## one.
-const DEPTH_MID := 0.8
+const DEPTH_MID := 0.0
 const DEPTH_SWING := 2.6
 ## How hard the running covered ratio pulls the desired depth back toward
 ## TARGET_COVERED_RATIO, in bands per unit of ratio error.
-const BALANCE_PULL := 5.0
+const BALANCE_PULL := 8.0
 ## How hard survivor selection pulls the finished ratio to the middle of the
 ## acceptance band, against the span and both-sides-walled terms it competes
 ## with. At 700 the span term simply outbid it and every seed settled within
@@ -220,6 +257,13 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 	if excavation.route_span_bands() < MIN_SPAN_BANDS:
 		_reject(rejected, "span")
 		return null
+	var grade := _grade_cells(massif, excavation)
+	if grade.size() < MIN_GRADE_CELLS:
+		_reject(rejected, "too little at grade")
+		return null
+	if _grade_spread(grade) < MIN_GRADE_SPREAD_CELLS:
+		_reject(rejected, "grade street too compact")
+		return null
 	if excavation.covered_ratio() < MIN_COVERED_RATIO:
 		_reject(rejected, "too open")
 		return null
@@ -308,8 +352,24 @@ static func _portal_cells(massif: WarrenMassif) -> Array[Vector3i]:
 			if not massif.has_column(column + direction):
 				exposed = true
 				break
-		if exposed:
-			out.append(Vector3i(column.x, base, column.y))
+		if not exposed:
+			continue
+		# A mouth in a thin rim pocket dead-ends the ground street on its
+		# first or second move: every grade neighbour is too short to hold a
+		# slot, and the attempt is spent. Require the mouth to open onto at
+		# least two columns that can themselves host a grade cell, which is
+		# the cheapest available proxy for "there is a street's worth of
+		# ground mass through here".
+		var grade_neighbours := 0
+		for direction: Vector2i in DIRECTIONS:
+			var neighbour := column + direction
+			if massif.has_column(neighbour) \
+					and massif.top_at(neighbour) - massif.base_at(neighbour) \
+						>= HEADROOM_BANDS:
+				grade_neighbours += 1
+		if grade_neighbours < 2:
+			continue
+		out.append(Vector3i(column.x, base, column.y))
 	out.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
 		if a.z != b.z:
 			return a.z < b.z
@@ -331,6 +391,8 @@ static func _style(world_seed: int, attempt: int,
 		"radius_rush": 0.45 + float(posmod(_hash(world_seed, attempt, 11, 0),
 			8)) * 0.07,
 		"portal_radius": Vector2(float(portal.x), float(portal.z)).length(),
+		"portal_x": portal.x,
+		"portal_z": portal.z,
 	}
 
 
@@ -350,9 +412,18 @@ static func _best_move(world_seed: int, attempt: int, move_index: int,
 			var run := int(action["run"])
 			if run > budget:
 				continue
-			var stride := _stride_cells(massif, excavation, current, direction,
-				int(action["rise"]), run)
+			var stride := _stride_cells(massif, excavation, route_set, current,
+				direction, int(action["rise"]), run)
 			if stride.is_empty():
+				continue
+			# The ground street comes first and is not negotiable: until the
+			# route has laid down MIN_GRADE_CELLS cells on the base band, the
+			# only legal moves are ones that stay there. Steering for it with
+			# a score term instead left the grade run at the mercy of the
+			# inward and climbing terms, which is how the route ended up
+			# touching grade exactly twice.
+			if excavation.route.size() < MIN_GRADE_CELLS \
+					and not _stride_is_at_grade(massif, stride):
 				continue
 			var score := _move_score(world_seed, attempt, move_index, target,
 				style, current, stride, int(action["rise"]), direction,
@@ -368,6 +439,40 @@ static func _best_move(world_seed: int, attempt: int, move_index: int,
 					"run": run,
 				}
 	return best
+
+
+static func _is_at_grade(massif: WarrenMassif, cell: Vector3i) -> bool:
+	## Exactly on the column's base band -- the only cells
+	## WarrenGroundArcadeSolver._find_path will accept as a branch root, since
+	## it compares against envelope.ground_at() with no tolerance.
+	return cell.y == massif.base_at(Vector2i(cell.x, cell.z))
+
+
+static func _stride_is_at_grade(massif: WarrenMassif,
+		stride: Array[Vector3i]) -> bool:
+	for cell: Vector3i in stride:
+		if not _is_at_grade(massif, cell):
+			return false
+	return true
+
+
+static func _grade_cells(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	for cell: Vector3i in excavation.route:
+		if _is_at_grade(massif, cell):
+			out.append(cell)
+	return out
+
+
+static func _grade_spread(grade: Array[Vector3i]) -> int:
+	## Manhattan distance between the two furthest-apart grade cells.
+	var widest := 0
+	for i in grade.size():
+		for j in range(i + 1, grade.size()):
+			widest = maxi(widest, absi(grade[i].x - grade[j].x)
+				+ absi(grade[i].z - grade[j].z))
+	return widest
 
 
 static func _surface_band_span(rise: int, run: int, offset: int) -> Vector2i:
@@ -409,14 +514,39 @@ static func _stride_slot_bands(rise: int, run: int, offset: int) -> int:
 	return span.y - span.x + HEADROOM_BANDS
 
 
+static func _completes_public_square(occupied: Dictionary,
+		cell: Vector3i) -> bool:
+	## Mirrors WarrenVolumePlan._same_datum_public_square_count() exactly:
+	## four same-band walk cells in a square expand into one featureless 4x4
+	## slab of player-width surface, and the plan rejects that outright.
+	## Enforced here as a hard rule rather than left to the same-datum fold
+	## PENALTY, which is only a preference -- a long ground street at one
+	## datum closes squares readily, and every one of them was a route the
+	## adapter then threw away with "public route contains a broad same-datum
+	## 2x2 block".
+	for x_offset in [-1, 0]:
+		for z_offset in [-1, 0]:
+			var origin := cell + Vector3i(x_offset, 0, z_offset)
+			var complete := true
+			for corner: Vector3i in [origin, origin + Vector3i.RIGHT,
+					origin + Vector3i.BACK, origin + Vector3i(1, 0, 1)]:
+				if corner != cell and not occupied.has(corner):
+					complete = false
+					break
+			if complete:
+				return true
+	return false
+
+
 static func _stride_cells(massif: WarrenMassif, excavation: WarrenExcavation,
-		current: Vector3i, direction: Vector2i, rise: int,
-		run: int) -> Array[Vector3i]:
+		route_set: Dictionary, current: Vector3i, direction: Vector2i,
+		rise: int, run: int) -> Array[Vector3i]:
 	## Every cell a move passes through, each placed on the lowest band
 	## surface_cells() will claim inside it and cleared to the height that
 	## method's span demands. Returns empty if any cell of the stride cannot
 	## be bored -- a partially legal stride is not a legal move.
 	var out: Array[Vector3i] = []
+	var occupied := route_set.duplicate()
 	for offset in range(1, run + 1):
 		var span := _surface_band_span(rise, run, offset)
 		var cell := Vector3i(current.x + direction.x * offset,
@@ -424,6 +554,9 @@ static func _stride_cells(massif: WarrenMassif, excavation: WarrenExcavation,
 		if not _slot_is_borable(massif, excavation, cell,
 				span.y - span.x + HEADROOM_BANDS):
 			return [] as Array[Vector3i]
+		if _completes_public_square(occupied, cell):
+			return [] as Array[Vector3i]
+		occupied[cell] = true
 		out.append(cell)
 	return out
 
@@ -474,6 +607,16 @@ static func _move_score(world_seed: int, attempt: int, move_index: int,
 	var target_radius := lerpf(portal_radius, INNER_RADIUS_CELLS,
 		minf(1.0, progress * radius_rush))
 	var score := absf(radius - target_radius) * WEIGHT_RADIUS
+	if excavation.route.size() < MIN_GRADE_CELLS:
+		# While the ground street is being laid the inward term is the wrong
+		# ambition: it is satisfied by circling at a constant radius, which
+		# is precisely how the grade run ended up a tight compact knot with
+		# no two roots far enough apart to hang a second arcade branch on.
+		# Reward travel from the mouth instead, so the street actually goes
+		# somewhere before it starts to climb.
+		var travelled_from_portal := absi(endpoint.x - int(style["portal_x"])) \
+			+ absi(endpoint.z - int(style["portal_z"]))
+		score -= float(travelled_from_portal) * WEIGHT_GRADE_TRAVEL
 
 	var achieved := float(roofed) / float(maxi(1, excavation.route.size()))
 	var balance := clampf(achieved - TARGET_COVERED_RATIO, -1.0, 1.0)
@@ -522,6 +665,30 @@ static func _move_score(world_seed: int, attempt: int, move_index: int,
 	score -= float(endpoint.y - current.y) * BONUS_RISE
 	score += float(run) * COST_PER_STRIDE_CELL
 
+	# WarrenGroundArcadeSolver needs two of its ground cells to run BENEATH
+	# the climbing itinerary (MIN_UPPER_ROUTE_CROSSOVERS), and it carves those
+	# cells beside the grade street. A climb that spirals away from the ground
+	# street therefore satisfies every gate here and still fails the arcade
+	# stage, so the climb is rewarded for passing back over the street it came
+	# from once it is high enough to be a roof rather than a neighbour.
+	if excavation.route.size() >= MIN_GRADE_CELLS:
+		# Checked over the cell AND its four neighbours, because the arcade
+		# branches are new cells carved BESIDE the grade street, not the
+		# street itself -- passing directly over the route alone leaves the
+		# branch cells in the open.
+		var crossings := 0
+		for cell: Vector3i in stride:
+			for offset: Vector2i in [Vector2i.ZERO, Vector2i.RIGHT,
+					Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN]:
+				var column := Vector2i(cell.x + offset.x, cell.z + offset.y)
+				var ceiling := cell.y - HEADROOM_BANDS
+				var found := false
+				for band in range(massif.base_at(column), ceiling + 1):
+					if route_set.has(Vector3i(column.x, band, column.y)):
+						found = true
+						break
+				crossings += int(found)
+		score -= float(mini(crossings, 4)) * BONUS_CROSSOVER
 	# A second mouth is allowed but never sought: only the last stretch of the
 	# walk may pay its way back out to daylight.
 	if exposed and progress < 0.85:

@@ -17,15 +17,15 @@ const SIDES: Array[Vector3i] = [Vector3i.RIGHT, Vector3i.LEFT,
 ## asserts nothing about the carver, and an earlier revision passed at 0.65 on
 ## those three while a third of arbitrary seeds sat below it.
 ##
-## Forty consecutive seeds, none of them the ones the rest of this suite
-## samples. Teeth verified by execution at the current floor rather than
-## assumed: deleting the production gate drops seeds 43, 44, 49, 50 and 52 of
-## this window below it, the lowest to 0.538. The window was originally
-## chosen when the floor was 0.60, where it was the only span of forty that
-## could fail at all; at 0.70 the gate binds widely enough that several
-## windows would serve, and this one is kept because its teeth are measured.
+## A consecutive window, none of it the seeds the rest of this suite samples.
+## Teeth verified by execution at the current floor rather than assumed:
+## deleting the production gate drops seeds 43, 44, 49 and 50 of this window
+## below it, the lowest to 0.538. Trimmed from 40 seeds to 24 once the ground
+## street lengthened routes and roughly doubled the cost of a carve; 24 still
+## carries enough carved seeds to exercise both the enclosure and grade gates
+## and to fail loudly if supply collapses.
 const CANYON_SEED_START := 40
-const CANYON_SEED_COUNT := 40
+const CANYON_SEED_COUNT := 24
 
 
 func _carved(world_seed: int) -> WarrenExcavation:
@@ -96,7 +96,9 @@ func test_probe_seeds_carve_climbing_covered_routes() -> void:
 			continue
 		accepted += 1
 		assert_true(excavation.is_sealed())
-		assert_between(excavation.route.size(), 22, 26,
+		assert_between(excavation.route.size(),
+			WarrenExcavationCarver.MIN_ROUTE_CELLS,
+			WarrenExcavationCarver.MAX_ROUTE_CELLS,
 			"route length family (seed %d)" % world_seed)
 		assert_gte(excavation.route_span_bands(), 8,
 			"the route must genuinely climb (seed %d)" % world_seed)
@@ -358,10 +360,56 @@ func test_route_reads_as_a_canyon_climbing_into_the_town() -> void:
 		assert_gte(summit_index, excavation.route.size() / 2,
 			("the route must climb INTO the town, not begin at its high " \
 			+ "point and descend (seed %d)") % world_seed)
-	assert_gt(carved_seeds, 30,
+	# Was 30 when the route had no ground street to fit into its budget and
+	# 39 of these 40 seeds carried a route. The grade requirement costs real
+	# supply (measured: 25 of 40 here), so this floor is lowered to match what
+	# the carver actually delivers rather than left at a number that only
+	# passed before the amendment. It still fails loudly if supply collapses.
+	assert_gt(carved_seeds, 8,
 		("the canyon gate must be exercised on a wide seed range, not on a " \
 		+ "handful that happen to carve: only %d of %d seeds produced a " \
 		+ "route") % [carved_seeds, CANYON_SEED_COUNT])
+
+
+func test_route_walks_at_grade_before_it_climbs() -> void:
+	## The excavated route is what WarrenGroundArcadeSolver roots its two
+	## ground market branches from, and _find_path only accepts a root whose
+	## band equals envelope.ground_at() -- the massif's base band once the
+	## adapter has run. A route that touches grade only at its portal offers
+	## one root, so the second branch is impossible by construction and every
+	## candidate fails the arcade stage regardless of seed.
+	##
+	## Recomputed here from the massif, and asserted over a wide seed range
+	## rather than the probe seeds, because this is a supply-shaped property:
+	## it has to hold for every route the carver accepts, not for three.
+	var carved_seeds := 0
+	for world_seed in range(CANYON_SEED_START,
+			CANYON_SEED_START + CANYON_SEED_COUNT):
+		var excavation := _carved(world_seed)
+		if excavation == null:
+			continue
+		carved_seeds += 1
+		var massif := WarrenMassifBuilder.build(world_seed)
+		var grade: Array[Vector3i] = []
+		for cell: Vector3i in excavation.route:
+			if cell.y == massif.base_at(Vector2i(cell.x, cell.z)):
+				grade.append(cell)
+		assert_gte(grade.size(), WarrenExcavationCarver.MIN_GRADE_CELLS,
+			("the route must walk a ground street before it climbs, or the " \
+			+ "town has no ground-level public realm at all (seed %d)") \
+			% world_seed)
+		var spread := 0
+		for i in grade.size():
+			for j in range(i + 1, grade.size()):
+				spread = maxi(spread, absi(grade[i].x - grade[j].x)
+					+ absi(grade[i].z - grade[j].z))
+		assert_gte(spread, WarrenExcavationCarver.MIN_GRADE_SPREAD_CELLS,
+			("two arcade branch roots must be far enough apart to survive " \
+			+ "MIN_BRANCH_SEPARATION_CELLS once the first branch has been " \
+			+ "carved (seed %d)") % world_seed)
+	assert_gt(carved_seeds, 8,
+		"the grade gate must be exercised on a wide seed range: only %d of " \
+		% carved_seeds + "%d seeds produced a route" % CANYON_SEED_COUNT)
 
 
 func test_carve_does_not_depend_on_massif_column_order() -> void:
