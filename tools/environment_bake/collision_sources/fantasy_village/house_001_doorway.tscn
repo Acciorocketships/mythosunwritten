@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3]
+
+[sub_resource type="BoxShape3D" id="Box_jamb"]
+size = Vector3(0.48, 3.0, 0.48)
+
+[sub_resource type="BoxShape3D" id="Box_lintel"]
+size = Vector3(2.05, 0.4, 0.48)
+
+[node name="House001DoorwayCollision" type="Node3D"]
+
+[node name="JambLeft" type="CollisionShape3D" parent="."]
+position = Vector3(-1.04, 2.0, 5.934)
+shape = SubResource("Box_jamb")
+
+[node name="JambRight" type="CollisionShape3D" parent="."]
+position = Vector3(1.485, 2.0, 5.934)
+shape = SubResource("Box_jamb")
+
+[node name="Lintel" type="CollisionShape3D" parent="."]
+position = Vector3(0.222, 3.3, 5.934)
+shape = SubResource("Box_lintel")

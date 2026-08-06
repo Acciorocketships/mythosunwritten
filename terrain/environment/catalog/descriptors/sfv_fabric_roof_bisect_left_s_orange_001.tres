@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_1y0da"]
+
+[resource]
+script = ExtResource("1_1y0da")
+id = &"sfv.fabric.roof.bisect.left.s.orange.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_bisect_left_s_orange_001.tres"
+tags = Array[StringName]([&"building", &"fabric_roof_junction", &"roof_valley", &"village"])
+measured_aabb = AABB(-1.5381808, 8.5516035e-08, -1.5, 3.076362, 3.0201344, 3)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.roof.bisect.left.s.orange.001"

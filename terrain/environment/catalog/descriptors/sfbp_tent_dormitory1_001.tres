@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_4vbuv"]
+
+[resource]
+script = ExtResource("1_4vbuv")
+id = &"sfbp.tent.dormitory1.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent_dormitory1_001.tres"
+tags = Array[StringName]([&"tent", &"village"])
+measured_aabb = AABB(-3.0197635, -0.021999901, -3.091267, 6.1298366, 6.9718127, 7.2639804)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 7
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_structures:sfbp.tent.dormitory1.001"

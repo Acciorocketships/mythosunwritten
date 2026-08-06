@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_80mvj"]
+
+[resource]
+script = ExtResource("1_80mvj")
+id = &"sfbp.tent3.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent3_001.tres"
+tags = Array[StringName]([&"tent", &"village"])
+measured_aabb = AABB(-3.8193953, -0.013001601, -2.1095243, 6.39799, 6.321733, 6.068079)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_structures:sfbp.tent3.001"

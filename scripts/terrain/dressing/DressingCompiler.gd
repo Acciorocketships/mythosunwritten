@@ -53,10 +53,14 @@ static func compile(index: DressingCatalogIndex,
 		# _eligible_for_set rejects every jittered anchor outside core grown by
 		# group_radius. The proposal cell is only an enumeration device, so its
 		# 12 m half-size is not part of the field sampling footprint. Coverage
-		# needs the admitted anchor reach plus its actual visual support stencil.
+		# needs two explicit reaches: near-ground support samples terrain/water;
+		# full visual bounds query only authored reservations and may be wider
+		# than water's deliberately finite canonical context.
 		program.query_margin = maxf(program.query_margin,
 			compiled.group_radius + compiled.query_support_radius \
 				+ SURFACE_STENCIL)
+		program.feature_query_margin = maxf(program.feature_query_margin,
+			compiled.group_radius + compiled.query_feature_radius)
 	var water_context_margin := WaterField.FILL_MARGIN * WaterField.FILL_STEP \
 		- WaterContour.MARGIN
 	if program.query_margin + program.shore_distance_limit > water_context_margin:
@@ -152,6 +156,7 @@ static func _compile_set(source: DressingSet,
 	var choices: Array[Dictionary] = []
 	var compiled_spacing_radius := source.spacing_radius
 	var query_support_radius := source.support_radius
+	var query_feature_radius := 0.0
 	var authored_choices: Array[DressingChoice] = source.choices.duplicate()
 	authored_choices.sort_custom(func(a: DressingChoice, b: DressingChoice) -> bool:
 		return String(a.asset_id) < String(b.asset_id))
@@ -180,8 +185,23 @@ static func _compile_set(source: DressingSet,
 		compiled_spacing_radius = maxf(compiled_spacing_radius, choice_spacing)
 		var support_points := _ground_support_points(descriptor, support_cache)
 		var ground_radius := _maximum_radius(support_points)
+		var feature_centre := Vector2(
+			descriptor.measured_aabb.get_center().x,
+			descriptor.measured_aabb.get_center().z)
+		var feature_half_extents := Vector2(
+			descriptor.measured_aabb.size.x,
+			descriptor.measured_aabb.size.z) * 0.5
+		if not feature_centre.is_finite() or not feature_half_extents.is_finite() \
+				or feature_half_extents.x <= 0.0 or feature_half_extents.y <= 0.0:
+			_fail("Dressing asset %s requires finite non-empty visual bounds" \
+				% choice_resource.asset_id)
+			return {}
+		var maximum_scale := choice_resource.scale_multiplier * source.scale_range.y
 		query_support_radius = maxf(query_support_radius,
-			ground_radius * choice_resource.scale_multiplier * source.scale_range.y)
+			ground_radius * maximum_scale)
+		query_feature_radius = maxf(query_feature_radius,
+			(feature_centre.length() + feature_half_extents.length()) \
+				* maximum_scale)
 		choices.append({
 			"asset_id": choice_resource.asset_id,
 			"weight": choice_resource.weight,
@@ -191,6 +211,11 @@ static func _compile_set(source: DressingSet,
 			"spacing_radius": choice_spacing,
 			"support_points": support_points,
 			"ground_radius": ground_radius,
+			# The full visual XZ AABB becomes an oriented rectangle after the
+			# runtime yaw. It is deliberately distinct from support_points:
+			# crowns may overhang natural cliffs, but never authored space.
+			"feature_footprint_centre": feature_centre,
+			"feature_footprint_half_extents": feature_half_extents,
 		})
 	if choices.is_empty():
 		_fail("Dressing set %s has no choices" % set_id)
@@ -226,6 +251,7 @@ static func _compile_set(source: DressingSet,
 		"shore_limit": shore_limit,
 		"support_radius": source.support_radius,
 		"query_support_radius": query_support_radius,
+		"query_feature_radius": query_feature_radius,
 		"max_support_height_span": source.max_support_height_span \
 			if source.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT \
 			else AUTO_SUPPORT_HEIGHT_SPAN,

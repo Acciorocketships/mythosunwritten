@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_dtmp6"]
+
+[resource]
+script = ExtResource("1_dtmp6")
+id = &"sfv.fabric.roof.s.blue.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_s_blue_001.tres"
+tags = Array[StringName]([&"building", &"fabric_roof", &"village"])
+measured_aabb = AABB(-3.2428799, -7.72419e-08, -0.66525877, 6.4910083, 3.5170174, 1.6905342)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.roof.s.blue.001"

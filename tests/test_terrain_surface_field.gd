@@ -16,6 +16,27 @@ func test_flat_at_cell_centre():
 	# At the centre of a neighbour cell, its own height.
 	assert_almost_eq(Field.surface_y(r, 24.0, 0.0), r.surface_height(1, 0), 0.001)
 
+func test_height_bounds_are_exact_on_a_flat_footprint() -> void:
+	var plan := Plan.new(7, 1.0, 1, "mean")
+	plan.set_raw_height_override(func(_cx: int, _cz: int) -> float: return 4.0)
+	var region := plan.compute_region(0, 0, 6)
+	assert_eq(Field.height_bounds(region,
+		Rect2(Vector2(-4.0, -3.0), Vector2(8.0, 6.0))), Vector2(4.0, 4.0))
+
+func test_height_bounds_contain_dense_samples_across_cell_boundaries() -> void:
+	var region := _region()
+	var footprint := Rect2(Vector2(-8.25, -10.5), Vector2(31.5, 27.75))
+	var bounds := Field.height_bounds(region, footprint)
+	for z_index in 38:
+		for x_index in 42:
+			var point := footprint.position + Vector2(
+				footprint.size.x * float(x_index) / 41.0,
+				footprint.size.y * float(z_index) / 37.0)
+			var height := Field.surface_y(region, point.x, point.y)
+			assert_gte(height, bounds.x - 0.0001)
+			assert_lte(height, bounds.y + 0.0001)
+	assert_lt(bounds.x, bounds.y, "the sloped fixture produces a useful range")
+
 func test_slope_ramps_over_full_half_cell():
 	# A 1-storey slope must ramp the WHOLE half-cell like the old SlopeProfile.edge_height
 	# (4m drop over CELL=12u ≈ 18°), NOT cram it into the outer ~6u (≈34°, angular & hard
@@ -191,6 +212,19 @@ func test_walkability_is_derived_from_the_rendered_boundary():
 	var level_region := level_plan.compute_region(0, 0, 8)
 	assert_true(Field.is_walkable_edge(level_region, Vector2i.ZERO, Vector2i.RIGHT),
 		"sub-storey level slopes are walkable")
+
+func test_cardinal_strip_proves_every_rendered_boundary_crossing() -> void:
+	var cliff: HeightfieldRegion = _region_cliff()
+	assert_false(Field.cardinal_strip_is_walkable(cliff,
+		Vector2(-6.0, 0.0), Vector2(42.0, 0.0), 2.0),
+		"a long authored road cannot terminate through the cliff at x=12")
+	assert_true(Field.cardinal_strip_is_walkable(cliff,
+		Vector2(-42.0, 0.0), Vector2(6.0, 0.0), 2.0),
+		"a strip wholly on the flat side remains admissible")
+	var slope := _region()
+	assert_true(Field.cardinal_strip_is_walkable(slope,
+		Vector2(-6.0, 0.0), Vector2(42.0, 0.0), 2.0),
+		"ordinary rendered slopes remain valid for full corridors")
 
 func test_walkability_matches_exposed_edges_across_varied_fields():
 	for world_seed in [17, 4242, 918273]:

@@ -78,7 +78,7 @@ static func tile_of(world_xz: Vector2) -> Vector2i:
 
 static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		paths: PathContext = null) -> GrassPayload:
+		features: FeatureContext = null) -> GrassPayload:
 	assert(program != null and region != null and water != null)
 	var payload := GrassPayload.new()
 	payload.tile = tile
@@ -141,7 +141,7 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 			var coverage := carpet_coverage(habitat)
 			if eligibility >= coverage * maximum_weight:
 				continue
-			var surface := _qualified_surface(program, anchor, region, water, paths,
+			var surface := _qualified_surface(program, anchor, region, water, features,
 				footprint_radius, surface_cache, cliff_edge_cache,
 				physical_edge_scale)
 			if surface.is_empty():
@@ -272,14 +272,14 @@ static func _sample_tile_fields(values: Array[Dictionary],
 
 static func _qualified_surface(program: GrassProgram, anchor: Vector2,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		paths: PathContext, footprint_radius: float,
+		features: FeatureContext, footprint_radius: float,
 		surface_cache: Dictionary = {}, cliff_edge_cache: Dictionary = {},
 		known_physical_edge_scale: float = -1.0) -> Dictionary:
 	assert(water.covers(anchor), "Grass water context must cover every tile anchor")
-	if paths != null:
-		if paths.clearance_at(anchor) < GrassProgram.FEATURE_CLEARANCE:
+	if features != null:
+		if features.clearance_at(anchor) < GrassProgram.FEATURE_CLEARANCE:
 			return {}
-		if _footprint_overlaps_corridor(paths, anchor,
+		if _footprint_overlaps_feature_surface(features, anchor,
 				footprint_radius + PATH_FOOTPRINT_CLEARANCE):
 			return {}
 	# Signed shoreline distance is negative on wet ground, so this one canonical
@@ -308,14 +308,15 @@ static func _surface_basis(normal: Vector3) -> Basis:
 	var tangent_z := tangent_x.cross(normal).normalized()
 	return Basis(tangent_x, normal, tangent_z)
 
-static func _footprint_overlaps_corridor(paths: PathContext,
+static func _footprint_overlaps_feature_surface(features: FeatureContext,
 		anchor: Vector2, radius: float) -> bool:
-	if not paths.has_corridors():
+	if not features.has_modified_surface():
 		return false
-	if paths.corridor_at(anchor):
+	if features.surface_at(anchor) != FeatureGroundField.NATURAL:
 		return true
 	for direction: Vector2 in FOOTPRINT_DIRECTIONS:
-		if paths.corridor_at(anchor + direction * radius):
+		if features.surface_at(anchor + direction * radius) \
+				!= FeatureGroundField.NATURAL:
 			return true
 	return false
 

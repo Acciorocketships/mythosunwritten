@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "SFV_GLOW_WINDOW"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.9507073, 1, 1, 1)
+emission_enabled = true
+emission = Color(3.1591568, 2.3326542, 1.3069527, 1)

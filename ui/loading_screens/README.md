@@ -10,7 +10,7 @@ and `(0,0)`.
 
 The bottom hairline is `MythosTaperedProgressBar`, not a timer. Three percent is
 Godot's threaded scene-resource load. The remaining range combines measured
-worker milestones for PathContext/features, heightfield, meshing, water, and
+worker milestones for FeatureContext, heightfield, meshing, water, and
 dressing across the four startup support jobs and their required feature halo,
 then the actual main-thread integration fraction. The streamer prioritizes that
 support work ahead of its normal outward radius. The bar's small `preview` cycle

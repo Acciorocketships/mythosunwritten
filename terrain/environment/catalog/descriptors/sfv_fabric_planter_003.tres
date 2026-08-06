@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_3euq6"]
+
+[resource]
+script = ExtResource("1_3euq6")
+id = &"sfv.fabric.planter.003"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_planter_003.tres"
+tags = Array[StringName]([&"fabric_dressing", &"village"])
+measured_aabb = AABB(-0.6038332, -5.5674764e-08, -0.45001563, 1.2076664, 0.92785776, 0.9000337)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.planter.003"

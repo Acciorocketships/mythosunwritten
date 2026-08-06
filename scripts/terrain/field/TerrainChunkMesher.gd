@@ -97,7 +97,7 @@ func prepare_resources() -> void:
 ## collision faces, transforms, and colours only. commit_chunk owns every
 ## Node/ArrayMesh/MultiMesh/Shape creation and must run on the main thread.
 func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
-		water: WaterFieldContext = null, paths: PathContext = null) -> Dictionary:
+		water: WaterFieldContext = null, features: FeatureContext = null) -> Dictionary:
 	if _skirt_material == null:
 		push_error("TerrainChunkMesher.prepare_resources() must run on the main thread before compute_chunk()")
 		return {}
@@ -193,7 +193,7 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			# one and depth-fought into detached strips at gameplay distance.
 			# One surface layer cannot z-fight with itself and still preserves the
 			# rounded 0.25 m path boundary.
-			var path_state := _emit_path_surface(st, region, water, paths,
+			var path_state := _emit_path_surface(st, region, water, features,
 				qkey, x0, z0, clip_cache, [t00, t10, t11, t01])
 			if path_state == 0:
 				var i00: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v00)
@@ -209,7 +209,7 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 				_tri_tinted(st, [c00, c10, c11], uv0, [t00, t10, t11])
 				_tri_tinted(st, [c00, c11, c01], uv1, [t00, t11, t01])
 			if path_state == 2:
-				_emit_path_spot(st, region, water, paths, quad_centre, qcx, qcz,
+				_emit_path_spot(st, region, water, features, quad_centre, qcx, qcz,
 					x0, z0, [t00, t10, t11, t01])
 	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
 	# pinned grid leaves between a cliff top and the lower cell. This is the actual rock cliff face
@@ -251,7 +251,7 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
 			if _emit_aprons(ast, region, clip_cache, cx, cz, _cell_tint(cx, cz),
-					water, paths):
+					water, features):
 				any_apron = true
 	var apron_arrays: Array = []
 	if any_apron:
@@ -381,15 +381,15 @@ const PATH_SPOT_SIDES := 12
 # The lattice is world aligned and neighbouring chunks therefore retain
 # bit-identical boundary vertices.
 func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
-		water: WaterFieldContext, paths: PathContext, qkey: Vector2i,
+		water: WaterFieldContext, features: FeatureContext, qkey: Vector2i,
 		x0: float, z0: float, clip_cache: Dictionary,
 		quad_tints: Array[Color]) -> int:
-	if paths == null or water == null:
+	if features == null or water == null:
 		return 0
 	# Most terrain quads are nowhere near a path. Centre/corner rejection avoids
 	# the 8x8 subdivision there while still admitting a circular join that merely
 	# clips a coarse quad's corner.
-	var candidate := _path_quad_candidate(paths, qkey, x0, z0)
+	var candidate := _path_quad_candidate(features, qkey, x0, z0)
 	if not candidate:
 		# A finely divided neighbour would otherwise terminate in T-junctions
 		# along this coarse edge. GPU rasterization exposed those as long white
@@ -404,7 +404,7 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 			var neighbour_centre := Vector2(nx0 + STEP * 0.5, nz0 + STEP * 0.5)
 			var neighbour_cell := Vector2i(roundi(neighbour_centre.x / TILE),
 				roundi(neighbour_centre.y / TILE))
-			transition_sides[side_index] = 1 if _path_quad_candidate(paths,
+			transition_sides[side_index] = 1 if _path_quad_candidate(features,
 				neighbour_cell, nx0, nz0) else 0
 		if transition_sides.has(1):
 			_emit_path_transition(st, region, qkey, x0, z0, clip_cache,
@@ -420,7 +420,8 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 			var sx1 := sx0 + sub_step
 			var sz1 := sz0 + sub_step
 			var centre := Vector2((sx0 + sx1) * 0.5, (sz0 + sz1) * 0.5)
-			var is_path := paths.corridor_at_cell(centre, qkey) \
+			var is_path := features.surface_at_cell(centre, qkey) \
+				== FeatureGroundField.WORN_PATH \
 				and not water.is_wet(centre)
 			var p00 := Vector3(sx0,
 				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz0, qkey.x, qkey.y), sz0)
@@ -452,14 +453,14 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 			emitted_path = emitted_path or is_path
 	return 2 if emitted_path else 1
 
-func _path_quad_candidate(paths: PathContext, qkey: Vector2i,
+func _path_quad_candidate(features: FeatureContext, qkey: Vector2i,
 		x0: float, z0: float) -> bool:
 	var x1 := x0 + STEP
 	var z1 := z0 + STEP
 	for probe: Vector2 in [
 			Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5),
 			Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]:
-		if paths.corridor_at_cell(probe, qkey):
+		if features.surface_at_cell(probe, qkey) == FeatureGroundField.WORN_PATH:
 			return true
 	return false
 
@@ -517,7 +518,7 @@ func _path_surface_vertex(region: HeightfieldRegion, qkey: Vector2i,
 # gameplay distance. Every rim point must remain inside the dry corridor, so no
 # spot can bleed across a rounded edge, a water crossing, or a concave join.
 func _emit_path_spot(st: SurfaceTool, region: HeightfieldRegion,
-		water: WaterFieldContext, paths: PathContext, quad_centre: Vector2,
+		water: WaterFieldContext, features: FeatureContext, quad_centre: Vector2,
 		qcx: int, qcz: int, x0: float, z0: float, quad_tints: Array[Color]) -> void:
 	var gx := floori(quad_centre.x / STEP)
 	var gz := floori(quad_centre.y / STEP)
@@ -532,7 +533,8 @@ func _emit_path_spot(st: SurfaceTool, region: HeightfieldRegion,
 	for i in PATH_SPOT_SIDES:
 		var angle := TAU * float(i) / float(PATH_SPOT_SIDES)
 		var p := centre + Vector2(cos(angle), sin(angle)) * radius
-		if not paths.corridor_at_cell(p, Vector2i(qcx, qcz)) or water.is_wet(p):
+		if features.surface_at_cell(p, Vector2i(qcx, qcz)) \
+				!= FeatureGroundField.WORN_PATH or water.is_wet(p):
 			return
 		rim.append(p)
 	var centre3 := Vector3(centre.x,
@@ -767,7 +769,7 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 # plane jutting out below the lip from any low angle, owner rounds 12-13. The round-11
 # "tiny gaps" it papered over are handled at ground level where they actually live.)
 func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int,
-		tint: Color, water: WaterFieldContext, paths: PathContext) -> bool:
+		tint: Color, water: WaterFieldContext, features: FeatureContext) -> bool:
 	var emitted := false
 	var active := {}
 	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -843,7 +845,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 			if not ((cap_hi and a1 >= TOP_CLIP) or (cap_lo and a1 <= -TOP_CLIP)):
 				p1 = _clip_vert(region, clip_cache, cx, cz, p1)
 				q1 = _clip_perp(region, clip_cache, ncx, ncz, dir, q1)
-			_apron_quad(st, p0, p1, q0, q1, tint, water, paths)
+			_apron_quad(st, p0, p1, q0, q1, tint, water, features)
 			emitted = true
 	for cdir in [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
 		if not (active[Vector2i(cdir.x, 0)] and active[Vector2i(0, cdir.y)]):
@@ -857,7 +859,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var b := a + Vector3(float(cdir.x) * APRON, 0.0, 0.0)
 		var c := a + Vector3(0.0, 0.0, float(cdir.y) * APRON)
 		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
-		_apron_quad(st, a, b, c, d2, tint, water, paths)
+		_apron_quad(st, a, b, c, d2, tint, water, features)
 		emitted = true
 	# (Round 8 floored the flush-step cap notch with a flat grass patch here; the owner
 	# rejected it — round 9 extends the run's straight modules to the boundary and turns
@@ -870,12 +872,13 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 # colour "ground skirt". The flipped copy sits 2cm lower (never z-fights) with a DOWN normal.
 func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3,
 		q1: Vector3, tint: Color, water: WaterFieldContext,
-		paths: PathContext) -> void:
+		features: FeatureContext) -> void:
 	var drop := Vector3(0.0, -0.02, 0.0)
 	var centre := (p0 + p1 + q0 + q1) * 0.25
 	var point := Vector2(centre.x, centre.z)
-	var uv := _path_uv if paths != null and water != null \
-		and paths.corridor_at(point) and not water.is_wet(point) else _grass_uv
+	var uv := _path_uv if features != null and water != null \
+		and features.surface_at(point) == FeatureGroundField.WORN_PATH \
+		and not water.is_wet(point) else _grass_uv
 	for tri in [[p0, q0, q1], [p0, q1, p1]]:
 		var n: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0])
 		var order: Array = tri if n.y < 0.0 else [tri[0], tri[2], tri[1]]

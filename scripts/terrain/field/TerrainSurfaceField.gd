@@ -191,8 +191,92 @@ static func is_walkable_edge(region: HeightfieldRegion, cell: Vector2i, d: Vecto
 	return not is_exposed_edge(region, cell.x, cell.y, d) \
 		and not is_exposed_edge(region, cell.x + d.x, cell.y + d.y, -d)
 
+
+## Proves that a grid-aligned strip crosses no rendered wall. Village streets,
+## future boardwalks, and other authored corridors use this finished-surface
+## fact instead of reproducing cliff rules or accepting a centre-point sample.
+static func cardinal_strip_is_walkable(region: HeightfieldRegion, start: Vector2,
+		end: Vector2, half_width: float) -> bool:
+	assert(region != null)
+	assert(is_finite(half_width) and half_width >= 0.0)
+	var delta := end - start
+	assert((is_zero_approx(delta.x) and not is_zero_approx(delta.y)) \
+		or (is_zero_approx(delta.y) and not is_zero_approx(delta.x)),
+		"walkable strips must be cardinal and non-empty")
+	var direction := Vector2i(signi(roundi(delta.x)), signi(roundi(delta.y)))
+	var perpendicular := Vector2(-direction.y, direction.x)
+	for offset: float in [-half_width, 0.0, half_width]:
+		if not _cardinal_line_is_walkable(region, start + perpendicular * offset,
+				end + perpendicular * offset, direction):
+			return false
+	return true
+
+
+static func _cardinal_line_is_walkable(region: HeightfieldRegion,
+		start: Vector2, end: Vector2, direction: Vector2i) -> bool:
+	var cell := Vector2i(_cell_of(start.x), _cell_of(start.y))
+	var end_cell := Vector2i(_cell_of(end.x), _cell_of(end.y))
+	assert((direction.x == 0 and cell.x == end_cell.x) \
+		or (direction.y == 0 and cell.y == end_cell.y))
+	while cell != end_cell:
+		if not is_walkable_edge(region, cell, direction):
+			return false
+		cell += direction
+	return true
+
+
 static func surface_y(region, x: float, z: float) -> float:
 	return surface_y_in_cell(region, x, z, _cell_of(x), _cell_of(z))
+
+## Exact conservative extrema for every clipped quadrant patch intersecting a
+## world-space AABB. Within one quadrant the surface is bilinear in two
+## monotone smootherstep coordinates, so its extrema over a rectangular
+## parameter interval occur at the four clipped corners. This keeps narrow
+## structural stencils from inheriting an unrelated far edge of the same 12 m
+## quadrant while retaining a proof rather than a sample-density assumption.
+static func height_bounds(region: HeightfieldRegion, footprint: Rect2) -> Vector2:
+	assert(region != null)
+	assert(is_finite(footprint.position.x) and is_finite(footprint.position.y))
+	assert(is_finite(footprint.size.x) and is_finite(footprint.size.y))
+	assert(footprint.size.x >= 0.0 and footprint.size.y >= 0.0)
+	var min_cell := Vector2i(
+		ceili((footprint.position.x - HALF) / TILE),
+		ceili((footprint.position.y - HALF) / TILE))
+	var max_cell := Vector2i(
+		floori((footprint.end.x + HALF) / TILE),
+		floori((footprint.end.y + HALF) / TILE))
+	var minimum := INF
+	var maximum := -INF
+	for cz in range(min_cell.y, max_cell.y + 1):
+		for cx in range(min_cell.x, max_cell.x + 1):
+			var centre := Vector2(float(cx) * TILE, float(cz) * TILE)
+			for z_sign: int in [-1, 1]:
+				var quadrant_min_z := centre.y \
+					+ (-HALF if z_sign < 0 else 0.0)
+				var quadrant_max_z := centre.y \
+					+ (0.0 if z_sign < 0 else HALF)
+				var lo_z := maxf(footprint.position.y, quadrant_min_z)
+				var hi_z := minf(footprint.end.y, quadrant_max_z)
+				if lo_z > hi_z + 0.000001:
+					continue
+				for x_sign: int in [-1, 1]:
+					var quadrant_min_x := centre.x \
+						+ (-HALF if x_sign < 0 else 0.0)
+					var quadrant_max_x := centre.x \
+						+ (0.0 if x_sign < 0 else HALF)
+					var lo_x := maxf(footprint.position.x, quadrant_min_x)
+					var hi_x := minf(footprint.end.x, quadrant_max_x)
+					if lo_x > hi_x + 0.000001:
+						continue
+					for point: Vector2 in [Vector2(lo_x, lo_z),
+							Vector2(hi_x, lo_z), Vector2(hi_x, hi_z),
+							Vector2(lo_x, hi_z)]:
+						var height := surface_y_in_cell(region,
+							point.x, point.y, cx, cz)
+						minimum = minf(minimum, height)
+						maximum = maxf(maximum, height)
+	assert(minimum != INF and maximum != -INF)
+	return Vector2(minimum, maximum)
 
 # Height of the shared corner control in one cell quadrant. Normally this is
 # simply the minimum of the four centres meeting there: the no-up-ramp rule in

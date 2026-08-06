@@ -114,7 +114,7 @@ const JOIN_DEPTH := 2             # junction dependency recursion cap
 const PATH_WATER_GUARD := 6.0
 const PATH_QUERY_MAX := SUPER
 const PATH_INTERVAL_TOLERANCE := 0.05
-const _PATH_DISTANCE_LIPSCHITZ := 2.0
+const PLANNING_DISTANCE_LIPSCHITZ := 2.0
 const _PATH_INSIDE_EPS := 0.0001
 # Any point a river can influence lies within the summit ascent + the trace
 # length + the largest pond bound + carve feather of its source's JITTER
@@ -617,10 +617,10 @@ func _append_planning_samples(a: Vector2, delta: Vector2, length: float,
 		out: Array[Vector2], depth: int) -> void:
 	assert(depth < 24, "Planning water interval refinement exceeded its fixed bound")
 	var world_span := (t1 - t0) * length
-	if minf(d0, d1) > _PATH_DISTANCE_LIPSCHITZ * world_span + PATH_INTERVAL_TOLERANCE:
+	if minf(d0, d1) > PLANNING_DISTANCE_LIPSCHITZ * world_span + PATH_INTERVAL_TOLERANCE:
 		out.append(Vector2(t1, d1))
 		return
-	if maxf(d0, d1) < -_PATH_DISTANCE_LIPSCHITZ * world_span - PATH_INTERVAL_TOLERANCE:
+	if maxf(d0, d1) < -PLANNING_DISTANCE_LIPSCHITZ * world_span - PATH_INTERVAL_TOLERANCE:
 		out.append(Vector2(t1, d1))
 		return
 	var tm := (t0 + t1) * 0.5

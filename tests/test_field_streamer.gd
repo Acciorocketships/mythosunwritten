@@ -25,6 +25,15 @@ func test_chunk_of_world_pos():
 	assert_eq(Streamer.chunk_of(Vector3(200, 0, 10)), Vector2i(1, 0))
 	assert_eq(Streamer.chunk_of(Vector3(-5, 0, -5)), Vector2i(-1, -1))
 
+func test_exported_terrain_defaults_match_the_canonical_production_tuning() -> void:
+	var s := Streamer.new()
+	assert_eq(s.HEIGHTFIELD_AMPLITUDE,
+		TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE)
+	assert_eq(s.HEIGHTFIELD_MAX_STOREYS,
+		TerrainWorldTuning.HEIGHTFIELD_MAX_STOREYS)
+	assert_eq(s.MAX_CLIFF_STEP, TerrainWorldTuning.MAX_CLIFF_STEP)
+	s.free()
+
 func test_spawn_corner_resolves_to_four_support_quadrants() -> void:
 	assert_eq(Streamer.support_chunks_at(Vector3.ZERO), [
 		Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i.ZERO,
@@ -157,7 +166,7 @@ func test_background_builds_populate_radius():
 
 func test_feature_halo_is_one_sorted_nine_key_square() -> void:
 	var s := Streamer.new()
-	s._path_program = PathProgram.compile(EnvironmentCatalog.load_default())
+	s._feature_program = FeatureProgram.compile(EnvironmentCatalog.load_default())
 	var keys := s._feature_halo_keys(Vector2i(-2, 3))
 	assert_eq(keys.size(), 9)
 	assert_eq(keys[0], Vector2i(-3, 2))
@@ -170,7 +179,7 @@ func test_feature_halo_is_one_sorted_nine_key_square() -> void:
 
 func test_queued_feature_request_widens_existing_terrain_job() -> void:
 	var s := Streamer.new()
-	s._path_program = PathProgram.compile(EnvironmentCatalog.load_default())
+	s._feature_program = FeatureProgram.compile(EnvironmentCatalog.load_default())
 	assert_true(s._request_job_locked(Vector2i.ZERO, true, false, 2))
 	assert_false(s._request_job_locked(Vector2i.ZERO, false, true, 1))
 	assert_eq(s._jobs.size(), 1)
@@ -254,7 +263,7 @@ func test_static_dressing_publishes_a_persistent_layer_separate_from_footsteps()
 
 func test_empty_feature_result_becomes_ready_without_scene_resources() -> void:
 	var s := Streamer.new()
-	s._path_program = PathProgram.compile(EnvironmentCatalog.load_default())
+	s._feature_program = FeatureProgram.compile(EnvironmentCatalog.load_default())
 	s._feature_generation[Vector2i.ZERO] = 1
 	s._commit_feature_result({"chunk": Vector2i.ZERO, "feature_generation": 1,
 		"features": EnvironmentInstancePayload.new()}, Vector2i.ZERO)

@@ -77,8 +77,14 @@ func _build_paths() -> void:
 				Vector2i.DOWN: 4, Vector2i.UP: 8}[direction]
 			if (int(masks[cell]) & bit) != 0:
 				corridors.append(PathPlan._connection_rect(centre, direction))
-	var paths := PathContext.new(CORE, corridors, corridors,
-		EnvironmentInstancePayload.new(), 2.0, masks, nodes)
+	var clearance_shapes: Array[FeatureGroundShape] = []
+	for corridor: Rect2 in corridors:
+		clearance_shapes.append(FeatureGroundShape.axis_rect(corridor))
+	var surface_shapes: Array[FeatureGroundShape] = []
+	var ground := FeatureGroundField.new(surface_shapes, clearance_shapes,
+		2.0, masks, nodes)
+	var features := FeatureContext.new(CORE, ground,
+		EnvironmentInstancePayload.new(), masks, nodes)
 	var height_plan := HeightfieldPlan.new(1, 1.0, 1, "mean", 1)
 	height_plan.set_raw_height_override(func(_x: int, _z: int) -> float: return 0.0)
 	var region := height_plan.compute_region(4, 4, 8)
@@ -90,7 +96,7 @@ func _build_paths() -> void:
 	var mesher := TerrainChunkMesher.new()
 	mesher.prepare_resources()
 	add_child(mesher.commit_chunk(mesher.compute_chunk(Vector2i.ZERO,
-		region, water, paths)))
+		region, water, features)))
 	_add_rejected_strip()
 	_add_character_marker(Vector3(48.0, 1.0, 58.0))
 	for item: Dictionary in [

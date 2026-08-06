@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_376ik"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_s_001_piece_00.res" id="2_1pyfh"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_s_001_piece_01.res" id="3_mn4j1"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_s_001_piece_02.res" id="4_t4mlm"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_s_001_piece_03.res" id="5_mkl7u"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="6_tlqkx"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_structures/sfv_deck_railing_s_001_piece_00.res" id="7_kvoqj"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="8_uhk28"]
+
+[sub_resource type="Resource" id="Resource_4grvw"]
+script = ExtResource("1_376ik")
+shape = ExtResource("2_1pyfh")
+local_transform = Transform3D(0.676169, 0, 0, 0, 1, 0, 0, 0, 1, -0.676169, 0.465, 0)
+
+[sub_resource type="Resource" id="Resource_hk2p3"]
+script = ExtResource("1_376ik")
+shape = ExtResource("3_mn4j1")
+local_transform = Transform3D(0.676169, 0, 0, 0, 1, 0, 0, 0, 1, 0.676169, 0.465, 0)
+
+[sub_resource type="Resource" id="Resource_pmxgg"]
+script = ExtResource("1_376ik")
+shape = ExtResource("4_t4mlm")
+local_transform = Transform3D(0.6740064, 0.054035835, 0, -0.07991469, 0.99680173, 0, 0, 0, 1, 0, 0.34, 0)
+
+[sub_resource type="Resource" id="Resource_8w7t4"]
+script = ExtResource("1_376ik")
+shape = ExtResource("5_mkl7u")
+local_transform = Transform3D(0.6749522, -0.0405458, 0, 0.059964005, 0.99820054, 0, 0, 0, 1, 0, 0.7, 0)
+
+[sub_resource type="Resource" id="Resource_yajq7"]
+script = ExtResource("6_tlqkx")
+mesh = ExtResource("7_kvoqj")
+
+[resource]
+script = ExtResource("8_uhk28")
+pieces = Array[ExtResource("6_tlqkx")]([SubResource("Resource_yajq7")])
+collisions = Array[ExtResource("1_376ik")]([SubResource("Resource_4grvw"), SubResource("Resource_hk2p3"), SubResource("Resource_pmxgg"), SubResource("Resource_8w7t4")])

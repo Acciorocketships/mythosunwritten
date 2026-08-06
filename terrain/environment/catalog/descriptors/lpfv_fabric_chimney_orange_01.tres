@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_44lp3"]
+
+[resource]
+script = ExtResource("1_44lp3")
+id = &"lpfv.fabric.chimney.orange.01"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_chimney_orange_01.tres"
+tags = Array[StringName]([&"building", &"chimney", &"fabric_roof", &"village"])
+measured_aabb = AABB(-0.5895961, -2.0116568e-07, -0.39714435, 1.1791923, 4.878917, 0.7942896)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.chimney.orange.01"

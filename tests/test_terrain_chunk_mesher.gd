@@ -8,6 +8,18 @@ class DryWaterPlan extends WaterPlan:
 	func bodies_near(_center_cell: Vector2i, _radius_cells: int) -> Dictionary:
 		return {"ponds": [], "rivers": []}
 
+func _feature_context(coverage: Rect2, surface_rects: Array[Rect2],
+		clearance_rects: Array[Rect2], limit: float) -> FeatureContext:
+	var surfaces: Array[FeatureGroundShape] = []
+	var clearances: Array[FeatureGroundShape] = []
+	for rect: Rect2 in surface_rects:
+		surfaces.append(FeatureGroundShape.axis_rect(rect,
+			FeatureGroundField.WORN_PATH))
+	for rect: Rect2 in clearance_rects:
+		clearances.append(FeatureGroundShape.axis_rect(rect))
+	var ground := FeatureGroundField.new(surfaces, clearances, limit)
+	return FeatureContext.new(coverage, ground, EnvironmentInstancePayload.new())
+
 func _plan():
 	var p := Plan.new(7, 56.0, 12, "mean")
 	return p
@@ -166,10 +178,9 @@ func test_path_paint_changes_only_walkable_sheet_uvs() -> void:
 	var core := Rect2(Vector2.ZERO, Vector2.ONE * Mesher.CHUNK_WORLD)
 	var water := WaterFieldContext.build(DryWaterPlan.new(), core, region, 0.0)
 	var corridor := Rect2(Vector2(46.0, 0.0), Vector2(4.0, Mesher.CHUNK_WORLD))
-	var paths := PathContext.new(core, [corridor], [corridor],
-		EnvironmentInstancePayload.new(), 2.0)
+	var features := _feature_context(core, [corridor], [corridor], 2.0)
 	var grass := m.compute_chunk(Vector2i.ZERO, region)
-	var painted := m.compute_chunk(Vector2i.ZERO, region, water, paths)
+	var painted := m.compute_chunk(Vector2i.ZERO, region, water, features)
 	var before: Array = grass.surface_arrays
 	var after: Array = painted.surface_arrays
 	assert_eq(painted.collision_faces, grass.collision_faces,

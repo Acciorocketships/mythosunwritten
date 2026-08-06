@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_t5c3n"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfm_stall_butcher_002_piece_00.res" id="2_c5awj"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_e35v5"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_structures/sfm_stall_butcher_002_piece_00.res" id="4_b1ydu"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_amyj3"]
+
+[sub_resource type="Resource" id="Resource_ermn8"]
+script = ExtResource("1_t5c3n")
+shape = ExtResource("2_c5awj")
+
+[sub_resource type="Resource" id="Resource_hwtxm"]
+script = ExtResource("3_e35v5")
+mesh = ExtResource("4_b1ydu")
+
+[resource]
+script = ExtResource("5_amyj3")
+pieces = Array[ExtResource("3_e35v5")]([SubResource("Resource_hwtxm")])
+collisions = Array[ExtResource("1_t5c3n")]([SubResource("Resource_ermn8")])

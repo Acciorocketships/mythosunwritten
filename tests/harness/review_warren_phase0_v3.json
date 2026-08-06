@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"phase0-approach_west","disposition":"clear","finding_ids":[],"notes":"Two continuous rows, a narrow street, the first bridge, and the human marker establish credible scale and enclosure."},
+    {"screenshot_id":"phase0-canyon_west_to_east","disposition":"clear","finding_ids":[],"notes":"Facade, covered tables, galleries, bridges, and the court stair fill the eye-level frame while preserving a walkable centre."},
+    {"screenshot_id":"phase0-canyon_east_to_west","disposition":"clear","finding_ids":[],"notes":"The raised inhabited shells sit behind plain terrace plinths while their blue and teal market stalls remain grounded on the street."},
+    {"screenshot_id":"phase0-market_north","disposition":"finding","finding_ids":["WPF-006"],"notes":"The covered frontage works structurally, but adjacent fishmonger tables repeat the exact same stocked silhouette."},
+    {"screenshot_id":"phase0-market_south","disposition":"finding","finding_ids":["WPF-006"],"notes":"The opposite covered frontage confirms the same low-severity stock repetition."},
+    {"screenshot_id":"phase0-gallery_level","disposition":"clear","finding_ids":[],"notes":"The revised view shows the gallery attached to doors and braces, a guarded bridge opening, planters, and market activity below."},
+    {"screenshot_id":"phase0-bridge_underside","disposition":"clear","finding_ids":[],"notes":"The narrow bridge slab, both guarded edges, facade endpoints, and human-scale underpass clearance are visible together."},
+    {"screenshot_id":"phase0-court_stair","disposition":"clear","finding_ids":[],"notes":"The complete stair rises from the light court to a guarded gallery landing without an isolated platform."},
+    {"screenshot_id":"phase0-roofline","disposition":"clear","finding_ids":[],"notes":"Blue and orange roofs now retain their atlases; windowed side bays, overhang offsets, and varied heights break the module grid."},
+    {"screenshot_id":"phase0-side_elevation","disposition":"clear","finding_ids":[],"notes":"The closed exterior wall has readable windows, staggered storey bands, and continuous stone-to-timber load paths."},
+    {"screenshot_id":"phase0-overview","disposition":"clear","finding_ids":[],"notes":"The slice contains one street-owned fabric mass, one explicit court, no freestanding platform, and no individually propped house."}
+  ],
+  "findings": [
+    {"id":"WPF-006","severity":"P3","seed":0,"settlement_id":"warren.phase0.fabric","recipe":"covered_market_front","screenshot_ids":["phase0-market_north","phase0-market_south"],"evidence":"All covered gallery bays currently reuse the stocked fishmonger-table silhouette.","invariant":"Dressing variants should break repeated stock silhouettes without changing the structural street recipe.","confidence":"high","status":"open"}
+  ]
+}

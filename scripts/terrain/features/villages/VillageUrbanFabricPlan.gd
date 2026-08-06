@@ -1,0 +1,189 @@
+class_name VillageUrbanFabricPlan
+extends RefCounted
+
+## Complete atomic replacement for the legacy fixed elevated district. The
+## record builder commits this payload only after massing, circulation,
+## support, access, and 3D occupancy all validate together.
+enum GenerationKind {
+	LEGACY_TERRAIN_MASSING,
+	SECTIONAL_WARREN,
+	VOLUMETRIC_WARREN,
+}
+const MAX_FABRIC_TERRAIN_RELIEF := 4.5
+
+var generation_kind := GenerationKind.LEGACY_TERRAIN_MASSING
+var accepted: bool = false
+var reason: StringName
+## The sealed common-fabric source is retained verbatim in production records.
+## Projection materializes the arrays below, while audits and future gameplay
+## inspect the same topology instead of reverse-engineering render instances.
+var fabric_plan: SettlementFabricPlan
+var fabric_audit: Dictionary = {}
+## Volumetric generation retains its complete source stages as lineage; the
+## common fabric above remains the sole render/collision transaction.
+var volumetric_town: WarrenBuiltTownPlan
+## Canonical local-fabric to world transform chosen by the terrain adapter.
+## Review, navigation, and future gameplay consumers use this same authored
+## frame instead of trying to recover it from render placements or bounds.
+var world_transform := Transform3D.IDENTITY
+## Terrain-adapter facts remain explicit on generated-fabric records. The route
+## landing may differ from natural ground only by the character's ordinary
+## planned step; lower terrain elsewhere is handled by fixed supports.
+var terrain_entrance_lift_m := -1.0
+var terrain_relief_m := -1.0
+var massing: VillageMassingPlan
+var market: VillageMarketPlan
+var circulation: VillageCirculationPlan
+var timber: VillageTimberFabricPlan
+var route_stairs: VillageRouteStairFabricPlan
+var entries: Array[Dictionary] = []
+## World-space generated walk-surface meshes (stair/ramp spans). They stream
+## inside the record payload beside asset instances; a STAIR claim therefore
+## has visible, collision-bearing production geometry by construction.
+var surface_meshes: Array[Dictionary] = []
+var volumes: Array[VillageOccupancyVolume] = []
+var surfaces: Array[FeatureGroundShape] = []
+var clearances: Array[FeatureGroundShape] = []
+var buildings: Array[Dictionary] = []
+var supports: Array[VillageBuildingSupportPlan] = []
+var skirts: Array[VillageSkirtDeckPlan] = []
+var entrance_stair_count: int = 0
+var public_stair_count: int = 0
+var natural_building_count: int = 0
+var retained_building_count: int = 0
+var rock_piece_count: int = 0
+var foundation_piece_count: int = 0
+## Bounded frontier audit retained on the selected/rejected plan. It explains
+## which complete massings were tried without leaking partially built payloads.
+var candidate_audit: Array[Dictionary] = []
+
+
+func validate(program: VillageProgram, tier: StringName) -> bool:
+	if not accepted:
+		return entries.is_empty() and volumes.is_empty() \
+			and surfaces.is_empty() and clearances.is_empty()
+	if generation_kind == GenerationKind.SECTIONAL_WARREN:
+		return _validate_sectional_warren(program)
+	if generation_kind == GenerationKind.VOLUMETRIC_WARREN:
+		return _validate_volumetric_warren(program)
+	if reason != &"accepted" or massing == null or circulation == null \
+			or market == null or not market.validate(program.market_program, tier) \
+			or timber == null or route_stairs == null \
+			or not massing.validate(program.massing_program,
+			tier) or not circulation.validate(massing) or not timber.validate():
+		return false
+	if not route_stairs.validate() \
+			or public_stair_count != route_stairs.stair_count:
+		return false
+	if buildings.size() != massing.placements.size() \
+			or supports.size() != buildings.size() \
+			or skirts.size() != buildings.size() \
+			or natural_building_count + retained_building_count \
+				!= buildings.size() or entries.is_empty() or volumes.is_empty():
+		return false
+	for support: VillageBuildingSupportPlan in supports:
+		if not support.validate():
+			return false
+	for index in skirts.size():
+		if not skirts[index].validate(
+				massing.placements[index].perch.is_naturally_supported()):
+			return false
+	return true
+
+
+func requires_outskirts() -> bool:
+	return generation_kind == GenerationKind.LEGACY_TERRAIN_MASSING
+
+
+func _validate_sectional_warren(program: VillageProgram) -> bool:
+	return volumetric_town == null and _validate_compiled_fabric(program)
+
+
+func _validate_volumetric_warren(program: VillageProgram) -> bool:
+	if volumetric_town == null or not volumetric_town.is_sealed() \
+			or volumetric_town.fabric != fabric_plan \
+			or StringName(fabric_audit.get("generation_source", "")) \
+				!= &"volumetric_warren" \
+			or int(fabric_audit.get("market_count", 0)) \
+				< WarrenMarketSolver.REQUIRED_MARKETS \
+			or int(fabric_audit.get("skywalk_link_count", 0)) < 1 \
+			or int(fabric_audit.get("transverse_parcel_count", -1)) != 0 \
+			or int(fabric_audit.get(
+				"max_uncovered_core_component_size", -1)) != 0 \
+			or int(fabric_audit.get(
+				"max_uncovered_route_component_size", 1 << 30)) \
+				> WarrenBuiltTownSolver \
+					.TARGET_MAX_UNCOVERED_ROUTE_COMPONENT_SIZE:
+		return false
+	return _validate_compiled_fabric(program)
+
+
+func _validate_compiled_fabric(program: VillageProgram) -> bool:
+	if program == null or program.settlement_fabric_program == null \
+			or reason != &"accepted" or fabric_plan == null \
+			or not fabric_plan.is_sealed() or not fabric_plan.validate() \
+			or not world_transform.is_finite() \
+			or entries.is_empty() or volumes.is_empty() \
+			or clearances.is_empty():
+		return false
+	if terrain_entrance_lift_m < 0.0 \
+			or terrain_entrance_lift_m > TraversalEnvelope.MAX_PLANNED_STEP \
+			or terrain_relief_m < 0.0 \
+			or terrain_relief_m > MAX_FABRIC_TERRAIN_RELIEF:
+		return false
+	if not _fabric_audit_matches_plan() \
+			or int(fabric_audit.get("detached_building_stack_count", -1)) != 0 \
+			or int(fabric_audit.get("stair_endpoint_gap_count", -1)) != 0 \
+			or int(fabric_audit.get(
+				"stair_endpoint_missing_landing_count", -1)) != 0 \
+			or int(fabric_audit.get("stair_to_stair_edge_count", -1)) != 0 \
+			or int(fabric_audit.get("unserved_entrance_count", -1)) != 0:
+		return false
+	var allowed: Dictionary = {}
+	for asset_id: StringName in program.referenced_asset_ids:
+		allowed[asset_id] = true
+	var entry_ids: Dictionary = {}
+	for entry: Dictionary in entries:
+		var asset_id := StringName(entry.get("asset_id", ""))
+		var stable_entry_id := StringName(entry.get("stable_id", ""))
+		if asset_id.is_empty() or not allowed.has(asset_id) \
+				or stable_entry_id.is_empty() or entry_ids.has(stable_entry_id) \
+				or not (entry.get("transform") is Transform3D):
+			return false
+		entry_ids[stable_entry_id] = true
+	for mesh: Dictionary in surface_meshes:
+		if not EnvironmentInstancePayload._surface_mesh_is_valid(mesh):
+			return false
+	var occupancy_roles: Dictionary = {}
+	for volume: VillageOccupancyVolume in volumes:
+		occupancy_roles[volume.role] = true
+	for required_role in [VillageOccupancy.Role.SOLID,
+			VillageOccupancy.Role.WALK_SURFACE,
+			VillageOccupancy.Role.HEADROOM,
+			VillageOccupancy.Role.GROUND_EXCLUSIVE]:
+		if not occupancy_roles.has(required_role):
+			return false
+	if not fabric_plan.surface_plan.guard_segments.is_empty() \
+			and not occupancy_roles.has(VillageOccupancy.Role.WALK_GUARD):
+		return false
+	return buildings.size() == int(fabric_audit.get(
+		"building_stack_count", -1))
+
+
+func _fabric_audit_matches_plan() -> bool:
+	## The sealed fabric owns structural truth. Production may append only the
+	## bounded survivor-selection disposition, which does not alter topology,
+	## geometry, collision, or occupancy. Compare every canonical key and reject
+	## all other extras so this cannot become a permissive audit bypass.
+	for key: Variant in fabric_plan.audit.keys():
+		if not fabric_audit.has(key) or fabric_audit[key] != fabric_plan.audit[key]:
+			return false
+	var allowed_extras: Dictionary = {
+		&"visual_quality_target_met": true,
+		&"visual_quality_fallback_count": true,
+		&"visual_selection_candidate_count": true,
+	}
+	for key: Variant in fabric_audit.keys():
+		if not fabric_plan.audit.has(key) and not allowed_extras.has(key):
+			return false
+	return true

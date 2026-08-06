@@ -57,6 +57,10 @@ func _build(index: EnvironmentCatalogIndex) -> bool:
 		if not ResourceLoader.exists(descriptor_value.visual_path):
 			push_error("Environment descriptor %s points to a missing visual: %s" % [key, descriptor_value.visual_path])
 			return false
+		for point: Vector2 in descriptor_value.ground_contact_points:
+			if not point.is_finite():
+				push_error("Environment descriptor %s has a non-finite ground contact" % key)
+				return false
 		_by_id[descriptor_value.id] = descriptor_value
 		_ids.append(descriptor_value.id)
 		previous = key

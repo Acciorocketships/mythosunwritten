@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_hsj61"]
+
+[resource]
+script = ExtResource("1_hsj61")
+id = &"sfv.fabric.roof.seam.m.002"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_seam_m_002.tres"
+tags = Array[StringName]([&"fabric_roof_junction", &"roof_seam", &"village"])
+measured_aabb = AABB(-0.2425843, -1.1096707e-07, -1.6657483e-06, 0.4851864, 0.6263053, 3.0185914)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.roof.seam.m.002"

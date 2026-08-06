@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"warren-lower_approach","disposition":"clear","finding_ids":[],"notes":"The entrance now reads as a dense inhabited canyon with market frontage, a bridge, a visible higher branch, and credible human scale."},
+    {"screenshot_id":"warren-lower_market","disposition":"finding","finding_ids":["WTV-004"],"notes":"The covered ground market is spatially convincing, but its stocked fishmonger tables repeat too uniformly."},
+    {"screenshot_id":"warren-first_rise","disposition":"finding","finding_ids":["WTV-001"],"notes":"The first stair and rising buildings are visible, but the review terrace presents as a large untextured rectangular wall."},
+    {"screenshot_id":"warren-middle_alley","disposition":"finding","finding_ids":["WTV-001"],"notes":"The middle route is enclosed and layered, while the artificial test-terrain cut still dominates the lower half of the view."},
+    {"screenshot_id":"warren-switchback","disposition":"clear","finding_ids":[],"notes":"The elevated view proves the middle alley turns west between perpendicular inhabited rows and continues toward a second climb."},
+    {"screenshot_id":"warren-upper_arrival","disposition":"clear","finding_ids":[],"notes":"This view clearly exposes a same-level path junction, the east and west upper continuations, multiple stairs, and facade-owned bridges."},
+    {"screenshot_id":"warren-upper_lane_east","disposition":"clear","finding_ids":[],"notes":"The upper lane is narrow, guarded, market-lined, and bounded by occupied facades rather than an empty suspended platform."},
+    {"screenshot_id":"warren-upper_lane_west","disposition":"clear","finding_ids":[],"notes":"The reverse traversal confirms the same inhabited lane, overhead bridge punctuation, and readable continuation toward the corner routes."},
+    {"screenshot_id":"warren-upper_turn","disposition":"clear","finding_ids":[],"notes":"The former weak western spur now passes a door, turns beside an inhabited terminal block, climbs to its gallery, and bridges back to the neighboring row."},
+    {"screenshot_id":"warren-east_branch","disposition":"finding","finding_ids":["WTV-003"],"notes":"The perpendicular eastern row and upper corner are present, but strongly black tent cloth in the foreground reduces fringe readability."},
+    {"screenshot_id":"warren-gallery_bridge","disposition":"finding","finding_ids":["WTV-002"],"notes":"The camera is clear of collision but a near facade occludes the intended lower bridge proof, so this recipe does not verify what its name claims."},
+    {"screenshot_id":"warren-lower_tents","disposition":"finding","finding_ids":["WTV-003"],"notes":"Several plain and themed silhouettes and their prop loads are distinct from above, but canopy lighting alternates between clipped white and nearly black."},
+    {"screenshot_id":"warren-terrace_tents","disposition":"finding","finding_ids":["WTV-003"],"notes":"The middle and upper fringe contains different tent structures, yet dark canopy materials obscure their shape hierarchy."},
+    {"screenshot_id":"warren-upper_tents","disposition":"finding","finding_ids":["WTV-003"],"notes":"Upper-band tents are genuinely varied and terrain-backed, though their contrast remains inconsistent with the building palette."},
+    {"screenshot_id":"warren-network_overview","disposition":"clear","finding_ids":[],"notes":"The complete mass now reads as several compact perpendicular street walls stepping through three route bands, not one flat street or a wheel-and-spokes plan."}
+  ],
+  "findings": [
+    {
+      "id": "WTV-001",
+      "severity": "P2",
+      "seed": 0,
+      "settlement_id": "warren.review.town",
+      "recipe": "review_terrace",
+      "screenshot_ids": ["warren-first_rise", "warren-middle_alley"],
+      "evidence": "The isolated harness uses rectangular grey cliff boxes; their broad vertical faces overwhelm close views of the first two climbs.",
+      "invariant": "Production migration must project the street graph onto natural terrain tiles and preserve stair visibility without introducing manufactured slab cliffs.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WTV-002",
+      "severity": "P2",
+      "seed": 0,
+      "settlement_id": "warren.review.town",
+      "recipe": "gallery_bridge_view",
+      "screenshot_ids": ["warren-gallery_bridge"],
+      "evidence": "A near facade occupies most of the frame and hides the bridge that this capture recipe is intended to inspect.",
+      "invariant": "Every named verification recipe must visibly prove its target geometry at full resolution.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WTV-003",
+      "severity": "P3",
+      "seed": 0,
+      "settlement_id": "warren.review.town",
+      "recipe": "fringe_tent",
+      "screenshot_ids": ["warren-east_branch", "warren-lower_tents", "warren-terrace_tents", "warren-upper_tents"],
+      "evidence": "Eleven distinct tent assets are present, including armory, deposit, dormitory, and forge variants, but several cloth panels render almost black beside clipped-white variants.",
+      "invariant": "Tent material response should preserve readable silhouettes and prop detail under the same lighting used to judge the town fabric.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WTV-004",
+      "severity": "P3",
+      "seed": 0,
+      "settlement_id": "warren.review.town",
+      "recipe": "covered_market_front",
+      "screenshot_ids": ["warren-lower_market"],
+      "evidence": "Most covered bays repeat the same stocked fishmonger table with matching orientation and spacing.",
+      "invariant": "Market-front dressing variants should break the repeated stock silhouette without changing the structural bay grammar.",
+      "confidence": "high",
+      "status": "open"
+    }
+  ]
+}

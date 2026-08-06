@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "world_seed": 6046713720826375059,
+  "manifest": "/tmp/warren-two-sided-review/manifest-6046713720826375059.json",
+  "review_instruction": "Finding a real issue is a successful review. Judge every full-resolution image critically; structural counters cannot overrule visible evidence.",
+  "dispositions": [
+    {"screenshot_id":"overview-ne","disposition":"finding","finding_ids":["WTV4-003"],"notes":"Every visible room is roof-closed and the silhouette is taller, but the overall mass reads as an elongated chain more than a compact warren."},
+    {"screenshot_id":"overview-sw","disposition":"pass","finding_ids":[],"notes":"The reverse overview verifies varied, complete roofs and no visually short/wide house envelope."},
+    {"screenshot_id":"section-east","disposition":"pass","finding_ids":[],"notes":"Authored plank surfaces remain consistently light and the section has several occupied height bands."},
+    {"screenshot_id":"entry","disposition":"pass","finding_ids":[],"notes":"The entry turns past a stocked market and does not expose a straight street through the town."},
+    {"screenshot_id":"ground-reverse","disposition":"finding","finding_ids":["WTV4-002"],"notes":"The hostile camera missed the intended interior ground route and mostly tests the exterior silhouette."},
+    {"screenshot_id":"ground-cross","disposition":"finding","finding_ids":["WTV4-002"],"notes":"The cross-town camera is outside the occupied fabric, so it cannot falsify the internal ground maze."},
+    {"screenshot_id":"upper-route","disposition":"pass","finding_ids":[],"notes":"Connected plank surfaces pass entrances, change elevation, and remain bounded by nearby facades."},
+    {"screenshot_id":"skywalk-side","disposition":"pass","finding_ids":[],"notes":"The occupied overhead connection reads as building mass rather than a bare bridge."},
+    {"screenshot_id":"skywalk-beneath","disposition":"finding","finding_ids":["WTV4-001"],"notes":"A long grass-floored undercroft extends beneath the shaft-closing deck network and reaches visible exterior daylight through the town."},
+    {"screenshot_id":"roofline","disposition":"pass","finding_ids":[],"notes":"All visible generated rooms, bays, and corner overlaps have complete integrated roofs."},
+    {"screenshot_id":"network-above","disposition":"finding","finding_ids":["WTV4-001"],"notes":"The former multi-column vertical shaft is covered, but the cure is still a broad pale deck lattice with too little occupied mass beneath it."}
+  ],
+  "findings": [
+    {
+      "id":"WTV4-001",
+      "severity":"P1",
+      "status":"open",
+      "recipe":"skywalk_beneath/network_above",
+      "evidence":"Nine platform-infill patches, eight required by the shaft metric, form a continuous low ceiling over an open grass lawn. The horizon remains visible beneath the fabric.",
+      "invariant":"A shaft-closing upper surface is admissible only where its lower volume is already bounded urban space; it must not manufacture a substantial uninhabited suspended platform."
+    },
+    {
+      "id":"WTV4-002",
+      "severity":"P2",
+      "status":"open",
+      "recipe":"hostile_ground_views",
+      "evidence":"Both new cross-town cameras have zero target visibility and sit outside the route volume.",
+      "invariant":"Hostile sightline cameras must be derived from public-route cells and look along an internal route chord, with validated target visibility."
+    },
+    {
+      "id":"WTV4-003",
+      "severity":"P2",
+      "status":"open",
+      "recipe":"overview_ne",
+      "evidence":"The mass is vertically varied but has a long-chain footprint from the north-east overview.",
+      "invariant":"The selected construction should be compact in both horizontal axes, with branches folding back through the same central mass."
+    }
+  ],
+  "verified_passes": {
+    "dark_platform_skin_count": 0,
+    "visually_roofless_room_count": 0,
+    "visually_short_parcel_count": 0,
+    "stair_endpoint_gap_count": 0,
+    "detached_building_stack_count": 0
+  }
+}

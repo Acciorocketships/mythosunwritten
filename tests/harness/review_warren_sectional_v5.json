@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"warren-market_entry","disposition":"finding","finding_ids":["WSV5-001","WSV5-004"],"notes":"The first route surface is continuous, but it is a dark isolated strip beside lawn; the market frontage and a bounded urban alley do not read from the entrance."},
+    {"screenshot_id":"warren-market_turn","disposition":"finding","finding_ids":["WSV5-001","WSV5-004"],"notes":"This frame exposes a long open lawn sightline between separated building masses; neither a market bend nor dense frontage encloses the turn."},
+    {"screenshot_id":"warren-tunnel_underpass","disposition":"finding","finding_ids":["WSV5-001"],"notes":"The occupied bridge is legible above, but the lower route opens directly to the horizon and the stairs do not form a facade-bounded vertical street."},
+    {"screenshot_id":"warren-middle_alley","disposition":"finding","finding_ids":["WSV5-003"],"notes":"A support wall fills most of the frame. The automatic ray probe also classifies the target as obscured, so this capture cannot verify the named alley."},
+    {"screenshot_id":"warren-stair_house_entry","disposition":"finding","finding_ids":["WSV5-002"],"notes":"The internal stair-house exists and climbs two storeys, but the opposing flights visually intersect without a distinct collision-bearing intermediate landing or readable guard openings."},
+    {"screenshot_id":"warren-upper_court","disposition":"suspicion","finding_ids":["WSV5-003"],"notes":"The passage facade and doorway are visible, but they dominate the frame; the image does not establish the court as a shared local-ground space serving multiple onward relationships."},
+    {"screenshot_id":"warren-court_bearing","disposition":"finding","finding_ids":["WSV5-003","WSV5-005"],"notes":"The target is ray-obscured by close massing and the rectangular harness rock stacks still substitute for a real uneven terrain payload, so the support relationship is not cleanly proven."},
+    {"screenshot_id":"warren-court_guard","disposition":"clear","finding_ids":[],"notes":"The structural court floor is complete and the exposed edge has continuous derived upper/lower rails and posts; adjoining building edges and the doorway side remain open."},
+    {"screenshot_id":"warren-bridge_descent","disposition":"suspicion","finding_ids":["WSV5-002"],"notes":"The high passage floor and exterior doorway are present, but the descending route is small and distant through the opening; a sequential traversal proof is still needed to establish the continuous return."},
+    {"screenshot_id":"warren-lower_passage_return","disposition":"clear","finding_ids":[],"notes":"The lower return passage has a complete facade, roof, doorway, rock perch, and continuous claimed floor reaching the portal."},
+    {"screenshot_id":"warren-half_rise","disposition":"clear","finding_ids":[],"notes":"The full-rise stair, its upper landing, surrounding occupied masses, and an overhead inhabited link are all legible in one sectional view."},
+    {"screenshot_id":"warren-upper_switchback","disposition":"suspicion","finding_ids":["WSV5-003"],"notes":"The court, guards, passage facades, and onward stair are visible, but the ray audit reports the authored target as obscured; this view cannot close the transition gate."},
+    {"screenshot_id":"warren-entry_overhang","disposition":"finding","finding_ids":["WSV5-003"],"notes":"The camera is collision-clear but resolves to a close wall/window view and does not show the underside, supporting braces, or route beneath the intended inhabited overhang."},
+    {"screenshot_id":"warren-valley_skywalk","disposition":"finding","finding_ids":["WSV5-001","WSV5-006"],"notes":"The secondary link's endpoint houses sit on separate rectangular perches with lawn between them; the enclosed link is visually lost and the composition reads as disconnected islands."},
+    {"screenshot_id":"warren-roofline","disposition":"suspicion","finding_ids":["WSV5-003"],"notes":"Most roof and gable closures are present, but the automatic target ray is obstructed and the frame cannot prove every exposed top boundary in the dense centre."},
+    {"screenshot_id":"warren-sectional_profile","disposition":"finding","finding_ids":["WSV5-001","WSV5-005"],"notes":"The central cluster now has substantial vertical overlap and a guarded high court, but adjacent clusters remain separated by lawn and the proof still uses synthetic rectangular terrain supports."},
+    {"screenshot_id":"warren-network_overview","disposition":"finding","finding_ids":["WSV5-001","WSV5-004","WSV5-006"],"notes":"The overview diagnoses a compact stacked central mass, but also several disconnected satellite perches, long dark path strips across grass, and an isolated secondary skywalk composition."}
+  ],
+  "findings": [
+    {
+      "id": "WSV5-001",
+      "severity": "P1",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "sectional_public_realm",
+      "screenshot_ids": ["warren-market_entry","warren-market_turn","warren-tunnel_underpass","warren-sectional_profile","warren-network_overview","warren-valley_skywalk"],
+      "evidence": "The automated audit measures frontage_ratio=0.0435, overhead_route_ratio=0.1081, through_sightline_count=916, and max_sightline_m=46.5. Full-resolution views agree: lawn and horizon remain visible through the core and satellite masses read independently.",
+      "invariant": "The compact-core itinerary must be bounded by occupied frontage, contain no through-core ray, keep tangent visibility at most 12 m, and visually read as one interlocked accretion from eye level.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WSV5-002",
+      "severity": "P1",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "room.stair_house.terrain.orange",
+      "screenshot_ids": ["warren-stair_house_entry","warren-bridge_descent"],
+      "evidence": "The stair-house flights visually cross in one open volume without a distinct intermediate landing; the later descent is topologically connected but not yet demonstrated by a sequential capsule traversal or a clear before/on/after image set.",
+      "invariant": "Every stair transition must have exact lower/upper landings, continuous collision and guards, and bidirectional capsule proof through the same portals claimed by the graph.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WSV5-003",
+      "severity": "P2",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "review_camera_set",
+      "screenshot_ids": ["warren-middle_alley","warren-upper_court","warren-court_bearing","warren-upper_switchback","warren-entry_overhang","warren-roofline"],
+      "evidence": "The line-of-sight verifier reports six collision-clear but target-obscured authored cameras. Several frames show a near wall or support instead of the geometry named by the view.",
+      "invariant": "Every named verification recipe must visibly prove its target at full resolution; collision clearance alone is insufficient.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WSV5-004",
+      "severity": "P2",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "public_realm_surface_material",
+      "screenshot_ids": ["warren-market_entry","warren-market_turn","warren-network_overview"],
+      "evidence": "Terrain-street patches render as nearly black rectangular strips under the review lighting and are surrounded by uncovered lawn. Surface closure exists structurally but does not yet read as a finished street material or urban ground.",
+      "invariant": "Solved surface boundaries must produce readable continuous street/court material without exposing accidental grass or looking like debug slabs.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WSV5-005",
+      "severity": "P2",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "review_support_heightfield",
+      "screenshot_ids": ["warren-court_bearing","warren-sectional_profile"],
+      "evidence": "The harness derives rectangular rock stacks beneath every terrain-bearing footprint rather than committing the pinned runtime terrain field required by the spec.",
+      "invariant": "The fixed visual proof must use a real uneven terrain site or the exact runtime terrain payload for a pinned seed, not synthetic rectangular support slabs.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WSV5-006",
+      "severity": "P1",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "skywalk.valley.tunnel",
+      "screenshot_ids": ["warren-valley_skywalk","warren-network_overview"],
+      "evidence": "The secondary enclosed link is accepted by sockets and ancestry, but its endpoint blocks remain visually separated on isolated perches and the link is not legible from its dedicated capture.",
+      "invariant": "A secondary enclosed link must close adjacency inside the same compact mass and visibly reconnect the public realm; it cannot read as a detached skywalk branch between islands.",
+      "confidence": "high",
+      "status": "open"
+    }
+  ]
+}

@@ -27,6 +27,9 @@ var _collision_closeup := false
 var _normalize_review_scale := false
 var _asset_id := StringName()
 var _view_yaw_degrees := 0.0
+var _focus_local := Vector3.ZERO
+var _has_focus_local := false
+var _view_distance := 0.0
 var _page_label := Label.new()
 var _camera := Camera3D.new()
 
@@ -87,6 +90,16 @@ func _read_args() -> void:
 			"--view-yaw":
 				if index + 1 < args.size():
 					_view_yaw_degrees = float(args[index + 1])
+					index += 1
+			"--focus-local":
+				if index + 3 < args.size():
+					_focus_local = Vector3(float(args[index + 1]),
+						float(args[index + 2]), float(args[index + 3]))
+					_has_focus_local = _focus_local.is_finite()
+					index += 3
+			"--view-distance":
+				if index + 1 < args.size():
+					_view_distance = maxf(0.0, float(args[index + 1]))
 					index += 1
 			"--normalize":
 				_normalize_review_scale = true
@@ -205,24 +218,29 @@ func _add_asset(asset_id: StringName, page_index: int) -> void:
 			debug_instance.material_override = debug_material
 			_content.add_child(debug_instance)
 
-	var label := Label3D.new()
-	label.text = "%s\n%s\n%.1f × %.1f × %.1f m  |  %d collider%s%s" % [
-		String(asset_id), String(descriptor.provenance_id),
-		aabb.size.x, aabb.size.y, aabb.size.z,
-		descriptor.collision_piece_count,
-		"" if descriptor.collision_piece_count == 1 else "s",
-		_path_metric_text(asset_id)]
-	label.position = cell_origin + Vector3(0.0, 0.75, 7.0)
-	if not String(_asset_id).is_empty():
-		label.position = cell_origin + Vector3(0.0, aabb.size.y + 1.2, 0.0)
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.no_depth_test = true
-	label.font_size = 48
-	label.pixel_size = 0.015
-	label.modulate = Color("#f2f6eb")
-	label.outline_modulate = Color("#152018")
-	label.outline_size = 6
-	_content.add_child(label)
+	# The fixed screen-space header already identifies a collision close-up.
+	# Omitting the billboard here keeps its text from covering the small prop
+	# whose proxy the reviewer is meant to falsify.
+	if not _collision_closeup:
+		var label := Label3D.new()
+		label.text = "%s\n%s\n%.1f × %.1f × %.1f m  |  %d collider%s%s" % [
+			String(asset_id), String(descriptor.provenance_id),
+			aabb.size.x, aabb.size.y, aabb.size.z,
+			descriptor.collision_piece_count,
+			"" if descriptor.collision_piece_count == 1 else "s",
+			_path_metric_text(asset_id)]
+		label.position = cell_origin + Vector3(0.0, 0.75, 7.0)
+		if not String(_asset_id).is_empty():
+			label.position = cell_origin + Vector3(0.0,
+				aabb.size.y + 1.2, 0.0)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.no_depth_test = true
+		label.font_size = 48
+		label.pixel_size = 0.015
+		label.modulate = Color("#f2f6eb")
+		label.outline_modulate = Color("#152018")
+		label.outline_size = 6
+		_content.add_child(label)
 
 	# One-metre review marker makes source-pack scale errors immediately visible.
 	var marker_mesh := BoxMesh.new()
@@ -237,13 +255,21 @@ func _add_asset(asset_id: StringName, page_index: int) -> void:
 		_content.add_child(marker)
 	else:
 		marker.free()
-	if _path_program.assets.has(asset_id):
+	var structural_tags: Array[StringName] = [
+		&"building", &"tent", &"stall", &"deck", &"stair", &"support",
+		&"railing", &"foundation"]
+	var show_traversal_envelope := _path_program.assets.has(asset_id)
+	for tag: StringName in structural_tags:
+		show_traversal_envelope = show_traversal_envelope \
+			or descriptor.tags.has(tag)
+	if show_traversal_envelope:
 		var character_mesh := CapsuleMesh.new()
-		character_mesh.radius = 0.35
-		character_mesh.height = 1.8
+		character_mesh.radius = TraversalEnvelope.CAPSULE_RADIUS
+		character_mesh.height = TraversalEnvelope.CAPSULE_HEIGHT
 		var character := MeshInstance3D.new()
 		character.mesh = character_mesh
-		character.position = cell_origin + Vector3(-8.8, 0.9, 7.0)
+		character.position = cell_origin + Vector3(-8.8,
+			TraversalEnvelope.CAPSULE_HEIGHT * 0.5, 7.0)
 		_content.add_child(character)
 
 func _path_metric_text(asset_id: StringName) -> String:
@@ -260,10 +286,18 @@ func _path_metric_text(asset_id: StringName) -> String:
 func _frame_asset(aabb: AABB) -> void:
 	var focus := Vector3(0.0, aabb.size.y * 0.48, 0.0)
 	var extent := maxf(aabb.size.x, maxf(aabb.size.y, aabb.size.z))
+	if _has_focus_local:
+		# Single-asset placement recentres XZ and grounds Y. Accepting source-
+		# local coordinates lets bake probes and authored metrics drive an exact
+		# reproducible close-up without adding asset-specific review hooks.
+		focus = _focus_local - Vector3(aabb.get_center().x,
+			aabb.position.y, aabb.get_center().z)
 	if _collision_closeup:
-		focus.y = minf(3.2, aabb.size.y * 0.3)
+		if not _has_focus_local:
+			focus.y = minf(3.2, aabb.size.y * 0.3)
 		extent = minf(extent, 8.0)
-	var distance := maxf(4.0, extent * 2.6)
+	var distance := _view_distance if _view_distance > 0.0 \
+		else maxf(4.0, extent * 2.6)
 	var view_direction := Vector3(0.9, 0.55, 1.0).normalized() \
 		.rotated(Vector3.UP, deg_to_rad(_view_yaw_degrees))
 	_camera.look_at_from_position(focus + view_direction * distance, focus)

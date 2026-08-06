@@ -1,0 +1,1863 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_awning_blue_001.tres",
+      "id": "sfv.fabric.awning.blue.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.12037348747253,
+            -0.000000146595496630653,
+            -1.51498520374298
+          ],
+          "size": [
+            4.24074649810791,
+            3.49098920822144,
+            3.02997040748596
+          ]
+        },
+        "mesh_bytes": 84073,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 932
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "id": "sfv.fabric.awning.blue.001",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Blue_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_dressing",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Blue_001.fbx",
+      "source_sha256": "7a02560ff8b9719965a4a9579269c4a86c09f78e62477cdc9b7a92998ffcff54",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_awning_blue_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_brace_wood_002.tres",
+      "id": "sfv.fabric.brace.wood.002",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.94269776344299,
+            -0.000000161214146032762,
+            -0.43310073018074
+          ],
+          "size": [
+            1.94269609451294,
+            0.470999747514725,
+            0.86620157957077
+          ]
+        },
+        "mesh_bytes": 25912,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 306
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfv.fabric.brace.wood.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 1048576.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Wall_Support_Wooden_Stair_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_brace",
+          "support",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Wall_Support_Wooden_Stair_002.fbx",
+      "source_sha256": "198e305ba3b27f31ba2c9dfd18cf3f716d3a1af649af326036a23e37958e42d7",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_brace_wood_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_bridge_001.tres",
+      "id": "sfv.fabric.bridge.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 3622,
+        "measured_aabb": {
+          "position": [
+            -2.34308815002441,
+            -0.00000014126925407254,
+            -5.25337886810303
+          ],
+          "size": [
+            4.68617630004883,
+            2.26584410667419,
+            10.5067577362061
+          ]
+        },
+        "mesh_bytes": 302480,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 3622
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.bridge.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 6000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 6000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Bridge/SFV_Bridge_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "bridge",
+          "building",
+          "fabric_bridge",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Bridge/SFV_Bridge_001.fbx",
+      "source_sha256": "2cb83d84dde508fc0fb0410df52703f2f953837b67d4e837231c2e8910d623e4",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_bridge_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_clothes_001.tres",
+      "id": "sfv.fabric.clothes.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.00444009760394692,
+            -1.47323203086853,
+            -0.0547444857656956
+          ],
+          "size": [
+            3.13481783866882,
+            1.47868382930756,
+            0.104888923466206
+          ]
+        },
+        "mesh_bytes": 102325,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1128
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "id": "sfv.fabric.clothes.001",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 1048576.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Hanged Clothes/SFV_Clothes_Hanged_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_dressing",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Hanged Clothes/SFV_Clothes_Hanged_001.fbx",
+      "source_sha256": "cf0463610a1202ea4b7b44ce20499e321148fa572e0296311f784d944db66c90",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_clothes_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_floor_l_001.tres",
+      "id": "sfv.fabric.floor.l.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.50102043151855,
+            -0.000000226570733730114,
+            -1.5
+          ],
+          "size": [
+            3.00000023841858,
+            0.161052331328392,
+            3.0
+          ]
+        },
+        "mesh_bytes": 21457,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 236
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_footprint": 0.98,
+        "collision_profile": "flat_box",
+        "id": "sfv.fabric.floor.l.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "pivot": [
+          -1.5,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Floor/SFV_Floor_L_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "deck",
+          "fabric_floor",
+          "slab",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Floor/SFV_Floor_L_001.fbx",
+      "source_sha256": "1ae5824a1487ca2a03bb3888e2b38d9036ba17b3fd2079bf1f2aa92d70cddacb",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_floor_l_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_gable_wood_m_001.tres",
+      "id": "sfv.fabric.gable.wood.m.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 176,
+        "measured_aabb": {
+          "position": [
+            -3.0,
+            -0.0000000391785341946616,
+            -0.234330475330353
+          ],
+          "size": [
+            6.0,
+            4.03789949417114,
+            0.468661069869995
+          ]
+        },
+        "mesh_bytes": 16594,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 176
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.gable.wood.m.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 2000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 2000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_M_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_gable",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_M_001.fbx",
+      "source_sha256": "eb2b9f5bc47e1f00d021b32081cec4892bc3fd0e2ec504e208cd9567ab211d9b",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_gable_wood_m_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_gallery_floor_m_001.tres",
+      "id": "sfv.fabric.gallery.floor.m.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.50102257728577,
+            -0.00000022657090426037,
+            -0.75
+          ],
+          "size": [
+            3.00000095367432,
+            0.161052331328392,
+            1.50000011920929
+          ]
+        },
+        "mesh_bytes": 11581,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 124
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_footprint": 0.98,
+        "collision_profile": "flat_box",
+        "id": "sfv.fabric.gallery.floor.m.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "pivot": [
+          -1.5,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Floor/SFV_Floor_M_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "deck",
+          "fabric_gallery",
+          "slab",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Floor/SFV_Floor_M_001.fbx",
+      "source_sha256": "8eebbfa52bc4206e2f80fb7852656252cfba6edda95f98c4463876fd430cf0aa",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_gallery_floor_m_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_ivy_001.tres",
+      "id": "sfv.fabric.ivy.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.627761244773865,
+            -0.955608904361725,
+            -0.0507332719862461
+          ],
+          "size": [
+            1.84274649620056,
+            1.78860282897949,
+            0.13480132818222
+          ]
+        },
+        "mesh_bytes": 14121,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 148
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "id": "sfv.fabric.ivy.001",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 1048576.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Ivies/SFV_Ivy_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_dressing",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Ivies/SFV_Ivy_001.fbx",
+      "source_sha256": "ba6db7a4b314624a9f66d11e3fe717c2c3b5f1bd639c1074874301c8d916a0a5",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_ivy_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_planter_003.tres",
+      "id": "sfv.fabric.planter.003",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.603833198547363,
+            -0.0000000556747643543076,
+            -0.450015634298325
+          ],
+          "size": [
+            1.20766639709473,
+            0.927857756614685,
+            0.900033712387085
+          ]
+        },
+        "mesh_bytes": 45085,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 492
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "id": "sfv.fabric.planter.003",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 1048576.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 2000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Planter/SFV_Planter_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_dressing",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Planter/SFV_Planter_003.fbx",
+      "source_sha256": "7906f63a5cc71d851efd0acbd732314f560b94697222dcbc3a223fdd54c57a0a",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_planter_003.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_bisect_left_s_blue_001.tres",
+      "id": "sfv.fabric.roof.bisect.left.s.blue.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 402,
+        "measured_aabb": {
+          "position": [
+            -1.53818082809448,
+            0.0000000855160351420636,
+            -1.5
+          ],
+          "size": [
+            3.07636189460754,
+            3.02013444900513,
+            3.0
+          ]
+        },
+        "mesh_bytes": 36973,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 402
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.roof.bisect.left.s.blue.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_Bisect_L_S_Blue_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_roof_junction",
+          "roof_valley",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_Bisect_L_S_Blue_001.fbx",
+      "source_sha256": "46b4cb9bd3340a86333c1284f947e209c12955e7cdd1adf4d2dcd33e6d2c53b5",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_bisect_left_s_blue_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_bisect_left_s_orange_001.tres",
+      "id": "sfv.fabric.roof.bisect.left.s.orange.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 402,
+        "measured_aabb": {
+          "position": [
+            -1.53818082809448,
+            0.0000000855160351420636,
+            -1.5
+          ],
+          "size": [
+            3.07636189460754,
+            3.02013444900513,
+            3.0
+          ]
+        },
+        "mesh_bytes": 36975,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 402
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
+        "id": "sfv.fabric.roof.bisect.left.s.orange.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_Bisect_L_S_Orange_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_roof_junction",
+          "roof_valley",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_Bisect_L_S_Orange_001.fbx",
+      "source_sha256": "a448fb5b2696d52091ed51182819b485173ec188bdb44b094854c0c28cdf35f1",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_bisect_left_s_orange_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_bisect_right_s_blue_001.tres",
+      "id": "sfv.fabric.roof.bisect.right.s.blue.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 402,
+        "measured_aabb": {
+          "position": [
+            -1.5381805896759,
+            -0.0000000855160493529183,
+            -1.5
+          ],
+          "size": [
+            3.07636141777039,
+            3.02013444900513,
+            3.0
+          ]
+        },
+        "mesh_bytes": 37002,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 402
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.roof.bisect.right.s.blue.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_Bisect_R_S_Blue_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_roof_junction",
+          "roof_valley",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_Bisect_R_S_Blue_001.fbx",
+      "source_sha256": "962c205d996b59f1e7aa2cf22273689b222c9353227caabbd542351737d3f1f2",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_bisect_right_s_blue_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_bisect_right_s_orange_001.tres",
+      "id": "sfv.fabric.roof.bisect.right.s.orange.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 402,
+        "measured_aabb": {
+          "position": [
+            -1.5381805896759,
+            -0.0000000855160493529183,
+            -1.5
+          ],
+          "size": [
+            3.07636141777039,
+            3.02013444900513,
+            3.0
+          ]
+        },
+        "mesh_bytes": 37004,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 402
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
+        "id": "sfv.fabric.roof.bisect.right.s.orange.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_Bisect_R_S_Orange_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_roof_junction",
+          "roof_valley",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_Bisect_R_S_Orange_001.fbx",
+      "source_sha256": "8921e8dfab0d0b4544086df51ba7fae9116e0b34e2aeb44f1a699c778b0d9233",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_bisect_right_s_orange_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_half_s_blue_002.tres",
+      "id": "sfv.fabric.roof.half.s.blue.002",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 512,
+        "measured_aabb": {
+          "position": [
+            -1.62172257900238,
+            -0.000000122436460969766,
+            -1.5
+          ],
+          "size": [
+            3.24344539642334,
+            3.50416493415833,
+            3.0
+          ]
+        },
+        "mesh_bytes": 46894,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 512
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.roof.half.s.blue.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_S_Blue_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_roof",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_S_Blue_002.fbx",
+      "source_sha256": "d00af7e301f3e2d3365f718a4a1982462e1299fc706ea0bc5c3a0052561c3260",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_half_s_blue_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_half_s_orange_002.tres",
+      "id": "sfv.fabric.roof.half.s.orange.002",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 512,
+        "measured_aabb": {
+          "position": [
+            -1.62172257900238,
+            -0.000000122436460969766,
+            -1.5
+          ],
+          "size": [
+            3.24344539642334,
+            3.50416493415833,
+            3.0
+          ]
+        },
+        "mesh_bytes": 46896,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 512
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
+        "id": "sfv.fabric.roof.half.s.orange.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_S_Orange_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_roof",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_S_Orange_002.fbx",
+      "source_sha256": "394976b43e8db3c22c1701dc72c02f50548e4dad7bfab63f180276a85302921e",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_half_s_orange_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_s_blue_001.tres",
+      "id": "sfv.fabric.roof.s.blue.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 658,
+        "measured_aabb": {
+          "position": [
+            -3.24287986755371,
+            -0.0000000772418999872571,
+            -0.665258765220642
+          ],
+          "size": [
+            6.49100828170776,
+            3.51701736450195,
+            1.69053423404694
+          ]
+        },
+        "mesh_bytes": 60029,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 658
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.roof.s.blue.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_S_Preset_Blue_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_roof",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_S_Preset_Blue_001.fbx",
+      "source_sha256": "920e9e664486ca9f0f9b8e42b2874a8a7055ffa1a1fcb97385d06fdbc46160de",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_s_blue_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_s_orange_001.tres",
+      "id": "sfv.fabric.roof.s.orange.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 658,
+        "measured_aabb": {
+          "position": [
+            -3.24287986755371,
+            -0.0000000772418999872571,
+            -0.665258765220642
+          ],
+          "size": [
+            6.49100828170776,
+            3.51701736450195,
+            1.69053423404694
+          ]
+        },
+        "mesh_bytes": 60031,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 658
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
+        "id": "sfv.fabric.roof.s.orange.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_S_Preset_Orange_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_roof",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_S_Preset_Orange_001.fbx",
+      "source_sha256": "087b614c84b6f642aea8c944ad6606dc980279b21303c63784439a75b13a1f1d",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_s_orange_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_seam_m_002.tres",
+      "id": "sfv.fabric.roof.seam.m.002",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.242584303021431,
+            -0.000000110967071975665,
+            -0.00000166574830018362
+          ],
+          "size": [
+            0.485186398029327,
+            0.626305282115936,
+            3.01859140396118
+          ]
+        },
+        "mesh_bytes": 6029,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 58
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "id": "sfv.fabric.roof.seam.m.002",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 1048576.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_M/SFV_Roof_Attachable_M_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_roof_junction",
+          "roof_seam",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_M/SFV_Roof_Attachable_M_002.fbx",
+      "source_sha256": "535558f6d139000b9801aaa1eaf96ddf6ad873330efc5ef9bea21040e8698b97",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_seam_m_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_window_001.tres",
+      "id": "sfv.fabric.roof.window.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1200,
+        "measured_aabb": {
+          "position": [
+            -1.22857534885406,
+            -0.000000364995031532089,
+            -1.6770179271698
+          ],
+          "size": [
+            2.45715856552124,
+            3.10333228111267,
+            3.35403537750244
+          ]
+        },
+        "mesh_bytes": 109256,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 1200
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "fallback_albedo_textures": {
+          "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+        },
+        "id": "sfv.fabric.roof.window.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "dormer",
+          "fabric_roof_feature",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_001.fbx",
+      "source_sha256": "e2904142262a33d1370dd35970f0b8e90dc8648597fb983e9774684c865f9a1c",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_window_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_window_002.tres",
+      "id": "sfv.fabric.roof.window.002",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1200,
+        "measured_aabb": {
+          "position": [
+            -1.22857534885406,
+            -0.000000364995031532089,
+            -1.6770179271698
+          ],
+          "size": [
+            2.45715856552124,
+            3.10333228111267,
+            3.35403537750244
+          ]
+        },
+        "mesh_bytes": 109256,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 1200
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.roof.window.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "dormer",
+          "fabric_roof_feature",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_002.fbx",
+      "source_sha256": "9dea9b3342810fda04876559eb4320f37c26eff507b9b9e07478e81efb4e7107",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_window_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_window_003.tres",
+      "id": "sfv.fabric.roof.window.003",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 774,
+        "measured_aabb": {
+          "position": [
+            -1.39939486980438,
+            -0.0000000637721271345981,
+            -1.29016554355621
+          ],
+          "size": [
+            2.79878950119019,
+            3.1113600730896,
+            2.58033108711243
+          ]
+        },
+        "mesh_bytes": 70804,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 774
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.roof.window.003",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "dormer",
+          "fabric_roof_feature",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_003.fbx",
+      "source_sha256": "740bfb3442ab72ca459342361f5eb42e207affb47ae758bc09b315b7e8b781e0",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_window_003.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_roof_window_004.tres",
+      "id": "sfv.fabric.roof.window.004",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 774,
+        "measured_aabb": {
+          "position": [
+            -1.39939486980438,
+            -0.0000000637721271345981,
+            -1.29016554355621
+          ],
+          "size": [
+            2.79878950119019,
+            3.1113600730896,
+            2.58033108711243
+          ]
+        },
+        "mesh_bytes": 70804,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 774
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "fallback_albedo_textures": {
+          "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+        },
+        "id": "sfv.fabric.roof.window.004",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_004.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "dormer",
+          "fabric_roof_feature",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_004.fbx",
+      "source_sha256": "da1de090312f5997d1adc41f2f6836ab8f996123fdab4138d2e2cb59f037ecd6",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_window_004.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_sign_tavern_001.tres",
+      "id": "sfv.fabric.sign.tavern.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.243265956640244,
+            -0.233471691608429,
+            -0.0640229433774948
+          ],
+          "size": [
+            0.457758605480194,
+            0.431344717741013,
+            0.129483759403229
+          ]
+        },
+        "mesh_bytes": 12869,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 134
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "id": "sfv.fabric.sign.tavern.001",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 1048576.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Sign/SFV_Sign_Tavern_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_dressing",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Sign/SFV_Sign_Tavern_001.fbx",
+      "source_sha256": "777caeae239caeabfec73b6517428ebff115c4dcb444c4f96fb576ddd439e77d",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_sign_tavern_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_stair_preset_004.tres",
+      "id": "sfv.fabric.stair.preset.004",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 856,
+        "measured_aabb": {
+          "position": [
+            -1.51493167877197,
+            -0.0000000633815346873234,
+            -2.86000871658325
+          ],
+          "size": [
+            2.98488998413086,
+            3.16974401473999,
+            2.86001348495483
+          ]
+        },
+        "mesh_bytes": 74910,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 856
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.stair.preset.004",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 6000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 6000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_004.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_stair",
+          "stair",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_004.fbx",
+      "source_sha256": "14cf2d57fecdb271f35a89812238ced07a1e5120af80fdc675d3dd3c8c3229df",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_stair_preset_004.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_rock_door_005.tres",
+      "id": "sfv.fabric.wall.rock.door.005",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1329,
+        "measured_aabb": {
+          "position": [
+            -1.55171453952789,
+            -0.0000000573403511339166,
+            -0.556769728660583
+          ],
+          "size": [
+            3.10342884063721,
+            3.04001879692078,
+            1.11353945732117
+          ]
+        },
+        "mesh_bytes": 118184,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1329
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.rock.door.005",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_005.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_005.fbx",
+      "source_sha256": "1b022e2650a0a523950ee6c55c1eadf9e3087f332aaba7320da57c6f4e561c65",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_rock_door_005.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_rock_plain_001.tres",
+      "id": "sfv.fabric.wall.rock.plain.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 576,
+        "measured_aabb": {
+          "position": [
+            -0.881077587604523,
+            0.0000000348834703345346,
+            -0.331943690776825
+          ],
+          "size": [
+            1.77017331123352,
+            3.00012254714966,
+            0.663887143135071
+          ]
+        },
+        "mesh_bytes": 52541,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 576
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.rock.plain.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 2000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 2000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_001.fbx",
+      "source_sha256": "8c72e304e739e844cb6c269ddc630e217b7b0fa2bbf5e907bf8c35f37aca261c",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_rock_plain_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_rock_window_010.tres",
+      "id": "sfv.fabric.wall.rock.window.010",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1024,
+        "measured_aabb": {
+          "position": [
+            -1.54258275032043,
+            -0.000000112905624405357,
+            -0.33194375038147
+          ],
+          "size": [
+            3.08516526222229,
+            3.00000095367432,
+            0.663887500762939
+          ]
+        },
+        "mesh_bytes": 92218,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1024
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.rock.window.010",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_010.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_010.fbx",
+      "source_sha256": "64cac464795b2e0ffd08001ccae71aeb525020008ad74045e359b4acae06c2aa",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_rock_window_010.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_corner_s_001.tres",
+      "id": "sfv.fabric.wall.wood.corner.s.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 118,
+        "measured_aabb": {
+          "position": [
+            -0.375452399253845,
+            -0.000000028277565178314,
+            -0.375915318727493
+          ],
+          "size": [
+            0.75090479850769,
+            3.00000047683716,
+            0.751830697059631
+          ]
+        },
+        "mesh_bytes": 11100,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 118
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.corner.s.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Corner/SFV_Wall_Wooden_Corner_S_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Corner/SFV_Wall_Wooden_Corner_S_001.fbx",
+      "source_sha256": "64e738b9bdeec852bbe3ef089a8aa02ca6757f90cc61db642580881acc8306cd",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_corner_s_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_001.tres",
+      "id": "sfv.fabric.wall.wood.door.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 716,
+        "measured_aabb": {
+          "position": [
+            -1.5,
+            -0.000000113246848343351,
+            -0.508308112621307
+          ],
+          "size": [
+            3.0,
+            3.0,
+            1.01661610603333
+          ]
+        },
+        "mesh_bytes": 62060,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 716
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.door.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001.fbx",
+      "source_sha256": "d77f0c8080576e20df3c77a41af626eb58cd8a81603b43ae30409788116c4f87",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_door_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_plain_001.tres",
+      "id": "sfv.fabric.wall.wood.plain.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 172,
+        "measured_aabb": {
+          "position": [
+            -1.50000023841858,
+            -0.000000113246848343351,
+            -0.23433044552803
+          ],
+          "size": [
+            3.00000023841858,
+            3.0,
+            0.468660891056061
+          ]
+        },
+        "mesh_bytes": 15257,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 172
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.plain.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 2000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 2000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_001.fbx",
+      "source_sha256": "8eb650ff8f1083fd2b4118844477d82db566c889e093b19ee7d8b1e5f16c258a",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_plain_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_s_001.tres",
+      "id": "sfv.fabric.wall.wood.s.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 142,
+        "measured_aabb": {
+          "position": [
+            -0.750000298023224,
+            -0.0000000566234099608209,
+            -0.234330415725708
+          ],
+          "size": [
+            1.50000023841858,
+            3.0,
+            0.468660831451416
+          ]
+        },
+        "mesh_bytes": 13281,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 142
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.s.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_001.fbx",
+      "source_sha256": "871cac446677b8d851367ea31e9b82b321bd5c373ddfd36e4f8fce972567cec7",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_s_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_s_002.tres",
+      "id": "sfv.fabric.wall.wood.s.002",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 134,
+        "measured_aabb": {
+          "position": [
+            -0.750000298023224,
+            -0.0000000566234099608209,
+            -0.234330415725708
+          ],
+          "size": [
+            1.50000023841858,
+            3.0,
+            0.468660831451416
+          ]
+        },
+        "mesh_bytes": 12449,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 134
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.s.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_002.fbx",
+      "source_sha256": "9cb54f81bb3ad9522a56a1be32eb4edb3f0284f47482f0510cff803ae9051b46",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_s_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_s_003.tres",
+      "id": "sfv.fabric.wall.wood.s.003",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 112,
+        "measured_aabb": {
+          "position": [
+            -0.750000059604645,
+            -0.0000000566234099608209,
+            -0.234330415725708
+          ],
+          "size": [
+            1.49999988079071,
+            3.0,
+            0.468660831451416
+          ]
+        },
+        "mesh_bytes": 10497,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 112
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.s.003",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_003.fbx",
+      "source_sha256": "a7524e8b31423d6354d269f2d04bed5d730d867b764b69171aa9101e3f438804",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_s_003.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_s_004.tres",
+      "id": "sfv.fabric.wall.wood.s.004",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 144,
+        "measured_aabb": {
+          "position": [
+            -0.750000059604645,
+            -0.0000000566234099608209,
+            -0.234330415725708
+          ],
+          "size": [
+            1.49999988079071,
+            3.0,
+            0.468660831451416
+          ]
+        },
+        "mesh_bytes": 13601,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 144
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.s.004",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 5000.0,
+        "max_mesh_bytes": 4194304.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 5000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_004.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_004.fbx",
+      "source_sha256": "0b1f02e93630e59d172f71aa5fd3bc87355ce0695c9478e1917b145eadb90fdd",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_s_004.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_window_001.tres",
+      "id": "sfv.fabric.wall.wood.window.001",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 310,
+        "measured_aabb": {
+          "position": [
+            -1.50000011920929,
+            -0.0000000655670646665385,
+            -0.306758850812912
+          ],
+          "size": [
+            3.00000047683716,
+            3.0,
+            0.595917820930481
+          ]
+        },
+        "mesh_bytes": 27286,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 310
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.window.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_001.fbx",
+      "source_sha256": "456f0987a9a003f10bdf6fed9d4fb956f75750263da89e2fe25f95a429604493",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_window_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_window_010.tres",
+      "id": "sfv.fabric.wall.wood.window.010",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 378,
+        "measured_aabb": {
+          "position": [
+            -1.50000023841858,
+            -0.000000113246848343351,
+            -0.27658024430275
+          ],
+          "size": [
+            3.00000023841858,
+            3.0,
+            0.553163170814514
+          ]
+        },
+        "mesh_bytes": 33966,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 378
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.window.010",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_010.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_010.fbx",
+      "source_sha256": "de38649fda3e9411cf4bff97b7128d4ccb50797a04a2368aa13cd705267d857d",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_window_010.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_window_020.tres",
+      "id": "sfv.fabric.wall.wood.window.020",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 516,
+        "measured_aabb": {
+          "position": [
+            -1.50000023841858,
+            -0.000000113246848343351,
+            -0.281676352024078
+          ],
+          "size": [
+            3.00000023841858,
+            3.0,
+            0.562020361423492
+          ]
+        },
+        "mesh_bytes": 45938,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 516
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.window.020",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_020.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_020.fbx",
+      "source_sha256": "12e786f6ca94247cef1d3681dfe2c176d4818dd711883e7fbee33d643147cdae",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_window_020.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_window_040.tres",
+      "id": "sfv.fabric.wall.wood.window.040",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 332,
+        "measured_aabb": {
+          "position": [
+            -1.50000023841858,
+            -0.000000113246848343351,
+            -0.306758850812912
+          ],
+          "size": [
+            3.00000023841858,
+            3.0,
+            0.595917820930481
+          ]
+        },
+        "mesh_bytes": 29014,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 332
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.window.040",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_040.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_040.fbx",
+      "source_sha256": "8475de74a7abd66595be3e59b0fa59f71ed6b1905a7b66781d47ff50fe207a96",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_window_040.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_window_060.tres",
+      "id": "sfv.fabric.wall.wood.window.060",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1068,
+        "measured_aabb": {
+          "position": [
+            -1.5,
+            -0.0000000655670788773932,
+            -0.306758850812912
+          ],
+          "size": [
+            3.0,
+            3.0,
+            0.78548538684845
+          ]
+        },
+        "mesh_bytes": 92818,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1068
+      },
+      "pack": "fantasy_village_fabric",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.wall.wood.window.060",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_060.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "fabric_wall",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_060.fbx",
+      "source_sha256": "eae237e3fc1471eb29e33709fdf326d0cf77993465203ced9894cf15898d5973",
+      "visual": "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_window_060.tres"
+    }
+  ],
+  "license": "Fantasy Village source-pack license",
+  "pack": "fantasy_village_fabric",
+  "tool_version": 18
+}

@@ -1,0 +1,68 @@
+[gd_scene load_steps=4 format=3]
+
+[sub_resource type="BoxShape3D" id="Box_ring_segment"]
+size = Vector3(1.05, 0.92, 0.34)
+
+[sub_resource type="BoxShape3D" id="Box_post"]
+size = Vector3(0.3, 3.2, 0.3)
+
+[sub_resource type="BoxShape3D" id="Box_roof"]
+size = Vector3(3.75, 0.18, 1.9)
+
+[node name="Well001Collision" type="Node3D"]
+
+[node name="RingNorth" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.48, -1.18)
+shape = SubResource("Box_ring_segment")
+
+[node name="RingNorthEast" type="CollisionShape3D" parent="."]
+position = Vector3(0.83, 0.48, -0.83)
+rotation = Vector3(0, 0.7853982, 0)
+shape = SubResource("Box_ring_segment")
+
+[node name="RingEast" type="CollisionShape3D" parent="."]
+position = Vector3(1.18, 0.48, 0)
+rotation = Vector3(0, 1.5707963, 0)
+shape = SubResource("Box_ring_segment")
+
+[node name="RingSouthEast" type="CollisionShape3D" parent="."]
+position = Vector3(0.83, 0.48, 0.83)
+rotation = Vector3(0, -0.7853982, 0)
+shape = SubResource("Box_ring_segment")
+
+[node name="RingSouth" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.48, 1.18)
+shape = SubResource("Box_ring_segment")
+
+[node name="RingSouthWest" type="CollisionShape3D" parent="."]
+position = Vector3(-0.83, 0.48, 0.83)
+rotation = Vector3(0, 0.7853982, 0)
+shape = SubResource("Box_ring_segment")
+
+[node name="RingWest" type="CollisionShape3D" parent="."]
+position = Vector3(-1.18, 0.48, 0)
+rotation = Vector3(0, 1.5707963, 0)
+shape = SubResource("Box_ring_segment")
+
+[node name="RingNorthWest" type="CollisionShape3D" parent="."]
+position = Vector3(-0.83, 0.48, -0.83)
+rotation = Vector3(0, -0.7853982, 0)
+shape = SubResource("Box_ring_segment")
+
+[node name="PostLeft" type="CollisionShape3D" parent="."]
+position = Vector3(-1.52, 2.15, 0)
+shape = SubResource("Box_post")
+
+[node name="PostRight" type="CollisionShape3D" parent="."]
+position = Vector3(1.52, 2.15, 0)
+shape = SubResource("Box_post")
+
+[node name="RoofNorth" type="CollisionShape3D" parent="."]
+position = Vector3(-0.2, 3.92, -0.68)
+rotation = Vector3(-0.46, 0, 0)
+shape = SubResource("Box_roof")
+
+[node name="RoofSouth" type="CollisionShape3D" parent="."]
+position = Vector3(-0.2, 3.92, 0.68)
+rotation = Vector3(0.46, 0, 0)
+shape = SubResource("Box_roof")

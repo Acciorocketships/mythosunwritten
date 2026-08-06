@@ -1,0 +1,40 @@
+[gd_scene load_steps=3 format=3]
+
+[sub_resource type="CylinderShape3D" id="Cylinder_fire"]
+radius = 0.62
+height = 0.28
+
+[sub_resource type="CylinderShape3D" id="Cylinder_timber"]
+radius = 0.065
+height = 1.72
+
+[node name="Campfire001Collision" type="Node3D"]
+
+[node name="FireRing" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.14, 0)
+shape = SubResource("Cylinder_fire")
+
+[node name="SpitCrossbar" type="CollisionShape3D" parent="."]
+position = Vector3(-0.11, 1.34, -0.055)
+rotation = Vector3(0, 0, 1.5707963)
+shape = SubResource("Cylinder_timber")
+
+[node name="StandLeftFront" type="CollisionShape3D" parent="."]
+position = Vector3(-0.82, 0.78, 0.17)
+rotation = Vector3(0.27, 0, 0)
+shape = SubResource("Cylinder_timber")
+
+[node name="StandLeftRear" type="CollisionShape3D" parent="."]
+position = Vector3(-0.82, 0.78, -0.17)
+rotation = Vector3(-0.27, 0, 0)
+shape = SubResource("Cylinder_timber")
+
+[node name="StandRightFront" type="CollisionShape3D" parent="."]
+position = Vector3(0.70, 0.78, 0.17)
+rotation = Vector3(0.27, 0, 0)
+shape = SubResource("Cylinder_timber")
+
+[node name="StandRightRear" type="CollisionShape3D" parent="."]
+position = Vector3(0.70, 0.78, -0.17)
+rotation = Vector3(-0.27, 0, 0)
+shape = SubResource("Cylinder_timber")

@@ -2,6 +2,18 @@ extends GutTest
 
 const CORE := Rect2(Vector2.ZERO, Vector2.ONE * 192.0)
 
+func _feature_context(surface_rects: Array[Rect2],
+		clearance_rects: Array[Rect2], limit: float) -> FeatureContext:
+	var surfaces: Array[FeatureGroundShape] = []
+	var clearances: Array[FeatureGroundShape] = []
+	for rect: Rect2 in surface_rects:
+		surfaces.append(FeatureGroundShape.axis_rect(rect,
+			FeatureGroundField.WORN_PATH))
+	for rect: Rect2 in clearance_rects:
+		clearances.append(FeatureGroundShape.axis_rect(rect))
+	var ground := FeatureGroundField.new(surfaces, clearances, limit)
+	return FeatureContext.new(CORE, ground, EnvironmentInstancePayload.new())
+
 func _program() -> DressingProgram:
 	var index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
 	return DressingCompiler.compile(index, EnvironmentCatalog.load_default())
@@ -43,6 +55,8 @@ func test_compiler_produces_resource_free_bounded_program() -> void:
 		"dense GrassField is the sole runtime owner of grass ground cover")
 	assert_lte(program.maximum_spacing_radius, DressingCompiler.LOCAL_SPACING_CAP)
 	assert_gt(program.query_margin, program.maximum_spacing_radius)
+	assert_gte(program.feature_query_margin, program.query_margin,
+		"full visual reservations have independent complete coverage")
 	assert_almost_eq(program.maximum_feature_clearance, 2.0, 0.001)
 	assert_lte(program.query_margin + program.shore_distance_limit,
 		WaterField.FILL_MARGIN * WaterField.FILL_STEP - WaterContour.MARGIN,
@@ -62,6 +76,10 @@ func test_compiler_produces_resource_free_bounded_program() -> void:
 		assert_false(_contains_resource(set_data), "compiled sets contain primitive worker data only")
 		for choice: Dictionary in set_data.choices:
 			var descriptor := EnvironmentCatalog.load_default().descriptor(choice.asset_id)
+			assert_gt(choice.feature_footprint_half_extents.x, 0.0,
+				"every visual has a projected feature footprint")
+			assert_gt(choice.feature_footprint_half_extents.y, 0.0,
+				"every visual has a projected feature footprint")
 			if descriptor.collision_piece_count <= 0:
 				continue
 			assert_false(choice.support_points.is_empty(),
@@ -97,15 +115,48 @@ func test_visible_support_stencil_rejects_a_collidable_asset_across_a_cliff() ->
 		choice, Basis.IDENTITY).is_empty(),
 		"the same placement is rejected when its visible base crosses the drop")
 
+func test_full_visual_footprint_rejects_canopy_over_authored_space() -> void:
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-4, 5):
+		for x in range(-4, 5):
+			storeys[Vector2i(x, z)] = 0
+			levels[Vector2i(x, z)] = 0
+	var region := HeightfieldRegion.new(storeys, levels)
+	var water := _dry_context(region, Rect2(Vector2(-96, -96),
+		Vector2(192, 192)), 0.0)
+	var features := _feature_context([], [Rect2(Vector2(4.0, -0.5),
+		Vector2(1.0, 1.0))], 2.0)
+	var set_data := {
+		"surface_mode": DressingSet.SurfaceMode.GROUND_POINT,
+		"water_mode": DressingSet.WaterMode.LAND,
+		"shore_range": Vector2.ZERO,
+		"support_radius": 0.0,
+		"max_support_height_span": DressingCompiler.AUTO_SUPPORT_HEIGHT_SPAN,
+		"max_grade": 1.0,
+		"feature_clearance": 0.0,
+	}
+	var anchor := Vector2.ZERO
+	var broad_canopy := {
+		"feature_footprint_centre": Vector2.ZERO,
+		"feature_footprint_half_extents": Vector2(6.0, 3.0),
+	}
+	assert_true(DressingField._qualify(set_data, anchor, region, water,
+		null).has("y"), "an origin-only query misses the enclosed reservation")
+	assert_true(DressingField._qualify(set_data, anchor, region, water,
+		features, broad_canopy, Basis.IDENTITY).is_empty(),
+		"the continuous visual footprint rejects a reservation enclosed by canopy")
+
 func test_path_reservation_rejects_every_population_including_zero_margin() -> void:
 	var plan := HeightfieldPlan.new(4242, 1.0, 1, "mean")
 	var region := plan.compute_region(4, 4, 12)
 	var program := _program()
 	var water := _dry_context(region, CORE.grow(program.query_margin + 2.0),
 		program.shore_distance_limit)
-	var paths := PathContext.new(CORE, [CORE], [CORE],
-		EnvironmentInstancePayload.new(), program.maximum_feature_clearance)
-	var payload := DressingField.compute(program, 4242, CORE, region, water, paths)
+	var features := _feature_context([CORE], [CORE],
+		program.maximum_feature_clearance)
+	var payload := DressingField.compute(program, 4242, CORE, region, water,
+		features)
 	assert_eq(payload.instance_count, 0,
 		"zero clearance still rejects the reservation interior")
 

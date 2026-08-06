@@ -12,7 +12,12 @@ var ground_radius_by_asset: Dictionary = {}
 ## actual stencil lets main-thread grass suppression follow a long rock/tree
 ## base instead of replacing every asset with an oversized circle.
 var ground_stencil_by_asset: Dictionary = {}
+## Region/water sampling reach of near-ground support points.
 var query_margin: float = 0.0
+## Independent reach needed when projected visual bounds query authored
+## feature reservations. This may exceed water's finite canonical margin
+## because it never samples terrain or water there.
+var feature_query_margin: float = 0.0
 var shore_distance_limit: float = 0.0
 var maximum_spacing_radius: float = 0.0
 var maximum_feature_clearance: float = 0.0

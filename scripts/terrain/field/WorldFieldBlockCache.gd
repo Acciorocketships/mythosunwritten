@@ -37,8 +37,30 @@ static func key_of(world_xz: Vector2) -> Vector2i:
 func region_at(world_xz: Vector2) -> HeightfieldRegion:
 	return region(key_of(world_xz))
 
+
+func region_covering(world_rect: Rect2) -> HeightfieldRegion:
+	assert(world_rect.position.is_finite() and world_rect.size.is_finite())
+	assert(world_rect.size.x >= 0.0 and world_rect.size.y >= 0.0)
+	var cached := region_at(world_rect.get_center())
+	if _region_covers_surface_rect(cached, world_rect):
+		return cached
+	var centre_cell := Vector2i(roundi(world_rect.get_center().x \
+		/ TerrainSurfaceField.TILE), roundi(world_rect.get_center().y \
+		/ TerrainSurfaceField.TILE))
+	var half_cells := ceili(maxf(world_rect.size.x, world_rect.size.y) \
+		* 0.5 / TerrainSurfaceField.TILE) + 2
+	var expanded := _plan.compute_region(centre_cell.x, centre_cell.y,
+		half_cells)
+	assert(_region_covers_surface_rect(expanded, world_rect),
+		"Explicit field region does not cover its requested surface rectangle")
+	return expanded
+
 func water_at(world_xz: Vector2) -> WaterFieldContext:
 	return water(key_of(world_xz))
+
+
+func planning_water_distance(world_xz: Vector2) -> float:
+	return _water_plan.planning_signed_distance(world_xz)
 
 func region(key: Vector2i) -> HeightfieldRegion:
 	var entry := _entry(key)
@@ -114,3 +136,24 @@ func _evict_if_full() -> void:
 
 static func _key_less(a: Vector2i, b: Vector2i) -> bool:
 	return a.x < b.x or (a.x == b.x and a.y < b.y)
+
+
+static func _region_covers_surface_rect(region_value: HeightfieldRegion,
+		world_rect: Rect2) -> bool:
+	# height_bounds() bakes every intersected patch; each bake reads one ring of
+	# cardinal/diagonal neighbours. Prove that complete read set here instead of
+	# relying on HeightfieldRegion's intentional zero default outside coverage.
+	var minimum := Vector2i(
+		ceili((world_rect.position.x - TerrainSurfaceField.HALF) \
+			/ TerrainSurfaceField.TILE) - 1,
+		ceili((world_rect.position.y - TerrainSurfaceField.HALF) \
+			/ TerrainSurfaceField.TILE) - 1)
+	var maximum := Vector2i(
+		floori((world_rect.end.x + TerrainSurfaceField.HALF) \
+			/ TerrainSurfaceField.TILE) + 1,
+		floori((world_rect.end.y + TerrainSurfaceField.HALF) \
+			/ TerrainSurfaceField.TILE) + 1)
+	return region_value.has_surface_cell(minimum.x, minimum.y) \
+		and region_value.has_surface_cell(maximum.x, minimum.y) \
+		and region_value.has_surface_cell(minimum.x, maximum.y) \
+		and region_value.has_surface_cell(maximum.x, maximum.y)

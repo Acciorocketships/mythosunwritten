@@ -18,14 +18,33 @@ extends Node
 @export var follow_gain: float = 1.0 # how much to follow the player. if 0, it stays in the same place
 @export var max_speed: float = 15.0 
 
+# General world obstruction. The target body is excluded; terrain, structures,
+# dressing collision, cliffs, and later dungeon geometry all use this path.
+@export var collision_enabled := true
+@export_flags_3d_physics var collision_mask: int = 1
+@export var camera_radius := 0.28
+@export var collision_margin := 0.02
+@export var collision_skin := 0.05
+@export var minimum_pivot_height := 1.35
+@export var pivot_release_speed := 4.0
+@export var boom_release_speed := 6.0
+
 var _prev_pos: Vector3
 var _have_prev := false
 var _v_ema := Vector3.ZERO
 var _last_back_dir := Vector3.ZERO
+var _obstruction: CameraObstructionSolver
+var _pivot_height := -1.0
+var _boom_was_obstructed := false
 
 func _ready() -> void:
 	if camera == null:
 		camera = get_node_or_null(".") as Camera3D
+	assert(height >= minimum_pivot_height)
+	assert(pivot_release_speed > 0.0 and boom_release_speed > 0.0)
+	if collision_enabled:
+		_obstruction = CameraObstructionSolver.new(camera_radius,
+			collision_mask, collision_margin, collision_skin)
 
 func _physics_process(delta: float) -> void:
 	if camera == null or target == null:
@@ -60,8 +79,24 @@ func _physics_process(delta: float) -> void:
 	else:
 		back_dir = _last_back_dir.normalized()
 
+	# --- resolve the framing pivot below ceilings ---
+	var resolved_pivot_height := height
+	var space := camera.get_world_3d().direct_space_state
+	var excluded: Array[RID] = []
+	if target is CollisionObject3D:
+		excluded.append((target as CollisionObject3D).get_rid())
+	if _obstruction != null and space != null:
+		var safe_pivot := _obstruction.resolve_ceiling(space, pos,
+			minimum_pivot_height, height, excluded)
+		resolved_pivot_height = safe_pivot.y - pos.y
+	if _pivot_height < 0.0 or resolved_pivot_height < _pivot_height:
+		_pivot_height = resolved_pivot_height
+	else:
+		_pivot_height = move_toward(_pivot_height, resolved_pivot_height,
+			pivot_release_speed * delta)
+	var center := pos + Vector3.UP * _pivot_height
+
 	# --- base desired position directly behind the target ---
-	var center := pos + Vector3.UP * height
 	var disp = (strafe_ratio * prev_dir + (1-strafe_ratio) * back_dir).normalized() * distance
 	var desired : Vector3 = center + disp
 
@@ -69,6 +104,8 @@ func _physics_process(delta: float) -> void:
 	var new_pos := camera.global_position
 	var gain := follow_gain * speed
 	var alpha := 1.0 - exp(-gain * delta)
+	if _boom_was_obstructed:
+		alpha = maxf(alpha, 1.0 - exp(-boom_release_speed * delta))
 	var lerped := camera.global_position.lerp(desired, alpha)
 	var step := lerped - camera.global_position
 	var max_step := max_speed * delta
@@ -86,7 +123,13 @@ func _physics_process(delta: float) -> void:
 		var rot_amount := orbit_speed_rad * yaw_dir * delta
 		radial = radial.rotated(Vector3.UP, rot_amount)
 
-	camera.global_position = center + radial
+	var unconstrained := center + radial
+	var resolved := unconstrained
+	if _obstruction != null and space != null:
+		resolved = _obstruction.resolve_boom(space, center, unconstrained,
+			excluded)
+	_boom_was_obstructed = resolved.distance_squared_to(unconstrained) > 0.000001
+	camera.global_position = resolved
 
 	# --- always look at the target ---
 	camera.look_at(pos, Vector3.UP)

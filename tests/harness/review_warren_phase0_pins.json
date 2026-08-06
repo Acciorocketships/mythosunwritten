@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "pins": [
+    {"finding_id":"WPF-001","severity":"P2","seed":0,"settlement_id":"warren.phase0.fabric","recipe":"street_canyon","status":"fixed","passing_recaptures":["phase0-approach_west","phase0-canyon_west_to_east"]},
+    {"finding_id":"WPF-002","severity":"P1","seed":0,"settlement_id":"warren.phase0.fabric","recipe":"gable_roof","status":"fixed","passing_recaptures":["phase0-roofline","phase0-overview"]},
+    {"finding_id":"WPF-003","severity":"P2","seed":0,"settlement_id":"warren.phase0.fabric","recipe":"gallery_and_bridge_views","status":"fixed","passing_recaptures":["phase0-gallery_level","phase0-bridge_underside"]},
+    {"finding_id":"WPF-004","severity":"P1","seed":0,"settlement_id":"warren.phase0.fabric","recipe":"market_front","status":"fixed","passing_recaptures":["phase0-canyon_east_to_west"]},
+    {"finding_id":"WPF-005","severity":"P2","seed":0,"settlement_id":"warren.phase0.fabric","recipe":"row_shell","status":"fixed","passing_recaptures":["phase0-roofline","phase0-side_elevation","phase0-overview"]}
+  ]
+}

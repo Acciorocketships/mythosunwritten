@@ -16,11 +16,12 @@ const SALT_BRIGHTNESS := 0x082EFA98
 
 static func compute(program: DressingProgram, world_seed: int, core: Rect2,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		paths: PathContext = null) -> EnvironmentInstancePayload:
+		features: FeatureContext = null) -> EnvironmentInstancePayload:
 	assert(program != null and region != null and water != null)
 	var eligible: Array[Dictionary] = []
 	for set_data: Dictionary in program.sets:
-		eligible.append_array(_eligible_for_set(set_data, world_seed, core, region, water, paths))
+		eligible.append_array(_eligible_for_set(set_data, world_seed, core, region,
+			water, features))
 	var winners: Array[Dictionary] = []
 	for candidate: Dictionary in eligible:
 		var survives := true
@@ -45,7 +46,7 @@ static func compute(program: DressingProgram, world_seed: int, core: Rect2,
 
 static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		paths: PathContext = null) -> Array[Dictionary]:
+		features: FeatureContext = null) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var query: Rect2 = core.grow(float(set_data.group_radius))
 	var min_cell := Vector2i(int(floor(query.position.x / PROPOSAL_CELL)),
@@ -91,7 +92,7 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 				var tint: Color = BiomeRegistry.blended_environment_tint(weights, choice.tint_group)
 				var basis: Basis = Basis(Vector3.UP, yaw).scaled(Vector3.ONE * scale)
 				var qualification: Dictionary = _qualify(set_data, anchor, region, water,
-					paths, choice, basis)
+					features, choice, basis)
 				if qualification.is_empty():
 					continue
 				out.append({
@@ -112,8 +113,27 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 
 static func _qualify(set_data: Dictionary, anchor: Vector2,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		paths: PathContext = null, choice: Dictionary = {},
+		features: FeatureContext = null, choice: Dictionary = {},
 		basis: Basis = Basis.IDENTITY) -> Dictionary:
+	if features != null:
+		var footprint_half: Vector2 = choice.get(
+			"feature_footprint_half_extents", Vector2.ZERO)
+		if footprint_half.x > 0.0 and footprint_half.y > 0.0:
+			var footprint_centre: Vector2 = choice.get(
+				"feature_footprint_centre", Vector2.ZERO)
+			var centre_offset := basis * Vector3(
+				footprint_centre.x, 0.0, footprint_centre.y)
+			var x_axis := basis * Vector3.RIGHT
+			var scale := Vector2(x_axis.x, x_axis.z).length()
+			var angle := atan2(x_axis.z, x_axis.x)
+			var footprint := FeatureGroundShape.oriented_rect(
+				anchor + Vector2(centre_offset.x, centre_offset.z),
+				footprint_half * scale, angle)
+			if features.overlaps_clearance(footprint,
+					float(set_data.feature_clearance)):
+				return {}
+		elif features.clearance_at(anchor) < float(set_data.feature_clearance):
+			return {}
 	var points: Array[Vector2] = [anchor]
 	if set_data.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT:
 		var radius: float = set_data.support_radius
@@ -128,9 +148,6 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 		var offset := basis * Vector3(local_point.x, 0.0, local_point.y)
 		points.append(anchor + Vector2(offset.x, offset.z))
 	for point: Vector2 in points:
-		if paths != null \
-				and paths.clearance_at(point) < float(set_data.feature_clearance):
-			return {}
 		if not water.covers(point) or not _water_ok(set_data, water, point):
 			return {}
 	if set_data.surface_mode == DressingSet.SurfaceMode.WATER_SURFACE:

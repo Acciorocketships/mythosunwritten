@@ -13,6 +13,7 @@ var _fields: WorldFieldBlockCache
 var _program: PathProgram
 var _settlements: SettlementPlan
 var _context_margin: float
+var _surface_priorities: Dictionary
 
 var _nodes: Dictionary = {}
 var _node_stamps: Dictionary = {}
@@ -27,6 +28,10 @@ var _context_stamps: Dictionary = {}
 var _planning_points: Dictionary = {}
 var _planning_point_stamps: Dictionary = {}
 var _site_defs: Dictionary = {}
+var _accepted_masks: Dictionary = {}
+var _accepted_mask_stamps: Dictionary = {}
+var _chosen_routes: Dictionary = {}
+var _chosen_route_stamps: Dictionary = {}
 var _clock := 0
 var _progress_callback := Callable()
 var _planning_progress_callback := Callable()
@@ -42,7 +47,8 @@ var _stats := {
 
 func _init(world_seed: int, water_plan: WaterPlan, fields: WorldFieldBlockCache,
 		program: PathProgram, context_margin: float,
-		settlements: SettlementPlan) -> void:
+		settlements: SettlementPlan,
+		surface_priorities: Dictionary = {}) -> void:
 	assert(water_plan != null and fields != null and program != null and settlements != null)
 	assert(is_finite(context_margin) and context_margin >= program.query_margin)
 	_world_seed = world_seed
@@ -51,10 +57,11 @@ func _init(world_seed: int, water_plan: WaterPlan, fields: WorldFieldBlockCache,
 	_program = program
 	_settlements = settlements
 	_context_margin = context_margin
+	_surface_priorities = surface_priorities.duplicate()
 	_water_plan.set_planning_progress_callback(
 		Callable(self, "_on_water_planning_progress"))
 
-func context_for(chunk: Vector2i) -> PathContext:
+func context_for(chunk: Vector2i) -> FeatureContext:
 	if _contexts.has(chunk):
 		_touch(_context_stamps, chunk)
 		_report_context_progress(chunk, 1.0)
@@ -121,6 +128,63 @@ func route_for(node_a: Dictionary, node_b: Dictionary) -> Dictionary:
 	_routes[pair_key] = route
 	_touch(_route_stamps, pair_key)
 	return route.duplicate(true)
+
+## Canonical incident-route projection for one settlement. This is the same
+## backbone/loop decision used by block contexts, without constructing an
+## unrelated 192 m feature block merely to discover a village frame.
+func accepted_mask_for_node(super_cell: Vector2i) -> int:
+	if _accepted_masks.has(super_cell):
+		_touch(_accepted_mask_stamps, super_cell)
+		return int(_accepted_masks[super_cell])
+	_evict_lru(_accepted_masks, _accepted_mask_stamps,
+		_program.NODE_CACHE_CAP)
+	var node := node_for(super_cell)
+	var mask := 0
+	if not node.is_empty():
+		for direction: Vector2i in _DIRS:
+			var other_super := super_cell + direction
+			var other := node_for(other_super)
+			if other.is_empty():
+				continue
+			var route := route_for(node, other)
+			if route.is_empty():
+				continue
+			var backbone := _chosen_route_key(super_cell) == String(route.key) \
+				or _chosen_route_key(other_super) == String(route.key)
+			var loop := _roll(_hash(PathProgram.SALT_LOOP,
+				[route.node_a.cell.x, route.node_a.cell.y,
+				route.node_b.cell.x, route.node_b.cell.y])) \
+				< PathProgram.LOOP_EDGE_PROBABILITY
+			if backbone or loop:
+				mask |= int(_BITS[direction])
+	_accepted_masks[super_cell] = mask
+	_touch(_accepted_mask_stamps, super_cell)
+	return mask
+
+func _chosen_route_key(super_cell: Vector2i) -> String:
+	if _chosen_routes.has(super_cell):
+		_touch(_chosen_route_stamps, super_cell)
+		return String(_chosen_routes[super_cell])
+	_evict_lru(_chosen_routes, _chosen_route_stamps,
+		_program.NODE_CACHE_CAP)
+	var node := node_for(super_cell)
+	var chosen := ""
+	var chosen_rank := ""
+	if not node.is_empty():
+		for direction: Vector2i in _DIRS:
+			var other := node_for(super_cell + direction)
+			if other.is_empty():
+				continue
+			var route := route_for(node, other)
+			if route.is_empty():
+				continue
+			var rank := _route_rank(route)
+			if chosen.is_empty() or rank < chosen_rank:
+				chosen = String(route.key)
+				chosen_rank = rank
+	_chosen_routes[super_cell] = chosen
+	_touch(_chosen_route_stamps, super_cell)
+	return chosen
 
 func bridge_site(site_key: Variant) -> Dictionary:
 	var key := String(site_key.key) if site_key is Dictionary else String(site_key)
@@ -471,7 +535,7 @@ func _validate_route_exact(edges: Array[Dictionary]) -> bool:
 # ---------------------------------------------------------------------------
 # Network projection and contextual props
 
-func _build_context(chunk: Vector2i) -> PathContext:
+func _build_context(chunk: Vector2i) -> FeatureContext:
 	_report_context_progress(chunk, 0.01)
 	var core := Rect2(Vector2(chunk) * TerrainChunkMesher.CHUNK_WORLD,
 		Vector2.ONE * TerrainChunkMesher.CHUNK_WORLD)
@@ -542,7 +606,7 @@ func _build_context(chunk: Vector2i) -> PathContext:
 	_active_progress_valid = false
 	return context
 
-func _project_context(core: Rect2, routes: Array[Dictionary]) -> PathContext:
+func _project_context(core: Rect2, routes: Array[Dictionary]) -> FeatureContext:
 	var masks: Dictionary = {}
 	var nodes: Dictionary = {}
 	var bridge_cells: Dictionary = {}
@@ -574,7 +638,7 @@ func _project_context(core: Rect2, routes: Array[Dictionary]) -> PathContext:
 		if nodes.has(cell):
 			corridors.append(Rect2(centre - Vector2.ONE * PathProgram.PLAZA_RADIUS,
 				Vector2.ONE * PathProgram.PLAZA_SIZE))
-		elif PathContext._has_join(mask):
+		elif FeatureGroundField.path_mask_has_join(mask):
 			corridors.append(Rect2(centre - Vector2.ONE * PathProgram.JUNCTION_SIZE * 0.5,
 				Vector2.ONE * PathProgram.JUNCTION_SIZE))
 	var reservations := corridors.duplicate()
@@ -596,8 +660,14 @@ func _project_context(core: Rect2, routes: Array[Dictionary]) -> PathContext:
 		reservations, occupied, payload)
 	_place_lamps(core, routes, masks, nodes, bridge_cells, cell_routes,
 		reservations, occupied, payload)
-	return PathContext.new(core.grow(_context_margin), corridors, reservations,
-		payload, _program.maximum_clearance, masks, nodes, bridge_cells)
+	var clearance_shapes: Array[FeatureGroundShape] = []
+	for reservation: Rect2 in reservations:
+		clearance_shapes.append(FeatureGroundShape.axis_rect(reservation))
+	var surface_shapes: Array[FeatureGroundShape] = []
+	var ground := FeatureGroundField.new(surface_shapes, clearance_shapes,
+		_program.maximum_clearance, masks, nodes, _surface_priorities)
+	return FeatureContext.new(core.grow(_context_margin), ground, payload,
+		masks, nodes, bridge_cells)
 
 func _place_arches(core: Rect2, routes: Array[Dictionary], masks: Dictionary,
 		nodes: Dictionary, bridge_cells: Dictionary, reservations: Array[Rect2],
@@ -861,7 +931,8 @@ func _planning_intervals_cells(a_cell: Vector2i, b_cell: Vector2i) -> Array[Vect
 	# graph-point distances therefore prove the common dry edge without asking
 	# the adaptive interval walker to resample the same endpoints.
 	if minf(_planning_distance(a_cell), _planning_distance(b_cell)) \
-		> 2.0 * length + WaterPlan.PATH_INTERVAL_TOLERANCE:
+		> WaterPlan.PLANNING_DISTANCE_LIPSCHITZ * length \
+			+ WaterPlan.PATH_INTERVAL_TOLERANCE:
 		return []
 	return _water_plan.planning_intervals(a, b)
 

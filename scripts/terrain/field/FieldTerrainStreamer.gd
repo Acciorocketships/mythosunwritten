@@ -38,14 +38,21 @@ signal startup_loading_completed
 ## Render-only dressing batches committed per frame. Terrain/water readiness
 ## never waits for this queue.
 @export var MAX_DRESSING_BATCHES_PER_FRAME: int = 2
+## Structural features demand-load and build collision before readiness. Each
+## cap bounds one main-thread stage; the elapsed budget bounds their sum.
+@export var MAX_FEATURE_ASSET_LOADS_PER_FRAME: int = 1
+@export var MAX_FEATURE_COLLISION_SHAPES_PER_FRAME: int = 24
+@export var MAX_FEATURE_COMMIT_USEC: int = 2500
 ## Dense grass is visual-only and is skipped by headless terrain/test runs.
 ## Its field and renderer have direct headless tests; production enables it.
 @export var GRASS_ENABLED: bool = true
-@export var HEIGHTFIELD_AMPLITUDE: float = 22.0
-@export var HEIGHTFIELD_MAX_STOREYS: int = 8
+@export var HEIGHTFIELD_AMPLITUDE: float = \
+	TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE
+@export var HEIGHTFIELD_MAX_STOREYS: int = \
+	TerrainWorldTuning.HEIGHTFIELD_MAX_STOREYS
 ## Max storey difference between adjacent cells. 1 = all walkable slopes (SP1);
 ## 3 = cliffs up to 3 storeys (12m) form where the field steps down steeply.
-@export var MAX_CLIFF_STEP: int = 3
+@export var MAX_CLIFF_STEP: int = TerrainWorldTuning.MAX_CLIFF_STEP
 ## 0 = random each run. Set non-zero to pin the world for debugging (pairs
 ## with the F3 coord overlay screenshot workflow).
 @export var SEED_OVERRIDE: int = 0
@@ -61,11 +68,11 @@ var _environment_catalog: EnvironmentCatalog
 var _environment_cache: EnvironmentRenderCache
 var _dressing_program: DressingProgram
 var _dressing_queue: EnvironmentCommitQueue
-var _path_program: PathProgram
+var _feature_program: FeatureProgram
 var _settlements: SettlementPlan
 var _fields: WorldFieldBlockCache
-var _paths: PathPlan
-var _feature_queue: EnvironmentCommitQueue
+var _features: WorldFeaturePlan
+var _feature_queue: FeatureCommitQueue
 var _features_root: Node3D
 var _grass_program: GrassProgram
 var _grass_streamer: GrassStreamer
@@ -88,9 +95,9 @@ var _pending_terrain: Array[Dictionary] = []
 var _startup_support_chunks: Array[Vector2i] = []
 var _startup_feature_keys: Array[Vector2i] = []
 ## Worker-owned phase fractions mirrored through _mutex. Support chunks record
-## the whole terrain pipeline; every required feature key records PathContext.
+## the whole terrain pipeline; every required feature key records FeatureContext.
 var _startup_worker_progress: Dictionary = {}
-var _startup_path_progress: Dictionary = {}
+var _startup_feature_progress: Dictionary = {}
 var _startup_cold_plan_progress := 0.0
 var _startup_ready_count: int = -1
 var _startup_emitted_progress: float = -1.0
@@ -157,20 +164,22 @@ func _ready() -> void:
 	assert(dressing_index != null)
 	_dressing_program = DressingCompiler.compile(dressing_index, _environment_catalog)
 	assert(_dressing_program != null)
-	_path_program = PathProgram.compile(_environment_catalog)
-	assert(_path_program != null)
+	_feature_program = FeatureProgram.compile(_environment_catalog)
+	assert(_feature_program != null)
 	if GRASS_ENABLED:
 		var grass_settings := load("res://terrain/grass/settings.tres") as GrassSettings
 		_grass_program = GrassProgram.compile(grass_settings, _environment_catalog,
 			_environment_cache)
 		assert(_grass_program != null)
 	assert(_dressing_program.maximum_feature_clearance \
-		<= _path_program.maximum_clearance,
-		"PathProgram clearance coverage must contain every dressing margin")
+		<= _feature_program.maximum_clearance,
+		"FeatureProgram clearance coverage must contain every dressing margin")
 	var combined_query_margin := maxf(_dressing_program.query_margin,
-		_path_program.query_margin)
+		_feature_program.query_margin)
+	var feature_context_margin := maxf(_feature_program.query_margin,
+		_dressing_program.feature_query_margin)
 	var combined_shore_limit := maxf(_dressing_program.shore_distance_limit,
-		_path_program.shore_distance_limit)
+		_feature_program.shore_distance_limit)
 	if _grass_program != null:
 		combined_query_margin = maxf(combined_query_margin,
 			_grass_program.query_margin)
@@ -179,11 +188,11 @@ func _ready() -> void:
 	assert(combined_query_margin + combined_shore_limit \
 		<= WaterField.FILL_MARGIN * WaterField.FILL_STEP - WaterContour.MARGIN)
 	_fields = WorldFieldBlockCache.new(_plan, _water, combined_query_margin,
-		combined_shore_limit, _path_program.FIELD_CACHE_CAP)
-	_paths = PathPlan.new(world_seed, _water, _fields, _path_program,
-		combined_query_margin, _settlements)
-	_paths.set_progress_callback(Callable(self, "_on_path_context_progress"))
-	_paths.set_planning_progress_callback(
+		combined_shore_limit, _feature_program.field_cache_cap)
+	_features = WorldFeaturePlan.new(world_seed, _water, _fields,
+		_feature_program, _settlements, feature_context_margin)
+	_features.set_progress_callback(Callable(self, "_on_feature_context_progress"))
+	_features.set_planning_progress_callback(
 		Callable(self, "_on_cold_planning_progress"))
 	_startup_feature_keys = _startup_required_feature_keys()
 	print("[terrain-streamer] startup_plan seed=%d feature_keys=%d" % [
@@ -191,8 +200,8 @@ func _ready() -> void:
 	var active_set: Dictionary = {}
 	for asset_id: StringName in _dressing_program.referenced_asset_ids:
 		active_set[asset_id] = true
-	for asset_id: StringName in _path_program.referenced_asset_ids:
-		active_set[asset_id] = true
+	# Man-made features are demand-warmed by FeatureCommitQueue. Keeping them
+	# out of startup preparation makes village catalogue growth load-proportional.
 	if _grass_program != null:
 		for asset_id: StringName in _grass_program.referenced_asset_ids:
 			active_set[asset_id] = true
@@ -204,7 +213,7 @@ func _ready() -> void:
 		return String(a) < String(b))
 	assert(_environment_cache.prepare(active_visuals))
 	_dressing_queue = EnvironmentCommitQueue.new(_environment_cache, &"Dressing")
-	_feature_queue = EnvironmentCommitQueue.new(_environment_cache, &"Visuals")
+	_feature_queue = FeatureCommitQueue.new(_environment_cache)
 	_features_root = Node3D.new()
 	_features_root.name = &"ManmadeFeatures"
 	add_child(_features_root)
@@ -254,11 +263,11 @@ func startup_loading_progress() -> float:
 	if _startup_support_chunks.is_empty():
 		return 0.0
 	var worker_progress: Dictionary
-	var path_progress: Dictionary
+	var feature_progress_by_key: Dictionary
 	var cold_plan_progress: float
 	_mutex.lock()
 	worker_progress = _startup_worker_progress.duplicate()
-	path_progress = _startup_path_progress.duplicate()
+	feature_progress_by_key = _startup_feature_progress.duplicate()
 	cold_plan_progress = _startup_cold_plan_progress
 	_mutex.unlock()
 	var compute_sum := 0.0
@@ -277,7 +286,7 @@ func startup_loading_progress() -> float:
 		if int(_feature_ready.get(key, -1)) == int(_feature_generation.get(key, 0)):
 			feature_sum += 1.0
 		else:
-			feature_sum += float(path_progress.get(key, 0.0))
+			feature_sum += float(feature_progress_by_key.get(key, 0.0))
 	var feature_progress := feature_sum / float(_startup_feature_keys.size()) \
 		if not _startup_feature_keys.is_empty() else compute_progress
 	# Bare test instances have no feature set and preserve the intuitive support
@@ -331,14 +340,14 @@ func _startup_required_feature_keys() -> Array[Vector2i]:
 	keys.sort_custom(_key_less)
 	return keys
 
-## Called on the worker thread by PathPlan. It touches only mutex-protected
+## Called on the worker thread by WorldFeaturePlan. It touches only mutex-protected
 ## numeric progress records; the main thread owns all signal and UI emission.
-func _on_path_context_progress(chunk: Vector2i, progress: float) -> void:
+func _on_feature_context_progress(chunk: Vector2i, progress: float) -> void:
 	if not _startup_feature_keys.has(chunk) and not _startup_support_chunks.has(chunk):
 		return
 	_mutex.lock()
-	_startup_path_progress[chunk] = maxf(
-		float(_startup_path_progress.get(chunk, 0.0)), progress)
+	_startup_feature_progress[chunk] = maxf(
+		float(_startup_feature_progress.get(chunk, 0.0)), progress)
 	if _startup_support_chunks.has(chunk):
 		_startup_worker_progress[chunk] = maxf(
 			float(_startup_worker_progress.get(chunk, 0.0)), progress * 0.55)
@@ -396,14 +405,14 @@ func _worker() -> void:
 		if kind == &"grass":
 			var tile: Vector2i = job.tile
 			var grass_started := Time.get_ticks_usec()
-			_begin_worker_phase(c, &"grass_path_context")
-			var grass_paths := _paths.context_for(c)
+			_begin_worker_phase(c, &"grass_feature_context")
+			var grass_features := _features.context_for(c)
 			_begin_worker_phase(c, &"grass_fields")
 			var grass_region := _fields.region(c)
 			var grass_water := _fields.water(c)
 			_begin_worker_phase(c, &"grass_placement")
 			var grass_payload := GrassField.compute(_grass_program, world_seed, tile,
-				grass_region, grass_water, grass_paths)
+				grass_region, grass_water, grass_features)
 			result = {
 				"kind": &"grass",
 				"tile": tile,
@@ -413,8 +422,8 @@ func _worker() -> void:
 				"compute_usec": Time.get_ticks_usec() - grass_started,
 			}
 		else:
-			_begin_worker_phase(c, &"path_context")
-			var paths := _paths.context_for(c)
+			_begin_worker_phase(c, &"feature_context")
+			var features := _features.context_for(c)
 			_set_startup_worker_progress(c, 0.55)
 			result = {
 				"kind": &"chunk",
@@ -426,7 +435,7 @@ func _worker() -> void:
 			}
 			if job.build_features:
 				_begin_worker_phase(c, &"feature_placements")
-				result["features"] = paths.placements()
+				result["features"] = features.placements()
 				_set_startup_worker_progress(c, 0.58)
 			if job.build_terrain:
 				_begin_worker_phase(c, &"heightfield_region")
@@ -438,7 +447,8 @@ func _worker() -> void:
 				var core := Rect2(Vector2(c) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
 				result["storeys"] = _storey_snapshot(c, region)
 				_begin_worker_phase(c, &"terrain_mesh")
-				result["terrain"] = _mesher.compute_chunk(c, region, water_context, paths)
+				result["terrain"] = _mesher.compute_chunk(c, region, water_context,
+					features)
 				_set_startup_worker_progress(c, 0.82)
 				_begin_worker_phase(c, &"water_mesh")
 				result["water"] = _water_builder.compute_chunk(_water, c, region,
@@ -446,7 +456,7 @@ func _worker() -> void:
 				_set_startup_worker_progress(c, 0.88)
 				_begin_worker_phase(c, &"dressing")
 				result["dressing"] = DressingField.compute(_dressing_program, world_seed,
-					core, region, water_context, paths)
+					core, region, water_context, features)
 				_set_startup_worker_progress(c, 0.97)
 				# FX data stays worker-side; nodes are built during integration.
 				_begin_worker_phase(c, &"biome_fx")
@@ -526,6 +536,33 @@ func _finish_worker_job(chunk: Vector2i) -> void:
 			world_seed, chunk.x, chunk.y, String(phase), phase_elapsed, job_elapsed])
 
 
+## Main-thread verification harnesses use this immutable snapshot to
+## distinguish a genuinely stalled teleport from a complex village whose
+## relevant worker job is still active. Keeping the mutex here avoids making
+## test code reach into live worker-owned diagnostics unsafely.
+func worker_progress_snapshot() -> Dictionary:
+	var now := Time.get_ticks_msec()
+	var phase: StringName
+	var chunk: Vector2i
+	var phase_started: int
+	var job_started: int
+	var active: bool
+	_mutex.lock()
+	phase = _worker_phase
+	chunk = _worker_phase_chunk
+	phase_started = _worker_phase_started_msec
+	job_started = _worker_job_started_msec
+	active = not _active_job.is_empty()
+	_mutex.unlock()
+	return {
+		"active": active,
+		"phase": phase,
+		"chunk": chunk,
+		"phase_elapsed_msec": now - phase_started if phase_started > 0 else 0,
+		"job_elapsed_msec": now - job_started if job_started > 0 else 0,
+	}
+
+
 func _is_startup_diagnostic_chunk(chunk: Vector2i) -> bool:
 	return _startup_support_chunks.has(chunk) or _startup_feature_keys.has(chunk)
 
@@ -586,7 +623,11 @@ func _process(_delta: float) -> void:
 		_cancel_far_grass_jobs_locked(lod_origin)
 		_mutex.unlock()
 	_dressing_queue.drain(MAX_DRESSING_BATCHES_PER_FRAME)
-	_feature_queue.drain(MAX_DRESSING_BATCHES_PER_FRAME)
+	for event: Dictionary in _feature_queue.drain(
+			MAX_FEATURE_ASSET_LOADS_PER_FRAME,
+			MAX_FEATURE_COLLISION_SHAPES_PER_FRAME,
+			MAX_DRESSING_BATCHES_PER_FRAME, MAX_FEATURE_COMMIT_USEC):
+		_accept_feature_ready(event)
 	_drain_results(centre)
 	_integrate_pending_terrain(centre)
 	if _grass_runtime_enabled:
@@ -643,7 +684,7 @@ func _process(_delta: float) -> void:
 			if _dressing_trample_by_chunk.erase(c):
 				_static_trample_dirty = true
 			_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
-	var feature_keep := KEEP_RADIUS + _path_program.feature_halo
+	var feature_keep := KEEP_RADIUS + _feature_program.geometry_halo
 	for c: Vector2i in _feature_ready.keys():
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
 			_feature_queue.invalidate_chunk(c)
@@ -651,6 +692,10 @@ func _process(_delta: float) -> void:
 				_feature_nodes[c].queue_free()
 				_feature_nodes.erase(c)
 			_feature_ready.erase(c)
+			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
+	for c: Vector2i in _feature_queue.pending_chunks():
+		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
+			_feature_queue.invalidate_chunk(c)
 			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
 	if _grass_runtime_enabled and _static_trample_dirty:
 		_refresh_static_dressing()
@@ -745,21 +790,36 @@ func _drain_results(centre: Vector2i) -> void:
 func _commit_feature_result(result: Dictionary, centre: Vector2i) -> void:
 	var c: Vector2i = result.chunk
 	var generation: int = result.feature_generation
+	var payload: EnvironmentInstancePayload = result.features
+	# Empty blocks have no resource or collision stage. Publish their explicit
+	# readiness directly, which also keeps this pure fast path unit-testable
+	# without constructing main-thread render services.
+	if payload.instance_count == 0:
+		if int(_feature_generation.get(c, 0)) == generation \
+				and not _feature_ready.has(c) \
+				and maxi(absi(c.x - centre.x), absi(c.y - centre.y)) \
+				<= KEEP_RADIUS + _feature_program.geometry_halo:
+			_feature_ready[c] = generation
+		return
 	if int(_feature_generation.get(c, 0)) != generation \
 		or _feature_ready.has(c) \
+		or _feature_queue.has_chunk(c) \
 		or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) \
-		> KEEP_RADIUS + _path_program.feature_halo:
+		> KEEP_RADIUS + _feature_program.geometry_halo:
 		return
-	var payload: EnvironmentInstancePayload = result.features
-	if payload.instance_count > 0:
-		var block := Node3D.new()
-		block.name = "FeatureBlock_%d_%d" % [c.x, c.y]
-		EnvironmentCollisionBuilder.commit(block, payload, _environment_cache,
-			&"FeatureCollision")
-		_features_root.add_child(block)
+	_feature_queue.enqueue(c, generation, _features_root, payload)
+
+func _accept_feature_ready(event: Dictionary) -> void:
+	var c: Vector2i = event.chunk
+	var generation := int(event.generation)
+	if int(_feature_generation.get(c, 0)) != generation:
+		var stale := event.node as Node3D
+		if stale != null and is_instance_valid(stale):
+			stale.queue_free()
+		return
+	var block := event.node as Node3D
+	if block != null:
 		_feature_nodes[c] = block
-		_feature_queue.register_chunk(c, generation)
-		_feature_queue.enqueue(c, generation, block, payload)
 	_feature_ready[c] = generation
 
 func _integrate_pending_terrain(centre: Vector2i) -> void:
@@ -858,14 +918,16 @@ static func _storey_snapshot(chunk: Vector2i, region: HeightfieldRegion) -> Pack
 
 func _feature_halo_keys(chunk: Vector2i) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
-	for dz in range(-_path_program.feature_halo, _path_program.feature_halo + 1):
-		for dx in range(-_path_program.feature_halo, _path_program.feature_halo + 1):
+	for dz in range(-_feature_program.geometry_halo,
+			_feature_program.geometry_halo + 1):
+		for dx in range(-_feature_program.geometry_halo,
+				_feature_program.geometry_halo + 1):
 			out.append(chunk + Vector2i(dx, dz))
 	out.sort_custom(_key_less)
 	return out
 
 func _feature_square_ready(chunk: Vector2i) -> bool:
-	if _path_program == null:
+	if _feature_program == null:
 		return false
 	for key: Vector2i in _feature_halo_keys(chunk):
 		if int(_feature_ready.get(key, -1)) != int(_feature_generation.get(key, 0)):

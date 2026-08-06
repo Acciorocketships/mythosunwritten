@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "GLOW_PINK"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.9991627, 0.750077, 1, 1)
+emission_enabled = true
+emission = Color(1.8247963, 0, 0.8847177, 1)

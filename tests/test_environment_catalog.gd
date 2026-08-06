@@ -32,6 +32,9 @@ func test_descriptors_are_lightweight_and_visuals_are_string_paths() -> void:
 			assert_false(value is Mesh or value is Material or value is Texture2D \
 				or value is Shape3D or value is PackedScene,
 				"descriptor %s contains no heavy runtime resource" % String(asset_id))
+	for asset_id: StringName in SettlementFabricProgram.PREFAB_ANCHORS:
+		assert_gt(catalog.descriptor(asset_id).ground_contact_points.size(), 0,
+			"prefab %s exposes a lightweight support stencil" % asset_id)
 
 func test_render_cache_loads_only_requested_visuals() -> void:
 	var catalog := EnvironmentCatalog.load_default()
@@ -107,6 +110,28 @@ func test_every_visual_has_finite_valid_instance_colour_pieces() -> void:
 						assert_true(shader_material.shader.code.contains("COLOR.rgb"),
 							"variant shader preserves instance colour: %s" % asset_id)
 
+
+func test_orange_house_roofs_keep_their_named_atlas_fallback() -> void:
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	for asset_id: StringName in [
+		&"sfv.building.interior.orange.001",
+		&"sfv.building.interior.orange.002",
+		&"sfv.building.interior.orange.005",
+		&"sfv.building.interior.orange.006",
+	]:
+		var found_roof := false
+		for piece: EnvironmentVisualPiece in cache.visual(asset_id).pieces:
+			for surface_index in piece.mesh.get_surface_count():
+				var material := piece.mesh.surface_get_material(surface_index) \
+					as StandardMaterial3D
+				if material == null or material.resource_name != "SFV_ROOF_ORANGE":
+					continue
+				found_roof = true
+				assert_not_null(material.albedo_texture,
+					"%s roof cannot fall back to an untextured white surface" % asset_id)
+		assert_true(found_roof, "%s exposes its authored roof surface" % asset_id)
+
 func test_environment_runtime_roots_do_not_name_source_packs() -> void:
 	var roots: Array[String] = [
 		"res://scripts/terrain/environment",
@@ -155,6 +180,42 @@ func test_structural_visuals_carry_baked_collision_without_polluting_metadata() 
 			assert_true(collision.local_transform.is_finite())
 	assert_eq(catalog.descriptor(&"kaykit.bush.01").collision_piece_count, 0)
 	assert_true(cache.visual(&"kaykit.bush.01").collisions.is_empty())
+
+
+func test_warren_fabric_kit_has_structural_collision_and_decor_stays_nonblocking() -> void:
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	var structural: Array[StringName] = [
+		&"sfv.fabric.wall.rock.door.005",
+		&"sfv.fabric.wall.rock.window.010",
+		&"sfv.fabric.wall.wood.door.001",
+		&"sfv.fabric.wall.wood.window.001",
+		&"sfv.fabric.gable.wood.m.001",
+		&"sfv.fabric.roof.s.blue.001",
+		&"sfv.fabric.gallery.floor.m.001",
+		&"sfv.fabric.floor.l.001",
+		&"sfv.fabric.stair.preset.004",
+		&"sfv.fabric.brace.wood.002",
+	]
+	for asset_id: StringName in structural:
+		assert_true(catalog.has(asset_id), "%s is in the runtime catalogue" % asset_id)
+		var descriptor := catalog.descriptor(asset_id)
+		var visual := cache.visual(asset_id)
+		assert_gt(descriptor.collision_piece_count, 0,
+			"%s cannot become visually solid but physically absent" % asset_id)
+		assert_eq(visual.collisions.size(), descriptor.collision_piece_count)
+		for collision: EnvironmentCollisionPiece in visual.collisions:
+			assert_not_null(collision.shape)
+			assert_true(collision.local_transform.is_finite())
+	for asset_id: StringName in [
+		&"sfv.fabric.awning.blue.001",
+		&"sfv.fabric.sign.tavern.001",
+		&"sfv.fabric.ivy.001",
+		&"sfv.fabric.clothes.001",
+	]:
+		assert_true(catalog.has(asset_id))
+		assert_eq(catalog.descriptor(asset_id).collision_piece_count, 0,
+			"soft facade dressing stays nonblocking: %s" % asset_id)
 
 func test_every_rigid_nature_asset_has_only_simple_convex_collision() -> void:
 	var catalog := EnvironmentCatalog.load_default()
@@ -428,6 +489,67 @@ func test_reviewed_kaykit_colliders_preserve_the_primitive_policy() -> void:
 				"%s collision keeps its legacy wrapper scale" % asset_id)
 			assert_almost_eq(scale.z, expected_scale, 0.0001,
 				"%s collision keeps its legacy wrapper scale" % asset_id)
+
+func test_village_colliders_follow_structural_parts_instead_of_prefab_boxes() -> void:
+	var cache := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
+	var campfire := cache.visual(&"sfbp.campfire.001")
+	assert_eq(campfire.collisions.size(), 6)
+	for collision: EnvironmentCollisionPiece in campfire.collisions:
+		assert_true(collision.shape is CylinderShape3D,
+			"the fire ring, spit crossbar, and four stands are cylinders")
+	var tent := cache.visual(&"sfbp.tent1.001")
+	assert_eq(tent.collisions.size(), 7)
+	var tent_types := {"box": 0, "prism": 0, "roof_shell": 0}
+	for collision: EnvironmentCollisionPiece in tent.collisions:
+		if collision.shape is BoxShape3D:
+			tent_types.box += 1
+		elif collision.shape is ConvexPolygonShape3D:
+			tent_types.prism += 1
+		elif collision.shape is ConcavePolygonShape3D:
+			tent_types.roof_shell += 1
+			assert_eq((collision.shape as ConcavePolygonShape3D).get_faces().size(),
+				12, "the two-sided gable shell is exactly four triangles")
+	assert_eq(tent_types, {"box": 5, "prism": 1, "roof_shell": 1},
+		"the roof is a triangular shell, the back a prism, and posts/ridge beams")
+	for expectation: Dictionary in [
+		{"id": &"sfbp.tent2.001", "pieces": 1},
+		{"id": &"sfbp.tent3.001", "pieces": 1},
+		{"id": &"sfbp.tent4.001", "pieces": 1},
+		{"id": &"sfbp.tent5.001", "pieces": 1},
+		{"id": &"sfbp.tent6.001", "pieces": 7},
+		{"id": &"sfbp.tent.dormitory1.001", "pieces": 7},
+		{"id": &"sfbp.tent.armory.001", "pieces": 1},
+		{"id": &"sfbp.tent.deposit.001", "pieces": 1},
+		{"id": &"sfbp.tent.dormitory2.001", "pieces": 1},
+		{"id": &"sfbp.tent.forge.001", "pieces": 1},
+		{"id": &"sfm.stall.blue.007", "pieces": 7},
+		{"id": &"sfm.stall.butcher.001", "pieces": 7},
+		{"id": &"sfm.stall.butcher.003", "pieces": 7},
+		{"id": &"sfm.stall.neutral.009", "pieces": 7},
+		{"id": &"sfm.stall.orange.006", "pieces": 7},
+		{"id": &"sfm.stall.teal.008", "pieces": 7},
+		{"id": &"sfm.stall.alchemy.001", "pieces": 1},
+		{"id": &"sfm.stall.fish.001", "pieces": 1},
+		{"id": &"sfm.stall.forge.001", "pieces": 1},
+		{"id": &"sfm.stall.tavern.001", "pieces": 1},
+		{"id": &"sfm.table.fishmonger.001", "pieces": 5},
+		{"id": &"sfv.well.001", "pieces": 12},
+		{"id": &"sfv.quest_board.001", "pieces": 4},
+		{"id": &"sfv.fence.001", "pieces": 4},
+		{"id": &"sfv.deck.railing.s.001", "pieces": 4},
+	]:
+		var visual := cache.visual(expectation.id)
+		assert_eq(visual.collisions.size(), int(expectation.pieces),
+			"%s retains its reviewed compound structure" % expectation.id)
+	for asset_id: StringName in [
+		&"sfm.stall.alchemy.001",
+		&"sfm.stall.fish.001",
+		&"sfm.stall.forge.001",
+		&"sfm.stall.tavern.001",
+	]:
+		assert_true(cache.visual(asset_id).collisions[0].shape \
+			is ConcavePolygonShape3D,
+			"%s follows the complete themed structure instead of an AABB" % asset_id)
 
 func _scan_text_tree_for_source_paths(root: String) -> void:
 	var directory := DirAccess.open(root)

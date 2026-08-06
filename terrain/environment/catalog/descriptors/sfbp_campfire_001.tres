@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_5d6j8"]
+
+[resource]
+script = ExtResource("1_5d6j8")
+id = &"sfbp.campfire.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_structures/sfbp_campfire_001.tres"
+tags = Array[StringName]([&"village", &"village_prop"])
+measured_aabb = AABB(-1.3715281, -0.005390395, -0.5861801, 2.5179129, 1.7313905, 1.1723602)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 6
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_structures:sfbp.campfire.001"

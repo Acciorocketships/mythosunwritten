@@ -1,0 +1,42 @@
+[gd_scene load_steps=4 format=3]
+
+[sub_resource type="BoxShape3D" id="Box_post"]
+size = Vector3(0.3, 4.0, 0.3)
+
+[sub_resource type="BoxShape3D" id="Box_canopy_centre"]
+size = Vector3(5.28, 0.16, 2.35)
+
+[sub_resource type="BoxShape3D" id="Box_canopy_edge"]
+size = Vector3(5.28, 0.16, 0.82)
+
+[node name="MarketStall006007Collision" type="Node3D"]
+
+[node name="PostFrontLeft" type="CollisionShape3D" parent="."]
+position = Vector3(-2.08, 2.0, 1.12)
+shape = SubResource("Box_post")
+
+[node name="PostFrontRight" type="CollisionShape3D" parent="."]
+position = Vector3(2.08, 2.0, 1.12)
+shape = SubResource("Box_post")
+
+[node name="PostRearLeft" type="CollisionShape3D" parent="."]
+position = Vector3(-2.08, 2.0, -1.12)
+shape = SubResource("Box_post")
+
+[node name="PostRearRight" type="CollisionShape3D" parent="."]
+position = Vector3(2.08, 2.0, -1.12)
+shape = SubResource("Box_post")
+
+[node name="CanopyCentre" type="CollisionShape3D" parent="."]
+position = Vector3(0, 4.47, 0)
+shape = SubResource("Box_canopy_centre")
+
+[node name="CanopyFront" type="CollisionShape3D" parent="."]
+position = Vector3(0, 4.29, 1.43)
+rotation = Vector3(0.48, 0, 0)
+shape = SubResource("Box_canopy_edge")
+
+[node name="CanopyRear" type="CollisionShape3D" parent="."]
+position = Vector3(0, 4.29, -1.43)
+rotation = Vector3(-0.48, 0, 0)
+shape = SubResource("Box_canopy_edge")

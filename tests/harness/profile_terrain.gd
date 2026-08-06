@@ -7,9 +7,9 @@
 extends SceneTree
 
 const SEED := 3046246887
-const AMP := 22.0
-const MAX_STOREYS := 8
-const MAX_STEP := 3
+const AMP := TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE
+const MAX_STOREYS := TerrainWorldTuning.HEIGHTFIELD_MAX_STOREYS
+const MAX_STEP := TerrainWorldTuning.MAX_CLIFF_STEP
 const RADIUS := 3
 const CHUNK_WORLD := 192.0
 
@@ -22,12 +22,12 @@ func _mib(bytes: int) -> String:
 func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 		mesher: TerrainChunkMesher, water_builder: WaterSurfaceBuilder,
 		dressing_program: DressingProgram, path_program: PathProgram,
-		fields: WorldFieldBlockCache, paths: PathPlan,
+		fields: WorldFieldBlockCache, features: WorldFeaturePlan,
 		render_cache: EnvironmentRenderCache) -> void:
 	var worker_total := 0
 	var region_total := 0
 	var context_total := 0
-	var path_context_total := 0
+	var feature_context_total := 0
 	var terrain_total := 0
 	var water_total := 0
 	var dressing_total := 0
@@ -53,8 +53,8 @@ func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 			var worker_started := Time.get_ticks_usec()
 
 			var started := Time.get_ticks_usec()
-			var path_context := paths.context_for(chunk)
-			path_context_total += Time.get_ticks_usec() - started
+			var feature_context := features.context_for(chunk)
+			feature_context_total += Time.get_ticks_usec() - started
 
 			started = Time.get_ticks_usec()
 			var region: HeightfieldRegion = fields.region(chunk)
@@ -66,7 +66,8 @@ func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 			context_total += Time.get_ticks_usec() - started
 
 			started = Time.get_ticks_usec()
-			var terrain_payload := mesher.compute_chunk(chunk, region, context, path_context)
+			var terrain_payload := mesher.compute_chunk(chunk, region, context,
+				feature_context)
 			terrain_total += Time.get_ticks_usec() - started
 
 			started = Time.get_ticks_usec()
@@ -75,10 +76,10 @@ func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 
 			started = Time.get_ticks_usec()
 			var dressing_payload := DressingField.compute(dressing_program, SEED,
-				core, region, context, path_context)
+				core, region, context, feature_context)
 			dressing_total += Time.get_ticks_usec() - started
 			dressing_instances += dressing_payload.instance_count
-			var feature_payload := path_context.placements()
+			var feature_payload := feature_context.placements()
 			feature_instances += feature_payload.instance_count
 
 			var worker_usec := Time.get_ticks_usec() - worker_started
@@ -127,7 +128,8 @@ func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 		_ms(worker_total), _ms(worker_total / 49), _ms(worst_worker), worst_chunk])
 	print("  heightfield region: %s" % _ms(region_total))
 	print("  shared water context: %s" % _ms(context_total))
-	print("  PathContext (planning/routes/features): %s" % _ms(path_context_total))
+	print("  FeatureContext (planning/routes/features): %s" \
+		% _ms(feature_context_total))
 	print("  terrain mesh payload: %s" % _ms(terrain_total))
 	print("  water skin payload: %s" % _ms(water_total))
 	print("  DressingField: %s  (%d instances)" % [
@@ -142,7 +144,7 @@ func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 	print("  feature commit: %s  (%d instances, %d shapes, %d batches)" % [
 		_ms(feature_commit_total), feature_instances, feature_collisions, feature_batches])
 	print("  field cache: %s" % fields.stats())
-	print("  path plan: %s" % paths.stats())
+	print("  world feature plan: %s" % features.stats())
 	print("static memory: %s -> %s  process peak: %s" % [
 		_mib(memory_before), _mib(OS.get_static_memory_usage()),
 		_mib(OS.get_static_memory_peak_usage())])
@@ -162,20 +164,21 @@ func _init() -> void:
 	var catalog := EnvironmentCatalog.load_default()
 	var index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
 	var dressing_program := DressingCompiler.compile(index, catalog)
-	var path_program := PathProgram.compile(catalog)
-	assert(dressing_program != null and path_program != null)
-	var query_margin := maxf(dressing_program.query_margin, path_program.query_margin)
+	var feature_program := FeatureProgram.compile(catalog)
+	assert(dressing_program != null and feature_program != null)
+	var query_margin := maxf(dressing_program.query_margin,
+		feature_program.query_margin)
 	var shore_limit := maxf(dressing_program.shore_distance_limit,
-		path_program.shore_distance_limit)
+		feature_program.shore_distance_limit)
 	var fields := WorldFieldBlockCache.new(plan, water, query_margin, shore_limit,
-		path_program.FIELD_CACHE_CAP)
-	var paths := PathPlan.new(SEED, water, fields, path_program,
-		query_margin, settlements)
+		feature_program.field_cache_cap)
+	var features := WorldFeaturePlan.new(SEED, water, fields, feature_program,
+		settlements)
 	var render_cache := EnvironmentRenderCache.new(catalog)
 	var active_set: Dictionary = {}
 	for asset_id: StringName in dressing_program.referenced_asset_ids:
 		active_set[asset_id] = true
-	for asset_id: StringName in path_program.referenced_asset_ids:
+	for asset_id: StringName in feature_program.referenced_asset_ids:
 		active_set[asset_id] = true
 	for asset_id: StringName in CliffDressing.ASSETS.values():
 		active_set[asset_id] = true
@@ -196,8 +199,8 @@ func _init() -> void:
 		dressing_program.estimated_proposals_per_chunk])
 
 	_profile_pass("cold sweep", plan, water, mesher, water_builder, dressing_program,
-		path_program, fields, paths, render_cache)
+		path_program, fields, features, render_cache)
 	if OS.get_cmdline_user_args().has("--warm"):
 		_profile_pass("warm sweep", plan, water, mesher, water_builder, dressing_program,
-			path_program, fields, paths, render_cache)
+			path_program, fields, features, render_cache)
 	quit()

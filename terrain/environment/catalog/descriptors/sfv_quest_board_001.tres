@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_pynsd"]
+
+[resource]
+script = ExtResource("1_pynsd")
+id = &"sfv.quest_board.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_structures/sfv_quest_board_001.tres"
+tags = Array[StringName]([&"village", &"village_prop"])
+measured_aabb = AABB(-1.1102092, 6.354701e-08, -0.25757936, 2.2204185, 2.0543032, 0.51515865)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 4
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_structures:sfv.quest_board.001"

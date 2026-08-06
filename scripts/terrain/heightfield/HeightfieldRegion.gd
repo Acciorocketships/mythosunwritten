@@ -47,6 +47,10 @@ func level_at(cx: int, cz: int) -> int:
 	return int(_levels.get(Vector2i(cx, cz), 0))
 
 
+func has_surface_cell(cx: int, cz: int) -> bool:
+	return _levels.has(Vector2i(cx, cz))
+
+
 func surface_height(cx: int, cz: int) -> float:
 	# Level terraces are IN the rendered surface (HeightfieldPlan.RENDER_LEVELS, owner 2026-07-15):
 	# each 1m level step ramps through the same half-cell slope profile as the 4m storey slopes —

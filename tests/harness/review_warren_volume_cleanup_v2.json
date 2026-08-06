@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/tmp/warren-volume-review-final6",
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"seed-000.overview-ne","disposition":"pass","finding_ids":[],"notes":"Eleven roof-sealed narrow/deep buildings form a compact varied-height cluster; horizontal public surfaces use light authored boards and no dark duplicate top sheet is visible."},
+    {"screenshot_id":"seed-000.overview-sw","disposition":"pass","finding_ids":[],"notes":"The reverse overview shows the court infill closing the former broad core shaft while preserving small guarded openings and external circulation."},
+    {"screenshot_id":"seed-000.section-east","disposition":"pass","finding_ids":[],"notes":"The profile confirms tall narrow silhouettes, staggered rooflines, supported overhangs, and no unroofed room shell."},
+    {"screenshot_id":"seed-000.entry","disposition":"pass","finding_ids":[],"notes":"The collision-clear entry camera sees the route continue between occupied facades and beneath overhead mass; its required target is visible."},
+    {"screenshot_id":"seed-000.upper-route","disposition":"pass","finding_ids":[],"notes":"The upper public surface is continuously planked and guarded, with an addressed facade at route level and no dark collision-underlay bleed."},
+    {"screenshot_id":"seed-000.skywalk-side","disposition":"pass","finding_ids":[],"notes":"The occupied link reads as building mass joined to neighbouring construction rather than an empty suspended slab."},
+    {"screenshot_id":"seed-000.skywalk-beneath","disposition":"pass","finding_ids":[],"notes":"The low view verifies a collision-clear occupied underside and supporting fabric over lower exterior space."},
+    {"screenshot_id":"seed-000.roofline","disposition":"pass","finding_ids":[],"notes":"Every visible room stack terminates in a complete pitched roof; the blue/orange variants retain consistent gable seams."},
+
+    {"screenshot_id":"seed-002.overview-ne","disposition":"pass","finding_ids":[],"notes":"Twelve roofed buildings, two occupied links, and four roofed outcroppings produce geometry visibly distinct from seeds 0 and 3."},
+    {"screenshot_id":"seed-002.overview-sw","disposition":"pass","finding_ids":[],"notes":"The densest reviewed seed has no contiguous view shaft to ground through its core; exact infill leaves only one isolated guarded macro opening."},
+    {"screenshot_id":"seed-002.section-east","disposition":"pass","finding_ids":[],"notes":"The section exposes several elevation bands connected by external ramps and landings; no wide one-storey slab building is present."},
+    {"screenshot_id":"seed-002.entry","disposition":"pass","finding_ids":[],"notes":"The public route enters a bounded, overhead-layered exterior canyon and the next route target remains visible."},
+    {"screenshot_id":"seed-002.upper-route","disposition":"pass","finding_ids":[],"notes":"The close upper-route view confirms stable light plank rendering and exact railing openings at route seams."},
+    {"screenshot_id":"seed-002.skywalk-side","disposition":"pass","finding_ids":[],"notes":"The occupied skywalk facade is visible among neighbouring towers and joins external route fabric on both sides."},
+    {"screenshot_id":"seed-002.skywalk-beneath","disposition":"finding","finding_ids":["WVC2-001"],"notes":"The target ray passes, but the frame communicates the endpoint mass more clearly than the full bridge silhouette; this is retained as a review-harness weakness rather than silently called conclusive evidence."},
+    {"screenshot_id":"seed-002.roofline","disposition":"pass","finding_ids":[],"notes":"All twelve room stacks are visibly roof-sealed and the roof families vary without missing gable sides."},
+
+    {"screenshot_id":"seed-003.overview-ne","disposition":"pass","finding_ids":[],"notes":"The ten-building seed remains compact while varying its route, construction, heights, link placement, and roof palette from the other reviewed seeds."},
+    {"screenshot_id":"seed-003.overview-sw","disposition":"pass","finding_ids":[],"notes":"Public surfaces close the central volume without creating a monolithic empty platform; small fenced openings retain downward views."},
+    {"screenshot_id":"seed-003.section-east","disposition":"pass","finding_ids":[],"notes":"The external profile shows route rises, landings, occupied overhangs, and tall narrow building proportions."},
+    {"screenshot_id":"seed-003.entry","disposition":"pass","finding_ids":[],"notes":"The entry route is externally bounded by facades and overhead deck mass; the required forward target is visible."},
+    {"screenshot_id":"seed-003.upper-route","disposition":"pass","finding_ids":[],"notes":"Upper courts, ramps, and guarded lightwells join continuously with no dark platform-top artifact."},
+    {"screenshot_id":"seed-003.skywalk-side","disposition":"pass","finding_ids":[],"notes":"The occupied link presents a complete facade and doorway-level public surface rather than a bare bridge deck."},
+    {"screenshot_id":"seed-003.skywalk-beneath","disposition":"pass","finding_ids":[],"notes":"The underside view clearly shows occupied mass crossing above an external route and its support relationship."},
+    {"screenshot_id":"seed-003.roofline","disposition":"pass","finding_ids":[],"notes":"The overhead audit view shows one complete pitched roof per room stack and no roofless outcropping."}
+  ],
+  "findings": [
+    {
+      "id": "WVC2-001",
+      "severity": "P2",
+      "settlement_id": "procedural-warren-seed-002",
+      "recipe": "adversarial_capture_camera",
+      "screenshot_ids": ["seed-002.skywalk-beneath"],
+      "evidence": "The camera is collision-clear and its 1.0 visibility fraction passes the hard target gate, but full-resolution inspection shows that endpoint facades dominate the frame and the complete horizontal silhouette is not legible.",
+      "invariant": "A closing visual corpus should communicate the named construction relationship, not merely produce an unobstructed ray to one sampled target face.",
+      "confidence": "high",
+      "status": "open"
+    }
+  ],
+  "verified_cleanup": {
+    "reviewed_seed_count": 3,
+    "capture_count": 24,
+    "distinct_generation_signature_count": 3,
+    "camera_clearance_failure_count": 0,
+    "required_target_visibility_failure_count": 0,
+    "reviewed_parcel_count": 33,
+    "served_entrance_count": 33,
+    "visual_envelope_conflict_count": 0,
+    "public_air_occupied_overlap_count": 0,
+    "max_uncovered_core_component_size": 1,
+    "max_uncovered_core_column_count": 1,
+    "max_infill_lightwell_count": 4,
+    "focused_gut_test_count": 8,
+    "focused_gut_assertion_count": 19968
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/tmp/warren-final-seed0",
+  "world_seed": 0,
+  "route_attempt": 72,
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"overview-ne","disposition":"clear","finding_ids":[],"notes":"The compact mass steps through several heights. Every visible room terminates in a pitched roof and every horizontal walk top uses the light authored board family rather than the former dark duplicate skin."},
+    {"screenshot_id":"overview-sw","disposition":"clear","finding_ids":[],"notes":"The reverse angle shows buildings and galleries overlapping lower circulation. Open sky and terrain belong to the settlement perimeter, not a straight core shaft."},
+    {"screenshot_id":"section-east","disposition":"clear","finding_ids":[],"notes":"The section exposes narrow/deep and tower parcels at staggered bases, complete roof end closures, and support ancestry beneath projecting public surfaces; no wide one-storey hut is present."},
+    {"screenshot_id":"entry","disposition":"clear","finding_ids":[],"notes":"The terrain-level entrance enters a stocked market branch and immediately meets facade and route turns. There is no empty-tent substitute or uninterrupted road through the town."},
+    {"screenshot_id":"ground-reverse","disposition":"clear","finding_ids":[],"notes":"From the hostile reverse ground view, facades, stocked stalls, stairs, and overhead construction interrupt the corridor before the far boundary; no broad opening reveals the core ground plane."},
+    {"screenshot_id":"ground-cross","disposition":"clear","finding_ids":[],"notes":"The transverse ground view reads as an undercroft passage bounded on both sides, with an upper layer crossing it and no direct top-to-ground shaft."},
+    {"screenshot_id":"upper-route","disposition":"clear","finding_ids":[],"notes":"The upper public route is continuously covered by light plank assets, meets addressed facades, and has derived guards around its bounded fine-cell lightwells."},
+    {"screenshot_id":"skywalk-side","disposition":"clear","finding_ids":[],"notes":"The occupied link has a pitched roof and joins inhabited endpoint masses. Dense neighboring towers partially occlude the silhouette as intended, but the link and both joins remain readable."},
+    {"screenshot_id":"skywalk-beneath","disposition":"clear","finding_ids":[],"notes":"The underside confirms genuine occupied mass over exterior circulation rather than an unroofed floor slab. Adjacent exposed terrain lies beyond the compact edge."},
+    {"screenshot_id":"roofline","disposition":"clear","finding_ids":[],"notes":"All visible primary rooms, outcroppings, and occupied links have complete pitched runs and gable closures with no open room top or intersecting neighboring shell."},
+    {"screenshot_id":"network-above","disposition":"clear","finding_ids":[],"notes":"The top-down network shows one connected public surface with six separated guarded lightwells. No contiguous uncovered core component exceeds one macro column."}
+  ],
+  "findings": [],
+  "fixed_during_review": [
+    {
+      "id": "WVC4-FIX-PLATFORM",
+      "issue": "Generated horizontal render faces duplicated authored plank tops and appeared as nearly black platform rectangles.",
+      "fix": "Horizontal structural unions remain the collision authority but are render-suppressed wherever reviewed board assets own the visible top.",
+      "regression_evidence": "All eleven seed-0 captures show light authored walk tops; undersides remain naturally shadowed without bleeding through the top surface."
+    },
+    {
+      "id": "WVC4-FIX-ROOF-PROPORTION",
+      "issue": "One-storey wide parcels and incomplete room/outcropping roof shells broke the stacked silhouette.",
+      "fix": "Production parcel families are limited to 1x1 towers, narrow/deep 1x2 parcels, and multi-storey 2x2 parcels; every room stack, outcropping, and occupied link owns one complete roof contract.",
+      "regression_evidence": "The exact audit reports zero visually short parcels and the overview, section, skywalk, and roofline captures expose no roofless inhabited volume."
+    }
+  ],
+  "structural_evidence": {
+    "connected_building_stack_count": 10,
+    "placement_count": 223,
+    "infill_platform_patch_count": 16,
+    "infill_lightwell_count": 6,
+    "composed_walk_enclosure_ratio": 0.636363636363636,
+    "overhead_route_ratio": 0.473214285714286,
+    "through_sightline_count": 83,
+    "skywalk_count": 3,
+    "recipe_family_count": 3,
+    "stair_endpoint_gap_count": 0,
+    "visually_short_parcel_count": 0,
+    "visual_envelope_conflict_count": 0,
+    "public_air_occupied_overlap_count": 0
+  }
+}

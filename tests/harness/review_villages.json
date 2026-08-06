@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "pins": [
+    {
+      "finding_id": "VVR-001",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "foundation_absence_rear",
+      "finding": "Foundation modules formed bright detached outline rings around legal natural thresholds.",
+      "status": "fixed",
+      "passing_recaptures": ["v000-settlement-482d342e43656e08-foundation_absence_rear"]
+    },
+    {
+      "finding_id": "VVR-002",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "door_outside",
+      "finding": "The house entrance metric targeted the wrong facade and retained a closed door leaf.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-door_outside",
+        "v000-settlement-482d342e43656e08-door_inside"
+      ]
+    },
+    {
+      "finding_id": "VVR-003",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "dense_alley_inbound",
+      "finding": "An open-ring house occupied the future dense-street axis and blocked the corridor.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-dense_alley_inbound",
+        "v000-settlement-482d342e43656e08-dense_alley_outbound"
+      ]
+    },
+    {
+      "finding_id": "VVR-004",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "door_inside",
+      "finding": "The original district and doorway camera recipes spawned inside unrelated walls and could not review their named targets.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-door_inside",
+        "v000-settlement-482d342e43656e08-door_aws_building_003_inside"
+      ]
+    },
+    {
+      "finding_id": "VVR-005",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "main_approach",
+      "finding": "The village lacks its specified outskirts, props, market layer, and civic focal composition, leaving a weak district silhouette despite accepted base lots.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-main_approach",
+        "v000-settlement-482d342e43656e08-prop_sfv_well_001"
+      ]
+    },
+    {
+      "finding_id": "VVR-006",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "door_inside",
+      "finding": "The selected house prefab opens into a completely empty shell rather than the specified furnished interior.",
+      "status": "open",
+      "passing_recaptures": []
+    },
+    {
+      "finding_id": "VVR-007",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.18c71a2c5e5b8197",
+      "recipe": "dense_alley_inbound",
+      "finding": "The compact street crossed a rendered cliff boundary and terminated against the rock wall.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v001-settlement-18c71a2c5e5b8197-open_ring_lane_inbound",
+        "v001-settlement-18c71a2c5e5b8197-open_ring_lane_reverse"
+      ]
+    },
+    {
+      "finding_id": "VVR-008",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.5b2ce409e9741b09",
+      "recipe": "lowest_foundation_edge",
+      "finding": "The raised house foundation expanded beyond its reviewed contact and formed a detached outer wall with a grass-filled moat.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v003-settlement-5b2ce409e9741b09-lowest_foundation_edge"
+      ]
+    },
+    {
+      "finding_id": "VVR-009",
+      "severity": "P3",
+      "seed": 2697992464,
+      "settlement_id": "settlement.49f30c8d13fee7b7",
+      "recipe": "lowest_foundation_edge",
+      "finding": "The lowest-foundation recipe can collapse into an extreme wall-only close-up that omits the ground contact it is named to review. A valid foundation view must frame the full foundation-to-terrain interface, not merely clear physics obstruction.",
+      "status": "open",
+      "passing_recaptures": []
+    },
+    {
+      "finding_id": "VVR-010",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.37e986e81ca67017",
+      "recipe": "foundation_absence_rear",
+      "finding": "The authored foundation-absence camera began inside a rendered cliff face even though the ray-only obstruction diagnostic reported it clear.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v004-settlement-37e986e81ca67017-foundation_absence_rear"
+      ]
+    },
+    {
+      "finding_id": "VVR-011",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.558e7dffbcdee3fc",
+      "recipe": "lowest_foundation_edge",
+      "finding": "A single centre terrain probe omitted foundation modules whose span endpoints crossed the visible drop, leaving discontinuous support beneath the alchemist wall.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v005-settlement-558e7dffbcdee3fc-lowest_foundation_edge"
+      ]
+    },
+    {
+      "finding_id": "VVR-012",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.6f671e19a1a9c7c9",
+      "recipe": "foundation_absence_rear",
+      "finding": "The runtime obstruction fallback cleared the named subject by moving the camera into an unrelated ring house, producing an interior wall view instead of the requested foundation edge.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v002-settlement-6f671e19a1a9c7c9-foundation_absence_rear"
+      ]
+    },
+    {
+      "finding_id": "VVR-013",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "door_sfm_stall_blue_001_outside",
+      "finding": "The selected market variants violate the village theme contract: blue villages render purple-striped stalls and orange villages render green-striped stalls.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-door_sfm_stall_blue_007_outside",
+        "v001-settlement-18c71a2c5e5b8197-door_sfm_stall_blue_007_outside"
+      ]
+    },
+    {
+      "finding_id": "VVR-014",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "skyline",
+      "finding": "Village lots are distributed on a ring and each receives an individual connector to the plaza, producing an implausible wheel-and-spokes layout instead of continuous streets and right-angle blocks.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-skyline",
+        "v000-settlement-482d342e43656e08-street_inbound"
+      ]
+    },
+    {
+      "finding_id": "VVR-015",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "collision_lineup_sfbp_campfire_001",
+      "finding": "Several reviewed village props use coarse whole-object rectangular collision prisms; the cooking spit proxy blocks empty space instead of following its cylindrical supports and crossbar, and similar structural proxies do not preserve roof/frame geometry.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "collision-sfbp-campfire-001-v2",
+        "collision-sfbp-tent1-001-v5"
+      ]
+    },
+    {
+      "finding_id": "VVR-016",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "descent_ground_east_top",
+      "finding": "The irregular Battle Pack floor patch is repeated as if it were a rectangular tile, leaving large visible holes and green terrain between deck cells while one rectangular slab collider falsely marks the holes walkable.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-descent_ground_lower_02_top"
+      ]
+    },
+    {
+      "finding_id": "VVR-017",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "elevated_undercroft",
+      "finding": "The undercroft recipe targets the average of the lower and upper deck nodes and lands beside a tier stair at deck height, so it does not inspect the protected ground passage beneath the lower web.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-elevated_undercroft"
+      ]
+    },
+    {
+      "finding_id": "VVR-018",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "elevated_undercroft",
+      "finding": "The trestle source already includes a floor cap, but the district layers a second floor lattice above many repeated trestles; the resulting understructure is visually over-dense and contains redundant overlapping floor fabric.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-elevated_undercroft"
+      ]
+    },
+    {
+      "finding_id": "VVR-019",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "elevated_web_above",
+      "finding": "The first elevated grammar produced broad freestanding platforms with no buildings. Substantial elevated landings must be owned by inhabited buildings, rock must carry their grounded footprint, and timber may exist only beneath unsupported overhangs or as a thin connecting street.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-elevated_web_above",
+        "v000-settlement-482d342e43656e08-elevated_building_middle_civic_overhang"
+      ]
+    },
+    {
+      "finding_id": "VVR-020",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "elevated_walkway_turn_132000_1131000_1",
+      "finding": "The one-tile elevated streets have completely exposed edges, so the intended layered town reads as unfinished collisionless strips and traversal has no fall protection. Exposed floor edges need exact module-sized structural railings while doors and stair contacts remain open.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-elevated_walkway_turn_132000_1131000_1"
+      ]
+    },
+    {
+      "finding_id": "VVR-021",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "elevated_undercroft",
+      "finding": "The authored undercroft camera looked inward through the rock core, was reported obstructed, and the fallback lifted it above the undercroft ceiling into a building interior. A passing recipe must remain at ground eye height outside the overhang and look along the protected lower street without adjustment.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-elevated_undercroft"
+      ]
+    },
+    {
+      "finding_id": "VVR-022",
+      "severity": "P1",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "door_aws_building_003_inside",
+      "finding": "Ambient trees were qualified only by their grounded trunk footprint, allowing broad crowns to pass through elevated buildings and walkways whose projected lots were not present in the feature field.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v000-settlement-482d342e43656e08-door_aws_building_003_inside",
+        "v000-settlement-482d342e43656e08-elevated_building_middle_civic_overhang",
+        "v000-settlement-482d342e43656e08-elevated_building_upper_house_overhang"
+      ]
+    },
+    {
+      "finding_id": "VVR-023",
+      "severity": "P2",
+      "seed": 4242,
+      "settlement_id": "settlement.482d342e43656e08",
+      "recipe": "tier_transition_lower_middle_04_top",
+      "finding": "Storey-transition stair flights have open sides even though their upper and lower elevated streets are railed, leaving the steepest part of the traversal graph without fall protection.",
+      "status": "open",
+      "passing_recaptures": []
+    },
+    {
+      "finding_id": "VVR-024",
+      "severity": "P2",
+      "seed": 991177,
+      "settlement_id": "settlement.107c7349f8707c63",
+      "recipe": "skyline",
+      "finding": "Building acceptance and street extent are uncoupled: some generated villages retain the full orthogonal road grid after most lots reject, reading as near-empty subdivisions rather than settlements. Road reach and civic fabric must derive from accepted occupancy.",
+      "status": "open",
+      "passing_recaptures": []
+    },
+    {
+      "finding_id": "VVR-025",
+      "severity": "P1",
+      "seed": 2697992464,
+      "settlement_id": "settlement.29bc5c240c52f84a",
+      "recipe": "skyline",
+      "finding": "A production settlement collapsed to a lone tent/stall and cooking spit because optional ground frontage occupied the viable space before the elevated district transaction, while the district tried only one orientation and treated optional supports and ground activity as all-or-nothing vetoes. The result had no inhabited buildings, vertical levels, or elevated streets.",
+      "status": "fixed",
+      "passing_recaptures": [
+        "v002-settlement-29bc5c240c52f84a-skyline_reverse",
+        "v002-settlement-29bc5c240c52f84a-elevated_web_above",
+        "v002-settlement-29bc5c240c52f84a-elevated_undercroft"
+      ]
+    }
+  ]
+}

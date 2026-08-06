@@ -40,10 +40,9 @@ func _init() -> void:
 	quit()
 
 func _run_seed(seed_value: int, program: PathProgram) -> Dictionary:
-	var water := WaterPlan.new(seed_value, 22.0, 8)
+	var water := TerrainWorldTuning.make_water(seed_value)
 	var settlements := SettlementPlan.new(seed_value, water)
-	var height_plan := HeightfieldPlan.new(seed_value, 22.0, 8, "mean", 3)
-	height_plan.set_water_plan(water)
+	var height_plan := TerrainWorldTuning.make_heightfield(seed_value, water)
 	var fields := WorldFieldBlockCache.new(height_plan, water,
 		program.query_margin, program.shore_distance_limit, program.FIELD_CACHE_CAP)
 	var paths := PathPlan.new(seed_value, water, fields, program,

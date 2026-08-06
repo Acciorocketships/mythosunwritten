@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_tkmtr"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfbp_tent_dormitory2_001_piece_00.res" id="2_wdjki"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_ui2sy"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_structures/sfbp_tent_dormitory2_001_piece_00.res" id="4_ry61k"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_jhcxu"]
+
+[sub_resource type="Resource" id="Resource_4jutf"]
+script = ExtResource("1_tkmtr")
+shape = ExtResource("2_wdjki")
+
+[sub_resource type="Resource" id="Resource_rmtdw"]
+script = ExtResource("3_ui2sy")
+mesh = ExtResource("4_ry61k")
+
+[resource]
+script = ExtResource("5_jhcxu")
+pieces = Array[ExtResource("3_ui2sy")]([SubResource("Resource_rmtdw")])
+collisions = Array[ExtResource("1_tkmtr")]([SubResource("Resource_4jutf")])

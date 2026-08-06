@@ -39,10 +39,13 @@ func enqueue(chunk: Vector2i, generation: int, parent: Node3D,
 				"colors": batch.colors,
 			})
 
-func drain(max_batches: int) -> int:
+func drain(max_batches: int, max_usec: int = 0) -> int:
 	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
+	assert(max_batches >= 0 and max_usec >= 0)
+	var started := Time.get_ticks_usec()
 	var committed := 0
-	while committed < max_batches and not _items.is_empty():
+	while committed < max_batches and not _items.is_empty() \
+			and (max_usec <= 0 or Time.get_ticks_usec() - started < max_usec):
 		var item: Dictionary = _items.pop_front()
 		if int(_current_generation.get(item.chunk, -1)) != item.generation:
 			continue

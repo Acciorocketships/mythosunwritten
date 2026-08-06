@@ -3,6 +3,19 @@ extends GutTest
 const TILE := Vector2i.ZERO
 const CORE := Rect2(Vector2.ZERO, Vector2.ONE * GrassField.TILE_WORLD)
 
+func _feature_context(surface_rects: Array[Rect2],
+		clearance_rects: Array[Rect2]) -> FeatureContext:
+	var surfaces: Array[FeatureGroundShape] = []
+	var clearances: Array[FeatureGroundShape] = []
+	for rect: Rect2 in surface_rects:
+		surfaces.append(FeatureGroundShape.axis_rect(rect,
+			FeatureGroundField.WORN_PATH))
+	for rect: Rect2 in clearance_rects:
+		clearances.append(FeatureGroundShape.axis_rect(rect))
+	var ground := FeatureGroundField.new(surfaces, clearances,
+		GrassProgram.FEATURE_CLEARANCE)
+	return FeatureContext.new(CORE, ground, EnvironmentInstancePayload.new())
+
 func _program() -> GrassProgram:
 	var settings := load("res://terrain/grass/settings.tres") as GrassSettings
 	var catalog := EnvironmentCatalog.load_default()
@@ -183,20 +196,18 @@ func test_dropout_rank_is_an_exact_nested_prefix() -> void:
 func test_path_reservation_removes_the_carpet_without_special_case_stamps() -> void:
 	var program := _program()
 	var inputs := _flat_inputs(program)
-	var paths := PathContext.new(CORE, [CORE], [CORE],
-		EnvironmentInstancePayload.new(), GrassProgram.FEATURE_CLEARANCE)
+	var features := _feature_context([CORE], [CORE])
 	var payload := GrassField.compute(program, 4242, TILE,
-		inputs.region, inputs.water, paths)
+		inputs.region, inputs.water, features)
 	assert_eq(payload.instance_count, 0)
 
 func test_path_corridor_rejects_the_complete_patch_footprint() -> void:
 	var program := _program()
 	var inputs := _flat_inputs(program)
 	var corridor := Rect2(Vector2(10.0, -4.0), Vector2(4.0, 32.0))
-	var paths := PathContext.new(CORE, [corridor], [],
-		EnvironmentInstancePayload.new(), GrassProgram.FEATURE_CLEARANCE)
+	var features := _feature_context([corridor], [])
 	var payload := GrassField.compute(program, 4242, TILE,
-		inputs.region, inputs.water, paths)
+		inputs.region, inputs.water, features)
 	assert_gt(payload.instance_count, 0, "only the path shoulder is cleared")
 	for asset_id: StringName in payload.asset_ids():
 		var asset: Dictionary = program.assets[asset_id]

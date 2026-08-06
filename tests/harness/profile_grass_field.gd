@@ -19,8 +19,13 @@ func _init() -> void:
 	water._coverage = Rect2(Vector2(-4.0, -4.0), Vector2(32.0, 32.0))
 	water._shore_limit = 0.3
 	water._shore_curves_ready = true
-	var paths := PathContext.new(Rect2(Vector2.ZERO, Vector2.ONE * 24.0), [], [],
-		EnvironmentInstancePayload.new(), GrassProgram.FEATURE_CLEARANCE)
+	var surface_shapes: Array[FeatureGroundShape] = []
+	var clearance_shapes: Array[FeatureGroundShape] = []
+	var ground := FeatureGroundField.new(surface_shapes, clearance_shapes,
+		GrassProgram.FEATURE_CLEARANCE)
+	var features := FeatureContext.new(
+		Rect2(Vector2.ZERO, Vector2.ONE * 24.0), ground,
+		EnvironmentInstancePayload.new())
 
 	var weights: Array[Dictionary] = []
 	var started := Time.get_ticks_usec()
@@ -56,15 +61,15 @@ func _init() -> void:
 	_print_phase("dry_water", started)
 	started = Time.get_ticks_usec()
 	for anchor: Vector2 in anchors:
-		paths.clearance_at(anchor)
-	_print_phase("empty_path_clearance", started)
+		features.clearance_at(anchor)
+	_print_phase("empty_feature_clearance", started)
 	var settings := load("res://terrain/grass/settings.tres") as GrassSettings
 	var catalog := EnvironmentCatalog.load_default()
 	var cache := EnvironmentRenderCache.new(catalog)
 	var program := GrassProgram.compile(settings, catalog, cache)
 	started = Time.get_ticks_usec()
 	var payload := GrassField.compute(program, 4242, Vector2i.ZERO,
-		region, water, paths)
+		region, water, features)
 	var elapsed := Time.get_ticks_usec() - started
 	print("[grass_field_profile] optimized_compute total_usec=%d instances=%d" % [
 		elapsed, payload.instance_count])

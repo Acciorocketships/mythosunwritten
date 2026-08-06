@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3]
+
+[sub_resource type="ConcavePolygonShape3D" id="Shell_roof"]
+data = PackedVector3Array(-2.95, 1.35, -2.98, -2.95, 1.35, 3.88, 0, 6.75, 3.88, -2.95, 1.35, -2.98, 0, 6.75, 3.88, 0, 6.75, -2.98, 0, 6.75, -2.98, 0, 6.75, 3.88, 2.95, 1.35, 3.88, 0, 6.75, -2.98, 2.95, 1.35, 3.88, 2.95, 1.35, -2.98)
+backface_collision = true
+
+[sub_resource type="BoxShape3D" id="Box_post"]
+size = Vector3(0.18, 4.15, 0.18)
+
+[sub_resource type="BoxShape3D" id="Box_ridge"]
+size = Vector3(0.20, 0.20, 6.85)
+
+[sub_resource type="ConvexPolygonShape3D" id="Prism_back"]
+points = PackedVector3Array(-2.95, 1.35, -0.11, 2.95, 1.35, -0.11, 0, 6.75, -0.11, -2.95, 1.35, 0.11, 2.95, 1.35, 0.11, 0, 6.75, 0.11)
+
+[node name="Tent1001Collision" type="Node3D"]
+
+[node name="TriangularRoof" type="CollisionShape3D" parent="."]
+shape = SubResource("Shell_roof")
+
+[node name="BackFabric" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0, -3.0)
+shape = SubResource("Prism_back")
+
+[node name="FrontLeftPost" type="CollisionShape3D" parent="."]
+position = Vector3(-2.72, 2.07, 3.72)
+shape = SubResource("Box_post")
+
+[node name="FrontRightPost" type="CollisionShape3D" parent="."]
+position = Vector3(2.72, 2.07, 3.72)
+shape = SubResource("Box_post")
+
+[node name="RearLeftPost" type="CollisionShape3D" parent="."]
+position = Vector3(-2.72, 2.07, -2.62)
+shape = SubResource("Box_post")
+
+[node name="RearRightPost" type="CollisionShape3D" parent="."]
+position = Vector3(2.72, 2.07, -2.62)
+shape = SubResource("Box_post")
+
+[node name="RidgeBeam" type="CollisionShape3D" parent="."]
+position = Vector3(0, 6.70, 0.45)
+shape = SubResource("Box_ridge")

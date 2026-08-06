@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/private/tmp/production-village-final-cleanup-captures",
+  "world_seed": 2697992464,
+  "settlement_id": "settlement.29bc5c240c52f84a",
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_skyline_ne","disposition":"clear","finding_ids":[],"notes":"The production-streamed town has narrow, tall, fully roofed stacks, pale authored plank decks, staggered rooflines, and supported overhangs. No dark duplicate platform skin is visible."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_skyline_sw","disposition":"finding","finding_ids":["PW2697V2-001"],"notes":"The requested vertical opening is closed, but several adjacent upper courts combine into a broad rectangular plank field that weakens the building-bounded maze reading."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_skyline_nw","disposition":"finding","finding_ids":["PW2697V2-001"],"notes":"Roofs and material rendering are sound, while the middle level still reads more as a continuous deck than a collection of narrow passages between inhabited masses."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_skyline_se","disposition":"finding","finding_ids":["PW2697V2-001"],"notes":"The upper route is structurally connected and supported, but broad court geometry remains visually dominant in the centre."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_ground_entry","disposition":"clear","finding_ids":[],"notes":"A stocked market, external route, nearby facades, and overhead mass form a legible entry. Platform tops use authored boards and every visible room is capped."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_ground_reverse","disposition":"finding","finding_ids":["PW2697V2-003"],"notes":"The camera is collision-clear but too close to the arched facade to evaluate the reverse route relationship well; this is a capture-quality weakness rather than a construction failure."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_route_mid","disposition":"clear","finding_ids":[],"notes":"Light plank modules tile the walk surface cleanly, the route passes addressed facades, guards follow exposed edges, and the connected stair/platform seams are visually coherent."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_route_high","disposition":"suspicion","finding_ids":["PW2697V2-003"],"notes":"The high route is present and supported, but this outward-looking frame gives weak evidence about its onward connection through the settlement."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_ground_cross_a","disposition":"clear","finding_ids":[],"notes":"This hostile cross-axis view is interrupted by stocked market and building mass while retaining a traversable exterior path; no roof, proportion, or plank-material regression is visible."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_ground_cross_b","disposition":"finding","finding_ids":["PW2697V2-002"],"notes":"A broad green horizontal gap remains visible between tall masses. It does not reopen the top-to-ground core shaft, but it weakens the intended closed, winding ground maze."},
+    {"screenshot_id":"v000-settlement-29bc5c240c52f84a-warren_network_above","disposition":"finding","finding_ids":["PW2697V2-001"],"notes":"The top-down view verifies that the former broad see-through-to-ground opening is gone and only bounded holes remain; it also makes the overly rectangular central deck field easy to identify."}
+  ],
+  "findings": [
+    {
+      "id": "PW2697V2-001",
+      "severity": "P2",
+      "status": "open",
+      "screenshot_ids": [
+        "v000-settlement-29bc5c240c52f84a-warren_skyline_sw",
+        "v000-settlement-29bc5c240c52f84a-warren_skyline_nw",
+        "v000-settlement-29bc5c240c52f84a-warren_skyline_se",
+        "v000-settlement-29bc5c240c52f84a-warren_network_above"
+      ],
+      "evidence": "The exact plan closes every raw 3 m core aperture, but several legal route-fused infill patches visually merge into one broad rectangular upper deck.",
+      "invariant": "Platform infill should close dangerous vertical openings while remaining subordinate to narrow building-bounded passages and separated guarded lightwells.",
+      "confidence": "high"
+    },
+    {
+      "id": "PW2697V2-002",
+      "severity": "P2",
+      "status": "open",
+      "screenshot_ids": [
+        "v000-settlement-29bc5c240c52f84a-warren_ground_cross_b"
+      ],
+      "evidence": "The full-resolution cross-axis capture shows a broad grass opening between tall stacks. The exact audit agrees that composition remains below its visual target: frontage_ratio=0.1858 and through_sightline_count=100.",
+      "invariant": "Inner ground routes should bend between inhabited or overhead mass instead of presenting a broad horizontal opening through the town.",
+      "confidence": "high"
+    },
+    {
+      "id": "PW2697V2-003",
+      "severity": "P3",
+      "status": "open",
+      "screenshot_ids": [
+        "v000-settlement-29bc5c240c52f84a-warren_ground_reverse",
+        "v000-settlement-29bc5c240c52f84a-warren_route_high"
+      ],
+      "evidence": "Both captures pass geometric camera clearance, but one is dominated by a close arched facade and the other looks mostly away from the onward public network.",
+      "invariant": "Every named review view should clearly expose the complete structural relationship that it claims to inspect.",
+      "confidence": "high"
+    }
+  ],
+  "verified_non_regressions": {
+    "dark_platform_skin": false,
+    "roofless_room_count": 0,
+    "visually_short_parcel_count": 0,
+    "transverse_parcel_count": 0,
+    "unclassified_core_aperture_count": 0,
+    "max_uncovered_route_component_size": 12,
+    "detached_building_stack_count": 0,
+    "stair_endpoint_gap_count": 0,
+    "stair_endpoint_missing_landing_count": 0,
+    "unsupported_platform_count": 0,
+    "unsupported_stair_count": 0,
+    "visual_envelope_overlap_count": 0
+  }
+}

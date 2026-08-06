@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_f2yw6"]
+
+[resource]
+script = ExtResource("1_f2yw6")
+id = &"sfm.stall.butcher.002"
+visual_path = "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_butcher_002.tres"
+tags = Array[StringName]([&"building", &"stall", &"stocked_market", &"village"])
+measured_aabb = AABB(-2.66495, -0.009999923, -2.8597088, 5.3299, 4.6744237, 4.6118426)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_structures:sfm.stall.butcher.002"

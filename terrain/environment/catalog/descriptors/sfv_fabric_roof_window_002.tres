@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_8vjpg"]
+
+[resource]
+script = ExtResource("1_8vjpg")
+id = &"sfv.fabric.roof.window.002"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_roof_window_002.tres"
+tags = Array[StringName]([&"building", &"dormer", &"fabric_roof_feature", &"village"])
+measured_aabb = AABB(-1.2285753, -3.6499503e-07, -1.6770179, 2.4571586, 3.1033323, 3.3540354)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.roof.window.002"

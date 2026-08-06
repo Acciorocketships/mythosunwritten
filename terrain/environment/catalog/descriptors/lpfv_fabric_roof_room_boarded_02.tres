@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_u8o52"]
+
+[resource]
+script = ExtResource("1_u8o52")
+id = &"lpfv.fabric.roof.room.boarded.02"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_room_boarded_02.tres"
+tags = Array[StringName]([&"boarded_roof", &"building", &"fabric_roof", &"room_roof", &"village"])
+measured_aabb = AABB(-3.0717762, -0.0037901402, -3.3250666, 6.143553, 2.9049525, 6.6501355)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.roof.room.boarded.02"

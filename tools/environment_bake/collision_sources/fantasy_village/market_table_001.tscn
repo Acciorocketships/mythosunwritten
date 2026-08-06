@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3]
+
+[sub_resource type="BoxShape3D" id="Box_top"]
+size = Vector3(1.96, 0.18, 1.00)
+
+[sub_resource type="BoxShape3D" id="Box_leg"]
+size = Vector3(0.18, 0.82, 0.18)
+
+[node name="MarketTable001Collision" type="Node3D"]
+
+[node name="Top" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.82, 0)
+shape = SubResource("Box_top")
+
+[node name="LegFrontLeft" type="CollisionShape3D" parent="."]
+position = Vector3(-0.76, 0.41, 0.36)
+shape = SubResource("Box_leg")
+
+[node name="LegFrontRight" type="CollisionShape3D" parent="."]
+position = Vector3(0.76, 0.41, 0.36)
+shape = SubResource("Box_leg")
+
+[node name="LegRearLeft" type="CollisionShape3D" parent="."]
+position = Vector3(-0.76, 0.41, -0.36)
+shape = SubResource("Box_leg")
+
+[node name="LegRearRight" type="CollisionShape3D" parent="."]
+position = Vector3(0.76, 0.41, -0.36)
+shape = SubResource("Box_leg")
