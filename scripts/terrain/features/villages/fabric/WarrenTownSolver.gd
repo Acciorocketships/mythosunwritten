@@ -57,6 +57,31 @@ const MAX_URBAN_CORE_OPEN_RATIO := 0.125
 # enclosure, lightwell, platform, and screenshot audits still decide whether a
 # survivor reads as an enclosed town; this ratio is only an early search bound.
 const ASSET_AWARE_MAX_CORE_OPEN_RATIO := 0.25
+## Migration boundary (mass-first design spec). route_first is the pipeline
+## this project ships: its branch in ranked_candidates() is the original code,
+## unreachable from and unaffected by anything below. mass_first replaces only
+## the topology frontier -- with excavated massifs instead of routes carved out
+## of a Gaussian envelope -- and then hands that frontier to exactly the same
+## arcade, frontage, parcel, ranking, and composition stages. A static var
+## rather than a const so tests and corpus probes can flip it per call.
+const MODE_ROUTE_FIRST := &"route_first"
+const MODE_MASS_FIRST := &"mass_first"
+static var GENERATION_MODE: StringName = MODE_ROUTE_FIRST
+## One attempt is a full 256-bore WarrenExcavationCarver search over an
+## already-built massif, measured at ~0.9 s (the massif itself is 6 ms and is
+## built once, since WarrenMassifBuilder.build is deterministic per seed).
+## Twelve attempts therefore cost ~11 s per ranked_candidates() call and,
+## measured over seeds 1-12, cleared the topology gate on a median of 9 and a
+## minimum of 1 volume per buildable seed -- enough that the gate, not the
+## attempt budget, is what bounds the frontier. A 64-attempt sweep over four
+## seeds bought proportionally more gate survivors (34-41 of 64) and no new
+## downstream behaviour, so the extra minute per call buys nothing today.
+const MASS_FIRST_EXCAVATION_ATTEMPTS := 12
+## Attempts vary the CARVE seed, never the massif seed: the massif is
+## deterministic per world seed, so rebuilding it per attempt would return the
+## identical solid and the whole frontier would collapse to one route. A large
+## prime stride keeps adjacent world seeds from sharing attempt corpora.
+const MASS_FIRST_ATTEMPT_STRIDE := 1000003
 static var last_failure := ""
 ## Non-deterministic performance trace for harnesses. Timings never enter a
 ## sealed plan or signature and therefore cannot affect output.
@@ -154,22 +179,27 @@ static func ranked_candidates(world_seed: int,
 	if max_results <= 0:
 		last_failure = "candidate frontier limit must be positive"
 		return out
-	var envelope := WarrenVolumeEnvelope.build(world_seed, ground_bands)
-	if envelope == null:
-		last_failure = "Gaussian envelope rejected"
-		return out
 	var topology_frontier: Array[WarrenVolumePlan] = []
-	for attempt in TOPOLOGY_ATTEMPTS:
-		var volume := WarrenPublicRealmCarver.sealed_candidate(world_seed,
-			attempt, envelope)
-		if volume == null:
-			continue
-		volume = WarrenGroundArcadeSolver.extend(volume)
-		if volume == null:
-			continue
-		for gallery_variant: WarrenVolumePlan in \
-				WarrenElevatedFrontageSolver.variants(volume):
-			topology_frontier.append(gallery_variant)
+	if GENERATION_MODE == MODE_MASS_FIRST:
+		topology_frontier = _mass_first_frontier(world_seed, ground_bands)
+		if topology_frontier.is_empty():
+			return out
+	else:
+		var envelope := WarrenVolumeEnvelope.build(world_seed, ground_bands)
+		if envelope == null:
+			last_failure = "Gaussian envelope rejected"
+			return out
+		for attempt in TOPOLOGY_ATTEMPTS:
+			var volume := WarrenPublicRealmCarver.sealed_candidate(world_seed,
+				attempt, envelope)
+			if volume == null:
+				continue
+			volume = WarrenGroundArcadeSolver.extend(volume)
+			if volume == null:
+				continue
+			for gallery_variant: WarrenVolumePlan in \
+					WarrenElevatedFrontageSolver.variants(volume):
+				topology_frontier.append(gallery_variant)
 	var topology_finished := Time.get_ticks_msec()
 	topology_frontier.sort_custom(func(a: WarrenVolumePlan,
 			b: WarrenVolumePlan) -> bool:
@@ -292,6 +322,73 @@ static func ranked_candidates(world_seed: int,
 		"compose_ms": Time.get_ticks_msec() - compose_started,
 		"total_ms": Time.get_ticks_msec() - solve_started,
 	}
+	return out
+
+
+static func _mass_first_frontier(world_seed: int,
+		ground_bands: Dictionary) -> Array[WarrenVolumePlan]:
+	## The mass-first topology frontier: one terraced solid, bored repeatedly,
+	## each bore adapted into the same sealed WarrenVolumePlan the route-first
+	## carver emits, then extended by the same arcade and frontage solvers.
+	##
+	## Every stage here returns null for ordinary reasons and none of them are
+	## errors: the massif gates reject ~2% of world seeds outright, a bounded
+	## bore search legitimately finds nothing on some massifs, and the adapter's
+	## plan seal rejects the occasional same-datum 2x2 block that the carver's
+	## soft fold penalty could not price away (~2%, documented in Task 3). A
+	## null is skipped and the search continues; only an empty frontier fails,
+	## and it reports where the corpus was lost rather than that it was.
+	var out: Array[WarrenVolumePlan] = []
+	var massif := WarrenMassifBuilder.build(world_seed, ground_bands)
+	if massif == null:
+		last_failure = "massif rejected: %s" % WarrenMassifBuilder.last_failure
+		return out
+	var carved := 0
+	var adapted := 0
+	var gated := 0
+	var arcade_failure := ""
+	for attempt in MASS_FIRST_EXCAVATION_ATTEMPTS:
+		var excavation := WarrenExcavationCarver.carve(
+			world_seed + attempt * MASS_FIRST_ATTEMPT_STRIDE, massif)
+		if excavation == null:
+			continue
+		carved += 1
+		var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if volume == null:
+			continue
+		adapted += 1
+		# Route-first candidates can only reach this frontier through
+		# WarrenPublicRealmCarver.sealed_candidate, which applies the carver's
+		# topology gate. Excavated candidates are held to that same bar instead
+		# of an implicit weaker one, so both modes hand the downstream stages
+		# topology of the same measured quality. Two of its criteria genuinely
+		# bite here -- a complete six-band frontage on 55% of route cells, and
+		# at least one ramp -- because the excavation carver's own gates ask
+		# only for street-height flanking walls and no ramp at all.
+		if not WarrenPublicRealmCarver.passes_topology_gate(volume):
+			continue
+		gated += 1
+		volume = WarrenGroundArcadeSolver.extend(volume)
+		if volume == null:
+			arcade_failure = WarrenGroundArcadeSolver.last_failure
+			continue
+		for gallery_variant: WarrenVolumePlan in \
+				WarrenElevatedFrontageSolver.variants(volume):
+			out.append(gallery_variant)
+	if out.is_empty():
+		# Naming the stage that ate the corpus is the whole diagnostic value
+		# here: a bare "nothing survived" sends the next reader back to
+		# re-instrumenting these same four stages by hand. Today every gated
+		# candidate is lost at the arcade, which wants two terrain-level route
+		# cells at least MIN_BRANCH_SEPARATION_CELLS apart, while an excavated
+		# route climbs away from its single portal and touches grade twice,
+		# adjacently. Task 5's solid partitioner is where that is answered.
+		last_failure = ("no excavated topology reached the frontier " \
+			+ "(%d/%d bores carved, %d adapted, %d passed the topology gate%s)") \
+			% [carved, MASS_FIRST_EXCAVATION_ATTEMPTS, adapted, gated,
+			"" if arcade_failure.is_empty() \
+				else "; ground arcade: %s" % arcade_failure]
 	return out
 
 

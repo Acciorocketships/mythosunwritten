@@ -91,6 +91,16 @@ static func topology_score(plan: WarrenVolumePlan) -> float:
 	return INF if plan == null or not plan.is_sealed() else _plan_score(plan)
 
 
+static func passes_topology_gate(plan: WarrenVolumePlan) -> bool:
+	## Read-only view of the same corpus quality bar sealed_candidate() applies,
+	## for topology built outside this carver (the mass-first excavation path).
+	## Exposing the one authority is deliberate: a second copy of these
+	## thresholds would let the two generation modes drift apart silently. This
+	## can only reject a candidate, never admit one, so no existing caller's
+	## result can change.
+	return plan != null and _passes_topology_gate(plan)
+
+
 static func _grow_candidate(world_seed: int, attempt: int,
 		envelope: WarrenVolumeEnvelope,
 		allow_unsealed_diagnostic: bool = false) -> WarrenVolumePlan:
