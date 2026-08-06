@@ -184,7 +184,10 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 			_reject(rejected, "unflanked cell")
 			return null
 	if not excavation.seal():
-		_reject(rejected, excavation.last_rejection)
+		# Bucketed, not keyed on last_rejection: that string carries cell
+		# coordinates, so using it as a key would grow one tally entry per
+		# failing attempt instead of summarising them.
+		_reject(rejected, "unsealed walk")
 		return null
 	return excavation
 
