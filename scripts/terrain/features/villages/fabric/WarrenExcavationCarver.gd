@@ -24,6 +24,21 @@ const MIN_COVERED_RATIO := 0.55
 const MAX_COVERED_RATIO := 0.70
 const MIN_PORTALS := 1
 const MAX_PORTALS := 2
+## Fraction of walk cells that must have mass standing to full street height
+## on BOTH sides. "Streets bounded by tall mass on both sides" is design
+## intent for this whole feature, and every other gate here is satisfied by
+## one-band kerbs at a terrace lip, so it needs a gate of its own or it is
+## merely an aspiration a test happened to sample.
+##
+## Set from the measured trade curve rather than chosen: over 196 buildable
+## massifs the BEST ratio any of 256 attempts reaches has a minimum of 0.609,
+## so 0.60 is the highest floor that costs nothing at all (195/196 carve,
+## identical to no gate). Raising it trades corpus acceptance directly --
+## 0.65 costs 2 seeds, 0.70 costs 11, 0.75 costs 26. The typical route sits
+## far above the floor (median best-achievable 0.846) because selection
+## prefers enclosure; the gate only stops a poor survivor being chosen when
+## a better one existed.
+const MIN_WALL_RATIO := 0.60
 ## A street that runs straight for five cells stops reading as a warren
 ## canyon and starts reading as an avenue with a sightline down it.
 const MAX_STRAIGHT_RUN := 4
@@ -157,8 +172,8 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 	var direction := Vector2i.ZERO
 	var straight_run := 0
 	var roofed := 0
-	_carve_cell(excavation, route_set, current)
-	roofed += int(_depth_of(massif, current) > 0)
+	_carve_cell(excavation, route_set, current, HEADROOM_BANDS)
+	roofed += int(_depth_of(massif, current, HEADROOM_BANDS) > 0)
 	var move_index := 0
 	while excavation.route.size() < target:
 		var selected := _best_move(world_seed, attempt, move_index, target,
@@ -168,16 +183,19 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 			break
 		var stride: Array = selected["cells"]
 		var move_direction := selected["direction"] as Vector2i
+		var rise := int(selected["rise"])
+		var run := int(selected["run"])
 		var endpoint := stride[stride.size() - 1] as Vector3i
 		excavation.transitions.append({
 			"from": current,
 			"to": endpoint,
 			"kind": int(selected["kind"]),
 		})
-		for cell_value: Variant in stride:
-			var cell := cell_value as Vector3i
-			_carve_cell(excavation, route_set, cell)
-			roofed += int(_depth_of(massif, cell) > 0)
+		for offset in range(1, run + 1):
+			var cell := stride[offset - 1] as Vector3i
+			var bands := _stride_slot_bands(rise, run, offset)
+			_carve_cell(excavation, route_set, cell, bands)
+			roofed += int(_depth_of(massif, cell, bands) > 0)
 		straight_run = straight_run + stride.size() \
 			if move_direction == direction else stride.size()
 		direction = move_direction
@@ -201,14 +219,20 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 			or excavation.portals.size() > MAX_PORTALS:
 		_reject(rejected, "portals")
 		return null
+	var walled := 0
 	for cell: Vector3i in excavation.route:
-		# Flanking was steered for at every step against the mass standing at
-		# the time; only the finished excavation knows what a later step took
-		# back out from beside an earlier cell. Re-checked here so the gate is
-		# enforced against the final solid, not against a snapshot of it.
+		# Flanking and enclosure were steered for at every step against the
+		# mass standing at the time; only the finished excavation knows what a
+		# later step took back out from beside an earlier cell. Re-measured
+		# here so both gates are enforced against the final solid, not against
+		# a snapshot of it.
 		if _flank_count(massif, excavation, cell) < 1:
 			_reject(rejected, "unflanked cell")
 			return null
+		walled += int(_wall_count(massif, excavation, cell) >= 2)
+	if float(walled) / float(excavation.route.size()) < MIN_WALL_RATIO:
+		_reject(rejected, "open-sided")
+		return null
 	if not excavation.seal():
 		# Bucketed, not keyed on last_rejection: that string carries cell
 		# coordinates, so using it as a key would grow one tally entry per
@@ -219,10 +243,10 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 
 
 static func _carve_cell(excavation: WarrenExcavation, route_set: Dictionary,
-		cell: Vector3i) -> void:
+		cell: Vector3i, bands: int) -> void:
 	excavation.route.append(cell)
 	route_set[cell] = true
-	for band in range(cell.y, cell.y + HEADROOM_BANDS):
+	for band in range(cell.y, cell.y + bands):
 		excavation.carved[Vector3i(cell.x, band, cell.z)] = true
 
 
@@ -239,7 +263,8 @@ static func _finalize(excavation: WarrenExcavation,
 	excavation.portals.clear()
 	for cell: Vector3i in excavation.route:
 		var column := Vector2i(cell.x, cell.z)
-		var roof := Vector3i(cell.x, cell.y + HEADROOM_BANDS, cell.z)
+		var roof := Vector3i(cell.x, cell.y + excavation.slot_bands(cell),
+			cell.z)
 		excavation.covered[cell] = massif.top_at(column) > roof.y \
 			and not excavation.carved.has(roof)
 		if _opens_to_exterior(massif, cell):
@@ -319,57 +344,95 @@ static func _best_move(world_seed: int, attempt: int, move_index: int,
 			if stride.is_empty():
 				continue
 			var score := _move_score(world_seed, attempt, move_index, target,
-				style, current, stride, direction, current_direction,
-				straight_run, roofed, massif, excavation, route_set,
-				direction_index * ACTIONS.size() + action_index)
+				style, current, stride, int(action["rise"]), direction,
+				current_direction, straight_run, roofed, massif, excavation,
+				route_set, direction_index * ACTIONS.size() + action_index)
 			if score < best_score:
 				best_score = score
 				best = {
 					"cells": stride,
 					"direction": direction,
 					"kind": int(action["kind"]),
+					"rise": int(action["rise"]),
+					"run": run,
 				}
 	return best
+
+
+static func _surface_band_span(rise: int, run: int, offset: int) -> Vector2i:
+	## The lowest and highest band, relative to a stride's starting band, on
+	## which WarrenVolumeTransition.surface_cells() will place walking surface
+	## inside the macro cell `offset` steps along that stride.
+	##
+	## Read off that method's own micro-lane arithmetic rather than
+	## approximated, because the two do not agree at macro resolution unless
+	## you follow it exactly. surface_cells() walks 2*run-2 micro steps and
+	## rounds `lerp` at each; micro step `along` falls in macro cell
+	## `(along + 1) / 2`. For a STAIR (run 2) BOTH micro steps land in the one
+	## intermediate cell, at the lower tread and then the upper -- so that
+	## cell's void has to span two bands. Interpolating once per macro cell
+	## instead put its floor on the upper tread alone and left the lower half
+	## of every flight standing in solid mass. A RAMP (run 3) gives each of
+	## its two gap cells a single band, which is why only stairs diverged.
+	if rise == 0:
+		return Vector2i.ZERO
+	var gap := run * 2 - 2
+	var low := rise
+	var high := rise
+	var found := false
+	for along in range(1, gap + 1):
+		if (along + 1) / 2 != offset:
+			continue
+		var band := roundi(lerpf(0.0, float(rise),
+			float(along) / float(gap + 1)))
+		low = band if not found else mini(low, band)
+		high = band if not found else maxi(high, band)
+		found = true
+	return Vector2i(low, high)
+
+
+static func _stride_slot_bands(rise: int, run: int, offset: int) -> int:
+	## Height of void one stride cell needs: its own walking surface span plus
+	## standing headroom above the highest tread in it.
+	var span := _surface_band_span(rise, run, offset)
+	return span.y - span.x + HEADROOM_BANDS
 
 
 static func _stride_cells(massif: WarrenMassif, excavation: WarrenExcavation,
 		current: Vector3i, direction: Vector2i, rise: int,
 		run: int) -> Array[Vector3i]:
-	## Every cell a move passes through, floors interpolated the same way
-	## WarrenVolumeTransition.surface_cells() interpolates its own span, so
-	## the excavated slot and the transition later built over it agree about
-	## which band the walking surface is on at each cell of the run. Returns
-	## empty if any cell of the stride cannot be bored -- a partially legal
-	## stride is not a legal move.
+	## Every cell a move passes through, each placed on the lowest band
+	## surface_cells() will claim inside it and cleared to the height that
+	## method's span demands. Returns empty if any cell of the stride cannot
+	## be bored -- a partially legal stride is not a legal move.
 	var out: Array[Vector3i] = []
 	for offset in range(1, run + 1):
-		var band := current.y + roundi(lerpf(0.0, float(rise),
-			float(offset) / float(run)))
-		var cell := Vector3i(current.x + direction.x * offset, band,
-			current.z + direction.y * offset)
-		if not _slot_is_borable(massif, excavation, cell):
+		var span := _surface_band_span(rise, run, offset)
+		var cell := Vector3i(current.x + direction.x * offset,
+			current.y + span.x, current.z + direction.y * offset)
+		if not _slot_is_borable(massif, excavation, cell,
+				span.y - span.x + HEADROOM_BANDS):
 			return [] as Array[Vector3i]
 		out.append(cell)
 	return out
 
 
 static func _slot_is_borable(massif: WarrenMassif,
-		excavation: WarrenExcavation, cell: Vector3i) -> bool:
-	## The whole headroom slot must lie inside the solid. Allowing the top of
-	## the slot to poke out through the massif's skin would let the route
-	## "excavate" cells that were already sky and walk the roofs instead of
-	## the streets.
+		excavation: WarrenExcavation, cell: Vector3i, bands: int) -> bool:
+	## The whole slot must lie inside the solid. Allowing the top of it to
+	## poke out through the massif's skin would let the route "excavate"
+	## cells that were already sky and walk the roofs instead of the streets.
 	var column := Vector2i(cell.x, cell.z)
 	if not massif.has_column(column):
 		return false
 	if cell.y < massif.base_at(column):
 		return false
-	if cell.y + HEADROOM_BANDS > massif.top_at(column):
+	if cell.y + bands > massif.top_at(column):
 		return false
 	# One solid band has to survive between two passes of the route through
-	# the same column, otherwise the "tunnel crossing" is really one
-	# six-band shaft with a street somewhere in the middle of it.
-	for band in range(cell.y - 1, cell.y + HEADROOM_BANDS + 1):
+	# the same column, otherwise the "tunnel crossing" is really one tall
+	# shaft with a street somewhere in the middle of it.
+	for band in range(cell.y - 1, cell.y + bands + 1):
 		if excavation.carved.has(Vector3i(cell.x, band, cell.z)):
 			return false
 	return true
@@ -377,7 +440,7 @@ static func _slot_is_borable(massif: WarrenMassif,
 
 static func _move_score(world_seed: int, attempt: int, move_index: int,
 		target: int, style: Dictionary, current: Vector3i,
-		stride: Array[Vector3i], direction: Vector2i,
+		stride: Array[Vector3i], rise: int, direction: Vector2i,
 		current_direction: Vector2i, straight_run: int, roofed: int,
 		massif: WarrenMassif, excavation: WarrenExcavation,
 		route_set: Dictionary, action_index: int) -> float:
@@ -413,8 +476,10 @@ static func _move_score(world_seed: int, attempt: int, move_index: int,
 	var unwalled := 0
 	var exposed := false
 	var folded := false
-	for cell: Vector3i in stride:
-		depth_error += absf(float(_depth_of(massif, cell) - desired_depth))
+	for offset in range(1, run + 1):
+		var cell := stride[offset - 1]
+		depth_error += absf(float(_depth_of(massif, cell,
+			_stride_slot_bands(rise, run, offset)) - desired_depth))
 		var cell_flanks := _flank_count(massif, excavation, cell)
 		var cell_walls := _wall_count(massif, excavation, cell)
 		flanks += cell_flanks
@@ -472,9 +537,13 @@ static func _folds_onto_route(route_set: Dictionary, current: Vector3i,
 	return false
 
 
-static func _depth_of(massif: WarrenMassif, cell: Vector3i) -> int:
-	## Bands of mass left above the headroom slot at this cell's own column.
-	return massif.top_at(Vector2i(cell.x, cell.z)) - cell.y - HEADROOM_BANDS
+static func _depth_of(massif: WarrenMassif, cell: Vector3i,
+		bands: int) -> int:
+	## Bands of mass left above this cell's own slot. A stair's intermediate
+	## cell carries two treads, so its slot is a band taller and its roof
+	## correspondingly thinner -- passing the height in keeps cover honest
+	## rather than assuming every cell is HEADROOM_BANDS tall.
+	return massif.top_at(Vector2i(cell.x, cell.z)) - cell.y - bands
 
 
 static func _flank_count(massif: WarrenMassif, excavation: WarrenExcavation,
@@ -531,7 +600,7 @@ static func _candidate_score(excavation: WarrenExcavation,
 		previous = direction
 		straightest = maxi(straightest, run)
 	return -float(excavation.route_span_bands()) * 200.0 \
-		- float(walled) / float(excavation.route.size()) * 500.0 \
+		- float(walled) / float(excavation.route.size()) * 900.0 \
 		- float(excavation.transitions.size()) * 12.0 \
 		+ absf(excavation.covered_ratio() - TARGET_COVERED_RATIO) \
 			* COVER_CENTRING_WEIGHT \

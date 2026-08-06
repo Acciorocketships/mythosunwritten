@@ -145,6 +145,18 @@ func route_span_bands() -> int:
 	return high - low
 
 
+func slot_bands(cell: Vector3i) -> int:
+	## Height of the void actually removed above this walk cell, read back off
+	## `carved` rather than assumed. Not every cell is HEADROOM_BANDS tall: a
+	## stair's intermediate cell carries both treads, so it is one band
+	## taller, and anything reasoning about what is left overhead has to ask
+	## rather than assume.
+	var count := 0
+	while carved.has(Vector3i(cell.x, cell.y + count, cell.z)):
+		count += 1
+	return count
+
+
 func headroom_slot(cell: Vector3i) -> Array[Vector3i]:
 	## The exact cells one walk cell removes. Consumers that rebuild the
 	## solid (parcelling, meshing) need this to agree with `carved` exactly

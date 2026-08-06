@@ -12,13 +12,17 @@ extends GutTest
 const PROBE_SEEDS := [1, 2, 6]
 const SIDES: Array[Vector3i] = [Vector3i.RIGHT, Vector3i.LEFT,
 	Vector3i(0, 0, 1), Vector3i(0, 0, -1)]
-## A canyon is bounded by mass reaching the full height of the street, not by
-## a one-band kerb at a terrace lip -- and every gate in the brief is
-## satisfied by kerbs alone. Wall height is steered for, never gated, inside
-## the carver, so this floor is a real measurement rather than a restatement
-## of a constant: the probe seeds measure 0.77-0.88 with that steering and
-## 0.44-0.63 without it, and the threshold sits between the two.
-const MIN_FULL_HEIGHT_WALL_RATIO := 0.65
+## Seeds the canyon gate is checked against. Deliberately NOT PROBE_SEEDS: an
+## enclosure floor sampled only on three seeds chosen because they satisfy it
+## asserts nothing about the carver, and an earlier revision passed at 0.65 on
+## those three while a third of arbitrary seeds sat below it.
+##
+## This window is chosen to be the HARDEST forty consecutive seeds measured,
+## not the most comfortable: 49 and 67 land exactly on the floor, so the gate
+## is what puts them there. Over seeds 0-39 every route clears the floor on
+## the score weights alone and the assertion could not fail.
+const CANYON_SEED_START := 40
+const CANYON_SEED_COUNT := 40
 
 
 func _carved(world_seed: int) -> WarrenExcavation:
@@ -145,10 +149,15 @@ func test_removed_volume_never_leaves_the_solid() -> void:
 				massif.top_at(column) - 1,
 				"carved %s (seed %d) is not inside the solid" \
 				% [cell, world_seed])
+		var stairs := 0
+		for spec: Dictionary in excavation.transitions:
+			stairs += int(int(spec["kind"])
+				== int(WarrenVolumeTransition.Kind.STAIR))
 		assert_eq(excavation.carved.size(),
-			excavation.route.size() * WarrenExcavation.HEADROOM_BANDS,
-			("removed volume must be exactly one unshared headroom slot " \
-			+ "per walk cell (seed %d)") % world_seed)
+			excavation.route.size() * WarrenExcavation.HEADROOM_BANDS + stairs,
+			("removed volume must be one unshared headroom slot per walk " \
+			+ "cell, plus exactly one extra band for each stair's " \
+			+ "two-tread intermediate cell (seed %d)") % world_seed)
 
 
 func test_route_is_a_walk_that_never_teleports() -> void:
@@ -185,10 +194,15 @@ func test_cover_flags_are_reproducible_from_the_massif_alone() -> void:
 		var roofed := 0
 		for cell: Vector3i in excavation.route:
 			var column := Vector2i(cell.x, cell.z)
-			var roof := Vector3i(cell.x,
-				cell.y + WarrenExcavation.HEADROOM_BANDS, cell.z)
-			var expected := massif.top_at(column) > roof.y \
-				and not excavation.carved.has(roof)
+			# The roof is the first band above the floor that this cell's own
+			# removed volume did NOT take out. Counted rather than assumed to
+			# be HEADROOM_BANDS up: a stair's intermediate cell carries both
+			# treads, so its void is a band taller and its roof a band higher.
+			var height := 0
+			while excavation.carved.has(
+					Vector3i(cell.x, cell.y + height, cell.z)):
+				height += 1
+			var expected := massif.top_at(column) > cell.y + height
 			roofed += int(expected)
 			assert_eq(bool(excavation.covered.get(cell, false)), expected,
 				"cover flag for %s (seed %d) is not what the mass says" \
@@ -200,12 +214,17 @@ func test_cover_flags_are_reproducible_from_the_massif_alone() -> void:
 
 
 func test_transitions_tile_the_route_and_build_real_transitions() -> void:
-	## The strongest statement available about this output: construct the
-	## actual WarrenVolumeTransition each spec describes, over swept air taken
-	## from the excavation's own removed volume, and require it to seal. A
-	## span no transition can be built from is a span the Task-3 adapter would
-	## have to invent an uncarved route cell to stretch over -- at which point
-	## the carved void and the sealed plan disagree about where the stair is.
+	## Constructs the actual WarrenVolumeTransition each spec describes and
+	## requires it to seal, then -- the part with teeth -- requires every cell
+	## surface_cells() will claim for that transition to be void the
+	## excavation actually removed, with standing headroom above it.
+	##
+	## seal() alone proves very little here: it validates swept_air_cells only
+	## for duplicates, so it passes just as happily on an empty array. It is
+	## surface_cells() that Task 3 will reserve the stair footprint from, and
+	## it works in micro lanes at twice this lattice's resolution, so a floor
+	## band that looks right per macro cell can still leave half of every
+	## flight standing in solid mass.
 	for world_seed: int in PROBE_SEEDS:
 		var excavation := _carved(world_seed)
 		if excavation == null:
@@ -245,6 +264,17 @@ func test_transitions_tile_the_route_and_build_real_transitions() -> void:
 				("transition %d (%s -> %s, kind %d) cannot be built as a " \
 				+ "WarrenVolumeTransition (seed %d)") % [index, from_cell,
 				to_cell, int(spec["kind"]), world_seed])
+			for micro: Vector3i in transition.surface_cells():
+				var macro_column := Vector2i(
+					floori(float(micro.x) / 2.0), floori(float(micro.z) / 2.0))
+				for band in range(micro.y,
+						micro.y + WarrenExcavation.HEADROOM_BANDS):
+					assert_true(excavation.carved.has(
+						Vector3i(macro_column.x, band, macro_column.y)),
+						("transition %d puts walking surface at %s, whose " \
+						+ "macro cell %s band %d is solid mass the " \
+						+ "excavation never removed (seed %d)") % [index,
+						micro, macro_column, band, world_seed])
 			kinds[int(spec["kind"])] = true
 			cursor += run
 		assert_eq(cursor, excavation.route.size() - 1,
@@ -298,10 +328,18 @@ func test_route_reads_as_a_canyon_climbing_into_the_town() -> void:
 	## street that reads as a canyon has full-height walls on BOTH sides for
 	## most of its run, and it gains its height going in rather than starting
 	## on a summit and walking down.
-	for world_seed: int in PROBE_SEEDS:
+	##
+	## Checked over a wide seed range against the carver's own production
+	## gate, recomputed here from the massif and the removed volume. The
+	## enclosure floor is a real constraint on every seed the carver accepts,
+	## not a property of the three seeds the other tests sample.
+	var carved_seeds := 0
+	for world_seed in range(CANYON_SEED_START,
+			CANYON_SEED_START + CANYON_SEED_COUNT):
 		var excavation := _carved(world_seed)
 		if excavation == null:
 			continue
+		carved_seeds += 1
 		var massif := WarrenMassifBuilder.build(world_seed)
 		var walled := 0
 		var summit_index := 0
@@ -311,12 +349,16 @@ func test_route_reads_as_a_canyon_climbing_into_the_town() -> void:
 			if cell.y > excavation.route[summit_index].y:
 				summit_index = index
 		assert_gte(float(walled) / float(excavation.route.size()),
-			MIN_FULL_HEIGHT_WALL_RATIO,
+			WarrenExcavationCarver.MIN_WALL_RATIO,
 			("most of the route must be walled to full street height on " \
 			+ "both sides (seed %d)") % world_seed)
 		assert_gte(summit_index, excavation.route.size() / 2,
 			("the route must climb INTO the town, not begin at its high " \
 			+ "point and descend (seed %d)") % world_seed)
+	assert_gt(carved_seeds, 30,
+		("the canyon gate must be exercised on a wide seed range, not on a " \
+		+ "handful that happen to carve: only %d of %d seeds produced a " \
+		+ "route") % [carved_seeds, CANYON_SEED_COUNT])
 
 
 func test_carve_does_not_depend_on_massif_column_order() -> void:
