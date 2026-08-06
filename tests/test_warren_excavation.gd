@@ -17,10 +17,13 @@ const SIDES: Array[Vector3i] = [Vector3i.RIGHT, Vector3i.LEFT,
 ## asserts nothing about the carver, and an earlier revision passed at 0.65 on
 ## those three while a third of arbitrary seeds sat below it.
 ##
-## This window is chosen to be the HARDEST forty consecutive seeds measured,
-## not the most comfortable: 49 and 67 land exactly on the floor, so the gate
-## is what puts them there. Over seeds 0-39 every route clears the floor on
-## the score weights alone and the assertion could not fail.
+## Forty consecutive seeds, none of them the ones the rest of this suite
+## samples. Teeth verified by execution at the current floor rather than
+## assumed: deleting the production gate drops seeds 43, 44, 49, 50 and 52 of
+## this window below it, the lowest to 0.538. The window was originally
+## chosen when the floor was 0.60, where it was the only span of forty that
+## could fail at all; at 0.70 the gate binds widely enough that several
+## windows would serve, and this one is kept because its teeth are measured.
 const CANYON_SEED_START := 40
 const CANYON_SEED_COUNT := 40
 

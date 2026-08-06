@@ -30,15 +30,26 @@ const MAX_PORTALS := 2
 ## one-band kerbs at a terrace lip, so it needs a gate of its own or it is
 ## merely an aspiration a test happened to sample.
 ##
-## Set from the measured trade curve rather than chosen: over 196 buildable
-## massifs the BEST ratio any of 256 attempts reaches has a minimum of 0.609,
-## so 0.60 is the highest floor that costs nothing at all (195/196 carve,
-## identical to no gate). Raising it trades corpus acceptance directly --
-## 0.65 costs 2 seeds, 0.70 costs 11, 0.75 costs 26. The typical route sits
-## far above the floor (median best-achievable 0.846) because selection
-## prefers enclosure; the gate only stops a poor survivor being chosen when
-## a better one existed.
-const MIN_WALL_RATIO := 0.60
+## Priced against a measured trade curve over 196 buildable massifs, not
+## picked: floor 0.60 costs nothing (195/196 carve), 0.65 costs 2 seeds, 0.70
+## costs 12, 0.75 costs 26.
+##
+## 0.70 is a deliberate purchase of ~6% of seed supply, ruled by the
+## coordinator: enclosure is the one note this project's review has repeated
+## across five rounds, and every earlier attempt under-delivered on it while
+## protecting a budget that turned out not to be the binding constraint. The
+## downstream pipeline has historically rejected about half of all seeds
+## anyway, so 6% here buys a guaranteed floor under every accepted town.
+##
+## Stopped short of 0.75 because its 14% cost also thins the candidates left
+## per seed, and Tasks 3-6 stack further constraints on that slack -- seed 65
+## already survives on 1 candidate of 256.
+##
+## Revisitable from Task 8, which renders real towns and measures end-to-end
+## acceptance, with both exits named: if the downstream stages starve, lower
+## it on that evidence; if the towns still do not read as canyons, raise it.
+## Either way it is this one constant.
+const MIN_WALL_RATIO := 0.70
 ## A street that runs straight for five cells stops reading as a warren
 ## canyon and starts reading as an avenue with a sightline down it.
 const MAX_STRAIGHT_RUN := 4
