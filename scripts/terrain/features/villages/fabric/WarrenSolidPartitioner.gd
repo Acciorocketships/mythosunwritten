@@ -523,6 +523,7 @@ static func _house_for_face(addresses: Array[Dictionary],
 	## face the wall's other street, because each is a larger concession than
 	## the last.
 	var stable_id := StringName("parcel.solid.%04d" % index)
+	var joinable_fallback: WarrenBuildingParcel = null
 	var unjoinable: WarrenBuildingParcel = null
 	for face: Dictionary in addresses:
 		var walk := face["walk"] as Vector3i
@@ -535,15 +536,23 @@ static func _house_for_face(addresses: Array[Dictionary],
 			while top > walk.y:
 				var parcel := WarrenBuildingParcel.new(stable_id, footprint,
 					walk.y, top, walk, threshold, -direction)
-				if _roofs_can_meet(parcel, placed):
+				var joins := _roofs_can_meet(parcel, placed)
+				if joins and not _corners_a_neighbour(parcel, placed):
 					return parcel
+				# Rank the concessions rather than taking whichever came first:
+				# a house that at least joins its neighbours' roofs is a smaller
+				# defect than one that also corners them.
+				if joins and joinable_fallback == null:
+					joinable_fallback = parcel
 				if unjoinable == null:
 					unjoinable = parcel
 				top = _top_band(footprint, walk.y, massif, excavation, claimed,
 					face_bands, top - 1)
-	# Ownership outranks roof compilability: a street wall belonging to nobody
-	# is a hole in the town, while an unjoinable roof pair costs this candidate
-	# and the frontier moves on. Counted in last_diagnostic either way.
+	# Ownership outranks both: a street wall belonging to nobody is a hole in
+	# the town, while an unbuildable adjacency costs this candidate and the
+	# frontier moves on. Counted in last_diagnostic either way.
+	if joinable_fallback != null:
+		return joinable_fallback
 	#
 	# Deliberately NOT also preferring a footprint that shares a party wall with
 	# a standing neighbour, though the construction gate does score buildings on
@@ -591,6 +600,48 @@ static func _roofs_can_meet(parcel: WarrenBuildingParcel,
 		if other != parcel and not _pair_can_meet(parcel, other):
 			return false
 	return true
+
+
+static func _corners_a_neighbour(parcel: WarrenBuildingParcel,
+		placed: Array[WarrenBuildingParcel]) -> bool:
+	## Whether this house would meet another only at a corner -- diagonally,
+	## with no shared face. Such a pair is the one arrangement the compiled
+	## vocabulary cannot express, and it is rejected far downstream as
+	## interpenetrating geometry.
+	##
+	## The exemption from SettlementFabricPlan's visual-envelope test is a
+	## declared seam, and WarrenAssetCompiler._party_wall_seams declares one only
+	## where StaggeredFabricCompiler.classified_roof_seam_compatible() holds --
+	## which requires the pair to have EXACTLY ONE roof junction, i.e. to share a
+	## face. Corner neighbours have none, so they are never exempt; and their
+	## authored roofs overhang their footprints by about a third of a metre on
+	## every side, so the two overhangs always meet across the shared corner by
+	## more than the 0.10 m contact tolerance. Both houses are rooted at the
+	## terrain, so their envelopes always overlap vertically too.
+	##
+	## Route-first never produces this pair either: its packing ran
+	## WarrenAssetCompiler.parcels_are_visually_compatible as a search predicate,
+	## which applies the same envelope test. Partitioning had no such filter.
+	for other: WarrenBuildingParcel in placed:
+		if _contact_direction(parcel.footprint, other.footprint) \
+				!= Vector2i.ZERO:
+			continue
+		if _footprints_share_a_corner(parcel.footprint, other.footprint):
+			return true
+	return false
+
+
+static func _footprints_share_a_corner(left: Array[Vector2i],
+		right: Array[Vector2i]) -> bool:
+	var occupied: Dictionary = {}
+	for column: Vector2i in right:
+		occupied[column] = true
+	for column: Vector2i in left:
+		for step: Vector2i in [Vector2i(1, 1), Vector2i(1, -1),
+				Vector2i(-1, 1), Vector2i(-1, -1)]:
+			if occupied.has(column + step):
+				return true
+	return false
 
 
 static func _step_neighbours_down(parcel: WarrenBuildingParcel,

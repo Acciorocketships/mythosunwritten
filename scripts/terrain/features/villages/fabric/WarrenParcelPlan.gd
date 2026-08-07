@@ -346,6 +346,12 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 			_largest_component_cell_count(contact_components, area_by_id),
 		"largest_building_contact_component_cell_ratio":
 			largest_contact_cell_ratio(contact_components, area_by_id),
+		# Isolates are gated on the same footing and for the same reason: an
+		# absolute cap on detached BUILDINGS tightens automatically as a stage
+		# subdivides the same mass more finely, so it is measured as the share
+		# of built footprint those detached buildings occupy.
+		"isolated_building_cell_ratio":
+			isolated_cell_ratio(contact_components, area_by_id),
 		"isolated_building_count": isolated_building_count,
 		"contacted_building_ratio": float(parcels.size() \
 			- isolated_building_count) / float(parcels.size()),
@@ -523,13 +529,42 @@ static func largest_contact_cell_ratio(components: Array[Array],
 	## partitioner divides the same urban mass more finely. A town of scattered
 	## pavilions still scores low, which is the property the gate exists to
 	## enforce.
-	var total := 0
-	for area_value: Variant in area_by_id.values():
-		total += int(area_value)
+	var total := _total_cells(area_by_id)
 	if total <= 0:
 		return 0.0
 	return float(_largest_component_cell_count(components, area_by_id)) \
 		/ float(total)
+
+
+static func isolated_cell_ratio(components: Array[Array],
+		area_by_id: Dictionary) -> float:
+	## Share of the town's built footprint standing in buildings that touch
+	## nothing at all.
+	##
+	## Weighted by cells for the same reason as largest_contact_cell_ratio(),
+	## and public for the same reason: an absolute cap on detached BUILDINGS
+	## grows stricter on its own as a stage divides the same mass more finely,
+	## so subdividing one wide isolated house into two adjacent halves would
+	## turn one violation into two while leaving the town identical. Splitting a
+	## detached house leaves this ratio alone -- the halves touch each other, so
+	## they stop being isolated, which is the honest answer -- while a town of
+	## scattered pavilions still scores high.
+	var total := _total_cells(area_by_id)
+	if total <= 0:
+		return 0.0
+	var isolated := 0
+	for component: Array in components:
+		if component.size() != 1:
+			continue
+		isolated += int(area_by_id.get(StringName(component[0]), 0))
+	return float(isolated) / float(total)
+
+
+static func _total_cells(area_by_id: Dictionary) -> int:
+	var total := 0
+	for area_value: Variant in area_by_id.values():
+		total += int(area_value)
+	return total
 
 
 func _walk_transition_degree(walk: Vector3i) -> int:

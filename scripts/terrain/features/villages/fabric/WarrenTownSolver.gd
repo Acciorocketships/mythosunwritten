@@ -53,7 +53,20 @@ const ASSET_AWARE_MIN_BUILDING_CONTACT_RATIO := 0.33
 # route-addressed corner closers without mistaking ten isolated houses for a
 # town. Raising this to eight forced the last three accents into repeated rows.
 const ASSET_AWARE_MIN_CONTACTED_BUILDING_RATIO := 0.70
-const ASSET_AWARE_MAX_ISOLATED_BUILDINGS := 3
+## Detached buildings, as a share of built footprint cells rather than as an
+## absolute count of houses -- the same correction, and for the same reason, as
+## the contact ratio above. A cap of three DETACHED HOUSES grows stricter on its
+## own as a stage subdivides the same mass more finely: route-first tolerated
+## three of its ten-to-twelve parcels standing alone, roughly a quarter of the
+## town, while mass-first's eighteen-to-twenty-five parcels were held to an
+## eighth for no physical reason.
+##
+## Derived from measurement, not chosen: across route-first's ranked corpus on
+## seeds 0-7 the isolated share runs 0.182, 0.182, 0.207, 0.276, 0.286 and
+## 0.370. The cap sits just above that observed maximum so every town
+## route-first ships today still passes -- verified by re-running its corpus
+## under both forms and diffing the ranked candidates.
+const ASSET_AWARE_MAX_ISOLATED_BUILDING_CELL_RATIO := 0.38
 const ASSET_AWARE_MIN_NEIGHBORING_PARCEL_PAIRS := 4
 const MAX_URBAN_CORE_OPEN_RATIO := 0.125
 # Asset-aware search preserves a broader raw-void frontier because the two
@@ -667,9 +680,9 @@ static func _passes_construction_gate(parcels: WarrenParcelPlan,
 		and (not asset_aware or float(parcels.audit.get(
 			"contacted_building_ratio", 0.0)) \
 			>= ASSET_AWARE_MIN_CONTACTED_BUILDING_RATIO) \
-		and (not asset_aware or int(parcels.audit.get(
-			"isolated_building_count", 2147483647)) \
-			<= ASSET_AWARE_MAX_ISOLATED_BUILDINGS) \
+		and (not asset_aware or float(parcels.audit.get(
+			"isolated_building_cell_ratio", 1.0)) \
+			<= ASSET_AWARE_MAX_ISOLATED_BUILDING_CELL_RATIO) \
 		and (not asset_aware or int(parcels.audit.get(
 			"neighboring_parcel_pair_count", 0)) \
 			>= ASSET_AWARE_MIN_NEIGHBORING_PARCEL_PAIRS) \
@@ -760,13 +773,13 @@ static func _gate_distance(parcels: WarrenParcelPlan,
 			if asset_aware else 0.0) \
 		+ (maxf(0.0, ASSET_AWARE_MIN_BUILDING_CONTACT_RATIO \
 			- float(parcels.audit.get(
-				"largest_building_contact_component_ratio", 0.0))) * 4000.0 \
-			if asset_aware else 0.0) \
+				"largest_building_contact_component_cell_ratio", 0.0))) \
+			* 4000.0 if asset_aware else 0.0) \
 		+ (maxf(0.0, ASSET_AWARE_MIN_CONTACTED_BUILDING_RATIO \
 			- float(parcels.audit.get("contacted_building_ratio", 0.0))) \
 			* 4000.0 if asset_aware else 0.0) \
-		+ (float(maxi(0, int(parcels.audit.get("isolated_building_count",
-			2147483647)) - ASSET_AWARE_MAX_ISOLATED_BUILDINGS)) * 800.0 \
+		+ (maxf(0.0, float(parcels.audit.get("isolated_building_cell_ratio",
+			1.0)) - ASSET_AWARE_MAX_ISOLATED_BUILDING_CELL_RATIO) * 4000.0 \
 			if asset_aware else 0.0) \
 		+ (float(maxi(0, ASSET_AWARE_MIN_NEIGHBORING_PARCEL_PAIRS \
 			- int(parcels.audit.get("neighboring_parcel_pair_count", 0)))) \

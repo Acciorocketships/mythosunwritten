@@ -140,15 +140,12 @@ func _report_contact() -> void:
 						int(audit.get("parcel_footprint_cell_count", 0)),
 						float(audit.get(
 							"largest_building_contact_component_ratio", 0.0))] \
-					+ "cellratio=%.2f (largest run %d parcels / %d cells)" \
+					+ "cellratio=%.2f isolated=%d isolatedcells=%.3f" \
 					% [float(audit.get(
 							"largest_building_contact_component_cell_ratio",
 							0.0)),
-						int(audit.get(
-							"largest_building_contact_component_count", 0)),
-						int(audit.get(
-							"largest_building_contact_component_cell_count",
-							0))])
+						int(audit.get("isolated_building_count", -1)),
+						float(audit.get("isolated_building_cell_ratio", 0.0))])
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
 
 
