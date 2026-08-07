@@ -14,9 +14,9 @@ extends RefCounted
 ##
 ##   1. Faces are served in ascending street-floor order, so every parcel
 ##      already placed shares or undercuts the current base band.
-##   2. No parcel may STRADDLE a face wall (`_clipped_top`): its top either
-##      stops at or below a face's floor band, or clears that face's full wall
-##      height. A wall is therefore never half-owned.
+##   2. No parcel may STRADDLE a face wall (`_top_band`'s `required`): a house
+##      built over a column whose street wall is addressed from higher up must
+##      clear that wall's full height, so a wall is never half-owned.
 ##
 ## Together those make each face either already fully owned (skip it) or
 ## completely free from its floor band up (place the fallback), so the pass
@@ -63,6 +63,10 @@ const MIN_STOREYS := 2
 ## production rule, the audit is what notices.
 const AUDIT_MIN_STOREYS := 2
 const MIN_PARCELS := 10
+## Deterministic second opinions on the serving order (see _variant_key). The
+## search stops at the first variant with no unjoinable roof, so seeds that
+## never had a corner conflict pay for exactly one.
+const PARTITION_VARIANTS := 8
 
 static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
@@ -85,17 +89,70 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 	if excavation == null or not excavation.is_sealed():
 		last_failure = "excavation missing or unsealed"
 		return out
-	var faces := street_wall_faces(massif, excavation)
+	# A house is only ever placed against the neighbours already standing, so a
+	# corner where no legal roof could meet is an artefact of the order houses
+	# went up in, not of the solid. Re-serving the same faces in a different
+	# within-band order is therefore a real second opinion, and cheap: the
+	# search is integer-only and stops at the first variant that leaves no
+	# unjoinable roof, which is the first one on all but a few seeds.
+	var best_diagnostic: Dictionary = {}
+	var best_unjoinable := 1 << 30
+	for variant in PARTITION_VARIANTS:
+		var attempt := _partition_variant(massif, excavation, variant)
+		var unjoinable := int(last_diagnostic["unjoinable_roof_count"])
+		if not attempt.is_empty() and unjoinable < best_unjoinable:
+			out = attempt
+			best_diagnostic = last_diagnostic
+			best_unjoinable = unjoinable
+		if best_unjoinable == 0:
+			break
+	last_diagnostic = best_diagnostic
+	if out.size() < MIN_PARCELS:
+		last_failure = "only %d houses partitioned (%s)" % [out.size(),
+			last_failure]
+	elif best_unjoinable > 0:
+		last_failure = "%d house roofs have no join to a neighbour" \
+			% best_unjoinable
+	if volume != null and not _seal_all(out, volume):
+		return [] as Array[WarrenBuildingParcel]
+	return out
+
+
+static func _partition_variant(massif: WarrenMassif,
+		excavation: WarrenExcavation,
+		variant: int) -> Array[WarrenBuildingParcel]:
+	var out: Array[WarrenBuildingParcel] = []
+	var faces := street_wall_faces(massif, excavation, variant)
 	var face_bands := _face_bands_by_column(faces)
+	# A corner column is usually a street wall for BOTH streets that meet there,
+	# so the same wall can be addressed from either -- and the choice sets the
+	# house's ridge direction. Keeping every address for a wall means a corner
+	# whose roof will not join its neighbour can often be turned to face the
+	# other way instead of being left unjoinable.
+	var addresses: Dictionary = {}
+	for face: Dictionary in faces:
+		var column := face["column"] as Vector2i
+		var key := Vector3i(column.x, (face["walk"] as Vector3i).y, column.y)
+		if not addresses.has(key):
+			addresses[key] = [] as Array[Dictionary]
+		(addresses[key] as Array[Dictionary]).append(face)
 	var occupied: Dictionary = {}
+	var claimed: Dictionary = {}
 	var inherited := 0
 	var stranded := 0
+	var unjoinable := 0
 	for face: Dictionary in faces:
 		if _wall_is_owned(face, occupied):
 			inherited += 1
 			continue
-		var parcel := _house_for_face(face, massif, excavation, occupied,
-			face_bands, out.size())
+		var wall_column := face["column"] as Vector2i
+		var parcel := _house_for_face(addresses[Vector3i(wall_column.x,
+			(face["walk"] as Vector3i).y, wall_column.y)] as Array[Dictionary],
+			massif, excavation, claimed, face_bands, out, out.size())
+		if parcel != null and not _roofs_can_meet(parcel, out) \
+				and not _step_neighbours_down(parcel, out, massif, excavation,
+					claimed, face_bands):
+			unjoinable += 1
 		if parcel == null:
 			# Unreachable while the two rules above hold; recorded rather than
 			# repaired so the audit names the stranded wall instead of this
@@ -106,25 +163,30 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 			continue
 		for cell: Vector3i in occupied_cells(parcel):
 			occupied[cell] = parcel.stable_id
+		for column: Vector2i in parcel.footprint:
+			claimed[column] = parcel.stable_id
 		out.append(parcel)
-	last_diagnostic = _diagnostic(out, faces, inherited, stranded)
-	if out.size() < MIN_PARCELS:
-		last_failure = "only %d houses partitioned" % out.size()
-	if volume != null and not _seal_all(out, volume):
-		return [] as Array[WarrenBuildingParcel]
+	last_diagnostic = _diagnostic(out, faces, inherited, stranded, unjoinable)
 	return out
 
 
 static func street_wall_faces(massif: WarrenMassif,
-		excavation: WarrenExcavation) -> Array[Dictionary]:
+		excavation: WarrenExcavation, variant: int = 0) -> Array[Dictionary]:
 	## Every (column, walk cell) pair where the solid left standing beside the
 	## route can carry a house addressed from that walk cell. Ordered by
 	## ascending street-floor band -- the ordering the ownership guarantee
 	## depends on -- then by column and direction so the total order has no
 	## ties for the unstable sort_custom to resolve arbitrarily.
+	##
+	## `variant` permutes only the order of faces sharing a band. Ascending band
+	## order, which the ownership guarantee rests on, is identical in every
+	## variant, and so is the admitted face SET -- `_admitted` decides that per
+	## column from the solid alone. A variant therefore changes which house
+	## claims a corner first, never which walls have to be claimed.
 	var out := _admitted(_wall_candidates(massif, excavation), massif,
 		excavation)
-	out.sort_custom(_face_before)
+	out.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		return _face_before(left, right, variant))
 	return out
 
 
@@ -152,15 +214,23 @@ static func _wall_candidates(massif: WarrenMassif,
 
 static func _admitted(candidates: Array[Dictionary], massif: WarrenMassif,
 		excavation: WarrenExcavation) -> Array[Dictionary]:
-	## Where the route passes a column twice within one envelope's height, the
-	## two walls cannot both be housed: an even-band envelope rooted at the
-	## lower street either stops short of the upper wall or ends inside it, and
-	## the upper street's own house would have to start inside the lower one.
-	## The upper wall wins, because it is the one a house can be rooted at
-	## without undercutting anything, and the lower wall joins the kerbs and
-	## ledges as trimmed leftover. Resolved per column, highest street first,
-	## so admission depends only on the terraced solid -- never on what the
-	## serving pass happened to place first.
+	## One column, one house -- so where the route passes a column twice, only
+	## the higher street can be addressed from it.
+	##
+	## This is not a simplification for its own sake, it is what the asset stage
+	## requires. WarrenParcelConstruction descends a fully-borne house from its
+	## addressed floor to its bearing datum as one continuous stack, and
+	## WarrenAssetPlan._proposal_extends_parcel_safely() then insists every
+	## descended cell be a bearing opportunity -- which WarrenPrunedMassPlan
+	## defines as source mass that is NOT another parcel's retained building
+	## mass. A house standing on a column another house already occupies lower
+	## down therefore fails to seal, however disjoint their bands are.
+	##
+	## The higher wall wins because it is the one that can be rooted without
+	## undercutting anything; the lower wall becomes the plinth beneath it and
+	## joins the kerbs and ledges as trimmed leftover. Resolved per column,
+	## highest street first, so admission depends only on the terraced solid --
+	## never on what the serving pass happened to place first.
 	var walls_by_column: Dictionary = {}
 	for candidate: Dictionary in candidates:
 		var column := candidate["column"] as Vector2i
@@ -184,10 +254,10 @@ static func _admitted(candidates: Array[Dictionary], massif: WarrenMassif,
 			# Admission asks the identical question the serving pass will ask,
 			# through the identical code path, so "this face was admitted" and
 			# "its fallback house is legal" can never drift apart.
-			if _top_band(footprint, band, massif, excavation, {},
-					{column: admitted}) <= band:
+			if _top_band(footprint, band, massif, excavation, {}, {}) <= band:
 				continue
 			admitted.append(Vector2i(band, wall))
+			break
 		admitted_by_column[column] = admitted
 	var out: Array[Dictionary] = []
 	for candidate: Dictionary in candidates:
@@ -373,18 +443,43 @@ static func _minimum_bands(massif: WarrenMassif, footprint: Array[Vector2i],
 	return maxi(MIN_HOUSE_BANDS, needed + posmod(needed, 2))
 
 
-static func _face_before(left: Dictionary, right: Dictionary) -> bool:
+static func _face_before(left: Dictionary, right: Dictionary,
+		variant: int) -> bool:
 	var left_walk := left["walk"] as Vector3i
 	var right_walk := right["walk"] as Vector3i
 	if left_walk.y != right_walk.y:
 		return left_walk.y < right_walk.y
-	var left_column := left["column"] as Vector2i
-	var right_column := right["column"] as Vector2i
-	if left_column.x != right_column.x:
-		return left_column.x < right_column.x
-	if left_column.y != right_column.y:
-		return left_column.y < right_column.y
+	var left_key := _variant_key(left["column"] as Vector2i, variant)
+	var right_key := _variant_key(right["column"] as Vector2i, variant)
+	if left_key.x != right_key.x:
+		return left_key.x < right_key.x
+	if left_key.y != right_key.y:
+		return left_key.y < right_key.y
 	return int(left["order"]) < int(right["order"])
+
+
+static func _variant_key(column: Vector2i, variant: int) -> Vector2i:
+	## Each variant is a different total order on a band's columns -- swapping
+	## the major axis and/or its direction. Total, so the unstable sort_custom
+	## never has a tie to break arbitrarily, and a pure permutation, so no
+	## variant can admit or drop a face.
+	match posmod(variant, PARTITION_VARIANTS):
+		1:
+			return Vector2i(column.y, column.x)
+		2:
+			return Vector2i(-column.x, -column.y)
+		3:
+			return Vector2i(-column.y, -column.x)
+		4:
+			return Vector2i(column.x + column.y, column.x - column.y)
+		5:
+			return Vector2i(column.x - column.y, column.x + column.y)
+		6:
+			return Vector2i(-column.x - column.y, column.y - column.x)
+		7:
+			return Vector2i(column.y - column.x, -column.x - column.y)
+		_:
+			return column
 
 
 static func _face_bands_by_column(faces: Array[Dictionary]) -> Dictionary:
@@ -416,22 +511,209 @@ static func _wall_is_owned(face: Dictionary, occupied: Dictionary) -> bool:
 	return true
 
 
-static func _house_for_face(face: Dictionary, massif: WarrenMassif,
-		excavation: WarrenExcavation, occupied: Dictionary,
-		face_bands: Dictionary, index: int) -> WarrenBuildingParcel:
-	var walk := face["walk"] as Vector3i
-	var direction := face["direction"] as Vector2i
-	var threshold := face["column"] as Vector2i
-	for shape: Vector2i in SHAPES:
-		var footprint := _footprint(walk, direction, shape.x, shape.y)
-		var top := _top_band(footprint, walk.y, massif, excavation, occupied,
-			face_bands)
-		if top <= walk.y:
-			continue
-		return WarrenBuildingParcel.new(
-			StringName("parcel.solid.%04d" % index), footprint, walk.y, top,
-			walk, threshold, -direction)
-	return null
+static func _house_for_face(addresses: Array[Dictionary],
+		massif: WarrenMassif, excavation: WarrenExcavation,
+		claimed: Dictionary, face_bands: Dictionary,
+		placed: Array[WarrenBuildingParcel],
+		index: int) -> WarrenBuildingParcel:
+	## Preference order: the wall's first address, then its largest footprint,
+	## then the highest roof its terrace allows -- but only among roofs that can
+	## actually MEET the neighbours already standing. A lower roof is tried
+	## before a smaller house, and a smaller house before turning the house to
+	## face the wall's other street, because each is a larger concession than
+	## the last.
+	var stable_id := StringName("parcel.solid.%04d" % index)
+	var unjoinable: WarrenBuildingParcel = null
+	for face: Dictionary in addresses:
+		var walk := face["walk"] as Vector3i
+		var direction := face["direction"] as Vector2i
+		var threshold := face["column"] as Vector2i
+		for shape: Vector2i in SHAPES:
+			var footprint := _footprint(walk, direction, shape.x, shape.y)
+			var top := _top_band(footprint, walk.y, massif, excavation,
+				claimed, face_bands)
+			while top > walk.y:
+				var parcel := WarrenBuildingParcel.new(stable_id, footprint,
+					walk.y, top, walk, threshold, -direction)
+				if _roofs_can_meet(parcel, placed):
+					return parcel
+				if unjoinable == null:
+					unjoinable = parcel
+				top = _top_band(footprint, walk.y, massif, excavation, claimed,
+					face_bands, top - 1)
+	# Ownership outranks roof compilability: a street wall belonging to nobody
+	# is a hole in the town, while an unjoinable roof pair costs this candidate
+	# and the frontier moves on. Counted in last_diagnostic either way.
+	#
+	# Deliberately NOT also preferring a footprint that shares a party wall with
+	# a standing neighbour, though the construction gate does score buildings on
+	# forming connected terraces: SHAPES is ordered largest first and each
+	# smaller shape is a strict subset of the larger, so the first admissible
+	# candidate already touches everything any candidate could. Measured: adding
+	# that preference changed no seed's contact metrics at all.
+	return unjoinable
+
+
+static func _roofs_can_meet(parcel: WarrenBuildingParcel,
+		placed: Array[WarrenBuildingParcel]) -> bool:
+	## Whether every roof this house would touch has a construction rule in
+	## FabricRoofJunctionModuleTable -- decided here, while the house can still
+	## be moved, rather than discovered at assembly.
+	##
+	## The table's whole vocabulary turns on one fact: a junction between roofs
+	## at DIFFERENT heights is a STEPPED_EAVE_WALL or STEPPED_GABLE_WALL, and it
+	## implements both unconditionally. Only equal-height junctions are
+	## restricted, and there are exactly three of those:
+	##
+	##   PARALLEL_VALLEY (side by side along one street) -> EAVE_FLASHING,
+	##     accepted unconditionally.
+	##   RIDGE_CONTINUATION (back to back, ridges in line) -> accepted only when
+	##     the contact spans BOTH gables full width, which for two houses of
+	##     equal width fully overlapping is exactly true. Common here, because
+	##     a one-column-wide house has a one-column gable.
+	##   PERPENDICULAR_VALLEY (across a corner) -> a bisected valley, which
+	##     needs a four-cell eave-to-gable join between two width-two houses at
+	##     an exact run offset, with at most one such valley per roof. The
+	##     leftover solid does not produce that shape on purpose and mostly
+	##     cannot: its houses are predominantly one column wide, and a
+	##     width-one house has no valley recipe at all. Avoided rather than
+	##     chased -- avoiding an uncompilable adjacency is a fix, inventing a
+	##     roof is not.
+	##
+	## Heights come from the terraces regardless; this only decides which of a
+	## column's legal terrace steps a house takes.
+	##
+	## Equality of `top_band` is exactly equality of the roof datum the
+	## classifier compares: FabricRoofTopologyPlan._roof_base() is
+	## origin.y + storeys * STOREY_BANDS, which for every parcel this class
+	## builds reduces to top_band - ROOF_RESERVATION_BANDS.
+	for other: WarrenBuildingParcel in placed:
+		if other != parcel and not _pair_can_meet(parcel, other):
+			return false
+	return true
+
+
+static func _step_neighbours_down(parcel: WarrenBuildingParcel,
+		placed: Array[WarrenBuildingParcel], massif: WarrenMassif,
+		excavation: WarrenExcavation, claimed: Dictionary,
+		face_bands: Dictionary) -> bool:
+	## Last resort when a wall's house has no roof left that joins its
+	## neighbours: step the offending NEIGHBOURS down a storey instead.
+	##
+	## Safe for every other guarantee, which is why it is available at all. A
+	## neighbour's base band never moves, so the wall it was built for stays
+	## owned at the street's own floor; one column carries one house, so
+	## lowering a roof cannot expose a wall some other house was covering; and
+	## `_top_band` re-derives the lower roof under the same terrace, parity,
+	## storey-minimum and no-straddle rules as the original. Only the skyline
+	## changes, and it changes downward onto another of the same terrace's
+	## legal steps. Reverted wholesale unless every affected roof ends up
+	## joinable, so a failed repair leaves the partition exactly as it was.
+	var conflicts: Array[WarrenBuildingParcel] = []
+	for other: WarrenBuildingParcel in placed:
+		if not _pair_can_meet(parcel, other):
+			conflicts.append(other)
+	var restored: Array[int] = []
+	for other: WarrenBuildingParcel in conflicts:
+		restored.append(other.top_band)
+	var repaired := true
+	for other: WarrenBuildingParcel in conflicts:
+		var freed := claimed.duplicate()
+		for column: Vector2i in other.footprint:
+			freed.erase(column)
+		# Walk this neighbour's remaining terrace steps, not merely the next
+		# one down: the first lower roof may simply collide with a different
+		# neighbour, while the one below it clears both.
+		var settled := false
+		var candidate := other.top_band
+		while not settled:
+			candidate = _top_band(other.footprint, other.base_band, massif,
+				excavation, freed, face_bands, candidate - 1)
+			if candidate <= other.base_band:
+				break
+			other.top_band = candidate
+			settled = _pair_can_meet(parcel, other) \
+				and _roofs_can_meet(other, placed)
+		if not settled:
+			repaired = false
+			break
+	if repaired:
+		repaired = _roofs_can_meet(parcel, placed)
+	if not repaired:
+		for index in conflicts.size():
+			conflicts[index].top_band = restored[index]
+	return repaired
+
+
+static func _pair_can_meet(parcel: WarrenBuildingParcel,
+		other: WarrenBuildingParcel) -> bool:
+	if parcel.top_band != other.top_band:
+		return true
+	var contact := _contact_direction(parcel.footprint, other.footprint)
+	if contact == Vector2i.ZERO:
+		return true
+	if (parcel.frontage_direction.x == 0) \
+			!= (other.frontage_direction.x == 0):
+		return false
+	if _crosses_frontage(parcel.frontage_direction, contact):
+		return true
+	var span := _contact_span(parcel.footprint, other.footprint, contact)
+	return span == _width_cells(parcel) and span == _width_cells(other)
+
+
+static func _width_cells(parcel: WarrenBuildingParcel) -> int:
+	## Gable width: the footprint's extent across its ridge, derived the way
+	## WarrenBuildingParcel.seal() derives width_cells, so it is available
+	## before the parcel has been sealed.
+	var minimum := Vector2i(1 << 30, 1 << 30)
+	var maximum := Vector2i(-(1 << 30), -(1 << 30))
+	for column: Vector2i in parcel.footprint:
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	var size := maximum - minimum + Vector2i.ONE
+	return size.y if parcel.frontage_direction.x != 0 else size.x
+
+
+static func _contact_span(left: Array[Vector2i], right: Array[Vector2i],
+		direction: Vector2i) -> int:
+	var occupied: Dictionary = {}
+	for column: Vector2i in right:
+		occupied[column] = true
+	var count := 0
+	for column: Vector2i in left:
+		count += int(occupied.has(column + direction))
+	return count
+
+
+static func _crosses_frontage(frontage: Vector2i, contact: Vector2i) -> bool:
+	## Whether a contact meets this house on an eave rather than a gable end.
+	## A parcel's ridge runs along its frontage axis
+	## (FabricRoofTopologyPlan._axes takes the ridge from the proposal yaw, and
+	## WarrenParcelConstruction._yaw_for_frontage picks that yaw so local BACK
+	## maps to the frontage), so a contact perpendicular to the frontage is an
+	## eave seam and one along it is a gable end.
+	return contact.x * frontage.x + contact.y * frontage.y == 0
+
+
+static func _contact_direction(left: Array[Vector2i],
+		right: Array[Vector2i]) -> Vector2i:
+	## The direction FabricRoofTopologyPlan._contact would pick: the one with
+	## the most touching cells. Macro adjacency is the whole story because a
+	## proposal's occupied cells are exactly its footprint at double
+	## resolution -- no eave overhangs a neighbouring column.
+	var occupied: Dictionary = {}
+	for column: Vector2i in right:
+		occupied[column] = true
+	var best := Vector2i.ZERO
+	var best_count := 0
+	for direction: Vector2i in DIRECTIONS:
+		var count := 0
+		for column: Vector2i in left:
+			count += int(occupied.has(column + direction))
+		if count > best_count:
+			best = direction
+			best_count = count
+	return best
 
 
 static func _footprint(walk: Vector3i, walk_to_building: Vector2i, width: int,
@@ -459,70 +741,54 @@ static func _footprint(walk: Vector3i, walk_to_building: Vector2i, width: int,
 
 static func _top_band(footprint: Array[Vector2i], base: int,
 		massif: WarrenMassif, excavation: WarrenExcavation,
-		occupied: Dictionary, face_bands: Dictionary) -> int:
+		claimed: Dictionary, face_bands: Dictionary,
+		ceiling: int = 1 << 30) -> int:
 	## Tops follow the terraces: the roof datum is the LOWEST massif top under
-	## the footprint, then cut back to whatever the excavated void, an existing
-	## neighbour, or a street wall claimed later actually leaves standing.
-	## Returns `base` (a zero-height, always-rejected envelope) for any
-	## footprint that is not a legal house here.
+	## the footprint, then cut back to whatever the excavated void or a street
+	## wall claimed later actually leaves standing. Returns `base` (a
+	## zero-height, always-rejected envelope) for any footprint that is not a
+	## legal house here.
+	##
+	## `ceiling` asks for the best legal roof no higher than a given band, which
+	## is how the caller walks a column's terrace steps downward: every answer
+	## still satisfies parity, the storey minimum and the no-straddle rule, so a
+	## stepped-down roof is as valid as the tallest one.
 	if footprint.size() > MAX_FOOTPRINT_COLUMNS:
 		return base
-	var top := 1 << 30
+	var top := ceiling
 	var bearing := 0
+	var required := base
 	for column: Vector2i in footprint:
 		if not massif.has_column(column) or massif.base_at(column) > base:
 			return base
+		# One column, one house: a column another house already stands on is
+		# spent, because the second house would have to be descended through
+		# the first and WarrenAssetPlan forbids that (see _admitted).
+		if claimed.has(column):
+			return base
+		# A column whose own street wall is addressed from higher up may still
+		# be built over -- but only by a house tall enough to wall that street
+		# itself, so the wall ends up owned rather than stranded and the column
+		# still carries exactly one house. Anything shorter would stop inside
+		# the higher wall and leave it to a house that can no longer be rooted.
+		for wall: Vector2i in face_bands.get(column, [] as Array[Vector2i]) \
+				as Array[Vector2i]:
+			if wall.x > base:
+				required = maxi(required, wall.x + wall.y)
 		top = mini(top, massif.top_at(column))
 		bearing += int(_is_grounded(massif, excavation, column, base))
 	if bearing * 2 < footprint.size():
 		return base
 	for column: Vector2i in footprint:
 		for band in range(base, top):
-			var cell := Vector3i(column.x, band, column.y)
-			if excavation.carved.has(cell) or occupied.has(cell):
+			if excavation.carved.has(Vector3i(column.x, band, column.y)):
 				top = band
 				break
-	var settled := _settled_top(footprint, base, top, face_bands)
-	if settled - base < _minimum_bands(massif, footprint, base,
-			bearing == footprint.size()):
+	var settled := base + (top - base) - (top - base) % 2
+	if settled < required or settled - base < _minimum_bands(massif, footprint,
+			base, bearing == footprint.size()):
 		return base
 	return settled
-
-
-static func _settled_top(footprint: Array[Vector2i], base: int, top: int,
-		face_bands: Dictionary) -> int:
-	## Parity and the no-straddle rule have to hold at the SAME top, so they are
-	## iterated to a fixpoint rather than applied once each: rounding an
-	## odd-height envelope down by one band can drop its roof back inside a
-	## wall it had just cleared, which is exactly how a single orphaned wall
-	## cell appears. Each round strictly lowers the top, so this terminates.
-	var settled := top
-	for _round in range(top - base + 2):
-		var height := settled - base
-		settled = base + height - height % 2
-		if settled <= base:
-			return base
-		var clipped := _clipped_top(footprint, base, settled, face_bands)
-		if clipped == settled:
-			return settled
-		settled = clipped
-	return base
-
-
-static func _clipped_top(footprint: Array[Vector2i], base: int, top: int,
-		face_bands: Dictionary) -> int:
-	## The no-straddle rule. A parcel may rise past a street wall on one of its
-	## columns only if it covers that wall completely; otherwise it stops at
-	## the wall's floor and leaves the whole wall to the house that will be
-	## addressed from it. Half-owned walls are what would break the guarantee.
-	var result := top
-	for column: Vector2i in footprint:
-		for wall: Vector2i in face_bands.get(column, [] as Array[Vector2i]) \
-				as Array[Vector2i]:
-			if wall.x <= base or result <= wall.x or result >= wall.x + wall.y:
-				continue
-			result = wall.x
-	return result
 
 
 static func _is_grounded(massif: WarrenMassif, excavation: WarrenExcavation,
@@ -551,8 +817,8 @@ static func _seal_all(parcels: Array[WarrenBuildingParcel],
 
 
 static func _diagnostic(parcels: Array[WarrenBuildingParcel],
-		faces: Array[Dictionary], inherited: int,
-		stranded: int) -> Dictionary:
+		faces: Array[Dictionary], inherited: int, stranded: int,
+		unjoinable: int) -> Dictionary:
 	var families: Dictionary = {}
 	var footprint_cells := 0
 	for parcel: WarrenBuildingParcel in parcels:
@@ -564,6 +830,7 @@ static func _diagnostic(parcels: Array[WarrenBuildingParcel],
 		"parcel_count": parcels.size(),
 		"faces_walled_by_a_neighbour": inherited,
 		"stranded_face_count": stranded,
+		"unjoinable_roof_count": unjoinable,
 		"footprint_cell_count": footprint_cells,
 		"footprint_families": families,
 	}

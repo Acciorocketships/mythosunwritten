@@ -150,6 +150,134 @@ func test_parcels_satisfy_the_whole_downstream_parcel_contract() -> void:
 				+ "production forbids") % [world_seed, parcel.stable_id])
 
 
+func test_a_partition_that_claims_joinable_roofs_really_compiles() -> void:
+	## The acceptance test for the whole junction-awareness rule, judged by the
+	## REAL classifier and module table rather than this class's cheap
+	## restatement of them. A partition whose roofs cannot be joined composes
+	## into nothing, and before this rule existed that was nearly every seed.
+	##
+	## The claim checked is one-directional on purpose. `_pair_can_meet` is
+	## deliberately STRICTER than the table -- it refuses every perpendicular
+	## valley, including the few the table would accept -- so a partition may
+	## report a conflict the table would have tolerated. What must never happen
+	## is the reverse: reporting zero unjoinable roofs and then failing to
+	## compile, which is what a drifted derivation would look like.
+	var clean := 0
+	for world_seed: int in CORPUS:
+		var town := _town(world_seed)
+		if town.is_empty():
+			continue
+		var proposals := _proposals(world_seed)
+		assert_gt(proposals.size(), 9,
+			"seed %d: no proposals to classify" % world_seed)
+		var topology := FabricRoofTopologyPlan.build(proposals)
+		assert_not_null(topology,
+			"seed %d: roof topology could not classify the partition" \
+			% world_seed)
+		if topology == null:
+			continue
+		assert_gt(int(topology.audit.junction_count), 0,
+			("seed %d: a partition whose roofs touch nothing cannot prove " \
+			+ "anything about joining them") % world_seed)
+		var compiles := not FabricRoofJunctionModuleTable.build(proposals,
+			topology).is_empty()
+		clean += int(compiles)
+		if int(town["unjoinable"]) != 0:
+			continue
+		assert_true(compiles,
+			("seed %d: partition reported every roof joinable, but the module " \
+			+ "table rejects it: %s") % [world_seed,
+				FabricRoofJunctionModuleTable.last_failure])
+	## Five of seven, measured. The residue is a real vocabulary gap, not slack
+	## left in the search: on seeds 3 and 4 two perpendicular streets pass
+	## adjacent columns whose terraces each admit exactly one legal roof height,
+	## so neither house can step and the corner between them is a perpendicular
+	## valley -- for which the authored table has a recipe only between two
+	## width-two houses, and these are one column wide. The partition reports
+	## the conflict rather than hiding it, and the frontier drops the candidate.
+	## Tighten this bound if the valley vocabulary ever covers narrow houses.
+	assert_gt(clean, CORPUS.size() - 3,
+		("at most two corpus seeds may be left with an unjoinable corner; " \
+		+ "only %d of %d compiled") % [clean, CORPUS.size()])
+
+
+func test_equal_roof_bands_never_meet_across_a_corner() -> void:
+	## The rule the partitioner enforces, checked independently of the code that
+	## enforces it: re-derives adjacency and frontage from the parcels and
+	## asserts no two houses share a roof band across a corner, because a
+	## perpendicular valley between the width-one houses the leftover solid
+	## mostly yields has no recipe at all. Together with the test above this
+	## pins both halves -- that the rule holds, and that holding it is what
+	## makes the real module table accept the plan.
+	var equal_pairs := 0
+	for world_seed: int in CORPUS:
+		var town := _town(world_seed)
+		if town.is_empty():
+			continue
+		var parcels := town["parcels"] as Array[WarrenBuildingParcel]
+		var corners := 0
+		for left_index in parcels.size():
+			for right_index in range(left_index + 1, parcels.size()):
+				var left := parcels[left_index]
+				var right := parcels[right_index]
+				if left.top_band != right.top_band \
+						or not _footprints_touch(left.footprint,
+							right.footprint):
+					continue
+				equal_pairs += 1
+				corners += int((left.frontage_direction.x == 0) \
+					!= (right.frontage_direction.x == 0))
+		if int(town["unjoinable"]) != 0:
+			# One house with no joinable roof can abut two neighbours, so the
+			# reported count bounds the houses involved, not the pairs. What
+			# must hold is that a partition claiming success has no corners.
+			continue
+		assert_eq(corners, 0,
+			("seed %d: %d equal-height corner pairs in a partition that " \
+			+ "reported every roof joinable") % [world_seed, corners])
+	assert_gt(equal_pairs, 0,
+		("no equal-height neighbours anywhere in the corpus would mean this " \
+		+ "rule passes by forbidding every terrace row"))
+
+
+func test_no_column_carries_two_houses() -> void:
+	## One column, one house. WarrenParcelConstruction descends a fully-borne
+	## house to its bearing datum as one stack, and WarrenAssetPlan rejects any
+	## descent that passes through another parcel's retained mass -- so a house
+	## standing over another on the same column cannot seal, however disjoint
+	## their bands. Checked here against the descent rule itself, not against
+	## the reservation this class uses to avoid it.
+	for world_seed: int in CORPUS:
+		var town := _town(world_seed)
+		if town.is_empty():
+			continue
+		var massif := town["massif"] as WarrenMassif
+		var parcels := town["parcels"] as Array[WarrenBuildingParcel]
+		var owner_by_column: Dictionary = {}
+		for parcel: WarrenBuildingParcel in parcels:
+			for column: Vector2i in parcel.footprint:
+				assert_false(owner_by_column.has(column),
+					"seed %d: column %s carries both %s and %s" % [world_seed,
+						column, owner_by_column.get(column, &""),
+						parcel.stable_id])
+				owner_by_column[column] = parcel.stable_id
+		var occupied: Dictionary = {}
+		for parcel: WarrenBuildingParcel in parcels:
+			for cell: Vector3i in WarrenSolidPartitioner.occupied_cells(parcel):
+				occupied[cell] = parcel.stable_id
+		for parcel: WarrenBuildingParcel in parcels:
+			for column: Vector2i in parcel.footprint:
+				for band in range(massif.base_at(column), parcel.base_band):
+					assert_false(occupied.has(Vector3i(column.x, band,
+							column.y)),
+						("seed %d: %s cannot be borne down to ground -- %s " \
+						+ "stands in its descent at %s") % [world_seed,
+							parcel.stable_id,
+							occupied.get(Vector3i(column.x, band, column.y),
+								&""),
+							Vector3i(column.x, band, column.y)])
+
+
 func test_houses_are_cut_from_the_solid_the_excavation_left() -> void:
 	## Mass-first's defining claim: houses are the leftover solid, not volumes
 	## invented beside it. Every occupied cell must be massif mass the carver
@@ -294,12 +422,18 @@ func _town(world_seed: int) -> Dictionary:
 	var excavation := null if massif == null \
 		else WarrenExcavationCarver.carve(world_seed, massif)
 	if massif != null and excavation != null:
+		var parcels := WarrenSolidPartitioner.partition(massif, excavation)
 		out = {
 			"massif": massif,
 			"excavation": excavation,
 			"plan": WarrenExcavationVolumeAdapter.to_volume_plan(massif,
 				excavation),
-			"parcels": WarrenSolidPartitioner.partition(massif, excavation),
+			"parcels": parcels,
+			# Captured with the partition that produced it: later calls
+			# overwrite the static, and the roof tests compare what the
+			# partitioner CLAIMED against what the real module table decides.
+			"unjoinable": int(WarrenSolidPartitioner.last_diagnostic.get(
+				"unjoinable_roof_count", -1)),
 		}
 	_towns[world_seed] = out
 	return out
@@ -329,6 +463,39 @@ func _strict_walls(massif: WarrenMassif,
 			seen[wall] = true
 			out.append(wall)
 	return out
+
+
+func _proposals(world_seed: int) -> Array[Dictionary]:
+	## Sealed parcels carry the construction proposal the roof classifier reads,
+	## so the roof tests partition against the real adapted plan rather than the
+	## unsealed geometric preview.
+	var town := _town(world_seed)
+	var out: Array[Dictionary] = []
+	if town.is_empty():
+		return out
+	for parcel: WarrenBuildingParcel in WarrenSolidPartitioner.partition(
+			town["massif"] as WarrenMassif,
+			town["excavation"] as WarrenExcavation,
+			town["plan"] as WarrenVolumePlan):
+		var proposal := WarrenParcelConstruction.proposal(parcel)
+		assert_false(proposal.is_empty(),
+			"seed %d: parcel %s compiles to no proposal" % [world_seed,
+				parcel.stable_id])
+		if not proposal.is_empty():
+			out.append(proposal)
+	return out
+
+
+func _footprints_touch(left: Array[Vector2i], right: Array[Vector2i]) -> bool:
+	var occupied: Dictionary = {}
+	for column: Vector2i in right:
+		occupied[column] = true
+	for column: Vector2i in left:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN,
+				Vector2i.LEFT, Vector2i.UP]:
+			if occupied.has(column + direction):
+				return true
+	return false
 
 
 func _owned_cells(parcels: Array[WarrenBuildingParcel]) -> Dictionary:
