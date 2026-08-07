@@ -20,8 +20,9 @@ extends RefCounted
 ##
 ## Together those make each face either already fully owned (skip it) or
 ## completely free from its floor band up (place the fallback), so the pass
-## cannot strand a street wall. `unowned_route_faces` re-derives the face set
-## from the raw massif and excavation and audits the result independently.
+## cannot strand a street wall. `street_wall_audit` checks that claim against
+## an independently derived wall set -- see its own notes on why it must not
+## share this class's admission rules.
 ##
 ## Bands, not metres: MIN_HOUSE_BANDS -- one storey plus WarrenBuildingParcel's
 ## roof reservation -- is exactly the tallest slot the carver bores (headroom
@@ -57,6 +58,10 @@ const MIN_HOUSE_BANDS := WarrenBuildingParcel.STOREY_BANDS \
 ## counts it -- from the bearing datum, so a house addressed from an upper
 ## terrace is already tall by virtue of the stack beneath it.
 const MIN_STOREYS := 2
+## The same policy restated for street_wall_audit(), which must not read the
+## partitioner's own constants -- if MIN_STOREYS ever drifts from the
+## production rule, the audit is what notices.
+const AUDIT_MIN_STOREYS := 2
 const MIN_PARCELS := 10
 
 static var last_failure := ""
@@ -195,39 +200,121 @@ static func _admitted(candidates: Array[Dictionary], massif: WarrenMassif,
 	return out
 
 
-static func _solid_top(massif: WarrenMassif, excavation: WarrenExcavation,
-		column: Vector2i, base: int) -> int:
-	var top := massif.top_at(column)
-	for band in range(base, top):
-		if excavation.carved.has(Vector3i(column.x, band, column.y)):
-			return band
-	return top
-
-
 static func unowned_route_faces(parcels: Array[WarrenBuildingParcel],
 		excavation: WarrenExcavation,
 		massif: WarrenMassif) -> Array[Vector3i]:
-	## Audit, not bookkeeping: the face set is re-derived from the massif and
-	## the excavation rather than read back off the parcels, and ownership is
-	## checked per CELL over each wall's full height. A house that owns the
-	## column but floats above the street it is supposed to wall fails here
-	## exactly like a column nobody claimed.
+	## Street walls this partition left to nobody. See street_wall_audit() for
+	## why this deliberately does NOT consult street_wall_faces().
+	return street_wall_audit(parcels, excavation, massif)["unowned"] \
+		as Array[Vector3i]
+
+
+static func street_wall_audit(parcels: Array[WarrenBuildingParcel],
+		excavation: WarrenExcavation, massif: WarrenMassif) -> Dictionary:
+	## The gate Task 6 should run, and an oracle deliberately independent of the
+	## partitioner it audits.
+	##
+	## Sharing `street_wall_faces()` between the partition and its audit would
+	## make the audit blind to exactly the failure worth catching: mis-set the
+	## admission threshold and a genuinely buildable wall vanishes from BOTH,
+	## so a visibly under-built town reports zero unowned faces. So the wall set
+	## here is re-derived from the raw route, massif and carved void, and the
+	## reasons a wall may go unhoused are re-derived from WarrenBuildingParcel's
+	## OWN contract (STOREY_BANDS, ROOF_RESERVATION_BANDS) and the production
+	## no-visually-short-houses policy -- never from this class's constants.
+	## The formula duplication is the point: if the partitioner's rules drift
+	## from the contract they claim to implement, walls land in `unowned` and
+	## the gate fires instead of quietly agreeing.
+	##
+	## Every raw wall lands in exactly one bucket:
+	##   owned_count  a house occupies the wall cell at the street's own floor
+	##                band (owning the column but starting a terrace higher is
+	##                the same hole in the street as owning nothing)
+	##   plinth       unhoused here, but the column carries a house further up
+	##   kerb         too little solid above the street for any sealable
+	##                envelope -- the terraced rim, not a frontage
+	##   undermined   carved out beneath, so nothing can bear on it
+	##   short        sealable, but only as a house production calls visually
+	##                short
+	##   unowned      none of the above: a real gap in the street wall
 	var owned: Dictionary = {}
+	var column_tops: Dictionary = {}
 	for parcel: WarrenBuildingParcel in parcels:
 		for cell: Vector3i in occupied_cells(parcel):
 			owned[cell] = true
-	var out: Array[Vector3i] = []
+		for column: Vector2i in parcel.footprint:
+			column_tops[column] = maxi(int(column_tops.get(column, -(1 << 30))),
+				parcel.top_band)
+	var audit := {
+		"wall_count": 0,
+		"owned_count": 0,
+		"plinth": [] as Array[Vector3i],
+		"kerb": [] as Array[Vector3i],
+		"undermined": [] as Array[Vector3i],
+		"short": [] as Array[Vector3i],
+		"unowned": [] as Array[Vector3i],
+	}
+	for wall: Vector3i in _raw_street_walls(massif, excavation):
+		audit["wall_count"] = int(audit["wall_count"]) + 1
+		if owned.has(wall):
+			audit["owned_count"] = int(audit["owned_count"]) + 1
+			continue
+		var column := Vector2i(wall.x, wall.z)
+		(audit[_wall_verdict(massif, excavation, column_tops, column, wall.y)] \
+			as Array[Vector3i]).append(wall)
+	return audit
+
+
+static func _raw_street_walls(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> Array[Vector3i]:
+	## Every column face the route actually runs past with solid standing at the
+	## street's own floor band, keyed by (column, floor band). Raw geometry
+	## only: no notion of what is buildable enters here.
 	var seen: Dictionary = {}
-	for face: Dictionary in street_wall_faces(massif, excavation):
-		var column := face["column"] as Vector2i
-		var walk := face["walk"] as Vector3i
-		for band in range(walk.y, walk.y + int(face["wall_bands"])):
-			var cell := Vector3i(column.x, band, column.y)
-			if owned.has(cell) or seen.has(cell):
+	var out: Array[Vector3i] = []
+	if massif == null or excavation == null:
+		return out
+	for walk: Vector3i in excavation.route:
+		for direction: Vector2i in DIRECTIONS:
+			var column := Vector2i(walk.x + direction.x, walk.z + direction.y)
+			var wall := Vector3i(column.x, walk.y, column.y)
+			if seen.has(wall) or not massif.has_column(column) \
+					or massif.base_at(column) > walk.y \
+					or massif.top_at(column) <= walk.y \
+					or excavation.carved.has(wall):
 				continue
-			seen[cell] = true
-			out.append(cell)
+			seen[wall] = true
+			out.append(wall)
 	return out
+
+
+static func _wall_verdict(massif: WarrenMassif, excavation: WarrenExcavation,
+		column_tops: Dictionary, column: Vector2i, base: int) -> StringName:
+	if int(column_tops.get(column, -(1 << 30))) > base:
+		return &"plinth"
+	for band in range(massif.base_at(column), base):
+		if excavation.carved.has(Vector3i(column.x, band, column.y)):
+			return &"undermined"
+	var clear := 0
+	for band in range(base, massif.top_at(column)):
+		if excavation.carved.has(Vector3i(column.x, band, column.y)):
+			break
+		clear += 1
+	var envelope := clear - clear % WarrenBuildingParcel.STOREY_BANDS
+	if envelope < WarrenBuildingParcel.STOREY_BANDS \
+			+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS:
+		return &"kerb"
+	# Storeys as WarrenParcelConstruction.proposal() counts them: the envelope's
+	# own rooms plus whatever complete storeys its bearing stack adds beneath
+	# the addressed floor.
+	var support := massif.base_at(column)
+	if posmod(base - support, WarrenBuildingParcel.STOREY_BANDS) != 0:
+		support -= 1
+	var storeys := (envelope - WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
+		+ base - support) / WarrenBuildingParcel.STOREY_BANDS
+	if storeys < AUDIT_MIN_STOREYS:
+		return &"short"
+	return &"unowned"
 
 
 static func occupied_cells(parcel: WarrenBuildingParcel) -> Array[Vector3i]:
@@ -335,7 +422,7 @@ static func _house_for_face(face: Dictionary, massif: WarrenMassif,
 	var walk := face["walk"] as Vector3i
 	var direction := face["direction"] as Vector2i
 	var threshold := face["column"] as Vector2i
-	for shape: Vector2i in _shape_order(massif.world_seed, threshold):
+	for shape: Vector2i in SHAPES:
 		var footprint := _footprint(walk, direction, shape.x, shape.y)
 		var top := _top_band(footprint, walk.y, massif, excavation, occupied,
 			face_bands)
@@ -345,19 +432,6 @@ static func _house_for_face(face: Dictionary, massif: WarrenMassif,
 			StringName("parcel.solid.%04d" % index), footprint, walk.y, top,
 			walk, threshold, -direction)
 	return null
-
-
-static func _shape_order(world_seed: int, column: Vector2i) -> Array[Vector2i]:
-	## Footprint variety falls out of position rather than a packing score, and
-	## the 1x1 stays last so the guaranteed fallback is only ever reached when
-	## nothing larger fits. Integer hash: no engine RNG, no float rounding.
-	var out: Array[Vector2i] = []
-	var pivot := posmod(_hash(world_seed, column.x, column.y),
-		SHAPES.size() - 1)
-	for offset in SHAPES.size() - 1:
-		out.append(SHAPES[posmod(pivot + offset, SHAPES.size() - 1)])
-	out.append(SHAPES[SHAPES.size() - 1])
-	return out
 
 
 static func _footprint(walk: Vector3i, walk_to_building: Vector2i, width: int,
@@ -493,8 +567,3 @@ static func _diagnostic(parcels: Array[WarrenBuildingParcel],
 		"footprint_cell_count": footprint_cells,
 		"footprint_families": families,
 	}
-
-
-static func _hash(world_seed: int, x: int, z: int) -> int:
-	var value := world_seed * 73856093 ^ x * 19349663 ^ z * 83492791
-	return posmod(value, 2147483647)

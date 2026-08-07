@@ -7,7 +7,10 @@ extends GutTest
 ## is built once and shared by the whole suite. The partition under test is
 ## rebuilt per call where a test needs a pristine (unsealed) copy.
 
-const CORPUS: Array[int] = [0, 1, 3, 5]
+## Every seed the report tabulates, so the table is reproducible from the
+## suite. Seven towns cost roughly 15s; seeds 2 and 7 are rejected by the
+## carver and seed 8 by the massif builder, so they are not in the corpus.
+const CORPUS: Array[int] = [0, 1, 3, 4, 5, 6, 9]
 ## Deliberately stricter than WarrenSolidPartitioner's own admission rule and
 ## derived without calling it: two full storeys of unexcavated solid above the
 ## street floor, on unexcavated ground. Anything this obviously buildable is a
@@ -72,6 +75,40 @@ func test_every_obviously_buildable_street_wall_is_owned_at_street_level() \
 			assert_gt(highest, wall.y,
 				("seed %d: wall %s is unhoused but nothing stands above it " \
 				+ "either") % [world_seed, wall])
+
+
+func test_street_wall_audit_classifies_every_wall_independently() -> void:
+	## The audit is the gate Task 6 runs, so it has to be worth trusting. Two
+	## claims here: it accounts for every raw street wall exactly once (no wall
+	## quietly dropped between buckets), and its exclusions are real rather
+	## than a way of agreeing with the partitioner -- the kerb bucket must be
+	## substantial, because the terraced rim genuinely cannot hold houses.
+	for world_seed: int in CORPUS:
+		var town := _town(world_seed)
+		if town.is_empty():
+			continue
+		var audit := WarrenSolidPartitioner.street_wall_audit(
+			town["parcels"] as Array[WarrenBuildingParcel],
+			town["excavation"] as WarrenExcavation,
+			town["massif"] as WarrenMassif)
+		var tally := int(audit["owned_count"])
+		for bucket: String in ["plinth", "kerb", "undermined", "short",
+				"unowned"]:
+			tally += (audit[bucket] as Array[Vector3i]).size()
+		assert_eq(tally, int(audit["wall_count"]),
+			"seed %d: buckets must account for every wall exactly once" \
+			% world_seed)
+		assert_gt(int(audit["wall_count"]), 60,
+			"seed %d: too few raw walls to prove anything" % world_seed)
+		assert_gt(int(audit["owned_count"]), 20,
+			"seed %d: only %d walls are housed" % [world_seed,
+				int(audit["owned_count"])])
+		assert_eq((audit["unowned"] as Array[Vector3i]).size(), 0,
+			"seed %d: real gaps in the street wall: %s" % [world_seed,
+				str((audit["unowned"] as Array[Vector3i]).slice(0, 6))])
+		assert_gt((audit["kerb"] as Array[Vector3i]).size(), 0,
+			("seed %d: no kerbs at all means the audit is measuring the " \
+			+ "partitioner rather than the solid") % world_seed)
 
 
 func test_parcels_satisfy_the_whole_downstream_parcel_contract() -> void:
