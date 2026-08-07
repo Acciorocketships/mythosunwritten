@@ -59,6 +59,19 @@ func _read_args() -> void:
 			_output_dir = args[index + 1]
 		elif args[index] == "--seed" and index + 1 < args.size():
 			_world_seed = int(args[index + 1])
+		elif args[index] == "--mode" and index + 1 < args.size():
+			# Selects the generation pipeline: route_first (default) or
+			# mass_first. The solver reads this as a static, so the harness sets
+			# it before solving rather than threading it through every call.
+			WarrenTownSolver.GENERATION_MODE = StringName(args[index + 1])
+		elif args[index] == "--allow-corner-overlap":
+			# DIAGNOSTIC. Lets a town compose whose only remaining defect is
+			# that two buildings meet at a corner, where the authored roof
+			# overhang interpenetrates the neighbour by ~0.47 m because no roof
+			# is flush with its lattice footprint. Renders the artefact so it
+			# can be judged by eye; it is not a shipping tolerance, and nothing
+			# outside this harness may set it.
+			SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
 		elif args[index] == "--attempt" and index + 1 < args.size():
 			_attempt = int(args[index + 1])
 

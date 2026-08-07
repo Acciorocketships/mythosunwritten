@@ -89,6 +89,9 @@ func add_unit(unit: FabricUnit) -> bool:
 		var existing_clearance := existing.transform() * \
 			existing_recipe.local_clearance_bounds
 		if _aabb_overlaps_volume(clearance_bounds, existing_clearance):
+			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
+					and _is_corner_nick(clearance_bounds, existing_clearance):
+				continue
 			last_rejection = \
 				"visual envelope of %s %s intersects unrelated unit %s %s" % [
 					unit.stable_id, clearance_bounds, existing.stable_id,
@@ -145,6 +148,9 @@ func validate() -> bool:
 			var right_clearance := right.transform() * \
 				right_recipe.local_clearance_bounds
 			if _aabb_overlaps_volume(left_clearance, right_clearance):
+				if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
+						and _is_corner_nick(left_clearance, right_clearance):
+					continue
 				last_rejection = "unrelated visual envelopes intersect: %s and %s" % [
 					left.stable_id, right.stable_id]
 				return false
@@ -271,6 +277,35 @@ func _is_bearing_ancestor(unit_value: FabricUnit,
 		if parent != null:
 			pending.append_array(parent.parent_ids)
 	return false
+
+
+## DIAGNOSTIC ONLY -- MUST NOT SHIP ENABLED. Exempts corner-only envelope
+## overlaps, and nothing else, so a town whose sole remaining defect is that
+## class can be composed and LOOKED AT. It does not make the geometry correct:
+## two buildings meeting at a corner interpenetrate by roughly half a metre of
+## roof overhang, because no authored roof is flush with its lattice footprint
+## (measured: the tightest variant clears 0.234 m past it on every side, and
+## rooms are flush, so the shorter house's roof always cuts into the taller
+## one's wall). Enabling this is how to judge whether that reads badly on
+## screen; it is not a tolerance until someone has looked and said so.
+##
+## Enable only from a review harness, never from a test:
+##   SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
+static var DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP := false
+## A corner nick is small on BOTH horizontal axes -- two footprints touching at
+## a point, overlapping only by what their roofs project. A genuine face
+## overlap runs the length of the shared wall, metres rather than centimetres,
+## so this cannot silently forgive stacked or interpenetrating buildings.
+const DIAGNOSTIC_CORNER_NICK_METRES := 1.0
+
+
+static func _is_corner_nick(left: AABB, right: AABB) -> bool:
+	var overlap_x := minf(left.end.x, right.end.x) \
+		- maxf(left.position.x, right.position.x)
+	var overlap_z := minf(left.end.z, right.end.z) \
+		- maxf(left.position.z, right.position.z)
+	return overlap_x <= DIAGNOSTIC_CORNER_NICK_METRES \
+		and overlap_z <= DIAGNOSTIC_CORNER_NICK_METRES
 
 
 static func _aabb_overlaps_volume(left: AABB, right: AABB,

@@ -58,6 +58,10 @@ func _read_args() -> void:
 	for index in args.size():
 		if args[index] == "--stage" and index + 1 < args.size():
 			_stage = args[index + 1]
+		elif args[index] == "--allow-corner-overlap":
+			# See SettlementFabricPlan: diagnostic only, so a town blocked
+			# solely by corner-envelope overlap can be measured and rendered.
+			SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
 		elif args[index] == "--seeds" and index + 1 < args.size():
 			for token: String in args[index + 1].split(",", false):
 				_seeds.append(int(token))
