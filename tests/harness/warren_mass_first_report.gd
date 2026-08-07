@@ -17,6 +17,12 @@ extends SceneTree
 ##                     joined and the plan is doomed however well it scores.
 ##   --stage compose   WarrenBuiltTownSolver.solve() per seed, reporting the
 ##                     rejecting stage for every seed that does not compose.
+##   --stage bridge    whether the solid standing OVER the streets could become
+##                     houses at all: how deep it is, how many street-spanning
+##                     footprints exist, and how many of them are legal
+##                     envelopes. Read it with `cover`, which says how much of
+##                     that solid the partition actually built -- `cover` alone
+##                     cannot tell lost cover from unbuildable trim.
 ##   --stage contact   both pipelines' building-contact metrics side by side,
 ##                     parcel-weighted against cell-weighted. Use it when
 ##                     touching the construction gate's contact threshold.
@@ -38,6 +44,10 @@ func _init() -> void:
 		_seeds.assign(DEFAULT_SEEDS)
 	if _stage == "cover":
 		_report_cover()
+		quit()
+		return
+	if _stage == "bridge":
+		_report_bridge()
 		quit()
 		return
 	if _stage == "envelopes":
@@ -174,6 +184,234 @@ func _report_cover() -> void:
 			% [world_seed, excavation.route.size(), roofed, bare]
 			+ " | UNBUILT mass cells over the route %d" % lost_cells)
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+const BRIDGE_SHAPES: Array[Vector2i] = [
+	Vector2i(2, 3), Vector2i(2, 2), Vector2i(1, 2), Vector2i(1, 1),
+]
+const BRIDGE_DIRECTIONS: Array[Vector2i] = [
+	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
+]
+
+
+func _report_bridge() -> void:
+	## CAN the over-street mass become houses at all? `cover` says how much is
+	## left unbuilt; this says how much of it any legal envelope could ever
+	## claim, before conflict resolution, so a partition change can be judged
+	## against a real ceiling rather than against zero.
+	##
+	## A bridging house is an ordinary house whose footprint spans a lower walk
+	## cell, so it is bound by every rule any house is: its base band must BE a
+	## frontage cell's band (WarrenBuildingParcel.seal), at least half its
+	## columns must reach ground (the bearing majority), and -- because a
+	## mixed-span parcel never descends (WarrenParcelConstruction
+	## ._support_base_band) -- it must carry two complete storeys plus the roof
+	## reservation in the mass left ABOVE the street's headroom.
+	##
+	## Scanned over the WHOLE frontier, not one volume: a different bore leaves a
+	## different thickness of mass overhead, so a negative taken from a single
+	## candidate would only be a statement about that candidate.
+	var minimum := WarrenBuildingParcel.STOREY_BANDS * 2 \
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	for world_seed: int in _seeds:
+		var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+		if frontier.is_empty():
+			print("seed %2d: no frontier" % world_seed)
+			continue
+		var route_cells := 0
+		var with_mass := 0
+		var buildable_depth := 0
+		var deepest := 0
+		var spanning := 0
+		var tallest := 0
+		var two_storey_bridges := 0
+		var one_storey_bridges := 0
+		var one_storey_route_cells := 0
+		var scanned := 0
+		var refused: Dictionary = {"column": 0, "bearing": 0, "height": 0}
+		for volume: WarrenVolumePlan in frontier:
+			var massif := volume.mass_context.get(&"massif") as WarrenMassif
+			var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
+			var excavation := WarrenExcavationVolumeAdapter.excavation_for_volume(
+				bore, volume)
+			if massif == null or excavation == null:
+				continue
+			scanned += 1
+			var ceilings: Dictionary = {}
+			var over_street: Dictionary = {}
+			for walk: Vector3i in excavation.route:
+				var column := Vector2i(walk.x, walk.z)
+				var ceiling := walk.y + excavation.slot_bands(walk)
+				ceilings[column] = maxi(int(ceilings.get(column, -(1 << 30))),
+					ceiling)
+			route_cells = maxi(route_cells, excavation.route.size())
+			var volume_with_mass := 0
+			var volume_buildable := 0
+			for column_value: Variant in ceilings.keys():
+				var column := column_value as Vector2i
+				var ceiling := int(ceilings[column])
+				var above := massif.top_at(column) - ceiling
+				if above <= 0:
+					continue
+				volume_with_mass += 1
+				deepest = maxi(deepest, above)
+				volume_buildable += int(above >= minimum)
+				for band in range(ceiling, massif.top_at(column)):
+					var cell := Vector3i(column.x, band, column.y)
+					if not excavation.carved.has(cell):
+						over_street[cell] = true
+			with_mass = maxi(with_mass, volume_with_mass)
+			buildable_depth = maxi(buildable_depth, volume_buildable)
+			# Every address the plan offers, at the band a house rooted there sits.
+			var addresses: Array[Vector3i] = []
+			var seen_addresses: Dictionary = {}
+			for cell: Vector3i in volume.walk_cells:
+				seen_addresses[cell] = true
+				addresses.append(cell)
+			for cell: Vector3i in excavation.route:
+				if not seen_addresses.has(cell):
+					seen_addresses[cell] = true
+					addresses.append(cell)
+			var two_storey := _bridge_scan(addresses, ceilings, over_street,
+				massif, excavation, minimum)
+			# The same scan with the storey minimum dropped to one, which is what
+			# a bridge over a street would have to be if it were allowed at all.
+			# Not a proposal -- the number that says what the question is worth.
+			var one_storey := _bridge_scan(addresses, ceilings, over_street,
+				massif, excavation, WarrenBuildingParcel.STOREY_BANDS
+					+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS)
+			spanning = maxi(spanning, int(two_storey["spanning"]))
+			tallest = maxi(tallest, int(two_storey["tallest"]))
+			two_storey_bridges = maxi(two_storey_bridges,
+				int(two_storey["candidates"]))
+			one_storey_bridges = maxi(one_storey_bridges,
+				int(one_storey["candidates"]))
+			one_storey_route_cells = maxi(one_storey_route_cells,
+				int(one_storey["route_cells"]))
+			for reason: String in ["column", "bearing", "height"]:
+				refused[reason] = int(refused[reason]) \
+					+ int(two_storey[reason])
+		print("seed %2d: %d volumes | route %d, with mass above %d," % [world_seed,
+			scanned, route_cells, with_mass]
+			+ " of which %d carry a %d-band envelope (deepest %d bands)"
+				% [buildable_depth, minimum, deepest]
+			+ " | street-spanning footprints %d, tallest legal span %d bands"
+				% [spanning, tallest]
+			+ " | BRIDGES: 2-storey %d, 1-storey %d over %d route cells"
+				% [two_storey_bridges, one_storey_bridges, one_storey_route_cells]
+			+ " | refused off-massif %d, bearing %d, too short %d"
+				% [int(refused["column"]), int(refused["bearing"]),
+					int(refused["height"])])
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _bridge_scan(addresses: Array[Vector3i], ceilings: Dictionary,
+		unbuilt: Dictionary, massif: WarrenMassif,
+		excavation: WarrenExcavation, mixed_minimum: int) -> Dictionary:
+	var out: Dictionary = {"column": 0, "bearing": 0, "height": 0,
+		"tallest": 0, "spanning": 0, "candidates": 0}
+	var reached: Dictionary = {}
+	var reached_columns: Dictionary = {}
+	for address: Vector3i in addresses:
+		for direction: Vector2i in BRIDGE_DIRECTIONS:
+			for shape: Vector2i in BRIDGE_SHAPES:
+				var footprint := _bridge_footprint(address, direction, shape.x,
+					shape.y)
+				var spans := false
+				for column: Vector2i in footprint:
+					spans = spans or (ceilings.has(column) \
+						and int(ceilings[column]) <= address.y)
+				if not spans:
+					continue
+				out["spanning"] = int(out["spanning"]) + 1
+				var top := _bridge_top(footprint, address.y, massif, excavation,
+					out, mixed_minimum)
+				if top <= address.y:
+					continue
+				out["candidates"] = int(out["candidates"]) + 1
+				for column: Vector2i in footprint:
+					for band in range(address.y, top):
+						var cell := Vector3i(column.x, band, column.y)
+						if not unbuilt.has(cell):
+							continue
+						reached[cell] = true
+						# SettlementFabricSolver only counts a route cell covered
+						# when a room occupies 2..6 bands above it, so mass higher
+						# than that buys nothing the visual gate can see.
+						if cell.y - int(ceilings[column]) \
+								+ WarrenExcavation.HEADROOM_BANDS <= 6:
+							reached_columns[column] = true
+	out["reachable"] = reached.size()
+	out["route_cells"] = reached_columns.size()
+	return out
+
+
+func _bridge_footprint(walk: Vector3i, direction: Vector2i, width: int,
+		depth: int) -> Array[Vector2i]:
+	var perpendicular := Vector2i(-direction.y, direction.x)
+	var threshold := Vector2i(walk.x, walk.z) + direction
+	var out: Array[Vector2i] = []
+	for depth_offset in depth:
+		for width_offset in width:
+			out.append(threshold + direction * depth_offset \
+				+ perpendicular * width_offset)
+	return out
+
+
+func _bridge_top(footprint: Array[Vector2i], base: int, massif: WarrenMassif,
+		excavation: WarrenExcavation, reasons: Dictionary,
+		mixed_minimum: int) -> int:
+	## WarrenSolidPartitioner._top_band without the claim/no-straddle rules --
+	## this measures what the SOLID allows, not what one serving order left.
+	var top := 1 << 30
+	var bearing := 0
+	for column: Vector2i in footprint:
+		if not massif.has_column(column) or massif.base_at(column) > base:
+			reasons["column"] = int(reasons.get("column", 0)) + 1
+			return base
+		top = mini(top, massif.top_at(column))
+		var grounded := true
+		for band in range(massif.base_at(column), base):
+			if excavation.carved.has(Vector3i(column.x, band, column.y)):
+				grounded = false
+				break
+		bearing += int(grounded)
+	var reachable_top := top
+	for column: Vector2i in footprint:
+		for band in range(base, reachable_top):
+			if excavation.carved.has(Vector3i(column.x, band, column.y)):
+				reachable_top = band
+				break
+	reasons["tallest"] = maxi(int(reasons.get("tallest", 0)),
+		reachable_top - base)
+	if bearing * 2 < footprint.size():
+		reasons["bearing"] = int(reasons.get("bearing", 0)) + 1
+		return base
+	for column: Vector2i in footprint:
+		for band in range(base, top):
+			if excavation.carved.has(Vector3i(column.x, band, column.y)):
+				top = band
+				break
+	var settled := base + (top - base) - (top - base) % 2
+	var needed := mixed_minimum
+	if bearing == footprint.size():
+		needed = WarrenBuildingParcel.STOREY_BANDS * 2 \
+			+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+		var ground := -(1 << 30)
+		for column: Vector2i in footprint:
+			ground = maxi(ground, massif.base_at(column))
+		var support := ground
+		if posmod(base - ground, WarrenBuildingParcel.STOREY_BANDS) != 0:
+			support -= 1
+		needed -= base - mini(support, base)
+		needed = maxi(WarrenBuildingParcel.STOREY_BANDS
+			+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS,
+			needed + posmod(needed, 2))
+	if settled - base < needed:
+		reasons["height"] = int(reasons.get("height", 0)) + 1
+		return base
+	return settled
 
 
 func _report_envelopes() -> void:

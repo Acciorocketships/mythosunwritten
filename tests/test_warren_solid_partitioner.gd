@@ -16,6 +16,10 @@ const CORPUS: Array[int] = [0, 1, 3, 4, 5, 6, 9]
 ## street floor, on unexcavated ground. Anything this obviously buildable is a
 ## wall the partition may not leave to nobody.
 const STRICT_WALL_BANDS := 6
+## The furthest a 2x3 footprint can reach from the walk cell that addresses it:
+## three columns of depth, or two of depth and one of width. Used only as a
+## generous upper bound on where a bridge over a street could be addressed from.
+const BRIDGE_REACH_CELLS := 3
 
 var _towns: Dictionary = {}
 
@@ -408,6 +412,137 @@ func test_houses_are_cut_from_the_solid_the_excavation_left() -> void:
 						owners.get(cell, &""), parcel.stable_id, cell])
 				owners[cell] = parcel.stable_id
 		assert_gt(checked, 0, "seed %d: nothing was partitioned" % world_seed)
+
+
+func test_the_partition_leaves_no_buildable_solid_standing_over_a_street() \
+		-> void:
+	## Mass-first exists to roof its streets, so solid left standing OVER the
+	## route must be either built into a house or genuinely unbuildable -- never
+	## merely unclaimed. This is the completeness half of the ownership
+	## guarantee: `street_wall_audit` says no flank is stranded, this says no
+	## ceiling is.
+	##
+	## "Buildable" is re-derived here from WarrenBuildingParcel's own contract,
+	## never from the partitioner's rules. A house whose footprint spans a street
+	## cell can never be fully borne -- the street is carved out beneath that
+	## column -- so WarrenParcelConstruction._support_base_band keeps it at its
+	## addressed floor and its whole built silhouette is `top_band - base_band`.
+	## Two complete storeys plus the roof reservation is therefore what a bridge
+	## must find ABOVE the street's headroom; seal() pins `base_band` to a real
+	## frontage cell's band; and the bearing majority demands that half its
+	## columns still reach ground through unexcavated solid.
+	##
+	## Measured, and the reason this passes rather than being vacuous: 324
+	## candidate envelopes over the corpus's streets are enumerated and every one
+	## is refused, 177 of them because some footprint column's terrace stops
+	## below `base + minimum` -- the bore leaves 1-8 bands of solid over its
+	## route where a bridge needs six above the headroom -- and 138 because a
+	## column already carries a house, one-column-one-house being absolute. Only
+	## 8 fail on carved mass and 1 on the bearing majority. See task-9's report,
+	## and `warren_mass_first_report --stage bridge` for the same question asked
+	## across the whole frontier.
+	##
+	## So this is the tripwire for the day the geometry stops being self-blocking
+	## -- a carver that leaves deeper cover, or a footprint family with a longer
+	## reach across a street. It fires, and the partition owes that cover a house.
+	var over_street_cells := 0
+	for world_seed: int in CORPUS:
+		var town := _town(world_seed)
+		if town.is_empty():
+			continue
+		var massif := town["massif"] as WarrenMassif
+		var excavation := town["excavation"] as WarrenExcavation
+		var parcels := town["parcels"] as Array[WarrenBuildingParcel]
+		var owned := _owned_cells(parcels)
+		var claimed := _owned_columns(parcels)
+		var ceilings: Dictionary = {}
+		for walk: Vector3i in excavation.route:
+			var column := Vector2i(walk.x, walk.z)
+			ceilings[column] = maxi(int(ceilings.get(column, -(1 << 30))),
+				walk.y + excavation.slot_bands(walk))
+		for column_value: Variant in ceilings.keys():
+			var column := column_value as Vector2i
+			var unbuilt := 0
+			for band in range(int(ceilings[column]), massif.top_at(column)):
+				var cell := Vector3i(column.x, band, column.y)
+				if excavation.carved.has(cell):
+					continue
+				over_street_cells += 1
+				unbuilt += int(not owned.has(cell))
+			if unbuilt == 0:
+				continue
+			var base := _bridge_base_band(massif, excavation, claimed, column,
+				int(ceilings[column]))
+			assert_eq(base, -1, ("seed %d: %d cells of solid stand unbuilt over " \
+				+ "the street at %s, where a house addressed at band %d would " \
+				+ "bridge it") % [world_seed, unbuilt, column, base])
+	assert_gt(over_street_cells, 20,
+		"the corpus left no solid over any street, so this test measured nothing")
+
+
+func _bridge_base_band(massif: WarrenMassif, excavation: WarrenExcavation,
+		claimed: Dictionary, column: Vector2i, ceiling: int) -> int:
+	## The lowest band at which a sealable house spanning `column` could stand,
+	## or -1 when the solid admits none. Every condition is taken from
+	## WarrenBuildingParcel.seal() and WarrenParcelConstruction directly: an
+	## authored footprint whose threshold abuts a real frontage cell, unexcavated
+	## solid through the whole envelope, the bearing majority, the mixed-span
+	## silhouette minimum, and no column another house already stands on.
+	var minimum := WarrenBuildingParcel.STOREY_BANDS * 2 \
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+	for address: Vector3i in excavation.route:
+		if address.y < ceiling \
+				or absi(address.x - column.x) > BRIDGE_REACH_CELLS \
+				or absi(address.z - column.y) > BRIDGE_REACH_CELLS:
+			continue
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN,
+				Vector2i.LEFT, Vector2i.UP]:
+			for shape: Vector2i in [Vector2i(2, 3), Vector2i(2, 2),
+					Vector2i(1, 2), Vector2i(1, 1)]:
+				var footprint := _bridge_footprint(address, direction, shape.x,
+					shape.y)
+				if not footprint.has(column):
+					continue
+				if _envelope_stands(massif, excavation, claimed, footprint,
+						address.y, minimum):
+					return address.y
+	return -1
+
+
+func _bridge_footprint(walk: Vector3i, direction: Vector2i, width: int,
+		depth: int) -> Array[Vector2i]:
+	## WarrenParcelizer's footprint at the only lateral variant whose doorway
+	## lands in the threshold column, so this enumerates exactly the shapes
+	## WarrenParcelConstruction.door_serves_address() can accept.
+	var perpendicular := Vector2i(-direction.y, direction.x)
+	var threshold := Vector2i(walk.x, walk.z) + direction
+	var out: Array[Vector2i] = []
+	for depth_offset in depth:
+		for width_offset in width:
+			out.append(threshold + direction * depth_offset \
+				+ perpendicular * width_offset)
+	return out
+
+
+func _envelope_stands(massif: WarrenMassif, excavation: WarrenExcavation,
+		claimed: Dictionary, footprint: Array[Vector2i], base: int,
+		minimum: int) -> bool:
+	var bearing := 0
+	for column: Vector2i in footprint:
+		if claimed.has(column) or not massif.has_column(column) \
+				or massif.base_at(column) > base \
+				or massif.top_at(column) < base + minimum:
+			return false
+		for band in range(base, base + minimum):
+			if excavation.carved.has(Vector3i(column.x, band, column.y)):
+				return false
+		var grounded := true
+		for band in range(massif.base_at(column), base):
+			if excavation.carved.has(Vector3i(column.x, band, column.y)):
+				grounded = false
+				break
+		bearing += int(grounded)
+	return bearing * 2 >= footprint.size()
 
 
 func test_tops_follow_the_massif_terraces() -> void:
