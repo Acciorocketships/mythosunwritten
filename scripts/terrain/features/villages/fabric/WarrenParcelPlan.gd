@@ -195,6 +195,9 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 	var contact_components := _contact_components()
 	var largest_contact_component_count := _largest_component_size(
 		contact_components)
+	var area_by_id: Dictionary = {}
+	for parcel: WarrenBuildingParcel in parcels:
+		area_by_id[parcel.stable_id] = parcel.area_cells()
 	var isolated_building_count := 0
 	for component: Array in contact_components:
 		isolated_building_count += int(component.size() == 1)
@@ -332,6 +335,17 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 			largest_contact_component_count,
 		"largest_building_contact_component_ratio":
 			float(largest_contact_component_count) / float(parcels.size()),
+		# The gate reads the CELL-weighted share, not the one above. Dividing by
+		# parcel count makes the measurement depend on how finely the same mass
+		# happens to be subdivided: splitting one wide house into two adjacent
+		# narrow ones changes nothing physical, yet moves a parcel-count ratio.
+		# Weighting by footprint cells is invariant under exactly that split,
+		# while a town of scattered pavilions still scores low. Kept beside the
+		# old ratio because the diagnostics quote both.
+		"largest_building_contact_component_cell_count":
+			_largest_component_cell_count(contact_components, area_by_id),
+		"largest_building_contact_component_cell_ratio":
+			largest_contact_cell_ratio(contact_components, area_by_id),
 		"isolated_building_count": isolated_building_count,
 		"contacted_building_ratio": float(parcels.size() \
 			- isolated_building_count) / float(parcels.size()),
@@ -484,6 +498,38 @@ static func _largest_component_size(components: Array[Array]) -> int:
 	for component: Array in components:
 		result = maxi(result, component.size())
 	return result
+
+
+static func _largest_component_cell_count(components: Array[Array],
+		area_by_id: Dictionary) -> int:
+	var result := 0
+	for component: Array in components:
+		var cells := 0
+		for id_value: Variant in component:
+			cells += int(area_by_id.get(StringName(id_value), 0))
+		result = maxi(result, cells)
+	return result
+
+
+static func largest_contact_cell_ratio(components: Array[Array],
+		area_by_id: Dictionary) -> float:
+	## Share of the town's built footprint standing in its largest
+	## face-connected run of buildings.
+	##
+	## Deliberately weighted by footprint cells rather than by parcel count, and
+	## public so that invariance can be pinned directly: subdividing a parcel
+	## into adjacent parcels covering the same columns leaves both the numerator
+	## and the denominator untouched, so the ratio cannot drift merely because a
+	## partitioner divides the same urban mass more finely. A town of scattered
+	## pavilions still scores low, which is the property the gate exists to
+	## enforce.
+	var total := 0
+	for area_value: Variant in area_by_id.values():
+		total += int(area_value)
+	if total <= 0:
+		return 0.0
+	return float(_largest_component_cell_count(components, area_by_id)) \
+		/ float(total)
 
 
 func _walk_transition_degree(walk: Vector3i) -> int:

@@ -17,6 +17,9 @@ extends SceneTree
 ##                     joined and the plan is doomed however well it scores.
 ##   --stage compose   WarrenBuiltTownSolver.solve() per seed, reporting the
 ##                     rejecting stage for every seed that does not compose.
+##   --stage contact   both pipelines' building-contact metrics side by side,
+##                     parcel-weighted against cell-weighted. Use it when
+##                     touching the construction gate's contact threshold.
 ##   --seeds 1,3,4     seed list (default: the mass-first review corpus).
 ##
 ## Usage:
@@ -33,6 +36,10 @@ func _init() -> void:
 	_read_args()
 	if _seeds.is_empty():
 		_seeds.assign(DEFAULT_SEEDS)
+	if _stage == "contact":
+		_report_contact()
+		quit()
+		return
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
 	if _stage == "compose":
 		_report_composition()
@@ -75,7 +82,8 @@ func _report_gate() -> void:
 						int(plan.audit.get("parcel_footprint_cell_count", 0)),
 						int(plan.audit.footprint_family_count),
 						float(plan.audit.get(
-							"largest_building_contact_component_ratio", 0.0)),
+							"largest_building_contact_component_cell_ratio",
+							0.0)),
 						float(plan.audit.get("contacted_building_ratio", 0.0))] \
 					+ "isolated=%d roofbands=%d gate=%s roofs=%s" \
 					% [int(plan.audit.get("isolated_building_count", -1)),
@@ -108,6 +116,40 @@ func _report_composition() -> void:
 			reason = "no ranked candidate -- %s" % WarrenTownSolver.last_failure
 		print("seed %2d: FAILED :: %s" % [world_seed, reason.substr(0, 400)])
 	print("COMPOSED %d/%d" % [composed, _seeds.size()])
+
+
+func _report_contact() -> void:
+	## Both pipelines, same measurement, so a threshold change can be judged
+	## against the pipeline that ships as well as the one being built.
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	for mode: StringName in [WarrenTownSolver.MODE_ROUTE_FIRST,
+			WarrenTownSolver.MODE_MASS_FIRST]:
+		WarrenTownSolver.GENERATION_MODE = mode
+		for world_seed: int in _seeds:
+			var towns := WarrenTownSolver.ranked_candidates(world_seed, {},
+				program, 4)
+			if towns.is_empty():
+				print("%s seed %2d: no ranked candidate" % [mode, world_seed])
+				continue
+			for town: WarrenTownPlan in towns:
+				var audit := town.parcels.audit
+				print("%s seed %2d attempt %d: n=%d cells=%d parcelratio=%.2f " \
+					% [mode, world_seed, int(town.audit.get("route_attempt",
+							-1)), int(audit.parcel_count),
+						int(audit.get("parcel_footprint_cell_count", 0)),
+						float(audit.get(
+							"largest_building_contact_component_ratio", 0.0))] \
+					+ "cellratio=%.2f (largest run %d parcels / %d cells)" \
+					% [float(audit.get(
+							"largest_building_contact_component_cell_ratio",
+							0.0)),
+						int(audit.get(
+							"largest_building_contact_component_count", 0)),
+						int(audit.get(
+							"largest_building_contact_component_cell_count",
+							0))])
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
 
 
 func _roofs_compile(plan: WarrenParcelPlan) -> bool:

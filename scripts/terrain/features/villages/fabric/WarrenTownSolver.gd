@@ -41,6 +41,11 @@ const ASSET_AWARE_MAX_LARGEST_ROOF_BAND_RATIO := 0.60
 ## plaza perimeter. Require a substantial local mass plus broad participation
 ## in some face-contact seam; a bounded number of isolates may still terminate
 ## a street or own a skywalk across it.
+##
+## Measured as a share of built footprint CELLS, not of parcel count -- see
+## WarrenParcelPlan.largest_contact_cell_ratio(). The threshold is unchanged;
+## the parcel-count form simply measured the wrong thing, scoring the same
+## urban mass differently depending on how finely a stage subdivided it.
 const ASSET_AWARE_MIN_BUILDING_CONTACT_RATIO := 0.33
 # The structural connection graph now includes sealed occupied bridge-house
 # edges as well as shared facade boundaries. Seven of ten connected buildings,
@@ -272,8 +277,11 @@ static func ranked_candidates(world_seed: int,
 				int(closest_rejected.audit.base_band_count),
 				int(closest_rejected.audit.footprint_family_count),
 				int(closest_rejected.audit.half_level_neighbor_pair_count),
+				# The cell-weighted share, because that is what the gate above
+				# actually tested; quoting the parcel-count one here sent a
+				# reader chasing a number no threshold reads.
 				float(closest_rejected.audit.get(
-					"largest_building_contact_component_ratio", 0.0)),
+					"largest_building_contact_component_cell_ratio", 0.0)),
 				int(closest_rejected.audit.get(
 					"neighboring_parcel_pair_count", 0)),
 				float(closest_rejected.audit.bounded_walk_ratio),
@@ -654,7 +662,7 @@ static func _passes_construction_gate(parcels: WarrenParcelPlan,
 			"largest_roof_band_ratio", 1.0)) \
 			<= ASSET_AWARE_MAX_LARGEST_ROOF_BAND_RATIO) \
 		and (not asset_aware or float(parcels.audit.get(
-			"largest_building_contact_component_ratio", 0.0)) \
+			"largest_building_contact_component_cell_ratio", 0.0)) \
 			>= ASSET_AWARE_MIN_BUILDING_CONTACT_RATIO) \
 		and (not asset_aware or float(parcels.audit.get(
 			"contacted_building_ratio", 0.0)) \

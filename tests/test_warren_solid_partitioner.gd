@@ -240,6 +240,42 @@ func test_equal_roof_bands_never_meet_across_a_corner() -> void:
 		+ "rule passes by forbidding every terrace row"))
 
 
+func test_building_contact_metric_is_invariant_under_subdivision() -> void:
+	## The property the construction gate's contact metric must have, pinned
+	## directly rather than inferred from a seed's score.
+	##
+	## Splitting one wide house into two adjacent narrow ones covering the same
+	## columns changes nothing about the urban mass -- the same cells stand in
+	## the same connected run -- so a metric that moves under that split is
+	## measuring subdivision granularity, not connectedness. That is exactly how
+	## the old parcel-count ratio failed mass-first, which divides the same
+	## solid into roughly twice as many houses as route-first.
+	##
+	## Same mass, same connectivity, two subdivisions: one 4-cell house joined
+	## to a 2-cell neighbour, and the 4-cell house split into two 2-cell halves.
+	var coarse: Array[Array] = [[&"a", &"b"] as Array, [&"lone"] as Array]
+	var coarse_areas := {&"a": 4, &"b": 2, &"lone": 3}
+	var fine: Array[Array] = [[&"a1", &"a2", &"b"] as Array, [&"lone"] as Array]
+	var fine_areas := {&"a1": 2, &"a2": 2, &"b": 2, &"lone": 3}
+	var coarse_ratio := WarrenParcelPlan.largest_contact_cell_ratio(coarse,
+		coarse_areas)
+	var fine_ratio := WarrenParcelPlan.largest_contact_cell_ratio(fine,
+		fine_areas)
+	assert_almost_eq(fine_ratio, coarse_ratio, 0.0001,
+		("subdividing a house must not move the contact metric: %f became %f") \
+		% [coarse_ratio, fine_ratio])
+	assert_almost_eq(coarse_ratio, 6.0 / 9.0, 0.0001,
+		"six of nine built cells stand in the largest connected run")
+	## And it must still fail a town that really is scattered: the same eight
+	## built cells, but as four detached pavilions with nothing touching.
+	var scattered: Array[Array] = [[&"a1"] as Array, [&"a2"] as Array,
+		[&"b"] as Array, [&"lone"] as Array]
+	var scattered_areas := {&"a1": 2, &"a2": 2, &"b": 2, &"lone": 2}
+	assert_lt(WarrenParcelPlan.largest_contact_cell_ratio(scattered,
+			scattered_areas), 0.33,
+		"a town of detached pavilions must still miss the gate")
+
+
 func test_no_column_carries_two_houses() -> void:
 	## One column, one house. WarrenParcelConstruction descends a fully-borne
 	## house to its bearing datum as one stack, and WarrenAssetPlan rejects any
