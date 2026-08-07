@@ -36,6 +36,18 @@ var daylight_void_cells: Array[Vector3i] = []
 var landing_cells: Array[Vector3i] = []
 var transitions: Array[WarrenVolumeTransition] = []
 var mass_cells: Dictionary = {}
+## Provenance for plans synthesised from an excavated massif:
+## `{"massif": WarrenMassif, "excavation": WarrenExcavation}`, empty for the
+## route-first carver. It is metadata, never geometry -- seal() never reads it,
+## deterministic_signature() never includes it, and a plan is exactly as valid
+## with it absent -- so it sits outside the sealed contract and may be attached
+## to a plan that is already sealed.
+##
+## For the same reason a derived clone which rebuilds this plan's geometry
+## deliberately does NOT inherit it: whoever derives a plan and still needs the
+## provenance re-attaches it, which keeps a stale massif from riding along
+## behind a volume it no longer describes.
+var mass_context: Dictionary = {}
 var audit: Dictionary = {}
 var last_rejection := ""
 var _walk_set: Dictionary = {}

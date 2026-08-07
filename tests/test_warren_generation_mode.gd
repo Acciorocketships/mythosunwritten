@@ -11,20 +11,32 @@ extends GutTest
 ## these tests prove both that excavated routes can clear it and that it still
 ## has teeth against them, rather than assuming either.
 ##
-## The frontier stops at WarrenGroundArcadeSolver today (see
-## test_mass_first_reports_which_stage_consumed_the_corpus). That is a measured
-## structural boundary, not a defect in the wiring: the arcade needs two
-## terrain-level route cells at least MIN_BRANCH_SEPARATION_CELLS apart and an
-## excavated route touches grade at its portal and its immediate neighbour
-## only. Task 5's solid partitioner is where that changes.
+## Mass-first now reaches ranked parcel plans: every arcaded candidate is
+## partitioned into terraced houses by WarrenSolidPartitioner and clears the
+## same construction gate route-first candidates do. It does not yet reach a
+## composed town -- see test_mass_first_reports_which_stage_consumed_the_corpus
+## for the one stage that still consumes the corpus and why that is a route
+## model conflict rather than a gate to relax.
 
 const MASS_FIRST_SEED := 1
+
+## Boring one massif twelve times costs ~11s, so the frontier is built once and
+## shared. Volumes are sealed and immutable; partition_parcels() builds fresh
+## parcels per call, so sharing them couples nothing.
+var _frontier_cache: Dictionary = {}
 
 
 func after_each() -> void:
 	## A leaked flag would silently convert every later suite in the same
 	## process to mass-first, so restore it even when an assertion failed.
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _frontier(world_seed: int) -> Array[WarrenVolumePlan]:
+	if not _frontier_cache.has(world_seed):
+		_frontier_cache[world_seed] = WarrenTownSolver.mass_first_frontier(
+			world_seed)
+	return _frontier_cache[world_seed] as Array[WarrenVolumePlan]
 
 
 func _gated_excavated_volumes(world_seed: int) -> Dictionary:
@@ -97,11 +109,22 @@ func test_the_topology_gate_still_rejects_excavated_routes() -> void:
 
 
 func test_mass_first_reports_which_stage_consumed_the_corpus() -> void:
-	## Mass-first mode must fail loudly and specifically, never silently: the
-	## frontier reports how many bores carved, adapted, and cleared the gate,
-	## and which downstream stage rejected the survivors. This pins the current
-	## structural boundary; when Task 5's partitioner moves it, this test is
-	## the one that says so.
+	## Mass-first mode must fail loudly and specifically, never silently. This
+	## pins wherever the corpus is currently lost, so the test -- not a later
+	## reader re-instrumenting the pipeline by hand -- is what announces that
+	## the boundary moved.
+	##
+	## It is no longer the parcel stage: every gated, arcaded candidate now
+	## partitions, clears the construction gate, and is ranked (see
+	## test_mass_first_parcels_are_the_solid_the_streets_were_cut_from). They
+	## are consumed one stage further on, adapting the excavated route into a
+	## sectional public realm: WarrenExcavationVolumeAdapter makes every carved
+	## cell a walk cell, including the intermediate stride of a STAIR or RAMP,
+	## while WarrenVolumePublicRealmAdapter gives that same ground to the
+	## vertical transition node -- so the first climbing move of every
+	## excavated route claims one surface twice. Route-first never collides
+	## because WarrenPublicRealmCarver records only transition endpoints as
+	## walk cells. Reconciling those two route models is the next task's.
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
 	var towns := WarrenTownSolver.ranked_candidates(MASS_FIRST_SEED, {}, null, 4)
 	if not towns.is_empty():
@@ -109,10 +132,14 @@ func test_mass_first_reports_which_stage_consumed_the_corpus() -> void:
 			assert_true(town.is_sealed(), "ranked town is sealed")
 			assert_true(WarrenPublicRealmCarver.passes_topology_gate(
 				town.volume), "ranked volume meets the route-first bar")
+			for parcel: WarrenBuildingParcel in town.parcels.parcels:
+				assert_string_starts_with(String(parcel.stable_id),
+					"parcel.solid.", "a composed mass-first town is built " \
+					+ "from the partitioned solid")
 		return
 	assert_string_contains(WarrenTownSolver.last_failure,
-		"passed the topology gate")
-	assert_string_contains(WarrenTownSolver.last_failure, "ground arcade")
+		"route failed downstream compilation")
+	assert_string_contains(WarrenTownSolver.last_failure, "is shared by")
 
 
 func test_mass_first_frontier_is_deterministic() -> void:
@@ -131,6 +158,89 @@ func test_mass_first_frontier_is_deterministic() -> void:
 			String(second[index].stable_id))
 
 
+func test_mass_first_parcels_are_the_solid_the_streets_were_cut_from() -> void:
+	## Task 6's deliverable. Every candidate the frontier produces must yield a
+	## sealed parcel plan whose houses are the partitioned leftover solid, not
+	## envelopes a packing search fitted around a route. The stable-id prefix is
+	## the only fact that distinguishes the two authors, so it is asserted
+	## directly rather than inferred from a count.
+	##
+	## The flag is deliberately not flipped here: both seams are excavated
+	## geometry in and parcels out, independent of the mode. Which of the two
+	## parcel stages the flag selects is
+	## test_mass_first_reports_which_stage_consumed_the_corpus's business.
+	var frontier := _frontier(MASS_FIRST_SEED)
+	assert_gt(frontier.size(), 0, WarrenTownSolver.last_failure)
+	for volume: WarrenVolumePlan in frontier:
+		var parcels := WarrenTownSolver.partition_parcels(volume)
+		# Not "most candidates partition": the partitioner's ownership
+		# guarantee makes a complete partition structural, so a null here is a
+		# broken guarantee rather than ordinary attrition.
+		assert_not_null(parcels, "%s: %s" % [volume.stable_id,
+			WarrenTownSolver.last_partition_failure])
+		if parcels == null:
+			continue
+		assert_true(parcels.is_sealed(), parcels.last_rejection)
+		assert_eq(parcels.source, volume,
+			"the plan is sealed against the volume it was partitioned from")
+		assert_gte(parcels.parcels.size(), WarrenTownSolver.MIN_COMPLETE_PARCELS,
+			"a mass-first candidate is a town, not a hamlet")
+		# The floors of the route-first construction gate, restated so this
+		# stage is judged on the bar the shipped pipeline already applies.
+		assert_gte(int(parcels.audit.base_band_count), 3,
+			"terraced houses stand on several datums")
+		assert_gte(int(parcels.audit.footprint_family_count), 3,
+			"the partition uses several footprint families")
+		assert_eq(int(parcels.audit.visually_short_parcel_count), 0,
+			"production forbids visually short houses outright")
+		for parcel: WarrenBuildingParcel in parcels.parcels:
+			assert_string_starts_with(String(parcel.stable_id), "parcel.solid.",
+				"every house was partitioned out of the standing solid")
+
+
+func test_mass_first_streets_run_between_walls_somebody_owns() -> void:
+	## The point of the whole mode: an excavated street must read as a canyon.
+	## Audited against the volume's OWN total negative space -- the bore plus
+	## the arcade and gallery void carved after it -- because a house resting on
+	## a column the arcade undermined is not a wall, and neither is one the
+	## partition put inside the arcade.
+	##
+	## `unowned` being empty is already a production gate, so the teeth here are
+	## the two facts production does not check: that the emptiness is not vacuous
+	## (a partition of nothing but kerbs would also report zero unowned walls),
+	## and that the street it walls actually climbs.
+	var frontier := _frontier(MASS_FIRST_SEED)
+	assert_gt(frontier.size(), 0, WarrenTownSolver.last_failure)
+	for volume: WarrenVolumePlan in frontier:
+		var parcels := WarrenTownSolver.partition_parcels(volume)
+		if parcels == null:
+			continue
+		var massif := volume.mass_context.get(&"massif") as WarrenMassif
+		var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
+		assert_not_null(massif, "the frontier variant still names its massif")
+		assert_not_null(bore, "the frontier variant still names its bore")
+		var excavation := WarrenExcavationVolumeAdapter.excavation_for_volume(
+			bore, volume)
+		assert_not_null(excavation, WarrenExcavationVolumeAdapter.last_failure)
+		if excavation == null:
+			continue
+		var audit := WarrenSolidPartitioner.street_wall_audit(parcels.parcels,
+			excavation, massif)
+		assert_eq((audit["unowned"] as Array[Vector3i]).size(), 0,
+			"%s leaves a hole in a street wall" % volume.stable_id)
+		# Measured across seeds 1/3/4/5/6/9 the owned share never fell below
+		# 0.47; a third is well clear of that and still refuses a partition
+		# which trimmed the street to kerbs instead of walling it.
+		assert_gte(int(audit["owned_count"]) * 3, int(audit["wall_count"]),
+			"at least a third of the street walls are owned outright")
+		var low := 1 << 30
+		var high := -(1 << 30)
+		for cell: Vector3i in volume.primary_itinerary:
+			low = mini(low, cell.y)
+			high = maxi(high, cell.y)
+		assert_gte(high - low, 8, "an excavated street climbs at least 8 bands")
+
+
 func test_route_first_still_solves_after_a_mass_first_call() -> void:
 	## The flag is process-global static state. Restoring it must genuinely
 	## restore the shipped path, with route-first identities and no residue
@@ -145,3 +255,10 @@ func test_route_first_still_solves_after_a_mass_first_call() -> void:
 	for town: WarrenTownPlan in towns:
 		assert_string_starts_with(String(town.volume.stable_id),
 			"warren.volume.%d." % MASS_FIRST_SEED)
+		# The parcel stage is mode-switched too, and the author of a house is
+		# the one fact that can prove which branch ran. Route-first houses come
+		# from the packing search and must keep coming from it.
+		for parcel: WarrenBuildingParcel in town.parcels.parcels:
+			assert_string_starts_with(String(parcel.stable_id),
+				"parcel.candidate.",
+				"route-first houses still come from the packing search")

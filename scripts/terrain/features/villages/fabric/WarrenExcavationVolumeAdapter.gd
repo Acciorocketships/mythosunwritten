@@ -81,10 +81,55 @@ static func to_volume_plan(massif: WarrenMassif,
 			return null
 	if not _add_transitions(plan, excavation):
 		return null
+	plan.mass_context = {&"massif": massif, &"excavation": excavation}
 	if not plan.seal(excavation.portals[0]):
 		last_failure = "plan seal rejected: %s" % plan.last_rejection
 		return null
 	return plan
+
+
+static func excavation_for_volume(excavation: WarrenExcavation,
+		volume: WarrenVolumePlan) -> WarrenExcavation:
+	## The TOTAL negative space of a volume plan derived from `excavation`,
+	## restated as a sealed WarrenExcavation.
+	##
+	## to_volume_plan() produces a plan whose mass is exactly the massif minus
+	## `excavation.carved`, which is the solid predicate WarrenSolidPartitioner
+	## re-derives from (massif, excavation). Later stages -- the ground arcade
+	## and the elevated galleries -- clone that plan and remove more mass, and
+	## the bore alone then understates the void by exactly their branches. A
+	## partition built from it puts houses inside an arcade and rests them on
+	## columns the arcade undermined, and every such house is rejected by
+	## WarrenBuildingParcel.seal() against the very plan it came from.
+	##
+	## So the void handed to the partitioner is read back off the plan itself:
+	## its public air and daylight voids ARE its non-mass, so massif minus this
+	## `carved` equals `volume.mass_cells` for a derived plan exactly as it did
+	## for the raw one. The walk, transitions and portals are the bore's
+	## unchanged -- only the subtraction grows -- so the seal still validates
+	## the same route it always described, and street walls are still audited
+	## against the bore rather than against the branches beside it.
+	last_failure = ""
+	if excavation == null or not excavation.is_sealed():
+		last_failure = "excavation missing or unsealed"
+		return null
+	if volume == null or not volume.is_sealed():
+		last_failure = "volume missing or unsealed"
+		return null
+	var out := WarrenExcavation.new(excavation.world_seed)
+	out.route.assign(excavation.route)
+	out.portals.assign(excavation.portals)
+	out.transitions.assign(excavation.transitions)
+	out.covered = excavation.covered.duplicate()
+	out.carved = excavation.carved.duplicate()
+	for cell: Vector3i in volume.public_air_cells:
+		out.carved[cell] = true
+	for cell: Vector3i in volume.daylight_void_cells:
+		out.carved[cell] = true
+	if not out.seal():
+		last_failure = "derived excavation rejected: %s" % out.last_rejection
+		return null
+	return out
 
 
 static func _add_transitions(plan: WarrenVolumePlan,

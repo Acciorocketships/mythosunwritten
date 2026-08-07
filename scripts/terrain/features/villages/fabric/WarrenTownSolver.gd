@@ -86,6 +86,10 @@ static var last_failure := ""
 ## Non-deterministic performance trace for harnesses. Timings never enter a
 ## sealed plan or signature and therefore cannot affect output.
 static var last_timing_diagnostic: Dictionary = {}
+## Why the mass-first parcel stage last returned null. Route-first keeps
+## reporting WarrenParcelizer.last_failure, which is unrelated and would be
+## stale here; see last_parcelize_failure().
+static var last_partition_failure := ""
 
 
 static func solve(world_seed: int,
@@ -181,7 +185,7 @@ static func ranked_candidates(world_seed: int,
 		return out
 	var topology_frontier: Array[WarrenVolumePlan] = []
 	if GENERATION_MODE == MODE_MASS_FIRST:
-		topology_frontier = _mass_first_frontier(world_seed, ground_bands)
+		topology_frontier = mass_first_frontier(world_seed, ground_bands)
 		if topology_frontier.is_empty():
 			return out
 	else:
@@ -234,7 +238,7 @@ static func ranked_candidates(world_seed: int,
 		parcel_max_ms = maxi(parcel_max_ms, parcel_ms)
 		parcel_call_count += 1
 		if parcels == null:
-			parcel_failure = WarrenParcelizer.last_failure
+			parcel_failure = last_parcelize_failure()
 			continue
 		if not _passes_construction_gate(parcels,
 				construction_program != null):
@@ -325,11 +329,16 @@ static func ranked_candidates(world_seed: int,
 	return out
 
 
-static func _mass_first_frontier(world_seed: int,
-		ground_bands: Dictionary) -> Array[WarrenVolumePlan]:
+static func mass_first_frontier(world_seed: int,
+		ground_bands: Dictionary = {}) -> Array[WarrenVolumePlan]:
 	## The mass-first topology frontier: one terraced solid, bored repeatedly,
 	## each bore adapted into the same sealed WarrenVolumePlan the route-first
 	## carver emits, then extended by the same arcade and frontage solvers.
+	##
+	## Public because it is a stage seam, not an implementation detail: mode
+	## corpora and the mass-first tests audit the frontier and the parcel stage
+	## (partition_parcels) independently, rather than inferring both from
+	## whether a whole town composed.
 	##
 	## Every stage here returns null for ordinary reasons and none of them are
 	## errors: the massif gates reject ~2% of world seeds outright, a bounded
@@ -358,6 +367,7 @@ static func _mass_first_frontier(world_seed: int,
 		if volume == null:
 			continue
 		adapted += 1
+		var mass_context := volume.mass_context
 		# Route-first candidates can only reach this frontier through
 		# WarrenPublicRealmCarver.sealed_candidate, which applies the carver's
 		# topology gate. Excavated candidates are held to that same bar instead
@@ -375,6 +385,13 @@ static func _mass_first_frontier(world_seed: int,
 			continue
 		for gallery_variant: WarrenVolumePlan in \
 				WarrenElevatedFrontageSolver.variants(volume):
+			# The arcade and gallery stages rebuild the plan from geometry
+			# alone and deliberately drop non-geometric provenance, so the
+			# frontier -- the one place that still holds the massif this
+			# variant descends from -- re-attaches it. _parcelize() needs it to
+			# partition the standing solid; without it a mass-first candidate
+			# is simply not parcelizable and is skipped like any other.
+			gallery_variant.mass_context = mass_context
 			out.append(gallery_variant)
 	if out.is_empty():
 		# Naming the stage that ate the corpus is the whole diagnostic value
@@ -487,6 +504,12 @@ static func _parcelize(volume: WarrenVolumePlan,
 		construction_program: SettlementFabricProgram) -> WarrenParcelPlan:
 	if volume == null:
 		return null
+	if GENERATION_MODE == MODE_MASS_FIRST:
+		# Everything below this line is the route-first packing search, reached
+		# only under the shipped default. In mass-first the search is the wrong
+		# question: the leftover solid already IS the buildings, so nothing has
+		# to be fitted around the route.
+		return partition_parcels(volume)
 	var compatibility := Callable()
 	var connection_pair := Callable()
 	var reservation_compatibility := Callable()
@@ -514,6 +537,67 @@ static func _parcelize(volume: WarrenVolumePlan,
 				asset_cache)
 	return WarrenParcelizer.solve(volume, compatibility, connection_pair,
 		reservation_compatibility, connection_broad_phase)
+
+
+static func partition_parcels(volume: WarrenVolumePlan) -> WarrenParcelPlan:
+	## The mass-first parcel stage: houses are the solid a bore left standing,
+	## so they are partitioned rather than searched for, and their tops already
+	## follow the massif's terraces. WarrenParcelHeightSolver is deliberately
+	## NOT run over them -- reassigning heights would flatten exactly the
+	## terracing that makes this skyline vary by construction.
+	##
+	## Every rejection here is ordinary attrition: an unparcelizable candidate
+	## is skipped and the frontier continues, the same as a route-first volume
+	## whose packing search stopped short. Public for the same reason
+	## mass_first_frontier() is -- so this stage's real yield is measurable
+	## without composing a town around it.
+	last_partition_failure = ""
+	if volume == null:
+		last_partition_failure = "no volume to partition"
+		return null
+	var massif := volume.mass_context.get(&"massif") as WarrenMassif
+	var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
+	if massif == null or bore == null:
+		last_partition_failure = "volume carries no excavated mass context"
+		return null
+	var excavation := WarrenExcavationVolumeAdapter.excavation_for_volume(bore,
+		volume)
+	if excavation == null:
+		last_partition_failure = WarrenExcavationVolumeAdapter.last_failure
+		return null
+	var houses := WarrenSolidPartitioner.partition(massif, excavation, volume)
+	if houses.size() < WarrenSolidPartitioner.MIN_PARCELS:
+		last_partition_failure = "solid partition: %s" \
+			% WarrenSolidPartitioner.last_failure
+		return null
+	# The partition's own admission rules decided which walls were housable.
+	# street_wall_audit re-derives both the wall set and the reasons a wall may
+	# go unhoused from the raw route, massif and void, so a wall this partition
+	# stranded lands in `unowned` even when the partitioner agrees with itself.
+	# A street with a hole in its wall is not the canyon this mode exists to
+	# build, so that is a rejection rather than a diagnostic.
+	var wall_audit := WarrenSolidPartitioner.street_wall_audit(houses,
+		excavation, massif)
+	var unowned := wall_audit["unowned"] as Array[Vector3i]
+	if not unowned.is_empty():
+		last_partition_failure = "%d of %d street walls belong to no house" \
+			% [unowned.size(), int(wall_audit["wall_count"])]
+		return null
+	var plan := WarrenParcelPlan.new(
+		StringName("%s.parcels" % volume.stable_id), volume)
+	if not plan.seal(houses):
+		last_partition_failure = "parcel plan rejected after partitioning: %s" \
+			% plan.last_rejection
+		return null
+	return plan
+
+
+static func last_parcelize_failure() -> String:
+	## Whichever parcel stage the current mode actually ran. Reading
+	## WarrenParcelizer.last_failure unconditionally would report a stale
+	## packing-search message -- or none at all -- for a mass-first rejection.
+	return last_partition_failure if GENERATION_MODE == MODE_MASS_FIRST \
+		else WarrenParcelizer.last_failure
 
 
 static func _compose_plan(world_seed: int, volume: WarrenVolumePlan,
