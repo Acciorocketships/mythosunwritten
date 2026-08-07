@@ -36,6 +36,10 @@ func _init() -> void:
 	_read_args()
 	if _seeds.is_empty():
 		_seeds.assign(DEFAULT_SEEDS)
+	if _stage == "envelopes":
+		_report_envelopes()
+		quit()
+		return
 	if _stage == "contact":
 		_report_contact()
 		quit()
@@ -116,6 +120,32 @@ func _report_composition() -> void:
 			reason = "no ranked candidate -- %s" % WarrenTownSolver.last_failure
 		print("seed %2d: FAILED :: %s" % [world_seed, reason.substr(0, 400)])
 	print("COMPOSED %d/%d" % [composed, _seeds.size()])
+
+
+func _report_envelopes() -> void:
+	## How far each authored roof's visual envelope reaches past the lattice
+	## footprint it is placed on. SettlementFabricPlan rejects unrelated units
+	## whose envelopes overlap by more than 0.10 m, so this overhang is what
+	## decides which adjacencies are buildable at all. Reach for it before
+	## assuming a trimmed variant exists for some junction.
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	if program == null:
+		print("no compiled construction vocabulary")
+		return
+	for recipe: FabricRecipe in program.recipes():
+		var text := String(recipe.recipe_id)
+		if not (text.begins_with("roof.") or text.begins_with("room.")):
+			continue
+		var bounds := recipe.local_bounds
+		var clearance := recipe.local_clearance_bounds
+		var overhang_x := maxf(bounds.position.x - clearance.position.x,
+			clearance.end.x - bounds.end.x)
+		var overhang_z := maxf(bounds.position.z - clearance.position.z,
+			clearance.end.z - bounds.end.z)
+		print("%-42s bounds=%s clearance=%s overhang x=%.3f z=%.3f" % [
+			recipe.recipe_id, bounds.size, clearance.size, overhang_x,
+			overhang_z])
 
 
 func _report_contact() -> void:
