@@ -54,6 +54,10 @@ func _init() -> void:
 		_report_skywalk()
 		quit()
 		return
+	if _stage == "grade":
+		_report_grade()
+		quit()
+		return
 	if _stage == "envelopes":
 		_report_envelopes()
 		quit()
@@ -187,6 +191,75 @@ func _report_cover() -> void:
 		print("seed %2d: route %d | cells with mass above %d | no mass above %d"
 			% [world_seed, excavation.route.size(), roofed, bare]
 			+ " | UNBUILT mass cells over the route %d" % lost_cells)
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+const ARCADE_SEED_START := 16
+const ARCADE_SEED_COUNT := 16
+
+
+func _report_grade() -> void:
+	## What the ground street costs the coverage gate, and what the arcade stage
+	## gets for it -- the two halves of WarrenExcavationCarver.MIN_GRADE_CELLS,
+	## measured together so the constant can be traded rather than guessed.
+	##
+	## A route cell at grade sits on the massif's thin rim, where there is no
+	## mass overhead, so it can never be roofed by a house, a bridge or a
+	## skywalk. `bare` counts every route cell with nothing above its carved
+	## slot and `longest bare run` is the consecutive run of them along the
+	## itinerary -- the quantity WarrenBuiltTownPlan rejects on through
+	## MAX_UNCOVERED_ROUTE_COMPONENT_SIZE, and the component every composed
+	## mass-first seed has failed on.
+	##
+	## The arcade half re-runs the committed integration test's own chain
+	## (carve -> to_volume_plan -> WarrenGroundArcadeSolver.extend) over the same
+	## seed window, so a trim can be judged against the authority that owns it
+	## rather than against a proxy.
+	var carved := 0
+	var cleared := 0
+	for world_seed in range(ARCADE_SEED_START,
+			ARCADE_SEED_START + ARCADE_SEED_COUNT):
+		var massif := WarrenMassifBuilder.build(world_seed)
+		if massif == null:
+			continue
+		var excavation := WarrenExcavationCarver.carve(world_seed, massif)
+		if excavation == null:
+			continue
+		carved += 1
+		var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if plan != null and WarrenGroundArcadeSolver.extend(plan) != null:
+			cleared += 1
+	print("MIN_GRADE_CELLS=%d: arcade %d/%d carved routes cleared (%.2f)" % [
+		WarrenExcavationCarver.MIN_GRADE_CELLS, cleared, carved,
+		float(cleared) / float(maxi(1, carved))])
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	var with_frontier := 0
+	for world_seed: int in _seeds:
+		var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+		if frontier.is_empty():
+			print("seed %2d: no frontier" % world_seed)
+			continue
+		with_frontier += 1
+		var volume := frontier[0]
+		var massif := volume.mass_context.get(&"massif") as WarrenMassif
+		var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
+		var bare := 0
+		var run := 0
+		var longest := 0
+		var grade := 0
+		for walk: Vector3i in bore.route:
+			var column := Vector2i(walk.x, walk.z)
+			grade += int(walk.y == massif.base_at(column))
+			if massif.top_at(column) - walk.y - bore.slot_bands(walk) > 0:
+				run = 0
+				continue
+			bare += 1
+			run += 1
+			longest = maxi(longest, run)
+		print("seed %2d: route %d | grade %d | bare %d | longest bare run %d" % [
+			world_seed, bore.route.size(), grade, bare, longest])
+	print("FRONTIER %d/%d" % [with_frontier, _seeds.size()])
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
 
 
