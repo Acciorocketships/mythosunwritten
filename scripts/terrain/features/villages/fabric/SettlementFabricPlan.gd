@@ -296,7 +296,12 @@ static var DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP := false
 ## a point, overlapping only by what their roofs project. A genuine face
 ## overlap runs the length of the shared wall, metres rather than centimetres,
 ## so this cannot silently forgive stacked or interpenetrating buildings.
-const DIAGNOSTIC_CORNER_NICK_METRES := 1.0
+## One lattice micro cell. Two roofs meeting at a corner overlap by twice
+## their overhang -- measured at 0.66 m and 1.16 m on the two axes -- while a
+## genuine face overlap runs the length of a shared wall, 3 m or more. A
+## metre-and-a-half separates those cleanly; 1.0 m did not, and wrongly left
+## roof-to-roof corners looking like a second, unexplained failure mode.
+const DIAGNOSTIC_CORNER_NICK_METRES := 1.5
 
 
 static func _is_corner_nick(left: AABB, right: AABB) -> bool:

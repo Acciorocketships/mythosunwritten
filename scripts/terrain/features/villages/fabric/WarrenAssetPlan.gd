@@ -274,6 +274,14 @@ func visual_envelope_conflicts() -> Array[Dictionary]:
 				* right_recipe.local_clearance_bounds
 			if SettlementFabricPlan._aabb_overlaps_volume(left_bounds,
 					right_bounds):
+				# The same corner-only diagnostic escape the fabric plan
+				# honours; this is the third site running the identical test,
+				# so leaving it out let a town clear the first two and fail
+				# here for a reason that read as a different defect.
+				if SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
+						and SettlementFabricPlan._is_corner_nick(left_bounds,
+							right_bounds):
+					continue
 				out.append({
 					"left": left.stable_id,
 					"right": right.stable_id,
