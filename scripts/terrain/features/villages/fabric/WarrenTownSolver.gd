@@ -368,6 +368,7 @@ static func mass_first_frontier(world_seed: int,
 			continue
 		adapted += 1
 		var mass_context := volume.mass_context
+		var frontage_cells := volume.frontage_cells
 		# Route-first candidates can only reach this frontier through
 		# WarrenPublicRealmCarver.sealed_candidate, which applies the carver's
 		# topology gate. Excavated candidates are held to that same bar instead
@@ -388,10 +389,14 @@ static func mass_first_frontier(world_seed: int,
 			# The arcade and gallery stages rebuild the plan from geometry
 			# alone and deliberately drop non-geometric provenance, so the
 			# frontier -- the one place that still holds the massif this
-			# variant descends from -- re-attaches it. _parcelize() needs it to
-			# partition the standing solid; without it a mass-first candidate
-			# is simply not parcelizable and is skipped like any other.
+			# variant descends from -- re-attaches it. _parcelize() needs
+			# mass_context to partition the standing solid, and frontage_cells
+			# so WarrenBuildingParcel.seal() recognises a house addressed at a
+			# STAIR/RAMP intermediate cell; without either a mass-first
+			# candidate is simply not parcelizable and is skipped like any
+			# other.
 			gallery_variant.mass_context = mass_context
+			gallery_variant.frontage_cells = frontage_cells
 			out.append(gallery_variant)
 	if out.is_empty():
 		# Naming the stage that ate the corpus is the whole diagnostic value

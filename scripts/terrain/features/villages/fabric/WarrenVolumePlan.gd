@@ -48,6 +48,22 @@ var mass_cells: Dictionary = {}
 ## provenance re-attaches it, which keeps a stale massif from riding along
 ## behind a volume it no longer describes.
 var mass_context: Dictionary = {}
+## Real, excavated street ground a parcel may legitimately address itself to,
+## but which cannot ALSO be a `walk_cells` graph node: WarrenExcavationVolumeAdapter
+## registers a STAIR/RAMP's intermediate stride cell here, because its ground
+## already belongs exclusively to that transition's own public-realm surface
+## (WarrenVolumeTransition.surface_cells()), and WarrenVolumePublicRealmAdapter
+## would collide the two claims if the same cell also had a walk node. Route-
+## first never populates this -- every one of its walk cells already is a
+## graph node -- so has_frontage() reduces to has_walk() exactly for every
+## route-first plan; only mass-first ever puts a cell here or asks about one.
+##
+## Public for the same reason `mass_context` is: a derived clone (the ground
+## arcade, the elevated gallery) rebuilds its own WarrenVolumePlan from
+## geometry alone and has no way to know this set exists, so it does not
+## inherit it. Whoever derives a plan and still needs frontage recognised
+## re-attaches it explicitly, exactly like mass_context.
+var frontage_cells: Dictionary = {}
 var audit: Dictionary = {}
 var last_rejection := ""
 var _walk_set: Dictionary = {}
@@ -72,6 +88,20 @@ func add_walk_cell(cell: Vector3i, is_primary: bool = true) -> bool:
 	if is_primary:
 		primary_itinerary.append(cell)
 	return true
+
+
+func add_frontage(cell: Vector3i) -> bool:
+	## Marks `cell` addressable (see `frontage_cells`'s doc) without making it a
+	## walk_cells graph node. Idempotent, and legal whether or not `cell` is
+	## also a walk cell -- has_frontage() only ever needs the union.
+	if _sealed:
+		return false
+	frontage_cells[cell] = true
+	return true
+
+
+func has_frontage(cell: Vector3i) -> bool:
+	return _walk_set.has(cell) or frontage_cells.has(cell)
 
 
 func add_ground_arcade_cell(cell: Vector3i) -> bool:

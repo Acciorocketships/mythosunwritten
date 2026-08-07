@@ -44,7 +44,7 @@ func seal(volume: WarrenVolumePlan) -> bool:
 			or posmod(top_band - base_band - ROOF_RESERVATION_BANDS,
 				STOREY_BANDS) != 0 \
 			or address_walk_cell.y != base_band \
-			or not volume.has_walk(address_walk_cell) \
+			or not volume.has_frontage(address_walk_cell) \
 			or absi(frontage_direction.x) + absi(frontage_direction.y) != 1:
 		return false
 	var unique: Dictionary = {}

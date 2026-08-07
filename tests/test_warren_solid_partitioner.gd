@@ -133,9 +133,17 @@ func test_parcels_satisfy_the_whole_downstream_parcel_contract() -> void:
 			assert_true(WarrenParcelConstruction.door_serves_address(parcel),
 				("seed %d: parcel %s door does not open onto walk %s") \
 				% [world_seed, parcel.stable_id, parcel.address_walk_cell])
-			assert_true(plan.has_walk(parcel.address_walk_cell),
-				"seed %d: parcel %s addresses a cell that is not a walk" \
-				% [world_seed, parcel.stable_id])
+			# has_frontage(), not has_walk(): a parcel may legitimately address
+			# a STAIR/RAMP intermediate stride cell, which is real excavated
+			# street ground WarrenSolidPartitioner always rooted houses at, but
+			# which cannot be a walk_cells graph node (its ground already
+			# belongs exclusively to that transition's public-realm surface).
+			# WarrenParcelPlan.seal() itself gates on has_frontage() via
+			# detached_parcel_count, so this is the same downstream contract,
+			# not a weaker stand-in for it.
+			assert_true(plan.has_frontage(parcel.address_walk_cell),
+				("seed %d: parcel %s addresses a cell with no recognised " \
+				+ "frontage") % [world_seed, parcel.stable_id])
 			assert_gt(int(WarrenParcelConstruction.proposal(parcel).get(
 					"storeys", 0)), 1,
 				("seed %d: parcel %s builds as a visually short house, which " \

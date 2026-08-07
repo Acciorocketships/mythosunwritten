@@ -109,7 +109,12 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 			elevated_count += 1
 		if parcel.depth_cells < parcel.width_cells:
 			transverse_count += 1
-		if not source.has_walk(parcel.address_walk_cell):
+		# has_frontage(), not has_walk(): a mass-first parcel may legitimately
+		# address a STAIR/RAMP's intermediate stride cell, which is real
+		# excavated street ground but never a walk_cells graph node (see
+		# WarrenVolumePlan.frontage_cells). Route-first never populates that
+		# set, so this is has_walk() exactly for every route-first plan.
+		if not source.has_frontage(parcel.address_walk_cell):
 			detached_count += 1
 		visually_short_count += int(int(WarrenParcelConstruction.proposal(
 			parcel).storeys) < 2)

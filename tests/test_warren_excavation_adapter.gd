@@ -17,12 +17,35 @@ func test_adapter_produces_sealed_volume_plan() -> void:
 	if plan == null:
 		return
 	assert_true(plan.is_sealed(), plan.last_rejection)
-	assert_eq(plan.primary_itinerary.size(), excavation.route.size())
+	# Corrected from the brief's literal `== excavation.route.size()`: walk
+	# cells are transition endpoints only (one per bored move), matching
+	# WarrenPublicRealmCarver's own route-first convention. Making every
+	# carved cell -- including a STAIR/RAMP's intermediate stride cell -- a
+	# walk cell was the root cause of a real integration defect: that
+	# intermediate's ground is already claimed whole by
+	# WarrenVolumeTransition.surface_cells(), and WarrenVolumePublicRealmAdapter
+	# gives every walk cell an unconditional surface square of its own, so the
+	# two claims collided on every candidate's first climbing move (see
+	# test_adapter_plan_survives_the_public_realm_adapter below). See the
+	# task-3-report.md amendment for the full history.
+	assert_eq(plan.primary_itinerary.size(), excavation.transitions.size() + 1,
+		"walk cells are one per move endpoint (plus the portal), not one " \
+		+ "per carved cell")
 	assert_gt(plan.transitions.size(), 0)
 	var envelope := plan.envelope
 	for cell: Vector3i in excavation.route:
 		assert_true(envelope.contains_column(Vector2i(cell.x, cell.z)),
 			"every route column exists in the synthesised envelope")
+
+
+func _endpoint_walk_cells(excavation: WarrenExcavation) -> Array[Vector3i]:
+	## The walk-cell sequence the adapter is now contracted to produce: the
+	## portal, then every transition's `to_cell`, in order -- the excavation's
+	## own move endpoints, never an intermediate stride cell.
+	var out: Array[Vector3i] = [excavation.route[0]]
+	for spec: Dictionary in excavation.transitions:
+		out.append(spec["to"] as Vector3i)
+	return out
 
 
 func test_adapter_preserves_exact_walk_and_entry_geometry() -> void:
@@ -31,7 +54,8 @@ func test_adapter_preserves_exact_walk_and_entry_geometry() -> void:
 	## later stage would build against a fiction. Size equality alone (the
 	## test above) cannot catch a reordering or a substitution, so this checks
 	## the actual cell sequence and entry point are identical, not just
-	## equally sized.
+	## equally sized -- against the move-endpoint sequence, not the raw
+	## cell-by-cell walk (see the correction above).
 	var massif := WarrenMassifBuilder.build(1)
 	var excavation := WarrenExcavationCarver.carve(1, massif)
 	var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
@@ -39,13 +63,20 @@ func test_adapter_preserves_exact_walk_and_entry_geometry() -> void:
 	assert_not_null(plan, WarrenExcavationVolumeAdapter.last_failure)
 	if plan == null:
 		return
-	assert_eq(plan.primary_itinerary, excavation.route,
-		"the plan's itinerary must be the excavated walk, cell for cell, " \
-		+ "in order -- not merely the same size")
+	assert_eq(plan.primary_itinerary, _endpoint_walk_cells(excavation),
+		"the plan's itinerary must be the excavated move endpoints, cell " \
+		+ "for cell, in order -- not merely the same size")
 	assert_eq(plan.entry_cell, excavation.portals[0],
 		"the plan must enter where the excavation actually opens to daylight")
+	var endpoints: Dictionary = {}
+	for cell: Vector3i in _endpoint_walk_cells(excavation):
+		endpoints[cell] = true
 	for cell: Vector3i in excavation.route:
-		assert_true(plan.has_walk(cell))
+		assert_eq(plan.has_walk(cell), endpoints.has(cell),
+			("walk-cell membership at %s must match move-endpoint status " \
+			+ "exactly -- an intermediate stride cell must NOT be a walk " \
+			+ "cell, since its ground already belongs to the transition") \
+			% cell)
 
 
 func test_adapter_envelope_matches_massif_column_heights_exactly() -> void:
@@ -158,8 +189,9 @@ func test_adapter_corpus_preserves_geometry_across_seeds() -> void:
 		accepted += 1
 		assert_true(plan.is_sealed(), "seed %d: %s" \
 			% [world_seed, plan.last_rejection])
-		assert_eq(plan.primary_itinerary, excavation.route,
-			"seed %d: walk must match the excavated route exactly" % world_seed)
+		assert_eq(plan.primary_itinerary, _endpoint_walk_cells(excavation),
+			"seed %d: walk must match the excavated move endpoints exactly" \
+			% world_seed)
 		assert_eq(plan.entry_cell, excavation.portals[0],
 			"seed %d: entry must match the excavation's chosen portal" \
 			% world_seed)
@@ -190,3 +222,58 @@ func test_adapter_is_deterministic() -> void:
 		second.deterministic_signature())
 	assert_eq(first.envelope.deterministic_signature(),
 		second.envelope.deterministic_signature())
+
+
+func test_adapter_plan_survives_the_public_realm_adapter() -> void:
+	## Pins the regression this amendment exists to fix. Before it,
+	## WarrenExcavationVolumeAdapter made every carved cell a walk cell
+	## (including a STAIR/RAMP's intermediate stride cell) and wired the
+	## orphan in with a connective LEVEL spur. WarrenVolumePublicRealmAdapter
+	## independently gives every walk cell its own 2x2 surface square AND
+	## gives every vertical transition the macro column(s) strictly between
+	## its endpoints via WarrenVolumeTransition.surface_cells() -- which for a
+	## STAIR/RAMP is exactly that same intermediate column. The two claims
+	## collided at the first climbing move of every route, deterministically,
+	## on every one of Task 6's 31 measured candidates ("surface cell ... is
+	## shared by volume.walk.NN and volume.transition.NN"). This runs the
+	## actual downstream adapter and re-derives the no-shared-surface
+	## invariant independently (mirroring SectionalPublicRealmPlan.add_node's
+	## own bookkeeping) rather than trusting a non-null return alone.
+	var accepted := 0
+	for world_seed in range(6):
+		var massif := WarrenMassifBuilder.build(world_seed)
+		if massif == null:
+			continue
+		var excavation := WarrenExcavationCarver.carve(world_seed, massif)
+		if excavation == null:
+			continue
+		var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if plan == null:
+			continue
+		# MIN_SPAN_BANDS requires an 8-band climb, so every accepted
+		# excavation contains at least one vertical move -- this is a real
+		# exercise of the conflict on every seed reached, not a contrived one.
+		var has_vertical := false
+		for transition: WarrenVolumeTransition in plan.transitions:
+			has_vertical = has_vertical or transition.is_vertical()
+		assert_true(has_vertical,
+			("seed %d: an excavated route must climb, or this test exercises " \
+			+ "nothing") % world_seed)
+		var realm := WarrenVolumePublicRealmAdapter.from_volume(plan)
+		assert_not_null(realm, "seed %d: %s" \
+			% [world_seed, WarrenVolumePublicRealmAdapter.last_failure])
+		if realm == null:
+			continue
+		accepted += 1
+		assert_true(realm.is_sealed(), realm.last_rejection)
+		var surface_owner: Dictionary = {}
+		for node: PublicRealmNode in realm.nodes:
+			for cell: Vector3i in node.surface_cells:
+				assert_false(surface_owner.has(cell),
+					("seed %d: surface cell %s is claimed by both %s and " \
+					+ "%s") % [world_seed, cell, surface_owner.get(cell),
+					node.stable_id])
+				surface_owner[cell] = node.stable_id
+	assert_gt(accepted, 0,
+		"no seed in the corpus produced a plan the realm adapter accepted")

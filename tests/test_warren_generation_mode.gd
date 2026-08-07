@@ -100,10 +100,20 @@ func test_the_topology_gate_still_rejects_excavated_routes() -> void:
 		# Every rejection must be a real gate criterion, never a seal failure:
 		# an unsealed plan can never reach the frontier in the first place.
 		assert_true(volume.is_sealed(), volume.last_rejection)
+		# A third criterion joined these two once WarrenExcavationVolumeAdapter
+		# was corrected to register walk cells one per bored MOVE (matching
+		# WarrenPublicRealmCarver's own convention) instead of one per carved
+		# CELL: walk_cell_count now measures the same quantity
+		# MIN_ROUTE_CELLS gates on, and a STAIR/RAMP spends 2-3 cells per move,
+		# so it is no longer guaranteed to clear 22 just because
+		# WarrenExcavationCarver's own cell-length family (30-36) does.
 		assert_true(int(volume.audit.ramp_transition_count) < 1 \
-			or float(volume.audit.addressed_walk_ratio) < 0.55,
-			"rejection is one of the two criteria excavation does not " \
-			+ "guarantee (ramps=%d addressed=%.2f)" % [
+			or float(volume.audit.addressed_walk_ratio) < 0.55 \
+			or int(volume.audit.walk_cell_count) \
+				< WarrenPublicRealmCarver.MIN_ROUTE_CELLS,
+			"rejection is one of the three criteria excavation does not " \
+			+ "guarantee (walk_cells=%d ramps=%d addressed=%.2f)" % [
+			int(volume.audit.walk_cell_count),
 			int(volume.audit.ramp_transition_count),
 			float(volume.audit.addressed_walk_ratio)])
 
@@ -114,17 +124,23 @@ func test_mass_first_reports_which_stage_consumed_the_corpus() -> void:
 	## reader re-instrumenting the pipeline by hand -- is what announces that
 	## the boundary moved.
 	##
-	## It is no longer the parcel stage: every gated, arcaded candidate now
-	## partitions, clears the construction gate, and is ranked (see
-	## test_mass_first_parcels_are_the_solid_the_streets_were_cut_from). They
-	## are consumed one stage further on, adapting the excavated route into a
-	## sectional public realm: WarrenExcavationVolumeAdapter makes every carved
-	## cell a walk cell, including the intermediate stride of a STAIR or RAMP,
-	## while WarrenVolumePublicRealmAdapter gives that same ground to the
-	## vertical transition node -- so the first climbing move of every
-	## excavated route claims one surface twice. Route-first never collides
-	## because WarrenPublicRealmCarver records only transition endpoints as
-	## walk cells. Reconciling those two route models is the next task's.
+	## It is no longer the walk/surface collision this test used to pin:
+	## WarrenExcavationVolumeAdapter now registers walk cells one per bored
+	## move (matching WarrenPublicRealmCarver's own route-first convention --
+	## a STAIR/RAMP's intermediate stride cell is real frontage
+	## (has_frontage()) but never a walk_cells graph node), so
+	## WarrenVolumePublicRealmAdapter no longer sees two claimants for the
+	## same surface. Four of six measured seeds (3, 4, 5, 6) now compose full
+	## towns end to end for the first time.
+	##
+	## Seed 1 specifically is still consumed, one stage further on: its
+	## (now smaller, since walk_cell_count measures moves rather than cells --
+	## see test_the_topology_gate_still_rejects_excavated_routes) frontier has
+	## exactly one gated, arcaded, partitioned candidate, and that candidate's
+	## urban core keeps an unclassified 3 m aperture that WarrenTownPlan.seal()
+	## refuses -- a real, shared production gate (also route-first's own) that
+	## nothing about the walk/frontage model touches. This is genuinely new
+	## territory: no mass-first candidate had ever reached this gate before.
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
 	var towns := WarrenTownSolver.ranked_candidates(MASS_FIRST_SEED, {}, null, 4)
 	if not towns.is_empty():
@@ -137,9 +153,8 @@ func test_mass_first_reports_which_stage_consumed_the_corpus() -> void:
 					"parcel.solid.", "a composed mass-first town is built " \
 					+ "from the partitioned solid")
 		return
-	assert_string_contains(WarrenTownSolver.last_failure,
-		"route failed downstream compilation")
-	assert_string_contains(WarrenTownSolver.last_failure, "is shared by")
+	assert_string_contains(WarrenTownSolver.last_failure, "urban core retains")
+	assert_string_contains(WarrenTownSolver.last_failure, "unclassified")
 
 
 func test_mass_first_frontier_is_deterministic() -> void:

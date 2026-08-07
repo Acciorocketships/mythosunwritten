@@ -75,12 +75,20 @@ static func to_volume_plan(massif: WarrenMassif,
 	var plan := WarrenVolumePlan.new(
 		StringName("warren.volume.mass.%d" % excavation.world_seed),
 		excavation.world_seed, envelope)
-	for cell: Vector3i in excavation.route:
-		if not plan.add_walk_cell(cell):
-			last_failure = "duplicate walk cell %s" % cell
-			return null
+	if not plan.add_walk_cell(excavation.route[0]):
+		last_failure = "duplicate walk cell %s" % excavation.route[0]
+		return null
 	if not _add_transitions(plan, excavation):
 		return null
+	# Every excavated cell is real street ground WarrenSolidPartitioner may
+	# legitimately root a house at (it already does: street_wall_faces()
+	# iterates excavation.route directly, unaware of which cells are also
+	# walk_cells graph nodes), even though only move endpoints can BE graph
+	# nodes. Registering the rest as frontage-only keeps
+	# WarrenBuildingParcel.seal()/WarrenParcelPlan's detached-parcel audit
+	# satisfied without giving any of them a colliding public-realm surface.
+	for cell: Vector3i in excavation.route:
+		plan.add_frontage(cell)
 	plan.mass_context = {&"massif": massif, &"excavation": excavation}
 	if not plan.seal(excavation.portals[0]):
 		last_failure = "plan seal rejected: %s" % plan.last_rejection
@@ -137,15 +145,28 @@ static func _add_transitions(plan: WarrenVolumePlan,
 	## excavation.transitions records one macro edge per bored move (its
 	## `from`/`to` span the whole 1-3 cell stride the carver's ACTIONS table
 	## allows), exactly matching the WarrenVolumeTransition Kind contract --
-	## see WarrenExcavationCarver's own docs. What it does NOT do is touch a
-	## STAIR/RAMP's intermediate stride cell as a graph endpoint, even though
-	## that cell is real, carved, and (per the brief's contract test) belongs
-	## in the plan's primary_itinerary one-for-one with excavation.route. Left
-	## unconnected, WarrenVolumePlan._all_walk_connected() would strand it, so
-	## every intermediate is wired in below with a LEVEL spur to whichever
-	## neighbour shares its floor band -- the only edge shape a same-band
-	## single-cell hop can ever legally be.
-	var route := excavation.route
+	## see WarrenExcavationCarver's own docs.
+	##
+	## WALK CELLS ARE TRANSITION ENDPOINTS ONLY -- exactly
+	## WarrenPublicRealmCarver's own route-first convention
+	## (`route.append(destination)` once per move, never per stride cell).
+	## An earlier revision instead made every carved cell (including a
+	## STAIR/RAMP's intermediate stride cell) a walk cell, and wired the
+	## orphaned intermediate into the graph with a LEVEL "spur" transition so
+	## WarrenVolumePlan._all_walk_connected() would not strand it. That solved
+	## CONNECTIVITY but not OWNERSHIP: WarrenVolumeTransition.surface_cells()
+	## for a vertical transition always claims the intermediate macro column's
+	## complete two-lane surface (its stair/ramp tread), and
+	## WarrenVolumePublicRealmAdapter gives every walk cell an unconditional
+	## 2x2 surface square of its own -- so a walk node at that exact column
+	## collided with the transition node claiming the same ground. That
+	## surface_cells() geometry is shared, protected code (pinned by
+	## tests/test_warren_excavation.gd, which requires every cell it claims to
+	## already be carved); it cannot change to make room for a second owner.
+	## The only cell-for-cell-legitimate fix is therefore the one below: the
+	## intermediate never becomes a walk cell in the first place, so there is
+	## no orphan to strand and no second claimant to collide -- exactly
+	## mirroring the model route-first has run for years without incident.
 	var cursor := 0
 	var previous_direction := Vector2i.ZERO
 	var previous_vertical := false
@@ -169,6 +190,9 @@ static func _add_transitions(plan: WarrenVolumePlan,
 				and _dot(previous_direction, direction) == 0 \
 				and (previous_vertical or vertical):
 			plan.add_landing(from_cell)
+		if not plan.add_walk_cell(to_cell):
+			last_failure = "duplicate walk cell %s" % to_cell
+			return false
 		var spine := WarrenVolumeTransition.new(
 			StringName("volume.transition.%02d" % index),
 			from_cell, to_cell, kind, _swept_span(excavation, cursor, run))
@@ -176,35 +200,9 @@ static func _add_transitions(plan: WarrenVolumePlan,
 			last_failure = "invalid transition %d (%s -> %s): %s" \
 				% [index, from_cell, to_cell, plan.last_rejection]
 			return false
-		if run > 1 and not _add_spurs(plan, route, cursor, run, index):
-			return false
 		cursor += run
 		previous_direction = direction
 		previous_vertical = vertical
-	return true
-
-
-static func _add_spurs(plan: WarrenVolumePlan, route: Array[Vector3i],
-		cursor: int, run: int, index: int) -> bool:
-	## Connects every intermediate cell of a multi-cell stride into the walk
-	## graph. Exactly one consecutive pair inside a STAIR's stride, and
-	## exactly two inside a RAMP's, share a floor band (WarrenExcavationCarver
-	## always spends the whole rise on a single middle step; the approach and
-	## departure stay level) -- detected here from the actual carved
-	## coordinates rather than assumed from the kind, so this holds regardless
-	## of which direction the move rises or falls.
-	for offset in range(run):
-		var a := route[cursor + offset]
-		var b := route[cursor + offset + 1]
-		if a.y != b.y:
-			continue
-		var spur := WarrenVolumeTransition.new(
-			StringName("volume.transition.%02d.spur%d" % [index, offset]),
-			a, b, WarrenVolumeTransition.Kind.LEVEL, [])
-		if not plan.add_transition(spur):
-			last_failure = "invalid spur at transition %d offset %d: %s" \
-				% [index, offset, plan.last_rejection]
-			return false
 	return true
 
 
