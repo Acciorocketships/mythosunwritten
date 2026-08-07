@@ -50,6 +50,10 @@ func _init() -> void:
 		_report_bridge()
 		quit()
 		return
+	if _stage == "skywalk":
+		_report_skywalk()
+		quit()
+		return
 	if _stage == "envelopes":
 		_report_envelopes()
 		quit()
@@ -184,6 +188,141 @@ func _report_cover() -> void:
 			% [world_seed, excavation.route.size(), roofed, bare]
 			+ " | UNBUILT mass cells over the route %d" % lost_cells)
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _report_skywalk() -> void:
+	## Does a mass-first partition offer any occupied-link corridor at all?
+	##
+	## Route-first seeds one deliberately: WarrenParcelizer._best_connection_pair
+	## reserves a skywalk pair BEFORE packing anything else, so two compatible
+	## upper-room sockets are guaranteed to survive facing each other, and
+	## WarrenBuiltTownSolver realises that reservation ahead of every other
+	## detail. Mass-first replaced WarrenParcelizer.solve wholesale, so it seals
+	## its plan with no reservations and skywalks are left to the detail phase.
+	##
+	## This asks the question the parcel stage would ask:
+	## WarrenAssetCompiler.skywalk_reservation over every pair of partitioned
+	## houses, with the volume's own public air, then the same
+	## parcel_preserves_skywalk_reservation filter the parcelizer applies before
+	## committing one. `standalone` is how many pairs form a corridor at all;
+	## `preserved` is how many survive every other house in the partition; `cover`
+	## counts those that pass over a ground route cell.
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	if program == null:
+		print("no compiled construction vocabulary")
+		return
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	for world_seed: int in _seeds:
+		var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+		if frontier.is_empty():
+			print("seed %2d: no frontier" % world_seed)
+			continue
+		var volumes := 0
+		var best_standalone := 0
+		var best_preserved := 0
+		var best_cover := 0
+		var best_solid := 0
+		var best_envelope := 0
+		var parcels := 0
+		for volume: WarrenVolumePlan in frontier:
+			var plan := WarrenTownSolver.partition_parcels(volume)
+			var realm := WarrenVolumePublicRealmAdapter.from_volume(volume)
+			if plan == null or realm == null:
+				continue
+			volumes += 1
+			parcels = maxi(parcels, plan.parcels.size())
+			var air := realm.air_claims()
+			var cache: Dictionary = {&"enabled": true}
+			var standalone := 0
+			var preserved := 0
+			var cover := 0
+			var blocked_solid := 0
+			var blocked_envelope := 0
+			for left_index in plan.parcels.size():
+				var left := plan.parcels[left_index]
+				for right_index in range(left_index + 1, plan.parcels.size()):
+					var right := plan.parcels[right_index]
+					var reservation := WarrenAssetCompiler.skywalk_reservation(
+						left, right, program, air, cache)
+					if reservation.is_empty():
+						continue
+					standalone += 1
+					var clear := true
+					for other: WarrenBuildingParcel in plan.parcels:
+						if other == left or other == right:
+							continue
+						if WarrenAssetCompiler \
+								.parcel_preserves_skywalk_reservation(other,
+									reservation, program, cache):
+							continue
+						clear = false
+						# Which half of that predicate fired decides whether the
+						# corridor is inside a building (structural) or merely
+						# grazed by a roof overhang (the envelope class).
+						if _occupies_reserved_cells(other, reservation, program):
+							blocked_solid += 1
+						else:
+							blocked_envelope += 1
+						break
+					if not clear:
+						continue
+					preserved += 1
+					cover += int(_reservation_covers_route(volume, reservation))
+			if standalone > best_standalone:
+				best_standalone = standalone
+				best_solid = blocked_solid
+				best_envelope = blocked_envelope
+			best_preserved = maxi(best_preserved, preserved)
+			best_cover = maxi(best_cover, cover)
+		print("seed %2d: %d volumes, up to %d houses" % [world_seed, volumes,
+			parcels]
+			+ " | skywalk pairs: standalone %d, preserved by the whole partition"
+				% best_standalone
+			+ " %d, of those over a route cell %d" % [best_preserved, best_cover]
+			+ " | blocked by a third house: mass %d, envelope %d"
+				% [best_solid, best_envelope])
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _occupies_reserved_cells(parcel: WarrenBuildingParcel,
+		reservation: Dictionary, program: SettlementFabricProgram) -> bool:
+	## The structural half of WarrenAssetCompiler
+	## .parcel_preserves_skywalk_reservation, restated so a rejection can be
+	## attributed: does this house's built mass actually stand in the corridor,
+	## or does only its clearance envelope reach it?
+	var reserved := reservation.reserved_cells as Dictionary
+	var proposal := WarrenParcelConstruction.proposal(parcel)
+	if proposal.is_empty():
+		return false
+	for component: Dictionary in \
+			StaggeredFabricCompiler.proposal_components(proposal):
+		var recipe_value := program.recipe(StringName(component.recipe_id))
+		if recipe_value == null:
+			continue
+		for group: Array[Vector3i] in [recipe_value.solid_cells,
+				recipe_value.headroom_cells]:
+			for local_cell: Vector3i in group:
+				if reserved.has(FabricRecipe.transform_cell(local_cell,
+						component.origin as Vector3i,
+						int(component.yaw_quarters))):
+					return true
+	return false
+
+
+func _reservation_covers_route(volume: WarrenVolumePlan,
+		reservation: Dictionary) -> bool:
+	## Mirrors WarrenParcelizer._reservation_lower_route_cover_count's test for a
+	## single reservation: a reserved cell standing over a walk cell's column,
+	## clear of its headroom.
+	var cells := reservation.get("reserved_cells", {}) as Dictionary
+	for walk: Vector3i in volume.walk_cells:
+		for cell_value: Variant in cells.keys():
+			var cell := cell_value as Vector3i
+			if cell.x == walk.x and cell.z == walk.z \
+					and cell.y >= walk.y + WarrenVolumePlan.HEADROOM_BANDS:
+				return true
+	return false
 
 
 const BRIDGE_SHAPES: Array[Vector2i] = [
