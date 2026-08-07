@@ -36,6 +36,10 @@ func _init() -> void:
 	_read_args()
 	if _seeds.is_empty():
 		_seeds.assign(DEFAULT_SEEDS)
+	if _stage == "cover":
+		_report_cover()
+		quit()
+		return
 	if _stage == "envelopes":
 		_report_envelopes()
 		quit()
@@ -124,6 +128,52 @@ func _report_composition() -> void:
 			reason = "no ranked candidate -- %s" % WarrenTownSolver.last_failure
 		print("seed %2d: FAILED :: %s" % [world_seed, reason.substr(0, 400)])
 	print("COMPOSED %d/%d" % [composed, _seeds.size()])
+
+
+func _report_cover() -> void:
+	## Is mass that stands OVER a street actually being built into houses?
+	## A route cell with solid above its carved headroom is potential cover; if
+	## the partition leaves that solid unbuilt, the overhead the visual gate
+	## measures was available and lost in this stage. If instead there is no
+	## mass above, the ceiling is structural and no partition can raise it.
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	for world_seed: int in _seeds:
+		var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+		if frontier.is_empty():
+			print("seed %2d: no frontier" % world_seed)
+			continue
+		var volume := frontier[0]
+		var massif := volume.mass_context.get(&"massif") as WarrenMassif
+		var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
+		var excavation := WarrenExcavationVolumeAdapter.excavation_for_volume(
+			bore, volume)
+		var plan := WarrenTownSolver.partition_parcels(volume)
+		if excavation == null or plan == null:
+			print("seed %2d: no partition" % world_seed)
+			continue
+		var owned: Dictionary = {}
+		for parcel: WarrenBuildingParcel in plan.parcels:
+			for cell: Vector3i in WarrenSolidPartitioner.occupied_cells(parcel):
+				owned[cell] = true
+		var roofed := 0
+		var bare := 0
+		var lost_cells := 0
+		for walk: Vector3i in excavation.route:
+			var column := Vector2i(walk.x, walk.z)
+			var ceiling := walk.y + excavation.slot_bands(walk)
+			var above := massif.top_at(column) - ceiling
+			if above <= 0:
+				bare += 1
+				continue
+			roofed += 1
+			for band in range(ceiling, massif.top_at(column)):
+				var cell := Vector3i(column.x, band, column.y)
+				if not excavation.carved.has(cell) and not owned.has(cell):
+					lost_cells += 1
+		print("seed %2d: route %d | cells with mass above %d | no mass above %d"
+			% [world_seed, excavation.route.size(), roofed, bare]
+			+ " | UNBUILT mass cells over the route %d" % lost_cells)
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
 
 
 func _report_envelopes() -> void:
