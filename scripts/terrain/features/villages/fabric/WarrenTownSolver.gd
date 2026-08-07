@@ -250,26 +250,30 @@ static func ranked_candidates(world_seed: int,
 	for volume: WarrenVolumePlan in topology_frontier:
 		parcel_attempts.append(_volume_attempt(volume))
 		var parcel_started := Time.get_ticks_msec()
-		var parcels := _parcelize(volume, construction_program)
+		var variants := _parcel_variants(volume, construction_program)
 		var parcel_ms := Time.get_ticks_msec() - parcel_started
 		parcel_elapsed_ms += parcel_ms
 		parcel_max_ms = maxi(parcel_max_ms, parcel_ms)
 		parcel_call_count += 1
-		if parcels == null:
+		if variants.is_empty():
 			parcel_failure = last_parcelize_failure()
 			continue
-		if not _passes_construction_gate(parcels,
-				construction_program != null):
-			var rejected_score := _gate_distance(parcels,
-				construction_program != null)
-			if closest_rejected == null or rejected_score < closest_rejected_score:
-				closest_rejected = parcels
-				closest_rejected_attempt = _volume_attempt(volume)
-				closest_rejected_score = rejected_score
-			continue
-		var score := _construction_score(volume, parcels, construction_program)
-		ranked.append({"volume": volume, "parcels": parcels, "score": score})
-		parcel_survivors.append(_volume_attempt(volume))
+		for parcels: WarrenParcelPlan in variants:
+			if not _passes_construction_gate(parcels,
+					construction_program != null):
+				var rejected_score := _gate_distance(parcels,
+					construction_program != null)
+				if closest_rejected == null \
+						or rejected_score < closest_rejected_score:
+					closest_rejected = parcels
+					closest_rejected_attempt = _volume_attempt(volume)
+					closest_rejected_score = rejected_score
+				continue
+			var score := _construction_score(volume, parcels,
+				construction_program)
+			ranked.append({"volume": volume, "parcels": parcels,
+				"score": score})
+			parcel_survivors.append(_volume_attempt(volume))
 	if ranked.is_empty():
 		last_timing_diagnostic = {
 			"topology_ms": topology_finished - solve_started,
@@ -565,7 +569,40 @@ static func _parcelize(volume: WarrenVolumePlan,
 		reservation_compatibility, connection_broad_phase)
 
 
-static func partition_parcels(volume: WarrenVolumePlan) -> WarrenParcelPlan:
+static func _parcel_variants(volume: WarrenVolumePlan,
+		construction_program: SettlementFabricProgram) -> Array[WarrenParcelPlan]:
+	## One volume, several arrangements -- the slack route-first got from
+	## searching a pre-filtered candidate space, restored where mass-first can
+	## provide it.
+	##
+	## Mass-first constructs an arrangement rather than searching for one, so a
+	## single unbuildable adjacency anywhere used to cost the whole town. The
+	## partitioner can already re-serve the same street walls in several
+	## deterministic orders; emitting those as separate candidates lets the
+	## frontier reject on every gate at once instead of this stage guessing
+	## which arrangement will survive stages it cannot see. Duplicates are
+	## dropped because different orders often converge on the same partition.
+	var out: Array[WarrenParcelPlan] = []
+	if GENERATION_MODE != MODE_MASS_FIRST:
+		var single := _parcelize(volume, construction_program)
+		if single != null:
+			out.append(single)
+		return out
+	var seen: Dictionary = {}
+	for variant in WarrenSolidPartitioner.PARTITION_VARIANTS:
+		var plan := partition_parcels(volume, variant)
+		if plan == null:
+			continue
+		var signature := plan.deterministic_signature()
+		if seen.has(signature):
+			continue
+		seen[signature] = true
+		out.append(plan)
+	return out
+
+
+static func partition_parcels(volume: WarrenVolumePlan,
+		variant: int = -1) -> WarrenParcelPlan:
 	## The mass-first parcel stage: houses are the solid a bore left standing,
 	## so they are partitioned rather than searched for, and their tops already
 	## follow the massif's terraces. WarrenParcelHeightSolver is deliberately
@@ -591,7 +628,8 @@ static func partition_parcels(volume: WarrenVolumePlan) -> WarrenParcelPlan:
 	if excavation == null:
 		last_partition_failure = WarrenExcavationVolumeAdapter.last_failure
 		return null
-	var houses := WarrenSolidPartitioner.partition(massif, excavation, volume)
+	var houses := WarrenSolidPartitioner.partition(massif, excavation, volume,
+		variant)
 	if houses.size() < WarrenSolidPartitioner.MIN_PARCELS:
 		last_partition_failure = "solid partition: %s" \
 			% WarrenSolidPartitioner.last_failure
@@ -610,7 +648,8 @@ static func partition_parcels(volume: WarrenVolumePlan) -> WarrenParcelPlan:
 			% [unowned.size(), int(wall_audit["wall_count"])]
 		return null
 	var plan := WarrenParcelPlan.new(
-		StringName("%s.parcels" % volume.stable_id), volume)
+		StringName("%s.parcels%s" % [volume.stable_id,
+			"" if variant < 0 else ".v%d" % variant]), volume)
 	if not plan.seal(houses):
 		last_partition_failure = "parcel plan rejected after partitioning: %s" \
 			% plan.last_rejection

@@ -73,7 +73,8 @@ static var last_diagnostic: Dictionary = {}
 
 
 static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
-		volume: WarrenVolumePlan = null) -> Array[WarrenBuildingParcel]:
+		volume: WarrenVolumePlan = null,
+		variant: int = -1) -> Array[WarrenBuildingParcel]:
 	## `volume` is optional: the solid predicate this uses (massif column span
 	## minus excavation.carved) is exactly what WarrenExcavationVolumeAdapter
 	## puts in WarrenVolumePlan.mass_cells, so the partition is identical with
@@ -97,8 +98,14 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 	# unjoinable roof, which is the first one on all but a few seeds.
 	var best_diagnostic: Dictionary = {}
 	var best_unjoinable := 1 << 30
-	for variant in PARTITION_VARIANTS:
-		var attempt := _partition_variant(massif, excavation, variant)
+	# A caller that names a variant gets exactly that arrangement, so the
+	# frontier can rank several partitions of one volume against every gate
+	# rather than this class picking one on a criterion that knows about roofs
+	# and nothing else. Naming none keeps the self-selecting behaviour.
+	var first := 0 if variant < 0 else posmod(variant, PARTITION_VARIANTS)
+	var count := PARTITION_VARIANTS if variant < 0 else 1
+	for offset in count:
+		var attempt := _partition_variant(massif, excavation, first + offset)
 		var unjoinable := int(last_diagnostic["unjoinable_roof_count"])
 		if not attempt.is_empty() and unjoinable < best_unjoinable:
 			out = attempt
