@@ -149,6 +149,17 @@ const PENALTY_SAME_DATUM_FOLD := 400.0
 ## spends below it is the fraction of the route that surfaces, so the pair
 ## sets the open/roofed mix directly instead of hoping the terrain supplies
 ## one.
+##
+## DEPTH_MID fell 1.1 -> 0.8 -> 0.0 and BALANCE_PULL rose 5.0 -> 8.0 purely
+## empirically, as the route lengthened and then gained a ground street: a
+## grade cell run inward under the mass is roofed by whatever the terrace
+## happens to be, which the carver cannot choose, so the climbing half has to
+## surface much harder to keep the whole route inside the covered band. At the
+## earlier values "too buried" was the largest rejection bucket at every
+## length family tried. There is no principled derivation behind either
+## number -- they are the settings that maximised survivors, and they should
+## be re-measured rather than reasoned about if the route shape changes
+## again.
 const DEPTH_MID := 0.0
 const DEPTH_SWING := 2.6
 ## How hard the running covered ratio pulls the desired depth back toward

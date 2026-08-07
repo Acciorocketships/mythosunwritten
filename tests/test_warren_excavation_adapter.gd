@@ -14,6 +14,8 @@ func test_adapter_produces_sealed_volume_plan() -> void:
 		excavation)
 	assert_not_null(plan,
 		"adapter failed: %s" % WarrenExcavationVolumeAdapter.last_failure)
+	if plan == null:
+		return
 	assert_true(plan.is_sealed(), plan.last_rejection)
 	assert_eq(plan.primary_itinerary.size(), excavation.route.size())
 	assert_gt(plan.transitions.size(), 0)

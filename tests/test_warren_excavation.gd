@@ -26,6 +26,19 @@ const SIDES: Array[Vector3i] = [Vector3i.RIGHT, Vector3i.LEFT,
 ## and to fail loudly if supply collapses.
 const CANYON_SEED_START := 40
 const CANYON_SEED_COUNT := 24
+## Seeds the full carve -> adapt -> ground-arcade chain is exercised on.
+## Distinct from PROBE_SEEDS and from the canyon window, so no seed is doing
+## double duty. Sixteen is the smallest size whose clearance rate was stable
+## across the first 96 seeds (70-80%, against 57-88% at twelve), and the chain
+## costs about 1.7s per seed, so this is ~27s of the suite.
+const ARCADE_SEED_START := 16
+const ARCADE_SEED_COUNT := 16
+## Measured on seeds 16-31: 11 carved, 8 cleared (73%). Floors sit below the
+## observed range on every 16-seed window (rate 70-80%, count 6-8) so they
+## survive seed-to-seed variation, and far above zero so a regression to
+## "no candidate ever reaches an arcade" fails loudly.
+const MIN_ARCADE_CLEARED_SEEDS := 5
+const MIN_ARCADE_CLEARED_RATIO := 0.55
 
 
 func _carved(world_seed: int) -> WarrenExcavation:
@@ -410,6 +423,58 @@ func test_route_walks_at_grade_before_it_climbs() -> void:
 	assert_gt(carved_seeds, 8,
 		"the grade gate must be exercised on a wide seed range: only %d of " \
 		% carved_seeds + "%d seeds produced a route" % CANYON_SEED_COUNT)
+
+
+func test_carved_routes_clear_the_real_ground_arcade_stage() -> void:
+	## The grade gates above assert the carver's own arithmetic. They cannot
+	## tell whether that arithmetic still buys what it was added for: the gate
+	## constants, WarrenGroundArcadeSolver.MIN_BRANCH_SEPARATION_CELLS, and
+	## that solver's root filter could all drift apart while every other test
+	## in this file keeps passing and clearance quietly returns to zero -- the
+	## state this whole amendment exists to fix.
+	##
+	## So this runs the real three-stage chain, with no stubs: carve ->
+	## WarrenExcavationVolumeAdapter.to_volume_plan ->
+	## WarrenGroundArcadeSolver.extend.
+	##
+	## Floors are set from measurement on THIS window, not from aspiration.
+	## Seeds 16-31 carry 11 carved routes of which 8 clear the arcade stage
+	## (73%); across every 16-seed window of the first 96 seeds the rate ranges
+	## 70-80% and the cleared count 6-8. A 0.55 rate floor and a count floor of
+	## 5 therefore sit clear of seed-to-seed variation while still failing long
+	## before clearance approaches zero.
+	##
+	## Both floors are needed. The rate alone passes if supply collapses to one
+	## carved route that happens to clear; the count alone passes if supply
+	## grows while clearance rots.
+	var carved := 0
+	var cleared := 0
+	for world_seed in range(ARCADE_SEED_START,
+			ARCADE_SEED_START + ARCADE_SEED_COUNT):
+		var massif := WarrenMassifBuilder.build(world_seed)
+		if massif == null:
+			continue
+		var excavation := WarrenExcavationCarver.carve(world_seed, massif)
+		if excavation == null:
+			continue
+		carved += 1
+		var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		assert_not_null(plan, "seed %d: adapter rejected a sealed excavation: %s" \
+			% [world_seed, WarrenExcavationVolumeAdapter.last_failure])
+		if plan == null:
+			continue
+		if WarrenGroundArcadeSolver.extend(plan) != null:
+			cleared += 1
+	assert_gte(cleared, MIN_ARCADE_CLEARED_SEEDS,
+		("only %d of %d carved routes reached a ground arcade; the route " \
+		+ "must walk far enough at grade to root two separated branches") \
+		% [cleared, carved])
+	assert_gte(float(cleared) / float(maxi(1, carved)),
+		MIN_ARCADE_CLEARED_RATIO,
+		("ground arcade clearance fell to %d of %d carved routes; the grade " \
+		+ "gates and WarrenGroundArcadeSolver's root contract have drifted " \
+		+ "apart") % [cleared, carved])
 
 
 func test_carve_does_not_depend_on_massif_column_order() -> void:
