@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_6woka"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_xw3w0"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_structures/sfm_stall_butcher_attach_001_piece_00.res" id="3_h0wj7"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_gwgpl"]
+
+[sub_resource type="Resource" id="Resource_knh1v"]
+script = ExtResource("2_xw3w0")
+mesh = ExtResource("3_h0wj7")
+
+[resource]
+script = ExtResource("4_gwgpl")
+pieces = Array[ExtResource("2_xw3w0")]([SubResource("Resource_knh1v")])

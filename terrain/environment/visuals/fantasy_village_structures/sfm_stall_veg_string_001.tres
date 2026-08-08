@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yh6yf"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_pymwv"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_structures/sfm_stall_veg_string_001_piece_00.res" id="3_3o110"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_6g56w"]
+
+[sub_resource type="Resource" id="Resource_cwnts"]
+script = ExtResource("2_pymwv")
+mesh = ExtResource("3_3o110")
+
+[resource]
+script = ExtResource("4_6g56w")
+pieces = Array[ExtResource("2_pymwv")]([SubResource("Resource_cwnts")])

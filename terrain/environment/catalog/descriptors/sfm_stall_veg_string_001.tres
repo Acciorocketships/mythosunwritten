@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ya16t"]
+
+[resource]
+script = ExtResource("1_ya16t")
+id = &"sfm.stall.veg_string.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_veg_string_001.tres"
+tags = Array[StringName]([&"fabric_dressing", &"village"])
+measured_aabb = AABB(-1.6671095, -1.2648948, -0.09915175, 1.7013744, 1.265315, 0.109240346)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_structures:sfm.stall.veg_string.001"

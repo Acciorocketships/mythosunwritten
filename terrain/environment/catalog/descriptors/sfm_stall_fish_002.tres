@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_8dcut"]
+
+[resource]
+script = ExtResource("1_8dcut")
+id = &"sfm.stall.fish.002"
+visual_path = "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_fish_002.tres"
+tags = Array[StringName]([&"building", &"stall", &"themed_stall", &"village"])
+measured_aabb = AABB(-2.0922465, -1.3087748e-07, -1.3781469, 4.1844926, 3.649002, 2.7562938)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_structures:sfm.stall.fish.002"

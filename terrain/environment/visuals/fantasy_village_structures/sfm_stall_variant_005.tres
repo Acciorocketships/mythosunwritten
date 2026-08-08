@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_rlgqc"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfm_stall_variant_005_piece_00.res" id="2_mntel"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfm_stall_variant_005_piece_01.res" id="3_e2n51"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfm_stall_variant_005_piece_02.res" id="4_wit7o"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfm_stall_variant_005_piece_03.res" id="5_hamej"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfm_stall_variant_005_piece_04.res" id="6_6mhnx"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfm_stall_variant_005_piece_05.res" id="7_bqrf6"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfm_stall_variant_005_piece_06.res" id="8_1o2t7"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="9_1rcq4"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_structures/sfm_stall_variant_005_piece_00.res" id="10_d1l5o"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="11_ugh2q"]
+
+[sub_resource type="Resource" id="Resource_kc7k4"]
+script = ExtResource("1_rlgqc")
+shape = ExtResource("2_mntel")
+local_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.47, 0)
+
+[sub_resource type="Resource" id="Resource_8ndfn"]
+script = ExtResource("1_rlgqc")
+shape = ExtResource("3_e2n51")
+local_transform = Transform3D(1, 0, 0, 0, 0.8869949, -0.46177918, 0, 0.46177918, 0.8869949, 0, 4.29, 1.43)
+
+[sub_resource type="Resource" id="Resource_w6enw"]
+script = ExtResource("1_rlgqc")
+shape = ExtResource("4_wit7o")
+local_transform = Transform3D(1, 0, 0, 0, 0.8869949, 0.46177918, 0, -0.46177918, 0.8869949, 0, 4.29, -1.43)
+
+[sub_resource type="Resource" id="Resource_x26qi"]
+script = ExtResource("1_rlgqc")
+shape = ExtResource("5_hamej")
+local_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.08, 2, 1.12)
+
+[sub_resource type="Resource" id="Resource_p30tk"]
+script = ExtResource("1_rlgqc")
+shape = ExtResource("6_6mhnx")
+local_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.08, 2, 1.12)
+
+[sub_resource type="Resource" id="Resource_cclj5"]
+script = ExtResource("1_rlgqc")
+shape = ExtResource("7_bqrf6")
+local_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.08, 2, -1.12)
+
+[sub_resource type="Resource" id="Resource_6ndht"]
+script = ExtResource("1_rlgqc")
+shape = ExtResource("8_1o2t7")
+local_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.08, 2, -1.12)
+
+[sub_resource type="Resource" id="Resource_4g7jm"]
+script = ExtResource("9_1rcq4")
+mesh = ExtResource("10_d1l5o")
+
+[resource]
+script = ExtResource("11_ugh2q")
+pieces = Array[ExtResource("9_1rcq4")]([SubResource("Resource_4g7jm")])
+collisions = Array[ExtResource("1_rlgqc")]([SubResource("Resource_kc7k4"), SubResource("Resource_8ndfn"), SubResource("Resource_w6enw"), SubResource("Resource_x26qi"), SubResource("Resource_p30tk"), SubResource("Resource_cclj5"), SubResource("Resource_6ndht")])

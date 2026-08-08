@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_b7jwc"]
+
+[resource]
+script = ExtResource("1_b7jwc")
+id = &"sfm.stall.bakery.002"
+visual_path = "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_bakery_002.tres"
+tags = Array[StringName]([&"building", &"stall", &"themed_stall", &"village"])
+measured_aabb = AABB(-3.0907733, -0.056408152, -2.8763683, 5.5721607, 4.0757494, 5.0123606)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_structures:sfm.stall.bakery.002"
