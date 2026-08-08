@@ -17,6 +17,7 @@ const VIEW_COUNT := 4
 
 var _output_dir := "/tmp/mythos-mass-first-preview"
 var _world_seed := 3
+var _detail := true
 var _camera := Camera3D.new()
 var _fabric: SettlementFabricPlan
 
@@ -31,23 +32,8 @@ func _ready() -> void:
 	assert(program != null)
 	WarrenTownSolver.GENERATION_MODE = &"mass_first"
 	SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
-	var towns := WarrenTownSolver.ranked_candidates(_world_seed, {}, program, 4)
-	if towns.is_empty():
-		printerr("[mass_first_preview] seed=%d has no ranked candidate: %s" % [
-			_world_seed, WarrenTownSolver.last_failure])
-		get_tree().quit(1)
-		return
-	for town: WarrenTownPlan in towns:
-		var assets := WarrenAssetCompiler.solve(town, program)
-		if assets == null:
-			continue
-		var fabric := WarrenFabricCompiler.solve(assets)
-		if fabric != null and fabric.is_sealed():
-			_fabric = fabric
-			break
+	_solve_fabric(program)
 	if _fabric == null:
-		printerr("[mass_first_preview] seed=%d compiled no sealed fabric: %s" % [
-			_world_seed, WarrenFabricCompiler.last_failure])
 		get_tree().quit(1)
 		return
 	_build_ground()
@@ -66,6 +52,47 @@ func _ready() -> void:
 	_capture_all.call_deferred()
 
 
+func _solve_fabric(program: SettlementFabricProgram) -> void:
+	## DETAIL MODE (default): run the whole WarrenBuiltTownSolver pipeline, so
+	## the render shows the skywalks, outcrops, markets, prefab anchors and
+	## style breadth the detail phases build. Compiling only the parcel fabric
+	## -- what this harness used to do -- skips all of that and makes the town
+	## look far duller and more repetitive than the pipeline actually is.
+	##
+	## The best-effort fabric is drawn EVEN WHEN the visual-selection gates
+	## reject it, with the refusals printed. This proves nothing about
+	## acceptance and must never be quoted as a town passing.
+	if _detail:
+		var attempt := WarrenBuiltTownSolver.diagnostic_best_effort(_world_seed,
+			program)
+		_fabric = attempt.get("fabric") as SettlementFabricPlan
+		if _fabric != null:
+			print("[mass_first_preview] seed=%d detail mode: %s, %d detail %s" % [
+				_world_seed,
+				"SELECTED" if bool(attempt.selected) else "REJECTED BY GATES",
+				int(attempt.detail_count), "candidates admitted"])
+			for failure: String in attempt.gate_failures as PackedStringArray:
+				print("[mass_first_preview]   gate refusal: ", failure)
+			return
+		printerr("[mass_first_preview] seed=%d reached no detailed fabric: %s" % [
+			_world_seed, WarrenBuiltTownSolver.last_failure])
+	var towns := WarrenTownSolver.ranked_candidates(_world_seed, {}, program, 4)
+	if towns.is_empty():
+		printerr("[mass_first_preview] seed=%d has no ranked candidate: %s" % [
+			_world_seed, WarrenTownSolver.last_failure])
+		return
+	for town: WarrenTownPlan in towns:
+		var assets := WarrenAssetCompiler.solve(town, program)
+		if assets == null:
+			continue
+		var fabric := WarrenFabricCompiler.solve(assets)
+		if fabric != null and fabric.is_sealed():
+			_fabric = fabric
+			return
+	printerr("[mass_first_preview] seed=%d compiled no sealed fabric: %s" % [
+		_world_seed, WarrenFabricCompiler.last_failure])
+
+
 func _read_args() -> void:
 	var args := OS.get_cmdline_user_args()
 	for index in args.size():
@@ -73,6 +100,8 @@ func _read_args() -> void:
 			_output_dir = args[index + 1]
 		elif args[index] == "--seed" and index + 1 < args.size():
 			_world_seed = int(args[index + 1])
+		elif args[index] == "--no-detail":
+			_detail = false
 
 
 func _build_environment() -> void:
@@ -166,10 +195,14 @@ func _report_stone_budget() -> void:
 	for asset_id: StringName in SettlementFabricAssembler.STONE_FACADE_ASSETS:
 		stone += int((whole.batches.get(asset_id, {}) as Dictionary).get(
 			"transforms", []).size())
+	var covered := SettlementFabricAssembler.building_ceiling(
+		_fabric.transformed_cells(&"solid"))
 	print(("[mass_first_preview] stone modules=%d of %d instances "
-		+ "(plinths=%d courts=%d), tallest stone face=%d bands") % [stone,
-		whole.instance_count, plinths.instance_count, low.instance_count,
-		SettlementFabricAssembler.tallest_stone_stack_bands(whole)])
+		+ "(plinth+substrate=%d courts=%d), tallest BARE stone face=%d bands")
+		% [stone, whole.instance_count, plinths.instance_count,
+		low.instance_count,
+		SettlementFabricAssembler.tallest_bare_stone_stack_bands(whole,
+			covered)])
 
 
 func _covered_route_eye() -> Dictionary:

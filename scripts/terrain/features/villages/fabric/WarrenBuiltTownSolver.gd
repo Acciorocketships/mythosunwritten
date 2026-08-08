@@ -95,6 +95,16 @@ static var last_candidate_failure_diagnostic: Array[Dictionary] = []
 ## variant.  Preserve the bounded fallback trace so review artifacts show which
 ## surface budget survived instead of making a missing deck look mysterious.
 static var last_infill_variant_diagnostic: Array[Dictionary] = []
+## DIAGNOSTIC ONLY. The most detailed sealed fabric any candidate reached --
+## skywalks, outcrops, markets, prefabs all admitted -- regardless of whether
+## the visual-selection gates then accepted the town. A preview that compiles
+## only the parcel fabric shows none of those phases and reads as a duller town
+## than the pipeline actually builds, so this exists to let a harness render
+## what the detail phases produced. It is never a claim of acceptance: read
+## last_best_effort_failures alongside it, and never route a shipped town here.
+static var last_best_effort_fabric: SettlementFabricPlan
+static var last_best_effort_detail_count := 0
+static var last_best_effort_failures := PackedStringArray()
 
 
 static func solve(world_seed: int, program: SettlementFabricProgram,
@@ -455,14 +465,57 @@ static func _solve_candidate_variant(world_seed: int,
 				break
 	var result := WarrenBuiltTownPlan.new(
 		StringName("warren.built.%d" % world_seed), world_seed, assets, fabric)
+	_record_best_effort(fabric, accepted)
 	if not result.seal(accepted):
 		last_failure = "%s (skywalks=%d outcrops=%d overhead=%.3f uncovered=%s)" % [
 			result.last_rejection, _count_category(accepted, &"skywalk"),
 			_count_category(accepted, &"outcrop"),
 			float(fabric.audit.get("overhead_route_ratio", 0.0)),
 			fabric.audit.get("max_uncovered_route_component_cells", [])]
+		last_best_effort_failures.append(last_failure)
 		return null
 	return result
+
+
+static func _record_best_effort(fabric: SettlementFabricPlan,
+		accepted: Array[Dictionary]) -> void:
+	## Read-only bookkeeping on the accepted path: it records the candidate that
+	## admitted the most detail so a diagnostic harness has something to draw,
+	## and cannot influence selection, ordering, or any audit.
+	if fabric == null or not fabric.is_sealed():
+		return
+	if last_best_effort_fabric != null \
+			and accepted.size() <= last_best_effort_detail_count:
+		return
+	last_best_effort_fabric = fabric
+	last_best_effort_detail_count = accepted.size()
+
+
+static func diagnostic_best_effort(world_seed: int,
+		program: SettlementFabricProgram,
+		ground_bands: Dictionary = {}) -> Dictionary:
+	## DIAGNOSTIC ONLY -- NEVER a claim that a town passes. Runs the ordinary
+	## solve() and, when the visual-selection gates reject every candidate,
+	## hands back the most detailed fabric those gates saw together with the
+	## reasons they refused it. A harness can then show the town the detail
+	## phases actually built instead of the bare parcel compile.
+	last_best_effort_fabric = null
+	last_best_effort_detail_count = 0
+	last_best_effort_failures = PackedStringArray()
+	var plan := solve(world_seed, program, ground_bands)
+	if plan != null:
+		return {
+			"fabric": plan.fabric,
+			"detail_count": plan.overhead_candidates.size(),
+			"selected": true,
+			"gate_failures": PackedStringArray(),
+		}
+	return {
+		"fabric": last_best_effort_fabric,
+		"detail_count": last_best_effort_detail_count,
+		"selected": false,
+		"gate_failures": last_best_effort_failures,
+	}
 
 
 static func _candidate_matches_reservation(candidate: Dictionary,
