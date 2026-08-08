@@ -11,10 +11,16 @@ var surface_plan: PublicRealmSurfacePlan
 var volume_plan: FabricVolumePlan
 var solid_void_plan: FabricSolidVoidPlan
 var embedding_plan: StaggeredFabricEmbeddingPlan
-## Source mass a house stands ON rather than IN: the hill between natural
-## ground and a raised parcel's lowest room. Rendered as retained stone by
-## SettlementFabricAssembler and deliberately excluded from occupancy, so it
-## claims no socket and enters no visual-envelope or solid/void test.
+## Source mass the town stands ON rather than IN: every cell of the standing
+## solid no building occupies -- the plinth under a raised parcel, the terrace
+## risers between houses, and the mass beside and above a street the excavation
+## cut through the hill, which is what makes a covered route read as a passage
+## instead of a trench. Rendered as retained stone by SettlementFabricAssembler
+## and deliberately excluded from occupancy, so it claims no socket and enters
+## no visual-envelope or solid/void test.
+##
+## Empty for a route-first town: WarrenFabricCompiler declares the wider hill
+## only where the massif provenance is present.
 var retained_terrace_cells: Dictionary = {}
 var audit: Dictionary = {}
 var _recipes: Dictionary = {}

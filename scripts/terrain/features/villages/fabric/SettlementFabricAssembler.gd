@@ -170,12 +170,15 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 
 static func retaining_walls(retained: Dictionary,
 		solids: Dictionary) -> EnvironmentInstancePayload:
-	## Stone on every lateral face of `retained` that neither the hill itself
-	## nor a building already closes; nothing on the top, which is what the
-	## house sits on. Faces are grouped into vertical runs first, so a run is
-	## tiled by whole modules from its top down and the lowest one buries its
-	## remainder exactly as the one-band court does -- never two coplanar
-	## modules on the same face.
+	## Stone on every face of `retained` that neither the hill itself nor a
+	## building already closes: lateral faces as stacked wall modules, and the
+	## horizontal faces -- the terrace tread on top and the vault soffit under
+	## mass that stands over a street -- as the same module laid flat.
+	##
+	## Lateral faces are grouped into vertical runs first, so a run is tiled by
+	## whole modules from its top down and the lowest one buries its remainder
+	## exactly as the one-band court does -- never two coplanar modules on the
+	## same face.
 	##
 	## Pure function of two integer cell sets, and every loop runs over a sorted
 	## key list, so the payload is byte-identical for identical input.
@@ -217,8 +220,58 @@ static func retaining_walls(retained: Dictionary,
 			_stack_retaining_run(out, Vector2i(key.x, key.y), direction,
 				bands[index], bands[last] + 1)
 			index = last + 1
+	_lay_retaining_decks(out, retained, solids, cells)
 	assert(out.validate())
 	return out
+
+
+static func _lay_retaining_decks(out: EnvironmentInstancePayload,
+		retained: Dictionary, solids: Dictionary,
+		cells: Array[Vector3i]) -> void:
+	## The horizontal faces the wall vocabulary cannot close. Without them a
+	## rendered hill is an open-topped shell you see straight down into, and a
+	## street cut through the hill is a roofless trench however much mass the
+	## excavation left above it -- which is the whole reason the carver's
+	## covered majority has never read as a passage.
+	##
+	## Emitted per MACRO column, because the retained set is always whole macro
+	## columns (both its sources expand a macro cell into its 2x2 block) and a
+	## building always claims whole macro columns too. Two flat modules cover
+	## one macro column; they overlap 0.27 m in x exactly as two adjacent wall
+	## modules on a 1.5 m lattice already do, so this is the module's existing
+	## tiling tolerance rather than a new one. No module is scaled.
+	for cell: Vector3i in cells:
+		if posmod(cell.x, 2) != 0 or posmod(cell.z, 2) != 0:
+			continue
+		var whole := true
+		for x_offset in 2:
+			for z_offset in 2:
+				if not retained.has(Vector3i(cell.x + x_offset, cell.y,
+						cell.z + z_offset)):
+					whole = false
+		if not whole:
+			continue
+		for direction: Vector3i in [Vector3i.UP, Vector3i.DOWN]:
+			var open := true
+			for x_offset in 2:
+				for z_offset in 2:
+					var neighbor := Vector3i(cell.x + x_offset,
+						cell.y + direction.y, cell.z + z_offset)
+					if retained.has(neighbor) or solids.has(neighbor):
+						open = false
+			if not open:
+				continue
+			var surface := float(cell.y + (1 if direction.y > 0 else 0)) \
+				* FabricRecipe.CELL_SIZE
+			for x_offset in 2:
+				var origin := Vector3(float(cell.x + x_offset)
+					* FabricRecipe.CELL_SIZE, surface,
+					(float(cell.z) + 1.5) * FabricRecipe.CELL_SIZE)
+				out.add(LOW_RETAINING_WALL,
+					Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), origin),
+					Color.WHITE,
+					StringName("terrace-deck/%d/%d/%d/%d/%d" % [cell.x,
+						cell.y, cell.z, direction.y, x_offset]))
 
 
 static func _stack_retaining_run(out: EnvironmentInstancePayload,

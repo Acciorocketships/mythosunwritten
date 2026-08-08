@@ -131,6 +131,9 @@ func _capture_all() -> void:
 			bounds.position.y + 2.0, span * 0.55), "target": center
 			+ Vector3(0.0, bounds.position.y + 3.0, 0.0), "fov": 70.0},
 	]
+	var route_eye := _covered_route_eye()
+	if not route_eye.is_empty():
+		views.append(route_eye)
 	for view: Dictionary in views:
 		_camera.fov = float(view.fov)
 		_camera.look_at_from_position(view.position as Vector3,
@@ -145,6 +148,45 @@ func _capture_all() -> void:
 		assert(image != null and image.save_png(path) == OK)
 		print("[mass_first_preview] captured ", path)
 	get_tree().quit()
+
+
+func _covered_route_eye() -> Dictionary:
+	## Standing on the street cell carrying the most mass overhead, looking along
+	## the street. The fixed overview cameras cannot answer "is there a path
+	## through the city", which is the question this round is judged on.
+	if _fabric == null or _fabric.surface_plan == null:
+		return {}
+	var floors := _fabric.surface_plan.cells_for_kind(
+		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT)
+	var retained := _fabric.retained_terrace_cells
+	var best := Vector3i(2147483647, 0, 0)
+	var best_cover := 0
+	for cell: Vector3i in floors:
+		var cover := 0
+		for band in range(cell.y + 2, cell.y + 10):
+			if retained.has(Vector3i(cell.x, band, cell.z)):
+				cover += 1
+		if cover > best_cover:
+			best_cover = cover
+			best = cell
+	if best.x == 2147483647:
+		return {}
+	var forward := Vector3.ZERO
+	for cell: Vector3i in floors:
+		if cell.y != best.y or cell == best:
+			continue
+		var delta := Vector3(cell - best)
+		if delta.length() < 1.5 or delta.length() > 8.0:
+			continue
+		forward = delta.normalized()
+		break
+	if forward == Vector3.ZERO:
+		forward = Vector3(0.0, 0.0, 1.0)
+	var eye := Vector3(best) * FabricRecipe.CELL_SIZE + Vector3(0.0, 1.4, 0.0)
+	print("[mass_first_preview] route eye at %s with %d bands overhead" % [
+		best, best_cover])
+	return {"id": "route-eye", "position": eye,
+		"target": eye + forward * 6.0, "fov": 75.0}
 
 
 func _fabric_bounds() -> AABB:

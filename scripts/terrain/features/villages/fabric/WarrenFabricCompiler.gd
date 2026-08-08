@@ -55,7 +55,7 @@ static func solve(assets: WarrenAssetPlan,
 		last_failure = "solid/void classification failed: %s" % \
 			FabricSolidVoidClassifier.last_failure
 		return null
-	if not result.set_retained_terrace(_retained_terrace(town)):
+	if not result.set_retained_terrace(_retained_terrace(town, result)):
 		last_failure = "retained terrace overlaps built mass"
 		return null
 	var lineage_audit := assets.audit.duplicate(true)
@@ -76,11 +76,26 @@ static func solve(assets: WarrenAssetPlan,
 	return result
 
 
-static func _retained_terrace(town: WarrenTownPlan) -> Dictionary:
-	## The hill under every raised house, unioned. Empty for a town whose
-	## envelope declares no terrace -- route-first always, and any mass-first
-	## house already standing on its own natural ground -- so this is a no-op
-	## wherever there is no hill to render.
+static func _retained_terrace(town: WarrenTownPlan,
+		plan: SettlementFabricPlan) -> Dictionary:
+	## Every cell of the standing solid that is not a building: the hill the
+	## town is cut into, at construction resolution.
+	##
+	## The per-parcel declaration alone renders only the plinth directly under a
+	## raised house, which leaves the other ~250 massif columns invisible -- so
+	## a house's plinth stands as an isolated stone face however short the
+	## massif's own steps are, and the excavated street, whose covered majority
+	## the carver's cover gate guarantees, has no mass drawn around or above it
+	## and reads as an open trench. Rendering the whole remainder is what makes
+	## the massif's MAX_NEIGHBOR_STEP_BANDS silhouette visible: no exposed stone
+	## face can then exceed one riser, because the mass one cell over is drawn
+	## too, and a covered route cell becomes a passage with stone beside and
+	## overhead.
+	##
+	## MASS-FIRST ONLY, keyed on the massif provenance the excavation adapter
+	## attaches and nothing else sets. A route-first town's Gaussian mass is
+	## deliberately NOT rock (see WarrenPrunedMassPlan's header) and this must
+	## not start rendering it.
 	var out: Dictionary = {}
 	if town == null or town.parcels == null:
 		return out
@@ -88,6 +103,20 @@ static func _retained_terrace(town: WarrenTownPlan) -> Dictionary:
 		for cell: Vector3i in WarrenParcelConstruction.retained_terrace_cells(
 				parcel):
 			out[cell] = true
+	if town.volume == null or not town.volume.mass_context.has(&"massif"):
+		return out
+	var solids := plan.transformed_cells(&"solid")
+	var macro_cells: Array[Vector3i] = []
+	macro_cells.assign(town.volume.mass_cells.keys())
+	macro_cells.sort()
+	for macro_cell: Vector3i in macro_cells:
+		for x_offset in 2:
+			for z_offset in 2:
+				var cell := Vector3i(macro_cell.x * 2 + x_offset, macro_cell.y,
+					macro_cell.z * 2 + z_offset)
+				if solids.has(cell):
+					continue
+				out[cell] = true
 	return out
 
 

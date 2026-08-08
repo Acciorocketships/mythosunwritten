@@ -193,6 +193,51 @@ func test_a_terrace_face_the_hill_itself_closes_gets_no_wall() -> void:
 			"a wall was built on the face the two terraces share")
 
 
+func test_hill_standing_over_a_street_is_closed_underneath_and_on_top() -> void:
+	## The excavation's cover gate guarantees a majority of route cells carry
+	## massif mass overhead, but the wall vocabulary closes only lateral faces,
+	## so that mass rendered as nothing and every covered street read as an open
+	## trench. A macro column of hill standing over air is decked UNDERNEATH --
+	## the vault a covered route walks through -- and on TOP, so the rendered
+	## hill is not an open-topped shell you see straight down into.
+	var retained: Dictionary = {}
+	for band: int in [3, 4]:
+		for x in 2:
+			for z in 2:
+				retained[Vector3i(x, band, z)] = true
+	var payload := SettlementFabricAssembler.retaining_walls(retained, {})
+	assert_true(payload.validate())
+	var batch := payload.batches.get(
+		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
+	var heights: Array[float] = []
+	for value: Variant in batch.get("transforms", []):
+		var placement := value as Transform3D
+		if placement.basis.y.y > 0.5:
+			continue
+		heights.append(snappedf(placement.origin.y, 0.001))
+	heights.sort()
+	assert_eq(heights, [4.5, 4.5, 7.5, 7.5] as Array[float],
+		"one macro column of hill over a street needs a soffit at its "
+		+ "underside and a tread on its top, two modules each")
+	# Burying the top under one more band of hill must remove the tread from
+	# the band below it: a deck inside the hill is a deck nobody can see.
+	for x in 2:
+		for z in 2:
+			retained[Vector3i(x, 5, z)] = true
+	var buried := SettlementFabricAssembler.retaining_walls(retained, {})
+	var buried_batch := buried.batches.get(
+		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
+	var buried_heights: Array[float] = []
+	for value: Variant in buried_batch.get("transforms", []):
+		var placement := value as Transform3D
+		if placement.basis.y.y > 0.5:
+			continue
+		buried_heights.append(snappedf(placement.origin.y, 0.001))
+	buried_heights.sort()
+	assert_eq(buried_heights, [4.5, 4.5, 9.0, 9.0] as Array[float],
+		"only the exposed horizontal faces may be decked")
+
+
 func test_retaining_walls_are_deterministic_and_uniquely_identified() -> void:
 	var retained: Dictionary = {}
 	for band in 5:
