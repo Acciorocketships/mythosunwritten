@@ -14,7 +14,7 @@ extends RefCounted
 ## Gaussian's flat outer tail (see fix-round-1 in task-1-report.md) either
 ## fractured the footprint (when it also gated existence) or produced
 ## cliffs of up to 20 bands between neighbours (when it only touched level).
-const RADIUS_CELLS := 12
+const RADIUS_CELLS := 16
 const MIN_CORE_BANDS := 16
 const MAX_CORE_BANDS := 20
 const MIN_TERRACE_LEVELS := 5

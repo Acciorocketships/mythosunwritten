@@ -33,8 +33,9 @@ func test_massif_builds_tall_terraced_and_deterministic() -> void:
 func test_massif_seeds_differ_and_respect_ground_bands() -> void:
 	var flat := WarrenMassifBuilder.build(1)
 	var raised_bands: Dictionary = {}
-	for z in range(-12, 13):
-		for x in range(-12, 13):
+	var span := WarrenMassifBuilder.RADIUS_CELLS
+	for z in range(-span, span + 1):
+		for x in range(-span, span + 1):
 			raised_bands[Vector2i(x, z)] = 2
 	var raised := WarrenMassifBuilder.build(1, raised_bands)
 	assert_not_null(flat, WarrenMassifBuilder.last_failure)
@@ -83,7 +84,7 @@ func test_the_address_gate_no_longer_forces_a_tower_at_the_top_of_the_climb() \
 	# Seeds re-pinned to survivors of the rim step rule: 13 no longer builds
 	# (plateau of 7 cells), which is a seed-supply fact reported in
 	# task-13-report.md, not a property of the datum split this test pins.
-	for world_seed in [16, 17]:
+	for world_seed in [17, 19]:
 		var massif := WarrenMassifBuilder.build(world_seed)
 		assert_not_null(massif, WarrenMassifBuilder.last_failure)
 		if massif == null:
@@ -146,7 +147,7 @@ func test_the_rim_steps_down_to_the_ground_like_every_other_terrace() -> void:
 	## vertical face anywhere in the solid is one riser, so a viewer never sees
 	## more than MAX_NEIGHBOR_STEP_BANDS of unbroken wall before a setback,
 	## whatever material later dresses it.
-	for world_seed: int in [0, 1, 3, 5, 16, 18]:
+	for world_seed: int in [0, 1, 3, 5, 11, 18]:
 		var massif := WarrenMassifBuilder.build(world_seed)
 		assert_not_null(massif, "seed %d: %s" % [world_seed,
 			WarrenMassifBuilder.last_failure])

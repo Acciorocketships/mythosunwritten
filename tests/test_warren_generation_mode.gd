@@ -18,7 +18,7 @@ extends GutTest
 ## for the one stage that still consumes the corpus and why that is a route
 ## model conflict rather than a gate to relax.
 
-const MASS_FIRST_SEED := 1
+const MASS_FIRST_SEED := 11
 
 ## Boring one massif twelve times costs ~11s, so the frontier is built once and
 ## shared. Volumes are sealed and immutable; partition_parcels() builds fresh

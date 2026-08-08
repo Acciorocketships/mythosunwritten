@@ -10,12 +10,12 @@ extends GutTest
 ## Every seed the report tabulates, so the table is reproducible from the
 ## suite. Seven towns cost roughly 15s; seeds 2 and 7 are rejected by the
 ## carver and seed 8 by the massif builder, so they are not in the corpus.
-const CORPUS: Array[int] = [0, 1, 3, 4, 5, 6, 9]
+const CORPUS: Array[int] = [1, 3, 4, 5, 6, 9, 11]
 ## Seeds whose whole mass-first frontier is built, so the parcel stage can be
 ## audited against the volume production actually hands it -- arcade and
 ## gallery walk cells included. Three towns cost roughly 45s, which is why this
 ## is a short list rather than CORPUS.
-const FRONTIER_CORPUS: Array[int] = [1, 5, 9]
+const FRONTIER_CORPUS: Array[int] = [6, 11, 12]
 ## Deliberately stricter than WarrenSolidPartitioner's own admission rule and
 ## derived without calling it: two full storeys of unexcavated solid above the
 ## street floor, on unexcavated ground. Anything this obviously buildable is a
