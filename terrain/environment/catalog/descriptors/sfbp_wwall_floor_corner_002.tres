@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_20074"]
+
+[resource]
+script = ExtResource("1_20074")
+id = &"sfbp.wwall.floor_corner.002"
+visual_path = "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_floor_corner_002.tres"
+tags = Array[StringName]([&"deck", &"slab", &"village", &"walkway"])
+measured_aabb = AABB(-0.9058174, -2.3005566e-07, -1.0916194, 1.8116348, 0.10021206, 2.1832387)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_walkways:sfbp.wwall.floor_corner.002"

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ydr66"]
+
+[resource]
+script = ExtResource("1_ydr66")
+id = &"sfbp.wwall.wall.s.004"
+visual_path = "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_004.tres"
+tags = Array[StringName]([&"building", &"village", &"walkway"])
+measured_aabb = AABB(-4.0237045, -2.1775098e-07, -0.3412352, 8.047409, 6.268172, 0.6824703)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_walkways:sfbp.wwall.wall.s.004"

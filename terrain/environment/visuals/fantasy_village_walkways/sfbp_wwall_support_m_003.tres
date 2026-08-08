@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_rd8yf"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_walkways/sfbp_wwall_support_m_003_piece_00.res" id="2_4cyig"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_3qobx"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_walkways/sfbp_wwall_support_m_003_piece_00.res" id="4_m35n3"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_wbc1u"]
+
+[sub_resource type="Resource" id="Resource_exn06"]
+script = ExtResource("1_rd8yf")
+shape = ExtResource("2_4cyig")
+
+[sub_resource type="Resource" id="Resource_1myoh"]
+script = ExtResource("3_3qobx")
+mesh = ExtResource("4_m35n3")
+
+[resource]
+script = ExtResource("5_wbc1u")
+pieces = Array[ExtResource("3_3qobx")]([SubResource("Resource_1myoh")])
+collisions = Array[ExtResource("1_rd8yf")]([SubResource("Resource_exn06")])

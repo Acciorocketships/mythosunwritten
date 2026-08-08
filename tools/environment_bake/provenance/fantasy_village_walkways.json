@@ -1,0 +1,2184 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_arch_001.tres",
+      "id": "sfbp.arch.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 668,
+        "measured_aabb": {
+          "position": [
+            -2.94863772392273,
+            -0.014970269985497,
+            -0.0171665251255035
+          ],
+          "size": [
+            6.2164478302002,
+            4.14957714080811,
+            0.409098476171494
+          ]
+        },
+        "mesh_bytes": 69370,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 668
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.arch.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 8000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 8000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/General Props/Arch/SFBP_Arch_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "arch",
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/General Props/Arch/SFBP_Arch_001.fbx",
+      "source_sha256": "5bd6cb26c7e08fea5e6596acf5ea1a8d2c356cf33caf36d24cbf47591dd2069d",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_arch_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_arch_002.tres",
+      "id": "sfbp.arch.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 344,
+        "measured_aabb": {
+          "position": [
+            -2.94863772392273,
+            -0.014970269985497,
+            0.0923954918980598
+          ],
+          "size": [
+            6.21647834777832,
+            4.14957714080811,
+            0.210919916629791
+          ]
+        },
+        "mesh_bytes": 31758,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 344
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.arch.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 8000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 3.0,
+        "max_visual_triangles": 8000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/General Props/Arch/SFBP_Arch_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "arch",
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/General Props/Arch/SFBP_Arch_002.fbx",
+      "source_sha256": "81a6a70f109a0fcd62080dca11e5ad196c2eb8d2b25d2ca0ef394ea1a844e6d5",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_arch_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_floor_001.tres",
+      "id": "sfbp.wwall.floor.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.91458964347839,
+            0.000000088722835300814,
+            -1.23490869998932
+          ],
+          "size": [
+            3.82917928695679,
+            0.224238678812981,
+            2.46981739997864
+          ]
+        },
+        "mesh_bytes": 58045,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 636
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_footprint": 0.97,
+        "collision_profile": "flat_box",
+        "id": "sfbp.wwall.floor.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "deck",
+          "slab",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_001.fbx",
+      "source_sha256": "e659dc28b1736aea7c5377c7d0d6a32fa4f36876059d6e42d8d712a6354a47e1",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_floor_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_floor_002.tres",
+      "id": "sfbp.wwall.floor.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -4.02032232284546,
+            0.000000346387110994328,
+            -1.11869049072266
+          ],
+          "size": [
+            8.04064464569092,
+            0.233886897563934,
+            2.23738098144531
+          ]
+        },
+        "mesh_bytes": 108085,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1192
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_footprint": 0.97,
+        "collision_profile": "flat_box",
+        "id": "sfbp.wwall.floor.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "deck",
+          "slab",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_002.fbx",
+      "source_sha256": "d1ef34cac0a88a5d8793d142da1249a48643982d992243f81acd7861bd683baf",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_floor_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_floor_003.tres",
+      "id": "sfbp.wwall.floor.003",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.50890278816223,
+            -0.0000000446627694827839,
+            -1.60354149341583
+          ],
+          "size": [
+            7.01780557632446,
+            0.224239096045494,
+            3.20708298683167
+          ]
+        },
+        "mesh_bytes": 116185,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1282
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_footprint": 0.97,
+        "collision_profile": "flat_box",
+        "id": "sfbp.wwall.floor.003",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "deck",
+          "slab",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_003.fbx",
+      "source_sha256": "c9f4f4fbcffd549c4efe626e63c5e9737924aeafda6ba5c544549142f04ec936",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_floor_003.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_floor_004.tres",
+      "id": "sfbp.wwall.floor.004",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.00999999046326,
+            -0.000000189003671380306,
+            -1.11760497093201
+          ],
+          "size": [
+            4.01999998092651,
+            0.233339592814445,
+            2.23521375656128
+          ]
+        },
+        "mesh_bytes": 55165,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 604
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_footprint": 0.97,
+        "collision_profile": "flat_box",
+        "id": "sfbp.wwall.floor.004",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_004.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "deck",
+          "slab",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_004.fbx",
+      "source_sha256": "c5ab994b6e8188b235505f5793a3383af658ac7d401a2439e6b75654eddce165",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_floor_004.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_floor_corner_001.tres",
+      "id": "sfbp.wwall.floor_corner.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.09892559051514,
+            -0.0000000762269181109332,
+            -1.15242063999176
+          ],
+          "size": [
+            2.19785118103027,
+            0.101575993001461,
+            2.30484127998352
+          ]
+        },
+        "mesh_bytes": 26012,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 280
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_footprint": 0.9,
+        "collision_profile": "flat_box",
+        "id": "sfbp.wwall.floor_corner.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Corner_1.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "deck",
+          "slab",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Corner_1.fbx",
+      "source_sha256": "6138319439a9ec0e005691e2db21b480ad2319a0f3d1e83de483fb4fc6e088c8",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_floor_corner_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_floor_corner_002.tres",
+      "id": "sfbp.wwall.floor_corner.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.90581738948822,
+            -0.000000230055661631923,
+            -1.09161937236786
+          ],
+          "size": [
+            1.81163477897644,
+            0.100212059915066,
+            2.18323874473572
+          ]
+        },
+        "mesh_bytes": 24032,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 258
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_footprint": 0.9,
+        "collision_profile": "flat_box",
+        "id": "sfbp.wwall.floor_corner.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Corner_2.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "deck",
+          "slab",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Corner_2.fbx",
+      "source_sha256": "86d6c4506b15fa6380cbf527b2dc252766e69c5dd9c6a9497c4018f794b21a91",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_floor_corner_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_m_001.tres",
+      "id": "sfbp.wwall.support.m.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -4.02032232284546,
+            -0.0000000400320487869976,
+            -1.41004300117493
+          ],
+          "size": [
+            8.04064464569092,
+            4.7938871383667,
+            2.82008647918701
+          ]
+        },
+        "mesh_bytes": 165329,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1828
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.m.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_M_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_M_001.fbx",
+      "source_sha256": "1db9aaa22b5a6594753d65364189a7829669ab73db84e59427fe0d3cb6241312",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_m_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_m_002.tres",
+      "id": "sfbp.wwall.support.m.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.50890278816223,
+            0.000000148712686609542,
+            -1.85354173183441
+          ],
+          "size": [
+            7.01780557632446,
+            4.79523897171021,
+            3.26358532905579
+          ]
+        },
+        "mesh_bytes": 135269,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1494
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.m.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_M_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_M_002.fbx",
+      "source_sha256": "5341fe38b960d294dba51b881477614699c4c3fb543053c03fbd309e002aabac",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_m_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_m_003.tres",
+      "id": "sfbp.wwall.support.m.003",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.9145895242691,
+            0.000000148712686609542,
+            -1.41004300117493
+          ],
+          "size": [
+            3.82917928695679,
+            4.79523897171021,
+            2.89495182037354
+          ]
+        },
+        "mesh_bytes": 77129,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 848
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.m.003",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_M_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_M_003.fbx",
+      "source_sha256": "13091b8637456c9d1f3e4145567d6759b03016c89e41c7ef33e9ceb040f06a36",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_m_003.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_m_004.tres",
+      "id": "sfbp.wwall.support.m.004",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.01000022888184,
+            0.000000148712686609542,
+            -1.41004300117493
+          ],
+          "size": [
+            4.02000045776367,
+            4.79333972930908,
+            2.82008647918701
+          ]
+        },
+        "mesh_bytes": 74249,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 816
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.m.004",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_M_004.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_M_004.fbx",
+      "source_sha256": "a1d5bc379255ab6043c20c9c51132e9e6f488e119d4e86a5c8af2caef5bf4692",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_m_004.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_s_001.tres",
+      "id": "sfbp.wwall.support.s.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.85458815097809,
+            0.000000122482902042975,
+            -1.2659068107605
+          ],
+          "size": [
+            3.82917928695679,
+            3.7242386341095,
+            2.46981716156006
+          ]
+        },
+        "mesh_bytes": 77129,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 848
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.s.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_001.fbx",
+      "source_sha256": "b5bb6c45ec0eefa3ad352606d0ed5a74ff3662006e49345b16828bf10905b258",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_s_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_s_002.tres",
+      "id": "sfbp.wwall.support.s.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.158030971884727,
+            0.00000000000954426641885942,
+            -1.18586707115173
+          ],
+          "size": [
+            0.316039115190506,
+            3.60563158988953,
+            2.37173414230347
+          ]
+        },
+        "mesh_bytes": 19889,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 212
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.s.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_002.fbx",
+      "source_sha256": "ed778d799527b2bd40784b0c3c3fd6d370a8a41f97d6cc78d3622a72268d5b8d",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_s_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_s_003.tres",
+      "id": "sfbp.wwall.support.s.003",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.69679689407349,
+            -0.000000160634215262689,
+            -1.18845343589783
+          ],
+          "size": [
+            8.04064559936523,
+            3.73388719558716,
+            2.51455354690552
+          ]
+        },
+        "mesh_bytes": 165329,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1828
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.s.003",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_003.fbx",
+      "source_sha256": "d5d7f194a1e4bc3196d66aec8eaedbfab1d4dc3dfb8972ead867d46d2bcf8b5c",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_s_003.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_s_004.tres",
+      "id": "sfbp.wwall.support.s.004",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.93648433685303,
+            0.000000122483584164002,
+            -1.18586707115173
+          ],
+          "size": [
+            4.0200023651123,
+            3.73333954811096,
+            2.51087665557861
+          ]
+        },
+        "mesh_bytes": 74249,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 816
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.s.004",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_004.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_004.fbx",
+      "source_sha256": "7cc1bc4020eb553331dee59f6e51f75d73c0b1452415f04d716bed3bbe997d2b",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_s_004.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_support_s_005.tres",
+      "id": "sfbp.wwall.support.s.005",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.44890141487122,
+            0.000000122482902042975,
+            -2.0045428276062
+          ],
+          "size": [
+            7.01780557632446,
+            3.72423839569092,
+            3.20708322525024
+          ]
+        },
+        "mesh_bytes": 135269,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1494
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "sfbp.wwall.support.s.005",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3500.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_005.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "support",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Floor/SFBP_WWall_Floor_Support_S_005.fbx",
+      "source_sha256": "b6d716454b4aba284ea14f8f8eff56d112d60148f25ce49f088e92c32f97437a",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_support_s_005.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_tower_001.tres",
+      "id": "sfbp.wwall.tower.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 23574,
+        "measured_aabb": {
+          "position": [
+            -3.64453339576721,
+            0.000000224126608827646,
+            -2.74303674697876
+          ],
+          "size": [
+            7.22509670257568,
+            15.38720703125,
+            5.6927661895752
+          ]
+        },
+        "mesh_bytes": 2242769,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 23574
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.tower.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 30000.0,
+        "max_mesh_bytes": 16777216.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 30000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Tower/SFBP_WWall_Tower_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "walkway_tower",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/Tower/SFBP_WWall_Tower_001.fbx",
+      "source_sha256": "e0a6ca189495378381b547e62b065bb2b6044b4bbf21f224ccbe1bb27e19c54b",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_tower_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_001.tres",
+      "id": "sfbp.wwall.wall.m.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -4.03882360458374,
+            -0.000000218892424186379,
+            -0.341235190629959
+          ],
+          "size": [
+            8.0776481628418,
+            9.29128170013428,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 241950,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_001.fbx",
+      "source_sha256": "e7183b3eb1824ff4a792115c05a6a4ef311dac3901e2eddd36402740f225a2be",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_002.tres",
+      "id": "sfbp.wwall.wall.m.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.06342649459839,
+            -0.0000000697540940564068,
+            -0.341235160827637
+          ],
+          "size": [
+            4.12685346603394,
+            9.29128170013428,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 121350,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_002.fbx",
+      "source_sha256": "e691387fc5cac16a270575514b499022049ec5beee1805bcb33aced40f9ac6aa",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_003.tres",
+      "id": "sfbp.wwall.wall.m.003",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.06342649459839,
+            -0.0000000697541082672615,
+            -0.341235160827637
+          ],
+          "size": [
+            4.12685346603394,
+            8.56818771362305,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 121350,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.003",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_003.fbx",
+      "source_sha256": "4d0b4a888dee1d8681dec92c6e268541f2e525a139ede65d86e0c14ddcf76a0e",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_003.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_004.tres",
+      "id": "sfbp.wwall.wall.m.004",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -4.03882360458374,
+            -0.000000218892409975524,
+            -0.341235190629959
+          ],
+          "size": [
+            8.0776481628418,
+            9.29128170013428,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 241782,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.004",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_004.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_004.fbx",
+      "source_sha256": "1ec0689ef0c588f65083fc1939d5eef400467e0190560d7f37220930f2e6507b",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_004.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_005.tres",
+      "id": "sfbp.wwall.wall.m.005",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -4.05031728744507,
+            -0.000000219760167396998,
+            -0.341235607862473
+          ],
+          "size": [
+            8.10063552856445,
+            8.56818771362305,
+            0.6824711561203
+          ]
+        },
+        "mesh_bytes": 241894,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.005",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_005.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_005.fbx",
+      "source_sha256": "2ca55fa5e0e550b66c3d2c3f28fc454b038629118abd7f573a04edcac4d36613",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_005.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_006.tres",
+      "id": "sfbp.wwall.wall.m.006",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -3.6435854434967,
+            -0.000000222595261334391,
+            -1.11186969280243
+          ],
+          "size": [
+            7.28717136383057,
+            8.56818771362305,
+            2.22373938560486
+          ]
+        },
+        "mesh_bytes": 242006,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.006",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_006.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_006.fbx",
+      "source_sha256": "ecb42fa1e245081689af990da4552832f074f5975a18558c48bcab417016cb47",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_006.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_007.tres",
+      "id": "sfbp.wwall.wall.m.007",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -3.6435854434967,
+            -0.000000222595261334391,
+            -1.11186969280243
+          ],
+          "size": [
+            7.28717136383057,
+            9.55659770965576,
+            2.22373938560486
+          ]
+        },
+        "mesh_bytes": 242006,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.007",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_007.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_007.fbx",
+      "source_sha256": "5973ee62165befe4ca2d4b84e8282cdefca4b528d62873c7ba8b1571ce5cf188",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_007.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_008.tres",
+      "id": "sfbp.wwall.wall.m.008",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.04617071151733,
+            -0.000000101834054078154,
+            -0.495101451873779
+          ],
+          "size": [
+            4.09234189987183,
+            8.56818580627441,
+            0.990202903747559
+          ]
+        },
+        "mesh_bytes": 121406,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.008",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_008.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_008.fbx",
+      "source_sha256": "a0b21ae0a8046bc27ac0d6a245c219fee5cf312ad7b4446843bbf5e9b910b92c",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_008.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_009.tres",
+      "id": "sfbp.wwall.wall.m.009",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.04617071151733,
+            -0.000000101834054078154,
+            -0.495101451873779
+          ],
+          "size": [
+            4.09234189987183,
+            9.49007034301758,
+            0.990202903747559
+          ]
+        },
+        "mesh_bytes": 121406,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.009",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_009.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_009.fbx",
+      "source_sha256": "528c3c32f6eb5544e4ca65c1ddc9d7f96b386c4a112ea2ffd3a60da6345563ce",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_009.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_010.tres",
+      "id": "sfbp.wwall.wall.m.010",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.06342649459839,
+            -0.0000000697540940564068,
+            -0.341235160827637
+          ],
+          "size": [
+            4.12685346603394,
+            9.29128170013428,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 121350,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.010",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_010.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_010.fbx",
+      "source_sha256": "3df7780fc3867b0cdefde9b77870580eeafb02ee3ebdc0873d95808e1462f2e9",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_010.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_011.tres",
+      "id": "sfbp.wwall.wall.m.011",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -3.6435854434967,
+            -0.000000222595261334391,
+            -1.11186969280243
+          ],
+          "size": [
+            7.28717136383057,
+            9.49997425079346,
+            2.22373938560486
+          ]
+        },
+        "mesh_bytes": 242006,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m.011",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_011.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_011.fbx",
+      "source_sha256": "6a22beb03a0ff062ab26b57184d8b0d5838618799138d47219a16830f8526d01",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_011.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_door_001.tres",
+      "id": "sfbp.wwall.wall.m_door.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2214,
+        "measured_aabb": {
+          "position": [
+            -2.34775710105896,
+            -1.93246865272522,
+            -0.260075032711029
+          ],
+          "size": [
+            2.38552093505859,
+            4.27297782897949,
+            0.479431957006454
+          ]
+        },
+        "mesh_bytes": 199959,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2214
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m_door.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_Door_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_Door_001.fbx",
+      "source_sha256": "5e505d1b71c7e6ff6b6adb0899050517d062cbb530f17e9c005e75994dba5f6e",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_door_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_entrance_001.tres",
+      "id": "sfbp.wwall.wall.m_entrance.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2794,
+        "measured_aabb": {
+          "position": [
+            -4.03882360458374,
+            -0.000000218892409975524,
+            -0.373916298151016
+          ],
+          "size": [
+            8.0776481628418,
+            9.29128170013428,
+            0.800312042236328
+          ]
+        },
+        "mesh_bytes": 252107,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2794
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m_entrance.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_Entrance_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_Entrance_001.fbx",
+      "source_sha256": "8650c8117743322afd97fa5f21f3a8a4027023c81e19c007b2a3c904da40d51d",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_entrance_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_m_entrance_002.tres",
+      "id": "sfbp.wwall.wall.m_entrance.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 7222,
+        "measured_aabb": {
+          "position": [
+            -4.0388240814209,
+            -0.000000175126984913732,
+            -0.787885189056396
+          ],
+          "size": [
+            8.0776481628418,
+            9.29128170013428,
+            1.21428143978119
+          ]
+        },
+        "mesh_bytes": 650795,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 7222
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.m_entrance.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_Entrance_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/M/SFBP_WWall_M_Entrance_002.fbx",
+      "source_sha256": "b57f041305d8effe374f8052a78759c89b1f07914e34891e2545f7b4324b36a2",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_m_entrance_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_001.tres",
+      "id": "sfbp.wwall.wall.s.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.04617071151733,
+            -0.000000101834054078154,
+            -0.495101451873779
+          ],
+          "size": [
+            4.09234189987183,
+            7.18972587585449,
+            0.990202903747559
+          ]
+        },
+        "mesh_bytes": 121406,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_001.fbx",
+      "source_sha256": "c50d7dbe9d902b6703a5c2f061b78a8fb5e504ca4bd0ab828acad5dcbd7b862a",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_002.tres",
+      "id": "sfbp.wwall.wall.s.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.06342649459839,
+            -0.0000000697540940564068,
+            -0.341235160827637
+          ],
+          "size": [
+            4.12685346603394,
+            6.26817178726196,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 121350,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_002.fbx",
+      "source_sha256": "bc9b5fcdb97dd4ebfdaf696db755d1547bbea2491499c47288bfd8a7a7910085",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_002.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_003.tres",
+      "id": "sfbp.wwall.wall.s.003",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.06342649459839,
+            -0.0000000697540940564068,
+            -0.341235160827637
+          ],
+          "size": [
+            4.12685346603394,
+            7.26384258270264,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 121350,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.003",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_003.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_003.fbx",
+      "source_sha256": "a4c32fc03a5805e40bc226f5b82822771516b3e28bee5eab508eb42a29436074",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_003.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_004.tres",
+      "id": "sfbp.wwall.wall.s.004",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -4.02370452880859,
+            -0.000000217750979913944,
+            -0.341235190629959
+          ],
+          "size": [
+            8.04740905761719,
+            6.26817178726196,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 242006,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.004",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_004.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_004.fbx",
+      "source_sha256": "1e03b251cac57c55f25cc532f396cac308c5b378c9c42c3480e515f715c106cb",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_004.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_005.tres",
+      "id": "sfbp.wwall.wall.s.005",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -4.04304122924805,
+            -0.000000219210804175418,
+            -0.341235667467117
+          ],
+          "size": [
+            8.08608245849609,
+            7.26384258270264,
+            0.68247127532959
+          ]
+        },
+        "mesh_bytes": 241894,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.005",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_005.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_005.fbx",
+      "source_sha256": "6fadf4b7566f879642022fca4f6b17a5806b67a739c5acb4b48699cb8d134b04",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_005.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_006.tres",
+      "id": "sfbp.wwall.wall.s.006",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.06342649459839,
+            -0.0000000697540940564068,
+            -0.341235160827637
+          ],
+          "size": [
+            4.12685346603394,
+            7.26384258270264,
+            0.682470321655273
+          ]
+        },
+        "mesh_bytes": 121350,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.006",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_006.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_006.fbx",
+      "source_sha256": "edd0bd769cf30b588a5c4a61d828bd99fc7788e2fc5e6d75df48b6e3fd73eacf",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_006.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_007.tres",
+      "id": "sfbp.wwall.wall.s.007",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -4.04304122924805,
+            -0.000000219210804175418,
+            -0.341235667467117
+          ],
+          "size": [
+            8.08608245849609,
+            7.26384258270264,
+            0.68247127532959
+          ]
+        },
+        "mesh_bytes": 241894,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.007",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_007.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_007.fbx",
+      "source_sha256": "d171526dca70ac18d57de4d64718775961d3d890703e9d863d1a0af042e9133f",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_007.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_008.tres",
+      "id": "sfbp.wwall.wall.s.008",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -3.6435854434967,
+            -0.000000222595261334391,
+            -1.11186969280243
+          ],
+          "size": [
+            7.28717136383057,
+            6.25942659378052,
+            2.22373938560486
+          ]
+        },
+        "mesh_bytes": 242006,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.008",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_008.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_008.fbx",
+      "source_sha256": "0e49bf1b025c8d0b653b8687fabb656fb5c4b0ae7689041f8c7b5d2da71dc206",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_008.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_009.tres",
+      "id": "sfbp.wwall.wall.s.009",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -3.6435854434967,
+            -0.000000222595261334391,
+            -1.11186969280243
+          ],
+          "size": [
+            7.28717136383057,
+            7.25625419616699,
+            2.22373938560486
+          ]
+        },
+        "mesh_bytes": 242006,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.009",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_009.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_009.fbx",
+      "source_sha256": "fd22f25fa45106c9648eb3fe922024ebc2b1a97541aca4d29a5deb83cde463a2",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_009.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_010.tres",
+      "id": "sfbp.wwall.wall.s.010",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1340,
+        "measured_aabb": {
+          "position": [
+            -2.04617071151733,
+            -0.000000101834054078154,
+            -0.495101451873779
+          ],
+          "size": [
+            4.09234189987183,
+            6.25942420959473,
+            0.990202903747559
+          ]
+        },
+        "mesh_bytes": 121406,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1340
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.010",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_010.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_010.fbx",
+      "source_sha256": "0d6e0e99e0acc4b085bb474de5679db614a5ab47e6052624041d2cd05bede784",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_010.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_011.tres",
+      "id": "sfbp.wwall.wall.s.011",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2680,
+        "measured_aabb": {
+          "position": [
+            -3.6435854434967,
+            -0.000000222595261334391,
+            -1.11186969280243
+          ],
+          "size": [
+            7.28717136383057,
+            7.19963073730469,
+            2.22373938560486
+          ]
+        },
+        "mesh_bytes": 242006,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2680
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s.011",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_011.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_011.fbx",
+      "source_sha256": "50e9c7282686d4c0bd4f40020ef7b450fba289c012efe2624368ca9c8f2bc264",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_011.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_door_001.tres",
+      "id": "sfbp.wwall.wall.s_door.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2988,
+        "measured_aabb": {
+          "position": [
+            -2.167151927948,
+            -1.36377251148224,
+            -0.183538913726807
+          ],
+          "size": [
+            2.19380235671997,
+            3.01550579071045,
+            0.338342428207397
+          ]
+        },
+        "mesh_bytes": 269675,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2988
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s_door.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_Door_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_Door_001.fbx",
+      "source_sha256": "a1d7713951081a73283355bbd2a59eae930cc912bbf5d7f9fb575e847ffae7b9",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_door_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_entrance_001.tres",
+      "id": "sfbp.wwall.wall.s_entrance.001",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2794,
+        "measured_aabb": {
+          "position": [
+            -4.04304122924805,
+            -0.000000219210804175418,
+            -0.341235667467117
+          ],
+          "size": [
+            8.08608245849609,
+            7.26384258270264,
+            0.68247127532959
+          ]
+        },
+        "mesh_bytes": 252163,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2794
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s_entrance.001",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_Entrance_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_Entrance_001.fbx",
+      "source_sha256": "4afa055ce1633159384e4815094aa66a3fb303ee5beb3f9bc93725f97d1383c8",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_entrance_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfbp_wwall_wall_s_entrance_002.tres",
+      "id": "sfbp.wwall.wall.s_entrance.002",
+      "license": "Battle Pack source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 8770,
+        "measured_aabb": {
+          "position": [
+            -4.04304122924805,
+            -0.000000175311370753661,
+            -0.592615842819214
+          ],
+          "size": [
+            8.08608245849609,
+            7.26384258270264,
+            0.933851838111877
+          ]
+        },
+        "mesh_bytes": 790115,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 8770
+      },
+      "pack": "fantasy_village_walkways",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfbp.wwall.wall.s_entrance.002",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 10000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 10000.0,
+        "merge_pieces": true,
+        "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_Entrance_002.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "building",
+          "walkway",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/BattlePackFBX/FBX/Wooden Walls/S/SFBP_WWall_S_Entrance_002.fbx",
+      "source_sha256": "3664fb994b616b57b1caa5965bf1fc60be392c82c5d6211a17ec60740c55634c",
+      "visual": "res://terrain/environment/visuals/fantasy_village_walkways/sfbp_wwall_wall_s_entrance_002.tres"
+    }
+  ],
+  "license": "Battle Pack source-pack license",
+  "pack": "fantasy_village_walkways",
+  "tool_version": 18
+}
