@@ -42,6 +42,13 @@ extends SceneTree
 ##                     it before and after any change to the street network; the
 ##                     house count is a consequence of the address count and
 ##                     nothing else moves it as far.
+##   --stage breadth   the inside-corner audit split into the PROPERTY and the
+##                     PROXY: per plan, walk cells, total interior cells, the
+##                     ratio between them, and the full component-size
+##                     histogram. Run it over both pipelines before touching
+##                     WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS -- the
+##                     histogram is what says whether a total over 36 is a slab
+##                     or simply a bigger street network.
 ##   --stage map       one seed's massif drawn as a plan, band heights in hex,
 ##                     marking every column as street, house, gallery walk cell
 ##                     or bare solid. The fastest way to see WHERE a town's mass
@@ -97,6 +104,10 @@ func _init() -> void:
 		return
 	if _stage == "address":
 		_report_address()
+		quit()
+		return
+	if _stage == "breadth":
+		_report_breadth()
 		quit()
 		return
 	if _stage == "hillside":
@@ -438,6 +449,67 @@ func _report_fill() -> void:
 			+ " | hill %d houses/%d cells" % [on_a_hill, retained_cells]
 			+ " | BUILT storeys %s | EXPOSED storeys %s" % [
 				_ascending(storeys), _ascending(exposed)])
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _report_breadth() -> void:
+	## Is exact_route_interior_cell_count measuring breadth, or counting corners?
+	##
+	## Both pipelines, same measurement. `int` is the total the absolute cap
+	## bounds; `comp` is the component histogram, which is the only part of it
+	## that describes a SLAB. A component of 1 is one inside corner of one turn;
+	## 2 is a T-junction; a 2x2 macro plaza would be 4 and a 2x3 block 8.
+	print("pipeline seed | walk | interior | ratio | max comp | histogram")
+	var route_first_ratio := 0.0
+	var route_first_max := 0
+	var route_first_worst_component := 0
+	for world_seed: int in _seeds:
+		var envelope := WarrenVolumeEnvelope.build(world_seed, {})
+		if envelope == null:
+			continue
+		for attempt in WarrenTownSolver.TOPOLOGY_ATTEMPTS:
+			var volume := WarrenPublicRealmCarver.sealed_candidate(world_seed,
+				attempt, envelope)
+			if volume == null:
+				continue
+			volume = WarrenGroundArcadeSolver.extend(volume)
+			if volume == null:
+				continue
+			for variant: WarrenVolumePlan in \
+					WarrenElevatedFrontageSolver.variants(volume):
+				var audit := variant.exact_route_breadth_audit()
+				var walk := variant.walk_cells.size()
+				var interior := int(audit.interior_cell_count)
+				var ratio := float(interior) / float(maxi(1, walk))
+				route_first_ratio = maxf(route_first_ratio, ratio)
+				route_first_max = maxi(route_first_max, interior)
+				route_first_worst_component = maxi(route_first_worst_component,
+					int(audit.max_interior_component_size))
+				print("route-first %2d | %3d | %3d | %.3f | %d | %s" % [world_seed,
+					walk, interior, ratio,
+					int(audit.max_interior_component_size),
+					str(audit.interior_component_sizes)])
+	print("ROUTE-FIRST legitimate density: max interior %d, max ratio %.3f, " \
+		% [route_first_max, route_first_ratio]
+		+ "worst component %d" % route_first_worst_component)
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	var mass_ratio := 0.0
+	var mass_worst_component := 0
+	for world_seed: int in _seeds:
+		for volume: WarrenVolumePlan in \
+				WarrenTownSolver.mass_first_frontier(world_seed):
+			var audit := volume.exact_route_breadth_audit()
+			var walk := volume.walk_cells.size()
+			var interior := int(audit.interior_cell_count)
+			var ratio := float(interior) / float(maxi(1, walk))
+			mass_ratio = maxf(mass_ratio, ratio)
+			mass_worst_component = maxi(mass_worst_component,
+				int(audit.max_interior_component_size))
+			print("mass-first %2d | %3d | %3d | %.3f | %d | %s" % [world_seed,
+				walk, interior, ratio, int(audit.max_interior_component_size),
+				str(audit.interior_component_sizes)])
+	print("MASS-FIRST: max ratio %.3f, worst component %d" % [mass_ratio,
+		mass_worst_component])
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
 
 

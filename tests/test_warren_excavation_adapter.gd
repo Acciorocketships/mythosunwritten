@@ -344,3 +344,74 @@ func test_lanes_reach_the_plan_as_connected_auxiliary_public_realm() -> void:
 		"a lane branching off the route left an undeclared vertical turn")
 	assert_gt(int(plan.audit.auxiliary_walk_cell_count), 0,
 		"the plan records no auxiliary public realm at all")
+
+
+func _breadth_probe(walk: Array[Vector3i]) -> WarrenVolumePlan:
+	## A plan carrying exactly `walk` as one connected LEVEL chain, built far
+	## enough from any real geometry that only the breadth audit is under test.
+	## Deliberately not sealed: exact_route_breadth_audit reads walk cells and
+	## transitions, which is all this needs, and sealing would drag in the
+	## envelope, entry and landing contracts that have nothing to do with breadth.
+	var envelope := WarrenVolumeEnvelope.new()
+	var plan := WarrenVolumePlan.new(&"breadth.probe", 0, envelope)
+	for cell: Vector3i in walk:
+		plan.add_walk_cell(cell)
+	return plan
+
+
+func test_public_breadth_is_bounded_locally_not_by_total_size() -> void:
+	## The property this audit protects is a SLAB -- public floor broader than
+	## one macro cell. The total inside-corner count is not that property: it is
+	## a corner count, so it grows with how convoluted and how large the street
+	## network is, which is the quality the warren exists to produce.
+	##
+	## Pinned as an invariance so the allowance can never regress to an absolute
+	## number again. Two constructions, and they must be decided differently.
+	var winding: Array[Vector3i] = []
+	# A one-wide staircase-shaped lane: 40 macro cells, 39 turns, no two cells
+	# ever forming a 2x2 block. Every inside corner it owns is isolated.
+	var cursor := Vector3i.ZERO
+	for step in 40:
+		winding.append(cursor)
+		cursor += Vector3i.RIGHT if step % 2 == 0 else Vector3i.BACK
+	var winding_plan := _breadth_probe(winding)
+	var winding_audit := winding_plan.exact_route_breadth_audit()
+	assert_lte(int(winding_audit.max_interior_component_size),
+		WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE,
+		"a one-wide winding lane owns only isolated inside corners")
+	assert_true(winding_plan.exact_route_breadth_allows(),
+		("a %d-cell winding network with %d inside corners is not a slab and " \
+		+ "must be admitted") % [winding.size(),
+			int(winding_audit.interior_cell_count)])
+
+	# A genuine plaza: a 4x4 macro block. Same cell count order of magnitude,
+	# but the public floor is now four macro cells wide.
+	var plaza: Array[Vector3i] = []
+	for x in 4:
+		for z in 4:
+			plaza.append(Vector3i(x, 0, z))
+	var plaza_plan := _breadth_probe(plaza)
+	var plaza_audit := plaza_plan.exact_route_breadth_audit()
+	assert_gt(int(plaza_audit.max_interior_component_size),
+		WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE,
+		"a 4x4 macro block is one broad slab of public floor")
+	assert_false(plaza_plan.exact_route_breadth_allows(),
+		"a plaza must still be refused, whatever the total allowance is")
+	# And it is refused on the LOCAL rule, not on the total -- so growing the
+	# network can never make a plaza legal.
+	assert_lte(int(plaza_audit.interior_cell_count),
+		WarrenVolumePlan.interior_breadth_allowance(plaza.size()),
+		("the plaza's total is within allowance; only the component cap " \
+		+ "catches it, which is why the component cap is the real rule"))
+
+	# The allowance is a density, and it never falls below what it was.
+	assert_eq(WarrenVolumePlan.interior_breadth_allowance(10),
+		WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS,
+		"a small public realm keeps the historical absolute allowance")
+	assert_gt(WarrenVolumePlan.interior_breadth_allowance(80),
+		WarrenVolumePlan.interior_breadth_allowance(40),
+		"a larger public realm is allowed proportionally more corners")
+	for walk_cells in [1, 20, 40, 42, 80, 200]:
+		assert_gte(WarrenVolumePlan.interior_breadth_allowance(walk_cells),
+			WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS,
+			"the allowance may never drop below the historical floor")

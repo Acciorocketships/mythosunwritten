@@ -199,31 +199,36 @@ const MIN_LANE_CELLS := 3
 const MAX_LANE_CELLS := 9
 ## Total lane cells one town may carry.
 ##
-## Priced against a measured trade curve, not chosen. The binding constraint is
-## WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS: that audit counts inside
-## corners at exact resolution over the WHOLE public realm, a junction costs two
-## and a turn one, and WarrenGroundArcadeSolver._route_breadth_allows spends the
-## same 36 prospectively while carving its market branches. So lane cells and
-## arcade cells compete for one absolute corner budget, and the arcade -- which
-## runs last -- loses.
+## Priced against a measured trade curve, not chosen. This constant was 24 while
+## WarrenVolumePlan bounded inside corners by an ABSOLUTE 36: lane corners and
+## arcade corners competed for one fixed allowance, the arcade ran last and
+## lost, and clearance over the committed window collapsed .75 -> .58 -> .42 as
+## the budget went 24 -> 28 -> 32.
 ##
-## Measured over the committed arcade window (seeds 16-31), carve -> adapt ->
-## WarrenGroundArcadeSolver.extend, against the 0.55 floor
-## tests/test_warren_excavation.gd pins:
+## With that allowance re-derived as a density (see
+## WarrenVolumePlan.INTERIOR_CELLS_PER_TEN_WALK_CELLS), the competition is gone
+## and the curve changes shape entirely -- arcade clearance over seeds 16-31
+## against the 0.55 floor tests/test_warren_excavation.gd pins, and mean houses
+## over the frontier seeds 6, 7, 8, 11:
 ##
-##   lane cells  0    8     12    16    24    28    32
-##   arcade      .73  .83   .83   .83   .75   .58   .42
-##   mean houses 29.8 --    --    --    45.2  --    46.5
+##   lane cells  0     24    40    64    96
+##   arcade      .73   .67   .67   .67   .67
+##   mean houses 29.8  61.2  --    73.8  79.2
 ##
-## 24 is the last setting that clears the floor with real margin rather than
-## hugging it, and it buys 1.5x the houses. 32 would buy 1.3 houses per seed
-## more and collapse the arcade to 0.42, which is the committed integration
-## test's business, not a budget to protect. The whole curve is a statement
-## about the corner cap, not about lanes -- see task-14-report.md.
-const MAX_LANE_CELLS_TOTAL := 24
+## 64 is where the budget stops being what limits the network: three of four
+## seeds plateau below it on lane legality alone, and 96 only lets one seed run
+## on to 124 houses. Clearance is flat across the whole range, so nothing is
+## being traded for this.
+const MAX_LANE_CELLS_TOTAL := 64
 ## Manhattan separation demanded between two lanes' anchors, so the network
 ## spreads over the hill instead of fraying one stretch of the route.
-const MIN_LANE_ANCHOR_SEPARATION := 3
+##
+## Three while the corner allowance was absolute, because anchors were not the
+## binding constraint then. At 2 the web reaches four to twelve lanes per town
+## instead of one to five -- measured 61.2 mean houses against 55.8 -- and it is
+## anchors, not the cell budget, that let a lane hang off an earlier lane's tip
+## and walk the network out across the hill.
+const MIN_LANE_ANCHOR_SEPARATION := 2
 ## A lane must earn the mass it removes: the cheapest legal house is one storey
 ## plus WarrenBuildingParcel's roof reservation, and a lane cell that fronts no
 ## column able to carry even that has addressed nothing.

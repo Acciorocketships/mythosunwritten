@@ -361,14 +361,13 @@ static func _would_complete_public_square(cell: Vector3i,
 
 static func _route_breadth_allows(source: WarrenVolumePlan,
 		path: Array[Vector3i], candidate: Vector3i) -> bool:
+	## Asks WarrenVolumePlan the same question its seal() will ask, rather than
+	## restating the thresholds -- the branch this carves has to survive that
+	## seal, and a second copy of the rule is a second thing to keep in step.
 	var additions: Array[Vector3i] = []
 	additions.assign(path)
 	additions.append(candidate)
-	var audit := source.exact_route_breadth_audit(additions)
-	return int(audit.interior_cell_count) \
-			<= WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS \
-		and int(audit.max_interior_component_size) \
-			<= WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE
+	return source.exact_route_breadth_allows(additions)
 
 
 static func _grounded_frontage_count(cell: Vector3i,

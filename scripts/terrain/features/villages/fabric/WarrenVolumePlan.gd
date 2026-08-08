@@ -17,7 +17,47 @@ const MIN_ADDRESS_BUILDING_BANDS := 6
 # Exact two-lane turns legitimately create isolated inside-corner cells. They
 # may not coalesce into a public slab: that topology is already wrong before a
 # material, guard rail, or building detail can disguise it.
+#
+# The SLAB is the property, and it is LOCAL: it is
+# MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE, plus the outright ban on a same-datum
+# 2x2 walk square in seal(). Between them nothing broader than one macro cell of
+# public floor can exist -- a 2x2 macro plaza is 4 connected interior cells and
+# is refused as a square before it is measured here at all; a 2x3 block is 8 and
+# fails the component cap.
+#
+# MAX_EXACT_ROUTE_INTERIOR_CELLS is the TOTAL, and the total is a corner count:
+# a straight one-wide street contributes nothing, a turn one cell, a T-junction
+# two. It therefore scales with how convoluted and how LARGE the public realm
+# is, which is the quality this feature exists to produce.
+#
+# Measured over both pipelines (tests/harness/warren_mass_first_report.gd
+# --stage breadth): route-first plans run 26-36 interior cells over 32-37 walk
+# cells -- 0.76 to 1.09 per walk cell -- with components of 1-5. Mass-first with
+# a lane network runs 29-36 over 35-45 walk cells, 0.69 to 0.88 per walk cell,
+# with components of 1-5. The two pipelines build at the SAME corner density and
+# the same local breadth; they differ only in how much town there is. An
+# absolute 36 is therefore route-first's size, not a breadth rule, and it caps
+# the street network at one route.
+#
+# So the total is stated as a density, floored at the old absolute value.
+# INTERIOR_CELLS_PER_TEN_WALK_CELLS is 12, derived from three bounds rather than
+# rounded to taste:
+#   * ABOVE route-first's own measured worst density, 1.09 -- the pipeline that
+#     ships defines what a legitimate corner density is.
+#   * ABOVE the worst a one-wide street can reach at all. A lane that turns at
+#     EVERY cell owns one isolated inside corner per cell, just under 1.0, and
+#     that shape is the "convoluted, snaking" quality this feature exists to
+#     produce; a bound underneath it would be throttling the goal. Pinned by
+#     test_public_breadth_is_bounded_locally_not_by_total_size.
+#   * BELOW what a town of many SMALL slabs would reach. Every interior
+#     component may be up to MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE, and a
+#     public realm packed with size-5 components runs past 2 per walk cell, so
+#     the total still refuses a town that is locally legal everywhere and
+#     collectively a series of courts.
+# The floor means nothing that passes today can fail tomorrow, and the
+# controlled A/B in task-14-report.md shows route-first ranks identically.
 const MAX_EXACT_ROUTE_INTERIOR_CELLS := 36
+const INTERIOR_CELLS_PER_TEN_WALK_CELLS := 12
 const MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE := 5
 
 var stable_id: StringName
@@ -186,7 +226,7 @@ func seal(p_entry_cell: Vector3i) -> bool:
 	if int(audit.same_datum_public_square_count) != 0:
 		return _reject("public route contains a broad same-datum 2x2 block")
 	if int(audit.exact_route_interior_cell_count) \
-			> MAX_EXACT_ROUTE_INTERIOR_CELLS \
+			> interior_breadth_allowance(walk_cells.size()) \
 			or int(audit.max_exact_route_interior_component_size) \
 			> MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE:
 		return _reject("exact public route expands into a broad floor slab")
@@ -557,13 +597,70 @@ func _same_datum_public_square_count() -> int:
 	return result
 
 
+static func interior_breadth_allowance(walk_cell_count: int) -> int:
+	## Inside corners a public realm of this size may own. Integer arithmetic
+	## throughout, because this decides acceptance and acceptance is
+	## deterministic.
+	##
+	## Floored at MAX_EXACT_ROUTE_INTERIOR_CELLS, which is what makes the change
+	## conservative in the only direction that matters: the allowance is never
+	## below what it was, so no plan that seals today can stop sealing. Route-
+	## first's walk count is structurally at most 23 primary
+	## (ROUTE_CELL_FAMILIES) + 7 and 4 arcade + 8 gallery = 42, so the density
+	## branch can raise its allowance from 36 to at most 51 -- and the controlled
+	## A/B over seeds 0-7 in task-14-report.md shows not one ranked candidate,
+	## attempt or ordering changes, because route-first's own plans top out at 36
+	## inside corners for reasons of their own.
+	return maxi(MAX_EXACT_ROUTE_INTERIOR_CELLS,
+		(walk_cell_count * INTERIOR_CELLS_PER_TEN_WALK_CELLS + 9) / 10)
+
+
+func exact_route_breadth_allows(
+		additional_macro_cells: Array[Vector3i] = []) -> bool:
+	## The one authority on "is this public realm too broad", so a solver
+	## carving new cells asks the same question seal() will ask afterwards
+	## rather than reconstructing it from the constants.
+	var audit := exact_route_breadth_audit(additional_macro_cells)
+	return int(audit.interior_cell_count) <= interior_breadth_allowance(
+			walk_cells.size() + additional_macro_cells.size()) \
+		and int(audit.max_interior_component_size) \
+			<= MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE
+
+
 func exact_route_breadth_audit(
 		additional_macro_cells: Array[Vector3i] = []) -> Dictionary:
 	var interior := _exact_route_interior_cells(additional_macro_cells)
 	return {
 		"interior_cell_count": interior.size(),
 		"max_interior_component_size": _max_cell_component_size(interior),
+		"interior_component_sizes": _cell_component_sizes(interior),
 	}
+
+
+static func _cell_component_sizes(cells: Dictionary) -> PackedInt32Array:
+	## Every connected inside-corner component, descending. The COUNT of these
+	## cells scales with how many corners the public realm turns; only their
+	## SIZE says anything about breadth, which is why both are reported.
+	var remaining := cells.duplicate()
+	var out := PackedInt32Array()
+	while not remaining.is_empty():
+		var first_key := String(remaining.keys()[0])
+		var frontier: Array[Vector3i] = [remaining[first_key] as Vector3i]
+		remaining.erase(first_key)
+		var size := 0
+		while not frontier.is_empty():
+			var cell: Vector3i = frontier.pop_back()
+			size += 1
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var key := _cell_key(cell + direction)
+				if remaining.has(key):
+					frontier.append(remaining[key] as Vector3i)
+					remaining.erase(key)
+		out.append(size)
+	out.sort()
+	out.reverse()
+	return out
 
 
 func _exact_route_surface_cells(
