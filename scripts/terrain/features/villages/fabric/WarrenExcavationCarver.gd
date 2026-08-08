@@ -172,6 +172,98 @@ const BALANCE_PULL := 8.0
 ## no survivor at all.
 const COVER_CENTRING_WEIGHT := 2200.0
 
+## --- Secondary lanes ---------------------------------------------------------
+## One route cannot seed a village. Every house needs a public address --
+## WarrenBuildingParcel.seal() rejects outright any address the volume plan does
+## not hold frontage for -- and one bore plus its two arcade branches offers
+## about 45 of them across a ~565 column massif. That, not the partitioner, is
+## what caps a mass-first town at 23-26 houses and leaves the hill reading as a
+## mesa with a hamlet on one edge.
+##
+## Lanes are the street web that lifts the ceiling: one cell wide, hugging the
+## terrace contours, cutting through a riser where the mass allows, and
+## downstream just ordinary walk cells that the existing address, frontage,
+## arcade, door and partition machinery sees with no special-casing.
+##
+## They are bored into the WINNING route, after every route gate has already
+## selected it, so route acceptance is byte-identical to the pre-lane carver:
+## the same itineraries clear the length, span, grade, cover, portal and wall
+## gates in the same order. What a lane may then do to the chosen itinerary is
+## bounded by _route_gates_survive(), which re-measures flanking, enclosure and
+## cover on the finished solid and rolls the lane back whole if any of them
+## moved.
+const MAX_LANES := 16
+## A two-cell stub is a doorway, not a lane; nine cells is about as far as a
+## contour runs before the terrace it follows has been spent.
+const MIN_LANE_CELLS := 3
+const MAX_LANE_CELLS := 9
+## Total lane cells one town may carry.
+##
+## Priced against a measured trade curve, not chosen. The binding constraint is
+## WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS: that audit counts inside
+## corners at exact resolution over the WHOLE public realm, a junction costs two
+## and a turn one, and WarrenGroundArcadeSolver._route_breadth_allows spends the
+## same 36 prospectively while carving its market branches. So lane cells and
+## arcade cells compete for one absolute corner budget, and the arcade -- which
+## runs last -- loses.
+##
+## Measured over the committed arcade window (seeds 16-31), carve -> adapt ->
+## WarrenGroundArcadeSolver.extend, against the 0.55 floor
+## tests/test_warren_excavation.gd pins:
+##
+##   lane cells  0    8     12    16    24    28    32
+##   arcade      .73  .83   .83   .83   .75   .58   .42
+##   mean houses 29.8 --    --    --    45.2  --    46.5
+##
+## 24 is the last setting that clears the floor with real margin rather than
+## hugging it, and it buys 1.5x the houses. 32 would buy 1.3 houses per seed
+## more and collapse the arcade to 0.42, which is the committed integration
+## test's business, not a budget to protect. The whole curve is a statement
+## about the corner cap, not about lanes -- see task-14-report.md.
+const MAX_LANE_CELLS_TOTAL := 24
+## Manhattan separation demanded between two lanes' anchors, so the network
+## spreads over the hill instead of fraying one stretch of the route.
+const MIN_LANE_ANCHOR_SEPARATION := 3
+## A lane must earn the mass it removes: the cheapest legal house is one storey
+## plus WarrenBuildingParcel's roof reservation, and a lane cell that fronts no
+## column able to carry even that has addressed nothing.
+const MIN_LANE_HOUSE_BANDS := WarrenBuildingParcel.STOREY_BANDS \
+	+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+## A lane runs no straighter than this before it must turn. Lower than the
+## route's MAX_STRAIGHT_RUN because a lane has no climb to justify a long
+## sightline, and a medieval hill town's back lanes bend constantly.
+const MAX_LANE_STRAIGHT_RUN := 3
+## Columns around the route's ground street that lanes must leave alone,
+## measured in 4-connected column distance.
+##
+## Derived from WarrenGroundArcadeSolver, not chosen: its second market branch
+## may only root on a grade route cell at least MIN_BRANCH_SEPARATION_CELLS
+## columns from every AUXILIARY walk cell (:134-144), and it measures that
+## distance in columns alone, ignoring height. A lane is auxiliary walk realm,
+## so a lane anywhere near the ground street -- even eight bands above it --
+## disqualifies every root the arcade had, and the seed loses its whole
+## frontier. Measured: with lanes free to run at grade, seeds 6, 7 and 8 all
+## reported "no separated secondary ground arcade" on every bore.
+##
+## The ground street's own branches are the arcade's job. Lanes are the terrace
+## network above it, which is also where the addresses the town is short of
+## actually are: the rim is 2-4 bands tall and can carry no house at all.
+const LANE_ARCADE_RESERVE_CELLS := WarrenGroundArcadeSolver \
+	.MIN_BRANCH_SEPARATION_CELLS
+const LANE_WEIGHT_ADDRESS := 320.0
+const LANE_WEIGHT_TRAVEL := 110.0
+## Charged per band of level change. Lanes follow the contours by preference and
+## climb only where a riser leaves them nowhere else to go, which is what makes
+## them read as terrace lanes rather than as more stairs.
+const LANE_PENALTY_RISE := 150.0
+const LANE_PENALTY_STRAIGHT := 190.0
+const LANE_BONUS_COVER := 90.0
+## Charged per neighbouring public cell within one band. Two lanes running side
+## by side are a plaza with a wall down the middle, and the exact-resolution
+## surface audits count them as one slab.
+const LANE_PENALTY_CROWD := 260.0
+const LANE_COST_PER_STRIDE_CELL := 45.0
+
 static var last_failure := ""
 
 
@@ -195,10 +287,19 @@ static func carve(world_seed: int, massif: WarrenMassif) -> WarrenExcavation:
 		if best == null or score < best_score:
 			best = candidate
 			best_score = score
-	if best != null:
-		last_failure = ""
-	else:
+	if best == null:
 		last_failure = "no attempt sealed (%s)" % _tally(rejected)
+		return null
+	last_failure = ""
+	# Lanes are carved into the survivor, never into a candidate: every gate
+	# above has already chosen this route against the unlaned solid, so the
+	# selection is exactly the one the pre-lane carver made. `best` is re-sealed
+	# with its lanes so nothing downstream can receive a network seal() has not
+	# validated.
+	_carve_lanes(world_seed, best, massif)
+	if not best.seal():
+		last_failure = "lane network rejected: %s" % best.last_rejection
+		return null
 	return best
 
 
@@ -306,6 +407,387 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 		_reject(rejected, "unsealed walk")
 		return null
 	return excavation
+
+
+static func _carve_lanes(world_seed: int, excavation: WarrenExcavation,
+		massif: WarrenMassif) -> void:
+	## Grows the lane network onto a chosen route. Purely additive: a lane that
+	## cannot be grown, cannot be grown far enough, or costs the route one of its
+	## own gates is rolled back whole, so the worst case is the route this
+	## function was handed.
+	##
+	## Anchors are re-enumerated after every lane, so a lane may hang off an
+	## earlier lane's tip as well as off the route. That is what makes this a WEB
+	## rather than a comb: the route occupies one winding corridor, and lanes
+	## hanging only off it can never reach the far terraces. Branching off a
+	## lane's own far end -- which the anchor separation rule pushes them toward
+	## -- walks the network outward across the hill.
+	var reserve := _arcade_reserve(massif, excavation)
+	var addressed := _route_addressed_count(massif, excavation)
+	var used: Array[Vector3i] = []
+	var tried: Dictionary = {}
+	var total := 0
+	while excavation.lanes.size() < MAX_LANES \
+			and total < MAX_LANE_CELLS_TOTAL:
+		var next := _next_lane_anchor(world_seed, excavation, used, tried)
+		if next.is_empty():
+			break
+		var cell := next[0]
+		tried[cell] = true
+		var lane := _grow_lane(world_seed, excavation, massif, cell, reserve,
+			MAX_LANE_CELLS_TOTAL - total)
+		if lane.is_empty():
+			continue
+		excavation.lanes.append(lane)
+		if not _lane_survives(excavation, massif, addressed):
+			_roll_back_lane(excavation)
+			continue
+		# Rollback bookkeeping, not part of the sealed lane record.
+		lane.erase("carved")
+		used.append(cell)
+		total += (lane["cells"] as Array[Vector3i]).size()
+
+
+static func _next_lane_anchor(world_seed: int, excavation: WarrenExcavation,
+		used: Array[Vector3i], tried: Dictionary) -> Array[Vector3i]:
+	## The next untried anchor far enough from every lane already grown, or an
+	## empty array. Returned as a list rather than a nullable cell so the caller
+	## stays statically typed.
+	for anchor: Vector3i in _lane_anchors(world_seed, excavation):
+		if tried.has(anchor) or _too_near(anchor, used):
+			continue
+		return [anchor] as Array[Vector3i]
+	return [] as Array[Vector3i]
+
+
+static func _arcade_reserve(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> Dictionary:
+	## Columns within LANE_ARCADE_RESERVE_CELLS of any grade route cell, which
+	## are the columns the ground arcade needs free of auxiliary walk realm.
+	var out: Dictionary = {}
+	for cell: Vector3i in excavation.route:
+		if not _is_at_grade(massif, cell):
+			continue
+		for x in range(cell.x - LANE_ARCADE_RESERVE_CELLS + 1,
+				cell.x + LANE_ARCADE_RESERVE_CELLS):
+			for z in range(cell.z - LANE_ARCADE_RESERVE_CELLS + 1,
+					cell.z + LANE_ARCADE_RESERVE_CELLS):
+				if absi(x - cell.x) + absi(z - cell.z) \
+						< LANE_ARCADE_RESERVE_CELLS:
+					out[Vector2i(x, z)] = true
+	return out
+
+
+static func _route_addressed_count(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> int:
+	## Route cells with a complete WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS
+	## frontage on at least one side, restated against the massif and the carved
+	## void -- which for a mass-first plan IS `mass_cells`, since
+	## WarrenExcavationVolumeAdapter builds the envelope from the massif and
+	## seal() then subtracts exactly this excavation.
+	##
+	## The topology gate demands 0.55 of the route be addressed this way. Lanes
+	## remove mass beside the route, so without pinning this a lane could carve
+	## away the very frontage the route was admitted for. Pinned as an exact
+	## count rather than against the 0.55 floor: the route was chosen with this
+	## many addressed cells and a lane is not entitled to spend the margin.
+	var out := 0
+	for cell: Vector3i in excavation.route:
+		for direction: Vector2i in DIRECTIONS:
+			var column := Vector2i(cell.x + direction.x, cell.z + direction.y)
+			var complete := true
+			for band in range(cell.y,
+					cell.y + WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS):
+				if not massif.has_column(column) or band < massif.base_at(column) \
+						or band >= massif.top_at(column) \
+						or excavation.carved.has(Vector3i(column.x, band,
+							column.y)):
+					complete = false
+					break
+			if complete:
+				out += 1
+				break
+	return out
+
+
+static func _lane_anchors(world_seed: int,
+		excavation: WarrenExcavation) -> Array[Vector3i]:
+	## Every cell a lane may hang off, in a deterministic hash order.
+	##
+	## Only transition ENDPOINTS qualify. WarrenExcavationVolumeAdapter makes a
+	## stride's intermediate cell frontage rather than a walk node, because the
+	## vertical transition already owns that ground's public surface; hanging a
+	## lane off one would need a second transition into a cell the plan has no
+	## graph node for.
+	var seen: Dictionary = {}
+	var out: Array[Vector3i] = []
+	for cell: Vector3i in _walk_nodes(excavation):
+		if seen.has(cell):
+			continue
+		seen[cell] = true
+		out.append(cell)
+	out.sort_custom(func(left: Vector3i, right: Vector3i) -> bool:
+		var left_key := _hash(world_seed, 8191, left.x * 131 + left.z,
+			left.y)
+		var right_key := _hash(world_seed, 8191, right.x * 131 + right.z,
+			right.y)
+		if left_key != right_key:
+			return left_key < right_key
+		if left.y != right.y:
+			return left.y < right.y
+		if left.x != right.x:
+			return left.x < right.x
+		return left.z < right.z)
+	return out
+
+
+static func _walk_nodes(excavation: WarrenExcavation) -> Array[Vector3i]:
+	var out: Array[Vector3i] = [excavation.route[0]]
+	for spec: Dictionary in excavation.transitions:
+		out.append(spec["to"] as Vector3i)
+	for lane: Dictionary in excavation.lanes:
+		for spec: Dictionary in lane["transitions"] as Array[Dictionary]:
+			out.append(spec["to"] as Vector3i)
+	return out
+
+
+static func _too_near(anchor: Vector3i, used: Array[Vector3i]) -> bool:
+	for other: Vector3i in used:
+		if absi(anchor.x - other.x) + absi(anchor.z - other.z) \
+				< MIN_LANE_ANCHOR_SEPARATION:
+			return true
+	return false
+
+
+static func _grow_lane(world_seed: int, excavation: WarrenExcavation,
+		massif: WarrenMassif, anchor: Vector3i, reserve: Dictionary,
+		budget: int) -> Dictionary:
+	## One lane, grown greedily from `anchor` and committed to `carved` as it
+	## goes so each move sees the solid the last one left. Returns {} and undoes
+	## its own carving unless it reached MIN_LANE_CELLS.
+	var target := mini(budget, MIN_LANE_CELLS + posmod(_hash(world_seed, 2749,
+		anchor.x * 131 + anchor.z, anchor.y),
+		MAX_LANE_CELLS - MIN_LANE_CELLS + 1))
+	if target < MIN_LANE_CELLS:
+		return {}
+	var public_set := _public_set(excavation)
+	var cells: Array[Vector3i] = []
+	var transitions: Array[Dictionary] = []
+	var carved: Array[Vector3i] = []
+	var current := anchor
+	var direction := Vector2i.ZERO
+	var straight := 0
+	var move_index := 0
+	while cells.size() < target:
+		var selected := _best_lane_move(world_seed, excavation, massif, anchor,
+			current, direction, straight, public_set, reserve,
+			target - cells.size(), move_index)
+		if selected.is_empty():
+			break
+		var stride := selected["cells"] as Array[Vector3i]
+		var rise := int(selected["rise"])
+		var run := int(selected["run"])
+		transitions.append({"from": current, "to": stride[run - 1],
+			"kind": int(selected["kind"])})
+		for offset in range(1, run + 1):
+			var cell := stride[offset - 1]
+			var bands := _stride_slot_bands(rise, run, offset)
+			cells.append(cell)
+			public_set[cell] = true
+			for band in range(cell.y, cell.y + bands):
+				var air := Vector3i(cell.x, band, cell.z)
+				excavation.carved[air] = true
+				carved.append(air)
+		var moved := selected["direction"] as Vector2i
+		straight = straight + run if moved == direction else run
+		direction = moved
+		current = stride[run - 1]
+		move_index += 1
+	if cells.size() < MIN_LANE_CELLS:
+		for air: Vector3i in carved:
+			excavation.carved.erase(air)
+		return {}
+	return {"anchor": anchor, "cells": cells, "transitions": transitions,
+		"carved": carved}
+
+
+static func _public_set(excavation: WarrenExcavation) -> Dictionary:
+	var out: Dictionary = {}
+	for cell: Vector3i in excavation.public_cells():
+		out[cell] = true
+	return out
+
+
+static func _best_lane_move(world_seed: int, excavation: WarrenExcavation,
+		massif: WarrenMassif, anchor: Vector3i, current: Vector3i,
+		current_direction: Vector2i, straight_run: int, public_set: Dictionary,
+		reserve: Dictionary, budget: int, move_index: int) -> Dictionary:
+	var best: Dictionary = {}
+	var best_score := INF
+	for direction_index in DIRECTIONS.size():
+		var direction := DIRECTIONS[direction_index]
+		for action_index in ACTIONS.size():
+			var action := ACTIONS[action_index]
+			var run := int(action["run"])
+			if run > budget:
+				continue
+			if direction == -current_direction \
+					and current_direction != Vector2i.ZERO:
+				continue
+			if direction == current_direction \
+					and straight_run + run > MAX_LANE_STRAIGHT_RUN:
+				continue
+			var stride := _lane_stride_cells(massif, excavation, public_set,
+				reserve, current, direction, int(action["rise"]), run)
+			if stride.is_empty():
+				continue
+			var score := _lane_move_score(world_seed, excavation, massif, anchor,
+				stride, int(action["rise"]), run, direction, current_direction,
+				straight_run, public_set,
+				move_index * 37 + direction_index * ACTIONS.size() + action_index)
+			if score < best_score:
+				best_score = score
+				best = {"cells": stride, "direction": direction,
+					"kind": int(action["kind"]), "rise": int(action["rise"]),
+					"run": run}
+	return best
+
+
+static func _lane_stride_cells(massif: WarrenMassif,
+		excavation: WarrenExcavation, public_set: Dictionary,
+		reserve: Dictionary, current: Vector3i, direction: Vector2i, rise: int,
+		run: int) -> Array[Vector3i]:
+	## A lane's stride, on exactly the route's slot legality -- the same
+	## _slot_is_borable and the same surface-band arithmetic, so every cell a
+	## transition will later claim is void that was actually removed from inside
+	## the solid.
+	##
+	## Two rules are the lane's own. It may not run beside existing public realm
+	## at its own band (that is one wide surface, not two streets), and every
+	## cell must front a column that can carry a house, which is what a lane is
+	## excavated for.
+	var out: Array[Vector3i] = []
+	var occupied := public_set.duplicate()
+	var previous := current
+	for offset in range(1, run + 1):
+		var span := _surface_band_span(rise, run, offset)
+		var cell := Vector3i(current.x + direction.x * offset,
+			current.y + span.x, current.z + direction.y * offset)
+		if not _slot_is_borable(massif, excavation, cell,
+				span.y - span.x + HEADROOM_BANDS):
+			return [] as Array[Vector3i]
+		if reserve.has(Vector2i(cell.x, cell.z)) \
+				or _completes_public_square(occupied, cell) \
+				or _folds_onto_route(occupied, previous, cell) \
+				or _addressable_sides(massif, excavation, cell) < 1:
+			return [] as Array[Vector3i]
+		occupied[cell] = true
+		out.append(cell)
+		previous = cell
+	return out
+
+
+static func _addressable_sides(massif: WarrenMassif,
+		excavation: WarrenExcavation, cell: Vector3i) -> int:
+	## Neighbouring columns that could carry a WELL-PROPORTIONED house addressed
+	## from this cell. Mirrors WarrenSolidPartitioner._can_carry_house's
+	## question against the raw solid: ground at or below the street, and nothing
+	## carved from that ground up through the house it would have to hold.
+	##
+	## Bounded above as well as below, which is a lane's rule and not the
+	## route's. A street cut more than WarrenMassif.BUILDABLE_LAYER_BANDS below
+	## a column's top has no plinth for the house to descend to, so that house
+	## is simply as tall as the solid over it -- the multi-storey slab this whole
+	## round of review rejected. Lanes choose where they are cut, so they may
+	## simply decline to address a face they would turn into a tower; the bore
+	## has a climb to complete and cannot.
+	var out := 0
+	for direction: Vector2i in DIRECTIONS:
+		var column := Vector2i(cell.x + direction.x, cell.z + direction.y)
+		if not massif.has_column(column) or massif.base_at(column) > cell.y \
+				or massif.top_at(column) < cell.y + MIN_LANE_HOUSE_BANDS \
+				or massif.top_at(column) \
+					> cell.y + WarrenMassif.BUILDABLE_LAYER_BANDS:
+			continue
+		var clear := true
+		for band in range(massif.base_at(column),
+				cell.y + MIN_LANE_HOUSE_BANDS):
+			if excavation.carved.has(Vector3i(column.x, band, column.y)):
+				clear = false
+				break
+		out += int(clear)
+	return out
+
+
+static func _lane_move_score(world_seed: int, excavation: WarrenExcavation,
+		massif: WarrenMassif, anchor: Vector3i, stride: Array[Vector3i],
+		rise: int, run: int, direction: Vector2i, current_direction: Vector2i,
+		straight_run: int, public_set: Dictionary, salt: int) -> float:
+	## What a lane wants, in order: addresses, distance from the street it left,
+	## the contour it is already on, and a roof over it now and then. Nothing
+	## here asks for enclosure on both sides -- a terrace lane open on its
+	## downhill side is correct hill-town form and gets a parapet from the
+	## surface stages, not a building.
+	var endpoint := stride[run - 1]
+	var addresses := 0
+	var covered := 0
+	var crowding := 0
+	for cell: Vector3i in stride:
+		addresses += _addressable_sides(massif, excavation, cell)
+		covered += int(_depth_of(massif, cell, HEADROOM_BANDS) > 0)
+		for direction_offset: Vector2i in DIRECTIONS:
+			for band_offset in [-1, 0, 1]:
+				var neighbour := Vector3i(cell.x + direction_offset.x,
+					cell.y + band_offset, cell.z + direction_offset.y)
+				crowding += int(public_set.has(neighbour))
+	var travelled := absi(endpoint.x - anchor.x) + absi(endpoint.z - anchor.z)
+	var score := float(run) * LANE_COST_PER_STRIDE_CELL \
+		- float(addresses) / float(run) * LANE_WEIGHT_ADDRESS \
+		- float(travelled) * LANE_WEIGHT_TRAVEL \
+		- float(covered) / float(run) * LANE_BONUS_COVER \
+		+ float(crowding) * LANE_PENALTY_CROWD \
+		+ float(absi(rise)) * LANE_PENALTY_RISE
+	if direction == current_direction:
+		score += float(straight_run + run) * LANE_PENALTY_STRAIGHT
+	var tie := posmod(_hash(world_seed, 6151, salt,
+		endpoint.y * 131 + endpoint.x * 17 + endpoint.z), 997)
+	return score + float(tie) * 0.05
+
+
+static func _lane_survives(excavation: WarrenExcavation,
+		massif: WarrenMassif, addressed: int) -> bool:
+	## Every gate the ROUTE answered to, re-measured on the solid the lanes left,
+	## plus the lane network's own address rule re-measured over all of it.
+	##
+	## The route gates ran before any lane existed, so without this a lane could
+	## take an earlier cell's canyon wall and the excavation would still claim
+	## the enclosure ratio it was selected for. Cover is included even though the
+	## one-solid-band rule in _slot_is_borable makes it invariant by
+	## construction: an invariant nothing checks is an argument, not a guarantee.
+	var walled := 0
+	for cell: Vector3i in excavation.route:
+		if _flank_count(massif, excavation, cell) < 1:
+			return false
+		walled += int(_wall_count(massif, excavation, cell) >= 2)
+		var roof := Vector3i(cell.x, cell.y + excavation.slot_bands(cell), cell.z)
+		if bool(excavation.covered.get(cell, false)) \
+				!= (massif.top_at(Vector2i(cell.x, cell.z)) > roof.y \
+					and not excavation.carved.has(roof)):
+			return false
+	if float(walled) / float(excavation.route.size()) < MIN_WALL_RATIO:
+		return false
+	if _route_addressed_count(massif, excavation) < addressed:
+		return false
+	for cell: Vector3i in excavation.lane_cells():
+		if _addressable_sides(massif, excavation, cell) < 1:
+			return false
+	return true
+
+
+static func _roll_back_lane(excavation: WarrenExcavation) -> void:
+	var lane: Dictionary = excavation.lanes.pop_back()
+	for air: Vector3i in lane["carved"] as Array[Vector3i]:
+		excavation.carved.erase(air)
 
 
 static func _carve_cell(excavation: WarrenExcavation, route_set: Dictionary,

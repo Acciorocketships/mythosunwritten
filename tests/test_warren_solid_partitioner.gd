@@ -360,13 +360,28 @@ func test_no_two_houses_meet_only_at_a_corner() -> void:
 		## MEASURED RESIDUE, NOT A TARGET. The partition prefers corner-free
 		## footprints, which cuts these from 51 to 48 across the corpus -- but
 		## most corners here are forced, not chosen: ownership demands a house
-		## on every buildable street wall, and a route winding through a solid
-		## puts those walls diagonally opposite one another constantly. Per seed
-		## the count runs 4-11. This bound exists so the number cannot grow
-		## unnoticed while the real fix is decided; it is NOT an acceptance of
-		## interpenetrating geometry, which still blocks composition.
-		assert_between(corners, 0, 12,
-			"seed %d: %d corner-only house pairs" % [world_seed, corners])
+		## on every buildable street wall, and a street winding through a solid
+		## puts those walls diagonally opposite one another constantly. This
+		## bound exists so the number cannot grow unnoticed while the real fix
+		## is decided; it is NOT an acceptance of interpenetrating geometry,
+		## which still blocks composition.
+		##
+		## RE-MEASURED with the secondary lane network, and rewritten as a RATE.
+		## The raw count rose 4-11 -> 9-23 per seed while the towns grew 18-30 ->
+		## 41-58 houses; per house that is 0.22-0.37 -> 0.18-0.42, i.e. the
+		## corner condition is no more frequent than it was, there is simply more
+		## town. An absolute cap on a quantity that scales with the town would
+		## forbid the town from growing while measuring nothing about the defect,
+		## which is the third time on this branch a proxy has been scale-
+		## dependent while the property it stood for was intact.
+		##
+		## Half a corner pair per house is a deliberately loose tripwire, set
+		## above the observed 0.42 rather than at it. The real fix is still
+		## authored corner art -- see the closed-negative trim investigation --
+		## and interpenetrating geometry still blocks composition.
+		assert_lte(corners * 2, parcels.size(),
+			"seed %d: %d corner-only pairs across %d houses" % [world_seed,
+				corners, parcels.size()])
 
 
 func test_no_column_carries_two_houses() -> void:
@@ -801,9 +816,13 @@ func test_a_house_on_a_terrace_declares_the_hill_beneath_it() -> void:
 			if proposal.is_empty():
 				continue
 			var support := (proposal.origin as Vector3i).y
+			# Only the MASS in the gap. A lane tunnelling under a plinth leaves
+			# void there, and stone declared over a lane fills the lane in.
 			var expected := 0
 			for column: Vector2i in parcel.footprint:
-				expected += 4 * maxi(0, support - envelope.ground_at(column))
+				for band in range(envelope.ground_at(column), support):
+					expected += 4 * int(parcel.source.has_mass(
+						Vector3i(column.x, band, column.y)))
 			var terrace := WarrenParcelConstruction.retained_terrace_cells(
 				parcel)
 			assert_eq(terrace.size(), expected,

@@ -46,13 +46,19 @@ extends RefCounted
 ## infill house is optional, so it is skipped rather than forced whenever its
 ## roof has no join to its neighbours' or it would meet one across a corner.
 ##
-## Its addresses are the bore route plus the volume plan's walk cells, which is
-## the set WarrenParcelizer._candidates has always packed against: the ground
-## arcade and the elevated galleries carve public surfaces the bore route never
-## had, and mass beside them is as addressable as mass beside the street. On a
-## plan straight from WarrenExcavationVolumeAdapter the walk cells are a subset
-## of the route, so passing one changes nothing; only a plan an arcade or
-## gallery has extended adds sites.
+## Its addresses are the whole excavated street network -- the bore route AND
+## its secondary lanes, `excavation.public_cells()` -- plus the volume plan's
+## walk cells, which is the set WarrenParcelizer._candidates has always packed
+## against: the ground arcade and the elevated galleries carve public surfaces
+## the bore route never had, and mass beside them is as addressable as mass
+## beside the street.
+##
+## A lane is a street here in every sense that matters to this class. It flanks
+## columns that must be owned, it addresses houses, and it is walk cells and
+## frontage in the sealed plan -- so `street_wall_faces`, `_raw_street_walls`
+## and `_fill_addresses` all read `public_cells()` rather than `route`. Reading
+## `route` alone would leave every lane's flank unowned, which is precisely the
+## hole in the street the ownership guarantee exists to forbid.
 
 ## Width (along the street) x depth (into the block), matching
 ## WarrenParcelizer.SHAPES and WarrenParcelConstruction.profile_for. Anything
@@ -219,7 +225,7 @@ static func _fill_addresses(excavation: WarrenExcavation,
 	## contributes one, because it is refused rather than carried.
 	var seen: Dictionary = {}
 	var out: Array[Vector3i] = []
-	for cell: Vector3i in excavation.route:
+	for cell: Vector3i in excavation.public_cells():
 		if not seen.has(cell):
 			seen[cell] = true
 			out.append(cell)
@@ -323,7 +329,7 @@ static func _wall_candidates(massif: WarrenMassif,
 	var out: Array[Dictionary] = []
 	if massif == null or excavation == null:
 		return out
-	for walk: Vector3i in excavation.route:
+	for walk: Vector3i in excavation.public_cells():
 		var wall_bands := maxi(MIN_HOUSE_BANDS, excavation.slot_bands(walk))
 		for direction_index in DIRECTIONS.size():
 			var direction := DIRECTIONS[direction_index]
@@ -472,7 +478,7 @@ static func _raw_street_walls(massif: WarrenMassif,
 	var out: Array[Vector3i] = []
 	if massif == null or excavation == null:
 		return out
-	for walk: Vector3i in excavation.route:
+	for walk: Vector3i in excavation.public_cells():
 		for direction: Vector2i in DIRECTIONS:
 			var column := Vector2i(walk.x + direction.x, walk.z + direction.y)
 			var wall := Vector3i(column.x, walk.y, column.y)

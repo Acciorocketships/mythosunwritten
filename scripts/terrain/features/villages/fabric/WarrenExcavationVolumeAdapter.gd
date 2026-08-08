@@ -84,17 +84,37 @@ static func to_volume_plan(massif: WarrenMassif,
 	if not plan.add_walk_cell(excavation.route[0]):
 		last_failure = "duplicate walk cell %s" % excavation.route[0]
 		return null
-	if not _add_transitions(plan, excavation):
+	if not _add_transitions(plan, excavation, excavation.route,
+			excavation.transitions, "volume.transition", true):
 		return null
+	# Lanes enter as ordinary auxiliary public realm: walk nodes at their
+	# transition endpoints, frontage everywhere, and no downstream special case.
+	# NOT primary -- `primary_itinerary` is the bored route, and every gate that
+	# reads it (overhang, addressed frontage, straight run, same-datum folds)
+	# is a statement about that one itinerary. A lane is a street the town
+	# addresses from, not part of the climb those gates measure.
+	#
+	# Anchors are already walk cells, from the route or from a lane declared
+	# earlier, which is what makes the whole graph connected by construction --
+	# WarrenExcavation.seal() has already refused any lane whose anchor was not.
+	for index in excavation.lanes.size():
+		var lane := excavation.lanes[index]
+		var walk: Array[Vector3i] = [lane["anchor"] as Vector3i]
+		walk.append_array(lane["cells"] as Array[Vector3i])
+		if not _add_transitions(plan, excavation, walk,
+				lane["transitions"] as Array[Dictionary],
+				"volume.lane%02d" % index, false):
+			return null
 	# Every excavated cell is real street ground WarrenSolidPartitioner may
 	# legitimately root a house at (it already does: street_wall_faces()
-	# iterates excavation.route directly, unaware of which cells are also
-	# walk_cells graph nodes), even though only move endpoints can BE graph
+	# iterates excavation.public_cells() directly, unaware of which cells are
+	# also walk_cells graph nodes), even though only move endpoints can BE graph
 	# nodes. Registering the rest as frontage-only keeps
 	# WarrenBuildingParcel.seal()/WarrenParcelPlan's detached-parcel audit
 	# satisfied without giving any of them a colliding public-realm surface.
-	for cell: Vector3i in excavation.route:
+	for cell: Vector3i in excavation.public_cells():
 		plan.add_frontage(cell)
+	_close_landing_turns(plan)
 	plan.mass_context = {&"massif": massif, &"excavation": excavation}
 	if not plan.seal(excavation.portals[0]):
 		last_failure = "plan seal rejected: %s" % plan.last_rejection
@@ -135,6 +155,7 @@ static func excavation_for_volume(excavation: WarrenExcavation,
 	out.portals.assign(excavation.portals)
 	out.transitions.assign(excavation.transitions)
 	out.covered = excavation.covered.duplicate()
+	out.lanes.assign(excavation.lanes)
 	out.carved = excavation.carved.duplicate()
 	for cell: Vector3i in volume.public_air_cells:
 		out.carved[cell] = true
@@ -146,8 +167,47 @@ static func excavation_for_volume(excavation: WarrenExcavation,
 	return out
 
 
+static func _close_landing_turns(plan: WarrenVolumePlan) -> bool:
+	## Declares a square landing wherever WarrenVolumePlan._build_audit() would
+	## otherwise count a landing_turn_violation: two transitions meeting at one
+	## cell at right angles with either of them vertical.
+	##
+	## The route's own turns are already declared as they are laid, mirroring
+	## WarrenPublicRealmCarver's growth-time bookkeeping. This closes the case
+	## that bookkeeping cannot see -- a lane branching off a route cell whose
+	## incident transitions were fixed long before the lane existed. Stated as
+	## the audit's own rule rather than as a second guess at it, and add_landing
+	## is idempotent, so the route's declarations are unchanged.
+	var incident: Dictionary = {}
+	for cell: Vector3i in plan.walk_cells:
+		incident[cell] = [] as Array[WarrenVolumeTransition]
+	for value: WarrenVolumeTransition in plan.transitions:
+		(incident[value.from_cell] as Array[WarrenVolumeTransition]).append(value)
+		(incident[value.to_cell] as Array[WarrenVolumeTransition]).append(value)
+	for cell: Vector3i in plan.walk_cells:
+		var edges := incident[cell] as Array[WarrenVolumeTransition]
+		for first_index in edges.size():
+			for second_index in range(first_index + 1, edges.size()):
+				var first := edges[first_index]
+				var second := edges[second_index]
+				if not first.is_vertical() and not second.is_vertical():
+					continue
+				if _dot(_step_direction(cell, first),
+						_step_direction(cell, second)) != 0:
+					continue
+				plan.add_landing(cell)
+	return true
+
+
+static func _step_direction(cell: Vector3i,
+		value: WarrenVolumeTransition) -> Vector2i:
+	var other := value.other(cell)
+	return Vector2i(signi(other.x - cell.x), signi(other.z - cell.z))
+
+
 static func _add_transitions(plan: WarrenVolumePlan,
-		excavation: WarrenExcavation) -> bool:
+		excavation: WarrenExcavation, walk: Array[Vector3i],
+		specs: Array[Dictionary], prefix: String, is_primary: bool) -> bool:
 	## excavation.transitions records one macro edge per bored move (its
 	## `from`/`to` span the whole 1-3 cell stride the carver's ACTIONS table
 	## allows), exactly matching the WarrenVolumeTransition Kind contract --
@@ -176,8 +236,8 @@ static func _add_transitions(plan: WarrenVolumePlan,
 	var cursor := 0
 	var previous_direction := Vector2i.ZERO
 	var previous_vertical := false
-	for index in excavation.transitions.size():
-		var spec := excavation.transitions[index]
+	for index in specs.size():
+		var spec := specs[index]
 		var from_cell := spec["from"] as Vector3i
 		var to_cell := spec["to"] as Vector3i
 		var kind := int(spec["kind"]) as WarrenVolumeTransition.Kind
@@ -196,12 +256,13 @@ static func _add_transitions(plan: WarrenVolumePlan,
 				and _dot(previous_direction, direction) == 0 \
 				and (previous_vertical or vertical):
 			plan.add_landing(from_cell)
-		if not plan.add_walk_cell(to_cell):
+		if not plan.add_walk_cell(to_cell, is_primary):
 			last_failure = "duplicate walk cell %s" % to_cell
 			return false
 		var spine := WarrenVolumeTransition.new(
-			StringName("volume.transition.%02d" % index),
-			from_cell, to_cell, kind, _swept_span(excavation, cursor, run))
+			StringName("%s.%02d" % [prefix, index]),
+			from_cell, to_cell, kind,
+			_swept_span(excavation, walk, cursor, run))
 		if not plan.add_transition(spine):
 			last_failure = "invalid transition %d (%s -> %s): %s" \
 				% [index, from_cell, to_cell, plan.last_rejection]
@@ -212,8 +273,8 @@ static func _add_transitions(plan: WarrenVolumePlan,
 	return true
 
 
-static func _swept_span(excavation: WarrenExcavation, cursor: int,
-		run: int) -> Array[Vector3i]:
+static func _swept_span(excavation: WarrenExcavation, walk: Array[Vector3i],
+		cursor: int, run: int) -> Array[Vector3i]:
 	## The full physical volume this move's stride actually removed, read
 	## back off `carved` per cell (via slot_bands()) rather than assumed to be
 	## a fixed headroom -- a STAIR's intermediate cell carries both treads and
@@ -226,7 +287,7 @@ static func _swept_span(excavation: WarrenExcavation, cursor: int,
 	var seen: Dictionary = {}
 	var out: Array[Vector3i] = []
 	for offset in range(run + 1):
-		var cell := excavation.route[cursor + offset]
+		var cell := walk[cursor + offset]
 		var height := excavation.slot_bands(cell)
 		for band in range(cell.y, cell.y + height):
 			var air_cell := Vector3i(cell.x, band, cell.z)

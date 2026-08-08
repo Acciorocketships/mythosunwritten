@@ -289,3 +289,58 @@ func test_adapter_plan_survives_the_public_realm_adapter() -> void:
 				surface_owner[cell] = node.stable_id
 	assert_gt(accepted, 0,
 		"no seed in the corpus produced a plan the realm adapter accepted")
+
+
+func test_lanes_reach_the_plan_as_connected_auxiliary_public_realm() -> void:
+	## Lanes must arrive downstream as ORDINARY public realm, because the whole
+	## point of them is that the existing address, frontage, door, arcade and
+	## partition machinery needs no special case for a street web.
+	##
+	## Three claims, each of which a plausible wiring mistake would break: every
+	## lane cell is addressable (WarrenBuildingParcel.gd:47 rejects any address
+	## the plan holds no frontage for, so a lane nobody can be addressed from is
+	## a lane that buys nothing); the lane's own endpoints are walk NODES but
+	## NOT primary itinerary (every gate that reads primary_itinerary is a
+	## statement about the bored climb); and the sealed plan's walk graph is
+	## connected, which is what seal() re-checks and what an orphan alley breaks.
+	var massif := WarrenMassifBuilder.build(1)
+	assert_not_null(massif, WarrenMassifBuilder.last_failure)
+	var excavation := WarrenExcavationCarver.carve(1, massif)
+	assert_not_null(excavation, WarrenExcavationCarver.last_failure)
+	if excavation == null:
+		return
+	assert_gt(excavation.lanes.size(), 0, "seed 1 grew no lanes to adapt")
+	var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+		excavation)
+	assert_not_null(plan,
+		"adapter failed: %s" % WarrenExcavationVolumeAdapter.last_failure)
+	if plan == null:
+		return
+	assert_true(plan.is_sealed(), plan.last_rejection)
+	for cell: Vector3i in excavation.lane_cells():
+		assert_true(plan.has_frontage(cell),
+			"lane cell %s is not addressable in the sealed plan" % cell)
+	var primary: Dictionary = {}
+	for cell: Vector3i in plan.primary_itinerary:
+		primary[cell] = true
+	var nodes := 0
+	for lane: Dictionary in excavation.lanes:
+		for spec: Dictionary in lane["transitions"] as Array[Dictionary]:
+			var endpoint := spec["to"] as Vector3i
+			nodes += 1
+			assert_true(plan.has_walk(endpoint),
+				"lane endpoint %s is not a walk node" % endpoint)
+			assert_false(primary.has(endpoint),
+				("lane endpoint %s joined the primary itinerary; the route's " \
+				+ "own gates measure that list") % endpoint)
+	assert_gt(nodes, 0, "no lane contributed a walk node")
+	assert_eq(plan.walk_cells.size(),
+		_endpoint_walk_cells(excavation).size() + nodes,
+		"the plan's walk cells are exactly the route's endpoints plus the lanes'")
+	# seal() already ran _all_walk_connected(); re-derived here so a future
+	# adapter that stopped emitting lane transitions could not pass by simply
+	# never wiring the lanes in.
+	assert_eq(plan.audit.landing_turn_violation_count, 0,
+		"a lane branching off the route left an undeclared vertical turn")
+	assert_gt(int(plan.audit.auxiliary_walk_cell_count), 0,
+		"the plan records no auxiliary public realm at all")

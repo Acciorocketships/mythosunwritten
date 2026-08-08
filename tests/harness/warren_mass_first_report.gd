@@ -35,6 +35,13 @@ extends SceneTree
 ##                     carve -> adapt -> topology gate -> ground arcade on both.
 ##                     This is the measurement that rules on "make the massif a
 ##                     hillside so houses stop being towers".
+##   --stage address   the address supply itself: how many public cells the town
+##                     offers, how many houses the partition builds from them,
+##                     and the two WarrenVolumePlan.seal() budgets a wider public
+##                     realm spends -- the exact-route interior slab counts. Read
+##                     it before and after any change to the street network; the
+##                     house count is a consequence of the address count and
+##                     nothing else moves it as far.
 ##   --stage map       one seed's massif drawn as a plan, band heights in hex,
 ##                     marking every column as street, house, gallery walk cell
 ##                     or bare solid. The fastest way to see WHERE a town's mass
@@ -86,6 +93,10 @@ func _init() -> void:
 		return
 	if _stage == "fill":
 		_report_fill()
+		quit()
+		return
+	if _stage == "address":
+		_report_address()
 		quit()
 		return
 	if _stage == "hillside":
@@ -430,6 +441,117 @@ func _report_fill() -> void:
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
 
 
+func _bore_census(world_seed: int) -> String:
+	## Where a seed's twelve bores actually die, and what their exact-resolution
+	## interior counts were when they did. A frontier can be lost at the adapter's
+	## own seal, at the topology gate or at the ground arcade, and only the first
+	## of those is visible in WarrenTownSolver.last_failure.
+	var massif := WarrenMassifBuilder.build(world_seed)
+	if massif == null:
+		return "massif rejected"
+	var bores := 0
+	var adapted := 0
+	var gated := 0
+	var arcaded := 0
+	var slab_at_adapt := 0
+	var slab_at_arcade := 0
+	var lane_cells := 0
+	var interiors := PackedInt32Array()
+	for attempt in WarrenTownSolver.MASS_FIRST_EXCAVATION_ATTEMPTS:
+		var excavation := WarrenExcavationCarver.carve(world_seed
+			+ attempt * WarrenTownSolver.MASS_FIRST_ATTEMPT_STRIDE, massif)
+		if excavation == null:
+			continue
+		bores += 1
+		lane_cells += excavation.lane_cells().size()
+		var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if volume == null:
+			slab_at_adapt += int("floor slab" in
+				WarrenExcavationVolumeAdapter.last_failure)
+			continue
+		adapted += 1
+		interiors.append(int(volume.audit.exact_route_interior_cell_count))
+		if not WarrenPublicRealmCarver.passes_topology_gate(volume):
+			continue
+		gated += 1
+		if WarrenGroundArcadeSolver.extend(volume) != null:
+			arcaded += 1
+		else:
+			slab_at_arcade += int("floor slab" in
+				WarrenGroundArcadeSolver.last_failure)
+	return ("bores %d lanecells %d | adapted %d gated %d arcaded %d" % [bores,
+		lane_cells, adapted, gated, arcaded]
+		+ " | LOST TO THE SLAB CAP: adapt %d arcade %d" % [slab_at_adapt,
+			slab_at_arcade]
+		+ " | interior %s" % str(interiors))
+
+
+func _report_address() -> void:
+	## Address supply against house count, plus the two seal() budgets a wider
+	## public realm spends.
+	##
+	## `addr` is |bore route U volume.walk_cells| -- every cell
+	## WarrenBuildingParcel.seal() will accept as an address, because :47 rejects
+	## anything volume.has_frontage() does not hold for. `houses` is what the
+	## partition actually builds from them. The ratio between the two is the whole
+	## ceiling: no partitioner change raises the house count once every address is
+	## spent.
+	##
+	## `interior` and `component` are audit.exact_route_interior_cell_count and
+	## audit.max_exact_route_interior_component_size against
+	## WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS (36) and
+	## MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE (5). Both grow with public realm --
+	## the first with its total turn count, the second only with real slabs -- so
+	## they are the budgets any lane network has to live inside.
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	var total_addresses := 0
+	var total_houses := 0
+	var towns := 0
+	for world_seed: int in _seeds:
+		var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+		print("seed %2d census: %s" % [world_seed, _bore_census(world_seed)])
+		if frontier.is_empty():
+			print("seed %2d: no frontier -- %s" % [world_seed,
+				WarrenTownSolver.last_failure.substr(0, 110)])
+			continue
+		var volume := frontier[0]
+		var massif := volume.mass_context.get(&"massif") as WarrenMassif
+		var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
+		var plan := WarrenTownSolver.partition_parcels(volume)
+		var addresses: Dictionary = {}
+		for cell: Vector3i in bore.route:
+			addresses[cell] = true
+		for cell: Vector3i in bore.lane_cells():
+			addresses[cell] = true
+		for cell: Vector3i in volume.walk_cells:
+			addresses[cell] = true
+		var audit := WarrenSolidPartitioner.street_wall_audit(
+			[] as Array[WarrenBuildingParcel] if plan == null else plan.parcels,
+			WarrenExcavationVolumeAdapter.excavation_for_volume(bore, volume),
+			massif)
+		towns += 1
+		total_addresses += addresses.size()
+		total_houses += 0 if plan == null else plan.parcels.size()
+		print("seed %2d: frontier %d | columns %d | route %d lanes %d/%d"
+			% [world_seed, frontier.size(), massif.columns.size(),
+				bore.route.size(), bore.lanes.size(), bore.lane_cells().size()]
+			+ " | ADDRESSES %d | houses %s" % [addresses.size(),
+				"none" if plan == null else str(plan.parcels.size())]
+			+ " | walls %d unowned %d" % [int(audit["wall_count"]),
+				(audit["unowned"] as Array[Vector3i]).size()]
+			+ " | interior %d/%d component %d/%d" % [
+				int(volume.audit.exact_route_interior_cell_count),
+				WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS,
+				int(volume.audit.max_exact_route_interior_component_size),
+				WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE]
+			+ " | overhang %.2f" % float(volume.audit.overhang_walk_ratio))
+	print("TOWNS %d/%d | mean addresses %.1f | mean houses %.1f" % [towns,
+		_seeds.size(), float(total_addresses) / float(maxi(1, towns)),
+		float(total_houses) / float(maxi(1, towns))])
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
 func _report_map(world_seed: int) -> void:
 	## The town in plan. Every ratio in this file collapses one of these maps to
 	## a number; read the map first when a ratio is surprising, because it shows
@@ -489,6 +611,10 @@ func _exposed_storeys(parcel: WarrenBuildingParcel, tops: Dictionary,
 		/ WarrenBuildingParcel.STOREY_BANDS)
 
 
+func _tally(counts: Dictionary, key: String) -> void:
+	counts[key] = int(counts.get(key, 0)) + 1
+
+
 func _ascending(counts: Dictionary) -> String:
 	var keys: Array[int] = []
 	keys.assign(counts.keys())
@@ -522,6 +648,7 @@ func _report_grade() -> void:
 	## rather than against a proxy.
 	var carved := 0
 	var cleared := 0
+	var reasons: Dictionary = {}
 	for world_seed in range(ARCADE_SEED_START,
 			ARCADE_SEED_START + ARCADE_SEED_COUNT):
 		var massif := WarrenMassifBuilder.build(world_seed)
@@ -533,11 +660,16 @@ func _report_grade() -> void:
 		carved += 1
 		var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
 			excavation)
-		if plan != null and WarrenGroundArcadeSolver.extend(plan) != null:
+		if plan == null:
+			_tally(reasons, "adapter: %s" % WarrenExcavationVolumeAdapter.last_failure)
+			continue
+		if WarrenGroundArcadeSolver.extend(plan) != null:
 			cleared += 1
-	print("MIN_GRADE_CELLS=%d: arcade %d/%d carved routes cleared (%.2f)" % [
+		else:
+			_tally(reasons, WarrenGroundArcadeSolver.last_failure)
+	print("MIN_GRADE_CELLS=%d: arcade %d/%d carved routes cleared (%.2f) | %s" % [
 		WarrenExcavationCarver.MIN_GRADE_CELLS, cleared, carved,
-		float(cleared) / float(maxi(1, carved))])
+		float(cleared) / float(maxi(1, carved)), str(reasons)])
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
 	var with_frontier := 0
 	for world_seed: int in _seeds:

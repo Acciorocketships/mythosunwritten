@@ -287,10 +287,26 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 	for column_value: Variant in route_columns.keys():
 		urban_seed_columns[column_value as Vector2i] = true
 	urban_core_columns = _orthogonal_interior_hull(urban_seed_columns)
+	# Every transition's swept air, primary or not. `route_columns` deliberately
+	# covers only the primary itinerary, because the urban hull is seeded from
+	# the town's spine -- but a column may not be declared an open daylight void
+	# merely because the public ground standing in it belongs to an AUXILIARY
+	# transition. WarrenPrunedMassPlan._column_has_building_or_walk applies
+	# exactly this test over all transitions and rejects the whole plan when the
+	# two disagree, so this is one rule stated twice, not a new one.
+	#
+	# Latent until secondary lanes existed: an arcade or gallery transition is
+	# LEVEL over a run of one, so its swept air only ever covers its two
+	# endpoints, and both are walk cells the loop below already blocks on. A
+	# lane's STAIR or RAMP is the first non-primary transition to sweep an
+	# INTERMEDIATE column, which is real public ground and no walk node. Every
+	# route-first plan is unchanged for the same reason it was latent.
+	var auxiliary_air_columns := _transition_air_columns()
 	var urban_core_open_columns := 0
 	for column_value: Variant in urban_core_columns.keys():
 		var column := column_value as Vector2i
 		var blocked := route_columns.has(column) \
+			or auxiliary_air_columns.has(column) \
 			or reserved_link_columns.has(column)
 		for y in range(source.envelope.ground_at(column),
 			source.envelope.top_at(column)):
@@ -608,6 +624,16 @@ func _public_route_columns() -> Dictionary:
 	for transition: WarrenVolumeTransition in source.transitions:
 		if not _is_primary_transition(transition):
 			continue
+		for air_cell: Vector3i in transition.swept_air_cells:
+			out[Vector2i(air_cell.x, air_cell.z)] = true
+	return out
+
+
+func _transition_air_columns() -> Dictionary:
+	## Columns any transition sweeps public air through, primary or auxiliary.
+	## Mirrors WarrenPrunedMassPlan._column_has_building_or_walk's first loop.
+	var out: Dictionary = {}
+	for transition: WarrenVolumeTransition in source.transitions:
 		for air_cell: Vector3i in transition.swept_air_cells:
 			out[Vector2i(air_cell.x, air_cell.z)] = true
 	return out

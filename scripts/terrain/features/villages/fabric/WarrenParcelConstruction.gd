@@ -95,6 +95,14 @@ static func retained_terrace_cells(parcel: WarrenBuildingParcel) \
 	var support := (construction.origin as Vector3i).y
 	for column: Vector2i in parcel.footprint:
 		for band in range(parcel.source.envelope.ground_at(column), support):
+			# Only mass is hill. A street cut through the gap -- the bore under
+			# a plinth, or a secondary lane tunnelling beneath a terrace -- is
+			# void the plan already removed, and declaring it as retained stone
+			# would fill the passage in with rock. A footprint may legally span
+			# such a column, since WarrenBuildingParcel requires continuous
+			# bearing under only half of one.
+			if not parcel.source.has_mass(Vector3i(column.x, band, column.y)):
+				continue
 			for x_offset in 2:
 				for z_offset in 2:
 					out.append(Vector3i(column.x * 2 + x_offset, band,

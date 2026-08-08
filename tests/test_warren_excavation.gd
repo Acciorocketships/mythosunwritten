@@ -39,6 +39,20 @@ const ARCADE_SEED_COUNT := 16
 ## "no candidate ever reaches an arcade" fails loudly.
 const MIN_ARCADE_CLEARED_SEEDS := 5
 const MIN_ARCADE_CLEARED_RATIO := 0.55
+## Lane cells a town must carry, absolutely and as a share of its route.
+##
+## A house needs a public address (WarrenBuildingParcel.gd:47), the bore plus
+## its arcade branches offers about 45 of them across ~565 columns, and that
+## ceiling -- not the partitioner -- is what caps a mass-first town at 23-26
+## houses. Lanes exist to lift it, so what has to be pinned is that they
+## materially widen the public realm rather than that any exists.
+##
+## Measured across the probe seeds: 3-5 lanes, 16-27 cells, against routes of
+## 32-36. Both floors sit below the observed range so seed variation cannot make
+## them brittle, and the proportional one is the load-bearing half -- an
+## absolute floor would pass on a town whose route happened to be long.
+const MIN_LANE_CELLS_PER_TOWN := 12
+const MIN_LANE_CELLS_PER_FIVE_ROUTE_CELLS := 2
 
 
 func _carved(world_seed: int) -> WarrenExcavation:
@@ -61,6 +75,22 @@ func _hand_built(route: Array, transitions: Array) -> WarrenExcavation:
 		excavation.transitions.append(spec_value as Dictionary)
 	excavation.portals.append(route[0] as Vector3i)
 	return excavation
+
+
+func _hand_lane(excavation: WarrenExcavation, anchor: Vector3i,
+		cells: Array[Vector3i]) -> void:
+	## A hand-built lane with valid headroom and LEVEL transitions tiling it, so
+	## seal() can only be rejecting the anchor or the cells under test.
+	var transitions: Array[Dictionary] = []
+	var previous := anchor
+	for cell: Vector3i in cells:
+		transitions.append({"from": previous, "to": cell,
+			"kind": WarrenVolumeTransition.Kind.LEVEL})
+		previous = cell
+		for band: Vector3i in excavation.headroom_slot(cell):
+			excavation.carved[band] = true
+	excavation.lanes.append({"anchor": anchor, "cells": cells,
+		"transitions": transitions})
 
 
 func _reordered(massif: WarrenMassif) -> WarrenMassif:
@@ -167,12 +197,20 @@ func test_removed_volume_never_leaves_the_solid() -> void:
 				massif.top_at(column) - 1,
 				"carved %s (seed %d) is not inside the solid" \
 				% [cell, world_seed])
+		# Lanes are subtraction on the same terms as the route, so they widen
+		# this identity rather than exempting themselves from it: every public
+		# cell in the town, route or lane, owns one unshared headroom slot.
 		var stairs := 0
-		for spec: Dictionary in excavation.transitions:
+		var specs: Array[Dictionary] = []
+		specs.append_array(excavation.transitions)
+		for lane: Dictionary in excavation.lanes:
+			specs.append_array(lane["transitions"] as Array[Dictionary])
+		for spec: Dictionary in specs:
 			stairs += int(int(spec["kind"])
 				== int(WarrenVolumeTransition.Kind.STAIR))
 		assert_eq(excavation.carved.size(),
-			excavation.route.size() * WarrenExcavation.HEADROOM_BANDS + stairs,
+			excavation.public_cells().size() * WarrenExcavation.HEADROOM_BANDS
+				+ stairs,
 			("removed volume must be one unshared headroom slot per walk " \
 			+ "cell, plus exactly one extra band for each stair's " \
 			+ "two-tread intermediate cell (seed %d)") % world_seed)
@@ -510,3 +548,216 @@ func test_carve_does_not_depend_on_massif_column_order() -> void:
 		assert_eq(first.transitions.size(), second.transitions.size(),
 			"column order must not change the transitions (seed %d)" \
 			% world_seed)
+
+
+func _public_graph_reaches_every_cell(excavation: WarrenExcavation) -> bool:
+	## Flood fill the whole street network from the route's mouth over route
+	## steps and lane transitions alike. This is the property
+	## WarrenVolumePlan._all_walk_connected() will re-check one stage later, so a
+	## lane that fails here is an alley the sealed plan cannot accept either.
+	var adjacency: Dictionary = {}
+	for cell: Vector3i in excavation.public_cells():
+		adjacency[cell] = [] as Array[Vector3i]
+	for index in range(1, excavation.route.size()):
+		(adjacency[excavation.route[index]] as Array[Vector3i]).append(
+			excavation.route[index - 1])
+		(adjacency[excavation.route[index - 1]] as Array[Vector3i]).append(
+			excavation.route[index])
+	for lane: Dictionary in excavation.lanes:
+		var walk: Array[Vector3i] = [lane["anchor"] as Vector3i]
+		walk.append_array(lane["cells"] as Array[Vector3i])
+		for index in range(1, walk.size()):
+			if not adjacency.has(walk[index]) or not adjacency.has(walk[index - 1]):
+				return false
+			(adjacency[walk[index]] as Array[Vector3i]).append(walk[index - 1])
+			(adjacency[walk[index - 1]] as Array[Vector3i]).append(walk[index])
+	var reached: Dictionary = {}
+	var pending: Array[Vector3i] = [excavation.route[0]]
+	while not pending.is_empty():
+		var current: Vector3i = pending.pop_back()
+		if reached.has(current):
+			continue
+		reached[current] = true
+		for neighbour: Vector3i in adjacency[current] as Array[Vector3i]:
+			if not reached.has(neighbour):
+				pending.append(neighbour)
+	return reached.size() == adjacency.size()
+
+
+func test_the_route_branches_into_a_connected_lane_network() -> void:
+	## One route cannot seed a village across 565 columns: every house needs a
+	## public address, and the bore plus its arcade branches offer about 45 of
+	## them. Lanes are the street web that address the rest of the hill, so this
+	## asserts a substantive network rather than the existence of one alley.
+	var accepted := 0
+	for world_seed: int in PROBE_SEEDS:
+		var excavation := _carved(world_seed)
+		if excavation == null:
+			continue
+		accepted += 1
+		assert_gte(excavation.lanes.size(), 2,
+			"seed %d branched only %d lanes off its route; one spur is not a " \
+			% [world_seed, excavation.lanes.size()] + "street network")
+		assert_gte(excavation.lane_cells().size(), MIN_LANE_CELLS_PER_TOWN,
+			"seed %d carried only %d lane cells" \
+			% [world_seed, excavation.lane_cells().size()])
+		assert_gte(excavation.lane_cells().size() * 5,
+			excavation.route.size() * MIN_LANE_CELLS_PER_FIVE_ROUTE_CELLS,
+			("seed %d added only %d lane cells to a %d cell route; the lane " \
+			+ "network must widen the public realm, not decorate it") \
+			% [world_seed, excavation.lane_cells().size(),
+				excavation.route.size()])
+		var seen: Dictionary = {}
+		for cell: Vector3i in excavation.route:
+			seen[cell] = true
+		for cell: Vector3i in excavation.lane_cells():
+			assert_false(seen.has(cell),
+				"lane cell %s (seed %d) is already public realm" \
+				% [cell, world_seed])
+			seen[cell] = true
+		assert_true(_public_graph_reaches_every_cell(excavation),
+			"seed %d left an orphan alley in its street network" % world_seed)
+	assert_gt(accepted, 0, "no probe seed carved a route: %s" \
+		% WarrenExcavationCarver.last_failure)
+
+
+func test_every_lane_cell_is_a_slot_cut_from_solid_that_fronts_a_house() -> void:
+	## A lane's own legality, deliberately lighter than the route's: no
+	## two-sided full-height wall rule, because a terrace lane open on its
+	## downhill side is correct hill-town form and gets a parapet from the
+	## surface stages rather than a building.
+	##
+	## What a lane must do instead is earn the mass it removes. Every lane cell
+	## fronts at least one column that could carry the cheapest legal house --
+	## WarrenBuildingParcel's one storey plus its roof reservation, on
+	## unexcavated bearing -- which is the whole reason lanes exist. Re-derived
+	## from the massif here, never read back off the carver.
+	for world_seed: int in PROBE_SEEDS:
+		var excavation := _carved(world_seed)
+		if excavation == null:
+			continue
+		var massif := WarrenMassifBuilder.build(world_seed)
+		var needed := WarrenBuildingParcel.STOREY_BANDS \
+			+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+		for cell: Vector3i in excavation.lane_cells():
+			var column := Vector2i(cell.x, cell.z)
+			assert_true(massif.has_column(column),
+				"lane cell %s (seed %d) stands outside the footprint" \
+				% [cell, world_seed])
+			if not massif.has_column(column):
+				continue
+			var height := 0
+			while excavation.carved.has(Vector3i(cell.x, cell.y + height, cell.z)):
+				height += 1
+			assert_gte(height, WarrenExcavation.HEADROOM_BANDS,
+				"lane cell %s (seed %d) has no carved headroom" \
+				% [cell, world_seed])
+			assert_lte(cell.y + height, massif.top_at(column),
+				"lane cell %s (seed %d) was cut through the massif's skin" \
+				% [cell, world_seed])
+			assert_gte(cell.y, massif.base_at(column),
+				"lane cell %s (seed %d) is cut below natural ground" \
+				% [cell, world_seed])
+			var addressable := false
+			for side: Vector3i in SIDES:
+				var beside := Vector2i(cell.x + side.x, cell.z + side.z)
+				if not massif.has_column(beside) \
+						or massif.base_at(beside) > cell.y \
+						or massif.top_at(beside) < cell.y + needed:
+					continue
+				var clear := true
+				for band in range(massif.base_at(beside), cell.y + needed):
+					if excavation.carved.has(Vector3i(beside.x, band, beside.y)):
+						clear = false
+						break
+				addressable = addressable or clear
+			assert_true(addressable,
+				("lane cell %s (seed %d) fronts no column that can carry a " \
+				+ "house; a lane that addresses nothing is spent mass") \
+				% [cell, world_seed])
+
+
+func test_lanes_leave_every_gate_the_route_answers_to_intact() -> void:
+	## Lanes are cut AFTER the route has been chosen against its gates, so this
+	## re-measures those gates on the finished solid. A lane that took a route
+	## cell's wall, its flank or its roof would satisfy every gate at selection
+	## time and violate all three by the time anything is built.
+	for world_seed: int in PROBE_SEEDS:
+		var excavation := _carved(world_seed)
+		if excavation == null:
+			continue
+		var massif := WarrenMassifBuilder.build(world_seed)
+		var walled := 0
+		for cell: Vector3i in excavation.route:
+			var flanked := 0
+			var walls := 0
+			for side: Vector3i in SIDES:
+				var column := Vector2i(cell.x + side.x, cell.z + side.z)
+				if not massif.has_column(column):
+					continue
+				if massif.top_at(column) > cell.y \
+						and not excavation.carved.has(cell + side):
+					flanked += 1
+				if massif.top_at(column) < cell.y + WarrenExcavation.HEADROOM_BANDS:
+					continue
+				var open := false
+				for band in range(cell.y, cell.y + WarrenExcavation.HEADROOM_BANDS):
+					if excavation.carved.has(Vector3i(column.x, band, column.y)):
+						open = true
+						break
+				walls += int(not open)
+			assert_gte(flanked, 1,
+				"lanes stranded route cell %s (seed %d) beside no mass" \
+				% [cell, world_seed])
+			walled += int(walls >= 2)
+		assert_gte(float(walled) / float(excavation.route.size()),
+			WarrenExcavationCarver.MIN_WALL_RATIO,
+			"lanes opened the route's canyon walls (seed %d)" % world_seed)
+		assert_between(excavation.covered_ratio(), 0.55, 0.70,
+			"lanes changed what stands over the route (seed %d)" % world_seed)
+		assert_between(excavation.portals.size(), 1, 2,
+			"lanes changed the route's portal count (seed %d)" % world_seed)
+
+
+func test_seal_rejects_a_lane_that_never_reaches_the_public_realm() -> void:
+	## The connectivity above is only as strong as seal(), which is what
+	## enforces it in production -- and one stage later
+	## WarrenVolumePlan._all_walk_connected() rejects the whole town for it.
+	var orphan := _hand_built(
+		[Vector3i(0, 0, 0), Vector3i(1, 0, 0)],
+		[{"from": Vector3i(0, 0, 0), "to": Vector3i(1, 0, 0),
+			"kind": WarrenVolumeTransition.Kind.LEVEL}])
+	_hand_lane(orphan, Vector3i(9, 0, 9), [Vector3i(10, 0, 9)])
+	assert_false(orphan.seal(),
+		"a lane anchored on nothing is an alley nobody can walk into")
+
+	var untiled := _hand_built(
+		[Vector3i(0, 0, 0), Vector3i(1, 0, 0)],
+		[{"from": Vector3i(0, 0, 0), "to": Vector3i(1, 0, 0),
+			"kind": WarrenVolumeTransition.Kind.LEVEL}])
+	untiled.lanes.append({
+		"anchor": Vector3i(1, 0, 0),
+		"cells": [Vector3i(1, 0, 1)] as Array[Vector3i],
+		"transitions": [] as Array[Dictionary],
+	})
+	for band: Vector3i in untiled.headroom_slot(Vector3i(1, 0, 1)):
+		untiled.carved[band] = true
+	assert_false(untiled.seal(),
+		"a lane whose transitions do not tile it describes no walk")
+
+	var reused := _hand_built(
+		[Vector3i(0, 0, 0), Vector3i(1, 0, 0)],
+		[{"from": Vector3i(0, 0, 0), "to": Vector3i(1, 0, 0),
+			"kind": WarrenVolumeTransition.Kind.LEVEL}])
+	_hand_lane(reused, Vector3i(1, 0, 0), [Vector3i(0, 0, 0)])
+	assert_false(reused.seal(),
+		"a lane cell that is already route is a second claim on one surface")
+
+	var legal := _hand_built(
+		[Vector3i(0, 0, 0), Vector3i(1, 0, 0)],
+		[{"from": Vector3i(0, 0, 0), "to": Vector3i(1, 0, 0),
+			"kind": WarrenVolumeTransition.Kind.LEVEL}])
+	_hand_lane(legal, Vector3i(1, 0, 0), [Vector3i(1, 0, 1), Vector3i(1, 0, 2)])
+	assert_true(legal.seal(),
+		("a lane hanging off the route by LEVEL steps IS legal; the " \
+		+ "rejections above must be specific, not a seal that refuses lanes"))
