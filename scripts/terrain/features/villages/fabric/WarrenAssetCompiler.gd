@@ -2,6 +2,18 @@ class_name WarrenAssetCompiler
 extends RefCounted
 
 const FLEXIBLE_ORANGE_ROOF_CAP_RATIO := 0.65
+## The facade families an UPPER storey may draw from. Rock is deliberately
+## absent: every stack already builds its ground storey from `room.*.base.rock`
+## (StaggeredFabricCompiler picks that recipe unconditionally), so admitting
+## &"stone" here clads the whole house in masonry -- measured at ten contiguous
+## bands of house-rock on seed 8, which is the "multiple storeys of stone wall
+## read as a tower" the round-5 review rejected.
+##
+## Capping the family table rather than the recipes keeps the rock upper-storey
+## vocabulary compiled and available to any later stage that wants ONE course,
+## and leaves the reviewed wood-over-stone junction exactly where it was: at the
+## top of the ground storey.
+const UPPER_FACADE_FAMILIES: Array[StringName] = [&"blue", &"orange"]
 
 ## Situational recipe selection for already-sealed roofed parcels. It never
 ## scales a prefab or changes parcel geometry to make an asset fit.
@@ -836,13 +848,18 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 static func _select_facade_family(proposal: Dictionary,
 		neighbor_counts: Dictionary, family_counts: Dictionary,
 		world_seed: int) -> StringName:
-	## Three measured construction families compete on the sealed roof-contact
+	## The measured construction families compete on the sealed roof-contact
 	## graph. Adjacency dominates the global count, then a seed-stable rotation
-	## breaks exact ties. This makes a masonry house a real geometric/material
-	## event in the streetscape rather than a tint assigned after clearance.
-	var families: Array[StringName] = [&"blue", &"orange", &"stone"]
+	## breaks exact ties. This makes the facade a real geometric/material event
+	## in the streetscape rather than a tint assigned after clearance.
+	##
+	## This chooses the UPPER storeys only -- see UPPER_FACADE_FAMILIES for why
+	## rock is not among them.
+	var families: Array[StringName] = []
+	families.assign(UPPER_FACADE_FAMILIES)
+	var count := families.size()
 	var tie_phase := posmod(_style_hash(world_seed ^ 0x243f6a88,
-		proposal), families.size())
+		proposal), count)
 	families.sort_custom(func(left: StringName, right: StringName) -> bool:
 		var left_cost := int(neighbor_counts.get(left, 0)) * 8 \
 			+ int(family_counts.get(left, 0))
@@ -850,10 +867,10 @@ static func _select_facade_family(proposal: Dictionary,
 			+ int(family_counts.get(right, 0))
 		if left_cost != right_cost:
 			return left_cost < right_cost
-		var left_index := posmod([&"blue", &"orange", &"stone"].find(left) \
-			- tie_phase, 3)
-		var right_index := posmod([&"blue", &"orange", &"stone"].find(right) \
-			- tie_phase, 3)
+		var left_index := posmod(UPPER_FACADE_FAMILIES.find(left) - tie_phase,
+			count)
+		var right_index := posmod(UPPER_FACADE_FAMILIES.find(right) - tie_phase,
+			count)
 		return left_index < right_index)
 	return families[0]
 

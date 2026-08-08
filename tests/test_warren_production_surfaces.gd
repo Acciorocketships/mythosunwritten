@@ -189,12 +189,17 @@ func test_a_bank_under_a_house_is_a_plinth_over_a_mountain() -> void:
 			"substrate may not rise into the course the plinth owns")
 
 
-func test_hill_no_building_stands_over_carries_no_stone_at_all() -> void:
-	## Terrace mass, bare risers, and uncovered ring faces are the bulk of the
-	## retained set, and rendering them as coursed rock is the uniform masonry
-	## field the reviewer rejected twice. Nothing at all is drawn there -- not a
-	## rock stack, and not a generated slab in an earth palette either, which is
-	## the "box" the same review threw out.
+func test_the_hill_is_drawn_so_a_house_never_stands_over_undrawn_mass() -> void:
+	## SUPERSEDES "hill no building stands over carries no stone at all"
+	## (commit 439a497). That rule hid a face behind mass that was DECLARED and
+	## never DRAWN, so on a terrace the last drawn thing under a house was the
+	## house, and the round-5 review saw buildings floating.
+	##
+	## The declaration covers the whole solid, so the fix is to draw all of it
+	## and let the neighbour test do the hiding: a face survives only where the
+	## mass beside it is genuinely absent, which is a terrace step or the rim.
+	## What is still forbidden is the generated slab -- the "box" the round-4
+	## review threw out -- and a plinth on mass no building stands on.
 	var retained: Dictionary = {}
 	for band in 4:
 		for x in 2:
@@ -202,9 +207,18 @@ func test_hill_no_building_stands_over_carries_no_stone_at_all() -> void:
 				retained[Vector3i(x, band, z)] = true
 	assert_eq(SettlementFabricAssembler.house_plinth_walls(retained,
 		{}).instance_count, 0, "unbuilt hill mass may not be plinthed")
-	assert_eq(SettlementFabricAssembler.hill_substrate_walls(retained,
-		{}).instance_count, 0,
-		"substrate is only legal where a building covers it")
+	var bare := SettlementFabricAssembler.hill_substrate_walls(retained, {})
+	assert_gt(bare.instance_count, 0,
+		"declared mass that draws nothing is what makes a house float")
+	# Interior faces stay closed: only the block's own eight outward faces may
+	# carry stone, never the four between its own columns.
+	for asset_id: StringName in bare.batches.keys():
+		for value: Variant in (bare.batches[asset_id] as Dictionary).get(
+				"transforms", []):
+			var origin := (value as Transform3D).origin
+			assert_false(origin.x > 0.1 and origin.x < 1.4 \
+				and origin.z > 0.1 and origin.z < 1.4,
+				"a face between two retained columns must stay closed")
 	var methods: Array[String] = []
 	for entry: Dictionary in (load(
 			"res://scripts/terrain/features/villages/fabric/"
@@ -226,15 +240,16 @@ func test_hill_standing_over_a_street_is_not_a_stone_vault() -> void:
 		for x in 2:
 			for z in 2:
 				retained[Vector3i(x, band, z)] = true
-	var payload := SettlementFabricAssembler.house_plinth_walls(retained, {})
-	payload.append_from(SettlementFabricAssembler.hill_substrate_walls(retained,
-		{}))
-	assert_eq(payload.instance_count, 0, "a vault must not be stone")
-	# With a house on top the same mass becomes legal substrate -- and still
-	# never gains a horizontal module, because a flat-laid wall is the vault.
+	assert_eq(SettlementFabricAssembler.house_plinth_walls(retained,
+		{}).instance_count, 0, "a vault must not be plinthed")
+	# The hill's own sides are drawn (see the grounding test above), but its
+	# UNDERSIDE over a street never gains a horizontal module: a flat-laid wall
+	# is exactly the vault round 2 built.
 	var solids := _house_over(retained, 4)
 	var covered := SettlementFabricAssembler.hill_substrate_walls(retained,
 		solids)
+	covered.append_from(SettlementFabricAssembler.hill_substrate_walls(retained,
+		{}))
 	assert_gt(covered.instance_count, 0,
 		"mass a building stands over is the mountain and must render")
 	for asset_id: StringName in covered.batches.keys():
@@ -301,3 +316,78 @@ func test_plinth_walls_are_deterministic_and_uniquely_identified() -> void:
 				SettlementFabricAssembler.HOUSE_PLINTH] as Dictionary
 				).ids[index]), "instance order must be a pure function")
 	assert_eq(unique.size(), ids.size(), "stable ids must be unique")
+
+
+func test_rock_cladding_stops_at_the_ground_storey() -> void:
+	## Round-5 review note 4, second half: the style system could clad a whole
+	## house in rock -- ten contiguous bands of house-stone on a measured seed.
+	## Every stack already builds its ground storey from a `*.base.rock` recipe,
+	## so a rock UPPER storey puts a second, third and fourth masonry course on
+	## the same continuous face and the house reads as a tower.
+	##
+	## Pinned at the two places it can leak: the family table itself, and the
+	## recipe ids StaggeredFabricCompiler expands a proposal into for every
+	## family the table can return.
+	assert_false(WarrenAssetCompiler.UPPER_FACADE_FAMILIES.has(&"stone"),
+		"an upper storey may not draw from the rock family")
+	assert_gte(WarrenAssetCompiler.UPPER_FACADE_FAMILIES.size(), 2,
+		"one upper family is a repeated house row, not a streetscape")
+	var ground_rock := 0
+	var upper_rock := 0
+	for family: StringName in WarrenAssetCompiler.UPPER_FACADE_FAMILIES:
+		for kind: StringName in [&"building", &"long", &"slim", &"tower"]:
+			for storeys in range(1, 4):
+				var proposal := {
+					"stable_id": StringName("probe.%s.%s.%d" % [family, kind,
+						storeys]),
+					"kind": kind,
+					"origin": Vector3i(0, 0, 0),
+					"yaw_quarters": 0,
+					"storeys": storeys,
+					"route_y": 0,
+					"roof_feature": 0,
+					"theme": family,
+					"roof_theme": &"blue",
+					"facade_phase": 0,
+				}
+				for component: Dictionary in \
+						StaggeredFabricCompiler.proposal_components(proposal):
+					var recipe_id := String(component.recipe_id)
+					if not recipe_id.begins_with("room."):
+						continue
+					var rock := recipe_id.contains("rock") \
+						or recipe_id.contains("stone")
+					if recipe_id.contains(".upper"):
+						upper_rock += int(rock)
+						assert_false(rock,
+							"%s clads an upper storey in rock" % recipe_id)
+					else:
+						ground_rock += int(rock)
+	assert_eq(upper_rock, 0, "%d upper storeys still compile as rock"
+		% upper_rock)
+	assert_gt(ground_rock, 0,
+		"capping the family table must not also delete the reviewed "
+		+ "wood-over-stone ground storey")
+
+
+func test_the_facade_family_selector_can_never_return_rock() -> void:
+	## The table is only half the guarantee: _select_facade_family sorts by
+	## adjacency cost, so a table entry that leaked in through a count would
+	## still reach a recipe. Swept over every neighbour/global count shape the
+	## graph colouring can present, including ones that make rock the cheapest
+	## family if it were still a candidate.
+	for world_seed in [0, 1, 7, 11, 2697992464]:
+		for blue in 3:
+			for orange in 3:
+				var proposal := {
+					"stable_id": &"probe",
+					"kind": &"building",
+					"origin": Vector3i(blue, orange, world_seed % 7),
+					"storeys": 2,
+				}
+				var chosen := WarrenAssetCompiler._select_facade_family(proposal,
+					{&"blue": blue, &"orange": orange, &"stone": 0},
+					{&"blue": blue * 2, &"orange": orange * 2, &"stone": 0},
+					world_seed)
+				assert_true(WarrenAssetCompiler.UPPER_FACADE_FAMILIES.has(chosen),
+					"selector returned %s, outside the capped table" % chosen)
