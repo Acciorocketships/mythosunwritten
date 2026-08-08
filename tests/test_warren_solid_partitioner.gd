@@ -1056,3 +1056,131 @@ func _signature(parcels: Array[WarrenBuildingParcel]) -> String:
 	for parcel: WarrenBuildingParcel in parcels:
 		parts.append(parcel.slot_signature() + "@%d" % parcel.top_band)
 	return "|".join(parts)
+
+
+## What a foundation course can honestly hide, restated from
+## SettlementFabricAssembler.STONE_BUDGET_BANDS so this suite never reads the
+## number it audits from the class it audits. A house whose lowest drawn band
+## stands further than this over the nearest drawn support is floating.
+const MAX_UNSUPPORTED_BANDS := 2
+## The tallest run of bands a viewer may read as ONE unbroken wall, whichever
+## stage drew each band. WarrenMassifBuilder bounds every step in the solid at
+## MAX_NEIGHBOR_STEP_BANDS, and the tallest house the buildable layer carries
+## adds its own facade above the last step it stands on -- so the composed face
+## is bounded by that step plus one house, and nothing here may exceed it.
+const MAX_COMPOSED_FACE_BANDS := WarrenMassifBuilder.MAX_NEIGHBOR_STEP_BANDS \
+	+ WarrenMassif.BUILDABLE_LAYER_BANDS
+
+
+func _drawn_mass(world_seed: int) -> Dictionary:
+	## Everything the assembler draws, at macro resolution: a house's own cells,
+	## plus the retained solid, which hill_substrate_walls now renders wherever
+	## it is exposed. Bare void is everything else.
+	var town := _town(world_seed)
+	if town.is_empty():
+		return {}
+	var massif := town["massif"] as WarrenMassif
+	var excavation := town["excavation"] as WarrenExcavation
+	var drawn: Dictionary = {}
+	for column: Vector2i in massif.columns:
+		for band in range(massif.base_at(column), massif.top_at(column)):
+			var cell := Vector3i(column.x, band, column.y)
+			if not excavation.carved.has(cell):
+				drawn[cell] = true
+	return drawn
+
+
+func test_no_house_stands_more_than_a_plinth_above_its_own_support() -> void:
+	## Round-5 review note 3: "some of the buildings now are just kind of
+	## 'floating'". A house is grounded when the mass it stands on is DRAWN --
+	## natural ground, retained hill, or another house -- within one foundation
+	## course of its lowest room. Measured on the highest support anywhere under
+	## the footprint, so a house that genuinely oversails a street on one column
+	## still counts as carried by the others.
+	var floating := 0
+	var measured := 0
+	var worst := 0
+	for world_seed: int in CORPUS:
+		var drawn := _drawn_mass(world_seed)
+		if drawn.is_empty():
+			continue
+		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
+			var proposal := WarrenParcelConstruction.proposal(parcel)
+			if proposal.is_empty():
+				continue
+			measured += 1
+			var underside := (proposal.origin as Vector3i).y
+			var gap := 1 << 30
+			for column: Vector2i in parcel.footprint:
+				var column_gap := underside
+				for band in range(underside - 1, -1, -1):
+					if drawn.has(Vector3i(column.x, band, column.y)):
+						column_gap = underside - band - 1
+						break
+				gap = mini(gap, column_gap)
+			worst = maxi(worst, gap)
+			if gap > MAX_UNSUPPORTED_BANDS:
+				floating += 1
+	assert_gt(measured, 100, "only %d houses measured" % measured)
+	assert_eq(floating, 0,
+		"%d of %d houses stand over drawn nothing, the worst by %d bands" \
+		% [floating, measured, worst])
+
+
+func test_no_composed_vertical_face_reads_as_a_tower() -> void:
+	## Round-5 review note 4: the two-to-three storey rule is about the COMPOSED
+	## face -- what a viewer reads as one unbroken wall -- not about one house.
+	## Measured over every drawn band, so a house sitting flush on the hill it
+	## stands on is counted as the single wall it looks like.
+	##
+	## The bound is derived, not tuned: WarrenMassifBuilder holds every step in
+	## the solid to MAX_NEIGHBOR_STEP_BANDS, and WarrenMassif.bearing_at holds a
+	## house to one BUILDABLE_LAYER_BANDS above the terrace it stands on, so the
+	## worst legal composition is one terrace step plus one house.
+	var tallest := 0
+	var worst_seed := -1
+	var faces := 0
+	for world_seed: int in CORPUS:
+		var drawn := _drawn_mass(world_seed)
+		if drawn.is_empty():
+			continue
+		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
+			var proposal := WarrenParcelConstruction.proposal(parcel)
+			if proposal.is_empty():
+				continue
+			for column: Vector2i in parcel.footprint:
+				for band in range((proposal.origin as Vector3i).y,
+						parcel.top_band):
+					drawn[Vector3i(column.x, band, column.y)] = true
+		var runs: Dictionary = {}
+		for cell_value: Variant in drawn.keys():
+			var cell := cell_value as Vector3i
+			for index in 4:
+				var step: Vector2i = [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP,
+					Vector2i.DOWN][index]
+				if drawn.has(Vector3i(cell.x + step.x, cell.y, cell.z + step.y)):
+					continue
+				var key := Vector3i(cell.x, cell.z, index)
+				if not runs.has(key):
+					runs[key] = {}
+				(runs[key] as Dictionary)[cell.y] = true
+		for key_value: Variant in runs.keys():
+			var bands: Array[int] = []
+			bands.assign((runs[key_value] as Dictionary).keys())
+			bands.sort()
+			var index := 0
+			while index < bands.size():
+				var last := index
+				while last + 1 < bands.size() \
+						and bands[last + 1] == bands[last] + 1:
+					last += 1
+				faces += 1
+				if bands[last] - bands[index] + 1 > tallest:
+					tallest = bands[last] - bands[index] + 1
+					worst_seed = world_seed
+				index = last + 1
+	assert_gt(faces, 500, "only %d composed faces measured" % faces)
+	assert_lte(tallest, MAX_COMPOSED_FACE_BANDS,
+		"seed %d presents %d unbroken bands -- %d storeys of one wall" % [
+			worst_seed, tallest,
+			tallest / WarrenBuildingParcel.STOREY_BANDS])

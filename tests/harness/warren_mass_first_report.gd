@@ -49,6 +49,22 @@ extends SceneTree
 ##                     WarrenVolumePlan.MAX_EXACT_ROUTE_INTERIOR_CELLS -- the
 ##                     histogram is what says whether a total over 36 is a slab
 ##                     or simply a bigger street network.
+##   --stage read      what a VIEWER reads, on the composed detailed fabric:
+##                     the massif's bell profile (ring means, peak offset), how
+##                     many houses FLOAT (their lowest rendered band standing
+##                     clear of every support beneath their own footprint), the
+##                     tallest COMPOSED vertical face (the run of bands read as
+##                     one unbroken wall, whichever stage drew each band), and
+##                     how many room units clad a storey above the ground one in
+##                     rock. Runs WarrenBuiltTownSolver.diagnostic_best_effort,
+##                     so it measures the town the preview renders -- roughly a
+##                     minute a seed. `--no-fabric` reports the bell profile
+##                     alone in a second.
+##   --stage terrain   READ-ONLY: mass-first run against real ground bands --
+##                     flat, a steady slope and a terraced step field -- naming
+##                     the first stage that refuses and how far each house's
+##                     underside ends up above its own natural ground. Feeds
+##                     the phase-2 terrain milestone; fixes nothing.
 ##   --stage map       one seed's massif drawn as a plan, band heights in hex,
 ##                     marking every column as street, house, gallery walk cell
 ##                     or bare solid. The fastest way to see WHERE a town's mass
@@ -68,6 +84,7 @@ var _stage := "gate"
 var _seeds: Array[int] = []
 var _layer_bands := 9
 var _rise_bands := 13
+var _fabric_stage := true
 
 
 func _init() -> void:
@@ -114,6 +131,14 @@ func _init() -> void:
 		_report_hillside()
 		quit()
 		return
+	if _stage == "read":
+		_report_read()
+		quit()
+		return
+	if _stage == "terrain":
+		_report_terrain()
+		quit()
+		return
 	if _stage == "map":
 		for world_seed: int in _seeds:
 			_report_map(world_seed)
@@ -141,6 +166,8 @@ func _read_args() -> void:
 			_layer_bands = int(args[index + 1])
 		elif args[index] == "--rise" and index + 1 < args.size():
 			_rise_bands = int(args[index + 1])
+		elif args[index] == "--no-fabric":
+			_fabric_stage = false
 		elif args[index] == "--seeds" and index + 1 < args.size():
 			for token: String in args[index + 1].split(",", false):
 				_seeds.append(int(token))
@@ -1204,3 +1231,332 @@ func _roofs_compile(plan: WarrenParcelPlan) -> bool:
 		return false
 	return not FabricRoofJunctionModuleTable.build(proposals,
 		topology).is_empty()
+
+
+const READ_FACE_DIRECTIONS: Array[Vector3i] = [Vector3i.LEFT, Vector3i.RIGHT,
+	Vector3i.FORWARD, Vector3i.BACK]
+## What a foundation course can honestly hide: SettlementFabricAssembler's
+## STONE_BUDGET_BANDS, restated here so the harness never reads the number it
+## is auditing from the class it audits.
+const READ_MAX_PLINTH_BANDS := 2
+
+
+func _report_read() -> void:
+	## The round-5 review's three visual claims, measured on the town the
+	## preview renders rather than on the partition that precedes it.
+	var program: SettlementFabricProgram = null
+	if _fabric_stage:
+		program = SettlementFabricProgram.compile(
+			EnvironmentCatalog.load_default())
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
+	var floating_total := 0
+	var house_total := 0
+	var stone_total := 0
+	var tallest_face := 0
+	for world_seed: int in _seeds:
+		var massif := WarrenMassifBuilder.build(world_seed)
+		if massif == null:
+			print("seed %2d: massif rejected -- %s" % [world_seed,
+				WarrenMassifBuilder.last_failure])
+			continue
+		print("seed %2d BELL %s" % [world_seed, _bell_line(massif)])
+		if not _fabric_stage:
+			continue
+		var attempt := WarrenBuiltTownSolver.diagnostic_best_effort(world_seed,
+			program)
+		var fabric := attempt.get("fabric") as SettlementFabricPlan
+		if fabric == null:
+			print("seed %2d READ no fabric -- %s" % [world_seed,
+				WarrenBuiltTownSolver.last_failure])
+			continue
+		var read := read_audit(fabric)
+		floating_total += int(read.floating_house_count)
+		house_total += int(read.house_count)
+		stone_total += int(read.stone_upper_unit_count)
+		tallest_face = maxi(tallest_face, int(read.tallest_composed_face_bands))
+		print("seed %2d READ floating %d/%d %s | face %d bands (%s) | " % [
+				world_seed, int(read.floating_house_count),
+				int(read.house_count), str(read.floating_gaps),
+				int(read.tallest_composed_face_bands),
+				str(read.composed_face_histogram)]
+			+ "stone upper %d/%d units" % [int(read.stone_upper_unit_count),
+				int(read.room_unit_count)])
+		print("seed %2d BUILT core->rim %s over %d fine columns" % [world_seed,
+			String(read.built_ring_means), int(read.built_column_count)])
+	if _fabric_stage:
+		print("TOTAL floating %d/%d houses | tallest composed face %d bands | " \
+			% [floating_total, house_total, tallest_face]
+			+ "stone upper units %d" % stone_total)
+	SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = false
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+static func bell_profile(massif: WarrenMassif) -> Dictionary:
+	## Ring means of the massif's own height, measured from the footprint
+	## centroid outward and normalised by the widest radius, plus where the peak
+	## actually stands. A bell has a low rim, a rising middle and a tall core;
+	## an off-centre peak is variation, not a defect.
+	var centroid := Vector2.ZERO
+	for column: Vector2i in massif.columns:
+		centroid += Vector2(column)
+	centroid /= float(maxi(1, massif.columns.size()))
+	var widest := 0.0
+	for column: Vector2i in massif.columns:
+		widest = maxf(widest, (Vector2(column) - centroid).length())
+	var sums := PackedFloat64Array()
+	var counts := PackedInt32Array()
+	for _index in 5:
+		sums.append(0.0)
+		counts.append(0)
+	var peak := 0
+	var peak_column := Vector2i.ZERO
+	var rim_tallest := 0
+	for column: Vector2i in massif.columns:
+		var height := massif.top_at(column) - massif.base_at(column)
+		var ring := clampi(int(floor((Vector2(column) - centroid).length()
+			/ maxf(0.001, widest) * 5.0)), 0, 4)
+		sums[ring] += float(height)
+		counts[ring] += 1
+		if height > peak:
+			peak = height
+			peak_column = column
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP,
+				Vector2i.DOWN]:
+			if not massif.has_column(column + direction):
+				rim_tallest = maxi(rim_tallest, height)
+				break
+	var means := PackedFloat64Array()
+	for ring in 5:
+		means.append(sums[ring] / float(maxi(1, counts[ring])))
+	return {
+		"ring_means": means,
+		"peak_bands": peak,
+		"peak_offset_cells": (Vector2(peak_column) - centroid).length(),
+		"rim_tallest_bands": rim_tallest,
+		"column_count": massif.columns.size(),
+		"radius_cells": widest,
+	}
+
+
+func _bell_line(massif: WarrenMassif) -> String:
+	var profile := bell_profile(massif)
+	var means := profile.ring_means as PackedFloat64Array
+	var parts := PackedStringArray()
+	for ring in means.size():
+		parts.append("%.1f" % means[ring])
+	return "core->rim %s | peak %d at %.1f cells off centre | rim tallest %d" % [
+		" ".join(parts), int(profile.peak_bands),
+		float(profile.peak_offset_cells), int(profile.rim_tallest_bands)]
+
+
+static func read_audit(fabric: SettlementFabricPlan) -> Dictionary:
+	## Everything the round-5 notes ask about the RENDERED town, derived from
+	## the sealed fabric alone so no stage can claim a wall it does not draw.
+	var solids := fabric.transformed_cells(&"solid")
+	var retained := fabric.retained_terrace_cells
+	## DRAWN support only, and the model must track what the assembler actually
+	## emits or the numbers are about an imaginary town. Since the round-5
+	## grounding fix SettlementFabricAssembler.hill_substrate_walls renders the
+	## whole retained solid, so the drawn set is solids plus retained; before it,
+	## substrate was emitted only on a column a building stood over, and that
+	## narrower set is what the "before" column of task-17-report.md measures.
+	var support: Dictionary = {}
+	for cell_value: Variant in solids.keys():
+		support[cell_value as Vector3i] = true
+	for cell_value: Variant in retained.keys():
+		support[cell_value as Vector3i] = true
+
+	var lowest_band: Dictionary = {}
+	var lowest_owner: Dictionary = {}
+	for cell_value: Variant in solids.keys():
+		var cell := cell_value as Vector3i
+		var column := Vector2i(cell.x, cell.z)
+		if not lowest_band.has(column) or cell.y < int(lowest_band[column]):
+			lowest_band[column] = cell.y
+			lowest_owner[column] = StringName(solids[cell])
+	var gaps_by_owner: Dictionary = {}
+	for column_value: Variant in lowest_band.keys():
+		var column := column_value as Vector2i
+		var bottom := int(lowest_band[column])
+		var gap := bottom
+		for band in range(bottom - 1, -1, -1):
+			if support.has(Vector3i(column.x, band, column.y)):
+				gap = bottom - band - 1
+				break
+		var owner := StringName(lowest_owner[column])
+		gaps_by_owner[owner] = mini(int(gaps_by_owner.get(owner, 1 << 30)), gap)
+	var floating := 0
+	var gap_histogram: Dictionary = {}
+	for owner_value: Variant in gaps_by_owner.keys():
+		var gap := int(gaps_by_owner[owner_value])
+		gap_histogram[gap] = int(gap_histogram.get(gap, 0)) + 1
+		floating += int(gap > READ_MAX_PLINTH_BANDS)
+
+	var runs: Dictionary = {}
+	for cell_value: Variant in support.keys():
+		var cell := cell_value as Vector3i
+		for index in READ_FACE_DIRECTIONS.size():
+			if support.has(cell + READ_FACE_DIRECTIONS[index]):
+				continue
+			var key := Vector3i(cell.x, cell.z, index)
+			if not runs.has(key):
+				runs[key] = {}
+			(runs[key] as Dictionary)[cell.y] = true
+	var tallest := 0
+	var face_histogram: Dictionary = {}
+	for key_value: Variant in runs.keys():
+		var bands: Array[int] = []
+		bands.assign((runs[key_value] as Dictionary).keys())
+		bands.sort()
+		var index := 0
+		while index < bands.size():
+			var last := index
+			while last + 1 < bands.size() and bands[last + 1] == bands[last] + 1:
+				last += 1
+			var run := bands[last] - bands[index] + 1
+			tallest = maxi(tallest, run)
+			face_histogram[run] = int(face_histogram.get(run, 0)) + 1
+			index = last + 1
+
+	var stone_upper := 0
+	var room_units := 0
+	for unit_value: FabricUnit in fabric.units:
+		var text := String(unit_value.recipe_id)
+		if not text.begins_with("room."):
+			continue
+		room_units += 1
+		if not text.contains(".upper"):
+			continue
+		var recipe_value := fabric.recipe(unit_value.recipe_id)
+		if recipe_value == null:
+			continue
+		for asset_id: StringName in recipe_value.asset_ids():
+			if SettlementFabricAssembler.STONE_FACADE_ASSETS.has(asset_id):
+				stone_upper += 1
+				break
+	## The BUILT silhouette, which is the one a viewer actually sees: the massif
+	## may be a textbook bell and still read as a mesa if only a patch of it
+	## carries houses. Ring means over the built columns alone, centroid and
+	## radius taken from the built area itself.
+	var built_top: Dictionary = {}
+	var built_centroid := Vector2.ZERO
+	for cell_value: Variant in solids.keys():
+		var cell := cell_value as Vector3i
+		var column := Vector2i(cell.x, cell.z)
+		if not built_top.has(column):
+			built_centroid += Vector2(column)
+		built_top[column] = maxi(int(built_top.get(column, cell.y)), cell.y)
+	built_centroid /= float(maxi(1, built_top.size()))
+	var built_radius := 0.0
+	for column_value: Variant in built_top.keys():
+		built_radius = maxf(built_radius,
+			(Vector2(column_value as Vector2i) - built_centroid).length())
+	var built_sums := PackedFloat64Array()
+	var built_counts := PackedInt32Array()
+	for _index in 5:
+		built_sums.append(0.0)
+		built_counts.append(0)
+	for column_value: Variant in built_top.keys():
+		var ring := clampi(int(floor(
+			(Vector2(column_value as Vector2i) - built_centroid).length()
+			/ maxf(0.001, built_radius) * 5.0)), 0, 4)
+		built_sums[ring] += float(int(built_top[column_value]))
+		built_counts[ring] += 1
+	var built_means := PackedStringArray()
+	for ring in 5:
+		built_means.append("%.1f" % (built_sums[ring]
+			/ float(maxi(1, built_counts[ring]))))
+	return {
+		"built_ring_means": " ".join(built_means),
+		"built_column_count": built_top.size(),
+		"house_count": gaps_by_owner.size(),
+		"floating_house_count": floating,
+		"floating_gaps": _sorted_histogram(gap_histogram),
+		"tallest_composed_face_bands": tallest,
+		"composed_face_histogram": _sorted_histogram(face_histogram),
+		"stone_upper_unit_count": stone_upper,
+		"room_unit_count": room_units,
+	}
+
+
+static func _sorted_histogram(counts: Dictionary) -> String:
+	var keys: Array[int] = []
+	keys.assign(counts.keys())
+	keys.sort()
+	var parts := PackedStringArray()
+	for key: int in keys:
+		parts.append("%d:%d" % [key, int(counts[key])])
+	return "{%s}" % ", ".join(parts)
+
+
+func _report_terrain() -> void:
+	## READ-ONLY AUDIT for the phase-2 terrain milestone: mass-first has only
+	## ever been exercised at base=0, so what actually happens when the village
+	## layer hands it real ground bands is unknown rather than known-good.
+	##
+	## Three frames over the same seeds: flat (the pinned case), a steady SLOPE
+	## across the footprint, and a TERRACED step field in the shape
+	## test_village_plan.gd's _terraced_region uses. Every stage from the massif
+	## to the partition is run and the first one that refuses is named.
+	var span := WarrenMassifBuilder.RADIUS_CELLS + 4
+	var frames: Array[Dictionary] = []
+	var flat: Dictionary = {}
+	var slope: Dictionary = {}
+	var terraced: Dictionary = {}
+	for z in range(-span, span + 1):
+		for x in range(-span, span + 1):
+			var column := Vector2i(x, z)
+			flat[column] = 0
+			slope[column] = clampi((x + span) / 4, 0, 8)
+			terraced[column] = 0 if x <= -1 else (2 if x == 0 else 6)
+	frames.append({"name": "flat", "bands": flat})
+	frames.append({"name": "slope 0-8", "bands": slope})
+	frames.append({"name": "terrace 0/2/6", "bands": terraced})
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	for frame: Dictionary in frames:
+		for world_seed: int in _seeds:
+			print("%-16s seed %2d: %s" % [frame.name, world_seed,
+				_terrain_probe(world_seed, frame.bands as Dictionary)])
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _terrain_probe(world_seed: int, ground_bands: Dictionary) -> String:
+	var massif := WarrenMassifBuilder.build(world_seed, ground_bands)
+	if massif == null:
+		return "massif rejected -- %s" % WarrenMassifBuilder.last_failure
+	var lowest := 1 << 30
+	var highest := -(1 << 30)
+	var deepest_bearing := 0
+	for column: Vector2i in massif.columns:
+		lowest = mini(lowest, massif.base_at(column))
+		highest = maxi(highest, massif.top_at(column))
+		deepest_bearing = maxi(deepest_bearing,
+			massif.bearing_at(column) - massif.base_at(column))
+	var frontier := WarrenTownSolver.mass_first_frontier(world_seed,
+		ground_bands)
+	var text := "base %d..%d top %d bearing lift <=%d" % [lowest,
+		massif.base_at(massif.columns.keys()[0] as Vector2i), highest,
+		deepest_bearing]
+	if frontier.is_empty():
+		return "%s | NO FRONTIER -- %s" % [text, WarrenTownSolver.last_failure]
+	var volume := frontier[0]
+	var plan := WarrenTownSolver.partition_parcels(volume)
+	if plan == null:
+		return "%s | frontier %d | NO PARTITION -- %s" % [text,
+			frontier.size(), WarrenTownSolver.last_partition_failure]
+	var below_ground := 0
+	var undersides: Dictionary = {}
+	for parcel: WarrenBuildingParcel in plan.parcels:
+		var proposal := WarrenParcelConstruction.proposal(parcel)
+		if proposal.is_empty():
+			below_ground += 1
+			continue
+		var origin := proposal.origin as Vector3i
+		var lift := 1 << 30
+		for column: Vector2i in parcel.footprint:
+			lift = mini(lift, origin.y - massif.base_at(column))
+		undersides[lift] = int(undersides.get(lift, 0)) + 1
+	return "%s | frontier %d | houses %d | no-proposal %d | " % [text,
+		frontier.size(), plan.parcels.size(), below_ground] \
+		+ "underside above own ground %s" % _sorted_histogram(undersides)
