@@ -116,3 +116,31 @@ Terraced-house interior partitioning granularity (per-storey rooms vs whole
 stacks); daylight-well frequency tuning; whether market plazas become carved
 chambers (grotto markets) or stay surface-adjacent; performance budget for
 the mesh-overlap audit on 30+ seed sweeps.
+
+## Status checkpoint (2026-08-08)
+
+The pipeline is built end to end behind `GENERATION_MODE = &"mass_first"`
+(route_first remains the shipping default, A/B-verified untouched at every
+shared-file change): terraced massif (radius 16, rim rising in <=4-band
+steps against empty neighbours), excavated primary route (walks at grade,
+climbs 9-13 bands, 55-70% covered), secondary lane network (addresses
+~92/town, houses ~74 mean, 100 on seed 11), solid partitioner with split
+support datum, detail phases (skywalks, outcrops, markets) and a
+best-effort preview harness (`tests/harness/warren_mass_first_preview.tscn`)
+that renders pre-gate towns and prints gate refusals honestly.
+
+Visual state per the reviewer's rounds: buildings 2-3 storeys with
+setbacks (stone included), boxes removed, city composed of catalog assets
+only, stone as hidden substrate + foundation plinths, mountain character
+kept. Open: whole-house stone facades (cap to ground storey), facade/wall
+uniformity (unbaked variant bake wave), towns still fail legacy visual
+gates (overhead 0.11-0.21 vs 0.35 — calibration vs mountain form to be
+argued from measurement), corner-junction art to retire the diagnostic
+overlap exemption, elevated houses on bare support pillars where substrate
+is unresolved, seed-6 contact regression, richness-blind topology_score.
+
+Strategic fork presented to the reviewer (decision pending): terrain-
+integrated hill (massif -> heightfield + existing cliff dressing) vs
+maturing the fabric-substrate path vs phased hybrid (shared variety work
+first, then terrain milestone). Decision ledger for the whole build:
+`.superpowers/sdd/2026-08-06-mass-first-warren/progress.md` (untracked).
