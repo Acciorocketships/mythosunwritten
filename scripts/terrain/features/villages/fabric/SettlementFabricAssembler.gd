@@ -228,22 +228,30 @@ static func hill_substrate_walls(retained: Dictionary, solids: Dictionary,
 		stone_clad: Dictionary = {}) -> EnvironmentInstancePayload:
 	## The mountain under the town, tiled by whole 3 m rock modules from each
 	## exposed run's top downward, the lowest one burying its remainder rather
-	## than being scaled. Emitted ONLY on a column a building stands over, and
-	## never on a band the foundation plinth already covers.
+	## than being scaled, and never on a band the foundation plinth already
+	## covers.
+	##
+	## It is drawn on EVERY retained column, not only the ones a building stands
+	## over, and that is the round-5 grounding fix rather than a relapse into the
+	## round-2 monument. Restricting it to built columns hid a face behind mass
+	## that was declared and never drawn, so a house on a terrace stood over
+	## nothing and read as floating -- measured on seed 7, and the reviewer's
+	## note 3. Drawing the whole solid also HALVES the tallest composed vertical
+	## face, because a face is only cut where its neighbour is missing: with the
+	## hill drawn, every exposed run is one of WarrenMassifBuilder's own terrace
+	## steps and is bounded by MAX_NEIGHBOR_STEP_BANDS, where a skirt under an
+	## isolated built column ran from the house floor to the grass. Measured on
+	## seed 7's composed fabric: 16 bands built-columns-only, 8 bands whole-hill.
 	##
 	## Pure function of integer cell sets over sorted keys, so the payload is
 	## byte-identical for identical input.
 	var out := EnvironmentInstancePayload.new()
-	var ceilings := building_ceiling(solids)
 	var plinths := plinth_faces(retained, solids, stone_clad)
 	var runs: Dictionary = {}
 	var cells: Array[Vector3i] = []
 	cells.assign(retained.keys())
 	cells.sort_custom(_cell_before)
 	for cell: Vector3i in cells:
-		var column := Vector2i(cell.x, cell.z)
-		if not ceilings.has(column) or cell.y >= int(ceilings[column]):
-			continue
 		for index in FACE_DIRECTIONS.size():
 			var neighbor := cell + FACE_DIRECTIONS[index]
 			if retained.has(neighbor) or solids.has(neighbor) \
