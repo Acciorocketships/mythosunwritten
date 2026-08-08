@@ -495,21 +495,33 @@ static func diagnostic_best_effort(world_seed: int,
 		program: SettlementFabricProgram,
 		ground_bands: Dictionary = {}) -> Dictionary:
 	## DIAGNOSTIC ONLY -- NEVER a claim that a town passes. Runs the ordinary
-	## solve() and, when the visual-selection gates reject every candidate,
-	## hands back the most detailed fabric those gates saw together with the
-	## reasons they refused it. A harness can then show the town the detail
+	## per-candidate construction, and when the visual-selection gates reject a
+	## candidate it hands back the detailed fabric those gates saw together with
+	## the reason they refused it. A harness can then show the town the detail
 	## phases actually built instead of the bare parcel compile.
+	##
+	## It stops at the FIRST candidate that reaches the gates rather than calling
+	## solve(), because solve() only exits early on a survivor: a town type the
+	## gates always reject therefore pays for the whole exhaustive frontier with
+	## full detail assembly on every candidate, which is tens of minutes. A
+	## preview needs one town, not the best of thirty-two. That also means this
+	## deliberately does NOT pick the best candidate and must never be mistaken
+	## for selection.
 	last_best_effort_fabric = null
 	last_best_effort_detail_count = 0
 	last_best_effort_failures = PackedStringArray()
-	var plan := solve(world_seed, program, ground_bands)
-	if plan != null:
-		return {
-			"fabric": plan.fabric,
-			"detail_count": plan.overhead_candidates.size(),
-			"selected": true,
-			"gate_failures": PackedStringArray(),
-		}
+	for town: WarrenTownPlan in WarrenTownSolver.ranked_candidates(world_seed,
+			ground_bands, program, WarrenTownSolver.COMPOSED_PLAN_FRONTIER):
+		var plan := _solve_candidate(world_seed, program, town)
+		if plan != null:
+			return {
+				"fabric": plan.fabric,
+				"detail_count": plan.overhead_candidates.size(),
+				"selected": true,
+				"gate_failures": PackedStringArray(),
+			}
+		if last_best_effort_fabric != null:
+			break
 	return {
 		"fabric": last_best_effort_fabric,
 		"detail_count": last_best_effort_detail_count,
