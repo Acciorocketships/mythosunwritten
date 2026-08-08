@@ -137,135 +137,169 @@ func test_commit_queue_stages_surface_mesh_collision_and_visuals() -> void:
 		"the committed block must draw the generated surface mesh")
 
 
-func test_a_multi_band_terrace_is_retained_by_stacked_authored_modules() -> void:
-	## The one-band court already renders as a half-buried 3 m rock module. A
-	## house standing on a six-band hill needs the same module STACKED, never
-	## stretched: three of them, top flush with the terrace, each covering two
-	## bands. Faces the town itself already closes get nothing.
+func _house_over(retained: Dictionary, band: int) -> Dictionary:
+	## A timber house standing on the top of a column of hill: its own base
+	## storey is not rock, so the last course of hill under it is the one place
+	## the round-3 budget still allows stone.
+	var solids: Dictionary = {}
+	for cell_value: Variant in retained.keys():
+		var cell := cell_value as Vector3i
+		if cell.y == band:
+			solids[cell + Vector3i.UP] = &"house"
+	return solids
+
+
+func test_a_multi_band_terrace_is_never_stacked_with_stone() -> void:
+	## Round 2 tiled a six-band bank with three courses of rock, which is how a
+	## hill town became a monument. The budget now allows ONE module per face,
+	## top flush with the house it carries; everything under it is earth. Faces
+	## the town itself already closes still get nothing.
 	var retained: Dictionary = {}
 	for band in 6:
 		retained[Vector3i(0, band, 0)] = true
-	var solids: Dictionary = {}
+	var solids := _house_over(retained, 5)
 	for band in 6:
 		# The neighbour to the east is another house's wall, so that face is
 		# already closed and no rock may appear inside it.
-		solids[Vector3i(1, band, 0)] = true
-	var payload := SettlementFabricAssembler.retaining_walls(retained, solids)
+		solids[Vector3i(1, band, 0)] = &"neighbour"
+	var payload := SettlementFabricAssembler.house_plinth_walls(retained,
+		solids)
 	assert_true(payload.validate())
 	var batch := payload.batches.get(
 		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
 	var transforms: Array = batch.get("transforms", [])
-	assert_eq(transforms.size(), 9,
-		"three exposed faces of a six-band terrace need three modules each")
-	var tops: Dictionary = {}
-	var eastward := 0
+	assert_eq(transforms.size(), 3,
+		"a six-band bank owes one plinth course to its three open faces, "
+		+ "not one course per two bands")
 	for value: Variant in transforms:
 		var origin := (value as Transform3D).origin
-		tops[snappedf(origin.y + 3.0, 0.001)] = true
-		eastward += int(origin.x > 0.4)
-	assert_eq(eastward, 0,
-		"a face closed by a neighbouring house must stay unretained")
-	var expected: Array[float] = [9.0, 6.0, 3.0]
-	for top: float in expected:
-		assert_true(tops.has(top),
-			"no module tops out at %.1f m; the hill has a gap" % top)
-	assert_eq(tops.size(), expected.size(),
-		"modules must tile the terrace rather than overlap it")
+		assert_almost_eq(origin.y + 3.0, 9.0, 0.001,
+			"the plinth must hang from the house floor it carries")
+		assert_lt(origin.x, 0.4,
+			"a face closed by a neighbouring house must stay unretained")
+	assert_eq(SettlementFabricAssembler.tallest_stone_stack_bands(payload),
+		SettlementFabricAssembler.STONE_BUDGET_BANDS,
+		"one plinth course is exactly one storey of stone")
 
 
-func test_a_terrace_face_the_hill_itself_closes_gets_no_wall() -> void:
-	## Two neighbouring houses on the same hill share a face that is solid rock
-	## on both sides. Retaining it would build a wall inside the hill.
+func test_hill_the_town_did_not_build_on_carries_no_stone_at_all() -> void:
+	## Terrace mass, tunnel walls, and cut faces with no house on top are the
+	## bulk of the retained set. Round 2 rendered every one of them as coursed
+	## rock. They are ground: the earth skin owns them and stone never appears.
 	var retained: Dictionary = {}
 	for band in 4:
-		retained[Vector3i(0, band, 0)] = true
-		retained[Vector3i(1, band, 0)] = true
-	var payload := SettlementFabricAssembler.retaining_walls(retained, {})
-	var batch := payload.batches.get(
-		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
-	var transforms: Array = batch.get("transforms", [])
-	assert_eq(transforms.size(), 12,
-		"six exposed faces of a four-band pair need two modules each")
-	for value: Variant in transforms:
-		var origin := (value as Transform3D).origin
-		assert_false(is_equal_approx(origin.x, 0.75) \
-			and is_equal_approx(origin.z, 0.0),
-			"a wall was built on the face the two terraces share")
+		for x in 2:
+			for z in 2:
+				retained[Vector3i(x, band, z)] = true
+	var payload := SettlementFabricAssembler.house_plinth_walls(retained, {})
+	assert_eq(payload.instance_count, 0,
+		"unbuilt hill mass rendered %d stone modules" % payload.instance_count)
+	var skin := SettlementFabricAssembler.earth_skin_mesh(retained, {},
+		SettlementFabricAssembler.plinth_faces(retained, {}))
+	assert_not_null(skin, "the hill it replaces must still be skinned as earth")
+	assert_true(_skin_has_normal(skin, Vector3.UP),
+		"the terrace tread must be earth")
+	assert_true(_skin_has_normal(skin, Vector3.LEFT) \
+		and _skin_has_normal(skin, Vector3.BACK),
+		"the cut faces of the hill must be earth, not masonry")
 
 
-func test_hill_standing_over_a_street_is_vaulted_underneath() -> void:
+func test_hill_standing_over_a_street_is_closed_by_earth_underneath() -> void:
 	## The excavation's cover gate guarantees a majority of route cells carry
-	## massif mass overhead, but the wall vocabulary closes only lateral faces,
-	## so that mass rendered as nothing and every covered street read as an open
-	## trench. A macro column of hill standing over a street is decked
-	## UNDERNEATH -- the vault a covered route walks through. Its top is ground,
-	## not architecture, and belongs to the earth skin.
+	## mass overhead. Round 2 closed that underside with flat rock modules -- a
+	## stone vault. It is the underside of a hill, so it is earth; without it a
+	## covered street reads as a roofless trench however much mass is above.
 	var retained: Dictionary = {}
 	for band: int in [3, 4]:
 		for x in 2:
 			for z in 2:
 				retained[Vector3i(x, band, z)] = true
-	var payload := SettlementFabricAssembler.retaining_walls(retained, {})
-	assert_true(payload.validate())
-	var heights := _flat_module_heights(payload)
-	assert_eq(heights, [4.5, 4.5] as Array[float],
-		"one macro column of hill over a street needs a soffit at its "
-		+ "underside, two modules, and nothing on its tread")
-	# Extending the hill one band down moves the vault down with it: only the
-	# lowest exposed underside is decked, never one buried inside the hill.
-	var buried := retained.duplicate()
+	var payload := SettlementFabricAssembler.house_plinth_walls(retained, {})
+	assert_eq(payload.instance_count, 0, "a vault must not be stone")
+	var skin := SettlementFabricAssembler.earth_skin_mesh(retained, {},
+		SettlementFabricAssembler.plinth_faces(retained, {}))
+	var heights := _skin_face_heights(skin, Vector3.DOWN)
+	assert_eq(heights, [4.5, 4.5, 4.5, 4.5] as Array[float],
+		"only the lowest exposed underside is skinned, once per cell")
+	# Extending the hill one band down moves the soffit down with it, and a
+	# band resting on the world floor is never an overhang.
+	var lowered := retained.duplicate()
 	for x in 2:
 		for z in 2:
-			buried[Vector3i(x, 2, z)] = true
-	assert_eq(_flat_module_heights(
-		SettlementFabricAssembler.retaining_walls(buried, {})),
-		[3.0, 3.0] as Array[float],
-		"only the lowest exposed underside is vaulted")
+			lowered[Vector3i(x, 2, z)] = true
+	assert_eq(_skin_face_heights(SettlementFabricAssembler.earth_skin_mesh(
+		lowered, {}, SettlementFabricAssembler.plinth_faces(lowered, {})),
+		Vector3.DOWN), [3.0, 3.0, 3.0, 3.0] as Array[float],
+		"only the lowest exposed underside is skinned")
 
 
-func test_stone_is_retained_only_where_the_town_cut_the_hill() -> void:
-	## A hill rendered as masonry everywhere is a monument, not a hillside. With
-	## a cut set the wall modules appear only on faces looking onto a column the
-	## town actually occupies; the rest of the hill is left to the earth skin.
+func test_no_stone_face_in_an_assembled_payload_exceeds_one_storey() -> void:
+	## The round-3 budget, pinned: "almost no stone should be visible, it should
+	## only be used sparingly to make a house one storey taller". A plinth under
+	## a house whose own ground storey is ALREADY rock would put a second storey
+	## of masonry on one continuous face, so it is refused and that course reads
+	## as earth instead.
 	var retained: Dictionary = {}
 	for band in 4:
-		for x in 2:
-			for z in 2:
-				retained[Vector3i(x, band, z)] = true
-	var everywhere := SettlementFabricAssembler.retaining_walls(retained, {})
-	var cut := {Vector2i(-1, 0): true, Vector2i(-1, 1): true}
-	var scoped := SettlementFabricAssembler.retaining_walls(retained, {}, cut)
-	assert_gt(everywhere.instance_count, scoped.instance_count,
-		"a cut set must retain strictly less than every exposed face")
-	var batch := scoped.batches.get(
-		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
-	assert_gt(int(batch.get("transforms", []).size()), 0,
-		"the cut faces themselves must still be stone")
-	for value: Variant in batch.get("transforms", []):
-		assert_lt((value as Transform3D).origin.x, 0.0,
-			"stone appeared on a face the town never cut")
+		retained[Vector3i(0, band, 0)] = true
+	var solids := _house_over(retained, 3)
+	var assembled := SettlementFabricAssembler.house_plinth_walls(retained,
+		solids)
+	# The house's own ground storey, as room.base.rock places it: a 3 m rock
+	# facade sitting directly on the plinth, offset half a cell along the wall.
+	assembled.add(SettlementFabricProgram.ROCK_WINDOW,
+		Transform3D(Basis.IDENTITY, Vector3(0.75, 6.0, -0.75)), Color.WHITE,
+		&"test.house.front")
+	assert_gt(SettlementFabricAssembler.tallest_stone_stack_bands(assembled),
+		SettlementFabricAssembler.STONE_BUDGET_BANDS,
+		"the control must show an unguarded plinth stacking under a rock "
+		+ "ground storey, or this test proves nothing")
+	var stone_clad: Dictionary = {}
+	for cell_value: Variant in solids.keys():
+		stone_clad[cell_value as Vector3i] = true
+	var guarded := SettlementFabricAssembler.house_plinth_walls(retained,
+		solids, stone_clad)
+	assert_eq(guarded.instance_count, 0,
+		"a house that already wears rock may not be given a rock plinth")
+	guarded.add(SettlementFabricProgram.ROCK_WINDOW,
+		Transform3D(Basis.IDENTITY, Vector3(0.75, 6.0, -0.75)), Color.WHITE,
+		&"test.house.front")
+	assert_lte(SettlementFabricAssembler.tallest_stone_stack_bands(guarded),
+		SettlementFabricAssembler.STONE_BUDGET_BANDS,
+		"no continuous stone face may exceed one storey")
 
 
-func _flat_module_heights(payload: EnvironmentInstancePayload) -> Array[float]:
-	var batch := payload.batches.get(
-		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
+func _skin_has_normal(mesh: ArrayMesh, normal: Vector3) -> bool:
+	return not _skin_face_heights(mesh, normal).is_empty()
+
+
+func _skin_face_heights(mesh: ArrayMesh, normal: Vector3) -> Array[float]:
+	## One entry per quad whose normal matches, at its height. Read back
+	## approximately: an ArrayMesh may store its normals compressed.
 	var out: Array[float] = []
-	for value: Variant in batch.get("transforms", []):
-		var placement := value as Transform3D
-		if placement.basis.y.y > 0.5:
-			continue
-		out.append(snappedf(placement.origin.y, 0.001))
+	if mesh == null:
+		return out
+	var arrays := mesh.surface_get_arrays(0)
+	var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+	var normals := arrays[Mesh.ARRAY_NORMAL] as PackedVector3Array
+	var index := 0
+	while index < normals.size():
+		if normals[index].dot(normal) > 0.99:
+			out.append(snappedf(vertices[index].y, 0.001))
+		index += 6
 	out.sort()
 	return out
 
 
-func test_retaining_walls_are_deterministic_and_uniquely_identified() -> void:
+func test_plinth_walls_are_deterministic_and_uniquely_identified() -> void:
 	var retained: Dictionary = {}
 	for band in 5:
 		for x in 2:
 			retained[Vector3i(x, band, 0)] = true
-	var first := SettlementFabricAssembler.retaining_walls(retained, {})
-	var second := SettlementFabricAssembler.retaining_walls(retained, {})
+	var solids := _house_over(retained, 4)
+	var first := SettlementFabricAssembler.house_plinth_walls(retained, solids)
+	var second := SettlementFabricAssembler.house_plinth_walls(retained, solids)
+	assert_gt(first.instance_count, 0, "the fixture must place some stone")
 	assert_eq(first.instance_count, second.instance_count)
 	var batch := first.batches.get(
 		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary

@@ -15,9 +15,10 @@ var embedding_plan: StaggeredFabricEmbeddingPlan
 ## solid no building occupies -- the plinth under a raised parcel, the terrace
 ## risers between houses, and the mass beside and above a street the excavation
 ## cut through the hill, which is what makes a covered route read as a passage
-## instead of a trench. Rendered as retained stone by SettlementFabricAssembler
-## and deliberately excluded from occupancy, so it claims no socket and enters
-## no visual-envelope or solid/void test.
+## instead of a trench. Rendered as EARTH by SettlementFabricAssembler -- only
+## the last course under a house that stopped descending short of its ground is
+## masonry -- and deliberately excluded from occupancy, so it claims no socket
+## and enters no visual-envelope or solid/void test.
 ##
 ## Empty for a route-first town: WarrenFabricCompiler declares the wider hill
 ## only where the massif provenance is present.

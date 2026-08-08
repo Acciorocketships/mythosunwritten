@@ -11,6 +11,22 @@ const PLANK_RAILING := &"sfv.deck.railing.s.001"
 const TIMBER_SUPPORT := &"sfv.deck.pillar.001"
 const LOW_RETAINING_WALL := &"sfv.fabric.wall.rock.plain.001"
 const PLANK_Y_OFFSET := -0.12
+## Every authored module that reads as coursed rock, whether a recipe places it
+## as a house's ground storey or this assembler places it as a plinth. The
+## budget below is measured across the union, because a viewer sees one
+## continuous masonry face and does not care which stage emitted it.
+const STONE_FACADE_ASSETS: Array[StringName] = [
+	&"sfv.fabric.wall.rock.plain.001",
+	&"sfv.fabric.wall.rock.door.005",
+	&"sfv.fabric.wall.rock.window.010",
+]
+## REVIEWER BUDGET (round 3, binding): "almost no stone should be visible, it
+## should only be used sparingly to make a house one storey taller." One storey
+## is two bands, which is exactly one upright 3 m rock module. No continuous
+## stone face anywhere in a town may be taller than this.
+const STONE_BUDGET_BANDS := 2
+const FACE_DIRECTIONS: Array[Vector3i] = [Vector3i.LEFT, Vector3i.RIGHT,
+	Vector3i.FORWARD, Vector3i.BACK]
 
 
 static func payload(plan: SettlementFabricPlan) -> EnvironmentInstancePayload:
@@ -128,6 +144,9 @@ static func low_retaining_payload(plan: SettlementFabricPlan) \
 	## undercroft. Render it as a retained stone terrace, with fixed 3 m wall
 	## modules half-buried, instead of exposing a crawl-height lawn beneath sparse
 	## timber posts. Full-headroom surfaces continue to use open timber support.
+	##
+	## Within the round-3 stone budget by construction: exactly one module per
+	## exposed face of a ONE-band step, which can never stack.
 	var out := EnvironmentInstancePayload.new()
 	if plan == null or plan.surface_plan == null:
 		return out
@@ -161,182 +180,171 @@ static func low_retaining_payload(plan: SettlementFabricPlan) \
 
 static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 		-> EnvironmentInstancePayload:
-	## The hill a house stands on when it stops descending at its terrace
-	## (WarrenParcelConstruction.retained_terrace_cells). Same authored 3 m rock
-	## module low_retaining_payload uses for a one-band court, STACKED rather
-	## than stretched, so an eight-band hill is four modules and no asset is
-	## scaled. Without it a short house on a high terrace floats: nothing else
-	## in the fabric renders unbuilt source mass.
-	var out := EnvironmentInstancePayload.new()
+	## Stone is a house PLINTH and nothing else. The hill itself -- its terrace
+	## treads, the banks between them, the faces the streets are cut through,
+	## and the soffit over a covered route -- is GROUND, skinned as earth by
+	## terrace_ground_mesh. Only the last course under a house, where the stack
+	## stopped descending short of its own ground, is masonry, because that
+	## course reads as the house's own base and is the one use of stone the
+	## round-3 directive allows ("to make a house one storey taller").
+	##
+	## Stacking that course was the round-2 mistake: rendering unbuilt hill mass
+	## as coursed rock turned a hill town into a monument. The mass is still
+	## declared, still collides, still bookkept -- it is only drawn as earth.
 	if plan == null:
-		return out
-	return retaining_walls(plan.retained_terrace_cells,
-		plan.transformed_cells(&"solid"), cut_columns(plan))
+		return EnvironmentInstancePayload.new()
+	return house_plinth_walls(plan.retained_terrace_cells,
+		plan.transformed_cells(&"solid"), stone_clad_solids(plan))
 
 
-static func cut_columns(plan: SettlementFabricPlan) -> Dictionary:
-	## Columns where the town actually CUTS the hill: any column carrying a
-	## public surface or a building. A hill face looking onto one of those is
-	## masonry -- a street wall, a tunnel mouth, the riser behind a house.
-	## Everything else is untouched hillside and is skinned as earth, because
-	## rendering the whole volume as coursed stone turns a hill town into a
-	## monument (task-13 amendment: the reviewer's "stone counts as building"
-	## meant stone obeys the setback rule, not that the hill becomes masonry).
+static func stone_clad_solids(plan: SettlementFabricPlan) -> Dictionary:
+	## Solid cells whose own recipe already clads them in rock -- the reviewed
+	## rock ground storey with its windows and door, which is the "stone
+	## feature" the reviewer praised. A plinth beneath one of those would put a
+	## SECOND storey of masonry on the same continuous face, so the budget
+	## refuses it and that hill course reads as earth instead.
 	var out: Dictionary = {}
 	if plan == null:
 		return out
-	for cell_value: Variant in plan.transformed_cells(&"solid").keys():
-		var cell := cell_value as Vector3i
-		out[Vector2i(cell.x, cell.z)] = true
-	if plan.surface_plan == null:
-		return out
-	for kind in [PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
-			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
-			PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
-			PublicRealmSurfacePlan.SurfaceKind.STAIR,
-			PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
-		for cell: Vector3i in plan.surface_plan.cells_for_kind(kind):
-			out[Vector2i(cell.x, cell.z)] = true
+	var solids := plan.transformed_cells(&"solid")
+	var by_unit: Dictionary = {}
+	var owners: Array[Vector3i] = []
+	owners.assign(solids.keys())
+	owners.sort_custom(_cell_before)
+	for cell: Vector3i in owners:
+		var unit_id := StringName(solids[cell])
+		if not by_unit.has(unit_id):
+			by_unit[unit_id] = _unit_is_stone_clad(plan, unit_id)
+		if bool(by_unit[unit_id]):
+			out[cell] = true
 	return out
 
 
-static func retaining_walls(retained: Dictionary, solids: Dictionary,
-		cut: Dictionary = {}) -> EnvironmentInstancePayload:
-	## Stone on the faces of `retained` that the town actually CUT, as stacked
-	## wall modules, plus a flat soffit under mass standing over a cut column --
-	## the vault a covered street walks through.
+static func _unit_is_stone_clad(plan: SettlementFabricPlan,
+		unit_id: StringName) -> bool:
+	var unit_value := plan.unit(unit_id)
+	if unit_value == null:
+		return false
+	var recipe_value := plan.recipe(unit_value.recipe_id)
+	if recipe_value == null:
+		return false
+	for asset_id: StringName in recipe_value.asset_ids():
+		if STONE_FACADE_ASSETS.has(asset_id):
+			return true
+	return false
+
+
+static func house_plinth_walls(retained: Dictionary, solids: Dictionary,
+		stone_clad: Dictionary = {}) -> EnvironmentInstancePayload:
+	## One authored 3 m rock module per exposed plinth face, and never a second.
+	## The module's top is flush with the house floor it carries and its bottom
+	## is buried in the bank below -- the same half-burial the one-band court in
+	## low_retaining_payload already relies on, and the reason no asset is ever
+	## scaled. A deeper bank is NOT tiled with further courses: everything below
+	## STONE_BUDGET_BANDS is earth.
 	##
-	## `cut` is a set of Vector2i columns (see cut_columns). Passing none keeps
-	## the older behaviour of retaining every exposed face, which is what the
-	## one-band court and the per-parcel plinth relied on before the hill was
-	## declared whole.
-	##
-	## Lateral faces are grouped into vertical runs first, so a run is tiled by
-	## whole modules from its top down and the lowest one buries its remainder
-	## exactly as the one-band court does -- never two coplanar modules on the
-	## same face.
-	##
-	## Pure function of integer cell sets, and every loop runs over a sorted key
-	## list, so the payload is byte-identical for identical input.
+	## Pure function of integer cell sets whose every loop runs over a sorted
+	## key list, so the payload is byte-identical for identical input.
 	var out := EnvironmentInstancePayload.new()
-	var runs: Dictionary = {}
-	var cells: Array[Vector3i] = []
-	cells.assign(retained.keys())
-	cells.sort_custom(_cell_before)
-	for cell: Vector3i in cells:
-		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-				Vector3i.FORWARD, Vector3i.BACK]:
-			var neighbor := cell + direction
-			if retained.has(neighbor) or solids.has(neighbor):
-				continue
-			if not cut.is_empty() \
-					and not cut.has(Vector2i(neighbor.x, neighbor.z)):
-				continue
-			var key := Vector4i(cell.x, cell.z, direction.x, direction.z)
-			if not runs.has(key):
-				runs[key] = {}
-			(runs[key] as Dictionary)[cell.y] = true
 	var keys: Array[Vector4i] = []
-	keys.assign(runs.keys())
-	keys.sort_custom(func(a: Vector4i, b: Vector4i) -> bool:
-		if a.x != b.x:
-			return a.x < b.x
-		if a.y != b.y:
-			return a.y < b.y
-		if a.z != b.z:
-			return a.z < b.z
-		return a.w < b.w)
+	keys.assign(plinth_faces(retained, solids, stone_clad).keys())
+	keys.sort_custom(_face_before)
 	for key: Vector4i in keys:
-		var bands: Array[int] = []
-		bands.assign((runs[key] as Dictionary).keys())
-		bands.sort()
-		var direction := Vector3i(key.z, 0, key.w)
-		var index := 0
-		while index < bands.size():
-			var last := index
-			while last + 1 < bands.size() and bands[last + 1] == bands[last] + 1:
-				last += 1
-			_stack_retaining_run(out, Vector2i(key.x, key.y), direction,
-				bands[index], bands[last] + 1)
-			index = last + 1
-	_lay_retaining_decks(out, retained, solids, cells, cut)
+		var direction := FACE_DIRECTIONS[key.w]
+		var midpoint := Vector3(float(key.x), 0.0, float(key.z)) \
+			* FabricRecipe.CELL_SIZE \
+			+ Vector3(direction) * FabricRecipe.CELL_SIZE * 0.5
+		midpoint.y = float(key.y + 1) * FabricRecipe.CELL_SIZE - 3.0
+		var yaw := PI * 0.5 if direction.x != 0 else 0.0
+		out.add(LOW_RETAINING_WALL,
+			Transform3D(Basis(Vector3.UP, yaw), midpoint), Color.WHITE,
+			StringName("house-plinth/%d/%d/%d/%d" % [key.x, key.y, key.z,
+				key.w]))
 	assert(out.validate())
 	return out
 
 
-static func _lay_retaining_decks(out: EnvironmentInstancePayload,
-		retained: Dictionary, solids: Dictionary,
-		cells: Array[Vector3i], cut: Dictionary) -> void:
-	## The one horizontal face the wall vocabulary cannot close and that the
-	## earth skin must not: the SOFFIT under hill mass standing over a cut
-	## column. That is the vault a covered street walks through, and without it
-	## the excavation's covered majority reads as a roofless trench however much
-	## mass it left overhead. Terrace TOPS are ground, not architecture, and are
-	## skinned as earth by terrace_ground_mesh instead.
+static func plinth_faces(retained: Dictionary, solids: Dictionary,
+		stone_clad: Dictionary = {}) -> Dictionary:
+	## The faces stone is allowed to claim, keyed Vector4i(x, band, z, direction
+	## index into FACE_DIRECTIONS) at the TOP band of the run. A face qualifies
+	## only when a building stands directly on that cell (so the stone is part
+	## of that house rather than a retaining wall in its own right), the side is
+	## one nothing else already closes, and the house's own facade is not
+	## already rock.
 	##
-	## Emitted per MACRO column, because the retained set is always whole macro
-	## columns (both its sources expand a macro cell into its 2x2 block) and a
-	## building always claims whole macro columns too. Two flat modules cover
-	## one macro column; they overlap 0.27 m in x exactly as two adjacent wall
-	## modules on a 1.5 m lattice already do, so this is the module's existing
-	## tiling tolerance rather than a new one. No module is scaled.
+	## The 3 m module hung from this band also covers the band below it, which
+	## is why the earth skin skips both.
+	var out: Dictionary = {}
+	var cells: Array[Vector3i] = []
+	cells.assign(retained.keys())
+	cells.sort_custom(_cell_before)
 	for cell: Vector3i in cells:
-		if posmod(cell.x, 2) != 0 or posmod(cell.z, 2) != 0:
+		var above := cell + Vector3i.UP
+		if not solids.has(above) or stone_clad.has(above):
 			continue
-		var whole := true
-		var open := true
-		for x_offset in 2:
-			for z_offset in 2:
-				if not retained.has(Vector3i(cell.x + x_offset, cell.y,
-						cell.z + z_offset)):
-					whole = false
-				var below := Vector3i(cell.x + x_offset, cell.y - 1,
-					cell.z + z_offset)
-				if retained.has(below) or solids.has(below) \
-						or (not cut.is_empty() \
-							and not cut.has(Vector2i(below.x, below.z))):
-					open = false
-		if not whole or not open:
-			continue
-		for x_offset in 2:
-			var origin := Vector3(float(cell.x + x_offset)
-				* FabricRecipe.CELL_SIZE,
-				float(cell.y) * FabricRecipe.CELL_SIZE,
-				(float(cell.z) + 1.5) * FabricRecipe.CELL_SIZE)
-			out.add(LOW_RETAINING_WALL,
-				Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), origin),
-				Color.WHITE,
-				StringName("terrace-soffit/%d/%d/%d/%d" % [cell.x,
-					cell.y, cell.z, x_offset]))
+		for index in FACE_DIRECTIONS.size():
+			var neighbor := cell + FACE_DIRECTIONS[index]
+			if retained.has(neighbor) or solids.has(neighbor):
+				continue
+			out[Vector4i(cell.x, cell.y, cell.z, index)] = true
+	return out
 
 
-static func _stack_retaining_run(out: EnvironmentInstancePayload,
-		column: Vector2i, direction: Vector3i, floor_band: int,
-		ceiling_band: int) -> void:
-	## Fixed 3 m modules from the run's top downward. The last one may reach
-	## below the run, which buries it in the terrain or the mass beneath -- the
-	## same half-burial the one-band court already relies on, and the reason no
-	## module is ever scaled to fit.
-	var yaw := PI * 0.5 if direction.x != 0 else 0.0
-	var top := ceiling_band
-	while top > floor_band:
-		var midpoint := Vector3(float(column.x), 0.0, float(column.y)) \
-			* FabricRecipe.CELL_SIZE \
-			+ Vector3(direction) * FabricRecipe.CELL_SIZE * 0.5
-		midpoint.y = float(top) * FabricRecipe.CELL_SIZE - 3.0
-		out.add(LOW_RETAINING_WALL,
-			Transform3D(Basis(Vector3.UP, yaw), midpoint), Color.WHITE,
-			StringName("terrace-wall/%d/%d/%d/%d/%d" % [column.x, column.y,
-				direction.x, direction.z, top]))
-		top -= 2
+static func tallest_stone_stack_bands(
+		payload: EnvironmentInstancePayload) -> int:
+	## Measures the round-3 stone budget on a finished payload: the tallest run
+	## of contiguous bands any one wall plane is clad in rock, counting recipe
+	## facades and assembler plinths together. Upright modules are 3 m -- two
+	## bands -- so a result above STONE_BUDGET_BANDS is a masonry podium.
+	##
+	## A module is 3 m wide but the plinth lattice is offset half a cell from the
+	## room lattice, so width is resolved in 0.75 m slots; two modules that
+	## overlap laterally at all count as the same face.
+	var planes: Dictionary = {}
+	for asset_id: StringName in STONE_FACADE_ASSETS:
+		var batch := payload.batches.get(asset_id, {}) as Dictionary
+		for value: Variant in batch.get("transforms", []):
+			var placement := value as Transform3D
+			if placement.basis.y.y < 0.5:
+				continue
+			var yaw_index := posmod(roundi(placement.basis.get_euler().y
+				/ (PI * 0.5)), 2)
+			var plane := placement.origin.z if yaw_index == 0 \
+				else placement.origin.x
+			var tangent := placement.origin.x if yaw_index == 0 \
+				else placement.origin.z
+			var base_band := roundi(placement.origin.y / FabricRecipe.CELL_SIZE)
+			var first_slot := roundi((tangent - 1.5) / 0.75)
+			for slot in 4:
+				var key := Vector3i(yaw_index, roundi(plane / 0.75),
+					first_slot + slot)
+				if not planes.has(key):
+					planes[key] = {}
+				(planes[key] as Dictionary)[base_band] = true
+				(planes[key] as Dictionary)[base_band + 1] = true
+	var tallest := 0
+	for key_value: Variant in planes.keys():
+		var bands: Array = (planes[key_value] as Dictionary).keys()
+		bands.sort()
+		var index := 0
+		while index < bands.size():
+			var last := index
+			while last + 1 < bands.size() \
+					and int(bands[last + 1]) == int(bands[last]) + 1:
+				last += 1
+			tallest = maxi(tallest, last - index + 1)
+			index = last + 1
+	return tallest
 
 
 static func terrace_ground_mesh(plan: SettlementFabricPlan) -> ArrayMesh:
-	## The hill as GROUND: a generated earth skin over every exposed face of the
-	## retained mass the town did not cut. Tops are the terrace treads you look
-	## down on; the uncut lateral faces are the earth banks between them. Only
-	## cut faces stay authored masonry (see cut_columns), which is what keeps a
-	## hillside from reading as a stacked stone monument.
+	## The hill as GROUND, over EVERY exposed face of the retained mass the
+	## house-plinth budget does not claim: the terrace treads you look down on,
+	## the banks between them, the faces the streets are cut through, and the
+	## soffit over a covered route. That last one used to be flat rock modules;
+	## it is now simply the underside of the hill, so a covered street still
+	## reads as a passage instead of a trench without being a stone vault.
 	##
 	## Generated rather than authored for the same reason PublicRealmSurfacePlan
 	## generates its street skin: there is no flat-topped rock module in the
@@ -344,9 +352,18 @@ static func terrace_ground_mesh(plan: SettlementFabricPlan) -> ArrayMesh:
 	## it owns no collision and enters no audit.
 	if plan == null or plan.retained_terrace_cells.is_empty():
 		return null
-	var retained := plan.retained_terrace_cells
-	var solids := plan.transformed_cells(&"solid")
-	var cut := cut_columns(plan)
+	return earth_skin_mesh(plan.retained_terrace_cells,
+		plan.transformed_cells(&"solid"),
+		plinth_faces(plan.retained_terrace_cells,
+			plan.transformed_cells(&"solid"), stone_clad_solids(plan)))
+
+
+static func earth_skin_mesh(retained: Dictionary, solids: Dictionary,
+		plinths: Dictionary) -> ArrayMesh:
+	## Pure geometry half of terrace_ground_mesh, so the skin can be measured
+	## without compiling a sealed town. Faces already covered by a plinth module
+	## are skipped, including the band below its anchor, which the hanging 3 m
+	## module also covers.
 	var cells: Array[Vector3i] = []
 	cells.assign(retained.keys())
 	cells.sort_custom(_cell_before)
@@ -363,11 +380,22 @@ static func terrace_ground_mesh(plan: SettlementFabricPlan) -> ArrayMesh:
 				Vector3(centre.x + half, top, centre.z - half),
 				Vector3(centre.x + half, top, centre.z + half),
 				Vector3(centre.x - half, top, centre.z + half), Vector3.UP)
-		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-				Vector3i.FORWARD, Vector3i.BACK]:
+		# The underside of hill mass standing over carved-out space: the vault a
+		# covered route walks under. Band zero is the bottom of the world here,
+		# never an overhang, and skinning it would z-fight the terrain.
+		var below := cell + Vector3i.DOWN
+		if cell.y > 0 and not retained.has(below) and not solids.has(below):
+			_append_quad(vertices, normals,
+				Vector3(centre.x - half, centre.y, centre.z - half),
+				Vector3(centre.x - half, centre.y, centre.z + half),
+				Vector3(centre.x + half, centre.y, centre.z + half),
+				Vector3(centre.x + half, centre.y, centre.z - half), Vector3.DOWN)
+		for index in FACE_DIRECTIONS.size():
+			var direction := FACE_DIRECTIONS[index]
 			var neighbor := cell + direction
 			if retained.has(neighbor) or solids.has(neighbor) \
-					or cut.has(Vector2i(neighbor.x, neighbor.z)):
+					or plinths.has(Vector4i(cell.x, cell.y, cell.z, index)) \
+					or plinths.has(Vector4i(cell.x, cell.y + 1, cell.z, index)):
 				continue
 			var normal := Vector3(direction)
 			var face := centre + normal * half
@@ -408,6 +436,16 @@ static func _cell_before(left: Vector3i, right: Vector3i) -> bool:
 	if left.z != right.z:
 		return left.z < right.z
 	return left.x < right.x
+
+
+static func _face_before(left: Vector4i, right: Vector4i) -> bool:
+	if left.y != right.y:
+		return left.y < right.y
+	if left.z != right.z:
+		return left.z < right.z
+	if left.x != right.x:
+		return left.x < right.x
+	return left.w < right.w
 
 
 static func _column_is_occupied_below(plan: SettlementFabricPlan,

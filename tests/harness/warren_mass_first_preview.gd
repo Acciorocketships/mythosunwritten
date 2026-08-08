@@ -58,6 +58,7 @@ func _ready() -> void:
 		false)
 	print("[mass_first_preview] seed=%d instances=%d" % [_world_seed,
 		int(committed.instance_count)])
+	_report_stone_budget()
 	_camera.current = true
 	_camera.near = 0.08
 	_camera.far = 400.0
@@ -148,6 +149,27 @@ func _capture_all() -> void:
 		assert(image != null and image.save_png(path) == OK)
 		print("[mass_first_preview] captured ", path)
 	get_tree().quit()
+
+
+func _report_stone_budget() -> void:
+	## The round-3 directive is a quantity ("almost no stone should be
+	## visible"), so the harness prints the quantity beside the image: how many
+	## rock modules the town draws, split into the plinths this assembler places
+	## and the ground storeys the recipes place, and the tallest continuous
+	## masonry face anywhere in the payload.
+	var whole := SettlementFabricAssembler.payload(_fabric)
+	whole.append_from(SettlementFabricAssembler.structural_support_payload(
+		_fabric))
+	var plinths := SettlementFabricAssembler.terrace_retaining_payload(_fabric)
+	var low := SettlementFabricAssembler.low_retaining_payload(_fabric)
+	var stone := 0
+	for asset_id: StringName in SettlementFabricAssembler.STONE_FACADE_ASSETS:
+		stone += int((whole.batches.get(asset_id, {}) as Dictionary).get(
+			"transforms", []).size())
+	print(("[mass_first_preview] stone modules=%d of %d instances "
+		+ "(plinths=%d courts=%d), tallest stone face=%d bands") % [stone,
+		whole.instance_count, plinths.instance_count, low.instance_count,
+		SettlementFabricAssembler.tallest_stone_stack_bands(whole)])
 
 
 func _covered_route_eye() -> Dictionary:
