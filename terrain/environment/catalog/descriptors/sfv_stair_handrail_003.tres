@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ptmj8"]
+
+[resource]
+script = ExtResource("1_ptmj8")
+id = &"sfv.stair.handrail.003"
+visual_path = "res://terrain/environment/visuals/fantasy_village_stairs/sfv_stair_handrail_003.tres"
+tags = Array[StringName]([&"railing", &"stair", &"village"])
+measured_aabb = AABB(-0.050455578, -1.3090032e-09, -0.3975764, 0.10091114, 0.8859783, 0.7951528)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_stairs:sfv.stair.handrail.003"

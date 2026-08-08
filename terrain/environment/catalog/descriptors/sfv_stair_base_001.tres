@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_5qvvs"]
+
+[resource]
+script = ExtResource("1_5qvvs")
+id = &"sfv.stair.base.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_stairs/sfv_stair_base_001.tres"
+tags = Array[StringName]([&"stair", &"village"])
+measured_aabb = AABB(-0.9613861, -1.9179191e-07, -0.06414295, 0.96138734, 3.750684, 0.12828022)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_stairs:sfv.stair.base.001"

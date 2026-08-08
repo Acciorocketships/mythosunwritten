@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ogloa"]
+
+[resource]
+script = ExtResource("1_ogloa")
+id = &"sfv.stair.floor.s.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_stairs/sfv_stair_floor_s_001.tres"
+tags = Array[StringName]([&"deck", &"slab", &"stair", &"village"])
+measured_aabb = AABB(2.2275635e-06, 1.7100096e-13, -0.75197536, 1.45, 0.060175527, 0.7519751)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_stairs:sfv.stair.floor.s.001"

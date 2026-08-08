@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_e0jke"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_vqlql"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_cliffs/sfv_cliff_004_piece_00.res" id="3_2w178"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_spjay"]
+
+[sub_resource type="Resource" id="Resource_i86aa"]
+script = ExtResource("2_vqlql")
+mesh = ExtResource("3_2w178")
+
+[resource]
+script = ExtResource("4_spjay")
+pieces = Array[ExtResource("2_vqlql")]([SubResource("Resource_i86aa")])

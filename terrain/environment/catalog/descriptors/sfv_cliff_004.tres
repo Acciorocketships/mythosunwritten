@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_dxu6c"]
+
+[resource]
+script = ExtResource("1_dxu6c")
+id = &"sfv.cliff.004"
+visual_path = "res://terrain/environment/visuals/fantasy_village_cliffs/sfv_cliff_004.tres"
+tags = Array[StringName]([&"cliff", &"terrain", &"village"])
+measured_aabb = AABB(-0.26581982, -0.96728826, -1.3986704, 0.568295, 2.0306768, 2.7800856)
+ground_contact_points = PackedVector2Array()
+tint_group = &"ground"
+supports_instance_color = true
+provenance_id = &"fantasy_village_cliffs:sfv.cliff.004"

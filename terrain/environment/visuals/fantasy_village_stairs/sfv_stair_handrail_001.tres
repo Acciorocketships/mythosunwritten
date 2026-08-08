@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_i6mam"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_stairs/sfv_stair_handrail_001_piece_00.res" id="2_ui2kq"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_r72jx"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_stairs/sfv_stair_handrail_001_piece_00.res" id="4_eg8fb"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_jp67r"]
+
+[sub_resource type="Resource" id="Resource_i368v"]
+script = ExtResource("1_i6mam")
+shape = ExtResource("2_ui2kq")
+
+[sub_resource type="Resource" id="Resource_vbdsq"]
+script = ExtResource("3_r72jx")
+mesh = ExtResource("4_eg8fb")
+
+[resource]
+script = ExtResource("5_jp67r")
+pieces = Array[ExtResource("3_r72jx")]([SubResource("Resource_vbdsq")])
+collisions = Array[ExtResource("1_i6mam")]([SubResource("Resource_i368v")])

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_q4bk7"]
+
+[resource]
+script = ExtResource("1_q4bk7")
+id = &"sfv.stair.brace.rock.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_stairs/sfv_stair_brace_rock_001.tres"
+tags = Array[StringName]([&"fabric_brace", &"support", &"village"])
+measured_aabb = AABB(-1.8247331, -1.3776351e-07, -0.3251533, 1.8455112, 0.38564283, 0.6503067)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_stairs:sfv.stair.brace.rock.001"
