@@ -34,40 +34,6 @@ const MIN_COLUMN_BANDS := 2
 ## tallest continuous vertical face anywhere in the solid is now two storeys
 ## followed by a setback, whatever later dresses it.
 const MAX_NEIGHBOR_STEP_BANDS := 4
-## How tall the outermost ring -- every column with open ground beside it --
-## may stand. Stated separately from MAX_NEIGHBOR_STEP_BANDS and gated
-## separately so "the hem meets the grass" is a property with a number rather
-## than a corollary of the interior riser rule.
-##
-## It is deliberately NOT the one storey the round-5 bell note asks for.
-## MEASURED, seeds 0-23: at two bands the ceiling forces every rim column to
-## the same level, the ring fuses into one same-level region and
-## MAX_PLATEAU_CELLS rejects the seed -- supply falls 18/24 -> 13/24 (three
-## bands: 16/24). The gate that actually binds there is the plateau cap, whose
-## property is "no wide flat buildable platform"; whether a one-storey hem two
-## cells wide is such a platform is a re-derivation this task did not run, so
-## the rim keeps the bound the interior already proved.
-const MAX_RIM_BANDS := MAX_NEIGHBOR_STEP_BANDS
-## How far the peak may wander from the footprint centre, in cells. The
-## existence field stays a warped Gaussian about THIS point, so it is still
-## monotonic along every ray from it and the footprint stays star-shaped,
-## simply connected and hole-free -- the property WarrenMassif.seal() checks.
-## Without it every seed puts its summit within a cell and a half of dead
-## centre (measured, seeds 0-20), which is a bell but not a landscape.
-const MAX_PEAK_OFFSET_CELLS := 4
-## Districts are biased off the pure Gaussian by up to this many bands, on a
-## DISTRICT_BLOCK_CELLS lattice, so one hillside bulges and another dips. The
-## bias moves terrace LEVELS only -- never existence -- because a field that
-## also gates existence fractures the footprint (see fix-round-1 above). Every
-## biased level still passes through the ceiling clamp and the neighbour-step
-## clamp, so no gate is traded for the variation.
-const MAX_DISTRICT_BIAS_BANDS := 2
-const DISTRICT_BLOCK_CELLS := 4
-## Ring means of column height, measured from the footprint centroid outward.
-## A bell descends monotonically; a mesa does not. Checked as a gate rather
-## than hoped for, because every other rule here is local and none of them
-## forbids a plateau that happens to sit off centre.
-const PROFILE_RING_COUNT := 5
 
 static var last_failure := ""
 
@@ -82,26 +48,17 @@ static func build(world_seed: int,
 		/ 1000.0 * TAU
 	var warp_strength := 0.22 + float(posmod(_hash(world_seed, 11, 0, 0),
 		100)) / 100.0 * 0.18
-	# Where the summit stands. Every measurement below is taken about this
-	# point, so the field remains one warped Gaussian and only its centre moves.
-	var peak := Vector2i(
-		posmod(_hash(world_seed, 13, 0, 0), MAX_PEAK_OFFSET_CELLS * 2 + 1)
-			- MAX_PEAK_OFFSET_CELLS,
-		posmod(_hash(world_seed, 23, 0, 0), MAX_PEAK_OFFSET_CELLS * 2 + 1)
-			- MAX_PEAK_OFFSET_CELLS)
 
 	# Pass 1: existence only, from the smooth field. `raw` is monotonic along
-	# every ray from the peak (the angular warp only rescales the radius
+	# every ray from the centre (the angular warp only rescales the radius
 	# fed into the Gaussian; it never makes height increase outward), so
 	# thresholding it alone yields one star-shaped, simply-connected,
 	# hole-free footprint regardless of how terrace levels are later chosen.
 	var raw_at: Dictionary = {}
-	var span := RADIUS_CELLS + MAX_PEAK_OFFSET_CELLS
-	for z in range(-span, span + 1):
-		for x in range(-span, span + 1):
-			var offset := Vector2(float(x - peak.x), float(z - peak.y))
-			var radius := offset.length()
-			var angle := atan2(offset.y, offset.x)
+	for z in range(-RADIUS_CELLS, RADIUS_CELLS + 1):
+		for x in range(-RADIUS_CELLS, RADIUS_CELLS + 1):
+			var radius := Vector2(float(x), float(z)).length()
+			var angle := atan2(float(z), float(x))
 			var warped := radius * (1.0 + warp_strength \
 				* sin(angle * 3.0 + warp_phase))
 			var gaussian := exp(-pow(warped / float(RADIUS_CELLS) * 1.9,
@@ -113,8 +70,7 @@ static func build(world_seed: int,
 
 	# Pass 2: capacity-limited flood fill assigns the actual terrace bands,
 	# under a per-column ceiling derived from how far that column stands from
-	# the empty ground outside the footprint, and off a district-biased field
-	# so two seeds with the same core height do not build the same hill.
+	# the empty ground outside the footprint.
 	var terrace_at := _assign_terraces(raw_at, world_seed,
 		_step_ceilings(raw_at))
 
@@ -147,18 +103,6 @@ static func build(world_seed: int,
 		last_failure = "neighbour step of %d bands exceeds %d" % [
 			worst_step, MAX_NEIGHBOR_STEP_BANDS]
 		return null
-	var worst_rim := _worst_rim_step(massif)
-	if worst_rim > MAX_RIM_BANDS:
-		last_failure = "rim stands %d bands over open ground, %d allowed" % [
-			worst_rim, MAX_RIM_BANDS]
-		return null
-	var rings := profile_ring_means(massif)
-	for ring in range(1, rings.size()):
-		if rings[ring] > rings[ring - 1]:
-			last_failure = "ring %d averages %.1f bands, above ring %d's %.1f " \
-				% [ring, rings[ring], ring - 1, rings[ring - 1]] \
-				+ "-- a mesa or a crater, not a bell"
-			return null
 	if not massif.seal():
 		last_failure = massif.last_rejection
 		return null
@@ -184,34 +128,17 @@ static func _worst_neighbor_step(massif: WarrenMassif) -> int:
 	return worst
 
 
-static func _worst_rim_step(massif: WarrenMassif) -> int:
-	## The tallest face the hill turns to the grass. Separated from
-	## _worst_neighbor_step because the rim is now held to a tighter bound than
-	## an interior riser, and a single combined number would hide which one
-	## a seed broke.
-	var worst := 0
-	for column: Vector2i in massif.columns:
-		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
-				Vector2i.UP, Vector2i.DOWN]:
-			if massif.has_column(column + direction):
-				continue
-			worst = maxi(worst, massif.top_at(column) - massif.base_at(column))
-	return worst
-
-
 static func _step_ceilings(raw_at: Dictionary) -> Dictionary:
-	## MAX_RIM_BANDS at the edge, then MAX_NEIGHBOR_STEP_BANDS per further step
-	## of 4-connected distance from the empty ground outside the footprint. A
-	## column one cell from the edge may stand MAX_RIM_BANDS bands, two cells
-	## from the edge that plus one riser, and so on -- the tightest height
-	## assignment that can still descend to zero in legal steps.
+	## MAX_NEIGHBOR_STEP_BANDS per step of 4-connected distance from the empty
+	## ground outside the footprint. A column one cell from the edge may stand
+	## four bands, two cells from the edge eight, and so on -- the tightest
+	## height assignment that can still descend to zero in legal steps.
 	##
 	## Necessary: a column d cells from open ground has a chain of d-1 columns
-	## between it and the outside; the last link faces empty ground and may drop
-	## at most MAX_RIM_BANDS, each earlier link at most MAX_NEIGHBOR_STEP_BANDS.
-	## Sufficient in practice because adjacent distances differ by at most one,
-	## so a neighbour's ceiling never forces a level above this one's -- see
-	## _new_district_level's clamp.
+	## between it and the outside, and each link may drop at most
+	## MAX_NEIGHBOR_STEP_BANDS. Sufficient in practice because adjacent
+	## distances differ by at most one, so a neighbour's ceiling never forces a
+	## level above this one's -- see _new_district_level's clamp.
 	var distance: Dictionary = {}
 	var frontier: Array[Vector2i] = []
 	for column: Vector2i in raw_at:
@@ -236,8 +163,8 @@ static func _step_ceilings(raw_at: Dictionary) -> Dictionary:
 			frontier.append(neighbor)
 	var ceilings: Dictionary = {}
 	for column: Vector2i in raw_at:
-		ceilings[column] = MAX_RIM_BANDS \
-			+ (int(distance.get(column, 1)) - 1) * MAX_NEIGHBOR_STEP_BANDS
+		ceilings[column] = int(distance.get(column, 1)) \
+			* MAX_NEIGHBOR_STEP_BANDS
 	return ceilings
 
 
@@ -313,17 +240,8 @@ static func _assign_terraces(raw_at: Dictionary, world_seed: int,
 				break
 
 		if chosen_level == null:
-			# The size a merge onto each occupied level would produce, so the
-			# last-resort branch below can pick the cheapest one instead of
-			# whichever level the riser rhythm happened to land on.
-			var merged_size: Dictionary = {}
-			for lvl_key: Variant in roots_by_level.keys():
-				var total := 1
-				for r: int in roots_by_level[lvl_key] as Array:
-					total += int(dsu_size[r])
-				merged_size[int(lvl_key)] = total
 			chosen_level = _new_district_level(cell, raw_at, world_seed,
-				neighbor_levels, ceiling, merged_size)
+				neighbor_levels, ceiling)
 
 		var cl: int = chosen_level
 		var cur_root: int
@@ -351,8 +269,7 @@ static func _assign_terraces(raw_at: Dictionary, world_seed: int,
 
 
 static func _new_district_level(cell: Vector2i, raw_at: Dictionary,
-		world_seed: int, neighbor_levels: Array, ceiling: int,
-		merged_size: Dictionary = {}) -> int:
+		world_seed: int, neighbor_levels: Array, ceiling: int) -> int:
 	## Starts a fresh district a riser away from its neighbours. The riser
 	## rhythm (1 or 2 bands) is seed-and-cell-varied so terraces do not
 	## repeat one global step size.
@@ -362,10 +279,8 @@ static func _new_district_level(cell: Vector2i, raw_at: Dictionary,
 	## this builder exists to forbid, whereas a district one band off its
 	## preferred riser is only a slightly different terrace.
 	var riser := 1 + posmod(_hash(world_seed, 17, cell.x, cell.y), 2)
-	var raw_here: float = float(raw_at[cell]) + float(_district_bias(cell,
-		world_seed))
-	var lvl := mini(int(floor(maxf(0.0, raw_here) / float(riser))) * riser,
-		ceiling)
+	var raw_here: float = raw_at[cell]
+	var lvl := mini(int(floor(raw_here / float(riser))) * riser, ceiling)
 	if neighbor_levels.is_empty():
 		return lvl
 	var lo := -2147483648
@@ -395,76 +310,21 @@ static func _new_district_level(cell: Vector2i, raw_at: Dictionary,
 	lvl = clampi(lvl, lo, hi)
 	# Nudge away from exactly matching a neighbour's level: an exact match
 	# here would silently bridge two districts before the union-find has a
-	# chance to size-check the merge. The whole window is scanned outward from
-	# the preferred level rather than only the two adjacent risers, because a
-	# tight window -- which is what a low ceiling near the rim produces -- often
-	# has the only free level three or four bands away, and taking the match
-	# instead is exactly how a ring of rim columns fuses into one plateau.
-	if not neighbor_levels.has(lvl):
-		return lvl
-	for distance in range(1, hi - lo + 1):
-		if lvl + distance <= hi and not neighbor_levels.has(lvl + distance):
-			return lvl + distance
-		if lvl - distance >= lo and not neighbor_levels.has(lvl - distance):
-			return lvl - distance
-	# Every legal level is already a neighbour's, so this column must join one.
-	# Join the SMALLEST, since the plateau gate counts the merged region: taking
-	# the riser's preference here is how a window with no free level turns two
-	# capped districts into one over-cap plateau.
-	var best := lvl
-	var best_size := int(merged_size.get(lvl, 1 << 30))
-	for level_key: Variant in merged_size.keys():
-		var level: int = level_key
-		if level < lo or level > hi:
-			continue
-		var size := int(merged_size[level_key])
-		if size < best_size or (size == best_size and level < best):
-			best = level
-			best_size = size
-	return best
-
-
-static func _district_bias(cell: Vector2i, world_seed: int) -> int:
-	## Bumps and dips at district scale, in bands. One integer hash per
-	## DISTRICT_BLOCK_CELLS block, so a whole hillside leans the same way rather
-	## than each column jittering independently -- per-cell noise is what
-	## produced the cliffs that made this class a flood fill in the first place.
-	##
-	## Deliberately applied AFTER existence and BEFORE both clamps: it changes
-	## which terrace a district prefers and nothing else, so no seed can gain a
-	## hole, a plateau or a cliff from it.
-	var block := Vector2i(floori(float(cell.x) / float(DISTRICT_BLOCK_CELLS)),
-		floori(float(cell.y) / float(DISTRICT_BLOCK_CELLS)))
-	return posmod(_hash(world_seed, 29, block.x, block.y),
-		MAX_DISTRICT_BIAS_BANDS * 2 + 1) - MAX_DISTRICT_BIAS_BANDS
-
-
-static func profile_ring_means(massif: WarrenMassif) -> PackedFloat64Array:
-	## Mean column height per concentric ring, core ring first, measured from
-	## the footprint centroid and normalised by the widest radius. This is the
-	## bell the review asked for, stated as a number a gate can read.
-	var centroid := Vector2.ZERO
-	for column: Vector2i in massif.columns:
-		centroid += Vector2(column)
-	centroid /= float(maxi(1, massif.columns.size()))
-	var widest := 0.0
-	for column: Vector2i in massif.columns:
-		widest = maxf(widest, (Vector2(column) - centroid).length())
-	var sums := PackedFloat64Array()
-	var counts := PackedInt32Array()
-	for _index in PROFILE_RING_COUNT:
-		sums.append(0.0)
-		counts.append(0)
-	for column: Vector2i in massif.columns:
-		var ring := clampi(int((Vector2(column) - centroid).length()
-			/ maxf(0.001, widest) * float(PROFILE_RING_COUNT)), 0,
-			PROFILE_RING_COUNT - 1)
-		sums[ring] += float(massif.top_at(column) - massif.base_at(column))
-		counts[ring] += 1
-	var out := PackedFloat64Array()
-	for ring in PROFILE_RING_COUNT:
-		out.append(sums[ring] / float(maxi(1, counts[ring])))
-	return out
+	# chance to size-check the merge.
+	var attempts := 0
+	while neighbor_levels.has(lvl) and attempts < 8:
+		if lvl + riser <= hi and not neighbor_levels.has(lvl + riser):
+			lvl += riser
+		elif lvl - riser >= lo and not neighbor_levels.has(lvl - riser):
+			lvl -= riser
+		elif lvl + riser <= hi:
+			lvl += riser
+		elif lvl - riser >= lo:
+			lvl -= riser
+		else:
+			break
+		attempts += 1
+	return lvl
 
 
 static func _dsu_find(parent: Dictionary, rid: int) -> int:
