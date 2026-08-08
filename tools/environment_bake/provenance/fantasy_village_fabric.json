@@ -5968,6 +5968,9 @@
       "pack": "fantasy_village_fabric",
       "parameters": {
         "collision_profile": "building_trimesh",
+        "fallback_albedo_textures": {
+          "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+        },
         "id": "sfv.fabric.wall.wood.window.078",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 6000.0,
@@ -6015,6 +6018,9 @@
       "pack": "fantasy_village_fabric",
       "parameters": {
         "collision_profile": "building_trimesh",
+        "fallback_albedo_textures": {
+          "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+        },
         "id": "sfv.fabric.wall.wood.window.081",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 6000.0,
@@ -6062,6 +6068,9 @@
       "pack": "fantasy_village_fabric",
       "parameters": {
         "collision_profile": "building_trimesh",
+        "fallback_albedo_textures": {
+          "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+        },
         "id": "sfv.fabric.wall.wood.window.083",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 6000.0,
@@ -6109,6 +6118,9 @@
       "pack": "fantasy_village_fabric",
       "parameters": {
         "collision_profile": "building_trimesh",
+        "fallback_albedo_textures": {
+          "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+        },
         "id": "sfv.fabric.wall.wood.window.roof.001",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 6000.0,
@@ -6205,6 +6217,9 @@
       "pack": "fantasy_village_fabric",
       "parameters": {
         "collision_profile": "building_trimesh",
+        "fallback_albedo_textures": {
+          "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+        },
         "id": "sfv.fabric.wall.wood.window.roof.003",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 6000.0,
