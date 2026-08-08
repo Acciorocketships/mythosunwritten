@@ -9,6 +9,16 @@ extends RefCounted
 ## WarrenMassifBuilder's fix-round-1 history) must fail here, not silently
 ## pass through as a solid mass with holes in it.
 
+## Inhabited bands a terrace carries: MAX_TERRACE_STOREYS storeys plus one
+## roof reservation, in WarrenBuildingParcel's units. Written out rather than
+## imported so this class stays free of the parcel vocabulary; a test pins the
+## arithmetic so the two cannot drift.
+##
+## It is what makes `bearing_at` a cap on built height: a house rooted at the
+## terrace and topping out at the massif top spans exactly this many bands.
+const MAX_TERRACE_STOREYS := 3
+const BUILDABLE_LAYER_BANDS := 8
+
 var world_seed: int
 var columns: Dictionary = {}
 var core_top_bands: int = 0
@@ -49,6 +59,22 @@ func top_at(column: Vector2i) -> int:
 
 func base_at(column: Vector2i) -> int:
 	return int((columns.get(column, {}) as Dictionary).get("base", 0))
+
+
+func bearing_at(column: Vector2i) -> int:
+	## The terrace a house standing on this column rests on -- a SECOND datum,
+	## deliberately distinct from `base_at`.
+	##
+	## `base_at` is natural ground, and every street, address, arcade and cover
+	## rule keeps measuring mass from it, so a street stays flanked by real
+	## inhabited height. `bearing_at` is only where an inhabited stack STOPS
+	## descending. The mass between the two is hill: unbuilt solid the fabric
+	## renders as retained stone rather than as more storeys of house.
+	##
+	## Never above the massif top and never below natural ground, so a column
+	## whose whole span already fits inside the buildable layer is untouched
+	## and its houses descend exactly as they always did.
+	return maxi(base_at(column), top_at(column) - BUILDABLE_LAYER_BANDS)
 
 
 func terrace_levels() -> Array[int]:

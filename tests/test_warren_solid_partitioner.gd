@@ -29,6 +29,11 @@ const STRICT_WALL_BANDS := 6
 ## deleting the fill pass's roof/corner refusal takes those 10 to zero, so every
 ## one of them is that refusal and none is a hole in the fill.
 const MEASURED_UNJOINABLE_FILL_SITES := 16
+## Houses across CORPUS whose street is cut BELOW their own terrace, leaving
+## them nothing to descend to and more than a terrace's worth of solid above.
+## A MEASURED TRIPWIRE, NOT A TARGET: shortening them means capping `_top_band`,
+## which the no-straddle rule turns into stranded street walls.
+const MEASURED_UNDESCENDED_TALL_HOUSES := 8
 ## The furthest a 2x3 footprint can reach from the walk cell that addresses it:
 ## three columns of depth, or two of depth and one of width. Used only as a
 ## generous upper bound on where a bridge over a street could be addressed from.
@@ -704,6 +709,66 @@ func test_tops_follow_the_massif_terraces() -> void:
 			% [world_seed, tops.size()])
 
 
+func test_no_house_builds_more_storeys_than_a_terrace_carries() -> void:
+	## The storeys a viewer counts are WarrenParcelConstruction.proposal()'s,
+	## not the envelope the partition cut: a house descends from its addressed
+	## floor to its bearing datum as one continuous stack. With the bearing
+	## datum at natural ground a street eight bands up makes a one-storey
+	## envelope read as six, which is the tower the reviewer rejected.
+	##
+	## The bearing datum is the terrace instead, so the whole stack fits inside
+	## the buildable layer the terrace carries. Derived from that layer rather
+	## than chosen, and asserted against the real adapted plan so the number is
+	## the one the asset compiler will build.
+	## Two claims, because there are two ways to be tall and only one of them is
+	## the defect. A house that DESCENDS may not descend past its terrace, so
+	## its whole stack fits the buildable layer. A house whose street is cut
+	## BELOW its terrace has no plinth to descend to at all and is simply as
+	## tall as the solid standing over it -- rarer, and capping it is the
+	## already-closed remedy that strands street walls, so it is bounded by a
+	## measured tripwire instead of forbidden.
+	var maximum := (WarrenMassif.BUILDABLE_LAYER_BANDS \
+		- WarrenBuildingParcel.ROOF_RESERVATION_BANDS) \
+		/ WarrenBuildingParcel.STOREY_BANDS
+	var counted := 0
+	var undescended_tall := 0
+	for world_seed: int in CORPUS:
+		var town := _town(world_seed)
+		if town.is_empty():
+			continue
+		var envelope := (town["plan"] as WarrenVolumePlan).envelope
+		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
+			var proposal := WarrenParcelConstruction.proposal(parcel)
+			assert_false(proposal.is_empty(),
+				"seed %d: parcel %s compiles to no proposal" % [world_seed,
+					parcel.stable_id])
+			if proposal.is_empty():
+				continue
+			counted += 1
+			var support := (proposal.origin as Vector3i).y
+			var terrace := -(1 << 30)
+			for column: Vector2i in parcel.footprint:
+				terrace = maxi(terrace, envelope.bearing_at(column))
+			# One band of slack is the address-phase parity fudge
+			# _support_base_band already owned; the clamp to base_band is the
+			# street cut below its own terrace.
+			assert_gte(support, mini(parcel.base_band, terrace - 1),
+				"seed %d: %s roots at %d, %d bands under its terrace" \
+				% [world_seed, parcel.stable_id, support, terrace - support])
+			if support < parcel.base_band:
+				assert_between(int(proposal.storeys), 1, maximum,
+					"seed %d: %s descends to a terrace and still builds %d " \
+					% [world_seed, parcel.stable_id, int(proposal.storeys)]
+					+ "storeys against a %d-band layer" \
+					% WarrenMassif.BUILDABLE_LAYER_BANDS)
+			elif int(proposal.storeys) > maximum:
+				undescended_tall += 1
+	assert_gt(counted, 50, "too few houses measured to be a corpus")
+	assert_lte(undescended_tall, MEASURED_UNDESCENDED_TALL_HOUSES,
+		"%d houses stand taller than a terrace on a street cut below it" \
+		% undescended_tall)
+
+
 func test_footprints_stay_in_the_authored_family() -> void:
 	## Every shape must have an authored roof profile downstream. A footprint
 	## outside WarrenParcelConstruction's four profiles compiles to nothing at
@@ -832,6 +897,17 @@ func _strict_walls(massif: WarrenMassif,
 			seen[wall] = true
 			out.append(wall)
 	return out
+
+
+func _sealed_parcels(world_seed: int) -> Array[WarrenBuildingParcel]:
+	## Parcels sealed against the adapted plan, so envelope-derived facts
+	## (bearing datum, source mass) are readable from the parcel itself.
+	var town := _town(world_seed)
+	if town.is_empty():
+		return [] as Array[WarrenBuildingParcel]
+	return WarrenSolidPartitioner.partition(town["massif"] as WarrenMassif,
+		town["excavation"] as WarrenExcavation,
+		town["plan"] as WarrenVolumePlan)
 
 
 func _proposals(world_seed: int) -> Array[Dictionary]:

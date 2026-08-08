@@ -51,10 +51,11 @@ func test_massif_seeds_differ_and_respect_ground_bands() -> void:
 			"terrain ground bands lift the massif base")
 
 
-func test_the_address_gate_requires_a_tower_at_the_top_of_the_climb() -> void:
-	## Pins WHY "no building over 2-3 storeys" cannot be reached by reshaping
-	## the massif, so the next attempt starts from the constraint instead of
-	## rediscovering it. Measured on real bores, not argued.
+func test_the_address_gate_no_longer_forces_a_tower_at_the_top_of_the_climb() \
+		-> void:
+	## Pins BOTH halves of the split datum on real bores, not by argument: the
+	## address gate still demands a four-storey column of mass beside the top of
+	## the climb, and a house standing there is still only three storeys tall.
 	##
 	## A walk cell is ADDRESSED only when a neighbouring column carries
 	## WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS of CONTINUOUS mass starting
@@ -68,10 +69,10 @@ func test_the_address_gate_requires_a_tower_at_the_top_of_the_climb() -> void:
 	##
 	## Shortening the massif starves the address gate instead (measured:
 	## warren_mass_first_report --stage hillside, SHORT+FLAT column). Raising
-	## each column's base to its terrace deletes the mass the gate reads. One
-	## field is both the datum street rules measure mass from and the datum a
-	## house descends to; a terraced town needs those to differ, and no value
-	## of `base` satisfies both.
+	## each column's base to its terrace deletes the mass the gate reads. So one
+	## field could not be both, and `bearing_at` is now the second: the gate
+	## keeps reading the whole solid from `base_at`, while a house stops
+	## descending at the terrace and the hill below it is rendered as stone.
 	var storeys_per_band := WarrenBuildingParcel.STOREY_BANDS
 	var forced := (WarrenExcavationCarver.MIN_SPAN_BANDS
 		+ WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS
@@ -84,24 +85,64 @@ func test_the_address_gate_requires_a_tower_at_the_top_of_the_climb() -> void:
 		assert_not_null(massif, WarrenMassifBuilder.last_failure)
 		if massif == null:
 			continue
-		var shortest := _shortest_addressed_flank_storeys(massif)
-		if shortest < 0:
+		var from_ground := _tallest_addressed_flank_storeys(massif, false)
+		var from_terrace := _tallest_addressed_flank_storeys(massif, true)
+		if from_ground < 0:
 			continue
 		measured += 1
-		assert_gte(shortest, 4,
-			("seed %d: the shortest flank addressing the top of the climb " \
-			+ "builds %d storeys. If this is ever 3 or fewer the address " \
-			+ "datum has been split from the bearing datum -- delete this " \
-			+ "test and build the terraced hillside.") % [world_seed, shortest])
+		assert_gte(from_ground, 4,
+			"seed %d: natural ground still makes that flank %d storeys" \
+			% [world_seed, from_ground])
+		assert_lte(from_terrace, WarrenMassif.MAX_TERRACE_STOREYS,
+			"seed %d: the flank addressing the top of the climb builds %d " \
+			% [world_seed, from_terrace]
+			+ "storeys from its terrace, so the datums are not really split")
 	assert_gt(measured, 0, "neither seed produced an addressed bore")
 
 
-func _shortest_addressed_flank_storeys(massif: WarrenMassif) -> int:
-	## Over the bore family WarrenTownSolver.mass_first_frontier tries: the
-	## fewest storeys any column addressing a route's HIGHEST walk cell builds,
-	## counted the way WarrenParcelConstruction.proposal() counts them (from
-	## the bearing datum, so the descent is included). -1 when nothing carved.
-	var fewest := 1 << 20
+func test_the_buildable_layer_is_derived_from_the_parcel_contract() -> void:
+	## WarrenMassif deliberately restates the layer rather than importing the
+	## parcel vocabulary, so this is the only thing stopping the two drifting.
+	assert_eq(WarrenMassif.BUILDABLE_LAYER_BANDS,
+		WarrenMassif.MAX_TERRACE_STOREYS * WarrenBuildingParcel.STOREY_BANDS
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS,
+		"the buildable layer must be exactly MAX_TERRACE_STOREYS storeys "
+		+ "plus one roof reservation")
+	var massif := WarrenMassifBuilder.build(1)
+	assert_not_null(massif, WarrenMassifBuilder.last_failure)
+	if massif == null:
+		return
+	var raised := 0
+	for column: Vector2i in massif.columns:
+		var bearing := massif.bearing_at(column)
+		assert_between(bearing, massif.base_at(column), massif.top_at(column),
+			"the terrace at %s is outside its own column" % column)
+		assert_lte(massif.top_at(column) - bearing,
+			WarrenMassif.BUILDABLE_LAYER_BANDS,
+			"the terrace at %s carries more than one buildable layer" % column)
+		if massif.top_at(column) - massif.base_at(column) \
+				<= WarrenMassif.BUILDABLE_LAYER_BANDS:
+			assert_eq(bearing, massif.base_at(column),
+				"a column already inside the layer keeps natural ground at %s" \
+				% column)
+		else:
+			raised += 1
+	# Measured 126 of 291 on seed 1. The remainder is the taper -- rim columns
+	# shorter than one buildable layer, which keep natural ground by the rule
+	# above. A third is a floor on "the terrace actually bites", not a target.
+	assert_gt(raised * 3, massif.columns.size(),
+		"a terrace that lifts almost nothing is not a hillside: %d of %d" \
+		% [raised, massif.columns.size()])
+
+
+func _tallest_addressed_flank_storeys(massif: WarrenMassif,
+		from_terrace: bool) -> int:
+	## Over the bore family WarrenTownSolver.mass_first_frontier tries: the most
+	## storeys any column addressing a route's HIGHEST walk cell builds, counted
+	## the way WarrenParcelConstruction.proposal() counts them -- from the
+	## bearing datum when `from_terrace`, from natural ground otherwise. -1 when
+	## nothing carved.
+	var tallest := -1
 	for attempt in WarrenTownSolver.MASS_FIRST_EXCAVATION_ATTEMPTS:
 		var excavation := WarrenExcavationCarver.carve(massif.world_seed
 			+ attempt * WarrenTownSolver.MASS_FIRST_ATTEMPT_STRIDE, massif)
@@ -127,11 +168,12 @@ func _shortest_addressed_flank_storeys(massif: WarrenMassif) -> int:
 					break
 			if not addressed:
 				continue
-			fewest = mini(fewest, (massif.top_at(column)
-				- massif.base_at(column)
+			var datum := massif.bearing_at(column) if from_terrace \
+				else massif.base_at(column)
+			tallest = maxi(tallest, (massif.top_at(column) - datum
 				- WarrenBuildingParcel.ROOF_RESERVATION_BANDS)
 				/ WarrenBuildingParcel.STOREY_BANDS)
-	return -1 if fewest == 1 << 20 else fewest
+	return tallest
 
 
 func test_seal_requires_single_connected_component_and_no_holes() -> void:

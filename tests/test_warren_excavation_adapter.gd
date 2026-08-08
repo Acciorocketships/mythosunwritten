@@ -105,7 +105,19 @@ func test_adapter_envelope_matches_massif_column_heights_exactly() -> void:
 			"column %s height must match the massif's terrace" % column)
 		assert_eq(envelope.top_at(column), massif.top_at(column),
 			"column %s top must match the massif exactly" % column)
+		# The SECOND datum. Ground stays natural ground so the frontage,
+		# arcade and cover rules keep reading the whole solid; the terrace
+		# only bounds how far a house descends.
+		assert_eq(envelope.bearing_at(column), massif.bearing_at(column),
+			"column %s terrace must match the massif" % column)
 	assert_eq(checked, massif.columns.size())
+	var raised := 0
+	for column_value: Variant in massif.columns.keys():
+		var column := column_value as Vector2i
+		raised += int(envelope.bearing_at(column) > envelope.ground_at(column))
+	assert_gt(raised, 0,
+		"a synthesised envelope whose terrace never rises above ground has "
+		+ "not carried the massif's second datum at all")
 
 
 func test_adapter_transitions_preserve_excavation_spine_edges() -> void:

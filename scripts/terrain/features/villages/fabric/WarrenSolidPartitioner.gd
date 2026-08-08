@@ -504,8 +504,8 @@ static func _wall_verdict(massif: WarrenMassif, excavation: WarrenExcavation,
 		return &"kerb"
 	# Storeys as WarrenParcelConstruction.proposal() counts them: the envelope's
 	# own rooms plus whatever complete storeys its bearing stack adds beneath
-	# the addressed floor.
-	var support := massif.base_at(column)
+	# the addressed floor -- which stops at the terrace, not at natural ground.
+	var support := massif.bearing_at(column)
 	if posmod(base - support, WarrenBuildingParcel.STOREY_BANDS) != 0:
 		support -= 1
 	var storeys := (envelope - WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
@@ -563,7 +563,7 @@ static func _minimum_bands(massif: WarrenMassif, footprint: Array[Vector2i],
 		return maxi(MIN_HOUSE_BANDS, needed)
 	var ground := -(1 << 30)
 	for column: Vector2i in footprint:
-		ground = maxi(ground, massif.base_at(column))
+		ground = maxi(ground, massif.bearing_at(column))
 	var support := ground
 	if posmod(base - ground, WarrenBuildingParcel.STOREY_BANDS) != 0:
 		support -= 1

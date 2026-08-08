@@ -47,6 +47,12 @@ static func envelope_from_massif(massif: WarrenMassif) -> WarrenVolumeEnvelope:
 		min_z = mini(min_z, column.y)
 		max_z = maxi(max_z, column.y)
 		envelope.ground_bands[column] = base
+		# The massif's SECOND datum, carried across unchanged. Natural ground
+		# stays `ground_bands` so every frontage, arcade and cover rule keeps
+		# measuring the whole solid beside a street; the terrace is only where
+		# a house stops descending. Copied rather than recomputed so the
+		# partition and the construction stage read one authority.
+		envelope.bearing_bands[column] = massif.bearing_at(column)
 		envelope.height_bands[column] = top - base
 		for y in range(base, top):
 			envelope.mass_cells[Vector3i(column.x, y, column.y)] = true

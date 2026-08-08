@@ -11,6 +11,10 @@ var radius_x: int
 var radius_z: int
 var max_height_bands: int
 var ground_bands: Dictionary = {}
+## Optional second datum per column: where an inhabited stack STOPS descending.
+## Empty by default, and `bearing_at` then reduces to `ground_at` exactly, so
+## an envelope that does not declare a terrace behaves as it always has.
+var bearing_bands: Dictionary = {}
 var height_bands: Dictionary = {}
 var mass_cells: Dictionary = {}
 var last_rejection := ""
@@ -74,6 +78,19 @@ func contains_column(column: Vector2i) -> bool:
 
 func ground_at(column: Vector2i) -> int:
 	return int(ground_bands.get(column, 0))
+
+
+func bearing_at(column: Vector2i) -> int:
+	## The band a house grounds to. `ground_at` stays the datum every street,
+	## address, arcade and cover rule measures mass from; these are two roles,
+	## not two names for one number, and only WarrenParcelConstruction's
+	## bearing descent reads this one.
+	##
+	## Between the two lies hill: unbuilt source mass the fabric renders as
+	## retained stone (SettlementFabricAssembler.terrace_retaining_payload)
+	## rather than as further storeys of house. `_seal` refuses a bearing
+	## outside [ground, top], so the hill can never be a hole or a cantilever.
+	return int(bearing_bands.get(column, ground_at(column)))
 
 
 func height_at(column: Vector2i) -> int:
@@ -142,6 +159,15 @@ func _seal() -> bool:
 			if not mass_cells.has(Vector3i(column.x, y, column.y)):
 				last_rejection = "mass column is discontinuous at %s:%d" % [column, y]
 				return false
+		var bearing := bearing_at(column)
+		if bearing < ground or bearing > ground + height:
+			last_rejection = "bearing datum %d outside the mass at %s" % [
+				bearing, column]
+			return false
+	for column_value: Variant in bearing_bands.keys():
+		if not height_bands.has(column_value):
+			last_rejection = "bearing datum on absent column %s" % column_value
+			return false
 	if boundary_entry_cells(2).is_empty():
 		last_rejection = "no boundary column can provide player headroom"
 		return false

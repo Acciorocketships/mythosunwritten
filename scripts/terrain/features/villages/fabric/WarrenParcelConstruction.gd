@@ -157,13 +157,20 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	## continuous source-mass bearing path. Mixed-span parcels intentionally stay
 	## at their addressed level; a later explicit overhang/support recipe must
 	## carry them without filling a public passage below.
+	##
+	## It descends to the envelope's BEARING datum, which is natural ground
+	## unless the envelope declares a terrace above it. That distinction is the
+	## whole difference between a hill town and a tower: a street eight bands up
+	## flanked by six of mass stands on fourteen bands of solid, and descending a
+	## house through all fourteen is what a viewer counts as seven storeys. The
+	## mass below the terrace is hill, not house.
 	if parcel == null or parcel.source == null \
 			or parcel.bearing_columns.size() != parcel.footprint.size():
 		return parcel.base_band if parcel != null else 0
 	var maximum_ground := -2147483648
 	for column: Vector2i in parcel.footprint:
 		maximum_ground = maxi(maximum_ground,
-			parcel.source.envelope.ground_at(column))
+			parcel.source.envelope.bearing_at(column))
 	var result := maximum_ground
 	if posmod(parcel.base_band - result,
 			WarrenBuildingParcel.STOREY_BANDS) != 0:
