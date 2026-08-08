@@ -73,6 +73,35 @@ static func _roof_feature(parcel: WarrenBuildingParcel,
 	return 1 if phase in [0, 1] else 2 if phase in [2, 3] else phase
 
 
+static func retained_terrace_cells(parcel: WarrenBuildingParcel) \
+		-> Array[Vector3i]:
+	## The hill a raised house stands on, at construction resolution: source
+	## mass between each footprint column's natural ground and the band the
+	## stack actually stops descending at.
+	##
+	## Empty whenever the two coincide -- every route-first parcel, and every
+	## mass-first house whose terrace IS its ground -- so declaring it costs
+	## nothing where there is no hill. Deliberately NOT occupancy: it claims no
+	## socket, collides with no recipe and never enters the visual-envelope
+	## test. SettlementFabricAssembler renders it as retained stone, because
+	## nothing else renders unbuilt massif mass and a house resting on an
+	## unrendered terrace floats.
+	var out: Array[Vector3i] = []
+	if parcel == null or parcel.source == null or not parcel.is_sealed():
+		return out
+	var construction := proposal(parcel)
+	if construction.is_empty():
+		return out
+	var support := (construction.origin as Vector3i).y
+	for column: Vector2i in parcel.footprint:
+		for band in range(parcel.source.envelope.ground_at(column), support):
+			for x_offset in 2:
+				for z_offset in 2:
+					out.append(Vector3i(column.x * 2 + x_offset, band,
+						column.y * 2 + z_offset))
+	return out
+
+
 static func threshold_cell(parcel: WarrenBuildingParcel) -> Vector3i:
 	var profile := profile_for(parcel)
 	var construction := proposal(parcel)
@@ -164,14 +193,25 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	## flanked by six of mass stands on fourteen bands of solid, and descending a
 	## house through all fourteen is what a viewer counts as seven storeys. The
 	## mass below the terrace is hill, not house.
+	##
+	## Across a footprint it takes the DEEPEST terrace, floored at the highest
+	## natural ground. Deepest, because a terrace is not a floor the stack rests
+	## on -- the source mass is continuous below it -- so a house spanning a
+	## step simply cuts one more room into the uphill side, which is what a hill
+	## house does. Taking the shallowest instead would refuse every footprint
+	## that crosses a terrace step. Floored at natural ground, because THAT is a
+	## real floor and burying a storey under the terrain is not a room.
 	if parcel == null or parcel.source == null \
 			or parcel.bearing_columns.size() != parcel.footprint.size():
 		return parcel.base_band if parcel != null else 0
 	var maximum_ground := -2147483648
+	var deepest_terrace := 2147483647
 	for column: Vector2i in parcel.footprint:
 		maximum_ground = maxi(maximum_ground,
+			parcel.source.envelope.ground_at(column))
+		deepest_terrace = mini(deepest_terrace,
 			parcel.source.envelope.bearing_at(column))
-	var result := maximum_ground
+	var result := maxi(maximum_ground, deepest_terrace)
 	if posmod(parcel.base_band - result,
 			WarrenBuildingParcel.STOREY_BANDS) != 0:
 		result -= 1

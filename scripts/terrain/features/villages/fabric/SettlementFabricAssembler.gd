@@ -77,6 +77,7 @@ static func structural_support_payload(plan: SettlementFabricPlan) \
 	if plan == null or plan.surface_plan == null:
 		return out
 	out.append_from(low_retaining_payload(plan))
+	out.append_from(terrace_retaining_payload(plan))
 	var solids := plan.transformed_cells(&"solid")
 	var structural := plan.surface_plan.cells_for_kind(
 		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT)
@@ -150,6 +151,103 @@ static func low_retaining_payload(plan: SettlementFabricPlan) \
 					cell.y, cell.z, direction.x, direction.z]))
 	assert(out.validate())
 	return out
+
+
+static func terrace_retaining_payload(plan: SettlementFabricPlan) \
+		-> EnvironmentInstancePayload:
+	## The hill a house stands on when it stops descending at its terrace
+	## (WarrenParcelConstruction.retained_terrace_cells). Same authored 3 m rock
+	## module low_retaining_payload uses for a one-band court, STACKED rather
+	## than stretched, so an eight-band hill is four modules and no asset is
+	## scaled. Without it a short house on a high terrace floats: nothing else
+	## in the fabric renders unbuilt source mass.
+	var out := EnvironmentInstancePayload.new()
+	if plan == null:
+		return out
+	return retaining_walls(plan.retained_terrace_cells,
+		plan.transformed_cells(&"solid"))
+
+
+static func retaining_walls(retained: Dictionary,
+		solids: Dictionary) -> EnvironmentInstancePayload:
+	## Stone on every lateral face of `retained` that neither the hill itself
+	## nor a building already closes; nothing on the top, which is what the
+	## house sits on. Faces are grouped into vertical runs first, so a run is
+	## tiled by whole modules from its top down and the lowest one buries its
+	## remainder exactly as the one-band court does -- never two coplanar
+	## modules on the same face.
+	##
+	## Pure function of two integer cell sets, and every loop runs over a sorted
+	## key list, so the payload is byte-identical for identical input.
+	var out := EnvironmentInstancePayload.new()
+	var runs: Dictionary = {}
+	var cells: Array[Vector3i] = []
+	cells.assign(retained.keys())
+	cells.sort_custom(_cell_before)
+	for cell: Vector3i in cells:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if retained.has(neighbor) or solids.has(neighbor):
+				continue
+			var key := Vector4i(cell.x, cell.z, direction.x, direction.z)
+			if not runs.has(key):
+				runs[key] = {}
+			(runs[key] as Dictionary)[cell.y] = true
+	var keys: Array[Vector4i] = []
+	keys.assign(runs.keys())
+	keys.sort_custom(func(a: Vector4i, b: Vector4i) -> bool:
+		if a.x != b.x:
+			return a.x < b.x
+		if a.y != b.y:
+			return a.y < b.y
+		if a.z != b.z:
+			return a.z < b.z
+		return a.w < b.w)
+	for key: Vector4i in keys:
+		var bands: Array[int] = []
+		bands.assign((runs[key] as Dictionary).keys())
+		bands.sort()
+		var direction := Vector3i(key.z, 0, key.w)
+		var index := 0
+		while index < bands.size():
+			var last := index
+			while last + 1 < bands.size() and bands[last + 1] == bands[last] + 1:
+				last += 1
+			_stack_retaining_run(out, Vector2i(key.x, key.y), direction,
+				bands[index], bands[last] + 1)
+			index = last + 1
+	assert(out.validate())
+	return out
+
+
+static func _stack_retaining_run(out: EnvironmentInstancePayload,
+		column: Vector2i, direction: Vector3i, floor_band: int,
+		ceiling_band: int) -> void:
+	## Fixed 3 m modules from the run's top downward. The last one may reach
+	## below the run, which buries it in the terrain or the mass beneath -- the
+	## same half-burial the one-band court already relies on, and the reason no
+	## module is ever scaled to fit.
+	var yaw := PI * 0.5 if direction.x != 0 else 0.0
+	var top := ceiling_band
+	while top > floor_band:
+		var midpoint := Vector3(float(column.x), 0.0, float(column.y)) \
+			* FabricRecipe.CELL_SIZE \
+			+ Vector3(direction) * FabricRecipe.CELL_SIZE * 0.5
+		midpoint.y = float(top) * FabricRecipe.CELL_SIZE - 3.0
+		out.add(LOW_RETAINING_WALL,
+			Transform3D(Basis(Vector3.UP, yaw), midpoint), Color.WHITE,
+			StringName("terrace-wall/%d/%d/%d/%d/%d" % [column.x, column.y,
+				direction.x, direction.z, top]))
+		top -= 2
+
+
+static func _cell_before(left: Vector3i, right: Vector3i) -> bool:
+	if left.y != right.y:
+		return left.y < right.y
+	if left.z != right.z:
+		return left.z < right.z
+	return left.x < right.x
 
 
 static func _column_is_occupied_below(plan: SettlementFabricPlan,

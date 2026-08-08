@@ -378,12 +378,17 @@ func _report_fill() -> void:
 	## carry a house at all, and how many houses the infill pass added on top of
 	## the mandatory street-wall flanks. Two answer the second: the distribution
 	## of BUILT storeys -- `WarrenParcelConstruction.proposal().storeys`, which
-	## counts the stack down to natural ground rather than the envelope the
+	## counts the stack down to its BEARING datum rather than the envelope the
 	## partition cut -- and, for every house, how many of those storeys stand
 	## clear of every neighbour on their tallest exposed side. A house whose
 	## exposed height is one or two storeys is part of a terraced mass however
 	## tall the whole stack is; one exposed for six is the tower the reviewer
 	## rejected.
+	##
+	## `hill` is the third: houses standing on a terrace, and the bands of
+	## source mass beneath them that SettlementFabricAssembler must retain as
+	## stone. A house on a hill is short BECAUSE that mass stopped being house;
+	## if the hill were not rendered it would be floating instead.
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
 	for world_seed: int in _seeds:
 		var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
@@ -403,16 +408,23 @@ func _report_fill() -> void:
 				tops[column] = parcel.top_band
 		var storeys: Dictionary = {}
 		var exposed: Dictionary = {}
+		var on_a_hill := 0
+		var retained_cells := 0
 		for parcel: WarrenBuildingParcel in plan.parcels:
 			var proposal := WarrenParcelConstruction.proposal(parcel)
 			var built := int(proposal.get("storeys", 0))
 			storeys[built] = int(storeys.get(built, 0)) + 1
 			var bare := _exposed_storeys(parcel, tops, built)
 			exposed[bare] = int(exposed.get(bare, 0)) + 1
+			var terrace := WarrenParcelConstruction.retained_terrace_cells(
+				parcel).size()
+			retained_cells += terrace
+			on_a_hill += int(terrace > 0)
 		print("seed %2d: houses %d over %d of %d massif columns" % [world_seed,
 			plan.parcels.size(), tops.size(), massif.columns.size()]
 			+ " | infill %d" % int(WarrenSolidPartitioner.last_diagnostic.get(
 				"infill_house_count", -1))
+			+ " | hill %d houses/%d cells" % [on_a_hill, retained_cells]
 			+ " | BUILT storeys %s | EXPOSED storeys %s" % [
 				_ascending(storeys), _ascending(exposed)])
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST

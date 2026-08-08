@@ -55,6 +55,9 @@ static func solve(assets: WarrenAssetPlan,
 		last_failure = "solid/void classification failed: %s" % \
 			FabricSolidVoidClassifier.last_failure
 		return null
+	if not result.set_retained_terrace(_retained_terrace(town)):
+		last_failure = "retained terrace overlaps built mass"
+		return null
 	var lineage_audit := assets.audit.duplicate(true)
 	lineage_audit.merge(town.audit, true)
 	lineage_audit.merge(exact_surfaces.audit(), true)
@@ -71,6 +74,21 @@ static func solve(assets: WarrenAssetPlan,
 		last_failure = "common fabric seal failed: %s" % result.last_rejection
 		return null
 	return result
+
+
+static func _retained_terrace(town: WarrenTownPlan) -> Dictionary:
+	## The hill under every raised house, unioned. Empty for a town whose
+	## envelope declares no terrace -- route-first always, and any mass-first
+	## house already standing on its own natural ground -- so this is a no-op
+	## wherever there is no hill to render.
+	var out: Dictionary = {}
+	if town == null or town.parcels == null:
+		return out
+	for parcel: WarrenBuildingParcel in town.parcels.parcels:
+		for cell: Vector3i in WarrenParcelConstruction.retained_terrace_cells(
+				parcel):
+			out[cell] = true
+	return out
 
 
 static func _unit_from_spec(spec: Dictionary) -> FabricUnit:

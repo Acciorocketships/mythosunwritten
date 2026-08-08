@@ -11,12 +11,18 @@ var surface_plan: PublicRealmSurfacePlan
 var volume_plan: FabricVolumePlan
 var solid_void_plan: FabricSolidVoidPlan
 var embedding_plan: StaggeredFabricEmbeddingPlan
+## Source mass a house stands ON rather than IN: the hill between natural
+## ground and a raised parcel's lowest room. Rendered as retained stone by
+## SettlementFabricAssembler and deliberately excluded from occupancy, so it
+## claims no socket and enters no visual-envelope or solid/void test.
+var retained_terrace_cells: Dictionary = {}
 var audit: Dictionary = {}
 var _recipes: Dictionary = {}
 var _by_id: Dictionary = {}
 var _solid_owner: Dictionary = {}
 var _walk_owner: Dictionary = {}
 var _headroom_owner: Dictionary = {}
+var _terrace_declared := false
 var _sealed := false
 var last_rejection := ""
 
@@ -61,6 +67,21 @@ func set_solid_void_plan(plan_value: FabricSolidVoidPlan) -> bool:
 			or solid_void_plan != null:
 		return false
 	solid_void_plan = plan_value
+	return true
+
+
+func set_retained_terrace(cells: Dictionary) -> bool:
+	## Declared once, before sealing, and never after: the hill is a fact about
+	## the parcels this plan was compiled from, not something a later stage may
+	## grow. A cell already claimed as solid is refused outright -- retained
+	## stone must be mass nobody built in.
+	if _sealed or _terrace_declared:
+		return false
+	for cell_value: Variant in cells.keys():
+		if _solid_owner.has(cell_value):
+			return false
+	retained_terrace_cells = cells.duplicate()
+	_terrace_declared = true
 	return true
 
 

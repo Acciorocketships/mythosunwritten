@@ -142,6 +142,8 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	local_payload.append_from(SettlementFabricAssembler.production_surface_bundle(
 		fabric.surface_plan))
 	local_payload.append_from(SettlementFabricAssembler.low_retaining_payload(fabric))
+	local_payload.append_from(
+		SettlementFabricAssembler.terrace_retaining_payload(fabric))
 	_append_ground_supports(local_payload, terrain, fabric, world_frame)
 	for asset_id: StringName in local_payload.asset_ids():
 		var batch := local_payload.batches[asset_id] as Dictionary

@@ -561,9 +561,15 @@ static func _minimum_bands(massif: WarrenMassif, footprint: Array[Vector2i],
 		# A mixed-span parcel deliberately stays at its addressed level rather
 		# than descending, so it must carry its own storeys.
 		return maxi(MIN_HOUSE_BANDS, needed)
+	# The deepest terrace under the footprint, floored at the highest natural
+	# ground -- WarrenParcelConstruction._support_base_band's rule exactly, and
+	# for its reasons: a terrace caps the descent, terrain ends it.
 	var ground := -(1 << 30)
+	var terrace := 1 << 30
 	for column: Vector2i in footprint:
-		ground = maxi(ground, massif.bearing_at(column))
+		ground = maxi(ground, massif.base_at(column))
+		terrace = mini(terrace, massif.bearing_at(column))
+	ground = maxi(ground, terrace)
 	var support := ground
 	if posmod(base - ground, WarrenBuildingParcel.STOREY_BANDS) != 0:
 		support -= 1

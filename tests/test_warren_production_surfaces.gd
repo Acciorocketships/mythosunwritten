@@ -135,3 +135,80 @@ func test_commit_queue_stages_surface_mesh_collision_and_visuals() -> void:
 		false) if visuals != null else []
 	assert_eq(mesh_instances.size(), 1,
 		"the committed block must draw the generated surface mesh")
+
+
+func test_a_multi_band_terrace_is_retained_by_stacked_authored_modules() -> void:
+	## The one-band court already renders as a half-buried 3 m rock module. A
+	## house standing on a six-band hill needs the same module STACKED, never
+	## stretched: three of them, top flush with the terrace, each covering two
+	## bands. Faces the town itself already closes get nothing.
+	var retained: Dictionary = {}
+	for band in 6:
+		retained[Vector3i(0, band, 0)] = true
+	var solids: Dictionary = {}
+	for band in 6:
+		# The neighbour to the east is another house's wall, so that face is
+		# already closed and no rock may appear inside it.
+		solids[Vector3i(1, band, 0)] = true
+	var payload := SettlementFabricAssembler.retaining_walls(retained, solids)
+	assert_true(payload.validate())
+	var batch := payload.batches.get(
+		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
+	var transforms: Array = batch.get("transforms", [])
+	assert_eq(transforms.size(), 9,
+		"three exposed faces of a six-band terrace need three modules each")
+	var tops: Dictionary = {}
+	var eastward := 0
+	for value: Variant in transforms:
+		var origin := (value as Transform3D).origin
+		tops[snappedf(origin.y + 3.0, 0.001)] = true
+		eastward += int(origin.x > 0.4)
+	assert_eq(eastward, 0,
+		"a face closed by a neighbouring house must stay unretained")
+	var expected: Array[float] = [9.0, 6.0, 3.0]
+	for top: float in expected:
+		assert_true(tops.has(top),
+			"no module tops out at %.1f m; the hill has a gap" % top)
+	assert_eq(tops.size(), expected.size(),
+		"modules must tile the terrace rather than overlap it")
+
+
+func test_a_terrace_face_the_hill_itself_closes_gets_no_wall() -> void:
+	## Two neighbouring houses on the same hill share a face that is solid rock
+	## on both sides. Retaining it would build a wall inside the hill.
+	var retained: Dictionary = {}
+	for band in 4:
+		retained[Vector3i(0, band, 0)] = true
+		retained[Vector3i(1, band, 0)] = true
+	var payload := SettlementFabricAssembler.retaining_walls(retained, {})
+	var batch := payload.batches.get(
+		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
+	var transforms: Array = batch.get("transforms", [])
+	assert_eq(transforms.size(), 12,
+		"six exposed faces of a four-band pair need two modules each")
+	for value: Variant in transforms:
+		var origin := (value as Transform3D).origin
+		assert_false(is_equal_approx(origin.x, 0.75) \
+			and is_equal_approx(origin.z, 0.0),
+			"a wall was built on the face the two terraces share")
+
+
+func test_retaining_walls_are_deterministic_and_uniquely_identified() -> void:
+	var retained: Dictionary = {}
+	for band in 5:
+		for x in 2:
+			retained[Vector3i(x, band, 0)] = true
+	var first := SettlementFabricAssembler.retaining_walls(retained, {})
+	var second := SettlementFabricAssembler.retaining_walls(retained, {})
+	assert_eq(first.instance_count, second.instance_count)
+	var batch := first.batches.get(
+		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
+	var ids: Array = batch.get("ids", [])
+	var unique: Dictionary = {}
+	for index in ids.size():
+		unique[StringName(ids[index])] = true
+		assert_eq(StringName(ids[index]),
+			StringName((second.batches[
+				SettlementFabricAssembler.LOW_RETAINING_WALL] as Dictionary
+				).ids[index]), "instance order must be a pure function")
+	assert_eq(unique.size(), ids.size(), "stable ids must be unique")

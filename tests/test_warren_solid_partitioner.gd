@@ -746,9 +746,15 @@ func test_no_house_builds_more_storeys_than_a_terrace_carries() -> void:
 				continue
 			counted += 1
 			var support := (proposal.origin as Vector3i).y
-			var terrace := -(1 << 30)
+			# The deepest terrace under the footprint, floored at the highest
+			# natural ground -- see _support_base_band on why a footprint
+			# crossing a step cuts into the uphill side rather than refusing.
+			var terrace := 1 << 30
+			var ground := -(1 << 30)
 			for column: Vector2i in parcel.footprint:
-				terrace = maxi(terrace, envelope.bearing_at(column))
+				terrace = mini(terrace, envelope.bearing_at(column))
+				ground = maxi(ground, envelope.ground_at(column))
+			terrace = maxi(terrace, ground)
 			# One band of slack is the address-phase parity fudge
 			# _support_base_band already owned; the clamp to base_band is the
 			# street cut below its own terrace.
@@ -767,6 +773,51 @@ func test_no_house_builds_more_storeys_than_a_terrace_carries() -> void:
 	assert_lte(undescended_tall, MEASURED_UNDESCENDED_TALL_HOUSES,
 		"%d houses stand taller than a terrace on a street cut below it" \
 		% undescended_tall)
+
+
+func test_a_house_on_a_terrace_declares_the_hill_beneath_it() -> void:
+	## Splitting the datum stops a house descending to the valley floor, which
+	## leaves real source mass between natural ground and its lowest room.
+	## Nothing renders unbuilt massif mass, so unless the house DECLARES that
+	## gap it stands on nothing. The declaration must be exactly the gap --
+	## short and the house floats, long and it buries a storey.
+	var declared := 0
+	var houses_on_a_hill := 0
+	for world_seed: int in CORPUS:
+		var town := _town(world_seed)
+		if town.is_empty():
+			continue
+		var envelope := (town["plan"] as WarrenVolumePlan).envelope
+		var occupied := _owned_cells(_sealed_parcels(world_seed))
+		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
+			var proposal := WarrenParcelConstruction.proposal(parcel)
+			if proposal.is_empty():
+				continue
+			var support := (proposal.origin as Vector3i).y
+			var expected := 0
+			for column: Vector2i in parcel.footprint:
+				expected += 4 * maxi(0, support - envelope.ground_at(column))
+			var terrace := WarrenParcelConstruction.retained_terrace_cells(
+				parcel)
+			assert_eq(terrace.size(), expected,
+				"seed %d: %s stands %d bands above ground and declares %d " \
+				% [world_seed, parcel.stable_id, support, terrace.size()]
+				+ "terrace cells, not %d" % expected)
+			declared += terrace.size()
+			houses_on_a_hill += int(expected > 0)
+			for cell: Vector3i in terrace:
+				var macro_cell := Vector3i(floori(float(cell.x) / 2.0), cell.y,
+					floori(float(cell.z) / 2.0))
+				assert_false(occupied.has(macro_cell),
+					"seed %d: %s retains %s, which a house already occupies" \
+					% [world_seed, parcel.stable_id, macro_cell])
+				assert_true(parcel.source.has_mass(macro_cell),
+					"seed %d: %s retains %s, which the excavation removed" \
+					% [world_seed, parcel.stable_id, macro_cell])
+	assert_gt(houses_on_a_hill, 40,
+		"only %d houses across the corpus stand on a terrace at all" \
+		% houses_on_a_hill)
+	assert_gt(declared, 0, "no hill was declared anywhere")
 
 
 func test_footprints_stay_in_the_authored_family() -> void:
