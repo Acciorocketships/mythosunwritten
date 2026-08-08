@@ -29,6 +29,12 @@ extends SceneTree
 ##                     descending it to natural ground, which is what a viewer
 ##                     counts. Read it with the exposed-face table beside it:
 ##                     a stack is only a tower where no neighbour stands.
+##   --stage hillside  A/B between the massif as built and the same massif with
+##                     its terrace levels read as a rising GROUND surface under
+##                     a shallow buildable layer (`--layer N`, default 9). Runs
+##                     carve -> adapt -> topology gate -> ground arcade on both.
+##                     This is the measurement that rules on "make the massif a
+##                     hillside so houses stop being towers".
 ##   --stage map       one seed's massif drawn as a plan, band heights in hex,
 ##                     marking every column as street, house, gallery walk cell
 ##                     or bare solid. The fastest way to see WHERE a town's mass
@@ -46,6 +52,8 @@ const DEFAULT_SEEDS: Array[int] = [1, 3, 4, 5, 6, 9, 11, 13, 16, 20]
 
 var _stage := "gate"
 var _seeds: Array[int] = []
+var _layer_bands := 9
+var _rise_bands := 13
 
 
 func _init() -> void:
@@ -80,6 +88,10 @@ func _init() -> void:
 		_report_fill()
 		quit()
 		return
+	if _stage == "hillside":
+		_report_hillside()
+		quit()
+		return
 	if _stage == "map":
 		for world_seed: int in _seeds:
 			_report_map(world_seed)
@@ -103,9 +115,155 @@ func _read_args() -> void:
 			# See SettlementFabricPlan: diagnostic only, so a town blocked
 			# solely by corner-envelope overlap can be measured and rendered.
 			SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
+		elif args[index] == "--layer" and index + 1 < args.size():
+			_layer_bands = int(args[index + 1])
+		elif args[index] == "--rise" and index + 1 < args.size():
+			_rise_bands = int(args[index + 1])
 		elif args[index] == "--seeds" and index + 1 < args.size():
 			for token: String in args[index + 1].split(",", false):
 				_seeds.append(int(token))
+
+
+static func _as_hillside(massif: WarrenMassif, layer_bands: int,
+		rise_bands: int = 0) -> WarrenMassif:
+	## The massif the mass-first design correction asked for: the terrace level
+	## becomes a rising GROUND surface and only `layer_bands` sit above it, so a
+	## house on a high terrace is short instead of a stack descended to natural
+	## ground. Applied here as a transform of a real WarrenMassifBuilder result
+	## rather than as a production change, because the production change does
+	## not survive its own measurement -- see _report_hillside.
+	##
+	## `rise_bands` optionally rescales the hill to that peak first. A shallow
+	## layer caps how far a bore can stand above local ground at
+	## layer_bands - WarrenExcavation.HEADROOM_BANDS, so on the 16-20 band hill
+	## the builder ships the flanks outrun every move in
+	## WarrenExcavationCarver.ACTIONS and almost nothing carves. Rescaling makes
+	## the hill walkable, which is what separates "the bore cannot climb this"
+	## from the deeper result the addressed-frontage column reports.
+	var out := WarrenMassif.new(massif.world_seed)
+	var peak := 1
+	for column: Vector2i in massif.columns:
+		peak = maxi(peak, massif.top_at(column))
+	var scale := 1.0 if rise_bands <= 0 else float(rise_bands) / float(peak)
+	for column_value: Variant in massif.columns.keys():
+		var column := column_value as Vector2i
+		var terrace := int((massif.columns[column] as Dictionary).get("terrace",
+			massif.top_at(column)))
+		var ground := massif.base_at(column) - terrace
+		terrace = maxi(1, int(round(float(terrace) * scale)))
+		var top := ground + terrace
+		out.columns[column] = {
+			"base": maxi(ground, top - layer_bands),
+			"top": top,
+			"terrace": terrace,
+		}
+	out.core_top_bands = 0
+	for column: Vector2i in out.columns:
+		out.core_top_bands = maxi(out.core_top_bands,
+			out.top_at(column) - out.base_at(column))
+	out.seal()
+	return out
+
+
+func _report_hillside() -> void:
+	## A/B for the "terraced hillside carrying a shallow buildable layer"
+	## correction: identical seeds, identical bores, one flat-based massif and
+	## one whose ground surface rises with its terraces.
+	##
+	## Read the `addr` column first. It is `addressed_walk_ratio`, and
+	## WarrenPublicRealmCarver's topology gate wants 0.55 of it: a walk cell
+	## counts only when a neighbouring column carries
+	## WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS of CONTINUOUS mass starting
+	## at the street's own floor band. Three columns, because the two ways of
+	## building a hillside fail differently:
+	##
+	##   FLAT           the massif as shipped -- the control.
+	##   HILL-AS-BUILT  16-20 band hill, shallow layer. A bore may stand at most
+	##                  layer - HEADROOM_BANDS bands above local ground, so a
+	##                  taller riser is a cliff no move in
+	##                  WarrenExcavationCarver.ACTIONS can climb: `b` collapses
+	##                  before any gate is reached.
+	##   SHORT+HILL     the hill rescaled gentle enough to climb. Bores carve;
+	##                  `addr` then falls through the gate, because raising a
+	##                  column's base deletes the mass below its terrace and
+	##                  only same-level neighbours can address a street.
+	##
+	## The deleted mass is the mass a viewer counts as a tower. A street must
+	## climb MIN_SPAN_BANDS and be flanked by MIN_ADDRESS_BUILDING_BANDS
+	## measured from its own floor, so ~14 bands stand under its highest cell
+	## and WarrenParcelConstruction descends a house through all of them. The
+	## tower is what the address gate is asking for -- pinned by
+	## test_the_address_gate_requires_a_tower_at_the_top_of_the_climb.
+	##
+	## Rescaling here rounds an existing terracing rather than re-terracing, so
+	## SHORT+HILL loses some bores for reasons of its own; the builder-level
+	## control (MIN_HILL_RISE_BANDS 12-16, flat base, no layer) measured the
+	## same addressed collapse, 0.57 -> 0.39.
+	var layer := _layer_bands
+	print("hillside A/B, buildable layer %d bands, walkable hill rescaled to %d"
+		% [layer, _rise_bands])
+	print("seed | FLAT b/g/a addr | HILL-AS-BUILT b/g/a addr | SHORT+HILL b/g/a addr")
+	var totals := {"flat_gate": 0, "hill_gate": 0, "walk_gate": 0,
+		"flat_arcade": 0, "hill_arcade": 0, "walk_arcade": 0}
+	for world_seed: int in _seeds:
+		var built := WarrenMassifBuilder.build(world_seed)
+		if built == null:
+			print("%4d | massif rejected: %s" % [world_seed,
+				WarrenMassifBuilder.last_failure])
+			continue
+		var flat := _hillside_row(world_seed, built)
+		var hill := _hillside_row(world_seed, _as_hillside(built, layer))
+		var walkable := _hillside_row(world_seed, _as_hillside(built, layer,
+			_rise_bands))
+		totals["flat_gate"] = int(totals["flat_gate"]) + int(flat["gate"])
+		totals["hill_gate"] = int(totals["hill_gate"]) + int(hill["gate"])
+		totals["flat_arcade"] = int(totals["flat_arcade"]) + int(flat["arcade"])
+		totals["hill_arcade"] = int(totals["hill_arcade"]) + int(hill["arcade"])
+		totals["walk_gate"] = int(totals["walk_gate"]) + int(walkable["gate"])
+		totals["walk_arcade"] = int(totals["walk_arcade"]) \
+			+ int(walkable["arcade"])
+		print("%4d | %2d/%2d/%2d %.2f | %2d/%2d/%2d %.2f | %2d/%2d/%2d %.2f"
+			% [world_seed,
+			int(flat["bores"]), int(flat["gate"]), int(flat["arcade"]),
+			float(flat["addressed"]),
+			int(hill["bores"]), int(hill["gate"]), int(hill["arcade"]),
+			float(hill["addressed"]),
+			int(walkable["bores"]), int(walkable["gate"]),
+			int(walkable["arcade"]), float(walkable["addressed"])])
+	print("TOTAL gate %d flat -> %d as-built -> %d short+hill" % [
+		int(totals["flat_gate"]), int(totals["hill_gate"]),
+		int(totals["walk_gate"])])
+	print("TOTAL arcade %d flat -> %d as-built -> %d short+hill" % [
+		int(totals["flat_arcade"]), int(totals["hill_arcade"]),
+		int(totals["walk_arcade"])])
+
+
+func _hillside_row(world_seed: int, massif: WarrenMassif) -> Dictionary:
+	## Runs the frontier's own three stages -- carve, adapt, topology gate,
+	## ground arcade -- over the same bore family WarrenTownSolver uses, so the
+	## counts are the ones that decide whether a seed yields a town at all.
+	var bores := 0
+	var gate := 0
+	var arcade := 0
+	var addressed := 0.0
+	for attempt in WarrenTownSolver.MASS_FIRST_EXCAVATION_ATTEMPTS:
+		var excavation := WarrenExcavationCarver.carve(world_seed
+			+ attempt * WarrenTownSolver.MASS_FIRST_ATTEMPT_STRIDE, massif)
+		if excavation == null:
+			continue
+		var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if volume == null:
+			continue
+		bores += 1
+		addressed += float(volume.audit.addressed_walk_ratio)
+		if not WarrenPublicRealmCarver.passes_topology_gate(volume):
+			continue
+		gate += 1
+		if WarrenGroundArcadeSolver.extend(volume) != null:
+			arcade += 1
+	return {"bores": bores, "gate": gate, "arcade": arcade,
+		"addressed": addressed / float(maxi(1, bores))}
 
 
 func _report_gate() -> void:
