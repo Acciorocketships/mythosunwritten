@@ -11,17 +11,31 @@ extends GutTest
 ## suite. Seven towns cost roughly 15s; seeds 2 and 7 are rejected by the
 ## carver and seed 8 by the massif builder, so they are not in the corpus.
 const CORPUS: Array[int] = [0, 1, 3, 4, 5, 6, 9]
+## Seeds whose whole mass-first frontier is built, so the parcel stage can be
+## audited against the volume production actually hands it -- arcade and
+## gallery walk cells included. Three towns cost roughly 45s, which is why this
+## is a short list rather than CORPUS.
+const FRONTIER_CORPUS: Array[int] = [3, 4, 6]
 ## Deliberately stricter than WarrenSolidPartitioner's own admission rule and
 ## derived without calling it: two full storeys of unexcavated solid above the
 ## street floor, on unexcavated ground. Anything this obviously buildable is a
 ## wall the partition may not leave to nobody.
 const STRICT_WALL_BANDS := 6
+## Fill sites the partition may leave standing across FRONTIER_CORPUS, and only
+## for the one declared reason: an optional house is never placed when its roof
+## cannot join a neighbour's or when it would meet one across a corner.
+## A MEASURED RESIDUE, NOT A TARGET. Attributed by experiment rather than by
+## argument: 43 sites stood unbuilt before the fill pass and 10 after, and
+## deleting the fill pass's roof/corner refusal takes those 10 to zero, so every
+## one of them is that refusal and none is a hole in the fill.
+const MEASURED_UNJOINABLE_FILL_SITES := 16
 ## The furthest a 2x3 footprint can reach from the walk cell that addresses it:
 ## three columns of depth, or two of depth and one of width. Used only as a
 ## generous upper bound on where a bridge over a street could be addressed from.
 const BRIDGE_REACH_CELLS := 3
 
 var _towns: Dictionary = {}
+var _frontier_towns: Dictionary = {}
 
 
 func test_partition_owns_every_route_flank() -> void:
@@ -478,6 +492,127 @@ func test_the_partition_leaves_no_buildable_solid_standing_over_a_street() \
 				+ "bridge it") % [world_seed, unbuilt, column, base])
 	assert_gt(over_street_cells, 20,
 		"the corpus left no solid over any street, so this test measured nothing")
+
+
+func test_the_partition_fills_the_solid_its_public_realm_can_reach() -> void:
+	## A tall stack reads as a skyscraper alone and as a terraced hillside town
+	## when shorter neighbours stand against it, so mass the town can address
+	## and does not build is a defect rather than spare capacity. Owning every
+	## street wall houses the front rank of the bore only; this is the claim
+	## that nothing else the same public realm could carry was left standing.
+	##
+	## Measured against a REAL frontier volume, because that is where the gap
+	## lives: the ground arcade and the elevated galleries add walk cells the
+	## bore's own route never had, WarrenParcelizer._candidates has always
+	## treated every walk cell as an ordinary address, and the flank pass reads
+	## `excavation.route` alone. On the raw adapted plan the two sets coincide
+	## and this test is a tautology; on an extended one it is the whole point.
+	##
+	## Sites are re-derived from WarrenBuildingParcel's own contract, never from
+	## the partitioner's admission rules: an authored footprint whose threshold
+	## abuts a real address, unexcavated solid through the shortest envelope
+	## WarrenParcelConstruction would build as two storeys from that base, the
+	## bearing majority, and no column another house already stands on.
+	##
+	## `MEASURED_UNJOINABLE_FILL_SITES` is the residue: an infill house is
+	## optional, so unlike a street wall it is never placed when its roof has no
+	## join to its neighbours' or when it would meet one only across a corner.
+	## That is the only reason a site here may go unbuilt, and the bound exists
+	## so the number cannot grow unnoticed.
+	var sites := 0
+	var unclaimed_sites := 0
+	var measured := 0
+	for world_seed: int in FRONTIER_CORPUS:
+		var town := _frontier_town(world_seed)
+		if town.is_empty():
+			continue
+		measured += 1
+		var massif := town["massif"] as WarrenMassif
+		var excavation := town["excavation"] as WarrenExcavation
+		var claimed := _owned_columns(
+			town["parcels"] as Array[WarrenBuildingParcel])
+		for address: Vector3i in town["addresses"] as Array[Vector3i]:
+			for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN,
+					Vector2i.LEFT, Vector2i.UP]:
+				for shape: Vector2i in [Vector2i(2, 3), Vector2i(2, 2),
+						Vector2i(1, 2), Vector2i(1, 1)]:
+					var footprint := _bridge_footprint(address, direction,
+						shape.x, shape.y)
+					var minimum := _two_storey_bands(massif, footprint,
+						address.y)
+					if _envelope_stands(massif, excavation, {}, footprint,
+							address.y, minimum):
+						sites += 1
+					if _envelope_stands(massif, excavation, claimed, footprint,
+							address.y, minimum):
+						unclaimed_sites += 1
+	assert_gt(measured, 1, "too few frontier towns to prove anything")
+	assert_gt(sites, 100,
+		"the corpus offers too few house sites to prove anything")
+	assert_between(unclaimed_sites, 0, MEASURED_UNJOINABLE_FILL_SITES,
+		("%d house sites stand unbuilt on unclaimed solid the town's own walk " \
+		+ "cells address, so the towns are ribbons of towers rather than a " \
+		+ "terraced mass") % unclaimed_sites)
+
+
+func _frontier_town(world_seed: int) -> Dictionary:
+	## The production parcel stage's own inputs: a volume that has been through
+	## the arcade and gallery solvers, and the widened void they carve.
+	if _frontier_towns.has(world_seed):
+		return _frontier_towns[world_seed] as Dictionary
+	var out: Dictionary = {}
+	var previous_mode := WarrenTownSolver.GENERATION_MODE
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+	WarrenTownSolver.GENERATION_MODE = previous_mode
+	if not frontier.is_empty():
+		var volume := frontier[0]
+		var massif := volume.mass_context.get(&"massif") as WarrenMassif
+		var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
+		var excavation := WarrenExcavationVolumeAdapter.excavation_for_volume(
+			bore, volume)
+		if massif != null and excavation != null:
+			var addresses: Dictionary = {}
+			for cell: Vector3i in excavation.route:
+				addresses[cell] = true
+			for cell: Vector3i in volume.walk_cells:
+				addresses[cell] = true
+			var address_list: Array[Vector3i] = []
+			address_list.assign(addresses.keys())
+			out = {
+				"massif": massif,
+				"excavation": excavation,
+				"volume": volume,
+				"addresses": address_list,
+				"parcels": WarrenSolidPartitioner.partition(massif, excavation,
+					volume),
+			}
+	_frontier_towns[world_seed] = out
+	return out
+
+
+func _two_storey_bands(massif: WarrenMassif, footprint: Array[Vector2i],
+		base: int) -> int:
+	## The shortest envelope that both seals and builds as two storeys, taken
+	## from WarrenParcelConstruction.proposal() rather than from the
+	## partitioner: a fully borne house descends to its bearing datum as one
+	## continuous stack, so an elevated address inherits those storeys and needs
+	## only WarrenBuildingParcel.seal()'s own minimum, while one addressed at
+	## natural ground has nothing beneath it and must carry both storeys itself.
+	var seal_minimum := WarrenBuildingParcel.STOREY_BANDS \
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+	var ground := -(1 << 30)
+	for column: Vector2i in footprint:
+		if not massif.has_column(column):
+			return seal_minimum
+		ground = maxi(ground, massif.base_at(column))
+	var support := ground
+	if posmod(base - ground, WarrenBuildingParcel.STOREY_BANDS) != 0:
+		support -= 1
+	var needed := WarrenBuildingParcel.STOREY_BANDS * 2 \
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
+		- (base - mini(support, base))
+	return maxi(seal_minimum, needed + posmod(needed, 2))
 
 
 func _bridge_base_band(massif: WarrenMassif, excavation: WarrenExcavation,

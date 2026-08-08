@@ -33,6 +33,26 @@ extends RefCounted
 ## undermined by a lower pass of the route, are deliberately NOT faces. They
 ## are the terraced massif's low rim and undercroft ledges -- kerbs, not
 ## frontages -- and spec §3 trims that leftover rather than housing it.
+##
+## Owning every street wall houses the bore's front rank and nothing else, and
+## a house that stands alone is a tower however short its envelope: the storeys
+## a viewer counts are the ones WarrenParcelConstruction descends to natural
+## ground, so an eight-band climb makes a one-storey envelope read as six.
+## A second pass therefore fills every remaining site the town's OWN public
+## realm can address -- `_fill_free_solid`. It is additive by construction:
+## it runs only after every street wall is served, it never moves or shortens a
+## house already placed, and one-column-one-house still holds, so
+## `street_wall_audit`'s `unowned` bucket cannot grow. Unlike a street wall an
+## infill house is optional, so it is skipped rather than forced whenever its
+## roof has no join to its neighbours' or it would meet one across a corner.
+##
+## Its addresses are the bore route plus the volume plan's walk cells, which is
+## the set WarrenParcelizer._candidates has always packed against: the ground
+## arcade and the elevated galleries carve public surfaces the bore route never
+## had, and mass beside them is as addressable as mass beside the street. On a
+## plan straight from WarrenExcavationVolumeAdapter the walk cells are a subset
+## of the route, so passing one changes nothing; only a plan an arcade or
+## gallery has extended adds sites.
 
 ## Width (along the street) x depth (into the block), matching
 ## WarrenParcelizer.SHAPES and WarrenParcelConstruction.profile_for. Anything
@@ -75,12 +95,19 @@ static var last_diagnostic: Dictionary = {}
 static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 		volume: WarrenVolumePlan = null,
 		variant: int = -1) -> Array[WarrenBuildingParcel]:
-	## `volume` is optional: the solid predicate this uses (massif column span
+	## `volume` is optional. The solid predicate this uses (massif column span
 	## minus excavation.carved) is exactly what WarrenExcavationVolumeAdapter
-	## puts in WarrenVolumePlan.mass_cells, so the partition is identical with
-	## or without it. Passing the plan additionally seals every parcel, which
-	## is what Task 6 needs and what proves the geometry satisfies the whole
+	## puts in WarrenVolumePlan.mass_cells, so a plan can never change which
+	## mass is available; passing one additionally seals every parcel, which is
+	## what Task 6 needs and what proves the geometry satisfies the whole
 	## downstream contract rather than merely this class's own rules.
+	##
+	## The one thing a plan does change is the ADDRESS set the infill pass may
+	## build from -- see `_fill_addresses`. A plan straight from the adapter
+	## carries only walk cells the route already contains, so it adds nothing;
+	## an arcade- or gallery-extended plan carries public surfaces the bore
+	## never had, and refusing to build beside them would leave the town short
+	## of exactly the mass those stages exist to front.
 	last_failure = ""
 	last_diagnostic = {}
 	var out: Array[WarrenBuildingParcel] = []
@@ -105,7 +132,8 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 	var first := 0 if variant < 0 else posmod(variant, PARTITION_VARIANTS)
 	var count := PARTITION_VARIANTS if variant < 0 else 1
 	for offset in count:
-		var attempt := _partition_variant(massif, excavation, first + offset)
+		var attempt := _partition_variant(massif, excavation, first + offset,
+			volume)
 		var unjoinable := int(last_diagnostic["unjoinable_roof_count"])
 		if not attempt.is_empty() and unjoinable < best_unjoinable:
 			out = attempt
@@ -127,7 +155,8 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 
 static func _partition_variant(massif: WarrenMassif,
 		excavation: WarrenExcavation,
-		variant: int) -> Array[WarrenBuildingParcel]:
+		variant: int,
+		volume: WarrenVolumePlan = null) -> Array[WarrenBuildingParcel]:
 	var out: Array[WarrenBuildingParcel] = []
 	var faces := street_wall_faces(massif, excavation, variant)
 	var face_bands := _face_bands_by_column(faces)
@@ -173,8 +202,100 @@ static func _partition_variant(massif: WarrenMassif,
 		for column: Vector2i in parcel.footprint:
 			claimed[column] = parcel.stable_id
 		out.append(parcel)
-	last_diagnostic = _diagnostic(out, faces, inherited, stranded, unjoinable)
+	var infilled := _fill_free_solid(out, massif, excavation, occupied,
+		claimed, face_bands, _fill_addresses(excavation, volume, variant))
+	last_diagnostic = _diagnostic(out, faces, inherited, stranded, unjoinable,
+		infilled)
 	return out
+
+
+static func _fill_addresses(excavation: WarrenExcavation,
+		volume: WarrenVolumePlan, variant: int) -> Array[Vector3i]:
+	## Every public cell a house may be addressed from, ordered by ascending
+	## band then by the same variant key the ownership pass sorts faces with, so
+	## the whole partition stays a pure function of its integer inputs. The
+	## variant permutes this pass too, though `partition` still selects between
+	## variants on unjoinable street-wall roofs alone -- an infill house never
+	## contributes one, because it is refused rather than carried.
+	var seen: Dictionary = {}
+	var out: Array[Vector3i] = []
+	for cell: Vector3i in excavation.route:
+		if not seen.has(cell):
+			seen[cell] = true
+			out.append(cell)
+	if volume != null:
+		for cell: Vector3i in volume.walk_cells:
+			if not seen.has(cell):
+				seen[cell] = true
+				out.append(cell)
+	out.sort_custom(func(left: Vector3i, right: Vector3i) -> bool:
+		if left.y != right.y:
+			return left.y < right.y
+		var left_key := _variant_key(Vector2i(left.x, left.z), variant)
+		var right_key := _variant_key(Vector2i(right.x, right.z), variant)
+		if left_key.x != right_key.x:
+			return left_key.x < right_key.x
+		return left_key.y < right_key.y)
+	return out
+
+
+static func _fill_free_solid(out: Array[WarrenBuildingParcel],
+		massif: WarrenMassif, excavation: WarrenExcavation,
+		occupied: Dictionary, claimed: Dictionary, face_bands: Dictionary,
+		addresses: Array[Vector3i]) -> int:
+	## Houses the solid the ownership pass left standing, so a tall stack is
+	## embedded in shorter neighbours instead of rising out of bare ground.
+	##
+	## Safe for every guarantee the ownership pass established, which is the
+	## only reason it may run at all: it starts after the last street wall has
+	## been served, so no face it could have taken is still waiting; it adds
+	## parcels only on columns `claimed` says are free, so one-column-one-house
+	## and the no-overlap rule hold; `_top_band` applies the same terrace,
+	## parity, storey-minimum and no-straddle rules; and it never moves or
+	## shortens a standing house, so nothing owned can become unowned.
+	var placed := 0
+	for address: Vector3i in addresses:
+		for direction: Vector2i in DIRECTIONS:
+			var parcel := _infill_house(address, direction, massif, excavation,
+				claimed, face_bands, out)
+			if parcel == null:
+				continue
+			for cell: Vector3i in occupied_cells(parcel):
+				occupied[cell] = parcel.stable_id
+			for column: Vector2i in parcel.footprint:
+				claimed[column] = parcel.stable_id
+			out.append(parcel)
+			placed += 1
+	return placed
+
+
+static func _infill_house(address: Vector3i, direction: Vector2i,
+		massif: WarrenMassif, excavation: WarrenExcavation,
+		claimed: Dictionary, face_bands: Dictionary,
+		placed: Array[WarrenBuildingParcel]) -> WarrenBuildingParcel:
+	## The largest house that fits this address facing this way and joins every
+	## roof it touches, or null. Concessions are ranked as they are for a street
+	## wall -- a lower roof before a smaller footprint -- but there is no
+	## fallback beneath them: nothing depends on this house existing, so an
+	## adjacency the compiled vocabulary cannot express is refused outright
+	## rather than recorded and carried.
+	var stable_id := StringName("parcel.solid.%04d" % placed.size())
+	var threshold := Vector2i(address.x + direction.x, address.z + direction.y)
+	if claimed.has(threshold):
+		return null
+	for shape: Vector2i in SHAPES:
+		var footprint := _footprint(address, direction, shape.x, shape.y)
+		var top := _top_band(footprint, address.y, massif, excavation, claimed,
+			face_bands)
+		while top > address.y:
+			var parcel := WarrenBuildingParcel.new(stable_id, footprint,
+				address.y, top, address, threshold, -direction)
+			if _roofs_can_meet(parcel, placed) \
+					and not _corners_a_neighbour(parcel, placed):
+				return parcel
+			top = _top_band(footprint, address.y, massif, excavation, claimed,
+				face_bands, top - 1)
+	return null
 
 
 static func street_wall_faces(massif: WarrenMassif,
@@ -876,7 +997,7 @@ static func _seal_all(parcels: Array[WarrenBuildingParcel],
 
 static func _diagnostic(parcels: Array[WarrenBuildingParcel],
 		faces: Array[Dictionary], inherited: int, stranded: int,
-		unjoinable: int) -> Dictionary:
+		unjoinable: int, infilled: int) -> Dictionary:
 	var families: Dictionary = {}
 	var footprint_cells := 0
 	for parcel: WarrenBuildingParcel in parcels:
@@ -886,6 +1007,7 @@ static func _diagnostic(parcels: Array[WarrenBuildingParcel],
 	return {
 		"street_wall_face_count": faces.size(),
 		"parcel_count": parcels.size(),
+		"infill_house_count": infilled,
 		"faces_walled_by_a_neighbour": inherited,
 		"stranded_face_count": stranded,
 		"unjoinable_roof_count": unjoinable,

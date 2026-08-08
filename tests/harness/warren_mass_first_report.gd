@@ -23,6 +23,16 @@ extends SceneTree
 ##                     envelopes. Read it with `cover`, which says how much of
 ##                     that solid the partition actually built -- `cover` alone
 ##                     cannot tell lost cover from unbuildable trim.
+##   --stage fill      how much of the massif becomes houses, and how tall they
+##                     BUILD rather than how tall their envelopes are -- the
+##                     storey count WarrenParcelConstruction gives a house after
+##                     descending it to natural ground, which is what a viewer
+##                     counts. Read it with the exposed-face table beside it:
+##                     a stack is only a tower where no neighbour stands.
+##   --stage map       one seed's massif drawn as a plan, band heights in hex,
+##                     marking every column as street, house, gallery walk cell
+##                     or bare solid. The fastest way to see WHERE a town's mass
+##                     went unhoused, which no ratio can tell you.
 ##   --stage contact   both pipelines' building-contact metrics side by side,
 ##                     parcel-weighted against cell-weighted. Use it when
 ##                     touching the construction gate's contact threshold.
@@ -64,6 +74,15 @@ func _init() -> void:
 		return
 	if _stage == "contact":
 		_report_contact()
+		quit()
+		return
+	if _stage == "fill":
+		_report_fill()
+		quit()
+		return
+	if _stage == "map":
+		for world_seed: int in _seeds:
+			_report_map(world_seed)
 		quit()
 		return
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
@@ -192,6 +211,122 @@ func _report_cover() -> void:
 			% [world_seed, excavation.route.size(), roofed, bare]
 			+ " | UNBUILT mass cells over the route %d" % lost_cells)
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _report_fill() -> void:
+	## Is the massif becoming a town, and does that town read as terraced?
+	##
+	## Two numbers answer the first: how many of the massif's solid columns
+	## carry a house at all, and how many houses the infill pass added on top of
+	## the mandatory street-wall flanks. Two answer the second: the distribution
+	## of BUILT storeys -- `WarrenParcelConstruction.proposal().storeys`, which
+	## counts the stack down to natural ground rather than the envelope the
+	## partition cut -- and, for every house, how many of those storeys stand
+	## clear of every neighbour on their tallest exposed side. A house whose
+	## exposed height is one or two storeys is part of a terraced mass however
+	## tall the whole stack is; one exposed for six is the tower the reviewer
+	## rejected.
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	for world_seed: int in _seeds:
+		var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+		if frontier.is_empty():
+			print("seed %2d: no frontier" % world_seed)
+			continue
+		var volume := frontier[0]
+		var massif := volume.mass_context.get(&"massif") as WarrenMassif
+		var plan := WarrenTownSolver.partition_parcels(volume)
+		if massif == null or plan == null:
+			print("seed %2d: no partition -- %s" % [world_seed,
+				WarrenTownSolver.last_partition_failure])
+			continue
+		var tops: Dictionary = {}
+		for parcel: WarrenBuildingParcel in plan.parcels:
+			for column: Vector2i in parcel.footprint:
+				tops[column] = parcel.top_band
+		var storeys: Dictionary = {}
+		var exposed: Dictionary = {}
+		for parcel: WarrenBuildingParcel in plan.parcels:
+			var proposal := WarrenParcelConstruction.proposal(parcel)
+			var built := int(proposal.get("storeys", 0))
+			storeys[built] = int(storeys.get(built, 0)) + 1
+			var bare := _exposed_storeys(parcel, tops, built)
+			exposed[bare] = int(exposed.get(bare, 0)) + 1
+		print("seed %2d: houses %d over %d of %d massif columns" % [world_seed,
+			plan.parcels.size(), tops.size(), massif.columns.size()]
+			+ " | infill %d" % int(WarrenSolidPartitioner.last_diagnostic.get(
+				"infill_house_count", -1))
+			+ " | BUILT storeys %s | EXPOSED storeys %s" % [
+				_ascending(storeys), _ascending(exposed)])
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _report_map(world_seed: int) -> void:
+	## The town in plan. Every ratio in this file collapses one of these maps to
+	## a number; read the map first when a ratio is surprising, because it shows
+	## the one thing the ratios cannot -- whether unhoused mass is rim trim or
+	## the tallest part of the massif standing untouched behind the street.
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+	if frontier.is_empty():
+		print("seed %2d: no frontier" % world_seed)
+		WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+		return
+	var volume := frontier[0]
+	var massif := volume.mass_context.get(&"massif") as WarrenMassif
+	var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
+	var plan := WarrenTownSolver.partition_parcels(volume)
+	var marks: Dictionary = {}
+	for column_value: Variant in massif.columns.keys():
+		var column := column_value as Vector2i
+		marks[column] = " %X " % massif.top_at(column)
+	if plan != null:
+		for parcel: WarrenBuildingParcel in plan.parcels:
+			for column: Vector2i in parcel.footprint:
+				marks[column] = "[%X]" % parcel.top_band
+	for walk: Vector3i in volume.walk_cells:
+		marks[Vector2i(walk.x, walk.z)] = "(%X)" % walk.y
+	for walk: Vector3i in bore.route:
+		marks[Vector2i(walk.x, walk.z)] = "<%X>" % walk.y
+	var minimum := Vector2i(1 << 30, 1 << 30)
+	var maximum := Vector2i(-(1 << 30), -(1 << 30))
+	for column_value: Variant in massif.columns.keys():
+		minimum = minimum.min(column_value as Vector2i)
+		maximum = maximum.max(column_value as Vector2i)
+	print("seed %d: <b> street at band b | [t] house topping at band t" % world_seed
+		+ " | (b) arcade/gallery walk cell | t bare massif top, all hex")
+	for z in range(minimum.y, maximum.y + 1):
+		var line := "%4d " % z
+		for x in range(minimum.x, maximum.x + 1):
+			line += String(marks.get(Vector2i(x, z), "  . "))
+		print(line)
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _exposed_storeys(parcel: WarrenBuildingParcel, tops: Dictionary,
+		built: int) -> int:
+	## The storeys of this house's tallest facade that no neighbour stands
+	## against. A neighbouring roof hides everything below it, so the worst
+	## exposed side is the perimeter column with the lowest standing top --
+	## including bare ground, where the whole stack is exposed.
+	var lowest := parcel.top_band
+	for column: Vector2i in parcel.footprint:
+		for direction: Vector2i in BRIDGE_DIRECTIONS:
+			var neighbour := column + direction
+			if parcel.footprint.has(neighbour):
+				continue
+			lowest = mini(lowest, int(tops.get(neighbour, 0)))
+	return mini(built, (parcel.top_band - maxi(0, lowest))
+		/ WarrenBuildingParcel.STOREY_BANDS)
+
+
+func _ascending(counts: Dictionary) -> String:
+	var keys: Array[int] = []
+	keys.assign(counts.keys())
+	keys.sort()
+	var parts := PackedStringArray()
+	for key: int in keys:
+		parts.append("%d:%d" % [key, int(counts[key])])
+	return "{%s}" % ", ".join(parts)
 
 
 const ARCADE_SEED_START := 16
