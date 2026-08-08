@@ -1356,16 +1356,22 @@ static func read_audit(fabric: SettlementFabricPlan) -> Dictionary:
 	var solids := fabric.transformed_cells(&"solid")
 	var retained := fabric.retained_terrace_cells
 	## DRAWN support only, and the model must track what the assembler actually
-	## emits or the numbers are about an imaginary town. Since the round-5
-	## grounding fix SettlementFabricAssembler.hill_substrate_walls renders the
-	## whole retained solid, so the drawn set is solids plus retained; before it,
-	## substrate was emitted only on a column a building stood over, and that
-	## narrower set is what the "before" column of task-17-report.md measures.
+	## emits or the numbers are about an imaginary town.
+	## WarrenFabricCompiler declares EVERY unbuilt massif cell as retained, but
+	## SettlementFabricAssembler.hill_substrate_walls emits a module only on a
+	## column a building stands over, so counting the declaration would score a
+	## house as grounded on mass the viewer cannot see -- which is precisely the
+	## artefact this stage exists to catch (task-17-report.md §2). Widen this to
+	## every retained cell only if that emission rule is ever widened too.
+	var ceilings := SettlementFabricAssembler.building_ceiling(solids)
 	var support: Dictionary = {}
 	for cell_value: Variant in solids.keys():
 		support[cell_value as Vector3i] = true
 	for cell_value: Variant in retained.keys():
-		support[cell_value as Vector3i] = true
+		var cell := cell_value as Vector3i
+		var column := Vector2i(cell.x, cell.z)
+		if ceilings.has(column) and cell.y < int(ceilings[column]):
+			support[cell] = true
 
 	var lowest_band: Dictionary = {}
 	var lowest_owner: Dictionary = {}
