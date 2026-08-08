@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_wunug"]
+
+[resource]
+script = ExtResource("1_wunug")
+id = &"sfv.fabric.gable.rock.corner_attach.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_gable_rock_corner_attach_001.tres"
+tags = Array[StringName]([&"building", &"fabric_gable", &"village"])
+measured_aabb = AABB(-1.5014964, -6.588746e-08, -0.23433115, 3.0291882, 2.9999993, 1.3673544)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.gable.rock.corner_attach.001"

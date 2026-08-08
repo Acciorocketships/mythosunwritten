@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_gubo4"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_4x6wu"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_roof_seam_l_preset_001_piece_00.res" id="3_8478c"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_jy7cl"]
+
+[sub_resource type="Resource" id="Resource_1m8o1"]
+script = ExtResource("2_4x6wu")
+mesh = ExtResource("3_8478c")
+
+[resource]
+script = ExtResource("4_jy7cl")
+pieces = Array[ExtResource("2_4x6wu")]([SubResource("Resource_1m8o1")])

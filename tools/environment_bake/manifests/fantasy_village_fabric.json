@@ -8,183 +8,408 @@
  ],
  "assets": [
   {
-   "id": "sfv.fabric.wall.rock.plain.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_001.fbx",
+   "id": "sfv.fabric.awning.blue.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Blue_001.fbx",
    "merge_pieces": true,
-   "collision_profile": "building_trimesh",
    "tags": [
-    "building",
-    "fabric_wall",
+    "fabric_dressing",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 2000,
-   "max_collision_triangles": 2000,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 5000,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.brace.wood.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Wall_Support_Wooden_Stair_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "fabric_brace",
+    "support",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1000,
+   "max_collision_triangles": 0,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.rock.door.005",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_005.fbx",
+   "id": "sfv.fabric.bridge.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Bridge/SFV_Bridge_001.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
+    "bridge",
     "building",
-    "fabric_wall",
+    "fabric_bridge",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 3000,
-   "max_collision_triangles": 3000,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.rock.window.010",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_010.fbx",
+   "id": "sfv.fabric.chimney.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Chemney/SFV_Chemney_001.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_wall",
+    "chimney",
+    "fabric_roof_feature",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 3000,
-   "max_collision_triangles": 3000,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 2500,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.wood.plain.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_001.fbx",
+   "id": "sfv.fabric.chimney.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Chemney/SFV_Chemney_002.001.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_wall",
+    "chimney",
+    "fabric_roof_feature",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 2000,
-   "max_collision_triangles": 2000,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 2500,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.wood.door.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001.fbx",
+   "id": "sfv.fabric.chimney.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Chemney/SFV_Chemney_003.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_wall",
+    "chimney",
+    "fabric_roof_feature",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 3000,
-   "max_collision_triangles": 3000,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 2500,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.wood.window.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_001.fbx",
+   "id": "sfv.fabric.chimney.004",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Chemney/SFV_Chemney_004.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_wall",
+    "chimney",
+    "fabric_roof_feature",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 3000,
-   "max_collision_triangles": 3000,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 2500,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.wood.window.020",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_020.fbx",
+   "id": "sfv.fabric.chimney.005",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Chemney/SFV_Chemney_005.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_wall",
+    "chimney",
+    "fabric_roof_feature",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 3000,
-   "max_collision_triangles": 3000,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 2500,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.wood.window.010",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_010.fbx",
+   "id": "sfv.fabric.clothes.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Hanged Clothes/SFV_Clothes_Hanged_001.fbx",
    "merge_pieces": true,
-   "collision_profile": "building_trimesh",
    "tags": [
-    "building",
-    "fabric_wall",
+    "fabric_dressing",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.floor.l.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Floor/SFV_Floor_L_001.fbx",
+   "pivot": [
+    -1.5,
+    0.0,
+    0.0
+   ],
+   "merge_pieces": true,
+   "collision_profile": "flat_box",
+   "collision_footprint": 0.98,
+   "tags": [
+    "deck",
+    "fabric_floor",
+    "slab",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 3000,
-   "max_collision_triangles": 3000,
+   "max_visual_triangles": 1000,
+   "max_collision_triangles": 0,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.wood.window.040",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_040.fbx",
+   "id": "sfv.fabric.gable.rock.corner.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Triangle/SFV_Roof_Wall_Rock_Corner_001.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_wall",
+    "fabric_gable",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 3000,
-   "max_collision_triangles": 3000,
-   "max_surfaces": 2,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.wood.window.060",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_060.fbx",
+   "id": "sfv.fabric.gable.rock.corner_attach.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Triangle/SFV_Roof_Wall_Rock_Corner_Attachable_001.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_wall",
+    "fabric_gable",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 3000,
-   "max_collision_triangles": 3000,
-   "max_surfaces": 2,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 9000,
+   "max_collision_triangles": 9000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.rock.l.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Triangle/SFV_Roof_Wall_Rock_L_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.rock.m.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Triangle/SFV_Roof_Wall_Rock_M_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.rock.s.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Triangle/SFV_Roof_Wall_Rock_S_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.rock.s.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Triangle/SFV_Roof_Wall_Rock_S_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.rock.s_attach.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Triangle/SFV_Roof_Wall_Rock_S_Attachable_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 9000,
+   "max_collision_triangles": 9000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.rock.xl.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Triangle/SFV_Roof_Wall_Rock_XL_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.wood.base.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Triangle_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.wood.corner.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_Corner_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.wood.corner_attach.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_Corner_Attachable_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 9000,
+   "max_collision_triangles": 9000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.wood.l.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Triangle_L_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
    "max_collision_pieces": 1
   },
   {
@@ -206,39 +431,92 @@
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.roof.s.blue.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_S_Preset_Blue_001.fbx",
+   "id": "sfv.fabric.gable.wood.m_attach.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_M_Attachable_001.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_roof",
+    "fabric_gable",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 4194304,
-   "max_visual_triangles": 5000,
-   "max_collision_triangles": 5000,
+   "max_visual_triangles": 9000,
+   "max_collision_triangles": 9000,
    "max_surfaces": 3,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.roof.s.orange.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_S_Preset_Orange_001.fbx",
+   "id": "sfv.fabric.gable.wood.s.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_S_001.fbx",
    "merge_pieces": true,
-   "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_roof",
+    "fabric_gable",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 4194304,
-   "max_visual_triangles": 5000,
-   "max_collision_triangles": 5000,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.wood.s.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_S_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.wood.s_attach.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_S_Attachable_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 9000,
+   "max_collision_triangles": 9000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.gable.wood.xl.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Triangle/SFV_Roof_Wall_XL_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_gable",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
    "max_surfaces": 3,
    "max_collision_pieces": 1
   },
@@ -265,6 +543,116 @@
    "max_visual_triangles": 1000,
    "max_collision_triangles": 0,
    "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.ivy.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Ivies/SFV_Ivy_001.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_dressing",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1000,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.planter.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Planter/SFV_Planter_003.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_dressing",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 2000,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.bisect.left.s.blue.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_Bisect_L_S_Blue_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_roof_junction",
+    "roof_valley",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 5000,
+   "max_collision_triangles": 5000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.roof.bisect.left.s.orange.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_Bisect_L_S_Orange_001.fbx",
+   "merge_pieces": true,
+   "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_roof_junction",
+    "roof_valley",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 5000,
+   "max_collision_triangles": 5000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.roof.bisect.right.s.blue.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_Bisect_R_S_Blue_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_roof_junction",
+    "roof_valley",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 5000,
+   "max_collision_triangles": 5000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.roof.bisect.right.s.orange.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_Bisect_R_S_Orange_001.fbx",
+   "merge_pieces": true,
+   "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_roof_junction",
+    "roof_valley",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 5000,
+   "max_collision_triangles": 5000,
+   "max_surfaces": 3,
    "max_collision_pieces": 1
   },
   {
@@ -305,14 +693,13 @@
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.roof.bisect.left.s.blue.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_Bisect_L_S_Blue_001.fbx",
+   "id": "sfv.fabric.roof.s.blue.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_S_Preset_Blue_001.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_roof_junction",
-    "roof_valley",
+    "fabric_roof",
     "village"
    ],
    "tint_group": "identity",
@@ -324,34 +711,14 @@
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.roof.bisect.right.s.blue.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Blue/SBlue/SFV_Roof_Bisect_R_S_Blue_001.fbx",
-   "merge_pieces": true,
-   "collision_profile": "building_trimesh",
-   "tags": [
-    "building",
-    "fabric_roof_junction",
-    "roof_valley",
-    "village"
-   ],
-   "tint_group": "identity",
-   "supports_instance_color": true,
-   "max_mesh_bytes": 4194304,
-   "max_visual_triangles": 5000,
-   "max_collision_triangles": 5000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
-  },
-  {
-   "id": "sfv.fabric.roof.bisect.left.s.orange.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_Bisect_L_S_Orange_001.fbx",
+   "id": "sfv.fabric.roof.s.orange.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_S_Preset_Orange_001.fbx",
    "merge_pieces": true,
    "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
    "collision_profile": "building_trimesh",
    "tags": [
     "building",
-    "fabric_roof_junction",
-    "roof_valley",
+    "fabric_roof",
     "village"
    ],
    "tint_group": "identity",
@@ -363,24 +730,174 @@
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.roof.bisect.right.s.orange.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Orange/SOrange/SFV_Roof_Bisect_R_S_Orange_001.fbx",
+   "id": "sfv.fabric.roof.seam.l.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_L/SFV_Roof_Attachable_L_001.fbx",
    "merge_pieces": true,
-   "fallback_albedo_texture": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png",
-   "collision_profile": "building_trimesh",
    "tags": [
-    "building",
     "fabric_roof_junction",
-    "roof_valley",
+    "roof_seam",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 4194304,
-   "max_visual_triangles": 5000,
-   "max_collision_triangles": 5000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1200,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.l.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_L/SFV_Roof_Attachable_L_002.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1200,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.l_preset.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_L/SFV_Roof_Attachable_L_Preset_001.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.l_preset.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_L/SFV_Roof_Attachable_L_Preset_002.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.l_preset.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_L/SFV_Roof_Attachable_L_Preset_003.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.m.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_M/SFV_Roof_Attachable_M_001.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1200,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.m.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_M/SFV_Roof_Attachable_M_002.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1000,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.m_preset.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_M/SFV_Roof_Attachable_Preset_M_001.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.m_preset.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_M/SFV_Roof_Attachable_Preset_M_002.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "sfv.fabric.roof.seam.m_preset.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_M/SFV_Roof_Attachable_Preset_M_003.fbx",
+   "merge_pieces": true,
+   "tags": [
+    "fabric_roof_junction",
+    "roof_seam",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 2500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 0
   },
   {
    "id": "sfv.fabric.roof.window.001",
@@ -465,12 +982,11 @@
    }
   },
   {
-   "id": "sfv.fabric.roof.seam.m.002",
-   "source": "res://assets/FantasyVillageFBX/FBX/Roof/Roof Attachable/RA_M/SFV_Roof_Attachable_M_002.fbx",
+   "id": "sfv.fabric.sign.tavern.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Sign/SFV_Sign_Tavern_001.fbx",
    "merge_pieces": true,
    "tags": [
-    "fabric_roof_junction",
-    "roof_seam",
+    "fabric_dressing",
     "village"
    ],
    "tint_group": "identity",
@@ -480,31 +996,6 @@
    "max_collision_triangles": 0,
    "max_surfaces": 2,
    "max_collision_pieces": 0
-  },
-  {
-   "id": "sfv.fabric.floor.l.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Floor/SFV_Floor_L_001.fbx",
-   "pivot": [
-    -1.5,
-    0.0,
-    0.0
-   ],
-   "merge_pieces": true,
-   "collision_profile": "flat_box",
-   "collision_footprint": 0.98,
-   "tags": [
-    "deck",
-    "fabric_floor",
-    "slab",
-    "village"
-   ],
-   "tint_group": "identity",
-   "supports_instance_color": true,
-   "max_mesh_bytes": 2097152,
-   "max_visual_triangles": 1000,
-   "max_collision_triangles": 0,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
   },
   {
    "id": "sfv.fabric.stair.preset.004",
@@ -526,32 +1017,13 @@
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.brace.wood.002",
-   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Wall_Support_Wooden_Stair_002.fbx",
-   "merge_pieces": true,
-   "collision_profile": "convex",
-   "tags": [
-    "fabric_brace",
-    "support",
-    "village"
-   ],
-   "tint_group": "identity",
-   "supports_instance_color": true,
-   "max_mesh_bytes": 1048576,
-   "max_visual_triangles": 1000,
-   "max_collision_triangles": 0,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
-  },
-  {
-   "id": "sfv.fabric.bridge.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Bridge/SFV_Bridge_001.fbx",
+   "id": "sfv.fabric.wall.rock.corner.m.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Corner/SFV_Wall_Rock_Corner_M_001.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
-    "bridge",
     "building",
-    "fabric_bridge",
+    "fabric_wall",
     "village"
    ],
    "tint_group": "identity",
@@ -559,88 +1031,710 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.corner.s.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Corner/SFV_Wall_Rock_Corner_S_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.door.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.door.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.door.004",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_004.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.door.005",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_005.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 3000,
+   "max_collision_triangles": 3000,
    "max_surfaces": 2,
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.awning.blue.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Blue_001.fbx",
+   "id": "sfv.fabric.wall.rock.door.006",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_006.fbx",
    "merge_pieces": true,
+   "collision_profile": "building_trimesh",
    "tags": [
-    "fabric_dressing",
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.door.008",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_008.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.door.009",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_009.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.plain.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 2000,
+   "max_collision_triangles": 2000,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.plain.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.plain.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_003.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.plain.004",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_004.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.010",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_010.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 3000,
+   "max_collision_triangles": 3000,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.m.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.m.004",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_004.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.m.007",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_007.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.m.012",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_012.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.m.016",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_016.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.m.019",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_M_019.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.s.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_S_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.s.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_S_003.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.s.006",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_S_006.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.s.009",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_S_009.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.rock.window.s.012",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Windows/SFV_Wall_Rock_Window_S_012.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.corner.m.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Corner/SFV_Wall_Wooden_Corner_M_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.corner.s.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Corner/SFV_Wall_Wooden_Corner_S_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 5000,
-   "max_collision_triangles": 0,
-   "max_surfaces": 2,
-   "max_collision_pieces": 0
+   "max_collision_triangles": 5000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.sign.tavern.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Sign/SFV_Sign_Tavern_001.fbx",
+   "id": "sfv.fabric.wall.wood.door.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001.fbx",
    "merge_pieces": true,
+   "collision_profile": "building_trimesh",
    "tags": [
-    "fabric_dressing",
+    "building",
+    "fabric_wall",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 1048576,
-   "max_visual_triangles": 1000,
-   "max_collision_triangles": 0,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 3000,
+   "max_collision_triangles": 3000,
    "max_surfaces": 2,
-   "max_collision_pieces": 0
+   "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.ivy.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Ivies/SFV_Ivy_001.fbx",
+   "id": "sfv.fabric.wall.wood.door.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_002.fbx",
    "merge_pieces": true,
+   "collision_profile": "building_trimesh",
    "tags": [
-    "fabric_dressing",
+    "building",
+    "fabric_wall",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 1048576,
-   "max_visual_triangles": 1000,
-   "max_collision_triangles": 0,
-   "max_surfaces": 2,
-   "max_collision_pieces": 0
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.planter.003",
-   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Planter/SFV_Planter_003.fbx",
+   "id": "sfv.fabric.wall.wood.door.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_003.fbx",
    "merge_pieces": true,
+   "collision_profile": "building_trimesh",
    "tags": [
-    "fabric_dressing",
+    "building",
+    "fabric_wall",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 1048576,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.door.004",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_004.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.door.open.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001_1.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.plain.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
    "max_visual_triangles": 2000,
-   "max_collision_triangles": 0,
+   "max_collision_triangles": 2000,
    "max_surfaces": 2,
-   "max_collision_pieces": 0
+   "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.clothes.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Hanged Clothes/SFV_Clothes_Hanged_001.fbx",
+   "id": "sfv.fabric.wall.wood.plain.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_003.fbx",
    "merge_pieces": true,
+   "collision_profile": "building_trimesh",
    "tags": [
-    "fabric_dressing",
+    "building",
+    "fabric_wall",
     "village"
    ],
    "tint_group": "identity",
    "supports_instance_color": true,
-   "max_mesh_bytes": 1048576,
-   "max_visual_triangles": 1500,
-   "max_collision_triangles": 0,
-   "max_surfaces": 2,
-   "max_collision_pieces": 0
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.plain.005",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_005.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.plain.007",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_007.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.plain.009",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_009.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.plain.011",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_011.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.plain.013",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_013.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.plain.015",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_015.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
   },
   {
    "id": "sfv.fabric.wall.wood.s.001",
@@ -715,8 +1809,8 @@
    "max_collision_pieces": 1
   },
   {
-   "id": "sfv.fabric.wall.wood.corner.s.001",
-   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Corner/SFV_Wall_Wooden_Corner_S_001.fbx",
+   "id": "sfv.fabric.wall.wood.s.005",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_005.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [
@@ -727,8 +1821,714 @@
    "tint_group": "identity",
    "supports_instance_color": true,
    "max_mesh_bytes": 4194304,
-   "max_visual_triangles": 5000,
-   "max_collision_triangles": 5000,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.s.006",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_006.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.s.007",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_S_007.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 3000,
+   "max_collision_triangles": 3000,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.004",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_004.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.008",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_008.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.010",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_010.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 3000,
+   "max_collision_triangles": 3000,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.013",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_013.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.017",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_017.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.020",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_020.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 3000,
+   "max_collision_triangles": 3000,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.024",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_024.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.028",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_028.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.033",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_033.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.037",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_037.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.040",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_040.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 3000,
+   "max_collision_triangles": 3000,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.044",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_044.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.048",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_048.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.052",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_052.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.056",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_056.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.058",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_058.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.060",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_060.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 3000,
+   "max_collision_triangles": 3000,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.064",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_064.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.066",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_066.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.069",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_069.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.071",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_071.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.074",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_074.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.076",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_076.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.078",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_078.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.081",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_081.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.083",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_083.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.roof.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "dormer",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.roof.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "dormer",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.roof.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_003.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "dormer",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.roof.004",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_004.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "dormer",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.s.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_S_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.s.004",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_S_004.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.s.006",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_S_006.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.s.008",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_S_008.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.s.010",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_S_010.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.window.s.012",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_S_012.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
    "max_surfaces": 3,
    "max_collision_pieces": 1
   }

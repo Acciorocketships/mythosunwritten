@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_87ch0"]
+
+[resource]
+script = ExtResource("1_87ch0")
+id = &"sfv.fabric.gable.rock.m.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_gable_rock_m_001.tres"
+tags = Array[StringName]([&"building", &"fabric_gable", &"village"])
+measured_aabb = AABB(-3, -3.9178534e-08, -0.23433048, 6, 4.0378995, 0.46866107)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.gable.rock.m.001"

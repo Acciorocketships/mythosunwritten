@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_twnql"]
+
+[resource]
+script = ExtResource("1_twnql")
+id = &"sfv.fabric.wall.rock.door.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_rock_door_001.tres"
+tags = Array[StringName]([&"building", &"fabric_wall", &"village"])
+measured_aabb = AABB(-1.5517144, -0.0009795979, -0.39853024, 3.1034288, 3.0016503, 0.729175)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.wall.rock.door.001"
