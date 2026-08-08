@@ -53,6 +53,12 @@ static func commit(parent: Node3D, plan: SettlementFabricPlan,
 		queue.drain(64)
 	var surface_commit := _commit_surfaces(parent, plan.surface_plan,
 		include_collision)
+	var ground_mesh := terrace_ground_mesh(plan)
+	if ground_mesh != null:
+		var ground := MeshInstance3D.new()
+		ground.name = "TerraceGround"
+		ground.mesh = ground_mesh
+		parent.add_child(ground)
 	return {
 		"instance_count": instances.instance_count + surface_instances.instance_count,
 		"fabric_instance_count": instances.instance_count,
@@ -165,23 +171,53 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	if plan == null:
 		return out
 	return retaining_walls(plan.retained_terrace_cells,
-		plan.transformed_cells(&"solid"))
+		plan.transformed_cells(&"solid"), cut_columns(plan))
 
 
-static func retaining_walls(retained: Dictionary,
-		solids: Dictionary) -> EnvironmentInstancePayload:
-	## Stone on every face of `retained` that neither the hill itself nor a
-	## building already closes: lateral faces as stacked wall modules, and the
-	## horizontal faces -- the terrace tread on top and the vault soffit under
-	## mass that stands over a street -- as the same module laid flat.
+static func cut_columns(plan: SettlementFabricPlan) -> Dictionary:
+	## Columns where the town actually CUTS the hill: any column carrying a
+	## public surface or a building. A hill face looking onto one of those is
+	## masonry -- a street wall, a tunnel mouth, the riser behind a house.
+	## Everything else is untouched hillside and is skinned as earth, because
+	## rendering the whole volume as coursed stone turns a hill town into a
+	## monument (task-13 amendment: the reviewer's "stone counts as building"
+	## meant stone obeys the setback rule, not that the hill becomes masonry).
+	var out: Dictionary = {}
+	if plan == null:
+		return out
+	for cell_value: Variant in plan.transformed_cells(&"solid").keys():
+		var cell := cell_value as Vector3i
+		out[Vector2i(cell.x, cell.z)] = true
+	if plan.surface_plan == null:
+		return out
+	for kind in [PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+			PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
+			PublicRealmSurfacePlan.SurfaceKind.STAIR,
+			PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
+		for cell: Vector3i in plan.surface_plan.cells_for_kind(kind):
+			out[Vector2i(cell.x, cell.z)] = true
+	return out
+
+
+static func retaining_walls(retained: Dictionary, solids: Dictionary,
+		cut: Dictionary = {}) -> EnvironmentInstancePayload:
+	## Stone on the faces of `retained` that the town actually CUT, as stacked
+	## wall modules, plus a flat soffit under mass standing over a cut column --
+	## the vault a covered street walks through.
+	##
+	## `cut` is a set of Vector2i columns (see cut_columns). Passing none keeps
+	## the older behaviour of retaining every exposed face, which is what the
+	## one-band court and the per-parcel plinth relied on before the hill was
+	## declared whole.
 	##
 	## Lateral faces are grouped into vertical runs first, so a run is tiled by
 	## whole modules from its top down and the lowest one buries its remainder
 	## exactly as the one-band court does -- never two coplanar modules on the
 	## same face.
 	##
-	## Pure function of two integer cell sets, and every loop runs over a sorted
-	## key list, so the payload is byte-identical for identical input.
+	## Pure function of integer cell sets, and every loop runs over a sorted key
+	## list, so the payload is byte-identical for identical input.
 	var out := EnvironmentInstancePayload.new()
 	var runs: Dictionary = {}
 	var cells: Array[Vector3i] = []
@@ -192,6 +228,9 @@ static func retaining_walls(retained: Dictionary,
 				Vector3i.FORWARD, Vector3i.BACK]:
 			var neighbor := cell + direction
 			if retained.has(neighbor) or solids.has(neighbor):
+				continue
+			if not cut.is_empty() \
+					and not cut.has(Vector2i(neighbor.x, neighbor.z)):
 				continue
 			var key := Vector4i(cell.x, cell.z, direction.x, direction.z)
 			if not runs.has(key):
@@ -220,19 +259,20 @@ static func retaining_walls(retained: Dictionary,
 			_stack_retaining_run(out, Vector2i(key.x, key.y), direction,
 				bands[index], bands[last] + 1)
 			index = last + 1
-	_lay_retaining_decks(out, retained, solids, cells)
+	_lay_retaining_decks(out, retained, solids, cells, cut)
 	assert(out.validate())
 	return out
 
 
 static func _lay_retaining_decks(out: EnvironmentInstancePayload,
 		retained: Dictionary, solids: Dictionary,
-		cells: Array[Vector3i]) -> void:
-	## The horizontal faces the wall vocabulary cannot close. Without them a
-	## rendered hill is an open-topped shell you see straight down into, and a
-	## street cut through the hill is a roofless trench however much mass the
-	## excavation left above it -- which is the whole reason the carver's
-	## covered majority has never read as a passage.
+		cells: Array[Vector3i], cut: Dictionary) -> void:
+	## The one horizontal face the wall vocabulary cannot close and that the
+	## earth skin must not: the SOFFIT under hill mass standing over a cut
+	## column. That is the vault a covered street walks through, and without it
+	## the excavation's covered majority reads as a roofless trench however much
+	## mass it left overhead. Terrace TOPS are ground, not architecture, and are
+	## skinned as earth by terrace_ground_mesh instead.
 	##
 	## Emitted per MACRO column, because the retained set is always whole macro
 	## columns (both its sources expand a macro cell into its 2x2 block) and a
@@ -244,34 +284,30 @@ static func _lay_retaining_decks(out: EnvironmentInstancePayload,
 		if posmod(cell.x, 2) != 0 or posmod(cell.z, 2) != 0:
 			continue
 		var whole := true
+		var open := true
 		for x_offset in 2:
 			for z_offset in 2:
 				if not retained.has(Vector3i(cell.x + x_offset, cell.y,
 						cell.z + z_offset)):
 					whole = false
-		if not whole:
+				var below := Vector3i(cell.x + x_offset, cell.y - 1,
+					cell.z + z_offset)
+				if retained.has(below) or solids.has(below) \
+						or (not cut.is_empty() \
+							and not cut.has(Vector2i(below.x, below.z))):
+					open = false
+		if not whole or not open:
 			continue
-		for direction: Vector3i in [Vector3i.UP, Vector3i.DOWN]:
-			var open := true
-			for x_offset in 2:
-				for z_offset in 2:
-					var neighbor := Vector3i(cell.x + x_offset,
-						cell.y + direction.y, cell.z + z_offset)
-					if retained.has(neighbor) or solids.has(neighbor):
-						open = false
-			if not open:
-				continue
-			var surface := float(cell.y + (1 if direction.y > 0 else 0)) \
-				* FabricRecipe.CELL_SIZE
-			for x_offset in 2:
-				var origin := Vector3(float(cell.x + x_offset)
-					* FabricRecipe.CELL_SIZE, surface,
-					(float(cell.z) + 1.5) * FabricRecipe.CELL_SIZE)
-				out.add(LOW_RETAINING_WALL,
-					Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), origin),
-					Color.WHITE,
-					StringName("terrace-deck/%d/%d/%d/%d/%d" % [cell.x,
-						cell.y, cell.z, direction.y, x_offset]))
+		for x_offset in 2:
+			var origin := Vector3(float(cell.x + x_offset)
+				* FabricRecipe.CELL_SIZE,
+				float(cell.y) * FabricRecipe.CELL_SIZE,
+				(float(cell.z) + 1.5) * FabricRecipe.CELL_SIZE)
+			out.add(LOW_RETAINING_WALL,
+				Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), origin),
+				Color.WHITE,
+				StringName("terrace-soffit/%d/%d/%d/%d" % [cell.x,
+					cell.y, cell.z, x_offset]))
 
 
 static func _stack_retaining_run(out: EnvironmentInstancePayload,
@@ -293,6 +329,77 @@ static func _stack_retaining_run(out: EnvironmentInstancePayload,
 			StringName("terrace-wall/%d/%d/%d/%d/%d" % [column.x, column.y,
 				direction.x, direction.z, top]))
 		top -= 2
+
+
+static func terrace_ground_mesh(plan: SettlementFabricPlan) -> ArrayMesh:
+	## The hill as GROUND: a generated earth skin over every exposed face of the
+	## retained mass the town did not cut. Tops are the terrace treads you look
+	## down on; the uncut lateral faces are the earth banks between them. Only
+	## cut faces stay authored masonry (see cut_columns), which is what keeps a
+	## hillside from reading as a stacked stone monument.
+	##
+	## Generated rather than authored for the same reason PublicRealmSurfacePlan
+	## generates its street skin: there is no flat-topped rock module in the
+	## vocabulary, and stretching one to fit is forbidden. Purely decorative --
+	## it owns no collision and enters no audit.
+	if plan == null or plan.retained_terrace_cells.is_empty():
+		return null
+	var retained := plan.retained_terrace_cells
+	var solids := plan.transformed_cells(&"solid")
+	var cut := cut_columns(plan)
+	var cells: Array[Vector3i] = []
+	cells.assign(retained.keys())
+	cells.sort_custom(_cell_before)
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var half := FabricRecipe.CELL_SIZE * 0.5
+	for cell: Vector3i in cells:
+		var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+		var above := cell + Vector3i.UP
+		if not retained.has(above) and not solids.has(above):
+			var top := centre.y + FabricRecipe.CELL_SIZE
+			_append_quad(vertices, normals,
+				Vector3(centre.x - half, top, centre.z - half),
+				Vector3(centre.x + half, top, centre.z - half),
+				Vector3(centre.x + half, top, centre.z + half),
+				Vector3(centre.x - half, top, centre.z + half), Vector3.UP)
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if retained.has(neighbor) or solids.has(neighbor) \
+					or cut.has(Vector2i(neighbor.x, neighbor.z)):
+				continue
+			var normal := Vector3(direction)
+			var face := centre + normal * half
+			var side := Vector3(normal.z, 0.0, normal.x) * half
+			_append_quad(vertices, normals,
+				Vector3(face.x, centre.y, face.z) - side,
+				Vector3(face.x, centre.y, face.z) + side,
+				Vector3(face.x, centre.y + FabricRecipe.CELL_SIZE, face.z) + side,
+				Vector3(face.x, centre.y + FabricRecipe.CELL_SIZE, face.z) - side,
+				normal)
+	if vertices.is_empty():
+		return null
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color("9c8055")
+	material.roughness = 1.0
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mesh.surface_set_material(0, material)
+	return mesh
+
+
+static func _append_quad(vertices: PackedVector3Array,
+		normals: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3,
+		d: Vector3, normal: Vector3) -> void:
+	for vertex: Vector3 in [a, b, c, a, c, d]:
+		vertices.append(vertex)
+		normals.append(normal)
 
 
 static func _cell_before(left: Vector3i, right: Vector3i) -> bool:

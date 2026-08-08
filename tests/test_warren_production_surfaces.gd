@@ -193,13 +193,13 @@ func test_a_terrace_face_the_hill_itself_closes_gets_no_wall() -> void:
 			"a wall was built on the face the two terraces share")
 
 
-func test_hill_standing_over_a_street_is_closed_underneath_and_on_top() -> void:
+func test_hill_standing_over_a_street_is_vaulted_underneath() -> void:
 	## The excavation's cover gate guarantees a majority of route cells carry
 	## massif mass overhead, but the wall vocabulary closes only lateral faces,
 	## so that mass rendered as nothing and every covered street read as an open
-	## trench. A macro column of hill standing over air is decked UNDERNEATH --
-	## the vault a covered route walks through -- and on TOP, so the rendered
-	## hill is not an open-topped shell you see straight down into.
+	## trench. A macro column of hill standing over a street is decked
+	## UNDERNEATH -- the vault a covered route walks through. Its top is ground,
+	## not architecture, and belongs to the earth skin.
 	var retained: Dictionary = {}
 	for band: int in [3, 4]:
 		for x in 2:
@@ -207,35 +207,56 @@ func test_hill_standing_over_a_street_is_closed_underneath_and_on_top() -> void:
 				retained[Vector3i(x, band, z)] = true
 	var payload := SettlementFabricAssembler.retaining_walls(retained, {})
 	assert_true(payload.validate())
+	var heights := _flat_module_heights(payload)
+	assert_eq(heights, [4.5, 4.5] as Array[float],
+		"one macro column of hill over a street needs a soffit at its "
+		+ "underside, two modules, and nothing on its tread")
+	# Extending the hill one band down moves the vault down with it: only the
+	# lowest exposed underside is decked, never one buried inside the hill.
+	var buried := retained.duplicate()
+	for x in 2:
+		for z in 2:
+			buried[Vector3i(x, 2, z)] = true
+	assert_eq(_flat_module_heights(
+		SettlementFabricAssembler.retaining_walls(buried, {})),
+		[3.0, 3.0] as Array[float],
+		"only the lowest exposed underside is vaulted")
+
+
+func test_stone_is_retained_only_where_the_town_cut_the_hill() -> void:
+	## A hill rendered as masonry everywhere is a monument, not a hillside. With
+	## a cut set the wall modules appear only on faces looking onto a column the
+	## town actually occupies; the rest of the hill is left to the earth skin.
+	var retained: Dictionary = {}
+	for band in 4:
+		for x in 2:
+			for z in 2:
+				retained[Vector3i(x, band, z)] = true
+	var everywhere := SettlementFabricAssembler.retaining_walls(retained, {})
+	var cut := {Vector2i(-1, 0): true, Vector2i(-1, 1): true}
+	var scoped := SettlementFabricAssembler.retaining_walls(retained, {}, cut)
+	assert_gt(everywhere.instance_count, scoped.instance_count,
+		"a cut set must retain strictly less than every exposed face")
+	var batch := scoped.batches.get(
+		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
+	assert_gt(int(batch.get("transforms", []).size()), 0,
+		"the cut faces themselves must still be stone")
+	for value: Variant in batch.get("transforms", []):
+		assert_lt((value as Transform3D).origin.x, 0.0,
+			"stone appeared on a face the town never cut")
+
+
+func _flat_module_heights(payload: EnvironmentInstancePayload) -> Array[float]:
 	var batch := payload.batches.get(
 		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
-	var heights: Array[float] = []
+	var out: Array[float] = []
 	for value: Variant in batch.get("transforms", []):
 		var placement := value as Transform3D
 		if placement.basis.y.y > 0.5:
 			continue
-		heights.append(snappedf(placement.origin.y, 0.001))
-	heights.sort()
-	assert_eq(heights, [4.5, 4.5, 7.5, 7.5] as Array[float],
-		"one macro column of hill over a street needs a soffit at its "
-		+ "underside and a tread on its top, two modules each")
-	# Burying the top under one more band of hill must remove the tread from
-	# the band below it: a deck inside the hill is a deck nobody can see.
-	for x in 2:
-		for z in 2:
-			retained[Vector3i(x, 5, z)] = true
-	var buried := SettlementFabricAssembler.retaining_walls(retained, {})
-	var buried_batch := buried.batches.get(
-		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary
-	var buried_heights: Array[float] = []
-	for value: Variant in buried_batch.get("transforms", []):
-		var placement := value as Transform3D
-		if placement.basis.y.y > 0.5:
-			continue
-		buried_heights.append(snappedf(placement.origin.y, 0.001))
-	buried_heights.sort()
-	assert_eq(buried_heights, [4.5, 4.5, 9.0, 9.0] as Array[float],
-		"only the exposed horizontal faces may be decked")
+		out.append(snappedf(placement.origin.y, 0.001))
+	out.sort()
+	return out
 
 
 func test_retaining_walls_are_deterministic_and_uniquely_identified() -> void:
