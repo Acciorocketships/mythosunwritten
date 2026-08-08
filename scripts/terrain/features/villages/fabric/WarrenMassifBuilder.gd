@@ -20,11 +20,19 @@ const MAX_CORE_BANDS := 20
 const MIN_TERRACE_LEVELS := 5
 const MAX_PLATEAU_CELLS := 6
 const MIN_COLUMN_BANDS := 2
-## A neighbouring pair of existing columns may step by at most this many
-## bands. Riser steps are 1-2 bands, so this comfortably allows a normal
-## riser, an occasional doubled riser, or a fresh district settling one step
-## away from two different neighbours -- it forbids the multi-riser cliffs
-## per-cell noise produced.
+## A neighbouring pair of columns may step by at most this many bands, and
+## EMPTY GROUND COUNTS AS A NEIGHBOUR OF HEIGHT ZERO. Riser steps are 1-2
+## bands, so this comfortably allows a normal riser, an occasional doubled
+## riser, or a fresh district settling one step away from two different
+## neighbours -- it forbids the multi-riser cliffs per-cell noise produced.
+##
+## Applying it at the boundary is what makes the whole silhouette a stepped
+## hill rather than a terraced dome standing on a cliff. While boundary
+## columns were exempt the rim was a legal 7-16 band face (measured over seeds
+## 0-39), and re-materialising it -- timber, then retained stone -- only ever
+## changed what the cliff was made of. Four bands is two storeys, so the
+## tallest continuous vertical face anywhere in the solid is now two storeys
+## followed by a setback, whatever later dresses it.
 const MAX_NEIGHBOR_STEP_BANDS := 4
 
 static var last_failure := ""
@@ -60,8 +68,11 @@ static func build(world_seed: int,
 				continue
 			raw_at[Vector2i(x, z)] = raw
 
-	# Pass 2: capacity-limited flood fill assigns the actual terrace bands.
-	var terrace_at := _assign_terraces(raw_at, world_seed)
+	# Pass 2: capacity-limited flood fill assigns the actual terrace bands,
+	# under a per-column ceiling derived from how far that column stands from
+	# the empty ground outside the footprint.
+	var terrace_at := _assign_terraces(raw_at, world_seed,
+		_step_ceilings(raw_at))
 
 	for column: Vector2i in raw_at:
 		var base := int(ground_bands.get(column, 0))
@@ -99,18 +110,66 @@ static func build(world_seed: int,
 
 
 static func _worst_neighbor_step(massif: WarrenMassif) -> int:
+	## The tallest continuous vertical face in the solid. A MISSING neighbour is
+	## not skipped: it is ground, so the face it exposes is the column's whole
+	## height above its own base. All four directions are visited because the
+	## empty side of a boundary column has no column of its own to visit it back.
 	var worst := 0
 	for column: Vector2i in massif.columns:
-		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+				Vector2i.UP, Vector2i.DOWN]:
 			var neighbor := column + direction
 			if not massif.has_column(neighbor):
+				worst = maxi(worst, massif.top_at(column)
+					- massif.base_at(column))
 				continue
 			worst = maxi(worst, absi(massif.top_at(column)
 				- massif.top_at(neighbor)))
 	return worst
 
 
-static func _assign_terraces(raw_at: Dictionary, world_seed: int) -> Dictionary:
+static func _step_ceilings(raw_at: Dictionary) -> Dictionary:
+	## MAX_NEIGHBOR_STEP_BANDS per step of 4-connected distance from the empty
+	## ground outside the footprint. A column one cell from the edge may stand
+	## four bands, two cells from the edge eight, and so on -- the tightest
+	## height assignment that can still descend to zero in legal steps.
+	##
+	## Necessary: a column d cells from open ground has a chain of d-1 columns
+	## between it and the outside, and each link may drop at most
+	## MAX_NEIGHBOR_STEP_BANDS. Sufficient in practice because adjacent
+	## distances differ by at most one, so a neighbour's ceiling never forces a
+	## level above this one's -- see _new_district_level's clamp.
+	var distance: Dictionary = {}
+	var frontier: Array[Vector2i] = []
+	for column: Vector2i in raw_at:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+				Vector2i.UP, Vector2i.DOWN]:
+			if raw_at.has(column + direction):
+				continue
+			distance[column] = 1
+			frontier.append(column)
+			break
+	var index := 0
+	while index < frontier.size():
+		var column: Vector2i = frontier[index]
+		index += 1
+		var next_distance: int = int(distance[column]) + 1
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+				Vector2i.UP, Vector2i.DOWN]:
+			var neighbor := column + direction
+			if not raw_at.has(neighbor) or distance.has(neighbor):
+				continue
+			distance[neighbor] = next_distance
+			frontier.append(neighbor)
+	var ceilings: Dictionary = {}
+	for column: Vector2i in raw_at:
+		ceilings[column] = int(distance.get(column, 1)) \
+			* MAX_NEIGHBOR_STEP_BANDS
+	return ceilings
+
+
+static func _assign_terraces(raw_at: Dictionary, world_seed: int,
+		ceilings: Dictionary) -> Dictionary:
 	## Processes columns from the peak outward (highest raw first, hash
 	## tie-broken for determinism). Each column either joins an adjacent
 	## district whose resulting size stays within MAX_PLATEAU_CELLS and
@@ -122,6 +181,10 @@ static func _assign_terraces(raw_at: Dictionary, world_seed: int) -> Dictionary:
 	## column group in isolation, is what actually keeps same-level
 	## connected regions small; capping in isolation lets two same-level
 	## districts merge past the cap the moment a column touches both.
+	##
+	## Every choice is additionally bounded by `ceilings`, the rim step limit,
+	## which is tracked per district as the minimum over its members so that a
+	## merge can never lift a near-edge column above what it may carry.
 	var order: Array = raw_at.keys()
 	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		var ra: float = raw_at[a]
@@ -152,9 +215,12 @@ static func _assign_terraces(raw_at: Dictionary, world_seed: int) -> Dictionary:
 				arr.append(root)
 		var neighbor_levels: Array = roots_by_level.keys()
 
+		var ceiling: int = int(ceilings.get(cell, MAX_NEIGHBOR_STEP_BANDS))
 		var chosen_level: Variant = null
 		for lvl_key: Variant in roots_by_level.keys():
 			var lvl: int = lvl_key
+			if lvl > ceiling:
+				continue
 			var roots: Array = roots_by_level[lvl]
 			var total_size := 1
 			for r: int in roots:
@@ -175,7 +241,7 @@ static func _assign_terraces(raw_at: Dictionary, world_seed: int) -> Dictionary:
 
 		if chosen_level == null:
 			chosen_level = _new_district_level(cell, raw_at, world_seed,
-				neighbor_levels)
+				neighbor_levels, ceiling)
 
 		var cl: int = chosen_level
 		var cur_root: int
@@ -203,13 +269,18 @@ static func _assign_terraces(raw_at: Dictionary, world_seed: int) -> Dictionary:
 
 
 static func _new_district_level(cell: Vector2i, raw_at: Dictionary,
-		world_seed: int, neighbor_levels: Array) -> int:
+		world_seed: int, neighbor_levels: Array, ceiling: int) -> int:
 	## Starts a fresh district a riser away from its neighbours. The riser
 	## rhythm (1 or 2 bands) is seed-and-cell-varied so terraces do not
 	## repeat one global step size.
+	##
+	## `ceiling` is the rim step limit and outranks every other consideration:
+	## a column that cannot descend to open ground in legal steps is the cliff
+	## this builder exists to forbid, whereas a district one band off its
+	## preferred riser is only a slightly different terrace.
 	var riser := 1 + posmod(_hash(world_seed, 17, cell.x, cell.y), 2)
 	var raw_here: float = raw_at[cell]
-	var lvl := int(floor(raw_here / float(riser))) * riser
+	var lvl := mini(int(floor(raw_here / float(riser))) * riser, ceiling)
 	if neighbor_levels.is_empty():
 		return lvl
 	var lo := -2147483648
@@ -232,6 +303,10 @@ static func _new_district_level(cell: Vector2i, raw_at: Dictionary,
 				closest = other2
 		lo = closest - MAX_NEIGHBOR_STEP_BANDS
 		hi = closest + MAX_NEIGHBOR_STEP_BANDS
+	# The ceiling is applied last and wins outright: a neighbour pulling this
+	# column up is exactly how the rim used to become a cliff.
+	hi = mini(hi, ceiling)
+	lo = mini(lo, hi)
 	lvl = clampi(lvl, lo, hi)
 	# Nudge away from exactly matching a neighbour's level: an exact match
 	# here would silently bridge two districts before the union-find has a

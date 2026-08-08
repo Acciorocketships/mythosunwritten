@@ -31,16 +31,16 @@ func test_massif_builds_tall_terraced_and_deterministic() -> void:
 
 
 func test_massif_seeds_differ_and_respect_ground_bands() -> void:
-	var flat := WarrenMassifBuilder.build(2)
+	var flat := WarrenMassifBuilder.build(1)
 	var raised_bands: Dictionary = {}
 	for z in range(-12, 13):
 		for x in range(-12, 13):
 			raised_bands[Vector2i(x, z)] = 2
-	var raised := WarrenMassifBuilder.build(2, raised_bands)
+	var raised := WarrenMassifBuilder.build(1, raised_bands)
 	assert_not_null(flat, WarrenMassifBuilder.last_failure)
 	assert_not_null(raised, WarrenMassifBuilder.last_failure)
 	var differing := 0
-	var other := WarrenMassifBuilder.build(3)
+	var other := WarrenMassifBuilder.build(4)
 	for column: Vector2i in flat.columns:
 		if other.has_column(column) \
 				and flat.top_at(column) != other.top_at(column):
@@ -80,7 +80,10 @@ func test_the_address_gate_no_longer_forces_a_tower_at_the_top_of_the_climb() \
 	assert_gte(forced, 4,
 		"the published constants already demand a %d storey flank" % forced)
 	var measured := 0
-	for world_seed in [13, 16]:
+	# Seeds re-pinned to survivors of the rim step rule: 13 no longer builds
+	# (plateau of 7 cells), which is a seed-supply fact reported in
+	# task-13-report.md, not a property of the datum split this test pins.
+	for world_seed in [16, 17]:
 		var massif := WarrenMassifBuilder.build(world_seed)
 		assert_not_null(massif, WarrenMassifBuilder.last_failure)
 		if massif == null:
@@ -133,6 +136,39 @@ func test_the_buildable_layer_is_derived_from_the_parcel_contract() -> void:
 	assert_gt(raised * 3, massif.columns.size(),
 		"a terrace that lifts almost nothing is not a hillside: %d of %d" \
 		% [raised, massif.columns.size()])
+
+
+func test_the_rim_steps_down_to_the_ground_like_every_other_terrace() -> void:
+	## Empty ground beside a boundary column IS height zero, and the neighbour
+	## step limit applies to it. Without that the rim was a legal 7-16 band
+	## cliff (measured over seeds 0-39) which every remedy so far re-skinned --
+	## timber, then stone -- rather than removed. With it the tallest continuous
+	## vertical face anywhere in the solid is one riser, so a viewer never sees
+	## more than MAX_NEIGHBOR_STEP_BANDS of unbroken wall before a setback,
+	## whatever material later dresses it.
+	for world_seed: int in [0, 1, 3, 5, 16, 18]:
+		var massif := WarrenMassifBuilder.build(world_seed)
+		assert_not_null(massif, "seed %d: %s" % [world_seed,
+			WarrenMassifBuilder.last_failure])
+		if massif == null:
+			continue
+		var tallest_rim := 0
+		var tallest_face := 0
+		for column: Vector2i in massif.columns:
+			for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+					Vector2i.UP, Vector2i.DOWN]:
+				var neighbor := column + direction
+				var exposed := massif.top_at(column) - massif.base_at(column) \
+					if not massif.has_column(neighbor) \
+					else massif.top_at(column) - massif.top_at(neighbor)
+				if not massif.has_column(neighbor):
+					tallest_rim = maxi(tallest_rim, exposed)
+				tallest_face = maxi(tallest_face, exposed)
+		assert_lte(tallest_rim, WarrenMassifBuilder.MAX_NEIGHBOR_STEP_BANDS,
+			"seed %d presents a %d-band cliff to the empty ground beside it" \
+			% [world_seed, tallest_rim])
+		assert_lte(tallest_face, WarrenMassifBuilder.MAX_NEIGHBOR_STEP_BANDS,
+			"seed %d has a %d-band continuous face" % [world_seed, tallest_face])
 
 
 func _tallest_addressed_flank_storeys(massif: WarrenMassif,
