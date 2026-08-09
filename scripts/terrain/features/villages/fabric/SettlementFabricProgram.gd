@@ -11,11 +11,6 @@ const ROCK_DOOR := &"sfv.fabric.wall.rock.door.005"
 const ROCK_WINDOW := &"sfv.fabric.wall.rock.window.010"
 const WOOD_PLAIN := &"sfv.fabric.wall.wood.plain.001"
 const WOOD_DOOR := &"sfv.fabric.wall.wood.door.001"
-const WOOD_WINDOW_BLUE := &"sfv.fabric.wall.wood.window.001"
-const WOOD_WINDOW_ORANGE := &"sfv.fabric.wall.wood.window.020"
-const WOOD_WINDOW_SMALL := &"sfv.fabric.wall.wood.window.010"
-const WOOD_WINDOW_SHUTTER := &"sfv.fabric.wall.wood.window.040"
-const WOOD_WINDOW_BROAD := &"sfv.fabric.wall.wood.window.060"
 const FLOOR := &"sfv.fabric.floor.l.001"
 const GALLERY_FLOOR := &"sfv.fabric.gallery.floor.m.001"
 const ROOF_BLUE := &"sfv.fabric.roof.half.s.blue.002"
@@ -44,6 +39,103 @@ const BRACE := &"sfv.fabric.brace.wood.002"
 const WALL_WOOD_S_A := &"sfv.fabric.wall.wood.s.001"
 const WALL_WOOD_S_B := &"sfv.fabric.wall.wood.s.002"
 const WALL_WOOD_CORNER_S := &"sfv.fabric.wall.wood.corner.s.001"
+
+## The facade module pools, indexed by facade phase.
+##
+## Every entry is a COMPLETE authored wall module, so a phase change is a
+## geometry and joinery change rather than a tint. Two invariants keep widening
+## these pools inert for everything except what a viewer sees:
+##
+## 1. Indices 0-2 are the pre-wave modules in their pre-wave order, so any
+##    recipe that asks for a bare phase renders exactly what it rendered before.
+## 2. Every wood entry measures exactly 3.000 m wide and 3.000 m tall, and every
+##    rock entry at most 3.085 m wide -- the width the shipped rock pool already
+##    carried. `FabricModuleProgram.facade_aligned_transform` pins a module's
+##    OUTER face to the wall plane, so a module no wider than the widest module
+##    its family already places cannot grow any recipe's clearance envelope, and
+##    therefore cannot change which parcels the visual-compatibility broad phase
+##    admits. `tests/test_warren_facade_variety.gd` measures both invariants
+##    against the catalog rather than trusting this comment.
+const WOOD_FACADE_BLUE: Array[StringName] = [
+	&"sfv.fabric.wall.wood.window.001",
+	&"sfv.fabric.wall.wood.window.040",
+	&"sfv.fabric.wall.wood.window.010",
+	&"sfv.fabric.wall.wood.window.004",
+	&"sfv.fabric.wall.wood.window.033",
+	&"sfv.fabric.wall.wood.plain.005",
+	&"sfv.fabric.wall.wood.window.052",
+	&"sfv.fabric.wall.wood.window.017",
+	&"sfv.fabric.wall.wood.plain.011",
+	&"sfv.fabric.wall.wood.window.066",
+]
+const WOOD_FACADE_ORANGE: Array[StringName] = [
+	&"sfv.fabric.wall.wood.window.020",
+	&"sfv.fabric.wall.wood.window.060",
+	&"sfv.fabric.wall.wood.window.010",
+	&"sfv.fabric.wall.wood.window.024",
+	&"sfv.fabric.wall.wood.window.037",
+	&"sfv.fabric.wall.wood.plain.007",
+	&"sfv.fabric.wall.wood.window.056",
+	&"sfv.fabric.wall.wood.window.028",
+	&"sfv.fabric.wall.wood.plain.015",
+	&"sfv.fabric.wall.wood.window.069",
+]
+## A third timber family so the streetscape graph-colouring has three colours to
+## spend instead of two. Its modules are drawn from the part of the bake the
+## other two pools do not touch (one module, `window.037`, is shared with the
+## orange pool because the flush 3 m window vocabulary runs out at 21 pieces):
+## a neighbour in a different family is a different authored wall, not the same
+## wall in a different phase.
+const WOOD_FACADE_AMBER: Array[StringName] = [
+	&"sfv.fabric.wall.wood.window.013",
+	&"sfv.fabric.wall.wood.window.048",
+	&"sfv.fabric.wall.wood.window.008",
+	&"sfv.fabric.wall.wood.window.044",
+	&"sfv.fabric.wall.wood.plain.003",
+	&"sfv.fabric.wall.wood.window.058",
+	&"sfv.fabric.wall.wood.window.064",
+	&"sfv.fabric.wall.wood.plain.009",
+	&"sfv.fabric.wall.wood.plain.013",
+	&"sfv.fabric.wall.wood.window.037",
+]
+const ROCK_FACADE: Array[StringName] = [
+	&"sfv.fabric.wall.rock.window.010",
+	&"sfv.fabric.wall.rock.plain.001",
+	&"sfv.fabric.wall.rock.window.010",
+	&"sfv.fabric.wall.rock.window.m.016",
+	&"sfv.fabric.wall.rock.window.m.019",
+	&"sfv.fabric.wall.rock.plain.002",
+	&"sfv.fabric.wall.rock.window.s.003",
+]
+## Door modules follow the same rule: index 0 stays the shipped door so an
+## existing addressed room is unchanged, and the later entries are alternative
+## authored door frames of the same module width.
+const WOOD_DOORS: Array[StringName] = [
+	&"sfv.fabric.wall.wood.door.001",
+	&"sfv.fabric.wall.wood.door.004",
+	&"sfv.fabric.wall.wood.door.002",
+	&"sfv.fabric.wall.wood.door.003",
+]
+const ROCK_DOORS: Array[StringName] = [
+	&"sfv.fabric.wall.rock.door.005",
+	&"sfv.fabric.wall.rock.door.006",
+	&"sfv.fabric.wall.rock.door.001",
+	&"sfv.fabric.wall.rock.door.009",
+]
+## Roof-feature stacks. Index 0 is the shipped compact chimney; the rest are the
+## authored SFV chimney family, so a capped bay is a different silhouette on
+## every roll instead of one repeated stack.
+const ROOF_CHIMNEYS: Array[StringName] = [
+	&"lpfv.fabric.chimney.orange.01",
+	&"sfv.fabric.chimney.002",
+	&"sfv.fabric.chimney.005",
+	&"sfv.fabric.chimney.003",
+]
+## The four faces of a square or compact room take four DIFFERENT phases. Every
+## offset is >= 3, so each face draws from the widened part of its pool and the
+## frozen 0-2 phases keep meaning exactly what they meant before. Offset 0 keeps
+## the addressed face on its family's signature module.
+const FACE_PHASE_OFFSETS: Array[int] = [0, 3, 5, 4]
 const STAIR_FULL := &"sfv.fabric.stair.preset.004"
 const STAIR_HALF := &"sfv.stair.s.001"
 const RAILING := &"sfv.deck.railing.s.001"
@@ -100,15 +192,19 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_room_recipe(&"room.base.rock.closed", true, &"rock", false, modules),
 		_room_recipe(&"room.upper.blue", false, &"blue", false, modules),
 		_room_recipe(&"room.upper.orange", false, &"orange", false, modules),
+		_room_recipe(&"room.upper.amber", false, &"amber", false, modules),
 		_room_recipe(&"room.upper.stone", false, &"stone", false, modules),
 		_room_recipe(&"room.upper.blue.b", false, &"blue", false, modules, 1),
 		_room_recipe(&"room.upper.orange.b", false, &"orange", false, modules, 1),
+		_room_recipe(&"room.upper.amber.b", false, &"amber", false, modules, 1),
 		_room_recipe(&"room.upper.stone.b", false, &"stone", false, modules, 1),
 		_room_recipe(&"room.upper.address.blue", false, &"blue", true, modules),
 		_room_recipe(&"room.upper.address.orange", false, &"orange", true, modules),
+		_room_recipe(&"room.upper.address.amber", false, &"amber", true, modules),
 		_room_recipe(&"room.upper.address.stone", false, &"stone", true, modules),
 		_room_recipe(&"room.upper.address.blue.b", false, &"blue", true, modules, 1),
 		_room_recipe(&"room.upper.address.orange.b", false, &"orange", true, modules, 1),
+		_room_recipe(&"room.upper.address.amber.b", false, &"amber", true, modules, 1),
 		_room_recipe(&"room.upper.address.stone.b", false, &"stone", true, modules, 1),
 		_long_room_recipe(&"room.long.base.rock", true, &"rock", true, 0, modules),
 		_long_room_recipe(&"room.long.base.rock.closed", true, &"rock", false, 1, modules),
@@ -116,41 +212,53 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_long_room_recipe(&"room.long.upper.blue.b", false, &"blue", false, 1, modules),
 		_long_room_recipe(&"room.long.upper.orange.a", false, &"orange", false, 0, modules),
 		_long_room_recipe(&"room.long.upper.orange.b", false, &"orange", false, 1, modules),
+		_long_room_recipe(&"room.long.upper.amber.a", false, &"amber", false, 0, modules),
+		_long_room_recipe(&"room.long.upper.amber.b", false, &"amber", false, 1, modules),
 		_long_room_recipe(&"room.long.upper.stone.a", false, &"stone", false, 0, modules),
 		_long_room_recipe(&"room.long.upper.stone.b", false, &"stone", false, 1, modules),
 		_long_room_recipe(&"room.long.upper.address.blue.a", false, &"blue", true, 0, modules),
 		_long_room_recipe(&"room.long.upper.address.blue.b", false, &"blue", true, 1, modules),
 		_long_room_recipe(&"room.long.upper.address.orange.a", false, &"orange", true, 0, modules),
 		_long_room_recipe(&"room.long.upper.address.orange.b", false, &"orange", true, 1, modules),
+		_long_room_recipe(&"room.long.upper.address.amber.a", false, &"amber", true, 0, modules),
+		_long_room_recipe(&"room.long.upper.address.amber.b", false, &"amber", true, 1, modules),
 		_long_room_recipe(&"room.long.upper.address.stone.a", false, &"stone", true, 0, modules),
 		_long_room_recipe(&"room.long.upper.address.stone.b", false, &"stone", true, 1, modules),
 		_tower_room_recipe(&"room.tower.base.rock", true, &"rock", true, modules),
 		_tower_room_recipe(&"room.tower.base.rock.closed", true, &"rock", false, modules),
 		_tower_room_recipe(&"room.tower.upper.blue", false, &"blue", false, modules),
 		_tower_room_recipe(&"room.tower.upper.orange", false, &"orange", false, modules),
+		_tower_room_recipe(&"room.tower.upper.amber", false, &"amber", false, modules),
 		_tower_room_recipe(&"room.tower.upper.stone", false, &"stone", false, modules),
 		_tower_room_recipe(&"room.tower.upper.blue.b", false, &"blue", false, modules, 1),
 		_tower_room_recipe(&"room.tower.upper.orange.b", false, &"orange", false, modules, 1),
+		_tower_room_recipe(&"room.tower.upper.amber.b", false, &"amber", false, modules, 1),
 		_tower_room_recipe(&"room.tower.upper.stone.b", false, &"stone", false, modules, 1),
 		_tower_room_recipe(&"room.tower.upper.address.blue", false, &"blue", true, modules),
 		_tower_room_recipe(&"room.tower.upper.address.orange", false, &"orange", true, modules),
+		_tower_room_recipe(&"room.tower.upper.address.amber", false, &"amber", true, modules),
 		_tower_room_recipe(&"room.tower.upper.address.stone", false, &"stone", true, modules),
 		_tower_room_recipe(&"room.tower.upper.address.blue.b", false, &"blue", true, modules, 1),
 		_tower_room_recipe(&"room.tower.upper.address.orange.b", false, &"orange", true, modules, 1),
+		_tower_room_recipe(&"room.tower.upper.address.amber.b", false, &"amber", true, modules, 1),
 		_tower_room_recipe(&"room.tower.upper.address.stone.b", false, &"stone", true, modules, 1),
 		_slim_room_recipe(&"room.slim.base.rock", true, &"rock", true, modules),
 		_slim_room_recipe(&"room.slim.base.rock.closed", true, &"rock", false, modules),
 		_slim_room_recipe(&"room.slim.upper.blue", false, &"blue", false, modules),
 		_slim_room_recipe(&"room.slim.upper.orange", false, &"orange", false, modules),
+		_slim_room_recipe(&"room.slim.upper.amber", false, &"amber", false, modules),
 		_slim_room_recipe(&"room.slim.upper.stone", false, &"stone", false, modules),
 		_slim_room_recipe(&"room.slim.upper.blue.b", false, &"blue", false, modules, 1),
 		_slim_room_recipe(&"room.slim.upper.orange.b", false, &"orange", false, modules, 1),
+		_slim_room_recipe(&"room.slim.upper.amber.b", false, &"amber", false, modules, 1),
 		_slim_room_recipe(&"room.slim.upper.stone.b", false, &"stone", false, modules, 1),
 		_slim_room_recipe(&"room.slim.upper.address.blue", false, &"blue", true, modules),
 		_slim_room_recipe(&"room.slim.upper.address.orange", false, &"orange", true, modules),
+		_slim_room_recipe(&"room.slim.upper.address.amber", false, &"amber", true, modules),
 		_slim_room_recipe(&"room.slim.upper.address.stone", false, &"stone", true, modules),
 		_slim_room_recipe(&"room.slim.upper.address.blue.b", false, &"blue", true, modules, 1),
 		_slim_room_recipe(&"room.slim.upper.address.orange.b", false, &"orange", true, modules, 1),
+		_slim_room_recipe(&"room.slim.upper.address.amber.b", false, &"amber", true, modules, 1),
 		_slim_room_recipe(&"room.slim.upper.address.stone.b", false, &"stone", true, modules, 1),
 		_pier_room_recipe(&"room.pier.base.rock", true, &"rock", modules),
 		_pier_room_recipe(&"room.pier.upper.blue", false, &"blue", modules),
@@ -240,6 +348,22 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules, 0),
 		_capped_outcrop_recipe(&"outcrop.capped.corner.right.orange", &"orange",
 			modules, 0),
+		_capped_outcrop_recipe(&"outcrop.flue.corner.left.blue", &"blue",
+			modules, -1, ROOF_CHIMNEYS[1]),
+		_capped_outcrop_recipe(&"outcrop.flue.corner.left.orange", &"orange",
+			modules, -1, ROOF_CHIMNEYS[3]),
+		_capped_outcrop_recipe(&"outcrop.flue.corner.right.blue", &"blue",
+			modules, 0, ROOF_CHIMNEYS[3]),
+		_capped_outcrop_recipe(&"outcrop.flue.corner.right.orange", &"orange",
+			modules, 0, ROOF_CHIMNEYS[1]),
+		_capped_outcrop_recipe(&"outcrop.capped.corner.left.amber", &"amber",
+			modules, -1),
+		_capped_outcrop_recipe(&"outcrop.capped.corner.right.amber", &"amber",
+			modules, 0),
+		_capped_outcrop_recipe(&"outcrop.flue.corner.left.amber", &"amber",
+			modules, -1, ROOF_CHIMNEYS[2]),
+		_capped_outcrop_recipe(&"outcrop.flue.corner.right.amber", &"amber",
+			modules, 0, ROOF_CHIMNEYS[2]),
 		_dormer_outcrop_recipe(&"outcrop.dormer.gable.teal.left",
 			ROOF_WINDOW_02, false, modules, -1),
 		_dormer_outcrop_recipe(&"outcrop.dormer.gable.teal.right",
@@ -264,6 +388,10 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules, 1),
 		_corner_wrap_outcrop_recipe(&"outcrop.corner.wrap.right.orange",
 			&"orange", modules, 1),
+		_corner_wrap_outcrop_recipe(&"outcrop.corner.wrap.left.amber", &"amber",
+			modules, -1),
+		_corner_wrap_outcrop_recipe(&"outcrop.corner.wrap.right.amber", &"amber",
+			modules, 1),
 		_micro_room_recipe(&"room.micro.terrain.blue", &"blue", modules),
 		_micro_room_recipe(&"room.micro.terrain.orange", &"orange", modules),
 		_skywalk_recipe(&"skywalk.3.blue", 1, &"blue", modules, 2),
@@ -309,17 +437,23 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 static func _compile_module_program(catalog: EnvironmentCatalog) \
 		-> FabricModuleProgram:
 	var modules := FabricModuleProgram.new(catalog)
-	for wall_asset: StringName in [
+	var facade_assets: Array[StringName] = [
 		ROCK_PLAIN, ROCK_DOOR, ROCK_WINDOW, WOOD_PLAIN, WOOD_DOOR,
-		WOOD_WINDOW_BLUE, WOOD_WINDOW_ORANGE, WOOD_WINDOW_SMALL,
-		WOOD_WINDOW_SHUTTER, WOOD_WINDOW_BROAD, STAIR_FULL, STAIR_HALF,
+		STAIR_FULL, STAIR_HALF,
 		WALL_WOOD_S_A, WALL_WOOD_S_B, WALL_WOOD_CORNER_S,
 		COMPACT_CHIMNEY, ROOM_ROOF_01, ROOM_ROOF_04,
 		ROOF_WINDOW_01, ROOF_WINDOW_02, ROOF_WINDOW_03, ROOF_WINDOW_04,
 		ROOF_SEAM,
 		ROOF_BISECT_LEFT_BLUE, ROOF_BISECT_RIGHT_BLUE,
 		ROOF_BISECT_LEFT_ORANGE, ROOF_BISECT_RIGHT_ORANGE,
-	]:
+	]
+	for pool: Array[StringName] in [WOOD_FACADE_BLUE, WOOD_FACADE_ORANGE,
+			WOOD_FACADE_AMBER, ROCK_FACADE, WOOD_DOORS, ROCK_DOORS,
+			ROOF_CHIMNEYS]:
+		for asset_id: StringName in pool:
+			if not facade_assets.has(asset_id):
+				facade_assets.append(asset_id)
+	for wall_asset: StringName in facade_assets:
 		if not modules.add_generic(wall_asset):
 			push_error("Could not compile facade contract %s: %s" % [
 				wall_asset, modules.last_rejection])
@@ -455,10 +589,18 @@ static func _room_recipe(recipe_id: StringName, terrain_bearing: bool,
 	var recipe_value := FabricRecipe.new(recipe_id, tags,
 		0 if terrain_bearing else 1)
 	var facade_family := &"stone" if terrain_bearing else theme
-	var window_asset := _facade_asset(facade_family, facade_phase)
+	## Four faces, four authored modules. Before this the whole shell repeated a
+	## single window, which is what made a square room read as one stamped box
+	## from every angle; the offsets live in FACE_PHASE_OFFSETS so the frozen
+	## phases 0-2 keep their pre-wave meaning.
+	var face_assets: Array[StringName] = []
+	for face_index in 4:
+		face_assets.append(_facade_asset(facade_family,
+			_face_phase(facade_phase, face_index)))
 	_add_room_shell(recipe_value,
-		_facade_door(facade_family) if has_exterior_door else window_asset,
-		window_asset, 6.0, modules, &"front" if has_exterior_door else &"")
+		_facade_door(facade_family, facade_phase) if has_exterior_door \
+			else face_assets[0],
+		face_assets, 6.0, modules, &"front" if has_exterior_door else &"")
 	if not terrain_bearing and facade_phase == 1:
 		_add_front_facade_detail(recipe_value, &"ivy",
 			FabricModuleProgram.footprint_centre(Vector3i(-2, 0, -2),
@@ -910,12 +1052,14 @@ static func _exterior_stair_facade_recipe(recipe_id: StringName,
 		&"room", &"generated_building", &"terrain_bearing", &"public_walk",
 		&"route", &"stair", &"exterior_stair", &"circulation_building",
 	], 0)
-	var window_asset := _wood_window(theme)
+	var face_assets: Array[StringName] = []
+	for face_index in 4:
+		face_assets.append(_facade_asset(theme, _face_phase(0, face_index)))
 	# The east door opens directly onto the low public tread. Door placement and
 	# semantic entrance data are derived from the same facade contract, so a
 	# future facade variant cannot leave a decorative door disconnected from the
 	# route graph (or claim a route through an unbroken wall).
-	_add_room_shell(recipe_value, WOOD_DOOR, window_asset, 6.0, modules, &"right")
+	_add_room_shell(recipe_value, WOOD_DOOR, face_assets, 6.0, modules, &"right")
 	_add_room_occupancy(recipe_value, &"right")
 	var roof_asset := ROOF_ORANGE if theme == &"orange" else ROOF_BLUE
 	var room_centre := FabricModuleProgram.footprint_centre(
@@ -1546,7 +1690,8 @@ static func _outcrop_recipe(recipe_id: StringName, theme: StringName,
 
 
 static func _capped_outcrop_recipe(recipe_id: StringName, theme: StringName,
-		modules: FabricModuleProgram, minimum_x: int = -1) -> FabricRecipe:
+		modules: FabricModuleProgram, minimum_x: int = -1,
+		chimney_asset: StringName = &"") -> FabricRecipe:
 	## Flat-capped shallow jetty: one cell deep, framed by the reviewed 1.5 m
 	## side walls and symmetric corner posts, closed by the gallery deck module.
 	## It reads as a jettied extension of the parent house, never as a second
@@ -1595,6 +1740,14 @@ static func _capped_outcrop_recipe(recipe_id: StringName, theme: StringName,
 		_pose(Vector3(centre_x - 0.9, -0.55, row_z + 0.3), 0.0))
 	recipe_value.add_placement(&"brace.right", BRACE,
 		_pose(Vector3(centre_x + 0.9, -0.55, row_z + 0.3), 0.0))
+	if not chimney_asset.is_empty():
+		# A flue standing on the bay's own deck, against the parent wall. It
+		# claims no extra cell -- the bay's occupancy is untouched -- so the
+		# only thing it changes is the silhouette this jetty cuts against the
+		# sky, and the ordinary overhead transaction still refuses it wherever
+		# the taller envelope will not fit.
+		recipe_value.add_placement(&"chimney", chimney_asset,
+			_pose(Vector3(centre_x, 3.0, row_z - 0.45), 0.0))
 	_seal_shallow_bay_cells_and_sockets(recipe_value, minimum_x)
 	return recipe_value
 
@@ -1999,9 +2152,11 @@ static func _add_front_facade_detail(recipe_value: FabricRecipe,
 
 
 static func _add_room_shell(recipe_value: FabricRecipe, door_asset: StringName,
-		window_asset: StringName, width: float,
+		face_assets: Array[StringName], width: float,
 		modules: FabricModuleProgram, door_face: StringName = &"") -> void:
+	## `face_assets` is front/back/left/right, one authored module per face.
 	assert(door_face in [&"", &"front", &"back", &"left", &"right"])
+	assert(face_assets.size() == 4)
 	var cell_count := roundi(width / CELL)
 	assert(cell_count > 0 and cell_count % 2 == 0 \
 		and is_equal_approx(float(cell_count) * CELL, width))
@@ -2021,13 +2176,13 @@ static func _add_room_shell(recipe_value: FabricRecipe, door_asset: StringName,
 	for index in 2:
 		var offset := -1.5 + index * 3.0
 		var front_asset := door_asset \
-			if door_face == &"front" and index == door_index else window_asset
+			if door_face == &"front" and index == door_index else face_assets[0]
 		var back_asset := door_asset \
-			if door_face == &"back" and index == door_index else window_asset
+			if door_face == &"back" and index == door_index else face_assets[1]
 		var left_asset := door_asset \
-			if door_face == &"left" and index == door_index else window_asset
+			if door_face == &"left" and index == door_index else face_assets[2]
 		var right_asset := door_asset \
-			if door_face == &"right" and index == door_index else window_asset
+			if door_face == &"right" and index == door_index else face_assets[3]
 		recipe_value.add_placement(StringName("front.%d" % index),
 			front_asset, modules.facade_aligned_transform(front_asset,
 				_pose(centre + Vector3(offset, 0.0, half), 0.0),
@@ -2216,45 +2371,54 @@ static func _add_cardinal_sockets(recipe_value: FabricRecipe,
 
 
 static func _wood_window(theme: StringName) -> StringName:
-	return WOOD_WINDOW_ORANGE if theme == &"orange" else WOOD_WINDOW_BLUE
+	return facade_pool(theme)[0]
 
 
-static func _facade_window(family: StringName) -> StringName:
+static func facade_pool(family: StringName) -> Array[StringName]:
 	## Facade family is an authored construction vocabulary, not a tint. Stone
 	## upper storeys therefore use the same measured rock modules as foundations
 	## without inheriting terrain bearing; timber families retain their source
 	## pack colour variants and UVs.
-	return ROCK_WINDOW if family == &"stone" else _wood_window(family)
+	if family == &"stone":
+		return ROCK_FACADE
+	if family == &"orange":
+		return WOOD_FACADE_ORANGE
+	if family == &"amber":
+		return WOOD_FACADE_AMBER
+	return WOOD_FACADE_BLUE
+
+
+static func door_pool(family: StringName) -> Array[StringName]:
+	return ROCK_DOORS if family == &"stone" else WOOD_DOORS
+
+
+static func _facade_window(family: StringName) -> StringName:
+	return facade_pool(family)[0]
 
 
 static func _facade_plain(family: StringName) -> StringName:
 	return ROCK_PLAIN if family == &"stone" else WOOD_PLAIN
 
 
-static func _facade_door(family: StringName) -> StringName:
-	return ROCK_DOOR if family == &"stone" else WOOD_DOOR
+static func _facade_door(family: StringName, phase: int = 0) -> StringName:
+	var pool := door_pool(family)
+	return pool[posmod(phase, pool.size())]
 
 
 static func _facade_asset(family: StringName, phase: int) -> StringName:
-	if family == &"stone":
-		# Alternating complete arch and ashlar panels prevents a masonry stack from
-		# becoming the same uniform window repeated on every face and storey.
-		return ROCK_PLAIN if posmod(phase, 3) == 1 else ROCK_WINDOW
-	return _wood_facade(family, phase)
+	## Complete facade modules only. Phase changes geometry (framing, shutters,
+	## trim, or a blank board panel), never material overrides, so side textures
+	## retain the source pack's authored UVs and every collision envelope
+	## remains measured.
+	var pool := facade_pool(family)
+	return pool[posmod(phase, pool.size())]
 
 
-static func _wood_facade(theme: StringName, phase: int) -> StringName:
-	## Complete facade modules only. Phase changes geometry (shutters, rails, or
-	## lattice), never material overrides, so side textures retain the source
-	## pack's authored UVs and every collision envelope remains measured.
-	match posmod(phase, 3):
-		0:
-			return _wood_window(theme)
-		1:
-			return WOOD_WINDOW_BROAD if theme == &"orange" \
-				else WOOD_WINDOW_SHUTTER
-		_:
-			return WOOD_WINDOW_SMALL
+static func _face_phase(phase: int, face_index: int) -> int:
+	## One phase per face, so a room is four authored walls rather than the same
+	## wall stamped four times. See FACE_PHASE_OFFSETS.
+	return phase + FACE_PHASE_OFFSETS[posmod(face_index,
+		FACE_PHASE_OFFSETS.size())]
 
 
 static func _pose(origin: Vector3, yaw: float) -> Transform3D:

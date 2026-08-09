@@ -13,7 +13,15 @@ const FLEXIBLE_ORANGE_ROOF_CAP_RATIO := 0.65
 ## vocabulary compiled and available to any later stage that wants ONE course,
 ## and leaves the reviewed wood-over-stone junction exactly where it was: at the
 ## top of the ground storey.
-const UPPER_FACADE_FAMILIES: Array[StringName] = [&"blue", &"orange"]
+##
+## `amber` is the third timber family added by the vocabulary wiring wave. Two
+## colours left the streetscape graph-colouring with no move on a degree-2
+## neighbourhood -- every third house had to repeat one of its neighbours -- and
+## pushed the largest-family share hard against
+## WarrenBuiltTownSolver.TARGET_MAX_LARGEST_FACADE_FAMILY_RATIO. Its modules are
+## disjoint from the other two pools (see SettlementFabricProgram), so it is a
+## different authored wall rather than a re-phased one.
+const UPPER_FACADE_FAMILIES: Array[StringName] = [&"blue", &"orange", &"amber"]
 
 ## Situational recipe selection for already-sealed roofed parcels. It never
 ## scales a prefab or changes parcel geometry to make an asset fit.
@@ -676,7 +684,7 @@ static func _style_invariant_proposal_bounds(proposal: Dictionary,
 	## the already-fixed geometry. A later colour choice can never make two roofs
 	## intersect when the fallback hash happened to test the narrower variant.
 	var out: Array[AABB] = []
-	for theme: StringName in [&"blue", &"orange", &"stone"]:
+	for theme: StringName in [&"blue", &"orange", &"amber", &"stone"]:
 		for roof_theme: StringName in [&"blue", &"orange"]:
 			for facade_phase in 2:
 				var styled := proposal.duplicate(true)
@@ -773,7 +781,7 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 		return a_degree > b_degree if a_degree != b_degree \
 			else String(a) < String(b))
 	var assigned: Dictionary = {}
-	var theme_counts := {&"blue": 0, &"orange": 0, &"stone": 0}
+	var theme_counts := {&"blue": 0, &"orange": 0, &"amber": 0, &"stone": 0}
 	var forced_orange_roof_count := 0
 	for proposal: Dictionary in proposals:
 		forced_orange_roof_count += int(_has_forced_orange_roof(proposal))
@@ -791,7 +799,8 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 		floori(float(proposals.size()) * FLEXIBLE_ORANGE_ROOF_CAP_RATIO))
 	for proposal_id: StringName in ids:
 		var proposal := by_id[proposal_id] as Dictionary
-		var neighbor_theme_counts := {&"blue": 0, &"orange": 0, &"stone": 0}
+		var neighbor_theme_counts := {&"blue": 0, &"orange": 0, &"amber": 0,
+			&"stone": 0}
 		var neighbor_phases: Dictionary = {}
 		for seam: Dictionary in roof_topology.fact(proposal_id).junctions as Array:
 			var neighbor_id := StringName(seam.neighbor_id)

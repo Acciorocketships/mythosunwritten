@@ -489,19 +489,29 @@ static func _outcrop_candidates(program: SettlementFabricProgram,
 			StringName(endpoint.unit_id))
 		var endpoint_cell := endpoint.cell as Vector3i
 		var wood_family := _wood_family(source_unit.recipe_id)
-		var orange := wood_family == &"orange" if wood_family != &"" \
-			else posmod(endpoint_cell.x * 31 + endpoint_cell.y * 17
-				+ endpoint_cell.z * 13, 2) == 0
+		var orange := posmod(endpoint_cell.x * 31 + endpoint_cell.y * 17
+			+ endpoint_cell.z * 13, 2) == 0
+		# A wood-walled bay wears its parent's timber family, including the
+		# third family the vocabulary wave added. Falling back to the parity
+		# hash for an unrecognised parent would put an orange jetty on an amber
+		# house -- the exact "projection reads as a different building" defect
+		# `test_warren_outcrops` exists to catch.
+		var bay_family := wood_family if wood_family != &"" \
+			else &"orange" if orange else &"blue"
 		if String(endpoint.socket_id).contains(".corner."):
 			_append_corner_wrap_candidate(out, program, plan, endpoint,
-				source_unit, orange)
+				source_unit, bay_family)
 			continue
 		var variant_roll := posmod(endpoint_cell.x * 53 + endpoint_cell.y * 29
-			+ endpoint_cell.z * 41, 3)
+			+ endpoint_cell.z * 41, 4)
 		var roof_token := "teal" if cool_stack else "orange"
+		# A fourth bay family from the bake wave: the flat-capped jetty with an
+		# authored flue standing on its deck. It is the same occupied bay as
+		# `capped.corner` -- same cells, same sockets, same bonds -- so the only
+		# thing the roll changes is which silhouette the facade cuts.
 		var bay_variant := "dormer.gable.%s" % roof_token if variant_roll == 0 \
 			else "dormer.shed.%s" % roof_token if variant_roll == 1 \
-			else "capped.corner"
+			else "capped.corner" if variant_roll == 2 else "flue.corner"
 		# A half-raised occupied bay needs an authored internal stair before its
 		# ROOM seam is traversable. Interiors are deliberately deferred, so only
 		# level facade bays enter the external-circulation transaction for now.
@@ -512,8 +522,8 @@ static func _outcrop_candidates(program: SettlementFabricProgram,
 			var half_raised := false
 			var recipe_id := StringName("outcrop.%s.%s%s" % [
 				bay_variant, String(style),
-				".%s" % ("orange" if orange else "blue") \
-					if bay_variant == "capped.corner" else "",
+				".%s" % bay_family if bay_variant == "capped.corner" \
+					or bay_variant == "flue.corner" else "",
 			])
 			var recipe_value := program.recipe(recipe_id)
 			assert(recipe_value != null, String(recipe_id))
@@ -561,16 +571,16 @@ static func _outcrop_candidates(program: SettlementFabricProgram,
 
 static func _wood_family(recipe_id: StringName) -> StringName:
 	var text := String(recipe_id)
-	if text.contains("blue"):
-		return &"blue"
-	if text.contains("orange"):
-		return &"orange"
+	for family: StringName in WarrenAssetCompiler.UPPER_FACADE_FAMILIES:
+		if text.contains(String(family)):
+			return family
 	return &""
 
 
 static func _append_corner_wrap_candidate(out: Array[Dictionary],
 		program: SettlementFabricProgram, plan: SettlementFabricPlan,
-		endpoint: Dictionary, source_unit: FabricUnit, orange: bool) -> void:
+		endpoint: Dictionary, source_unit: FabricUnit,
+		bay_family: StringName) -> void:
 	## One corner oriel candidate per end-of-face socket: two overlapping
 	## squares sharing the parent corner's diagonal. The wrap hand follows
 	## which end of the face the socket names, resolved through both the
@@ -592,7 +602,7 @@ static func _append_corner_wrap_candidate(out: Array[Dictionary],
 	var bay_right := FabricRecipe.transform_direction(Vector3i.RIGHT, yaw)
 	var hand := "right" if side_world == bay_right else "left"
 	var recipe_id := StringName("outcrop.corner.wrap.%s.%s" % [hand,
-		"orange" if orange else "blue"])
+		bay_family])
 	var recipe_value := program.recipe(recipe_id)
 	assert(recipe_value != null, String(recipe_id))
 	var origin := _attached_origin(recipe_value, &"bearing.back", yaw,
