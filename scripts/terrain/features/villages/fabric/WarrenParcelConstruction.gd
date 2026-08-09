@@ -94,7 +94,14 @@ static func retained_terrace_cells(parcel: WarrenBuildingParcel) \
 		return out
 	var support := (construction.origin as Vector3i).y
 	for column: Vector2i in parcel.footprint:
-		for band in range(parcel.source.envelope.ground_at(column), support):
+		# From the column's own STAMPED GROUND, not from the declared bottom of
+		# the solid: since the undercroft wave `ground_at` may sit below the
+		# surface where a street tunnels under the column, and a plinth measured
+		# from there would fill the tunnel with foundation stone. `bearing_at`
+		# is the surface, which is where a plinth starts and where a house
+		# grounds. The two are equal on every column no tunnel passes under, and
+		# on every route-first parcel.
+		for band in range(parcel.source.envelope.bearing_at(column), support):
 			# Only mass is hill. A street cut through the gap -- the bore under
 			# a plinth, or a secondary lane tunnelling beneath a terrace -- is
 			# void the plan already removed, and declaring it as retained stone
@@ -202,28 +209,89 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	## house through all fourteen is what a viewer counts as seven storeys. The
 	## mass below the terrace is hill, not house.
 	##
-	## Across a footprint it takes the DEEPEST terrace, floored at the highest
-	## natural ground. Deepest, because a terrace is not a floor the stack rests
-	## on -- the source mass is continuous below it -- so a house spanning a
-	## step simply cuts one more room into the uphill side, which is what a hill
-	## house does. Taking the shallowest instead would refuse every footprint
-	## that crosses a terrace step. Floored at natural ground, because THAT is a
-	## real floor and burying a storey under the terrain is not a room.
+	## PER COLUMN AND HONEST since the terrain milestone's Wave 5. The datum is
+	## the HIGHEST bearing band under the footprint -- each column's own stamped
+	## ground, sampled rather than inferred -- so the stack rests on the real
+	## surface of the highest ground it covers and never floats over it. Where a
+	## footprint straddles a terrace step, the columns below that datum are the
+	## gap `retained_terrace_cells` declares and the assembler fills with
+	## sfv.foundation.rock plinth stone: the downhill side gets the course of
+	## stone that makes the house one storey taller, which is what a plinth is
+	## FOR.
+	##
+	## THE STOREY PARITY, which is the whole of the old defect. A stack meets its
+	## address only on a whole STOREY_BANDS boundary, and a ground band of the
+	## wrong parity has to be resolved one way or the other. Resolving it DOWN --
+	## `result -= 1` -- buries the house one band under its own ground, and that
+	## single line, not hill geometry, is what put 211 of 424 mass-first houses
+	## into the earth against zero plinths (task-23-report §4). An envelope that
+	## declares a `plinth_budget_bands` resolves it UP instead, onto one band of
+	## stone, which is a thing a viewer can see and a mason would build. The
+	## budget also bounds it: a straddle whose plinth would exceed the allowance
+	## falls back to the cut rather than growing a masonry terrace.
+	##
+	## Route-first envelopes leave the budget at zero and are byte-identical.
 	if parcel == null or parcel.source == null \
 			or parcel.bearing_columns.size() != parcel.footprint.size():
 		return parcel.base_band if parcel != null else 0
-	var maximum_ground := -2147483648
-	var deepest_terrace := 2147483647
+	var envelope := parcel.source.envelope
+	var highest_ground := -2147483648
+	var lowest_ground := 2147483647
 	for column: Vector2i in parcel.footprint:
-		maximum_ground = maxi(maximum_ground,
-			parcel.source.envelope.ground_at(column))
-		deepest_terrace = mini(deepest_terrace,
-			parcel.source.envelope.bearing_at(column))
-	var result := maxi(maximum_ground, deepest_terrace)
-	if posmod(parcel.base_band - result,
-			WarrenBuildingParcel.STOREY_BANDS) != 0:
-		result -= 1
-	return mini(result, parcel.base_band)
+		var ground := envelope.bearing_at(column)
+		highest_ground = maxi(highest_ground, ground)
+		lowest_ground = mini(lowest_ground, ground)
+	return resolve_support_band(highest_ground, lowest_ground,
+		parcel.base_band, envelope.plinth_budget_bands)
+
+
+## Bands of apparent face a building must present before it stops reading as a
+## shed. RESTATED, not moved: the rule production has always enforced is
+## `WarrenParcelConstruction.proposal().storeys >= 2` counted from the support
+## datum, and that datum was one band UNDER the ground whenever the address
+## offset was odd -- so the old bar was six bands of face on an even offset and
+## five on an odd one, and this single number is exactly that pair
+## (`MIN_STOREYS * STOREY_BANDS + ROOF_RESERVATION_BANDS - 1`), because an even
+## offset can only ever produce an even face. The equivalence is proved by test
+## over the whole reachable input space rather than argued here.
+##
+## Why restate it at all: the storey form credited a room buried under the
+## terrain, so it could not survive honest grounding (Wave 5), while the face
+## form says the thing the reviewer actually judges -- how tall the building
+## looks from the ground it stands on -- and counts the plinth stone that makes
+## up the band an odd offset cannot buy.
+const MIN_APPARENT_FACE_BANDS := 5
+
+
+static func apparent_face_bands(parcel: WarrenBuildingParcel) -> int:
+	## Bands of this building a viewer sees standing on the ground it is cut
+	## into: its roof band minus the HIGHEST stamped ground under its own
+	## footprint. Plinth stone counts (it is visible and load-bearing); anything
+	## under the terrain does not.
+	if parcel == null or parcel.source == null:
+		return 0
+	var ground := -2147483648
+	for column: Vector2i in parcel.footprint:
+		ground = maxi(ground, parcel.source.envelope.bearing_at(column))
+	return parcel.top_band - mini(ground, parcel.base_band)
+
+
+static func resolve_support_band(highest_ground: int, lowest_ground: int,
+		base_band: int, plinth_budget: int) -> int:
+	## The one place the support datum's storey parity is resolved. Shared
+	## rather than restated because WarrenSolidPartitioner has to predict this
+	## answer twice -- once to size an envelope (`_minimum_bands`) and once to
+	## bucket an unowned street wall (`_wall_verdict`) -- and three copies of a
+	## `result -= 1` are how a buried house becomes invisible to the audit that
+	## exists to catch it.
+	var result := mini(highest_ground, base_band)
+	if posmod(base_band - result, WarrenBuildingParcel.STOREY_BANDS) != 0:
+		if plinth_budget > 0 and result < base_band \
+				and result + 1 - lowest_ground <= plinth_budget:
+			result += 1
+		else:
+			result -= 1
+	return mini(result, base_band)
 
 
 static func _yaw_for_frontage(frontage: Vector2i) -> int:

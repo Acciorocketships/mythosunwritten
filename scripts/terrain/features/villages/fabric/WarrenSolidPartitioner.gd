@@ -508,15 +508,16 @@ static func _wall_verdict(massif: WarrenMassif, excavation: WarrenExcavation,
 	if envelope < WarrenBuildingParcel.STOREY_BANDS \
 			+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS:
 		return &"kerb"
-	# Storeys as WarrenParcelConstruction.proposal() counts them: the envelope's
-	# own rooms plus whatever complete storeys its bearing stack adds beneath
-	# the addressed floor -- which stops at the terrace, not at natural ground.
-	var support := massif.bearing_at(column)
-	if posmod(base - support, WarrenBuildingParcel.STOREY_BANDS) != 0:
-		support -= 1
-	var storeys := (envelope - WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
-		+ base - support) / WarrenBuildingParcel.STOREY_BANDS
-	if storeys < AUDIT_MIN_STOREYS:
+	# APPARENT FACE above this column's own stamped ground -- the same honest
+	# restatement `_minimum_bands` carries, and arithmetically identical to the
+	# storeys-from-support form it replaces on every offset. The audit stays
+	# independent of the partitioner's admission code; what it stops sharing is
+	# a support datum the storey-parity fudge had pushed under the terrain.
+	var ground := mini(massif.bearing_at(column), base)
+	var target := AUDIT_MIN_STOREYS * WarrenBuildingParcel.STOREY_BANDS \
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+	if envelope + base - ground < target \
+			- posmod(base - ground, WarrenBuildingParcel.STOREY_BANDS):
 		return &"short"
 	return &"unowned"
 
@@ -567,20 +568,26 @@ static func _minimum_bands(massif: WarrenMassif, footprint: Array[Vector2i],
 		# A mixed-span parcel deliberately stays at its addressed level rather
 		# than descending, so it must carry its own storeys.
 		return maxi(MIN_HOUSE_BANDS, needed)
-	# The deepest terrace under the footprint, floored at the highest natural
-	# ground -- WarrenParcelConstruction._support_base_band's rule exactly, and
-	# for its reasons: a terrace caps the descent, terrain ends it.
+	# APPARENT FACE, counted from the stamped ground under the footprint rather
+	# than from the support datum. Identical arithmetic to the pre-Wave-5 rule
+	# on every offset (verified case by case: an even offset always matched, and
+	# an odd one matched because the support was pushed one band UNDER the
+	# ground and the even round-up gave the band straight back). What changes is
+	# only what the sentence MEANS: it no longer credits a room buried under the
+	# terrain, and where an odd address offset leaves the target one band out of
+	# reach the missing band is the plinth stone the house now stands on
+	# (WarrenMassif.PLINTH_BUDGET_BANDS) instead of a storey nobody can see.
+	#
+	# Rounded DOWN to the envelope's own even step, and that direction is forced
+	# rather than chosen: an envelope is even (WarrenBuildingParcel.seal), and
+	# rounding an odd offset UP would demand seven bands over a street standing
+	# one band above its ground -- one more than WarrenMassif's whole buildable
+	# layer, so no such house could exist anywhere.
 	var ground := -(1 << 30)
-	var terrace := 1 << 30
 	for column: Vector2i in footprint:
-		ground = maxi(ground, massif.base_at(column))
-		terrace = mini(terrace, massif.bearing_at(column))
-	ground = maxi(ground, terrace)
-	var support := ground
-	if posmod(base - ground, WarrenBuildingParcel.STOREY_BANDS) != 0:
-		support -= 1
-	needed -= base - mini(support, base)
-	return maxi(MIN_HOUSE_BANDS, needed + posmod(needed, 2))
+		ground = maxi(ground, massif.bearing_at(column))
+	needed -= base - mini(ground, base)
+	return maxi(MIN_HOUSE_BANDS, needed - posmod(needed, 2))
 
 
 static func _face_before(left: Dictionary, right: Dictionary,

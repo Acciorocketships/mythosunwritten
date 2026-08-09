@@ -205,10 +205,18 @@ func test_parcels_satisfy_the_whole_downstream_parcel_contract() -> void:
 			assert_true(plan.has_frontage(parcel.address_walk_cell),
 				("seed %d: parcel %s addresses a cell with no recognised " \
 				+ "frontage") % [world_seed, parcel.stable_id])
-			assert_gt(int(WarrenParcelConstruction.proposal(parcel).get(
-					"storeys", 0)), 1,
-				("seed %d: parcel %s builds as a visually short house, which " \
-				+ "production forbids") % [world_seed, parcel.stable_id])
+			# Production's own rule, called through production's own predicate
+			# rather than restated here as a storey count. The storey form was
+			# only ever a proxy for it and it counted a room the storey-parity
+			# fudge had buried under the terrain, which is why it could not
+			# survive honest grounding -- see
+			# WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS and the
+			# equivalence test in this suite.
+			assert_false(WarrenParcelizer._is_visually_short(parcel),
+				("seed %d: parcel %s builds as a visually short house (%d "
+				+ "bands of apparent face), which production forbids")
+				% [world_seed, parcel.stable_id,
+				WarrenParcelConstruction.apparent_face_bands(parcel)])
 
 
 func test_a_partition_that_claims_joinable_roofs_really_compiles() -> void:
@@ -1279,3 +1287,114 @@ func test_no_composed_vertical_face_reads_as_a_tower() -> void:
 		"seed %d presents %d unbroken bands -- %d storeys of one wall" % [
 			worst_seed, tallest,
 			tallest / WarrenBuildingParcel.STOREY_BANDS])
+
+
+func test_the_apparent_face_rule_is_the_storey_rule_restated() -> void:
+	## THE EQUIVALENCE PROOF, over the whole reachable input space rather than
+	## on a sample. Production's "visually short" rule was
+	## `proposal().storeys >= 2`, counted from a support datum the storey-parity
+	## fudge pushed one band UNDER the ground whenever the address offset was
+	## odd. Wave 5 stops burying that band, so the storey form had to be
+	## restated -- and a restatement that changed any verdict would be a gate
+	## move wearing a comment.
+	##
+	## Inputs: an envelope of any legal height (even, at least the seal
+	## minimum) at any address offset the buildable layer can present.
+	var checked := 0
+	for offset in range(0, WarrenMassif.BUILDABLE_LAYER_BANDS + 1):
+		for envelope in range(WarrenBuildingParcel.STOREY_BANDS
+				+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS,
+				WarrenMassif.BUILDABLE_LAYER_BANDS * 2 + 1, 2):
+			# The old rule, spelled out: storeys counted from the support the
+			# parity fudge produced.
+			var support := -offset
+			if posmod(offset, WarrenBuildingParcel.STOREY_BANDS) != 0:
+				support -= 1
+			var storeys := (envelope
+				- WarrenBuildingParcel.ROOF_RESERVATION_BANDS - support) \
+				/ WarrenBuildingParcel.STOREY_BANDS
+			var was_short := storeys < 2
+			# The new rule: bands of face above the ground, plinth included.
+			var is_short := envelope + offset \
+				< WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS
+			assert_eq(is_short, was_short,
+				("offset %d, envelope %d: the apparent-face rule says %s and "
+				+ "the storey rule said %s") % [offset, envelope,
+				str(is_short), str(was_short)])
+			checked += 1
+	assert_gt(checked, 20, "the equivalence sweep covered nothing")
+	# TEETH, so the restatement is not vacuously true of everything: a kerb is
+	# still short, and the shortest thing that clears the bar is the five-band
+	# face an odd offset produces -- the one the plinth stone completes.
+	assert_true(WarrenBuildingParcel.STOREY_BANDS
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+		< WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS,
+		"a bare seal-minimum envelope at grade must still read as short")
+	assert_eq(WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS,
+		WarrenSolidPartitioner.MIN_STOREYS * WarrenBuildingParcel.STOREY_BANDS
+			+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS - 1,
+		"the bar is the storey minimum less the one band an odd offset cannot "
+		+ "buy, which is the band the plinth supplies")
+
+
+func test_no_house_is_buried_and_a_parity_offset_becomes_a_plinth() -> void:
+	## THE GROUNDING CONTRACT (terrain milestone, Wave 5). Measured over the
+	## stamped-hill corpus rather than asserted on a fixture, because the defect
+	## it replaces was a corpus statistic: 211 of 424 houses rooted exactly one
+	## band under their own ground and not one plinth anywhere
+	## (task-23-report §4).
+	##
+	## Three claims, and the third is what makes the first two more than a
+	## rename: nothing is buried, the support never floats above the ground it
+	## claims to rest on beyond the plinth budget, and every band between the
+	## stamped surface and the support is DECLARED as plinth cells -- so the
+	## stone a house stands on is stone the assembler will actually place, not a
+	## gap it hovers over.
+	var houses := 0
+	var buried := 0
+	var plinths := 0
+	var declared := 0
+	var over_budget := 0
+	for world_seed in range(0, 6):
+		var massif := WarrenMassifBuilder.build(world_seed, _hill(world_seed))
+		if massif == null:
+			continue
+		var excavation := WarrenExcavationCarver.carve(world_seed, massif)
+		if excavation == null:
+			continue
+		var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if plan == null:
+			continue
+		for parcel: WarrenBuildingParcel in WarrenSolidPartitioner.partition(
+				massif, excavation, plan):
+			var construction := WarrenParcelConstruction.proposal(parcel)
+			if construction.is_empty():
+				continue
+			houses += 1
+			var support := (construction.origin as Vector3i).y
+			var lowest := 1 << 30
+			for column: Vector2i in parcel.footprint:
+				lowest = mini(lowest, plan.envelope.bearing_at(column))
+			buried += int(support < lowest)
+			var lift := support - lowest
+			if lift > 0:
+				plinths += 1
+				over_budget += int(lift
+					> plan.envelope.plinth_budget_bands)
+				declared += int(
+					WarrenParcelConstruction.retained_terrace_cells(parcel).size()
+					> 0)
+	assert_gt(houses, 0, "no house to measure")
+	assert_eq(buried, 0,
+		"%d of %d houses are rooted below the lowest ground under their own "
+		% [buried, houses] + "footprint")
+	assert_eq(over_budget, 0,
+		"%d houses stand on more stone than WarrenMassif.PLINTH_BUDGET_BANDS "
+		% over_budget + "allows")
+	assert_gt(plinths, 0,
+		"not one house in %d stands on a plinth, so the budget is doing "
+		% houses + "nothing and the parity is still being resolved downward")
+	assert_eq(declared, plinths,
+		"%d of %d plinthed houses declare no retained cells, so their stone "
+		% [plinths - declared, plinths] + "is never placed and they float")

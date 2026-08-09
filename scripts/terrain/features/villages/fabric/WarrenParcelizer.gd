@@ -789,7 +789,14 @@ static func _is_one_storey_wide(parcel: WarrenBuildingParcel) -> bool:
 
 
 static func _is_visually_short(parcel: WarrenBuildingParcel) -> bool:
-	return int(WarrenParcelConstruction.proposal(parcel).storeys) < 2
+	## APPARENT FACE, which is the same verdict this always returned and no
+	## longer depends on a support datum buried under the terrain -- see
+	## WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS for the equivalence and
+	## why the storey form could not survive honest grounding.
+	if WarrenParcelConstruction.proposal(parcel).is_empty():
+		return true
+	return WarrenParcelConstruction.apparent_face_bands(parcel) \
+		< WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS
 
 
 static func _is_tall_construction(parcel: WarrenBuildingParcel) -> bool:

@@ -23,6 +23,7 @@ static func envelope_from_massif(massif: WarrenMassif) -> WarrenVolumeEnvelope:
 	envelope.world_seed = massif.world_seed
 	envelope.address_bands = WarrenMassif.ADDRESS_BANDS
 	envelope.upper_route_crossovers = WarrenMassif.UPPER_ROUTE_CROSSOVERS
+	envelope.plinth_budget_bands = WarrenMassif.PLINTH_BUDGET_BANDS
 	var min_x := 2147483647
 	var max_x := -2147483648
 	var min_z := 2147483647

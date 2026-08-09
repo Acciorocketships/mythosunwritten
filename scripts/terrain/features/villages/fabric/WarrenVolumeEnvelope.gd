@@ -38,6 +38,13 @@ var height_bands: Dictionary = {}
 var mass_cells: Dictionary = {}
 var address_bands: int = DEFAULT_ADDRESS_BANDS
 var upper_route_crossovers: int = DEFAULT_UPPER_ROUTE_CROSSOVERS
+## Bands of stone a house standing in this envelope may be lifted onto so its
+## storey stack meets its address, instead of being cut one band down into the
+## ground under it. ZERO by default, which is exactly the behaviour every
+## route-first plan has always had, so this field can only ever change a town
+## whose envelope opts in (WarrenMassif.PLINTH_BUDGET_BANDS). See
+## WarrenParcelConstruction._support_base_band for what the two settings do.
+var plinth_budget_bands: int = 0
 var last_rejection := ""
 var _sealed := false
 

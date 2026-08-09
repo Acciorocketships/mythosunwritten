@@ -839,7 +839,11 @@ func _report_plinth() -> void:
 			var lowest := 1 << 30
 			var highest := -(1 << 30)
 			for column: Vector2i in parcel.footprint:
-				var ground := plan.envelope.ground_at(column)
+				# The STAMPED SURFACE, not the declared bottom of the solid:
+				# since the undercroft wave `ground_at` drops below the surface
+				# wherever a street tunnels under a column, and this measurement
+				# is about the ground a house stands on.
+				var ground := plan.envelope.bearing_at(column)
 				lowest = mini(lowest, ground)
 				highest = maxi(highest, ground)
 			houses += 1

@@ -116,8 +116,14 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 		# set, so this is has_walk() exactly for every route-first plan.
 		if not source.has_frontage(parcel.address_walk_cell):
 			detached_count += 1
-		visually_short_count += int(int(WarrenParcelConstruction.proposal(
-			parcel).storeys) < 2)
+		# APPARENT FACE, the same restatement WarrenParcelizer._is_visually_short
+		# uses and the same verdict the storey form gave -- see
+		# WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS. The two must agree:
+		# one is what the packer refuses, the other is what the audit reports.
+		visually_short_count += int(WarrenParcelConstruction.proposal(
+			parcel).is_empty()
+			or WarrenParcelConstruction.apparent_face_bands(parcel)
+				< WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS)
 		grounded_count += int(parcel.base_band == source.envelope.ground_at(
 			parcel.threshold_column))
 		var footprint_family := "%dx%d" % [parcel.width_cells,

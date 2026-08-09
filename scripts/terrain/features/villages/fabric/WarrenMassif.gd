@@ -74,6 +74,27 @@ const ADDRESS_BANDS := 4
 ## fails.
 const UPPER_ROUTE_CROSSOVERS := 1
 
+## Bands of stone a house cut from this class may stand on, carried to the
+## parcel stage as WarrenVolumeEnvelope.plinth_budget_bands. Route-first keeps
+## the field at zero and is byte-identical.
+##
+## ONE STOREY, which is the reviewer's own unit for this: "stone should only be
+## used sparingly to make a house one storey taller" (ledger line 182), softened
+## at line 191 to "sparing visible stone is fine where purposeful". A storey is
+## WarrenBuildingParcel.STOREY_BANDS = 2 bands, so two is the whole allowance and
+## a taller step is not a plinth but the masonry terrace-farm rounds 2-3
+## rejected.
+##
+## WHAT IT BUYS, measured. A house's stack has to meet its address on a whole
+## STOREY_BANDS boundary. With no budget the only way to make the arithmetic
+## work is to drop the support one band BELOW the ground the house stands on --
+## which is where 211 of 424 mass-first houses were found buried exactly one
+## band, against zero plinths and only five footprints straddling a real step
+## (task-23-report §4). The parity is a fact about the address, not about the
+## hill, and the honest place to spend it is a course of stone under the house
+## rather than a storey of it underground.
+const PLINTH_BUDGET_BANDS := WarrenBuildingParcel.STOREY_BANDS
+
 var world_seed: int
 var columns: Dictionary = {}
 var core_top_bands: int = 0
