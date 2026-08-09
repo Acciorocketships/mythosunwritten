@@ -258,3 +258,99 @@ func test_the_chimney_pool_offers_more_than_one_stack() -> void:
 			"%s is not tagged as a chimney" % asset_id)
 	assert_gte(SettlementFabricProgram.ROOF_CHIMNEYS.size(), 3,
 		"the roof still has one chimney silhouette")
+
+
+## A wider pool must widen CHOICE, not multiply SEARCH. Both properties below
+## pin that separation at the two places this wave crossed it, because both
+## regressions were invisible to every other suite: they cost time, not
+## correctness, and a slow solve fails no assertion.
+
+
+func test_a_placement_offers_no_more_stall_families_than_the_pre_wave_pool()\
+		-> void:
+	## Each candidate WarrenMarketSolver emits costs _admit_markets one complete
+	## WarrenFabricCompiler.solve whether it is admitted or refused, so the
+	## per-placement family walk multiplies the whole market pass. Seven is the
+	## width the pool itself had before the bake wave, so this is the count the
+	## reviewed code already paid -- and it may not grow again with the pool.
+	assert_lte(WarrenMarketSolver.MAX_FAMILIES_PER_PLACEMENT, 7,
+		"one placement now costs the market pass more than it did pre-wave")
+	assert_gte(WarrenMarketSolver.MAX_FAMILIES_PER_PLACEMENT, 2,
+		"a placement with no alternative family cannot recover from a refusal")
+
+
+func test_the_bounded_family_walk_still_reaches_every_stall_in_the_pool()\
+		-> void:
+	## The bound is only free if the POOL is still what a town draws from. The
+	## window's start is a function of the placement origin and the world seed,
+	## so it slides: this asserts the union of windows over ordinary placement
+	## origins covers every entry, for each of several seeds independently --
+	## i.e. no stall is unreachable in any given town.
+	var pool := SettlementFabricProgram.MARKET_STALLS.size()
+	for world_seed in [0, 7, 11, 4242]:
+		var reached: Dictionary = {}
+		for x in range(-12, 13):
+			for z in range(-12, 13):
+				var first := WarrenMarketSolver._family(Vector3i(x, 0, z),
+					world_seed)
+				for offset in mini(WarrenMarketSolver.MAX_FAMILIES_PER_PLACEMENT,
+						pool):
+					reached[posmod(first + offset, pool)] = true
+		assert_eq(reached.size(), pool,
+			"seed %d can never draw %d of the %d stalls" % [world_seed,
+				pool - reached.size(), pool])
+
+
+func test_the_style_invariant_envelope_union_repeats_no_box() -> void:
+	## parcels_are_visually_compatible compares every box of one house against
+	## every box of the other, so a duplicate box costs the pair search
+	## QUADRATICALLY while proving nothing -- an overlap against a repeat is an
+	## overlap that was already found. Almost every style leaves the geometry
+	## alone (the facade families draw different authored walls at identical
+	## widths), so the raw union over the style table is mostly repeats and the
+	## table's width was silently a search multiplier.
+	var proposal := {
+		"stable_id": &"style.union.probe",
+		"kind": &"tower",
+		"origin": Vector3i.ZERO,
+		"yaw_quarters": 0,
+		"storeys": 2,
+		"route_y": 0,
+	}
+	var bounds := WarrenAssetCompiler._style_invariant_proposal_bounds(proposal,
+		_program)
+	assert_gt(bounds.size(), 0, "the probe proposal compiled no envelope")
+	var seen: Dictionary = {}
+	for box: AABB in bounds:
+		assert_false(seen.has(box), "the style union repeats %s" % box)
+		seen[box] = true
+
+
+func test_the_style_invariant_envelope_union_still_covers_every_style() -> void:
+	## The dedup may only remove REPEATS. Any box a legal style produces must
+	## still be in the union, or a later colour choice could make two roofs
+	## intersect on a pair the search qualified.
+	var proposal := {
+		"stable_id": &"style.union.probe",
+		"kind": &"tower",
+		"origin": Vector3i.ZERO,
+		"yaw_quarters": 0,
+		"storeys": 2,
+		"route_y": 0,
+	}
+	var union: Dictionary = {}
+	for box: AABB in WarrenAssetCompiler._style_invariant_proposal_bounds(
+			proposal, _program):
+		union[box] = true
+	for theme: StringName in [&"blue", &"orange", &"amber", &"stone"]:
+		for roof_theme: StringName in [&"blue", &"orange"]:
+			for facade_phase in 2:
+				var styled := proposal.duplicate(true)
+				styled["theme"] = theme
+				styled["roof_theme"] = roof_theme
+				styled["facade_phase"] = facade_phase
+				for box: AABB in WarrenAssetCompiler._proposal_component_bounds(
+						styled, _program):
+					assert_true(union.has(box),
+						"%s/%s/%d lost the envelope %s" % [theme, roof_theme,
+							facade_phase, box])

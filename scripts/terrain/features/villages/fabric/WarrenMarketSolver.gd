@@ -10,6 +10,26 @@ const REQUIRED_MARKETS := 2
 ## stocked stalls up to this target, turning spare ground frontage into a
 ## readable bazaar instead of leaving raw grass beneath the upper maze.
 const TARGET_MARKETS := 6
+## How many stall families ONE placement may put in front of the admission
+## pass -- NOT how wide the pool is.
+##
+## Every candidate this function emits costs
+## WarrenBuiltTownSolver._admit_markets a complete WarrenFabricCompiler.solve,
+## whether that candidate is admitted or refused, so the candidate count
+## multiplies the whole market pass. Emitting one candidate per family per
+## placement made the pool's WIDTH a multiplier on SEARCH: the
+## bake wave's 7 -> 20 widening tripled the list (931 -> 2660 on seed 7) and
+## added 408 s to a 575 s mass-first detail solve, measured with
+## `warren_mass_first_report.gd --stage timing`.
+##
+## The pool's width does not need to be a multiplier, because it is already a
+## CHOICE: `_family` picks each placement's first family from the whole pool as
+## a function of its origin and the world seed, so the window slides across all
+## twenty entries within one town and shifts again between towns. Bounding the
+## walk therefore costs variety nothing and restores the pre-wave candidate
+## count exactly -- seven is the width the shipped pool itself had, so no
+## placement is offered fewer alternatives than the reviewed code gave it.
+const MAX_FAMILIES_PER_PLACEMENT := 7
 const MARKET_MINIMUM := Vector3i(-2, 0, -1)
 const MARKET_SIZE := Vector3i(4, 3, 2)
 
@@ -54,7 +74,8 @@ static func candidate_specs(program: SettlementFabricProgram,
 				if not _backs_onto_mass(origin, yaw, mass_columns):
 					continue
 				var first_family := _family(origin, world_seed)
-				for family_offset in SettlementFabricProgram.MARKET_STALLS.size():
+				for family_offset in mini(MAX_FAMILIES_PER_PLACEMENT,
+						SettlementFabricProgram.MARKET_STALLS.size()):
 					var family := posmod(first_family + family_offset,
 						SettlementFabricProgram.MARKET_STALLS.size())
 					var recipe_id := StringName("market.stall.%02d" % family)

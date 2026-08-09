@@ -683,7 +683,20 @@ static func _style_invariant_proposal_bounds(proposal: Dictionary,
 	## envelopes. Search therefore qualifies the union of every legal style for
 	## the already-fixed geometry. A later colour choice can never make two roofs
 	## intersect when the fallback hash happened to test the narrower variant.
+	##
+	## The union is DEDUPLICATED, and that is a cost fix rather than a contract
+	## change: both consumers only ever ask "does this box overlap ANY box in
+	## the list", so a repeated box can neither add nor remove an overlap. It
+	## matters because almost every style leaves the geometry alone -- the
+	## facade families draw different authored walls at identical widths -- so
+	## the raw union is mostly N copies of the same box, and the pairwise
+	## overlap loop in parcels_are_visually_compatible pays for the copies
+	## SQUARED. Widening the family table therefore used to multiply search
+	## rather than choice: the third family alone took the union from 12 style
+	## combinations to 16 and the loop from 144 to 256 comparisons per
+	## component pair.
 	var out: Array[AABB] = []
+	var seen: Dictionary = {}
 	for theme: StringName in [&"blue", &"orange", &"amber", &"stone"]:
 		for roof_theme: StringName in [&"blue", &"orange"]:
 			for facade_phase in 2:
@@ -694,7 +707,11 @@ static func _style_invariant_proposal_bounds(proposal: Dictionary,
 				var bounds := _proposal_component_bounds(styled, program)
 				if bounds.is_empty():
 					return [] as Array[AABB]
-				out.append_array(bounds)
+				for box: AABB in bounds:
+					if seen.has(box):
+						continue
+					seen[box] = true
+					out.append(box)
 	return out
 
 
