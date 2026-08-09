@@ -72,6 +72,13 @@ extends SceneTree
 ##   --stage contact   both pipelines' building-contact metrics side by side,
 ##                     parcel-weighted against cell-weighted. Use it when
 ##                     touching the construction gate's contact threshold.
+##   --stage variety   what a viewer reads as VARIETY on the detailed town the
+##                     preview renders: how many distinct wall/gable assets the
+##                     facades draw, the longest run of one wall asset along a
+##                     single street face, how many skywalks and outcrops the
+##                     detail phases admitted, and how many market-stall
+##                     families appear. The wiring wave's before/after ledger --
+##                     roughly a minute a seed.
 ##   --seeds 1,3,4     seed list (default: the mass-first review corpus).
 ##
 ## Usage:
@@ -133,6 +140,10 @@ func _init() -> void:
 		return
 	if _stage == "read":
 		_report_read()
+		quit()
+		return
+	if _stage == "variety":
+		_report_variety()
 		quit()
 		return
 	if _stage == "terrain":
@@ -1186,6 +1197,144 @@ func _report_envelopes() -> void:
 		print("%-42s bounds=%s clearance=%s overhang x=%.3f z=%.3f" % [
 			recipe.recipe_id, bounds.size, clearance.size, overhang_x,
 			overhang_z])
+
+
+func _report_variety() -> void:
+	## The wiring wave's before/after ledger. Everything here is read off the
+	## SAME detailed fabric the preview renders, so a number and an image can
+	## never disagree about which town they describe.
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	var catalog := EnvironmentCatalog.load_default()
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
+	for world_seed: int in _seeds:
+		var attempt := WarrenBuiltTownSolver.diagnostic_best_effort(world_seed,
+			program)
+		var fabric := attempt.get("fabric") as SettlementFabricPlan
+		if fabric == null:
+			print("seed %2d VARIETY no fabric -- %s" % [world_seed,
+				WarrenBuiltTownSolver.last_failure])
+			continue
+		var audit := variety_audit(fabric, catalog)
+		print(("seed %2d VARIETY walls %d distinct / %d placed | longest same-"
+			+ "asset street run %d | skywalks %d | outcrops %d | stalls %d "
+			+ "distinct | roof features %d distinct") % [world_seed,
+			int(audit.distinct_wall_assets), int(audit.placed_wall_assets),
+			int(audit.longest_same_asset_run), int(audit.skywalk_unit_count),
+			int(audit.outcrop_unit_count), int(audit.distinct_stall_assets),
+			int(audit.distinct_roof_feature_assets)])
+		var supply := overhead_supply_audit(program, fabric, world_seed)
+		print(("seed %2d SUPPLY raw skywalk corridors %d, raw outcrop bays %d "
+			+ "on the finished town | admitted %d/%d skywalks, %d/%d outcrops")
+			% [world_seed, int(supply.raw_skywalks), int(supply.raw_outcrops),
+			int(audit.skywalk_unit_count), WarrenBuiltTownSolver.MAX_SKYWALKS,
+			int(audit.outcrop_unit_count), WarrenBuiltTownSolver.MAX_OUTCROPS])
+	SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = false
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+static func overhead_supply_audit(program: SettlementFabricProgram,
+		fabric: SettlementFabricPlan, world_seed: int) -> Dictionary:
+	## Budget or supply? Counts every overhead corridor and bay the FINISHED
+	## town's socket geometry still offers, unqualified. A budget is binding
+	## only when the admitted count sits AT the cap; a raw supply far above an
+	## admitted count well under the cap means the refusals are downstream of
+	## enumeration, in the exact transaction, not in the budget.
+	##
+	## Deliberately does not re-run the qualifying pass: that pass rebuilds every
+	## sealed unit's bounds per candidate and costs more than the whole solve.
+	var raw_skywalks := 0
+	var raw_outcrops := 0
+	for candidate: Dictionary in WarrenOverheadSolver.candidate_specs(program,
+			fabric, world_seed, false):
+		if StringName(candidate.category) == &"skywalk":
+			raw_skywalks += 1
+		else:
+			raw_outcrops += 1
+	return {
+		"raw_skywalks": raw_skywalks,
+		"raw_outcrops": raw_outcrops,
+	}
+
+
+static func variety_audit(fabric: SettlementFabricPlan,
+		catalog: EnvironmentCatalog) -> Dictionary:
+	## Read-only. Wall variety is counted over the assets the catalog itself
+	## calls walls, never over an id-prefix guess, so a future bake wave that
+	## renames a family cannot silently drop out of the measurement.
+	var wall_placements: Array[Dictionary] = []
+	var distinct_walls: Dictionary = {}
+	var distinct_stalls: Dictionary = {}
+	var distinct_roof_features: Dictionary = {}
+	for placement: Dictionary in fabric.expanded_placements():
+		var asset_id := StringName(placement.asset_id)
+		var descriptor := catalog.descriptor(asset_id)
+		if descriptor == null:
+			continue
+		if descriptor.tags.has(&"fabric_wall") \
+				or descriptor.tags.has(&"fabric_gable"):
+			distinct_walls[asset_id] = true
+			wall_placements.append({
+				"asset_id": asset_id,
+				"origin": (placement.transform as Transform3D).origin,
+			})
+		if descriptor.tags.has(&"stall"):
+			distinct_stalls[asset_id] = true
+		if descriptor.tags.has(&"dormer") or descriptor.tags.has(&"roof_seam") \
+				or descriptor.tags.has(&"chimney"):
+			distinct_roof_features[asset_id] = true
+	var skywalks := 0
+	var outcrops := 0
+	for unit_value: FabricUnit in fabric.units:
+		var text := String(unit_value.stable_id)
+		if text.begins_with("overhead.skywalk.") \
+				or text.begins_with("overhead.corner."):
+			skywalks += 1
+		elif text.begins_with("overhead.outcrop."):
+			outcrops += 1
+	return {
+		"distinct_wall_assets": distinct_walls.size(),
+		"placed_wall_assets": wall_placements.size(),
+		"longest_same_asset_run": _longest_same_asset_run(wall_placements),
+		"skywalk_unit_count": skywalks,
+		"outcrop_unit_count": outcrops,
+		"distinct_stall_assets": distinct_stalls.size(),
+		"distinct_roof_feature_assets": distinct_roof_features.size(),
+	}
+
+
+static func _longest_same_asset_run(wall_placements: Array[Dictionary]) -> int:
+	## "How repetitive does one street face look" -- the longest chain of wall
+	## modules sharing an asset id that also share a wall plane (same height,
+	## same axis coordinate) and sit one 3 m module apart along that plane.
+	## Bounded to the placements the town actually drew, so the measurement is
+	## a fact about the render rather than about the recipe tables.
+	var lanes: Dictionary = {}
+	for placement: Dictionary in wall_placements:
+		var origin := placement.origin as Vector3
+		for axis in 2:
+			var along := origin.z if axis == 0 else origin.x
+			var across := origin.x if axis == 0 else origin.z
+			var key := "%s|%d|%d|%d" % [placement.asset_id, axis,
+				roundi(across * 10.0), roundi(origin.y * 10.0)]
+			if not lanes.has(key):
+				# Deliberately an Array, not a PackedFloat32Array: the packed
+				# types are VALUE types, so `dict[key].append(...)` mutates a
+				# copy and every lane silently stays empty.
+				lanes[key] = []
+			(lanes[key] as Array).append(along)
+	var longest := 0
+	for key: Variant in lanes:
+		var sorted := (lanes[key] as Array).duplicate()
+		sorted.sort()
+		var run := 1
+		for index in range(1, sorted.size()):
+			var step: float = absf(float(sorted[index]) - float(sorted[index - 1]))
+			run = run + 1 if step > 0.01 and step < 3.2 else 1
+			longest = maxi(longest, run)
+		longest = maxi(longest, mini(run, sorted.size()))
+	return longest
 
 
 func _report_contact() -> void:
