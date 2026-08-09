@@ -132,6 +132,7 @@ func _solve_fabric(program: SettlementFabricProgram) -> void:
 	if towns.is_empty():
 		printerr("[mass_first_preview] seed=%d has no ranked candidate: %s" % [
 			_world_seed, WarrenTownSolver.last_failure])
+		_solve_ungated(program)
 		return
 	for town: WarrenTownPlan in towns:
 		var assets := WarrenAssetCompiler.solve(town, program)
@@ -158,6 +159,50 @@ func _read_args() -> void:
 			_terrain = false
 		elif args[index] == "--site" and index + 1 < args.size():
 			_production_site = args[index + 1] != "origin"
+
+
+func _solve_ungated(program: SettlementFabricProgram) -> void:
+	## LAST-RESORT DIAGNOSTIC, and the loudest one in this file. It composes a
+	## parcel plan that WarrenTownSolver._passes_construction_gate REFUSED, so
+	## the image it produces is of a town the pipeline does not admit. It exists
+	## because the buildable-layer wave left mass-first composition failing on
+	## every stamped seed at that gate -- a pre-existing mass-first weakness the
+	## acceptance wave owns -- and "no picture at all" is a worse answer to
+	## "what does the thin layer look like" than "a picture of a refused town,
+	## labelled as one".
+	##
+	## NEVER quote an image from this path as a town passing anything.
+	for volume: WarrenVolumePlan in WarrenTownSolver.mass_first_frontier(
+			_world_seed, _ground_bands):
+		for parcels: WarrenParcelPlan in WarrenTownSolver._parcel_variants(
+				volume, program):
+			var town := WarrenTownSolver._compose_plan(_world_seed, volume,
+				parcels)
+			if town == null:
+				print("[mass_first_preview]   ungated compose: %s"
+					% WarrenTownSolver.last_failure)
+				continue
+			var assets := WarrenAssetCompiler.solve(town, program)
+			if assets == null:
+				print("[mass_first_preview]   ungated assets: %s"
+					% WarrenAssetCompiler.last_failure)
+				continue
+			var fabric := WarrenFabricCompiler.solve(assets)
+			if fabric == null:
+				print("[mass_first_preview]   ungated fabric: %s"
+					% WarrenFabricCompiler.last_failure)
+				continue
+			_fabric = fabric
+			print(("[mass_first_preview] seed=%d UNGATED DIAGNOSTIC: this town "
+				+ "was REFUSED by the construction gate and is drawn anyway "
+				+ "(parcels=%d contact=%.2f families=%d)") % [_world_seed,
+				int(parcels.audit.parcel_count),
+				float(parcels.audit.get(
+					"largest_building_contact_component_cell_ratio", 0.0)),
+				int(parcels.audit.footprint_family_count)])
+			return
+	printerr("[mass_first_preview] seed=%d: even the ungated diagnostic "
+		% _world_seed + "reached no fabric")
 
 
 func _build_environment() -> void:
