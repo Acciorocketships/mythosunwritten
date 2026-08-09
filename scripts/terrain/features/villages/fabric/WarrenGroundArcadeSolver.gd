@@ -323,10 +323,9 @@ static func _column_supports_complete_wall(column: Vector2i, base_band: int,
 	if not source.envelope.contains_column(column) \
 			or source.envelope.ground_at(column) > base_band \
 			or source.envelope.top_at(column) - base_band \
-				< WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS:
+				< source.address_bands():
 		return false
-	for y in range(base_band,
-			base_band + WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS):
+	for y in range(base_band, base_band + source.address_bands()):
 		if not source.has_mass(Vector3i(column.x, y, column.y)):
 			return false
 	return true

@@ -21,6 +21,7 @@ static func envelope_from_massif(massif: WarrenMassif) -> WarrenVolumeEnvelope:
 	## FULL pre-excavation block, not a hint of it.
 	var envelope := WarrenVolumeEnvelope.new()
 	envelope.world_seed = massif.world_seed
+	envelope.address_bands = WarrenMassif.ADDRESS_BANDS
 	var min_x := 2147483647
 	var max_x := -2147483648
 	var min_z := 2147483647

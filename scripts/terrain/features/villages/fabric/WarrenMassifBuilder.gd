@@ -15,9 +15,65 @@ extends RefCounted
 ## fractured the footprint (when it also gated existence) or produced
 ## cliffs of up to 20 bands between neighbours (when it only touched level).
 const RADIUS_CELLS := 16
-const MIN_CORE_BANDS := 16
-const MAX_CORE_BANDS := 20
+
+## FOOTPRINT ONLY. The Gaussian amplitude that decides WHICH columns exist, i.e.
+## the iso-contour `footprint_core * gaussian >= MIN_COLUMN_BANDS`. Kept at the
+## pre-buildable-layer values so the footprint the builder produces is
+## byte-identical to the one every earlier round measured: the layer wave
+## changes how TALL the mass is, never how WIDE, and separating the two
+## constants is what makes that claim checkable rather than hoped for.
+const FOOTPRINT_CORE_MIN_BANDS := 16
+const FOOTPRINT_CORE_MAX_BANDS := 20
+
+## THE BUILDABLE LAYER. Bands of authored mass over the sampled ground at the
+## crown, tapering to MIN_COLUMN_BANDS at the rim (design §3.4: "per-column
+## `top_at` = `base + layer`, `layer` in [4, 6] bands"). Six bands is
+## WarrenMassif.BUILDABLE_LAYER_BANDS -- two storeys plus a roof reservation --
+## and four is one storey plus a roof, the shortest thing
+## WarrenBuildingParcel will seal.
+const MIN_LAYER_BANDS := 4
+const MAX_LAYER_BANDS := 6
+
+## THE VERTICAL-DEVELOPMENT FLOOR, re-derived (design §3.1). The property is
+## unchanged -- "the town has enough vertical development for an excavated
+## public realm" -- but the PROXY moved: while the massif owned the mountain,
+## one column's own height was that development, and now the ground under the
+## layer carries most of it, so the gate reads
+## WarrenMassif.vertical_development_bands() (lowest ground to highest roof)
+## instead of the tallest layer.
+##
+## The VALUE is derived from the published constants of the consumer the gate
+## exists to protect, exactly as test_warren_massif already derives the address
+## flank: the carver demands a route span of
+## WarrenExcavationCarver.MIN_SPAN_BANDS and every route cell carries
+## WarrenExcavation.HEADROOM_BANDS of void inside the solid, so the shallowest
+## town that can hold a legal bore at all is span + headroom bands from its
+## lowest ground to its highest roof. Restated here rather than imported
+## because WarrenExcavationCarver depends on this class, and pinned against
+## both constants by a test so the two cannot drift.
+##
+## The old 16 was the same statement about a massif that authored 16-20 bands
+## by itself; it is not weakened, it is re-addressed to the object that now
+## carries the height. A genuinely flat site scores `0 + layer <= 6` and is
+## refused, which is the intended consequence: mass-first is a hill town and
+## the hill is the terrain's.
+const MIN_CORE_BANDS := 8
+
+## Distinct LAYER thicknesses across the footprint. UNCHANGED at five, and
+## measured rather than assumed: the buildable layer's whole range is
+## MIN_COLUMN_BANDS..MAX_LAYER_BANDS plus whatever a district's neighbour clamp
+## lifts it to, and over a 150-seed sweep on the stamped hill frame every seed
+## presented 5 or 6 distinct thicknesses. The thin layer articulates as much as
+## the tall solid did, so there is nothing here to re-derive.
 const MIN_TERRACE_LEVELS := 5
+## Largest 4-connected run of one LAYER thickness. UNCHANGED at six. The
+## capacity-limited fill still caps each union-find district at this size by
+## construction, and the pigeonhole worry the thin layer raises -- five
+## thicknesses over ~560 columns instead of nineteen -- does not materialise:
+## the same 150-seed sweep measured a widest plateau of 6 on every seed but a
+## handful at 7, exactly the pre-wave distribution that already costs seed 13
+## its town (task-13-report.md). A rejection at 7 is therefore a seed-supply
+## fact this wave inherits, not one it created.
 const MAX_PLATEAU_CELLS := 6
 const MIN_COLUMN_BANDS := 2
 ## A neighbouring pair of columns may step by at most this many bands OF
@@ -45,8 +101,11 @@ static func build(world_seed: int,
 		ground_bands: Dictionary = {}) -> WarrenMassif:
 	last_failure = ""
 	var massif := WarrenMassif.new(world_seed)
-	var core := MIN_CORE_BANDS + posmod(_hash(world_seed, 5, 0, 0),
-		MAX_CORE_BANDS - MIN_CORE_BANDS + 1)
+	var footprint_core := FOOTPRINT_CORE_MIN_BANDS \
+		+ posmod(_hash(world_seed, 5, 0, 0),
+			FOOTPRINT_CORE_MAX_BANDS - FOOTPRINT_CORE_MIN_BANDS + 1)
+	var layer_core := MIN_LAYER_BANDS + posmod(_hash(world_seed, 13, 0, 0),
+		MAX_LAYER_BANDS - MIN_LAYER_BANDS + 1)
 	var warp_phase := float(posmod(_hash(world_seed, 7, 0, 0), 1000)) \
 		/ 1000.0 * TAU
 	var warp_strength := 0.22 + float(posmod(_hash(world_seed, 11, 0, 0),
@@ -66,10 +125,24 @@ static func build(world_seed: int,
 				* sin(angle * 3.0 + warp_phase))
 			var gaussian := exp(-pow(warped / float(RADIUS_CELLS) * 1.9,
 				2.0))
-			var raw := float(core) * gaussian
+			var raw := float(footprint_core) * gaussian
 			if raw < float(MIN_COLUMN_BANDS):
 				continue
-			raw_at[Vector2i(x, z)] = raw
+			# Existence is decided on the FOOTPRINT field, and the terrace
+			# field is that same field rescaled onto the buildable layer:
+			# [MIN_COLUMN_BANDS, footprint_core] -> [MIN_COLUMN_BANDS,
+			# layer_core]. Two consequences the wave leans on. The footprint
+			# is bit-identical to the tall massif's, because it is the same
+			# iso-contour of the same Gaussian at the same threshold -- so
+			# "the layer got thinner" is a claim about height alone and
+			# nothing about the town's plan moved. And the rescale is a
+			# positive affine map, so `raw` stays monotone along every ray
+			# from the centre, which is the entire proof that the footprint
+			# is one simply-connected hole-free blob (see WarrenMassif.seal).
+			raw_at[Vector2i(x, z)] = float(MIN_LAYER_BANDS) \
+				+ (raw - float(MIN_COLUMN_BANDS)) \
+				* float(layer_core - MIN_LAYER_BANDS) \
+				/ float(footprint_core - MIN_COLUMN_BANDS)
 
 	# Pass 2: capacity-limited flood fill assigns the actual terrace bands,
 	# under a per-column ceiling derived from how far that column stands from
@@ -92,9 +165,19 @@ static func build(world_seed: int,
 	for column: Vector2i in massif.columns:
 		massif.core_top_bands = maxi(massif.core_top_bands,
 			massif.layer_at(column))
-	if massif.core_top_bands < MIN_CORE_BANDS:
-		last_failure = "core reaches %d bands; %d required" % [
-			massif.core_top_bands, MIN_CORE_BANDS]
+	if massif.core_top_bands > MAX_LAYER_BANDS:
+		# Not reachable from the rescale above, which caps `raw` at
+		# `layer_core`; a tripwire on the assignment pass rather than on the
+		# field, because a district may only ever settle DOWN from its raw
+		# value and this is the one place that could stop being true.
+		last_failure = "layer of %d bands exceeds the buildable %d" % [
+			massif.core_top_bands, MAX_LAYER_BANDS]
+		return null
+	var development := massif.vertical_development_bands()
+	if development < MIN_CORE_BANDS:
+		last_failure = ("vertical development of %d bands (%d of ground "
+			+ "relief under a %d band layer); %d required") % [development,
+			massif.relief_bands(), massif.core_top_bands, MIN_CORE_BANDS]
 		return null
 	if massif.terrace_levels().size() < MIN_TERRACE_LEVELS:
 		last_failure = "only %d terrace levels" \

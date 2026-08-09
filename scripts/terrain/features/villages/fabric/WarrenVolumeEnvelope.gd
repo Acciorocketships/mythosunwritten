@@ -5,6 +5,19 @@ extends RefCounted
 ## a floating ellipsoid: every column begins at its local natural-ground band,
 ## and its available construction mass tapers toward the settlement boundary.
 const MIN_ENTRY_HEIGHT_BANDS := 2
+## Bands of continuous mass beside a walk cell that make it ADDRESSED. Six --
+## two storeys plus a roof reservation -- for every envelope this class grows
+## itself, which is the route-first world and is byte-identical to the constant
+## WarrenVolumePlan has always published. Written as a literal rather than read
+## from WarrenVolumePlan because that class holds an envelope and the reference
+## would be cyclic; a test pins the two together.
+##
+## A SYNTHESISED envelope may lower it (see
+## WarrenExcavationVolumeAdapter.envelope_from_massif and
+## WarrenMassif.ADDRESS_BANDS): a town whose whole authored layer is six bands
+## cannot offer a six-band flank to a street that has left grade, and the
+## envelope is the one object both the audit and the carvers already hold.
+const DEFAULT_ADDRESS_BANDS := 6
 
 var world_seed: int
 var radius_x: int
@@ -17,6 +30,7 @@ var ground_bands: Dictionary = {}
 var bearing_bands: Dictionary = {}
 var height_bands: Dictionary = {}
 var mass_cells: Dictionary = {}
+var address_bands: int = DEFAULT_ADDRESS_BANDS
 var last_rejection := ""
 var _sealed := false
 

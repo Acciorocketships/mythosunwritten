@@ -14,10 +14,42 @@ extends RefCounted
 ## imported so this class stays free of the parcel vocabulary; a test pins the
 ## arithmetic so the two cannot drift.
 ##
-## It is what makes `bearing_at` a cap on built height: a house rooted at the
-## terrace and topping out at the massif top spans exactly this many bands.
-const MAX_TERRACE_STOREYS := 3
-const BUILDABLE_LAYER_BANDS := 8
+## TWO STOREYS SINCE THE BUILDABLE-LAYER WAVE, not three. The massif no longer
+## owns the mountain -- SettlementReliefPlan stamps it into the heightfield and
+## the terrain meshes, dresses and collides it -- so this constant stopped being
+## "how far down a house may reach into the hill" and became the WHOLE thickness
+## of the authored layer (design §3.4). The reviewer's rule is 2-3 visible
+## storeys of composed face; at three storeys plus a roof the layer alone
+## already spends the whole allowance and leaves nothing for the terrain step
+## the house stands on, so the layer takes two and the third storey of apparent
+## height is the hill itself.
+const MAX_TERRACE_STOREYS := 2
+const BUILDABLE_LAYER_BANDS := 6
+
+## Bands of continuous mass a street cell needs beside it before the plan calls
+## it ADDRESSED, for towns cut from this class. Route-first keeps
+## WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS unchanged at six; the envelope
+## carries the number so the two modes cannot drift and neither has to know
+## about the other (WarrenVolumeEnvelope.address_bands).
+##
+## WHY IT IS NOT SIX HERE, derived rather than preferred. A walk cell needs
+## WarrenExcavation.HEADROOM_BANDS of void inside its own column, so a route
+## floor may stand up to `BUILDABLE_LAYER_BANDS - HEADROOM_BANDS` = 3 bands
+## above its own ground. The flank beside it then offers at most
+## `BUILDABLE_LAYER_BANDS - 3` = 3 bands, so a six-band frontage demands that
+## the street NEVER leave grade -- and the stamped hill's terrace risers are 2-3
+## bands, which no move in the carver's vocabulary crosses without leaving
+## grade. Six is therefore not a stricter bar at this geometry, it is one no
+## bore can meet anywhere except on a bench.
+##
+## Four is the parcel transaction's OWN floor for a sealable house
+## (WarrenBuildingParcel.seal refuses anything under
+## STOREY_BANDS + ROOF_RESERVATION_BANDS), so the property the gate states --
+## "a real building fronts this street, not a kerb" -- survives intact. What is
+## given up is the second storey OF THE HOUSE, and the trade is the milestone's
+## whole thesis: the terrace riser the house stands on is now real terrain, and
+## it is what the composed face gains the storey back from.
+const ADDRESS_BANDS := 4
 
 var world_seed: int
 var columns: Dictionary = {}
@@ -76,6 +108,39 @@ func layer_at(column: Vector2i) -> int:
 	return top_at(column) - base_at(column)
 
 
+func relief_bands() -> int:
+	## Bands of GROUND relief the terrain handed in under the footprint. Zero on
+	## a flat frame; on a stamped site it is the settlement relief stamp read
+	## back through VillageWarrenFabricSolver._sample_ground_bands.
+	if columns.is_empty():
+		return 0
+	var lowest := 2147483647
+	var highest := -2147483648
+	for column: Vector2i in columns:
+		lowest = mini(lowest, base_at(column))
+		highest = maxi(highest, base_at(column))
+	return highest - lowest
+
+
+func vertical_development_bands() -> int:
+	## The town's whole silhouette: lowest ground under the footprint to highest
+	## roof band above it. This is what "the town has N bands of vertical
+	## development" always MEANT; while the massif owned the mountain the single
+	## column's own height was an exact proxy for it, and now that the terrain
+	## owns everything below the layer it is not (design §3.1). Equal to
+	## `relief_bands() + core layer` whenever the layer peaks over the ground's
+	## peak, which the two coincident bell profiles make the ordinary case, and
+	## strictly correct when they do not.
+	if columns.is_empty():
+		return 0
+	var lowest := 2147483647
+	var highest := -2147483648
+	for column: Vector2i in columns:
+		lowest = mini(lowest, base_at(column))
+		highest = maxi(highest, top_at(column))
+	return highest - lowest
+
+
 func bearing_at(column: Vector2i) -> int:
 	## The terrace a house standing on this column rests on -- a SECOND datum,
 	## deliberately distinct from `base_at`.
@@ -85,6 +150,14 @@ func bearing_at(column: Vector2i) -> int:
 	## inhabited height. `bearing_at` is only where an inhabited stack STOPS
 	## descending. The mass between the two is hill: unbuilt solid the fabric
 	## renders as retained stone rather than as more storeys of house.
+	##
+	## DEGENERATE SINCE THE BUILDABLE-LAYER WAVE, deliberately. The second datum
+	## was invented to name "the mass between natural ground and where houses
+	## stop descending"; the terrain owns that mass now, and every column's whole
+	## layer fits inside BUILDABLE_LAYER_BANDS by construction, so this returns
+	## `base_at` for every column a builder produces. The method survives because
+	## the excavation envelope copies it and the accessor is shared -- deleting it
+	## mid-milestone would churn four suites to remove an identity (design §3.4).
 	##
 	## Never above the massif top and never below natural ground, so a column
 	## whose whole span already fits inside the buildable layer is untouched

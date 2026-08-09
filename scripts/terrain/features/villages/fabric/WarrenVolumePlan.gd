@@ -246,6 +246,20 @@ func has_public_air(cell: Vector3i) -> bool:
 	return _air_set.has(cell)
 
 
+func address_bands() -> int:
+	## Bands of continuous mass beside a walk cell that make it ADDRESSED, taken
+	## from the envelope the route was cut through rather than from the constant
+	## above. Route-first envelopes carry
+	## WarrenVolumeEnvelope.DEFAULT_ADDRESS_BANDS, which IS
+	## MIN_ADDRESS_BUILDING_BANDS, so nothing about that world moves; a
+	## synthesised mass-first envelope lowers it to WarrenMassif.ADDRESS_BANDS
+	## because a six-band buildable layer cannot present a six-band flank to a
+	## street that has left grade. See WarrenMassif.ADDRESS_BANDS for the
+	## derivation and the trade.
+	return envelope.address_bands if envelope != null \
+		else MIN_ADDRESS_BUILDING_BANDS
+
+
 func has_mass(cell: Vector3i) -> bool:
 	return mass_cells.has(cell)
 
@@ -419,8 +433,7 @@ func _build_audit() -> Dictionary:
 		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
 				Vector2i.UP, Vector2i.DOWN]:
 			var frontage_complete := true
-			for y in range(cell.y, cell.y
-					+ MIN_ADDRESS_BUILDING_BANDS):
+			for y in range(cell.y, cell.y + address_bands()):
 				if not mass_cells.has(Vector3i(cell.x + direction.x, y,
 						cell.z + direction.y)):
 					frontage_complete = false
@@ -548,7 +561,7 @@ func _complete_address_side_count(cell: Vector3i) -> int:
 	for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
 			Vector2i.UP, Vector2i.DOWN]:
 		var complete := true
-		for y in range(cell.y, cell.y + MIN_ADDRESS_BUILDING_BANDS):
+		for y in range(cell.y, cell.y + address_bands()):
 			if not mass_cells.has(Vector3i(cell.x + direction.x, y,
 					cell.z + direction.y)):
 				complete = false
@@ -563,7 +576,7 @@ func _has_opposed_address_sides(cell: Vector3i) -> bool:
 			[Vector2i.UP, Vector2i.DOWN] as Array[Vector2i]]:
 		var complete_pair := true
 		for direction: Vector2i in axis:
-			for y in range(cell.y, cell.y + MIN_ADDRESS_BUILDING_BANDS):
+			for y in range(cell.y, cell.y + address_bands()):
 				if not mass_cells.has(Vector3i(cell.x + direction.x, y,
 						cell.z + direction.y)):
 					complete_pair = false

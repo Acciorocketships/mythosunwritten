@@ -1,16 +1,32 @@
 extends GutTest
 
-## The massif is the primary object of the mass-first pipeline: a tall,
-## terraced, deterministic solid. These tests pin its hard gates.
+## The massif is the primary object of the mass-first pipeline. Since the
+## buildable-layer wave it is a THIN one: 4-6 bands of authored mass draped over
+## ground the terrain owns and renders. These tests pin its hard gates.
+##
+## Every build takes a HILL, because a mass-first town on band zero no longer
+## exists -- see StampedGround and
+## test_a_flat_site_is_refused_because_the_hill_belongs_to_the_terrain.
+
+const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
 
 
-func test_massif_builds_tall_terraced_and_deterministic() -> void:
-	var a := WarrenMassifBuilder.build(1)
-	var b := WarrenMassifBuilder.build(1)
+func _hill(world_seed: int = 0) -> Dictionary:
+	return StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 1, world_seed)
+
+
+func test_massif_builds_a_terraced_layer_and_is_deterministic() -> void:
+	var a := WarrenMassifBuilder.build(1, _hill())
+	var b := WarrenMassifBuilder.build(1, _hill())
 	assert_not_null(a, WarrenMassifBuilder.last_failure)
 	assert_true(a.is_sealed())
-	assert_gte(a.core_top_bands, 16,
-		"core must reach 16 bands so excavation has vertical room")
+	assert_gte(a.vertical_development_bands(),
+		WarrenMassifBuilder.MIN_CORE_BANDS,
+		"the town must reach its vertical-development floor from lowest "
+		+ "ground to highest roof, however the two contribute")
+	assert_lte(a.core_top_bands, WarrenMassif.BUILDABLE_LAYER_BANDS,
+		"the fabric may not author more than one buildable layer: the "
+		+ "mountain under it is the terrain's")
 	assert_gte(a.terrace_levels().size(), 5,
 		"a smooth dome is not a terraced town silhouette")
 	assert_lte(a.widest_plateau_cells(), 6,
@@ -21,7 +37,7 @@ func test_massif_builds_tall_terraced_and_deterministic() -> void:
 			var neighbor := column + direction
 			if a.has_column(neighbor):
 				worst_step = maxi(worst_step,
-					absi(a.top_at(column) - a.top_at(neighbor)))
+					absi(a.layer_at(column) - a.layer_at(neighbor)))
 	assert_lte(worst_step, WarrenMassifBuilder.MAX_NEIGHBOR_STEP_BANDS,
 		"neighbouring columns must step like terraces, not cliffs")
 	assert_eq(a.columns.size(), b.columns.size())
@@ -31,46 +47,87 @@ func test_massif_builds_tall_terraced_and_deterministic() -> void:
 
 
 func test_massif_seeds_differ_and_respect_ground_bands() -> void:
-	var flat := WarrenMassifBuilder.build(1)
+	var hill := _hill()
+	var base := WarrenMassifBuilder.build(1, hill)
 	var raised_bands: Dictionary = {}
-	var span := WarrenMassifBuilder.RADIUS_CELLS
-	for z in range(-span, span + 1):
-		for x in range(-span, span + 1):
-			raised_bands[Vector2i(x, z)] = 2
+	for column: Vector2i in hill:
+		raised_bands[column] = int(hill[column]) + 2
 	var raised := WarrenMassifBuilder.build(1, raised_bands)
-	assert_not_null(flat, WarrenMassifBuilder.last_failure)
+	assert_not_null(base, WarrenMassifBuilder.last_failure)
 	assert_not_null(raised, WarrenMassifBuilder.last_failure)
 	var differing := 0
-	var other := WarrenMassifBuilder.build(4)
-	for column: Vector2i in flat.columns:
+	var other := WarrenMassifBuilder.build(4, hill)
+	for column: Vector2i in base.columns:
 		if other.has_column(column) \
-				and flat.top_at(column) != other.top_at(column):
+				and base.layer_at(column) != other.layer_at(column):
 			differing += 1
 	assert_gt(differing, 10, "different seeds must differ meaningfully")
 	for column: Vector2i in raised.columns:
-		assert_gte(raised.base_at(column), 2,
+		assert_eq(raised.base_at(column), int(hill[column]) + 2,
 			"terrain ground bands lift the massif base")
 
 
+func test_a_flat_site_is_refused_because_the_hill_belongs_to_the_terrain() \
+		-> void:
+	## The teeth of the re-derived vertical-development gate, and the wave's
+	## thesis stated as a refusal. While the massif authored 16-20 bands of its
+	## own mass a flat site produced a legal town; now the fabric authors only
+	## WarrenMassif.BUILDABLE_LAYER_BANDS and the rest is SettlementReliefPlan's,
+	## so a site with no relief has nothing for a bore to climb through and must
+	## be refused rather than built short.
+	for world_seed: int in [0, 1, 3, 5, 11, 18]:
+		var flat := WarrenMassifBuilder.build(world_seed,
+			StampedGround.flat(WarrenMassifBuilder.RADIUS_CELLS + 1))
+		assert_null(flat,
+			"seed %d built a mass-first town on level ground" % world_seed)
+		assert_true(WarrenMassifBuilder.last_failure.contains(
+			"vertical development"),
+			"seed %d was refused for the wrong reason: %s" % [world_seed,
+				WarrenMassifBuilder.last_failure])
+	var hill := WarrenMassifBuilder.build(1, _hill())
+	assert_not_null(hill,
+		"the same seed on a stamped hill must still build, or the gate is "
+		+ "refusing everything rather than refusing flatness")
+
+
+func test_the_vertical_development_floor_is_derived_from_the_bore() -> void:
+	## MIN_CORE_BANDS is not a preference: the carver demands a route span of
+	## MIN_SPAN_BANDS and every walk cell carries HEADROOM_BANDS of void inside
+	## the solid, so the shallowest town that can hold a legal bore at all is
+	## exactly their sum. Pinned so the three cannot drift apart.
+	assert_eq(WarrenMassifBuilder.MIN_CORE_BANDS,
+		WarrenExcavationCarver.MIN_SPAN_BANDS + WarrenExcavation.HEADROOM_BANDS,
+		"the vertical-development floor must stay derived from the bore it "
+		+ "exists to protect")
+
+
 func _ground_frame(kind: String) -> Dictionary:
-	## The three input frames warren_mass_first_report --stage terrain uses, so
-	## the suite and the measuring instrument describe the same ground.
+	## The input frames warren_mass_first_report --stage terrain uses, so the
+	## suite and the measuring instrument describe the same ground.
+	##
+	## Every variation is laid ON the stamped hill rather than on band zero,
+	## because the vertical-development gate is deliberately NOT ground-neutral
+	## (it measures lowest ground to highest roof) while the SHAPE gates are --
+	## and it is the shape gates this frame family exists to interrogate.
 	var span := WarrenMassifBuilder.RADIUS_CELLS + 4
+	var hill := StampedGround.hill(span)
 	var bands: Dictionary = {}
 	for z in range(-span, span + 1):
 		for x in range(-span, span + 1):
 			var column := Vector2i(x, z)
+			var floor_band := int(hill.get(column, 0))
 			match kind:
-				"flat":
-					bands[column] = 0
+				"hill":
+					bands[column] = floor_band
 				"slope":
-					bands[column] = clampi((x + span) / 4, 0, 8)
+					bands[column] = floor_band + clampi((x + span) / 4, 0, 8)
 				"steep":
-					bands[column] = x + span
+					bands[column] = floor_band + x + span
 				"terrace":
-					bands[column] = 0 if x <= -1 else (2 if x == 0 else 6)
+					bands[column] = floor_band \
+						+ (0 if x <= -1 else (2 if x == 0 else 6))
 				_:
-					bands[column] = 0
+					bands[column] = floor_band
 	return bands
 
 
@@ -88,7 +145,7 @@ func test_gate_verdicts_are_invariant_under_the_ground_the_massif_stands_on() \
 	## identical relative structure, cell for cell.
 	for world_seed: int in [0, 1, 3, 5, 11, 18]:
 		var flat := WarrenMassifBuilder.build(world_seed,
-			_ground_frame("flat"))
+			_ground_frame("hill"))
 		var flat_failure := WarrenMassifBuilder.last_failure
 		for kind: String in ["slope", "steep", "terrace"]:
 			var bands := _ground_frame(kind)
@@ -204,40 +261,21 @@ func test_a_real_layer_plateau_still_fails_the_plateau_gate() -> void:
 		"each distinct layer thickness is its own terrace level")
 
 
-func test_the_address_gate_no_longer_forces_a_tower_at_the_top_of_the_climb() \
-		-> void:
-	## Pins BOTH halves of the split datum on real bores, not by argument: the
-	## address gate still demands a four-storey column of mass beside the top of
-	## the climb, and a house standing there is still only three storeys tall.
+func test_the_layer_cap_is_what_holds_a_street_flank_to_two_storeys() -> void:
+	## SUCCESSOR to the split-datum test. `bearing_at` was invented so an
+	## addressed flank could carry the tall mass the address gate reads while a
+	## house standing there stopped short of it -- one field could not be both.
+	## The buildable layer collapsed that problem instead of solving it: the
+	## flank IS the layer now, so the mass the gate reads and the house that
+	## stands in it are the same 4-6 bands and the second datum is an identity
+	## (see WarrenMassif.bearing_at).
 	##
-	## A walk cell is ADDRESSED only when a neighbouring column carries
-	## WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS of CONTINUOUS mass starting
-	## at the street's own floor band, and WarrenPublicRealmCarver's topology
-	## gate demands that of 0.55 of the itinerary. The street must also climb
-	## WarrenExcavationCarver.MIN_SPAN_BANDS. So the flank beside its highest
-	## cell stands span + address bands above the lowest -- and
-	## WarrenParcelConstruction descends a house to
-	## WarrenVolumeEnvelope.ground_at(), turning every one of those bands into
-	## a storey a viewer counts.
-	##
-	## Shortening the massif starves the address gate instead (measured:
-	## warren_mass_first_report --stage hillside, SHORT+FLAT column). Raising
-	## each column's base to its terrace deletes the mass the gate reads. So one
-	## field could not be both, and `bearing_at` is now the second: the gate
-	## keeps reading the whole solid from `base_at`, while a house stops
-	## descending at the terrace and the hill below it is rendered as stone.
-	var storeys_per_band := WarrenBuildingParcel.STOREY_BANDS
-	var forced := (WarrenExcavationCarver.MIN_SPAN_BANDS
-		+ WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS
-		- WarrenBuildingParcel.ROOF_RESERVATION_BANDS) / storeys_per_band
-	assert_gte(forced, 4,
-		"the published constants already demand a %d storey flank" % forced)
+	## What has to stay true is the reviewer's rule, measured on real bores
+	## rather than argued: no column addressing the top of a climb builds more
+	## than MAX_TERRACE_STOREYS storeys, counted from its OWN natural ground.
 	var measured := 0
-	# Seeds re-pinned to survivors of the rim step rule: 13 no longer builds
-	# (plateau of 7 cells), which is a seed-supply fact reported in
-	# task-13-report.md, not a property of the datum split this test pins.
 	for world_seed in [17, 19]:
-		var massif := WarrenMassifBuilder.build(world_seed)
+		var massif := WarrenMassifBuilder.build(world_seed, _hill(world_seed))
 		assert_not_null(massif, WarrenMassifBuilder.last_failure)
 		if massif == null:
 			continue
@@ -246,13 +284,13 @@ func test_the_address_gate_no_longer_forces_a_tower_at_the_top_of_the_climb() \
 		if from_ground < 0:
 			continue
 		measured += 1
-		assert_gte(from_ground, 4,
-			"seed %d: natural ground still makes that flank %d storeys" \
-			% [world_seed, from_ground])
-		assert_lte(from_terrace, WarrenMassif.MAX_TERRACE_STOREYS,
-			"seed %d: the flank addressing the top of the climb builds %d " \
-			% [world_seed, from_terrace]
-			+ "storeys from its terrace, so the datums are not really split")
+		assert_eq(from_ground, from_terrace,
+			"seed %d: the bearing datum is an identity in the buildable "
+			% world_seed + "layer, so the two counts cannot differ")
+		assert_lte(from_ground, WarrenMassif.MAX_TERRACE_STOREYS,
+			"seed %d: the flank addressing the top of the climb builds %d "
+			% [world_seed, from_ground]
+			+ "storeys from its own ground, past the layer cap")
 	assert_gt(measured, 0, "neither seed produced an addressed bore")
 
 
@@ -264,31 +302,37 @@ func test_the_buildable_layer_is_derived_from_the_parcel_contract() -> void:
 		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS,
 		"the buildable layer must be exactly MAX_TERRACE_STOREYS storeys "
 		+ "plus one roof reservation")
-	var massif := WarrenMassifBuilder.build(1)
+	assert_eq(WarrenMassifBuilder.MAX_LAYER_BANDS,
+		WarrenMassif.BUILDABLE_LAYER_BANDS,
+		"the builder may not author a column taller than one buildable layer")
+	assert_eq(WarrenMassifBuilder.MIN_LAYER_BANDS,
+		WarrenBuildingParcel.STOREY_BANDS
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS,
+		"the thinnest legal layer must still be a house the parcel "
+		+ "transaction will seal")
+	assert_eq(WarrenMassif.ADDRESS_BANDS, WarrenMassifBuilder.MIN_LAYER_BANDS,
+		"a street's frontage bar and the thinnest house the layer can carry "
+		+ "must be the same number, or the gate asks for a house the layer "
+		+ "cannot build")
+	assert_eq(WarrenVolumeEnvelope.DEFAULT_ADDRESS_BANDS,
+		WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS,
+		"route-first envelopes must keep the published frontage bar exactly")
+	var massif := WarrenMassifBuilder.build(1, _hill())
 	assert_not_null(massif, WarrenMassifBuilder.last_failure)
 	if massif == null:
 		return
-	var raised := 0
 	for column: Vector2i in massif.columns:
-		var bearing := massif.bearing_at(column)
-		assert_between(bearing, massif.base_at(column), massif.top_at(column),
-			"the terrace at %s is outside its own column" % column)
-		assert_lte(massif.top_at(column) - bearing,
-			WarrenMassif.BUILDABLE_LAYER_BANDS,
-			"the terrace at %s carries more than one buildable layer" % column)
-		if massif.top_at(column) - massif.base_at(column) \
-				<= WarrenMassif.BUILDABLE_LAYER_BANDS:
-			assert_eq(bearing, massif.base_at(column),
-				"a column already inside the layer keeps natural ground at %s" \
-				% column)
-		else:
-			raised += 1
-	# Measured 126 of 291 on seed 1. The remainder is the taper -- rim columns
-	# shorter than one buildable layer, which keep natural ground by the rule
-	# above. A third is a floor on "the terrace actually bites", not a target.
-	assert_gt(raised * 3, massif.columns.size(),
-		"a terrace that lifts almost nothing is not a hillside: %d of %d" \
-		% [raised, massif.columns.size()])
+		assert_lte(massif.layer_at(column), WarrenMassif.BUILDABLE_LAYER_BANDS,
+			"the layer at %s is thicker than one buildable layer" % column)
+		# THE SECOND DATUM HAS DEGENERATED, by design and not by accident: with
+		# every column's whole layer inside BUILDABLE_LAYER_BANDS there is no
+		# unbuilt hill left between natural ground and where a house stops
+		# descending, because the terrain owns it. The old measure here was "a
+		# third of columns are lifted off their own ground"; the correct
+		# reading now is that NONE are.
+		assert_eq(massif.bearing_at(column), massif.base_at(column),
+			"the bearing datum must be natural ground at %s: nothing the "
+			% column + "fabric authors stands below the buildable layer")
 
 
 func test_the_rim_steps_down_to_the_ground_like_every_other_terrace() -> void:
@@ -300,7 +344,7 @@ func test_the_rim_steps_down_to_the_ground_like_every_other_terrace() -> void:
 	## more than MAX_NEIGHBOR_STEP_BANDS of unbroken wall before a setback,
 	## whatever material later dresses it.
 	for world_seed: int in [0, 1, 3, 5, 11, 18]:
-		var massif := WarrenMassifBuilder.build(world_seed)
+		var massif := WarrenMassifBuilder.build(world_seed, _hill(world_seed))
 		assert_not_null(massif, "seed %d: %s" % [world_seed,
 			WarrenMassifBuilder.last_failure])
 		if massif == null:
@@ -311,9 +355,12 @@ func test_the_rim_steps_down_to_the_ground_like_every_other_terrace() -> void:
 			for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
 					Vector2i.UP, Vector2i.DOWN]:
 				var neighbor := column + direction
-				var exposed := massif.top_at(column) - massif.base_at(column) \
+				# LAYER, not absolute top: the ground step between two columns
+				# is the terrain's face to render, and charging it here is what
+				# the relief-relative wave removed.
+				var exposed := massif.layer_at(column) \
 					if not massif.has_column(neighbor) \
-					else massif.top_at(column) - massif.top_at(neighbor)
+					else massif.layer_at(column) - massif.layer_at(neighbor)
 				if not massif.has_column(neighbor):
 					tallest_rim = maxi(tallest_rim, exposed)
 				tallest_face = maxi(tallest_face, exposed)
@@ -366,7 +413,7 @@ func _tallest_addressed_flank_storeys(massif: WarrenMassif,
 
 
 func test_seal_requires_single_connected_component_and_no_holes() -> void:
-	var built := WarrenMassifBuilder.build(1)
+	var built := WarrenMassifBuilder.build(1, _hill())
 	assert_not_null(built, WarrenMassifBuilder.last_failure)
 	if built == null:
 		return

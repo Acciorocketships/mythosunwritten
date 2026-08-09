@@ -248,7 +248,7 @@ static func _move_score(world_seed: int, attempt: int, step_index: int,
 	var radius := Vector2(float(destination.x), float(destination.z)).length()
 	var column := Vector2i(destination.x, destination.z)
 	var available_relative_height := envelope.top_at(column) \
-		- envelope.ground_at(column) - WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS
+		- envelope.ground_at(column) - envelope.address_bands
 	# Ceiling -3 (was -4) and amplitude 1.6 (was 1.25): review round 5 asked for
 	# routes that genuinely snake UP through the mass; the extra band of ambition
 	# and deeper undulation buy more climb without touching hard gates.
@@ -472,7 +472,7 @@ static func _envelope_address_side_count(cell: Vector3i,
 		if envelope.contains_column(column) \
 				and envelope.ground_at(column) <= cell.y \
 				and envelope.top_at(column) \
-					>= cell.y + WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS:
+					>= cell.y + envelope.address_bands:
 			count += 1
 	return count
 
