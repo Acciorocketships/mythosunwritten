@@ -77,6 +77,18 @@ extends SceneTree
 ##                     the first stage that refuses and how far each house's
 ##                     underside ends up above its own natural ground. Feeds
 ##                     the phase-2 terrain milestone; fixes nothing.
+##   --stage motif     READ-ONLY CENSUS for the terrace-over-tunnel motif
+##                     (design 2026-08-10, Wave 0 -- the wave that may refute
+##                     the design before a line of production code). Over the
+##                     stamped corpus it counts LEGAL MOTIF SITES under the
+##                     design's own §3.4 predicate: a flat 4-connected run of
+##                     2..MAX_PLATEAU_CELLS columns whose buildable layer is
+##                     deep enough to carry a house on a lifted deck, untouched
+##                     by the bore, with a passage anchor at ground and a deck
+##                     anchor at D±1. Reported at both deck datums (a lane at
+##                     D+1 needs l>=5, a lane at D needs l>=6), at the current
+##                     relief budget and at +4 bands, plus the support-asset
+##                     census R2 asks for. Changes nothing; measures only.
 ##   --stage map       one seed's massif drawn as a plan, band heights in hex,
 ##                     marking every column as street, house, gallery walk cell
 ##                     or bare solid. The fastest way to see WHERE a town's mass
@@ -109,7 +121,14 @@ var _fabric_stage := true
 func _init() -> void:
 	_read_args()
 	if _seeds.is_empty():
-		_seeds.assign(DEFAULT_SEEDS)
+		if _stage == "motif":
+			# The stamped corpus the terrain milestone measures on, not the
+			# ten-seed mass-first review list: Wave 0's question is a supply
+			# distribution and a ten-seed sample cannot carry it.
+			for value in MOTIF_SEED_COUNT:
+				_seeds.append(value)
+		else:
+			_seeds.assign(DEFAULT_SEEDS)
 	if _stage == "cover":
 		_report_cover()
 		quit()
@@ -170,6 +189,10 @@ func _init() -> void:
 		_report_terrain()
 		quit()
 		return
+	if _stage == "motif":
+		_report_motif()
+		quit()
+		return
 	if _stage == "map":
 		for world_seed: int in _seeds:
 			_report_map(world_seed)
@@ -201,7 +224,15 @@ func _read_args() -> void:
 			_fabric_stage = false
 		elif args[index] == "--seeds" and index + 1 < args.size():
 			for token: String in args[index + 1].split(",", false):
-				_seeds.append(int(token))
+				# `A-B` is an inclusive range, the spelling
+				# warren_buildable_layer_probe.gd already takes, so a
+				# forty-seed corpus is not forty comma-separated integers.
+				var bounds := token.split("-", false)
+				if not token.begins_with("-") and bounds.size() == 2:
+					for value in range(int(bounds[0]), int(bounds[1]) + 1):
+						_seeds.append(value)
+				else:
+					_seeds.append(int(token))
 
 
 static func _as_hillside(massif: WarrenMassif, layer_bands: int,
@@ -1869,3 +1900,697 @@ func _terrain_probe(world_seed: int, ground_bands: Dictionary) -> String:
 	return "%s | frontier %d | houses %d | no-proposal %d | " % [text,
 		frontier.size(), plan.parcels.size(), below_ground] \
 		+ "underside above own ground %s" % _sorted_histogram(undersides)
+
+
+# --- Wave 0: the terrace-over-tunnel motif site census -----------------------
+#
+# Read-only throughout. Every number below is measured off an UNMODIFIED massif
+# and an UNMODIFIED excavation; nothing here lifts a column, bores a passage or
+# touches a constant. The design (docs/superpowers/specs/
+# 2026-08-10-warren-terrace-tunnel-motif-design.md) names site scarcity as its
+# own most likely failure mode (R1) and gives this stage the authority to refute
+# it, so the predicate is transcribed from §3.4 rather than approximated.
+
+## Seeds in the stamped corpus the terrain milestone measures on.
+const MOTIF_SEED_COUNT := 40
+## `U` in the design's notation: the open air a lifted column leaves beneath it,
+## which is exactly the void one street cell removes.
+const MOTIF_UNDERCROFT_BANDS := WarrenExcavation.HEADROOM_BANDS
+## §3.4: "a 4-connected run of 2..MAX_PLATEAU_CELLS columns".
+const MOTIF_MIN_RUN_CELLS := 2
+const MOTIF_MAX_RUN_CELLS := WarrenMassifBuilder.MAX_PLATEAU_CELLS
+## §3.4: "at least 2 columns inside the footprint boundary".
+const MOTIF_MIN_INTERIOR_CELLS := 2
+## §3.4: "a public cell at band `D ± 1` within 2 columns of the run".
+const MOTIF_DECK_ANCHOR_REACH_CELLS := 2
+const MOTIF_DECK_ANCHOR_BAND_SLACK := 1
+## The two deck datums of §3.3 rows 9-13, which is the whole layer arithmetic:
+## a deck lane one band above the deck needs five bands of layer, a deck lane ON
+## the deck needs six. Measured separately because they are different towns.
+const MOTIF_LAYER_FOR_DECK_PLUS_ONE := 5
+const MOTIF_LAYER_FOR_DECK := WarrenMassif.BUILDABLE_LAYER_BANDS
+## The supply lever of §3.3/§7: the relief budget is the reviewer's pending
+## ruling, so the census is run twice and the delta is the ruling's price tag.
+const MOTIF_BUDGET_DELTA_BANDS := 4
+## The undercroft opening R2 asks the vocabulary for: one column wide, one
+## street storey tall. The no-scaling rule that killed the WWall ramparts is
+## absolute, so the test is against the asset's own baked bounding box.
+const MOTIF_OPENING_SPAN_M := WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M
+const MOTIF_OPENING_HEIGHT_M := WarrenExcavation.HEADROOM_BANDS \
+	* WarrenVolumePlan.VERTICAL_BAND_SIZE_M
+const MOTIF_FIT_TOLERANCE_M := 0.10
+const MOTIF_DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
+## The pieces §3.8 names as the intended undercroft vocabulary, reported with
+## their measured sizes whether they fit or not -- "it does not fit" is the
+## answer R2 is asking for, and a bare absence from the fitting list is weaker
+## evidence than the number.
+const MOTIF_NAMED_SUPPORTS: Array[String] = ["sfv.arch.001", "sfv.arch.002",
+	"sfv.entrance_arch.001", "sfv.bridge.001", "sfv.foundation.rock.001"]
+## Tags a piece must carry before "it fits in the hole" means "it can hold the
+## deck up". Without this the fit test passes 179 of 375 descriptors, almost all
+## of them wall panels, dormers and grass.
+const MOTIF_SUPPORT_TAGS: Array[String] = ["arch", "beam", "brace", "bridge",
+	"column", "fabric_brace", "foundation", "pier", "pillar", "post",
+	"support"]
+const MOTIF_REFUSALS: Array[String] = ["bore", "rim", "passage-anchor",
+	"deck-anchor"]
+
+var _motif_ground_cache: Dictionary = {}
+
+
+func _report_motif() -> void:
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	print("MOTIF SITE CENSUS -- terrace-over-tunnel design Wave 0, read-only.")
+	print("site = flat 4-connected run of %d..%d massif columns, equal base_at," \
+		% [MOTIF_MIN_RUN_CELLS, MOTIF_MAX_RUN_CELLS])
+	print("  layer >= the deck datum's demand, >=%d columns off the rim," \
+		% MOTIF_MIN_INTERIOR_CELLS)
+	print("  no column touched by the bore/a lane/a portal,")
+	print("  a public cell at band g beside an END of the run (passage anchor),")
+	print("  a public cell at band D+-%d within %d columns (deck anchor)." \
+		% [MOTIF_DECK_ANCHOR_BAND_SLACK, MOTIF_DECK_ANCHOR_REACH_CELLS])
+	print("D = g + %d. `cand` counts every legal run; `sites` is the greedy" \
+		% MOTIF_UNDERCROFT_BANDS)
+	print("  column-disjoint packing of them -- what a town could actually build.")
+	var budgets: Array[float] = [SettlementReliefPlan.RELIEF_BUDGET_METRES,
+		SettlementReliefPlan.RELIEF_BUDGET_METRES
+			+ float(MOTIF_BUDGET_DELTA_BANDS)
+			* WarrenVolumePlan.VERTICAL_BAND_SIZE_M]
+	for budget: float in budgets:
+		_motif_budget_report(budget)
+	_motif_support_census()
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _motif_budget_report(budget_metres: float) -> void:
+	print("")
+	print("=== relief budget %.1f m (%.2f bands, %d terrace steps) ===" \
+		% [budget_metres, budget_metres / WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
+		SettlementReliefPlan.terrace_steps(budget_metres)])
+	var rows: Array[Dictionary] = []
+	for world_seed: int in _seeds:
+		var row := _motif_seed_census(world_seed, budget_metres)
+		rows.append(row)
+		if row.has("failure"):
+			print("seed %2d: %s" % [world_seed, row["failure"]])
+			continue
+		print(("seed %2d: cols %3d l>=5 %3d l=6 %3d flat %2d/%2d benches %3d " \
+			+ "| route %2d public %2d | D+1 cand %3d sites %2d cells %2d " \
+			+ "bench %d rings %d/%d/%d | D cand %3d sites %2d cells %2d " \
+			+ "| sole %s") % [world_seed,
+			int(row["columns"]), int(row["layer5"]), int(row["layer6"]),
+			int(row["d1_component"]), int(row["d0_component"]),
+			int(row["bench_edges"]),
+			int(row["route"]), int(row["public"]),
+			int(row["d1_candidates"]), int(row["d1_sites"]),
+			int(row["d1_cells"]), int(row["d1_bench"]),
+			int(row["d1_inner"]), int(row["d1_middle"]), int(row["d1_outer"]),
+			int(row["d0_candidates"]), int(row["d0_sites"]),
+			int(row["d0_cells"]), row["d1_sole"]])
+	_motif_summary(rows)
+
+
+func _motif_summary(rows: Array[Dictionary]) -> void:
+	var built: Array[Dictionary] = []
+	for row: Dictionary in rows:
+		if not row.has("failure"):
+			built.append(row)
+	print("-- summary over %d/%d seeds that built a massif and a bore" \
+		% [built.size(), rows.size()])
+	if built.is_empty():
+		return
+	var bench_edges := 0
+	var benchless := 0
+	for row: Dictionary in built:
+		bench_edges += int(row["bench_edges"])
+		benchless += int(int(row["bench_edges"]) == 0)
+	print("   bench edges (adjacent ground step of exactly %d bands): %.1f " \
+		% [MOTIF_UNDERCROFT_BANDS, float(bench_edges) / float(built.size())] \
+		+ "per seed, %d seeds with none" % benchless)
+	for datum: String in ["d1", "d0"]:
+		var label := "deck lane at D    (layer >= %d)" % MOTIF_LAYER_FOR_DECK
+		if datum == "d1":
+			label = "deck lane at D+1 (layer >= %d)" \
+				% MOTIF_LAYER_FOR_DECK_PLUS_ONE
+		var sites: Array[int] = []
+		var zero := 0
+		var passage_cells := 0
+		var route_cells := 0
+		var bench := 0
+		var rings := [0, 0, 0]
+		var sole: Dictionary = {}
+		for row: Dictionary in built:
+			var count := int(row["%s_sites" % datum])
+			sites.append(count)
+			zero += int(count == 0)
+			passage_cells += int(row["%s_cells" % datum])
+			route_cells += int(row["route"])
+			bench += int(row["%s_bench" % datum])
+			rings[0] += int(row["%s_inner" % datum])
+			rings[1] += int(row["%s_middle" % datum])
+			rings[2] += int(row["%s_outer" % datum])
+			for key: String in MOTIF_REFUSALS:
+				sole[key] = int(sole.get(key, 0)) \
+					+ int((row["%s_sole_counts" % datum] as Dictionary).get(
+						key, 0))
+		sites.sort()
+		var total := 0
+		for count: int in sites:
+			total += count
+		var seeds_with := built.size() - zero
+		print(("   %s: sites/seed min %d median %d max %d mean %.2f | " \
+			+ "zero-site seeds %d/%d (%.0f%% carry >=1) | passage cells " \
+			+ "%d vs route cells %d = %.3f of the street | bench-level sites " \
+			+ "%d | crown/mid/rim %d/%d/%d") % [label, sites[0],
+			sites[sites.size() / 2], sites[-1],
+			float(total) / float(built.size()), zero, built.size(),
+			100.0 * float(seeds_with) / float(built.size()), passage_cells,
+			route_cells, float(passage_cells) / float(maxi(1, route_cells)),
+			bench, rings[0], rings[1], rings[2]])
+		var parts := PackedStringArray()
+		for key: String in MOTIF_REFUSALS:
+			parts.append("%s %d" % [key, int(sole.get(key, 0))])
+		print("     sole blocker over every enumerated run: %s" \
+			% " ".join(parts))
+
+
+func _motif_seed_census(world_seed: int, budget_metres: float) -> Dictionary:
+	var bands := _motif_ground_bands(world_seed, budget_metres)
+	var massif := WarrenMassifBuilder.build(world_seed, bands)
+	if massif == null:
+		return {"failure": "MASSIF -- %s" % WarrenMassifBuilder.last_failure}
+	# The motif is a stage seam INSIDE the frontier's bore loop (§3.4), so the
+	# excavation it sees is whatever that loop carved. Take the first attempt
+	# that carves, on the frontier's own attempt schedule, so this census is
+	# about a bore the pipeline actually produces.
+	var excavation: WarrenExcavation = null
+	for attempt in WarrenTownSolver.MASS_FIRST_EXCAVATION_ATTEMPTS:
+		excavation = WarrenExcavationCarver.carve(world_seed
+			+ attempt * WarrenTownSolver.MASS_FIRST_ATTEMPT_STRIDE, massif)
+		if excavation != null:
+			break
+	if excavation == null:
+		return {"failure": "BORE -- %s" % WarrenExcavationCarver.last_failure}
+	var layer5 := 0
+	var layer6 := 0
+	for column: Vector2i in massif.columns:
+		var layer := massif.layer_at(column)
+		layer5 += int(layer >= MOTIF_LAYER_FOR_DECK_PLUS_ONE)
+		layer6 += int(layer >= MOTIF_LAYER_FOR_DECK)
+	var row: Dictionary = {
+		"seed": world_seed,
+		"columns": massif.columns.size(),
+		"layer5": layer5,
+		"layer6": layer6,
+		"route": excavation.route.size(),
+		"public": excavation.public_cells().size(),
+		"bench_edges": _motif_bench_edges(massif),
+	}
+	var datums: Dictionary = {
+		"d1": MOTIF_LAYER_FOR_DECK_PLUS_ONE,
+		"d0": MOTIF_LAYER_FOR_DECK,
+	}
+	for key: String in ["d1", "d0"]:
+		var census := _motif_sites(massif, excavation, int(datums[key]))
+		var packed: Array[Dictionary] = census["packed"]
+		var legal: Array[Dictionary] = census["legal"]
+		var cells := 0
+		var bench := 0
+		var rings := [0, 0, 0]
+		for site: Dictionary in packed:
+			cells += (site["columns"] as Array).size()
+			bench += int(bool(site["bench"]))
+			rings[int(site["ring"])] += 1
+		row["%s_candidates" % key] = legal.size()
+		row["%s_enumerated" % key] = int(census["enumerated"])
+		row["%s_sites" % key] = packed.size()
+		row["%s_cells" % key] = cells
+		row["%s_bench" % key] = bench
+		row["%s_inner" % key] = rings[0]
+		row["%s_middle" % key] = rings[1]
+		row["%s_outer" % key] = rings[2]
+		row["%s_component" % key] = int(census["component"])
+		row["%s_sole_counts" % key] = census["sole"]
+		row["%s_sole" % key] = _motif_refusal_text(census["sole"] as Dictionary)
+	return row
+
+
+func _motif_bench_edges(massif: WarrenMassif) -> int:
+	## THE BENCH CENSUS the design asks for: adjacent columns whose own ground
+	## differs by exactly one undercroft. Those are the edges where a lifted
+	## deck comes out level with an ordinary at-grade street, which is the
+	## natural anchor §3.3 says more relief budget buys more of.
+	var count := 0
+	for column: Vector2i in massif.columns:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+			var neighbour := column + direction
+			if not massif.has_column(neighbour):
+				continue
+			if absi(massif.base_at(neighbour) - massif.base_at(column)) \
+					== MOTIF_UNDERCROFT_BANDS:
+				count += 1
+	return count
+
+
+func _motif_refusal_text(counts: Dictionary) -> String:
+	var parts := PackedStringArray()
+	for key: String in MOTIF_REFUSALS:
+		var value := int(counts.get(key, 0))
+		if value > 0:
+			parts.append("%s:%d" % [key, value])
+	return "none" if parts.is_empty() else " ".join(parts)
+
+
+func _motif_sites(massif: WarrenMassif, excavation: WarrenExcavation,
+		min_layer: int) -> Dictionary:
+	## Enumerates every run the design would consider and says, for each, which
+	## clause of §3.4 refused it. The refusal split is the point: "no sites"
+	## and "no sites because the bore is standing on all of them" are different
+	## verdicts and only one of them can be answered by a supply lever.
+	var blocked: Dictionary = {}
+	var public_at: Dictionary = {}
+	for cell: Vector3i in excavation.carved:
+		blocked[Vector2i(cell.x, cell.z)] = true
+	for cell: Vector3i in excavation.public_cells():
+		blocked[Vector2i(cell.x, cell.z)] = true
+		public_at[cell] = true
+	for cell: Vector3i in excavation.portals:
+		blocked[Vector2i(cell.x, cell.z)] = true
+		public_at[cell] = true
+	var crown := _motif_crown(massif)
+	var reach := 0
+	for column: Vector2i in massif.columns:
+		reach = maxi(reach, absi(column.x - crown.x) + absi(column.y - crown.y))
+	var eligible: Array[Vector2i] = []
+	for column: Vector2i in massif.columns:
+		if massif.layer_at(column) >= min_layer:
+			eligible.append(column)
+	eligible.sort()
+	var eligible_set: Dictionary = {}
+	for column: Vector2i in eligible:
+		eligible_set[column] = true
+	# Every §3.4 clause is a per-COLUMN property once the run's ground band is
+	# fixed, and a run has one ground band by construction, so precomputing
+	# them turns the path scan into an aggregation.
+	var interior: Dictionary = {}
+	var passage_anchor: Dictionary = {}
+	var deck_anchor: Dictionary = {}
+	var bench: Dictionary = {}
+	for column: Vector2i in eligible:
+		var ground := massif.base_at(column)
+		var inside := true
+		var touches_bench := false
+		var at_grade := false
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+				Vector2i.UP, Vector2i.DOWN]:
+			var neighbour := column + direction
+			if not massif.has_column(neighbour):
+				inside = false
+				continue
+			# The supply-lever note (§3.3): a neighbour whose own ground stands
+			# exactly one undercroft higher puts an ordinary at-grade street
+			# level with this column's deck.
+			touches_bench = touches_bench \
+				or massif.base_at(neighbour) - ground == MOTIF_UNDERCROFT_BANDS
+			at_grade = at_grade or public_at.has(
+				Vector3i(neighbour.x, ground, neighbour.y))
+		interior[column] = inside
+		bench[column] = touches_bench
+		passage_anchor[column] = at_grade
+		deck_anchor[column] = _motif_deck_anchor(public_at, column,
+			ground + MOTIF_UNDERCROFT_BANDS)
+	var legal: Array[Dictionary] = []
+	var state: Dictionary = {
+		"massif": massif,
+		"eligible": eligible_set,
+		"blocked": blocked,
+		"interior": interior,
+		"passage_anchor": passage_anchor,
+		"deck_anchor": deck_anchor,
+		"bench": bench,
+		"crown": crown,
+		"reach": maxi(1, reach),
+		"enumerated": 0,
+		"sole": {},
+		"legal": legal,
+	}
+	for start: Vector2i in eligible:
+		var path: Array[Vector2i] = [start]
+		_motif_walk(path, state)
+	return {
+		"enumerated": int(state["enumerated"]),
+		"component": _motif_largest_component(massif, eligible, eligible_set),
+		"sole": state["sole"],
+		"legal": legal,
+		"packed": _motif_pack(legal),
+	}
+
+
+func _motif_largest_component(massif: WarrenMassif, eligible: Array[Vector2i],
+		eligible_set: Dictionary) -> int:
+	## The raw supply before any anchor is asked for: the widest patch of deep
+	## enough layer standing on ONE ground band. A run can never be longer than
+	## this, so a small number here refutes the motif on arithmetic alone.
+	var seen: Dictionary = {}
+	var widest := 0
+	for start: Vector2i in eligible:
+		if seen.has(start):
+			continue
+		var ground := massif.base_at(start)
+		var frontier: Array[Vector2i] = [start]
+		seen[start] = true
+		var size := 0
+		while not frontier.is_empty():
+			var column: Vector2i = frontier.pop_back()
+			size += 1
+			for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+					Vector2i.UP, Vector2i.DOWN]:
+				var neighbour := column + direction
+				if seen.has(neighbour) or not eligible_set.has(neighbour):
+					continue
+				if massif.base_at(neighbour) != ground:
+					continue
+				seen[neighbour] = true
+				frontier.append(neighbour)
+		widest = maxi(widest, size)
+	return widest
+
+
+func _motif_deck_anchor(public_at: Dictionary, column: Vector2i,
+		deck: int) -> bool:
+	for dz in range(-MOTIF_DECK_ANCHOR_REACH_CELLS,
+			MOTIF_DECK_ANCHOR_REACH_CELLS + 1):
+		var span := MOTIF_DECK_ANCHOR_REACH_CELLS - absi(dz)
+		for dx in range(-span, span + 1):
+			for band in range(deck - MOTIF_DECK_ANCHOR_BAND_SLACK,
+					deck + MOTIF_DECK_ANCHOR_BAND_SLACK + 1):
+				if public_at.has(Vector3i(column.x + dx, band,
+						column.y + dz)):
+					return true
+	return false
+
+
+func _motif_walk(path: Array[Vector2i], state: Dictionary) -> void:
+	## Depth-first over flat 4-connected runs. A path and its reverse are the
+	## same site, so only the orientation whose first column sorts lower is
+	## scored -- the dedup is exact because a simple path has two distinct ends.
+	if path.size() >= MOTIF_MIN_RUN_CELLS and path[0] < path[-1]:
+		_motif_score(path, state)
+	if path.size() >= MOTIF_MAX_RUN_CELLS:
+		return
+	var massif := state["massif"] as WarrenMassif
+	var eligible := state["eligible"] as Dictionary
+	var ground := massif.base_at(path[0])
+	var tail: Vector2i = path[-1]
+	for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP,
+			Vector2i.DOWN]:
+		var next := tail + direction
+		if not eligible.has(next):
+			continue
+		if massif.base_at(next) != ground:
+			continue
+		if path.has(next):
+			continue
+		path.append(next)
+		_motif_walk(path, state)
+		path.resize(path.size() - 1)
+
+
+func _motif_score(path: Array[Vector2i], state: Dictionary) -> void:
+	state["enumerated"] = int(state["enumerated"]) + 1
+	var blocked := state["blocked"] as Dictionary
+	var interior := state["interior"] as Dictionary
+	var passage_anchor := state["passage_anchor"] as Dictionary
+	var deck_anchor := state["deck_anchor"] as Dictionary
+	var bench := state["bench"] as Dictionary
+	var refused := PackedStringArray()
+	var free := true
+	var inside := 0
+	var reaches_deck := false
+	var against_bench := false
+	for column: Vector2i in path:
+		free = free and not blocked.has(column)
+		inside += int(bool(interior.get(column, false)))
+		reaches_deck = reaches_deck or bool(deck_anchor.get(column, false))
+		against_bench = against_bench or bool(bench.get(column, false))
+	if not free:
+		refused.append("bore")
+	if inside < MOTIF_MIN_INTERIOR_CELLS:
+		refused.append("rim")
+	if not (bool(passage_anchor.get(path[0], false))
+			or bool(passage_anchor.get(path[-1], false))):
+		refused.append("passage-anchor")
+	if not reaches_deck:
+		refused.append("deck-anchor")
+	if refused.size() == 1:
+		var sole := state["sole"] as Dictionary
+		sole[refused[0]] = int(sole.get(refused[0], 0)) + 1
+	if not refused.is_empty():
+		return
+	var massif := state["massif"] as WarrenMassif
+	var crown: Vector2i = state["crown"]
+	var distance := 1 << 30
+	for column: Vector2i in path:
+		distance = mini(distance,
+			absi(column.x - crown.x) + absi(column.y - crown.y))
+	var columns: Array[Vector2i] = []
+	columns.assign(path)
+	var legal: Array[Dictionary] = state["legal"]
+	legal.append({
+		"columns": columns,
+		"ground": massif.base_at(path[0]),
+		"bench": against_bench,
+		"distance": distance,
+		# Thirds of the footprint's own reach from the crown, so "crown" and
+		# "flank" mean the same thing on a wide massif and a narrow one.
+		"ring": mini(2, distance * 3 / int(state["reach"])),
+	})
+
+
+func _motif_pack(legal: Array[Dictionary]) -> Array[Dictionary]:
+	## How many sites a town could build AT ONCE. Overlapping runs are the same
+	## piece of ground offered twice; counting them all would answer a question
+	## nobody asked. Longest first, then a total order on the columns, so the
+	## packing is a pure function of the input.
+	var order := legal.duplicate()
+	order.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var left := (a["columns"] as Array).size()
+		var right := (b["columns"] as Array).size()
+		if left != right:
+			return left > right
+		return str(a["columns"]) < str(b["columns"]))
+	var taken: Dictionary = {}
+	var out: Array[Dictionary] = []
+	for site: Dictionary in order:
+		var columns: Array[Vector2i] = site["columns"]
+		var clash := false
+		for column: Vector2i in columns:
+			clash = clash or taken.has(column)
+		if clash:
+			continue
+		for column: Vector2i in columns:
+			taken[column] = true
+		out.append(site)
+	return out
+
+
+func _motif_crown(massif: WarrenMassif) -> Vector2i:
+	var crown := Vector2i.ZERO
+	var best := -(1 << 30)
+	var best_base := -(1 << 30)
+	var columns: Array[Vector2i] = []
+	columns.assign(massif.columns.keys())
+	columns.sort()
+	for column: Vector2i in columns:
+		var top := massif.top_at(column)
+		var base := massif.base_at(column)
+		if top > best or (top == best and base > best_base):
+			best = top
+			best_base = base
+			crown = column
+	return crown
+
+
+func _motif_ground_bands(world_seed: int, budget_metres: float) -> Dictionary:
+	## The REAL stamp, sampled the way production samples it
+	## (VillageWarrenFabricSolver._sample_ground_bands: five probes per 3 m
+	## column, ceiled off the site's own lowest sample). Reproduced here rather
+	## than imported because the production reader needs a VillageTerrainView
+	## the harness has already built, and because this stage has to be able to
+	## re-stamp at a budget production does not currently use.
+	var key := "%d@%.2f" % [world_seed, budget_metres]
+	if _motif_ground_cache.has(key):
+		return _motif_ground_cache[key]
+	var water := TerrainWorldTuning.make_water(world_seed)
+	var settlements := SettlementPlan.new(world_seed, water)
+	var relief := SettlementReliefPlan.new(world_seed, settlements,
+		TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE,
+		TerrainWorldTuning.HEIGHTFIELD_MAX_STOREYS, budget_metres)
+	var plan := TerrainWorldTuning.make_heightfield(world_seed, water, relief)
+	var site := Vector2i.ZERO
+	for ring in 3:
+		var found := false
+		for sz in range(-ring, ring + 1):
+			for sx in range(-ring, ring + 1):
+				var candidate: Dictionary = settlements.site_for(
+					Vector2i(sx, sz))
+				if candidate.is_empty():
+					continue
+				site = candidate["cell"] as Vector2i
+				found = true
+				break
+			if found:
+				break
+		if found:
+			break
+	var region := plan.compute_region(site.x, site.y,
+		TerrainChunkMesher.CELLS_PER_CHUNK)
+	var terrain := VillageTerrainView.from_region(region)
+	var centre := Vector2(float(site.x), float(site.y)) * TerrainSurfaceField.TILE
+	var span := WarrenMassifBuilder.RADIUS_CELLS + 1
+	var half := WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M * 0.45
+	var maxima: Dictionary = {}
+	var lowest := INF
+	for z in range(-span, span + 1):
+		for x in range(-span, span + 1):
+			var point := centre + Vector2(
+				float(x) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M,
+				float(z) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M)
+			var column_max := -INF
+			for offset: Vector2 in [Vector2.ZERO, Vector2(-half, -half),
+					Vector2(half, -half), Vector2(-half, half),
+					Vector2(half, half)]:
+				var height := terrain.surface_y(point + offset)
+				column_max = maxf(column_max, height)
+				lowest = minf(lowest, height)
+			maxima[Vector2i(x, z)] = column_max
+	var bands: Dictionary = {}
+	for column: Vector2i in maxima:
+		bands[column] = ceili((float(maxima[column]) - lowest)
+			/ WarrenVolumePlan.VERTICAL_BAND_SIZE_M)
+	_motif_ground_cache[key] = bands
+	return bands
+
+
+func _motif_support_census() -> void:
+	## R2, and the second half of Wave 0's acceptance: is there a baked piece
+	## that can stand in a 3.0 m x 4.5 m undercroft opening WITHOUT SCALING?
+	## The measured_aabb the bake writes is already in placed metres, so this
+	## is the same test the WWall rampart family failed at 3.8-8.0 m.
+	print("")
+	print("=== support vocabulary: pieces fitting a %.1f m x %.1f m opening ===" \
+		% [MOTIF_OPENING_SPAN_M, MOTIF_OPENING_HEIGHT_M])
+	var directory := DirAccess.open(MOTIF_DESCRIPTOR_DIR)
+	if directory == null:
+		print("  no descriptor catalogue at %s" % MOTIF_DESCRIPTOR_DIR)
+		return
+	var names := PackedStringArray(directory.get_files())
+	names.sort()
+	var fitting: Array[String] = []
+	var named: Array[String] = []
+	var scanned := 0
+	var fitted := 0
+	var heights: Array[float] = []
+	var tallest_in_span := 0.0
+	var tallest_id := "none"
+	for file_name: String in names:
+		if not file_name.ends_with(".tres"):
+			continue
+		var descriptor: Resource = load("%s/%s" \
+			% [MOTIF_DESCRIPTOR_DIR, file_name])
+		if descriptor == null:
+			continue
+		var measured: Variant = descriptor.get("measured_aabb")
+		if typeof(measured) != TYPE_AABB:
+			continue
+		var box: AABB = measured
+		scanned += 1
+		var identifier := String(descriptor.get("id"))
+		var tags := PackedStringArray()
+		var raw_tags: Variant = descriptor.get("tags")
+		if typeof(raw_tags) == TYPE_ARRAY:
+			for tag: Variant in raw_tags as Array:
+				tags.append(String(tag))
+		var line := "%s  %.2f x %.2f x %.2f m  [%s]" % [identifier,
+			box.size.x, box.size.y, box.size.z, " ".join(tags)]
+		if MOTIF_NAMED_SUPPORTS.has(identifier):
+			named.append(line)
+		if box.size.x > MOTIF_OPENING_SPAN_M + MOTIF_FIT_TOLERANCE_M \
+				or box.size.z > MOTIF_OPENING_SPAN_M + MOTIF_FIT_TOLERANCE_M:
+			continue
+		# Tallest thing in the WHOLE catalogue that stands in one column's
+		# footprint, tag or no tag: if that is under the opening, no filter
+		# choice above can rescue the answer.
+		if box.size.y > tallest_in_span:
+			tallest_in_span = box.size.y
+			tallest_id = identifier
+		if box.size.y > MOTIF_OPENING_HEIGHT_M + MOTIF_FIT_TOLERANCE_M:
+			continue
+		fitted += 1
+		var structural := false
+		for tag: String in tags:
+			structural = structural or MOTIF_SUPPORT_TAGS.has(tag)
+		if not structural:
+			continue
+		# SPANS means one piece reaches the deck. STACKS means the opening is
+		# an exact whole number of this piece, so a course of them reaches it
+		# -- which is a stricter test than "the piece is a whole number of
+		# bands": a 3.0 m pillar is two exact bands and still cannot make 4.5
+		# out of copies of itself.
+		var courses := MOTIF_OPENING_HEIGHT_M / maxf(0.01, box.size.y)
+		var verdict := "SHORT "
+		if box.size.y >= MOTIF_OPENING_HEIGHT_M - MOTIF_FIT_TOLERANCE_M:
+			verdict = "SPANS "
+		elif absf(courses - roundf(courses)) * box.size.y \
+				<= MOTIF_FIT_TOLERANCE_M:
+			verdict = "STACKS"
+		fitting.append("%s %s" % [verdict, line])
+		# Only a piece that is itself a whole number of bands can be a member
+		# of a course; a 0.39 m brace stacked three deep to make up a shortfall
+		# is not masonry, it is scaling by another name.
+		var bands := box.size.y / WarrenVolumePlan.VERTICAL_BAND_SIZE_M
+		if absf(bands - roundf(bands)) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M \
+				<= MOTIF_FIT_TOLERANCE_M and bands >= 0.5:
+			heights.append(box.size.y)
+	print("  scanned %d descriptors; %d fit the opening; %d of those could" \
+		% [scanned, fitted, fitting.size()])
+	print("  carry load (tagged %s)" % " ".join(MOTIF_SUPPORT_TAGS))
+	print("  SPANS = tall enough to reach the deck; STACKS = an exact multiple")
+	print("  of the %.1f m band, so a course of them reaches it without scaling." \
+		% WarrenVolumePlan.VERTICAL_BAND_SIZE_M)
+	for line: String in fitting:
+		print("    %s" % line)
+	print("  a course of the whole-band pieces above reaches %.2f m exactly: %s" \
+		% [MOTIF_OPENING_HEIGHT_M,
+		"YES" if _motif_course_reaches(heights) else "NO"])
+	print("  tallest piece of ANY tag standing in one column's footprint: " \
+		+ "%s at %.2f m (the opening is %.2f m)" % [tallest_id,
+		tallest_in_span, MOTIF_OPENING_HEIGHT_M])
+	print("  the pieces design §3.8 names, fitting or not:")
+	for line: String in named:
+		print("    %s" % line)
+
+
+func _motif_course_reaches(heights: Array[float]) -> bool:
+	## Can ANY multiset of the fitting pieces stack to the undercroft's exact
+	## height? A pier that ends 0.9 m under the deck is not a pier, and the
+	## no-scaling rule forbids stretching one to close the gap.
+	var reachable: Dictionary = {0: true}
+	var step := MOTIF_OPENING_HEIGHT_M / 100.0
+	for _course in 8:
+		var grown: Dictionary = {}
+		for key: int in reachable:
+			for height: float in heights:
+				var total := float(key) * step + height
+				if total > MOTIF_OPENING_HEIGHT_M + MOTIF_FIT_TOLERANCE_M:
+					continue
+				grown[int(roundf(total / step))] = true
+		for key: int in grown:
+			reachable[key] = true
+	for key: int in reachable:
+		if key == 0:
+			continue
+		if absf(float(key) * step - MOTIF_OPENING_HEIGHT_M) \
+				<= MOTIF_FIT_TOLERANCE_M:
+			return true
+	return false
