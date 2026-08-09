@@ -423,23 +423,58 @@ func _covered_route_eye() -> Dictionary:
 	## Standing on the street cell carrying the most mass overhead, looking along
 	## the street. The fixed overview cameras cannot answer "is there a path
 	## through the city", which is the question this round is judged on.
+	##
+	## Overhead mass is the fabric's own SOLID layer -- the rooms and galleries a
+	## house puts over a street. It used to be `retained_terrace_cells`, which
+	## was correct while the fabric drew the mountain: the mass over a street was
+	## unbuilt massif the parcel retained. The buildable-layer wave deleted that
+	## substrate, so the retained set is empty on every stamped seed and this
+	## camera silently stopped existing -- the only view that answers the
+	## reviewer's standing question, lost to a set that is now always empty.
+	##
+	## Every standable public kind is a candidate, not STRUCTURAL_COURT alone.
+	## INTERIOR_PASSAGE is precisely "the street runs through the inside of a
+	## building", so a camera that could not stand on one was excluding the shot
+	## it exists to take.
 	if _fabric == null or _fabric.surface_plan == null:
 		return {}
-	var floors := _fabric.surface_plan.cells_for_kind(
-		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT)
-	var retained := _fabric.retained_terrace_cells
+	var floors: Array[Vector3i] = []
+	var covered_kind: Dictionary = {}
+	for kind: int in [PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET]:
+		for cell: Vector3i in _fabric.surface_plan.cells_for_kind(kind):
+			if kind == PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE:
+				covered_kind[cell] = true
+			floors.append(cell)
+	if floors.is_empty():
+		return {}
+	var solids := _fabric.transformed_cells(&"solid")
 	var best := Vector3i(2147483647, 0, 0)
 	var best_cover := 0
 	for cell: Vector3i in floors:
-		var cover := 0
+		# An INTERIOR_PASSAGE cell is roofed by definition, so it outranks any
+		# open court however much solid happens to stand above the court.
+		var cover := 16 if covered_kind.has(cell) else 0
 		for band in range(cell.y + 2, cell.y + 10):
-			if retained.has(Vector3i(cell.x, band, cell.z)):
+			if solids.has(Vector3i(cell.x, band, cell.z)):
 				cover += 1
 		if cover > best_cover:
 			best_cover = cover
 			best = cell
 	if best.x == 2147483647:
-		return {}
+		# No street runs under a building on this seed -- which is itself worth
+		# seeing. Stand on the most central floor cell instead and say so, so an
+		# uncovered town produces the same view as a covered one rather than
+		# silently producing none.
+		var nearest := INF
+		for cell: Vector3i in floors:
+			var radius := Vector2(float(cell.x), float(cell.z)).length()
+			if radius < nearest:
+				nearest = radius
+				best = cell
+		if best.x == 2147483647:
+			return {}
 	var forward := Vector3.ZERO
 	for cell: Vector3i in floors:
 		if cell.y != best.y or cell == best:
@@ -453,10 +488,44 @@ func _covered_route_eye() -> Dictionary:
 		forward = Vector3(0.0, 0.0, 1.0)
 	var eye := Vector3(best) * FabricRecipe.CELL_SIZE + Vector3(0.0, 1.4, 0.0) \
 		+ _town_origin
-	print("[mass_first_preview] route eye at %s with %d bands overhead" % [
-		best, best_cover])
+	print("[mass_first_preview] route eye at %s: %s, %d bands of BUILDING "
+		% [best, "INTERIOR_PASSAGE" if covered_kind.has(best) else "open floor",
+		best_cover % 16] + "overhead (%d floors offered)" % floors.size())
+	_report_street_cover(floors, solids)
 	return {"id": "route-eye", "position": eye,
 		"target": eye + forward * 6.0, "fov": 75.0}
+
+
+func _report_street_cover(floors: Array[Vector3i], solids: Dictionary) -> void:
+	## How much of the public realm a BUILDING stands over, at fabric
+	## resolution, printed beside the route-eye so "the street is covered" is a
+	## number in the same place as the picture of it.
+	##
+	## `shared columns` is the lattice check the rest of the line depends on: if
+	## surface cells and recipe solid cells did not live in one lattice this
+	## would be zero and every other count here would be meaningless rather than
+	## merely bad.
+	var floor_columns: Dictionary = {}
+	for cell: Vector3i in floors:
+		floor_columns[Vector2i(cell.x, cell.z)] = true
+	var solid_columns: Dictionary = {}
+	for cell_value: Variant in solids.keys():
+		var cell := cell_value as Vector3i
+		solid_columns[Vector2i(cell.x, cell.z)] = true
+	var shared := 0
+	for column: Vector2i in floor_columns:
+		shared += int(solid_columns.has(column))
+	var roofed := 0
+	for cell: Vector3i in floors:
+		for band in range(cell.y + 2, cell.y + 10):
+			if solids.has(Vector3i(cell.x, band, cell.z)):
+				roofed += 1
+				break
+	print(("[mass_first_preview] street cover: %d of %d floor cells carry a "
+		+ "building 2-9 bands overhead | %d of %d floor columns share a column "
+		+ "with some building cell | %d solid cells in %d columns")
+		% [roofed, floors.size(), shared, floor_columns.size(), solids.size(),
+		solid_columns.size()])
 
 
 func _fabric_bounds() -> AABB:
