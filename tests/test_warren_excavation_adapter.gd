@@ -79,6 +79,19 @@ func test_adapter_preserves_exact_walk_and_entry_geometry() -> void:
 			% cell)
 
 
+func _terraced_ground() -> Dictionary:
+	## test_village_plan.gd's `_terraced_region` step field, restated in the
+	## massif's own column lattice: three ground plateaus at 0, 2 and 6 bands.
+	## Real terrain relief, and enough of it that anything still assuming base 0
+	## is caught.
+	var span := WarrenMassifBuilder.RADIUS_CELLS + 4
+	var bands: Dictionary = {}
+	for z in range(-span, span + 1):
+		for x in range(-span, span + 1):
+			bands[Vector2i(x, z)] = 0 if x <= -1 else (2 if x == 0 else 6)
+	return bands
+
+
 func test_adapter_envelope_matches_massif_column_heights_exactly() -> void:
 	## The brief's own contract test only proves the synthesised envelope
 	## KNOWS about every route column. It says nothing about whether the
@@ -86,38 +99,74 @@ func test_adapter_envelope_matches_massif_column_heights_exactly() -> void:
 	## column frontage/addressing logic will read -- actually match the
 	## terraced mass Task 1 built, rather than some other plausible-looking
 	## Gaussian shape.
-	var massif := WarrenMassifBuilder.build(1)
-	var excavation := WarrenExcavationCarver.carve(1, massif)
-	var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
-		excavation)
-	assert_not_null(plan, WarrenExcavationVolumeAdapter.last_failure)
-	if plan == null:
-		return
-	var envelope := plan.envelope
-	var checked := 0
-	for column_value: Variant in massif.columns.keys():
-		var column := column_value as Vector2i
-		checked += 1
-		assert_eq(envelope.ground_at(column), massif.base_at(column),
-			"column %s ground band must match the massif" % column)
-		assert_eq(envelope.height_at(column),
-			massif.top_at(column) - massif.base_at(column),
-			"column %s height must match the massif's terrace" % column)
-		assert_eq(envelope.top_at(column), massif.top_at(column),
-			"column %s top must match the massif exactly" % column)
-		# The SECOND datum. Ground stays natural ground so the frontage,
-		# arcade and cover rules keep reading the whole solid; the terrace
-		# only bounds how far a house descends.
-		assert_eq(envelope.bearing_at(column), massif.bearing_at(column),
-			"column %s terrace must match the massif" % column)
-	assert_eq(checked, massif.columns.size())
-	var raised := 0
-	for column_value: Variant in massif.columns.keys():
-		var column := column_value as Vector2i
-		raised += int(envelope.bearing_at(column) > envelope.ground_at(column))
-	assert_gt(raised, 0,
-		"a synthesised envelope whose terrace never rises above ground has "
-		+ "not carried the massif's second datum at all")
+	##
+	## Run on real ground relief as well as flat, and stated as the TRUE
+	## relationship rather than the one that happened to hold at base 0.
+	## envelope_from_massif DROPS any column the neighbour-step clamp squeezed to
+	## zero height, and `ground_at`/`height_at` answer 0 for a column the
+	## envelope does not hold -- so on flat ground the old blanket "every massif
+	## column matches" passed for dropped columns by coincidence (0 == 0 == 0).
+	## On relief a dropped column's massif top is its own ground band, which is
+	## not zero, and the coincidence is gone. The honest claim is that the
+	## envelope holds exactly the positive-layer columns and copies those
+	## faithfully.
+	for ground: Dictionary in [{} as Dictionary, _terraced_ground()]:
+		var massif := WarrenMassifBuilder.build(1, ground)
+		assert_not_null(massif, WarrenMassifBuilder.last_failure)
+		if massif == null:
+			continue
+		var excavation := WarrenExcavationCarver.carve(1, massif)
+		assert_not_null(excavation, WarrenExcavationCarver.last_failure)
+		if excavation == null:
+			continue
+		var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		assert_not_null(plan, WarrenExcavationVolumeAdapter.last_failure)
+		if plan == null:
+			continue
+		var envelope := plan.envelope
+		var carried := 0
+		var dropped := 0
+		for column_value: Variant in massif.columns.keys():
+			var column := column_value as Vector2i
+			if massif.layer_at(column) < 1:
+				dropped += 1
+				assert_false(envelope.contains_column(column),
+					("column %s carries no mass, so the envelope must drop it " \
+					+ "rather than hold a zero-height column") % column)
+				continue
+			carried += 1
+			assert_true(envelope.contains_column(column),
+				"column %s carries mass and must reach the envelope" % column)
+			assert_eq(envelope.ground_at(column), massif.base_at(column),
+				"column %s ground band must match the massif" % column)
+			assert_eq(envelope.height_at(column), massif.layer_at(column),
+				"column %s height must match the massif's terrace" % column)
+			assert_eq(envelope.top_at(column), massif.top_at(column),
+				"column %s top must match the massif exactly" % column)
+			# The SECOND datum. Ground stays natural ground so the frontage,
+			# arcade and cover rules keep reading the whole solid; the terrace
+			# only bounds how far a house descends.
+			assert_eq(envelope.bearing_at(column), massif.bearing_at(column),
+				"column %s terrace must match the massif" % column)
+		assert_eq(carried + dropped, massif.columns.size())
+		assert_eq(envelope.height_bands.size(), carried,
+			"the envelope must hold exactly the massif's load-bearing columns")
+		var raised := 0
+		var grounded := 0
+		for column_value: Variant in massif.columns.keys():
+			var column := column_value as Vector2i
+			if not envelope.contains_column(column):
+				continue
+			raised += int(envelope.bearing_at(column)
+				> envelope.ground_at(column))
+			grounded += int(envelope.ground_at(column)
+				== massif.base_at(column))
+		assert_gt(raised, 0,
+			"a synthesised envelope whose terrace never rises above ground has "
+			+ "not carried the massif's second datum at all")
+		assert_eq(grounded, envelope.height_bands.size(),
+			"every envelope column stands on its own input ground band")
 
 
 func test_adapter_transitions_preserve_excavation_spine_edges() -> void:
@@ -209,11 +258,97 @@ func test_adapter_corpus_preserves_geometry_across_seeds() -> void:
 			% world_seed)
 		for column_value: Variant in massif.columns.keys():
 			var column := column_value as Vector2i
+			# Zero-layer columns are dropped by envelope_from_massif, and the
+			# envelope answers 0 for a column it does not hold. Comparing tops
+			# there only ever held because flat ground made both sides 0.
+			if not plan.envelope.contains_column(column):
+				assert_lt(massif.layer_at(column), 1,
+					("seed %d: column %s carries mass but never reached the " \
+					+ "envelope") % [world_seed, column])
+				continue
 			assert_eq(plan.envelope.top_at(column), massif.top_at(column),
 				"seed %d column %s height must match the massif" \
 				% [world_seed, column])
 	assert_gt(accepted, 0,
 		"no seed in the corpus produced a sealed plan")
+
+
+func test_the_whole_mass_first_chain_runs_on_terraced_ground() -> void:
+	## WAVE 1 ACCEPTANCE. Mass-first has only ever been exercised at base 0, and
+	## the terrain audit found it dying at the FIRST stage on any relief. This
+	## walks the whole chain -- massif, carve, adapt, partition -- on the
+	## terraced step field the village suite already uses for real terrain, and
+	## demands the same guarantees the flat corpus gets: a sealed volume plan
+	## whose columns stand on their own input ground, and a partition that
+	## leaves no street wall to nobody.
+	var ground := _terraced_ground()
+	var reached := 0
+	var relief_seen := 0
+	var houses := 0
+	for world_seed: int in [1, 3, 4, 5, 6, 9, 11]:
+		var massif := WarrenMassifBuilder.build(world_seed, ground)
+		if massif == null:
+			continue
+		# The gates are relief-relative, so the massif must build on relief
+		# wherever it builds on flat ground -- pinned as an invariance in
+		# test_warren_massif.gd; here it is only the precondition.
+		var bases: Dictionary = {}
+		for column: Vector2i in massif.columns:
+			assert_eq(massif.base_at(column), int(ground[column]),
+				"seed %d: column %s ignored its input ground" \
+				% [world_seed, column])
+			bases[massif.base_at(column)] = true
+		assert_gt(bases.size(), 1,
+			"seed %d: a footprint on one ground band proves nothing about relief"
+			% world_seed)
+		relief_seen += 1
+		var excavation := WarrenExcavationCarver.carve(world_seed, massif)
+		if excavation == null:
+			continue
+		# The at-grade street is the local input ground, not band 0.
+		var grade_bands: Dictionary = {}
+		for cell: Vector3i in excavation.route:
+			var column := Vector2i(cell.x, cell.z)
+			if cell.y == massif.base_at(column):
+				grade_bands[cell.y] = true
+		assert_gt(grade_bands.size(), 0,
+			"seed %d: the bore never touched its own ground" % world_seed)
+		var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if plan == null:
+			continue
+		assert_true(plan.is_sealed(), "seed %d: %s" \
+			% [world_seed, plan.last_rejection])
+		var parcels := WarrenSolidPartitioner.partition(massif, excavation)
+		if parcels.is_empty():
+			continue
+		reached += 1
+		houses += parcels.size()
+		var unowned := WarrenSolidPartitioner.unowned_route_faces(parcels,
+			excavation, massif)
+		assert_eq(unowned.size(), 0,
+			"seed %d: %d street walls belong to nobody on terraced ground: %s" \
+			% [world_seed, unowned.size(), str(unowned.slice(0, 6))])
+		for parcel: WarrenBuildingParcel in parcels:
+			var footing := -2147483648
+			for column: Vector2i in parcel.footprint:
+				footing = maxi(footing, massif.base_at(column))
+			assert_gte(parcel.base_band, footing,
+				("seed %d: house %s is rooted below its own input ground, so " \
+				+ "the chain is still assuming base 0") \
+				% [world_seed, parcel.stable_id])
+	assert_gt(relief_seen, 0,
+		"no seed built a massif on the terraced frame at all")
+	assert_gt(reached, 0,
+		"no seed reached a partition on terraced ground -- the whole point "
+		+ "of relief-relative gates is that the chain now runs on relief")
+	# A floor on "the chain really ran", not a target: measured 7 of 7 seeds and
+	# 380 houses (54/37/56/32/83/48/70) over this corpus on the terraced frame,
+	# every one of them with zero unowned street walls. Halved, so seed supply
+	# may move without this test quietly becoming a pin on it.
+	assert_gt(houses, 190,
+		"only %d houses across %d terraced towns -- the chain is limping, "
+		% [houses, reached] + "not running")
 
 
 func test_adapter_is_deterministic() -> void:

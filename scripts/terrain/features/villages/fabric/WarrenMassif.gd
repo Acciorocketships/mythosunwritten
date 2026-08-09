@@ -61,6 +61,21 @@ func base_at(column: Vector2i) -> int:
 	return int((columns.get(column, {}) as Dictionary).get("base", 0))
 
 
+func layer_at(column: Vector2i) -> int:
+	## Bands of MASSIF above this column's own input ground -- the only part of
+	## the solid this class authored. Every shape gate scores this rather than
+	## `top_at`, because `top_at` also carries whatever relief the terrain
+	## handed in through `ground_bands`, and charging the builder for the
+	## landscape is what made a smooth slope read as a 12-14 cell plateau and a
+	## terrace riser read as an 8-band cliff (terrain audit, ledger line 208).
+	##
+	## The invariance this buys: a constant-thickness buildable layer draped
+	## over any ground whatsoever is gate-neutral, so flat, sloped and terraced
+	## input produce identical verdicts. On flat input `layer_at == top_at`, so
+	## nothing about the pinned flat corpus moves.
+	return top_at(column) - base_at(column)
+
+
 func bearing_at(column: Vector2i) -> int:
 	## The terrace a house standing on this column rests on -- a SECOND datum,
 	## deliberately distinct from `base_at`.
@@ -78,9 +93,13 @@ func bearing_at(column: Vector2i) -> int:
 
 
 func terrace_levels() -> Array[int]:
+	## Distinct LAYER thicknesses, so the >=MIN_TERRACE_LEVELS gate measures how
+	## articulated the built mass is. Counting distinct absolute tops passed
+	## vacuously on relief: every band the ground itself stepped through
+	## registered as another terrace the builder never authored.
 	var seen: Dictionary = {}
 	for column: Vector2i in columns:
-		seen[top_at(column)] = true
+		seen[layer_at(column)] = true
 	var out: Array[int] = []
 	out.assign(seen.keys())
 	out.sort()
@@ -88,14 +107,17 @@ func terrace_levels() -> Array[int]:
 
 
 func widest_plateau_cells() -> int:
-	## Largest 4-connected component sharing one top band.
+	## Largest 4-connected component sharing one LAYER thickness. Grouping by
+	## absolute top instead makes a constant-thickness layer on a ramp -- where
+	## the base rises exactly as the terrace falls -- read as one huge plateau,
+	## which is the audit's observed 12-14 cell plateau on a slope.
 	var visited: Dictionary = {}
 	var widest := 0
 	for start_value: Variant in columns.keys():
 		var start := start_value as Vector2i
 		if visited.has(start):
 			continue
-		var level := top_at(start)
+		var level := layer_at(start)
 		var frontier: Array[Vector2i] = [start]
 		var count := 0
 		visited[start] = true
@@ -106,7 +128,7 @@ func widest_plateau_cells() -> int:
 					Vector2i.UP, Vector2i.DOWN]:
 				var neighbor := cell + direction
 				if visited.has(neighbor) or not columns.has(neighbor) \
-						or top_at(neighbor) != level:
+						or layer_at(neighbor) != level:
 					continue
 				visited[neighbor] = true
 				frontier.append(neighbor)

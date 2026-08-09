@@ -858,10 +858,20 @@ static func _portal_cells(massif: WarrenMassif) -> Array[Vector3i]:
 		# least two columns that can themselves host a grade cell, which is
 		# the cheapest available proxy for "there is a street's worth of
 		# ground mass through here".
+		#
+		# Tall enough is necessary but not sufficient once the ground under the
+		# massif has relief of its own. EVERY action's first stride cell sits on
+		# the move's STARTING band (_surface_band_span returns a zero low for
+		# offset 1 of a stair and a ramp alike), so a 4-neighbour whose own
+		# ground stands at a different band can never be entered at grade: it is
+		# either above the bored slot or below its own base. Counting it here
+		# hands the bore a mouth whose ground street dies on move one. Same-band
+		# is a no-op on flat input, where every base is equal.
 		var grade_neighbours := 0
 		for direction: Vector2i in DIRECTIONS:
 			var neighbour := column + direction
 			if massif.has_column(neighbour) \
+					and massif.base_at(neighbour) == base \
 					and massif.top_at(neighbour) - massif.base_at(neighbour) \
 						>= HEADROOM_BANDS:
 				grade_neighbours += 1

@@ -20,11 +20,14 @@ const MAX_CORE_BANDS := 20
 const MIN_TERRACE_LEVELS := 5
 const MAX_PLATEAU_CELLS := 6
 const MIN_COLUMN_BANDS := 2
-## A neighbouring pair of columns may step by at most this many bands, and
-## EMPTY GROUND COUNTS AS A NEIGHBOUR OF HEIGHT ZERO. Riser steps are 1-2
-## bands, so this comfortably allows a normal riser, an occasional doubled
-## riser, or a fresh district settling one step away from two different
-## neighbours -- it forbids the multi-riser cliffs per-cell noise produced.
+## A neighbouring pair of columns may step by at most this many bands OF
+## AUTHORED LAYER (see WarrenMassif.layer_at -- pre-existing terrain relief
+## between the pair belongs to the terrain, which renders it as slope or as a
+## dressed cliff), and EMPTY GROUND COUNTS AS A NEIGHBOUR OF HEIGHT ZERO.
+## Riser steps are 1-2 bands, so this comfortably allows a normal riser, an
+## occasional doubled riser, or a fresh district settling one step away from
+## two different neighbours -- it forbids the multi-riser cliffs per-cell
+## noise produced.
 ##
 ## Applying it at the boundary is what makes the whole silhouette a stepped
 ## hill rather than a terraced dome standing on a cliff. While boundary
@@ -82,10 +85,13 @@ static func build(world_seed: int,
 			"top": base + terrace,
 			"terrace": terrace,
 		}
+	# Already relief-relative before this wave, and stated through the shared
+	# accessor now so the whole gate battery reads one definition of "mass this
+	# builder authored".
 	massif.core_top_bands = 0
 	for column: Vector2i in massif.columns:
 		massif.core_top_bands = maxi(massif.core_top_bands,
-			massif.top_at(column) - massif.base_at(column))
+			massif.layer_at(column))
 	if massif.core_top_bands < MIN_CORE_BANDS:
 		last_failure = "core reaches %d bands; %d required" % [
 			massif.core_top_bands, MIN_CORE_BANDS]
@@ -110,21 +116,30 @@ static func build(world_seed: int,
 
 
 static func _worst_neighbor_step(massif: WarrenMassif) -> int:
-	## The tallest continuous vertical face in the solid. A MISSING neighbour is
-	## not skipped: it is ground, so the face it exposes is the column's whole
-	## height above its own base. All four directions are visited because the
-	## empty side of a boundary column has no column of its own to visit it back.
+	## The tallest continuous vertical face THIS BUILDER authored. A MISSING
+	## neighbour is not skipped: it is ground, so the face it exposes is the
+	## column's whole layer above its own base. All four directions are visited
+	## because the empty side of a boundary column has no column of its own to
+	## visit it back.
+	##
+	## Between two present columns the step measured is the difference in LAYER,
+	## not in absolute top. The absolute difference also contains the step the
+	## GROUND took between those same two columns, and that step is the
+	## terrain's to render -- as a walkable slope or as a dressed cliff -- not a
+	## cliff the massif must forbid. Charging it here is what made a terraced
+	## input frame report an 8-band cliff before a single band of mass had been
+	## placed (terrain audit, ledger line 208). The two happen to coincide on
+	## flat ground, which is why this went unnoticed for the whole build.
 	var worst := 0
 	for column: Vector2i in massif.columns:
 		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
 				Vector2i.UP, Vector2i.DOWN]:
 			var neighbor := column + direction
 			if not massif.has_column(neighbor):
-				worst = maxi(worst, massif.top_at(column)
-					- massif.base_at(column))
+				worst = maxi(worst, massif.layer_at(column))
 				continue
-			worst = maxi(worst, absi(massif.top_at(column)
-				- massif.top_at(neighbor)))
+			worst = maxi(worst, absi(massif.layer_at(column)
+				- massif.layer_at(neighbor)))
 	return worst
 
 

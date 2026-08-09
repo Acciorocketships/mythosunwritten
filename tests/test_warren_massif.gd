@@ -52,6 +52,158 @@ func test_massif_seeds_differ_and_respect_ground_bands() -> void:
 			"terrain ground bands lift the massif base")
 
 
+func _ground_frame(kind: String) -> Dictionary:
+	## The three input frames warren_mass_first_report --stage terrain uses, so
+	## the suite and the measuring instrument describe the same ground.
+	var span := WarrenMassifBuilder.RADIUS_CELLS + 4
+	var bands: Dictionary = {}
+	for z in range(-span, span + 1):
+		for x in range(-span, span + 1):
+			var column := Vector2i(x, z)
+			match kind:
+				"flat":
+					bands[column] = 0
+				"slope":
+					bands[column] = clampi((x + span) / 4, 0, 8)
+				"steep":
+					bands[column] = x + span
+				"terrace":
+					bands[column] = 0 if x <= -1 else (2 if x == 0 else 6)
+				_:
+					bands[column] = 0
+	return bands
+
+
+func test_gate_verdicts_are_invariant_under_the_ground_the_massif_stands_on() \
+		-> void:
+	## THE property this wave exists to pin. The massif authors a LAYER of mass
+	## above whatever ground it is handed; the ground itself is the terrain's,
+	## and the terrain renders it as slope or as dressed cliff. So a shape gate
+	## that scores absolute column tops is charging the builder for the
+	## landscape -- which is exactly why a smooth slope read as a 10-14 cell
+	## plateau and a terraced frame as a 6-band cliff (terrain audit).
+	##
+	## Stamped on four inputs that differ by up to 44 bands of relief, including
+	## one steeper than any terrain can legally produce: identical verdicts,
+	## identical relative structure, cell for cell.
+	for world_seed: int in [0, 1, 3, 5, 11, 18]:
+		var flat := WarrenMassifBuilder.build(world_seed,
+			_ground_frame("flat"))
+		var flat_failure := WarrenMassifBuilder.last_failure
+		for kind: String in ["slope", "steep", "terrace"]:
+			var bands := _ground_frame(kind)
+			var relief := WarrenMassifBuilder.build(world_seed, bands)
+			assert_eq(relief == null, flat == null,
+				("seed %d on %s ground: the verdict moved (%s vs flat %s); a " \
+				+ "constant-thickness layer draped over relief must be " \
+				+ "gate-neutral") % [world_seed, kind,
+					WarrenMassifBuilder.last_failure, flat_failure])
+			if flat == null or relief == null:
+				continue
+			assert_eq(relief.columns.size(), flat.columns.size(),
+				"seed %d on %s ground: footprint changed" % [world_seed, kind])
+			assert_eq(relief.core_top_bands, flat.core_top_bands,
+				"seed %d on %s ground: core bands are relief-relative already, "
+				% [world_seed, kind] + "so they must not move")
+			assert_eq(relief.terrace_levels(), flat.terrace_levels(),
+				"seed %d on %s ground: terrace levels moved" \
+				% [world_seed, kind])
+			assert_eq(relief.widest_plateau_cells(),
+				flat.widest_plateau_cells(),
+				"seed %d on %s ground: widest plateau moved" \
+				% [world_seed, kind])
+			for column: Vector2i in flat.columns:
+				assert_true(relief.has_column(column),
+					"seed %d on %s ground: column %s vanished" \
+					% [world_seed, kind, column])
+				assert_eq(relief.layer_at(column), flat.layer_at(column),
+					"seed %d on %s ground: the layer at %s changed thickness" \
+					% [world_seed, kind, column])
+				assert_eq(relief.base_at(column), int(bands[column]),
+					"seed %d on %s ground: column %s did not take its own " \
+					% [world_seed, kind, column] + "input ground as its base")
+
+
+func test_a_real_layer_cliff_still_fails_the_neighbour_step_gate() -> void:
+	## Sabotage-proof for the neighbour-step gate: relief-relativity must not
+	## have turned it off. Hand-built because the builder cannot produce an
+	## illegal step by construction -- the point is that the GATE still sees one
+	## when the layer, not the ground, is what steps.
+	##
+	## The fixture is a 5x5 pad of one-band rim with a tall column dead centre,
+	## so the centre has all four neighbours and the missing-neighbour branch
+	## cannot mask the result, while the rim contributes only one band. Run
+	## twice: on flat ground, and with the tall column's ground sunk by exactly
+	## its extra layer so every absolute top in the pad is equal. The old
+	## absolute measure scored that second pad as perfectly level; the
+	## relief-relative one still sees the cliff.
+	var step := WarrenMassifBuilder.MAX_NEIGHBOR_STEP_BANDS + 2
+	for cancelled: bool in [false, true]:
+		var massif := WarrenMassif.new(7)
+		for z in range(5):
+			for x in range(5):
+				var centre := x == 2 and z == 2
+				var layer := 1 + step if centre else 1
+				# `cancelled` sinks the tall column's ground by exactly its extra
+				# layer, so every absolute top in the pad is 1 and the OLD
+				# absolute measure scored the whole thing as flat.
+				var base := -step if centre and cancelled else 0
+				massif.columns[Vector2i(x, z)] = {
+					"base": base, "top": base + layer, "terrace": layer,
+				}
+		var tallest_absolute_step := 0
+		for column: Vector2i in massif.columns:
+			for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+					Vector2i.UP, Vector2i.DOWN]:
+				if massif.has_column(column + direction):
+					tallest_absolute_step = maxi(tallest_absolute_step,
+						absi(massif.top_at(column)
+							- massif.top_at(column + direction)))
+		if cancelled:
+			assert_eq(tallest_absolute_step, 0,
+				"the fixture must be flat in ABSOLUTE terms, or it proves "
+				+ "nothing about relief-relativity")
+		var worst := WarrenMassifBuilder._worst_neighbor_step(massif)
+		assert_eq(worst, step,
+			("a %d-band step in the authored layer is a cliff whether or not " \
+			+ "the ground cancels it in absolute terms (cancelled=%s)") \
+			% [step, cancelled])
+		assert_gt(worst, WarrenMassifBuilder.MAX_NEIGHBOR_STEP_BANDS,
+			"the neighbour-step gate must still have teeth (cancelled=%s)" \
+			% cancelled)
+
+
+func test_a_real_layer_plateau_still_fails_the_plateau_gate() -> void:
+	## The plateau gate's counterpart sabotage-proof, and its converse: a
+	## constant-thickness layer laid on a STAIRCASE of ground is not a plateau
+	## even though its absolute tops rise in lockstep, while a genuine
+	## constant-LAYER slab is one however the ground beneath it moves.
+	var wide := WarrenMassifBuilder.MAX_PLATEAU_CELLS + 3
+	var slab := WarrenMassif.new(8)
+	for x in range(wide):
+		slab.columns[Vector2i(x, 0)] = {"base": x, "top": x + 5, "terrace": 5}
+	assert_eq(slab.widest_plateau_cells(), wide,
+		"%d columns of identical layer thickness are one plateau however " \
+		% wide + "much the ground under them climbs")
+	assert_gt(slab.widest_plateau_cells(),
+		WarrenMassifBuilder.MAX_PLATEAU_CELLS,
+		"the plateau gate must still have teeth")
+
+	var terraced := WarrenMassif.new(9)
+	for x in range(wide):
+		# Layer thins by one band per column exactly as the ground rises by one:
+		# every absolute top is 10, which the old measure scored as one wide
+		# plateau and the audit observed on every slope.
+		terraced.columns[Vector2i(x, 0)] = {
+			"base": x, "top": 10, "terrace": 10 - x,
+		}
+	assert_eq(terraced.widest_plateau_cells(), 1,
+		"columns of differing layer thickness are separate terraces even " \
+		+ "when a rising ground makes their absolute tops equal")
+	assert_eq(terraced.terrace_levels().size(), wide,
+		"each distinct layer thickness is its own terrace level")
+
+
 func test_the_address_gate_no_longer_forces_a_tower_at_the_top_of_the_climb() \
 		-> void:
 	## Pins BOTH halves of the split datum on real bores, not by argument: the
