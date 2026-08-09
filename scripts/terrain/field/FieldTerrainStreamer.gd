@@ -46,6 +46,12 @@ signal startup_loading_completed
 ## Dense grass is visual-only and is skipped by headless terrain/test runs.
 ## Its field and renderer have direct headless tests; production enables it.
 @export var GRASS_ENABLED: bool = true
+## READ-ONLY MIRRORS of the canonical tuning, kept so the inspector still shows
+## what the streamed world is built from. The plan itself is constructed by
+## TerrainWorldTuning.make_water/make_relief/make_heightfield in _ready(), so
+## that harnesses, corpora and the streamed world cannot diverge about what the
+## world is; overriding these in a scene changes nothing. Change
+## TerrainWorldTuning instead (every value there re-rolls the whole world).
 @export var HEIGHTFIELD_AMPLITUDE: float = \
 	TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE
 @export var HEIGHTFIELD_MAX_STOREYS: int = \
@@ -70,6 +76,11 @@ var _dressing_program: DressingProgram
 var _dressing_queue: EnvironmentCommitQueue
 var _feature_program: FeatureProgram
 var _settlements: SettlementPlan
+# Untyped and usually null: the mass-first settlement relief stamp. Duck-typed
+# into _plan the way _water is, and part of the PLAN, so a chunk is built with
+# the hill already in it the first time and forever — nothing invalidates and
+# nothing re-meshes (there is no terrain rebuild API, and none is needed).
+var _relief = null
 var _fields: WorldFieldBlockCache
 var _features: WorldFeaturePlan
 var _feature_queue: FeatureCommitQueue
@@ -150,11 +161,18 @@ func _ready() -> void:
 	_last_diagnostic_msec = _diagnostic_started_msec
 	print("[terrain-streamer] startup_begin seed=%d support_chunks=%s" % [
 		world_seed, str(_startup_support_chunks)])
-	_water = WaterPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE, HEIGHTFIELD_MAX_STOREYS)
+	# Built through TerrainWorldTuning rather than from these exports, so the
+	# streamed world and every harness/test that calls make_heightfield are
+	# provably the same world. Two construction sites for one plan is design
+	# risk 4: a stamp wired into one and not the other means renders and tests
+	# disagree about what the world IS.
+	_water = TerrainWorldTuning.make_water(world_seed)
 	_settlements = SettlementPlan.new(world_seed, _water)
-	_plan = HeightfieldPlan.new(world_seed, HEIGHTFIELD_AMPLITUDE,
-		HEIGHTFIELD_MAX_STOREYS, "mean", MAX_CLIFF_STEP)
-	_plan.set_water_plan(_water)
+	# Null in a route-first world (the shipping default), so nothing about an
+	# existing world moves; a mass-first world gets its towns' landform as real
+	# heightfield, before any chunk near a site is built.
+	_relief = TerrainWorldTuning.make_relief(world_seed, _water, _settlements)
+	_plan = TerrainWorldTuning.make_heightfield(world_seed, _water, _relief)
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
 	_environment_catalog = EnvironmentCatalog.load_default()

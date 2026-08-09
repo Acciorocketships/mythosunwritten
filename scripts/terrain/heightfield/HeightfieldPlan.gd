@@ -34,6 +34,14 @@ var _raw_override: Callable = Callable()
 # class-resolution cycle; duck-typed: needs carve_at_cell(cx, cz) -> float).
 var _water_plan = null
 
+# Optional settlement relief stamp (untyped, same convention as the carve;
+# duck-typed: needs relief_at_cell(cx, cz) -> float, metres, >= 0). Exact
+# mirror of the carve: the carve LOWERS the continuous field before
+# quantization, the stamp RAISES it, and both land in _sample so that storey
+# quantization, the trickle-down clamp, the level tier, cliff classification,
+# dressing, grass suppression and collision are all downstream and unchanged.
+var _relief_plan = null
+
 # Per-cell sample memo: Vector2i(cx,cz) -> [height_after_carve: float, carve: float].
 # Purely a performance cache — raw_height is a pure function of (seed, cell) —
 # persisted across compute_region calls so the ~77%-overlapping windows of
@@ -56,7 +64,18 @@ func _sample(cx: int, cz: int) -> Array:
 		var carve: float = 0.0
 		if _water_plan != null:
 			carve = _water_plan.carve_at_cell(cx, cz)
-		s = [h - carve, carve]
+		var relief: float = 0.0
+		# ZERO WHERE THE CARVE IS NON-ZERO. This is the only place that knows
+		# the carve actually applied to this cell, so it is where the two
+		# height writers are kept from arguing: the stamp can never fill a
+		# channel back in, and a settlement's stamp radius is bounded well
+		# below SettlementPlan.WATER_CLEARANCE so the rule is a backstop rather
+		# than a shape the terrain ever shows.
+		if _relief_plan != null and carve <= 0.0:
+			relief = _relief_plan.relief_at_cell(cx, cz)
+			assert(relief >= 0.0,
+				"a settlement relief stamp may only ever raise the field")
+		s = [h - carve + relief, carve]
 		if _samples.size() >= _SAMPLE_CACHE_MAX:
 			_samples.clear()
 		_samples[key] = s
@@ -84,8 +103,28 @@ func _init(
 
 
 ## Replace the noise source with a synthetic field for tests. fn(cx, cz) -> float.
+## Forwarded to the relief stamp when one is attached: the stamp reads natural
+## ground too (its fill formula and its storey-ceiling clamp both do), so the
+## two must never disagree about what the ground is.
 func set_raw_height_override(fn: Callable) -> void:
 	_raw_override = fn
+	if _relief_plan != null \
+			and _relief_plan.has_method("set_natural_height_override"):
+		_relief_plan.set_natural_height_override(fn)
+	_samples.clear()
+
+
+## Attach the settlement relief stamp: raw_height ADDS its relief BEFORE storey
+## quantization, so the hill, its slopes, its terrace benches, its dressed
+## cliffs, its grass suppression and its collision all come from the existing
+## clamp + surface-field + mesher machinery with no downstream changes. Mirror
+## of set_water_plan; passing null (the shipping default for a route-first
+## world) leaves every value bit-identical to a world with no stamp at all.
+func set_relief_plan(p_relief_plan) -> void:
+	_relief_plan = p_relief_plan
+	if _relief_plan != null and _raw_override.is_valid() \
+			and _relief_plan.has_method("set_natural_height_override"):
+		_relief_plan.set_natural_height_override(_raw_override)
 	_samples.clear()
 
 
