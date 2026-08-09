@@ -108,6 +108,12 @@ var _site_cache: Dictionary = {}
 ## configuration must never trip it (tests/test_settlement_relief.gd), and the
 ## flag is what makes that assertable instead of invisible. Depends on which
 ## cells were sampled, so it is a report, not part of the pure function.
+##
+## Written by whichever thread samples the field. In production that is the
+## terrain worker and nothing else, under the same confinement that already
+## covers HeightfieldPlan's sample memo and WaterPlan's trace caches
+## (FieldTerrainStreamer.gd:60-62) -- so no lock, and no read from the main
+## thread.
 var ceiling_clamped := false
 var ceiling_deficit_metres := 0.0
 
