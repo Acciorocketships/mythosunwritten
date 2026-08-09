@@ -60,6 +60,18 @@ extends SceneTree
 ##                     so it measures the town the preview renders -- roughly a
 ##                     minute a seed. `--no-fabric` reports the bell profile
 ##                     alone in a second.
+##   --stage routeab   ROUTE-FIRST, the shipping pipeline: per seed, how many
+##                     candidates WarrenTownSolver.ranked_candidates offers and
+##                     whether WarrenBuiltTownSolver.solve accepts one, with the
+##                     accepted town's deterministic signature digest and the
+##                     facade audit any change to the family table moves. This
+##                     is the controlled A/B route-first is owed whenever the
+##                     mass-first branch touches shared vocabulary.
+##   --stage timing    WHERE a mass-first detail solve spends its wall clock,
+##                     split at the two public boundaries a vocabulary change
+##                     can slow down, with the candidate-list census that turns
+##                     a slow number into a mechanism. Run it before and after
+##                     any change to a pool size.
 ##   --stage terrain   READ-ONLY: mass-first run against real ground bands --
 ##                     flat, a steady slope and a terraced step field -- naming
 ##                     the first stage that refuses and how far each house's
@@ -144,6 +156,14 @@ func _init() -> void:
 		return
 	if _stage == "variety":
 		_report_variety()
+		quit()
+		return
+	if _stage == "timing":
+		_report_timing()
+		quit()
+		return
+	if _stage == "routeab":
+		_report_route_first_ab()
 		quit()
 		return
 	if _stage == "terrain":
@@ -1643,6 +1663,140 @@ static func _sorted_histogram(counts: Dictionary) -> String:
 	for key: int in keys:
 		parts.append("%d:%d" % [key, int(counts[key])])
 	return "{%s}" % ", ".join(parts)
+
+
+func _report_route_first_ab() -> void:
+	## The controlled diff the SHIPPING pipeline is owed. Mass-first work keeps
+	## touching shared vocabulary tables -- the facade family list, the market
+	## pool, the bay roll -- and route-first reads every one of them. Green tests
+	## say no contract broke; only this says the same seeds still compose the
+	## same towns.
+	##
+	## Deliberately runs the real `solve`, not `diagnostic_best_effort`: solve is
+	## what ships, and its acceptance is the quantity that may not regress. The
+	## signature is printed as a SHA-256 digest with its source length beside it,
+	## because the raw signature is tens of kilobytes and only exact equality
+	## matters when comparing two revisions.
+	##
+	## GENERATION_MODE is deliberately left at its default. Route-first is the
+	## default, and a harness that sets the mode it means to measure can no
+	## longer detect the mode being wrong.
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	if program == null:
+		print("no compiled construction vocabulary")
+		return
+	print("mode %s | recipes %d | market stalls %d" % [
+		WarrenTownSolver.GENERATION_MODE, program.recipes().size(),
+		SettlementFabricProgram.MARKET_STALLS.size()])
+	var accepted := 0
+	for world_seed: int in _seeds:
+		var start := Time.get_ticks_msec()
+		var ranked := WarrenTownSolver.ranked_candidates(world_seed, {}, program,
+			WarrenTownSolver.COMPOSED_PLAN_FRONTIER).size()
+		var town := WarrenBuiltTownSolver.solve(world_seed, program)
+		var elapsed := float(Time.get_ticks_msec() - start) / 1000.0
+		if town == null:
+			print("route-first seed %2d REJECT ranked %d | %.0f s | %s"
+				% [world_seed, ranked, elapsed,
+				WarrenBuiltTownSolver.last_failure.substr(0, 200)])
+			continue
+		accepted += 1
+		var signature := town.deterministic_signature()
+		print("route-first seed %2d ACCEPT ranked %d | %.0f s | sig %s len %d"
+			% [world_seed, ranked, elapsed,
+			signature.sha256_text().substr(0, 24), signature.length()]
+			+ " | buildings %d | facade families %d ratio %.3f" % [
+				int(town.audit.get("building_stack_count", -1)),
+				int(town.audit.get("facade_family_count", -1)),
+				float(town.audit.get("largest_facade_family_ratio", -1.0))]
+			+ " | skywalks %d | targets met %s" % [
+				int(town.audit.get("skywalk_link_count", -1)),
+				str(town.audit.get("visual_quality_target_met", false))])
+	print("ROUTE-FIRST ACCEPTED %d/%d" % [accepted, _seeds.size()])
+
+
+func _report_timing() -> void:
+	## WHERE the wall clock goes, split at the two public boundaries that
+	## separate the only two stages a vocabulary change can slow down:
+	##
+	##   rank    WarrenTownSolver.ranked_candidates -- the parcel/frontier
+	##           search. Under route-first this is where
+	##           WarrenAssetCompiler.parcels_are_visually_compatible runs its
+	##           O(n^2) measured-envelope broad phase; under mass-first
+	##           _parcelize returns partition_parcels and never reaches it.
+	##   detail  everything WarrenBuiltTownSolver builds on top -- asset
+	##           compile, fabric compile, then the market / outcrop / skywalk
+	##           admission passes. Each of those pays a FULL
+	##           WarrenFabricCompiler.solve per trial, admitted or refused.
+	##
+	## The CENSUS line is what turns a slow number into a mechanism. An
+	## admission pass that walks N candidates at t seconds a rebuild cannot cost
+	## less than N*t, so a pool that multiplies N is legible here without a
+	## profiler -- and a pool that widens CHOICE without multiplying N leaves
+	## this line flat. Read `market` against `detail`: when N*t accounts for most
+	## of the detail time, the pool feeds a search rather than a choice.
+	var wall := Time.get_ticks_msec()
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	print("program compile %d ms | recipes %d | market stalls %d"
+		% [Time.get_ticks_msec() - wall,
+		program.recipes().size() if program != null else -1,
+		SettlementFabricProgram.MARKET_STALLS.size()])
+	if program == null:
+		return
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
+	SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
+	for world_seed: int in _seeds:
+		var rank_start := Time.get_ticks_msec()
+		var towns := WarrenTownSolver.ranked_candidates(world_seed, {}, program,
+			WarrenTownSolver.COMPOSED_PLAN_FRONTIER)
+		var rank_ms := Time.get_ticks_msec() - rank_start
+		print("seed %2d CENSUS %s" % [world_seed,
+			_timing_census(program, towns, world_seed)])
+		var solve_start := Time.get_ticks_msec()
+		var attempt := WarrenBuiltTownSolver.diagnostic_best_effort(world_seed,
+			program)
+		var solve_ms := Time.get_ticks_msec() - solve_start
+		print("seed %2d TIMING rank %.1f s | solve %.1f s | detail %.1f s | %s"
+			% [world_seed, float(rank_ms) / 1000.0, float(solve_ms) / 1000.0,
+			float(solve_ms - rank_ms) / 1000.0,
+			"fabric" if attempt.get("fabric") != null else "NO FABRIC"])
+	SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = false
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
+func _timing_census(program: SettlementFabricProgram,
+		towns: Array[WarrenTownPlan], world_seed: int) -> String:
+	## One candidate, taken to the same bare parcel fabric the detail phases
+	## start from, then asked what each of those phases will have to walk. The
+	## single measured WarrenFabricCompiler.solve is the unit price every
+	## admission trial pays, so `N x t` is a floor on that pass's cost.
+	if towns.is_empty():
+		return "no ranked candidate -- %s" % WarrenTownSolver.last_failure
+	var variants := WarrenTownSolver.infill_variants(towns[0])
+	if variants.is_empty():
+		return "no infill variant"
+	var town := variants[0]
+	var assets := WarrenAssetCompiler.solve(town, program)
+	if assets == null:
+		return "no asset plan -- %s" % WarrenAssetCompiler.last_failure
+	var compile_start := Time.get_ticks_usec()
+	var fabric := WarrenFabricCompiler.solve(assets)
+	var compile_us := Time.get_ticks_usec() - compile_start
+	if fabric == null:
+		return "no parcel fabric -- %s" % WarrenFabricCompiler.last_failure
+	var markets := WarrenMarketSolver.candidate_specs(program, fabric,
+		town.volume, world_seed, town.pruning.daylight_void_columns).size()
+	var overhead := WarrenOverheadSolver.candidate_specs(program, fabric,
+		world_seed).size()
+	var unit := float(compile_us) / 1000000.0
+	return ("ranked %d | parcels %d | one fabric rebuild %.2f s" % [towns.size(),
+		town.parcels.parcels.size(), unit]
+		+ " | market candidates %d (floor %.0f s)" % [markets,
+			float(markets) * unit]
+		+ " | overhead candidates %d (floor %.0f s)" % [overhead,
+			float(overhead) * unit])
 
 
 func _report_terrain() -> void:
