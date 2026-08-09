@@ -32,7 +32,16 @@ const MIN_TURN_COUNT := 2
 # another and split the vertical sightline before any optional building detail
 # is selected.  A branch which merely wanders beside the main route is an open
 # street on a lawn, regardless of how many props later line it.
+## Route-first's value, and the default every envelope this solver sees carries
+## unless a synthesised one lowers it -- see
+## WarrenVolumeEnvelope.DEFAULT_UPPER_ROUTE_CROSSOVERS and
+## WarrenMassif.UPPER_ROUTE_CROSSOVERS.
 const MIN_UPPER_ROUTE_CROSSOVERS := 2
+
+
+static func _required_crossovers(source: WarrenVolumePlan) -> int:
+	return source.envelope.upper_route_crossovers if source != null \
+		and source.envelope != null else MIN_UPPER_ROUTE_CROSSOVERS
 # Carving an auxiliary branch parallel to a terrain-level primary street spends
 # the exact mass which its facades need.  The root must leave that street once;
 # subsequent cells are ranked away from it so the two alleys bound different
@@ -86,7 +95,7 @@ static func extend(source: WarrenVolumePlan) -> WarrenVolumePlan:
 		last_failure = "secondary ground arcade failed volume transaction"
 		return null
 	if int(result.audit.get("ground_arcade_upper_crossover_count", 0)) \
-			< MIN_UPPER_ROUTE_CROSSOVERS:
+			< _required_crossovers(source):
 		last_failure = "ground arcades do not pass beneath the climbing itinerary"
 		return null
 	return result

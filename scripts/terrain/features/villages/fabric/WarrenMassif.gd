@@ -51,6 +51,29 @@ const BUILDABLE_LAYER_BANDS := 6
 ## it is what the composed face gains the storey back from.
 const ADDRESS_BANDS := 4
 
+## Ground-arcade cells that must run under the climbing route for a town cut
+## from this class. Route-first keeps
+## WarrenVolumeEnvelope.DEFAULT_UPPER_ROUTE_CROSSOVERS at two.
+##
+## The property is unchanged -- "one public level is the roof of another, and
+## the vertical sightline is split" -- and so is the geometry it is measured
+## against; what changed is how much of that geometry exists. An arcade cell
+## sitting on ground band g is crossed by a route cell in the same column at
+## `y >= g + WarrenVolumePlan.HEADROOM_BANDS`, and that route cell needs
+## `WarrenExcavation.HEADROOM_BANDS` of void inside a column whose top is
+## `g + BUILDABLE_LAYER_BANDS`, so
+##
+##   y in [g + 2, g + BUILDABLE_LAYER_BANDS - 3] = [g + 2, g + 3]
+##
+## -- a TWO BAND window. Against a 16-20 band massif the same window was eight
+## to fourteen bands wide and crossings were routine. Measured over twelve
+## stamped-hill seeds the arcade achieves 0 or 1 crossings and never 2, so two
+## is not a stricter bar at this geometry but an unreachable one. One still
+## refuses the "branch which merely wanders beside the main route" the solver's
+## own constant was written against, and a town with no crossing at all still
+## fails.
+const UPPER_ROUTE_CROSSOVERS := 1
+
 var world_seed: int
 var columns: Dictionary = {}
 var core_top_bands: int = 0

@@ -75,6 +75,16 @@ func _init() -> void:
 			% [excavation.route.size(), excavation.route_span_bands(),
 			excavation.covered_ratio(), wall_ratio, excavation.lanes.size(),
 			excavation.portals.size()]
+		var arc_plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if arc_plan != null and WarrenPublicRealmCarver.passes_topology_gate(
+				arc_plan):
+			var extended := WarrenGroundArcadeSolver.extend(arc_plan)
+			if extended == null:
+				print("    arcade: %s" % WarrenGroundArcadeSolver.last_failure)
+			else:
+				print("    arcade crossovers %s" % extended.audit.get(
+					"ground_arcade_upper_crossover_count"))
 		var frontier := WarrenTownSolver.mass_first_frontier(world_seed, bands)
 		head += " | frontier %d" % frontier.size()
 		if frontier.is_empty():

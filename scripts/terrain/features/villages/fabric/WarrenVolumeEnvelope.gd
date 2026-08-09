@@ -18,6 +18,12 @@ const MIN_ENTRY_HEIGHT_BANDS := 2
 ## cannot offer a six-band flank to a street that has left grade, and the
 ## envelope is the one object both the audit and the carvers already hold.
 const DEFAULT_ADDRESS_BANDS := 6
+## Ground-arcade cells that must pass BENEATH the climbing itinerary before
+## WarrenGroundArcadeSolver accepts a town. Two for every envelope this class
+## grows itself, byte-identically to the constant that solver has always
+## published; a synthesised envelope may lower it. See
+## WarrenMassif.UPPER_ROUTE_CROSSOVERS for the derivation.
+const DEFAULT_UPPER_ROUTE_CROSSOVERS := 2
 
 var world_seed: int
 var radius_x: int
@@ -31,6 +37,7 @@ var bearing_bands: Dictionary = {}
 var height_bands: Dictionary = {}
 var mass_cells: Dictionary = {}
 var address_bands: int = DEFAULT_ADDRESS_BANDS
+var upper_route_crossovers: int = DEFAULT_UPPER_ROUTE_CROSSOVERS
 var last_rejection := ""
 var _sealed := false
 

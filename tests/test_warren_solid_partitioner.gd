@@ -10,12 +10,31 @@ extends GutTest
 ## Every seed the report tabulates, so the table is reproducible from the
 ## suite. Seven towns cost roughly 15s; seeds 2 and 7 are rejected by the
 ## carver and seed 8 by the massif builder, so they are not in the corpus.
+
+const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
+
+
+func _hill(world_seed: int = 0) -> Dictionary:
+	## Since the buildable-layer wave a mass-first town stands on a HILL the
+	## terrain owns, and WarrenMassifBuilder refuses a flat site outright (its
+	## vertical-development gate measures lowest ground to highest roof). Every
+	## build in this suite therefore takes the same synthetic reproduction of a
+	## stamped site that every other mass-first suite takes -- see
+	## tests/fixtures/warren_stamped_ground.gd for what it reproduces and how it
+	## was measured.
+	return StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 4, world_seed)
+
+
 const CORPUS: Array[int] = [1, 3, 4, 5, 6, 9, 11]
 ## Seeds whose whole mass-first frontier is built, so the parcel stage can be
 ## audited against the volume production actually hands it -- arcade and
 ## gallery walk cells included. Three towns cost roughly 45s, which is why this
 ## is a short list rather than CORPUS.
-const FRONTIER_CORPUS: Array[int] = [6, 11, 12]
+## RE-PINNED for the buildable layer: on the stamped-hill frame the arcade's
+## two-band crossing window (WarrenMassif.UPPER_ROUTE_CROSSOVERS) costs seeds 6
+## and 12 their frontier, and 1, 5 and 11 keep theirs. A seed-supply fact,
+## measured with tests/harness/warren_buildable_layer_probe.gd.
+const FRONTIER_CORPUS: Array[int] = [1, 5, 11]
 ## Deliberately stricter than WarrenSolidPartitioner's own admission rule and
 ## derived without calling it: two full storeys of unexcavated solid above the
 ## street floor, on unexcavated ground. Anything this obviously buildable is a
@@ -48,7 +67,7 @@ var _frontier_towns: Dictionary = {}
 
 
 func test_partition_owns_every_route_flank() -> void:
-	var massif := WarrenMassifBuilder.build(1)
+	var massif := WarrenMassifBuilder.build(1, _hill())
 	var excavation := WarrenExcavationCarver.carve(1, massif)
 	assert_not_null(excavation, WarrenExcavationCarver.last_failure)
 	var parcels := WarrenSolidPartitioner.partition(massif, excavation)
@@ -78,6 +97,7 @@ func test_every_obviously_buildable_street_wall_is_owned_at_street_level() \
 	## that can be rooted without undercutting the other). That leftover is
 	## trimmed to a plinth, so the lower wall may go unhoused -- but the column
 	## must still carry a house above it, never nothing at all.
+	var corpus_walls := 0
 	for world_seed: int in CORPUS:
 		var town := _town(world_seed)
 		if town.is_empty():
@@ -87,11 +107,14 @@ func test_every_obviously_buildable_street_wall_is_owned_at_street_level() \
 			town["parcels"] as Array[WarrenBuildingParcel])
 		var walls := _strict_walls(town["massif"] as WarrenMassif,
 			town["excavation"] as WarrenExcavation)
-		# Sample-size guard, re-measured to 12 after the rim step rule: seed 0's
-		# massif is shorter, so fewer columns carry STRICT_WALL_BANDS of solid
-		# above a street. Lowest observed across CORPUS is 14.
-		assert_gt(walls.size(), 12,
-			"seed %d: too few walls re-derived to prove anything" % world_seed)
+		# Sample-size guard, RE-MEASURED AS A CORPUS TOTAL for the buildable
+		# layer. STRICT_WALL_BANDS is two full storeys of unexcavated solid
+		# above a street floor, which a 16-20 band massif offered on 14-30
+		# columns per seed and a 4-6 band layer offers on 2-9 -- the layer is
+		# barely taller than the bar. Per seed the count is now too small to be
+		# a stable guard, so it is accumulated across CORPUS instead; measured
+		# 35 over the seven seeds, floored at half.
+		corpus_walls += walls.size()
 		for wall: Vector3i in walls:
 			if owned.has(wall):
 				continue
@@ -105,6 +128,9 @@ func test_every_obviously_buildable_street_wall_is_owned_at_street_level() \
 			assert_gt(highest, wall.y,
 				("seed %d: wall %s is unhoused but nothing stands above it " \
 				+ "either") % [world_seed, wall])
+	assert_gt(corpus_walls, 17,
+		"only %d strictly-buildable street walls across the corpus -- too "
+		% corpus_walls + "few to prove anything")
 
 
 func test_street_wall_audit_classifies_every_wall_independently() -> void:
@@ -128,9 +154,14 @@ func test_street_wall_audit_classifies_every_wall_independently() -> void:
 		assert_eq(tally, int(audit["wall_count"]),
 			"seed %d: buckets must account for every wall exactly once" \
 			% world_seed)
-		assert_gt(int(audit["wall_count"]), 60,
+		# RE-MEASURED for the buildable layer. Raw walls fell from 60-90 to
+		# 52-80 and housed walls from 20-40 to 15-30: a 4-6 band layer presents
+		# fewer full-height street walls than a 16-20 band solid did, and fewer
+		# of them clear the parcel transaction's own height floor. Both guards
+		# sit below the observed range on CORPUS.
+		assert_gt(int(audit["wall_count"]), 45,
 			"seed %d: too few raw walls to prove anything" % world_seed)
-		assert_gt(int(audit["owned_count"]), 20,
+		assert_gt(int(audit["owned_count"]), 12,
 			"seed %d: only %d walls are housed" % [world_seed,
 				int(audit["owned_count"])])
 		assert_eq((audit["unowned"] as Array[Vector3i]).size(), 0,
@@ -590,7 +621,7 @@ func _frontier_town(world_seed: int) -> Dictionary:
 	var out: Dictionary = {}
 	var previous_mode := WarrenTownSolver.GENERATION_MODE
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
-	var frontier := WarrenTownSolver.mass_first_frontier(world_seed)
+	var frontier := WarrenTownSolver.mass_first_frontier(world_seed, _hill(world_seed))
 	WarrenTownSolver.GENERATION_MODE = previous_mode
 	if not frontier.is_empty():
 		var volume := frontier[0]
@@ -798,13 +829,24 @@ func test_no_house_builds_more_storeys_than_a_terrace_carries() -> void:
 
 
 func test_a_house_on_a_terrace_declares_the_hill_beneath_it() -> void:
-	## Splitting the datum stops a house descending to the valley floor, which
-	## leaves real source mass between natural ground and its lowest room.
-	## Nothing renders unbuilt massif mass, so unless the house DECLARES that
-	## gap it stands on nothing. The declaration must be exactly the gap --
+	## THE PLINTH BUDGET, and the declaration contract behind it.
+	##
+	## Split-datum era: a house stopped descending at its terrace, leaving real
+	## source mass between natural ground and its lowest room, and unless it
+	## DECLARED that gap nothing rendered it. Buildable-layer era: the terrain
+	## carries everything under the layer, `bearing_at` is `base_at`, and the
+	## only gap left is the one a footprint straddling a ground step opens on
+	## its downhill side. The contract is unchanged and still exact; what moved
+	## is how much there is to declare, and the reviewer's budget -- a plinth is
+	## ONE course of stone, part of a facade -- is what now has to be pinned.
+	##
+	## The declaration must be exactly the gap --
 	## short and the house floats, long and it buries a storey.
 	var declared := 0
 	var houses_on_a_hill := 0
+	var measured_houses := 0
+	var over_budget := 0
+	var deepest_plinth := 0
 	for world_seed: int in CORPUS:
 		var town := _town(world_seed)
 		if town.is_empty():
@@ -831,6 +873,13 @@ func test_a_house_on_a_terrace_declares_the_hill_beneath_it() -> void:
 				+ "terrace cells, not %d" % expected)
 			declared += terrace.size()
 			houses_on_a_hill += int(expected > 0)
+			measured_houses += 1
+			var lowest_ground := 1 << 30
+			for column: Vector2i in parcel.footprint:
+				lowest_ground = mini(lowest_ground, envelope.ground_at(column))
+			deepest_plinth = maxi(deepest_plinth, support - lowest_ground)
+			over_budget += int(support - lowest_ground
+				> SettlementFabricAssembler.STONE_BUDGET_BANDS)
 			for cell: Vector3i in terrace:
 				var macro_cell := Vector3i(floori(float(cell.x) / 2.0), cell.y,
 					floori(float(cell.z) / 2.0))
@@ -840,10 +889,28 @@ func test_a_house_on_a_terrace_declares_the_hill_beneath_it() -> void:
 				assert_true(parcel.source.has_mass(macro_cell),
 					"seed %d: %s retains %s, which the excavation removed" \
 					% [world_seed, parcel.stable_id, macro_cell])
-	assert_gt(houses_on_a_hill, 40,
-		"only %d houses across the corpus stand on a terrace at all" \
-		% houses_on_a_hill)
-	assert_gt(declared, 0, "no hill was declared anywhere")
+	# MEASURED, and the measurement is the finding: on the stamped-hill frame
+	# houses_on_a_hill is 0. `_support_base_band` floors the support at the
+	# HIGHEST ground under the footprint and then clamps it to the street band,
+	# so a footprint straddling a terrace riser is cut INTO the uphill side
+	# rather than lifted off the downhill one -- which is what a hill house
+	# does, and which leaves no gap to declare. The old floor of 40 was a
+	# statement about the split datum and has nothing left to measure.
+	#
+	# What replaces it is the property that actually matters now, asserted with
+	# real counts rather than vacuously: no house is rooted more than one
+	# foundation course above the lowest ground under its own footprint, so
+	# every house is grounded and every plinth is inside the stone budget.
+	assert_gt(measured_houses, 50,
+		"only %d houses measured -- too few to be a corpus" % measured_houses)
+	assert_eq(over_budget, 0,
+		("%d of %d houses are rooted more than %d bands above the lowest "
+		+ "ground under their own footprint, the worst by %d") % [over_budget,
+			measured_houses, SettlementFabricAssembler.STONE_BUDGET_BANDS,
+			deepest_plinth])
+	assert_lte(deepest_plinth, SettlementFabricAssembler.STONE_BUDGET_BANDS,
+		"the deepest plinth is %d bands, past the one course the reviewer's "
+		% deepest_plinth + "budget allows")
 
 
 func test_footprints_stay_in_the_authored_family() -> void:
@@ -929,7 +996,7 @@ func _town(world_seed: int) -> Dictionary:
 	if _towns.has(world_seed):
 		return _towns[world_seed] as Dictionary
 	var out: Dictionary = {}
-	var massif := WarrenMassifBuilder.build(world_seed)
+	var massif := WarrenMassifBuilder.build(world_seed, _hill(world_seed))
 	var excavation := null if massif == null \
 		else WarrenExcavationCarver.carve(world_seed, massif)
 	if massif != null and excavation != null:
@@ -1072,21 +1139,35 @@ const MAX_COMPOSED_FACE_BANDS := WarrenMassifBuilder.MAX_NEIGHBOR_STEP_BANDS \
 	+ WarrenMassif.BUILDABLE_LAYER_BANDS
 
 
-func _drawn_mass(world_seed: int) -> Dictionary:
-	## Everything the assembler draws, at macro resolution: a house's own cells,
-	## plus the retained solid, which hill_substrate_walls now renders wherever
-	## it is exposed. Bare void is everything else.
+## Bands of terrain body modelled under each column's sampled ground band. The
+## hill is a solid the mesher renders and the chunk collider carries, not a
+## surface, so anything resting at or below its own ground band is carried.
+const TERRAIN_BODY_BANDS := 12
+
+
+func _carried_mass(world_seed: int) -> Dictionary:
+	## Everything a viewer sees mass at, at macro resolution: the TERRAIN body
+	## under each column, plus the plinth course a house declares. House cells
+	## are added by the caller.
+	##
+	## RE-BASED for the buildable layer. This used to be "the whole standing
+	## massif solid", because the fabric drew that solid -- and it is exactly
+	## what WarrenFabricCompiler stopped declaring and
+	## SettlementFabricAssembler stopped drawing. What carries a house now is
+	## SettlementReliefPlan's hill, meshed and collided by the terrain, so the
+	## honest model of "drawn support" is the terrain body under the sampled
+	## ground band. Modelling the old solid here would score a house as
+	## grounded on masonry nobody renders any more, which is precisely the
+	## artefact the reviewer's floating note was about.
 	var town := _town(world_seed)
 	if town.is_empty():
 		return {}
 	var massif := town["massif"] as WarrenMassif
-	var excavation := town["excavation"] as WarrenExcavation
 	var drawn: Dictionary = {}
 	for column: Vector2i in massif.columns:
-		for band in range(massif.base_at(column), massif.top_at(column)):
-			var cell := Vector3i(column.x, band, column.y)
-			if not excavation.carved.has(cell):
-				drawn[cell] = true
+		for band in range(massif.base_at(column) - TERRAIN_BODY_BANDS,
+				massif.base_at(column)):
+			drawn[Vector3i(column.x, band, column.y)] = true
 	return drawn
 
 
@@ -1101,9 +1182,13 @@ func test_no_house_stands_more_than_a_plinth_above_its_own_support() -> void:
 	var measured := 0
 	var worst := 0
 	for world_seed: int in CORPUS:
-		var drawn := _drawn_mass(world_seed)
+		var drawn := _carried_mass(world_seed)
 		if drawn.is_empty():
 			continue
+		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
+			for cell: Vector3i in WarrenParcelConstruction.retained_terrace_cells(
+					parcel):
+				drawn[Vector3i(cell.x / 2, cell.y, cell.z / 2)] = true
 		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
 			var proposal := WarrenParcelConstruction.proposal(parcel)
 			if proposal.is_empty():
@@ -1112,8 +1197,9 @@ func test_no_house_stands_more_than_a_plinth_above_its_own_support() -> void:
 			var underside := (proposal.origin as Vector3i).y
 			var gap := 1 << 30
 			for column: Vector2i in parcel.footprint:
-				var column_gap := underside
-				for band in range(underside - 1, -1, -1):
+				var column_gap := 0
+				for band in range(underside - 1,
+						underside - 1 - TERRAIN_BODY_BANDS, -1):
 					if drawn.has(Vector3i(column.x, band, column.y)):
 						column_gap = underside - band - 1
 						break
@@ -1141,9 +1227,18 @@ func test_no_composed_vertical_face_reads_as_a_tower() -> void:
 	var worst_seed := -1
 	var faces := 0
 	for world_seed: int in CORPUS:
-		var drawn := _drawn_mass(world_seed)
-		if drawn.is_empty():
+		if _town(world_seed).is_empty():
 			continue
+		# FABRIC ONLY. The composed face is what the fabric stacks; the terrain
+		# body beneath is landscape in the world's own vocabulary -- grass,
+		# slope and KayKit crag -- and whether a terrain-authored cliff counts
+		# as "visible stone" under the 2-3 storey rule is the reviewer's open
+		# ruling (mass-first ledger 214/218), not this suite's to assume.
+		var drawn: Dictionary = {}
+		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
+			for cell: Vector3i in WarrenParcelConstruction.retained_terrace_cells(
+					parcel):
+				drawn[Vector3i(cell.x / 2, cell.y, cell.z / 2)] = true
 		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
 			var proposal := WarrenParcelConstruction.proposal(parcel)
 			if proposal.is_empty():

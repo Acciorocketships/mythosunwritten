@@ -4,9 +4,22 @@ extends GutTest
 ## existing parcel/fabric machine: its output must satisfy the same sealed
 ## WarrenVolumePlan contract the route-first carver produces.
 
+const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
+
+
+func _hill(world_seed: int = 0) -> Dictionary:
+	## Since the buildable-layer wave a mass-first town stands on a HILL the
+	## terrain owns, and WarrenMassifBuilder refuses a flat site outright (its
+	## vertical-development gate measures lowest ground to highest roof). Every
+	## build in this suite therefore takes the same synthetic reproduction of a
+	## stamped site that every other mass-first suite takes -- see
+	## tests/fixtures/warren_stamped_ground.gd for what it reproduces and how it
+	## was measured.
+	return StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 4, world_seed)
+
 
 func test_adapter_produces_sealed_volume_plan() -> void:
-	var massif := WarrenMassifBuilder.build(1)
+	var massif := WarrenMassifBuilder.build(1, _hill())
 	assert_not_null(massif, WarrenMassifBuilder.last_failure)
 	var excavation := WarrenExcavationCarver.carve(1, massif)
 	assert_not_null(excavation, WarrenExcavationCarver.last_failure)
@@ -56,7 +69,7 @@ func test_adapter_preserves_exact_walk_and_entry_geometry() -> void:
 	## the actual cell sequence and entry point are identical, not just
 	## equally sized -- against the move-endpoint sequence, not the raw
 	## cell-by-cell walk (see the correction above).
-	var massif := WarrenMassifBuilder.build(1)
+	var massif := WarrenMassifBuilder.build(1, _hill())
 	var excavation := WarrenExcavationCarver.carve(1, massif)
 	var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
 		excavation)
@@ -81,14 +94,26 @@ func test_adapter_preserves_exact_walk_and_entry_geometry() -> void:
 
 func _terraced_ground() -> Dictionary:
 	## test_village_plan.gd's `_terraced_region` step field, restated in the
-	## massif's own column lattice: three ground plateaus at 0, 2 and 6 bands.
-	## Real terrain relief, and enough of it that anything still assuming base 0
-	## is caught.
+	## massif's own column lattice: three ground plateaus separated by risers.
+	##
+	## RE-MEASURED for the buildable layer, in both riser height and bench
+	## width. The old field stepped 0/2/6 over two adjacent columns, i.e. a
+	## six-band cliff two columns wide. While the massif authored 16-20 bands of
+	## its own the route simply ran high over that step; in a 4-6 band layer it
+	## has three bands of freedom above its own ground and no such option, so
+	## the field was a wall and nothing bored.
+	##
+	## Both numbers now come from what the stamp actually produces:
+	## SettlementReliefPlan's risers are one 4 m terrain storey, which is three
+	## warren bands, and its benches are RING_WIDTH_CELLS of 24 m terrain cell,
+	## which is eight or more 3 m columns. A bore climbs a riser by spending its
+	## layer freedom along the bench below it, so a bench narrower than the
+	## climb is impassable however low the riser.
 	var span := WarrenMassifBuilder.RADIUS_CELLS + 4
 	var bands: Dictionary = {}
 	for z in range(-span, span + 1):
 		for x in range(-span, span + 1):
-			bands[Vector2i(x, z)] = 0 if x <= -1 else (2 if x == 0 else 6)
+			bands[Vector2i(x, z)] = 0 if x <= -5 else (3 if x <= 4 else 6)
 	return bands
 
 
@@ -100,8 +125,9 @@ func test_adapter_envelope_matches_massif_column_heights_exactly() -> void:
 	## terraced mass Task 1 built, rather than some other plausible-looking
 	## Gaussian shape.
 	##
-	## Run on real ground relief as well as flat, and stated as the TRUE
-	## relationship rather than the one that happened to hold at base 0.
+	## Run on two different relief frames -- flat is no longer a legal
+	## mass-first site -- and stated as the TRUE relationship rather than the
+	## one that happened to hold at base 0.
 	## envelope_from_massif DROPS any column the neighbour-step clamp squeezed to
 	## zero height, and `ground_at`/`height_at` answer 0 for a column the
 	## envelope does not hold -- so on flat ground the old blanket "every massif
@@ -110,7 +136,7 @@ func test_adapter_envelope_matches_massif_column_heights_exactly() -> void:
 	## not zero, and the coincidence is gone. The honest claim is that the
 	## envelope holds exactly the positive-layer columns and copies those
 	## faithfully.
-	for ground: Dictionary in [{} as Dictionary, _terraced_ground()]:
+	for ground: Dictionary in [_hill(), _terraced_ground()]:
 		var massif := WarrenMassifBuilder.build(1, ground)
 		assert_not_null(massif, WarrenMassifBuilder.last_failure)
 		if massif == null:
@@ -162,9 +188,16 @@ func test_adapter_envelope_matches_massif_column_heights_exactly() -> void:
 				> envelope.ground_at(column))
 			grounded += int(envelope.ground_at(column)
 				== massif.base_at(column))
-		assert_gt(raised, 0,
-			"a synthesised envelope whose terrace never rises above ground has "
-			+ "not carried the massif's second datum at all")
+		# THE SECOND DATUM HAS DEGENERATED, and the adapter must carry the
+		# degenerate value faithfully rather than invent one. While the massif
+		# owned the mountain some columns stood taller than one buildable layer
+		# and the terrace lifted their houses off the hill; now no column does,
+		# so `bearing_at` is `base_at` everywhere (WarrenMassif.bearing_at) and
+		# the honest reading is that NOTHING is raised. The copy is still
+		# checked cell for cell above; what moved is what there is to copy.
+		assert_eq(raised, 0,
+			"nothing the fabric authors stands below the buildable layer, so "
+			+ "no envelope column may declare a terrace above its own ground")
 		assert_eq(grounded, envelope.height_bands.size(),
 			"every envelope column stands on its own input ground band")
 
@@ -175,7 +208,7 @@ func test_adapter_transitions_preserve_excavation_spine_edges() -> void:
 	## move the carver recorded must survive into the sealed plan unaltered
 	## (same from, to, and kind), regardless of whatever connective spurs the
 	## adapter also had to add for STAIR/RAMP intermediate cells.
-	var massif := WarrenMassifBuilder.build(1)
+	var massif := WarrenMassifBuilder.build(1, _hill())
 	var excavation := WarrenExcavationCarver.carve(1, massif)
 	var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
 		excavation)
@@ -201,7 +234,7 @@ func test_adapter_mass_cells_equal_massif_minus_excavated_void() -> void:
 	## too little air would leave phantom solid mass inside the street it
 	## just carved; one that swept too much would erase real building volume
 	## the excavation never touched.
-	var massif := WarrenMassifBuilder.build(1)
+	var massif := WarrenMassifBuilder.build(1, _hill())
 	var excavation := WarrenExcavationCarver.carve(1, massif)
 	var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
 		excavation)
@@ -235,7 +268,7 @@ func test_adapter_corpus_preserves_geometry_across_seeds() -> void:
 	## adapter, not a property of one hand-picked massif.
 	var accepted := 0
 	for world_seed in range(6):
-		var massif := WarrenMassifBuilder.build(world_seed)
+		var massif := WarrenMassifBuilder.build(world_seed, _hill(world_seed))
 		if massif == null:
 			continue
 		var excavation := WarrenExcavationCarver.carve(world_seed, massif)
@@ -342,11 +375,15 @@ func test_the_whole_mass_first_chain_runs_on_terraced_ground() -> void:
 	assert_gt(reached, 0,
 		"no seed reached a partition on terraced ground -- the whole point "
 		+ "of relief-relative gates is that the chain now runs on relief")
-	# A floor on "the chain really ran", not a target: measured 7 of 7 seeds and
-	# 380 houses (54/37/56/32/83/48/70) over this corpus on the terraced frame,
-	# every one of them with zero unowned street walls. Halved, so seed supply
-	# may move without this test quietly becoming a pin on it.
-	assert_gt(houses, 190,
+	# A floor on "the chain really ran", not a target. RE-MEASURED for the
+	# buildable layer: 7 of 7 seeds and 168 houses over this corpus, every one
+	# with zero unowned street walls, against 7 of 7 and 380 before the layer
+	# cap. The drop is the cap itself and is expected arithmetic rather than a
+	# regression -- a 16-20 band massif offers two or three stacked terraces per
+	# column to parcel and a 4-6 band layer offers one -- so the floor is halved
+	# off the new measurement exactly as it was off the old, and seed supply may
+	# move without this test quietly becoming a pin on it.
+	assert_gt(houses, 84,
 		"only %d houses across %d terraced towns -- the chain is limping, "
 		% [houses, reached] + "not running")
 
@@ -355,7 +392,7 @@ func test_adapter_is_deterministic() -> void:
 	## No randf/Time/engine RNG anywhere in the adapter: rebuilding from the
 	## same massif and excavation objects (themselves already proven
 	## deterministic by their own suites) must yield a bit-identical plan.
-	var massif := WarrenMassifBuilder.build(1)
+	var massif := WarrenMassifBuilder.build(1, _hill())
 	var excavation := WarrenExcavationCarver.carve(1, massif)
 	var first := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
 		excavation)
@@ -388,7 +425,7 @@ func test_adapter_plan_survives_the_public_realm_adapter() -> void:
 	## own bookkeeping) rather than trusting a non-null return alone.
 	var accepted := 0
 	for world_seed in range(6):
-		var massif := WarrenMassifBuilder.build(world_seed)
+		var massif := WarrenMassifBuilder.build(world_seed, _hill(world_seed))
 		if massif == null:
 			continue
 		var excavation := WarrenExcavationCarver.carve(world_seed, massif)
@@ -438,7 +475,7 @@ func test_lanes_reach_the_plan_as_connected_auxiliary_public_realm() -> void:
 	## NOT primary itinerary (every gate that reads primary_itinerary is a
 	## statement about the bored climb); and the sealed plan's walk graph is
 	## connected, which is what seal() re-checks and what an orphan alley breaks.
-	var massif := WarrenMassifBuilder.build(1)
+	var massif := WarrenMassifBuilder.build(1, _hill())
 	assert_not_null(massif, WarrenMassifBuilder.last_failure)
 	var excavation := WarrenExcavationCarver.carve(1, massif)
 	assert_not_null(excavation, WarrenExcavationCarver.last_failure)

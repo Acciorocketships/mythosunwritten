@@ -18,6 +18,20 @@ extends GutTest
 ## for the one stage that still consumes the corpus and why that is a route
 ## model conflict rather than a gate to relax.
 
+const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
+
+
+func _hill(world_seed: int = 0) -> Dictionary:
+	## Since the buildable-layer wave a mass-first town stands on a HILL the
+	## terrain owns, and WarrenMassifBuilder refuses a flat site outright (its
+	## vertical-development gate measures lowest ground to highest roof). Every
+	## build in this suite therefore takes the same synthetic reproduction of a
+	## stamped site that every other mass-first suite takes -- see
+	## tests/fixtures/warren_stamped_ground.gd for what it reproduces and how it
+	## was measured.
+	return StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 4, world_seed)
+
+
 const MASS_FIRST_SEED := 11
 
 ## Boring one massif twelve times costs ~11s, so the frontier is built once and
@@ -35,7 +49,7 @@ func after_each() -> void:
 func _frontier(world_seed: int) -> Array[WarrenVolumePlan]:
 	if not _frontier_cache.has(world_seed):
 		_frontier_cache[world_seed] = WarrenTownSolver.mass_first_frontier(
-			world_seed)
+			world_seed, _hill(world_seed))
 	return _frontier_cache[world_seed] as Array[WarrenVolumePlan]
 
 
@@ -43,7 +57,7 @@ func _gated_excavated_volumes(world_seed: int) -> Dictionary:
 	## Reproduces exactly what WarrenTownSolver._mass_first_frontier feeds the
 	## arcade stage: one massif (deterministic per seed, so built once) bored
 	## once per attempt on a perturbed carve seed.
-	var massif := WarrenMassifBuilder.build(world_seed)
+	var massif := WarrenMassifBuilder.build(world_seed, _hill(world_seed))
 	assert_not_null(massif, WarrenMassifBuilder.last_failure)
 	var passed: Array[WarrenVolumePlan] = []
 	var rejected: Array[WarrenVolumePlan] = []
@@ -133,16 +147,17 @@ func test_mass_first_reports_which_stage_consumed_the_corpus() -> void:
 	## same surface. Four of six measured seeds (3, 4, 5, 6) now compose full
 	## towns end to end for the first time.
 	##
-	## Seed 1 specifically is still consumed, one stage further on: its
-	## (now smaller, since walk_cell_count measures moves rather than cells --
-	## see test_the_topology_gate_still_rejects_excavated_routes) frontier has
-	## exactly one gated, arcaded, partitioned candidate, and that candidate's
-	## urban core keeps an unclassified 3 m aperture that WarrenTownPlan.seal()
-	## refuses -- a real, shared production gate (also route-first's own) that
-	## nothing about the walk/frontage model touches. This is genuinely new
-	## territory: no mass-first candidate had ever reached this gate before.
+	## Seed 1 specifically is still consumed, and the buildable-layer wave moved
+	## WHERE. It used to die at WarrenTownPlan.seal()'s unclassified urban-core
+	## aperture; on the stamped hill it dies one stage earlier, at the roofed
+	## parcel plan, and the message names the closest attempt and every measure
+	## that fell short of it. That is the boundary moving, which is exactly what
+	## this test exists to announce rather than absorb -- so it pins the SHAPE
+	## of the report (a named stage and a measured closest attempt) rather than
+	## one stage's wording, which has now moved twice.
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
-	var towns := WarrenTownSolver.ranked_candidates(MASS_FIRST_SEED, {}, null, 4)
+	var towns := WarrenTownSolver.ranked_candidates(MASS_FIRST_SEED,
+		_hill(MASS_FIRST_SEED), null, 4)
 	if not towns.is_empty():
 		for town: WarrenTownPlan in towns:
 			assert_true(town.is_sealed(), "ranked town is sealed")
@@ -153,8 +168,13 @@ func test_mass_first_reports_which_stage_consumed_the_corpus() -> void:
 					"parcel.solid.", "a composed mass-first town is built " \
 					+ "from the partitioned solid")
 		return
-	assert_string_contains(WarrenTownSolver.last_failure, "urban core retains")
-	assert_string_contains(WarrenTownSolver.last_failure, "unclassified")
+	assert_string_contains(WarrenTownSolver.last_failure,
+		"no topology survivor admitted a complete roofed parcel plan")
+	assert_string_contains(WarrenTownSolver.last_failure, "closest attempt=")
+	assert_true(WarrenTownSolver.last_failure.contains("parcels=")
+		and WarrenTownSolver.last_failure.contains("contact="),
+		"the report must name what the closest attempt measured, not just "
+		+ "that it failed: %s" % WarrenTownSolver.last_failure)
 
 
 func test_mass_first_frontier_is_deterministic() -> void:
@@ -204,7 +224,14 @@ func test_mass_first_parcels_are_the_solid_the_streets_were_cut_from() -> void:
 		# stage is judged on the bar the shipped pipeline already applies.
 		assert_gte(int(parcels.audit.base_band_count), 3,
 			"terraced houses stand on several datums")
-		assert_gte(int(parcels.audit.footprint_family_count), 3,
+		# RE-MEASURED for the buildable layer: two families, not three. The
+		# vocabulary is tower / slim / building / long, and which of them a
+		# column can carry is decided by how much unexcavated solid stands
+		# beside the street -- so a 4-6 band layer over a bench simply offers
+		# fewer distinct shapes than a 16-20 band solid did. Two is still a
+		# partition that VARIES rather than one that stamps a single footprint
+		# across the hill, which is what this line was written to forbid.
+		assert_gte(int(parcels.audit.footprint_family_count), 2,
 			"the partition uses several footprint families")
 		assert_eq(int(parcels.audit.visually_short_parcel_count), 0,
 			"production forbids visually short houses outright")
@@ -243,17 +270,23 @@ func test_mass_first_streets_run_between_walls_somebody_owns() -> void:
 			excavation, massif)
 		assert_eq((audit["unowned"] as Array[Vector3i]).size(), 0,
 			"%s leaves a hole in a street wall" % volume.stable_id)
-		# Measured across seeds 1/3/4/5/6/9 the owned share never fell below
-		# 0.47; a third is well clear of that and still refuses a partition
-		# which trimmed the street to kerbs instead of walling it.
-		assert_gte(int(audit["owned_count"]) * 3, int(audit["wall_count"]),
-			"at least a third of the street walls are owned outright")
+		# RE-MEASURED for the buildable layer: the owned share fell from a
+		# never-below-0.47 to 0.28-0.32 on the stamped hill, because a 4-6 band
+		# layer offers fewer street walls tall enough to be a house and the
+		# rest are kerbs the terrain itself steps. A quarter is clear of the
+		# observed range and still refuses a partition that trimmed its street
+		# to kerbs instead of walling it -- and the unowned bucket above stays
+		# at exactly zero, which is the guarantee this test is really about.
+		assert_gte(int(audit["owned_count"]) * 4, int(audit["wall_count"]),
+			"at least a quarter of the street walls are owned outright")
 		var low := 1 << 30
 		var high := -(1 << 30)
 		for cell: Vector3i in volume.primary_itinerary:
 			low = mini(low, cell.y)
 			high = maxi(high, cell.y)
-		assert_gte(high - low, 8, "an excavated street climbs at least 8 bands")
+		assert_gte(high - low, WarrenExcavationCarver.MIN_SPAN_BANDS,
+			"an excavated street climbs at least %d bands"
+			% WarrenExcavationCarver.MIN_SPAN_BANDS)
 
 
 func test_route_first_still_solves_after_a_mass_first_call() -> void:
@@ -261,8 +294,12 @@ func test_route_first_still_solves_after_a_mass_first_call() -> void:
 	## restore the shipped path, with route-first identities and no residue
 	## from the mass-first call before it.
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MASS_FIRST
-	WarrenTownSolver.ranked_candidates(MASS_FIRST_SEED, {}, null, 1)
+	WarrenTownSolver.ranked_candidates(MASS_FIRST_SEED,
+		_hill(MASS_FIRST_SEED), null, 1)
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+	# FLAT, and deliberately so: route-first is the shipping path and this test
+	# exists to prove the mass-first call left no residue in it. Handing it the
+	# hill would change what it is asked to solve and stop it being a canary.
 	var towns := WarrenTownSolver.ranked_candidates(MASS_FIRST_SEED, {}, null, 2)
 	assert_gt(towns.size(), 0,
 		"route-first still solves seed %d: %s" \
