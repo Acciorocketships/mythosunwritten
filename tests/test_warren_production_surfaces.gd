@@ -149,12 +149,13 @@ func _house_over(retained: Dictionary, band: int) -> Dictionary:
 	return solids
 
 
-func test_a_bank_under_a_house_is_a_plinth_over_a_mountain() -> void:
-	## Round-3b doctrine. The last course under the house is the authored
-	## FOUNDATION piece -- that is the liked wood-over-stone junction -- and the
-	## bank below it is the mountain the house stands on, tiled by whole rock
-	## modules because a building covers it. Faces the town itself already closes
-	## still get nothing.
+func test_a_bank_under_a_house_is_one_plinth_course_and_no_more() -> void:
+	## Round-3b doctrine, RE-MEASURED for the buildable layer. The last course
+	## under the house is the authored FOUNDATION piece -- the liked
+	## wood-over-stone junction -- and the bank below it is now the MOUNTAIN,
+	## which SettlementReliefPlan stamped into the heightfield and the terrain
+	## mesher renders, dresses and collides. The fabric draws none of it.
+	## Faces the town itself already closes still get nothing.
 	var retained: Dictionary = {}
 	for band in 6:
 		retained[Vector3i(0, band, 0)] = true
@@ -163,9 +164,9 @@ func test_a_bank_under_a_house_is_a_plinth_over_a_mountain() -> void:
 		# The neighbour to the east is another house's wall, so that face is
 		# already closed and no rock may appear inside it.
 		solids[Vector3i(1, band, 0)] = &"neighbour"
-	var plinths := SettlementFabricAssembler.house_plinth_walls(retained, solids)
-	assert_true(plinths.validate())
-	var foundations: Array = (plinths.batches.get(
+	var payload := SettlementFabricAssembler.house_plinth_walls(retained, solids)
+	assert_true(payload.validate())
+	var foundations: Array = (payload.batches.get(
 		SettlementFabricAssembler.HOUSE_PLINTH, {}) as Dictionary).get(
 		"transforms", [])
 	assert_eq(foundations.size(), 3,
@@ -176,25 +177,38 @@ func test_a_bank_under_a_house_is_a_plinth_over_a_mountain() -> void:
 			"the plinth must hang from the house floor it carries")
 		assert_lt(origin.x, 0.4,
 			"a face closed by a neighbouring house must stay unretained")
-	var substrate := SettlementFabricAssembler.hill_substrate_walls(retained,
-		solids)
-	var walls: Array = (substrate.batches.get(
-		SettlementFabricAssembler.LOW_RETAINING_WALL, {}) as Dictionary).get(
-		"transforms", [])
-	assert_eq(walls.size(), 6,
-		"the four bands under the plinth are mountain a house covers, two "
-		+ "modules on each of the three open faces")
-	for value: Variant in walls:
-		assert_lt((value as Transform3D).origin.y + 3.0, 6.001,
-			"substrate may not rise into the course the plinth owns")
+	assert_eq(payload.instance_count, foundations.size(),
+		"a six-band bank owes exactly its plinth course and nothing else: "
+		+ "the four bands beneath it are terrain")
+	assert_lte(SettlementFabricAssembler.tallest_bare_stone_stack_bands(payload),
+		SettlementFabricAssembler.STONE_BUDGET_BANDS,
+		"one course is one storey of stone, whatever the bank's depth")
+
+
+func test_the_hill_substrate_renderer_is_gone_and_may_not_return() -> void:
+	## TRIPWIRE for the buildable-layer wave (design §3.4).
+	## `hill_substrate_walls` tiled the riser under a house with whole rock
+	## modules because the fabric owned the hill and an undrawn hill left its
+	## houses floating. The hill is terrain now: re-drawing it would put a
+	## masonry collider inside the terrain's own volume and rebuild the monument
+	## rounds 2 and 3 rejected. So would the earth skin the same review threw
+	## out as a box.
+	var methods: Array[String] = []
+	for entry: Dictionary in (load(
+			"res://scripts/terrain/features/villages/fabric/"
+			+ "SettlementFabricAssembler.gd") as GDScript
+			).get_script_method_list():
+		methods.append(String(entry.name))
+	for banned: String in ["hill_substrate_walls", "terrace_ground_mesh",
+			"earth_skin_mesh"]:
+		assert_false(methods.has(banned),
+			"%s draws the mountain the terrain already renders" % banned)
 
 
 func test_hill_no_building_stands_over_carries_no_stone_at_all() -> void:
-	## Terrace mass, bare risers, and uncovered ring faces are the bulk of the
-	## retained set, and rendering them as coursed rock is the uniform masonry
-	## field the reviewer rejected twice. Nothing at all is drawn there -- not a
-	## rock stack, and not a generated slab in an earth palette either, which is
-	## the "box" the same review threw out.
+	## Terrace mass, bare risers and uncovered ring faces are what the retained
+	## set used to be full of, and rendering them as coursed rock is the uniform
+	## masonry field the reviewer rejected twice. Nothing at all is drawn there.
 	var retained: Dictionary = {}
 	for band in 4:
 		for x in 2:
@@ -202,75 +216,59 @@ func test_hill_no_building_stands_over_carries_no_stone_at_all() -> void:
 				retained[Vector3i(x, band, z)] = true
 	assert_eq(SettlementFabricAssembler.house_plinth_walls(retained,
 		{}).instance_count, 0, "unbuilt hill mass may not be plinthed")
-	assert_eq(SettlementFabricAssembler.hill_substrate_walls(retained,
-		{}).instance_count, 0,
-		"substrate is only legal where a building covers it")
-	var methods: Array[String] = []
-	for entry: Dictionary in (load(
-			"res://scripts/terrain/features/villages/fabric/"
-			+ "SettlementFabricAssembler.gd") as GDScript
-			).get_script_method_list():
-		methods.append(String(entry.name))
-	assert_false(methods.has("terrace_ground_mesh") \
-		or methods.has("earth_skin_mesh"),
-		"the generated earth skin is a box and must not come back")
 
 
 func test_hill_standing_over_a_street_is_not_a_stone_vault() -> void:
 	## The excavation's cover gate guarantees a majority of route cells carry
 	## mass overhead. Round 2 closed that underside with flat rock modules laid
-	## as a vault. The timber soffits and plank floors over a street stay, but
-	## the hill's own underside is not masonry and is not a slab.
+	## as a vault. The timber soffits and plank floors over a street stay; the
+	## hill's own underside is neither masonry nor a slab, and since the
+	## buildable-layer wave it is not the fabric's at all.
 	var retained: Dictionary = {}
 	for band: int in [1, 2, 3, 4]:
 		for x in 2:
 			for z in 2:
 				retained[Vector3i(x, band, z)] = true
-	var payload := SettlementFabricAssembler.house_plinth_walls(retained, {})
-	payload.append_from(SettlementFabricAssembler.hill_substrate_walls(retained,
-		{}))
-	assert_eq(payload.instance_count, 0, "a vault must not be stone")
-	# With a house on top the same mass becomes legal substrate -- and still
-	# never gains a horizontal module, because a flat-laid wall is the vault.
+	assert_eq(SettlementFabricAssembler.house_plinth_walls(retained,
+		{}).instance_count, 0, "a vault must not be stone")
+	# With a house on top the same mass owes exactly one upright plinth course
+	# per open face -- never a horizontal module, because a flat-laid wall IS
+	# the vault, and never a second course, because that is the mountain.
 	var solids := _house_over(retained, 4)
-	var covered := SettlementFabricAssembler.hill_substrate_walls(retained,
-		solids)
+	var covered := SettlementFabricAssembler.house_plinth_walls(retained, solids)
 	assert_gt(covered.instance_count, 0,
-		"mass a building stands over is the mountain and must render")
+		"the course a house rests on is the plinth and must render")
 	for asset_id: StringName in covered.batches.keys():
 		for value: Variant in (covered.batches[asset_id] as Dictionary).get(
 				"transforms", []):
 			assert_gt((value as Transform3D).basis.y.y, 0.5,
-				"every substrate module must stand upright, never lie flat")
+				"every plinth module must stand upright, never lie flat")
+	assert_lte(SettlementFabricAssembler.tallest_bare_stone_stack_bands(covered),
+		SettlementFabricAssembler.STONE_BUDGET_BANDS,
+		"a four-band bank under a house is still one course of stone")
 
 
 func test_bare_stone_never_exceeds_one_storey_in_an_assembled_payload() -> void:
-	## The round-3b budget, pinned: stone a building covers is the mountain and
-	## is exempt, but stone left in the open may not exceed one storey. A plinth
-	## under a house whose own ground storey is ALREADY rock would also put a
-	## second storey of masonry on one continuous face, so it is refused.
+	## The round-3b budget, pinned. Since the buildable-layer wave the ONLY
+	## stone this assembler places under a house is the single plinth course, so
+	## the budget now holds by construction rather than by a covered-column
+	## exemption -- and the test says so both ways: the payload is inside the
+	## budget with no exemption at all, and a house that already wears rock is
+	## still refused its plinth.
 	var retained: Dictionary = {}
 	for band in 4:
 		retained[Vector3i(0, band, 0)] = true
 	var solids := _house_over(retained, 3)
 	var assembled := SettlementFabricAssembler.house_plinth_walls(retained,
 		solids)
-	assembled.append_from(SettlementFabricAssembler.hill_substrate_walls(
-		retained, solids))
-	assert_gt(SettlementFabricAssembler.tallest_bare_stone_stack_bands(
+	assert_gt(assembled.instance_count, 0, "the fixture must place some stone")
+	assert_lte(SettlementFabricAssembler.tallest_bare_stone_stack_bands(
 		assembled), SettlementFabricAssembler.STONE_BUDGET_BANDS,
-		"the control must show the whole column measured as bare, or the "
-		+ "covered-column exemption below proves nothing")
+		"bare stone may never exceed one storey, with no exemption claimed")
 	var covered := SettlementFabricAssembler.building_ceiling(solids)
 	assert_eq(SettlementFabricAssembler.tallest_bare_stone_stack_bands(
 		assembled, covered), 0,
-		"a column a house stands on is substrate, not bare masonry")
-	# The one-band court wall is the only stone this assembler leaves in the
-	# open, and it is a single module.
-	var court := SettlementFabricAssembler.house_plinth_walls(retained, solids)
-	assert_lte(SettlementFabricAssembler.tallest_bare_stone_stack_bands(court),
-		SettlementFabricAssembler.STONE_BUDGET_BANDS,
-		"bare stone may never exceed one storey")
+		"a column a house stands on is read against that house")
 	# A rock ground storey already spends the budget, so no foundation joins it.
 	var stone_clad: Dictionary = {}
 	for cell_value: Variant in solids.keys():

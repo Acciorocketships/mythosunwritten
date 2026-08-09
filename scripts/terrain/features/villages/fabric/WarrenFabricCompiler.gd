@@ -77,25 +77,26 @@ static func solve(assets: WarrenAssetPlan,
 
 
 static func _retained_terrace(town: WarrenTownPlan,
-		plan: SettlementFabricPlan) -> Dictionary:
-	## Every cell of the standing solid that is not a building: the hill the
-	## town is cut into, at construction resolution.
+		_plan: SettlementFabricPlan) -> Dictionary:
+	## The PLINTH course under each raised house, at construction resolution,
+	## and nothing else.
 	##
-	## The per-parcel declaration alone renders only the plinth directly under a
-	## raised house, which leaves the other ~250 massif columns invisible -- so
-	## a house's plinth stands as an isolated stone face however short the
-	## massif's own steps are, and the excavated street, whose covered majority
-	## the carver's cover gate guarantees, has no mass drawn around or above it
-	## and reads as an open trench. Rendering the whole remainder is what makes
-	## the massif's MAX_NEIGHBOR_STEP_BANDS silhouette visible: no exposed stone
-	## face can then exceed one riser, because the mass one cell over is drawn
-	## too, and a covered route cell becomes a passage with stone beside and
-	## overhead.
+	## THE WHOLE-REMAINDER BRANCH IS GONE (terrain milestone Wave 4, design
+	## §3.4). It used to declare every standing massif cell that was not a
+	## building -- the 1->4 macro expansion of the unbuilt mass -- so that
+	## SettlementFabricAssembler could draw the hill the town was cut into. Its
+	## justification was that nothing else rendered unbuilt massif mass and a
+	## house resting on an unrendered terrace floats. That justification expired
+	## when SettlementReliefPlan made the hill real terrain: the mesher renders
+	## it, the cliff dressing dresses it and the chunk collider carries it, so
+	## drawing it again in masonry is the "stone ziggurat" rounds 2 and 3
+	## rejected AND a second collider inside the terrain's own volume.
 	##
-	## MASS-FIRST ONLY, keyed on the massif provenance the excavation adapter
-	## attaches and nothing else sets. A route-first town's Gaussian mass is
-	## deliberately NOT rock (see WarrenPrunedMassPlan's header) and this must
-	## not start rendering it.
+	## What survives is the per-parcel declaration, which is the <=2 band
+	## foundation course under a house that stopped descending short of its own
+	## ground -- the sfv.foundation.rock.001 plinth and the wood-over-stone
+	## junction the reviewer likes. `SettlementFabricPlan.set_retained_terrace`
+	## keeps its contract exactly; the set simply gets small.
 	var out: Dictionary = {}
 	if town == null or town.parcels == null:
 		return out
@@ -103,20 +104,6 @@ static func _retained_terrace(town: WarrenTownPlan,
 		for cell: Vector3i in WarrenParcelConstruction.retained_terrace_cells(
 				parcel):
 			out[cell] = true
-	if town.volume == null or not town.volume.mass_context.has(&"massif"):
-		return out
-	var solids := plan.transformed_cells(&"solid")
-	var macro_cells: Array[Vector3i] = []
-	macro_cells.assign(town.volume.mass_cells.keys())
-	macro_cells.sort()
-	for macro_cell: Vector3i in macro_cells:
-		for x_offset in 2:
-			for z_offset in 2:
-				var cell := Vector3i(macro_cell.x * 2 + x_offset, macro_cell.y,
-					macro_cell.z * 2 + z_offset)
-				if solids.has(cell):
-					continue
-				out[cell] = true
 	return out
 
 
