@@ -921,6 +921,81 @@ func test_a_house_on_a_terrace_declares_the_hill_beneath_it() -> void:
 		% deepest_plinth + "budget allows")
 
 
+func test_a_grounded_corpus_seed_draws_its_declared_plinths() -> void:
+	## THE DRAWING HALF of the plinth contract. The test above proves
+	## declaration is correct and bounded; task-24-report.md concern #2 found
+	## the assembler then drew NONE of the 216 plinths the stamped-hill corpus
+	## declared, because a since-removed stone_clad veto refused a plinth
+	## under any house whose own ground storey already read as rock -- and
+	## every ground storey is unconditionally rock (WarrenAssetCompiler builds
+	## every stack's base from `room.*.base.rock`), so the veto fired on 100%
+	## of houses regardless of how much stone the plinth would actually add.
+	## A plinth is FRONTED stone: a building always stands directly on it
+	## (that is what makes a cell eligible below), so it is bounded on its own
+	## terms by the declaration side
+	## (WarrenParcelConstruction.resolve_support_band, budgeted at
+	## WarrenMassif.PLINTH_BUDGET_BANDS) rather than by the bare-stone budget
+	## that governs masonry nothing stands over. Whether the ground storey
+	## above it also happens to be rock is the separate, already-accepted
+	## "stone feature" the reviewer praised, not a reason to refuse the
+	## foundation course underneath it.
+	##
+	## Modelled with a synthetic solid standing on the declared terrace --
+	## test_a_house_on_a_terrace_declares_the_hill_beneath_it's fixture,
+	## carried one step further into the assembler that draws it.
+	var drawn_total := 0
+	var plinthed_houses := 0
+	var over_budget := 0
+	for world_seed: int in CORPUS:
+		if _town(world_seed).is_empty():
+			continue
+		for parcel: WarrenBuildingParcel in _sealed_parcels(world_seed):
+			var terrace := WarrenParcelConstruction.retained_terrace_cells(
+				parcel)
+			if terrace.is_empty():
+				continue
+			var proposal := WarrenParcelConstruction.proposal(parcel)
+			if proposal.is_empty():
+				continue
+			var retained: Dictionary = {}
+			for cell: Vector3i in terrace:
+				retained[cell] = true
+			var support := (proposal.origin as Vector3i).y
+			# The house's own ground storey, standing exactly where
+			# WarrenParcelConstruction rooted it. Real ground storeys are
+			# unconditionally rock (WarrenAssetCompiler's `room.*.base.rock`)
+			# -- the point of this fixture is that the plinth must draw
+			# whether or not this solid is stone-clad, so it is deliberately
+			# not told apart here.
+			var solids: Dictionary = {}
+			for column: Vector2i in parcel.footprint:
+				for x_offset in 2:
+					for z_offset in 2:
+						solids[Vector3i(column.x * 2 + x_offset, support,
+							column.y * 2 + z_offset)] = parcel.stable_id
+			var payload := SettlementFabricAssembler.house_plinth_walls(
+				retained, solids)
+			plinthed_houses += 1
+			drawn_total += payload.instance_count
+			assert_gt(payload.instance_count, 0,
+				("seed %d: %s declares %d plinth cells and the assembler " \
+				+ "draws none of them") % [world_seed, parcel.stable_id,
+					terrace.size()])
+			var lowest_ground := 1 << 30
+			for column: Vector2i in parcel.footprint:
+				lowest_ground = mini(lowest_ground,
+					parcel.source.envelope.bearing_at(column))
+			over_budget += int(support - lowest_ground
+				> SettlementFabricAssembler.STONE_BUDGET_BANDS)
+	assert_gt(plinthed_houses, 10,
+		"only %d plinthed houses in the corpus -- too few to prove anything" \
+		% plinthed_houses)
+	assert_gt(drawn_total, 0, "the grounded corpus draws zero plinth modules")
+	assert_eq(over_budget, 0,
+		"%d houses stand on more plinth stone than STONE_BUDGET_BANDS allows" \
+		% over_budget)
+
+
 func test_footprints_stay_in_the_authored_family() -> void:
 	## Every shape must have an authored roof profile downstream. A footprint
 	## outside WarrenParcelConstruction's four profiles compiles to nothing at

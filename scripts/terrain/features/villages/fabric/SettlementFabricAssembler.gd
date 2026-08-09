@@ -203,8 +203,7 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 		return EnvironmentInstancePayload.new()
 	var retained := plan.retained_terrace_cells
 	var solids := plan.transformed_cells(&"solid")
-	var stone_clad := stone_clad_solids(plan)
-	var out := house_plinth_walls(retained, solids, stone_clad)
+	var out := house_plinth_walls(retained, solids)
 	assert(out.validate())
 	return out
 
@@ -221,57 +220,21 @@ static func building_ceiling(solids: Dictionary) -> Dictionary:
 	return out
 
 
-static func stone_clad_solids(plan: SettlementFabricPlan) -> Dictionary:
-	## Solid cells whose own recipe already clads them in rock -- the reviewed
-	## rock ground storey with its windows and door, which is the "stone
-	## feature" the reviewer praised. A plinth beneath one of those would put a
-	## SECOND storey of masonry on the same continuous face, so the budget
-	## refuses it and that course gets no foundation piece at all.
-	var out: Dictionary = {}
-	if plan == null:
-		return out
-	var solids := plan.transformed_cells(&"solid")
-	var by_unit: Dictionary = {}
-	var owners: Array[Vector3i] = []
-	owners.assign(solids.keys())
-	owners.sort_custom(_cell_before)
-	for cell: Vector3i in owners:
-		var unit_id := StringName(solids[cell])
-		if not by_unit.has(unit_id):
-			by_unit[unit_id] = _unit_is_stone_clad(plan, unit_id)
-		if bool(by_unit[unit_id]):
-			out[cell] = true
-	return out
-
-
-static func _unit_is_stone_clad(plan: SettlementFabricPlan,
-		unit_id: StringName) -> bool:
-	var unit_value := plan.unit(unit_id)
-	if unit_value == null:
-		return false
-	var recipe_value := plan.recipe(unit_value.recipe_id)
-	if recipe_value == null:
-		return false
-	for asset_id: StringName in recipe_value.asset_ids():
-		if STONE_FACADE_ASSETS.has(asset_id):
-			return true
-	return false
-
-
-static func house_plinth_walls(retained: Dictionary, solids: Dictionary,
-		stone_clad: Dictionary = {}) -> EnvironmentInstancePayload:
+static func house_plinth_walls(retained: Dictionary,
+		solids: Dictionary) -> EnvironmentInstancePayload:
 	## One authored HOUSE_PLINTH foundation piece per exposed plinth face, and
 	## never a second. Its top is flush with the house floor it carries and its
 	## bottom is buried in the bank below -- the same half-burial the one-band
 	## court in low_retaining_payload already relies on, and the reason no asset
-	## is ever scaled. A deeper bank is NOT tiled with further courses:
-	## everything below STONE_BUDGET_BANDS is left unrendered.
+	## is ever scaled. A deeper bank is NOT tiled with further courses: nothing
+	## below the declared run (bounded at construction by
+	## WarrenMassif.PLINTH_BUDGET_BANDS) is ever rendered.
 	##
 	## Pure function of integer cell sets whose every loop runs over a sorted
 	## key list, so the payload is byte-identical for identical input.
 	var out := EnvironmentInstancePayload.new()
 	var keys: Array[Vector4i] = []
-	keys.assign(plinth_faces(retained, solids, stone_clad).keys())
+	keys.assign(plinth_faces(retained, solids).keys())
 	keys.sort_custom(_face_before)
 	for key: Vector4i in keys:
 		var direction := FACE_DIRECTIONS[key.w]
@@ -288,14 +251,29 @@ static func house_plinth_walls(retained: Dictionary, solids: Dictionary,
 	return out
 
 
-static func plinth_faces(retained: Dictionary, solids: Dictionary,
-		stone_clad: Dictionary = {}) -> Dictionary:
+static func plinth_faces(retained: Dictionary, solids: Dictionary) -> Dictionary:
 	## The faces stone is allowed to claim, keyed Vector4i(x, band, z, direction
 	## index into FACE_DIRECTIONS) at the TOP band of the run. A face qualifies
 	## only when a building stands directly on that cell (so the stone is part
-	## of that house rather than a retaining wall in its own right), the side is
-	## one nothing else already closes, and the house's own facade is not
-	## already rock.
+	## of that house rather than a retaining wall in its own right) and the
+	## side is one nothing else already closes.
+	##
+	## NOT gated on whether the house's own ground storey already reads as rock.
+	## Round 5 shipped that gate and it refused all 216 houses the stamped-hill
+	## corpus declared a plinth for, because every ground storey is
+	## unconditionally rock (WarrenAssetCompiler builds every stack's base from
+	## `room.*.base.rock`) -- the test was "does this house wear any stone",
+	## which is always true, rather than "how much stone would this add"
+	## (task-24-report.md concern #2). A plinth is FRONTED stone: the check
+	## just below already requires a building to stand directly on the cell, so
+	## it can never be a bare retaining face. It is bounded on its own terms by
+	## the declaration side (WarrenParcelConstruction.resolve_support_band,
+	## budgeted at WarrenMassif.PLINTH_BUDGET_BANDS) rather than by
+	## tallest_bare_stone_stack_bands, which governs masonry nothing stands
+	## over and must not be weakened to make room for this. Whether the ground
+	## storey above also happens to be rock is the separate, already-accepted
+	## "stone feature" the reviewer praised, not a reason to refuse the
+	## foundation course beneath it.
 	##
 	## The 3 m module hung from this band also covers the band below it, which
 	## is why the earth skin skips both.
@@ -305,7 +283,7 @@ static func plinth_faces(retained: Dictionary, solids: Dictionary,
 	cells.sort_custom(_cell_before)
 	for cell: Vector3i in cells:
 		var above := cell + Vector3i.UP
-		if not solids.has(above) or stone_clad.has(above):
+		if not solids.has(above):
 			continue
 		for index in FACE_DIRECTIONS.size():
 			var neighbor := cell + FACE_DIRECTIONS[index]

@@ -253,8 +253,20 @@ func test_bare_stone_never_exceeds_one_storey_in_an_assembled_payload() -> void:
 	## stone this assembler places under a house is the single plinth course, so
 	## the budget now holds by construction rather than by a covered-column
 	## exemption -- and the test says so both ways: the payload is inside the
-	## budget with no exemption at all, and a house that already wears rock is
-	## still refused its plinth.
+	## budget with no exemption at all, and it is fully exempt once read against
+	## the house standing over it.
+	##
+	## task-24-report.md concern #2: a round-5 veto refused this same plinth
+	## whenever the house's own ground storey already read as rock, which was
+	## every house (WarrenAssetCompiler's ground storey is unconditionally
+	## `room.*.base.rock`) -- so 216 declared plinths on the stamped-hill corpus
+	## drew zero. house_plinth_walls no longer takes a stone-clad hint at all:
+	## the plinth is FRONTED stone (a building stands directly on it by the
+	## eligibility check alone) and is bounded on its own terms by the
+	## declaration side's PLINTH_BUDGET_BANDS, so what the house above is made
+	## of cannot refuse it. See test_warren_solid_partitioner.gd's
+	## test_a_grounded_corpus_seed_draws_its_declared_plinths for the
+	## corpus-wide regression.
 	var retained: Dictionary = {}
 	for band in 4:
 		retained[Vector3i(0, band, 0)] = true
@@ -269,13 +281,6 @@ func test_bare_stone_never_exceeds_one_storey_in_an_assembled_payload() -> void:
 	assert_eq(SettlementFabricAssembler.tallest_bare_stone_stack_bands(
 		assembled, covered), 0,
 		"a column a house stands on is read against that house")
-	# A rock ground storey already spends the budget, so no foundation joins it.
-	var stone_clad: Dictionary = {}
-	for cell_value: Variant in solids.keys():
-		stone_clad[cell_value as Vector3i] = true
-	assert_eq(SettlementFabricAssembler.house_plinth_walls(retained, solids,
-		stone_clad).instance_count, 0,
-		"a house that already wears rock may not be given a rock plinth")
 
 
 func test_plinth_walls_are_deterministic_and_uniquely_identified() -> void:
