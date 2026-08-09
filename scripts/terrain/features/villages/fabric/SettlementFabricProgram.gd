@@ -140,6 +140,11 @@ const STAIR_FULL := &"sfv.fabric.stair.preset.004"
 const STAIR_HALF := &"sfv.stair.s.001"
 const RAILING := &"sfv.deck.railing.s.001"
 
+## Every reviewed stocked-stall prefab in the bake, not the seven that happened
+## to exist before the wave. WarrenMarketSolver picks a family per origin and
+## then walks this list, so its width IS how much two towns' bazaars differ.
+## The first seven entries are the pre-wave pool in its pre-wave order, which
+## keeps `market.stall.00`..`.06` naming the same assets they always named.
 const MARKET_STALLS: Array[StringName] = [
 	&"sfm.stall.alchemy.002",
 	&"sfm.stall.forge.002",
@@ -148,6 +153,19 @@ const MARKET_STALLS: Array[StringName] = [
 	&"sfm.stall.tavern.002",
 	&"sfm.stall.tavern.003",
 	&"sfm.stall.butcher.002",
+	&"sfm.stall.armory.001",
+	&"sfm.stall.bakery.001",
+	&"sfm.stall.veg.001",
+	&"sfm.stall.fabric.001",
+	&"sfm.stall.forge.003",
+	&"sfm.stall.veg.003",
+	&"sfm.stall.armory.002",
+	&"sfm.stall.bakery.002",
+	&"sfm.stall.fish.002",
+	&"sfm.stall.veg.002",
+	&"sfm.stall.fabric.002",
+	&"sfm.stall.alchemy.001",
+	&"sfm.stall.veg.004",
 ]
 
 const PREFAB_ANCHORS: Array[StringName] = [
@@ -406,8 +424,13 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	_append_bisected_valley_vocabulary(candidates, modules)
 	for index in MARKET_STALLS.size():
 		var market_descriptor := catalog.descriptor(MARKET_STALLS[index])
+		# `stocked_market` and `themed_stall` are the two reviewed goods-laden
+		# stall tags the bake manifests carry; both mean a complete stall prefab
+		# with its wares modelled. Admitting only the first pinned every town's
+		# bazaar to the seven pieces that predated the bake wave.
 		if market_descriptor == null \
-				or not market_descriptor.tags.has(&"stocked_market"):
+				or not (market_descriptor.tags.has(&"stocked_market") \
+					or market_descriptor.tags.has(&"themed_stall")):
 			push_error("Market vocabulary asset is not a reviewed stocked prefab: %s" %
 				MARKET_STALLS[index])
 			return null

@@ -226,6 +226,28 @@ func test_the_amber_family_compiles_a_complete_recipe_set() -> void:
 				"missing %s" % recipe_id)
 
 
+func test_the_market_pool_is_wider_than_the_pre_wave_seven() -> void:
+	## 31 stall pieces were baked; a market that redraws the same seven stalls
+	## in every town is the visible symptom of a pool, not of the solver.
+	assert_gte(SettlementFabricProgram.MARKET_STALLS.size(), 16,
+		"the market stall pool is still near its pre-wave width")
+	var distinct: Dictionary = {}
+	for asset_id: StringName in SettlementFabricProgram.MARKET_STALLS:
+		distinct[asset_id] = true
+	assert_eq(distinct.size(), SettlementFabricProgram.MARKET_STALLS.size(),
+		"the market stall pool repeats an asset")
+
+
+func test_every_market_stall_is_a_reviewed_stall_prefab() -> void:
+	for asset_id: StringName in SettlementFabricProgram.MARKET_STALLS:
+		var descriptor := _catalog.descriptor(asset_id)
+		assert_not_null(descriptor, "uncatalogued stall %s" % asset_id)
+		if descriptor == null:
+			continue
+		assert_true(descriptor.tags.has(&"stall"),
+			"%s is not tagged as a stall" % asset_id)
+
+
 func test_the_chimney_pool_offers_more_than_one_stack() -> void:
 	for asset_id: StringName in SettlementFabricProgram.ROOF_CHIMNEYS:
 		var descriptor := _catalog.descriptor(asset_id)
