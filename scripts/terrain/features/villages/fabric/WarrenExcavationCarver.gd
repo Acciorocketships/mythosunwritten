@@ -14,8 +14,8 @@ extends RefCounted
 ## is a tunnel. Because the massif's top rises about 1.2 bands per cell of
 ## inward travel, moving inward while rising one band gains depth slowly,
 ## moving sideways while rising sheds it, and that asymmetry is what lets one
-## route both climb 8+ bands and surface often enough to stay inside the
-## 0.55-0.70 covered band instead of burying itself the moment it heads in.
+## route both climb 8+ bands and retain occasional daylight while accepting the
+## much higher cover naturally produced by a true inward, addressable throat.
 const HEADROOM_BANDS := WarrenExcavation.HEADROOM_BANDS
 ## Route length. The 22-26 family was inherited from the route-first carver,
 ## which never had to spend cells at grade. A mass-first route now walks a
@@ -54,8 +54,21 @@ const MIN_GRADE_CELLS := 9
 ## the first branch has spent itself, measured end to end against the real
 ## solver rather than reasoned about.
 const MIN_GRADE_SPREAD_CELLS := 7
+## The ground throat is the player's first and most hostile read of the town.
+## Head-height massif walls are insufficient: a shallow edge can satisfy the
+## canyon gate and then disappear when the partitioner asks for a complete
+## inhabited address. Count the same transition endpoints the macro adapter
+## publishes and require a material share to retain full ADDRESS_BANDS mass on
+## an opposing pair of sides. The boundary portal itself makes 1.0 impossible;
+## later 3D frontage and sightline gates remain stricter whole-town proofs.
 const MIN_COVERED_RATIO := 0.55
-const MAX_COVERED_RATIO := 0.70
+## The former 0.70 ceiling forced the terrain-level throat to orbit the shallow
+## massif skirt: the first route with four complete opposing addresses measured
+## 0.886 because entering inhabitable depth necessarily leaves mass overhead.
+## This is desirable for the requested tunnel-heavy warren. The downstream
+## spatial compiler still has to realize that cover as occupied construction;
+## raw unclassified mass never counts toward its stricter 0.38 production gate.
+const MAX_COVERED_RATIO := 0.90
 const MIN_PORTALS := 1
 const MAX_PORTALS := 2
 ## Fraction of walk cells that must have mass standing to full street height
@@ -96,8 +109,9 @@ const ATTEMPTS := 256
 ## the massif's peak are a plateau of at most MAX_PLATEAU_CELLS columns, and
 ## a route that reaches dead centre has nowhere left to be flanked.
 const INNER_RADIUS_CELLS := 5.0
-## The cover feedback aims at the middle of the acceptance band rather than
-## either edge, so an attempt that drifts still has room on both sides.
+## The soft cover feedback remains biased toward intermittent daylight. The
+## stronger inward/address objective can legitimately override it and produce
+## a tunnel-heavy survivor up to MAX_COVERED_RATIO.
 const TARGET_COVERED_RATIO := 0.62
 const DIRECTIONS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
@@ -141,7 +155,11 @@ const BONUS_RISE := 260.0
 const COST_PER_STRIDE_CELL := 55.0
 ## Pull that makes the ground street travel outward from the mouth rather
 ## than circle near it. Only active while the grade run is being laid.
-const WEIGHT_GRADE_TRAVEL := 240.0
+const WEIGHT_GRADE_TRAVEL := 55.0
+const WEIGHT_GRADE_INWARD := 420.0
+const BONUS_GRADE_TWO_SIDED_ADDRESS := 1150.0
+const PENALTY_GRADE_SINGLE_ADDRESS := 420.0
+const PENALTY_GRADE_UNADDRESSED := 1100.0
 ## Reward for the climbing route passing over a cell it already walked at
 ## least a full street height below -- the over/under crossing the ground
 ## arcade stage counts as MIN_UPPER_ROUTE_CROSSOVERS.
@@ -274,10 +292,16 @@ const LANE_PENALTY_CROWD := 260.0
 const LANE_COST_PER_STRIDE_CELL := 45.0
 
 static var last_failure := ""
+static var last_diagnostic: Dictionary = {}
 
 
 static func carve(world_seed: int, massif: WarrenMassif) -> WarrenExcavation:
 	last_failure = "no attempt sealed"
+	last_diagnostic = {
+		"best_grade_two_sided_address_ratio": 0.0,
+		"best_grade_two_sided_address_count": 0,
+		"best_grade_endpoint_count": 0,
+	}
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
 		return null
@@ -297,7 +321,11 @@ static func carve(world_seed: int, massif: WarrenMassif) -> WarrenExcavation:
 			best = candidate
 			best_score = score
 	if best == null:
-		last_failure = "no attempt sealed (%s)" % _tally(rejected)
+		last_failure = "no attempt sealed (%s; best two-sided grade %d/%d=%.3f)" % [
+			_tally(rejected),
+			int(last_diagnostic.best_grade_two_sided_address_count),
+			int(last_diagnostic.best_grade_endpoint_count),
+			float(last_diagnostic.best_grade_two_sided_address_ratio)]
 		return null
 	last_failure = ""
 	# Lanes are carved into the survivor, never into a candidate: every gate
@@ -384,6 +412,36 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 		return null
 	if _grade_spread(grade) < MIN_GRADE_SPREAD_CELLS:
 		_reject(rejected, "grade street too compact")
+		return null
+	var grade_endpoints := _grade_route_address_records(massif, excavation)
+	var two_sided_grade_endpoints := 0
+	for endpoint: Dictionary in grade_endpoints:
+		two_sided_grade_endpoints += int(bool(endpoint.two_sided))
+	var two_sided_grade_ratio := float(two_sided_grade_endpoints) \
+		/ float(maxi(1, grade_endpoints.size()))
+	if two_sided_grade_ratio > float(last_diagnostic.get(
+			"best_grade_two_sided_address_ratio", 0.0)):
+		var endpoint_diagnostic: Array[Dictionary] = []
+		for endpoint: Dictionary in grade_endpoints:
+			var cell := endpoint.cell as Vector3i
+			endpoint_diagnostic.append({
+				"cell": cell,
+				"two_sided": bool(endpoint.two_sided),
+				"required_directions": endpoint.required_directions,
+				"complete_sides": _complete_address_side_count(massif,
+					excavation, cell),
+			})
+		last_diagnostic = {
+			"best_grade_two_sided_address_ratio": two_sided_grade_ratio,
+			"best_grade_two_sided_address_count": two_sided_grade_endpoints,
+			"best_grade_endpoint_count": grade_endpoints.size(),
+			"best_grade_endpoints": endpoint_diagnostic,
+			"best_grade_covered_ratio": excavation.covered_ratio(),
+		}
+	if grade_endpoints.is_empty() or float(two_sided_grade_endpoints) \
+			/ float(grade_endpoints.size()) \
+			< WarrenPublicRealmCarver.MIN_GROUND_PRIMARY_TWO_SIDED_ADDRESS_RATIO:
+		_reject(rejected, "one-sided grade street")
 		return null
 	if excavation.covered_ratio() < MIN_COVERED_RATIO:
 		_reject(rejected, "too open")
@@ -535,17 +593,78 @@ static func _route_endpoint_addressed_count(massif: WarrenMassif,
 static func _cell_has_complete_address(massif: WarrenMassif,
 		excavation: WarrenExcavation, cell: Vector3i) -> bool:
 	for direction: Vector2i in DIRECTIONS:
-		var column := Vector2i(cell.x + direction.x, cell.z + direction.y)
-		var complete := true
-		for band in range(cell.y, cell.y + WarrenMassif.ADDRESS_BANDS):
-			if not massif.has_column(column) or band < massif.base_at(column) \
-					or band >= massif.top_at(column) \
-					or excavation.carved.has(Vector3i(column.x, band, column.y)):
-				complete = false
-				break
-		if complete:
+		if _direction_has_complete_address(massif, excavation, cell, direction):
 			return true
 	return false
+
+
+static func _direction_has_complete_address(massif: WarrenMassif,
+		excavation: WarrenExcavation, cell: Vector3i,
+		direction: Vector2i) -> bool:
+	var column := Vector2i(cell.x + direction.x, cell.z + direction.y)
+	for band in range(cell.y, cell.y + WarrenMassif.ADDRESS_BANDS):
+		if not massif.has_column(column) or band < massif.base_at(column) \
+				or band >= massif.top_at(column) \
+				or excavation.carved.has(Vector3i(column.x, band, column.y)):
+			return false
+	return true
+
+
+static func _complete_address_side_count(massif: WarrenMassif,
+		excavation: WarrenExcavation, cell: Vector3i) -> int:
+	var out := 0
+	for direction: Vector2i in DIRECTIONS:
+		out += int(_direction_has_complete_address(massif, excavation, cell,
+			direction))
+	return out
+
+
+static func _grade_route_address_records(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> Array[Dictionary]:
+	## Match WarrenExcavationVolumeAdapter's logical primary itinerary: the bore
+	## entrance plus each transition endpoint. Intermediate stair/ramp cells are
+	## physical treads, not independent public nodes. Required facade directions
+	## are route-relative: opposite on a straight, adjacent around a bend, and
+	## perpendicular at an endpoint. This proves that a winding street has walls
+	## on both of its actual sides instead of rejecting every chicane for lacking
+	## one world-axis pair.
+	var nodes: Array[Vector3i] = [excavation.route[0]]
+	for transition: Dictionary in excavation.transitions:
+		nodes.append(transition.to as Vector3i)
+	var out: Array[Dictionary] = []
+	for index in nodes.size():
+		var cell := nodes[index]
+		if not _is_at_grade(massif, cell):
+			continue
+		var required := _route_side_directions(nodes, index)
+		var two_sided := required.size() == 2
+		for direction: Vector2i in required:
+			two_sided = two_sided and _direction_has_complete_address(
+				massif, excavation, cell, direction)
+		out.append({"cell": cell, "required_directions": required,
+			"two_sided": two_sided})
+	return out
+
+
+static func _route_side_directions(nodes: Array[Vector3i], index: int) \
+		-> Array[Vector2i]:
+	var open_directions: Dictionary = {}
+	for neighbor_index: int in [index - 1, index + 1]:
+		if neighbor_index < 0 or neighbor_index >= nodes.size():
+			continue
+		var delta := nodes[neighbor_index] - nodes[index]
+		var direction := Vector2i(signi(delta.x), signi(delta.z))
+		if direction != Vector2i.ZERO:
+			open_directions[direction] = true
+	if open_directions.size() == 1:
+		var tangent := open_directions.keys()[0] as Vector2i
+		return [Vector2i(-tangent.y, tangent.x),
+			Vector2i(tangent.y, -tangent.x)] as Array[Vector2i]
+	var out: Array[Vector2i] = []
+	for direction: Vector2i in DIRECTIONS:
+		if not open_directions.has(direction):
+			out.append(direction)
+	return out if out.size() == 2 else [] as Array[Vector2i]
 
 
 static func _lane_anchors(world_seed: int,
@@ -1149,15 +1268,30 @@ static func _move_score(world_seed: int, attempt: int, move_index: int,
 		minf(1.0, progress * radius_rush))
 	var score := absf(radius - target_radius) * WEIGHT_RADIUS
 	if excavation.route.size() < MIN_GRADE_CELLS:
-		# While the ground street is being laid the inward term is the wrong
-		# ambition: it is satisfied by circling at a constant radius, which
-		# is precisely how the grade run ended up a tight compact knot with
-		# no two roots far enough apart to hang a second arcade branch on.
-		# Reward travel from the mouth instead, so the street actually goes
-		# somewhere before it starts to climb.
+		# The grade street must travel far enough to seed two arcade roots, but
+		# unqualified Manhattan travel can run back around the Gaussian skirt.
+		# Reward mostly radial penetration into inhabitable depth, with a small
+		# independent travel term to keep the route from knotting at the mouth.
 		var travelled_from_portal := absi(endpoint.x - int(style["portal_x"])) \
 			+ absi(endpoint.z - int(style["portal_z"]))
 		score -= float(travelled_from_portal) * WEIGHT_GRADE_TRAVEL
+		var inward_travel := maxf(0.0, portal_radius - radius)
+		score -= inward_travel * WEIGHT_GRADE_INWARD
+		var two_sided_addresses := 0
+		var single_addresses := 0
+		for cell: Vector3i in stride:
+			var first_side := Vector2i(-direction.y, direction.x)
+			var second_side := -first_side
+			var first_complete := _direction_has_complete_address(massif,
+				excavation, cell, first_side)
+			var second_complete := _direction_has_complete_address(massif,
+				excavation, cell, second_side)
+			two_sided_addresses += int(first_complete and second_complete)
+			single_addresses += int(first_complete != second_complete)
+		var unaddressed := run - two_sided_addresses - single_addresses
+		score -= float(two_sided_addresses) * BONUS_GRADE_TWO_SIDED_ADDRESS
+		score += float(single_addresses) * PENALTY_GRADE_SINGLE_ADDRESS
+		score += float(unaddressed) * PENALTY_GRADE_UNADDRESSED
 
 	var achieved := float(roofed) / float(maxi(1, excavation.route.size()))
 	var balance := clampf(achieved - TARGET_COVERED_RATIO, -1.0, 1.0)

@@ -316,10 +316,20 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   above immutable terrain; `WarrenMassif.bearing_at()` is the terrain base, never a hidden stone
   substrate. `WarrenExcavationCarver` removes the connected narrow street, headroom, stairs, and
   passages from that mass, so paths remain negative space and accepted routes climb at least eight
-  1.5 m bands with strong two-sided enclosure and intermittent occupied cover. The solid partition
+  1.5 m bands with strong two-sided enclosure and intermittent occupied cover. Its terrain-level
+  throat is rewarded for true radial inward progress rather than distance from the portal, and at
+  least 30% of its primary grade endpoints must retain complete inhabited address mass on both
+  route-relative sides: opposing flanks on a straight, the two remaining adjacent facades around
+  a right-angle bend, and perpendicular flanks at an endpoint. This raw gate remains terrain-tolerant; final occupied frontage, overhead, and sightline
+  proofs are deliberately stronger. That inward throat may be heavily tunnelled (raw cover is capped at 90%); the
+  later spatial compiler must still realize the cover as owned rooms before it receives any credit.
+  The common topology gate repeats the route-relative two-sided-address proof after market arcades and galleries,
+  so auxiliary carving cannot silently reopen the selected canyon. The solid partition
   becomes the buildings rather than feeding the route-first packer. Exact mass-first construction
   alternates reviewed timber facade families in two-storey blocks, admits only explicit compatible
-  party-wall seams, and uses flat plank caps only where crossing gables would collide; stone is
+  party-wall seams, and uses flat plank caps only where crossing gables would collide. An unsupported
+  perpendicular-valley result triggers one finite rebuild which flattens only the two roofs in each
+  classified crossing; flat pairs emit no fictional pitched-junction module. Stone is
   limited to real terrain bearing and retaining work. A house footprint may span at most the
   explicit one-storey plinth budget in sampled terrain height; larger risers must split into
   narrower terrain-rooted buildings rather than becoming masonry podiums. A mass-first topology must also contain one
@@ -352,13 +362,18 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   protected reservations, and later lineage handoffs all remain valid. A second residual-mass pass
   can grow a room into genuinely unclaimed inhabited massif cells beyond its source footprint; an
   addressed upper room is eligible only when the transformed authored door and exact public frontage
-  remain unchanged. Cardinal adjacency is deliberately not rejected by a blanket fine-cell moat:
+  remain unchanged. If an unforced crown can no longer fit around a hero reservation, composition
+  may terminate the lineage at its last complete two-storey band; it may never discard or truncate
+  through a later door, court wall, market socket, or bridge endpoint. The selected court's occupied
+  bridge-house body and final recomposed room cells must still address three distinct sides before
+  any building is committed—source parcel silhouettes do not count. Cardinal adjacency is deliberately not rejected by a blanket fine-cell moat:
   exact cell ownership protects topology, compatible contact becomes a typed party wall, and the
   selected recipes' measured envelopes decide sub-cell eave/facade clearance. Skywalk constraints
   preserve the exact authored centre-facade room socket rather than accepting any perimeter cell.
   After hero composition, a bounded residual 3D backfill stamps complete one-storey rooms into
   remaining inhabited cells. It ranks genuinely new occupied cover over public route cells first,
-  accepts either an exact public threshold or a private parent edge, and requires terrain or an
+  accepts either the selected room recipe's exact transformed public threshold or a private parent
+  edge (mere adjacency to a street is not a doorway), and requires terrain or an
   existing building for physical bearing. Exact roof clearance remains the construction contract;
   an additional symmetric eave halo prevents a later facade or roof from rising through an earlier
   pitched eave without forbidding legal same-height roof meetings. The residual pass is ordinary
@@ -379,14 +394,19 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   source parcel stack. Selection permits at most two per building and forbids equal XZ/facing
   facade coordinates at different heights, so balconies cannot recreate a vertically repeated
   tower pattern. Their body, visual clearance, room endpoint, guard/open-seam/soffit faces, support,
-  and construction transform commit atomically before roof selection. Measured brace clearance may
+  and construction transform commit atomically before roof selection. Candidate admission compares
+  the balcony's authored AABB with both possible facade phases of every unrelated final room, so a
+  lattice-clear bracket or eave cannot clip neighbouring construction. Measured brace clearance may
   enter lower public air only as an explicit covered-street construction seam. The fast diagnostic
   `tests/harness/warren_spatial_review.tscn` renders the already-sealed fine-grid candidate directly
   and adds front/underside falsification views for every balcony; it deliberately bypasses corpus
   selection and is not evidence that the production selector accepted a seed. The spatial fabric
   compiler deterministically alternates complete authored facade phases by storey and horizontal
   slot, then retries the plainer phase only when the richer measured envelope conflicts with already
-  accepted construction. `SettlementFabricPlan.add_unit()` stages semantic occupancy and publishes
+  accepted construction. Before that choice it derives the minimum mandatory authored roof closure
+  from the sealed roof faces (exact flat plates or plain setback caps) and reserves those measured
+  AABBs against unrelated facade projections; a bay/laundry/sign phase may fall back, but cannot make
+  the later roof pass impossible. `SettlementFabricPlan.add_unit()` stages semantic occupancy and publishes
   it only after visual-envelope validation, so a rejected rich phase cannot leave ghost claims that
   poison that exact fallback transaction.
   Production then compiles the sealed spatial plan and rejects it unless inhabited/structural mass

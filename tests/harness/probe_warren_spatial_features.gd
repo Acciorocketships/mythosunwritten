@@ -4,9 +4,54 @@ extends SceneTree
 ## intentionally creates no render resources; it exposes whether a sealed seed
 ## has genuine two-ended bridge corridors and room-scale offset opportunities.
 
+const StampedGround = preload(
+	"res://tests/fixtures/warren_stamped_ground.gd")
+
 
 func _init() -> void:
 	var started_ms := Time.get_ticks_msec()
+	if "--excavation-terrain-only" in OS.get_cmdline_user_args():
+		var terrain_seed := 2
+		var terrain_seed_arg := OS.get_cmdline_user_args().find("--seed")
+		if terrain_seed_arg >= 0 \
+				and terrain_seed_arg + 1 < OS.get_cmdline_user_args().size():
+			terrain_seed = int(OS.get_cmdline_user_args()[terrain_seed_arg + 1])
+		var terrain_massif := WarrenMassifBuilder.build(terrain_seed,
+			StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 4,
+				terrain_seed))
+		var terrain_excavation := WarrenExcavationCarver.carve(terrain_seed,
+			terrain_massif)
+		print("TERRAIN_EXCAVATION seed=", terrain_seed, " relief=",
+			terrain_massif.relief_bands(), " failure=",
+			WarrenExcavationCarver.last_failure)
+		if terrain_excavation != null:
+			var route_bases := PackedInt32Array()
+			for cell: Vector3i in terrain_excavation.route:
+				route_bases.append(terrain_massif.base_at(
+					Vector2i(cell.x, cell.z)))
+			print("ROUTE span=", terrain_excavation.route_span_bands(),
+				" cells=", terrain_excavation.route.size(), " bases=",
+				route_bases, " route=", terrain_excavation.route)
+		quit(0 if terrain_excavation != null else 1)
+		return
+	if "--excavation-corpus-only" in OS.get_cmdline_user_args():
+		var corpus_start := 40
+		var corpus_count := 24
+		var accepted := 0
+		for terrain_seed in range(corpus_start, corpus_start + corpus_count):
+			var terrain_massif := WarrenMassifBuilder.build(terrain_seed,
+				StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 4,
+					terrain_seed))
+			var terrain_excavation := WarrenExcavationCarver.carve(terrain_seed,
+				terrain_massif)
+			accepted += int(terrain_excavation != null)
+			print("CORPUS seed=", terrain_seed, " accepted=",
+				terrain_excavation != null, " failure=",
+				WarrenExcavationCarver.last_failure, " diagnostic=",
+				WarrenExcavationCarver.last_diagnostic)
+		print("CORPUS_ACCEPTED=", accepted, "/", corpus_count)
+		quit()
+		return
 	WarrenVolumetricSolver.diagnostic_trace_skywalk_timing = \
 		"--timing" in OS.get_cmdline_user_args()
 	WarrenVolumetricSolver.diagnostic_trace_room_gate = \
@@ -14,6 +59,14 @@ func _init() -> void:
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
 	print("PROGRAM_MS=", Time.get_ticks_msec() - started_ms)
+	if "--recipe-bounds-only" in OS.get_cmdline_user_args():
+		for recipe: FabricRecipe in program.recipes():
+			if String(recipe.recipe_id).begins_with("room.") \
+					or String(recipe.recipe_id).begins_with("roof."):
+				print("RECIPE_BOUNDS ", recipe.recipe_id, " ",
+					recipe.local_clearance_bounds)
+		quit()
+		return
 	for recipe: FabricRecipe in program.recipes():
 		if recipe.has_tag(&"prefab_anchor"):
 			print("PREFAB_RECIPE ", recipe.recipe_id, " bounds=",
@@ -46,12 +99,24 @@ func _init() -> void:
 		source_generation_index, " source_rank=", source_rank,
 		" source_id=", source.stable_id if source != null else &"",
 		" source_score=", WarrenPublicRealmCarver.topology_score(source))
+	if frontier.is_empty():
+		print("FRONTIER_FAILURE ", WarrenTownSolver.last_failure)
 	if "--precomposition-rank-only" in OS.get_cmdline_user_args():
-		for ranked: Dictionary in WarrenVolumetricSolver \
-				._ranked_precomposition_variants(frontier, program):
+		var ranked_variants := WarrenVolumetricSolver \
+			._ranked_precomposition_variants(frontier, program)
+		for ranked: Dictionary in ranked_variants:
 			print("PRECOMPOSITION source=", ranked.volume.stable_id,
 				" variant=", ranked.variant, " score=", ranked.score,
 				" audit=", ranked.audit)
+		if ranked_variants.is_empty() and source != null:
+			for diagnostic_variant in WarrenSolidPartitioner.PARTITION_VARIANTS:
+				var diagnostic_parcels := WarrenTownSolver.partition_parcels(
+					source, diagnostic_variant, program)
+				print("PARTITION variant=", diagnostic_variant,
+					" parcels=", 0 if diagnostic_parcels == null \
+					else diagnostic_parcels.parcels.size(), " failure=",
+					WarrenTownSolver.last_partition_failure,
+					" partition_audit=", WarrenSolidPartitioner.last_diagnostic)
 		quit()
 		return
 	if "--frontier-only" in OS.get_cmdline_user_args():
@@ -84,8 +149,9 @@ func _init() -> void:
 		print("FAIL: ", WarrenVolumetricSolver.last_failure.left(1200))
 		print("COMPOSITION_AUDIT_ON_FAILURE: ",
 			WarrenRoomCompositionPlanner.last_audit)
-		print("COMPOSITION_MERGE_ON_FAILURE: ",
-			WarrenRoomCompositionPlanner.last_merge_diagnostic)
+		if "--verbose-failure" in OS.get_cmdline_user_args():
+			print("COMPOSITION_MERGE_ON_FAILURE: ",
+				WarrenRoomCompositionPlanner.last_merge_diagnostic)
 		print("PREPLAN_SELECTION: selected=",
 			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
 				"selected_count", -1), " candidates=",
@@ -127,12 +193,15 @@ func _init() -> void:
 		quit(1)
 		return
 	var composition_only := "--composition-only" in OS.get_cmdline_user_args()
-	if not composition_only:
+	var compiler_only := "--compiler-only" in OS.get_cmdline_user_args()
+	var verbose_failure := "--verbose-failure" in OS.get_cmdline_user_args()
+	if not composition_only and not compiler_only:
 		print("LANDMARK_DIAG: ",
 			WarrenVolumetricSolver.last_preplan_landmark_diagnostic)
 	print("COMPOSITION_AUDIT: ", WarrenRoomCompositionPlanner.last_audit)
-	print("COMPOSITION_MERGE_DIAG: ",
-		WarrenRoomCompositionPlanner.last_merge_diagnostic)
+	if verbose_failure:
+		print("COMPOSITION_MERGE_DIAG: ",
+			WarrenRoomCompositionPlanner.last_merge_diagnostic)
 	print("SPATIAL_RESIDUAL_AUDIT: buildings=",
 		plan.audit.get("residual_backfill_building_count", 0), " cells=",
 		plan.audit.get("residual_backfill_private_cell_count", 0),
@@ -141,7 +210,7 @@ func _init() -> void:
 		" new_frontage=",
 		plan.audit.get("residual_backfill_frontage_side_count", 0),
 		" kinds=", plan.audit.get("residual_backfill_kind_counts", {}))
-	if "--compiler-only" in OS.get_cmdline_user_args():
+	if compiler_only:
 		var compiled := WarrenSpatialFabricCompiler.solve(plan, program)
 		print("FABRIC_SEALED=", compiled != null,
 			" failure=", WarrenSpatialFabricCompiler.last_failure,
@@ -156,7 +225,7 @@ func _init() -> void:
 					" use=", plan.grid.use_at(landing),
 					" floor_face=", plan.grid.face_claim(landing,
 						Vector3i.DOWN))
-		if compiled == null:
+		if compiled == null and verbose_failure:
 			_print_support_handoffs(plan)
 			_print_feature_bindings(plan)
 		quit(0 if compiled != null else 1)

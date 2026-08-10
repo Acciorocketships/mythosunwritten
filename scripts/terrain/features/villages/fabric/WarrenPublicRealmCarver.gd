@@ -30,6 +30,14 @@ const MAX_STRAIGHT_RUN := 4
 ## volume applies it again after every derived public-realm branch.  One named
 ## authority prevents the upstream and downstream gates from silently drifting.
 const MIN_ADDRESSED_WALK_RATIO := 0.55
+## Complete route-relative inhabited addresses on both sides of the primary
+## terrain-level throat.  A straight node requires its opposing flanks, while a
+## right-angle turn requires the two remaining (adjacent) facade directions.
+## The mass-first excavation enforces this while choosing its bore; the common
+## volume gate repeats it after auxiliary market arcades have removed more mass.
+## This is deliberately stronger than head-height wall enclosure: the latter can
+## be a shallow massif lip that no complete building may occupy.
+const MIN_GROUND_PRIMARY_TWO_SIDED_ADDRESS_RATIO := 0.30
 # The entrance is a small piece of topology, not whatever the vertical search
 # happens to choose on its first few iterations. Two terrain-level moves make
 # an inward-right-angle throat. The first move stays on natural terrain; the
@@ -421,6 +429,9 @@ static func _passes_topology_gate(plan: WarrenVolumePlan) -> bool:
 		and int(plan.audit.max_transition_rise_bands) <= 1 \
 		and float(plan.audit.overhang_walk_ratio) >= 0.25 \
 		and float(plan.audit.addressed_walk_ratio) >= MIN_ADDRESSED_WALK_RATIO \
+		and float(plan.audit.get(
+			"ground_primary_two_sided_address_walk_ratio", 0.0)) \
+			>= MIN_GROUND_PRIMARY_TWO_SIDED_ADDRESS_RATIO \
 		and float(plan.audit.deep_vertical_shaft_ratio) <= 0.10 \
 		and int(plan.audit.same_datum_route_fold_count) == 0 \
 		and int(plan.audit.max_straight_run_cells) <= MAX_STRAIGHT_RUN

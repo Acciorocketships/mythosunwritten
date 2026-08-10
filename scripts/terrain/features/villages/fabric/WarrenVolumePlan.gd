@@ -525,7 +525,9 @@ func _build_audit() -> Dictionary:
 	var ground_primary_count := 0
 	var ground_primary_addressed_count := 0
 	var ground_primary_opposed_count := 0
-	for cell: Vector3i in primary_itinerary:
+	var ground_primary_two_sided_count := 0
+	for index in primary_itinerary.size():
+		var cell: Vector3i = primary_itinerary[index]
 		var column := Vector2i(cell.x, cell.z)
 		if cell.y != envelope.ground_at(column):
 			continue
@@ -533,6 +535,8 @@ func _build_audit() -> Dictionary:
 		var address_sides := _complete_address_side_count(cell)
 		ground_primary_addressed_count += int(address_sides >= 1)
 		ground_primary_opposed_count += int(_has_opposed_address_sides(cell))
+		ground_primary_two_sided_count += int(
+			_has_route_relative_address_sides(index))
 	var ground_arcade_upper_crossover_count := 0
 	for cell: Vector3i in ground_arcade_cells:
 		ground_arcade_upper_crossover_count += int(
@@ -585,6 +589,11 @@ func _build_audit() -> Dictionary:
 		"ground_primary_opposed_address_walk_ratio": 1.0 \
 			if ground_primary_count == 0 else \
 			float(ground_primary_opposed_count) / float(ground_primary_count),
+		"ground_primary_two_sided_address_walk_cell_count":
+			ground_primary_two_sided_count,
+		"ground_primary_two_sided_address_walk_ratio": 1.0 \
+			if ground_primary_count == 0 else \
+			float(ground_primary_two_sided_count) / float(ground_primary_count),
 		"elevated_gallery_walk_cell_count": elevated_gallery_cells.size(),
 		"elevated_courtyard_walk_cell_count": courtyard_cells.size(),
 	}
@@ -620,6 +629,51 @@ func _has_opposed_address_sides(cell: Vector3i) -> bool:
 		if complete_pair:
 			return true
 	return false
+
+
+func _has_route_relative_address_sides(index: int) -> bool:
+	var required := _route_side_directions(primary_itinerary, index)
+	if required.size() != 2:
+		return false
+	for direction: Vector2i in required:
+		if not _has_complete_address_in_direction(primary_itinerary[index],
+				direction):
+			return false
+	return true
+
+
+func _has_complete_address_in_direction(cell: Vector3i,
+		direction: Vector2i) -> bool:
+	for y in range(cell.y, cell.y + address_bands()):
+		if not mass_cells.has(Vector3i(cell.x + direction.x, y,
+				cell.z + direction.y)):
+			return false
+	return true
+
+
+static func _route_side_directions(nodes: Array[Vector3i], index: int) \
+		-> Array[Vector2i]:
+	## Streets are judged in their own frame. Straight nodes need the two
+	## perpendicular flanks; a right-angle node needs the two directions not
+	## occupied by its incoming and outgoing route; endpoints use their flanks.
+	var open_directions: Dictionary = {}
+	for neighbor_index: int in [index - 1, index + 1]:
+		if neighbor_index < 0 or neighbor_index >= nodes.size():
+			continue
+		var delta := nodes[neighbor_index] - nodes[index]
+		var direction := Vector2i(signi(delta.x), signi(delta.z))
+		if direction != Vector2i.ZERO:
+			open_directions[direction] = true
+	if open_directions.size() == 1:
+		var tangent: Vector2i = open_directions.keys()[0]
+		return [Vector2i(-tangent.y, tangent.x),
+			Vector2i(tangent.y, -tangent.x)] as Array[Vector2i]
+	var out: Array[Vector2i] = []
+	for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN,
+			Vector2i.LEFT, Vector2i.UP]:
+		if not open_directions.has(direction):
+			out.append(direction)
+	return out if out.size() == 2 else [] as Array[Vector2i]
 
 
 func _has_higher_public_walk_in_column(cell: Vector3i) -> bool:

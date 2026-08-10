@@ -743,12 +743,18 @@ static func massif_partition_asset_cache(
 	for parcel: WarrenBuildingParcel in parcels:
 		var proposal := WarrenParcelConstruction.proposal(parcel)
 		if proposal.is_empty():
-			return {&"enabled": false}
+			return {&"enabled": false,
+				&"failure": "parcel %s has no construction proposal" \
+				% parcel.stable_id}
 		proposals.append(proposal)
 	var topology := FabricRoofTopologyPlan.build(proposals)
-	if topology == null or not _assign_neighborhood_styles(proposals, topology,
-			world_seed, true):
-		return {&"enabled": false}
+	if topology == null:
+		return {&"enabled": false,
+			&"failure": "fixed partition has no roof topology"}
+	if not _assign_neighborhood_styles(proposals, topology, world_seed, true):
+		return {&"enabled": false,
+			&"failure": "fixed partition roof modules: %s" \
+			% FabricRoofJunctionModuleTable.last_failure}
 	for index in parcels.size():
 		cache[_parcel_cache_key(parcels[index])] = {
 			&"proposal": proposals[index],
@@ -825,6 +831,12 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 	## footprint and therefore cannot invalidate the town solve.
 	var junction_modules := FabricRoofJunctionModuleTable.build(proposals,
 		roof_topology)
+	if junction_modules.is_empty() and inhabited_massif \
+			and FabricRoofJunctionModuleTable.last_failure.begins_with(
+				"perpendicular valley"):
+		_flatten_crossing_gables(proposals, roof_topology)
+		junction_modules = FabricRoofJunctionModuleTable.build(proposals,
+			roof_topology)
 	if junction_modules.is_empty():
 		return false
 	var rules_by_id := junction_modules.rules_by_id as Dictionary
@@ -941,6 +953,27 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 				proposals[left_index]["flat_roof"] = true
 				proposals[right_index]["flat_roof"] = true
 	return true
+
+
+static func _flatten_crossing_gables(proposals: Array[Dictionary],
+		roof_topology: FabricRoofTopologyPlan) -> void:
+	## Finite mass-first fallback for crossing pitched roofs which the authored
+	## bisected-valley table cannot build. Only exact classified perpendicular
+	## contacts participate; unrelated pitched roofs keep their full vocabulary.
+	var by_id: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		by_id[StringName(proposal.stable_id)] = proposal
+	for owner_value: Variant in by_id.keys():
+		var owner_id := StringName(owner_value)
+		for seam: Dictionary in roof_topology.fact(owner_id).junctions as Array:
+			if int(seam.kind) \
+					!= FabricRoofTopologyPlan.JunctionKind.PERPENDICULAR_VALLEY:
+				continue
+			var neighbor_id := StringName(seam.neighbor_id)
+			if not by_id.has(neighbor_id):
+				continue
+			(by_id[owner_id] as Dictionary)["flat_roof"] = true
+			(by_id[neighbor_id] as Dictionary)["flat_roof"] = true
 
 
 static func _select_facade_family(proposal: Dictionary,

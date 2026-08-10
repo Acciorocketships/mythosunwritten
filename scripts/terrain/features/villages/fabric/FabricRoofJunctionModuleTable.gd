@@ -82,6 +82,14 @@ static func build(proposals: Array[Dictionary],
 				continue
 			if not by_id.has(neighbor_id):
 				return _reject("roof junction names a missing neighbor")
+			# A mass-first crossing-gable conflict may be resolved atomically by
+			# flattening both complete roof proposals before this table is rebuilt.
+			# Flat caps have no pitched junction module; their own reviewed recipes
+			# cover the complete footprint and meet at the parcel boundary.
+			if bool((by_id[owner_id] as Dictionary).get("flat_roof", false)) \
+					or bool((by_id[neighbor_id] as Dictionary).get(
+						"flat_roof", false)):
+				continue
 			var reverse := _reverse_seam(roof_topology, neighbor_id, owner_id)
 			if reverse.is_empty():
 				return _reject("roof junction lacks a reciprocal signature")

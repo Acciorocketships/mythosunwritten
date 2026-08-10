@@ -390,12 +390,16 @@ static func mass_first_frontier(world_seed: int,
 	var carved := 0
 	var adapted := 0
 	var gated := 0
+	var excavation_failure := ""
 	var arcade_failure := ""
 	var frontage_failures := PackedStringArray()
 	for attempt in MASS_FIRST_EXCAVATION_ATTEMPTS:
 		var excavation := WarrenExcavationCarver.carve(
 			world_seed + attempt * MASS_FIRST_ATTEMPT_STRIDE, massif)
 		if excavation == null:
+			excavation_failure = "%s diagnostic=%s" % [
+				WarrenExcavationCarver.last_failure,
+				WarrenExcavationCarver.last_diagnostic]
 			continue
 		carved += 1
 		var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
@@ -438,6 +442,11 @@ static func mass_first_frontier(world_seed: int,
 			# other.
 			gallery_variant.mass_context = mass_context
 			gallery_variant.frontage_cells = frontage_cells
+			# Arcades and gallery variants remove additional mass after the first
+			# topology gate. Recheck the common contract so a branch cannot consume
+			# one of the opposing ground facades the inward bore was selected for.
+			if not WarrenPublicRealmCarver.passes_topology_gate(gallery_variant):
+				continue
 			out.append(gallery_variant)
 	if out.is_empty():
 		# Naming the stage that ate the corpus is the whole diagnostic value
@@ -453,7 +462,9 @@ static func mass_first_frontier(world_seed: int,
 			"; elevated frontage: %s" % " | ".join(frontage_failures) \
 				if not frontage_failures.is_empty() \
 				else "; ground arcade: %s" % arcade_failure \
-				if not arcade_failure.is_empty() else ""]
+				if not arcade_failure.is_empty() \
+				else "; excavation: %s" % excavation_failure \
+				if not excavation_failure.is_empty() else ""]
 	return out
 
 
@@ -496,6 +507,8 @@ static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
 			volume, true):
 		candidate.mass_context = mass_context
 		candidate.frontage_cells = frontage_cells
+		if not WarrenPublicRealmCarver.passes_topology_gate(candidate):
+			continue
 		out.append(candidate)
 	if out.is_empty():
 		last_failure = WarrenElevatedFrontageSolver.last_failure
@@ -738,7 +751,8 @@ static func partition_parcels(volume: WarrenVolumePlan,
 		var asset_cache := WarrenAssetCompiler.massif_partition_asset_cache(
 			houses, volume.world_seed, construction_program)
 		if not bool(asset_cache.get(&"enabled", false)):
-			last_partition_failure = "could not classify fixed-partition assets"
+			last_partition_failure = "could not classify fixed-partition assets: %s" \
+				% String(asset_cache.get(&"failure", "unknown failure"))
 			return null
 		var connection_pair := Callable(WarrenAssetCompiler,
 			"skywalk_reservation").bind(construction_program,

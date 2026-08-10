@@ -975,9 +975,22 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		last_failure = "3D room composition failed: %s" \
 			% WarrenRoomCompositionPlanner.last_failure
 		return {}
+	var composed_court_side_mask := _composition_courtyard_side_mask(
+		court_floors, composition, courtyard_bridge_candidate.body as Dictionary)
+	var composed_court_side_count := _side_mask_count(composed_court_side_mask)
+	if composed_court_side_count \
+			< WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT:
+		last_failure = ("3D room composition preserves only %d courtyard " \
+			+ "sides (mask=%d)") % [composed_court_side_count,
+				composed_court_side_mask]
+		return {}
 	var composition_audit := composition.audit as Dictionary
 	composition_audit["court_displaced_parcel_count"] = \
 		court_displaced_parcels.size()
+	composition_audit["composed_courtyard_side_mask"] = \
+		composed_court_side_mask
+	composition_audit["composed_courtyard_side_count"] = \
+		composed_court_side_count
 	var lineages := composition.lineages as Dictionary
 	var building_id_by_block_key: Dictionary = {}
 	for proposal: Dictionary in proposals:
@@ -2553,6 +2566,17 @@ static func _court_candidate_preserves_exact_room_envelopes(
 		market, trial_owners, forced_offsets_by_parcel,
 		skywalk_reservations, volume.world_seed)
 	if composition.is_empty():
+		return false
+	var court_floors := _courtyard_floor_cells(volume)
+	var court_side_mask := _composition_courtyard_side_mask(court_floors,
+		composition, court_candidate.body as Dictionary)
+	var court_side_count := _side_mask_count(court_side_mask)
+	if court_side_count < WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT:
+		last_preplan_market_diagnostic[
+			"last_exact_court_composition_failure"] = {
+				"side_count": court_side_count,
+				"side_mask": court_side_mask,
+			}
 		return false
 	var reservation := court_candidate.reservation as Dictionary
 	var related_parcels := _skywalk_endpoint_owner_set(reservation)
@@ -4628,6 +4652,29 @@ static func _proposal_courtyard_side_mask(volume: WarrenVolumePlan,
 		_courtyard_floor_cells(volume), occupied)
 
 
+static func _composition_courtyard_side_mask(court_floors: Dictionary,
+		composition: Dictionary, extra_occupied: Dictionary = {}) -> int:
+	## Court walls are an output property of the final 3D room tiling. Source
+	## proposals do not count: a parcel whose exact block cannot survive a market,
+	## landmark, or skywalk reservation must not leave behind a fictional facade.
+	var occupied := extra_occupied.duplicate()
+	for lineage_value: Variant in (composition.get("lineages", {}) \
+			as Dictionary).values():
+		var lineage := lineage_value as Dictionary
+		for block_value: Variant in (lineage.get("blocks", []) as Array):
+			var block := block_value as Dictionary
+			for cell: Vector3i in block.get("cells", []) as Array[Vector3i]:
+				occupied[cell] = true
+	return _courtyard_address_side_mask_from_occupied(court_floors, occupied)
+
+
+static func _side_mask_count(side_mask: int) -> int:
+	var count := 0
+	for bit in 4:
+		count += int((side_mask & (1 << bit)) != 0)
+	return count
+
+
 static func _proposal_private_cells(proposal: Dictionary) -> Array[Vector3i]:
 	if proposal.is_empty():
 		return [] as Array[Vector3i]
@@ -4789,6 +4836,19 @@ static func _composition_offsets(grid: WarrenSpatialGrid,
 				protected_owners, parcel_id):
 			chosen = Vector2i.ZERO
 		if chosen.x == 2147483647:
+			# A collision in an optional crown must not erase the valid terrain
+			# root, doorway, court wall, or bridge endpoint below it. End the
+			# lineage at the last complete two-storey band when no later exact
+			# interface depends on the missing mass. This is a real shorter house,
+			# and gives the mountain another stepped roof break; it is not a partial
+			# or unsupported room stamp.
+			var later_forced := false
+			for forced_block_value: Variant in forced_offsets.keys():
+				if int(forced_block_value) >= block:
+					later_forced = true
+					break
+			if not out.is_empty() and not later_forced:
+				return out
 			return [] as Array[Vector2i]
 		out.append(chosen)
 	return out
@@ -4835,7 +4895,8 @@ static func _segment_cells(base_plate: Dictionary, origin_y: int,
 		offsets: Array[Vector2i], start_storey: int,
 		end_storey: int) -> Array[Vector3i]:
 	var out: Array[Vector3i] = []
-	for storey in range(start_storey, end_storey):
+	var complete_end_storey := mini(end_storey, offsets.size() * 2)
+	for storey in range(start_storey, complete_end_storey):
 		var offset := offsets[storey / 2]
 		for column_value: Variant in base_plate.keys():
 			var column := column_value as Vector2i
@@ -5079,19 +5140,22 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 						return {}
 			candidate_roof_clearance[roof_cell] = true
 	var threshold_candidates: Array[Dictionary] = []
-	for cell: Vector3i in cells:
-		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-				Vector3i.FORWARD, Vector3i.BACK]:
-			var landing := cell + direction
-			if grid.use_at(landing) != WarrenSpatialGrid.Use.PUBLIC_AIR:
-				continue
-			var floor_claim := grid.face_claim(landing, Vector3i.DOWN)
-			if not floor_claim.is_empty() and int(floor_claim.get("kind", -1)) \
-					== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
-				threshold_candidates.append({"cell": cell,
-					"direction": direction,
-					"key": "%d:%d:%d/%d:%d" % [cell.x, cell.y, cell.z,
-						direction.x, direction.z]})
+	# An adjacent street cell is not automatically a door. Use the same exact
+	# authored local threshold as the final facade compiler so dense infill can
+	# never claim a doorway that its selected room shell cannot render.
+	var authored_threshold := _residual_authored_threshold(kind, origin, yaw)
+	var authored_frontage := FabricRecipe.transform_direction(
+		Vector3i.BACK, yaw)
+	var authored_landing := authored_threshold + authored_frontage
+	if grid.use_at(authored_landing) == WarrenSpatialGrid.Use.PUBLIC_AIR:
+		var floor_claim := grid.face_claim(authored_landing, Vector3i.DOWN)
+		if not floor_claim.is_empty() and int(floor_claim.get("kind", -1)) \
+				== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+			threshold_candidates.append({"cell": authored_threshold,
+				"direction": authored_frontage,
+				"key": "%d:%d:%d/%d:%d" % [authored_threshold.x,
+					authored_threshold.y, authored_threshold.z,
+					authored_frontage.x, authored_frontage.z]})
 	threshold_candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.key) < String(b.key))
 	var addressed := not threshold_candidates.is_empty()
@@ -5180,6 +5244,23 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		"score": score,
 		"key": "%s/%d:%d:%d/r%d" % [String(kind), origin.x, origin.y,
 			origin.z, yaw]}
+
+
+static func _residual_authored_threshold(kind: StringName, origin: Vector3i,
+		yaw: int) -> Vector3i:
+	var local := Vector3i.ZERO
+	match kind:
+		&"tower":
+			local = Vector3i(0, 0, 0)
+		&"slim":
+			local = Vector3i(0, 0, 1)
+		&"building":
+			local = Vector3i(-1, 0, 1)
+		&"long":
+			local = Vector3i(-1, 0, 2)
+		_:
+			return Vector3i(2147483647, 2147483647, 2147483647)
+	return FabricRecipe.transform_cell(local, origin, yaw)
 
 
 static func _largest_contact_owner(counts: Dictionary) -> StringName:

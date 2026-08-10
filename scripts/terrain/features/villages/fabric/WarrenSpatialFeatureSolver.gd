@@ -730,6 +730,8 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				allowed_owner_ids_by_source[room.source_parcel_id] = {}
 			(allowed_owner_ids_by_source[room.source_parcel_id] \
 				as Dictionary)[building.stable_id] = true
+	var room_clearance_bounds_by_source := \
+		_room_clearance_bounds_by_source(buildings, program, world_seed)
 	var recipe_ids: Array[StringName] = [
 		&"balcony.bracketed.left.blue",
 		&"balcony.bracketed.right.orange",
@@ -761,6 +763,9 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 			var socket_world := endpoint_cell + facing
 			var origin := socket_world - FabricRecipe.transform_cell(
 				socket.cell as Vector3i, Vector3i.ZERO, yaw)
+			if _feature_bounds_overlap_unrelated_room(recipe, origin, yaw,
+					room.source_parcel_id, room_clearance_bounds_by_source):
+				continue
 			var body := _feature_recipe_cells(recipe, origin, yaw)
 			if body.is_empty() or not WarrenVolumetricSolver \
 					._skywalk_body_fits_grid(grid, body):
@@ -952,6 +957,50 @@ static func _feature_recipe_cells(recipe: FabricRecipe, origin: Vector3i,
 		for local_cell: Vector3i in cells:
 			out[FabricRecipe.transform_cell(local_cell, origin, yaw_quarters)] = true
 	return out
+
+
+static func _room_clearance_bounds_by_source(
+		buildings: Array[WarrenBuildingVolume], program: SettlementFabricProgram,
+		world_seed: int) -> Dictionary:
+	## Feature raster clearance and authored visual clearance answer different
+	## questions. Cache both possible facade phases for every final room so a
+	## balcony cannot fit between lattice cells while clipping a neighbour's
+	## eaves, ivy, sign, or other measured projection.
+	var out: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not out.has(room.source_parcel_id):
+				out[room.source_parcel_id] = [] as Array[AABB]
+			var seen_recipes: Dictionary = {}
+			for allow_phase_b in [true, false]:
+				var recipe_id := WarrenSpatialFabricCompiler._room_recipe_id(
+					room, world_seed, allow_phase_b)
+				if seen_recipes.has(recipe_id):
+					continue
+				seen_recipes[recipe_id] = true
+				var recipe := program.recipe(recipe_id)
+				if recipe == null:
+					continue
+				(out[room.source_parcel_id] as Array[AABB]).append(
+					FabricRecipe.lattice_transform(room.lattice_origin,
+						room.yaw_quarters) * recipe.local_clearance_bounds)
+	return out
+
+
+static func _feature_bounds_overlap_unrelated_room(recipe: FabricRecipe,
+		origin: Vector3i, yaw_quarters: int, related_source_id: StringName,
+		room_bounds_by_source: Dictionary) -> bool:
+	var feature_bounds := FabricRecipe.lattice_transform(origin, yaw_quarters) \
+		* recipe.local_clearance_bounds
+	for source_value: Variant in room_bounds_by_source.keys():
+		if StringName(source_value) == related_source_id:
+			continue
+		for room_bounds: AABB in (room_bounds_by_source[source_value] \
+				as Array[AABB]):
+			if SettlementFabricPlan._aabb_overlaps_volume(feature_bounds,
+					room_bounds):
+				return true
+	return false
 
 
 static func _balcony_clearance_audit(grid: WarrenSpatialGrid,

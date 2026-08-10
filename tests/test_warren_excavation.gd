@@ -150,6 +150,29 @@ func _full_height_walls(massif: WarrenMassif, excavation: WarrenExcavation,
 	return walls
 
 
+func test_route_relative_address_sides_follow_straights_and_bends() -> void:
+	var straight: Array[Vector3i] = [
+		Vector3i(-1, 0, 0), Vector3i.ZERO, Vector3i(1, 0, 0)]
+	var straight_sides := WarrenExcavationCarver._route_side_directions(
+		straight, 1)
+	assert_eq(straight_sides.size(), 2)
+	assert_has(straight_sides, Vector2i.UP)
+	assert_has(straight_sides, Vector2i.DOWN)
+
+	var bend: Array[Vector3i] = [
+		Vector3i(-1, 0, 0), Vector3i.ZERO, Vector3i(0, 0, 1)]
+	var bend_sides := WarrenExcavationCarver._route_side_directions(bend, 1)
+	assert_eq(bend_sides.size(), 2)
+	assert_has(bend_sides, Vector2i.RIGHT)
+	assert_has(bend_sides, Vector2i.UP)
+
+	var endpoint_sides := WarrenExcavationCarver._route_side_directions(
+		bend, 0)
+	assert_eq(endpoint_sides.size(), 2)
+	assert_has(endpoint_sides, Vector2i.UP)
+	assert_has(endpoint_sides, Vector2i.DOWN)
+
+
 func test_probe_seeds_carve_climbing_covered_routes() -> void:
 	var accepted := 0
 	for world_seed: int in PROBE_SEEDS:
@@ -165,13 +188,24 @@ func test_probe_seeds_carve_climbing_covered_routes() -> void:
 		assert_gte(excavation.route_span_bands(),
 			WarrenExcavationCarver.MIN_SPAN_BANDS,
 			"the route must genuinely climb (seed %d)" % world_seed)
-		assert_gt(excavation.route_span_bands(),
-			WarrenMassif.BUILDABLE_LAYER_BANDS - WarrenExcavation.HEADROOM_BANDS,
-			("seed %d climbed %d bands, which the buildable layer's own "
-			+ "freedom supplies on level ground -- the route must ride the "
-			+ "hill, not just the crust") % [world_seed,
-				excavation.route_span_bands()])
-		assert_between(excavation.covered_ratio(), 0.55, 0.70,
+		# The inhabited Gaussian mass is now the town mountain; demanding that
+		# every route exceed the complete buildable-layer freedom encoded the
+		# retired terrain-as-mountain architecture and is incompatible with the
+		# nine-cell ground throat. Test terrain participation directly instead:
+		# on this stamped relief fixture, the route must cross a real ground
+		# riser as well as satisfying the independent eight-band city climb.
+		var massif := WarrenMassifBuilder.build(world_seed, _hill(world_seed))
+		var lowest_route_ground := 2147483647
+		var highest_route_ground := -2147483648
+		for cell: Vector3i in excavation.route:
+			var ground := massif.base_at(Vector2i(cell.x, cell.z))
+			lowest_route_ground = mini(lowest_route_ground, ground)
+			highest_route_ground = maxi(highest_route_ground, ground)
+		assert_gt(highest_route_ground - lowest_route_ground, 0,
+			"the route must cross real terrain relief (seed %d)" % world_seed)
+		assert_between(excavation.covered_ratio(),
+			WarrenExcavationCarver.MIN_COVERED_RATIO,
+			WarrenExcavationCarver.MAX_COVERED_RATIO,
 			"most of the route tunnels under mass (seed %d)" % world_seed)
 		assert_between(excavation.portals.size(), 1, 2,
 			"portals (seed %d)" % world_seed)
@@ -750,7 +784,9 @@ func test_lanes_leave_every_gate_the_route_answers_to_intact() -> void:
 		assert_gte(float(walled) / float(excavation.route.size()),
 			WarrenExcavationCarver.MIN_WALL_RATIO,
 			"lanes opened the route's canyon walls (seed %d)" % world_seed)
-		assert_between(excavation.covered_ratio(), 0.55, 0.70,
+		assert_between(excavation.covered_ratio(),
+			WarrenExcavationCarver.MIN_COVERED_RATIO,
+			WarrenExcavationCarver.MAX_COVERED_RATIO,
 			"lanes changed what stands over the route (seed %d)" % world_seed)
 		assert_between(excavation.portals.size(), 1, 2,
 			"lanes changed the route's portal count (seed %d)" % world_seed)

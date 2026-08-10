@@ -88,7 +88,11 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		for block_index in blocks.size():
 			if bool((blocks[block_index] as Dictionary).forced):
 				required_through = block_index
-		input_storeys += int(proposal.storeys)
+		# The exact-offset solve may terminate an optional upper crown instead
+		# of discarding a valid lower building when a hero feature occupies that
+		# residual mass. Count only the complete bands that actually enter this
+		# three-dimensional room grammar.
+		input_storeys += mini(int(proposal.storeys), offsets.size() * 2)
 		lineages[parcel.stable_id] = {
 			"proposal": proposal,
 			"blocks": blocks,

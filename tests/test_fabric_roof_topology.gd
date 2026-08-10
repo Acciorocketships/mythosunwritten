@@ -57,6 +57,24 @@ func test_perpendicular_valley_rejects_roofs_without_an_atomic_vocabulary() -> v
 		"perpendicular valley")
 
 
+func test_flat_caps_resolve_a_mass_first_crossing_gable_without_fake_seams() \
+		-> void:
+	var proposals: Array[Dictionary] = [
+		_tower(&"left", Vector3i.ZERO, 0, 2),
+		_tower(&"right", Vector3i(2, 0, 0), 1, 2),
+	]
+	var topology := FabricRoofTopologyPlan.build(proposals)
+	assert_not_null(topology)
+	proposals[0]["flat_roof"] = true
+	proposals[1]["flat_roof"] = true
+	var construction := FabricRoofJunctionModuleTable.build(proposals, topology)
+	assert_false(construction.is_empty(),
+		FabricRoofJunctionModuleTable.last_failure)
+	assert_eq((construction.rules_by_id[&"left"] as Array).size(), 0)
+	assert_eq((construction.rules_by_id[&"right"] as Array).size(), 0,
+		"complete flat caps meet at the boundary without pitched-valley modules")
+
+
 func test_complete_perpendicular_valley_selects_host_and_branch_recipes() -> void:
 	var proposals: Array[Dictionary] = [
 		_proposal(&"host", &"building", Vector3i.ZERO, 0, 2),

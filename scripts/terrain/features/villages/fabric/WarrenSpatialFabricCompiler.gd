@@ -128,6 +128,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		return String(a.stable_id) < String(b.stable_id))
 	var room_by_source_level: Dictionary = {}
 	var room_by_private_cell: Dictionary = {}
+	var room_id_by_private_cell: Dictionary = {}
 	for room: WarrenRoomStamp in rooms:
 		var key := _source_level_key(room.source_parcel_id,
 			room.source_storey_index)
@@ -137,6 +138,14 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		room_by_source_level[key] = room
 		for cell: Vector3i in room.private_cells:
 			room_by_private_cell[cell] = room
+			room_id_by_private_cell[cell] = room.stable_id
+	# Roof faces are already authoritative plan facts at this point. Reserve the
+	# smallest measured construction that can close each face (flat full plate or
+	# plain setback cap) before choosing optional phase-B facade projections.
+	# Without this ordering a bay/laundry/sign detail can be legal against every
+	# room, then make an unrelated roof impossible several compiler phases later.
+	var required_roof_clearance := _required_roof_clearance(source, program,
+		rooms, room_id_by_private_cell)
 	var feature_portal_masks := _feature_portal_masks(source, room_by_id)
 	if not last_failure.is_empty():
 		return [] as Array[FabricUnit]
@@ -150,6 +159,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var selected_phase_b_count := 0
 	var facade_phase_fallback_count := 0
 	var hero_feature_facade_fallback_count := 0
+	var roof_clearance_facade_fallback_count := 0
 	var physical_support_redirect_count := 0
 	var room_probe := SettlementFabricPlan.new(&"spatial.room-phase-selection")
 	for recipe_value: FabricRecipe in program.recipes():
@@ -206,9 +216,14 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 		var feature_conflict := _room_feature_envelope_conflict(source,
 			program, room, recipe)
+		var roof_conflict := _room_required_roof_conflict(room, recipe,
+			required_roof_clearance)
 		var desired_rejection := "visual envelope intersects unrelated feature %s" \
-			% feature_conflict if not feature_conflict.is_empty() else ""
+			% feature_conflict if not feature_conflict.is_empty() \
+			else "visual envelope intersects required roof %s" % roof_conflict \
+			if not roof_conflict.is_empty() else ""
 		var desired_added := feature_conflict.is_empty() \
+			and roof_conflict.is_empty() \
 			and room_probe.add_unit(unit)
 		if not desired_added:
 			if desired_rejection.is_empty():
@@ -230,16 +245,26 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				room.lattice_origin, room.yaw_quarters, parents, bonds, &"", seams)
 			var fallback_conflict := _room_feature_envelope_conflict(source,
 				program, room, fallback_recipe)
+			var fallback_roof_conflict := _room_required_roof_conflict(room,
+				fallback_recipe, required_roof_clearance)
 			if not unit.is_valid() or not fallback_conflict.is_empty() \
+					or not fallback_roof_conflict.is_empty() \
 					or not room_probe.add_unit(unit):
-				last_failure = "room %s fallback failed measured phase selection: %s" \
-					% [room.stable_id, "visual envelope intersects unrelated feature %s" \
+				var fallback_rejection := \
+					"visual envelope intersects unrelated feature %s" \
 						% fallback_conflict if not fallback_conflict.is_empty() \
-						else room_probe.last_rejection]
+					else "visual envelope intersects required roof %s" \
+						% fallback_roof_conflict \
+						if not fallback_roof_conflict.is_empty() \
+					else room_probe.last_rejection
+				last_failure = "room %s fallback failed measured phase selection: %s" \
+					% [room.stable_id, fallback_rejection]
 				return [] as Array[FabricUnit]
 			facade_phase_fallback_count += 1
 			hero_feature_facade_fallback_count += int(
 				not feature_conflict.is_empty())
+			roof_clearance_facade_fallback_count += int(
+				not roof_conflict.is_empty())
 		selected_phase_b_count += int(_is_phase_b_recipe(unit.recipe_id))
 		units.append(unit)
 		unit_by_room[room.stable_id] = unit
@@ -252,11 +277,108 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		"facade_phase_a_count": units.size() - selected_phase_b_count,
 		"hero_feature_facade_fallback_count": \
 			hero_feature_facade_fallback_count,
+		"roof_clearance_facade_fallback_count": \
+			roof_clearance_facade_fallback_count,
+		"required_roof_clearance_envelope_count": \
+			required_roof_clearance.size(),
 		"physical_support_redirect_count": physical_support_redirect_count,
 		"feature_portal_room_count": feature_portal_masks.size(),
 		"feature_portal_opening_count": feature_portal_opening_count,
 	}
 	return units
+
+
+static func _required_roof_clearance(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, rooms: Array[WarrenRoomStamp],
+		room_id_by_private_cell: Dictionary) -> Array[Dictionary]:
+	## Compile a lower bound on the measured roof construction that the sealed
+	## face plan must eventually receive. Full exposed plates can always fall back
+	## to their exact flat recipe; partial plates can always fall back from a
+	## railed terrace to the equivalent plain native cap. These envelopes are not
+	## speculative pitched-roof halos: they are the smallest authored closure the
+	## final compiler is required to place.
+	var out: Array[Dictionary] = []
+	var roof_faces_by_room := _roof_faces_by_room(source,
+		room_id_by_private_cell)
+	for room: WarrenRoomStamp in rooms:
+		if not roof_faces_by_room.has(room.stable_id):
+			continue
+		var face_cells := roof_faces_by_room[room.stable_id] \
+			as Array[Vector3i]
+		var allowed_room_ids: Dictionary = {room.stable_id: true}
+		for cell: Vector3i in room.private_cells:
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+					Vector3i.BACK]:
+				var neighbor_id := StringName(room_id_by_private_cell.get(
+					cell + direction, &""))
+				if neighbor_id.is_empty() or neighbor_id == room.stable_id:
+					continue
+				var claim := source.grid.face_claim(cell, direction)
+				if int(claim.get("kind", -1)) \
+						== WarrenSpatialGrid.FaceKind.PARTY_WALL:
+					allowed_room_ids[neighbor_id] = true
+		if _is_full_roof_plate(room, face_cells) \
+				and not _touches_public_air(source.grid, face_cells):
+			var flat_id := _flat_roof_recipe_id(room)
+			var flat_recipe := program.recipe(flat_id)
+			if flat_recipe != null:
+				var flat_transform := FabricRecipe.lattice_transform(
+					room.lattice_origin + Vector3i.UP \
+						* WarrenSpatialGrid.STOREY_CELLS,
+					room.yaw_quarters)
+				out.append({"owner_room_id": room.stable_id,
+					"recipe_id": flat_id,
+					"bounds": flat_transform \
+						* flat_recipe.local_clearance_bounds,
+					"allowed_room_ids": allowed_room_ids})
+			continue
+		for row_value: Variant in _cap_rows(face_cells):
+			var row := row_value as Array[Vector3i]
+			var cap := _cap_placement(source.grid, row, room,
+				source.world_seed)
+			if cap.is_empty():
+				continue
+			var plain_cap_id := StringName("roof.setback.cap.%d" % row.size())
+			var cap_recipe := program.recipe(plain_cap_id)
+			if cap_recipe == null:
+				continue
+			var cap_transform := FabricRecipe.lattice_transform(
+				cap.origin as Vector3i, int(cap.yaw_quarters))
+			out.append({"owner_room_id": room.stable_id,
+				"recipe_id": plain_cap_id,
+				"bounds": cap_transform * cap_recipe.local_clearance_bounds,
+				"allowed_room_ids": allowed_room_ids})
+	return out
+
+
+static func _room_required_roof_conflict(room: WarrenRoomStamp,
+		recipe: FabricRecipe, required_roof_clearance: Array[Dictionary]) \
+		-> StringName:
+	if room == null or recipe == null or recipe.placements.is_empty():
+		return &""
+	var room_bounds := FabricRecipe.lattice_transform(room.lattice_origin,
+		room.yaw_quarters) * recipe.local_clearance_bounds
+	for roof: Dictionary in required_roof_clearance:
+		if (roof.allowed_room_ids as Dictionary).has(room.stable_id):
+			continue
+		if _aabb_overlaps_volume(room_bounds, roof.bounds as AABB):
+			return StringName("%s/%s" % [roof.owner_room_id,
+				roof.recipe_id])
+	return &""
+
+
+static func _aabb_overlaps_volume(left: AABB, right: AABB,
+		epsilon: float = 0.10) -> bool:
+	# Keep this identical to SettlementFabricPlan's measured-envelope policy.
+	# This is an early ordering gate, not a looser second definition of contact.
+	var overlap_x := minf(left.end.x, right.end.x) \
+		- maxf(left.position.x, right.position.x)
+	var overlap_y := minf(left.end.y, right.end.y) \
+		- maxf(left.position.y, right.position.y)
+	var overlap_z := minf(left.end.z, right.end.z) \
+		- maxf(left.position.z, right.position.z)
+	return overlap_x > epsilon and overlap_y > epsilon and overlap_z > epsilon
 
 
 static func _feature_portal_masks(source: WarrenSpatialPlan,

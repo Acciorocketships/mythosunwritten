@@ -23,6 +23,9 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_eq(int(plan.audit.unclassified_public_private_face_count), 0)
 	assert_eq(int(plan.audit.missing_roof_face_count), 0)
 	assert_eq(int(plan.audit.elevated_courtyard_count), 1)
+	assert_gte(int(plan.audit.composed_courtyard_side_count),
+		WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT,
+		"the final 3D room composition must preserve the promised court walls")
 	assert_eq(int(plan.audit.covered_market_count), 1)
 	assert_eq(int(plan.audit.prefab_landmark_count),
 		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
@@ -38,6 +41,12 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		WarrenSpatialFeatureSolver.MIN_BALCONY_BUILDINGS)
 	assert_gte(int(plan.audit.room_outcropping_count),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
+	assert_gte(float(plan.audit.overhead_route_ratio),
+		WarrenVolumetricSolver.MIN_PRODUCTION_OVERHEAD_ROUTE_RATIO)
+	assert_lte(int(plan.audit.through_sightline_count),
+		WarrenVolumetricSolver.MAX_PRODUCTION_THROUGH_SIGHTLINES)
+	assert_lte(int(plan.audit.ground_through_sightline_count),
+		WarrenVolumetricSolver.MAX_PRODUCTION_GROUND_THROUGH_SIGHTLINES)
 	assert_gte(int(plan.audit.merged_upper_composition_count), 4,
 		"at least one upper plate must cross original parcel lineages")
 	assert_gte(int(plan.audit.coupled_upper_composition_count), 6,
