@@ -151,6 +151,27 @@ func reservation_owned_by(cell: Vector3i, bit: int,
 	return true
 
 
+func reservation_owner_names_at(cell: Vector3i, bit: int) \
+		-> Array[StringName]:
+	## Read-only diagnostic/proof seam for consumers reconciling an exact
+	## measured envelope with the conservative fine-cell reservation. Callers may
+	## inspect ownership; they still cannot mutate or bypass the grid transaction.
+	var out: Array[StringName] = []
+	var index := index_for(cell)
+	if index < 0 or bit <= 0 or (reservation_bits_at(cell) & bit) != bit:
+		return out
+	for one_bit: int in _individual_bits(bit):
+		var owners := _reservation_owners.get(
+			_reservation_key(index, one_bit), {}) as Dictionary
+		for owner_index_value: Variant in owners.keys():
+			var owner_index := int(owner_index_value)
+			if owner_index >= 0 and owner_index < _owner_names.size():
+				out.append(_owner_names[owner_index])
+	out.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	return out
+
+
 func face_claim(cell: Vector3i, direction: Vector3i) -> Dictionary:
 	var key := _face_key(cell, direction)
 	return (_face_claims.get(key, {}) as Dictionary).duplicate(true)

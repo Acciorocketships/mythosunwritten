@@ -121,7 +121,8 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 			and endpoint_owners.size() < 2:
 		return _reject("skywalk lacks two distinct endpoint owners")
 	if kind in [&"enclosed_skywalk", &"covered_market", &"balcony",
-			&"tower_annex", &"prefab_landmark"] \
+			&"tower_annex", &"prefab_landmark",
+			&"courtyard_bridge_house"] \
 			and construction_records.is_empty():
 		return _reject("constructed feature has no exact asset record")
 	if kind == &"covered_market":
@@ -140,6 +141,9 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 	if kind == &"tower_annex" and (endpoints.size() != 1 \
 			or endpoint_owners.size() != 1 or construction_records.size() != 1):
 		return _reject("tower annex lacks one private endpoint or exact recipe")
+	if kind == &"courtyard_bridge_house" and (endpoints.size() != 1 \
+			or endpoint_owners.size() != 1 or construction_records.size() != 2):
+		return _reject("courtyard bridge house lacks one room endpoint or two-piece recipe")
 	if kind == &"room_outcropping" and endpoint_owners.size() != 1:
 		return _reject("room outcropping lacks one parent building")
 	if kind == &"prefab_landmark":

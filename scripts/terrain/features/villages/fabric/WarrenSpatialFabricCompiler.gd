@@ -196,8 +196,8 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				return [] as Array[FabricUnit]
 			parents.append(parent_unit.stable_id)
 			bonds.append(bearing)
-		var seams := _prior_party_wall_units(source.grid, room,
-			prior_unit_by_cell, building_by_room)
+		var seams := _prior_visual_seam_units(source.grid, room,
+			prior_unit_by_cell, building_by_room, room_probe, recipe)
 		var unit := FabricUnit.new(StringName("spatial.fabric.%s" % room.stable_id),
 			recipe_id, room.lattice_origin, room.yaw_quarters, parents, bonds,
 			&"", seams)
@@ -276,6 +276,20 @@ static func _feature_portal_masks(source: WarrenSpatialPlan,
 					feature.stable_id
 				return {}
 			var facing := feature.audit.get("balcony_endpoint_facing",
+				Vector3i.ZERO) as Vector3i
+			if not _record_feature_portal(out, room_by_id, room_id,
+					(feature.endpoints[0] as Dictionary).cell as Vector3i,
+					_feature_endpoint_facing(feature, 0, facing)):
+				return {}
+		elif feature.kind == &"courtyard_bridge_house":
+			var room_id := StringName(feature.audit.get(
+				"courtyard_bridge_house_room_id", &""))
+			if room_id.is_empty() or feature.endpoints.size() != 1:
+				last_failure = "courtyard bridge %s lacks one portal endpoint" \
+					% feature.stable_id
+				return {}
+			var facing := feature.audit.get(
+				"courtyard_bridge_house_endpoint_facing",
 				Vector3i.ZERO) as Vector3i
 			if not _record_feature_portal(out, room_by_id, room_id,
 					(feature.endpoints[0] as Dictionary).cell as Vector3i,
@@ -477,6 +491,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var realized_cells: Dictionary = {}
 	var compiled_feature_unit_by_owner: Dictionary = {}
 	var skywalk_count := 0
+	var courtyard_bridge_count := 0
 	var market_count := 0
 	var balcony_count := 0
 	var tower_annex_count := 0
@@ -484,6 +499,11 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	for feature: WarrenFeatureReservation in ordered_features:
 		var feature_units: Array[FabricUnit] = []
 		match feature.kind:
+			&"courtyard_bridge_house":
+				feature_units = _compile_courtyard_bridge_house_feature(feature,
+					program, room_unit_by_stamp, source_parcel_by_room,
+					seam_ids_by_source_parcel)
+				courtyard_bridge_count += int(not feature_units.is_empty())
 			&"enclosed_skywalk":
 				feature_units = _compile_skywalk_feature(feature, program,
 					room_unit_by_stamp, source_parcel_by_room,
@@ -534,8 +554,10 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	last_audit = {
 		"source_constructed_feature_count": ordered_features.size(),
 		"realized_constructed_feature_count": skywalk_count + market_count \
-			+ balcony_count + tower_annex_count + landmark_count,
+			+ balcony_count + tower_annex_count + landmark_count \
+			+ courtyard_bridge_count,
 		"skywalk_feature_count": skywalk_count,
+		"courtyard_bridge_house_feature_count": courtyard_bridge_count,
 		"covered_market_feature_count": market_count,
 		"balcony_feature_count": balcony_count,
 		"tower_annex_feature_count": tower_annex_count,
@@ -699,6 +721,68 @@ static func _compile_market_feature(feature: WarrenFeatureReservation,
 	return [FabricUnit.new(component.stable_id, component.recipe_id,
 		component.lattice_origin, component.yaw_quarters,
 		[] as Array[StringName], bonds, &"", seams)] as Array[FabricUnit]
+
+
+static func _compile_courtyard_bridge_house_feature(
+		feature: WarrenFeatureReservation, program: SettlementFabricProgram,
+		room_unit_by_stamp: Dictionary, source_parcel_by_room: Dictionary,
+		seam_ids_by_source_parcel: Dictionary) -> Array[FabricUnit]:
+	## The topology record is ordered parent-to-child: a pitched corner knuckle
+	## bonds to the addressed room, then a single inhabited cantilever bay bonds
+	## to the remaining corner socket. The far end is deliberately closed; making
+	## it seek a second room would recreate the impossible U-link that blocked the
+	## upper public gateway beside the court.
+	var room_id := StringName(feature.audit.get(
+		"courtyard_bridge_house_room_id", &""))
+	if room_id.is_empty() or feature.endpoints.size() != 1 \
+			or feature.construction_records.size() != 2:
+		last_failure = "courtyard bridge %s lacks one room or two components" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	var room_unit := room_unit_by_stamp.get(room_id) as FabricUnit
+	if room_unit == null:
+		last_failure = "courtyard bridge %s parent room %s was not compiled" % [
+			feature.stable_id, room_id]
+		return [] as Array[FabricUnit]
+	var source_parcel_id := StringName(source_parcel_by_room.get(room_id, &""))
+	var lineage_seams: Array[StringName] = []
+	lineage_seams.assign(seam_ids_by_source_parcel.get(source_parcel_id, []) \
+		as Array[StringName])
+	var corner_shell := _feature_component_shell(feature, 0,
+		feature.construction_records[0])
+	var corner_recipe := program.recipe(corner_shell.recipe_id)
+	if corner_recipe == null or not String(corner_shell.recipe_id).begins_with(
+			"skywalk.corner.") or corner_recipe.bearing_parent_count != 1:
+		last_failure = "courtyard bridge %s lacks its measured corner knuckle" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	var endpoint_cell := (feature.endpoints[0] as Dictionary).cell as Vector3i
+	var room_matches := _matching_room_connections(corner_shell, room_unit,
+		program, endpoint_cell, true)
+	if room_matches.size() != 1:
+		last_failure = "courtyard bridge %s has %d exact room/socket matches" % [
+			feature.stable_id, room_matches.size()]
+		return [] as Array[FabricUnit]
+	var corner := _feature_component_with_connections(corner_shell,
+		[room_matches[0]] as Array[Dictionary],
+		[room_unit] as Array[FabricUnit], true, lineage_seams)
+	var bay_shell := _feature_component_shell(feature, 1,
+		feature.construction_records[1])
+	var bay_recipe := program.recipe(bay_shell.recipe_id)
+	if bay_recipe == null or not String(bay_shell.recipe_id).begins_with(
+			"skywalk.cantilever.") or bay_recipe.bearing_parent_count != 1:
+		last_failure = "courtyard bridge %s lacks its one-bearing occupied bay" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	var bay_matches := _matching_room_connections(bay_shell, corner, program)
+	if bay_matches.size() != 1:
+		last_failure = "courtyard bridge %s bay has %d corner/socket matches" % [
+			feature.stable_id, bay_matches.size()]
+		return [] as Array[FabricUnit]
+	var bay := _feature_component_with_connections(bay_shell,
+		[bay_matches[0]] as Array[Dictionary], [corner] as Array[FabricUnit],
+		true, lineage_seams)
+	return [corner, bay] as Array[FabricUnit]
 
 
 static func _compile_skywalk_feature(feature: WarrenFeatureReservation,
@@ -1554,7 +1638,7 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 		feature: WarrenFeatureReservation, room: WarrenRoomStamp) -> bool:
 	var room_id := room.stable_id
 	for key: String in ["annex_room_id", "balcony_room_id",
-			"market_backing_room_id"]:
+			"market_backing_room_id", "courtyard_bridge_house_room_id"]:
 		if StringName(feature.audit.get(key, &"")) == room_id:
 			return true
 	# A balcony, annex, or market is selected against every measured room in its
@@ -1562,7 +1646,8 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 	# conservative AABB of the storey directly below even though the occupied
 	# cells remain disjoint. Preserve that authored construction seam here.
 	for key: String in ["annex_source_parcel_id",
-			"balcony_source_parcel_id", "market_backing_parcel_id"]:
+			"balcony_source_parcel_id", "market_backing_parcel_id",
+			"courtyard_bridge_house_source_parcel_id"]:
 		if StringName(feature.audit.get(key, &"")) == room.source_parcel_id:
 			return true
 	for binding_value: Variant in feature.audit.get(
@@ -1580,9 +1665,15 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 	return false
 
 
-static func _prior_party_wall_units(grid: WarrenSpatialGrid,
+static func _prior_visual_seam_units(grid: WarrenSpatialGrid,
 		room: WarrenRoomStamp, prior_unit_by_cell: Dictionary,
-		building_by_room: Dictionary) -> Array[StringName]:
+		building_by_room: Dictionary, probe: SettlementFabricPlan,
+		current_recipe: FabricRecipe) -> Array[StringName]:
+	## Face-adjacent rooms use the shell's explicit PARTY_WALL fact. A second,
+	## genuinely 3D seam exists where two occupied stamps meet along one lattice
+	## edge: their cells differ by one on exactly two axes. Admit that seam only
+	## when the measured construction overlap is shallow on those same axes;
+	## nearby but unrelated shells remain an error.
 	var unique: Dictionary = {}
 	var own_building := StringName(building_by_room.get(room.stable_id, &""))
 	for cell: Vector3i in room.private_cells:
@@ -1596,6 +1687,33 @@ static func _prior_party_wall_units(grid: WarrenSpatialGrid,
 					== WarrenSpatialGrid.FaceKind.PARTY_WALL \
 					and grid.owner_name_at(neighbor) != own_building:
 				unique[StringName(prior_unit_by_cell[neighbor])] = true
+	var current_bounds := FabricRecipe.lattice_transform(room.lattice_origin,
+		room.yaw_quarters) * current_recipe.local_clearance_bounds
+	var edge_offsets: Array[Vector3i] = []
+	for first_axis in 3:
+		for second_axis in range(first_axis + 1, 3):
+			for first_sign in [-1, 1]:
+				for second_sign in [-1, 1]:
+					var offset := Vector3i.ZERO
+					offset[first_axis] = first_sign
+					offset[second_axis] = second_sign
+					edge_offsets.append(offset)
+	for cell: Vector3i in room.private_cells:
+		for offset: Vector3i in edge_offsets:
+			var prior_id := StringName(prior_unit_by_cell.get(cell + offset, &""))
+			if prior_id.is_empty() or unique.has(prior_id):
+				continue
+			var prior_unit := probe.unit(prior_id)
+			var prior_recipe := probe.recipe(prior_unit.recipe_id) \
+				if prior_unit != null else null
+			if prior_recipe == null or prior_recipe.placements.is_empty():
+				continue
+			var prior_bounds := prior_unit.transform() \
+				* prior_recipe.local_clearance_bounds
+			if SettlementFabricPlan._aabb_overlaps_volume(current_bounds,
+					prior_bounds) and SettlementFabricPlan._is_edge_nick(
+						current_bounds, prior_bounds):
+				unique[prior_id] = true
 	var out: Array[StringName] = []
 	out.assign(unique.keys())
 	out.sort_custom(func(a: StringName, b: StringName) -> bool:

@@ -32,6 +32,10 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	if preview_fabric == null:
 		return _rejected(StringName("fabric_%s" %
 			WarrenSpatialFabricCompiler.last_failure))
+	var preview_quality_failure := WarrenVolumetricSolver \
+		.production_quality_failure(preview_fabric.audit)
+	if not preview_quality_failure.is_empty():
+		return _rejected(StringName("quality_%s" % preview_quality_failure))
 	for placement: Dictionary in _placement_candidates(terrain, preview,
 			centre, street_axis, city_seed):
 		var spatial := preview if bool(placement.flat_ground) \
@@ -48,7 +52,8 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 		var fabric := preview_fabric if spatial == preview \
 			else WarrenSpatialFabricCompiler.solve(spatial,
 				program.settlement_fabric_program)
-		if fabric == null:
+		if fabric == null or not WarrenVolumetricSolver \
+				.production_quality_failure(fabric.audit).is_empty():
 			continue
 		placement["local_bounds"] = _local_bounds(fabric)
 		return _materialize(terrain, stable_id, spatial, fabric, placement, program)

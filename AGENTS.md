@@ -338,9 +338,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   generic rooms. Each anchor is a complete measured terrain-rooted recipe with its real baked
   entrance aligned to a canonical ground-street landing, conservative shell/private volume,
   visual envelope, exact contact-point bearing cells, doorway face, and construction transform.
-  Candidate pairs are ranked by the distinct skywalk corridors and endpoint parcels they preserve,
-  then by displaced fabric, separation, and visual variety; arbitrary detached prefabs are never
-  added after packing. At least one of the three enclosed skywalks terminates in a real landmark
+  Candidate pairs must preserve a viable three-skywalk frontier, then rank by the least displaced
+  parcel fabric before surplus corridors, separation, and visual variety. This keeps a landmark
+  from winning merely because it preserves dozens of links when production needs exactly three;
+  arbitrary detached prefabs are never added after packing. At least one of the three enclosed skywalks terminates in a real landmark
   ROOM/BEARING socket. That intentional two-cell interface is the only deferred landmark shell
   seam, and the skywalk owns both the open face and its persistent clearance halo so later balconies
   and roofs cannot pierce it. Landmark-owned private cells are feature volume rather than synthetic
@@ -355,6 +356,14 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   exact cell ownership protects topology, compatible contact becomes a typed party wall, and the
   selected recipes' measured envelopes decide sub-cell eave/facade clearance. Skywalk constraints
   preserve the exact authored centre-facade room socket rather than accepting any perimeter cell.
+  After hero composition, a bounded residual 3D backfill stamps complete one-storey rooms into
+  remaining inhabited cells. It ranks genuinely new occupied cover over public route cells first,
+  accepts either an exact public threshold or a private parent edge, and requires terrain or an
+  existing building for physical bearing. Exact roof clearance remains the construction contract;
+  an additional symmetric eave halo prevents a later facade or roof from rising through an earlier
+  pitched eave without forbidding legal same-height roof meetings. The residual pass is ordinary
+  building volume, never decorative mass, and its audit reports newly covered route cells and newly
+  closed street-frontage sides independently.
   Storey diversity is audited from world-space floorplate columns rather than room
   kind or local origin, because even-cell rotations and origin changes can describe the same visible
   shaft. No accepted tall lineage may remain a repeated world-space extrusion. Every occupied
@@ -380,6 +389,12 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   accepted construction. `SettlementFabricPlan.add_unit()` stages semantic occupancy and publishes
   it only after visual-envelope validation, so a rejected rich phase cannot leave ghost claims that
   poison that exact fallback transaction.
+  Production then compiles the sealed spatial plan and rejects it unless inhabited/structural mass
+  covers at least 38% of public route cells, all-height through-core sightlines are at most 48, and
+  ground through-core sightlines are at most 20. These are screenshot-backed acceptance gates, not
+  decorative scores: a feature-complete town with an open plaza or horizon-length street is not a
+  production result. Diagnostic review disables no visual-overlap rule; every captured candidate
+  must pass the same strict measured-envelope transaction as production.
   Route-first retains its independent-stall grammar. Skywalk reservations are solved against
   the fixed exact parcel partition and preserved through asset compilation; do not fake extra links
   when no independent measured corridor exists. Mass-first-only thresholds and styling are guarded

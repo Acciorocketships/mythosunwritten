@@ -151,7 +151,22 @@ func test_reported_seed_builds_an_inhabited_dense_multilevel_village() -> void:
 	assert_gte(int(audit.building_stack_count), 7)
 	assert_gte(int(audit.vertical_span_cells), 3)
 	assert_gt(int(audit.stair_count), 0)
-	assert_gte(int(audit.skywalk_link_count), 1)
+	assert_eq(int(audit.enclosed_skywalk_count),
+		WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
+	assert_eq(int(audit.covered_market_count), 1)
+	assert_eq(int(audit.elevated_courtyard_count), 1)
+	assert_eq(int(audit.courtyard_bridge_house_count), 1)
+	assert_gte(int(audit.courtyard_bridge_house_lower_public_column_count), 2)
+	assert_gte(int(audit.courtyard_below_route_cell_count),
+		WarrenSpatialFeatureSolver.MIN_COURT_BELOW_ROUTE_CELLS)
+	assert_gte(int(audit.courtyard_upper_route_cell_count),
+		WarrenSpatialFeatureSolver.MIN_COURT_UPPER_ROUTE_CELLS)
+	assert_eq(int(audit.prefab_landmark_count),
+		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
+	assert_gte(int(audit.usable_balcony_count),
+		WarrenSpatialFeatureSolver.TARGET_BALCONIES)
+	assert_gte(int(audit.room_outcropping_count),
+		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
 	assert_eq(int(audit.detached_building_stack_count), 0)
 	assert_eq(int(audit.stair_endpoint_gap_count), 0)
 	assert_eq(int(audit.stair_endpoint_missing_landing_count), 0)

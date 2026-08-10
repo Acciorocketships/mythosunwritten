@@ -27,6 +27,7 @@ static var last_skywalk_diagnostic: Dictionary = {}
 static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		preplanned_skywalks: Array[Dictionary] = [],
+		preplanned_courtyard_bridge: Dictionary = {},
 		preplanned_market: Dictionary = {},
 		preplanned_landmarks: Array[Dictionary] = [],
 		construction_program: SettlementFabricProgram = null,
@@ -63,10 +64,15 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			last_skywalk_diagnostic]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(skywalks)
-	# Skywalks precede the court transaction because an occupied, room-to-room
-	# bridge-house may be one of its three enclosing facades.  The court proof
-	# therefore sees the connector's actual committed PRIVATE_VOLUME, not a
-	# promise inferred from endpoints or an asset after the fact.
+	var courtyard_bridge := _reserve_preplanned_courtyard_bridge_house(grid,
+		buildings, supports, preplanned_courtyard_bridge)
+	if courtyard_bridge == null:
+		return [] as Array[WarrenFeatureReservation]
+	out.append(courtyard_bridge)
+	# The court transaction sees the cantilever's actual committed
+	# PRIVATE_VOLUME. It never counts its endpoint, clearance envelope, or visual
+	# mesh as an enclosing facade, and the three ordinary skywalks remain fully
+	# independent circulation features elsewhere in the mountain.
 	var court := _reserve_courtyard(grid, source, buildings, supports)
 	if court == null:
 		return [] as Array[WarrenFeatureReservation]
@@ -118,6 +124,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"covered_market_count": 1,
 		"prefab_landmark_count": landmarks.size(),
 		"enclosed_skywalk_count": skywalks.size(),
+		"courtyard_bridge_house_count": 1,
 		"tower_annex_count": tower_annexes.size(),
 		"tower_annex_source_count": tall_tower_sources.size(),
 		"usable_balcony_count": balconies.size(),
@@ -125,6 +132,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"room_outcropping_count": outcroppings.size(),
 		"feature_count": out.size(),
 	}
+	last_audit.merge(courtyard_bridge.audit, false)
 	last_audit.merge(court.audit, false)
 	return out
 
@@ -473,6 +481,131 @@ static func _record_preplanned_landmarks(grid: WarrenSpatialGrid,
 			return [] as Array[WarrenFeatureReservation]
 		out.append(feature)
 	return out
+
+
+static func _reserve_preplanned_courtyard_bridge_house(
+		grid: WarrenSpatialGrid, buildings: Array[WarrenBuildingVolume],
+		supports: WarrenSupportGraph,
+		reservation: Dictionary) -> WarrenFeatureReservation:
+	## Commit the one-ended inhabited projection selected before room
+	## composition. Unlike an ordinary skywalk, this is a room-scale cantilever:
+	## one real building bears it, its far end remains occupied, and it encloses
+	## only the court-edge cells that its measured body physically occupies.
+	if reservation.is_empty() or StringName(reservation.get("feature_id", &"")) \
+			!= WarrenVolumetricSolver.COURTYARD_BRIDGE_FEATURE_ID:
+		last_failure = "missing topology-first courtyard bridge house"
+		return null
+	var owner_ids := reservation.get("owner_parcel_ids", []) as Array
+	var endpoints := reservation.get("owner_endpoints", []) as Array
+	if owner_ids.size() != 1 or endpoints.size() != 1:
+		last_failure = "courtyard bridge house lacks one source endpoint"
+		return null
+	var source_parcel_id := StringName(owner_ids[0])
+	var endpoint_record := endpoints[0] as Dictionary
+	var endpoint_cell := endpoint_record.cell as Vector3i
+	var endpoint_facing := endpoint_record.facing as Vector3i
+	var resolved: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.source_parcel_id != source_parcel_id \
+					or not room.has_private_cell(endpoint_cell):
+				continue
+			if not resolved.is_empty():
+				last_failure = "courtyard bridge endpoint has multiple room owners"
+				return null
+			resolved = {"building": building, "room": room}
+	if resolved.is_empty():
+		last_failure = "courtyard bridge house lost its exact room endpoint"
+		return null
+	var body_set := reservation.get("reserved_cells", {}) as Dictionary
+	if not body_set.has(endpoint_cell + endpoint_facing):
+		last_failure = "courtyard bridge body does not begin outside its room"
+		return null
+	var body: Array[Vector3i] = []
+	body.assign(body_set.keys())
+	body.sort_custom(_cell_less)
+	var lower_public_columns := _lower_public_columns(grid, body)
+	if lower_public_columns.size() < 2:
+		last_failure = "courtyard bridge house lost the lower public street"
+		return null
+	var feature_id := WarrenVolumetricSolver.COURTYARD_BRIDGE_FEATURE_ID
+	var clearance_only: Array[Vector3i] = []
+	for cell_value: Variant in (reservation.get("visual_clearance_cells", {}) \
+			as Dictionary).keys():
+		if body_set.has(cell_value):
+			continue
+		var cell := cell_value as Vector3i
+		if (grid.reservation_bits_at(cell) \
+				& WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE) != 0:
+			last_failure = "courtyard bridge clearance changed before commit at %s" \
+				% cell
+			return null
+		clearance_only.append(cell)
+	var tx := grid.begin_transaction(feature_id)
+	if not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
+			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+			or not tx.reserve(body, WarrenSpatialGrid.Reservation.FEATURE \
+				| WarrenSpatialGrid.Reservation.PRIVATE_CONNECTION \
+				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not clearance_only.is_empty() and not tx.reserve(clearance_only,
+				WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not tx.assign_use(body, WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+				feature_id):
+		last_failure = "could not stage courtyard bridge house: %s" \
+			% tx.last_rejection
+		return null
+	var endpoint_owner := (resolved.building as WarrenBuildingVolume).stable_id
+	for cell: Vector3i in body:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if body_set.has(neighbor):
+				continue
+			var kind := WarrenSpatialGrid.FaceKind.FACADE
+			if neighbor == endpoint_cell:
+				kind = WarrenSpatialGrid.FaceKind.OPEN_SEAM
+			elif direction == Vector3i.UP:
+				kind = WarrenSpatialGrid.FaceKind.ROOF
+			elif direction == Vector3i.DOWN:
+				kind = WarrenSpatialGrid.FaceKind.PRIVATE_FLOOR
+			if not tx.claim_face(cell, direction, kind, feature_id):
+				last_failure = "could not stage courtyard bridge face at %s" % cell
+				return null
+	if not tx.commit():
+		last_failure = "courtyard bridge house rejected: %s" % tx.last_rejection
+		return null
+	var feature := WarrenFeatureReservation.new(feature_id,
+		&"courtyard_bridge_house")
+	if not feature.add_reserved_cells(body) \
+			or not feature.add_endpoint(endpoint_cell, endpoint_owner):
+		last_failure = "could not record courtyard bridge volume or endpoint"
+		return null
+	var components := reservation.get("components", []) as Array
+	for component_index in components.size():
+		var component := components[component_index] as Dictionary
+		if not feature.add_construction_record(StringName(component.recipe_id),
+				component.origin as Vector3i, int(component.yaw_quarters),
+				StringName("component.%02d" % component_index)):
+			last_failure = "could not record courtyard bridge component"
+			return null
+	var room := resolved.room as WarrenRoomStamp
+	if components.size() != 2 or not feature.set_support_node(endpoint_owner) \
+			or not feature.set_audit_facts({
+				"courtyard_bridge_house_room_id": room.stable_id,
+				"courtyard_bridge_house_source_parcel_id": source_parcel_id,
+				"courtyard_bridge_house_endpoint_facing": endpoint_facing,
+				"courtyard_bridge_house_component_count": components.size(),
+				"courtyard_bridge_house_lower_public_column_count":
+					lower_public_columns.size(),
+				"courtyard_bridge_house_side_mask": int(reservation.get(
+					"courtyard_side_mask", 0)),
+				"courtyard_bridge_house_visual_clearance_cell_count":
+					body.size() + clearance_only.size(),
+			}) or not feature.seal(grid, supports):
+		last_failure = "courtyard bridge feature seal failed: %s" \
+			% feature.last_rejection
+		return null
+	return feature
 
 
 static func _reserve_courtyard(grid: WarrenSpatialGrid,
@@ -1022,9 +1155,7 @@ static func _reserve_preplanned_skywalks(grid: WarrenSpatialGrid,
 			landmark_endpoint_count += int(is_landmark)
 			offset_endpoint_count += int(is_landmark or offset_rooms.has(
 				StringName(endpoint.room_id)))
-		var reservation_kind := StringName(reservation.get("kind", &"straight"))
-		if endpoint_owner_ids.size() != 2 or offset_endpoint_count < 1 \
-				and reservation_kind != &"courtyard_bridge_house":
+		if endpoint_owner_ids.size() != 2 or offset_endpoint_count < 1:
 			last_failure = "preplanned skywalk %d lacks two owners or an offset endpoint" \
 				% reservation_index
 			return [] as Array[WarrenFeatureReservation]
@@ -1185,7 +1316,25 @@ static func _commit_preplanned_skywalk(grid: WarrenSpatialGrid,
 					break
 			if endpoint_owns_clearance:
 				continue
-			last_failure = "skywalk clearance changed before commit at %s" % cell
+			# Candidate selection already rejects intersecting measured AABBs for
+			# every pair in the accepted triple. Two disjoint eaves may still touch
+			# the same conservative 1.5 m raster cell; the earlier skywalk keeps
+			# ownership of that coarse cell and the later one relies on the exact
+			# pair proof. Solid/private volume remains mutually exclusive below.
+			var prior_skywalk_owns_clearance := false
+			for prior_ordinal in ordinal:
+				var prior_id := StringName("spatial.feature.skywalk.%02d" \
+					% prior_ordinal)
+				if grid.reservation_owned_by(cell,
+						WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE,
+						prior_id):
+					prior_skywalk_owns_clearance = true
+					break
+			if prior_skywalk_owns_clearance:
+				continue
+			last_failure = "skywalk clearance changed before commit at %s; owners=%s" \
+				% [cell, grid.reservation_owner_names_at(cell,
+					WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE)]
 			return null
 		clearance_only.append(cell)
 	var tx := grid.begin_transaction(feature_id)

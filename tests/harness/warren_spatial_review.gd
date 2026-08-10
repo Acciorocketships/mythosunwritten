@@ -8,9 +8,17 @@ extends Node3D
 ##
 ##   Godot --path . res://tests/harness/warren_spatial_review.tscn -- \
 ##     --seed 7 --output /tmp/warren-spatial-review
+const DEFAULT_PRODUCTION_WORLD_SEED := 2697992464
+const DEFAULT_PRODUCTION_SUPER_CELL := Vector2i(0, -1)
+const PRODUCTION_REGION_RADIUS := 5
+
 var _output_dir := "/tmp/mythos-warren-spatial-review"
 var _world_seed := 7
+var _super_cell := DEFAULT_PRODUCTION_SUPER_CELL
 var _candidate_token := "4000019"
+var _partition_variant := 1
+var _solve_production := false
+var _production_terrain_site := false
 var _camera := Camera3D.new()
 var _spatial: WarrenSpatialPlan
 var _fabric: SettlementFabricPlan
@@ -19,19 +27,48 @@ var _captures: Array[Dictionary] = []
 
 func _ready() -> void:
 	_read_args()
+	# The review must render exactly the same strict envelope policy as
+	# production. Edge-nick cameras remain as a falsification aid and should now
+	# produce no captures.
+	SettlementFabricPlan.DIAGNOSTIC_ALLOW_EDGE_ENVELOPE_OVERLAP = false
 	get_window().size = Vector2i(1920, 1080)
 	DirAccess.make_dir_recursive_absolute(_output_dir)
 	_build_environment()
 	_build_ground()
 	var catalog := EnvironmentCatalog.load_default()
 	var program := SettlementFabricProgram.compile(catalog)
-	assert(program != null)
-	var source := _select_source()
-	assert(source != null, "no requested volumetric source candidate")
-	_spatial = WarrenVolumetricSolver.from_volume(source, 1, program)
-	assert(_spatial != null, WarrenVolumetricSolver.last_failure)
-	_fabric = WarrenSpatialFabricCompiler.solve(_spatial, program)
-	assert(_fabric != null, WarrenSpatialFabricCompiler.last_failure)
+	if program == null:
+		_fail_and_quit("could not compile the settlement fabric program")
+		return
+	if _production_terrain_site:
+		var urban := _solve_production_site(catalog)
+		if urban == null or not urban.accepted \
+				or urban.volumetric_spatial == null \
+				or urban.fabric_plan == null:
+			_fail_and_quit("production terrain solve rejected: %s" \
+				% String(urban.reason if urban != null else &"missing_plan"))
+			return
+		_spatial = urban.volumetric_spatial
+		_fabric = urban.fabric_plan
+	elif _solve_production:
+		_spatial = WarrenVolumetricSolver.solve(_world_seed, {}, program)
+	else:
+		var source := _select_source()
+		if source == null:
+			_fail_and_quit("no requested volumetric source candidate")
+			return
+		_spatial = WarrenVolumetricSolver.from_volume(source,
+			_partition_variant, program)
+	if _spatial == null:
+		_fail_and_quit("volumetric solve rejected: %s" \
+			% WarrenVolumetricSolver.last_failure)
+		return
+	if _fabric == null:
+		_fabric = WarrenSpatialFabricCompiler.solve(_spatial, program)
+	if _fabric == null:
+		_fail_and_quit("fabric compile rejected: %s" \
+			% WarrenSpatialFabricCompiler.last_failure)
+		return
 	var root := Node3D.new()
 	root.name = "AuthoritativeSpatialWarren"
 	add_child(root)
@@ -73,6 +110,61 @@ func _read_args() -> void:
 			_world_seed = int(args[index + 1])
 		elif args[index] == "--candidate-token" and index + 1 < args.size():
 			_candidate_token = args[index + 1]
+		elif args[index] == "--variant" and index + 1 < args.size():
+			_partition_variant = int(args[index + 1])
+		elif args[index] == "--solve-production":
+			_solve_production = true
+		elif args[index] == "--production-terrain-site":
+			_production_terrain_site = true
+			_world_seed = DEFAULT_PRODUCTION_WORLD_SEED
+		elif args[index] == "--super-x" and index + 1 < args.size():
+			_super_cell.x = int(args[index + 1])
+		elif args[index] == "--super-z" and index + 1 < args.size():
+			_super_cell.y = int(args[index + 1])
+
+
+func _solve_production_site(catalog: EnvironmentCatalog) \
+		-> VillageUrbanFabricPlan:
+	var water := TerrainWorldTuning.make_water(_world_seed)
+	var site := SettlementPlan.new(_world_seed, water).site_for(_super_cell)
+	if site.is_empty():
+		return null
+	var cell := site.cell as Vector2i
+	var heightfield := TerrainWorldTuning.make_heightfield(_world_seed, water)
+	var region := heightfield.compute_region(cell.x, cell.y,
+		PRODUCTION_REGION_RADIUS)
+	var terrain := VillageTerrainView.from_region(region)
+	var village_program := VillageProgram.compile({}, catalog)
+	if village_program == null:
+		return null
+	var frame := VillageFrame.from_mask(site, 1, region,
+		_empty_water(region, cell))
+	var city_seed := VillagePlan.new(_world_seed,
+		village_program)._warren_seed(frame)
+	print(("[warren_spatial_review] production terrain world_seed=%d " \
+		+ "city_seed=%d super_cell=(%d,%d)") % [_world_seed, city_seed,
+			_super_cell.x, _super_cell.y])
+	return VillageWarrenFabricSolver.solve(terrain, city_seed,
+		frame.settlement_id, frame.centre, Vector2.RIGHT, village_program)
+
+
+func _fail_and_quit(reason: String) -> void:
+	printerr("[warren_spatial_review] ", reason)
+	get_tree().quit(1)
+
+
+static func _empty_water(region: HeightfieldRegion,
+		cell: Vector2i) -> WaterFieldContext:
+	var context := WaterFieldContext.new()
+	context._ctx = {"ponds": [], "rivers": [], "buckets": {},
+		"region": region}
+	context._region = region
+	var centre := Vector2(cell) * TerrainSurfaceField.TILE
+	var radius := float(PRODUCTION_REGION_RADIUS) * TerrainSurfaceField.TILE
+	context._coverage = Rect2(centre - Vector2.ONE * radius,
+		Vector2.ONE * radius * 2.0)
+	context._shore_limit = 0.0
+	return context
 
 
 func _select_source() -> WarrenVolumePlan:
@@ -104,6 +196,7 @@ func _capture_all() -> void:
 	views.append_array(_tower_annex_views())
 	views.append_array(_landmark_views())
 	views.append_array(_balcony_views())
+	views.append_array(_edge_nick_views())
 	for view: Dictionary in views:
 		_camera.fov = float(view.fov)
 		_camera.look_at_from_position(view.position as Vector3,
@@ -135,7 +228,8 @@ func _street_views() -> Array[Dictionary]:
 		route_set[cell] = true
 	var candidates: Array[Dictionary] = []
 	for cell: Vector3i in _spatial.route_floor_cells:
-		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK]:
+		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK,
+				Vector3i.LEFT, Vector3i.FORWARD]:
 			if not _has_route_run(route_set, cell, direction, 5):
 				continue
 			var side := Vector3i(-direction.z, 0, direction.x)
@@ -161,12 +255,16 @@ func _street_views() -> Array[Dictionary]:
 						overhead_score += int(_is_building_use(
 							_spatial.grid.use_at(lane_b \
 								+ Vector3i.UP * height)))
-				var score := wall_score * 3 + overhead_score * 2
+				var terminal_enclosure := _street_terminal_enclosure(
+					cell + direction * 5, direction, lane_side)
+				var score := wall_score * 3 + overhead_score * 2 \
+					+ terminal_enclosure * 5
 				if wall_score >= 6:
 					candidates.append({"cell": cell, "direction": direction,
 						"lane_side": lane_side, "score": score,
 						"wall_score": wall_score,
-						"overhead_score": overhead_score})
+						"overhead_score": overhead_score,
+						"terminal_enclosure": terminal_enclosure})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.score) != int(b.score):
 			return int(a.score) > int(b.score)
@@ -198,16 +296,29 @@ func _street_views() -> Array[Dictionary]:
 	return out
 
 
+func _street_terminal_enclosure(cell: Vector3i, direction: Vector3i,
+		lane_side: Vector3i) -> int:
+	var score := 0
+	for forward_step in 3:
+		var centre := cell + direction * forward_step
+		for side_step in [-1, 2]:
+			var outside: Vector3i = centre + lane_side * side_step
+			for y_offset in 3:
+				score += int(_is_building_use(_spatial.grid.use_at(
+					outside + Vector3i.UP * y_offset)))
+		for y_offset in range(2, 6):
+			score += int(_is_building_use(_spatial.grid.use_at(
+				centre + Vector3i.UP * y_offset)))
+	return score
+
+
 func _market_views() -> Array[Dictionary]:
 	for feature: WarrenFeatureReservation in _spatial.features:
 		if feature.kind != &"covered_market" \
 				or feature.construction_records.size() != 1:
 			continue
-		var record := feature.construction_records[0]
 		var centre := _cell_centroid(feature.public_cells)
-		var outward3 := FabricRecipe.transform_direction(Vector3i.BACK,
-			int(record.yaw_quarters))
-		var eye := centre + Vector3(outward3) * 7.0 + Vector3.UP * 1.45
+		var aisle := _market_public_aisle_view(feature)
 		var visual_bounds := _feature_visual_bounds(feature)
 		# The topology solver may join the market through any side or after a turn;
 		# recipe-local BACK is therefore not evidence of the street approach. Walk
@@ -224,12 +335,40 @@ func _market_views() -> Array[Dictionary]:
 				12.0, 2.0, ignored, visual_bounds)
 		var approach_target := approach.target as Vector3 \
 			if not approach.is_empty() else centre + Vector3.UP * 1.25
-		return [{"id": "market-aisle", "position": eye,
-			"target": centre + Vector3.UP * 1.35, "fov": 66.0},
+		return [{"id": "market-aisle", "position": aisle.position,
+			"target": aisle.target, "fov": 72.0},
 			{"id": "market-approach", "position": approach_eye,
 				"target": approach_target, "fov": 68.0}] \
 			as Array[Dictionary]
 	return [] as Array[Dictionary]
+
+
+func _market_public_aisle_view(feature: WarrenFeatureReservation) -> Dictionary:
+	## Both camera and target sit on the feature's sealed public floor cells.
+	## Recipe-local BACK previously put the eye inside an unrelated stone shell.
+	var floors: Array[Vector3i] = feature.public_cells.duplicate()
+	if floors.is_empty():
+		return {"position": Vector3.ZERO, "target": Vector3.FORWARD}
+	floors.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return _cell_key(a) < _cell_key(b))
+	var best_left: Vector3i = floors[0]
+	var best_right: Vector3i = floors[0]
+	var best_distance := -1
+	for left: Vector3i in floors:
+		for right: Vector3i in floors:
+			if left.y != right.y:
+				continue
+			var distance := absi(left.x - right.x) + absi(left.z - right.z)
+			if distance > best_distance:
+				best_distance = distance
+				best_left = left
+				best_right = right
+	var eye := _route_eye(best_left)
+	var target := _route_eye(best_right)
+	if best_left == best_right:
+		var direction := _best_route_direction(best_left)
+		target = eye + Vector3(direction) * 4.5
+	return {"position": eye, "target": target}
 
 
 func _market_route_approach(feature: WarrenFeatureReservation,
@@ -573,6 +712,45 @@ func _fabric_bounds() -> AABB:
 	return out
 
 
+func _edge_nick_views() -> Array[Dictionary]:
+	## Put a falsification camera directly on every overlap admitted only by the
+	## review-only edge switch. These captures decide whether the generator needs
+	## a different room placement, an authored joint, or a narrower module.
+	var out: Array[Dictionary] = []
+	for left_index in _fabric.units.size():
+		var left := _fabric.units[left_index]
+		var left_recipe := _fabric.recipe(left.recipe_id)
+		if left_recipe == null or left_recipe.placements.is_empty():
+			continue
+		var left_bounds := left.transform() * left_recipe.local_clearance_bounds
+		for right_index in range(left_index + 1, _fabric.units.size()):
+			var right := _fabric.units[right_index]
+			var right_recipe := _fabric.recipe(right.recipe_id)
+			if right_recipe == null or right_recipe.placements.is_empty() \
+					or _fabric._units_declare_connection(left, right):
+				continue
+			var right_bounds := right.transform() \
+				* right_recipe.local_clearance_bounds
+			if not SettlementFabricPlan._aabb_overlaps_volume(left_bounds,
+					right_bounds) or not SettlementFabricPlan._is_edge_nick(
+						left_bounds, right_bounds):
+				continue
+			var overlap_min := left_bounds.position.max(right_bounds.position)
+			var overlap_max := left_bounds.end.min(right_bounds.end)
+			var target := (overlap_min + overlap_max) * 0.5
+			var ignored := [left.stable_id, right.stable_id] as Array[StringName]
+			var union_bounds := left_bounds.merge(right_bounds)
+			var eye := _best_orbit_position(target, 8.0, 1.5, ignored,
+				union_bounds)
+			out.append({"id": "edge-nick-%02d" % out.size(),
+				"position": eye, "target": target, "fov": 54.0})
+			print("[warren_spatial_review] edge nick ", left.stable_id,
+				" <-> ", right.stable_id, " overlap=", overlap_max - overlap_min)
+			if out.size() >= 6:
+				return out
+	return out
+
+
 func _build_environment() -> void:
 	var sky_material := ProceduralSkyMaterial.new()
 	sky_material.sky_top_color = Color("527faf")
@@ -616,6 +794,8 @@ func _write_manifest() -> void:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	assert(file != null)
 	file.store_string(JSON.stringify({"world_seed": _world_seed,
+		"diagnostic_allow_edge_envelope_overlap":
+			SettlementFabricPlan.DIAGNOSTIC_ALLOW_EDGE_ENVELOPE_OVERLAP,
 		"spatial_signature": _spatial.deterministic_signature().sha256_text(),
 		"audit": _spatial.audit, "fabric_audit": _fabric.audit,
 		"captures": _captures}, "  "))

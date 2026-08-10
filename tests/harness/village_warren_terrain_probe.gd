@@ -117,6 +117,12 @@ func _init() -> void:
 			"covered_market_count", 0)),
 		"elevated_courtyard_count": int(urban.fabric_audit.get(
 			"elevated_courtyard_count", 0)),
+		"courtyard_bridge_house_count": int(urban.fabric_audit.get(
+			"courtyard_bridge_house_count", 0)),
+		"courtyard_below_route_cell_count": int(urban.fabric_audit.get(
+			"courtyard_below_route_cell_count", 0)),
+		"courtyard_upper_route_cell_count": int(urban.fabric_audit.get(
+			"courtyard_upper_route_cell_count", 0)),
 		"usable_balcony_count": int(urban.fabric_audit.get(
 			"usable_balcony_count", 0)),
 		"room_outcropping_count": int(urban.fabric_audit.get(

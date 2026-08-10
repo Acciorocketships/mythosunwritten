@@ -129,6 +129,9 @@ func add_unit(unit: FabricUnit) -> bool:
 			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
 					and _is_corner_nick(clearance_bounds, existing_clearance):
 				continue
+			if DIAGNOSTIC_ALLOW_EDGE_ENVELOPE_OVERLAP \
+					and _is_edge_nick(clearance_bounds, existing_clearance):
+				continue
 			last_rejection = \
 				"visual envelope of %s %s intersects unrelated unit %s %s" % [
 					unit.stable_id, clearance_bounds, existing.stable_id,
@@ -190,6 +193,9 @@ func validate() -> bool:
 			if _aabb_overlaps_volume(left_clearance, right_clearance):
 				if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
 						and _is_corner_nick(left_clearance, right_clearance):
+					continue
+				if DIAGNOSTIC_ALLOW_EDGE_ENVELOPE_OVERLAP \
+						and _is_edge_nick(left_clearance, right_clearance):
 					continue
 				last_rejection = "unrelated visual envelopes intersect: %s and %s" % [
 					left.stable_id, right.stable_id]
@@ -332,6 +338,11 @@ func _is_bearing_ancestor(unit_value: FabricUnit,
 ## Enable only from a review harness, never from a test:
 ##   SettlementFabricPlan.DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP = true
 static var DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP := false
+## DIAGNOSTIC ONLY -- MUST NOT SHIP ENABLED. Lets the rendered review harness
+## expose a shallow roof/fascia edge intersection when the overlap is small on
+## two of three axes. Production remains strict so the image can guide an
+## authored seam/packing fix without normalizing the defect.
+static var DIAGNOSTIC_ALLOW_EDGE_ENVELOPE_OVERLAP := false
 ## A corner nick is small on BOTH horizontal axes -- two footprints touching at
 ## a point, overlapping only by what their roofs project. A genuine face
 ## overlap runs the length of the shared wall, metres rather than centimetres,
@@ -342,6 +353,7 @@ static var DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP := false
 ## metre-and-a-half separates those cleanly; 1.0 m did not, and wrongly left
 ## roof-to-roof corners looking like a second, unexplained failure mode.
 const DIAGNOSTIC_CORNER_NICK_METRES := 1.5
+const DIAGNOSTIC_EDGE_NICK_METRES := 0.5
 
 
 static func _is_corner_nick(left: AABB, right: AABB) -> bool:
@@ -351,6 +363,18 @@ static func _is_corner_nick(left: AABB, right: AABB) -> bool:
 		- maxf(left.position.z, right.position.z)
 	return overlap_x <= DIAGNOSTIC_CORNER_NICK_METRES \
 		and overlap_z <= DIAGNOSTIC_CORNER_NICK_METRES
+
+
+static func _is_edge_nick(left: AABB, right: AABB) -> bool:
+	var overlaps := [
+		minf(left.end.x, right.end.x) - maxf(left.position.x, right.position.x),
+		minf(left.end.y, right.end.y) - maxf(left.position.y, right.position.y),
+		minf(left.end.z, right.end.z) - maxf(left.position.z, right.position.z),
+	]
+	var shallow_axis_count := 0
+	for overlap: float in overlaps:
+		shallow_axis_count += int(overlap <= DIAGNOSTIC_EDGE_NICK_METRES)
+	return shallow_axis_count >= 2
 
 
 static func _aabb_overlaps_volume(left: AABB, right: AABB,

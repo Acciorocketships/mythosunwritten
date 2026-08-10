@@ -64,6 +64,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var expected_feature_cells := 0
 	var constructed_features := 0
 	var constructed_skywalks := 0
+	var constructed_courtyard_bridges := 0
 	var constructed_markets := 0
 	var constructed_balconies := 0
 	var constructed_tower_annexes := 0
@@ -73,6 +74,8 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 			continue
 		constructed_features += 1
 		constructed_skywalks += int(feature.kind == &"enclosed_skywalk")
+		constructed_courtyard_bridges += int(
+			feature.kind == &"courtyard_bridge_house")
 		constructed_markets += int(feature.kind == &"covered_market")
 		constructed_balconies += int(feature.kind == &"balcony")
 		constructed_tower_annexes += int(feature.kind == &"tower_annex")
@@ -84,6 +87,10 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		.realized_constructed_feature_count), constructed_features)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit.skywalk_feature_count),
 		constructed_skywalks)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.courtyard_bridge_house_feature_count), constructed_courtyard_bridges)
+	assert_eq(constructed_courtyard_bridges, 1,
+		"the elevated court must have one measured occupied cantilever wall")
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.covered_market_feature_count), constructed_markets)
 	assert_eq(constructed_markets, 1)
@@ -168,6 +175,11 @@ func _expected_feature_portals(spatial: WarrenSpatialPlan) -> Dictionary:
 			var facing := feature.audit.get("balcony_endpoint_facing",
 				Vector3i.ZERO) as Vector3i
 			_add_expected_portal(rooms, openings, room_id, facing)
+		elif feature.kind == &"courtyard_bridge_house":
+			_add_expected_portal(rooms, openings, StringName(feature.audit.get(
+				"courtyard_bridge_house_room_id", &"")), feature.audit.get(
+				"courtyard_bridge_house_endpoint_facing",
+				Vector3i.ZERO) as Vector3i)
 		elif feature.kind == &"enclosed_skywalk":
 			for binding_value: Variant in feature.audit.get(
 					"skywalk_endpoint_bindings", []):

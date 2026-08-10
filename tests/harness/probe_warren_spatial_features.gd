@@ -7,6 +7,10 @@ extends SceneTree
 
 func _init() -> void:
 	var started_ms := Time.get_ticks_msec()
+	WarrenVolumetricSolver.diagnostic_trace_skywalk_timing = \
+		"--timing" in OS.get_cmdline_user_args()
+	WarrenVolumetricSolver.diagnostic_trace_room_gate = \
+		"--gate-trace" in OS.get_cmdline_user_args()
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
 	print("PROGRAM_MS=", Time.get_ticks_msec() - started_ms)
@@ -17,11 +21,16 @@ func _init() -> void:
 				" headroom=", recipe.headroom_cells.size(), " bearing=",
 				recipe.terrain_bearing_cells.size())
 	var frontier := WarrenTownSolver.mass_first_frontier(7)
+	var candidate_token := "4000019"
+	var candidate_arg := OS.get_cmdline_user_args().find("--candidate-token")
+	if candidate_arg >= 0 \
+			and candidate_arg + 1 < OS.get_cmdline_user_args().size():
+		candidate_token = OS.get_cmdline_user_args()[candidate_arg + 1]
 	var source: WarrenVolumePlan
 	var source_generation_index := -1
 	var generation_index := 0
 	for candidate: WarrenVolumePlan in frontier:
-		if String(candidate.stable_id).contains("4000019"):
+		if String(candidate.stable_id).contains(candidate_token):
 			source = candidate
 			source_generation_index = generation_index
 			break
@@ -37,6 +46,14 @@ func _init() -> void:
 		source_generation_index, " source_rank=", source_rank,
 		" source_id=", source.stable_id if source != null else &"",
 		" source_score=", WarrenPublicRealmCarver.topology_score(source))
+	if "--precomposition-rank-only" in OS.get_cmdline_user_args():
+		for ranked: Dictionary in WarrenVolumetricSolver \
+				._ranked_precomposition_variants(frontier, program):
+			print("PRECOMPOSITION source=", ranked.volume.stable_id,
+				" variant=", ranked.variant, " score=", ranked.score,
+				" audit=", ranked.audit)
+		quit()
+		return
 	if "--frontier-only" in OS.get_cmdline_user_args():
 		for candidate: WarrenVolumePlan in frontier:
 			print("CANDIDATE id=", candidate.stable_id,
@@ -58,8 +75,10 @@ func _init() -> void:
 				reservation.get("owner_endpoints", []), " components=",
 				reservation.get("components", []))
 	var solve_started_ms := Time.get_ticks_msec()
-	var plan := WarrenVolumetricSolver.from_volume(source, requested_variant,
-		program)
+	var plan := WarrenVolumetricSolver.solve(7, {}, program) \
+		if "--solve-production" in OS.get_cmdline_user_args() \
+		else WarrenVolumetricSolver.from_volume(source, requested_variant,
+			program)
 	print("SPATIAL_SOLVE_MS=", Time.get_ticks_msec() - solve_started_ms)
 	if plan == null:
 		print("FAIL: ", WarrenVolumetricSolver.last_failure.left(1200))
@@ -114,6 +133,14 @@ func _init() -> void:
 	print("COMPOSITION_AUDIT: ", WarrenRoomCompositionPlanner.last_audit)
 	print("COMPOSITION_MERGE_DIAG: ",
 		WarrenRoomCompositionPlanner.last_merge_diagnostic)
+	print("SPATIAL_RESIDUAL_AUDIT: buildings=",
+		plan.audit.get("residual_backfill_building_count", 0), " cells=",
+		plan.audit.get("residual_backfill_private_cell_count", 0),
+		" new_overhead=",
+		plan.audit.get("residual_backfill_overhead_route_cell_count", 0),
+		" new_frontage=",
+		plan.audit.get("residual_backfill_frontage_side_count", 0),
+		" kinds=", plan.audit.get("residual_backfill_kind_counts", {}))
 	if "--compiler-only" in OS.get_cmdline_user_args():
 		var compiled := WarrenSpatialFabricCompiler.solve(plan, program)
 		print("FABRIC_SEALED=", compiled != null,
