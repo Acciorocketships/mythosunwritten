@@ -99,8 +99,12 @@ func seal(grid: WarrenSpatialGrid) -> bool:
 	for threshold: Dictionary in thresholds:
 		var private_cell := threshold.private_cell as Vector3i
 		var public_cell := threshold.public_cell as Vector3i
+		var floor_claim := grid.face_claim(public_cell, Vector3i.DOWN)
 		if not _private_set.has(private_cell) or not grid.contains(public_cell) \
-				or grid.use_at(public_cell) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+				or grid.use_at(public_cell) != WarrenSpatialGrid.Use.PUBLIC_AIR \
+				or floor_claim.is_empty() \
+				or int(floor_claim.get("kind", -1)) \
+					!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
 			return _reject("threshold does not meet public air")
 	audit["private_cell_count"] = private_cells.size()
 	audit["threshold_count"] = thresholds.size()

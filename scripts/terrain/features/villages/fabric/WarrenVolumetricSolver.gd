@@ -134,6 +134,8 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit["room_stamp_count"] = int(partition.room_count)
 	plan.audit["offset_composition_block_count"] = int(partition.offset_blocks)
 	plan.audit["ownership_handoff_count"] = int(partition.handoffs)
+	plan.audit["rejected_unfloored_address_count"] = int(
+		partition.rejected_unfloored_address_count)
 	plan.audit.merge(partition.composition_audit as Dictionary, true)
 	plan.audit["preplanned_skywalk_count"] = int(
 		partition.preplanned_skywalk_count)
@@ -247,9 +249,18 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
 		construction_program: SettlementFabricProgram) -> Dictionary:
 	var proposals: Array[Dictionary] = []
+	var rejected_unfloored_addresses := 0
 	for parcel: WarrenBuildingParcel in parcels.parcels:
 		var proposal := WarrenParcelConstruction.proposal(parcel)
 		if proposal.is_empty():
+			continue
+		# Mass-first frontage includes intermediate stair/ramp macro cells. Only
+		# two fine lanes inside such a square carry the actual transition surface;
+		# a door aimed at either unused half opens into swept public air with no
+		# floor. Reject that parcel before it can reserve hero features or enter the
+		# room composition, and keep the same fact as a final room/building seal.
+		if not _parcel_address_has_public_floor(grid, parcel):
+			rejected_unfloored_addresses += 1
 			continue
 		proposal["parcel"] = parcel
 		proposals.append(proposal)
@@ -687,10 +698,27 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		"room_count": room_count, "offset_blocks": offset_blocks,
 		"handoffs": handoffs,
 		"composition_audit": composition.audit,
+		"rejected_unfloored_address_count": rejected_unfloored_addresses,
 		"preplanned_skywalk_count": skywalk_reservations.size(),
 		"skywalk_reservations": skywalk_reservations,
 		"landmark_reservations": landmark_reservations,
 		"market_reservation": market_reservation}
+
+
+static func _parcel_address_has_public_floor(grid: WarrenSpatialGrid,
+		parcel: WarrenBuildingParcel) -> bool:
+	if grid == null or parcel == null:
+		return false
+	var threshold := WarrenParcelConstruction.threshold_cell(parcel)
+	if threshold.x == 2147483647:
+		return false
+	var landing := threshold + Vector3i(parcel.frontage_direction.x, 0,
+		parcel.frontage_direction.y)
+	var floor_claim := grid.face_claim(landing, Vector3i.DOWN)
+	return grid.use_at(landing) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+		and not floor_claim.is_empty() \
+		and int(floor_claim.get("kind", -1)) \
+			== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR
 
 
 static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,

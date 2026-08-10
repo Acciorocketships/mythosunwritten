@@ -75,6 +75,13 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		assert_lte(int(building.audit.longest_identical_floorplate_run),
 			WarrenBuildingVolume.MAX_IDENTICAL_FLOORPLATE_RUN)
 		assert_gt(building.room_records.size(), 0)
+		for threshold: Dictionary in building.thresholds:
+			var landing := threshold.public_cell as Vector3i
+			assert_has(plan.route_floor_cells, landing,
+				"every public doorway must land on an authoritative route floor")
+			assert_eq(int(plan.grid.face_claim(landing,
+				Vector3i.DOWN).get("kind", -1)),
+				WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR)
 		for room: WarrenRoomStamp in building.room_records:
 			assert_true(room.is_sealed())
 			assert_true(room.kind in WarrenRoomStamp.KINDS)

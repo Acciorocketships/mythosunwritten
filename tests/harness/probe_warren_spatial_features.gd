@@ -91,6 +91,16 @@ func _init() -> void:
 		print("FABRIC_SEALED=", compiled != null,
 			" failure=", WarrenSpatialFabricCompiler.last_failure,
 			" audit=", WarrenSpatialFabricCompiler.last_audit)
+		if compiled != null:
+			print("UNSERVED_ENTRANCES=",
+				compiled.surface_plan.unserved_entrances)
+			for entrance: Dictionary in compiled.surface_plan.unserved_entrances:
+				var landing := entrance.landing_cell as Vector3i
+				print("UNSERVED_SOURCE landing=", landing,
+					" route_floor=", plan.route_floor_cells.has(landing),
+					" use=", plan.grid.use_at(landing),
+					" floor_face=", plan.grid.face_claim(landing,
+						Vector3i.DOWN))
 		if compiled == null:
 			_print_support_handoffs(plan)
 			_print_feature_bindings(plan)

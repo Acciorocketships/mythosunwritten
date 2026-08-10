@@ -209,22 +209,83 @@ func _market_views() -> Array[Dictionary]:
 			int(record.yaw_quarters))
 		var eye := centre + Vector3(outward3) * 7.0 + Vector3.UP * 1.45
 		var visual_bounds := _feature_visual_bounds(feature)
-		# A high orbit photographs the neighboring roofs because the bazaar is
-		# intentionally embedded in a sheltered arcade. Pull straight back along
-		# its canonical aisle far enough to see the canopy as an exterior silhouette
-		# rather than putting the lens under its low eave. The measured bounds still
-		# prevent a future larger canopy from swallowing the camera position.
-		var approach_eye := centre + Vector3(outward3) * 12.0 \
-			+ Vector3.UP * 3.0
-		if visual_bounds.grow(0.25).has_point(approach_eye):
-			approach_eye = centre + Vector3(outward3) * 15.0 \
-				+ Vector3.UP * 3.0
+		# The topology solver may join the market through any side or after a turn;
+		# recipe-local BACK is therefore not evidence of the street approach. Walk
+		# the actual connected route and select a clear player-height sightline back
+		# into the bazaar. This keeps a neighboring house from becoming the entire
+		# exterior review image while still photographing the market from traversable
+		# public space.
+		var approach := _market_route_approach(feature,
+			centre + Vector3.UP * 1.25)
+		var ignored := [StringName("spatial.fabric.%s" % feature.stable_id)] \
+			as Array[StringName]
+		var approach_eye := approach.position as Vector3 \
+			if not approach.is_empty() else _best_orbit_position(centre,
+				12.0, 2.0, ignored, visual_bounds)
+		var approach_target := approach.target as Vector3 \
+			if not approach.is_empty() else centre + Vector3.UP * 1.25
 		return [{"id": "market-aisle", "position": eye,
 			"target": centre + Vector3.UP * 1.35, "fov": 66.0},
 			{"id": "market-approach", "position": approach_eye,
-				"target": centre + Vector3.UP * 1.25, "fov": 64.0}] \
+				"target": approach_target, "fov": 68.0}] \
 			as Array[Dictionary]
 	return [] as Array[Dictionary]
+
+
+func _market_route_approach(feature: WarrenFeatureReservation,
+		target: Vector3) -> Dictionary:
+	var public_set: Dictionary = {}
+	for cell: Vector3i in feature.public_cells:
+		public_set[cell] = true
+	var route_set: Dictionary = {}
+	for cell: Vector3i in _spatial.route_floor_cells:
+		route_set[cell] = true
+	var queue: Array[Vector3i] = []
+	var distance_by_cell: Dictionary = {}
+	for public_cell: Vector3i in feature.public_cells:
+		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK,
+				Vector3i.LEFT, Vector3i.FORWARD]:
+			var neighbor := public_cell + direction
+			if neighbor.y != public_cell.y or public_set.has(neighbor) \
+					or not route_set.has(neighbor) \
+					or distance_by_cell.has(neighbor):
+				continue
+			distance_by_cell[neighbor] = 0
+			queue.append(neighbor)
+	if queue.is_empty():
+		return {}
+	var candidates: Array[Vector3i] = []
+	while not queue.is_empty():
+		var current: Vector3i = queue.pop_front()
+		var route_distance := int(distance_by_cell[current])
+		if route_distance >= 1:
+			candidates.append(current)
+		if route_distance >= 12:
+			continue
+		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK,
+				Vector3i.LEFT, Vector3i.FORWARD]:
+			var neighbor := current + direction
+			if neighbor.y != current.y or distance_by_cell.has(neighbor) \
+					or not route_set.has(neighbor):
+				continue
+			distance_by_cell[neighbor] = route_distance + 1
+			queue.append(neighbor)
+	if candidates.is_empty():
+		candidates.append_array(distance_by_cell.keys())
+	var ignored := [StringName("spatial.fabric.%s" % feature.stable_id)] \
+		as Array[StringName]
+	var best_eye := _route_eye(candidates[0])
+	var best_score := 1 << 30
+	for candidate: Vector3i in candidates:
+		var candidate_eye := _route_eye(candidate)
+		var horizontal_distance := Vector2(candidate_eye.x - target.x,
+			candidate_eye.z - target.z).length()
+		var score := _view_occlusion_score(candidate_eye, target, ignored) * 100 \
+			+ roundi(absf(horizontal_distance - 10.5) * 10.0)
+		if score < best_score:
+			best_score = score
+			best_eye = candidate_eye
+	return {"position": best_eye, "target": target}
 
 
 func _courtyard_views() -> Array[Dictionary]:

@@ -95,12 +95,17 @@ func seal(grid: WarrenSpatialGrid, building_id: StringName) -> bool:
 				or grid.owner_name_at(cell) != building_id:
 			return _reject("room stamp differs from private volume at %s" % cell)
 	if addressed:
+		var public_landing := threshold_cell + frontage_direction
+		var floor_claim := grid.face_claim(public_landing, Vector3i.DOWN)
 		if not _cell_set.has(threshold_cell) \
 				or absi(frontage_direction.x) + absi(frontage_direction.y) \
 					+ absi(frontage_direction.z) != 1 \
 				or frontage_direction.y != 0 \
-				or grid.use_at(threshold_cell + frontage_direction) \
-					!= WarrenSpatialGrid.Use.PUBLIC_AIR:
+				or grid.use_at(public_landing) \
+					!= WarrenSpatialGrid.Use.PUBLIC_AIR \
+				or floor_claim.is_empty() \
+				or int(floor_claim.get("kind", -1)) \
+					!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
 			return _reject("addressed room has no exact public threshold")
 	elif threshold_cell.x != 2147483647:
 		return _reject("unaddressed room carries a threshold")
