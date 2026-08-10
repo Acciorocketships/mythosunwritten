@@ -138,13 +138,14 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		var parents: Array[StringName] = []
 		var bonds: Array[Dictionary] = []
 		if not room.terrain_bearing:
-			var parent_key := _source_level_key(room.source_parcel_id,
-				room.source_storey_index - 1)
+			var parent_key := _source_level_key(
+				room.support_parent_parcel_id,
+				room.support_parent_storey_index)
 			var parent_room := room_by_source_level.get(parent_key) \
 				as WarrenRoomStamp
 			if parent_room == null or not unit_by_room.has(parent_room.stable_id):
-				last_failure = "room %s has no built lower source level" % \
-					room.stable_id
+				last_failure = "room %s has no built support parent %s" % [
+					room.stable_id, parent_key]
 				return [] as Array[FabricUnit]
 			var parent_unit := unit_by_room[parent_room.stable_id] as FabricUnit
 			var bearing := _bearing_bond(room, parent_room, parent_unit.stable_id)

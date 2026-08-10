@@ -34,6 +34,14 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		WarrenSpatialFeatureSolver.MIN_BALCONY_BUILDINGS)
 	assert_gte(int(plan.audit.room_outcropping_count),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
+	assert_gte(int(plan.audit.merged_upper_composition_count), 3,
+		"adjacent narrow columns should become shared upper room plates")
+	assert_gte(int(plan.audit.mixed_kind_tall_lineage_count), 3,
+		"tall construction must change room size/kind across height")
+	assert_eq(int(plan.audit.extruded_tall_lineage_count), 0,
+		"no 5+ storey source lineage may remain one extruded room kind")
+	assert_lte(int(plan.audit.max_tower_only_lineage_storeys), 4,
+		"an unpaired 3x3 m lineage may not become a visual spike")
 	assert_not_null(plan.construction_plan)
 	assert_gt(int(plan.construction_plan.audit.roof_region_count), 0)
 	for building: WarrenBuildingVolume in plan.buildings:

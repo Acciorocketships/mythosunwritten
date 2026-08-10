@@ -70,11 +70,45 @@ func _init() -> void:
 		return
 	print("LANDMARK_DIAG: ",
 		WarrenVolumetricSolver.last_preplan_landmark_diagnostic)
+	print("COMPOSITION_AUDIT: ", WarrenRoomCompositionPlanner.last_audit)
+	print("COMPOSITION_MERGE_DIAG: ",
+		WarrenRoomCompositionPlanner.last_merge_diagnostic)
 	_print_courtyard(plan)
+	_print_room_lineages(plan)
 	_print_offset_rooms(plan)
 	_print_straight_skywalks(plan)
 	_print_feature_compilation(plan, program)
 	quit()
+
+
+func _print_room_lineages(plan: WarrenSpatialPlan) -> void:
+	var by_source: Dictionary = {}
+	for building: WarrenBuildingVolume in plan.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not by_source.has(room.source_parcel_id):
+				by_source[room.source_parcel_id] = [] as Array[WarrenRoomStamp]
+			(by_source[room.source_parcel_id] as Array[WarrenRoomStamp]).append(room)
+	var source_ids: Array[StringName] = []
+	source_ids.assign(by_source.keys())
+	source_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	var tall_count := 0
+	for source_id: StringName in source_ids:
+		var rooms := by_source[source_id] as Array[WarrenRoomStamp]
+		rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
+			return a.source_storey_index < b.source_storey_index)
+		if rooms.size() < 4:
+			continue
+		tall_count += 1
+		var parts := PackedStringArray()
+		for room: WarrenRoomStamp in rooms:
+			parts.append("s%d:%s@%d,%d,%d/r%d" % [room.source_storey_index,
+				String(room.kind), room.lattice_origin.x, room.lattice_origin.y,
+				room.lattice_origin.z,
+				room.yaw_quarters])
+		print("TALL_LINEAGE ", source_id, " storeys=", rooms.size(), " ",
+			" | ".join(parts))
+	print("TALL_LINEAGE_COUNT=", tall_count)
 
 
 func _print_courtyard(plan: WarrenSpatialPlan) -> void:

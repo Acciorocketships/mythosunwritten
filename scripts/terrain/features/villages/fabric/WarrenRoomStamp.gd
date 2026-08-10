@@ -13,6 +13,11 @@ var lattice_origin: Vector3i
 var yaw_quarters: int
 var source_storey_index: int
 var terrain_bearing: bool
+## Exact lower room that carries this stamp. Ordinarily this is the previous
+## storey of the same source lineage; a volumetric handoff may instead name a
+## room from the neighboring lineage whose wider plate bridges both supports.
+var support_parent_parcel_id: StringName
+var support_parent_storey_index: int
 var addressed: bool
 var threshold_cell := Vector3i(2147483647, 2147483647, 2147483647)
 var frontage_direction := Vector3i.ZERO
@@ -30,7 +35,9 @@ func _init(p_stable_id: StringName, p_source_parcel_id: StringName,
 		p_addressed: bool, p_threshold_cell: Vector3i = Vector3i(2147483647,
 			2147483647, 2147483647),
 		p_frontage_direction: Vector3i = Vector3i.ZERO,
-		p_roof_feature: int = 0) -> void:
+		p_roof_feature: int = 0,
+		p_support_parent_parcel_id: StringName = &"",
+		p_support_parent_storey_index: int = -1) -> void:
 	stable_id = p_stable_id
 	source_parcel_id = p_source_parcel_id
 	kind = p_kind
@@ -38,6 +45,14 @@ func _init(p_stable_id: StringName, p_source_parcel_id: StringName,
 	yaw_quarters = p_yaw_quarters
 	source_storey_index = p_source_storey_index
 	terrain_bearing = p_terrain_bearing
+	if terrain_bearing:
+		support_parent_parcel_id = &""
+		support_parent_storey_index = -1
+	else:
+		support_parent_parcel_id = p_support_parent_parcel_id \
+			if not p_support_parent_parcel_id.is_empty() else source_parcel_id
+		support_parent_storey_index = p_support_parent_storey_index \
+			if p_support_parent_storey_index >= 0 else source_storey_index - 1
 	addressed = p_addressed
 	threshold_cell = p_threshold_cell
 	frontage_direction = p_frontage_direction
@@ -60,7 +75,13 @@ func seal(grid: WarrenSpatialGrid, building_id: StringName) -> bool:
 	if _sealed or grid == null or stable_id.is_empty() \
 			or source_parcel_id.is_empty() or building_id.is_empty() \
 			or kind not in KINDS or yaw_quarters < 0 or yaw_quarters > 3 \
-			or source_storey_index < 0 or private_cells.is_empty():
+			or source_storey_index < 0 or private_cells.is_empty() \
+			or terrain_bearing and (not support_parent_parcel_id.is_empty() \
+				or support_parent_storey_index >= 0) \
+			or not terrain_bearing and (support_parent_parcel_id.is_empty() \
+				or support_parent_storey_index < 0 \
+				or support_parent_parcel_id == source_parcel_id \
+					and support_parent_storey_index >= source_storey_index):
 		return _reject("invalid room-stamp identity")
 	var expected := expected_private_cells(kind, lattice_origin, yaw_quarters)
 	if expected.size() != private_cells.size():
@@ -103,10 +124,12 @@ func has_private_cell(cell: Vector3i) -> bool:
 
 
 func deterministic_signature() -> String:
-	return "%s/%s/%s@%d:%d:%d/r%d/s%d/b%d/a%d/t=%d:%d:%d/f=%d:%d:%d/rf%d" % [
+	return "%s/%s/%s@%d:%d:%d/r%d/s%d/b%d/p=%s:%d/a%d/t=%d:%d:%d/f=%d:%d:%d/rf%d" % [
 		String(stable_id), String(source_parcel_id), String(kind),
 		lattice_origin.x, lattice_origin.y, lattice_origin.z, yaw_quarters,
-		source_storey_index, int(terrain_bearing), int(addressed),
+		source_storey_index, int(terrain_bearing),
+		String(support_parent_parcel_id), support_parent_storey_index,
+		int(addressed),
 		threshold_cell.x, threshold_cell.y, threshold_cell.z,
 		frontage_direction.x, frontage_direction.y, frontage_direction.z,
 		roof_feature]

@@ -134,6 +134,7 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit["room_stamp_count"] = int(partition.room_count)
 	plan.audit["offset_composition_block_count"] = int(partition.offset_blocks)
 	plan.audit["ownership_handoff_count"] = int(partition.handoffs)
+	plan.audit.merge(partition.composition_audit as Dictionary, true)
 	plan.audit["preplanned_skywalk_count"] = int(
 		partition.preplanned_skywalk_count)
 	plan.audit["preplanned_landmark_count"] = (
@@ -425,12 +426,13 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			(protected_owners[cell_value] as Dictionary)[reservation_owner] = \
 				allowed_endpoint_owners
 	var forced_offsets_by_parcel := skywalk_plan.forced_offsets as Dictionary
-	var buildings: Array[WarrenBuildingVolume] = []
-	var supports := WarrenSupportGraph.new()
-	var required_supports: Array[StringName] = []
-	var room_count := 0
-	var offset_blocks := 0
-	var handoffs := 0
+	# First solve every exact interface block against the unchanged residual
+	# mass. The volumetric composition planner then re-partitions only those
+	# upper bands that are not doors, court edges, market sockets, or skywalk
+	# endpoints. This separates immutable topology from mutable construction
+	# form and prevents proposal iteration order from deciding who survives.
+	var solved_offsets_by_parcel: Dictionary = {}
+	var exact_forced_offsets_by_parcel: Dictionary = {}
 	for proposal: Dictionary in proposals:
 		var parcel := proposal.parcel as WarrenBuildingParcel
 		var storeys := int(proposal.storeys)
@@ -438,9 +440,6 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		var base_plate := _proposal_base_plate(proposal)
 		if storeys <= 0 or base_plate.is_empty():
 			continue
-		# The storey containing the authored doorway is an immovable public
-		# interface.  Offsetting that composition block would preserve the room
-		# volume but strand its real threshold inside the old facade plane.
 		var threshold := WarrenParcelConstruction.threshold_cell(parcel)
 		var addressed_storey := clampi(floori(float(threshold.y - origin.y) \
 			/ float(WarrenSpatialGrid.STOREY_CELLS)), 0, storeys - 1)
@@ -462,59 +461,139 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			forced_offsets)
 		if offsets.is_empty():
 			continue
-		for offset: Vector2i in offsets:
-			offset_blocks += int(offset != Vector2i.ZERO)
-		var segments := _composition_segments(offsets, storeys)
-		handoffs += maxi(0, segments.size() - 1)
+		solved_offsets_by_parcel[parcel.stable_id] = offsets
+		exact_forced_offsets_by_parcel[parcel.stable_id] = forced_offsets
+		# A solved block set is a provisional 3D reservation for the remaining
+		# source passes. Without this lock, two individually legal lateral moves
+		# can converge on the same residual cell even though neither overlaps the
+		# original parcel envelopes. The later room grammar may merge or shrink
+		# these reservations, but it starts from a non-overlapping partition.
+		for cell: Vector3i in _segment_cells(base_plate, origin.y, offsets, 0,
+				storeys):
+			if not protected_owners.has(cell):
+				protected_owners[cell] = {}
+			(protected_owners[cell] as Dictionary)[parcel.stable_id] = true
+	var composition := WarrenRoomCompositionPlanner.solve(grid, volume,
+		proposals, solved_offsets_by_parcel, exact_forced_offsets_by_parcel,
+		market_reservation, protected_owners, volume.world_seed)
+	if composition.is_empty():
+		last_failure = "3D room composition failed: %s" \
+			% WarrenRoomCompositionPlanner.last_failure
+		return {}
+	var lineages := composition.lineages as Dictionary
+	var building_id_by_block_key: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		var source_parcel := proposal.parcel as WarrenBuildingParcel
+		var source_lineage := lineages.get(source_parcel.stable_id, {}) \
+			as Dictionary
+		if source_lineage.is_empty():
+			continue
+		var source_blocks := source_lineage.blocks as Array[Dictionary]
+		for segment_index in source_blocks.size():
+			var source_block := source_blocks[segment_index] as Dictionary
+			building_id_by_block_key["%s/%d" % [source_parcel.stable_id,
+				int(source_block.source_block_index)]] = StringName(
+				"spatial.%s.part%02d" % [source_parcel.stable_id, segment_index])
+	var buildings: Array[WarrenBuildingVolume] = []
+	var supports := WarrenSupportGraph.new()
+	var required_supports: Array[StringName] = []
+	var terrain_support_ids: Array[StringName] = []
+	var support_edges: Array[Dictionary] = []
+	var room_count := 0
+	var offset_blocks := 0
+	var handoffs := 0
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		var lineage := lineages.get(parcel.stable_id, {}) as Dictionary
+		if lineage.is_empty():
+			continue
+		var blocks := lineage.blocks as Array[Dictionary]
+		if blocks.is_empty():
+			continue
+		var origin := proposal.origin as Vector3i
+		var threshold := WarrenParcelConstruction.threshold_cell(parcel)
+		for block: Dictionary in blocks:
+			offset_blocks += int(StringName(block.kind) \
+				!= StringName(block.original_kind) \
+				or block.origin != block.original_origin \
+				or int(block.yaw_quarters) \
+					!= int(block.original_yaw_quarters))
+		handoffs += maxi(0, blocks.size() - 1)
 		var segment_ids: Array[StringName] = []
-		for segment_index in segments.size():
+		for segment_index in blocks.size():
 			segment_ids.append(StringName("spatial.%s.part%02d" % [
 				StringName(parcel.stable_id), segment_index]))
 		var threshold_segment := -1
-		for segment_index in segments.size():
-			var segment := segments[segment_index] as Vector2i
-			if threshold.y >= origin.y + segment.x * WarrenSpatialGrid.STOREY_CELLS \
-					and threshold.y < origin.y \
-						+ segment.y * WarrenSpatialGrid.STOREY_CELLS:
+		for segment_index in blocks.size():
+			var block := blocks[segment_index] as Dictionary
+			if threshold.y >= origin.y + int(block.start_storey) \
+					* WarrenSpatialGrid.STOREY_CELLS \
+					and threshold.y < origin.y + int(block.end_storey) \
+						* WarrenSpatialGrid.STOREY_CELLS:
 				threshold_segment = segment_index
 				break
-		for segment_index in segments.size():
-			var segment := segments[segment_index] as Vector2i
+		if threshold_segment < 0:
+			last_failure = "3D composition removed addressed block for %s" \
+				% parcel.stable_id
+			return {}
+		for segment_index in blocks.size():
+			var block := blocks[segment_index] as Dictionary
 			var building_id := segment_ids[segment_index]
-			var cells := _segment_cells(base_plate, origin.y, offsets,
-				segment.x, segment.y)
+			var cells := block.cells as Array[Vector3i]
 			var assign := grid.begin_transaction(building_id)
 			if not assign.require_use(cells,
 					[WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
 					or not assign.assign_use(cells,
 						WarrenSpatialGrid.Use.PRIVATE_VOLUME, building_id) \
 					or not assign.commit():
-				last_failure = "room segment %s rejected: %s" % [building_id,
-					assign.last_rejection]
+				var conflict_parts := PackedStringArray()
+				for conflict_cell: Vector3i in cells:
+					if grid.use_at(conflict_cell) \
+							!= WarrenSpatialGrid.Use.ALLOCATABLE:
+						conflict_parts.append("%s=%d/%s" % [conflict_cell,
+							grid.use_at(conflict_cell),
+							String(grid.owner_name_at(conflict_cell))])
+						if conflict_parts.size() >= 8:
+							break
+				last_failure = "room segment %s rejected: %s conflicts=%s" % [
+					building_id, assign.last_rejection,
+					",".join(conflict_parts)]
 				return {}
 			var building := WarrenBuildingVolume.new(building_id,
-				origin.y + segment.x * WarrenSpatialGrid.STOREY_CELLS)
+				origin.y + int(block.start_storey) \
+					* WarrenSpatialGrid.STOREY_CELLS)
 			if not building.add_private_cells(cells):
 				last_failure = "could not assign private cells to %s" % building_id
 				return {}
-			for storey in range(segment.x, segment.y):
-				var room_cells := _segment_cells(base_plate, origin.y, offsets,
-					storey, storey + 1)
-				var offset := offsets[storey / 2]
+			for storey in range(int(block.start_storey), int(block.end_storey)):
+				var room_origin := Vector3i((block.origin as Vector3i).x,
+					origin.y + storey * WarrenSpatialGrid.STOREY_CELLS,
+					(block.origin as Vector3i).z)
+				var room_cells := WarrenRoomStamp.expected_private_cells(
+					StringName(block.kind), room_origin,
+					int(block.yaw_quarters))
 				var addressed := threshold.y >= origin.y \
 					+ storey * WarrenSpatialGrid.STOREY_CELLS \
 					and threshold.y < origin.y \
 						+ (storey + 1) * WarrenSpatialGrid.STOREY_CELLS
+				var support_parent_parcel_id := &""
+				var support_parent_storey_index := -1
+				if storey == int(block.start_storey) \
+						and block.has("support_parent_lineage_id"):
+					support_parent_parcel_id = StringName(
+						block.support_parent_lineage_id)
+					support_parent_storey_index = int(
+						block.support_parent_source_storey)
 				var room := WarrenRoomStamp.new(
 					StringName("%s.room%02d" % [building_id,
-						storey - segment.x]), parcel.stable_id,
-					StringName(proposal.kind), origin + Vector3i(offset.x,
-						storey * WarrenSpatialGrid.STOREY_CELLS, offset.y),
-					int(proposal.yaw_quarters), storey, storey == 0,
+						storey - int(block.start_storey)]), parcel.stable_id,
+					StringName(block.kind), room_origin,
+					int(block.yaw_quarters), storey, storey == 0,
 					addressed, threshold if addressed else Vector3i(2147483647,
 						2147483647, 2147483647),
 					Vector3i(parcel.frontage_direction.x, 0,
-						parcel.frontage_direction.y), int(proposal.roof_feature))
+						parcel.frontage_direction.y), int(proposal.roof_feature),
+					support_parent_parcel_id, support_parent_storey_index)
 				if not room.add_private_cells(room_cells) \
 						or not room.seal(grid, building_id) \
 						or not building.add_room(room):
@@ -566,23 +645,46 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				return {}
 			required_supports.append(building_id)
 		for segment_index in segment_ids.size():
-			if segment_index == 0:
-				if not supports.mark_terrain_root(segment_ids[segment_index]):
-					last_failure = "could not root %s" % segment_ids[segment_index]
-					return {}
-			elif not supports.add_edge(segment_ids[segment_index],
-					segment_ids[segment_index - 1]):
-				last_failure = "could not support %s" % segment_ids[segment_index]
+			var block := blocks[segment_index] as Dictionary
+			if int(block.source_block_index) == 0:
+				terrain_support_ids.append(segment_ids[segment_index])
+				continue
+			var parent_key := ""
+			if block.has("support_parent_lineage_id"):
+				parent_key = "%s/%d" % [StringName(
+					block.support_parent_lineage_id),
+					int(block.support_parent_source_block_index)]
+			elif segment_index > 0:
+				var lower_block := blocks[segment_index - 1] as Dictionary
+				parent_key = "%s/%d" % [parcel.stable_id,
+					int(lower_block.source_block_index)]
+			var parent_id := StringName(building_id_by_block_key.get(parent_key,
+				&""))
+			if parent_id.is_empty():
+				last_failure = "composition support parent %s missing for %s" % [
+					parent_key, segment_ids[segment_index]]
 				return {}
+			support_edges.append({"child": segment_ids[segment_index],
+				"parent": parent_id})
 	if buildings.size() < MIN_BUILDINGS:
 		last_failure = "room partition formed only %d buildings" % buildings.size()
 		return {}
+	for root_id: StringName in terrain_support_ids:
+		if not supports.mark_terrain_root(root_id):
+			last_failure = "could not root %s" % root_id
+			return {}
+	for edge: Dictionary in support_edges:
+		if not supports.add_edge(StringName(edge.child), StringName(edge.parent)):
+			last_failure = "could not support %s from %s" % [edge.child,
+				edge.parent]
+			return {}
 	if not supports.seal(required_supports):
 		last_failure = "support DAG rejected: %s" % supports.last_rejection
 		return {}
 	return {"buildings": buildings, "supports": supports,
 		"room_count": room_count, "offset_blocks": offset_blocks,
 		"handoffs": handoffs,
+		"composition_audit": composition.audit,
 		"preplanned_skywalk_count": skywalk_reservations.size(),
 		"skywalk_reservations": skywalk_reservations,
 		"landmark_reservations": landmark_reservations,
