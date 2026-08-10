@@ -28,6 +28,8 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
 	assert_eq(int(plan.audit.enclosed_skywalk_count),
 		WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
+	assert_eq(int(plan.audit.tower_annex_count),
+		WarrenSpatialFeatureSolver.TARGET_TOWER_ANNEXES)
 	assert_gte(int(plan.audit.usable_balcony_count),
 		WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	assert_gte(int(plan.audit.balcony_building_count),
@@ -75,6 +77,7 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	var skywalks: Array[WarrenFeatureReservation] = []
 	var markets: Array[WarrenFeatureReservation] = []
 	var balconies: Array[WarrenFeatureReservation] = []
+	var tower_annexes: Array[WarrenFeatureReservation] = []
 	var landmarks: Array[WarrenFeatureReservation] = []
 	var outcroppings: Array[WarrenFeatureReservation] = []
 	for feature: WarrenFeatureReservation in plan.features:
@@ -87,6 +90,8 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 				markets.append(feature)
 			&"balcony":
 				balconies.append(feature)
+			&"tower_annex":
+				tower_annexes.append(feature)
 			&"prefab_landmark":
 				landmarks.append(feature)
 			&"room_outcropping":
@@ -197,6 +202,23 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	assert_gte(landmark_link_count, 1,
 		"at least one true skywalk must terminate in a landmark socket")
 	assert_gte(balconies.size(), WarrenSpatialFeatureSolver.TARGET_BALCONIES)
+	assert_eq(tower_annexes.size(),
+		WarrenSpatialFeatureSolver.TARGET_TOWER_ANNEXES)
+	var annex_source_lineages: Dictionary = {}
+	for annex: WarrenFeatureReservation in tower_annexes:
+		assert_eq(annex.endpoints.size(), 1)
+		assert_eq(annex.construction_records.size(), 1)
+		assert_true(String(annex.construction_records[0].recipe_id) \
+			.begins_with("outcrop."))
+		assert_true(bool(annex.audit.annex_breaks_tower_lineage))
+		var source_id := StringName(annex.audit.annex_source_parcel_id)
+		assert_false(annex_source_lineages.has(source_id),
+			"tower-breaking annexes must diversify distinct tall lineages")
+		annex_source_lineages[source_id] = true
+		for cell: Vector3i in annex.reserved_cells:
+			assert_eq(plan.grid.use_at(cell),
+				WarrenSpatialGrid.Use.PRIVATE_VOLUME)
+			assert_eq(plan.grid.owner_name_at(cell), annex.stable_id)
 	var balcony_owners: Dictionary = {}
 	var balcony_facades: Dictionary = {}
 	for balcony: WarrenFeatureReservation in balconies:

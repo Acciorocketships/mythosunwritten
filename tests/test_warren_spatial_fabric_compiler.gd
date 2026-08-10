@@ -43,6 +43,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var constructed_skywalks := 0
 	var constructed_markets := 0
 	var constructed_balconies := 0
+	var constructed_tower_annexes := 0
 	var constructed_landmarks := 0
 	for feature: WarrenFeatureReservation in spatial.features:
 		if feature.construction_records.is_empty():
@@ -51,6 +52,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		constructed_skywalks += int(feature.kind == &"enclosed_skywalk")
 		constructed_markets += int(feature.kind == &"covered_market")
 		constructed_balconies += int(feature.kind == &"balcony")
+		constructed_tower_annexes += int(feature.kind == &"tower_annex")
 		constructed_landmarks += int(feature.kind == &"prefab_landmark")
 		expected_feature_units += feature.construction_records.size()
 		expected_feature_cells += feature.reserved_cells.size()
@@ -67,6 +69,10 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_gte(constructed_balconies,
 		WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.tower_annex_feature_count), constructed_tower_annexes)
+	assert_eq(constructed_tower_annexes,
+		WarrenSpatialFeatureSolver.TARGET_TOWER_ANNEXES)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.prefab_landmark_feature_count), constructed_landmarks)
 	assert_eq(constructed_landmarks,
 		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
@@ -77,6 +83,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		assert_true(feature_recipe.has_tag(&"skywalk") \
 			or feature_recipe.has_tag(&"covered_market") \
 			or feature_recipe.has_tag(&"balcony") \
+			or feature_recipe.has_tag(&"outcropping") \
 			or feature_recipe.has_tag(&"prefab_anchor"))
 		assert_true(fabric.add_unit(feature_unit), fabric.last_rejection)
 	var roofs := WarrenSpatialFabricCompiler.compile_roof_units(spatial,

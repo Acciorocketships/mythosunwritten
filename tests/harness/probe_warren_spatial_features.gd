@@ -35,6 +35,8 @@ func _init() -> void:
 	print("SPATIAL_SOLVE_MS=", Time.get_ticks_msec() - solve_started_ms)
 	if plan == null:
 		print("FAIL: ", WarrenVolumetricSolver.last_failure.left(1200))
+		print("COMPOSITION_AUDIT_ON_FAILURE: ",
+			WarrenRoomCompositionPlanner.last_audit)
 		print("PREPLAN_SELECTION: selected=",
 			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
 				"selected_count", -1), " candidates=",

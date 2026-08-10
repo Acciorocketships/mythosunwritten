@@ -351,9 +351,18 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   protected reservations, and later lineage handoffs all remain valid. A second residual-mass pass
   can grow a room into genuinely unclaimed inhabited massif cells beyond its source footprint; an
   addressed upper room is eligible only when the transformed authored door and exact public frontage
-  remain unchanged. Storey diversity is audited from world-space floorplate columns rather than room
+  remain unchanged. Cardinal adjacency is deliberately not rejected by a blanket fine-cell moat:
+  exact cell ownership protects topology, compatible contact becomes a typed party wall, and the
+  selected recipes' measured envelopes decide sub-cell eave/facade clearance. Skywalk constraints
+  preserve the exact authored centre-facade room socket rather than accepting any perimeter cell.
+  Storey diversity is audited from world-space floorplate columns rather than room
   kind or local origin, because even-cell rotations and origin changes can describe the same visible
-  shaft. No accepted tall lineage may remain a repeated world-space extrusion.
+  shaft. No accepted tall lineage may remain a repeated world-space extrusion. Every occupied
+  composition feature owns private volume through the same sealed exact-reservation contract; final
+  ownership validation is intentionally feature-kind-agnostic. Three distinct measured roofed annexes
+  are reserved against the remaining tall lineages before balconies, using authored AABB clearance as
+  well as the integer occupancy raster so dormers, corner wraps, flue bays, and full-room outcrops can
+  break the vertical read without clipping unrelated eaves.
   After exact room composition, the same fine grid admits exactly six usable balconies across at
   least three building owners. Each is one measured 3 x 1.5 m private occupied-floor recipe with
   two deck tiles, full two-band headroom, a reviewed door facade, four exposed-edge railing runs,

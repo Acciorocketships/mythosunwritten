@@ -7,7 +7,7 @@ extends RefCounted
 ## and roof compilation may respond to these facts but never recreate them.
 const TARGET_SKYWALKS := 3
 const TARGET_PREFAB_LANDMARKS := 2
-const TARGET_TOWER_ANNEXES := 2
+const TARGET_TOWER_ANNEXES := 3
 const TARGET_BALCONIES := 6
 const MIN_BALCONY_BUILDINGS := 3
 const MAX_BALCONIES_PER_BUILDING := 2
@@ -152,6 +152,16 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		&"outcrop.blue", &"outcrop.orange",
 		&"outcrop.corner.wrap.left.amber",
 		&"outcrop.corner.wrap.right.blue",
+		&"outcrop.corner.wrap.left.orange",
+		&"outcrop.corner.wrap.right.amber",
+		&"outcrop.dormer.gable.teal.left",
+		&"outcrop.dormer.gable.orange.right",
+		&"outcrop.dormer.shed.teal.right",
+		&"outcrop.dormer.shed.orange.left",
+		&"outcrop.flue.corner.left.blue",
+		&"outcrop.flue.corner.right.orange",
+		&"outcrop.capped.corner.left.amber",
+		&"outcrop.capped.corner.right.amber",
 	]
 	var candidates: Array[Dictionary] = []
 	for endpoint: Dictionary in _balcony_room_endpoints(buildings):
@@ -186,10 +196,14 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				._skywalk_visual_clearance_cells(components, program)
 			var clearance_audit := _balcony_clearance_audit(grid, clearance,
 				body, allowed_owner_ids, origin.y)
-			if not bool(clearance_audit.get("fits", false)):
+			if not bool(clearance_audit.get("fits", false)) \
+					or not _tower_annex_clears_room_envelopes(recipe, origin,
+						yaw, room.source_parcel_id, buildings, program,
+						world_seed):
 				continue
 			candidates.append({"recipe_id": recipe_id, "origin": origin,
 				"yaw_quarters": yaw, "body": body, "clearance": clearance,
+				"body_cell_count": body.size(),
 				"clearance_only": clearance_audit.clearance_only,
 				"covered_public_cells": clearance_audit.covered_public_cells,
 				"endpoint_cell": endpoint.cell, "socket_world": socket_world,
@@ -205,6 +219,8 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		var b_room := b.room as WarrenRoomStamp
 		if a_room.source_storey_index != b_room.source_storey_index:
 			return a_room.source_storey_index > b_room.source_storey_index
+		if int(a.body_cell_count) != int(b.body_cell_count):
+			return int(a.body_cell_count) > int(b.body_cell_count)
 		return int(a.tie) < int(b.tie))
 	var out: Array[WarrenFeatureReservation] = []
 	var used_sources: Dictionary = {}
@@ -231,6 +247,41 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		used_sources[room.source_parcel_id] = true
 		out.append(feature)
 	return out
+
+
+static func _tower_annex_clears_room_envelopes(recipe: FabricRecipe,
+		origin: Vector3i, yaw_quarters: int, own_source_id: StringName,
+		buildings: Array[WarrenBuildingVolume], program: SettlementFabricProgram,
+		world_seed: int) -> bool:
+	## The integer clearance raster protects topology, but authored eaves and
+	## facade details can cross a cell boundary by centimetres. Use the same
+	## measured AABBs as SettlementFabricPlan before reserving an annex; only
+	## rooms in its own source lineage are explicit visual seams.
+	var annex_bounds := FabricRecipe.lattice_transform(origin, yaw_quarters) \
+		* recipe.local_clearance_bounds
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.source_parcel_id == own_source_id:
+				continue
+			var recipe_ids: Array[StringName] = [
+				WarrenSpatialFabricCompiler._room_recipe_id(room, world_seed),
+				WarrenSpatialFabricCompiler._room_recipe_id(room, world_seed, false),
+			]
+			var seen: Dictionary = {}
+			for recipe_id: StringName in recipe_ids:
+				if seen.has(recipe_id):
+					continue
+				seen[recipe_id] = true
+				var room_recipe := program.recipe(recipe_id)
+				if room_recipe == null:
+					return false
+				var room_bounds := FabricRecipe.lattice_transform(
+					room.lattice_origin, room.yaw_quarters) \
+					* room_recipe.local_clearance_bounds
+				if SettlementFabricPlan._aabb_overlaps_volume(annex_bounds,
+						room_bounds):
+					return false
+	return true
 
 
 static func _commit_tower_annex(grid: WarrenSpatialGrid,

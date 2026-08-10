@@ -1123,38 +1123,12 @@ static func _record_clearance_failure(grid: WarrenSpatialGrid,
 static func _new_projection_has_clearance(record: Dictionary,
 		source_columns: Dictionary, protected_owners: Dictionary,
 		claimed_cells: Dictionary, allowed_owner_ids: Dictionary) -> bool:
-	## A logical cell is 1.5 m wide, while reviewed facade/eave envelopes can
-	## project several decimetres beyond it. New cantilever columns therefore
-	## keep one fine-cell broad-phase halo from unrelated provisional rooms.
-	## Existing source columns retain their authored party-wall behavior.
-	for cell: Vector3i in record.cells:
-		if source_columns.has(Vector2i(cell.x, cell.z)):
-			continue
-		for dz in range(-1, 2):
-			for dx in range(-1, 2):
-				if dx == 0 and dz == 0:
-					continue
-				var neighbor := cell + Vector3i(dx, 0, dz)
-				if claimed_cells.has(neighbor):
-					var claimed_owner: Variant = claimed_cells[neighbor]
-					if not (claimed_owner is StringName or claimed_owner is String) \
-							or not allowed_owner_ids.has(StringName(claimed_owner)):
-						return false
-				var owners := protected_owners.get(neighbor, {}) as Dictionary
-				for owner_value: Variant in owners.keys():
-					var owner_id := StringName(owner_value)
-					if allowed_owner_ids.has(owner_id):
-						continue
-					var allowed := false
-					var allowance: Variant = owners[owner_value]
-					if allowance is Dictionary:
-						for allowed_id_value: Variant in allowed_owner_ids.keys():
-							if (allowance as Dictionary).has(StringName(
-									allowed_id_value)):
-								allowed = true
-								break
-					if not allowed:
-						return false
+	## Cell overlap and hero-feature reservations are proven by the exact grid
+	## checks immediately before this call. Neighbor distance is not clearance:
+	## dense cardinal contact becomes a typed PARTY_WALL, while diagonal/eave
+	## compatibility is decided later from the actual selected recipe envelopes.
+	## A blanket fine-cell halo (1.5 m) erased the negative-space street fabric
+	## and made the only legal upper construction a repeated vertical shaft.
 	return true
 
 
@@ -1211,45 +1185,42 @@ static func _candidate_matches_constraints(kind: StringName,
 static func _candidate_has_facade_endpoint(kind: StringName,
 		origin: Vector3i, yaw: int, endpoint: Vector3i,
 		facing: Vector3i) -> bool:
-	var minimum := Vector2i.ZERO
-	var size := Vector2i.ZERO
+	var x_radius := 0
+	var z_radius := 0
 	match kind:
 		&"tower":
-			minimum = Vector2i(-1, -1)
-			size = Vector2i(2, 2)
+			x_radius = 1
+			z_radius = 1
 		&"slim":
-			minimum = Vector2i(-1, -2)
-			size = Vector2i(2, 4)
+			x_radius = 1
+			z_radius = 2
 		&"building":
-			minimum = Vector2i(-2, -2)
-			size = Vector2i(4, 4)
+			x_radius = 2
+			z_radius = 2
 		&"long":
-			minimum = Vector2i(-2, -3)
-			size = Vector2i(4, 6)
+			x_radius = 2
+			z_radius = 3
 		_:
 			return false
-	var maximum := minimum + size - Vector2i.ONE
-	for local_z in range(minimum.y, maximum.y + 1):
-		for local_x in range(minimum.x, maximum.x + 1):
-			for local_facing: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-					Vector3i.FORWARD, Vector3i.BACK]:
-				var on_side := local_facing == Vector3i.LEFT \
-						and local_x == minimum.x \
-					or local_facing == Vector3i.RIGHT \
-						and local_x == maximum.x \
-					or local_facing == Vector3i.FORWARD \
-						and local_z == minimum.y \
-					or local_facing == Vector3i.BACK \
-						and local_z == maximum.y
-				if not on_side or FabricRecipe.transform_direction(
-						local_facing, yaw) != facing:
-					continue
-				var local_cell := Vector3i(local_x, 0, local_z)
-				var cell_origin := Vector3i(origin.x, endpoint.y, origin.z)
-				if FabricRecipe.transform_cell(local_cell, cell_origin, yaw) \
-						== endpoint:
-					return true
-	return false
+	# Authored room recipes expose one non-corner socket at the centre of each
+	# facade.  Preserving an arbitrary perimeter cell is insufficient: the
+	# compiled bridge would then have no legal room/bearing bond even though its
+	# logical endpoint still touched private volume.
+	var local_facing := FabricRecipe.transform_direction(facing, -yaw)
+	var local_cell := Vector3i.ZERO
+	match local_facing:
+		Vector3i.LEFT:
+			local_cell = Vector3i(-x_radius, 0, 0)
+		Vector3i.RIGHT:
+			local_cell = Vector3i(x_radius - 1, 0, 0)
+		Vector3i.FORWARD:
+			local_cell = Vector3i(0, 0, -z_radius)
+		Vector3i.BACK:
+			local_cell = Vector3i(0, 0, z_radius - 1)
+		_:
+			return false
+	var cell_origin := Vector3i(origin.x, endpoint.y, origin.z)
+	return FabricRecipe.transform_cell(local_cell, cell_origin, yaw) == endpoint
 
 
 static func _record_is_clear_for_lineage(grid: WarrenSpatialGrid,

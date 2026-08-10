@@ -186,9 +186,12 @@ func _validate_building_ownership() -> bool:
 				return _reject("private cell differs from building owner at %s" % cell)
 			continue
 		var feature := _feature_by_id.get(owner_id) as WarrenFeatureReservation
-		if feature == null or feature.kind not in [&"enclosed_skywalk",
-				&"balcony", &"prefab_landmark"] \
-				or not feature.reserved_cells.has(cell):
+		# Feature ownership is a volumetric fact, not a closed list of visual
+		# feature names.  A sealed feature is the exact owner when both the grid
+		# owner and its immutable reservation name this cell.  Keeping a kind
+		# whitelist here made every new occupied composition feature fail only at
+		# final plan seal despite already passing its atomic reservation proof.
+		if feature == null or not feature.reserved_cells.has(cell):
 			return _reject("private cell has no exact building/feature owner at %s" \
 				% cell)
 	for cell: Vector3i in grid.cells_with_use(
