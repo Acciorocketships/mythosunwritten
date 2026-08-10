@@ -339,10 +339,6 @@ static func _record_feature_portal(out: Dictionary, room_by_id: Dictionary,
 	if room == null:
 		last_failure = "feature portal names missing room %s" % room_id
 		return false
-	if room.terrain_bearing:
-		last_failure = "feature portal %s targets unsupported terrain storey" % \
-			room_id
-		return false
 	if not _is_cardinal_xz(world_facing):
 		last_failure = "feature portal %s has no cardinal outward direction" % \
 			room_id

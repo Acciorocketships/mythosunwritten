@@ -15,6 +15,8 @@ const MIN_ROOT_RISE_BANDS := 2
 const MIN_BRANCH_SEPARATION_CELLS := 4
 const COURTYARD_RISE_BANDS := WarrenBuildingParcel.STOREY_BANDS * 2
 const MAX_COURTYARD_RISE_BANDS := COURTYARD_RISE_BANDS + 2
+const MIN_COURTYARD_BELOW_AIR_CELLS := 4
+const MIN_COURTYARD_ABOVE_AIR_CELLS := 2
 # Upper cul-de-sacs must be able to terminate at a building whose vertical
 # silhouette exceeds its footprint. One inhabited storey plus a roof was the
 # old generic address minimum; for these deliberately introduced gallery cells
@@ -112,6 +114,7 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 	var lower_squares := 0
 	var underbuilt_squares := 0
 	var upper_squares := 0
+	var vertically_threaded_squares := 0
 	var addressed_squares := 0
 	var max_address_sides := 0
 	var max_upper_mass := 0
@@ -186,14 +189,18 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 					+ WarrenBuildingParcel.STOREY_BANDS)
 			var address_sides := _courtyard_address_side_count(court, source,
 				MIN_COURTYARD_BUILDING_BANDS)
+			var vertical_air := _courtyard_vertical_public_air_counts(court,
+				source)
 			max_address_sides = maxi(max_address_sides, address_sides)
 			max_upper_mass = maxi(max_upper_mass, upper_mass)
-			# The upper court must be part of the three-dimensional town, never
-			# a freestanding deck. It may span a public alley, or sit on a complete
-			# lower inhabited storey; both are valid readings of construction
-			# below the third-storey public room.
-			if lower_walks < 1 and underbuilt_columns < 2:
+			# A third-storey label alone is insufficient. The requested court is a
+			# true three-dimensional knot: existing public air must pass under its
+			# exact 6 x 6 m footprint and another public episode must cross above.
+			# Match the fine-grid feature proof here, before parcel/asset search.
+			if int(vertical_air.below) < MIN_COURTYARD_BELOW_AIR_CELLS \
+					or int(vertical_air.above) < MIN_COURTYARD_ABOVE_AIR_CELLS:
 				continue
+			vertically_threaded_squares += 1
 			lower_squares += 1
 			underbuilt_squares += int(underbuilt_columns >= 2)
 			# The court remains typed exterior public realm. Direct upper mass is a
@@ -208,7 +215,8 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 			var tie := posmod(_hash(source.world_seed, BRANCH_COUNT,
 				root_index, axes[0].x * 31 + axes[0].y * 17), 1009)
 			var score := (100000.0 if root_is_primary else 0.0) \
-				+ float(lower_walks) * 1800.0 \
+				+ float(int(vertical_air.below)) * 450.0 \
+				+ float(int(vertical_air.above)) * 300.0 \
 				+ float(upper_mass) * 950.0 \
 				+ float(address_sides) * 420.0 \
 				- float(absi(rise - COURTYARD_RISE_BANDS)) * 600.0 \
@@ -233,10 +241,11 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 	if best.is_empty():
 		last_failure = ("no third-storey courtyard site " \
 			+ "(rise roots=%d legal=%d breadth=%d lower=%d underbuilt=%d " \
-			+ "upper=%d addressed=%d max-address=%d max-upper=%d; " \
+			+ "upper=%d threaded=%d addressed=%d max-address=%d max-upper=%d; " \
 			+ "occupied=%d headroom=%d side-contact=%d)") \
 			% [rise_roots, legal_squares, breadth_squares, lower_squares,
-				underbuilt_squares, upper_squares, addressed_squares,
+				underbuilt_squares, upper_squares, vertically_threaded_squares,
+				addressed_squares,
 				max_address_sides, max_upper_mass, occupied_rejections,
 				headroom_rejections, side_contact_rejections]
 	return best
@@ -476,6 +485,34 @@ static func _has_lower_walk(cell: Vector3i,
 				and cell.y - walk.y >= WarrenVolumePlan.HEADROOM_BANDS:
 			return true
 	return false
+
+
+static func _courtyard_vertical_public_air_counts(court: Array[Vector3i],
+		source: WarrenVolumePlan) -> Dictionary:
+	var fine_air: Dictionary = {}
+	for macro_air: Vector3i in source.public_air_cells:
+		for fine: Vector3i in _fine_square(macro_air):
+			fine_air[fine] = true
+	var below: Dictionary = {}
+	var above: Dictionary = {}
+	for macro_floor: Vector3i in court:
+		for floor: Vector3i in _fine_square(macro_floor):
+			for offset in range(1, 9):
+				var below_cell := floor + Vector3i.DOWN * offset
+				if fine_air.has(below_cell):
+					below[below_cell] = true
+			for offset in range(2, 9):
+				var above_cell := floor + Vector3i.UP * offset
+				if fine_air.has(above_cell):
+					above[above_cell] = true
+	return {"below": below.size(), "above": above.size()}
+
+
+static func _fine_square(macro_cell: Vector3i) -> Array[Vector3i]:
+	var origin := Vector3i(macro_cell.x * 2, macro_cell.y,
+		macro_cell.z * 2)
+	return [origin, origin + Vector3i.RIGHT, origin + Vector3i.BACK,
+		origin + Vector3i(1, 0, 1)] as Array[Vector3i]
 
 
 static func _has_inhabited_mass_below(cell: Vector3i,

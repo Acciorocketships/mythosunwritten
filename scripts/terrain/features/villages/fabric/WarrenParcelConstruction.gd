@@ -176,6 +176,11 @@ static func candidate_address_landing(parcel: WarrenBuildingParcel,
 		parcel.footprint, parcel.base_band, parcel.top_band,
 		parcel.address_walk_cell, parcel.threshold_column,
 		parcel.frontage_direction, parcel.address_door_phase)
+	if not parcel.support_parent_parcel_id.is_empty() \
+			and not preview.set_building_support(
+				parcel.support_parent_parcel_id,
+				parcel.support_parent_storey_index):
+		return invalid
 	if not preview.seal(volume) or not door_serves_address(preview):
 		return invalid
 	var threshold := threshold_cell(preview)
@@ -252,6 +257,8 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	## falls back to the cut rather than growing a masonry terrace.
 	##
 	## Route-first envelopes leave the budget at zero and are byte-identical.
+	if parcel != null and not parcel.support_parent_parcel_id.is_empty():
+		return parcel.base_band
 	if parcel == null or parcel.source == null \
 			or parcel.bearing_columns.size() != parcel.footprint.size():
 		return parcel.base_band if parcel != null else 0

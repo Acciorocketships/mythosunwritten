@@ -1748,18 +1748,20 @@ static func _address_door_phase_variant(base: FabricRecipe) -> FabricRecipe:
 
 
 static func _is_feature_portal_base(recipe_value: FabricRecipe) -> bool:
-	if recipe_value == null or recipe_value.has_tag(&"terrain_bearing") \
-			or not recipe_value.has_tag(&"generated_building"):
+	if recipe_value == null or not recipe_value.has_tag(&"generated_building"):
 		return false
 	var id := String(recipe_value.recipe_id)
 	if id.contains(".stone"):
 		# The spatial compiler deliberately colour-selects the three timber
 		# families above terrain. Avoid compiling unreachable stone variants.
 		return false
-	return id.begins_with("room.upper.") \
+	return id.begins_with("room.upper.") or id.begins_with("room.base.") \
 		or id.begins_with("room.long.upper.") \
+		or id.begins_with("room.long.base.") \
 		or id.begins_with("room.slim.upper.") \
-		or id.begins_with("room.tower.upper.")
+		or id.begins_with("room.slim.base.") \
+		or id.begins_with("room.tower.upper.") \
+		or id.begins_with("room.tower.base.")
 
 
 static func _feature_portal_variant(base: FabricRecipe, portal_mask: int,
@@ -1832,19 +1834,23 @@ static func _feature_portal_spec(base_recipe_id: StringName,
 	var family := &"square"
 	var minimum := Vector3i(-2, 0, -2)
 	var size := Vector3i(4, 1, 4)
-	if id.begins_with("room.long.upper."):
+	if id.begins_with("room.long.upper.") \
+			or id.begins_with("room.long.base."):
 		family = &"long"
 		minimum = Vector3i(-2, 0, -3)
 		size = Vector3i(4, 1, 6)
-	elif id.begins_with("room.slim.upper."):
+	elif id.begins_with("room.slim.upper.") \
+			or id.begins_with("room.slim.base."):
 		family = &"slim"
 		minimum = Vector3i(-1, 0, -2)
 		size = Vector3i(2, 1, 4)
-	elif id.begins_with("room.tower.upper."):
+	elif id.begins_with("room.tower.upper.") \
+			or id.begins_with("room.tower.base."):
 		family = &"tower"
 		minimum = Vector3i(-1, 0, -1)
 		size = Vector3i(2, 1, 2)
-	elif not id.begins_with("room.upper."):
+	elif not id.begins_with("room.upper.") \
+			and not id.begins_with("room.base."):
 		return {}
 	var centre := FabricModuleProgram.footprint_centre(minimum, size)
 	var half_x := float(size.x) * CELL * 0.5

@@ -21,6 +21,11 @@ var frontage_direction: Vector2i
 var address_door_phase: int
 var bearing_columns: Array[Vector2i] = []
 var support_mode: StringName
+## Optional explicit building-on-building bearing seam. The upper parcel keeps
+## its addressed base instead of descending through the lower building, and its
+## first room names the exact lower source storey in the volumetric support DAG.
+var support_parent_parcel_id: StringName = &""
+var support_parent_storey_index := -1
 var has_occupied_overpass := false
 var width_cells: int
 var depth_cells: int
@@ -53,6 +58,10 @@ func seal(volume: WarrenVolumePlan) -> bool:
 			or not volume.has_frontage(address_walk_cell) \
 			or absi(frontage_direction.x) + absi(frontage_direction.y) != 1 \
 			or address_door_phase < 0 or address_door_phase > 1:
+		return false
+	if support_parent_parcel_id.is_empty() != (support_parent_storey_index < 0) \
+			or not support_parent_parcel_id.is_empty() \
+				and support_parent_parcel_id == stable_id:
 		return false
 	var unique: Dictionary = {}
 	var minimum := Vector2i(2147483647, 2147483647)
@@ -93,7 +102,8 @@ func seal(volume: WarrenVolumePlan) -> bool:
 			bearing_columns.append(column)
 	if bearing_columns.size() * 2 < footprint.size():
 		return false
-	support_mode = &"terrain" if bearing_columns.size() == footprint.size() \
+	support_mode = &"building" if not support_parent_parcel_id.is_empty() \
+		else &"terrain" if bearing_columns.size() == footprint.size() \
 		else &"mixed_span"
 	has_occupied_overpass = _covers_lower_walk(volume)
 	source = volume
@@ -121,6 +131,16 @@ func storey_count() -> int:
 	return (height_bands() - ROOF_RESERVATION_BANDS) / STOREY_BANDS
 
 
+func set_building_support(parent_id: StringName,
+		parent_storey_index: int) -> bool:
+	if _sealed or parent_id.is_empty() or parent_id == stable_id \
+			or parent_storey_index < 0:
+		return false
+	support_parent_parcel_id = parent_id
+	support_parent_storey_index = parent_storey_index
+	return true
+
+
 func roof_base_band() -> int:
 	return base_band + storey_count() * STOREY_BANDS
 
@@ -130,11 +150,12 @@ func deterministic_signature() -> String:
 	for column: Vector2i in footprint:
 		footprint_parts.append("%d:%d" % [column.x, column.y])
 	footprint_parts.sort()
-	return "%s@%d..%d>A%d:%d/F%d:%d/D%d/O%d" % [
+	return "%s@%d..%d>A%d:%d/F%d:%d/D%d/O%d/P%s:%d" % [
 		",".join(footprint_parts), base_band, top_band,
 		address_walk_cell.x, address_walk_cell.z,
 		frontage_direction.x, frontage_direction.y, address_door_phase,
-		int(has_occupied_overpass)]
+		int(has_occupied_overpass), String(support_parent_parcel_id),
+		support_parent_storey_index]
 
 
 func slot_signature() -> String:

@@ -55,6 +55,15 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
 	var skywalk_constraints := _skywalk_constraints_by_parcel(
 		skywalk_reservations)
+	var bearing_interface_storeys: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		var child := proposal.get("parcel") as WarrenBuildingParcel
+		if child == null or child.support_parent_parcel_id.is_empty():
+			continue
+		if not bearing_interface_storeys.has(child.support_parent_parcel_id):
+			bearing_interface_storeys[child.support_parent_parcel_id] = {}
+		(bearing_interface_storeys[child.support_parent_parcel_id] \
+			as Dictionary)[child.support_parent_storey_index] = true
 	var lineages: Dictionary = {}
 	var input_storeys := 0
 	for proposal: Dictionary in proposals:
@@ -71,7 +80,8 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 			as Dictionary
 		var blocks := _source_blocks(proposal, offsets, forced,
 			skywalk_forced, skywalk_constraints.get(parcel.stable_id, []) as Array,
-			court_neighbors, market_backing)
+			court_neighbors, market_backing,
+			bearing_interface_storeys.get(parcel.stable_id, {}) as Dictionary)
 		if blocks.is_empty():
 			continue
 		var required_through := -1
@@ -95,6 +105,12 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		protected_owners, world_seed)
 	var expanded_count := _vary_unmerged_lineages(lineages, grid,
 		protected_owners, world_seed)
+	var overlap_audit := _lineage_overlap_audit(lineages)
+	if int(overlap_audit.overlap_cell_count) > 0:
+		last_failure = "composed room lineages overlap in %d cells: %s" % [
+			int(overlap_audit.overlap_cell_count),
+			JSON.stringify(overlap_audit.conflicts)]
+		return {}
 	last_merge_diagnostic["variant_diagnostic"] = \
 		last_variant_diagnostic.duplicate(true)
 	var truncated_tower_storeys := _truncate_unpaired_towers(lineages)
@@ -108,7 +124,8 @@ static func _source_blocks(proposal: Dictionary,
 		offsets: Array[Vector2i], forced_offsets: Dictionary,
 		skywalk_forced_offsets: Dictionary,
 		skywalk_constraints: Array, court_neighbors: Dictionary,
-		market_backing: Vector3i) \
+		market_backing: Vector3i,
+		bearing_interface_storeys: Dictionary = {}) \
 		-> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var source_origin := proposal.origin as Vector3i
@@ -160,7 +177,10 @@ static func _source_blocks(proposal: Dictionary,
 			var addressed := addressed_storey == storey
 			var structural_forced := storey == 0 \
 				or skywalk_forced_offsets.has(offset_block) \
-					and not offset_block_has_skywalk_constraints
+					and not offset_block_has_skywalk_constraints \
+				or bearing_interface_storeys.has(storey) \
+				or parcel != null and storey == 0 \
+					and not parcel.support_parent_parcel_id.is_empty()
 			var forced := structural_forced or addressed \
 				or not storey_skywalk_constraints.is_empty()
 			for cell: Vector3i in record.cells:
@@ -183,6 +203,14 @@ static func _source_blocks(proposal: Dictionary,
 			# two-storey offset can produce two independently composed records.
 			record["source_block_index"] = storey
 			record["source_offset_block_index"] = offset_block
+			if parcel != null and storey == 0 \
+					and not parcel.support_parent_parcel_id.is_empty():
+				record["support_parent_lineage_id"] = \
+					parcel.support_parent_parcel_id
+				record["support_parent_source_storey"] = \
+					parcel.support_parent_storey_index
+				record["support_parent_source_block_index"] = \
+					parcel.support_parent_storey_index
 			record["merged"] = false
 			out.append(record)
 	return out
@@ -956,7 +984,18 @@ static func _vary_unmerged_lineages(lineages: Dictionary,
 		if a_height != b_height:
 			return a_height > b_height
 		return String(a) < String(b))
+	# Begin from the complete result of the merge and coupled-room passes. The
+	# former empty map only protected variants selected during this final pass;
+	# an outcropping could therefore expand into residual cells already claimed
+	# by a coupled room and survive until the grid commit rejected it.
 	var claimed_cells: Dictionary = {}
+	for existing_id_value: Variant in lineages.keys():
+		var existing_id := StringName(existing_id_value)
+		var existing := lineages[existing_id] as Dictionary
+		for existing_block: Dictionary in existing.blocks as Array[Dictionary]:
+			for cell: Vector3i in existing_block.cells:
+				if not claimed_cells.has(cell):
+					claimed_cells[cell] = existing_id
 	var expanded_count := 0
 	for lineage_id: StringName in ids:
 		var lineage := lineages[lineage_id] as Dictionary
@@ -1001,6 +1040,9 @@ static func _vary_unmerged_lineages(lineages: Dictionary,
 			replacement["merged"] = false
 			replacement["expanded"] = bool(variant.expanded)
 			blocks[block] = replacement
+			for old_cell: Vector3i in current.cells:
+				if claimed_cells.get(old_cell, &"") == lineage_id:
+					claimed_cells.erase(old_cell)
 			for cell: Vector3i in replacement.cells:
 				claimed_cells[cell] = lineage_id
 			expanded_count += int(bool(variant.expanded))
@@ -1008,6 +1050,32 @@ static func _vary_unmerged_lineages(lineages: Dictionary,
 		lineage["blocks"] = blocks
 		lineages[lineage_id] = lineage
 	return expanded_count
+
+
+static func _lineage_overlap_audit(lineages: Dictionary) -> Dictionary:
+	var owner_by_cell: Dictionary = {}
+	var overlap_cells: Dictionary = {}
+	var conflicts: Array[Dictionary] = []
+	var lineage_ids: Array[StringName] = []
+	lineage_ids.assign(lineages.keys())
+	lineage_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	for lineage_id: StringName in lineage_ids:
+		var lineage := lineages[lineage_id] as Dictionary
+		for block: Dictionary in lineage.blocks as Array[Dictionary]:
+			for cell: Vector3i in block.cells:
+				if not owner_by_cell.has(cell):
+					owner_by_cell[cell] = lineage_id
+					continue
+				var prior := StringName(owner_by_cell[cell])
+				if prior == lineage_id:
+					continue
+				overlap_cells[cell] = true
+				if conflicts.size() < 12:
+					conflicts.append({"cell": cell, "left": prior,
+						"right": lineage_id})
+	return {"overlap_cell_count": overlap_cells.size(),
+		"conflicts": conflicts}
 
 
 static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,

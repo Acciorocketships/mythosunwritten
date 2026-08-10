@@ -96,6 +96,7 @@ const PARTITION_VARIANTS := 8
 
 static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
+static var last_courtyard_upper_diagnostic: Dictionary = {}
 
 
 static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
@@ -119,6 +120,7 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 	## of exactly the mass those stages exist to front.
 	last_failure = ""
 	last_diagnostic = {}
+	last_courtyard_upper_diagnostic = {}
 	var out: Array[WarrenBuildingParcel] = []
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
@@ -213,9 +215,192 @@ static func _partition_variant(massif: WarrenMassif,
 		out.append(parcel)
 	var infilled := _fill_free_solid(out, massif, excavation, occupied,
 		claimed, face_bands, _fill_addresses(excavation, volume, variant), volume)
+	var court_upper_parcels := _fill_courtyard_upper_walls(out, massif,
+		excavation, occupied, face_bands, volume)
 	last_diagnostic = _diagnostic(out, faces, inherited, stranded, unjoinable,
-		infilled)
+		infilled, court_upper_parcels)
+	last_diagnostic["courtyard_upper_diagnostic"] = \
+		last_courtyard_upper_diagnostic.duplicate(true)
 	return out
+
+
+static func _fill_courtyard_upper_walls(
+		placed: Array[WarrenBuildingParcel], massif: WarrenMassif,
+		excavation: WarrenExcavation, occupied: Dictionary,
+		face_bands: Dictionary, volume: WarrenVolumePlan) -> int:
+	## Complete the court perimeter in three dimensions. A broad lower parcel may
+	## roof out exactly at the court datum while a narrower column of source mass
+	## continues above it. The old whole-column claim discarded that upper mass;
+	## here it becomes a separately addressed parcel whose first room names the
+	## lower parcel's top occupied storey as its explicit support parent.
+	if volume == null or volume.courtyard_cells.size() != 4:
+		return 0
+	var court_set: Dictionary = {}
+	for cell: Vector3i in volume.courtyard_cells:
+		court_set[cell] = true
+	var added := 0
+	var missing_side_count := 0
+	var address_count := 0
+	var shape_count := 0
+	var top_fit_count := 0
+	var parent_fit_count := 0
+	var doorway_fit_count := 0
+	var cell_fit_count := 0
+	var roof_fit_count := 0
+	var corner_fit_count := 0
+	var top_attempts: Array[Dictionary] = []
+	for direction: Vector2i in DIRECTIONS:
+		if _court_side_has_private_room(placed, court_set, direction):
+			continue
+		missing_side_count += 1
+		var accepted: WarrenBuildingParcel = null
+		for address: Vector3i in volume.courtyard_cells:
+			var neighbor := address + Vector3i(direction.x, 0, direction.y)
+			if court_set.has(neighbor):
+				continue
+			address_count += 1
+			for shape: Vector2i in SHAPES:
+				shape_count += 1
+				var footprint := _footprint(address, direction, shape.x,
+					shape.y)
+				var top := _top_band(footprint, address.y, massif, excavation,
+					{}, face_bands)
+				if top_attempts.size() < 24:
+					var footprint_tops: Array[int] = []
+					var grounded_columns := 0
+					var first_carved := 2147483647
+					for column: Vector2i in footprint:
+						footprint_tops.append(massif.top_at(column))
+						grounded_columns += int(_is_grounded(massif,
+							excavation, column, address.y))
+						for band in range(address.y, massif.top_at(column)):
+							if excavation.carved.has(Vector3i(column.x, band,
+									column.y)):
+								first_carved = mini(first_carved, band)
+								break
+					top_attempts.append({"address": address,
+						"direction": direction, "shape": shape,
+						"footprint": footprint, "tops": footprint_tops,
+						"grounded": grounded_columns, "settled_top": top,
+						"first_carved": first_carved})
+				if top - address.y < MIN_HOUSE_BANDS:
+					continue
+				top_fit_count += 1
+				var parent := _best_courtyard_support_parent(placed, footprint,
+					address.y)
+				if parent == null:
+					continue
+				parent_fit_count += 1
+				var candidate := WarrenBuildingParcel.new(StringName(
+					"parcel.solid.%04d" % placed.size()), footprint,
+					address.y, top, address,
+					Vector2i(neighbor.x, neighbor.z), -direction)
+				if not candidate.set_building_support(parent.stable_id,
+						parent.storey_count() - 1):
+					continue
+				candidate = _candidate_with_exact_public_floor(candidate, volume)
+				if candidate == null:
+					continue
+				doorway_fit_count += 1
+				if not _upper_parcel_cells_fit(candidate, occupied, parent):
+					continue
+				cell_fit_count += 1
+				if not _roofs_can_meet(candidate, placed):
+					continue
+				roof_fit_count += 1
+				if _upper_parcel_corners_neighbor(candidate, placed, parent):
+					continue
+				corner_fit_count += 1
+				accepted = candidate
+				break
+			if accepted != null:
+				break
+		if accepted == null:
+			continue
+		for cell: Vector3i in occupied_cells(accepted):
+			occupied[cell] = accepted.stable_id
+		placed.append(accepted)
+		added += 1
+		if _courtyard_private_side_count(placed, court_set) >= 3:
+			break
+	last_courtyard_upper_diagnostic = {
+		"missing_side_count": missing_side_count,
+		"address_count": address_count, "shape_count": shape_count,
+		"top_fit_count": top_fit_count,
+		"parent_fit_count": parent_fit_count,
+		"doorway_fit_count": doorway_fit_count,
+		"cell_fit_count": cell_fit_count, "roof_fit_count": roof_fit_count,
+		"corner_fit_count": corner_fit_count, "accepted_count": added,
+		"top_attempts": top_attempts,
+	}
+	return added
+
+
+static func _court_side_has_private_room(
+		parcels: Array[WarrenBuildingParcel], court_set: Dictionary,
+		direction: Vector2i) -> bool:
+	for court_value: Variant in court_set.keys():
+		var court := court_value as Vector3i
+		var neighbor := court + Vector3i(direction.x, 0, direction.y)
+		if court_set.has(neighbor):
+			continue
+		var column := Vector2i(neighbor.x, neighbor.z)
+		for parcel: WarrenBuildingParcel in parcels:
+			if parcel.footprint.has(column) and parcel.base_band <= court.y \
+					and parcel.roof_base_band() > court.y:
+				return true
+	return false
+
+
+static func _courtyard_private_side_count(
+		parcels: Array[WarrenBuildingParcel], court_set: Dictionary) -> int:
+	var count := 0
+	for direction: Vector2i in DIRECTIONS:
+		count += int(_court_side_has_private_room(parcels, court_set,
+			direction))
+	return count
+
+
+static func _best_courtyard_support_parent(
+		parcels: Array[WarrenBuildingParcel], footprint: Array[Vector2i],
+		base_band: int) -> WarrenBuildingParcel:
+	var best: WarrenBuildingParcel = null
+	var best_overlap := 0
+	for parcel: WarrenBuildingParcel in parcels:
+		if parcel.roof_base_band() != base_band or parcel.storey_count() < 1:
+			continue
+		var overlap := 0
+		for column: Vector2i in footprint:
+			overlap += int(parcel.footprint.has(column))
+		if overlap > best_overlap:
+			best = parcel
+			best_overlap = overlap
+	return best if best_overlap >= maxi(1,
+		ceili(float(footprint.size()) * 0.25)) else null
+
+
+static func _upper_parcel_cells_fit(parcel: WarrenBuildingParcel,
+		occupied: Dictionary, parent: WarrenBuildingParcel) -> bool:
+	for cell: Vector3i in occupied_cells(parcel):
+		if not occupied.has(cell):
+			continue
+		if StringName(occupied[cell]) != parent.stable_id \
+				or cell.y < parent.roof_base_band() or cell.y >= parent.top_band:
+			return false
+	return true
+
+
+static func _upper_parcel_corners_neighbor(parcel: WarrenBuildingParcel,
+		placed: Array[WarrenBuildingParcel], parent: WarrenBuildingParcel) -> bool:
+	for other: WarrenBuildingParcel in placed:
+		if other == parent or parcel.top_band <= other.base_band \
+				or other.top_band <= parcel.base_band:
+			continue
+		if _contact_direction(parcel.footprint, other.footprint) \
+				== Vector2i.ZERO \
+				and _footprints_share_a_corner(parcel.footprint, other.footprint):
+			return true
+	return false
 
 
 static func _fill_addresses(excavation: WarrenExcavation,
@@ -361,7 +546,12 @@ static func _wall_candidates(massif: WarrenMassif,
 		for direction_index in DIRECTIONS.size():
 			var direction := DIRECTIONS[direction_index]
 			var column := Vector2i(walk.x + direction.x, walk.z + direction.y)
-			if not _can_carry_house(massif, excavation, column, walk.y):
+			var grounded := _can_carry_house(massif, excavation, column,
+				walk.y)
+			var court_span := not grounded \
+				and _can_carry_courtyard_span(massif, excavation, walk,
+					direction, volume)
+			if not grounded and not court_span:
 				continue
 			out.append({
 				"column": column,
@@ -369,6 +559,7 @@ static func _wall_candidates(massif: WarrenMassif,
 				"direction": direction,
 				"wall_bands": wall_bands,
 				"order": direction_index,
+				"mixed_span": court_span,
 			})
 	return out
 
@@ -393,6 +584,7 @@ static func _admitted(candidates: Array[Dictionary], massif: WarrenMassif,
 	## highest street first, so admission depends only on the terraced solid --
 	## never on what the serving pass happened to place first.
 	var walls_by_column: Dictionary = {}
+	var mixed_span_bands_by_column: Dictionary = {}
 	for candidate: Dictionary in candidates:
 		var column := candidate["column"] as Vector2i
 		if not walls_by_column.has(column):
@@ -401,6 +593,10 @@ static func _admitted(candidates: Array[Dictionary], massif: WarrenMassif,
 		var band := (candidate["walk"] as Vector3i).y
 		walls[band] = maxi(int(walls.get(band, 0)),
 			int(candidate["wall_bands"]))
+		if bool(candidate.get("mixed_span", false)):
+			if not mixed_span_bands_by_column.has(column):
+				mixed_span_bands_by_column[column] = {}
+			(mixed_span_bands_by_column[column] as Dictionary)[band] = true
 	var admitted_by_column: Dictionary = {}
 	for column_value: Variant in walls_by_column.keys():
 		var column := column_value as Vector2i
@@ -415,7 +611,10 @@ static func _admitted(candidates: Array[Dictionary], massif: WarrenMassif,
 			# Admission asks the identical question the serving pass will ask,
 			# through the identical code path, so "this face was admitted" and
 			# "its fallback house is legal" can never drift apart.
-			if _top_band(footprint, band, massif, excavation, {}, {}) <= band:
+			var admits_span := (mixed_span_bands_by_column.get(column, {}) \
+				as Dictionary).has(band)
+			if not admits_span and _top_band(footprint, band, massif,
+					excavation, {}, {}) <= band:
 				continue
 			admitted.append(Vector2i(band, wall))
 			break
@@ -429,6 +628,33 @@ static func _admitted(candidates: Array[Dictionary], massif: WarrenMassif,
 				out.append(candidate)
 				break
 	return out
+
+
+static func _can_carry_courtyard_span(massif: WarrenMassif,
+		excavation: WarrenExcavation, walk: Vector3i,
+		walk_to_building: Vector2i, volume: WarrenVolumePlan) -> bool:
+	## The required third-storey court may sit directly over a lower public
+	## passage. Its facade column is then intentionally undermined, but a deeper
+	## room is still a real building when at least half its complete footprint
+	## bears continuously behind that opening. Admit only that named topology and
+	## only through the same full-envelope math the serving pass will rerun.
+	if volume == null or not volume.courtyard_cells.has(walk):
+		return false
+	var threshold := Vector2i(walk.x + walk_to_building.x,
+		walk.z + walk_to_building.y)
+	for shape: Vector2i in SHAPES:
+		if shape.x * shape.y < 2:
+			continue
+		var footprint := _footprint(walk, walk_to_building, shape.x,
+			shape.y)
+		var top := _top_band(footprint, walk.y, massif, excavation, {}, {})
+		if top <= walk.y:
+			continue
+		var probe := WarrenBuildingParcel.new(&"parcel.court.span.probe",
+			footprint, walk.y, top, walk, threshold, -walk_to_building)
+		if _candidate_with_exact_public_floor(probe, volume) != null:
+			return true
+	return false
 
 
 static func unowned_route_faces(parcels: Array[WarrenBuildingParcel],
@@ -762,6 +988,11 @@ static func _candidate_with_exact_public_floor(parcel: WarrenBuildingParcel,
 			parcel.footprint, parcel.base_band, parcel.top_band,
 			parcel.address_walk_cell, parcel.threshold_column,
 			parcel.frontage_direction, door_phase)
+		if not parcel.support_parent_parcel_id.is_empty() \
+				and not phased.set_building_support(
+					parcel.support_parent_parcel_id,
+					parcel.support_parent_storey_index):
+			continue
 		if _candidate_has_exact_public_floor(phased, volume):
 			return phased
 	return null
@@ -1101,7 +1332,8 @@ static func _seal_all(parcels: Array[WarrenBuildingParcel],
 
 static func _diagnostic(parcels: Array[WarrenBuildingParcel],
 		faces: Array[Dictionary], inherited: int, stranded: int,
-		unjoinable: int, infilled: int) -> Dictionary:
+		unjoinable: int, infilled: int,
+		court_upper_parcels: int = 0) -> Dictionary:
 	var families: Dictionary = {}
 	var footprint_cells := 0
 	var alternate_door_phases := 0
@@ -1114,6 +1346,7 @@ static func _diagnostic(parcels: Array[WarrenBuildingParcel],
 		"street_wall_face_count": faces.size(),
 		"parcel_count": parcels.size(),
 		"infill_house_count": infilled,
+		"courtyard_upper_parcel_count": court_upper_parcels,
 		"faces_walled_by_a_neighbour": inherited,
 		"stranded_face_count": stranded,
 		"unjoinable_roof_count": unjoinable,

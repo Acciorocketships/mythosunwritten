@@ -41,10 +41,6 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		last_failure = "missing mutable grid, source volume, buildings, or supports"
 		return [] as Array[WarrenFeatureReservation]
 	var out: Array[WarrenFeatureReservation] = []
-	var court := _reserve_courtyard(grid, source, buildings, supports)
-	if court == null:
-		return [] as Array[WarrenFeatureReservation]
-	out.append(court)
 	var market := _reserve_preplanned_market(grid, buildings, supports,
 		preplanned_market)
 	if market == null:
@@ -67,6 +63,14 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			last_skywalk_diagnostic]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(skywalks)
+	# Skywalks precede the court transaction because an occupied, room-to-room
+	# bridge-house may be one of its three enclosing facades.  The court proof
+	# therefore sees the connector's actual committed PRIVATE_VOLUME, not a
+	# promise inferred from endpoints or an asset after the fact.
+	var court := _reserve_courtyard(grid, source, buildings, supports)
+	if court == null:
+		return [] as Array[WarrenFeatureReservation]
+	out.append(court)
 	var tall_tower_sources: Array[StringName] = []
 	for source_value: Variant in composition_audit.get(
 			"tall_tower_only_lineage_ids", []):
@@ -554,8 +558,9 @@ static func _reserve_courtyard(grid: WarrenSpatialGrid,
 				StringName(endpoint.owner_id)):
 			last_failure = "could not record court facade endpoint"
 			return null
-		if support_owner.is_empty():
-			support_owner = StringName(endpoint.owner_id)
+		var endpoint_owner := StringName(endpoint.owner_id)
+		if support_owner.is_empty() and supports.reaches_terrain(endpoint_owner):
+			support_owner = endpoint_owner
 	if support_owner.is_empty() or not feature.set_support_node(support_owner) \
 			or not feature.set_audit_facts({
 				"courtyard_floor_cell_count": floors.size(),
@@ -1017,7 +1022,9 @@ static func _reserve_preplanned_skywalks(grid: WarrenSpatialGrid,
 			landmark_endpoint_count += int(is_landmark)
 			offset_endpoint_count += int(is_landmark or offset_rooms.has(
 				StringName(endpoint.room_id)))
-		if endpoint_owner_ids.size() != 2 or offset_endpoint_count < 1:
+		var reservation_kind := StringName(reservation.get("kind", &"straight"))
+		if endpoint_owner_ids.size() != 2 or offset_endpoint_count < 1 \
+				and reservation_kind != &"courtyard_bridge_house":
 			last_failure = "preplanned skywalk %d lacks two owners or an offset endpoint" \
 				% reservation_index
 			return [] as Array[WarrenFeatureReservation]

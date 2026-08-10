@@ -276,8 +276,21 @@ static func _audit_bore_frontier(city_seed: int, outer_attempt: int) -> void:
 
 static func _audit_spatial_variants(city_seed: int,
 		program: SettlementFabricProgram) -> void:
+	var args := OS.get_cmdline_user_args()
 	WarrenVolumetricSolver.diagnostic_stop_after_skywalk_candidates = \
-		"--skywalk-filter-only" in OS.get_cmdline_user_args()
+		"--skywalk-filter-only" in args
+	WarrenVolumetricSolver.diagnostic_stop_after_skywalk_individual = \
+		"--skywalk-individual-only" in args
+	WarrenVolumetricSolver.diagnostic_trace_skywalk_timing = \
+		"--skywalk-timing" in args
+	var candidate_limit_index := args.find("--candidate-limit")
+	WarrenVolumetricSolver.diagnostic_skywalk_candidate_limit = int(
+		args[candidate_limit_index + 1]) if candidate_limit_index >= 0 \
+			and candidate_limit_index + 1 < args.size() else -1
+	var market_limit_index := args.find("--market-limit")
+	WarrenVolumetricSolver.diagnostic_feature_market_limit = int(
+		args[market_limit_index + 1]) if market_limit_index >= 0 \
+			and market_limit_index + 1 < args.size() else -1
 	var frontier_started := Time.get_ticks_msec()
 	var frontier := WarrenTownSolver.mass_first_frontier(city_seed, {})
 	frontier.sort_custom(WarrenVolumetricSolver._spatial_topology_less)
@@ -285,7 +298,6 @@ static func _audit_spatial_variants(city_seed: int,
 		" count=", frontier.size(), " ids=",
 		frontier.map(func(volume: WarrenVolumePlan) -> String:
 			return String(volume.stable_id)))
-	var args := OS.get_cmdline_user_args()
 	var variant_index := args.find("--variant")
 	var variants: Array[int] = []
 	if variant_index >= 0 and variant_index + 1 < args.size():
@@ -329,8 +341,28 @@ static func _audit_spatial_variants(city_seed: int,
 						"courtyard_fixed_block_count", -1),
 					"individual_reject": sky.get(
 						"individual_candidate_rejection_count", -1),
+					"individual_validated": sky.get(
+						"individual_validated_count", -1),
+					"individual_viable": sky.get(
+						"individual_viable_count", -1),
+					"individual_ms": sky.get(
+						"individual_validation_ms", -1),
 					"individual_failures": sky.get(
 						"individual_candidate_rejection_failures", {}),
+					"landmark_sockets": sky.get(
+						"landmark_link_socket_count", -1),
+					"landmark_body_sockets": sky.get(
+						"landmark_link_body_socket_count", -1),
+					"landmark_endpoint_pairs": sky.get(
+						"landmark_link_endpoint_pair_count", -1),
+					"landmark_raw_links": sky.get(
+						"landmark_link_raw_count", -1),
+					"landmark_upper_links": sky.get(
+						"landmark_link_upper_block_count", -1),
+					"landmark_body_fit": sky.get(
+						"landmark_link_body_fit_count", -1),
+					"landmark_route_cover": sky.get(
+						"landmark_link_route_cover_count", -1),
 					"selected": sky.get("selected_count", -1),
 				},
 				" composition=", WarrenRoomCompositionPlanner.last_failure)
@@ -405,6 +437,9 @@ static func _audit_court_partition(city_seed: int,
 			"address": parcel.address_walk_cell,
 			"threshold_column": parcel.threshold_column,
 			"proposal": not proposal.is_empty(),
+			"support_mode": parcel.support_mode,
+			"support_parent": parcel.support_parent_parcel_id,
+			"support_parent_storey": parcel.support_parent_storey_index,
 		}
 	var touching: Dictionary = {}
 	var solved: Dictionary = {}
@@ -443,6 +478,27 @@ static func _audit_court_partition(city_seed: int,
 	var proposal_by_id: Dictionary = {}
 	for proposal: Dictionary in proposals:
 		proposal_by_id[(proposal.parcel as WarrenBuildingParcel).stable_id] = proposal
+	var endpoint_preview: Array[Dictionary] = []
+	var proposal_parcels: Array[WarrenBuildingParcel] = []
+	for proposal: Dictionary in proposals:
+		proposal_parcels.append(proposal.parcel as WarrenBuildingParcel)
+	var asset_cache := WarrenAssetCompiler.massif_partition_asset_cache(
+		proposal_parcels, volume.world_seed, program)
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		for endpoint: Dictionary in WarrenAssetCompiler._parcel_room_endpoints(
+				parcel, program, asset_cache):
+			var cell := endpoint.cell as Vector3i
+			var nearest_distance := 2147483647
+			for floor_value: Variant in court_floors.keys():
+				var floor := floor_value as Vector3i
+				nearest_distance = mini(nearest_distance, absi(cell.x - floor.x) \
+					+ absi(cell.y - floor.y) + absi(cell.z - floor.z))
+			if nearest_distance <= 6:
+				endpoint_preview.append({"parcel": parcel.stable_id,
+					"cell": cell, "facing": endpoint.facing,
+					"distance": nearest_distance,
+					"slot": endpoint.get("slot_signature", "")})
 	print(JSON.stringify({
 		"source": String(volume.stable_id),
 		"variant": variant,
@@ -454,9 +510,11 @@ static func _audit_court_partition(city_seed: int,
 		"perimeter_parcels": perimeter_parcels,
 		"solved_court_offsets": solved,
 		"court_offset_failures": failures,
+		"near_court_room_endpoints": endpoint_preview,
 		"solved_address_side_count": WarrenVolumetricSolver \
 			._solved_courtyard_address_side_count(court_floors, solved,
 				proposal_by_id),
+		"partition_diagnostic": WarrenSolidPartitioner.last_diagnostic,
 	}, "  "))
 
 

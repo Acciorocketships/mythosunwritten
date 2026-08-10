@@ -27,6 +27,7 @@ func seal(p_parcels: Array[WarrenBuildingParcel],
 			or not source.is_sealed() or p_parcels.is_empty():
 		return _reject("missing source or parcels")
 	var ids: Dictionary = {}
+	var parcel_by_id: Dictionary = {}
 	var occupied_owners: Dictionary = {}
 	for parcel: WarrenBuildingParcel in p_parcels:
 		if parcel == null or not parcel.is_sealed() \
@@ -34,9 +35,21 @@ func seal(p_parcels: Array[WarrenBuildingParcel],
 				or not WarrenParcelConstruction.door_serves_address(parcel):
 			return _reject("null, unsealed, or duplicate parcel")
 		ids[parcel.stable_id] = true
+		parcel_by_id[parcel.stable_id] = parcel
+	for parcel: WarrenBuildingParcel in p_parcels:
+		if not parcel.support_parent_parcel_id.is_empty() \
+				and not _building_support_is_valid(parcel, parcel_by_id):
+			return _reject("parcel %s has invalid building support %s:%d" % [
+				parcel.stable_id, parcel.support_parent_parcel_id,
+				parcel.support_parent_storey_index])
 		for cell: Vector3i in parcel.occupied_cells():
 			if occupied_owners.has(cell):
-				return _reject("parcels overlap at %s" % cell)
+				var prior := parcel_by_id[StringName(
+					occupied_owners[cell])] as WarrenBuildingParcel
+				if not _overlap_is_support_roof_seam(parcel, prior, cell):
+					return _reject("parcels overlap at %s" % cell)
+				retained_mass_cells[cell] = true
+				continue
 			occupied_owners[cell] = parcel.stable_id
 			retained_mass_cells[cell] = true
 		parcels.append(parcel)
@@ -53,6 +66,36 @@ func seal(p_parcels: Array[WarrenBuildingParcel],
 		return _reject("parcel topology or orientation audit failed")
 	_sealed = true
 	return true
+
+
+func _building_support_is_valid(child: WarrenBuildingParcel,
+		parcel_by_id: Dictionary) -> bool:
+	var parent := parcel_by_id.get(child.support_parent_parcel_id) \
+		as WarrenBuildingParcel
+	if parent == null or child.base_band != parent.roof_base_band():
+		return false
+	var overlap := 0
+	for column: Vector2i in child.footprint:
+		overlap += int(parent.footprint.has(column))
+	if overlap < maxi(1, ceili(float(child.footprint.size()) * 0.25)):
+		return false
+	var parent_proposal := WarrenParcelConstruction.proposal(parent)
+	return not parent_proposal.is_empty() \
+		and child.support_parent_storey_index \
+			== int(parent_proposal.storeys) - 1
+
+
+func _overlap_is_support_roof_seam(left: WarrenBuildingParcel,
+		right: WarrenBuildingParcel, cell: Vector3i) -> bool:
+	var child := left
+	var parent := right
+	if child.support_parent_parcel_id != parent.stable_id:
+		child = right
+		parent = left
+	if child.support_parent_parcel_id != parent.stable_id:
+		return false
+	return child.base_band == parent.roof_base_band() \
+		and cell.y >= parent.roof_base_band() and cell.y < parent.top_band
 
 
 func is_sealed() -> bool:
