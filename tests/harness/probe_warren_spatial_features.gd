@@ -68,11 +68,23 @@ func _init() -> void:
 				"joint_pair_preview", []))
 		quit(1)
 		return
-	print("LANDMARK_DIAG: ",
-		WarrenVolumetricSolver.last_preplan_landmark_diagnostic)
+	var composition_only := "--composition-only" in OS.get_cmdline_user_args()
+	if not composition_only:
+		print("LANDMARK_DIAG: ",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic)
 	print("COMPOSITION_AUDIT: ", WarrenRoomCompositionPlanner.last_audit)
 	print("COMPOSITION_MERGE_DIAG: ",
 		WarrenRoomCompositionPlanner.last_merge_diagnostic)
+	if "--compiler-only" in OS.get_cmdline_user_args():
+		var compiled := WarrenSpatialFabricCompiler.solve(plan, program)
+		print("FABRIC_SEALED=", compiled != null,
+			" failure=", WarrenSpatialFabricCompiler.last_failure,
+			" audit=", WarrenSpatialFabricCompiler.last_audit)
+		quit(0 if compiled != null else 1)
+		return
+	if composition_only:
+		quit()
+		return
 	_print_courtyard(plan)
 	_print_room_lineages(plan)
 	_print_offset_rooms(plan)

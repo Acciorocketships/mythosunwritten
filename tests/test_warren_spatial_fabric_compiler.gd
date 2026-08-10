@@ -13,6 +13,18 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_not_null(realm, WarrenSpatialPublicRealmAdapter.last_failure)
 	var units := WarrenSpatialFabricCompiler.compile_room_units(spatial, program)
 	assert_gt(units.size(), 0, WarrenSpatialFabricCompiler.last_failure)
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+		.selected_facade_phase_b_count), 0,
+		"some upper storeys should retain the alternate authored facade phase")
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+		.facade_phase_a_count), 0,
+		"the town should not synchronize onto one facade phase")
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.desired_facade_phase_b_count),
+		int(WarrenSpatialFabricCompiler.last_audit \
+			.selected_facade_phase_b_count) \
+			+ int(WarrenSpatialFabricCompiler.last_audit \
+				.facade_phase_fallback_count))
 	var expected := 0
 	for building: WarrenBuildingVolume in spatial.buildings:
 		expected += building.room_records.size()
@@ -84,4 +96,5 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	if sealed != null:
 		assert_true(sealed.is_sealed())
 		assert_eq(sealed.audit.generation_source, &"spatial_volumetric_warren")
+		assert_gt(int(sealed.audit.selected_facade_phase_b_count), 0)
 		assert_eq(sealed.visual_envelope_conflicts().size(), 0)

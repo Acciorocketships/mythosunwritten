@@ -28,6 +28,7 @@ static func solve(source: WarrenSpatialPlan,
 	var rooms := compile_room_units(source, program)
 	if rooms.is_empty():
 		return null
+	var room_audit := last_audit.duplicate(true)
 	var features := compile_feature_units(source, program, rooms)
 	if features.is_empty() and _constructed_feature_count(source) > 0:
 		return null
@@ -79,6 +80,7 @@ static func solve(source: WarrenSpatialPlan,
 		return null
 	var lineage := source.audit.duplicate(true)
 	lineage.merge(source.construction_plan.audit, true)
+	lineage.merge(room_audit, true)
 	lineage.merge(feature_audit, true)
 	lineage.merge(roof_audit, true)
 	lineage.merge(volumes.audit(), true)
@@ -98,6 +100,7 @@ static func solve(source: WarrenSpatialPlan,
 static func compile_room_units(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram) -> Array[FabricUnit]:
 	last_failure = ""
+	last_audit = {}
 	if source == null or not source.is_sealed() or program == null:
 		last_failure = "missing sealed spatial plan or measured vocabulary"
 		return [] as Array[FabricUnit]
@@ -124,8 +127,19 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var units: Array[FabricUnit] = []
 	var unit_by_room: Dictionary = {}
 	var prior_unit_by_cell: Dictionary = {}
+	var desired_phase_b_count := 0
+	var selected_phase_b_count := 0
+	var facade_phase_fallback_count := 0
+	var room_probe := SettlementFabricPlan.new(&"spatial.room-phase-selection")
+	for recipe_value: FabricRecipe in program.recipes():
+		if not room_probe.register_recipe(recipe_value):
+			last_failure = "room phase selection could not register %s" \
+				% recipe_value.recipe_id
+			return [] as Array[FabricUnit]
 	for room: WarrenRoomStamp in rooms:
 		var recipe_id := _room_recipe_id(room, source.world_seed)
+		var desired_phase_b := _is_phase_b_recipe(recipe_id)
+		desired_phase_b_count += int(desired_phase_b)
 		var recipe := program.recipe(recipe_id)
 		if recipe == null or not _recipe_stays_inside_stamp(recipe, room):
 			last_failure = "measured recipe %s changes room stamp %s" % [
@@ -163,11 +177,42 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		if not unit.is_valid():
 			last_failure = "room %s produced an invalid fabric unit" % room.stable_id
 			return [] as Array[FabricUnit]
+		if not room_probe.add_unit(unit):
+			var fallback_id := _room_recipe_id(room, source.world_seed, false)
+			if fallback_id == recipe_id:
+				last_failure = "room %s failed measured phase selection: %s" % [
+					room.stable_id, room_probe.last_rejection]
+				return [] as Array[FabricUnit]
+			var fallback_recipe := program.recipe(fallback_id)
+			if fallback_recipe == null \
+					or not _recipe_stays_inside_stamp(fallback_recipe, room) \
+					or not _entrance_matches(fallback_recipe, room):
+				last_failure = "room %s has no measured facade fallback" \
+					% room.stable_id
+				return [] as Array[FabricUnit]
+			unit = FabricUnit.new(unit.stable_id, fallback_id,
+				room.lattice_origin, room.yaw_quarters, parents, bonds, &"", seams)
+			if not unit.is_valid() or not room_probe.add_unit(unit):
+				last_failure = "room %s fallback failed measured phase selection: %s" \
+					% [room.stable_id, room_probe.last_rejection]
+				return [] as Array[FabricUnit]
+			facade_phase_fallback_count += 1
+		selected_phase_b_count += int(_is_phase_b_recipe(unit.recipe_id))
 		units.append(unit)
 		unit_by_room[room.stable_id] = unit
 		for cell: Vector3i in room.private_cells:
 			prior_unit_by_cell[cell] = unit.stable_id
+	last_audit = {
+		"desired_facade_phase_b_count": desired_phase_b_count,
+		"selected_facade_phase_b_count": selected_phase_b_count,
+		"facade_phase_fallback_count": facade_phase_fallback_count,
+		"facade_phase_a_count": units.size() - selected_phase_b_count,
+	}
 	return units
+
+
+static func _is_phase_b_recipe(recipe_id: StringName) -> bool:
+	return String(recipe_id).ends_with(".b")
 
 
 static func compile_feature_units(source: WarrenSpatialPlan,
@@ -227,6 +272,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var skywalk_count := 0
 	var market_count := 0
 	var balcony_count := 0
+	var tower_annex_count := 0
 	var landmark_count := 0
 	for feature: WarrenFeatureReservation in ordered_features:
 		var feature_units: Array[FabricUnit] = []
@@ -247,6 +293,11 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 					room_unit_by_stamp, source_parcel_by_room,
 					seam_ids_by_source_parcel)
 				balcony_count += int(not feature_units.is_empty())
+			&"tower_annex":
+				feature_units = _compile_tower_annex_feature(feature, program,
+					room_unit_by_stamp, source_parcel_by_room,
+					seam_ids_by_source_parcel)
+				tower_annex_count += int(not feature_units.is_empty())
 			&"prefab_landmark":
 				feature_units = _compile_landmark_feature(feature, program)
 				landmark_count += int(not feature_units.is_empty())
@@ -276,15 +327,55 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	last_audit = {
 		"source_constructed_feature_count": ordered_features.size(),
 		"realized_constructed_feature_count": skywalk_count + market_count \
-			+ balcony_count + landmark_count,
+			+ balcony_count + tower_annex_count + landmark_count,
 		"skywalk_feature_count": skywalk_count,
 		"covered_market_feature_count": market_count,
 		"balcony_feature_count": balcony_count,
+		"tower_annex_feature_count": tower_annex_count,
 		"prefab_landmark_feature_count": landmark_count,
 		"feature_construction_unit_count": out.size(),
 		"feature_reserved_cell_count": realized_cells.size(),
 	}
 	return out
+
+
+static func _compile_tower_annex_feature(feature: WarrenFeatureReservation,
+		program: SettlementFabricProgram,
+		room_unit_by_stamp: Dictionary, source_parcel_by_room: Dictionary,
+		seam_ids_by_source_parcel: Dictionary) -> Array[FabricUnit]:
+	var room_id := StringName(feature.audit.get("annex_room_id", &""))
+	if room_id.is_empty() or feature.endpoints.size() != 1 \
+			or feature.construction_records.size() != 1:
+		last_failure = "tower annex %s lacks one exact room/recipe" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	var room_unit := room_unit_by_stamp.get(room_id) as FabricUnit
+	if room_unit == null:
+		last_failure = "tower annex %s parent room %s was not compiled" % [
+			feature.stable_id, room_id]
+		return [] as Array[FabricUnit]
+	var component := _feature_component_shell(feature, 0,
+		feature.construction_records[0])
+	var recipe := program.recipe(component.recipe_id)
+	if recipe == null or not recipe.has_tag(&"outcropping") \
+			or recipe.bearing_parent_count != 1:
+		last_failure = "tower annex %s lacks a one-bearing occupied recipe" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	var endpoint_cell := (feature.endpoints[0] as Dictionary).cell as Vector3i
+	var matches := _matching_room_connections(component, room_unit, program,
+		endpoint_cell, true)
+	if matches.size() != 1:
+		last_failure = "tower annex %s has %d exact room/socket matches" % [
+			feature.stable_id, matches.size()]
+		return [] as Array[FabricUnit]
+	var source_parcel_id := StringName(source_parcel_by_room.get(room_id, &""))
+	var seams: Array[StringName] = []
+	seams.assign(seam_ids_by_source_parcel.get(source_parcel_id, []) \
+		as Array[StringName])
+	return [_feature_component_with_connections(component,
+		[matches[0]] as Array[Dictionary], [room_unit] as Array[FabricUnit],
+		true, seams)] as Array[FabricUnit]
 
 
 static func _compile_landmark_feature(feature: WarrenFeatureReservation,
@@ -822,7 +913,8 @@ static func _cap_unit(room_id: StringName, row_index: int,
 				parent_local.x, parent_local.z))] as Array[Dictionary], &"", seams)
 
 
-static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int) \
+static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
+		allow_phase_b: bool = true) \
 		-> StringName:
 	var prefix := "room.long" if room.kind == &"long" \
 		else "room.slim" if room.kind == &"slim" \
@@ -836,10 +928,15 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int) \
 	var theme := "blue" if phase in [0, 3] \
 		else "orange" if phase in [1, 4] else "amber"
 	var addressed := ".address" if room.addressed else ""
-	# Phase-B shells carry projecting signs/ivy/laundry. In the dense massif those
-	# are separate reserved feature units; selecting them as the structural room
-	# shell would let an incidental detail invalidate a legal party-wall bay.
-	var phase_b := false
+	# Alternate complete facade recipes by storey. The phase-B vocabulary uses a
+	# different authored module arrangement plus measured ivy, laundry, or sign
+	# projections; its clearance envelope participates in the same compiler
+	# transaction, so a detail is kept only when the dense 3D fabric really has
+	# room for it. Hashing the horizontal slot prevents every neighboring stack
+	# from changing phase on the same floor.
+	var phase_b := allow_phase_b and posmod(room.source_storey_index \
+		+ room.lattice_origin.x \
+		+ room.lattice_origin.z + world_seed, 2) == 1
 	if room.kind == &"long":
 		return StringName("%s.upper%s.%s.%s" % [prefix, addressed, theme,
 			"b" if phase_b else "a"])

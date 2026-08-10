@@ -345,6 +345,15 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   seam, and the skywalk owns both the open face and its persistent clearance halo so later balconies
   and roofs cannot pierce it. Landmark-owned private cells are feature volume rather than synthetic
   `WarrenBuildingVolume` stacks, and their terrain bearing replaces any hidden support podium.
+  `WarrenRoomCompositionPlanner` then treats every remaining upper band as a mutable 3D room field,
+  never as a 2D parcel to extrude. Its deterministic band tiler may replace adjacent source-lineage
+  blocks with one measured long/slim/square room when the exact occupied-cell union, support overlap,
+  protected reservations, and later lineage handoffs all remain valid. A second residual-mass pass
+  can grow a room into genuinely unclaimed inhabited massif cells beyond its source footprint; an
+  addressed upper room is eligible only when the transformed authored door and exact public frontage
+  remain unchanged. Storey diversity is audited from world-space floorplate columns rather than room
+  kind or local origin, because even-cell rotations and origin changes can describe the same visible
+  shaft. No accepted tall lineage may remain a repeated world-space extrusion.
   After exact room composition, the same fine grid admits exactly six usable balconies across at
   least three building owners. Each is one measured 3 x 1.5 m private occupied-floor recipe with
   two deck tiles, full two-band headroom, a reviewed door facade, four exposed-edge railing runs,
@@ -356,7 +365,12 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   enter lower public air only as an explicit covered-street construction seam. The fast diagnostic
   `tests/harness/warren_spatial_review.tscn` renders the already-sealed fine-grid candidate directly
   and adds front/underside falsification views for every balcony; it deliberately bypasses corpus
-  selection and is not evidence that the production selector accepted a seed.
+  selection and is not evidence that the production selector accepted a seed. The spatial fabric
+  compiler deterministically alternates complete authored facade phases by storey and horizontal
+  slot, then retries the plainer phase only when the richer measured envelope conflicts with already
+  accepted construction. `SettlementFabricPlan.add_unit()` stages semantic occupancy and publishes
+  it only after visual-envelope validation, so a rejected rich phase cannot leave ghost claims that
+  poison that exact fallback transaction.
   Route-first retains its independent-stall grammar. Skywalk reservations are solved against
   the fixed exact parcel partition and preserved through asset compilation; do not fake extra links
   when no independent measured corridor exists. Mass-first-only thresholds and styling are guarded

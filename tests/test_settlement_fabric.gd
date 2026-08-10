@@ -484,6 +484,36 @@ func test_solid_or_headroom_overlap_is_rejected_during_construction() -> void:
 	assert_null(plan)
 
 
+func test_visual_rejection_rolls_back_staged_semantic_claims() -> void:
+	var plan := SettlementFabricPlan.new(&"warren.test.visual-rollback")
+	var catalog := EnvironmentCatalog.load_default()
+	var recipe_value := FabricRecipe.new(&"test.visual-rollback",
+		[&"generated_building"], 0)
+	recipe_value.add_placement(&"floor", SettlementFabricProgram.FLOOR)
+	recipe_value.solid_cells.append(Vector3i.ZERO)
+	var visual_bounds := catalog.descriptor(
+		SettlementFabricProgram.FLOOR).measured_aabb
+	assert_true(recipe_value.set_local_clearance_bounds(
+		visual_bounds.grow(0.5)))
+	assert_true(recipe_value.seal(catalog), recipe_value.last_rejection)
+	assert_true(plan.register_recipe(recipe_value))
+	var left := FabricUnit.new(&"room.left", recipe_value.recipe_id,
+		Vector3i.ZERO, 0)
+	assert_true(plan.add_unit(left), plan.last_rejection)
+	var unseamed := FabricUnit.new(&"room.right", recipe_value.recipe_id,
+		Vector3i(1, 0, 0), 0)
+	assert_false(plan.add_unit(unseamed),
+		"adjacent authored facade envelopes require an explicit party-wall seam")
+	assert_true(plan.last_rejection.contains("visual envelope"),
+		plan.last_rejection)
+	var retry := FabricUnit.new(&"room.right", recipe_value.recipe_id,
+		Vector3i(1, 0, 0), 0, [], [], &"", [&"room.left"])
+	assert_true(plan.add_unit(retry),
+		"the rejected attempt must not retain ghost semantic claims: %s" \
+			% plan.last_rejection)
+	assert_eq(plan.units.size(), 2)
+
+
 func test_stacked_room_requires_the_declared_bearing_parent_socket() -> void:
 	var specs := _route_specs()
 	specs.append(SettlementFabricSolver.unit_spec(&"room.base",

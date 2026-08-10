@@ -34,14 +34,20 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		WarrenSpatialFeatureSolver.MIN_BALCONY_BUILDINGS)
 	assert_gte(int(plan.audit.room_outcropping_count),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
-	assert_gte(int(plan.audit.merged_upper_composition_count), 3,
-		"adjacent narrow columns should become shared upper room plates")
-	assert_gte(int(plan.audit.mixed_kind_tall_lineage_count), 3,
+	assert_gte(int(plan.audit.merged_upper_composition_count), 1,
+		"at least one upper plate must cross original parcel lineages")
+	assert_gte(int(plan.audit.expanded_upper_composition_count), 3,
+		"upper rooms should occupy free 3D massif cells beyond their 2D parcels")
+	assert_gte(int(plan.audit.upper_recomposition_count), 6,
+		"the upper town must be materially recomposed in three dimensions")
+	assert_gte(int(plan.audit.mixed_kind_tall_lineage_count), 5,
 		"tall construction must change room size/kind across height")
 	assert_eq(int(plan.audit.extruded_tall_lineage_count), 0,
-		"no 5+ storey source lineage may remain one extruded room kind")
-	assert_lte(int(plan.audit.max_tower_only_lineage_storeys), 4,
-		"an unpaired 3x3 m lineage may not become a visual spike")
+		"no tall source lineage may repeat one world-space floorplate")
+	assert_eq(plan.audit.extruded_tall_lineage_ids, [],
+		"the audit must identify no repeated world-space extrusion")
+	assert_lte(int(plan.audit.max_identical_tower_floorplate_run_storeys), 4,
+		"even a shorter tower-family run must break before becoming a shaft")
 	assert_not_null(plan.construction_plan)
 	assert_gt(int(plan.construction_plan.audit.roof_region_count), 0)
 	for building: WarrenBuildingVolume in plan.buildings:

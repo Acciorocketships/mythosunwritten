@@ -7,6 +7,7 @@ extends RefCounted
 ## and roof compilation may respond to these facts but never recreate them.
 const TARGET_SKYWALKS := 3
 const TARGET_PREFAB_LANDMARKS := 2
+const TARGET_TOWER_ANNEXES := 2
 const TARGET_BALCONIES := 6
 const MIN_BALCONY_BUILDINGS := 3
 const MAX_BALCONIES_PER_BUILDING := 2
@@ -65,6 +66,13 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			last_skywalk_diagnostic]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(skywalks)
+	var tower_annexes := _reserve_tower_annexes(grid, buildings, supports,
+		source.world_seed, construction_program, out)
+	if tower_annexes.size() < TARGET_TOWER_ANNEXES:
+		last_failure = "only %d of %d tower-breaking room annexes fit" % [
+			tower_annexes.size(), TARGET_TOWER_ANNEXES]
+		return [] as Array[WarrenFeatureReservation]
+	out.append_array(tower_annexes)
 	var balconies := _reserve_balconies(grid, buildings, supports,
 		source.world_seed, construction_program, out)
 	var balcony_buildings: Dictionary = {}
@@ -89,6 +97,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"covered_market_count": 1,
 		"prefab_landmark_count": landmarks.size(),
 		"enclosed_skywalk_count": skywalks.size(),
+		"tower_annex_count": tower_annexes.size(),
 		"usable_balcony_count": balconies.size(),
 		"balcony_building_count": balcony_buildings.size(),
 		"room_outcropping_count": outcroppings.size(),
@@ -96,6 +105,203 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	}
 	last_audit.merge(court.audit, false)
 	return out
+
+
+static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
+		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
+		world_seed: int, program: SettlementFabricProgram,
+		existing_features: Array[WarrenFeatureReservation]) \
+		-> Array[WarrenFeatureReservation]:
+	if program == null:
+		return [] as Array[WarrenFeatureReservation]
+	var rooms_by_source: Dictionary = {}
+	var building_by_room: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			building_by_room[room.stable_id] = building
+			if not rooms_by_source.has(room.source_parcel_id):
+				rooms_by_source[room.source_parcel_id] = [] \
+					as Array[WarrenRoomStamp]
+			(rooms_by_source[room.source_parcel_id] \
+				as Array[WarrenRoomStamp]).append(room)
+	var target_sources: Dictionary = {}
+	for source_value: Variant in rooms_by_source.keys():
+		var source_id := StringName(source_value)
+		var rooms := rooms_by_source[source_id] as Array[WarrenRoomStamp]
+		if rooms.size() < 4:
+			continue
+		var tower_only := true
+		for room: WarrenRoomStamp in rooms:
+			tower_only = tower_only and room.kind == &"tower"
+		if tower_only:
+			target_sources[source_id] = true
+	if target_sources.is_empty():
+		return [] as Array[WarrenFeatureReservation]
+	var used_endpoint_cells: Dictionary = {}
+	for feature: WarrenFeatureReservation in existing_features:
+		for endpoint: Dictionary in feature.endpoints:
+			used_endpoint_cells[endpoint.cell as Vector3i] = true
+	var owner_ids_by_source: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not owner_ids_by_source.has(room.source_parcel_id):
+				owner_ids_by_source[room.source_parcel_id] = {}
+			(owner_ids_by_source[room.source_parcel_id] \
+				as Dictionary)[building.stable_id] = true
+	var recipe_ids: Array[StringName] = [
+		&"outcrop.blue", &"outcrop.orange",
+		&"outcrop.corner.wrap.left.amber",
+		&"outcrop.corner.wrap.right.blue",
+	]
+	var candidates: Array[Dictionary] = []
+	for endpoint: Dictionary in _balcony_room_endpoints(buildings):
+		var room := endpoint.room as WarrenRoomStamp
+		if not target_sources.has(room.source_parcel_id) \
+				or room.source_storey_index < 2 \
+				or used_endpoint_cells.has(endpoint.cell as Vector3i):
+			continue
+		var facing := endpoint.facing as Vector3i
+		var building := endpoint.building as WarrenBuildingVolume
+		var allowed_owner_ids := owner_ids_by_source[room.source_parcel_id] \
+			as Dictionary
+		for recipe_id: StringName in recipe_ids:
+			var recipe := program.recipe(recipe_id)
+			if recipe == null or not recipe.has_tag(&"outcropping") \
+					or recipe.bearing_parent_count != 1:
+				continue
+			var socket := recipe.socket(&"room.back")
+			var yaw := _yaw_for_local_direction(Vector3i.FORWARD, -facing)
+			if socket.is_empty() or yaw < 0:
+				continue
+			var socket_world := (endpoint.cell as Vector3i) + facing
+			var origin := socket_world - FabricRecipe.transform_cell(
+				socket.cell as Vector3i, Vector3i.ZERO, yaw)
+			var body := _feature_recipe_cells(recipe, origin, yaw)
+			if body.is_empty() or not WarrenVolumetricSolver \
+					._skywalk_body_fits_grid(grid, body):
+				continue
+			var components: Array[Dictionary] = [{"recipe_id": recipe_id,
+				"origin": origin, "yaw_quarters": yaw}]
+			var clearance := WarrenVolumetricSolver \
+				._skywalk_visual_clearance_cells(components, program)
+			var clearance_audit := _balcony_clearance_audit(grid, clearance,
+				body, allowed_owner_ids, origin.y)
+			if not bool(clearance_audit.get("fits", false)):
+				continue
+			candidates.append({"recipe_id": recipe_id, "origin": origin,
+				"yaw_quarters": yaw, "body": body, "clearance": clearance,
+				"clearance_only": clearance_audit.clearance_only,
+				"covered_public_cells": clearance_audit.covered_public_cells,
+				"endpoint_cell": endpoint.cell, "socket_world": socket_world,
+				"room": room, "building": building,
+				"allowed_owner_ids": allowed_owner_ids,
+				"tie": posmod(Helper._mix64(world_seed \
+					^ String(room.stable_id).hash() * 31 \
+					^ String(recipe_id).hash() * 47 \
+					^ (endpoint.cell as Vector3i).x * 73856093 \
+					^ (endpoint.cell as Vector3i).z * 19349663), 1000003)})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var a_room := a.room as WarrenRoomStamp
+		var b_room := b.room as WarrenRoomStamp
+		if a_room.source_storey_index != b_room.source_storey_index:
+			return a_room.source_storey_index > b_room.source_storey_index
+		return int(a.tie) < int(b.tie))
+	var out: Array[WarrenFeatureReservation] = []
+	var used_sources: Dictionary = {}
+	for candidate: Dictionary in candidates:
+		if out.size() >= TARGET_TOWER_ANNEXES:
+			break
+		var room := candidate.room as WarrenRoomStamp
+		if used_sources.has(room.source_parcel_id) \
+				or not WarrenVolumetricSolver._skywalk_body_fits_grid(
+					grid, candidate.body as Dictionary):
+			continue
+		var refreshed := _balcony_clearance_audit(grid,
+			candidate.clearance as Dictionary, candidate.body as Dictionary,
+			candidate.allowed_owner_ids as Dictionary,
+			(candidate.origin as Vector3i).y)
+		if not bool(refreshed.get("fits", false)):
+			continue
+		candidate["clearance_only"] = refreshed.clearance_only
+		candidate["covered_public_cells"] = refreshed.covered_public_cells
+		var feature := _commit_tower_annex(grid, candidate, supports,
+			out.size())
+		if feature == null:
+			continue
+		used_sources[room.source_parcel_id] = true
+		out.append(feature)
+	return out
+
+
+static func _commit_tower_annex(grid: WarrenSpatialGrid,
+		candidate: Dictionary, supports: WarrenSupportGraph,
+		ordinal: int) -> WarrenFeatureReservation:
+	var feature_id := StringName("spatial.feature.tower-annex.%02d" % ordinal)
+	var body_dict := candidate.body as Dictionary
+	var body: Array[Vector3i] = []
+	body.assign(body_dict.keys())
+	body.sort_custom(_cell_less)
+	var clearance_only: Array[Vector3i] = []
+	clearance_only.assign((candidate.clearance_only as Dictionary).keys())
+	var covered_public: Array[Vector3i] = []
+	covered_public.assign((candidate.covered_public_cells as Dictionary).keys())
+	var endpoint_cell := candidate.endpoint_cell as Vector3i
+	var socket_world := candidate.socket_world as Vector3i
+	var building := candidate.building as WarrenBuildingVolume
+	var room := candidate.room as WarrenRoomStamp
+	var base_y := (candidate.origin as Vector3i).y
+	var tx := grid.begin_transaction(feature_id)
+	if not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
+			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+			or not tx.reserve(body, WarrenSpatialGrid.Reservation.FEATURE \
+				| WarrenSpatialGrid.Reservation.PRIVATE_CONNECTION \
+				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not clearance_only.is_empty() and not tx.reserve(clearance_only,
+				WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not covered_public.is_empty() and not tx.reserve(covered_public,
+				WarrenSpatialGrid.Reservation.CONSTRUCTION_SEAM, feature_id) \
+			or not tx.assign_use(body, WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+				feature_id):
+		return null
+	for cell: Vector3i in body:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if body_dict.has(neighbor):
+				continue
+			var opens_to_room := Vector2i(cell.x, cell.z) \
+					== Vector2i(socket_world.x, socket_world.z) \
+				and neighbor == endpoint_cell + Vector3i.UP * (cell.y - base_y)
+			var kind := WarrenSpatialGrid.FaceKind.FACADE
+			if opens_to_room:
+				kind = WarrenSpatialGrid.FaceKind.OPEN_SEAM
+			elif direction == Vector3i.DOWN:
+				kind = WarrenSpatialGrid.FaceKind.SOFFIT \
+					if grid.use_at(neighbor) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+					else WarrenSpatialGrid.FaceKind.PRIVATE_FLOOR
+			elif direction == Vector3i.UP:
+				kind = WarrenSpatialGrid.FaceKind.ROOF
+			if not tx.claim_face(cell, direction, kind, feature_id):
+				return null
+	if not tx.commit():
+		return null
+	var feature := WarrenFeatureReservation.new(feature_id, &"tower_annex")
+	if not feature.add_reserved_cells(body) \
+			or not feature.add_endpoint(endpoint_cell, building.stable_id) \
+			or not feature.add_construction_record(
+				StringName(candidate.recipe_id), candidate.origin as Vector3i,
+				int(candidate.yaw_quarters), &"occupied_room_annex") \
+			or not feature.set_support_node(building.stable_id) \
+			or not feature.set_audit_facts({
+				"annex_room_id": room.stable_id,
+				"annex_building_id": building.stable_id,
+				"annex_source_parcel_id": room.source_parcel_id,
+				"annex_recipe_id": StringName(candidate.recipe_id),
+				"annex_breaks_tower_lineage": true,
+				"annex_reserved_cell_count": body.size(),
+			}) or not feature.seal(grid, supports):
+		return null
+	return feature
 
 
 static func _record_preplanned_landmarks(grid: WarrenSpatialGrid,

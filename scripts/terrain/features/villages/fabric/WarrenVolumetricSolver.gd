@@ -475,7 +475,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			(protected_owners[cell] as Dictionary)[parcel.stable_id] = true
 	var composition := WarrenRoomCompositionPlanner.solve(grid, volume,
 		proposals, solved_offsets_by_parcel, exact_forced_offsets_by_parcel,
-		market_reservation, protected_owners, volume.world_seed)
+		market_reservation, protected_owners, forced_offsets_by_parcel,
+		skywalk_reservations, volume.world_seed)
 	if composition.is_empty():
 		last_failure = "3D room composition failed: %s" \
 			% WarrenRoomCompositionPlanner.last_failure
@@ -542,7 +543,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			var cells := block.cells as Array[Vector3i]
 			var assign := grid.begin_transaction(building_id)
 			if not assign.require_use(cells,
-					[WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+					[WarrenSpatialGrid.Use.ALLOCATABLE,
+						WarrenSpatialGrid.Use.OUTSIDE] as Array[int]) \
 					or not assign.assign_use(cells,
 						WarrenSpatialGrid.Use.PRIVATE_VOLUME, building_id) \
 					or not assign.commit():

@@ -103,8 +103,16 @@ func set_embedding_plan(plan_value: StaggeredFabricEmbeddingPlan) -> bool:
 
 func add_unit(unit: FabricUnit) -> bool:
 	last_rejection = ""
-	if _sealed or not _accept_unit(unit, _by_id, _solid_owner,
-			_walk_owner, _headroom_owner):
+	if _sealed:
+		return false
+	# _accept_unit claims semantic cells as it validates them. Stage those
+	# mutations so a later visual-envelope rejection cannot leave ghost claims
+	# that poison a measured fallback attempted in the same plan.
+	var trial_solid := _solid_owner.duplicate()
+	var trial_walk := _walk_owner.duplicate()
+	var trial_headroom := _headroom_owner.duplicate()
+	if not _accept_unit(unit, _by_id, trial_solid,
+			trial_walk, trial_headroom):
 		return false
 	var recipe := _recipes[unit.recipe_id] as FabricRecipe
 	var transform := unit.transform()
@@ -126,6 +134,9 @@ func add_unit(unit: FabricUnit) -> bool:
 					unit.stable_id, clearance_bounds, existing.stable_id,
 					existing_clearance]
 			return false
+	_solid_owner = trial_solid
+	_walk_owner = trial_walk
+	_headroom_owner = trial_headroom
 	units.append(unit)
 	_by_id[unit.stable_id] = unit
 	return true
