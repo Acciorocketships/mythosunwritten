@@ -862,8 +862,14 @@ static func _admit_markets(assets: WarrenAssetPlan,
 	var accepted_specs: Array[Dictionary] = []
 	accepted_specs.assign(initial_specs)
 	var market_count := 0
-	var market_candidates := WarrenMarketSolver.candidate_specs(program,
-		fabric, town.volume, world_seed, town.pruning.daylight_void_columns)
+	var mass_first := town.volume.mass_context.has(&"massif")
+	var market_candidates := WarrenMarketSolver.covered_candidate_specs(program,
+		fabric, town.volume, world_seed, town.pruning.daylight_void_columns) \
+		if mass_first else WarrenMarketSolver.candidate_specs(program, fabric,
+			town.volume, world_seed, town.pruning.daylight_void_columns)
+	if mass_first:
+		return _admit_covered_market(assets, fabric,
+			accepted_specs, market_candidates)
 	var market_rejections := PackedStringArray()
 	for candidate: Dictionary in market_candidates:
 		if market_count >= WarrenMarketSolver.TARGET_MARKETS:
@@ -889,6 +895,36 @@ static func _admit_markets(assets: WarrenAssetPlan,
 				market_count, " | ".join(market_rejections)],
 		}
 	return {"accepted": true, "fabric": fabric, "specs": accepted_specs}
+
+
+static func _admit_covered_market(assets: WarrenAssetPlan,
+		initial_fabric: SettlementFabricPlan,
+		initial_specs: Array[Dictionary],
+		candidates: Array[Dictionary]) -> Dictionary:
+	## Each candidate is already one compound recipe containing a canopy and its
+	## stocked counter. Exact construction therefore proves the whole bazaar once
+	## instead of rebuilding the town for pair combinations.
+	var attempts := 0
+	var rejections := PackedStringArray()
+	for candidate: Dictionary in candidates:
+		if attempts >= WarrenMarketSolver.MAX_COVERED_MARKET_ATTEMPTS:
+			break
+		attempts += 1
+		var trial_specs: Array[Dictionary] = []
+		trial_specs.assign(initial_specs)
+		trial_specs.append((candidate.spec as Dictionary).duplicate(true))
+		var market_trial := WarrenFabricCompiler.solve(assets, trial_specs)
+		if market_trial != null:
+			return {"accepted": true, "fabric": market_trial,
+				"specs": trial_specs}
+		if rejections.size() < 4:
+			rejections.append("%s: %s" % [candidate.stable_id,
+				WarrenFabricCompiler.last_failure])
+	return {"accepted": false,
+		"failure": ("no compound covered market survived " \
+			+ "(candidates=%d exact attempts=%d): %s") \
+			% [candidates.size(), attempts,
+				" | ".join(rejections)]}
 
 
 static func _admit_prefabs(assets: WarrenAssetPlan,

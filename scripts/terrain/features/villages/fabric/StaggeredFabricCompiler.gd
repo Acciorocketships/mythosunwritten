@@ -23,6 +23,9 @@ static func append_specs(program: SettlementFabricProgram,
 	if program == null or embedding == null or not embedding.validate():
 		return false
 	for recipe_id: StringName in [&"room.base.rock", &"room.base.rock.closed",
+			&"room.base.blue", &"room.base.blue.closed",
+			&"room.base.orange", &"room.base.orange.closed",
+			&"room.base.amber", &"room.base.amber.closed",
 			&"room.upper.blue", &"room.upper.orange", &"room.upper.amber",
 			&"room.upper.stone",
 			&"room.upper.blue.b", &"room.upper.orange.b", &"room.upper.amber.b",
@@ -33,6 +36,9 @@ static func append_specs(program: SettlementFabricProgram,
 			&"room.upper.address.orange.b", &"room.upper.address.amber.b",
 			&"room.upper.address.stone.b",
 			&"room.long.base.rock", &"room.long.base.rock.closed",
+			&"room.long.base.blue", &"room.long.base.blue.closed",
+			&"room.long.base.orange", &"room.long.base.orange.closed",
+			&"room.long.base.amber", &"room.long.base.amber.closed",
 			&"room.long.upper.blue.a", &"room.long.upper.blue.b",
 			&"room.long.upper.orange.a", &"room.long.upper.orange.b",
 			&"room.long.upper.amber.a", &"room.long.upper.amber.b",
@@ -56,6 +62,9 @@ static func append_specs(program: SettlementFabricProgram,
 			&"roof.square.05",
 			&"roof.square.blue.plain", &"roof.square.orange.plain",
 			&"room.tower.base.rock", &"room.tower.base.rock.closed",
+			&"room.tower.base.blue", &"room.tower.base.blue.closed",
+			&"room.tower.base.orange", &"room.tower.base.orange.closed",
+			&"room.tower.base.amber", &"room.tower.base.amber.closed",
 			&"room.tower.upper.blue", &"room.tower.upper.orange",
 			&"room.tower.upper.amber",
 			&"room.tower.upper.stone", &"room.tower.upper.blue.b",
@@ -71,7 +80,12 @@ static func append_specs(program: SettlementFabricProgram,
 			&"roof.tower.blue", &"roof.tower.orange",
 			&"roof.tower.chimney.blue", &"roof.tower.chimney.orange",
 			&"roof.tower.short.blue", &"roof.tower.short.orange",
+			&"roof.flat.tower", &"roof.flat.slim", &"roof.flat.square",
+			&"roof.flat.long",
 			&"room.slim.base.rock", &"room.slim.base.rock.closed",
+			&"room.slim.base.blue", &"room.slim.base.blue.closed",
+			&"room.slim.base.orange", &"room.slim.base.orange.closed",
+			&"room.slim.base.amber", &"room.slim.base.amber.closed",
 			&"room.slim.upper.blue", &"room.slim.upper.orange",
 			&"room.slim.upper.amber",
 			&"room.slim.upper.stone", &"room.slim.upper.blue.b",
@@ -186,6 +200,56 @@ static func classified_roof_seam_compatible(left: Dictionary,
 	return not FabricRoofJunctionModuleTable.build([left, right], topology).is_empty()
 
 
+static func inhabited_party_wall_compatible(left: Dictionary,
+		right: Dictionary) -> bool:
+	## Dense massif parcels are allowed to meet on a logical construction face
+	## even when their roofs finish at different levels.  Test exact 3-D room
+	## occupancy rather than only the ground footprint: the partition may stack a
+	## second house above an earlier roof as well as place party walls side by
+	## side.  Disjointness plus six-neighbour contact means this cannot turn a
+	## street gap, corner nick, or unsupported overhang into a seam.
+	var left_cells := proposal_occupied_cells(left)
+	var right_cells := proposal_occupied_cells(right)
+	if left_cells.is_empty() or right_cells.is_empty():
+		return false
+	var right_set: Dictionary = {}
+	for cell: Vector3i in right_cells:
+		right_set[cell] = true
+	for cell: Vector3i in left_cells:
+		if right_set.has(cell):
+			return false
+	for cell: Vector3i in left_cells:
+		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.LEFT,
+				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
+			if right_set.has(cell + direction):
+				return true
+	return false
+
+
+static func proposals_share_corner(left: Dictionary,
+		right: Dictionary) -> bool:
+	## Exact diagonal macro contact. Pitched roofs overhang this point and need
+	## a flush cap on both participants; face neighbours remain ordinary party
+	## walls with classified roof junctions.
+	var left_columns := _proposal_ground_columns(left)
+	var right_columns := _proposal_ground_columns(right)
+	if left_columns.is_empty() or right_columns.is_empty():
+		return false
+	for column: Vector2i in left_columns:
+		if right_columns.has(column):
+			return false
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
+				Vector2i.UP, Vector2i.DOWN]:
+			if right_columns.has(column + direction):
+				return false
+	for column: Vector2i in left_columns:
+		for diagonal: Vector2i in [Vector2i(1, 1), Vector2i(1, -1),
+				Vector2i(-1, 1), Vector2i(-1, -1)]:
+			if right_columns.has(column + diagonal):
+				return true
+	return false
+
+
 static func tower_seam_compatible(left: Dictionary,
 		right: Dictionary) -> bool:
 	## Compatibility alias retained for older diagnostic fixtures. New code names
@@ -295,25 +359,36 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 	var is_slim := kind == &"slim"
 	var is_long := kind == &"long"
 	var facade_family := _proposal_facade_family(proposal, origin)
+	var ground_theme := StringName(proposal.get("ground_theme", &"rock"))
+	if ground_theme not in [&"rock", &"blue", &"orange", &"amber"]:
+		return out
+	var storey_themes := proposal.get("storey_themes", []) as Array
+	var flush_facades := bool(proposal.get("flush_facades", false))
 	var roof_orange := StringName(proposal.get("roof_theme",
 		&"orange" if _orange_theme(origin) else &"blue")) == &"orange"
 	var facade_phase := int(proposal.get("facade_phase",
 		posmod(origin.x + origin.z, 2)))
-	var base_recipe := &"room.long.base.rock" if is_long \
-		and origin.y == route_y else &"room.long.base.rock.closed" if is_long \
-		else &"room.slim.base.rock" if is_slim \
-		and origin.y == route_y else &"room.slim.base.rock.closed" if is_slim \
-		else &"room.tower.base.rock" if is_tower \
-		and origin.y == route_y else &"room.tower.base.rock.closed" \
-		if is_tower else &"room.base.rock" if origin.y == route_y \
-		else &"room.base.rock.closed"
+	var base_prefix := "room.long.base" if is_long \
+		else "room.slim.base" if is_slim \
+		else "room.tower.base" if is_tower else "room.base"
+	var base_recipe := StringName("%s.%s%s" % [base_prefix,
+		String(ground_theme), "" if origin.y == route_y else ".closed"])
 	out.append({"role": &"base", "recipe_id": base_recipe,
 		"origin": origin, "yaw_quarters": yaw})
 	for level in range(1, storeys):
 		var addressed_upper := origin.y + level * 2 == route_y
-		var long_phase := "a" if posmod(facade_phase + level, 2) == 0 \
-			else "b"
-		var long_theme := String(facade_family)
+		var level_theme := facade_family
+		if level < storey_themes.size():
+			level_theme = StringName(storey_themes[level])
+		if level_theme == &"rock":
+			level_theme = &"stone"
+		if level_theme not in [&"blue", &"orange", &"amber", &"stone"]:
+			return []
+		var use_phase_b := not flush_facades \
+			and posmod(facade_phase + level, 2) != 0
+		var long_phase := "b" if use_phase_b \
+			else "a"
+		var long_theme := String(level_theme)
 		var long_prefix := "room.long.upper.address" if addressed_upper \
 			else "room.long.upper"
 		var upper_recipe: StringName
@@ -323,18 +398,16 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 		elif is_slim:
 			var slim_prefix := "room.slim.upper.address" if addressed_upper \
 				else "room.slim.upper"
-			var slim_theme := String(facade_family)
-			var slim_phase := ".b" \
-				if posmod(facade_phase + level, 2) != 0 else ""
+			var slim_theme := String(level_theme)
+			var slim_phase := ".b" if use_phase_b else ""
 			upper_recipe = StringName("%s.%s%s" % [slim_prefix,
 				slim_theme, slim_phase])
 		else:
 			var prefix := "room.tower.upper" if is_tower else "room.upper"
 			if addressed_upper:
 				prefix += ".address"
-			var theme := String(facade_family)
-			var phase_suffix := ".b" \
-				if posmod(facade_phase + level, 2) != 0 else ""
+			var theme := String(level_theme)
+			var phase_suffix := ".b" if use_phase_b else ""
 			upper_recipe = StringName("%s.%s%s" % [prefix, theme, phase_suffix])
 		out.append({
 			"role": StringName("upper.%02d" % level),
@@ -369,7 +442,12 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 				FabricRoofTopologyPlan.JunctionKind.PARALLEL_VALLEY]:
 			equal_band_flashed = true
 	var roof_recipe := &""
-	if atomic_valley_rules.size() == 1:
+	var flat_roof := bool(proposal.get("flat_roof", false))
+	if flat_roof:
+		roof_recipe = &"roof.flat.long" if is_long \
+			else &"roof.flat.slim" if is_slim \
+			else &"roof.flat.tower" if is_tower else &"roof.flat.square"
+	elif atomic_valley_rules.size() == 1:
 		var atomic_rule := atomic_valley_rules[0]
 		var theme := &"orange" if roof_orange else &"blue"
 		var atomic_role := StringName(atomic_rule.get("atomic_role", ""))
@@ -421,6 +499,8 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 		"origin": origin + Vector3i(0, storeys * 2, 0),
 		"yaw_quarters": yaw})
 	for rule_index in roof_junction_rules.size():
+		if flat_roof:
+			break
 		var rule := roof_junction_rules[rule_index] as Dictionary
 		if not bool(rule.get("emits_module", false)) \
 				or StringName(rule.get("module_family", "")) != &"eave_seam":

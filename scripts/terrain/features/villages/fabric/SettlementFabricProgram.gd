@@ -167,6 +167,18 @@ const MARKET_STALLS: Array[StringName] = [
 	&"sfm.stall.alchemy.001",
 	&"sfm.stall.veg.004",
 ]
+## Compact canopies with one reviewed stocked table attachment. Unlike the
+## large self-contained stalls above, these fit a single 6 x 3 m frontage and
+## make the mass-first bazaar one rich covered unit rather than a distant pair.
+const COVERED_MARKET_CANOPIES: Array[StringName] = [
+	&"sfm.stall.blue.007",
+	&"sfm.stall.orange.006",
+	&"sfm.stall.teal.008",
+	&"sfm.stall.neutral.009",
+	&"sfm.stall.butcher.001",
+	&"sfm.stall.butcher.003",
+]
+const COVERED_MARKET_TABLE := &"sfm.table.fishmonger.001"
 
 const PREFAB_ANCHORS: Array[StringName] = [
 	&"sfv.building.interior.blue.001",
@@ -208,6 +220,12 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_gallery_recipe(),
 		_room_recipe(&"room.base.rock", true, &"rock", true, modules),
 		_room_recipe(&"room.base.rock.closed", true, &"rock", false, modules),
+		_room_recipe(&"room.base.blue", true, &"blue", true, modules),
+		_room_recipe(&"room.base.blue.closed", true, &"blue", false, modules),
+		_room_recipe(&"room.base.orange", true, &"orange", true, modules),
+		_room_recipe(&"room.base.orange.closed", true, &"orange", false, modules),
+		_room_recipe(&"room.base.amber", true, &"amber", true, modules),
+		_room_recipe(&"room.base.amber.closed", true, &"amber", false, modules),
 		_room_recipe(&"room.upper.blue", false, &"blue", false, modules),
 		_room_recipe(&"room.upper.orange", false, &"orange", false, modules),
 		_room_recipe(&"room.upper.amber", false, &"amber", false, modules),
@@ -226,6 +244,12 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_room_recipe(&"room.upper.address.stone.b", false, &"stone", true, modules, 1),
 		_long_room_recipe(&"room.long.base.rock", true, &"rock", true, 0, modules),
 		_long_room_recipe(&"room.long.base.rock.closed", true, &"rock", false, 1, modules),
+		_long_room_recipe(&"room.long.base.blue", true, &"blue", true, 0, modules),
+		_long_room_recipe(&"room.long.base.blue.closed", true, &"blue", false, 1, modules),
+		_long_room_recipe(&"room.long.base.orange", true, &"orange", true, 0, modules),
+		_long_room_recipe(&"room.long.base.orange.closed", true, &"orange", false, 1, modules),
+		_long_room_recipe(&"room.long.base.amber", true, &"amber", true, 0, modules),
+		_long_room_recipe(&"room.long.base.amber.closed", true, &"amber", false, 1, modules),
 		_long_room_recipe(&"room.long.upper.blue.a", false, &"blue", false, 0, modules),
 		_long_room_recipe(&"room.long.upper.blue.b", false, &"blue", false, 1, modules),
 		_long_room_recipe(&"room.long.upper.orange.a", false, &"orange", false, 0, modules),
@@ -244,6 +268,12 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_long_room_recipe(&"room.long.upper.address.stone.b", false, &"stone", true, 1, modules),
 		_tower_room_recipe(&"room.tower.base.rock", true, &"rock", true, modules),
 		_tower_room_recipe(&"room.tower.base.rock.closed", true, &"rock", false, modules),
+		_tower_room_recipe(&"room.tower.base.blue", true, &"blue", true, modules),
+		_tower_room_recipe(&"room.tower.base.blue.closed", true, &"blue", false, modules),
+		_tower_room_recipe(&"room.tower.base.orange", true, &"orange", true, modules),
+		_tower_room_recipe(&"room.tower.base.orange.closed", true, &"orange", false, modules),
+		_tower_room_recipe(&"room.tower.base.amber", true, &"amber", true, modules),
+		_tower_room_recipe(&"room.tower.base.amber.closed", true, &"amber", false, modules),
 		_tower_room_recipe(&"room.tower.upper.blue", false, &"blue", false, modules),
 		_tower_room_recipe(&"room.tower.upper.orange", false, &"orange", false, modules),
 		_tower_room_recipe(&"room.tower.upper.amber", false, &"amber", false, modules),
@@ -262,6 +292,12 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_tower_room_recipe(&"room.tower.upper.address.stone.b", false, &"stone", true, modules, 1),
 		_slim_room_recipe(&"room.slim.base.rock", true, &"rock", true, modules),
 		_slim_room_recipe(&"room.slim.base.rock.closed", true, &"rock", false, modules),
+		_slim_room_recipe(&"room.slim.base.blue", true, &"blue", true, modules),
+		_slim_room_recipe(&"room.slim.base.blue.closed", true, &"blue", false, modules),
+		_slim_room_recipe(&"room.slim.base.orange", true, &"orange", true, modules),
+		_slim_room_recipe(&"room.slim.base.orange.closed", true, &"orange", false, modules),
+		_slim_room_recipe(&"room.slim.base.amber", true, &"amber", true, modules),
+		_slim_room_recipe(&"room.slim.base.amber.closed", true, &"amber", false, modules),
 		_slim_room_recipe(&"room.slim.upper.blue", false, &"blue", false, modules),
 		_slim_room_recipe(&"room.slim.upper.orange", false, &"orange", false, modules),
 		_slim_room_recipe(&"room.slim.upper.amber", false, &"amber", false, modules),
@@ -342,6 +378,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules),
 		_short_tower_roof_recipe(&"roof.tower.short.orange", COMPACT_ROOF_06,
 			modules),
+		_flat_roof_recipe(&"roof.flat.tower", Vector3i(-1, 0, -1),
+			Vector3i(2, 1, 2), &"compact_tower", modules),
+		_flat_roof_recipe(&"roof.flat.slim", Vector3i(-1, 0, -2),
+			Vector3i(2, 1, 4), &"slim_building", modules),
+		_flat_roof_recipe(&"roof.flat.square", Vector3i(-2, 0, -2),
+			Vector3i(4, 1, 4), &"square_building", modules),
+		_flat_roof_recipe(&"roof.flat.long", Vector3i(-2, 0, -3),
+			Vector3i(4, 1, 6), &"long_building", modules),
 		_slim_roof_recipe(&"roof.slim.blue", ROOF_BLUE, modules),
 		_slim_roof_recipe(&"roof.slim.orange", ROOF_ORANGE, modules),
 		_chimney_slim_roof_recipe(&"roof.slim.chimney.blue", ROOF_BLUE,
@@ -436,6 +480,10 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			return null
 		candidates.append(_market_recipe(StringName("market.stall.%02d" % index),
 			MARKET_STALLS[index]))
+		candidates.append(_covered_market_recipe(
+			StringName("market.covered.%02d" % index),
+			COVERED_MARKET_CANOPIES[index % COVERED_MARKET_CANOPIES.size()],
+			COVERED_MARKET_TABLE))
 	for index in PREFAB_ANCHORS.size():
 		candidates.append(_prefab_recipe(StringName("anchor.prefab.%02d" % index),
 			PREFAB_ANCHORS[index], catalog, modules))
@@ -611,7 +659,7 @@ static func _room_recipe(recipe_id: StringName, terrain_bearing: bool,
 		tags.append(&"terrain_bearing")
 	var recipe_value := FabricRecipe.new(recipe_id, tags,
 		0 if terrain_bearing else 1)
-	var facade_family := &"stone" if terrain_bearing else theme
+	var facade_family := &"stone" if theme == &"rock" else theme
 	## Four faces, four authored modules. Before this the whole shell repeated a
 	## single window, which is what made a square room read as one stamped box
 	## from every angle; the offsets live in FACE_PHASE_OFFSETS so the frozen
@@ -652,7 +700,7 @@ static func _long_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 		tags.append(&"terrain_bearing")
 	var recipe_value := FabricRecipe.new(recipe_id, tags,
 		0 if terrain_bearing else 1)
-	var facade_family := &"stone" if terrain_bearing else theme
+	var facade_family := &"stone" if theme == &"rock" else theme
 	var primary_window := _facade_window(facade_family)
 	var plain_asset := _facade_plain(facade_family)
 	var facade_variants: Array[StringName] = []
@@ -831,7 +879,7 @@ static func _tower_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 		tags.append(&"terrain_bearing")
 	var recipe_value := FabricRecipe.new(recipe_id, tags,
 		0 if terrain_bearing else 1)
-	var facade_family := &"stone" if terrain_bearing else theme
+	var facade_family := &"stone" if theme == &"rock" else theme
 	var window_asset := _facade_asset(facade_family, facade_phase)
 	var rear_asset := _facade_asset(facade_family, facade_phase + 1)
 	var side_asset := _facade_asset(facade_family, facade_phase + 2)
@@ -908,7 +956,7 @@ static func _slim_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 		tags.append(&"terrain_bearing")
 	var recipe_value := FabricRecipe.new(recipe_id, tags,
 		0 if terrain_bearing else 1)
-	var facade_family := &"stone" if terrain_bearing else theme
+	var facade_family := &"stone" if theme == &"rock" else theme
 	var window_asset := _facade_asset(facade_family, facade_phase)
 	var rear_asset := _facade_asset(facade_family, facade_phase + 1)
 	var side_asset := _facade_asset(facade_family, facade_phase + 2)
@@ -1382,6 +1430,36 @@ static func _tower_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 		Vector3i.ZERO, Vector3i.DOWN)
 	_add_roof_junction_sockets(recipe_value, Vector3i(-1, 0, -1),
 		Vector3i(2, 1, 2))
+	return recipe_value
+
+
+static func _flat_roof_recipe(recipe_id: StringName, minimum: Vector3i,
+		size: Vector3i, family: StringName,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## A flush plank cap for the exact diagonal corners where two authored eaves
+	## cannot coexist. It is assembled from the same reviewed 3 m floor module
+	## used inside every house, never scaled or shifted off the parcel lattice.
+	## These are private roofs rather than public platforms: no walk claim is
+	## invented and the ordinary room stack remains the bearing authority.
+	var recipe_value := FabricRecipe.new(recipe_id,
+		[&"roof", &"occupied_mass", &"flat_roof", family], 1)
+	var centre := FabricModuleProgram.footprint_centre(minimum, size)
+	var x_tiles: int = size.x / 2
+	var z_tiles: int = size.z / 2
+	for z_index in z_tiles:
+		for x_index in x_tiles:
+			var offset := Vector3(
+				(float(x_index) - float(x_tiles - 1) * 0.5) * 3.0,
+				0.0,
+				(float(z_index) - float(z_tiles - 1) * 0.5) * 3.0)
+			recipe_value.add_placement(StringName("cap.%d.%d" % [z_index,
+				x_index]), FLOOR, modules.walk_aligned_transform(FLOOR,
+					_pose(centre + offset, 0.0), 0.0))
+	recipe_value.solid_cells = FabricRecipe.box_cells(minimum, size)
+	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
+	recipe_value.add_socket(&"bearing.bottom",
+		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
+	_add_roof_junction_sockets(recipe_value, minimum, size)
 	return recipe_value
 
 
@@ -2077,6 +2155,32 @@ static func _market_recipe(recipe_id: StringName, asset_id: StringName) \
 		Vector3i(-2, 2, -1), Vector3i(4, 1, 2)))
 	recipe_value.occluder_cells = FabricRecipe.box_cells(Vector3i(-2, 0, -1),
 		Vector3i(4, 3, 2))
+	recipe_value.add_socket(&"market.back", FabricRecipe.SocketKind.MARKET,
+		Vector3i(-1, 0, -1), Vector3i(0, 0, -1))
+	_set_terrain_bearing_rect(recipe_value, Vector3i(-2, 0, -1),
+		Vector3i(4, 1, 2))
+	return recipe_value
+
+
+static func _covered_market_recipe(recipe_id: StringName,
+		canopy_asset_id: StringName, table_asset_id: StringName) -> FabricRecipe:
+	## One exact 6 x 3 m bazaar: a reviewed covered canopy plus its authored
+	## stocked fishmonger table attachment. The table offset comes from the
+	## original VillageAssetSpec, so this is a composed prefab rather than two
+	## guessed bounds. Exact construction admits or rejects the whole market once.
+	var recipe_value := FabricRecipe.new(recipe_id,
+		[&"market", &"covered_market", &"themed_stall", &"terrain_bearing"], 0)
+	recipe_value.add_placement(&"canopy", canopy_asset_id)
+	recipe_value.add_placement(&"stocked_table", table_asset_id,
+		Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, -0.15)))
+	for y in 2:
+		for x in [-2, 1]:
+			for z in [-1, 0]:
+				recipe_value.solid_cells.append(Vector3i(x, y, z))
+	recipe_value.solid_cells.append_array(FabricRecipe.box_cells(
+		Vector3i(-2, 2, -1), Vector3i(4, 1, 2)))
+	recipe_value.occluder_cells = FabricRecipe.box_cells(
+		Vector3i(-2, 0, -1), Vector3i(4, 3, 2))
 	recipe_value.add_socket(&"market.back", FabricRecipe.SocketKind.MARKET,
 		Vector3i(-1, 0, -1), Vector3i(0, 0, -1))
 	_set_terrain_bearing_rect(recipe_value, Vector3i(-2, 0, -1),

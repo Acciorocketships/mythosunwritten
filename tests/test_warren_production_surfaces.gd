@@ -186,7 +186,7 @@ func test_a_bank_under_a_house_is_one_plinth_course_and_no_more() -> void:
 
 
 func test_the_hill_substrate_renderer_is_gone_and_may_not_return() -> void:
-	## TRIPWIRE for the buildable-layer wave (design §3.4).
+	## Tripwire for the terrain-bearing invariant.
 	## `hill_substrate_walls` tiled the riser under a house with whole rock
 	## modules because the fabric owned the hill and an undrawn hill left its
 	## houses floating. The hill is terrain now: re-drawing it would put a
@@ -222,8 +222,7 @@ func test_hill_standing_over_a_street_is_not_a_stone_vault() -> void:
 	## The excavation's cover gate guarantees a majority of route cells carry
 	## mass overhead. Round 2 closed that underside with flat rock modules laid
 	## as a vault. The timber soffits and plank floors over a street stay; the
-	## hill's own underside is neither masonry nor a slab, and since the
-	## buildable-layer wave it is not the fabric's at all.
+	## hill's own underside is neither masonry nor a slab; terrain owns it.
 	var retained: Dictionary = {}
 	for band: int in [1, 2, 3, 4]:
 		for x in 2:
@@ -249,18 +248,17 @@ func test_hill_standing_over_a_street_is_not_a_stone_vault() -> void:
 
 
 func test_bare_stone_never_exceeds_one_storey_in_an_assembled_payload() -> void:
-	## The round-3b budget, pinned. Since the buildable-layer wave the ONLY
-	## stone this assembler places under a house is the single plinth course, so
+	## The round-3b budget, pinned. The only stone this assembler places under a
+	## house is the single plinth course, so
 	## the budget now holds by construction rather than by a covered-column
 	## exemption -- and the test says so both ways: the payload is inside the
 	## budget with no exemption at all, and it is fully exempt once read against
 	## the house standing over it.
 	##
 	## task-24-report.md concern #2: a round-5 veto refused this same plinth
-	## whenever the house's own ground storey already read as rock, which was
-	## every house (WarrenAssetCompiler's ground storey is unconditionally
-	## `room.*.base.rock`) -- so 216 declared plinths on the stamped-hill corpus
-	## drew zero. house_plinth_walls no longer takes a stone-clad hint at all:
+	## whenever the house's own ground storey already read as rock. Mass-first
+	## now usually begins in timber, but the plinth contract remains independent
+	## of facade style. house_plinth_walls no longer takes a stone-clad hint:
 	## the plinth is FRONTED stone (a building stands directly on it by the
 	## eligibility check alone) and is bounded on its own terms by the
 	## declaration side's PLINTH_BUDGET_BANDS, so what the house above is made

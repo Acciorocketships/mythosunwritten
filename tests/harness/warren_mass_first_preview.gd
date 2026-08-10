@@ -1,15 +1,11 @@
 extends Node3D
 
-## Diagnostic preview of a mass-first town BEFORE the visual-selection gate.
+## Diagnostic preview of the complete mass-first town pipeline.
 ##
-## The ordinary review harness renders only towns that survive every gate.
-## Mass-first towns currently seal a complete detailed fabric and are then
-## rejected for overhead coverage, so nothing renders — which leaves the one
-## question that matters unanswerable: does an excavated town actually look
-## like a bounded warren? This harness compiles the same assets and fabric the
-## built-town solver would, stopping before selection, so the geometry can be
-## judged by eye. It proves nothing about acceptance and must never be used to
-## claim a town passes.
+## Detail mode runs exact construction and visual selection, then draws the
+## selected town. If a candidate reaches construction but misses a late review
+## gate, the harness deliberately draws that best effort and prints every
+## refusal; a rejected image remains diagnostic evidence, never a passing town.
 ##
 ##   Godot --path . res://tests/harness/warren_mass_first_preview.tscn -- \
 ##     --seed 3 --output DIR
@@ -135,11 +131,19 @@ func _solve_fabric(program: SettlementFabricProgram) -> void:
 		_solve_ungated(program)
 		return
 	for town: WarrenTownPlan in towns:
+		print("[mass_first_preview] candidate houses=%d planned-skywalks=%d court=%d" \
+			% [town.parcels.parcels.size(), int(town.parcels.audit.get(
+				"planned_skywalk_count", 0)),
+				int(town.volume.audit.get(
+					"elevated_courtyard_walk_cell_count", 0))])
 		var assets := WarrenAssetCompiler.solve(town, program)
 		if assets == null:
 			continue
 		var fabric := WarrenFabricCompiler.solve(assets)
 		if fabric != null and fabric.is_sealed():
+			print("[mass_first_preview] qualified market candidates=%d" % \
+				WarrenMarketSolver.covered_candidate_specs(program, fabric, town.volume,
+					_world_seed, town.pruning.daylight_void_columns).size())
 			_fabric = fabric
 			return
 	printerr("[mass_first_preview] seed=%d compiled no sealed fabric: %s" % [
@@ -165,11 +169,8 @@ func _solve_ungated(program: SettlementFabricProgram) -> void:
 	## LAST-RESORT DIAGNOSTIC, and the loudest one in this file. It composes a
 	## parcel plan that WarrenTownSolver._passes_construction_gate REFUSED, so
 	## the image it produces is of a town the pipeline does not admit. It exists
-	## because the buildable-layer wave left mass-first composition failing on
-	## every stamped seed at that gate -- a pre-existing mass-first weakness the
-	## acceptance wave owns -- and "no picture at all" is a worse answer to
-	## "what does the thin layer look like" than "a picture of a refused town,
-	## labelled as one".
+	## so a rejected topology can still be inspected and falsified, but is always
+	## labelled as diagnostic evidence.
 	##
 	## NEVER quote an image from this path as a town passing anything.
 	for volume: WarrenVolumePlan in WarrenTownSolver.mass_first_frontier(
@@ -378,6 +379,12 @@ func _capture_all() -> void:
 	var route_eye := _covered_route_eye()
 	if not route_eye.is_empty():
 		views.append(route_eye)
+	var market_view := _market_view()
+	if not market_view.is_empty():
+		views.append(market_view)
+	var courtyard_view := _courtyard_view()
+	if not courtyard_view.is_empty():
+		views.append(courtyard_view)
 	for view: Dictionary in views:
 		_camera.fov = float(view.fov)
 		_camera.look_at_from_position(view.position as Vector3,
@@ -394,12 +401,71 @@ func _capture_all() -> void:
 	get_tree().quit()
 
 
+func _market_view() -> Dictionary:
+	var market_units: Array[FabricUnit] = []
+	for unit_value: FabricUnit in _fabric.units:
+		var recipe_value := _fabric.recipe(unit_value.recipe_id)
+		if recipe_value != null and recipe_value.has_tag(&"market"):
+			market_units.append(unit_value)
+	if market_units.is_empty():
+		return {}
+	# Review the bazaar from the same northeast oblique that exposes its awning in
+	# the town overview. A route-facing camera can sit under a gallery or inside
+	# the opposite retaining face -- exactly the density this capture must show,
+	# but not a useful way to inspect the canopy and stock.
+	var focus := market_units[0]
+	var center := Vector3.ZERO
+	for unit_value: FabricUnit in market_units:
+		center += Vector3(unit_value.lattice_origin) * FabricRecipe.CELL_SIZE \
+			+ _town_origin
+	center /= float(market_units.size())
+	var focus_origin := Vector3(focus.lattice_origin) * FabricRecipe.CELL_SIZE \
+		+ _town_origin
+	var eye := focus_origin + Vector3(12.0, 10.0, 12.0)
+	print("[mass_first_preview] market cluster center=%s focus=%s yaw=%d" % [
+		center, focus.lattice_origin, focus.yaw_quarters])
+	return {"id": "covered-market", "position": eye,
+		"target": focus_origin + Vector3.UP * 1.5, "fov": 52.0}
+
+
+func _courtyard_view() -> Dictionary:
+	## The typed 2x2 macro court expands to one exact 4x4 fine-cell square. Find
+	## that signature in the compiled structural surface rather than reaching
+	## backward into a topology object the fabric intentionally does not own.
+	var cells: Dictionary = {}
+	for cell: Vector3i in _fabric.surface_plan.cells_for_kind(
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT):
+		cells[cell] = true
+	for origin_value: Variant in cells.keys():
+		var origin := origin_value as Vector3i
+		var complete := true
+		for x_offset in 4:
+			for z_offset in 4:
+				if not cells.has(origin + Vector3i(x_offset, 0, z_offset)):
+					complete = false
+					break
+			if not complete:
+				break
+		if not complete:
+			continue
+		var center := (Vector3(origin) + Vector3(1.5, 0.0, 1.5)) \
+			* FabricRecipe.CELL_SIZE + _town_origin
+		# The courtyard is intentionally ringed by upper buildings. Review it from
+		# above the roofline so the camera cannot spawn inside that perimeter.
+		print("[mass_first_preview] courtyard center=%s lattice=%s" % [center,
+			origin])
+		return {"id": "third-storey-courtyard",
+			"position": center + Vector3(8.0, 16.0, 8.0),
+			"target": center + Vector3.UP * 0.4, "fov": 52.0}
+	return {}
+
+
 func _report_stone_budget() -> void:
 	## The round-3 directive is a quantity ("almost no stone should be
 	## visible"), so the harness prints the quantity beside the image: how many
-	## rock modules the town draws, split into the plinths this assembler places
-	## and the ground storeys the recipes place, and the tallest continuous
-	## masonry face anywhere in the payload.
+	## rock modules the town draws, split into the explicit retaining work this
+	## assembler places and the ground storeys the recipes place, and the tallest
+	## continuous masonry face anywhere in the payload.
 	var whole := SettlementFabricAssembler.payload(_fabric)
 	whole.append_from(SettlementFabricAssembler.structural_support_payload(
 		_fabric))
@@ -412,7 +478,7 @@ func _report_stone_budget() -> void:
 	var covered := SettlementFabricAssembler.building_ceiling(
 		_fabric.transformed_cells(&"solid"))
 	print(("[mass_first_preview] stone modules=%d of %d instances "
-		+ "(plinth+substrate=%d courts=%d), tallest BARE stone face=%d bands")
+		+ "(plinth+retaining=%d courts=%d), tallest BARE stone face=%d bands")
 		% [stone, whole.instance_count, plinths.instance_count,
 		low.instance_count,
 		SettlementFabricAssembler.tallest_bare_stone_stack_bands(whole,
@@ -424,13 +490,9 @@ func _covered_route_eye() -> Dictionary:
 	## the street. The fixed overview cameras cannot answer "is there a path
 	## through the city", which is the question this round is judged on.
 	##
-	## Overhead mass is the fabric's own SOLID layer -- the rooms and galleries a
-	## house puts over a street. It used to be `retained_terrace_cells`, which
-	## was correct while the fabric drew the mountain: the mass over a street was
-	## unbuilt massif the parcel retained. The buildable-layer wave deleted that
-	## substrate, so the retained set is empty on every stamped seed and this
-	## camera silently stopped existing -- the only view that answers the
-	## reviewer's standing question, lost to a set that is now always empty.
+	## Overhead mass is the fabric's own SOLID layer -- inhabited rooms and
+	## galleries above a street. Terrain and retained plinths never count as
+	## occupied cover.
 	##
 	## Every standable public kind is a candidate, not STRUCTURAL_COURT alone.
 	## INTERIOR_PASSAGE is precisely "the street runs through the inside of a

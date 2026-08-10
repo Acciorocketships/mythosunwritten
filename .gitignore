@@ -12,3 +12,4 @@ addons/
 # run artifacts. Small regression pins and review contracts stay versioned.
 tests/artifacts/village_review_runs/
 /.artifacts/
+/renders/

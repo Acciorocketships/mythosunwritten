@@ -3,13 +3,10 @@ extends RefCounted
 ## GROUND FRAMES for the mass-first suites, in the plain
 ## `Dictionary[Vector2i -> int]` WarrenMassifBuilder.build actually takes.
 ##
-## Since the buildable-layer wave the massif authors only 4-6 bands of mass and
-## the HILL is real terrain (SettlementReliefPlan, stamped into
-## HeightfieldPlan._sample). A mass-first town therefore cannot be built on band
-## zero any more -- WarrenMassifBuilder.MIN_CORE_BANDS measures lowest ground to
-## highest roof and a flat site scores the layer alone -- so every suite that
-## builds a massif has to hand it a hill, and they must all hand it the SAME
-## hill or their measured pins are about different towns.
+## The massif now authors a deep 2-18-band inhabited mountain above real terrain
+## (SettlementReliefPlan, stamped into HeightfieldPlan._sample). Flat ground is
+## valid, but the terrain-sensitive suites still share this measured hill so
+## their relief, bearing, and route-grade assertions describe the same town.
 ##
 ## `hill()` is a synthetic reproduction of what
 ## VillageWarrenFabricSolver._sample_ground_bands reads back off a stamped site,

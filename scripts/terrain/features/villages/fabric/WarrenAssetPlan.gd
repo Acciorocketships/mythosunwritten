@@ -216,6 +216,8 @@ func _proposal_roof_recipe(proposal: Dictionary) -> FabricRecipe:
 
 static func _roof_material_family(recipe_value: FabricRecipe) -> StringName:
 	var asset_ids := recipe_value.asset_ids()
+	if recipe_value.has_tag(&"flat_roof"):
+		return &"boarded"
 	if asset_ids.has(SettlementFabricProgram.ROOM_ROOF_02) \
 			or asset_ids.has(SettlementFabricProgram.ROOM_ROOF_05):
 		return &"boarded"
@@ -235,6 +237,8 @@ static func _roof_material_family(recipe_value: FabricRecipe) -> StringName:
 
 
 static func _roof_geometry_family(recipe_value: FabricRecipe) -> StringName:
+	if recipe_value.has_tag(&"flat_roof"):
+		return &"flat_plank_cap"
 	if recipe_value.has_tag(&"dormer"):
 		return &"dormered_long_gable"
 	if recipe_value.has_tag(&"staggered_roof"):

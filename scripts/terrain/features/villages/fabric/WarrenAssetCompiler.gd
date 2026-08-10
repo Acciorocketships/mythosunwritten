@@ -45,8 +45,9 @@ static func solve(town: WarrenTownPlan,
 	if roof_topology == null:
 		last_failure = "could not classify the parcel roof neighborhood"
 		return null
+	var inhabited_massif := town.volume.mass_context.has(&"massif")
 	if not _assign_neighborhood_styles(proposals, roof_topology,
-			int(town.volume.world_seed)):
+			int(town.volume.world_seed), inhabited_massif):
 		last_failure = FabricRoofJunctionModuleTable.last_failure
 		return null
 	var tower_seams := _party_wall_seams(proposals)
@@ -727,6 +728,34 @@ static func _cached_proposal(parcel: WarrenBuildingParcel,
 	return entry[&"proposal"] as Dictionary
 
 
+static func massif_partition_asset_cache(
+		parcels: Array[WarrenBuildingParcel], world_seed: int,
+		program: SettlementFabricProgram) -> Dictionary:
+	## Skywalk reservation happens after mass-first's fixed partition but before
+	## solve() creates its WarrenAssetPlan. Precompute the exact same neighborhood
+	## styles here so corridor clearance sees the flush corner caps and timber
+	## shells the final town will actually build, rather than a conservative
+	## unrelated pitched-roof default which falsely blocks nearby bridges.
+	var cache: Dictionary = {&"enabled": true}
+	if parcels.is_empty() or program == null:
+		return cache
+	var proposals: Array[Dictionary] = []
+	for parcel: WarrenBuildingParcel in parcels:
+		var proposal := WarrenParcelConstruction.proposal(parcel)
+		if proposal.is_empty():
+			return {&"enabled": false}
+		proposals.append(proposal)
+	var topology := FabricRoofTopologyPlan.build(proposals)
+	if topology == null or not _assign_neighborhood_styles(proposals, topology,
+			world_seed, true):
+		return {&"enabled": false}
+	for index in parcels.size():
+		cache[_parcel_cache_key(parcels[index])] = {
+			&"proposal": proposals[index],
+		}
+	return cache
+
+
 static func _cached_proposal_component_bounds(parcel: WarrenBuildingParcel,
 		program: SettlementFabricProgram, cache: Dictionary) -> Array[AABB]:
 	if not bool(cache.get(&"enabled", false)):
@@ -764,19 +793,31 @@ static func _party_wall_seams(proposals: Array[Dictionary]) -> Dictionary:
 		var left := proposals[left_index]
 		for right_index in range(left_index + 1, proposals.size()):
 			var right := proposals[right_index]
-			if not StaggeredFabricCompiler.classified_roof_seam_compatible(
-					left, right):
+			var roof_seam := \
+				StaggeredFabricCompiler.classified_roof_seam_compatible(
+					left, right)
+			var wall_seam := \
+				StaggeredFabricCompiler.inhabited_party_wall_compatible(
+					left, right)
+			if not roof_seam and not wall_seam:
 				continue
 			var seams := out[StringName(right.stable_id)] as Array[StringName]
 			for component: Dictionary in \
 					StaggeredFabricCompiler.proposal_components(left):
-				seams.append(StringName("volume.%s.%s" % [
-					StringName(left.stable_id), StringName(component.role)]))
+				var role := StringName(component.role)
+				if not roof_seam and role != &"base" \
+						and not String(role).begins_with("upper."):
+					continue
+				var seam_id := StringName("volume.%s.%s" % [
+					StringName(left.stable_id), role])
+				if not seams.has(seam_id):
+					seams.append(seam_id)
 	return out
 
 
 static func _assign_neighborhood_styles(proposals: Array[Dictionary],
-		roof_topology: FabricRoofTopologyPlan, world_seed: int) -> bool:
+		roof_topology: FabricRoofTopologyPlan, world_seed: int,
+		inhabited_massif := false) -> bool:
 	## A palette hash is not a streetscape composition rule.  Colour and facade
 	## phase are graph-coloured over the sealed roof neighbourhood, so a run of
 	## adjacent parcels cannot accidentally compile as one repeated house row.
@@ -837,6 +878,29 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 				and not neighbor_phases.has(1 - facade_phase):
 			facade_phase = 1 - facade_phase
 		proposal["theme"] = theme
+		if inhabited_massif:
+			# A tall hill-town stack is several visibly distinct construction
+			# campaigns, not one extruded facade.  Two-storey blocks preserve a
+			# readable house rhythm while rotating through the three authored
+			# timber families.  One ground storey in five remains stone; the rest
+			# meet the terrain as timber so masonry cannot become the mountain.
+			var family_index := UPPER_FACADE_FAMILIES.find(theme)
+			var rotation := 1 + posmod(_style_hash(
+				world_seed ^ 0x6a09e667, proposal), 2)
+			var storey_themes: Array[StringName] = []
+			for level in range(int(proposal.get("storeys", 0))):
+				var block := level / 2
+				storey_themes.append(UPPER_FACADE_FAMILIES[posmod(
+					family_index + block * rotation,
+					UPPER_FACADE_FAMILIES.size())])
+			proposal["storey_themes"] = storey_themes
+			# The `.b` shells carry signs, ivy, or laundry beyond the parcel
+			# plane.  In a touching massif those details belong on selected bays
+			# and balconies, not on every alternate party wall.
+			proposal["flush_facades"] = true
+			proposal["ground_theme"] = &"rock" if posmod(_style_hash(
+				world_seed ^ 0xbb67ae85, proposal), 5) == 0 \
+				else storey_themes[0]
 		var roof_family := _select_roof_family(proposal, roof_topology,
 			assigned, roof_family_counts, world_seed)
 		if not _has_forced_orange_roof(proposal) \
@@ -868,6 +932,14 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 	for index in proposals.size():
 		proposals[index] = by_id[StringName(proposals[index].stable_id)] \
 			as Dictionary
+	if inhabited_massif:
+		for left_index in proposals.size():
+			for right_index in range(left_index + 1, proposals.size()):
+				if not StaggeredFabricCompiler.proposals_share_corner(
+						proposals[left_index], proposals[right_index]):
+					continue
+				proposals[left_index]["flat_roof"] = true
+				proposals[right_index]["flat_roof"] = true
 	return true
 
 

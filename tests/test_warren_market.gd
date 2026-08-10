@@ -73,6 +73,25 @@ func test_every_stall_backs_onto_building_mass() -> void:
 			+ "module; markets belong against the fabric") % unit_value.stable_id)
 
 
+func test_covered_market_is_one_local_street_episode() -> void:
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	assert_not_null(program)
+	if program == null:
+		return
+	var covered := program.recipe(&"market.covered.00")
+	assert_not_null(covered)
+	if covered == null:
+		return
+	assert_true(covered.has_tag(&"covered_market"))
+	assert_eq(covered.placements.size(), 2,
+		"the bazaar is one atomic canopy-and-stocked-counter composition")
+	assert_eq(covered.asset_ids().size(), 2,
+		"the covered stall enriches its canopy with a separate market asset")
+	assert_eq(covered.terrain_bearing_cells.size(), 8,
+		"the compact six-by-three-metre market follows local terrain")
+
+
 static func _stall_units(plan: SettlementFabricPlan) -> Array[FabricUnit]:
 	var out: Array[FabricUnit] = []
 	for unit_value: FabricUnit in plan.units:

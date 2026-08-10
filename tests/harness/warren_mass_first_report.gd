@@ -403,9 +403,20 @@ func _report_gate() -> void:
 							"largest_building_contact_component_cell_ratio",
 							0.0)),
 						float(plan.audit.get("contacted_building_ratio", 0.0))] \
-					+ "isolated=%d roofbands=%d gate=%s roofs=%s" \
+					+ ("isolated=%d isolatedcells=%.2f neighbors=%d roofbands=%d " \
+						+ "roofmax=%.2f two-sided=%.2f open=%.2f gallery-unaddr=%d " \
+						+ "links=%d gate=%s roofs=%s") \
 					% [int(plan.audit.get("isolated_building_count", -1)),
-						int(plan.audit.get("roof_band_count", 0)), gate, roofs]
+						float(plan.audit.get("isolated_building_cell_ratio", 1.0)),
+						int(plan.audit.get("neighboring_parcel_pair_count", 0)),
+						int(plan.audit.get("roof_band_count", 0)),
+						float(plan.audit.get("largest_roof_band_ratio", 1.0)),
+						float(plan.audit.get("all_two_sided_walk_ratio", 0.0)),
+						float(plan.audit.get("urban_core_open_column_ratio", 1.0)),
+						int(plan.audit.get(
+							"unaddressed_elevated_gallery_terminal_count", -1)),
+						int(plan.audit.get("planned_skywalk_count", 0)), gate,
+						roofs]
 		passing += int(usable)
 		print("seed %2d: usable=%s | %s" % [world_seed, usable, best])
 	print("SEEDS with a gate-passing, roof-joinable volume: %d/%d" % [passing,
@@ -1270,10 +1281,11 @@ func _report_variety() -> void:
 		var audit := variety_audit(fabric, catalog)
 		print(("seed %2d VARIETY walls %d distinct / %d placed | longest same-"
 			+ "asset street run %d | skywalks %d | outcrops %d | stalls %d "
-			+ "distinct | roof features %d distinct") % [world_seed,
+			+ "distinct/%d placed, covered cluster %d | roof features %d distinct") % [world_seed,
 			int(audit.distinct_wall_assets), int(audit.placed_wall_assets),
 			int(audit.longest_same_asset_run), int(audit.skywalk_unit_count),
 			int(audit.outcrop_unit_count), int(audit.distinct_stall_assets),
+			int(audit.placed_stall_assets), int(audit.market_cluster_size),
 			int(audit.distinct_roof_feature_assets)])
 		var supply := overhead_supply_audit(program, fabric, world_seed)
 		print(("seed %2d SUPPLY raw skywalk corridors %d, raw outcrop bays %d "
@@ -1317,9 +1329,15 @@ static func variety_audit(fabric: SettlementFabricPlan,
 	var wall_placements: Array[Dictionary] = []
 	var distinct_walls: Dictionary = {}
 	var distinct_stalls: Dictionary = {}
+	var stall_positions: Array[Vector3] = []
+	var market_piece_positions: Array[Vector3] = []
 	var distinct_roof_features: Dictionary = {}
 	for placement: Dictionary in fabric.expanded_placements():
 		var asset_id := StringName(placement.asset_id)
+		var stable_id := String(placement.stable_id)
+		if stable_id.begins_with("volume.market."):
+			market_piece_positions.append(
+				(placement.transform as Transform3D).origin)
 		var descriptor := catalog.descriptor(asset_id)
 		if descriptor == null:
 			continue
@@ -1332,6 +1350,7 @@ static func variety_audit(fabric: SettlementFabricPlan,
 			})
 		if descriptor.tags.has(&"stall"):
 			distinct_stalls[asset_id] = true
+			stall_positions.append((placement.transform as Transform3D).origin)
 		if descriptor.tags.has(&"dormer") or descriptor.tags.has(&"roof_seam") \
 				or descriptor.tags.has(&"chimney"):
 			distinct_roof_features[asset_id] = true
@@ -1351,8 +1370,41 @@ static func variety_audit(fabric: SettlementFabricPlan,
 		"skywalk_unit_count": skywalks,
 		"outcrop_unit_count": outcrops,
 		"distinct_stall_assets": distinct_stalls.size(),
+		"placed_stall_assets": stall_positions.size(),
+		"market_cluster_size": _largest_market_cluster(market_piece_positions),
 		"distinct_roof_feature_assets": distinct_roof_features.size(),
 	}
+
+
+static func _largest_market_cluster(positions: Array[Vector3]) -> int:
+	## A compact covered-market episode comprises its reviewed canopy and stocked
+	## counter. Measure the largest connected group of pieces carrying the same
+	## stable market prefix.
+	var neighbor_distance := float(
+		WarrenMarketSolver.MAX_COVERED_CLUSTER_DISTANCE_CELLS) \
+		* FabricRecipe.CELL_SIZE + 0.1
+	var remaining: Dictionary = {}
+	for index in positions.size():
+		remaining[index] = true
+	var maximum := 0
+	while not remaining.is_empty():
+		var first := int(remaining.keys()[0])
+		remaining.erase(first)
+		var frontier: Array[int] = [first]
+		var size := 0
+		while not frontier.is_empty():
+			var current: int = frontier.pop_back()
+			size += 1
+			for other_value: Variant in remaining.keys():
+				var other := int(other_value)
+				var delta := positions[current] - positions[other]
+				if absf(delta.y) > 0.2 \
+						or absf(delta.x) + absf(delta.z) > neighbor_distance:
+					continue
+				remaining.erase(other)
+				frontier.append(other)
+		maximum = maxi(maximum, size)
+	return maximum
 
 
 static func _longest_same_asset_run(wall_placements: Array[Dictionary]) -> int:

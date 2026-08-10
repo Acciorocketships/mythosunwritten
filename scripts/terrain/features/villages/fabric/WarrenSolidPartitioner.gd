@@ -975,6 +975,12 @@ static func _top_band(footprint: Array[Vector2i], base: int,
 				required = maxi(required, wall.x + wall.y)
 		top = mini(top, massif.top_at(column))
 		bearing += int(_is_grounded(massif, excavation, column, base))
+	# A footprint spanning more relief than one explicit foundation course would
+	# be supported at its highest corner and float above the lowest. That is a
+	# masonry terrace, not a terrain-rooted house; let a narrower footprint fit
+	# the step instead.
+	if not footprint_fits_plinth_budget(massif, footprint):
+		return base
 	if bearing * 2 < footprint.size():
 		return base
 	for column: Vector2i in footprint:
@@ -987,6 +993,20 @@ static func _top_band(footprint: Array[Vector2i], base: int,
 			base, bearing == footprint.size()):
 		return base
 	return settled
+
+
+static func footprint_fits_plinth_budget(massif: WarrenMassif,
+		footprint: Array[Vector2i]) -> bool:
+	if massif == null or footprint.is_empty():
+		return false
+	var lowest_ground := 2147483647
+	var highest_ground := -2147483648
+	for column: Vector2i in footprint:
+		if not massif.has_column(column):
+			return false
+		lowest_ground = mini(lowest_ground, massif.bearing_at(column))
+		highest_ground = maxi(highest_ground, massif.bearing_at(column))
+	return highest_ground - lowest_ground <= WarrenMassif.PLINTH_BUDGET_BANDS
 
 
 static func _is_grounded(massif: WarrenMassif, excavation: WarrenExcavation,

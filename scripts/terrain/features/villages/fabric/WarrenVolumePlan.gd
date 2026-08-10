@@ -71,6 +71,11 @@ var primary_itinerary: Array[Vector3i] = []
 ## alley merely because both are auxiliary graph nodes.
 var ground_arcade_cells: Array[Vector3i] = []
 var elevated_gallery_cells: Array[Vector3i] = []
+## One explicitly authored elevated court may form a 2x2 macro square.  It is
+## still part of elevated_gallery_cells and landing_cells; this subset exists
+## only so the broad-floor gate can distinguish the requested court motif from
+## an accidental plaza made by unrelated route branches.
+var courtyard_cells: Array[Vector3i] = []
 var public_air_cells: Array[Vector3i] = []
 var daylight_void_cells: Array[Vector3i] = []
 var landing_cells: Array[Vector3i] = []
@@ -110,6 +115,7 @@ var _walk_set: Dictionary = {}
 var _air_set: Dictionary = {}
 var _void_set: Dictionary = {}
 var _landing_set: Dictionary = {}
+var _courtyard_set: Dictionary = {}
 var _sealed := false
 
 
@@ -156,6 +162,15 @@ func add_elevated_gallery_cell(cell: Vector3i) -> bool:
 		return false
 	elevated_gallery_cells.append(cell)
 	return true
+
+
+func mark_courtyard_cell(cell: Vector3i) -> bool:
+	if _sealed or not _walk_set.has(cell):
+		return false
+	if not _courtyard_set.has(cell):
+		_courtyard_set[cell] = true
+		courtyard_cells.append(cell)
+	return add_landing(cell)
 
 
 func add_public_air(cell: Vector3i) -> void:
@@ -213,6 +228,8 @@ func seal(p_entry_cell: Vector3i) -> bool:
 	for cell: Vector3i in daylight_void_cells:
 		if _walk_set.has(cell) or _air_set.has(cell):
 			return _reject("daylight void overlaps walk or public air at %s" % cell)
+	if not courtyard_cells.is_empty() and not _has_one_typed_courtyard():
+		return _reject("typed courtyard is not one 2x2 elevated square")
 	mass_cells = envelope.mass_cells.duplicate()
 	for cell: Vector3i in public_air_cells:
 		mass_cells.erase(cell)
@@ -553,6 +570,7 @@ func _build_audit() -> Dictionary:
 			if ground_primary_count == 0 else \
 			float(ground_primary_opposed_count) / float(ground_primary_count),
 		"elevated_gallery_walk_cell_count": elevated_gallery_cells.size(),
+		"elevated_courtyard_walk_cell_count": courtyard_cells.size(),
 	}
 
 
@@ -604,10 +622,32 @@ func _same_datum_public_square_count() -> int:
 	## gallery can never turn a narrow negative-space alley into a plaza.
 	var result := 0
 	for cell: Vector3i in walk_cells:
-		result += int(_walk_set.has(cell + Vector3i.RIGHT)
-			and _walk_set.has(cell + Vector3i.BACK)
-			and _walk_set.has(cell + Vector3i(1, 0, 1)))
+		var right := cell + Vector3i.RIGHT
+		var back := cell + Vector3i.BACK
+		var diagonal := cell + Vector3i(1, 0, 1)
+		if not _walk_set.has(right) or not _walk_set.has(back) \
+				or not _walk_set.has(diagonal):
+			continue
+		# Exactly one typed courtyard is allowed to be broad by design. Every
+		# cell is named before seal(), so unrelated galleries cannot borrow the
+		# exemption merely by touching one corner of it.
+		if _courtyard_set.has(cell) and _courtyard_set.has(right) \
+				and _courtyard_set.has(back) \
+				and _courtyard_set.has(diagonal):
+			continue
+		result += 1
 	return result
+
+
+func _has_one_typed_courtyard() -> bool:
+	if courtyard_cells.size() != 4:
+		return false
+	for cell: Vector3i in courtyard_cells:
+		if _courtyard_set.has(cell + Vector3i.RIGHT) \
+				and _courtyard_set.has(cell + Vector3i.BACK) \
+				and _courtyard_set.has(cell + Vector3i(1, 0, 1)):
+			return true
+	return false
 
 
 static func interior_breadth_allowance(walk_cell_count: int) -> int:
@@ -713,7 +753,30 @@ func _exact_route_interior_cells(
 				and surfaces.has(_cell_key(cell + Vector3i.FORWARD)) \
 				and surfaces.has(_cell_key(cell + Vector3i.BACK)):
 			result[_cell_key(cell)] = cell
+	# The four fine-lattice inside cells of the explicitly typed 6 x 6 m court
+	# are its authored usable floor, not evidence that the surrounding alleys
+	# have widened. Remove only that exact square from the generic breadth audit;
+	# any interior cells created where other routes accrete around it remain and
+	# are still component-gated below.
+	if courtyard_cells.size() == 4:
+		var origin := _courtyard_macro_origin()
+		if origin.x != 2147483647:
+			var fine_origin := Vector3i(origin.x * 2, origin.y,
+				origin.z * 2)
+			for x_offset in [1, 2]:
+				for z_offset in [1, 2]:
+					result.erase(_cell_key(fine_origin \
+						+ Vector3i(x_offset, 0, z_offset)))
 	return result
+
+
+func _courtyard_macro_origin() -> Vector3i:
+	for cell: Vector3i in courtyard_cells:
+		if _courtyard_set.has(cell + Vector3i.RIGHT) \
+				and _courtyard_set.has(cell + Vector3i.BACK) \
+				and _courtyard_set.has(cell + Vector3i(1, 0, 1)):
+			return cell
+	return Vector3i(2147483647, 0, 0)
 
 
 func _max_exact_route_interior_component_size() -> int:

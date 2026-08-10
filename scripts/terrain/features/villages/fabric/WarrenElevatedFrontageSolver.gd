@@ -12,12 +12,17 @@ const MAX_BRANCH_CELLS := 4
 const MAX_SEARCH_VISITS_PER_ROOT := 384
 const MIN_ROOT_RISE_BANDS := 2
 const MIN_BRANCH_SEPARATION_CELLS := 4
+const COURTYARD_RISE_BANDS := WarrenBuildingParcel.STOREY_BANDS * 2
+const MAX_COURTYARD_RISE_BANDS := COURTYARD_RISE_BANDS + 2
 # Upper cul-de-sacs must be able to terminate at a building whose vertical
 # silhouette exceeds its footprint. One inhabited storey plus a roof was the
 # old generic address minimum; for these deliberately introduced gallery cells
 # require two complete storeys and the roof reservation before carving the void.
 const MIN_GALLERY_BUILDING_BANDS := \
 	WarrenBuildingParcel.STOREY_BANDS * 2 \
+	+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+const MIN_COURTYARD_BUILDING_BANDS := \
+	WarrenBuildingParcel.STOREY_BANDS \
 	+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
 const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
@@ -30,7 +35,8 @@ static func extend(source: WarrenVolumePlan) -> WarrenVolumePlan:
 	return null if candidates.is_empty() else candidates[0]
 
 
-static func variants(source: WarrenVolumePlan) -> Array[WarrenVolumePlan]:
+static func variants(source: WarrenVolumePlan,
+		require_courtyard := false) -> Array[WarrenVolumePlan]:
 	## Elevated bypasses are bounded grammar alternatives. A route which admits a
 	## topological gallery may not admit enough measured building/roof envelopes
 	## around that new void; retain every complete prefix so the construction
@@ -40,8 +46,21 @@ static func variants(source: WarrenVolumePlan) -> Array[WarrenVolumePlan]:
 	if source == null or not source.is_sealed():
 		last_failure = "missing sealed route and ground arcades"
 		return out
-	out.append(source)
 	var result := source
+	if require_courtyard:
+		var court := _best_courtyard(source)
+		if court.is_empty():
+			if last_failure.is_empty():
+				last_failure = "no third-storey courtyard fits the excavated mass"
+			return out
+		result = _clone_with_branch(source, court.root as Vector3i,
+			court.path as Array[Vector3i], court.root as Vector3i,
+			BRANCH_COUNT, true)
+		if result == null:
+			return out
+		out.append(result)
+	else:
+		out.append(source)
 	for branch_index in BRANCH_COUNT:
 		var branch := _best_branch(result, branch_index)
 		var path: Array[Vector3i] = []
@@ -65,6 +84,126 @@ static func variants(source: WarrenVolumePlan) -> Array[WarrenVolumePlan]:
 	# construction facts.
 	out.reverse()
 	return out
+
+
+static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
+	## A 6 x 6 m court is a deliberate exception to the one-macro-cell street
+	## width.  It is a four-edge loop rooted on the third-storey itinerary,
+	## projects over lower circulation, retains building-height mass around its
+	## perimeter, and leaves inhabited depth above its headroom.
+	var best: Dictionary = {}
+	var best_score := -INF
+	var rise_roots := 0
+	var legal_squares := 0
+	var breadth_squares := 0
+	var occupied_rejections := 0
+	var headroom_rejections := 0
+	var side_contact_rejections := 0
+	var lower_squares := 0
+	var underbuilt_squares := 0
+	var upper_squares := 0
+	var addressed_squares := 0
+	var max_address_sides := 0
+	var max_upper_mass := 0
+	for root_index in source.primary_itinerary.size():
+		var root := source.primary_itinerary[root_index]
+		var root_column := Vector2i(root.x, root.z)
+		var rise := root.y - source.envelope.ground_at(root_column)
+		if rise < COURTYARD_RISE_BANDS or rise > MAX_COURTYARD_RISE_BANDS:
+			continue
+		rise_roots += 1
+		for axes: Array[Vector2i] in [
+				[Vector2i.RIGHT, Vector2i.DOWN] as Array[Vector2i],
+				[Vector2i.DOWN, Vector2i.LEFT] as Array[Vector2i],
+				[Vector2i.LEFT, Vector2i.UP] as Array[Vector2i],
+				[Vector2i.UP, Vector2i.RIGHT] as Array[Vector2i]]:
+			var first := root + Vector3i(axes[0].x, 0, axes[0].y)
+			var diagonal := first + Vector3i(axes[1].x, 0, axes[1].y)
+			var last := root + Vector3i(axes[1].x, 0, axes[1].y)
+			var path: Array[Vector3i] = [first, diagonal, last]
+			var court: Array[Vector3i] = [root, first, diagonal, last]
+			var legal := true
+			for cell: Vector3i in path:
+				if source.has_walk(cell):
+					occupied_rejections += 1
+					legal = false
+					break
+				if not _cell_is_legal(cell, source):
+					headroom_rejections += 1
+					legal = false
+					break
+				for direction: Vector2i in CARDINALS:
+					var neighbor := cell + Vector3i(direction.x, 0,
+						direction.y)
+					if source.has_walk(neighbor) and neighbor != root:
+						side_contact_rejections += 1
+						legal = false
+						break
+				if not legal:
+					break
+			if not legal:
+				continue
+			legal_squares += 1
+			# A typed court is the sole deliberate broad public episode. The
+			# generic preflight cannot distinguish those three cells from an
+			# accidental plaza because the courtyard facts do not exist until the
+			# clone is assembled. Let WarrenVolumePlan.seal() judge the complete
+			# typed transaction; it retains the exact-route breadth gates outside
+			# this named 2x2 square.
+			breadth_squares += 1
+			var lower_walks := 0
+			var underbuilt_columns := 0
+			var upper_mass := 0
+			for cell: Vector3i in court:
+				lower_walks += int(_has_lower_walk(cell, source))
+				underbuilt_columns += int(_has_inhabited_mass_below(cell,
+					source))
+				upper_mass += int(source.envelope.top_at(
+					Vector2i(cell.x, cell.z)) >= cell.y \
+					+ WarrenVolumePlan.HEADROOM_BANDS \
+					+ WarrenBuildingParcel.STOREY_BANDS)
+			var address_sides := _courtyard_address_side_count(court, source,
+				MIN_COURTYARD_BUILDING_BANDS)
+			max_address_sides = maxi(max_address_sides, address_sides)
+			max_upper_mass = maxi(max_upper_mass, upper_mass)
+			# The upper court must be part of the three-dimensional town, never
+			# a freestanding deck. It may span a public alley, or sit on a complete
+			# lower inhabited storey; both are valid readings of construction
+			# below the third-storey public room.
+			if lower_walks < 1 and underbuilt_columns < 2:
+				continue
+			lower_squares += 1
+			underbuilt_squares += int(underbuilt_columns >= 2)
+			# The court remains typed exterior public realm. Direct upper mass is a
+			# useful overhang or crossing, not a support requirement; the perimeter
+			# buildings below are what make the space a courtyard.
+			upper_squares += int(upper_mass >= 2)
+			# Three complete inhabited edges plus the route seam make a legible
+			# court: the fourth side is its entrance, not a missing wall.
+			if address_sides < 3:
+				continue
+			addressed_squares += 1
+			var tie := posmod(_hash(source.world_seed, BRANCH_COUNT,
+				root_index, axes[0].x * 31 + axes[0].y * 17), 1009)
+			var score := float(lower_walks) * 1800.0 \
+				+ float(upper_mass) * 950.0 \
+				+ float(address_sides) * 420.0 \
+				- float(absi(rise - COURTYARD_RISE_BANDS)) * 600.0 \
+				- Vector2(float(root.x), float(root.z)).length() * 18.0 \
+				- float(tie) * 0.01
+			if best.is_empty() or score > best_score:
+				best = {"root": root, "path": path, "score": score}
+				best_score = score
+	if best.is_empty():
+		last_failure = ("no third-storey courtyard site " \
+			+ "(rise roots=%d legal=%d breadth=%d lower=%d underbuilt=%d " \
+			+ "upper=%d addressed=%d max-address=%d max-upper=%d; " \
+			+ "occupied=%d headroom=%d side-contact=%d)") \
+			% [rise_roots, legal_squares, breadth_squares, lower_squares,
+				underbuilt_squares, upper_squares, addressed_squares,
+				max_address_sides, max_upper_mass, occupied_rejections,
+				headroom_rejections, side_contact_rejections]
+	return best
 
 
 static func _best_branch(source: WarrenVolumePlan,
@@ -238,18 +377,45 @@ static func _rejoin_cell(terminal: Vector3i, root: Vector3i,
 
 
 static func _address_side_count(cell: Vector3i, branch: Array[Vector3i],
-		source: WarrenVolumePlan) -> int:
+		source: WarrenVolumePlan,
+		required_building_bands := MIN_GALLERY_BUILDING_BANDS) -> int:
 	var result := 0
 	for direction: Vector2i in CARDINALS:
 		var neighbor := cell + Vector3i(direction.x, 0, direction.y)
 		if source.has_walk(neighbor) or branch.has(neighbor):
 			continue
 		var complete := true
-		for y in range(cell.y, cell.y + MIN_GALLERY_BUILDING_BANDS):
+		for y in range(cell.y, cell.y + required_building_bands):
 			if not source.has_mass(Vector3i(neighbor.x, y, neighbor.z)):
 				complete = false
 				break
 		result += int(complete)
+	return result
+
+
+static func _courtyard_address_side_count(court: Array[Vector3i],
+		source: WarrenVolumePlan, required_building_bands: int) -> int:
+	## Count cardinal perimeter edges, not individual cell contacts. Three
+	## contacts on one long facade are still one addressed side of a courtyard.
+	var court_set: Dictionary = {}
+	for cell: Vector3i in court:
+		court_set[cell] = true
+	var result := 0
+	for direction: Vector2i in CARDINALS:
+		var side_addressed := false
+		for cell: Vector3i in court:
+			var neighbor := cell + Vector3i(direction.x, 0, direction.y)
+			if court_set.has(neighbor) or source.has_walk(neighbor):
+				continue
+			var complete := true
+			for y in range(cell.y, cell.y + required_building_bands):
+				if not source.has_mass(Vector3i(neighbor.x, y, neighbor.z)):
+					complete = false
+					break
+			if complete:
+				side_addressed = true
+				break
+		result += int(side_addressed)
 	return result
 
 
@@ -276,6 +442,18 @@ static func _has_lower_walk(cell: Vector3i,
 	return false
 
 
+static func _has_inhabited_mass_below(cell: Vector3i,
+		source: WarrenVolumePlan) -> bool:
+	## One complete 3 m storey immediately below the court is enough to make it
+	## an upper-city room. Parcelization will turn that standing mass into an
+	## addressed building; this stage merely proves the load-bearing volume was
+	## not hollowed into public air.
+	for offset in range(1, WarrenBuildingParcel.STOREY_BANDS + 1):
+		if not source.has_mass(cell + Vector3i.DOWN * offset):
+			return false
+	return true
+
+
 static func _distance_to_cells(cell: Vector3i,
 		others: Array[Vector3i]) -> int:
 	var result := 2147483647
@@ -287,7 +465,7 @@ static func _distance_to_cells(cell: Vector3i,
 
 static func _clone_with_branch(source: WarrenVolumePlan, root: Vector3i,
 		path: Array[Vector3i], rejoin: Vector3i,
-		branch_index: int) -> WarrenVolumePlan:
+		branch_index: int, typed_courtyard := false) -> WarrenVolumePlan:
 	var result := WarrenVolumePlan.new(
 		StringName("%s.gallery%d" % [source.stable_id, branch_index]),
 		source.world_seed, source.envelope)
@@ -339,6 +517,13 @@ static func _clone_with_branch(source: WarrenVolumePlan, root: Vector3i,
 	for landing: Vector3i in source.landing_cells:
 		if not result.add_landing(landing):
 			return null
+	for court_cell: Vector3i in source.courtyard_cells:
+		if not result.mark_courtyard_cell(court_cell):
+			return null
+	if typed_courtyard:
+		for court_cell: Vector3i in [root] + path:
+			if not result.mark_courtyard_cell(court_cell):
+				return null
 	if not result.add_landing(root):
 		return null
 	# A bypass may rejoin at the far end of a stair/ramp. The 3 m route square is

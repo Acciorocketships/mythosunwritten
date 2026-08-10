@@ -24,6 +24,10 @@ const COMPOSED_PLAN_FRONTIER := 8
 ## ground streets, not by starving required cover.
 const INFILL_VARIANT_BUDGETS: Array[int] = [10, 6, 3, 0]
 const MIN_COMPLETE_PARCELS := 10
+## Fixed mass-first partitions do not pass through the route-first packer's
+## preselection motif. Reserve several mutually independent occupied links once
+## their dense house graph is frozen, before details can spend those envelopes.
+const MASS_FIRST_PLANNED_SKYWALKS := 3
 # These are only cheap pre-compilation floors. Exact measured construction,
 # surface continuity, overhead, frontage, and sight-line audits remain the
 # acceptance authority. Keeping this preview gate at the finished-town target
@@ -47,6 +51,12 @@ const ASSET_AWARE_MAX_LARGEST_ROOF_BAND_RATIO := 0.60
 ## the parcel-count form simply measured the wrong thing, scoring the same
 ## urban mass differently depending on how finely a stage subdivided it.
 const ASSET_AWARE_MIN_BUILDING_CONTACT_RATIO := 0.33
+## A 45-60 house massif is intentionally split into several wall clusters by
+## the public maze. Requiring one cluster to own a full third of all footprint
+## cells needlessly rejects towns where 94% of houses still touch a neighbor.
+## Keep route-first's reviewed 0.33 bar and use the slightly lower physical
+## component floor only for the much larger excavated mass.
+const MASS_FIRST_MIN_BUILDING_CONTACT_RATIO := 0.30
 # The structural connection graph now includes sealed occupied bridge-house
 # edges as well as shared facade boundaries. Seven of ten connected buildings,
 # together with the independent substantial-component gate above, permits a few
@@ -381,6 +391,7 @@ static func mass_first_frontier(world_seed: int,
 	var adapted := 0
 	var gated := 0
 	var arcade_failure := ""
+	var frontage_failures := PackedStringArray()
 	for attempt in MASS_FIRST_EXCAVATION_ATTEMPTS:
 		var excavation := WarrenExcavationCarver.carve(
 			world_seed + attempt * MASS_FIRST_ATTEMPT_STRIDE, massif)
@@ -409,8 +420,13 @@ static func mass_first_frontier(world_seed: int,
 		if volume == null:
 			arcade_failure = WarrenGroundArcadeSolver.last_failure
 			continue
-		for gallery_variant: WarrenVolumePlan in \
-				WarrenElevatedFrontageSolver.variants(volume):
+		var gallery_variants := WarrenElevatedFrontageSolver.variants(volume, true)
+		if gallery_variants.is_empty():
+			var frontage_failure := WarrenElevatedFrontageSolver.last_failure
+			if not frontage_failure.is_empty() \
+					and not frontage_failures.has(frontage_failure):
+				frontage_failures.append(frontage_failure)
+		for gallery_variant: WarrenVolumePlan in gallery_variants:
 			# The arcade and gallery stages rebuild the plan from geometry
 			# alone and deliberately drop non-geometric provenance, so the
 			# frontier -- the one place that still holds the massif this
@@ -434,8 +450,10 @@ static func mass_first_frontier(world_seed: int,
 		last_failure = ("no excavated topology reached the frontier " \
 			+ "(%d/%d bores carved, %d adapted, %d passed the topology gate%s)") \
 			% [carved, MASS_FIRST_EXCAVATION_ATTEMPTS, adapted, gated,
-			"" if arcade_failure.is_empty() \
-				else "; ground arcade: %s" % arcade_failure]
+			"; elevated frontage: %s" % " | ".join(frontage_failures) \
+				if not frontage_failures.is_empty() \
+				else "; ground arcade: %s" % arcade_failure \
+				if not arcade_failure.is_empty() else ""]
 	return out
 
 
@@ -590,7 +608,7 @@ static func _parcel_variants(volume: WarrenVolumePlan,
 		return out
 	var seen: Dictionary = {}
 	for variant in WarrenSolidPartitioner.PARTITION_VARIANTS:
-		var plan := partition_parcels(volume, variant)
+		var plan := partition_parcels(volume, variant, construction_program)
 		if plan == null:
 			continue
 		var signature := plan.deterministic_signature()
@@ -602,7 +620,8 @@ static func _parcel_variants(volume: WarrenVolumePlan,
 
 
 static func partition_parcels(volume: WarrenVolumePlan,
-		variant: int = -1) -> WarrenParcelPlan:
+		variant: int = -1,
+		construction_program: SettlementFabricProgram = null) -> WarrenParcelPlan:
 	## The mass-first parcel stage: houses are the solid a bore left standing,
 	## so they are partitioned rather than searched for, and their tops already
 	## follow the massif's terraces. WarrenParcelHeightSolver is deliberately
@@ -650,7 +669,30 @@ static func partition_parcels(volume: WarrenVolumePlan,
 	var plan := WarrenParcelPlan.new(
 		StringName("%s.parcels%s" % [volume.stable_id,
 			"" if variant < 0 else ".v%d" % variant]), volume)
-	if not plan.seal(houses):
+	var reservations: Array[Dictionary] = []
+	if construction_program != null:
+		var exact_realm := WarrenVolumePublicRealmAdapter.from_volume(volume)
+		if exact_realm == null:
+			last_partition_failure = WarrenVolumePublicRealmAdapter.last_failure
+			return null
+		var asset_cache := WarrenAssetCompiler.massif_partition_asset_cache(
+			houses, volume.world_seed, construction_program)
+		if not bool(asset_cache.get(&"enabled", false)):
+			last_partition_failure = "could not classify fixed-partition assets"
+			return null
+		var connection_pair := Callable(WarrenAssetCompiler,
+			"skywalk_reservation").bind(construction_program,
+				exact_realm.air_claims(), asset_cache)
+		var connection_broad_phase := Callable(WarrenAssetCompiler,
+			"parcels_may_form_skywalk").bind(construction_program,
+				asset_cache)
+		var reservation_compatibility := Callable(WarrenAssetCompiler,
+			"parcel_preserves_skywalk_reservation").bind(construction_program,
+				asset_cache)
+		reservations = WarrenParcelizer.fixed_parcel_connection_reservations(
+			volume, houses, MASS_FIRST_PLANNED_SKYWALKS, connection_pair,
+			reservation_compatibility, connection_broad_phase)
+	if not plan.seal(houses, reservations):
 		last_partition_failure = "parcel plan rejected after partitioning: %s" \
 			% plan.last_rejection
 		return null
@@ -701,6 +743,9 @@ static func _passes_construction_gate(parcels: WarrenParcelPlan,
 		if asset_aware else MAX_URBAN_CORE_OPEN_RATIO
 	var minimum_parcels := ASSET_AWARE_MIN_COMPLETE_PARCELS \
 		if asset_aware else MIN_COMPLETE_PARCELS
+	var minimum_contact := MASS_FIRST_MIN_BUILDING_CONTACT_RATIO \
+		if parcels.source.mass_context.has(&"massif") \
+		else ASSET_AWARE_MIN_BUILDING_CONTACT_RATIO
 	return parcels.is_sealed() \
 		and int(parcels.audit.parcel_count) >= minimum_parcels \
 		and (not asset_aware or int(parcels.audit.get(
@@ -715,7 +760,7 @@ static func _passes_construction_gate(parcels: WarrenParcelPlan,
 			<= ASSET_AWARE_MAX_LARGEST_ROOF_BAND_RATIO) \
 		and (not asset_aware or float(parcels.audit.get(
 			"largest_building_contact_component_cell_ratio", 0.0)) \
-			>= ASSET_AWARE_MIN_BUILDING_CONTACT_RATIO) \
+			>= minimum_contact) \
 		and (not asset_aware or float(parcels.audit.get(
 			"contacted_building_ratio", 0.0)) \
 			>= ASSET_AWARE_MIN_CONTACTED_BUILDING_RATIO) \
@@ -772,6 +817,7 @@ static func _construction_score(volume: WarrenVolumePlan,
 			* 420.0 \
 		- float(parcels.audit.get("stepped_descent_tall_parcel_count", 0)) \
 			* 900.0 \
+		- float(parcels.audit.get("planned_skywalk_count", 0)) * 14000.0 \
 		- float(parcels.audit.get(
 			"largest_building_contact_component_ratio", 0.0)) * 4200.0 \
 		- float(parcels.audit.get("neighboring_parcel_pair_count", 0)) * 320.0 \

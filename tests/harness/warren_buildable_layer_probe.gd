@@ -602,10 +602,10 @@ func _lane_census(world_seed: int, massif: WarrenMassif) -> Dictionary:
 	var initial_anchors := WarrenExcavationCarver._lane_anchors(world_seed,
 		excavation)
 	var offered := initial_anchors.size()
-	# The reserve is the one lane rule whose SIZE is set by the layer rather
+	# The reserve is the one lane rule whose size is set by route grade rather
 	# than by the lane: it is a four-column halo around every route cell that
-	# stands AT GRADE, and a thin layer lets a route stand at most
-	# BUILDABLE_LAYER_BANDS - HEADROOM_BANDS above its own ground.
+	# stands at grade, preserving ground-arcade opportunities before optional
+	# lane growth consumes them.
 	var grade_cells := 0
 	for cell: Vector3i in excavation.route:
 		grade_cells += int(WarrenExcavationCarver._is_at_grade(massif, cell))

@@ -14,17 +14,14 @@ extends RefCounted
 ## imported so this class stays free of the parcel vocabulary; a test pins the
 ## arithmetic so the two cannot drift.
 ##
-## TWO STOREYS SINCE THE BUILDABLE-LAYER WAVE, not three. The massif no longer
-## owns the mountain -- SettlementReliefPlan stamps it into the heightfield and
-## the terrain meshes, dresses and collides it -- so this constant stopped being
-## "how far down a house may reach into the hill" and became the WHOLE thickness
-## of the authored layer (design §3.4). The reviewer's rule is 2-3 visible
-## storeys of composed face; at three storeys plus a roof the layer alone
-## already spends the whole allowance and leaves nothing for the terrain step
-## the house stands on, so the layer takes two and the third storey of apparent
-## height is the hill itself.
-const MAX_TERRACE_STOREYS := 2
-const BUILDABLE_LAYER_BANDS := 6
+## The massif is now the complete inhabited construction envelope, grounded on
+## the real terrain.  Eight storeys at the crown are enough to make a compact
+## town read as a mountain while still fitting StaggeredFabricCompiler's finite
+## stack vocabulary.  The final two bands are the explicit roof reservation.
+## Nothing below this interval is a hidden stone substrate: bearing_at() is the
+## sampled terrain on every column.
+const MAX_TERRACE_STOREYS := 8
+const BUILDABLE_LAYER_BANDS := 18
 
 ## Bands of continuous mass a street cell needs beside it before the plan calls
 ## it ADDRESSED, for towns cut from this class. Route-first keeps
@@ -32,47 +29,14 @@ const BUILDABLE_LAYER_BANDS := 6
 ## carries the number so the two modes cannot drift and neither has to know
 ## about the other (WarrenVolumeEnvelope.address_bands).
 ##
-## WHY IT IS NOT SIX HERE, derived rather than preferred. A walk cell needs
-## WarrenExcavation.HEADROOM_BANDS of void inside its own column, so a route
-## floor may stand up to `BUILDABLE_LAYER_BANDS - HEADROOM_BANDS` = 3 bands
-## above its own ground. The flank beside it then offers at most
-## `BUILDABLE_LAYER_BANDS - 3` = 3 bands, so a six-band frontage demands that
-## the street NEVER leave grade -- and the stamped hill's terrace risers are 2-3
-## bands, which no move in the carver's vocabulary crosses without leaving
-## grade. Six is therefore not a stricter bar at this geometry, it is one no
-## bore can meet anywhere except on a bench.
-##
-## Four is the parcel transaction's OWN floor for a sealable house
-## (WarrenBuildingParcel.seal refuses anything under
-## STOREY_BANDS + ROOF_RESERVATION_BANDS), so the property the gate states --
-## "a real building fronts this street, not a kerb" -- survives intact. What is
-## given up is the second storey OF THE HOUSE, and the trade is the milestone's
-## whole thesis: the terrace riser the house stands on is now real terrain, and
-## it is what the composed face gains the storey back from.
-const ADDRESS_BANDS := 4
+## Six continuous bands beside a street prove that its wall belongs to a real
+## two-storey-plus-roof building.  The restored deep envelope can satisfy this
+## original standard even while the public route climbs through it.
+const ADDRESS_BANDS := 6
 
-## Ground-arcade cells that must run under the climbing route for a town cut
-## from this class. Route-first keeps
-## WarrenVolumeEnvelope.DEFAULT_UPPER_ROUTE_CROSSOVERS at two.
-##
-## The property is unchanged -- "one public level is the roof of another, and
-## the vertical sightline is split" -- and so is the geometry it is measured
-## against; what changed is how much of that geometry exists. An arcade cell
-## sitting on ground band g is crossed by a route cell in the same column at
-## `y >= g + WarrenVolumePlan.HEADROOM_BANDS`, and that route cell needs
-## `WarrenExcavation.HEADROOM_BANDS` of void inside a column whose top is
-## `g + BUILDABLE_LAYER_BANDS`, so
-##
-##   y in [g + 2, g + BUILDABLE_LAYER_BANDS - 3] = [g + 2, g + 3]
-##
-## -- a TWO BAND window. Against a 16-20 band massif the same window was eight
-## to fourteen bands wide and crossings were routine. Measured over twelve
-## stamped-hill seeds the arcade achieves 0 or 1 crossings and never 2, so two
-## is not a stricter bar at this geometry but an unreachable one. One still
-## refuses the "branch which merely wanders beside the main route" the solver's
-## own constant was written against, and a town with no crossing at all still
-## fails.
-const UPPER_ROUTE_CROSSOVERS := 1
+## At least two ground-arcade cells must pass beneath the climbing itinerary.
+## This makes overhead streets a plan fact instead of an optional decoration.
+const UPPER_ROUTE_CROSSOVERS := 2
 
 ## Bands of stone a house cut from this class may stand on, carried to the
 ## parcel stage as WarrenVolumeEnvelope.plinth_budget_bands. Route-first keeps
@@ -186,27 +150,10 @@ func vertical_development_bands() -> int:
 
 
 func bearing_at(column: Vector2i) -> int:
-	## The terrace a house standing on this column rests on -- a SECOND datum,
-	## deliberately distinct from `base_at`.
-	##
-	## `base_at` is natural ground, and every street, address, arcade and cover
-	## rule keeps measuring mass from it, so a street stays flanked by real
-	## inhabited height. `bearing_at` is only where an inhabited stack STOPS
-	## descending. The mass between the two is hill: unbuilt solid the fabric
-	## renders as retained stone rather than as more storeys of house.
-	##
-	## DEGENERATE SINCE THE BUILDABLE-LAYER WAVE, deliberately. The second datum
-	## was invented to name "the mass between natural ground and where houses
-	## stop descending"; the terrain owns that mass now, and every column's whole
-	## layer fits inside BUILDABLE_LAYER_BANDS by construction, so this returns
-	## `base_at` for every column a builder produces. The method survives because
-	## the excavation envelope copies it and the accessor is shared -- deleting it
-	## mid-milestone would churn four suites to remove an identity (design §3.4).
-	##
-	## Never above the massif top and never below natural ground, so a column
-	## whose whole span already fits inside the buildable layer is untouched
-	## and its houses descend exactly as they always did.
-	return maxi(base_at(column), top_at(column) - BUILDABLE_LAYER_BANDS)
+	## The whole envelope is inhabitable construction.  Houses descend to the
+	## sampled terrain rather than stopping on an abstract terrace, so a tall
+	## centre becomes stacked rooms and roofs instead of a stone podium.
+	return base_at(column)
 
 
 func terrace_levels() -> Array[int]:

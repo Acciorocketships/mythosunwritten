@@ -26,40 +26,11 @@ const HEADROOM_BANDS := WarrenExcavation.HEADROOM_BANDS
 ## unchanged either side of the change).
 const MIN_ROUTE_CELLS := 30
 const MAX_ROUTE_CELLS := 36
-## Bands the finished route must climb, RE-DERIVED for the buildable layer
-## (terrain milestone Wave 4). The old 8 was written against a massif that
-## authored 16-20 bands of its own mass, where "the massif's top rises about
-## 1.2 bands per cell of inward travel" (see the header) and the route climbed
-## through mass the fabric owned. The massif now authors only
-## WarrenMassif.BUILDABLE_LAYER_BANDS over ground the TERRAIN owns, and that
-## changes the arithmetic of what a bore can possibly reach:
-##
-##   a walk cell needs HEADROOM_BANDS of void inside its own column, so its
-##   floor sits at most `BUILDABLE_LAYER_BANDS - HEADROOM_BANDS` = 3 bands
-##   above that column's base band -- whatever the terrain does.
-##
-## So a bore on FLAT ground can span 3 bands and no more, as a proof rather
-## than a measurement, and every band beyond that is ground the route genuinely
-## climbed. The gate is therefore re-addressed to say the thing it always
-## meant -- "the street has an upper and a lower realm" -- in the units the new
-## geometry actually has: spend the whole layer's freedom, and then climb one
-## further STOREY of the town on top of it.
-##
-##   MIN_SPAN_BANDS = (BUILDABLE_LAYER_BANDS - HEADROOM_BANDS)
-##                  + WarrenBuildingParcel.STOREY_BANDS = 3 + 2 = 5
-##
-## A test pins it against those three constants so it cannot drift, and the
-## flat-ground proof above is its sabotage: no bore on level ground can pass.
-##
-## MEASURED SUPPLY: over 256 attempts on each of 40 stamped seeds the best span
-## any bore reached was 6 and the mean was 2.5-3.0, so 8 was not a stricter gate
-## at the new geometry -- it was an unreachable one, and holding it produced
-## zero towns. This is design risk 3 ("cover collapses when the buildable layer
-## thins") landing as written, and the trade is reported rather than hidden: the
-## street network of a thin-layer town is shallower than a 16-20 band massif's
-## was, and the height a viewer reads comes from the terrain instead.
-const MIN_SPAN_BANDS := WarrenMassif.BUILDABLE_LAYER_BANDS \
-	- HEADROOM_BANDS + WarrenBuildingParcel.STOREY_BANDS
+## The deep inhabited envelope restores a four-storey journey between lower
+## and upper public realms. Requiring the entire eighteen-band depth would leave
+## no headroom at the summit, so the route owns eight bands and the remaining
+## upper mass stays available for rooms, bridges, and the third-storey court.
+const MIN_SPAN_BANDS := 8
 ## Walk cells sitting exactly on their own column's base band. The excavated
 ## route is the itinerary WarrenGroundArcadeSolver roots its two ground market
 ## branches from, and _find_path only ever considers a root where

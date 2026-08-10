@@ -143,6 +143,7 @@ static func _append_spec_broad_phase(program: SettlementFabricProgram,
 	for local_cell: Vector3i in recipe_value.solid_cells:
 		var cell := FabricRecipe.transform_cell(local_cell, origin, yaw)
 		if solid.has(cell) or walk.has(cell) or headroom.has(cell) \
+				or public_air.has(cell) \
 				or candidate_solid.has(cell) or candidate_walk.has(cell) \
 				or candidate_headroom.has(cell):
 			return false

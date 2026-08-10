@@ -1141,22 +1141,19 @@ static func _best_additional_connection_reservation(source: WarrenVolumePlan,
 		connection_broad_phase: Callable) -> Dictionary:
 	if not connection_pair.is_valid() or selected.size() < 4:
 		return {}
-	var used_owners: Dictionary = {}
-	for reservation: Dictionary in reservations:
-		for owner_value: Variant in reservation.get("owner_parcel_ids", []):
-			used_owners[StringName(owner_value)] = true
 	var best: Dictionary = {}
 	var best_cover := -1
 	var best_size := 2147483647
 	for left_index in selected.size():
 		var left := selected[left_index]
-		if used_owners.has(left.stable_id):
-			continue
 		for right_index in range(left_index + 1, selected.size()):
 			var right := selected[right_index]
-			if used_owners.has(right.stable_id) \
-					or (connection_broad_phase.is_valid() and not bool(
-						connection_broad_phase.call(left, right))):
+			# A tall central house may carry bridges from different facades.
+			# Independence is a property of the exact corridor cells and visual
+			# bounds below, not of whether one endpoint building participated in
+			# another bridge somewhere else.
+			if connection_broad_phase.is_valid() and not bool(
+						connection_broad_phase.call(left, right)):
 				continue
 			var reservation := connection_pair.call(left, right) as Dictionary
 			if reservation.is_empty() \
@@ -1181,6 +1178,28 @@ static func _best_additional_connection_reservation(source: WarrenVolumePlan,
 				best_cover = cover
 				best_size = size
 	return best
+
+
+static func fixed_parcel_connection_reservations(source: WarrenVolumePlan,
+		selected: Array[WarrenBuildingParcel], target_count: int,
+		connection_pair: Callable, reservation_compatibility: Callable,
+		connection_broad_phase: Callable) -> Array[Dictionary]:
+	## Mass-first inherits an already-complete solid partition, so it cannot seed
+	## a bridge pair before packing the way route-first does. Discover a bounded
+	## set afterward without moving or deleting any house. Every reservation is
+	## exact, independent of those already selected, and preserved by the whole
+	## fixed partition; later construction realizes these before optional detail.
+	var out: Array[Dictionary] = []
+	if source == null or not source.is_sealed() or target_count <= 0:
+		return out
+	for _index in target_count:
+		var reservation := _best_additional_connection_reservation(source,
+			selected, out, connection_pair, reservation_compatibility,
+			connection_broad_phase)
+		if reservation.is_empty():
+			break
+		out.append(reservation)
+	return out
 
 
 static func _rebind_reservation_owners(reservation: Dictionary,

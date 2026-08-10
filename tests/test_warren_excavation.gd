@@ -13,13 +13,9 @@ const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
 
 
 func _hill(world_seed: int = 0) -> Dictionary:
-	## Since the buildable-layer wave a mass-first town stands on a HILL the
-	## terrain owns, and WarrenMassifBuilder refuses a flat site outright (its
-	## vertical-development gate measures lowest ground to highest roof). Every
-	## build in this suite therefore takes the same synthetic reproduction of a
-	## stamped site that every other mass-first suite takes -- see
-	## tests/fixtures/warren_stamped_ground.gd for what it reproduces and how it
-	## was measured.
+	## Exercise excavation against the shared synthetic settlement-relief stamp.
+	## Flat ground is valid too; this fixture isolates how the inhabited bell's
+	## route follows real terrain bands.
 	return StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 4, world_seed)
 
 
@@ -61,14 +57,10 @@ const MIN_ARCADE_CLEARED_RATIO := 0.55
 ## houses. Lanes exist to lift it, so what has to be pinned is that they
 ## materially widen the public realm rather than that any exists.
 ##
-## RE-MEASURED ACROSS THE CORPUS, not per town, since the buildable-layer wave.
-## A lane hangs off a route cell and needs HEADROOM_BANDS of void in its own
-## column, so it is legal only where the route is within
-## `BUILDABLE_LAYER_BANDS - HEADROOM_BANDS` of the neighbouring column's own
-## ground -- which on a stamped hill means near grade. A climbing stretch can
-## therefore hang no lanes at all, and the per-town floor became a lottery on
-## where each seed's route happened to climb: measured 5 / 1 / 0 lanes on the
-## probe seeds against 3-5 before the cap.
+## Measured across the corpus, not per town. A lane hangs off a route cell and
+## needs HEADROOM_BANDS of void in its own column; even in the deep bell it is
+## legal only where neighboring building mass leaves that exact swept volume.
+## A per-town floor would therefore be a lottery on route shape.
 ##
 ## Pinned as a corpus total instead, which is the quantity the sentence above
 ## actually cares about -- "lanes materially widen the public realm" is a
@@ -76,8 +68,8 @@ const MIN_ARCADE_CLEARED_RATIO := 0.55
 ## 29 cells against 103 route cells over PROBE_SEEDS; both floors are halved off
 ## that, and the proportional one stays the load-bearing half.
 ##
-## THE DROP IS REPORTED, NOT ABSORBED: the street web is the biggest measured
-## casualty of the thin layer, and Wave 5 owns streets on real ground.
+## The proportional floor remains the load-bearing assertion: optional lanes
+## must materially widen the public realm across the reviewed corpus.
 const MIN_LANE_CELLS_PER_TOWN := 14
 const MIN_LANE_CELLS_PER_FIVE_ROUTE_CELLS := 1
 
@@ -509,17 +501,12 @@ func test_carved_routes_clear_the_real_ground_arcade_stage() -> void:
 	## WarrenExcavationVolumeAdapter.to_volume_plan ->
 	## WarrenGroundArcadeSolver.extend.
 	##
-	## MEASURED PER SEED, NOT PER BORE, since the buildable-layer wave. The
-	## old form carved ONE route per seed and asked whether that route cleared;
-	## at a 16-20 band massif that was a fair proxy for the pipeline, because a
-	## crossing under the climbing itinerary was routine. In a 4-6 band layer
-	## the window in which an arcade cell can pass under a route cell is two
-	## bands wide (WarrenMassif.UPPER_ROUTE_CROSSOVERS), so a single bore clears
-	## it 0 of 14 times while the production path -- which tries
+	## MEASURED PER SEED, NOT PER BORE. One route is never a fair proxy for the
+	## production grammar: the deep inhabited bell offers several vertical
+	## crossing windows, but their alignment depends on the bore's turns and
+	## landing phases. The production path tries
 	## WarrenTownSolver.MASS_FIRST_EXCAVATION_ATTEMPTS bores per massif and
-	## keeps any that clears -- reaches an arcade on most seeds. Measuring one
-	## bore stopped being a measurement of the pipeline, so this measures the
-	## attempt corpus the pipeline actually runs.
+	## keeps any that clears, so this measures the same attempt corpus.
 	##
 	## Floors are set from measurement on THIS window, not from aspiration, and
 	## both are needed: the rate alone passes if supply collapses to one massif

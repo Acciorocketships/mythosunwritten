@@ -310,7 +310,29 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   custom-program fixtures; a solve selects exactly one generation kind and the two algorithms
   must never be mixed. Sectional production records also suppress the legacy outskirts/prop pass.
   The replacement volumetric source-plan pipeline is now the default production transaction when
-  the common fabric vocabulary is available. `WarrenVolumeEnvelope` fills a warped anisotropic Gaussian height envelope
+  the common fabric vocabulary is available. It has two deliberately separate topology producers.
+  Route-first uses `WarrenVolumeEnvelope` and the public-realm carver described below. Mass-first
+  uses `WarrenMassifBuilder` to author one bounded 2--18-band **inhabited** Gaussian mountain directly
+  above immutable terrain; `WarrenMassif.bearing_at()` is the terrain base, never a hidden stone
+  substrate. `WarrenExcavationCarver` removes the connected narrow street, headroom, stairs, and
+  passages from that mass, so paths remain negative space and accepted routes climb at least eight
+  1.5 m bands with strong two-sided enclosure and intermittent occupied cover. The solid partition
+  becomes the buildings rather than feeding the route-first packer. Exact mass-first construction
+  alternates reviewed timber facade families in two-storey blocks, admits only explicit compatible
+  party-wall seams, and uses flat plank caps only where crossing gables would collide; stone is
+  limited to real terrain bearing and retaining work. A house footprint may span at most the
+  explicit one-storey plinth budget in sampled terrain height; larger risers must split into
+  narrower terrain-rooted buildings rather than becoming masonry podiums. A mass-first topology must also contain one
+  typed 6 x 6 m third-storey courtyard: its floor is four bands above the local terrain, supported by
+  complete mass or a lower route, and addressed by buildings on at least three sides. Mass-first
+  market detail uses one atomic 6 x 3 m covered-bazaar recipe composed from a reviewed canopy and
+  its authored stocked-table attachment; it must fit a sheltered arcade in one exact construction
+  transaction.
+  Route-first retains its independent-stall grammar. Skywalk reservations are solved against
+  the fixed exact parcel partition and preserved through asset compilation; do not fake extra links
+  when no independent measured corridor exists. Mass-first-only thresholds and styling are guarded
+  by `mass_context.has(&"massif")`; route-first must not inherit them accidentally.
+  `WarrenVolumeEnvelope` fills a warped anisotropic Gaussian height envelope
   upward from immutable local terrain bands; `WarrenPublicRealmCarver` then removes one connected
   orthogonal exterior realm from a perimeter ground entrance. Its sealed `WarrenVolumePlan`
   distinguishes remaining building `MASS`, abstract `WALK` floor planes, swept `PUBLIC_AIR`, and
