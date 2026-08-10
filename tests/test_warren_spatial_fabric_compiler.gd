@@ -28,19 +28,30 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var expected_feature_units := 0
 	var expected_feature_cells := 0
 	var constructed_features := 0
+	var constructed_skywalks := 0
+	var constructed_markets := 0
 	for feature: WarrenFeatureReservation in spatial.features:
 		if feature.construction_records.is_empty():
 			continue
 		constructed_features += 1
+		constructed_skywalks += int(feature.kind == &"enclosed_skywalk")
+		constructed_markets += int(feature.kind == &"covered_market")
 		expected_feature_units += feature.construction_records.size()
 		expected_feature_cells += feature.reserved_cells.size()
 	assert_eq(features.size(), expected_feature_units)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.realized_constructed_feature_count), constructed_features)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit.skywalk_feature_count),
-		constructed_features)
+		constructed_skywalks)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.covered_market_feature_count), constructed_markets)
+	assert_eq(constructed_markets, 1)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.feature_reserved_cell_count), expected_feature_cells)
 	for feature_unit: FabricUnit in features:
-		assert_true(program.recipe(feature_unit.recipe_id).has_tag(&"skywalk"))
+		var feature_recipe := program.recipe(feature_unit.recipe_id)
+		assert_true(feature_recipe.has_tag(&"skywalk") \
+			or feature_recipe.has_tag(&"covered_market"))
 		assert_true(fabric.add_unit(feature_unit), fabric.last_rejection)
 	var roofs := WarrenSpatialFabricCompiler.compile_roof_units(spatial,
 		program, units, features)

@@ -17,7 +17,8 @@ static func from_volume(source: WarrenVolumePlan,
 		pruning: WarrenPrunedMassPlan = null,
 		optional_infill_limit: int = \
 			WarrenPlatformInfillSolver.MAX_OPTIONAL_PATCH_COUNT,
-		supplemental_air: Array[Vector3i] = []) \
+		supplemental_air: Array[Vector3i] = [],
+		supplemental_surfaces: Array[Vector3i] = []) \
 		-> SectionalPublicRealmPlan:
 	last_failure = ""
 	if source == null or not source.is_sealed():
@@ -113,6 +114,44 @@ static func from_volume(source: WarrenVolumePlan,
 					from_id, to_id]
 				return null
 			edge_index += 1
+	var supplemental_components := _supplemental_surface_components(
+		supplemental_surfaces, realm)
+	for component_index in supplemental_components.size():
+		var surfaces := supplemental_components[component_index] \
+			as Array[Vector3i]
+		var node_id := StringName("volume.supplemental.%02d" % component_index)
+		var node_value := PublicRealmNode.new(node_id,
+			PublicRealmNode.EpisodeKind.UNDERCROFT,
+			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
+			PublicRealmNode.AirRealm.EXTERIOR,
+			PublicRealmNode.CoverPolicy.COVERED, surfaces,
+			_air_for_surfaces(surfaces), surfaces[0].y, surfaces[0].y,
+			false, false)
+		if not node_value.seal() or not realm.add_node(node_value):
+			last_failure = "supplemental covered route node %s rejected: %s" % [
+				node_id, realm.last_rejection]
+			return null
+		var connection_candidates: Array[Dictionary] = []
+		for existing: PublicRealmNode in realm.nodes:
+			if existing.stable_id == node_id \
+					or String(existing.stable_id).begins_with("volume.supplemental."):
+				continue
+			var seams := _adjacent_lane_seams(existing.surface_cells, surfaces)
+			if seams.size() >= 2:
+				connection_candidates.append({"node_id": existing.stable_id,
+					"seam_count": seams.size()})
+		connection_candidates.sort_custom(func(a: Dictionary,
+				b: Dictionary) -> bool:
+			if int(a.seam_count) != int(b.seam_count):
+				return int(a.seam_count) > int(b.seam_count)
+			return String(a.node_id) < String(b.node_id))
+		if connection_candidates.is_empty() or not _add_edge(realm, edge_index,
+				StringName(connection_candidates[0].node_id), node_id,
+				PublicRealmEdge.TransitionKind.LEVEL, false):
+			last_failure = "supplemental covered route %s has no two-lane seam" % \
+				node_id
+			return null
+		edge_index += 1
 	for primary_index in range(source.primary_itinerary.size() - 1):
 		var from_cell := source.primary_itinerary[primary_index]
 		var to_cell := source.primary_itinerary[primary_index + 1]
@@ -163,6 +202,47 @@ static func from_volume(source: WarrenVolumePlan,
 		_composed_walk_enclosure_ratio(source, pruning, extensions) \
 		if pruning != null else 0.0
 	return realm
+
+
+static func _supplemental_surface_components(cells: Array[Vector3i],
+		realm: SectionalPublicRealmPlan) -> Array[Array]:
+	var existing: Dictionary = {}
+	for node_value: PublicRealmNode in realm.nodes:
+		for cell: Vector3i in node_value.surface_cells:
+			existing[cell] = true
+	var remaining: Dictionary = {}
+	for cell: Vector3i in cells:
+		if not existing.has(cell):
+			remaining[cell] = true
+	var components: Array[Array] = []
+	while not remaining.is_empty():
+		var seeds: Array[Vector3i] = []
+		seeds.assign(remaining.keys())
+		seeds.sort_custom(_fine_cell_less)
+		var seed := seeds[0]
+		remaining.erase(seed)
+		var frontier: Array[Vector3i] = [seed]
+		var component: Array[Vector3i] = []
+		while not frontier.is_empty():
+			var cell: Vector3i = frontier.pop_back()
+			component.append(cell)
+			for direction: Vector3i in CARDINAL_MACRO_DIRECTIONS:
+				var neighbor := cell + direction
+				if remaining.erase(neighbor):
+					frontier.append(neighbor)
+		component.sort_custom(_fine_cell_less)
+		components.append(component)
+	components.sort_custom(func(a: Array, b: Array) -> bool:
+		return _fine_cell_less(a[0] as Vector3i, b[0] as Vector3i))
+	return components
+
+
+static func _fine_cell_less(a: Vector3i, b: Vector3i) -> bool:
+	if a.y != b.y:
+		return a.y < b.y
+	if a.z != b.z:
+		return a.z < b.z
+	return a.x < b.x
 
 
 static func _composed_walk_enclosure_ratio(source: WarrenVolumePlan,

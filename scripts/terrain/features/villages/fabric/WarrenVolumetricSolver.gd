@@ -13,6 +13,7 @@ const MAX_PARTITION_VARIANTS := WarrenSolidPartitioner.PARTITION_VARIANTS
 static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
 static var last_preplan_skywalk_diagnostic: Dictionary = {}
+static var last_preplan_market_diagnostic: Dictionary = {}
 static var _last_skywalk_selection_failure := ""
 
 
@@ -22,6 +23,7 @@ static func solve(world_seed: int,
 	last_failure = ""
 	last_diagnostic = {}
 	last_preplan_skywalk_diagnostic = {}
+	last_preplan_market_diagnostic = {}
 	if construction_program == null:
 		last_failure = "volumetric feature search requires measured construction vocabulary"
 		return null
@@ -72,13 +74,20 @@ static func from_volume(volume: WarrenVolumePlan,
 		construction_program)
 	if partition.is_empty():
 		return null
+	for cell_value: Variant in (partition.market_reservation.public_cells \
+			as Dictionary).keys():
+		var market_floor := cell_value as Vector3i
+		if not route_floors.has(market_floor):
+			route_floors.append(market_floor)
+	route_floors.sort_custom(_cell_less)
 	var buildings := partition.buildings as Array[WarrenBuildingVolume]
 	var supports := partition.supports as WarrenSupportGraph
 	if buildings.size() < MIN_BUILDINGS:
 		last_failure = "only %d volumetric buildings formed" % buildings.size()
 		return null
 	var features := WarrenSpatialFeatureSolver.solve(grid, volume, buildings,
-		supports, partition.skywalk_reservations as Array[Dictionary])
+		supports, partition.skywalk_reservations as Array[Dictionary],
+		partition.market_reservation as Dictionary)
 	if features.is_empty():
 		last_failure = WarrenSpatialFeatureSolver.last_failure
 		return null
@@ -252,19 +261,59 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			if not protected_owners.has(cell):
 				protected_owners[cell] = {}
 			(protected_owners[cell] as Dictionary)[parcel.stable_id] = true
+	# The covered bazaar is town topology, not a late prop pass. Select and
+	# reserve its exact canopy/posts, under-canopy public aisle, measured visual
+	# envelope, and backing-room socket before generic composition blocks move.
+	var market_plan := _preplan_spatial_market(grid, volume, proposals,
+		construction_program, protected_owners)
+	var market_candidates: Array[Dictionary] = []
+	market_candidates.assign(market_plan.get("candidates", []) as Array)
+	if market_candidates.is_empty():
+		last_failure = "no topology-first covered market fits the connected ground street"
+		return {}
 	# Select three measured straight links *before* upper composition blocks are
 	# frozen. Each candidate shifts both endpoint blocks together by one fine
 	# cell, creating a genuine floorplate break while preserving exact sockets.
 	# Unrelated generic blocks must move around the reserved connector volume.
-	var skywalk_plan := _preplan_spatial_skywalks(grid, volume, proposals,
-		construction_program, protected_owners,
-		WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
-	var skywalk_reservations := skywalk_plan.get("reservations", []) \
-		as Array[Dictionary]
-	if skywalk_reservations.size() < WarrenSpatialFeatureSolver.TARGET_SKYWALKS:
+	# Market and skywalks are one bounded compatible feature-set search. A valid
+	# bazaar in isolation may consume the only measured bridge endpoint; try the
+	# finite ranked market corpus until the complete hero-feature set survives.
+	var market_reservation: Dictionary = {}
+	var skywalk_plan: Dictionary = {}
+	var feature_set_attempts: Array[Dictionary] = []
+	for candidate: Dictionary in market_candidates:
+		var trial_owners := _protected_owners_with_market(protected_owners,
+			candidate)
+		var trial_skywalk_plan := _preplan_spatial_skywalks(grid, volume,
+			proposals, construction_program, trial_owners,
+			WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
+		var trial_skywalks: Array[Dictionary] = []
+		trial_skywalks.assign(trial_skywalk_plan.get("reservations", []) as Array)
+		feature_set_attempts.append({"market_parcel": candidate.backing_parcel_id,
+			"market_origin": candidate.origin,
+			"skywalk_count": trial_skywalks.size()})
+		if trial_skywalks.size() < WarrenSpatialFeatureSolver.TARGET_SKYWALKS \
+				or not _reserve_market_preplan(grid, candidate):
+			continue
+		market_reservation = candidate
+		skywalk_plan = trial_skywalk_plan
+		protected_owners = trial_owners
+		break
+	var skywalk_reservations: Array[Dictionary] = []
+	skywalk_reservations.assign(skywalk_plan.get("reservations", []) as Array)
+	if market_reservation.is_empty() \
+			or skywalk_reservations.size() \
+				< WarrenSpatialFeatureSolver.TARGET_SKYWALKS:
 		last_failure = "pre-partition beam found only %d measured skywalk corridors (%s)" \
 			% [skywalk_reservations.size(), last_preplan_skywalk_diagnostic]
 		return {}
+	last_preplan_market_diagnostic["feature_set_attempts"] = feature_set_attempts
+	last_preplan_market_diagnostic["selected"] = {
+		"parcel": market_reservation.backing_parcel_id,
+		"origin": market_reservation.origin,
+		"yaw": market_reservation.yaw_quarters,
+		"recipe": market_reservation.recipe_id}
+	var market_feature_id := StringName(market_reservation.feature_id)
 	# Selected hero-feature endpoint blocks outrank generic room proposals. Make
 	# that priority explicit in the provisional-owner field so every displaced
 	# parcel either finds another legal block offset or drops transactionally.
@@ -417,6 +466,12 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						last_failure = "could not attach %s to %s" % [feature_id,
 							building_id]
 						return {}
+			if StringName(market_reservation.backing_parcel_id) == parcel.stable_id \
+					and building.has_private_cell(
+						market_reservation.backing_cell as Vector3i):
+				if not building.add_feature(market_feature_id):
+					last_failure = "could not attach covered market to %s" % building_id
+					return {}
 			if not building.seal(grid):
 				last_failure = "building %s rejected: %s" % [building_id,
 					building.last_rejection]
@@ -445,7 +500,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		"room_count": room_count, "offset_blocks": offset_blocks,
 		"handoffs": handoffs,
 		"preplanned_skywalk_count": skywalk_reservations.size(),
-		"skywalk_reservations": skywalk_reservations}
+		"skywalk_reservations": skywalk_reservations,
+		"market_reservation": market_reservation}
 
 
 static func _proposal_base_plate(proposal: Dictionary) -> Dictionary:
@@ -456,6 +512,411 @@ static func _proposal_base_plate(proposal: Dictionary) -> Dictionary:
 		if cell.y == origin.y:
 			out[Vector2i(cell.x, cell.z)] = true
 	return out
+
+
+static func _preplan_spatial_market(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, proposals: Array[Dictionary],
+		program: SettlementFabricProgram,
+		protected_owners: Dictionary) -> Dictionary:
+	## Attach the reviewed 6 x 3 m bazaar to one exact base-room MARKET socket.
+	## Its central two-by-two aisle is already canonical route air; the corner
+	## posts and continuous canopy surround/cover that negative space without
+	## turning the market into a detached tent row or a late decoration pass.
+	var candidates: Array[Dictionary] = []
+	var socket_count := 0
+	var ground_fit_count := 0
+	var body_fit_count := 0
+	var aisle_fit_count := 0
+	var clearance_fit_count := 0
+	var backing_fit_count := 0
+	var aisle_failures: Array[Dictionary] = []
+	var feature_id := &"spatial.feature.market.00"
+	var aisle_local: Array[Vector3i] = [
+		Vector3i(-1, 0, -1), Vector3i(0, 0, -1),
+		Vector3i(-1, 0, 0), Vector3i(0, 0, 0),
+	]
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		var profile := WarrenParcelConstruction.profile_for(parcel)
+		if profile.is_empty():
+			continue
+		var proposal_origin := proposal.origin as Vector3i
+		var proposal_yaw := int(proposal.yaw_quarters)
+		var minimum := profile.minimum as Vector3i
+		var size := profile.size as Vector3i
+		var sockets: Array[Dictionary] = [
+			{"cell": minimum + Vector3i(size.x - 1, 0,
+				(size.z - 1) / 2), "facing": Vector3i.RIGHT},
+			{"cell": minimum + Vector3i(0, 0, (size.z - 1) / 2),
+				"facing": Vector3i.LEFT},
+			{"cell": minimum + Vector3i((size.x - 1) / 2, 0, 0),
+				"facing": Vector3i.FORWARD},
+			{"cell": minimum + Vector3i((size.x - 1) / 2, 0,
+				size.z - 1), "facing": Vector3i.BACK},
+		]
+		for socket: Dictionary in sockets:
+			socket_count += 1
+			var backing_cell := FabricRecipe.transform_cell(
+				socket.cell as Vector3i, proposal_origin, proposal_yaw)
+			var backing_facing := FabricRecipe.transform_direction(
+				socket.facing as Vector3i, proposal_yaw)
+			var market_yaw := _yaw_for_direction(Vector3i.FORWARD,
+				-backing_facing)
+			if market_yaw < 0:
+				continue
+			var market_socket_cell := backing_cell + backing_facing
+			var market_origin := market_socket_cell - FabricRecipe.transform_cell(
+				Vector3i(-1, 0, -1), Vector3i.ZERO, market_yaw)
+			var family := posmod(Helper._mix64(volume.world_seed \
+				^ String(parcel.stable_id).hash() ^ backing_cell.x * 73856093 \
+				^ backing_cell.z * 19349663),
+				SettlementFabricProgram.MARKET_STALLS.size())
+			var recipe_id := StringName("market.covered.%02d" % family)
+			var recipe := program.recipe(recipe_id)
+			if recipe == null or not recipe.has_tag(&"covered_market"):
+				continue
+			if not WarrenMarketSolver._bearing_follows_local_ground(market_origin,
+					market_yaw, volume, WarrenMarketSolver.COVERED_MARKET_MINIMUM,
+					WarrenMarketSolver.COVERED_MARKET_SIZE):
+				continue
+			ground_fit_count += 1
+			var body: Dictionary = {}
+			for cells: Array[Vector3i] in [recipe.solid_cells,
+					recipe.headroom_cells, recipe.walk_cells]:
+				for local_cell: Vector3i in cells:
+					body[FabricRecipe.transform_cell(local_cell, market_origin,
+						market_yaw)] = true
+			if body.is_empty() or not _skywalk_body_fits_grid(grid, body):
+				continue
+			body_fit_count += 1
+			# The named backing room may touch the visual envelope, but structural
+			# market cells may never replace the room they claim to address.
+			var overlaps_backing := false
+			for body_value: Variant in body.keys():
+				if (protected_owners.get(body_value, {}) as Dictionary).has(
+						parcel.stable_id):
+					overlaps_backing = true
+					break
+			if overlaps_backing:
+				continue
+			var aisle := _market_public_aisle(grid, volume, market_origin,
+				market_yaw, aisle_local, body, protected_owners, parcel.stable_id)
+			if aisle.is_empty():
+				if aisle_failures.size() < 16:
+					aisle_failures.append({"parcel": parcel.stable_id,
+						"origin": market_origin, "yaw": market_yaw})
+				continue
+			var public_cells := aisle.cells as Dictionary
+			var covered_aisle_cells := aisle.covered_cells as Dictionary
+			var new_public_cell_count := int(aisle.new_public_cell_count)
+			var entrance_edge_count := int(aisle.entrance_edge_count)
+			var entrance_width := int(aisle.entrance_width)
+			aisle_fit_count += 1
+			var components: Array[Dictionary] = [{"recipe_id": recipe_id,
+				"origin": market_origin, "yaw_quarters": market_yaw}]
+			var clearance := _skywalk_visual_clearance_cells(components, program)
+			if clearance.is_empty() or not _cells_fit_grid(grid, clearance):
+				continue
+			clearance_fit_count += 1
+			var bearing_cells: Dictionary = {}
+			for local_cell: Vector3i in FabricRecipe.box_cells(
+					WarrenMarketSolver.COVERED_MARKET_MINIMUM,
+					Vector3i(WarrenMarketSolver.COVERED_MARKET_SIZE.x, 1,
+						WarrenMarketSolver.COVERED_MARKET_SIZE.z)):
+				bearing_cells[FabricRecipe.transform_cell(local_cell,
+					market_origin, market_yaw)] = true
+			var blocker_count := _skywalk_blocker_count(clearance,
+				protected_owners, {parcel.stable_id: true})
+			candidates.append({"feature_id": feature_id,
+				"kind": &"covered_market", "recipe_id": recipe_id,
+				"origin": market_origin, "yaw_quarters": market_yaw,
+				"components": components, "reserved_cells": body,
+				"public_cells": public_cells,
+				"covered_aisle_cells": covered_aisle_cells,
+				"aisle_extension_cell_count": public_cells.size() \
+					- covered_aisle_cells.size(),
+				"new_public_cell_count": new_public_cell_count,
+				"street_entrance_edge_count": entrance_edge_count,
+				"street_entrance_width": entrance_width,
+				"visual_clearance_cells": clearance,
+				"bearing_cells": bearing_cells,
+				"owner_parcel_ids": [parcel.stable_id],
+				"backing_parcel_id": parcel.stable_id,
+				"backing_cell": backing_cell,
+				"backing_facing": backing_facing,
+				"blocker_count": blocker_count,
+				"tie": posmod(Helper._mix64(volume.world_seed \
+					^ String(recipe_id).hash() ^ market_origin.x * 31 \
+					^ market_origin.z * 47 ^ market_yaw * 131), 1000003)})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.blocker_count) != int(b.blocker_count):
+			return int(a.blocker_count) < int(b.blocker_count)
+		return int(a.tie) < int(b.tie))
+	var viable: Array[Dictionary] = []
+	for candidate: Dictionary in candidates:
+		if not _market_backing_composition_survives(grid, candidate, proposals,
+				protected_owners, volume.world_seed):
+			continue
+		backing_fit_count += 1
+		viable.append(candidate)
+	last_preplan_market_diagnostic = {"socket_count": socket_count,
+		"ground_fit_count": ground_fit_count, "body_fit_count": body_fit_count,
+		"aisle_fit_count": aisle_fit_count,
+		"clearance_fit_count": clearance_fit_count,
+		"candidate_count": candidates.size(),
+		"backing_fit_count": backing_fit_count,
+		"aisle_failures": aisle_failures}
+	return {"candidates": viable}
+
+
+static func _market_backing_composition_survives(grid: WarrenSpatialGrid,
+		market: Dictionary, proposals: Array[Dictionary],
+		protected_owners: Dictionary, world_seed: int) -> bool:
+	var backing_parcel_id := StringName(market.backing_parcel_id)
+	var proposal: Dictionary = {}
+	for candidate: Dictionary in proposals:
+		if (candidate.parcel as WarrenBuildingParcel).stable_id \
+				== backing_parcel_id:
+			proposal = candidate
+			break
+	if proposal.is_empty():
+		return false
+	var trial := protected_owners.duplicate(true)
+	var feature_id := StringName(market.feature_id)
+	var endpoint_allowance: Dictionary = {backing_parcel_id: true}
+	for cell_value: Variant in (market.reserved_cells as Dictionary).keys():
+		if not trial.has(cell_value):
+			trial[cell_value] = {}
+		(trial[cell_value] as Dictionary)[feature_id] = true
+	for cell_value: Variant in (market.visual_clearance_cells \
+			as Dictionary).keys():
+		if (market.reserved_cells as Dictionary).has(cell_value):
+			continue
+		if not trial.has(cell_value):
+			trial[cell_value] = {}
+		(trial[cell_value] as Dictionary)[feature_id] = endpoint_allowance
+	var parcel := proposal.parcel as WarrenBuildingParcel
+	var origin := proposal.origin as Vector3i
+	var storeys := int(proposal.storeys)
+	var threshold := WarrenParcelConstruction.threshold_cell(parcel)
+	var addressed_storey := clampi(floori(float(threshold.y - origin.y) \
+		/ float(WarrenSpatialGrid.STOREY_CELLS)), 0, storeys - 1)
+	var forced: Dictionary = {0: Vector2i.ZERO,
+		addressed_storey / 2: Vector2i.ZERO}
+	return not _composition_offsets(grid, _proposal_base_plate(proposal),
+		origin.y, storeys, trial, backing_parcel_id, world_seed, forced).is_empty()
+
+
+static func _protected_owners_with_market(protected_owners: Dictionary,
+		market: Dictionary) -> Dictionary:
+	var trial := protected_owners.duplicate(true)
+	var feature_id := StringName(market.feature_id)
+	var endpoint_allowance: Dictionary = {
+		StringName(market.backing_parcel_id): true}
+	for cell_value: Variant in (market.reserved_cells as Dictionary).keys():
+		if not trial.has(cell_value):
+			trial[cell_value] = {}
+		(trial[cell_value] as Dictionary)[feature_id] = true
+	for cell_value: Variant in (market.visual_clearance_cells \
+			as Dictionary).keys():
+		if (market.reserved_cells as Dictionary).has(cell_value):
+			continue
+		if not trial.has(cell_value):
+			trial[cell_value] = {}
+		(trial[cell_value] as Dictionary)[feature_id] = endpoint_allowance
+	return trial
+
+
+static func _reserve_market_preplan(grid: WarrenSpatialGrid,
+		market: Dictionary) -> bool:
+	var feature_id := StringName(market.feature_id)
+	var body: Array[Vector3i] = []
+	body.assign((market.reserved_cells as Dictionary).keys())
+	var clearance_only: Array[Vector3i] = []
+	for cell_value: Variant in (market.visual_clearance_cells \
+			as Dictionary).keys():
+		if not (market.reserved_cells as Dictionary).has(cell_value):
+			clearance_only.append(cell_value as Vector3i)
+	var public_cells: Array[Vector3i] = []
+	public_cells.assign((market.public_cells as Dictionary).keys())
+	var new_air: Dictionary = {}
+	for floor: Vector3i in public_cells:
+		for y_offset in WarrenVolumePlan.HEADROOM_BANDS:
+			var air := floor + Vector3i.UP * y_offset
+			if grid.use_at(air) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+				new_air[air] = true
+	var new_air_cells: Array[Vector3i] = []
+	new_air_cells.assign(new_air.keys())
+	var bearing_cells: Array[Vector3i] = []
+	bearing_cells.assign((market.bearing_cells as Dictionary).keys())
+	var tx := grid.begin_transaction(feature_id)
+	if not tx.reserve(body, WarrenSpatialGrid.Reservation.FEATURE \
+			| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not new_air_cells.is_empty() and (not tx.require_use(new_air_cells,
+				[WarrenSpatialGrid.Use.OUTSIDE,
+					WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+				or not tx.reserve(new_air_cells,
+					WarrenSpatialGrid.Reservation.PUBLIC_CLEARANCE, feature_id) \
+				or not tx.assign_use(new_air_cells,
+					WarrenSpatialGrid.Use.PUBLIC_AIR, feature_id)) \
+			or not clearance_only.is_empty() and not tx.reserve(clearance_only,
+				WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not tx.reserve(public_cells,
+				WarrenSpatialGrid.Reservation.CONSTRUCTION_SEAM, feature_id) \
+			or not tx.reserve(bearing_cells,
+				WarrenSpatialGrid.Reservation.TERRAIN_BEARING, feature_id):
+		return false
+	for floor: Vector3i in public_cells:
+		var existing := grid.face_claim(floor, Vector3i.DOWN)
+		if existing.is_empty() and not tx.claim_face(floor, Vector3i.DOWN,
+				WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, feature_id):
+			return false
+	return tx.commit()
+
+
+static func _yaw_for_direction(local_direction: Vector3i,
+		target_direction: Vector3i) -> int:
+	for yaw in 4:
+		if FabricRecipe.transform_direction(local_direction, yaw) \
+				== target_direction:
+			return yaw
+	return -1
+
+
+static func _cells_fit_grid(grid: WarrenSpatialGrid, cells: Dictionary) -> bool:
+	for cell_value: Variant in cells.keys():
+		if not grid.contains(cell_value as Vector3i):
+			return false
+	return true
+
+
+static func _market_public_aisle(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, origin: Vector3i, yaw: int,
+		covered_local_cells: Array[Vector3i], body: Dictionary,
+		protected_owners: Dictionary,
+		backing_parcel_id: StringName) -> Dictionary:
+	## The four central cells are the browsable space beneath the canopy. When
+	## that bay does not directly meet two lanes of one route episode, extend a
+	## short two-cell-wide negative-space throat. This keeps the market atomic and
+	## player-width without requiring the macro route to land on one exact phase.
+	var covered: Dictionary = {}
+	for local_cell: Vector3i in covered_local_cells:
+		covered[FabricRecipe.transform_cell(local_cell, origin, yaw)] = true
+	var directions: Array[Vector3i] = [Vector3i.BACK, Vector3i.RIGHT,
+		Vector3i.LEFT, Vector3i.FORWARD]
+	for extension_length in 4:
+		var direction_count := 1 if extension_length == 0 else directions.size()
+		for direction_index in direction_count:
+			var cells := covered.duplicate()
+			if extension_length > 0:
+				var local_direction := directions[direction_index]
+				for step in range(1, extension_length + 1):
+					var row: Array[Vector3i] = []
+					if local_direction == Vector3i.BACK:
+						row = [Vector3i(-1, 0, step), Vector3i(0, 0, step)]
+					elif local_direction == Vector3i.FORWARD:
+						row = [Vector3i(-1, 0, -1 - step),
+							Vector3i(0, 0, -1 - step)]
+					elif local_direction == Vector3i.RIGHT:
+						row = [Vector3i(step, 0, -1), Vector3i(step, 0, 0)]
+					else:
+						row = [Vector3i(-1 - step, 0, -1),
+							Vector3i(-1 - step, 0, 0)]
+					for local_cell: Vector3i in row:
+						cells[FabricRecipe.transform_cell(local_cell, origin,
+							yaw)] = true
+			if not _market_aisle_cells_fit(grid, volume, cells, body,
+					protected_owners, backing_parcel_id):
+				continue
+			var entrance := _market_street_connection(volume, grid, cells)
+			if int(entrance.max_episode_width) < 2:
+				continue
+			var new_public_count := 0
+			for cell_value: Variant in cells.keys():
+				new_public_count += int(grid.use_at(cell_value as Vector3i) \
+					!= WarrenSpatialGrid.Use.PUBLIC_AIR)
+			return {"cells": cells, "covered_cells": covered,
+				"new_public_cell_count": new_public_count,
+				"entrance_edge_count": int(entrance.edge_count),
+				"entrance_width": int(entrance.max_episode_width),
+				"extension_length": extension_length}
+	return {}
+
+
+static func _market_aisle_cells_fit(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, cells: Dictionary, body: Dictionary,
+		protected_owners: Dictionary,
+		backing_parcel_id: StringName) -> bool:
+	for value: Variant in cells.keys():
+		var cell := value as Vector3i
+		var upper := cell + Vector3i.UP
+		var use_value := grid.use_at(cell)
+		var upper_use := grid.use_at(upper)
+		if body.has(cell) or body.has(upper) or use_value not in [
+				WarrenSpatialGrid.Use.OUTSIDE,
+				WarrenSpatialGrid.Use.ALLOCATABLE] or upper_use not in [
+				WarrenSpatialGrid.Use.OUTSIDE,
+				WarrenSpatialGrid.Use.ALLOCATABLE] \
+				or (protected_owners.get(cell, {}) as Dictionary).has(
+					backing_parcel_id) \
+				or (protected_owners.get(upper, {}) as Dictionary).has(
+					backing_parcel_id) \
+				or (grid.reservation_bits_at(cell) \
+					| grid.reservation_bits_at(upper)) & (
+						WarrenSpatialGrid.Reservation.FEATURE \
+						| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE) != 0:
+			return false
+		var column := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		if not volume.envelope.contains_column(column) \
+				or volume.envelope.ground_at(column) != cell.y:
+			return false
+	return true
+
+
+static func _market_street_connection(volume: WarrenVolumePlan,
+		grid: WarrenSpatialGrid, market_cells: Dictionary) -> Dictionary:
+	var episode_owners: Dictionary = {}
+	for index in volume.walk_cells.size():
+		var owner_id := StringName("walk.%02d" % index)
+		for cell: Vector3i in _fine_square(volume.walk_cells[index]):
+			if not episode_owners.has(cell):
+				episode_owners[cell] = [] as Array[StringName]
+			(episode_owners[cell] as Array[StringName]).append(owner_id)
+	for index in volume.transitions.size():
+		var transition := volume.transitions[index]
+		if not transition.is_vertical():
+			continue
+		var owner_id := StringName("transition.%02d" % index)
+		for cell: Vector3i in transition.surface_cells():
+			if not episode_owners.has(cell):
+				episode_owners[cell] = [] as Array[StringName]
+			(episode_owners[cell] as Array[StringName]).append(owner_id)
+	var seams_by_episode: Dictionary = {}
+	var edge_count := 0
+	for cell_value: Variant in market_cells.keys():
+		var cell := cell_value as Vector3i
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if market_cells.has(neighbor) \
+					or grid.use_at(neighbor) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+				continue
+			var floor := grid.face_claim(neighbor, Vector3i.DOWN)
+			if floor.is_empty() or int(floor.kind) \
+					!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+				continue
+			edge_count += 1
+			for owner_id: StringName in episode_owners.get(neighbor,
+					[] as Array[StringName]):
+				if not seams_by_episode.has(owner_id):
+					seams_by_episode[owner_id] = {}
+				(seams_by_episode[owner_id] as Dictionary)["%s>%s" % [cell,
+					neighbor]] = true
+	var max_width := 0
+	for seams_value: Variant in seams_by_episode.values():
+		max_width = maxi(max_width, (seams_value as Dictionary).size())
+	return {"edge_count": edge_count, "max_episode_width": max_width}
 
 
 static func _preplan_spatial_skywalks(grid: WarrenSpatialGrid,
@@ -567,7 +1028,10 @@ static func _preplan_spatial_skywalks(grid: WarrenSpatialGrid,
 							delta3)
 						var body := shifted.reserved_cells as Dictionary
 						var clearance := shifted.visual_clearance_cells as Dictionary
-						if not _skywalk_body_fits_grid(grid, body):
+						if not _skywalk_body_fits_grid(grid, body) \
+								or not _skywalk_clearance_fits_grid(grid, clearance) \
+								or not _skywalk_clearance_fits_protected(clearance,
+									protected_owners):
 							continue
 						if _sets_overlap(body, left_plate) \
 								or _sets_overlap(body, right_plate):
@@ -879,6 +1343,9 @@ static func _shifted_corner_skywalk_candidates(grid: WarrenSpatialGrid,
 				var body := reservation.reserved_cells as Dictionary
 				var clearance := reservation.visual_clearance_cells as Dictionary
 				if not _skywalk_body_fits_grid(grid, body) \
+						or not _skywalk_clearance_fits_grid(grid, clearance) \
+						or not _skywalk_clearance_fits_protected(clearance,
+							protected_owners) \
 						or _sets_overlap(body, left_plate) \
 						or _sets_overlap(body, right_plate):
 					continue
@@ -1127,7 +1594,10 @@ static func _stationary_skywalk_candidates(grid: WarrenSpatialGrid,
 	var out: Array[Dictionary] = []
 	var body := raw.reserved_cells as Dictionary
 	var clearance := raw.visual_clearance_cells as Dictionary
-	if not _skywalk_body_fits_grid(grid, body):
+	if not _skywalk_body_fits_grid(grid, body) \
+			or not _skywalk_clearance_fits_grid(grid, clearance) \
+			or not _skywalk_clearance_fits_protected(clearance,
+				protected_owners):
 		return out
 	var lower_cover := _lower_public_cover(body, public_air)
 	if lower_cover < 2:
@@ -1345,8 +1815,32 @@ static func _skywalk_body_fits_grid(grid: WarrenSpatialGrid,
 		var cell := value as Vector3i
 		if not grid.contains(cell) or grid.use_at(cell) not in [
 				WarrenSpatialGrid.Use.OUTSIDE,
-				WarrenSpatialGrid.Use.ALLOCATABLE]:
+				WarrenSpatialGrid.Use.ALLOCATABLE] \
+				or (grid.reservation_bits_at(cell) & (
+					WarrenSpatialGrid.Reservation.FEATURE \
+					| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE)) != 0:
 			return false
+	return true
+
+
+static func _skywalk_clearance_fits_grid(grid: WarrenSpatialGrid,
+		clearance: Dictionary) -> bool:
+	for value: Variant in clearance.keys():
+		var cell := value as Vector3i
+		if not grid.contains(cell) or (grid.reservation_bits_at(cell) & (
+				WarrenSpatialGrid.Reservation.FEATURE \
+				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE)) != 0:
+			return false
+	return true
+
+
+static func _skywalk_clearance_fits_protected(clearance: Dictionary,
+		protected_owners: Dictionary) -> bool:
+	for value: Variant in clearance.keys():
+		for owner_value: Variant in (protected_owners.get(value, {}) \
+				as Dictionary).keys():
+			if String(owner_value).begins_with("spatial.feature."):
+				return false
 	return true
 
 
@@ -1491,6 +1985,18 @@ static func _skywalk_selection_preserves_endpoint_rooms(
 		proposal_by_id[parcel.stable_id] = proposal
 	var endpoint_parcel_ids := forced_by_parcel.duplicate()
 	var required_parcel_ids := forced_by_parcel.duplicate()
+	# Named feature-clearance allowances identify structural endpoint parcels.
+	# The preplanned market has no shifted block, so it would otherwise fall out
+	# of this skywalk-only forced-offset set even though its exact backing socket
+	# is just as mandatory as either end of a bridge.
+	for owners_value: Variant in trial_owners.values():
+		for allowance_value: Variant in (owners_value as Dictionary).values():
+			if not allowance_value is Dictionary:
+				continue
+			for parcel_value: Variant in (allowance_value as Dictionary).keys():
+				var parcel_id := StringName(parcel_value)
+				endpoint_parcel_ids[parcel_id] = true
+				required_parcel_ids[parcel_id] = true
 	var court_floors: Dictionary = {}
 	for macro: Vector3i in volume.courtyard_cells:
 		for floor_cell: Vector3i in _fine_square(macro):

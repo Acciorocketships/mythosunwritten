@@ -18,7 +18,7 @@ static func from_spatial(source: WarrenSpatialPlan) \
 		WarrenSpatialGrid.Use.PUBLIC_AIR)
 	var realm := WarrenVolumePublicRealmAdapter.from_volume(source.source_volume,
 		null, null, WarrenPlatformInfillSolver.MAX_OPTIONAL_PATCH_COUNT,
-		spatial_air)
+		spatial_air, source.route_floor_cells)
 	if realm == null:
 		last_failure = WarrenVolumePublicRealmAdapter.last_failure
 		return null

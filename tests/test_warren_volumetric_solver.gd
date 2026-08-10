@@ -23,6 +23,7 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_eq(int(plan.audit.unclassified_public_private_face_count), 0)
 	assert_eq(int(plan.audit.missing_roof_face_count), 0)
 	assert_eq(int(plan.audit.elevated_courtyard_count), 1)
+	assert_eq(int(plan.audit.covered_market_count), 1)
 	assert_eq(int(plan.audit.enclosed_skywalk_count),
 		WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
 	assert_gte(int(plan.audit.room_outcropping_count),
@@ -52,6 +53,7 @@ func test_volumetric_solve_is_deterministic() -> void:
 func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	var courts: Array[WarrenFeatureReservation] = []
 	var skywalks: Array[WarrenFeatureReservation] = []
+	var markets: Array[WarrenFeatureReservation] = []
 	var outcroppings: Array[WarrenFeatureReservation] = []
 	for feature: WarrenFeatureReservation in plan.features:
 		match feature.kind:
@@ -59,6 +61,8 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 				courts.append(feature)
 			&"enclosed_skywalk":
 				skywalks.append(feature)
+			&"covered_market":
+				markets.append(feature)
 			&"room_outcropping":
 				outcroppings.append(feature)
 	assert_eq(courts.size(), 1)
@@ -68,6 +72,29 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		assert_gte(int(court.audit.courtyard_addressed_side_count), 3)
 		assert_gte(int(court.audit.courtyard_below_route_cell_count), 4)
 		assert_gte(int(court.audit.courtyard_upper_route_cell_count), 2)
+	assert_eq(markets.size(), 1)
+	if not markets.is_empty():
+		var market := markets[0]
+		assert_gte(market.public_cells.size(), 4)
+		assert_eq(market.endpoints.size(), 1)
+		assert_eq(market.construction_records.size(), 1)
+		assert_true(String(market.construction_records[0].recipe_id) \
+			.begins_with("market.covered."))
+		assert_eq(int(market.audit.market_stocked_bay_count), 1)
+		assert_eq(int(market.audit.market_covered_aisle_cell_count), 4)
+		assert_gte(int(market.audit.market_street_entrance_width), 2)
+		assert_true(bool(market.audit.market_continuous_canopy))
+		for cell: Vector3i in market.public_cells:
+			assert_eq(plan.grid.use_at(cell), WarrenSpatialGrid.Use.PUBLIC_AIR)
+			assert_true(plan.grid.reservation_owned_by(cell,
+				WarrenSpatialGrid.Reservation.CONSTRUCTION_SEAM,
+				market.stable_id))
+			assert_eq(int(plan.grid.face_claim(cell, Vector3i.DOWN).kind),
+				WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR)
+		for cell: Vector3i in market.reserved_cells:
+			assert_eq(plan.grid.use_at(cell),
+				WarrenSpatialGrid.Use.STRUCTURAL_VOLUME)
+			assert_eq(plan.grid.owner_name_at(cell), market.stable_id)
 	assert_eq(skywalks.size(), WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
 	var endpoint_pairs: Dictionary = {}
 	var corner_count := 0

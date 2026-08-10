@@ -21,7 +21,8 @@ static var last_skywalk_diagnostic: Dictionary = {}
 
 static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
-		preplanned_skywalks: Array[Dictionary] = []) \
+		preplanned_skywalks: Array[Dictionary] = [],
+		preplanned_market: Dictionary = {}) \
 		-> Array[WarrenFeatureReservation]:
 	last_failure = ""
 	last_audit = {}
@@ -36,6 +37,11 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	if court == null:
 		return [] as Array[WarrenFeatureReservation]
 	out.append(court)
+	var market := _reserve_preplanned_market(grid, buildings, supports,
+		preplanned_market)
+	if market == null:
+		return [] as Array[WarrenFeatureReservation]
+	out.append(market)
 	var skywalks := _reserve_preplanned_skywalks(grid, buildings, supports,
 		preplanned_skywalks) if not preplanned_skywalks.is_empty() \
 		else _reserve_skywalks(grid, buildings, supports, source.world_seed)
@@ -55,6 +61,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	out.append_array(outcroppings)
 	last_audit = {
 		"elevated_courtyard_count": 1,
+		"covered_market_count": 1,
 		"enclosed_skywalk_count": skywalks.size(),
 		"room_outcropping_count": outcroppings.size(),
 		"feature_count": out.size(),
@@ -157,6 +164,127 @@ static func _reserve_courtyard(grid: WarrenSpatialGrid,
 				"courtyard_floor_band": minimum_y,
 			}) or not feature.seal(grid, supports):
 		last_failure = "elevated court feature seal failed: %s" % \
+			feature.last_rejection
+		return null
+	return feature
+
+
+static func _reserve_preplanned_market(grid: WarrenSpatialGrid,
+		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
+		reservation: Dictionary) -> WarrenFeatureReservation:
+	## Commit the exact topology-first canopy/posts around an existing four-cell
+	## public aisle. The public cells retain their canonical route owner; the
+	## market incorporates them through a named construction seam instead of
+	## painting a disconnected prefab beside the street after packing.
+	if reservation.is_empty():
+		last_failure = "covered market has no pre-partition reservation"
+		return null
+	var feature_id := StringName(reservation.get("feature_id", &""))
+	var backing_parcel_id := StringName(reservation.get(
+		"backing_parcel_id", &""))
+	var backing_cell := reservation.get("backing_cell",
+		Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+	var backing_building: WarrenBuildingVolume
+	var backing_room: WarrenRoomStamp
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.source_parcel_id != backing_parcel_id \
+					or not room.has_private_cell(backing_cell):
+				continue
+			if backing_room != null:
+				last_failure = "covered market backing socket has multiple room owners"
+				return null
+			backing_building = building
+			backing_room = room
+	if feature_id.is_empty() or backing_building == null or backing_room == null \
+			or not backing_building.feature_ids.has(feature_id):
+		last_failure = "covered market lost its exact backing room"
+		return null
+	var body: Array[Vector3i] = []
+	body.assign((reservation.get("reserved_cells", {}) as Dictionary).keys())
+	body.sort_custom(_cell_less)
+	var public_cells: Array[Vector3i] = []
+	public_cells.assign((reservation.get("public_cells", {}) as Dictionary).keys())
+	public_cells.sort_custom(_cell_less)
+	var covered_aisle_cells := reservation.get("covered_aisle_cells", {}) \
+		as Dictionary
+	var bearing_cells: Array[Vector3i] = []
+	bearing_cells.assign((reservation.get("bearing_cells", {}) \
+		as Dictionary).keys())
+	if body.is_empty() or public_cells.size() < 4 \
+			or covered_aisle_cells.size() != 4 or bearing_cells.is_empty():
+		last_failure = "covered market reservation is incomplete"
+		return null
+	var body_set: Dictionary = {}
+	for cell: Vector3i in body:
+		body_set[cell] = true
+	var tx := grid.begin_transaction(feature_id)
+	if not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
+			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+			or not tx.reserve(body, WarrenSpatialGrid.Reservation.FEATURE \
+				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not tx.reserve(public_cells,
+				WarrenSpatialGrid.Reservation.CONSTRUCTION_SEAM, feature_id) \
+			or not tx.reserve(bearing_cells,
+				WarrenSpatialGrid.Reservation.TERRAIN_BEARING, feature_id) \
+			or not tx.assign_use(body,
+				WarrenSpatialGrid.Use.STRUCTURAL_VOLUME, feature_id):
+		last_failure = "could not stage topology-first covered market"
+		return null
+	for cell: Vector3i in body:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if body_set.has(neighbor):
+				continue
+			var kind := WarrenSpatialGrid.FaceKind.FACADE
+			if direction == Vector3i.UP:
+				kind = WarrenSpatialGrid.FaceKind.ROOF
+			elif direction == Vector3i.DOWN:
+				kind = WarrenSpatialGrid.FaceKind.SOFFIT \
+					if grid.use_at(neighbor) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+					else WarrenSpatialGrid.FaceKind.PRIVATE_FLOOR
+			if not tx.claim_face(cell, direction, kind, feature_id):
+				last_failure = "could not stage covered-market interface at %s" % cell
+				return null
+	if not tx.commit():
+		last_failure = "covered market %s rejected: %s" % [feature_id,
+			tx.last_rejection]
+		return null
+	var components := reservation.get("components", []) as Array
+	if components.size() != 1:
+		last_failure = "covered market is not one atomic reviewed construction"
+		return null
+	var component := components[0] as Dictionary
+	var feature := WarrenFeatureReservation.new(feature_id, &"covered_market")
+	if not feature.add_reserved_cells(body) \
+			or not feature.add_public_cells(public_cells) \
+			or not feature.add_endpoint(backing_cell,
+				backing_building.stable_id) \
+			or not feature.add_construction_record(
+				StringName(component.recipe_id), component.origin as Vector3i,
+				int(component.yaw_quarters), &"covered_bazaar") \
+			or not feature.set_support_node(backing_building.stable_id) \
+			or not feature.set_audit_facts({
+				"market_aisle_cell_count": public_cells.size(),
+				"market_covered_aisle_cell_count": covered_aisle_cells.size(),
+				"market_aisle_extension_cell_count": int(reservation.get(
+					"aisle_extension_cell_count", 0)),
+				"market_new_public_cell_count": int(reservation.get(
+					"new_public_cell_count", 0)),
+				"market_street_entrance_edge_count": int(reservation.get(
+					"street_entrance_edge_count", 0)),
+				"market_street_entrance_width": int(reservation.get(
+					"street_entrance_width", 0)),
+				"market_stocked_bay_count": 1,
+				"market_continuous_canopy": true,
+				"market_backing_room_id": backing_room.stable_id,
+				"market_backing_building_id": backing_building.stable_id,
+				"market_backing_parcel_id": backing_parcel_id,
+				"market_recipe_id": StringName(component.recipe_id),
+				"market_terrain_bearing_cell_count": bearing_cells.size(),
+			}) or not feature.seal(grid, supports):
+		last_failure = "covered market feature seal failed: %s" % \
 			feature.last_rejection
 		return null
 	return feature

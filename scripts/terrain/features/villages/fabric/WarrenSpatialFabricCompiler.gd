@@ -223,23 +223,33 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var out: Array[FabricUnit] = []
 	var realized_cells: Dictionary = {}
 	var skywalk_count := 0
+	var market_count := 0
 	for feature: WarrenFeatureReservation in ordered_features:
-		if feature.kind != &"enclosed_skywalk":
-			last_failure = "constructed spatial feature %s has no compiler" % \
-				feature.kind
-			return [] as Array[FabricUnit]
-		var feature_units := _compile_skywalk_feature(feature, program,
-			room_unit_by_stamp, source_parcel_by_room,
-			seam_ids_by_source_parcel)
+		var feature_units: Array[FabricUnit] = []
+		match feature.kind:
+			&"enclosed_skywalk":
+				feature_units = _compile_skywalk_feature(feature, program,
+					room_unit_by_stamp, source_parcel_by_room,
+					seam_ids_by_source_parcel)
+				skywalk_count += int(not feature_units.is_empty())
+			&"covered_market":
+				feature_units = _compile_market_feature(feature, program,
+					room_unit_by_stamp, source_parcel_by_room,
+					seam_ids_by_source_parcel)
+				market_count += int(not feature_units.is_empty())
+			_:
+				last_failure = "constructed spatial feature %s has no compiler" % \
+					feature.kind
+				return [] as Array[FabricUnit]
 		if feature_units.is_empty():
 			return [] as Array[FabricUnit]
 		if not _feature_units_match_reservation(feature, feature_units, program):
-			last_failure = "skywalk %s construction changes its reserved volume" % \
+			last_failure = "feature %s construction changes its reserved volume" % \
 				feature.stable_id
 			return [] as Array[FabricUnit]
 		for unit: FabricUnit in feature_units:
 			if not probe.add_unit(unit):
-				last_failure = "skywalk component %s rejected: %s" % [
+				last_failure = "feature component %s rejected: %s" % [
 					unit.stable_id, probe.last_rejection]
 				return [] as Array[FabricUnit]
 			out.append(unit)
@@ -248,15 +258,58 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 				last_failure = "constructed features overlap at %s" % cell
 				return [] as Array[FabricUnit]
 			realized_cells[cell] = feature.stable_id
-		skywalk_count += 1
 	last_audit = {
 		"source_constructed_feature_count": ordered_features.size(),
-		"realized_constructed_feature_count": skywalk_count,
+		"realized_constructed_feature_count": skywalk_count + market_count,
 		"skywalk_feature_count": skywalk_count,
+		"covered_market_feature_count": market_count,
 		"feature_construction_unit_count": out.size(),
 		"feature_reserved_cell_count": realized_cells.size(),
 	}
 	return out
+
+
+static func _compile_market_feature(feature: WarrenFeatureReservation,
+		program: SettlementFabricProgram,
+		room_unit_by_stamp: Dictionary, source_parcel_by_room: Dictionary,
+		seam_ids_by_source_parcel: Dictionary) -> Array[FabricUnit]:
+	var room_id := StringName(feature.audit.get("market_backing_room_id", &""))
+	if room_id.is_empty() or feature.endpoints.size() != 1 \
+			or feature.construction_records.size() != 1:
+		last_failure = "covered market %s lacks one exact backing room/recipe" % \
+			feature.stable_id
+		return [] as Array[FabricUnit]
+	var room_unit := room_unit_by_stamp.get(room_id) as FabricUnit
+	if room_unit == null:
+		last_failure = "covered market %s backing room %s was not compiled" % [
+			feature.stable_id, room_id]
+		return [] as Array[FabricUnit]
+	var component := _feature_component_shell(feature, 0,
+		feature.construction_records[0])
+	var recipe := program.recipe(component.recipe_id)
+	if recipe == null or not recipe.has_tag(&"covered_market") \
+			or recipe.bearing_parent_count != 0:
+		last_failure = "covered market %s lacks a terrain-bearing bazaar recipe" % \
+			feature.stable_id
+		return [] as Array[FabricUnit]
+	var endpoint_cell := (feature.endpoints[0] as Dictionary).cell as Vector3i
+	var matches := _matching_market_connections(component, room_unit, program,
+		endpoint_cell)
+	if matches.size() != 1:
+		last_failure = "covered market %s has %d exact backing socket matches" % [
+			feature.stable_id, matches.size()]
+		return [] as Array[FabricUnit]
+	var source_parcel_id := StringName(source_parcel_by_room.get(room_id, &""))
+	var seams: Array[StringName] = []
+	seams.assign(seam_ids_by_source_parcel.get(source_parcel_id, []) \
+		as Array[StringName])
+	var connection := matches[0] as Dictionary
+	var bonds: Array[Dictionary] = [FabricUnit.bond(
+		StringName(connection.own_market), room_unit.stable_id,
+		StringName(connection.target_market))]
+	return [FabricUnit.new(component.stable_id, component.recipe_id,
+		component.lattice_origin, component.yaw_quarters,
+		[] as Array[StringName], bonds, &"", seams)] as Array[FabricUnit]
 
 
 static func _compile_skywalk_feature(feature: WarrenFeatureReservation,
@@ -433,6 +486,29 @@ static func _matching_room_connections(own: FabricUnit, target: FabricUnit,
 			out.append({"own_room": own_room, "target_unit": target.stable_id,
 				"target_room": target_room, "own_bearing": own_bearing,
 				"target_bearing": target_bearing})
+	return out
+
+
+static func _matching_market_connections(own: FabricUnit, target: FabricUnit,
+		program: SettlementFabricProgram,
+		expected_target_cell: Vector3i) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var own_recipe := program.recipe(own.recipe_id)
+	var target_recipe := program.recipe(target.recipe_id)
+	if own_recipe == null or target_recipe == null:
+		return out
+	for own_socket: Dictionary in own_recipe.sockets:
+		if int(own_socket.kind) != FabricRecipe.SocketKind.MARKET:
+			continue
+		for target_socket: Dictionary in target_recipe.sockets:
+			if int(target_socket.kind) != FabricRecipe.SocketKind.MARKET \
+					or _socket_world_cell(target, target_socket) \
+						!= expected_target_cell \
+					or not SettlementFabricPlan._sockets_meet(own, own_socket,
+						target, target_socket):
+				continue
+			out.append({"own_market": StringName(own_socket.id),
+				"target_market": StringName(target_socket.id)})
 	return out
 
 

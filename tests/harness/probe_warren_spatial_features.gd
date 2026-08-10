@@ -39,6 +39,8 @@ func _init() -> void:
 			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
 				"endpoint_survival_failures", {}))
 		print("SKY_DIAG: ", WarrenSpatialFeatureSolver.last_skywalk_diagnostic)
+		print("MARKET_DIAG: ",
+			WarrenVolumetricSolver.last_preplan_market_diagnostic)
 		quit(1)
 		return
 	_print_courtyard(plan)
