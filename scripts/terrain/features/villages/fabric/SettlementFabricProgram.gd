@@ -11,6 +11,7 @@ const ROCK_DOOR := &"sfv.fabric.wall.rock.door.005"
 const ROCK_WINDOW := &"sfv.fabric.wall.rock.window.010"
 const WOOD_PLAIN := &"sfv.fabric.wall.wood.plain.001"
 const WOOD_DOOR := &"sfv.fabric.wall.wood.door.001"
+const WOOD_DOOR_OPEN := &"sfv.fabric.wall.wood.door.open.001"
 const FLOOR := &"sfv.fabric.floor.l.001"
 const GALLERY_FLOOR := &"sfv.fabric.gallery.floor.m.001"
 const SETBACK_CAP := &"sfv.deck.floor.s.001"
@@ -137,6 +138,12 @@ const ROOF_CHIMNEYS: Array[StringName] = [
 ## frozen 0-2 phases keep meaning exactly what they meant before. Offset 0 keeps
 ## the addressed face on its family's signature module.
 const FACE_PHASE_OFFSETS: Array[int] = [0, 3, 5, 4]
+const FEATURE_PORTAL_NORTH := 1
+const FEATURE_PORTAL_EAST := 2
+const FEATURE_PORTAL_SOUTH := 4
+const FEATURE_PORTAL_WEST := 8
+const FEATURE_PORTAL_MASK_ALL := FEATURE_PORTAL_NORTH \
+	| FEATURE_PORTAL_EAST | FEATURE_PORTAL_SOUTH | FEATURE_PORTAL_WEST
 const STAIR_FULL := &"sfv.fabric.stair.preset.004"
 const STAIR_HALF := &"sfv.stair.s.001"
 const RAILING := &"sfv.deck.railing.s.001"
@@ -197,6 +204,16 @@ const PREFAB_ANCHORS: Array[StringName] = [
 var referenced_asset_ids: Array[StringName] = []
 var module_program: FabricModuleProgram
 var _recipes: Dictionary = {}
+
+
+static func feature_portal_recipe_id(base_recipe_id: StringName,
+		portal_mask: int) -> StringName:
+	## Private balcony and occupied-skywalk openings are finite recipe variants,
+	## never facade overlays. The mask is local to the room so rotations preserve
+	## one exact wall aperture and measured module placement per cardinal face.
+	assert(not base_recipe_id.is_empty())
+	assert(portal_mask > 0 and (portal_mask & ~FEATURE_PORTAL_MASK_ALL) == 0)
+	return StringName("%s.portal.%x" % [base_recipe_id, portal_mask])
 
 
 static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
@@ -481,14 +498,15 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_skywalk_recipe(&"skywalk.cantilever.9.blue", 3, &"blue", modules, 1),
 		_skywalk_corner_recipe(modules),
 		_balcony_recipe(&"balcony.bracketed.left.blue", &"blue", -1,
-			WOOD_DOORS[0], modules),
+			modules),
 		_balcony_recipe(&"balcony.bracketed.right.orange", &"orange", 0,
-			WOOD_DOORS[1], modules),
+			modules),
 		_balcony_recipe(&"balcony.bracketed.left.amber", &"amber", -1,
-			WOOD_DOORS[2], modules),
+			modules),
 		_balcony_recipe(&"balcony.bracketed.right.blue", &"blue", 0,
-			WOOD_DOORS[3], modules),
+			modules),
 	]
+	_append_feature_portal_vocabulary(candidates, modules)
 	_append_roof_seam_vocabulary(candidates, modules)
 	_append_bisected_valley_vocabulary(candidates, modules)
 	for index in MARKET_STALLS.size():
@@ -535,6 +553,7 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 	var modules := FabricModuleProgram.new(catalog)
 	var facade_assets: Array[StringName] = [
 		ROCK_PLAIN, ROCK_DOOR, ROCK_WINDOW, WOOD_PLAIN, WOOD_DOOR,
+		WOOD_DOOR_OPEN,
 		STAIR_FULL, STAIR_HALF,
 		WALL_WOOD_S_A, WALL_WOOD_S_B, WALL_WOOD_CORNER_S,
 		COMPACT_CHIMNEY, ROOM_ROOF_01, ROOM_ROOF_04,
@@ -1630,6 +1649,173 @@ static func _roof_seam_recipe(recipe_id: StringName, width_m: float,
 	return recipe_value
 
 
+static func _append_feature_portal_vocabulary(
+		candidates: Array[FabricRecipe], modules: FabricModuleProgram) -> void:
+	## Enumerate all non-empty cardinal masks for the room recipes the spatial
+	## compiler can actually select. A room may carry a balcony on one face and
+	## one or two skywalk ends on others, so choosing only a single opening would
+	## make valid sealed topology visually lie whenever features coincide.
+	var base_count := candidates.size()
+	for candidate_index in base_count:
+		var base := candidates[candidate_index]
+		if not _is_feature_portal_base(base):
+			continue
+		for portal_mask in range(1, FEATURE_PORTAL_MASK_ALL + 1):
+			candidates.append(_feature_portal_variant(base, portal_mask, modules))
+
+
+static func _is_feature_portal_base(recipe_value: FabricRecipe) -> bool:
+	if recipe_value == null or recipe_value.has_tag(&"terrain_bearing") \
+			or not recipe_value.has_tag(&"generated_building"):
+		return false
+	var id := String(recipe_value.recipe_id)
+	if id.contains(".stone"):
+		# The spatial compiler deliberately colour-selects the three timber
+		# families above terrain. Avoid compiling unreachable stone variants.
+		return false
+	return id.begins_with("room.upper.") \
+		or id.begins_with("room.long.upper.") \
+		or id.begins_with("room.slim.upper.") \
+		or id.begins_with("room.tower.upper.")
+
+
+static func _feature_portal_variant(base: FabricRecipe, portal_mask: int,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	var tags: Array[StringName] = []
+	tags.assign(base.role_tags)
+	tags.append(&"feature_portal")
+	var variant := FabricRecipe.new(feature_portal_recipe_id(base.recipe_id,
+		portal_mask), tags, base.bearing_parent_count)
+	var portal_by_placement: Dictionary = {}
+	for bit in [FEATURE_PORTAL_NORTH, FEATURE_PORTAL_EAST,
+			FEATURE_PORTAL_SOUTH, FEATURE_PORTAL_WEST]:
+		if (portal_mask & bit) == 0:
+			continue
+		var spec := _feature_portal_spec(base.recipe_id, bit)
+		assert(not spec.is_empty())
+		portal_by_placement[StringName(spec.placement)] = spec
+	for placement: Dictionary in base.placements:
+		var placement_id := StringName(placement.id)
+		# Front facade ivy/laundry/sign would otherwise hang across a newly
+		# opened south portal. Its absence is itself part of the finite variant.
+		if (portal_mask & FEATURE_PORTAL_SOUTH) != 0 \
+				and String(placement_id).begins_with("facade."):
+			continue
+		if portal_by_placement.has(placement_id):
+			var spec := portal_by_placement[placement_id] as Dictionary
+			variant.add_placement(placement_id, WOOD_DOOR_OPEN,
+				modules.facade_aligned_transform(WOOD_DOOR_OPEN,
+					spec.pose as Transform3D, spec.outward as Vector3i,
+					float(spec.boundary)))
+		else:
+			variant.add_placement(placement_id,
+				StringName(placement.asset_id),
+				placement.transform as Transform3D)
+	for run: Dictionary in base.construction_runs:
+		var placement_ids: Array[StringName] = []
+		placement_ids.assign(run.placement_ids as Array)
+		variant.add_construction_run(StringName(run.id), StringName(run.kind),
+			placement_ids, float(run.start_seam), float(run.end_seam),
+			float(run.repeat_pitch), StringName(run.seam_profile),
+			StringName(run.material_family))
+	variant.solid_cells.assign(base.solid_cells)
+	variant.walk_cells.assign(base.walk_cells)
+	variant.headroom_cells.assign(base.headroom_cells)
+	variant.public_air_cells.assign(base.public_air_cells)
+	variant.daylight_void_cells.assign(base.daylight_void_cells)
+	variant.inhabited_cells.assign(base.inhabited_cells)
+	variant.occluder_cells.assign(base.occluder_cells)
+	variant.terrain_bearing_cells.assign(base.terrain_bearing_cells)
+	for spec_value: Variant in portal_by_placement.values():
+		var aperture_base := (spec_value as Dictionary).cell as Vector3i
+		for y in 2:
+			var aperture := aperture_base + Vector3i.UP * y
+			variant.solid_cells.erase(aperture)
+			variant.occluder_cells.erase(aperture)
+			_append_unique_cell(variant.headroom_cells, aperture)
+			_append_unique_cell(variant.inhabited_cells, aperture)
+	for socket: Dictionary in base.sockets:
+		variant.add_socket(StringName(socket.id), int(socket.kind),
+			socket.cell as Vector3i, socket.facing as Vector3i)
+	for entrance: Dictionary in base.entrances:
+		variant.add_entrance(StringName(entrance.id),
+			entrance.cell as Vector3i, entrance.facing as Vector3i)
+	return variant
+
+
+static func _feature_portal_spec(base_recipe_id: StringName,
+		portal_bit: int) -> Dictionary:
+	var id := String(base_recipe_id)
+	var family := &"square"
+	var minimum := Vector3i(-2, 0, -2)
+	var size := Vector3i(4, 1, 4)
+	if id.begins_with("room.long.upper."):
+		family = &"long"
+		minimum = Vector3i(-2, 0, -3)
+		size = Vector3i(4, 1, 6)
+	elif id.begins_with("room.slim.upper."):
+		family = &"slim"
+		minimum = Vector3i(-1, 0, -2)
+		size = Vector3i(2, 1, 4)
+	elif id.begins_with("room.tower.upper."):
+		family = &"tower"
+		minimum = Vector3i(-1, 0, -1)
+		size = Vector3i(2, 1, 2)
+	elif not id.begins_with("room.upper."):
+		return {}
+	var centre := FabricModuleProgram.footprint_centre(minimum, size)
+	var half_x := float(size.x) * CELL * 0.5
+	var half_z := float(size.z) * CELL * 0.5
+	var along_ns := 1.5 if family in [&"square", &"long"] else 0.0
+	var along_ew := 1.5 if family in [&"square", &"slim"] else 0.0
+	match portal_bit:
+		FEATURE_PORTAL_NORTH:
+			return {
+				"placement": &"back.1" if family in [&"square", &"long"] \
+					else &"north",
+				"cell": Vector3i(0, 0, minimum.z),
+				"pose": _pose(centre + Vector3(along_ns, 0.0, -half_z), PI),
+				"outward": Vector3i.FORWARD,
+				"boundary": centre.z - half_z,
+			}
+		FEATURE_PORTAL_EAST:
+			return {
+				"placement": &"right.1" if family == &"square" \
+					else &"east.1" if family in [&"long", &"slim"] else &"east",
+				"cell": Vector3i(minimum.x + size.x - 1, 0, 0),
+				"pose": _pose(centre + Vector3(half_x, 0.0, along_ew),
+					-PI * 0.5),
+				"outward": Vector3i.RIGHT,
+				"boundary": centre.x + half_x,
+			}
+		FEATURE_PORTAL_SOUTH:
+			return {
+				"placement": &"front.1" if family in [&"square", &"long"] \
+					else &"south",
+				"cell": Vector3i(0, 0, minimum.z + size.z - 1),
+				"pose": _pose(centre + Vector3(along_ns, 0.0, half_z), 0.0),
+				"outward": Vector3i.BACK,
+				"boundary": centre.z + half_z,
+			}
+		FEATURE_PORTAL_WEST:
+			return {
+				"placement": &"left.1" if family == &"square" \
+					else &"west.1" if family in [&"long", &"slim"] else &"west",
+				"cell": Vector3i(minimum.x, 0, 0),
+				"pose": _pose(centre + Vector3(-half_x, 0.0, along_ew),
+					PI * 0.5),
+				"outward": Vector3i.LEFT,
+				"boundary": centre.x - half_x,
+			}
+		_:
+			return {}
+
+
+static func _append_unique_cell(cells: Array[Vector3i], cell: Vector3i) -> void:
+	if not cells.has(cell):
+		cells.append(cell)
+
+
 static func _append_roof_seam_vocabulary(candidates: Array[FabricRecipe],
 		modules: FabricModuleProgram) -> void:
 	## Enumerate the finite native-pitch interval vocabulary. A partial contact
@@ -2163,18 +2349,20 @@ static func _skywalk_recipe(recipe_id: StringName, segments: int,
 
 
 static func _balcony_recipe(recipe_id: StringName, theme: StringName,
-		back_socket_x: int, door_asset: StringName,
-		modules: FabricModuleProgram) -> FabricRecipe:
+		back_socket_x: int, modules: FabricModuleProgram) -> FabricRecipe:
 	## One complete 3 x 1.5 m occupied balcony. The logical cells are exterior
-	## private walk/headroom, while the reviewed deck tiles, four rail runs,
-	## doorway wall, and brackets are one atomic measured construction. Left and
-	## right attachment variants shift the room socket without changing the
+	## private walk/headroom, while the reviewed deck tiles, four rail runs, and
+	## brackets are one atomic measured construction. The parent room's finite
+	## feature-portal variant owns the open doorway; placing another wall module
+	## here would merely paste an arch over the room's still-closed facade. Left
+	## and right attachment variants shift the room socket without changing the
 	## usable floor, allowing a facade to stagger balconies instead of extruding
 	## the same coordinate through every storey.
 	assert(back_socket_x in [-1, 0])
 	var recipe_value := FabricRecipe.new(recipe_id, [
 		&"balcony", &"private_walk", &"exterior_occupied_floor",
-		&"bracket_supported", &"facade_door", &"overhead_occupied", theme,
+		&"bracket_supported", &"requires_room_portal",
+		&"overhead_occupied", theme,
 	], 1)
 	var deck_cells: Array[Vector3i] = [
 		Vector3i(-1, 0, 0), Vector3i(0, 0, 0),
@@ -2191,16 +2379,11 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 			RAILING, _pose(Vector3(float(cell.x) * CELL, 0.0, CELL * 0.5),
 				0.0))
 	# The two end rails close the 1.5 m depth; the parent facade is the only
-	# unguarded edge and contains the exact reviewed door module.
+	# unguarded edge and contains the exact portal selected with this feature.
 	recipe_value.add_placement(&"guard.left", RAILING,
 		_pose(Vector3(-CELL * 1.5, 0.0, 0.0), -PI * 0.5))
 	recipe_value.add_placement(&"guard.right", RAILING,
 		_pose(Vector3(CELL * 0.5, 0.0, 0.0), -PI * 0.5))
-	var centre_x := -CELL * 0.5
-	recipe_value.add_placement(&"door", door_asset,
-		modules.facade_aligned_transform(door_asset,
-			_pose(Vector3(centre_x, 0.0, -CELL * 0.5), 0.0),
-			Vector3i.BACK, -CELL * 0.5))
 	for index in 2:
 		var brace_x := float(index - 1) * CELL
 		recipe_value.add_placement(StringName("brace.%d" % index), BRACE,

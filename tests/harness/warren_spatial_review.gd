@@ -42,6 +42,21 @@ func _ready() -> void:
 			int(_spatial.audit.get("prefab_landmark_count", 0)),
 			int(_spatial.audit.get("usable_balcony_count", 0)),
 			int(committed.instance_count)])
+	print(("[warren_spatial_review] composition pairs=%d strong_registration=%d " \
+		+ "facade_planes=%d same_kind=%d same_axis=%d roofs=%d pitched=%d " \
+		+ "flat=%d caps=%d terraces=%d") % [
+			int(_spatial.audit.get("consecutive_floorplate_pair_count", 0)),
+			int(_spatial.audit.get(
+				"strongly_registered_floorplate_pair_count", 0)),
+			int(_spatial.audit.get("registered_facade_plane_count", 0)),
+			int(_spatial.audit.get("same_kind_floorplate_pair_count", 0)),
+			int(_spatial.audit.get("same_ridge_axis_floorplate_pair_count", 0)),
+			int(_fabric.audit.get("roof_unit_count", 0)),
+			int(_fabric.audit.get("pitched_roof_count", 0)),
+			int(_fabric.audit.get("flat_roof_count", 0)),
+			int(_fabric.audit.get("setback_cap_unit_count", 0)),
+			int(_fabric.audit.get("setback_terrace_unit_count", 0)),
+		])
 	_camera.current = true
 	_camera.near = 0.08
 	_camera.far = 400.0
@@ -193,12 +208,21 @@ func _market_views() -> Array[Dictionary]:
 		var outward3 := FabricRecipe.transform_direction(Vector3i.BACK,
 			int(record.yaw_quarters))
 		var eye := centre + Vector3(outward3) * 7.0 + Vector3.UP * 1.45
-		var overview_eye := _best_orbit_position(centre + Vector3.UP * 1.0,
-			12.0, 11.0, [StringName("spatial.fabric.%s" % feature.stable_id)])
+		var visual_bounds := _feature_visual_bounds(feature)
+		# A high orbit photographs the neighboring roofs because the bazaar is
+		# intentionally embedded in a sheltered arcade. Pull straight back along
+		# its canonical aisle far enough to see the canopy as an exterior silhouette
+		# rather than putting the lens under its low eave. The measured bounds still
+		# prevent a future larger canopy from swallowing the camera position.
+		var approach_eye := centre + Vector3(outward3) * 12.0 \
+			+ Vector3.UP * 3.0
+		if visual_bounds.grow(0.25).has_point(approach_eye):
+			approach_eye = centre + Vector3(outward3) * 15.0 \
+				+ Vector3.UP * 3.0
 		return [{"id": "market-aisle", "position": eye,
 			"target": centre + Vector3.UP * 1.35, "fov": 66.0},
-			{"id": "market-overhead", "position": overview_eye,
-				"target": centre + Vector3.UP, "fov": 58.0}] \
+			{"id": "market-approach", "position": approach_eye,
+				"target": centre + Vector3.UP * 1.25, "fov": 64.0}] \
 			as Array[Dictionary]
 	return [] as Array[Dictionary]
 
@@ -230,9 +254,13 @@ func _courtyard_views() -> Array[Dictionary]:
 	var out: Array[Dictionary] = [
 		{"id": "courtyard-eye", "position": court_eye,
 			"target": court_target, "fov": 74.0},
-		{"id": "courtyard-overhead", "position": centre \
-			+ Vector3(0.4, 18.0, 0.4), "target": centre,
-			"fov": 46.0},
+		# The court deliberately has route/building mass above it. An exterior
+		# top-down camera therefore photographs roofs, not the typed court. Keep
+		# this eye inside the court's protected four-cell (6 m) exterior-air shaft
+		# and look diagonally down across the full 6 x 6 m floor instead.
+		{"id": "courtyard-protected-air", "position": centre \
+			+ Vector3(-2.4, 2.6, -2.4), "target": centre \
+			+ Vector3(1.2, 1.4, 1.2), "fov": 78.0},
 	]
 	var floor_columns: Dictionary = {}
 	var court_y := floors[0].y
@@ -277,16 +305,54 @@ func _skywalk_views() -> Array[Dictionary]:
 			% feature.stable_id)]
 		var orbit_distance := maxf(15.0, maxf(visual_bounds.size.x,
 			visual_bounds.size.z) + 10.0)
-		var span_eye := _best_orbit_position(centre, orbit_distance, 3.5,
+		var span_eye := _best_orbit_position(centre, orbit_distance, 1.2,
 			ignored, visual_bounds)
-		var under_eye := _best_orbit_position(centre - Vector3.UP * 1.0,
-			orbit_distance, -2.0, ignored, visual_bounds)
+		var under_view := _public_route_view_below(feature, centre)
+		var under_eye := under_view.position as Vector3 \
+			if not under_view.is_empty() else _best_orbit_position(
+				centre - Vector3.UP, orbit_distance, -2.0, ignored,
+				visual_bounds)
+		var under_target := under_view.target as Vector3 \
+			if not under_view.is_empty() else centre - Vector3.UP
 		out.append({"id": "skywalk-%02d-span" % ordinal,
 			"position": span_eye,
 			"target": centre, "fov": 52.0})
 		out.append({"id": "skywalk-%02d-under" % ordinal,
 			"position": under_eye,
-			"target": centre - Vector3.UP, "fov": 62.0})
+			"target": under_target, "fov": 66.0})
+		var bindings := feature.audit.get("skywalk_endpoint_bindings", []) \
+			as Array
+		var body_set: Dictionary = {}
+		for body_cell: Vector3i in feature.reserved_cells:
+			body_set[body_cell] = true
+		for endpoint_index in mini(bindings.size(), feature.endpoints.size()):
+			var binding := bindings[endpoint_index] as Dictionary
+			if StringName(binding.get("endpoint_kind", &"room")) != &"room":
+				continue
+			var facing := binding.get("facing", Vector3i.ZERO) as Vector3i
+			if facing.length_squared() <= 0:
+				continue
+			var endpoint_cell := (feature.endpoints[endpoint_index] \
+				as Dictionary).cell as Vector3i
+			var seam_target := Vector3(endpoint_cell) * FabricRecipe.CELL_SIZE \
+				+ Vector3.UP * 1.4
+			# The bridge-house is an occupied private room. Put the diagnostic eye
+			# inside its actual reserved walk volume and look back at the exact room
+			# endpoint. This proves the private portal directly; an exterior orbit can
+			# only show the bridge's closed side facade or a neighboring roof.
+			var eye_cell := endpoint_cell + facing
+			if not body_set.has(eye_cell):
+				continue
+			for step in range(2, 4):
+				var deeper := endpoint_cell + facing * step
+				if not body_set.has(deeper):
+					break
+				eye_cell = deeper
+			var seam_eye := Vector3(eye_cell) * FabricRecipe.CELL_SIZE \
+				+ Vector3.UP * 1.4
+			out.append({"id": "skywalk-%02d-seam-%d" % [ordinal,
+				endpoint_index], "position": seam_eye,
+				"target": seam_target, "fov": 70.0})
 		ordinal += 1
 	return out
 
@@ -364,17 +430,25 @@ func _balcony_views() -> Array[Dictionary]:
 		if feature.kind != &"balcony" or feature.construction_records.size() != 1:
 			continue
 		var record := feature.construction_records[0]
-		var origin := record.origin as Vector3i
 		var yaw := int(record.yaw_quarters)
 		var outward3 := FabricRecipe.transform_direction(Vector3i.BACK, yaw)
 		var outward := Vector3(outward3)
-		var target := Vector3(origin) * FabricRecipe.CELL_SIZE \
-			+ Vector3.UP * 1.25
+		var target := Vector3((feature.endpoints[0] as Dictionary).cell \
+			as Vector3i) * FabricRecipe.CELL_SIZE + Vector3.UP * 1.35
+		var bounds := _feature_visual_bounds(feature)
+		var feature_prefix := StringName("spatial.fabric.%s" % feature.stable_id)
+		var room_prefix := StringName("spatial.fabric.%s" % StringName(
+			feature.audit.get("balcony_room_id", &"")))
+		var ignored := [feature_prefix, room_prefix] as Array[StringName]
+		var front_eye := _best_directional_position(target, outward, 6.0, 0.8,
+			ignored, bounds)
+		var under_eye := _best_directional_position(target - Vector3.UP * 0.7,
+			outward, 5.0, -1.0, ignored, bounds)
 		out.append({"id": "balcony-%02d-front" % ordinal,
-			"position": target + outward * 5.0 + Vector3.UP * 0.5,
+			"position": front_eye,
 			"target": target, "fov": 56.0})
 		out.append({"id": "balcony-%02d-underside" % ordinal,
-			"position": target + outward * 3.5 + Vector3.UP * -1.2,
+			"position": under_eye,
 			"target": target + Vector3.UP * -0.4, "fov": 58.0})
 		ordinal += 1
 	return out
@@ -394,16 +468,24 @@ func _landmark_views() -> Array[Dictionary]:
 		var outward3 := landing - entrance
 		var outward := Vector3(outward3)
 		var side := Vector3(-outward3.z, 0.0, outward3.x)
+		var bounds := _feature_visual_bounds(feature)
 		var height_m := float(feature.audit.landmark_height_cell_count) \
 			* FabricRecipe.CELL_SIZE
-		var target := Vector3(origin) * FabricRecipe.CELL_SIZE \
-			+ Vector3.UP * height_m * 0.48
+		var target := bounds.get_center() if bounds.size.length_squared() > 0.0 \
+			else Vector3(origin) * FabricRecipe.CELL_SIZE \
+				+ Vector3.UP * height_m * 0.48
+		var distance := maxf(18.0, maxf(bounds.size.x, bounds.size.z) + 8.0)
+		var ignored := [StringName("spatial.fabric.%s" % feature.stable_id)] \
+			as Array[StringName]
+		var front_eye := _best_directional_position(target, outward, distance,
+			2.5, ignored, bounds)
+		var side_eye := _best_directional_position(target,
+			(outward + side).normalized(), distance, 3.5, ignored, bounds)
 		out.append({"id": "landmark-%02d-front" % ordinal,
-			"position": target + outward * 18.0 + Vector3.UP * 2.5,
+			"position": front_eye,
 			"target": target, "fov": 56.0})
 		out.append({"id": "landmark-%02d-side" % ordinal,
-			"position": target + outward * 10.0 + side * 13.0 \
-				+ Vector3.UP * 4.0,
+			"position": side_eye,
 			"target": target + Vector3.UP * 1.0, "fov": 58.0})
 		for skywalk: WarrenFeatureReservation in _spatial.features:
 			if skywalk.kind != &"enclosed_skywalk":
@@ -474,7 +556,8 @@ func _write_manifest() -> void:
 	assert(file != null)
 	file.store_string(JSON.stringify({"world_seed": _world_seed,
 		"spatial_signature": _spatial.deterministic_signature().sha256_text(),
-		"audit": _spatial.audit, "captures": _captures}, "  "))
+		"audit": _spatial.audit, "fabric_audit": _fabric.audit,
+		"captures": _captures}, "  "))
 
 
 func _best_route_direction(cell: Vector3i) -> Vector3i:
@@ -494,6 +577,83 @@ func _best_route_direction(cell: Vector3i) -> Vector3i:
 			best = direction
 			best_length = length
 	return best
+
+
+func _public_route_view_below(feature: WarrenFeatureReservation,
+		feature_centre: Vector3) -> Dictionary:
+	## An occupied bridge-house is meaningful because a player traverses the
+	## negative-space street beneath it. Put the underside camera on that exact
+	## canonical route rather than on an arbitrary low orbit that can land inside
+	## neighboring mass.
+	if feature.reserved_cells.is_empty():
+		return {}
+	var columns: Dictionary = {}
+	var minimum_feature_y := feature.reserved_cells[0].y
+	for cell: Vector3i in feature.reserved_cells:
+		columns[Vector2i(cell.x, cell.z)] = true
+		minimum_feature_y = mini(minimum_feature_y, cell.y)
+	var best := Vector3i(2147483647, 2147483647, 2147483647)
+	var best_score := 1 << 30
+	for route: Vector3i in _spatial.route_floor_cells:
+		if not columns.has(Vector2i(route.x, route.z)) \
+				or route.y + 2 > minimum_feature_y:
+			continue
+		var world := Vector3(route) * FabricRecipe.CELL_SIZE
+		var score := roundi(Vector2(world.x - feature_centre.x,
+			world.z - feature_centre.z).length() * 10.0) \
+			+ (minimum_feature_y - route.y) * 3
+		if score < best_score:
+			best = route
+			best_score = score
+	if best.x == 2147483647:
+		return {}
+	var route_set: Dictionary = {}
+	for route: Vector3i in _spatial.route_floor_cells:
+		route_set[route] = true
+	var target_y := float(minimum_feature_y) * FabricRecipe.CELL_SIZE + 1.0
+	var target := Vector3(feature_centre.x, target_y, feature_centre.z)
+	# Walk the connected same-level public route away from the exact bridge
+	# column. Looking obliquely back from 6--9 m shows both the street canyon and
+	# its occupied ceiling; a camera directly below can only photograph a flat
+	# black soffit. The search is deliberately small and deterministic.
+	var queue: Array[Vector3i] = [best]
+	var distance_by_cell: Dictionary = {best: 0}
+	var candidates: Array[Vector3i] = []
+	while not queue.is_empty():
+		var current: Vector3i = queue.pop_front()
+		var route_distance := int(distance_by_cell[current])
+		if route_distance >= 2:
+			candidates.append(current)
+		if route_distance >= 10:
+			continue
+		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK,
+				Vector3i.LEFT, Vector3i.FORWARD]:
+			var neighbor: Vector3i = current + direction
+			if neighbor.y != best.y or distance_by_cell.has(neighbor) \
+					or not route_set.has(neighbor):
+				continue
+			distance_by_cell[neighbor] = route_distance + 1
+			queue.append(neighbor)
+	if candidates.is_empty():
+		candidates.append(best)
+	var feature_prefix := StringName("spatial.fabric.%s" % feature.stable_id)
+	var eye_cell := candidates[0]
+	var eye_position := _route_eye(eye_cell)
+	var best_view_score := 1 << 30
+	for candidate: Vector3i in candidates:
+		var candidate_eye := _route_eye(candidate)
+		var horizontal_distance := Vector2(candidate_eye.x - target.x,
+			candidate_eye.z - target.z).length()
+		var candidate_score := _view_occlusion_score(candidate_eye, target,
+			[feature_prefix] as Array[StringName]) * 100 \
+			+ roundi(absf(horizontal_distance - 13.5) * 10.0)
+		if columns.has(Vector2i(candidate.x, candidate.z)):
+			candidate_score += 500
+		if candidate_score < best_view_score:
+			best_view_score = candidate_score
+			eye_cell = candidate
+			eye_position = candidate_eye
+	return {"position": eye_position, "target": target}
 
 
 func _feature_visual_bounds(feature: WarrenFeatureReservation) -> AABB:

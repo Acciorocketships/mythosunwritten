@@ -762,6 +762,7 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 				"balcony_building_id": building.stable_id,
 				"balcony_source_parcel_id": room.source_parcel_id,
 				"balcony_recipe_id": StringName(candidate.recipe_id),
+				"balcony_endpoint_facing": candidate.endpoint_facing as Vector3i,
 				"balcony_usable_width_cells": 2,
 				"balcony_usable_depth_cells": 1,
 				"balcony_door_count": 1,
@@ -1246,6 +1247,7 @@ static func _commit_preplanned_skywalk(grid: WarrenSpatialGrid,
 			"owner_id": StringName(endpoint.building_id),
 			"room_id": StringName(endpoint.room_id),
 			"cell": endpoint.cell,
+			"facing": endpoint.facing,
 		})
 	if support_owner.is_empty() or not feature.set_support_node(support_owner) \
 			or not feature.set_audit_facts({

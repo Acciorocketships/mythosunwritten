@@ -13,6 +13,15 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_not_null(realm, WarrenSpatialPublicRealmAdapter.last_failure)
 	var units := WarrenSpatialFabricCompiler.compile_room_units(spatial, program)
 	assert_gt(units.size(), 0, WarrenSpatialFabricCompiler.last_failure)
+	var expected_portals := _expected_feature_portals(spatial)
+	assert_gt((expected_portals.rooms as Dictionary).size(), 0,
+		"the reviewed seed must exercise topology-driven room portals")
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.feature_portal_room_count),
+		(expected_portals.rooms as Dictionary).size())
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.feature_portal_opening_count),
+		(expected_portals.openings as Dictionary).size())
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
 		.selected_facade_phase_b_count), 0,
 		"some upper storeys should retain the alternate authored facade phase")
@@ -32,6 +41,17 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	for building: WarrenBuildingVolume in spatial.buildings:
 		expected += building.room_records.size()
 	assert_eq(units.size(), expected)
+	var portal_unit_count := 0
+	for unit: FabricUnit in units:
+		var room_id := StringName(String(unit.stable_id).trim_prefix(
+			"spatial.fabric."))
+		var room_recipe := program.recipe(unit.recipe_id)
+		var expected_portal := (expected_portals.rooms as Dictionary).has(room_id)
+		assert_eq(room_recipe.has_tag(&"feature_portal"), expected_portal,
+			"only rooms named by sealed balcony/skywalk endpoints may open")
+		portal_unit_count += int(room_recipe.has_tag(&"feature_portal"))
+	assert_eq(portal_unit_count,
+		(expected_portals.rooms as Dictionary).size())
 	var fabric := SettlementFabricPlan.new(&"spatial.room-proof")
 	for recipe: FabricRecipe in program.recipes():
 		assert_true(fabric.register_recipe(recipe))
@@ -118,3 +138,35 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		assert_eq(sealed.audit.generation_source, &"spatial_volumetric_warren")
 		assert_gt(int(sealed.audit.selected_facade_phase_b_count), 0)
 		assert_eq(sealed.visual_envelope_conflicts().size(), 0)
+
+
+func _expected_feature_portals(spatial: WarrenSpatialPlan) -> Dictionary:
+	var rooms: Dictionary = {}
+	var openings: Dictionary = {}
+	for feature: WarrenFeatureReservation in spatial.features:
+		if feature.construction_records.is_empty():
+			continue
+		if feature.kind == &"balcony":
+			var room_id := StringName(feature.audit.get("balcony_room_id", &""))
+			var facing := feature.audit.get("balcony_endpoint_facing",
+				Vector3i.ZERO) as Vector3i
+			_add_expected_portal(rooms, openings, room_id, facing)
+		elif feature.kind == &"enclosed_skywalk":
+			for binding_value: Variant in feature.audit.get(
+					"skywalk_endpoint_bindings", []):
+				var binding := binding_value as Dictionary
+				if StringName(binding.get("endpoint_kind", &"room")) != &"room":
+					continue
+				_add_expected_portal(rooms, openings,
+					StringName(binding.get("room_id", &"")),
+					binding.get("facing", Vector3i.ZERO) as Vector3i)
+	return {"rooms": rooms, "openings": openings}
+
+
+func _add_expected_portal(rooms: Dictionary, openings: Dictionary,
+		room_id: StringName, facing: Vector3i) -> void:
+	assert_false(room_id.is_empty())
+	assert_eq(absi(facing.x) + absi(facing.z), 1)
+	assert_eq(facing.y, 0)
+	rooms[room_id] = true
+	openings["%s/%d:%d" % [room_id, facing.x, facing.z]] = true

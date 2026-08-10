@@ -1420,6 +1420,11 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 	var four_storey_tower_run_ids: Array[StringName] = []
 	var four_storey_tower_run_details: Array[Dictionary] = []
 	var max_identical_tower_run := 0
+	var consecutive_floorplate_pair_count := 0
+	var registered_facade_plane_count := 0
+	var strongly_registered_floorplate_pair_count := 0
+	var same_kind_floorplate_pair_count := 0
+	var same_ridge_axis_floorplate_pair_count := 0
 	var lineage_ids: Array[StringName] = []
 	lineage_ids.assign(lineages.keys())
 	lineage_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -1430,7 +1435,8 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 		var storeys := _lineage_storey_count(blocks)
 		output_storeys += storeys
 		var kinds: Dictionary = {}
-		for block: Dictionary in blocks:
+		for block_index in blocks.size():
+			var block := blocks[block_index] as Dictionary
 			kinds[StringName(block.kind)] = true
 			varied_blocks += int(StringName(block.kind) \
 				!= StringName(block.original_kind) \
@@ -1438,6 +1444,21 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 				or int(block.yaw_quarters) \
 					!= int(block.original_yaw_quarters))
 			merged_blocks += int(bool(block.merged))
+			if block_index <= 0:
+				continue
+			var previous := blocks[block_index - 1] as Dictionary
+			if int(previous.end_storey) != int(block.start_storey):
+				continue
+			var registered := _registered_facade_plane_count(
+				previous.columns as Dictionary, block.columns as Dictionary)
+			consecutive_floorplate_pair_count += 1
+			registered_facade_plane_count += registered
+			strongly_registered_floorplate_pair_count += int(registered >= 2)
+			same_kind_floorplate_pair_count += int(StringName(previous.kind) \
+				== StringName(block.kind))
+			same_ridge_axis_floorplate_pair_count += int(
+				posmod(int(previous.yaw_quarters), 2) \
+				== posmod(int(block.yaw_quarters), 2))
 		if storeys >= TALL_LINEAGE_STOREYS and kinds.size() > 1:
 			mixed_tall += 1
 		if storeys >= EXTRUDED_LINEAGE_STOREYS \
@@ -1490,6 +1511,13 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 		"max_identical_tower_floorplate_run_storeys": \
 			max_identical_tower_run,
 		"truncated_tower_storey_count": truncated_tower_storeys,
+		"consecutive_floorplate_pair_count": consecutive_floorplate_pair_count,
+		"registered_facade_plane_count": registered_facade_plane_count,
+		"strongly_registered_floorplate_pair_count": \
+			strongly_registered_floorplate_pair_count,
+		"same_kind_floorplate_pair_count": same_kind_floorplate_pair_count,
+		"same_ridge_axis_floorplate_pair_count": \
+			same_ridge_axis_floorplate_pair_count,
 	}
 
 
@@ -1537,6 +1565,31 @@ static func _longest_identical_floorplate_run(blocks: Array[Dictionary]) -> int:
 		longest = maxi(longest, run)
 		previous_columns = columns
 	return longest
+
+
+static func _registered_facade_plane_count(left: Dictionary,
+		right: Dictionary) -> int:
+	## Count exact world-space facade planes retained across a vertical room
+	## transition. Two rectangles can have different areas and therefore evade
+	## the old identical-floorplate audit while still sharing both street-facing
+	## planes, which reads as one extruded tower from that axis. Bounding planes
+	## are the relevant silhouette fact; internal party-wall cells are not.
+	if left.is_empty() or right.is_empty():
+		return 0
+	var left_min := Vector2i(2147483647, 2147483647)
+	var left_max := Vector2i(-2147483648, -2147483648)
+	for value: Variant in left.keys():
+		var column := value as Vector2i
+		left_min = left_min.min(column)
+		left_max = left_max.max(column)
+	var right_min := Vector2i(2147483647, 2147483647)
+	var right_max := Vector2i(-2147483648, -2147483648)
+	for value: Variant in right.keys():
+		var column := value as Vector2i
+		right_min = right_min.min(column)
+		right_max = right_max.max(column)
+	return int(left_min.x == right_min.x) + int(left_max.x == right_max.x) \
+		+ int(left_min.y == right_min.y) + int(left_max.y == right_max.y)
 
 
 static func _is_subset(left: Dictionary, right: Dictionary) -> bool:

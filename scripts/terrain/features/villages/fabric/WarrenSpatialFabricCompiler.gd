@@ -106,10 +106,12 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		return [] as Array[FabricUnit]
 	var rooms: Array[WarrenRoomStamp] = []
 	var building_by_room: Dictionary = {}
+	var room_by_id: Dictionary = {}
 	for building: WarrenBuildingVolume in source.buildings:
 		for room: WarrenRoomStamp in building.room_records:
 			rooms.append(room)
 			building_by_room[room.stable_id] = building.stable_id
+			room_by_id[room.stable_id] = room
 	rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
 		if a.lattice_origin.y != b.lattice_origin.y:
 			return a.lattice_origin.y < b.lattice_origin.y
@@ -127,6 +129,12 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		room_by_source_level[key] = room
 		for cell: Vector3i in room.private_cells:
 			room_by_private_cell[cell] = room
+	var feature_portal_masks := _feature_portal_masks(source, room_by_id)
+	if not last_failure.is_empty():
+		return [] as Array[FabricUnit]
+	var feature_portal_opening_count := 0
+	for mask_value: Variant in feature_portal_masks.values():
+		feature_portal_opening_count += _feature_portal_bit_count(int(mask_value))
 	var units: Array[FabricUnit] = []
 	var unit_by_room: Dictionary = {}
 	var prior_unit_by_cell: Dictionary = {}
@@ -142,7 +150,9 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				% recipe_value.recipe_id
 			return [] as Array[FabricUnit]
 	for room: WarrenRoomStamp in rooms:
-		var recipe_id := _room_recipe_id(room, source.world_seed)
+		var feature_portal_mask := int(feature_portal_masks.get(room.stable_id, 0))
+		var recipe_id := _room_recipe_id(room, source.world_seed, true,
+			feature_portal_mask)
 		var desired_phase_b := _is_phase_b_recipe(recipe_id)
 		desired_phase_b_count += int(desired_phase_b)
 		var recipe := program.recipe(recipe_id)
@@ -195,7 +205,8 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		if not desired_added:
 			if desired_rejection.is_empty():
 				desired_rejection = room_probe.last_rejection
-			var fallback_id := _room_recipe_id(room, source.world_seed, false)
+			var fallback_id := _room_recipe_id(room, source.world_seed, false,
+				feature_portal_mask)
 			if fallback_id == recipe_id:
 				last_failure = "room %s failed measured phase selection: %s" % [
 					room.stable_id, desired_rejection]
@@ -234,12 +245,177 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		"hero_feature_facade_fallback_count": \
 			hero_feature_facade_fallback_count,
 		"physical_support_redirect_count": physical_support_redirect_count,
+		"feature_portal_room_count": feature_portal_masks.size(),
+		"feature_portal_opening_count": feature_portal_opening_count,
 	}
 	return units
 
 
+static func _feature_portal_masks(source: WarrenSpatialPlan,
+		room_by_id: Dictionary) -> Dictionary:
+	## Reduce sealed feature endpoints into local room-face masks before any room
+	## recipe is selected. The feature geometry is already authoritative here;
+	## the compiler is only choosing the finite shell variant that tells the same
+	## story visually and in its solid/headroom layers.
+	var out: Dictionary = {}
+	for feature: WarrenFeatureReservation in source.features:
+		if feature.construction_records.is_empty():
+			continue
+		if feature.kind == &"balcony":
+			var room_id := StringName(feature.audit.get("balcony_room_id", &""))
+			if room_id.is_empty() or feature.endpoints.size() != 1:
+				last_failure = "balcony %s lacks one portal endpoint" % \
+					feature.stable_id
+				return {}
+			var facing := feature.audit.get("balcony_endpoint_facing",
+				Vector3i.ZERO) as Vector3i
+			if not _record_feature_portal(out, room_by_id, room_id,
+					(feature.endpoints[0] as Dictionary).cell as Vector3i,
+					_feature_endpoint_facing(feature, 0, facing)):
+				return {}
+		elif feature.kind == &"enclosed_skywalk":
+			var bindings: Array[Dictionary] = []
+			bindings.assign(feature.audit.get("skywalk_endpoint_bindings", []) \
+				as Array)
+			if bindings.is_empty():
+				bindings = [
+					{"endpoint_kind": &"room", "room_id": StringName(
+						feature.audit.get("skywalk_left_room_id", &""))},
+					{"endpoint_kind": &"room", "room_id": StringName(
+						feature.audit.get("skywalk_right_room_id", &""))},
+				] as Array[Dictionary]
+			if bindings.size() != feature.endpoints.size():
+				last_failure = "skywalk %s portal bindings differ from endpoints" % \
+					feature.stable_id
+				return {}
+			for endpoint_index in bindings.size():
+				var binding := bindings[endpoint_index]
+				var endpoint_kind := StringName(binding.get("endpoint_kind", &"room"))
+				if endpoint_kind == &"landmark":
+					continue
+				if endpoint_kind != &"room":
+					last_failure = "skywalk %s has unsupported endpoint kind %s" % [
+						feature.stable_id, endpoint_kind]
+					return {}
+				var room_id := StringName(binding.get("room_id", &""))
+				var facing := binding.get("facing", Vector3i.ZERO) as Vector3i
+				if not _record_feature_portal(out, room_by_id, room_id,
+						(feature.endpoints[endpoint_index] as Dictionary).cell \
+							as Vector3i,
+						_feature_endpoint_facing(feature, endpoint_index, facing)):
+					return {}
+	return out
+
+
+static func _feature_endpoint_facing(feature: WarrenFeatureReservation,
+		endpoint_index: int, recorded_facing: Vector3i) -> Vector3i:
+	if _is_cardinal_xz(recorded_facing):
+		return recorded_facing
+	# Compatibility with source plans sealed before endpoint facing became an
+	# explicit audit fact: the occupied feature begins exactly one cell outside
+	# its room endpoint, so the unique adjacent reserved cell recovers direction.
+	var endpoint := (feature.endpoints[endpoint_index] as Dictionary).cell \
+		as Vector3i
+	var recovered: Array[Vector3i] = []
+	for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+			Vector3i.FORWARD, Vector3i.BACK]:
+		if feature.reserved_cells.has(endpoint + direction):
+			recovered.append(direction)
+	return recovered[0] if recovered.size() == 1 else Vector3i.ZERO
+
+
+static func _record_feature_portal(out: Dictionary, room_by_id: Dictionary,
+		room_id: StringName, endpoint_cell: Vector3i,
+		world_facing: Vector3i) -> bool:
+	var room := room_by_id.get(room_id) as WarrenRoomStamp
+	if room == null:
+		last_failure = "feature portal names missing room %s" % room_id
+		return false
+	if room.terrain_bearing:
+		last_failure = "feature portal %s targets unsupported terrain storey" % \
+			room_id
+		return false
+	if not _is_cardinal_xz(world_facing):
+		last_failure = "feature portal %s has no cardinal outward direction" % \
+			room_id
+		return false
+	var local_facing := FabricRecipe.transform_direction(world_facing,
+		-room.yaw_quarters)
+	var portal_bit := _portal_bit_for_facing(local_facing)
+	var local_cell := _inverse_cell(endpoint_cell, room.lattice_origin,
+		room.yaw_quarters)
+	var expected_cell := _portal_cell_for_room(room.kind, portal_bit)
+	if portal_bit == 0 or local_cell != expected_cell:
+		last_failure = "feature portal %s endpoint %s is not its centre facade %s" \
+			% [room_id, local_cell, local_facing]
+		return false
+	out[room_id] = int(out.get(room_id, 0)) | portal_bit
+	return true
+
+
+static func _portal_bit_for_facing(local_facing: Vector3i) -> int:
+	match local_facing:
+		Vector3i.FORWARD:
+			return SettlementFabricProgram.FEATURE_PORTAL_NORTH
+		Vector3i.RIGHT:
+			return SettlementFabricProgram.FEATURE_PORTAL_EAST
+		Vector3i.BACK:
+			return SettlementFabricProgram.FEATURE_PORTAL_SOUTH
+		Vector3i.LEFT:
+			return SettlementFabricProgram.FEATURE_PORTAL_WEST
+		_:
+			return 0
+
+
+static func _portal_cell_for_room(kind: StringName, portal_bit: int) \
+		-> Vector3i:
+	var minimum := Vector2i.ZERO
+	var maximum := Vector2i.ZERO
+	match kind:
+		&"tower":
+			minimum = Vector2i(-1, -1)
+			maximum = Vector2i(0, 0)
+		&"slim":
+			minimum = Vector2i(-1, -2)
+			maximum = Vector2i(0, 1)
+		&"building":
+			minimum = Vector2i(-2, -2)
+			maximum = Vector2i(1, 1)
+		&"long":
+			minimum = Vector2i(-2, -3)
+			maximum = Vector2i(1, 2)
+		_:
+			return Vector3i(2147483647, 2147483647, 2147483647)
+	match portal_bit:
+		SettlementFabricProgram.FEATURE_PORTAL_NORTH:
+			return Vector3i(0, 0, minimum.y)
+		SettlementFabricProgram.FEATURE_PORTAL_EAST:
+			return Vector3i(maximum.x, 0, 0)
+		SettlementFabricProgram.FEATURE_PORTAL_SOUTH:
+			return Vector3i(0, 0, maximum.y)
+		SettlementFabricProgram.FEATURE_PORTAL_WEST:
+			return Vector3i(minimum.x, 0, 0)
+		_:
+			return Vector3i(2147483647, 2147483647, 2147483647)
+
+
+static func _feature_portal_bit_count(mask: int) -> int:
+	var count := 0
+	for bit in [SettlementFabricProgram.FEATURE_PORTAL_NORTH,
+			SettlementFabricProgram.FEATURE_PORTAL_EAST,
+			SettlementFabricProgram.FEATURE_PORTAL_SOUTH,
+			SettlementFabricProgram.FEATURE_PORTAL_WEST]:
+		count += int((mask & bit) != 0)
+	return count
+
+
+static func _is_cardinal_xz(direction: Vector3i) -> bool:
+	return direction.y == 0 and absi(direction.x) + absi(direction.z) == 1
+
+
 static func _is_phase_b_recipe(recipe_id: StringName) -> bool:
-	return String(recipe_id).ends_with(".b")
+	var id := String(recipe_id)
+	return id.ends_with(".b") or id.contains(".b.portal.")
 
 
 static func compile_feature_units(source: WarrenSpatialPlan,
@@ -964,14 +1140,16 @@ static func _cap_unit(room_id: StringName, row_index: int,
 
 
 static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
-		allow_phase_b: bool = true) \
+		allow_phase_b: bool = true, feature_portal_mask: int = 0) \
 		-> StringName:
 	var prefix := "room.long" if room.kind == &"long" \
 		else "room.slim" if room.kind == &"slim" \
 		else "room.tower" if room.kind == &"tower" else "room"
 	if room.terrain_bearing:
-		return StringName("%s.base.rock%s" % [prefix,
+		var terrain_recipe := StringName("%s.base.rock%s" % [prefix,
 			"" if room.addressed else ".closed"])
+		return SettlementFabricProgram.feature_portal_recipe_id(terrain_recipe,
+			feature_portal_mask) if feature_portal_mask > 0 else terrain_recipe
 	var phase := posmod(room.lattice_origin.x * 31 + room.lattice_origin.y * 17 \
 		+ room.lattice_origin.z * 13 + world_seed \
 		+ room.source_storey_index * 7, 6)
@@ -987,11 +1165,15 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 	var phase_b := allow_phase_b and posmod(room.source_storey_index \
 		+ room.lattice_origin.x \
 		+ room.lattice_origin.z + world_seed, 2) == 1
+	var base_recipe_id: StringName
 	if room.kind == &"long":
-		return StringName("%s.upper%s.%s.%s" % [prefix, addressed, theme,
+		base_recipe_id = StringName("%s.upper%s.%s.%s" % [prefix, addressed, theme,
 			"b" if phase_b else "a"])
-	return StringName("%s.upper%s.%s%s" % [prefix, addressed, theme,
-		".b" if phase_b else ""])
+	else:
+		base_recipe_id = StringName("%s.upper%s.%s%s" % [prefix, addressed, theme,
+			".b" if phase_b else ""])
+	return SettlementFabricProgram.feature_portal_recipe_id(base_recipe_id,
+		feature_portal_mask) if feature_portal_mask > 0 else base_recipe_id
 
 
 static func _full_roof_recipe_id(room: WarrenRoomStamp,

@@ -444,6 +444,12 @@ func test_feature_portal_room_variants_open_exact_private_socket_facades() \
 		if not portal_placement.is_empty():
 			assert_eq(StringName(portal_placement.asset_id),
 				SettlementFabricProgram.WOOD_DOOR_OPEN)
+	var balcony := program.recipe(&"balcony.bracketed.left.blue")
+	assert_true(balcony.has_tag(&"requires_room_portal"))
+	assert_false(balcony.has_tag(&"facade_door"))
+	assert_false(balcony.placements.any(func(placement: Dictionary) -> bool:
+		return String(placement.id) == "door"),
+		"the balcony must not paste a second doorway over its parent shell")
 
 
 func test_exterior_builder_rejects_deferred_interior_route_units() -> void:
