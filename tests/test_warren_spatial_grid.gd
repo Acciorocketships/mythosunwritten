@@ -75,6 +75,19 @@ func test_reservations_conflict_by_owner_but_load_channels_can_share() -> void:
 		"compatible load paths may share a terrain-bearing column")
 
 
+func test_one_transaction_cannot_hide_conflicting_reservation_owners() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i.ZERO, Vector3i(3, 3, 3))
+	var tx := grid.begin_transaction(&"feature.batch")
+	assert_true(tx.reserve([Vector3i.ONE] as Array[Vector3i],
+		WarrenSpatialGrid.Reservation.ROOF_CLEARANCE, &"roof.a"))
+	assert_true(tx.reserve([Vector3i.ONE] as Array[Vector3i],
+		WarrenSpatialGrid.Reservation.ROOF_CLEARANCE, &"roof.b"))
+	assert_false(tx.commit(),
+		"copy-on-write validation must include conflicts inside the delta")
+	assert_eq(grid.reservation_bits_at(Vector3i.ONE), 0,
+		"an internally inconsistent delta remains atomic")
+
+
 func test_opposite_face_queries_address_one_canonical_interface() -> void:
 	var grid := WarrenSpatialGrid.new(Vector3i.ZERO, Vector3i(3, 3, 3))
 	var tx := grid.begin_transaction(&"building.01")
@@ -86,6 +99,19 @@ func test_opposite_face_queries_address_one_canonical_interface() -> void:
 	assert_false(from_room.is_empty())
 	assert_eq(from_room, from_street)
 	assert_eq(StringName(from_room.owner_id), &"building.01")
+
+
+func test_one_transaction_cannot_overwrite_a_canonical_face() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i.ZERO, Vector3i(3, 3, 3))
+	var tx := grid.begin_transaction(&"shell.batch")
+	assert_true(tx.claim_face(Vector3i(1, 1, 1), Vector3i.RIGHT,
+		WarrenSpatialGrid.FaceKind.FACADE, &"building.01"))
+	assert_true(tx.claim_face(Vector3i(2, 1, 1), Vector3i.LEFT,
+		WarrenSpatialGrid.FaceKind.DOOR, &"building.01"))
+	assert_false(tx.commit(),
+		"opposite claims in one delta address the same immutable interface")
+	assert_true(grid.face_claim(Vector3i(1, 1, 1),
+		Vector3i.RIGHT).is_empty())
 
 
 func test_sealed_grid_rejects_later_transactions() -> void:

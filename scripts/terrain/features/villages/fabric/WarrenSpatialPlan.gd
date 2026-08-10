@@ -183,9 +183,11 @@ func _interface_audit() -> Dictionary:
 	var missing_roofs := 0
 	var threshold_mismatch := 0
 	var allowed_public_faces: Dictionary = {
+		WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR: true,
 		WarrenSpatialGrid.FaceKind.FACADE: true,
 		WarrenSpatialGrid.FaceKind.DOOR: true,
 		WarrenSpatialGrid.FaceKind.SOFFIT: true,
+		WarrenSpatialGrid.FaceKind.ROOF: true,
 		WarrenSpatialGrid.FaceKind.CONSTRUCTION_JOINT: true,
 	}
 	for building: WarrenBuildingVolume in buildings:
@@ -204,8 +206,12 @@ func _interface_audit() -> Dictionary:
 					or grid.use_at(above) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
 				continue
 			var roof := grid.face_claim(cell, Vector3i.UP)
-			missing_roofs += int(roof.is_empty() or int(roof.get("kind", -1)) \
-				!= WarrenSpatialGrid.FaceKind.ROOF)
+			var roof_kind := int(roof.get("kind", -1))
+			var carries_public_floor := grid.use_at(above) \
+				== WarrenSpatialGrid.Use.PUBLIC_AIR and roof_kind \
+				== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR
+			missing_roofs += int(roof.is_empty() or roof_kind \
+				!= WarrenSpatialGrid.FaceKind.ROOF and not carries_public_floor)
 		for threshold: Dictionary in building.thresholds:
 			var private_cell := threshold.private_cell as Vector3i
 			var public_cell := threshold.public_cell as Vector3i

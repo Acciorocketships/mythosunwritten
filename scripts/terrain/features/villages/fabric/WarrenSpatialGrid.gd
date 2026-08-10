@@ -263,6 +263,7 @@ func _validate_assignments(assignments: Dictionary) -> bool:
 
 
 func _validate_reservations(reservations: Array[Dictionary]) -> bool:
+	var staged_nonshareable_owner: Dictionary = {}
 	for record: Dictionary in reservations:
 		var index := int(record.index)
 		var bits := int(record.bits)
@@ -273,17 +274,25 @@ func _validate_reservations(reservations: Array[Dictionary]) -> bool:
 		for bit: int in _individual_bits(bits):
 			if (bit & _SHAREABLE_RESERVATION_BITS) != 0:
 				continue
+			var key := _reservation_key(index, bit)
 			var owners := _reservation_owners.get(
-				_reservation_key(index, bit), {}) as Dictionary
+				key, {}) as Dictionary
 			for owner_index_value: Variant in owners.keys():
 				var existing_id := _owner_names[int(owner_index_value)]
 				if existing_id != owner_id:
 					return _reject("reservation conflict at %s" \
 						% cell_for_index(index))
+			var staged_owner := StringName(staged_nonshareable_owner.get(
+				key, &""))
+			if not staged_owner.is_empty() and staged_owner != owner_id:
+				return _reject("reservation conflict inside transaction at %s" \
+					% cell_for_index(index))
+			staged_nonshareable_owner[key] = owner_id
 	return true
 
 
 func _validate_faces(records: Array[Dictionary]) -> bool:
+	var staged: Dictionary = {}
 	for record: Dictionary in records:
 		var cell := record.cell as Vector3i
 		var direction := record.direction as Vector3i
@@ -295,11 +304,14 @@ func _validate_faces(records: Array[Dictionary]) -> bool:
 			return _reject("invalid face claim")
 		var key := _face_key(cell, direction)
 		var existing := _face_claims.get(key, {}) as Dictionary
-		if existing.is_empty():
-			continue
-		if int(existing.kind) != kind \
-				or StringName(existing.owner_id) != owner_id:
+		if not existing.is_empty() and (int(existing.kind) != kind \
+				or StringName(existing.owner_id) != owner_id):
 			return _reject("face claim conflict at %s" % key)
+		var staged_record := staged.get(key, {}) as Dictionary
+		if not staged_record.is_empty() and (int(staged_record.kind) != kind \
+				or StringName(staged_record.owner_id) != owner_id):
+			return _reject("face claim conflict inside transaction at %s" % key)
+		staged[key] = {"kind": kind, "owner_id": owner_id}
 	return true
 
 

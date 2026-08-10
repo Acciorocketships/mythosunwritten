@@ -208,21 +208,28 @@ static func _carve_public_volume(grid: WarrenSpatialGrid,
 static func _partition_rooms(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, parcels: WarrenParcelPlan) -> Dictionary:
 	var proposals: Array[Dictionary] = []
-	var protected_owner: Dictionary = {}
 	for parcel: WarrenBuildingParcel in parcels.parcels:
 		var proposal := WarrenParcelConstruction.proposal(parcel)
 		if proposal.is_empty():
 			continue
 		proposal["parcel"] = parcel
 		proposals.append(proposal)
-		for cell: Vector3i in StaggeredFabricCompiler.proposal_occupied_cells(
-				proposal):
-			protected_owner[cell] = parcel.stable_id
 	if proposals.is_empty():
 		last_failure = "parcel seed produced no complete room proposals"
 		return {}
 	proposals.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return StringName(a.stable_id) < StringName(b.stable_id))
+		return String(a.stable_id) < String(b.stable_id))
+	# Conservative source envelopes may intentionally share authored roof seams.
+	# Retain every claimant: a last-writer map made residual shift legality depend
+	# on the parcel array's incidental construction order.
+	var protected_owners: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		for cell: Vector3i in StaggeredFabricCompiler.proposal_occupied_cells(
+				proposal):
+			if not protected_owners.has(cell):
+				protected_owners[cell] = {}
+			(protected_owners[cell] as Dictionary)[parcel.stable_id] = true
 	var buildings: Array[WarrenBuildingVolume] = []
 	var supports := WarrenSupportGraph.new()
 	var required_supports: Array[StringName] = []
@@ -236,8 +243,16 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		var base_plate := _proposal_base_plate(proposal)
 		if storeys <= 0 or base_plate.is_empty():
 			continue
+		# The storey containing the authored doorway is an immovable public
+		# interface.  Offsetting that composition block would preserve the room
+		# volume but strand its real threshold inside the old facade plane.
+		var threshold := WarrenParcelConstruction.threshold_cell(parcel)
+		var addressed_storey := clampi(floori(float(threshold.y - origin.y) \
+			/ float(WarrenSpatialGrid.STOREY_CELLS)), 0, storeys - 1)
+		var pinned_block := floori(float(addressed_storey) / 2.0)
 		var offsets := _composition_offsets(grid, base_plate, origin.y,
-			storeys, protected_owner, parcel.stable_id, volume.world_seed)
+			storeys, protected_owners, parcel.stable_id, volume.world_seed,
+			pinned_block)
 		if offsets.is_empty():
 			continue
 		for offset: Vector2i in offsets:
@@ -248,7 +263,6 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		for segment_index in segments.size():
 			segment_ids.append(StringName("spatial.%s.part%02d" % [
 				StringName(parcel.stable_id), segment_index]))
-		var threshold := WarrenParcelConstruction.threshold_cell(parcel)
 		var threshold_segment := -1
 		for segment_index in segments.size():
 			var segment := segments[segment_index] as Vector2i
@@ -339,16 +353,26 @@ static func _proposal_base_plate(proposal: Dictionary) -> Dictionary:
 
 static func _composition_offsets(grid: WarrenSpatialGrid,
 		base_plate: Dictionary, origin_y: int, storeys: int,
-		protected_owner: Dictionary, parcel_id: StringName,
-		world_seed: int) -> Array[Vector2i]:
+		protected_owners: Dictionary, parcel_id: StringName,
+		world_seed: int, pinned_block: int) -> Array[Vector2i]:
 	var block_count := ceili(float(storeys) / 2.0)
-	var out: Array[Vector2i] = [Vector2i.ZERO]
+	var out: Array[Vector2i] = []
 	var directions: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN,
 		Vector2i.LEFT, Vector2i.UP]
 	var parcel_hash := String(parcel_id).hash()
-	for block in range(1, block_count):
+	for block in block_count:
+		var start_storey := block * 2
+		var end_storey := mini(storeys, start_storey + 2)
+		# The base block and the block carrying the addressed door retain the
+		# authored parcel phase.  All other blocks may shift by one fine cell.
+		if block == 0 or block == pinned_block:
+			if not _plate_fits(grid, base_plate, Vector2i.ZERO, origin_y,
+					start_storey, end_storey, protected_owners, parcel_id):
+				return [] as Array[Vector2i]
+			out.append(Vector2i.ZERO)
+			continue
 		var previous := out[block - 1]
-		var chosen := previous
+		var chosen := Vector2i(2147483647, 2147483647)
 		var start := posmod(Helper._mix64(world_seed ^ parcel_hash \
 			^ block * 0x45d9f3b), directions.size())
 		for direction_offset in directions.size():
@@ -356,19 +380,29 @@ static func _composition_offsets(grid: WarrenSpatialGrid,
 				posmod(start + direction_offset, directions.size())]
 			if candidate.length_squared() > 4:
 				continue
-			var start_storey := block * 2
-			var end_storey := mini(storeys, start_storey + 2)
 			if _plate_fits(grid, base_plate, candidate, origin_y,
-					start_storey, end_storey, protected_owner, parcel_id):
+					start_storey, end_storey, protected_owners, parcel_id):
 				chosen = candidate
 				break
+		# A failed lateral proposal may keep its previous phase only when that
+		# exact volume is still allocatable.  The former unconditional fallback
+		# let two buildings claim the same residual-mass cells.
+		if chosen.x == 2147483647 and _plate_fits(grid, base_plate, previous,
+				origin_y, start_storey, end_storey, protected_owners, parcel_id):
+			chosen = previous
+		if chosen.x == 2147483647 and _plate_fits(grid, base_plate,
+				Vector2i.ZERO, origin_y, start_storey, end_storey,
+				protected_owners, parcel_id):
+			chosen = Vector2i.ZERO
+		if chosen.x == 2147483647:
+			return [] as Array[Vector2i]
 		out.append(chosen)
 	return out
 
 
 static func _plate_fits(grid: WarrenSpatialGrid, base_plate: Dictionary,
 		offset: Vector2i, origin_y: int, start_storey: int, end_storey: int,
-		protected_owner: Dictionary, parcel_id: StringName) -> bool:
+		protected_owners: Dictionary, parcel_id: StringName) -> bool:
 	for storey in range(start_storey, end_storey):
 		for column_value: Variant in base_plate.keys():
 			var column := column_value as Vector2i
@@ -379,9 +413,10 @@ static func _plate_fits(grid: WarrenSpatialGrid, base_plate: Dictionary,
 				if not grid.contains(cell) \
 						or grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE:
 					return false
-				var protected_id := StringName(protected_owner.get(cell, &""))
-				if not protected_id.is_empty() and protected_id != parcel_id:
-					return false
+				var owners := protected_owners.get(cell, {}) as Dictionary
+				for protected_id_value: Variant in owners.keys():
+					if StringName(protected_id_value) != parcel_id:
+						return false
 	return true
 
 
@@ -446,10 +481,22 @@ static func _derive_shell(grid: WarrenSpatialGrid,
 				var owner_id := building.stable_id
 				if neighbor_use == WarrenSpatialGrid.Use.PUBLIC_AIR:
 					var key := WarrenSpatialGrid._face_key(cell, direction)
-					face_kind = WarrenSpatialGrid.FaceKind.DOOR \
-						if threshold_faces.has(key) \
-						else WarrenSpatialGrid.FaceKind.FACADE \
-						if direction.y == 0 else WarrenSpatialGrid.FaceKind.SOFFIT
+					if direction == Vector3i.UP:
+						# The carver already owns the canonical upper interface
+						# wherever a street or court walks on inhabited mass.
+						# Reclassifying it as a soffit/roof would make the same
+						# face contradict itself depending on traversal order.
+						var existing := grid.face_claim(cell, direction)
+						if not existing.is_empty() and int(existing.kind) \
+								== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+							continue
+						face_kind = WarrenSpatialGrid.FaceKind.ROOF
+					elif direction == Vector3i.DOWN:
+						face_kind = WarrenSpatialGrid.FaceKind.SOFFIT
+					else:
+						face_kind = WarrenSpatialGrid.FaceKind.DOOR \
+							if threshold_faces.has(key) \
+							else WarrenSpatialGrid.FaceKind.FACADE
 				elif neighbor_use == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
 					var neighbor_owner := grid.owner_name_at(neighbor)
 					if neighbor_owner != building.stable_id:
