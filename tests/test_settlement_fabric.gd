@@ -404,6 +404,48 @@ func test_occupied_skywalk_is_private_overhead_mass() -> void:
 		"a private occupied skywalk still owns a real floor")
 
 
+func test_feature_portal_room_variants_open_exact_private_socket_facades() \
+		-> void:
+	var program := _program()
+	var cases: Array[Dictionary] = [
+		{"base": &"room.upper.blue", "mask": 1,
+			"cell": Vector3i(0, 0, -2), "placement": &"back.1"},
+		{"base": &"room.long.upper.orange.b", "mask": 2,
+			"cell": Vector3i(1, 0, 0), "placement": &"east.1"},
+		{"base": &"room.slim.upper.amber", "mask": 4,
+			"cell": Vector3i(0, 0, 1), "placement": &"south"},
+		{"base": &"room.tower.upper.blue.b", "mask": 8,
+			"cell": Vector3i(-1, 0, 0), "placement": &"west"},
+	]
+	for sample: Dictionary in cases:
+		var base := program.recipe(StringName(sample.base))
+		var variant_id := SettlementFabricProgram.feature_portal_recipe_id(
+			StringName(sample.base), int(sample.mask))
+		var variant := program.recipe(variant_id)
+		assert_not_null(variant, "%s is missing" % variant_id)
+		if base == null or variant == null:
+			continue
+		assert_true(variant.has_tag(&"feature_portal"))
+		assert_eq(variant.entrances, base.entrances,
+			"a private feature portal must not invent a public entrance")
+		var cell := sample.cell as Vector3i
+		for y in 2:
+			var aperture := cell + Vector3i.UP * y
+			assert_false(variant.solid_cells.has(aperture))
+			assert_false(variant.occluder_cells.has(aperture))
+			assert_true(variant.headroom_cells.has(aperture))
+			assert_true(variant.inhabited_cells.has(aperture))
+		var portal_placement: Dictionary = {}
+		for placement: Dictionary in variant.placements:
+			if StringName(placement.id) == StringName(sample.placement):
+				portal_placement = placement
+				break
+		assert_false(portal_placement.is_empty())
+		if not portal_placement.is_empty():
+			assert_eq(StringName(portal_placement.asset_id),
+				SettlementFabricProgram.WOOD_DOOR_OPEN)
+
+
 func test_exterior_builder_rejects_deferred_interior_route_units() -> void:
 	var program := _program()
 	var specs: Array[Dictionary] = [

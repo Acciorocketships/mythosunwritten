@@ -29,21 +29,29 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_eq(int(plan.audit.enclosed_skywalk_count),
 		WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
 	assert_eq(int(plan.audit.tower_annex_count),
-		WarrenSpatialFeatureSolver.TARGET_TOWER_ANNEXES)
+		plan.audit.tall_tower_only_lineage_ids.size() \
+			* WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_TALL_LINEAGE,
+		"annexes are a repair grammar only for residual tall tower lineages")
 	assert_gte(int(plan.audit.usable_balcony_count),
 		WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	assert_gte(int(plan.audit.balcony_building_count),
 		WarrenSpatialFeatureSolver.MIN_BALCONY_BUILDINGS)
 	assert_gte(int(plan.audit.room_outcropping_count),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
-	assert_gte(int(plan.audit.merged_upper_composition_count), 1,
+	assert_gte(int(plan.audit.merged_upper_composition_count), 4,
 		"at least one upper plate must cross original parcel lineages")
-	assert_gte(int(plan.audit.expanded_upper_composition_count), 3,
+	assert_gte(int(plan.audit.coupled_upper_composition_count), 6,
+		"neighboring lineages must exchange upper mass in the 3D solve")
+	assert_gte(int(plan.audit.expanded_upper_composition_count), 30,
 		"upper rooms should occupy free 3D massif cells beyond their 2D parcels")
-	assert_gte(int(plan.audit.upper_recomposition_count), 6,
+	assert_gte(int(plan.audit.upper_recomposition_count), 45,
 		"the upper town must be materially recomposed in three dimensions")
-	assert_gte(int(plan.audit.mixed_kind_tall_lineage_count), 5,
+	assert_gte(int(plan.audit.varied_room_block_count), 35,
+		"many blocks must change footprint, orientation, or room family")
+	assert_gte(int(plan.audit.mixed_kind_tall_lineage_count), 10,
 		"tall construction must change room size/kind across height")
+	assert_eq(plan.audit.tall_tower_only_lineage_ids, [],
+		"the primary 3D composition must eliminate every residual tall shaft")
 	assert_eq(int(plan.audit.extruded_tall_lineage_count), 0,
 		"no tall source lineage may repeat one world-space floorplate")
 	assert_eq(plan.audit.extruded_tall_lineage_ids, [],
@@ -203,7 +211,9 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		"at least one true skywalk must terminate in a landmark socket")
 	assert_gte(balconies.size(), WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	assert_eq(tower_annexes.size(),
-		WarrenSpatialFeatureSolver.TARGET_TOWER_ANNEXES)
+		plan.audit.tall_tower_only_lineage_ids.size() \
+			* WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_TALL_LINEAGE,
+		"decorative annexes must not substitute for spatial recomposition")
 	var annex_source_counts: Dictionary = {}
 	var annex_profiles: Dictionary = {}
 	var annex_storeys_by_source: Dictionary = {}

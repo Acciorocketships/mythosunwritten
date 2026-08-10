@@ -85,6 +85,7 @@ func _capture_all() -> void:
 	views.append_array(_market_views())
 	views.append_array(_courtyard_views())
 	views.append_array(_skywalk_views())
+	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
 	views.append_array(_landmark_views())
 	views.append_array(_balcony_views())
@@ -308,6 +309,54 @@ func _tower_annex_views() -> Array[Dictionary]:
 	return out
 
 
+func _room_outcropping_views() -> Array[Dictionary]:
+	## These are not attached facade props: each reservation names a complete
+	## inhabited upper WarrenRoomStamp whose floorplate leaves the room below.
+	## Photograph the exposed displacement side and its underside so review can
+	## falsify whether the volumetric recomposition actually reads as a room-scale
+	## projection in the assembled town.
+	var out: Array[Dictionary] = []
+	var ordinal := 0
+	for feature: WarrenFeatureReservation in _spatial.features:
+		if feature.kind != &"room_outcropping":
+			continue
+		var upper := _room_by_id(StringName(
+			feature.audit.outcrop_upper_room_id))
+		var lower := _room_by_id(StringName(
+			feature.audit.outcrop_lower_room_id))
+		if upper == null or lower == null:
+			continue
+		var upper_bounds := _unit_visual_bounds(StringName(
+			"spatial.fabric.%s" % upper.stable_id))
+		if upper_bounds.size.length_squared() <= 0.0:
+			continue
+		var upper_centre := upper_bounds.get_center()
+		var lower_centre := _cell_centroid(lower.private_cells)
+		var offset := upper_centre - lower_centre
+		offset.y = 0.0
+		if offset.length_squared() <= 0.01:
+			continue
+		var outward := offset.normalized()
+		var distance := maxf(10.0, maxf(upper_bounds.size.x,
+			upper_bounds.size.z) + 7.0)
+		var ignored: Array[StringName] = [StringName(
+			"spatial.fabric.%s" % upper.stable_id)]
+		var front_eye := _best_directional_position(upper_centre, outward,
+			distance, 2.0, ignored, upper_bounds)
+		var underside_target := Vector3(upper_centre.x,
+			upper_bounds.position.y + 0.35, upper_centre.z)
+		var underside_eye := _best_directional_position(underside_target,
+			outward, distance * 0.8, -1.0, ignored, upper_bounds)
+		out.append({"id": "room-outcrop-%02d-front" % ordinal,
+			"position": front_eye, "target": upper_centre,
+			"fov": 52.0})
+		out.append({"id": "room-outcrop-%02d-under" % ordinal,
+			"position": underside_eye, "target": underside_target,
+			"fov": 58.0})
+		ordinal += 1
+	return out
+
+
 func _balcony_views() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var ordinal := 0
@@ -463,6 +512,52 @@ func _feature_visual_bounds(feature: WarrenFeatureReservation) -> AABB:
 	return bounds
 
 
+func _unit_visual_bounds(stable_id: StringName) -> AABB:
+	for unit: FabricUnit in _fabric.units:
+		if unit.stable_id != stable_id:
+			continue
+		var recipe := _fabric.recipe(unit.recipe_id)
+		if recipe != null and not recipe.placements.is_empty():
+			return unit.transform() * recipe.local_clearance_bounds
+	return AABB()
+
+
+func _room_by_id(stable_id: StringName) -> WarrenRoomStamp:
+	for building: WarrenBuildingVolume in _spatial.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.stable_id == stable_id:
+				return room
+	return null
+
+
+func _best_directional_position(target: Vector3, preferred: Vector3,
+		distance: float, height: float,
+		ignored_prefixes: Array[StringName], own_bounds: AABB) -> Vector3:
+	var directions: Array[Vector3] = [
+		preferred.normalized(),
+		preferred.rotated(Vector3.UP, PI * 0.25).normalized(),
+		preferred.rotated(Vector3.UP, -PI * 0.25).normalized(),
+		preferred.rotated(Vector3.UP, PI * 0.5).normalized(),
+		preferred.rotated(Vector3.UP, -PI * 0.5).normalized(),
+	]
+	var distance_scales: Array[float] = [1.0, 1.35]
+	var best := target + directions[0] * distance + Vector3.UP * height
+	var best_score := 1 << 30
+	for distance_scale: float in distance_scales:
+		for direction: Vector3 in directions:
+			var candidate: Vector3 = target \
+				+ direction * distance * distance_scale \
+				+ Vector3.UP * height
+			var score := _view_occlusion_score(candidate, target,
+				ignored_prefixes)
+			if own_bounds.grow(0.25).has_point(candidate):
+				score += 1000
+			if score < best_score:
+				best = candidate
+				best_score = score
+	return best
+
+
 func _best_orbit_position(target: Vector3, distance: float, height: float,
 		ignored_prefixes: Array[StringName] = [], own_bounds := AABB()) -> Vector3:
 	## Pick the least-occluded of eight deterministic orbit positions against the
@@ -476,11 +571,13 @@ func _best_orbit_position(target: Vector3, distance: float, height: float,
 		(Vector3.LEFT + Vector3.FORWARD).normalized(),
 		(Vector3.RIGHT + Vector3.FORWARD).normalized(),
 	]
+	var distance_scales: Array[float] = [1.0, 1.35]
 	var best := target + directions[0] * distance + Vector3.UP * height
 	var best_score := 1 << 30
-	for distance_scale in [1.0, 1.35]:
+	for distance_scale: float in distance_scales:
 		for direction: Vector3 in directions:
-			var candidate := target + direction * distance * distance_scale \
+			var candidate: Vector3 = target \
+				+ direction * distance * distance_scale \
 				+ Vector3.UP * height
 			var score := _view_occlusion_score(candidate, target,
 				ignored_prefixes)

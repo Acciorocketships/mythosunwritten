@@ -19,6 +19,9 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
 		.facade_phase_a_count), 0,
 		"the town should not synchronize onto one facade phase")
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+		.physical_support_redirect_count), 0,
+		"offset upper rooms must bind to their actual 3D bearing parent")
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.desired_facade_phase_b_count),
 		int(WarrenSpatialFabricCompiler.last_audit \
@@ -71,7 +74,8 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.tower_annex_feature_count), constructed_tower_annexes)
 	assert_eq(constructed_tower_annexes,
-		WarrenSpatialFeatureSolver.TARGET_TOWER_ANNEXES)
+		spatial.audit.tall_tower_only_lineage_ids.size() \
+			* WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_TALL_LINEAGE)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.prefab_landmark_feature_count), constructed_landmarks)
 	assert_eq(constructed_landmarks,
@@ -96,6 +100,15 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.pitched_roof_count), 0)
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.rejected_pitched_count), 0)
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count), 0)
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_terrace_unit_count), 0,
+		"exposed setback ledges should receive measured terrace treatments")
+	assert_lt(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_terrace_unit_count),
+		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count),
+		"terraces must remain varied rather than railing every roof edge")
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_terrace_fallback_count), 0)
 	for roof: FabricUnit in roofs:
 		assert_true(fabric.add_unit(roof), fabric.last_rejection)
 	var sealed := WarrenSpatialFabricCompiler.solve(spatial, program)
