@@ -93,6 +93,7 @@ func _init() -> void:
 			" audit=", WarrenSpatialFabricCompiler.last_audit)
 		if compiled == null:
 			_print_support_handoffs(plan)
+			_print_feature_bindings(plan)
 		quit(0 if compiled != null else 1)
 		return
 	if composition_only:
@@ -126,6 +127,15 @@ func _print_support_handoffs(plan: WarrenSpatialPlan) -> void:
 				&"" if parent == null else parent.kind, " parent_origin=",
 				Vector3i.ZERO if parent == null else parent.lattice_origin,
 				" parent_yaw=", -1 if parent == null else parent.yaw_quarters)
+
+
+func _print_feature_bindings(plan: WarrenSpatialPlan) -> void:
+	for feature: WarrenFeatureReservation in plan.features:
+		if feature.construction_records.is_empty():
+			continue
+		print("FEATURE_BINDING id=", feature.stable_id, " kind=", feature.kind,
+			" endpoints=", feature.endpoints, " records=",
+			feature.construction_records, " audit=", feature.audit)
 
 
 func _print_room_lineages(plan: WarrenSpatialPlan) -> void:

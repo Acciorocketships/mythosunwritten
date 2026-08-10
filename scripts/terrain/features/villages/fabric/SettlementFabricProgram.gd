@@ -391,6 +391,18 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_setback_cap_recipe(&"roof.setback.cap.2", 2, modules),
 		_setback_cap_recipe(&"roof.setback.cap.4", 4, modules),
 		_setback_cap_recipe(&"roof.setback.cap.6", 6, modules),
+		_setback_terrace_recipe(&"roof.setback.terrace.2.left", 2, -1,
+			modules),
+		_setback_terrace_recipe(&"roof.setback.terrace.2.right", 2, 1,
+			modules),
+		_setback_terrace_recipe(&"roof.setback.terrace.4.left", 4, -1,
+			modules),
+		_setback_terrace_recipe(&"roof.setback.terrace.4.right", 4, 1,
+			modules),
+		_setback_terrace_recipe(&"roof.setback.terrace.6.left", 6, -1,
+			modules),
+		_setback_terrace_recipe(&"roof.setback.terrace.6.right", 6, 1,
+			modules),
 		_slim_roof_recipe(&"roof.slim.blue", ROOF_BLUE, modules),
 		_slim_roof_recipe(&"roof.slim.orange", ROOF_ORANGE, modules),
 		_chimney_slim_roof_recipe(&"roof.slim.chimney.blue", ROOF_BLUE,
@@ -1498,6 +1510,22 @@ static func _setback_cap_recipe(recipe_id: StringName, length_cells: int,
 		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
 	recipe_value.add_socket(&"bearing.bottom",
 		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
+	return recipe_value
+
+
+static func _setback_terrace_recipe(recipe_id: StringName, length_cells: int,
+		rail_side: int, modules: FabricModuleProgram) -> FabricRecipe:
+	## A measured inhabited-looking treatment for an otherwise bare setback
+	## strip. It retains the exact thin roof-face contract of the plain cap but
+	## adds complete authored rail modules only along one solver-selected exposed
+	## edge. The strip remains a private roof, not a fabricated walk surface.
+	assert(length_cells in [2, 4, 6] and rail_side in [-1, 1])
+	var recipe_value := _setback_cap_recipe(recipe_id, length_cells, modules)
+	recipe_value.role_tags.append(&"setback_terrace")
+	for x in length_cells:
+		recipe_value.add_placement(StringName("guard.%02d" % x), RAILING,
+			_pose(Vector3(float(x) * CELL, 0.0,
+				float(rail_side) * CELL * 0.5), 0.0))
 	return recipe_value
 
 

@@ -110,37 +110,47 @@ func _capture_all() -> void:
 
 
 func _street_views() -> Array[Dictionary]:
-	## Select actual canonical route cells with the strongest immediate walls and
-	## overhead mass. The former generic south camera often looked across roofs
-	## and said nothing about the player-scale negative space.
+	## Select complete same-level, two-lane route runs. Merely finding one
+	## neighboring route cell can point through the next corner and photograph a
+	## facade at zero range; a five-cell run keeps both eye and target inside the
+	## actual negative-space street the player traverses.
 	var route_set: Dictionary = {}
 	for cell: Vector3i in _spatial.route_floor_cells:
 		route_set[cell] = true
 	var candidates: Array[Dictionary] = []
 	for cell: Vector3i in _spatial.route_floor_cells:
-		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK,
-				Vector3i.LEFT, Vector3i.FORWARD]:
-			if not route_set.has(cell + direction):
+		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK]:
+			if not _has_route_run(route_set, cell, direction, 5):
 				continue
 			var side := Vector3i(-direction.z, 0, direction.x)
-			var wall_score := 0
-			var overhead_score := 0
-			for step in 4:
-				var sample := cell + direction * step
-				for sign_value in [-1, 1]:
-					var side_cell: Vector3i = sample + side * int(sign_value)
-					wall_score += int(_is_building_use(
-						_spatial.grid.use_at(side_cell)) \
-						or _is_building_use(_spatial.grid.use_at(
-							side_cell + Vector3i.UP)))
-				for height in range(2, 6):
-					overhead_score += int(_is_building_use(
-						_spatial.grid.use_at(sample + Vector3i.UP * height)))
-			var score := wall_score * 3 + overhead_score * 2
-			if wall_score >= 4:
-				candidates.append({"cell": cell, "direction": direction,
-					"score": score, "wall_score": wall_score,
-					"overhead_score": overhead_score})
+			for lane_side: Vector3i in [side, -side]:
+				if not _has_route_run(route_set, cell + lane_side,
+						direction, 5):
+					continue
+				var wall_score := 0
+				var overhead_score := 0
+				for step in 5:
+					var lane_a := cell + direction * step
+					var lane_b := lane_a + lane_side
+					for outside: Vector3i in [lane_a - lane_side,
+							lane_b + lane_side]:
+						wall_score += int(_is_building_use(
+							_spatial.grid.use_at(outside)) \
+							or _is_building_use(_spatial.grid.use_at(
+								outside + Vector3i.UP)))
+					for height in range(2, 6):
+						overhead_score += int(_is_building_use(
+							_spatial.grid.use_at(lane_a \
+								+ Vector3i.UP * height)))
+						overhead_score += int(_is_building_use(
+							_spatial.grid.use_at(lane_b \
+								+ Vector3i.UP * height)))
+				var score := wall_score * 3 + overhead_score * 2
+				if wall_score >= 6:
+					candidates.append({"cell": cell, "direction": direction,
+						"lane_side": lane_side, "score": score,
+						"wall_score": wall_score,
+						"overhead_score": overhead_score})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.score) != int(b.score):
 			return int(a.score) > int(b.score)
@@ -161,11 +171,13 @@ func _street_views() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for index in selected.size():
 		var candidate := selected[index]
-		var eye := _route_eye(candidate.cell as Vector3i)
+		var eye := (Vector3(candidate.cell as Vector3i) \
+			+ Vector3(candidate.lane_side as Vector3i) * 0.5) \
+			* FabricRecipe.CELL_SIZE + Vector3.UP * 1.45
 		var direction := candidate.direction as Vector3i
 		out.append({"id": "street-%02d-w%d-o%d" % [index,
 			int(candidate.wall_score), int(candidate.overhead_score)],
-			"position": eye, "target": eye + Vector3(direction) * 7.5 \
+			"position": eye, "target": eye + Vector3(direction) * 6.0 \
 				+ Vector3.UP * 0.25, "fov": 72.0})
 	return out
 
@@ -180,10 +192,11 @@ func _market_views() -> Array[Dictionary]:
 		var outward3 := FabricRecipe.transform_direction(Vector3i.BACK,
 			int(record.yaw_quarters))
 		var eye := centre + Vector3(outward3) * 7.0 + Vector3.UP * 1.45
+		var overview_eye := _best_orbit_position(centre + Vector3.UP * 1.0,
+			12.0, 11.0, [StringName("spatial.fabric.%s" % feature.stable_id)])
 		return [{"id": "market-aisle", "position": eye,
 			"target": centre + Vector3.UP * 1.35, "fov": 66.0},
-			{"id": "market-overhead", "position": centre \
-				+ Vector3(outward3) * 6.0 + Vector3.UP * 8.0,
+			{"id": "market-overhead", "position": overview_eye,
 				"target": centre + Vector3.UP, "fov": 58.0}] \
 			as Array[Dictionary]
 	return [] as Array[Dictionary]
@@ -196,12 +209,29 @@ func _courtyard_views() -> Array[Dictionary]:
 	if floors.is_empty():
 		return [] as Array[Dictionary]
 	var centre := _cell_centroid(floors)
+	var minimum := floors[0]
+	var maximum := floors[0]
+	for floor: Vector3i in floors:
+		minimum = minimum.min(floor)
+		maximum = maximum.max(floor)
+	var along_x := maximum.x - minimum.x >= maximum.z - minimum.z
+	var eye_cell := Vector3(
+		float(minimum.x) if along_x else float(minimum.x + maximum.x) * 0.5,
+		float(minimum.y),
+		float(minimum.z + maximum.z) * 0.5 if along_x else float(minimum.z))
+	var target_cell := Vector3(
+		float(maximum.x) if along_x else float(minimum.x + maximum.x) * 0.5,
+		float(minimum.y),
+		float(minimum.z + maximum.z) * 0.5 if along_x else float(maximum.z))
+	var court_eye := eye_cell * FabricRecipe.CELL_SIZE + Vector3.UP * 1.45
+	var court_target := target_cell * FabricRecipe.CELL_SIZE \
+		+ Vector3.UP * 1.45
 	var out: Array[Dictionary] = [
-		{"id": "courtyard-eye", "position": centre + Vector3.UP * 1.45,
-			"target": centre + Vector3(7.0, 1.8, 0.0), "fov": 72.0},
+		{"id": "courtyard-eye", "position": court_eye,
+			"target": court_target, "fov": 74.0},
 		{"id": "courtyard-overhead", "position": centre \
-			+ Vector3(9.0, 12.0, 9.0), "target": centre,
-			"fov": 58.0},
+			+ Vector3(0.4, 18.0, 0.4), "target": centre,
+			"fov": 46.0},
 	]
 	var floor_columns: Dictionary = {}
 	var court_y := floors[0].y
@@ -220,8 +250,10 @@ func _courtyard_views() -> Array[Dictionary]:
 		lower.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
 			return a.y > b.y)
 		var eye := _route_eye(lower[0])
+		var direction := _best_route_direction(lower[0])
 		out.append({"id": "courtyard-under-route", "position": eye,
-			"target": eye + Vector3(7.0, 0.2, 0.0), "fov": 72.0})
+			"target": eye + Vector3(direction) * 6.0 \
+				+ Vector3.UP * 0.2, "fov": 72.0})
 	if not upper.is_empty():
 		upper.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
 			return a.y < b.y)
@@ -237,19 +269,22 @@ func _skywalk_views() -> Array[Dictionary]:
 	for feature: WarrenFeatureReservation in _spatial.features:
 		if feature.kind != &"enclosed_skywalk":
 			continue
-		var centre := _cell_centroid(feature.reserved_cells)
-		var a := (feature.endpoints[0] as Dictionary).cell as Vector3i
-		var b := (feature.endpoints[1] as Dictionary).cell as Vector3i
-		var delta := b - a
-		var side3 := Vector3i(-delta.z, 0, delta.x)
-		if side3 == Vector3i.ZERO:
-			side3 = Vector3i.RIGHT
-		var side := Vector3(side3).normalized()
+		var visual_bounds := _feature_visual_bounds(feature)
+		var centre := visual_bounds.get_center() if visual_bounds.size.length() \
+			> 0.0 else _cell_centroid(feature.reserved_cells)
+		var ignored: Array[StringName] = [StringName("spatial.fabric.%s" \
+			% feature.stable_id)]
+		var orbit_distance := maxf(15.0, maxf(visual_bounds.size.x,
+			visual_bounds.size.z) + 10.0)
+		var span_eye := _best_orbit_position(centre, orbit_distance, 3.5,
+			ignored, visual_bounds)
+		var under_eye := _best_orbit_position(centre - Vector3.UP * 1.0,
+			orbit_distance, -2.0, ignored, visual_bounds)
 		out.append({"id": "skywalk-%02d-span" % ordinal,
-			"position": centre + side * 8.0 + Vector3.UP * 1.5,
-			"target": centre, "fov": 58.0})
+			"position": span_eye,
+			"target": centre, "fov": 52.0})
 		out.append({"id": "skywalk-%02d-under" % ordinal,
-			"position": centre + side * 5.5 - Vector3.UP * 2.5,
+			"position": under_eye,
 			"target": centre - Vector3.UP, "fov": 62.0})
 		ordinal += 1
 	return out
@@ -393,6 +428,96 @@ func _write_manifest() -> void:
 		"audit": _spatial.audit, "captures": _captures}, "  "))
 
 
+func _best_route_direction(cell: Vector3i) -> Vector3i:
+	var route_set: Dictionary = {}
+	for route: Vector3i in _spatial.route_floor_cells:
+		route_set[route] = true
+	var best := Vector3i.RIGHT
+	var best_length := 0
+	for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK,
+			Vector3i.LEFT, Vector3i.FORWARD]:
+		var length := 0
+		for step in range(1, 7):
+			if not route_set.has(cell + direction * step):
+				break
+			length += 1
+		if length > best_length:
+			best = direction
+			best_length = length
+	return best
+
+
+func _feature_visual_bounds(feature: WarrenFeatureReservation) -> AABB:
+	var prefix := "spatial.fabric.%s" % feature.stable_id
+	var bounds := AABB()
+	var has_bounds := false
+	for unit: FabricUnit in _fabric.units:
+		if not String(unit.stable_id).begins_with(prefix):
+			continue
+		var recipe := _fabric.recipe(unit.recipe_id)
+		if recipe == null or recipe.placements.is_empty():
+			continue
+		var unit_bounds := unit.transform() * recipe.local_clearance_bounds
+		bounds = bounds.merge(unit_bounds) if has_bounds else unit_bounds
+		has_bounds = true
+	return bounds
+
+
+func _best_orbit_position(target: Vector3, distance: float, height: float,
+		ignored_prefixes: Array[StringName] = [], own_bounds := AABB()) -> Vector3:
+	## Pick the least-occluded of eight deterministic orbit positions against the
+	## same measured envelopes that gate construction. This is not image scoring;
+	## it only prevents a review camera from spawning inside an unrelated house or
+	## aiming through several buildings before reaching its requested feature.
+	var directions: Array[Vector3] = [
+		Vector3.RIGHT, Vector3.BACK, Vector3.LEFT, Vector3.FORWARD,
+		(Vector3.RIGHT + Vector3.BACK).normalized(),
+		(Vector3.LEFT + Vector3.BACK).normalized(),
+		(Vector3.LEFT + Vector3.FORWARD).normalized(),
+		(Vector3.RIGHT + Vector3.FORWARD).normalized(),
+	]
+	var best := target + directions[0] * distance + Vector3.UP * height
+	var best_score := 1 << 30
+	for distance_scale in [1.0, 1.35]:
+		for direction: Vector3 in directions:
+			var candidate := target + direction * distance * distance_scale \
+				+ Vector3.UP * height
+			var score := _view_occlusion_score(candidate, target,
+				ignored_prefixes)
+			if own_bounds.size.length_squared() > 0.0 \
+					and own_bounds.grow(0.25).has_point(candidate):
+				score += 1000
+			if score < best_score:
+				best = candidate
+				best_score = score
+	return best
+
+
+func _view_occlusion_score(position: Vector3, target: Vector3,
+		ignored_prefixes: Array[StringName]) -> int:
+	var score := 0
+	for sample_index in 24:
+		# Stop short of the target because the feature being photographed may join
+		# an endpoint room there. The ignored feature prefix handles its own shell.
+		var weight := 100 if sample_index == 0 else 1
+		var point := position.lerp(target, float(sample_index) / 26.0)
+		for unit: FabricUnit in _fabric.units:
+			var ignored := false
+			for prefix: StringName in ignored_prefixes:
+				if String(unit.stable_id).begins_with(String(prefix)):
+					ignored = true
+					break
+			if ignored:
+				continue
+			var recipe := _fabric.recipe(unit.recipe_id)
+			if recipe == null or recipe.placements.is_empty():
+				continue
+			var bounds := unit.transform() * recipe.local_clearance_bounds
+			if bounds.grow(0.1).has_point(point):
+				score += weight
+	return score
+
+
 static func _v3(value: Vector3) -> Array[float]:
 	return [value.x, value.y, value.z] as Array[float]
 
@@ -400,6 +525,14 @@ static func _v3(value: Vector3) -> Array[float]:
 static func _is_building_use(use_value: int) -> bool:
 	return use_value in [WarrenSpatialGrid.Use.PRIVATE_VOLUME,
 		WarrenSpatialGrid.Use.STRUCTURAL_VOLUME]
+
+
+static func _has_route_run(route_set: Dictionary, start: Vector3i,
+		direction: Vector3i, length: int) -> bool:
+	for step in length:
+		if not route_set.has(start + direction * step):
+			return false
+	return true
 
 
 static func _route_eye(cell: Vector3i) -> Vector3:

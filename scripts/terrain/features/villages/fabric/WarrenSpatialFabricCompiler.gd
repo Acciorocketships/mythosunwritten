@@ -595,6 +595,9 @@ static func _compile_skywalk_feature(feature: WarrenFeatureReservation,
 		last_failure = "skywalk %s has unsupported %d-component construction" % [
 			feature.stable_id, records.size()]
 		return [] as Array[FabricUnit]
+	var endpoint_lineage_seams := _unique_sorted_names(
+		(endpoint_specs[0].seam_ids as Array[StringName]) \
+		+ (endpoint_specs[1].seam_ids as Array[StringName]))
 	var first_shell := _feature_component_shell(feature, 0, records[0])
 	var endpoint_options: Array[Dictionary] = []
 	for endpoint_index in endpoint_specs.size():
@@ -613,7 +616,7 @@ static func _compile_skywalk_feature(feature: WarrenFeatureReservation,
 	var first := _feature_component_with_connections(first_shell,
 		[endpoint_options[0].connection] as Array[Dictionary],
 		[first_endpoint.unit] as Array[FabricUnit], true,
-		first_endpoint.seam_ids as Array[StringName])
+		endpoint_lineage_seams)
 	var corner_shell := _feature_component_shell(feature, 1, records[1])
 	var corner_matches := _matching_room_connections(corner_shell, first,
 		program)
@@ -623,7 +626,7 @@ static func _compile_skywalk_feature(feature: WarrenFeatureReservation,
 		return [] as Array[FabricUnit]
 	var corner := _feature_component_with_connections(corner_shell,
 		[corner_matches[0]] as Array[Dictionary], [first] as Array[FabricUnit],
-		true)
+		true, endpoint_lineage_seams)
 	var final_shell := _feature_component_shell(feature, 2, records[2])
 	var corner_to_final := _matching_room_connections(final_shell, corner,
 		program)
@@ -640,7 +643,7 @@ static func _compile_skywalk_feature(feature: WarrenFeatureReservation,
 		endpoint_to_final[0]]
 	var final_unit := _feature_component_with_connections(final_shell,
 		final_connections, [corner] as Array[FabricUnit], false,
-		final_endpoint.seam_ids as Array[StringName])
+		endpoint_lineage_seams)
 	return [first, corner, final_unit] as Array[FabricUnit]
 
 
@@ -828,6 +831,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var pitched_count := 0
 	var flat_count := 0
 	var cap_count := 0
+	var terrace_cap_count := 0
+	var terrace_cap_fallback_count := 0
 	var rejected_pitched_count := 0
 	var rejected_flat_count := 0
 	for room_id: StringName in room_ids:
@@ -881,7 +886,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 		for row_index in rows.size():
 			var row := rows[row_index] as Array[Vector3i]
-			var cap := _cap_placement(source.grid, row)
+			var cap := _cap_placement(source.grid, row, room,
+				source.world_seed)
 			if cap.is_empty():
 				last_failure = "no native setback cap fits row %d for %s" % [
 					row_index, room_id]
@@ -891,13 +897,28 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			var cap_unit := _cap_unit(room_id, row_index, room, parent_unit,
 				cap, seams)
 			if not probe.add_unit(cap_unit):
-				last_failure = "exact setback cap %d for %s was rejected after %s: %s" \
-					% [row_index, room_id, "; ".join(attempt_failures),
-						probe.last_rejection]
-				return [] as Array[FabricUnit]
+				var terrace_rejection := probe.last_rejection
+				if String(cap.recipe_id).contains(".terrace."):
+					cap["recipe_id"] = StringName("roof.setback.cap.%d" \
+						% row.size())
+					cap_unit = _cap_unit(room_id, row_index, room,
+						parent_unit, cap, seams)
+					if not probe.add_unit(cap_unit):
+						last_failure = "setback terrace and plain cap %d for %s were rejected after %s: %s; %s" \
+							% [row_index, room_id, "; ".join(attempt_failures),
+								terrace_rejection, probe.last_rejection]
+						return [] as Array[FabricUnit]
+					terrace_cap_fallback_count += 1
+				else:
+					last_failure = "exact setback cap %d for %s was rejected after %s: %s" \
+						% [row_index, room_id, "; ".join(attempt_failures),
+							probe.last_rejection]
+					return [] as Array[FabricUnit]
 			out.append(cap_unit)
 			realized_face_count += row.size()
 			cap_count += 1
+			terrace_cap_count += int(String(cap_unit.recipe_id) \
+				.contains(".terrace."))
 	if realized_face_count != source_face_count:
 		last_failure = "roof realization covered %d of %d authoritative faces" % [
 			realized_face_count, source_face_count]
@@ -910,6 +931,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"pitched_roof_count": pitched_count,
 		"flat_roof_count": flat_count,
 		"setback_cap_unit_count": cap_count,
+		"setback_terrace_unit_count": terrace_cap_count,
+		"setback_terrace_fallback_count": terrace_cap_fallback_count,
 		"rejected_pitched_count": rejected_pitched_count,
 		"rejected_flat_count": rejected_flat_count,
 	}
@@ -1038,8 +1061,9 @@ static func _touches_public_air(grid: WarrenSpatialGrid,
 	return false
 
 
-static func _cap_placement(_grid: WarrenSpatialGrid,
-		face_cells: Array[Vector3i]) -> Dictionary:
+static func _cap_placement(grid: WarrenSpatialGrid,
+		face_cells: Array[Vector3i], room: WarrenRoomStamp,
+		world_seed: int) -> Dictionary:
 	if face_cells.size() not in [1, 2, 4, 6]:
 		return {}
 	var targets: Dictionary = {}
@@ -1057,8 +1081,34 @@ static func _cap_placement(_grid: WarrenSpatialGrid,
 					origin, yaw)] = true
 			if not _same_cell_set(visible, targets):
 				continue
-			return {"recipe_id": StringName("roof.setback.cap.%d" \
-				% face_cells.size()), "origin": origin,
+			var recipe_id := StringName("roof.setback.cap.%d" \
+				% face_cells.size())
+			if face_cells.size() > 1 and posmod(Helper._mix64(world_seed \
+					^ String(room.stable_id).hash() \
+					^ anchor_face.x * 73856093 ^ anchor_face.y * 83492791 \
+					^ anchor_face.z * 19349663), 3) != 0:
+				var exposed_sides: Array[int] = []
+				for rail_side: int in [-1, 1]:
+					var local_side := Vector3i(0, 0, rail_side)
+					var world_side := FabricRecipe.transform_direction(local_side,
+						yaw)
+					var exposed := true
+					for face: Vector3i in face_cells:
+						if grid.use_at(face + world_side) in [
+								WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+								WarrenSpatialGrid.Use.STRUCTURAL_VOLUME]:
+							exposed = false
+							break
+					if exposed:
+						exposed_sides.append(rail_side)
+				if not exposed_sides.is_empty():
+					var selected_side := exposed_sides[posmod(Helper._mix64(
+						world_seed ^ anchor_face.x * 31 ^ anchor_face.z * 47),
+						exposed_sides.size())]
+					recipe_id = StringName("roof.setback.terrace.%d.%s" % [
+						face_cells.size(), "left" if selected_side < 0 \
+						else "right"])
+			return {"recipe_id": recipe_id, "origin": origin,
 				"yaw_quarters": yaw, "anchor_face": anchor_face}
 	return {}
 
@@ -1288,7 +1338,7 @@ static func _room_feature_envelope_conflict(source: WarrenSpatialPlan,
 		room.yaw_quarters) * recipe.local_clearance_bounds
 	for feature: WarrenFeatureReservation in source.features:
 		if feature.construction_records.is_empty() \
-				or _feature_is_related_to_room(feature, room.stable_id):
+				or _feature_is_related_to_room(source, feature, room):
 			continue
 		for record: Dictionary in feature.construction_records:
 			var feature_recipe := program.recipe(StringName(record.recipe_id))
@@ -1303,17 +1353,33 @@ static func _room_feature_envelope_conflict(source: WarrenSpatialPlan,
 	return &""
 
 
-static func _feature_is_related_to_room(feature: WarrenFeatureReservation,
-		room_id: StringName) -> bool:
+static func _feature_is_related_to_room(source: WarrenSpatialPlan,
+		feature: WarrenFeatureReservation, room: WarrenRoomStamp) -> bool:
+	var room_id := room.stable_id
 	for key: String in ["annex_room_id", "balcony_room_id",
 			"market_backing_room_id"]:
 		if StringName(feature.audit.get(key, &"")) == room_id:
 			return true
+	# A balcony, annex, or market is selected against every measured room in its
+	# recomposed source lineage. Its brackets/eaves may legitimately cross the
+	# conservative AABB of the storey directly below even though the occupied
+	# cells remain disjoint. Preserve that authored construction seam here.
+	for key: String in ["annex_source_parcel_id",
+			"balcony_source_parcel_id", "market_backing_parcel_id"]:
+		if StringName(feature.audit.get(key, &"")) == room.source_parcel_id:
+			return true
 	for binding_value: Variant in feature.audit.get(
 			"skywalk_endpoint_bindings", []):
-		if StringName((binding_value as Dictionary).get("room_id", &"")) \
-				== room_id:
+		var endpoint_room_id := StringName((binding_value as Dictionary).get(
+			"room_id", &""))
+		if endpoint_room_id == room_id:
 			return true
+		for building: WarrenBuildingVolume in source.buildings:
+			for endpoint_room: WarrenRoomStamp in building.room_records:
+				if endpoint_room.stable_id == endpoint_room_id \
+						and endpoint_room.source_parcel_id \
+						== room.source_parcel_id:
+					return true
 	return false
 
 
