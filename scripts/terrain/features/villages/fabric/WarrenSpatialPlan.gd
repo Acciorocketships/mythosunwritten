@@ -82,6 +82,11 @@ func seal(p_entry_floor_cell: Vector3i) -> bool:
 		return false
 	if not _validate_building_ownership():
 		return false
+	var access_audit := _building_access_audit()
+	if int(access_audit.spatial_missing_private_parent_count) != 0:
+		return _reject("private building access names a missing parent")
+	if int(access_audit.detached_building_stack_count) != 0:
+		return _reject("inhabited building access does not reach a public threshold")
 	var allocatable_count := grid.count_use(WarrenSpatialGrid.Use.ALLOCATABLE)
 	if allocatable_count != 0:
 		return _reject("allocatable mass survives final classification")
@@ -115,6 +120,7 @@ func seal(p_entry_floor_cell: Vector3i) -> bool:
 		"feature_count": features.size(),
 	}
 	audit.merge(interface_audit, true)
+	audit.merge(access_audit, true)
 	audit.merge(construction_plan.audit, true)
 	if not grid.seal():
 		return _reject("fine grid could not seal")
@@ -201,6 +207,60 @@ func _validate_building_ownership() -> bool:
 		if feature == null or not feature.reserved_cells.has(cell):
 			return _reject("structural cell has no exact feature owner at %s" % cell)
 	return true
+
+
+func _building_access_audit() -> Dictionary:
+	## The fine plan already owns exact inhabited components and their private
+	## access ancestry. Legacy FabricUnit IDs split every recomposed room segment
+	## into a different apparent stack, so grouping those strings cannot prove
+	## access for this generation mode. Follow the sealed source facts instead:
+	## public thresholds are roots and private_parent_ids are inhabited links.
+	var reached: Dictionary = {}
+	var missing_parents := 0
+	var private_edges := 0
+	var addressed := 0
+	for building: WarrenBuildingVolume in buildings:
+		if not building.thresholds.is_empty():
+			reached[building.stable_id] = true
+			addressed += 1
+		for parent_id: StringName in building.private_parent_ids:
+			private_edges += 1
+			missing_parents += int(not _building_by_id.has(parent_id))
+	var changed := true
+	while changed:
+		changed = false
+		for building: WarrenBuildingVolume in buildings:
+			if reached.has(building.stable_id):
+				continue
+			for parent_id: StringName in building.private_parent_ids:
+				if reached.has(parent_id):
+					reached[building.stable_id] = true
+					changed = true
+					break
+	var detached_buildings := buildings.size() - reached.size()
+	var landmarks := 0
+	var connected_landmarks := 0
+	for feature: WarrenFeatureReservation in features:
+		if feature.kind != &"prefab_landmark":
+			continue
+		landmarks += 1
+		connected_landmarks += int(
+			bool(feature.audit.get("landmark_publicly_addressed", false)) \
+			and bool(feature.audit.get("landmark_terrain_rooted", false)) \
+			and not feature.endpoints.is_empty())
+	var total := buildings.size() + landmarks
+	var detached := detached_buildings + landmarks - connected_landmarks
+	return {
+		"spatial_building_volume_count": buildings.size(),
+		"spatial_addressed_building_volume_count": addressed,
+		"spatial_private_access_edge_count": private_edges,
+		"spatial_missing_private_parent_count": missing_parents,
+		"spatial_detached_building_volume_count": detached_buildings,
+		"spatial_prefab_landmark_building_count": landmarks,
+		"building_stack_count": total,
+		"connected_building_stack_count": total - detached,
+		"detached_building_stack_count": detached,
+	}
 
 
 func _interface_audit() -> Dictionary:

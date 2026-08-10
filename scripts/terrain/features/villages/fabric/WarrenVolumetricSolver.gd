@@ -606,7 +606,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						2147483647, 2147483647),
 					Vector3i(parcel.frontage_direction.x, 0,
 						parcel.frontage_direction.y), int(proposal.roof_feature),
-					support_parent_parcel_id, support_parent_storey_index)
+					support_parent_parcel_id, support_parent_storey_index,
+					parcel.address_door_phase if addressed else 0)
 				if not room.add_private_cells(room_cells) \
 						or not room.seal(grid, building_id) \
 						or not building.add_room(room):

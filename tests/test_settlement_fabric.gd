@@ -245,6 +245,46 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		assert_false(String(asset_id).begins_with("sfbp.tent"), String(asset_id))
 
 
+func test_addressed_room_vocabulary_has_two_exact_door_phases() -> void:
+	var program := _program()
+	assert_not_null(program)
+	if program == null:
+		return
+	for base_id: StringName in [&"room.base.rock",
+			&"room.slim.base.rock", &"room.tower.base.rock",
+			&"room.long.base.rock"]:
+		var primary := program.recipe(base_id)
+		var alternate := program.recipe(
+			SettlementFabricProgram.address_door_phase_recipe_id(base_id, 1))
+		assert_not_null(primary, String(base_id))
+		assert_not_null(alternate, "%s alternate" % base_id)
+		if primary == null or alternate == null:
+			continue
+		assert_eq(primary.entrances.size(), 1)
+		assert_eq(alternate.entrances.size(), 1)
+		var first := primary.entrances[0] as Dictionary
+		var second := alternate.entrances[0] as Dictionary
+		assert_eq(second.cell as Vector3i,
+			(first.cell as Vector3i) + Vector3i.LEFT,
+			"the second threshold must be the other half of one 3 m module")
+		assert_eq(second.facing, first.facing)
+		assert_eq(alternate.placements.size(), primary.placements.size(),
+			"door phase may not add a facade overlay")
+		for index in primary.placements.size():
+			assert_eq(alternate.placements[index].asset_id,
+				primary.placements[index].asset_id)
+			assert_eq(alternate.placements[index].transform,
+				primary.placements[index].transform)
+		for y_offset in 2:
+			var old_cell := (first.cell as Vector3i) + Vector3i.UP * y_offset
+			var new_cell := (second.cell as Vector3i) + Vector3i.UP * y_offset
+			assert_has(alternate.solid_cells, old_cell,
+				"the unused threshold half must be a real wall")
+			assert_does_not_have(alternate.occluder_cells, new_cell,
+				"the selected threshold half must be an aperture")
+			assert_has(alternate.headroom_cells, new_cell)
+
+
 func test_module_contracts_pin_floor_facade_and_roof_datums() -> void:
 	var program := _program()
 	var catalog := EnvironmentCatalog.load_default()

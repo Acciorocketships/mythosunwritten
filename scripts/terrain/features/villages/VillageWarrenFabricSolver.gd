@@ -22,34 +22,43 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	assert(street_axis.is_normalized() and program != null)
 	if program.settlement_fabric_program == null:
 		return _rejected(&"fabric_program")
-	var preview := WarrenBuiltTownSolver.solve(city_seed,
+	var preview := WarrenVolumetricSolver.solve(city_seed, {},
 		program.settlement_fabric_program)
 	if preview == null:
 		return _rejected(StringName("volume_%s" %
-			WarrenBuiltTownSolver.last_failure))
-	var attempt := int(preview.assets.town.audit.route_attempt)
+			WarrenVolumetricSolver.last_failure))
+	var preview_fabric := WarrenSpatialFabricCompiler.solve(preview,
+		program.settlement_fabric_program)
+	if preview_fabric == null:
+		return _rejected(StringName("fabric_%s" %
+			WarrenSpatialFabricCompiler.last_failure))
 	for placement: Dictionary in _placement_candidates(terrain, preview,
 			centre, street_axis, city_seed):
-		var built := preview if bool(placement.flat_ground) \
-			else WarrenBuiltTownSolver.solve_attempt(city_seed, attempt,
-				program.settlement_fabric_program,
-				placement.ground_bands as Dictionary)
-		if built == null:
+		var spatial := preview if bool(placement.flat_ground) \
+			else WarrenVolumetricSolver.solve(city_seed,
+				placement.ground_bands as Dictionary,
+				program.settlement_fabric_program)
+		if spatial == null:
 			continue
-		var preview_entry := preview.assets.town.volume.entry_cell
-		var built_entry := built.assets.town.volume.entry_cell
+		var preview_entry := preview.source_volume.entry_cell
+		var built_entry := spatial.source_volume.entry_cell
 		if Vector2i(preview_entry.x, preview_entry.z) \
 				!= Vector2i(built_entry.x, built_entry.z):
 			continue
-		placement["local_bounds"] = _local_bounds(built.fabric)
-		return _materialize(terrain, stable_id, built, placement, program)
+		var fabric := preview_fabric if spatial == preview \
+			else WarrenSpatialFabricCompiler.solve(spatial,
+				program.settlement_fabric_program)
+		if fabric == null:
+			continue
+		placement["local_bounds"] = _local_bounds(fabric)
+		return _materialize(terrain, stable_id, spatial, fabric, placement, program)
 	return _rejected(&"terrain_footprint")
 
 
 static func _placement_candidates(terrain: VillageTerrainView,
-		preview: WarrenBuiltTownPlan, centre: Vector2, street_axis: Vector2,
+		preview: WarrenSpatialPlan, centre: Vector2, street_axis: Vector2,
 		city_seed: int) -> Array[Dictionary]:
-	var volume := preview.assets.town.volume
+	var volume := preview.source_volume
 	var entry := volume.entry_cell
 	var entry_local := Vector3(float(entry.x) \
 		* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
@@ -116,23 +125,15 @@ static func _placement_candidates(terrain: VillageTerrainView,
 
 
 static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
-		built: WarrenBuiltTownPlan, placement: Dictionary,
+		spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
+		placement: Dictionary,
 		program: VillageProgram) -> VillageUrbanFabricPlan:
-	var fabric := built.fabric
 	var result := VillageUrbanFabricPlan.new()
 	result.generation_kind = \
 		VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN
 	result.fabric_plan = fabric
 	result.fabric_audit = fabric.audit.duplicate(true)
-	# Selection is a projection fact layered over the canonical fabric audit; it
-	# must not replace that dictionary with WarrenBuiltTownPlan's broader detail-
-	# search counters. VillageUrbanFabricPlan validates these three explicit
-	# additions while continuing to require every structural fact byte-for-byte.
-	for key: StringName in [&"visual_quality_target_met",
-			&"visual_quality_fallback_count", &"visual_selection_candidate_count"]:
-		result.fabric_audit[key] = built.audit.get(key,
-			false if key == &"visual_quality_target_met" else 0)
-	result.volumetric_town = built
+	result.volumetric_spatial = spatial
 	result.terrain_entrance_lift_m = float(placement.entrance_lift)
 	result.terrain_relief_m = float(placement.maximum_y) \
 		- float(placement.minimum_y)
@@ -189,11 +190,18 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 		horizontal_size * 0.5 + Vector2.ONE * CLEARANCE_MARGIN, yaw,
 		float(placement.minimum_y) - SUPPORT_STEP, top_y,
 		StringName("%s.exclusive" % district_id), district_id))
-	var building_count := int(fabric.audit.get("building_stack_count", 0))
-	for index in building_count:
+	for building: WarrenBuildingVolume in spatial.buildings:
 		result.buildings.append({
-			"stable_id": StringName("%s.building.%02d" % [district_id, index]),
+			"stable_id": StringName("%s/%s" % [district_id, building.stable_id]),
 			"volumetric": true,
+		})
+	for feature: WarrenFeatureReservation in spatial.features:
+		if feature.kind != &"prefab_landmark":
+			continue
+		result.buildings.append({
+			"stable_id": StringName("%s/%s" % [district_id, feature.stable_id]),
+			"volumetric": true,
+			"prefab_landmark": true,
 		})
 	result.entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_id) < String(b.stable_id))

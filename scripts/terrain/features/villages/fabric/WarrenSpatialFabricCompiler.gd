@@ -89,6 +89,14 @@ static func solve(source: WarrenSpatialPlan,
 	lineage["construction_signature"] = result.construction_signature()
 	lineage["generation_source"] = &"spatial_volumetric_warren"
 	var audit := SettlementFabricSolver.audit_plan(result, lineage)
+	# Preserve the generic unit-name grouping as a diagnostic, but do not let it
+	# replace the source plan's explicit private-access proof. Recomposition makes
+	# one WarrenBuildingVolume per connected 3D owner, and its parent links are the
+	# only authoritative statement that an unaddressed segment reaches a doorway.
+	for key: StringName in [&"building_stack_count",
+			&"connected_building_stack_count", &"detached_building_stack_count"]:
+		audit[StringName("legacy_unit_group_%s" % key)] = audit.get(key, -1)
+		audit[key] = source.audit.get(key, -1)
 	if not result.seal(audit):
 		last_failure = "spatial common-fabric seal failed: %s" % \
 			result.last_rejection
@@ -415,7 +423,7 @@ static func _is_cardinal_xz(direction: Vector3i) -> bool:
 
 static func _is_phase_b_recipe(recipe_id: StringName) -> bool:
 	var id := String(recipe_id)
-	return id.ends_with(".b") or id.contains(".b.portal.")
+	return id.ends_with(".b") or id.contains(".b.")
 
 
 static func compile_feature_units(source: WarrenSpatialPlan,
@@ -1149,6 +1157,9 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 	if room.terrain_bearing:
 		var terrain_recipe := StringName("%s.base.rock%s" % [prefix,
 			"" if room.addressed else ".closed"])
+		if room.addressed:
+			terrain_recipe = SettlementFabricProgram.address_door_phase_recipe_id(
+				terrain_recipe, room.address_door_phase)
 		return SettlementFabricProgram.feature_portal_recipe_id(terrain_recipe,
 			feature_portal_mask) if feature_portal_mask > 0 else terrain_recipe
 	var phase := posmod(room.lattice_origin.x * 31 + room.lattice_origin.y * 17 \
@@ -1173,6 +1184,9 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 	else:
 		base_recipe_id = StringName("%s.upper%s.%s%s" % [prefix, addressed, theme,
 			".b" if phase_b else ""])
+	if room.addressed:
+		base_recipe_id = SettlementFabricProgram.address_door_phase_recipe_id(
+			base_recipe_id, room.address_door_phase)
 	return SettlementFabricProgram.feature_portal_recipe_id(base_recipe_id,
 		feature_portal_mask) if feature_portal_mask > 0 else base_recipe_id
 

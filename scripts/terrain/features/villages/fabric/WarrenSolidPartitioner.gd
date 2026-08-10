@@ -104,9 +104,12 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 	## `volume` is optional. The solid predicate this uses (massif column span
 	## minus excavation.carved) is exactly what WarrenExcavationVolumeAdapter
 	## puts in WarrenVolumePlan.mass_cells, so a plan can never change which
-	## mass is available; passing one additionally seals every parcel, which is
-	## what Task 6 needs and what proves the geometry satisfies the whole
-	## downstream contract rather than merely this class's own rules.
+	## mass is available. Passing one additionally makes the exact fine-lattice
+	## route surface part of candidate selection: a stair/ramp stride is a coarse
+	## frontage cell but only two of its fine cells are real floor. A candidate
+	## whose authored door misses those treads is skipped before it claims solid,
+	## allowing another frontage or footprint to take the wall. The final pass
+	## still seals every selected parcel against the complete volume contract.
 	##
 	## The one thing a plan does change is the ADDRESS set the infill pass may
 	## build from -- see `_fill_addresses`. A plan straight from the adapter
@@ -190,7 +193,7 @@ static func _partition_variant(massif: WarrenMassif,
 		var wall_column := face["column"] as Vector2i
 		var parcel := _house_for_face(addresses[Vector3i(wall_column.x,
 			(face["walk"] as Vector3i).y, wall_column.y)] as Array[Dictionary],
-			massif, excavation, claimed, face_bands, out, out.size())
+			massif, excavation, claimed, face_bands, out, out.size(), volume)
 		if parcel != null and not _roofs_can_meet(parcel, out) \
 				and not _step_neighbours_down(parcel, out, massif, excavation,
 					claimed, face_bands):
@@ -209,7 +212,7 @@ static func _partition_variant(massif: WarrenMassif,
 			claimed[column] = parcel.stable_id
 		out.append(parcel)
 	var infilled := _fill_free_solid(out, massif, excavation, occupied,
-		claimed, face_bands, _fill_addresses(excavation, volume, variant))
+		claimed, face_bands, _fill_addresses(excavation, volume, variant), volume)
 	last_diagnostic = _diagnostic(out, faces, inherited, stranded, unjoinable,
 		infilled)
 	return out
@@ -248,7 +251,7 @@ static func _fill_addresses(excavation: WarrenExcavation,
 static func _fill_free_solid(out: Array[WarrenBuildingParcel],
 		massif: WarrenMassif, excavation: WarrenExcavation,
 		occupied: Dictionary, claimed: Dictionary, face_bands: Dictionary,
-		addresses: Array[Vector3i]) -> int:
+		addresses: Array[Vector3i], volume: WarrenVolumePlan) -> int:
 	## Houses the solid the ownership pass left standing, so a tall stack is
 	## embedded in shorter neighbours instead of rising out of bare ground.
 	##
@@ -263,7 +266,7 @@ static func _fill_free_solid(out: Array[WarrenBuildingParcel],
 	for address: Vector3i in addresses:
 		for direction: Vector2i in DIRECTIONS:
 			var parcel := _infill_house(address, direction, massif, excavation,
-				claimed, face_bands, out)
+				claimed, face_bands, out, volume)
 			if parcel == null:
 				continue
 			for cell: Vector3i in occupied_cells(parcel):
@@ -278,7 +281,8 @@ static func _fill_free_solid(out: Array[WarrenBuildingParcel],
 static func _infill_house(address: Vector3i, direction: Vector2i,
 		massif: WarrenMassif, excavation: WarrenExcavation,
 		claimed: Dictionary, face_bands: Dictionary,
-		placed: Array[WarrenBuildingParcel]) -> WarrenBuildingParcel:
+		placed: Array[WarrenBuildingParcel],
+		volume: WarrenVolumePlan) -> WarrenBuildingParcel:
 	## The largest house that fits this address facing this way and joins every
 	## roof it touches, or null. Concessions are ranked as they are for a street
 	## wall -- a lower roof before a smaller footprint -- but there is no
@@ -296,6 +300,11 @@ static func _infill_house(address: Vector3i, direction: Vector2i,
 		while top > address.y:
 			var parcel := WarrenBuildingParcel.new(stable_id, footprint,
 				address.y, top, address, threshold, -direction)
+			parcel = _candidate_with_exact_public_floor(parcel, volume)
+			if parcel == null:
+				# Door phase is fixed by the footprint profile, so lowering the same
+				# roof cannot move it onto the other half of the street square.
+				break
 			if _roofs_can_meet(parcel, placed) \
 					and not _corners_a_neighbour(parcel, placed):
 				return parcel
@@ -662,7 +671,7 @@ static func _house_for_face(addresses: Array[Dictionary],
 		massif: WarrenMassif, excavation: WarrenExcavation,
 		claimed: Dictionary, face_bands: Dictionary,
 		placed: Array[WarrenBuildingParcel],
-		index: int) -> WarrenBuildingParcel:
+		index: int, volume: WarrenVolumePlan) -> WarrenBuildingParcel:
 	## Preference order: the wall's first address, then its largest footprint,
 	## then the highest roof its terrace allows -- but only among roofs that can
 	## actually MEET the neighbours already standing. A lower roof is tried
@@ -683,6 +692,9 @@ static func _house_for_face(addresses: Array[Dictionary],
 			while top > walk.y:
 				var parcel := WarrenBuildingParcel.new(stable_id, footprint,
 					walk.y, top, walk, threshold, -direction)
+				parcel = _candidate_with_exact_public_floor(parcel, volume)
+				if parcel == null:
+					break
 				var joins := _roofs_can_meet(parcel, placed)
 				if joins and not _corners_a_neighbour(parcel, placed):
 					return parcel
@@ -708,6 +720,28 @@ static func _house_for_face(addresses: Array[Dictionary],
 	# candidate already touches everything any candidate could. Measured: adding
 	# that preference changed no seed's contact metrics at all.
 	return unjoinable
+
+
+static func _candidate_with_exact_public_floor(parcel: WarrenBuildingParcel,
+		volume: WarrenVolumePlan) -> WarrenBuildingParcel:
+	if volume == null:
+		return parcel
+	for door_phase in 2:
+		var phased := WarrenBuildingParcel.new(parcel.stable_id,
+			parcel.footprint, parcel.base_band, parcel.top_band,
+			parcel.address_walk_cell, parcel.threshold_column,
+			parcel.frontage_direction, door_phase)
+		if _candidate_has_exact_public_floor(phased, volume):
+			return phased
+	return null
+
+
+static func _candidate_has_exact_public_floor(parcel: WarrenBuildingParcel,
+		volume: WarrenVolumePlan) -> bool:
+	var landing := WarrenParcelConstruction.candidate_address_landing(parcel,
+		volume)
+	return landing.x != 2147483647 \
+		and volume.has_exact_route_surface(landing)
 
 
 static func _roofs_can_meet(parcel: WarrenBuildingParcel,
@@ -1039,10 +1073,12 @@ static func _diagnostic(parcels: Array[WarrenBuildingParcel],
 		unjoinable: int, infilled: int) -> Dictionary:
 	var families: Dictionary = {}
 	var footprint_cells := 0
+	var alternate_door_phases := 0
 	for parcel: WarrenBuildingParcel in parcels:
 		var family := "%dcell" % parcel.footprint.size()
 		families[family] = int(families.get(family, 0)) + 1
 		footprint_cells += parcel.footprint.size()
+		alternate_door_phases += int(parcel.address_door_phase == 1)
 	return {
 		"street_wall_face_count": faces.size(),
 		"parcel_count": parcels.size(),
@@ -1052,4 +1088,5 @@ static func _diagnostic(parcels: Array[WarrenBuildingParcel],
 		"unjoinable_roof_count": unjoinable,
 		"footprint_cell_count": footprint_cells,
 		"footprint_families": families,
+		"alternate_door_phase_count": alternate_door_phases,
 	}

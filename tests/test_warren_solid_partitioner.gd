@@ -190,6 +190,13 @@ func test_parcels_satisfy_the_whole_downstream_parcel_contract() -> void:
 			assert_true(WarrenParcelConstruction.door_serves_address(parcel),
 				("seed %d: parcel %s door does not open onto walk %s") \
 				% [world_seed, parcel.stable_id, parcel.address_walk_cell])
+			var threshold := WarrenParcelConstruction.threshold_cell(parcel)
+			var landing := threshold + Vector3i(parcel.frontage_direction.x, 0,
+				parcel.frontage_direction.y)
+			assert_true(plan.has_exact_route_surface(landing),
+				("seed %d: parcel %s door opens into swept headroom rather than " \
+				+ "onto exact public floor at %s") % [world_seed,
+					parcel.stable_id, landing])
 			# has_frontage(), not has_walk(): a parcel may legitimately address
 			# a STAIR/RAMP intermediate stride cell, which is real excavated
 			# street ground WarrenSolidPartitioner always rooted houses at, but
@@ -995,23 +1002,36 @@ func test_footprints_stay_in_the_authored_family() -> void:
 		"a warren of one repeated footprint is not a partitioned town")
 
 
-func test_partition_is_deterministic_and_ignores_the_optional_plan() -> void:
-	## Integer hashes only: no randf, no Time, no engine RNG. The optional
-	## volume plan seals the result, and must not be able to change which
-	## houses were chosen -- the solid predicate it carries is the same one
-	## derived from the massif and the excavation.
-	var town := _town(1)
-	assert_false(town.is_empty())
+func test_partition_is_deterministic_with_and_without_exact_surface_selection() -> void:
+	## Integer hashes only: no randf, no Time, no engine RNG. The optional volume
+	## does not change the residual solid, but it legitimately rejects a coarse
+	## frontage candidate whose exact authored door misses a stair/ramp tread.
+	## Each mode must remain deterministic; equality between the modes is no
+	## longer an invariant because only one of them knows fine floor ownership.
+	var town: Dictionary = {}
+	var fixture_seed := -1
+	for world_seed: int in CORPUS:
+		town = _town(world_seed)
+		if not town.is_empty():
+			fixture_seed = world_seed
+			break
+	assert_false(town.is_empty(),
+		"the accepted partition corpus produced no deterministic fixture")
+	if town.is_empty():
+		return
 	var massif := town["massif"] as WarrenMassif
 	var excavation := town["excavation"] as WarrenExcavation
 	var first := WarrenSolidPartitioner.partition(massif, excavation)
 	var second := WarrenSolidPartitioner.partition(massif, excavation)
 	var sealed_run := WarrenSolidPartitioner.partition(massif, excavation,
 		town["plan"] as WarrenVolumePlan)
+	var repeated_sealed_run := WarrenSolidPartitioner.partition(massif,
+		excavation, town["plan"] as WarrenVolumePlan)
 	assert_eq(_signature(first), _signature(second),
-		"two partitions of one excavation must be identical")
-	assert_eq(_signature(first), _signature(sealed_run),
-		"sealing must not change which houses the partition chose")
+		"seed %d: two partitions of one excavation must be identical" % fixture_seed)
+	assert_eq(_signature(sealed_run), _signature(repeated_sealed_run),
+		("seed %d: two exact-surface partitions of one volume must be identical") \
+		% fixture_seed)
 
 
 func test_partition_refuses_unsealed_inputs() -> void:

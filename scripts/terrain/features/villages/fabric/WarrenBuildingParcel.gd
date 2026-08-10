@@ -15,6 +15,10 @@ var address_walk_cell: Vector3i
 var threshold_column: Vector2i
 ## Cardinal direction from the threshold toward its public walk cell.
 var frontage_direction: Vector2i
+## Which half of the authored 3 m door module owns the exact 1.5 m threshold.
+## Phase zero preserves the original high-local-X threshold; phase one selects
+## the other half without moving the facade module or changing the footprint.
+var address_door_phase: int
 var bearing_columns: Array[Vector2i] = []
 var support_mode: StringName
 var has_occupied_overpass := false
@@ -27,7 +31,8 @@ var _sealed := false
 func _init(p_stable_id: StringName, p_footprint: Array[Vector2i],
 		p_base_band: int, p_top_band: int, p_address_walk_cell: Vector3i,
 		p_threshold_column: Vector2i,
-		p_frontage_direction: Vector2i) -> void:
+		p_frontage_direction: Vector2i,
+		p_address_door_phase: int = 0) -> void:
 	stable_id = p_stable_id
 	footprint.assign(p_footprint)
 	base_band = p_base_band
@@ -35,6 +40,7 @@ func _init(p_stable_id: StringName, p_footprint: Array[Vector2i],
 	address_walk_cell = p_address_walk_cell
 	threshold_column = p_threshold_column
 	frontage_direction = p_frontage_direction
+	address_door_phase = p_address_door_phase
 
 
 func seal(volume: WarrenVolumePlan) -> bool:
@@ -45,7 +51,8 @@ func seal(volume: WarrenVolumePlan) -> bool:
 				STOREY_BANDS) != 0 \
 			or address_walk_cell.y != base_band \
 			or not volume.has_frontage(address_walk_cell) \
-			or absi(frontage_direction.x) + absi(frontage_direction.y) != 1:
+			or absi(frontage_direction.x) + absi(frontage_direction.y) != 1 \
+			or address_door_phase < 0 or address_door_phase > 1:
 		return false
 	var unique: Dictionary = {}
 	var minimum := Vector2i(2147483647, 2147483647)
@@ -123,10 +130,10 @@ func deterministic_signature() -> String:
 	for column: Vector2i in footprint:
 		footprint_parts.append("%d:%d" % [column.x, column.y])
 	footprint_parts.sort()
-	return "%s@%d..%d>A%d:%d/F%d:%d/O%d" % [
+	return "%s@%d..%d>A%d:%d/F%d:%d/D%d/O%d" % [
 		",".join(footprint_parts), base_band, top_band,
 		address_walk_cell.x, address_walk_cell.z,
-		frontage_direction.x, frontage_direction.y,
+		frontage_direction.x, frontage_direction.y, address_door_phase,
 		int(has_occupied_overpass)]
 
 
@@ -138,10 +145,10 @@ func slot_signature() -> String:
 	for column: Vector2i in footprint:
 		footprint_parts.append("%d:%d" % [column.x, column.y])
 	footprint_parts.sort()
-	return "%s@%d>A%d:%d/T%d:%d/F%d:%d" % [",".join(footprint_parts),
+	return "%s@%d>A%d:%d/T%d:%d/F%d:%d/D%d" % [",".join(footprint_parts),
 		base_band, address_walk_cell.x, address_walk_cell.z,
 		threshold_column.x, threshold_column.y,
-		frontage_direction.x, frontage_direction.y]
+		frontage_direction.x, frontage_direction.y, address_door_phase]
 
 
 func _has_continuous_bearing(volume: WarrenVolumePlan,

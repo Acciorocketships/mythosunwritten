@@ -21,6 +21,7 @@ var support_parent_storey_index: int
 var addressed: bool
 var threshold_cell := Vector3i(2147483647, 2147483647, 2147483647)
 var frontage_direction := Vector3i.ZERO
+var address_door_phase: int
 var roof_feature: int
 var private_cells: Array[Vector3i] = []
 var audit: Dictionary = {}
@@ -37,7 +38,8 @@ func _init(p_stable_id: StringName, p_source_parcel_id: StringName,
 		p_frontage_direction: Vector3i = Vector3i.ZERO,
 		p_roof_feature: int = 0,
 		p_support_parent_parcel_id: StringName = &"",
-		p_support_parent_storey_index: int = -1) -> void:
+		p_support_parent_storey_index: int = -1,
+		p_address_door_phase: int = 0) -> void:
 	stable_id = p_stable_id
 	source_parcel_id = p_source_parcel_id
 	kind = p_kind
@@ -56,6 +58,7 @@ func _init(p_stable_id: StringName, p_source_parcel_id: StringName,
 	addressed = p_addressed
 	threshold_cell = p_threshold_cell
 	frontage_direction = p_frontage_direction
+	address_door_phase = p_address_door_phase
 	roof_feature = p_roof_feature
 
 
@@ -76,6 +79,8 @@ func seal(grid: WarrenSpatialGrid, building_id: StringName) -> bool:
 			or source_parcel_id.is_empty() or building_id.is_empty() \
 			or kind not in KINDS or yaw_quarters < 0 or yaw_quarters > 3 \
 			or source_storey_index < 0 or private_cells.is_empty() \
+			or address_door_phase < 0 or address_door_phase > 1 \
+			or not addressed and address_door_phase != 0 \
 			or terrain_bearing and (not support_parent_parcel_id.is_empty() \
 				or support_parent_storey_index >= 0) \
 			or not terrain_bearing and (support_parent_parcel_id.is_empty() \
@@ -113,6 +118,7 @@ func seal(grid: WarrenSpatialGrid, building_id: StringName) -> bool:
 	audit = {
 		"private_cell_count": private_cells.size(),
 		"addressed": addressed,
+		"address_door_phase": address_door_phase,
 		"terrain_bearing": terrain_bearing,
 		"roof_feature": roof_feature,
 	}
@@ -129,12 +135,12 @@ func has_private_cell(cell: Vector3i) -> bool:
 
 
 func deterministic_signature() -> String:
-	return "%s/%s/%s@%d:%d:%d/r%d/s%d/b%d/p=%s:%d/a%d/t=%d:%d:%d/f=%d:%d:%d/rf%d" % [
+	return "%s/%s/%s@%d:%d:%d/r%d/s%d/b%d/p=%s:%d/a%d/dp%d/t=%d:%d:%d/f=%d:%d:%d/rf%d" % [
 		String(stable_id), String(source_parcel_id), String(kind),
 		lattice_origin.x, lattice_origin.y, lattice_origin.z, yaw_quarters,
 		source_storey_index, int(terrain_bearing),
 		String(support_parent_parcel_id), support_parent_storey_index,
-		int(addressed),
+		int(addressed), address_door_phase,
 		threshold_cell.x, threshold_cell.y, threshold_cell.z,
 		frontage_direction.x, frontage_direction.y, frontage_direction.z,
 		roof_feature]

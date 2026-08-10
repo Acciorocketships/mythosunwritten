@@ -147,8 +147,17 @@ func deterministic_signature() -> String:
 	for room: WarrenRoomStamp in room_records:
 		rooms.append(room.deterministic_signature())
 	rooms.sort()
-	return "%s@%d[%s]/doors=%s/rooms=%s" % [String(stable_id),
-		storey_base_band, ",".join(cells), ",".join(doors), ",".join(rooms)]
+	var parents := PackedStringArray()
+	for parent_id: StringName in private_parent_ids:
+		parents.append(String(parent_id))
+	parents.sort()
+	var features := PackedStringArray()
+	for feature_id: StringName in feature_ids:
+		features.append(String(feature_id))
+	features.sort()
+	return "%s@%d[%s]/doors=%s/parents=%s/features=%s/rooms=%s" % [
+		String(stable_id), storey_base_band, ",".join(cells), ",".join(doors),
+		",".join(parents), ",".join(features), ",".join(rooms)]
 
 
 func _rooms_cover_private_volume() -> bool:

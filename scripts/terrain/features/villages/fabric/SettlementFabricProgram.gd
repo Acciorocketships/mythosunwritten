@@ -218,6 +218,16 @@ static func feature_portal_recipe_id(base_recipe_id: StringName,
 	return StringName("%s.portal.%x" % [base_recipe_id, portal_mask])
 
 
+static func address_door_phase_recipe_id(base_recipe_id: StringName,
+		door_phase: int) -> StringName:
+	## Both phases use the same complete authored 3 m facade module. The suffix
+	## records which 1.5 m half-cell is the topological threshold so stairs can
+	## stay two lanes wide without a decorative door opening into swept air.
+	assert(not base_recipe_id.is_empty() and door_phase >= 0 and door_phase <= 1)
+	return base_recipe_id if door_phase == 0 \
+		else StringName("%s.door_b" % base_recipe_id)
+
+
 static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	if catalog == null:
 		return null
@@ -512,6 +522,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_balcony_recipe(&"balcony.bracketed.right.blue", &"blue", 0,
 			modules),
 	]
+	_append_address_door_phase_vocabulary(candidates)
 	_append_feature_portal_vocabulary(candidates, modules)
 	_append_roof_seam_vocabulary(candidates, modules)
 	_append_bisected_valley_vocabulary(candidates, modules)
@@ -1670,6 +1681,70 @@ static func _append_feature_portal_vocabulary(
 			continue
 		for portal_mask in range(1, FEATURE_PORTAL_MASK_ALL + 1):
 			candidates.append(_feature_portal_variant(base, portal_mask, modules))
+
+
+static func _append_address_door_phase_vocabulary(
+		candidates: Array[FabricRecipe]) -> void:
+	## Enumerate the second exact threshold for every addressed generated room
+	## before feature-portal variants are expanded. A balcony or occupied bridge
+	## can therefore coexist with either exterior-door phase in one measured
+	## recipe; no later compiler pass moves an aperture or wall module.
+	var base_count := candidates.size()
+	for candidate_index in base_count:
+		var base := candidates[candidate_index]
+		if base == null or not base.has_tag(&"room") \
+				or not base.has_tag(&"generated_building") \
+				or base.entrances.size() != 1 \
+				or (base.entrances[0] as Dictionary).facing != Vector3i.BACK:
+			continue
+		candidates.append(_address_door_phase_variant(base))
+
+
+static func _address_door_phase_variant(base: FabricRecipe) -> FabricRecipe:
+	var tags: Array[StringName] = []
+	tags.assign(base.role_tags)
+	tags.append(&"alternate_door_phase")
+	var variant := FabricRecipe.new(address_door_phase_recipe_id(base.recipe_id, 1),
+		tags, base.bearing_parent_count)
+	for placement: Dictionary in base.placements:
+		variant.add_placement(StringName(placement.id),
+			StringName(placement.asset_id), placement.transform as Transform3D)
+	for run: Dictionary in base.construction_runs:
+		var placement_ids: Array[StringName] = []
+		placement_ids.assign(run.placement_ids as Array)
+		variant.add_construction_run(StringName(run.id), StringName(run.kind),
+			placement_ids, float(run.start_seam), float(run.end_seam),
+			float(run.repeat_pitch), StringName(run.seam_profile),
+			StringName(run.material_family))
+	variant.solid_cells.assign(base.solid_cells)
+	variant.walk_cells.assign(base.walk_cells)
+	variant.headroom_cells.assign(base.headroom_cells)
+	variant.public_air_cells.assign(base.public_air_cells)
+	variant.daylight_void_cells.assign(base.daylight_void_cells)
+	variant.inhabited_cells.assign(base.inhabited_cells)
+	variant.occluder_cells.assign(base.occluder_cells)
+	variant.terrain_bearing_cells.assign(base.terrain_bearing_cells)
+	for socket: Dictionary in base.sockets:
+		variant.add_socket(StringName(socket.id), int(socket.kind),
+			socket.cell as Vector3i, socket.facing as Vector3i)
+	var entrance := base.entrances[0] as Dictionary
+	var original := entrance.cell as Vector3i
+	var facing := entrance.facing as Vector3i
+	assert(facing == Vector3i.BACK)
+	var shifted := original + Vector3i.LEFT
+	for y_offset in 2:
+		var old_cell := original + Vector3i.UP * y_offset
+		var new_cell := shifted + Vector3i.UP * y_offset
+		variant.headroom_cells.erase(old_cell)
+		variant.inhabited_cells.erase(old_cell)
+		_append_unique_cell(variant.solid_cells, old_cell)
+		_append_unique_cell(variant.occluder_cells, old_cell)
+		variant.solid_cells.erase(new_cell)
+		variant.occluder_cells.erase(new_cell)
+		_append_unique_cell(variant.headroom_cells, new_cell)
+		_append_unique_cell(variant.inhabited_cells, new_cell)
+	variant.add_entrance(StringName(entrance.id), shifted, facing)
+	return variant
 
 
 static func _is_feature_portal_base(recipe_value: FabricRecipe) -> bool:

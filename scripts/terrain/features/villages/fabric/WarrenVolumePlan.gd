@@ -116,6 +116,13 @@ var _air_set: Dictionary = {}
 var _void_set: Dictionary = {}
 var _landing_set: Dictionary = {}
 var _courtyard_set: Dictionary = {}
+## Cached fine-lattice floor ownership for public addresses.  A walk endpoint
+## owns its complete 2x2 square; a stair/ramp intermediate owns only the exact
+## two-lane treads from WarrenVolumeTransition.surface_cells().  Keeping this
+## on the sealed source plan lets parcel packing validate the authored doorway
+## before it claims a macro column, rather than discovering a floorless door
+## after the whole partition has been chosen.
+var _exact_route_surface_set: Dictionary = {}
 var _sealed := false
 
 
@@ -230,6 +237,7 @@ func seal(p_entry_cell: Vector3i) -> bool:
 			return _reject("daylight void overlaps walk or public air at %s" % cell)
 	if not courtyard_cells.is_empty() and not _has_one_typed_courtyard():
 		return _reject("typed courtyard is not one 2x2 elevated square")
+	_exact_route_surface_set = _exact_route_surface_cells()
 	mass_cells = envelope.mass_cells.duplicate()
 	for cell: Vector3i in public_air_cells:
 		mass_cells.erase(cell)
@@ -261,6 +269,14 @@ func has_walk(cell: Vector3i) -> bool:
 
 func has_public_air(cell: Vector3i) -> bool:
 	return _air_set.has(cell)
+
+
+func has_exact_route_surface(cell: Vector3i) -> bool:
+	## Whether this exact 1.5 m fine cell carries a public floor.  This is
+	## deliberately stricter than has_frontage(), whose 3 m macro cell records
+	## which wall belongs to the street but cannot distinguish the two real
+	## treads from the two swept-headroom cells beside them.
+	return _sealed and _exact_route_surface_set.has(_cell_key(cell))
 
 
 func address_bands() -> int:

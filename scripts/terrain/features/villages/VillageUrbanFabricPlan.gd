@@ -22,6 +22,10 @@ var fabric_audit: Dictionary = {}
 ## Volumetric generation retains its complete source stages as lineage; the
 ## common fabric above remains the sole render/collision transaction.
 var volumetric_town: WarrenBuiltTownPlan
+## New production lineage for the authoritative fine-grid town. Exactly one of
+## this and volumetric_town may be present: the latter remains only for explicit
+## legacy volumetric fixtures while default villages use true 3D reservations.
+var volumetric_spatial: WarrenSpatialPlan
 ## Canonical local-fabric to world transform chosen by the terrain adapter.
 ## Review, navigation, and future gameplay consumers use this same authored
 ## frame instead of trying to recover it from render placements or bounds.
@@ -96,10 +100,30 @@ func requires_outskirts() -> bool:
 
 
 func _validate_sectional_warren(program: VillageProgram) -> bool:
-	return volumetric_town == null and _validate_compiled_fabric(program)
+	return volumetric_town == null and volumetric_spatial == null \
+		and _validate_compiled_fabric(program)
 
 
 func _validate_volumetric_warren(program: VillageProgram) -> bool:
+	if volumetric_spatial != null:
+		if volumetric_town != null or not volumetric_spatial.is_sealed() \
+				or StringName(fabric_audit.get("generation_source", "")) \
+					!= &"spatial_volumetric_warren" \
+				or String(fabric_audit.get("spatial_signature", "")) \
+					!= volumetric_spatial.deterministic_signature().sha256_text() \
+				or int(fabric_audit.get("rejected_unfloored_address_count", -1)) != 0 \
+				or int(fabric_audit.get("elevated_courtyard_count", 0)) != 1 \
+				or int(fabric_audit.get("covered_market_count", 0)) != 1 \
+				or int(fabric_audit.get("prefab_landmark_count", 0)) \
+					!= WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS \
+				or int(fabric_audit.get("enclosed_skywalk_count", 0)) \
+					!= WarrenSpatialFeatureSolver.TARGET_SKYWALKS \
+				or int(fabric_audit.get("usable_balcony_count", 0)) \
+					< WarrenSpatialFeatureSolver.TARGET_BALCONIES \
+				or int(fabric_audit.get("room_outcropping_count", 0)) \
+					< WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS:
+			return false
+		return _validate_compiled_fabric(program)
 	if volumetric_town == null or not volumetric_town.is_sealed() \
 			or volumetric_town.fabric != fabric_plan \
 			or StringName(fabric_audit.get("generation_source", "")) \

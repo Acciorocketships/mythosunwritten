@@ -162,6 +162,27 @@ static func door_serves_address(parcel: WarrenBuildingParcel) -> bool:
 		and landing.z >= address_origin.z and landing.z <= address_origin.z + 1
 
 
+static func candidate_address_landing(parcel: WarrenBuildingParcel,
+		volume: WarrenVolumePlan) -> Vector3i:
+	## Preview the exact authored doorway of an unsealed partition candidate
+	## without sealing (and therefore freezing) the candidate itself.  Roof-joint
+	## repair may still step its top band down before the transaction is final.
+	## The disposable clone applies the complete downstream parcel contract, so
+	## this query cannot bless a door on a footprint the source volume rejects.
+	var invalid := Vector3i(2147483647, 2147483647, 2147483647)
+	if parcel == null or volume == null or not volume.is_sealed():
+		return invalid
+	var preview := WarrenBuildingParcel.new(parcel.stable_id,
+		parcel.footprint, parcel.base_band, parcel.top_band,
+		parcel.address_walk_cell, parcel.threshold_column,
+		parcel.frontage_direction, parcel.address_door_phase)
+	if not preview.seal(volume) or not door_serves_address(preview):
+		return invalid
+	var threshold := threshold_cell(preview)
+	return threshold + Vector3i(preview.frontage_direction.x, 0,
+		preview.frontage_direction.y)
+
+
 static func profile_for(parcel: WarrenBuildingParcel) -> Dictionary:
 	if parcel == null or not parcel.is_sealed():
 		return {}
@@ -170,28 +191,28 @@ static func profile_for(parcel: WarrenBuildingParcel) -> Dictionary:
 			"kind": &"tower",
 			"minimum": Vector3i(-1, 0, -1),
 			"size": Vector3i(2, 1, 2),
-			"door_cell": Vector3i(0, 0, 0),
+			"door_cell": Vector3i(-parcel.address_door_phase, 0, 0),
 		}
 	if parcel.width_cells == 1 and parcel.depth_cells == 2:
 		return {
 			"kind": &"slim",
 			"minimum": Vector3i(-1, 0, -2),
 			"size": Vector3i(2, 1, 4),
-			"door_cell": Vector3i(0, 0, 1),
+			"door_cell": Vector3i(-parcel.address_door_phase, 0, 1),
 		}
 	if parcel.width_cells == 2 and parcel.depth_cells == 2:
 		return {
 			"kind": &"building",
 			"minimum": Vector3i(-2, 0, -2),
 			"size": Vector3i(4, 1, 4),
-			"door_cell": Vector3i(-1, 0, 1),
+			"door_cell": Vector3i(-1 - parcel.address_door_phase, 0, 1),
 		}
 	if parcel.width_cells == 2 and parcel.depth_cells == 3:
 		return {
 			"kind": &"long",
 			"minimum": Vector3i(-2, 0, -3),
 			"size": Vector3i(4, 1, 6),
-			"door_cell": Vector3i(-1, 0, 2),
+			"door_cell": Vector3i(-1 - parcel.address_door_phase, 0, 2),
 		}
 	return {}
 

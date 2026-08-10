@@ -145,6 +145,14 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	if sealed != null:
 		assert_true(sealed.is_sealed())
 		assert_eq(sealed.audit.generation_source, &"spatial_volumetric_warren")
+		assert_eq(int(sealed.audit.detached_building_stack_count), 0,
+			"spatial private-parent chains must all reach served thresholds")
+		assert_eq(int(sealed.audit.building_stack_count),
+			spatial.buildings.size() \
+				+ int(spatial.audit.spatial_prefab_landmark_building_count))
+		assert_eq(int(sealed.audit.spatial_missing_private_parent_count), 0)
+		assert_gt(int(sealed.audit.legacy_unit_group_detached_building_stack_count),
+			0, "the legacy grouping remains visible as a non-authoritative diagnostic")
 		assert_gt(int(sealed.audit.selected_facade_phase_b_count), 0)
 		assert_eq(sealed.visual_envelope_conflicts().size(), 0)
 
