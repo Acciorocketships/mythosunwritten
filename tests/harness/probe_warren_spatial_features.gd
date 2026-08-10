@@ -37,6 +37,8 @@ func _init() -> void:
 		print("FAIL: ", WarrenVolumetricSolver.last_failure.left(1200))
 		print("COMPOSITION_AUDIT_ON_FAILURE: ",
 			WarrenRoomCompositionPlanner.last_audit)
+		print("COMPOSITION_MERGE_ON_FAILURE: ",
+			WarrenRoomCompositionPlanner.last_merge_diagnostic)
 		print("PREPLAN_SELECTION: selected=",
 			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
 				"selected_count", -1), " candidates=",
@@ -46,6 +48,13 @@ func _init() -> void:
 				"fixed_block_rejection_count", -1), " failures=",
 			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
 				"endpoint_survival_failures", {}))
+		print("PREPLAN_TOWER_RANK: combinations=",
+			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
+				"composition_ranked_combination_count", -1), " risk=",
+			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
+				"selected_tower_risk", -1), " selected=",
+			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
+				"selected", []))
 		print("SKY_DIAG: ", WarrenSpatialFeatureSolver.last_skywalk_diagnostic)
 		print("MARKET_DIAG: ",
 			WarrenVolumetricSolver.last_preplan_market_diagnostic)
@@ -82,6 +91,8 @@ func _init() -> void:
 		print("FABRIC_SEALED=", compiled != null,
 			" failure=", WarrenSpatialFabricCompiler.last_failure,
 			" audit=", WarrenSpatialFabricCompiler.last_audit)
+		if compiled == null:
+			_print_support_handoffs(plan)
 		quit(0 if compiled != null else 1)
 		return
 	if composition_only:
@@ -93,6 +104,28 @@ func _init() -> void:
 	_print_straight_skywalks(plan)
 	_print_feature_compilation(plan, program)
 	quit()
+
+
+func _print_support_handoffs(plan: WarrenSpatialPlan) -> void:
+	var by_level: Dictionary = {}
+	for building: WarrenBuildingVolume in plan.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			by_level["%s/%d" % [String(room.source_parcel_id),
+				room.source_storey_index]] = room
+	for building: WarrenBuildingVolume in plan.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.terrain_bearing or room.support_parent_parcel_id \
+					== room.source_parcel_id:
+				continue
+			var key := "%s/%d" % [String(room.support_parent_parcel_id),
+				room.support_parent_storey_index]
+			var parent := by_level.get(key) as WarrenRoomStamp
+			print("HANDOFF child=", room.stable_id, " kind=", room.kind,
+				" origin=", room.lattice_origin, " yaw=", room.yaw_quarters,
+				" parent=", key, " parent_kind=",
+				&"" if parent == null else parent.kind, " parent_origin=",
+				Vector3i.ZERO if parent == null else parent.lattice_origin,
+				" parent_yaw=", -1 if parent == null else parent.yaw_quarters)
 
 
 func _print_room_lineages(plan: WarrenSpatialPlan) -> void:

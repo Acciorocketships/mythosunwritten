@@ -7,7 +7,8 @@ extends RefCounted
 ## and roof compilation may respond to these facts but never recreate them.
 const TARGET_SKYWALKS := 3
 const TARGET_PREFAB_LANDMARKS := 2
-const TARGET_TOWER_ANNEXES := 3
+const MIN_TOWER_ANNEXES_PER_TALL_LINEAGE := 2
+const TARGET_TOWER_ANNEXES := 6
 const TARGET_BALCONIES := 6
 const MIN_BALCONY_BUILDINGS := 3
 const MAX_BALCONIES_PER_BUILDING := 2
@@ -29,7 +30,8 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		preplanned_skywalks: Array[Dictionary] = [],
 		preplanned_market: Dictionary = {},
 		preplanned_landmarks: Array[Dictionary] = [],
-		construction_program: SettlementFabricProgram = null) \
+		construction_program: SettlementFabricProgram = null,
+		composition_audit: Dictionary = {}) \
 		-> Array[WarrenFeatureReservation]:
 	last_failure = ""
 	last_audit = {}
@@ -66,11 +68,27 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			last_skywalk_diagnostic]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(skywalks)
+	var tall_tower_sources: Array[StringName] = []
+	for source_value: Variant in composition_audit.get(
+			"tall_tower_only_lineage_ids", []):
+		tall_tower_sources.append(StringName(source_value))
 	var tower_annexes := _reserve_tower_annexes(grid, buildings, supports,
-		source.world_seed, construction_program, out)
-	if tower_annexes.size() < TARGET_TOWER_ANNEXES:
-		last_failure = "only %d of %d tower-breaking room annexes fit" % [
-			tower_annexes.size(), TARGET_TOWER_ANNEXES]
+		source.world_seed, construction_program, out, tall_tower_sources)
+	var required_tower_annexes := tall_tower_sources.size() \
+		* MIN_TOWER_ANNEXES_PER_TALL_LINEAGE
+	if tower_annexes.size() < required_tower_annexes:
+		var annexes_by_source: Dictionary = {}
+		for annex: WarrenFeatureReservation in tower_annexes:
+			var source_id := StringName(annex.audit.annex_source_parcel_id)
+			if not annexes_by_source.has(source_id):
+				annexes_by_source[source_id] = []
+			(annexes_by_source[source_id] as Array).append({
+				"storey": int(annex.audit.annex_source_storey_index),
+				"facade": String(annex.audit.annex_vertical_facade_key),
+				"recipe": StringName(annex.audit.annex_recipe_id),
+			})
+		last_failure = "only %d of %d tower-breaking room annexes fit: %s" % [
+			tower_annexes.size(), required_tower_annexes, annexes_by_source]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(tower_annexes)
 	var balconies := _reserve_balconies(grid, buildings, supports,
@@ -98,6 +116,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"prefab_landmark_count": landmarks.size(),
 		"enclosed_skywalk_count": skywalks.size(),
 		"tower_annex_count": tower_annexes.size(),
+		"tower_annex_source_count": tall_tower_sources.size(),
 		"usable_balcony_count": balconies.size(),
 		"balcony_building_count": balcony_buildings.size(),
 		"room_outcropping_count": outcroppings.size(),
@@ -110,7 +129,8 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
-		existing_features: Array[WarrenFeatureReservation]) \
+		existing_features: Array[WarrenFeatureReservation],
+		tall_tower_sources: Array[StringName]) \
 		-> Array[WarrenFeatureReservation]:
 	if program == null:
 		return [] as Array[WarrenFeatureReservation]
@@ -125,15 +145,8 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			(rooms_by_source[room.source_parcel_id] \
 				as Array[WarrenRoomStamp]).append(room)
 	var target_sources: Dictionary = {}
-	for source_value: Variant in rooms_by_source.keys():
-		var source_id := StringName(source_value)
-		var rooms := rooms_by_source[source_id] as Array[WarrenRoomStamp]
-		if rooms.size() < 4:
-			continue
-		var tower_only := true
-		for room: WarrenRoomStamp in rooms:
-			tower_only = tower_only and room.kind == &"tower"
-		if tower_only:
+	for source_id: StringName in tall_tower_sources:
+		if rooms_by_source.has(source_id):
 			target_sources[source_id] = true
 	if target_sources.is_empty():
 		return [] as Array[WarrenFeatureReservation]
@@ -167,7 +180,7 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	for endpoint: Dictionary in _balcony_room_endpoints(buildings):
 		var room := endpoint.room as WarrenRoomStamp
 		if not target_sources.has(room.source_parcel_id) \
-				or room.source_storey_index < 2 \
+				or room.source_storey_index < 1 \
 				or used_endpoint_cells.has(endpoint.cell as Vector3i):
 			continue
 		var facing := endpoint.facing as Vector3i
@@ -207,6 +220,7 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				"clearance_only": clearance_audit.clearance_only,
 				"covered_public_cells": clearance_audit.covered_public_cells,
 				"endpoint_cell": endpoint.cell, "socket_world": socket_world,
+				"facing": facing,
 				"room": room, "building": building,
 				"allowed_owner_ids": allowed_owner_ids,
 				"tie": posmod(Helper._mix64(world_seed \
@@ -223,29 +237,60 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			return int(a.body_cell_count) > int(b.body_cell_count)
 		return int(a.tie) < int(b.tie))
 	var out: Array[WarrenFeatureReservation] = []
-	var used_sources: Dictionary = {}
-	for candidate: Dictionary in candidates:
-		if out.size() >= TARGET_TOWER_ANNEXES:
-			break
-		var room := candidate.room as WarrenRoomStamp
-		if used_sources.has(room.source_parcel_id) \
-				or not WarrenVolumetricSolver._skywalk_body_fits_grid(
-					grid, candidate.body as Dictionary):
-			continue
-		var refreshed := _balcony_clearance_audit(grid,
-			candidate.clearance as Dictionary, candidate.body as Dictionary,
-			candidate.allowed_owner_ids as Dictionary,
-			(candidate.origin as Vector3i).y)
-		if not bool(refreshed.get("fits", false)):
-			continue
-		candidate["clearance_only"] = refreshed.clearance_only
-		candidate["covered_public_cells"] = refreshed.covered_public_cells
-		var feature := _commit_tower_annex(grid, candidate, supports,
-			out.size())
-		if feature == null:
-			continue
-		used_sources[room.source_parcel_id] = true
-		out.append(feature)
+	var source_ids: Array[StringName] = []
+	source_ids.assign(target_sources.keys())
+	source_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	var selected_by_source: Dictionary = {}
+	for source_id: StringName in source_ids:
+		selected_by_source[source_id] = [] as Array[Dictionary]
+	# Round-robin selection prevents one especially open shaft from consuming the
+	# relief budget.  Pass one chooses the strongest upper room; pass two must be
+	# at least two storeys away and use another authored mass profile, creating a
+	# compound cadence rather than two vertically repeated bay windows. A dense
+	# party-wall shaft may have only one exposed compass side, so facade direction
+	# itself is not required to change.
+	for relief_round in MIN_TOWER_ANNEXES_PER_TALL_LINEAGE:
+		for source_id: StringName in source_ids:
+			var prior := selected_by_source[source_id] as Array[Dictionary]
+			var chosen: Dictionary = {}
+			var chosen_distance := -1
+			for candidate: Dictionary in candidates:
+				var room := candidate.room as WarrenRoomStamp
+				if room.source_parcel_id != source_id:
+					continue
+				var vertical_distance := 0
+				if not prior.is_empty():
+					var first_room := prior[0].room as WarrenRoomStamp
+					vertical_distance = absi(room.source_storey_index \
+						- first_room.source_storey_index)
+					if vertical_distance < 2 \
+							or candidate.recipe_id == prior[0].recipe_id:
+						continue
+				if not WarrenVolumetricSolver._skywalk_body_fits_grid(grid,
+						candidate.body as Dictionary):
+					continue
+				var refreshed := _balcony_clearance_audit(grid,
+					candidate.clearance as Dictionary,
+					candidate.body as Dictionary,
+					candidate.allowed_owner_ids as Dictionary,
+					(candidate.origin as Vector3i).y)
+				if not bool(refreshed.get("fits", false)):
+					continue
+				if chosen.is_empty() or vertical_distance > chosen_distance:
+					chosen = candidate.duplicate()
+					chosen["clearance_only"] = refreshed.clearance_only
+					chosen["covered_public_cells"] = \
+						refreshed.covered_public_cells
+					chosen_distance = vertical_distance
+			if chosen.is_empty():
+				continue
+			var feature := _commit_tower_annex(grid, chosen, supports,
+				out.size())
+			if feature == null:
+				continue
+			prior.append(chosen)
+			out.append(feature)
 	return out
 
 
@@ -349,6 +394,13 @@ static func _commit_tower_annex(grid: WarrenSpatialGrid,
 				"annex_source_parcel_id": room.source_parcel_id,
 				"annex_recipe_id": StringName(candidate.recipe_id),
 				"annex_breaks_tower_lineage": true,
+				"annex_source_storey_index": room.source_storey_index,
+				"annex_vertical_facade_key": "%s/%d,%d/%d,%d" % [
+					String(room.source_parcel_id), endpoint_cell.x,
+					endpoint_cell.z, (candidate.facing as Vector3i).x,
+					(candidate.facing as Vector3i).z],
+				"annex_relief_profile_key": "%s/%s" % [
+					String(room.source_parcel_id), String(candidate.recipe_id)],
 				"annex_reserved_cell_count": body.size(),
 			}) or not feature.seal(grid, supports):
 		return null

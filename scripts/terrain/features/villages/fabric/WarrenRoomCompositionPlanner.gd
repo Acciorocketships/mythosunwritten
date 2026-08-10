@@ -113,51 +113,68 @@ static func _source_blocks(proposal: Dictionary,
 	var addressed_storey := floori(float(threshold.y - source_origin.y) \
 		/ float(WarrenSpatialGrid.STOREY_CELLS)) \
 		if threshold.x != 2147483647 else -1
-	for block in offsets.size():
-		var start_storey := block * 2
-		if start_storey >= storeys:
+	for offset_block in offsets.size():
+		var block_start_storey := offset_block * 2
+		if block_start_storey >= storeys:
 			break
-		var end_storey := mini(storeys, start_storey + 2)
-		var offset := offsets[block]
-		var origin := source_origin + Vector3i(offset.x,
-			start_storey * WarrenSpatialGrid.STOREY_CELLS, offset.y)
-		var home_origin := source_origin + Vector3i(0,
-			start_storey * WarrenSpatialGrid.STOREY_CELLS, 0)
-		var record := _record(kind, origin, yaw, start_storey, end_storey)
-		if record.is_empty():
-			return [] as Array[Dictionary]
-		var forced := forced_offsets.has(block)
-		var block_skywalk_constraints: Array[Dictionary] = []
+		var block_end_storey := mini(storeys, block_start_storey + 2)
+		var offset := offsets[offset_block]
+		var offset_block_has_skywalk_constraints := false
 		for constraint_value: Variant in skywalk_constraints:
-			var constraint := constraint_value as Dictionary
-			var endpoint := constraint.cell as Vector3i
-			if endpoint.y >= origin.y \
-					and endpoint.y < origin.y + (end_storey - start_storey) \
-						* WarrenSpatialGrid.STOREY_CELLS:
-				block_skywalk_constraints.append(constraint)
-		var structural_forced := block == 0 \
-			or skywalk_forced_offsets.has(block) \
-				and block_skywalk_constraints.is_empty()
-		var addressed := addressed_storey >= start_storey \
-			and addressed_storey < end_storey
-		for cell: Vector3i in record.cells:
-			if cell == market_backing or court_neighbors.has(cell):
-				forced = true
-				structural_forced = true
+			var endpoint := (constraint_value as Dictionary).cell as Vector3i
+			var local_storey := floori(float(endpoint.y - source_origin.y) \
+				/ float(WarrenSpatialGrid.STOREY_CELLS))
+			if local_storey >= block_start_storey \
+					and local_storey < block_end_storey:
+				offset_block_has_skywalk_constraints = true
 				break
-		record["forced"] = forced
-		record["address_expandable"] = addressed and not structural_forced
-		record["feature_endpoint_constraints"] = block_skywalk_constraints
-		record["address_threshold"] = threshold
-		record["address_frontage"] = frontage
-		record["original_kind"] = kind
-		record["original_origin"] = origin
-		record["original_yaw_quarters"] = yaw
-		record["home_origin"] = home_origin
-		record["home_columns"] = _stamp_columns(kind, home_origin, yaw)
-		record["source_block_index"] = block
-		record["merged"] = false
-		out.append(record)
+		# A two-storey offset is only a provisional packing convenience. Emit one
+		# composition record per actual storey so a doorway, street tunnel, market
+		# socket, or skywalk on the lower floor cannot freeze the free floor above
+		# into the same narrow prism.
+		for storey in range(block_start_storey, block_end_storey):
+			var origin := source_origin + Vector3i(offset.x,
+				storey * WarrenSpatialGrid.STOREY_CELLS, offset.y)
+			var home_origin := source_origin + Vector3i(0,
+				storey * WarrenSpatialGrid.STOREY_CELLS, 0)
+			var record := _record(kind, origin, yaw, storey, storey + 1)
+			if record.is_empty():
+				return [] as Array[Dictionary]
+			var storey_skywalk_constraints: Array[Dictionary] = []
+			for constraint_value: Variant in skywalk_constraints:
+				var constraint := constraint_value as Dictionary
+				var endpoint := constraint.cell as Vector3i
+				if endpoint.y >= origin.y and endpoint.y < origin.y \
+						+ WarrenSpatialGrid.STOREY_CELLS:
+					storey_skywalk_constraints.append(constraint)
+			var addressed := addressed_storey == storey
+			var structural_forced := storey == 0 \
+				or skywalk_forced_offsets.has(offset_block) \
+					and not offset_block_has_skywalk_constraints
+			var forced := structural_forced or addressed \
+				or not storey_skywalk_constraints.is_empty()
+			for cell: Vector3i in record.cells:
+				if cell == market_backing or court_neighbors.has(cell):
+					forced = true
+					structural_forced = true
+					break
+			record["forced"] = forced
+			record["address_expandable"] = addressed and not structural_forced
+			record["feature_endpoint_constraints"] = \
+				storey_skywalk_constraints
+			record["address_threshold"] = threshold
+			record["address_frontage"] = frontage
+			record["original_kind"] = kind
+			record["original_origin"] = origin
+			record["original_yaw_quarters"] = yaw
+			record["home_origin"] = home_origin
+			record["home_columns"] = _stamp_columns(kind, home_origin, yaw)
+			# Storey index is the stable unique key now that one provisional
+			# two-storey offset can produce two independently composed records.
+			record["source_block_index"] = storey
+			record["source_offset_block_index"] = offset_block
+			record["merged"] = false
+			out.append(record)
 	return out
 
 

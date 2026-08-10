@@ -92,7 +92,7 @@ static func from_volume(volume: WarrenVolumePlan,
 		supports, partition.skywalk_reservations as Array[Dictionary],
 		partition.market_reservation as Dictionary,
 		partition.landmark_reservations as Array[Dictionary],
-		construction_program)
+		construction_program, partition.composition_audit as Dictionary)
 	if features.is_empty():
 		last_failure = WarrenSpatialFeatureSolver.last_failure
 		return null
@@ -1017,6 +1017,9 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 			return int(a.lower_cover) > int(b.lower_cover)
 		return int(a.tie) < int(b.tie))
 	var selected: Array[Dictionary] = []
+	var selected_tower_risk := 2147483647
+	var selected_quality := 2147483647
+	var composition_ranked_combination_count := 0
 	var primary_frontier_size := mini(candidates.size(), 64)
 	var pair_frontier: Array[Vector2i] = []
 	var stop_pairs := false
@@ -1061,19 +1064,76 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 			if not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
 					combination, proposals, protected_owners, volume.world_seed):
 				continue
-			selected = combination
-			break
-		if not selected.is_empty():
-			break
+			composition_ranked_combination_count += 1
+			var tower_risk := _skywalk_combination_tower_risk(combination,
+				proposals)
+			var quality := 0
+			for candidate: Dictionary in combination:
+				quality += int(candidate.blocker_count) * 100 \
+					- int(candidate.lower_cover) * 10
+			if tower_risk < selected_tower_risk \
+					or tower_risk == selected_tower_risk \
+						and quality < selected_quality:
+				selected = combination
+				selected_tower_risk = tower_risk
+				selected_quality = quality
 	last_preplan_skywalk_diagnostic["landmark_filtered_candidate_count"] = \
 		candidates.size()
 	last_preplan_skywalk_diagnostic["landmark_attached_candidate_count"] = \
 		landmark_attached.size()
 	last_preplan_skywalk_diagnostic["landmark_joint_selected_count"] = \
 		selected.size()
+	last_preplan_skywalk_diagnostic["composition_ranked_combination_count"] = \
+		composition_ranked_combination_count
+	last_preplan_skywalk_diagnostic["selected_tower_risk"] = \
+		selected_tower_risk
 	var plan := _skywalk_plan_from_selected(selected, candidates.size())
 	plan["pair_frontier_count"] = pair_frontier.size()
+	plan["tower_risk"] = selected_tower_risk
 	return plan
+
+
+static func _skywalk_combination_tower_risk(
+		combination: Array[Dictionary], proposals: Array[Dictionary]) -> int:
+	## Exact endpoint survival alone can still force a stationary upper block on
+	## a tall narrow parcel, leaving the later 3D composer no legal alternative
+	## to a tower. Rank complete bridge triples by that downstream obligation:
+	## shifted tall endpoints are cheaper than stationary ones, and fewer/highly
+	## constrained tower parcels are preferred. This is topology selection, not a
+	## post-construction decoration score.
+	var proposal_by_id: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		proposal_by_id[parcel.stable_id] = proposal
+	var states: Dictionary = {}
+	for candidate: Dictionary in combination:
+		for parcel_value: Variant in (candidate.forced_offsets \
+				as Dictionary).keys():
+			var parcel_id := StringName(parcel_value)
+			if not proposal_by_id.has(parcel_id):
+				continue
+			var proposal := proposal_by_id[parcel_id] as Dictionary
+			if StringName(proposal.kind) != &"tower" \
+					or int(proposal.storeys) < \
+						WarrenRoomCompositionPlanner.TALL_LINEAGE_STOREYS:
+				continue
+			if not states.has(parcel_id):
+				states[parcel_id] = {"shifted": false, "highest_block": 0,
+					"storeys": int(proposal.storeys)}
+			var state := states[parcel_id] as Dictionary
+			for block_value: Variant in ((candidate.forced_offsets \
+					as Dictionary)[parcel_id] as Dictionary).keys():
+				var delta := ((candidate.forced_offsets as Dictionary)[
+					parcel_id] as Dictionary)[block_value] as Vector2i
+				state["shifted"] = bool(state.shifted) or delta != Vector2i.ZERO
+				state["highest_block"] = maxi(int(state.highest_block),
+					int(block_value))
+	var risk := 0
+	for state_value: Variant in states.values():
+		var state := state_value as Dictionary
+		risk += 100000 if not bool(state.shifted) else 10000
+		risk += int(state.highest_block) * 1000 + int(state.storeys)
+	return risk
 
 
 static func _landmark_attached_skywalk_candidates(grid: WarrenSpatialGrid,

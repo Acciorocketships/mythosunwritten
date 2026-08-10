@@ -111,12 +111,13 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			rooms.append(room)
 			building_by_room[room.stable_id] = building.stable_id
 	rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
-		if a.source_storey_index != b.source_storey_index:
-			return a.source_storey_index < b.source_storey_index
 		if a.lattice_origin.y != b.lattice_origin.y:
 			return a.lattice_origin.y < b.lattice_origin.y
+		if a.source_storey_index != b.source_storey_index:
+			return a.source_storey_index < b.source_storey_index
 		return String(a.stable_id) < String(b.stable_id))
 	var room_by_source_level: Dictionary = {}
+	var room_by_private_cell: Dictionary = {}
 	for room: WarrenRoomStamp in rooms:
 		var key := _source_level_key(room.source_parcel_id,
 			room.source_storey_index)
@@ -124,12 +125,16 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			last_failure = "two rooms own source level %s" % key
 			return [] as Array[FabricUnit]
 		room_by_source_level[key] = room
+		for cell: Vector3i in room.private_cells:
+			room_by_private_cell[cell] = room
 	var units: Array[FabricUnit] = []
 	var unit_by_room: Dictionary = {}
 	var prior_unit_by_cell: Dictionary = {}
 	var desired_phase_b_count := 0
 	var selected_phase_b_count := 0
 	var facade_phase_fallback_count := 0
+	var hero_feature_facade_fallback_count := 0
+	var physical_support_redirect_count := 0
 	var room_probe := SettlementFabricPlan.new(&"spatial.room-phase-selection")
 	for recipe_value: FabricRecipe in program.recipes():
 		if not room_probe.register_recipe(recipe_value):
@@ -155,12 +160,16 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			var parent_key := _source_level_key(
 				room.support_parent_parcel_id,
 				room.support_parent_storey_index)
-			var parent_room := room_by_source_level.get(parent_key) \
+			var lineage_parent := room_by_source_level.get(parent_key) \
 				as WarrenRoomStamp
+			var parent_room := _physical_support_parent(room,
+				room_by_private_cell, lineage_parent)
 			if parent_room == null or not unit_by_room.has(parent_room.stable_id):
 				last_failure = "room %s has no built support parent %s" % [
 					room.stable_id, parent_key]
 				return [] as Array[FabricUnit]
+			physical_support_redirect_count += int(lineage_parent != null \
+				and parent_room.stable_id != lineage_parent.stable_id)
 			var parent_unit := unit_by_room[parent_room.stable_id] as FabricUnit
 			var bearing := _bearing_bond(room, parent_room, parent_unit.stable_id)
 			if bearing.is_empty():
@@ -177,11 +186,19 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		if not unit.is_valid():
 			last_failure = "room %s produced an invalid fabric unit" % room.stable_id
 			return [] as Array[FabricUnit]
-		if not room_probe.add_unit(unit):
+		var feature_conflict := _room_feature_envelope_conflict(source,
+			program, room, recipe)
+		var desired_rejection := "visual envelope intersects unrelated feature %s" \
+			% feature_conflict if not feature_conflict.is_empty() else ""
+		var desired_added := feature_conflict.is_empty() \
+			and room_probe.add_unit(unit)
+		if not desired_added:
+			if desired_rejection.is_empty():
+				desired_rejection = room_probe.last_rejection
 			var fallback_id := _room_recipe_id(room, source.world_seed, false)
 			if fallback_id == recipe_id:
 				last_failure = "room %s failed measured phase selection: %s" % [
-					room.stable_id, room_probe.last_rejection]
+					room.stable_id, desired_rejection]
 				return [] as Array[FabricUnit]
 			var fallback_recipe := program.recipe(fallback_id)
 			if fallback_recipe == null \
@@ -192,11 +209,18 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				return [] as Array[FabricUnit]
 			unit = FabricUnit.new(unit.stable_id, fallback_id,
 				room.lattice_origin, room.yaw_quarters, parents, bonds, &"", seams)
-			if not unit.is_valid() or not room_probe.add_unit(unit):
+			var fallback_conflict := _room_feature_envelope_conflict(source,
+				program, room, fallback_recipe)
+			if not unit.is_valid() or not fallback_conflict.is_empty() \
+					or not room_probe.add_unit(unit):
 				last_failure = "room %s fallback failed measured phase selection: %s" \
-					% [room.stable_id, room_probe.last_rejection]
+					% [room.stable_id, "visual envelope intersects unrelated feature %s" \
+						% fallback_conflict if not fallback_conflict.is_empty() \
+						else room_probe.last_rejection]
 				return [] as Array[FabricUnit]
 			facade_phase_fallback_count += 1
+			hero_feature_facade_fallback_count += int(
+				not feature_conflict.is_empty())
 		selected_phase_b_count += int(_is_phase_b_recipe(unit.recipe_id))
 		units.append(unit)
 		unit_by_room[room.stable_id] = unit
@@ -207,6 +231,9 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		"selected_facade_phase_b_count": selected_phase_b_count,
 		"facade_phase_fallback_count": facade_phase_fallback_count,
 		"facade_phase_a_count": units.size() - selected_phase_b_count,
+		"hero_feature_facade_fallback_count": \
+			hero_feature_facade_fallback_count,
+		"physical_support_redirect_count": physical_support_redirect_count,
 	}
 	return units
 
@@ -1218,7 +1245,76 @@ static func _bearing_bond(upper: WarrenRoomStamp,
 	return FabricUnit.bond(SettlementFabricProgram._bearing_cell_socket_id(
 		&"bottom", upper_local.x, upper_local.z), lower_unit_id,
 		SettlementFabricProgram._bearing_cell_socket_id(&"top", lower_local.x,
-			lower_local.z))
+		lower_local.z))
+
+
+static func _physical_support_parent(upper: WarrenRoomStamp,
+		room_by_private_cell: Dictionary,
+		preferred: WarrenRoomStamp) -> WarrenRoomStamp:
+	## Cross-lineage recomposition is keyed by absolute 1.5 m bands. A source
+	## lineage handoff remains useful ancestry, but after per-storey splitting its
+	## relative storey number need not name the room directly below every overlap
+	## column. Construction binds the authoritative spatial fact: the room whose
+	## top cell is immediately below the upper room's bottom plate.
+	var counts: Dictionary = {}
+	var room_by_id: Dictionary = {}
+	for cell: Vector3i in upper.private_cells:
+		if cell.y != upper.lattice_origin.y:
+			continue
+		var candidate := room_by_private_cell.get(cell + Vector3i.DOWN) \
+			as WarrenRoomStamp
+		if candidate == null or candidate.stable_id == upper.stable_id:
+			continue
+		counts[candidate.stable_id] = int(counts.get(candidate.stable_id, 0)) + 1
+		room_by_id[candidate.stable_id] = candidate
+	if counts.is_empty():
+		return preferred
+	var ids: Array[StringName] = []
+	ids.assign(counts.keys())
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		if int(counts[a]) != int(counts[b]):
+			return int(counts[a]) > int(counts[b])
+		if preferred != null and (a == preferred.stable_id) \
+				!= (b == preferred.stable_id):
+			return a == preferred.stable_id
+		return String(a) < String(b))
+	return room_by_id[ids[0]] as WarrenRoomStamp
+
+
+static func _room_feature_envelope_conflict(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, room: WarrenRoomStamp,
+		recipe: FabricRecipe) -> StringName:
+	var room_bounds := FabricRecipe.lattice_transform(room.lattice_origin,
+		room.yaw_quarters) * recipe.local_clearance_bounds
+	for feature: WarrenFeatureReservation in source.features:
+		if feature.construction_records.is_empty() \
+				or _feature_is_related_to_room(feature, room.stable_id):
+			continue
+		for record: Dictionary in feature.construction_records:
+			var feature_recipe := program.recipe(StringName(record.recipe_id))
+			if feature_recipe == null:
+				return feature.stable_id
+			var feature_bounds := FabricRecipe.lattice_transform(
+				record.origin as Vector3i, int(record.yaw_quarters)) \
+				* feature_recipe.local_clearance_bounds
+			if SettlementFabricPlan._aabb_overlaps_volume(room_bounds,
+					feature_bounds):
+				return feature.stable_id
+	return &""
+
+
+static func _feature_is_related_to_room(feature: WarrenFeatureReservation,
+		room_id: StringName) -> bool:
+	for key: String in ["annex_room_id", "balcony_room_id",
+			"market_backing_room_id"]:
+		if StringName(feature.audit.get(key, &"")) == room_id:
+			return true
+	for binding_value: Variant in feature.audit.get(
+			"skywalk_endpoint_bindings", []):
+		if StringName((binding_value as Dictionary).get("room_id", &"")) \
+				== room_id:
+			return true
+	return false
 
 
 static func _prior_party_wall_units(grid: WarrenSpatialGrid,

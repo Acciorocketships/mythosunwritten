@@ -48,8 +48,8 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		"no tall source lineage may repeat one world-space floorplate")
 	assert_eq(plan.audit.extruded_tall_lineage_ids, [],
 		"the audit must identify no repeated world-space extrusion")
-	assert_lte(int(plan.audit.max_identical_tower_floorplate_run_storeys), 4,
-		"even a shorter tower-family run must break before becoming a shaft")
+	assert_lte(int(plan.audit.max_identical_tower_floorplate_run_storeys), 2,
+		"interface constraints must not force a repeated multi-storey shaft")
 	assert_not_null(plan.construction_plan)
 	assert_gt(int(plan.construction_plan.audit.roof_region_count), 0)
 	for building: WarrenBuildingVolume in plan.buildings:
@@ -204,7 +204,9 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	assert_gte(balconies.size(), WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	assert_eq(tower_annexes.size(),
 		WarrenSpatialFeatureSolver.TARGET_TOWER_ANNEXES)
-	var annex_source_lineages: Dictionary = {}
+	var annex_source_counts: Dictionary = {}
+	var annex_profiles: Dictionary = {}
+	var annex_storeys_by_source: Dictionary = {}
 	for annex: WarrenFeatureReservation in tower_annexes:
 		assert_eq(annex.endpoints.size(), 1)
 		assert_eq(annex.construction_records.size(), 1)
@@ -212,13 +214,29 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 			.begins_with("outcrop."))
 		assert_true(bool(annex.audit.annex_breaks_tower_lineage))
 		var source_id := StringName(annex.audit.annex_source_parcel_id)
-		assert_false(annex_source_lineages.has(source_id),
-			"tower-breaking annexes must diversify distinct tall lineages")
-		annex_source_lineages[source_id] = true
+		annex_source_counts[source_id] = int(annex_source_counts.get(source_id,
+			0)) + 1
+		var profile_key := String(annex.audit.annex_relief_profile_key)
+		assert_false(annex_profiles.has(profile_key),
+			"one shaft must not repeat the same authored annex profile")
+		annex_profiles[profile_key] = true
+		var storey := int(annex.audit.annex_source_storey_index)
+		assert_gte(storey, 1)
+		if not annex_storeys_by_source.has(source_id):
+			annex_storeys_by_source[source_id] = []
+		(annex_storeys_by_source[source_id] as Array).append(storey)
 		for cell: Vector3i in annex.reserved_cells:
 			assert_eq(plan.grid.use_at(cell),
 				WarrenSpatialGrid.Use.PRIVATE_VOLUME)
 			assert_eq(plan.grid.owner_name_at(cell), annex.stable_id)
+	for source_value: Variant in plan.audit.tall_tower_only_lineage_ids:
+		var source_id := StringName(source_value)
+		assert_eq(int(annex_source_counts.get(source_id, 0)),
+			WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_TALL_LINEAGE,
+			"each residual tall shaft needs two separated compound-room events")
+		var storeys := annex_storeys_by_source[source_id] as Array
+		assert_gte(absi(int(storeys[0]) - int(storeys[1])), 2,
+			"compound annexes need at least one clear storey between them")
 	var balcony_owners: Dictionary = {}
 	var balcony_facades: Dictionary = {}
 	for balcony: WarrenFeatureReservation in balconies:
