@@ -334,6 +334,17 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   seam, and is projected by `WarrenSpatialPublicRealmAdapter` as one supplemental covered route
   node. The market body, aisle, terrain bearing, visual clearance, backing room, and construction
   record commit atomically; room/roof packing and the skywalk beam must yield to that reservation.
+  The same bounded hero-feature beam stamps exactly two distinct reviewed prefab landmarks before
+  generic rooms. Each anchor is a complete measured terrain-rooted recipe with its real baked
+  entrance aligned to a canonical ground-street landing, conservative shell/private volume,
+  visual envelope, exact contact-point bearing cells, doorway face, and construction transform.
+  Candidate pairs are ranked by the distinct skywalk corridors and endpoint parcels they preserve,
+  then by displaced fabric, separation, and visual variety; arbitrary detached prefabs are never
+  added after packing. At least one of the three enclosed skywalks terminates in a real landmark
+  ROOM/BEARING socket. That intentional two-cell interface is the only deferred landmark shell
+  seam, and the skywalk owns both the open face and its persistent clearance halo so later balconies
+  and roofs cannot pierce it. Landmark-owned private cells are feature volume rather than synthetic
+  `WarrenBuildingVolume` stacks, and their terrain bearing replaces any hidden support podium.
   After exact room composition, the same fine grid admits exactly six usable balconies across at
   least three building owners. Each is one measured 3 x 1.5 m private occupied-floor recipe with
   two deck tiles, full two-band headroom, a reviewed door facade, four exposed-edge railing runs,

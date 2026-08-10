@@ -12,6 +12,10 @@ var reserved_cells: Array[Vector3i] = []
 ## without changing their PUBLIC_AIR ownership. Markets use a shareable named
 ## construction seam here; their aisle remains part of the canonical route.
 var public_cells: Array[Vector3i] = []
+## Exact ground-contact cells for a terrain-rooted composed feature. These are
+## separate from occupied volume because a measured prefab may bear through
+## interior piers that are not part of its conservative shell mask.
+var terrain_bearing_cells: Array[Vector3i] = []
 var endpoints: Array[Dictionary] = []
 var support_node_id: StringName
 ## Exact resource-free construction alternatives selected by the topology
@@ -23,6 +27,7 @@ var audit: Dictionary = {}
 var last_rejection := ""
 var _cell_set: Dictionary = {}
 var _public_set: Dictionary = {}
+var _terrain_bearing_set: Dictionary = {}
 var _audit_facts: Dictionary = {}
 var _sealed := false
 
@@ -51,6 +56,17 @@ func add_public_cells(cells: Array[Vector3i]) -> bool:
 			return false
 		_public_set[cell] = true
 		public_cells.append(cell)
+	return true
+
+
+func add_terrain_bearing_cells(cells: Array[Vector3i]) -> bool:
+	if _sealed or cells.is_empty():
+		return false
+	for cell: Vector3i in cells:
+		if _terrain_bearing_set.has(cell):
+			return false
+		_terrain_bearing_set[cell] = true
+		terrain_bearing_cells.append(cell)
 	return true
 
 
@@ -104,7 +120,8 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 	if kind in [&"enclosed_skywalk", &"public_skybridge"] \
 			and endpoint_owners.size() < 2:
 		return _reject("skywalk lacks two distinct endpoint owners")
-	if kind in [&"enclosed_skywalk", &"covered_market", &"balcony"] \
+	if kind in [&"enclosed_skywalk", &"covered_market", &"balcony",
+			&"prefab_landmark"] \
 			and construction_records.is_empty():
 		return _reject("constructed feature has no exact asset record")
 	if kind == &"covered_market":
@@ -122,12 +139,36 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 		return _reject("balcony lacks one private endpoint owner")
 	if kind == &"room_outcropping" and endpoint_owners.size() != 1:
 		return _reject("room outcropping lacks one parent building")
+	if kind == &"prefab_landmark":
+		if endpoints.size() != 1 or endpoint_owners.size() != 1 \
+				or not endpoint_owners.has(stable_id) \
+				or construction_records.size() != 1 \
+				or terrain_bearing_cells.is_empty():
+			return _reject("prefab landmark lacks one self-owned doorway, recipe, or bearing")
+		for cell: Vector3i in terrain_bearing_cells:
+			if not grid.reservation_owned_by(cell,
+					WarrenSpatialGrid.Reservation.TERRAIN_BEARING, stable_id):
+				return _reject("prefab landmark bearing differs from grid")
+		var entrance := (endpoints[0] as Dictionary).cell as Vector3i
+		var landing := _audit_facts.get("landmark_public_landing_cell",
+			Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+		var direction := landing - entrance
+		var floor := grid.face_claim(landing, Vector3i.DOWN)
+		var doorway := grid.face_claim(entrance, direction)
+		if absi(direction.x) + absi(direction.z) != 1 or direction.y != 0 \
+				or grid.use_at(landing) != WarrenSpatialGrid.Use.PUBLIC_AIR \
+				or floor.is_empty() or int(floor.kind) \
+					!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR \
+				or doorway.is_empty() or int(doorway.kind) \
+					!= WarrenSpatialGrid.FaceKind.DOOR:
+			return _reject("prefab landmark doorway does not meet canonical public space")
 	if not support_node_id.is_empty() \
 			and (supports == null or not supports.reaches_terrain(support_node_id)):
 		return _reject("feature support does not reach terrain")
 	audit = _audit_facts.duplicate(true)
 	audit.merge({"reserved_cell_count": reserved_cells.size(),
 		"public_cell_count": public_cells.size(),
+		"terrain_bearing_cell_count": terrain_bearing_cells.size(),
 		"endpoint_count": endpoints.size(), "endpoint_owner_count":
 		endpoint_owners.size(), "construction_record_count":
 		construction_records.size()}, true)
@@ -154,6 +195,10 @@ func deterministic_signature() -> String:
 	for cell: Vector3i in public_cells:
 		public_parts.append("%d:%d:%d" % [cell.x, cell.y, cell.z])
 	public_parts.sort()
+	var bearing_parts := PackedStringArray()
+	for cell: Vector3i in terrain_bearing_cells:
+		bearing_parts.append("%d:%d:%d" % [cell.x, cell.y, cell.z])
+	bearing_parts.sort()
 	var construction_parts := PackedStringArray()
 	for record: Dictionary in construction_records:
 		var origin := record.origin as Vector3i
@@ -161,9 +206,9 @@ func deterministic_signature() -> String:
 			StringName(record.recipe_id), origin.x, origin.y, origin.z,
 			int(record.yaw_quarters), StringName(record.role)])
 	construction_parts.sort()
-	return "%s/%s[%s]>%s/public=%s/support=%s/build=%s" % [String(stable_id),
+	return "%s/%s[%s]>%s/public=%s/bearing=%s/support=%s/build=%s" % [String(stable_id),
 		String(kind), ",".join(cells), ",".join(endpoint_parts),
-		",".join(public_parts), String(support_node_id),
+		",".join(public_parts), ",".join(bearing_parts), String(support_node_id),
 		",".join(construction_parts)]
 
 

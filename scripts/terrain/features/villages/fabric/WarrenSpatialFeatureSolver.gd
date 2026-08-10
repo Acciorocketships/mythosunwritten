@@ -6,6 +6,7 @@ extends RefCounted
 ## its exact private/structural cells and construction transform. Generic room
 ## and roof compilation may respond to these facts but never recreate them.
 const TARGET_SKYWALKS := 3
+const TARGET_PREFAB_LANDMARKS := 2
 const TARGET_BALCONIES := 6
 const MIN_BALCONY_BUILDINGS := 3
 const MAX_BALCONIES_PER_BUILDING := 2
@@ -26,6 +27,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		preplanned_skywalks: Array[Dictionary] = [],
 		preplanned_market: Dictionary = {},
+		preplanned_landmarks: Array[Dictionary] = [],
 		construction_program: SettlementFabricProgram = null) \
 		-> Array[WarrenFeatureReservation]:
 	last_failure = ""
@@ -46,8 +48,15 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	if market == null:
 		return [] as Array[WarrenFeatureReservation]
 	out.append(market)
+	var landmarks := _record_preplanned_landmarks(grid, supports,
+		preplanned_landmarks)
+	if landmarks.size() < TARGET_PREFAB_LANDMARKS:
+		last_failure = "only %d of %d topology-first prefab landmarks survived" \
+			% [landmarks.size(), TARGET_PREFAB_LANDMARKS]
+		return [] as Array[WarrenFeatureReservation]
+	out.append_array(landmarks)
 	var skywalks := _reserve_preplanned_skywalks(grid, buildings, supports,
-		preplanned_skywalks) if not preplanned_skywalks.is_empty() \
+		preplanned_skywalks, landmarks) if not preplanned_skywalks.is_empty() \
 		else _reserve_skywalks(grid, buildings, supports, source.world_seed)
 	if skywalks.size() < TARGET_SKYWALKS:
 		var detail := last_failure
@@ -78,6 +87,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	last_audit = {
 		"elevated_courtyard_count": 1,
 		"covered_market_count": 1,
+		"prefab_landmark_count": landmarks.size(),
 		"enclosed_skywalk_count": skywalks.size(),
 		"usable_balcony_count": balconies.size(),
 		"balcony_building_count": balcony_buildings.size(),
@@ -85,6 +95,71 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"feature_count": out.size(),
 	}
 	last_audit.merge(court.audit, false)
+	return out
+
+
+static func _record_preplanned_landmarks(grid: WarrenSpatialGrid,
+		supports: WarrenSupportGraph,
+		reservations: Array[Dictionary]) -> Array[WarrenFeatureReservation]:
+	## Landmark volume, clearance, terrain bearing, doorway, and shell faces were
+	## committed before room composition. This phase only seals the immutable
+	## semantic records; it never searches for a new transform after packing.
+	var out: Array[WarrenFeatureReservation] = []
+	for reservation: Dictionary in reservations:
+		var feature_id := StringName(reservation.get("feature_id", &""))
+		var body: Array[Vector3i] = []
+		body.assign((reservation.get("body", {}) as Dictionary).keys())
+		body.sort_custom(_cell_less)
+		var bearing: Array[Vector3i] = []
+		bearing.assign((reservation.get("bearing_cells", {}) as Dictionary).keys())
+		bearing.sort_custom(_cell_less)
+		var entrance_cell := reservation.get("entrance_cell",
+			Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+		var landing_cell := reservation.get("landing_cell",
+			Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+		if feature_id.is_empty() or body.is_empty() or bearing.is_empty() \
+				or not body.has(entrance_cell):
+			last_failure = "preplanned prefab landmark record is incomplete"
+			return [] as Array[WarrenFeatureReservation]
+		for cell: Vector3i in body:
+			if grid.use_at(cell) != WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+					or grid.owner_name_at(cell) != feature_id:
+				last_failure = "prefab landmark %s lost body cell %s" % [
+					feature_id, cell]
+				return [] as Array[WarrenFeatureReservation]
+		var blocker_ids: Array[StringName] = []
+		blocker_ids.assign((reservation.get("blocker_parcels", {}) \
+			as Dictionary).keys())
+		blocker_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+			return String(a) < String(b))
+		var feature := WarrenFeatureReservation.new(feature_id,
+			&"prefab_landmark")
+		if not feature.add_reserved_cells(body) \
+				or not feature.add_terrain_bearing_cells(bearing) \
+				or not feature.add_endpoint(entrance_cell, feature_id) \
+				or not feature.add_construction_record(
+					StringName(reservation.recipe_id),
+					reservation.origin as Vector3i,
+					int(reservation.yaw_quarters), &"terrain_rooted_landmark") \
+				or not feature.set_audit_facts({
+					"landmark_recipe_id": StringName(reservation.recipe_id),
+					"landmark_source_family": StringName(
+						reservation.source_family),
+					"landmark_entrance_cell": entrance_cell,
+					"landmark_public_landing_cell": landing_cell,
+					"landmark_terrain_bearing_cell_count": bearing.size(),
+					"landmark_visual_clearance_cell_count": (
+						reservation.clearance as Dictionary).size(),
+					"landmark_height_cell_count": int(
+						reservation.height_cell_count),
+					"landmark_displaced_parcel_ids": blocker_ids,
+					"landmark_publicly_addressed": true,
+					"landmark_terrain_rooted": true,
+				}) or not feature.seal(grid, supports):
+			last_failure = "prefab landmark feature seal failed: %s" \
+				% feature.last_rejection
+			return [] as Array[WarrenFeatureReservation]
+		out.append(feature)
 	return out
 
 
@@ -604,7 +679,9 @@ static func _reserve_preplanned_market(grid: WarrenSpatialGrid,
 
 static func _reserve_preplanned_skywalks(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
-		reservations: Array[Dictionary]) -> Array[WarrenFeatureReservation]:
+		reservations: Array[Dictionary],
+		landmarks: Array[WarrenFeatureReservation] = []) \
+		-> Array[WarrenFeatureReservation]:
 	## Commit the exact feature-set selected before room partition. The former
 	## late scanner threw those reservations away and tried to rediscover only
 	## straight links after rooms had consumed the surrounding mass, which made
@@ -613,7 +690,8 @@ static func _reserve_preplanned_skywalks(grid: WarrenSpatialGrid,
 	var offset_rooms := _offset_room_ids(buildings)
 	for reservation_index in reservations.size():
 		var reservation := reservations[reservation_index]
-		var resolved := _resolve_preplanned_endpoints(reservation, buildings)
+		var resolved := _resolve_preplanned_endpoints(grid, reservation, buildings,
+			landmarks)
 		if resolved.size() != 2:
 			last_skywalk_diagnostic = _preplanned_endpoint_diagnostic(grid,
 				reservation, buildings, reservation_index)
@@ -622,9 +700,13 @@ static func _reserve_preplanned_skywalks(grid: WarrenSpatialGrid,
 			return [] as Array[WarrenFeatureReservation]
 		var endpoint_owner_ids: Dictionary = {}
 		var offset_endpoint_count := 0
+		var landmark_endpoint_count := 0
 		for endpoint: Dictionary in resolved:
 			endpoint_owner_ids[StringName(endpoint.building_id)] = true
-			offset_endpoint_count += int(offset_rooms.has(
+			var is_landmark := StringName(endpoint.get("endpoint_kind", &"")) \
+				== &"landmark"
+			landmark_endpoint_count += int(is_landmark)
+			offset_endpoint_count += int(is_landmark or offset_rooms.has(
 				StringName(endpoint.room_id)))
 		if endpoint_owner_ids.size() != 2 or offset_endpoint_count < 1:
 			last_failure = "preplanned skywalk %d lacks two owners or an offset endpoint" \
@@ -645,7 +727,7 @@ static func _reserve_preplanned_skywalks(grid: WarrenSpatialGrid,
 			return [] as Array[WarrenFeatureReservation]
 		var feature := _commit_preplanned_skywalk(grid, reservation, resolved,
 			body, lower_public_columns.size(), supports, reservation_index,
-			offset_endpoint_count)
+			offset_endpoint_count, landmark_endpoint_count)
 		if feature == null:
 			return [] as Array[WarrenFeatureReservation]
 		out.append(feature)
@@ -685,9 +767,14 @@ static func _preplanned_endpoint_diagnostic(grid: WarrenSpatialGrid,
 			._skywalk_endpoint_pair_key(reservation)}
 
 
-static func _resolve_preplanned_endpoints(reservation: Dictionary,
-		buildings: Array[WarrenBuildingVolume]) -> Array[Dictionary]:
+static func _resolve_preplanned_endpoints(grid: WarrenSpatialGrid,
+		reservation: Dictionary,
+		buildings: Array[WarrenBuildingVolume],
+		landmarks: Array[WarrenFeatureReservation] = []) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
+	var landmark_by_id: Dictionary = {}
+	for landmark: WarrenFeatureReservation in landmarks:
+		landmark_by_id[landmark.stable_id] = landmark
 	var owner_ids := reservation.get("owner_parcel_ids", []) as Array
 	var endpoints := reservation.get("owner_endpoints", []) as Array
 	if owner_ids.size() != 2 or endpoints.size() != 2:
@@ -700,6 +787,19 @@ static func _resolve_preplanned_endpoints(reservation: Dictionary,
 		var facing := endpoint.facing as Vector3i
 		if not body.has(cell + facing):
 			return [] as Array[Dictionary]
+		var landmark := landmark_by_id.get(source_parcel_id) \
+			as WarrenFeatureReservation
+		if landmark != null:
+			if not landmark.reserved_cells.has(cell) \
+					or grid.use_at(cell) != WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+					or grid.owner_name_at(cell) != landmark.stable_id:
+				return [] as Array[Dictionary]
+			out.append({"cell": cell, "facing": facing,
+				"building_id": landmark.stable_id,
+				"room_id": landmark.stable_id,
+				"source_parcel_id": landmark.stable_id,
+				"endpoint_kind": &"landmark"})
+			continue
 		var endpoint_match: Dictionary = {}
 		for building: WarrenBuildingVolume in buildings:
 			for room: WarrenRoomStamp in building.room_records:
@@ -711,7 +811,8 @@ static func _resolve_preplanned_endpoints(reservation: Dictionary,
 				endpoint_match = {"cell": cell, "facing": facing,
 					"building_id": building.stable_id,
 					"room_id": room.stable_id,
-					"source_parcel_id": source_parcel_id}
+					"source_parcel_id": source_parcel_id,
+					"endpoint_kind": &"room"}
 		if endpoint_match.is_empty():
 			return [] as Array[Dictionary]
 		out.append(endpoint_match)
@@ -739,20 +840,46 @@ static func _commit_preplanned_skywalk(grid: WarrenSpatialGrid,
 		reservation: Dictionary, resolved: Array[Dictionary],
 		body: Array[Vector3i], lower_public_column_count: int,
 		supports: WarrenSupportGraph, ordinal: int,
-		offset_endpoint_count: int) -> WarrenFeatureReservation:
+		offset_endpoint_count: int,
+		landmark_endpoint_count: int = 0) -> WarrenFeatureReservation:
 	var feature_id := StringName("spatial.feature.skywalk.%02d" % ordinal)
 	var body_set: Dictionary = {}
 	for cell: Vector3i in body:
 		body_set[cell] = true
 	var endpoint_cells: Dictionary = {}
+	var endpoint_owner_ids: Dictionary = {}
 	for endpoint: Dictionary in resolved:
 		endpoint_cells[endpoint.cell as Vector3i] = true
+		endpoint_owner_ids[StringName(endpoint.building_id)] = true
+	var clearance_only: Array[Vector3i] = []
+	for cell_value: Variant in (reservation.get("visual_clearance_cells", {}) \
+			as Dictionary).keys():
+		if body_set.has(cell_value):
+			continue
+		var cell := cell_value as Vector3i
+		var existing_visual := (grid.reservation_bits_at(cell) \
+			& WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE) != 0
+		if existing_visual:
+			var endpoint_owns_clearance := false
+			for owner_value: Variant in endpoint_owner_ids.keys():
+				if grid.reservation_owned_by(cell,
+						WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE,
+						StringName(owner_value)):
+					endpoint_owns_clearance = true
+					break
+			if endpoint_owns_clearance:
+				continue
+			last_failure = "skywalk clearance changed before commit at %s" % cell
+			return null
+		clearance_only.append(cell)
 	var tx := grid.begin_transaction(feature_id)
 	if not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
 			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
 			or not tx.reserve(body, WarrenSpatialGrid.Reservation.FEATURE \
 				| WarrenSpatialGrid.Reservation.PRIVATE_CONNECTION \
 				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not clearance_only.is_empty() and not tx.reserve(clearance_only,
+				WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
 			or not tx.assign_use(body, WarrenSpatialGrid.Use.PRIVATE_VOLUME,
 				feature_id):
 		last_failure = "could not stage preplanned skywalk %s" % feature_id
@@ -798,12 +925,30 @@ static func _commit_preplanned_skywalk(grid: WarrenSpatialGrid,
 			return null
 	var left := resolved[0]
 	var right := resolved[1]
-	if not feature.set_support_node(StringName(left.building_id)) \
+	var support_owner := &""
+	for endpoint: Dictionary in resolved:
+		var candidate_owner := StringName(endpoint.building_id)
+		if supports.reaches_terrain(candidate_owner):
+			support_owner = candidate_owner
+			break
+	var endpoint_bindings: Array[Dictionary] = []
+	for endpoint: Dictionary in resolved:
+		endpoint_bindings.append({
+			"endpoint_kind": StringName(endpoint.endpoint_kind),
+			"owner_id": StringName(endpoint.building_id),
+			"room_id": StringName(endpoint.room_id),
+			"cell": endpoint.cell,
+		})
+	if support_owner.is_empty() or not feature.set_support_node(support_owner) \
 			or not feature.set_audit_facts({
 				"skywalk_kind": StringName(reservation.get("kind", &"straight")),
 				"skywalk_component_count": components.size(),
 				"skywalk_lower_public_column_count": lower_public_column_count,
 				"skywalk_offset_endpoint_count": offset_endpoint_count,
+				"skywalk_landmark_endpoint_count": landmark_endpoint_count,
+				"skywalk_visual_clearance_cell_count": body.size() \
+					+ clearance_only.size(),
+				"skywalk_endpoint_bindings": endpoint_bindings,
 				"skywalk_left_room_id": StringName(left.room_id),
 				"skywalk_right_room_id": StringName(right.room_id),
 				"skywalk_endpoint_pair_key": WarrenVolumetricSolver \

@@ -47,6 +47,25 @@ func _init() -> void:
 		print("SKY_DIAG: ", WarrenSpatialFeatureSolver.last_skywalk_diagnostic)
 		print("MARKET_DIAG: ",
 			WarrenVolumetricSolver.last_preplan_market_diagnostic)
+		print("LANDMARK_COUNTS: candidates=",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic.get(
+				"candidate_count", -1), " pairs=",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic.get(
+				"compatible_pair_count", -1), " attempts=",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic.get(
+				"joint_attempt_count", -1), " max_skywalks=",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic.get(
+				"maximum_joint_skywalk_count", -1), " max_exact_candidates=",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic.get(
+				"maximum_exact_skywalk_candidate_count", -1), " max_pairs=",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic.get(
+				"maximum_skywalk_pair_frontier_count", -1))
+		print("LANDMARK_PAIR_PREVIEW: ",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic.get(
+				"pair_preview", []))
+		print("LANDMARK_JOINT_PREVIEW: ",
+			WarrenVolumetricSolver.last_preplan_landmark_diagnostic.get(
+				"joint_pair_preview", []))
 		quit(1)
 		return
 	print("LANDMARK_DIAG: ",

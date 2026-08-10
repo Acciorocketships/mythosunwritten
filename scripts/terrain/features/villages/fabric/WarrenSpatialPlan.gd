@@ -187,7 +187,8 @@ func _validate_building_ownership() -> bool:
 			continue
 		var feature := _feature_by_id.get(owner_id) as WarrenFeatureReservation
 		if feature == null or feature.kind not in [&"enclosed_skywalk",
-				&"balcony"] or not feature.reserved_cells.has(cell):
+				&"balcony", &"prefab_landmark"] \
+				or not feature.reserved_cells.has(cell):
 			return _reject("private cell has no exact building/feature owner at %s" \
 				% cell)
 	for cell: Vector3i in grid.cells_with_use(

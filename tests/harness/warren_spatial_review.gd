@@ -37,8 +37,9 @@ func _ready() -> void:
 	add_child(root)
 	var committed := SettlementFabricAssembler.commit(root, _fabric, catalog,
 		false)
-	print("[warren_spatial_review] seed=%d features=%d balconies=%d instances=%d" \
+	print("[warren_spatial_review] seed=%d features=%d landmarks=%d balconies=%d instances=%d" \
 		% [_world_seed, _spatial.features.size(),
+			int(_spatial.audit.get("prefab_landmark_count", 0)),
 			int(_spatial.audit.get("usable_balcony_count", 0)),
 			int(committed.instance_count)])
 	_camera.current = true
@@ -83,6 +84,7 @@ func _capture_all() -> void:
 			span * 0.55), "target": centre + Vector3(0.0, 3.0, 0.0),
 			"fov": 70.0},
 	]
+	views.append_array(_landmark_views())
 	views.append_array(_balcony_views())
 	for view: Dictionary in views:
 		_camera.fov = float(view.fov)
@@ -124,6 +126,47 @@ func _balcony_views() -> Array[Dictionary]:
 		out.append({"id": "balcony-%02d-underside" % ordinal,
 			"position": target + outward * 3.5 + Vector3.UP * -1.2,
 			"target": target + Vector3.UP * -0.4, "fov": 58.0})
+		ordinal += 1
+	return out
+
+
+func _landmark_views() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var ordinal := 0
+	for feature: WarrenFeatureReservation in _spatial.features:
+		if feature.kind != &"prefab_landmark" \
+				or feature.construction_records.size() != 1:
+			continue
+		var record := feature.construction_records[0]
+		var origin := record.origin as Vector3i
+		var entrance := feature.audit.landmark_entrance_cell as Vector3i
+		var landing := feature.audit.landmark_public_landing_cell as Vector3i
+		var outward3 := landing - entrance
+		var outward := Vector3(outward3)
+		var side := Vector3(-outward3.z, 0.0, outward3.x)
+		var height_m := float(feature.audit.landmark_height_cell_count) \
+			* FabricRecipe.CELL_SIZE
+		var target := Vector3(origin) * FabricRecipe.CELL_SIZE \
+			+ Vector3.UP * height_m * 0.48
+		out.append({"id": "landmark-%02d-front" % ordinal,
+			"position": target + outward * 18.0 + Vector3.UP * 2.5,
+			"target": target, "fov": 56.0})
+		out.append({"id": "landmark-%02d-side" % ordinal,
+			"position": target + outward * 10.0 + side * 13.0 \
+				+ Vector3.UP * 4.0,
+			"target": target + Vector3.UP * 1.0, "fov": 58.0})
+		for skywalk: WarrenFeatureReservation in _spatial.features:
+			if skywalk.kind != &"enclosed_skywalk":
+				continue
+			for endpoint: Dictionary in skywalk.endpoints:
+				if StringName(endpoint.owner_id) != feature.stable_id:
+					continue
+				var socket_target := Vector3(endpoint.cell as Vector3i) \
+					* FabricRecipe.CELL_SIZE + Vector3.UP * 1.5
+				out.append({"id": "landmark-%02d-skywalk-seam" % ordinal,
+					"position": socket_target + side * 8.0 \
+						+ outward * 5.0 + Vector3.UP * 2.0,
+					"target": socket_target, "fov": 55.0})
 		ordinal += 1
 	return out
 

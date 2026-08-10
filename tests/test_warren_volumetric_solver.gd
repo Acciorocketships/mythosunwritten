@@ -24,6 +24,8 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_eq(int(plan.audit.missing_roof_face_count), 0)
 	assert_eq(int(plan.audit.elevated_courtyard_count), 1)
 	assert_eq(int(plan.audit.covered_market_count), 1)
+	assert_eq(int(plan.audit.prefab_landmark_count),
+		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
 	assert_eq(int(plan.audit.enclosed_skywalk_count),
 		WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
 	assert_gte(int(plan.audit.usable_balcony_count),
@@ -59,6 +61,7 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	var skywalks: Array[WarrenFeatureReservation] = []
 	var markets: Array[WarrenFeatureReservation] = []
 	var balconies: Array[WarrenFeatureReservation] = []
+	var landmarks: Array[WarrenFeatureReservation] = []
 	var outcroppings: Array[WarrenFeatureReservation] = []
 	for feature: WarrenFeatureReservation in plan.features:
 		match feature.kind:
@@ -70,6 +73,8 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 				markets.append(feature)
 			&"balcony":
 				balconies.append(feature)
+			&"prefab_landmark":
+				landmarks.append(feature)
 			&"room_outcropping":
 				outcroppings.append(feature)
 	assert_eq(courts.size(), 1)
@@ -80,6 +85,39 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		assert_gte(int(court.audit.courtyard_below_route_cell_count), 4)
 		assert_gte(int(court.audit.courtyard_upper_route_cell_count), 2)
 	assert_eq(markets.size(), 1)
+	assert_eq(landmarks.size(),
+		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
+	var landmark_recipes: Dictionary = {}
+	var landmark_ids: Dictionary = {}
+	for landmark: WarrenFeatureReservation in landmarks:
+		landmark_ids[landmark.stable_id] = landmark
+		assert_eq(landmark.endpoints.size(), 1)
+		assert_eq(landmark.construction_records.size(), 1)
+		assert_gt(landmark.terrain_bearing_cells.size(), 0)
+		var recipe_id := StringName(landmark.construction_records[0].recipe_id)
+		assert_true(String(recipe_id).begins_with("anchor.prefab."))
+		assert_false(landmark_recipes.has(recipe_id),
+			"landmarks must use distinct authored prefab recipes")
+		landmark_recipes[recipe_id] = true
+		assert_true(bool(landmark.audit.landmark_publicly_addressed))
+		assert_true(bool(landmark.audit.landmark_terrain_rooted))
+		var entrance := landmark.audit.landmark_entrance_cell as Vector3i
+		var landing := landmark.audit.landmark_public_landing_cell as Vector3i
+		assert_eq(StringName(landmark.endpoints[0].owner_id), landmark.stable_id)
+		assert_eq(landmark.endpoints[0].cell as Vector3i, entrance)
+		assert_eq(plan.grid.use_at(landing), WarrenSpatialGrid.Use.PUBLIC_AIR)
+		assert_eq(int(plan.grid.face_claim(landing, Vector3i.DOWN).kind),
+			WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR)
+		assert_eq(int(plan.grid.face_claim(entrance, landing - entrance).kind),
+			WarrenSpatialGrid.FaceKind.DOOR)
+		for cell: Vector3i in landmark.terrain_bearing_cells:
+			assert_true(plan.grid.reservation_owned_by(cell,
+				WarrenSpatialGrid.Reservation.TERRAIN_BEARING,
+				landmark.stable_id))
+		for cell: Vector3i in landmark.reserved_cells:
+			assert_eq(plan.grid.use_at(cell),
+				WarrenSpatialGrid.Use.PRIVATE_VOLUME)
+			assert_eq(plan.grid.owner_name_at(cell), landmark.stable_id)
 	if not markets.is_empty():
 		var market := markets[0]
 		assert_gte(market.public_cells.size(), 4)
@@ -105,6 +143,7 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	assert_eq(skywalks.size(), WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
 	var endpoint_pairs: Dictionary = {}
 	var corner_count := 0
+	var landmark_link_count := 0
 	for skywalk: WarrenFeatureReservation in skywalks:
 		assert_eq(skywalk.endpoints.size(), 2)
 		assert_gte(skywalk.construction_records.size(), 1)
@@ -115,10 +154,17 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 			"two skywalks reused the same exact endpoint pair")
 		endpoint_pairs[pair_key] = true
 		corner_count += int(skywalk.audit.skywalk_kind == &"corner")
+		landmark_link_count += int(
+			int(skywalk.audit.get("skywalk_landmark_endpoint_count", 0)) > 0)
 		var owner_ids: Dictionary = {}
 		for endpoint: Dictionary in skywalk.endpoints:
 			var owner_id := StringName(endpoint.owner_id)
 			owner_ids[owner_id] = true
+			if landmark_ids.has(owner_id):
+				assert_true((landmark_ids[owner_id] \
+					as WarrenFeatureReservation).reserved_cells.has(
+						endpoint.cell as Vector3i))
+				continue
 			var building: WarrenBuildingVolume
 			for candidate: WarrenBuildingVolume in plan.buildings:
 				if candidate.stable_id == owner_id:
@@ -134,6 +180,8 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 			assert_eq(plan.grid.owner_name_at(cell), skywalk.stable_id)
 	assert_gte(corner_count, 1,
 		"the seed-seven proof should retain a visibly turning skywalk")
+	assert_gte(landmark_link_count, 1,
+		"at least one true skywalk must terminate in a landmark socket")
 	assert_gte(balconies.size(), WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	var balcony_owners: Dictionary = {}
 	var balcony_facades: Dictionary = {}

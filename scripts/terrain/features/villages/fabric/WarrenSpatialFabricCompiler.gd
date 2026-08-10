@@ -222,16 +222,19 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 		return String(a.stable_id) < String(b.stable_id))
 	var out: Array[FabricUnit] = []
 	var realized_cells: Dictionary = {}
+	var compiled_feature_unit_by_owner: Dictionary = {}
 	var skywalk_count := 0
 	var market_count := 0
 	var balcony_count := 0
+	var landmark_count := 0
 	for feature: WarrenFeatureReservation in ordered_features:
 		var feature_units: Array[FabricUnit] = []
 		match feature.kind:
 			&"enclosed_skywalk":
 				feature_units = _compile_skywalk_feature(feature, program,
 					room_unit_by_stamp, source_parcel_by_room,
-					seam_ids_by_source_parcel)
+					seam_ids_by_source_parcel,
+					compiled_feature_unit_by_owner)
 				skywalk_count += int(not feature_units.is_empty())
 			&"covered_market":
 				feature_units = _compile_market_feature(feature, program,
@@ -243,6 +246,9 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 					room_unit_by_stamp, source_parcel_by_room,
 					seam_ids_by_source_parcel)
 				balcony_count += int(not feature_units.is_empty())
+			&"prefab_landmark":
+				feature_units = _compile_landmark_feature(feature, program)
+				landmark_count += int(not feature_units.is_empty())
 			_:
 				last_failure = "constructed spatial feature %s has no compiler" % \
 					feature.kind
@@ -259,6 +265,8 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 					unit.stable_id, probe.last_rejection]
 				return [] as Array[FabricUnit]
 			out.append(unit)
+		if feature.kind == &"prefab_landmark" and feature_units.size() == 1:
+			compiled_feature_unit_by_owner[feature.stable_id] = feature_units[0]
 		for cell: Vector3i in feature.reserved_cells:
 			if realized_cells.has(cell):
 				last_failure = "constructed features overlap at %s" % cell
@@ -267,14 +275,50 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	last_audit = {
 		"source_constructed_feature_count": ordered_features.size(),
 		"realized_constructed_feature_count": skywalk_count + market_count \
-			+ balcony_count,
+			+ balcony_count + landmark_count,
 		"skywalk_feature_count": skywalk_count,
 		"covered_market_feature_count": market_count,
 		"balcony_feature_count": balcony_count,
+		"prefab_landmark_feature_count": landmark_count,
 		"feature_construction_unit_count": out.size(),
 		"feature_reserved_cell_count": realized_cells.size(),
 	}
 	return out
+
+
+static func _compile_landmark_feature(feature: WarrenFeatureReservation,
+		program: SettlementFabricProgram) -> Array[FabricUnit]:
+	if feature.endpoints.size() != 1 \
+			or feature.construction_records.size() != 1:
+		last_failure = "prefab landmark %s lacks one exact doorway/recipe" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	var component := _feature_component_shell(feature, 0,
+		feature.construction_records[0])
+	var recipe := program.recipe(component.recipe_id)
+	if recipe == null or not recipe.has_tag(&"prefab_anchor") \
+			or not recipe.has_tag(&"terrain_bearing") \
+			or recipe.bearing_parent_count != 0:
+		last_failure = "prefab landmark %s lacks a terrain-bearing anchor recipe" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	var expected_entrance := feature.audit.get("landmark_entrance_cell",
+		Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+	var expected_landing := feature.audit.get("landmark_public_landing_cell",
+		Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+	var matching_entrances := 0
+	for entrance: Dictionary in recipe.entrances:
+		var world_cell := FabricRecipe.transform_cell(entrance.cell as Vector3i,
+			component.lattice_origin, component.yaw_quarters)
+		var world_facing := FabricRecipe.transform_direction(
+			entrance.facing as Vector3i, component.yaw_quarters)
+		matching_entrances += int(world_cell == expected_entrance \
+			and world_cell + world_facing == expected_landing)
+	if matching_entrances != 1:
+		last_failure = "prefab landmark %s construction moves its public doorway" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	return [component] as Array[FabricUnit]
 
 
 static func _compile_balcony_feature(feature: WarrenFeatureReservation,
@@ -361,28 +405,43 @@ static func _compile_market_feature(feature: WarrenFeatureReservation,
 static func _compile_skywalk_feature(feature: WarrenFeatureReservation,
 		program: SettlementFabricProgram,
 		room_unit_by_stamp: Dictionary, source_parcel_by_room: Dictionary,
-		seam_ids_by_source_parcel: Dictionary) -> Array[FabricUnit]:
-	var room_ids: Array[StringName] = [StringName(feature.audit.get(
-		"skywalk_left_room_id", &"")), StringName(feature.audit.get(
-		"skywalk_right_room_id", &""))]
-	if room_ids[0].is_empty() or room_ids[1].is_empty() \
-			or room_ids[0] == room_ids[1] or feature.endpoints.size() != 2:
+		seam_ids_by_source_parcel: Dictionary,
+		compiled_feature_unit_by_owner: Dictionary = {}) -> Array[FabricUnit]:
+	var bindings: Array[Dictionary] = []
+	bindings.assign(feature.audit.get("skywalk_endpoint_bindings", []) as Array)
+	if bindings.is_empty():
+		bindings = [
+			{"endpoint_kind": &"room", "owner_id": &"", "room_id":
+				StringName(feature.audit.get("skywalk_left_room_id", &""))},
+			{"endpoint_kind": &"room", "owner_id": &"", "room_id":
+				StringName(feature.audit.get("skywalk_right_room_id", &""))},
+		] as Array[Dictionary]
+	if bindings.size() != 2 or feature.endpoints.size() != 2:
 		last_failure = "skywalk %s lacks two exact endpoint rooms" % \
 			feature.stable_id
 		return [] as Array[FabricUnit]
 	var endpoint_specs: Array[Dictionary] = []
 	for endpoint_index in 2:
-		var room_unit := room_unit_by_stamp.get(room_ids[endpoint_index]) \
-			as FabricUnit
-		if room_unit == null:
-			last_failure = "skywalk %s endpoint room %s was not compiled" % [
-				feature.stable_id, room_ids[endpoint_index]]
-			return [] as Array[FabricUnit]
-		var source_parcel_id := StringName(source_parcel_by_room.get(
-			room_ids[endpoint_index], &""))
+		var binding := bindings[endpoint_index]
+		var endpoint_kind := StringName(binding.get("endpoint_kind", &"room"))
+		var room_id := StringName(binding.get("room_id", &""))
+		var room_unit: FabricUnit
 		var seam_ids: Array[StringName] = []
-		seam_ids.assign(seam_ids_by_source_parcel.get(source_parcel_id, []) \
-			as Array[StringName])
+		if endpoint_kind == &"landmark":
+			var owner_id := StringName(binding.get("owner_id", &""))
+			room_unit = compiled_feature_unit_by_owner.get(owner_id) as FabricUnit
+			if room_unit != null:
+				seam_ids.append(room_unit.stable_id)
+		else:
+			room_unit = room_unit_by_stamp.get(room_id) as FabricUnit
+			var source_parcel_id := StringName(source_parcel_by_room.get(room_id,
+				&""))
+			seam_ids.assign(seam_ids_by_source_parcel.get(source_parcel_id, []) \
+				as Array[StringName])
+		if room_unit == null:
+			last_failure = "skywalk %s endpoint %s was not compiled" % [
+				feature.stable_id, room_id]
+			return [] as Array[FabricUnit]
 		endpoint_specs.append({"unit": room_unit, "cell":
 			(feature.endpoints[endpoint_index] as Dictionary).cell as Vector3i,
 			"seam_ids": seam_ids})

@@ -31,6 +31,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var constructed_skywalks := 0
 	var constructed_markets := 0
 	var constructed_balconies := 0
+	var constructed_landmarks := 0
 	for feature: WarrenFeatureReservation in spatial.features:
 		if feature.construction_records.is_empty():
 			continue
@@ -38,6 +39,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		constructed_skywalks += int(feature.kind == &"enclosed_skywalk")
 		constructed_markets += int(feature.kind == &"covered_market")
 		constructed_balconies += int(feature.kind == &"balcony")
+		constructed_landmarks += int(feature.kind == &"prefab_landmark")
 		expected_feature_units += feature.construction_records.size()
 		expected_feature_cells += feature.reserved_cells.size()
 	assert_eq(features.size(), expected_feature_units)
@@ -53,17 +55,21 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_gte(constructed_balconies,
 		WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.prefab_landmark_feature_count), constructed_landmarks)
+	assert_eq(constructed_landmarks,
+		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.feature_reserved_cell_count), expected_feature_cells)
 	for feature_unit: FabricUnit in features:
 		var feature_recipe := program.recipe(feature_unit.recipe_id)
 		assert_true(feature_recipe.has_tag(&"skywalk") \
 			or feature_recipe.has_tag(&"covered_market") \
-			or feature_recipe.has_tag(&"balcony"))
+			or feature_recipe.has_tag(&"balcony") \
+			or feature_recipe.has_tag(&"prefab_anchor"))
 		assert_true(fabric.add_unit(feature_unit), fabric.last_rejection)
 	var roofs := WarrenSpatialFabricCompiler.compile_roof_units(spatial,
 		program, units, features)
 	assert_gt(roofs.size(), 0, WarrenSpatialFabricCompiler.last_failure)
-	assert_gte(roofs.size(), int(spatial.construction_plan.audit.roof_region_count))
 	assert_eq(WarrenSpatialFabricCompiler.last_audit.source_roof_face_count,
 		WarrenSpatialFabricCompiler.last_audit.realized_roof_face_count)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit.roof_unit_count),

@@ -9,6 +9,7 @@ const MIN_BUILDINGS := 10
 const GRID_PADDING_CELLS := 2
 const ROOF_CLEARANCE_CELLS := 2
 const MAX_PARTITION_VARIANTS := WarrenSolidPartitioner.PARTITION_VARIANTS
+const MAX_LANDMARK_SET_ATTEMPTS := 12
 
 static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
@@ -89,7 +90,9 @@ static func from_volume(volume: WarrenVolumePlan,
 		return null
 	var features := WarrenSpatialFeatureSolver.solve(grid, volume, buildings,
 		supports, partition.skywalk_reservations as Array[Dictionary],
-		partition.market_reservation as Dictionary, construction_program)
+		partition.market_reservation as Dictionary,
+		partition.landmark_reservations as Array[Dictionary],
+		construction_program)
 	if features.is_empty():
 		last_failure = WarrenSpatialFeatureSolver.last_failure
 		return null
@@ -133,6 +136,8 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit["ownership_handoff_count"] = int(partition.handoffs)
 	plan.audit["preplanned_skywalk_count"] = int(
 		partition.preplanned_skywalk_count)
+	plan.audit["preplanned_landmark_count"] = (
+		partition.landmark_reservations as Array).size()
 	plan.audit.merge(WarrenSpatialFeatureSolver.last_audit, true)
 	last_diagnostic = plan.audit.duplicate(true)
 	return plan
@@ -282,34 +287,111 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# finite ranked market corpus until the complete hero-feature set survives.
 	var market_reservation: Dictionary = {}
 	var skywalk_plan: Dictionary = {}
+	var landmark_reservations: Array[Dictionary] = []
 	var feature_set_attempts: Array[Dictionary] = []
 	for candidate: Dictionary in market_candidates:
-		var trial_owners := _protected_owners_with_market(protected_owners,
+		var market_owners := _protected_owners_with_market(protected_owners,
 			candidate)
-		var trial_skywalk_plan := _preplan_spatial_skywalks(grid, volume,
-			proposals, construction_program, trial_owners,
+		var baseline_skywalk_plan := _preplan_spatial_skywalks(grid, volume,
+			proposals, construction_program, market_owners,
 			WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
-		var trial_skywalks: Array[Dictionary] = []
-		trial_skywalks.assign(trial_skywalk_plan.get("reservations", []) as Array)
-		feature_set_attempts.append({"market_parcel": candidate.backing_parcel_id,
-			"market_origin": candidate.origin,
-			"skywalk_count": trial_skywalks.size()})
-		if trial_skywalks.size() < WarrenSpatialFeatureSolver.TARGET_SKYWALKS \
-				or not _reserve_market_preplan(grid, candidate):
+		var skywalk_corpus: Array[Dictionary] = []
+		skywalk_corpus.assign(baseline_skywalk_plan.get("candidate_corpus", []) \
+			as Array)
+		var public_air := baseline_skywalk_plan.get("public_air", {}) as Dictionary
+		if skywalk_corpus.is_empty():
+			feature_set_attempts.append({
+				"market_parcel": candidate.backing_parcel_id,
+				"market_origin": candidate.origin, "landmark_count": 0,
+				"landmark_recipes": [] as Array[StringName],
+				"skywalk_count": 0, "skywalk_candidate_count": 0})
 			continue
-		market_reservation = candidate
-		skywalk_plan = trial_skywalk_plan
-		protected_owners = trial_owners
-		break
+		var landmark_plan := _preplan_spatial_landmarks(grid, volume,
+			construction_program, market_owners, candidate,
+			[] as Array[Dictionary])
+		var landmark_candidates: Array[Dictionary] = []
+		landmark_candidates.assign(landmark_plan.get("candidates", []) as Array)
+		var landmark_sets := _landmark_candidate_sets(landmark_candidates,
+			volume.world_seed)
+		_rank_landmark_sets_for_skywalks(landmark_sets, skywalk_corpus)
+		for set_index in mini(MAX_LANDMARK_SET_ATTEMPTS,
+				landmark_sets.size()):
+			var landmark_set := (landmark_sets[set_index] as Dictionary) \
+				.get("reservations", []) as Array[Dictionary]
+			var trial_owners := _protected_owners_with_landmarks(market_owners,
+				landmark_set)
+			var trial_skywalk_plan := _skywalk_plan_for_landmarks(grid, volume,
+				proposals, trial_owners, skywalk_corpus, landmark_set,
+				construction_program, public_air)
+			var trial_skywalks: Array[Dictionary] = []
+			trial_skywalks.assign(trial_skywalk_plan.get("reservations", []) as Array)
+			feature_set_attempts.append({
+				"market_parcel": candidate.backing_parcel_id,
+				"market_origin": candidate.origin,
+				"landmark_count": landmark_set.size(),
+				"landmark_recipes": _landmark_recipe_ids(landmark_set),
+				"skywalk_count": trial_skywalks.size(),
+				"skywalk_candidate_count": int((landmark_sets[set_index] \
+					as Dictionary).get("skywalk_candidate_count", 0)),
+				"exact_skywalk_candidate_count": int(trial_skywalk_plan.get(
+					"candidate_count", 0)),
+				"skywalk_pair_frontier_count": int(trial_skywalk_plan.get(
+					"pair_frontier_count", 0))})
+			if landmark_set.size() \
+					< WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS \
+					or trial_skywalks.size() \
+						< WarrenSpatialFeatureSolver.TARGET_SKYWALKS:
+				continue
+			market_reservation = candidate
+			landmark_reservations.assign(landmark_set)
+			skywalk_plan = trial_skywalk_plan
+			protected_owners = trial_owners
+			break
+		if not market_reservation.is_empty():
+			break
 	var skywalk_reservations: Array[Dictionary] = []
 	skywalk_reservations.assign(skywalk_plan.get("reservations", []) as Array)
+	var maximum_joint_skywalk_count := 0
+	var maximum_exact_skywalk_candidate_count := 0
+	var maximum_skywalk_pair_frontier_count := 0
+	for attempt: Dictionary in feature_set_attempts:
+		maximum_joint_skywalk_count = maxi(maximum_joint_skywalk_count,
+			int(attempt.skywalk_count))
+		maximum_exact_skywalk_candidate_count = maxi(
+			maximum_exact_skywalk_candidate_count,
+			int(attempt.get("exact_skywalk_candidate_count", 0)))
+		maximum_skywalk_pair_frontier_count = maxi(
+			maximum_skywalk_pair_frontier_count,
+			int(attempt.get("skywalk_pair_frontier_count", 0)))
+	last_preplan_market_diagnostic["feature_set_attempts"] = feature_set_attempts
+	last_preplan_landmark_diagnostic["joint_attempt_count"] = \
+		feature_set_attempts.size()
+	last_preplan_landmark_diagnostic["maximum_joint_skywalk_count"] = \
+		maximum_joint_skywalk_count
+	last_preplan_landmark_diagnostic["maximum_exact_skywalk_candidate_count"] = \
+		maximum_exact_skywalk_candidate_count
+	last_preplan_landmark_diagnostic["maximum_skywalk_pair_frontier_count"] = \
+		maximum_skywalk_pair_frontier_count
 	if market_reservation.is_empty() \
+			or landmark_reservations.size() \
+				< WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS \
 			or skywalk_reservations.size() \
 				< WarrenSpatialFeatureSolver.TARGET_SKYWALKS:
-		last_failure = "pre-partition beam found only %d measured skywalk corridors (%s)" \
-			% [skywalk_reservations.size(), last_preplan_skywalk_diagnostic]
+		last_failure = "joint hero-feature beam found %d landmarks and %d skywalks (%s; %s)" \
+			% [landmark_reservations.size(), skywalk_reservations.size(),
+				last_preplan_landmark_diagnostic,
+				last_preplan_skywalk_diagnostic]
 		return {}
-	last_preplan_market_diagnostic["feature_set_attempts"] = feature_set_attempts
+	if not _reserve_market_preplan(grid, market_reservation):
+		last_failure = "covered-market reservation changed before joint commit: %s" \
+			% grid.last_rejection
+		return {}
+	_annotate_landmark_skywalk_connections(landmark_reservations,
+		skywalk_reservations)
+	if not _reserve_landmark_preplans(grid, landmark_reservations):
+		last_failure = "prefab-landmark reservation changed before joint commit: %s" \
+			% grid.last_rejection
+		return {}
 	last_preplan_market_diagnostic["selected"] = {
 		"parcel": market_reservation.backing_parcel_id,
 		"origin": market_reservation.origin,
@@ -342,12 +424,6 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				protected_owners[cell_value] = {}
 			(protected_owners[cell_value] as Dictionary)[reservation_owner] = \
 				allowed_endpoint_owners
-	# Inventory complete terrain-rooted landmark stamps against the exact
-	# post-market/post-skywalk reservation field. Selection is deliberately a
-	# separate bounded phase because these large envelopes must displace generic
-	# parcel stacks, never arrive later as detached decoration.
-	_preplan_spatial_landmarks(grid, volume, construction_program,
-		protected_owners, market_reservation, skywalk_reservations)
 	var forced_offsets_by_parcel := skywalk_plan.forced_offsets as Dictionary
 	var buildings: Array[WarrenBuildingVolume] = []
 	var supports := WarrenSupportGraph.new()
@@ -509,6 +585,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		"handoffs": handoffs,
 		"preplanned_skywalk_count": skywalk_reservations.size(),
 		"skywalk_reservations": skywalk_reservations,
+		"landmark_reservations": landmark_reservations,
 		"market_reservation": market_reservation}
 
 
@@ -576,21 +653,25 @@ static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
 				var components: Array[Dictionary] = [{"recipe_id": recipe.recipe_id,
 					"origin": origin, "yaw_quarters": yaw}]
 				var clearance := _skywalk_visual_clearance_cells(components, program)
+				var protected_cells := clearance.duplicate()
+				protected_cells.merge(body, true)
+				protected_cells.merge(bearing, true)
 				if clearance.is_empty() or not _cells_fit_grid(grid, clearance) \
 						or not _skywalk_clearance_fits_grid(grid, clearance) \
-						or not _skywalk_clearance_fits_protected(clearance,
+						or not _skywalk_clearance_fits_protected(protected_cells,
 							protected_owners):
 					continue
 				clearance_fit_count += 1
 				var blockers: Dictionary = {}
 				var mandatory_hit := false
-				for cell_value: Variant in clearance.keys():
+				for cell_value: Variant in protected_cells.keys():
 					for owner_value: Variant in (protected_owners.get(cell_value, {}) \
 							as Dictionary).keys():
 						var owner_id := StringName(owner_value)
-						if required_parcels.has(owner_id):
+						if required_parcels.has(owner_id) \
+								or _protected_owner_is_feature(owner_id):
 							mandatory_hit = true
-						elif not String(owner_id).begins_with("spatial.feature."):
+						else:
 							blockers[owner_id] = true
 				if mandatory_hit:
 					mandatory_rejection_count += 1
@@ -601,9 +682,15 @@ static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
 				candidates.append({"recipe_id": recipe.recipe_id,
 					"source_family": source_family, "origin": origin,
 					"yaw_quarters": yaw, "landing_cell": landing,
+					"entrance_cell": landing + side,
+					"entrance_facing": -side,
 					"body": body, "bearing_cells": bearing,
-					"clearance": clearance, "blocker_parcels": blockers,
+					"clearance": clearance, "protected_cells": protected_cells,
+					"blocker_parcels": blockers,
 					"blocker_count": blockers.size(),
+					"height_cell_count": ceili(
+						recipe.local_clearance_bounds.size.y \
+							/ FabricRecipe.CELL_SIZE),
 					"footprint_area": recipe.local_clearance_bounds.size.x \
 						* recipe.local_clearance_bounds.size.z,
 					"tie": posmod(Helper._mix64(volume.world_seed \
@@ -615,6 +702,24 @@ static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
 		if not is_equal_approx(float(a.footprint_area), float(b.footprint_area)):
 			return float(a.footprint_area) > float(b.footprint_area)
 		return int(a.tie) < int(b.tie))
+	var candidate_preview: Array[Dictionary] = []
+	for candidate_index in mini(8, candidates.size()):
+		var candidate := candidates[candidate_index]
+		var blocker_ids: Array[StringName] = []
+		blocker_ids.assign((candidate.blocker_parcels as Dictionary).keys())
+		blocker_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+			return String(a) < String(b))
+		candidate_preview.append({"recipe_id": candidate.recipe_id,
+			"source_family": candidate.source_family,
+			"origin": candidate.origin,
+			"yaw_quarters": candidate.yaw_quarters,
+			"landing_cell": candidate.landing_cell,
+			"entrance_cell": candidate.entrance_cell,
+			"body_cell_count": (candidate.body as Dictionary).size(),
+			"clearance_cell_count": (candidate.clearance as Dictionary).size(),
+			"blocker_count": candidate.blocker_count,
+			"blocker_parcels": blocker_ids,
+			"footprint_area": candidate.footprint_area})
 	last_preplan_landmark_diagnostic = {"landing_count": landing_count,
 		"prefab_recipe_count": prefab_recipes.size(),
 		"body_fit_count": body_fit_count,
@@ -622,8 +727,575 @@ static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
 		"clearance_fit_count": clearance_fit_count,
 		"mandatory_rejection_count": mandatory_rejection_count,
 		"candidate_count": candidates.size(),
-		"candidate_preview": candidates.slice(0, mini(8, candidates.size()))}
+		"candidate_preview": candidate_preview}
 	return {"candidates": candidates}
+
+
+static func _landmark_candidate_sets(candidates: Array[Dictionary],
+		world_seed: int) -> Array[Dictionary]:
+	## Two genuinely separate, measured prefabs are the minimum massing
+	## intervention. Pair selection happens before the skywalk beam so the latter
+	## routes around these buildings instead of consuming every viable anchor.
+	var out: Array[Dictionary] = []
+	for left_index in candidates.size():
+		for right_index in range(left_index + 1, candidates.size()):
+			var left := candidates[left_index]
+			var right := candidates[right_index]
+			if not _landmark_candidates_compatible(left, right):
+				continue
+			var first := left.duplicate(true)
+			var second := right.duplicate(true)
+			first["feature_id"] = &"spatial.feature.landmark.00"
+			second["feature_id"] = &"spatial.feature.landmark.01"
+			var blocker_union := (left.blocker_parcels as Dictionary).duplicate()
+			blocker_union.merge(right.blocker_parcels as Dictionary, true)
+			var protected_union := (left.protected_cells as Dictionary).duplicate()
+			protected_union.merge(right.protected_cells as Dictionary, true)
+			var left_landing := left.landing_cell as Vector3i
+			var right_landing := right.landing_cell as Vector3i
+			var separation := Vector2i(left_landing.x - right_landing.x,
+				left_landing.z - right_landing.z).length_squared()
+			var distinct_family: bool = left.source_family != right.source_family
+			out.append({"reservations": [first, second] \
+				as Array[Dictionary], "distinct_source_families": distinct_family,
+				"displaced_parcel_count": blocker_union.size(),
+				"protected_cell_count": protected_union.size(),
+				"separation_squared": separation,
+				"footprint_area": float(left.footprint_area) \
+					+ float(right.footprint_area),
+				"tie": posmod(Helper._mix64(world_seed \
+					^ String(left.recipe_id).hash() \
+					^ String(right.recipe_id).hash() \
+					^ left_landing.x * 31 ^ left_landing.z * 47 \
+					^ right_landing.x * 73 ^ right_landing.z * 89), 1000003)})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.displaced_parcel_count) != int(b.displaced_parcel_count):
+			return int(a.displaced_parcel_count) < int(b.displaced_parcel_count)
+		if int(a.protected_cell_count) != int(b.protected_cell_count):
+			return int(a.protected_cell_count) < int(b.protected_cell_count)
+		if int(a.separation_squared) != int(b.separation_squared):
+			return int(a.separation_squared) > int(b.separation_squared)
+		if bool(a.distinct_source_families) != bool(b.distinct_source_families):
+			return bool(a.distinct_source_families)
+		if not is_equal_approx(float(a.footprint_area), float(b.footprint_area)):
+			return float(a.footprint_area) > float(b.footprint_area)
+		return int(a.tie) < int(b.tie))
+	last_preplan_landmark_diagnostic["compatible_pair_count"] = out.size()
+	var pair_preview: Array[Dictionary] = []
+	for pair_index in mini(8, out.size()):
+		var pair := out[pair_index]
+		var reservations := pair.reservations as Array[Dictionary]
+		pair_preview.append({"recipe_ids": _landmark_recipe_ids(reservations),
+			"landing_cells": [reservations[0].landing_cell,
+				reservations[1].landing_cell],
+			"distinct_source_families": pair.distinct_source_families,
+			"displaced_parcel_count": pair.displaced_parcel_count,
+			"protected_cell_count": pair.protected_cell_count,
+			"separation_squared": pair.separation_squared,
+			"footprint_area": pair.footprint_area})
+	last_preplan_landmark_diagnostic["pair_preview"] = pair_preview
+	return out
+
+
+static func _rank_landmark_sets_for_skywalks(sets: Array[Dictionary],
+		skywalk_corpus: Array[Dictionary]) -> void:
+	for landmark_set: Dictionary in sets:
+		var protected := _landmark_set_protected_cells(
+			landmark_set.reservations as Array[Dictionary])
+		var blocked_parcels := _landmark_set_blocker_parcels(
+			landmark_set.reservations as Array[Dictionary])
+		var candidate_count := 0
+		var pair_keys: Dictionary = {}
+		for skywalk: Dictionary in skywalk_corpus:
+			if not _skywalk_candidate_avoids_landmarks(skywalk, protected,
+					blocked_parcels):
+				continue
+			candidate_count += 1
+			pair_keys[String(skywalk.pair_key)] = true
+		landmark_set["skywalk_candidate_count"] = candidate_count
+		landmark_set["skywalk_pair_count"] = pair_keys.size()
+	sets.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.skywalk_pair_count) != int(b.skywalk_pair_count):
+			return int(a.skywalk_pair_count) > int(b.skywalk_pair_count)
+		if int(a.skywalk_candidate_count) != int(b.skywalk_candidate_count):
+			return int(a.skywalk_candidate_count) > int(b.skywalk_candidate_count)
+		if int(a.displaced_parcel_count) != int(b.displaced_parcel_count):
+			return int(a.displaced_parcel_count) < int(b.displaced_parcel_count)
+		if int(a.protected_cell_count) != int(b.protected_cell_count):
+			return int(a.protected_cell_count) < int(b.protected_cell_count)
+		if int(a.separation_squared) != int(b.separation_squared):
+			return int(a.separation_squared) > int(b.separation_squared)
+		if bool(a.distinct_source_families) != bool(b.distinct_source_families):
+			return bool(a.distinct_source_families)
+		return int(a.tie) < int(b.tie))
+	var preview: Array[Dictionary] = []
+	for index in mini(8, sets.size()):
+		var pair := sets[index]
+		var reservations := pair.reservations as Array[Dictionary]
+		preview.append({"recipe_ids": _landmark_recipe_ids(reservations),
+			"landing_cells": [reservations[0].landing_cell,
+				reservations[1].landing_cell],
+			"skywalk_candidate_count": pair.skywalk_candidate_count,
+			"skywalk_pair_count": pair.skywalk_pair_count,
+			"displaced_parcel_count": pair.displaced_parcel_count,
+			"protected_cell_count": pair.protected_cell_count})
+	last_preplan_landmark_diagnostic["joint_pair_preview"] = preview
+
+
+static func _landmark_set_protected_cells(
+		landmarks: Array[Dictionary]) -> Dictionary:
+	var out: Dictionary = {}
+	for landmark: Dictionary in landmarks:
+		out.merge(landmark.protected_cells as Dictionary, true)
+	return out
+
+
+static func _landmark_set_blocker_parcels(
+		landmarks: Array[Dictionary]) -> Dictionary:
+	var out: Dictionary = {}
+	for landmark: Dictionary in landmarks:
+		out.merge(landmark.blocker_parcels as Dictionary, true)
+	return out
+
+
+static func _skywalk_candidate_avoids_landmarks(candidate: Dictionary,
+		protected: Dictionary, blocked_parcels: Dictionary = {}) -> bool:
+	for owner_value: Variant in (candidate.reservation as Dictionary).get(
+			"owner_parcel_ids", []):
+		if blocked_parcels.has(StringName(owner_value)):
+			return false
+	for field: StringName in [&"clearance", &"body", &"priority_cells"]:
+		for cell_value: Variant in (candidate.get(field, {}) as Dictionary).keys():
+			if protected.has(cell_value):
+				return false
+	return true
+
+
+static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, proposals: Array[Dictionary],
+		protected_owners: Dictionary,
+		candidate_corpus: Array[Dictionary],
+		landmarks: Array[Dictionary], program: SettlementFabricProgram,
+		public_air: Dictionary) -> Dictionary:
+	var landmark_cells: Dictionary = {}
+	for cell_value: Variant in protected_owners.keys():
+		for owner_value: Variant in (protected_owners[cell_value] \
+				as Dictionary).keys():
+			if String(owner_value).begins_with("spatial.feature.landmark."):
+				landmark_cells[cell_value] = true
+				break
+	var blocked_parcels := _landmark_set_blocker_parcels(landmarks)
+	var candidates: Array[Dictionary] = []
+	for candidate: Dictionary in candidate_corpus:
+		if not _skywalk_candidate_avoids_landmarks(candidate, landmark_cells,
+				blocked_parcels) \
+				or not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
+					[candidate] as Array[Dictionary], proposals, protected_owners,
+					volume.world_seed):
+			continue
+		candidates.append(candidate)
+	var landmark_attached := _landmark_attached_skywalk_candidates(grid,
+		volume, proposals, landmarks, program, protected_owners, public_air)
+	for candidate: Dictionary in landmark_attached:
+		if not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
+				[candidate] as Array[Dictionary], proposals, protected_owners,
+				volume.world_seed):
+			continue
+		candidates.append(candidate)
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.get("landmark_endpoint_count", 0)) \
+				!= int(b.get("landmark_endpoint_count", 0)):
+			return int(a.get("landmark_endpoint_count", 0)) \
+				> int(b.get("landmark_endpoint_count", 0))
+		if int(a.blocker_count) != int(b.blocker_count):
+			return int(a.blocker_count) < int(b.blocker_count)
+		if int(a.lower_cover) != int(b.lower_cover):
+			return int(a.lower_cover) > int(b.lower_cover)
+		return int(a.tie) < int(b.tie))
+	var selected: Array[Dictionary] = []
+	var primary_frontier_size := mini(candidates.size(), 64)
+	var pair_frontier: Array[Vector2i] = []
+	var stop_pairs := false
+	for first in primary_frontier_size:
+		var accepted_for_first := 0
+		for second in candidates.size():
+			if second == first or not _skywalk_candidates_compatible(
+					candidates[first], candidates[second]):
+				continue
+			var pair := [candidates[first], candidates[second]] \
+				as Array[Dictionary]
+			if not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
+					pair, proposals, protected_owners, volume.world_seed):
+				continue
+			pair_frontier.append(Vector2i(first, second))
+			accepted_for_first += 1
+			if pair_frontier.size() >= 128:
+				stop_pairs = true
+				break
+			if accepted_for_first >= 4:
+				break
+		if stop_pairs:
+			break
+	for pair_indices: Vector2i in pair_frontier:
+		var first := pair_indices.x
+		var second := pair_indices.y
+		for third in candidates.size():
+			if third in [first, second] \
+					or not _skywalk_candidates_compatible(candidates[first],
+						candidates[third]) \
+					or not _skywalk_candidates_compatible(candidates[second],
+						candidates[third]):
+				continue
+			var combination := [candidates[first], candidates[second],
+				candidates[third]] as Array[Dictionary]
+			var landmark_endpoint_count := 0
+			for candidate: Dictionary in combination:
+				landmark_endpoint_count += int(candidate.get(
+					"landmark_endpoint_count", 0))
+			if landmark_endpoint_count < 1:
+				continue
+			if not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
+					combination, proposals, protected_owners, volume.world_seed):
+				continue
+			selected = combination
+			break
+		if not selected.is_empty():
+			break
+	last_preplan_skywalk_diagnostic["landmark_filtered_candidate_count"] = \
+		candidates.size()
+	last_preplan_skywalk_diagnostic["landmark_attached_candidate_count"] = \
+		landmark_attached.size()
+	last_preplan_skywalk_diagnostic["landmark_joint_selected_count"] = \
+		selected.size()
+	var plan := _skywalk_plan_from_selected(selected, candidates.size())
+	plan["pair_frontier_count"] = pair_frontier.size()
+	return plan
+
+
+static func _landmark_attached_skywalk_candidates(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, proposals: Array[Dictionary],
+		landmarks: Array[Dictionary], program: SettlementFabricProgram,
+		protected_owners: Dictionary, public_air: Dictionary) \
+		-> Array[Dictionary]:
+	## Large authored buildings expose the same measured ROOM/BEARING sockets as
+	## modular rooms. Let one of the required links terminate in that real socket;
+	## otherwise two landmarks can erase the third bridge endpoint even while a
+	## perfectly good elevated facade connection exists on the prefab itself.
+	var parcels: Array[WarrenBuildingParcel] = []
+	var proposal_by_id: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		parcels.append(parcel)
+		proposal_by_id[parcel.stable_id] = proposal
+	var cache := WarrenAssetCompiler.massif_partition_asset_cache(parcels,
+		volume.world_seed, program)
+	if not bool(cache.get(&"enabled", false)):
+		return [] as Array[Dictionary]
+	var all_landmark_cells := _landmark_set_protected_cells(landmarks)
+	var blocked_parcels := _landmark_set_blocker_parcels(landmarks)
+	var out: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	for landmark: Dictionary in landmarks:
+		var landmark_id := StringName(landmark.feature_id)
+		var landmark_recipe := program.recipe(StringName(landmark.recipe_id))
+		if landmark_recipe == null:
+			continue
+		for socket: Dictionary in landmark_recipe.sockets:
+			if int(socket.kind) != FabricRecipe.SocketKind.ROOM \
+					or String(StringName(socket.id)).contains(".corner."):
+				continue
+			var landmark_endpoint := {
+				"slot_signature": String(landmark_id),
+				"owner_kind": &"landmark",
+				"cell": FabricRecipe.transform_cell(socket.cell as Vector3i,
+					landmark.origin as Vector3i, int(landmark.yaw_quarters)),
+				"facing": FabricRecipe.transform_direction(
+					socket.facing as Vector3i, int(landmark.yaw_quarters)),
+			}
+			if not (landmark.body as Dictionary).has(landmark_endpoint.cell):
+				continue
+			for parcel: WarrenBuildingParcel in parcels:
+				if blocked_parcels.has(parcel.stable_id):
+					continue
+				var proposal := proposal_by_id[parcel.stable_id] as Dictionary
+				for parcel_endpoint: Dictionary in WarrenAssetCompiler \
+						._parcel_room_endpoints(parcel, program, cache):
+					var raw := _raw_straight_skywalk_between_endpoints(
+						landmark_endpoint, parcel_endpoint, landmark_id,
+						parcel.stable_id, program, public_air)
+					if raw.is_empty():
+						continue
+					var body := raw.reserved_cells as Dictionary
+					var clearance := raw.visual_clearance_cells as Dictionary
+					var block := _proposal_block_for_cell(proposal,
+						parcel_endpoint.cell as Vector3i)
+					var priority := _forced_block_cells(proposal, block,
+						Vector2i.ZERO)
+					if block <= 0 or priority.is_empty() \
+							or not _forced_block_fits(grid, proposal, block,
+								Vector2i.ZERO) \
+							or _sets_overlap(body, all_landmark_cells) \
+							or _sets_overlap(priority, all_landmark_cells) \
+							or not _skywalk_body_fits_grid(grid, body) \
+							or not _skywalk_clearance_fits_grid(grid, clearance) \
+							or not _landmark_link_clearance_fits_protected(
+								clearance, protected_owners, landmark_id):
+						continue
+					var lower_cover := _lower_public_cover(body, public_air)
+					if lower_cover < 2:
+						continue
+					raw["owner_parcel_ids"] = [landmark_id, parcel.stable_id]
+					var endpoint_key := _skywalk_endpoint_pair_key(raw)
+					var construction_key := _skywalk_construction_key(raw)
+					var unique_key := "%s/%s" % [endpoint_key, construction_key]
+					if seen.has(unique_key):
+						continue
+					seen[unique_key] = true
+					var priority_cells: Dictionary = {}
+					for cell_value: Variant in priority.keys():
+						priority_cells[cell_value] = parcel.stable_id
+					out.append({"reservation": raw, "body": body,
+						"clearance": clearance,
+						"forced_offsets": {parcel.stable_id: {
+							block: Vector2i.ZERO}},
+						"priority_cells": priority_cells,
+						"pair_key": "%s|%s" % [landmark_id,
+							parcel.stable_id],
+						"endpoint_pair_key": endpoint_key,
+						"blocker_count": _skywalk_blocker_count(clearance,
+							protected_owners, {landmark_id: true,
+								parcel.stable_id: true}),
+						"lower_cover": lower_cover,
+						"landmark_endpoint_count": 1,
+						"tie": posmod(Helper._mix64(volume.world_seed \
+							^ String(landmark_id).hash() \
+							^ String(parcel.stable_id).hash() \
+							^ (landmark_endpoint.cell as Vector3i).y * 131),
+							1000003)})
+	return out
+
+
+static func _landmark_link_clearance_fits_protected(clearance: Dictionary,
+		protected_owners: Dictionary, allowed_landmark_id: StringName) -> bool:
+	for cell_value: Variant in clearance.keys():
+		for owner_value: Variant in (protected_owners.get(cell_value, {}) \
+				as Dictionary).keys():
+			var owner_id := StringName(owner_value)
+			if _protected_owner_is_feature(owner_id) \
+					and owner_id != allowed_landmark_id:
+				return false
+	return true
+
+
+static func _raw_straight_skywalk_between_endpoints(left_endpoint: Dictionary,
+		right_endpoint: Dictionary, left_owner_id: StringName,
+		right_owner_id: StringName, program: SettlementFabricProgram,
+		public_air: Dictionary) -> Dictionary:
+	if (left_endpoint.cell as Vector3i).y \
+			!= (right_endpoint.cell as Vector3i).y \
+			or (left_endpoint.facing as Vector3i) \
+				!= -(right_endpoint.facing as Vector3i):
+		return {}
+	var forward := left_endpoint.facing as Vector3i
+	var delta := (right_endpoint.cell as Vector3i) \
+		- (left_endpoint.cell as Vector3i)
+	var distance: int = delta.x * forward.x + delta.z * forward.z
+	if distance < 3 or distance > 7 or posmod(distance, 2) != 1 \
+			or delta != forward * distance:
+		return {}
+	var segments := (distance - 1) / 2
+	var recipe_id := &"skywalk.3.blue" if segments == 1 \
+		else &"skywalk.6.orange" if segments == 2 else &"skywalk.9.blue"
+	var recipe := program.recipe(recipe_id)
+	var yaw := -1
+	for candidate_yaw in 4:
+		if FabricRecipe.transform_direction(Vector3i.LEFT, candidate_yaw) \
+				== -forward:
+			yaw = candidate_yaw
+			break
+	if recipe == null or yaw < 0:
+		return {}
+	var west := recipe.socket(&"room.west")
+	if west.is_empty():
+		return {}
+	var origin := (left_endpoint.cell as Vector3i) + forward \
+		- FabricRecipe.transform_cell(west.cell as Vector3i, Vector3i.ZERO, yaw)
+	var reserved: Dictionary = {}
+	for source_cells: Array[Vector3i] in [recipe.solid_cells,
+			recipe.headroom_cells]:
+		for local: Vector3i in source_cells:
+			var cell := FabricRecipe.transform_cell(local, origin, yaw)
+			if public_air.has(cell):
+				return {}
+			reserved[cell] = true
+	var components: Array[Dictionary] = [{"recipe_id": recipe_id,
+		"origin": origin, "yaw_quarters": yaw}]
+	var left_record := left_endpoint.duplicate(true)
+	left_record["owner_id"] = left_owner_id
+	var right_record := right_endpoint.duplicate(true)
+	right_record["owner_id"] = right_owner_id
+	return {"kind": &"straight", "recipe_id": recipe_id,
+		"origin": origin, "yaw_quarters": yaw, "components": components,
+		"reserved_cells": reserved,
+		"visual_bounds": [FabricRecipe.lattice_transform(origin, yaw) \
+			* recipe.local_clearance_bounds] as Array[AABB],
+		"visual_clearance_cells": _skywalk_visual_clearance_cells(components,
+			program), "owner_endpoints": [left_record, right_record]}
+
+
+static func _skywalk_plan_from_selected(selected: Array[Dictionary],
+		candidate_count: int) -> Dictionary:
+	var reservations: Array[Dictionary] = []
+	var forced_offsets: Dictionary = {}
+	var priority_cells: Dictionary = {}
+	for candidate: Dictionary in selected:
+		reservations.append((candidate.reservation as Dictionary).duplicate(true))
+		for parcel_value: Variant in (candidate.forced_offsets \
+				as Dictionary).keys():
+			var parcel_id := StringName(parcel_value)
+			if not forced_offsets.has(parcel_id):
+				forced_offsets[parcel_id] = {}
+			for block_value: Variant in ((candidate.forced_offsets \
+					as Dictionary)[parcel_id] as Dictionary).keys():
+				(forced_offsets[parcel_id] as Dictionary)[int(block_value)] = \
+					((candidate.forced_offsets as Dictionary)[parcel_id] \
+						as Dictionary)[block_value]
+		for cell_value: Variant in (candidate.priority_cells as Dictionary).keys():
+			priority_cells[cell_value] = (candidate.priority_cells \
+				as Dictionary)[cell_value]
+	return {"reservations": reservations, "forced_offsets": forced_offsets,
+		"priority_cells": priority_cells, "candidate_count": candidate_count}
+
+
+static func _landmark_candidates_compatible(left: Dictionary,
+		right: Dictionary) -> bool:
+	if left.landing_cell == right.landing_cell \
+			or StringName(left.recipe_id) == StringName(right.recipe_id):
+		return false
+	for cell_value: Variant in (left.protected_cells as Dictionary).keys():
+		if (right.protected_cells as Dictionary).has(cell_value):
+			return false
+	return true
+
+
+static func _protected_owners_with_landmarks(protected_owners: Dictionary,
+		landmarks: Array[Dictionary]) -> Dictionary:
+	var trial := protected_owners.duplicate(true)
+	for landmark: Dictionary in landmarks:
+		var feature_id := StringName(landmark.feature_id)
+		for cell_value: Variant in (landmark.protected_cells as Dictionary).keys():
+			if not trial.has(cell_value):
+				trial[cell_value] = {}
+			(trial[cell_value] as Dictionary)[feature_id] = true
+	return trial
+
+
+static func _landmark_recipe_ids(landmarks: Array[Dictionary]) \
+		-> Array[StringName]:
+	var out: Array[StringName] = []
+	for landmark: Dictionary in landmarks:
+		out.append(StringName(landmark.recipe_id))
+	return out
+
+
+static func _reserve_landmark_preplans(grid: WarrenSpatialGrid,
+		landmarks: Array[Dictionary]) -> bool:
+	for landmark: Dictionary in landmarks:
+		if not _reserve_landmark_preplan(grid, landmark):
+			return false
+	var selected: Array[Dictionary] = []
+	for landmark: Dictionary in landmarks:
+		selected.append({"feature_id": landmark.feature_id,
+			"recipe_id": landmark.recipe_id,
+			"source_family": landmark.source_family,
+			"origin": landmark.origin,
+			"yaw_quarters": landmark.yaw_quarters,
+			"landing_cell": landmark.landing_cell,
+			"entrance_cell": landmark.entrance_cell,
+			"body_cell_count": (landmark.body as Dictionary).size(),
+			"clearance_cell_count": (landmark.clearance as Dictionary).size(),
+			"displaced_parcel_count": (landmark.blocker_parcels \
+				as Dictionary).size()})
+	last_preplan_landmark_diagnostic["selected"] = selected
+	return true
+
+
+static func _annotate_landmark_skywalk_connections(
+		landmarks: Array[Dictionary], skywalks: Array[Dictionary]) -> void:
+	var landmark_by_id: Dictionary = {}
+	for landmark: Dictionary in landmarks:
+		landmark["skywalk_socket_faces"] = {}
+		landmark_by_id[StringName(landmark.feature_id)] = landmark
+	for skywalk: Dictionary in skywalks:
+		var owner_ids := skywalk.get("owner_parcel_ids", []) as Array
+		var endpoints := skywalk.get("owner_endpoints", []) as Array
+		for endpoint_index in mini(owner_ids.size(), endpoints.size()):
+			var owner_id := StringName(owner_ids[endpoint_index])
+			if not landmark_by_id.has(owner_id):
+				continue
+			var endpoint := endpoints[endpoint_index] as Dictionary
+			var landmark := landmark_by_id[owner_id] as Dictionary
+			(landmark.skywalk_socket_faces as Dictionary)[
+				endpoint.cell as Vector3i] = endpoint.facing as Vector3i
+			var skywalk_body := skywalk.get("reserved_cells", {}) as Dictionary
+			for cell_value: Variant in (landmark.body as Dictionary).keys():
+				var cell := cell_value as Vector3i
+				for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+						Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+						Vector3i.BACK]:
+					if skywalk_body.has(cell + direction):
+						(landmark.skywalk_socket_faces as Dictionary)[cell] = \
+							direction
+
+
+static func _reserve_landmark_preplan(grid: WarrenSpatialGrid,
+		landmark: Dictionary) -> bool:
+	var feature_id := StringName(landmark.feature_id)
+	var body_set := landmark.body as Dictionary
+	var body: Array[Vector3i] = []
+	body.assign(body_set.keys())
+	body.sort_custom(_cell_less)
+	var clearance_only: Array[Vector3i] = []
+	for cell_value: Variant in (landmark.clearance as Dictionary).keys():
+		if not body_set.has(cell_value):
+			clearance_only.append(cell_value as Vector3i)
+	var bearing: Array[Vector3i] = []
+	bearing.assign((landmark.bearing_cells as Dictionary).keys())
+	var entrance_cell := landmark.entrance_cell as Vector3i
+	var landing_cell := landmark.landing_cell as Vector3i
+	var skywalk_socket_faces := landmark.get("skywalk_socket_faces", {}) \
+		as Dictionary
+	var tx := grid.begin_transaction(feature_id)
+	if body.is_empty() or bearing.is_empty() \
+			or not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
+				WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+			or not tx.reserve(body, WarrenSpatialGrid.Reservation.FEATURE \
+				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not clearance_only.is_empty() and not tx.reserve(clearance_only,
+				WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not tx.reserve(bearing,
+				WarrenSpatialGrid.Reservation.TERRAIN_BEARING, feature_id) \
+			or not tx.assign_use(body, WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+				feature_id):
+		return false
+	for cell: Vector3i in body:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if body_set.has(neighbor):
+				continue
+			if skywalk_socket_faces.get(cell, Vector3i.ZERO) == direction:
+				continue
+			var kind := WarrenSpatialGrid.FaceKind.FACADE
+			if cell == entrance_cell and neighbor == landing_cell:
+				kind = WarrenSpatialGrid.FaceKind.DOOR
+			elif direction == Vector3i.UP:
+				kind = WarrenSpatialGrid.FaceKind.ROOF
+			elif direction == Vector3i.DOWN:
+				kind = WarrenSpatialGrid.FaceKind.PRIVATE_FLOOR
+			if not tx.claim_face(cell, direction, kind, feature_id):
+				return false
+	return tx.commit()
 
 
 static func _landmark_bearing_follows_terrain(bearing: Dictionary,
@@ -1373,7 +2045,8 @@ static func _preplan_spatial_skywalks(grid: WarrenSpatialGrid,
 		"selected_count": selected.size()}
 	return {"reservations": reservations, "forced_offsets": forced_offsets,
 		"priority_cells": priority_cells,
-		"candidate_count": candidates.size()}
+		"candidate_count": candidates.size(), "candidate_corpus": candidates,
+		"public_air": public_air}
 
 
 static func _skywalk_candidate_respects_fixed_blocks(candidate: Dictionary,
@@ -1975,9 +2648,16 @@ static func _skywalk_clearance_fits_protected(clearance: Dictionary,
 	for value: Variant in clearance.keys():
 		for owner_value: Variant in (protected_owners.get(value, {}) \
 				as Dictionary).keys():
-			if String(owner_value).begins_with("spatial.feature."):
+			if _protected_owner_is_feature(StringName(owner_value)):
 				return false
 	return true
+
+
+static func _protected_owner_is_feature(owner_id: StringName) -> bool:
+	var text := String(owner_id)
+	return text.begins_with("spatial.feature.") \
+		or text.begins_with("spatial.skywalk.reserve.") \
+		or text.begins_with("spatial.skywalk.trial.")
 
 
 static func _lower_public_cover(body: Dictionary,
@@ -2131,6 +2811,8 @@ static func _skywalk_selection_preserves_endpoint_rooms(
 				continue
 			for parcel_value: Variant in (allowance_value as Dictionary).keys():
 				var parcel_id := StringName(parcel_value)
+				if _protected_owner_is_feature(parcel_id):
+					continue
 				endpoint_parcel_ids[parcel_id] = true
 				required_parcel_ids[parcel_id] = true
 	var court_floors: Dictionary = {}
@@ -2189,6 +2871,9 @@ static func _skywalk_selection_preserves_endpoint_rooms(
 		var offset_endpoint_count := 0
 		for endpoint_index in mini(owner_ids.size(), endpoints.size()):
 			var parcel_id := StringName(owner_ids[endpoint_index])
+			if String(parcel_id).begins_with("spatial.feature.landmark."):
+				offset_endpoint_count += 1
+				continue
 			var proposal := proposal_by_id.get(parcel_id, {}) as Dictionary
 			var offsets := solved_offsets_by_parcel.get(parcel_id, []) \
 				as Array[Vector2i]
