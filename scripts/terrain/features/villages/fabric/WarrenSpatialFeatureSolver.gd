@@ -972,7 +972,7 @@ static func _reserve_preplanned_market(grid: WarrenSpatialGrid,
 					"street_entrance_edge_count", 0)),
 				"market_street_entrance_width": int(reservation.get(
 					"street_entrance_width", 0)),
-				"market_stocked_bay_count": 1,
+				"market_stocked_bay_count": 2,
 				"market_continuous_canopy": true,
 				"market_backing_room_id": backing_room.stable_id,
 				"market_backing_building_id": backing_building.stable_id,

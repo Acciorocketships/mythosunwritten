@@ -84,12 +84,12 @@ func test_covered_market_is_one_local_street_episode() -> void:
 	if covered == null:
 		return
 	assert_true(covered.has_tag(&"covered_market"))
-	assert_eq(covered.placements.size(), 2,
-		"the bazaar is one atomic canopy-and-stocked-counter composition")
-	assert_eq(covered.asset_ids().size(), 2,
-		"the covered stall enriches its canopy with a separate market asset")
+	assert_eq(covered.placements.size(), 4,
+		"the bazaar is one atomic canopy, counter, and hanging-goods composition")
+	assert_eq(covered.asset_ids().size(), 4,
+		"the covered market uses four distinct reviewed market pieces")
 	assert_eq(covered.terrain_bearing_cells.size(), 8,
-		"the compact six-by-three-metre market follows local terrain")
+		"the compact six-by-three-metre market follows local terrain exactly")
 
 
 static func _stall_units(plan: SettlementFabricPlan) -> Array[FabricUnit]:

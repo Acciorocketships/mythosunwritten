@@ -58,6 +58,17 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		"the audit must identify no repeated world-space extrusion")
 	assert_lte(int(plan.audit.max_identical_tower_floorplate_run_storeys), 2,
 		"interface constraints must not force a repeated multi-storey shaft")
+	var consecutive_pairs := int(plan.audit.consecutive_floorplate_pair_count)
+	assert_gt(consecutive_pairs, 0)
+	assert_lte(int(plan.audit.strongly_registered_floorplate_pair_count) * 2,
+		consecutive_pairs,
+		"fewer than half of vertical room seams may retain two facade planes")
+	assert_lte(int(plan.audit.registered_facade_plane_count) * 2,
+		consecutive_pairs * 3,
+		"vertical room seams should retain at most 1.5 facade planes on average")
+	assert_lte(int(plan.audit.same_ridge_axis_floorplate_pair_count) * 5,
+		consecutive_pairs * 3,
+		"at least two fifths of consecutive rooms should turn their roof axis")
 	assert_not_null(plan.construction_plan)
 	assert_gt(int(plan.construction_plan.audit.roof_region_count), 0)
 	for building: WarrenBuildingVolume in plan.buildings:
@@ -152,7 +163,7 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		assert_eq(market.construction_records.size(), 1)
 		assert_true(String(market.construction_records[0].recipe_id) \
 			.begins_with("market.covered."))
-		assert_eq(int(market.audit.market_stocked_bay_count), 1)
+		assert_eq(int(market.audit.market_stocked_bay_count), 2)
 		assert_eq(int(market.audit.market_covered_aisle_cell_count), 4)
 		assert_gte(int(market.audit.market_street_entrance_width), 2)
 		assert_true(bool(market.audit.market_continuous_canopy))

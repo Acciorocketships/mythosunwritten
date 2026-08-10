@@ -123,10 +123,19 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_terrace_unit_count), 0,
 		"exposed setback ledges should receive measured terrace treatments")
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_terrace_unit_count) * 2,
+		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count),
+		"measured rail terraces should dominate bare upper-storey shelves")
 	assert_lt(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_terrace_unit_count),
 		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count),
 		"terraces must remain varied rather than railing every roof edge")
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_plain_cap_unit_count),
+		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count) \
+			- int(WarrenSpatialFabricCompiler.last_audit \
+				.setback_terrace_unit_count))
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_terrace_fallback_count), 0)
 	for roof: FabricUnit in roofs:

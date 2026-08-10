@@ -187,6 +187,8 @@ const COVERED_MARKET_CANOPIES: Array[StringName] = [
 	&"sfm.stall.butcher.003",
 ]
 const COVERED_MARKET_TABLE := &"sfm.table.fishmonger.001"
+const COVERED_MARKET_HANGING_GOODS := &"sfm.stall.veg_string.001"
+const COVERED_MARKET_WHEEL := &"sfm.stall.veg_wheel.001"
 
 const PREFAB_ANCHORS: Array[StringName] = [
 	&"sfv.building.interior.blue.001",
@@ -408,6 +410,10 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_setback_cap_recipe(&"roof.setback.cap.2", 2, modules),
 		_setback_cap_recipe(&"roof.setback.cap.4", 4, modules),
 		_setback_cap_recipe(&"roof.setback.cap.6", 6, modules),
+		_setback_terrace_recipe(&"roof.setback.terrace.1.left", 1, -1,
+			modules),
+		_setback_terrace_recipe(&"roof.setback.terrace.1.right", 1, 1,
+			modules),
 		_setback_terrace_recipe(&"roof.setback.terrace.2.left", 2, -1,
 			modules),
 		_setback_terrace_recipe(&"roof.setback.terrace.2.right", 2, 1,
@@ -1537,8 +1543,10 @@ static func _setback_terrace_recipe(recipe_id: StringName, length_cells: int,
 	## A measured inhabited-looking treatment for an otherwise bare setback
 	## strip. It retains the exact thin roof-face contract of the plain cap but
 	## adds complete authored rail modules only along one solver-selected exposed
-	## edge. The strip remains a private roof, not a fabricated walk surface.
-	assert(length_cells in [2, 4, 6] and rail_side in [-1, 1])
+	## edge. Even one-cell ledges are real 1.5 m room setbacks and receive the
+	## native 1.5 m rail rather than being left as visually empty shelves. The
+	## strip remains a private roof, not a fabricated walk surface.
+	assert(length_cells in [1, 2, 4, 6] and rail_side in [-1, 1])
 	var recipe_value := _setback_cap_recipe(recipe_id, length_cells, modules)
 	recipe_value.role_tags.append(&"setback_terrace")
 	for x in length_cells:
@@ -2471,15 +2479,29 @@ static func _market_recipe(recipe_id: StringName, asset_id: StringName) \
 
 static func _covered_market_recipe(recipe_id: StringName,
 		canopy_asset_id: StringName, table_asset_id: StringName) -> FabricRecipe:
-	## One exact 6 x 3 m bazaar: a reviewed covered canopy plus its authored
-	## stocked fishmonger table attachment. The table offset comes from the
-	## original VillageAssetSpec, so this is a composed prefab rather than two
-	## guessed bounds. Exact construction admits or rejects the whole market once.
+	## One exact 6 x 3 m covered bazaar. The stocked counter is rotated into the
+	## west structural post bay, while hanging vegetables and a market wheel stock
+	## the opposite canopy edge above player headroom. The two centre columns stay
+	## a physically unobstructed 3 x 3 m public aisle. Canopy, posts, goods, aisle,
+	## and backing socket remain one measured all-or-nothing transaction.
 	var recipe_value := FabricRecipe.new(recipe_id,
 		[&"market", &"covered_market", &"themed_stall", &"terrain_bearing"], 0)
-	recipe_value.add_placement(&"canopy", canopy_asset_id)
-	recipe_value.add_placement(&"stocked_table", table_asset_id,
-		Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, -0.15)))
+	var centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-2, 0, -1), Vector3i(4, 1, 2))
+	recipe_value.add_placement(&"canopy", canopy_asset_id,
+		_pose(centre + Vector3(-0.25, 0.0, 0.0), 0.0))
+	# The table's rotated 1.41 m depth fits the x=-2 structural column. Its east
+	# edge is x=-2.24 m, outside the x=-1 aisle cell whose west seam is -2.25 m.
+	recipe_value.add_placement(&"stocked.counter", table_asset_id,
+		_pose(Vector3(-3.05, 0.0, centre.z), PI * 0.5))
+	# Both attachments are the authored market pieces from the same asset family.
+	# Their lowest measured points stay above 1.84 m, so they enrich the covered
+	# bay without turning the semantic headroom into a collision lie.
+	recipe_value.add_placement(&"stocked.hanging",
+		COVERED_MARKET_HANGING_GOODS,
+		_pose(Vector3(0.8, 3.25, -1.55), 0.0))
+	recipe_value.add_placement(&"stocked.wheel", COVERED_MARKET_WHEEL,
+		_pose(Vector3(1.1, 2.5, -0.75), 0.0))
 	for y in 2:
 		for x in [-2, 1]:
 			for z in [-1, 0]:

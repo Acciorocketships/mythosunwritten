@@ -18,6 +18,16 @@ const EXTRUDED_LINEAGE_STOREYS := 5
 const MAX_UNPAIRED_TOWER_STOREYS := 2
 const MIN_BEARING_OVERLAP_COLUMNS := 2
 
+# A changed area is not enough to break a vertical tower silhouette.  A room
+# can grow on one side while retaining the other three facade planes exactly,
+# which still reads as one extruded shaft.  These costs make the 3D search pay
+# for that world-space registration while leaving bearing and exact clearance
+# as the hard arbiters of whether an offset is physically valid.
+const REGISTERED_FACADE_PLANE_COST := 650
+const STRONG_FACADE_REGISTRATION_COST := 1900
+const SAME_ADJACENT_ROOM_KIND_COST := 500
+const SAME_ADJACENT_RIDGE_AXIS_COST := 300
+
 const ROOM_KINDS: Array[StringName] = [
 	&"long", &"building", &"slim", &"tower",
 ]
@@ -865,9 +875,13 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 					var scale_bonus := 260 if kind == &"slim" \
 						else 190 if kind == &"building" \
 						else 80 if kind == &"long" else 0
+					var repetition_cost := _vertical_repetition_cost(kind, yaw,
+						columns, previous) + _vertical_repetition_cost(kind, yaw,
+						columns, next)
 					var score := tower_relief * 7000 + kind_change * 1800 \
 						+ int(expanded) * 700 + difference * 55 \
-						+ lower_overlap * 22 + upper_overlap * 12 + scale_bonus
+						+ lower_overlap * 22 + upper_overlap * 12 + scale_bonus \
+						- repetition_cost
 					var tie := posmod(Helper._mix64(world_seed \
 						^ String(record.key).hash() * 31 ^ kind.hash() * 47 \
 						^ x * 73856093 ^ z * 19349663 ^ yaw * 83492791),
@@ -1077,11 +1091,15 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 					# massif genuinely supports them.
 					var cap_scale_bonus := 180 if kind == &"slim" \
 						else 120 if kind == &"building" else 20
+					var repetition_cost := _vertical_repetition_cost(kind, yaw,
+						columns, previous) + _vertical_repetition_cost(kind, yaw,
+						columns, next)
 					var score := tower_relief * 6000 + kind_change * 1800 \
 						+ int(expanded) * 900 + cap_scale_bonus \
 						+ difference * 45 + lower_overlap * 25 \
 						+ upper_overlap * 18 + old_inside_new * 6 \
-						- maxi(columns.size() - 16, 0) * 30
+						- maxi(columns.size() - 16, 0) * 30 \
+						- repetition_cost
 					var tie := posmod(Helper._mix64(world_seed \
 						^ String(lineage_id).hash() * 31 \
 						^ block_index * 0x45d9f3b ^ kind.hash() * 47 \
@@ -1590,6 +1608,22 @@ static func _registered_facade_plane_count(left: Dictionary,
 		right_max = right_max.max(column)
 	return int(left_min.x == right_min.x) + int(left_max.x == right_max.x) \
 		+ int(left_min.y == right_min.y) + int(left_max.y == right_max.y)
+
+
+static func _vertical_repetition_cost(kind: StringName, yaw: int,
+		columns: Dictionary, adjacent: Dictionary) -> int:
+	if adjacent.is_empty():
+		return 0
+	var registered := _registered_facade_plane_count(columns,
+		adjacent.columns as Dictionary)
+	var cost := registered * REGISTERED_FACADE_PLANE_COST
+	if registered >= 2:
+		cost += STRONG_FACADE_REGISTRATION_COST
+	if kind == StringName(adjacent.kind):
+		cost += SAME_ADJACENT_ROOM_KIND_COST
+	if posmod(yaw, 2) == posmod(int(adjacent.yaw_quarters), 2):
+		cost += SAME_ADJACENT_RIDGE_AXIS_COST
+	return cost
 
 
 static func _is_subset(left: Dictionary, right: Dictionary) -> bool:

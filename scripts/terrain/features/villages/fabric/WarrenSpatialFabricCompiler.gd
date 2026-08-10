@@ -1108,6 +1108,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"flat_roof_count": flat_count,
 		"setback_cap_unit_count": cap_count,
 		"setback_terrace_unit_count": terrace_cap_count,
+		"setback_plain_cap_unit_count": cap_count - terrace_cap_count,
 		"setback_terrace_fallback_count": terrace_cap_fallback_count,
 		"rejected_pitched_count": rejected_pitched_count,
 		"rejected_flat_count": rejected_flat_count,
@@ -1265,10 +1266,14 @@ static func _cap_placement(grid: WarrenSpatialGrid,
 				continue
 			var recipe_id := StringName("roof.setback.cap.%d" \
 				% face_cells.size())
-			if face_cells.size() > 1 and posmod(Helper._mix64(world_seed \
+			# Exact setbacks should usually read as occupied roof terraces and
+			# balcony-like ledges, not a stack of bare plank shelves. Keep a small
+			# deterministic plain-cap minority so the skyline does not acquire a
+			# railing at every level.
+			if posmod(Helper._mix64(world_seed \
 					^ String(room.stable_id).hash() \
 					^ anchor_face.x * 73856093 ^ anchor_face.y * 83492791 \
-					^ anchor_face.z * 19349663), 3) != 0:
+					^ anchor_face.z * 19349663), 5) != 0:
 				var exposed_sides: Array[int] = []
 				for rail_side: int in [-1, 1]:
 					var local_side := Vector3i(0, 0, rail_side)
