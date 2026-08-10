@@ -1,7 +1,17 @@
 extends GutTest
 
+static var _program_cache: SettlementFabricProgram
+
+
+func _program() -> SettlementFabricProgram:
+	if _program_cache == null:
+		_program_cache = SettlementFabricProgram.compile(
+			EnvironmentCatalog.load_default())
+	return _program_cache
+
+
 func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
-	var plan := WarrenVolumetricSolver.solve(7)
+	var plan := WarrenVolumetricSolver.solve(7, {}, _program())
 	assert_not_null(plan, WarrenVolumetricSolver.last_failure)
 	if plan == null:
 		return
@@ -24,8 +34,8 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 
 
 func test_volumetric_solve_is_deterministic() -> void:
-	var first := WarrenVolumetricSolver.solve(7)
-	var repeated := WarrenVolumetricSolver.solve(7)
+	var first := WarrenVolumetricSolver.solve(7, {}, _program())
+	var repeated := WarrenVolumetricSolver.solve(7, {}, _program())
 	assert_not_null(first, WarrenVolumetricSolver.last_failure)
 	assert_not_null(repeated, WarrenVolumetricSolver.last_failure)
 	if first != null and repeated != null:

@@ -6,6 +6,82 @@ extends RefCounted
 ## relationships. Roof and composed-feature units are appended by later phases;
 ## no method here may move, resize, or restamp the spatial topology.
 static var last_failure := ""
+static var last_audit: Dictionary = {}
+
+
+static func solve(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram) -> SettlementFabricPlan:
+	## Compile the authoritative spatial town through the same sealed fabric,
+	## surface, exterior-air, and solid/void transaction used by production.
+	## Nothing in this adapter may infer a replacement footprint or route.
+	last_failure = ""
+	last_audit = {}
+	if source == null or not source.is_sealed() or program == null:
+		last_failure = "missing sealed spatial town or measured vocabulary"
+		return null
+	var realm := WarrenSpatialPublicRealmAdapter.from_spatial(source)
+	if realm == null:
+		last_failure = "public realm adaptation failed: %s" % \
+			WarrenSpatialPublicRealmAdapter.last_failure
+		return null
+	var rooms := compile_room_units(source, program)
+	if rooms.is_empty():
+		return null
+	var roofs := compile_roof_units(source, program, rooms)
+	if roofs.is_empty():
+		return null
+	var roof_audit := last_audit.duplicate(true)
+	var result := SettlementFabricPlan.new(StringName("%s.fabric" % \
+		source.stable_id))
+	if not result.set_public_realm(realm):
+		last_failure = "could not attach authoritative spatial public realm"
+		return null
+	for recipe: FabricRecipe in program.recipes():
+		if not result.register_recipe(recipe):
+			last_failure = "could not register recipe %s" % recipe.recipe_id
+			return null
+	for unit: FabricUnit in rooms:
+		if not result.add_unit(unit):
+			last_failure = "room %s rejected by common fabric: %s" % [
+				unit.stable_id, result.last_rejection]
+			return null
+	for unit: FabricUnit in roofs:
+		if not result.add_unit(unit):
+			last_failure = "roof %s rejected by common fabric: %s" % [
+				unit.stable_id, result.last_rejection]
+			return null
+	var surfaces := PublicRealmSurfaceSolver.solve(
+		StringName("%s.surfaces" % result.stable_id), realm, result)
+	if surfaces == null or not result.set_surface_plan(surfaces):
+		last_failure = "spatial public-surface closure failed"
+		return null
+	var volumes := FabricVolumeClassifier.solve(
+		StringName("%s.volumes" % result.stable_id), realm, result)
+	if volumes == null or not result.set_volume_plan(volumes):
+		last_failure = "spatial exterior-air proof failed: %s" % \
+			FabricVolumeClassifier.last_failure
+		return null
+	var solid_void := FabricSolidVoidClassifier.solve(
+		StringName("%s.solid-void" % result.stable_id), realm, result)
+	if solid_void == null or not result.set_solid_void_plan(solid_void):
+		last_failure = "spatial solid/void proof failed: %s" % \
+			FabricSolidVoidClassifier.last_failure
+		return null
+	var lineage := source.audit.duplicate(true)
+	lineage.merge(source.construction_plan.audit, true)
+	lineage.merge(roof_audit, true)
+	lineage.merge(volumes.audit(), true)
+	lineage.merge(solid_void.audit(), true)
+	lineage["spatial_signature"] = source.deterministic_signature().sha256_text()
+	lineage["construction_signature"] = result.construction_signature()
+	lineage["generation_source"] = &"spatial_volumetric_warren"
+	var audit := SettlementFabricSolver.audit_plan(result, lineage)
+	if not result.seal(audit):
+		last_failure = "spatial common-fabric seal failed: %s" % \
+			result.last_rejection
+		return null
+	last_audit = audit
+	return result
 
 
 static func compile_room_units(source: WarrenSpatialPlan,
@@ -86,6 +162,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram,
 		room_units: Array[FabricUnit]) -> Array[FabricUnit]:
 	last_failure = ""
+	last_audit = {}
 	if source == null or not source.is_sealed() or program == null \
 			or room_units.is_empty():
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
@@ -109,6 +186,17 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		var room := room_by_id[room_id] as WarrenRoomStamp
 		for cell: Vector3i in room.private_cells:
 			unit_by_private_cell[cell] = unit.stable_id
+	var probe := SettlementFabricPlan.new(&"spatial.roof-selection")
+	for recipe: FabricRecipe in program.recipes():
+		if not probe.register_recipe(recipe):
+			last_failure = "roof selection could not register recipe %s" % \
+				recipe.recipe_id
+			return [] as Array[FabricUnit]
+	for room_unit: FabricUnit in room_units:
+		if not probe.add_unit(room_unit):
+			last_failure = "roof selection rejected source room %s: %s" % [
+				room_unit.stable_id, probe.last_rejection]
+			return [] as Array[FabricUnit]
 	var roof_faces_by_room := _roof_faces_by_room(source, room_id_by_cell)
 	var room_ids: Array[StringName] = []
 	room_ids.assign(roof_faces_by_room.keys())
@@ -119,50 +207,120 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			if left.lattice_origin.y != right.lattice_origin.y \
 			else String(a) < String(b))
 	var out: Array[FabricUnit] = []
+	var source_face_count := 0
+	var realized_face_count := 0
+	var pitched_count := 0
+	var flat_count := 0
+	var cap_count := 0
+	var rejected_pitched_count := 0
+	var rejected_flat_count := 0
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
 		var parent_unit := unit_by_room[room_id] as FabricUnit
 		var face_cells := roof_faces_by_room[room_id] as Array[Vector3i]
+		source_face_count += face_cells.size()
 		var full := _is_full_roof_plate(room, face_cells)
-		var unit: FabricUnit
+		var room_seams := _roof_room_seams(source.grid, room,
+			unit_by_private_cell, parent_unit.stable_id)
+		var selected := false
+		var attempt_failures := PackedStringArray()
 		if full and not _touches_public_air(source.grid, face_cells):
-			var recipe_id := _full_roof_recipe_id(room, source.world_seed)
-			if program.recipe(recipe_id) == null:
-				last_failure = "missing full roof recipe %s" % recipe_id
+			var pitched_id := _full_roof_recipe_id(room, source.world_seed)
+			var pitched := _full_roof_unit(room_id, room, parent_unit,
+				pitched_id, _roof_seams_for_candidate(room_seams,
+					parent_unit.stable_id, out))
+			if program.recipe(pitched_id) == null:
+				last_failure = "missing full roof recipe %s" % pitched_id
 				return [] as Array[FabricUnit]
-			var seams := _roof_room_seams(source.grid, room,
-				unit_by_private_cell, parent_unit.stable_id)
-			unit = FabricUnit.new(StringName("spatial.roof.%s" % room_id),
-				recipe_id, room.lattice_origin + Vector3i.UP \
-					* WarrenSpatialGrid.STOREY_CELLS, room.yaw_quarters,
-				[parent_unit.stable_id] as Array[StringName], [FabricUnit.bond(
-					&"bearing.bottom", parent_unit.stable_id, &"bearing.top")]
-					as Array[Dictionary], &"", seams)
-		else:
-			var cap := _cap_placement(source.grid, face_cells)
-			if cap.is_empty():
-				last_failure = "no finite setback cap fits roof region for %s (%s)" \
-					% [room_id, _cap_failure_diagnostic(source.grid, face_cells)]
+			if probe.add_unit(pitched):
+				out.append(pitched)
+				realized_face_count += face_cells.size()
+				pitched_count += 1
+				selected = true
+			else:
+				rejected_pitched_count += 1
+				attempt_failures.append("pitched: %s" % probe.last_rejection)
+		if selected:
+			continue
+		if full and not _touches_public_air(source.grid, face_cells):
+			var flat_id := _flat_roof_recipe_id(room)
+			var flat := _full_roof_unit(room_id, room, parent_unit, flat_id,
+				_roof_seams_for_candidate(room_seams, parent_unit.stable_id, out))
+			if program.recipe(flat_id) == null:
+				last_failure = "missing exact flat roof recipe %s" % flat_id
 				return [] as Array[FabricUnit]
-			var anchor_face := cap.anchor_face as Vector3i
-			var parent_local := _inverse_cell(anchor_face,
-				room.lattice_origin, room.yaw_quarters)
-			var seams: Array[StringName] = []
-			seams.append_array(_roof_room_seams(source.grid, room,
-				unit_by_private_cell, parent_unit.stable_id))
-			seams = _unique_sorted_names(seams)
-			unit = FabricUnit.new(StringName("spatial.roof.%s" % room_id),
-				StringName(cap.recipe_id), cap.origin as Vector3i,
-				int(cap.yaw_quarters), [parent_unit.stable_id] as Array[StringName],
-				[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
-					SettlementFabricProgram._bearing_cell_socket_id(&"top",
-						parent_local.x, parent_local.z))] as Array[Dictionary],
-				&"", seams)
-		if unit == null or not unit.is_valid():
-			last_failure = "roof region for %s produced an invalid unit" % room_id
+			if probe.add_unit(flat):
+				out.append(flat)
+				realized_face_count += face_cells.size()
+				flat_count += 1
+				continue
+			rejected_flat_count += 1
+			attempt_failures.append("flat: %s" % probe.last_rejection)
+		var rows := _cap_rows(face_cells)
+		if rows.is_empty():
+			last_failure = "no finite setback cap partition fits roof region for %s (%s; %s)" \
+				% [room_id, "; ".join(attempt_failures),
+					_cap_failure_diagnostic(source.grid, face_cells)]
 			return [] as Array[FabricUnit]
-		out.append(unit)
+		for row_index in rows.size():
+			var row := rows[row_index] as Array[Vector3i]
+			var cap := _cap_placement(source.grid, row)
+			if cap.is_empty():
+				last_failure = "no native setback cap fits row %d for %s" % [
+					row_index, room_id]
+				return [] as Array[FabricUnit]
+			var seams := _roof_seams_for_candidate(room_seams,
+				parent_unit.stable_id, out)
+			var cap_unit := _cap_unit(room_id, row_index, room, parent_unit,
+				cap, seams)
+			if not probe.add_unit(cap_unit):
+				last_failure = "exact setback cap %d for %s was rejected after %s: %s" \
+					% [row_index, room_id, "; ".join(attempt_failures),
+						probe.last_rejection]
+				return [] as Array[FabricUnit]
+			out.append(cap_unit)
+			realized_face_count += row.size()
+			cap_count += 1
+	if realized_face_count != source_face_count:
+		last_failure = "roof realization covered %d of %d authoritative faces" % [
+			realized_face_count, source_face_count]
+		return [] as Array[FabricUnit]
+	last_audit = {
+		"source_roof_face_count": source_face_count,
+		"realized_roof_face_count": realized_face_count,
+		"roofed_room_count": room_ids.size(),
+		"roof_unit_count": out.size(),
+		"pitched_roof_count": pitched_count,
+		"flat_roof_count": flat_count,
+		"setback_cap_unit_count": cap_count,
+		"rejected_pitched_count": rejected_pitched_count,
+		"rejected_flat_count": rejected_flat_count,
+	}
 	return out
+
+
+static func _full_roof_unit(room_id: StringName, room: WarrenRoomStamp,
+		parent_unit: FabricUnit, recipe_id: StringName,
+		seams: Array[StringName]) -> FabricUnit:
+	return FabricUnit.new(StringName("spatial.roof.%s" % room_id), recipe_id,
+		room.lattice_origin + Vector3i.UP * WarrenSpatialGrid.STOREY_CELLS,
+		room.yaw_quarters, [parent_unit.stable_id] as Array[StringName],
+		[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
+			&"bearing.top")] as Array[Dictionary], &"", seams)
+
+
+static func _cap_unit(room_id: StringName, row_index: int,
+		room: WarrenRoomStamp, parent_unit: FabricUnit, cap: Dictionary,
+		seams: Array[StringName]) -> FabricUnit:
+	var anchor_face := cap.anchor_face as Vector3i
+	var parent_local := _inverse_cell(anchor_face, room.lattice_origin,
+		room.yaw_quarters)
+	return FabricUnit.new(StringName("spatial.roof.%s.cap%02d" % [room_id,
+		row_index]), StringName(cap.recipe_id), cap.origin as Vector3i,
+		int(cap.yaw_quarters), [parent_unit.stable_id] as Array[StringName],
+		[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
+			SettlementFabricProgram._bearing_cell_socket_id(&"top",
+				parent_local.x, parent_local.z))] as Array[Dictionary], &"", seams)
 
 
 static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int) \
@@ -214,6 +372,16 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 	if room.roof_feature == 3:
 		return &"roof.square.04" if orange else &"roof.square.05"
 	return &"roof.square.01" if orange else &"roof.square.02"
+
+
+static func _flat_roof_recipe_id(room: WarrenRoomStamp) -> StringName:
+	if room.kind == &"tower":
+		return &"roof.flat.tower"
+	if room.kind == &"slim":
+		return &"roof.flat.slim"
+	if room.kind == &"long":
+		return &"roof.flat.long"
+	return &"roof.flat.square"
 
 
 static func _roof_faces_by_room(source: WarrenSpatialPlan,
@@ -270,6 +438,68 @@ static func _cap_placement(_grid: WarrenSpatialGrid,
 				% face_cells.size()), "origin": origin,
 				"yaw_quarters": yaw, "anchor_face": anchor_face}
 	return {}
+
+
+static func _cap_rows(face_cells: Array[Vector3i]) \
+		-> Array[Array]:
+	## Losslessly partition an arbitrary exposed roof plate into fixed native
+	## 1.5 m strips. Long rows are preferred, but the one-cell recipe makes the
+	## operation total: no protected air or upper room can force a hidden slab.
+	var remaining: Dictionary = {}
+	for cell: Vector3i in face_cells:
+		remaining[cell] = true
+	var out: Array[Array] = []
+	while not remaining.is_empty():
+		var ordered: Array[Vector3i] = []
+		ordered.assign(remaining.keys())
+		ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			if a.y != b.y:
+				return a.y < b.y
+			if a.z != b.z:
+				return a.z < b.z
+			return a.x < b.x)
+		var start: Vector3i = ordered[0]
+		var chosen: Array[Vector3i] = []
+		for length: int in [6, 4, 2, 1]:
+			for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK]:
+				var candidate: Array[Vector3i] = []
+				var fits := true
+				for offset: int in length:
+					var cell: Vector3i = start + direction * offset
+					if not remaining.has(cell):
+						fits = false
+						break
+					candidate.append(cell)
+				if fits:
+					chosen = candidate
+					break
+			if not chosen.is_empty():
+				break
+		if chosen.is_empty():
+			return [] as Array[Array]
+		out.append(chosen)
+		for cell: Vector3i in chosen:
+			remaining.erase(cell)
+	return out
+
+
+static func _roof_seams_for_candidate(room_seams: Array[StringName],
+		parent_unit_id: StringName,
+		prior_roofs: Array[FabricUnit]) -> Array[StringName]:
+	## A roof may meet a previously compiled roof only where their underlying
+	## rooms share an exact party wall. Multiple native caps over one room are
+	## also explicit pieces of the same authoritative roof region.
+	var related_rooms: Dictionary = {parent_unit_id: true}
+	for room_seam: StringName in room_seams:
+		related_rooms[room_seam] = true
+	var out: Array[StringName] = []
+	out.append_array(room_seams)
+	for prior: FabricUnit in prior_roofs:
+		for prior_parent: StringName in prior.parent_ids:
+			if related_rooms.has(prior_parent):
+				out.append(prior.stable_id)
+				break
+	return _unique_sorted_names(out)
 
 
 static func _cap_failure_diagnostic(grid: WarrenSpatialGrid,

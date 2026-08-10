@@ -10,9 +10,15 @@ var kind: StringName
 var reserved_cells: Array[Vector3i] = []
 var endpoints: Array[Dictionary] = []
 var support_node_id: StringName
+## Exact resource-free construction alternatives selected by the topology
+## transaction. The asset compiler may realize these records but may not move
+## or resize them. Some structural facts (an offset room or public court) are
+## already realized by ordinary room/surface compilation and need no record.
+var construction_records: Array[Dictionary] = []
 var audit: Dictionary = {}
 var last_rejection := ""
 var _cell_set: Dictionary = {}
+var _audit_facts: Dictionary = {}
 var _sealed := false
 
 
@@ -46,6 +52,23 @@ func set_support_node(stable_id_value: StringName) -> bool:
 	return true
 
 
+func add_construction_record(recipe_id: StringName, origin: Vector3i,
+		yaw_quarters: int, role: StringName = &"main") -> bool:
+	if _sealed or recipe_id.is_empty() or role.is_empty() \
+			or yaw_quarters < 0 or yaw_quarters > 3:
+		return false
+	construction_records.append({"recipe_id": recipe_id, "origin": origin,
+		"yaw_quarters": yaw_quarters, "role": role})
+	return true
+
+
+func set_audit_facts(facts: Dictionary) -> bool:
+	if _sealed or not _audit_facts.is_empty() or facts.is_empty():
+		return false
+	_audit_facts = facts.duplicate(true)
+	return true
+
+
 func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 	last_rejection = ""
 	if _sealed or stable_id.is_empty() or kind.is_empty() or grid == null \
@@ -65,14 +88,21 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 	if kind in [&"enclosed_skywalk", &"public_skybridge"] \
 			and endpoint_owners.size() < 2:
 		return _reject("skywalk lacks two distinct endpoint owners")
+	if kind in [&"enclosed_skywalk", &"covered_market", &"balcony"] \
+			and construction_records.is_empty():
+		return _reject("constructed feature has no exact asset record")
 	if kind == &"balcony" and endpoint_owners.size() != 1:
 		return _reject("balcony lacks one private endpoint owner")
+	if kind == &"room_outcropping" and endpoint_owners.size() != 1:
+		return _reject("room outcropping lacks one parent building")
 	if not support_node_id.is_empty() \
 			and (supports == null or not supports.reaches_terrain(support_node_id)):
 		return _reject("feature support does not reach terrain")
-	audit = {"reserved_cell_count": reserved_cells.size(),
+	audit = _audit_facts.duplicate(true)
+	audit.merge({"reserved_cell_count": reserved_cells.size(),
 		"endpoint_count": endpoints.size(), "endpoint_owner_count":
-		endpoint_owners.size()}
+		endpoint_owners.size(), "construction_record_count":
+		construction_records.size()}, true)
 	_sealed = true
 	return true
 
@@ -92,8 +122,16 @@ func deterministic_signature() -> String:
 		endpoint_parts.append("%d:%d:%d/%s" % [cell.x, cell.y, cell.z,
 			StringName(endpoint.owner_id)])
 	endpoint_parts.sort()
-	return "%s/%s[%s]>%s/support=%s" % [String(stable_id), String(kind),
-		",".join(cells), ",".join(endpoint_parts), String(support_node_id)]
+	var construction_parts := PackedStringArray()
+	for record: Dictionary in construction_records:
+		var origin := record.origin as Vector3i
+		construction_parts.append("%s@%d:%d:%d/r%d/%s" % [
+			StringName(record.recipe_id), origin.x, origin.y, origin.z,
+			int(record.yaw_quarters), StringName(record.role)])
+	construction_parts.sort()
+	return "%s/%s[%s]>%s/support=%s/build=%s" % [String(stable_id), String(kind),
+		",".join(cells), ",".join(endpoint_parts), String(support_node_id),
+		",".join(construction_parts)]
 
 
 func _reject(reason: String) -> bool:

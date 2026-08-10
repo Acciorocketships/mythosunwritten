@@ -23,6 +23,7 @@ var audit: Dictionary = {}
 var last_rejection := ""
 var _route_set: Dictionary = {}
 var _building_by_id: Dictionary = {}
+var _feature_by_id: Dictionary = {}
 var _sealed := false
 
 
@@ -53,9 +54,10 @@ func add_building(building: WarrenBuildingVolume) -> bool:
 func add_feature(feature: WarrenFeatureReservation) -> bool:
 	if _sealed or feature == null or not feature.is_sealed():
 		return false
-	for existing: WarrenFeatureReservation in features:
-		if existing.stable_id == feature.stable_id:
-			return false
+	if _feature_by_id.has(feature.stable_id) \
+			or _building_by_id.has(feature.stable_id):
+		return false
+	_feature_by_id[feature.stable_id] = feature
 	features.append(feature)
 	return true
 
@@ -178,12 +180,22 @@ func _validate_building_ownership() -> bool:
 	for cell: Vector3i in grid.cells_with_use(
 			WarrenSpatialGrid.Use.PRIVATE_VOLUME):
 		var owner_id := grid.owner_name_at(cell)
-		if not _building_by_id.has(owner_id) \
-				or not (_building_by_id[owner_id] as WarrenBuildingVolume) \
+		if _building_by_id.has(owner_id):
+			if not (_building_by_id[owner_id] as WarrenBuildingVolume) \
 					.has_private_cell(cell) or claimed.get(cell, &"") != owner_id:
-			return _reject("private cell has no exact building owner at %s" % cell)
-	if claimed.size() != grid.count_use(WarrenSpatialGrid.Use.PRIVATE_VOLUME):
-		return _reject("building ownership does not cover private volume")
+				return _reject("private cell differs from building owner at %s" % cell)
+			continue
+		var feature := _feature_by_id.get(owner_id) as WarrenFeatureReservation
+		if feature == null or feature.kind not in [&"enclosed_skywalk",
+				&"balcony"] or not feature.reserved_cells.has(cell):
+			return _reject("private cell has no exact building/feature owner at %s" \
+				% cell)
+	for cell: Vector3i in grid.cells_with_use(
+			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
+		var owner_id := grid.owner_name_at(cell)
+		var feature := _feature_by_id.get(owner_id) as WarrenFeatureReservation
+		if feature == null or not feature.reserved_cells.has(cell):
+			return _reject("structural cell has no exact feature owner at %s" % cell)
 	return true
 
 

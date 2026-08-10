@@ -5,7 +5,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
 	assert_not_null(program)
-	var spatial := WarrenVolumetricSolver.solve(7)
+	var spatial := WarrenVolumetricSolver.solve(7, {}, program)
 	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
 	if program == null or spatial == null:
 		return
@@ -25,6 +25,19 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var roofs := WarrenSpatialFabricCompiler.compile_roof_units(spatial,
 		program, units)
 	assert_gt(roofs.size(), 0, WarrenSpatialFabricCompiler.last_failure)
-	assert_eq(roofs.size(), int(spatial.construction_plan.audit.roof_region_count))
+	assert_gte(roofs.size(), int(spatial.construction_plan.audit.roof_region_count))
+	assert_eq(WarrenSpatialFabricCompiler.last_audit.source_roof_face_count,
+		WarrenSpatialFabricCompiler.last_audit.realized_roof_face_count)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit.roof_unit_count),
+		roofs.size())
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.pitched_roof_count), 0)
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.rejected_pitched_count), 0)
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count), 0)
 	for roof: FabricUnit in roofs:
 		assert_true(fabric.add_unit(roof), fabric.last_rejection)
+	var sealed := WarrenSpatialFabricCompiler.solve(spatial, program)
+	assert_not_null(sealed, WarrenSpatialFabricCompiler.last_failure)
+	if sealed != null:
+		assert_true(sealed.is_sealed())
+		assert_eq(sealed.audit.generation_source, &"spatial_volumetric_warren")
+		assert_eq(sealed.visual_envelope_conflicts().size(), 0)
