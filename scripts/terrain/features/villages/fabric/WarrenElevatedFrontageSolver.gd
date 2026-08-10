@@ -7,6 +7,7 @@ extends RefCounted
 ## one-edge shelves, and because their void exists before massing, buildings
 ## must form their walls rather than decorating a platform after the fact.
 const BRANCH_COUNT := 2
+const MAX_COURTYARD_VARIANTS := 4
 const MIN_BRANCH_CELLS := 1
 const MAX_BRANCH_CELLS := 4
 const MAX_SEARCH_VISITS_PER_ROOT := 384
@@ -28,6 +29,7 @@ const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
 ]
 static var last_failure := ""
+static var last_courtyard_candidates: Array[Dictionary] = []
 
 
 static func extend(source: WarrenVolumePlan) -> WarrenVolumePlan:
@@ -46,43 +48,50 @@ static func variants(source: WarrenVolumePlan,
 	if source == null or not source.is_sealed():
 		last_failure = "missing sealed route and ground arcades"
 		return out
-	var result := source
+	var roots: Array[WarrenVolumePlan] = []
 	if require_courtyard:
 		var court := _best_courtyard(source)
 		if court.is_empty():
 			if last_failure.is_empty():
 				last_failure = "no third-storey courtyard fits the excavated mass"
 			return out
-		result = _clone_with_branch(source, court.root as Vector3i,
-			court.path as Array[Vector3i], court.root as Vector3i,
-			BRANCH_COUNT, true)
-		if result == null:
-			return out
-		out.append(result)
+		for court_index in mini(MAX_COURTYARD_VARIANTS,
+				last_courtyard_candidates.size()):
+			var candidate := last_courtyard_candidates[court_index]
+			var court_source := _clone_with_branch(source,
+				candidate.root as Vector3i,
+				candidate.path as Array[Vector3i],
+				candidate.root as Vector3i,
+				BRANCH_COUNT + court_index * 10, true)
+			if court_source != null:
+				roots.append(court_source)
 	else:
-		out.append(source)
-	for branch_index in BRANCH_COUNT:
-		var branch := _best_branch(result, branch_index)
-		var path: Array[Vector3i] = []
-		path.assign(branch.get("path", []) as Array)
-		var root := branch.get("root",
-			Vector3i(2147483647, 0, 0)) as Vector3i
-		var rejoin := branch.get("rejoin",
-			Vector3i(2147483647, 0, 0)) as Vector3i
-		if path.size() < MIN_BRANCH_CELLS:
-			break
-		var extended := _clone_with_branch(result, root, path, rejoin,
-			branch_index)
-		if extended == null:
-			if last_failure.is_empty():
-				last_failure = "elevated gallery failed volume transaction"
-			break
-		result = extended
-		out.append(result)
-	# Prefer richer valid topology when a caller requests only one variant. The
-	# composed town solver still ranks all returned alternatives with measured
-	# construction facts.
-	out.reverse()
+		roots.append(source)
+	for initial: WarrenVolumePlan in roots:
+		var family: Array[WarrenVolumePlan] = [initial]
+		var result := initial
+		for branch_index in BRANCH_COUNT:
+			var branch := _best_branch(result, branch_index)
+			var path: Array[Vector3i] = []
+			path.assign(branch.get("path", []) as Array)
+			var root := branch.get("root",
+				Vector3i(2147483647, 0, 0)) as Vector3i
+			var rejoin := branch.get("rejoin",
+				Vector3i(2147483647, 0, 0)) as Vector3i
+			if path.size() < MIN_BRANCH_CELLS:
+				break
+			var extended := _clone_with_branch(result, root, path, rejoin,
+				branch_index)
+			if extended == null:
+				if last_failure.is_empty():
+					last_failure = "elevated gallery failed volume transaction"
+				break
+			result = extended
+			family.append(result)
+		# Prefer richer valid topology within each court family. Court candidates
+		# themselves retain the raw construction-aware score order below.
+		family.reverse()
+		out.append_array(family)
 	return out
 
 
@@ -93,6 +102,7 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 	## perimeter, and leaves inhabited depth above its headroom.
 	var best: Dictionary = {}
 	var best_score := -INF
+	last_courtyard_candidates = []
 	var rise_roots := 0
 	var legal_squares := 0
 	var breadth_squares := 0
@@ -105,8 +115,20 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 	var addressed_squares := 0
 	var max_address_sides := 0
 	var max_upper_mass := 0
-	for root_index in source.primary_itinerary.size():
-		var root := source.primary_itinerary[root_index]
+	# Prefer the main climbing itinerary absolutely, preserving every existing
+	# court choice there.  When it offers no legal 2x2 room, an elevated lane is
+	# still sealed exterior circulation and is a better courtyard address than
+	# rejecting an otherwise complete three-dimensional town.  Ground arcades
+	# fall out naturally at the rise gate below.
+	var roots: Array[Vector3i] = []
+	for cell: Vector3i in source.primary_itinerary:
+		roots.append(cell)
+	for cell: Vector3i in source.walk_cells:
+		if not roots.has(cell):
+			roots.append(cell)
+	for root_index in roots.size():
+		var root := roots[root_index]
+		var root_is_primary := source.primary_itinerary.has(root)
 		var root_column := Vector2i(root.x, root.z)
 		var rise := root.y - source.envelope.ground_at(root_column)
 		if rise < COURTYARD_RISE_BANDS or rise > MAX_COURTYARD_RISE_BANDS:
@@ -185,7 +207,8 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 			addressed_squares += 1
 			var tie := posmod(_hash(source.world_seed, BRANCH_COUNT,
 				root_index, axes[0].x * 31 + axes[0].y * 17), 1009)
-			var score := float(lower_walks) * 1800.0 \
+			var score := (100000.0 if root_is_primary else 0.0) \
+				+ float(lower_walks) * 1800.0 \
 				+ float(upper_mass) * 950.0 \
 				+ float(address_sides) * 420.0 \
 				- float(absi(rise - COURTYARD_RISE_BANDS)) * 600.0 \
@@ -194,6 +217,19 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 			if best.is_empty() or score > best_score:
 				best = {"root": root, "path": path, "score": score}
 				best_score = score
+			last_courtyard_candidates.append({"root": root, "path": path,
+				"score": score})
+	last_courtyard_candidates.sort_custom(func(a: Dictionary,
+			b: Dictionary) -> bool:
+		if not is_equal_approx(float(a.score), float(b.score)):
+			return float(a.score) > float(b.score)
+		var a_root := a.root as Vector3i
+		var b_root := b.root as Vector3i
+		if a_root.y != b_root.y:
+			return a_root.y < b_root.y
+		if a_root.x != b_root.x:
+			return a_root.x < b_root.x
+		return a_root.z < b_root.z)
 	if best.is_empty():
 		last_failure = ("no third-storey courtyard site " \
 			+ "(rise roots=%d legal=%d breadth=%d lower=%d underbuilt=%d " \

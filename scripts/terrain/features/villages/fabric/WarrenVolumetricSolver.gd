@@ -17,6 +17,10 @@ static var last_preplan_skywalk_diagnostic: Dictionary = {}
 static var last_preplan_market_diagnostic: Dictionary = {}
 static var last_preplan_landmark_diagnostic: Dictionary = {}
 static var _last_skywalk_selection_failure := ""
+## Harness-only performance seam. Production never sets this; it lets a probe
+## stop after geometric/fixed-block skywalk filtering instead of paying for the
+## endpoint-composition beam while diagnosing candidate growth.
+static var diagnostic_stop_after_skywalk_candidates := false
 
 
 static func solve(world_seed: int,
@@ -34,9 +38,14 @@ static func solve(world_seed: int,
 	if frontier.is_empty():
 		last_failure = WarrenTownSolver.last_failure
 		return null
-	frontier.sort_custom(func(a: WarrenVolumePlan, b: WarrenVolumePlan) -> bool:
-		return WarrenPublicRealmCarver.topology_score(a) \
-			< WarrenPublicRealmCarver.topology_score(b))
+	# Every member has already passed the same public-realm topology gates.  The
+	# fine-grid town wants the densest remaining inhabited mountain, not the bore
+	# which maximises route reward by removing the most mass.  Visit the least
+	# carved public volume first, then the narrowest exact route interior; the
+	# generic topology score remains the deterministic tie-breaker.  This changes
+	# search cost/order only: the exact room, feature, support and surface gates
+	# below remain the acceptance authority.
+	frontier.sort_custom(_spatial_topology_less)
 	var failures := PackedStringArray()
 	for volume: WarrenVolumePlan in frontier:
 		for variant in MAX_PARTITION_VARIANTS:
@@ -48,6 +57,65 @@ static func solve(world_seed: int,
 				variant, last_failure])
 	last_failure = "no volumetric partition sealed: %s" % " | ".join(failures)
 	return null
+
+
+static func solve_selected(world_seed: int, selected: WarrenSpatialPlan,
+		ground_bands: Dictionary = {},
+		construction_program: SettlementFabricProgram = null) -> WarrenSpatialPlan:
+	## Rebuild exactly one flat-preview topology against local terrain.  Production
+	## placement must not pay for the complete twelve-bore and eight-partition
+	## search again for every yaw, nor silently switch to a different maze after
+	## the road has already been aligned to the preview entrance.
+	last_failure = ""
+	if selected == null or not selected.is_sealed() \
+			or selected.source_volume == null or construction_program == null:
+		last_failure = "selected volumetric preview is missing or unsealed"
+		return null
+	var attempt := WarrenTownSolver.mass_first_attempt_index(world_seed,
+		selected.source_volume)
+	if attempt < 0:
+		last_failure = "selected preview has no mass-first excavation identity"
+		return null
+	var candidates := WarrenTownSolver.mass_first_attempt_frontier(world_seed,
+		attempt, ground_bands)
+	if candidates.is_empty():
+		last_failure = WarrenTownSolver.last_failure
+		return null
+	var source: WarrenVolumePlan
+	for candidate: WarrenVolumePlan in candidates:
+		if candidate.stable_id == selected.source_volume.stable_id:
+			source = candidate
+			break
+	if source == null:
+		last_failure = "selected gallery topology no longer fits local terrain"
+		return null
+	var partition_variant := int(selected.audit.get("partition_variant", -1))
+	if partition_variant < 0 or partition_variant >= MAX_PARTITION_VARIANTS:
+		last_failure = "selected preview has no partition identity"
+		return null
+	var rebuilt := from_volume(source, partition_variant, construction_program)
+	if rebuilt == null:
+		return null
+	if rebuilt.source_volume.entry_cell != selected.source_volume.entry_cell:
+		last_failure = "selected terrain rebuild changed its route entrance"
+		return null
+	return rebuilt
+
+
+static func _spatial_topology_less(a: WarrenVolumePlan,
+		b: WarrenVolumePlan) -> bool:
+	var a_walk := int(a.audit.get("walk_cell_count", 2147483647))
+	var b_walk := int(b.audit.get("walk_cell_count", 2147483647))
+	if a_walk != b_walk:
+		return a_walk < b_walk
+	var a_interior := int(a.audit.get("exact_route_interior_cell_count",
+		2147483647))
+	var b_interior := int(b.audit.get("exact_route_interior_cell_count",
+		2147483647))
+	if a_interior != b_interior:
+		return a_interior < b_interior
+	return WarrenPublicRealmCarver.topology_score(a) \
+		< WarrenPublicRealmCarver.topology_score(b)
 
 
 static func from_volume(volume: WarrenVolumePlan,
@@ -72,6 +140,12 @@ static func from_volume(volume: WarrenVolumePlan,
 		partition_variant, construction_program)
 	if parcel_plan == null:
 		last_failure = WarrenTownSolver.last_partition_failure
+		return null
+	var courtyard_parcel_sides := _parcel_courtyard_address_side_count(grid,
+		volume, parcel_plan)
+	if courtyard_parcel_sides < WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT:
+		last_failure = "courtyard partition forms only %d exact room sides" \
+			% courtyard_parcel_sides
 		return null
 	var partition := _partition_rooms(grid, volume, parcel_plan,
 		construction_program)
@@ -130,6 +204,7 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit["source_macro_walk_count"] = volume.walk_cells.size()
 	plan.audit["source_courtyard_macro_cell_count"] = \
 		volume.courtyard_cells.size()
+	plan.audit["source_courtyard_parcel_side_count"] = courtyard_parcel_sides
 	plan.audit["partition_variant"] = partition_variant
 	plan.audit["room_stamp_count"] = int(partition.room_count)
 	plan.audit["offset_composition_block_count"] = int(partition.offset_blocks)
@@ -144,6 +219,40 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit.merge(WarrenSpatialFeatureSolver.last_audit, true)
 	last_diagnostic = plan.audit.duplicate(true)
 	return plan
+
+
+static func _parcel_courtyard_address_side_count(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, parcels: WarrenParcelPlan) -> int:
+	var floors: Dictionary = {}
+	for macro: Vector3i in volume.courtyard_cells:
+		for floor: Vector3i in _fine_square(macro):
+			floors[floor] = true
+	var occupied: Dictionary = {}
+	for parcel: WarrenBuildingParcel in parcels.parcels:
+		if not _parcel_address_has_public_floor(grid, parcel):
+			continue
+		var proposal := WarrenParcelConstruction.proposal(parcel)
+		if proposal.is_empty():
+			continue
+		for cell: Vector3i in StaggeredFabricCompiler \
+				.proposal_occupied_cells(proposal):
+			occupied[cell] = parcel.stable_id
+	var side_count := 0
+	for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+			Vector3i.FORWARD, Vector3i.BACK]:
+		var addressed := false
+		for floor_value: Variant in floors.keys():
+			var floor := floor_value as Vector3i
+			if floors.has(floor + direction):
+				continue
+			for y_offset in WarrenSpatialGrid.STOREY_CELLS:
+				if occupied.has(floor + direction + Vector3i.UP * y_offset):
+					addressed = true
+					break
+			if addressed:
+				break
+		side_count += int(addressed)
+	return side_count
 
 
 static func _grid_bounds(massif: WarrenMassif) -> Dictionary:
@@ -269,6 +378,15 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		return {}
 	proposals.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_id) < String(b.stable_id))
+	var court_floors := _courtyard_floor_cells(volume)
+	var court_neighbor_cells := _courtyard_neighbor_cells(court_floors)
+	var court_fixed_blocks_by_parcel: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		var fixed := _proposal_court_fixed_blocks(proposal,
+			court_neighbor_cells)
+		if not fixed.is_empty():
+			court_fixed_blocks_by_parcel[parcel.stable_id] = fixed
 	# Conservative source envelopes may intentionally share authored roof seams.
 	# Retain every claimant: a last-writer map made residual shift legality depend
 	# on the parcel array's incidental construction order.
@@ -456,6 +574,9 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			/ float(WarrenSpatialGrid.STOREY_CELLS)), 0, storeys - 1)
 		var forced_offsets: Dictionary = {0: Vector2i.ZERO,
 			floori(float(addressed_storey) / 2.0): Vector2i.ZERO}
+		for court_block_value: Variant in (court_fixed_blocks_by_parcel.get(
+				parcel.stable_id, {}) as Dictionary).keys():
+			forced_offsets[int(court_block_value)] = Vector2i.ZERO
 		for block_value: Variant in (forced_offsets_by_parcel.get(
 				parcel.stable_id, {}) as Dictionary).keys():
 			var block := int(block_value)
@@ -1928,12 +2049,21 @@ static func _preplan_spatial_skywalks(grid: WarrenSpatialGrid,
 	## Unlike the retired late detail pass, candidates may displace unrelated
 	## generic rooms; the endpoint composition blocks and bridge void are fixed
 	## before `_partition_rooms` commits any private volume.
+	var stage_started := Time.get_ticks_msec()
 	var parcels: Array[WarrenBuildingParcel] = []
 	var proposal_by_slot: Dictionary = {}
 	for proposal: Dictionary in proposals:
 		var parcel := proposal.parcel as WarrenBuildingParcel
 		parcels.append(parcel)
 		proposal_by_slot[parcel.slot_signature()] = proposal
+	var court_fixed_blocks_by_parcel: Dictionary = {}
+	var court_neighbors := _courtyard_neighbor_cells(
+		_courtyard_floor_cells(volume))
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		var fixed := _proposal_court_fixed_blocks(proposal, court_neighbors)
+		if not fixed.is_empty():
+			court_fixed_blocks_by_parcel[parcel.stable_id] = fixed
 	var realm := WarrenVolumePublicRealmAdapter.from_volume(volume)
 	if realm == null:
 		return {}
@@ -2086,12 +2216,31 @@ static func _preplan_spatial_skywalks(grid: WarrenSpatialGrid,
 	var fixed_block_rejection_count := 0
 	var fixed_block_candidates: Array[Dictionary] = []
 	for candidate: Dictionary in candidates:
-		if _skywalk_candidate_respects_fixed_blocks(candidate, proposal_by_slot):
+		if _skywalk_candidate_respects_fixed_blocks(candidate, proposal_by_slot,
+				court_fixed_blocks_by_parcel):
 			fixed_block_candidates.append(candidate)
 		else:
 			fixed_block_rejection_count += 1
 	candidates = fixed_block_candidates
+	var candidate_generation_ms := Time.get_ticks_msec() - stage_started
+	if diagnostic_stop_after_skywalk_candidates:
+		last_preplan_skywalk_diagnostic = {
+			"raw_straight_count": raw_count,
+			"raw_corner_count": corner_raw_count,
+			"generated_candidate_count": candidates.size() \
+				+ fixed_block_rejection_count,
+			"fixed_block_rejection_count": fixed_block_rejection_count,
+			"pre_individual_candidate_count": candidates.size(),
+			"courtyard_fixed_block_count": _nested_dictionary_entry_count(
+				court_fixed_blocks_by_parcel),
+			"candidate_generation_ms": candidate_generation_ms,
+		}
+		return {"reservations": [] as Array[Dictionary],
+			"forced_offsets": {}, "priority_cells": {},
+			"candidate_count": 0, "candidate_corpus": [] as Array[Dictionary],
+			"public_air": public_air}
 	var individual_rejection_count := 0
+	var individual_rejection_failures: Dictionary = {}
 	var individually_viable: Array[Dictionary] = []
 	for candidate: Dictionary in candidates:
 		if _skywalk_selection_preserves_endpoint_rooms(grid, volume,
@@ -2100,6 +2249,9 @@ static func _preplan_spatial_skywalks(grid: WarrenSpatialGrid,
 			individually_viable.append(candidate)
 		else:
 			individual_rejection_count += 1
+			individual_rejection_failures[_last_skywalk_selection_failure] = int(
+				individual_rejection_failures.get(
+					_last_skywalk_selection_failure, 0)) + 1
 	candidates = individually_viable
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.blocker_count) != int(b.blocker_count):
@@ -2226,7 +2378,12 @@ static func _preplan_spatial_skywalks(grid: WarrenSpatialGrid,
 		"route_cover_count": route_cover_count,
 		"compatible_candidate_count": candidates.size(),
 		"fixed_block_rejection_count": fixed_block_rejection_count,
+		"candidate_generation_ms": candidate_generation_ms,
+		"courtyard_fixed_block_count": _nested_dictionary_entry_count(
+			court_fixed_blocks_by_parcel),
 		"individual_candidate_rejection_count": individual_rejection_count,
+		"individual_candidate_rejection_failures": \
+			individual_rejection_failures,
 		"distinct_pair_count": pair_keys.size(),
 		"pair_keys": pair_keys.keys(),
 		"distinct_endpoint_pair_count": endpoint_pair_keys.size(),
@@ -2243,7 +2400,8 @@ static func _preplan_spatial_skywalks(grid: WarrenSpatialGrid,
 
 
 static func _skywalk_candidate_respects_fixed_blocks(candidate: Dictionary,
-		proposal_by_slot: Dictionary) -> bool:
+		proposal_by_slot: Dictionary,
+		court_fixed_blocks_by_parcel: Dictionary = {}) -> bool:
 	for parcel_value: Variant in (candidate.forced_offsets as Dictionary).keys():
 		var parcel_id := StringName(parcel_value)
 		var proposal: Dictionary = {}
@@ -2267,7 +2425,10 @@ static func _skywalk_candidate_respects_fixed_blocks(candidate: Dictionary,
 			var block := int(block_value)
 			var wanted := ((candidate.forced_offsets as Dictionary)[parcel_id] \
 				as Dictionary)[block] as Vector2i
-			if block in [0, addressed_block] and wanted != Vector2i.ZERO:
+			var court_fixed := (court_fixed_blocks_by_parcel.get(parcel_id, {}) \
+				as Dictionary).has(block)
+			if (block in [0, addressed_block] or court_fixed) \
+					and wanted != Vector2i.ZERO:
 				return false
 	return true
 
@@ -3034,6 +3195,9 @@ static func _skywalk_selection_preserves_endpoint_rooms(
 			/ float(WarrenSpatialGrid.STOREY_CELLS)), 0, storeys - 1)
 		var forced: Dictionary = {0: Vector2i.ZERO,
 			floori(float(addressed_storey) / 2.0): Vector2i.ZERO}
+		for court_block_value: Variant in _proposal_court_fixed_blocks(proposal,
+				court_neighbor_cells).keys():
+			forced[int(court_block_value)] = Vector2i.ZERO
 		for block_value: Variant in (forced_by_parcel.get(parcel_id, {}) \
 				as Dictionary).keys():
 			var block := int(block_value)
@@ -3100,6 +3264,38 @@ static func _courtyard_neighbor_cells(court_floors: Dictionary) -> Dictionary:
 				continue
 			for y_offset in WarrenSpatialGrid.STOREY_CELLS:
 				out[floor_cell + direction + Vector3i.UP * y_offset] = true
+	return out
+
+
+static func _courtyard_floor_cells(volume: WarrenVolumePlan) -> Dictionary:
+	var out: Dictionary = {}
+	if volume == null:
+		return out
+	for macro: Vector3i in volume.courtyard_cells:
+		for floor: Vector3i in _fine_square(macro):
+			out[floor] = true
+	return out
+
+
+static func _proposal_court_fixed_blocks(proposal: Dictionary,
+		court_neighbor_cells: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	if proposal.is_empty() or court_neighbor_cells.is_empty():
+		return out
+	var block_count := ceili(float(int(proposal.storeys)) / 2.0)
+	for block in block_count:
+		for cell_value: Variant in _forced_block_cells(proposal, block,
+				Vector2i.ZERO).keys():
+			if court_neighbor_cells.has(cell_value):
+				out[block] = Vector2i.ZERO
+				break
+	return out
+
+
+static func _nested_dictionary_entry_count(values: Dictionary) -> int:
+	var out := 0
+	for nested_value: Variant in values.values():
+		out += (nested_value as Dictionary).size()
 	return out
 
 

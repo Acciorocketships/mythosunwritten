@@ -167,7 +167,7 @@ static func _partition_variant(massif: WarrenMassif,
 		variant: int,
 		volume: WarrenVolumePlan = null) -> Array[WarrenBuildingParcel]:
 	var out: Array[WarrenBuildingParcel] = []
-	var faces := street_wall_faces(massif, excavation, variant)
+	var faces := street_wall_faces(massif, excavation, variant, volume)
 	var face_bands := _face_bands_by_column(faces)
 	# A corner column is usually a street wall for BOTH streets that meet there,
 	# so the same wall can be addressed from either -- and the choice sets the
@@ -314,7 +314,8 @@ static func _infill_house(address: Vector3i, direction: Vector2i,
 
 
 static func street_wall_faces(massif: WarrenMassif,
-		excavation: WarrenExcavation, variant: int = 0) -> Array[Dictionary]:
+		excavation: WarrenExcavation, variant: int = 0,
+		volume: WarrenVolumePlan = null) -> Array[Dictionary]:
 	## Every (column, walk cell) pair where the solid left standing beside the
 	## route can carry a house addressed from that walk cell. Ordered by
 	## ascending street-floor band -- the ordering the ownership guarantee
@@ -326,7 +327,7 @@ static func street_wall_faces(massif: WarrenMassif,
 	## variant, and so is the admitted face SET -- `_admitted` decides that per
 	## column from the solid alone. A variant therefore changes which house
 	## claims a corner first, never which walls have to be claimed.
-	var out := _admitted(_wall_candidates(massif, excavation), massif,
+	var out := _admitted(_wall_candidates(massif, excavation, volume), massif,
 		excavation)
 	out.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 		return _face_before(left, right, variant))
@@ -334,11 +335,28 @@ static func street_wall_faces(massif: WarrenMassif,
 
 
 static func _wall_candidates(massif: WarrenMassif,
-		excavation: WarrenExcavation) -> Array[Dictionary]:
+		excavation: WarrenExcavation,
+		volume: WarrenVolumePlan = null) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if massif == null or excavation == null:
 		return out
+	var public_cells: Array[Vector3i] = []
+	var seen_public: Dictionary = {}
 	for walk: Vector3i in excavation.public_cells():
+		if not seen_public.has(walk):
+			seen_public[walk] = true
+			public_cells.append(walk)
+	# Arcades, upper galleries, and the typed third-storey courtyard are carved
+	# after the excavation. They are still streets in the sealed source plan and
+	# their buildable faces are mandatory town walls, not optional infill. The
+	# derived excavation owns their void, while the volume supplies their exact
+	# public floor nodes.
+	if volume != null:
+		for walk: Vector3i in volume.walk_cells:
+			if not seen_public.has(walk):
+				seen_public[walk] = true
+				public_cells.append(walk)
+	for walk: Vector3i in public_cells:
 		var wall_bands := maxi(MIN_HOUSE_BANDS, excavation.slot_bands(walk))
 		for direction_index in DIRECTIONS.size():
 			var direction := DIRECTIONS[direction_index]
@@ -423,7 +441,8 @@ static func unowned_route_faces(parcels: Array[WarrenBuildingParcel],
 
 
 static func street_wall_audit(parcels: Array[WarrenBuildingParcel],
-		excavation: WarrenExcavation, massif: WarrenMassif) -> Dictionary:
+		excavation: WarrenExcavation, massif: WarrenMassif,
+		volume: WarrenVolumePlan = null) -> Dictionary:
 	## The gate Task 6 should run, and an oracle deliberately independent of the
 	## partitioner it audits.
 	##
@@ -467,7 +486,7 @@ static func street_wall_audit(parcels: Array[WarrenBuildingParcel],
 		"short": [] as Array[Vector3i],
 		"unowned": [] as Array[Vector3i],
 	}
-	for wall: Vector3i in _raw_street_walls(massif, excavation):
+	for wall: Vector3i in _raw_street_walls(massif, excavation, volume):
 		audit["wall_count"] = int(audit["wall_count"]) + 1
 		if owned.has(wall):
 			audit["owned_count"] = int(audit["owned_count"]) + 1
@@ -479,7 +498,8 @@ static func street_wall_audit(parcels: Array[WarrenBuildingParcel],
 
 
 static func _raw_street_walls(massif: WarrenMassif,
-		excavation: WarrenExcavation) -> Array[Vector3i]:
+		excavation: WarrenExcavation,
+		volume: WarrenVolumePlan = null) -> Array[Vector3i]:
 	## Every column face the route actually runs past with solid standing at the
 	## street's own floor band, keyed by (column, floor band). Raw geometry
 	## only: no notion of what is buildable enters here.
@@ -487,7 +507,18 @@ static func _raw_street_walls(massif: WarrenMassif,
 	var out: Array[Vector3i] = []
 	if massif == null or excavation == null:
 		return out
+	var public_cells: Array[Vector3i] = []
+	var seen_public: Dictionary = {}
 	for walk: Vector3i in excavation.public_cells():
+		if not seen_public.has(walk):
+			seen_public[walk] = true
+			public_cells.append(walk)
+	if volume != null:
+		for walk: Vector3i in volume.walk_cells:
+			if not seen_public.has(walk):
+				seen_public[walk] = true
+				public_cells.append(walk)
+	for walk: Vector3i in public_cells:
 		for direction: Vector2i in DIRECTIONS:
 			var column := Vector2i(walk.x + direction.x, walk.z + direction.y)
 			var wall := Vector3i(column.x, walk.y, column.y)

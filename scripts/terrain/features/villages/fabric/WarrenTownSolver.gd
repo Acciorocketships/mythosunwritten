@@ -457,6 +457,66 @@ static func mass_first_frontier(world_seed: int,
 	return out
 
 
+static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
+		ground_bands: Dictionary = {}) -> Array[WarrenVolumePlan]:
+	## Terrain-placement rebuild seam for one source selected by the complete flat
+	## preview.  It runs the identical massif -> excavation -> topology gate ->
+	## arcade -> third-storey-court/gallery transaction as mass_first_frontier(),
+	## but never explores a different bore.  The returned stable IDs therefore
+	## let the caller demand the same gallery alternative exactly.
+	last_failure = ""
+	var out: Array[WarrenVolumePlan] = []
+	if attempt_index < 0 or attempt_index >= MASS_FIRST_EXCAVATION_ATTEMPTS:
+		last_failure = "mass-first excavation attempt is outside the bounded search"
+		return out
+	var massif := WarrenMassifBuilder.build(world_seed, ground_bands)
+	if massif == null:
+		last_failure = "massif rejected: %s" % WarrenMassifBuilder.last_failure
+		return out
+	var excavation := WarrenExcavationCarver.carve(
+		world_seed + attempt_index * MASS_FIRST_ATTEMPT_STRIDE, massif)
+	if excavation == null:
+		last_failure = "selected excavation no longer carves local terrain"
+		return out
+	var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+		excavation)
+	if volume == null:
+		last_failure = WarrenExcavationVolumeAdapter.last_failure
+		return out
+	if not WarrenPublicRealmCarver.passes_topology_gate(volume):
+		last_failure = "selected excavation no longer passes the topology gate"
+		return out
+	var mass_context := volume.mass_context
+	var frontage_cells := volume.frontage_cells
+	volume = WarrenGroundArcadeSolver.extend(volume)
+	if volume == null:
+		last_failure = WarrenGroundArcadeSolver.last_failure
+		return out
+	for candidate: WarrenVolumePlan in WarrenElevatedFrontageSolver.variants(
+			volume, true):
+		candidate.mass_context = mass_context
+		candidate.frontage_cells = frontage_cells
+		out.append(candidate)
+	if out.is_empty():
+		last_failure = WarrenElevatedFrontageSolver.last_failure
+	return out
+
+
+static func mass_first_attempt_index(world_seed: int,
+		volume: WarrenVolumePlan) -> int:
+	## The excavation seed is the source volume's seed.  Semantic `.arcade` and
+	## `.gallery` suffixes never alter it, so this identity survives every
+	## topology clone without parsing a presentation-oriented stable ID.
+	if volume == null:
+		return -1
+	var delta := volume.world_seed - world_seed
+	if delta < 0 or delta % MASS_FIRST_ATTEMPT_STRIDE != 0:
+		return -1
+	var attempt := delta / MASS_FIRST_ATTEMPT_STRIDE
+	return attempt if attempt >= 0 \
+		and attempt < MASS_FIRST_EXCAVATION_ATTEMPTS else -1
+
+
 static func _asset_composition_order(ranked: Array[Dictionary],
 		max_results: int) -> Array[Dictionary]:
 	## Cheap parcel scores cannot compare the exterior-air behavior of measured
@@ -660,7 +720,7 @@ static func partition_parcels(volume: WarrenVolumePlan,
 	# A street with a hole in its wall is not the canyon this mode exists to
 	# build, so that is a rejection rather than a diagnostic.
 	var wall_audit := WarrenSolidPartitioner.street_wall_audit(houses,
-		excavation, massif)
+		excavation, massif, volume)
 	var unowned := wall_audit["unowned"] as Array[Vector3i]
 	if not unowned.is_empty():
 		last_partition_failure = "%d of %d street walls belong to no house" \

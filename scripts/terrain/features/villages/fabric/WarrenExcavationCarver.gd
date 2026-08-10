@@ -409,6 +409,18 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 	if float(walled) / float(excavation.route.size()) < MIN_WALL_RATIO:
 		_reject(rejected, "open-sided")
 		return null
+	# A two-band wall can enclose a player's head while still being too shallow
+	# to become an inhabited facade.  Select only bores whose remaining mass can
+	# carry a complete six-band address along the same share required by the
+	# common WarrenVolumePlan gate.  This was always re-measured for lane
+	# preservation below, but omitting it here let `carve()` choose an
+	# unbuildable winner and discard other legal bores in its 256-candidate set.
+	var addressed := _route_endpoint_addressed_count(massif, excavation)
+	var endpoint_count := excavation.transitions.size() + 1
+	if float(addressed) / float(endpoint_count) \
+			< WarrenPublicRealmCarver.MIN_ADDRESSED_WALK_RATIO:
+		_reject(rejected, "shallow frontage")
+		return null
 	if not excavation.seal():
 		# Bucketed, not keyed on last_rejection: that string carries cell
 		# coordinates, so using it as a key would grow one tally entry per
@@ -502,20 +514,38 @@ static func _route_addressed_count(massif: WarrenMassif,
 	## many addressed cells and a lane is not entitled to spend the margin.
 	var out := 0
 	for cell: Vector3i in excavation.route:
-		for direction: Vector2i in DIRECTIONS:
-			var column := Vector2i(cell.x + direction.x, cell.z + direction.y)
-			var complete := true
-			for band in range(cell.y, cell.y + WarrenMassif.ADDRESS_BANDS):
-				if not massif.has_column(column) or band < massif.base_at(column) \
-						or band >= massif.top_at(column) \
-						or excavation.carved.has(Vector3i(column.x, band,
-							column.y)):
-					complete = false
-					break
-			if complete:
-				out += 1
-				break
+		out += int(_cell_has_complete_address(massif, excavation, cell))
 	return out
+
+
+static func _route_endpoint_addressed_count(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> int:
+	## WarrenExcavationVolumeAdapter publishes the bore's first cell plus one
+	## logical walk node per move endpoint.  Stair/ramp intermediate columns are
+	## physical treads and frontage, but never graph nodes, so counting them in
+	## the topology ratio lets shallow landings hide behind deep treads.
+	var out := int(_cell_has_complete_address(massif, excavation,
+		excavation.route[0]))
+	for transition: Dictionary in excavation.transitions:
+		out += int(_cell_has_complete_address(massif, excavation,
+			transition.to as Vector3i))
+	return out
+
+
+static func _cell_has_complete_address(massif: WarrenMassif,
+		excavation: WarrenExcavation, cell: Vector3i) -> bool:
+	for direction: Vector2i in DIRECTIONS:
+		var column := Vector2i(cell.x + direction.x, cell.z + direction.y)
+		var complete := true
+		for band in range(cell.y, cell.y + WarrenMassif.ADDRESS_BANDS):
+			if not massif.has_column(column) or band < massif.base_at(column) \
+					or band >= massif.top_at(column) \
+					or excavation.carved.has(Vector3i(column.x, band, column.y)):
+				complete = false
+				break
+		if complete:
+			return true
+	return false
 
 
 static func _lane_anchors(world_seed: int,

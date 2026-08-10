@@ -18,11 +18,38 @@ func _init() -> void:
 				recipe.terrain_bearing_cells.size())
 	var frontier := WarrenTownSolver.mass_first_frontier(7)
 	var source: WarrenVolumePlan
+	var source_generation_index := -1
+	var generation_index := 0
 	for candidate: WarrenVolumePlan in frontier:
 		if String(candidate.stable_id).contains("4000019"):
 			source = candidate
+			source_generation_index = generation_index
 			break
-	var parcel_probe := WarrenTownSolver.partition_parcels(source, 1, program)
+		generation_index += 1
+	var source_rank := -1
+	if source != null:
+		source_rank = 0
+		var source_score := WarrenPublicRealmCarver.topology_score(source)
+		for candidate: WarrenVolumePlan in frontier:
+			if WarrenPublicRealmCarver.topology_score(candidate) < source_score:
+				source_rank += 1
+	print("FRONTIER size=", frontier.size(), " source_index=",
+		source_generation_index, " source_rank=", source_rank,
+		" source_id=", source.stable_id if source != null else &"",
+		" source_score=", WarrenPublicRealmCarver.topology_score(source))
+	if "--frontier-only" in OS.get_cmdline_user_args():
+		for candidate: WarrenVolumePlan in frontier:
+			print("CANDIDATE id=", candidate.stable_id,
+				" score=", WarrenPublicRealmCarver.topology_score(candidate),
+				" audit=", candidate.audit)
+		quit(0 if source != null else 1)
+		return
+	var requested_variant := 1
+	var variant_arg := OS.get_cmdline_user_args().find("--variant")
+	if variant_arg >= 0 and variant_arg + 1 < OS.get_cmdline_user_args().size():
+		requested_variant = int(OS.get_cmdline_user_args()[variant_arg + 1])
+	var parcel_probe := WarrenTownSolver.partition_parcels(source,
+		requested_variant, program)
 	print("PLANNED_SKYWALKS=", 0 if parcel_probe == null \
 		else parcel_probe.connection_reservations.size())
 	if parcel_probe != null:
@@ -31,7 +58,8 @@ func _init() -> void:
 				reservation.get("owner_endpoints", []), " components=",
 				reservation.get("components", []))
 	var solve_started_ms := Time.get_ticks_msec()
-	var plan := WarrenVolumetricSolver.from_volume(source, 1, program)
+	var plan := WarrenVolumetricSolver.from_volume(source, requested_variant,
+		program)
 	print("SPATIAL_SOLVE_MS=", Time.get_ticks_msec() - solve_started_ms)
 	if plan == null:
 		print("FAIL: ", WarrenVolumetricSolver.last_failure.left(1200))

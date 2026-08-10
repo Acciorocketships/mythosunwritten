@@ -25,6 +25,11 @@ const COMPACT_ROUTE_ATTEMPTS := ATTEMPTS_PER_ROUTE_FAMILY
 # vocabulary cannot silently leave this bounded search stale.
 const MAX_ATTEMPTS := 192
 const MAX_STRAIGHT_RUN := 4
+## Shared complete-building-frontage floor.  Mass-first's low-level excavation
+## selection must apply this before choosing one bore, and the adapted common
+## volume applies it again after every derived public-realm branch.  One named
+## authority prevents the upstream and downstream gates from silently drifting.
+const MIN_ADDRESSED_WALK_RATIO := 0.55
 # The entrance is a small piece of topology, not whatever the vertical search
 # happens to choose on its first few iterations. Two terrain-level moves make
 # an inward-right-angle throat. The first move stays on natural terrain; the
@@ -415,7 +420,7 @@ static func _passes_topology_gate(plan: WarrenVolumePlan) -> bool:
 		and int(plan.audit.landing_turn_violation_count) == 0 \
 		and int(plan.audit.max_transition_rise_bands) <= 1 \
 		and float(plan.audit.overhang_walk_ratio) >= 0.25 \
-		and float(plan.audit.addressed_walk_ratio) >= 0.55 \
+		and float(plan.audit.addressed_walk_ratio) >= MIN_ADDRESSED_WALK_RATIO \
 		and float(plan.audit.deep_vertical_shaft_ratio) <= 0.10 \
 		and int(plan.audit.same_datum_route_fold_count) == 0 \
 		and int(plan.audit.max_straight_run_cells) <= MAX_STRAIGHT_RUN

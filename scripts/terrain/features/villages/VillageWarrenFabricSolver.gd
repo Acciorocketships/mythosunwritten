@@ -35,7 +35,7 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	for placement: Dictionary in _placement_candidates(terrain, preview,
 			centre, street_axis, city_seed):
 		var spatial := preview if bool(placement.flat_ground) \
-			else WarrenVolumetricSolver.solve(city_seed,
+			else WarrenVolumetricSolver.solve_selected(city_seed, preview,
 				placement.ground_bands as Dictionary,
 				program.settlement_fabric_program)
 		if spatial == null:
