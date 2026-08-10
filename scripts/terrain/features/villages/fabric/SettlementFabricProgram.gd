@@ -2094,13 +2094,17 @@ static func _skywalk_recipe(recipe_id: StringName, segments: int,
 			modules.facade_aligned_transform(wall,
 				_pose(centre + Vector3(x, 0.0, 1.5), PI),
 				Vector3i.BACK, centre.z + 1.5))
-	var roof_asset := ROOF_ORANGE if theme == &"orange" else ROOF_BLUE
-	# An occupied skywalk is a narrow building, not a floor module used twice.
-	# The former flat FLOOR ceiling produced a large blank cream rectangle in
-	# top-down review and visually read as a roofless room. A measured repeat run
-	# closes both slopes and both gable ends without scaling any source asset.
-	assert(modules.add_roof_run(recipe_value, &"roof", roof_asset, GABLE,
-		centre, 3.0, PI * 0.5, float(segments) * 3.0))
+	# A bridge-house is only 3 m wide. The ordinary SFV repeat gable spans 6.49 m
+	# and its eaves clear away an entire neighboring facade on each side, which
+	# makes several skywalks incompatible with a dense town. Repeat complete LPFV
+	# compact roofs instead: every 3 m bay remains pitched, gable-closed, unscaled,
+	# and visually articulated, while its measured envelope matches the tunnel.
+	var compact_roof := COMPACT_ROOF_03 if theme == &"blue" \
+		else COMPACT_ROOF_06
+	for segment in segments:
+		var roof_x := (float(segment) - float(segments - 1) * 0.5) * 3.0
+		recipe_value.add_placement(StringName("roof.%d" % segment),
+			compact_roof, _pose(centre + Vector3(roof_x, 3.0, 0.0), PI * 0.5))
 	recipe_value.walk_cells = FabricRecipe.box_cells(
 		Vector3i(minimum_x, 0, -1), Vector3i(length_cells, 1, 2))
 	recipe_value.headroom_cells = FabricRecipe.box_cells(

@@ -3,8 +3,9 @@ extends RefCounted
 
 ## Measured-construction adapter for the authoritative 3D town.  This initial
 ## phase realizes every exact WarrenRoomStamp and its true bearing/party-wall
-## relationships. Roof and composed-feature units are appended by later phases;
-## no method here may move, resize, or restamp the spatial topology.
+## relationships. Composed features are then realized from their already-sealed
+## construction records before roofs are selected around the resulting measured
+## envelopes. No method here may move, resize, or restamp the spatial topology.
 static var last_failure := ""
 static var last_audit: Dictionary = {}
 
@@ -27,7 +28,11 @@ static func solve(source: WarrenSpatialPlan,
 	var rooms := compile_room_units(source, program)
 	if rooms.is_empty():
 		return null
-	var roofs := compile_roof_units(source, program, rooms)
+	var features := compile_feature_units(source, program, rooms)
+	if features.is_empty() and _constructed_feature_count(source) > 0:
+		return null
+	var feature_audit := last_audit.duplicate(true)
+	var roofs := compile_roof_units(source, program, rooms, features)
 	if roofs.is_empty():
 		return null
 	var roof_audit := last_audit.duplicate(true)
@@ -43,6 +48,11 @@ static func solve(source: WarrenSpatialPlan,
 	for unit: FabricUnit in rooms:
 		if not result.add_unit(unit):
 			last_failure = "room %s rejected by common fabric: %s" % [
+				unit.stable_id, result.last_rejection]
+			return null
+	for unit: FabricUnit in features:
+		if not result.add_unit(unit):
+			last_failure = "feature component %s rejected by common fabric: %s" % [
 				unit.stable_id, result.last_rejection]
 			return null
 	for unit: FabricUnit in roofs:
@@ -69,6 +79,7 @@ static func solve(source: WarrenSpatialPlan,
 		return null
 	var lineage := source.audit.duplicate(true)
 	lineage.merge(source.construction_plan.audit, true)
+	lineage.merge(feature_audit, true)
 	lineage.merge(roof_audit, true)
 	lineage.merge(volumes.audit(), true)
 	lineage.merge(solid_void.audit(), true)
@@ -158,9 +169,309 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	return units
 
 
-static func compile_roof_units(source: WarrenSpatialPlan,
+static func compile_feature_units(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram,
 		room_units: Array[FabricUnit]) -> Array[FabricUnit]:
+	## Construction records are sealed topology facts. This adapter may only bind
+	## their measured sockets to the already-compiled endpoint rooms; it proves
+	## that the resulting recipe layers reproduce the exact reserved cell union.
+	last_failure = ""
+	last_audit = {}
+	if source == null or not source.is_sealed() or program == null \
+			or room_units.is_empty():
+		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
+		return [] as Array[FabricUnit]
+	var room_unit_by_stamp: Dictionary = {}
+	var source_parcel_by_room: Dictionary = {}
+	var seam_ids_by_source_parcel: Dictionary = {}
+	for room_unit: FabricUnit in room_units:
+		var room_id := StringName(String(room_unit.stable_id).trim_prefix(
+			"spatial.fabric."))
+		room_unit_by_stamp[room_id] = room_unit
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			source_parcel_by_room[room.stable_id] = room.source_parcel_id
+			if not seam_ids_by_source_parcel.has(room.source_parcel_id):
+				seam_ids_by_source_parcel[room.source_parcel_id] = [] \
+					as Array[StringName]
+			var room_unit := room_unit_by_stamp.get(room.stable_id) as FabricUnit
+			if room_unit != null:
+				(seam_ids_by_source_parcel[room.source_parcel_id] \
+					as Array[StringName]).append(room_unit.stable_id)
+	for seam_ids_value: Variant in seam_ids_by_source_parcel.values():
+		(seam_ids_value as Array[StringName]).sort_custom(func(a: StringName,
+				b: StringName) -> bool:
+			return String(a) < String(b))
+	var probe := SettlementFabricPlan.new(&"spatial.feature-selection")
+	for recipe: FabricRecipe in program.recipes():
+		if not probe.register_recipe(recipe):
+			last_failure = "feature selection could not register recipe %s" % \
+				recipe.recipe_id
+			return [] as Array[FabricUnit]
+	for room_unit: FabricUnit in room_units:
+		if not probe.add_unit(room_unit):
+			last_failure = "feature selection rejected source room %s: %s" % [
+				room_unit.stable_id, probe.last_rejection]
+			return [] as Array[FabricUnit]
+	var ordered_features: Array[WarrenFeatureReservation] = []
+	for feature: WarrenFeatureReservation in source.features:
+		if not feature.construction_records.is_empty():
+			ordered_features.append(feature)
+	ordered_features.sort_custom(func(a: WarrenFeatureReservation,
+			b: WarrenFeatureReservation) -> bool:
+		return String(a.stable_id) < String(b.stable_id))
+	var out: Array[FabricUnit] = []
+	var realized_cells: Dictionary = {}
+	var skywalk_count := 0
+	for feature: WarrenFeatureReservation in ordered_features:
+		if feature.kind != &"enclosed_skywalk":
+			last_failure = "constructed spatial feature %s has no compiler" % \
+				feature.kind
+			return [] as Array[FabricUnit]
+		var feature_units := _compile_skywalk_feature(feature, program,
+			room_unit_by_stamp, source_parcel_by_room,
+			seam_ids_by_source_parcel)
+		if feature_units.is_empty():
+			return [] as Array[FabricUnit]
+		if not _feature_units_match_reservation(feature, feature_units, program):
+			last_failure = "skywalk %s construction changes its reserved volume" % \
+				feature.stable_id
+			return [] as Array[FabricUnit]
+		for unit: FabricUnit in feature_units:
+			if not probe.add_unit(unit):
+				last_failure = "skywalk component %s rejected: %s" % [
+					unit.stable_id, probe.last_rejection]
+				return [] as Array[FabricUnit]
+			out.append(unit)
+		for cell: Vector3i in feature.reserved_cells:
+			if realized_cells.has(cell):
+				last_failure = "constructed features overlap at %s" % cell
+				return [] as Array[FabricUnit]
+			realized_cells[cell] = feature.stable_id
+		skywalk_count += 1
+	last_audit = {
+		"source_constructed_feature_count": ordered_features.size(),
+		"realized_constructed_feature_count": skywalk_count,
+		"skywalk_feature_count": skywalk_count,
+		"feature_construction_unit_count": out.size(),
+		"feature_reserved_cell_count": realized_cells.size(),
+	}
+	return out
+
+
+static func _compile_skywalk_feature(feature: WarrenFeatureReservation,
+		program: SettlementFabricProgram,
+		room_unit_by_stamp: Dictionary, source_parcel_by_room: Dictionary,
+		seam_ids_by_source_parcel: Dictionary) -> Array[FabricUnit]:
+	var room_ids: Array[StringName] = [StringName(feature.audit.get(
+		"skywalk_left_room_id", &"")), StringName(feature.audit.get(
+		"skywalk_right_room_id", &""))]
+	if room_ids[0].is_empty() or room_ids[1].is_empty() \
+			or room_ids[0] == room_ids[1] or feature.endpoints.size() != 2:
+		last_failure = "skywalk %s lacks two exact endpoint rooms" % \
+			feature.stable_id
+		return [] as Array[FabricUnit]
+	var endpoint_specs: Array[Dictionary] = []
+	for endpoint_index in 2:
+		var room_unit := room_unit_by_stamp.get(room_ids[endpoint_index]) \
+			as FabricUnit
+		if room_unit == null:
+			last_failure = "skywalk %s endpoint room %s was not compiled" % [
+				feature.stable_id, room_ids[endpoint_index]]
+			return [] as Array[FabricUnit]
+		var source_parcel_id := StringName(source_parcel_by_room.get(
+			room_ids[endpoint_index], &""))
+		var seam_ids: Array[StringName] = []
+		seam_ids.assign(seam_ids_by_source_parcel.get(source_parcel_id, []) \
+			as Array[StringName])
+		endpoint_specs.append({"unit": room_unit, "cell":
+			(feature.endpoints[endpoint_index] as Dictionary).cell as Vector3i,
+			"seam_ids": seam_ids})
+	var records := feature.construction_records
+	if records.size() == 1:
+		var component := _feature_component_shell(feature, 0, records[0])
+		var recipe := program.recipe(component.recipe_id)
+		if recipe == null or recipe.bearing_parent_count != 2:
+			last_failure = "straight skywalk %s lacks a two-bearing recipe" % \
+				feature.stable_id
+			return [] as Array[FabricUnit]
+		var connections: Array[Dictionary] = []
+		for endpoint: Dictionary in endpoint_specs:
+			var matches := _matching_room_connections(component,
+				endpoint.unit as FabricUnit, program, endpoint.cell as Vector3i, true)
+			if matches.size() != 1:
+				last_failure = "straight skywalk %s has %d socket matches to %s" % [
+					feature.stable_id, matches.size(),
+					(endpoint.unit as FabricUnit).stable_id]
+				return [] as Array[FabricUnit]
+			connections.append(matches[0])
+		if connections[0].own_room == connections[1].own_room:
+			last_failure = "straight skywalk %s reuses one endpoint socket" % \
+				feature.stable_id
+			return [] as Array[FabricUnit]
+		return [_feature_component_with_connections(component, connections,
+			[endpoint_specs[0].unit, endpoint_specs[1].unit] as Array[FabricUnit],
+			true, _unique_sorted_names((endpoint_specs[0].seam_ids \
+				as Array[StringName]) + (endpoint_specs[1].seam_ids \
+				as Array[StringName])))] as Array[FabricUnit]
+	if records.size() != 3:
+		last_failure = "skywalk %s has unsupported %d-component construction" % [
+			feature.stable_id, records.size()]
+		return [] as Array[FabricUnit]
+	var first_shell := _feature_component_shell(feature, 0, records[0])
+	var endpoint_options: Array[Dictionary] = []
+	for endpoint_index in endpoint_specs.size():
+		var endpoint := endpoint_specs[endpoint_index]
+		var matches := _matching_room_connections(first_shell,
+			endpoint.unit as FabricUnit, program, endpoint.cell as Vector3i, true)
+		for match: Dictionary in matches:
+			endpoint_options.append({"endpoint_index": endpoint_index,
+				"connection": match})
+	if endpoint_options.size() != 1:
+		last_failure = "corner skywalk %s first arm has %d endpoint matches" % [
+			feature.stable_id, endpoint_options.size()]
+		return [] as Array[FabricUnit]
+	var first_endpoint_index := int(endpoint_options[0].endpoint_index)
+	var first_endpoint := endpoint_specs[first_endpoint_index]
+	var first := _feature_component_with_connections(first_shell,
+		[endpoint_options[0].connection] as Array[Dictionary],
+		[first_endpoint.unit] as Array[FabricUnit], true,
+		first_endpoint.seam_ids as Array[StringName])
+	var corner_shell := _feature_component_shell(feature, 1, records[1])
+	var corner_matches := _matching_room_connections(corner_shell, first,
+		program)
+	if corner_matches.size() != 1:
+		last_failure = "corner skywalk %s knuckle has %d arm matches" % [
+			feature.stable_id, corner_matches.size()]
+		return [] as Array[FabricUnit]
+	var corner := _feature_component_with_connections(corner_shell,
+		[corner_matches[0]] as Array[Dictionary], [first] as Array[FabricUnit],
+		true)
+	var final_shell := _feature_component_shell(feature, 2, records[2])
+	var corner_to_final := _matching_room_connections(final_shell, corner,
+		program)
+	var final_endpoint := endpoint_specs[1 - first_endpoint_index]
+	var endpoint_to_final := _matching_room_connections(final_shell,
+		final_endpoint.unit as FabricUnit, program,
+		final_endpoint.cell as Vector3i, true)
+	if corner_to_final.size() != 1 or endpoint_to_final.size() != 1 \
+			or corner_to_final[0].own_room == endpoint_to_final[0].own_room:
+		last_failure = "corner skywalk %s final arm does not close both seams" % \
+			feature.stable_id
+		return [] as Array[FabricUnit]
+	var final_connections: Array[Dictionary] = [corner_to_final[0],
+		endpoint_to_final[0]]
+	var final_unit := _feature_component_with_connections(final_shell,
+		final_connections, [corner] as Array[FabricUnit], false,
+		final_endpoint.seam_ids as Array[StringName])
+	return [first, corner, final_unit] as Array[FabricUnit]
+
+
+static func _feature_component_shell(feature: WarrenFeatureReservation,
+		index: int, record: Dictionary) -> FabricUnit:
+	return FabricUnit.new(StringName("spatial.fabric.%s.component.%02d" % [
+		feature.stable_id, index]), StringName(record.recipe_id),
+		record.origin as Vector3i, int(record.yaw_quarters))
+
+
+static func _feature_component_with_connections(shell: FabricUnit,
+		connections: Array[Dictionary], bearing_parents: Array[FabricUnit],
+		all_connections_bear: bool,
+		visual_seams: Array[StringName] = []) -> FabricUnit:
+	var parents: Array[StringName] = []
+	for parent: FabricUnit in bearing_parents:
+		parents.append(parent.stable_id)
+	var bonds: Array[Dictionary] = []
+	for connection_index in connections.size():
+		var connection := connections[connection_index]
+		bonds.append(FabricUnit.bond(StringName(connection.own_room),
+			StringName(connection.target_unit),
+			StringName(connection.target_room)))
+		if all_connections_bear or connection_index < bearing_parents.size():
+			bonds.append(FabricUnit.bond(StringName(connection.own_bearing),
+				StringName(connection.target_unit),
+				StringName(connection.target_bearing)))
+	return FabricUnit.new(shell.stable_id, shell.recipe_id,
+		shell.lattice_origin, shell.yaw_quarters, parents, bonds, &"",
+		visual_seams)
+
+
+static func _matching_room_connections(own: FabricUnit, target: FabricUnit,
+		program: SettlementFabricProgram,
+		expected_target_cell: Vector3i = Vector3i.ZERO,
+		require_expected_cell: bool = false) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var own_recipe := program.recipe(own.recipe_id)
+	var target_recipe := program.recipe(target.recipe_id)
+	if own_recipe == null or target_recipe == null:
+		return out
+	for own_socket: Dictionary in own_recipe.sockets:
+		var own_room := StringName(own_socket.id)
+		if int(own_socket.kind) != FabricRecipe.SocketKind.ROOM \
+				or String(own_room).contains(".corner."):
+			continue
+		for target_socket: Dictionary in target_recipe.sockets:
+			var target_room := StringName(target_socket.id)
+			if int(target_socket.kind) != FabricRecipe.SocketKind.ROOM \
+					or String(target_room).contains(".corner.") \
+					or not SettlementFabricPlan._sockets_meet(own, own_socket,
+						target, target_socket):
+				continue
+			if require_expected_cell and _socket_world_cell(target,
+					target_socket) != expected_target_cell:
+				continue
+			var own_bearing := StringName(String(own_room).replace("room.",
+				"bearing."))
+			var target_bearing := StringName(String(target_room).replace("room.",
+				"bearing."))
+			var own_bearing_socket := own_recipe.socket(own_bearing)
+			var target_bearing_socket := target_recipe.socket(target_bearing)
+			if own_bearing_socket.is_empty() or target_bearing_socket.is_empty() \
+					or not SettlementFabricPlan._sockets_meet(own,
+						own_bearing_socket, target, target_bearing_socket):
+				continue
+			out.append({"own_room": own_room, "target_unit": target.stable_id,
+				"target_room": target_room, "own_bearing": own_bearing,
+				"target_bearing": target_bearing})
+	return out
+
+
+static func _socket_world_cell(unit_value: FabricUnit,
+		socket: Dictionary) -> Vector3i:
+	return FabricRecipe.transform_cell(socket.cell as Vector3i,
+		unit_value.lattice_origin, unit_value.yaw_quarters)
+
+
+static func _feature_units_match_reservation(
+		feature: WarrenFeatureReservation, units: Array[FabricUnit],
+		program: SettlementFabricProgram) -> bool:
+	var realized: Dictionary = {}
+	for unit: FabricUnit in units:
+		var recipe := program.recipe(unit.recipe_id)
+		if recipe == null:
+			return false
+		for cells: Array[Vector3i] in [recipe.solid_cells,
+				recipe.headroom_cells, recipe.walk_cells]:
+			for local_cell: Vector3i in cells:
+				realized[FabricRecipe.transform_cell(local_cell,
+					unit.lattice_origin, unit.yaw_quarters)] = true
+	var reserved: Dictionary = {}
+	for cell: Vector3i in feature.reserved_cells:
+		reserved[cell] = true
+	return _same_cell_set(realized, reserved)
+
+
+static func _constructed_feature_count(source: WarrenSpatialPlan) -> int:
+	var count := 0
+	for feature: WarrenFeatureReservation in source.features:
+		count += int(not feature.construction_records.is_empty())
+	return count
+
+
+static func compile_roof_units(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram,
+		room_units: Array[FabricUnit],
+		fixed_feature_units: Array[FabricUnit] = []) -> Array[FabricUnit]:
 	last_failure = ""
 	last_audit = {}
 	if source == null or not source.is_sealed() or program == null \
@@ -197,6 +508,11 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			last_failure = "roof selection rejected source room %s: %s" % [
 				room_unit.stable_id, probe.last_rejection]
 			return [] as Array[FabricUnit]
+	for feature_unit: FabricUnit in fixed_feature_units:
+		if not probe.add_unit(feature_unit):
+			last_failure = "roof selection rejected fixed feature %s: %s" % [
+				feature_unit.stable_id, probe.last_rejection]
+			return [] as Array[FabricUnit]
 	var roof_faces_by_room := _roof_faces_by_room(source, room_id_by_cell)
 	var room_ids: Array[StringName] = []
 	room_ids.assign(roof_faces_by_room.keys())
@@ -228,7 +544,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			var pitched_id := _full_roof_recipe_id(room, source.world_seed)
 			var pitched := _full_roof_unit(room_id, room, parent_unit,
 				pitched_id, _roof_seams_for_candidate(room_seams,
-					parent_unit.stable_id, out))
+					parent_unit.stable_id, out, fixed_feature_units))
 			if program.recipe(pitched_id) == null:
 				last_failure = "missing full roof recipe %s" % pitched_id
 				return [] as Array[FabricUnit]
@@ -245,7 +561,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		if full and not _touches_public_air(source.grid, face_cells):
 			var flat_id := _flat_roof_recipe_id(room)
 			var flat := _full_roof_unit(room_id, room, parent_unit, flat_id,
-				_roof_seams_for_candidate(room_seams, parent_unit.stable_id, out))
+				_roof_seams_for_candidate(room_seams, parent_unit.stable_id, out,
+					fixed_feature_units))
 			if program.recipe(flat_id) == null:
 				last_failure = "missing exact flat roof recipe %s" % flat_id
 				return [] as Array[FabricUnit]
@@ -270,7 +587,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					row_index, room_id]
 				return [] as Array[FabricUnit]
 			var seams := _roof_seams_for_candidate(room_seams,
-				parent_unit.stable_id, out)
+				parent_unit.stable_id, out, fixed_feature_units)
 			var cap_unit := _cap_unit(room_id, row_index, room, parent_unit,
 				cap, seams)
 			if not probe.add_unit(cap_unit):
@@ -485,7 +802,8 @@ static func _cap_rows(face_cells: Array[Vector3i]) \
 
 static func _roof_seams_for_candidate(room_seams: Array[StringName],
 		parent_unit_id: StringName,
-		prior_roofs: Array[FabricUnit]) -> Array[StringName]:
+		prior_roofs: Array[FabricUnit],
+		fixed_feature_units: Array[FabricUnit] = []) -> Array[StringName]:
 	## A roof may meet a previously compiled roof only where their underlying
 	## rooms share an exact party wall. Multiple native caps over one room are
 	## also explicit pieces of the same authoritative roof region.
@@ -494,6 +812,16 @@ static func _roof_seams_for_candidate(room_seams: Array[StringName],
 		related_rooms[room_seam] = true
 	var out: Array[StringName] = []
 	out.append_array(room_seams)
+	for feature_unit: FabricUnit in fixed_feature_units:
+		var connected := feature_unit.parent_ids.has(parent_unit_id) \
+			or feature_unit.visual_seam_ids.has(parent_unit_id)
+		if not connected:
+			for bond: Dictionary in feature_unit.socket_bonds:
+				if StringName(bond.target_unit) == parent_unit_id:
+					connected = true
+					break
+		if connected:
+			out.append(feature_unit.stable_id)
 	for prior: FabricUnit in prior_roofs:
 		for prior_parent: StringName in prior.parent_ids:
 			if related_rooms.has(prior_parent):

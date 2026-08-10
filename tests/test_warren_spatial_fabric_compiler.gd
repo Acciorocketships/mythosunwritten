@@ -22,8 +22,28 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		assert_true(fabric.register_recipe(recipe))
 	for unit: FabricUnit in units:
 		assert_true(fabric.add_unit(unit), fabric.last_rejection)
-	var roofs := WarrenSpatialFabricCompiler.compile_roof_units(spatial,
+	var features := WarrenSpatialFabricCompiler.compile_feature_units(spatial,
 		program, units)
+	assert_gt(features.size(), 0, WarrenSpatialFabricCompiler.last_failure)
+	var expected_feature_units := 0
+	var expected_feature_cells := 0
+	var constructed_features := 0
+	for feature: WarrenFeatureReservation in spatial.features:
+		if feature.construction_records.is_empty():
+			continue
+		constructed_features += 1
+		expected_feature_units += feature.construction_records.size()
+		expected_feature_cells += feature.reserved_cells.size()
+	assert_eq(features.size(), expected_feature_units)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit.skywalk_feature_count),
+		constructed_features)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.feature_reserved_cell_count), expected_feature_cells)
+	for feature_unit: FabricUnit in features:
+		assert_true(program.recipe(feature_unit.recipe_id).has_tag(&"skywalk"))
+		assert_true(fabric.add_unit(feature_unit), fabric.last_rejection)
+	var roofs := WarrenSpatialFabricCompiler.compile_roof_units(spatial,
+		program, units, features)
 	assert_gt(roofs.size(), 0, WarrenSpatialFabricCompiler.last_failure)
 	assert_gte(roofs.size(), int(spatial.construction_plan.audit.roof_region_count))
 	assert_eq(WarrenSpatialFabricCompiler.last_audit.source_roof_face_count,

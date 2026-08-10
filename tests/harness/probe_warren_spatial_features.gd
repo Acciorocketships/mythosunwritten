@@ -6,8 +6,10 @@ extends SceneTree
 
 
 func _init() -> void:
+	var started_ms := Time.get_ticks_msec()
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
+	print("PROGRAM_MS=", Time.get_ticks_msec() - started_ms)
 	var frontier := WarrenTownSolver.mass_first_frontier(7)
 	var source: WarrenVolumePlan
 	for candidate: WarrenVolumePlan in frontier:
@@ -22,17 +24,27 @@ func _init() -> void:
 			print("PLANNED ", reservation.get("owner_parcel_ids", []), " ",
 				reservation.get("owner_endpoints", []), " components=",
 				reservation.get("components", []))
+	var solve_started_ms := Time.get_ticks_msec()
 	var plan := WarrenVolumetricSolver.from_volume(source, 1, program)
+	print("SPATIAL_SOLVE_MS=", Time.get_ticks_msec() - solve_started_ms)
 	if plan == null:
-		print("FAIL: ", WarrenVolumetricSolver.last_failure)
-		print("PREPLAN_DIAG: ",
-			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic)
+		print("FAIL: ", WarrenVolumetricSolver.last_failure.left(1200))
+		print("PREPLAN_SELECTION: selected=",
+			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
+				"selected_count", -1), " candidates=",
+			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
+				"compatible_candidate_count", -1), " fixed_reject=",
+			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
+				"fixed_block_rejection_count", -1), " failures=",
+			WarrenVolumetricSolver.last_preplan_skywalk_diagnostic.get(
+				"endpoint_survival_failures", {}))
 		print("SKY_DIAG: ", WarrenSpatialFeatureSolver.last_skywalk_diagnostic)
 		quit(1)
 		return
 	_print_courtyard(plan)
 	_print_offset_rooms(plan)
 	_print_straight_skywalks(plan)
+	_print_feature_compilation(plan, program)
 	quit()
 
 
@@ -130,3 +142,40 @@ func _print_straight_skywalks(plan: WarrenSpatialPlan) -> void:
 	print("SKYWALK_COUNT=", candidates.size())
 	for index in mini(candidates.size(), 30):
 		print("SKY ", candidates[index])
+
+
+func _print_feature_compilation(plan: WarrenSpatialPlan,
+		program: SettlementFabricProgram) -> void:
+	var rooms := WarrenSpatialFabricCompiler.compile_room_units(plan, program)
+	var features := WarrenSpatialFabricCompiler.compile_feature_units(plan,
+		program, rooms)
+	print("FEATURE_COMPILE_COUNT=", features.size(), " failure=",
+		WarrenSpatialFabricCompiler.last_failure)
+	if not features.is_empty():
+		var roofs := WarrenSpatialFabricCompiler.compile_roof_units(plan, program,
+			rooms, features)
+		print("ROOF_COMPILE_COUNT=", roofs.size(), " failure=",
+			WarrenSpatialFabricCompiler.last_failure)
+		if not roofs.is_empty():
+			var sealed := WarrenSpatialFabricCompiler.solve(plan, program)
+			print("FABRIC_SEALED=", sealed != null, " failure=",
+				WarrenSpatialFabricCompiler.last_failure)
+	for feature: WarrenFeatureReservation in plan.features:
+		if feature.construction_records.is_empty():
+			continue
+		print("FEATURE ", feature.stable_id, " audit=", feature.audit,
+			" endpoints=", feature.endpoints)
+		for record: Dictionary in feature.construction_records:
+			var recipe := program.recipe(StringName(record.recipe_id))
+			var feature_bounds := FabricRecipe.lattice_transform(
+				record.origin as Vector3i, int(record.yaw_quarters)) \
+				* recipe.local_clearance_bounds
+			for room_unit: FabricUnit in rooms:
+				var room_recipe := program.recipe(room_unit.recipe_id)
+				var room_bounds := room_unit.transform() \
+					* room_recipe.local_clearance_bounds
+				if SettlementFabricPlan._aabb_overlaps_volume(feature_bounds,
+						room_bounds):
+					print("  OVERLAP component=", record.role, " bounds=",
+						feature_bounds, " room=", room_unit.stable_id,
+						" recipe=", room_unit.recipe_id, " bounds=", room_bounds)

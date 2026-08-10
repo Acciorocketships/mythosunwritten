@@ -8,6 +8,10 @@ extends RefCounted
 var stable_id: StringName
 var kind: StringName
 var reserved_cells: Array[Vector3i] = []
+## Existing public-route cells atomically incorporated into a composed feature
+## without changing their PUBLIC_AIR ownership. Markets use a shareable named
+## construction seam here; their aisle remains part of the canonical route.
+var public_cells: Array[Vector3i] = []
 var endpoints: Array[Dictionary] = []
 var support_node_id: StringName
 ## Exact resource-free construction alternatives selected by the topology
@@ -18,6 +22,7 @@ var construction_records: Array[Dictionary] = []
 var audit: Dictionary = {}
 var last_rejection := ""
 var _cell_set: Dictionary = {}
+var _public_set: Dictionary = {}
 var _audit_facts: Dictionary = {}
 var _sealed := false
 
@@ -35,6 +40,17 @@ func add_reserved_cells(cells: Array[Vector3i]) -> bool:
 			return false
 		_cell_set[cell] = true
 		reserved_cells.append(cell)
+	return true
+
+
+func add_public_cells(cells: Array[Vector3i]) -> bool:
+	if _sealed or cells.is_empty():
+		return false
+	for cell: Vector3i in cells:
+		if _public_set.has(cell) or _cell_set.has(cell):
+			return false
+		_public_set[cell] = true
+		public_cells.append(cell)
 	return true
 
 
@@ -91,6 +107,17 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 	if kind in [&"enclosed_skywalk", &"covered_market", &"balcony"] \
 			and construction_records.is_empty():
 		return _reject("constructed feature has no exact asset record")
+	if kind == &"covered_market":
+		if public_cells.is_empty():
+			return _reject("covered market has no public aisle")
+		for cell: Vector3i in public_cells:
+			var floor := grid.face_claim(cell, Vector3i.DOWN)
+			if grid.use_at(cell) != WarrenSpatialGrid.Use.PUBLIC_AIR \
+					or not grid.reservation_owned_by(cell,
+						WarrenSpatialGrid.Reservation.CONSTRUCTION_SEAM,
+						stable_id) or floor.is_empty() or int(floor.kind) \
+						!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+				return _reject("covered market aisle is not canonical public space")
 	if kind == &"balcony" and endpoint_owners.size() != 1:
 		return _reject("balcony lacks one private endpoint owner")
 	if kind == &"room_outcropping" and endpoint_owners.size() != 1:
@@ -100,6 +127,7 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 		return _reject("feature support does not reach terrain")
 	audit = _audit_facts.duplicate(true)
 	audit.merge({"reserved_cell_count": reserved_cells.size(),
+		"public_cell_count": public_cells.size(),
 		"endpoint_count": endpoints.size(), "endpoint_owner_count":
 		endpoint_owners.size(), "construction_record_count":
 		construction_records.size()}, true)
@@ -122,6 +150,10 @@ func deterministic_signature() -> String:
 		endpoint_parts.append("%d:%d:%d/%s" % [cell.x, cell.y, cell.z,
 			StringName(endpoint.owner_id)])
 	endpoint_parts.sort()
+	var public_parts := PackedStringArray()
+	for cell: Vector3i in public_cells:
+		public_parts.append("%d:%d:%d" % [cell.x, cell.y, cell.z])
+	public_parts.sort()
 	var construction_parts := PackedStringArray()
 	for record: Dictionary in construction_records:
 		var origin := record.origin as Vector3i
@@ -129,8 +161,9 @@ func deterministic_signature() -> String:
 			StringName(record.recipe_id), origin.x, origin.y, origin.z,
 			int(record.yaw_quarters), StringName(record.role)])
 	construction_parts.sort()
-	return "%s/%s[%s]>%s/support=%s/build=%s" % [String(stable_id), String(kind),
-		",".join(cells), ",".join(endpoint_parts), String(support_node_id),
+	return "%s/%s[%s]>%s/public=%s/support=%s/build=%s" % [String(stable_id),
+		String(kind), ",".join(cells), ",".join(endpoint_parts),
+		",".join(public_parts), String(support_node_id),
 		",".join(construction_parts)]
 
 
