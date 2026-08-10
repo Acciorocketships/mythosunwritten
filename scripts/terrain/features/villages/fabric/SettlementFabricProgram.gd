@@ -468,6 +468,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_skywalk_recipe(&"skywalk.cantilever.6.orange", 2, &"orange", modules, 1),
 		_skywalk_recipe(&"skywalk.cantilever.9.blue", 3, &"blue", modules, 1),
 		_skywalk_corner_recipe(modules),
+		_balcony_recipe(&"balcony.bracketed.left.blue", &"blue", -1,
+			WOOD_DOORS[0], modules),
+		_balcony_recipe(&"balcony.bracketed.right.orange", &"orange", 0,
+			WOOD_DOORS[1], modules),
+		_balcony_recipe(&"balcony.bracketed.left.amber", &"amber", -1,
+			WOOD_DOORS[2], modules),
+		_balcony_recipe(&"balcony.bracketed.right.blue", &"blue", 0,
+			WOOD_DOORS[3], modules),
 	]
 	_append_roof_seam_vocabulary(candidates, modules)
 	_append_bisected_valley_vocabulary(candidates, modules)
@@ -2123,6 +2131,60 @@ static func _skywalk_recipe(recipe_id: StringName, segments: int,
 		Vector3i(minimum_x, 0, 0), Vector3i(-1, 0, 0))
 	recipe_value.add_socket(&"bearing.east", FabricRecipe.SocketKind.BEARING,
 		Vector3i(maximum_x, 0, 0), Vector3i(1, 0, 0))
+	return recipe_value
+
+
+static func _balcony_recipe(recipe_id: StringName, theme: StringName,
+		back_socket_x: int, door_asset: StringName,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## One complete 3 x 1.5 m occupied balcony. The logical cells are exterior
+	## private walk/headroom, while the reviewed deck tiles, four rail runs,
+	## doorway wall, and brackets are one atomic measured construction. Left and
+	## right attachment variants shift the room socket without changing the
+	## usable floor, allowing a facade to stagger balconies instead of extruding
+	## the same coordinate through every storey.
+	assert(back_socket_x in [-1, 0])
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"balcony", &"private_walk", &"exterior_occupied_floor",
+		&"bracket_supported", &"facade_door", &"overhead_occupied", theme,
+	], 1)
+	var deck_cells: Array[Vector3i] = [
+		Vector3i(-1, 0, 0), Vector3i(0, 0, 0),
+	]
+	for cell: Vector3i in deck_cells:
+		# The S deck pivot lies on its +X seam; this is the same measured datum
+		# correction used by setback caps, not a scaled or guessed placement.
+		var floor_pose := _pose(Vector3(float(cell.x) * CELL + CELL * 0.5,
+			0.0, 0.0), 0.0)
+		recipe_value.add_placement(StringName("floor.%d" % (cell.x + 1)),
+			SETBACK_CAP, modules.walk_aligned_transform(SETBACK_CAP,
+				floor_pose, 0.0))
+		recipe_value.add_placement(StringName("guard.front.%d" % (cell.x + 1)),
+			RAILING, _pose(Vector3(float(cell.x) * CELL, 0.0, CELL * 0.5),
+				0.0))
+	# The two end rails close the 1.5 m depth; the parent facade is the only
+	# unguarded edge and contains the exact reviewed door module.
+	recipe_value.add_placement(&"guard.left", RAILING,
+		_pose(Vector3(-CELL * 1.5, 0.0, 0.0), -PI * 0.5))
+	recipe_value.add_placement(&"guard.right", RAILING,
+		_pose(Vector3(CELL * 0.5, 0.0, 0.0), -PI * 0.5))
+	var centre_x := -CELL * 0.5
+	recipe_value.add_placement(&"door", door_asset,
+		modules.facade_aligned_transform(door_asset,
+			_pose(Vector3(centre_x, 0.0, -CELL * 0.5), 0.0),
+			Vector3i.BACK, -CELL * 0.5))
+	for index in 2:
+		var brace_x := float(index - 1) * CELL
+		recipe_value.add_placement(StringName("brace.%d" % index), BRACE,
+			_pose(Vector3(brace_x, -0.55, -CELL * 0.35), 0.0))
+	recipe_value.walk_cells.assign(deck_cells)
+	recipe_value.headroom_cells = FabricRecipe.box_cells(
+		Vector3i(-1, 0, 0), Vector3i(2, 2, 1))
+	recipe_value.inhabited_cells.assign(recipe_value.headroom_cells)
+	recipe_value.add_socket(&"room.back", FabricRecipe.SocketKind.ROOM,
+		Vector3i(back_socket_x, 0, 0), Vector3i.FORWARD)
+	recipe_value.add_socket(&"bearing.back", FabricRecipe.SocketKind.BEARING,
+		Vector3i(back_socket_x, 0, 0), Vector3i.FORWARD)
 	return recipe_value
 
 

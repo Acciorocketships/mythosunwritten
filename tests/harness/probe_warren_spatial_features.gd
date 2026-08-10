@@ -10,6 +10,12 @@ func _init() -> void:
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
 	print("PROGRAM_MS=", Time.get_ticks_msec() - started_ms)
+	for recipe: FabricRecipe in program.recipes():
+		if recipe.has_tag(&"prefab_anchor"):
+			print("PREFAB_RECIPE ", recipe.recipe_id, " bounds=",
+				recipe.local_clearance_bounds, " solid=", recipe.solid_cells.size(),
+				" headroom=", recipe.headroom_cells.size(), " bearing=",
+				recipe.terrain_bearing_cells.size())
 	var frontier := WarrenTownSolver.mass_first_frontier(7)
 	var source: WarrenVolumePlan
 	for candidate: WarrenVolumePlan in frontier:
@@ -43,6 +49,8 @@ func _init() -> void:
 			WarrenVolumetricSolver.last_preplan_market_diagnostic)
 		quit(1)
 		return
+	print("LANDMARK_DIAG: ",
+		WarrenVolumetricSolver.last_preplan_landmark_diagnostic)
 	_print_courtyard(plan)
 	_print_offset_rooms(plan)
 	_print_straight_skywalks(plan)

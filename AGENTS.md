@@ -324,8 +324,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   explicit one-storey plinth budget in sampled terrain height; larger risers must split into
   narrower terrain-rooted buildings rather than becoming masonry podiums. A mass-first topology must also contain one
   typed 6 x 6 m third-storey courtyard: its floor is four bands above the local terrain, supported by
-  complete mass or a lower route, and addressed by buildings on at least three sides. Mass-first
-  The fine-grid volumetric front end jointly selects exactly one covered market and its measured
+  complete mass or a lower route, and addressed by buildings on at least three sides. The
+  fine-grid volumetric front end jointly selects exactly one covered market and its measured
   skywalk set before room composition. The market attaches the atomic 6 x 3 m reviewed canopy plus
   authored stocked-table recipe to one exact terrain-rooted room `MARKET` socket. Four central
   public cells remain negative space beneath the canopy; when their lattice phase does not already
@@ -334,6 +334,18 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   seam, and is projected by `WarrenSpatialPublicRealmAdapter` as one supplemental covered route
   node. The market body, aisle, terrain bearing, visual clearance, backing room, and construction
   record commit atomically; room/roof packing and the skywalk beam must yield to that reservation.
+  After exact room composition, the same fine grid admits exactly six usable balconies across at
+  least three building owners. Each is one measured 3 x 1.5 m private occupied-floor recipe with
+  two deck tiles, full two-band headroom, a reviewed door facade, four exposed-edge railing runs,
+  twin cantilever brackets, one exact room/bearing socket, and a named visual seam to only its
+  source parcel stack. Selection permits at most two per building and forbids equal XZ/facing
+  facade coordinates at different heights, so balconies cannot recreate a vertically repeated
+  tower pattern. Their body, visual clearance, room endpoint, guard/open-seam/soffit faces, support,
+  and construction transform commit atomically before roof selection. Measured brace clearance may
+  enter lower public air only as an explicit covered-street construction seam. The fast diagnostic
+  `tests/harness/warren_spatial_review.tscn` renders the already-sealed fine-grid candidate directly
+  and adds front/underside falsification views for every balcony; it deliberately bypasses corpus
+  selection and is not evidence that the production selector accepted a seed.
   Route-first retains its independent-stall grammar. Skywalk reservations are solved against
   the fixed exact parcel partition and preserved through asset compilation; do not fake extra links
   when no independent measured corridor exists. Mass-first-only thresholds and styling are guarded

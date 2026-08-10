@@ -224,6 +224,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var realized_cells: Dictionary = {}
 	var skywalk_count := 0
 	var market_count := 0
+	var balcony_count := 0
 	for feature: WarrenFeatureReservation in ordered_features:
 		var feature_units: Array[FabricUnit] = []
 		match feature.kind:
@@ -237,6 +238,11 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 					room_unit_by_stamp, source_parcel_by_room,
 					seam_ids_by_source_parcel)
 				market_count += int(not feature_units.is_empty())
+			&"balcony":
+				feature_units = _compile_balcony_feature(feature, program,
+					room_unit_by_stamp, source_parcel_by_room,
+					seam_ids_by_source_parcel)
+				balcony_count += int(not feature_units.is_empty())
 			_:
 				last_failure = "constructed spatial feature %s has no compiler" % \
 					feature.kind
@@ -260,13 +266,53 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 			realized_cells[cell] = feature.stable_id
 	last_audit = {
 		"source_constructed_feature_count": ordered_features.size(),
-		"realized_constructed_feature_count": skywalk_count + market_count,
+		"realized_constructed_feature_count": skywalk_count + market_count \
+			+ balcony_count,
 		"skywalk_feature_count": skywalk_count,
 		"covered_market_feature_count": market_count,
+		"balcony_feature_count": balcony_count,
 		"feature_construction_unit_count": out.size(),
 		"feature_reserved_cell_count": realized_cells.size(),
 	}
 	return out
+
+
+static func _compile_balcony_feature(feature: WarrenFeatureReservation,
+		program: SettlementFabricProgram,
+		room_unit_by_stamp: Dictionary, source_parcel_by_room: Dictionary,
+		seam_ids_by_source_parcel: Dictionary) -> Array[FabricUnit]:
+	var room_id := StringName(feature.audit.get("balcony_room_id", &""))
+	if room_id.is_empty() or feature.endpoints.size() != 1 \
+			or feature.construction_records.size() != 1:
+		last_failure = "balcony %s lacks one exact room/recipe" % feature.stable_id
+		return [] as Array[FabricUnit]
+	var room_unit := room_unit_by_stamp.get(room_id) as FabricUnit
+	if room_unit == null:
+		last_failure = "balcony %s parent room %s was not compiled" % [
+			feature.stable_id, room_id]
+		return [] as Array[FabricUnit]
+	var component := _feature_component_shell(feature, 0,
+		feature.construction_records[0])
+	var recipe := program.recipe(component.recipe_id)
+	if recipe == null or not recipe.has_tag(&"balcony") \
+			or recipe.bearing_parent_count != 1:
+		last_failure = "balcony %s lacks a one-bearing occupied recipe" % \
+			feature.stable_id
+		return [] as Array[FabricUnit]
+	var endpoint_cell := (feature.endpoints[0] as Dictionary).cell as Vector3i
+	var matches := _matching_room_connections(component, room_unit, program,
+		endpoint_cell, true)
+	if matches.size() != 1:
+		last_failure = "balcony %s has %d exact doorway/socket matches" % [
+			feature.stable_id, matches.size()]
+		return [] as Array[FabricUnit]
+	var source_parcel_id := StringName(source_parcel_by_room.get(room_id, &""))
+	var seams: Array[StringName] = []
+	seams.assign(seam_ids_by_source_parcel.get(source_parcel_id, []) \
+		as Array[StringName])
+	return [_feature_component_with_connections(component,
+		[matches[0]] as Array[Dictionary], [room_unit] as Array[FabricUnit],
+		true, seams)] as Array[FabricUnit]
 
 
 static func _compile_market_feature(feature: WarrenFeatureReservation,

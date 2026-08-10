@@ -14,6 +14,7 @@ static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
 static var last_preplan_skywalk_diagnostic: Dictionary = {}
 static var last_preplan_market_diagnostic: Dictionary = {}
+static var last_preplan_landmark_diagnostic: Dictionary = {}
 static var _last_skywalk_selection_failure := ""
 
 
@@ -24,6 +25,7 @@ static func solve(world_seed: int,
 	last_diagnostic = {}
 	last_preplan_skywalk_diagnostic = {}
 	last_preplan_market_diagnostic = {}
+	last_preplan_landmark_diagnostic = {}
 	if construction_program == null:
 		last_failure = "volumetric feature search requires measured construction vocabulary"
 		return null
@@ -87,7 +89,7 @@ static func from_volume(volume: WarrenVolumePlan,
 		return null
 	var features := WarrenSpatialFeatureSolver.solve(grid, volume, buildings,
 		supports, partition.skywalk_reservations as Array[Dictionary],
-		partition.market_reservation as Dictionary)
+		partition.market_reservation as Dictionary, construction_program)
 	if features.is_empty():
 		last_failure = WarrenSpatialFeatureSolver.last_failure
 		return null
@@ -340,6 +342,12 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				protected_owners[cell_value] = {}
 			(protected_owners[cell_value] as Dictionary)[reservation_owner] = \
 				allowed_endpoint_owners
+	# Inventory complete terrain-rooted landmark stamps against the exact
+	# post-market/post-skywalk reservation field. Selection is deliberately a
+	# separate bounded phase because these large envelopes must displace generic
+	# parcel stacks, never arrive later as detached decoration.
+	_preplan_spatial_landmarks(grid, volume, construction_program,
+		protected_owners, market_reservation, skywalk_reservations)
 	var forced_offsets_by_parcel := skywalk_plan.forced_offsets as Dictionary
 	var buildings: Array[WarrenBuildingVolume] = []
 	var supports := WarrenSupportGraph.new()
@@ -502,6 +510,134 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		"preplanned_skywalk_count": skywalk_reservations.size(),
 		"skywalk_reservations": skywalk_reservations,
 		"market_reservation": market_reservation}
+
+
+static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, program: SettlementFabricProgram,
+		protected_owners: Dictionary, market_reservation: Dictionary,
+		skywalk_reservations: Array[Dictionary]) -> Dictionary:
+	var required_parcels: Dictionary = {
+		StringName(market_reservation.get("backing_parcel_id", &"")): true,
+	}
+	for reservation: Dictionary in skywalk_reservations:
+		for parcel_value: Variant in reservation.get("owner_parcel_ids", []):
+			required_parcels[StringName(parcel_value)] = true
+	required_parcels.erase(&"")
+	var prefab_recipes: Array[FabricRecipe] = []
+	for recipe: FabricRecipe in program.recipes():
+		if recipe.has_tag(&"prefab_anchor") and not recipe.entrances.is_empty() \
+				and maxf(recipe.local_clearance_bounds.size.x,
+					recipe.local_clearance_bounds.size.z) <= 21.0:
+			prefab_recipes.append(recipe)
+	var candidates: Array[Dictionary] = []
+	var landing_count := 0
+	var body_fit_count := 0
+	var bearing_fit_count := 0
+	var clearance_fit_count := 0
+	var mandatory_rejection_count := 0
+	var seen: Dictionary = {}
+	for landing: Vector3i in grid.cells_with_use(
+			WarrenSpatialGrid.Use.PUBLIC_AIR):
+		var floor_claim := grid.face_claim(landing, Vector3i.DOWN)
+		if landing.y > 1 or floor_claim.is_empty() \
+				or int(floor_claim.kind) != WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+			continue
+		landing_count += 1
+		for side: Vector3i in WarrenSpatialFeatureSolver.SKY_DIRECTIONS:
+			if grid.use_at(landing + side) not in [WarrenSpatialGrid.Use.OUTSIDE,
+					WarrenSpatialGrid.Use.ALLOCATABLE]:
+				continue
+			for recipe: FabricRecipe in prefab_recipes:
+				var entrance := recipe.entrances[0] as Dictionary
+				var yaw := _yaw_for_direction(entrance.facing as Vector3i, -side)
+				if yaw < 0:
+					continue
+				var origin := landing + side - FabricRecipe.transform_cell(
+					entrance.cell as Vector3i, Vector3i.ZERO, yaw)
+				var key := "%s@%s/r%d" % [recipe.recipe_id, origin, yaw]
+				if seen.has(key):
+					continue
+				seen[key] = true
+				var body: Dictionary = {}
+				for cells: Array[Vector3i] in [recipe.solid_cells,
+						recipe.headroom_cells, recipe.walk_cells]:
+					for local_cell: Vector3i in cells:
+						body[FabricRecipe.transform_cell(local_cell, origin, yaw)] = true
+				if body.is_empty() or not _skywalk_body_fits_grid(grid, body):
+					continue
+				body_fit_count += 1
+				var bearing: Dictionary = {}
+				for local_cell: Vector3i in recipe.terrain_bearing_cells:
+					bearing[FabricRecipe.transform_cell(local_cell, origin, yaw)] = true
+				if bearing.is_empty() or not _landmark_bearing_follows_terrain(
+						bearing, volume):
+					continue
+				bearing_fit_count += 1
+				var components: Array[Dictionary] = [{"recipe_id": recipe.recipe_id,
+					"origin": origin, "yaw_quarters": yaw}]
+				var clearance := _skywalk_visual_clearance_cells(components, program)
+				if clearance.is_empty() or not _cells_fit_grid(grid, clearance) \
+						or not _skywalk_clearance_fits_grid(grid, clearance) \
+						or not _skywalk_clearance_fits_protected(clearance,
+							protected_owners):
+					continue
+				clearance_fit_count += 1
+				var blockers: Dictionary = {}
+				var mandatory_hit := false
+				for cell_value: Variant in clearance.keys():
+					for owner_value: Variant in (protected_owners.get(cell_value, {}) \
+							as Dictionary).keys():
+						var owner_id := StringName(owner_value)
+						if required_parcels.has(owner_id):
+							mandatory_hit = true
+						elif not String(owner_id).begins_with("spatial.feature."):
+							blockers[owner_id] = true
+				if mandatory_hit:
+					mandatory_rejection_count += 1
+					continue
+				var assets := recipe.asset_ids()
+				var source_family := &"unknown" if assets.is_empty() else \
+					StringName(String(assets[0]).get_slice(".", 0))
+				candidates.append({"recipe_id": recipe.recipe_id,
+					"source_family": source_family, "origin": origin,
+					"yaw_quarters": yaw, "landing_cell": landing,
+					"body": body, "bearing_cells": bearing,
+					"clearance": clearance, "blocker_parcels": blockers,
+					"blocker_count": blockers.size(),
+					"footprint_area": recipe.local_clearance_bounds.size.x \
+						* recipe.local_clearance_bounds.size.z,
+					"tie": posmod(Helper._mix64(volume.world_seed \
+						^ String(recipe.recipe_id).hash() ^ origin.x * 31 \
+						^ origin.z * 47 ^ yaw * 131), 1000003)})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.blocker_count) != int(b.blocker_count):
+			return int(a.blocker_count) > int(b.blocker_count)
+		if not is_equal_approx(float(a.footprint_area), float(b.footprint_area)):
+			return float(a.footprint_area) > float(b.footprint_area)
+		return int(a.tie) < int(b.tie))
+	last_preplan_landmark_diagnostic = {"landing_count": landing_count,
+		"prefab_recipe_count": prefab_recipes.size(),
+		"body_fit_count": body_fit_count,
+		"bearing_fit_count": bearing_fit_count,
+		"clearance_fit_count": clearance_fit_count,
+		"mandatory_rejection_count": mandatory_rejection_count,
+		"candidate_count": candidates.size(),
+		"candidate_preview": candidates.slice(0, mini(8, candidates.size()))}
+	return {"candidates": candidates}
+
+
+static func _landmark_bearing_follows_terrain(bearing: Dictionary,
+		volume: WarrenVolumePlan) -> bool:
+	var massif := volume.mass_context.get("massif") as WarrenMassif
+	if massif == null:
+		return false
+	for cell_value: Variant in bearing.keys():
+		var cell := cell_value as Vector3i
+		var macro_column := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		if massif.bearing_at(macro_column) != cell.y:
+			return false
+	return true
 
 
 static func _proposal_base_plate(proposal: Dictionary) -> Dictionary:

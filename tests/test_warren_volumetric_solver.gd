@@ -26,6 +26,10 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_eq(int(plan.audit.covered_market_count), 1)
 	assert_eq(int(plan.audit.enclosed_skywalk_count),
 		WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
+	assert_gte(int(plan.audit.usable_balcony_count),
+		WarrenSpatialFeatureSolver.TARGET_BALCONIES)
+	assert_gte(int(plan.audit.balcony_building_count),
+		WarrenSpatialFeatureSolver.MIN_BALCONY_BUILDINGS)
 	assert_gte(int(plan.audit.room_outcropping_count),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
 	assert_not_null(plan.construction_plan)
@@ -54,6 +58,7 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	var courts: Array[WarrenFeatureReservation] = []
 	var skywalks: Array[WarrenFeatureReservation] = []
 	var markets: Array[WarrenFeatureReservation] = []
+	var balconies: Array[WarrenFeatureReservation] = []
 	var outcroppings: Array[WarrenFeatureReservation] = []
 	for feature: WarrenFeatureReservation in plan.features:
 		match feature.kind:
@@ -63,6 +68,8 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 				skywalks.append(feature)
 			&"covered_market":
 				markets.append(feature)
+			&"balcony":
+				balconies.append(feature)
 			&"room_outcropping":
 				outcroppings.append(feature)
 	assert_eq(courts.size(), 1)
@@ -127,6 +134,32 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 			assert_eq(plan.grid.owner_name_at(cell), skywalk.stable_id)
 	assert_gte(corner_count, 1,
 		"the seed-seven proof should retain a visibly turning skywalk")
+	assert_gte(balconies.size(), WarrenSpatialFeatureSolver.TARGET_BALCONIES)
+	var balcony_owners: Dictionary = {}
+	var balcony_facades: Dictionary = {}
+	for balcony: WarrenFeatureReservation in balconies:
+		assert_eq(balcony.endpoints.size(), 1)
+		assert_eq(balcony.construction_records.size(), 1)
+		assert_true(String(balcony.construction_records[0].recipe_id) \
+			.begins_with("balcony."))
+		assert_eq(int(balcony.audit.balcony_usable_width_cells), 2)
+		assert_eq(int(balcony.audit.balcony_usable_depth_cells), 1)
+		assert_eq(int(balcony.audit.balcony_door_count), 1)
+		assert_eq(int(balcony.audit.balcony_guard_segment_count), 4)
+		assert_eq(balcony.audit.balcony_support_kind, &"bracket_cantilever")
+		assert_eq(balcony.reserved_cells.size(), 4)
+		var owner_id := StringName(balcony.audit.balcony_building_id)
+		balcony_owners[owner_id] = true
+		var facade_key := String(balcony.audit.balcony_facade_key)
+		assert_false(balcony_facades.has(facade_key),
+			"balconies repeat at equivalent vertical facade coordinates")
+		balcony_facades[facade_key] = true
+		for cell: Vector3i in balcony.reserved_cells:
+			assert_eq(plan.grid.use_at(cell),
+				WarrenSpatialGrid.Use.PRIVATE_VOLUME)
+			assert_eq(plan.grid.owner_name_at(cell), balcony.stable_id)
+	assert_gte(balcony_owners.size(),
+		WarrenSpatialFeatureSolver.MIN_BALCONY_BUILDINGS)
 	assert_gte(outcroppings.size(),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
 	var outcrop_owners: Dictionary = {}
