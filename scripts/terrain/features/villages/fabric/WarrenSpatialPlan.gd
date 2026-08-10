@@ -16,6 +16,9 @@ var route_floor_cells: Array[Vector3i] = []
 var buildings: Array[WarrenBuildingVolume] = []
 var features: Array[WarrenFeatureReservation] = []
 var support_graph: WarrenSupportGraph
+## Phase-7 lossless merge of every exact grid face. Asset realization consumes
+## these regions; it may not rebuild a shell from a 2D building footprint.
+var construction_plan: WarrenConstructionRegionPlan
 var audit: Dictionary = {}
 var last_rejection := ""
 var _route_set: Dictionary = {}
@@ -91,6 +94,10 @@ func seal(p_entry_floor_cell: Vector3i) -> bool:
 		return _reject("private volume terminates without a roof interface")
 	if int(interface_audit.threshold_face_mismatch_count) != 0:
 		return _reject("building threshold is not a door interface")
+	construction_plan = WarrenConstructionRegionPlan.derive(
+		StringName("%s.construction" % stable_id), grid)
+	if construction_plan == null:
+		return _reject("construction interfaces could not be derived")
 	audit = {
 		"public_route_floor_count": route_floor_cells.size(),
 		"public_air_cell_count": grid.count_use(
@@ -106,6 +113,7 @@ func seal(p_entry_floor_cell: Vector3i) -> bool:
 		"feature_count": features.size(),
 	}
 	audit.merge(interface_audit, true)
+	audit.merge(construction_plan.audit, true)
 	if not grid.seal():
 		return _reject("fine grid could not seal")
 	_sealed = true
@@ -129,10 +137,11 @@ func deterministic_signature() -> String:
 	for cell: Vector3i in route_floor_cells:
 		routes.append("%d:%d:%d" % [cell.x, cell.y, cell.z])
 	routes.sort()
-	return "%s/%d|grid=%s|route=%s|buildings=%s|features=%s|support=%s" % [
+	return "%s/%d|grid=%s|route=%s|buildings=%s|features=%s|support=%s|construction=%s" % [
 		String(stable_id), world_seed, grid.deterministic_signature(),
 		",".join(routes), "|".join(building_parts),
-		"|".join(feature_parts), support_graph.deterministic_signature()]
+		"|".join(feature_parts), support_graph.deterministic_signature(),
+		construction_plan.deterministic_signature()]
 
 
 func _validate_route() -> bool:

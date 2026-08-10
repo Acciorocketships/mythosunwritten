@@ -16,7 +16,8 @@ static func from_volume(source: WarrenVolumePlan,
 		parcels: WarrenParcelPlan = null,
 		pruning: WarrenPrunedMassPlan = null,
 		optional_infill_limit: int = \
-			WarrenPlatformInfillSolver.MAX_OPTIONAL_PATCH_COUNT) \
+			WarrenPlatformInfillSolver.MAX_OPTIONAL_PATCH_COUNT,
+		supplemental_air: Array[Vector3i] = []) \
 		-> SectionalPublicRealmPlan:
 	last_failure = ""
 	if source == null or not source.is_sealed():
@@ -135,6 +136,10 @@ static func from_volume(source: WarrenVolumePlan,
 			realm.require_classification(cell)
 	for cell: Vector3i in infill.daylight_voids as Array[Vector3i]:
 		realm.add_daylight_void(cell)
+	for cell: Vector3i in supplemental_air:
+		if not realm.add_supplemental_air(cell):
+			last_failure = "supplemental exterior air could not be projected"
+			return null
 	if not realm.seal():
 		last_failure = "realm seal failed: %s" % realm.last_rejection
 		return null

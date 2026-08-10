@@ -13,6 +13,7 @@ const WOOD_PLAIN := &"sfv.fabric.wall.wood.plain.001"
 const WOOD_DOOR := &"sfv.fabric.wall.wood.door.001"
 const FLOOR := &"sfv.fabric.floor.l.001"
 const GALLERY_FLOOR := &"sfv.fabric.gallery.floor.m.001"
+const SETBACK_CAP := &"sfv.deck.floor.s.001"
 const ROOF_BLUE := &"sfv.fabric.roof.half.s.blue.002"
 const ROOF_ORANGE := &"sfv.fabric.roof.half.s.orange.002"
 const ROOF_BISECT_LEFT_BLUE := &"sfv.fabric.roof.bisect.left.s.blue.001"
@@ -386,6 +387,10 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			Vector3i(4, 1, 4), &"square_building", modules),
 		_flat_roof_recipe(&"roof.flat.long", Vector3i(-2, 0, -3),
 			Vector3i(4, 1, 6), &"long_building", modules),
+		_setback_cap_recipe(&"roof.setback.cap.1", 1, modules),
+		_setback_cap_recipe(&"roof.setback.cap.2", 2, modules),
+		_setback_cap_recipe(&"roof.setback.cap.4", 4, modules),
+		_setback_cap_recipe(&"roof.setback.cap.6", 6, modules),
 		_slim_roof_recipe(&"roof.slim.blue", ROOF_BLUE, modules),
 		_slim_roof_recipe(&"roof.slim.orange", ROOF_ORANGE, modules),
 		_chimney_slim_roof_recipe(&"roof.slim.chimney.blue", ROOF_BLUE,
@@ -531,6 +536,7 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 			return null
 	if not modules.add_walk_surface(FLOOR) \
 			or not modules.add_walk_surface(GALLERY_FLOOR) \
+			or not modules.add_walk_surface(SETBACK_CAP) \
 			or not modules.add_roof_repeat(ROOF_BLUE, Vector3i.BACK, 3.0,
 				Vector3i.RIGHT, 1.6217227, &"gable.wood.m", &"roof.blue", 0.12) \
 			or not modules.add_roof_repeat(ROOF_ORANGE, Vector3i.BACK, 3.0,
@@ -1460,6 +1466,30 @@ static func _flat_roof_recipe(recipe_id: StringName, minimum: Vector3i,
 	recipe_value.add_socket(&"bearing.bottom",
 		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
 	_add_roof_junction_sockets(recipe_value, minimum, size)
+	return recipe_value
+
+
+static func _setback_cap_recipe(recipe_id: StringName, length_cells: int,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## A thin plank weather-cap for the one-cell strip exposed when the next room
+	## shifts laterally. The reviewed S floor is a native 1.5 x 1.5 m slab, so one
+	## fixed asset closes each exact face even beside protected public air. It is
+	## lowered four centimetres below the next floor datum and never scaled.
+	assert(length_cells in [1, 2, 4, 6])
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"roof", &"thin_roof_face", &"setback_cap", &"occupied_mass",
+	], 1)
+	for x in length_cells:
+		# The S asset's pivot lies on its local +X seam (same correction as
+		# SettlementFabricAssembler._add_plank_tile), so +0.75 m centres it on
+		# the logical fine cell without changing its authored scale.
+		var pose := _pose(Vector3(float(x) * CELL + CELL * 0.5, 0.0, 0.0),
+			0.0)
+		recipe_value.add_placement(StringName("cap.%02d" % x), SETBACK_CAP,
+			modules.walk_aligned_transform(SETBACK_CAP, pose, -0.04))
+		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
+	recipe_value.add_socket(&"bearing.bottom",
+		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
 	return recipe_value
 
 
@@ -2478,9 +2508,28 @@ static func _add_room_sockets(recipe_value: FabricRecipe, x_radius: int = 2,
 	if recipe_value.bearing_parent_count > 0:
 		recipe_value.add_socket(&"bearing.bottom", FabricRecipe.SocketKind.BEARING,
 			Vector3i(0, 0, 0), Vector3i(0, -1, 0))
+	# A volumetric composition may set an upper room back by one 1.5 m cell.
+	# Bearing therefore belongs to the actual overlap columns, not only to the
+	# footprint centre inherited from the retired extrusion chain.  These named
+	# sockets do not authorize a cantilever: the spatial support solver must still
+	# prove overlap and the compiler binds one matching top/bottom column exactly.
+	for z in range(-z_radius, z_radius):
+		for x in range(-x_radius, x_radius):
+			recipe_value.add_socket(_bearing_cell_socket_id(&"top", x, z),
+				FabricRecipe.SocketKind.BEARING, Vector3i(x, 1, z),
+				Vector3i.UP)
+			if recipe_value.bearing_parent_count > 0:
+				recipe_value.add_socket(_bearing_cell_socket_id(&"bottom", x, z),
+					FabricRecipe.SocketKind.BEARING, Vector3i(x, 0, z),
+					Vector3i.DOWN)
 	_add_cardinal_sockets(recipe_value, FabricRecipe.SocketKind.MARKET,
 		&"market", socket_y, Vector3i(-x_radius, 0, -z_radius),
 		x_radius * 2, z_radius * 2)
+
+
+static func _bearing_cell_socket_id(side: StringName, x: int,
+		z: int) -> StringName:
+	return StringName("bearing.%s.cell.%d.%d" % [String(side), x, z])
 
 
 static func _add_cardinal_sockets(recipe_value: FabricRecipe,

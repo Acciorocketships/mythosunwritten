@@ -293,9 +293,24 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			for storey in range(segment.x, segment.y):
 				var room_cells := _segment_cells(base_plate, origin.y, offsets,
 					storey, storey + 1)
-				if not building.add_room({
-					"stable_id": StringName("%s.room%02d" % [building_id,
-						storey - segment.x]), "cells": room_cells}):
+				var offset := offsets[storey / 2]
+				var addressed := threshold.y >= origin.y \
+					+ storey * WarrenSpatialGrid.STOREY_CELLS \
+					and threshold.y < origin.y \
+						+ (storey + 1) * WarrenSpatialGrid.STOREY_CELLS
+				var room := WarrenRoomStamp.new(
+					StringName("%s.room%02d" % [building_id,
+						storey - segment.x]), parcel.stable_id,
+					StringName(proposal.kind), origin + Vector3i(offset.x,
+						storey * WarrenSpatialGrid.STOREY_CELLS, offset.y),
+					int(proposal.yaw_quarters), storey, storey == 0,
+					addressed, threshold if addressed else Vector3i(2147483647,
+						2147483647, 2147483647),
+					Vector3i(parcel.frontage_direction.x, 0,
+						parcel.frontage_direction.y), int(proposal.roof_feature))
+				if not room.add_private_cells(room_cells) \
+						or not room.seal(grid, building_id) \
+						or not building.add_room(room):
 					last_failure = "could not record room stamp for %s" % building_id
 					return {}
 				room_count += 1

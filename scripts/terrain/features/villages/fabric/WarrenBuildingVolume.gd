@@ -10,7 +10,7 @@ const MIN_COMPOSITION_BREAK_RATIO := 0.25
 var stable_id: StringName
 var storey_base_band: int
 var private_cells: Array[Vector3i] = []
-var room_records: Array[Dictionary] = []
+var room_records: Array[WarrenRoomStamp] = []
 var thresholds: Array[Dictionary] = []
 var feature_ids: Array[StringName] = []
 var private_parent_ids: Array[StringName] = []
@@ -36,11 +36,10 @@ func add_private_cells(cells: Array[Vector3i]) -> bool:
 	return true
 
 
-func add_room(record: Dictionary) -> bool:
-	if _sealed or StringName(record.get("stable_id", "")).is_empty() \
-			or (record.get("cells", []) as Array).is_empty():
+func add_room(record: WarrenRoomStamp) -> bool:
+	if _sealed or record == null or not record.is_sealed():
 		return false
-	room_records.append(record.duplicate(true))
+	room_records.append(record)
 	return true
 
 
@@ -79,6 +78,8 @@ func seal(grid: WarrenSpatialGrid) -> bool:
 				or grid.use_at(cell) != WarrenSpatialGrid.Use.PRIVATE_VOLUME \
 				or grid.owner_name_at(cell) != stable_id:
 			return _reject("private volume differs from grid at %s" % cell)
+	if room_records.is_empty() or not _rooms_cover_private_volume():
+		return _reject("room stamps do not exactly partition private volume")
 	if not _connected():
 		return _reject("private volume is disconnected")
 	var plates := _floorplates()
@@ -138,8 +139,22 @@ func deterministic_signature() -> String:
 			private_cell.y, private_cell.z, public_cell.x, public_cell.y,
 			public_cell.z])
 	doors.sort()
-	return "%s@%d[%s]/doors=%s" % [String(stable_id), storey_base_band,
-		",".join(cells), ",".join(doors)]
+	var rooms := PackedStringArray()
+	for room: WarrenRoomStamp in room_records:
+		rooms.append(room.deterministic_signature())
+	rooms.sort()
+	return "%s@%d[%s]/doors=%s/rooms=%s" % [String(stable_id),
+		storey_base_band, ",".join(cells), ",".join(doors), ",".join(rooms)]
+
+
+func _rooms_cover_private_volume() -> bool:
+	var claimed: Dictionary = {}
+	for room: WarrenRoomStamp in room_records:
+		for cell: Vector3i in room.private_cells:
+			if not _private_set.has(cell) or claimed.has(cell):
+				return false
+			claimed[cell] = room.stable_id
+	return claimed.size() == private_cells.size()
 
 
 func _connected() -> bool:

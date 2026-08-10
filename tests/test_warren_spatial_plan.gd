@@ -26,6 +26,26 @@ func _constant_four_storey_cells() -> Array[Vector3i]:
 	return out
 
 
+func _add_tower_rooms(building: WarrenBuildingVolume,
+		grid: WarrenSpatialGrid, origins: Array[Vector3i],
+		addressed_index: int = -1, threshold := Vector3i(2147483647,
+			2147483647, 2147483647),
+		frontage := Vector3i.ZERO) -> bool:
+	for index in origins.size():
+		var addressed := index == addressed_index
+		var room := WarrenRoomStamp.new(StringName("%s.room%02d" % [
+			building.stable_id, index]), &"fixture.parcel", &"tower",
+			origins[index], 0, index, index == 0, addressed,
+			threshold if addressed else Vector3i(2147483647, 2147483647,
+				2147483647), frontage if addressed else Vector3i.ZERO)
+		if not room.add_private_cells(WarrenRoomStamp.expected_private_cells(
+				&"tower", origins[index], 0)) \
+				or not room.seal(grid, building.stable_id) \
+				or not building.add_room(room):
+			return false
+	return true
+
+
 func test_building_volume_refuses_a_four_storey_extrusion() -> void:
 	var grid := WarrenSpatialGrid.new(Vector3i(-1, 0, -1),
 		Vector3i(5, 10, 4))
@@ -34,6 +54,9 @@ func test_building_volume_refuses_a_four_storey_extrusion() -> void:
 		WarrenSpatialGrid.Use.PRIVATE_VOLUME))
 	var building := WarrenBuildingVolume.new(&"building.tower", 0)
 	assert_true(building.add_private_cells(cells))
+	assert_true(_add_tower_rooms(building, grid, [Vector3i(1, 0, 1),
+		Vector3i(1, 2, 1), Vector3i(1, 4, 1), Vector3i(1, 6, 1)] \
+		as Array[Vector3i]))
 	assert_false(building.seal(grid))
 	assert_true(building.last_rejection.contains("floorplate"),
 		building.last_rejection)
@@ -50,6 +73,9 @@ func test_building_volume_accepts_a_room_scale_upper_offset() -> void:
 		WarrenSpatialGrid.Use.PUBLIC_AIR))
 	var building := WarrenBuildingVolume.new(&"building.chaotic", 0)
 	assert_true(building.add_private_cells(cells))
+	assert_true(_add_tower_rooms(building, grid, [Vector3i(1, 0, 1),
+		Vector3i(1, 2, 1), Vector3i(2, 4, 1), Vector3i(2, 6, 1)] \
+		as Array[Vector3i], 0, Vector3i(0, 0, 0), Vector3i.FORWARD))
 	assert_true(building.add_threshold(Vector3i(0, 0, 0),
 		Vector3i(0, 0, -1)))
 	assert_true(building.seal(grid), building.last_rejection)
@@ -92,7 +118,9 @@ func _simple_plan(leave_allocatable: bool = false,
 	assert_true(_assign(grid, &"route", route_air,
 		WarrenSpatialGrid.Use.PUBLIC_AIR))
 	var building_cells := [Vector3i(0, 0, 1), Vector3i(0, 1, 1),
-		Vector3i(1, 0, 1), Vector3i(1, 1, 1)] as Array[Vector3i]
+		Vector3i(1, 0, 1), Vector3i(1, 1, 1), Vector3i(0, 0, 2),
+		Vector3i(0, 1, 2), Vector3i(1, 0, 2), Vector3i(1, 1, 2)] \
+		as Array[Vector3i]
 	assert_true(_assign(grid, &"building.01", building_cells,
 		WarrenSpatialGrid.Use.PRIVATE_VOLUME))
 	if leave_allocatable:
@@ -112,13 +140,16 @@ func _simple_plan(leave_allocatable: bool = false,
 		WarrenSpatialGrid.FaceKind.FACADE, &"building.01"))
 	assert_true(shell.claim_face(Vector3i(1, 1, 1), Vector3i.FORWARD,
 		WarrenSpatialGrid.FaceKind.FACADE, &"building.01"))
-	for roof_cell: Vector3i in [Vector3i(0, 1, 1), Vector3i(1, 1, 1)]:
+	for roof_cell: Vector3i in [Vector3i(0, 1, 1), Vector3i(1, 1, 1),
+			Vector3i(0, 1, 2), Vector3i(1, 1, 2)]:
 		assert_true(shell.claim_face(roof_cell, Vector3i.UP,
 			WarrenSpatialGrid.FaceKind.ROOF, &"building.01"))
 	assert_true(shell.commit(), shell.last_rejection)
 
 	var building := WarrenBuildingVolume.new(&"building.01", 0)
 	assert_true(building.add_private_cells(building_cells))
+	assert_true(_add_tower_rooms(building, grid, [Vector3i(1, 0, 2)] \
+		as Array[Vector3i], 0, Vector3i(0, 0, 1), Vector3i.FORWARD))
 	assert_true(building.add_threshold(Vector3i(0, 0, 1),
 		Vector3i(0, 0, 0)))
 	assert_true(building.seal(grid), building.last_rejection)
@@ -139,6 +170,13 @@ func test_spatial_plan_seals_one_authoritative_volume() -> void:
 	var plan := _simple_plan()
 	assert_true(plan.seal(Vector3i(0, 0, 0)), plan.last_rejection)
 	assert_true(plan.is_sealed())
+	assert_not_null(plan.construction_plan)
+	assert_true(plan.construction_plan.is_sealed())
+	assert_eq(int(plan.construction_plan.audit.source_face_count), 10)
+	assert_eq(int(plan.construction_plan.audit.door_region_count), 1)
+	assert_eq(plan.construction_plan.regions_for_kind(
+		WarrenSpatialGrid.FaceKind.ROOF).size(), 1,
+		"adjacent coplanar roof faces merge into one construction region")
 	assert_eq(int(plan.audit.public_route_floor_count), 2)
 	assert_eq(int(plan.audit.building_count), 1)
 	assert_eq(int(plan.audit.unclassified_public_private_face_count), 0)

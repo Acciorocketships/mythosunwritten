@@ -11,10 +11,15 @@ var edges: Array[PublicRealmEdge] = []
 var primary_itinerary: Array[StringName] = []
 var required_classification_cells: Array[Vector3i] = []
 var daylight_void_cells: Array[Vector3i] = []
+## Exterior air that belongs to the sealed negative-space volume but is not the
+## two-cell sweep directly above one surface claim (portal flare, tunnel crown,
+## court side volume, and similar authored void). It never invents a floor.
+var supplemental_air_cells: Array[Vector3i] = []
 var audit: Dictionary = {}
 var _node_by_id: Dictionary = {}
 var _surface_owner: Dictionary = {}
 var _air_owners: Dictionary = {}
+var _air_cell_by_key: Dictionary = {}
 var _daylight_void_set: Dictionary = {}
 var _sealed := false
 var last_rejection := ""
@@ -49,6 +54,7 @@ func add_node(node_value: PublicRealmNode) -> bool:
 		_surface_owner[_cell_key(cell)] = node_value.stable_id
 	for cell: Vector3i in node_value.air_cells:
 		var key := _cell_key(cell)
+		_air_cell_by_key[key] = cell
 		var owners: Array[StringName] = []
 		if _air_owners.has(key):
 			owners.assign(_air_owners[key] as Array)
@@ -59,6 +65,19 @@ func add_node(node_value: PublicRealmNode) -> bool:
 		_air_owners[key] = owners
 	nodes.append(node_value)
 	_node_by_id[node_value.stable_id] = node_value
+	return true
+
+
+func add_supplemental_air(cell: Vector3i,
+		owner_id: StringName = &"supplemental.exterior_air") -> bool:
+	if _sealed or owner_id.is_empty():
+		return false
+	var key := _cell_key(cell)
+	if _air_cell_by_key.has(key):
+		return true
+	_air_cell_by_key[key] = cell
+	_air_owners[key] = [owner_id] as Array[StringName]
+	supplemental_air_cells.append(cell)
 	return true
 
 
@@ -138,6 +157,9 @@ func seal() -> bool:
 			last_rejection = "invalid daylight void cell %s" % key
 			return false
 		_daylight_void_set[key] = true
+	if not _all_supplemental_air_reaches_node_air():
+		last_rejection = "supplemental public air is disconnected from route air"
+		return false
 	audit = _build_audit()
 	_sealed = true
 	return true
@@ -171,15 +193,12 @@ func surface_claims() -> Dictionary:
 
 func air_claims() -> Dictionary:
 	var out: Dictionary = {}
-	for node_value: PublicRealmNode in nodes:
-		for cell: Vector3i in node_value.air_cells:
-			if not out.has(cell):
-				out[cell] = {"owners": []}
-			var owners := (out[cell] as Dictionary).owners as Array
-			if not owners.has(node_value.stable_id):
-				owners.append(node_value.stable_id)
-				owners.sort_custom(func(a: StringName, b: StringName) -> bool:
-					return String(a) < String(b))
+	for key_value: Variant in _air_cell_by_key.keys():
+		var key := String(key_value)
+		var cell := _air_cell_by_key[key] as Vector3i
+		var owners: Array[StringName] = []
+		owners.assign(_air_owners[key] as Array)
+		out[cell] = {"owners": owners}
 	return out
 
 
@@ -222,7 +241,38 @@ func deterministic_signature() -> String:
 		daylight_parts.append(_cell_key(cell))
 	daylight_parts.sort()
 	parts.append("D:%s" % ",".join(daylight_parts))
+	var supplemental_parts := PackedStringArray()
+	for cell: Vector3i in supplemental_air_cells:
+		supplemental_parts.append(_cell_key(cell))
+	supplemental_parts.sort()
+	parts.append("A+:%s" % ",".join(supplemental_parts))
 	return "|".join(PackedStringArray(parts))
+
+
+func _all_supplemental_air_reaches_node_air() -> bool:
+	if supplemental_air_cells.is_empty():
+		return true
+	var node_air: Dictionary = {}
+	for node_value: PublicRealmNode in nodes:
+		for cell: Vector3i in node_value.air_cells:
+			node_air[_cell_key(cell)] = true
+	var reached: Dictionary = node_air.duplicate()
+	var pending: Array[Vector3i] = []
+	for node_value: PublicRealmNode in nodes:
+		pending.append_array(node_value.air_cells)
+	while not pending.is_empty():
+		var cell: Vector3i = pending.pop_back()
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			var key := _cell_key(neighbor)
+			if _air_cell_by_key.has(key) and not reached.has(key):
+				reached[key] = true
+				pending.append(neighbor)
+	for cell: Vector3i in supplemental_air_cells:
+		if not reached.has(_cell_key(cell)):
+			return false
+	return true
 
 
 func _has_primary_edge(a: StringName, b: StringName) -> bool:
@@ -298,6 +348,7 @@ func _build_audit() -> Dictionary:
 		"sectional_has_up_down_up": _contains_sign_sequence(elevation_signs,
 			[1, -1, 1]),
 		"public_air_claim_count": _air_owners.size(),
+		"supplemental_public_air_count": supplemental_air_cells.size(),
 		"public_interior_node_count": 0 \
 			if air_realm == PublicRealmNode.AirRealm.EXTERIOR else nodes.size(),
 		"primary_covered_episode_count": covered_on_primary,
