@@ -107,6 +107,97 @@
       "max_collision_triangles": 1500,
       "max_surfaces": 2,
       "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.prop.lantern.table.01",
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Lantern_01.glb",
+      "merge_pieces": true,
+      "tags": ["fabric_dressing", "lantern", "prop", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 524288,
+      "max_visual_triangles": 1500,
+      "max_collision_triangles": 0,
+      "max_surfaces": 2,
+      "max_collision_pieces": 0
+    },
+    {
+      "id": "lpfv.fabric.prop.lantern.post.02",
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Lantern_02.glb",
+      "merge_pieces": true,
+      "tags": ["fabric_dressing", "lantern", "prop", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 1048576,
+      "max_visual_triangles": 2000,
+      "max_collision_triangles": 0,
+      "max_surfaces": 2,
+      "max_collision_pieces": 0
+    },
+    {
+      "id": "lpfv.fabric.prop.barrel.01",
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Barrel_01.glb",
+      "merge_pieces": true,
+      "tags": ["barrel", "fabric_dressing", "prop", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 524288,
+      "max_visual_triangles": 1000,
+      "max_collision_triangles": 0,
+      "max_surfaces": 2,
+      "max_collision_pieces": 0
+    },
+    {
+      "id": "lpfv.fabric.prop.barrel.02",
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Barrel_02.glb",
+      "merge_pieces": true,
+      "tags": ["barrel", "fabric_dressing", "prop", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 524288,
+      "max_visual_triangles": 1000,
+      "max_collision_triangles": 0,
+      "max_surfaces": 2,
+      "max_collision_pieces": 0
+    },
+    {
+      "id": "lpfv.fabric.prop.bench.02",
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bench_02.glb",
+      "merge_pieces": true,
+      "tags": ["bench", "fabric_dressing", "furniture", "prop", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 524288,
+      "max_visual_triangles": 1500,
+      "max_collision_triangles": 0,
+      "max_surfaces": 2,
+      "max_collision_pieces": 0
+    },
+    {
+      "id": "lpfv.fabric.prop.plant.low.01",
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb",
+      "merge_pieces": true,
+      "tags": ["fabric_dressing", "plant", "prop", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 524288,
+      "max_visual_triangles": 1000,
+      "max_collision_triangles": 0,
+      "max_surfaces": 2,
+      "max_collision_pieces": 0
+    },
+    {
+      "id": "lpfv.fabric.prop.plant.tall.04",
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_04.glb",
+      "merge_pieces": true,
+      "tags": ["fabric_dressing", "plant", "prop", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 524288,
+      "max_visual_triangles": 1500,
+      "max_collision_triangles": 0,
+      "max_surfaces": 2,
+      "max_collision_pieces": 0
     }
   ]
 }

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_ekbvn"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_i6mpu"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02_piece_00.res" id="3_0goer"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_btibe"]
+
+[sub_resource type="Resource" id="Resource_mue0k"]
+script = ExtResource("2_i6mpu")
+mesh = ExtResource("3_0goer")
+
+[resource]
+script = ExtResource("4_btibe")
+pieces = Array[ExtResource("2_i6mpu")]([SubResource("Resource_mue0k")])

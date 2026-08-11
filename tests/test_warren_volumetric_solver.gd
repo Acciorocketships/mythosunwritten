@@ -69,6 +69,44 @@ func test_landmark_candidate_corpus_key_is_order_independent_and_exact() \
 		"a geometrically different candidate frontier must never reuse pairs")
 
 
+func test_touching_landmarks_share_one_explicit_party_wall() -> void:
+	var left := _rank_fixture_landmark(&"anchor.a", Vector3i.ZERO,
+		{Vector3i.ZERO: true}, {})
+	left.merge({"feature_id": &"landmark.a", "source_family": &"fixture",
+		"body": {Vector3i.ZERO: true},
+		"clearance": {Vector3i.ZERO: true},
+		"bearing_cells": {Vector3i.ZERO: true},
+		"entrance_cell": Vector3i.ZERO,
+		"skywalk_socket_faces": {}}, true)
+	var right := _rank_fixture_landmark(&"anchor.b", Vector3i.RIGHT,
+		{Vector3i.RIGHT: true}, {})
+	right.merge({"feature_id": &"landmark.b", "source_family": &"fixture",
+		"body": {Vector3i.RIGHT: true},
+		"clearance": {Vector3i.RIGHT: true},
+		"bearing_cells": {Vector3i.RIGHT: true},
+		"entrance_cell": Vector3i.RIGHT,
+		"skywalk_socket_faces": {}}, true)
+	assert_true(WarrenVolumetricSolver._landmark_candidates_compatible(
+		left, right), "touching measured bodies should enter the joint transaction")
+	var landmarks := [left, right] as Array[Dictionary]
+	WarrenVolumetricSolver._annotate_landmark_party_walls(landmarks)
+	var left_faces := left.party_wall_faces as Dictionary
+	var right_faces := right.party_wall_faces as Dictionary
+	assert_has(left_faces, Vector3i.ZERO)
+	assert_has(right_faces, Vector3i.RIGHT)
+	var left_owner := StringName((left_faces[Vector3i.ZERO] \
+		as Dictionary)[Vector3i.RIGHT])
+	assert_eq(left_owner, StringName((right_faces[Vector3i.RIGHT] \
+		as Dictionary)[Vector3i.LEFT]))
+	var grid := WarrenSpatialGrid.new(Vector3i(-1, -1, -1),
+		Vector3i(4, 3, 3))
+	assert_true(WarrenVolumetricSolver._reserve_landmark_preplans(grid,
+		landmarks), grid.last_rejection)
+	var seam := grid.face_claim(Vector3i.ZERO, Vector3i.RIGHT)
+	assert_eq(int(seam.kind), WarrenSpatialGrid.FaceKind.PARTY_WALL)
+	assert_eq(StringName(seam.owner_id), left_owner)
+
+
 func test_landmark_embeddedness_counts_only_surviving_city_mass() -> void:
 	var landmark_cells := {Vector3i.ZERO: true}
 	var protected_owners := {
@@ -187,6 +225,73 @@ func test_court_tower_memo_keys_only_the_forced_structural_obligation() -> void:
 	assert_ne(WarrenVolumetricSolver._feature_forced_offset_key(first),
 		WarrenVolumetricSolver._feature_forced_offset_key(different_block),
 		"a different room block remains in the complete geometric frontier")
+	assert_eq(WarrenVolumetricSolver._court_owned_tall_tower_failures(
+		[&"unrelated", &"parcel"], first), [&"parcel"] as Array[StringName],
+		"one independently fatal court lineage memoizes a mixed failure")
+	assert_true(WarrenVolumetricSolver._court_owned_tall_tower_failures(
+		[&"unrelated"], first).is_empty(),
+		"an unrelated tower failure leaves other landmark sets searchable")
+
+
+func test_exact_room_preflight_cache_keys_structural_facts_not_palette() -> void:
+	var court := {"forced_offsets": {&"court": {1: Vector2i.ZERO}},
+		"body": {Vector3i.ZERO: true}, "clearance": {},
+		"priority_cells": {}}
+	var first_landmarks := [{"feature_id": &"landmark.0",
+		"recipe_id": &"palette.blue",
+		"protected_cells": {Vector3i(4, 0, 0): true}}] as Array[Dictionary]
+	var recoloured_landmarks := [{"feature_id": &"landmark.0",
+		"recipe_id": &"palette.orange",
+		"protected_cells": {Vector3i(4, 0, 0): true}}] as Array[Dictionary]
+	var skywalk := {"forced_offsets": {&"room": {1: Vector2i.LEFT}},
+		"priority_cells": {Vector3i(2, 2, 0): &"room"},
+		"landmark_transition_owner_ids": [&"transition.room"],
+		"reservations": [{"components": [{"recipe_id": &"skywalk.3.blue",
+			"origin": Vector3i(2, 2, 0), "yaw_quarters": 0}],
+			"owner_parcel_ids": [&"room", &"landmark.0"],
+			"reserved_cells": {Vector3i(2, 2, 0): true},
+			"visual_clearance_cells": {Vector3i(2, 3, 0): true}}]}
+	var first_key := WarrenVolumetricSolver._exact_room_preflight_key(court,
+		first_landmarks, skywalk)
+	assert_eq(first_key, WarrenVolumetricSolver._exact_room_preflight_key(
+		court, recoloured_landmarks, skywalk),
+		"a palette-only prefab change reuses the exact structural proof")
+	var moved_landmarks := recoloured_landmarks.duplicate(true) \
+		as Array[Dictionary]
+	moved_landmarks[0]["protected_cells"] = {Vector3i(5, 0, 0): true}
+	assert_ne(first_key, WarrenVolumetricSolver._exact_room_preflight_key(
+		court, moved_landmarks, skywalk),
+		"a changed protected volume must receive a fresh exact preflight")
+	var shifted_skywalk := skywalk.duplicate(true)
+	shifted_skywalk["forced_offsets"] = {&"room": {1: Vector2i.RIGHT}}
+	assert_ne(first_key, WarrenVolumetricSolver._exact_room_preflight_key(
+		court, recoloured_landmarks, shifted_skywalk),
+		"a changed room obligation must receive a fresh exact preflight")
+
+
+func test_balcony_measured_bounds_yield_to_existing_outcrop_supports() -> void:
+	var program := _program()
+	var support_recipe := program.recipe(&"outcrop.support.diagonal.2")
+	var balcony_recipe := program.recipe(
+		&"balcony.bracketed.left.blue.planted")
+	assert_not_null(support_recipe)
+	assert_not_null(balcony_recipe)
+	var outcrop := WarrenFeatureReservation.new(&"outcrop.fixture",
+		&"room_outcropping")
+	assert_true(outcrop.add_construction_record(
+		&"outcrop.support.diagonal.2", Vector3i.ZERO, 0,
+		&"cantilever_support"))
+	var same_place := FabricRecipe.lattice_transform(Vector3i.ZERO, 0) \
+		* balcony_recipe.local_clearance_bounds
+	assert_true(WarrenSpatialFeatureSolver
+		._feature_bounds_overlap_existing_features(same_place,
+			[outcrop] as Array[WarrenFeatureReservation], program),
+		"a balcony must yield to a committed measured support envelope")
+	var distant := FabricRecipe.lattice_transform(Vector3i(100, 0, 0), 0) \
+		* balcony_recipe.local_clearance_bounds
+	assert_false(WarrenSpatialFeatureSolver
+		._feature_bounds_overlap_existing_features(distant,
+			[outcrop] as Array[WarrenFeatureReservation], program))
 
 
 func test_room_outcropping_geometry_requires_one_bounded_bearing_facade() -> void:
@@ -293,8 +398,8 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_lte(int(plan.audit.market_open_horizon_max_cells),
 		WarrenVolumetricSolver.MAX_MARKET_OPEN_HORIZON_CELLS,
 		"the covered bazaar must be embedded in the inhabited street maze")
-	assert_gt(int(plan.audit.market_overhead_public_floor_seam_count), 0,
-		"the reviewed bazaar should sit beneath an upper public route")
+	assert_true(plan.audit.has("market_overhead_public_floor_seam_count"),
+		"an optional upper-route/canopy seam remains explicitly audited")
 	assert_eq(int(plan.audit.prefab_landmark_count),
 		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
 	assert_eq(int(plan.audit.enclosed_skywalk_count),

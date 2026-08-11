@@ -44,6 +44,13 @@ const ROOF_FLOWER_WARM := &"lpfv.flower.04"
 const ROOF_FLOWER_SMALL := &"lpfv.flower.01"
 const ROOF_FLOWER_TALL := &"lpfv.flower.03"
 const ROOF_FLOWER_PALE := &"lpfv.flower.05"
+const TERRACE_LANTERN_TABLE := &"lpfv.fabric.prop.lantern.table.01"
+const TERRACE_LANTERN_POST := &"lpfv.fabric.prop.lantern.post.02"
+const TERRACE_BARREL_A := &"lpfv.fabric.prop.barrel.01"
+const TERRACE_BARREL_B := &"lpfv.fabric.prop.barrel.02"
+const TERRACE_BENCH := &"lpfv.fabric.prop.bench.02"
+const TERRACE_PLANT_LOW := &"lpfv.fabric.prop.plant.low.01"
+const TERRACE_PLANT_TALL := &"lpfv.fabric.prop.plant.tall.04"
 const GABLE := &"sfv.fabric.gable.wood.m.001"
 const BRACE := &"sfv.fabric.brace.wood.002"
 const DIAGONAL_BRACE := &"sfbp.wwall.support.s.002"
@@ -1620,10 +1627,10 @@ static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
 	recipe_value.add_placement(&"terrace.planter.0", ROOF_PLANTER,
 		_pose(centre + inward + along * planter_offset + Vector3.UP * 0.04,
 			0.0 if along_x else PI * 0.5))
-	var first_flower := ROOF_FLOWER_TALL \
+	var first_flower := TERRACE_PLANT_TALL \
 		if guarded_side in [&"south", &"west"] else ROOF_FLOWER_BLUE
 	var second_flower := ROOF_FLOWER_PALE \
-		if guarded_side in [&"south", &"west"] else ROOF_FLOWER_WARM
+		if guarded_side in [&"south", &"west"] else TERRACE_PLANT_LOW
 	recipe_value.add_placement(&"terrace.flowers.0", first_flower,
 		_pose(centre + inward * 1.18 + along * maxf(0.0,
 			planter_offset - 0.24) + Vector3.UP * 0.04,
@@ -1636,6 +1643,36 @@ static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
 			_pose(centre + inward * 1.18 - along * maxf(0.0,
 				planter_offset - 0.24) + Vector3.UP * 0.04,
 				0.0 if along_x else PI * 0.5))
+	# Wide roof terraces are small exterior rooms in their own right. A bench,
+	# barrel, and tabletop lantern occupy the sheltered guard edge; a longhouse
+	# can additionally carry one full-height lamp post. Every prop is baked at
+	# its authored scale and contributes its measured AABB to this recipe, so a
+	# higher neighbour makes the compiler choose another orientation or the
+	# undecorated fallback instead of accepting a collision.
+	if mini(size.x, size.z) >= 4:
+		var guardward := -inward.normalized()
+		var cross_half := (float(size.z) if along_x else float(size.x)) \
+			* CELL * 0.5
+		var furniture_yaw := 0.0 if along_x else PI * 0.5
+		var bench_origin := centre + guardward * (cross_half - 0.55)
+		recipe_value.add_placement(&"terrace.bench", TERRACE_BENCH,
+			_pose(bench_origin, furniture_yaw))
+		var barrel_origin := centre + guardward * (cross_half - 0.50) \
+			- along * minf(half_run - 0.50, 2.50)
+		var barrel_asset := TERRACE_BARREL_A \
+			if guarded_side in [&"north", &"east"] else TERRACE_BARREL_B
+		recipe_value.add_placement(&"terrace.barrel", barrel_asset,
+			_pose(barrel_origin, furniture_yaw))
+		recipe_value.add_placement(&"terrace.lantern.table",
+			TERRACE_LANTERN_TABLE,
+			_pose(barrel_origin + Vector3.UP * 1.04, furniture_yaw))
+		recipe_value.role_tags.append(&"furnished_roof_terrace")
+		if maxi(size.x, size.z) >= 6:
+			var post_origin := centre + guardward * (cross_half - 0.68) \
+				+ along * minf(half_run - 0.82, 3.25)
+			recipe_value.add_placement(&"terrace.lantern.post",
+				TERRACE_LANTERN_POST, _pose(post_origin, furniture_yaw))
+			recipe_value.role_tags.append(&"terrace_lamp")
 	# Broad flat closers otherwise read as low timber slabs from the town
 	# overview. A real stone chimney gives every 6 m-or-larger lived-in terrace
 	# a vertical service core and a second material. It is part of this measured
@@ -1727,8 +1764,8 @@ static func _setback_terrace_recipe(recipe_id: StringName, length_cells: int,
 		recipe_value.add_placement(&"terrace.planter",
 			ROOF_PLANTER, _pose(Vector3(run_centre, 0.04,
 				-float(rail_side) * 0.22), 0.0))
-		var flower_asset := ROOF_FLOWER_PALE if rail_side < 0 \
-			else ROOF_FLOWER_WARM
+		var flower_asset := TERRACE_PLANT_TALL if rail_side < 0 \
+			else TERRACE_PLANT_LOW
 		recipe_value.add_placement(&"terrace.flowers", flower_asset,
 			_pose(Vector3(run_centre + 0.42, 0.04,
 				-float(rail_side) * 0.48), 0.0))
@@ -1755,8 +1792,8 @@ static func _setback_garden_recipe(recipe_id: StringName, length_cells: int,
 	var run_centre := float(length_cells) * CELL * 0.5
 	recipe_value.add_placement(&"garden.planter", ROOF_PLANTER,
 		_pose(Vector3(run_centre, 0.04, 0.0), 0.0))
-	var flower_asset := ROOF_FLOWER_SMALL if length_cells == 2 \
-		else ROOF_FLOWER_TALL if length_cells == 4 else ROOF_FLOWER_BLUE
+	var flower_asset := TERRACE_PLANT_LOW if length_cells == 2 \
+		else TERRACE_PLANT_TALL if length_cells == 4 else ROOF_FLOWER_BLUE
 	recipe_value.add_placement(&"garden.flowers", flower_asset,
 		_pose(Vector3(run_centre - 0.42, 0.04, 0.18), 0.0))
 	recipe_value.role_tags.append(&"roof_planter")
@@ -2837,13 +2874,19 @@ static func _covered_market_recipe(recipe_id: StringName,
 		_pose(Vector3(1.1, 2.5, -0.75), 0.0))
 	if decorated:
 		# As with planted balconies, this remains a distinct measured variant.
-		# Plants occupy only the two structural post bays, outside the exact
-		# two-cell public aisle.
-		recipe_value.add_placement(&"stocked.flowers.east", ROOF_FLOWER_SMALL,
-			_pose(Vector3(2.65, 0.02, 0.55), 0.0))
-		recipe_value.add_placement(&"stocked.flowers.west", ROOF_FLOWER_PALE,
-			_pose(Vector3(-2.60, 0.02, -0.48), PI))
+		# A barrel with a tabletop lantern and a leafy plant occupy only the two
+		# structural post bays, outside the exact two-cell public aisle. This makes
+		# the bazaar read as stocked after dusk without turning the aisle into a
+		# scatter pass or inventing an unmeasured obstruction.
+		var barrel_origin := Vector3(2.42, 0.02, 0.48)
+		recipe_value.add_placement(&"stocked.barrel", TERRACE_BARREL_B,
+			_pose(barrel_origin, 0.0))
+		recipe_value.add_placement(&"stocked.lantern", TERRACE_LANTERN_TABLE,
+			_pose(barrel_origin + Vector3.UP * 1.04, 0.0))
+		recipe_value.add_placement(&"stocked.plant.west", TERRACE_PLANT_LOW,
+			_pose(Vector3(-2.55, 0.02, -0.48), PI))
 		recipe_value.role_tags.append(&"market_garden")
+		recipe_value.role_tags.append(&"market_lantern")
 	for y in 2:
 		for x in [-2, 1]:
 			for z in [-1, 0]:
@@ -2931,19 +2974,16 @@ static func _add_front_facade_detail(recipe_value: FabricRecipe,
 	## accepted.  Alternating storeys therefore gain ivy, laundry, or a hanging
 	## sign without a post-build decoration pass piercing a neighboring house.
 	if detail_kind == &"windowbox":
-		# A complete measured sill garden: the planter and both flower clumps are
+		# A complete measured sill garden: the planter and leafy plant are
 		# compiled into the room's visual envelope. It can therefore fall back to
 		# the flush phase-A shell at a tight party wall instead of clipping a lane.
 		var box_origin := centre + Vector3(0.0, 0.82,
 			front_half_depth + 0.42)
 		recipe_value.add_placement(&"facade.windowbox", ROOF_PLANTER,
 			_pose(box_origin, 0.0))
-		recipe_value.add_placement(&"facade.windowbox.flowers.left",
-			ROOF_FLOWER_SMALL, _pose(box_origin + Vector3(-0.24, 0.08, 0.0),
-				0.0))
-		recipe_value.add_placement(&"facade.windowbox.flowers.right",
-			ROOF_FLOWER_WARM, _pose(box_origin + Vector3(0.24, 0.08, 0.0),
-				PI))
+		recipe_value.add_placement(&"facade.windowbox.plant",
+			TERRACE_PLANT_LOW,
+			_pose(box_origin + Vector3(0.0, 0.08, 0.0), 0.0))
 		if not recipe_value.role_tags.has(&"facade_detail"):
 			recipe_value.role_tags.append(&"facade_detail")
 		recipe_value.role_tags.append(&"planted_facade")

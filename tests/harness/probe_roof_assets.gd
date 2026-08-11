@@ -41,7 +41,14 @@ const SOURCES: Array[String] = [
 
 
 func _init() -> void:
-	for source_path: String in SOURCES:
+	var sources := SOURCES
+	var args := OS.get_cmdline_user_args()
+	var source_arg := args.find("--sources")
+	if source_arg >= 0 and source_arg + 1 < args.size():
+		sources = [] as Array[String]
+		for source_path: String in args[source_arg + 1].split(",", false):
+			sources.append(source_path)
+	for source_path: String in sources:
 		var scene := load(source_path) as PackedScene
 		if scene == null:
 			push_error("Could not load roof source %s" % source_path)

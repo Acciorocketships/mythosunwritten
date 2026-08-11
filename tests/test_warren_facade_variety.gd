@@ -257,15 +257,14 @@ func test_phase_b_facades_use_multiple_measured_detail_families() -> void:
 	var planted := _program.recipe(&"room.upper.orange.b")
 	assert_true(planted.has_tag(&"planted_facade"))
 	var planted_asset_ids := planted.asset_ids()
-	assert_true(planted_asset_ids.has(SettlementFabricProgram.ROOF_FLOWER_SMALL))
-	assert_true(planted_asset_ids.has(SettlementFabricProgram.ROOF_FLOWER_WARM))
+	assert_true(planted_asset_ids.has(SettlementFabricProgram.TERRACE_PLANT_LOW))
 
 
-func test_the_market_pool_is_wider_than_the_pre_wave_seven() -> void:
-	## 31 stall pieces were baked; a market that redraws the same seven stalls
-	## in every town is the visible symptom of a pool, not of the solver.
-	assert_gte(SettlementFabricProgram.MARKET_STALLS.size(), 16,
-		"the market stall pool is still near its pre-wave width")
+func test_the_market_pool_is_the_reviewed_stocked_seven() -> void:
+	## The other loose stall pieces are not complete stocked-market envelopes;
+	## only these seven prefabs are safe atomic fabric recipes.
+	assert_eq(SettlementFabricProgram.MARKET_STALLS.size(), 7,
+		"the market pool drifted away from the reviewed stocked prefabs")
 	var distinct: Dictionary = {}
 	for asset_id: StringName in SettlementFabricProgram.MARKET_STALLS:
 		distinct[asset_id] = true

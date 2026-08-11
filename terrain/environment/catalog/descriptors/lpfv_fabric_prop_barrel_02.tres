@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_u5q4k"]
+
+[resource]
+script = ExtResource("1_u5q4k")
+id = &"lpfv.fabric.prop.barrel.02"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_barrel_02.tres"
+tags = Array[StringName]([&"barrel", &"fabric_dressing", &"prop", &"village"])
+measured_aabb = AABB(-0.44967902, 0.003072964, -0.4496789, 0.89935803, 1.0266114, 0.8993579)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.barrel.02"

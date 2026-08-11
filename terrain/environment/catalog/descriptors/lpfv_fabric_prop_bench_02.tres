@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_5q74f"]
+
+[resource]
+script = ExtResource("1_5q74f")
+id = &"lpfv.fabric.prop.bench.02"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02.tres"
+tags = Array[StringName]([&"bench", &"fabric_dressing", &"furniture", &"prop", &"village"])
+measured_aabb = AABB(-1.0188987, -1.3360316e-08, -0.1959118, 2.0495265, 0.4521215, 0.40382713)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.bench.02"

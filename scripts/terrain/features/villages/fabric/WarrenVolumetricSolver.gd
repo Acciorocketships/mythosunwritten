@@ -694,6 +694,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		return {}
 	var public_air := realm.air_claims()
 	var market_attempt_count := 0
+	var exact_room_preflight_cache_hit_count := 0
 	var selected_court_alternatives: Array[Dictionary] = []
 	var selected_market_landmark_owners: Dictionary = {}
 	for candidate: Dictionary in market_candidates:
@@ -707,6 +708,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				candidate.backing_parcel_id)
 		var market_owners := _protected_owners_with_market(protected_owners,
 			candidate)
+		# Cosmetic prefab alternatives often share the exact same protected
+		# volumes and room/skywalk obligations. Cache only failed exact preflights,
+		# scoped to this market, by those structural facts; recipe names alone never
+		# alias a proof and a success is selected immediately anyway.
+		var exact_room_preflight_failures: Dictionary = {}
 		var raw_court_candidates: Array[Dictionary] = []
 		if requires_courtyard:
 			raw_court_candidates = _courtyard_cantilever_room_candidates(grid,
@@ -843,11 +849,24 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				# another court or market, rather than discovering a tower or eave
 				# conflict only after irrevocably selecting the first hero set.
 				var exact_room_started := Time.get_ticks_msec()
-				var exact_room_fit := not requires_courtyard or \
-					_court_candidate_preserves_exact_room_envelopes(
-						grid, volume, proposals, construction_program, candidate,
-						court_candidate, market_landmark_owners,
-						court_fixed_blocks_by_parcel, trial_skywalk_plan)
+				var exact_room_fit := not requires_courtyard
+				if requires_courtyard:
+					var exact_key := _exact_room_preflight_key(court_candidate,
+						landmark_set, trial_skywalk_plan)
+					if exact_room_preflight_failures.has(exact_key):
+						exact_room_preflight_cache_hit_count += 1
+						_restore_exact_room_preflight_failure(
+							exact_room_preflight_failures[exact_key] as Dictionary)
+					else:
+						exact_room_fit = \
+							_court_candidate_preserves_exact_room_envelopes(
+								grid, volume, proposals, construction_program,
+								candidate, court_candidate,
+								market_landmark_owners,
+								court_fixed_blocks_by_parcel, trial_skywalk_plan)
+						if not exact_room_fit:
+							exact_room_preflight_failures[exact_key] = \
+								_exact_room_preflight_failure_snapshot()
 				if diagnostic_trace_skywalk_timing:
 					print("SKYWALK_TIMING exact_room_fit index=", set_index,
 						" fit=", exact_room_fit, " ms=",
@@ -875,23 +894,21 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						"exact_room_fit"] = false
 					if last_preplan_market_diagnostic.has(
 							"last_exact_court_tall_tower_failure"):
-						# The highest-ranked complete hero set already leaves an
-						# intrinsically vertical room lineage for this exact court
-						# endpoint. Landmark palette permutations repeat the same
-						# forced composition; advance to the next measured court
-						# cantilever without discarding the rest of the market state.
+						# One court-owned failed lineage is sufficient to prove this
+						# exact forced endpoint obligation impossible. Other failed
+						# lineages may be incidental to the selected landmark/skywalk
+						# set; they must not prevent memoizing the independently fatal
+						# court obligation. A failure with no court-owned lineage still
+						# advances to the next court candidate, but cannot memoize other
+						# visual variants of this structural obligation.
 						var failed_ids := last_preplan_market_diagnostic[
 							"last_exact_court_tall_tower_failure"] as Array
-						var court_forced := court_candidate.get(
-							"forced_offsets", {}) as Dictionary
-						var failure_is_court_owned := not failed_ids.is_empty()
-						for failed_value: Variant in failed_ids:
-							if not court_forced.has(StringName(failed_value)):
-								failure_is_court_owned = false
-								break
-						if failure_is_court_owned:
+						var court_owned_failures := \
+							_court_owned_tall_tower_failures(failed_ids,
+								court_candidate)
+						if not court_owned_failures.is_empty():
 							failed_court_tower_obligations[court_obligation_key] = \
-								failed_ids.duplicate()
+								court_owned_failures
 						court_has_intrinsic_tall_tower = true
 						break
 					continue
@@ -1004,6 +1021,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		exact_court_attempt_count
 	last_preplan_market_diagnostic["exact_court_rejection_count"] = \
 		exact_court_rejection_count
+	last_preplan_market_diagnostic["exact_room_preflight_cache_hit_count"] = \
+		exact_room_preflight_cache_hit_count
 	if not exact_court_selected:
 		last_failure = ("no court cantilever clears the final authored room " \
 			+ "envelopes: %s") % JSON.stringify(
@@ -2660,6 +2679,123 @@ static func _feature_forced_offset_key(candidate: Dictionary) -> String:
 	return "|".join(parts)
 
 
+static func _exact_room_preflight_key(court_candidate: Dictionary,
+		landmarks: Array[Dictionary], skywalk_plan: Dictionary) -> String:
+	## Key only the facts consumed by the exact room preflight. This deliberately
+	## ignores prefab recipe names when two authored colour/style alternatives
+	## resolve to identical protected cells, but distinguishes every changed
+	## body, clearance cell, forced offset, endpoint owner, and transition owner.
+	var parts := PackedStringArray([
+		"court.force=" + _feature_forced_offset_key(court_candidate),
+		"court.body=" + _cell_set_signature(court_candidate.get("body", {})),
+		"court.clear=" + _cell_set_signature(court_candidate.get(
+			"clearance", {})),
+		"court.priority=" + _cell_owner_map_signature(court_candidate.get(
+			"priority_cells", {})),
+		"sky.force=" + _feature_forced_offset_key({
+			"forced_offsets": skywalk_plan.get("forced_offsets", {})}),
+		"sky.priority=" + _cell_owner_map_signature(skywalk_plan.get(
+			"priority_cells", {})),
+	])
+	var landmark_parts := PackedStringArray()
+	for landmark: Dictionary in landmarks:
+		landmark_parts.append("%s:%s" % [StringName(landmark.get(
+			"feature_id", &"")), _cell_set_signature(landmark.get(
+			"protected_cells", {}))])
+	landmark_parts.sort()
+	parts.append("landmarks=" + "|".join(landmark_parts))
+	var skywalk_parts := PackedStringArray()
+	for reservation_value: Variant in skywalk_plan.get("reservations", []) as Array:
+		var reservation := reservation_value as Dictionary
+		var owners := PackedStringArray()
+		for owner_value: Variant in reservation.get("owner_parcel_ids", []):
+			owners.append(String(StringName(owner_value)))
+		owners.sort()
+		skywalk_parts.append("%s/%s/body=%s/clear=%s" % [
+			_skywalk_construction_key(reservation), ",".join(owners),
+			_cell_set_signature(reservation.get("reserved_cells", {})),
+			_cell_set_signature(reservation.get("visual_clearance_cells", {})),
+		])
+	skywalk_parts.sort()
+	parts.append("skywalks=" + "|".join(skywalk_parts))
+	var transition_owners := PackedStringArray()
+	for owner_value: Variant in skywalk_plan.get(
+			"landmark_transition_owner_ids", []):
+		transition_owners.append(String(StringName(owner_value)))
+	transition_owners.sort()
+	parts.append("transitions=" + ",".join(transition_owners))
+	return "\n".join(parts).sha256_text()
+
+
+static func _cell_set_signature(cells_value: Variant) -> String:
+	var cells := cells_value as Dictionary
+	var ordered: Array[Vector3i] = []
+	ordered.assign(cells.keys())
+	ordered.sort_custom(_cell_less)
+	var parts := PackedStringArray()
+	for cell: Vector3i in ordered:
+		parts.append("%d:%d:%d" % [cell.x, cell.y, cell.z])
+	return ",".join(parts)
+
+
+static func _cell_owner_map_signature(cells_value: Variant) -> String:
+	var cells := cells_value as Dictionary
+	var ordered: Array[Vector3i] = []
+	ordered.assign(cells.keys())
+	ordered.sort_custom(_cell_less)
+	var parts := PackedStringArray()
+	for cell: Vector3i in ordered:
+		parts.append("%d:%d:%d=%s" % [cell.x, cell.y, cell.z,
+			String(StringName(cells[cell]))])
+	return ",".join(parts)
+
+
+static func _exact_room_preflight_failure_snapshot() -> Dictionary:
+	var snapshot: Dictionary = {}
+	for key: String in [
+			"last_exact_court_tall_tower_failure",
+			"last_exact_room_composition_failure",
+			"last_exact_room_pair_failure",
+			"last_exact_court_composition_failure",
+			"last_exact_court_required_conflict",
+	]:
+		if last_preplan_market_diagnostic.has(key):
+			snapshot[key] = last_preplan_market_diagnostic[key].duplicate(true) \
+				if last_preplan_market_diagnostic[key] is Array \
+				or last_preplan_market_diagnostic[key] is Dictionary \
+				else last_preplan_market_diagnostic[key]
+	return snapshot
+
+
+static func _restore_exact_room_preflight_failure(snapshot: Dictionary) -> void:
+	for key: String in [
+			"last_exact_court_tall_tower_failure",
+			"last_exact_room_composition_failure",
+			"last_exact_room_pair_failure",
+			"last_exact_court_composition_failure",
+			"last_exact_court_required_conflict",
+	]:
+		last_preplan_market_diagnostic.erase(key)
+	for key_value: Variant in snapshot.keys():
+		var key := String(key_value)
+		last_preplan_market_diagnostic[key] = snapshot[key_value].duplicate(true) \
+			if snapshot[key_value] is Array or snapshot[key_value] is Dictionary \
+			else snapshot[key_value]
+
+
+static func _court_owned_tall_tower_failures(failed_ids: Array,
+		court_candidate: Dictionary) -> Array[StringName]:
+	var court_forced := court_candidate.get("forced_offsets", {}) as Dictionary
+	var out: Array[StringName] = []
+	for failed_value: Variant in failed_ids:
+		var failed_id := StringName(failed_value)
+		if court_forced.has(failed_id) and not out.has(failed_id):
+			out.append(failed_id)
+	out.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	return out
+
+
 static func _landmark_candidates_compatible(left: Dictionary,
 		right: Dictionary) -> bool:
 	if left.landing_cell == right.landing_cell \
@@ -2669,6 +2805,44 @@ static func _landmark_candidates_compatible(left: Dictionary,
 		if (right.protected_cells as Dictionary).has(cell_value):
 			return false
 	return true
+
+
+static func _annotate_landmark_party_walls(
+		landmarks: Array[Dictionary]) -> void:
+	## Measured prefab bodies may meet at one exact cell face. That contact is an
+	## authored city seam, not two exterior facades occupying the same plane. Both
+	## transactions claim the same deterministic joint owner and face kind, so the
+	## grid stores one canonical party wall (or vertical construction joint) while
+	## each landmark retains independent volume and feature ownership.
+	for landmark: Dictionary in landmarks:
+		landmark["party_wall_faces"] = {}
+	for left_index in landmarks.size():
+		var left := landmarks[left_index]
+		var left_body := left.get("body", {}) as Dictionary
+		for right_index in range(left_index + 1, landmarks.size()):
+			var right := landmarks[right_index]
+			var right_body := right.get("body", {}) as Dictionary
+			var ids: Array[StringName] = [StringName(left.feature_id),
+				StringName(right.feature_id)]
+			ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+				return String(a) < String(b))
+			var joint_owner := StringName("%s+%s" % [ids[0], ids[1]])
+			for cell_value: Variant in left_body.keys():
+				var cell := cell_value as Vector3i
+				for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+						Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+						Vector3i.BACK]:
+					var neighbor := cell + direction
+					if not right_body.has(neighbor):
+						continue
+					if not (left.party_wall_faces as Dictionary).has(cell):
+						(left.party_wall_faces as Dictionary)[cell] = {}
+					((left.party_wall_faces as Dictionary)[cell] \
+						as Dictionary)[direction] = joint_owner
+					if not (right.party_wall_faces as Dictionary).has(neighbor):
+						(right.party_wall_faces as Dictionary)[neighbor] = {}
+					((right.party_wall_faces as Dictionary)[neighbor] \
+						as Dictionary)[-direction] = joint_owner
 
 
 static func _protected_owners_with_landmarks(protected_owners: Dictionary,
@@ -2723,8 +2897,17 @@ static func _landmark_candidate_corpus_key(
 
 static func _reserve_landmark_preplans(grid: WarrenSpatialGrid,
 		landmarks: Array[Dictionary]) -> bool:
-	for landmark: Dictionary in landmarks:
+	_annotate_landmark_party_walls(landmarks)
+	for landmark_index in landmarks.size():
+		var landmark := landmarks[landmark_index]
 		if not _reserve_landmark_preplan(grid, landmark):
+			last_preplan_landmark_diagnostic["reservation_failure"] = {
+				"index": landmark_index,
+				"feature_id": landmark.get("feature_id", &""),
+				"recipe_id": landmark.get("recipe_id", &""),
+				"origin": landmark.get("origin", Vector3i.ZERO),
+				"rejection": grid.last_rejection,
+			}
 			return false
 	var selected: Array[Dictionary] = []
 	for landmark: Dictionary in landmarks:
@@ -2788,6 +2971,7 @@ static func _reserve_landmark_preplan(grid: WarrenSpatialGrid,
 	var landing_cell := landmark.landing_cell as Vector3i
 	var skywalk_socket_faces := landmark.get("skywalk_socket_faces", {}) \
 		as Dictionary
+	var party_wall_faces := landmark.get("party_wall_faces", {}) as Dictionary
 	var tx := grid.begin_transaction(feature_id)
 	if body.is_empty() or bearing.is_empty() \
 			or not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
@@ -2806,6 +2990,15 @@ static func _reserve_landmark_preplan(grid: WarrenSpatialGrid,
 				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
 			var neighbor := cell + direction
 			if body_set.has(neighbor):
+				continue
+			var cell_joints := party_wall_faces.get(cell, {}) as Dictionary
+			if cell_joints.has(direction):
+				var joint_kind := WarrenSpatialGrid.FaceKind.PARTY_WALL \
+					if direction.y == 0 \
+					else WarrenSpatialGrid.FaceKind.CONSTRUCTION_JOINT
+				if not tx.claim_face(cell, direction, joint_kind,
+						StringName(cell_joints[direction])):
+					return false
 				continue
 			if skywalk_socket_faces.get(cell, Vector3i.ZERO) == direction:
 				continue
@@ -2960,6 +3153,8 @@ static func _preplan_spatial_market(grid: WarrenSpatialGrid,
 				protected_owners, {parcel.stable_id: true})
 			var shelter := _market_shelter_audit(grid, public_cells, body,
 				protected_owners)
+			var overhead_public_floor_seam_count := \
+				_market_overhead_public_floor_seam_count(grid, body, public_cells)
 			candidates.append({"feature_id": feature_id,
 				"kind": &"covered_market", "recipe_id": recipe_id,
 				"origin": market_origin, "yaw_quarters": market_yaw,
@@ -2978,6 +3173,8 @@ static func _preplan_spatial_market(grid: WarrenSpatialGrid,
 				"backing_cell": backing_cell,
 				"backing_facing": backing_facing,
 				"blocker_count": blocker_count,
+				"overhead_public_floor_seam_count":
+					overhead_public_floor_seam_count,
 				"open_horizon_max_cells": int(shelter.max_open_cells),
 				"open_horizon_total_cells": int(shelter.total_open_cells),
 				"core_radius_squared": float(shelter.core_radius_squared),
@@ -2989,6 +3186,10 @@ static func _preplan_spatial_market(grid: WarrenSpatialGrid,
 		# candidate whose aisle views terminate in mass soonest; a low room-
 		# displacement count may break ties, but may not drag the market back to
 		# an empty perimeter merely because that space is cheap.
+		if int(a.overhead_public_floor_seam_count) \
+				!= int(b.overhead_public_floor_seam_count):
+			return int(a.overhead_public_floor_seam_count) \
+				> int(b.overhead_public_floor_seam_count)
 		if int(a.open_horizon_max_cells) != int(b.open_horizon_max_cells):
 			return int(a.open_horizon_max_cells) < int(b.open_horizon_max_cells)
 		if int(a.open_horizon_total_cells) != int(b.open_horizon_total_cells):
@@ -3014,6 +3215,8 @@ static func _preplan_spatial_market(grid: WarrenSpatialGrid,
 		var candidate := candidates[index]
 		shelter_preview.append({"parcel": candidate.backing_parcel_id,
 			"origin": candidate.origin,
+			"overhead_public_floor_seams": int(
+				candidate.overhead_public_floor_seam_count),
 			"open_max": int(candidate.open_horizon_max_cells),
 			"open_total": int(candidate.open_horizon_total_cells),
 			"radius_squared": float(candidate.core_radius_squared),
@@ -3027,6 +3230,27 @@ static func _preplan_spatial_market(grid: WarrenSpatialGrid,
 		"shelter_preview": shelter_preview,
 		"aisle_failures": aisle_failures}
 	return {"candidates": viable}
+
+
+static func _market_overhead_public_floor_seam_count(
+		grid: WarrenSpatialGrid, body: Dictionary,
+		planned_public_cells: Dictionary = {}) -> int:
+	## The canopy is part of the vertical public-realm composition: at least one
+	## of its exposed upper faces must meet an already-sealed public floor. This
+	## makes the bazaar a genuine inhabited undercroft instead of a tent inserted
+	## into whichever ground-level void happened to remain cheapest.
+	var count := 0
+	for cell_value: Variant in body.keys():
+		var cell := cell_value as Vector3i
+		if body.has(cell + Vector3i.UP):
+			continue
+		var upper_cell := cell + Vector3i.UP
+		var existing := grid.face_claim(cell, Vector3i.UP)
+		if planned_public_cells.has(upper_cell) \
+				or not existing.is_empty() and int(existing.kind) \
+					== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+			count += 1
+	return count
 
 
 static func _market_shelter_audit(grid: WarrenSpatialGrid,

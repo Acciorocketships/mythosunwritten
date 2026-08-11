@@ -9,6 +9,14 @@ extends RefCounted
 static var last_failure := ""
 static var last_audit: Dictionary = {}
 
+## Facade and roof colour is owned by a jittered architectural district rather
+## than hashed independently per room. Twelve fine cells are 18 m: large enough
+## for neighbouring storeys and party-wall houses to read as one historical
+## quarter, but small enough for even the compact town to contain several
+## palettes. Jittered Voronoi ownership avoids visible square zoning seams.
+const ARCHITECTURAL_DISTRICT_CELLS := 12
+const ARCHITECTURAL_DISTRICT_JITTER := 4
+
 
 static func solve(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram) -> SettlementFabricPlan:
@@ -1371,6 +1379,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var flat_terrace_count := 0
 	var lived_in_flat_terrace_count := 0
 	var awning_flat_terrace_count := 0
+	var furnished_flat_terrace_count := 0
+	var lamped_flat_terrace_count := 0
 	var cap_count := 0
 	var terrace_cap_count := 0
 	var garden_cap_count := 0
@@ -1468,6 +1478,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						.ends_with(".lived"))
 					awning_flat_terrace_count += int(terrace_recipe.has_tag(
 						&"roof_terrace_awning"))
+					furnished_flat_terrace_count += int(terrace_recipe.has_tag(
+						&"furnished_roof_terrace"))
+					lamped_flat_terrace_count += int(terrace_recipe.has_tag(
+						&"terrace_lamp"))
 					selected = true
 					break
 				attempt_failures.append("flat terrace %s: %s" % [
@@ -1561,6 +1575,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"flat_roof_terrace_count": flat_terrace_count,
 		"lived_in_flat_roof_terrace_count": lived_in_flat_terrace_count,
 		"awning_flat_roof_terrace_count": awning_flat_terrace_count,
+		"furnished_flat_roof_terrace_count": furnished_flat_terrace_count,
+		"lamped_flat_roof_terrace_count": lamped_flat_terrace_count,
 		"bare_flat_roof_count": flat_count - flat_terrace_count,
 		"setback_cap_unit_count": cap_count,
 		"setback_terrace_unit_count": terrace_cap_count,
@@ -1620,12 +1636,15 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 				terrain_recipe, room.address_door_phase)
 		return SettlementFabricProgram.feature_portal_recipe_id(terrain_recipe,
 			feature_portal_mask) if feature_portal_mask > 0 else terrain_recipe
-	var phase := posmod(room.lattice_origin.x * 31 + room.lattice_origin.y * 17 \
-		+ room.lattice_origin.z * 13 + world_seed \
-		+ room.source_storey_index * 7, 6)
-	var theme := "stone" if phase == 0 and room.source_storey_index <= 2 \
-		else "blue" if phase in [0, 3] \
-		else "orange" if phase in [1, 4] else "amber"
+	var theme := String(_architectural_district_theme(room.lattice_origin,
+		world_seed))
+	# Some lineages carry a real two-storey masonry plinth above their terrain
+	# bearing room. This is a coherent building-level accent, not a random stone
+	# module sprinkled through otherwise timber storeys.
+	if room.source_storey_index <= 1 and posmod(Helper._mix64(world_seed \
+			^ room.lattice_origin.x * 73856093 \
+			^ room.lattice_origin.z * 19349663 ^ 0x4d41534f4e5259), 6) == 0:
+		theme = "stone"
 	var addressed := ".address" if room.addressed else ""
 	# Alternate complete facade recipes by storey. The phase-B vocabulary uses a
 	# different authored module arrangement plus measured ivy, laundry, or sign
@@ -1652,10 +1671,17 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 
 static func _full_roof_recipe_id(room: WarrenRoomStamp,
 		world_seed: int) -> StringName:
-	var orange := posmod(room.lattice_origin.x * 19 + room.lattice_origin.z * 23 \
-		+ room.lattice_origin.y * 11 + world_seed, 2) == 0
+	var district_theme := _architectural_district_theme(room.lattice_origin,
+		world_seed)
+	# Amber timber quarters share the cool slate roof family. Compact LPFV tower
+	# roofs have two useful silhouettes but both source textures are orange, so
+	# they keep an independent variant hash instead of pretending one is blue.
+	var orange := district_theme == &"orange"
 	var theme := "orange" if orange else "blue"
 	if room.kind == &"tower":
+		theme = "orange" if posmod(Helper._mix64(world_seed \
+			^ room.lattice_origin.x * 19 ^ room.lattice_origin.y * 11 \
+			^ room.lattice_origin.z * 23), 2) == 0 else "blue"
 		if room.source_storey_index == 0:
 			return StringName("roof.tower.short.%s" % theme)
 		return StringName("roof.tower.chimney.%s" % theme) \
@@ -1676,12 +1702,57 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 		return StringName("roof.square.%s.dormer.%s" % [theme,
 			"left" if room.roof_feature == 1 else "right"])
 	if room.roof_feature == 3:
-		return &"roof.square.04" if orange else &"roof.square.05"
+		return &"roof.square.04" if orange else &"roof.square.blue.plain"
 	# The complete boarded shell remains an authored chimney variant, but the
 	# ordinary cool square roof should actually read blue. Routing every
 	# non-orange square through the boarded LPFV shell was the main source of the
 	# orange/brown roof sea despite the nominal 50/50 palette hash.
 	return &"roof.square.01" if orange else &"roof.square.blue.plain"
+
+
+static func _architectural_district_theme(origin: Vector3i,
+		world_seed: int) -> StringName:
+	var owner := _architectural_district_owner(origin, world_seed)
+	var phase := posmod(Helper._mix64(world_seed ^ owner.x * 73856093 \
+		^ owner.y * 19349663 ^ 0x50414c45545445), 8)
+	# Half the districts are blue, one quarter orange, and one quarter amber.
+	# Amber facades also take cool roofs, deliberately offsetting the compact
+	# tower vocabulary whose two honest authored roofs are both orange.
+	return &"blue" if phase < 4 else &"orange" if phase < 6 else &"amber"
+
+
+static func _architectural_district_owner(origin: Vector3i,
+		world_seed: int) -> Vector2i:
+	var base := Vector2i(
+		floori(float(origin.x) / float(ARCHITECTURAL_DISTRICT_CELLS)),
+		floori(float(origin.z) / float(ARCHITECTURAL_DISTRICT_CELLS)))
+	var best_owner := base
+	var best_distance := 9223372036854775807
+	var best_tie := 9223372036854775807
+	for district_z in range(base.y - 1, base.y + 2):
+		for district_x in range(base.x - 1, base.x + 2):
+			var owner := Vector2i(district_x, district_z)
+			var owner_hash := Helper._mix64(world_seed \
+				^ district_x * 73856093 ^ district_z * 19349663 \
+				^ 0x4449535452494354)
+			var jitter_x := posmod(Helper._mix64(owner_hash ^ 0x584a4954544552),
+				ARCHITECTURAL_DISTRICT_JITTER * 2 + 1) \
+				- ARCHITECTURAL_DISTRICT_JITTER
+			var jitter_z := posmod(Helper._mix64(owner_hash ^ 0x5a4a4954544552),
+				ARCHITECTURAL_DISTRICT_JITTER * 2 + 1) \
+				- ARCHITECTURAL_DISTRICT_JITTER
+			var centre := owner * ARCHITECTURAL_DISTRICT_CELLS \
+				+ Vector2i(ARCHITECTURAL_DISTRICT_CELLS / 2 + jitter_x,
+					ARCHITECTURAL_DISTRICT_CELLS / 2 + jitter_z)
+			var delta := Vector2i(origin.x, origin.z) - centre
+			var distance := delta.x * delta.x + delta.y * delta.y
+			var tie := posmod(owner_hash, 2147483647)
+			if distance < best_distance \
+					or distance == best_distance and tie < best_tie:
+				best_owner = owner
+				best_distance = distance
+				best_tie = tie
+	return best_owner
 
 
 static func _full_roof_candidates(room: WarrenRoomStamp,

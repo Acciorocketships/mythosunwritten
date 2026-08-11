@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_x244w"]
+
+[resource]
+script = ExtResource("1_x244w")
+id = &"lpfv.fabric.prop.plant.low.01"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_low_01.tres"
+tags = Array[StringName]([&"fabric_dressing", &"plant", &"prop", &"village"])
+measured_aabb = AABB(-0.4926712, -0.0050198524, -0.43669882, 0.95142424, 0.30859932, 0.8535912)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.plant.low.01"

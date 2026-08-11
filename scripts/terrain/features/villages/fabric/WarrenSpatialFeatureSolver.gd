@@ -970,6 +970,15 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 			if _feature_bounds_overlap_unrelated_room(recipe, origin, yaw,
 					room.source_parcel_id, room_clearance_bounds_by_source):
 				continue
+			var balcony_bounds := FabricRecipe.lattice_transform(origin, yaw) \
+				* recipe.local_clearance_bounds
+			# Room-scale cantilever supports are committed before balconies, but
+			# their sloped/bracketed meshes are construction records rather than
+			# private-volume cells. Compare the exact measured AABBs here; the grid
+			# reservation alone cannot represent that oblique visual envelope.
+			if _feature_bounds_overlap_existing_features(balcony_bounds,
+					existing_features, program):
+				continue
 			var body := _feature_recipe_cells(recipe, origin, yaw)
 			if body.is_empty() or not WarrenVolumetricSolver \
 					._skywalk_body_fits_grid(grid, body):
@@ -1239,6 +1248,23 @@ static func _balcony_clearance_audit(grid: WarrenSpatialGrid,
 	return {"fits": true, "clearance_only": clearance_only,
 		"covered_public_cells": covered_public,
 		"covered_public_count": covered_public.size()}
+
+
+static func _feature_bounds_overlap_existing_features(bounds: AABB,
+		existing_features: Array[WarrenFeatureReservation],
+		program: SettlementFabricProgram) -> bool:
+	for feature: WarrenFeatureReservation in existing_features:
+		for record: Dictionary in feature.construction_records:
+			var recipe := program.recipe(StringName(record.recipe_id))
+			if recipe == null:
+				return true
+			var existing_bounds := FabricRecipe.lattice_transform(
+				record.origin as Vector3i, int(record.yaw_quarters)) \
+				* recipe.local_clearance_bounds
+			if SettlementFabricPlan._aabb_overlaps_volume(bounds,
+					existing_bounds):
+				return true
+	return false
 
 
 static func _balcony_facade_key(cell: Vector3i, facing: Vector3i) -> String:

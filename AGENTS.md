@@ -341,10 +341,17 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   per episode, keeping only a complete two-arcade transaction which still passes that common gate;
   it does not relax the thresholds when the greedy roots consume an opposing facade. The solid partition
   becomes the buildings rather than feeding the route-first packer. Exact mass-first construction
-  alternates reviewed timber facade families in two-storey blocks, admits only explicit compatible
-  party-wall seams, and uses flat roofs only where crossing gables would collide. A complete flat
-  fallback first tries a guarded lived-in roof terrace with measured planters/laundry and either a
-  stone chimney or complete blue canopy, then a plain guarded terrace, then the exact bare plate.
+  assigns blue/orange/amber timber families through deterministic jittered-Voronoi architectural
+  districts about 18 m across, so neighbouring houses and vertical lineages read as related quarters
+  instead of per-room colour confetti. Blue and amber quarters take cool slate roofs; orange quarters
+  retain warm roofs, deliberately counterbalancing the two compact authored tower roofs whose honest
+  source textures are both orange. Storey phase still changes complete authored wall modules and
+  measured facade details. Construction admits only explicit compatible party-wall seams and uses
+  flat roofs only where crossing gables would collide. A complete flat fallback first tries a guarded
+  lived-in roof terrace with measured planters, small fabric-scale plants, laundry, and either a
+  stone chimney or complete blue canopy. Broad variants may also contain a bench, barrel with table
+  lantern, and one freestanding lamp; every prop participates in the same measured envelope and can
+  force an orientation/plain-terrace fallback. The exact bare plate remains the last resort.
   Partial setback strips prefer an honest exposed-edge rail; enclosed strips may receive a measured
   planter-only roof garden, and every dressed form has the exact plain cap as its transactional
   fallback. True one-storey tower/slim closers preferentially use their integrated chimney roofs.
@@ -353,8 +360,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   just its first band—so a tall gable beneath an elevated street falls back to a non-occupying thin
   weather cap instead of piercing route headroom. An unsupported
   perpendicular-valley result triggers one finite rebuild which flattens only the two roofs in each
-  classified crossing; flat pairs emit no fictional pitched-junction module. Stone is
-  limited to real terrain bearing and retaining work. A house footprint may span at most the
+  classified crossing; flat pairs emit no fictional pitched-junction module. Stone is concentrated
+  at real terrain bearing and retaining work; a sparse building-level rule may continue that masonry
+  through the first upper storey as a coherent plinth, but never as arbitrary high cladding or a
+  hidden podium. A house footprint may span at most the
   explicit one-storey plinth budget in sampled terrain height; larger risers must split into
   narrower terrain-rooted buildings rather than becoming masonry podiums. The buildable frontier
   is the tapered 3D envelope's real capacity boundary, never a radial outskirts ring. Every
@@ -375,7 +384,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   aisle cell is newly carved canonical `PUBLIC_AIR`, carries its public floor and named construction
   seam, and is projected by `WarrenSpatialPublicRealmAdapter` as one supplemental covered route
   node. The market body, aisle, terrain bearing, visual clearance, backing room, and construction
-  record commit atomically; room/roof packing and the skywalk beam must yield to that reservation.
+  record commit atomically; its decorated variant keeps a measured leafy plant in one post bay and a
+  barrel with tabletop lantern in the other, outside the four-cell aisle. Room/roof packing and the
+  skywalk beam must yield to that reservation.
   Candidate order measures bounded sight rays from every aisle edge and prefers the arcade whose
   views terminate in inhabited mass soonest, before considering room displacement, so cheap empty
   perimeter space cannot pull the bazaar out of the city. A canopy may meet the underside of an
@@ -389,10 +400,16 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   bounded hero-feature loops, while another court or market candidate can still be selected, rather
   than after the first superficially compatible set has become irreversible. Tower-risk ordering uses
   that same three-storey repetition threshold rather than the separate four-storey annex threshold.
+  Exact room-preflight failures are cached within one market candidate by the complete court body,
+  clearance and forced offsets; landmark protected cells; skywalk components, owners, clearance,
+  priority and forced offsets; and required transition owners. Authored palette recipe names are
+  deliberately absent, so visually different prefabs reuse a proof only when every consumed 3D
+  composition fact is identical.
   When exact composition proves that the selected court's forced parcel/block/offset obligation
-  creates the repeated shaft, the remaining visual variants of only that identical obligation reuse
-  the failure; other court geometry and other market sites remain searchable. Failures owned by an
-  unrelated room are never promoted into a court-wide shortcut.
+  creates even one repeated shaft, the remaining visual variants of only that identical obligation
+  reuse the failure, even when the same composition reports additional unrelated bad lineages. Other
+  court geometry and other market sites remain searchable. A failure owned only by unrelated rooms
+  is never promoted into a court-wide shortcut.
   The four typed third-storey court nodes
   retain explicit owner identities through public-realm projection; the visual adapter tiles only
   their exact 6 x 6 m union with alternating reviewed 1.5 m boards. Collision still comes from the
@@ -402,7 +419,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   mountain instead of appending a detached manor. Each anchor is a complete measured terrain-rooted recipe with its real baked
   entrance aligned to a canonical ground-street landing, conservative shell/private volume,
   visual envelope, exact contact-point bearing cells, doorway face, and construction transform.
-  Candidate pairs must preserve a viable three-skywalk frontier, then rank by their measured contact
+  Candidate pairs may touch across a canonical face only through the joint transaction's explicit
+  deterministic `PARTY_WALL` (horizontal) or `CONSTRUCTION_JOINT` (vertical) claim. Both landmark
+  transactions reuse that one canonical joint owner, so measured anchors can form coherent dense
+  fabric without double-claiming exterior facades or accepting a mesh overlap. Candidate
+  pairs must preserve a viable three-skywalk frontier, then rank by their measured contact
   with surviving ordinary room mass on multiple sides before parcel displacement, surplus corridors,
   separation, and visual variety. Blocked parcels and other hero features never count as that contact,
   and the exact terrain-rooted transition houses which do count become required members of the final
@@ -469,7 +490,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   tower pattern. Their body, visual clearance, room endpoint, guard/open-seam/soffit faces, support,
   and construction transform commit atomically before roof selection. Candidate admission compares
   the balcony's authored AABB with both possible facade phases of every unrelated final room, so a
-  lattice-clear bracket or eave cannot clip neighbouring construction. Measured brace clearance may
+  lattice-clear bracket or eave cannot clip neighbouring construction. It also compares that exact
+  AABB with every earlier feature construction record—especially the diagonal and shallow support
+  courses owned by room-scale outcroppings—because those oblique meshes are not represented by the
+  private-volume raster alone. Measured brace clearance may
   enter lower public air only as an explicit covered-street construction seam. Flowered balconies
   are separate measured recipes rather than props stamped onto the plain structural form; the same
   transactional rule owns the garden versions of stocked markets and the planter/flower variants

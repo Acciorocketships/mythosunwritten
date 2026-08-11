@@ -305,6 +305,7 @@ func _capture_all() -> void:
 	views.append_array(_street_views())
 	views.append_array(_market_views())
 	views.append_array(_courtyard_views())
+	views.append_array(_roof_terrace_views())
 	views.append_array(_skywalk_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -407,6 +408,39 @@ func _street_views() -> Array[Dictionary]:
 			int(candidate.wall_score), int(candidate.overhead_score)],
 			"position": eye, "target": eye + Vector3(direction) * 6.0 \
 				+ Vector3.UP * 0.25, "fov": 72.0})
+	return out
+
+
+func _roof_terrace_views() -> Array[Dictionary]:
+	## Furnished flat roofs are deliberately optional measured recipes. Give
+	## them their own adversarial view so benches, barrels, lamps, planters, and
+	## rails cannot be credited merely because their asset IDs occur in a recipe
+	## the dense-town compiler never managed to place.
+	var out: Array[Dictionary] = []
+	for unit: FabricUnit in _fabric.units:
+		var recipe := _fabric.recipe(unit.recipe_id)
+		if recipe == null or not recipe.has_tag(&"furnished_roof_terrace"):
+			continue
+		var recipe_text := String(recipe.recipe_id)
+		var local_outward := Vector3i.BACK
+		if recipe_text.contains(".north"):
+			local_outward = Vector3i.FORWARD
+		elif recipe_text.contains(".east"):
+			local_outward = Vector3i.RIGHT
+		elif recipe_text.contains(".west"):
+			local_outward = Vector3i.LEFT
+		var outward := Vector3(FabricRecipe.transform_direction(local_outward,
+			unit.yaw_quarters))
+		var bounds := unit.transform() * recipe.local_clearance_bounds
+		var target := bounds.get_center()
+		target.y = float(unit.lattice_origin.y) * FabricRecipe.CELL_SIZE + 1.1
+		var distance := maxf(9.0, maxf(bounds.size.x, bounds.size.z) + 4.0)
+		var eye := _best_directional_position(target, outward, distance, 2.3,
+			[unit.stable_id] as Array[StringName], bounds)
+		out.append({"id": "roof-terrace-%02d-furnished" % out.size(),
+			"position": eye, "target": target, "fov": 55.0})
+		if out.size() >= 4:
+			break
 	return out
 
 
