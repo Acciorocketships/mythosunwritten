@@ -334,6 +334,99 @@ static func apparent_face_bands(parcel: WarrenBuildingParcel) -> int:
 	return parcel.top_band - mini(ground, parcel.base_band)
 
 
+static func touches_envelope_boundary(parcel: WarrenBuildingParcel) -> bool:
+	## Perimeter is the buildable frontier of the same tapered 3D envelope the
+	## parcel was cut from. An outer neighbor may still contain one or two low
+	## bands of authored massif; that is hillside, not enough volume for another
+	## complete roofed room at this address. Treating it as interior made the
+	## visible edge audit vacuous even though the Gaussian correctly tapered.
+	## This remains a volumetric capability test, not a radial band or a later
+	## cosmetic ring.
+	if parcel == null or parcel.source == null:
+		return false
+	var minimum_neighbor_top := parcel.base_band \
+		+ WarrenBuildingParcel.STOREY_BANDS \
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+	for column: Vector2i in parcel.footprint:
+		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+				Vector2i.UP, Vector2i.DOWN]:
+			var neighbor := column + direction
+			if not parcel.source.envelope.contains_column(neighbor) \
+					or parcel.source.envelope.top_at(neighbor) \
+						< minimum_neighbor_top:
+				return true
+	return false
+
+
+static func has_perimeter_grounding(parcel: WarrenBuildingParcel) -> bool:
+	## A boundary parcel either descends through its own complete room stack to
+	## terrain, or names an explicit lower building parent. A mixed-span facade
+	## hovering at an upper street datum is useful inside the maze but cannot be
+	## the town's outer silhouette.
+	if parcel == null or parcel.source == null:
+		return false
+	if not parcel.support_parent_parcel_id.is_empty():
+		return true
+	if parcel.bearing_columns.size() != parcel.footprint.size():
+		return false
+	var construction := proposal(parcel)
+	if construction.is_empty():
+		return false
+	var highest_ground := -2147483648
+	for column: Vector2i in parcel.footprint:
+		highest_ground = maxi(highest_ground,
+			parcel.source.envelope.bearing_at(column))
+	return (construction.origin as Vector3i).y - highest_ground \
+		<= parcel.source.envelope.plinth_budget_bands
+
+
+static func perimeter_gateway_support(parcel: WarrenBuildingParcel) \
+		-> Dictionary:
+	## One deliberately narrow exception to direct terrain bearing: a 3 x 6 m
+	## frontier house may cantilever its second 3 m bay over an already-authored
+	## public passage when its first bay has a complete terrain load path.  This
+	## is the hill-town gateway motif, not permission for an elevated edge row.
+	## The returned bearing seam is consumed by the fine-grid feature transaction
+	## and realized as a measured two-bracket course beneath the room.
+	if parcel == null or parcel.source == null \
+			or not touches_envelope_boundary(parcel) \
+			or parcel.support_mode != &"mixed_span" \
+			or not parcel.support_parent_parcel_id.is_empty() \
+			or parcel.width_cells != 1 or parcel.depth_cells != 2 \
+			or parcel.footprint.size() != 2 or parcel.bearing_columns.size() != 1 \
+			or not parcel.has_occupied_overpass:
+		return {}
+	var bearing := parcel.bearing_columns[0]
+	var unsupported := parcel.footprint[0] if parcel.footprint[1] == bearing \
+		else parcel.footprint[1]
+	var direction := unsupported - bearing
+	if absi(direction.x) + absi(direction.y) != 1:
+		return {}
+	# The unsupported bay must cover the real route, not merely a random hole in
+	# the source massif.  Its lower public floor and swept headroom are immutable
+	# source-plan facts, so the bracket contract can never manufacture a tunnel.
+	var route_y := -2147483648
+	for walk: Vector3i in parcel.source.walk_cells:
+		if Vector2i(walk.x, walk.z) == unsupported \
+				and parcel.base_band - walk.y >= WarrenVolumePlan.HEADROOM_BANDS:
+			route_y = maxi(route_y, walk.y)
+	if route_y == -2147483648:
+		return {}
+	return {
+		"parcel_id": parcel.stable_id,
+		"bearing_column": bearing,
+		"unsupported_column": unsupported,
+		"projection_direction": direction,
+		"base_band": parcel.base_band,
+		"route_band": route_y,
+	}
+
+
+static func has_perimeter_load_path(parcel: WarrenBuildingParcel) -> bool:
+	return has_perimeter_grounding(parcel) \
+		or not perimeter_gateway_support(parcel).is_empty()
+
+
 static func resolve_support_band(highest_ground: int, lowest_ground: int,
 		base_band: int, plinth_budget: int) -> int:
 	## The one place the support datum's storey parity is resolved. Shared

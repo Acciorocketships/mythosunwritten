@@ -39,6 +39,11 @@ const FACADE_CLOTHES := &"sfv.fabric.clothes.001"
 const FACADE_SIGN := &"sfv.fabric.sign.tavern.001"
 const ROOF_PLANTER := &"sfv.fabric.planter.003"
 const ROOF_TERRACE_AWNING := &"sfv.fabric.awning.blue.001"
+const ROOF_FLOWER_BLUE := &"lpfv.flower.02"
+const ROOF_FLOWER_WARM := &"lpfv.flower.04"
+const ROOF_FLOWER_SMALL := &"lpfv.flower.01"
+const ROOF_FLOWER_TALL := &"lpfv.flower.03"
+const ROOF_FLOWER_PALE := &"lpfv.flower.05"
 const GABLE := &"sfv.fabric.gable.wood.m.001"
 const BRACE := &"sfv.fabric.brace.wood.002"
 const DIAGONAL_BRACE := &"sfbp.wwall.support.s.002"
@@ -515,6 +520,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules),
 		_balcony_recipe(&"balcony.bracketed.right.blue", &"blue", 0,
 			modules),
+		_balcony_recipe(&"balcony.bracketed.left.blue.planted", &"blue", -1,
+			modules, true),
+		_balcony_recipe(&"balcony.bracketed.right.orange.planted", &"orange", 0,
+			modules, true),
+		_balcony_recipe(&"balcony.bracketed.left.amber.planted", &"amber", -1,
+			modules, true),
+		_balcony_recipe(&"balcony.bracketed.right.blue.planted", &"blue", 0,
+			modules, true),
 		_integrated_cantilever_support_recipe(modules),
 		_integrated_cantilever_diagonal_support_recipe(modules),
 	]
@@ -558,6 +571,10 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			StringName("market.covered.%02d" % index),
 			COVERED_MARKET_CANOPIES[index % COVERED_MARKET_CANOPIES.size()],
 			COVERED_MARKET_TABLE))
+		candidates.append(_covered_market_recipe(
+			StringName("market.covered.%02d.garden" % index),
+			COVERED_MARKET_CANOPIES[index % COVERED_MARKET_CANOPIES.size()],
+			COVERED_MARKET_TABLE, true))
 	for index in PREFAB_ANCHORS.size():
 		candidates.append(_prefab_recipe(StringName("anchor.prefab.%02d" % index),
 			PREFAB_ANCHORS[index], catalog, modules))
@@ -1599,9 +1616,21 @@ static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
 	recipe_value.add_placement(&"terrace.planter.0", ROOF_PLANTER,
 		_pose(centre + inward + along * planter_offset + Vector3.UP * 0.04,
 			0.0 if along_x else PI * 0.5))
+	var first_flower := ROOF_FLOWER_TALL \
+		if guarded_side in [&"south", &"west"] else ROOF_FLOWER_BLUE
+	var second_flower := ROOF_FLOWER_PALE \
+		if guarded_side in [&"south", &"west"] else ROOF_FLOWER_WARM
+	recipe_value.add_placement(&"terrace.flowers.0", first_flower,
+		_pose(centre + inward * 1.18 + along * maxf(0.0,
+			planter_offset - 0.24) + Vector3.UP * 0.04,
+			0.0 if along_x else PI * 0.5))
 	if planter_offset > 0.1:
 		recipe_value.add_placement(&"terrace.planter.1", ROOF_PLANTER,
 			_pose(centre + inward - along * planter_offset + Vector3.UP * 0.04,
+				0.0 if along_x else PI * 0.5))
+		recipe_value.add_placement(&"terrace.flowers.1", second_flower,
+			_pose(centre + inward * 1.18 - along * maxf(0.0,
+				planter_offset - 0.24) + Vector3.UP * 0.04,
 				0.0 if along_x else PI * 0.5))
 	# Broad flat closers otherwise read as low timber slabs from the town
 	# overview. A real stone chimney gives every 6 m-or-larger lived-in terrace
@@ -1694,6 +1723,11 @@ static func _setback_terrace_recipe(recipe_id: StringName, length_cells: int,
 		recipe_value.add_placement(&"terrace.planter",
 			ROOF_PLANTER, _pose(Vector3(run_centre, 0.04,
 				-float(rail_side) * 0.22), 0.0))
+		var flower_asset := ROOF_FLOWER_PALE if rail_side < 0 \
+			else ROOF_FLOWER_WARM
+		recipe_value.add_placement(&"terrace.flowers", flower_asset,
+			_pose(Vector3(run_centre + 0.42, 0.04,
+				-float(rail_side) * 0.48), 0.0))
 		recipe_value.role_tags.append(&"roof_planter")
 	if length_cells == 6:
 		recipe_value.add_placement(&"terrace.chimney", TERRACE_CHIMNEY,
@@ -1717,6 +1751,10 @@ static func _setback_garden_recipe(recipe_id: StringName, length_cells: int,
 	var run_centre := float(length_cells) * CELL * 0.5
 	recipe_value.add_placement(&"garden.planter", ROOF_PLANTER,
 		_pose(Vector3(run_centre, 0.04, 0.0), 0.0))
+	var flower_asset := ROOF_FLOWER_SMALL if length_cells == 2 \
+		else ROOF_FLOWER_TALL if length_cells == 4 else ROOF_FLOWER_BLUE
+	recipe_value.add_placement(&"garden.flowers", flower_asset,
+		_pose(Vector3(run_centre - 0.42, 0.04, 0.18), 0.0))
 	recipe_value.role_tags.append(&"roof_planter")
 	return recipe_value
 
@@ -2592,7 +2630,8 @@ static func _skywalk_recipe(recipe_id: StringName, segments: int,
 
 
 static func _balcony_recipe(recipe_id: StringName, theme: StringName,
-		back_socket_x: int, modules: FabricModuleProgram) -> FabricRecipe:
+		back_socket_x: int, modules: FabricModuleProgram,
+		decorated: bool = false) -> FabricRecipe:
 	## One complete 3 x 1.5 m occupied balcony. The logical cells are exterior
 	## private walk/headroom, while the reviewed deck tiles, four rail runs, and
 	## brackets are one atomic measured construction. The parent room's finite
@@ -2631,6 +2670,19 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		var brace_x := float(index - 1) * CELL
 		recipe_value.add_placement(StringName("brace.%d" % index), BRACE,
 			_pose(Vector3(brace_x, -0.55, -CELL * 0.35), 0.0))
+	if decorated:
+		# Decoration is a separate measured construction variant. This prevents
+		# plants from silently widening the long-standing structural balcony
+		# contract used by older sectional fixtures, while production can prefer
+		# this richer version wherever its complete envelope fits.
+		var planter_x := -0.78 if back_socket_x == 0 else -0.18
+		recipe_value.add_placement(&"balcony.planter", ROOF_PLANTER,
+			_pose(Vector3(planter_x, 0.04, 0.26), 0.0))
+		var balcony_flower := ROOF_FLOWER_TALL if theme == &"blue" \
+			else ROOF_FLOWER_SMALL if theme == &"amber" else ROOF_FLOWER_PALE
+		recipe_value.add_placement(&"balcony.flowers", balcony_flower,
+			_pose(Vector3(planter_x + 0.12, 0.04, 0.20), 0.0))
+		recipe_value.role_tags.append(&"planted_balcony")
 	recipe_value.walk_cells.assign(deck_cells)
 	recipe_value.headroom_cells = FabricRecipe.box_cells(
 		Vector3i(-1, 0, 0), Vector3i(2, 2, 1))
@@ -2754,7 +2806,8 @@ static func _market_recipe(recipe_id: StringName, asset_id: StringName) \
 
 
 static func _covered_market_recipe(recipe_id: StringName,
-		canopy_asset_id: StringName, table_asset_id: StringName) -> FabricRecipe:
+		canopy_asset_id: StringName, table_asset_id: StringName,
+		decorated: bool = false) -> FabricRecipe:
 	## One exact 6 x 3 m covered bazaar. The stocked counter is rotated into the
 	## west structural post bay, while hanging vegetables and a market wheel stock
 	## the opposite canopy edge above player headroom. The two centre columns stay
@@ -2778,6 +2831,15 @@ static func _covered_market_recipe(recipe_id: StringName,
 		_pose(Vector3(0.8, 3.25, -1.55), 0.0))
 	recipe_value.add_placement(&"stocked.wheel", COVERED_MARKET_WHEEL,
 		_pose(Vector3(1.1, 2.5, -0.75), 0.0))
+	if decorated:
+		# As with planted balconies, this remains a distinct measured variant.
+		# Plants occupy only the two structural post bays, outside the exact
+		# two-cell public aisle.
+		recipe_value.add_placement(&"stocked.flowers.east", ROOF_FLOWER_SMALL,
+			_pose(Vector3(2.65, 0.02, 0.55), 0.0))
+		recipe_value.add_placement(&"stocked.flowers.west", ROOF_FLOWER_PALE,
+			_pose(Vector3(-2.60, 0.02, -0.48), PI))
+		recipe_value.role_tags.append(&"market_garden")
 	for y in 2:
 		for x in [-2, 1]:
 			for z in [-1, 0]:

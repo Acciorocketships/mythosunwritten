@@ -7,7 +7,7 @@ extends Node3D
 ## harness, never evidence that the wider candidate selector accepted the seed.
 ##
 ##   Godot --path . res://tests/harness/warren_spatial_review.tscn -- \
-##     --seed 7 --candidate-id warren.volume.mass.7000028.arcade0.arcade1 \
+##     --seed 7 --candidate-id warren.volume.mass.8000031.arcade0.arcade1.gallery2 \
 ##     --variant 0 --output /tmp/warren-spatial-review
 const DEFAULT_PRODUCTION_WORLD_SEED := 2697992464
 const DEFAULT_PRODUCTION_SUPER_CELL := Vector2i(0, -1)
@@ -16,7 +16,7 @@ const PRODUCTION_REGION_RADIUS := 5
 var _output_dir := "/tmp/mythos-warren-spatial-review"
 var _world_seed := 7
 var _super_cell := DEFAULT_PRODUCTION_SUPER_CELL
-var _candidate_token := "4000019"
+var _candidate_token := "8000031"
 var _candidate_id := ""
 var _partition_variant := 1
 var _scale_id := WarrenVillageScaleProfile.LARGE
@@ -162,7 +162,8 @@ func _solve_production_site(catalog: EnvironmentCatalog) \
 	var city_seed := VillagePlan.new(_world_seed,
 		village_program)._warren_seed(frame)
 	print(("[warren_spatial_review] production terrain world_seed=%d " \
-		+ "city_seed=%d super_cell=(%d,%d)") % [_world_seed, city_seed,
+		+ "city_seed=%d scale=%s super_cell=(%d,%d)") % [_world_seed, city_seed,
+		String(WarrenVillageScaleProfile.select(city_seed).scale_id),
 			_super_cell.x, _super_cell.y])
 	return VillageWarrenFabricSolver.solve(terrain, city_seed,
 		frame.settlement_id, frame.centre, Vector2.RIGHT, village_program)

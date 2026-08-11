@@ -91,6 +91,12 @@ func test_final_village_feature_contract_is_scale_aware() -> void:
 			"scale_profile_signature": profile.deterministic_signature(),
 			"elevated_courtyard_count": int(
 				profile.requires_elevated_courtyard),
+			"courtyard_daylight_macro_column_count":
+				WarrenElevatedFrontageSolver.MIN_COURTYARD_DAYLIGHT_COLUMNS \
+				if profile.requires_elevated_courtyard else 0,
+			"courtyard_upper_route_cell_count":
+				WarrenSpatialFeatureSolver.MIN_COURT_UPPER_ROUTE_CELLS \
+				if profile.requires_elevated_courtyard else 0,
 			"covered_market_count": int(profile.requires_covered_market),
 			"prefab_landmark_count": profile.landmark_range.x,
 			"enclosed_skywalk_count": profile.skywalk_range.x,

@@ -15,8 +15,9 @@ const MIN_ROOT_RISE_BANDS := 2
 const MIN_BRANCH_SEPARATION_CELLS := 4
 const COURTYARD_RISE_BANDS := WarrenBuildingParcel.STOREY_BANDS * 2
 const MAX_COURTYARD_RISE_BANDS := COURTYARD_RISE_BANDS + 2
-const MIN_COURTYARD_BELOW_AIR_CELLS := 4
-const MIN_COURTYARD_ABOVE_AIR_CELLS := 2
+const MIN_COURTYARD_BELOW_ROUTE_CELLS := 4
+const MIN_COURTYARD_ABOVE_ROUTE_CELLS := 2
+const MIN_COURTYARD_DAYLIGHT_COLUMNS := 2
 # Upper cul-de-sacs must be able to terminate at a building whose vertical
 # silhouette exceeds its footprint. One inhabited storey plus a roof was the
 # old generic address minimum; for these deliberately introduced gallery cells
@@ -115,6 +116,7 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 	var underbuilt_squares := 0
 	var upper_squares := 0
 	var vertically_threaded_squares := 0
+	var daylight_squares := 0
 	var addressed_squares := 0
 	var max_address_sides := 0
 	var max_upper_mass := 0
@@ -189,18 +191,23 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 					+ WarrenBuildingParcel.STOREY_BANDS)
 			var address_sides := _courtyard_address_side_count(court, source,
 				MIN_COURTYARD_BUILDING_BANDS)
-			var vertical_air := _courtyard_vertical_public_air_counts(court,
+			var vertical_routes := _courtyard_vertical_route_floor_counts(court,
 				source)
+			var daylight := _courtyard_daylight_plan(court, source)
 			max_address_sides = maxi(max_address_sides, address_sides)
 			max_upper_mass = maxi(max_upper_mass, upper_mass)
 			# A third-storey label alone is insufficient. The requested court is a
 			# true three-dimensional knot: existing public air must pass under its
 			# exact 6 x 6 m footprint and another public episode must cross above.
 			# Match the fine-grid feature proof here, before parcel/asset search.
-			if int(vertical_air.below) < MIN_COURTYARD_BELOW_AIR_CELLS \
-					or int(vertical_air.above) < MIN_COURTYARD_ABOVE_AIR_CELLS:
+			if int(vertical_routes.below) < MIN_COURTYARD_BELOW_ROUTE_CELLS \
+					or int(vertical_routes.above) \
+						< MIN_COURTYARD_ABOVE_ROUTE_CELLS:
 				continue
 			vertically_threaded_squares += 1
+			if int(daylight.column_count) < MIN_COURTYARD_DAYLIGHT_COLUMNS:
+				continue
+			daylight_squares += 1
 			lower_squares += 1
 			underbuilt_squares += int(underbuilt_columns >= 2)
 			# The court remains typed exterior public realm. Direct upper mass is a
@@ -215,8 +222,9 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 			var tie := posmod(_hash(source.world_seed, BRANCH_COUNT,
 				root_index, axes[0].x * 31 + axes[0].y * 17), 1009)
 			var score := (100000.0 if root_is_primary else 0.0) \
-				+ float(int(vertical_air.below)) * 450.0 \
-				+ float(int(vertical_air.above)) * 300.0 \
+				+ float(int(vertical_routes.below)) * 450.0 \
+				+ float(int(vertical_routes.above)) * 300.0 \
+				+ float(int(daylight.column_count)) * 700.0 \
 				+ float(upper_mass) * 950.0 \
 				+ float(address_sides) * 420.0 \
 				- float(absi(rise - COURTYARD_RISE_BANDS)) * 600.0 \
@@ -241,11 +249,12 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 	if best.is_empty():
 		last_failure = ("no third-storey courtyard site " \
 			+ "(rise roots=%d legal=%d breadth=%d lower=%d underbuilt=%d " \
-			+ "upper=%d threaded=%d addressed=%d max-address=%d max-upper=%d; " \
+			+ "upper=%d threaded=%d daylight=%d addressed=%d " \
+			+ "max-address=%d max-upper=%d; " \
 			+ "occupied=%d headroom=%d side-contact=%d)") \
 			% [rise_roots, legal_squares, breadth_squares, lower_squares,
 				underbuilt_squares, upper_squares, vertically_threaded_squares,
-				addressed_squares,
+				daylight_squares, addressed_squares,
 				max_address_sides, max_upper_mass, occupied_rejections,
 				headroom_rejections, side_contact_rejections]
 	return best
@@ -487,25 +496,62 @@ static func _has_lower_walk(cell: Vector3i,
 	return false
 
 
-static func _courtyard_vertical_public_air_counts(court: Array[Vector3i],
+static func _courtyard_vertical_route_floor_counts(court: Array[Vector3i],
 		source: WarrenVolumePlan) -> Dictionary:
-	var fine_air: Dictionary = {}
-	for macro_air: Vector3i in source.public_air_cells:
-		for fine: Vector3i in _fine_square(macro_air):
-			fine_air[fine] = true
+	## A swept-air cell above the court is not an upper pathway. In particular,
+	## the old test admitted the headroom of a route whose actual floor sat only
+	## one 1.5 m band over the court, producing the low timber ceiling visible in
+	## review captures. Count only real public floor claims with a complete 3 m
+	## storey of separation.
+	var route_floors: Dictionary = {}
+	for macro_floor: Vector3i in source.walk_cells:
+		for fine: Vector3i in _fine_square(macro_floor):
+			route_floors[fine] = true
+	for transition: WarrenVolumeTransition in source.transitions:
+		for fine: Vector3i in transition.surface_cells():
+			route_floors[fine] = true
 	var below: Dictionary = {}
 	var above: Dictionary = {}
 	for macro_floor: Vector3i in court:
 		for floor: Vector3i in _fine_square(macro_floor):
-			for offset in range(1, 9):
+			for offset in range(WarrenVolumePlan.HEADROOM_BANDS, 9):
 				var below_cell := floor + Vector3i.DOWN * offset
-				if fine_air.has(below_cell):
+				if route_floors.has(below_cell):
 					below[below_cell] = true
-			for offset in range(2, 9):
+			for offset in range(WarrenVolumePlan.HEADROOM_BANDS, 9):
 				var above_cell := floor + Vector3i.UP * offset
-				if fine_air.has(above_cell):
+				if route_floors.has(above_cell):
 					above[above_cell] = true
 	return {"below": below.size(), "above": above.size()}
+
+
+static func _courtyard_daylight_plan(court: Array[Vector3i],
+		source: WarrenVolumePlan) -> Dictionary:
+	## Keep the true upper crossing over one edge, but subtract every remaining
+	## eligible court column continuously from headroom to the envelope top. A
+	## court with only ordinary PUBLIC_AIR headroom is a covered gallery; these
+	## typed DAYLIGHT_VOID shafts are what make it an exterior room.
+	var cells: Array[Vector3i] = []
+	var columns: Array[Vector2i] = []
+	for court_cell: Vector3i in court:
+		var column := Vector2i(court_cell.x, court_cell.z)
+		var start_y := court_cell.y + WarrenVolumePlan.HEADROOM_BANDS
+		var top_y := source.envelope.top_at(column)
+		if start_y >= top_y:
+			continue
+		var blocked_by_public_route := false
+		for y in range(start_y, top_y):
+			if source.has_public_air(Vector3i(column.x, y, column.y)):
+				blocked_by_public_route = true
+				break
+		if blocked_by_public_route:
+			continue
+		columns.append(column)
+		for y in range(start_y, top_y):
+			var cell := Vector3i(column.x, y, column.y)
+			if not source.daylight_void_cells.has(cell):
+				cells.append(cell)
+	return {"column_count": columns.size(), "columns": columns, "cells": cells}
 
 
 static func _fine_square(macro_cell: Vector3i) -> Array[Vector3i]:
@@ -593,8 +639,10 @@ static func _clone_with_branch(source: WarrenVolumePlan, root: Vector3i,
 	for court_cell: Vector3i in source.courtyard_cells:
 		if not result.mark_courtyard_cell(court_cell):
 			return null
+	var new_court: Array[Vector3i] = []
 	if typed_courtyard:
-		for court_cell: Vector3i in [root] + path:
+		new_court.assign([root] + path)
+		for court_cell: Vector3i in new_court:
 			if not result.mark_courtyard_cell(court_cell):
 				return null
 	if not result.add_landing(root):
@@ -607,6 +655,13 @@ static func _clone_with_branch(source: WarrenVolumePlan, root: Vector3i,
 	for daylight: Vector3i in source.daylight_void_cells:
 		if not result.add_daylight_void(daylight):
 			return null
+	if typed_courtyard:
+		var daylight_plan := _courtyard_daylight_plan(new_court, result)
+		if int(daylight_plan.column_count) < MIN_COURTYARD_DAYLIGHT_COLUMNS:
+			return null
+		for daylight: Vector3i in daylight_plan.cells as Array[Vector3i]:
+			if not result.add_daylight_void(daylight):
+				return null
 	if not result.seal(source.entry_cell):
 		last_failure = "elevated gallery rejected: %s" % result.last_rejection
 		return null

@@ -596,7 +596,21 @@ func _build_audit() -> Dictionary:
 			float(ground_primary_two_sided_count) / float(ground_primary_count),
 		"elevated_gallery_walk_cell_count": elevated_gallery_cells.size(),
 		"elevated_courtyard_walk_cell_count": courtyard_cells.size(),
+		"daylight_void_cell_count": daylight_void_cells.size(),
+		"courtyard_daylight_macro_column_count":
+			_courtyard_daylight_macro_column_count(),
 	}
+
+
+func _courtyard_daylight_macro_column_count() -> int:
+	var columns: Dictionary = {}
+	for court: Vector3i in courtyard_cells:
+		for daylight: Vector3i in daylight_void_cells:
+			if daylight.x == court.x and daylight.z == court.z \
+					and daylight.y >= court.y + HEADROOM_BANDS:
+				columns[Vector2i(court.x, court.z)] = true
+				break
+	return columns.size()
 
 
 func _complete_address_side_count(cell: Vector3i) -> int:

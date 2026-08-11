@@ -199,10 +199,19 @@ static func _ranked_precomposition_variants(
 	var ranked: Array[Dictionary] = []
 	for volume: WarrenVolumePlan in frontier:
 		# Partition rotations alter local room choices but not the street network;
-		# one canonical projection is sufficient to rank source volumes. Measuring
-		# all eight cost almost a minute while returning the same enclosure numbers.
-		var audit := _precomposition_enclosure_audit(volume, 0,
-			construction_program)
+		# one canonical VALID projection is sufficient to rank source volumes.
+		# Measuring all eight routinely cost almost a minute, but assuming variant
+		# zero existed became incorrect once the tapered buildable frontier gained a
+		# hard grounding audit: a serving order can strand a raised edge parcel even
+		# when another order grounds the identical street topology. Probe later
+		# variants only as a bounded fallback, then reuse the first survivor's cheap
+		# enclosure metric for the complete variant family.
+		var audit: Dictionary = {}
+		for audit_variant in MAX_PARTITION_VARIANTS:
+			audit = _precomposition_enclosure_audit(volume, audit_variant,
+				construction_program)
+			if not audit.is_empty():
+				break
 		if audit.is_empty():
 			continue
 		for variant in MAX_PARTITION_VARIANTS:
@@ -428,6 +437,14 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit["room_stamp_count"] = room_count
 	plan.audit["room_volume_budget_min"] = scale_profile.room_volume_budget.x
 	plan.audit["room_volume_budget_max"] = scale_profile.room_volume_budget.y
+	for key: StringName in [&"perimeter_parcel_count",
+			&"grounded_perimeter_parcel_count",
+			&"gateway_supported_perimeter_parcel_count",
+			&"ungrounded_perimeter_parcel_count",
+			&"unsupported_perimeter_parcel_count",
+			&"grounded_perimeter_parcel_ratio",
+			&"perimeter_load_path_ratio"]:
+		plan.audit[key] = parcel_plan.audit.get(key, 0)
 	plan.audit["offset_composition_block_count"] = int(partition.offset_blocks)
 	plan.audit["ownership_handoff_count"] = int(partition.handoffs)
 	plan.audit["rejected_unfloored_address_count"] = int(
@@ -1069,6 +1086,12 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		composed_court_side_mask
 	composition_audit["composed_courtyard_side_count"] = \
 		composed_court_side_count
+	# Preserve the parcelizer's exact 3D frontier-bearing seams through room
+	# recomposition. The feature solver realizes them as measured construction
+	# before optional facade details can spend the same clearance.
+	composition_audit["perimeter_gateway_support_records"] = (
+		parcels.audit.get("perimeter_gateway_support_records", []) \
+		as Array).duplicate(true)
 	var lineages := composition.lineages as Dictionary
 	var building_id_by_block_key: Dictionary = {}
 	for proposal: Dictionary in proposals:
@@ -2505,7 +2528,7 @@ static func _preplan_spatial_market(grid: WarrenSpatialGrid,
 				^ String(parcel.stable_id).hash() ^ backing_cell.x * 73856093 \
 				^ backing_cell.z * 19349663),
 				SettlementFabricProgram.MARKET_STALLS.size())
-			var recipe_id := StringName("market.covered.%02d" % family)
+			var recipe_id := StringName("market.covered.%02d.garden" % family)
 			var recipe := program.recipe(recipe_id)
 			if recipe == null or not recipe.has_tag(&"covered_market"):
 				continue

@@ -64,6 +64,12 @@ func seal(p_parcels: Array[WarrenBuildingParcel],
 			or int(audit.overlapping_parcel_cell_count) != 0 \
 			or int(audit.transverse_parcel_count) != 0:
 		return _reject("parcel topology or orientation audit failed")
+	if int(audit.unsupported_perimeter_parcel_count) != 0:
+		return _reject(("%d of %d buildable-frontier parcels lack a sealed " \
+			+ "load path: %s") \
+			% [int(audit.unsupported_perimeter_parcel_count),
+				int(audit.perimeter_parcel_count),
+				audit.unsupported_perimeter_details])
 	_sealed = true
 	return true
 
@@ -134,6 +140,11 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 	var detached_count := 0
 	var visually_short_count := 0
 	var grounded_count := 0
+	var perimeter_count := 0
+	var grounded_perimeter_count := 0
+	var gateway_supported_perimeter_count := 0
+	var gateway_support_records: Array[Dictionary] = []
+	var unsupported_perimeter_details: Array[Dictionary] = []
 	var footprint_families: Dictionary = {}
 	var footprint_family_counts: Dictionary = {}
 	var footprint_cell_count := 0
@@ -169,6 +180,27 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 				< WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS)
 		grounded_count += int(parcel.base_band == source.envelope.ground_at(
 			parcel.threshold_column))
+		if WarrenParcelConstruction.touches_envelope_boundary(parcel):
+			perimeter_count += 1
+			var perimeter_grounded := WarrenParcelConstruction \
+				.has_perimeter_grounding(parcel)
+			grounded_perimeter_count += int(perimeter_grounded)
+			var gateway_support := WarrenParcelConstruction \
+				.perimeter_gateway_support(parcel)
+			gateway_supported_perimeter_count += int(
+				not gateway_support.is_empty())
+			if not gateway_support.is_empty():
+				gateway_support_records.append(gateway_support)
+			elif not perimeter_grounded:
+				unsupported_perimeter_details.append({
+					"parcel_id": parcel.stable_id,
+					"footprint": parcel.footprint,
+					"base_band": parcel.base_band,
+					"top_band": parcel.top_band,
+					"support_mode": parcel.support_mode,
+					"bearing_column_count": parcel.bearing_columns.size(),
+					"has_occupied_overpass": parcel.has_occupied_overpass,
+				})
 		var footprint_family := "%dx%d" % [parcel.width_cells,
 			parcel.depth_cells]
 		footprint_families[footprint_family] = true
@@ -382,6 +414,21 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 		"visually_short_parcel_count": visually_short_count,
 		"grounded_parcel_count": grounded_count,
 		"grounded_parcel_ratio": float(grounded_count) / float(parcels.size()),
+		"perimeter_parcel_count": perimeter_count,
+		"grounded_perimeter_parcel_count": grounded_perimeter_count,
+		"gateway_supported_perimeter_parcel_count":
+			gateway_supported_perimeter_count,
+		"ungrounded_perimeter_parcel_count": perimeter_count \
+			- grounded_perimeter_count,
+		"unsupported_perimeter_parcel_count": perimeter_count \
+			- grounded_perimeter_count - gateway_supported_perimeter_count,
+		"unsupported_perimeter_details": unsupported_perimeter_details,
+		"perimeter_gateway_support_records": gateway_support_records,
+		"grounded_perimeter_parcel_ratio": 1.0 if perimeter_count == 0 \
+			else float(grounded_perimeter_count) / float(perimeter_count),
+		"perimeter_load_path_ratio": 1.0 if perimeter_count == 0 else \
+			float(grounded_perimeter_count + gateway_supported_perimeter_count) \
+				/ float(perimeter_count),
 		"base_band_count": base_bands.size(),
 		"largest_base_band_count": largest_base_band_count,
 		"largest_base_band_ratio": float(largest_base_band_count) \

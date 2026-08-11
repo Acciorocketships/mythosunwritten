@@ -8,6 +8,7 @@ const PLANK_FLOOR := &"sfv.fabric.floor.l.001"
 const PLANK_GALLERY := &"sfv.fabric.gallery.floor.m.001"
 const PLANK_SINGLE := &"sfv.deck.floor.s.001"
 const PLANK_RAILING := &"sfv.deck.railing.s.001"
+const COURTYARD_PLANTER := &"sfv.fabric.planter.003"
 const TIMBER_SUPPORT := &"sfv.deck.pillar.001"
 const LOW_RETAINING_WALL := &"sfv.fabric.wall.rock.plain.001"
 ## The authored foundation piece, not a wall panel pressed into service as one.
@@ -115,15 +116,16 @@ static func structural_support_payload(plan: SettlementFabricPlan) \
 		var support_base := plan.surface_plan.support_base_at(cell)
 		if cell.y <= support_base \
 				or (plan.surface_plan.has_support_base(cell) \
-					and cell.y - support_base == 1) \
-				or posmod(cell.x * 17 + cell.z * 31, 3) != 0:
+					and cell.y - support_base == 1):
 			continue
-		var boundary_neighbors := 0
+		var exposed_directions: Array[Vector3i] = []
 		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 				Vector3i.FORWARD, Vector3i.BACK]:
-			if structural_set.has(cell + direction):
-				boundary_neighbors += 1
-		if boundary_neighbors >= 4 or _column_is_occupied_below(plan, solids, cell):
+			if not structural_set.has(cell + direction):
+				exposed_directions.append(direction)
+		if exposed_directions.is_empty() \
+				or not _is_structural_support_anchor(cell, exposed_directions) \
+				or _column_is_occupied_below(plan, solids, cell):
 			continue
 		var surface_y := float(cell.y) * FabricRecipe.CELL_SIZE
 		var segment_top := surface_y
@@ -141,6 +143,20 @@ static func structural_support_payload(plan: SettlementFabricPlan) \
 			segment += 1
 	assert(out.validate())
 	return out
+
+
+static func _is_structural_support_anchor(cell: Vector3i,
+		exposed_directions: Array[Vector3i]) -> bool:
+	## A structural deck reads as load-bearing only when every exposed corner has
+	## a post and each longer edge repeats that rhythm at the native 3 m module
+	## width. The former one-in-three hash left terminal courts and market decks
+	## with long apparently floating corners; this boundary rule is geometric and
+	## deterministic instead of decorative.
+	if exposed_directions.size() >= 2:
+		return true
+	var edge := exposed_directions[0]
+	return posmod(cell.z, 2) == 0 if edge.x != 0 \
+		else posmod(cell.x, 2) == 0
 
 
 static func low_retaining_payload(plan: SettlementFabricPlan) \
@@ -532,15 +548,40 @@ static func _append_plank_tiles(out: EnvironmentInstancePayload,
 
 static func _append_courtyard_paving(out: EnvironmentInstancePayload,
 		cells: Array[Vector3i]) -> void:
-	## The elevated 6 m court stays timber-supported, but a checker of reviewed
-	## 1.5 m deck boards separates it visually from through-galleries and broad
-	## roof decks. Every module still tiles the same collision-authoritative
-	## surface claim; this is identity, not an independently inferred platform.
+	## The elevated 6 m court stays timber-supported, but a checker of cool and
+	## warm weathered boards plus two edge planters separates it visually from
+	## through-galleries and broad roof decks. Every module still tiles the same
+	## collision-authoritative surface claim; this is identity, not an
+	## independently inferred platform. The centre remains a clear 4 m room.
+	if cells.is_empty():
+		return
 	for cell: Vector3i in cells:
 		var yaw := posmod(cell.x + cell.z, 2)
 		_add_plank_tile(out, PLANK_SINGLE,
 			Vector3(cell) + Vector3(0.5, 0.0, 0.5), yaw,
-			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT)
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+			Color("b9c1b8") if yaw == 0 else Color("c8b79d"))
+	var minimum := cells[0]
+	var maximum := cells[0]
+	for cell: Vector3i in cells:
+		minimum = minimum.min(cell)
+		maximum = maximum.max(cell)
+	var min_edge := Vector2(float(minimum.x), float(minimum.z)) \
+		* FabricRecipe.CELL_SIZE
+	var max_edge := Vector2(float(maximum.x + 1), float(maximum.z + 1)) \
+		* FabricRecipe.CELL_SIZE
+	var inset := 0.68
+	var y := float(minimum.y) * FabricRecipe.CELL_SIZE + 0.04
+	var planter_positions: Array[Vector3] = [
+		Vector3(min_edge.x + inset, y, min_edge.y + inset),
+		Vector3(max_edge.x - inset, y, max_edge.y - inset),
+	]
+	for index in planter_positions.size():
+		out.add(COURTYARD_PLANTER,
+			Transform3D(Basis(Vector3.UP, float(index) * PI),
+				planter_positions[index]), Color.WHITE,
+			StringName("courtyard-planter/%d/%d/%d/%d" % [minimum.x,
+				minimum.y, minimum.z, index]))
 
 
 static func _cell_set(cells: Array[Vector3i]) -> Dictionary:
@@ -561,7 +602,7 @@ static func _without_cells(cells: Array[Vector3i], excluded: Dictionary) \
 
 static func _add_plank_tile(out: EnvironmentInstancePayload,
 		asset_id: StringName, lattice_center: Vector3, yaw_quarters: int,
-		kind: int) -> void:
+		kind: int, color := Color.WHITE) -> void:
 	var world_origin := lattice_center * FabricRecipe.CELL_SIZE
 	world_origin.y += PLANK_Y_OFFSET
 	var basis := Basis(Vector3.UP, float(yaw_quarters) * PI * 0.5)
@@ -571,7 +612,7 @@ static func _add_plank_tile(out: EnvironmentInstancePayload,
 	var stable_id := StringName("public-surface/%d/%d/%d/%d/%s" % [kind,
 		roundi(lattice_center.x * 2.0), roundi(lattice_center.y * 2.0),
 		roundi(lattice_center.z * 2.0), asset_id])
-	out.add(asset_id, transform, Color.WHITE, stable_id)
+	out.add(asset_id, transform, color, stable_id)
 
 
 static func _commit_surfaces(parent: Node3D, plan: PublicRealmSurfacePlan,

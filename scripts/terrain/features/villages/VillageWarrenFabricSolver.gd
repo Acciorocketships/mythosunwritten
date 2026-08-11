@@ -387,18 +387,17 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		if fabric.surface_plan.has_support_base(cell) \
 				and cell.y - fabric.surface_plan.support_base_at(cell) == 1:
 			continue
-		# Boundary-biased sparse supports keep alleys open while visibly carrying
-		# broad ground decks.  Interior cells supported by four neighbours do
-		# not need a redundant post forest.
-		var neighbors := 0
+		# The exact exposed boundary owns the support rhythm. Every terminal corner
+		# receives a post; straight runs repeat at the native 3 m module pitch.
+		# Interior cells supported by four neighbors still need no post forest.
+		var exposed_directions: Array[Vector3i] = []
 		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 				Vector3i.FORWARD, Vector3i.BACK]:
-			neighbors += int(support_cells.has(cell + direction))
-		# Retain roughly one stack per three exposed 1.5 m modules. Thin winding
-		# paths turn often; forcing a post at every geometric corner would make
-		# almost every route cell a support and erase the lower alleys.
-		if neighbors >= 4 \
-				or posmod(cell.x * 17 + cell.y * 13 + cell.z * 31, 3) != 0:
+			if not support_cells.has(cell + direction):
+				exposed_directions.append(direction)
+		if exposed_directions.is_empty() \
+				or not SettlementFabricAssembler._is_structural_support_anchor(
+					cell, exposed_directions):
 			continue
 		if int(lowest_bearing_y.get(Vector2i(cell.x, cell.z), cell.y)) < cell.y:
 			continue

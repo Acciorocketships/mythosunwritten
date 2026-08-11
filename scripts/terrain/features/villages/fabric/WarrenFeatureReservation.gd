@@ -122,7 +122,7 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 		return _reject("skywalk lacks two distinct endpoint owners")
 	if kind in [&"enclosed_skywalk", &"covered_market", &"balcony",
 			&"tower_annex", &"prefab_landmark", &"room_outcropping",
-			&"courtyard_bridge_house"] \
+			&"courtyard_bridge_house", &"frontier_gateway_support"] \
 			and construction_records.is_empty():
 		return _reject("constructed feature has no exact asset record")
 	if kind == &"covered_market":
@@ -154,6 +154,13 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 				"outcrop_support_course_count", -1)) \
 				!= construction_records.size():
 			return _reject("room outcropping lacks its exact bracket courses")
+	if kind == &"frontier_gateway_support":
+		if endpoint_owners.size() != 1 \
+				or not bool(_audit_facts.get(
+					"gateway_is_terrain_anchored", false)) \
+				or int(_audit_facts.get("gateway_support_course_count", -1)) \
+					!= construction_records.size():
+			return _reject("frontier gateway lacks its terrain anchor or bracket course")
 	if kind == &"prefab_landmark":
 		if endpoints.size() != 1 or endpoint_owners.size() != 1 \
 				or not endpoint_owners.has(stable_id) \

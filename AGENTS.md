@@ -356,9 +356,17 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   classified crossing; flat pairs emit no fictional pitched-junction module. Stone is
   limited to real terrain bearing and retaining work. A house footprint may span at most the
   explicit one-storey plinth budget in sampled terrain height; larger risers must split into
-  narrower terrain-rooted buildings rather than becoming masonry podiums. Large and grand mass-first
-  topologies must also contain one typed 6 x 6 m third-storey courtyard: its floor is four bands above the local terrain, supported by
-  complete mass or a lower route, and addressed by buildings on at least three sides. The
+  narrower terrain-rooted buildings rather than becoming masonry podiums. The buildable frontier
+  is the tapered 3D envelope's real capacity boundary, never a radial outskirts ring. Every
+  frontier parcel must either reach terrain directly or be the one typed 3 x 6 m covered gateway:
+  one bay is terrain-borne while the other crosses an already-authored lower route and its exact
+  headroom, with a measured bracket/diagonal support reserved in the same transaction. An
+  unsupported frontier parcel invalidates the whole parcel plan. Large and grand mass-first
+  topologies must also contain one typed 6 x 6 m third-storey courtyard: its floor is four bands
+  above the local terrain, supported by complete mass or a lower route, and addressed by buildings
+  on at least three sides. The court additionally reserves explicit open-sky columns and proves
+  actual public walk surfaces both below and above its XZ projection; swept headroom alone never
+  counts as the over-court route. The
   fine-grid volumetric front end jointly selects exactly one covered market and its measured
   skywalk set before room composition. The market attaches the atomic 6 x 3 m reviewed canopy plus
   authored stocked-table recipe to one exact terrain-rooted room `MARKET` socket. Four central
@@ -447,12 +455,17 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   and construction transform commit atomically before roof selection. Candidate admission compares
   the balcony's authored AABB with both possible facade phases of every unrelated final room, so a
   lattice-clear bracket or eave cannot clip neighbouring construction. Measured brace clearance may
-  enter lower public air only as an explicit covered-street construction seam. The fast diagnostic
+  enter lower public air only as an explicit covered-street construction seam. Flowered balconies
+  are separate measured recipes rather than props stamped onto the plain structural form; the same
+  transactional rule owns the garden versions of stocked markets and the planter/flower variants
+  of roof terraces and setback gardens. Their five reviewed flower families remain inside each
+  recipe's visual-clearance and fallback contract.
   Whole-room outcroppings are selected from shifted final room floorplates, not small houses pasted
   onto facades. Each owns roof, floor, side shells, and support. The preferred support is a measured
   diagonal timber course whose full 3D sweep must avoid public/daylight/service air, unrelated rooms,
   and feature clearance; a shallow bracket course is the explicit fallback, never horizontal trim
-  masquerading as structure.
+  masquerading as structure. Every accepted cantilever is either directly terrain/building-borne or
+  owns one of those exact support courses; the final audit permits zero unresolved cantilevers.
   The fast diagnostic
   `tests/harness/warren_spatial_review.tscn` renders the already-sealed fine-grid candidate directly
   and adds front/underside falsification views for every balcony; it deliberately bypasses corpus
@@ -528,7 +541,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   board assets while the generated union remains collision-only, avoiding the duplicate dark skin;
   stair/ramp meshes use a stable plank shader. Sparse timber supports derive from exposed court
   cells down to an explicit datum, while a court only one half-level above terrain is enclosed by
-  fixed retaining-wall modules instead of becoming a crawl-height undercroft.
+  fixed retaining-wall modules instead of becoming a crawl-height undercroft. The production
+  terrain adapter likewise derives posts from exposed public-surface boundary corners and repeats
+  them at the authored 3 m structural rhythm; fully enclosed interior cells are omitted so a broad
+  deck gains a legible perimeter load path without becoming a forest of posts.
   `WarrenAssetCompiler`, `WarrenFabricCompiler`, and `WarrenBuiltTownSolver` compile the
   measured terrain-rooted stacks, complete roofs, occupied skywalks, and roofed outcroppings through
   one common fabric/air/solid-void transaction. Visually one-storey proposals and every

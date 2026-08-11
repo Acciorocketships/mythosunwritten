@@ -116,6 +116,18 @@ func test_surface_audit_distinguishes_narrow_gallery_from_broad_plaza() -> void:
 		"a broad empty floor has an interior independent of its perimeter")
 
 
+func test_structural_support_rhythm_anchors_corners_and_native_edge_pitch() \
+		-> void:
+	assert_true(SettlementFabricAssembler._is_structural_support_anchor(
+		Vector3i(3, 4, 5), [Vector3i.LEFT, Vector3i.FORWARD] \
+			as Array[Vector3i]), "every exposed corner needs a post")
+	assert_true(SettlementFabricAssembler._is_structural_support_anchor(
+		Vector3i(3, 4, 6), [Vector3i.LEFT] as Array[Vector3i]),
+		"a north/south edge repeats supports every two fine cells")
+	assert_false(SettlementFabricAssembler._is_structural_support_anchor(
+		Vector3i(3, 4, 5), [Vector3i.LEFT] as Array[Vector3i]))
+
+
 func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
 		-> void:
 	var surfaces := PublicRealmSurfacePlan.new(&"test.named.courtyard")
@@ -148,6 +160,19 @@ func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
 			assert_true(visual_centres.has(Vector3i(x, 4, z)))
 	assert_false(payload.batches.has(SettlementFabricAssembler.PLANK_FLOOR),
 		"the named court must not be hidden beneath ordinary broad deck tiles")
+	assert_true(payload.batches.has(SettlementFabricAssembler.COURTYARD_PLANTER))
+	var planter_batch := payload.batches[
+		SettlementFabricAssembler.COURTYARD_PLANTER] as Dictionary
+	assert_eq((planter_batch.transforms as Array).size(), 2,
+		"two perimeter planters make the open-air court legible without " \
+		+ "blocking its clear centre")
+	var paving_colors := (payload.batches[
+		SettlementFabricAssembler.PLANK_SINGLE] as Dictionary).colors as Array
+	var unique_paving_colors: Dictionary = {}
+	for color: Color in paving_colors:
+		unique_paving_colors[color] = true
+	assert_eq(unique_paving_colors.size(), 2,
+		"courtyard paving must differ visibly from an ordinary timber gallery")
 
 
 func test_surface_audit_detects_plaza_split_across_public_claim_kinds() -> void:
@@ -191,6 +216,15 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		"a wide, shallow mass is an attachment, never a standalone house recipe")
 	assert_null(program.recipe(&"roof.bay.blue"))
 	assert_not_null(program.recipe(&"room.stair_house.blue"))
+	var balcony := program.recipe(&"balcony.bracketed.left.blue.planted")
+	assert_not_null(balcony)
+	assert_true(balcony.asset_ids().has(SettlementFabricProgram.ROOF_PLANTER))
+	assert_true(balcony.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_TALL),
+		"balcony vegetation must remain inside the measured recipe")
+	var market := program.recipe(&"market.covered.01.garden")
+	assert_not_null(market)
+	assert_true(market.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_SMALL))
+	assert_true(market.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_PALE))
 	var micro := program.recipe(&"room.micro.terrain.blue")
 	assert_not_null(micro)
 	assert_eq(micro.entrances.size(), 1,

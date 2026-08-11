@@ -94,6 +94,8 @@ func _init() -> void:
 		"reason": String(urban.reason),
 		"seed": world_seed,
 		"city_seed": city_seed,
+		"scale_profile_id": String(
+			WarrenVillageScaleProfile.select(city_seed).scale_id),
 		"source_seed": urban.volumetric_spatial.world_seed \
 			if urban.volumetric_spatial != null else 0,
 		"super_cell": [super_cell.x, super_cell.y],

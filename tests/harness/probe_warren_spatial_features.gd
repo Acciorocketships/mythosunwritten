@@ -79,7 +79,7 @@ func _init() -> void:
 				" headroom=", recipe.headroom_cells.size(), " bearing=",
 				recipe.terrain_bearing_cells.size())
 	var frontier := WarrenTownSolver.mass_first_frontier(7)
-	var candidate_token := "4000019"
+	var candidate_token := "8000031"
 	var candidate_arg := OS.get_cmdline_user_args().find("--candidate-token")
 	if candidate_arg >= 0 \
 			and candidate_arg + 1 < OS.get_cmdline_user_args().size():

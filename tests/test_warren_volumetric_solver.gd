@@ -102,6 +102,11 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_eq(int(plan.audit.unclassified_public_private_face_count), 0)
 	assert_eq(int(plan.audit.missing_roof_face_count), 0)
 	assert_eq(int(plan.audit.elevated_courtyard_count), 1)
+	assert_gte(int(plan.audit.courtyard_daylight_macro_column_count),
+		WarrenElevatedFrontageSolver.MIN_COURTYARD_DAYLIGHT_COLUMNS)
+	assert_gte(int(plan.audit.courtyard_upper_route_cell_count),
+		WarrenSpatialFeatureSolver.MIN_COURT_UPPER_ROUTE_CELLS,
+		"the upper courtyard crossing must contain actual walk floors")
 	assert_gte(int(plan.audit.composed_courtyard_side_count),
 		WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT,
 		"the final 3D room composition must preserve the promised court walls")
@@ -125,6 +130,15 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		WarrenSpatialFeatureSolver.MIN_BALCONY_BUILDINGS)
 	assert_gte(int(plan.audit.room_outcropping_count),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
+	assert_eq(int(plan.audit.unresolved_integrated_cantilever_count), 0,
+		"every structural floorplate projection needs a measured load path")
+	assert_eq(int(plan.audit.unsupported_perimeter_parcel_count), 0,
+		"no buildable-frontier house may survive without a sealed load path")
+	assert_almost_eq(float(plan.audit.perimeter_load_path_ratio), 1.0, 0.0001)
+	assert_eq(int(plan.audit.grounded_perimeter_parcel_count) \
+		+ int(plan.audit.gateway_supported_perimeter_parcel_count),
+		int(plan.audit.perimeter_parcel_count),
+		"edge houses must either reach terrain or be one typed covered gateway")
 	assert_gte(float(plan.audit.overhead_route_ratio),
 		WarrenVolumetricSolver.MIN_PRODUCTION_OVERHEAD_ROUTE_RATIO)
 	assert_lte(int(plan.audit.through_sightline_count),
@@ -199,6 +213,7 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	var tower_annexes: Array[WarrenFeatureReservation] = []
 	var landmarks: Array[WarrenFeatureReservation] = []
 	var outcroppings: Array[WarrenFeatureReservation] = []
+	var gateway_supports: Array[WarrenFeatureReservation] = []
 	for feature: WarrenFeatureReservation in plan.features:
 		match feature.kind:
 			&"third_storey_courtyard":
@@ -215,6 +230,15 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 				landmarks.append(feature)
 			&"room_outcropping":
 				outcroppings.append(feature)
+			&"frontier_gateway_support":
+				gateway_supports.append(feature)
+	assert_eq(gateway_supports.size(),
+		int(plan.audit.gateway_supported_perimeter_parcel_count))
+	for gateway: WarrenFeatureReservation in gateway_supports:
+		assert_true(bool(gateway.audit.gateway_is_terrain_anchored))
+		assert_eq(gateway.construction_records.size(), 1)
+		assert_true(StringName(gateway.construction_records[0].recipe_id) in [
+			&"outcrop.support.bracketed.2", &"outcrop.support.diagonal.2"])
 	assert_eq(courts.size(), 1)
 	if not courts.is_empty():
 		var court := courts[0]

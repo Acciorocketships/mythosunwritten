@@ -88,6 +88,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var constructed_markets := 0
 	var constructed_balconies := 0
 	var constructed_outcropping_supports := 0
+	var constructed_frontier_gateway_supports := 0
 	var constructed_tower_annexes := 0
 	var constructed_landmarks := 0
 	for feature: WarrenFeatureReservation in spatial.features:
@@ -101,6 +102,8 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		constructed_balconies += int(feature.kind == &"balcony")
 		constructed_outcropping_supports += int(
 			feature.kind == &"room_outcropping")
+		constructed_frontier_gateway_supports += int(
+			feature.kind == &"frontier_gateway_support")
 		constructed_tower_annexes += int(feature.kind == &"tower_annex")
 		constructed_landmarks += int(feature.kind == &"prefab_landmark")
 		expected_feature_units += feature.construction_records.size()
@@ -126,6 +129,9 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		constructed_outcropping_supports)
 	assert_gte(constructed_outcropping_supports,
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.frontier_gateway_support_feature_count),
+		constructed_frontier_gateway_supports)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.tower_annex_feature_count), constructed_tower_annexes)
 	assert_eq(constructed_tower_annexes,

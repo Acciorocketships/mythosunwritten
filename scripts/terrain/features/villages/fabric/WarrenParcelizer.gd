@@ -660,10 +660,33 @@ static func _candidate_score(source: WarrenVolumePlan,
 		# skywalk envelopes cannot otherwise reach the inhabited-count contract,
 		# but never spend it as an ordinary aesthetic preference.
 		score += VISUALLY_SHORT_FALLBACK_COST
-	if parcel.support_mode == &"mixed_span":
-		score -= 45.0
-	if parcel.base_band > source.envelope.ground_at(parcel.threshold_column):
-		score -= 80.0
+	var at_perimeter := WarrenParcelConstruction.touches_envelope_boundary(
+		parcel)
+	if at_perimeter:
+		# The same parcel grammar closes the edge, but only with houses whose room
+		# stacks visibly reach terrain (or an explicit lower building). This makes
+		# the inhabited mountain taper into grounded construction without growing
+		# a separate perimeter ring.
+		# Grounding is a hard final audit, so this remains a modest beam-search
+		# preference rather than a dominant aesthetic score. Over-rewarding every
+		# frontier house displaced the denser two-sided parcels and reopened long
+		# ground-level sightlines at otherwise valid production sites.
+		if WarrenParcelConstruction.has_perimeter_grounding(parcel):
+			score -= 140.0
+		elif not WarrenParcelConstruction.perimeter_gateway_support(
+				parcel).is_empty():
+			# A real covered gateway remains useful, but direct terrain-rooted
+			# frontage wins whenever the beam can preserve both.
+			score += 420.0
+		else:
+			score += 5200.0
+	else:
+		# Mixed spans and elevated addresses remain valuable inside the massif:
+		# they are what produce tunnels, undercrofts, and occupied overhead paths.
+		if parcel.support_mode == &"mixed_span":
+			score -= 45.0
+		if parcel.base_band > source.envelope.ground_at(parcel.threshold_column):
+			score -= 80.0
 	var tie := posmod(_hash(source.world_seed, route_index,
 		direction_index * 17 + shape_index * 5 + lateral_variant,
 		parcel.threshold_column.x, parcel.threshold_column.y), 1009)

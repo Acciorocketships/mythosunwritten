@@ -103,10 +103,6 @@ static func append_specs(program: SettlementFabricProgram,
 			&"roof.slim.short.blue", &"roof.slim.short.orange",
 			&"roof.blue", &"roof.orange",
 			&"roof.short.blue", &"roof.short.orange",
-			&"roof.seam.narrow.3.negative", &"roof.seam.narrow.3.positive",
-			&"roof.seam.narrow.6.negative", &"roof.seam.narrow.6.positive",
-			&"roof.seam.wide.6.negative", &"roof.seam.wide.6.positive",
-			&"roof.seam.wide.9.negative", &"roof.seam.wide.9.positive",
 			&"room.micro.terrain.blue", &"room.micro.terrain.orange"]:
 		if program.recipe(recipe_id) == null:
 			return false

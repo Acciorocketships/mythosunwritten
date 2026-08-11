@@ -634,6 +634,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var market_count := 0
 	var balcony_count := 0
 	var room_outcropping_support_count := 0
+	var frontier_gateway_support_count := 0
 	var tower_annex_count := 0
 	var landmark_count := 0
 	for feature: WarrenFeatureReservation in ordered_features:
@@ -664,6 +665,11 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 				feature_units = _compile_room_outcropping_supports(feature,
 					program, room_unit_by_stamp)
 				room_outcropping_support_count += int(
+					not feature_units.is_empty())
+			&"frontier_gateway_support":
+				feature_units = _compile_frontier_gateway_supports(feature,
+					program, room_unit_by_stamp)
+				frontier_gateway_support_count += int(
 					not feature_units.is_empty())
 			&"tower_annex":
 				feature_units = _compile_tower_annex_feature(feature, program,
@@ -700,13 +706,16 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 		"source_constructed_feature_count": ordered_features.size(),
 		"realized_constructed_feature_count": skywalk_count + market_count \
 			+ balcony_count + tower_annex_count + landmark_count \
-			+ courtyard_bridge_count + room_outcropping_support_count,
+			+ courtyard_bridge_count + room_outcropping_support_count \
+			+ frontier_gateway_support_count,
 		"skywalk_feature_count": skywalk_count,
 		"courtyard_bridge_house_feature_count": courtyard_bridge_count,
 		"covered_market_feature_count": market_count,
 		"balcony_feature_count": balcony_count,
 		"room_outcropping_support_feature_count":
 			room_outcropping_support_count,
+		"frontier_gateway_support_feature_count":
+			frontier_gateway_support_count,
 		"tower_annex_feature_count": tower_annex_count,
 		"prefab_landmark_feature_count": landmark_count,
 		"feature_construction_unit_count": out.size(),
@@ -734,6 +743,16 @@ static func _compile_room_outcropping_supports(
 		last_failure = "room outcropping %s lacks its two room plates or supports" \
 			% feature.stable_id
 		return out
+	var neighbor_units: Array[StringName] = []
+	for neighbor_value: Variant in feature.audit.get(
+			"outcrop_support_neighbor_room_ids", []):
+		var neighbor_id := StringName(neighbor_value)
+		var neighbor_unit := room_unit_by_stamp.get(neighbor_id) as FabricUnit
+		if neighbor_unit == null:
+			last_failure = "room outcropping %s names missing support seam %s" % [
+				feature.stable_id, neighbor_id]
+			return [] as Array[FabricUnit]
+		neighbor_units.append(neighbor_unit.stable_id)
 	var shells: Array[FabricUnit] = []
 	for index in feature.construction_records.size():
 		var record := feature.construction_records[index]
@@ -758,11 +777,55 @@ static func _compile_room_outcropping_supports(
 		# despite the complete feature reservation being valid.
 		var seams: Array[StringName] = [upper_unit.stable_id,
 			lower_unit.stable_id]
+		seams.append_array(neighbor_units)
 		seams.append_array(built_support_seams)
 		out.append(FabricUnit.new(shell.stable_id, shell.recipe_id,
 			shell.lattice_origin, shell.yaw_quarters,
 			[] as Array[StringName], [] as Array[Dictionary], &"", seams))
 		built_support_seams.append(shell.stable_id)
+	return out
+
+
+static func _compile_frontier_gateway_supports(
+		feature: WarrenFeatureReservation,
+		program: SettlementFabricProgram,
+		room_unit_by_stamp: Dictionary) -> Array[FabricUnit]:
+	## The gateway room already owns the occupied volume. This adapter realizes
+	## only its sealed underside bracket course and names every measured room it
+	## touches as an explicit joinery seam.
+	var out: Array[FabricUnit] = []
+	var room_id := StringName(feature.audit.get("gateway_room_id", &""))
+	var room_unit := room_unit_by_stamp.get(room_id) as FabricUnit
+	if room_unit == null or feature.construction_records.size() != 1 \
+			or not bool(feature.audit.get("gateway_is_terrain_anchored", false)):
+		last_failure = "frontier gateway %s lacks its terrain-rooted room or bracket" \
+			% feature.stable_id
+		return out
+	var seams: Array[StringName] = [room_unit.stable_id]
+	for neighbor_value: Variant in feature.audit.get(
+			"gateway_support_neighbor_room_ids", []):
+		var neighbor_id := StringName(neighbor_value)
+		var neighbor_unit := room_unit_by_stamp.get(neighbor_id) as FabricUnit
+		if neighbor_unit == null:
+			last_failure = "frontier gateway %s names missing support seam %s" % [
+				feature.stable_id, neighbor_id]
+			return [] as Array[FabricUnit]
+		seams.append(neighbor_unit.stable_id)
+	var record := feature.construction_records[0] as Dictionary
+	var shell := _feature_component_shell(feature, 0, record)
+	var recipe := program.recipe(shell.recipe_id)
+	if recipe == null or not recipe.has_tag(&"cantilever_support") \
+			or not recipe.has_tag(&"visual_attachment") \
+			or not recipe.solid_cells.is_empty() \
+			or not recipe.walk_cells.is_empty() \
+			or not recipe.headroom_cells.is_empty() \
+			or recipe.bearing_parent_count != 0:
+		last_failure = "frontier gateway %s has a non-attachment support recipe" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	out.append(FabricUnit.new(shell.stable_id, shell.recipe_id,
+		shell.lattice_origin, shell.yaw_quarters,
+		[] as Array[StringName], [] as Array[Dictionary], &"", seams))
 	return out
 
 
@@ -1210,7 +1273,7 @@ static func _socket_world_cell(unit_value: FabricUnit,
 static func _feature_units_match_reservation(
 		feature: WarrenFeatureReservation, units: Array[FabricUnit],
 		program: SettlementFabricProgram) -> bool:
-	if feature.kind == &"room_outcropping":
+	if feature.kind in [&"room_outcropping", &"frontier_gateway_support"]:
 		# The feature's reserved cells are the already-realized upper room. Its
 		# construction records are deliberately zero-cell bracket attachments;
 		# requiring them to reproduce the room would duplicate occupied mass.
@@ -2071,8 +2134,16 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 	var room_id := room.stable_id
 	for key: String in ["annex_room_id", "balcony_room_id",
 			"market_backing_room_id", "courtyard_bridge_house_room_id",
-			"outcrop_upper_room_id", "outcrop_lower_room_id"]:
+			"outcrop_upper_room_id", "outcrop_lower_room_id", "gateway_room_id"]:
 		if StringName(feature.audit.get(key, &"")) == room_id:
+			return true
+	for neighbor_value: Variant in feature.audit.get(
+			"outcrop_support_neighbor_room_ids", []):
+		if StringName(neighbor_value) == room_id:
+			return true
+	for neighbor_value: Variant in feature.audit.get(
+			"gateway_support_neighbor_room_ids", []):
+		if StringName(neighbor_value) == room_id:
 			return true
 	# A balcony, annex, or market is selected against every measured room in its
 	# recomposed source lineage. Its brackets/eaves may legitimately cross the

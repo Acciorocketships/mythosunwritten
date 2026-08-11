@@ -161,6 +161,10 @@ func test_reported_seed_builds_an_inhabited_dense_multilevel_village() -> void:
 		WarrenSpatialFeatureSolver.MIN_COURT_BELOW_ROUTE_CELLS)
 	assert_gte(int(audit.courtyard_upper_route_cell_count),
 		WarrenSpatialFeatureSolver.MIN_COURT_UPPER_ROUTE_CELLS)
+	assert_gte(int(audit.courtyard_daylight_macro_column_count),
+		WarrenElevatedFrontageSolver.MIN_COURTYARD_DAYLIGHT_COLUMNS)
+	assert_gt(int(audit.courtyard_daylight_air_cell_count), 0,
+		"the in-game court keeps a typed open-air shaft through final validation")
 	assert_eq(int(audit.prefab_landmark_count),
 		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
 	assert_gte(int(audit.usable_balcony_count),

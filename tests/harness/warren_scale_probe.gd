@@ -46,6 +46,23 @@ func _init() -> void:
 			candidate.audit.get("all_overhang_walk_ratio", 0.0),
 			" addressed=", candidate.audit.get(
 				"all_addressed_walk_ratio", 0.0))
+		if not candidate.courtyard_cells.is_empty():
+			print("COURT_THREAD index=", index, " ",
+				_courtyard_threading(candidate))
+	if args.find("--list-precomposition") >= 0:
+		var diagnostic_program := SettlementFabricProgram.compile(
+			EnvironmentCatalog.load_default())
+		for source: WarrenVolumePlan in frontier:
+			for variant in WarrenVolumetricSolver.MAX_PARTITION_VARIANTS:
+				var preaudit := WarrenVolumetricSolver \
+					._precomposition_enclosure_audit(source, variant,
+						diagnostic_program)
+				print("PRECOMPOSITION_AUDIT source=", source.stable_id,
+					" variant=", variant, " accepted=", not preaudit.is_empty(),
+					" failure=", WarrenTownSolver.last_partition_failure,
+					" audit=", preaudit)
+		quit(0)
+		return
 	if full_requested and not frontier.is_empty():
 		print("FULL_BEGIN")
 		var program := SettlementFabricProgram.compile(
@@ -120,3 +137,37 @@ static func _string_arg(args: PackedStringArray, key: String,
 static func _int_arg(args: PackedStringArray, key: String,
 		fallback: int) -> int:
 	return int(_string_arg(args, key, str(fallback)))
+
+
+static func _courtyard_threading(volume: WarrenVolumePlan) -> Dictionary:
+	## Report actual walk surfaces, not merely swept public air. A headroom cell
+	## from an upper episode is not itself evidence that a player can walk above
+	## the courtyard.
+	var floor_columns: Dictionary = {}
+	var court_y := volume.courtyard_cells[0].y
+	for macro: Vector3i in volume.courtyard_cells:
+		for fine: Vector3i in WarrenVolumetricSolver._fine_square(macro):
+			floor_columns[Vector2i(fine.x, fine.z)] = true
+	var route_floors: Dictionary = {}
+	for macro: Vector3i in volume.walk_cells:
+		for fine: Vector3i in WarrenVolumetricSolver._fine_square(macro):
+			route_floors[fine] = true
+	for transition: WarrenVolumeTransition in volume.transitions:
+		for fine: Vector3i in transition.surface_cells():
+			route_floors[fine] = true
+	var below: Array[Vector3i] = []
+	var above: Array[Vector3i] = []
+	for cell_value: Variant in route_floors.keys():
+		var cell := cell_value as Vector3i
+		if not floor_columns.has(Vector2i(cell.x, cell.z)):
+			continue
+		if cell.y <= court_y - WarrenVolumePlan.HEADROOM_BANDS:
+			below.append(cell)
+		elif cell.y >= court_y + WarrenVolumePlan.HEADROOM_BANDS:
+			above.append(cell)
+	below.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return a.y < b.y if a.y != b.y else str(a) < str(b))
+	above.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return a.y < b.y if a.y != b.y else str(a) < str(b))
+	return {"court_y": court_y, "below_floor_count": below.size(),
+		"above_floor_count": above.size(), "below": below, "above": above}

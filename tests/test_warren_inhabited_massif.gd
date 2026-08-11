@@ -104,6 +104,18 @@ func test_mass_first_frontier_owns_one_supported_third_storey_courtyard() \
 		assert_eq(volume.courtyard_cells.size(), 4,
 			"every production mass-first topology carries the authored court")
 		assert_eq(int(volume.audit.elevated_courtyard_walk_cell_count), 4)
+		assert_gte(int(volume.audit.courtyard_daylight_macro_column_count),
+			WarrenElevatedFrontageSolver.MIN_COURTYARD_DAYLIGHT_COLUMNS,
+			"the court must own explicit open-sky shafts, not only headroom")
+		var threading := WarrenElevatedFrontageSolver \
+			._courtyard_vertical_route_floor_counts(volume.courtyard_cells,
+				volume)
+		assert_gte(int(threading.below),
+			WarrenElevatedFrontageSolver.MIN_COURTYARD_BELOW_ROUTE_CELLS,
+			"a real public walk surface passes beneath the court")
+		assert_gte(int(threading.above),
+			WarrenElevatedFrontageSolver.MIN_COURTYARD_ABOVE_ROUTE_CELLS,
+			"a real public walk surface—not merely swept headroom—crosses above")
 		assert_eq(int(volume.audit.same_datum_public_square_count), 0,
 			"only the typed court may consume the plaza exception")
 		var underbuilt := 0
