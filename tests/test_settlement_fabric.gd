@@ -116,6 +116,40 @@ func test_surface_audit_distinguishes_narrow_gallery_from_broad_plaza() -> void:
 		"a broad empty floor has an interior independent of its perimeter")
 
 
+func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
+		-> void:
+	var surfaces := PublicRealmSurfacePlan.new(&"test.named.courtyard")
+	for z in 4:
+		for x in 4:
+			assert_true(surfaces.add_claim(Vector3i(x, 4, z),
+				PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+				StringName("volume.courtyard.%02d" % (z * 4 + x))))
+	assert_true(surfaces.seal(), surfaces.last_rejection)
+	assert_eq(surfaces.cells_owned_by_prefix("volume.courtyard.").size(), 16)
+	var payload := SettlementFabricAssembler.surface_visual_payload(surfaces)
+	assert_true(payload.validate())
+	assert_true(payload.batches.has(SettlementFabricAssembler.PLANK_SINGLE))
+	var transforms := (payload.batches[SettlementFabricAssembler.PLANK_SINGLE] \
+		as Dictionary).transforms as Array
+	assert_eq(transforms.size(), 16)
+	var visual_centres: Dictionary = {}
+	for transform: Transform3D in transforms:
+		# The S-floor source pivot sits 0.75 m beyond its mesh centre on local
+		# +X. Verify the realised board centre, not merely its transform origin.
+		var centre := transform.origin \
+			+ transform.basis * Vector3(-0.75, 0.0, 0.0)
+		visual_centres[Vector3i(roundi(centre.x / FabricRecipe.CELL_SIZE - 0.5),
+			roundi(centre.y / FabricRecipe.CELL_SIZE),
+			roundi(centre.z / FabricRecipe.CELL_SIZE - 0.5))] = true
+	assert_eq(visual_centres.size(), 16,
+		"every courtyard board must centre on a distinct logical floor cell")
+	for z in 4:
+		for x in 4:
+			assert_true(visual_centres.has(Vector3i(x, 4, z)))
+	assert_false(payload.batches.has(SettlementFabricAssembler.PLANK_FLOOR),
+		"the named court must not be hidden beneath ordinary broad deck tiles")
+
+
 func test_surface_audit_detects_plaza_split_across_public_claim_kinds() -> void:
 	var surfaces := PublicRealmSurfacePlan.new(&"test.mixed_plaza")
 	for z in 4:
@@ -450,6 +484,8 @@ func test_feature_portal_room_variants_open_exact_private_socket_facades() \
 	var cases: Array[Dictionary] = [
 		{"base": &"room.upper.blue", "mask": 1,
 			"cell": Vector3i(0, 0, -2), "placement": &"back.1"},
+		{"base": &"room.upper.stone", "mask": 1,
+			"cell": Vector3i(0, 0, -2), "placement": &"back.1"},
 		{"base": &"room.long.upper.orange.b", "mask": 2,
 			"cell": Vector3i(1, 0, 0), "placement": &"east.1"},
 		{"base": &"room.slim.upper.amber", "mask": 4,
@@ -490,6 +526,105 @@ func test_feature_portal_room_variants_open_exact_private_socket_facades() \
 	assert_false(balcony.placements.any(func(placement: Dictionary) -> bool:
 		return String(placement.id) == "door"),
 		"the balcony must not paste a second doorway over its parent shell")
+
+
+func test_recomposed_room_door_phase_is_derived_from_final_geometry() -> void:
+	var kinds := {
+		&"tower": Vector3i(0, 0, 0),
+		&"slim": Vector3i(0, 0, 1),
+		&"building": Vector3i(-1, 0, 1),
+		&"long": Vector3i(-1, 0, 2),
+	}
+	var origin := Vector3i(17, 9, -23)
+	for kind_value: Variant in kinds:
+		var kind := StringName(kind_value)
+		var phase_zero := kinds[kind] as Vector3i
+		for yaw in 4:
+			var frontage := FabricRecipe.transform_direction(Vector3i.BACK, yaw)
+			for phase in 2:
+				var threshold := FabricRecipe.transform_cell(
+					phase_zero + Vector3i.LEFT * phase, origin, yaw)
+				assert_eq(WarrenParcelConstruction.address_door_phase_for_room(
+					kind, origin, yaw, threshold, frontage), phase,
+					"%s yaw %d must bind the exact phase-%d threshold" \
+						% [kind, yaw, phase])
+			assert_eq(WarrenParcelConstruction.address_door_phase_for_room(
+				kind, origin, yaw, origin + Vector3i(20, 0, 20), frontage), -1)
+			assert_eq(WarrenParcelConstruction.address_door_phase_for_room(
+				kind, origin, yaw,
+				FabricRecipe.transform_cell(phase_zero, origin, yaw),
+				-frontage), -1)
+
+
+func test_flat_roof_fallbacks_have_measured_guarded_terrace_variants() -> void:
+	var program := _program()
+	for kind: String in ["tower", "slim", "square", "long"]:
+		for side: String in ["north", "east", "south", "west"]:
+			var recipe_id := StringName("roof.flat.%s.terrace.%s" % [kind, side])
+			var recipe_value := program.recipe(recipe_id)
+			assert_not_null(recipe_value, "%s is missing" % recipe_id)
+			if recipe_value == null:
+				continue
+			assert_true(recipe_value.has_tag(&"flat_roof"))
+			assert_true(recipe_value.has_tag(&"flat_roof_terrace"))
+			assert_true(recipe_value.walk_cells.is_empty(),
+				"a visual roof treatment must not invent public circulation")
+			assert_true(recipe_value.placements.any(
+				func(placement: Dictionary) -> bool:
+					return String(placement.id).begins_with("guard.")),
+				"%s must carry a complete authored railing run" % recipe_id)
+			var lived_id := StringName("%s.lived" % recipe_id)
+			var lived := program.recipe(lived_id)
+			assert_not_null(lived, "%s is missing" % lived_id)
+			if lived != null:
+				assert_true(lived.has_tag(&"lived_in_roof_terrace"))
+				assert_true(lived.placements.any(
+					func(placement: Dictionary) -> bool:
+						return String(placement.id).begins_with(
+							"terrace.planter.")))
+				var should_have_chimney := kind == "slim" \
+					or kind == "square" and side in ["east", "west"]
+				assert_eq(lived.placements.any(
+					func(placement: Dictionary) -> bool:
+						return String(placement.id) == "terrace.chimney"),
+					should_have_chimney,
+					"narrow lived-in terraces need a measured vertical stone core")
+				var should_have_awning := kind == "long" \
+					or kind == "square" and side in ["north", "south"]
+				assert_eq(lived.placements.any(
+					func(placement: Dictionary) -> bool:
+						return String(placement.id) == "terrace.awning"),
+					should_have_awning,
+					"broad lived-in terraces need a complete measured canopy")
+	for length_cells: int in [1, 2, 4, 6]:
+		for side: String in ["left", "right"]:
+			var setback := program.recipe(StringName(
+				"roof.setback.terrace.%d.%s" % [length_cells, side]))
+			assert_not_null(setback)
+			if setback == null:
+				continue
+			assert_eq(setback.placements.any(
+				func(placement: Dictionary) -> bool:
+					return String(placement.id) == "terrace.planter"),
+				length_cells >= 2,
+				"usable setback strips need measured lived-in dressing")
+			assert_eq(setback.placements.any(
+				func(placement: Dictionary) -> bool:
+					return String(placement.id) == "terrace.chimney"),
+				length_cells == 6,
+				"only the rare longest setback receives a stone vertical core")
+	for length_cells: int in [2, 4, 6]:
+		var garden := program.recipe(StringName(
+			"roof.setback.garden.%d" % length_cells))
+		assert_not_null(garden)
+		if garden != null:
+			assert_true(garden.has_tag(&"setback_garden"))
+			assert_true(garden.walk_cells.is_empty(),
+				"private roof dressing must not invent circulation")
+			assert_true(garden.placements.any(
+				func(placement: Dictionary) -> bool:
+					return String(placement.id) == "garden.planter"),
+				"enclosed setback bands need a measured inhabited detail")
 
 
 func test_exterior_builder_rejects_deferred_interior_route_units() -> void:

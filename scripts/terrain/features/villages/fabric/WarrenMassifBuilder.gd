@@ -69,13 +69,19 @@ const MAX_NEIGHBOR_STEP_BANDS := 4
 static var last_failure := ""
 
 
-static func build(world_seed: int,
-		ground_bands: Dictionary = {}) -> WarrenMassif:
+static func build(world_seed: int, ground_bands: Dictionary = {},
+		scale_profile: WarrenVillageScaleProfile = null) -> WarrenMassif:
 	last_failure = ""
+	var profile := scale_profile if scale_profile != null \
+		else WarrenVillageScaleProfile.review_fixture()
+	if not profile.validate():
+		last_failure = "invalid village scale profile"
+		return null
+	var radius_cells := profile.radius_cells
 	var massif := WarrenMassif.new(world_seed)
-	var footprint_core := FOOTPRINT_CORE_MIN_BANDS \
+	var footprint_core := profile.minimum_core_bands \
 		+ posmod(_hash(world_seed, 5, 0, 0),
-			FOOTPRINT_CORE_MAX_BANDS - FOOTPRINT_CORE_MIN_BANDS + 1)
+			profile.maximum_core_bands - profile.minimum_core_bands + 1)
 	var warp_phase := float(posmod(_hash(world_seed, 7, 0, 0), 1000)) \
 		/ 1000.0 * TAU
 	var warp_strength := 0.22 + float(posmod(_hash(world_seed, 11, 0, 0),
@@ -87,13 +93,13 @@ static func build(world_seed: int,
 	# thresholding it alone yields one star-shaped, simply-connected,
 	# hole-free footprint regardless of how terrace levels are later chosen.
 	var raw_at: Dictionary = {}
-	for z in range(-RADIUS_CELLS, RADIUS_CELLS + 1):
-		for x in range(-RADIUS_CELLS, RADIUS_CELLS + 1):
+	for z in range(-radius_cells, radius_cells + 1):
+		for x in range(-radius_cells, radius_cells + 1):
 			var radius := Vector2(float(x), float(z)).length()
 			var angle := atan2(float(z), float(x))
 			var warped := radius * (1.0 + warp_strength \
 				* sin(angle * 3.0 + warp_phase))
-			var gaussian := exp(-pow(warped / float(RADIUS_CELLS) * 1.9,
+			var gaussian := exp(-pow(warped / float(radius_cells) * 1.9,
 				2.0))
 			var raw := float(footprint_core) * gaussian
 			if raw < float(MIN_COLUMN_BANDS):
@@ -128,9 +134,9 @@ static func build(world_seed: int,
 		last_failure = "layer of %d bands exceeds the buildable %d" % [
 			massif.core_top_bands, MAX_LAYER_BANDS]
 		return null
-	if massif.core_top_bands < MIN_CORE_BANDS:
+	if massif.core_top_bands < profile.minimum_core_bands:
 		last_failure = "core reaches %d bands; %d required" % [
-			massif.core_top_bands, MIN_CORE_BANDS]
+			massif.core_top_bands, profile.minimum_core_bands]
 		return null
 	if massif.terrace_levels().size() < MIN_TERRACE_LEVELS:
 		last_failure = "only %d terrace levels" \

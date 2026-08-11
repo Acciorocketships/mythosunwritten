@@ -129,6 +129,36 @@ static func threshold_cell(parcel: WarrenBuildingParcel) -> Vector3i:
 		construction.origin as Vector3i, int(construction.yaw_quarters))
 
 
+static func address_door_phase_for_room(kind: StringName, origin: Vector3i,
+		yaw_quarters: int, threshold: Vector3i,
+		frontage: Vector3i) -> int:
+	## Recomposition may move or reshape one complete room block while preserving
+	## the parcel's exact world-space threshold. The original parcel phase is no
+	## longer meaningful after that move; derive the finite authored door variant
+	## from the final room geometry so the visual aperture and topology cannot
+	## diverge by one 1.5 m half-cell.
+	if FabricRecipe.transform_direction(Vector3i.BACK, yaw_quarters) != frontage:
+		return -1
+	var phase_zero := Vector3i.ZERO
+	match kind:
+		&"tower":
+			phase_zero = Vector3i(0, 0, 0)
+		&"slim":
+			phase_zero = Vector3i(0, 0, 1)
+		&"building":
+			phase_zero = Vector3i(-1, 0, 1)
+		&"long":
+			phase_zero = Vector3i(-1, 0, 2)
+		_:
+			return -1
+	for phase in 2:
+		var local_door := phase_zero + Vector3i.LEFT * phase
+		if FabricRecipe.transform_cell(local_door, origin, yaw_quarters) \
+				== threshold:
+			return phase
+	return -1
+
+
 static func addressed_unit_id(parcel: WarrenBuildingParcel) -> StringName:
 	if parcel == null:
 		return &""

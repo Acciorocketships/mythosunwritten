@@ -410,9 +410,15 @@ static func surface_visual_payload(plan: PublicRealmSurfacePlan) \
 	var out := EnvironmentInstancePayload.new()
 	if plan == null or not plan.is_sealed():
 		return out
+	var courtyard_cells := plan.cells_owned_by_prefix("volume.courtyard.")
+	var courtyard_set := _cell_set(courtyard_cells)
 	for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
 			PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
-		_append_plank_tiles(out, plan.cells_for_kind(kind), int(kind))
+		var cells := plan.cells_for_kind(kind)
+		if kind == PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
+			cells = _without_cells(cells, courtyard_set)
+		_append_plank_tiles(out, cells, int(kind))
+	_append_courtyard_paving(out, courtyard_cells)
 	for segment: Dictionary in plan.guard_segments:
 		var a := segment.a as Vector3
 		var b := segment.b as Vector3
@@ -438,10 +444,16 @@ static func production_surface_payload(plan: PublicRealmSurfacePlan) \
 	var out := EnvironmentInstancePayload.new()
 	if plan == null or not plan.is_sealed():
 		return out
+	var courtyard_cells := plan.cells_owned_by_prefix("volume.courtyard.")
+	var courtyard_set := _cell_set(courtyard_cells)
 	for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
 			PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
 			PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
-		_append_plank_tiles(out, plan.cells_for_kind(kind), int(kind))
+		var cells := plan.cells_for_kind(kind)
+		if kind == PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
+			cells = _without_cells(cells, courtyard_set)
+		_append_plank_tiles(out, cells, int(kind))
+	_append_courtyard_paving(out, courtyard_cells)
 	for segment: Dictionary in plan.guard_segments:
 		var a := segment.a as Vector3
 		var b := segment.b as Vector3
@@ -511,10 +523,40 @@ static func _append_plank_tiles(out: EnvironmentInstancePayload,
 		else:
 			# The reviewed 1.5 m deck module closes odd residual cells without
 			# scaling a 3 m floor or exposing the plain diagnostic underlay. Its
-			# authored pivot lies on the local +X seam, hence the half-cell pivot
-			# correction in _add_plank_tile().
-			_add_plank_tile(out, PLANK_SINGLE, Vector3(cell), 0, kind)
+			# authored pivot lies on the local +X seam; _add_plank_tile() corrects
+			# that pivot after receiving the logical cell centre.
+			_add_plank_tile(out, PLANK_SINGLE,
+				Vector3(cell) + Vector3(0.5, 0.0, 0.5), 0, kind)
 			pending.erase(cell)
+
+
+static func _append_courtyard_paving(out: EnvironmentInstancePayload,
+		cells: Array[Vector3i]) -> void:
+	## The elevated 6 m court stays timber-supported, but a checker of reviewed
+	## 1.5 m deck boards separates it visually from through-galleries and broad
+	## roof decks. Every module still tiles the same collision-authoritative
+	## surface claim; this is identity, not an independently inferred platform.
+	for cell: Vector3i in cells:
+		var yaw := posmod(cell.x + cell.z, 2)
+		_add_plank_tile(out, PLANK_SINGLE,
+			Vector3(cell) + Vector3(0.5, 0.0, 0.5), yaw,
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT)
+
+
+static func _cell_set(cells: Array[Vector3i]) -> Dictionary:
+	var out: Dictionary = {}
+	for cell: Vector3i in cells:
+		out[cell] = true
+	return out
+
+
+static func _without_cells(cells: Array[Vector3i], excluded: Dictionary) \
+		-> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	for cell: Vector3i in cells:
+		if not excluded.has(cell):
+			out.append(cell)
+	return out
 
 
 static func _add_plank_tile(out: EnvironmentInstancePayload,

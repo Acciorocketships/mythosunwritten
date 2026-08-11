@@ -33,11 +33,15 @@ const ROOF_WINDOW_03 := &"sfv.fabric.roof.window.003"
 const ROOF_WINDOW_04 := &"sfv.fabric.roof.window.004"
 const ROOF_SEAM := &"sfv.fabric.roof.seam.m.002"
 const COMPACT_CHIMNEY := &"lpfv.fabric.chimney.orange.01"
+const TERRACE_CHIMNEY := &"sfv.fabric.chimney.002"
 const FACADE_IVY := &"sfv.fabric.ivy.001"
 const FACADE_CLOTHES := &"sfv.fabric.clothes.001"
 const FACADE_SIGN := &"sfv.fabric.sign.tavern.001"
+const ROOF_PLANTER := &"sfv.fabric.planter.003"
+const ROOF_TERRACE_AWNING := &"sfv.fabric.awning.blue.001"
 const GABLE := &"sfv.fabric.gable.wood.m.001"
 const BRACE := &"sfv.fabric.brace.wood.002"
+const DIAGONAL_BRACE := &"sfbp.wwall.support.s.002"
 const WALL_WOOD_S_A := &"sfv.fabric.wall.wood.s.001"
 const WALL_WOOD_S_B := &"sfv.fabric.wall.wood.s.002"
 const WALL_WOOD_CORNER_S := &"sfv.fabric.wall.wood.corner.s.001"
@@ -161,19 +165,6 @@ const MARKET_STALLS: Array[StringName] = [
 	&"sfm.stall.tavern.002",
 	&"sfm.stall.tavern.003",
 	&"sfm.stall.butcher.002",
-	&"sfm.stall.armory.001",
-	&"sfm.stall.bakery.001",
-	&"sfm.stall.veg.001",
-	&"sfm.stall.fabric.001",
-	&"sfm.stall.forge.003",
-	&"sfm.stall.veg.003",
-	&"sfm.stall.armory.002",
-	&"sfm.stall.bakery.002",
-	&"sfm.stall.fish.002",
-	&"sfm.stall.veg.002",
-	&"sfm.stall.fabric.002",
-	&"sfm.stall.alchemy.001",
-	&"sfm.stall.veg.004",
 ]
 ## Compact canopies with one reviewed stocked table attachment. Unlike the
 ## large self-contained stalls above, these fit a single 6 x 3 m frontage and
@@ -420,6 +411,9 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_setback_cap_recipe(&"roof.setback.cap.2", 2, modules),
 		_setback_cap_recipe(&"roof.setback.cap.4", 4, modules),
 		_setback_cap_recipe(&"roof.setback.cap.6", 6, modules),
+		_setback_garden_recipe(&"roof.setback.garden.2", 2, modules),
+		_setback_garden_recipe(&"roof.setback.garden.4", 4, modules),
+		_setback_garden_recipe(&"roof.setback.garden.6", 6, modules),
 		_setback_terrace_recipe(&"roof.setback.terrace.1.left", 1, -1,
 			modules),
 		_setback_terrace_recipe(&"roof.setback.terrace.1.right", 1, 1,
@@ -521,20 +515,40 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules),
 		_balcony_recipe(&"balcony.bracketed.right.blue", &"blue", 0,
 			modules),
+		_integrated_cantilever_support_recipe(modules),
+		_integrated_cantilever_diagonal_support_recipe(modules),
 	]
+	for flat_spec: Dictionary in [
+		{"kind": "tower", "minimum": Vector3i(-1, 0, -1),
+			"size": Vector3i(2, 1, 2), "family": &"compact_tower"},
+		{"kind": "slim", "minimum": Vector3i(-1, 0, -2),
+			"size": Vector3i(2, 1, 4), "family": &"slim_building"},
+		{"kind": "square", "minimum": Vector3i(-2, 0, -2),
+			"size": Vector3i(4, 1, 4), "family": &"square_building"},
+		{"kind": "long", "minimum": Vector3i(-2, 0, -3),
+			"size": Vector3i(4, 1, 6), "family": &"long_building"},
+	]:
+		for side: StringName in [&"north", &"east", &"south", &"west"]:
+			candidates.append(_flat_roof_terrace_recipe(StringName(
+				"roof.flat.%s.terrace.%s.lived" % [flat_spec.kind, side]),
+				flat_spec.minimum as Vector3i, flat_spec.size as Vector3i,
+				StringName(flat_spec.family), side, modules, true))
+			candidates.append(_flat_roof_terrace_recipe(StringName(
+				"roof.flat.%s.terrace.%s" % [flat_spec.kind, side]),
+				flat_spec.minimum as Vector3i, flat_spec.size as Vector3i,
+				StringName(flat_spec.family), side, modules))
 	_append_address_door_phase_vocabulary(candidates)
 	_append_feature_portal_vocabulary(candidates, modules)
 	_append_roof_seam_vocabulary(candidates, modules)
 	_append_bisected_valley_vocabulary(candidates, modules)
 	for index in MARKET_STALLS.size():
 		var market_descriptor := catalog.descriptor(MARKET_STALLS[index])
-		# `stocked_market` and `themed_stall` are the two reviewed goods-laden
-		# stall tags the bake manifests carry; both mean a complete stall prefab
-		# with its wares modelled. Admitting only the first pinned every town's
-		# bazaar to the seven pieces that predated the bake wave.
+		# Route-first's narrow two-stall alley admits only the seven complete
+		# `stocked_market` prefabs whose measured envelopes were reviewed for that
+		# grammar. The broader themed stalls remain available to other systems;
+		# adding them here crowds the bounded beam and can erase every valid alley.
 		if market_descriptor == null \
-				or not (market_descriptor.tags.has(&"stocked_market") \
-					or market_descriptor.tags.has(&"themed_stall")):
+				or not market_descriptor.tags.has(&"stocked_market"):
 			push_error("Market vocabulary asset is not a reviewed stocked prefab: %s" %
 				MARKET_STALLS[index])
 			return null
@@ -578,6 +592,7 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 		ROOF_SEAM,
 		ROOF_BISECT_LEFT_BLUE, ROOF_BISECT_RIGHT_BLUE,
 		ROOF_BISECT_LEFT_ORANGE, ROOF_BISECT_RIGHT_ORANGE,
+		ROOF_TERRACE_AWNING, DIAGONAL_BRACE,
 	]
 	for pool: Array[StringName] in [WOOD_FACADE_BLUE, WOOD_FACADE_ORANGE,
 			WOOD_FACADE_AMBER, ROCK_FACADE, WOOD_DOORS, ROCK_DOORS,
@@ -1525,6 +1540,110 @@ static func _flat_roof_recipe(recipe_id: StringName, minimum: Vector3i,
 	return recipe_value
 
 
+static func _flat_roof_terrace_recipe(recipe_id: StringName,
+		minimum: Vector3i, size: Vector3i, family: StringName,
+		side: StringName, modules: FabricModuleProgram,
+		lived_in: bool = false) -> FabricRecipe:
+	## A full plate whose pitched eaves cannot coexist with a higher neighbor
+	## should read as a deliberate roof terrace, not a featureless box lid. One
+	## native railing run marks a genuinely exposed edge; the compiler tries all
+	## four measured orientations against the final construction envelopes and
+	## keeps the old plain cap only when every terrace rail is obstructed.
+	assert(side in [&"north", &"east", &"south", &"west"])
+	var recipe_value := _flat_roof_recipe(recipe_id, minimum, size, family,
+		modules)
+	recipe_value.role_tags.append(&"flat_roof_terrace")
+	if lived_in:
+		recipe_value.role_tags.append(&"lived_in_roof_terrace")
+	var centre := FabricModuleProgram.footprint_centre(minimum, size)
+	var half_x := float(size.x) * CELL * 0.5
+	var half_z := float(size.z) * CELL * 0.5
+	if side in [&"north", &"south"]:
+		var z := centre.z + (-half_z if side == &"north" else half_z)
+		for x_index in size.x:
+			recipe_value.add_placement(StringName("guard.%02d" % x_index),
+				RAILING, _pose(Vector3(float(minimum.x + x_index) * CELL,
+					0.0, z), 0.0))
+	else:
+		var x := centre.x + (-half_x if side == &"west" else half_x)
+		for z_index in size.z:
+			recipe_value.add_placement(StringName("guard.%02d" % z_index),
+				RAILING, _pose(Vector3(x, 0.0,
+					float(minimum.z + z_index) * CELL), PI * 0.5))
+	if lived_in:
+		_add_lived_in_roof_terrace_dressing(recipe_value, centre, size, side)
+	return recipe_value
+
+
+static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
+		centre: Vector3, size: Vector3i, guarded_side: StringName) -> void:
+	## Flat roofs are an intentional dense-city type, but a field of pristine
+	## plank plates still reads like solver fallback. These finite variants put
+	## laundry and planters inside the same measured roof transaction. If their
+	## real envelopes meet a higher wall, the compiler tries another orientation
+	## and finally the equally valid guarded-but-undressed terrace.
+	var inward := Vector3.ZERO
+	match guarded_side:
+		&"north":
+			inward = Vector3(0.0, 0.0, 0.58)
+		&"south":
+			inward = Vector3(0.0, 0.0, -0.58)
+		&"west":
+			inward = Vector3(0.58, 0.0, 0.0)
+		&"east":
+			inward = Vector3(-0.58, 0.0, 0.0)
+	var along_x := guarded_side in [&"north", &"south"]
+	var half_run := (float(size.x) if along_x else float(size.z)) * CELL * 0.5
+	var along := Vector3.RIGHT if along_x else Vector3.BACK
+	var planter_offset := maxf(0.0, half_run - 0.72)
+	recipe_value.add_placement(&"terrace.planter.0", ROOF_PLANTER,
+		_pose(centre + inward + along * planter_offset + Vector3.UP * 0.04,
+			0.0 if along_x else PI * 0.5))
+	if planter_offset > 0.1:
+		recipe_value.add_placement(&"terrace.planter.1", ROOF_PLANTER,
+			_pose(centre + inward - along * planter_offset + Vector3.UP * 0.04,
+				0.0 if along_x else PI * 0.5))
+	# Broad flat closers otherwise read as low timber slabs from the town
+	# overview. A real stone chimney gives every 6 m-or-larger lived-in terrace
+	# a vertical service core and a second material. It is part of this measured
+	# roof recipe, so dense neighbors can reject it and fall back to the guarded
+	# terrace instead of accepting a post-build overlap.
+	if mini(size.x, size.z) < 4 and maxi(size.x, size.z) >= 4:
+		recipe_value.add_placement(&"terrace.chimney", TERRACE_CHIMNEY,
+			_pose(centre + inward * 0.78 - along * 0.42, 0.0))
+		recipe_value.role_tags.append(&"chimney")
+	elif size.x == size.z and size.x >= 4 \
+			and guarded_side in [&"east", &"west"]:
+		recipe_value.add_placement(&"terrace.chimney", TERRACE_CHIMNEY,
+			_pose(centre + inward * 0.78 - along * 0.42, 0.0))
+		recipe_value.role_tags.append(&"chimney")
+	elif size.z > size.x and size.x >= 4 \
+			or size.x == size.z and size.x >= 4:
+		# The complete 4.24 x 3.03 m framed blue awning fits inside long terraces
+		# and broad square terraces without scaling. Alternating square sides
+		# between this canopy and a stone chimney keeps the low roof population
+		# from repeating one silhouette. Its full measured envelope remains part
+		# of the terrace transaction and may fall back when an upper neighbor needs
+		# the volume.
+		recipe_value.add_placement(&"terrace.awning", ROOF_TERRACE_AWNING,
+			_pose(centre, 0.0 if along_x else PI * 0.5))
+		recipe_value.role_tags.append(&"roof_terrace_awning")
+	# The authored line is 3.135 m long from an end pivot. A three-metre tower
+	# cannot contain that measured span, so its pair of planters is the complete
+	# lived-in treatment; every deeper/wider family gets laundry as well.
+	if half_run * 2.0 < 3.14:
+		return
+	var laundry_y := 1.48
+	if along_x:
+		recipe_value.add_placement(&"terrace.laundry", FACADE_CLOTHES,
+			_pose(centre + Vector3(-1.565, laundry_y, 0.0) - inward * 0.25,
+				0.0))
+	else:
+		recipe_value.add_placement(&"terrace.laundry", FACADE_CLOTHES,
+			_pose(centre + Vector3(0.0, laundry_y, 1.565) - inward * 0.25,
+				PI * 0.5))
+
+
 static func _setback_cap_recipe(recipe_id: StringName, length_cells: int,
 		modules: FabricModuleProgram) -> FabricRecipe:
 	## A thin plank weather-cap for the one-cell strip exposed when the next room
@@ -1564,6 +1683,41 @@ static func _setback_terrace_recipe(recipe_id: StringName, length_cells: int,
 		recipe_value.add_placement(StringName("guard.%02d" % x), RAILING,
 			_pose(Vector3(float(x) * CELL, 0.0,
 				float(rail_side) * CELL * 0.5), 0.0))
+	# These strips are the exposed shoulders of genuinely staggered rooms, but a
+	# rail over bare boards still reads as a solver cap from the town overview.
+	# Native planters make every usable 3 m-or-longer strip inhabited; the rare
+	# 9 m family also receives one measured stone chimney to break its horizontal
+	# silhouette. Both remain inside the recipe's measured visual envelope and
+	# can therefore fall back to the plain cap if a neighboring room conflicts.
+	if length_cells >= 2:
+		var run_centre := float(length_cells) * CELL * 0.5
+		recipe_value.add_placement(&"terrace.planter",
+			ROOF_PLANTER, _pose(Vector3(run_centre, 0.04,
+				-float(rail_side) * 0.22), 0.0))
+		recipe_value.role_tags.append(&"roof_planter")
+	if length_cells == 6:
+		recipe_value.add_placement(&"terrace.chimney", TERRACE_CHIMNEY,
+			_pose(Vector3(float(length_cells) * CELL * 0.28, 0.0,
+				-float(rail_side) * 0.18), 0.0))
+		recipe_value.role_tags.append(&"chimney")
+	return recipe_value
+
+
+static func _setback_garden_recipe(recipe_id: StringName, length_cells: int,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## A setback can be enclosed by later room additions on both long edges, so
+	## it cannot honestly receive an exposed-edge rail. A native planter still
+	## turns that otherwise bare plank band into an inhabited roof garden. The
+	## measured asset is only 1.21 x 0.90 m and stays inside the 1.5 m strip; the
+	## spatial compiler nevertheless tests its complete visual envelope and can
+	## fall back to the undecorated cap where a projecting facade is too close.
+	assert(length_cells in [2, 4, 6])
+	var recipe_value := _setback_cap_recipe(recipe_id, length_cells, modules)
+	recipe_value.role_tags.append(&"setback_garden")
+	var run_centre := float(length_cells) * CELL * 0.5
+	recipe_value.add_placement(&"garden.planter", ROOF_PLANTER,
+		_pose(Vector3(run_centre, 0.04, 0.0), 0.0))
+	recipe_value.role_tags.append(&"roof_planter")
 	return recipe_value
 
 
@@ -1751,10 +1905,10 @@ static func _is_feature_portal_base(recipe_value: FabricRecipe) -> bool:
 	if recipe_value == null or not recipe_value.has_tag(&"generated_building"):
 		return false
 	var id := String(recipe_value.recipe_id)
-	if id.contains(".stone"):
-		# The spatial compiler deliberately colour-selects the three timber
-		# families above terrain. Avoid compiling unreachable stone variants.
-		return false
+	# Stone upper-storey recipes are reachable for low, terrain-near storeys and
+	# may own a balcony or an occupied-link endpoint. They therefore need the
+	# same finite, measured portal vocabulary as the timber families; omitting
+	# them made an otherwise exact topology fail only during final asset binding.
 	return id.begins_with("room.upper.") or id.begins_with("room.base.") \
 		or id.begins_with("room.long.upper.") \
 		or id.begins_with("room.long.base.") \
@@ -2485,6 +2639,47 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		Vector3i(back_socket_x, 0, 0), Vector3i.FORWARD)
 	recipe_value.add_socket(&"bearing.back", FabricRecipe.SocketKind.BEARING,
 		Vector3i(back_socket_x, 0, 0), Vector3i.FORWARD)
+	return recipe_value
+
+
+static func _integrated_cantilever_support_recipe(
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## One measured 3 m bracket course beneath a room-scale jetty. The parent
+	## room remains the occupied construction authority; this zero-cell recipe is
+	## an explicit visual/collision attachment derived from the sealed bearing
+	## edge. Rotating the authored stair-wall support by a quarter turn makes its
+	## 1.94 m long axis project outward from the facade rather than run along it.
+	## Two unscaled supports sit beneath the two 1.5 m attachment columns.
+	var recipe_value := FabricRecipe.new(&"outcrop.support.bracketed.2", [
+		&"visual_attachment", &"cantilever_support", &"bracket_supported",
+		&"integrated_room_outcropping",
+	], 0)
+	for index in 2:
+		recipe_value.add_placement(StringName("brace.%d" % index), BRACE,
+			_pose(Vector3(float(index) * CELL, -0.55, 0.0), PI * 0.5))
+	return recipe_value
+
+
+static func _integrated_cantilever_diagonal_support_recipe(
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## A visually load-bearing alternative for a cantilever whose underside does
+	## not contain public circulation. The reviewed support has its upright on
+	## local -Z, its diagonal foot on local +Z, and its top at measured AABB end
+	## Y. Pin those authored datums to the parent facade and room underside. This
+	## is intentionally a separate recipe: a tunnel may retain the shallow
+	## bracket without pretending that a 3.6 m post can pass through public air.
+	var contract_value := modules.contract(DIAGONAL_BRACE)
+	if contract_value == null:
+		return null
+	var bounds := contract_value.visual_bounds
+	var recipe_value := FabricRecipe.new(&"outcrop.support.diagonal.2", [
+		&"visual_attachment", &"cantilever_support", &"diagonal_support",
+		&"bracket_supported", &"integrated_room_outcropping",
+	], 0)
+	for index in 2:
+		recipe_value.add_placement(StringName("brace.%d" % index),
+			DIAGONAL_BRACE, _pose(Vector3(float(index) * CELL,
+				-bounds.end.y, -bounds.position.z), 0.0))
 	return recipe_value
 
 

@@ -365,7 +365,9 @@ static func ranked_candidates(world_seed: int,
 
 
 static func mass_first_frontier(world_seed: int,
-		ground_bands: Dictionary = {}) -> Array[WarrenVolumePlan]:
+		ground_bands: Dictionary = {},
+		scale_profile: WarrenVillageScaleProfile = null) \
+		-> Array[WarrenVolumePlan]:
 	## The mass-first topology frontier: one terraced solid, bored repeatedly,
 	## each bore adapted into the same sealed WarrenVolumePlan the route-first
 	## carver emits, then extended by the same arcade and frontage solvers.
@@ -383,19 +385,25 @@ static func mass_first_frontier(world_seed: int,
 	## null is skipped and the search continues; only an empty frontier fails,
 	## and it reports where the corpus was lost rather than that it was.
 	var out: Array[WarrenVolumePlan] = []
-	var massif := WarrenMassifBuilder.build(world_seed, ground_bands)
+	var profile := scale_profile if scale_profile != null \
+		else WarrenVillageScaleProfile.review_fixture()
+	var massif := WarrenMassifBuilder.build(world_seed, ground_bands, profile)
 	if massif == null:
 		last_failure = "massif rejected: %s" % WarrenMassifBuilder.last_failure
 		return out
 	var carved := 0
 	var adapted := 0
 	var gated := 0
+	var arcaded := 0
+	var gallery_variant_count := 0
+	var regated := 0
 	var excavation_failure := ""
 	var arcade_failure := ""
 	var frontage_failures := PackedStringArray()
+	var post_gallery_failures := PackedStringArray()
 	for attempt in MASS_FIRST_EXCAVATION_ATTEMPTS:
 		var excavation := WarrenExcavationCarver.carve(
-			world_seed + attempt * MASS_FIRST_ATTEMPT_STRIDE, massif)
+			world_seed + attempt * MASS_FIRST_ATTEMPT_STRIDE, massif, profile)
 		if excavation == null:
 			excavation_failure = "%s diagnostic=%s" % [
 				WarrenExcavationCarver.last_failure,
@@ -406,6 +414,7 @@ static func mass_first_frontier(world_seed: int,
 			excavation)
 		if volume == null:
 			continue
+		_attach_scale_profile(volume, profile)
 		adapted += 1
 		var mass_context := volume.mass_context
 		var frontage_cells := volume.frontage_cells
@@ -420,11 +429,14 @@ static func mass_first_frontier(world_seed: int,
 		if not WarrenPublicRealmCarver.passes_topology_gate(volume):
 			continue
 		gated += 1
-		volume = WarrenGroundArcadeSolver.extend(volume)
+		volume = WarrenGroundArcadeSolver.extend_preserving_topology(volume)
 		if volume == null:
 			arcade_failure = WarrenGroundArcadeSolver.last_failure
 			continue
-		var gallery_variants := WarrenElevatedFrontageSolver.variants(volume, true)
+		arcaded += 1
+		var gallery_variants := WarrenElevatedFrontageSolver.variants(volume,
+			profile.requires_elevated_courtyard)
+		gallery_variant_count += gallery_variants.size()
 		if gallery_variants.is_empty():
 			var frontage_failure := WarrenElevatedFrontageSolver.last_failure
 			if not frontage_failure.is_empty() \
@@ -445,8 +457,13 @@ static func mass_first_frontier(world_seed: int,
 			# Arcades and gallery variants remove additional mass after the first
 			# topology gate. Recheck the common contract so a branch cannot consume
 			# one of the opposing ground facades the inward bore was selected for.
-			if not WarrenPublicRealmCarver.passes_topology_gate(gallery_variant):
+			var gate_failure := WarrenPublicRealmCarver \
+				.topology_gate_failure(gallery_variant)
+			if not gate_failure.is_empty():
+				if not post_gallery_failures.has(gate_failure):
+					post_gallery_failures.append(gate_failure)
 				continue
+			regated += 1
 			out.append(gallery_variant)
 	if out.is_empty():
 		# Naming the stage that ate the corpus is the whole diagnostic value
@@ -457,9 +474,14 @@ static func mass_first_frontier(world_seed: int,
 		# route climbs away from its single portal and touches grade twice,
 		# adjacently. Task 5's solid partitioner is where that is answered.
 		last_failure = ("no excavated topology reached the frontier " \
-			+ "(%d/%d bores carved, %d adapted, %d passed the topology gate%s)") \
+			+ ("(%d/%d bores carved, %d adapted, %d passed the topology " \
+			+ "gate, %d arcaded, %d gallery variants, %d passed the " \
+			+ "post-gallery gate%s)")) \
 			% [carved, MASS_FIRST_EXCAVATION_ATTEMPTS, adapted, gated,
-			"; elevated frontage: %s" % " | ".join(frontage_failures) \
+				arcaded, gallery_variant_count, regated,
+			"; post-gallery: %s" % " | ".join(post_gallery_failures) \
+				if not post_gallery_failures.is_empty() \
+				else "; elevated frontage: %s" % " | ".join(frontage_failures) \
 				if not frontage_failures.is_empty() \
 				else "; ground arcade: %s" % arcade_failure \
 				if not arcade_failure.is_empty() \
@@ -469,7 +491,9 @@ static func mass_first_frontier(world_seed: int,
 
 
 static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
-		ground_bands: Dictionary = {}) -> Array[WarrenVolumePlan]:
+		ground_bands: Dictionary = {},
+		scale_profile: WarrenVillageScaleProfile = null) \
+		-> Array[WarrenVolumePlan]:
 	## Terrain-placement rebuild seam for one source selected by the complete flat
 	## preview.  It runs the identical massif -> excavation -> topology gate ->
 	## arcade -> third-storey-court/gallery transaction as mass_first_frontier(),
@@ -480,12 +504,14 @@ static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
 	if attempt_index < 0 or attempt_index >= MASS_FIRST_EXCAVATION_ATTEMPTS:
 		last_failure = "mass-first excavation attempt is outside the bounded search"
 		return out
-	var massif := WarrenMassifBuilder.build(world_seed, ground_bands)
+	var profile := scale_profile if scale_profile != null \
+		else WarrenVillageScaleProfile.review_fixture()
+	var massif := WarrenMassifBuilder.build(world_seed, ground_bands, profile)
 	if massif == null:
 		last_failure = "massif rejected: %s" % WarrenMassifBuilder.last_failure
 		return out
 	var excavation := WarrenExcavationCarver.carve(
-		world_seed + attempt_index * MASS_FIRST_ATTEMPT_STRIDE, massif)
+		world_seed + attempt_index * MASS_FIRST_ATTEMPT_STRIDE, massif, profile)
 	if excavation == null:
 		last_failure = "selected excavation no longer carves local terrain"
 		return out
@@ -494,17 +520,18 @@ static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
 	if volume == null:
 		last_failure = WarrenExcavationVolumeAdapter.last_failure
 		return out
+	_attach_scale_profile(volume, profile)
 	if not WarrenPublicRealmCarver.passes_topology_gate(volume):
 		last_failure = "selected excavation no longer passes the topology gate"
 		return out
 	var mass_context := volume.mass_context
 	var frontage_cells := volume.frontage_cells
-	volume = WarrenGroundArcadeSolver.extend(volume)
+	volume = WarrenGroundArcadeSolver.extend_preserving_topology(volume)
 	if volume == null:
 		last_failure = WarrenGroundArcadeSolver.last_failure
 		return out
 	for candidate: WarrenVolumePlan in WarrenElevatedFrontageSolver.variants(
-			volume, true):
+			volume, profile.requires_elevated_courtyard):
 		candidate.mass_context = mass_context
 		candidate.frontage_cells = frontage_cells
 		if not WarrenPublicRealmCarver.passes_topology_gate(candidate):
@@ -513,6 +540,14 @@ static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
 	if out.is_empty():
 		last_failure = WarrenElevatedFrontageSolver.last_failure
 	return out
+
+
+static func _attach_scale_profile(volume: WarrenVolumePlan,
+		profile: WarrenVillageScaleProfile) -> void:
+	assert(volume != null and profile != null and profile.validate())
+	volume.mass_context[&"scale_profile_id"] = profile.scale_id
+	volume.mass_context[&"scale_profile_signature"] = \
+		profile.deterministic_signature()
 
 
 static func mass_first_attempt_index(world_seed: int,

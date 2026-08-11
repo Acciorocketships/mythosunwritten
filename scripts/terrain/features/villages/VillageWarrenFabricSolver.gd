@@ -22,8 +22,9 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	assert(street_axis.is_normalized() and program != null)
 	if program.settlement_fabric_program == null:
 		return _rejected(&"fabric_program")
+	var scale_profile := WarrenVillageScaleProfile.select(city_seed)
 	var preview := WarrenVolumetricSolver.solve(city_seed, {},
-		program.settlement_fabric_program)
+		program.settlement_fabric_program, scale_profile)
 	if preview == null:
 		return _rejected(StringName("volume_%s" %
 			WarrenVolumetricSolver.last_failure))

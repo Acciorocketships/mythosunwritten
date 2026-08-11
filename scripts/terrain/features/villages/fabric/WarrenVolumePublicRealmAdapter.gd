@@ -47,7 +47,13 @@ static func from_volume(source: WarrenVolumePlan,
 	var extensions := infill.extensions as Dictionary
 	for index in source.walk_cells.size():
 		var macro_cell := source.walk_cells[index]
-		var node_id := StringName("volume.walk.%02d" % index)
+		# Preserve the one authored third-storey court through the otherwise
+		# generic public-realm adapter. Its exact surface cells remain ordinary
+		# structural claims; the name lets the visual adapter give only this 6 m
+		# square a legible paving pattern without re-inferring topology.
+		var node_id := StringName("volume.courtyard.%02d" % index) \
+			if source.courtyard_cells.has(macro_cell) else \
+			StringName("volume.walk.%02d" % index)
 		var surfaces := _square_surface_cells(macro_cell)
 		if extensions.has(macro_cell):
 			surfaces.append_array(extensions[macro_cell] as Array[Vector3i])

@@ -112,16 +112,7 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 				or String(fabric_audit.get("spatial_signature", "")) \
 					!= volumetric_spatial.deterministic_signature().sha256_text() \
 				or int(fabric_audit.get("rejected_unfloored_address_count", -1)) != 0 \
-				or int(fabric_audit.get("elevated_courtyard_count", 0)) != 1 \
-				or int(fabric_audit.get("covered_market_count", 0)) != 1 \
-				or int(fabric_audit.get("prefab_landmark_count", 0)) \
-					!= WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS \
-				or int(fabric_audit.get("enclosed_skywalk_count", 0)) \
-					!= WarrenSpatialFeatureSolver.TARGET_SKYWALKS \
-				or int(fabric_audit.get("usable_balcony_count", 0)) \
-					< WarrenSpatialFeatureSolver.TARGET_BALCONIES \
-				or int(fabric_audit.get("room_outcropping_count", 0)) \
-					< WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS:
+				or not _scale_feature_contract_matches(fabric_audit):
 			return false
 		return _validate_compiled_fabric(program)
 	if volumetric_town == null or not volumetric_town.is_sealed() \
@@ -140,6 +131,30 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 					.TARGET_MAX_UNCOVERED_ROUTE_COMPONENT_SIZE:
 		return false
 	return _validate_compiled_fabric(program)
+
+
+static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
+	## Production selects the size profile before authoring the massif. The final
+	## transaction must validate against that same profile; the former hard-coded
+	## large-showcase counts rejected legitimate compact and standard villages
+	## after every topology, construction, and support proof had already passed.
+	var scale_id := StringName(audit.get("scale_profile_id", ""))
+	var profile := WarrenVillageScaleProfile.for_id(scale_id)
+	if profile == null or String(audit.get("scale_profile_signature", "")) \
+			!= profile.deterministic_signature():
+		return false
+	return int(audit.get("elevated_courtyard_count", -1)) \
+			== int(profile.requires_elevated_courtyard) \
+		and int(audit.get("covered_market_count", -1)) \
+			== int(profile.requires_covered_market) \
+		and int(audit.get("prefab_landmark_count", -1)) \
+			== profile.landmark_range.x \
+		and int(audit.get("enclosed_skywalk_count", -1)) \
+			== profile.skywalk_range.x \
+		and int(audit.get("usable_balcony_count", -1)) \
+			>= profile.balcony_range.x \
+		and int(audit.get("room_outcropping_count", -1)) \
+			>= profile.cantilever_range.x
 
 
 func _validate_compiled_fabric(program: VillageProgram) -> bool:

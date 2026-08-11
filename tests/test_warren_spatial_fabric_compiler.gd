@@ -1,6 +1,26 @@
 extends GutTest
 
 
+func test_roof_gate_checks_the_candidate_full_3d_solid_volume() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-2, 0, -2),
+		Vector3i(5, 5, 5))
+	var transaction := grid.begin_transaction(&"test.elevated-route-air")
+	assert_true(transaction.assign_use([Vector3i(0, 2, 0)] as Array[Vector3i],
+		WarrenSpatialGrid.Use.PUBLIC_AIR, &"route.air"))
+	assert_true(transaction.commit())
+	var recipe := FabricRecipe.new(&"test.two-band-roof", [&"roof"], 0)
+	recipe.solid_cells = [Vector3i.ZERO,
+		Vector3i.UP * 2] as Array[Vector3i]
+	var unit := FabricUnit.new(&"test.roof", recipe.recipe_id,
+		Vector3i.ZERO, 0)
+	assert_true(WarrenSpatialFabricCompiler._unit_touches_public_air(grid,
+		unit, recipe),
+		"a clear first band must not hide a taller gable entering route air")
+	unit.lattice_origin = Vector3i.RIGHT
+	assert_false(WarrenSpatialFabricCompiler._unit_touches_public_air(grid,
+		unit, recipe))
+
+
 func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
@@ -67,6 +87,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var constructed_courtyard_bridges := 0
 	var constructed_markets := 0
 	var constructed_balconies := 0
+	var constructed_outcropping_supports := 0
 	var constructed_tower_annexes := 0
 	var constructed_landmarks := 0
 	for feature: WarrenFeatureReservation in spatial.features:
@@ -78,6 +99,8 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 			feature.kind == &"courtyard_bridge_house")
 		constructed_markets += int(feature.kind == &"covered_market")
 		constructed_balconies += int(feature.kind == &"balcony")
+		constructed_outcropping_supports += int(
+			feature.kind == &"room_outcropping")
 		constructed_tower_annexes += int(feature.kind == &"tower_annex")
 		constructed_landmarks += int(feature.kind == &"prefab_landmark")
 		expected_feature_units += feature.construction_records.size()
@@ -99,6 +122,11 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_gte(constructed_balconies,
 		WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.room_outcropping_support_feature_count),
+		constructed_outcropping_supports)
+	assert_gte(constructed_outcropping_supports,
+		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.tower_annex_feature_count), constructed_tower_annexes)
 	assert_eq(constructed_tower_annexes,
 		spatial.audit.tall_tower_only_lineage_ids.size() \
@@ -114,6 +142,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		assert_true(feature_recipe.has_tag(&"skywalk") \
 			or feature_recipe.has_tag(&"covered_market") \
 			or feature_recipe.has_tag(&"balcony") \
+			or feature_recipe.has_tag(&"cantilever_support") \
 			or feature_recipe.has_tag(&"outcropping") \
 			or feature_recipe.has_tag(&"prefab_anchor"))
 		assert_true(fabric.add_unit(feature_unit), fabric.last_rejection)
@@ -142,10 +171,23 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		.setback_plain_cap_unit_count),
 		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count) \
 			- int(WarrenSpatialFabricCompiler.last_audit \
-				.setback_terrace_unit_count))
+				.setback_terrace_unit_count) \
+			- int(WarrenSpatialFabricCompiler.last_audit \
+				.setback_garden_unit_count))
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_dressed_unit_count),
+		int(WarrenSpatialFabricCompiler.last_audit.setback_terrace_unit_count),
+		"enclosed setback bands should gain measured roof gardens")
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_terrace_fallback_count), 0)
 	for roof: FabricUnit in roofs:
+		var roof_recipe := program.recipe(roof.recipe_id)
+		for local_cell: Vector3i in roof_recipe.solid_cells:
+			var world_cell := FabricRecipe.transform_cell(local_cell,
+				roof.lattice_origin, roof.yaw_quarters)
+			assert_ne(spatial.grid.use_at(world_cell),
+				WarrenSpatialGrid.Use.PUBLIC_AIR,
+				"measured roof volume may not enter an elevated route's headroom")
 		assert_true(fabric.add_unit(roof), fabric.last_rejection)
 	var sealed := WarrenSpatialFabricCompiler.solve(spatial, program)
 	assert_not_null(sealed, WarrenSpatialFabricCompiler.last_failure)

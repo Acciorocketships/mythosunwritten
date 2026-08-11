@@ -16,6 +16,7 @@ extends RefCounted
 const TALL_LINEAGE_STOREYS := 4
 const EXTRUDED_LINEAGE_STOREYS := 5
 const MAX_UNPAIRED_TOWER_STOREYS := 2
+const MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS := 2
 const MIN_BEARING_OVERLAP_COLUMNS := 2
 
 # A changed area is not enough to break a vertical tower silhouette.  A room
@@ -109,6 +110,8 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		protected_owners, world_seed)
 	var expanded_count := _vary_unmerged_lineages(lineages, grid,
 		protected_owners, world_seed)
+	var registration_relief_count := _relieve_registered_lineages(lineages,
+		grid, protected_owners, world_seed)
 	var overlap_audit := _lineage_overlap_audit(lineages)
 	if int(overlap_audit.overlap_cell_count) > 0:
 		last_failure = "composed room lineages overlap in %d cells: %s" % [
@@ -120,7 +123,18 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	var truncated_tower_storeys := _truncate_unpaired_towers(lineages)
 	var audit := _audit(lineages, input_storeys, merged_count,
 		coupled_count, expanded_count, truncated_tower_storeys)
+	audit["registration_relief_recomposition_count"] = \
+		registration_relief_count
 	last_audit = audit.duplicate(true)
+	var repeated_run := int(audit.get(
+		"max_identical_tower_floorplate_run_storeys", 0))
+	if repeated_run > MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS:
+		last_failure = ("3D composition retained a %d-storey identical tower " \
+			+ "floorplate; maximum is %d: %s") % [repeated_run,
+				MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS,
+				JSON.stringify(audit.get(
+					"overlong_tower_run_details", []))]
+		return {}
 	return {"lineages": lineages, "audit": audit}
 
 
@@ -397,6 +411,8 @@ static func _merge_upper_lineages(lineages: Dictionary,
 							^ z * 19349663 ^ yaw * 83492791), 1000003)
 						var covered_source_columns := _intersection_size(columns,
 							union)
+						var repetition := _merged_vertical_repetition_audit(
+							lineages, participants, columns)
 						candidates.append({
 							"primary": primary,
 							"participants": participants,
@@ -410,11 +426,23 @@ static func _merge_upper_lineages(lineages: Dictionary,
 								- covered_source_columns,
 							"displaced_source_columns": union.size() \
 								- covered_source_columns,
+							"strong_registration_count": int(
+								repetition.strong_registration_count),
+							"registered_facade_plane_count": int(
+								repetition.registered_facade_plane_count),
 							"tie": tie,
 						})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.tall_tower_relief) != int(b.tall_tower_relief):
 			return int(a.tall_tower_relief) > int(b.tall_tower_relief)
+		if int(a.strong_registration_count) \
+				!= int(b.strong_registration_count):
+			return int(a.strong_registration_count) \
+				< int(b.strong_registration_count)
+		if int(a.registered_facade_plane_count) \
+				!= int(b.registered_facade_plane_count):
+			return int(a.registered_facade_plane_count) \
+				< int(b.registered_facade_plane_count)
 		if int(a.height) != int(b.height):
 			return int(a.height) > int(b.height)
 		if int(a.participant_count) != int(b.participant_count):
@@ -586,6 +614,43 @@ static func _participant_can_bear(lineages: Dictionary,
 		int(participant.source_block_index))
 	return position >= 1 and _intersection_size(columns,
 		(blocks[position - 1] as Dictionary).columns as Dictionary) > 0
+
+
+static func _merged_vertical_repetition_audit(lineages: Dictionary,
+		participants: Array[Dictionary], columns: Dictionary) -> Dictionary:
+	## A cross-lineage room is chosen for structural and volumetric reasons, but
+	## it is still one visible storey in every lineage it consumes. Count the
+	## world-space facade planes it would retain against every surviving lower
+	## and upper neighbor before candidate selection; otherwise the greedy merge
+	## can create the very registered tower silhouette the later variation pass
+	## is unable to revisit.
+	var registered_planes := 0
+	var strong_registrations := 0
+	for participant: Dictionary in participants:
+		var lineage := lineages[StringName(participant.lineage_id)] as Dictionary
+		var blocks := lineage.blocks as Array[Dictionary]
+		var position := _block_position(blocks,
+			int(participant.source_block_index))
+		if position < 0:
+			continue
+		var current := blocks[position] as Dictionary
+		for neighbor_position in [position - 1, position + 1]:
+			if neighbor_position < 0 or neighbor_position >= blocks.size():
+				continue
+			var neighbor := blocks[neighbor_position] as Dictionary
+			var contiguous := int(neighbor.end_storey) \
+				== int(current.start_storey) if neighbor_position < position \
+				else int(current.end_storey) == int(neighbor.start_storey)
+			if not contiguous:
+				continue
+			var registered := _registered_facade_plane_count(columns,
+				neighbor.columns as Dictionary)
+			registered_planes += registered
+			strong_registrations += int(registered >= 2)
+	return {
+		"registered_facade_plane_count": registered_planes,
+		"strong_registration_count": strong_registrations,
+	}
 
 
 static func _resumptions_overlap(lineages: Dictionary,
@@ -793,6 +858,12 @@ static func _couple_upper_lineages(lineages: Dictionary,
 								and StringName((right.current as Dictionary).kind) \
 									== &"tower" \
 								and StringName(right_variant.kind) != &"tower"),
+							"strong_registration_count": int(
+								left_variant.strong_registration_count) + int(
+								right_variant.strong_registration_count),
+							"registered_facade_plane_count": int(
+								left_variant.registered_facade_plane_count) + int(
+								right_variant.registered_facade_plane_count),
 							"height": maxi(int(left.height), int(right.height)),
 							"score": score, "tie": tie})
 	pair_candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -801,6 +872,14 @@ static func _couple_upper_lineages(lineages: Dictionary,
 				> int(b.interface_tower_relief)
 		if int(a.tower_relief) != int(b.tower_relief):
 			return int(a.tower_relief) > int(b.tower_relief)
+		if int(a.strong_registration_count) \
+				!= int(b.strong_registration_count):
+			return int(a.strong_registration_count) \
+				< int(b.strong_registration_count)
+		if int(a.registered_facade_plane_count) \
+				!= int(b.registered_facade_plane_count):
+			return int(a.registered_facade_plane_count) \
+				< int(b.registered_facade_plane_count)
 		if int(a.height) != int(b.height):
 			return int(a.height) > int(b.height)
 		if int(a.score) != int(b.score):
@@ -910,6 +989,8 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 					var repetition_cost := _vertical_repetition_cost(kind, yaw,
 						columns, previous) + _vertical_repetition_cost(kind, yaw,
 						columns, next)
+					var registration := _candidate_vertical_registration(
+						columns, previous, next)
 					var score := tower_relief * 7000 + kind_change * 1800 \
 						+ int(expanded) * 700 + difference * 55 \
 						+ lower_overlap * 22 + upper_overlap * 12 + scale_bonus \
@@ -921,8 +1002,22 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 					out.append({"kind": kind, "origin": origin,
 						"yaw_quarters": yaw, "columns": columns,
 						"tower_relief": tower_relief, "score": score,
+						"strong_registration_count": int(
+							registration.strong_registration_count),
+						"registered_facade_plane_count": int(
+							registration.registered_facade_plane_count),
 						"tie": tie})
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.tower_relief) != int(b.tower_relief):
+			return int(a.tower_relief) > int(b.tower_relief)
+		if int(a.strong_registration_count) \
+				!= int(b.strong_registration_count):
+			return int(a.strong_registration_count) \
+				< int(b.strong_registration_count)
+		if int(a.registered_facade_plane_count) \
+				!= int(b.registered_facade_plane_count):
+			return int(a.registered_facade_plane_count) \
+				< int(b.registered_facade_plane_count)
 		if int(a.score) != int(b.score):
 			return int(a.score) > int(b.score)
 		return int(a.tie) < int(b.tie))
@@ -1056,6 +1151,129 @@ static func _vary_unmerged_lineages(lineages: Dictionary,
 	return expanded_count
 
 
+static func _relieve_registered_lineages(lineages: Dictionary,
+		grid: WarrenSpatialGrid, protected_owners: Dictionary,
+		world_seed: int) -> int:
+	## The first three composition passes exchange mass between lineages and
+	## make indispensable feature-aware choices. A storey selected early in
+	## those passes cannot know the final plate above it, so local scoring can
+	## accidentally preserve a registered facade after its neighbor moves.
+	##
+	## Run bounded coordinate descent over that finished 3D partition. A move is
+	## accepted only when the actual two adjacent transitions improve
+	## lexicographically (strong registrations, then retained facade planes,
+	## then repeated room/ridge families). Every accepted move therefore lowers
+	## the global vertical-repetition measure; alternating sweep direction lets
+	## a middle storey react to both already-final neighbors without oscillation.
+	var claimed_cells: Dictionary = {}
+	for id_value: Variant in lineages.keys():
+		var owner_id := StringName(id_value)
+		var owner := lineages[owner_id] as Dictionary
+		for block: Dictionary in owner.blocks as Array[Dictionary]:
+			for cell: Vector3i in block.cells:
+				if not claimed_cells.has(cell):
+					claimed_cells[cell] = owner_id
+	var ids: Array[StringName] = []
+	ids.assign(lineages.keys())
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	var accepted := 0
+	for sweep in 4:
+		var changed := 0
+		var sweep_ids := ids.duplicate()
+		if posmod(sweep, 2) == 1:
+			sweep_ids.reverse()
+		for lineage_id: StringName in sweep_ids:
+			var lineage := lineages[lineage_id] as Dictionary
+			var blocks := lineage.blocks as Array[Dictionary]
+			if blocks.size() < 2:
+				continue
+			var positions: Array[int] = []
+			for position in range(1, blocks.size()):
+				positions.append(position)
+			if posmod(sweep, 2) == 1:
+				positions.reverse()
+			for position: int in positions:
+				var current := blocks[position] as Dictionary
+				if bool(current.forced) and not _block_allows_recomposition(
+						current) or bool(current.merged) \
+						or current.has("support_parent_lineage_id"):
+					continue
+				var previous := blocks[position - 1] as Dictionary
+				var next := blocks[position + 1] as Dictionary \
+					if position + 1 < blocks.size() else {}
+				var before := _vertical_profile_metric(current, previous, next)
+				var variant := _volumetric_variant_stamp(grid,
+					protected_owners, claimed_cells, lineage_id, current,
+					previous, next, position, world_seed, false)
+				if variant.is_empty():
+					continue
+				var replacement := _variant_replacement(current, variant)
+				var after := _vertical_profile_metric(replacement,
+					previous, next)
+				if not _vertical_profile_is_better(after, before):
+					continue
+				for old_cell: Vector3i in current.cells:
+					if claimed_cells.get(old_cell, &"") == lineage_id:
+						claimed_cells.erase(old_cell)
+				for cell: Vector3i in replacement.cells:
+					claimed_cells[cell] = lineage_id
+				blocks[position] = replacement
+				changed += 1
+				accepted += 1
+			lineage["blocks"] = blocks
+			lineages[lineage_id] = lineage
+		if changed == 0:
+			break
+	return accepted
+
+
+static func _variant_replacement(current: Dictionary,
+		variant: Dictionary) -> Dictionary:
+	var replacement := current.duplicate(true)
+	var stamped := _record(StringName(variant.kind),
+		variant.origin as Vector3i, int(variant.yaw_quarters),
+		int(current.start_storey), int(current.end_storey))
+	for key: String in ["kind", "origin", "yaw_quarters", "columns", "cells"]:
+		replacement[key] = stamped[key]
+	replacement["merged"] = false
+	replacement["expanded"] = bool(variant.get("expanded", false))
+	replacement["registration_relief"] = true
+	return replacement
+
+
+static func _vertical_profile_metric(current: Dictionary,
+		previous: Dictionary, next: Dictionary) -> Dictionary:
+	var registration := _candidate_vertical_registration(
+		current.columns as Dictionary, previous, next)
+	var same_kind := 0
+	var same_axis := 0
+	for adjacent: Dictionary in [previous, next]:
+		if adjacent.is_empty():
+			continue
+		same_kind += int(StringName(current.kind) == StringName(adjacent.kind))
+		same_axis += int(posmod(int(current.yaw_quarters), 2) \
+			== posmod(int(adjacent.yaw_quarters), 2))
+	return {
+		"strong_registration_count": int(
+			registration.strong_registration_count),
+		"registered_facade_plane_count": int(
+			registration.registered_facade_plane_count),
+		"same_kind_count": same_kind,
+		"same_ridge_axis_count": same_axis,
+	}
+
+
+static func _vertical_profile_is_better(candidate: Dictionary,
+		current: Dictionary) -> bool:
+	for key: String in ["strong_registration_count",
+			"registered_facade_plane_count", "same_kind_count",
+			"same_ridge_axis_count"]:
+		if int(candidate[key]) != int(current[key]):
+			return int(candidate[key]) < int(current[key])
+	return false
+
+
 static func _lineage_overlap_audit(lineages: Dictionary) -> Dictionary:
 	var owner_by_cell: Dictionary = {}
 	var overlap_cells: Dictionary = {}
@@ -1085,7 +1303,8 @@ static func _lineage_overlap_audit(lineages: Dictionary) -> Dictionary:
 static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 		protected_owners: Dictionary, claimed_cells: Dictionary,
 		lineage_id: StringName, current: Dictionary, previous: Dictionary,
-		next: Dictionary, block_index: int, world_seed: int) -> Dictionary:
+		next: Dictionary, block_index: int, world_seed: int,
+		allow_tower_promotion: bool = true) -> Dictionary:
 	var current_columns := current.columns as Dictionary
 	var previous_columns := previous.columns as Dictionary
 	var minimum := Vector2i(2147483647, 2147483647)
@@ -1102,6 +1321,9 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	var clear_count := 0
 	var clearance_failures: Array[Dictionary] = []
 	for kind: StringName in ROOM_KINDS:
+		if not allow_tower_promotion and kind == &"tower" \
+				and StringName(current.kind) != &"tower":
+			continue
 		for yaw in 4:
 			for x in range(minimum.x - 4, maximum.x + 5):
 				for z in range(minimum.y - 4, maximum.y + 5):
@@ -1166,6 +1388,8 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 					var repetition_cost := _vertical_repetition_cost(kind, yaw,
 						columns, previous) + _vertical_repetition_cost(kind, yaw,
 						columns, next)
+					var registration := _candidate_vertical_registration(
+						columns, previous, next)
 					var score := tower_relief * 6000 + kind_change * 1800 \
 						+ int(expanded) * 900 + cap_scale_bonus \
 						+ difference * 45 + lower_overlap * 25 \
@@ -1179,7 +1403,13 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 						1000003)
 					candidates.append({"kind": kind, "origin": origin,
 						"yaw_quarters": yaw, "columns": columns,
-						"expanded": expanded, "score": score, "tie": tie})
+						"expanded": expanded, "score": score,
+						"tower_relief": tower_relief,
+						"strong_registration_count": int(
+							registration.strong_registration_count),
+						"registered_facade_plane_count": int(
+							registration.registered_facade_plane_count),
+						"tie": tie})
 	if _block_has_interface_constraint(current):
 		last_variant_diagnostic["%s/%d" % [lineage_id, block_index]] = {
 			"shape_count": shape_count,
@@ -1193,6 +1423,16 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	if candidates.is_empty():
 		return {}
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.tower_relief) != int(b.tower_relief):
+			return int(a.tower_relief) > int(b.tower_relief)
+		if int(a.strong_registration_count) \
+				!= int(b.strong_registration_count):
+			return int(a.strong_registration_count) \
+				< int(b.strong_registration_count)
+		if int(a.registered_facade_plane_count) \
+				!= int(b.registered_facade_plane_count):
+			return int(a.registered_facade_plane_count) \
+				< int(b.registered_facade_plane_count)
 		if int(a.score) != int(b.score):
 			return int(a.score) > int(b.score)
 		return int(a.tie) < int(b.tie))
@@ -1364,9 +1604,13 @@ static func _truncate_unpaired_towers(lineages: Dictionary) -> int:
 		var storeys := _lineage_storey_count(blocks)
 		if storeys <= MAX_UNPAIRED_TOWER_STOREYS \
 				or int(lineage.required_through_block) \
-					>= floori(float(MAX_UNPAIRED_TOWER_STOREYS) / 2.0) \
+					>= MAX_UNPAIRED_TOWER_STOREYS \
 				or not _lineage_is_tower_only(blocks):
 			continue
+		# Source records used to span two storeys, so this comparison divided the
+		# retained height by two. Records are now one storey each: a forced second
+		# storey has index 1 and is fully preserved by the two-storey cap, while a
+		# genuinely required third storey has index 2 and must prevent truncation.
 		while not blocks.is_empty() \
 				and int((blocks[-1] as Dictionary).start_storey) \
 					>= MAX_UNPAIRED_TOWER_STOREYS:
@@ -1507,8 +1751,12 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 	var extruded_ids: Array[StringName] = []
 	var tower_only_ids: Array[StringName] = []
 	var tall_tower_only_ids: Array[StringName] = []
+	var relieved_tall_tower_only_ids: Array[StringName] = []
+	var tall_tower_only_details: Array[Dictionary] = []
 	var four_storey_tower_run_ids: Array[StringName] = []
 	var four_storey_tower_run_details: Array[Dictionary] = []
+	var overlong_tower_run_ids: Array[StringName] = []
+	var overlong_tower_run_details: Array[Dictionary] = []
 	var max_identical_tower_run := 0
 	var consecutive_floorplate_pair_count := 0
 	var registered_facade_plane_count := 0
@@ -1562,11 +1810,54 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 				and not bool(lineage.paired_secondary):
 			max_tower_only = maxi(max_tower_only, storeys)
 			tower_only_ids.append(lineage_id)
-			if storeys >= TALL_LINEAGE_STOREYS:
-				tall_tower_only_ids.append(lineage_id)
 			var identical_run := _longest_identical_floorplate_run(blocks)
+			if storeys >= TALL_LINEAGE_STOREYS:
+				var relief_transition_count := \
+					_silhouette_relief_transition_count(blocks)
+				var transition_count := _contiguous_transition_count(blocks)
+				var is_silhouette_relieved := relief_transition_count >= 1 \
+					and identical_run <= MAX_UNPAIRED_TOWER_STOREYS
+				if is_silhouette_relieved:
+					relieved_tall_tower_only_ids.append(lineage_id)
+				else:
+					tall_tower_only_ids.append(lineage_id)
+				var block_details: Array[Dictionary] = []
+				for block: Dictionary in blocks:
+					block_details.append({
+						"storey": int(block.source_block_index),
+						"origin": block.origin,
+						"forced": bool(block.forced),
+						"address_expandable": bool(block.get(
+							"address_expandable", false)),
+						"feature_endpoint_count": (block.get(
+							"feature_endpoint_constraints", []) as Array).size(),
+						"support_parent": StringName(block.get(
+							"support_parent_lineage_id", &"")),
+					})
+				tall_tower_only_details.append({
+					"lineage_id": lineage_id,
+					"silhouette_relieved": is_silhouette_relieved,
+					"relief_transition_count": relief_transition_count,
+					"transition_count": transition_count,
+					"required_through_block": int(
+						lineage.required_through_block),
+					"blocks": block_details,
+				})
 			max_identical_tower_run = maxi(max_identical_tower_run,
 				identical_run)
+			if identical_run > MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS:
+				overlong_tower_run_ids.append(lineage_id)
+				var overlong_blocks: Array[Dictionary] = []
+				for block: Dictionary in blocks:
+					overlong_blocks.append({"source_block_index": int(
+						block.source_block_index), "start": int(block.start_storey),
+						"end": int(block.end_storey), "forced": bool(block.forced),
+						"address_expandable": bool(block.get(
+							"address_expandable", false)), "origin": block.origin})
+				overlong_tower_run_details.append({"lineage_id": lineage_id,
+					"identical_run": identical_run,
+					"required_through_block": int(lineage.required_through_block),
+					"blocks": overlong_blocks})
 			if identical_run >= 4:
 				four_storey_tower_run_ids.append(lineage_id)
 				var block_details: Array[Dictionary] = []
@@ -1596,8 +1887,13 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 		"max_tower_only_lineage_storeys": max_tower_only,
 		"tower_only_lineage_ids": tower_only_ids,
 		"tall_tower_only_lineage_ids": tall_tower_only_ids,
+		"relieved_tall_tower_only_lineage_ids": \
+			relieved_tall_tower_only_ids,
+		"tall_tower_only_lineage_details": tall_tower_only_details,
 		"four_storey_tower_run_lineage_ids": four_storey_tower_run_ids,
 		"four_storey_tower_run_details": four_storey_tower_run_details,
+		"overlong_tower_run_lineage_ids": overlong_tower_run_ids,
+		"overlong_tower_run_details": overlong_tower_run_details,
 		"max_identical_tower_floorplate_run_storeys": \
 			max_identical_tower_run,
 		"truncated_tower_storey_count": truncated_tower_storeys,
@@ -1682,6 +1978,38 @@ static func _registered_facade_plane_count(left: Dictionary,
 		+ int(left_min.y == right_min.y) + int(left_max.y == right_max.y)
 
 
+static func _contiguous_transition_count(blocks: Array[Dictionary]) -> int:
+	var count := 0
+	for block_index in range(1, blocks.size()):
+		var lower := blocks[block_index - 1] as Dictionary
+		var upper := blocks[block_index] as Dictionary
+		count += int(int(lower.end_storey) == int(upper.start_storey))
+	return count
+
+
+static func _silhouette_relief_transition_count(
+		blocks: Array[Dictionary]) -> int:
+	## A small room family is not automatically a vertical tower. A complete
+	## upper room shifted far enough to release at least two of the lower room's
+	## four facade planes is a whole-room outcropping/setback in the actual
+	## occupied volume. One such break is sufficient only when no floorplate then
+	## repeats for three storeys; this admits a deliberate 2+2 stepped house while
+	## retaining the hard rejection of a shaft with a token cap offset.
+	var count := 0
+	for block_index in range(1, blocks.size()):
+		var lower := blocks[block_index - 1] as Dictionary
+		var upper := blocks[block_index] as Dictionary
+		if int(lower.end_storey) != int(upper.start_storey):
+			continue
+		var lower_columns := lower.columns as Dictionary
+		var upper_columns := upper.columns as Dictionary
+		if not _same_set(lower_columns, upper_columns) \
+				and _registered_facade_plane_count(lower_columns,
+					upper_columns) <= 2:
+			count += 1
+	return count
+
+
 static func _vertical_repetition_cost(kind: StringName, yaw: int,
 		columns: Dictionary, adjacent: Dictionary) -> int:
 	if adjacent.is_empty():
@@ -1696,6 +2024,23 @@ static func _vertical_repetition_cost(kind: StringName, yaw: int,
 	if posmod(yaw, 2) == posmod(int(adjacent.yaw_quarters), 2):
 		cost += SAME_ADJACENT_RIDGE_AXIS_COST
 	return cost
+
+
+static func _candidate_vertical_registration(columns: Dictionary,
+		previous: Dictionary, next: Dictionary) -> Dictionary:
+	var registered_planes := 0
+	var strong_registrations := 0
+	for adjacent: Dictionary in [previous, next]:
+		if adjacent.is_empty():
+			continue
+		var registered := _registered_facade_plane_count(columns,
+			adjacent.columns as Dictionary)
+		registered_planes += registered
+		strong_registrations += int(registered >= 2)
+	return {
+		"registered_facade_plane_count": registered_planes,
+		"strong_registration_count": strong_registrations,
+	}
 
 
 static func _is_subset(left: Dictionary, right: Dictionary) -> bool:

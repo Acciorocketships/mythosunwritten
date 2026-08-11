@@ -22,6 +22,7 @@ const SKY_DIRECTIONS: Array[Vector3i] = [
 static var last_failure := ""
 static var last_audit: Dictionary = {}
 static var last_skywalk_diagnostic: Dictionary = {}
+static var last_outcropping_diagnostic: Dictionary = {}
 
 
 static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
@@ -36,12 +37,23 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	last_failure = ""
 	last_audit = {}
 	last_skywalk_diagnostic = {}
+	last_outcropping_diagnostic = {}
 	if grid == null or grid.is_sealed() or source == null \
 			or not source.is_sealed() or buildings.is_empty() or supports == null \
 			or not supports.is_sealed():
 		last_failure = "missing mutable grid, source volume, buildings, or supports"
 		return [] as Array[WarrenFeatureReservation]
 	var out: Array[WarrenFeatureReservation] = []
+	var scale_profile := WarrenVillageScaleProfile.for_id(StringName(
+		source.mass_context.get(&"scale_profile_id",
+			WarrenVillageScaleProfile.LARGE)))
+	if scale_profile == null:
+		last_failure = "spatial features have an invalid scale profile"
+		return [] as Array[WarrenFeatureReservation]
+	var target_skywalks := scale_profile.skywalk_range.x
+	var target_landmarks := scale_profile.landmark_range.x
+	var target_balconies := scale_profile.balcony_range.x
+	var target_outcroppings := scale_profile.cantilever_range.x
 	var market := _reserve_preplanned_market(grid, buildings, supports,
 		preplanned_market)
 	if market == null:
@@ -49,34 +61,39 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	out.append(market)
 	var landmarks := _record_preplanned_landmarks(grid, supports,
 		preplanned_landmarks)
-	if landmarks.size() < TARGET_PREFAB_LANDMARKS:
+	if landmarks.size() < target_landmarks:
 		last_failure = "only %d of %d topology-first prefab landmarks survived" \
-			% [landmarks.size(), TARGET_PREFAB_LANDMARKS]
+			% [landmarks.size(), target_landmarks]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(landmarks)
 	var skywalks := _reserve_preplanned_skywalks(grid, buildings, supports,
 		preplanned_skywalks, landmarks) if not preplanned_skywalks.is_empty() \
-		else _reserve_skywalks(grid, buildings, supports, source.world_seed)
-	if skywalks.size() < TARGET_SKYWALKS:
+		else _reserve_skywalks(grid, buildings, supports, source.world_seed,
+			target_skywalks)
+	if skywalks.size() < target_skywalks:
 		var detail := last_failure
 		last_failure = "only %d of %d topology-first skywalks fit: %s (%s)" % [
-			skywalks.size(), TARGET_SKYWALKS, detail,
+			skywalks.size(), target_skywalks, detail,
 			last_skywalk_diagnostic]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(skywalks)
-	var courtyard_bridge := _reserve_preplanned_courtyard_bridge_house(grid,
-		buildings, supports, preplanned_courtyard_bridge)
-	if courtyard_bridge == null:
-		return [] as Array[WarrenFeatureReservation]
-	out.append(courtyard_bridge)
+	var courtyard_bridge: WarrenFeatureReservation
+	if scale_profile.requires_elevated_courtyard:
+		courtyard_bridge = _reserve_preplanned_courtyard_bridge_house(grid,
+			buildings, supports, preplanned_courtyard_bridge)
+		if courtyard_bridge == null:
+			return [] as Array[WarrenFeatureReservation]
+		out.append(courtyard_bridge)
 	# The court transaction sees the cantilever's actual committed
 	# PRIVATE_VOLUME. It never counts its endpoint, clearance envelope, or visual
 	# mesh as an enclosing facade, and the three ordinary skywalks remain fully
 	# independent circulation features elsewhere in the mountain.
-	var court := _reserve_courtyard(grid, source, buildings, supports)
-	if court == null:
-		return [] as Array[WarrenFeatureReservation]
-	out.append(court)
+	var court: WarrenFeatureReservation
+	if scale_profile.requires_elevated_courtyard:
+		court = _reserve_courtyard(grid, source, buildings, supports)
+		if court == null:
+			return [] as Array[WarrenFeatureReservation]
+		out.append(court)
 	var tall_tower_sources: Array[StringName] = []
 	for source_value: Variant in composition_audit.get(
 			"tall_tower_only_lineage_ids", []):
@@ -101,30 +118,34 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(tower_annexes)
 	var balconies := _reserve_balconies(grid, buildings, supports,
-		source.world_seed, construction_program, out)
+		source.world_seed, construction_program, out, target_balconies)
 	var balcony_buildings: Dictionary = {}
 	for balcony: WarrenFeatureReservation in balconies:
 		balcony_buildings[StringName(balcony.audit.balcony_building_id)] = true
-	if balconies.size() < TARGET_BALCONIES \
-			or balcony_buildings.size() < MIN_BALCONY_BUILDINGS:
+	var minimum_balcony_buildings := mini(MIN_BALCONY_BUILDINGS,
+		target_balconies)
+	if balconies.size() < target_balconies \
+			or balcony_buildings.size() < minimum_balcony_buildings:
 		last_failure = "only %d balconies across %d buildings fit; need %d across %d" \
-			% [balconies.size(), balcony_buildings.size(), TARGET_BALCONIES,
-				MIN_BALCONY_BUILDINGS]
+			% [balconies.size(), balcony_buildings.size(), target_balconies,
+				minimum_balcony_buildings]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(balconies)
 	var outcroppings := _reserve_room_outcroppings(grid, buildings, supports,
-		source.world_seed)
-	if outcroppings.size() < TARGET_ROOM_OUTCROPPINGS:
+		source.world_seed, construction_program, out, target_outcroppings)
+	if outcroppings.size() < target_outcroppings:
 		last_failure = "only %d of %d room-scale outcroppings exist" % [
-			outcroppings.size(), TARGET_ROOM_OUTCROPPINGS]
+			outcroppings.size(), target_outcroppings]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(outcroppings)
 	last_audit = {
-		"elevated_courtyard_count": 1,
+		"elevated_courtyard_count": int(
+			scale_profile.requires_elevated_courtyard),
 		"covered_market_count": 1,
 		"prefab_landmark_count": landmarks.size(),
 		"enclosed_skywalk_count": skywalks.size(),
-		"courtyard_bridge_house_count": 1,
+		"courtyard_bridge_house_count": int(
+			scale_profile.requires_elevated_courtyard),
 		"tower_annex_count": tower_annexes.size(),
 		"tower_annex_source_count": tall_tower_sources.size(),
 		"usable_balcony_count": balconies.size(),
@@ -132,8 +153,12 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"room_outcropping_count": outcroppings.size(),
 		"feature_count": out.size(),
 	}
-	last_audit.merge(courtyard_bridge.audit, false)
-	last_audit.merge(court.audit, false)
+	last_audit.merge(last_outcropping_diagnostic, false)
+	if courtyard_bridge != null:
+		last_audit.merge(courtyard_bridge.audit, false)
+	if court != null:
+		last_audit.merge(court.audit, false)
+	last_audit.merge(market.audit, false)
 	return out
 
 
@@ -711,7 +736,8 @@ static func _reserve_courtyard(grid: WarrenSpatialGrid,
 static func _reserve_balconies(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
-		existing_features: Array[WarrenFeatureReservation]) \
+		existing_features: Array[WarrenFeatureReservation],
+		target_count: int = TARGET_BALCONIES) \
 		-> Array[WarrenFeatureReservation]:
 	## Search the actual three-dimensional residual void around upper room
 	## sockets. A candidate is a complete measured recipe and owns its deck,
@@ -804,7 +830,7 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 	var used_facades: Dictionary = {}
 	var used_rooms: Dictionary = {}
 	for candidate: Dictionary in candidates:
-		if out.size() >= TARGET_BALCONIES:
+		if out.size() >= target_count:
 			break
 		var building := candidate.building as WarrenBuildingVolume
 		var room := candidate.room as WarrenRoomStamp
@@ -1101,6 +1127,7 @@ static func _reserve_preplanned_market(grid: WarrenSpatialGrid,
 	var body_set: Dictionary = {}
 	for cell: Vector3i in body:
 		body_set[cell] = true
+	var overhead_public_floor_seam_count := 0
 	var tx := grid.begin_transaction(feature_id)
 	if not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
 			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
@@ -1127,6 +1154,19 @@ static func _reserve_preplanned_market(grid: WarrenSpatialGrid,
 				kind = WarrenSpatialGrid.FaceKind.SOFFIT \
 					if grid.use_at(neighbor) == WarrenSpatialGrid.Use.PUBLIC_AIR \
 					else WarrenSpatialGrid.FaceKind.PRIVATE_FLOOR
+			var existing := grid.face_claim(cell, direction)
+			if not existing.is_empty():
+				# A topology-first market may fit immediately beneath an upper
+				# public route. Its canopy and that route meet at one physical
+				# interface; the already-sealed PUBLIC_FLOOR remains the authority
+				# instead of being overwritten by a duplicate ROOF label.
+				if direction == Vector3i.UP and int(existing.kind) \
+						== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+					overhead_public_floor_seam_count += 1
+					continue
+				last_failure = "covered-market face conflicts at %s toward %s" % [
+					cell, direction]
+				return null
 			if not tx.claim_face(cell, direction, kind, feature_id):
 				last_failure = "could not stage covered-market interface at %s" % cell
 				return null
@@ -1161,6 +1201,14 @@ static func _reserve_preplanned_market(grid: WarrenSpatialGrid,
 					"street_entrance_width", 0)),
 				"market_stocked_bay_count": 2,
 				"market_continuous_canopy": true,
+				"market_overhead_public_floor_seam_count":
+					overhead_public_floor_seam_count,
+				"market_open_horizon_max_cells": int(reservation.get(
+					"open_horizon_max_cells", 2147483647)),
+				"market_open_horizon_total_cells": int(reservation.get(
+					"open_horizon_total_cells", 2147483647)),
+				"market_core_radius_squared": float(reservation.get(
+					"core_radius_squared", INF)),
 				"market_backing_room_id": backing_room.stable_id,
 				"market_backing_building_id": backing_building.stable_id,
 				"market_backing_parcel_id": backing_parcel_id,
@@ -1502,7 +1550,8 @@ static func _courtyard_side_endpoints(grid: WarrenSpatialGrid,
 
 static func _reserve_skywalks(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
-		world_seed: int) -> Array[WarrenFeatureReservation]:
+		world_seed: int, target_count: int = TARGET_SKYWALKS) \
+		-> Array[WarrenFeatureReservation]:
 	var endpoints := _room_endpoints(buildings)
 	var by_key: Dictionary = {}
 	for endpoint: Dictionary in endpoints:
@@ -1546,7 +1595,7 @@ static func _reserve_skywalks(grid: WarrenSpatialGrid,
 			"distance": int(candidate.distance),
 			"origin": candidate.origin,
 		})
-		if out.size() >= TARGET_SKYWALKS:
+		if out.size() >= target_count:
 			break
 		var pair_key := _pair_key(StringName(candidate.left.building_id),
 			StringName(candidate.right.building_id))
@@ -1679,7 +1728,14 @@ static func _commit_skywalk(grid: WarrenSpatialGrid, candidate: Dictionary,
 
 static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
-		world_seed: int) -> Array[WarrenFeatureReservation]:
+		world_seed: int, program: SettlementFabricProgram,
+		existing_features: Array[WarrenFeatureReservation] = [],
+		target_count: int = TARGET_ROOM_OUTCROPPINGS) \
+		-> Array[WarrenFeatureReservation]:
+	if program == null or program.recipe(&"outcrop.support.bracketed.2") == null \
+			or program.recipe(&"outcrop.support.diagonal.2") == null:
+		last_failure = "room outcroppings lack the measured bracket vocabulary"
+		return [] as Array[WarrenFeatureReservation]
 	var building_by_room: Dictionary = {}
 	var rooms_by_source: Dictionary = {}
 	for building: WarrenBuildingVolume in buildings:
@@ -1702,36 +1758,60 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 				upper.lattice_origin.z - lower.lattice_origin.z)
 			if delta == Vector2i.ZERO:
 				continue
-			var lower_columns: Dictionary = {}
-			for cell: Vector3i in lower.private_cells:
-				lower_columns[Vector2i(cell.x, cell.z)] = true
-			var upper_columns: Dictionary = {}
-			var extension_columns: Dictionary = {}
-			for cell: Vector3i in upper.private_cells:
-				var column := Vector2i(cell.x, cell.z)
-				upper_columns[column] = true
-				if not lower_columns.has(column):
-					extension_columns[column] = true
-			if upper_columns.size() < 4 or extension_columns.is_empty():
+			var geometry := _room_cantilever_geometry(lower, upper)
+			if geometry.is_empty():
 				continue
 			candidates.append({"lower": lower, "upper": upper,
 				"building": building_by_room[upper.stable_id], "delta": delta,
-				"extension_column_count": extension_columns.size(),
+				"extension_column_count": int(geometry.extension_column_count),
+				"cantilever_geometry": geometry,
 				"tie": posmod(Helper._mix64(world_seed \
 					^ String(upper.stable_id).hash()), 1000003)})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var a_valid := bool((a.cantilever_geometry as Dictionary).valid)
+		var b_valid := bool((b.cantilever_geometry as Dictionary).valid)
+		if a_valid != b_valid:
+			return a_valid
 		if int(a.extension_column_count) != int(b.extension_column_count):
 			return int(a.extension_column_count) > int(b.extension_column_count)
 		return int(a.tie) < int(b.tie))
+	var valid_candidate_count := 0
+	var rejection_counts: Dictionary = {}
+	for candidate: Dictionary in candidates:
+		var geometry := candidate.cantilever_geometry as Dictionary
+		valid_candidate_count += int(bool(geometry.valid))
+		if not bool(geometry.valid):
+			var rejection := StringName(geometry.rejection)
+			rejection_counts[rejection] = int(rejection_counts.get(rejection, 0)) + 1
 	var out: Array[WarrenFeatureReservation] = []
 	var used_buildings: Dictionary = {}
+	var measured_support_conflict_count := 0
 	for candidate: Dictionary in candidates:
-		if out.size() >= TARGET_ROOM_OUTCROPPINGS:
+		if out.size() >= target_count:
 			break
+		# Invalid shifted rooms remain in the diagnostic census so future grammar
+		# changes cannot silently reintroduce them, but they are not outcroppings.
+		# A corner-shifted box or a mostly floating upper plate must never satisfy
+		# this feature quota merely because some columns differ from the floor below.
+		if not bool((candidate.cantilever_geometry as Dictionary).valid):
+			continue
 		var building := candidate.building as WarrenBuildingVolume
 		if used_buildings.has(building.stable_id):
 			continue
 		var upper := candidate.upper as WarrenRoomStamp
+		var geometry := candidate.cantilever_geometry as Dictionary
+		var support_records := _cantilever_support_records(upper, geometry, grid)
+		if support_records.is_empty():
+			continue
+		var related_room_ids := {
+			upper.stable_id: true,
+			(candidate.lower as WarrenRoomStamp).stable_id: true,
+		}
+		if not _outcrop_supports_clear_measured_envelopes(support_records,
+				related_room_ids, buildings, existing_features, program,
+				world_seed):
+			measured_support_conflict_count += 1
+			continue
 		var feature_id := StringName("spatial.feature.outcrop.%02d" % out.size())
 		var tx := grid.begin_transaction(feature_id)
 		if not tx.reserve(upper.private_cells,
@@ -1743,8 +1823,16 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 		if not feature.add_reserved_cells(upper.private_cells) \
 				or not feature.add_endpoint(upper.private_cells[0],
 					building.stable_id) \
-				or not feature.set_support_node(building.stable_id) \
-				or not feature.set_audit_facts({
+				or not feature.set_support_node(building.stable_id):
+			last_failure = "room outcropping support identity failed"
+			return [] as Array[WarrenFeatureReservation]
+		for record: Dictionary in support_records:
+			if not feature.add_construction_record(StringName(record.recipe_id),
+					record.origin as Vector3i, int(record.yaw_quarters),
+					StringName(record.role)):
+				last_failure = "room outcropping bracket record failed"
+				return [] as Array[WarrenFeatureReservation]
+		if not feature.set_audit_facts({
 					"outcrop_upper_room_id": upper.stable_id,
 					"outcrop_lower_room_id": (candidate.lower \
 						as WarrenRoomStamp).stable_id,
@@ -1752,12 +1840,306 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 						candidate.extension_column_count),
 					"outcrop_room_footprint_column_count": \
 						upper.private_cells.size() / WarrenSpatialGrid.STOREY_CELLS,
+					"outcrop_is_integrated_cantilever": bool(geometry.valid),
+					"outcrop_projection_direction": geometry.direction as Vector2i,
+					"outcrop_projection_depth_cells": int(geometry.depth_cells),
+					"outcrop_attachment_span_cells": int(
+						geometry.attachment_span_cells),
+					"outcrop_bearing_column_count": int(geometry.bearing_column_count),
+					"outcrop_bearing_ratio": float(geometry.bearing_ratio),
+					"outcrop_support_course_count": support_records.size(),
+					"outcrop_diagonal_support_course_count": support_records.filter(
+						func(record: Dictionary) -> bool:
+							return StringName(record.recipe_id) \
+								== &"outcrop.support.diagonal.2").size(),
+					"outcrop_geometry_rejection": StringName(geometry.rejection),
 				}) or not feature.seal(grid, supports):
 			last_failure = "room outcropping seal failed: %s" % \
 				feature.last_rejection
 			return [] as Array[WarrenFeatureReservation]
 		used_buildings[building.stable_id] = true
 		out.append(feature)
+	last_outcropping_diagnostic = {
+		"room_outcropping_candidate_count": candidates.size(),
+		"integrated_cantilever_candidate_count": valid_candidate_count,
+		"noncantilever_outcropping_candidate_count": candidates.size() \
+			- valid_candidate_count,
+		"selected_integrated_cantilever_count": out.filter(
+			func(feature: WarrenFeatureReservation) -> bool:
+				return bool(feature.audit.get(
+					"outcrop_is_integrated_cantilever", false))).size(),
+		"outcrop_diagonal_support_course_count": out.reduce(
+			func(total: int, feature: WarrenFeatureReservation) -> int:
+				return total + int(feature.audit.get(
+					"outcrop_diagonal_support_course_count", 0)), 0),
+		"cantilever_rejection_counts": rejection_counts,
+		"cantilever_measured_support_conflict_count":
+			measured_support_conflict_count,
+	}
+	return out
+
+
+static func _outcrop_supports_clear_measured_envelopes(
+		support_records: Array[Dictionary], related_room_ids: Dictionary,
+		buildings: Array[WarrenBuildingVolume],
+		existing_features: Array[WarrenFeatureReservation],
+		program: SettlementFabricProgram, world_seed: int) -> bool:
+	## Brackets are selected as measured construction, not added after topology.
+	## They may enter the conservative envelopes of the exact upper/lower room
+	## plates they join, but no other room or previously reserved feature.
+	var support_bounds: Array[AABB] = []
+	for record: Dictionary in support_records:
+		var support_recipe := program.recipe(StringName(record.recipe_id))
+		if support_recipe == null or not support_recipe.has_tag(
+				&"cantilever_support"):
+			return false
+		support_bounds.append(FabricRecipe.lattice_transform(
+			record.origin as Vector3i, int(record.yaw_quarters)) \
+			* support_recipe.local_clearance_bounds)
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if related_room_ids.has(room.stable_id):
+				continue
+			var seen_recipes: Dictionary = {}
+			for allow_phase_b in [true, false]:
+				var room_recipe_id := WarrenSpatialFabricCompiler._room_recipe_id(
+					room, world_seed, allow_phase_b)
+				if seen_recipes.has(room_recipe_id):
+					continue
+				seen_recipes[room_recipe_id] = true
+				var room_recipe := program.recipe(room_recipe_id)
+				if room_recipe == null:
+					return false
+				var room_bounds := FabricRecipe.lattice_transform(
+					room.lattice_origin, room.yaw_quarters) \
+					* room_recipe.local_clearance_bounds
+				for bounds: AABB in support_bounds:
+					if SettlementFabricPlan._aabb_overlaps_volume(bounds,
+							room_bounds):
+						return false
+	for feature: WarrenFeatureReservation in existing_features:
+		for record: Dictionary in feature.construction_records:
+			var feature_recipe := program.recipe(StringName(record.recipe_id))
+			if feature_recipe == null:
+				return false
+			var feature_bounds := FabricRecipe.lattice_transform(
+				record.origin as Vector3i, int(record.yaw_quarters)) \
+				* feature_recipe.local_clearance_bounds
+			for bounds: AABB in support_bounds:
+				if SettlementFabricPlan._aabb_overlaps_volume(bounds,
+						feature_bounds):
+					return false
+	return true
+
+
+static func _cantilever_support_records(upper: WarrenRoomStamp,
+		geometry: Dictionary, grid: WarrenSpatialGrid = null) \
+		-> Array[Dictionary]:
+	## Tile the exact bearing edge with native 3 m bracket pairs. Local BACK is
+	## the unsupported projection direction and local RIGHT follows the facade.
+	## Room side spans are even in the admissible 3/6/9 m vocabulary; an odd or
+	## discontinuous edge is rejected instead of receiving a stretched support.
+	var out: Array[Dictionary] = []
+	if upper == null or not bool(geometry.get("valid", false)):
+		return out
+	var direction_2d := geometry.get("direction", Vector2i.ZERO) as Vector2i
+	var direction := Vector3i(direction_2d.x, 0, direction_2d.y)
+	var yaw := _yaw_for_local_direction(Vector3i.BACK, direction)
+	if yaw < 0:
+		return out
+	var span_direction_3d := FabricRecipe.transform_direction(Vector3i.RIGHT,
+		yaw)
+	var span_direction := Vector2i(span_direction_3d.x, span_direction_3d.z)
+	var attachment: Array[Vector2i] = []
+	attachment.assign(geometry.get("attachment_columns", []) as Array)
+	if attachment.size() < 2 or attachment.size() % 2 != 0:
+		return out
+	attachment.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x * span_direction.x + a.y * span_direction.y \
+			< b.x * span_direction.x + b.y * span_direction.y)
+	for index in range(1, attachment.size()):
+		if attachment[index] != attachment[index - 1] + span_direction:
+			return [] as Array[Dictionary]
+	for index in range(0, attachment.size(), 2):
+		var column := attachment[index]
+		var course_columns: Array[Vector2i] = [column, column + span_direction]
+		var recipe_id := &"outcrop.support.diagonal.2" \
+			if _diagonal_cantilever_sweep_is_clear(grid, course_columns,
+				direction, upper.lattice_origin.y) \
+			else &"outcrop.support.bracketed.2"
+		out.append({
+			"recipe_id": recipe_id,
+			"origin": Vector3i(column.x, upper.lattice_origin.y, column.y),
+			"yaw_quarters": yaw,
+			"role": StringName("cantilever_support.%02d" % (index / 2)),
+		})
+	return out
+
+
+static func _diagonal_cantilever_sweep_is_clear(grid: WarrenSpatialGrid,
+		attachment_columns: Array[Vector2i], direction: Vector3i,
+		upper_base_y: int) -> bool:
+	## The native brace drops 3.606 m (slightly over two fine bands) and projects
+	## 2.372 m from its facade post. Conservatively inspect three bands below the
+	## room and two outward columns. Private mass is allowed here because the
+	## measured-envelope pass immediately afterwards proves it belongs to the
+	## upper/lower room pair; public, daylight, service, or court structure is
+	## never pierced by a decorative support.
+	if grid == null:
+		return false
+	for attachment: Vector2i in attachment_columns:
+		for depth in [0, 1, 2]:
+			var column := Vector2i(attachment.x + direction.x * depth,
+				attachment.y + direction.z * depth)
+			for y in range(upper_base_y - 3, upper_base_y):
+				var use_value := grid.use_at(Vector3i(column.x, y, column.y))
+				if use_value in [WarrenSpatialGrid.Use.PUBLIC_AIR,
+						WarrenSpatialGrid.Use.DAYLIGHT_AIR,
+						WarrenSpatialGrid.Use.SERVICE_VOID,
+						WarrenSpatialGrid.Use.STRUCTURAL_VOLUME]:
+					return false
+	return true
+
+
+static func _room_cantilever_geometry(lower: WarrenRoomStamp,
+		upper: WarrenRoomStamp) -> Dictionary:
+	## A room outcropping is an integrated floorplate change, not an arbitrary
+	## upper room which happens not to register with the room beneath it. Its
+	## unsupported columns form one contiguous strip beyond exactly one facade;
+	## at least half of the upper plate remains on real bearing, and projection
+	## depth is bounded to one 3 m bay. This describes the user's drawn jetty:
+	## continuous upper wall over a void, with a legible attachment edge.
+	var lower_columns := _room_columns(lower)
+	var upper_columns := _room_columns(upper)
+	var extension: Dictionary = {}
+	var bearing := 0
+	for column_value: Variant in upper_columns.keys():
+		var column := column_value as Vector2i
+		if lower_columns.has(column):
+			bearing += 1
+		else:
+			extension[column] = true
+	if upper_columns.size() < 4 or extension.is_empty():
+		return {}
+	var lower_bounds := _column_bounds(lower_columns)
+	var direction := Vector2i.ZERO
+	var depth := 0
+	for column_value: Variant in extension.keys():
+		var column := column_value as Vector2i
+		var outside := Vector2i.ZERO
+		var column_depth := 0
+		if column.x < int(lower_bounds.minimum.x):
+			outside = Vector2i.LEFT
+			column_depth = int(lower_bounds.minimum.x) - column.x
+		elif column.x > int(lower_bounds.maximum.x):
+			outside = Vector2i.RIGHT
+			column_depth = column.x - int(lower_bounds.maximum.x)
+		elif column.y < int(lower_bounds.minimum.y):
+			outside = Vector2i.UP
+			column_depth = int(lower_bounds.minimum.y) - column.y
+		elif column.y > int(lower_bounds.maximum.y):
+			outside = Vector2i.DOWN
+			column_depth = column.y - int(lower_bounds.maximum.y)
+		else:
+			return _cantilever_rejection(extension, bearing,
+				upper_columns.size(), &"internal_hole")
+		if direction == Vector2i.ZERO:
+			direction = outside
+		elif outside != direction:
+			return _cantilever_rejection(extension, bearing,
+				upper_columns.size(), &"multiple_facades")
+		depth = maxi(depth, column_depth)
+	if depth > 2:
+		return _cantilever_rejection(extension, bearing,
+			upper_columns.size(), &"projection_too_deep", direction, depth)
+	if not _columns_are_connected(extension):
+		return _cantilever_rejection(extension, bearing,
+			upper_columns.size(), &"disconnected_projection", direction, depth)
+	var attachment: Dictionary = {}
+	for column_value: Variant in extension.keys():
+		var column := column_value as Vector2i
+		var inward := column - direction
+		if lower_columns.has(inward):
+			attachment[inward] = true
+	if attachment.size() < 2:
+		return _cantilever_rejection(extension, bearing,
+			upper_columns.size(), &"attachment_too_narrow", direction, depth,
+			attachment.size())
+	var bearing_ratio := float(bearing) / float(upper_columns.size())
+	if bearing_ratio < 0.50:
+		return _cantilever_rejection(extension, bearing,
+			upper_columns.size(), &"insufficient_bearing", direction, depth,
+			attachment.size())
+	return {
+		"valid": true,
+		"rejection": &"",
+		"direction": direction,
+		"depth_cells": depth,
+		"attachment_span_cells": attachment.size(),
+		"attachment_columns": _sorted_columns(attachment),
+		"extension_columns": _sorted_columns(extension),
+		"extension_column_count": extension.size(),
+		"bearing_column_count": bearing,
+		"bearing_ratio": bearing_ratio,
+	}
+
+
+static func _cantilever_rejection(extension: Dictionary, bearing: int,
+		upper_count: int, rejection: StringName,
+		direction: Vector2i = Vector2i.ZERO, depth: int = 0,
+		attachment_span: int = 0) -> Dictionary:
+	return {
+		"valid": false,
+		"rejection": rejection,
+		"direction": direction,
+		"depth_cells": depth,
+		"attachment_span_cells": attachment_span,
+		"extension_column_count": extension.size(),
+		"bearing_column_count": bearing,
+		"bearing_ratio": float(bearing) / float(upper_count) \
+			if upper_count > 0 else 0.0,
+	}
+
+
+static func _room_columns(room: WarrenRoomStamp) -> Dictionary:
+	var out: Dictionary = {}
+	for cell: Vector3i in room.private_cells:
+		out[Vector2i(cell.x, cell.z)] = true
+	return out
+
+
+static func _column_bounds(columns: Dictionary) -> Dictionary:
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for column_value: Variant in columns.keys():
+		var column := column_value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	return {"minimum": minimum, "maximum": maximum}
+
+
+static func _columns_are_connected(columns: Dictionary) -> bool:
+	if columns.is_empty():
+		return false
+	var keys: Array = columns.keys()
+	var frontier: Array[Vector2i] = [keys[0] as Vector2i]
+	var visited: Dictionary = {frontier[0]: true}
+	while not frontier.is_empty():
+		var column: Vector2i = frontier.pop_back()
+		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+				Vector2i.UP, Vector2i.DOWN]:
+			var neighbor := column + direction
+			if columns.has(neighbor) and not visited.has(neighbor):
+				visited[neighbor] = true
+				frontier.append(neighbor)
+	return visited.size() == columns.size()
+
+
+static func _sorted_columns(columns: Dictionary) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	out.assign(columns.keys())
+	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x < b.x if a.x != b.x else a.y < b.y)
 	return out
 
 

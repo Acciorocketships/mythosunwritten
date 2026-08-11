@@ -193,6 +193,22 @@ func cells_for_kind(kind: SurfaceKind) -> Array[Vector3i]:
 	return out
 
 
+func cells_owned_by_prefix(owner_prefix: String) -> Array[Vector3i]:
+	## Owner identity is sealed topology provenance. This query allows a visual
+	## adapter to style one explicitly named episode without guessing from a
+	## platform's shape, height, or neighborhood.
+	var out: Array[Vector3i] = []
+	if owner_prefix.is_empty():
+		return out
+	for claim: Dictionary in _claims.values():
+		for owner_value: Variant in claim.owners as Array:
+			if String(StringName(owner_value)).begins_with(owner_prefix):
+				out.append(claim.cell as Vector3i)
+				break
+	out.sort_custom(_cell_less)
+	return out
+
+
 func audit() -> Dictionary:
 	var counts: Dictionary = {}
 	for claim: Dictionary in _claims.values():

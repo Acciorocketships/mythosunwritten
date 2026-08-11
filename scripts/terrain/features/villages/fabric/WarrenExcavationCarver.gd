@@ -295,7 +295,8 @@ static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
 
 
-static func carve(world_seed: int, massif: WarrenMassif) -> WarrenExcavation:
+static func carve(world_seed: int, massif: WarrenMassif,
+		scale_profile: WarrenVillageScaleProfile = null) -> WarrenExcavation:
 	last_failure = "no attempt sealed"
 	last_diagnostic = {
 		"best_grade_two_sided_address_ratio": 0.0,
@@ -305,6 +306,7 @@ static func carve(world_seed: int, massif: WarrenMassif) -> WarrenExcavation:
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
 		return null
+	var constraints := _scale_constraints(scale_profile)
 	var portals := _portal_cells(massif)
 	if portals.is_empty():
 		last_failure = "no boundary column can host a portal"
@@ -313,7 +315,8 @@ static func carve(world_seed: int, massif: WarrenMassif) -> WarrenExcavation:
 	var best_score := INF
 	var rejected: Dictionary = {}
 	for attempt in ATTEMPTS:
-		var candidate := _bore(world_seed, attempt, massif, portals, rejected)
+		var candidate := _bore(world_seed, attempt, massif, portals, rejected,
+			constraints)
 		if candidate == null:
 			continue
 		var score := _candidate_score(candidate, massif)
@@ -333,7 +336,8 @@ static func carve(world_seed: int, massif: WarrenMassif) -> WarrenExcavation:
 	# selection is exactly the one the pre-lane carver made. `best` is re-sealed
 	# with its lanes so nothing downstream can receive a network seal() has not
 	# validated.
-	_carve_lanes(world_seed, best, massif)
+	_carve_lanes(world_seed, best, massif, int(constraints.lane_budget),
+		int(constraints.lane_cell_budget))
 	if not best.seal():
 		last_failure = "lane network rejected: %s" % best.last_rejection
 		return null
@@ -357,12 +361,17 @@ static func _tally(rejected: Dictionary) -> String:
 
 
 static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
-		portals: Array[Vector3i], rejected: Dictionary) -> WarrenExcavation:
+		portals: Array[Vector3i], rejected: Dictionary,
+		constraints: Dictionary = {}) -> WarrenExcavation:
+	if constraints.is_empty():
+		constraints = _scale_constraints(null)
 	var portal := portals[posmod(_hash(world_seed, attempt, 1, 0),
 		portals.size())]
 	var excavation := WarrenExcavation.new(world_seed)
-	var target := MIN_ROUTE_CELLS + posmod(_hash(world_seed, attempt, 3, 0),
-		MAX_ROUTE_CELLS - MIN_ROUTE_CELLS + 1)
+	var route_min := int(constraints.route_min)
+	var route_max := int(constraints.route_max)
+	var target := route_min + posmod(_hash(world_seed, attempt, 3, 0),
+		route_max - route_min + 1)
 	var style := _style(world_seed, attempt, portal)
 	var route_set: Dictionary = {}
 	var current := portal
@@ -375,7 +384,7 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 	while excavation.route.size() < target:
 		var selected := _best_move(world_seed, attempt, move_index, target,
 			style, current, direction, straight_run, roofed, massif,
-			excavation, route_set, target - excavation.route.size())
+			excavation, route_set, target - excavation.route.size(), constraints)
 		if selected.is_empty():
 			break
 		var stride: Array = selected["cells"]
@@ -399,18 +408,18 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 		current = endpoint
 		move_index += 1
 	_finalize(excavation, massif)
-	if excavation.route.size() < MIN_ROUTE_CELLS \
-			or excavation.route.size() > MAX_ROUTE_CELLS:
+	if excavation.route.size() < route_min \
+			or excavation.route.size() > route_max:
 		_reject(rejected, "route length")
 		return null
-	if excavation.route_span_bands() < MIN_SPAN_BANDS:
+	if excavation.route_span_bands() < int(constraints.span_min):
 		_reject(rejected, "span")
 		return null
 	var grade := _grade_cells(massif, excavation)
-	if grade.size() < MIN_GRADE_CELLS:
+	if grade.size() < int(constraints.grade_min):
 		_reject(rejected, "too little at grade")
 		return null
-	if _grade_spread(grade) < MIN_GRADE_SPREAD_CELLS:
+	if _grade_spread(grade) < int(constraints.grade_spread_min):
 		_reject(rejected, "grade street too compact")
 		return null
 	var grade_endpoints := _grade_route_address_records(massif, excavation)
@@ -489,7 +498,8 @@ static func _bore(world_seed: int, attempt: int, massif: WarrenMassif,
 
 
 static func _carve_lanes(world_seed: int, excavation: WarrenExcavation,
-		massif: WarrenMassif) -> void:
+		massif: WarrenMassif, lane_budget: int = MAX_LANES,
+		lane_cell_budget: int = MAX_LANE_CELLS_TOTAL) -> void:
 	## Grows the lane network onto a chosen route. Purely additive: a lane that
 	## cannot be grown, cannot be grown far enough, or costs the route one of its
 	## own gates is rolled back whole, so the worst case is the route this
@@ -506,15 +516,15 @@ static func _carve_lanes(world_seed: int, excavation: WarrenExcavation,
 	var used: Array[Vector3i] = []
 	var tried: Dictionary = {}
 	var total := 0
-	while excavation.lanes.size() < MAX_LANES \
-			and total < MAX_LANE_CELLS_TOTAL:
+	while excavation.lanes.size() < lane_budget \
+			and total < lane_cell_budget:
 		var next := _next_lane_anchor(world_seed, excavation, used, tried)
 		if next.is_empty():
 			break
 		var cell := next[0]
 		tried[cell] = true
 		var lane := _grow_lane(world_seed, excavation, massif, cell, reserve,
-			MAX_LANE_CELLS_TOTAL - total)
+			lane_cell_budget - total)
 		if lane.is_empty():
 			continue
 		excavation.lanes.append(lane)
@@ -1060,7 +1070,7 @@ static func _best_move(world_seed: int, attempt: int, move_index: int,
 		target: int, style: Dictionary, current: Vector3i,
 		current_direction: Vector2i, straight_run: int, roofed: int,
 		massif: WarrenMassif, excavation: WarrenExcavation,
-		route_set: Dictionary, budget: int) -> Dictionary:
+		route_set: Dictionary, budget: int, constraints: Dictionary) -> Dictionary:
 	## Single-pass minimum rather than a sort: sort_custom is not stable, and
 	## a stable winner is a determinism requirement, not a nicety.
 	var best: Dictionary = {}
@@ -1082,13 +1092,14 @@ static func _best_move(world_seed: int, attempt: int, move_index: int,
 			# a score term instead left the grade run at the mercy of the
 			# inward and climbing terms, which is how the route ended up
 			# touching grade exactly twice.
-			if excavation.route.size() < MIN_GRADE_CELLS \
+			if excavation.route.size() < int(constraints.grade_min) \
 					and not _stride_is_at_grade(massif, stride):
 				continue
 			var score := _move_score(world_seed, attempt, move_index, target,
 				style, current, stride, int(action["rise"]), direction,
 				current_direction, straight_run, roofed, massif, excavation,
-				route_set, direction_index * ACTIONS.size() + action_index)
+				route_set, direction_index * ACTIONS.size() + action_index,
+				constraints)
 			if score < best_score:
 				best_score = score
 				best = {
@@ -1247,7 +1258,8 @@ static func _move_score(world_seed: int, attempt: int, move_index: int,
 		stride: Array[Vector3i], rise: int, direction: Vector2i,
 		current_direction: Vector2i, straight_run: int, roofed: int,
 		massif: WarrenMassif, excavation: WarrenExcavation,
-		route_set: Dictionary, action_index: int) -> float:
+		route_set: Dictionary, action_index: int,
+		constraints: Dictionary) -> float:
 	## Scored per MOVE, not per cell: a stair spends two of the route's cells
 	## and a ramp three, so the terms that describe where the street ends up
 	## are read at the endpoint while the terms that describe what it is like
@@ -1264,10 +1276,10 @@ static func _move_score(world_seed: int, attempt: int, move_index: int,
 	var cycles: float = style["cycles"]
 
 	var radius := Vector2(float(endpoint.x), float(endpoint.z)).length()
-	var target_radius := lerpf(portal_radius, INNER_RADIUS_CELLS,
+	var target_radius := lerpf(portal_radius, float(constraints.inner_radius),
 		minf(1.0, progress * radius_rush))
 	var score := absf(radius - target_radius) * WEIGHT_RADIUS
-	if excavation.route.size() < MIN_GRADE_CELLS:
+	if excavation.route.size() < int(constraints.grade_min):
 		# The grade street must travel far enough to seed two arcade roots, but
 		# unqualified Manhattan travel can run back around the Gaussian skirt.
 		# Reward mostly radial penetration into inhabitable depth, with a small
@@ -1346,7 +1358,7 @@ static func _move_score(world_seed: int, attempt: int, move_index: int,
 	# street therefore satisfies every gate here and still fails the arcade
 	# stage, so the climb is rewarded for passing back over the street it came
 	# from once it is high enough to be a roof rather than a neighbour.
-	if excavation.route.size() >= MIN_GRADE_CELLS:
+	if excavation.route.size() >= int(constraints.grade_min):
 		# Checked over the cell AND its four neighbours, because the arcade
 		# branches are new cells carved BESIDE the grade street, not the
 		# street itself -- passing directly over the route alone leaves the
@@ -1458,6 +1470,23 @@ static func _candidate_score(excavation: WarrenExcavation,
 		+ absf(excavation.covered_ratio() - TARGET_COVERED_RATIO) \
 			* COVER_CENTRING_WEIGHT \
 		+ float(straightest) * 40.0
+
+
+static func _scale_constraints(
+		scale_profile: WarrenVillageScaleProfile) -> Dictionary:
+	var profile := scale_profile if scale_profile != null \
+		else WarrenVillageScaleProfile.review_fixture()
+	var grade_min := clampi(roundi(float(profile.radius_cells) * 0.75), 6, 9)
+	return {
+		"route_min": profile.route_cell_range.x,
+		"route_max": profile.route_cell_range.y,
+		"span_min": profile.route_span_range.x,
+		"grade_min": grade_min,
+		"grade_spread_min": maxi(4, grade_min - 2),
+		"inner_radius": maxf(3.0, float(profile.radius_cells) * 0.42),
+		"lane_budget": profile.lane_budget,
+		"lane_cell_budget": profile.lane_cell_budget,
+	}
 
 
 static func _hash(world_seed: int, attempt: int, a: int, b: int) -> int:

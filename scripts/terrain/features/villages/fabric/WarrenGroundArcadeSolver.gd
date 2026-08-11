@@ -51,10 +51,14 @@ const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
 ]
 static var last_failure := ""
+## Non-semantic diagnostic for regression probes. The selected rank/length is
+## never copied into a sealed plan and cannot affect deterministic output.
+static var last_selection_audit: Dictionary = {}
 
 
 static func extend(source: WarrenVolumePlan) -> WarrenVolumePlan:
 	last_failure = ""
+	last_selection_audit = {}
 	if source == null or not source.is_sealed():
 		last_failure = "missing sealed public route"
 		return null
@@ -69,16 +73,6 @@ static func extend(source: WarrenVolumePlan) -> WarrenVolumePlan:
 	if first == null:
 		last_failure = "ground arcade failed volume transaction"
 		return null
-	# One branch can leave the opposite side of a tall Gaussian core as raw
-	# undercroft lawn. Carve a shorter, spatially separated second branch before
-	# parcelization so both lower approaches compete for grounded facades. This
-	# remains one connected public graph; it is not a detached market prop or a
-	# post-hoc blocker inserted after buildings exist.
-	# Four- and five-cell branches are separate sectional grammar families. The
-	# seed chooses between them before parcelization; exact construction still
-	# owns every shared validity gate. Keeping both families avoids making either
-	# a universal shape that starves the parcel frontier on the opposite core
-	# profile.
 	var secondary_target := SECONDARY_MIN_CELLS + posmod(source.world_seed,
 		SECONDARY_TARGET_CELLS - SECONDARY_MIN_CELLS + 1)
 	var secondary := _find_path(first, secondary_target,
@@ -98,7 +92,80 @@ static func extend(source: WarrenVolumePlan) -> WarrenVolumePlan:
 			< _required_crossovers(source):
 		last_failure = "ground arcades do not pass beneath the climbing itinerary"
 		return null
+	last_selection_audit = {"mode": &"greedy", "primary_rank": 0,
+		"secondary_rank": 0, "primary_length": path.size() + 1,
+		"secondary_length": secondary_path.size() + 1}
 	return result
+
+
+static func extend_preserving_topology(source: WarrenVolumePlan) \
+		-> WarrenVolumePlan:
+	## Mass-first has already passed the common street-quality gate when it asks
+	## for these two additional tunnel episodes. Try the rich lengths first, then
+	## the authored minima, and retain only a complete pair which preserves that
+	## same gate. This is a bounded grammar choice, not a threshold relaxation.
+	last_failure = ""
+	last_selection_audit = {}
+	if source == null or not source.is_sealed():
+		last_failure = "missing sealed public route"
+		return null
+	var preferred_secondary := SECONDARY_MIN_CELLS + posmod(source.world_seed,
+		SECONDARY_TARGET_CELLS - SECONDARY_MIN_CELLS + 1)
+	var primary_lengths: Array[int] = [TARGET_CELLS, MIN_CELLS]
+	var secondary_lengths: Array[int] = [preferred_secondary]
+	if preferred_secondary != SECONDARY_MIN_CELLS:
+		secondary_lengths.append(SECONDARY_MIN_CELLS)
+	var failures := PackedStringArray()
+	for primary_length: int in primary_lengths:
+		var primary_candidates := _find_path_candidates(source, primary_length,
+			primary_length, false, 8)
+		for primary_rank in primary_candidates.size():
+			var branch := primary_candidates[primary_rank]
+			var path: Array[Vector3i] = []
+			path.assign(branch.get("path", []) as Array)
+			var root := branch.get("root",
+				Vector3i(2147483647, 0, 0)) as Vector3i
+			var first := _clone_volume(source, root, path, 0)
+			if first == null:
+				continue
+			for secondary_length: int in secondary_lengths:
+				var secondary_candidates := _find_path_candidates(first,
+					secondary_length, secondary_length, true, 8)
+				for secondary_rank in secondary_candidates.size():
+					var secondary := secondary_candidates[secondary_rank]
+					var secondary_path: Array[Vector3i] = []
+					secondary_path.assign(secondary.get("path", []) as Array)
+					var secondary_root := secondary.get("root",
+						Vector3i(2147483647, 0, 0)) as Vector3i
+					var result := _clone_volume(first, secondary_root,
+						secondary_path, 1)
+					if result == null:
+						continue
+					if int(result.audit.get(
+							"ground_arcade_upper_crossover_count", 0)) \
+							< _required_crossovers(source):
+						failures.append(
+							"%d+%d cells: insufficient upper crossover" % [
+								primary_length, secondary_length])
+						continue
+					var gate_failure := WarrenPublicRealmCarver \
+						.topology_gate_failure(result)
+					if not gate_failure.is_empty():
+						var failure := "%d+%d cells: %s" % [primary_length,
+							secondary_length, gate_failure]
+						if not failures.has(failure):
+							failures.append(failure)
+						continue
+					last_selection_audit = {"mode": &"topology_preserving",
+						"primary_rank": primary_rank,
+						"secondary_rank": secondary_rank,
+						"primary_length": primary_length,
+						"secondary_length": secondary_length,
+						"rejected_family_count": failures.size()}
+					return result
+	last_failure = "no bounded ground-arcade family preserved the street: %s" \
+		% " | ".join(failures)
+	return null
 
 
 static func parcels_enclose_arcade(parcels: WarrenParcelPlan) -> bool:
@@ -137,7 +204,15 @@ static func arcade_enclosure_audit(parcels: WarrenParcelPlan) -> Dictionary:
 
 static func _find_path(source: WarrenVolumePlan, target_cells: int,
 		minimum_cells: int, prefer_separated_root: bool) -> Dictionary:
-	var best: Dictionary = {}
+	var candidates := _find_path_candidates(source, target_cells,
+		minimum_cells, prefer_separated_root, 1)
+	return {} if candidates.is_empty() else candidates[0]
+
+
+static func _find_path_candidates(source: WarrenVolumePlan, target_cells: int,
+		minimum_cells: int, prefer_separated_root: bool,
+		limit: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
 	var roots: Array[Dictionary] = []
 	var existing_auxiliary: Array[Vector3i] = []
 	for cell: Vector3i in source.walk_cells:
@@ -160,7 +235,6 @@ static func _find_path(source: WarrenVolumePlan, target_cells: int,
 	if roots.size() > ROOT_FRONTIER:
 		roots.resize(ROOT_FRONTIER)
 	for target_count in range(target_cells, minimum_cells - 1, -1):
-		var best_score := INF
 		for root_value: Dictionary in roots:
 			var root := root_value.cell as Vector3i
 			var path: Array[Vector3i] = []
@@ -171,12 +245,16 @@ static func _find_path(source: WarrenVolumePlan, target_cells: int,
 			if path.size() + 1 < target_count:
 				continue
 			var score := _path_score(root, path, source)
-			if best.is_empty() or score < best_score:
-				best = {"root": root, "path": path}
-				best_score = score
-		if not best.is_empty():
+			out.append({"root": root, "path": path, "score": score})
+		if not out.is_empty():
 			break
-	return best
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if not is_equal_approx(float(a.score), float(b.score)):
+			return float(a.score) < float(b.score)
+		return _cell_key(a.root as Vector3i) < _cell_key(b.root as Vector3i))
+	if out.size() > limit:
+		out.resize(limit)
+	return out
 
 
 static func _root_score(root: Vector3i, source: WarrenVolumePlan) -> float:

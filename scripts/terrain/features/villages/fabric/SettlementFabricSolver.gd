@@ -171,6 +171,8 @@ static func audit_plan(plan: SettlementFabricPlan,
 				and unit_value.parent_ids.size() < recipe_value.bearing_parent_count:
 			unsupported_stairs += 1
 	var result := lineage_audit.duplicate(true)
+	var connected_visual_conflicts := \
+		plan.connected_visual_envelope_conflicts()
 	result.merge({
 		"unit_count": plan.units.size(),
 		"route_cell_count": route_cells,
@@ -194,6 +196,11 @@ static func audit_plan(plan: SettlementFabricPlan,
 		"unsupported_stair_count": unsupported_stairs,
 		"platform_bearing_parent_count": platform_bearing_parents,
 		"visual_envelope_overlap_count": plan.visual_envelope_conflicts().size(),
+		"connected_visual_envelope_conflict_count": \
+			connected_visual_conflicts.size(),
+		"connected_visual_envelope_conflicts": \
+			connected_visual_conflicts.slice(0, mini(
+				connected_visual_conflicts.size(), 24)),
 	}, true)
 	result.merge(_audit_route_shape(plan), true)
 	result.merge(_audit_enclosure(plan), true)

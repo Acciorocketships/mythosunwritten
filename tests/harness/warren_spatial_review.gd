@@ -7,7 +7,8 @@ extends Node3D
 ## harness, never evidence that the wider candidate selector accepted the seed.
 ##
 ##   Godot --path . res://tests/harness/warren_spatial_review.tscn -- \
-##     --seed 7 --output /tmp/warren-spatial-review
+##     --seed 7 --candidate-id warren.volume.mass.7000028.arcade0.arcade1 \
+##     --variant 0 --output /tmp/warren-spatial-review
 const DEFAULT_PRODUCTION_WORLD_SEED := 2697992464
 const DEFAULT_PRODUCTION_SUPER_CELL := Vector2i(0, -1)
 const PRODUCTION_REGION_RADIUS := 5
@@ -16,12 +17,17 @@ var _output_dir := "/tmp/mythos-warren-spatial-review"
 var _world_seed := 7
 var _super_cell := DEFAULT_PRODUCTION_SUPER_CELL
 var _candidate_token := "4000019"
+var _candidate_id := ""
 var _partition_variant := 1
+var _scale_id := WarrenVillageScaleProfile.LARGE
 var _solve_production := false
 var _production_terrain_site := false
 var _camera := Camera3D.new()
 var _spatial: WarrenSpatialPlan
 var _fabric: SettlementFabricPlan
+var _production_urban: VillageUrbanFabricPlan
+var _production_heightfield: HeightfieldPlan
+var _production_site_cell := Vector2i.ZERO
 var _captures: Array[Dictionary] = []
 
 
@@ -34,7 +40,6 @@ func _ready() -> void:
 	get_window().size = Vector2i(1920, 1080)
 	DirAccess.make_dir_recursive_absolute(_output_dir)
 	_build_environment()
-	_build_ground()
 	var catalog := EnvironmentCatalog.load_default()
 	var program := SettlementFabricProgram.compile(catalog)
 	if program == null:
@@ -48,12 +53,14 @@ func _ready() -> void:
 			_fail_and_quit("production terrain solve rejected: %s" \
 				% String(urban.reason if urban != null else &"missing_plan"))
 			return
+		_production_urban = urban
 		_spatial = urban.volumetric_spatial
 		_fabric = urban.fabric_plan
 	elif _solve_production:
-		_spatial = WarrenVolumetricSolver.solve(_world_seed, {}, program)
+		_spatial = WarrenVolumetricSolver.solve(_world_seed, {}, program,
+			WarrenVillageScaleProfile.for_id(_scale_id))
 	else:
-		var source := _select_source()
+		var source := _select_source(program)
 		if source == null:
 			_fail_and_quit("no requested volumetric source candidate")
 			return
@@ -69,11 +76,16 @@ func _ready() -> void:
 		_fail_and_quit("fabric compile rejected: %s" \
 			% WarrenSpatialFabricCompiler.last_failure)
 		return
+	if _production_urban != null:
+		_build_production_terrain(_production_urban.world_transform)
+	else:
+		_build_ground()
 	var root := Node3D.new()
 	root.name = "AuthoritativeSpatialWarren"
 	add_child(root)
-	var committed := SettlementFabricAssembler.commit(root, _fabric, catalog,
-		false)
+	var committed := _commit_production_entries(root, catalog) \
+		if _production_urban != null \
+		else SettlementFabricAssembler.commit(root, _fabric, catalog, false)
 	print("[warren_spatial_review] seed=%d features=%d landmarks=%d balconies=%d instances=%d" \
 		% [_world_seed, _spatial.features.size(),
 			int(_spatial.audit.get("prefab_landmark_count", 0)),
@@ -81,7 +93,7 @@ func _ready() -> void:
 			int(committed.instance_count)])
 	print(("[warren_spatial_review] composition pairs=%d strong_registration=%d " \
 		+ "facade_planes=%d same_kind=%d same_axis=%d roofs=%d pitched=%d " \
-		+ "flat=%d caps=%d terraces=%d") % [
+		+ "flat=%d roof_terraces=%d bare_flat=%d caps=%d setback_terraces=%d") % [
 			int(_spatial.audit.get("consecutive_floorplate_pair_count", 0)),
 			int(_spatial.audit.get(
 				"strongly_registered_floorplate_pair_count", 0)),
@@ -91,6 +103,8 @@ func _ready() -> void:
 			int(_fabric.audit.get("roof_unit_count", 0)),
 			int(_fabric.audit.get("pitched_roof_count", 0)),
 			int(_fabric.audit.get("flat_roof_count", 0)),
+			int(_fabric.audit.get("flat_roof_terrace_count", 0)),
+			int(_fabric.audit.get("bare_flat_roof_count", 0)),
 			int(_fabric.audit.get("setback_cap_unit_count", 0)),
 			int(_fabric.audit.get("setback_terrace_unit_count", 0)),
 		])
@@ -110,8 +124,12 @@ func _read_args() -> void:
 			_world_seed = int(args[index + 1])
 		elif args[index] == "--candidate-token" and index + 1 < args.size():
 			_candidate_token = args[index + 1]
+		elif args[index] == "--candidate-id" and index + 1 < args.size():
+			_candidate_id = args[index + 1]
 		elif args[index] == "--variant" and index + 1 < args.size():
 			_partition_variant = int(args[index + 1])
+		elif args[index] == "--scale" and index + 1 < args.size():
+			_scale_id = StringName(args[index + 1])
 		elif args[index] == "--solve-production":
 			_solve_production = true
 		elif args[index] == "--production-terrain-site":
@@ -131,6 +149,8 @@ func _solve_production_site(catalog: EnvironmentCatalog) \
 		return null
 	var cell := site.cell as Vector2i
 	var heightfield := TerrainWorldTuning.make_heightfield(_world_seed, water)
+	_production_heightfield = heightfield
+	_production_site_cell = cell
 	var region := heightfield.compute_region(cell.x, cell.y,
 		PRODUCTION_REGION_RADIUS)
 	var terrain := VillageTerrainView.from_region(region)
@@ -146,6 +166,77 @@ func _solve_production_site(catalog: EnvironmentCatalog) \
 			_super_cell.x, _super_cell.y])
 	return VillageWarrenFabricSolver.solve(terrain, city_seed,
 		frame.settlement_id, frame.centre, Vector2.RIGHT, village_program)
+
+
+func _build_production_terrain(world_frame: Transform3D) -> void:
+	## Review the same immutable heightfield the placement solver sampled. Keep
+	## the authored town in its convenient local frame and transform real terrain
+	## back into that frame; all existing adversarial cameras then remain valid.
+	assert(_production_heightfield != null)
+	var mesher := TerrainChunkMesher.new()
+	mesher.set_seed(_world_seed)
+	mesher.prepare_resources()
+	var centre := Vector2(_production_site_cell) * TerrainSurfaceField.TILE
+	var reach := 96.0
+	var chunk_lo := Vector2i(floori((centre.x - reach) \
+		/ TerrainChunkMesher.CHUNK_WORLD), floori((centre.y - reach) \
+		/ TerrainChunkMesher.CHUNK_WORLD))
+	var chunk_hi := Vector2i(floori((centre.x + reach) \
+		/ TerrainChunkMesher.CHUNK_WORLD), floori((centre.y + reach) \
+		/ TerrainChunkMesher.CHUNK_WORLD))
+	var terrain_root := Node3D.new()
+	terrain_root.name = "ProductionTerrainInTownFrame"
+	terrain_root.transform = world_frame.affine_inverse()
+	add_child(terrain_root)
+	for cz in range(chunk_lo.y, chunk_hi.y + 1):
+		for cx in range(chunk_lo.x, chunk_hi.x + 1):
+			terrain_root.add_child(mesher.build_chunk(_production_heightfield,
+				Vector2i(cx, cz)))
+
+
+func _commit_production_entries(parent: Node3D,
+		catalog: EnvironmentCatalog) -> Dictionary:
+	## The ordinary local assembler omits terrain-drop posts because only the
+	## production adapter knows the sampled world ground. Render the materialized
+	## entry payload here so support review sees those exact fixed modules too.
+	var payload := EnvironmentInstancePayload.new()
+	var inverse := _production_urban.world_transform.affine_inverse()
+	for entry: Dictionary in _production_urban.entries:
+		payload.add(StringName(entry.asset_id),
+			inverse * (entry.transform as Transform3D), Color.WHITE,
+			StringName(entry.stable_id))
+	for world_mesh: Dictionary in _production_urban.surface_meshes:
+		var local_mesh := world_mesh.duplicate(true)
+		var vertices := PackedVector3Array()
+		for vertex: Vector3 in world_mesh.vertices as PackedVector3Array:
+			vertices.append(inverse * vertex)
+		var normals := PackedVector3Array()
+		for normal: Vector3 in world_mesh.normals as PackedVector3Array:
+			normals.append((inverse.basis * normal).normalized())
+		var collision := PackedVector3Array()
+		for face_point: Vector3 in world_mesh.collision_faces \
+				as PackedVector3Array:
+			collision.append(inverse * face_point)
+		local_mesh["vertices"] = vertices
+		local_mesh["normals"] = normals
+		local_mesh["collision_faces"] = collision
+		local_mesh["anchor"] = inverse * (world_mesh.get("anchor",
+			Vector3.ZERO) as Vector3)
+		payload.add_surface_mesh(local_mesh)
+	assert(payload.validate())
+	var cache := EnvironmentRenderCache.new(catalog)
+	assert(cache.prepare(payload.asset_ids()))
+	var queue := EnvironmentCommitQueue.new(cache, &"ProductionFabricVisuals")
+	queue.register_chunk(Vector2i.ZERO, 1)
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	while queue.pending_count() > 0:
+		queue.drain(64)
+	var terrain_support_count := 0
+	for entry: Dictionary in _production_urban.entries:
+		terrain_support_count += int(String(entry.stable_id).contains(
+			"terrain-support/"))
+	return {"instance_count": payload.instance_count,
+		"terrain_support_count": terrain_support_count}
 
 
 func _fail_and_quit(reason: String) -> void:
@@ -167,11 +258,33 @@ static func _empty_water(region: HeightfieldRegion,
 	return context
 
 
-func _select_source() -> WarrenVolumePlan:
-	var frontier := WarrenTownSolver.mass_first_frontier(_world_seed)
-	for candidate: WarrenVolumePlan in frontier:
-		if _candidate_token.is_empty() \
-				or String(candidate.stable_id).contains(_candidate_token):
+func _select_source(program: SettlementFabricProgram) -> WarrenVolumePlan:
+	var profile := WarrenVillageScaleProfile.for_id(_scale_id)
+	if profile == null or program == null:
+		return null
+	var frontier := WarrenTownSolver.mass_first_frontier(_world_seed, {}, profile)
+	# The production solver ranks fully threaded precomposition variants, not the
+	# raw frontier object that happens to share their stable source id. Render the
+	# exact same `(source, partition_variant)` pair as the text proof; otherwise a
+	# capture can silently review a different skywalk/court transaction.
+	var ranked := WarrenVolumetricSolver._ranked_precomposition_variants(
+		frontier, program)
+	for ranked_index in ranked.size():
+		var candidate_value := ranked[ranked_index]
+		if int(candidate_value.variant) != _partition_variant:
+			continue
+		var candidate := candidate_value.volume as WarrenVolumePlan
+		var id_matches := not _candidate_id.is_empty() \
+			and String(candidate.stable_id) == _candidate_id
+		var token_matches := _candidate_id.is_empty() \
+			and (_candidate_token.is_empty() \
+				or String(candidate.stable_id).contains(_candidate_token))
+		if id_matches or token_matches:
+			print("[warren_spatial_review] selected rank=", ranked_index,
+				" source=", candidate.stable_id, " variant=",
+				candidate_value.variant, " score=", candidate_value.score,
+				" signature=",
+				candidate.deterministic_signature().sha256_text())
 			return candidate
 	return null
 

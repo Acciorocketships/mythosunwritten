@@ -42,6 +42,42 @@
    "max_collision_pieces": 1
   },
   {
+   "id": "sfv.fabric.bracket.wood.l.m.attach.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Wall Supports/WSWooden/SFV_Wall_LSupport_M_Attachable_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "fabric_bracket",
+    "support",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 2000,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.bracket.wood.m.attach.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Wall Supports/WSWooden/SFV_Wall_Support_M_Attachable_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "fabric_bracket",
+    "support",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 2000,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
    "id": "sfv.fabric.bridge.001",
    "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Bridge/SFV_Bridge_001.fbx",
    "merge_pieces": true,

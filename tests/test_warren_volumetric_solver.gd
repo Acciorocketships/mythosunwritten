@@ -10,6 +10,85 @@ func _program() -> SettlementFabricProgram:
 	return _program_cache
 
 
+func test_room_outcropping_geometry_requires_one_bounded_bearing_facade() -> void:
+	var lower := _unsealed_room_for_geometry(&"lower", &"building",
+		Vector3i.ZERO)
+	var integrated := _unsealed_room_for_geometry(&"integrated", &"building",
+		Vector3i(1, WarrenSpatialGrid.STOREY_CELLS, 0))
+	var valid := WarrenSpatialFeatureSolver._room_cantilever_geometry(lower,
+		integrated)
+	assert_true(bool(valid.valid))
+	assert_eq(valid.direction, Vector2i.RIGHT)
+	assert_eq(int(valid.depth_cells), 1)
+	assert_eq(int(valid.extension_column_count), 4)
+	assert_eq(int(valid.attachment_span_cells), 4)
+	assert_eq(int(valid.bearing_column_count), 12)
+	assert_almost_eq(float(valid.bearing_ratio), 0.75, 0.0001)
+	var supports := WarrenSpatialFeatureSolver._cantilever_support_records(
+		integrated, valid)
+	assert_eq(supports.size(), 2,
+		"the four-column bearing edge receives two native 3 m courses")
+	for support: Dictionary in supports:
+		assert_eq(StringName(support.recipe_id),
+			&"outcrop.support.bracketed.2")
+		assert_eq(FabricRecipe.transform_direction(Vector3i.BACK,
+			int(support.yaw_quarters)), Vector3i.RIGHT,
+			"every unscaled bracket projects beneath the unsupported room")
+
+	var glued_corner := _unsealed_room_for_geometry(&"glued", &"building",
+		Vector3i(1, WarrenSpatialGrid.STOREY_CELLS, 1))
+	var corner_result := WarrenSpatialFeatureSolver._room_cantilever_geometry(
+		lower, glued_corner)
+	assert_false(bool(corner_result.valid),
+		"a diagonally glued upper box is not one integrated facade jetty")
+	assert_eq(StringName(corner_result.rejection), &"multiple_facades")
+
+	var floating := _unsealed_room_for_geometry(&"floating", &"building",
+		Vector3i(3, WarrenSpatialGrid.STOREY_CELLS, 0))
+	var floating_result := WarrenSpatialFeatureSolver._room_cantilever_geometry(
+		lower, floating)
+	assert_false(bool(floating_result.valid))
+	assert_eq(StringName(floating_result.rejection), &"projection_too_deep")
+
+
+func _unsealed_room_for_geometry(stable_id: StringName, kind: StringName,
+		origin: Vector3i) -> WarrenRoomStamp:
+	var room := WarrenRoomStamp.new(stable_id, &"source", kind, origin, 0,
+		origin.y / WarrenSpatialGrid.STOREY_CELLS, origin.y == 0, false)
+	room.private_cells.assign(WarrenRoomStamp.expected_private_cells(kind,
+		origin, 0))
+	return room
+
+
+func test_one_storey_composition_records_truncate_only_unrequired_tower_crown() \
+		-> void:
+	var three_storeys: Array[Dictionary] = []
+	for storey in 3:
+		three_storeys.append({"kind": &"tower", "start_storey": storey,
+			"end_storey": storey + 1})
+	var second_storey_required := {
+		&"lineage": {"blocks": three_storeys.duplicate(true),
+			"required_through_block": 1, "paired_primary": false,
+			"paired_secondary": false},
+	}
+	assert_eq(WarrenRoomCompositionPlanner._truncate_unpaired_towers(
+		second_storey_required), 1)
+	assert_eq((((second_storey_required[&"lineage"] as Dictionary).blocks) \
+		as Array).size(), 2,
+		"a forced second storey must not protect an optional third storey")
+
+	var third_storey_required := {
+		&"lineage": {"blocks": three_storeys.duplicate(true),
+			"required_through_block": 2, "paired_primary": false,
+			"paired_secondary": false},
+	}
+	assert_eq(WarrenRoomCompositionPlanner._truncate_unpaired_towers(
+		third_storey_required), 0)
+	assert_eq((((third_storey_required[&"lineage"] as Dictionary).blocks) \
+		as Array).size(), 3,
+		"a real third-storey interface must remain for recomposition or rejection")
+
+
 func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	var plan := WarrenVolumetricSolver.solve(7, {}, _program())
 	assert_not_null(plan, WarrenVolumetricSolver.last_failure)
@@ -27,6 +106,11 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 		WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT,
 		"the final 3D room composition must preserve the promised court walls")
 	assert_eq(int(plan.audit.covered_market_count), 1)
+	assert_lte(int(plan.audit.market_open_horizon_max_cells),
+		WarrenVolumetricSolver.MAX_MARKET_OPEN_HORIZON_CELLS,
+		"the covered bazaar must be embedded in the inhabited street maze")
+	assert_gt(int(plan.audit.market_overhead_public_floor_seam_count), 0,
+		"the reviewed bazaar should sit beneath an upper public route")
 	assert_eq(int(plan.audit.prefab_landmark_count),
 		WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS)
 	assert_eq(int(plan.audit.enclosed_skywalk_count),
@@ -304,8 +388,20 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	var outcrop_owners: Dictionary = {}
 	for outcrop: WarrenFeatureReservation in outcroppings:
 		assert_eq(outcrop.endpoints.size(), 1)
+		assert_true(bool(outcrop.audit.outcrop_is_integrated_cantilever))
 		assert_gte(int(outcrop.audit.outcrop_room_footprint_column_count), 4)
 		assert_gte(int(outcrop.audit.outcrop_extension_column_count), 1)
+		assert_between(int(outcrop.audit.outcrop_projection_depth_cells), 1, 2)
+		assert_gte(int(outcrop.audit.outcrop_attachment_span_cells), 2)
+		assert_gte(float(outcrop.audit.outcrop_bearing_ratio), 0.5)
+		assert_gt(outcrop.construction_records.size(), 0)
+		assert_eq(outcrop.construction_records.size(),
+			int(outcrop.audit.outcrop_support_course_count))
+		for record: Dictionary in outcrop.construction_records:
+			assert_has([
+				&"outcrop.support.bracketed.2",
+				&"outcrop.support.diagonal.2",
+			], StringName(record.recipe_id))
 		outcrop_owners[StringName(outcrop.endpoints[0].owner_id)] = true
 	assert_gte(outcrop_owners.size(),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)

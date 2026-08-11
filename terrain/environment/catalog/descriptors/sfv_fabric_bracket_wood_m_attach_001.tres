@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://crb52uydmldhe"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_tg10m"]
+
+[resource]
+script = ExtResource("1_tg10m")
+id = &"sfv.fabric.bracket.wood.m.attach.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_bracket_wood_m_attach_001.tres"
+tags = Array[StringName]([&"fabric_bracket", &"support", &"village"])
+measured_aabb = AABB(-3, -5.2108035e-15, -0.31500047, 3.0000002, 0.4865971, 1.1351787)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.bracket.wood.m.attach.001"

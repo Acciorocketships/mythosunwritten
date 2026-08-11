@@ -111,7 +111,49 @@ static func passes_topology_gate(plan: WarrenVolumePlan) -> bool:
 	## thresholds would let the two generation modes drift apart silently. This
 	## can only reject a candidate, never admit one, so no existing caller's
 	## result can change.
-	return plan != null and _passes_topology_gate(plan)
+	return topology_gate_failure(plan).is_empty()
+
+
+static func topology_gate_failure(plan: WarrenVolumePlan) -> String:
+	## Diagnostic companion to the single authoritative gate. Keep the measured
+	## value beside its threshold so bounded source-plan searches can report which
+	## derived episode consumed an otherwise viable street wall.
+	if plan == null or not plan.is_sealed():
+		return "unsealed plan"
+	if int(plan.audit.walk_cell_count) < MIN_ROUTE_CELLS:
+		return "walk cells %d < %d" % [int(plan.audit.walk_cell_count),
+			MIN_ROUTE_CELLS]
+	if int(plan.audit.elevation_band_count) < 4:
+		return "elevation bands %d < 4" % int(plan.audit.elevation_band_count)
+	if int(plan.audit.ramp_transition_count) < 1:
+		return "ramp transitions %d < 1" % int(plan.audit.ramp_transition_count)
+	if int(plan.audit.landing_turn_violation_count) != 0:
+		return "landing turn violations %d" % int(
+			plan.audit.landing_turn_violation_count)
+	if int(plan.audit.max_transition_rise_bands) > 1:
+		return "transition rise %d > 1" % int(
+			plan.audit.max_transition_rise_bands)
+	if float(plan.audit.overhang_walk_ratio) < 0.25:
+		return "overhang ratio %.3f < 0.250" % float(
+			plan.audit.overhang_walk_ratio)
+	if float(plan.audit.addressed_walk_ratio) < MIN_ADDRESSED_WALK_RATIO:
+		return "addressed ratio %.3f < %.3f" % [float(
+			plan.audit.addressed_walk_ratio), MIN_ADDRESSED_WALK_RATIO]
+	var two_sided := float(plan.audit.get(
+		"ground_primary_two_sided_address_walk_ratio", 0.0))
+	if two_sided < MIN_GROUND_PRIMARY_TWO_SIDED_ADDRESS_RATIO:
+		return "ground-primary two-sided ratio %.3f < %.3f" % [two_sided,
+			MIN_GROUND_PRIMARY_TWO_SIDED_ADDRESS_RATIO]
+	if float(plan.audit.deep_vertical_shaft_ratio) > 0.10:
+		return "deep shaft ratio %.3f > 0.100" % float(
+			plan.audit.deep_vertical_shaft_ratio)
+	if int(plan.audit.same_datum_route_fold_count) != 0:
+		return "same-datum folds %d" % int(
+			plan.audit.same_datum_route_fold_count)
+	if int(plan.audit.max_straight_run_cells) > MAX_STRAIGHT_RUN:
+		return "straight run %d > %d" % [int(
+			plan.audit.max_straight_run_cells), MAX_STRAIGHT_RUN]
+	return ""
 
 
 static func _grow_candidate(world_seed: int, attempt: int,
@@ -421,20 +463,7 @@ static func _swept_air_is_legal(swept: Array[Vector3i],
 			return false
 	return true
 static func _passes_topology_gate(plan: WarrenVolumePlan) -> bool:
-	return plan.is_sealed() \
-		and int(plan.audit.walk_cell_count) >= MIN_ROUTE_CELLS \
-		and int(plan.audit.elevation_band_count) >= 4 \
-		and int(plan.audit.ramp_transition_count) >= 1 \
-		and int(plan.audit.landing_turn_violation_count) == 0 \
-		and int(plan.audit.max_transition_rise_bands) <= 1 \
-		and float(plan.audit.overhang_walk_ratio) >= 0.25 \
-		and float(plan.audit.addressed_walk_ratio) >= MIN_ADDRESSED_WALK_RATIO \
-		and float(plan.audit.get(
-			"ground_primary_two_sided_address_walk_ratio", 0.0)) \
-			>= MIN_GROUND_PRIMARY_TWO_SIDED_ADDRESS_RATIO \
-		and float(plan.audit.deep_vertical_shaft_ratio) <= 0.10 \
-		and int(plan.audit.same_datum_route_fold_count) == 0 \
-		and int(plan.audit.max_straight_run_cells) <= MAX_STRAIGHT_RUN
+	return topology_gate_failure(plan).is_empty()
 
 
 static func _plan_score(plan: WarrenVolumePlan) -> float:

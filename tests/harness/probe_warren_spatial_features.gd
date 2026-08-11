@@ -56,6 +56,11 @@ func _init() -> void:
 		"--timing" in OS.get_cmdline_user_args()
 	WarrenVolumetricSolver.diagnostic_trace_room_gate = \
 		"--gate-trace" in OS.get_cmdline_user_args()
+	var market_limit_arg := OS.get_cmdline_user_args().find("--market-limit")
+	if market_limit_arg >= 0 \
+			and market_limit_arg + 1 < OS.get_cmdline_user_args().size():
+		WarrenVolumetricSolver.diagnostic_feature_market_limit = int(
+			OS.get_cmdline_user_args()[market_limit_arg + 1])
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
 	print("PROGRAM_MS=", Time.get_ticks_msec() - started_ms)
@@ -198,6 +203,8 @@ func _init() -> void:
 	if not composition_only and not compiler_only:
 		print("LANDMARK_DIAG: ",
 			WarrenVolumetricSolver.last_preplan_landmark_diagnostic)
+	print("MARKET_DIAG: ",
+		WarrenVolumetricSolver.last_preplan_market_diagnostic)
 	print("COMPOSITION_AUDIT: ", WarrenRoomCompositionPlanner.last_audit)
 	if verbose_failure:
 		print("COMPOSITION_MERGE_DIAG: ",

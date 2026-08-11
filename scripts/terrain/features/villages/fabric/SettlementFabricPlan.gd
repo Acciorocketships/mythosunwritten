@@ -290,6 +290,70 @@ func visual_envelope_conflicts() -> Array[Dictionary]:
 	return conflicts
 
 
+func connected_visual_envelope_conflicts() -> Array[Dictionary]:
+	## Connections permit one measured construction seam, not arbitrary mesh
+	## interpenetration. The legacy gate exempted the complete AABBs of every
+	## bearing ancestor/descendant pair, which could hide a roof cutting through
+	## a related upper room. Keep this diagnostic separate while the existing
+	## vocabulary is classified; it identifies exemptions that must become typed
+	## seams before the rule can safely become a hard admission gate.
+	var conflicts: Array[Dictionary] = []
+	for left_index in units.size():
+		var left := units[left_index]
+		var left_recipe := _recipes[left.recipe_id] as FabricRecipe
+		if left_recipe.placements.is_empty():
+			continue
+		var left_bounds := left.transform() * left_recipe.local_clearance_bounds
+		for right_index in range(left_index + 1, units.size()):
+			var right := units[right_index]
+			var right_recipe := _recipes[right.recipe_id] as FabricRecipe
+			if right_recipe.placements.is_empty() \
+					or not _units_declare_connection(left, right):
+				continue
+			var right_bounds := right.transform() * \
+				right_recipe.local_clearance_bounds
+			if not _aabb_overlaps_volume(left_bounds, right_bounds):
+				continue
+			var overlap := _overlap_size(left_bounds, right_bounds)
+			var direct_bearing := left.parent_ids.has(right.stable_id) \
+				or right.parent_ids.has(left.stable_id)
+			var lateral_seam := left.visual_seam_ids.has(right.stable_id) \
+				or right.visual_seam_ids.has(left.stable_id) \
+				or _has_direct_socket_target(left, right.stable_id) \
+				or _has_direct_socket_target(right, left.stable_id)
+			var bearing_seam_ok := direct_bearing and overlap.y <= 0.50
+			var lateral_seam_ok := lateral_seam \
+				and minf(overlap.x, overlap.z) <= 0.50
+			if bearing_seam_ok or lateral_seam_ok:
+				continue
+			conflicts.append({
+				"left": left.stable_id,
+				"left_recipe": left.recipe_id,
+				"right": right.stable_id,
+				"right_recipe": right.recipe_id,
+				"overlap_m": overlap,
+				"direct_bearing": direct_bearing,
+				"lateral_seam": lateral_seam,
+				"transitive_only": not direct_bearing and not lateral_seam,
+			})
+	return conflicts
+
+
+static func _has_direct_socket_target(unit_value: FabricUnit,
+		target_id: StringName) -> bool:
+	for bond: Dictionary in unit_value.socket_bonds:
+		if StringName(bond.get("target_unit", &"")) == target_id:
+			return true
+	return false
+
+
+static func _overlap_size(left: AABB, right: AABB) -> Vector3:
+	return Vector3(
+		minf(left.end.x, right.end.x) - maxf(left.position.x, right.position.x),
+		minf(left.end.y, right.end.y) - maxf(left.position.y, right.position.y),
+		minf(left.end.z, right.end.z) - maxf(left.position.z, right.position.z))
+
+
 func _units_declare_connection(left: FabricUnit,
 		right: FabricUnit) -> bool:
 	if left.visual_seam_ids.has(right.stable_id) \

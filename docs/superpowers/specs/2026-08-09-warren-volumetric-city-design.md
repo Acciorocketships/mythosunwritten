@@ -1,7 +1,8 @@
 # Warren Volumetric City Architecture — Design Spec
 
 **Date:** 2026-08-09
-**Status:** Proposed architecture; implementation has not started.
+**Status:** Living architecture; the first volumetric production transaction is
+implemented and under visual/construction iteration.
 **Supersedes:** The constant-2D-footprint partition and vertically repeated
 construction assumptions in
 `2026-08-06-mass-first-warren-design.md`.
@@ -72,6 +73,83 @@ tuning cannot make a constant-footprint extrusion behave like an interlocking
 3D settlement.
 
 ## 3. Spatial scale and coordinate system
+
+### 3.0 Settlement scale is a source-plan parameter
+
+Village size is selected before the allocation massif, route, feature set, or
+rooms exist. It is not implemented by cropping a large town, deleting its rim,
+or scaling placed meshes. A pure `WarrenVillageScaleProfile`, derived from the
+world seed and stable settlement identity, owns the bounded planning domain and
+the budgets every later stage consumes.
+
+The initial production distribution is deliberately weighted toward small
+settlements:
+
+| Scale | Share | Character | Hero-feature budget |
+|---|---:|---|---|
+| `COMPACT` | 55% | 63 m planning diameter; one dense climbing knot | covered market, 1 skywalk, 4 balconies, 4 room cantilevers, no prefab landmark |
+| `STANDARD` | 30% | 69 m diameter; two or three interlocked street episodes | covered market, 2 skywalks, 5 balconies/cantilevers, 1 landmark |
+| `LARGE` | 12% | 75 m diameter; full warren grammar | covered market, 3 skywalks, 6 balconies/cantilevers, elevated courtyard, 2 landmarks |
+| `GRAND` | 3% | 87 m diameter; rare regional centre and stress case | covered market, 3 skywalks, 8 balconies/cantilevers, elevated courtyard, 3 landmarks |
+
+These percentages are deterministic selection weights, not streaming spawn
+probabilities. They make the median settlement substantially smaller than the
+current seed-7 showcase. The existing large review town remains an explicit
+`LARGE` fixture rather than the implicit template for every village.
+
+The profile carries at least:
+
+```gdscript
+class_name WarrenVillageScaleProfile
+
+var scale_id: StringName
+var radius_cells: int
+var minimum_core_bands: int
+var maximum_core_bands: int
+var route_cell_range: Vector2i
+var route_span_range: Vector2i
+var lane_budget: int
+var lane_cell_budget: int
+var room_volume_budget: Vector2i
+var residual_room_budget: int
+var residual_kind_budget: int
+var skywalk_range: Vector2i
+var balcony_range: Vector2i
+var cantilever_range: Vector2i
+var landmark_range: Vector2i
+var requires_elevated_courtyard: bool
+var requires_covered_market: bool
+```
+
+Size changes the amount of authored mass and the length of the negative-space
+route, not the density doctrine. A compact village still has narrow streets,
+touching buildings, at least one overhead crossing, real roofs, and complete
+support. It must not become a few detached cottages merely because its bounds
+are smaller.
+
+Feature minimums are conditional only where the feature genuinely needs the
+larger topology. The covered market remains part of every size. The 6 x 6 m
+third-storey courtyard is mandatory for `LARGE` and `GRAND`; `STANDARD` may
+admit it when the sealed route reaches the required datum; `COMPACT` does not
+reserve one. A smaller town is never rejected for lacking a large-town feature
+that its selected profile did not request.
+
+All integrity gates remain scale-invariant: zero public-air/occupied overlap,
+complete bearing, exact entrances, typed seams, roof closure, and connected
+public circulation. Aesthetic count/length gates are expressed by the profile
+or normalized by available route/facade area. Stable signatures and cache keys
+include `scale_id`, and terrain placement rebuilds must reuse the exact selected
+profile.
+
+The current total inhabited-room budgets are 18–110, 30–190, 50–220, and
+80–300 from compact through grand. They count both route-frontage composition
+and residual infill; the latter cannot disappear from the size audit merely
+because it was packed in a later phase. Residual infill is independently capped
+at 12/16/24/32 rooms (3/4/6/8 per room family), preventing a compact source
+from quietly growing a large town's secondary shoulder. Landmark requirements
+similarly scale 0/1/2/3. A standard town's two skywalks may remain internal to
+the connected room mountain; large/grand landmark groups require at least one
+occupied connector endpoint.
 
 ### 3.1 One uniform fine lattice
 
@@ -267,6 +345,14 @@ Each stamp declares private volume, shell interfaces, entrance/socket options,
 support requirements, allowed rotations, roof compatibility, and measured
 visual clearance. A stamp is a planning contract, not necessarily one mesh.
 
+When recomposition moves or reshapes a complete room, its doorway phase is
+derived again from the final world-space room origin, yaw, frontage, and exact
+threshold. Reusing the source parcel's half-cell phase is invalid because it can
+move an authored door 1.5 m away from topology. Private balcony and skywalk
+endpoints select finite portal variants of every reachable facade family,
+including stone upper storeys; they open only the requested socket face and do
+not invent a public entrance.
+
 ### 5.4 `WarrenFeatureReservation`
 
 Every composed feature is an atomic transaction with:
@@ -304,7 +390,7 @@ Before generic partitioning, choose a compatible set of town-scale reservations:
 
 1. primary ascending street and secondary lane graph;
 2. tunnel/undercroft runs and portal locations;
-3. one third-storey courtyard volume;
+3. one third-storey courtyard volume when required by the selected scale;
 4. one covered market volume;
 5. several skywalk corridors with endpoint regions;
 6. several room-scale jetty/outcropping regions;
@@ -446,8 +532,11 @@ land at a floorplate that is not vertically identical to the storey beneath it,
 so links contribute to the interlocked silhouette rather than joining towers at
 their midpoints.
 
-The normal town target is **three to six** skywalks, with at least two visibly
-crossing a public street or court and no duplicate endpoint pair.
+The normal large-town target is **three to six** skywalks, with at least two
+visibly crossing a public street or court and no duplicate endpoint pair.
+Compact and standard profiles use their smaller explicit ranges, but every
+accepted town still contains at least one true occupied connector over public
+space.
 
 ### 7.3 Balconies
 
@@ -475,9 +564,17 @@ support/cantilever path. It changes the building's floorplate and silhouette.
 Shallow bay-window assets remain useful facade details, but they do not satisfy
 the room-outcropping requirement.
 
+The current construction vocabulary supports a room-scale cantilever with one
+measured diagonal timber support course when its swept envelope avoids public
+air, daylight, services, unrelated rooms, and feature clearance. A shallow
+bracket course is the explicit fallback. Horizontal trim pasted under a room is
+not accepted as proof of support.
+
 ### 7.5 Third-storey courtyard
 
-Every accepted town contains one typed elevated courtyard with:
+Every accepted `LARGE` or `GRAND` town contains one typed elevated courtyard
+(`STANDARD` may contain one when its selected profile and route support it)
+with:
 
 - a minimum 6 × 6 m public floor at four fine bands (6 m, the third-storey
   datum) above its local terrain reference;
@@ -510,7 +607,8 @@ town's mass, not a detached prop group.
 
 ### 7.7 Landmark and prefab structures
 
-Two to four distinctive authored structures should anchor each town when legal:
+Up to two to four distinctive authored structures should anchor a large or
+grand town when legal:
 tavern, forge, guild hall, gatehouse, shrine, or another catalogued complete
 building. Each gets a measured irregular occupancy/clearance contract and named
 public/private sockets. Residual rooms, streets, roofs, and skywalks grow around
@@ -529,6 +627,10 @@ town may ignore.
 
 - No generated building may repeat an identical floorplate for more than two
   consecutive storeys.
+- Composition records are indexed one storey at a time. A protected second
+  storey therefore preserves indices 0–1 but never exempts an optional third
+  storey; a genuinely required third-storey interface must be recomposed or the
+  complete candidate is rejected.
 - A building of four or more storeys must change at least 25% of its occupied
   X/Z cells across each two-storey composition break, measured by symmetric
   difference over the union of the two floorplates.
@@ -567,6 +669,21 @@ silhouette has already been reviewed as non-repetitive.
   elevations in the central half of the footprint.
 - Dormers, chimneys, cross-gables, lean-tos, corner roofs, and flat occupied
   terraces are selected from topology, not sprinkled uniformly.
+- When a complete pitched roof cannot coexist with measured neighbouring eaves,
+  the finite fallback is a guarded private roof terrace. The compiler first
+  tries a lived-in variant whose planters, laundry, stone chimney, or complete
+  blue canopy participate in the same visual-clearance transaction, then an
+  undressed guarded terrace, and only then the exact bare cap. Partial setback
+  strips prefer a rail on a genuinely exposed long edge; an enclosed strip may
+  instead receive a measured planter-only roof garden. Every dressed strip has
+  the exact plain cap as its transactional fallback, and true one-storey narrow
+  closers preferentially use integrated chimney roofs. No public walkability is
+  invented.
+- Roof qualification intersects every semantic solid cell of the transformed
+  candidate with the sealed 3D public-air grid. Checking only the first band
+  above the source face is invalid: a two-band gable can clear that band while
+  piercing an elevated street above it. Such a candidate is rejected before
+  placement and the exact roof face receives a thin non-occupying weather cap.
 - No single roof material family may dominate more than 55% of primary roof
   area in a showcase town unless the asset catalog cannot satisfy the measured
   seams; such a failure blocks acceptance rather than silently weakening the
@@ -688,11 +805,11 @@ Initial corpus targets, to be calibrated only with recorded evidence:
 | Primary route with a building boundary on both sides | at least 70% |
 | Public route with occupied/structural cover | 45–70% |
 | Longest unbounded ground-street run | at most 12 m |
-| True skywalks | 3–6, at least 2 over public space |
-| Usable balconies | at least 6, across at least 3 buildings |
-| Room-scale outcroppings/jetties | at least 6 |
-| Landmark/prefab anchors | 2–4 when catalog contracts fit |
-| Elevated third-storey courtyard | exactly 1 |
+| True skywalks | selected scale range; always at least 1 over public space |
+| Usable balconies | selected scale range, distributed across buildings |
+| Room-scale outcroppings/jetties | selected scale range |
+| Landmark/prefab anchors | selected scale range when catalog contracts fit |
+| Elevated third-storey courtyard | exactly 1 where the scale requires it |
 | Covered market | exactly 1 |
 | Dormered roof regions | at least 4 |
 | Identical generated floorplate run | at most 2 storeys |
@@ -743,6 +860,12 @@ structural rather than seed-specific taste.
 - every accepted private cell reaches terrain in the support DAG;
 - town geometry is identical across chunk projections and repeated runs;
 - a multi-seed corpus meets topology, feature, variety, and runtime floors;
+- a broad deterministic corpus matches the scale weights and monotonically
+  increases footprint/route/room budgets from compact through grand;
+- the same settlement identity always selects the same scale, including during
+  terrain-relative rebuild and chunk-order perturbation;
+- the compact production fixture proves a bounded non-greedy two-arcade choice
+  survives the same topology gate before and after gallery construction;
 - sabotage tests remove one endpoint, support, guard, roof, facade, or air cell
   and prove the corresponding seal fails.
 
@@ -751,6 +874,13 @@ structural rather than seed-specific taste.
 Use the existing capture/falsification discipline. Add occupancy overlays and
 exploded storey views so a reviewer can see building ownership and floorplate
 changes directly, not infer them from the final skin.
+
+The spatial review harness also has a production-terrain mode. It must run the
+real site selection and terrain-relative rebuild, commit the exact final entry
+list including terrain-derived supports, render the surrounding terrain chunks
+in the town frame, and omit any diagnostic road skin. A production-terrain
+capture therefore judges the actual negative-space streets and bearing result,
+not the same town floating over a flat review slab.
 
 ## 15. Migration plan
 

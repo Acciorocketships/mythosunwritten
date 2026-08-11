@@ -121,7 +121,7 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 			and endpoint_owners.size() < 2:
 		return _reject("skywalk lacks two distinct endpoint owners")
 	if kind in [&"enclosed_skywalk", &"covered_market", &"balcony",
-			&"tower_annex", &"prefab_landmark",
+			&"tower_annex", &"prefab_landmark", &"room_outcropping",
 			&"courtyard_bridge_house"] \
 			and construction_records.is_empty():
 		return _reject("constructed feature has no exact asset record")
@@ -144,8 +144,16 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 	if kind == &"courtyard_bridge_house" and (endpoints.size() != 1 \
 			or endpoint_owners.size() != 1 or construction_records.size() != 2):
 		return _reject("courtyard bridge house lacks one room endpoint or two-piece recipe")
-	if kind == &"room_outcropping" and endpoint_owners.size() != 1:
-		return _reject("room outcropping lacks one parent building")
+	if kind == &"room_outcropping":
+		if endpoint_owners.size() != 1:
+			return _reject("room outcropping lacks one parent building")
+		if not bool(_audit_facts.get(
+				"outcrop_is_integrated_cantilever", false)):
+			return _reject("room outcropping is not an integrated cantilever")
+		if construction_records.is_empty() or int(_audit_facts.get(
+				"outcrop_support_course_count", -1)) \
+				!= construction_records.size():
+			return _reject("room outcropping lacks its exact bracket courses")
 	if kind == &"prefab_landmark":
 		if endpoints.size() != 1 or endpoint_owners.size() != 1 \
 				or not endpoint_owners.has(stable_id) \

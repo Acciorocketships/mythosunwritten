@@ -72,6 +72,13 @@ const MIN_ARCADE_CLEARED_RATIO := 0.55
 ## must materially widen the public realm across the reviewed corpus.
 const MIN_LANE_CELLS_PER_TOWN := 14
 const MIN_LANE_CELLS_PER_FIVE_ROUTE_CELLS := 1
+## The default production site's compact city seed. This candidate is the
+## regression which proved one greedy pair of arcade roots is insufficient:
+## another bounded pair preserves the same common topology contract through
+## the gallery transaction and lets the small town materialize at its selected
+## terrain site instead of disappearing or being promoted to a larger profile.
+const COMPACT_PRODUCTION_CITY_SEED := 166029932451774690
+const COMPACT_PRODUCTION_ATTEMPT := 5
 
 
 func _carved(world_seed: int) -> WarrenExcavation:
@@ -211,6 +218,63 @@ func test_probe_seeds_carve_climbing_covered_routes() -> void:
 			"portals (seed %d)" % world_seed)
 	assert_gt(accepted, 0, "no probe seed carved a route: %s" \
 		% WarrenExcavationCarver.last_failure)
+
+
+func test_compact_production_arcades_preserve_common_topology_gate() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(
+		WarrenVillageScaleProfile.COMPACT)
+	assert_not_null(profile)
+	var massif := WarrenMassifBuilder.build(COMPACT_PRODUCTION_CITY_SEED, {},
+		profile)
+	assert_not_null(massif, WarrenMassifBuilder.last_failure)
+	if massif == null:
+		return
+	var carve_seed := COMPACT_PRODUCTION_CITY_SEED \
+		+ COMPACT_PRODUCTION_ATTEMPT \
+			* WarrenTownSolver.MASS_FIRST_ATTEMPT_STRIDE
+	var excavation := WarrenExcavationCarver.carve(carve_seed, massif, profile)
+	assert_not_null(excavation, WarrenExcavationCarver.last_failure)
+	if excavation == null:
+		return
+	var source := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+		excavation)
+	assert_not_null(source, WarrenExcavationVolumeAdapter.last_failure)
+	if source == null:
+		return
+	assert_true(WarrenPublicRealmCarver.passes_topology_gate(source),
+		WarrenPublicRealmCarver.topology_gate_failure(source))
+	var mass_context := source.mass_context
+	var frontage_cells := source.frontage_cells
+	var arcaded := WarrenGroundArcadeSolver.extend_preserving_topology(source)
+	assert_not_null(arcaded, WarrenGroundArcadeSolver.last_failure)
+	if arcaded == null:
+		return
+	assert_true(WarrenPublicRealmCarver.passes_topology_gate(arcaded),
+		WarrenPublicRealmCarver.topology_gate_failure(arcaded))
+	assert_gte(int(arcaded.audit.get("ground_arcade_walk_cell_count", 0)),
+		WarrenGroundArcadeSolver.MIN_CELLS - 1 \
+			+ WarrenGroundArcadeSolver.SECONDARY_MIN_CELLS - 1,
+		"both complete ground-arcade episodes must survive sealing")
+	var selection := WarrenGroundArcadeSolver.last_selection_audit
+	assert_eq(selection.get("mode", &""), &"topology_preserving")
+	assert_true(int(selection.get("primary_rank", 0)) > 0 \
+			or int(selection.get("secondary_rank", 0)) > 0 \
+			or int(selection.get("primary_length", 0)) \
+				< WarrenGroundArcadeSolver.TARGET_CELLS \
+			or int(selection.get("secondary_length", 0)) \
+				< WarrenGroundArcadeSolver.SECONDARY_TARGET_CELLS,
+		"the fixture must keep exercising a non-greedy bounded arcade choice")
+	var gallery_survivor := false
+	for gallery: WarrenVolumePlan in WarrenElevatedFrontageSolver.variants(
+			arcaded, false):
+		gallery.mass_context = mass_context
+		gallery.frontage_cells = frontage_cells
+		if WarrenPublicRealmCarver.passes_topology_gate(gallery):
+			gallery_survivor = true
+			break
+	assert_true(gallery_survivor,
+		"a compact source needs at least one gallery transaction which keeps " \
+		+ "the shared street-quality contract")
 
 
 func test_every_route_cell_is_bounded_by_mass_or_declared_open() -> void:
