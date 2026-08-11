@@ -69,6 +69,93 @@ func test_landmark_candidate_corpus_key_is_order_independent_and_exact() \
 		"a geometrically different candidate frontier must never reuse pairs")
 
 
+func test_landmark_embeddedness_counts_only_surviving_city_mass() -> void:
+	var landmark_cells := {Vector3i.ZERO: true}
+	var protected_owners := {
+		Vector3i(1, 0, 0): {&"east.house": true},
+		Vector3i(0, 1, 2): {&"south.house": true},
+		Vector3i(-1, 0, 0): {&"spatial.feature.market.00": true},
+		Vector3i(0, 0, -1): {&"removed.house": true},
+	}
+	var audit := WarrenVolumetricSolver._landmark_embeddedness(
+		landmark_cells, protected_owners, {&"removed.house": true})
+	assert_eq(int(audit.side_count), 2,
+		"only independently surviving houses embed a landmark side")
+	assert_eq(int(audit.nearest_gap), 1)
+	assert_eq((audit.owner_ids as Array).size(), 2)
+	assert_has(audit.owner_ids, &"east.house")
+	assert_has(audit.owner_ids, &"south.house")
+
+
+func test_landmark_ranking_prefers_city_contact_before_parcel_preservation() \
+		-> void:
+	var detached := _rank_fixture_set(&"detached", [
+		_rank_fixture_landmark(&"anchor.detached", Vector3i.ZERO, {}, {})] \
+			as Array[Dictionary])
+	detached.merge({"minimum_city_contact_side_count": 1,
+		"city_contact_side_count": 1, "city_contact_score": 3,
+		"maximum_city_gap": 4}, true)
+	var embedded := _rank_fixture_set(&"embedded", [
+		_rank_fixture_landmark(&"anchor.embedded", Vector3i(3, 0, 0), {}, {
+			&"replaced.a": true, &"replaced.b": true})] as Array[Dictionary])
+	embedded.merge({"minimum_city_contact_side_count": 3,
+		"city_contact_side_count": 3, "city_contact_score": 12,
+		"maximum_city_gap": 1, "displaced_parcel_count": 2}, true)
+	var sets := [detached, embedded] as Array[Dictionary]
+	WarrenVolumetricSolver._rank_landmark_sets_for_skywalks(sets,
+		[] as Array[Dictionary], 0)
+	assert_eq(StringName(sets[0].stable_id), &"embedded",
+		"a landmark knit into the town outranks an open-lawn satellite")
+
+
+func test_landmark_skywalk_coverage_counts_distinct_external_buildings() \
+		-> void:
+	var first := {"reservation": {"owner_parcel_ids": [
+		&"spatial.feature.landmark.00", &"parcel.a"]}}
+	var repeated := {"reservation": {"owner_parcel_ids": [
+		&"parcel.b", &"spatial.feature.landmark.00"]}}
+	var second := {"reservation": {"owner_parcel_ids": [
+		&"spatial.feature.landmark.01", &"parcel.c"]}}
+	var internal := {"reservation": {"owner_parcel_ids": [
+		&"parcel.d", &"parcel.e"]}}
+	assert_eq(WarrenVolumetricSolver._skywalk_landmark_coverage(
+		[first, repeated, internal] as Array[Dictionary]).size(), 1,
+		"two links into one landmark do not integrate the other landmark")
+	assert_eq(WarrenVolumetricSolver._skywalk_landmark_coverage(
+		[first, repeated, second, internal] as Array[Dictionary]).size(), 2,
+		"each independently attached landmark contributes exactly once")
+
+
+func test_landmark_transition_owners_are_deduplicated_and_stable() -> void:
+	var landmarks := [
+		{"transition_owner_ids": [&"parcel.z", &"parcel.a"]},
+		{"transition_owner_ids": [&"parcel.a", &"parcel.m"]},
+	] as Array[Dictionary]
+	assert_eq(WarrenVolumetricSolver._landmark_transition_owner_ids(landmarks),
+		[&"parcel.a", &"parcel.m", &"parcel.z"] as Array[StringName],
+		"landmark integration must preserve the same deterministic house set")
+
+
+func test_room_pair_repair_never_drops_required_transition_house() -> void:
+	var room := _unsealed_room_for_geometry(&"current.room", &"current",
+		Vector3i.ZERO)
+	room.source_parcel_id = &"current"
+	var rejection := {"prior_id": &"unit.prior"}
+	var prior_records := {&"unit.prior": {
+		"source_parcel_id": &"prior"}}
+	var displaced: Dictionary = {}
+	assert_eq(WarrenVolumetricSolver._displace_optional_room_pair_parcel(
+		room, rejection, prior_records, displaced, {&"current": true}),
+		&"prior", "the optional neighbor yields to a required current house")
+	assert_has(displaced, &"prior")
+	displaced.clear()
+	assert_eq(WarrenVolumetricSolver._displace_optional_room_pair_parcel(
+		room, rejection, prior_records, displaced,
+		{&"current": true, &"prior": true}), &"",
+		"two required transition houses must reject the whole feature state")
+	assert_true(displaced.is_empty())
+
+
 func test_skywalk_tower_risk_matches_three_storey_repetition_gate() -> void:
 	var parcel := WarrenBuildingParcel.new(&"tower", [Vector2i.ZERO], 0, 8,
 		Vector3i.ZERO, Vector2i.ZERO, Vector2i.DOWN)

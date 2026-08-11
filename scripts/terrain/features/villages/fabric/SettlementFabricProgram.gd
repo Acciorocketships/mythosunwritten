@@ -767,7 +767,8 @@ static func _room_recipe(recipe_id: StringName, terrain_bearing: bool,
 			else face_assets[0],
 		face_assets, 6.0, modules, &"front" if has_exterior_door else &"")
 	if not terrain_bearing and facade_phase == 1:
-		_add_front_facade_detail(recipe_value, &"ivy",
+		_add_front_facade_detail(recipe_value,
+			_upper_facade_detail_kind(theme, &"square"),
 			FabricModuleProgram.footprint_centre(Vector3i(-2, 0, -2),
 				Vector3i(4, 1, 4)), 3.0)
 	_add_room_occupancy(recipe_value, &"front" if has_exterior_door else &"")
@@ -841,7 +842,8 @@ static func _long_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 				_pose(centre + Vector3(3.0, 0.0, z_offset), -PI * 0.5),
 				Vector3i.RIGHT, centre.x + 3.0))
 	if not terrain_bearing and facade_phase == 1:
-		_add_front_facade_detail(recipe_value, &"clothes", centre, 4.5)
+		_add_front_facade_detail(recipe_value,
+			_upper_facade_detail_kind(theme, &"long"), centre, 4.5)
 	var door_cell := Vector3i(-1, 0, 2)
 	for y in 2:
 		for z in range(-3, 3):
@@ -1004,7 +1006,8 @@ static func _tower_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 				_pose(centre + side.offset as Vector3, float(side.yaw)),
 				side.outward as Vector3i, float(side.boundary)))
 	if not terrain_bearing and facade_phase == 1:
-		_add_front_facade_detail(recipe_value, &"sign", centre, 1.5)
+		_add_front_facade_detail(recipe_value,
+			_upper_facade_detail_kind(theme, &"tower"), centre, 1.5)
 	# At this lattice resolution a 3 m shell has no cell wholly inside it. Keep
 	# the rear-west pier structural and treat the remaining cells as furnished
 	# volume; exact visual envelopes and baked wall collision remain authoritative.
@@ -1072,7 +1075,8 @@ static func _slim_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 			_pose(centre + Vector3(0.0, 0.0, -3.0), PI),
 			Vector3i.FORWARD, centre.z - 3.0))
 	if not terrain_bearing and facade_phase == 1:
-		_add_front_facade_detail(recipe_value, &"sign", centre, 3.0)
+		_add_front_facade_detail(recipe_value,
+			_upper_facade_detail_kind(theme, &"slim"), centre, 3.0)
 	for index in 2:
 		var z_offset := -1.5 + float(index) * 3.0
 		var west_asset := side_asset if index == int(theme == &"blue") \
@@ -2926,6 +2930,24 @@ static func _add_front_facade_detail(recipe_value: FabricRecipe,
 	## their measured bounds participate in parcel clearance before a building is
 	## accepted.  Alternating storeys therefore gain ivy, laundry, or a hanging
 	## sign without a post-build decoration pass piercing a neighboring house.
+	if detail_kind == &"windowbox":
+		# A complete measured sill garden: the planter and both flower clumps are
+		# compiled into the room's visual envelope. It can therefore fall back to
+		# the flush phase-A shell at a tight party wall instead of clipping a lane.
+		var box_origin := centre + Vector3(0.0, 0.82,
+			front_half_depth + 0.42)
+		recipe_value.add_placement(&"facade.windowbox", ROOF_PLANTER,
+			_pose(box_origin, 0.0))
+		recipe_value.add_placement(&"facade.windowbox.flowers.left",
+			ROOF_FLOWER_SMALL, _pose(box_origin + Vector3(-0.24, 0.08, 0.0),
+				0.0))
+		recipe_value.add_placement(&"facade.windowbox.flowers.right",
+			ROOF_FLOWER_WARM, _pose(box_origin + Vector3(0.24, 0.08, 0.0),
+				PI))
+		if not recipe_value.role_tags.has(&"facade_detail"):
+			recipe_value.role_tags.append(&"facade_detail")
+		recipe_value.role_tags.append(&"planted_facade")
+		return
 	var asset_id := FACADE_IVY if detail_kind == &"ivy" \
 		else FACADE_CLOTHES if detail_kind == &"clothes" \
 		else FACADE_SIGN if detail_kind == &"sign" else &""
@@ -2943,6 +2965,29 @@ static func _add_front_facade_detail(recipe_value: FabricRecipe,
 		asset_id, _pose(local_origin, 0.0))
 	if not recipe_value.role_tags.has(&"facade_detail"):
 		recipe_value.role_tags.append(&"facade_detail")
+
+
+static func _upper_facade_detail_kind(theme: StringName,
+		room_form: StringName) -> StringName:
+	## Detail families follow construction style and room width instead of every
+	## `.b` storey receiving the same pasted sign. The selection is recipe-local,
+	## while town-seed phase selection still decides which storeys receive it.
+	match room_form:
+		&"square":
+			return &"ivy" if theme == &"blue" else &"sign" \
+				if theme == &"stone" else &"windowbox"
+		&"long":
+			return &"clothes" if theme == &"blue" else &"ivy" \
+				if theme == &"orange" else &"sign" \
+				if theme == &"stone" else &"windowbox"
+		&"tower":
+			return &"sign" if theme in [&"blue", &"stone"] else &"ivy" \
+				if theme == &"amber" else &"windowbox"
+		&"slim":
+			return &"ivy" if theme == &"blue" else &"sign" \
+				if theme == &"orange" else &"clothes" \
+				if theme == &"stone" else &"windowbox"
+	return &"ivy"
 
 
 static func _add_room_shell(recipe_value: FabricRecipe, door_asset: StringName,

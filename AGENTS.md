@@ -402,8 +402,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   mountain instead of appending a detached manor. Each anchor is a complete measured terrain-rooted recipe with its real baked
   entrance aligned to a canonical ground-street landing, conservative shell/private volume,
   visual envelope, exact contact-point bearing cells, doorway face, and construction transform.
-  Candidate pairs must preserve a viable three-skywalk frontier, then rank by the least displaced
-  parcel fabric before surplus corridors, separation, and visual variety. Ranking precomputes the
+  Candidate pairs must preserve a viable three-skywalk frontier, then rank by their measured contact
+  with surviving ordinary room mass on multiple sides before parcel displacement, surplus corridors,
+  separation, and visual variety. Blocked parcels and other hero features never count as that contact,
+  and the exact terrain-rooted transition houses which do count become required members of the final
+  room transaction. Ranking precomputes the
   exact blocked-skywalk index set for each individual landmark and unions those sets per pair; this is
   an exact factorization of the former pair-by-skywalk collision loop, not a shortlist. Identical
   ordered candidate corpora reuse their complete pair frontier across court variants, while every
@@ -415,6 +418,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   seam, and the skywalk owns both the open face and its persistent clearance halo so later balconies
   and roofs cannot pierce it. Landmark-owned private cells are feature volume rather than synthetic
   `WarrenBuildingVolume` stacks, and their terrain bearing replaces any hidden support podium.
+  The exact hero preflight also mirrors final phase-A/phase-B room-envelope selection for every
+  unrelated room pair. If both measured facade phases collide, it may drop one complete optional
+  parcel and re-run the transaction; it may never drop an addressed/court/market/skywalk parcel or a
+  selected landmark-transition house, and it never removes a lone storey as a visual repair. The
+  audit separates feature-clearance displacement from room-pair displacement.
   `WarrenRoomCompositionPlanner` then treats every remaining upper band as a mutable 3D room field,
   never as a 2D parcel to extrude. Its deterministic band tiler may replace adjacent source-lineage
   blocks with one measured long/slim/square room when the exact occupied-cell union, support overlap,
@@ -482,8 +490,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `TerrainChunkMesher` chunks in the town's local frame, and omits the diagnostic road skin so paths
   remain the actual terrain or structural surfaces production owns. The spatial fabric
   compiler deterministically alternates complete authored facade phases by storey and horizontal
-  slot, then retries the plainer phase only when the richer measured envelope conflicts with already
-  accepted construction. Before that choice it derives the minimum mandatory authored roof closure
+  slot, with theme/form-selected ivy, clothes, signs, or planter-and-flower windowboxes as measured
+  rich phases, then retries the plainer phase only when the richer measured envelope conflicts with
+  already accepted construction. Before that choice it derives the minimum mandatory authored roof closure
   from the sealed roof faces (exact flat plates or plain setback caps) and reserves those measured
   AABBs against unrelated facade projections; a bay/laundry/sign phase may fall back, but cannot make
   the later roof pass impossible. `SettlementFabricPlan.add_unit()` stages semantic occupancy and publishes
