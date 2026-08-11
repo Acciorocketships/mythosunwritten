@@ -1693,9 +1693,9 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 		world_seed: int) -> StringName:
 	var district_theme := _architectural_district_theme(room.lattice_origin,
 		world_seed)
-	# Amber timber quarters share the cool slate roof family. Compact LPFV tower
-	# roofs have two useful silhouettes but both source textures are orange, so
-	# they keep an independent variant hash instead of pretending one is blue.
+	# Amber timber quarters share the cool slate roof family. Both compact roof
+	# silhouettes have measured slate-palette variants, so the theme remains an
+	# honest construction choice rather than metadata over an orange source mesh.
 	var orange := district_theme == &"orange"
 	var theme := "orange" if orange else "blue"
 	if room.kind == &"tower":

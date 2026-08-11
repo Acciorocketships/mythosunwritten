@@ -23,6 +23,8 @@ const ROOF_BISECT_LEFT_ORANGE := &"sfv.fabric.roof.bisect.left.s.orange.001"
 const ROOF_BISECT_RIGHT_ORANGE := &"sfv.fabric.roof.bisect.right.s.orange.001"
 const COMPACT_ROOF_03 := &"lpfv.fabric.roof.compact.orange.03"
 const COMPACT_ROOF_06 := &"lpfv.fabric.roof.compact.orange.06"
+const COMPACT_ROOF_SLATE_03 := &"lpfv.fabric.roof.compact.slate.03"
+const COMPACT_ROOF_SLATE_06 := &"lpfv.fabric.roof.compact.slate.06"
 const ROOM_ROOF_01 := &"lpfv.fabric.roof.room.orange.01"
 const ROOM_ROOF_04 := &"lpfv.fabric.roof.room.orange.04"
 const ROOM_ROOF_02 := &"lpfv.fabric.roof.room.boarded.02"
@@ -409,13 +411,13 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			ROOF_ORANGE, ROOF_WINDOW_04, -1, modules),
 		_paired_dormered_long_roof_recipe(&"roof.long.orange.dormer.pair.right",
 			ROOF_ORANGE, ROOF_WINDOW_04, 1, modules),
-		_tower_roof_recipe(&"roof.tower.blue", COMPACT_ROOF_03, modules),
+		_tower_roof_recipe(&"roof.tower.blue", COMPACT_ROOF_SLATE_03, modules),
 		_tower_roof_recipe(&"roof.tower.orange", COMPACT_ROOF_06, modules),
 		_chimney_tower_roof_recipe(&"roof.tower.chimney.blue",
-			COMPACT_ROOF_03, modules),
+			COMPACT_ROOF_SLATE_03, modules),
 		_chimney_tower_roof_recipe(&"roof.tower.chimney.orange",
 			COMPACT_ROOF_06, modules),
-		_short_tower_roof_recipe(&"roof.tower.short.blue", COMPACT_ROOF_03,
+		_short_tower_roof_recipe(&"roof.tower.short.blue", COMPACT_ROOF_SLATE_03,
 			modules),
 		_short_tower_roof_recipe(&"roof.tower.short.orange", COMPACT_ROOF_06,
 			modules),
@@ -1893,9 +1895,9 @@ static func _slim_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 			&"staggered_roof"], 1)
 	var centre := FabricModuleProgram.footprint_centre(
 		Vector3i(-1, 0, -2), Vector3i(2, 1, 4))
-	var first_asset := COMPACT_ROOF_06 if roof_asset == ROOF_BLUE \
+	var first_asset := COMPACT_ROOF_SLATE_06 if roof_asset == ROOF_BLUE \
 		else COMPACT_ROOF_03
-	var second_asset := COMPACT_ROOF_03 if roof_asset == ROOF_BLUE \
+	var second_asset := COMPACT_ROOF_SLATE_03 if roof_asset == ROOF_BLUE \
 		else COMPACT_ROOF_06
 	recipe_value.add_placement(&"roof.rear", first_asset,
 		_pose(centre + Vector3(0.0, 0.0, -1.5), 0.0))
@@ -2341,7 +2343,7 @@ static func _outcrop_recipe(recipe_id: StringName, theme: StringName,
 	var recipe_value := FabricRecipe.new(recipe_id, role_tags, 1)
 	var wall := _wood_window(theme)
 	var roof_asset := COMPACT_ROOF_03 if theme == &"orange" \
-		else COMPACT_ROOF_06
+		else COMPACT_ROOF_SLATE_06
 	# Centre bays occupy one 3 m facade module. Corner variants shift that same
 	# complete envelope one fine cell left/right, so their overlap with the
 	# parent is a deliberate square-at-a-corner composition rather than a larger
@@ -2542,7 +2544,8 @@ static func _corner_wrap_outcrop_recipe(recipe_id: StringName,
 	# A closed compact gable finishes the turret; the former flat deck cap read
 	# as a bare tabletop over an open frame from every above vantage. The 3.66 m
 	# eave span overhangs the 3 m square like the projection bays.
-	var roof_asset := COMPACT_ROOF_03 if theme == &"orange" else COMPACT_ROOF_06
+	var roof_asset := COMPACT_ROOF_03 if theme == &"orange" \
+		else COMPACT_ROOF_SLATE_06
 	recipe_value.add_placement(&"roof", roof_asset,
 		_pose(Vector3(square_centre_x, 3.0, -0.75), 0.0))
 	recipe_value.add_placement(&"brace.north", BRACE,
@@ -2686,7 +2689,7 @@ static func _skywalk_recipe(recipe_id: StringName, segments: int,
 	# makes several skywalks incompatible with a dense town. Repeat complete LPFV
 	# compact roofs instead: every 3 m bay remains pitched, gable-closed, unscaled,
 	# and visually articulated, while its measured envelope matches the tunnel.
-	var compact_roof := COMPACT_ROOF_03 if theme == &"blue" \
+	var compact_roof := COMPACT_ROOF_SLATE_03 if theme == &"blue" \
 		else COMPACT_ROOF_06
 	for segment in segments:
 		var roof_x := (float(segment) - float(segments - 1) * 0.5) * 3.0

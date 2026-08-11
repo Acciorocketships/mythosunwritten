@@ -223,10 +223,12 @@ static func _roof_material_family(recipe_value: FabricRecipe) -> StringName:
 		return &"boarded"
 	if asset_ids.has(SettlementFabricProgram.ROOF_BLUE):
 		return &"blue_tile"
+	if asset_ids.has(SettlementFabricProgram.COMPACT_ROOF_SLATE_03) \
+			or asset_ids.has(SettlementFabricProgram.COMPACT_ROOF_SLATE_06):
+		return &"blue_tile"
 	# The compact 03/06 meshes and both complete LPFV room roofs are genuinely
-	# orange. In particular, the slim recipe named `.blue` only reverses two
-	# compact orange geometries; classify what is rendered rather than trusting
-	# a palette label.
+	# orange. Palette-labelled recipes must therefore use the explicit slate
+	# variants above rather than trusting a semantic `.blue` suffix.
 	if asset_ids.has(SettlementFabricProgram.ROOF_ORANGE) \
 			or asset_ids.has(SettlementFabricProgram.COMPACT_ROOF_03) \
 			or asset_ids.has(SettlementFabricProgram.COMPACT_ROOF_06) \

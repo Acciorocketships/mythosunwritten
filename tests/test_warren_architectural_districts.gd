@@ -51,7 +51,7 @@ func test_vertical_storeys_share_a_quarter_but_keep_distinct_recipe_phases() \
 		"successive storeys lost their alternating authored facade treatment")
 
 
-func test_broad_roofs_counterbalance_the_honestly_orange_compact_roofs() \
+func test_broad_roofs_keep_the_town_palette_cool_weighted() \
 		-> void:
 	var cool := 0
 	var warm := 0
@@ -66,7 +66,39 @@ func test_broad_roofs_counterbalance_the_honestly_orange_compact_roofs() \
 			else:
 				warm += 1
 	assert_gt(cool, warm * 2,
-		"wider roofs no longer offset the two orange compact-roof silhouettes")
+		"wider roofs no longer preserve the cool-weighted district palette")
+
+
+func test_compact_blue_roofs_use_real_slate_palette_variants() -> void:
+	assert_not_null(_catalog)
+	assert_not_null(_program)
+	var blue := _program.recipe(&"roof.tower.blue")
+	var orange := _program.recipe(&"roof.tower.orange")
+	assert_not_null(blue)
+	assert_not_null(orange)
+	if blue == null or orange == null:
+		return
+	assert_true(blue.asset_ids().has(
+		SettlementFabricProgram.COMPACT_ROOF_SLATE_03))
+	assert_false(blue.asset_ids().has(SettlementFabricProgram.COMPACT_ROOF_03),
+		"a blue compact recipe silently returned to the orange source visual")
+	assert_true(orange.asset_ids().has(SettlementFabricProgram.COMPACT_ROOF_06))
+	var slate_descriptor := _catalog.descriptor(
+		SettlementFabricProgram.COMPACT_ROOF_SLATE_03)
+	var source_descriptor := _catalog.descriptor(
+		SettlementFabricProgram.COMPACT_ROOF_03)
+	assert_not_null(slate_descriptor)
+	assert_not_null(source_descriptor)
+	if slate_descriptor == null or source_descriptor == null:
+		return
+	assert_eq(slate_descriptor.measured_aabb, source_descriptor.measured_aabb,
+		"a palette variant changed the compact roof's measured construction")
+	var visual := load(slate_descriptor.visual_path) as EnvironmentVisual
+	assert_not_null(visual)
+	if visual != null and not visual.pieces.is_empty():
+		assert_not_null(visual.pieces[0].material_override)
+		assert_false(visual.pieces[0].use_instance_color,
+			"the instance channel would erase the palette material's authored input")
 
 
 func test_lived_in_recipes_use_the_new_measured_prop_families() -> void:

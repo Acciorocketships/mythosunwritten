@@ -251,6 +251,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   unrelated mesh intersections, while explicit semantic visual seams are the only exception;
   those envelopes also feed the bounded filler search so invalid proposals are avoided before
   assembly. Layout code never repairs individual meshes with visual offsets.
+  Rare reviewed palette variants reuse the exact source mesh and collision only through an
+  explicit `EnvironmentVisualPiece.material_override`; variants that need the authored colour
+  channel opt out of MultiMesh instance colour so the renderer cannot erase the remap input.
   `PublicRealmSurfaceSolver` unions only exterior terrain-street, structural-court,
   stair, gallery, and bridge claims; the assembler commits visual and collision faces from the
   same payload. Reviewed fixed-size floor/gallery meshes tile structural claims as authored plank

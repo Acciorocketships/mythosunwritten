@@ -78,13 +78,14 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	assert(transforms.size() == colors.size())
 	var multimesh := MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
-	multimesh.use_colors = true
+	multimesh.use_colors = piece.use_instance_color
 	multimesh.mesh = piece.mesh
 	multimesh.instance_count = transforms.size()
 	var composed := compose_transforms(transforms, piece)
 	for index in composed.size():
 		multimesh.set_instance_transform(index, composed[index])
-		multimesh.set_instance_color(index, colors[index])
+		if piece.use_instance_color:
+			multimesh.set_instance_color(index, colors[index])
 	var container := parent.get_node_or_null(String(_container_name)) as Node3D
 	if container == null:
 		container = Node3D.new()
@@ -93,4 +94,5 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	var instance := MultiMeshInstance3D.new()
 	instance.name = "%s_%02d" % [String(item.asset_id).replace(".", "_"), item.piece_index]
 	instance.multimesh = multimesh
+	instance.material_override = piece.material_override
 	container.add_child(instance)

@@ -6,6 +6,12 @@ func _cache() -> EnvironmentRenderCache:
 	assert_true(cache.prepare(ids))
 	return cache
 
+func _cache_for(asset_id: StringName) -> EnvironmentRenderCache:
+	var cache := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
+	var ids: Array[StringName] = [asset_id]
+	assert_true(cache.prepare(ids))
+	return cache
+
 func test_one_asset_piece_commits_one_coloured_multimesh_batch() -> void:
 	var cache := _cache()
 	var queue := EnvironmentCommitQueue.new(cache, &"Dressing")
@@ -27,6 +33,24 @@ func test_one_asset_piece_commits_one_coloured_multimesh_batch() -> void:
 	var instance := container.get_child(0) as MultiMeshInstance3D
 	assert_not_null(instance)
 	assert_eq(instance.multimesh.instance_count, 1)
+
+func test_palette_piece_commits_material_without_instance_colour_channel() -> void:
+	var asset_id := &"lpfv.fabric.roof.compact.slate.03"
+	var cache := _cache_for(asset_id)
+	var queue := EnvironmentCommitQueue.new(cache, &"Dressing")
+	var parent := Node3D.new()
+	add_child_autofree(parent)
+	var payload := EnvironmentInstancePayload.new()
+	payload.add(asset_id, Transform3D.IDENTITY, Color(1.0, 0.0, 0.8))
+	queue.register_chunk(Vector2i.ZERO, 1)
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	assert_eq(queue.drain(1), 1)
+	var piece := cache.visual(asset_id).pieces[0]
+	var instance := parent.get_node("Dressing").get_child(0) as MultiMeshInstance3D
+	assert_not_null(instance)
+	assert_false(instance.multimesh.use_colors,
+		"the instance colour channel would overwrite the palette material input")
+	assert_same(instance.material_override, piece.material_override)
 
 func test_stale_generation_is_discarded_without_touching_the_chunk() -> void:
 	var queue := EnvironmentCommitQueue.new(_cache(), &"Dressing")
