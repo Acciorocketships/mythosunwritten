@@ -10,6 +10,98 @@ func _program() -> SettlementFabricProgram:
 	return _program_cache
 
 
+func test_landmark_skywalk_ranking_factorization_matches_exact_union() -> void:
+	var skywalks: Array[Dictionary] = [
+		{"pair_key": "a", "reservation": {"owner_parcel_ids": [&"p0"]},
+			"body": {Vector3i(0, 0, 0): true}, "clearance": {},
+			"priority_cells": {}},
+		{"pair_key": "b", "reservation": {"owner_parcel_ids": [&"p1"]},
+			"body": {}, "clearance": {Vector3i(10, 0, 0): true},
+			"priority_cells": {}},
+		{"pair_key": "c", "reservation": {"owner_parcel_ids": [&"p2"]},
+			"body": {}, "clearance": {},
+			"priority_cells": {Vector3i(20, 0, 0): &"p2"}},
+	]
+	var landmark_a := _rank_fixture_landmark(&"anchor.a", Vector3i.ZERO,
+		{Vector3i(0, 0, 0): true}, {})
+	var landmark_b := _rank_fixture_landmark(&"anchor.b", Vector3i(3, 0, 0),
+		{Vector3i(10, 0, 0): true}, {&"p2": true})
+	var sets: Array[Dictionary] = [
+		_rank_fixture_set(&"a", [landmark_a] as Array[Dictionary]),
+		_rank_fixture_set(&"b", [landmark_b] as Array[Dictionary]),
+		_rank_fixture_set(&"ab", [landmark_a, landmark_b] \
+			as Array[Dictionary]),
+	]
+	WarrenVolumetricSolver._rank_landmark_sets_for_skywalks(sets,
+		skywalks, 1)
+	for landmark_set: Dictionary in sets:
+		var protected := WarrenVolumetricSolver._landmark_set_protected_cells(
+			landmark_set.reservations as Array[Dictionary])
+		var blocked := WarrenVolumetricSolver._landmark_set_blocker_parcels(
+			landmark_set.reservations as Array[Dictionary])
+		var exact_count := 0
+		var exact_pairs: Dictionary = {}
+		for skywalk: Dictionary in skywalks:
+			if not WarrenVolumetricSolver._skywalk_candidate_avoids_landmarks(
+					skywalk, protected, blocked):
+				continue
+			exact_count += 1
+			exact_pairs[String(skywalk.pair_key)] = true
+		assert_eq(int(landmark_set.skywalk_candidate_count), exact_count,
+			"factored candidate count must equal the complete union test")
+		assert_eq(int(landmark_set.skywalk_pair_count), exact_pairs.size(),
+			"factored pair diversity must equal the complete union test")
+
+
+func test_landmark_candidate_corpus_key_is_order_independent_and_exact() \
+		-> void:
+	var first := _rank_fixture_landmark(&"anchor.a", Vector3i.ZERO, {}, {})
+	var second := _rank_fixture_landmark(&"anchor.b", Vector3i(3, 0, 0), {}, {})
+	assert_eq(WarrenVolumetricSolver._landmark_candidate_corpus_key(
+		[first, second] as Array[Dictionary]),
+		WarrenVolumetricSolver._landmark_candidate_corpus_key(
+			[second, first] as Array[Dictionary]))
+	var moved := _rank_fixture_landmark(&"anchor.b", Vector3i(4, 0, 0), {}, {})
+	assert_ne(WarrenVolumetricSolver._landmark_candidate_corpus_key(
+		[first, second] as Array[Dictionary]),
+		WarrenVolumetricSolver._landmark_candidate_corpus_key(
+			[first, moved] as Array[Dictionary]),
+		"a geometrically different candidate frontier must never reuse pairs")
+
+
+func test_skywalk_tower_risk_matches_three_storey_repetition_gate() -> void:
+	var parcel := WarrenBuildingParcel.new(&"tower", [Vector2i.ZERO], 0, 8,
+		Vector3i.ZERO, Vector2i.ZERO, Vector2i.DOWN)
+	var stationary: Array[Dictionary] = [{"forced_offsets": {
+		parcel.stable_id: {1: Vector2i.ZERO}}}]
+	var three_storeys: Array[Dictionary] = [{"parcel": parcel,
+		"kind": &"tower", "storeys": 3}]
+	assert_gt(WarrenVolumetricSolver._skywalk_combination_tower_risk(
+		stationary, three_storeys), 0,
+		"a three-storey stationary endpoint predicts the exact visual rejection")
+	var two_storeys: Array[Dictionary] = [{"parcel": parcel,
+		"kind": &"tower", "storeys": 2}]
+	assert_eq(WarrenVolumetricSolver._skywalk_combination_tower_risk(
+		stationary, two_storeys), 0,
+		"the permitted two-storey stack does not receive tower risk")
+
+
+func test_court_tower_memo_keys_only_the_forced_structural_obligation() -> void:
+	var first := {"forced_offsets": {&"parcel": {1: Vector2i.ZERO}},
+		"body": {Vector3i.ZERO: true}}
+	var visual_alternative := {"forced_offsets": {
+		&"parcel": {1: Vector2i.ZERO}},
+		"body": {Vector3i(9, 9, 9): true}}
+	var different_block := {"forced_offsets": {
+		&"parcel": {2: Vector2i.ZERO}}}
+	assert_eq(WarrenVolumetricSolver._feature_forced_offset_key(first),
+		WarrenVolumetricSolver._feature_forced_offset_key(visual_alternative),
+		"cantilever visuals sharing one exact endpoint obligation reuse proof")
+	assert_ne(WarrenVolumetricSolver._feature_forced_offset_key(first),
+		WarrenVolumetricSolver._feature_forced_offset_key(different_block),
+		"a different room block remains in the complete geometric frontier")
+
+
 func test_room_outcropping_geometry_requires_one_bounded_bearing_facade() -> void:
 	var lower := _unsealed_room_for_geometry(&"lower", &"building",
 		Vector3i.ZERO)
@@ -429,3 +521,18 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		outcrop_owners[StringName(outcrop.endpoints[0].owner_id)] = true
 	assert_gte(outcrop_owners.size(),
 		WarrenSpatialFeatureSolver.TARGET_ROOM_OUTCROPPINGS)
+
+
+func _rank_fixture_landmark(recipe_id: StringName, origin: Vector3i,
+		protected: Dictionary, blockers: Dictionary) -> Dictionary:
+	return {"recipe_id": recipe_id, "origin": origin, "yaw_quarters": 0,
+		"landing_cell": origin, "protected_cells": protected,
+		"blocker_parcels": blockers}
+
+
+func _rank_fixture_set(stable_id: StringName,
+		reservations: Array[Dictionary]) -> Dictionary:
+	return {"stable_id": stable_id, "reservations": reservations,
+		"distinct_source_families": false, "displaced_parcel_count": 0,
+		"protected_cell_count": 0, "separation_squared": 0,
+		"footprint_area": 0.0, "tie": String(stable_id).hash()}

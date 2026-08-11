@@ -387,9 +387,12 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   vertical stack. The composition records are one storey each, so a forced second storey does not
   accidentally protect an optional third-storey crown from truncation. That check runs inside the
   bounded hero-feature loops, while another court or market candidate can still be selected, rather
-  than after the first superficially compatible set has become irreversible. Once the top-ranked
-  complete feature set for one market yields such a tower, the search advances to the next measured
-  market site instead of spending its landmark palette permutations on the same forced room state.
+  than after the first superficially compatible set has become irreversible. Tower-risk ordering uses
+  that same three-storey repetition threshold rather than the separate four-storey annex threshold.
+  When exact composition proves that the selected court's forced parcel/block/offset obligation
+  creates the repeated shaft, the remaining visual variants of only that identical obligation reuse
+  the failure; other court geometry and other market sites remain searchable. Failures owned by an
+  unrelated room are never promoted into a court-wide shortcut.
   The four typed third-storey court nodes
   retain explicit owner identities through public-realm projection; the visual adapter tiles only
   their exact 6 x 6 m union with alternating reviewed 1.5 m boards. Collision still comes from the
@@ -400,7 +403,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   entrance aligned to a canonical ground-street landing, conservative shell/private volume,
   visual envelope, exact contact-point bearing cells, doorway face, and construction transform.
   Candidate pairs must preserve a viable three-skywalk frontier, then rank by the least displaced
-  parcel fabric before surplus corridors, separation, and visual variety. This keeps a landmark
+  parcel fabric before surplus corridors, separation, and visual variety. Ranking precomputes the
+  exact blocked-skywalk index set for each individual landmark and unions those sets per pair; this is
+  an exact factorization of the former pair-by-skywalk collision loop, not a shortlist. Identical
+  ordered candidate corpora reuse their complete pair frontier across court variants, while every
+  court-specific skywalk score is recomputed. This keeps a landmark
   from winning merely because it preserves dozens of links when production needs the selected count;
   arbitrary detached prefabs are never added after packing. Large/grand landmark groups require at
   least one enclosed skywalk to terminate in a real landmark
