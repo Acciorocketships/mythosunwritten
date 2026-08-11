@@ -257,7 +257,7 @@ func test_phase_b_facades_use_multiple_measured_detail_families() -> void:
 	var planted := _program.recipe(&"room.upper.orange.b")
 	assert_true(planted.has_tag(&"planted_facade"))
 	var planted_asset_ids := planted.asset_ids()
-	assert_true(planted_asset_ids.has(SettlementFabricProgram.TERRACE_PLANT_LOW))
+	assert_true(planted_asset_ids.has(SettlementFabricProgram.TERRACE_PLANT_MID))
 
 
 func test_the_market_pool_is_the_reviewed_stocked_seven() -> void:

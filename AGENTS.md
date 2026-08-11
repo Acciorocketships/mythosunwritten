@@ -504,7 +504,25 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   diagonal timber course whose full 3D sweep must avoid public/daylight/service air, unrelated rooms,
   and feature clearance; a shallow bracket course is the explicit fallback, never horizontal trim
   masquerading as structure. Every accepted cantilever is either directly terrain/building-borne or
-  owns one of those exact support courses; the final audit permits zero unresolved cantilevers.
+  owns one of those exact support courses; odd 4.5/7.5 m bearing edges close with an authored
+  one-brace terminal after their complete 3 m courses, never a scaled brace. A room with no direct
+  bearing remains invalid. After every room has been composed, the planner re-audits the final 3D
+  solid claims rather than trusting proposal-time ancestry: it may relocate an unsupported
+  floorplate, hand the load to a lower parent floorplate, or omit an optional terminal crown, while
+  exact door and skywalk interface rooms remain fixed. The final audit permits zero unsupported
+  room transitions, unresolved cantilevers, or irregular projections.
+  Exact third-storey court frontage freezes only the contacted facade columns, not an entire room;
+  half-storey paired relief indexes every occupied fine-Y slice and may atomically repartition two
+  neighboring rooms before either is rejected in isolation. Addressed replacement rooms use the
+  same two measured door phases as ordinary construction, and a load-bearing room below that
+  threshold may still reshape while preserving the exact support column. The global support
+  allocator may join collinear measured cantilever courses into one explicit timber frame; the
+  compiler records those structural joins as semantic visual seams, while every unrelated room,
+  feature, and support overlap remains forbidden.
+  Lived-in roof, market, balcony, and facade dressing draws from measured collisionless plants,
+  benches, chairs, bags, buckets, crates, barrels, lanterns, and firewood. Those props participate
+  with their full authored AABBs in the same construction transaction as the room or structural
+  surface that bears them; they are not a post-pass scatter that may clip walls or circulation.
   The fast diagnostic
   `tests/harness/warren_spatial_review.tscn` renders the already-sealed fine-grid candidate directly
   and adds front/underside falsification views for every balcony; it deliberately bypasses corpus

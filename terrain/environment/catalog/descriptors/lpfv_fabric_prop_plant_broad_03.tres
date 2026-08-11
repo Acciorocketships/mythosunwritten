@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://cfcorakm87yv8"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ngjl3"]
+
+[resource]
+script = ExtResource("1_ngjl3")
+id = &"lpfv.fabric.prop.plant.broad.03"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_broad_03.tres"
+tags = Array[StringName]([&"fabric_dressing", &"plant", &"prop", &"village"])
+measured_aabb = AABB(-0.40560606, 0.0078671025, -0.33785382, 0.8801644, 0.33576444, 0.7677348)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.plant.broad.03"

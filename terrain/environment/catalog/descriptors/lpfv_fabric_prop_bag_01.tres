@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://c8ubihjk0mfy3"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_6fetd"]
+
+[resource]
+script = ExtResource("1_6fetd")
+id = &"lpfv.fabric.prop.bag.01"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bag_01.tres"
+tags = Array[StringName]([&"bag", &"fabric_dressing", &"prop", &"village"])
+measured_aabb = AABB(-0.31751385, -0.005922295, -0.26806968, 0.63502777, 0.53673023, 0.5361396)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.bag.01"

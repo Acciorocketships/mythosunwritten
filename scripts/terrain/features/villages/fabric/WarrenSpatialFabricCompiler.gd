@@ -635,6 +635,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 			b: WarrenFeatureReservation) -> bool:
 		return String(a.stable_id) < String(b.stable_id))
 	var out: Array[FabricUnit] = []
+	var compiled_support_units: Array[FabricUnit] = []
 	var realized_cells: Dictionary = {}
 	var compiled_feature_unit_by_owner: Dictionary = {}
 	var skywalk_count := 0
@@ -698,11 +699,30 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 				feature.stable_id
 			return [] as Array[FabricUnit]
 		for unit: FabricUnit in feature_units:
+			var unit_recipe := program.recipe(unit.recipe_id)
+			if unit_recipe != null and unit_recipe.has_tag(&"cantilever_support"):
+				var unit_clearance := unit.transform() \
+					* unit_recipe.local_clearance_bounds
+				# Support courses are selected as one compatible structural frame.
+				# Make every measured intersection explicit before the plan gate sees
+				# it; this is a typed timber joint, not a general overlap exemption.
+				for prior: FabricUnit in compiled_support_units:
+					var prior_recipe := program.recipe(prior.recipe_id)
+					if prior_recipe == null:
+						continue
+					var prior_clearance := prior.transform() \
+						* prior_recipe.local_clearance_bounds
+					if SettlementFabricPlan._aabb_overlaps_volume(
+							unit_clearance, prior_clearance) \
+							and not unit.visual_seam_ids.has(prior.stable_id):
+						unit.visual_seam_ids.append(prior.stable_id)
 			if not probe.add_unit(unit):
 				last_failure = "feature component %s rejected: %s" % [
 					unit.stable_id, probe.last_rejection]
 				return [] as Array[FabricUnit]
 			out.append(unit)
+			if unit_recipe != null and unit_recipe.has_tag(&"cantilever_support"):
+				compiled_support_units.append(unit)
 		if feature.kind == &"prefab_landmark" and feature_units.size() == 1:
 			compiled_feature_unit_by_owner[feature.stable_id] = feature_units[0]
 		for cell: Vector3i in feature.reserved_cells:

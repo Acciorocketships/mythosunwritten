@@ -1,6 +1,6 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://cko81ybs1mwb6"]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/low_poly_fantasy_village_fabric/3f78d8be298b98f4015e.res" id="1_b5dmy"]
+[ext_resource type="Texture2D" uid="uid://bwppv4mgsar4u" path="res://terrain/environment/textures/low_poly_fantasy_village_fabric/3f78d8be298b98f4015e.res" id="1_b5dmy"]
 
 [resource]
 resource_name = "LP_Village_01"

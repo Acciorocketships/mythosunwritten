@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://djocf0q3x6hf"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_r7glc"]
+
+[resource]
+script = ExtResource("1_r7glc")
+id = &"lpfv.fabric.prop.bucket.01"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bucket_01.tres"
+tags = Array[StringName]([&"bucket", &"fabric_dressing", &"prop", &"village"])
+measured_aabb = AABB(-0.27800232, -0.0012070249, -0.2780023, 0.55600464, 0.31733817, 0.55600464)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.bucket.01"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://dpaqajh7dfp1u"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_dcsey"]
+
+[resource]
+script = ExtResource("1_dcsey")
+id = &"lpfv.fabric.prop.firewood.01"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_firewood_01.tres"
+tags = Array[StringName]([&"fabric_dressing", &"firewood", &"prop", &"village"])
+measured_aabb = AABB(-1.0690844, -0.029695012, -0.9146792, 2.1474612, 1.2121073, 1.9458535)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.firewood.01"

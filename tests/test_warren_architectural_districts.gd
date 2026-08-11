@@ -72,9 +72,11 @@ func test_broad_roofs_counterbalance_the_honestly_orange_compact_roofs() \
 func test_lived_in_recipes_use_the_new_measured_prop_families() -> void:
 	assert_not_null(_program)
 	var square := _program.recipe(&"roof.flat.square.terrace.north.lived")
+	var square_east := _program.recipe(&"roof.flat.square.terrace.east.lived")
 	var long_roof := _program.recipe(&"roof.flat.long.terrace.north.lived")
 	var market := _program.recipe(&"market.covered.00.garden")
 	assert_not_null(square)
+	assert_not_null(square_east)
 	assert_not_null(long_roof)
 	assert_not_null(market)
 	if square != null:
@@ -83,6 +85,13 @@ func test_lived_in_recipes_use_the_new_measured_prop_families() -> void:
 		assert_true(ids.has(SettlementFabricProgram.TERRACE_BARREL_A))
 		assert_true(ids.has(SettlementFabricProgram.TERRACE_LANTERN_TABLE))
 		assert_true(square.has_tag(&"furnished_roof_terrace"))
+		assert_true(ids.has(SettlementFabricProgram.TERRACE_BUCKET))
+		assert_true(ids.has(SettlementFabricProgram.TERRACE_CHAIR))
+	if square_east != null:
+		var ids := square_east.asset_ids()
+		assert_true(ids.has(SettlementFabricProgram.TERRACE_BENCH_ALT))
+		assert_true(ids.has(SettlementFabricProgram.TERRACE_FIREWOOD))
+		assert_true(square_east.has_tag(&"roof_firewood"))
 	if long_roof != null:
 		assert_true(long_roof.asset_ids().has(
 			SettlementFabricProgram.TERRACE_LANTERN_POST))
@@ -91,8 +100,12 @@ func test_lived_in_recipes_use_the_new_measured_prop_families() -> void:
 		var ids := market.asset_ids()
 		assert_true(ids.has(SettlementFabricProgram.TERRACE_BARREL_B))
 		assert_true(ids.has(SettlementFabricProgram.TERRACE_LANTERN_TABLE))
-		assert_true(ids.has(SettlementFabricProgram.TERRACE_PLANT_LOW))
+		assert_true(ids.has(SettlementFabricProgram.TERRACE_PLANT_MID))
+		assert_true(ids.has(SettlementFabricProgram.TERRACE_CRATE))
+		assert_true(ids.has(SettlementFabricProgram.TERRACE_BAG))
+		assert_true(ids.has(SettlementFabricProgram.TERRACE_BUCKET))
 		assert_true(market.has_tag(&"market_lantern"))
+		assert_true(market.has_tag(&"market_work_corner"))
 
 
 func test_fabric_props_are_small_collisionless_catalog_assets() -> void:
@@ -101,8 +114,16 @@ func test_fabric_props_are_small_collisionless_catalog_assets() -> void:
 		SettlementFabricProgram.TERRACE_LANTERN_POST: Vector3(1.6, 2.5, 0.6),
 		SettlementFabricProgram.TERRACE_BARREL_A: Vector3(1.0, 1.1, 1.0),
 		SettlementFabricProgram.TERRACE_BARREL_B: Vector3(1.0, 1.1, 1.0),
+		SettlementFabricProgram.TERRACE_BAG: Vector3(0.7, 0.6, 0.6),
+		SettlementFabricProgram.TERRACE_BENCH_ALT: Vector3(2.4, 0.6, 0.5),
 		SettlementFabricProgram.TERRACE_BENCH: Vector3(2.1, 0.5, 0.5),
+		SettlementFabricProgram.TERRACE_BUCKET: Vector3(0.6, 0.4, 0.6),
+		SettlementFabricProgram.TERRACE_CHAIR: Vector3(0.6, 0.9, 0.5),
+		SettlementFabricProgram.TERRACE_CRATE: Vector3(0.8, 0.8, 0.8),
+		SettlementFabricProgram.TERRACE_FIREWOOD: Vector3(2.2, 1.3, 2.0),
 		SettlementFabricProgram.TERRACE_PLANT_LOW: Vector3(1.0, 0.4, 0.9),
+		SettlementFabricProgram.TERRACE_PLANT_MID: Vector3(0.9, 0.6, 0.9),
+		SettlementFabricProgram.TERRACE_PLANT_BROAD: Vector3(0.9, 0.4, 0.8),
 		SettlementFabricProgram.TERRACE_PLANT_TALL: Vector3(1.0, 0.6, 0.9),
 	}
 	for asset_id: StringName in expected.keys():

@@ -48,8 +48,16 @@ const TERRACE_LANTERN_TABLE := &"lpfv.fabric.prop.lantern.table.01"
 const TERRACE_LANTERN_POST := &"lpfv.fabric.prop.lantern.post.02"
 const TERRACE_BARREL_A := &"lpfv.fabric.prop.barrel.01"
 const TERRACE_BARREL_B := &"lpfv.fabric.prop.barrel.02"
+const TERRACE_BAG := &"lpfv.fabric.prop.bag.01"
+const TERRACE_BENCH_ALT := &"lpfv.fabric.prop.bench.01"
 const TERRACE_BENCH := &"lpfv.fabric.prop.bench.02"
+const TERRACE_BUCKET := &"lpfv.fabric.prop.bucket.01"
+const TERRACE_CHAIR := &"lpfv.fabric.prop.chair.01"
+const TERRACE_CRATE := &"lpfv.fabric.prop.crate.01"
+const TERRACE_FIREWOOD := &"lpfv.fabric.prop.firewood.01"
 const TERRACE_PLANT_LOW := &"lpfv.fabric.prop.plant.low.01"
+const TERRACE_PLANT_MID := &"lpfv.fabric.prop.plant.mid.02"
+const TERRACE_PLANT_BROAD := &"lpfv.fabric.prop.plant.broad.03"
 const TERRACE_PLANT_TALL := &"lpfv.fabric.prop.plant.tall.04"
 const GABLE := &"sfv.fabric.gable.wood.m.001"
 const BRACE := &"sfv.fabric.brace.wood.002"
@@ -537,6 +545,8 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules, true),
 		_integrated_cantilever_support_recipe(modules),
 		_integrated_cantilever_diagonal_support_recipe(modules),
+		_integrated_cantilever_terminal_support_recipe(modules),
+		_integrated_cantilever_terminal_diagonal_support_recipe(modules),
 	]
 	for flat_spec: Dictionary in [
 		{"kind": "tower", "minimum": Vector3i(-1, 0, -1),
@@ -1627,10 +1637,17 @@ static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
 	recipe_value.add_placement(&"terrace.planter.0", ROOF_PLANTER,
 		_pose(centre + inward + along * planter_offset + Vector3.UP * 0.04,
 			0.0 if along_x else PI * 0.5))
-	var first_flower := TERRACE_PLANT_TALL \
-		if guarded_side in [&"south", &"west"] else ROOF_FLOWER_BLUE
-	var second_flower := ROOF_FLOWER_PALE \
-		if guarded_side in [&"south", &"west"] else TERRACE_PLANT_LOW
+	# Four authored leaf/flower silhouettes keep roof gardens from repeating the
+	# same pair throughout the town. The orientation still owns the deterministic
+	# choice, so this remains a finite recipe rather than random scatter.
+	var first_flower := TERRACE_PLANT_TALL if guarded_side == &"south" \
+		else TERRACE_PLANT_MID if guarded_side == &"north" \
+		else TERRACE_PLANT_BROAD if guarded_side == &"east" \
+		else ROOF_FLOWER_BLUE
+	var second_flower := ROOF_FLOWER_PALE if guarded_side == &"south" \
+		else TERRACE_PLANT_BROAD if guarded_side == &"north" \
+		else TERRACE_PLANT_LOW if guarded_side == &"east" \
+		else TERRACE_PLANT_MID
 	recipe_value.add_placement(&"terrace.flowers.0", first_flower,
 		_pose(centre + inward * 1.18 + along * maxf(0.0,
 			planter_offset - 0.24) + Vector3.UP * 0.04,
@@ -1655,17 +1672,27 @@ static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
 			* CELL * 0.5
 		var furniture_yaw := 0.0 if along_x else PI * 0.5
 		var bench_origin := centre + guardward * (cross_half - 0.55)
-		recipe_value.add_placement(&"terrace.bench", TERRACE_BENCH,
+		var bench_asset := TERRACE_BENCH_ALT \
+			if guarded_side in [&"east", &"south"] else TERRACE_BENCH
+		recipe_value.add_placement(&"terrace.bench", bench_asset,
 			_pose(bench_origin, furniture_yaw))
 		var barrel_origin := centre + guardward * (cross_half - 0.50) \
 			- along * minf(half_run - 0.50, 2.50)
-		var barrel_asset := TERRACE_BARREL_A \
-			if guarded_side in [&"north", &"east"] else TERRACE_BARREL_B
-		recipe_value.add_placement(&"terrace.barrel", barrel_asset,
+		var uses_crate := guarded_side in [&"south", &"west"]
+		var storage_asset := TERRACE_CRATE if uses_crate else TERRACE_BARREL_A
+		recipe_value.add_placement(&"terrace.storage", storage_asset,
 			_pose(barrel_origin, furniture_yaw))
 		recipe_value.add_placement(&"terrace.lantern.table",
 			TERRACE_LANTERN_TABLE,
-			_pose(barrel_origin + Vector3.UP * 1.04, furniture_yaw))
+			_pose(barrel_origin + Vector3.UP * (0.76 if uses_crate else 1.04),
+				furniture_yaw))
+		if uses_crate:
+			recipe_value.add_placement(&"terrace.storage.bag", TERRACE_BAG,
+				_pose(barrel_origin + Vector3.UP * 0.76, furniture_yaw + 0.18))
+		else:
+			recipe_value.add_placement(&"terrace.storage.bucket", TERRACE_BUCKET,
+				_pose(barrel_origin + along * 0.86, furniture_yaw))
+		recipe_value.role_tags.append(&"roof_storage")
 		recipe_value.role_tags.append(&"furnished_roof_terrace")
 		if maxi(size.x, size.z) >= 6:
 			var post_origin := centre + guardward * (cross_half - 0.68) \
@@ -1686,7 +1713,14 @@ static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
 			and guarded_side in [&"east", &"west"]:
 		recipe_value.add_placement(&"terrace.chimney", TERRACE_CHIMNEY,
 			_pose(centre + inward * 0.78 - along * 0.42, 0.0))
+		# A sheltered stack of firewood occupies the opposite back corner. Its
+		# complete 2.15 x 1.95 m bounds fit this 6 m plate and are rejected with the
+		# terrace if a neighboring upper room needs the same volume.
+		recipe_value.add_placement(&"terrace.firewood", TERRACE_FIREWOOD,
+			_pose(centre + inward * 1.92 + along * 1.48,
+				0.0 if along_x else PI * 0.5))
 		recipe_value.role_tags.append(&"chimney")
+		recipe_value.role_tags.append(&"roof_firewood")
 	elif size.z > size.x and size.x >= 4 \
 			or size.x == size.z and size.x >= 4:
 		# The complete 4.24 x 3.03 m framed blue awning fits inside long terraces
@@ -1698,6 +1732,13 @@ static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
 		recipe_value.add_placement(&"terrace.awning", ROOF_TERRACE_AWNING,
 			_pose(centre, 0.0 if along_x else PI * 0.5))
 		recipe_value.role_tags.append(&"roof_terrace_awning")
+		if size.x == size.z:
+			# The chair sits beneath the square terrace awning rather than consuming
+			# a street or balcony cell. Long terraces keep their central aisle open.
+			recipe_value.add_placement(&"terrace.chair", TERRACE_CHAIR,
+				_pose(centre + inward * 0.36 + along * 1.92,
+					0.0 if along_x else PI * 0.5))
+			recipe_value.role_tags.append(&"roof_seating")
 	# The authored line is 3.135 m long from an end pivot. A three-metre tower
 	# cannot contain that measured span, so its pair of planters is the complete
 	# lived-in treatment; every deeper/wider family gets laundry as well.
@@ -1764,7 +1805,9 @@ static func _setback_terrace_recipe(recipe_id: StringName, length_cells: int,
 		recipe_value.add_placement(&"terrace.planter",
 			ROOF_PLANTER, _pose(Vector3(run_centre, 0.04,
 				-float(rail_side) * 0.22), 0.0))
-		var flower_asset := TERRACE_PLANT_TALL if rail_side < 0 \
+		var flower_asset := TERRACE_PLANT_TALL if length_cells >= 4 \
+				and rail_side < 0 else TERRACE_PLANT_MID if rail_side < 0 \
+			else TERRACE_PLANT_BROAD if length_cells >= 4 \
 			else TERRACE_PLANT_LOW
 		recipe_value.add_placement(&"terrace.flowers", flower_asset,
 			_pose(Vector3(run_centre + 0.42, 0.04,
@@ -1793,7 +1836,7 @@ static func _setback_garden_recipe(recipe_id: StringName, length_cells: int,
 	recipe_value.add_placement(&"garden.planter", ROOF_PLANTER,
 		_pose(Vector3(run_centre, 0.04, 0.0), 0.0))
 	var flower_asset := TERRACE_PLANT_LOW if length_cells == 2 \
-		else TERRACE_PLANT_TALL if length_cells == 4 else ROOF_FLOWER_BLUE
+		else TERRACE_PLANT_BROAD if length_cells == 4 else TERRACE_PLANT_MID
 	recipe_value.add_placement(&"garden.flowers", flower_asset,
 		_pose(Vector3(run_centre - 0.42, 0.04, 0.18), 0.0))
 	recipe_value.role_tags.append(&"roof_planter")
@@ -2719,8 +2762,9 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		var planter_x := -0.78 if back_socket_x == 0 else -0.18
 		recipe_value.add_placement(&"balcony.planter", ROOF_PLANTER,
 			_pose(Vector3(planter_x, 0.04, 0.26), 0.0))
-		var balcony_flower := ROOF_FLOWER_TALL if theme == &"blue" \
-			else ROOF_FLOWER_SMALL if theme == &"amber" else ROOF_FLOWER_PALE
+		var balcony_flower := TERRACE_PLANT_MID if theme == &"blue" \
+			else TERRACE_PLANT_BROAD if theme == &"amber" \
+			else ROOF_FLOWER_PALE
 		recipe_value.add_placement(&"balcony.flowers", balcony_flower,
 			_pose(Vector3(planter_x + 0.12, 0.04, 0.20), 0.0))
 		recipe_value.role_tags.append(&"planted_balcony")
@@ -2773,6 +2817,35 @@ static func _integrated_cantilever_diagonal_support_recipe(
 		recipe_value.add_placement(StringName("brace.%d" % index),
 			DIAGONAL_BRACE, _pose(Vector3(float(index) * CELL,
 				-bounds.end.y, -bounds.position.z), 0.0))
+	return recipe_value
+
+
+static func _integrated_cantilever_terminal_support_recipe(
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## Odd 4.5/7.5 m bearing edges tile as native 3 m courses plus this final
+	## unscaled brace. It is a measured terminal, not a half-width scaled copy.
+	var recipe_value := FabricRecipe.new(&"outcrop.support.bracketed.1", [
+		&"visual_attachment", &"cantilever_support", &"bracket_supported",
+		&"integrated_room_outcropping", &"terminal_support",
+	], 0)
+	recipe_value.add_placement(&"brace.0", BRACE,
+		_pose(Vector3(0.0, -0.55, 0.0), PI * 0.5))
+	return recipe_value
+
+
+static func _integrated_cantilever_terminal_diagonal_support_recipe(
+		modules: FabricModuleProgram) -> FabricRecipe:
+	var contract_value := modules.contract(DIAGONAL_BRACE)
+	if contract_value == null:
+		return null
+	var bounds := contract_value.visual_bounds
+	var recipe_value := FabricRecipe.new(&"outcrop.support.diagonal.1", [
+		&"visual_attachment", &"cantilever_support", &"diagonal_support",
+		&"bracket_supported", &"integrated_room_outcropping",
+		&"terminal_support",
+	], 0)
+	recipe_value.add_placement(&"brace.0", DIAGONAL_BRACE,
+		_pose(Vector3(0.0, -bounds.end.y, -bounds.position.z), 0.0))
 	return recipe_value
 
 
@@ -2883,10 +2956,21 @@ static func _covered_market_recipe(recipe_id: StringName,
 			_pose(barrel_origin, 0.0))
 		recipe_value.add_placement(&"stocked.lantern", TERRACE_LANTERN_TABLE,
 			_pose(barrel_origin + Vector3.UP * 1.04, 0.0))
-		recipe_value.add_placement(&"stocked.plant.west", TERRACE_PLANT_LOW,
+		recipe_value.add_placement(&"stocked.plant.west", TERRACE_PLANT_MID,
 			_pose(Vector3(-2.55, 0.02, -0.48), PI))
+		# Small complete props turn the opposite post bay into an actual merchant's
+		# work corner. Their measured footprints stay outside the two-cell aisle;
+		# the crate carries its bag, while the bucket sits beside the counter.
+		var crate_origin := Vector3(1.92, 0.02, -0.54)
+		recipe_value.add_placement(&"stocked.crate", TERRACE_CRATE,
+			_pose(crate_origin, PI * 0.5))
+		recipe_value.add_placement(&"stocked.bag", TERRACE_BAG,
+			_pose(crate_origin + Vector3.UP * 0.76, -0.12))
+		recipe_value.add_placement(&"stocked.bucket", TERRACE_BUCKET,
+			_pose(Vector3(-2.30, 0.02, 0.58), PI * 0.25))
 		recipe_value.role_tags.append(&"market_garden")
 		recipe_value.role_tags.append(&"market_lantern")
+		recipe_value.role_tags.append(&"market_work_corner")
 	for y in 2:
 		for x in [-2, 1]:
 			for z in [-1, 0]:
@@ -2981,8 +3065,11 @@ static func _add_front_facade_detail(recipe_value: FabricRecipe,
 			front_half_depth + 0.42)
 		recipe_value.add_placement(&"facade.windowbox", ROOF_PLANTER,
 			_pose(box_origin, 0.0))
+		var windowbox_plant := TERRACE_PLANT_LOW if front_half_depth < 2.0 \
+			else TERRACE_PLANT_MID if front_half_depth < 4.0 \
+			else TERRACE_PLANT_BROAD
 		recipe_value.add_placement(&"facade.windowbox.plant",
-			TERRACE_PLANT_LOW,
+			windowbox_plant,
 			_pose(box_origin + Vector3(0.0, 0.08, 0.0), 0.0))
 		if not recipe_value.role_tags.has(&"facade_detail"):
 			recipe_value.role_tags.append(&"facade_detail")

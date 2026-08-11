@@ -54,6 +54,53 @@
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_chimney_orange_01.tres"
     },
     {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_bag_01.tres",
+      "id": "lpfv.fabric.prop.bag.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.317513853311539,
+            -0.00592229515314102,
+            -0.268069684505463
+          ],
+          "size": [
+            0.635027766227722,
+            0.536730229854584,
+            0.536139607429504
+          ]
+        },
+        "mesh_bytes": 16187,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 150
+      },
+      "pack": "low_poly_fantasy_village_fabric",
+      "parameters": {
+        "id": "lpfv.fabric.prop.bag.01",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 524288.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bag.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "bag",
+          "fabric_dressing",
+          "prop",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bag.glb",
+      "source_sha256": "e30c7927f6fe4c0b68a22e24cd7e673274257ffef99111a12b7a447aa9d10734",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bag_01.tres"
+    },
+    {
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_barrel_01.tres",
       "id": "lpfv.fabric.prop.barrel.01",
       "license": "LowPolyFantasyVillage source-pack license",
@@ -148,6 +195,54 @@
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_barrel_02.tres"
     },
     {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_bench_01.tres",
+      "id": "lpfv.fabric.prop.bench.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.15298068523407,
+            -0.0000000157370045883454,
+            -0.218379497528076
+          ],
+          "size": [
+            2.2967734336853,
+            0.4990493953228,
+            0.437097311019897
+          ]
+        },
+        "mesh_bytes": 9745,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 96
+      },
+      "pack": "low_poly_fantasy_village_fabric",
+      "parameters": {
+        "id": "lpfv.fabric.prop.bench.01",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 524288.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bench_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "bench",
+          "fabric_dressing",
+          "furniture",
+          "prop",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bench_01.glb",
+      "source_sha256": "97fa152da0ff395e0d3ea3389a83125923c39ab7970b0558de0146736da8a8a4",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_01.tres"
+    },
+    {
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_bench_02.tres",
       "id": "lpfv.fabric.prop.bench.02",
       "license": "LowPolyFantasyVillage source-pack license",
@@ -194,6 +289,195 @@
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bench_02.glb",
       "source_sha256": "52f2dd64406e7cf2f809399a088b218220cfdfe8c6b856d1bcb6f312b417a694",
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_bucket_01.tres",
+      "id": "lpfv.fabric.prop.bucket.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.278002321720123,
+            -0.00120702490676194,
+            -0.278002291917801
+          ],
+          "size": [
+            0.556004643440247,
+            0.317338168621063,
+            0.556004643440247
+          ]
+        },
+        "mesh_bytes": 55282,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 611
+      },
+      "pack": "low_poly_fantasy_village_fabric",
+      "parameters": {
+        "id": "lpfv.fabric.prop.bucket.01",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 524288.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bucket_01.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "bucket",
+          "fabric_dressing",
+          "prop",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bucket_01.glb",
+      "source_sha256": "7e17ab8503d3f26f5181361ff51e2ed934f39746d0c939469756c1a371150af3",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bucket_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_chair_01.tres",
+      "id": "lpfv.fabric.prop.chair.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.257986664772034,
+            -0.00540556805208325,
+            -0.233999788761139
+          ],
+          "size": [
+            0.537477076053619,
+            0.807059407234192,
+            0.45857435464859
+          ]
+        },
+        "mesh_bytes": 32677,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 318
+      },
+      "pack": "low_poly_fantasy_village_fabric",
+      "parameters": {
+        "id": "lpfv.fabric.prop.chair.01",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 524288.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Props/Chair.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "chair",
+          "fabric_dressing",
+          "furniture",
+          "prop",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Chair.glb",
+      "source_sha256": "e5f863a2400e49772028d5536dbf3da9e0abfe6a75fecc706c82d9d181b6ddb4",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_chair_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_crate_01.tres",
+      "id": "lpfv.fabric.prop.crate.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.375586152076721,
+            -0.00563433673232794,
+            -0.375636100769043
+          ],
+          "size": [
+            0.751172304153442,
+            0.747728168964386,
+            0.751272261142731
+          ]
+        },
+        "mesh_bytes": 33529,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 328
+      },
+      "pack": "low_poly_fantasy_village_fabric",
+      "parameters": {
+        "id": "lpfv.fabric.prop.crate.01",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 524288.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1000.0,
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Props/Box.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "crate",
+          "fabric_dressing",
+          "prop",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Box.glb",
+      "source_sha256": "c9552522638c42f6f2d9bacb16894f8f7630778a97475817ef4f0e9afe7761b8",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_crate_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_firewood_01.tres",
+      "id": "lpfv.fabric.prop.firewood.01",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.06908440589905,
+            -0.0296950116753578,
+            -0.914679229259491
+          ],
+          "size": [
+            2.14746117591858,
+            1.21210730075836,
+            1.94585347175598
+          ]
+        },
+        "mesh_bytes": 127636,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1888
+      },
+      "pack": "low_poly_fantasy_village_fabric",
+      "parameters": {
+        "id": "lpfv.fabric.prop.firewood.01",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 524288.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 2500.0,
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Props/Logs.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_dressing",
+          "firewood",
+          "prop",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Props/Logs.glb",
+      "source_sha256": "b772a2aef0c13ec234340902ba7a82ba8d135e56f63e7c95c0a9d0c83e06aa88",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_firewood_01.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_lantern_post_02.tres",
@@ -290,6 +574,53 @@
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_lantern_table_01.tres"
     },
     {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_plant_broad_03.tres",
+      "id": "lpfv.fabric.prop.plant.broad.03",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.405606061220169,
+            0.00786710251122713,
+            -0.337853819131851
+          ],
+          "size": [
+            0.880164384841919,
+            0.335764437913895,
+            0.767734825611115
+          ]
+        },
+        "mesh_bytes": 78559,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 968
+      },
+      "pack": "low_poly_fantasy_village_fabric",
+      "parameters": {
+        "id": "lpfv.fabric.prop.plant.broad.03",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 524288.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_dressing",
+          "plant",
+          "prop",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb",
+      "source_sha256": "25c8234f575b14b0cf26cb0be3e9b26154a59cf922c1b00f847823f54a577ed1",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_broad_03.tres"
+    },
+    {
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_plant_low_01.tres",
       "id": "lpfv.fabric.prop.plant.low.01",
       "license": "LowPolyFantasyVillage source-pack license",
@@ -335,6 +666,53 @@
       "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb",
       "source_sha256": "9dedda86861af433774932540a9ead08b73bad7b4580e53d3f53f8f525775808",
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_low_01.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_plant_mid_02.tres",
+      "id": "lpfv.fabric.prop.plant.mid.02",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.405606061220169,
+            -0.00183772854506969,
+            -0.352478474378586
+          ],
+          "size": [
+            0.869474470615387,
+            0.546655833721161,
+            0.807047128677368
+          ]
+        },
+        "mesh_bytes": 112121,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1378
+      },
+      "pack": "low_poly_fantasy_village_fabric",
+      "parameters": {
+        "id": "lpfv.fabric.prop.plant.mid.02",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 524288.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 1500.0,
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_02.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "fabric_dressing",
+          "plant",
+          "prop",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_02.glb",
+      "source_sha256": "17dcae7e9747c2123ce1ab216b9f7d9e7013ed05c2fd1474f454b9aec0576054",
+      "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_mid_02.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_prop_plant_tall_04.tres",

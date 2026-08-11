@@ -18,6 +18,10 @@ const EXTRUDED_LINEAGE_STOREYS := 5
 const MAX_UNPAIRED_TOWER_STOREYS := 2
 const MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS := 2
 const MIN_BEARING_OVERLAP_COLUMNS := 2
+const MAX_PAIRED_RELIEF_FRONTIER := 12
+const MAX_PAIRED_RELIEF_COLUMN_DISTANCE := 1
+const MAX_PAIRED_RELIEF_PAIR_CHECKS := 24
+const MAX_STRUCTURAL_VARIANT_FRONTIER := 72
 
 # A changed area is not enough to break a vertical tower silhouette.  A room
 # can grow on one side while retaining the other three facade planes exactly,
@@ -37,17 +41,23 @@ static var last_failure := ""
 static var last_audit: Dictionary = {}
 static var last_merge_diagnostic: Dictionary = {}
 static var last_variant_diagnostic: Dictionary = {}
+static var last_pair_diagnostic: Dictionary = {}
+static var diagnostic_trace := false
 
 
 static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		proposals: Array[Dictionary], offsets_by_parcel: Dictionary,
 		forced_offsets_by_parcel: Dictionary, market_reservation: Dictionary,
 		protected_owners: Dictionary, skywalk_forced_offsets: Dictionary,
-		skywalk_reservations: Array[Dictionary], world_seed: int) -> Dictionary:
+		skywalk_reservations: Array[Dictionary], world_seed: int,
+		enable_paired_registration_relief: bool = true) -> Dictionary:
 	last_failure = ""
 	last_audit = {}
 	last_merge_diagnostic = {}
 	last_variant_diagnostic = {}
+	last_pair_diagnostic = {}
+	var trace_started := Time.get_ticks_msec()
+	var trace_stage := trace_started
 	if grid == null or volume == null or proposals.is_empty():
 		last_failure = "missing grid, volume, or room proposals"
 		return {}
@@ -104,14 +114,65 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	if lineages.is_empty():
 		last_failure = "no source lineage survived exact feature reservations"
 		return {}
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING source ms=",
+			Time.get_ticks_msec() - trace_stage, " lineages=", lineages.size())
+		trace_stage = Time.get_ticks_msec()
 	var merged_count := _merge_upper_lineages(lineages, grid,
 		protected_owners, world_seed)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING merge ms=",
+			Time.get_ticks_msec() - trace_stage, " accepted=", merged_count)
+		trace_stage = Time.get_ticks_msec()
 	var coupled_count := _couple_upper_lineages(lineages, grid,
 		protected_owners, world_seed)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING couple ms=",
+			Time.get_ticks_msec() - trace_stage, " accepted=", coupled_count)
+		trace_stage = Time.get_ticks_msec()
 	var expanded_count := _vary_unmerged_lineages(lineages, grid,
 		protected_owners, world_seed)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING vary ms=",
+			Time.get_ticks_msec() - trace_stage, " accepted=", expanded_count)
+		trace_stage = Time.get_ticks_msec()
 	var registration_relief_count := _relieve_registered_lineages(lineages,
 		grid, protected_owners, world_seed)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING serial_relief ms=",
+			Time.get_ticks_msec() - trace_stage, " accepted=",
+			registration_relief_count)
+		trace_stage = Time.get_ticks_msec()
+	var paired_registration_relief_count := 0
+	if enable_paired_registration_relief:
+		paired_registration_relief_count = \
+			_relieve_paired_registered_lineages(lineages, grid,
+				protected_owners, world_seed)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING paired_relief ms=",
+			Time.get_ticks_msec() - trace_stage, " accepted=",
+			paired_registration_relief_count, " audit=",
+			last_pair_diagnostic)
+		trace_stage = Time.get_ticks_msec()
+	var support_repair_count := _repair_unsupported_transitions(lineages,
+		grid, protected_owners, world_seed)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING support_repair ms=",
+			Time.get_ticks_msec() - trace_stage, " accepted=",
+			support_repair_count)
+		trace_stage = Time.get_ticks_msec()
+	var support_audit := _lineage_support_audit(lineages, grid)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING support_audit ms=",
+			Time.get_ticks_msec() - trace_stage, " total_ms=",
+			Time.get_ticks_msec() - trace_started, " unsupported=",
+			support_audit.unsupported_transition_count, " details=",
+			JSON.stringify(support_audit.unsupported_transition_details))
+	if int(support_audit.unsupported_transition_count) > 0:
+		last_failure = "3D composition retained %d unsupported room transitions: %s" \
+			% [int(support_audit.unsupported_transition_count),
+				JSON.stringify(support_audit.unsupported_transition_details)]
+		return {}
 	var overlap_audit := _lineage_overlap_audit(lineages)
 	if int(overlap_audit.overlap_cell_count) > 0:
 		last_failure = "composed room lineages overlap in %d cells: %s" % [
@@ -125,6 +186,14 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		coupled_count, expanded_count, truncated_tower_storeys)
 	audit["registration_relief_recomposition_count"] = \
 		registration_relief_count
+	audit["paired_registration_relief_count"] = \
+		paired_registration_relief_count
+	audit["paired_registration_candidate_pair_count"] = int(
+		last_pair_diagnostic.get("examined_pair_count", 0))
+	audit["paired_registration_peak_frontier_count"] = int(
+		last_pair_diagnostic.get("peak_frontier_count", 0))
+	audit["structural_room_repair_count"] = support_repair_count
+	audit.merge(support_audit, false)
 	last_audit = audit.duplicate(true)
 	var repeated_run := int(audit.get(
 		"max_identical_tower_floorplate_run_storeys", 0))
@@ -158,21 +227,24 @@ static func _source_blocks(proposal: Dictionary,
 	var addressed_storey := floori(float(threshold.y - source_origin.y) \
 		/ float(WarrenSpatialGrid.STOREY_CELLS)) \
 		if threshold.x != 2147483647 else -1
+	var interface_storeys: Dictionary = {}
+	var interface_offset_blocks: Dictionary = {}
+	for constraint_value: Variant in skywalk_constraints:
+		var endpoint := (constraint_value as Dictionary).cell as Vector3i
+		var local_storey := floori(float(endpoint.y - source_origin.y) \
+			/ float(WarrenSpatialGrid.STOREY_CELLS))
+		if local_storey >= 0:
+			interface_storeys[local_storey] = true
+			interface_offset_blocks[floori(float(local_storey) / 2.0)] = true
+	if addressed_storey >= 0:
+		interface_storeys[addressed_storey] = true
+		interface_offset_blocks[floori(float(addressed_storey) / 2.0)] = true
 	for offset_block in offsets.size():
 		var block_start_storey := offset_block * 2
 		if block_start_storey >= storeys:
 			break
 		var block_end_storey := mini(storeys, block_start_storey + 2)
 		var offset := offsets[offset_block]
-		var offset_block_has_skywalk_constraints := false
-		for constraint_value: Variant in skywalk_constraints:
-			var endpoint := (constraint_value as Dictionary).cell as Vector3i
-			var local_storey := floori(float(endpoint.y - source_origin.y) \
-				/ float(WarrenSpatialGrid.STOREY_CELLS))
-			if local_storey >= block_start_storey \
-					and local_storey < block_end_storey:
-				offset_block_has_skywalk_constraints = true
-				break
 		# A two-storey offset is only a provisional packing convenience. Emit one
 		# composition record per actual storey so a doorway, street tunnel, market
 		# socket, or skywalk on the lower floor cannot freeze the free floor above
@@ -193,23 +265,41 @@ static func _source_blocks(proposal: Dictionary,
 						+ WarrenSpatialGrid.STOREY_CELLS:
 					storey_skywalk_constraints.append(constraint)
 			var addressed := addressed_storey == storey
+			# The exact room keeps its transformed public door/skywalk socket. Its
+			# preceding storey is protected as a bearer, but the final structural
+			# pass may still move that bearer underneath the fixed interface.
+			var interface_forced := interface_storeys.has(storey)
+			var bearing_forced := interface_storeys.has(storey + 1)
 			var structural_forced := storey == 0 \
 				or skywalk_forced_offsets.has(offset_block) \
-					and not offset_block_has_skywalk_constraints \
+					and not interface_offset_blocks.has(offset_block) \
 				or bearing_interface_storeys.has(storey) \
 				or parcel != null and storey == 0 \
 					and not parcel.support_parent_parcel_id.is_empty()
-			var forced := structural_forced or addressed \
+			var forced := structural_forced or interface_forced \
+				or bearing_forced or addressed \
 				or not storey_skywalk_constraints.is_empty()
+			# A market backing is one exact structural socket. Courtyard frontage is
+			# different: only the occupied columns that actually address the court are
+			# invariant. Freezing the whole source floorplate because one edge touched
+			# the court forced otherwise avoidable three-storey tower extrusions.
+			var court_contact_columns: Dictionary = {}
 			for cell: Vector3i in record.cells:
-				if cell == market_backing or court_neighbors.has(cell):
+				if cell == market_backing:
 					forced = true
 					structural_forced = true
-					break
+				if court_neighbors.has(cell):
+					court_contact_columns[Vector2i(cell.x, cell.z)] = true
+			if not court_contact_columns.is_empty():
+				forced = true
 			record["forced"] = forced
+			record["structural_forced"] = structural_forced
+			record["interface_forced"] = interface_forced
+			record["bearing_forced"] = bearing_forced
 			record["address_expandable"] = addressed and not structural_forced
 			record["feature_endpoint_constraints"] = \
 				storey_skywalk_constraints
+			record["court_contact_columns"] = court_contact_columns
 			record["address_threshold"] = threshold
 			record["address_frontage"] = frontage
 			record["original_kind"] = kind
@@ -268,12 +358,17 @@ static func _merge_upper_lineages(lineages: Dictionary,
 		return String(a) < String(b))
 	var records_by_band: Dictionary = {}
 	var eligible_record_count := 0
+	var source_claimed_cells: Dictionary = {}
 	for lineage_id: StringName in ids:
 		var lineage := lineages[lineage_id] as Dictionary
 		var blocks := lineage.blocks as Array[Dictionary]
+		for source_block: Dictionary in blocks:
+			for source_cell: Vector3i in source_block.cells:
+				source_claimed_cells[source_cell] = true
 		for block_position in range(1, blocks.size()):
 			var block := blocks[block_position] as Dictionary
-			if bool(block.forced) and not _block_allows_recomposition(block):
+			if bool(block.get("structural_forced", false)) \
+					or bool(block.forced) and not _block_allows_recomposition(block):
 				continue
 			var duration := int(block.end_storey) - int(block.start_storey)
 			var band_key := "%d/%d" % [(block.origin as Vector3i).y, duration]
@@ -472,6 +567,10 @@ static func _merge_upper_lineages(lineages: Dictionary,
 		if unavailable:
 			continue
 		var merged := candidate.merged_stamp as Dictionary
+		if not _floorplate_transition_is_structurally_legible(
+				merged.columns as Dictionary, {},
+				(merged.origin as Vector3i).y, source_claimed_cells, grid):
+			continue
 		for cell: Vector3i in merged.cells:
 			if claimed_cells.has(cell):
 				unavailable = true
@@ -514,7 +613,8 @@ static func _merge_upper_lineages(lineages: Dictionary,
 		first["merged_lineage_count"] = participants.size()
 		for metadata_key: String in ["address_expandable",
 				"address_threshold", "address_frontage",
-				"feature_endpoint_constraints",
+				"feature_endpoint_constraints", "court_contact_columns",
+				"structural_forced", "interface_forced", "bearing_forced",
 				"support_parent_lineage_id",
 				"support_parent_source_storey",
 				"support_parent_source_block_index"]:
@@ -782,8 +882,8 @@ static func _couple_upper_lineages(lineages: Dictionary,
 					composed_cells[cell] = true
 			if position < 1 or bool(block.merged) \
 					or block.has("support_parent_lineage_id") \
-					or bool(block.forced) and not _block_allows_recomposition(
-						block):
+					or bool(block.get("structural_forced", false)) \
+					or bool(block.forced) and not _block_allows_recomposition(block):
 				continue
 			var duration := int(block.end_storey) - int(block.start_storey)
 			var key := "%d/%d" % [(block.origin as Vector3i).y, duration]
@@ -931,7 +1031,9 @@ static func _couple_upper_lineages(lineages: Dictionary,
 static func _coupled_variants(grid: WarrenSpatialGrid,
 		protected_owners: Dictionary, claimed_cells: Dictionary,
 		participant_ids: Dictionary, record: Dictionary,
-		world_seed: int) -> Array[Dictionary]:
+		world_seed: int,
+		require_new_projection_bearing: bool = false,
+		defer_structural_proof: bool = false) -> Array[Dictionary]:
 	var current := record.current as Dictionary
 	var previous := record.previous as Dictionary
 	var next := record.next as Dictionary
@@ -1007,23 +1109,761 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 						"registered_facade_plane_count": int(
 							registration.registered_facade_plane_count),
 						"tie": tie})
+					# Structural support depends on the final occupied cells beneath
+					# the stamp. Keep a bounded visual frontier here, then run the
+					# more expensive connectivity/attachment proof only on that
+					# frontier below rather than on thousands of losing stamps.
+					if out.size() > MAX_STRUCTURAL_VARIANT_FRONTIER * 2:
+						out.sort_custom(func(a: Dictionary,
+								b: Dictionary) -> bool:
+							return _coupled_variant_is_better(a, b))
+						out.resize(MAX_STRUCTURAL_VARIANT_FRONTIER)
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a.tower_relief) != int(b.tower_relief):
-			return int(a.tower_relief) > int(b.tower_relief)
-		if int(a.strong_registration_count) \
-				!= int(b.strong_registration_count):
-			return int(a.strong_registration_count) \
-				< int(b.strong_registration_count)
-		if int(a.registered_facade_plane_count) \
-				!= int(b.registered_facade_plane_count):
-			return int(a.registered_facade_plane_count) \
-				< int(b.registered_facade_plane_count)
-		if int(a.score) != int(b.score):
-			return int(a.score) > int(b.score)
-		return int(a.tie) < int(b.tie))
-	if out.size() > 18:
-		out.resize(18)
-	return out
+		return _coupled_variant_is_better(a, b))
+	if out.size() > MAX_STRUCTURAL_VARIANT_FRONTIER:
+		out.resize(MAX_STRUCTURAL_VARIANT_FRONTIER)
+	var legible: Array[Dictionary] = []
+	var legible_limit := MAX_STRUCTURAL_VARIANT_FRONTIER \
+		if defer_structural_proof else 18
+	for variant: Dictionary in out:
+		var columns := variant.columns as Dictionary
+		# A paired half-storey transaction may replace the room that physically
+		# bears this candidate. Its support cannot be proven until both candidate
+		# records exist in one joint claim set; filtering it here recreated a 2D,
+		# solve-one-room-at-a-time assumption inside the volumetric repair.
+		if not defer_structural_proof and not \
+				_floorplate_transition_is_structurally_legible(columns,
+					previous.columns as Dictionary,
+					(current.origin as Vector3i).y, claimed_cells, grid):
+			continue
+		if require_new_projection_bearing \
+				and not _new_projection_is_directly_borne(grid, columns,
+					previous.columns as Dictionary,
+					(current.origin as Vector3i).y, claimed_cells):
+			continue
+		legible.append(variant)
+		if legible.size() >= legible_limit:
+			break
+	return legible
+
+
+static func _new_projection_is_directly_borne(grid: WarrenSpatialGrid,
+		candidate_columns: Dictionary, lower_columns: Dictionary, upper_base_y: int,
+		claimed_cells: Dictionary) -> bool:
+	## Used for an untouched continuation above a paired replacement. The moved
+	## room itself may deliberately create a one-bay outcropping because the later
+	## town-wide support transaction can choose compatible measured brackets. An
+	## unchanged room above it may not acquire a new brace obligation indirectly:
+	## every column outside the replacement below must remain directly borne.
+	for column_value: Variant in candidate_columns.keys():
+		var column := column_value as Vector2i
+		if lower_columns.has(column):
+			continue
+		var below := Vector3i(column.x, upper_base_y - 1, column.y)
+		if claimed_cells.has(below):
+			continue
+		if grid != null and grid.use_at(below) \
+				== WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+			continue
+		return false
+	return true
+
+
+static func _floorplate_transition_is_structurally_legible(
+		candidate_columns: Dictionary, lower_columns: Dictionary,
+		upper_base_y: int, claimed_cells: Dictionary,
+		grid: WarrenSpatialGrid) -> bool:
+	## Logical ancestry is not visual bearing. Resolve the exact support under
+	## every candidate column, including neighboring inhabited mass, then admit
+	## only a fully borne plate or one bracketable room bay. A bracketable bay is
+	## one connected one/two-cell-deep strip, leaves at least half the room on
+	## direct bearing, and has a straight attachment course that the authored 3 m
+	## support pair plus optional one-brace terminal can tile without scaling.
+	if candidate_columns.is_empty():
+		return false
+	var borne: Dictionary = {}
+	var unborne: Dictionary = {}
+	for column_value: Variant in candidate_columns.keys():
+		var column := column_value as Vector2i
+		var below := Vector3i(column.x, upper_base_y - 1, column.y)
+		if lower_columns.has(column) or claimed_cells.has(below) \
+				or grid != null and grid.use_at(below) \
+					== WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+			borne[column] = true
+		else:
+			unborne[column] = true
+	if unborne.is_empty():
+		return true
+	if borne.size() * 2 < candidate_columns.size() \
+			or not _column_set_is_connected(unborne):
+		return false
+	for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+			Vector2i.UP, Vector2i.DOWN]:
+		var attachments: Dictionary = {}
+		var valid := true
+		for column_value: Variant in unborne.keys():
+			var column := column_value as Vector2i
+			var attached := false
+			for depth in range(1, 3):
+				var inward := column - direction * depth
+				if borne.has(inward):
+					attachments[inward] = true
+					attached = true
+					break
+			if not attached:
+				valid = false
+				break
+		if valid and unborne.size() == 1 and attachments.size() == 1:
+			return true
+		if not valid or attachments.size() < 2:
+			continue
+		var span := Vector2i(-direction.y, direction.x)
+		var ordered: Array[Vector2i] = []
+		ordered.assign(attachments.keys())
+		ordered.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			return a.x * span.x + a.y * span.y \
+				< b.x * span.x + b.y * span.y)
+		var plane := ordered[0].x * direction.x \
+			+ ordered[0].y * direction.y
+		for index in ordered.size():
+			var attachment := ordered[index]
+			if attachment.x * direction.x + attachment.y * direction.y \
+					!= plane or index > 0 \
+					and attachment != ordered[index - 1] + span:
+				valid = false
+				break
+		if valid:
+			return true
+	return false
+
+
+static func _column_set_is_connected(columns: Dictionary) -> bool:
+	if columns.is_empty():
+		return false
+	var keys := columns.keys()
+	var frontier: Array[Vector2i] = [keys[0] as Vector2i]
+	var visited: Dictionary = {frontier[0]: true}
+	while not frontier.is_empty():
+		var column: Vector2i = frontier.pop_back()
+		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+				Vector2i.UP, Vector2i.DOWN]:
+			var neighbor := column + direction
+			if columns.has(neighbor) and not visited.has(neighbor):
+				visited[neighbor] = true
+				frontier.append(neighbor)
+	return visited.size() == columns.size()
+
+
+static func _repair_unsupported_transitions(lineages: Dictionary,
+		grid: WarrenSpatialGrid, protected_owners: Dictionary,
+		world_seed: int) -> int:
+	## Earlier composition operators make locally valid choices against a
+	## provisional partition. A later merge or offset can remove the mass that
+	## made one of those choices look borne. Repair the completed 3D partition,
+	## where every occupied cell below a room is now known.
+	##
+	## This is deliberately a monotone cleanup rather than another town search:
+	## one measured room plate is reopened at a time, and a replacement is
+	## accepted only when the town-wide unsupported-transition count falls. That
+	## prevents a fixed room from merely handing its floating edge to a child.
+	var claimed_cells := _claimed_room_cells(lineages)
+	var unsupported_count := _unsupported_transition_count(lineages, grid,
+		claimed_cells)
+	if unsupported_count <= 0:
+		return 0
+	var accepted := 0
+	# A lower repair can transfer one obligation to its formerly supported child.
+	# Revisit the ascending frontier until that same-count handoff reaches a cap
+	# that can be borne outright. Eight sweeps exceeds the tallest admitted room
+	# lineage while keeping the cleanup strictly bounded.
+	for sweep in 8:
+		var targets: Array[Dictionary] = []
+		for id_value: Variant in lineages.keys():
+			var lineage_id := StringName(id_value)
+			var lineage := lineages[lineage_id] as Dictionary
+			var blocks := lineage.blocks as Array[Dictionary]
+			for position in blocks.size():
+				var block := blocks[position] as Dictionary
+				if position == 0 and int(block.start_storey) == 0 \
+						and not block.has("support_parent_lineage_id"):
+					continue
+				if _floorplate_transition_is_structurally_legible(
+						block.columns as Dictionary, {},
+						(block.origin as Vector3i).y, claimed_cells, grid):
+					continue
+				targets.append({"lineage_id": lineage_id,
+					"source_block_index": int(block.source_block_index),
+					"y": (block.origin as Vector3i).y})
+		targets.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			if int(a.y) != int(b.y):
+				return int(a.y) < int(b.y)
+			if String(a.lineage_id) != String(b.lineage_id):
+				return String(a.lineage_id) < String(b.lineage_id)
+			return int(a.source_block_index) < int(b.source_block_index))
+		var changed := 0
+		for target: Dictionary in targets:
+			var lineage_id := StringName(target.lineage_id)
+			var lineage := lineages.get(lineage_id, {}) as Dictionary
+			if lineage.is_empty():
+				continue
+			var blocks := lineage.blocks as Array[Dictionary]
+			var position := _block_position(blocks,
+				int(target.source_block_index))
+			if position < 0:
+				continue
+			var current := blocks[position] as Dictionary
+			if _floorplate_transition_is_structurally_legible(
+					current.columns as Dictionary, {},
+					(current.origin as Vector3i).y, claimed_cells, grid):
+				continue
+			# A sealed hero backing with no explicit socket contract cannot move:
+			# its adjacency, not merely its occupied cells, is the feature fact.
+			# Addressed doors and skywalk endpoints are safe to recompose because
+			# their exact transformed sockets are re-proved below.
+			if bool(current.get("structural_forced", false)) \
+					or bool(current.forced) \
+					and not bool(current.get("bearing_forced", false)) \
+					and not _block_allows_recomposition(current):
+				if diagnostic_trace:
+					print("ROOM_SUPPORT_REPAIR fixed lineage=", lineage_id,
+						" block=", int(current.source_block_index),
+						" origin=", current.origin)
+				continue
+			var candidate := _support_repair_variant(lineages, grid,
+				protected_owners, claimed_cells, lineage_id, current,
+				position, unsupported_count, world_seed ^ sweep * 0x45d9f3b)
+			if candidate.is_empty():
+				var parent_repair := _support_repair_parent_variant(lineages,
+					grid, protected_owners, claimed_cells, lineage_id,
+					current, position, unsupported_count,
+					world_seed ^ sweep * 0x6d2b79f)
+				if not parent_repair.is_empty():
+					var parent_id := StringName(parent_repair.lineage_id)
+					var parent_lineage := lineages[parent_id] as Dictionary
+					var parent_blocks := parent_lineage.blocks as Array[Dictionary]
+					var parent_position := _block_position(parent_blocks,
+						int(parent_repair.source_block_index))
+					if parent_position >= 0:
+						var parent_current := parent_blocks[parent_position] \
+							as Dictionary
+						var parent_replacement := _support_replacement(
+							parent_current, parent_repair.variant as Dictionary)
+						for old_cell: Vector3i in parent_current.cells:
+							if claimed_cells.get(old_cell, &"") == parent_id:
+								claimed_cells.erase(old_cell)
+						for new_cell: Vector3i in parent_replacement.cells:
+							claimed_cells[new_cell] = parent_id
+						parent_blocks[parent_position] = parent_replacement
+						parent_lineage["blocks"] = parent_blocks
+						lineages[parent_id] = parent_lineage
+						unsupported_count = int(
+							parent_repair.unsupported_count)
+						accepted += 1
+						changed += 1
+						if diagnostic_trace:
+							print("ROOM_SUPPORT_REPAIR parent lineage=",
+								parent_id, " block=",
+								int(parent_current.source_block_index),
+								" origin=", parent_current.origin, " -> ",
+								parent_replacement.origin, " bears=",
+								lineage_id, "/",
+								int(current.source_block_index), " remaining=",
+								unsupported_count)
+						continue
+				# Optional crowns are density, not topology. If neither the room nor
+				# its bearing parent has a legal measured plate, omit only a terminal
+				# unforced crown rather than materializing an unsupported box.
+				var droppable_suffix := position > 0
+				for suffix_position in range(position, blocks.size()):
+					if bool((blocks[suffix_position] as Dictionary).forced):
+						droppable_suffix = false
+						break
+				if droppable_suffix and _lineage_blocks_have_external_dependents(
+						lineages, lineage_id, blocks, position):
+					droppable_suffix = false
+				if droppable_suffix:
+					var omitted_count := blocks.size() - position
+					for suffix_position in range(position, blocks.size()):
+						for old_cell: Vector3i in (blocks[suffix_position] \
+								as Dictionary).cells:
+							if claimed_cells.get(old_cell, &"") == lineage_id:
+								claimed_cells.erase(old_cell)
+					blocks.resize(position)
+					lineage["blocks"] = blocks
+					lineages[lineage_id] = lineage
+					unsupported_count = _unsupported_transition_count(
+						lineages, grid, claimed_cells)
+					accepted += 1
+					changed += 1
+					if diagnostic_trace:
+						print("ROOM_SUPPORT_REPAIR omitted_unborne_crown lineage=",
+							lineage_id, " block=",
+							int(current.source_block_index), " storeys=",
+							omitted_count, " remaining=",
+							unsupported_count)
+					continue
+				if diagnostic_trace:
+					print("ROOM_SUPPORT_REPAIR no_candidate lineage=",
+						lineage_id, " block=",
+						int(current.source_block_index), " origin=",
+						current.origin, " unsupported=", unsupported_count)
+				continue
+			var replacement := _support_replacement(current, candidate)
+			for old_cell: Vector3i in current.cells:
+				if claimed_cells.get(old_cell, &"") == lineage_id:
+					claimed_cells.erase(old_cell)
+			for new_cell: Vector3i in replacement.cells:
+				claimed_cells[new_cell] = lineage_id
+			blocks[position] = replacement
+			lineage["blocks"] = blocks
+			lineages[lineage_id] = lineage
+			unsupported_count = int(candidate.unsupported_count)
+			if diagnostic_trace:
+				print("ROOM_SUPPORT_REPAIR accepted lineage=", lineage_id,
+					" block=", int(current.source_block_index), " origin=",
+					current.origin, " -> ", replacement.origin,
+					" remaining=", unsupported_count)
+			accepted += 1
+			changed += 1
+			if unsupported_count <= 0:
+				return accepted
+		if changed == 0:
+			break
+	return accepted
+
+
+static func _lineage_blocks_have_external_dependents(lineages: Dictionary,
+		lineage_id: StringName, blocks: Array[Dictionary],
+		first_position: int) -> bool:
+	var removed_source_blocks: Dictionary = {}
+	for position in range(first_position, blocks.size()):
+		removed_source_blocks[int((blocks[position] \
+			as Dictionary).source_block_index)] = true
+	for other_id_value: Variant in lineages.keys():
+		var other_id := StringName(other_id_value)
+		if other_id == lineage_id:
+			continue
+		var other := lineages[other_id] as Dictionary
+		for block: Dictionary in other.blocks as Array[Dictionary]:
+			if StringName(block.get("support_parent_lineage_id", &"")) \
+					== lineage_id and removed_source_blocks.has(int(block.get(
+						"support_parent_source_block_index", -1))):
+				return true
+	return false
+
+
+static func _support_repair_variant(lineages: Dictionary,
+		grid: WarrenSpatialGrid, protected_owners: Dictionary,
+		claimed_cells: Dictionary, lineage_id: StringName,
+		current: Dictionary, block_position: int,
+		baseline_unsupported_count: int, world_seed: int) -> Dictionary:
+	var current_columns := current.columns as Dictionary
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for value: Variant in current_columns.keys():
+		var column := value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	var free_claims := claimed_cells.duplicate()
+	for old_cell: Vector3i in current.cells:
+		if free_claims.get(old_cell, &"") == lineage_id:
+			free_claims.erase(old_cell)
+	var previous: Dictionary = {}
+	var next: Dictionary = {}
+	var lineage := lineages[lineage_id] as Dictionary
+	var blocks := lineage.blocks as Array[Dictionary]
+	if block_position > 0:
+		previous = blocks[block_position - 1] as Dictionary
+	if block_position + 1 < blocks.size():
+		next = blocks[block_position + 1] as Dictionary
+	var candidates: Array[Dictionary] = []
+	for kind: StringName in ROOM_KINDS:
+		for yaw in 4:
+			for x in range(minimum.x - 4, maximum.x + 5):
+				for z in range(minimum.y - 4, maximum.y + 5):
+					var origin := Vector3i(x,
+						(current.origin as Vector3i).y, z)
+					var columns := _stamp_columns(kind, origin, yaw)
+					if columns.is_empty() or _same_set(columns,
+							current_columns) or not _candidate_matches_constraints(
+							kind, origin, yaw, current):
+						continue
+					var trial := _record(kind, origin, yaw,
+						int(current.start_storey), int(current.end_storey))
+					if trial.is_empty() or not _record_is_clear_for_lineage(
+							grid, protected_owners, free_claims, trial,
+							lineage_id):
+						continue
+					var overlaps_existing := false
+					for cell: Vector3i in trial.cells:
+						if free_claims.has(cell):
+							overlaps_existing = true
+							break
+					if overlaps_existing:
+						continue
+					var trial_claims := free_claims.duplicate()
+					for cell: Vector3i in trial.cells:
+						trial_claims[cell] = lineage_id
+					if not _floorplate_transition_is_structurally_legible(
+							columns, {}, origin.y, trial_claims, grid):
+						continue
+					var unsupported := _unsupported_transition_count(lineages,
+						grid, trial_claims, lineage_id,
+						int(current.source_block_index), trial)
+					# Direct room repair must strictly remove an obligation. Equal-count
+					# handoffs are reserved for `_support_repair_parent_variant`, which
+					# moves them monotonically downward toward terrain; allowing both
+					# directions would let two adjacent storeys trade the same defect.
+					if unsupported >= baseline_unsupported_count:
+						continue
+					var direct_bearing := _direct_bearing_column_count(columns,
+						origin.y, trial_claims, grid)
+					var registration := _candidate_vertical_registration(columns,
+						previous, next)
+					var difference := _symmetric_difference_size(columns,
+						current_columns)
+					var displacement := absi(origin.x \
+						- (current.origin as Vector3i).x) + absi(origin.z \
+						- (current.origin as Vector3i).z)
+					var tie := posmod(Helper._mix64(world_seed \
+						^ String(lineage_id).hash() * 31 \
+						^ int(current.source_block_index) * 0x45d9f3b \
+						^ kind.hash() * 47 ^ x * 73856093 \
+						^ z * 19349663 ^ yaw * 83492791), 1000003)
+					candidates.append({"kind": kind, "origin": origin,
+						"yaw_quarters": yaw, "columns": columns,
+						"unsupported_count": unsupported,
+						"direct_bearing_count": direct_bearing,
+						"fully_borne": direct_bearing == columns.size(),
+						"strong_registration_count": int(
+							registration.strong_registration_count),
+						"registered_facade_plane_count": int(
+							registration.registered_facade_plane_count),
+						"tower": kind == &"tower",
+						"difference": difference,
+						"displacement": displacement, "tie": tie})
+					if candidates.size() > MAX_STRUCTURAL_VARIANT_FRONTIER * 2:
+						candidates.sort_custom(func(a: Dictionary,
+								b: Dictionary) -> bool:
+							return _support_repair_is_better(a, b))
+						candidates.resize(MAX_STRUCTURAL_VARIANT_FRONTIER)
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return _support_repair_is_better(a, b))
+	return candidates[0] as Dictionary if not candidates.is_empty() else {}
+
+
+static func _support_repair_parent_variant(lineages: Dictionary,
+		grid: WarrenSpatialGrid, protected_owners: Dictionary,
+		claimed_cells: Dictionary, child_lineage_id: StringName,
+		child: Dictionary, child_position: int,
+		baseline_unsupported_count: int, world_seed: int) -> Dictionary:
+	var parent_lineage_id := child_lineage_id
+	var parent_source_block_index := -1
+	if child.has("support_parent_lineage_id"):
+		parent_lineage_id = StringName(child.support_parent_lineage_id)
+		parent_source_block_index = int(child.get(
+			"support_parent_source_block_index", -1))
+	elif child_position > 0:
+		var child_lineage := lineages[child_lineage_id] as Dictionary
+		var child_blocks := child_lineage.blocks as Array[Dictionary]
+		parent_source_block_index = int((child_blocks[child_position - 1] \
+			as Dictionary).source_block_index)
+	if parent_source_block_index < 0 or not lineages.has(parent_lineage_id):
+		return {}
+	var parent_lineage := lineages[parent_lineage_id] as Dictionary
+	var parent_blocks := parent_lineage.blocks as Array[Dictionary]
+	var parent_position := _block_position(parent_blocks,
+		parent_source_block_index)
+	if parent_position < 0:
+		return {}
+	var parent := parent_blocks[parent_position] as Dictionary
+	if bool(parent.get("structural_forced", false)) \
+			or bool(parent.forced) \
+			and not bool(parent.get("bearing_forced", false)) \
+			and not _block_allows_recomposition(parent):
+		return {}
+	var parent_columns := parent.columns as Dictionary
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for value: Variant in parent_columns.keys():
+		var column := value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	var free_claims := claimed_cells.duplicate()
+	for old_cell: Vector3i in parent.cells:
+		if free_claims.get(old_cell, &"") == parent_lineage_id:
+			free_claims.erase(old_cell)
+	var previous: Dictionary = {}
+	var next: Dictionary = {}
+	if parent_position > 0:
+		previous = parent_blocks[parent_position - 1] as Dictionary
+	if parent_position + 1 < parent_blocks.size():
+		next = parent_blocks[parent_position + 1] as Dictionary
+	var candidates: Array[Dictionary] = []
+	for kind: StringName in ROOM_KINDS:
+		for yaw in 4:
+			for x in range(minimum.x - 4, maximum.x + 5):
+				for z in range(minimum.y - 4, maximum.y + 5):
+					var origin := Vector3i(x, (parent.origin as Vector3i).y, z)
+					var columns := _stamp_columns(kind, origin, yaw)
+					if columns.is_empty() or _same_set(columns, parent_columns) \
+							or not _candidate_matches_constraints(kind, origin,
+								yaw, parent):
+						continue
+					var trial := _record(kind, origin, yaw,
+						int(parent.start_storey), int(parent.end_storey))
+					if trial.is_empty() or not _record_is_clear_for_lineage(grid,
+							protected_owners, free_claims, trial,
+							parent_lineage_id):
+						continue
+					var overlaps_existing := false
+					for cell: Vector3i in trial.cells:
+						if free_claims.has(cell):
+							overlaps_existing = true
+							break
+					if overlaps_existing:
+						continue
+					var trial_claims := free_claims.duplicate()
+					for cell: Vector3i in trial.cells:
+						trial_claims[cell] = parent_lineage_id
+					# The parent may temporarily inherit the one unsupported
+					# obligation from its child. A later, lower sweep then moves the
+					# grandparent beneath it. This monotone downward handoff is the
+					# only way to realign a locked elevated doorway whose whole stack
+					# has drifted; it never increases the town-wide defect count.
+					if not _floorplate_transition_is_structurally_legible(
+								child.columns as Dictionary, {},
+								(child.origin as Vector3i).y, trial_claims, grid):
+						continue
+					var unsupported := _unsupported_transition_count(lineages,
+						grid, trial_claims, parent_lineage_id,
+						int(parent.source_block_index), trial)
+					if unsupported > baseline_unsupported_count:
+						continue
+					var child_bearing := _direct_bearing_column_count(
+						child.columns as Dictionary,
+						(child.origin as Vector3i).y, trial_claims, grid)
+					var parent_bearing := _direct_bearing_column_count(columns,
+						origin.y, trial_claims, grid)
+					var registration := _candidate_vertical_registration(columns,
+						previous, next)
+					var displacement := absi(origin.x \
+						- (parent.origin as Vector3i).x) + absi(origin.z \
+						- (parent.origin as Vector3i).z)
+					var tie := posmod(Helper._mix64(world_seed \
+						^ String(parent_lineage_id).hash() * 31 \
+						^ int(parent.source_block_index) * 0x45d9f3b \
+						^ kind.hash() * 47 ^ x * 73856093 \
+						^ z * 19349663 ^ yaw * 83492791), 1000003)
+					candidates.append({"kind": kind, "origin": origin,
+						"yaw_quarters": yaw, "columns": columns,
+						"unsupported_count": unsupported,
+						"child_bearing_count": child_bearing,
+						"direct_bearing_count": parent_bearing,
+						"fully_borne": parent_bearing == columns.size(),
+						"strong_registration_count": int(
+							registration.strong_registration_count),
+						"registered_facade_plane_count": int(
+							registration.registered_facade_plane_count),
+						"tower": kind == &"tower",
+						"difference": _symmetric_difference_size(columns,
+							parent_columns), "displacement": displacement,
+						"tie": tie})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.unsupported_count) != int(b.unsupported_count):
+			return int(a.unsupported_count) < int(b.unsupported_count)
+		if int(a.child_bearing_count) != int(b.child_bearing_count):
+			return int(a.child_bearing_count) > int(b.child_bearing_count)
+		return _support_repair_is_better(a, b))
+	if candidates.is_empty():
+		return {}
+	return {"lineage_id": parent_lineage_id,
+		"source_block_index": int(parent.source_block_index),
+		"variant": candidates[0],
+		"unsupported_count": int((candidates[0] as Dictionary).unsupported_count)}
+
+
+static func _support_repair_is_better(a: Dictionary,
+		b: Dictionary) -> bool:
+	if int(a.unsupported_count) != int(b.unsupported_count):
+		return int(a.unsupported_count) < int(b.unsupported_count)
+	if bool(a.fully_borne) != bool(b.fully_borne):
+		return bool(a.fully_borne)
+	if int(a.direct_bearing_count) != int(b.direct_bearing_count):
+		return int(a.direct_bearing_count) > int(b.direct_bearing_count)
+	if int(a.strong_registration_count) \
+			!= int(b.strong_registration_count):
+		return int(a.strong_registration_count) \
+			< int(b.strong_registration_count)
+	if int(a.registered_facade_plane_count) \
+			!= int(b.registered_facade_plane_count):
+		return int(a.registered_facade_plane_count) \
+			< int(b.registered_facade_plane_count)
+	if bool(a.tower) != bool(b.tower):
+		return not bool(a.tower)
+	if int(a.difference) != int(b.difference):
+		return int(a.difference) > int(b.difference)
+	if int(a.displacement) != int(b.displacement):
+		return int(a.displacement) < int(b.displacement)
+	return int(a.tie) < int(b.tie)
+
+
+static func _support_replacement(current: Dictionary,
+		variant: Dictionary) -> Dictionary:
+	var replacement := current.duplicate(true)
+	var stamped := _record(StringName(variant.kind),
+		variant.origin as Vector3i, int(variant.yaw_quarters),
+		int(current.start_storey), int(current.end_storey))
+	for key: String in ["kind", "origin", "yaw_quarters", "columns", "cells"]:
+		replacement[key] = stamped[key]
+	replacement["support_repair"] = true
+	return replacement
+
+
+static func _claimed_room_cells(lineages: Dictionary) -> Dictionary:
+	var claimed_cells: Dictionary = {}
+	for id_value: Variant in lineages.keys():
+		var lineage_id := StringName(id_value)
+		var lineage := lineages[lineage_id] as Dictionary
+		for block: Dictionary in lineage.blocks as Array[Dictionary]:
+			for cell: Vector3i in block.cells:
+				claimed_cells[cell] = lineage_id
+	return claimed_cells
+
+
+static func _direct_bearing_column_count(columns: Dictionary,
+		upper_base_y: int, claimed_cells: Dictionary,
+		grid: WarrenSpatialGrid) -> int:
+	var count := 0
+	for column_value: Variant in columns.keys():
+		var column := column_value as Vector2i
+		var below := Vector3i(column.x, upper_base_y - 1, column.y)
+		count += int(claimed_cells.has(below) or grid != null \
+			and grid.use_at(below) == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME)
+	return count
+
+
+static func _unsupported_transition_count(lineages: Dictionary,
+		grid: WarrenSpatialGrid, claimed_cells: Dictionary,
+		replacement_lineage_id: StringName = &"",
+		replacement_source_block_index: int = -1,
+		replacement: Dictionary = {}) -> int:
+	var unsupported := 0
+	for id_value: Variant in lineages.keys():
+		var lineage_id := StringName(id_value)
+		var lineage := lineages[lineage_id] as Dictionary
+		var blocks := lineage.blocks as Array[Dictionary]
+		for position in blocks.size():
+			var block := blocks[position] as Dictionary
+			if lineage_id == replacement_lineage_id \
+					and int(block.source_block_index) \
+						== replacement_source_block_index:
+				block = replacement
+			if position == 0 and int(block.start_storey) == 0 \
+					and not block.has("support_parent_lineage_id"):
+				continue
+			unsupported += int(not _floorplate_transition_is_structurally_legible(
+				block.columns as Dictionary, {},
+				(block.origin as Vector3i).y, claimed_cells, grid))
+	return unsupported
+
+
+static func _lineage_support_audit(lineages: Dictionary,
+		grid: WarrenSpatialGrid) -> Dictionary:
+	var claimed_cells := _claimed_room_cells(lineages)
+	var unsupported: Array[Dictionary] = []
+	var unsupported_count := 0
+	var transition_count := 0
+	for id_value: Variant in lineages.keys():
+		var lineage_id := StringName(id_value)
+		var lineage := lineages[lineage_id] as Dictionary
+		var blocks := lineage.blocks as Array[Dictionary]
+		for position in blocks.size():
+			var block := blocks[position] as Dictionary
+			if position == 0 and int(block.start_storey) == 0 \
+					and not block.has("support_parent_lineage_id"):
+				continue
+			transition_count += 1
+			if _floorplate_transition_is_structurally_legible(
+					block.columns as Dictionary, {},
+					(block.origin as Vector3i).y, claimed_cells, grid):
+				continue
+			unsupported_count += 1
+			if unsupported.size() < 16:
+				var support_state := _transition_support_state(
+					block.columns as Dictionary,
+					(block.origin as Vector3i).y, claimed_cells, grid)
+				unsupported.append({"lineage_id": lineage_id,
+					"source_block_index": int(block.source_block_index),
+					"origin": block.origin, "kind": block.kind,
+					"merged": bool(block.get("merged", false)),
+					"coupled": bool(block.get("coupled", false)),
+					"expanded": bool(block.get("expanded", false)),
+					"registration_relief": bool(block.get(
+						"registration_relief", false)),
+					"paired_registration_relief": bool(block.get(
+						"paired_registration_relief", false)),
+					"support_repair": bool(block.get("support_repair", false)),
+					"forced": bool(block.get("forced", false)),
+					"structural_forced": bool(block.get(
+						"structural_forced", false)),
+					"interface_forced": bool(block.get(
+						"interface_forced", false)),
+					"bearing_forced": bool(block.get("bearing_forced", false)),
+					"recomposable_interface": _block_allows_recomposition(block),
+					"borne_columns": support_state.borne_columns,
+					"unborne_columns": support_state.unborne_columns,
+				})
+	return {"room_support_transition_count": transition_count,
+		"unsupported_room_transition_count": unsupported_count,
+		"unsupported_transition_count": unsupported_count,
+		"unsupported_transition_details": unsupported}
+
+
+static func _transition_support_state(columns: Dictionary,
+		upper_base_y: int, claimed_cells: Dictionary,
+		grid: WarrenSpatialGrid) -> Dictionary:
+	var borne: Array[Vector2i] = []
+	var unborne: Array[Vector2i] = []
+	for column_value: Variant in columns.keys():
+		var column := column_value as Vector2i
+		var below := Vector3i(column.x, upper_base_y - 1, column.y)
+		if claimed_cells.has(below) or grid != null \
+				and grid.use_at(below) \
+					== WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+			borne.append(column)
+		else:
+			unborne.append(column)
+	for values: Array[Vector2i] in [borne, unborne]:
+		values.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			return a.x < b.x if a.x != b.x else a.y < b.y)
+	return {"borne_columns": borne, "unborne_columns": unborne}
+
+
+static func _coupled_variant_is_better(a: Dictionary,
+		b: Dictionary) -> bool:
+	if int(a.tower_relief) != int(b.tower_relief):
+		return int(a.tower_relief) > int(b.tower_relief)
+	if int(a.strong_registration_count) \
+			!= int(b.strong_registration_count):
+		return int(a.strong_registration_count) \
+			< int(b.strong_registration_count)
+	if int(a.registered_facade_plane_count) \
+			!= int(b.registered_facade_plane_count):
+		return int(a.registered_facade_plane_count) \
+			< int(b.registered_facade_plane_count)
+	if int(a.score) != int(b.score):
+		return int(a.score) > int(b.score)
+	if int(a.tie) != int(b.tie):
+		return int(a.tie) < int(b.tie)
+	if String(a.kind) != String(b.kind):
+		return String(a.kind) < String(b.kind)
+	if int(a.yaw_quarters) != int(b.yaw_quarters):
+		return int(a.yaw_quarters) < int(b.yaw_quarters)
+	var a_origin := a.origin as Vector3i
+	var b_origin := b.origin as Vector3i
+	return a_origin.x < b_origin.x if a_origin.x != b_origin.x \
+		else a_origin.z < b_origin.z
 
 
 static func _coupled_replacement(current: Dictionary,
@@ -1104,8 +1944,9 @@ static func _vary_unmerged_lineages(lineages: Dictionary,
 		var previous := blocks[0] as Dictionary
 		for block in range(1, blocks.size()):
 			var current := blocks[block] as Dictionary
-			if bool(current.forced) and not _block_allows_recomposition(
-					current) or bool(current.merged) \
+			if bool(current.get("structural_forced", false)) \
+					or bool(current.forced) and not _block_allows_recomposition(
+						current) or bool(current.merged) \
 					or current.has("support_parent_lineage_id"):
 				previous = current
 				continue
@@ -1121,6 +1962,12 @@ static func _vary_unmerged_lineages(lineages: Dictionary,
 				variant.origin as Vector3i, int(variant.yaw_quarters),
 				int(current.start_storey), int(current.end_storey))
 			replacement["forced"] = bool(current.forced)
+			replacement["structural_forced"] = bool(current.get(
+				"structural_forced", false))
+			replacement["interface_forced"] = bool(current.get(
+				"interface_forced", false))
+			replacement["bearing_forced"] = bool(current.get(
+				"bearing_forced", false))
 			replacement["original_kind"] = current.original_kind
 			replacement["original_origin"] = current.original_origin
 			replacement["original_yaw_quarters"] = \
@@ -1136,6 +1983,8 @@ static func _vary_unmerged_lineages(lineages: Dictionary,
 				Vector3i.ZERO)
 			replacement["feature_endpoint_constraints"] = current.get(
 				"feature_endpoint_constraints", [])
+			replacement["court_contact_columns"] = current.get(
+				"court_contact_columns", {}).duplicate()
 			replacement["merged"] = false
 			replacement["expanded"] = bool(variant.expanded)
 			blocks[block] = replacement
@@ -1195,8 +2044,9 @@ static func _relieve_registered_lineages(lineages: Dictionary,
 				positions.reverse()
 			for position: int in positions:
 				var current := blocks[position] as Dictionary
-				if bool(current.forced) and not _block_allows_recomposition(
-						current) or bool(current.merged) \
+				if bool(current.get("structural_forced", false)) \
+						or bool(current.forced) and not _block_allows_recomposition(
+							current) or bool(current.merged) \
 						or current.has("support_parent_lineage_id"):
 					continue
 				var previous := blocks[position - 1] as Dictionary
@@ -1226,6 +2076,391 @@ static func _relieve_registered_lineages(lineages: Dictionary,
 		if changed == 0:
 			break
 	return accepted
+
+
+static func _relieve_paired_registered_lineages(lineages: Dictionary,
+		grid: WarrenSpatialGrid, protected_owners: Dictionary,
+		world_seed: int) -> int:
+	## The serial cleanup above deliberately never occupies another lineage's
+	## current cells. In a dense party-wall block this can leave two aligned upper
+	## rooms mutually locked even though their combined mass has a much better
+	## two-room partition. Reopen exactly two vertically overlapping records,
+	## enumerate complete
+	## measured rooms for both, and commit the disjoint pair atomically.
+	##
+	## At least one replacement must cross the old inter-lineage seam. Without
+	## that requirement this would merely repeat coordinate descent at much higher
+	## cost. Every accepted pair still preserves each lineage's lower bearing,
+	## upper continuation, exact interface sockets, and protected feature volume.
+	last_pair_diagnostic = {}
+	var claimed_cells: Dictionary = {}
+	for id_value: Variant in lineages.keys():
+		var owner_id := StringName(id_value)
+		var owner := lineages[owner_id] as Dictionary
+		for block: Dictionary in owner.blocks as Array[Dictionary]:
+			for cell: Vector3i in block.cells:
+				claimed_cells[cell] = owner_id
+	var accepted := 0
+	var examined_pairs := 0
+	var peak_frontier := 0
+	var traced_pairs: Array[Dictionary] = []
+	# One bounded pass is enough: its inputs are already the fixed point of the
+	# serial cleanup. Keeping only a tiny best-first frontier makes this a local
+	# repair operator rather than another town-wide search nested inside every
+	# hero-feature candidate.
+	for sweep in 1:
+		var records_by_band: Dictionary = {}
+		var ids: Array[StringName] = []
+		ids.assign(lineages.keys())
+		ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+			return String(a) < String(b))
+		for lineage_id: StringName in ids:
+			var lineage := lineages[lineage_id] as Dictionary
+			var blocks := lineage.blocks as Array[Dictionary]
+			for position in range(1, blocks.size()):
+				var current := blocks[position] as Dictionary
+				if bool(current.get("structural_forced", false)) \
+						or bool(current.forced) and not _block_allows_recomposition(
+							current) or bool(current.merged) \
+						or current.has("support_parent_lineage_id"):
+					continue
+				var previous := blocks[position - 1] as Dictionary
+				var next := blocks[position + 1] as Dictionary \
+					if position + 1 < blocks.size() else {}
+				var metric := _vertical_profile_metric(current, previous, next)
+				if int(metric.strong_registration_count) <= 0:
+					continue
+				var exact_interface_priority := int(not (current.get(
+					"court_contact_columns", {}) as Dictionary).is_empty()) * 100 \
+					+ int(_block_has_interface_constraint(current)) * 20 \
+					+ int(_same_set(current.columns as Dictionary,
+						previous.columns as Dictionary)) * 5 \
+					+ int(not next.is_empty() and _same_set(
+						current.columns as Dictionary,
+						next.columns as Dictionary)) * 5
+				var record := {
+					"lineage_id": lineage_id,
+					"position": position,
+					"source_block_index": int(current.source_block_index),
+					"key": "%s/%d" % [lineage_id,
+						int(current.source_block_index)],
+					"current": current,
+					"previous": previous,
+					"next": next,
+					"exact_interface_priority": exact_interface_priority,
+				}
+				# Adjacent terrain roots may be half a storey out of phase. Index this
+				# one-storey record by each occupied fine Y slice, so rooms based at y=2
+				# and y=3 can exchange the volume they both occupy at slice 3.
+				var base_y := (current.origin as Vector3i).y
+				for occupied_y in range(base_y,
+						base_y + WarrenSpatialGrid.STOREY_CELLS):
+					var band_key := "%d" % occupied_y
+					if not records_by_band.has(band_key):
+						records_by_band[band_key] = [] as Array[Dictionary]
+					(records_by_band[band_key] as Array[Dictionary]).append(record)
+		var candidates: Array[Dictionary] = []
+		var seen_pair_keys: Dictionary = {}
+		var band_keys: Array[String] = []
+		for key_value: Variant in records_by_band.keys():
+			band_keys.append(String(key_value))
+		var band_priority: Dictionary = {}
+		for band_key: String in band_keys:
+			var priority := 0
+			for record: Dictionary in records_by_band[band_key] \
+					as Array[Dictionary]:
+				priority = maxi(priority, int(record.exact_interface_priority))
+			band_priority[band_key] = priority
+		band_keys.sort_custom(func(a: String, b: String) -> bool:
+			if int(band_priority[a]) != int(band_priority[b]):
+				return int(band_priority[a]) > int(band_priority[b])
+			return a.to_int() < b.to_int())
+		for band_key: String in band_keys:
+			if examined_pairs >= MAX_PAIRED_RELIEF_PAIR_CHECKS:
+				break
+			var records := records_by_band[band_key] as Array[Dictionary]
+			# Spend the bounded pair budget on the visually fatal, exact-interface
+			# locks first. A court-facing middle storey may have a valid shape only if
+			# its party-wall neighbor moves in the same transaction; lexical parcel
+			# order must not decide whether that repair is ever examined.
+			records.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+				if int(a.exact_interface_priority) \
+						!= int(b.exact_interface_priority):
+					return int(a.exact_interface_priority) \
+						> int(b.exact_interface_priority)
+				return String(a.key) < String(b.key))
+			for left_index in records.size():
+				if examined_pairs >= MAX_PAIRED_RELIEF_PAIR_CHECKS:
+					break
+				var left := records[left_index] as Dictionary
+				for right_index in range(left_index + 1, records.size()):
+					if examined_pairs >= MAX_PAIRED_RELIEF_PAIR_CHECKS:
+						break
+					var right := records[right_index] as Dictionary
+					if left.lineage_id == right.lineage_id \
+							or _minimum_column_distance(
+								(left.current as Dictionary).columns as Dictionary,
+								(right.current as Dictionary).columns as Dictionary) \
+									> MAX_PAIRED_RELIEF_COLUMN_DISTANCE:
+						continue
+					var pair_ids := PackedStringArray([
+						String(left.key), String(right.key)])
+					pair_ids.sort()
+					var pair_key := "|".join(pair_ids)
+					if seen_pair_keys.has(pair_key):
+						continue
+					seen_pair_keys[pair_key] = true
+					examined_pairs += 1
+					var participant_ids: Dictionary = {
+						StringName(left.lineage_id): true,
+						StringName(right.lineage_id): true,
+					}
+					var free_claims := claimed_cells.duplicate()
+					for participant: Dictionary in [left, right]:
+						var participant_id := StringName(participant.lineage_id)
+						for cell: Vector3i in (participant.current \
+								as Dictionary).cells as Array[Vector3i]:
+							if free_claims.get(cell, &"") == participant_id:
+								free_claims.erase(cell)
+					var left_variants := _coupled_variants(grid,
+						protected_owners, free_claims, participant_ids,
+						left, world_seed ^ 0x39a75b1, false, true)
+					var right_variants := _coupled_variants(grid,
+						protected_owners, free_claims, participant_ids,
+						right, world_seed ^ 0x6d2b79f, false, true)
+					var before := _combined_vertical_profile_metric(
+						left.current as Dictionary,
+						left.previous as Dictionary,
+						left.next as Dictionary,
+						right.current as Dictionary,
+						right.previous as Dictionary,
+						right.next as Dictionary)
+					var best_pair: Dictionary = {}
+					var disjoint_pair_count := 0
+					var borne_pair_count := 0
+					var seam_crossing_pair_count := 0
+					var improved_pair_count := 0
+					for left_variant: Dictionary in left_variants:
+						for right_variant: Dictionary in right_variants:
+							if _intersection_size(
+									left_variant.columns as Dictionary,
+									right_variant.columns as Dictionary) > 0:
+								continue
+							disjoint_pair_count += 1
+							var left_trial := _coupled_replacement(
+								left.current as Dictionary, left_variant)
+							var right_trial := _coupled_replacement(
+								right.current as Dictionary, right_variant)
+							var joint_claims := free_claims.duplicate()
+							for trial_entry: Dictionary in [left_trial, right_trial]:
+								for trial_cell: Vector3i in trial_entry.cells:
+									joint_claims[trial_cell] = true
+							if not _floorplate_transition_is_structurally_legible(
+									left_variant.columns as Dictionary,
+									(left.previous as Dictionary).columns as Dictionary,
+									((left.current as Dictionary).origin as Vector3i).y,
+									joint_claims, grid) \
+								or not _floorplate_transition_is_structurally_legible(
+									right_variant.columns as Dictionary,
+									(right.previous as Dictionary).columns as Dictionary,
+									((right.current as Dictionary).origin as Vector3i).y,
+									joint_claims, grid):
+								continue
+							if not _paired_upper_continuation_is_borne(grid,
+									left.next as Dictionary, left_variant,
+									joint_claims) \
+									or not _paired_upper_continuation_is_borne(grid,
+										right.next as Dictionary, right_variant,
+										joint_claims):
+								continue
+							borne_pair_count += 1
+							var crosses_old_seam := _intersection_size(
+								left_variant.columns as Dictionary,
+								(right.current as Dictionary).columns \
+									as Dictionary) > 0 \
+								or _intersection_size(
+									right_variant.columns as Dictionary,
+									(left.current as Dictionary).columns \
+										as Dictionary) > 0
+							if not crosses_old_seam:
+								continue
+							seam_crossing_pair_count += 1
+							# Variants already contain every field the profile metric
+							# reads. Do not stamp full cell arrays for all 18x18
+							# combinations; only the one surviving pair receives a
+							# complete measured record below.
+							var after := _combined_vertical_profile_metric(
+								left_variant,
+								left.previous as Dictionary,
+								left.next as Dictionary,
+								right_variant,
+								right.previous as Dictionary,
+								right.next as Dictionary)
+							if not _vertical_profile_is_better(after, before):
+								continue
+							improved_pair_count += 1
+							var tie := posmod(Helper._mix64(world_seed \
+								^ String(left.key).hash() * 31 \
+								^ String(right.key).hash() * 47 \
+								^ String(left_variant.kind).hash() * 59 \
+								^ String(right_variant.kind).hash() * 71 \
+								^ sweep * 0x45d9f3b), 1000003)
+							var pair_candidate := {"left": left, "right": right,
+								"left_variant": left_variant,
+								"right_variant": right_variant,
+								"before": before, "after": after, "tie": tie}
+							if best_pair.is_empty() or \
+									_paired_relief_candidate_is_better(
+										pair_candidate, best_pair):
+								best_pair = pair_candidate
+					if diagnostic_trace:
+						traced_pairs.append({"pair": pair_key,
+							"priority": maxi(int(left.exact_interface_priority),
+								int(right.exact_interface_priority)),
+							"left_variant_count": left_variants.size(),
+							"right_variant_count": right_variants.size(),
+							"disjoint_pair_count": disjoint_pair_count,
+							"borne_pair_count": borne_pair_count,
+							"seam_crossing_pair_count": seam_crossing_pair_count,
+							"improved_pair_count": improved_pair_count})
+					if not best_pair.is_empty():
+						candidates.append(best_pair)
+						if candidates.size() > MAX_PAIRED_RELIEF_FRONTIER:
+							candidates.sort_custom(func(a: Dictionary,
+									b: Dictionary) -> bool:
+								return _paired_relief_candidate_is_better(a, b))
+							candidates.resize(MAX_PAIRED_RELIEF_FRONTIER)
+						peak_frontier = maxi(peak_frontier,
+							candidates.size())
+		candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			return _paired_relief_candidate_is_better(a, b))
+		var used_records: Dictionary = {}
+		var changed := 0
+		for candidate: Dictionary in candidates:
+			var left := candidate.left as Dictionary
+			var right := candidate.right as Dictionary
+			if used_records.has(String(left.key)) \
+					or used_records.has(String(right.key)):
+				continue
+			var left_id := StringName(left.lineage_id)
+			var right_id := StringName(right.lineage_id)
+			var left_lineage := lineages[left_id] as Dictionary
+			var right_lineage := lineages[right_id] as Dictionary
+			var left_blocks := left_lineage.blocks as Array[Dictionary]
+			var right_blocks := right_lineage.blocks as Array[Dictionary]
+			var left_position := _block_position(left_blocks,
+				int(left.source_block_index))
+			var right_position := _block_position(right_blocks,
+				int(right.source_block_index))
+			if left_position < 1 or right_position < 1:
+				continue
+			var left_current := left_blocks[left_position] as Dictionary
+			var right_current := right_blocks[right_position] as Dictionary
+			if not _same_set(left_current.columns as Dictionary,
+					(left.current as Dictionary).columns as Dictionary) \
+					or not _same_set(right_current.columns as Dictionary,
+						(right.current as Dictionary).columns as Dictionary):
+				continue
+			var free_claims := claimed_cells.duplicate()
+			for old_record: Dictionary in [left_current, right_current]:
+				var old_id := left_id if old_record == left_current else right_id
+				for cell: Vector3i in old_record.cells:
+					if free_claims.get(cell, &"") == old_id:
+						free_claims.erase(cell)
+			var left_replacement := _coupled_replacement(left_current,
+				candidate.left_variant as Dictionary)
+			var right_replacement := _coupled_replacement(right_current,
+				candidate.right_variant as Dictionary)
+			if _record_overlaps_claimed(left_replacement, free_claims) \
+					or _record_overlaps_claimed(right_replacement, free_claims) \
+					or _intersection_size(
+						left_replacement.columns as Dictionary,
+						right_replacement.columns as Dictionary) > 0:
+				continue
+			var left_previous := left_blocks[left_position - 1] as Dictionary
+			var left_next := left_blocks[left_position + 1] as Dictionary \
+				if left_position + 1 < left_blocks.size() else {}
+			var right_previous := right_blocks[right_position - 1] as Dictionary
+			var right_next := right_blocks[right_position + 1] as Dictionary \
+				if right_position + 1 < right_blocks.size() else {}
+			var before := _combined_vertical_profile_metric(left_current,
+				left_previous, left_next, right_current, right_previous,
+				right_next)
+			var after := _combined_vertical_profile_metric(left_replacement,
+				left_previous, left_next, right_replacement, right_previous,
+				right_next)
+			if not _vertical_profile_is_better(after, before):
+				continue
+			for old_record: Dictionary in [left_current, right_current]:
+				var old_id := left_id if old_record == left_current else right_id
+				for cell: Vector3i in old_record.cells:
+					if claimed_cells.get(cell, &"") == old_id:
+						claimed_cells.erase(cell)
+			left_replacement["paired_registration_relief"] = true
+			right_replacement["paired_registration_relief"] = true
+			left_blocks[left_position] = left_replacement
+			right_blocks[right_position] = right_replacement
+			left_lineage["blocks"] = left_blocks
+			right_lineage["blocks"] = right_blocks
+			lineages[left_id] = left_lineage
+			lineages[right_id] = right_lineage
+			for record: Dictionary in [left_replacement, right_replacement]:
+				var owner_id := left_id if record == left_replacement else right_id
+				for cell: Vector3i in record.cells:
+					claimed_cells[cell] = owner_id
+			used_records[String(left.key)] = true
+			used_records[String(right.key)] = true
+			changed += 1
+			accepted += 1
+		if changed == 0:
+			break
+	last_pair_diagnostic = {
+		"examined_pair_count": examined_pairs,
+		"peak_frontier_count": peak_frontier,
+		"accepted_pair_count": accepted,
+	}
+	if diagnostic_trace:
+		last_pair_diagnostic["traced_pairs"] = traced_pairs
+	return accepted
+
+
+static func _paired_relief_candidate_is_better(a: Dictionary,
+		b: Dictionary) -> bool:
+	for key: String in ["strong_registration_count",
+			"registered_facade_plane_count", "same_kind_count",
+			"same_ridge_axis_count"]:
+		var a_gain := int((a.before as Dictionary)[key]) \
+			- int((a.after as Dictionary)[key])
+		var b_gain := int((b.before as Dictionary)[key]) \
+			- int((b.after as Dictionary)[key])
+		if a_gain != b_gain:
+			return a_gain > b_gain
+	return int(a.tie) < int(b.tie)
+
+
+static func _paired_upper_continuation_is_borne(grid: WarrenSpatialGrid,
+		next: Dictionary, replacement: Dictionary,
+		claimed_cells: Dictionary) -> bool:
+	if next.is_empty():
+		return true
+	return _new_projection_is_directly_borne(grid,
+		next.columns as Dictionary, replacement.columns as Dictionary,
+		(next.origin as Vector3i).y, claimed_cells)
+
+
+static func _combined_vertical_profile_metric(left: Dictionary,
+		left_previous: Dictionary, left_next: Dictionary,
+		right: Dictionary, right_previous: Dictionary,
+		right_next: Dictionary) -> Dictionary:
+	var left_metric := _vertical_profile_metric(left, left_previous, left_next)
+	var right_metric := _vertical_profile_metric(right, right_previous,
+		right_next)
+	var out: Dictionary = {}
+	for key: String in ["strong_registration_count",
+			"registered_facade_plane_count", "same_kind_count",
+			"same_ridge_axis_count"]:
+		out[key] = int(left_metric[key]) + int(right_metric[key])
+	return out
 
 
 static func _variant_replacement(current: Dictionary,
@@ -1420,8 +2655,6 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 			"candidate_count": candidates.size(),
 			"clearance_failures": clearance_failures,
 		}
-	if candidates.is_empty():
-		return {}
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.tower_relief) != int(b.tower_relief):
 			return int(a.tower_relief) > int(b.tower_relief)
@@ -1436,7 +2669,14 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 		if int(a.score) != int(b.score):
 			return int(a.score) > int(b.score)
 		return int(a.tie) < int(b.tie))
-	return candidates[0]
+	for candidate_index in mini(candidates.size(),
+			MAX_STRUCTURAL_VARIANT_FRONTIER):
+		var candidate := candidates[candidate_index] as Dictionary
+		if _floorplate_transition_is_structurally_legible(
+				candidate.columns as Dictionary, previous_columns,
+				(current.origin as Vector3i).y, claimed_cells, grid):
+			return candidate
+	return {}
 
 
 static func _record_clearance_failure(grid: WarrenSpatialGrid,
@@ -1484,34 +2724,28 @@ static func _candidate_matches_address(kind: StringName, origin: Vector3i,
 	var threshold := current.get("address_threshold",
 		Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
 	var frontage := current.get("address_frontage", Vector3i.ZERO) as Vector3i
-	var local_door := Vector3i.ZERO
-	match kind:
-		&"tower":
-			local_door = Vector3i(0, 0, 0)
-		&"slim":
-			local_door = Vector3i(0, 0, 1)
-		&"building":
-			local_door = Vector3i(-1, 0, 1)
-		&"long":
-			local_door = Vector3i(-1, 0, 2)
-		_:
-			return false
 	if threshold.x == 2147483647:
 		return false
+	# Generated room recipes own two measured door phases on the same facade.
+	# Recomposition must accept both: forcing phase zero here kept an addressed
+	# narrow room registered vertically even when shifting it one fine cell would
+	# preserve the exact public threshold and select the authored phase-one shell.
 	var addressed_origin := Vector3i(origin.x, threshold.y, origin.z)
-	return FabricRecipe.transform_cell(local_door, addressed_origin, yaw) \
-		== threshold and FabricRecipe.transform_direction(Vector3i.BACK, yaw) \
-		== frontage
+	return WarrenParcelConstruction.address_door_phase_for_room(kind,
+		addressed_origin, yaw, threshold, frontage) >= 0
 
 
 static func _block_allows_recomposition(block: Dictionary) -> bool:
 	return bool(block.get("address_expandable", false)) \
-		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty()
+		or bool(block.get("bearing_forced", false)) \
+		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty() \
+		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty()
 
 
 static func _block_has_interface_constraint(block: Dictionary) -> bool:
 	return bool(block.get("address_expandable", false)) \
-		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty()
+		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty() \
+		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty()
 
 
 static func _candidate_matches_constraints(kind: StringName,
@@ -1525,6 +2759,11 @@ static func _candidate_matches_constraints(kind: StringName,
 		if not _candidate_has_facade_endpoint(kind, origin, yaw,
 				constraint.cell as Vector3i,
 				constraint.facing as Vector3i):
+			return false
+	var candidate_columns := _stamp_columns(kind, origin, yaw)
+	for column_value: Variant in (current.get("court_contact_columns", {}) \
+			as Dictionary).keys():
+		if not candidate_columns.has(column_value):
 			return false
 	return true
 

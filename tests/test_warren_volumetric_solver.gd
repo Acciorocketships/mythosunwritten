@@ -335,6 +335,43 @@ func test_room_outcropping_geometry_requires_one_bounded_bearing_facade() -> voi
 	assert_eq(StringName(floating_result.rejection), &"projection_too_deep")
 
 
+func test_room_support_accepts_one_measured_corner_brace_but_not_floating_mass() \
+		-> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, 0, -8),
+		Vector3i(16, 8, 16))
+	var upper_record := WarrenRoomCompositionPlanner._record(&"slim",
+		Vector3i(0, WarrenSpatialGrid.STOREY_CELLS, 0), 0, 1, 2)
+	var columns := upper_record.columns as Dictionary
+	var ordered: Array[Vector2i] = []
+	ordered.assign(columns.keys())
+	ordered.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x < b.x if a.x != b.x else a.y < b.y)
+	var claimed: Dictionary = {}
+	for index in ordered.size() - 1:
+		var column := ordered[index]
+		claimed[Vector3i(column.x, WarrenSpatialGrid.STOREY_CELLS - 1,
+			column.y)] = &"bearing"
+	assert_true(WarrenRoomCompositionPlanner
+		._floorplate_transition_is_structurally_legible(columns, {},
+			WarrenSpatialGrid.STOREY_CELLS, claimed, grid),
+		"one unsupported corner on a 7/8-borne room is a measured bracket case")
+	assert_false(WarrenRoomCompositionPlanner
+		._floorplate_transition_is_structurally_legible(columns, {},
+			WarrenSpatialGrid.STOREY_CELLS, {}, grid),
+		"a room with no mass beneath it must never pass as a cantilever")
+
+	var upper := _unsealed_room_for_geometry(&"corner", &"slim",
+		Vector3i(0, WarrenSpatialGrid.STOREY_CELLS, 0))
+	var anchor := ordered[0]
+	var geometry := {"valid": true, "direction": Vector2i.RIGHT,
+		"depth_cells": 1, "attachment_columns": [anchor],
+		"bearing_columns": [anchor, anchor + Vector2i.DOWN]}
+	var supports := WarrenSpatialFeatureSolver._cantilever_support_records(
+		upper, geometry)
+	assert_eq(supports.size(), 1,
+		"the native two-brace course must widen from the borne neighbor")
+
+
 func _unsealed_room_for_geometry(stable_id: StringName, kind: StringName,
 		origin: Vector3i) -> WarrenRoomStamp:
 	var room := WarrenRoomStamp.new(stable_id, &"source", kind, origin, 0,
@@ -371,6 +408,184 @@ func test_one_storey_composition_records_truncate_only_unrequired_tower_crown() 
 	assert_eq((((third_storey_required[&"lineage"] as Dictionary).blocks) \
 		as Array).size(), 3,
 		"a real third-storey interface must remain for recomposition or rejection")
+
+
+func test_paired_registration_relief_repartitions_two_locked_upper_rooms() \
+		-> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-12, 0, -12),
+		Vector3i(24, 4, 24))
+	var left_lower := _composition_test_record(&"building",
+		Vector3i(-2, 0, 0), 0, 0)
+	var left_upper := _composition_test_record(&"building",
+		Vector3i(-2, WarrenSpatialGrid.STOREY_CELLS, 0), 0, 1)
+	var right_lower := _composition_test_record(&"building",
+		Vector3i(2, 0, 0), 0, 0)
+	var right_upper := _composition_test_record(&"building",
+		Vector3i(2, WarrenSpatialGrid.STOREY_CELLS, 0), 0, 1)
+	var lineages := {
+		&"left": {"blocks": [left_lower, left_upper] as Array[Dictionary],
+			"required_through_block": -1, "paired_primary": false,
+			"paired_secondary": false},
+		&"right": {"blocks": [right_lower, right_upper] as Array[Dictionary],
+			"required_through_block": -1, "paired_primary": false,
+			"paired_secondary": false},
+	}
+	var before_registered := \
+		WarrenRoomCompositionPlanner._registered_facade_plane_count(
+			left_lower.columns as Dictionary,
+			left_upper.columns as Dictionary) \
+		+ WarrenRoomCompositionPlanner._registered_facade_plane_count(
+			right_lower.columns as Dictionary,
+			right_upper.columns as Dictionary)
+	var relieved := WarrenRoomCompositionPlanner \
+		._relieve_paired_registered_lineages(lineages, grid, {}, 73)
+	assert_gt(relieved, 0,
+		"a party-wall pair must be able to trade its upper occupied volume")
+	var left_blocks := (lineages[&"left"] as Dictionary).blocks \
+		as Array[Dictionary]
+	var right_blocks := (lineages[&"right"] as Dictionary).blocks \
+		as Array[Dictionary]
+	var new_left := left_blocks[1] as Dictionary
+	var new_right := right_blocks[1] as Dictionary
+	var after_registered := \
+		WarrenRoomCompositionPlanner._registered_facade_plane_count(
+			(left_blocks[0] as Dictionary).columns as Dictionary,
+			new_left.columns as Dictionary) \
+		+ WarrenRoomCompositionPlanner._registered_facade_plane_count(
+			(right_blocks[0] as Dictionary).columns as Dictionary,
+			new_right.columns as Dictionary)
+	assert_lt(after_registered, before_registered,
+		"the atomic exchange must lower the actual world-space facade metric")
+	assert_eq(WarrenRoomCompositionPlanner._intersection_size(
+		new_left.columns as Dictionary, new_right.columns as Dictionary), 0,
+		"the two complete replacement rooms must remain disjoint")
+	assert_true(bool(new_left.get("paired_registration_relief", false)))
+	assert_true(bool(new_right.get("paired_registration_relief", false)))
+	assert_lte(int(WarrenRoomCompositionPlanner.last_pair_diagnostic \
+		.get("peak_frontier_count", -1)),
+		WarrenRoomCompositionPlanner.MAX_PAIRED_RELIEF_FRONTIER,
+		"the exact pair exchange must retain a hard bounded frontier")
+	assert_lte(int(WarrenRoomCompositionPlanner.last_pair_diagnostic \
+		.get("examined_pair_count", -1)),
+		WarrenRoomCompositionPlanner.MAX_PAIRED_RELIEF_PAIR_CHECKS,
+		"nested exact candidate solves must have a fixed work budget")
+
+
+func test_paired_registration_relief_sees_half_storey_phase_overlap() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-12, 0, -12),
+		Vector3i(24, 6, 24))
+	var left_lower := _composition_test_record(&"building",
+		Vector3i(-2, 0, 0), 0, 0)
+	var left_upper := _composition_test_record(&"building",
+		Vector3i(-2, 2, 0), 0, 1)
+	var right_lower := _composition_test_record(&"building",
+		Vector3i(2, 1, 0), 0, 0)
+	var right_upper := _composition_test_record(&"building",
+		Vector3i(2, 3, 0), 0, 1)
+	var lineages := {
+		&"left": {"blocks": [left_lower, left_upper] as Array[Dictionary],
+			"required_through_block": -1, "paired_primary": false,
+			"paired_secondary": false},
+		&"right": {"blocks": [right_lower, right_upper] as Array[Dictionary],
+			"required_through_block": -1, "paired_primary": false,
+			"paired_secondary": false},
+	}
+	var relieved := WarrenRoomCompositionPlanner \
+		._relieve_paired_registered_lineages(lineages, grid, {}, 91)
+	assert_gt(relieved, 0,
+		"rooms sharing only one fine Y slice still need one atomic 3D repair")
+	assert_eq(int(WarrenRoomCompositionPlanner._lineage_overlap_audit(
+		lineages).overlap_cell_count), 0)
+	assert_lte(int(WarrenRoomCompositionPlanner.last_pair_diagnostic.get(
+		"examined_pair_count", -1)),
+		WarrenRoomCompositionPlanner.MAX_PAIRED_RELIEF_PAIR_CHECKS)
+
+
+func test_addressed_room_recomposition_accepts_second_measured_door_phase() \
+		-> void:
+	var current := {"address_threshold": Vector3i(0, 2, 0),
+		"address_frontage": Vector3i.BACK,
+		"address_expandable": true,
+		"feature_endpoint_constraints": []}
+	assert_true(WarrenRoomCompositionPlanner._candidate_matches_address(
+		&"tower", Vector3i(0, 2, 0), 0, current),
+		"the phase-zero room remains a valid exact public address")
+	assert_true(WarrenRoomCompositionPlanner._candidate_matches_address(
+		&"tower", Vector3i(1, 2, 0), 0, current),
+		"a one-cell step must select the authored phase-one doorway")
+	assert_false(WarrenRoomCompositionPlanner._candidate_matches_address(
+		&"tower", Vector3i(2, 2, 0), 0, current),
+		"the finite doorway vocabulary cannot excuse an arbitrary shift")
+	assert_true(WarrenRoomCompositionPlanner._block_allows_recomposition({
+		"bearing_forced": true,
+		"address_expandable": false,
+		"feature_endpoint_constraints": [],
+		"court_contact_columns": {},
+	}), "the bearer below an exact doorway may reshape while keeping support")
+
+
+func test_cantilever_support_assignment_can_revise_an_earlier_course() -> void:
+	var bad_early := {"bounds": [AABB(Vector3.ZERO, Vector3(2.0, 2.0, 2.0))],
+		"records": [], "analysis": {}, "diagonal_count": 1}
+	var safe_early := {"bounds": [AABB(Vector3(5.0, 0.0, 0.0),
+		Vector3(2.0, 2.0, 2.0))], "records": [], "analysis": {},
+		"diagonal_count": 0}
+	var later := {"bounds": [AABB(Vector3(1.0, 0.0, 0.0),
+		Vector3(2.0, 2.0, 2.0))], "records": [], "analysis": {},
+		"diagonal_count": 1}
+	var entries: Array[Dictionary] = [
+		{"key": "early", "options": [bad_early, safe_early]},
+		{"key": "later", "options": [later]},
+	]
+	var state := {"visited_node_count": 0, "peak_assigned_count": 0}
+	var assignments := WarrenSpatialFeatureSolver \
+		._assign_cantilever_supports(entries, state)
+	assert_eq(assignments.size(), 2,
+		"mandatory support courses must be chosen as one compatible transaction")
+	assert_eq(int((assignments.early as Dictionary).diagonal_count), 0,
+		"the solver must revise an earlier diagonal when a later support needs it")
+	assert_lte(int(state.visited_node_count),
+		WarrenSpatialFeatureSolver.MAX_CANTILEVER_SUPPORT_ASSIGNMENT_NODES)
+
+
+func test_collinear_cantilever_courses_share_one_structural_frame() -> void:
+	var lower_record := {"recipe_id": &"outcrop.support.diagonal.2",
+		"origin": Vector3i(3, 4, 7), "yaw_quarters": 1}
+	var upper_record := {"recipe_id": &"outcrop.support.bracketed.2",
+		"origin": Vector3i(3, 6, 8), "yaw_quarters": 1}
+	var entries: Array[Dictionary] = [
+		{"key": "lower", "options": [{"bounds": [AABB(Vector3.ZERO,
+			Vector3(2.0, 3.5, 2.0))], "records": [lower_record]}]},
+		{"key": "upper", "options": [{"bounds": [AABB(Vector3(0.0, 2.5,
+			0.0), Vector3(2.0, 3.5, 2.0))], "records": [upper_record]}]},
+	]
+	var state := {"visited_node_count": 0, "peak_assigned_count": 0}
+	var assignments := WarrenSpatialFeatureSolver \
+		._assign_cantilever_supports(entries, state)
+	assert_eq(assignments.size(), 2,
+		"adjacent same-plane courses should form one continuous timber frame")
+	var crossing := upper_record.duplicate()
+	crossing["yaw_quarters"] = 2
+	assert_true(WarrenSpatialFeatureSolver._cantilever_supports_share_frame(
+		lower_record, crossing),
+		"perpendicular support courses meet at an explicit timber joint")
+
+
+func _composition_test_record(kind: StringName, origin: Vector3i, yaw: int,
+		storey: int) -> Dictionary:
+	var record := WarrenRoomCompositionPlanner._record(kind, origin, yaw,
+		storey, storey + 1)
+	record["forced"] = false
+	record["merged"] = false
+	record["source_block_index"] = storey
+	record["original_kind"] = kind
+	record["original_origin"] = origin
+	record["original_yaw_quarters"] = yaw
+	record["home_origin"] = origin
+	record["home_columns"] = (record.columns as Dictionary).duplicate()
+	record["address_expandable"] = false
+	record["feature_endpoint_constraints"] = []
+	return record
 
 
 func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
@@ -700,14 +915,16 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		assert_gte(int(outcrop.audit.outcrop_room_footprint_column_count), 4)
 		assert_gte(int(outcrop.audit.outcrop_extension_column_count), 1)
 		assert_between(int(outcrop.audit.outcrop_projection_depth_cells), 1, 2)
-		assert_gte(int(outcrop.audit.outcrop_attachment_span_cells), 2)
+		assert_gte(int(outcrop.audit.outcrop_attachment_span_cells), 1)
 		assert_gte(float(outcrop.audit.outcrop_bearing_ratio), 0.5)
 		assert_gt(outcrop.construction_records.size(), 0)
 		assert_eq(outcrop.construction_records.size(),
 			int(outcrop.audit.outcrop_support_course_count))
 		for record: Dictionary in outcrop.construction_records:
 			assert_has([
+				&"outcrop.support.bracketed.1",
 				&"outcrop.support.bracketed.2",
+				&"outcrop.support.diagonal.1",
 				&"outcrop.support.diagonal.2",
 			], StringName(record.recipe_id))
 		outcrop_owners[StringName(outcrop.endpoints[0].owner_id)] = true

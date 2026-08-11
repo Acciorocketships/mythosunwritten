@@ -91,7 +91,10 @@ static func solve(world_seed: int,
 		if diagnostic_trace_room_gate:
 			print("SKYWALK_TIMING partition_begin source=", volume.stable_id,
 				" variant=", variant, " proxy=", ranked.audit)
-		var plan := from_volume(volume, variant, construction_program)
+		# Candidate search uses the cheaper serial fixed point. The paired
+		# silhouette cleanup changes no hero-feature topology, so paying for it in
+		# every rejected topology/partition trial only multiplies exact room work.
+		var plan := from_volume(volume, variant, construction_program, false)
 		if plan != null:
 			for key: Variant in (ranked.audit as Dictionary).keys():
 				plan.audit["precomposition_%s" % String(key)] = ranked.audit[key]
@@ -103,18 +106,49 @@ static func solve(world_seed: int,
 			else:
 				var quality_failure := production_quality_failure(fabric.audit)
 				if quality_failure.is_empty():
-					for key: StringName in [&"frontage_ratio",
-							&"overhead_route_ratio",
-							&"through_sightline_count",
-							&"ground_through_sightline_count"]:
-						plan.audit[key] = fabric.audit.get(key, 0)
-					last_failure = ""
-					return plan
-				last_failure = quality_failure
+					var finalized := _finalize_selected_candidate(volume,
+						variant, construction_program, ranked.audit as Dictionary)
+					if finalized != null:
+						last_failure = ""
+						return finalized
+				else:
+					last_failure = quality_failure
 		failures.append("%s/v%d: %s" % [String(volume.stable_id),
 			variant, last_failure])
 	last_failure = "no volumetric partition sealed: %s" % " | ".join(failures)
 	return null
+
+
+static func _finalize_selected_candidate(volume: WarrenVolumePlan,
+		variant: int, construction_program: SettlementFabricProgram,
+		precomposition_audit: Dictionary) -> WarrenSpatialPlan:
+	## Search proves hero topology and production sightline quality with the
+	## serial room fixed point. Rebuild exactly that one survivor with the bounded
+	## paired silhouette cleanup, then rerun every authored-envelope and compiled
+	## quality gate. The cleanup therefore runs once, yet can never smuggle an
+	## overlap or a weaker street fabric past selection.
+	var finalized := from_volume(volume, variant, construction_program, true)
+	if finalized == null:
+		return null
+	for key: Variant in precomposition_audit.keys():
+		finalized.audit["precomposition_%s" % String(key)] = \
+			precomposition_audit[key]
+	var fabric := WarrenSpatialFabricCompiler.solve(finalized,
+		construction_program)
+	if fabric == null:
+		last_failure = "final paired fabric gate failed: %s" \
+			% WarrenSpatialFabricCompiler.last_failure
+		return null
+	var quality_failure := production_quality_failure(fabric.audit)
+	if not quality_failure.is_empty():
+		last_failure = "final paired cleanup changed production quality: %s" \
+			% quality_failure
+		return null
+	for key: StringName in [&"frontage_ratio", &"overhead_route_ratio",
+			&"through_sightline_count", &"ground_through_sightline_count"]:
+		finalized.audit[key] = fabric.audit.get(key, 0)
+	finalized.audit["paired_registration_finalization_count"] = 1
+	return finalized
 
 
 static func production_quality_failure(audit: Dictionary) -> String:
@@ -324,7 +358,8 @@ static func _precomposition_quality_score(volume: WarrenVolumePlan,
 
 static func from_volume(volume: WarrenVolumePlan,
 		partition_variant: int = 0,
-		construction_program: SettlementFabricProgram = null) -> WarrenSpatialPlan:
+		construction_program: SettlementFabricProgram = null,
+		enable_paired_registration_relief: bool = true) -> WarrenSpatialPlan:
 	last_failure = ""
 	if volume == null or not volume.is_sealed() or construction_program == null:
 		last_failure = "missing sealed macro volume or measured vocabulary"
@@ -359,7 +394,7 @@ static func from_volume(volume: WarrenVolumePlan,
 			% courtyard_parcel_sides
 		return null
 	var partition := _partition_rooms(grid, volume, parcel_plan,
-		construction_program)
+		construction_program, enable_paired_registration_relief)
 	if partition.is_empty():
 		return null
 	var room_count := int(partition.room_count)
@@ -616,7 +651,8 @@ static func _carve_public_volume(grid: WarrenSpatialGrid,
 
 static func _partition_rooms(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
-		construction_program: SettlementFabricProgram) -> Dictionary:
+		construction_program: SettlementFabricProgram,
+		enable_paired_registration_relief: bool = true) -> Dictionary:
 	var scale_profile := _scale_profile_for_volume(volume)
 	if scale_profile == null:
 		last_failure = "room partition has an invalid scale profile"
@@ -888,7 +924,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						" skywalk_owners=", _skywalk_plan_owner_preview(
 							trial_skywalk_plan),
 						" skywalk_offsets=", trial_skywalk_plan.get(
-							"forced_offsets", {}))
+							"forced_offsets", {}),
+						" variant_failure=", WarrenRoomCompositionPlanner \
+							.last_variant_diagnostic.get("failure", ""),
+						" variant_lineage=", WarrenRoomCompositionPlanner \
+							.last_variant_diagnostic.get("lineage_id", &""))
 				if not exact_room_fit:
 					(feature_set_attempts.back() as Dictionary)[
 						"exact_room_fit"] = false
@@ -1157,7 +1197,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var composition := WarrenRoomCompositionPlanner.solve(grid, volume,
 		proposals, solved_offsets_by_parcel, exact_forced_offsets_by_parcel,
 		market_reservation, protected_owners, forced_offsets_by_parcel,
-		skywalk_reservations, volume.world_seed)
+		skywalk_reservations, volume.world_seed,
+		enable_paired_registration_relief)
 	if composition.is_empty():
 		last_failure = "3D room composition failed: %s" \
 			% WarrenRoomCompositionPlanner.last_failure
@@ -3513,7 +3554,7 @@ static func _court_candidate_preserves_exact_room_envelopes(
 	var composition := WarrenRoomCompositionPlanner.solve(grid, volume,
 		proposals, solved_offsets_by_parcel, exact_forced_offsets_by_parcel,
 		market, trial_owners, forced_offsets_by_parcel,
-		skywalk_reservations, volume.world_seed)
+		skywalk_reservations, volume.world_seed, true)
 	if composition.is_empty():
 		# The room solver publishes its audit before rejecting a repeated tower.
 		# Preserve that structured cause here: the enclosing hero-feature beam can

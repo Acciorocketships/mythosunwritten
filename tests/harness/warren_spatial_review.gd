@@ -22,6 +22,8 @@ var _partition_variant := 1
 var _scale_id := WarrenVillageScaleProfile.LARGE
 var _solve_production := false
 var _production_terrain_site := false
+var _solve_only := false
+var _trace_room_gate := false
 var _camera := Camera3D.new()
 var _spatial: WarrenSpatialPlan
 var _fabric: SettlementFabricPlan
@@ -33,6 +35,9 @@ var _captures: Array[Dictionary] = []
 
 func _ready() -> void:
 	_read_args()
+	WarrenVolumetricSolver.diagnostic_trace_room_gate = _trace_room_gate
+	WarrenVolumetricSolver.diagnostic_trace_skywalk_timing = _trace_room_gate
+	WarrenRoomCompositionPlanner.diagnostic_trace = _trace_room_gate
 	# The review must render exactly the same strict envelope policy as
 	# production. Edge-nick cameras remain as a falsification aid and should now
 	# produce no captures.
@@ -69,6 +74,11 @@ func _ready() -> void:
 	if _spatial == null:
 		_fail_and_quit("volumetric solve rejected: %s" \
 			% WarrenVolumetricSolver.last_failure)
+		return
+	if _solve_only:
+		print("[warren_spatial_review] solve_audit=",
+			JSON.stringify(_spatial.audit))
+		get_tree().quit(0)
 		return
 	if _fabric == null:
 		_fabric = WarrenSpatialFabricCompiler.solve(_spatial, program)
@@ -132,6 +142,10 @@ func _read_args() -> void:
 			_scale_id = StringName(args[index + 1])
 		elif args[index] == "--solve-production":
 			_solve_production = true
+		elif args[index] == "--solve-only":
+			_solve_only = true
+		elif args[index] == "--trace-room-gate":
+			_trace_room_gate = true
 		elif args[index] == "--production-terrain-site":
 			_production_terrain_site = true
 			_world_seed = DEFAULT_PRODUCTION_WORLD_SEED
@@ -242,6 +256,10 @@ func _commit_production_entries(parent: Node3D,
 
 func _fail_and_quit(reason: String) -> void:
 	printerr("[warren_spatial_review] ", reason)
+	if not WarrenSpatialFeatureSolver.last_outcropping_diagnostic.is_empty():
+		printerr("[warren_spatial_review] outcrop_diagnostic=",
+			JSON.stringify(
+				WarrenSpatialFeatureSolver.last_outcropping_diagnostic))
 	get_tree().quit(1)
 
 

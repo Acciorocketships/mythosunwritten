@@ -16,6 +16,7 @@ const MIN_COURT_SIDE_COUNT := 3
 const MIN_COURT_BELOW_ROUTE_CELLS := 4
 const MIN_COURT_UPPER_ROUTE_CELLS := 2
 const MIN_COURT_DAYLIGHT_MACRO_COLUMNS := 2
+const MAX_CANTILEVER_SUPPORT_ASSIGNMENT_NODES := 4096
 const SKY_DIRECTIONS: Array[Vector3i] = [
 	Vector3i.RIGHT, Vector3i.BACK, Vector3i.LEFT, Vector3i.FORWARD,
 ]
@@ -1937,7 +1938,9 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 		_target_count: int = TARGET_ROOM_OUTCROPPINGS) \
 		-> Array[WarrenFeatureReservation]:
 	if program == null or program.recipe(&"outcrop.support.bracketed.2") == null \
-			or program.recipe(&"outcrop.support.diagonal.2") == null:
+			or program.recipe(&"outcrop.support.diagonal.2") == null \
+			or program.recipe(&"outcrop.support.bracketed.1") == null \
+			or program.recipe(&"outcrop.support.diagonal.1") == null:
 		last_failure = "room outcroppings lack the measured bracket vocabulary"
 		return [] as Array[WarrenFeatureReservation]
 	var building_by_room: Dictionary = {}
@@ -1992,16 +1995,35 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 	var measured_support_conflict_kinds: Dictionary = {}
 	var directly_borne_cantilever_count := 0
 	var support_required_cantilever_count := 0
+	var directly_borne_irregular_projection_count := 0
+	var unsupported_irregular_projection_count := 0
+	var unsupported_irregular_projection_details: Array[Dictionary] = []
+	var support_entries: Array[Dictionary] = []
+	var support_options_by_upper: Dictionary = {}
 	for candidate: Dictionary in candidates:
 		# Invalid shifted rooms remain in the diagnostic census so future grammar
 		# changes cannot silently reintroduce them, but they are not outcroppings.
 		# A corner-shifted box or a mostly floating upper plate must never satisfy
 		# this feature quota merely because some columns differ from the floor below.
-		if not bool((candidate.cantilever_geometry as Dictionary).valid):
-			continue
-		var building := candidate.building as WarrenBuildingVolume
-		var upper := candidate.upper as WarrenRoomStamp
 		var geometry := candidate.cantilever_geometry as Dictionary
+		var upper := candidate.upper as WarrenRoomStamp
+		if not bool(geometry.valid):
+			var extension: Array[Vector2i] = []
+			extension.assign(geometry.get("extension_columns", []) as Array)
+			if _projection_columns_are_directly_borne(upper, extension, grid):
+				directly_borne_irregular_projection_count += 1
+			else:
+				unsupported_irregular_projection_count += 1
+				if unsupported_irregular_projection_details.size() < 12:
+					unsupported_irregular_projection_details.append({
+						"upper_room_id": upper.stable_id,
+						"lower_room_id": (candidate.lower \
+							as WarrenRoomStamp).stable_id,
+						"rejection": StringName(geometry.get(
+							"rejection", &"unclassified")),
+						"extension_column_count": extension.size(),
+					})
+			continue
 		# Recomposition can move a room beyond the immediately preceding room in
 		# its source lineage while landing it directly on a different inhabited
 		# volume. That is a genuine floorplate outcropping but not a floating one;
@@ -2012,36 +2034,60 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 		support_required_cantilever_count += 1
 		var support_records := _cantilever_support_records(upper, geometry, grid)
 		if support_records.is_empty():
+			measured_support_conflict_count += 1
+			measured_support_conflict_kinds[&"missing_support_course"] = int(
+				measured_support_conflict_kinds.get(
+					&"missing_support_course", 0)) + 1
 			continue
 		var related_room_ids := {
 			upper.stable_id: true,
 			(candidate.lower as WarrenRoomStamp).stable_id: true,
 		}
-		var already_reserved_features := existing_features.duplicate()
-		already_reserved_features.append_array(out)
-		var support_analysis := _outcrop_support_analysis(support_records,
-			related_room_ids, buildings, already_reserved_features, program,
-			world_seed)
-		var support_conflict := StringName(support_analysis.conflict)
-		if not support_conflict.is_empty():
-			# The deep diagonal is preferred when there is open space beneath it,
-			# but a neighboring brace course is still real structure. Replace only
-			# the colliding course with the reviewed shallow bracket and re-run the
-			# complete measured-envelope transaction; never drop the support.
-			var shallow_records := _shallow_cantilever_support_records(
-				support_records)
-			var shallow_analysis := _outcrop_support_analysis(shallow_records,
-				related_room_ids, buildings, already_reserved_features, program,
-				world_seed)
-			if StringName(shallow_analysis.conflict).is_empty():
-				support_records = shallow_records
-				support_analysis = shallow_analysis
-				support_conflict = &""
-		if not support_conflict.is_empty():
+		# Supports are mandatory structure. Choose them as one town-wide measured
+		# transaction instead of greedily freezing the first diagonal course: a
+		# later neighboring outcrop may need that same volume and may only become
+		# solvable when the earlier course uses its reviewed shallow bracket.
+		var support_options := _cantilever_support_options(support_records,
+			related_room_ids, buildings, existing_features, program, world_seed)
+		if support_options.is_empty():
+			var failed_analysis := _outcrop_support_analysis(support_records,
+				related_room_ids, buildings, existing_features, program, world_seed)
+			var support_conflict := StringName(failed_analysis.conflict)
+			if support_conflict.is_empty():
+				support_conflict = &"support_configuration"
 			measured_support_conflict_count += 1
 			measured_support_conflict_kinds[support_conflict] = int(
 				measured_support_conflict_kinds.get(support_conflict, 0)) + 1
 			continue
+		var support_key := String(upper.stable_id)
+		support_entries.append({"key": support_key,
+			"candidate": candidate, "options": support_options})
+	var assignment_state := {"visited_node_count": 0,
+		"peak_assigned_count": 0}
+	var support_assignments := _assign_cantilever_supports(support_entries,
+		assignment_state)
+	if support_assignments.size() != support_entries.size():
+		var unresolved_assignment_count := support_entries.size()
+		measured_support_conflict_count += unresolved_assignment_count
+		measured_support_conflict_kinds[&"feature.room_outcropping"] = int(
+			measured_support_conflict_kinds.get(
+				&"feature.room_outcropping", 0)) + unresolved_assignment_count
+	else:
+		support_options_by_upper = support_assignments
+	for candidate: Dictionary in candidates:
+		if not bool((candidate.cantilever_geometry as Dictionary).valid):
+			continue
+		var building := candidate.building as WarrenBuildingVolume
+		var upper := candidate.upper as WarrenRoomStamp
+		var geometry := candidate.cantilever_geometry as Dictionary
+		if _cantilever_is_directly_borne(upper, geometry, grid):
+			continue
+		var support_key := String(upper.stable_id)
+		if not support_options_by_upper.has(support_key):
+			continue
+		var support_option := support_options_by_upper[support_key] as Dictionary
+		var support_records := support_option.records as Array[Dictionary]
+		var support_analysis := support_option.analysis as Dictionary
 		var feature_id := StringName("spatial.feature.outcrop.%02d" % out.size())
 		var tx := grid.begin_transaction(feature_id)
 		if not tx.reserve(upper.private_cells,
@@ -2082,8 +2128,8 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 						support_analysis.neighbor_room_ids,
 					"outcrop_diagonal_support_course_count": support_records.filter(
 						func(record: Dictionary) -> bool:
-							return StringName(record.recipe_id) \
-								== &"outcrop.support.diagonal.2").size(),
+							return String(record.recipe_id).begins_with(
+								"outcrop.support.diagonal.")).size(),
 					"outcrop_geometry_rejection": StringName(geometry.rejection),
 				}) or not feature.seal(grid, supports):
 			last_failure = "room outcropping seal failed: %s" % \
@@ -2110,13 +2156,162 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 			measured_support_conflict_kinds,
 		"directly_borne_integrated_cantilever_count":
 			directly_borne_cantilever_count,
+		"directly_borne_irregular_projection_count":
+			directly_borne_irregular_projection_count,
+		"unsupported_irregular_projection_count":
+			unsupported_irregular_projection_count,
+		"unsupported_irregular_projection_details":
+			unsupported_irregular_projection_details,
 		"support_required_integrated_cantilever_count":
 			support_required_cantilever_count,
 		"unresolved_integrated_cantilever_count":
 			support_required_cantilever_count \
 			- out.size(),
+		"cantilever_support_assignment_node_count": int(
+			assignment_state.visited_node_count),
+		"cantilever_support_assignment_peak_count": int(
+			assignment_state.peak_assigned_count),
 	}
 	return out
+
+
+static func _cantilever_support_options(records: Array[Dictionary],
+		related_room_ids: Dictionary, buildings: Array[WarrenBuildingVolume],
+		existing_features: Array[WarrenFeatureReservation],
+		program: SettlementFabricProgram, world_seed: int) -> Array[Dictionary]:
+	## Each diagonal course has one authored shallow alternative. Enumerating
+	## per-course choices matters: replacing an entire facade at once can move a
+	## collision from one end of a room to the other and falsely reject a sound
+	## mixed support course.
+	var diagonal_indices: Array[int] = []
+	for index in records.size():
+		if String(records[index].recipe_id).begins_with(
+				"outcrop.support.diagonal."):
+			diagonal_indices.append(index)
+	var option_count := 1 << diagonal_indices.size()
+	var out: Array[Dictionary] = []
+	for mask in option_count:
+		var option_records: Array[Dictionary] = []
+		for source: Dictionary in records:
+			option_records.append(source.duplicate(true))
+		for bit in diagonal_indices.size():
+			if mask & (1 << bit):
+				var source_recipe := StringName(
+					option_records[diagonal_indices[bit]].recipe_id)
+				option_records[diagonal_indices[bit]]["recipe_id"] = \
+					&"outcrop.support.bracketed.1" \
+					if source_recipe == &"outcrop.support.diagonal.1" \
+					else &"outcrop.support.bracketed.2"
+		var analysis := _outcrop_support_analysis(option_records,
+			related_room_ids, buildings, existing_features, program, world_seed)
+		if not StringName(analysis.conflict).is_empty():
+			continue
+		var bounds := _cantilever_support_bounds(option_records, program)
+		if bounds.size() != option_records.size():
+			continue
+		out.append({"records": option_records, "analysis": analysis,
+			"bounds": bounds,
+			"diagonal_count": option_records.filter(
+				func(record: Dictionary) -> bool:
+					return String(record.recipe_id).begins_with(
+						"outcrop.support.diagonal.")).size(),
+			"tie": mask})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.diagonal_count) != int(b.diagonal_count):
+			return int(a.diagonal_count) > int(b.diagonal_count)
+		return int(a.tie) < int(b.tie))
+	return out
+
+
+static func _cantilever_support_bounds(records: Array[Dictionary],
+		program: SettlementFabricProgram) -> Array[AABB]:
+	var out: Array[AABB] = []
+	if program == null:
+		return out
+	for record: Dictionary in records:
+		var recipe := program.recipe(StringName(record.recipe_id))
+		if recipe == null or not recipe.has_tag(&"cantilever_support"):
+			return [] as Array[AABB]
+		out.append(FabricRecipe.lattice_transform(record.origin as Vector3i,
+			int(record.yaw_quarters)) * recipe.local_clearance_bounds)
+	return out
+
+
+static func _assign_cantilever_supports(entries: Array[Dictionary],
+		state: Dictionary) -> Dictionary:
+	var ordered := entries.duplicate(true)
+	ordered.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var a_options := (a.options as Array).size()
+		var b_options := (b.options as Array).size()
+		if a_options != b_options:
+			return a_options < b_options
+		return String(a.key) < String(b.key))
+	var assignments: Dictionary = {}
+	var claimed_supports: Array[Dictionary] = []
+	if _assign_cantilever_supports_recursive(ordered, 0, claimed_supports,
+			assignments, state):
+		return assignments
+	return {}
+
+
+static func _assign_cantilever_supports_recursive(entries: Array,
+		position: int, claimed_supports: Array[Dictionary], assignments: Dictionary,
+		state: Dictionary) -> bool:
+	state["visited_node_count"] = int(state.visited_node_count) + 1
+	state["peak_assigned_count"] = maxi(int(state.peak_assigned_count), position)
+	if int(state.visited_node_count) > MAX_CANTILEVER_SUPPORT_ASSIGNMENT_NODES:
+		return false
+	if position >= entries.size():
+		return true
+	var entry := entries[position] as Dictionary
+	for option_value: Variant in entry.options as Array:
+		var option := option_value as Dictionary
+		var overlaps := false
+		var option_bounds: Array[AABB] = []
+		option_bounds.assign(option.bounds as Array)
+		var option_records: Array[Dictionary] = []
+		option_records.assign(option.get("records", []) as Array)
+		for bounds_index in option_bounds.size():
+			var bounds := option_bounds[bounds_index]
+			var record := option_records[bounds_index] as Dictionary \
+				if bounds_index < option_records.size() else {}
+			for claimed: Dictionary in claimed_supports:
+				if SettlementFabricPlan._aabb_overlaps_volume(bounds,
+						claimed.bounds as AABB) \
+						and not _cantilever_supports_share_frame(record,
+							claimed.record as Dictionary):
+					overlaps = true
+					break
+			if overlaps:
+				break
+		if overlaps:
+			continue
+		var old_support_count := claimed_supports.size()
+		for bounds_index in option_bounds.size():
+			claimed_supports.append({"bounds": option_bounds[bounds_index],
+				"record": option_records[bounds_index] as Dictionary \
+					if bounds_index < option_records.size() else {}})
+		assignments[String(entry.key)] = option
+		if _assign_cantilever_supports_recursive(entries, position + 1,
+				claimed_supports, assignments, state):
+			return true
+		assignments.erase(String(entry.key))
+		claimed_supports.resize(old_support_count)
+	return false
+
+
+static func _cantilever_supports_share_frame(left: Dictionary,
+		right: Dictionary) -> bool:
+	## Cantilever courses are authored pieces of one town-wide timber frame. Their
+	## conservative AABBs may overlap at shared posts, consecutive lifts, or a
+	## perpendicular braced joint; the fabric compiler records those intersections
+	## as explicit joinery seams. Feature and inhabited-room envelopes were already
+	## checked before this global assignment and remain hard conflicts.
+	if left.is_empty() or right.is_empty():
+		return false
+	return String(left.get("recipe_id", "")).begins_with(
+		"outcrop.support.") and String(right.get("recipe_id", "")).begins_with(
+			"outcrop.support.")
 
 
 static func _shallow_cantilever_support_records(
@@ -2202,8 +2397,17 @@ static func _cantilever_is_directly_borne(upper: WarrenRoomStamp,
 		return false
 	var extension: Array[Vector2i] = []
 	extension.assign(geometry.get("extension_columns", []) as Array)
-	if extension.is_empty():
+	return _projection_columns_are_directly_borne(upper, extension, grid)
+
+
+static func _projection_columns_are_directly_borne(upper: WarrenRoomStamp,
+		extension: Array[Vector2i], grid: WarrenSpatialGrid) -> bool:
+	# An empty extension means the upper floorplate is a setback wholly inside
+	# the lower one. It is fully borne even when its authored origin/yaw changed.
+	if upper == null or grid == null:
 		return false
+	if extension.is_empty():
+		return true
 	for column: Vector2i in extension:
 		var below := Vector3i(column.x, upper.lattice_origin.y - 1, column.y)
 		if grid.use_at(below) not in [WarrenSpatialGrid.Use.PRIVATE_VOLUME,
@@ -2232,7 +2436,20 @@ static func _cantilever_support_records(upper: WarrenRoomStamp,
 	var span_direction := Vector2i(span_direction_3d.x, span_direction_3d.z)
 	var attachment: Array[Vector2i] = []
 	attachment.assign(geometry.get("attachment_columns", []) as Array)
-	if attachment.size() < 2 or attachment.size() % 2 != 0:
+	if attachment.size() == 1:
+		# A one-column corner jetty still receives the native two-brace course:
+		# the second brace lands on the adjacent borne floor column instead of
+		# inventing a scaled one-off support asset.
+		var bearing_columns: Dictionary = {}
+		for bearing_value: Variant in geometry.get("bearing_columns", []) as Array:
+			bearing_columns[bearing_value as Vector2i] = true
+		var anchor := attachment[0]
+		for sign_value in [-1, 1]:
+			var neighbor := anchor + span_direction * int(sign_value)
+			if bearing_columns.has(neighbor):
+				attachment.append(neighbor)
+				break
+	if attachment.size() < 2:
 		return out
 	attachment.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return a.x * span_direction.x + a.y * span_direction.y \
@@ -2242,7 +2459,10 @@ static func _cantilever_support_records(upper: WarrenRoomStamp,
 			return [] as Array[Dictionary]
 	for index in range(0, attachment.size(), 2):
 		var column := attachment[index]
-		var course_columns: Array[Vector2i] = [column, column + span_direction]
+		var course_size := mini(2, attachment.size() - index)
+		var course_columns: Array[Vector2i] = [column]
+		if course_size == 2:
+			course_columns.append(column + span_direction)
 		# A neighboring lower room may bear only this 3 m slice of a longer
 		# outcropping. Omit that brace course while retaining brackets beneath the
 		# genuinely open slices; otherwise the full-width support recipe intersects
@@ -2250,10 +2470,10 @@ static func _cantilever_support_records(upper: WarrenRoomStamp,
 		if _cantilever_course_is_directly_borne(grid, course_columns, direction,
 				upper.lattice_origin.y, int(geometry.depth_cells)):
 			continue
-		var recipe_id := &"outcrop.support.diagonal.2" \
+		var recipe_id := StringName("outcrop.support.diagonal.%d" % course_size) \
 			if _diagonal_cantilever_sweep_is_clear(grid, course_columns,
 				direction, upper.lattice_origin.y) \
-			else &"outcrop.support.bracketed.2"
+			else StringName("outcrop.support.bracketed.%d" % course_size)
 		out.append({
 			"recipe_id": recipe_id,
 			"origin": Vector3i(column.x, upper.lattice_origin.y, column.y),
@@ -2315,11 +2535,13 @@ static func _room_cantilever_geometry(lower: WarrenRoomStamp,
 	var lower_columns := _room_columns(lower)
 	var upper_columns := _room_columns(upper)
 	var extension: Dictionary = {}
+	var bearing_columns: Dictionary = {}
 	var bearing := 0
 	for column_value: Variant in upper_columns.keys():
 		var column := column_value as Vector2i
 		if lower_columns.has(column):
 			bearing += 1
+			bearing_columns[column] = true
 		else:
 			extension[column] = true
 	if upper_columns.size() < 4 or extension.is_empty():
@@ -2364,7 +2586,7 @@ static func _room_cantilever_geometry(lower: WarrenRoomStamp,
 		var inward := column - direction
 		if lower_columns.has(inward):
 			attachment[inward] = true
-	if attachment.size() < 2:
+	if attachment.is_empty():
 		return _cantilever_rejection(extension, bearing,
 			upper_columns.size(), &"attachment_too_narrow", direction, depth,
 			attachment.size())
@@ -2380,6 +2602,7 @@ static func _room_cantilever_geometry(lower: WarrenRoomStamp,
 		"depth_cells": depth,
 		"attachment_span_cells": attachment.size(),
 		"attachment_columns": _sorted_columns(attachment),
+		"bearing_columns": _sorted_columns(bearing_columns),
 		"extension_columns": _sorted_columns(extension),
 		"extension_column_count": extension.size(),
 		"bearing_column_count": bearing,
@@ -2397,6 +2620,7 @@ static func _cantilever_rejection(extension: Dictionary, bearing: int,
 		"direction": direction,
 		"depth_cells": depth,
 		"attachment_span_cells": attachment_span,
+		"extension_columns": _sorted_columns(extension),
 		"extension_column_count": extension.size(),
 		"bearing_column_count": bearing,
 		"bearing_ratio": float(bearing) / float(upper_count) \

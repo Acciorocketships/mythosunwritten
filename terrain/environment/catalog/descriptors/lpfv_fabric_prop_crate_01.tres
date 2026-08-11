@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://dc3oamtsjx5ci"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_w1ng5"]
+
+[resource]
+script = ExtResource("1_w1ng5")
+id = &"lpfv.fabric.prop.crate.01"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_crate_01.tres"
+tags = Array[StringName]([&"crate", &"fabric_dressing", &"prop", &"village"])
+measured_aabb = AABB(-0.37558615, -0.0056343367, -0.3756361, 0.7511723, 0.74772817, 0.75127226)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.crate.01"
