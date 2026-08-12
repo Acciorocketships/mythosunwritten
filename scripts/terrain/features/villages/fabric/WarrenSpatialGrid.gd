@@ -327,11 +327,16 @@ func _validate_faces(records: Array[Dictionary]) -> bool:
 		var existing := _face_claims.get(key, {}) as Dictionary
 		if not existing.is_empty() and (int(existing.kind) != kind \
 				or StringName(existing.owner_id) != owner_id):
-			return _reject("face claim conflict at %s" % key)
+			return _reject(("face claim conflict at %s: existing kind=%d " \
+				+ "owner=%s, proposed kind=%d owner=%s") % [key,
+				int(existing.kind), StringName(existing.owner_id), kind, owner_id])
 		var staged_record := staged.get(key, {}) as Dictionary
 		if not staged_record.is_empty() and (int(staged_record.kind) != kind \
 				or StringName(staged_record.owner_id) != owner_id):
-			return _reject("face claim conflict inside transaction at %s" % key)
+			return _reject(("face claim conflict inside transaction at %s: " \
+				+ "first kind=%d owner=%s, proposed kind=%d owner=%s") % [key,
+				int(staged_record.kind), StringName(staged_record.owner_id), kind,
+				owner_id])
 		staged[key] = {"kind": kind, "owner_id": owner_id}
 	return true
 

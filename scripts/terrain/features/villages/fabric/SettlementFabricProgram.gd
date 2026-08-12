@@ -197,6 +197,11 @@ const COVERED_MARKET_CANOPIES: Array[StringName] = [
 	&"sfm.stall.teal.008",
 	&"sfm.stall.neutral.009",
 	&"sfm.stall.butcher.001",
+	# This is a complete 4.24 x 3.03 m framed awning, not a shallow facade
+	# decoration. It fits the bazaar's measured 6 x 3 m structural envelope and
+	# keeps the exact public aisle clear; putting it on a 1.5 m balcony would
+	# project most of the asset into the street below.
+	ROOF_TERRACE_AWNING,
 	&"sfm.stall.butcher.003",
 ]
 const COVERED_MARKET_TABLE := &"sfm.table.fishmonger.001"
@@ -449,6 +454,18 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_flat_roof_garden_recipe(&"roof.flat.long.garden",
 			Vector3i(-2, 0, -3), Vector3i(4, 1, 6), &"long_building",
 			TERRACE_PLANT_TALL, modules),
+		_flat_roof_garden_recipe(&"roof.flat.tower.garden.rich",
+			Vector3i(-1, 0, -1), Vector3i(2, 1, 2), &"compact_tower",
+			TERRACE_PLANT_LOW, modules, true),
+		_flat_roof_garden_recipe(&"roof.flat.slim.garden.rich",
+			Vector3i(-1, 0, -2), Vector3i(2, 1, 4), &"slim_building",
+			TERRACE_PLANT_MID, modules, true),
+		_flat_roof_garden_recipe(&"roof.flat.square.garden.rich",
+			Vector3i(-2, 0, -2), Vector3i(4, 1, 4), &"square_building",
+			TERRACE_PLANT_BROAD, modules, true),
+		_flat_roof_garden_recipe(&"roof.flat.long.garden.rich",
+			Vector3i(-2, 0, -3), Vector3i(4, 1, 6), &"long_building",
+			TERRACE_PLANT_TALL, modules, true),
 		_setback_cap_recipe(&"roof.setback.cap.1", 1, modules),
 		_setback_cap_recipe(&"roof.setback.cap.2", 2, modules),
 		_setback_cap_recipe(&"roof.setback.cap.4", 4, modules),
@@ -456,6 +473,30 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_setback_garden_recipe(&"roof.setback.garden.2", 2, modules),
 		_setback_garden_recipe(&"roof.setback.garden.4", 4, modules),
 		_setback_garden_recipe(&"roof.setback.garden.6", 6, modules),
+		_setback_lean_roof_recipe(&"roof.setback.lean.blue.2.negative", 2,
+			-1, ROOF_BLUE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.blue.2.positive", 2,
+			1, ROOF_BLUE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.orange.2.negative", 2,
+			-1, ROOF_ORANGE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.orange.2.positive", 2,
+			1, ROOF_ORANGE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.blue.4.negative", 4,
+			-1, ROOF_BLUE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.blue.4.positive", 4,
+			1, ROOF_BLUE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.orange.4.negative", 4,
+			-1, ROOF_ORANGE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.orange.4.positive", 4,
+			1, ROOF_ORANGE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.blue.6.negative", 6,
+			-1, ROOF_BLUE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.blue.6.positive", 6,
+			1, ROOF_BLUE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.orange.6.negative", 6,
+			-1, ROOF_ORANGE),
+		_setback_lean_roof_recipe(&"roof.setback.lean.orange.6.positive", 6,
+			1, ROOF_ORANGE),
 		_setback_terrace_recipe(&"roof.setback.terrace.1.left", 1, -1,
 			modules),
 		_setback_terrace_recipe(&"roof.setback.terrace.1.right", 1, 1,
@@ -1679,7 +1720,7 @@ static func _flat_roof_terrace_recipe(recipe_id: StringName,
 static func _flat_roof_garden_recipe(recipe_id: StringName,
 		minimum: Vector3i, size: Vector3i, family: StringName,
 		plant_asset: StringName,
-		modules: FabricModuleProgram) -> FabricRecipe:
+		modules: FabricModuleProgram, rich: bool = false) -> FabricRecipe:
 	## A full terrace rail can be blocked by a higher neighbor on every exposed
 	## side. That geometric pressure must not turn the surviving house into a bare
 	## plank cube. This conservative accent binds to the separately sealed cap and
@@ -1695,6 +1736,26 @@ static func _flat_roof_garden_recipe(recipe_id: StringName,
 		_pose(centre + Vector3.UP * 0.04, 0.0))
 	recipe_value.add_placement(&"garden.plant", plant_asset,
 		_pose(centre + Vector3(0.18, 0.04, -0.14), 0.0))
+	if rich:
+		# These are private rooftop service/garden structures, not walkable
+		# balconies. A chimney gives narrow roofs a vertical stone landmark; broad
+		# roofs get the complete framed awning and a second planting cluster. Their
+		# exact envelopes are optional and the compiler falls back to the minimal
+		# garden when a dense neighboring room occupies the same space.
+		if mini(size.x, size.z) >= 4:
+			recipe_value.add_placement(&"garden.awning", ROOF_TERRACE_AWNING,
+				_pose(centre + Vector3(-0.35, 0.04, 0.0),
+					0.0 if size.z >= size.x else PI * 0.5))
+			recipe_value.add_placement(&"garden.planter.second", ROOF_PLANTER,
+				_pose(centre + Vector3(1.65, 0.04, 1.65), 0.0))
+			recipe_value.add_placement(&"garden.plant.second", ROOF_FLOWER_PALE,
+				_pose(centre + Vector3(1.82, 0.08, 1.50), 0.0))
+			recipe_value.role_tags.append(&"roof_garden_awning")
+		else:
+			recipe_value.add_placement(&"garden.chimney", TERRACE_CHIMNEY,
+				_pose(centre + Vector3(0.42, 0.04, -0.48), 0.0))
+			recipe_value.role_tags.append(&"chimney")
+		recipe_value.role_tags.append(&"rich_roof_garden")
 	# Placed at the same origin as the cap. A local y=1 downward socket meets the
 	# cap's local y=0 upward socket without moving the visible authored assets.
 	recipe_value.add_socket(&"bearing.bottom",
@@ -1929,6 +1990,36 @@ static func _setback_garden_recipe(recipe_id: StringName, length_cells: int,
 	recipe_value.add_placement(&"garden.flowers", flower_asset,
 		_pose(Vector3(run_centre - 0.42, 0.04, 0.18), 0.0))
 	recipe_value.role_tags.append(&"roof_planter")
+	return recipe_value
+
+
+static func _setback_lean_roof_recipe(recipe_id: StringName,
+		length_cells: int, wall_side: int,
+		roof_asset: StringName) -> FabricRecipe:
+	## Close a one-cell room setback as a real wall-bound lean-to. Each 3 m bay is
+	## one native SFV half-gable; it overlaps the continuing upper wall only at
+	## its authored ridge seam and sheds outward across the exposed lower shoulder.
+	## The compiler binds that overlap to the exact upper room as a visual seam.
+	assert(length_cells in [2, 4, 6] and wall_side in [-1, 1])
+	assert(roof_asset == ROOF_BLUE or roof_asset == ROOF_ORANGE)
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"roof", &"thin_roof_face", &"setback_lean_to", &"occupied_mass",
+		&"pitched_roof",
+	], 1)
+	var yaw := PI * 0.5 * float(wall_side)
+	# The logical row is centred at local Z=0 and its wall seam lies at +/-0.75m.
+	# The measured half-gable reaches 1.6217227m from its pivot to either bound;
+	# this origin puts the ridge on that seam and the tiles on the exposed side.
+	var cross_centre := -float(wall_side) * (1.6217227 - CELL * 0.5)
+	for run_index in length_cells / 2:
+		var run_centre_x := (float(run_index) * 2.0 + 0.5) * CELL
+		recipe_value.add_placement(StringName("slope.%02d" % run_index),
+			roof_asset, _pose(Vector3(run_centre_x, 0.0, cross_centre), yaw))
+	for x in length_cells:
+		recipe_value.solid_cells.append(Vector3i(x, 0, 0))
+		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
+	recipe_value.add_socket(&"bearing.bottom",
+		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
 	return recipe_value
 
 
@@ -2870,7 +2961,7 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		var planter_x := -0.78 if back_socket_x == 0 else -0.18
 		recipe_value.add_placement(&"balcony.planter", ROOF_PLANTER,
 			_pose(Vector3(planter_x, 0.04, 0.26), 0.0))
-		var balcony_flower := TERRACE_PLANT_MID if theme == &"blue" \
+		var balcony_flower := ROOF_FLOWER_TALL if theme == &"blue" \
 			else TERRACE_PLANT_BROAD if theme == &"amber" \
 			else ROOF_FLOWER_PALE
 		recipe_value.add_placement(&"balcony.flowers", balcony_flower,
@@ -2942,7 +3033,7 @@ static func _wrap_balcony_recipe(recipe_id: StringName, theme: StringName,
 	var planter_x := float(corner_x) * CELL
 	recipe_value.add_placement(&"balcony.planter", ROOF_PLANTER,
 		_pose(Vector3(planter_x, 0.04, -0.32), 0.0))
-	var balcony_flower := TERRACE_PLANT_MID if theme == &"blue" \
+	var balcony_flower := ROOF_FLOWER_TALL if theme == &"blue" \
 		else TERRACE_PLANT_BROAD if theme == &"amber" else ROOF_FLOWER_PALE
 	recipe_value.add_placement(&"balcony.flowers", balcony_flower,
 		_pose(Vector3(planter_x, 0.04, -0.40), 0.0))
@@ -3137,6 +3228,8 @@ static func _covered_market_recipe(recipe_id: StringName,
 			_pose(barrel_origin + Vector3.UP * 1.04, 0.0))
 		recipe_value.add_placement(&"stocked.plant.west", TERRACE_PLANT_MID,
 			_pose(Vector3(-2.55, 0.02, -0.48), PI))
+		recipe_value.add_placement(&"stocked.flower.west", ROOF_FLOWER_SMALL,
+			_pose(Vector3(-2.50, 0.02, -0.43), PI))
 		# Small complete props turn the opposite post bay into an actual merchant's
 		# work corner. Their measured footprints stay outside the two-cell aisle;
 		# the crate carries its bag, while the bucket sits beside the counter.
@@ -3147,6 +3240,8 @@ static func _covered_market_recipe(recipe_id: StringName,
 			_pose(crate_origin + Vector3.UP * 0.76, -0.12))
 		recipe_value.add_placement(&"stocked.bucket", TERRACE_BUCKET,
 			_pose(Vector3(-2.30, 0.02, 0.58), PI * 0.25))
+		recipe_value.add_placement(&"stocked.flower.east", ROOF_FLOWER_PALE,
+			_pose(Vector3(2.38, 0.02, 0.42), 0.0))
 		recipe_value.role_tags.append(&"market_garden")
 		recipe_value.role_tags.append(&"market_lantern")
 		recipe_value.role_tags.append(&"market_work_corner")

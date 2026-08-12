@@ -358,22 +358,28 @@ static func _required_roof_clearance(source: WarrenSpatialPlan,
 						* flat_recipe.local_clearance_bounds,
 					"allowed_room_ids": allowed_room_ids})
 			continue
-		for row_value: Variant in _cap_rows(face_cells):
-			var row := row_value as Array[Vector3i]
-			var cap := _cap_placement(source.grid, row, room,
-				source.world_seed)
-			if cap.is_empty():
-				continue
-			var plain_cap_id := StringName("roof.setback.cap.%d" % row.size())
-			var cap_recipe := program.recipe(plain_cap_id)
-			if cap_recipe == null:
-				continue
-			var cap_transform := FabricRecipe.lattice_transform(
-				cap.origin as Vector3i, int(cap.yaw_quarters))
-			out.append({"owner_room_id": room.stable_id,
-				"recipe_id": plain_cap_id,
-				"bounds": cap_transform * cap_recipe.local_clearance_bounds,
-				"allowed_room_ids": allowed_room_ids})
+		for piece_value: Variant in _cap_pieces(face_cells):
+			var piece := piece_value as Dictionary
+			var reserve_rows: Array[Array] = []
+			if StringName(piece.kind) == &"stamp":
+				reserve_rows = _terminal_cap_rows(
+					piece.cells as Array[Vector3i])
+			else:
+				reserve_rows.append(piece.cells as Array[Vector3i])
+			for row: Array[Vector3i] in reserve_rows:
+				var cap := _cap_placement(source.grid, row, room,
+					source.world_seed)
+				if cap.is_empty():
+					continue
+				var cap_recipe := program.recipe(StringName(cap.recipe_id))
+				if cap_recipe == null:
+					continue
+				var cap_transform := FabricRecipe.lattice_transform(
+					cap.origin as Vector3i, int(cap.yaw_quarters))
+				out.append({"owner_room_id": room.stable_id,
+					"recipe_id": StringName(cap.recipe_id),
+					"bounds": cap_transform * cap_recipe.local_clearance_bounds,
+					"allowed_room_ids": allowed_room_ids})
 	return out
 
 
@@ -1359,7 +1365,9 @@ static func _constructed_feature_count(source: WarrenSpatialPlan) -> int:
 static func compile_roof_units(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram,
 		room_units: Array[FabricUnit],
-		fixed_feature_units: Array[FabricUnit] = []) -> Array[FabricUnit]:
+		fixed_feature_units: Array[FabricUnit] = [],
+		collision_flattened_rooms: Dictionary = {},
+		collision_flattened_component_count: int = 0) -> Array[FabricUnit]:
 	last_failure = ""
 	last_audit = {}
 	if source == null or not source.is_sealed() or program == null \
@@ -1408,6 +1416,19 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		return [] as Array[FabricUnit]
 	var roof_proposal_by_room := roof_neighborhood.get(
 		"proposal_by_room", {}) as Dictionary
+	# A late measured-clearance failure is allowed to flatten a complete joined
+	# campaign, but never just the room that happened to be visited first.  Apply
+	# the retry decision only after topology has exposed the connected campaign so
+	# every ridge/valley member changes treatment together.
+	for room_id_value: Variant in collision_flattened_rooms.keys():
+		var flattened_room_id := StringName(room_id_value)
+		if not roof_proposal_by_room.has(flattened_room_id):
+			continue
+		var flattened_proposal := (roof_proposal_by_room[
+			flattened_room_id] as Dictionary).duplicate(true)
+		flattened_proposal["flat_roof"] = true
+		flattened_proposal["roof_junction_rules"] = [] as Array[Dictionary]
+		roof_proposal_by_room[flattened_room_id] = flattened_proposal
 	var room_ids: Array[StringName] = []
 	room_ids.assign(roof_faces_by_room.keys())
 	room_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -1423,6 +1444,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var flat_count := 0
 	var flat_terrace_count := 0
 	var flat_garden_count := 0
+	var rich_flat_garden_count := 0
+	var rich_flat_garden_fallback_count := 0
 	var flat_garden_rejections: Array[Dictionary] = []
 	var flat_roof_recipe_counts: Dictionary = {}
 	var lived_in_flat_terrace_count := 0
@@ -1430,6 +1453,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var furnished_flat_terrace_count := 0
 	var lamped_flat_terrace_count := 0
 	var cap_count := 0
+	var lean_to_cap_count := 0
+	var macro_gable_cap_count := 0
+	var macro_gable_fallback_count := 0
 	var terrace_cap_count := 0
 	var garden_cap_count := 0
 	var terrace_cap_fallback_count := 0
@@ -1448,6 +1474,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var alternate_pitched_roof_count := 0
 	var quarter_turned_square_roof_count := 0
 	var pending_roof_trims: Array[Dictionary] = []
+	var atomic_neighborhood_roof_count := 0
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
 		exposed_roof_room_kind_counts[room.kind] = int(
@@ -1462,9 +1489,13 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			unit_by_private_cell, parent_unit.stable_id)
 		var selected := false
 		var attempt_failures := PackedStringArray()
+		var neighborhood_proposal := roof_proposal_by_room.get(room_id,
+			{}) as Dictionary
+		var requires_atomic_neighborhood := not neighborhood_proposal.is_empty() \
+			and not bool(neighborhood_proposal.get("flat_roof", false)) \
+			and not (neighborhood_proposal.get(
+				"roof_junction_rules", []) as Array).is_empty()
 		if full and not _touches_public_air(source.grid, face_cells):
-			var neighborhood_proposal := roof_proposal_by_room.get(room_id,
-				{}) as Dictionary
 			var pitched_candidates := _full_roof_candidates(room,
 				source.world_seed, neighborhood_proposal)
 			var pitched_rejections: Array[Dictionary] = []
@@ -1490,6 +1521,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				if probe.add_unit(pitched):
 					out.append(pitched)
 					if bool(candidate.get("uses_roof_neighborhood", false)):
+						atomic_neighborhood_roof_count += 1
 						for trim_value: Variant in candidate.get(
 								"trim_components", []):
 							pending_roof_trims.append({
@@ -1526,42 +1558,23 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						"attempts": pitched_rejections})
 		if selected:
 			continue
-		if full and not _touches_public_air(source.grid, face_cells):
-			for flat_terrace_id: StringName in _flat_roof_terrace_candidates(
-					room, source.world_seed):
-				var terrace := _full_roof_unit(room_id, room, parent_unit,
-					flat_terrace_id, _roof_seams_for_candidate(room_seams,
-						parent_unit.stable_id, out, fixed_feature_units))
-				var terrace_recipe := program.recipe(flat_terrace_id)
-				if terrace_recipe == null:
-					last_failure = "missing flat-roof terrace recipe %s" \
-						% flat_terrace_id
-					return [] as Array[FabricUnit]
-				if _unit_touches_public_air(source.grid, terrace,
-						terrace_recipe):
-					attempt_failures.append(
-						"flat terrace %s: exact roof volume enters public air" \
-						% flat_terrace_id)
-					continue
-				if probe.add_unit(terrace):
-					out.append(terrace)
-					realized_face_count += face_cells.size()
-					flat_count += 1
-					flat_terrace_count += 1
-					lived_in_flat_terrace_count += int(String(flat_terrace_id) \
-						.ends_with(".lived"))
-					awning_flat_terrace_count += int(terrace_recipe.has_tag(
-						&"roof_terrace_awning"))
-					furnished_flat_terrace_count += int(terrace_recipe.has_tag(
-						&"furnished_roof_terrace"))
-					lamped_flat_terrace_count += int(terrace_recipe.has_tag(
-						&"terrace_lamp"))
-					selected = true
-					break
-				attempt_failures.append("flat terrace %s: %s" % [
-					flat_terrace_id, probe.last_rejection])
-		if selected:
-			continue
+		# A joined roof is one atomic neighborhood choice. Falling back one member
+		# at a time produced the capture defect where a pitched eave stopped against
+		# an unrelated flat plate or a differently aligned gable. Reject this whole
+		# construction and let the bounded selector choose another composition.
+		if requires_atomic_neighborhood:
+			var campaign := _roof_neighborhood_component(
+				roof_proposal_by_room, room_id)
+			var retry_flattened := collision_flattened_rooms.duplicate(true)
+			for campaign_room_id: StringName in campaign:
+				retry_flattened[campaign_room_id] = true
+			if retry_flattened.size() == collision_flattened_rooms.size():
+				last_failure = "atomic roof neighborhood for %s rejected after its complete campaign was flattened: %s" % [
+					room_id, "; ".join(attempt_failures)]
+				return [] as Array[FabricUnit]
+			return compile_roof_units(source, program, room_units,
+				fixed_feature_units, retry_flattened,
+				collision_flattened_component_count + 1)
 		if full and not _touches_public_air(source.grid, face_cells):
 			var flat_id := _flat_roof_recipe_id(room)
 			var flat := _full_roof_unit(room_id, room, parent_unit, flat_id,
@@ -1577,21 +1590,29 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					"flat: exact roof volume enters public air")
 			else:
 				if probe.add_unit(flat):
-					var garden_id := StringName("%s.garden" % flat_id)
-					var garden_recipe := program.recipe(garden_id)
-					if garden_recipe == null:
-						last_failure = "missing flat-roof garden accent %s" \
-							% garden_id
-						return [] as Array[FabricUnit]
-					var garden := _flat_roof_garden_unit(room_id, flat,
-						garden_id)
-					if not probe.add_unit(garden):
-						var garden_rejection := probe.last_rejection
+					var base_garden_id := StringName("%s.garden" % flat_id)
+					var garden_ids: Array[StringName] = [StringName(
+						"%s.rich" % base_garden_id), base_garden_id]
+					var garden: FabricUnit
+					var garden_selected := false
+					for garden_index in garden_ids.size():
+						var garden_id := garden_ids[garden_index]
+						if program.recipe(garden_id) == null:
+							continue
+						garden = _flat_roof_garden_unit(room_id, flat,
+							garden_id)
+						if probe.add_unit(garden):
+							garden_selected = true
+							rich_flat_garden_count += int(garden_index == 0)
+							rich_flat_garden_fallback_count += int(
+								garden_index > 0)
+							break
 						flat_garden_rejections.append({"room_id": room_id,
 							"recipe_id": garden_id,
-							"rejection": garden_rejection})
-						last_failure = "flat roof %s has no collision-free central accent: %s" \
-							% [room_id, garden_rejection]
+							"rejection": probe.last_rejection})
+					if not garden_selected:
+						last_failure = "flat roof %s has no collision-free central accent" \
+							% room_id
 						return [] as Array[FabricUnit]
 					out.append(flat)
 					out.append(garden)
@@ -1603,22 +1624,49 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					continue
 				rejected_flat_count += 1
 				attempt_failures.append("flat: %s" % probe.last_rejection)
-		var rows := _cap_rows(face_cells)
-		if rows.is_empty():
+		var pieces := _cap_pieces(face_cells)
+		if pieces.is_empty():
 			last_failure = "no finite setback cap partition fits roof region for %s (%s; %s)" \
 				% [room_id, "; ".join(attempt_failures),
 					_cap_failure_diagnostic(source.grid, face_cells)]
 			return [] as Array[FabricUnit]
-		for row_index in rows.size():
-			var row := rows[row_index] as Array[Vector3i]
-			var cap := _cap_placement(source.grid, row, room,
-				source.world_seed)
+		for row_index in pieces.size():
+			var piece := pieces[row_index] as Dictionary
+			var macro_piece := StringName(piece.kind) == &"stamp"
+			var row := piece.cells as Array[Vector3i]
+			var cap := _setback_gable_placement(piece, room,
+				source.world_seed) \
+				if macro_piece \
+				else _cap_placement(source.grid, row, room, source.world_seed)
 			if cap.is_empty():
 				last_failure = "no native setback cap fits row %d for %s" % [
 					row_index, room_id]
 				return [] as Array[FabricUnit]
-			var seams := _roof_seams_for_candidate(room_seams,
+			if not macro_piece:
+				var lean_to := _setback_lean_to_placement(source,
+					row, room, cap, unit_by_room)
+				if not lean_to.is_empty():
+					cap = lean_to
+			# A setback roof is not a license to intersect every room that happens
+			# to share a party wall with its parent.  That broad exception admitted
+			# little gables deep into the valley between two continuing upper rooms.
+			# Multiple pieces over this one parent and physically attached feature
+			# units remain explicit seams; a lean-to adds its one measured wall seam
+			# below.  An ordinary macro gable that clips a neighbor must therefore
+			# take the plain or flat fallback.
+			var seams := _roof_seams_for_candidate([] as Array[StringName],
 				parent_unit.stable_id, out, fixed_feature_units)
+			var upper_room_unit_id := StringName(cap.get(
+				"upper_room_unit_id", &""))
+			if not upper_room_unit_id.is_empty() \
+					and not seams.has(upper_room_unit_id):
+				seams.append(upper_room_unit_id)
+			for upper_id_value: Variant in cap.get(
+					"upper_room_unit_ids", []) as Array:
+				var upper_id := StringName(upper_id_value)
+				if not upper_id.is_empty() and not seams.has(upper_id):
+					seams.append(upper_id)
+				seams = _unique_sorted_names(seams)
 			var cap_unit := _cap_unit(room_id, row_index, room, parent_unit,
 				cap, seams)
 			var cap_recipe := program.recipe(StringName(cap.recipe_id))
@@ -1628,8 +1676,38 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				var terrace_rejection := probe.last_rejection
 				if cap_enters_public_air:
 					terrace_rejection = "exact setback roof volume enters public air"
-				if String(cap.recipe_id).contains(".terrace.") \
-						or String(cap.recipe_id).contains(".garden."):
+				if macro_piece:
+					var fallback_ids: Array[StringName] = []
+					var plain_id := _plain_pitched_recipe_id(
+						StringName(cap.recipe_id))
+					if plain_id != StringName(cap.recipe_id):
+						fallback_ids.append(plain_id)
+					fallback_ids.append(_flat_roof_recipe_id_for_kind(
+						StringName(piece.room_kind)))
+					var fallback_failures := PackedStringArray([
+						terrace_rejection])
+					var fallback_selected := false
+					for fallback_id: StringName in fallback_ids:
+						cap["recipe_id"] = fallback_id
+						cap_unit = _cap_unit(room_id, row_index, room,
+							parent_unit, cap, seams)
+						var fallback_recipe := program.recipe(fallback_id)
+						if fallback_recipe != null \
+								and not _unit_touches_public_air(source.grid,
+									cap_unit, fallback_recipe) \
+								and probe.add_unit(cap_unit):
+							fallback_selected = true
+							break
+						fallback_failures.append("%s: %s" % [fallback_id,
+							probe.last_rejection])
+					if not fallback_selected:
+						last_failure = "macro setback roof %d for %s and its complete fallbacks were rejected: %s" % [
+							row_index, room_id, "; ".join(fallback_failures)]
+						return [] as Array[FabricUnit]
+					macro_gable_fallback_count += 1
+				elif String(cap.recipe_id).contains(".terrace.") \
+						or String(cap.recipe_id).contains(".garden.") \
+						or String(cap.recipe_id).contains(".lean."):
 					var rejected_garden := String(cap.recipe_id).contains(
 						".garden.")
 					cap["recipe_id"] = StringName("roof.setback.cap.%d" \
@@ -1651,6 +1729,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			out.append(cap_unit)
 			realized_face_count += row.size()
 			cap_count += 1
+			lean_to_cap_count += int(String(cap_unit.recipe_id) \
+				.begins_with("roof.setback.lean."))
+			macro_gable_cap_count += int(macro_piece and not String(
+				cap_unit.recipe_id).begins_with("roof.flat."))
 			terrace_cap_count += int(String(cap_unit.recipe_id) \
 				.contains(".terrace."))
 			garden_cap_count += int(String(cap_unit.recipe_id) \
@@ -1663,6 +1745,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			roof_unit_by_room[StringName(roof_text.trim_prefix(
 				"spatial.roof."))] = roof_unit
 	var roof_trim_count := 0
+	var rejected_roof_trim_count := 0
+	var rejected_roof_trim_details: Array[Dictionary] = []
 	for pending: Dictionary in pending_roof_trims:
 		var room_id := StringName(pending.room_id)
 		var parent_roof := roof_unit_by_room.get(room_id) as FabricUnit
@@ -1697,9 +1781,14 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				StringName("bearing.junction.eave.%s" % side_name))] \
 				as Array[Dictionary], &"", seams)
 		if not probe.add_unit(trim):
-			last_failure = "classified roof trim %s was rejected: %s" % [
-				trim.stable_id, probe.last_rejection]
-			return [] as Array[FabricUnit]
+			# The two complete roof shells remain watertight when optional flashing
+			# cannot fit a third intersecting setback roof. Omitting that trim is a
+			# coherent atomic fallback; never flatten just one side of the campaign.
+			rejected_roof_trim_count += 1
+			if rejected_roof_trim_details.size() < 16:
+				rejected_roof_trim_details.append({"trim_id": trim.stable_id,
+					"rejection": probe.last_rejection})
+			continue
 		out.append(trim)
 		roof_trim_count += 1
 	if realized_face_count != source_face_count:
@@ -1715,6 +1804,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"flat_roof_count": flat_count,
 		"flat_roof_terrace_count": flat_terrace_count,
 		"flat_roof_garden_count": flat_garden_count,
+		"rich_flat_roof_garden_count": rich_flat_garden_count,
+		"rich_flat_roof_garden_fallback_count":
+			rich_flat_garden_fallback_count,
 		"flat_roof_garden_rejections": flat_garden_rejections,
 		"flat_roof_recipe_counts": flat_roof_recipe_counts,
 		"lived_in_flat_roof_terrace_count": lived_in_flat_terrace_count,
@@ -1724,6 +1816,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"bare_flat_roof_count": flat_count - flat_terrace_count \
 			- flat_garden_count,
 		"setback_cap_unit_count": cap_count,
+		"setback_lean_to_unit_count": lean_to_cap_count,
+		"setback_macro_gable_unit_count": macro_gable_cap_count,
+		"setback_macro_gable_fallback_count": macro_gable_fallback_count,
 		"setback_terrace_unit_count": terrace_cap_count,
 		"setback_garden_unit_count": garden_cap_count,
 		"setback_dressed_unit_count": terrace_cap_count + garden_cap_count,
@@ -1754,7 +1849,40 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"roof_neighborhood_flattened_room_count": int(roof_neighborhood.get(
 			"flattened_room_count", 0)),
 		"roof_junction_trim_unit_count": roof_trim_count,
+		"rejected_optional_roof_trim_count": rejected_roof_trim_count,
+		"rejected_optional_roof_trim_details": rejected_roof_trim_details,
+		"atomic_neighborhood_roof_count": atomic_neighborhood_roof_count,
+		"broken_atomic_roof_neighborhood_count": 0,
+		"collision_flattened_roof_room_count": collision_flattened_rooms.size(),
+		"collision_flattened_roof_component_count": \
+			collision_flattened_component_count,
 	}
+	return out
+
+
+static func _roof_neighborhood_component(proposal_by_room: Dictionary,
+		start_room_id: StringName) -> Array[StringName]:
+	## Return the complete joined campaign around one measured collision.  The
+	## graph includes stepped joins as well as equal-height continuations: a flat
+	## interruption at either kind of authored seam is the visual defect this
+	## retry exists to prevent.
+	var out: Array[StringName] = []
+	var pending: Array[StringName] = [start_room_id]
+	var seen: Dictionary = {start_room_id: true}
+	while not pending.is_empty():
+		var room_id: StringName = pending.pop_back()
+		out.append(room_id)
+		var proposal := proposal_by_room.get(room_id, {}) as Dictionary
+		for rule: Dictionary in proposal.get(
+				"roof_junction_rules", []) as Array:
+			var neighbor_id := StringName(rule.get("neighbor_id", &""))
+			if neighbor_id == &"" or seen.has(neighbor_id) \
+					or not proposal_by_room.has(neighbor_id):
+				continue
+			seen[neighbor_id] = true
+			pending.append(neighbor_id)
+	out.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
 	return out
 
 
@@ -1790,6 +1918,113 @@ static func _cap_unit(room_id: StringName, row_index: int,
 		[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
 			SettlementFabricProgram._bearing_cell_socket_id(&"top",
 				parent_local.x, parent_local.z))] as Array[Dictionary], &"", seams)
+
+
+static func _setback_lean_to_placement(source: WarrenSpatialPlan,
+		face_cells: Array[Vector3i], room: WarrenRoomStamp,
+		cap: Dictionary, unit_by_room: Dictionary) -> Dictionary:
+	## A lean-to is legal only where one complete long edge of the cap meets one
+	## continuing upper room. This is a measured wall/roof seam, not decoration
+	## inferred from proximity. One-cell caps have no 3 m repeat and remain plain.
+	if source == null or face_cells.size() not in [2, 4, 6] \
+			or cap.is_empty():
+		return {}
+	var origin := cap.origin as Vector3i
+	var yaw := int(cap.yaw_quarters)
+	var owner_by_side: Dictionary = {}
+	for side in [-1, 1]:
+		var side_owners: Dictionary = {}
+		var complete := true
+		for local_x in face_cells.size():
+			var row_cell := FabricRecipe.transform_cell(
+				Vector3i(local_x, 0, 0), origin, yaw)
+			var side_direction := FabricRecipe.transform_direction(
+				Vector3i(0, 0, side), yaw)
+			var upper_neighbor := row_cell + Vector3i.UP + side_direction
+			if source.grid.use_at(upper_neighbor) \
+					!= WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+				complete = false
+				break
+			var owner := source.grid.owner_name_at(upper_neighbor)
+			if owner.is_empty():
+				complete = false
+				break
+			side_owners[owner] = true
+		if complete and side_owners.size() == 1:
+			owner_by_side[side] = StringName(side_owners.keys()[0])
+	if owner_by_side.size() != 1:
+		return {}
+	var wall_side := int(owner_by_side.keys()[0])
+	var upper_room_unit_id := &""
+	var upper_building_id := StringName(owner_by_side[wall_side])
+	for building: WarrenBuildingVolume in source.buildings:
+		if building.stable_id != upper_building_id:
+			continue
+		for upper_room: WarrenRoomStamp in building.room_records:
+			if not unit_by_room.has(upper_room.stable_id):
+				continue
+			for upper_cell: Vector3i in upper_room.private_cells:
+				if source.grid.owner_name_at(upper_cell) == upper_building_id:
+					upper_room_unit_id = (unit_by_room[
+						upper_room.stable_id] as FabricUnit).stable_id
+					break
+			if not upper_room_unit_id.is_empty():
+				break
+		break
+	if upper_room_unit_id.is_empty():
+		return {}
+	var theme := _architectural_district_theme(room.lattice_origin,
+		source.world_seed)
+	var family := "orange" if theme == &"orange" else "blue"
+	return {
+		"recipe_id": StringName("roof.setback.lean.%s.%d.%s" % [family,
+			face_cells.size(), "negative" if wall_side < 0 else "positive"]),
+		"origin": origin,
+		"yaw_quarters": yaw,
+		"anchor_face": cap.anchor_face,
+		"upper_room_unit_id": upper_room_unit_id,
+	}
+
+
+static func _setback_gable_placement(piece: Dictionary,
+		room: WarrenRoomStamp, world_seed: int) -> Dictionary:
+	## A rectangular island inside a compound shoulder is a small complete house
+	## crown, not a collection of deck tiles. Its exact stamp origin/yaw chooses
+	## one of the ordinary measured pitched-roof recipes. It does not declare
+	## neighboring upper rooms as visual seams: if the measured eave clips one,
+	## the common transaction must select the plain or complete flat fallback.
+	if StringName(piece.get("kind", &"")) != &"stamp":
+		return {}
+	var kind := StringName(piece.get("room_kind", &""))
+	var origin := piece.get("origin", Vector3i.ZERO) as Vector3i
+	var yaw := int(piece.get("yaw_quarters", 0))
+	var cells := piece.get("cells", []) as Array[Vector3i]
+	if cells.is_empty() or kind not in WarrenRoomStamp.KINDS:
+		return {}
+	origin.y = cells[0].y + 1
+	var theme := _architectural_district_theme(origin, world_seed)
+	var family := "orange" if theme == &"orange" else "blue"
+	var detail := posmod(Helper._mix64(world_seed ^ String(room.stable_id).hash()
+		^ origin.x * 73856093 ^ origin.y * 83492791 ^ origin.z * 19349663), 4)
+	var recipe_id: StringName
+	match kind:
+		&"tower":
+			recipe_id = StringName("roof.tower.%s.dormer.%s" % [family,
+				"left" if detail % 2 == 0 else "right"])
+		&"slim":
+			recipe_id = StringName("roof.slim.%s.dormer.%s" % [family,
+				"left" if detail % 2 == 0 else "right"])
+		&"building":
+			recipe_id = StringName("roof.square.%s.dormer.%s" % [family,
+				"left" if detail % 2 == 0 else "right"])
+		&"long":
+			recipe_id = StringName("roof.long.%s.dormer.%s%s" % [family,
+				"pair." if detail >= 2 else "",
+				"left" if detail % 2 == 0 else "right"])
+		_:
+			return {}
+	return {"recipe_id": recipe_id, "origin": origin,
+		"yaw_quarters": yaw, "anchor_face": origin - Vector3i.UP}
 
 
 static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
@@ -1982,6 +2217,15 @@ static func _spatial_roof_neighborhood(source: WarrenSpatialPlan,
 			var neighbor_id := StringName(seam.neighbor_id)
 			if String(owner_id) >= String(neighbor_id):
 				continue
+			# The generic table contains experimental valley flashing for isolated
+			# module proofs, but full-town captures show that the current authored
+			# roof shells still pile their eaves at these crossings. Until a true
+			# valley/cross-gable mesh exists, spatial production only promises the
+			# continuous-ridge and stepped-wall joins that visually close.
+			if not _spatial_roof_join_supported(int(seam.kind)):
+				flattened[owner_id] = true
+				flattened[neighbor_id] = true
+				continue
 			var pair: Array[Dictionary] = [
 				(by_id[owner_id] as Dictionary).duplicate(true),
 				(by_id[neighbor_id] as Dictionary).duplicate(true),
@@ -2079,6 +2323,14 @@ static func _spatial_roof_neighborhood(source: WarrenSpatialPlan,
 	}
 
 
+static func _spatial_roof_join_supported(kind: int) -> bool:
+	return kind in [
+		FabricRoofTopologyPlan.JunctionKind.RIDGE_CONTINUATION,
+		FabricRoofTopologyPlan.JunctionKind.STEPPED_EAVE_WALL,
+		FabricRoofTopologyPlan.JunctionKind.STEPPED_GABLE_WALL,
+	]
+
+
 static func _full_roof_candidates(room: WarrenRoomStamp,
 		world_seed: int, neighborhood_proposal: Dictionary = {}) \
 		-> Array[Dictionary]:
@@ -2112,36 +2364,27 @@ static func _full_roof_candidates(room: WarrenRoomStamp,
 				trim["neighbor_room_ids"] = neighbors
 				trim_components.append(trim)
 		if not roof_component.is_empty():
-			return [{
+			var joined_candidates: Array[Dictionary] = [{
 				"recipe_id": StringName(roof_component.recipe_id),
 				"yaw_offset": posmod(int(roof_component.yaw_quarters) \
 					- room.yaw_quarters, 4),
 				"uses_roof_neighborhood": true,
 				"trim_components": trim_components,
 			}] as Array[Dictionary]
+			# Dormers and chimneys are optional projections, never the authority for
+			# the ridge/valley campaign. If that detail clips a nearby higher room,
+			# try the matching plain pitched shell with the same yaw and junction
+			# modules before rejecting the entire atomic neighborhood.
+			var detailed_id := StringName(roof_component.recipe_id)
+			var plain_joined_id := _plain_pitched_recipe_id(detailed_id)
+			if plain_joined_id != detailed_id:
+				var plain_candidate := joined_candidates[0].duplicate(true)
+				plain_candidate["recipe_id"] = plain_joined_id
+				joined_candidates.append(plain_candidate)
+			return joined_candidates
 	var preferred := _full_roof_recipe_id(room, world_seed)
 	var ids: Array[StringName] = [preferred]
-	var preferred_text := String(preferred)
-	var plain := preferred
-	if preferred_text.begins_with("roof.long.") \
-			and preferred_text.contains(".dormer."):
-		plain = StringName(preferred_text.get_slice(".dormer.", 0))
-	elif preferred_text.begins_with("roof.slim.chimney."):
-		plain = StringName(preferred_text.replace("roof.slim.chimney.",
-			"roof.slim."))
-	elif preferred_text.begins_with("roof.tower.chimney."):
-		plain = StringName(preferred_text.replace("roof.tower.chimney.",
-			"roof.tower."))
-	elif preferred_text.begins_with("roof.slim.short."):
-		plain = StringName(preferred_text.replace("roof.slim.short.",
-			"roof.slim."))
-	elif preferred_text.begins_with("roof.tower.short."):
-		plain = StringName(preferred_text.replace("roof.tower.short.",
-			"roof.tower."))
-	elif preferred_text.begins_with("roof.square.") \
-			and preferred_text.contains(".dormer."):
-		var theme := "orange" if preferred_text.contains(".orange.") else "blue"
-		plain = StringName("roof.square.%s.plain" % theme)
+	var plain := _plain_pitched_recipe_id(preferred)
 	if not ids.has(plain):
 		ids.append(plain)
 	if room.kind == &"building":
@@ -2160,6 +2403,28 @@ static func _full_roof_candidates(room: WarrenRoomStamp,
 		for recipe_id: StringName in ids:
 			out.append({"recipe_id": recipe_id, "yaw_offset": 1})
 	return out
+
+
+static func _plain_pitched_recipe_id(recipe_id: StringName) -> StringName:
+	var id := String(recipe_id)
+	if id.begins_with("roof.long.") and id.contains(".dormer."):
+		return StringName(id.get_slice(".dormer.", 0))
+	if id.begins_with("roof.slim.chimney."):
+		return StringName(id.replace("roof.slim.chimney.", "roof.slim."))
+	if id.begins_with("roof.tower.chimney."):
+		return StringName(id.replace("roof.tower.chimney.", "roof.tower."))
+	if id.begins_with("roof.slim.short."):
+		return StringName(id.replace("roof.slim.short.", "roof.slim."))
+	if id.begins_with("roof.tower.short."):
+		return StringName(id.replace("roof.tower.short.", "roof.tower."))
+	if id.begins_with("roof.slim.") and id.contains(".dormer."):
+		return StringName(id.get_slice(".dormer.", 0))
+	if id.begins_with("roof.tower.") and id.contains(".dormer."):
+		return StringName(id.get_slice(".dormer.", 0))
+	if id.begins_with("roof.square.") and id.contains(".dormer."):
+		var theme := "orange" if id.contains(".orange.") else "blue"
+		return StringName("roof.square.%s.plain" % theme)
+	return recipe_id
 
 
 static func _room_recipe_facade_family(recipe_id: StringName) -> StringName:
@@ -2181,11 +2446,15 @@ static func _roof_recipe_family(recipe_id: StringName) -> StringName:
 
 
 static func _flat_roof_recipe_id(room: WarrenRoomStamp) -> StringName:
-	if room.kind == &"tower":
+	return _flat_roof_recipe_id_for_kind(room.kind)
+
+
+static func _flat_roof_recipe_id_for_kind(kind: StringName) -> StringName:
+	if kind == &"tower":
 		return &"roof.flat.tower"
-	if room.kind == &"slim":
+	if kind == &"slim":
 		return &"roof.flat.slim"
-	if room.kind == &"long":
+	if kind == &"long":
 		return &"roof.flat.long"
 	return &"roof.flat.square"
 
@@ -2271,40 +2540,11 @@ static func _cap_placement(grid: WarrenSpatialGrid,
 				continue
 			var recipe_id := StringName("roof.setback.cap.%d" \
 				% face_cells.size())
-			# Exact setbacks should usually read as occupied roof terraces and
-			# balcony-like ledges, not a stack of bare plank shelves. Keep a small
-			# deterministic plain-cap minority so the skyline does not acquire a
-			# railing at every level.
-			if posmod(Helper._mix64(world_seed \
-					^ String(room.stable_id).hash() \
-					^ anchor_face.x * 73856093 ^ anchor_face.y * 83492791 \
-					^ anchor_face.z * 19349663), 5) != 0:
-				var exposed_sides: Array[int] = []
-				for rail_side: int in [-1, 1]:
-					var local_side := Vector3i(0, 0, rail_side)
-					var world_side := FabricRecipe.transform_direction(local_side,
-						yaw)
-					var exposed := true
-					for face: Vector3i in face_cells:
-						if grid.use_at(face + world_side) in [
-								WarrenSpatialGrid.Use.PRIVATE_VOLUME,
-								WarrenSpatialGrid.Use.STRUCTURAL_VOLUME]:
-							exposed = false
-							break
-					if exposed:
-						exposed_sides.append(rail_side)
-				if not exposed_sides.is_empty():
-					var selected_side := exposed_sides[posmod(Helper._mix64(
-						world_seed ^ anchor_face.x * 31 ^ anchor_face.z * 47),
-						exposed_sides.size())]
-					recipe_id = StringName("roof.setback.terrace.%d.%s" % [
-						face_cells.size(), "left" if selected_side < 0 \
-						else "right"])
-			# Enclosed two-cell-or-longer shoulders cannot receive honest edge
-			# rails, but a measured roof garden makes them read as deliberately
-			# inhabited terraces instead of raw solver slabs. Keep a deterministic
-			# plain minority, and let the exact visual-envelope transaction reject
-			# any garden whose planter would meet a neighboring projection.
+			# Exposed shoulders remain roofs, not circulation. The former railing
+			# treatment silently promoted every collision-free shelf to a balcony even
+			# though no door, stair, or path reached it. A measured central garden can
+			# enrich the cap without making a false accessibility claim; the separate
+			# balcony/court solvers own all genuine exterior occupied floors.
 			if String(recipe_id).begins_with("roof.setback.cap.") \
 					and face_cells.size() >= 2 \
 					and posmod(Helper._mix64(world_seed \
@@ -2317,15 +2557,63 @@ static func _cap_placement(grid: WarrenSpatialGrid,
 	return {}
 
 
-static func _cap_rows(face_cells: Array[Vector3i]) \
-		-> Array[Array]:
-	## Losslessly partition an arbitrary exposed roof plate into fixed native
-	## 1.5 m strips. Long rows are preferred, but the one-cell recipe makes the
-	## operation total: no protected air or upper room can force a hidden slab.
+static func _cap_pieces(face_cells: Array[Vector3i]) -> Array[Dictionary]:
+	## Losslessly partition an arbitrary exposed plate into the largest complete
+	## room-shaped roofs first, then finite native strips. This is the compiler's
+	## macroscopic replacement pass: a 2x2 or 2x4 cluster becomes a recognisable
+	## gabled house crown rather than four/eight visible voxel caps.
 	var remaining: Dictionary = {}
 	for cell: Vector3i in face_cells:
 		remaining[cell] = true
-	var out: Array[Array] = []
+	var out: Array[Dictionary] = []
+	var y := face_cells[0].y if not face_cells.is_empty() else 0
+	# Exactly one largest recognizable crown may own an irregular shoulder. A
+	# second sibling gable over the same parent is not a larger house; it is the
+	# modular roof pile seen in close review, with intersecting valleys hidden by
+	# the parent's broad seam exception. The planner's admitted compound grammar
+	# already requires the residual to be terminal rows, so consuming one stamp
+	# here makes the construction pass match that proof.
+	var found_macro := false
+	for kind: StringName in [&"long", &"building", &"slim", &"tower"]:
+		if found_macro:
+			break
+		var ordered: Array[Vector3i] = []
+		ordered.assign(remaining.keys())
+		ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			return a.z < b.z if a.z != b.z else a.x < b.x)
+		for anchor: Vector3i in ordered:
+			for yaw in 4:
+				# Search a small origin halo around the first occupied cell;
+				# exact set containment is the authority, not this anchor phase.
+				for x in range(anchor.x - 3, anchor.x + 4):
+					for z in range(anchor.z - 3, anchor.z + 4):
+						var origin := Vector3i(x, y, z)
+						var stamp := WarrenRoomStamp.expected_private_cells(
+							kind, origin, yaw)
+						var top: Array[Vector3i] = []
+						var fits := true
+						for cell: Vector3i in stamp:
+							if cell.y != y:
+								continue
+							top.append(cell)
+							if not remaining.has(cell):
+								fits = false
+								break
+						if not fits or top.is_empty():
+							continue
+						out.append({"kind": &"stamp", "room_kind": kind,
+							"origin": origin, "yaw_quarters": yaw,
+							"cells": top})
+						for cell: Vector3i in top:
+							remaining.erase(cell)
+						found_macro = true
+						break
+					if found_macro:
+						break
+				if found_macro:
+					break
+			if found_macro:
+				break
 	while not remaining.is_empty():
 		var ordered: Array[Vector3i] = []
 		ordered.assign(remaining.keys())
@@ -2343,6 +2631,58 @@ static func _cap_rows(face_cells: Array[Vector3i]) \
 				var fits := true
 				for offset: int in length:
 					var cell: Vector3i = start + direction * offset
+					if not remaining.has(cell):
+						fits = false
+						break
+					candidate.append(cell)
+				if fits:
+					chosen = candidate
+					break
+			if not chosen.is_empty():
+				break
+		if chosen.is_empty():
+			return [] as Array[Dictionary]
+		out.append({"kind": &"row", "cells": chosen})
+		for cell: Vector3i in chosen:
+			remaining.erase(cell)
+	return out
+
+
+static func _cap_rows(face_cells: Array[Vector3i]) -> Array[Array]:
+	## Compatibility helper for focused tests and diagnostics that only need the
+	## terminal strip partition. Production uses `_cap_pieces` above.
+	var out: Array[Array] = []
+	for piece: Dictionary in _cap_pieces(face_cells):
+		out.append(piece.cells as Array[Vector3i])
+	return out
+
+
+static func _terminal_cap_rows(face_cells: Array[Vector3i]) \
+		-> Array[Array]:
+	## Strip-only form used for conservative pre-reservation and as the conceptual
+	## final fallback for a macro roof. It never recursively extracts another
+	## gable, so callers can reason about a finite native closure.
+	var remaining: Dictionary = {}
+	for cell: Vector3i in face_cells:
+		remaining[cell] = true
+	var out: Array[Array] = []
+	while not remaining.is_empty():
+		var ordered: Array[Vector3i] = []
+		ordered.assign(remaining.keys())
+		ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			if a.y != b.y:
+				return a.y < b.y
+			if a.z != b.z:
+				return a.z < b.z
+			return a.x < b.x)
+		var start := ordered[0] as Vector3i
+		var chosen: Array[Vector3i] = []
+		for length: int in [6, 4, 2, 1]:
+			for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK]:
+				var candidate: Array[Vector3i] = []
+				var fits := true
+				for offset: int in length:
+					var cell := start + direction * offset
 					if not remaining.has(cell):
 						fits = false
 						break

@@ -117,7 +117,7 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 			return WarrenVillageScaleProfile.new(COMPACT, 10,
 				Vector2i(14, 17), Vector2i(29, 35), Vector2i(7, 9),
 				8, 34, Vector2i(18, 110), 12, 3, Vector2i(1, 1),
-				Vector2i(4, 4), Vector2i(4, 4), Vector2i(0, 0), false)
+				Vector2i(2, 3), Vector2i(4, 4), Vector2i(0, 0), false)
 		STANDARD:
 			return WarrenVillageScaleProfile.new(STANDARD, 11,
 				Vector2i(15, 18), Vector2i(29, 35), Vector2i(7, 9),
@@ -126,7 +126,7 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 		LARGE:
 			return WarrenVillageScaleProfile.new(LARGE, 12,
 				Vector2i(16, 18), Vector2i(30, 36), Vector2i(8, 10),
-				16, 64, Vector2i(50, 220), 24, 6, Vector2i(3, 4),
+				16, 64, Vector2i(50, 220), 24, 6, Vector2i(2, 3),
 				Vector2i(6, 8), Vector2i(6, 8), Vector2i(2, 2), true)
 		GRAND:
 			return WarrenVillageScaleProfile.new(GRAND, 14,

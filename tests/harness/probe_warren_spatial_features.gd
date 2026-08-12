@@ -67,7 +67,9 @@ func _init() -> void:
 	if "--recipe-bounds-only" in OS.get_cmdline_user_args():
 		for recipe: FabricRecipe in program.recipes():
 			if String(recipe.recipe_id).begins_with("room.") \
-					or String(recipe.recipe_id).begins_with("roof."):
+					or String(recipe.recipe_id).begins_with("roof.") \
+					or String(recipe.recipe_id).begins_with("balcony.") \
+					or String(recipe.recipe_id).begins_with("market.covered."):
 				print("RECIPE_BOUNDS ", recipe.recipe_id, " ",
 					recipe.local_clearance_bounds)
 		quit()

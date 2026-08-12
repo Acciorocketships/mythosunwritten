@@ -11,7 +11,9 @@ const ROOF_CLEARANCE_CELLS := 2
 const MAX_PARTITION_VARIANTS := WarrenSolidPartitioner.PARTITION_VARIANTS
 const MAX_LANDMARK_SET_ATTEMPTS := 12
 const RESIDUAL_OVERHEAD_ROUTE_CELL_SCORE := 50000
-const RESIDUAL_FRONTAGE_SIDE_SCORE := 6000
+const RESIDUAL_FRONTAGE_SIDE_SCORE := 15000
+const RESIDUAL_TERRAIN_ROOT_SCORE := 35000
+const RESIDUAL_MASSIF_EDGE_COLUMN_SCORE := 8000
 ## Screenshot-backed production gates. A town with every requested feature can
 ## still read as isolated facades around an open plaza; require the compiled
 ## exterior realm to keep most long views broken and a substantial fraction of
@@ -1086,6 +1088,10 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		return {}
 	protected_owners = _protected_owners_with_courtyard_bridge(
 		selected_market_landmark_owners, courtyard_bridge_candidate)
+	# These feature envelopes are fixed by the joint preflight above. Commit them
+	# before room composition so the exact solver searches the real residual 3D
+	# mass instead of a much larger proxy volume. `protected_owners` remains the
+	# lineage-level exception map, while the grid is the authoritative occupancy.
 	if not _reserve_market_preplan(grid, market_reservation):
 		last_failure = "covered-market reservation changed before joint commit: %s" \
 			% grid.last_rejection
@@ -1491,6 +1497,14 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		backfill.get("overhead_route_cell_count", 0))
 	composition_audit["residual_backfill_frontage_side_count"] = int(
 		backfill.get("frontage_side_count", 0))
+	composition_audit["residual_backfill_terrain_root_count"] = int(
+		backfill.get("terrain_root_count", 0))
+	composition_audit["residual_backfill_massif_edge_room_count"] = int(
+		backfill.get("massif_edge_room_count", 0))
+	composition_audit["residual_backfill_massif_edge_contact_count"] = int(
+		backfill.get("massif_edge_contact_count", 0))
+	composition_audit["residual_backfill_terrain_rooted_established_access_count"] = int(
+		backfill.get("terrain_rooted_established_access_count", 0))
 	room_count += int(backfill.get("building_count", 0))
 	if buildings.size() < MIN_BUILDINGS:
 		last_failure = "room partition formed only %d buildings" % buildings.size()
@@ -3506,6 +3520,7 @@ static func _market_backing_composition_survives(grid: WarrenSpatialGrid,
 		if not trial.has(cell_value):
 			trial[cell_value] = {}
 		(trial[cell_value] as Dictionary)[feature_id] = endpoint_allowance
+	_protect_market_public_air(trial, market, feature_id)
 	var parcel := proposal.parcel as WarrenBuildingParcel
 	var origin := proposal.origin as Vector3i
 	var storeys := int(proposal.storeys)
@@ -3535,7 +3550,25 @@ static func _protected_owners_with_market(protected_owners: Dictionary,
 		if not trial.has(cell_value):
 			trial[cell_value] = {}
 		(trial[cell_value] as Dictionary)[feature_id] = endpoint_allowance
+	_protect_market_public_air(trial, market, feature_id)
 	return trial
+
+
+static func _protect_market_public_air(protected_owners: Dictionary,
+		market: Dictionary, feature_id: StringName) -> void:
+	## The aisle floor is a logical surface; the occupied reservation is its full
+	## swept player volume. Existing route air is already blocked by the grid,
+	## but aisle extensions still read ALLOCATABLE during preflight. Protect both
+	## headroom bands here so the exact room solve sees the same undercroft void
+	## that `_reserve_market_preplan` later commits as PUBLIC_AIR.
+	for floor_value: Variant in (market.get("public_cells", {}) \
+			as Dictionary).keys():
+		var floor := floor_value as Vector3i
+		for y_offset in WarrenVolumePlan.HEADROOM_BANDS:
+			var air := floor + Vector3i.UP * y_offset
+			if not protected_owners.has(air):
+				protected_owners[air] = {}
+			(protected_owners[air] as Dictionary)[feature_id] = true
 
 
 static func _protected_owners_with_courtyard_bridge(
@@ -3715,8 +3748,7 @@ static func _court_candidate_preserves_exact_room_envelopes(
 			var detail := detail_value as Dictionary
 			var lineage_id := StringName(detail.get("lineage_id", &""))
 			if not lineage_id.is_empty() \
-					and int(annex_targets.get(lineage_id, 0)) \
-						< WarrenRoomCompositionPlanner.TALL_TOWER_ANNEXES \
+					and int(annex_targets.get(lineage_id, 0)) <= 0 \
 					and lineage_id not in failed_tall_tower_ids:
 				failed_tall_tower_ids.append(lineage_id)
 		if not failed_tall_tower_ids.is_empty():
@@ -6239,9 +6271,19 @@ static func _composition_offsets(grid: WarrenSpatialGrid,
 			continue
 		var previous := out[block - 1]
 		var chosen := Vector2i(2147483647, 2147483647)
+		# Start the 3D room grammar from a coherent structural column. The former
+		# one-cell lateral shift was only a provisional anti-tower heuristic, but it
+		# left a one-cell strip of every lower room exposed and forced the roof
+		# compiler to tile dozens of plank shoulders. WarrenRoomCompositionPlanner
+		# now owns macroscopic changes of shape, merges, cantilevers, and tower
+		# relief, so preserve the previous phase whenever it is genuinely available.
+		if _plate_fits(grid, base_plate, previous, origin_y,
+				start_storey, end_storey, protected_owners, parcel_id):
+			chosen = previous
 		var start := posmod(Helper._mix64(world_seed ^ parcel_hash \
 			^ block * 0x45d9f3b), directions.size())
-		for direction_offset in directions.size():
+		for direction_offset in directions.size() if chosen.x == 2147483647 \
+				else 0:
 			var candidate := previous + directions[
 				posmod(start + direction_offset, directions.size())]
 			if candidate.length_squared() > 4:
@@ -6253,9 +6295,6 @@ static func _composition_offsets(grid: WarrenSpatialGrid,
 		# A failed lateral proposal may keep its previous phase only when that
 		# exact volume is still allocatable.  The former unconditional fallback
 		# let two buildings claim the same residual-mass cells.
-		if chosen.x == 2147483647 and _plate_fits(grid, base_plate, previous,
-				origin_y, start_storey, end_storey, protected_owners, parcel_id):
-			chosen = previous
 		if chosen.x == 2147483647 and _plate_fits(grid, base_plate,
 				Vector2i.ZERO, origin_y, start_storey, end_storey,
 				protected_owners, parcel_id):
@@ -6410,6 +6449,10 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 	var kind_counts: Dictionary = {}
 	var added_count := 0
 	var added_cells := 0
+	var terrain_root_count := 0
+	var massif_edge_room_count := 0
+	var massif_edge_contact_count := 0
+	var terrain_rooted_established_access_count := 0
 	while added_count < maximum_buildings:
 		var best: Dictionary = {}
 		for origin: Vector3i in grid.cells_with_use(
@@ -6459,6 +6502,12 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 			if parent_room == null and not parent_building.room_records.is_empty():
 				parent_room = parent_building.room_records[0]
 		var terrain_bearing := bool(best.terrain_bearing)
+		terrain_root_count += int(terrain_bearing)
+		terrain_rooted_established_access_count += int(terrain_bearing \
+			and not bool(best.addressed))
+		var edge_contacts := int(best.massif_edge_contact_count)
+		massif_edge_room_count += int(edge_contacts > 0)
+		massif_edge_contact_count += edge_contacts
 		var addressed := bool(best.addressed)
 		var threshold_cell := best.threshold_cell as Vector3i \
 			if addressed else Vector3i(2147483647, 2147483647, 2147483647)
@@ -6520,6 +6569,11 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 		added_cells += cells.size()
 	return {"failed": false, "building_count": added_count,
 		"private_cell_count": added_cells, "kind_counts": kind_counts,
+		"terrain_root_count": terrain_root_count,
+		"massif_edge_room_count": massif_edge_room_count,
+		"massif_edge_contact_count": massif_edge_contact_count,
+		"terrain_rooted_established_access_count": \
+			terrain_rooted_established_access_count,
 		"overhead_route_cell_count": initial_uncovered_route_count \
 			- uncovered_route_floors.size(),
 		"frontage_side_count": initial_uncovered_frontage_count \
@@ -6589,6 +6643,7 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		if addressed else {}
 	var access_counts: Dictionary = {}
 	var access_cell_by_owner: Dictionary = {}
+	var established_access_counts: Dictionary = {}
 	for cell: Vector3i in cells:
 		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 				Vector3i.FORWARD, Vector3i.BACK]:
@@ -6598,10 +6653,10 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 				continue
 			access_counts[owner] = int(access_counts.get(owner, 0)) + 1
 			access_cell_by_owner[owner] = neighbor
+			if not String(owner).begins_with("spatial.residual."):
+				established_access_counts[owner] = int(
+					established_access_counts.get(owner, 0)) + 1
 	var access_parent_id := _largest_contact_owner(access_counts)
-	if not addressed and (access_parent_id.is_empty() \
-			or int(access_counts[access_parent_id]) < 2):
-		return {}
 	var terrain_contacts := 0
 	var support_counts: Dictionary = {}
 	var support_cell_by_owner: Dictionary = {}
@@ -6619,12 +6674,37 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		support_cell_by_owner[owner] = below
 	var required_bearing := maxi(1, ceili(float(footprint.size()) * 0.5))
 	var terrain_bearing := terrain_contacts >= required_bearing
+	# Grounded edge infill is allowed to taper the mountain by one complete
+	# building depth, but it may not bootstrap a chain of new ground houses away
+	# from the sealed town. Such chains produced the screenshot's thin spokes.
+	# A ground room must therefore address the public realm or share a real side
+	# interface with the established (non-residual) mass. Elevated residual rooms
+	# retain ordinary parent access so they can complete the inhabited mountain.
+	if not addressed:
+		if terrain_bearing:
+			access_parent_id = _largest_contact_owner(established_access_counts)
+			if access_parent_id.is_empty() \
+					or int(established_access_counts[access_parent_id]) < 2:
+				return {}
+		elif access_parent_id.is_empty() \
+				or int(access_counts[access_parent_id]) < 2:
+			return {}
 	var support_parent_id := _largest_contact_owner(support_counts)
 	if not terrain_bearing and (support_parent_id.is_empty() \
 			or int(support_counts[support_parent_id]) < required_bearing):
 		return {}
 	var support_parent_cell := Vector3i(2147483647, 2147483647, 2147483647) \
 		if terrain_bearing else support_cell_by_owner[support_parent_id] as Vector3i
+	var massif_edge_contact_count := 0
+	for column_value: Variant in footprint.keys():
+		var column := column_value as Vector2i
+		var macro := Vector2i(floori(float(column.x) / 2.0),
+			floori(float(column.y) / 2.0))
+		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+				Vector2i.UP, Vector2i.DOWN]:
+			if not massif.has_column(macro + direction):
+				massif_edge_contact_count += 1
+				break
 	var overhead_route_floor_set: Dictionary = {}
 	for cell: Vector3i in cells:
 		for floor_cell: Vector3i in route_floor_by_overhead_cell.get(cell,
@@ -6649,8 +6729,10 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		1000003)
 	var score := float(overhead_route_floors.size() \
 			* RESIDUAL_OVERHEAD_ROUTE_CELL_SCORE \
-		+ frontage_side_keys.size() * RESIDUAL_FRONTAGE_SIDE_SCORE \
-		+ int(access_counts.get(access_parent_id, 0)) * 1000 \
+			+ frontage_side_keys.size() * RESIDUAL_FRONTAGE_SIDE_SCORE \
+			+ int(terrain_bearing) * RESIDUAL_TERRAIN_ROOT_SCORE \
+			+ massif_edge_contact_count * RESIDUAL_MASSIF_EDGE_COLUMN_SCORE \
+			+ int(access_counts.get(access_parent_id, 0)) * 1000 \
 		+ threshold_candidates.size() * 500 \
 		+ maxi(terrain_contacts, int(support_counts.get(support_parent_id, 0))) \
 			* 320 + footprint.size() * 90 + origin.y * 18 \
@@ -6665,6 +6747,7 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		"access_parent_id": access_parent_id,
 		"support_parent_id": support_parent_id,
 		"support_parent_cell": support_parent_cell,
+		"massif_edge_contact_count": massif_edge_contact_count,
 		"overhead_route_floors": overhead_route_floors,
 		"frontage_side_keys": frontage_side_keys,
 		"score": score,

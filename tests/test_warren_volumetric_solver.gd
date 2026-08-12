@@ -372,6 +372,53 @@ func test_room_support_accepts_one_measured_corner_brace_but_not_floating_mass()
 		"the native two-brace course must widen from the borne neighbor")
 
 
+func test_wrap_balcony_requires_a_side_wall_contact() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i.ZERO, Vector3i(6, 6, 6))
+	var endpoint := Vector3i(1, 2, 2)
+	var return_contact := Vector3i(3, 2, 0)
+	var building_cells: Array[Vector3i] = [endpoint, return_contact]
+	var room := grid.begin_transaction(&"building.wrap")
+	assert_true(room.assign_use(building_cells,
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME, &"building.wrap"))
+	assert_true(room.commit(), room.last_rejection)
+	var body := {
+		Vector3i(1, 2, 1): true,
+		Vector3i(2, 2, 1): true,
+		Vector3i(2, 2, 0): true,
+	}
+	var contacts := WarrenSpatialFeatureSolver._balcony_return_contact_cells(
+		grid, body, &"building.wrap", endpoint, Vector3i.FORWARD, 2)
+	assert_eq(contacts, [return_contact] as Array[Vector3i],
+		"the L return must physically meet the owning side wall")
+	assert_true(WarrenSpatialFeatureSolver._balcony_return_contact_cells(
+		grid, body, &"another.building", endpoint, Vector3i.FORWARD, 2).is_empty(),
+		"a neighboring unrelated facade cannot fake a balcony return")
+	var straight_body := {endpoint + Vector3i.FORWARD: true}
+	assert_true(WarrenSpatialFeatureSolver._balcony_return_contact_cells(
+		grid, straight_body, &"building.wrap", endpoint,
+		Vector3i.FORWARD, 2).is_empty(),
+		"the doorway face alone must not qualify a straight shelf as a wrap")
+
+
+func test_only_macroscopic_or_lean_to_shoulders_are_roofable() -> void:
+	var compound := {
+		Vector2i(0, 0): true, Vector2i(1, 0): true,
+		Vector2i(0, 1): true, Vector2i(1, 1): true,
+		Vector2i(2, 0): true, Vector2i(3, 0): true,
+	}
+	assert_true(WarrenRoomCompositionPlanner._component_has_gabled_partition(
+		compound, 0),
+		"a complete 3 x 3 m crown with one native strip is a finite roof assembly")
+	var branching := {
+		Vector2i(0, 0): true, Vector2i(1, 0): true,
+		Vector2i(2, 0): true, Vector2i(1, -1): true,
+		Vector2i(1, 1): true, Vector2i(1, 2): true,
+	}
+	assert_false(WarrenRoomCompositionPlanner._component_has_gabled_partition(
+		branching, 0),
+		"a branching voxel shelf has no authored macroscopic roof vocabulary")
+
+
 func _unsealed_room_for_geometry(stable_id: StringName, kind: StringName,
 		origin: Vector3i) -> WarrenRoomStamp:
 	var room := WarrenRoomStamp.new(stable_id, &"source", kind, origin, 0,
@@ -505,6 +552,24 @@ func test_three_storey_narrow_lineage_requires_one_occupied_annex() -> void:
 	assert_eq(int(targets.get(&"narrow", 0)),
 		WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_THREE_STOREY_LINEAGE,
 		"a three-storey narrow house needs one real side-room composition")
+	assert_true(WarrenRoomCompositionPlanner \
+		._unresolved_overlong_tower_runs(audit).is_empty(),
+		"the one-annex three-storey contract must survive to exact construction")
+
+
+func test_market_protection_includes_the_full_public_aisle_headroom() -> void:
+	var floor := Vector3i(4, 2, -3)
+	var protected := WarrenVolumetricSolver._protected_owners_with_market({}, {
+		"feature_id": &"market",
+		"backing_parcel_id": &"backing",
+		"reserved_cells": {},
+		"visual_clearance_cells": {},
+		"public_cells": {floor: true},
+	})
+	for y_offset in WarrenVolumePlan.HEADROOM_BANDS:
+		var air := floor + Vector3i.UP * y_offset
+		assert_true((protected.get(air, {}) as Dictionary).has(&"market"),
+			"market aisle headroom must be protected during exact room preflight")
 
 
 func test_paired_registration_relief_repartitions_two_locked_upper_rooms() \
@@ -987,11 +1052,15 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		assert_true(String(balcony.construction_records[0].recipe_id) \
 			.begins_with("balcony."))
 		assert_eq(int(balcony.audit.balcony_usable_width_cells), 2)
-		assert_eq(int(balcony.audit.balcony_usable_depth_cells), 1)
+		assert_true(bool(balcony.audit.balcony_wraparound),
+			"one-door straight shelves are not circulation or destinations")
+		assert_gte(int(balcony.audit.balcony_return_contact_cell_count), 1,
+			"every balcony must turn back into an inhabited side wall")
+		assert_eq(int(balcony.audit.balcony_usable_depth_cells), 2)
 		assert_eq(int(balcony.audit.balcony_door_count), 1)
-		assert_eq(int(balcony.audit.balcony_guard_segment_count), 4)
+		assert_eq(int(balcony.audit.balcony_guard_segment_count), 6)
 		assert_eq(balcony.audit.balcony_support_kind, &"bracket_cantilever")
-		assert_eq(balcony.reserved_cells.size(), 4)
+		assert_eq(balcony.reserved_cells.size(), 6)
 		var owner_id := StringName(balcony.audit.balcony_building_id)
 		balcony_owners[owner_id] = true
 		var facade_key := String(balcony.audit.balcony_facade_key)

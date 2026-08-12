@@ -112,6 +112,8 @@ func _init() -> void:
 			Time.get_ticks_msec() - full_started, " failure=",
 			WarrenVolumetricSolver.last_failure.left(2000))
 		if spatial != null:
+			if args.find("--list-buildings") >= 0:
+				_print_buildings(spatial)
 			var fabric := WarrenSpatialFabricCompiler.solve(spatial, program)
 			print("FABRIC accepted=", fabric != null, " buildings=",
 				spatial.buildings.size(), " rooms=",
@@ -125,6 +127,31 @@ func _init() -> void:
 		quit(1)
 		return
 	quit(0 if not frontier.is_empty() else 1)
+
+
+static func _print_buildings(spatial: WarrenSpatialPlan) -> void:
+	var entries: Array[Dictionary] = []
+	for building: WarrenBuildingVolume in spatial.buildings:
+		var minimum := Vector3i(2147483647, 2147483647, 2147483647)
+		var maximum := Vector3i(-2147483648, -2147483648, -2147483648)
+		var terrain_rooted := false
+		for room: WarrenRoomStamp in building.room_records:
+			terrain_rooted = terrain_rooted or room.terrain_bearing
+			for cell: Vector3i in room.private_cells:
+				minimum = minimum.min(cell)
+				maximum = maximum.max(cell)
+		entries.append({"id": building.stable_id, "minimum": minimum,
+			"maximum": maximum, "terrain_rooted": terrain_rooted,
+			"room_count": building.room_records.size()})
+	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var ac := (a.minimum as Vector3i) + (a.maximum as Vector3i)
+		var bc := (b.minimum as Vector3i) + (b.maximum as Vector3i)
+		return ac.x < bc.x if ac.x != bc.x else ac.z < bc.z \
+			if ac.z != bc.z else String(a.id) < String(b.id))
+	for entry: Dictionary in entries:
+		print("BUILDING id=", entry.id, " min=", entry.minimum,
+			" max=", entry.maximum, " terrain=", entry.terrain_rooted,
+			" rooms=", entry.room_count)
 
 
 static func _string_arg(args: PackedStringArray, key: String,

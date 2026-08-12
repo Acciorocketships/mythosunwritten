@@ -183,6 +183,13 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 			int(overlap_audit.overlap_cell_count),
 			JSON.stringify(overlap_audit.conflicts)]
 		return {}
+	var shoulder_repair := _truncate_unroofable_crowns(lineages)
+	var shoulder_audit := _unroofable_shoulder_audit(lineages)
+	if int(shoulder_audit.unroofable_shoulder_count) > 0:
+		last_failure = "3D composition retained %d arbitrary exposed shoulders after %d bounded crown repairs: %s" \
+			% [int(shoulder_audit.unroofable_shoulder_count), shoulder_repair,
+				JSON.stringify(shoulder_audit.details)]
+		return {}
 	last_merge_diagnostic["variant_diagnostic"] = \
 		last_variant_diagnostic.duplicate(true)
 	var truncated_tower_storeys := _truncate_unpaired_towers(lineages)
@@ -204,19 +211,13 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	audit["structural_yielded_lineage_count"] = maxi(
 		pre_support_lineage_count - lineages.size(), 0)
 	audit.merge(support_audit, false)
+	audit.merge(shoulder_audit, false)
+	audit["unroofable_shoulder_crown_repair_count"] = shoulder_repair
 	last_audit = audit.duplicate(true)
 	var repeated_run := int(audit.get(
 		"max_identical_tower_floorplate_run_storeys", 0))
 	if repeated_run > MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS:
-		var annex_targets := audit.get(
-			"tower_relief_annex_target_by_lineage", {}) as Dictionary
-		var unresolved_runs: Array[Dictionary] = []
-		for detail_value: Variant in audit.get(
-				"overlong_tower_run_details", []) as Array:
-			var detail := detail_value as Dictionary
-			if int(annex_targets.get(StringName(detail.lineage_id), 0)) \
-					< TALL_TOWER_ANNEXES:
-				unresolved_runs.append(detail)
+		var unresolved_runs := _unresolved_overlong_tower_runs(audit)
 		audit["unresolved_overlong_tower_run_details"] = unresolved_runs
 		last_audit = audit.duplicate(true)
 		if not unresolved_runs.is_empty():
@@ -227,6 +228,248 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 					JSON.stringify(unresolved_runs)]
 			return {}
 	return {"lineages": lineages, "audit": audit}
+
+
+static func _truncate_unroofable_crowns(lineages: Dictionary) -> int:
+	## The anti-box gate participates in the composition transaction. If a bad
+	## shoulder begins an entirely optional crown, terminate that crown at the
+	## lower complete room; never delete a doorway, feature socket, merged room,
+	## or bearing record. This is the same architectural operation as the existing
+	## registered-shaft truncation, but keyed to roofability rather than repetition.
+	var required_bearers: Dictionary = {}
+	for lineage_value: Variant in lineages.values():
+		for block: Dictionary in (lineage_value as Dictionary).blocks \
+				as Array[Dictionary]:
+			var parent_id := StringName(block.get("support_parent_lineage_id", &""))
+			var parent_block := int(block.get(
+				"support_parent_source_block_index", -1))
+			if not parent_id.is_empty() and parent_block >= 0:
+				required_bearers["%s/%d" % [parent_id, parent_block]] = true
+	var repaired := 0
+	var changed := true
+	while changed:
+		changed = false
+		var ids: Array[StringName] = []
+		ids.assign(lineages.keys())
+		ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+			return String(a) < String(b))
+		for lineage_id: StringName in ids:
+			var lineage := lineages[lineage_id] as Dictionary
+			var blocks := lineage.blocks as Array[Dictionary]
+			if blocks.size() < 2:
+				continue
+			for position in range(1, blocks.size()):
+				var lower := blocks[position - 1] as Dictionary
+				var upper := blocks[position] as Dictionary
+				if int(lower.end_storey) != int(upper.start_storey):
+					continue
+				var exposed: Dictionary = {}
+				for column_value: Variant in (lower.columns as Dictionary).keys():
+					if not (upper.columns as Dictionary).has(column_value):
+						exposed[column_value] = true
+				var roofable := true
+				for component: Dictionary in _column_components(exposed):
+					if not _shoulder_component_is_roofable(component,
+							upper.columns as Dictionary,
+							(lower.origin as Vector3i).y):
+						roofable = false
+						break
+				if roofable or not _optional_suffix_can_terminate(lineage_id,
+						lineage, blocks, position, required_bearers):
+					continue
+				blocks.resize(position)
+				lineage["blocks"] = blocks
+				lineages[lineage_id] = lineage
+				repaired += 1
+				changed = true
+				break
+			if changed:
+				break
+	return repaired
+
+
+static func _optional_suffix_can_terminate(lineage_id: StringName,
+		lineage: Dictionary, blocks: Array[Dictionary],
+		start_position: int, required_bearers: Dictionary) -> bool:
+	if start_position <= 0:
+		return false
+	for position in range(start_position, blocks.size()):
+		var block := blocks[position] as Dictionary
+		var source_index := int(block.get("source_block_index", position))
+		if bool(block.get("forced", false)) \
+				or bool(block.get("structural_forced", false)) \
+				or bool(block.get("merged", false)) \
+				or source_index <= int(lineage.required_through_block) \
+				or required_bearers.has("%s/%d" % [lineage_id, source_index]):
+			return false
+	return true
+
+
+static func _unroofable_shoulder_audit(lineages: Dictionary) -> Dictionary:
+	## Every lower-room remainder exposed by a changed upper floorplate must itself
+	## be a complete standard roof footprint. A disconnected/L-shaped/one-cell
+	## strip is the voxel artifact seen as a plank shelf in overview captures.
+	var count := 0
+	var details: Array[Dictionary] = []
+	for lineage_id_value: Variant in lineages.keys():
+		var lineage_id := StringName(lineage_id_value)
+		var blocks := (lineages[lineage_id] as Dictionary).blocks \
+			as Array[Dictionary]
+		for position in range(1, blocks.size()):
+			var lower := blocks[position - 1] as Dictionary
+			var upper := blocks[position] as Dictionary
+			if int(lower.end_storey) != int(upper.start_storey):
+				continue
+			var exposed: Dictionary = {}
+			for column_value: Variant in (lower.columns as Dictionary).keys():
+				if not (upper.columns as Dictionary).has(column_value):
+					exposed[column_value] = true
+			for component: Dictionary in _column_components(exposed):
+				if _shoulder_component_is_roofable(component,
+						upper.columns as Dictionary,
+						(lower.origin as Vector3i).y):
+					continue
+				count += 1
+				if details.size() < 16:
+					details.append({"lineage_id": lineage_id,
+						"lower_source_block": int(lower.source_block_index),
+						"upper_source_block": int(upper.source_block_index),
+						"cell_count": component.size(),
+						"cells": component.keys()})
+	return {"unroofable_shoulder_count": count,
+		"unroofable_shoulder_details": details, "details": details}
+
+
+static func _shoulder_component_is_roofable(component: Dictionary,
+		upper_columns: Dictionary, y: int) -> bool:
+	if not _exact_stamp_for_columns(component, y).is_empty():
+		return true
+	if _component_has_gabled_partition(component, y):
+		return true
+	# The only partial footprint admitted is the exact lean-to vocabulary: a
+	# straight 3/6/9 m row, one fine cell deep, with one complete long edge bound
+	# to the surviving upper room. Corners, branches, and isolated shelves have no
+	# authored roof contract and must make the composition candidate fail.
+	if component.size() not in [2, 4, 6]:
+		return false
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for column_value: Variant in component.keys():
+		var column := column_value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	var along_x := minimum.y == maximum.y \
+		and maximum.x - minimum.x + 1 == component.size()
+	var along_z := minimum.x == maximum.x \
+		and maximum.y - minimum.y + 1 == component.size()
+	if not along_x and not along_z:
+		return false
+	var normals: Array[Vector2i] = []
+	if along_x:
+		normals.assign([Vector2i.UP, Vector2i.DOWN])
+	else:
+		normals.assign([Vector2i.LEFT, Vector2i.RIGHT])
+	var wall_side_count := 0
+	for normal: Vector2i in normals:
+		var complete_wall := true
+		for column_value: Variant in component.keys():
+			if not upper_columns.has((column_value as Vector2i) + normal):
+				complete_wall = false
+				break
+		wall_side_count += int(complete_wall)
+	return wall_side_count == 1
+
+
+static func _component_has_gabled_partition(component: Dictionary,
+		y: int) -> bool:
+	## Compound L/Z shoulders are valid only when they contain at least one full
+	## authored room roof and the remainder is a finite set of straight native
+	## cap runs. The compiler uses the same largest-first partition. This admits a
+	## real intersecting roof composition without making arbitrary voxel shelves
+	## legal again.
+	if component.size() < 6:
+		return false
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for column_value: Variant in component.keys():
+		var column := column_value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	for kind: StringName in [&"long", &"building", &"slim", &"tower"]:
+		for yaw in 4:
+			for x in range(minimum.x - 3, maximum.x + 4):
+				for z in range(minimum.y - 3, maximum.y + 4):
+					var stamp := _stamp_columns(kind, Vector3i(x, y, z), yaw)
+					if stamp.is_empty() or not _is_subset(stamp, component):
+						continue
+					var remainder := component.duplicate()
+					for column_value: Variant in stamp.keys():
+						remainder.erase(column_value)
+					var valid := true
+					for residual: Dictionary in _column_components(remainder):
+						if not _component_is_straight_native_row(residual):
+							valid = false
+							break
+					if valid:
+						return true
+	return false
+
+
+static func _component_is_straight_native_row(component: Dictionary) -> bool:
+	if component.is_empty():
+		return true
+	if component.size() not in [1, 2, 4, 6]:
+		return false
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for column_value: Variant in component.keys():
+		var column := column_value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	return minimum.y == maximum.y \
+		and maximum.x - minimum.x + 1 == component.size() \
+		or minimum.x == maximum.x \
+			and maximum.y - minimum.y + 1 == component.size()
+
+
+static func _column_components(columns: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var remaining := columns.duplicate()
+	while not remaining.is_empty():
+		var start := remaining.keys()[0] as Vector2i
+		var component: Dictionary = {start: true}
+		var pending: Array[Vector2i] = [start]
+		remaining.erase(start)
+		while not pending.is_empty():
+			var current: Vector2i = pending.pop_back()
+			for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+					Vector2i.UP, Vector2i.DOWN]:
+				var neighbor := current + direction
+				if not remaining.has(neighbor):
+					continue
+				remaining.erase(neighbor)
+				component[neighbor] = true
+				pending.append(neighbor)
+		out.append(component)
+	return out
+
+
+static func _unresolved_overlong_tower_runs(audit: Dictionary) \
+		-> Array[Dictionary]:
+	## An overlong identical run is unresolved only when it has no occupied-room
+	## relief contract. Three-storey narrow houses intentionally require one
+	## annex; taller shafts require two. Comparing both cases to the taller quota
+	## rejects the valid three-storey contract before its exact annex transaction
+	## gets a chance to prove the architecture.
+	var annex_targets := audit.get(
+		"tower_relief_annex_target_by_lineage", {}) as Dictionary
+	var unresolved: Array[Dictionary] = []
+	for detail_value: Variant in audit.get(
+			"overlong_tower_run_details", []) as Array:
+		var detail := detail_value as Dictionary
+		if int(annex_targets.get(StringName(detail.lineage_id), 0)) <= 0:
+			unresolved.append(detail)
+	return unresolved
 
 
 static func lineages_are_supported(lineages: Dictionary,

@@ -153,9 +153,10 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		target_balconies)
 	if balconies.size() < target_balconies \
 			or balcony_buildings.size() < minimum_balcony_buildings:
-		last_failure = "only %d balconies across %d buildings fit; need %d across %d" \
+		last_failure = ("only %d balconies across %d buildings fit; " \
+			+ "need %d across %d; candidate audit=%s") \
 			% [balconies.size(), balcony_buildings.size(), target_balconies,
-				minimum_balcony_buildings]
+				minimum_balcony_buildings, last_skywalk_diagnostic]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(balconies)
 	var wraparound_balcony_count := 0
@@ -1037,17 +1038,22 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				allowed_owner_ids_by_source[room.source_parcel_id] = {}
 			(allowed_owner_ids_by_source[room.source_parcel_id] \
 				as Dictionary)[building.stable_id] = true
-	var room_clearance_bounds_by_source := \
-		_room_clearance_bounds_by_source(buildings, program, world_seed)
+	var room_clearance_bounds := _room_clearance_bounds(buildings, program,
+		world_seed)
+	var rejection_counts := {
+		&"missing_recipe": 0,
+		&"missing_socket": 0,
+		&"unrelated_room_overlap": 0,
+		&"existing_feature_overlap": 0,
+		&"body_blocked": 0,
+		&"missing_return_contact": 0,
+		&"clearance_blocked": 0,
+	}
 	var recipe_ids: Array[StringName] = [
 		&"balcony.wrap.left.blue.planted",
 		&"balcony.wrap.right.orange.planted",
 		&"balcony.wrap.left.amber.planted",
 		&"balcony.wrap.right.blue.planted",
-		&"balcony.bracketed.left.blue.planted",
-		&"balcony.bracketed.right.orange.planted",
-		&"balcony.bracketed.left.amber.planted",
-		&"balcony.bracketed.right.blue.planted",
 	]
 	var candidates: Array[Dictionary] = []
 	for endpoint: Dictionary in _balcony_room_endpoints(buildings):
@@ -1066,22 +1072,39 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 			var recipe_id := recipe_ids[(phase + recipe_offset) % recipe_ids.size()]
 			var recipe := program.recipe(recipe_id)
 			if recipe == null or not recipe.has_tag(&"balcony"):
+				rejection_counts[&"missing_recipe"] += 1
 				continue
-			# This finite L recipe turns around the corner of a 3 m room. Wider
-			# facade families need their own longer return vocabulary; placing it
-			# at a mid-wall socket would only masquerade as a corner balcony.
-			if recipe.has_tag(&"wraparound_balcony") \
-					and room.kind != &"tower":
-				continue
+			# The exact return-contact proof below is the authority. Wider houses may
+			# use this finite L only when their transformed doorway is genuinely one
+			# cell from a corner and the return reaches the same building's side wall;
+			# a mid-facade placement simply produces no contact and is rejected.
 			var socket := recipe.socket(&"room.back")
 			var yaw := _yaw_for_local_direction(Vector3i.FORWARD, -facing)
 			if socket.is_empty() or yaw < 0:
+				rejection_counts[&"missing_socket"] += 1
 				continue
 			var socket_world := endpoint_cell + facing
 			var origin := socket_world - FabricRecipe.transform_cell(
 				socket.cell as Vector3i, Vector3i.ZERO, yaw)
+			var body := _feature_recipe_cells(recipe, origin, yaw)
+			if body.is_empty() or not WarrenVolumetricSolver \
+					._skywalk_body_fits_grid(grid, body):
+				rejection_counts[&"body_blocked"] += 1
+				continue
+			var return_contacts := _balcony_return_contact_cells(grid, body,
+				building.stable_id, endpoint_cell, facing, origin.y)
+			# A one-door straight shelf is not a destination and not circulation.
+			# Production currently admits only true L balconies whose return reaches
+			# the side wall of the same inhabited building. A future straight gallery
+			# may re-enter this pool only with a second WALK/ROOM socket and exact path.
+			if not recipe.has_tag(&"wraparound_balcony") \
+					or return_contacts.is_empty():
+				rejection_counts[&"missing_return_contact"] += 1
+				continue
 			if _feature_bounds_overlap_unrelated_room(recipe, origin, yaw,
-					room.source_parcel_id, room_clearance_bounds_by_source):
+					building.stable_id, room.source_parcel_id,
+					return_contacts, room_clearance_bounds):
+				rejection_counts[&"unrelated_room_overlap"] += 1
 				continue
 			var balcony_bounds := FabricRecipe.lattice_transform(origin, yaw) \
 				* recipe.local_clearance_bounds
@@ -1091,10 +1114,7 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 			# reservation alone cannot represent that oblique visual envelope.
 			if _feature_bounds_overlap_existing_features(balcony_bounds,
 					existing_features, program):
-				continue
-			var body := _feature_recipe_cells(recipe, origin, yaw)
-			if body.is_empty() or not WarrenVolumetricSolver \
-					._skywalk_body_fits_grid(grid, body):
+				rejection_counts[&"existing_feature_overlap"] += 1
 				continue
 			var components: Array[Dictionary] = [{"recipe_id": recipe_id,
 				"origin": origin, "yaw_quarters": yaw}]
@@ -1103,6 +1123,7 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 			var clearance_audit := _balcony_clearance_audit(grid, clearance,
 				body, owner_ids, origin.y)
 			if not bool(clearance_audit.get("fits", false)):
+				rejection_counts[&"clearance_blocked"] += 1
 				continue
 			var facade_key := _balcony_facade_key(endpoint_cell, facing)
 			candidates.append({"recipe_id": recipe_id, "origin": origin,
@@ -1114,6 +1135,7 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				"building": building, "allowed_owner_ids": owner_ids,
 				"facade_key": facade_key,
 				"wraparound": recipe.has_tag(&"wraparound_balcony"),
+				"return_contact_cells": return_contacts,
 				"usable_floor_cell_count": recipe.walk_cells.size(),
 				"covered_public_count": int(clearance_audit.covered_public_count),
 				"tie": posmod(Helper._mix64(world_seed ^ String(recipe_id).hash()
@@ -1134,14 +1156,11 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 	var used_facades: Dictionary = {}
 	var used_rooms: Dictionary = {}
 	var wraparound_count := 0
-	var wraparound_limit := maxi(1, target_count / 4)
 	for candidate: Dictionary in candidates:
 		if out.size() >= target_count:
 			break
 		var building := candidate.building as WarrenBuildingVolume
 		var room := candidate.room as WarrenRoomStamp
-		if bool(candidate.wraparound) and wraparound_count >= wraparound_limit:
-			continue
 		if int(count_by_building.get(building.stable_id, 0)) \
 				>= MAX_BALCONIES_PER_BUILDING or used_rooms.has(room.stable_id) \
 				or used_facades.has(String(candidate.facade_key)):
@@ -1169,6 +1188,8 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 			building.stable_id, 0)) + 1
 		used_rooms[room.stable_id] = true
 		used_facades[String(candidate.facade_key)] = true
+	last_skywalk_diagnostic["balcony_candidate_count"] = candidates.size()
+	last_skywalk_diagnostic["balcony_rejection_counts"] = rejection_counts
 	return out
 
 
@@ -1242,6 +1263,8 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 				"balcony_recipe_id": StringName(candidate.recipe_id),
 				"balcony_endpoint_facing": candidate.endpoint_facing as Vector3i,
 				"balcony_wraparound": bool(candidate.wraparound),
+				"balcony_return_contact_cell_count": (
+					candidate.return_contact_cells as Array).size(),
 				"balcony_usable_width_cells": 2 \
 					if bool(candidate.wraparound) else 2,
 				"balcony_usable_depth_cells": 2 \
@@ -1262,6 +1285,33 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 	return feature
 
 
+static func _balcony_return_contact_cells(grid: WarrenSpatialGrid,
+		body: Dictionary, building_id: StringName, endpoint_cell: Vector3i,
+		endpoint_facing: Vector3i, base_y: int) -> Array[Vector3i]:
+	## A corner return must physically meet the owning side wall, independently
+	## of the doorway's frontal face. The current one-cell return may meet a side
+	## face of the same corner room cell, so direction—not cell identity—is the
+	## exact distinction between a true wrap and a straight shelf.
+	var contacts: Dictionary = {}
+	for cell_value: Variant in body.keys():
+		var cell := cell_value as Vector3i
+		if cell.y != base_y:
+			continue
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if grid.owner_name_at(neighbor) \
+					!= building_id:
+				continue
+			if neighbor == endpoint_cell and direction == -endpoint_facing:
+				continue
+			contacts[neighbor] = true
+	var out: Array[Vector3i] = []
+	out.assign(contacts.keys())
+	out.sort_custom(_cell_less)
+	return out
+
+
 static func _balcony_room_endpoints(
 		buildings: Array[WarrenBuildingVolume]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
@@ -1276,6 +1326,9 @@ static func _balcony_room_endpoints(
 				continue
 			var minimum := footprint.minimum as Vector2i
 			var maximum := minimum + footprint.size as Vector2i - Vector2i.ONE
+			# Private feature apertures use the finite authored centre module on each
+			# facade. The L recipe may still reach a corner on a 3 m or 6 m frontage;
+			# its exact side-face contact below is what proves a genuine return.
 			for local: Dictionary in [
 				{"cell": Vector3i(maximum.x, 0, 0), "facing": Vector3i.RIGHT},
 				{"cell": Vector3i(minimum.x, 0, 0), "facing": Vector3i.LEFT},
@@ -1300,18 +1353,16 @@ static func _feature_recipe_cells(recipe: FabricRecipe, origin: Vector3i,
 	return out
 
 
-static func _room_clearance_bounds_by_source(
+static func _room_clearance_bounds(
 		buildings: Array[WarrenBuildingVolume], program: SettlementFabricProgram,
-		world_seed: int) -> Dictionary:
+		world_seed: int) -> Array[Dictionary]:
 	## Feature raster clearance and authored visual clearance answer different
 	## questions. Cache both possible facade phases for every final room so a
 	## balcony cannot fit between lattice cells while clipping a neighbour's
 	## eaves, ivy, sign, or other measured projection.
-	var out: Dictionary = {}
+	var out: Array[Dictionary] = []
 	for building: WarrenBuildingVolume in buildings:
 		for room: WarrenRoomStamp in building.room_records:
-			if not out.has(room.source_parcel_id):
-				out[room.source_parcel_id] = [] as Array[AABB]
 			var seen_recipes: Dictionary = {}
 			for allow_phase_b in [true, false]:
 				var recipe_id := WarrenSpatialFabricCompiler._room_recipe_id(
@@ -1322,25 +1373,43 @@ static func _room_clearance_bounds_by_source(
 				var recipe := program.recipe(recipe_id)
 				if recipe == null:
 					continue
-				(out[room.source_parcel_id] as Array[AABB]).append(
-					FabricRecipe.lattice_transform(room.lattice_origin,
-						room.yaw_quarters) * recipe.local_clearance_bounds)
+				out.append({
+					"building_id": building.stable_id,
+					"source_parcel_id": room.source_parcel_id,
+					"room_id": room.stable_id,
+					"private_cells": room.private_cells.duplicate(),
+					"bounds": FabricRecipe.lattice_transform(room.lattice_origin,
+						room.yaw_quarters) * recipe.local_clearance_bounds,
+				})
 	return out
 
 
 static func _feature_bounds_overlap_unrelated_room(recipe: FabricRecipe,
-		origin: Vector3i, yaw_quarters: int, related_source_id: StringName,
-		room_bounds_by_source: Dictionary) -> bool:
+		origin: Vector3i, yaw_quarters: int, building_id: StringName,
+		related_source_id: StringName, return_contacts: Array[Vector3i],
+		room_bounds: Array[Dictionary]) -> bool:
 	var feature_bounds := FabricRecipe.lattice_transform(origin, yaw_quarters) \
 		* recipe.local_clearance_bounds
-	for source_value: Variant in room_bounds_by_source.keys():
-		if StringName(source_value) == related_source_id:
+	for record: Dictionary in room_bounds:
+		var same_source := StringName(record.source_parcel_id) == related_source_id
+		var return_room := StringName(record.building_id) == building_id \
+			and _cells_intersect(record.private_cells as Array[Vector3i],
+				return_contacts)
+		# The doorway's source stack and the exact side-wall return room are named
+		# construction seams. Every other room remains an unrelated hard obstacle.
+		if same_source or return_room:
 			continue
-		for room_bounds: AABB in (room_bounds_by_source[source_value] \
-				as Array[AABB]):
-			if SettlementFabricPlan._aabb_overlaps_volume(feature_bounds,
-					room_bounds):
-				return true
+		if SettlementFabricPlan._aabb_overlaps_volume(feature_bounds,
+				record.bounds as AABB):
+			return true
+	return false
+
+
+static func _cells_intersect(left: Array[Vector3i],
+		right: Array[Vector3i]) -> bool:
+	for cell: Vector3i in right:
+		if left.has(cell):
+			return true
 	return false
 
 

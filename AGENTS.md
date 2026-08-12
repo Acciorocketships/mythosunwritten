@@ -351,8 +351,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   source textures are both orange. Storey phase still changes complete authored wall modules and
   measured facade details. Construction admits only explicit compatible party-wall seams and uses
   flat roofs only where crossing gables would collide. Touching equal-height room roofs are solved as
-  one neighborhood transaction: only measured continuous ridges and parallel/perpendicular valley
-  seams are legal, and unsupported intersections deliberately flatten before construction. A complete
+  one neighborhood transaction: continuous ridges and measured stepped wall joins are legal.
+  Although the generic module table can classify experimental parallel/perpendicular valleys,
+  mass-first production deliberately flattens both crossing roofs until a truly watertight authored
+  valley mesh exists. A complete
   flat fallback first tries a guarded
   lived-in roof terrace with measured planters, small fabric-scale plants, laundry, and either a
   stone chimney or complete blue canopy. Broad variants may also contain a bench, barrel with table
@@ -361,7 +363,14 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   roof-garden child, so production never leaves a bare flat plate.
   Partial setback strips prefer an honest exposed-edge rail; enclosed strips may receive a measured
   planter-only roof garden, and every dressed form has the exact plain cap as its transactional
-  fallback. True one-storey tower/slim closers preferentially use their integrated chimney roofs.
+  fallback. A changed upper floorplate is accepted only when every exposed shoulder is either one
+  complete standard room footprint, an exact wall-bound lean-to row, or a lossless compound
+  partition of complete house crowns plus native terminal strips. The roof compiler consumes that
+  same partition largest-first with at most one recognizable gable crown per parent shoulder;
+  arbitrary branching voxel shelves are rejected or an optional
+  crown is truncated. A compound gable does not exempt neighboring rooms from measured visual
+  clearance, so a valley collision selects the matching plain shell or one coherent flat service
+  closure instead of overlapping roofs. True one-storey tower/slim closers preferentially use their integrated chimney roofs.
   Pitched compact and slim roofs may receive measured dormers. True wraparound balcony recipes own
   an L-shaped walk surface, corner guards, diagonal braces, and a planted corner; they are never
   inferred from an accidentally exposed lower roof. None of these private visual treatments invents
@@ -377,7 +386,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   explicit one-storey plinth budget in sampled terrain height; larger risers must split into
   narrower terrain-rooted buildings rather than becoming masonry podiums. The buildable frontier
   is the tapered 3D envelope's real capacity boundary, never a radial outskirts ring. Every
-  frontier parcel must either reach terrain directly or be the one typed 3 x 6 m covered gateway:
+  frontier parcel must either reach terrain directly or be the one typed 3 x 6 m covered gateway;
+  optional terrain-level residual houses require a multi-face connection to already established
+  circulation, preventing unsupported one-cell tails around the edge. The gateway's
   one bay is terrain-borne while the other crosses an already-authored lower route and its exact
   headroom, with a measured bracket/diagonal support reserved in the same transaction. An
   unsupported frontier parcel invalidates the whole parcel plan. Large and grand mass-first

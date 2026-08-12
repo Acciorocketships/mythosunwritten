@@ -25,6 +25,7 @@ var _production_terrain_site := false
 var _solve_only := false
 var _audit_only := false
 var _trace_room_gate := false
+var _raw_frontier := false
 var _camera := Camera3D.new()
 var _spatial: WarrenSpatialPlan
 var _fabric: SettlementFabricPlan
@@ -111,7 +112,8 @@ func _ready() -> void:
 			int(committed.instance_count)])
 	print(("[warren_spatial_review] composition pairs=%d strong_registration=%d " \
 		+ "facade_planes=%d same_kind=%d same_axis=%d roofs=%d pitched=%d " \
-		+ "flat=%d roof_terraces=%d bare_flat=%d caps=%d setback_terraces=%d") % [
+		+ "flat=%d roof_terraces=%d bare_flat=%d caps=%d lean_tos=%d " \
+		+ "macro_gables=%d macro_fallbacks=%d setback_terraces=%d") % [
 			int(_spatial.audit.get("consecutive_floorplate_pair_count", 0)),
 			int(_spatial.audit.get(
 				"strongly_registered_floorplate_pair_count", 0)),
@@ -124,6 +126,9 @@ func _ready() -> void:
 			int(_fabric.audit.get("flat_roof_terrace_count", 0)),
 			int(_fabric.audit.get("bare_flat_roof_count", 0)),
 			int(_fabric.audit.get("setback_cap_unit_count", 0)),
+			int(_fabric.audit.get("setback_lean_to_unit_count", 0)),
+			int(_fabric.audit.get("setback_macro_gable_unit_count", 0)),
+			int(_fabric.audit.get("setback_macro_gable_fallback_count", 0)),
 			int(_fabric.audit.get("setback_terrace_unit_count", 0)),
 		])
 	print(("[warren_spatial_review] roof_neighborhood joins=%d ridges=%d " \
@@ -169,6 +174,8 @@ func _read_args() -> void:
 			_audit_only = true
 		elif args[index] == "--trace-room-gate":
 			_trace_room_gate = true
+		elif args[index] == "--raw-frontier":
+			_raw_frontier = true
 		elif args[index] == "--production-terrain-site":
 			_production_terrain_site = true
 			_world_seed = DEFAULT_PRODUCTION_WORLD_SEED
@@ -305,6 +312,20 @@ func _select_source(program: SettlementFabricProgram) -> WarrenVolumePlan:
 	if profile == null or program == null:
 		return null
 	var frontier := WarrenTownSolver.mass_first_frontier(_world_seed, {}, profile)
+	if _raw_frontier:
+		for candidate: WarrenVolumePlan in frontier:
+			var id_matches := not _candidate_id.is_empty() \
+				and String(candidate.stable_id) == _candidate_id
+			var token_matches := _candidate_id.is_empty() \
+				and (_candidate_token.is_empty() \
+					or String(candidate.stable_id).contains(_candidate_token))
+			if id_matches or token_matches:
+				print("[warren_spatial_review] selected raw source=",
+					candidate.stable_id, " variant=", _partition_variant,
+					" signature=",
+					candidate.deterministic_signature().sha256_text())
+				return candidate
+		return null
 	# The production solver ranks fully threaded precomposition variants, not the
 	# raw frontier object that happens to share their stable source id. Render the
 	# exact same `(source, partition_variant)` pair as the text proof; otherwise a
@@ -348,6 +369,7 @@ func _capture_all() -> void:
 	views.append_array(_courtyard_views())
 	views.append_array(_roof_terrace_views())
 	views.append_array(_dormer_views())
+	views.append_array(_roof_campaign_views())
 	views.append_array(_skywalk_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -524,6 +546,77 @@ func _dormer_views() -> Array[Dictionary]:
 			"target": target, "fov": 48.0})
 		if out.size() >= 4:
 			break
+	return out
+
+
+func _roof_campaign_views() -> Array[Dictionary]:
+	## Dormer-only targets miss the roof neighborhoods deliberately flattened by
+	## the compiler. Photograph the classified crossing itself so visual review
+	## can prove the replacement is one coherent decorated service-roof campaign.
+	var room_by_id: Dictionary = {}
+	for building: WarrenBuildingVolume in _spatial.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			room_by_id[room.stable_id] = room
+	var out: Array[Dictionary] = []
+	# Initial topology flattening is not presently exposed as room IDs. Recover
+	# the final decorated flat roofs and select pairs whose room bounds touch.
+	var flat_units: Array[FabricUnit] = []
+	for unit: FabricUnit in _fabric.units:
+		if String(unit.recipe_id).begins_with("roof.flat.") \
+				and not String(unit.recipe_id).contains(".garden"):
+			flat_units.append(unit)
+	for left_index in flat_units.size():
+		var left := flat_units[left_index]
+		var left_room_id := StringName(String(left.stable_id).trim_prefix(
+			"spatial.roof."))
+		var left_room := room_by_id.get(left_room_id) as WarrenRoomStamp
+		if left_room == null:
+			continue
+		var left_columns := _room_columns(left_room)
+		for right_index in range(left_index + 1, flat_units.size()):
+			var right := flat_units[right_index]
+			var right_room_id := StringName(String(right.stable_id).trim_prefix(
+				"spatial.roof."))
+			var right_room := room_by_id.get(right_room_id) as WarrenRoomStamp
+			if right_room == null or right_room.lattice_origin.y \
+					!= left_room.lattice_origin.y:
+				continue
+			var adjacent := false
+			var right_columns := _room_columns(right_room)
+			for column_value: Variant in left_columns.keys():
+				var column := column_value as Vector2i
+				for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+						Vector2i.UP, Vector2i.DOWN]:
+					if right_columns.has(column + direction):
+						adjacent = true
+						break
+				if adjacent:
+					break
+			if not adjacent:
+				continue
+			var left_recipe := _fabric.recipe(left.recipe_id)
+			var right_recipe := _fabric.recipe(right.recipe_id)
+			var left_bounds := left.transform() \
+				* left_recipe.local_clearance_bounds
+			var right_bounds := right.transform() \
+				* right_recipe.local_clearance_bounds
+			var bounds := left_bounds.merge(right_bounds)
+			var target := bounds.get_center() + Vector3.UP * 0.4
+			var outward := Vector3(1.0, 0.0, 1.0).normalized()
+			var eye := _best_directional_position(target, outward,
+				maxf(9.0, bounds.size.length() * 0.8), 2.5,
+				[left.stable_id, right.stable_id] as Array[StringName], bounds)
+			out.append({"id": "roof-campaign-%02d" % out.size(),
+				"position": eye, "target": target, "fov": 52.0})
+			if out.size() >= 4:
+				return out
+	return out
+
+
+func _room_columns(room: WarrenRoomStamp) -> Dictionary:
+	var out: Dictionary = {}
+	for cell: Vector3i in room.private_cells:
+		out[Vector2i(cell.x, cell.z)] = true
 	return out
 
 
@@ -1018,16 +1111,46 @@ func _build_environment() -> void:
 
 
 func _build_ground() -> void:
-	var instance := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(120.0, 0.4, 120.0)
-	instance.mesh = mesh
-	instance.position = Vector3(0.0, -0.2, 0.0)
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color("718d50")
 	material.roughness = 1.0
-	instance.material_override = material
-	add_child(instance)
+	if _spatial == null or _spatial.source_volume == null \
+			or _spatial.source_volume.envelope == null:
+		var fallback := MeshInstance3D.new()
+		var fallback_mesh := BoxMesh.new()
+		fallback_mesh.size = Vector3(120.0, 0.4, 120.0)
+		fallback.mesh = fallback_mesh
+		fallback.position = Vector3(0.0, -0.2, 0.0)
+		fallback.material_override = material
+		add_child(fallback)
+		return
+	# The town is terrain-relative. A single y=0 review plane made correctly
+	# terrain-rooted edge houses appear to hover on posts whenever their natural
+	# ground band was higher. Render the sealed envelope's own stepped datum as
+	# deep terrain columns so visual support review matches production rather than
+	# showing thin green slabs floating below otherwise valid foundations.
+	var envelope := _spatial.source_volume.envelope
+	for column_value: Variant in envelope.height_bands.keys():
+		var column := column_value as Vector2i
+		var top := float(envelope.ground_at(column)) \
+			* FabricRecipe.CELL_SIZE
+		var instance := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		const REVIEW_GROUND_DEPTH_M := 30.0
+		mesh.size = Vector3(WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M,
+			REVIEW_GROUND_DEPTH_M,
+			WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M)
+		instance.mesh = mesh
+		# The envelope key identifies the first of two 1.5 m fine cells, so the
+		# rendered 3 m column centre is half a fine cell beyond that key.
+		instance.position = Vector3(float(column.x) \
+			* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+			+ FabricRecipe.CELL_SIZE * 0.5,
+			top - REVIEW_GROUND_DEPTH_M * 0.5, float(column.y) \
+			* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+			+ FabricRecipe.CELL_SIZE * 0.5)
+		instance.material_override = material
+		add_child(instance)
 
 
 func _write_manifest() -> void:

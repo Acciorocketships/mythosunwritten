@@ -21,6 +21,80 @@ func test_roof_gate_checks_the_candidate_full_3d_solid_volume() -> void:
 		unit, recipe))
 
 
+func test_compound_roof_partition_replaces_cells_with_complete_house_crowns() \
+		-> void:
+	var faces: Array[Vector3i] = [
+		Vector3i(0, 3, 0), Vector3i(1, 3, 0),
+		Vector3i(0, 3, 1), Vector3i(1, 3, 1),
+		Vector3i(2, 3, 0), Vector3i(3, 3, 0),
+	]
+	var pieces := WarrenSpatialFabricCompiler._cap_pieces(faces)
+	assert_eq(pieces.size(), 2,
+		"the L shoulder should become one complete gable plus one native strip")
+	if pieces.size() != 2:
+		return
+	assert_eq(StringName((pieces[0] as Dictionary).kind), &"stamp")
+	assert_eq(((pieces[0] as Dictionary).cells as Array).size(), 4)
+	assert_eq(StringName((pieces[1] as Dictionary).kind), &"row")
+	assert_eq(((pieces[1] as Dictionary).cells as Array).size(), 2)
+	var realized: Dictionary = {}
+	for piece: Dictionary in pieces:
+		for cell: Vector3i in piece.cells as Array[Vector3i]:
+			assert_false(realized.has(cell),
+				"macroscopic roof pieces may not overlap one another")
+			realized[cell] = true
+	assert_eq(realized.size(), faces.size())
+	for face: Vector3i in faces:
+		assert_true(realized.has(face),
+			"the replacement partition must preserve every authoritative face")
+
+
+func test_setback_gable_does_not_exempt_neighboring_room_collisions() -> void:
+	var piece := {"kind": &"stamp", "room_kind": &"tower",
+		"origin": Vector3i.ZERO, "yaw_quarters": 0,
+		"cells": [Vector3i(0, 2, 0), Vector3i(1, 2, 0),
+			Vector3i(0, 2, 1), Vector3i(1, 2, 1)] as Array[Vector3i]}
+	var room := WarrenRoomStamp.new(&"lower", &"building", &"building",
+		Vector3i.ZERO, 0, 0, true, false)
+	var placement := WarrenSpatialFabricCompiler._setback_gable_placement(
+		piece, room, 7)
+	assert_false(placement.is_empty())
+	assert_false(placement.has("upper_room_unit_ids"),
+		"adjacent rooms are collision obstacles unless an exact roof join names them")
+	assert_true(String(placement.recipe_id).contains("dormer"),
+		"the detailed gable is attempted before the transaction chooses a fallback")
+
+
+func test_one_parent_shoulder_never_becomes_a_pile_of_sibling_gables() -> void:
+	var faces: Array[Vector3i] = [
+		Vector3i(0, 3, 0), Vector3i(1, 3, 0),
+		Vector3i(0, 3, 1), Vector3i(1, 3, 1),
+		Vector3i(2, 3, 1), Vector3i(3, 3, 1),
+		Vector3i(2, 3, 2), Vector3i(3, 3, 2),
+	]
+	var pieces := WarrenSpatialFabricCompiler._cap_pieces(faces)
+	var macro_count := 0
+	var realized: Dictionary = {}
+	for piece: Dictionary in pieces:
+		macro_count += int(StringName(piece.kind) == &"stamp")
+		for cell: Vector3i in piece.cells as Array[Vector3i]:
+			realized[cell] = true
+	assert_eq(macro_count, 1,
+		"one parent may own one recognizable gable crown, never sibling roof cubes")
+	assert_eq(realized.size(), faces.size())
+
+
+func test_spatial_roofs_reject_experimental_crossing_valleys() -> void:
+	assert_true(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
+		FabricRoofTopologyPlan.JunctionKind.RIDGE_CONTINUATION))
+	assert_false(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
+		FabricRoofTopologyPlan.JunctionKind.PARALLEL_VALLEY))
+	assert_false(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
+		FabricRoofTopologyPlan.JunctionKind.PERPENDICULAR_VALLEY))
+	assert_true(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
+		FabricRoofTopologyPlan.JunctionKind.STEPPED_EAVE_WALL))
+
+
 func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
@@ -164,17 +238,9 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		"the accepted town should retain integrated roof dormers")
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.rejected_pitched_count), 0)
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count), 0)
-	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_terrace_unit_count), 0,
-		"exposed setback ledges should receive measured terrace treatments")
-	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
-		.setback_terrace_unit_count) * 2,
-		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count),
-		"measured rail terraces should dominate bare upper-storey shelves")
-	assert_lt(int(WarrenSpatialFabricCompiler.last_audit \
-		.setback_terrace_unit_count),
-		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count),
-		"terraces must remain varied rather than railing every roof edge")
+		"an inaccessible roof shoulder must never masquerade as a balcony")
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_plain_cap_unit_count),
 		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count) \
@@ -183,14 +249,15 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 			- int(WarrenSpatialFabricCompiler.last_audit \
 				.setback_garden_unit_count))
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
-		.setback_dressed_unit_count),
-		int(WarrenSpatialFabricCompiler.last_audit.setback_terrace_unit_count),
-		"enclosed setback bands should gain measured roof gardens")
+		.setback_garden_unit_count), 0,
+		"inaccessible roof shoulders may retain non-circulation gardens")
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_terrace_fallback_count), 0)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.bare_flat_roof_count), 0,
 		"collision pressure must not turn a roof into an undressed plank cube")
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.broken_atomic_roof_neighborhood_count), 0)
 	for roof: FabricUnit in roofs:
 		var roof_recipe := program.recipe(roof.recipe_id)
 		for local_cell: Vector3i in roof_recipe.solid_cells:

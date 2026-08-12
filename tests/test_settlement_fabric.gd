@@ -225,6 +225,11 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 	assert_not_null(market)
 	assert_true(market.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_SMALL))
 	assert_true(market.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_PALE))
+	var awning_market := program.recipe(&"market.covered.05.garden")
+	assert_not_null(awning_market)
+	assert_true(awning_market.asset_ids().has(
+		SettlementFabricProgram.ROOF_TERRACE_AWNING),
+		"the full framed awning belongs to a measured covered bazaar")
 	var micro := program.recipe(&"room.micro.terrain.blue")
 	assert_not_null(micro)
 	assert_eq(micro.entrances.size(), 1,
@@ -659,6 +664,28 @@ func test_flat_roof_fallbacks_have_measured_guarded_terrace_variants() -> void:
 				func(placement: Dictionary) -> bool:
 					return String(placement.id) == "garden.planter"),
 				"enclosed setback bands need a measured inhabited detail")
+	for kind: String in ["tower", "slim", "square", "long"]:
+		var rich := program.recipe(StringName(
+			"roof.flat.%s.garden.rich" % kind))
+		assert_not_null(rich)
+		if rich == null:
+			continue
+		assert_true(rich.has_tag(&"rich_roof_garden"))
+		assert_true(rich.walk_cells.is_empty(),
+			"a decorated service roof is private unless circulation addresses it")
+		var broad := kind in ["square", "long"]
+		assert_eq(rich.has_tag(&"roof_garden_awning"), broad)
+		assert_eq(rich.has_tag(&"chimney"), not broad)
+	for family: String in ["blue", "orange"]:
+		for length_cells: int in [2, 4, 6]:
+			for side: String in ["negative", "positive"]:
+				var lean_id := StringName("roof.setback.lean.%s.%d.%s" % [
+					family, length_cells, side])
+				var lean := program.recipe(lean_id)
+				assert_not_null(lean, "%s is missing" % lean_id)
+				if lean != null:
+					assert_true(lean.has_tag(&"setback_lean_to"))
+					assert_true(lean.walk_cells.is_empty())
 
 
 func test_exterior_builder_rejects_deferred_interior_route_units() -> void:
