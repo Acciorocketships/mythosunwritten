@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://8qvplej36w1x"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_1sj6a"]
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_1sj6a"]
 
 [resource]
 script = ExtResource("1_1sj6a")

@@ -1,4 +1,4 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://dlca3lj7q72cf"]
 
 [resource]
 resource_name = "SFV_GLOW_WINDOW"

@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3 uid="uid://bbytgj6cpr5hn"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_m6egb"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_iytow"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_awning_blue_001_piece_00.res" id="3_yvy2w"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_ji0lv"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_m6egb"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_iytow"]
+[ext_resource type="ArrayMesh" uid="uid://djsncmkll0fmj" path="res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_awning_blue_001_piece_00.res" id="3_yvy2w"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_ji0lv"]
 
 [sub_resource type="Resource" id="Resource_u4amf"]
 script = ExtResource("2_iytow")
