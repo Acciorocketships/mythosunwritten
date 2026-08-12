@@ -101,6 +101,59 @@ func test_compact_blue_roofs_use_real_slate_palette_variants() -> void:
 			"the instance channel would erase the palette material's authored input")
 
 
+func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
+	assert_not_null(_program)
+	for recipe_id: StringName in [
+			&"roof.tower.blue.dormer.left",
+			&"roof.tower.orange.dormer.right",
+			&"roof.slim.blue.dormer.left",
+			&"roof.slim.orange.dormer.right",
+	]:
+		var recipe_value := _program.recipe(recipe_id)
+		assert_not_null(recipe_value, String(recipe_id))
+		if recipe_value == null:
+			continue
+		assert_true(recipe_value.has_tag(&"dormer"),
+			"%s lost its finite dormer construction" % recipe_id)
+		var dormer_count := 0
+		for placement: Dictionary in recipe_value.placements:
+			dormer_count += int(String(placement.id).contains("dormer"))
+		assert_eq(dormer_count, 1,
+			"%s must carry one integrated attic window" % recipe_id)
+
+
+func test_plain_flat_roof_has_a_measured_central_garden_fallback() -> void:
+	assert_not_null(_program)
+	for kind: String in ["tower", "slim", "square", "long"]:
+		var recipe_id := StringName("roof.flat.%s.garden" % kind)
+		var recipe_value := _program.recipe(recipe_id)
+		assert_not_null(recipe_value, String(recipe_id))
+		if recipe_value == null:
+			continue
+		assert_true(recipe_value.has_tag(&"flat_roof_garden"))
+		assert_true(recipe_value.asset_ids().has(
+			SettlementFabricProgram.ROOF_PLANTER))
+		assert_true(recipe_value.has_tag(&"roof_decoration"))
+
+
+func test_wrap_balconies_are_true_l_shaped_floorplates() -> void:
+	assert_not_null(_program)
+	for recipe_id: StringName in [
+			&"balcony.wrap.left.blue.planted",
+			&"balcony.wrap.right.orange.planted",
+	]:
+		var recipe_value := _program.recipe(recipe_id)
+		assert_not_null(recipe_value, String(recipe_id))
+		if recipe_value == null:
+			continue
+		assert_true(recipe_value.has_tag(&"wraparound_balcony"))
+		var columns: Dictionary = {}
+		for cell: Vector3i in recipe_value.walk_cells:
+			columns[Vector2i(cell.x, cell.z)] = true
+		assert_eq(columns.size(), 3,
+			"%s must turn one complete corner as an L" % recipe_id)
+
+
 func test_lived_in_recipes_use_the_new_measured_prop_families() -> void:
 	assert_not_null(_program)
 	var square := _program.recipe(&"roof.flat.square.terrace.north.lived")

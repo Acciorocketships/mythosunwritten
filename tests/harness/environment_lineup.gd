@@ -202,6 +202,10 @@ func _add_asset(asset_id: StringName, page_index: int) -> void:
 	for piece: EnvironmentVisualPiece in visual.pieces:
 		var mesh_instance := MeshInstance3D.new()
 		mesh_instance.mesh = piece.mesh
+		# The production commit path applies reviewed asset-level palette
+		# materials.  The lineup must show that same final visual or it cannot
+		# falsify palette variants such as the compact slate roof.
+		mesh_instance.material_override = piece.material_override
 		mesh_instance.transform = placement * piece.local_transform
 		_content.add_child(mesh_instance)
 	if _show_collisions:

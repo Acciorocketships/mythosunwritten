@@ -464,6 +464,10 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 			if is_long and roof_feature in [1, 2, 4, 5] \
 		else &"roof.long.orange" if is_long and roof_orange \
 		else &"roof.long.blue" if is_long \
+		else StringName("roof.slim.%s.dormer.%s" % [
+			"orange" if roof_orange else "blue",
+			"left" if roof_feature == 1 else "right"]) \
+		if is_slim and roof_feature in [1, 2] \
 		else &"roof.slim.chimney.orange" if is_slim \
 		and roof_feature == 3 and roof_orange \
 		else &"roof.slim.chimney.blue" if is_slim and roof_feature == 3 \
@@ -472,6 +476,10 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 		else &"roof.slim.short.blue" if is_slim and storeys == 1 \
 		else &"roof.slim.orange" if is_slim and roof_orange \
 		else &"roof.slim.blue" if is_slim \
+		else StringName("roof.tower.%s.dormer.%s" % [
+			"orange" if roof_orange else "blue",
+			"left" if roof_feature == 1 else "right"]) \
+		if is_tower and roof_feature in [1, 2] \
 		else &"roof.tower.chimney.orange" if is_tower \
 		and roof_feature == 3 and roof_orange \
 		else &"roof.tower.chimney.blue" if is_tower and roof_feature == 3 \

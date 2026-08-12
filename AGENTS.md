@@ -350,15 +350,22 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   retain warm roofs, deliberately counterbalancing the two compact authored tower roofs whose honest
   source textures are both orange. Storey phase still changes complete authored wall modules and
   measured facade details. Construction admits only explicit compatible party-wall seams and uses
-  flat roofs only where crossing gables would collide. A complete flat fallback first tries a guarded
+  flat roofs only where crossing gables would collide. Touching equal-height room roofs are solved as
+  one neighborhood transaction: only measured continuous ridges and parallel/perpendicular valley
+  seams are legal, and unsupported intersections deliberately flatten before construction. A complete
+  flat fallback first tries a guarded
   lived-in roof terrace with measured planters, small fabric-scale plants, laundry, and either a
   stone chimney or complete blue canopy. Broad variants may also contain a bench, barrel with table
   lantern, and one freestanding lamp; every prop participates in the same measured envelope and can
-  force an orientation/plain-terrace fallback. The exact bare plate remains the last resort.
+  force an orientation/plain-terrace fallback. Any remaining plain cap receives a separate measured
+  roof-garden child, so production never leaves a bare flat plate.
   Partial setback strips prefer an honest exposed-edge rail; enclosed strips may receive a measured
   planter-only roof garden, and every dressed form has the exact plain cap as its transactional
   fallback. True one-storey tower/slim closers preferentially use their integrated chimney roofs.
-  None of these private visual treatments invents public walkability. Every candidate's
+  Pitched compact and slim roofs may receive measured dormers. True wraparound balcony recipes own
+  an L-shaped walk surface, corner guards, diagonal braces, and a planted corner; they are never
+  inferred from an accidentally exposed lower roof. None of these private visual treatments invents
+  public walkability. Every candidate's
   complete transformed semantic solid volume is checked against the sealed 3D public-air grid—not
   just its first band—so a tall gable beneath an elevated street falls back to a non-occupying thin
   weather cap instead of piercing route headroom. An unsupported
@@ -389,7 +396,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   node. The market body, aisle, terrain bearing, visual clearance, backing room, and construction
   record commit atomically; its decorated variant keeps a measured leafy plant in one post bay and a
   barrel with tabletop lantern in the other, outside the four-cell aisle. Room/roof packing and the
-  skywalk beam must yield to that reservation.
+  skywalk beam must yield to that reservation. The final room transaction recomputes support from
+  the complete surviving partition. An unsupported ordinary elevated building may yield only as one
+  complete lineage/dependent closure; market, court, skywalk, and other exact feature sockets veto
+  that fallback, so neither a doorway nor an upper-room fragment can remain floating.
   Candidate order measures bounded sight rays from every aisle edge and prefers the arcade whose
   views terminate in inhabited mass soonest, before considering room displacement, so cheap empty
   perimeter space cannot pull the bazaar out of the city. A canopy may meet the underside of an
@@ -397,8 +407,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   rather than being overwritten with a duplicate roof claim. All other market face conflicts still
   reject the transaction. The exact market/court/landmark/skywalk preflight also recomposes the
   rooms and rejects any survivor that still contains more than two consecutive storeys with an
-  identical tower floorplate; a late annex pass cannot be used to disguise an intrinsically
-  vertical stack. The composition records are one storey each, so a forced second storey does not
+  identical tower floorplate unless that exact lineage carries the hard quota of two occupied,
+  roofed room annexes. The feature transaction rejects the entire town when even one required annex
+  cannot seal, so the exception changes the building silhouette rather than disguising it with props.
+  Three-storey narrow houses receive one such occupied annex. The composition records are one storey
+  each, so a forced second storey does not
   accidentally protect an optional third-storey crown from truncation. That check runs inside the
   bounded hero-feature loops, while another court or market candidate can still be selected, rather
   than after the first superficially compatible set has become irreversible. Tower-risk ordering uses

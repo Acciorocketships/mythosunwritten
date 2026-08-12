@@ -135,8 +135,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.tower_annex_feature_count), constructed_tower_annexes)
 	assert_eq(constructed_tower_annexes,
-		spatial.audit.tall_tower_only_lineage_ids.size() \
-			* WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_TALL_LINEAGE)
+		int(spatial.audit.required_tower_annex_count))
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.prefab_landmark_feature_count), constructed_landmarks)
 	assert_eq(constructed_landmarks,
@@ -160,6 +159,9 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit.roof_unit_count),
 		roofs.size())
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.pitched_roof_count), 0)
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+		.dormered_pitched_roof_count), 0,
+		"the accepted town should retain integrated roof dormers")
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.rejected_pitched_count), 0)
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count), 0)
 	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
@@ -186,6 +188,9 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		"enclosed setback bands should gain measured roof gardens")
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_terrace_fallback_count), 0)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.bare_flat_roof_count), 0,
+		"collision pressure must not turn a roof into an undressed plank cube")
 	for roof: FabricUnit in roofs:
 		var roof_recipe := program.recipe(roof.recipe_id)
 		for local_cell: Vector3i in roof_recipe.solid_cells:

@@ -7,7 +7,10 @@ extends RefCounted
 ## and roof compilation may respond to these facts but never recreate them.
 const TARGET_SKYWALKS := 3
 const TARGET_PREFAB_LANDMARKS := 2
-const MIN_TOWER_ANNEXES_PER_TALL_LINEAGE := 2
+const MIN_TOWER_ANNEXES_PER_THREE_STOREY_LINEAGE := \
+	WarrenRoomCompositionPlanner.THREE_STOREY_TOWER_ANNEXES
+const MIN_TOWER_ANNEXES_PER_TALL_LINEAGE := \
+	WarrenRoomCompositionPlanner.TALL_TOWER_ANNEXES
 const TARGET_BALCONIES := 6
 const MIN_BALCONY_BUILDINGS := 3
 const MAX_BALCONIES_PER_BUILDING := 2
@@ -106,14 +109,13 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		if court == null:
 			return [] as Array[WarrenFeatureReservation]
 		out.append(court)
-	var tall_tower_sources: Array[StringName] = []
-	for source_value: Variant in composition_audit.get(
-			"tall_tower_only_lineage_ids", []):
-		tall_tower_sources.append(StringName(source_value))
+	var tower_annex_targets := composition_audit.get(
+		"tower_relief_annex_target_by_lineage", {}) as Dictionary
 	var tower_annexes := _reserve_tower_annexes(grid, buildings, supports,
-		source.world_seed, construction_program, out, tall_tower_sources)
-	var required_tower_annexes := tall_tower_sources.size() \
-		* MIN_TOWER_ANNEXES_PER_TALL_LINEAGE
+		source.world_seed, construction_program, out, tower_annex_targets)
+	var required_tower_annexes := 0
+	for target_value: Variant in tower_annex_targets.values():
+		required_tower_annexes += int(target_value)
 	if tower_annexes.size() < required_tower_annexes:
 		var annexes_by_source: Dictionary = {}
 		for annex: WarrenFeatureReservation in tower_annexes:
@@ -156,6 +158,21 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 				minimum_balcony_buildings]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(balconies)
+	var wraparound_balcony_count := 0
+	for balcony: WarrenFeatureReservation in balconies:
+		wraparound_balcony_count += int(bool(balcony.audit.get(
+			"balcony_wraparound", false)))
+	# Integrated room cantilevers above are massing facts. Add a separate finite
+	# facade-bay pass for the shallow, roofed whole-room projections that break a
+	# large wall plane. It runs last so it can never steal a required support,
+	# balcony, skywalk, or market reservation.
+	var facade_bay_target_count := maxi(2, target_balconies - 1)
+	var facade_bay_targets := _facade_bay_targets(buildings, tower_annexes,
+		facade_bay_target_count, source.world_seed)
+	var facade_bays := _reserve_tower_annexes(grid, buildings, supports,
+		source.world_seed, construction_program, out, facade_bay_targets,
+		&"facade_bay")
+	out.append_array(facade_bays)
 	last_audit = {
 		"elevated_courtyard_count": int(
 			scale_profile.requires_elevated_courtyard),
@@ -166,9 +183,14 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"courtyard_bridge_house_count": int(
 			scale_profile.requires_elevated_courtyard),
 		"tower_annex_count": tower_annexes.size(),
-		"tower_annex_source_count": tall_tower_sources.size(),
+		"tower_annex_source_count": tower_annex_targets.size(),
+		"required_tower_annex_count": required_tower_annexes,
+		"facade_bay_target_count": facade_bay_target_count,
+		"facade_bay_source_count": facade_bay_targets.size(),
+		"facade_bay_count": facade_bays.size(),
 		"usable_balcony_count": balconies.size(),
 		"balcony_building_count": balcony_buildings.size(),
+		"wraparound_balcony_count": wraparound_balcony_count,
 		"room_outcropping_count": outcroppings.size(),
 		"feature_count": out.size(),
 	}
@@ -323,9 +345,10 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
 		existing_features: Array[WarrenFeatureReservation],
-		tall_tower_sources: Array[StringName]) \
+		tower_annex_targets: Dictionary,
+		feature_kind: StringName = &"tower_annex") \
 		-> Array[WarrenFeatureReservation]:
-	if program == null:
+	if program == null or feature_kind not in [&"tower_annex", &"facade_bay"]:
 		return [] as Array[WarrenFeatureReservation]
 	var rooms_by_source: Dictionary = {}
 	var building_by_room: Dictionary = {}
@@ -338,9 +361,12 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			(rooms_by_source[room.source_parcel_id] \
 				as Array[WarrenRoomStamp]).append(room)
 	var target_sources: Dictionary = {}
-	for source_id: StringName in tall_tower_sources:
-		if rooms_by_source.has(source_id):
-			target_sources[source_id] = true
+	for source_value: Variant in tower_annex_targets.keys():
+		var source_id := StringName(source_value)
+		if rooms_by_source.has(source_id) \
+				and int(tower_annex_targets[source_value]) > 0:
+			target_sources[source_id] = int(
+				tower_annex_targets[source_value])
 	if target_sources.is_empty():
 		return [] as Array[WarrenFeatureReservation]
 	var used_endpoint_cells: Dictionary = {}
@@ -354,21 +380,39 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				owner_ids_by_source[room.source_parcel_id] = {}
 			(owner_ids_by_source[room.source_parcel_id] \
 				as Dictionary)[building.stable_id] = true
-	var recipe_ids: Array[StringName] = [
-		&"outcrop.blue", &"outcrop.orange",
-		&"outcrop.corner.wrap.left.amber",
-		&"outcrop.corner.wrap.right.blue",
-		&"outcrop.corner.wrap.left.orange",
-		&"outcrop.corner.wrap.right.amber",
-		&"outcrop.dormer.gable.teal.left",
-		&"outcrop.dormer.gable.orange.right",
-		&"outcrop.dormer.shed.teal.right",
-		&"outcrop.dormer.shed.orange.left",
-		&"outcrop.flue.corner.left.blue",
-		&"outcrop.flue.corner.right.orange",
-		&"outcrop.capped.corner.left.amber",
-		&"outcrop.capped.corner.right.amber",
-	]
+	# A tower-breaking annex needs enough volume to disrupt a repeated vertical
+	# stack. Ordinary facade relief is a different architectural operation: it
+	# must remain a shallow, framed projection of the parent wall. Keeping these
+	# finite vocabularies separate prevents a decorative bay from becoming a
+	# complete miniature house glued to another house.
+	var recipe_ids: Array[StringName] = []
+	if feature_kind == &"facade_bay":
+		recipe_ids.assign([
+			&"outcrop.dormer.gable.teal.left",
+			&"outcrop.dormer.gable.teal.right",
+			&"outcrop.dormer.shed.teal.left",
+			&"outcrop.dormer.shed.teal.right",
+			&"outcrop.dormer.gable.orange.left",
+			&"outcrop.dormer.gable.orange.right",
+			&"outcrop.dormer.shed.orange.left",
+			&"outcrop.dormer.shed.orange.right",
+		])
+	else:
+		recipe_ids.assign([
+			&"outcrop.blue", &"outcrop.orange",
+			&"outcrop.corner.wrap.left.amber",
+			&"outcrop.corner.wrap.right.blue",
+			&"outcrop.corner.wrap.left.orange",
+			&"outcrop.corner.wrap.right.amber",
+			&"outcrop.dormer.gable.teal.left",
+			&"outcrop.dormer.gable.orange.right",
+			&"outcrop.dormer.shed.teal.right",
+			&"outcrop.dormer.shed.orange.left",
+			&"outcrop.flue.corner.left.blue",
+			&"outcrop.flue.corner.right.orange",
+			&"outcrop.capped.corner.left.amber",
+			&"outcrop.capped.corner.right.amber",
+		])
 	var candidates: Array[Dictionary] = []
 	for endpoint: Dictionary in _balcony_room_endpoints(buildings):
 		var room := endpoint.room as WarrenRoomStamp
@@ -392,6 +436,15 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			var socket_world := (endpoint.cell as Vector3i) + facing
 			var origin := socket_world - FabricRecipe.transform_cell(
 				socket.cell as Vector3i, Vector3i.ZERO, yaw)
+			var feature_bounds := FabricRecipe.lattice_transform(origin, yaw) \
+				* recipe.local_clearance_bounds
+			# Grid cells protect topology; this catches an authored dormer cheek,
+			# eave, or brace that reaches into an already committed balcony,
+			# support, skywalk, or structural outcropping between cells. The final
+			# compiler must never be asked to repair such an overlap visually.
+			if _feature_bounds_overlap_existing_features(feature_bounds,
+					existing_features, program):
+				continue
 			var body := _feature_recipe_cells(recipe, origin, yaw)
 			if body.is_empty() or not WarrenVolumetricSolver \
 					._skywalk_body_fits_grid(grid, body):
@@ -427,7 +480,11 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		if a_room.source_storey_index != b_room.source_storey_index:
 			return a_room.source_storey_index > b_room.source_storey_index
 		if int(a.body_cell_count) != int(b.body_cell_count):
-			return int(a.body_cell_count) > int(b.body_cell_count)
+			# Structural tower relief should be emphatic; ordinary facade bays
+			# should remain visually subordinate to their parent room.
+			return int(a.body_cell_count) < int(b.body_cell_count) \
+				if feature_kind == &"facade_bay" \
+				else int(a.body_cell_count) > int(b.body_cell_count)
 		return int(a.tie) < int(b.tie))
 	var out: Array[WarrenFeatureReservation] = []
 	var source_ids: Array[StringName] = []
@@ -443,8 +500,13 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	# compound cadence rather than two vertically repeated bay windows. A dense
 	# party-wall shaft may have only one exposed compass side, so facade direction
 	# itself is not required to change.
-	for relief_round in MIN_TOWER_ANNEXES_PER_TALL_LINEAGE:
+	var relief_round_count := 0
+	for target_value: Variant in target_sources.values():
+		relief_round_count = maxi(relief_round_count, int(target_value))
+	for relief_round in relief_round_count:
 		for source_id: StringName in source_ids:
+			if relief_round >= int(target_sources[source_id]):
+				continue
 			var prior := selected_by_source[source_id] as Array[Dictionary]
 			var chosen: Dictionary = {}
 			var chosen_distance := -1
@@ -479,11 +541,46 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			if chosen.is_empty():
 				continue
 			var feature := _commit_tower_annex(grid, chosen, supports,
-				out.size())
+				out.size(), feature_kind)
 			if feature == null:
 				continue
 			prior.append(chosen)
 			out.append(feature)
+	return out
+
+
+static func _facade_bay_targets(buildings: Array[WarrenBuildingVolume],
+		tower_annexes: Array[WarrenFeatureReservation], target_count: int,
+		world_seed: int) -> Dictionary:
+	## One bay per lineage is enough to create a recognisable macroscopic wall
+	## rhythm without turning every facade module into noisy applique. Prefer
+	## upper occupied rooms and lineages not already repaired by a tower annex.
+	var excluded: Dictionary = {}
+	for annex: WarrenFeatureReservation in tower_annexes:
+		excluded[StringName(annex.audit.get(
+			"annex_source_parcel_id", &""))] = true
+	var candidates: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.source_storey_index < 1 or excluded.has(
+					room.source_parcel_id) or seen.has(room.source_parcel_id):
+				continue
+			seen[room.source_parcel_id] = true
+			candidates.append({
+				"source_id": room.source_parcel_id,
+				"upper_storey": room.source_storey_index,
+				"tie": posmod(Helper._mix64(world_seed \
+					^ String(room.source_parcel_id).hash() \
+					^ 0x4641434144454241), 1000003),
+			})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.upper_storey) != int(b.upper_storey):
+			return int(a.upper_storey) > int(b.upper_storey)
+		return int(a.tie) < int(b.tie))
+	var out: Dictionary = {}
+	for index in mini(target_count, candidates.size()):
+		out[StringName(candidates[index].source_id)] = 1
 	return out
 
 
@@ -524,8 +621,12 @@ static func _tower_annex_clears_room_envelopes(recipe: FabricRecipe,
 
 static func _commit_tower_annex(grid: WarrenSpatialGrid,
 		candidate: Dictionary, supports: WarrenSupportGraph,
-		ordinal: int) -> WarrenFeatureReservation:
-	var feature_id := StringName("spatial.feature.tower-annex.%02d" % ordinal)
+		ordinal: int, feature_kind: StringName = &"tower_annex") \
+		-> WarrenFeatureReservation:
+	var feature_token := "tower-annex" if feature_kind == &"tower_annex" \
+		else "facade-bay"
+	var feature_id := StringName("spatial.feature.%s.%02d" % [feature_token,
+		ordinal])
 	var body_dict := candidate.body as Dictionary
 	var body: Array[Vector3i] = []
 	body.assign(body_dict.keys())
@@ -574,7 +675,7 @@ static func _commit_tower_annex(grid: WarrenSpatialGrid,
 				return null
 	if not tx.commit():
 		return null
-	var feature := WarrenFeatureReservation.new(feature_id, &"tower_annex")
+	var feature := WarrenFeatureReservation.new(feature_id, feature_kind)
 	if not feature.add_reserved_cells(body) \
 			or not feature.add_endpoint(endpoint_cell, building.stable_id) \
 			or not feature.add_construction_record(
@@ -586,7 +687,8 @@ static func _commit_tower_annex(grid: WarrenSpatialGrid,
 				"annex_building_id": building.stable_id,
 				"annex_source_parcel_id": room.source_parcel_id,
 				"annex_recipe_id": StringName(candidate.recipe_id),
-				"annex_breaks_tower_lineage": true,
+				"annex_breaks_tower_lineage": feature_kind == &"tower_annex",
+				"annex_endpoint_facing": candidate.facing as Vector3i,
 				"annex_source_storey_index": room.source_storey_index,
 				"annex_vertical_facade_key": "%s/%d,%d/%d,%d" % [
 					String(room.source_parcel_id), endpoint_cell.x,
@@ -938,6 +1040,10 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 	var room_clearance_bounds_by_source := \
 		_room_clearance_bounds_by_source(buildings, program, world_seed)
 	var recipe_ids: Array[StringName] = [
+		&"balcony.wrap.left.blue.planted",
+		&"balcony.wrap.right.orange.planted",
+		&"balcony.wrap.left.amber.planted",
+		&"balcony.wrap.right.blue.planted",
 		&"balcony.bracketed.left.blue.planted",
 		&"balcony.bracketed.right.orange.planted",
 		&"balcony.bracketed.left.amber.planted",
@@ -960,6 +1066,12 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 			var recipe_id := recipe_ids[(phase + recipe_offset) % recipe_ids.size()]
 			var recipe := program.recipe(recipe_id)
 			if recipe == null or not recipe.has_tag(&"balcony"):
+				continue
+			# This finite L recipe turns around the corner of a 3 m room. Wider
+			# facade families need their own longer return vocabulary; placing it
+			# at a mid-wall socket would only masquerade as a corner balcony.
+			if recipe.has_tag(&"wraparound_balcony") \
+					and room.kind != &"tower":
 				continue
 			var socket := recipe.socket(&"room.back")
 			var yaw := _yaw_for_local_direction(Vector3i.FORWARD, -facing)
@@ -1001,11 +1113,15 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				"socket_world": socket_world, "room": room,
 				"building": building, "allowed_owner_ids": owner_ids,
 				"facade_key": facade_key,
+				"wraparound": recipe.has_tag(&"wraparound_balcony"),
+				"usable_floor_cell_count": recipe.walk_cells.size(),
 				"covered_public_count": int(clearance_audit.covered_public_count),
 				"tie": posmod(Helper._mix64(world_seed ^ String(recipe_id).hash()
 					^ endpoint_cell.x * 31 ^ endpoint_cell.y * 43 \
 					^ endpoint_cell.z * 47), 1000003)})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if bool(a.wraparound) != bool(b.wraparound):
+			return bool(a.wraparound)
 		if int(a.covered_public_count) != int(b.covered_public_count):
 			return int(a.covered_public_count) > int(b.covered_public_count)
 		var a_room := a.room as WarrenRoomStamp
@@ -1017,11 +1133,15 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 	var count_by_building: Dictionary = {}
 	var used_facades: Dictionary = {}
 	var used_rooms: Dictionary = {}
+	var wraparound_count := 0
+	var wraparound_limit := maxi(1, target_count / 4)
 	for candidate: Dictionary in candidates:
 		if out.size() >= target_count:
 			break
 		var building := candidate.building as WarrenBuildingVolume
 		var room := candidate.room as WarrenRoomStamp
+		if bool(candidate.wraparound) and wraparound_count >= wraparound_limit:
+			continue
 		if int(count_by_building.get(building.stable_id, 0)) \
 				>= MAX_BALCONIES_PER_BUILDING or used_rooms.has(room.stable_id) \
 				or used_facades.has(String(candidate.facade_key)):
@@ -1044,6 +1164,7 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		if feature == null:
 			continue
 		out.append(feature)
+		wraparound_count += int(bool(candidate.wraparound))
 		count_by_building[building.stable_id] = int(count_by_building.get(
 			building.stable_id, 0)) + 1
 		used_rooms[room.stable_id] = true
@@ -1120,10 +1241,16 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 				"balcony_source_parcel_id": room.source_parcel_id,
 				"balcony_recipe_id": StringName(candidate.recipe_id),
 				"balcony_endpoint_facing": candidate.endpoint_facing as Vector3i,
-				"balcony_usable_width_cells": 2,
-				"balcony_usable_depth_cells": 1,
+				"balcony_wraparound": bool(candidate.wraparound),
+				"balcony_usable_width_cells": 2 \
+					if bool(candidate.wraparound) else 2,
+				"balcony_usable_depth_cells": 2 \
+					if bool(candidate.wraparound) else 1,
+				"balcony_usable_floor_cell_count": int(
+					candidate.usable_floor_cell_count),
 				"balcony_door_count": 1,
-				"balcony_guard_segment_count": 4,
+				"balcony_guard_segment_count": 6 \
+					if bool(candidate.wraparound) else 4,
 				"balcony_support_kind": &"bracket_cantilever",
 				"balcony_reserved_headroom_cell_count": body.size(),
 				"balcony_visual_clearance_cell_count":

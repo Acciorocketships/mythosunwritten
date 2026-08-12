@@ -23,6 +23,7 @@ var _scale_id := WarrenVillageScaleProfile.LARGE
 var _solve_production := false
 var _production_terrain_site := false
 var _solve_only := false
+var _audit_only := false
 var _trace_room_gate := false
 var _camera := Camera3D.new()
 var _spatial: WarrenSpatialPlan
@@ -86,6 +87,13 @@ func _ready() -> void:
 		_fail_and_quit("fabric compile rejected: %s" \
 			% WarrenSpatialFabricCompiler.last_failure)
 		return
+	if _audit_only:
+		print("[warren_spatial_review] spatial_audit=",
+			JSON.stringify(_spatial.audit))
+		print("[warren_spatial_review] fabric_audit=",
+			JSON.stringify(_fabric.audit))
+		get_tree().quit(0)
+		return
 	if _production_urban != null:
 		_build_production_terrain(_production_urban.world_transform)
 	else:
@@ -118,6 +126,19 @@ func _ready() -> void:
 			int(_fabric.audit.get("setback_cap_unit_count", 0)),
 			int(_fabric.audit.get("setback_terrace_unit_count", 0)),
 		])
+	print(("[warren_spatial_review] roof_neighborhood joins=%d ridges=%d " \
+		+ "parallel_valleys=%d perpendicular_valleys=%d flattened=%d trims=%d " \
+		+ "dormered=%d paired_dormers=%d facade_bays=%d") % [
+			int(_fabric.audit.get("roof_neighborhood_join_count", 0)),
+			int(_fabric.audit.get("continuous_ridge_join_count", 0)),
+			int(_fabric.audit.get("parallel_valley_join_count", 0)),
+			int(_fabric.audit.get("perpendicular_valley_join_count", 0)),
+			int(_fabric.audit.get("roof_neighborhood_flattened_room_count", 0)),
+			int(_fabric.audit.get("roof_junction_trim_unit_count", 0)),
+			int(_fabric.audit.get("dormered_pitched_roof_count", 0)),
+			int(_fabric.audit.get("paired_dormer_roof_count", 0)),
+			int(_spatial.audit.get("facade_bay_count", 0)),
+		])
 	_camera.current = true
 	_camera.near = 0.08
 	_camera.far = 400.0
@@ -144,6 +165,8 @@ func _read_args() -> void:
 			_solve_production = true
 		elif args[index] == "--solve-only":
 			_solve_only = true
+		elif args[index] == "--audit-only":
+			_audit_only = true
 		elif args[index] == "--trace-room-gate":
 			_trace_room_gate = true
 		elif args[index] == "--production-terrain-site":
@@ -324,6 +347,7 @@ func _capture_all() -> void:
 	views.append_array(_market_views())
 	views.append_array(_courtyard_views())
 	views.append_array(_roof_terrace_views())
+	views.append_array(_dormer_views())
 	views.append_array(_skywalk_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -436,6 +460,8 @@ func _roof_terrace_views() -> Array[Dictionary]:
 	## the dense-town compiler never managed to place.
 	var out: Array[Dictionary] = []
 	for unit: FabricUnit in _fabric.units:
+		if not String(unit.stable_id).begins_with("spatial.roof."):
+			continue
 		var recipe := _fabric.recipe(unit.recipe_id)
 		if recipe == null or not recipe.has_tag(&"furnished_roof_terrace"):
 			continue
@@ -457,6 +483,45 @@ func _roof_terrace_views() -> Array[Dictionary]:
 			[unit.stable_id] as Array[StringName], bounds)
 		out.append({"id": "roof-terrace-%02d-furnished" % out.size(),
 			"position": eye, "target": target, "fov": 55.0})
+		if out.size() >= 4:
+			break
+	return out
+
+
+func _dormer_views() -> Array[Dictionary]:
+	## Verify the attic projection in the final selected construction, not just in
+	## an isolated recipe lineup. Aim along the slope-normal implied by the
+	## dormer's displacement from its owning roof centre so its face, cheeks, and
+	## intersection with the roof plane all remain visible.
+	var out: Array[Dictionary] = []
+	for unit: FabricUnit in _fabric.units:
+		var recipe := _fabric.recipe(unit.recipe_id)
+		if recipe == null or not recipe.has_tag(&"dormer"):
+			continue
+		var dormer_local := Vector3.ZERO
+		var found := false
+		for placement: Dictionary in recipe.placements:
+			if not String(placement.id).contains("dormer"):
+				continue
+			dormer_local = (placement.transform as Transform3D).origin
+			found = true
+			break
+		if not found:
+			continue
+		var transform := unit.transform()
+		var target := transform * dormer_local + Vector3.UP * 0.5
+		var bounds := transform * recipe.local_clearance_bounds
+		var roof_centre := bounds.get_center()
+		var outward := target - roof_centre
+		outward.y = 0.0
+		if outward.length_squared() <= 0.01:
+			outward = transform.basis * Vector3.BACK
+		outward.y = 0.0
+		outward = outward.normalized()
+		var eye := _best_directional_position(target, outward, 7.5, 1.2,
+			[unit.stable_id] as Array[StringName], bounds)
+		out.append({"id": "dormer-%02d" % out.size(), "position": eye,
+			"target": target, "fov": 48.0})
 		if out.size() >= 4:
 			break
 	return out
@@ -727,14 +792,16 @@ func _tower_annex_views() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var ordinal := 0
 	for feature: WarrenFeatureReservation in _spatial.features:
-		if feature.kind != &"tower_annex" \
+		if feature.kind not in [&"tower_annex", &"facade_bay"] \
 				or feature.construction_records.size() != 1:
 			continue
 		var record := feature.construction_records[0]
 		var centre := _cell_centroid(feature.reserved_cells)
 		var outward := Vector3(FabricRecipe.transform_direction(Vector3i.BACK,
 			int(record.yaw_quarters)))
-		out.append({"id": "tower-annex-%02d" % ordinal,
+		var token := "tower-annex" if feature.kind == &"tower_annex" \
+			else "facade-bay"
+		out.append({"id": "%s-%02d" % [token, ordinal],
 			"position": centre + outward * 7.0 + Vector3.UP * 1.5,
 			"target": centre, "fov": 58.0})
 		ordinal += 1
@@ -799,6 +866,10 @@ func _balcony_views() -> Array[Dictionary]:
 		var yaw := int(record.yaw_quarters)
 		var outward3 := FabricRecipe.transform_direction(Vector3i.BACK, yaw)
 		var outward := Vector3(outward3)
+		var wraparound := bool(feature.audit.get("balcony_wraparound", false))
+		var recipe_text := String(feature.audit.get("balcony_recipe_id", ""))
+		var hand := -1.0 if recipe_text.contains(".left.") else 1.0
+		var tangent := Vector3(-outward3.z, 0.0, outward3.x) * hand
 		var target := Vector3((feature.endpoints[0] as Dictionary).cell \
 			as Vector3i) * FabricRecipe.CELL_SIZE + Vector3.UP * 1.35
 		var bounds := _feature_visual_bounds(feature)
@@ -806,14 +877,18 @@ func _balcony_views() -> Array[Dictionary]:
 		var room_prefix := StringName("spatial.fabric.%s" % StringName(
 			feature.audit.get("balcony_room_id", &"")))
 		var ignored := [feature_prefix, room_prefix] as Array[StringName]
-		var front_eye := _best_directional_position(target, outward, 6.0, 0.8,
+		var view_direction := (outward + tangent * 0.72).normalized() \
+			if wraparound else outward
+		var front_eye := _best_directional_position(target, view_direction, 6.0,
+			0.8,
 			ignored, bounds)
 		var under_eye := _best_directional_position(target - Vector3.UP * 0.7,
 			outward, 5.0, -1.0, ignored, bounds)
-		out.append({"id": "balcony-%02d-front" % ordinal,
+		var token := "-wrap" if wraparound else ""
+		out.append({"id": "balcony-%02d%s-front" % [ordinal, token],
 			"position": front_eye,
 			"target": target, "fov": 56.0})
-		out.append({"id": "balcony-%02d-underside" % ordinal,
+		out.append({"id": "balcony-%02d%s-underside" % [ordinal, token],
 			"position": under_eye,
 			"target": target + Vector3.UP * -0.4, "fov": 58.0})
 		ordinal += 1

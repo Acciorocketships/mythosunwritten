@@ -16,6 +16,8 @@ extends RefCounted
 const TALL_LINEAGE_STOREYS := 4
 const EXTRUDED_LINEAGE_STOREYS := 5
 const MAX_UNPAIRED_TOWER_STOREYS := 2
+const THREE_STOREY_TOWER_ANNEXES := 1
+const TALL_TOWER_ANNEXES := 2
 const MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS := 2
 const MIN_BEARING_OVERLAP_COLUMNS := 2
 const MAX_PAIRED_RELIEF_FRONTIER := 12
@@ -154,6 +156,8 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 			paired_registration_relief_count, " audit=",
 			last_pair_diagnostic)
 		trace_stage = Time.get_ticks_msec()
+	var crown_termination := _truncate_registered_crowns(lineages, grid)
+	var pre_support_lineage_count := lineages.size()
 	var support_repair_count := _repair_unsupported_transitions(lineages,
 		grid, protected_owners, world_seed)
 	if diagnostic_trace:
@@ -192,19 +196,49 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		last_pair_diagnostic.get("examined_pair_count", 0))
 	audit["paired_registration_peak_frontier_count"] = int(
 		last_pair_diagnostic.get("peak_frontier_count", 0))
+	audit["terminated_registered_crown_lineage_count"] = int(
+		crown_termination.lineage_count)
+	audit["terminated_registered_crown_storey_count"] = int(
+		crown_termination.storey_count)
 	audit["structural_room_repair_count"] = support_repair_count
+	audit["structural_yielded_lineage_count"] = maxi(
+		pre_support_lineage_count - lineages.size(), 0)
 	audit.merge(support_audit, false)
 	last_audit = audit.duplicate(true)
 	var repeated_run := int(audit.get(
 		"max_identical_tower_floorplate_run_storeys", 0))
 	if repeated_run > MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS:
-		last_failure = ("3D composition retained a %d-storey identical tower " \
-			+ "floorplate; maximum is %d: %s") % [repeated_run,
-				MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS,
-				JSON.stringify(audit.get(
-					"overlong_tower_run_details", []))]
-		return {}
+		var annex_targets := audit.get(
+			"tower_relief_annex_target_by_lineage", {}) as Dictionary
+		var unresolved_runs: Array[Dictionary] = []
+		for detail_value: Variant in audit.get(
+				"overlong_tower_run_details", []) as Array:
+			var detail := detail_value as Dictionary
+			if int(annex_targets.get(StringName(detail.lineage_id), 0)) \
+					< TALL_TOWER_ANNEXES:
+				unresolved_runs.append(detail)
+		audit["unresolved_overlong_tower_run_details"] = unresolved_runs
+		last_audit = audit.duplicate(true)
+		if not unresolved_runs.is_empty():
+			last_failure = ("3D composition retained a %d-storey identical tower " \
+				+ "floorplate without an occupied-annex relief contract; " \
+				+ "maximum is %d: %s") % [repeated_run,
+					MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS,
+					JSON.stringify(unresolved_runs)]
+			return {}
 	return {"lineages": lineages, "audit": audit}
+
+
+static func lineages_are_supported(lineages: Dictionary,
+		grid: WarrenSpatialGrid) -> bool:
+	## Public final-transaction check for callers that attach additional exact
+	## feature sockets after an earlier preflight. It intentionally recomputes
+	## bearing from the complete current partition; a cached preflight count is
+	## not proof after market/court/skywalk owners have all been committed.
+	if lineages.is_empty() or grid == null:
+		return false
+	return int(_lineage_support_audit(lineages, grid).get(
+		"unsupported_transition_count", 1)) == 0
 
 
 static func _source_blocks(proposal: Dictionary,
@@ -1370,6 +1404,41 @@ static func _repair_unsupported_transitions(lineages: Dictionary,
 								int(current.source_block_index), " remaining=",
 								unsupported_count)
 						continue
+				# An ordinary source parcel can be addressed from an elevated public
+				# street even when later 3D recomposition removes every plausible
+				# bearer beneath that threshold. Keeping only its locked doorway storey
+				# would create exactly the floating edge house the support audit exists
+				# to prevent. If this lineage owns no market/court/skywalk socket and
+				# bears no other house, let the complete optional building yield. This
+				# removes its door as well as its rooms; topology features never enter
+				# this fallback.
+				var yield_ids := _optional_yield_lineage_closure(lineages,
+					lineage_id)
+				if not yield_ids.is_empty():
+					for removed_id: StringName in yield_ids:
+						var removed := lineages[removed_id] as Dictionary
+						for removed_block: Dictionary in removed.blocks \
+								as Array[Dictionary]:
+							for old_cell: Vector3i in removed_block.cells:
+								if claimed_cells.get(old_cell, &"") == removed_id:
+									claimed_cells.erase(old_cell)
+					for removed_id: StringName in yield_ids:
+						lineages.erase(removed_id)
+					unsupported_count = _unsupported_transition_count(
+						lineages, grid, claimed_cells)
+					accepted += yield_ids.size()
+					changed += 1
+					if diagnostic_trace:
+						print("ROOM_SUPPORT_REPAIR omitted_unborne_buildings lineages=",
+							yield_ids, " remaining=", unsupported_count)
+					continue
+				elif diagnostic_trace:
+					print("ROOM_SUPPORT_REPAIR building_yield_blocked lineage=",
+						lineage_id, " paired=", bool(lineage.get(
+							"paired_primary", false)) or bool(lineage.get(
+								"paired_secondary", false)), " dependents=",
+						_lineage_blocks_have_external_dependents(lineages,
+							lineage_id, blocks, 0))
 				# Optional crowns are density, not topology. If neither the room nor
 				# its bearing parent has a legal measured plate, omit only a terminal
 				# unforced crown rather than materializing an unsupported box.
@@ -1430,6 +1499,52 @@ static func _repair_unsupported_transitions(lineages: Dictionary,
 		if changed == 0:
 			break
 	return accepted
+
+
+static func _optional_yield_lineage_closure(lineages: Dictionary,
+		root_id: StringName) -> Array[StringName]:
+	## A paired merge can make another optional source lineage bear on the house
+	## that failed support. Remove that finite dependent component atomically; an
+	## individual storey is never cut loose. Exact feature sockets remain a veto.
+	var closure: Dictionary = {root_id: true}
+	var changed := true
+	while changed:
+		changed = false
+		for other_id_value: Variant in lineages.keys():
+			var other_id := StringName(other_id_value)
+			if closure.has(other_id):
+				continue
+			var other := lineages[other_id] as Dictionary
+			for block: Dictionary in other.blocks as Array[Dictionary]:
+				if closure.has(StringName(block.get(
+						"support_parent_lineage_id", &""))):
+					closure[other_id] = true
+					changed = true
+					break
+	var ids: Array[StringName] = []
+	ids.assign(closure.keys())
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	for lineage_id: StringName in ids:
+		var lineage := lineages.get(lineage_id, {}) as Dictionary
+		if lineage.is_empty():
+			return [] as Array[StringName]
+		var blocks := lineage.get("blocks", []) as Array[Dictionary]
+		if blocks.is_empty():
+			continue
+		for position in blocks.size():
+			var block := blocks[position] as Dictionary
+			if not (block.get("feature_endpoint_constraints", []) \
+					as Array).is_empty() or not (block.get(
+						"court_contact_columns", {}) as Dictionary).is_empty():
+				return [] as Array[StringName]
+			if block.has("support_parent_lineage_id") and not closure.has(
+					StringName(block.support_parent_lineage_id)):
+				return [] as Array[StringName]
+			if bool(block.get("structural_forced", false)) \
+					and not (position == 0 and int(block.start_storey) == 0):
+				return [] as Array[StringName]
+	return ids
 
 
 static func _lineage_blocks_have_external_dependents(lineages: Dictionary,
@@ -2861,6 +2976,122 @@ static func _truncate_unpaired_towers(lineages: Dictionary) -> int:
 	return truncated
 
 
+static func _truncate_registered_crowns(lineages: Dictionary,
+		grid: WarrenSpatialGrid = null) -> Dictionary:
+	## Recomposition is preferred: merge neighboring upper rooms, exchange mass,
+	## or move one complete room laterally. In dense pockets those moves can all
+	## be unavailable. Retaining the untouched optional suffix would turn that
+	## failed search into a centered shaft, so terminate it as a real roofline.
+	##
+	## Only a suffix above the second storey may be removed. Exact interfaces,
+	## merged cross-lineage rooms, and records that bear another lineage are hard
+	## blockers. This keeps the fallback architectural: it makes a stepped crown
+	## from already-qualified mass rather than disguising a tower with props.
+	var required_bearers: Dictionary = {}
+	for lineage_value: Variant in lineages.values():
+		var lineage := lineage_value as Dictionary
+		for block: Dictionary in lineage.blocks as Array[Dictionary]:
+			var parent_id := StringName(block.get(
+				"support_parent_lineage_id", &""))
+			if parent_id.is_empty():
+				continue
+			var parent_block := int(block.get(
+				"support_parent_source_block_index", -1))
+			if parent_block >= 0:
+				required_bearers["%s/%d" % [parent_id, parent_block]] = true
+	var ids: Array[StringName] = []
+	ids.assign(lineages.keys())
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	var terminated_lineages := 0
+	var terminated_storeys := 0
+	for lineage_id: StringName in ids:
+		var lineage := lineages[lineage_id] as Dictionary
+		if bool(lineage.paired_primary) or bool(lineage.paired_secondary):
+			continue
+		var blocks := lineage.blocks as Array[Dictionary]
+		if _lineage_storey_count(blocks) <= MAX_UNPAIRED_TOWER_STOREYS:
+			continue
+		var cut_position := -1
+		for position in range(2, blocks.size()):
+			var lower := blocks[position - 1] as Dictionary
+			var upper := blocks[position] as Dictionary
+			if int(lower.end_storey) != int(upper.start_storey):
+				continue
+			if _registered_facade_plane_count(
+					lower.columns as Dictionary,
+					upper.columns as Dictionary) >= 2:
+				cut_position = position
+				break
+		if cut_position < 0:
+			continue
+		var removable := true
+		var removed_storeys := 0
+		for position in range(cut_position, blocks.size()):
+			var block := blocks[position] as Dictionary
+			var source_block_index := int(block.get(
+				"source_block_index", position))
+			if bool(block.get("forced", false)) \
+					or bool(block.get("structural_forced", false)) \
+					or bool(block.get("merged", false)) \
+					or source_block_index <= int(
+						lineage.required_through_block) \
+					or required_bearers.has("%s/%d" % [lineage_id,
+						source_block_index]):
+				removable = false
+				break
+			removed_storeys += int(block.end_storey) \
+				- int(block.start_storey)
+		if not removable or removed_storeys <= 0:
+			continue
+		if not _crown_cut_preserves_bearing(lineages, grid, lineage_id,
+				cut_position):
+			continue
+		blocks.resize(cut_position)
+		lineage["blocks"] = blocks
+		lineages[lineage_id] = lineage
+		terminated_lineages += 1
+		terminated_storeys += removed_storeys
+	return {"lineage_count": terminated_lineages,
+		"storey_count": terminated_storeys}
+
+
+static func _crown_cut_preserves_bearing(lineages: Dictionary,
+		grid: WarrenSpatialGrid, cut_lineage_id: StringName,
+		cut_position: int) -> bool:
+	## Cross-lineage bearing is also a geometric fact. A neighboring upper room
+	## need not name a formal support parent when the completed partition already
+	## gives it enough occupied cells below. Test the actual pre/post volume so a
+	## silhouette repair cannot quietly turn that room into a floating block.
+	var before_claims := _claimed_room_cells(lineages)
+	var after_claims := before_claims.duplicate()
+	var cut_lineage := lineages[cut_lineage_id] as Dictionary
+	var cut_blocks := cut_lineage.blocks as Array[Dictionary]
+	for position in range(cut_position, cut_blocks.size()):
+		for cell: Vector3i in (cut_blocks[position] as Dictionary).cells:
+			if after_claims.get(cell, &"") == cut_lineage_id:
+				after_claims.erase(cell)
+	for lineage_id_value: Variant in lineages.keys():
+		var lineage_id := StringName(lineage_id_value)
+		var lineage := lineages[lineage_id] as Dictionary
+		var blocks := lineage.blocks as Array
+		for position in blocks.size():
+			var block := blocks[position] as Dictionary
+			if lineage_id == cut_lineage_id and position >= cut_position:
+				continue
+			if position == 0 and int(block.start_storey) == 0 \
+					and not block.has("support_parent_lineage_id"):
+				continue
+			var was_borne := _floorplate_transition_is_structurally_legible(
+				block.columns as Dictionary, {},
+				(block.origin as Vector3i).y, before_claims, grid)
+			if was_borne and not _floorplate_transition_is_structurally_legible(
+					block.columns as Dictionary, {},
+					(block.origin as Vector3i).y, after_claims, grid):
+				return false
+	return true
+
+
 static func _variant_stamp(allowed: Dictionary, previous: Dictionary,
 		y: int, block: int, world_seed: int, lineage_hash: int) -> Dictionary:
 	if allowed.is_empty():
@@ -2991,6 +3222,8 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 	var tower_only_ids: Array[StringName] = []
 	var tall_tower_only_ids: Array[StringName] = []
 	var relieved_tall_tower_only_ids: Array[StringName] = []
+	var annex_relieved_tall_tower_only_ids: Array[StringName] = []
+	var tower_relief_annex_target_by_lineage: Dictionary = {}
 	var tall_tower_only_details: Array[Dictionary] = []
 	var four_storey_tower_run_ids: Array[StringName] = []
 	var four_storey_tower_run_details: Array[Dictionary] = []
@@ -3050,6 +3283,13 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 			max_tower_only = maxi(max_tower_only, storeys)
 			tower_only_ids.append(lineage_id)
 			var identical_run := _longest_identical_floorplate_run(blocks)
+			# A complete three-storey narrow house can be structurally valid yet
+			# still read as a tower at village scale. It receives one occupied,
+			# roofed side-room event even when its top room has shifted. Taller
+			# shafts retain the stronger two-annex repair below.
+			if storeys == TALL_LINEAGE_STOREYS - 1:
+				tower_relief_annex_target_by_lineage[lineage_id] = \
+					THREE_STOREY_TOWER_ANNEXES
 			if storeys >= TALL_LINEAGE_STOREYS:
 				var relief_transition_count := \
 					_silhouette_relief_transition_count(blocks)
@@ -3059,7 +3299,16 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 				if is_silhouette_relieved:
 					relieved_tall_tower_only_ids.append(lineage_id)
 				else:
-					tall_tower_only_ids.append(lineage_id)
+					tower_relief_annex_target_by_lineage[lineage_id] = \
+						TALL_TOWER_ANNEXES
+					# Dense exact feature sockets can pin an otherwise repeated
+					# shaft more tightly than the room-only pass can move it. Such a
+					# lineage is not accepted undecorated: it receives a hard quota
+					# of occupied, roofed room annexes below. The feature transaction
+					# rejects the complete town if even one annex cannot seal, so this
+					# is an architectural relief contract rather than a cosmetic
+					# waiver of the anti-tower rule.
+					annex_relieved_tall_tower_only_ids.append(lineage_id)
 				var block_details: Array[Dictionary] = []
 				for block: Dictionary in blocks:
 					block_details.append({
@@ -3128,6 +3377,10 @@ static func _audit(lineages: Dictionary, input_storeys: int,
 		"tall_tower_only_lineage_ids": tall_tower_only_ids,
 		"relieved_tall_tower_only_lineage_ids": \
 			relieved_tall_tower_only_ids,
+		"annex_relieved_tall_tower_only_lineage_ids": \
+			annex_relieved_tall_tower_only_ids,
+		"tower_relief_annex_target_by_lineage": \
+			tower_relief_annex_target_by_lineage,
 		"tall_tower_only_lineage_details": tall_tower_only_details,
 		"four_storey_tower_run_lineage_ids": four_storey_tower_run_ids,
 		"four_storey_tower_run_details": four_storey_tower_run_details,

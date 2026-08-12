@@ -413,6 +413,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			ROOF_ORANGE, ROOF_WINDOW_04, 1, modules),
 		_tower_roof_recipe(&"roof.tower.blue", COMPACT_ROOF_SLATE_03, modules),
 		_tower_roof_recipe(&"roof.tower.orange", COMPACT_ROOF_06, modules),
+		_dormered_tower_roof_recipe(&"roof.tower.blue.dormer.left",
+			COMPACT_ROOF_SLATE_03, ROOF_WINDOW_02, -1, modules),
+		_dormered_tower_roof_recipe(&"roof.tower.blue.dormer.right",
+			COMPACT_ROOF_SLATE_03, ROOF_WINDOW_02, 1, modules),
+		_dormered_tower_roof_recipe(&"roof.tower.orange.dormer.left",
+			COMPACT_ROOF_06, ROOF_WINDOW_01, -1, modules),
+		_dormered_tower_roof_recipe(&"roof.tower.orange.dormer.right",
+			COMPACT_ROOF_06, ROOF_WINDOW_01, 1, modules),
 		_chimney_tower_roof_recipe(&"roof.tower.chimney.blue",
 			COMPACT_ROOF_SLATE_03, modules),
 		_chimney_tower_roof_recipe(&"roof.tower.chimney.orange",
@@ -429,6 +437,18 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			Vector3i(4, 1, 4), &"square_building", modules),
 		_flat_roof_recipe(&"roof.flat.long", Vector3i(-2, 0, -3),
 			Vector3i(4, 1, 6), &"long_building", modules),
+		_flat_roof_garden_recipe(&"roof.flat.tower.garden",
+			Vector3i(-1, 0, -1), Vector3i(2, 1, 2), &"compact_tower",
+			TERRACE_PLANT_LOW, modules),
+		_flat_roof_garden_recipe(&"roof.flat.slim.garden",
+			Vector3i(-1, 0, -2), Vector3i(2, 1, 4), &"slim_building",
+			TERRACE_PLANT_MID, modules),
+		_flat_roof_garden_recipe(&"roof.flat.square.garden",
+			Vector3i(-2, 0, -2), Vector3i(4, 1, 4), &"square_building",
+			TERRACE_PLANT_BROAD, modules),
+		_flat_roof_garden_recipe(&"roof.flat.long.garden",
+			Vector3i(-2, 0, -3), Vector3i(4, 1, 6), &"long_building",
+			TERRACE_PLANT_TALL, modules),
 		_setback_cap_recipe(&"roof.setback.cap.1", 1, modules),
 		_setback_cap_recipe(&"roof.setback.cap.2", 2, modules),
 		_setback_cap_recipe(&"roof.setback.cap.4", 4, modules),
@@ -454,6 +474,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules),
 		_slim_roof_recipe(&"roof.slim.blue", ROOF_BLUE, modules),
 		_slim_roof_recipe(&"roof.slim.orange", ROOF_ORANGE, modules),
+		_dormered_slim_roof_recipe(&"roof.slim.blue.dormer.left",
+			ROOF_BLUE, ROOF_WINDOW_02, -1, modules),
+		_dormered_slim_roof_recipe(&"roof.slim.blue.dormer.right",
+			ROOF_BLUE, ROOF_WINDOW_02, 1, modules),
+		_dormered_slim_roof_recipe(&"roof.slim.orange.dormer.left",
+			ROOF_ORANGE, ROOF_WINDOW_01, -1, modules),
+		_dormered_slim_roof_recipe(&"roof.slim.orange.dormer.right",
+			ROOF_ORANGE, ROOF_WINDOW_01, 1, modules),
 		_chimney_slim_roof_recipe(&"roof.slim.chimney.blue", ROOF_BLUE,
 			modules),
 		_chimney_slim_roof_recipe(&"roof.slim.chimney.orange", ROOF_ORANGE,
@@ -545,6 +573,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules, true),
 		_balcony_recipe(&"balcony.bracketed.right.blue.planted", &"blue", 0,
 			modules, true),
+		_wrap_balcony_recipe(&"balcony.wrap.left.blue.planted", &"blue", -1,
+			modules),
+		_wrap_balcony_recipe(&"balcony.wrap.right.orange.planted", &"orange", 1,
+			modules),
+		_wrap_balcony_recipe(&"balcony.wrap.left.amber.planted", &"amber", -1,
+			modules),
+		_wrap_balcony_recipe(&"balcony.wrap.right.blue.planted", &"blue", 1,
+			modules),
 		_integrated_cantilever_support_recipe(modules),
 		_integrated_cantilever_diagonal_support_recipe(modules),
 		_integrated_cantilever_terminal_support_recipe(modules),
@@ -1550,6 +1586,26 @@ static func _tower_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 	return recipe_value
 
 
+static func _dormered_tower_roof_recipe(recipe_id: StringName,
+		roof_asset: StringName, dormer_asset: StringName, eave_side: int,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## The 3 m infill house uses a complete 4.2 m compact gable. A single native
+	## attic-window module fits that ridge and turns the little roof into a
+	## recognisable house crown instead of another repeated pyramid. The entire
+	## combination is measured before packing; it is never pasted through a
+	## neighbour after construction.
+	assert(eave_side == -1 or eave_side == 1)
+	var recipe_value := _tower_roof_recipe(recipe_id, roof_asset, modules)
+	var centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-1, 0, -1), Vector3i(2, 1, 2))
+	var dormer_yaw := PI * 0.5 if eave_side > 0 else -PI * 0.5
+	recipe_value.add_placement(&"dormer", dormer_asset,
+		_pose(centre + Vector3(float(eave_side) * 0.65, 0.35, 0.0),
+			dormer_yaw))
+	recipe_value.role_tags.append(&"dormer")
+	return recipe_value
+
+
 static func _flat_roof_recipe(recipe_id: StringName, minimum: Vector3i,
 		size: Vector3i, family: StringName,
 		modules: FabricModuleProgram) -> FabricRecipe:
@@ -1576,6 +1632,11 @@ static func _flat_roof_recipe(recipe_id: StringName, minimum: Vector3i,
 	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
 	recipe_value.add_socket(&"bearing.bottom",
 		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
+	# A separately measured central accent can bind to this cap without inheriting
+	# the cap's full AABB. That distinction matters where a neighboring pitched
+	# eave legitimately reaches over the edge but does not approach the centre.
+	recipe_value.add_socket(&"bearing.top",
+		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.UP)
 	_add_roof_junction_sockets(recipe_value, minimum, size)
 	return recipe_value
 
@@ -1612,6 +1673,32 @@ static func _flat_roof_terrace_recipe(recipe_id: StringName,
 					float(minimum.z + z_index) * CELL), PI * 0.5))
 	if lived_in:
 		_add_lived_in_roof_terrace_dressing(recipe_value, centre, size, side)
+	return recipe_value
+
+
+static func _flat_roof_garden_recipe(recipe_id: StringName,
+		minimum: Vector3i, size: Vector3i, family: StringName,
+		plant_asset: StringName,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## A full terrace rail can be blocked by a higher neighbor on every exposed
+	## side. That geometric pressure must not turn the surviving house into a bare
+	## plank cube. This conservative accent binds to the separately sealed cap and
+	## keeps its entire envelope in the middle of the already-owned roof plate.
+	## Separating their envelopes is exact: a neighboring eave may overlap the cap
+	## edge while remaining metres from this planter. It invents neither a walk
+	## surface nor a parapet and is rejected if its own measured bounds collide.
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"roof", &"roof_decoration", &"flat_roof_garden", family,
+	], 1)
+	var centre := FabricModuleProgram.footprint_centre(minimum, size)
+	recipe_value.add_placement(&"garden.planter", ROOF_PLANTER,
+		_pose(centre + Vector3.UP * 0.04, 0.0))
+	recipe_value.add_placement(&"garden.plant", plant_asset,
+		_pose(centre + Vector3(0.18, 0.04, -0.14), 0.0))
+	# Placed at the same origin as the cap. A local y=1 downward socket meets the
+	# cap's local y=0 upward socket without moving the visible authored assets.
+	recipe_value.add_socket(&"bearing.bottom",
+		FabricRecipe.SocketKind.BEARING, Vector3i.UP, Vector3i.DOWN)
 	return recipe_value
 
 
@@ -1910,6 +1997,24 @@ static func _slim_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 		Vector3i.ZERO, Vector3i.DOWN)
 	_add_roof_junction_sockets(recipe_value, Vector3i(-1, 0, -2),
 		Vector3i(2, 1, 4))
+	return recipe_value
+
+
+static func _dormered_slim_roof_recipe(recipe_id: StringName,
+		roof_asset: StringName, dormer_asset: StringName, eave_side: int,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## A narrow/deep house is already one macroscopic two-gable roof. Embed the
+	## attic window in only its forward bay so the stagger remains legible and the
+	## silhouette does not become a repeated dormer stack.
+	assert(eave_side == -1 or eave_side == 1)
+	var recipe_value := _slim_roof_recipe(recipe_id, roof_asset, modules)
+	var centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-1, 0, -2), Vector3i(2, 1, 4))
+	var dormer_yaw := PI * 0.5 if eave_side > 0 else -PI * 0.5
+	recipe_value.add_placement(&"dormer", dormer_asset,
+		_pose(centre + Vector3(float(eave_side) * 0.65, 0.95, 1.5),
+			dormer_yaw))
+	recipe_value.role_tags.append(&"dormer")
 	return recipe_value
 
 
@@ -2779,6 +2884,77 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		Vector3i(back_socket_x, 0, 0), Vector3i.FORWARD)
 	recipe_value.add_socket(&"bearing.back", FabricRecipe.SocketKind.BEARING,
 		Vector3i(back_socket_x, 0, 0), Vector3i.FORWARD)
+	return recipe_value
+
+
+static func _wrap_balcony_recipe(recipe_id: StringName, theme: StringName,
+		side: int, modules: FabricModuleProgram) -> FabricRecipe:
+	## A true L-shaped corner balcony: two cells span the front corner, then one
+	## turns along the side facade. This is not the exposed roof of a
+	## shifted room. The complete deck, return guards, planters, and braces form
+	## one measured occupied recipe and reserve their full 3D clearance.
+	assert(side in [-1, 1])
+	var corner_x := side
+	var front_cells: Array[Vector3i] = [Vector3i.ZERO,
+		Vector3i(corner_x, 0, 0)]
+	var deck_cells: Array[Vector3i] = front_cells.duplicate()
+	deck_cells.append(Vector3i(corner_x, 0, -1))
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"balcony", &"wraparound_balcony", &"private_walk",
+		&"exterior_occupied_floor", &"bracket_supported",
+		&"requires_room_portal", &"overhead_occupied", &"planted_balcony",
+		theme,
+	], 1)
+	var deck_set: Dictionary = {}
+	for cell: Vector3i in deck_cells:
+		deck_set[cell] = true
+		var floor_pose := _pose(Vector3(float(cell.x) * CELL + CELL * 0.5,
+			0.0, float(cell.z) * CELL), 0.0)
+		recipe_value.add_placement(StringName("floor.%d.%d" % [cell.x,
+			cell.z]), SETBACK_CAP, modules.walk_aligned_transform(SETBACK_CAP,
+				floor_pose, 0.0))
+	var parent_edges: Dictionary = {}
+	parent_edges[WarrenSpatialGrid._face_key(Vector3i.ZERO,
+		Vector3i.FORWARD)] = true
+	var side_cell := Vector3i(corner_x, 0, -1)
+	var side_to_room := Vector3i.RIGHT if side < 0 else Vector3i.LEFT
+	parent_edges[WarrenSpatialGrid._face_key(side_cell, side_to_room)] = true
+	var guard_index := 0
+	for cell: Vector3i in deck_cells:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			if deck_set.has(cell + direction) or parent_edges.has(
+					WarrenSpatialGrid._face_key(cell, direction)):
+				continue
+			var edge_centre := Vector3(float(cell.x) * CELL,
+				0.0, float(cell.z) * CELL) + Vector3(direction) * CELL * 0.5
+			var yaw := -PI * 0.5 if direction.x != 0 else 0.0
+			recipe_value.add_placement(StringName("guard.%02d" % guard_index),
+				RAILING, _pose(edge_centre, yaw))
+			guard_index += 1
+	for index in 2:
+		var brace_x := float(index * side) * CELL
+		recipe_value.add_placement(StringName("brace.front.%d" % index), BRACE,
+			_pose(Vector3(brace_x, -0.55, -CELL * 0.35), 0.0))
+	recipe_value.add_placement(&"brace.return", BRACE,
+		_pose(Vector3(float(corner_x) * CELL - float(side) * CELL * 0.35,
+			-0.55, -CELL), PI * 0.5))
+	var planter_x := float(corner_x) * CELL
+	recipe_value.add_placement(&"balcony.planter", ROOF_PLANTER,
+		_pose(Vector3(planter_x, 0.04, -0.32), 0.0))
+	var balcony_flower := TERRACE_PLANT_MID if theme == &"blue" \
+		else TERRACE_PLANT_BROAD if theme == &"amber" else ROOF_FLOWER_PALE
+	recipe_value.add_placement(&"balcony.flowers", balcony_flower,
+		_pose(Vector3(planter_x, 0.04, -0.40), 0.0))
+	recipe_value.walk_cells.assign(deck_cells)
+	for cell: Vector3i in deck_cells:
+		recipe_value.headroom_cells.append(cell)
+		recipe_value.headroom_cells.append(cell + Vector3i.UP)
+	recipe_value.inhabited_cells.assign(recipe_value.headroom_cells)
+	recipe_value.add_socket(&"room.back", FabricRecipe.SocketKind.ROOM,
+		Vector3i.ZERO, Vector3i.FORWARD)
+	recipe_value.add_socket(&"bearing.back", FabricRecipe.SocketKind.BEARING,
+		Vector3i.ZERO, Vector3i.FORWARD)
 	return recipe_value
 
 

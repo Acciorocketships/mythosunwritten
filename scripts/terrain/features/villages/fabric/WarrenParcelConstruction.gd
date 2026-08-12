@@ -52,16 +52,23 @@ static func _roof_feature(parcel: WarrenBuildingParcel,
 	var value := seed ^ parcel.threshold_column.x * 73856093 \
 		^ parcel.threshold_column.y * 19349663 ^ parcel.base_band * 83492791
 	if kind == &"tower":
-		return 3 if posmod(value, 3) == 0 else 0
+		var tower_phase := posmod(value, 8)
+		return 1 if tower_phase == 0 else 2 if tower_phase == 1 \
+			else 3 if tower_phase == 2 else 0
 	if kind == &"slim":
-		return 3 if posmod(value, 4) == 0 else 0
+		var slim_phase := posmod(value, 8)
+		return 1 if slim_phase in [0, 1] else 2 if slim_phase in [2, 3] \
+			else 3 if slim_phase == 4 else 0
 	if kind == &"building":
 		# Complete square roofs can now carry either handed dormer as well as a
 		# chimney.  Selection is a parcel fact before measured-clearance packing;
 		# these are different construction envelopes, not post-hoc decorations.
 		var phase := posmod(value, 7)
-		return 1 if phase in [0, 1] else 2 if phase in [2, 3] \
-			else 3 if phase == 4 else 0
+		# Most complete square roofs receive an integrated dormer, split across
+		# both eaves. One phase keeps a chimney and one stays quiet, so a roofscape
+		# gains readable cadence instead of either uniform repetition or confetti.
+		return 1 if phase in [0, 1, 2] else 2 if phase in [3, 4] \
+			else 3 if phase == 5 else 0
 	if kind != &"long":
 		return 0
 	# Every longhouse receives a dormer. Plain long runs already exist in the

@@ -410,6 +410,103 @@ func test_one_storey_composition_records_truncate_only_unrequired_tower_crown() 
 		"a real third-storey interface must remain for recomposition or rejection")
 
 
+func test_registered_optional_crown_terminates_above_a_complete_house() \
+		-> void:
+	var blocks: Array[Dictionary] = []
+	for storey in 4:
+		blocks.append(_composition_test_record(&"building", Vector3i(0,
+			storey * WarrenSpatialGrid.STOREY_CELLS, 0), 0, storey))
+	var lineages := {
+		&"shaft": {"blocks": blocks, "required_through_block": -1,
+			"paired_primary": false, "paired_secondary": false},
+	}
+	var result := WarrenRoomCompositionPlanner \
+		._truncate_registered_crowns(lineages)
+	assert_eq(int(result.lineage_count), 1)
+	assert_eq(int(result.storey_count), 2)
+	assert_eq((((lineages[&"shaft"] as Dictionary).blocks) as Array).size(), 2,
+		"an unsolved centered suffix should become a roofline after two storeys")
+
+
+func test_registered_crown_keeps_required_interface_and_bearer() -> void:
+	var required_blocks: Array[Dictionary] = []
+	for storey in 4:
+		required_blocks.append(_composition_test_record(&"building", Vector3i(0,
+			storey * WarrenSpatialGrid.STOREY_CELLS, 0), 0, storey))
+	var required_third := required_blocks[2] as Dictionary
+	required_third["forced"] = true
+	required_blocks[2] = required_third
+	var required_lineages := {
+		&"required": {"blocks": required_blocks, "required_through_block": 2,
+			"paired_primary": false, "paired_secondary": false},
+	}
+	var required_result := WarrenRoomCompositionPlanner \
+		._truncate_registered_crowns(required_lineages)
+	assert_eq(int(required_result.storey_count), 0)
+	assert_eq((((required_lineages[&"required"] as Dictionary).blocks) \
+		as Array).size(), 4,
+		"a required third-storey interface must never be hidden by a roof")
+
+	var bearing_blocks: Array[Dictionary] = []
+	for storey in 4:
+		bearing_blocks.append(_composition_test_record(&"building", Vector3i(0,
+			storey * WarrenSpatialGrid.STOREY_CELLS, 0), 0, storey))
+	var child := _composition_test_record(&"tower", Vector3i(0,
+		4 * WarrenSpatialGrid.STOREY_CELLS, 0), 0, 4)
+	child["support_parent_lineage_id"] = &"bearing"
+	child["support_parent_source_block_index"] = 2
+	var bearing_lineages := {
+		&"bearing": {"blocks": bearing_blocks, "required_through_block": -1,
+			"paired_primary": false, "paired_secondary": false},
+		&"child": {"blocks": [child], "required_through_block": 0,
+			"paired_primary": false, "paired_secondary": true},
+	}
+	var bearing_result := WarrenRoomCompositionPlanner \
+		._truncate_registered_crowns(bearing_lineages)
+	assert_eq(int(bearing_result.storey_count), 0)
+	assert_eq((((bearing_lineages[&"bearing"] as Dictionary).blocks) \
+		as Array).size(), 4,
+		"a crown that bears another lineage must remain structural mass")
+
+	var implicit_bearing_blocks: Array[Dictionary] = []
+	for storey in 4:
+		implicit_bearing_blocks.append(_composition_test_record(&"building",
+			Vector3i(0, storey * WarrenSpatialGrid.STOREY_CELLS, 0), 0,
+			storey))
+	var implicit_child := _composition_test_record(&"tower", Vector3i(0,
+		4 * WarrenSpatialGrid.STOREY_CELLS, 0), 0, 4)
+	var implicit_lineages := {
+		&"bearing": {"blocks": implicit_bearing_blocks,
+			"required_through_block": -1, "paired_primary": false,
+			"paired_secondary": false},
+		&"implicit_child": {"blocks": [implicit_child],
+			"required_through_block": 0, "paired_primary": false,
+			"paired_secondary": true},
+	}
+	var implicit_result := WarrenRoomCompositionPlanner \
+		._truncate_registered_crowns(implicit_lineages)
+	assert_eq(int(implicit_result.storey_count), 0)
+	assert_eq((((implicit_lineages[&"bearing"] as Dictionary).blocks) \
+		as Array).size(), 4,
+		"implicit cross-lineage bearing must survive crown termination")
+
+
+func test_three_storey_narrow_lineage_requires_one_occupied_annex() -> void:
+	var blocks: Array[Dictionary] = []
+	for storey in 3:
+		blocks.append(_composition_test_record(&"tower", Vector3i(0,
+			storey * WarrenSpatialGrid.STOREY_CELLS, 0), 0, storey))
+	var lineages := {
+		&"narrow": {"blocks": blocks, "required_through_block": 2,
+			"paired_primary": false, "paired_secondary": false},
+	}
+	var audit := WarrenRoomCompositionPlanner._audit(lineages, 3, 0, 0, 0, 0)
+	var targets := audit.tower_relief_annex_target_by_lineage as Dictionary
+	assert_eq(int(targets.get(&"narrow", 0)),
+		WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_THREE_STOREY_LINEAGE,
+		"a three-storey narrow house needs one real side-room composition")
+
+
 func test_paired_registration_relief_repartitions_two_locked_upper_rooms() \
 		-> void:
 	var grid := WarrenSpatialGrid.new(Vector3i(-12, 0, -12),
@@ -620,8 +717,7 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_eq(int(plan.audit.enclosed_skywalk_count),
 		WarrenSpatialFeatureSolver.TARGET_SKYWALKS)
 	assert_eq(int(plan.audit.tower_annex_count),
-		plan.audit.tall_tower_only_lineage_ids.size() \
-			* WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_TALL_LINEAGE,
+		int(plan.audit.required_tower_annex_count),
 		"annexes are a repair grammar only for residual tall tower lineages")
 	assert_gte(int(plan.audit.usable_balcony_count),
 		WarrenSpatialFeatureSolver.TARGET_BALCONIES)
@@ -845,8 +941,7 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		"at least one true skywalk must terminate in a landmark socket")
 	assert_gte(balconies.size(), WarrenSpatialFeatureSolver.TARGET_BALCONIES)
 	assert_eq(tower_annexes.size(),
-		plan.audit.tall_tower_only_lineage_ids.size() \
-			* WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_TALL_LINEAGE,
+		int(plan.audit.required_tower_annex_count),
 		"decorative annexes must not substitute for spatial recomposition")
 	var annex_source_counts: Dictionary = {}
 	var annex_profiles: Dictionary = {}
@@ -873,14 +968,17 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 			assert_eq(plan.grid.use_at(cell),
 				WarrenSpatialGrid.Use.PRIVATE_VOLUME)
 			assert_eq(plan.grid.owner_name_at(cell), annex.stable_id)
-	for source_value: Variant in plan.audit.tall_tower_only_lineage_ids:
+	var annex_targets := plan.audit.tower_relief_annex_target_by_lineage \
+		as Dictionary
+	for source_value: Variant in annex_targets.keys():
 		var source_id := StringName(source_value)
 		assert_eq(int(annex_source_counts.get(source_id, 0)),
-			WarrenSpatialFeatureSolver.MIN_TOWER_ANNEXES_PER_TALL_LINEAGE,
-			"each residual tall shaft needs two separated compound-room events")
+			int(annex_targets[source_value]),
+			"each residual narrow shaft needs its required compound-room events")
 		var storeys := annex_storeys_by_source[source_id] as Array
-		assert_gte(absi(int(storeys[0]) - int(storeys[1])), 2,
-			"compound annexes need at least one clear storey between them")
+		if int(annex_targets[source_value]) >= 2:
+			assert_gte(absi(int(storeys[0]) - int(storeys[1])), 2,
+				"compound annexes need at least one clear storey between them")
 	var balcony_owners: Dictionary = {}
 	var balcony_facades: Dictionary = {}
 	for balcony: WarrenFeatureReservation in balconies:

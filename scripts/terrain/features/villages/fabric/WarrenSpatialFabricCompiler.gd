@@ -416,7 +416,19 @@ static func _feature_portal_masks(source: WarrenSpatialPlan,
 	for feature: WarrenFeatureReservation in source.features:
 		if feature.construction_records.is_empty():
 			continue
-		if feature.kind == &"balcony":
+		if feature.kind in [&"tower_annex", &"facade_bay"]:
+			var room_id := StringName(feature.audit.get("annex_room_id", &""))
+			if room_id.is_empty() or feature.endpoints.size() != 1:
+				last_failure = "%s %s lacks one portal endpoint" % [
+					feature.kind, feature.stable_id]
+				return {}
+			var facing := feature.audit.get("annex_endpoint_facing",
+				Vector3i.ZERO) as Vector3i
+			if not _record_feature_portal(out, room_by_id, room_id,
+					(feature.endpoints[0] as Dictionary).cell as Vector3i,
+					_feature_endpoint_facing(feature, 0, facing)):
+				return {}
+		elif feature.kind == &"balcony":
 			var room_id := StringName(feature.audit.get("balcony_room_id", &""))
 			if room_id.is_empty() or feature.endpoints.size() != 1:
 				last_failure = "balcony %s lacks one portal endpoint" % \
@@ -645,6 +657,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var room_outcropping_support_count := 0
 	var frontier_gateway_support_count := 0
 	var tower_annex_count := 0
+	var facade_bay_count := 0
 	var landmark_count := 0
 	for feature: WarrenFeatureReservation in ordered_features:
 		var feature_units: Array[FabricUnit] = []
@@ -685,6 +698,11 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 					room_unit_by_stamp, source_parcel_by_room,
 					seam_ids_by_source_parcel)
 				tower_annex_count += int(not feature_units.is_empty())
+			&"facade_bay":
+				feature_units = _compile_tower_annex_feature(feature, program,
+					room_unit_by_stamp, source_parcel_by_room,
+					seam_ids_by_source_parcel)
+				facade_bay_count += int(not feature_units.is_empty())
 			&"prefab_landmark":
 				feature_units = _compile_landmark_feature(feature, program)
 				landmark_count += int(not feature_units.is_empty())
@@ -733,7 +751,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	last_audit = {
 		"source_constructed_feature_count": ordered_features.size(),
 		"realized_constructed_feature_count": skywalk_count + market_count \
-			+ balcony_count + tower_annex_count + landmark_count \
+			+ balcony_count + tower_annex_count + facade_bay_count + landmark_count \
 			+ courtyard_bridge_count + room_outcropping_support_count \
 			+ frontier_gateway_support_count,
 		"skywalk_feature_count": skywalk_count,
@@ -745,6 +763,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 		"frontier_gateway_support_feature_count":
 			frontier_gateway_support_count,
 		"tower_annex_feature_count": tower_annex_count,
+		"facade_bay_feature_count": facade_bay_count,
 		"prefab_landmark_feature_count": landmark_count,
 		"feature_construction_unit_count": out.size(),
 		"feature_reserved_cell_count": realized_cells.size(),
@@ -864,28 +883,28 @@ static func _compile_tower_annex_feature(feature: WarrenFeatureReservation,
 	var room_id := StringName(feature.audit.get("annex_room_id", &""))
 	if room_id.is_empty() or feature.endpoints.size() != 1 \
 			or feature.construction_records.size() != 1:
-		last_failure = "tower annex %s lacks one exact room/recipe" \
-			% feature.stable_id
+		last_failure = "%s %s lacks one exact room/recipe" \
+			% [feature.kind, feature.stable_id]
 		return [] as Array[FabricUnit]
 	var room_unit := room_unit_by_stamp.get(room_id) as FabricUnit
 	if room_unit == null:
-		last_failure = "tower annex %s parent room %s was not compiled" % [
-			feature.stable_id, room_id]
+		last_failure = "%s %s parent room %s was not compiled" % [
+			feature.kind, feature.stable_id, room_id]
 		return [] as Array[FabricUnit]
 	var component := _feature_component_shell(feature, 0,
 		feature.construction_records[0])
 	var recipe := program.recipe(component.recipe_id)
 	if recipe == null or not recipe.has_tag(&"outcropping") \
 			or recipe.bearing_parent_count != 1:
-		last_failure = "tower annex %s lacks a one-bearing occupied recipe" \
-			% feature.stable_id
+		last_failure = "%s %s lacks a one-bearing occupied recipe" \
+			% [feature.kind, feature.stable_id]
 		return [] as Array[FabricUnit]
 	var endpoint_cell := (feature.endpoints[0] as Dictionary).cell as Vector3i
 	var matches := _matching_room_connections(component, room_unit, program,
 		endpoint_cell, true)
 	if matches.size() != 1:
-		last_failure = "tower annex %s has %d exact room/socket matches" % [
-			feature.stable_id, matches.size()]
+		last_failure = "%s %s has %d exact room/socket matches" % [
+			feature.kind, feature.stable_id, matches.size()]
 		return [] as Array[FabricUnit]
 	var source_parcel_id := StringName(source_parcel_by_room.get(room_id, &""))
 	var seams: Array[StringName] = []
@@ -1383,6 +1402,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				feature_unit.stable_id, probe.last_rejection]
 			return [] as Array[FabricUnit]
 	var roof_faces_by_room := _roof_faces_by_room(source, room_id_by_cell)
+	var roof_neighborhood := _spatial_roof_neighborhood(source,
+		room_by_id, roof_faces_by_room)
+	if roof_neighborhood.is_empty() and not last_failure.is_empty():
+		return [] as Array[FabricUnit]
+	var roof_proposal_by_room := roof_neighborhood.get(
+		"proposal_by_room", {}) as Dictionary
 	var room_ids: Array[StringName] = []
 	room_ids.assign(roof_faces_by_room.keys())
 	room_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -1397,6 +1422,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var pitched_count := 0
 	var flat_count := 0
 	var flat_terrace_count := 0
+	var flat_garden_count := 0
+	var flat_garden_rejections: Array[Dictionary] = []
+	var flat_roof_recipe_counts: Dictionary = {}
 	var lived_in_flat_terrace_count := 0
 	var awning_flat_terrace_count := 0
 	var furnished_flat_terrace_count := 0
@@ -1409,13 +1437,23 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var one_storey_chimney_roof_count := 0
 	var rejected_pitched_count := 0
 	var rejected_flat_count := 0
+	var dormered_pitched_roof_count := 0
+	var paired_dormer_roof_count := 0
 	var rejected_pitched_details: Array[Dictionary] = []
 	var pitched_roof_family_counts := {&"orange": 0, &"blue": 0,
 		&"boarded": 0}
+	var pitched_roof_recipe_counts: Dictionary = {}
+	var exposed_roof_room_kind_counts: Dictionary = {}
+	var exposed_roof_feature_counts: Dictionary = {}
 	var alternate_pitched_roof_count := 0
 	var quarter_turned_square_roof_count := 0
+	var pending_roof_trims: Array[Dictionary] = []
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
+		exposed_roof_room_kind_counts[room.kind] = int(
+			exposed_roof_room_kind_counts.get(room.kind, 0)) + 1
+		exposed_roof_feature_counts[room.roof_feature] = int(
+			exposed_roof_feature_counts.get(room.roof_feature, 0)) + 1
 		var parent_unit := unit_by_room[room_id] as FabricUnit
 		var face_cells := roof_faces_by_room[room_id] as Array[Vector3i]
 		source_face_count += face_cells.size()
@@ -1425,8 +1463,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		var selected := false
 		var attempt_failures := PackedStringArray()
 		if full and not _touches_public_air(source.grid, face_cells):
+			var neighborhood_proposal := roof_proposal_by_room.get(room_id,
+				{}) as Dictionary
 			var pitched_candidates := _full_roof_candidates(room,
-				source.world_seed)
+				source.world_seed, neighborhood_proposal)
 			var pitched_rejections: Array[Dictionary] = []
 			for candidate_index in pitched_candidates.size():
 				var candidate := pitched_candidates[candidate_index]
@@ -1449,6 +1489,14 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					continue
 				if probe.add_unit(pitched):
 					out.append(pitched)
+					if bool(candidate.get("uses_roof_neighborhood", false)):
+						for trim_value: Variant in candidate.get(
+								"trim_components", []):
+							pending_roof_trims.append({
+								"room_id": room_id,
+								"roof_unit_id": pitched.stable_id,
+								"component": (trim_value as Dictionary).duplicate(true),
+							})
 					realized_face_count += face_cells.size()
 					pitched_count += 1
 					alternate_pitched_roof_count += int(candidate_index > 0)
@@ -1456,9 +1504,15 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					var roof_family := _roof_recipe_family(pitched_id)
 					pitched_roof_family_counts[roof_family] = int(
 						pitched_roof_family_counts.get(roof_family, 0)) + 1
+					pitched_roof_recipe_counts[pitched_id] = int(
+						pitched_roof_recipe_counts.get(pitched_id, 0)) + 1
 					one_storey_chimney_roof_count += int(
 						room.source_storey_index == 0 and String(pitched_id) \
 							.contains(".short."))
+					dormered_pitched_roof_count += int(pitched_recipe.has_tag(
+						&"dormer"))
+					paired_dormer_roof_count += int(pitched_recipe.has_tag(
+						&"paired_dormer"))
 					selected = true
 					break
 				pitched_rejections.append({"recipe_id": pitched_id,
@@ -1523,9 +1577,29 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					"flat: exact roof volume enters public air")
 			else:
 				if probe.add_unit(flat):
+					var garden_id := StringName("%s.garden" % flat_id)
+					var garden_recipe := program.recipe(garden_id)
+					if garden_recipe == null:
+						last_failure = "missing flat-roof garden accent %s" \
+							% garden_id
+						return [] as Array[FabricUnit]
+					var garden := _flat_roof_garden_unit(room_id, flat,
+						garden_id)
+					if not probe.add_unit(garden):
+						var garden_rejection := probe.last_rejection
+						flat_garden_rejections.append({"room_id": room_id,
+							"recipe_id": garden_id,
+							"rejection": garden_rejection})
+						last_failure = "flat roof %s has no collision-free central accent: %s" \
+							% [room_id, garden_rejection]
+						return [] as Array[FabricUnit]
 					out.append(flat)
+					out.append(garden)
 					realized_face_count += face_cells.size()
 					flat_count += 1
+					flat_garden_count += 1
+					flat_roof_recipe_counts[flat_id] = int(
+						flat_roof_recipe_counts.get(flat_id, 0)) + 1
 					continue
 				rejected_flat_count += 1
 				attempt_failures.append("flat: %s" % probe.last_rejection)
@@ -1581,6 +1655,53 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				.contains(".terrace."))
 			garden_cap_count += int(String(cap_unit.recipe_id) \
 				.contains(".garden."))
+	var roof_unit_by_room: Dictionary = {}
+	for roof_unit: FabricUnit in out:
+		var roof_text := String(roof_unit.stable_id)
+		if roof_text.begins_with("spatial.roof.") \
+				and not roof_text.contains(".cap"):
+			roof_unit_by_room[StringName(roof_text.trim_prefix(
+				"spatial.roof."))] = roof_unit
+	var roof_trim_count := 0
+	for pending: Dictionary in pending_roof_trims:
+		var room_id := StringName(pending.room_id)
+		var parent_roof := roof_unit_by_room.get(room_id) as FabricUnit
+		var component := pending.component as Dictionary
+		if parent_roof == null:
+			last_failure = "roof trim %s lost its bearing roof" % room_id
+			return [] as Array[FabricUnit]
+		var side := int(component.get("roof_junction_side", -1))
+		var side_name := "negative" \
+			if side == FabricRoofTopologyPlan.Side.EAVE_NEGATIVE else "positive"
+		var seams: Array[StringName] = []
+		for seam_value: Variant in component.get("neighbor_room_ids", []):
+			var neighbor_room_id := StringName(seam_value)
+			# A classified valley/eave trim physically seals to both the
+			# neighboring roof and its wall plate.  The roof is not a proxy for
+			# that room: on stepped contacts the authored trim deliberately
+			# reaches the neighboring facade before it reaches the roof volume.
+			var neighbor_room := unit_by_room.get(neighbor_room_id) as FabricUnit
+			if neighbor_room != null:
+				seams.append(neighbor_room.stable_id)
+			var neighbor_roof := roof_unit_by_room.get(
+				neighbor_room_id) as FabricUnit
+			if neighbor_roof != null:
+				seams.append(neighbor_roof.stable_id)
+		seams = _unique_sorted_names(seams)
+		var trim := FabricUnit.new(StringName("%s.trim.%02d" % [
+			parent_roof.stable_id, roof_trim_count]),
+			StringName(component.recipe_id), component.origin as Vector3i,
+			int(component.yaw_quarters),
+			[parent_roof.stable_id] as Array[StringName],
+			[FabricUnit.bond(&"bearing.bottom", parent_roof.stable_id,
+				StringName("bearing.junction.eave.%s" % side_name))] \
+				as Array[Dictionary], &"", seams)
+		if not probe.add_unit(trim):
+			last_failure = "classified roof trim %s was rejected: %s" % [
+				trim.stable_id, probe.last_rejection]
+			return [] as Array[FabricUnit]
+		out.append(trim)
+		roof_trim_count += 1
 	if realized_face_count != source_face_count:
 		last_failure = "roof realization covered %d of %d authoritative faces" % [
 			realized_face_count, source_face_count]
@@ -1593,11 +1714,15 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"pitched_roof_count": pitched_count,
 		"flat_roof_count": flat_count,
 		"flat_roof_terrace_count": flat_terrace_count,
+		"flat_roof_garden_count": flat_garden_count,
+		"flat_roof_garden_rejections": flat_garden_rejections,
+		"flat_roof_recipe_counts": flat_roof_recipe_counts,
 		"lived_in_flat_roof_terrace_count": lived_in_flat_terrace_count,
 		"awning_flat_roof_terrace_count": awning_flat_terrace_count,
 		"furnished_flat_roof_terrace_count": furnished_flat_terrace_count,
 		"lamped_flat_roof_terrace_count": lamped_flat_terrace_count,
-		"bare_flat_roof_count": flat_count - flat_terrace_count,
+		"bare_flat_roof_count": flat_count - flat_terrace_count \
+			- flat_garden_count,
 		"setback_cap_unit_count": cap_count,
 		"setback_terrace_unit_count": terrace_cap_count,
 		"setback_garden_unit_count": garden_cap_count,
@@ -1607,12 +1732,28 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"setback_terrace_fallback_count": terrace_cap_fallback_count,
 		"setback_garden_fallback_count": garden_cap_fallback_count,
 		"one_storey_chimney_roof_count": one_storey_chimney_roof_count,
+		"dormered_pitched_roof_count": dormered_pitched_roof_count,
+		"paired_dormer_roof_count": paired_dormer_roof_count,
 		"rejected_pitched_count": rejected_pitched_count,
 		"rejected_pitched_details": rejected_pitched_details,
 		"rejected_flat_count": rejected_flat_count,
 		"pitched_roof_family_counts": pitched_roof_family_counts,
+		"pitched_roof_recipe_counts": pitched_roof_recipe_counts,
+		"exposed_roof_room_kind_counts": exposed_roof_room_kind_counts,
+		"exposed_roof_feature_counts": exposed_roof_feature_counts,
 		"alternate_pitched_roof_count": alternate_pitched_roof_count,
 		"quarter_turned_square_roof_count": quarter_turned_square_roof_count,
+		"roof_neighborhood_join_count": int(roof_neighborhood.get(
+			"junction_count", 0)),
+		"continuous_ridge_join_count": int(roof_neighborhood.get(
+			"ridge_continuation_count", 0)),
+		"parallel_valley_join_count": int(roof_neighborhood.get(
+			"parallel_valley_count", 0)),
+		"perpendicular_valley_join_count": int(roof_neighborhood.get(
+			"perpendicular_valley_count", 0)),
+		"roof_neighborhood_flattened_room_count": int(roof_neighborhood.get(
+			"flattened_room_count", 0)),
+		"roof_junction_trim_unit_count": roof_trim_count,
 	}
 	return out
 
@@ -1626,6 +1767,15 @@ static func _full_roof_unit(room_id: StringName, room: WarrenRoomStamp,
 		[parent_unit.stable_id] as Array[StringName],
 		[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
 			&"bearing.top")] as Array[Dictionary], &"", seams)
+
+
+static func _flat_roof_garden_unit(room_id: StringName,
+		flat_roof: FabricUnit, recipe_id: StringName) -> FabricUnit:
+	return FabricUnit.new(StringName("spatial.roof.%s.garden" % room_id),
+		recipe_id, flat_roof.lattice_origin, flat_roof.yaw_quarters,
+		[flat_roof.stable_id] as Array[StringName],
+		[FabricUnit.bond(&"bearing.bottom", flat_roof.stable_id,
+			&"bearing.top")] as Array[Dictionary])
 
 
 static func _cap_unit(room_id: StringName, row_index: int,
@@ -1704,11 +1854,17 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 			^ room.lattice_origin.z * 23), 2) == 0 else "blue"
 		if room.source_storey_index == 0:
 			return StringName("roof.tower.short.%s" % theme)
+		if room.roof_feature in [1, 2]:
+			return StringName("roof.tower.%s.dormer.%s" % [theme,
+				"left" if room.roof_feature == 1 else "right"])
 		return StringName("roof.tower.chimney.%s" % theme) \
 			if room.roof_feature == 3 else StringName("roof.tower.%s" % theme)
 	if room.kind == &"slim":
 		if room.source_storey_index == 0:
 			return StringName("roof.slim.short.%s" % theme)
+		if room.roof_feature in [1, 2]:
+			return StringName("roof.slim.%s.dormer.%s" % [theme,
+				"left" if room.roof_feature == 1 else "right"])
 		return StringName("roof.slim.chimney.%s" % theme) \
 			if room.roof_feature == 3 else StringName("roof.slim.%s" % theme)
 	if room.kind == &"long":
@@ -1775,13 +1931,194 @@ static func _architectural_district_owner(origin: Vector3i,
 	return best_owner
 
 
+static func _spatial_roof_neighborhood(source: WarrenSpatialPlan,
+		room_by_id: Dictionary, roof_faces_by_room: Dictionary) -> Dictionary:
+	## The occupancy grid owns the exposed faces, but a roof is selected from the
+	## complete neighborhood. Treating each room independently and then declaring
+	## every overlap a visual seam is exactly what produced broken ridges and
+	## colliding eaves in dense captures. Reuse the measured junction classifier
+	## and module table that already protects the route-first vocabulary.
+	var proposals: Array[Dictionary] = []
+	for room_id_value: Variant in roof_faces_by_room.keys():
+		var room_id := StringName(room_id_value)
+		var room := room_by_id.get(room_id) as WarrenRoomStamp
+		if room == null:
+			continue
+		var face_cells := roof_faces_by_room[room_id] as Array[Vector3i]
+		if not _is_full_roof_plate(room, face_cells) \
+				or _touches_public_air(source.grid, face_cells):
+			continue
+		proposals.append({
+			"stable_id": room_id,
+			"kind": room.kind,
+			"origin": room.lattice_origin,
+			"yaw_quarters": room.yaw_quarters,
+			"storeys": 1,
+			"route_y": room.lattice_origin.y,
+			"roof_feature": room.roof_feature,
+			"theme": &"blue",
+			"ground_theme": &"blue",
+			"facade_phase": 0,
+		})
+	if proposals.is_empty():
+		return {"proposal_by_room": {}, "junction_count": 0,
+			"flattened_room_count": 0}
+	var topology := FabricRoofTopologyPlan.build(proposals)
+	if topology == null:
+		last_failure = "could not classify the spatial roof neighborhood"
+		return {}
+	var by_id: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		by_id[StringName(proposal.stable_id)] = proposal
+	var flattened: Dictionary = {}
+	var ids: Array[StringName] = []
+	ids.assign(by_id.keys())
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	# Reject unsupported junction pairs locally. The fallback is an authored flat
+	# terrace over the exact complete room, never an intersecting pitched shell.
+	for owner_id: StringName in ids:
+		for seam: Dictionary in topology.fact(owner_id).junctions as Array:
+			var neighbor_id := StringName(seam.neighbor_id)
+			if String(owner_id) >= String(neighbor_id):
+				continue
+			var pair: Array[Dictionary] = [
+				(by_id[owner_id] as Dictionary).duplicate(true),
+				(by_id[neighbor_id] as Dictionary).duplicate(true),
+			]
+			var pair_topology := FabricRoofTopologyPlan.build(pair)
+			if pair_topology == null or FabricRoofJunctionModuleTable.build(
+					pair, pair_topology).is_empty():
+				flattened[owner_id] = true
+				flattened[neighbor_id] = true
+	# One authored roof can carry one atomic T-junction. A multi-valley roof is
+	# explicitly outside the finite vocabulary and therefore becomes a terrace.
+	for owner_id: StringName in ids:
+		var perpendicular_count := 0
+		for seam: Dictionary in topology.fact(owner_id).junctions as Array:
+			perpendicular_count += int(int(seam.kind) \
+				== FabricRoofTopologyPlan.JunctionKind.PERPENDICULAR_VALLEY)
+		if perpendicular_count > 1:
+			flattened[owner_id] = true
+	for room_id_value: Variant in flattened.keys():
+		(by_id[StringName(room_id_value)] as Dictionary)["flat_roof"] = true
+	var styled_proposals: Array[Dictionary] = []
+	for room_id: StringName in ids:
+		styled_proposals.append(by_id[room_id] as Dictionary)
+	var junction_modules := FabricRoofJunctionModuleTable.build(
+		styled_proposals, topology)
+	if junction_modules.is_empty():
+		# A higher-order signature can still be unsupported even when each pair is
+		# legal alone. Flatten only the joined roofs and rebuild once; isolated
+		# pitched roofs retain their silhouette and dormers.
+		for room_id: StringName in ids:
+			if not (topology.fact(room_id).junctions as Array).is_empty():
+				flattened[room_id] = true
+				(by_id[room_id] as Dictionary)["flat_roof"] = true
+		styled_proposals.clear()
+		for room_id: StringName in ids:
+			styled_proposals.append(by_id[room_id] as Dictionary)
+		junction_modules = FabricRoofJunctionModuleTable.build(
+			styled_proposals, topology)
+		if junction_modules.is_empty():
+			last_failure = "spatial roof neighborhood has no sealed junction treatment: %s" \
+				% FabricRoofJunctionModuleTable.last_failure
+			return {}
+	var rules_by_id := junction_modules.rules_by_id as Dictionary
+	# Equal-height neighbors form one roof campaign. A shared ridge or valley
+	# cannot change tile family halfway through merely because the two rooms have
+	# different stable IDs; stepped roofs may still vary independently.
+	var assigned_theme: Dictionary = {}
+	for start_id: StringName in ids:
+		if assigned_theme.has(start_id) or flattened.has(start_id):
+			continue
+		var component: Array[StringName] = []
+		var pending: Array[StringName] = [start_id]
+		var seen: Dictionary = {start_id: true}
+		while not pending.is_empty():
+			var current: StringName = pending.pop_back()
+			component.append(current)
+			for seam: Dictionary in topology.fact(current).junctions as Array:
+				var neighbor := StringName(seam.neighbor_id)
+				if int(seam.height_delta) != 0 or flattened.has(neighbor) \
+						or seen.has(neighbor):
+					continue
+				seen[neighbor] = true
+				pending.append(neighbor)
+		component.sort_custom(func(a: StringName, b: StringName) -> bool:
+			return String(a) < String(b))
+		var anchor_room := room_by_id[component[0]] as WarrenRoomStamp
+		var theme := _architectural_district_theme(anchor_room.lattice_origin,
+			source.world_seed)
+		var roof_theme := &"orange" if theme == &"orange" else &"blue"
+		for room_id: StringName in component:
+			assigned_theme[room_id] = roof_theme
+	for room_id: StringName in ids:
+		var proposal := by_id[room_id] as Dictionary
+		if not assigned_theme.has(room_id):
+			var room := room_by_id[room_id] as WarrenRoomStamp
+			var theme := _architectural_district_theme(room.lattice_origin,
+				source.world_seed)
+			assigned_theme[room_id] = &"orange" \
+				if theme == &"orange" else &"blue"
+		proposal["roof_theme"] = assigned_theme[room_id]
+		var rules: Array[Dictionary] = []
+		rules.assign(rules_by_id.get(room_id, []) as Array)
+		proposal["roof_junction_rules"] = rules
+		proposal["roof_signature"] = StringName(topology.fact(room_id).signature)
+		by_id[room_id] = proposal
+	return {
+		"proposal_by_room": by_id,
+		"junction_count": int(topology.audit.junction_count),
+		"ridge_continuation_count": int(topology.audit \
+			.ridge_continuation_count),
+		"parallel_valley_count": int(topology.audit.parallel_valley_count),
+		"perpendicular_valley_count": int(topology.audit \
+			.perpendicular_valley_count),
+		"flattened_room_count": flattened.size(),
+	}
+
+
 static func _full_roof_candidates(room: WarrenRoomStamp,
-		world_seed: int) -> Array[Dictionary]:
+		world_seed: int, neighborhood_proposal: Dictionary = {}) \
+		-> Array[Dictionary]:
 	## Construction gets a finite exact alternative set before falling back to a
 	## flat cap. Decorative projections are removed first. Square floorplates may
 	## also turn a reviewed roof profile by 90 degrees because their semantic
 	## solid set is rotation-invariant; rectangular rooms may not rotate their
 	## ridge sideways. No candidate moves or scales the authored asset.
+	if not neighborhood_proposal.is_empty() \
+			and bool(neighborhood_proposal.get("flat_roof", false)):
+		return [] as Array[Dictionary]
+	if not neighborhood_proposal.is_empty() \
+			and not (neighborhood_proposal.get(
+				"roof_junction_rules", []) as Array).is_empty():
+		var roof_component: Dictionary = {}
+		var trim_components: Array[Dictionary] = []
+		for component: Dictionary in StaggeredFabricCompiler \
+				.proposal_components(neighborhood_proposal):
+			var role := StringName(component.role)
+			if role == &"roof":
+				roof_component = component
+			elif String(role).begins_with("roof.trim."):
+				var trim := component.duplicate(true)
+				var neighbors: Array[StringName] = []
+				for rule: Dictionary in neighborhood_proposal \
+						.roof_junction_rules as Array:
+					if bool(rule.get("emits_module", false)) \
+							and int(rule.side) == int(component \
+								.roof_junction_side):
+						neighbors.append(StringName(rule.neighbor_id))
+				trim["neighbor_room_ids"] = neighbors
+				trim_components.append(trim)
+		if not roof_component.is_empty():
+			return [{
+				"recipe_id": StringName(roof_component.recipe_id),
+				"yaw_offset": posmod(int(roof_component.yaw_quarters) \
+					- room.yaw_quarters, 4),
+				"uses_roof_neighborhood": true,
+				"trim_components": trim_components,
+			}] as Array[Dictionary]
 	var preferred := _full_roof_recipe_id(room, world_seed)
 	var ids: Array[StringName] = [preferred]
 	var preferred_text := String(preferred)
