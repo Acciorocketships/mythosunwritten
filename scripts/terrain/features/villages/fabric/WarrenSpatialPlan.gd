@@ -21,6 +21,12 @@ var support_graph: WarrenSupportGraph
 var construction_plan: WarrenConstructionRegionPlan
 var audit: Dictionary = {}
 var last_rejection := ""
+## Output-pure derived cache populated only after the exact production compiler
+## accepts this sealed topology. It is excluded from the deterministic signature
+## and lets the village adapter reuse the proof the selector just paid for.
+var _compiled_fabric_cache: SettlementFabricPlan
+var _compiled_room_units_cache: Array[FabricUnit] = []
+var _compiled_room_audit_cache: Dictionary = {}
 var _route_set: Dictionary = {}
 var _building_by_id: Dictionary = {}
 var _feature_by_id: Dictionary = {}
@@ -130,6 +136,39 @@ func seal(p_entry_floor_cell: Vector3i) -> bool:
 
 func is_sealed() -> bool:
 	return _sealed
+
+
+func cache_compiled_fabric(value: SettlementFabricPlan) -> bool:
+	if not _sealed or value == null or not value.is_sealed() \
+			or _compiled_fabric_cache != null:
+		return false
+	_compiled_fabric_cache = value
+	return true
+
+
+func compiled_fabric_cache() -> SettlementFabricPlan:
+	return _compiled_fabric_cache
+
+
+func cache_compiled_room_units(values: Array[FabricUnit],
+		room_audit: Dictionary) -> bool:
+	if not _sealed or values.is_empty() \
+			or not _compiled_room_units_cache.is_empty():
+		return false
+	_compiled_room_units_cache.assign(values)
+	_compiled_room_audit_cache = room_audit.duplicate(true)
+	return true
+
+
+func compiled_room_units_cache() -> Array[FabricUnit]:
+	var out: Array[FabricUnit] = []
+	if not _compiled_room_units_cache.is_empty():
+		out.assign(_compiled_room_units_cache)
+	return out
+
+
+func compiled_room_audit_cache() -> Dictionary:
+	return _compiled_room_audit_cache.duplicate(true)
 
 
 func deterministic_signature() -> String:

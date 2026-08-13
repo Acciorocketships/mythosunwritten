@@ -66,7 +66,8 @@ extends RefCounted
 ## WarrenBuildingParcel.seal() rejects a footprint deeper across the street
 ## than into the block, so the family is a contract rather than a preference.
 const SHAPES: Array[Vector2i] = [
-	Vector2i(2, 3), Vector2i(2, 2), Vector2i(1, 2), Vector2i(1, 1),
+	Vector2i(2, 3), Vector2i(2, 2), Vector2i(2, 1), Vector2i(1, 2),
+	Vector2i(1, 1),
 ]
 const DIRECTIONS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
@@ -136,6 +137,7 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 	# unjoinable roof, which is the first one on all but a few seeds.
 	var best_diagnostic: Dictionary = {}
 	var best_unjoinable := 1 << 30
+	var best_corner_excess := 1 << 30
 	# A caller that names a variant gets exactly that arrangement, so the
 	# frontier can rank several partitions of one volume against every gate
 	# rather than this class picking one on a criterion that knows about roofs
@@ -146,11 +148,18 @@ static func partition(massif: WarrenMassif, excavation: WarrenExcavation,
 		var attempt := _partition_variant(massif, excavation, first + offset,
 			volume)
 		var unjoinable := int(last_diagnostic["unjoinable_roof_count"])
-		if not attempt.is_empty() and unjoinable < best_unjoinable:
+		var corner_pairs := _corner_only_pair_count(attempt)
+		var corner_excess := maxi(0, corner_pairs * 2 - attempt.size())
+		last_diagnostic["corner_only_pair_count"] = corner_pairs
+		last_diagnostic["corner_only_pair_excess"] = corner_excess
+		if not attempt.is_empty() and (unjoinable < best_unjoinable \
+				or unjoinable == best_unjoinable \
+				and corner_excess < best_corner_excess):
 			out = attempt
 			best_diagnostic = last_diagnostic
 			best_unjoinable = unjoinable
-		if best_unjoinable == 0:
+			best_corner_excess = corner_excess
+		if best_unjoinable == 0 and best_corner_excess == 0:
 			break
 	last_diagnostic = best_diagnostic
 	if out.size() < MIN_PARCELS:
@@ -1146,26 +1155,49 @@ static func _pair_can_meet(parcel: WarrenBuildingParcel,
 	var contact := _contact_direction(parcel.footprint, other.footprint)
 	if contact == Vector2i.ZERO:
 		return true
-	if (parcel.frontage_direction.x == 0) \
-			!= (other.frontage_direction.x == 0):
+	var parcel_ridge := _ridge_direction(parcel)
+	var other_ridge := _ridge_direction(other)
+	if (parcel_ridge.x == 0) != (other_ridge.x == 0):
 		return false
-	if _crosses_frontage(parcel.frontage_direction, contact):
+	if contact.x * parcel_ridge.x + contact.y * parcel_ridge.y == 0:
 		return true
 	var span := _contact_span(parcel.footprint, other.footprint, contact)
-	return span == _width_cells(parcel) and span == _width_cells(other)
+	return span == _gable_width_cells(parcel, parcel_ridge) \
+		and span == _gable_width_cells(other, other_ridge)
 
 
-static func _width_cells(parcel: WarrenBuildingParcel) -> int:
-	## Gable width: the footprint's extent across its ridge, derived the way
-	## WarrenBuildingParcel.seal() derives width_cells, so it is available
-	## before the parcel has been sealed.
+static func _ridge_direction(parcel: WarrenBuildingParcel) -> Vector2i:
+	## Every original parcel family runs its ridge into the plot, along the
+	## frontage normal. The broad/shallow row is deliberately rotated: its ridge
+	## follows the two-module street facade. Derive this before sealing so source
+	## search and FabricRoofTopologyPlan classify the same contact.
+	var perpendicular := Vector2i(-parcel.frontage_direction.y,
+		parcel.frontage_direction.x)
+	return perpendicular if parcel.footprint.size() == 2 \
+		and _footprint_depth(parcel) == 1 \
+		else parcel.frontage_direction
+
+
+static func _gable_width_cells(parcel: WarrenBuildingParcel,
+		ridge: Vector2i) -> int:
+	## Complete gable span is the footprint extent perpendicular to the ridge.
+	## For a row this is its one-cell depth, not its two-cell street frontage.
+	var size := _footprint_size(parcel.footprint)
+	return size.y if ridge.x != 0 else size.x
+
+
+static func _footprint_size(footprint: Array[Vector2i]) -> Vector2i:
 	var minimum := Vector2i(1 << 30, 1 << 30)
 	var maximum := Vector2i(-(1 << 30), -(1 << 30))
-	for column: Vector2i in parcel.footprint:
+	for column: Vector2i in footprint:
 		minimum = minimum.min(column)
 		maximum = maximum.max(column)
-	var size := maximum - minimum + Vector2i.ONE
-	return size.y if parcel.frontage_direction.x != 0 else size.x
+	return maximum - minimum + Vector2i.ONE
+
+
+static func _footprint_depth(parcel: WarrenBuildingParcel) -> int:
+	var size := _footprint_size(parcel.footprint)
+	return size.x if parcel.frontage_direction.x != 0 else size.y
 
 
 static func _contact_span(left: Array[Vector2i], right: Array[Vector2i],
@@ -1275,7 +1307,12 @@ static func _top_band(footprint: Array[Vector2i], base: int,
 	# be supported at its highest corner and float above the lowest. That is a
 	# masonry terrace, not a terrain-rooted house; let a narrower footprint fit
 	# the step instead.
-	if not footprint_fits_plinth_budget(massif, footprint):
+	# A fully borne footprint descends to its natural bearing datum during
+	# construction, so its addressed street band is not a plinth height. A mixed
+	# span cannot descend through its intentionally open columns and therefore
+	# stays at `base`; only that case must also prove the actual lift here.
+	var support_band := base if bearing < footprint.size() else 1 << 30
+	if not footprint_fits_plinth_budget(massif, footprint, support_band):
 		return base
 	if bearing * 2 < footprint.size():
 		return base
@@ -1292,7 +1329,7 @@ static func _top_band(footprint: Array[Vector2i], base: int,
 
 
 static func footprint_fits_plinth_budget(massif: WarrenMassif,
-		footprint: Array[Vector2i]) -> bool:
+		footprint: Array[Vector2i], support_band: int = 1 << 30) -> bool:
 	if massif == null or footprint.is_empty():
 		return false
 	var lowest_ground := 2147483647
@@ -1302,7 +1339,23 @@ static func footprint_fits_plinth_budget(massif: WarrenMassif,
 			return false
 		lowest_ground = mini(lowest_ground, massif.bearing_at(column))
 		highest_ground = maxi(highest_ground, massif.bearing_at(column))
-	return highest_ground - lowest_ground <= WarrenMassif.PLINTH_BUDGET_BANDS
+	if highest_ground - lowest_ground > WarrenMassif.PLINTH_BUDGET_BANDS:
+		return false
+	return support_band == 1 << 30 \
+		or support_band - lowest_ground <= WarrenMassif.PLINTH_BUDGET_BANDS
+
+
+static func _corner_only_pair_count(parcels: Array[WarrenBuildingParcel]) -> int:
+	var count := 0
+	for left_index in parcels.size():
+		for right_index in range(left_index + 1, parcels.size()):
+			var left := parcels[left_index]
+			var right := parcels[right_index]
+			if _contact_direction(left.footprint, right.footprint) \
+					== Vector2i.ZERO and _footprints_share_a_corner(
+						left.footprint, right.footprint):
+				count += 1
+	return count
 
 
 static func _is_grounded(massif: WarrenMassif, excavation: WarrenExcavation,

@@ -269,12 +269,18 @@ func test_a_partition_that_claims_joinable_roofs_really_compiles() -> void:
 
 func test_equal_roof_bands_never_meet_across_a_corner() -> void:
 	## The rule the partitioner enforces, checked independently of the code that
-	## enforces it: re-derives adjacency and frontage from the parcels and
+	## enforces it: re-derives adjacency and the authored ridge direction from
+	## the parcels and
 	## asserts no two houses share a roof band across a corner, because a
 	## perpendicular valley between the width-one houses the leftover solid
 	## mostly yields has no recipe at all. Together with the test above this
 	## pins both halves -- that the rule holds, and that holding it is what
 	## makes the real module table accept the plan.
+	##
+	## Do not compare frontage axes directly. The broad/shallow `row` family
+	## deliberately turns its ridge ninety degrees so its broad street facade is
+	## an eave; two legal row contacts can therefore have perpendicular frontage
+	## while their authored ridges remain parallel.
 	var equal_pairs := 0
 	for world_seed: int in CORPUS:
 		var town := _town(world_seed)
@@ -282,6 +288,7 @@ func test_equal_roof_bands_never_meet_across_a_corner() -> void:
 			continue
 		var parcels := town["parcels"] as Array[WarrenBuildingParcel]
 		var corners := 0
+		var corner_details := PackedStringArray()
 		for left_index in parcels.size():
 			for right_index in range(left_index + 1, parcels.size()):
 				var left := parcels[left_index]
@@ -291,8 +298,15 @@ func test_equal_roof_bands_never_meet_across_a_corner() -> void:
 							right.footprint):
 					continue
 				equal_pairs += 1
-				corners += int((left.frontage_direction.x == 0) \
-					!= (right.frontage_direction.x == 0))
+				var left_ridge := _parcel_ridge(left)
+				var right_ridge := _parcel_ridge(right)
+				if (left_ridge.x == 0) != (right_ridge.x == 0):
+					corners += 1
+					corner_details.append("%s(%s,%s) <> %s(%s,%s)" % [
+						left.stable_id,
+						_parcel_shape(left), left_ridge,
+						right.stable_id,
+						_parcel_shape(right), right_ridge])
 		if int(town["unjoinable"]) != 0:
 			# One house with no joinable roof can abut two neighbours, so the
 			# reported count bounds the houses involved, not the pairs. What
@@ -300,7 +314,8 @@ func test_equal_roof_bands_never_meet_across_a_corner() -> void:
 			continue
 		assert_eq(corners, 0,
 			("seed %d: %d equal-height corner pairs in a partition that " \
-			+ "reported every roof joinable") % [world_seed, corners])
+			+ "reported every roof joinable: %s") % [world_seed, corners,
+				str(corner_details)])
 	assert_gt(equal_pairs, 0,
 		("no equal-height neighbours anywhere in the corpus would mean this " \
 		+ "rule passes by forbidding every terrace row"))
@@ -982,7 +997,7 @@ func test_a_grounded_corpus_seed_draws_its_declared_plinths() -> void:
 
 func test_footprints_stay_in_the_authored_family() -> void:
 	## Every shape must have an authored roof profile downstream. A footprint
-	## outside WarrenParcelConstruction's four profiles compiles to nothing at
+	## outside WarrenParcelConstruction's five profiles compiles to nothing at
 	## all, so the family is a contract rather than a stylistic preference.
 	var town := _town(1)
 	assert_false(town.is_empty())
@@ -1000,6 +1015,9 @@ func test_footprints_stay_in_the_authored_family() -> void:
 			"parcel %s has no authored roof profile" % parcel.stable_id)
 	assert_gt(families.size(), 1,
 		"a warren of one repeated footprint is not a partitioned town")
+	assert_true(families.has(Vector2i(2, 1)),
+		("the production partition must exercise the broad/shallow rowhouse " \
+		+ "source contract instead of decomposing every street row into towers"))
 
 
 func test_partition_is_deterministic_with_and_without_exact_surface_selection() -> void:
@@ -1179,6 +1197,36 @@ func _footprints_touch(left: Array[Vector2i], right: Array[Vector2i]) -> bool:
 			if occupied.has(column + direction):
 				return true
 	return false
+
+
+func _parcel_ridge(parcel: WarrenBuildingParcel) -> Vector2i:
+	## Independent restatement of the authored roof-family contract. All narrow
+	## and square families run the ridge into the parcel; the sole broad/shallow
+	## family runs it along its two-module facade. Raw partition corpus parcels
+	## are intentionally unsealed, so derive width/depth from their footprint
+	## instead of reading the fields `seal()` populates.
+	var size := _parcel_footprint_size(parcel)
+	var depth := size.x if parcel.frontage_direction.x != 0 else size.y
+	if parcel.footprint.size() == 2 and depth == 1:
+		return Vector2i(-parcel.frontage_direction.y,
+			parcel.frontage_direction.x)
+	return parcel.frontage_direction
+
+
+func _parcel_shape(parcel: WarrenBuildingParcel) -> String:
+	var size := _parcel_footprint_size(parcel)
+	var depth := size.x if parcel.frontage_direction.x != 0 else size.y
+	var width := size.y if parcel.frontage_direction.x != 0 else size.x
+	return "%dx%d" % [width, depth]
+
+
+func _parcel_footprint_size(parcel: WarrenBuildingParcel) -> Vector2i:
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for column: Vector2i in parcel.footprint:
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	return maximum - minimum + Vector2i.ONE
 
 
 func _owned_cells(parcels: Array[WarrenBuildingParcel]) -> Dictionary:

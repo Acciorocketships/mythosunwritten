@@ -366,7 +366,9 @@ static func ranked_candidates(world_seed: int,
 
 static func mass_first_frontier(world_seed: int,
 		ground_bands: Dictionary = {},
-		scale_profile: WarrenVillageScaleProfile = null) \
+		scale_profile: WarrenVillageScaleProfile = null,
+		maximum_surviving_attempts: int = -1,
+		first_attempt: int = 0) \
 		-> Array[WarrenVolumePlan]:
 	## The mass-first topology frontier: one terraced solid, bored repeatedly,
 	## each bore adapted into the same sealed WarrenVolumePlan the route-first
@@ -385,6 +387,13 @@ static func mass_first_frontier(world_seed: int,
 	## null is skipped and the search continues; only an empty frontier fails,
 	## and it reports where the corpus was lost rather than that it was.
 	var out: Array[WarrenVolumePlan] = []
+	last_failure = ""
+	last_timing_diagnostic = {}
+	if first_attempt < 0 or first_attempt >= MASS_FIRST_EXCAVATION_ATTEMPTS \
+			or maximum_surviving_attempts == 0:
+		last_failure = "invalid staged mass-first frontier range"
+		return out
+	var solve_started := Time.get_ticks_msec()
 	var profile := scale_profile if scale_profile != null \
 		else WarrenVillageScaleProfile.review_fixture()
 	var massif := WarrenMassifBuilder.build(world_seed, ground_bands, profile)
@@ -401,18 +410,38 @@ static func mass_first_frontier(world_seed: int,
 	var arcade_failure := ""
 	var frontage_failures := PackedStringArray()
 	var post_gallery_failures := PackedStringArray()
-	for attempt in MASS_FIRST_EXCAVATION_ATTEMPTS:
+	var attempted := 0
+	var surviving_attempts := 0
+	var last_attempt_index := first_attempt - 1
+	var attempt_timings: Array[Dictionary] = []
+	for attempt in range(first_attempt, MASS_FIRST_EXCAVATION_ATTEMPTS):
+		var attempt_started_ms := Time.get_ticks_msec()
+		var stage_started_ms := attempt_started_ms
+		var attempt_timing := {"attempt": attempt}
+		attempted += 1
+		last_attempt_index = attempt
+		var output_count_before_attempt := out.size()
 		var excavation := WarrenExcavationCarver.carve(
 			world_seed + attempt * MASS_FIRST_ATTEMPT_STRIDE, massif, profile)
+		attempt_timing["excavation_ms"] = Time.get_ticks_msec() - stage_started_ms
+		stage_started_ms = Time.get_ticks_msec()
 		if excavation == null:
 			excavation_failure = "%s diagnostic=%s" % [
 				WarrenExcavationCarver.last_failure,
 				WarrenExcavationCarver.last_diagnostic]
+			attempt_timing["outcome"] = &"excavation"
+			attempt_timing["total_ms"] = Time.get_ticks_msec() - attempt_started_ms
+			attempt_timings.append(attempt_timing)
 			continue
 		carved += 1
 		var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
 			excavation)
+		attempt_timing["adapter_ms"] = Time.get_ticks_msec() - stage_started_ms
+		stage_started_ms = Time.get_ticks_msec()
 		if volume == null:
+			attempt_timing["outcome"] = &"adapter"
+			attempt_timing["total_ms"] = Time.get_ticks_msec() - attempt_started_ms
+			attempt_timings.append(attempt_timing)
 			continue
 		_attach_scale_profile(volume, profile)
 		adapted += 1
@@ -426,16 +455,30 @@ static func mass_first_frontier(world_seed: int,
 		# bite here -- a complete six-band frontage on 55% of route cells, and
 		# at least one ramp -- because the excavation carver's own gates ask
 		# only for street-height flanking walls and no ramp at all.
-		if not WarrenPublicRealmCarver.passes_topology_gate(volume):
+		var passes_topology := WarrenPublicRealmCarver.passes_topology_gate(volume)
+		attempt_timing["topology_gate_ms"] = \
+			Time.get_ticks_msec() - stage_started_ms
+		stage_started_ms = Time.get_ticks_msec()
+		if not passes_topology:
+			attempt_timing["outcome"] = &"topology_gate"
+			attempt_timing["total_ms"] = Time.get_ticks_msec() - attempt_started_ms
+			attempt_timings.append(attempt_timing)
 			continue
 		gated += 1
 		volume = WarrenGroundArcadeSolver.extend_preserving_topology(volume)
+		attempt_timing["arcade_ms"] = Time.get_ticks_msec() - stage_started_ms
+		stage_started_ms = Time.get_ticks_msec()
 		if volume == null:
 			arcade_failure = WarrenGroundArcadeSolver.last_failure
+			attempt_timing["outcome"] = &"arcade"
+			attempt_timing["total_ms"] = Time.get_ticks_msec() - attempt_started_ms
+			attempt_timings.append(attempt_timing)
 			continue
 		arcaded += 1
 		var gallery_variants := WarrenElevatedFrontageSolver.variants(volume,
 			profile.requires_elevated_courtyard)
+		attempt_timing["gallery_ms"] = Time.get_ticks_msec() - stage_started_ms
+		stage_started_ms = Time.get_ticks_msec()
 		gallery_variant_count += gallery_variants.size()
 		if gallery_variants.is_empty():
 			var frontage_failure := WarrenElevatedFrontageSolver.last_failure
@@ -465,6 +508,26 @@ static func mass_first_frontier(world_seed: int,
 				continue
 			regated += 1
 			out.append(gallery_variant)
+		attempt_timing["regate_ms"] = Time.get_ticks_msec() - stage_started_ms
+		attempt_timing["survivor_count"] = out.size() - output_count_before_attempt
+		attempt_timing["outcome"] = &"survived" \
+			if out.size() > output_count_before_attempt else &"gallery_gate"
+		attempt_timing["total_ms"] = Time.get_ticks_msec() - attempt_started_ms
+		attempt_timings.append(attempt_timing)
+		if out.size() > output_count_before_attempt:
+			surviving_attempts += 1
+			if maximum_surviving_attempts > 0 \
+					and surviving_attempts >= maximum_surviving_attempts:
+				break
+	last_timing_diagnostic = {
+		"first_attempt_index": first_attempt,
+		"last_attempt_index": last_attempt_index,
+		"attempt_count": attempted,
+		"surviving_attempt_count": surviving_attempts,
+		"frontier_count": out.size(),
+		"attempt_timings": attempt_timings,
+		"total_ms": Time.get_ticks_msec() - solve_started,
+	}
 	if out.is_empty():
 		# Naming the stage that ate the corpus is the whole diagnostic value
 		# here: a bare "nothing survived" sends the next reader back to
@@ -477,7 +540,7 @@ static func mass_first_frontier(world_seed: int,
 			+ ("(%d/%d bores carved, %d adapted, %d passed the topology " \
 			+ "gate, %d arcaded, %d gallery variants, %d passed the " \
 			+ "post-gallery gate%s)")) \
-			% [carved, MASS_FIRST_EXCAVATION_ATTEMPTS, adapted, gated,
+			% [carved, attempted, adapted, gated,
 				arcaded, gallery_variant_count, regated,
 			"; post-gallery: %s" % " | ".join(post_gallery_failures) \
 				if not post_gallery_failures.is_empty() \

@@ -831,10 +831,8 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 	## footprint and therefore cannot invalidate the town solve.
 	var junction_modules := FabricRoofJunctionModuleTable.build(proposals,
 		roof_topology)
-	if junction_modules.is_empty() and inhabited_massif \
-			and FabricRoofJunctionModuleTable.last_failure.begins_with(
-				"perpendicular valley"):
-		_flatten_crossing_gables(proposals, roof_topology)
+	if junction_modules.is_empty() and inhabited_massif:
+		_flatten_unbuildable_massif_roof_pairs(proposals, roof_topology)
 		junction_modules = FabricRoofJunctionModuleTable.build(proposals,
 			roof_topology)
 	if junction_modules.is_empty():
@@ -955,22 +953,36 @@ static func _assign_neighborhood_styles(proposals: Array[Dictionary],
 	return true
 
 
-static func _flatten_crossing_gables(proposals: Array[Dictionary],
+static func _flatten_unbuildable_massif_roof_pairs(
+		proposals: Array[Dictionary],
 		roof_topology: FabricRoofTopologyPlan) -> void:
-	## Finite mass-first fallback for crossing pitched roofs which the authored
-	## bisected-valley table cannot build. Only exact classified perpendicular
-	## contacts participate; unrelated pitched roofs keep their full vocabulary.
+	## Finite mass-first fallback for a pair of touching pitched roofs whose
+	## complete classified junction has no authored module. Both participants
+	## receive complete flat service closures in one transaction; no partial roof,
+	## stretched ridge strip, or coincidental overlap is admitted. Unrelated
+	## pitched roofs keep their full vocabulary.
+	##
+	## Pairwise validation catches both the deliberately unsupported crossing
+	## gables and a partial ridge contact where unequal gable widths make the
+	## phrase "continuous ridge" geometrically false. Higher-order failures are
+	## still rejected by the final full-neighborhood table build below.
 	var by_id: Dictionary = {}
 	for proposal: Dictionary in proposals:
 		by_id[StringName(proposal.stable_id)] = proposal
 	for owner_value: Variant in by_id.keys():
 		var owner_id := StringName(owner_value)
 		for seam: Dictionary in roof_topology.fact(owner_id).junctions as Array:
-			if int(seam.kind) \
-					!= FabricRoofTopologyPlan.JunctionKind.PERPENDICULAR_VALLEY:
-				continue
 			var neighbor_id := StringName(seam.neighbor_id)
-			if not by_id.has(neighbor_id):
+			if String(owner_id) >= String(neighbor_id) \
+					or not by_id.has(neighbor_id):
+				continue
+			var pair: Array[Dictionary] = [
+				(by_id[owner_id] as Dictionary).duplicate(true),
+				(by_id[neighbor_id] as Dictionary).duplicate(true),
+			]
+			var pair_topology := FabricRoofTopologyPlan.build(pair)
+			if pair_topology != null and not FabricRoofJunctionModuleTable.build(
+					pair, pair_topology).is_empty():
 				continue
 			(by_id[owner_id] as Dictionary)["flat_roof"] = true
 			(by_id[neighbor_id] as Dictionary)["flat_roof"] = true

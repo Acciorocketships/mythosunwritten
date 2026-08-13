@@ -32,6 +32,7 @@ var skywalk_range: Vector2i
 var balcony_range: Vector2i
 var cantilever_range: Vector2i
 var landmark_range: Vector2i
+var minimum_inhabited_overhead_ratio: float
 var requires_elevated_courtyard: bool
 var requires_covered_market: bool
 
@@ -43,6 +44,7 @@ func _init(p_scale_id: StringName, p_radius_cells: int,
 		p_residual_room_budget: int, p_residual_kind_budget: int,
 		p_skywalk_range: Vector2i, p_balcony_range: Vector2i,
 		p_cantilever_range: Vector2i, p_landmark_range: Vector2i,
+		p_minimum_inhabited_overhead_ratio: float,
 		p_requires_elevated_courtyard: bool,
 		p_requires_covered_market: bool = true) -> void:
 	scale_id = p_scale_id
@@ -60,6 +62,7 @@ func _init(p_scale_id: StringName, p_radius_cells: int,
 	balcony_range = p_balcony_range
 	cantilever_range = p_cantilever_range
 	landmark_range = p_landmark_range
+	minimum_inhabited_overhead_ratio = p_minimum_inhabited_overhead_ratio
 	requires_elevated_courtyard = p_requires_elevated_courtyard
 	requires_covered_market = p_requires_covered_market
 	assert(validate())
@@ -79,11 +82,13 @@ func validate() -> bool:
 		and _nonnegative_range(skywalk_range) and skywalk_range.x >= 1 \
 		and _nonnegative_range(balcony_range) \
 		and _nonnegative_range(cantilever_range) \
-		and _nonnegative_range(landmark_range)
+		and _nonnegative_range(landmark_range) \
+		and minimum_inhabited_overhead_ratio > 0.0 \
+		and minimum_inhabited_overhead_ratio <= 0.5
 
 
 func deterministic_signature() -> String:
-	return "%s/r%d/core%d-%d/route%d-%d/span%d-%d/lanes%d:%d/rooms%d-%d/residual%d:%d/sky%d-%d/bal%d-%d/cant%d-%d/land%d-%d/court%d/market%d" % [
+	return "%s/r%d/core%d-%d/route%d-%d/span%d-%d/lanes%d:%d/rooms%d-%d/residual%d:%d/sky%d-%d/bal%d-%d/cant%d-%d/land%d-%d/over%.3f/court%d/market%d" % [
 		String(scale_id), radius_cells, minimum_core_bands, maximum_core_bands,
 		route_cell_range.x, route_cell_range.y, route_span_range.x,
 		route_span_range.y, lane_budget, lane_cell_budget,
@@ -91,7 +96,8 @@ func deterministic_signature() -> String:
 		residual_room_budget, residual_kind_budget, skywalk_range.x,
 		skywalk_range.y, balcony_range.x, balcony_range.y,
 		cantilever_range.x, cantilever_range.y, landmark_range.x,
-		landmark_range.y, int(requires_elevated_courtyard),
+		landmark_range.y, minimum_inhabited_overhead_ratio,
+		int(requires_elevated_courtyard),
 		int(requires_covered_market)]
 
 
@@ -117,22 +123,22 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 			return WarrenVillageScaleProfile.new(COMPACT, 10,
 				Vector2i(14, 17), Vector2i(29, 35), Vector2i(7, 9),
 				8, 34, Vector2i(18, 110), 12, 3, Vector2i(1, 1),
-				Vector2i(2, 3), Vector2i(4, 4), Vector2i(0, 0), false)
+				Vector2i(2, 3), Vector2i(4, 4), Vector2i(0, 0), 0.29, false)
 		STANDARD:
 			return WarrenVillageScaleProfile.new(STANDARD, 11,
 				Vector2i(15, 18), Vector2i(29, 35), Vector2i(7, 9),
 				10, 42, Vector2i(30, 190), 16, 4, Vector2i(2, 2),
-				Vector2i(5, 5), Vector2i(5, 5), Vector2i(1, 1), false)
+				Vector2i(5, 5), Vector2i(5, 5), Vector2i(1, 1), 0.33, false)
 		LARGE:
 			return WarrenVillageScaleProfile.new(LARGE, 12,
 				Vector2i(16, 18), Vector2i(30, 36), Vector2i(8, 10),
-				16, 64, Vector2i(50, 220), 24, 6, Vector2i(2, 3),
-				Vector2i(6, 8), Vector2i(6, 8), Vector2i(2, 2), true)
+				16, 64, Vector2i(50, 220), 24, 6, Vector2i(4, 4),
+				Vector2i(6, 8), Vector2i(6, 8), Vector2i(2, 2), 0.38, true)
 		GRAND:
 			return WarrenVillageScaleProfile.new(GRAND, 14,
 				Vector2i(16, 18), Vector2i(32, 40), Vector2i(8, 12),
-				20, 80, Vector2i(80, 300), 32, 8, Vector2i(3, 3),
-				Vector2i(8, 12), Vector2i(8, 12), Vector2i(3, 3), true)
+				20, 80, Vector2i(80, 300), 32, 8, Vector2i(4, 4),
+				Vector2i(8, 12), Vector2i(8, 12), Vector2i(3, 3), 0.38, true)
 		_:
 			return null
 

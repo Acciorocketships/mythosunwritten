@@ -20,6 +20,7 @@ var _candidate_token := "8000031"
 var _candidate_id := ""
 var _partition_variant := 1
 var _scale_id := WarrenVillageScaleProfile.LARGE
+var _attempt := -1
 var _solve_production := false
 var _production_terrain_site := false
 var _solve_only := false
@@ -71,8 +72,10 @@ func _ready() -> void:
 		if source == null:
 			_fail_and_quit("no requested volumetric source candidate")
 			return
+		var direct_profile := WarrenVillageScaleProfile.for_id(_scale_id)
 		_spatial = WarrenVolumetricSolver.from_volume(source,
-			_partition_variant, program)
+			_partition_variant, program, direct_profile != null \
+				and direct_profile.requires_elevated_courtyard)
 	if _spatial == null:
 		_fail_and_quit("volumetric solve rejected: %s" \
 			% WarrenVolumetricSolver.last_failure)
@@ -164,6 +167,8 @@ func _read_args() -> void:
 			_candidate_id = args[index + 1]
 		elif args[index] == "--variant" and index + 1 < args.size():
 			_partition_variant = int(args[index + 1])
+		elif args[index] == "--attempt" and index + 1 < args.size():
+			_attempt = int(args[index + 1])
 		elif args[index] == "--scale" and index + 1 < args.size():
 			_scale_id = StringName(args[index + 1])
 		elif args[index] == "--solve-production":
@@ -311,7 +316,9 @@ func _select_source(program: SettlementFabricProgram) -> WarrenVolumePlan:
 	var profile := WarrenVillageScaleProfile.for_id(_scale_id)
 	if profile == null or program == null:
 		return null
-	var frontier := WarrenTownSolver.mass_first_frontier(_world_seed, {}, profile)
+	var frontier := WarrenTownSolver.mass_first_attempt_frontier(_world_seed,
+		_attempt, {}, profile) if _attempt >= 0 \
+		else WarrenTownSolver.mass_first_frontier(_world_seed, {}, profile)
 	if _raw_frontier:
 		for candidate: WarrenVolumePlan in frontier:
 			var id_matches := not _candidate_id.is_empty() \
@@ -370,6 +377,7 @@ func _capture_all() -> void:
 	views.append_array(_roof_terrace_views())
 	views.append_array(_dormer_views())
 	views.append_array(_roof_campaign_views())
+	views.append_array(_interstitial_gap_views())
 	views.append_array(_skywalk_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -878,6 +886,42 @@ func _skywalk_views() -> Array[Dictionary]:
 				endpoint_index], "position": seam_eye,
 				"target": seam_target, "fov": 70.0})
 		ordinal += 1
+	return out
+
+
+func _interstitial_gap_views() -> Array[Dictionary]:
+	## Photograph every final sub-tolerance building slot as its own review
+	## obligation. Grouping by the two exact owners avoids one duplicate camera per
+	## fine cell while retaining deterministic ids for before/after recaptures.
+	var groups: Dictionary = {}
+	for detail_value: Variant in _spatial.audit.get(
+			"one_cell_interstitial_gap_details", []) as Array:
+		var detail := detail_value as Dictionary
+		var key := "%s/%s/%s" % [String(detail.negative_owner),
+			String(detail.positive_owner), String(detail.axis)]
+		if not groups.has(key):
+			groups[key] = {"axis": StringName(detail.axis),
+				"cells": [] as Array[Vector3i]}
+		(groups[key].cells as Array[Vector3i]).append(detail.cell as Vector3i)
+	var keys := PackedStringArray(groups.keys())
+	keys.sort()
+	var out: Array[Dictionary] = []
+	for ordinal in keys.size():
+		var group := groups[keys[ordinal]] as Dictionary
+		var cells := group.cells as Array[Vector3i]
+		cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			return _cell_key(a) < _cell_key(b))
+		var centre := _cell_centroid(cells) + Vector3.UP * 0.75
+		var across := Vector3.RIGHT if StringName(group.axis) == &"x" \
+			else Vector3.BACK
+		var along := Vector3(-across.z, 0.0, across.x)
+		out.append({"id": "gap-%02d-oblique" % ordinal,
+			"position": centre + along * 6.0 + across * 3.0 \
+				+ Vector3.UP * 5.0,
+			"target": centre, "fov": 48.0})
+		out.append({"id": "gap-%02d-profile" % ordinal,
+			"position": centre + along * 7.0 + Vector3.UP * 0.8,
+			"target": centre, "fov": 52.0})
 	return out
 
 

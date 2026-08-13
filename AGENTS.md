@@ -343,13 +343,32 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   extension searches a fixed family of primary/secondary lengths and at most eight ranked roots
   per episode, keeping only a complete two-arcade transaction which still passes that common gate;
   it does not relax the thresholds when the greedy roots consume an opposing facade. The solid partition
-  becomes the buildings rather than feeding the route-first packer. Exact mass-first construction
+  becomes the buildings rather than feeding the route-first packer. Production explores excavation
+  attempts in sealed survivor batches and stops as soon as one complete town passes the unchanged
+  construction/quality gates; review calls without a limit still enumerate the full twelve-bore
+  corpus. The first partition order admitted by the cheap inhabited-mass audit is tried first.
+  Within a partition, macro room bearing is repaired and hard-rejected before the more expensive
+  registration/silhouette relief; a source macro preflight performs that proof before the hero
+  feature beam, and the final transaction repeats it afterward. A merged room may carry a source
+  lineage upward only when the resumed authored floorplate is fully borne or has one exact
+  bracketable bay--a one-cell incidental overlap is never a support seam. Registration relief
+  scores the exact exposed shoulder before facade variation and may never replace a roofable seam
+  with an arbitrary voxel shelf; complete room crowns, compound gables, and bound lean-to runs are
+  the only admitted shoulder vocabulary.
+  A successful exact hero-feature room composition is carried into final partitioning instead of
+  recomputing the same deterministic result, unless feature-envelope displacement changed its
+  input parcel set. Exact mass-first construction
   assigns blue/orange/amber timber families through deterministic jittered-Voronoi architectural
   districts about 18 m across, so neighbouring houses and vertical lineages read as related quarters
   instead of per-room colour confetti. Blue and amber quarters take cool slate roofs; orange quarters
   retain warm roofs, deliberately counterbalancing the two compact authored tower roofs whose honest
   source textures are both orange. Storey phase still changes complete authored wall modules and
-  measured facade details. Construction admits only explicit compatible party-wall seams and uses
+  measured facade details. Construction admits only explicit compatible party-wall seams. A sealed
+  `PARTY_WALL` may suppress a facade placement only when all four fine-grid faces behind that one
+  complete 3 m authored wall module meet private volume; partial contacts retain the whole module.
+  Suppression is stored on `FabricUnit`, validated against its recipe, enters the construction
+  signature, and is applied before asset demand/placement expansion, so the renderer never guesses
+  proximity or draws coincident timber/stone skins. Construction uses
   flat roofs only where crossing gables would collide. Touching equal-height room roofs are solved as
   one neighborhood transaction: continuous ridges and measured stepped wall joins are legal.
   Although the generic module table can classify experimental parallel/perpendicular valleys,

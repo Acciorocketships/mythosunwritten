@@ -90,7 +90,13 @@ func seal(volume: WarrenVolumePlan) -> bool:
 	else:
 		depth_cells = size.y
 		width_cells = size.x
-	if depth_cells < width_cells:
+	# A 6 x 3 m rowhouse is the one deliberate broad/shallow member of the
+	# construction grammar. It owns a complete two-module street facade and the
+	# paired-gable roof authored for `room.row`; admitting it here lets source
+	# parcelization choose that macro shape instead of first creating two 3 x 3 m
+	# towers and asking a later visual pass to disguise the seam.
+	if depth_cells < width_cells \
+			and not (width_cells == 2 and depth_cells == 1):
 		return false
 	for column: Vector2i in footprint:
 		for y in range(base_band, top_band):

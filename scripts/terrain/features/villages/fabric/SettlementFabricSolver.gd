@@ -592,6 +592,8 @@ static func _audit_enclosure(plan: SettlementFabricPlan) -> Dictionary:
 	# overfilling legitimate guarded upper courts.
 	var ground_sightline := _audit_sightlines(ground_route_walk, occluders)
 	return {
+		"enclosure_route_cell_count": route_walk.size(),
+		"ground_enclosure_route_cell_count": ground_route_walk.size(),
 		"eligible_frontage_side_count": eligible_sides,
 		"enclosed_frontage_side_count": enclosed_sides,
 		"frontage_ratio": frontage_ratio,

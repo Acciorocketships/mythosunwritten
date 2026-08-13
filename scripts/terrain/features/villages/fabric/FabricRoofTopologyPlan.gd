@@ -67,7 +67,7 @@ func _seal(proposals: Array[Dictionary]) -> bool:
 		var proposal_id := StringName(proposal.get("stable_id", ""))
 		var kind := StringName(proposal.get("kind", ""))
 		if proposal_id.is_empty() or by_id.has(proposal_id) \
-				or not [&"building", &"tower", &"slim", &"long"].has(kind):
+				or not [&"building", &"tower", &"slim", &"row", &"long"].has(kind):
 			return _reject("invalid or duplicate roof proposal")
 		var axes := _axes(proposal)
 		var columns := _columns(proposal)
@@ -187,8 +187,12 @@ func _junction_count() -> int:
 
 static func _junction_kind(left: Dictionary, right: Dictionary,
 		left_side: int, right_side: int, height_delta: int) -> JunctionKind:
-	var same_ridge_orientation := posmod(int(left.yaw_quarters), 2) \
-		== posmod(int(right.yaw_quarters), 2)
+	var left_axes := _axes(left)
+	var right_axes := _axes(right)
+	var left_ridge := left_axes.ridge as Vector2i
+	var right_ridge := right_axes.ridge as Vector2i
+	var same_ridge_orientation := left_ridge == right_ridge \
+		or left_ridge == -right_ridge
 	var left_is_ridge_end := left_side == Side.RIDGE_NEGATIVE \
 		or left_side == Side.RIDGE_POSITIVE
 	var right_is_ridge_end := right_side == Side.RIDGE_NEGATIVE \
@@ -284,8 +288,14 @@ static func _axes(proposal: Dictionary) -> Dictionary:
 	var yaw := int(proposal.get("yaw_quarters", -1))
 	if yaw < 0 or yaw > 3:
 		return {}
-	var ridge_3d := FabricRecipe.transform_direction(Vector3i.BACK, yaw)
-	var eave_3d := FabricRecipe.transform_direction(Vector3i.RIGHT, yaw)
+	# Wide/shallow rowhouses use their broad facade as an eave and therefore run
+	# the ridge along local X. Every other current room family is ridge-Z.
+	var ridge_local := Vector3i.RIGHT \
+		if StringName(proposal.get("kind", &"")) == &"row" else Vector3i.BACK
+	var eave_local := Vector3i.BACK \
+		if StringName(proposal.get("kind", &"")) == &"row" else Vector3i.RIGHT
+	var ridge_3d := FabricRecipe.transform_direction(ridge_local, yaw)
+	var eave_3d := FabricRecipe.transform_direction(eave_local, yaw)
 	return {
 		"ridge": Vector2i(ridge_3d.x, ridge_3d.z),
 		"eave": Vector2i(eave_3d.x, eave_3d.z),

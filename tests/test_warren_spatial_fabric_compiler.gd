@@ -65,6 +65,52 @@ func test_setback_gable_does_not_exempt_neighboring_room_collisions() -> void:
 		"the detailed gable is attempted before the transaction chooses a fallback")
 
 
+func test_terminal_setback_names_only_the_neighboring_roof_seam() -> void:
+	var own_room_unit := FabricUnit.new(&"room.own", &"room.test",
+		Vector3i.ZERO, 0)
+	var neighboring_room_unit := FabricUnit.new(&"room.neighbor", &"room.test",
+		Vector3i.RIGHT * 2, 0)
+	var neighboring_roof := FabricUnit.new(&"roof.neighbor", &"roof.test",
+		Vector3i.RIGHT * 2 + Vector3i.UP * 2, 0,
+		[neighboring_room_unit.stable_id] as Array[StringName])
+	var unrelated_roof := FabricUnit.new(&"roof.unrelated", &"roof.test",
+		Vector3i.BACK * 4, 0, [own_room_unit.stable_id] as Array[StringName])
+	var seams := WarrenSpatialFabricCompiler \
+		._prior_roof_seams_for_neighbor_rooms(
+			[neighboring_room_unit.stable_id] as Array[StringName],
+			[neighboring_roof, unrelated_roof] as Array[FabricUnit])
+	assert_eq(seams, [neighboring_roof.stable_id] as Array[StringName],
+		"the typed join closes roof-to-roof without exempting the upper room wall")
+
+
+func test_setback_wall_seam_comes_from_the_exact_cap_perimeter() -> void:
+	var row := [Vector3i(0, 2, 0), Vector3i(1, 2, 0)] as Array[Vector3i]
+	var room_by_cell := {
+		Vector3i(-1, 3, 0): &"room.left",
+		Vector3i(2, 3, 0): &"room.right",
+		Vector3i(0, 3, 1): &"room.side",
+	}
+	var seams := WarrenSpatialFabricCompiler._setback_wall_room_ids(row,
+		room_by_cell)
+	assert_eq(seams, [&"room.left", &"room.right", &"room.side"] \
+		as Array[StringName],
+		"only exact upper-wall contacts around the cap may receive flashing")
+
+
+func test_flashing_allows_a_thin_subcell_join_not_a_deep_overlap() -> void:
+	var cap := AABB(Vector3.ZERO, Vector3(3.0, 0.16, 1.5))
+	assert_true(WarrenSpatialFabricCompiler._is_shallow_flashing_contact(cap,
+		AABB(Vector3(0.0, 0.04, 0.68), Vector3(3.0, 3.0, 3.0))),
+		"a 0.82 m facade projection over a 0.16 m cap is typed flashing")
+	assert_false(WarrenSpatialFabricCompiler._is_shallow_flashing_contact(cap,
+		AABB(Vector3(0.0, 0.04, 0.45), Vector3(3.0, 3.0, 3.0))),
+		"more than the half-cell authored allowance remains an overlap")
+	assert_false(WarrenSpatialFabricCompiler._is_shallow_flashing_contact(
+		AABB(Vector3.ZERO, Vector3(3.0, 1.2, 1.5)),
+		AABB(Vector3(0.0, 0.04, 0.68), Vector3(3.0, 3.0, 3.0))),
+		"a tall terrace cannot masquerade as thin flashing")
+
+
 func test_one_parent_shoulder_never_becomes_a_pile_of_sibling_gables() -> void:
 	var faces: Array[Vector3i] = [
 		Vector3i(0, 3, 0), Vector3i(1, 3, 0),
@@ -93,6 +139,28 @@ func test_spatial_roofs_reject_experimental_crossing_valleys() -> void:
 		FabricRoofTopologyPlan.JunctionKind.PERPENDICULAR_VALLEY))
 	assert_true(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
 		FabricRoofTopologyPlan.JunctionKind.STEPPED_EAVE_WALL))
+
+
+func test_rowhouse_roof_axis_and_join_follow_the_broad_frontage_contract() \
+		-> void:
+	var proposals: Array[Dictionary] = [
+		{"stable_id": &"row.left", "kind": &"row",
+			"origin": Vector3i.ZERO, "yaw_quarters": 0, "storeys": 1},
+		{"stable_id": &"row.right", "kind": &"row",
+			"origin": Vector3i(4, 0, 0), "yaw_quarters": 0, "storeys": 1},
+	]
+	var topology := FabricRoofTopologyPlan.build(proposals)
+	assert_not_null(topology)
+	if topology == null:
+		return
+	assert_eq(int(topology.audit.junction_count), 1)
+	var seam := (topology.fact(&"row.left").junctions as Array)[0] \
+		as Dictionary
+	assert_eq(int(seam.kind),
+		FabricRoofTopologyPlan.JunctionKind.RIDGE_CONTINUATION,
+		"side-by-side rowhouses continue their local-X ridge")
+	assert_false(FabricRoofJunctionModuleTable.build(proposals,
+		topology).is_empty(), FabricRoofJunctionModuleTable.last_failure)
 
 
 func test_measured_room_units_preserve_every_spatial_stamp() -> void:
@@ -209,7 +277,9 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.tower_annex_feature_count), constructed_tower_annexes)
 	assert_eq(constructed_tower_annexes,
-		int(spatial.audit.required_tower_annex_count))
+		int(spatial.audit.tower_annex_count))
+	assert_gte(int(spatial.audit.tower_annex_relief_unit_count),
+		int(spatial.audit.required_tower_annex_relief_unit_count))
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.prefab_landmark_feature_count), constructed_landmarks)
 	assert_eq(constructed_landmarks,

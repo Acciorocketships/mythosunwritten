@@ -4,7 +4,9 @@ extends RefCounted
 ## One exact 3 m-tall volumetric grammar room.  Its topology, phase, door, and
 ## construction family are fixed before asset realization; a compiler may pick
 ## a measured visual variant, but it may not move or resize this stamp.
-const KINDS: Array[StringName] = [&"tower", &"slim", &"building", &"long"]
+const KINDS: Array[StringName] = [
+	&"tower", &"slim", &"row", &"building", &"long",
+]
 
 var stable_id: StringName
 var source_parcel_id: StringName
@@ -157,6 +159,12 @@ static func expected_private_cells(p_kind: StringName, origin: Vector3i,
 		&"slim":
 			minimum = Vector3i(-1, 0, -2)
 			size = Vector3i(2, WarrenSpatialGrid.STOREY_CELLS, 4)
+		&"row":
+			# The same eight columns as a quarter-turned slim townhouse, but a
+			# different construction contract: its public door and pitched-roof
+			# eave are on the broad four-cell street frontage.
+			minimum = Vector3i(-2, 0, -1)
+			size = Vector3i(4, WarrenSpatialGrid.STOREY_CELLS, 2)
 		&"building":
 			minimum = Vector3i(-2, 0, -2)
 			size = Vector3i(4, WarrenSpatialGrid.STOREY_CELLS, 4)

@@ -36,7 +36,7 @@ const SAME_ADJACENT_ROOM_KIND_COST := 500
 const SAME_ADJACENT_RIDGE_AXIS_COST := 300
 
 const ROOM_KINDS: Array[StringName] = [
-	&"long", &"building", &"slim", &"tower",
+	&"long", &"building", &"slim", &"row", &"tower",
 ]
 
 static var last_failure := ""
@@ -45,6 +45,12 @@ static var last_merge_diagnostic: Dictionary = {}
 static var last_variant_diagnostic: Dictionary = {}
 static var last_pair_diagnostic: Dictionary = {}
 static var diagnostic_trace := false
+## The merge/coupling/relief passes revisit the same translated authored room
+## footprints many thousands of times. These are output-pure geometry lookups,
+## so retain them only for the duration of one solve. Keeping the cache local to
+## the transaction avoids cross-town memory growth and cannot affect ordering.
+static var _stamp_columns_cache: Dictionary = {}
+static var _stamp_cells_cache: Dictionary = {}
 
 
 static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
@@ -52,12 +58,15 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		forced_offsets_by_parcel: Dictionary, market_reservation: Dictionary,
 		protected_owners: Dictionary, skywalk_forced_offsets: Dictionary,
 		skywalk_reservations: Array[Dictionary], world_seed: int,
-		enable_paired_registration_relief: bool = true) -> Dictionary:
+		enable_paired_registration_relief: bool = true,
+		stop_after_macro_support: bool = false) -> Dictionary:
 	last_failure = ""
 	last_audit = {}
 	last_merge_diagnostic = {}
 	last_variant_diagnostic = {}
 	last_pair_diagnostic = {}
+	_stamp_columns_cache.clear()
+	_stamp_cells_cache.clear()
 	var trace_started := Time.get_ticks_msec()
 	var trace_stage := trace_started
 	if grid == null or volume == null or proposals.is_empty():
@@ -120,30 +129,76 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		print("ROOM_COMPOSITION_TIMING source ms=",
 			Time.get_ticks_msec() - trace_stage, " lineages=", lineages.size())
 		trace_stage = Time.get_ticks_msec()
+	var merged_base_count := _merge_base_tower_pairs(lineages, grid,
+		protected_owners, world_seed)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING base_macro_merge ms=",
+			Time.get_ticks_msec() - trace_stage, " accepted=",
+			merged_base_count)
+		_trace_composition_geometry("base_macro", lineages, grid)
+		trace_stage = Time.get_ticks_msec()
 	var merged_count := _merge_upper_lineages(lineages, grid,
 		protected_owners, world_seed)
 	if diagnostic_trace:
 		print("ROOM_COMPOSITION_TIMING merge ms=",
 			Time.get_ticks_msec() - trace_stage, " accepted=", merged_count)
+		_trace_composition_geometry("merge", lineages, grid)
 		trace_stage = Time.get_ticks_msec()
 	var coupled_count := _couple_upper_lineages(lineages, grid,
 		protected_owners, world_seed)
 	if diagnostic_trace:
 		print("ROOM_COMPOSITION_TIMING couple ms=",
 			Time.get_ticks_msec() - trace_stage, " accepted=", coupled_count)
+		_trace_composition_geometry("couple", lineages, grid)
 		trace_stage = Time.get_ticks_msec()
 	var expanded_count := _vary_unmerged_lineages(lineages, grid,
 		protected_owners, world_seed)
 	if diagnostic_trace:
 		print("ROOM_COMPOSITION_TIMING vary ms=",
 			Time.get_ticks_msec() - trace_stage, " accepted=", expanded_count)
+		_trace_composition_geometry("vary", lineages, grid)
 		trace_stage = Time.get_ticks_msec()
+	# Bearing is a macro-composition constraint, not a cleanup pass. Repair and
+	# prove the room DAG before spending the expensive silhouette search on it;
+	# registration relief may then alter only a structurally viable town. A final
+	# repair/audit remains below because those later moves must preserve the same
+	# invariant rather than inheriting this verdict implicitly.
+	var early_support_repair_count := _repair_unsupported_transitions(lineages,
+		grid, protected_owners, world_seed)
+	var early_support_audit := _lineage_support_audit(lineages, grid)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING early_support ms=",
+			Time.get_ticks_msec() - trace_stage, " accepted=",
+			early_support_repair_count, " unsupported=",
+			early_support_audit.unsupported_transition_count)
+		_trace_composition_geometry("early_support", lineages, grid)
+		trace_stage = Time.get_ticks_msec()
+	if int(early_support_audit.unsupported_transition_count) > 0:
+		last_audit = early_support_audit.duplicate(true)
+		last_failure = ("3D composition retained %d unsupported room " \
+			+ "transitions before silhouette relief: %s") % [
+			int(early_support_audit.unsupported_transition_count),
+			JSON.stringify(early_support_audit.unsupported_transition_details)]
+		return {}
+	if stop_after_macro_support:
+		var macro_audit := early_support_audit.duplicate(true)
+		macro_audit["macro_lineage_count"] = lineages.size()
+		macro_audit["macro_input_storey_count"] = input_storeys
+		macro_audit["macro_base_merge_count"] = merged_base_count
+		macro_audit["macro_merge_count"] = merged_count
+		macro_audit["macro_coupling_count"] = coupled_count
+		macro_audit["macro_variation_count"] = expanded_count
+		macro_audit["macro_support_repair_count"] = \
+			early_support_repair_count
+		last_audit = macro_audit.duplicate(true)
+		return {"lineages": lineages, "audit": macro_audit}
 	var registration_relief_count := _relieve_registered_lineages(lineages,
 		grid, protected_owners, world_seed)
 	if diagnostic_trace:
 		print("ROOM_COMPOSITION_TIMING serial_relief ms=",
 			Time.get_ticks_msec() - trace_stage, " accepted=",
 			registration_relief_count)
+		_trace_composition_geometry("serial_relief", lineages, grid)
 		trace_stage = Time.get_ticks_msec()
 	var paired_registration_relief_count := 0
 	if enable_paired_registration_relief:
@@ -164,6 +219,7 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		print("ROOM_COMPOSITION_TIMING support_repair ms=",
 			Time.get_ticks_msec() - trace_stage, " accepted=",
 			support_repair_count)
+		_trace_composition_geometry("support_repair", lineages, grid)
 		trace_stage = Time.get_ticks_msec()
 	var support_audit := _lineage_support_audit(lineages, grid)
 	if diagnostic_trace:
@@ -173,6 +229,7 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 			support_audit.unsupported_transition_count, " details=",
 			JSON.stringify(support_audit.unsupported_transition_details))
 	if int(support_audit.unsupported_transition_count) > 0:
+		last_audit = support_audit.duplicate(true)
 		last_failure = "3D composition retained %d unsupported room transitions: %s" \
 			% [int(support_audit.unsupported_transition_count),
 				JSON.stringify(support_audit.unsupported_transition_details)]
@@ -195,6 +252,8 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	var truncated_tower_storeys := _truncate_unpaired_towers(lineages)
 	var audit := _audit(lineages, input_storeys, merged_count,
 		coupled_count, expanded_count, truncated_tower_storeys)
+	audit["merged_base_composition_count"] = merged_base_count
+	audit.merge(_macroscopic_shape_audit(lineages), true)
 	audit["registration_relief_recomposition_count"] = \
 		registration_relief_count
 	audit["paired_registration_relief_count"] = \
@@ -207,7 +266,10 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		crown_termination.lineage_count)
 	audit["terminated_registered_crown_storey_count"] = int(
 		crown_termination.storey_count)
-	audit["structural_room_repair_count"] = support_repair_count
+	audit["early_structural_room_repair_count"] = early_support_repair_count
+	audit["post_relief_structural_room_repair_count"] = support_repair_count
+	audit["structural_room_repair_count"] = early_support_repair_count \
+		+ support_repair_count
 	audit["structural_yielded_lineage_count"] = maxi(
 		pre_support_lineage_count - lineages.size(), 0)
 	audit.merge(support_audit, false)
@@ -228,6 +290,595 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 					JSON.stringify(unresolved_runs)]
 			return {}
 	return {"lineages": lineages, "audit": audit}
+
+
+static func _merge_base_tower_pairs(lineages: Dictionary,
+		grid: WarrenSpatialGrid, protected_owners: Dictionary,
+		world_seed: int) -> int:
+	## Ground/frontage rooms were deliberately excluded from the original upper
+	## merge, leaving every route-wall fallback as an individually roofed 2x2
+	## prism. Join only exact coplanar tower pairs whose union is one native macro
+	## stamp. One participant retains the real authored address and any hero
+	## socket; the other becomes private mass behind that address, and every upper
+	## continuation/support edge is transferred transactionally.
+	var records: Array[Dictionary] = []
+	var lineage_ids: Array[StringName] = []
+	lineage_ids.assign(lineages.keys())
+	lineage_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	for lineage_id: StringName in lineage_ids:
+		var lineage := lineages[lineage_id] as Dictionary
+		var blocks := lineage.blocks as Array[Dictionary]
+		if blocks.is_empty():
+			continue
+		var block := blocks[0] as Dictionary
+		if StringName(block.kind) != &"tower" \
+				or int(block.end_storey) - int(block.start_storey) != 1:
+			continue
+		records.append({"lineage_id": lineage_id,
+			"source_block_index": int(block.source_block_index),
+			"block": block, "height": _lineage_storey_count(blocks),
+			"key": "%s/%d" % [lineage_id, int(block.source_block_index)]})
+	var candidates: Array[Dictionary] = []
+	var exact_pair_count := 0
+	var address_match_count := 0
+	var clear_count := 0
+	var resumption_count := 0
+	var roofable_count := 0
+	for left_index in records.size():
+		var left := records[left_index] as Dictionary
+		for right_index in range(left_index + 1, records.size()):
+			var right := records[right_index] as Dictionary
+			var left_block := left.block as Dictionary
+			var right_block := right.block as Dictionary
+			if (left_block.origin as Vector3i).y \
+					!= (right_block.origin as Vector3i).y:
+				continue
+			var union := (left_block.columns as Dictionary).duplicate()
+			var overlaps := false
+			for column_value: Variant in (right_block.columns as Dictionary).keys():
+				if union.has(column_value):
+					overlaps = true
+					break
+				union[column_value] = true
+			if overlaps:
+				continue
+			var stamps := _exact_non_tower_stamps_for_columns(union,
+				(left_block.origin as Vector3i).y)
+			if stamps.is_empty():
+				continue
+			exact_pair_count += 1
+			var left_identity := _base_block_has_hero_identity(left_block)
+			var right_identity := _base_block_has_hero_identity(right_block)
+			if left_identity and right_identity:
+				continue
+			for stamp: Dictionary in stamps:
+				for primary_is_left: bool in [true, false]:
+					if left_identity and not primary_is_left \
+							or right_identity and primary_is_left:
+						continue
+					var primary := left if primary_is_left else right
+					var secondary := right if primary_is_left else left
+					if not _candidate_matches_address(StringName(stamp.kind),
+							stamp.origin as Vector3i,
+							int(stamp.yaw_quarters),
+							primary.block as Dictionary) \
+							or not _candidate_matches_constraints(StringName(stamp.kind),
+							stamp.origin as Vector3i,
+							int(stamp.yaw_quarters),
+							primary.block as Dictionary):
+						continue
+					address_match_count += 1
+					var participant_ids: Dictionary = {
+						StringName(left.lineage_id): true,
+						StringName(right.lineage_id): true,
+					}
+					var merged := _record(StringName(stamp.kind),
+						stamp.origin as Vector3i, int(stamp.yaw_quarters),
+						int((primary.block as Dictionary).start_storey),
+						int((primary.block as Dictionary).end_storey))
+					if merged.is_empty() or not _record_is_clear_for_participants(
+							grid, protected_owners, merged, participant_ids):
+						continue
+					clear_count += 1
+					var participants := [left, right] as Array[Dictionary]
+					if not _resumptions_overlap(lineages, participants,
+							merged.columns as Dictionary):
+						continue
+					resumption_count += 1
+					if not _merge_transitions_are_roofable(lineages,
+							participants, merged):
+						continue
+					roofable_count += 1
+					var tie := posmod(Helper._mix64(world_seed \
+						^ String(primary.lineage_id).hash() * 31 \
+						^ String(secondary.lineage_id).hash() * 47 \
+						^ StringName(stamp.kind).hash() * 59 \
+						^ int(stamp.yaw_quarters) * 71), 1000003)
+					candidates.append({"primary": primary,
+						"secondary": secondary, "merged": merged,
+						"identity_count": int(left_identity) \
+							+ int(right_identity),
+						"height": maxi(int(left.height), int(right.height)),
+						"tie": tie})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.identity_count) != int(b.identity_count):
+			return int(a.identity_count) > int(b.identity_count)
+		if int(a.height) != int(b.height):
+			return int(a.height) > int(b.height)
+		return int(a.tie) < int(b.tie))
+	var used: Dictionary = {}
+	var remaps: Array[Dictionary] = []
+	var selected := 0
+	for candidate: Dictionary in candidates:
+		var primary_record := candidate.primary as Dictionary
+		var secondary_record := candidate.secondary as Dictionary
+		var primary_id := StringName(primary_record.lineage_id)
+		var secondary_id := StringName(secondary_record.lineage_id)
+		if used.has(primary_id) or used.has(secondary_id) \
+				or not lineages.has(primary_id) or not lineages.has(secondary_id):
+			continue
+		var primary := lineages[primary_id] as Dictionary
+		var secondary := lineages[secondary_id] as Dictionary
+		var primary_blocks := primary.blocks as Array[Dictionary]
+		var secondary_blocks := secondary.blocks as Array[Dictionary]
+		if primary_blocks.is_empty() or secondary_blocks.is_empty() \
+				or int((primary_blocks[0] as Dictionary).source_block_index) \
+					!= int(primary_record.source_block_index) \
+				or int((secondary_blocks[0] as Dictionary).source_block_index) \
+					!= int(secondary_record.source_block_index):
+			continue
+		var original_primary := primary_blocks[0] as Dictionary
+		var merged := candidate.merged as Dictionary
+		var replacement := _record(StringName(merged.kind),
+			merged.origin as Vector3i, int(merged.yaw_quarters),
+			int(original_primary.start_storey), int(original_primary.end_storey))
+		replacement["forced"] = true
+		replacement["original_kind"] = original_primary.original_kind
+		replacement["original_origin"] = original_primary.original_origin
+		replacement["original_yaw_quarters"] = \
+			original_primary.original_yaw_quarters
+		replacement["home_origin"] = original_primary.home_origin
+		replacement["home_columns"] = original_primary.home_columns
+		replacement["source_block_index"] = original_primary.source_block_index
+		replacement["source_offset_block_index"] = original_primary.get(
+			"source_offset_block_index", 0)
+		replacement["merged"] = true
+		replacement["merged_lineage_count"] = 2
+		for metadata_key: String in ["address_expandable",
+				"address_threshold", "address_frontage",
+				"feature_endpoint_constraints", "court_contact_columns",
+				"structural_forced", "interface_forced", "bearing_forced",
+				"market_forced"]:
+			if original_primary.has(metadata_key):
+				replacement[metadata_key] = original_primary[metadata_key]
+		primary_blocks[0] = replacement
+		primary["blocks"] = primary_blocks
+		primary["paired_primary"] = true
+		var paired_with: Array[StringName] = []
+		paired_with.assign(primary.get("paired_with", []) as Array)
+		if not paired_with.has(secondary_id):
+			paired_with.append(secondary_id)
+		primary["paired_with"] = paired_with
+		lineages[primary_id] = primary
+		var removed_block := secondary_blocks[0] as Dictionary
+		secondary_blocks.remove_at(0)
+		if secondary_blocks.is_empty():
+			lineages.erase(secondary_id)
+		else:
+			var resumed := secondary_blocks[0] as Dictionary
+			resumed["support_parent_lineage_id"] = primary_id
+			resumed["support_parent_source_storey"] = \
+				int(replacement.end_storey) - 1
+			resumed["support_parent_source_block_index"] = \
+				int(replacement.source_block_index)
+			secondary_blocks[0] = resumed
+			secondary["blocks"] = secondary_blocks
+			secondary["paired_secondary"] = true
+			secondary["paired_with"] = primary_id
+			secondary["address_parent_lineage_id"] = primary_id
+			secondary["address_parent_source_block_index"] = int(
+				replacement.source_block_index)
+			lineages[secondary_id] = secondary
+		remaps.append({"from_lineage_id": secondary_id,
+			"from_source_block_index": int(removed_block.source_block_index),
+			"to_lineage_id": primary_id,
+			"to_source_block_index": int(replacement.source_block_index),
+			"to_source_storey": int(replacement.end_storey) - 1})
+		used[primary_id] = true
+		used[secondary_id] = true
+		selected += 1
+	_apply_base_support_remaps(lineages, remaps)
+	if diagnostic_trace:
+		print("ROOM_BASE_MACRO_DIAGNOSTIC exact_pairs=", exact_pair_count,
+			" address=", address_match_count, " clear=", clear_count,
+			" resumed=", resumption_count, " roofable=", roofable_count,
+			" candidates=", candidates.size(), " selected=", selected)
+	return selected
+
+
+static func _base_block_has_hero_identity(block: Dictionary) -> bool:
+	return bool(block.get("market_forced", false)) \
+		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty() \
+		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty()
+
+
+static func _exact_non_tower_stamps_for_columns(columns: Dictionary,
+		y: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if columns.is_empty():
+		return out
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for column_value: Variant in columns.keys():
+		var column := column_value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	var bounds_size := maximum - minimum + Vector2i.ONE
+	if columns.size() != bounds_size.x * bounds_size.y:
+		return out
+	# A 4 x 2 rectangle has two construction meanings. `slim` puts its door on
+	# the short gable; `row` puts it on the long street eave. Enumerate both so
+	# the exact public threshold, not a post-hoc mesh rotation, selects the form.
+	var kinds: Array[StringName] = []
+	if bounds_size in [Vector2i(2, 4), Vector2i(4, 2)]:
+		kinds.assign([&"slim", &"row"])
+	elif bounds_size == Vector2i(4, 4):
+		kinds.append(&"building")
+	elif bounds_size in [Vector2i(4, 6), Vector2i(6, 4)]:
+		kinds.append(&"long")
+	for kind: StringName in kinds:
+		for yaw in 4:
+			var local_minimum := Vector2i(-1, -2) if kind == &"slim" \
+				else Vector2i(-2, -1) if kind == &"row" \
+				else Vector2i(-2, -2) if kind == &"building" \
+				else Vector2i(-2, -3)
+			var local_size := Vector2i(2, 4) if kind == &"slim" \
+				else Vector2i(4, 2) if kind == &"row" \
+				else Vector2i(4, 4) if kind == &"building" \
+				else Vector2i(4, 6)
+			var world_size := local_size if posmod(yaw, 2) == 0 \
+				else Vector2i(local_size.y, local_size.x)
+			if world_size != bounds_size:
+				continue
+			var local_maximum := local_minimum + local_size - Vector2i.ONE
+			var origin := Vector3i.ZERO
+			match yaw:
+				0:
+					origin = Vector3i(minimum.x - local_minimum.x, y,
+						minimum.y - local_minimum.y)
+				1:
+					origin = Vector3i(minimum.x - local_minimum.y, y,
+						minimum.y + local_maximum.x)
+				2:
+					origin = Vector3i(minimum.x + local_maximum.x, y,
+						minimum.y + local_maximum.y)
+				3:
+					origin = Vector3i(minimum.x + local_maximum.y, y,
+						minimum.y - local_minimum.x)
+			var stamp_columns := _stamp_columns(kind, origin, yaw)
+			if _same_set(stamp_columns, columns):
+				out.append({"kind": kind, "origin": origin,
+					"yaw_quarters": yaw, "columns": stamp_columns})
+	return out
+
+
+static func _apply_base_support_remaps(lineages: Dictionary,
+		remaps: Array[Dictionary]) -> void:
+	if remaps.is_empty():
+		return
+	for lineage_id_value: Variant in lineages.keys():
+		var lineage_id := StringName(lineage_id_value)
+		var lineage := lineages[lineage_id] as Dictionary
+		var blocks := lineage.blocks as Array[Dictionary]
+		for block_index in blocks.size():
+			var block := blocks[block_index] as Dictionary
+			var parent_id := StringName(block.get(
+				"support_parent_lineage_id", &""))
+			var parent_block := int(block.get(
+				"support_parent_source_block_index", -1))
+			for remap: Dictionary in remaps:
+				if parent_id != StringName(remap.from_lineage_id) \
+						or parent_block != int(remap.from_source_block_index):
+					continue
+				block["support_parent_lineage_id"] = \
+					StringName(remap.to_lineage_id)
+				block["support_parent_source_block_index"] = int(
+					remap.to_source_block_index)
+				block["support_parent_source_storey"] = int(
+					remap.to_source_storey)
+				break
+			blocks[block_index] = block
+		lineage["blocks"] = blocks
+		lineages[lineage_id] = lineage
+
+
+static func _macroscopic_shape_audit(lineages: Dictionary) -> Dictionary:
+	## The old anti-tower audit catches repeated vertical extrusion, but it says
+	## nothing about a whole lower town made from separate one-storey 2x2 rooms.
+	## Measure the actual final 3D decomposition here: exposed tower rooms are the
+	## screenshot-visible micro-prisms, while adjacent tower pairs whose exact
+	## union is a native slim/building/long footprint are macroscopic covers the
+	## planner left on the table. These facts intentionally precede asset choice.
+	var entries: Array[Dictionary] = []
+	var claimed_cells: Dictionary = {}
+	var kind_counts: Dictionary = {}
+	var private_cells_by_kind: Dictionary = {}
+	var total_private_cells := 0
+	var macro_private_cells := 0
+	var lineage_ids: Array[StringName] = []
+	lineage_ids.assign(lineages.keys())
+	lineage_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	for lineage_id: StringName in lineage_ids:
+		var lineage := lineages[lineage_id] as Dictionary
+		for block: Dictionary in lineage.blocks as Array[Dictionary]:
+			var kind := StringName(block.kind)
+			var entry := {"lineage_id": lineage_id,
+				"source_block_index": int(block.source_block_index),
+				"kind": kind, "origin": block.origin,
+				"start_storey": int(block.start_storey),
+				"end_storey": int(block.end_storey),
+				"columns": block.columns,
+				"cells": block.cells,
+				"block": block,
+				"forced": bool(block.get("forced", false)),
+				"structural_forced": bool(block.get(
+					"structural_forced", false)),
+				"interface_constrained": _block_has_interface_constraint(block)}
+			entries.append(entry)
+			var duration := int(block.end_storey) - int(block.start_storey)
+			kind_counts[kind] = int(kind_counts.get(kind, 0)) + duration
+			var cell_count := (block.cells as Array).size()
+			private_cells_by_kind[kind] = int(
+				private_cells_by_kind.get(kind, 0)) + cell_count
+			total_private_cells += cell_count
+			if kind != &"tower":
+				macro_private_cells += cell_count
+			for cell: Vector3i in block.cells:
+				claimed_cells[cell] = "%s/%d" % [lineage_id,
+					int(block.source_block_index)]
+	var exposed_tower_count := 0
+	var optional_exposed_tower_count := 0
+	var exposed_tower_side_count := 0
+	var exposed_tower_details: Array[Dictionary] = []
+	for entry: Dictionary in entries:
+		if StringName(entry.kind) != &"tower":
+			continue
+		var exposed_directions: Array[Vector3i] = []
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var exposed := false
+			for cell: Vector3i in entry.cells as Array[Vector3i]:
+				if not claimed_cells.has(cell + direction):
+					exposed = true
+					break
+			if exposed:
+				exposed_directions.append(direction)
+		# One exposed direction reads as the end of a terrace. Two or more make
+		# the complete little cuboid legible as an independent box.
+		if exposed_directions.size() < 2:
+			continue
+		exposed_tower_count += 1
+		exposed_tower_side_count += exposed_directions.size()
+		var optional := not bool(entry.structural_forced) \
+			and not bool(entry.interface_constrained)
+		optional_exposed_tower_count += int(optional)
+		if exposed_tower_details.size() < 24:
+			exposed_tower_details.append({"lineage_id": entry.lineage_id,
+				"source_block_index": entry.source_block_index,
+				"origin": entry.origin, "optional": optional,
+				"exposed_directions": exposed_directions})
+	var exact_macro_pair_count := 0
+	var refused_exact_macro_pair_count := 0
+	var exact_macro_disposition_counts: Dictionary = {}
+	var exact_macro_pair_details: Array[Dictionary] = []
+	for left_index in entries.size():
+		var left := entries[left_index] as Dictionary
+		if StringName(left.kind) != &"tower":
+			continue
+		for right_index in range(left_index + 1, entries.size()):
+			var right := entries[right_index] as Dictionary
+			if StringName(right.kind) != &"tower" \
+					or int(left.start_storey) != int(right.start_storey) \
+					or int(left.end_storey) != int(right.end_storey):
+				continue
+			var union := (left.columns as Dictionary).duplicate()
+			var overlaps := false
+			for column_value: Variant in (right.columns as Dictionary).keys():
+				if union.has(column_value):
+					overlaps = true
+					break
+				union[column_value] = true
+			if overlaps:
+				continue
+			var macros := _exact_non_tower_stamps_for_columns(union,
+				(left.origin as Vector3i).y)
+			if macros.is_empty():
+				continue
+			var disposition := _exact_macro_pair_disposition(lineages,
+				left, right, macros)
+			var reason := StringName(disposition.get("reason", &"unresolved"))
+			exact_macro_disposition_counts[reason] = int(
+				exact_macro_disposition_counts.get(reason, 0)) + 1
+			if reason == &"unresolved":
+				exact_macro_pair_count += 1
+			else:
+				refused_exact_macro_pair_count += 1
+			if exact_macro_pair_details.size() < 24:
+				var macro := macros[0] as Dictionary
+				exact_macro_pair_details.append({"left_lineage_id":
+					left.lineage_id, "left_source_block": left.source_block_index,
+					"left_origin": left.origin,
+					"right_lineage_id": right.lineage_id,
+					"right_source_block": right.source_block_index,
+					"right_origin": right.origin,
+					"macro_kind": macro.kind, "macro_origin": macro.origin,
+					"macro_yaw_quarters": macro.yaw_quarters,
+					"disposition": reason})
+	return {"room_storey_kind_counts": kind_counts,
+		"private_cell_count_by_room_kind": private_cells_by_kind,
+		"macro_private_cell_ratio": float(macro_private_cells) \
+			/ float(maxi(1, total_private_cells)),
+		"exposed_tower_room_count": exposed_tower_count,
+		"optional_exposed_tower_room_count": optional_exposed_tower_count,
+		"exposed_tower_side_count": exposed_tower_side_count,
+		"exposed_tower_room_details": exposed_tower_details,
+		"unclaimed_exact_macro_tower_pair_count": exact_macro_pair_count,
+		"refused_exact_macro_tower_pair_count":
+			refused_exact_macro_pair_count,
+		"exact_macro_tower_pair_disposition_counts":
+			exact_macro_disposition_counts,
+		"exact_macro_tower_pair_details": exact_macro_pair_details}
+
+
+static func _trace_composition_geometry(stage: String,
+		lineages: Dictionary, grid: WarrenSpatialGrid) -> void:
+	## Composition tracing must reveal which transaction creates or removes an
+	## exact macro opportunity. A final count alone cannot tell whether the
+	## defect came from source parcelization, silhouette variation, or support
+	## repair. This stays behind `diagnostic_trace` at every call site.
+	var audit := _macroscopic_shape_audit(lineages)
+	var gap_audit := _lineage_interstitial_gap_audit(lineages, grid)
+	print("ROOM_MACRO_AUDIT stage=", stage,
+		" unresolved=", audit.unclaimed_exact_macro_tower_pair_count,
+		" refused=", audit.refused_exact_macro_tower_pair_count,
+		" dispositions=", audit.exact_macro_tower_pair_disposition_counts,
+		" details=", audit.exact_macro_tower_pair_details,
+		" slit_cells=", gap_audit.one_cell_interstitial_gap_cell_count,
+		" slit_details=", gap_audit.one_cell_interstitial_gap_details)
+
+
+static func _lineage_interstitial_gap_audit(lineages: Dictionary,
+		grid: WarrenSpatialGrid) -> Dictionary:
+	## Find the exact one-cell void courses that will become 1.5 m visual slits
+	## after unclaimed massif cells are discarded. Intentional alleys and passages
+	## are already PUBLIC_AIR, so only still-ALLOCATABLE cells qualify here.
+	var claims: Dictionary = {}
+	for lineage_id_value: Variant in lineages.keys():
+		var lineage_id := StringName(lineage_id_value)
+		for block: Dictionary in (lineages[lineage_id] as Dictionary).blocks \
+				as Array[Dictionary]:
+			for cell: Vector3i in block.cells:
+				claims[cell] = {"lineage_id": lineage_id,
+					"source_block_index": int(block.source_block_index)}
+	var gaps: Dictionary = {}
+	for claimed_cell_value: Variant in claims.keys():
+		var claimed_cell := claimed_cell_value as Vector3i
+		for direction: Vector3i in [Vector3i.RIGHT, Vector3i.BACK]:
+			var gap := claimed_cell + direction
+			if grid != null and grid.use_at(gap) \
+					!= WarrenSpatialGrid.Use.ALLOCATABLE:
+				continue
+			var opposite := gap + direction
+			if not claims.has(opposite):
+				continue
+			var left := claims[claimed_cell] as Dictionary
+			var right := claims[opposite] as Dictionary
+			if StringName(left.lineage_id) == StringName(right.lineage_id) \
+					and int(left.source_block_index) \
+						== int(right.source_block_index):
+				continue
+			gaps[gap] = {"cell": gap,
+				"axis": &"x" if direction == Vector3i.RIGHT else &"z",
+				"negative_lineage": StringName(left.lineage_id),
+				"negative_source_block": int(left.source_block_index),
+				"positive_lineage": StringName(right.lineage_id),
+				"positive_source_block": int(right.source_block_index)}
+	var cells: Array[Vector3i] = []
+	cells.assign(gaps.keys())
+	cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		if a.x != b.x:
+			return a.x < b.x
+		return a.z < b.z)
+	var details: Array[Dictionary] = []
+	for cell: Vector3i in cells:
+		if details.size() >= 16:
+			break
+		details.append(gaps[cell] as Dictionary)
+	return {"one_cell_interstitial_gap_cell_count": gaps.size(),
+		"one_cell_interstitial_gap_details": details}
+
+
+static func _exact_macro_pair_disposition(lineages: Dictionary,
+		left: Dictionary, right: Dictionary,
+		macros: Array[Dictionary]) -> Dictionary:
+	## Geometry alone deliberately cannot call a late merge legal. Explain which
+	## semantic or construction proof prevents the exact cover so the anti-box
+	## metric reports actionable defects rather than punishing two real homes for
+	## retaining two different doors.
+	var left_block := left.block as Dictionary
+	var right_block := right.block as Dictionary
+	# Source-relative storey indices are not world-space elevations. Two parcels
+	# rooted on different terrain/support phases can both call a room `storey 0`
+	# while their actual floor plates differ by a half-storey. Their projected XZ
+	# union resembles a macro in plan view, but moving either occupied volume to a
+	# shared Y would corrupt bearing and entrances. This is a typed stepped-wall /
+	# stepped-roof join obligation, not an undispositioned macro cover.
+	if (left_block.origin as Vector3i).y \
+			!= (right_block.origin as Vector3i).y:
+		return {"reason": &"vertical_phase_conflict"}
+	var left_addressed := _block_has_address_in_band(left_block)
+	var right_addressed := _block_has_address_in_band(right_block)
+	if left_addressed and right_addressed:
+		return {"reason": &"distinct_public_addresses"}
+	var left_hero := _block_has_non_address_identity(left_block)
+	var right_hero := _block_has_non_address_identity(right_block)
+	if int(left_addressed or left_hero) + int(right_addressed or right_hero) > 1:
+		return {"reason": &"hero_socket_conflict"}
+	var primary := left
+	if right_addressed or right_hero:
+		primary = right
+	var semantic_candidates: Array[Dictionary] = []
+	for macro: Dictionary in macros:
+		var primary_block := primary.block as Dictionary
+		if _block_has_address_in_band(primary_block) \
+				and not _candidate_matches_address(StringName(macro.kind),
+					macro.origin as Vector3i, int(macro.yaw_quarters),
+					primary_block):
+			continue
+		if not _candidate_matches_constraints(StringName(macro.kind),
+				macro.origin as Vector3i, int(macro.yaw_quarters),
+				primary_block):
+			continue
+		semantic_candidates.append(macro)
+	if semantic_candidates.is_empty():
+		return {"reason": &"public_threshold_conflict"} \
+			if left_addressed or right_addressed \
+			else {"reason": &"hero_socket_conflict"}
+	var participants := [left, right] as Array[Dictionary]
+	var bearing_candidate_count := 0
+	for macro: Dictionary in semantic_candidates:
+		if not _resumptions_overlap(lineages, participants,
+				macro.columns as Dictionary):
+			continue
+		bearing_candidate_count += 1
+		var merged := _record(StringName(macro.kind),
+			macro.origin as Vector3i, int(macro.yaw_quarters),
+			int(left_block.start_storey), int(left_block.end_storey))
+		if _merge_transitions_are_roofable(lineages, participants, merged):
+			return {"reason": &"unresolved"}
+	if bearing_candidate_count == 0:
+		return {"reason": &"bearing_conflict"}
+	return {"reason": &"roof_transition_conflict"}
+
+
+static func _block_has_address_in_band(block: Dictionary) -> bool:
+	var threshold := block.get("address_threshold",
+		Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+	if threshold.x == 2147483647:
+		return false
+	var origin := block.origin as Vector3i
+	return threshold.y >= origin.y \
+		and threshold.y < origin.y + WarrenSpatialGrid.STOREY_CELLS
+
+
+static func _block_has_non_address_identity(block: Dictionary) -> bool:
+	return bool(block.get("market_forced", false)) \
+		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty() \
+		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty()
 
 
 static func _truncate_unroofable_crowns(lineages: Dictionary) -> int:
@@ -381,7 +1032,7 @@ static func _shoulder_component_is_roofable(component: Dictionary,
 
 
 static func _component_has_gabled_partition(component: Dictionary,
-		y: int) -> bool:
+		_y: int) -> bool:
 	## Compound L/Z shoulders are valid only when they contain at least one full
 	## authored room roof and the remainder is a finite set of straight native
 	## cap runs. The compiler uses the same largest-first partition. This admits a
@@ -395,23 +1046,40 @@ static func _component_has_gabled_partition(component: Dictionary,
 		var column := column_value as Vector2i
 		minimum = minimum.min(column)
 		maximum = maximum.max(column)
-	for kind: StringName in [&"long", &"building", &"slim", &"tower"]:
-		for yaw in 4:
-			for x in range(minimum.x - 3, maximum.x + 4):
-				for z in range(minimum.y - 3, maximum.y + 4):
-					var stamp := _stamp_columns(kind, Vector3i(x, y, z), yaw)
-					if stamp.is_empty() or not _is_subset(stamp, component):
-						continue
-					var remainder := component.duplicate()
-					for column_value: Variant in stamp.keys():
-						remainder.erase(column_value)
-					var valid := true
-					for residual: Dictionary in _column_components(remainder):
-						if not _component_is_straight_native_row(residual):
-							valid = false
+	# Room stamps are axis-aligned rectangles. Enumerating the six unique XZ
+	# footprints directly avoids constructing four rotated three-dimensional room
+	# arrays for every origin around the component--this predicate sits on several
+	# hot candidate frontiers.
+	for size: Vector2i in [Vector2i(4, 6), Vector2i(6, 4),
+			Vector2i(4, 4), Vector2i(2, 4), Vector2i(4, 2),
+			Vector2i(2, 2)]:
+		if size.x * size.y > component.size():
+			continue
+		for x in range(minimum.x, maximum.x - size.x + 2):
+			for z in range(minimum.y, maximum.y - size.y + 2):
+				var stamp: Dictionary = {}
+				var contained := true
+				for stamp_x in range(x, x + size.x):
+					for stamp_z in range(z, z + size.y):
+						var column := Vector2i(stamp_x, stamp_z)
+						if not component.has(column):
+							contained = false
 							break
-					if valid:
-						return true
+						stamp[column] = true
+					if not contained:
+						break
+				if not contained:
+					continue
+				var remainder := component.duplicate()
+				for column_value: Variant in stamp.keys():
+					remainder.erase(column_value)
+				var valid := true
+				for residual: Dictionary in _column_components(remainder):
+					if not _component_is_straight_native_row(residual):
+						valid = false
+						break
+				if valid:
+					return true
 	return false
 
 
@@ -561,10 +1229,12 @@ static func _source_blocks(proposal: Dictionary,
 			# invariant. Freezing the whole source floorplate because one edge touched
 			# the court forced otherwise avoidable three-storey tower extrusions.
 			var court_contact_columns: Dictionary = {}
+			var market_forced := false
 			for cell: Vector3i in record.cells:
 				if cell == market_backing:
 					forced = true
 					structural_forced = true
+					market_forced = true
 				if court_neighbors.has(cell):
 					court_contact_columns[Vector2i(cell.x, cell.z)] = true
 			if not court_contact_columns.is_empty():
@@ -577,6 +1247,7 @@ static func _source_blocks(proposal: Dictionary,
 			record["feature_endpoint_constraints"] = \
 				storey_skywalk_constraints
 			record["court_contact_columns"] = court_contact_columns
+			record["market_forced"] = market_forced
 			record["address_threshold"] = threshold
 			record["address_frontage"] = frontage
 			record["original_kind"] = kind
@@ -635,13 +1306,9 @@ static func _merge_upper_lineages(lineages: Dictionary,
 		return String(a) < String(b))
 	var records_by_band: Dictionary = {}
 	var eligible_record_count := 0
-	var source_claimed_cells: Dictionary = {}
 	for lineage_id: StringName in ids:
 		var lineage := lineages[lineage_id] as Dictionary
 		var blocks := lineage.blocks as Array[Dictionary]
-		for source_block: Dictionary in blocks:
-			for source_cell: Vector3i in source_block.cells:
-				source_claimed_cells[source_cell] = true
 		for block_position in range(1, blocks.size()):
 			var block := blocks[block_position] as Dictionary
 			if bool(block.get("structural_forced", false)) \
@@ -685,7 +1352,7 @@ static func _merge_upper_lineages(lineages: Dictionary,
 					column_owner[column] = [] as Array[Dictionary]
 				(column_owner[column] as Array[Dictionary]).append(record)
 		var y := int(band_key.get_slice("/", 0))
-		for kind: StringName in [&"long", &"building", &"slim"]:
+		for kind: StringName in [&"long", &"building", &"slim", &"row"]:
 			for yaw in 4:
 				for x in range(minimum.x - 3, maximum.x + 4):
 					for z in range(minimum.y - 3, maximum.y + 4):
@@ -789,6 +1456,7 @@ static func _merge_upper_lineages(lineages: Dictionary,
 							"primary": primary,
 							"participants": participants,
 							"merged_stamp": merged_stamp,
+							"base_y": y,
 							"tall_tower_relief": tall_tower_relief,
 							"height": maximum_height,
 							"participant_count": participants.size(),
@@ -804,29 +1472,7 @@ static func _merge_upper_lineages(lineages: Dictionary,
 								repetition.registered_facade_plane_count),
 							"tie": tie,
 						})
-	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a.tall_tower_relief) != int(b.tall_tower_relief):
-			return int(a.tall_tower_relief) > int(b.tall_tower_relief)
-		if int(a.strong_registration_count) \
-				!= int(b.strong_registration_count):
-			return int(a.strong_registration_count) \
-				< int(b.strong_registration_count)
-		if int(a.registered_facade_plane_count) \
-				!= int(b.registered_facade_plane_count):
-			return int(a.registered_facade_plane_count) \
-				< int(b.registered_facade_plane_count)
-		if int(a.height) != int(b.height):
-			return int(a.height) > int(b.height)
-		if int(a.participant_count) != int(b.participant_count):
-			return int(a.participant_count) > int(b.participant_count)
-		if int(a.covered_source_columns) != int(b.covered_source_columns):
-			return int(a.covered_source_columns) > int(b.covered_source_columns)
-		if int(a.displaced_source_columns) != int(b.displaced_source_columns):
-			return int(a.displaced_source_columns) \
-				< int(b.displaced_source_columns)
-		if int(a.area) != int(b.area):
-			return int(a.area) > int(b.area)
-		return int(a.tie) < int(b.tie))
+	candidates.sort_custom(_upper_merge_candidate_is_better)
 	# A source lineage may legitimately join a different room plate on several
 	# height bands. Lock exact source blocks, not whole 2D parcel identities.
 	var used_records: Dictionary = {}
@@ -844,9 +1490,14 @@ static func _merge_upper_lineages(lineages: Dictionary,
 		if unavailable:
 			continue
 		var merged := candidate.merged_stamp as Dictionary
-		if not _floorplate_transition_is_structurally_legible(
-				merged.columns as Dictionary, {},
-				(merged.origin as Vector3i).y, source_claimed_cells, grid):
+		if not _merge_transitions_are_roofable(lineages, participants, merged):
+			continue
+		# Earlier accepted base/upper transactions may already have removed rooms
+		# from the immutable candidate snapshot, so the commit gate must re-prove the
+		# merged plate against the CURRENT room graph. Otherwise a visually useful
+		# macro can survive on bearing that no longer exists and fail minutes later
+		# in the town-wide support audit.
+		if not _merge_plate_has_current_bearing(lineages, grid, merged):
 			continue
 		for cell: Vector3i in merged.cells:
 			if claimed_cells.has(cell):
@@ -947,6 +1598,46 @@ static func _merge_upper_lineages(lineages: Dictionary,
 	return merged_count
 
 
+static func _upper_merge_candidate_is_better(a: Dictionary,
+		b: Dictionary) -> bool:
+	## Room-bearing ancestry is a DAG. Commit lower floorplates before any child
+	## which may bear on them, then retain the existing silhouette/macro ranking
+	## within one absolute band. A globally height-first greedy list could accept
+	## an upper macro and subsequently remove the lower mass that justified it.
+	if int(a.base_y) != int(b.base_y):
+		return int(a.base_y) < int(b.base_y)
+	if int(a.tall_tower_relief) != int(b.tall_tower_relief):
+		return int(a.tall_tower_relief) > int(b.tall_tower_relief)
+	if int(a.strong_registration_count) != int(b.strong_registration_count):
+		return int(a.strong_registration_count) \
+			< int(b.strong_registration_count)
+	if int(a.registered_facade_plane_count) \
+			!= int(b.registered_facade_plane_count):
+		return int(a.registered_facade_plane_count) \
+			< int(b.registered_facade_plane_count)
+	if int(a.height) != int(b.height):
+		return int(a.height) > int(b.height)
+	if int(a.participant_count) != int(b.participant_count):
+		return int(a.participant_count) > int(b.participant_count)
+	if int(a.covered_source_columns) != int(b.covered_source_columns):
+		return int(a.covered_source_columns) > int(b.covered_source_columns)
+	if int(a.displaced_source_columns) != int(b.displaced_source_columns):
+		return int(a.displaced_source_columns) < int(b.displaced_source_columns)
+	if int(a.area) != int(b.area):
+		return int(a.area) > int(b.area)
+	return int(a.tie) < int(b.tie)
+
+
+static func _merge_plate_has_current_bearing(lineages: Dictionary,
+		grid: WarrenSpatialGrid, merged: Dictionary) -> bool:
+	if merged.is_empty():
+		return false
+	return _floorplate_transition_is_structurally_legible(
+		merged.get("columns", {}) as Dictionary, {},
+		(merged.get("origin", Vector3i()) as Vector3i).y,
+		_claimed_room_cells(lineages), grid)
+
+
 static func _primary_participant(lineages: Dictionary,
 		participants: Array[Dictionary], columns: Dictionary,
 		world_seed: int) -> Dictionary:
@@ -1032,15 +1723,45 @@ static func _merged_vertical_repetition_audit(lineages: Dictionary,
 
 static func _resumptions_overlap(lineages: Dictionary,
 		participants: Array[Dictionary], columns: Dictionary) -> bool:
+	## A merged macro room becomes the explicit parent of every participant that
+	## resumes above it. Mere one-cell contact is not a construction seam: demand
+	## the same fully-borne-or-one-authored-bracket-course contract used by the
+	## final support proof before accepting the merge.
 	for participant: Dictionary in participants:
 		var lineage := lineages[StringName(participant.lineage_id)] as Dictionary
 		var blocks := lineage.blocks as Array[Dictionary]
 		var position := _block_position(blocks,
 			int(participant.source_block_index))
-		if position >= 0 and position + 1 < blocks.size():
+		if position < 0:
+			return false
+		if position + 1 < blocks.size():
 			var upper := blocks[position + 1] as Dictionary
-			if _intersection_size(columns, upper.columns as Dictionary) <= 0:
+			if not _floorplate_transition_is_structurally_legible(
+					upper.columns as Dictionary, columns,
+					(upper.origin as Vector3i).y, {}, null):
 				return false
+	return true
+
+
+static func _merge_transitions_are_roofable(lineages: Dictionary,
+		participants: Array[Dictionary], merged: Dictionary) -> bool:
+	## Run at the bounded, ranked commit frontier rather than inside raw stamp
+	## enumeration: exact roof decomposition is materially more expensive than the
+	## simple overlap filters that generate candidates.
+	for participant: Dictionary in participants:
+		var lineage := lineages[StringName(participant.lineage_id)] as Dictionary
+		var blocks := lineage.blocks as Array[Dictionary]
+		var position := _block_position(blocks,
+			int(participant.source_block_index))
+		if position < 0:
+			return false
+		if position > 0 and _transition_unroofable_shoulder_count(
+				blocks[position - 1] as Dictionary, merged) > 0:
+			return false
+		if position + 1 < blocks.size() and \
+				_transition_unroofable_shoulder_count(merged,
+					blocks[position + 1] as Dictionary) > 0:
+			return false
 	return true
 
 
@@ -1082,7 +1803,7 @@ static func _bridge_stamp_for_blocks(grid: WarrenSpatialGrid,
 			maximum = maximum.max(column)
 	var candidates: Array[Dictionary] = []
 	var y := (left.origin as Vector3i).y
-	for kind: StringName in [&"long", &"building", &"slim"]:
+	for kind: StringName in [&"long", &"building", &"slim", &"row"]:
 		for yaw in 4:
 			for x in range(minimum.x - 4, maximum.x + 5):
 				for z in range(minimum.y - 4, maximum.y + 5):
@@ -1380,6 +2101,12 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 						1000003)
 					out.append({"kind": kind, "origin": origin,
 						"yaw_quarters": yaw, "columns": columns,
+						# Paired silhouette scoring consumes the lightweight variant
+						# directly before the winning pair is expanded into a full
+						# record. Preserve its vertical interval so shoulder/roof
+						# rules see the same typed transition as _record().
+						"start_storey": int(current.start_storey),
+						"end_storey": int(current.end_storey),
 						"tower_relief": tower_relief, "score": score,
 						"strong_registration_count": int(
 							registration.strong_registration_count),
@@ -1404,6 +2131,13 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 		if defer_structural_proof else 18
 	for variant: Dictionary in out:
 		var columns := variant.columns as Dictionary
+		if not defer_structural_proof:
+			var trial := _record(StringName(variant.kind),
+				variant.origin as Vector3i, int(variant.yaw_quarters),
+				int(current.start_storey), int(current.end_storey))
+			if _transition_unroofable_shoulder_count(previous, trial) > 0 \
+					or _transition_unroofable_shoulder_count(trial, next) > 0:
+				continue
 		# A paired half-storey transaction may replace the room that physically
 		# bears this candidate. Its support cannot be proven until both candidate
 		# records exist in one joint claim set; filtering it here recreated a 2D,
@@ -2784,7 +3518,8 @@ static func _relieve_paired_registered_lineages(lineages: Dictionary,
 
 static func _paired_relief_candidate_is_better(a: Dictionary,
 		b: Dictionary) -> bool:
-	for key: String in ["strong_registration_count",
+	for key: String in ["unroofable_shoulder_count",
+			"strong_registration_count",
 			"registered_facade_plane_count", "same_kind_count",
 			"same_ridge_axis_count"]:
 		var a_gain := int((a.before as Dictionary)[key]) \
@@ -2814,7 +3549,8 @@ static func _combined_vertical_profile_metric(left: Dictionary,
 	var right_metric := _vertical_profile_metric(right, right_previous,
 		right_next)
 	var out: Dictionary = {}
-	for key: String in ["strong_registration_count",
+	for key: String in ["unroofable_shoulder_count",
+			"strong_registration_count",
 			"registered_facade_plane_count", "same_kind_count",
 			"same_ridge_axis_count"]:
 		out[key] = int(left_metric[key]) + int(right_metric[key])
@@ -2848,6 +3584,9 @@ static func _vertical_profile_metric(current: Dictionary,
 		same_axis += int(posmod(int(current.yaw_quarters), 2) \
 			== posmod(int(adjacent.yaw_quarters), 2))
 	return {
+		"unroofable_shoulder_count": \
+			_transition_unroofable_shoulder_count(previous, current) \
+			+ _transition_unroofable_shoulder_count(current, next),
 		"strong_registration_count": int(
 			registration.strong_registration_count),
 		"registered_facade_plane_count": int(
@@ -2859,12 +3598,33 @@ static func _vertical_profile_metric(current: Dictionary,
 
 static func _vertical_profile_is_better(candidate: Dictionary,
 		current: Dictionary) -> bool:
-	for key: String in ["strong_registration_count",
+	for key: String in ["unroofable_shoulder_count",
+			"strong_registration_count",
 			"registered_facade_plane_count", "same_kind_count",
 			"same_ridge_axis_count"]:
 		if int(candidate[key]) != int(current[key]):
 			return int(candidate[key]) < int(current[key])
 	return false
+
+
+static func _transition_unroofable_shoulder_count(lower: Dictionary,
+		upper: Dictionary) -> int:
+	## Silhouette relief is part of the architectural composition transaction,
+	## not permission to manufacture an arbitrary shelf. Score the exact remainder
+	## exposed by a changed floorplate before accepting the move, using the same
+	## complete-room/compound-gable/lean-to vocabulary as the final roof gate.
+	if lower.is_empty() or upper.is_empty() \
+			or int(lower.end_storey) != int(upper.start_storey):
+		return 0
+	var exposed: Dictionary = {}
+	for column_value: Variant in (lower.columns as Dictionary).keys():
+		if not (upper.columns as Dictionary).has(column_value):
+			exposed[column_value] = true
+	var count := 0
+	for component: Dictionary in _column_components(exposed):
+		count += int(not _shoulder_component_is_roofable(component,
+			upper.columns as Dictionary, (lower.origin as Vector3i).y))
+	return count
 
 
 static func _lineage_overlap_audit(lineages: Dictionary) -> Dictionary:
@@ -3027,9 +3787,22 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 		if int(a.score) != int(b.score):
 			return int(a.score) > int(b.score)
 		return int(a.tie) < int(b.tie))
+	var current_shoulder_count := _transition_unroofable_shoulder_count(
+		previous, current) + _transition_unroofable_shoulder_count(current, next)
 	for candidate_index in mini(candidates.size(),
 			MAX_STRUCTURAL_VARIANT_FRONTIER):
 		var candidate := candidates[candidate_index] as Dictionary
+		var candidate_record := _record(StringName(candidate.kind),
+			candidate.origin as Vector3i, int(candidate.yaw_quarters),
+			int(current.start_storey), int(current.end_storey))
+		var candidate_shoulder_count := \
+			_transition_unroofable_shoulder_count(previous, candidate_record) \
+			+ _transition_unroofable_shoulder_count(candidate_record, next)
+		# Never trade a roofable macro seam for a stronger silhouette. The
+		# roof check stays at this bounded accepted-candidate boundary instead of
+		# multiplying the much larger geometric enumeration above.
+		if candidate_shoulder_count > current_shoulder_count:
+			continue
 		if _floorplate_transition_is_structurally_legible(
 				candidate.columns as Dictionary, previous_columns,
 				(current.origin as Vector3i).y, claimed_cells, grid):
@@ -3138,6 +3911,9 @@ static func _candidate_has_facade_endpoint(kind: StringName,
 		&"slim":
 			x_radius = 1
 			z_radius = 2
+		&"row":
+			x_radius = 2
+			z_radius = 1
 		&"building":
 			x_radius = 2
 			z_radius = 2
@@ -3397,15 +4173,34 @@ static func _exact_stamp_for_columns(columns: Dictionary, y: int) -> Dictionary:
 		var column := value as Vector2i
 		minimum = minimum.min(column)
 		maximum = maximum.max(column)
-	for kind: StringName in ROOM_KINDS:
-		for yaw in 4:
-			for x in range(minimum.x - 3, maximum.x + 4):
-				for z in range(minimum.y - 3, maximum.y + 4):
-					var origin := Vector3i(x, y, z)
-					var candidate := _stamp_columns(kind, origin, yaw)
-					if _same_set(candidate, columns):
-						return {"kind": kind, "origin": origin,
-							"yaw_quarters": yaw, "columns": candidate}
+	var size := maximum - minimum + Vector2i.ONE
+	if columns.size() != size.x * size.y:
+		return {}
+	for x in range(minimum.x, maximum.x + 1):
+		for z in range(minimum.y, maximum.y + 1):
+			if not columns.has(Vector2i(x, z)):
+				return {}
+	var kind := &"tower" if size == Vector2i(2, 2) \
+		else &"slim" if size in [Vector2i(2, 4), Vector2i(4, 2)] \
+		else &"building" if size == Vector2i(4, 4) \
+		else &"long" if size in [Vector2i(4, 6), Vector2i(6, 4)] else &""
+	if not kind.is_empty():
+		var yaw := int(size.x > size.y)
+		var local_minimum := Vector2i(-1, -1) if kind == &"tower" \
+			else Vector2i(-1, -2) if kind == &"slim" \
+			else Vector2i(-2, -2) if kind == &"building" \
+			else Vector2i(-2, -3)
+		var local_size := Vector2i(2, 2) if kind == &"tower" \
+			else Vector2i(2, 4) if kind == &"slim" \
+			else Vector2i(4, 4) if kind == &"building" \
+			else Vector2i(4, 6)
+		var local_maximum := local_minimum + local_size - Vector2i.ONE
+		var origin := Vector3i(minimum.x - local_minimum.x, y,
+			minimum.y - local_minimum.y) if yaw == 0 else Vector3i(
+			minimum.x - local_minimum.y, y,
+			minimum.y + local_maximum.x)
+		return {"kind": kind, "origin": origin,
+			"yaw_quarters": yaw, "columns": columns}
 	return {}
 
 
@@ -3419,8 +4214,12 @@ static func _record(kind: StringName, origin: Vector3i, yaw: int,
 		var room_origin := Vector3i(origin.x,
 			origin.y + (storey - start_storey) \
 				* WarrenSpatialGrid.STOREY_CELLS, origin.z)
-		cells.append_array(WarrenRoomStamp.expected_private_cells(kind,
-			room_origin, yaw))
+		var cells_key := "%s/%d/%d/%d/%d" % [kind, room_origin.x,
+			room_origin.y, room_origin.z, yaw]
+		if not _stamp_cells_cache.has(cells_key):
+			_stamp_cells_cache[cells_key] = WarrenRoomStamp \
+				.expected_private_cells(kind, room_origin, yaw)
+		cells.append_array(_stamp_cells_cache[cells_key] as Array[Vector3i])
 	return {"kind": kind, "origin": origin, "yaw_quarters": yaw,
 		"start_storey": start_storey, "end_storey": end_storey,
 		"columns": columns, "cells": cells}
@@ -3428,10 +4227,53 @@ static func _record(kind: StringName, origin: Vector3i, yaw: int,
 
 static func _stamp_columns(kind: StringName, origin: Vector3i,
 		yaw: int) -> Dictionary:
+	var cache_key := "%s/%d/%d/%d" % [kind, origin.x, origin.z, yaw]
+	if _stamp_columns_cache.has(cache_key):
+		return _stamp_columns_cache[cache_key] as Dictionary
 	var out: Dictionary = {}
-	for cell: Vector3i in WarrenRoomStamp.expected_private_cells(kind,
-		Vector3i(origin.x, 0, origin.z), yaw):
-		out[Vector2i(cell.x, cell.z)] = true
+	var minimum := Vector2i.ZERO
+	var size := Vector2i.ZERO
+	match kind:
+		&"tower":
+			minimum = Vector2i(-1, -1)
+			size = Vector2i(2, 2)
+		&"slim":
+			minimum = Vector2i(-1, -2)
+			size = Vector2i(2, 4)
+		&"row":
+			minimum = Vector2i(-2, -1)
+			size = Vector2i(4, 2)
+		&"building":
+			minimum = Vector2i(-2, -2)
+			size = Vector2i(4, 4)
+		&"long":
+			minimum = Vector2i(-2, -3)
+			size = Vector2i(4, 6)
+		_:
+			return out
+	if yaw < 0 or yaw > 3:
+		return out
+	var maximum := minimum + size - Vector2i.ONE
+	var world_minimum := Vector2i.ZERO
+	match yaw:
+		0:
+			world_minimum = Vector2i(origin.x + minimum.x,
+				origin.z + minimum.y)
+		1:
+			world_minimum = Vector2i(origin.x + minimum.y,
+				origin.z - maximum.x)
+		2:
+			world_minimum = Vector2i(origin.x - maximum.x,
+				origin.z - maximum.y)
+		3:
+			world_minimum = Vector2i(origin.x - maximum.y,
+				origin.z + minimum.x)
+	var world_size := size if posmod(yaw, 2) == 0 \
+		else Vector2i(size.y, size.x)
+	for x in range(world_minimum.x, world_minimum.x + world_size.x):
+		for z in range(world_minimum.y, world_minimum.y + world_size.y):
+			out[Vector2i(x, z)] = true
+	_stamp_columns_cache[cache_key] = out
 	return out
 
 

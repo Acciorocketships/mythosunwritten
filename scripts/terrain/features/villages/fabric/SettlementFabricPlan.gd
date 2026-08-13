@@ -244,8 +244,11 @@ func asset_ids() -> Array[StringName]:
 	var unique: Dictionary = {}
 	for unit_value: FabricUnit in units:
 		var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
-		for asset_id: StringName in unit_recipe.asset_ids():
-			unique[asset_id] = true
+		for placement: Dictionary in unit_recipe.placements:
+			if unit_value.suppressed_placement_ids.has(
+					StringName(placement.id)):
+				continue
+			unique[StringName(placement.asset_id)] = true
 	var out: Array[StringName] = []
 	out.assign(unique.keys())
 	out.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -258,6 +261,9 @@ func expanded_placements() -> Array[Dictionary]:
 	for unit_value: FabricUnit in units:
 		var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
 		for placement: Dictionary in unit_recipe.placements:
+			if unit_value.suppressed_placement_ids.has(
+					StringName(placement.id)):
+				continue
 			out.append({
 				"stable_id": StringName("%s/%s" % [unit_value.stable_id,
 					StringName(placement.id)]),
@@ -583,11 +589,17 @@ func construction_signature() -> String:
 			bond_records.append("%s>%s:%s" % [bond.own_socket,
 				bond.target_unit, bond.target_socket])
 		bond_records.sort()
+		var suppressed := PackedStringArray()
+		for placement_id: StringName in unit_value.suppressed_placement_ids:
+			suppressed.append(String(placement_id))
+		suppressed.sort()
 		var origin := unit_value.lattice_origin
-		records.append("%s:%s@%d,%d,%d/r%d/p[%s]/b[%s]" % [
+		var suppression_suffix := "/x[%s]" % ",".join(suppressed) \
+			if not suppressed.is_empty() else ""
+		records.append("%s:%s@%d,%d,%d/r%d/p[%s]/b[%s]%s" % [
 			unit_value.stable_id, unit_value.recipe_id, origin.x, origin.y,
 			origin.z, unit_value.yaw_quarters, ",".join(parent_ids),
-			",".join(bond_records)])
+			",".join(bond_records), suppression_suffix])
 	records.sort()
 	return "|".join(records).sha256_text()
 
@@ -634,6 +646,21 @@ func _accept_unit(unit_value: FabricUnit, seen: Dictionary,
 			unit_value.stable_id, unit_value.recipe_id]
 		return false
 	var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
+	var recipe_placement_ids: Dictionary = {}
+	for placement: Dictionary in unit_recipe.placements:
+		recipe_placement_ids[StringName(placement.id)] = true
+	for placement_id: StringName in unit_value.suppressed_placement_ids:
+		if not recipe_placement_ids.has(placement_id):
+			last_rejection = "unit %s suppresses missing placement %s" % [
+				unit_value.stable_id, placement_id]
+			return false
+	for run: Dictionary in unit_recipe.construction_runs:
+		for placement_value: Variant in run.placement_ids as Array:
+			if unit_value.suppressed_placement_ids.has(
+					StringName(placement_value)):
+				last_rejection = ("unit %s partially suppresses authored " \
+					+ "construction run %s") % [unit_value.stable_id, run.id]
+				return false
 	if unit_value.parent_ids.size() != unit_recipe.bearing_parent_count:
 		last_rejection = "unit %s has %d bearing parents; recipe requires %d" % [
 			unit_value.stable_id, unit_value.parent_ids.size(),

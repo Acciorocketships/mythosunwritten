@@ -466,6 +466,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_flat_roof_garden_recipe(&"roof.flat.long.garden.rich",
 			Vector3i(-2, 0, -3), Vector3i(4, 1, 6), &"long_building",
 			TERRACE_PLANT_TALL, modules, true),
+		_flat_roof_micro_garden_recipe(&"roof.flat.tower.garden.micro",
+			Vector3i(-1, 0, -1), Vector3i(2, 1, 2), &"compact_tower"),
+		_flat_roof_micro_garden_recipe(&"roof.flat.slim.garden.micro",
+			Vector3i(-1, 0, -2), Vector3i(2, 1, 4), &"slim_building"),
+		_flat_roof_micro_garden_recipe(&"roof.flat.square.garden.micro",
+			Vector3i(-2, 0, -2), Vector3i(4, 1, 4), &"square_building"),
+		_flat_roof_micro_garden_recipe(&"roof.flat.long.garden.micro",
+			Vector3i(-2, 0, -3), Vector3i(4, 1, 6), &"long_building"),
 		_setback_cap_recipe(&"roof.setback.cap.1", 1, modules),
 		_setback_cap_recipe(&"roof.setback.cap.2", 2, modules),
 		_setback_cap_recipe(&"roof.setback.cap.4", 4, modules),
@@ -627,16 +635,29 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_integrated_cantilever_terminal_support_recipe(modules),
 		_integrated_cantilever_terminal_diagonal_support_recipe(modules),
 	]
+	_append_row_vocabulary(candidates, modules)
 	for flat_spec: Dictionary in [
 		{"kind": "tower", "minimum": Vector3i(-1, 0, -1),
 			"size": Vector3i(2, 1, 2), "family": &"compact_tower"},
 		{"kind": "slim", "minimum": Vector3i(-1, 0, -2),
 			"size": Vector3i(2, 1, 4), "family": &"slim_building"},
+		{"kind": "row", "minimum": Vector3i(-2, 0, -1),
+			"size": Vector3i(4, 1, 2), "family": &"row_building"},
 		{"kind": "square", "minimum": Vector3i(-2, 0, -2),
 			"size": Vector3i(4, 1, 4), "family": &"square_building"},
 		{"kind": "long", "minimum": Vector3i(-2, 0, -3),
 			"size": Vector3i(4, 1, 6), "family": &"long_building"},
 	]:
+		for micro_index in 4:
+			var micro_offset := [
+				Vector2(-0.65, -0.65), Vector2(0.65, -0.65),
+				Vector2(0.65, 0.65), Vector2(-0.65, 0.65),
+			][micro_index] as Vector2
+			candidates.append(_flat_roof_micro_garden_recipe(StringName(
+				"roof.flat.%s.garden.micro.%d" % [flat_spec.kind,
+					micro_index]), flat_spec.minimum as Vector3i,
+				flat_spec.size as Vector3i, StringName(flat_spec.family),
+				micro_offset))
 		for side: StringName in [&"north", &"east", &"south", &"west"]:
 			candidates.append(_flat_roof_terrace_recipe(StringName(
 				"roof.flat.%s.terrace.%s.lived" % [flat_spec.kind, side]),
@@ -1214,6 +1235,140 @@ static func _slim_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 	return recipe_value
 
 
+static func _append_row_vocabulary(candidates: Array[FabricRecipe],
+		modules: FabricModuleProgram) -> void:
+	## A rowhouse is geometrically the quarter-turn of a slim townhouse but not
+	## semantically interchangeable with it: the real public door lies on the
+	## broad four-cell eave. Keep that fact in the recipe vocabulary so an exact
+	## base-band merge never rotates a decorative gable door toward private mass.
+	for theme: StringName in [&"rock", &"blue", &"orange", &"amber"]:
+		candidates.append(_row_room_recipe(StringName("room.row.base.%s" % theme),
+			true, theme, true, modules))
+		candidates.append(_row_room_recipe(StringName(
+			"room.row.base.%s.closed" % theme), true, theme, false, modules))
+	for theme: StringName in [&"blue", &"orange", &"amber", &"stone"]:
+		for facade_phase in 2:
+			var phase_suffix := ".b" if facade_phase == 1 else ""
+			candidates.append(_row_room_recipe(StringName(
+				"room.row.upper.%s%s" % [theme, phase_suffix]), false,
+				theme, false, modules, facade_phase))
+			candidates.append(_row_room_recipe(StringName(
+				"room.row.upper.address.%s%s" % [theme, phase_suffix]), false,
+				theme, true, modules, facade_phase))
+	for roof_spec: Dictionary in [
+		{"id": &"roof.row.blue", "theme": ROOF_BLUE},
+		{"id": &"roof.row.orange", "theme": ROOF_ORANGE},
+	]:
+		candidates.append(_row_roof_recipe(StringName(roof_spec.id),
+			StringName(roof_spec.theme), modules))
+	var dormer_specs: Array[Dictionary] = [
+		{"id": &"roof.row.blue.dormer.left", "theme": ROOF_BLUE,
+			"asset": ROOF_WINDOW_02, "side": -1},
+		{"id": &"roof.row.blue.dormer.right", "theme": ROOF_BLUE,
+			"asset": ROOF_WINDOW_02, "side": 1},
+		{"id": &"roof.row.orange.dormer.left", "theme": ROOF_ORANGE,
+			"asset": ROOF_WINDOW_01, "side": -1},
+		{"id": &"roof.row.orange.dormer.right", "theme": ROOF_ORANGE,
+			"asset": ROOF_WINDOW_01, "side": 1},
+	]
+	for spec: Dictionary in dormer_specs:
+		candidates.append(_dormered_row_roof_recipe(StringName(spec.id),
+			StringName(spec.theme), StringName(spec.asset), int(spec.side), modules))
+	for roof_spec: Dictionary in [
+		{"id": &"roof.row.short.blue", "theme": ROOF_BLUE},
+		{"id": &"roof.row.short.orange", "theme": ROOF_ORANGE},
+		{"id": &"roof.row.chimney.blue", "theme": ROOF_BLUE},
+		{"id": &"roof.row.chimney.orange", "theme": ROOF_ORANGE},
+	]:
+		candidates.append(_chimney_row_roof_recipe(StringName(roof_spec.id),
+			StringName(roof_spec.theme), modules))
+	var row_minimum := Vector3i(-2, 0, -1)
+	var row_size := Vector3i(4, 1, 2)
+	candidates.append(_flat_roof_recipe(&"roof.flat.row", row_minimum,
+		row_size, &"row_building", modules))
+	candidates.append(_flat_roof_garden_recipe(&"roof.flat.row.garden",
+		row_minimum, row_size, &"row_building", TERRACE_PLANT_MID, modules))
+	candidates.append(_flat_roof_garden_recipe(&"roof.flat.row.garden.rich",
+		row_minimum, row_size, &"row_building", TERRACE_PLANT_MID, modules, true))
+	candidates.append(_flat_roof_micro_garden_recipe(
+		&"roof.flat.row.garden.micro", row_minimum, row_size, &"row_building"))
+
+
+static func _row_room_recipe(recipe_id: StringName, terrain_bearing: bool,
+		theme: StringName, has_exterior_door: bool,
+		modules: FabricModuleProgram, facade_phase: int = 0) -> FabricRecipe:
+	## One complete 6 x 3 m street-facing house storey. Two old tower cells become
+	## one facade rhythm and one bearing volume rather than coincident wall meshes.
+	var tags: Array[StringName] = [
+		&"room", &"generated_building", &"row_building",
+	]
+	if terrain_bearing:
+		tags.append(&"terrain_bearing")
+	var recipe_value := FabricRecipe.new(recipe_id, tags,
+		0 if terrain_bearing else 1)
+	var facade_family := &"stone" if theme == &"rock" else theme
+	var window_asset := _facade_asset(facade_family, facade_phase)
+	var rear_asset := _facade_asset(facade_family, facade_phase + 1)
+	var side_asset := _facade_asset(facade_family, facade_phase + 2)
+	var door_asset := _facade_door(facade_family) if has_exterior_door \
+		else window_asset
+	var centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-2, 0, -1), Vector3i(4, 1, 2))
+	for index in 2:
+		var x_offset := -1.5 + float(index) * 3.0
+		recipe_value.add_placement(StringName("floor.%d" % index), FLOOR,
+			modules.walk_aligned_transform(FLOOR,
+				_pose(centre + Vector3(x_offset, 0.0, 0.0), 0.0), 0.0))
+		var front_asset := door_asset if index == 0 else window_asset
+		recipe_value.add_placement(StringName("front.%d" % index), front_asset,
+			modules.facade_aligned_transform(front_asset,
+				_pose(centre + Vector3(x_offset, 0.0, 1.5), 0.0),
+				Vector3i.BACK, centre.z + 1.5))
+		recipe_value.add_placement(StringName("back.%d" % index), rear_asset,
+			modules.facade_aligned_transform(rear_asset,
+				_pose(centre + Vector3(x_offset, 0.0, -1.5), PI),
+				Vector3i.FORWARD, centre.z - 1.5))
+	for side: Dictionary in [
+		{"id": &"west.0", "x": -3.0, "yaw": PI * 0.5,
+			"outward": Vector3i.LEFT, "boundary": centre.x - 3.0},
+		{"id": &"east.0", "x": 3.0, "yaw": -PI * 0.5,
+			"outward": Vector3i.RIGHT, "boundary": centre.x + 3.0},
+	]:
+		recipe_value.add_placement(StringName(side.id), side_asset,
+			modules.facade_aligned_transform(side_asset,
+				_pose(centre + Vector3(float(side.x), 0.0, 0.0),
+					float(side.yaw)), side.outward as Vector3i,
+				float(side.boundary)))
+	if not terrain_bearing and facade_phase == 1:
+		_add_front_facade_detail(recipe_value,
+			_upper_facade_detail_kind(theme, &"row"), centre, 1.5)
+	var pier_xz := Vector2i(-2, -1)
+	var door_cell := Vector3i(-1, 0, 0)
+	for y in 2:
+		for z in range(-1, 1):
+			for x in range(-2, 2):
+				var cell := Vector3i(x, y, z)
+				var doorway := has_exterior_door \
+					and x == door_cell.x and z == door_cell.z
+				if x == pier_xz.x and z == pier_xz.y:
+					recipe_value.solid_cells.append(cell)
+				elif not doorway:
+					recipe_value.headroom_cells.append(cell)
+				if not doorway:
+					recipe_value.occluder_cells.append(cell)
+	if has_exterior_door:
+		for y in 2:
+			recipe_value.headroom_cells.append(Vector3i(door_cell.x, y,
+				door_cell.z))
+		recipe_value.add_entrance(&"front", door_cell, Vector3i.BACK)
+	recipe_value.inhabited_cells.assign(recipe_value.headroom_cells)
+	_add_room_sockets(recipe_value, 2, 1)
+	if terrain_bearing:
+		_set_terrain_bearing_rect(recipe_value, Vector3i(-2, 0, -1),
+			Vector3i(4, 1, 2))
+	return recipe_value
+
+
 static func _stair_house_recipe(recipe_id: StringName, theme: StringName,
 		terrain_bearing: bool, modules: FabricModuleProgram) -> FabricRecipe:
 	var tags: Array[StringName] = [
@@ -1763,6 +1918,25 @@ static func _flat_roof_garden_recipe(recipe_id: StringName,
 	return recipe_value
 
 
+static func _flat_roof_micro_garden_recipe(recipe_id: StringName,
+		minimum: Vector3i, size: Vector3i, family: StringName,
+		offset_xz: Vector2 = Vector2.ZERO) -> FabricRecipe:
+	## Last complete accent in the flat-roof rule table. A neighboring eave can
+	## block the planter's broad measured box while leaving enough central roof for
+	## one authored flower clump. This remains a real asset with measured bounds,
+	## never an overlap exception or a bare procedural plate.
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"roof", &"roof_decoration", &"flat_roof_garden",
+		&"micro_roof_garden", family,
+	], 1)
+	var centre := FabricModuleProgram.footprint_centre(minimum, size)
+	recipe_value.add_placement(&"garden.flower", ROOF_FLOWER_SMALL,
+		_pose(centre + Vector3(offset_xz.x, 0.05, offset_xz.y), 0.0))
+	recipe_value.add_socket(&"bearing.bottom",
+		FabricRecipe.SocketKind.BEARING, Vector3i.UP, Vector3i.DOWN)
+	return recipe_value
+
+
 static func _add_lived_in_roof_terrace_dressing(recipe_value: FabricRecipe,
 		centre: Vector3, size: Vector3i, guarded_side: StringName) -> void:
 	## Flat roofs are an intentional dense-city type, but a field of pristine
@@ -2091,6 +2265,61 @@ static func _slim_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 	return recipe_value
 
 
+static func _row_roof_recipe(recipe_id: StringName, roof_asset: StringName,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## The wide/shallow counterpart to the slim roof. Two complete compact gables
+	## share one rowhouse transaction and run along local X; their deliberate
+	## 0.6 m step reads as a grown building while avoiding coincident tile planes.
+	assert(roof_asset == ROOF_BLUE or roof_asset == ROOF_ORANGE)
+	assert(modules != null)
+	var recipe_value := FabricRecipe.new(recipe_id,
+		[&"roof", &"occupied_mass", &"row_building", &"ridge_x",
+			&"staggered_roof"], 1)
+	var centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-2, 0, -1), Vector3i(4, 1, 2))
+	var first_asset := COMPACT_ROOF_SLATE_06 if roof_asset == ROOF_BLUE \
+		else COMPACT_ROOF_03
+	var second_asset := COMPACT_ROOF_SLATE_03 if roof_asset == ROOF_BLUE \
+		else COMPACT_ROOF_06
+	recipe_value.add_placement(&"roof.left", first_asset,
+		_pose(centre + Vector3(-1.5, 0.0, 0.0), PI * 0.5))
+	recipe_value.add_placement(&"roof.right", second_asset,
+		_pose(centre + Vector3(1.5, 0.6, 0.0), PI * 0.5))
+	recipe_value.solid_cells = FabricRecipe.box_cells(Vector3i(-2, 0, -1),
+		Vector3i(4, 2, 2))
+	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
+	recipe_value.add_socket(&"bearing.bottom", FabricRecipe.SocketKind.BEARING,
+		Vector3i.ZERO, Vector3i.DOWN)
+	_add_row_roof_junction_sockets(recipe_value, Vector3i(-2, 0, -1),
+		Vector3i(4, 1, 2))
+	return recipe_value
+
+
+static func _dormered_row_roof_recipe(recipe_id: StringName,
+		roof_asset: StringName, dormer_asset: StringName, eave_side: int,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	assert(eave_side == -1 or eave_side == 1)
+	var recipe_value := _row_roof_recipe(recipe_id, roof_asset, modules)
+	var centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-2, 0, -1), Vector3i(4, 1, 2))
+	var dormer_yaw := 0.0 if eave_side > 0 else PI
+	recipe_value.add_placement(&"dormer", dormer_asset,
+		_pose(centre + Vector3(1.5, 0.95, float(eave_side) * 0.65),
+			dormer_yaw))
+	recipe_value.role_tags.append(&"dormer")
+	return recipe_value
+
+
+static func _chimney_row_roof_recipe(recipe_id: StringName,
+		roof_asset: StringName, modules: FabricModuleProgram) -> FabricRecipe:
+	var recipe_value := _row_roof_recipe(recipe_id, roof_asset, modules)
+	var centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-2, 0, -1), Vector3i(4, 1, 2))
+	recipe_value.add_placement(&"chimney", COMPACT_CHIMNEY,
+		_pose(centre + Vector3(-0.75, -1.5, 0.45), PI * 0.5))
+	return recipe_value
+
+
 static func _dormered_slim_roof_recipe(recipe_id: StringName,
 		roof_asset: StringName, dormer_asset: StringName, eave_side: int,
 		modules: FabricModuleProgram) -> FabricRecipe:
@@ -2234,6 +2463,8 @@ static func _is_feature_portal_base(recipe_value: FabricRecipe) -> bool:
 		or id.begins_with("room.long.base.") \
 		or id.begins_with("room.slim.upper.") \
 		or id.begins_with("room.slim.base.") \
+		or id.begins_with("room.row.upper.") \
+		or id.begins_with("room.row.base.") \
 		or id.begins_with("room.tower.upper.") \
 		or id.begins_with("room.tower.base.")
 
@@ -2318,6 +2549,11 @@ static func _feature_portal_spec(base_recipe_id: StringName,
 		family = &"slim"
 		minimum = Vector3i(-1, 0, -2)
 		size = Vector3i(2, 1, 4)
+	elif id.begins_with("room.row.upper.") \
+			or id.begins_with("room.row.base."):
+		family = &"row"
+		minimum = Vector3i(-2, 0, -1)
+		size = Vector3i(4, 1, 2)
 	elif id.begins_with("room.tower.upper.") \
 			or id.begins_with("room.tower.base."):
 		family = &"tower"
@@ -2329,12 +2565,12 @@ static func _feature_portal_spec(base_recipe_id: StringName,
 	var centre := FabricModuleProgram.footprint_centre(minimum, size)
 	var half_x := float(size.x) * CELL * 0.5
 	var half_z := float(size.z) * CELL * 0.5
-	var along_ns := 1.5 if family in [&"square", &"long"] else 0.0
+	var along_ns := 1.5 if family in [&"square", &"long", &"row"] else 0.0
 	var along_ew := 1.5 if family in [&"square", &"slim"] else 0.0
 	match portal_bit:
 		FEATURE_PORTAL_NORTH:
 			return {
-				"placement": &"back.1" if family in [&"square", &"long"] \
+				"placement": &"back.1" if family in [&"square", &"long", &"row"] \
 					else &"north",
 				"cell": Vector3i(0, 0, minimum.z),
 				"pose": _pose(centre + Vector3(along_ns, 0.0, -half_z), PI),
@@ -2344,7 +2580,8 @@ static func _feature_portal_spec(base_recipe_id: StringName,
 		FEATURE_PORTAL_EAST:
 			return {
 				"placement": &"right.1" if family == &"square" \
-					else &"east.1" if family in [&"long", &"slim"] else &"east",
+					else &"east.1" if family in [&"long", &"slim"] \
+					else &"east.0" if family == &"row" else &"east",
 				"cell": Vector3i(minimum.x + size.x - 1, 0, 0),
 				"pose": _pose(centre + Vector3(half_x, 0.0, along_ew),
 					-PI * 0.5),
@@ -2353,7 +2590,7 @@ static func _feature_portal_spec(base_recipe_id: StringName,
 			}
 		FEATURE_PORTAL_SOUTH:
 			return {
-				"placement": &"front.1" if family in [&"square", &"long"] \
+				"placement": &"front.1" if family in [&"square", &"long", &"row"] \
 					else &"south",
 				"cell": Vector3i(0, 0, minimum.z + size.z - 1),
 				"pose": _pose(centre + Vector3(along_ns, 0.0, half_z), 0.0),
@@ -2363,7 +2600,8 @@ static func _feature_portal_spec(base_recipe_id: StringName,
 		FEATURE_PORTAL_WEST:
 			return {
 				"placement": &"left.1" if family == &"square" \
-					else &"west.1" if family in [&"long", &"slim"] else &"west",
+					else &"west.1" if family in [&"long", &"slim"] \
+					else &"west.0" if family == &"row" else &"west",
 				"cell": Vector3i(minimum.x, 0, 0),
 				"pose": _pose(centre + Vector3(-half_x, 0.0, along_ew),
 					PI * 0.5),
@@ -2385,10 +2623,10 @@ static func _append_roof_seam_vocabulary(candidates: Array[FabricRecipe],
 	## never stretches flashing: each legal segment is composed from complete
 	## 3 m modules and remains bonded at the owning roof's canonical datum.
 	var seen: Dictionary = {}
-	for kind: StringName in [&"tower", &"slim", &"building", &"long"]:
+	for kind: StringName in [&"tower", &"slim", &"row", &"building", &"long"]:
 		var owner_run_cells := 2 if kind == &"tower" else 4 \
-			if kind == &"slim" or kind == &"building" else 6
-		var width_m := 3.0 if kind == &"tower" or kind == &"slim" else 6.0
+			if kind in [&"slim", &"row", &"building"] else 6
+		var width_m := 3.0 if kind in [&"tower", &"slim", &"row"] else 6.0
 		for face_cells in range(2, owner_run_cells + 1, 2):
 			for start_cell in range(0, owner_run_cells - face_cells + 1, 2):
 				var offset_half_steps := start_cell * 2 + face_cells \
@@ -2499,6 +2737,18 @@ static func _add_roof_junction_sockets(recipe_value: FabricRecipe,
 	recipe_value.add_socket(&"bearing.junction.eave.positive",
 		FabricRecipe.SocketKind.BEARING,
 		Vector3i(minimum.x + size.x - 1, 0, 0), Vector3i.UP)
+
+
+static func _add_row_roof_junction_sockets(recipe_value: FabricRecipe,
+		minimum: Vector3i, size: Vector3i) -> void:
+	## Row roofs rotate the standard ridge/eave basis by one quarter turn: their
+	## flashing sockets therefore live on the local Z edges, not the X edges.
+	recipe_value.add_socket(&"bearing.junction.eave.negative",
+		FabricRecipe.SocketKind.BEARING, Vector3i(0, 0, minimum.z),
+		Vector3i.UP)
+	recipe_value.add_socket(&"bearing.junction.eave.positive",
+		FabricRecipe.SocketKind.BEARING,
+		Vector3i(0, 0, minimum.z + size.z - 1), Vector3i.UP)
 
 
 static func _short_slim_roof_recipe(recipe_id: StringName,
@@ -3387,6 +3637,10 @@ static func _upper_facade_detail_kind(theme: StringName,
 		&"slim":
 			return &"ivy" if theme == &"blue" else &"sign" \
 				if theme == &"orange" else &"clothes" \
+				if theme == &"stone" else &"windowbox"
+		&"row":
+			return &"clothes" if theme == &"blue" else &"ivy" \
+				if theme == &"orange" else &"sign" \
 				if theme == &"stone" else &"windowbox"
 	return &"ivy"
 

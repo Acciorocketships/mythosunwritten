@@ -13,6 +13,11 @@ var socket_bonds: Array[Dictionary] = []
 ## Explicit authored intersections such as an awning fastened into the upper
 ## facade above its market socket. This is never inferred from role tags.
 var visual_seam_ids: Array[StringName] = []
+## Visual placements deliberately omitted because the sealed spatial grid
+## proves that the complete authored module lies behind a typed construction
+## seam. This is exact macro-composition data, not a renderer-side proximity
+## test: partial wall contacts may never suppress a placement.
+var suppressed_placement_ids: Array[StringName] = []
 var public_node_id: StringName
 var bounds := AABB()
 
@@ -22,7 +27,8 @@ func _init(p_stable_id: StringName, p_recipe_id: StringName,
 		p_parent_ids: Array[StringName] = [],
 		p_socket_bonds: Array[Dictionary] = [],
 		p_public_node_id: StringName = &"",
-		p_visual_seam_ids: Array[StringName] = []) -> void:
+		p_visual_seam_ids: Array[StringName] = [],
+		p_suppressed_placement_ids: Array[StringName] = []) -> void:
 	stable_id = p_stable_id
 	recipe_id = p_recipe_id
 	lattice_origin = p_lattice_origin
@@ -31,6 +37,7 @@ func _init(p_stable_id: StringName, p_recipe_id: StringName,
 	for bond: Dictionary in p_socket_bonds:
 		socket_bonds.append(bond.duplicate())
 	visual_seam_ids.assign(p_visual_seam_ids)
+	suppressed_placement_ids.assign(p_suppressed_placement_ids)
 	public_node_id = p_public_node_id
 
 
@@ -60,6 +67,12 @@ func is_valid() -> bool:
 				or unique_visual_seams.has(seam_id):
 			return false
 		unique_visual_seams[seam_id] = true
+	var unique_suppressed_placements: Dictionary = {}
+	for placement_id: StringName in suppressed_placement_ids:
+		if placement_id.is_empty() \
+				or unique_suppressed_placements.has(placement_id):
+			return false
+		unique_suppressed_placements[placement_id] = true
 	return true
 
 

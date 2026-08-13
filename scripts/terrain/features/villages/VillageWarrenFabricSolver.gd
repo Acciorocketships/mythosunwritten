@@ -28,8 +28,13 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	if preview == null:
 		return _rejected(StringName("volume_%s" %
 			WarrenVolumetricSolver.last_failure))
-	var preview_fabric := WarrenSpatialFabricCompiler.solve(preview,
-		program.settlement_fabric_program)
+	# The selector has already compiled and quality-gated its winning preview.
+	# Reuse that output-pure derivative instead of repeating the complete measured
+	# facade/roof/public-realm transaction at the production adapter boundary.
+	var preview_fabric := preview.compiled_fabric_cache()
+	if preview_fabric == null:
+		preview_fabric = WarrenSpatialFabricCompiler.solve(preview,
+			program.settlement_fabric_program)
 	if preview_fabric == null:
 		return _rejected(StringName("fabric_%s" %
 			WarrenSpatialFabricCompiler.last_failure))

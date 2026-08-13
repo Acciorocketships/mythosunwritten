@@ -152,6 +152,8 @@ static func address_door_phase_for_room(kind: StringName, origin: Vector3i,
 			phase_zero = Vector3i(0, 0, 0)
 		&"slim":
 			phase_zero = Vector3i(0, 0, 1)
+		&"row":
+			phase_zero = Vector3i(-1, 0, 0)
 		&"building":
 			phase_zero = Vector3i(-1, 0, 1)
 		&"long":
@@ -241,6 +243,13 @@ static func profile_for(parcel: WarrenBuildingParcel) -> Dictionary:
 			"minimum": Vector3i(-1, 0, -2),
 			"size": Vector3i(2, 1, 4),
 			"door_cell": Vector3i(-parcel.address_door_phase, 0, 1),
+		}
+	if parcel.width_cells == 2 and parcel.depth_cells == 1:
+		return {
+			"kind": &"row",
+			"minimum": Vector3i(-2, 0, -1),
+			"size": Vector3i(4, 1, 2),
+			"door_cell": Vector3i(-1 - parcel.address_door_phase, 0, 0),
 		}
 	if parcel.width_cells == 2 and parcel.depth_cells == 2:
 		return {

@@ -123,7 +123,7 @@ static func build(proposals: Array[Dictionary],
 static func eave_seam_recipe_id(kind: StringName, face_cells: int,
 		run_offset_half_steps: int, side: int) -> StringName:
 	var owner_run_cells := _ridge_span_for_kind(kind)
-	var size_family := "narrow" if kind == &"tower" or kind == &"slim" \
+	var size_family := "narrow" if kind in [&"tower", &"slim", &"row"] \
 		else "wide" if kind == &"building" or kind == &"long" else ""
 	if size_family.is_empty() or face_cells < 2 or face_cells > owner_run_cells \
 			or posmod(face_cells, 2) != 0 \
@@ -288,15 +288,15 @@ static func _reverse_seam(topology: FabricRoofTopologyPlan,
 static func _side_span(proposal: Dictionary, side: int) -> int:
 	var kind := StringName(proposal.get("kind", ""))
 	var ridge_span := _ridge_span_for_kind(kind)
-	var eave_span := 2 if kind == &"tower" or kind == &"slim" \
+	var eave_span := 2 if kind in [&"tower", &"slim", &"row"] \
 		else 4 if kind == &"building" or kind == &"long" else 0
 	return eave_span if side == FabricRoofTopologyPlan.Side.RIDGE_NEGATIVE \
 		or side == FabricRoofTopologyPlan.Side.RIDGE_POSITIVE else ridge_span
 
 
 static func _ridge_span_for_kind(kind: StringName) -> int:
-	return 2 if kind == &"tower" else 4 if kind == &"slim" \
-		or kind == &"building" else 6 if kind == &"long" else 0
+	return 2 if kind == &"tower" else 4 if kind in [&"slim", &"row", &"building"] \
+		else 6 if kind == &"long" else 0
 
 
 static func _reject(reason: String) -> Dictionary:

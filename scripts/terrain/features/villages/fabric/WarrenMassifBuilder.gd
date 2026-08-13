@@ -65,6 +65,13 @@ const MIN_COLUMN_BANDS := 2
 ## tallest continuous vertical face anywhere in the solid is now two storeys
 ## followed by a setback, whatever later dresses it.
 const MAX_NEIGHBOR_STEP_BANDS := 4
+## District growth is deterministic but a single tie-break order can make two
+## individually valid six-cell terraces meet at the same level and form an
+## oversized plateau. Try a small fixed family of order/riser phases before
+## rejecting the whole settlement. Existing seeds that pass phase zero remain
+## byte-for-byte identical.
+const TERRACE_ASSIGNMENT_ATTEMPTS := 8
+const TERRACE_ASSIGNMENT_STRIDE := 1000003
 
 static var last_failure := ""
 
@@ -78,7 +85,6 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 		last_failure = "invalid village scale profile"
 		return null
 	var radius_cells := profile.radius_cells
-	var massif := WarrenMassif.new(world_seed)
 	var footprint_core := profile.minimum_core_bands \
 		+ posmod(_hash(world_seed, 5, 0, 0),
 			profile.maximum_core_bands - profile.minimum_core_bands + 1)
@@ -112,17 +118,31 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 	# Pass 2: capacity-limited flood fill assigns the actual terrace bands,
 	# under a per-column ceiling derived from how far that column stands from
 	# the empty ground outside the footprint.
-	var terrace_at := _assign_terraces(raw_at, world_seed,
-		_step_ceilings(raw_at))
-
-	for column: Vector2i in raw_at:
-		var base := int(ground_bands.get(column, 0))
-		var terrace: int = terrace_at[column]
-		massif.columns[column] = {
-			"base": base,
-			"top": base + terrace,
-			"terrace": terrace,
-		}
+	var ceilings := _step_ceilings(raw_at)
+	var massif: WarrenMassif = null
+	var closest_failure := ""
+	for assignment_attempt in TERRACE_ASSIGNMENT_ATTEMPTS:
+		var assignment_seed := world_seed + assignment_attempt \
+			* TERRACE_ASSIGNMENT_STRIDE
+		var terrace_at := _assign_terraces(raw_at, assignment_seed, ceilings)
+		var candidate := WarrenMassif.new(world_seed)
+		for column: Vector2i in raw_at:
+			var base := int(ground_bands.get(column, 0))
+			var terrace: int = terrace_at[column]
+			candidate.columns[column] = {
+				"base": base,
+				"top": base + terrace,
+				"terrace": terrace,
+			}
+		var failure := _shape_gate_failure(candidate, profile)
+		if failure.is_empty():
+			massif = candidate
+			break
+		closest_failure = failure
+	if massif == null:
+		last_failure = "no terrace assignment sealed after %d phases: %s" % [
+			TERRACE_ASSIGNMENT_ATTEMPTS, closest_failure]
+		return null
 	# Already relief-relative before this wave, and stated through the shared
 	# accessor now so the whole gate battery reads one definition of "mass this
 	# builder authored".
@@ -130,31 +150,36 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 	for column: Vector2i in massif.columns:
 		massif.core_top_bands = maxi(massif.core_top_bands,
 			massif.layer_at(column))
-	if massif.core_top_bands > MAX_LAYER_BANDS:
-		last_failure = "layer of %d bands exceeds the buildable %d" % [
-			massif.core_top_bands, MAX_LAYER_BANDS]
-		return null
-	if massif.core_top_bands < profile.minimum_core_bands:
-		last_failure = "core reaches %d bands; %d required" % [
-			massif.core_top_bands, profile.minimum_core_bands]
-		return null
-	if massif.terrace_levels().size() < MIN_TERRACE_LEVELS:
-		last_failure = "only %d terrace levels" \
-			% massif.terrace_levels().size()
-		return null
-	if massif.widest_plateau_cells() > MAX_PLATEAU_CELLS:
-		last_failure = "plateau of %d cells exceeds %d" % [
-			massif.widest_plateau_cells(), MAX_PLATEAU_CELLS]
-		return null
-	var worst_step := _worst_neighbor_step(massif)
-	if worst_step > MAX_NEIGHBOR_STEP_BANDS:
-		last_failure = "neighbour step of %d bands exceeds %d" % [
-			worst_step, MAX_NEIGHBOR_STEP_BANDS]
-		return null
 	if not massif.seal():
 		last_failure = massif.last_rejection
 		return null
 	return massif
+
+
+static func _shape_gate_failure(massif: WarrenMassif,
+		profile: WarrenVillageScaleProfile) -> String:
+	if massif == null:
+		return "missing terrace assignment"
+	var core_top_bands := 0
+	for column: Vector2i in massif.columns:
+		core_top_bands = maxi(core_top_bands, massif.layer_at(column))
+	massif.core_top_bands = core_top_bands
+	if core_top_bands > MAX_LAYER_BANDS:
+		return "layer of %d bands exceeds the buildable %d" % [
+			core_top_bands, MAX_LAYER_BANDS]
+	if core_top_bands < profile.minimum_core_bands:
+		return "core reaches %d bands; %d required" % [
+			core_top_bands, profile.minimum_core_bands]
+	if massif.terrace_levels().size() < MIN_TERRACE_LEVELS:
+		return "only %d terrace levels" % massif.terrace_levels().size()
+	if massif.widest_plateau_cells() > MAX_PLATEAU_CELLS:
+		return "plateau of %d cells exceeds %d" % [
+			massif.widest_plateau_cells(), MAX_PLATEAU_CELLS]
+	var worst_step := _worst_neighbor_step(massif)
+	if worst_step > MAX_NEIGHBOR_STEP_BANDS:
+		return "neighbour step of %d bands exceeds %d" % [
+			worst_step, MAX_NEIGHBOR_STEP_BANDS]
+	return ""
 
 
 static func _worst_neighbor_step(massif: WarrenMassif) -> int:

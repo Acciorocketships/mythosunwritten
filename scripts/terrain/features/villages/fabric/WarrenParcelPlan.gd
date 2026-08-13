@@ -161,7 +161,9 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 		mixed_span_count += int(parcel.support_mode == &"mixed_span")
 		if parcel.base_band > source.envelope.ground_at(parcel.threshold_column):
 			elevated_count += 1
-		if parcel.depth_cells < parcel.width_cells:
+		if parcel.depth_cells < parcel.width_cells \
+				and not (parcel.width_cells == 2 \
+					and parcel.depth_cells == 1):
 			transverse_count += 1
 		# has_frontage(), not has_walk(): a mass-first parcel may legitimately
 		# address a STAIR/RAMP's intermediate stride cell, which is real

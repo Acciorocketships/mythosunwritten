@@ -75,6 +75,31 @@ func test_flat_caps_resolve_a_mass_first_crossing_gable_without_fake_seams() \
 		"complete flat caps meet at the boundary without pitched-valley modules")
 
 
+func test_massif_partial_ridge_flattens_both_complete_roofs_atomically() \
+		-> void:
+	## The tower meets only the middle half of the building's gable. Calling this
+	## a continuous ridge would stretch a two-cell module across a four-cell end;
+	## a dense mass-first town instead closes both complete roofs as one service
+	## terrace transaction.
+	var proposals: Array[Dictionary] = [
+		_proposal(&"wide", &"building", Vector3i.ZERO, 0, 2),
+		_proposal(&"narrow", &"tower", Vector3i(0, 0, 3), 0, 2),
+	]
+	var topology := FabricRoofTopologyPlan.build(proposals)
+	assert_not_null(topology)
+	assert_eq(_only_kind(topology, &"wide"),
+		FabricRoofTopologyPlan.JunctionKind.RIDGE_CONTINUATION)
+	assert_true(FabricRoofJunctionModuleTable.build(proposals,
+		topology).is_empty(), "a partial gable contact has no ridge module")
+	assert_true(WarrenAssetCompiler._assign_neighborhood_styles(
+		proposals, topology, 701, true),
+		FabricRoofJunctionModuleTable.last_failure)
+	assert_true(bool(proposals[0].get("flat_roof", false)))
+	assert_true(bool(proposals[1].get("flat_roof", false)))
+	assert_eq((proposals[0].roof_junction_rules as Array).size(), 0)
+	assert_eq((proposals[1].roof_junction_rules as Array).size(), 0)
+
+
 func test_complete_perpendicular_valley_selects_host_and_branch_recipes() -> void:
 	var proposals: Array[Dictionary] = [
 		_proposal(&"host", &"building", Vector3i.ZERO, 0, 2),

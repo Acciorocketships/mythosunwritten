@@ -39,6 +39,36 @@ func _route_plan() -> SettlementFabricPlan:
 		&"warren.test.route", _route_specs())
 
 
+func _party_wall_suppression(complete: bool) -> Array[StringName]:
+	var grid := WarrenSpatialGrid.new(Vector3i(-4, 0, -4),
+		Vector3i(9, 4, 9))
+	var room := WarrenRoomStamp.new(&"room", &"parcel", &"building",
+		Vector3i.ZERO, 0, 0, true, false)
+	var room_cells := WarrenRoomStamp.expected_private_cells(&"building",
+		Vector3i.ZERO, 0)
+	assert_true(room.add_private_cells(room_cells))
+	var neighbor_cells: Array[Vector3i] = []
+	for y in WarrenSpatialGrid.STOREY_CELLS:
+		for x in [-2, -1]:
+			neighbor_cells.append(Vector3i(x, y, 2))
+	var transaction := grid.begin_transaction(&"party-wall")
+	assert_true(transaction.assign_use(room_cells,
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME, &"building.a"))
+	assert_true(transaction.assign_use(neighbor_cells,
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME, &"building.b"))
+	for index in neighbor_cells.size():
+		if not complete and index == neighbor_cells.size() - 1:
+			continue
+		var neighbor := neighbor_cells[index]
+		assert_true(transaction.claim_face(neighbor + Vector3i.FORWARD,
+			Vector3i.BACK, WarrenSpatialGrid.FaceKind.PARTY_WALL, &"joint"))
+	assert_true(transaction.commit(), transaction.last_rejection)
+	assert_true(room.seal(grid, &"building.a"), room.last_rejection)
+	assert_true(grid.seal())
+	return WarrenSpatialFabricCompiler._suppressed_party_wall_placements(
+		grid, room, _program().recipe(&"room.base.rock"))
+
+
 func _sectional_route() -> SectionalPublicRealmPlan:
 	var realm := SectionalPublicRealmPlan.new(&"warren.test.sectional.realm")
 	var entry_cells := FabricRecipe.box_cells(Vector3i(-1, 0, -1),
@@ -324,7 +354,8 @@ func test_addressed_room_vocabulary_has_two_exact_door_phases() -> void:
 	if program == null:
 		return
 	for base_id: StringName in [&"room.base.rock",
-			&"room.slim.base.rock", &"room.tower.base.rock",
+			&"room.slim.base.rock", &"room.row.base.rock",
+			&"room.tower.base.rock",
 			&"room.long.base.rock"]:
 		var primary := program.recipe(base_id)
 		var alternate := program.recipe(
@@ -356,6 +387,32 @@ func test_addressed_room_vocabulary_has_two_exact_door_phases() -> void:
 			assert_does_not_have(alternate.occluder_cells, new_cell,
 				"the selected threshold half must be an aperture")
 			assert_has(alternate.headroom_cells, new_cell)
+
+
+func test_rowhouse_is_one_broad_frontage_and_one_coherent_roof() -> void:
+	var program := _program()
+	var room := program.recipe(&"room.row.base.rock")
+	var roof := program.recipe(&"roof.row.blue")
+	assert_not_null(room)
+	assert_not_null(roof)
+	if room == null or roof == null:
+		return
+	assert_true(room.has_tag(&"row_building"))
+	assert_eq((room.entrances[0] as Dictionary).cell, Vector3i(-1, 0, 0),
+		"the rowhouse door belongs to its broad eave, not the narrow gable")
+	assert_eq(room.placements.filter(func(placement: Dictionary) -> bool:
+		return String(placement.id).begins_with("front.")).size(), 2,
+		"two former towers must compile as one two-module street facade")
+	assert_eq(WarrenRoomStamp.expected_private_cells(&"row", Vector3i.ZERO,
+		0).size(), 16)
+	assert_true(roof.has_tag(&"ridge_x"))
+	assert_true(roof.has_tag(&"staggered_roof"))
+	assert_eq(roof.placements.filter(func(placement: Dictionary) -> bool:
+		return String(placement.id).begins_with("roof.")).size(), 2,
+		"the complete row crown owns both staggered gables transactionally")
+	assert_not_null(program.recipe(&"room.row.base.rock.door_b"))
+	assert_not_null(program.recipe(&"room.row.base.rock.portal.4"),
+		"a rowhouse may terminate an occupied link through its broad facade")
 
 
 func test_module_contracts_pin_floor_facade_and_roof_datums() -> void:
@@ -571,6 +628,7 @@ func test_recomposed_room_door_phase_is_derived_from_final_geometry() -> void:
 	var kinds := {
 		&"tower": Vector3i(0, 0, 0),
 		&"slim": Vector3i(0, 0, 1),
+		&"row": Vector3i(-1, 0, 0),
 		&"building": Vector3i(-1, 0, 1),
 		&"long": Vector3i(-1, 0, 2),
 	}
@@ -597,7 +655,7 @@ func test_recomposed_room_door_phase_is_derived_from_final_geometry() -> void:
 
 func test_flat_roof_fallbacks_have_measured_guarded_terrace_variants() -> void:
 	var program := _program()
-	for kind: String in ["tower", "slim", "square", "long"]:
+	for kind: String in ["tower", "slim", "row", "square", "long"]:
 		for side: String in ["north", "east", "south", "west"]:
 			var recipe_id := StringName("roof.flat.%s.terrace.%s" % [kind, side])
 			var recipe_value := program.recipe(recipe_id)
@@ -621,7 +679,7 @@ func test_flat_roof_fallbacks_have_measured_guarded_terrace_variants() -> void:
 					func(placement: Dictionary) -> bool:
 						return String(placement.id).begins_with(
 							"terrace.planter.")))
-				var should_have_chimney := kind == "slim" \
+				var should_have_chimney := kind in ["slim", "row"] \
 					or kind == "square" and side in ["east", "west"]
 				assert_eq(lived.placements.any(
 					func(placement: Dictionary) -> bool:
@@ -858,6 +916,37 @@ func test_composite_recipes_expand_to_stable_asset_placements() -> void:
 	assert_true(payload.validate())
 
 
+func test_fabric_unit_omits_only_declared_recipe_placements() -> void:
+	var program := _program()
+	var recipe := program.recipe(&"room.base.rock")
+	assert_not_null(recipe)
+	var plan := SettlementFabricPlan.new(&"warren.test.suppressed-placement")
+	for recipe_value: FabricRecipe in program.recipes():
+		assert_true(plan.register_recipe(recipe_value))
+	var unit := FabricUnit.new(&"room", recipe.recipe_id, Vector3i.ZERO, 0,
+		[], [], &"", [], [&"front.0"])
+	assert_true(plan.add_unit(unit), plan.last_rejection)
+	assert_eq(plan.expanded_placements().size(), recipe.placements.size() - 1)
+	for placement: Dictionary in plan.expanded_placements():
+		assert_ne(StringName(placement.stable_id), &"room/front.0")
+
+	var invalid := SettlementFabricPlan.new(&"warren.test.bad-suppression")
+	for recipe_value: FabricRecipe in program.recipes():
+		assert_true(invalid.register_recipe(recipe_value))
+	assert_false(invalid.add_unit(FabricUnit.new(&"room", recipe.recipe_id,
+		Vector3i.ZERO, 0, [], [], &"", [], [&"missing.module"])))
+	assert_string_contains(invalid.last_rejection, "missing placement")
+
+
+func test_party_wall_suppression_requires_a_complete_authored_module() -> void:
+	var complete := _party_wall_suppression(true)
+	assert_has(complete, &"front.0")
+	assert_does_not_have(complete, &"front.1")
+	var partial := _party_wall_suppression(false)
+	assert_does_not_have(partial, &"front.0",
+		"one unjoined fine-grid face must preserve the complete facade module")
+
+
 func test_sectional_plan_binds_units_and_seals_one_surface_union() -> void:
 	var realm := _sectional_route()
 	var solver := SettlementFabricSolver.new(_program())
@@ -875,6 +964,10 @@ func test_sectional_plan_binds_units_and_seals_one_surface_union() -> void:
 	assert_true(plan.visual_envelope_conflicts().is_empty())
 	assert_eq(int(plan.audit.unreachable_exterior_air_count), 0)
 	assert_eq(int(plan.audit.public_air_occupied_overlap_count), 0)
+	assert_eq(int(plan.audit.enclosure_route_cell_count), 4,
+		"the enclosure denominator excludes the landing and open terrace")
+	assert_eq(int(plan.audit.ground_enclosure_route_cell_count), 4)
+	assert_eq(int(plan.audit.overhead_route_cell_count), 0)
 	assert_not_null(plan.solid_void_plan)
 	assert_true(plan.solid_void_plan.is_sealed())
 	assert_gt(int(plan.audit.exterior_air_cell_count), 0)

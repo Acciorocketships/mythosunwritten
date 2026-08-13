@@ -13,6 +13,7 @@ const MARKET_SIZE := Vector3i(4, 3, 2)
 const TOWER_MINIMUM := Vector3i(-1, 0, -1)
 const MICRO_MINIMUM := Vector3i(-1, 0, -2)
 const SLIM_MINIMUM := Vector3i(-1, 0, -2)
+const ROW_MINIMUM := Vector3i(-2, 0, -1)
 const LONG_MINIMUM := Vector3i(-2, 0, -3)
 const MAX_PROPOSAL_STOREYS := 8
 
@@ -163,6 +164,9 @@ static func proposal_occupied_cells(proposal: Dictionary) -> Array[Vector3i]:
 	elif kind == &"slim":
 		minimum = SLIM_MINIMUM
 		size = Vector3i(2, storeys * 2 + 2, 4)
+	elif kind == &"row":
+		minimum = ROW_MINIMUM
+		size = Vector3i(4, storeys * 2 + 2, 2)
 	elif kind == &"long":
 		minimum = LONG_MINIMUM
 		size = Vector3i(4, storeys * 2 + 2, 6)
@@ -265,6 +269,9 @@ static func _proposal_ground_columns(proposal: Dictionary) -> Dictionary:
 	elif kind == &"slim":
 		minimum = SLIM_MINIMUM
 		size = Vector3i(2, 1, 4)
+	elif kind == &"row":
+		minimum = ROW_MINIMUM
+		size = Vector3i(4, 1, 2)
 	elif kind == &"long":
 		minimum = LONG_MINIMUM
 		size = Vector3i(4, 1, 6)
@@ -348,11 +355,13 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 		})
 		return out
 	if kind != &"building" and kind != &"tower" and kind != &"slim" \
+			and kind != &"row" \
 			and kind != &"long" \
 			or storeys < 1 or storeys > MAX_PROPOSAL_STOREYS:
 		return out
 	var is_tower := kind == &"tower"
 	var is_slim := kind == &"slim"
+	var is_row := kind == &"row"
 	var is_long := kind == &"long"
 	var facade_family := _proposal_facade_family(proposal, origin)
 	var ground_theme := StringName(proposal.get("ground_theme", &"rock"))
@@ -366,6 +375,7 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 		posmod(origin.x + origin.z, 2)))
 	var base_prefix := "room.long.base" if is_long \
 		else "room.slim.base" if is_slim \
+		else "room.row.base" if is_row \
 		else "room.tower.base" if is_tower else "room.base"
 	var base_recipe := StringName("%s.%s%s" % [base_prefix,
 		String(ground_theme), "" if origin.y == route_y else ".closed"])
@@ -398,6 +408,13 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 			var slim_phase := ".b" if use_phase_b else ""
 			upper_recipe = StringName("%s.%s%s" % [slim_prefix,
 				slim_theme, slim_phase])
+		elif is_row:
+			var row_prefix := "room.row.upper.address" if addressed_upper \
+				else "room.row.upper"
+			var row_theme := String(level_theme)
+			var row_phase := ".b" if use_phase_b else ""
+			upper_recipe = StringName("%s.%s%s" % [row_prefix,
+				row_theme, row_phase])
 		else:
 			var prefix := "room.tower.upper" if is_tower else "room.upper"
 			if addressed_upper:
@@ -442,6 +459,7 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 	if flat_roof:
 		roof_recipe = &"roof.flat.long" if is_long \
 			else &"roof.flat.slim" if is_slim \
+			else &"roof.flat.row" if is_row \
 			else &"roof.flat.tower" if is_tower else &"roof.flat.square"
 	elif atomic_valley_rules.size() == 1:
 		var atomic_rule := atomic_valley_rules[0]
@@ -456,6 +474,16 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 				kind, theme, int(atomic_rule.side))
 		if roof_recipe.is_empty():
 			return []
+	elif is_row:
+		roof_recipe = StringName("roof.row.%s.dormer.%s" % [
+			"orange" if roof_orange else "blue",
+			"left" if roof_feature == 1 else "right"]) \
+			if roof_feature in [1, 2] \
+			else &"roof.row.chimney.orange" if roof_feature == 3 and roof_orange \
+			else &"roof.row.chimney.blue" if roof_feature == 3 \
+			else &"roof.row.short.orange" if storeys == 1 and roof_orange \
+			else &"roof.row.short.blue" if storeys == 1 \
+			else &"roof.row.orange" if roof_orange else &"roof.row.blue"
 	else:
 		roof_recipe = StringName("roof.long.%s.dormer.%s%s" % [
 			"orange" if roof_orange else "blue",
@@ -523,7 +551,10 @@ static func proposal_components(proposal: Dictionary) -> Array[Dictionary]:
 			"role": StringName("roof.trim.%s.%02d" % [side_name, rule_index]),
 			"recipe_id": seam_recipe_id,
 			"origin": origin + Vector3i(0, storeys * 2, 0),
-			"yaw_quarters": yaw,
+			# The shared seam vocabulary is authored ridge-Z/eave-X. A rowhouse
+			# is ridge-X/eave-Z, so rotate only its trim one quarter turn back;
+			# the side sign then remains identical to the topology fact.
+			"yaw_quarters": posmod(yaw + 3, 4) if is_row else yaw,
 			"roof_junction_side": side,
 		})
 	return out

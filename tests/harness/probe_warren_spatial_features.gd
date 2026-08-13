@@ -56,14 +56,58 @@ func _init() -> void:
 		"--timing" in OS.get_cmdline_user_args()
 	WarrenVolumetricSolver.diagnostic_trace_room_gate = \
 		"--gate-trace" in OS.get_cmdline_user_args()
+	WarrenRoomCompositionPlanner.diagnostic_trace = \
+		"--composition-timing" in OS.get_cmdline_user_args()
 	var market_limit_arg := OS.get_cmdline_user_args().find("--market-limit")
 	if market_limit_arg >= 0 \
 			and market_limit_arg + 1 < OS.get_cmdline_user_args().size():
 		WarrenVolumetricSolver.diagnostic_feature_market_limit = int(
 			OS.get_cmdline_user_args()[market_limit_arg + 1])
+	var partition_limit_arg := OS.get_cmdline_user_args().find(
+		"--partition-limit")
+	if partition_limit_arg >= 0 \
+			and partition_limit_arg + 1 < OS.get_cmdline_user_args().size():
+		WarrenVolumetricSolver.diagnostic_partition_limit = int(
+			OS.get_cmdline_user_args()[partition_limit_arg + 1])
+	var partition_first_arg := OS.get_cmdline_user_args().find(
+		"--partition-start")
+	if partition_first_arg >= 0 \
+			and partition_first_arg + 1 < OS.get_cmdline_user_args().size():
+		WarrenVolumetricSolver.diagnostic_partition_first = int(
+			OS.get_cmdline_user_args()[partition_first_arg + 1])
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
+	var world_seed := 7
+	var world_seed_arg := OS.get_cmdline_user_args().find("--world-seed")
+	if world_seed_arg >= 0 \
+			and world_seed_arg + 1 < OS.get_cmdline_user_args().size():
+		world_seed = int(OS.get_cmdline_user_args()[world_seed_arg + 1])
+	var profile: WarrenVillageScaleProfile = null
+	var profile_arg := OS.get_cmdline_user_args().find("--profile")
+	if profile_arg >= 0 \
+			and profile_arg + 1 < OS.get_cmdline_user_args().size():
+		profile = WarrenVillageScaleProfile.for_id(StringName(
+			OS.get_cmdline_user_args()[profile_arg + 1]))
 	print("PROGRAM_MS=", Time.get_ticks_msec() - started_ms)
+	if "--production-only" in OS.get_cmdline_user_args():
+		var production_started := Time.get_ticks_msec()
+		var production := WarrenVolumetricSolver.solve(world_seed, {}, program,
+			profile)
+		print("PRODUCTION_SOLVE_MS=", Time.get_ticks_msec() - production_started,
+			" accepted=", production != null, " failure=",
+			WarrenVolumetricSolver.last_failure.left(1200))
+		if production != null:
+			print("PRODUCTION_FRONTIER_AUDIT attempts=",
+				production.audit.get("production_excavation_attempt_count", -1),
+				" batches=",
+				production.audit.get("production_frontier_batch_count", -1),
+				" topologies=",
+				production.audit.get("production_staged_frontier_count", -1),
+				" serial_reuse=",
+				production.audit.get("serial_finalization_reuse_count", 0),
+				" profile=", production.audit.get("scale_profile_id", &""))
+		quit(0 if production != null else 1)
+		return
 	if "--recipe-bounds-only" in OS.get_cmdline_user_args():
 		for recipe: FabricRecipe in program.recipes():
 			if String(recipe.recipe_id).begins_with("room.") \
@@ -80,7 +124,52 @@ func _init() -> void:
 				recipe.local_clearance_bounds, " solid=", recipe.solid_cells.size(),
 				" headroom=", recipe.headroom_cells.size(), " bearing=",
 				recipe.terrain_bearing_cells.size())
-	var frontier := WarrenTownSolver.mass_first_frontier(7)
+	var attempt_arg := OS.get_cmdline_user_args().find("--attempt")
+	var frontier := WarrenTownSolver.mass_first_attempt_frontier(world_seed,
+		int(OS.get_cmdline_user_args()[attempt_arg + 1]), {}, profile) \
+		if attempt_arg >= 0 \
+			and attempt_arg + 1 < OS.get_cmdline_user_args().size() \
+		else WarrenTownSolver.mass_first_frontier(world_seed, {}, profile)
+	if "--audit-variants" in OS.get_cmdline_user_args():
+		if frontier.is_empty():
+			print("VARIANT_AUDIT frontier is empty")
+			quit(1)
+			return
+		var audit_volume := frontier[0]
+		for audit_variant in WarrenVolumetricSolver.MAX_PARTITION_VARIANTS:
+			var audit_started_ms := Time.get_ticks_msec()
+			var enclosure := WarrenVolumetricSolver \
+				._precomposition_enclosure_audit(audit_volume, audit_variant,
+					program)
+			print("VARIANT_AUDIT variant=", audit_variant, " ms=",
+				Time.get_ticks_msec() - audit_started_ms, " audit=", enclosure,
+				" score=", WarrenVolumetricSolver \
+					._precomposition_quality_score(audit_volume, enclosure) \
+					if not enclosure.is_empty() else -INF)
+		quit()
+		return
+	if "--solve-frontier" in OS.get_cmdline_user_args():
+		var frontier_started_ms := Time.get_ticks_msec()
+		var frontier_plan := WarrenVolumetricSolver._solve_frontier(frontier,
+			program)
+		print("ATTEMPT_FRONTIER_SOLVE_MS=",
+			Time.get_ticks_msec() - frontier_started_ms,
+			" accepted=", frontier_plan != null,
+			" failure=", WarrenVolumetricSolver.last_failure.left(1200))
+		if frontier_plan != null:
+			print("ATTEMPT_FRONTIER_AUDIT=", {
+				"variant": frontier_plan.audit.get("partition_variant", -1),
+				"overhead": frontier_plan.audit.get(
+					"overhead_route_ratio", -1.0),
+				"through": frontier_plan.audit.get(
+					"through_sightline_count", -1),
+				"ground_through": frontier_plan.audit.get(
+					"ground_through_sightline_count", -1),
+				"paired": frontier_plan.audit.get(
+					"paired_registration_finalization_count", -1),
+			})
+		quit(0 if frontier_plan != null else 1)
+		return
 	var candidate_token := "8000031"
 	var candidate_arg := OS.get_cmdline_user_args().find("--candidate-token")
 	if candidate_arg >= 0 \
@@ -139,6 +228,7 @@ func _init() -> void:
 		requested_variant = int(OS.get_cmdline_user_args()[variant_arg + 1])
 	var parcel_probe := WarrenTownSolver.partition_parcels(source,
 		requested_variant, program)
+	print("PARTITION_DIAG=", WarrenSolidPartitioner.last_diagnostic)
 	print("PLANNED_SKYWALKS=", 0 if parcel_probe == null \
 		else parcel_probe.connection_reservations.size())
 	if parcel_probe != null:
@@ -147,10 +237,11 @@ func _init() -> void:
 				reservation.get("owner_endpoints", []), " components=",
 				reservation.get("components", []))
 	var solve_started_ms := Time.get_ticks_msec()
-	var plan := WarrenVolumetricSolver.solve(7, {}, program) \
+	var plan := WarrenVolumetricSolver.solve(world_seed, {}, program) \
 		if "--solve-production" in OS.get_cmdline_user_args() \
 		else WarrenVolumetricSolver.from_volume(source, requested_variant,
-			program)
+			program, "--serial-composition" \
+				not in OS.get_cmdline_user_args())
 	print("SPATIAL_SOLVE_MS=", Time.get_ticks_msec() - solve_started_ms)
 	if plan == null:
 		print("FAIL: ", WarrenVolumetricSolver.last_failure.left(1200))
@@ -219,6 +310,31 @@ func _init() -> void:
 		" new_frontage=",
 		plan.audit.get("residual_backfill_frontage_side_count", 0),
 		" kinds=", plan.audit.get("residual_backfill_kind_counts", {}))
+	print("SPATIAL_SKYWALK_ROUTE_AUDIT: unique=",
+		plan.audit.get("preplanned_skywalk_unique_route_cover_count", -1),
+		" marginal=",
+		plan.audit.get("preplanned_skywalk_marginal_route_cover_count", -1),
+		" selected=", plan.audit.get("preplanned_skywalk_count", -1))
+	print("SPATIAL_MACRO_AUDIT: macro_ratio=",
+		plan.audit.get("macro_private_cell_ratio", -1.0), " kinds=",
+		plan.audit.get("room_storey_kind_counts", {}), " exposed_towers=",
+		plan.audit.get("exposed_tower_room_count", -1), " optional=",
+		plan.audit.get("optional_exposed_tower_room_count", -1),
+		" available_exact_pairs=",
+		plan.audit.get("unclaimed_exact_macro_tower_pair_count", -1),
+		" trim_components=",
+		plan.audit.get("trimmed_mass_component_count", -1), " largest=",
+		plan.audit.get("trimmed_mass_largest_component_cell_count", -1))
+	print("SPATIAL_GAP_AUDIT: enclosed_rooms=",
+		plan.audit.get("enclosed_room_sized_residual_component_count", -1),
+		" slit_cells=",
+		plan.audit.get("one_cell_interstitial_gap_cell_count", -1),
+		" slit_components=",
+		plan.audit.get("one_cell_interstitial_gap_component_count", -1),
+		" details=",
+		plan.audit.get("one_cell_interstitial_gap_details", []))
+	if "--gap-details" in OS.get_cmdline_user_args():
+		_print_gap_owner_rooms(plan)
 	if compiler_only:
 		var compiled := WarrenSpatialFabricCompiler.solve(plan, program)
 		print("FABRIC_SEALED=", compiled != null,
@@ -248,6 +364,35 @@ func _init() -> void:
 	_print_straight_skywalks(plan)
 	_print_feature_compilation(plan, program)
 	quit()
+
+
+func _print_gap_owner_rooms(plan: WarrenSpatialPlan) -> void:
+	var owner_ids: Dictionary = {}
+	for detail_value: Variant in plan.audit.get(
+			"one_cell_interstitial_gap_details", []) as Array:
+		var detail := detail_value as Dictionary
+		var gap_cell := detail.cell as Vector3i
+		for y_offset in range(-2, 3):
+			var samples := PackedStringArray()
+			for offset: Vector3i in [Vector3i.LEFT, Vector3i.ZERO,
+					Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+				var sample := gap_cell + Vector3i.UP * y_offset + offset
+				samples.append("%s=%d/%s" % [sample,
+					plan.grid.use_at(sample),
+					String(plan.grid.owner_name_at(sample))])
+			print("GAP_LAYER gap=", gap_cell, " dy=", y_offset,
+				" samples=", ";".join(samples))
+		owner_ids[StringName(detail.negative_owner)] = true
+		owner_ids[StringName(detail.positive_owner)] = true
+	for building: WarrenBuildingVolume in plan.buildings:
+		if not owner_ids.has(building.stable_id):
+			continue
+		for room: WarrenRoomStamp in building.room_records:
+			print("GAP_OWNER building=", building.stable_id,
+				" room=", room.stable_id, " kind=", room.kind,
+				" origin=", room.lattice_origin, " yaw=", room.yaw_quarters,
+				" source=", room.source_parcel_id, "/",
+				room.source_storey_index, " cells=", room.private_cells)
 
 
 func _print_support_handoffs(plan: WarrenSpatialPlan) -> void:

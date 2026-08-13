@@ -45,9 +45,15 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 			smaller.residual_kind_budget)
 		assert_gte(larger.skywalk_range.x, smaller.skywalk_range.x)
 		assert_gte(larger.landmark_range.x, smaller.landmark_range.x)
+		assert_gte(larger.minimum_inhabited_overhead_ratio,
+			smaller.minimum_inhabited_overhead_ratio)
 	for profile: WarrenVillageScaleProfile in profiles:
 		assert_gte(profile.skywalk_range.x, 1)
 		assert_gte(profile.cantilever_range.x, 4)
+	assert_eq([profiles[0].skywalk_range.x, profiles[1].skywalk_range.x,
+		profiles[2].skywalk_range.x, profiles[3].skywalk_range.x],
+		[1, 2, 4, 4],
+		"large and grand towns require a fourth macroscopic occupied link")
 	assert_eq(profiles[0].landmark_range, Vector2i(0, 0))
 	assert_eq(profiles[1].landmark_range, Vector2i(1, 1))
 	assert_eq(profiles[2].landmark_range, Vector2i(2, 2))
@@ -131,3 +137,22 @@ func test_final_village_feature_contract_is_scale_aware() -> void:
 	forged["scale_profile_signature"] = "forged"
 	assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(forged),
 		"the final audit must retain the exact selected size contract")
+
+
+func test_production_overhead_gate_uses_the_selected_scale_contract() -> void:
+	var audit := {
+		"overhead_route_ratio": 0.30,
+		"through_sightline_count": 0,
+		"ground_through_sightline_count": 0,
+	}
+	audit["scale_profile_id"] = WarrenVillageScaleProfile.COMPACT
+	assert_eq(WarrenVolumetricSolver.production_quality_failure(audit), "",
+		"a compact town with its required occupied link keeps its own ratio")
+	audit["scale_profile_id"] = WarrenVillageScaleProfile.STANDARD
+	assert_true(WarrenVolumetricSolver.production_quality_failure(audit) \
+		.begins_with("compiled town overhead ratio"),
+		"larger route programs must earn their additional overhead coverage")
+	audit.erase("scale_profile_id")
+	assert_eq(WarrenVolumetricSolver.minimum_production_overhead_ratio(audit),
+		WarrenVolumetricSolver.MIN_PRODUCTION_OVERHEAD_ROUTE_RATIO,
+		"legacy and malformed audits retain the reviewed large-town gate")

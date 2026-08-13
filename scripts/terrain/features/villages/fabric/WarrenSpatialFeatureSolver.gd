@@ -66,12 +66,16 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	out.append(market)
 	var gateway_records := composition_audit.get(
 		"perimeter_gateway_support_records", []) as Array
+	var gateway_resolution: Dictionary = {}
 	var gateway_supports := _reserve_frontier_gateway_supports(grid, buildings,
-		supports, gateway_records, construction_program, out, source.world_seed)
-	if gateway_supports.size() != gateway_records.size():
+		supports, gateway_records, construction_program, out, source.world_seed,
+		gateway_resolution)
+	if int(gateway_resolution.get("satisfied_count", 0)) \
+			!= gateway_records.size():
 		if last_failure.is_empty():
-			last_failure = "only %d of %d frontier gateway supports fit" % [
-				gateway_supports.size(), gateway_records.size()]
+			last_failure = "only %d of %d frontier gateway load paths fit" % [
+				int(gateway_resolution.get("satisfied_count", 0)),
+				gateway_records.size()]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(gateway_supports)
 	var landmarks := _record_preplanned_landmarks(grid, supports,
@@ -109,14 +113,34 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		if court == null:
 			return [] as Array[WarrenFeatureReservation]
 		out.append(court)
-	var tower_annex_targets := composition_audit.get(
+	# Cantilever support is structure, not decoration. Reserve every measured
+	# brace course before tower-breaking annexes, facade relief, or balconies are
+	# allowed to spend the same clearance. This order makes the composed room DAG
+	# authoritative and prevents an optional side room from blocking the bracket
+	# that keeps a primary upper room physically attached.
+	var outcroppings := _reserve_room_outcroppings(grid, buildings, supports,
+		source.world_seed, construction_program, out, target_outcroppings)
+	var unresolved_outcroppings := int(last_outcropping_diagnostic.get(
+		"unresolved_integrated_cantilever_count", 0))
+	if outcroppings.size() < target_outcroppings or unresolved_outcroppings != 0:
+		last_failure = ("only %d of %d room-scale outcroppings exist; " \
+			+ "%d structural cantilevers remain unsupported: %s") % [
+			outcroppings.size(), target_outcroppings, unresolved_outcroppings,
+			JSON.stringify(last_outcropping_diagnostic)]
+		return [] as Array[WarrenFeatureReservation]
+	out.append_array(outcroppings)
+	var raw_tower_annex_targets := composition_audit.get(
 		"tower_relief_annex_target_by_lineage", {}) as Dictionary
+	var tower_relief := _tower_annex_targets_after_structural_outcroppings(
+		raw_tower_annex_targets, outcroppings)
+	var tower_annex_targets := tower_relief.targets as Dictionary
 	var tower_annexes := _reserve_tower_annexes(grid, buildings, supports,
 		source.world_seed, construction_program, out, tower_annex_targets)
 	var required_tower_annexes := 0
 	for target_value: Variant in tower_annex_targets.values():
 		required_tower_annexes += int(target_value)
-	if tower_annexes.size() < required_tower_annexes:
+	var tower_annex_relief_units := _tower_annex_relief_units(tower_annexes)
+	if tower_annex_relief_units < required_tower_annexes:
 		var annexes_by_source: Dictionary = {}
 		for annex: WarrenFeatureReservation in tower_annexes:
 			var source_id := StringName(annex.audit.annex_source_parcel_id)
@@ -127,23 +151,12 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 				"facade": String(annex.audit.annex_vertical_facade_key),
 				"recipe": StringName(annex.audit.annex_recipe_id),
 			})
-		last_failure = "only %d of %d tower-breaking room annexes fit: %s" % [
-			tower_annexes.size(), required_tower_annexes, annexes_by_source]
+		last_failure = ("tower-breaking room annexes supply only %d of %d " \
+			+ "facade-relief units (%d assets): %s") % [
+			tower_annex_relief_units, required_tower_annexes,
+			tower_annexes.size(), annexes_by_source]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(tower_annexes)
-	# Cantilever support is structure, not a decoration quota. Reserve every
-	# measured brace course before balconies are allowed to spend the same facade
-	# clearance; the scale profile remains only the minimum richness contract.
-	var outcroppings := _reserve_room_outcroppings(grid, buildings, supports,
-		source.world_seed, construction_program, out, target_outcroppings)
-	var unresolved_outcroppings := int(last_outcropping_diagnostic.get(
-		"unresolved_integrated_cantilever_count", 0))
-	if outcroppings.size() < target_outcroppings or unresolved_outcroppings != 0:
-		last_failure = ("only %d of %d room-scale outcroppings exist; " \
-			+ "%d structural cantilevers remain unsupported") % [
-			outcroppings.size(), target_outcroppings, unresolved_outcroppings]
-		return [] as Array[WarrenFeatureReservation]
-	out.append_array(outcroppings)
 	var balconies := _reserve_balconies(grid, buildings, supports,
 		source.world_seed, construction_program, out, target_balconies)
 	var balcony_buildings: Dictionary = {}
@@ -179,13 +192,18 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			scale_profile.requires_elevated_courtyard),
 		"covered_market_count": 1,
 		"frontier_gateway_support_count": gateway_supports.size(),
+		"frontier_gateway_direct_bearing_count": int(
+			gateway_resolution.get("direct_bearing_count", 0)),
 		"prefab_landmark_count": landmarks.size(),
 		"enclosed_skywalk_count": skywalks.size(),
 		"courtyard_bridge_house_count": int(
 			scale_profile.requires_elevated_courtyard),
 		"tower_annex_count": tower_annexes.size(),
 		"tower_annex_source_count": tower_annex_targets.size(),
-		"required_tower_annex_count": required_tower_annexes,
+		"tower_annex_relief_unit_count": tower_annex_relief_units,
+		"required_tower_annex_relief_unit_count": required_tower_annexes,
+		"tower_relief_structural_outcropping_count": int(
+			tower_relief.satisfied_count),
 		"facade_bay_target_count": facade_bay_target_count,
 		"facade_bay_source_count": facade_bay_targets.size(),
 		"facade_bay_count": facade_bays.size(),
@@ -204,16 +222,60 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	return out
 
 
+static func _tower_annex_targets_after_structural_outcroppings(
+		targets: Dictionary,
+		outcroppings: Array[WarrenFeatureReservation]) -> Dictionary:
+	## A shifted occupied upper room with its exact bracket course is already a
+	## macroscopic silhouette break. Count it before asking for smaller occupied
+	## annexes; otherwise a decorative child can be required to overlap the very
+	## support that makes the larger room possible.
+	var remaining := targets.duplicate()
+	var satisfied := 0
+	for outcropping: WarrenFeatureReservation in outcroppings:
+		var source_id := StringName(outcropping.audit.get(
+			"outcrop_source_parcel_id", &""))
+		var target := int(remaining.get(source_id, 0))
+		if source_id.is_empty() or target <= 0:
+			continue
+		target -= 1
+		satisfied += 1
+		if target <= 0:
+			remaining.erase(source_id)
+		else:
+			remaining[source_id] = target
+	return {"targets": remaining, "satisfied_count": satisfied}
+
+
+static func _tower_annex_relief_units(
+		annexes: Array[WarrenFeatureReservation]) -> int:
+	## A reviewed corner/wrap room changes two facade planes and is therefore a
+	## stronger macro silhouette event than one flat bay. Quotas describe visible
+	## relief, not an arbitrary number of child nodes.
+	var units := 0
+	for annex: WarrenFeatureReservation in annexes:
+		var recipe_id := String(annex.audit.get("annex_recipe_id", ""))
+		units += 2 if recipe_id.contains("corner") else 1
+	return units
+
+
 static func _reserve_frontier_gateway_supports(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		records: Array, program: SettlementFabricProgram,
-		existing_features: Array[WarrenFeatureReservation], world_seed: int) \
+		existing_features: Array[WarrenFeatureReservation], world_seed: int,
+		resolution: Dictionary = {}) \
 		-> Array[WarrenFeatureReservation]:
 	## A gateway house is mostly an ordinary terrain-rooted base room. Its second
 	## 3 m bay crosses an existing lower street, so this transaction fastens one
 	## measured two-bracket course to the exact seam between the grounded and
-	## spanning halves. Nothing is stamped into the public-air cells below.
+	## spanning halves. Nothing is stamped into the public-air cells below. If
+	## later macro composition has placed a complete structural room directly
+	## beneath the former span, that stronger final bearing fact supersedes the
+	## source gateway recipe: record the load path without drawing brackets into
+	## the room that now carries it.
 	var out: Array[WarrenFeatureReservation] = []
+	resolution.clear()
+	resolution["satisfied_count"] = 0
+	resolution["direct_bearing_count"] = 0
 	if records.is_empty():
 		return out
 	if program == null or program.recipe(&"outcrop.support.bracketed.2") == null:
@@ -241,6 +303,13 @@ static func _reserve_frontier_gateway_supports(grid: WarrenSpatialGrid,
 			return [] as Array[WarrenFeatureReservation]
 		var geometry := _frontier_gateway_geometry(room, source_record)
 		var support_records := _cantilever_support_records(room, geometry, grid)
+		if support_records.is_empty() \
+				and _frontier_gateway_is_directly_borne(room, geometry, grid):
+			resolution["satisfied_count"] = int(
+				resolution.satisfied_count) + 1
+			resolution["direct_bearing_count"] = int(
+				resolution.direct_bearing_count) + 1
+			continue
 		if support_records.size() != 1:
 			last_failure = ("frontier gateway %s lacks one passage-safe support " \
 				+ "course: geometry=%s records=%s") % [source_id, geometry,
@@ -293,7 +362,23 @@ static func _reserve_frontier_gateway_supports(grid: WarrenSpatialGrid,
 				source_id, feature.last_rejection]
 			return [] as Array[WarrenFeatureReservation]
 		out.append(feature)
+		resolution["satisfied_count"] = int(resolution.satisfied_count) + 1
 	return out
+
+
+static func _frontier_gateway_is_directly_borne(room: WarrenRoomStamp,
+		geometry: Dictionary, grid: WarrenSpatialGrid) -> bool:
+	if room == null or grid == null or not bool(geometry.get("valid", false)):
+		return false
+	var attachment: Array[Vector2i] = []
+	attachment.assign(geometry.get("attachment_columns", []) as Array)
+	var direction_2d := geometry.get("direction", Vector2i.ZERO) as Vector2i
+	if attachment.size() != 2 \
+			or absi(direction_2d.x) + absi(direction_2d.y) != 1:
+		return false
+	return _cantilever_course_is_directly_borne(grid, attachment,
+		Vector3i(direction_2d.x, 0, direction_2d.y), room.lattice_origin.y,
+		int(geometry.get("depth_cells", 0)))
 
 
 static func _frontier_gateway_geometry(room: WarrenRoomStamp,
@@ -468,6 +553,8 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				"covered_public_cells": clearance_audit.covered_public_cells,
 				"endpoint_cell": endpoint.cell, "socket_world": socket_world,
 				"facing": facing,
+				"vertical_facade_key": _tower_annex_vertical_facade_key(
+					endpoint.cell as Vector3i, facing),
 				"room": room, "building": building,
 				"allowed_owner_ids": allowed_owner_ids,
 				"tie": posmod(Helper._mix64(world_seed \
@@ -496,11 +583,11 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	for source_id: StringName in source_ids:
 		selected_by_source[source_id] = [] as Array[Dictionary]
 	# Round-robin selection prevents one especially open shaft from consuming the
-	# relief budget.  Pass one chooses the strongest upper room; pass two must be
-	# at least two storeys away and use another authored mass profile, creating a
-	# compound cadence rather than two vertically repeated bay windows. A dense
-	# party-wall shaft may have only one exposed compass side, so facade direction
-	# itself is not required to change.
+	# relief budget. Pass one chooses the strongest upper room. Pass two prefers a
+	# two-storey separation; a same/adjacent-storey fallback is allowed only when
+	# it turns onto a different world-space facade and uses another authored mass
+	# profile. That creates a wider or stepped compound silhouette without
+	# accepting two vertically repeated bay windows on one box face.
 	var relief_round_count := 0
 	for target_value: Variant in target_sources.values():
 		relief_round_count = maxi(relief_round_count, int(target_value))
@@ -520,8 +607,8 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 					var first_room := prior[0].room as WarrenRoomStamp
 					vertical_distance = absi(room.source_storey_index \
 						- first_room.source_storey_index)
-					if vertical_distance < 2 \
-							or candidate.recipe_id == prior[0].recipe_id:
+					if not _tower_annexes_have_silhouette_separation(candidate,
+							prior[0]):
 						continue
 				if not WarrenVolumetricSolver._skywalk_body_fits_grid(grid,
 						candidate.body as Dictionary):
@@ -548,6 +635,29 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			prior.append(chosen)
 			out.append(feature)
 	return out
+
+
+static func _tower_annexes_have_silhouette_separation(candidate: Dictionary,
+		prior: Dictionary) -> bool:
+	if candidate.is_empty() or prior.is_empty() \
+			or candidate.recipe_id == prior.recipe_id:
+		return false
+	var candidate_room := candidate.get("room") as WarrenRoomStamp
+	var prior_room := prior.get("room") as WarrenRoomStamp
+	if candidate_room == null or prior_room == null:
+		return false
+	var vertical_distance := absi(candidate_room.source_storey_index \
+		- prior_room.source_storey_index)
+	if vertical_distance >= 2:
+		return true
+	return vertical_distance <= 1 \
+		and String(candidate.get("vertical_facade_key", "")) \
+			!= String(prior.get("vertical_facade_key", ""))
+
+
+static func _tower_annex_vertical_facade_key(endpoint: Vector3i,
+		facing: Vector3i) -> String:
+	return "%d,%d/%d,%d" % [endpoint.x, endpoint.z, facing.x, facing.z]
 
 
 static func _facade_bay_targets(buildings: Array[WarrenBuildingVolume],
@@ -2305,6 +2415,7 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 				last_failure = "room outcropping bracket record failed"
 				return [] as Array[WarrenFeatureReservation]
 		if not feature.set_audit_facts({
+					"outcrop_source_parcel_id": upper.source_parcel_id,
 					"outcrop_upper_room_id": upper.stable_id,
 					"outcrop_lower_room_id": (candidate.lower \
 						as WarrenRoomStamp).stable_id,
@@ -2934,6 +3045,8 @@ static func _room_footprint(kind: StringName) -> Dictionary:
 			return {"minimum": Vector2i(-1, -1), "size": Vector2i(2, 2)}
 		&"slim":
 			return {"minimum": Vector2i(-1, -2), "size": Vector2i(2, 4)}
+		&"row":
+			return {"minimum": Vector2i(-2, -1), "size": Vector2i(4, 2)}
 		&"long":
 			return {"minimum": Vector2i(-2, -3), "size": Vector2i(4, 6)}
 		&"building":

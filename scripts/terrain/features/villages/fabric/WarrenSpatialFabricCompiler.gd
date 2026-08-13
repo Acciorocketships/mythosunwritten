@@ -16,6 +16,12 @@ static var last_audit: Dictionary = {}
 ## palettes. Jittered Voronoi ownership avoids visible square zoning seams.
 const ARCHITECTURAL_DISTRICT_CELLS := 12
 const ARCHITECTURAL_DISTRICT_JITTER := 4
+## Maximum measured horizontal penetration for a thin setback cap to become
+## typed facade flashing. Half a 1.5 m fine cell plus 0.15 m of authored-frame
+## tolerance closes the reviewed projecting facades while remaining well below
+## a whole room cell. Height has its own much tighter thin-cap limit below.
+const SHALLOW_FLASHING_MAX_OVERLAP_M := 0.90
+const SHALLOW_FLASHING_MAX_HEIGHT_M := 0.25
 
 
 static func solve(source: WarrenSpatialPlan,
@@ -33,10 +39,14 @@ static func solve(source: WarrenSpatialPlan,
 		last_failure = "public realm adaptation failed: %s" % \
 			WarrenSpatialPublicRealmAdapter.last_failure
 		return null
-	var rooms := compile_room_units(source, program)
+	var rooms := source.compiled_room_units_cache()
+	var room_audit := source.compiled_room_audit_cache()
 	if rooms.is_empty():
-		return null
-	var room_audit := last_audit.duplicate(true)
+		rooms = compile_room_units(source, program)
+		if rooms.is_empty():
+			return null
+		room_audit = last_audit.duplicate(true)
+		source.cache_compiled_room_units(rooms, room_audit)
 	var features := compile_feature_units(source, program, rooms)
 	if features.is_empty() and _constructed_feature_count(source) > 0:
 		return null
@@ -169,6 +179,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var hero_feature_facade_fallback_count := 0
 	var roof_clearance_facade_fallback_count := 0
 	var physical_support_redirect_count := 0
+	var suppressed_party_wall_module_count := 0
 	var facade_family_counts: Dictionary = {}
 	var room_probe := SettlementFabricPlan.new(&"spatial.room-phase-selection")
 	for recipe_value: FabricRecipe in program.recipes():
@@ -229,9 +240,11 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			bonds.append(bearing)
 		var seams := _prior_visual_seam_units(source.grid, room,
 			prior_unit_by_cell, building_by_room, room_probe, recipe)
+		var suppressed := _suppressed_party_wall_placements(source.grid,
+			room, recipe)
 		var unit := FabricUnit.new(StringName("spatial.fabric.%s" % room.stable_id),
 			recipe_id, room.lattice_origin, room.yaw_quarters, parents, bonds,
-			&"", seams)
+			&"", seams, suppressed)
 		if not unit.is_valid():
 			last_failure = "room %s produced an invalid fabric unit" % room.stable_id
 			return [] as Array[FabricUnit]
@@ -252,6 +265,9 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			var fallback_id := _room_recipe_id(room, source.world_seed, false,
 				feature_portal_mask)
 			if fallback_id == recipe_id:
+				last_audit["room_phase_failure"] = \
+					_room_phase_failure_audit(room, recipe, seams,
+						room_probe, unit_by_room, room_by_id, source.grid)
 				last_failure = "room %s failed measured phase selection: %s" % [
 					room.stable_id, desired_rejection]
 				return [] as Array[FabricUnit]
@@ -262,8 +278,11 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				last_failure = "room %s has no measured facade fallback" \
 					% room.stable_id
 				return [] as Array[FabricUnit]
+			suppressed = _suppressed_party_wall_placements(source.grid,
+				room, fallback_recipe)
 			unit = FabricUnit.new(unit.stable_id, fallback_id,
-				room.lattice_origin, room.yaw_quarters, parents, bonds, &"", seams)
+				room.lattice_origin, room.yaw_quarters, parents, bonds, &"", seams,
+				suppressed)
 			var fallback_conflict := _room_feature_envelope_conflict(source,
 				program, room, fallback_recipe)
 			var fallback_roof_conflict := _room_required_roof_conflict(room,
@@ -271,6 +290,9 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			if not unit.is_valid() or not fallback_conflict.is_empty() \
 					or not fallback_roof_conflict.is_empty() \
 					or not room_probe.add_unit(unit):
+				last_audit["room_phase_failure"] = \
+					_room_phase_failure_audit(room, fallback_recipe, seams,
+						room_probe, unit_by_room, room_by_id, source.grid)
 				var fallback_rejection := \
 					"visual envelope intersects unrelated feature %s" \
 						% fallback_conflict if not fallback_conflict.is_empty() \
@@ -287,6 +309,8 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			roof_clearance_facade_fallback_count += int(
 				not roof_conflict.is_empty())
 		selected_phase_b_count += int(_is_phase_b_recipe(unit.recipe_id))
+		suppressed_party_wall_module_count += \
+			unit.suppressed_placement_ids.size()
 		var facade_family := _room_recipe_facade_family(unit.recipe_id)
 		facade_family_counts[facade_family] = int(
 			facade_family_counts.get(facade_family, 0)) + 1
@@ -306,11 +330,55 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		"required_roof_clearance_envelope_count": \
 			required_roof_clearance.size(),
 		"physical_support_redirect_count": physical_support_redirect_count,
+		"suppressed_party_wall_module_count": \
+			suppressed_party_wall_module_count,
 		"feature_portal_room_count": feature_portal_masks.size(),
 		"feature_portal_opening_count": feature_portal_opening_count,
 		"facade_family_counts": facade_family_counts,
 	}
 	return units
+
+
+static func _room_phase_failure_audit(room: WarrenRoomStamp,
+		recipe: FabricRecipe, declared_seams: Array[StringName],
+		probe: SettlementFabricPlan, unit_by_room: Dictionary,
+		room_by_id: Dictionary, grid: WarrenSpatialGrid) -> Dictionary:
+	var bounds := FabricRecipe.lattice_transform(room.lattice_origin,
+		room.yaw_quarters) * recipe.local_clearance_bounds
+	var overlaps: Array[Dictionary] = []
+	for prior_room_value: Variant in unit_by_room.keys():
+		var prior_room_id := StringName(prior_room_value)
+		var prior_unit := unit_by_room[prior_room_id] as FabricUnit
+		var prior_recipe := probe.recipe(prior_unit.recipe_id)
+		if prior_recipe == null:
+			continue
+		var prior_bounds := prior_unit.transform() \
+			* prior_recipe.local_clearance_bounds
+		if not SettlementFabricPlan._aabb_overlaps_volume(bounds, prior_bounds):
+			continue
+		var prior_room := room_by_id.get(prior_room_id) as WarrenRoomStamp
+		var contact_faces: Array[Dictionary] = []
+		if prior_room != null:
+			for cell: Vector3i in room.private_cells:
+				for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+						Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+						Vector3i.BACK]:
+					if not prior_room.has_private_cell(cell + direction):
+						continue
+					var claim := grid.face_claim(cell, direction)
+					contact_faces.append({"cell": cell, "direction": direction,
+						"kind": int(claim.get("kind", -1)),
+						"owner": StringName(claim.get("owner_id", &""))})
+		overlaps.append({"unit_id": prior_unit.stable_id,
+			"room_id": prior_room_id, "recipe_id": prior_unit.recipe_id,
+			"bounds": prior_bounds,
+			"declared_seam": declared_seams.has(prior_unit.stable_id),
+			"edge_nick": SettlementFabricPlan._is_edge_nick(bounds,
+				prior_bounds), "contact_faces": contact_faces})
+	return {"room_id": room.stable_id, "source_parcel_id": room.source_parcel_id,
+		"kind": room.kind, "origin": room.lattice_origin,
+		"recipe_id": recipe.recipe_id, "bounds": bounds,
+		"declared_seams": declared_seams.duplicate(), "overlaps": overlaps}
 
 
 static func _required_roof_clearance(source: WarrenSpatialPlan,
@@ -561,6 +629,9 @@ static func _portal_cell_for_room(kind: StringName, portal_bit: int) \
 		&"slim":
 			minimum = Vector2i(-1, -2)
 			maximum = Vector2i(0, 1)
+		&"row":
+			minimum = Vector2i(-2, -1)
+			maximum = Vector2i(1, 0)
 		&"building":
 			minimum = Vector2i(-2, -2)
 			maximum = Vector2i(1, 1)
@@ -1446,6 +1517,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var flat_garden_count := 0
 	var rich_flat_garden_count := 0
 	var rich_flat_garden_fallback_count := 0
+	var micro_flat_garden_count := 0
 	var flat_garden_rejections: Array[Dictionary] = []
 	var flat_roof_recipe_counts: Dictionary = {}
 	var lived_in_flat_terrace_count := 0
@@ -1456,6 +1528,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var lean_to_cap_count := 0
 	var macro_gable_cap_count := 0
 	var macro_gable_fallback_count := 0
+	var terminal_macro_cap_fallback_count := 0
 	var terrace_cap_count := 0
 	var garden_cap_count := 0
 	var terrace_cap_fallback_count := 0
@@ -1592,7 +1665,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				if probe.add_unit(flat):
 					var base_garden_id := StringName("%s.garden" % flat_id)
 					var garden_ids: Array[StringName] = [StringName(
-						"%s.rich" % base_garden_id), base_garden_id]
+						"%s.rich" % base_garden_id), base_garden_id,
+						StringName("%s.micro" % base_garden_id),
+						StringName("%s.micro.0" % base_garden_id),
+						StringName("%s.micro.1" % base_garden_id),
+						StringName("%s.micro.2" % base_garden_id),
+						StringName("%s.micro.3" % base_garden_id)]
 					var garden: FabricUnit
 					var garden_selected := false
 					for garden_index in garden_ids.size():
@@ -1606,13 +1684,18 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 							rich_flat_garden_count += int(garden_index == 0)
 							rich_flat_garden_fallback_count += int(
 								garden_index > 0)
+							var garden_recipe := program.recipe(garden_id)
+							micro_flat_garden_count += int(garden_recipe != null \
+								and garden_recipe.has_tag(&"micro_roof_garden"))
 							break
 						flat_garden_rejections.append({"room_id": room_id,
 							"recipe_id": garden_id,
 							"rejection": probe.last_rejection})
 					if not garden_selected:
-						last_failure = "flat roof %s has no collision-free central accent" \
-							% room_id
+						last_failure = ("flat roof %s has no collision-free measured " \
+							+ "accent: %s") % [room_id,
+							JSON.stringify(flat_garden_rejections.slice(
+								maxi(0, flat_garden_rejections.size() - 3)))]
 						return [] as Array[FabricUnit]
 					out.append(flat)
 					out.append(garden)
@@ -1656,6 +1739,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			# take the plain or flat fallback.
 			var seams := _roof_seams_for_candidate([] as Array[StringName],
 				parent_unit.stable_id, out, fixed_feature_units)
+			var end_wall_room_ids: Array[StringName] = []
+			if not macro_piece:
+				end_wall_room_ids = _setback_wall_room_ids(row,
+					unit_by_private_cell)
 			var upper_room_unit_id := StringName(cap.get(
 				"upper_room_unit_id", &""))
 			if not upper_room_unit_id.is_empty() \
@@ -1669,6 +1756,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				seams = _unique_sorted_names(seams)
 			var cap_unit := _cap_unit(room_id, row_index, room, parent_unit,
 				cap, seams)
+			_append_shallow_prior_roof_seams(cap_unit, room_seams, out,
+				program)
+			_append_shallow_room_seams(cap_unit, end_wall_room_ids,
+				unit_by_room, unit_by_private_cell, program)
 			var cap_recipe := program.recipe(StringName(cap.recipe_id))
 			var cap_enters_public_air := cap_recipe != null \
 				and _unit_touches_public_air(source.grid, cap_unit, cap_recipe)
@@ -1691,6 +1782,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						cap["recipe_id"] = fallback_id
 						cap_unit = _cap_unit(room_id, row_index, room,
 							parent_unit, cap, seams)
+						_append_shallow_prior_roof_seams(cap_unit, room_seams,
+							out, program)
+						_append_shallow_room_seams(cap_unit, end_wall_room_ids,
+							unit_by_room, unit_by_private_cell, program)
 						var fallback_recipe := program.recipe(fallback_id)
 						if fallback_recipe != null \
 								and not _unit_touches_public_air(source.grid,
@@ -1701,9 +1796,39 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						fallback_failures.append("%s: %s" % [fallback_id,
 							probe.last_rejection])
 					if not fallback_selected:
-						last_failure = "macro setback roof %d for %s and its complete fallbacks were rejected: %s" % [
-							row_index, room_id, "; ".join(fallback_failures)]
-						return [] as Array[FabricUnit]
+						# A compound shoulder is admitted because its exact cells can be
+						# partitioned into authored shapes.  If the recognizable gable's
+						# measured eave cannot clear a neighboring macro room, preserve the
+						# same lossless partition with native terminal strips.  Prefer the
+						# typed lean-to when a complete row meets one upper facade; otherwise
+						# use the shallow plain cap.  This is an atomic fallback: no first
+						# strip is committed unless every strip fits.
+						var terminal := _terminal_macro_cap_fallback(source,
+							program, probe, row, row_index, room_id, room,
+							parent_unit, seams, room_seams, unit_by_room,
+							unit_by_private_cell, out)
+						var terminal_units := terminal.get("units",
+							[] as Array[FabricUnit]) as Array[FabricUnit]
+						if terminal_units.is_empty():
+							fallback_failures.append(String(terminal.get(
+								"failure", "terminal strip fallback rejected")))
+							last_failure = "macro setback roof %d for %s and its complete fallbacks were rejected: %s" % [
+								row_index, room_id, "; ".join(fallback_failures)]
+							return [] as Array[FabricUnit]
+						for terminal_unit: FabricUnit in terminal_units:
+							if not probe.add_unit(terminal_unit):
+								last_failure = "proved terminal roof fallback changed before commit for %s: %s" % [
+									room_id, probe.last_rejection]
+								return [] as Array[FabricUnit]
+							out.append(terminal_unit)
+							cap_count += 1
+							lean_to_cap_count += int(String(
+								terminal_unit.recipe_id).begins_with(
+									"roof.setback.lean."))
+						realized_face_count += row.size()
+						macro_gable_fallback_count += 1
+						terminal_macro_cap_fallback_count += 1
+						continue
 					macro_gable_fallback_count += 1
 				elif String(cap.recipe_id).contains(".terrace.") \
 						or String(cap.recipe_id).contains(".garden.") \
@@ -1714,6 +1839,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						% row.size())
 					cap_unit = _cap_unit(room_id, row_index, room,
 						parent_unit, cap, seams)
+					_append_shallow_prior_roof_seams(cap_unit, room_seams, out,
+						program)
+					_append_shallow_room_seams(cap_unit, end_wall_room_ids,
+						unit_by_room, unit_by_private_cell, program)
 					if not probe.add_unit(cap_unit):
 						last_failure = "setback terrace and plain cap %d for %s were rejected after %s: %s; %s" \
 							% [row_index, room_id, "; ".join(attempt_failures),
@@ -1807,6 +1936,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"rich_flat_roof_garden_count": rich_flat_garden_count,
 		"rich_flat_roof_garden_fallback_count":
 			rich_flat_garden_fallback_count,
+		"micro_flat_roof_garden_count": micro_flat_garden_count,
 		"flat_roof_garden_rejections": flat_garden_rejections,
 		"flat_roof_recipe_counts": flat_roof_recipe_counts,
 		"lived_in_flat_roof_terrace_count": lived_in_flat_terrace_count,
@@ -1819,6 +1949,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"setback_lean_to_unit_count": lean_to_cap_count,
 		"setback_macro_gable_unit_count": macro_gable_cap_count,
 		"setback_macro_gable_fallback_count": macro_gable_fallback_count,
+		"setback_terminal_macro_fallback_count": \
+			terminal_macro_cap_fallback_count,
 		"setback_terrace_unit_count": terrace_cap_count,
 		"setback_garden_unit_count": garden_cap_count,
 		"setback_dressed_unit_count": terrace_cap_count + garden_cap_count,
@@ -1908,16 +2040,105 @@ static func _flat_roof_garden_unit(room_id: StringName,
 
 static func _cap_unit(room_id: StringName, row_index: int,
 		room: WarrenRoomStamp, parent_unit: FabricUnit, cap: Dictionary,
-		seams: Array[StringName]) -> FabricUnit:
+		seams: Array[StringName], stable_suffix: String = "") -> FabricUnit:
 	var anchor_face := cap.anchor_face as Vector3i
 	var parent_local := _inverse_cell(anchor_face, room.lattice_origin,
 		room.yaw_quarters)
-	return FabricUnit.new(StringName("spatial.roof.%s.cap%02d" % [room_id,
-		row_index]), StringName(cap.recipe_id), cap.origin as Vector3i,
+	var stable_id := StringName("spatial.roof.%s.cap%02d%s" % [room_id,
+		row_index, "" if stable_suffix.is_empty() else ".%s" % stable_suffix])
+	return FabricUnit.new(stable_id, StringName(cap.recipe_id),
+		cap.origin as Vector3i,
 		int(cap.yaw_quarters), [parent_unit.stable_id] as Array[StringName],
 		[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
 			SettlementFabricProgram._bearing_cell_socket_id(&"top",
 				parent_local.x, parent_local.z))] as Array[Dictionary], &"", seams)
+
+
+static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, probe: SettlementFabricPlan,
+		face_cells: Array[Vector3i], row_index: int, room_id: StringName,
+		room: WarrenRoomStamp, parent_unit: FabricUnit,
+		base_seams: Array[StringName], neighbor_room_unit_ids: Array[StringName],
+		unit_by_room: Dictionary, unit_by_private_cell: Dictionary,
+		prior_roofs: Array[FabricUnit]) -> Dictionary:
+	## Replace one colliding macro gable with a complete, lossless set of native
+	## strips.  The two phases deliberately form a tiny rule table: rows abutting
+	## a complete upper facade first become lean-tos; if that measured asset does
+	## not fit, every row falls back together to its shallow cap.
+	var rows := _terminal_cap_rows(face_cells)
+	if rows.is_empty():
+		return {"units": [] as Array[FabricUnit],
+			"failure": "macro face set has no terminal strip partition"}
+	var failures := PackedStringArray()
+	for use_lean_to: bool in [true, false]:
+		var candidates: Array[FabricUnit] = []
+		var candidate_failure := ""
+		for strip_index in rows.size():
+			var strip := rows[strip_index] as Array[Vector3i]
+			var cap := _cap_placement(source.grid, strip, room,
+				source.world_seed)
+			if cap.is_empty():
+				candidate_failure = "no native cap placement for terminal strip %d" \
+					% strip_index
+				break
+			cap["recipe_id"] = StringName("roof.setback.cap.%d" % strip.size())
+			if use_lean_to:
+				var lean_to := _setback_lean_to_placement(source, strip, room,
+					cap, unit_by_room)
+				if not lean_to.is_empty():
+					cap = lean_to
+			var seams: Array[StringName] = []
+			seams.assign(base_seams)
+			var upper_id := StringName(cap.get("upper_room_unit_id", &""))
+			if not upper_id.is_empty() and not seams.has(upper_id):
+				seams.append(upper_id)
+			for earlier: FabricUnit in candidates:
+				if not seams.has(earlier.stable_id):
+					seams.append(earlier.stable_id)
+			seams = _unique_sorted_names(seams)
+			var unit := _cap_unit(room_id, row_index, room, parent_unit, cap,
+				seams, "terminal%02d" % strip_index)
+			_append_shallow_prior_roof_seams(unit, neighbor_room_unit_ids,
+				prior_roofs, program)
+			_append_shallow_room_seams(unit, [] as Array[StringName],
+				unit_by_room, unit_by_private_cell, program)
+			var recipe := program.recipe(unit.recipe_id)
+			if recipe == null or _unit_touches_public_air(source.grid, unit,
+					recipe):
+				candidate_failure = "terminal strip %d enters public air or lacks recipe %s" \
+					% [strip_index, unit.recipe_id]
+				break
+			candidates.append(unit)
+		if candidate_failure.is_empty():
+			var fit := _roof_units_fit_probe(program, probe.units, candidates)
+			if bool(fit.get("fits", false)):
+				return {"units": candidates}
+			candidate_failure = String(fit.get("failure",
+				"terminal strip transaction rejected"))
+		failures.append("%s phase: %s" % [
+			"lean-to" if use_lean_to else "plain", candidate_failure])
+	return {"units": [] as Array[FabricUnit], "failure": "; ".join(failures)}
+
+
+static func _roof_units_fit_probe(program: SettlementFabricProgram,
+		existing_units: Array[FabricUnit], candidates: Array[FabricUnit]) \
+		-> Dictionary:
+	## SettlementFabricPlan has transactional single-unit admission but not a
+	## multi-unit rollback. Rebuild this rare fallback's small CPU-only probe so a
+	## partial terminal roof can never leak into the authoritative transaction.
+	var trial := SettlementFabricPlan.new(&"spatial.terminal-roof-probe")
+	for recipe: FabricRecipe in program.recipes():
+		if not trial.register_recipe(recipe):
+			return {"fits": false, "failure": "could not register recipe %s" \
+				% recipe.recipe_id}
+	for existing: FabricUnit in existing_units:
+		if not trial.add_unit(existing):
+			return {"fits": false, "failure": "could not rebuild existing unit %s: %s" \
+				% [existing.stable_id, trial.last_rejection]}
+	for candidate: FabricUnit in candidates:
+		if not trial.add_unit(candidate):
+			return {"fits": false, "failure": trial.last_rejection}
+	return {"fits": true}
 
 
 static func _setback_lean_to_placement(source: WarrenSpatialPlan,
@@ -2014,6 +2235,9 @@ static func _setback_gable_placement(piece: Dictionary,
 		&"slim":
 			recipe_id = StringName("roof.slim.%s.dormer.%s" % [family,
 				"left" if detail % 2 == 0 else "right"])
+		&"row":
+			recipe_id = StringName("roof.row.%s.dormer.%s" % [family,
+				"left" if detail % 2 == 0 else "right"])
 		&"building":
 			recipe_id = StringName("roof.square.%s.dormer.%s" % [family,
 				"left" if detail % 2 == 0 else "right"])
@@ -2032,6 +2256,7 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		-> StringName:
 	var prefix := "room.long" if room.kind == &"long" \
 		else "room.slim" if room.kind == &"slim" \
+		else "room.row" if room.kind == &"row" \
 		else "room.tower" if room.kind == &"tower" else "room"
 	if room.terrain_bearing:
 		var terrain_recipe := StringName("%s.base.rock%s" % [prefix,
@@ -2102,6 +2327,14 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 				"left" if room.roof_feature == 1 else "right"])
 		return StringName("roof.slim.chimney.%s" % theme) \
 			if room.roof_feature == 3 else StringName("roof.slim.%s" % theme)
+	if room.kind == &"row":
+		if room.source_storey_index == 0:
+			return StringName("roof.row.short.%s" % theme)
+		if room.roof_feature in [1, 2]:
+			return StringName("roof.row.%s.dormer.%s" % [theme,
+				"left" if room.roof_feature == 1 else "right"])
+		return StringName("roof.row.chimney.%s" % theme) \
+			if room.roof_feature == 3 else StringName("roof.row.%s" % theme)
 	if room.kind == &"long":
 		var feature := room.roof_feature
 		if feature in [1, 2, 4, 5]:
@@ -2411,13 +2644,19 @@ static func _plain_pitched_recipe_id(recipe_id: StringName) -> StringName:
 		return StringName(id.get_slice(".dormer.", 0))
 	if id.begins_with("roof.slim.chimney."):
 		return StringName(id.replace("roof.slim.chimney.", "roof.slim."))
+	if id.begins_with("roof.row.chimney."):
+		return StringName(id.replace("roof.row.chimney.", "roof.row."))
 	if id.begins_with("roof.tower.chimney."):
 		return StringName(id.replace("roof.tower.chimney.", "roof.tower."))
 	if id.begins_with("roof.slim.short."):
 		return StringName(id.replace("roof.slim.short.", "roof.slim."))
+	if id.begins_with("roof.row.short."):
+		return StringName(id.replace("roof.row.short.", "roof.row."))
 	if id.begins_with("roof.tower.short."):
 		return StringName(id.replace("roof.tower.short.", "roof.tower."))
 	if id.begins_with("roof.slim.") and id.contains(".dormer."):
+		return StringName(id.get_slice(".dormer.", 0))
+	if id.begins_with("roof.row.") and id.contains(".dormer."):
 		return StringName(id.get_slice(".dormer.", 0))
 	if id.begins_with("roof.tower.") and id.contains(".dormer."):
 		return StringName(id.get_slice(".dormer.", 0))
@@ -2454,6 +2693,8 @@ static func _flat_roof_recipe_id_for_kind(kind: StringName) -> StringName:
 		return &"roof.flat.tower"
 	if kind == &"slim":
 		return &"roof.flat.slim"
+	if kind == &"row":
+		return &"roof.flat.row"
 	if kind == &"long":
 		return &"roof.flat.long"
 	return &"roof.flat.square"
@@ -2574,7 +2815,7 @@ static func _cap_pieces(face_cells: Array[Vector3i]) -> Array[Dictionary]:
 	# already requires the residual to be terminal rows, so consuming one stamp
 	# here makes the construction pass match that proof.
 	var found_macro := false
-	for kind: StringName in [&"long", &"building", &"slim", &"tower"]:
+	for kind: StringName in [&"long", &"building", &"slim", &"row", &"tower"]:
 		if found_macro:
 			break
 		var ordered: Array[Vector3i] = []
@@ -2728,6 +2969,164 @@ static func _roof_seams_for_candidate(room_seams: Array[StringName],
 				out.append(prior.stable_id)
 				break
 	return _unique_sorted_names(out)
+
+
+static func _prior_roof_seams_for_neighbor_rooms(
+		neighbor_room_unit_ids: Array[StringName],
+		prior_roofs: Array[FabricUnit]) -> Array[StringName]:
+	## A setback strip may close against a roof whose underlying room shares an
+	## exact PARTY_WALL with this room.  Name only the roof unit: naming the room
+	## itself would recreate the old broad exemption that let a gable eave pass
+	## through the neighboring facade.
+	var neighbors: Dictionary = {}
+	for room_unit_id: StringName in neighbor_room_unit_ids:
+		neighbors[room_unit_id] = true
+	var out: Array[StringName] = []
+	for prior: FabricUnit in prior_roofs:
+		for parent_id: StringName in prior.parent_ids:
+			if neighbors.has(parent_id):
+				out.append(prior.stable_id)
+				break
+	return _unique_sorted_names(out)
+
+
+static func _append_shallow_prior_roof_seams(candidate: FabricUnit,
+		neighbor_room_unit_ids: Array[StringName],
+		prior_roofs: Array[FabricUnit],
+		program: SettlementFabricProgram) -> void:
+	## Exact PARTY_WALL adjacency makes two roofs part of one construction, but it
+	## does not excuse arbitrary interpenetration. Declare the roof-to-roof seam
+	## only when the measured contact is shallow on two axes. A gable entering a
+	## neighbor wall still has no relationship and remains a hard rejection.
+	if candidate == null or program == null:
+		return
+	var candidate_recipe := program.recipe(candidate.recipe_id)
+	if candidate_recipe == null:
+		return
+	var candidate_bounds := candidate.transform() \
+		* candidate_recipe.local_clearance_bounds
+	var candidate_roof_ids := _prior_roof_seams_for_neighbor_rooms(
+		neighbor_room_unit_ids, prior_roofs)
+	for prior: FabricUnit in prior_roofs:
+		if not candidate_roof_ids.has(prior.stable_id):
+			continue
+		var prior_recipe := program.recipe(prior.recipe_id)
+		if prior_recipe == null:
+			continue
+		var prior_bounds := prior.transform() \
+			* prior_recipe.local_clearance_bounds
+		if SettlementFabricPlan._aabb_overlaps_volume(candidate_bounds,
+				prior_bounds) and SettlementFabricPlan._is_edge_nick(
+				candidate_bounds, prior_bounds) \
+				and not candidate.visual_seam_ids.has(prior.stable_id):
+			candidate.visual_seam_ids.append(prior.stable_id)
+	candidate.visual_seam_ids = _unique_sorted_names(
+		candidate.visual_seam_ids)
+
+
+static func _setback_wall_room_ids(face_cells: Array[Vector3i],
+		unit_by_private_cell: Dictionary) -> Array[StringName]:
+	## The cell immediately above each authoritative roof face is the cap volume.
+	## Any private cell directly across its horizontal perimeter is an exact upper
+	## wall contact. A complete long-side contact may select the pitched lean-to;
+	## partial sides and short ends can only receive the shallow flashing rule.
+	var out: Array[StringName] = []
+	if face_cells.is_empty():
+		return out
+	var cap_cells: Dictionary = {}
+	for face: Vector3i in face_cells:
+		cap_cells[face + Vector3i.UP] = true
+	for cap_cell_value: Variant in cap_cells.keys():
+		var cap_cell := cap_cell_value as Vector3i
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cap_cell + direction
+			if cap_cells.has(neighbor):
+				continue
+			var room_unit_id := StringName(unit_by_private_cell.get(neighbor, &""))
+			if not room_unit_id.is_empty() and not out.has(room_unit_id):
+				out.append(room_unit_id)
+	return _unique_sorted_names(out)
+
+
+static func _append_shallow_room_seams(candidate: FabricUnit,
+		candidate_room_unit_ids: Array[StringName], unit_by_room: Dictionary,
+		unit_by_private_cell: Dictionary,
+		program: SettlementFabricProgram) -> void:
+	## End-wall flashing is a measured shallow connection, not an envelope
+	## exemption. The detailed terrace/garden remains rejected when its height
+	## makes the overlap deep; the plain cap may tuck beneath the facade frame.
+	if candidate == null or program == null:
+		return
+	var candidate_recipe := program.recipe(candidate.recipe_id)
+	if candidate_recipe == null:
+		return
+	var candidate_bounds := candidate.transform() \
+		* candidate_recipe.local_clearance_bounds
+	var adjacent_room_ids: Array[StringName] = []
+	adjacent_room_ids.assign(candidate_room_unit_ids)
+	var candidate_solid_cells: Dictionary = {}
+	var local_contact_cells: Array[Vector3i] = []
+	local_contact_cells.assign(candidate_recipe.solid_cells)
+	for occluder_cell: Vector3i in candidate_recipe.occluder_cells:
+		if not local_contact_cells.has(occluder_cell):
+			local_contact_cells.append(occluder_cell)
+	for local_cell: Vector3i in local_contact_cells:
+		candidate_solid_cells[FabricRecipe.transform_cell(local_cell,
+			candidate.lattice_origin, candidate.yaw_quarters)] = true
+	for cell_value: Variant in candidate_solid_cells.keys():
+		var cell := cell_value as Vector3i
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if candidate_solid_cells.has(neighbor):
+				continue
+			var room_unit_id := StringName(unit_by_private_cell.get(neighbor,
+				&""))
+			if not room_unit_id.is_empty() \
+					and not adjacent_room_ids.has(room_unit_id):
+				adjacent_room_ids.append(room_unit_id)
+	# A one-cell structural setback can still be closed by an authored facade
+	# projection reaching the thin cap. The lattice alone cannot name that seam,
+	# so let the measured envelopes discover it below; the strict shallow-depth
+	# test remains the authority and rejects a tall terrace or deep intersection.
+	for room_unit_value: Variant in unit_by_room.values():
+		var room_unit := room_unit_value as FabricUnit
+		if room_unit != null \
+				and not adjacent_room_ids.has(room_unit.stable_id):
+			adjacent_room_ids.append(room_unit.stable_id)
+	adjacent_room_ids = _unique_sorted_names(adjacent_room_ids)
+	for room_unit_id: StringName in adjacent_room_ids:
+		var room_unit := _room_unit_with_stable_id(unit_by_room, room_unit_id)
+		if room_unit == null:
+			continue
+		var room_recipe := program.recipe(room_unit.recipe_id)
+		if room_recipe == null:
+			continue
+		var room_bounds := room_unit.transform() \
+			* room_recipe.local_clearance_bounds
+		if _is_shallow_flashing_contact(candidate_bounds, room_bounds) \
+				and not candidate.visual_seam_ids.has(room_unit_id):
+			candidate.visual_seam_ids.append(room_unit_id)
+	candidate.visual_seam_ids = _unique_sorted_names(
+		candidate.visual_seam_ids)
+
+
+static func _room_unit_with_stable_id(unit_by_room: Dictionary,
+		stable_unit_id: StringName) -> FabricUnit:
+	for unit_value: Variant in unit_by_room.values():
+		var unit := unit_value as FabricUnit
+		if unit != null and unit.stable_id == stable_unit_id:
+			return unit
+	return null
+
+
+static func _is_shallow_flashing_contact(left: AABB, right: AABB) -> bool:
+	if not SettlementFabricPlan._aabb_overlaps_volume(left, right):
+		return false
+	var overlap := SettlementFabricPlan._overlap_size(left, right)
+	return overlap.y <= SHALLOW_FLASHING_MAX_HEIGHT_M \
+		and minf(overlap.x, overlap.z) <= SHALLOW_FLASHING_MAX_OVERLAP_M
 
 
 static func _cap_failure_diagnostic(grid: WarrenSpatialGrid,
@@ -2935,6 +3334,115 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 						== room.source_parcel_id:
 					return true
 	return false
+
+
+static func _suppressed_party_wall_placements(grid: WarrenSpatialGrid,
+		room: WarrenRoomStamp, recipe: FabricRecipe) -> Array[StringName]:
+	## Translate the sealed fine-grid PARTY_WALL field into whole authored facade
+	## modules. A 3 m module is omitted only when both of its horizontal cells,
+	## across both 1.5 m height bands, meet private volume through the same typed
+	## seam. This keeps partial contacts visible and closes the old loophole where
+	## two composable rooms still rendered coincident timber/stone skins.
+	var minimum := Vector2i.ZERO
+	var maximum := Vector2i.ZERO
+	match room.kind:
+		&"tower":
+			minimum = Vector2i(-1, -1)
+			maximum = Vector2i(0, 0)
+		&"slim":
+			minimum = Vector2i(-1, -2)
+			maximum = Vector2i(0, 1)
+		&"row":
+			minimum = Vector2i(-2, -1)
+			maximum = Vector2i(1, 0)
+		&"building":
+			minimum = Vector2i(-2, -2)
+			maximum = Vector2i(1, 1)
+		&"long":
+			minimum = Vector2i(-2, -3)
+			maximum = Vector2i(1, 2)
+		_:
+			return [] as Array[StringName]
+	var available: Dictionary = {}
+	for placement: Dictionary in recipe.placements:
+		available[StringName(placement.id)] = true
+	var suppressed: Dictionary = {}
+	var front_ids: Array[StringName] = []
+	var x_segments := int((maximum.x - minimum.x + 1) / 2)
+	for index in x_segments:
+		var x0 := minimum.x + index * 2
+		var front_id := StringName("south") if room.kind in [&"tower", &"slim"] \
+			else StringName("front.%d" % index)
+		var back_id := StringName("north") if room.kind in [&"tower", &"slim"] \
+			else StringName("back.%d" % index)
+		front_ids.append(front_id)
+		_suppress_complete_party_wall_segment(grid, room, available,
+			suppressed, front_id, Vector3i.BACK, [
+				Vector3i(x0, 0, maximum.y),
+				Vector3i(x0 + 1, 0, maximum.y),
+			])
+		_suppress_complete_party_wall_segment(grid, room, available,
+			suppressed, back_id, Vector3i.FORWARD, [
+				Vector3i(x0, 0, minimum.y),
+				Vector3i(x0 + 1, 0, minimum.y),
+			])
+	var z_segments := int((maximum.y - minimum.y + 1) / 2)
+	for index in z_segments:
+		var z0 := minimum.y + index * 2
+		var west_id := StringName("west") if room.kind == &"tower" \
+			else StringName("left.%d" % index) if room.kind == &"building" \
+			else StringName("west.%d" % index)
+		var east_id := StringName("east") if room.kind == &"tower" \
+			else StringName("right.%d" % index) if room.kind == &"building" \
+			else StringName("east.%d" % index)
+		_suppress_complete_party_wall_segment(grid, room, available,
+			suppressed, west_id, Vector3i.LEFT, [
+				Vector3i(minimum.x, 0, z0),
+				Vector3i(minimum.x, 0, z0 + 1),
+			])
+		_suppress_complete_party_wall_segment(grid, room, available,
+			suppressed, east_id, Vector3i.RIGHT, [
+				Vector3i(maximum.x, 0, z0),
+				Vector3i(maximum.x, 0, z0 + 1),
+			])
+	var complete_front_is_hidden := not front_ids.is_empty()
+	for placement_id: StringName in front_ids:
+		complete_front_is_hidden = complete_front_is_hidden \
+			and suppressed.has(placement_id)
+	if complete_front_is_hidden:
+		for placement: Dictionary in recipe.placements:
+			var placement_id := StringName(placement.id)
+			if String(placement_id).begins_with("facade."):
+				suppressed[placement_id] = true
+	var out: Array[StringName] = []
+	out.assign(suppressed.keys())
+	out.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	return out
+
+
+static func _suppress_complete_party_wall_segment(grid: WarrenSpatialGrid,
+		room: WarrenRoomStamp, available: Dictionary, suppressed: Dictionary,
+		placement_id: StringName, local_direction: Vector3i,
+		local_columns: Array[Vector3i]) -> void:
+	if not available.has(placement_id):
+		return
+	var direction := FabricRecipe.transform_direction(local_direction,
+		room.yaw_quarters)
+	for local_column: Vector3i in local_columns:
+		for y in WarrenSpatialGrid.STOREY_CELLS:
+			var local_cell := Vector3i(local_column.x, y, local_column.z)
+			var cell := FabricRecipe.transform_cell(local_cell,
+				room.lattice_origin, room.yaw_quarters)
+			var neighbor := cell + direction
+			var claim := grid.face_claim(cell, direction)
+			if room.has_private_cell(neighbor) \
+					or grid.use_at(neighbor) \
+						!= WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+					or int(claim.get("kind", -1)) \
+						!= WarrenSpatialGrid.FaceKind.PARTY_WALL:
+				return
+	suppressed[placement_id] = true
 
 
 static func _prior_visual_seam_units(grid: WarrenSpatialGrid,
