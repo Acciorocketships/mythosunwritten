@@ -157,7 +157,9 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 		and int(audit.get("prefab_landmark_count", -1)) \
 			== profile.landmark_range.x \
 		and int(audit.get("enclosed_skywalk_count", -1)) \
-			== profile.skywalk_range.x \
+			>= profile.skywalk_range.x \
+		and int(audit.get("enclosed_skywalk_count", -1)) \
+			<= profile.skywalk_range.y \
 		and int(audit.get("usable_balcony_count", -1)) \
 			>= profile.balcony_range.x \
 		and int(audit.get("room_outcropping_count", -1)) \

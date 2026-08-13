@@ -52,8 +52,12 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 		assert_gte(profile.cantilever_range.x, 4)
 	assert_eq([profiles[0].skywalk_range.x, profiles[1].skywalk_range.x,
 		profiles[2].skywalk_range.x, profiles[3].skywalk_range.x],
-		[1, 2, 4, 4],
-		"large and grand towns require a fourth macroscopic occupied link")
+		[1, 2, 3, 3],
+		"large and grand towns require at least three occupied links")
+	assert_eq([profiles[2].skywalk_range.y, profiles[3].skywalk_range.y],
+		[4, 4],
+		"large and grand towns request a fourth link; the sealed occluder "
+		+ "ranking keeps it only when it adds distinct inhabited route cover")
 	assert_eq(profiles[0].landmark_range, Vector2i(0, 0))
 	assert_eq(profiles[1].landmark_range, Vector2i(1, 1))
 	assert_eq(profiles[2].landmark_range, Vector2i(2, 2))

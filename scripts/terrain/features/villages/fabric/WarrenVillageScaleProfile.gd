@@ -130,14 +130,18 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 				10, 42, Vector2i(30, 190), 16, 4, Vector2i(2, 2),
 				Vector2i(5, 5), Vector2i(5, 5), Vector2i(1, 1), 0.33, false)
 		LARGE:
+			# Skywalk range (3, 4): request four links, but the sealed occluder
+			# ranking may keep three when the fourth provably adds no distinct
+			# inhabited route coverage. The raw four-link experiment measured
+			# zero coverage gain, so link count alone is not the contract.
 			return WarrenVillageScaleProfile.new(LARGE, 12,
 				Vector2i(16, 18), Vector2i(30, 36), Vector2i(8, 10),
-				16, 64, Vector2i(50, 220), 24, 6, Vector2i(4, 4),
+				16, 64, Vector2i(50, 220), 24, 6, Vector2i(3, 4),
 				Vector2i(6, 8), Vector2i(6, 8), Vector2i(2, 2), 0.38, true)
 		GRAND:
 			return WarrenVillageScaleProfile.new(GRAND, 14,
 				Vector2i(16, 18), Vector2i(32, 40), Vector2i(8, 12),
-				20, 80, Vector2i(80, 300), 32, 8, Vector2i(4, 4),
+				20, 80, Vector2i(80, 300), 32, 8, Vector2i(3, 4),
 				Vector2i(8, 12), Vector2i(8, 12), Vector2i(3, 3), 0.38, true)
 		_:
 			return null

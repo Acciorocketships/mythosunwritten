@@ -10,6 +10,12 @@ const GRID_PADDING_CELLS := 2
 const ROOF_CLEARANCE_CELLS := 2
 const MAX_PARTITION_VARIANTS := WarrenSolidPartitioner.PARTITION_VARIANTS
 const MAX_LANDMARK_SET_ATTEMPTS := 12
+## Bounded exact hero-feature frontier. Endpoint-compatible skywalk
+## combinations are proved through the exact room composition and the sealed
+## survivors are ranked by final recipe occluder route coverage; these bounds
+## keep that proof affordable while still offering genuinely diverse sets.
+const MAX_OCCLUDER_RANK_TRIALS := 3
+const MAX_OCCLUDER_RANK_SCAN := 24
 const RESIDUAL_OVERHEAD_ROUTE_CELL_SCORE := 50000
 const RESIDUAL_FRONTAGE_SIDE_SCORE := 15000
 const RESIDUAL_TERRAIN_ROOT_SCORE := 35000
@@ -839,7 +845,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		last_failure = "room partition has an invalid scale profile"
 		return {}
 	var requires_courtyard := scale_profile.requires_elevated_courtyard
-	var target_skywalks := scale_profile.skywalk_range.x
+	# Request the richest end of the profile's skywalk range; the sealed
+	# occluder ranking may keep a reduced plan only when it proves the extra
+	# link adds no distinct inhabited route coverage, and the profile minimum
+	# (skywalk_range.x) still gates every accepted plan.
+	var target_skywalks := scale_profile.skywalk_range.y
 	var target_landmarks := scale_profile.landmark_range.x
 	var proposals: Array[Dictionary] = []
 	var rejected_unfloored_addresses := 0
@@ -923,6 +933,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var skywalk_plan: Dictionary = {}
 	var landmark_reservations: Array[Dictionary] = []
 	var selected_exact_composition: Dictionary = {}
+	var selected_occluder_rank: Dictionary = {}
 	var feature_set_attempts: Array[Dictionary] = []
 	var realm := WarrenVolumePublicRealmAdapter.from_volume(volume)
 	if realm == null:
@@ -1150,100 +1161,236 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 					_protected_owners_with_landmarks(market_owners,
 						landmark_set)
 				# This is the first point where market, court room, landmark pair,
-				# and all three skywalks are known together. Run the exact room
-				# composition here, while the enclosing bounded loops can still try
-				# another court or market, rather than discovering a tower or eave
-				# conflict only after irrevocably selecting the first hero set.
+				# and all requested skywalks are known together. Prove the bounded
+				# diverse skywalk frontier through the exact room composition here,
+				# while the enclosing loops can still try another court or market,
+				# then rank the sealed survivors by the same transformed recipe
+				# occluders the final enclosure audit measures.
 				var exact_room_started := Time.get_ticks_msec()
-				var exact_room_fit := not requires_courtyard
-				var exact_room_result: Dictionary = {}
-				if requires_courtyard:
+				var skywalk_trial_plans: Array[Dictionary] = [trial_skywalk_plan]
+				var exclusion_snapshot := _court_candidate_exclusion_snapshot(
+					court_candidate)
+				var sealed_trials: Array[Dictionary] = []
+				var fatal_court_failure := false
+				var trial_index := 0
+				while trial_index < skywalk_trial_plans.size():
+					var trial_plan := skywalk_trial_plans[trial_index]
+					var trial_reservations: Array[Dictionary] = []
+					trial_reservations.assign(trial_plan.get("reservations", []) \
+						as Array)
+					if trial_index > 0 and trial_reservations.size() \
+							< scale_profile.skywalk_range.x:
+						trial_index += 1
+						continue
+					if not requires_courtyard:
+						sealed_trials.append({"plan": trial_plan, "result": {},
+							"covered": -1, "route_cells": route_walk.size(),
+							"exclusions": exclusion_snapshot,
+							"reduced": false, "trial_index": trial_index})
+						break
+					_restore_court_candidate_exclusions(court_candidate,
+						exclusion_snapshot)
 					var exact_key := _exact_room_preflight_key(court_candidate,
-						landmark_set, trial_skywalk_plan)
+						landmark_set, trial_plan)
+					var trial_fit := false
+					var exact_room_result: Dictionary = {}
 					if exact_room_preflight_failures.has(exact_key):
 						exact_room_preflight_cache_hit_count += 1
 						_restore_exact_room_preflight_failure(
 							exact_room_preflight_failures[exact_key] as Dictionary)
 					else:
-						exact_room_fit = \
+						trial_fit = \
 							_court_candidate_preserves_exact_room_envelopes(
 								grid, volume, proposals, construction_program,
 								candidate, court_candidate,
 								market_landmark_owners,
-								court_fixed_blocks_by_parcel, trial_skywalk_plan,
+								court_fixed_blocks_by_parcel, trial_plan,
 								enable_paired_registration_relief,
 								exact_room_result)
-						if not exact_room_fit:
+						if not trial_fit:
 							exact_room_preflight_failures[exact_key] = \
 								_exact_room_preflight_failure_snapshot()
-				if diagnostic_trace_skywalk_timing:
-					print("SKYWALK_TIMING exact_room_fit index=", set_index,
-						" fit=", exact_room_fit, " ms=",
-						Time.get_ticks_msec() - exact_room_started,
-						" room=", last_preplan_market_diagnostic.get(
-							"last_exact_room_composition_failure", ""),
-						" pairs=", last_preplan_market_diagnostic.get(
-							"last_exact_room_pair_failure", ""),
-						" composition=", last_preplan_market_diagnostic.get(
-							"last_exact_court_composition_failure", {}),
-						" required=", last_preplan_market_diagnostic.get(
-							"last_exact_court_required_conflict", {}),
-						" tower=", last_preplan_market_diagnostic.get(
-							"last_exact_court_tall_tower_failure", []),
-						" court_owners=", court_reservation.get(
-							"owner_parcel_ids", []),
-						" court_offsets=", court_candidate.get(
-							"forced_offsets", {}),
-						" skywalk_owners=", _skywalk_plan_owner_preview(
-							trial_skywalk_plan),
-						" skywalk_offsets=", trial_skywalk_plan.get(
-							"forced_offsets", {}),
-						" variant_failure=", WarrenRoomCompositionPlanner \
-							.last_variant_diagnostic.get("failure", ""),
-						" variant_lineage=", WarrenRoomCompositionPlanner \
-							.last_variant_diagnostic.get("lineage_id", &""))
-				if not exact_room_fit:
+					if diagnostic_trace_skywalk_timing:
+						print("SKYWALK_TIMING exact_room_fit index=", set_index,
+							" trial=", trial_index, " fit=", trial_fit, " ms=",
+							Time.get_ticks_msec() - exact_room_started,
+							" room=", last_preplan_market_diagnostic.get(
+								"last_exact_room_composition_failure", ""),
+							" pairs=", last_preplan_market_diagnostic.get(
+								"last_exact_room_pair_failure", ""),
+							" composition=", last_preplan_market_diagnostic.get(
+								"last_exact_court_composition_failure", {}),
+							" required=", last_preplan_market_diagnostic.get(
+								"last_exact_court_required_conflict", {}),
+							" tower=", last_preplan_market_diagnostic.get(
+								"last_exact_court_tall_tower_failure", []),
+							" court_owners=", court_reservation.get(
+								"owner_parcel_ids", []),
+							" court_offsets=", court_candidate.get(
+								"forced_offsets", {}),
+							" skywalk_owners=", _skywalk_plan_owner_preview(
+								trial_plan),
+							" skywalk_offsets=", trial_plan.get(
+								"forced_offsets", {}),
+							" variant_failure=", WarrenRoomCompositionPlanner \
+								.last_variant_diagnostic.get("failure", ""),
+							" variant_lineage=", WarrenRoomCompositionPlanner \
+								.last_variant_diagnostic.get("lineage_id", &""))
+					if not trial_fit:
+						if trial_index == 0:
+							var failure_signature := JSON.stringify(
+								_exact_room_preflight_failure_snapshot())
+							if not failure_signature.is_empty() \
+									and failure_signature != "{}":
+								repeated_exact_failure_counts[failure_signature] = int(
+									repeated_exact_failure_counts.get(
+										failure_signature, 0)) + 1
+								if int(repeated_exact_failure_counts[
+										failure_signature]) >= 2:
+									court_has_repeated_exact_failure = true
+									fatal_court_failure = true
+									break
+							if last_preplan_market_diagnostic.has(
+									"last_exact_court_tall_tower_failure"):
+								# One court-owned failed lineage is sufficient to prove
+								# this exact forced endpoint obligation impossible. Other
+								# failed lineages may be incidental to the selected
+								# landmark/skywalk set; they must not prevent memoizing
+								# the independently fatal court obligation. A failure
+								# with no court-owned lineage still advances to the next
+								# court candidate, but cannot memoize other visual
+								# variants of this structural obligation.
+								var failed_ids := last_preplan_market_diagnostic[
+									"last_exact_court_tall_tower_failure"] as Array
+								var court_owned_failures := \
+									_court_owned_tall_tower_failures(failed_ids,
+										court_candidate)
+								if not court_owned_failures.is_empty():
+									failed_court_tower_obligations[
+										court_obligation_key] = court_owned_failures
+								court_has_intrinsic_tall_tower = true
+								fatal_court_failure = true
+								break
+						trial_index += 1
+						continue
+					# Sealed: measure the composed recipe occluder route coverage,
+					# excluding the parcels this exact pass dispositioned away.
+					var trial_excluded: Dictionary = {}
+					for excluded_value: Variant in court_candidate.get(
+							"excluded_parcel_ids", []) as Array:
+						trial_excluded[StringName(excluded_value)] = true
+					var coverage_reservations: Array[Dictionary] = []
+					coverage_reservations.append_array(trial_reservations)
+					if not bool(court_candidate.get("optional_absent", false)):
+						coverage_reservations.append(court_candidate.get(
+							"reservation", {}) as Dictionary)
+					coverage_reservations.append_array(landmark_set)
+					var covered := -1
+					var route_cells := route_walk.size()
+					var trial_probes := _exact_composition_room_probes(
+						exact_room_result.get("composition", {}) as Dictionary,
+						proposals, construction_program, volume.world_seed,
+						court_candidate, trial_reservations, trial_excluded)
+					if bool(trial_probes.get("valid", false)):
+						var probe_records: Array[Dictionary] = []
+						probe_records.assign(trial_probes.get("probes", []) \
+							as Array)
+						var coverage := _sealed_recipe_occluder_route_coverage(
+							probe_records, coverage_reservations,
+							construction_program, route_walk)
+						covered = int(coverage.covered_route_cell_count)
+						route_cells = int(coverage.route_cell_count)
+					sealed_trials.append({"plan": trial_plan,
+						"result": exact_room_result,
+						"covered": covered, "route_cells": route_cells,
+						"exclusions": _court_candidate_exclusion_snapshot(
+							court_candidate),
+						"reduced": bool(trial_plan.get(
+							"reduced_link_count", false)),
+						"trial_index": trial_index})
+					if trial_index == 0:
+						# The primary plan sealed; only now is the bounded diverse
+						# alternate search worth its endpoint-composition proofs.
+						skywalk_trial_plans.append_array(
+							_deferred_alternate_skywalk_plans(grid, volume,
+								proposals, trial_owners, trial_plan))
+					trial_index += 1
+				if sealed_trials.is_empty():
 					(feature_set_attempts.back() as Dictionary)[
 						"exact_room_fit"] = false
-					var failure_signature := JSON.stringify(
-						_exact_room_preflight_failure_snapshot())
-					if not failure_signature.is_empty() \
-							and failure_signature != "{}":
-						repeated_exact_failure_counts[failure_signature] = int(
-							repeated_exact_failure_counts.get(failure_signature, 0)) + 1
-						if int(repeated_exact_failure_counts[
-								failure_signature]) >= 2:
-							court_has_repeated_exact_failure = true
-							break
-					if last_preplan_market_diagnostic.has(
-							"last_exact_court_tall_tower_failure"):
-						# One court-owned failed lineage is sufficient to prove this
-						# exact forced endpoint obligation impossible. Other failed
-						# lineages may be incidental to the selected landmark/skywalk
-						# set; they must not prevent memoizing the independently fatal
-						# court obligation. A failure with no court-owned lineage still
-						# advances to the next court candidate, but cannot memoize other
-						# visual variants of this structural obligation.
-						var failed_ids := last_preplan_market_diagnostic[
-							"last_exact_court_tall_tower_failure"] as Array
-						var court_owned_failures := \
-							_court_owned_tall_tower_failures(failed_ids,
-								court_candidate)
-						if not court_owned_failures.is_empty():
-							failed_court_tower_obligations[court_obligation_key] = \
-								court_owned_failures
-						court_has_intrinsic_tall_tower = true
+					if fatal_court_failure:
 						break
 					continue
+				# Rank sealed survivors: highest composed occluder coverage wins;
+				# ties keep the deterministic trial order. A reduced three-link
+				# plan wins only when it strictly beats every full-target plan,
+				# which proves the fourth link visually redundant.
+				var best_full: Dictionary = {}
+				var best_reduced: Dictionary = {}
+				for sealed_trial: Dictionary in sealed_trials:
+					if bool(sealed_trial.get("reduced", false)):
+						if best_reduced.is_empty() or int(sealed_trial.covered) \
+								> int(best_reduced.covered):
+							best_reduced = sealed_trial
+					elif best_full.is_empty() or int(sealed_trial.covered) \
+							> int(best_full.covered):
+						best_full = sealed_trial
+				# The redundancy flag is an exact measured fact: the extra link
+				# failed to raise distinct route coverage. The tie nevertheless
+				# keeps the richer plan — review gate 11 explicitly values
+				# repeated overhead episodes, so equal-coverage extra links are
+				# kept and judged visually rather than silently dropped.
+				var fourth_link_redundant := not best_full.is_empty() \
+					and not best_reduced.is_empty() \
+					and int(best_reduced.covered) >= int(best_full.covered)
+				var chosen := best_full
+				if best_full.is_empty():
+					chosen = best_reduced
+				elif not best_reduced.is_empty() \
+						and int(best_reduced.covered) > int(best_full.covered):
+					chosen = best_reduced
+				_restore_court_candidate_exclusions(court_candidate,
+					chosen.exclusions as Dictionary)
+				var chosen_result := chosen.result as Dictionary
 				(feature_set_attempts.back() as Dictionary)["exact_room_fit"] = true
+				(feature_set_attempts.back() as Dictionary)[
+					"occluder_rank_sealed_count"] = sealed_trials.size()
+				last_preplan_skywalk_diagnostic["occluder_rank_trial_count"] = \
+					skywalk_trial_plans.size()
+				last_preplan_skywalk_diagnostic["occluder_rank_sealed_count"] = \
+					sealed_trials.size()
+				last_preplan_skywalk_diagnostic[
+					"occluder_rank_selected_covered_route_cell_count"] = \
+					int(chosen.covered)
+				last_preplan_skywalk_diagnostic[
+					"occluder_rank_route_cell_count"] = int(chosen.route_cells)
+				last_preplan_skywalk_diagnostic[
+					"occluder_rank_fourth_link_redundant"] = fourth_link_redundant
+				var trial_coverage_report: Array[Dictionary] = []
+				for sealed_trial: Dictionary in sealed_trials:
+					trial_coverage_report.append({
+						"trial_index": int(sealed_trial.trial_index),
+						"covered": int(sealed_trial.covered),
+						"reduced": bool(sealed_trial.get("reduced", false))})
+				last_preplan_skywalk_diagnostic[
+					"occluder_rank_trial_coverages"] = trial_coverage_report
+				selected_occluder_rank = {
+					"occluder_rank_trial_count": skywalk_trial_plans.size(),
+					"occluder_rank_sealed_trial_count": sealed_trials.size(),
+					"occluder_rank_selected_covered_route_cell_count":
+						int(chosen.covered),
+					"occluder_rank_route_cell_count": int(chosen.route_cells),
+					"occluder_rank_fourth_link_redundant": fourth_link_redundant,
+					"occluder_rank_trial_coverages": trial_coverage_report,
+				}
 				market_reservation = candidate
 				courtyard_bridge_candidate = court_candidate
 				courtyard_bridge_reservation = court_reservation
 				landmark_reservations.assign(landmark_set)
-				skywalk_plan = trial_skywalk_plan
-				selected_exact_composition = exact_room_result.get(
+				skywalk_plan = chosen.plan as Dictionary
+				selected_exact_composition = chosen_result.get(
 					"composition", {}) as Dictionary \
-					if not bool(exact_room_result.get(
+					if not bool(chosen_result.get(
 						"recomposition_required", false)) else {}
 				selected_court_alternatives.assign(raw_court_candidates)
 				selected_market_landmark_owners = market_landmark_owners
@@ -1550,6 +1697,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		composed_court_side_mask
 	composition_audit["composed_courtyard_side_count"] = \
 		composed_court_side_count
+	composition_audit.merge(selected_occluder_rank, true)
 	composition_audit["landmark_skywalk_connected_count"] = int(
 		skywalk_plan.get("landmark_coverage_count", 0))
 	composition_audit["landmark_skywalk_connection_ratio"] = 1.0 \
@@ -2841,7 +2989,9 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 				ranked_quadruple_count)
 	elif target_count > 4:
 		ranked_combinations = [] as Array[Dictionary]
-	for ranked: Dictionary in ranked_combinations:
+	var selected_rank_index := -1
+	for rank_index in ranked_combinations.size():
+		var ranked := ranked_combinations[rank_index]
 		composition_trial_count += 1
 		var indices := ranked.indices as Array[int]
 		var combination: Array[Dictionary] = []
@@ -2854,6 +3004,7 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 		selected = combination
 		selected_tower_risk = int(ranked.tower_risk)
 		selected_quality = int(ranked.quality)
+		selected_rank_index = rank_index
 		break
 	if diagnostic_trace_skywalk_timing:
 		print("SKYWALK_TIMING landmark_exact ms=",
@@ -2886,17 +3037,134 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 		required_landmark_coverage
 	last_preplan_skywalk_diagnostic["selected_landmark_coverage_count"] = \
 		selected_landmark_coverage.size()
-	var plan := _skywalk_plan_from_selected(selected, candidates.size())
-	plan["pair_frontier_count"] = pair_frontier.size()
-	plan["tower_risk"] = selected_tower_risk
+	var plan := _landmark_skywalk_plan_for_combination(selected,
+		candidates.size(), pair_frontier.size(), selected_tower_risk,
+		landmark_transition_owner_ids)
+	# Deferred alternate search state. Proving diverse alternates costs one
+	# endpoint-composition proof per scanned combination, so it must not run for
+	# every landmark set: the enclosing feature transaction requests alternates
+	# lazily, only after this plan's own exact room preflight has sealed.
+	plan["alternate_search"] = {
+		"candidates": candidates,
+		"ranked_combinations": ranked_combinations,
+		"ranked_triples": ranked_triples if target_count == 4 \
+			else [] as Array[Dictionary],
+		"pair_frontier_count": pair_frontier.size(),
+		# Every combination ranked before the primary already failed the exact
+		# endpoint-composition proof; the deferred alternate scan must resume
+		# after this rank instead of re-proving that prefix.
+		"primary_rank_index": selected_rank_index,
+	}
+	return plan
+
+
+static func _deferred_alternate_skywalk_plans(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, proposals: Array[Dictionary],
+		protected_owners: Dictionary, plan: Dictionary) -> Array[Dictionary]:
+	## Bounded, diverse alternates for the sealed occluder ranking. Runs only
+	## for a landmark set whose primary plan already sealed, so the extra
+	## endpoint-composition proofs are paid once per accepted feature set, not
+	## once per attempted landmark permutation. A reduced (one-fewer-link)
+	## triple is included so the exact ranking can prove or refute the fourth
+	## link's distinct inhabited route coverage.
+	var out: Array[Dictionary] = []
+	var search := plan.get("alternate_search", {}) as Dictionary
+	if search.is_empty():
+		return out
+	var candidates: Array[Dictionary] = []
+	candidates.assign(search.get("candidates", []) as Array)
+	var ranked_combinations: Array[Dictionary] = []
+	ranked_combinations.assign(search.get("ranked_combinations", []) as Array)
+	var ranked_triples: Array[Dictionary] = []
+	ranked_triples.assign(search.get("ranked_triples", []) as Array)
+	var pair_frontier_count := int(search.get("pair_frontier_count", 0))
+	var landmark_transition_owner_ids: Array[StringName] = []
+	landmark_transition_owner_ids.assign(plan.get(
+		"landmark_transition_owner_ids", []) as Array)
+	var primary: Array[Dictionary] = []
+	primary.assign(plan.get("selected_candidates", []) as Array)
+	if primary.is_empty():
+		return out
+	var retained: Array = [primary]
+	var scanned := 0
+	var scan_start := maxi(0, int(search.get("primary_rank_index", -1)) + 1)
+	for rank_index in range(scan_start, ranked_combinations.size()):
+		var ranked := ranked_combinations[rank_index]
+		if out.size() >= MAX_OCCLUDER_RANK_TRIALS - 1 \
+				or scanned >= MAX_OCCLUDER_RANK_SCAN:
+			break
+		scanned += 1
+		var indices := ranked.indices as Array[int]
+		var combination: Array[Dictionary] = []
+		for candidate_index: int in indices:
+			combination.append(candidates[candidate_index])
+		if not _skywalk_combination_is_diverse(combination, retained):
+			continue
+		if not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
+				combination, proposals, protected_owners, volume.world_seed):
+			continue
+		retained.append(combination)
+		out.append(_landmark_skywalk_plan_for_combination(combination,
+			candidates.size(), pair_frontier_count,
+			int(ranked.tower_risk), landmark_transition_owner_ids))
+	# The fourth link must prove it raises distinct inhabited route coverage.
+	var reduced_scanned := 0
+	for ranked: Dictionary in ranked_triples:
+		if reduced_scanned >= MAX_OCCLUDER_RANK_SCAN:
+			break
+		reduced_scanned += 1
+		var indices := ranked.indices as Array[int]
+		var combination: Array[Dictionary] = []
+		for candidate_index: int in indices:
+			combination.append(candidates[candidate_index])
+		if not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
+				combination, proposals, protected_owners, volume.world_seed):
+			continue
+		var reduced_plan := _landmark_skywalk_plan_for_combination(combination,
+			candidates.size(), pair_frontier_count,
+			int(ranked.tower_risk), landmark_transition_owner_ids)
+		reduced_plan["reduced_link_count"] = true
+		out.append(reduced_plan)
+		break
+	last_preplan_skywalk_diagnostic["occluder_rank_alternate_count"] = out.size()
+	return out
+
+
+static func _landmark_skywalk_plan_for_combination(
+		selected: Array[Dictionary], candidate_count: int,
+		pair_frontier_count: int, tower_risk: int,
+		landmark_transition_owner_ids: Array[StringName]) -> Dictionary:
+	var plan := _skywalk_plan_from_selected(selected, candidate_count)
+	plan["pair_frontier_count"] = pair_frontier_count
+	plan["tower_risk"] = tower_risk
 	plan["unique_route_cover_count"] = _skywalk_combination_route_cover_count(
 		selected, &"route_cover_cells")
 	plan["marginal_route_cover_count"] = \
 		_skywalk_combination_route_cover_count(selected,
 			&"marginal_route_cover_cells")
-	plan["landmark_coverage_count"] = selected_landmark_coverage.size()
+	plan["landmark_coverage_count"] = _skywalk_landmark_coverage(selected).size()
 	plan["landmark_transition_owner_ids"] = landmark_transition_owner_ids
 	return plan
+
+
+static func _skywalk_combination_is_diverse(combination: Array[Dictionary],
+		retained_combinations: Array) -> bool:
+	## A useful alternate offers the exact occluder ranker a genuinely different
+	## bridge set. Require at least two links absent from every retained
+	## combination so the bounded exact trials do not re-prove near-identical
+	## sets that would measure the same coverage.
+	for retained_value: Variant in retained_combinations:
+		var prior := retained_value as Array
+		var prior_keys: Dictionary = {}
+		for candidate_value: Variant in prior:
+			prior_keys[(candidate_value as Dictionary).pair_key] = true
+		var shared := 0
+		for candidate: Dictionary in combination:
+			if prior_keys.has(candidate.pair_key):
+				shared += 1
+		if shared > maxi(0, combination.size() - 2):
+			return false
+	return true
 
 
 static func _ranked_skywalk_quadruple_frontier(
@@ -3389,6 +3657,32 @@ static func _feature_forced_offset_key(candidate: Dictionary) -> String:
 			parts.append("%s/b%d/%d:%d" % [parcel_id, block,
 				delta.x, delta.y])
 	return "|".join(parts)
+
+
+static func _court_candidate_exclusion_snapshot(
+		court_candidate: Dictionary) -> Dictionary:
+	## The exact preflight records complete-parcel dispositions on the court
+	## candidate. Ranked sealed trials each mutate that state, so the frontier
+	## restores this snapshot before every trial and finally re-applies the
+	## winning trial's dispositions.
+	var snapshot: Dictionary = {}
+	for key: String in ["excluded_parcel_ids",
+			"feature_clearance_displaced_parcel_ids",
+			"room_pair_displaced_parcel_ids"]:
+		if court_candidate.has(key):
+			snapshot[key] = (court_candidate[key] as Array).duplicate()
+	return snapshot
+
+
+static func _restore_court_candidate_exclusions(court_candidate: Dictionary,
+		snapshot: Dictionary) -> void:
+	for key: String in ["excluded_parcel_ids",
+			"feature_clearance_displaced_parcel_ids",
+			"room_pair_displaced_parcel_ids"]:
+		if snapshot.has(key):
+			court_candidate[key] = (snapshot[key] as Array).duplicate()
+		else:
+			court_candidate.erase(key)
 
 
 static func _exact_room_preflight_key(court_candidate: Dictionary,
@@ -4420,75 +4714,19 @@ static func _court_candidate_preserves_exact_room_envelopes(
 	var displaced_parcels: Dictionary = initial_excluded_set.duplicate()
 	var feature_clearance_displaced: Dictionary = \
 		initial_feature_excluded_set.duplicate()
-	var room_probes: Array[Dictionary] = []
-	for proposal: Dictionary in proposals:
-		var parcel := proposal.parcel as WarrenBuildingParcel
-		var lineage := (composition.lineages as Dictionary).get(
-			parcel.stable_id, {}) as Dictionary
-		if lineage.is_empty():
-			continue
-		var proposal_origin := proposal.origin as Vector3i
-		var threshold := WarrenParcelConstruction.threshold_cell(parcel)
-		var lineage_blocks := lineage.blocks as Array[Dictionary]
-		for block_index in lineage_blocks.size():
-			var block := lineage_blocks[block_index]
-			for storey in range(int(block.start_storey),
-					int(block.end_storey)):
-				var room_origin := Vector3i((block.origin as Vector3i).x,
-					proposal_origin.y + storey \
-						* WarrenSpatialGrid.STOREY_CELLS,
-					(block.origin as Vector3i).z)
-				var addressed := threshold.y >= proposal_origin.y \
-					+ storey * WarrenSpatialGrid.STOREY_CELLS \
-					and threshold.y < proposal_origin.y \
-						+ (storey + 1) * WarrenSpatialGrid.STOREY_CELLS
-				var room_door_phase := WarrenParcelConstruction \
-					.address_door_phase_for_room(StringName(block.kind), room_origin,
-						int(block.yaw_quarters), threshold,
-						Vector3i(parcel.frontage_direction.x, 0,
-							parcel.frontage_direction.y)) if addressed else 0
-				if addressed and room_door_phase < 0:
-					return false
-				var building_id := StringName("spatial.%s.part%02d" % [
-					parcel.stable_id, block_index])
-				var room := WarrenRoomStamp.new(StringName(
-					"%s.room%02d" % [building_id,
-						storey - int(block.start_storey)]),
-					parcel.stable_id, StringName(block.kind), room_origin,
-					int(block.yaw_quarters), storey,
-					storey == 0 and not block.has(
-						"support_parent_lineage_id"), addressed,
-					threshold if addressed else Vector3i(2147483647,
-						2147483647, 2147483647),
-					Vector3i(parcel.frontage_direction.x, 0,
-						parcel.frontage_direction.y), int(proposal.roof_feature),
-					&"", -1, room_door_phase)
-				if not room.add_private_cells(
-						WarrenRoomStamp.expected_private_cells(
-							StringName(block.kind), room_origin,
-							int(block.yaw_quarters))):
-					return false
-				room_probes.append({"room": room, "building_id": building_id})
-	var portal_result := _exact_preflight_feature_portal_masks(room_probes,
-		court_candidate, skywalk_reservations)
-	if not bool(portal_result.get("valid", false)):
-		last_preplan_market_diagnostic["last_exact_room_pair_failure"] = \
-			portal_result.get("failure", "feature portal binding failed")
+	var probe_result := _exact_composition_room_probes(composition, proposals,
+		program, volume.world_seed, court_candidate, skywalk_reservations)
+	if not bool(probe_result.get("valid", false)):
+		if bool(probe_result.get("portal_failure", false)):
+			last_preplan_market_diagnostic["last_exact_room_pair_failure"] = \
+				probe_result.get("failure", "feature portal binding failed")
 		return false
-	var portal_masks := portal_result.get("masks", {}) as Dictionary
+	var room_probes: Array[Dictionary] = []
+	room_probes.assign(probe_result.get("probes", []) as Array)
 	for record: Dictionary in room_probes:
 		var room := record.room as WarrenRoomStamp
-		var feature_portal_mask := int(portal_masks.get(room.stable_id, 0))
-		var desired := program.recipe(
-			WarrenSpatialFabricCompiler._room_recipe_id(room,
-				volume.world_seed, true, feature_portal_mask))
-		var fallback := program.recipe(
-			WarrenSpatialFabricCompiler._room_recipe_id(room,
-				volume.world_seed, false, feature_portal_mask))
-		if desired == null or fallback == null:
-			return false
-		record["desired"] = desired
-		record["fallback"] = fallback
+		var desired := record.desired as FabricRecipe
+		var fallback := record.fallback as FabricRecipe
 		# The court endpoint's own portal intentionally meets its authored bridge
 		# component. All other rooms still prove clearance from both components.
 		if not related_parcels.has(room.source_parcel_id) \
@@ -4539,6 +4777,132 @@ static func _court_candidate_preserves_exact_room_envelopes(
 	result["composition"] = composition
 	result["recomposition_required"] = initial_excluded_ids != displaced_ids
 	return true
+
+
+static func _exact_composition_room_probes(composition: Dictionary,
+		proposals: Array[Dictionary], program: SettlementFabricProgram,
+		world_seed: int, court_candidate: Dictionary,
+		skywalk_reservations: Array[Dictionary],
+		skip_parcels: Dictionary = {}) -> Dictionary:
+	## Rebuild the exact compile-time room stamps and their measured recipe
+	## choices for a sealed composition. The exact court preflight and the sealed
+	## hero-feature occluder ranking share this so both always see the same rooms
+	## and recipes the final compiler will construct.
+	var room_probes: Array[Dictionary] = []
+	for proposal: Dictionary in proposals:
+		var parcel := proposal.parcel as WarrenBuildingParcel
+		if skip_parcels.has(parcel.stable_id):
+			continue
+		var lineage := (composition.lineages as Dictionary).get(
+			parcel.stable_id, {}) as Dictionary
+		if lineage.is_empty():
+			continue
+		var proposal_origin := proposal.origin as Vector3i
+		var threshold := WarrenParcelConstruction.threshold_cell(parcel)
+		var lineage_blocks := lineage.blocks as Array[Dictionary]
+		for block_index in lineage_blocks.size():
+			var block := lineage_blocks[block_index]
+			for storey in range(int(block.start_storey),
+					int(block.end_storey)):
+				var room_origin := Vector3i((block.origin as Vector3i).x,
+					proposal_origin.y + storey \
+						* WarrenSpatialGrid.STOREY_CELLS,
+					(block.origin as Vector3i).z)
+				var addressed := threshold.y >= proposal_origin.y \
+					+ storey * WarrenSpatialGrid.STOREY_CELLS \
+					and threshold.y < proposal_origin.y \
+						+ (storey + 1) * WarrenSpatialGrid.STOREY_CELLS
+				var room_door_phase := WarrenParcelConstruction \
+					.address_door_phase_for_room(StringName(block.kind), room_origin,
+						int(block.yaw_quarters), threshold,
+						Vector3i(parcel.frontage_direction.x, 0,
+							parcel.frontage_direction.y)) if addressed else 0
+				if addressed and room_door_phase < 0:
+					return {"valid": false, "portal_failure": false,
+						"failure": "recomposed room lost its exact threshold"}
+				var building_id := StringName("spatial.%s.part%02d" % [
+					parcel.stable_id, block_index])
+				var room := WarrenRoomStamp.new(StringName(
+					"%s.room%02d" % [building_id,
+						storey - int(block.start_storey)]),
+					parcel.stable_id, StringName(block.kind), room_origin,
+					int(block.yaw_quarters), storey,
+					storey == 0 and not block.has(
+						"support_parent_lineage_id"), addressed,
+					threshold if addressed else Vector3i(2147483647,
+						2147483647, 2147483647),
+					Vector3i(parcel.frontage_direction.x, 0,
+						parcel.frontage_direction.y), int(proposal.roof_feature),
+					&"", -1, room_door_phase)
+				if not room.add_private_cells(
+						WarrenRoomStamp.expected_private_cells(
+							StringName(block.kind), room_origin,
+							int(block.yaw_quarters))):
+					return {"valid": false, "portal_failure": false,
+						"failure": "room stamp cells could not be recorded"}
+				room_probes.append({"room": room, "building_id": building_id})
+	var portal_result := _exact_preflight_feature_portal_masks(room_probes,
+		court_candidate, skywalk_reservations)
+	if not bool(portal_result.get("valid", false)):
+		return {"valid": false, "portal_failure": true,
+			"failure": String(portal_result.get("failure",
+				"feature portal binding failed"))}
+	var portal_masks := portal_result.get("masks", {}) as Dictionary
+	for record: Dictionary in room_probes:
+		var room := record.room as WarrenRoomStamp
+		var feature_portal_mask := int(portal_masks.get(room.stable_id, 0))
+		var desired := program.recipe(
+			WarrenSpatialFabricCompiler._room_recipe_id(room,
+				world_seed, true, feature_portal_mask))
+		var fallback := program.recipe(
+			WarrenSpatialFabricCompiler._room_recipe_id(room,
+				world_seed, false, feature_portal_mask))
+		if desired == null or fallback == null:
+			return {"valid": false, "portal_failure": false,
+				"failure": "composed room has no measured recipe"}
+		record["desired"] = desired
+		record["fallback"] = fallback
+	return {"valid": true, "portal_failure": false, "probes": room_probes}
+
+
+static func _sealed_recipe_occluder_route_coverage(
+		room_probes: Array[Dictionary],
+		feature_reservations: Array[Dictionary],
+		program: SettlementFabricProgram,
+		route_walk: Dictionary) -> Dictionary:
+	## Selection objective for the hero-feature frontier: canonical route cells
+	## covered two to six fine bands above by the exact room-tagged recipe
+	## occluders the final compiler will place. This mirrors the occupied-
+	## overhead test of SettlementFabricSolver._audit_enclosure on the sealed
+	## preflight composition; the final fabric audit remains authoritative.
+	var occupied: Dictionary = {}
+	for record: Dictionary in room_probes:
+		var room := record.room as WarrenRoomStamp
+		var desired := record.get("desired") as FabricRecipe
+		if desired == null or not desired.has_tag(&"room"):
+			continue
+		for local: Vector3i in desired.occluder_cells:
+			occupied[FabricRecipe.transform_cell(local, room.lattice_origin,
+				room.yaw_quarters)] = true
+	for reservation: Dictionary in feature_reservations:
+		for component_value: Variant in reservation.get("components", []) as Array:
+			var component := component_value as Dictionary
+			var recipe := program.recipe(StringName(component.recipe_id))
+			if recipe == null or not recipe.has_tag(&"room"):
+				continue
+			for local: Vector3i in recipe.occluder_cells:
+				occupied[FabricRecipe.transform_cell(local,
+					component.origin as Vector3i,
+					int(component.yaw_quarters))] = true
+	var covered := 0
+	for cell_value: Variant in route_walk:
+		var cell := cell_value as Vector3i
+		for rise in range(2, 7):
+			if occupied.has(cell + Vector3i(0, rise, 0)):
+				covered += 1
+				break
+	return {"covered_route_cell_count": covered,
+		"route_cell_count": route_walk.size()}
 
 
 static func _exact_preflight_feature_portal_masks(
