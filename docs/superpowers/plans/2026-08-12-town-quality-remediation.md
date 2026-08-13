@@ -573,6 +573,53 @@ ancestry must ride the existing macro-merge proof, the support DAG, and the
 finite roof-junction table; nothing may be stretched or inferred from a
 doorway cell. The carver's tunnel supply is the input, not new massing.
 
+Reading the partitioner narrowed the mechanics, and a measured first attempt
+falsified the cheapest form. The pipeline already contains over-street
+contracts in several places: `WarrenBuildingParcel.seal` derives
+`support_mode = mixed_span` and `has_occupied_overpass` generically and
+enforces the at-least-half continuous-bearing rule;
+`WarrenParcelConstruction.perimeter_gateway_support` realizes the frontier
+gateway motif; `WarrenSolidPartitioner._can_carry_courtyard_span` admits
+interior span candidates over a lower passage; and the carver records the
+per-cell tunnel fact in `excavation.covered`. Widening the span-admission
+gate from courtyard cells to every covered street cell was, however, a
+measured no-op (variant 5 identical to the cell: 96 covered, 172 supply,
+131.3 s): a street-level candidate anchors its envelope at the walk's own
+band, inside the carved slot, and `_top_band`'s truncation-at-first-carve
+clips it to zero height. Court spans only work because the court walk sits
+above its passage. The change was reverted.
+
+The real gates, mapped precisely: `_can_carry_house` (rejects any column
+with a carved band, so tunnel columns never become wall candidates),
+`_top_band:~1319` (clips every envelope at the first carved band),
+`WarrenBuildingParcel.seal:~100` (every extruded cell must be source mass —
+a parcel cannot contain the street slot), and residual backfill's support
+rule: `_residual_room_candidate` requires half the footprint to stand
+directly on building mass below, and a tunnel-top room by definition has
+void below. The backfill pass is otherwise already the designed consumer —
+it indexes every uncovered route floor by its potential ceiling cells and
+scores street-spanning rooms far above peripheral ones
+(`RESIDUAL_OVERHEAD_ROUTE_CELL_SCORE`); it starves only because no bearing
+form exists for rooms whose support is the two flanking walls they span
+between.
+
+Next-session implementation, in preference order:
+
+1. **Bridge bearing for residual rooms**: admit a residual candidate with
+   zero below-support when its side contacts include two distinct
+   established owners on opposing sides along the span axis (two or more
+   contact cells each), and realize its support as a two-sided wall bond —
+   the `bearing_parent_count = 2` side-socket form the skywalk recipes
+   already compile — plus the existing bracketed course where only one wall
+   exists. This consumes the indexed tunnel supply directly, post
+   composition, without touching the partitioner.
+2. **Support-parent span parcels**: generalize
+   `_fill_courtyard_upper_walls` (currently court-gated) so a covered
+   street's tunnel mass becomes an upper parcel seated on a flanking parcel
+   with the existing overlap rule, entering ordinary composition.
+3. Only if supply remains: interior gateway rows via
+   `perimeter_gateway_support` minus the envelope-boundary gate.
+
 Generalizing the join transaction to this dense fixture also hardened it:
 
 - air exclusively reserved by a composed feature, or flanked by a feature's

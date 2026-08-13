@@ -647,6 +647,11 @@ static func _can_carry_courtyard_span(massif: WarrenMassif,
 	## room is still a real building when at least half its complete footprint
 	## bears continuously behind that opening. Admit only that named topology and
 	## only through the same full-envelope math the serving pass will rerun.
+	## (A measured attempt to widen this gate to every carver-covered street was
+	## a no-op: a street-level candidate anchors its envelope inside the carved
+	## slot, so `_top_band` clips it to zero height. Tunnel-top rooms must enter
+	## as support-parent children of flanking parcels or through the residual
+	## backfill pass — see the town-quality plan ledger.)
 	if volume == null or not volume.courtyard_cells.has(walk):
 		return false
 	var threshold := Vector2i(walk.x + walk_to_building.x,
