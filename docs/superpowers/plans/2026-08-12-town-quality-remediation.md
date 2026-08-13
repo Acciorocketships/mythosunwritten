@@ -257,6 +257,52 @@ Evidence required before this slice is marked complete:
 - low-street and underside captures show an intentional roofed/stepped join,
   not a thin patch hiding the opening.
 
+The transaction is now implemented and measured. Two corrections to the
+earlier diagnosis first: the fixture's gap census had evolved under the
+checkpointed source gates — the current sealed plan exposed seven one-cell
+gap cells in three components, not four cells in two. The layer probe showed
+three distinct conditions: the (0,4,5)-(1,4,5) two-cell stepped shoulder; a
+four-cell complex around (-3,5..6,-1..0)/(-3,6,-2) containing a two-band slit
+capped by parcel 0030's bridging storey; and a floating one-cell notch at
+(-4,5,4) with open air below.
+
+`WarrenSpatialFeatureSolver._reserve_interstitial_joins` runs after every
+required feature reservation and before optional facade bays. It re-runs the
+audit's own trap predicate, groups gap cells into straight single-band runs
+(bands resolve bottom-up so stacked slits rest on the strip sealed beneath
+them), takes the longest classifiable prefix of each run, and commits exactly
+one typed construction per authored chunk: `stepped_shoulder` (2/4/6-cell
+lean-to from the existing `roof.setback.lean` vocabulary, ridge on the single
+continuing upper wall, bearing bond into the room below's exact top socket)
+or `sealed_infill` (new measured `interstitial.seal.1/2.capped|buried`
+recipes; capped strips take a flush deck cap, buried strips carry timber
+blocking and omit the cap so no plate fights the bridging soffit above).
+A shoulder may not bear on an earlier strip — only real room mass with
+authored top sockets. Any unclassifiable slot rejects the town with a
+reason-coded refusal. Strips claim PRIVATE_VOLUME under the feature id with
+typed PARTY_WALL/ROOF/SOFFIT/FACADE face claims (prior claims from adjacent
+strips stay authoritative), so shell derivation, facade suppression, and the
+final `one_cell_interstitial_gap` audit all see deliberate built mass.
+
+The compiler realizes each reservation as one bonded unit
+(`_compile_interstitial_join_feature`): touching rooms — including the
+diagonal upper wall a shoulder seals against and the bridging cover storey —
+are explicit visual seams; the wall/cover/bearing/upper owner set plus the
+wedged parcels' whole lineages satisfy the room envelope gate's relatedness
+rule; and interstitial strips join the support-course seam pool so a later
+bracket frame measuring into one declares the same typed timber joint it
+would declare against an earlier brace.
+
+Evidence: seven focused fixtures pass (100 assertions) covering the valid
+shoulder, the two-sided slit, the buried strip, the shoulder-over-strip
+refusal, the no-closure typed refusal, chunking, and the sealed recipes. The
+reviewed fixture seals end-to-end with `one_cell_interstitial_gap_cell_count
+= 0`, five `interstitial_join` features (one lean-to shoulder, four sealed
+strips), 31 of 31 served entrances, and unchanged 40.8% overhead. Sealed
+infill placements are deliberately minimal (flush cap or base blocking; the
+flanking party walls are the reveal surfaces) — capture review judges whether
+the reveals need richer authored boarding.
+
 ## Visual baseline (2026-08-12)
 
 The exact fixture was rendered through `warren_spatial_review.tscn` into
@@ -451,6 +497,44 @@ is retained while exact route diagnostics remain available. The next selector
 must compare the complete composed recipe occluders inside the existing bounded
 exact feature transaction; the final fabric audit remains authoritative.
 
+That selector is now implemented and measured. The exact court preflight's
+room-probe construction (real compile-time stamps, portal-mask-aware measured
+recipes) was extracted into `_exact_composition_room_probes` and shared with a
+new `_sealed_recipe_occluder_route_coverage` objective that reproduces the
+final audit's occupied-overhead test on the sealed preflight composition.
+`_skywalk_plan_for_landmarks` keeps its original unbounded first-survivor
+primary scan (the variant-5 survivor ranks 281st; an early bounded-scan draft
+would have rejected the town) and stashes a deferred alternate search. Only
+after a landmark set's primary exact preflight seals does the transaction
+lazily prove up to two diverse alternates (two-plus differing links, scan
+resumed after the primary's rank because every earlier combination already
+failed endpoint preservation) plus one reduced triple, run each through the
+same memoized exact preflight, and choose the highest composed-occluder
+coverage with deterministic ties. An eager draft that proved alternates for
+every landmark permutation stalled the fixture beyond seven minutes and was
+replaced; the lazy form costs nothing measurable (116.2 s spatial, equal to
+baseline).
+
+Measured verdict on the variant-5 fixture: the primary four-link plan and the
+sealed three-link alternative both project exactly 85 of 280 covered route
+cells, and no diverse four-link alternate survives endpoint preservation even
+past rank 281. The fourth link therefore adds zero distinct inhabited route
+coverage (`occluder_rank_fourth_link_redundant` is now an exact recorded
+fact), and the final overhead remains 33.45% under either choice. Equal-
+coverage extra links are deliberately kept rather than dropped: acceptance
+gate 11 values repeated overhead episodes, so redundancy is now a measured
+diagnostic for visual review, not an automatic rejection. Large/grand
+profiles request four links (`skywalk_range` is now `(3, 4)` with the
+production contract accepting the range), and the 38% floor is unchanged.
+
+The decisive conclusion: on this topology, skywalk choice cannot close the
+33.45% to 38% gap. The largest uncovered route component is an 18-cell ground
+street beside the selected market; covering it requires overhanging inhabited
+mass or an arcaded gallery from source parcelization (Phase B), not another
+bridge. The hero-feature selection slice is complete; the active slice moves
+to the typed `interstitial_join` transaction, and the overhead deficit
+returns to the source-decomposition beam where the mass actually is.
+
 The latest exact fixture is sealed with 31 of 31 served entrances, 74 buildings,
 zero unresolved exact macro covers, and two typed
 `vertical_phase_conflict` refusals. Its roof mix is 10 pitched roofs, 19 flat
@@ -542,8 +626,11 @@ diagnostics and must not order production candidates.
   across the corpus.
 - [ ] Reject isolated one- or two-cell facade slivers unless an authored
   terminal strip consumes them.
-- [ ] Consume the reviewed fixture's two exact 2 x 1 x 1 half-storey slots with
-  a typed `interstitial_join`, or reject the plan with a reason-coded refusal.
+- [x] Consume the reviewed fixture's exact half-storey slots with a typed
+  `interstitial_join`, or reject the plan with a reason-coded refusal. The
+  fixture's census had grown to seven cells in three components; all consume
+  as one stepped shoulder plus four sealed strips, and unclassifiable slots
+  reject the town.
 - [ ] Report retained and discarded volume separately; a huge discarded source
   shell must not hide a visible planning hole.
 
@@ -555,7 +642,7 @@ diagnostics and must not order production candidates.
   wider than the visual-envelope tolerance.
 - [ ] Suppress duplicate wall/beam modules only through a party-wall seam.
 - [ ] Compile stepped wall closures and terminal endcaps from authored pieces.
-- [ ] Make `interstitial_join` an atomic two-owner construction contract; it
+- [x] Make `interstitial_join` an atomic two-owner construction contract; it
   must reserve its complete shallow volume and roof/cap before optional facade
   decoration runs.
 - [ ] Add audits for small gaps, coplanar duplicate faces, protruding beams,
@@ -587,11 +674,16 @@ diagnostics and must not order production candidates.
   coverage beyond the current macro room mass.
 - [x] Falsify and remove bridge-body, source-prism, and macro-owner coverage as
   production ranking proxies when they disagree with final recipe occluders.
-- [ ] Carry a small diverse combination frontier into the existing exact
+- [x] Carry a small diverse combination frontier into the existing exact
   court/landmark/skywalk composition transaction and rank sealed survivors by
   the same transformed recipe occluders used by the final enclosure audit.
-- [ ] Expose selected route-cover cells/count and redundant-link count in the
-  machine-readable skywalk diagnostic.
+  The alternate search is deferred until a primary plan seals and resumes
+  after the primary's frontier rank; an eager per-permutation draft stalled
+  the fixture and was replaced.
+- [x] Expose selected route-cover cells/count and redundant-link count in the
+  machine-readable skywalk diagnostic; `occluder_rank_trial_coverages`,
+  selected covered/denominator counts, and the exact fourth-link redundancy
+  fact now land in the composition audit.
 - [ ] Reward links that cover primary alleys, connect different height bands,
   close an upper circulation loop, or break a long sightline.
 - [ ] Require two distinct inhabited endpoints, full support, exterior air
@@ -607,6 +699,10 @@ diagnostics and must not order production candidates.
   exact passes and invalidate cached compositions that still contain them.
 - [ ] Raise the seed-7 attempt-10 surviving topology from 28.5% to the sealed
   38% large-profile inhabited-overhead floor without counting detached props.
+  Exact occluder ranking proves link choice cannot close the remaining
+  33.45% to 38% gap on this topology; the uncovered mass must come from the
+  Phase B source beam (overhanging rows or arcaded galleries over the
+  market-side ground street).
 
 ### Phase G — runtime and streaming
 

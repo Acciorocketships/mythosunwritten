@@ -505,6 +505,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			-1, ROOF_ORANGE),
 		_setback_lean_roof_recipe(&"roof.setback.lean.orange.6.positive", 6,
 			1, ROOF_ORANGE),
+		_interstitial_seal_recipe(&"interstitial.seal.1.capped", 1, true,
+			modules),
+		_interstitial_seal_recipe(&"interstitial.seal.1.buried", 1, false,
+			modules),
+		_interstitial_seal_recipe(&"interstitial.seal.2.capped", 2, true,
+			modules),
+		_interstitial_seal_recipe(&"interstitial.seal.2.buried", 2, false,
+			modules),
 		_setback_terrace_recipe(&"roof.setback.terrace.1.left", 1, -1,
 			modules),
 		_setback_terrace_recipe(&"roof.setback.terrace.1.right", 1, 1,
@@ -2164,6 +2172,46 @@ static func _setback_garden_recipe(recipe_id: StringName, length_cells: int,
 	recipe_value.add_placement(&"garden.flowers", flower_asset,
 		_pose(Vector3(run_centre - 0.42, 0.04, 0.18), 0.0))
 	recipe_value.role_tags.append(&"roof_planter")
+	return recipe_value
+
+
+static func _interstitial_seal_recipe(recipe_id: StringName,
+		length_cells: int, capped: bool,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## Deliberately sealed infill for a sub-tolerance interstitial slot: a
+	## one-cell-deep residual course trapped between two occupied party walls.
+	## The construction consumes the slot as solid built mass. Its long side
+	## faces stay bare on purpose — the neighboring facades remain the visible
+	## surfaces inside the sealed reveal, so no coplanar duplicate skin is
+	## created. Only the exposed end reveals are boarded, and a slot open to
+	## the sky receives a flush capped top; a slot buried under bridging upper
+	## mass omits the cap so no plate fights the soffit above.
+	assert(length_cells in [1, 2])
+	assert(modules != null)
+	# Sealed infill is anchored mass wedged between two party walls; like the
+	# authored bracket courses it declares no bearing parent of its own, and a
+	# stacked slit band simply rests on the strip sealed beneath it.
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"interstitial_join", &"sealed_infill", &"occupied_mass"], 0)
+	# The strip supplies no side or end skins of its own: every 1.5 m band
+	# asset in the module program is a full-storey wall whose measured bounds
+	# would poke into the storey above the slot. The flanking party walls are
+	# the visible reveal surfaces, and the flush cap (or the bridging soffit
+	# above a buried strip) closes the top; buried strips carry real timber
+	# blocking at their base so the sealed course is honest built mass.
+	if capped:
+		for x in length_cells:
+			recipe_value.add_placement(StringName("cap.%02d" % x),
+				SETBACK_CAP, modules.walk_aligned_transform(SETBACK_CAP,
+					_pose(Vector3(float(x) * CELL + CELL * 0.5, CELL, 0.0),
+						0.0), 0.0))
+	else:
+		for x in length_cells:
+			recipe_value.add_placement(StringName("blocking.%02d" % x),
+				BRACE, _pose(Vector3(float(x) * CELL, 0.1, 0.0), 0.0))
+	for x in length_cells:
+		recipe_value.solid_cells.append(Vector3i(x, 0, 0))
+		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
 	return recipe_value
 
 

@@ -28,6 +28,7 @@ static var last_failure := ""
 static var last_audit: Dictionary = {}
 static var last_skywalk_diagnostic: Dictionary = {}
 static var last_outcropping_diagnostic: Dictionary = {}
+static var _last_interstitial_rejection := ""
 
 
 static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
@@ -176,6 +177,19 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	for balcony: WarrenFeatureReservation in balconies:
 		wraparound_balcony_count += int(bool(balcony.audit.get(
 			"balcony_wraparound", false)))
+	# Every sub-tolerance interstitial slot must now compile as exactly one
+	# typed two-owner construction, or the town is rejected with a reason-coded
+	# refusal. This runs after every required feature reservation so a join can
+	# never steal a skywalk, market, support, annex, or balcony volume, and
+	# before optional facade bays so decoration cannot consume a required join.
+	var interstitial_result := _reserve_interstitial_joins(grid, buildings,
+		supports, source.world_seed, construction_program, out)
+	if not String(interstitial_result.get("failure", "")).is_empty():
+		last_failure = String(interstitial_result.failure)
+		return [] as Array[WarrenFeatureReservation]
+	var interstitial_joins: Array[WarrenFeatureReservation] = []
+	interstitial_joins.assign(interstitial_result.get("features", []) as Array)
+	out.append_array(interstitial_joins)
 	# Integrated room cantilevers above are massing facts. Add a separate finite
 	# facade-bay pass for the shallow, roofed whole-room projections that break a
 	# large wall plane. It runs last so it can never steal a required support,
@@ -207,6 +221,9 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"facade_bay_target_count": facade_bay_target_count,
 		"facade_bay_source_count": facade_bay_targets.size(),
 		"facade_bay_count": facade_bays.size(),
+		"interstitial_join_count": interstitial_joins.size(),
+		"interstitial_join_class_counts": interstitial_result.get(
+			"class_counts", {}),
 		"usable_balcony_count": balconies.size(),
 		"balcony_building_count": balcony_buildings.size(),
 		"wraparound_balcony_count": wraparound_balcony_count,
@@ -1391,6 +1408,342 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 				"balcony_covered_public_cell_count": covered_public.size(),
 				"balcony_facade_key": String(candidate.facade_key),
 			}) or not feature.seal(grid, supports):
+		return null
+	return feature
+
+
+static func _reserve_interstitial_joins(grid: WarrenSpatialGrid,
+		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
+		world_seed: int, program: SettlementFabricProgram,
+		existing_features: Array[WarrenFeatureReservation]) -> Dictionary:
+	## Consume every one-cell interstitial slot with a typed two-owner
+	## construction. A slot is a 1.5 m residual course trapped between occupied
+	## walls; coincidental mesh adjacency is not a seam, so each slot becomes a
+	## stepped shoulder lean-to (bearing below, exactly one continuing upper
+	## wall), or deliberately sealed infill (slit between continuing walls,
+	## buried under bridging mass or capped to the sky). Any slot without a
+	## complete authored closure rejects the town with a reason-coded refusal.
+	if program == null:
+		return {"failure": "interstitial joins need the measured vocabulary"}
+	var gap_cells: Dictionary = {}
+	for cell_value: Variant in grid.cells_with_use(
+			WarrenSpatialGrid.Use.ALLOCATABLE):
+		var cell := cell_value as Vector3i
+		if WarrenVolumetricSolver._is_one_cell_interstitial_gap(grid, cell):
+			gap_cells[cell] = true
+	var features: Array[WarrenFeatureReservation] = []
+	var class_counts: Dictionary = {}
+	if gap_cells.is_empty():
+		return {"features": features, "class_counts": class_counts,
+			"failure": ""}
+	var ordered_cells: Array[Vector3i] = []
+	ordered_cells.assign(gap_cells.keys())
+	# Bands must resolve bottom-up: a filled lower strip is the bearing fact a
+	# stacked slit band above it relies on.
+	ordered_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		if a.x != b.x:
+			return a.x < b.x
+		return a.z < b.z)
+	# Claimed cells from earlier constructions in this same pass count as
+	# support for stacked slit bands discovered above them.
+	var claimed: Dictionary = {}
+	var ordinal := 0
+	for start_cell: Vector3i in ordered_cells:
+		if claimed.has(start_cell):
+			continue
+		var run := _interstitial_run(grid, gap_cells, claimed, start_cell)
+		var run_cells := run.cells as Array[Vector3i]
+		var trap_axis := StringName(run.axis)
+		# A maximal run may mix conditions (one end buried under a stacked
+		# slit, the other open beside a public route). Take the longest
+		# classifiable prefix, commit it, and continue with the remainder.
+		while not run_cells.is_empty():
+			var prefix_size := run_cells.size()
+			var classified: Dictionary = {}
+			while prefix_size >= 1:
+				var prefix: Array[Vector3i] = []
+				for offset in prefix_size:
+					prefix.append(run_cells[offset])
+				classified = _classify_interstitial_run(grid, claimed, prefix,
+					trap_axis)
+				if StringName(classified.get("class", &"")) != &"unresolved":
+					break
+				prefix_size -= 1
+			if prefix_size < 1:
+				return {"failure": ("interstitial slot %s (axis %s) is " \
+					+ "unresolved: %s") % [run_cells[0], trap_axis,
+					String(classified.get("reason", "no closure"))]}
+			var accepted: Array[Vector3i] = []
+			for offset in prefix_size:
+				accepted.append(run_cells[offset])
+			var run_class := StringName(classified.get("class", &""))
+			var chunks := _interstitial_chunks(accepted,
+				run_class == &"stepped_shoulder")
+			for chunk: Array[Vector3i] in chunks:
+				var feature := _commit_interstitial_join(grid, buildings,
+					supports, world_seed, program, chunk, trap_axis,
+					classified, ordinal)
+				if feature == null:
+					return {"failure": ("interstitial join at %s could not " \
+						+ "commit its %s construction: %s") % [chunk[0],
+						run_class, _last_interstitial_rejection]}
+				features.append(feature)
+				ordinal += 1
+				for cell: Vector3i in chunk:
+					claimed[cell] = true
+				var chunk_class := StringName(feature.audit.get(
+					"interstitial_class", run_class))
+				class_counts[chunk_class] = int(class_counts.get(
+					chunk_class, 0)) + 1
+			run_cells = run_cells.slice(prefix_size)
+	return {"features": features, "class_counts": class_counts, "failure": ""}
+
+
+static func _interstitial_run(grid: WarrenSpatialGrid, gap_cells: Dictionary,
+		claimed: Dictionary, start_cell: Vector3i) -> Dictionary:
+	## Collect the maximal straight single-band run through the start cell along
+	## its free axis. The trap axis comes from the same wall test as the audit.
+	var detail := WarrenVolumetricSolver._interstitial_gap_detail(grid,
+		start_cell)
+	var trap_axis := StringName(detail.axis)
+	var run_direction := Vector3i(0, 0, 1) if trap_axis == &"x" \
+		else Vector3i(1, 0, 0)
+	var cells: Array[Vector3i] = [start_cell]
+	for sign: int in [-1, 1]:
+		var cursor: Vector3i = start_cell + run_direction * sign
+		while gap_cells.has(cursor) and not claimed.has(cursor) \
+				and StringName(WarrenVolumetricSolver._interstitial_gap_detail(
+					grid, cursor).axis) == trap_axis:
+			if sign < 0:
+				cells.push_front(cursor)
+			else:
+				cells.append(cursor)
+			cursor += run_direction * sign
+	return {"cells": cells, "axis": trap_axis}
+
+
+static func _classify_interstitial_run(grid: WarrenSpatialGrid,
+		claimed: Dictionary, run_cells: Array[Vector3i],
+		trap_axis: StringName) -> Dictionary:
+	## Decide the single typed closure for a straight slot run. The distinction
+	## is measured, not stylistic: a stepped shoulder has bearing below and
+	## exactly one wall continuing above; sealed infill is a slit between two
+	## continuing walls or lies buried under bridging upper mass.
+	var trap_positive := Vector3i(1, 0, 0) if trap_axis == &"x" \
+		else Vector3i(0, 0, 1)
+	var continuing_sides: Dictionary = {}
+	for side: int in [-1, 1]:
+		var continuous := true
+		var owners: Dictionary = {}
+		for cell: Vector3i in run_cells:
+			var upper: Vector3i = cell + Vector3i.UP + trap_positive * side
+			if grid.use_at(upper) != WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+				continuous = false
+				break
+			owners[grid.owner_name_at(upper)] = true
+		if continuous and owners.size() == 1:
+			continuing_sides[side] = StringName(owners.keys()[0])
+	# A stepped shoulder must bear on real room mass: its lean-to recipe binds
+	# one exact `bearing.top` column of the room below. Strips filled earlier
+	# in this pass count as generic support for sealed infill, but they author
+	# no bearing sockets, so they cannot carry a shoulder.
+	var bearing_below := true
+	for cell: Vector3i in run_cells:
+		var below := cell + Vector3i.DOWN
+		if grid.use_at(below) != WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+				or String(grid.owner_name_at(below)).begins_with(
+					"spatial.feature."):
+			bearing_below = false
+			break
+	var covered_above := true
+	for cell: Vector3i in run_cells:
+		var above := cell + Vector3i.UP
+		if grid.use_at(above) != WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+				and not WarrenVolumetricSolver._is_one_cell_interstitial_gap(
+					grid, above):
+			covered_above = false
+			break
+	if continuing_sides.size() == 1 and bearing_below and not covered_above \
+			and run_cells.size() >= 2:
+		return {"class": &"stepped_shoulder",
+			"wall_side": int(continuing_sides.keys()[0]),
+			"upper_owner": continuing_sides.values()[0],
+			"bearing_kind": &"below"}
+	if continuing_sides.size() >= 1 or covered_above:
+		return {"class": &"sealed_infill",
+			"buried": covered_above,
+			"bearing_kind": &"below" if bearing_below else &"side"}
+	return {"class": &"unresolved",
+		"reason": ("no continuing wall, no cover, bearing_below=%s; the " \
+			+ "slot is neither a shoulder nor a sealable slit") \
+			% bearing_below}
+
+
+static func _interstitial_chunks(run_cells: Array[Vector3i],
+		shoulder: bool) -> Array:
+	## Authored closures exist for finite lengths only: lean-to shoulders in
+	## 2/4/6-cell bays, sealed infill in 1/2-cell strips. Longer runs split
+	## deterministically from the run start; a shoulder remainder of one cell
+	## becomes a capped sealed end.
+	var out: Array = []
+	var index := 0
+	while index < run_cells.size():
+		var take := 0
+		if shoulder:
+			take = mini(6, run_cells.size() - index)
+			if take % 2 == 1 and take > 1:
+				take -= 1
+		else:
+			take = mini(2, run_cells.size() - index)
+		var chunk: Array[Vector3i] = []
+		for offset in take:
+			chunk.append(run_cells[index + offset])
+		out.append(chunk)
+		index += take
+	return out
+
+
+static func _commit_interstitial_join(grid: WarrenSpatialGrid,
+		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
+		world_seed: int, program: SettlementFabricProgram,
+		chunk: Array[Vector3i], trap_axis: StringName, classified: Dictionary,
+		ordinal: int) -> WarrenFeatureReservation:
+	var feature_id := StringName("spatial.feature.interstitial_join.%02d" \
+		% ordinal)
+	var run_direction := Vector3i(0, 0, 1) if trap_axis == &"x" \
+		else Vector3i(1, 0, 0)
+	var trap_positive := Vector3i(1, 0, 0) if trap_axis == &"x" \
+		else Vector3i(0, 0, 1)
+	var yaw := -1
+	for candidate_yaw in 4:
+		if FabricRecipe.transform_direction(Vector3i(1, 0, 0), candidate_yaw) \
+				== run_direction:
+			yaw = candidate_yaw
+			break
+	if yaw < 0:
+		return null
+	var local_z_world := FabricRecipe.transform_direction(Vector3i(0, 0, 1),
+		yaw)
+	var origin := chunk[0]
+	var run_class := StringName(classified.get("class", &""))
+	var chunk_class := run_class
+	var recipe_id := &""
+	if run_class == &"stepped_shoulder" and chunk.size() >= 2:
+		var wall_side := int(classified.get("wall_side", 1))
+		var wall_world := trap_positive * wall_side
+		var local_side := "positive" if local_z_world == wall_world \
+			else "negative"
+		var theme := WarrenSpatialFabricCompiler._architectural_district_theme(
+			origin, world_seed)
+		var family := "orange" if theme == &"orange" else "blue"
+		recipe_id = StringName("roof.setback.lean.%s.%d.%s" % [family,
+			chunk.size(), local_side])
+	else:
+		# One-cell shoulder remainders and every slit strip use sealed infill;
+		# a strip whose top is buried under bridging mass omits the cap.
+		chunk_class = &"sealed_infill"
+		var buried := bool(classified.get("buried", false))
+		recipe_id = StringName("interstitial.seal.%d.%s" % [chunk.size(),
+			"buried" if buried else "capped"])
+	var recipe := program.recipe(recipe_id)
+	if recipe == null:
+		return null
+	var wall_owners: Dictionary = {}
+	var cover_owners: Dictionary = {}
+	var bearing_owner: StringName = &""
+	for cell: Vector3i in chunk:
+		for side: int in [-1, 1]:
+			var wall_cell: Vector3i = cell + trap_positive * side
+			if grid.use_at(wall_cell) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+				wall_owners[grid.owner_name_at(wall_cell)] = true
+		# Mass bridging directly over a buried strip is part of the join's
+		# sealed relationship: its storey legitimately grazes the strip's
+		# conservative envelope from above.
+		var above: Vector3i = cell + Vector3i.UP
+		if grid.use_at(above) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+			cover_owners[grid.owner_name_at(above)] = true
+	var below := origin + Vector3i.DOWN
+	if grid.use_at(below) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+		bearing_owner = grid.owner_name_at(below)
+	if bearing_owner == &"":
+		# Side-anchored strips bear on a flanking wall owner; deterministic
+		# first by name so repeated solves bind the identical parent.
+		var owner_ids: Array = wall_owners.keys()
+		owner_ids.sort_custom(func(a: Variant, b: Variant) -> bool:
+			return String(a) < String(b))
+		if owner_ids.is_empty():
+			return null
+		bearing_owner = StringName(owner_ids[0])
+	var tx := grid.begin_transaction(feature_id)
+	if not tx.require_use(chunk, [WarrenSpatialGrid.Use.ALLOCATABLE] \
+				as Array[int]) \
+			or not tx.reserve(chunk, WarrenSpatialGrid.Reservation.FEATURE \
+				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
+			or not tx.assign_use(chunk, WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+				feature_id):
+		_last_interstitial_rejection = "grid claim: %s" % tx.last_rejection
+		return null
+	var chunk_set: Dictionary = {}
+	for cell: Vector3i in chunk:
+		chunk_set[cell] = true
+	for cell: Vector3i in chunk:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if chunk_set.has(neighbor):
+				continue
+			# An adjacent strip committed earlier in this same pass, or a
+			# carved public interface, may already own this exact face; typed
+			# prior claims stay authoritative.
+			if not grid.face_claim(cell, direction).is_empty():
+				continue
+			var neighbor_use := grid.use_at(neighbor)
+			var kind := WarrenSpatialGrid.FaceKind.FACADE
+			if neighbor_use == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+				kind = WarrenSpatialGrid.FaceKind.PARTY_WALL
+			elif direction == Vector3i.DOWN:
+				kind = WarrenSpatialGrid.FaceKind.SOFFIT
+			elif direction == Vector3i.UP:
+				kind = WarrenSpatialGrid.FaceKind.ROOF
+			if not tx.claim_face(cell, direction, kind, feature_id):
+				_last_interstitial_rejection = "face %s/%s: %s" % [cell,
+					direction, tx.last_rejection]
+				return null
+	if not tx.commit():
+		_last_interstitial_rejection = "commit: %s" % tx.last_rejection
+		return null
+	var feature := WarrenFeatureReservation.new(feature_id,
+		&"interstitial_join")
+	var wall_owner_ids: Array[StringName] = []
+	wall_owner_ids.assign(wall_owners.keys())
+	wall_owner_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	var cover_owner_ids: Array[StringName] = []
+	cover_owner_ids.assign(cover_owners.keys())
+	cover_owner_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	if not feature.add_reserved_cells(chunk) \
+			or not feature.add_construction_record(recipe_id, origin, yaw,
+				chunk_class) \
+			or not feature.set_support_node(bearing_owner) \
+			or not feature.set_audit_facts({
+				"interstitial_class": chunk_class,
+				"interstitial_recipe_id": recipe_id,
+				"interstitial_cell_count": chunk.size(),
+				"interstitial_trap_axis": trap_axis,
+				"interstitial_wall_owner_ids": wall_owner_ids,
+				"interstitial_cover_owner_ids": cover_owner_ids,
+				"interstitial_bearing_owner_id": bearing_owner,
+				"interstitial_bearing_kind": StringName(classified.get(
+					"bearing_kind", &"below")),
+				"interstitial_upper_owner_id": StringName(classified.get(
+					"upper_owner", &"")),
+				"interstitial_buried": bool(classified.get("buried", false)),
+			}) or not feature.seal(grid, supports):
+		_last_interstitial_rejection = "reservation seal: %s" \
+			% feature.last_rejection
 		return null
 	return feature
 

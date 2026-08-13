@@ -736,6 +736,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var tower_annex_count := 0
 	var facade_bay_count := 0
 	var landmark_count := 0
+	var interstitial_join_count := 0
 	for feature: WarrenFeatureReservation in ordered_features:
 		var feature_units: Array[FabricUnit] = []
 		match feature.kind:
@@ -780,6 +781,10 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 					room_unit_by_stamp, source_parcel_by_room,
 					seam_ids_by_source_parcel)
 				facade_bay_count += int(not feature_units.is_empty())
+			&"interstitial_join":
+				feature_units = _compile_interstitial_join_feature(feature,
+					program, source, room_unit_by_stamp, out)
+				interstitial_join_count += int(not feature_units.is_empty())
 			&"prefab_landmark":
 				feature_units = _compile_landmark_feature(feature, program)
 				landmark_count += int(not feature_units.is_empty())
@@ -818,6 +823,12 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 			out.append(unit)
 			if unit_recipe != null and unit_recipe.has_tag(&"cantilever_support"):
 				compiled_support_units.append(unit)
+			# Interstitial strips are structural courses wedged against the same
+			# walls the bracket frames anchor to; a later support course that
+			# measures into one declares the same typed timber joint it would
+			# declare against an earlier brace.
+			if feature.kind == &"interstitial_join":
+				compiled_support_units.append(unit)
 		if feature.kind == &"prefab_landmark" and feature_units.size() == 1:
 			compiled_feature_unit_by_owner[feature.stable_id] = feature_units[0]
 		for cell: Vector3i in feature.reserved_cells:
@@ -830,8 +841,9 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 		"realized_constructed_feature_count": skywalk_count + market_count \
 			+ balcony_count + tower_annex_count + facade_bay_count + landmark_count \
 			+ courtyard_bridge_count + room_outcropping_support_count \
-			+ frontier_gateway_support_count,
+			+ frontier_gateway_support_count + interstitial_join_count,
 		"skywalk_feature_count": skywalk_count,
+		"interstitial_join_feature_count": interstitial_join_count,
 		"courtyard_bridge_house_feature_count": courtyard_bridge_count,
 		"covered_market_feature_count": market_count,
 		"balcony_feature_count": balcony_count,
@@ -950,6 +962,115 @@ static func _compile_frontier_gateway_supports(
 	out.append(FabricUnit.new(shell.stable_id, shell.recipe_id,
 		shell.lattice_origin, shell.yaw_quarters,
 		[] as Array[StringName], [] as Array[Dictionary], &"", seams))
+	return out
+
+
+static func _compile_interstitial_join_feature(
+		feature: WarrenFeatureReservation,
+		program: SettlementFabricProgram, source: WarrenSpatialPlan,
+		room_unit_by_stamp: Dictionary,
+		prior_feature_units: Array[FabricUnit]) -> Array[FabricUnit]:
+	## Realize a typed interstitial join. The reservation already owns the slot
+	## volume and its two-owner relationship; this adapter binds the measured
+	## strip to its exact bearing parent and names every touching room as a
+	## visual seam, so the join compiles through the same envelope gate as any
+	## other unit instead of hiding a gap behind coincidental meshes.
+	var out: Array[FabricUnit] = []
+	if feature.construction_records.size() != 1:
+		last_failure = "interstitial join %s needs exactly one record" \
+			% feature.stable_id
+		return out
+	var record := feature.construction_records[0]
+	var shell := _feature_component_shell(feature, 0, record)
+	var recipe := program.recipe(shell.recipe_id)
+	if recipe == null:
+		last_failure = "interstitial join %s names unknown recipe %s" % [
+			feature.stable_id, shell.recipe_id]
+		return out
+	var strip_cells: Dictionary = {}
+	for cell: Vector3i in feature.reserved_cells:
+		strip_cells[cell] = true
+	# Every room touching the strip (including the diagonal upper wall a
+	# stepped shoulder seals against) is an explicit visual seam.
+	var seams: Array[StringName] = []
+	var seam_set: Dictionary = {}
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not room_unit_by_stamp.has(room.stable_id):
+				continue
+			var touches := false
+			for cell_value: Variant in strip_cells:
+				var cell := cell_value as Vector3i
+				for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+						Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+						Vector3i.BACK,
+						Vector3i.UP + Vector3i.LEFT,
+						Vector3i.UP + Vector3i.RIGHT,
+						Vector3i.UP + Vector3i.FORWARD,
+						Vector3i.UP + Vector3i.BACK]:
+					if room.has_private_cell(cell + direction):
+						touches = true
+						break
+				if touches:
+					break
+			if not touches:
+				continue
+			var unit := room_unit_by_stamp.get(room.stable_id) as FabricUnit
+			if unit != null and not seam_set.has(unit.stable_id):
+				seam_set[unit.stable_id] = true
+				seams.append(unit.stable_id)
+	# Stacked strips: a slit band sealed above another names it as a seam too.
+	for prior: FabricUnit in prior_feature_units:
+		if not String(prior.recipe_id).begins_with("interstitial.") \
+				and not String(prior.recipe_id).begins_with(
+					"roof.setback.lean."):
+			continue
+		var prior_recipe := program.recipe(prior.recipe_id)
+		if prior_recipe == null:
+			continue
+		var adjacent := false
+		for local: Vector3i in prior_recipe.solid_cells:
+			var prior_cell := FabricRecipe.transform_cell(local,
+				prior.lattice_origin, prior.yaw_quarters)
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+					Vector3i.BACK]:
+				if strip_cells.has(prior_cell + direction):
+					adjacent = true
+					break
+			if adjacent:
+				break
+		if adjacent and not seam_set.has(prior.stable_id):
+			seam_set[prior.stable_id] = true
+			seams.append(prior.stable_id)
+	seams = _unique_sorted_names(seams)
+	var parents: Array[StringName] = []
+	var bonds: Array[Dictionary] = []
+	if recipe.bearing_parent_count > 0:
+		var below := (record.origin as Vector3i) + Vector3i.DOWN
+		var parent_room: WarrenRoomStamp = null
+		for building: WarrenBuildingVolume in source.buildings:
+			for room: WarrenRoomStamp in building.room_records:
+				if room.has_private_cell(below):
+					parent_room = room
+					break
+			if parent_room != null:
+				break
+		var parent_unit := room_unit_by_stamp.get(
+			parent_room.stable_id) as FabricUnit if parent_room != null \
+			else null
+		if parent_unit == null:
+			last_failure = "interstitial join %s has no built bearing parent" \
+				% feature.stable_id
+			return out
+		var parent_local := _inverse_cell(below, parent_room.lattice_origin,
+			parent_room.yaw_quarters)
+		parents.append(parent_unit.stable_id)
+		bonds.append(FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
+			SettlementFabricProgram._bearing_cell_socket_id(&"top",
+				parent_local.x, parent_local.z)))
+	out.append(FabricUnit.new(shell.stable_id, shell.recipe_id,
+		shell.lattice_origin, shell.yaw_quarters, parents, bonds, &"", seams))
 	return out
 
 
@@ -3312,6 +3433,31 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 			"gateway_support_neighbor_room_ids", []):
 		if StringName(neighbor_value) == room_id:
 			return true
+	# An interstitial join is by definition wedged against its named wall,
+	# bearing, and continuing-upper owners; the strip's authored ridge/board
+	# seam may cross their conservative AABBs while the occupied cells remain
+	# disjoint. Every other room still treats the sealed strip as a hard limit.
+	if feature.kind == &"interstitial_join":
+		var owner_ids: Array = (feature.audit.get(
+			"interstitial_wall_owner_ids", []) as Array).duplicate()
+		owner_ids.append_array(feature.audit.get(
+			"interstitial_cover_owner_ids", []) as Array)
+		owner_ids.append(feature.audit.get(
+			"interstitial_bearing_owner_id", &""))
+		owner_ids.append(feature.audit.get(
+			"interstitial_upper_owner_id", &""))
+		var room_lineage_prefix := "spatial.%s.part" % room.source_parcel_id
+		for owner_value: Variant in owner_ids:
+			var owner_id := String(StringName(owner_value))
+			if owner_id.is_empty():
+				continue
+			if String(room_id).begins_with(owner_id + ".room"):
+				return true
+			# The strip is wedged into this parcel's recomposed lineage; every
+			# storey of that lineage shares the sealed reveal relationship,
+			# exactly like the balcony/annex lineage exceptions above.
+			if owner_id.begins_with(room_lineage_prefix):
+				return true
 	# A balcony, annex, or market is selected against every measured room in its
 	# recomposed source lineage. Its brackets/eaves may legitimately cross the
 	# conservative AABB of the storey directly below even though the occupied

@@ -378,6 +378,7 @@ func _capture_all() -> void:
 	views.append_array(_dormer_views())
 	views.append_array(_roof_campaign_views())
 	views.append_array(_interstitial_gap_views())
+	views.append_array(_interstitial_join_views())
 	views.append_array(_skywalk_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -941,6 +942,33 @@ func _tower_annex_views() -> Array[Dictionary]:
 		out.append({"id": "%s-%02d" % [token, ordinal],
 			"position": centre + outward * 7.0 + Vector3.UP * 1.5,
 			"target": centre, "fov": 58.0})
+		ordinal += 1
+	return out
+
+
+func _interstitial_join_views() -> Array[Dictionary]:
+	## Photograph every typed interstitial join along its open reveal so review
+	## can falsify that the slot reads as an intentional stepped or sealed
+	## course, not a thin patch hiding an opening between two facades.
+	var out: Array[Dictionary] = []
+	var ordinal := 0
+	for feature: WarrenFeatureReservation in _spatial.features:
+		if feature.kind != &"interstitial_join":
+			continue
+		if feature.reserved_cells.is_empty():
+			continue
+		var centre := _cell_centroid(feature.reserved_cells)
+		var trap_axis := StringName(feature.audit.get(
+			"interstitial_trap_axis", &"x"))
+		var run_direction := Vector3(0, 0, 1) if trap_axis == &"x" \
+			else Vector3(1, 0, 0)
+		for side_index in 2:
+			var run_sign := 1.0 if side_index == 0 else -1.0
+			var eye := centre + run_direction * run_sign * 9.0 \
+				+ Vector3.UP * 3.0
+			out.append({"id": "interstitial-join-%02d-%s" % [ordinal,
+				"a" if side_index == 0 else "b"],
+				"position": eye, "target": centre, "fov": 50.0})
 		ordinal += 1
 	return out
 
