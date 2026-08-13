@@ -321,8 +321,12 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   of four size contracts: compact 55%, standard 30%, large 12%, grand 3%. Their planning diameters
   are 63/69/75/87 m; total inhabited-room budgets are 18--110/30--190/50--220/80--300; residual
   infill is capped separately at 12/16/24/32 rooms. Those totals include the late residual pass,
-  which may never disappear from size accounting. Required landmarks scale 0/1/2/3, skywalks
-  1/2/3/3, balconies 4/5/6/8, and room cantilevers 4/5/6/8. Every size retains the covered market;
+  which may never disappear from size accounting. Required landmarks scale 0/1/2/3; skywalk
+  ranges are 1/2/(3--4)/(3--4): large and grand request four occupied links and the sealed
+  hero-feature ranking (exact composed recipe occluder route coverage, the same test as the final
+  enclosure audit) keeps three only when the fourth provably adds no distinct inhabited route
+  cover — that redundancy is recorded as an exact diagnostic fact. Balconies scale 4/5/6/8 and
+  room cantilevers 4/5/6/8. Every size retains the covered market;
   only large and grand require the elevated third-storey court. Stable source signatures and
   terrain-relative rebuilds carry the exact selected profile; a small town is never a cropped or
   mesh-scaled large one.
@@ -355,6 +359,14 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   scores the exact exposed shoulder before facade variation and may never replace a roofable seam
   with an arbitrary voxel shelf; complete room crowns, compound gables, and bound lean-to runs are
   the only admitted shoulder vocabulary.
+  After every required feature campaign and before optional facade bays, every one-cell residual
+  course trapped between occupied party walls must compile as exactly one typed
+  `interstitial_join` construction — a stepped-shoulder lean-to (bearing bond into the room
+  below's exact top socket, ridge on the single continuing wall) or a measured
+  `interstitial.seal` strip (flush-capped to the sky, timber-blocked under bridging mass) — or
+  the town is rejected with a reason-coded refusal. Coincidental mesh adjacency is never a seam,
+  a shoulder may never bear on another strip, and the final audit proves
+  `one_cell_interstitial_gap_cell_count == 0` on every sealed plan.
   A successful exact hero-feature room composition is carried into final partitioning instead of
   recomputing the same deterministic result, unless feature-envelope displacement changed its
   input parcel set. Exact mass-first construction
