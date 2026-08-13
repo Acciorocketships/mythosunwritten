@@ -546,6 +546,56 @@ bridge. The hero-feature selection slice is complete; the active slice moves
 to the typed `interstitial_join` transaction, and the overhead deficit
 returns to the source-decomposition beam where the mass actually is.
 
+## Street-spanning mass measurement (2026-08-13)
+
+A pre-discard supply audit (`route_overhead_supply_*` in the spatial audit)
+now classifies every canonical route cell lacking occupied overhead in the
+2--6 band window: does trimmed massif supply sit above it (a claimable
+partition failure) or genuinely empty sky (a massing failure)? On the sealed
+variant-5 fixture the answer is emphatic: of 280 sampled route cells, 96 are
+covered, **172 uncovered cells have authored massif mass directly above them
+in the credit window**, and only 12 (all high upper-walk cells) truly lack
+mass. The Gaussian mountain and the excavation carver already author the
+tunnels and underpasses the review asks for; the solid partitioner cannot
+represent a parcel whose columns stand wholly over a carved street (no
+terrain bearing, no plan-view support-parent overlap), so
+`_discard_unassigned_mass` erases the authored cover and the street opens to
+the sky. Reaching the 38% floor needs roughly eleven more covered cells;
+claiming even a tenth of the measured supply clears it.
+
+The next slice is therefore **bridge parcels in `WarrenSolidPartitioner`**:
+recognize over-street solid components and admit them as first-class parcels
+with an explicit two-ended bearing contract (flanking parcels at both run
+ends, the same two-parent shape the skywalk recipes already declare), plus
+jetty rows that keep partial plan-view overlap with one parent and consume
+the existing outcrop bracket vocabulary for the overhung remainder. Bearing
+ancestry must ride the existing macro-merge proof, the support DAG, and the
+finite roof-junction table; nothing may be stretched or inferred from a
+doorway cell. The carver's tunnel supply is the input, not new massing.
+
+Generalizing the join transaction to this dense fixture also hardened it:
+
+- air exclusively reserved by a composed feature, or flanked by a feature's
+  own authored wall (landmark silhouettes, bridge houses, earlier strips),
+  is typed `feature_clearance_gap_cell_count` — owned void, never a join
+  obligation and never a defect;
+- any remaining trapped course seals: stepped shoulders keep their strict
+  contract, and everything else — including flush parapet slots between two
+  walltop rows — becomes side- or below-anchored sealed infill;
+- a strip's support node must be a terrain-reaching building, never another
+  strip;
+- relatedness at the room envelope gate is physical: touching rooms
+  (including vertical diagonals), wedged lineages, and named owners; and
+  interstitial strips are exempt from room displacement entirely because
+  they occupy proven-vacant trapped cells — grazing eaves, sibling strips,
+  and crossing features instead declare typed joints through the shared
+  structural-course seam pool.
+
+With those rules variant 5 seals end-to-end with 47 typed joins, zero
+one-cell gap cells, 32 typed feature-clearance gap cells, and unchanged
+33.45% overhead; the compact reviewed fixture seals identically with four
+joins (its fifth former slot proved to be feature-reserved air).
+
 The latest exact fixture is sealed with 31 of 31 served entrances, 74 buildings,
 zero unresolved exact macro covers, and two typed
 `vertical_phase_conflict` refusals. Its roof mix is 10 pitched roofs, 19 flat

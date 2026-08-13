@@ -1429,8 +1429,18 @@ static func _reserve_interstitial_joins(grid: WarrenSpatialGrid,
 	for cell_value: Variant in grid.cells_with_use(
 			WarrenSpatialGrid.Use.ALLOCATABLE):
 		var cell := cell_value as Vector3i
-		if WarrenVolumetricSolver._is_one_cell_interstitial_gap(grid, cell):
-			gap_cells[cell] = true
+		if not WarrenVolumetricSolver._is_one_cell_interstitial_gap(grid, cell):
+			continue
+		# Air exclusively reserved by a composed feature, or flanked by a
+		# feature's own authored wall, is that feature's typed void; the
+		# final audit reports it under its own key and the join transaction
+		# must not fill it with mass.
+		if WarrenVolumetricSolver._cell_has_exclusive_feature_reservation(
+				grid, cell) \
+				or WarrenVolumetricSolver._interstitial_gap_is_feature_adjacent(
+					grid, cell):
+			continue
+		gap_cells[cell] = true
 	var features: Array[WarrenFeatureReservation] = []
 	var class_counts: Dictionary = {}
 	if gap_cells.is_empty():
@@ -1571,14 +1581,16 @@ static func _classify_interstitial_run(grid: WarrenSpatialGrid,
 			"wall_side": int(continuing_sides.keys()[0]),
 			"upper_owner": continuing_sides.values()[0],
 			"bearing_kind": &"below"}
-	if continuing_sides.size() >= 1 or covered_above:
-		return {"class": &"sealed_infill",
-			"buried": covered_above,
-			"bearing_kind": &"below" if bearing_below else &"side"}
-	return {"class": &"unresolved",
-		"reason": ("no continuing wall, no cover, bearing_below=%s; the " \
-			+ "slot is neither a shoulder nor a sealable slit") \
-			% bearing_below}
+	# Every remaining trapped course seals as deliberate infill. With a
+	# continuing wall or bridging cover above it reads as a stepped seam;
+	# with two flush walltops it reads as a joined parapet between the two
+	# houses; over an alley it becomes the soffit of a one-cell underpass.
+	# The trap predicate already guarantees occupied walls on both sides and
+	# never includes public air, so a side-anchored blocking course is always
+	# a coherent authored closure.
+	return {"class": &"sealed_infill",
+		"buried": covered_above,
+		"bearing_kind": &"below" if bearing_below else &"side"}
 
 
 static func _interstitial_chunks(run_cells: Array[Vector3i],
@@ -1623,6 +1635,7 @@ static func _commit_interstitial_join(grid: WarrenSpatialGrid,
 			yaw = candidate_yaw
 			break
 	if yaw < 0:
+		_last_interstitial_rejection = "no yaw maps the recipe run axis"
 		return null
 	var local_z_world := FabricRecipe.transform_direction(Vector3i(0, 0, 1),
 		yaw)
@@ -1649,6 +1662,7 @@ static func _commit_interstitial_join(grid: WarrenSpatialGrid,
 			"buried" if buried else "capped"])
 	var recipe := program.recipe(recipe_id)
 	if recipe == null:
+		_last_interstitial_rejection = "missing measured recipe %s" % recipe_id
 		return null
 	var wall_owners: Dictionary = {}
 	var cover_owners: Dictionary = {}
@@ -1664,18 +1678,31 @@ static func _commit_interstitial_join(grid: WarrenSpatialGrid,
 		var above: Vector3i = cell + Vector3i.UP
 		if grid.use_at(above) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
 			cover_owners[grid.owner_name_at(above)] = true
+	# The support node must be a real building whose chain reaches terrain;
+	# an earlier strip below a stacked slit is claimed mass, not a support
+	# lineage the sealed graph can walk.
 	var below := origin + Vector3i.DOWN
-	if grid.use_at(below) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+	if grid.use_at(below) == WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+			and not String(grid.owner_name_at(below)).begins_with(
+				"spatial.feature."):
 		bearing_owner = grid.owner_name_at(below)
 	if bearing_owner == &"":
-		# Side-anchored strips bear on a flanking wall owner; deterministic
-		# first by name so repeated solves bind the identical parent.
+		# Side-anchored strips bear on a flanking wall or covering owner;
+		# deterministic first by name so repeated solves bind the identical
+		# parent.
 		var owner_ids: Array = wall_owners.keys()
+		owner_ids.append_array(cover_owners.keys())
 		owner_ids.sort_custom(func(a: Variant, b: Variant) -> bool:
 			return String(a) < String(b))
-		if owner_ids.is_empty():
+		for owner_value: Variant in owner_ids:
+			if not String(StringName(owner_value)).begins_with(
+					"spatial.feature."):
+				bearing_owner = StringName(owner_value)
+				break
+		if bearing_owner == &"":
+			_last_interstitial_rejection = \
+				"no terrain-reaching building anchors the strip"
 			return null
-		bearing_owner = StringName(owner_ids[0])
 	var tx := grid.begin_transaction(feature_id)
 	if not tx.require_use(chunk, [WarrenSpatialGrid.Use.ALLOCATABLE] \
 				as Array[int]) \

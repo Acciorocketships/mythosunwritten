@@ -111,10 +111,11 @@ func test_shoulder_may_not_bear_on_an_earlier_feature_strip() -> void:
 		"lean-to bearing requires real room mass with authored top sockets")
 
 
-func test_isolated_slot_with_no_closure_is_a_typed_refusal() -> void:
+func test_flush_parapet_slot_seals_side_anchored() -> void:
 	var grid := _grid_with_massif(Vector3i(6, 6, 6))
-	# One-band walls on both sides, nothing continuing above, air below:
-	# neither a shoulder nor a sealable slit.
+	# One-band walltops on both sides, nothing continuing above, air below:
+	# the course seals flush as a joined parapet, side-anchored because no
+	# room mass sits beneath it.
 	for x in range(1, 3):
 		_claim_private(grid, &"spatial.parcel.solid.0009.part00",
 			[Vector3i(x, 2, 1)])
@@ -123,10 +124,11 @@ func test_isolated_slot_with_no_closure_is_a_typed_refusal() -> void:
 	var slot: Array[Vector3i] = [Vector3i(1, 2, 2), Vector3i(2, 2, 2)]
 	var classified := WarrenSpatialFeatureSolver._classify_interstitial_run(
 		grid, {}, slot, &"z")
-	assert_eq(StringName(classified.get("class", &"")), &"unresolved",
-		"a slot with no authored closure must reject the town, not hide")
-	assert_false(String(classified.get("reason", "")).is_empty(),
-		"the refusal must carry its reason code")
+	assert_eq(StringName(classified.get("class", &"")), &"sealed_infill",
+		"two flush walltops join as one deliberate parapet course")
+	assert_false(bool(classified.get("buried", true)),
+		"an open-sky parapet keeps its flush cap")
+	assert_eq(StringName(classified.get("bearing_kind", &"")), &"side")
 
 
 func test_interstitial_chunks_split_into_authored_lengths() -> void:

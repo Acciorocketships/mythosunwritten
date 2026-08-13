@@ -611,6 +611,8 @@ static func from_volume(volume: WarrenVolumePlan,
 	var unassigned_mass_cell_count := grid.cells_with_use(
 		WarrenSpatialGrid.Use.ALLOCATABLE).size()
 	var trim_audit := _unassigned_mass_audit(grid)
+	trim_audit.merge(_uncovered_route_overhead_supply_audit(grid, volume),
+		true)
 	var retained_private_cell_count := grid.cells_with_use(
 		WarrenSpatialGrid.Use.PRIVATE_VOLUME).size()
 	if not _discard_unassigned_mass(grid) or not _derive_shell(grid, buildings):
@@ -7050,6 +7052,59 @@ static func _enclosure_route_walk(
 	return out
 
 
+static func _uncovered_route_overhead_supply_audit(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan) -> Dictionary:
+	## Phase B evidence, measured pre-discard: for every canonical route cell
+	## lacking occupied overhead in the final 2-6 band window, distinguish
+	## trimmed massif supply above it (a partition/selection failure the
+	## source beam could still claim as rooms) from genuinely empty sky (a
+	## massing failure only the carver or an authored street-spanning gallery
+	## can add). A huge discarded source shell must not hide a visible
+	## planning hole.
+	var realm := WarrenVolumePublicRealmAdapter.from_volume(volume)
+	if realm == null:
+		return {}
+	var route_walk := _enclosure_route_walk(realm)
+	var covered := 0
+	var trimmed_supply_cells: Array[Vector3i] = []
+	var no_mass_cells: Array[Vector3i] = []
+	for cell_value: Variant in route_walk:
+		var cell := cell_value as Vector3i
+		var has_private := false
+		var has_trimmed := false
+		for rise in range(2, 7):
+			var above: Vector3i = cell + Vector3i.UP * rise
+			var use := grid.use_at(above)
+			if use == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+				has_private = true
+				break
+			if use == WarrenSpatialGrid.Use.ALLOCATABLE:
+				has_trimmed = true
+		if has_private:
+			covered += 1
+		elif has_trimmed:
+			trimmed_supply_cells.append(cell)
+		else:
+			no_mass_cells.append(cell)
+	trimmed_supply_cells.sort_custom(_cell_less)
+	no_mass_cells.sort_custom(_cell_less)
+	var trimmed_preview := PackedStringArray()
+	for cell: Vector3i in trimmed_supply_cells.slice(0, 48):
+		trimmed_preview.append("%d:%d:%d" % [cell.x, cell.y, cell.z])
+	var no_mass_preview := PackedStringArray()
+	for cell: Vector3i in no_mass_cells.slice(0, 48):
+		no_mass_preview.append("%d:%d:%d" % [cell.x, cell.y, cell.z])
+	return {
+		"route_overhead_supply_route_cell_count": route_walk.size(),
+		"route_overhead_supply_covered_cell_count": covered,
+		"uncovered_route_trimmed_supply_cell_count":
+			trimmed_supply_cells.size(),
+		"uncovered_route_no_mass_cell_count": no_mass_cells.size(),
+		"uncovered_route_trimmed_supply_cells": trimmed_preview,
+		"uncovered_route_no_mass_cells": no_mass_preview,
+	}
+
+
 static func _route_cells_covered_by_body(body: Dictionary,
 		route_walk: Dictionary) -> Dictionary:
 	## Mirror the final inhabited-overhead height window exactly. Candidate body
@@ -8248,6 +8303,7 @@ static func _unassigned_mass_audit(grid: WarrenSpatialGrid) -> Dictionary:
 	var component_sizes := PackedInt32Array()
 	var component_details: Array[Dictionary] = []
 	var interstitial_gap_cells: Dictionary = {}
+	var feature_clearance_gap_cells: Dictionary = {}
 	while not remaining.is_empty():
 		var start := remaining.keys()[0] as Vector3i
 		var pending: Array[Vector3i] = [start]
@@ -8264,7 +8320,16 @@ static func _unassigned_mass_audit(grid: WarrenSpatialGrid) -> Dictionary:
 			minimum = minimum.min(current)
 			maximum = maximum.max(current)
 			if _is_one_cell_interstitial_gap(grid, current):
-				interstitial_gap_cells[current] = true
+				# A trapped course inside another feature's exclusive
+				# reservation, or flanked by a feature's own authored wall,
+				# is typed, owned air rather than an unexplained crack. It is
+				# reported separately and never becomes a join obligation.
+				if _cell_has_exclusive_feature_reservation(grid, current) \
+						or _interstitial_gap_is_feature_adjacent(grid,
+							current):
+					feature_clearance_gap_cells[current] = true
+				else:
+					interstitial_gap_cells[current] = true
 			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 					Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
 					Vector3i.BACK]:
@@ -8348,7 +8413,33 @@ static func _unassigned_mass_audit(grid: WarrenSpatialGrid) -> Dictionary:
 			gap_component_sizes.size(),
 		"one_cell_interstitial_gap_component_sizes": gap_component_sizes,
 		"one_cell_interstitial_gap_details": gap_details,
+		"feature_clearance_gap_cell_count": feature_clearance_gap_cells.size(),
 		"trimmed_mass_component_details": component_details}
+
+
+static func _cell_has_exclusive_feature_reservation(grid: WarrenSpatialGrid,
+		cell: Vector3i) -> bool:
+	## True when a composed feature exclusively owns this cell's air (visual
+	## clearance, feature body reservation, or protected connection). Such a
+	## course is deliberate typed void, not an unexplained interstitial crack.
+	var bits := grid.reservation_bits_at(cell)
+	var exclusive := bits & ~(WarrenSpatialGrid.Reservation.TERRAIN_BEARING \
+		| WarrenSpatialGrid.Reservation.LOAD_CHANNEL \
+		| WarrenSpatialGrid.Reservation.CONSTRUCTION_SEAM)
+	return exclusive != 0
+
+
+static func _interstitial_gap_is_feature_adjacent(grid: WarrenSpatialGrid,
+		cell: Vector3i) -> bool:
+	## A trapped course whose flanking wall belongs to a composed feature
+	## (landmark prefab, bridge house, sealed strip) is part of that feature's
+	## authored silhouette — a sculpted concavity or clearance reveal, never a
+	## two-building contact defect the join transaction may fill with mass.
+	var detail := _interstitial_gap_detail(grid, cell)
+	return String(StringName(detail.get("negative_owner", &""))).begins_with(
+			"spatial.feature.") \
+		or String(StringName(detail.get("positive_owner", &""))).begins_with(
+			"spatial.feature.")
 
 
 static func _is_one_cell_interstitial_gap(grid: WarrenSpatialGrid,

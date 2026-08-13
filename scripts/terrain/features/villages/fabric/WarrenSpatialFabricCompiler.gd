@@ -800,15 +800,26 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 		for unit: FabricUnit in feature_units:
 			var unit_recipe := program.recipe(unit.recipe_id)
-			if unit_recipe != null and unit_recipe.has_tag(&"cantilever_support"):
+			var unit_is_support := unit_recipe != null \
+				and unit_recipe.has_tag(&"cantilever_support")
+			if unit_recipe != null:
 				var unit_clearance := unit.transform() \
 					* unit_recipe.local_clearance_bounds
 				# Support courses are selected as one compatible structural frame.
 				# Make every measured intersection explicit before the plan gate sees
 				# it; this is a typed timber joint, not a general overlap exemption.
+				# Interstitial strips extend the same rule to any feature whose
+				# measured envelope crosses one: the strip fills proven-vacant
+				# trapped cells, so the crossing is a joint, not displacement.
 				for prior: FabricUnit in compiled_support_units:
 					var prior_recipe := program.recipe(prior.recipe_id)
 					if prior_recipe == null:
+						continue
+					var prior_is_strip := String(prior.recipe_id).begins_with(
+							"interstitial.") \
+						or String(prior.recipe_id).begins_with(
+							"roof.setback.lean.")
+					if not unit_is_support and not prior_is_strip:
 						continue
 					var prior_clearance := prior.transform() \
 						* prior_recipe.local_clearance_bounds
@@ -1007,7 +1018,11 @@ static func _compile_interstitial_join_feature(
 						Vector3i.UP + Vector3i.LEFT,
 						Vector3i.UP + Vector3i.RIGHT,
 						Vector3i.UP + Vector3i.FORWARD,
-						Vector3i.UP + Vector3i.BACK]:
+						Vector3i.UP + Vector3i.BACK,
+						Vector3i.DOWN + Vector3i.LEFT,
+						Vector3i.DOWN + Vector3i.RIGHT,
+						Vector3i.DOWN + Vector3i.FORWARD,
+						Vector3i.DOWN + Vector3i.BACK]:
 					if room.has_private_cell(cell + direction):
 						touches = true
 						break
@@ -1019,28 +1034,43 @@ static func _compile_interstitial_join_feature(
 			if unit != null and not seam_set.has(unit.stable_id):
 				seam_set[unit.stable_id] = true
 				seams.append(unit.stable_id)
-	# Stacked strips: a slit band sealed above another names it as a seam too.
+	# A room whose measured eave or bay envelope grazes the strip from a
+	# distance shares the reveal too: the strip never exceeds its proven
+	# trapped cells, so every such intersection is a typed joint, mirrored
+	# from the room gate's interstitial exemption.
+	var strip_bounds := FabricRecipe.lattice_transform(shell.lattice_origin,
+		shell.yaw_quarters) * recipe.local_clearance_bounds
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			var unit := room_unit_by_stamp.get(room.stable_id) as FabricUnit
+			if unit == null or seam_set.has(unit.stable_id):
+				continue
+			var room_recipe := program.recipe(unit.recipe_id)
+			if room_recipe == null:
+				continue
+			var room_bounds := FabricRecipe.lattice_transform(
+				room.lattice_origin, room.yaw_quarters) \
+				* room_recipe.local_clearance_bounds
+			if SettlementFabricPlan._aabb_overlaps_volume(strip_bounds,
+					room_bounds):
+				seam_set[unit.stable_id] = true
+				seams.append(unit.stable_id)
+	# Sibling strips: a stacked slit band, or a nearby shoulder whose sloped
+	# envelope grazes this one, names the earlier strip as a typed joint —
+	# the same structural-course rule the bracket frames use.
 	for prior: FabricUnit in prior_feature_units:
 		if not String(prior.recipe_id).begins_with("interstitial.") \
 				and not String(prior.recipe_id).begins_with(
 					"roof.setback.lean."):
 			continue
 		var prior_recipe := program.recipe(prior.recipe_id)
-		if prior_recipe == null:
+		if prior_recipe == null or seam_set.has(prior.stable_id):
 			continue
-		var adjacent := false
-		for local: Vector3i in prior_recipe.solid_cells:
-			var prior_cell := FabricRecipe.transform_cell(local,
-				prior.lattice_origin, prior.yaw_quarters)
-			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-					Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
-					Vector3i.BACK]:
-				if strip_cells.has(prior_cell + direction):
-					adjacent = true
-					break
-			if adjacent:
-				break
-		if adjacent and not seam_set.has(prior.stable_id):
+		var prior_bounds := FabricRecipe.lattice_transform(
+			prior.lattice_origin, prior.yaw_quarters) \
+			* prior_recipe.local_clearance_bounds
+		if SettlementFabricPlan._aabb_overlaps_volume(strip_bounds,
+				prior_bounds):
 			seam_set[prior.stable_id] = true
 			seams.append(prior.stable_id)
 	seams = _unique_sorted_names(seams)
@@ -3401,6 +3431,12 @@ static func _room_feature_envelope_conflict(source: WarrenSpatialPlan,
 	var room_bounds := FabricRecipe.lattice_transform(room.lattice_origin,
 		room.yaw_quarters) * recipe.local_clearance_bounds
 	for feature: WarrenFeatureReservation in source.features:
+		# An interstitial strip occupies proven-vacant trapped cells and can
+		# never displace a room; an eave or bay grazing the strip from above
+		# is a typed reveal, declared as a seam on the strip's own unit. Every
+		# other feature keeps the hard displacement gate.
+		if feature.kind == &"interstitial_join":
+			continue
 		if feature.construction_records.is_empty() \
 				or _feature_is_related_to_room(source, feature, room):
 			continue
@@ -3458,6 +3494,24 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 			# exactly like the balcony/annex lineage exceptions above.
 			if owner_id.begins_with(room_lineage_prefix):
 				return true
+		# Physical contact is itself the sealed relationship: any room whose
+		# occupied cells touch the strip (including a storey stepping
+		# diagonally over or under it) legitimately shares the reveal, while
+		# genuinely detached rooms keep the hard envelope limit.
+		var strip_set: Dictionary = {}
+		for strip_cell: Vector3i in feature.reserved_cells:
+			strip_set[strip_cell] = true
+		var contact_directions: Array[Vector3i] = [Vector3i.LEFT,
+			Vector3i.RIGHT, Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+			Vector3i.BACK]
+		for side: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			contact_directions.append(Vector3i.UP + side)
+			contact_directions.append(Vector3i.DOWN + side)
+		for room_cell: Vector3i in room.private_cells:
+			for direction: Vector3i in contact_directions:
+				if strip_set.has(room_cell + direction):
+					return true
 	# A balcony, annex, or market is selected against every measured room in its
 	# recomposed source lineage. Its brackets/eaves may legitimately cross the
 	# conservative AABB of the storey directly below even though the occupied
