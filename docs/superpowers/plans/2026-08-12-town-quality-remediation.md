@@ -303,6 +303,17 @@ infill placements are deliberately minimal (flush cap or base blocking; the
 flanking party walls are the reveal surfaces) — capture review judges whether
 the reveals need richer authored boarding.
 
+## Visual state (2026-08-13)
+
+The joined fixture renders to `/tmp/mythos-town-joins-after2` through
+`warren_spatial_review.tscn`, which now includes `interstitial-join-*`
+reveal cameras (the naive `-b` reverse angles sometimes sit inside neighbor
+mass and need the occlusion-aware placement the outcrop battery uses). The
+join reveals read as deliberate planked ledges and sealed courses; no open
+sliver remains. The roof mix is essentially unchanged by the joins
+(10 pitched, 18 flat, 44 setback caps, 12 lean-tos), so the flat/setback
+dominance of Phase E remains the largest outstanding visual lever.
+
 ## Visual baseline (2026-08-12)
 
 The exact fixture was rendered through `warren_spatial_review.tscn` into
