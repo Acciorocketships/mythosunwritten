@@ -58,8 +58,13 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		return [] as Array[WarrenFeatureReservation]
 	var target_skywalks := scale_profile.skywalk_range.x
 	var target_landmarks := scale_profile.landmark_range.x
-	var target_balconies := scale_profile.balcony_range.x
-	var target_outcroppings := scale_profile.cantilever_range.x
+	# Occupied projections are the town's visual richness: search for the top
+	# of each declared range and gate acceptance at its floor, instead of
+	# stopping the search the moment the minimum is met.
+	var minimum_balconies := scale_profile.balcony_range.x
+	var target_balconies := scale_profile.balcony_range.y
+	var minimum_outcroppings := scale_profile.cantilever_range.x
+	var target_outcroppings := scale_profile.cantilever_range.y
 	# A village whose ground street holds no measured bazaar runs without one;
 	# a profile that requires the market never reaches this stage marketless
 	# because the hero-feature beam already rejected the town.
@@ -131,10 +136,11 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		source.world_seed, construction_program, out, target_outcroppings)
 	var unresolved_outcroppings := int(last_outcropping_diagnostic.get(
 		"unresolved_integrated_cantilever_count", 0))
-	if outcroppings.size() < target_outcroppings or unresolved_outcroppings != 0:
+	if outcroppings.size() < minimum_outcroppings \
+			or unresolved_outcroppings != 0:
 		last_failure = ("only %d of %d room-scale outcroppings exist; " \
 			+ "%d structural cantilevers remain unsupported: %s") % [
-			outcroppings.size(), target_outcroppings, unresolved_outcroppings,
+			outcroppings.size(), minimum_outcroppings, unresolved_outcroppings,
 			JSON.stringify(last_outcropping_diagnostic)]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(outcroppings)
@@ -172,12 +178,12 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	for balcony: WarrenFeatureReservation in balconies:
 		balcony_buildings[StringName(balcony.audit.balcony_building_id)] = true
 	var minimum_balcony_buildings := mini(MIN_BALCONY_BUILDINGS,
-		target_balconies)
-	if balconies.size() < target_balconies \
+		minimum_balconies)
+	if balconies.size() < minimum_balconies \
 			or balcony_buildings.size() < minimum_balcony_buildings:
 		last_failure = ("only %d balconies across %d buildings fit; " \
 			+ "need %d across %d; candidate audit=%s") \
-			% [balconies.size(), balcony_buildings.size(), target_balconies,
+			% [balconies.size(), balcony_buildings.size(), minimum_balconies,
 				minimum_balcony_buildings, last_skywalk_diagnostic]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(balconies)

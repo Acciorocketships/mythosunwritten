@@ -348,6 +348,41 @@ variant 5 needed it for 38%. The pinned compact/variant-5 fixtures predate
 the resize and are superseded; new pinned fixtures must be chosen from the
 first sealing village seeds.
 
+## Village fixture and measured performance (2026-08-14)
+
+New pinned village review fixture: world seed 1, standard profile, attempt
+6, candidate token 6000019, partition variant 0. It compiles and seals
+end-to-end (production still rejects it on the 33% overhead floor at 29.5%,
+the known jetty-increment gap) and renders through the review battery. Its
+kind mix is tower 14 / slim 12 / row 7 / long 2 / building 2 at 80.6% macro
+ratio with zero unexploited exact pairs — further de-boxing must come from
+the still-open source exact-cover beam (prefer building/long kinds at
+serving time), not from post-hoc merging. Roof mix: 30 setback caps, 5
+lean-tos, 3 gardens; at this scale the flat areas read as awning terraces.
+
+Measured cold spatial solve for the complete village: **5.9 s** single
+variant (the pre-resize large city measured 116 s), of which composition is
+about 1.3 s. The feature solver now searches to the top of each declared
+balcony/cantilever range while gating at its floor: this fixture keeps 13
+room outcroppings and 3 balconies through every gate.
+
+Optimization plan beyond the rescale, in measured-leverage order:
+
+1. **Off-thread planning with frame-budgeted commit** — the in-game
+   architecture: solve massif->fabric on the worker (no RenderingServer
+   calls), commit collision and near-field silhouettes first, then visual
+   batches under an elapsed-time budget (existing Phase G items; a ~6 s
+   background solve is already streamable if the main thread never blocks).
+2. **Persistent source caching by stable signature** — massif, excavation,
+   topology gate, and parcel-candidate results are pure functions of
+   (seed, attempt, profile); the staged production search currently
+   recomputes them cold every run.
+3. **Preflight sharing across palette-equivalent variants** and the
+   already-memoized exact-room failures extended to positive results.
+4. Micro hot spots when the above land: the residual backfill's full-grid
+   candidate rescans per placement, linear recipe socket lookups, and
+   per-block composition offset solves.
+
 ## Visual state (2026-08-13)
 
 The joined fixture renders to `/tmp/mythos-town-joins-after2` through
