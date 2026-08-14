@@ -68,6 +68,9 @@ static var diagnostic_trace_room_gate := false
 static var diagnostic_feature_market_limit := -1
 static var diagnostic_partition_limit := -1
 static var diagnostic_partition_first := 0
+## Bridge-room admission telemetry for the residual backfill pass; reset per
+## backfill run and surfaced through the residual audit keys.
+static var _residual_bridge_counts: Dictionary = {}
 
 
 static func solve(world_seed: int,
@@ -1978,6 +1981,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		backfill.get("massif_edge_contact_count", 0))
 	composition_audit["residual_backfill_terrain_rooted_established_access_count"] = int(
 		backfill.get("terrain_rooted_established_access_count", 0))
+	composition_audit["residual_backfill_bridge_counts"] = (
+		backfill.get("bridge_counts", {}) as Dictionary).duplicate()
 	composition_audit["preplanned_skywalk_unique_route_cover_count"] = int(
 		skywalk_plan.get("unique_route_cover_count", 0))
 	composition_audit["preplanned_skywalk_marginal_route_cover_count"] = int(
@@ -7730,6 +7735,7 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 		maximum_per_kind: int,
 		construction_program: SettlementFabricProgram) -> Dictionary:
 	assert(maximum_buildings > 0 and maximum_per_kind > 0)
+	_residual_bridge_counts = {}
 	var massif := volume.mass_context.get(&"massif") as WarrenMassif
 	if massif == null:
 		return {"failed": false, "building_count": 0,
@@ -7891,6 +7897,15 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 			last_failure = "residual room %s failed its building transaction: %s/%s" \
 				% [building_id, room.last_rejection, building.last_rejection]
 			return {"failed": true}
+		var bridge_support_room_ids: Array[StringName] = []
+		bridge_support_room_ids.assign(best.get("bridge_support_room_ids",
+			[]) as Array)
+		if not bridge_support_room_ids.is_empty():
+			# A street-bridge room bears on its two flanking walls; the compiler
+			# binds both through the exact span sockets instead of a below
+			# parent, and the support graph keeps one terrain-reaching edge.
+			# Stamped after seal() because seal rebuilds the audit dictionary.
+			room.audit["bridge_support_room_ids"] = bridge_support_room_ids
 		if terrain_bearing:
 			terrain_support_ids.append(building_id)
 		else:
@@ -7927,6 +7942,7 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 		"massif_edge_contact_count": massif_edge_contact_count,
 		"terrain_rooted_established_access_count": \
 			terrain_rooted_established_access_count,
+		"bridge_counts": _residual_bridge_counts.duplicate(),
 		"overhead_route_cell_count": initial_uncovered_route_count \
 			- uncovered_route_floors.size(),
 		"frontage_side_count": initial_uncovered_frontage_count \
@@ -7977,6 +7993,12 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 			return {}
 		footprint[Vector2i(cell.x, cell.z)] = true
 	var candidate_roof_clearance: Dictionary = {}
+	# A freestanding residual roof needs open air around its eaves; a bridge
+	# room nestled between its two taller flanks does not — its roof compiles
+	# as a party-wall cap or bound lean-to under the roof phase's own measured
+	# gates. Record the halo verdict instead of rejecting outright so the
+	# bridge admission below can waive exactly this one condition.
+	var roof_halo_clear := true
 	for column_value: Variant in footprint.keys():
 		var column := column_value as Vector2i
 		for rise in range(WarrenSpatialGrid.STOREY_CELLS,
@@ -7993,7 +8015,7 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 				for x_offset in range(-1, 2):
 					if building_by_cell.has(roof_cell + Vector3i(x_offset,
 							0, z_offset)):
-						return {}
+						roof_halo_clear = false
 			candidate_roof_clearance[roof_cell] = true
 	var threshold_candidates: Array[Dictionary] = []
 	# An adjacent street cell is not automatically a door. Use the same exact
@@ -8066,11 +8088,45 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 				or int(access_counts[access_parent_id]) < 2:
 			return {}
 	var support_parent_id := _largest_contact_owner(support_counts)
+	var bridge_span: Dictionary = {}
 	if not terrain_bearing and (support_parent_id.is_empty() \
 			or int(support_counts[support_parent_id]) < required_bearing):
+		# No half-footprint mass stands below. The one remaining legal bearing
+		# form is a street bridge: a tower or slim room whose side cells
+		# exactly meet the centred cardinal bearing sockets of two distinct
+		# established flanking rooms, and whose body actually covers uncovered
+		# canonical route. Anything else stays rejected.
+		if kind not in [&"tower", &"slim"]:
+			return {}
+		var covers_uncovered_route := false
+		for cell: Vector3i in cells:
+			for floor_cell: Vector3i in route_floor_by_overhead_cell.get(cell,
+					[] as Array[Vector3i]) as Array[Vector3i]:
+				if uncovered_route_floors.has(floor_cell):
+					covers_uncovered_route = true
+					break
+			if covers_uncovered_route:
+				break
+		if not covers_uncovered_route:
+			return {}
+		_residual_bridge_counts["route_covering_candidates"] = int(
+			_residual_bridge_counts.get("route_covering_candidates", 0)) + 1
+		bridge_span = _residual_bridge_span(cells, building_by_id,
+			building_by_cell, world_seed, construction_program)
+		if bridge_span.is_empty():
+			_residual_bridge_counts["span_unbound"] = int(
+				_residual_bridge_counts.get("span_unbound", 0)) + 1
+			return {}
+		_residual_bridge_counts["span_bound"] = int(
+			_residual_bridge_counts.get("span_bound", 0)) + 1
+		support_parent_id = StringName(bridge_span.parent_building_id)
+	if not roof_halo_clear and bridge_span.is_empty():
 		return {}
-	var support_parent_cell := Vector3i(2147483647, 2147483647, 2147483647) \
-		if terrain_bearing else support_cell_by_owner[support_parent_id] as Vector3i
+	var support_parent_cell := Vector3i(2147483647, 2147483647, 2147483647)
+	if not terrain_bearing:
+		support_parent_cell = bridge_span.parent_contact_cell as Vector3i \
+			if not bridge_span.is_empty() \
+			else support_cell_by_owner[support_parent_id] as Vector3i
 	var massif_edge_contact_count := 0
 	for column_value: Variant in footprint.keys():
 		var column := column_value as Vector2i
@@ -8134,12 +8190,144 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		"access_parent_id": access_parent_id,
 		"support_parent_id": support_parent_id,
 		"support_parent_cell": support_parent_cell,
+		"bridge_support_room_ids": bridge_span.get("room_ids",
+			[] as Array[StringName]),
 		"massif_edge_contact_count": massif_edge_contact_count,
 		"overhead_route_floors": overhead_route_floors,
 		"frontage_side_keys": frontage_side_keys,
 		"score": score,
 		"key": "%s/%d:%d:%d/r%d" % [String(kind), origin.x, origin.y,
 			origin.z, yaw]}
+
+
+static func _residual_bridge_span(cells: Array[Vector3i],
+		building_by_id: Dictionary, building_by_cell: Dictionary,
+		world_seed: int, program: SettlementFabricProgram) -> Dictionary:
+	## Prove the two-sided wall bearing for a candidate bridge room: on each of
+	## two opposing sides, one distinct established flanking room whose centred
+	## cardinal bearing socket exactly meets a cell of this footprint. The
+	## proof runs against the flanks' real measured recipes, so the strict
+	## compile-time `_sockets_meet` bond can never disagree with admission.
+	if program == null:
+		return {}
+	var cell_set: Dictionary = {}
+	for cell: Vector3i in cells:
+		cell_set[cell] = true
+	var bindings_by_direction: Dictionary = {}
+	for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+			Vector3i.FORWARD, Vector3i.BACK]:
+		for cell: Vector3i in cells:
+			var neighbor := cell + direction
+			if cell_set.has(neighbor):
+				continue
+			var owner := StringName(building_by_cell.get(neighbor, &""))
+			if owner.is_empty():
+				continue
+			var building := building_by_id.get(owner) as WarrenBuildingVolume
+			if building == null:
+				continue
+			_residual_bridge_counts["flank_contacts"] = int(
+				_residual_bridge_counts.get("flank_contacts", 0)) + 1
+			var binding: Dictionary = {}
+			for flank_room: WarrenRoomStamp in building.room_records:
+				if not flank_room.has_private_cell(neighbor):
+					continue
+				# An earlier residual room is a legal flank — it carries its
+				# own terrain-reaching support chain — but a bridge may not
+				# bear on another bridge: no viaducts of unproven depth.
+				if not (flank_room.audit.get("bridge_support_room_ids",
+						[]) as Array).is_empty():
+					continue
+				_residual_bridge_counts["flank_rooms_probed"] = int(
+					_residual_bridge_counts.get("flank_rooms_probed", 0)) + 1
+				binding = _bridge_flank_binding(cell_set, flank_room, owner,
+					world_seed, program)
+				if not binding.is_empty():
+					break
+			if not binding.is_empty():
+				bindings_by_direction[direction] = binding
+				break
+	if bindings_by_direction.size() == 1:
+		_residual_bridge_counts["one_side_bound"] = int(
+			_residual_bridge_counts.get("one_side_bound", 0)) + 1
+	# Two exact socket bonds on distinct flanking buildings carry the room.
+	# Opposing walls are the classic street bridge; perpendicular walls are
+	# the corner-jetty form over a street bend — both leave no free span wider
+	# than one bay. A single bound wall stays rejected until the bracketed
+	# jetty vocabulary exists.
+	var bound_directions: Array = bindings_by_direction.keys()
+	bound_directions.sort_custom(func(a: Variant, b: Variant) -> bool:
+		var left := a as Vector3i
+		var right := b as Vector3i
+		if left.x != right.x:
+			return left.x < right.x
+		return left.z < right.z)
+	for first_index in bound_directions.size():
+		for second_index in range(first_index + 1, bound_directions.size()):
+			var negative := bindings_by_direction[
+				bound_directions[first_index]] as Dictionary
+			var positive := bindings_by_direction[
+				bound_directions[second_index]] as Dictionary
+			# Two distinct bonded rooms carry the span. They are usually two
+			# buildings across a street; two wings of one U-shaped building
+			# bridging their own notch is the same legal arch.
+			if StringName(negative.room_id) == StringName(positive.room_id):
+				_residual_bridge_counts["same_room_pair"] = int(
+					_residual_bridge_counts.get("same_room_pair", 0)) + 1
+				continue
+			var room_ids: Array[StringName] = [
+				StringName(negative.room_id), StringName(positive.room_id)]
+			return {
+				"room_ids": room_ids,
+				"parent_building_id": StringName(negative.building_id),
+				"parent_contact_cell": negative.contact_cell,
+			}
+	return {}
+
+
+static func _bridge_flank_binding(cell_set: Dictionary,
+		flank_room: WarrenRoomStamp, owner_id: StringName, world_seed: int,
+		program: SettlementFabricProgram) -> Dictionary:
+	## A flank binds when its centred cardinal bearing socket faces a cell of
+	## the candidate footprint at the exact same band. The bridge recipe
+	## authors a span socket on every side cell, so this one-sided test is the
+	## complete strict mutual-adjacency proof.
+	var recipe := program.recipe(WarrenSpatialFabricCompiler._room_recipe_id(
+		flank_room, world_seed, true, 0))
+	if recipe == null:
+		_residual_bridge_counts["flank_recipe_null"] = int(
+			_residual_bridge_counts.get("flank_recipe_null", 0)) + 1
+		return {}
+	var probed_sockets := 0
+	for socket_name: StringName in [&"bearing.east", &"bearing.west",
+			&"bearing.north", &"bearing.south"]:
+		var socket := recipe.socket(socket_name)
+		if socket.is_empty():
+			continue
+		probed_sockets += 1
+		var socket_cell := FabricRecipe.transform_cell(
+			socket.cell as Vector3i, flank_room.lattice_origin,
+			flank_room.yaw_quarters)
+		var facing := FabricRecipe.transform_direction(
+			socket.facing as Vector3i, flank_room.yaw_quarters)
+		if cell_set.has(socket_cell + facing):
+			return {"room_id": flank_room.stable_id,
+				"building_id": owner_id,
+				"contact_cell": socket_cell}
+		if not _residual_bridge_counts.has("sample_miss"):
+			var candidate_cells: Array = cell_set.keys()
+			candidate_cells.sort_custom(_cell_less)
+			_residual_bridge_counts["sample_miss"] = {
+				"flank_room": flank_room.stable_id,
+				"flank_kind": flank_room.kind,
+				"socket": socket_name,
+				"socket_cell": socket_cell,
+				"facing": facing,
+				"candidate_min": candidate_cells[0]}
+	if probed_sockets == 0:
+		_residual_bridge_counts["flank_no_cardinal_sockets"] = int(
+			_residual_bridge_counts.get("flank_no_cardinal_sockets", 0)) + 1
+	return {}
 
 
 static func _residual_room_envelope_fits(candidate: WarrenRoomStamp,

@@ -326,6 +326,10 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_tower_room_recipe(&"room.tower.upper.orange", false, &"orange", false, modules),
 		_tower_room_recipe(&"room.tower.upper.amber", false, &"amber", false, modules),
 		_tower_room_recipe(&"room.tower.upper.stone", false, &"stone", false, modules),
+		_bridge_room_recipe(&"room.bridge.tower.blue", &"blue", modules),
+		_bridge_room_recipe(&"room.bridge.tower.orange", &"orange", modules),
+		_bridge_room_recipe(&"room.bridge.slim.blue", &"blue", modules),
+		_bridge_room_recipe(&"room.bridge.slim.orange", &"orange", modules),
 		_tower_room_recipe(&"room.tower.upper.blue.b", false, &"blue", false, modules, 1),
 		_tower_room_recipe(&"room.tower.upper.orange.b", false, &"orange", false, modules, 1),
 		_tower_room_recipe(&"room.tower.upper.amber.b", false, &"amber", false, modules, 1),
@@ -1081,6 +1085,57 @@ static func _pier_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 	else:
 		_set_terrain_bearing_rect(recipe_value, Vector3i(-1, 0, -1),
 			Vector3i(2, 1, 2))
+	return recipe_value
+
+
+static func _bridge_room_recipe(recipe_id: StringName, theme: StringName,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## An inhabited room spanning a carved street or residual gap, bearing on
+	## the two flanking buildings it joins instead of on mass below. The shell
+	## is the ordinary unaddressed upper tower storey; only the bearing
+	## contract differs: two bearing parents, bound through per-cell span
+	## sockets so any placement whose side cell exactly meets a flank's
+	## centred cardinal bearing socket can bind — the same strict
+	## `_sockets_meet` adjacency the skywalk endpoints use, never a loosened
+	## overlap test. Placements that cannot meet both flanks are rejected at
+	## candidate time, so this admits real street-bridging rooms only.
+	var recipe_value := _tower_room_recipe(recipe_id, false, theme, false,
+		modules) if not String(recipe_id).contains(".slim.") \
+		else _slim_room_recipe(recipe_id, false, theme, false, modules)
+	recipe_value.bearing_parent_count = 2
+	recipe_value.role_tags.append(&"bridge_room")
+	var minimum := Vector3i(-1, 0, -1)
+	var size := Vector3i(2, 2, 2)
+	if String(recipe_id).contains(".slim."):
+		minimum = Vector3i(-1, 0, -2)
+		size = Vector3i(2, 2, 4)
+	# Span sockets exist on every boundary cell of both storey bands:
+	# neighbouring lineages deliberately stagger half-storey phases (the
+	# vertical_phase_conflict motif), so a bridge may meet one flank's centred
+	# socket at its lower band and the opposite flank's at its upper band
+	# while both bonds stay strict exact adjacencies.
+	for side: Dictionary in [
+		{"prefix": "east", "facing": Vector3i(1, 0, 0)},
+		{"prefix": "west", "facing": Vector3i(-1, 0, 0)},
+		{"prefix": "north", "facing": Vector3i(0, 0, -1)},
+		{"prefix": "south", "facing": Vector3i(0, 0, 1)},
+	]:
+		var facing := side.facing as Vector3i
+		var side_cells: Array[Vector3i] = []
+		if facing.x != 0:
+			var x := minimum.x if facing.x < 0 else minimum.x + size.x - 1
+			for z in range(minimum.z, minimum.z + size.z):
+				side_cells.append(Vector3i(x, 0, z))
+		else:
+			var z := minimum.z if facing.z < 0 else minimum.z + size.z - 1
+			for x in range(minimum.x, minimum.x + size.x):
+				side_cells.append(Vector3i(x, 0, z))
+		for band in 2:
+			for index in side_cells.size():
+				recipe_value.add_socket(StringName("bearing.span.%s.%d.%d" % [
+					String(side.prefix), band, index]),
+					FabricRecipe.SocketKind.BEARING,
+					side_cells[index] + Vector3i(0, band, 0), facing)
 	return recipe_value
 
 

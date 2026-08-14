@@ -620,6 +620,29 @@ Next-session implementation, in preference order:
 3. Only if supply remains: interior gateway rows via
    `perimeter_gateway_support` minus the envelope-boundary gate.
 
+Option 1 is now implemented and measured: **variant 5 rose from 33.45% to
+37.68% inhabited overhead** — the first movement of that number in the
+entire remediation — and both fixtures seal with every focused test green.
+The mechanism: `room.bridge.tower.*` and `room.bridge.slim.*` recipes
+(ordinary unaddressed shells, `bearing_parent_count = 2`, span sockets on
+every boundary cell of both storey bands so half-storey-staggered flanks
+bind), a `_residual_bridge_span` admission proof that runs the flanks' real
+measured recipes so the strict compile-time `_sockets_meet` bond can never
+disagree with admission, bridge-aware compile ordering (a bridge sorts one
+band late so staggered flanks build first), and telemetry
+(`residual_backfill_bridge_counts`). Iteration falsified three cheaper
+forms first: opposing-only pairs bind zero towns (half-storey stagger),
+single-band span sockets bind one side only, and the residual roof halo
+must be waived for nestled bridges (their roofs are party-wall caps under
+the roof phase's own gates). Corner pairs, residual flanks, and
+same-building two-room arches are admitted; bridge-on-bridge is not.
+
+The remaining 0.9 points to the 38% floor are exactly the open-market-side
+street cells, where only one flank exists: the **single-flank jetty** —
+one span bond plus a measured bracket course on the outer edge (the
+`perimeter_gateway_support` two-bracket motif, interior) — is the specified
+next increment and would close the floor.
+
 Generalizing the join transaction to this dense fixture also hardened it:
 
 - air exclusively reserved by a composed feature, or flanked by a feature's

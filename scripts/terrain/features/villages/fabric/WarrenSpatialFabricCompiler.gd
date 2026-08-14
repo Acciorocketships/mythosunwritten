@@ -139,8 +139,15 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			building_by_room[room.stable_id] = building.stable_id
 			room_by_id[room.stable_id] = room
 	rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
-		if a.lattice_origin.y != b.lattice_origin.y:
-			return a.lattice_origin.y < b.lattice_origin.y
+		# A street-bridge room may meet a half-storey-staggered flank whose
+		# base sits one band above its own; ordering bridges one band late
+		# guarantees both flank units exist before their bridge binds.
+		var a_y := a.lattice_origin.y + int(not (a.audit.get(
+			"bridge_support_room_ids", []) as Array).is_empty())
+		var b_y := b.lattice_origin.y + int(not (b.audit.get(
+			"bridge_support_room_ids", []) as Array).is_empty())
+		if a_y != b_y:
+			return a_y < b_y
 		if a.source_storey_index != b.source_storey_index:
 			return a.source_storey_index < b.source_storey_index
 		return String(a.stable_id) < String(b.stable_id))
@@ -216,7 +223,31 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 		var parents: Array[StringName] = []
 		var bonds: Array[Dictionary] = []
-		if not room.terrain_bearing:
+		var bridge_support_room_ids: Array[StringName] = []
+		bridge_support_room_ids.assign(room.audit.get(
+			"bridge_support_room_ids", []) as Array)
+		if not bridge_support_room_ids.is_empty():
+			# A street-bridge room bears on the two flanking rooms it spans
+			# between. Both bonds go through the exact strict socket adjacency;
+			# a bridge that cannot meet both flanks is a compile failure, never
+			# a silently floating room.
+			for flank_room_id: StringName in bridge_support_room_ids:
+				var flank_room := room_by_id.get(flank_room_id) \
+					as WarrenRoomStamp
+				var flank_unit := unit_by_room.get(flank_room_id) as FabricUnit
+				if flank_room == null or flank_unit == null:
+					last_failure = "bridge room %s has no built flank %s" % [
+						room.stable_id, flank_room_id]
+					return [] as Array[FabricUnit]
+				var span_bond := _bridge_span_bond(room, recipe, flank_room,
+					flank_unit, program)
+				if span_bond.is_empty():
+					last_failure = "bridge room %s cannot meet flank %s" % [
+						room.stable_id, flank_room_id]
+					return [] as Array[FabricUnit]
+				parents.append(flank_unit.stable_id)
+				bonds.append(span_bond)
+		elif not room.terrain_bearing:
 			var parent_key := _source_level_key(
 				room.support_parent_parcel_id,
 				room.support_parent_storey_index)
@@ -2405,6 +2436,14 @@ static func _setback_gable_placement(piece: Dictionary,
 static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		allow_phase_b: bool = true, feature_portal_mask: int = 0) \
 		-> StringName:
+	if not (room.audit.get("bridge_support_room_ids", []) as Array).is_empty():
+		# A street-bridge room keeps its ordinary unaddressed shell but swaps
+		# the bearing contract: two flank parents through span sockets.
+		var bridge_theme := _architectural_district_theme(room.lattice_origin,
+			world_seed)
+		return StringName("room.bridge.%s.%s" % [
+			"slim" if room.kind == &"slim" else "tower",
+			"orange" if bridge_theme == &"orange" else "blue"])
 	var prefix := "room.long" if room.kind == &"long" \
 		else "room.slim" if room.kind == &"slim" \
 		else "room.row" if room.kind == &"row" \
@@ -3363,6 +3402,41 @@ static func _entrance_matches(recipe: FabricRecipe,
 		room.lattice_origin, room.yaw_quarters) == room.threshold_cell \
 		and FabricRecipe.transform_direction(entrance.facing as Vector3i,
 			room.yaw_quarters) == room.frontage_direction
+
+
+static func _bridge_span_bond(room: WarrenRoomStamp, recipe: FabricRecipe,
+		flank_room: WarrenRoomStamp, flank_unit: FabricUnit,
+		program: SettlementFabricProgram) -> Dictionary:
+	## Bind one side of a street-bridge room to a flanking room: the bridge's
+	## per-cell span socket must exactly meet the flank's centred cardinal
+	## bearing socket — the same mutual adjacency SettlementFabricPlan
+	## enforces, computed here so the unit is authored with the one true bond.
+	var flank_recipe := program.recipe(flank_unit.recipe_id)
+	if flank_recipe == null:
+		return {}
+	for socket: Dictionary in recipe.sockets:
+		var own_socket_id := StringName(socket.id)
+		if not String(own_socket_id).begins_with("bearing.span."):
+			continue
+		var own_cell := FabricRecipe.transform_cell(socket.cell as Vector3i,
+			room.lattice_origin, room.yaw_quarters)
+		var own_facing := FabricRecipe.transform_direction(
+			socket.facing as Vector3i, room.yaw_quarters)
+		for flank_name: StringName in [&"bearing.east", &"bearing.west",
+				&"bearing.north", &"bearing.south"]:
+			var flank_socket := flank_recipe.socket(flank_name)
+			if flank_socket.is_empty():
+				continue
+			var flank_cell := FabricRecipe.transform_cell(
+				flank_socket.cell as Vector3i, flank_room.lattice_origin,
+				flank_room.yaw_quarters)
+			var flank_facing := FabricRecipe.transform_direction(
+				flank_socket.facing as Vector3i, flank_room.yaw_quarters)
+			if own_cell + own_facing == flank_cell \
+					and flank_cell + flank_facing == own_cell:
+				return FabricUnit.bond(own_socket_id, flank_unit.stable_id,
+					flank_name)
+	return {}
 
 
 static func _bearing_bond(upper: WarrenRoomStamp,
