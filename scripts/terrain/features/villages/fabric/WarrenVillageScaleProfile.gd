@@ -118,31 +118,38 @@ static func from_roll(roll: int) -> WarrenVillageScaleProfile:
 
 
 static func for_id(id: StringName) -> WarrenVillageScaleProfile:
+	# Reviewed sizing (2026-08-14): the former radius-12 large town read as a
+	# metropolis in review captures. Footprints shrink to village scale —
+	# a standard town is roughly one fifth of that reviewed city's mass —
+	# while core heights stay nearly unchanged, so the hill remains tall and
+	# the warren remains vertical; only the sprawl contracts. Feature quotas
+	# scale with the smaller fabric so the gates stay satisfiable.
 	match id:
 		COMPACT:
-			return WarrenVillageScaleProfile.new(COMPACT, 10,
-				Vector2i(14, 17), Vector2i(29, 35), Vector2i(7, 9),
-				8, 34, Vector2i(18, 110), 12, 3, Vector2i(1, 1),
-				Vector2i(2, 3), Vector2i(4, 4), Vector2i(0, 0), 0.29, false)
+			return WarrenVillageScaleProfile.new(COMPACT, 7,
+				Vector2i(12, 15), Vector2i(12, 18), Vector2i(5, 7),
+				4, 16, Vector2i(10, 30), 6, 2, Vector2i(1, 1),
+				Vector2i(0, 2), Vector2i(2, 2), Vector2i(0, 0), 0.29, false,
+				false)
 		STANDARD:
-			return WarrenVillageScaleProfile.new(STANDARD, 11,
-				Vector2i(15, 18), Vector2i(29, 35), Vector2i(7, 9),
-				10, 42, Vector2i(30, 190), 16, 4, Vector2i(2, 2),
-				Vector2i(5, 5), Vector2i(5, 5), Vector2i(1, 1), 0.33, false)
+			return WarrenVillageScaleProfile.new(STANDARD, 8,
+				Vector2i(13, 16), Vector2i(14, 22), Vector2i(6, 8),
+				5, 20, Vector2i(16, 55), 8, 3, Vector2i(1, 2),
+				Vector2i(1, 3), Vector2i(2, 3), Vector2i(0, 1), 0.33, false,
+				false)
 		LARGE:
-			# Skywalk range (3, 4): request four links, but the sealed occluder
-			# ranking may keep three when the fourth provably adds no distinct
-			# inhabited route coverage. The raw four-link experiment measured
-			# zero coverage gain, so link count alone is not the contract.
-			return WarrenVillageScaleProfile.new(LARGE, 12,
-				Vector2i(16, 18), Vector2i(30, 36), Vector2i(8, 10),
-				16, 64, Vector2i(50, 220), 24, 6, Vector2i(3, 4),
-				Vector2i(6, 8), Vector2i(6, 8), Vector2i(2, 2), 0.38, true)
+			# Skywalk range minimum below maximum: request the richer link
+			# count, but the sealed occluder ranking may keep fewer when an
+			# extra link provably adds no distinct inhabited route coverage.
+			return WarrenVillageScaleProfile.new(LARGE, 9,
+				Vector2i(14, 17), Vector2i(16, 26), Vector2i(6, 9),
+				8, 32, Vector2i(25, 70), 12, 4, Vector2i(2, 3),
+				Vector2i(3, 4), Vector2i(3, 4), Vector2i(1, 1), 0.38, true)
 		GRAND:
-			return WarrenVillageScaleProfile.new(GRAND, 14,
-				Vector2i(16, 18), Vector2i(32, 40), Vector2i(8, 12),
-				20, 80, Vector2i(80, 300), 32, 8, Vector2i(3, 4),
-				Vector2i(8, 12), Vector2i(8, 12), Vector2i(3, 3), 0.38, true)
+			return WarrenVillageScaleProfile.new(GRAND, 11,
+				Vector2i(15, 18), Vector2i(20, 30), Vector2i(7, 10),
+				10, 40, Vector2i(40, 110), 16, 5, Vector2i(3, 4),
+				Vector2i(4, 6), Vector2i(4, 6), Vector2i(2, 2), 0.38, true)
 		_:
 			return null
 

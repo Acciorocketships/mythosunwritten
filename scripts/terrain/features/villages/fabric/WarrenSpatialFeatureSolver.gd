@@ -60,11 +60,19 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	var target_landmarks := scale_profile.landmark_range.x
 	var target_balconies := scale_profile.balcony_range.x
 	var target_outcroppings := scale_profile.cantilever_range.x
-	var market := _reserve_preplanned_market(grid, buildings, supports,
-		preplanned_market)
-	if market == null:
+	# A village whose ground street holds no measured bazaar runs without one;
+	# a profile that requires the market never reaches this stage marketless
+	# because the hero-feature beam already rejected the town.
+	var market: WarrenFeatureReservation = null
+	if not preplanned_market.is_empty():
+		market = _reserve_preplanned_market(grid, buildings, supports,
+			preplanned_market)
+		if market == null:
+			return [] as Array[WarrenFeatureReservation]
+		out.append(market)
+	elif scale_profile.requires_covered_market:
+		last_failure = "required covered market was never preplanned"
 		return [] as Array[WarrenFeatureReservation]
-	out.append(market)
 	var gateway_records := composition_audit.get(
 		"perimeter_gateway_support_records", []) as Array
 	var gateway_resolution: Dictionary = {}
@@ -204,7 +212,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	last_audit = {
 		"elevated_courtyard_count": int(
 			scale_profile.requires_elevated_courtyard),
-		"covered_market_count": 1,
+		"covered_market_count": int(market != null),
 		"frontier_gateway_support_count": gateway_supports.size(),
 		"frontier_gateway_direct_bearing_count": int(
 			gateway_resolution.get("direct_bearing_count", 0)),
@@ -235,7 +243,8 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		last_audit.merge(courtyard_bridge.audit, false)
 	if court != null:
 		last_audit.merge(court.audit, false)
-	last_audit.merge(market.audit, false)
+	if market != null:
+		last_audit.merge(market.audit, false)
 	return out
 
 

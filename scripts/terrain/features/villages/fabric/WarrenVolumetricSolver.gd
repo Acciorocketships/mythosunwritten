@@ -5,7 +5,9 @@ extends RefCounted
 ## reuses the proven terrain-grounded massif and bore as topology input, then
 ## abandons the old extrusion interpretation: remaining mass is assigned to
 ## offset 3D room volumes, exact interfaces, and an explicit support DAG.
-const MIN_BUILDINGS := 10
+## Village-scale floor: a rescaled compact hamlet legitimately forms six to
+## eight buildings; anything below this still reads as a farmstead, not a town.
+const MIN_BUILDINGS := 6
 const GRID_PADDING_CELLS := 2
 const ROOF_CLEARANCE_CELLS := 2
 const MAX_PARTITION_VARIANTS := WarrenSolidPartitioner.PARTITION_VARIANTS
@@ -591,8 +593,8 @@ static func from_volume(volume: WarrenVolumePlan,
 				scale_profile.room_volume_budget.x,
 				scale_profile.room_volume_budget.y])
 		return null
-	for cell_value: Variant in (partition.market_reservation.public_cells \
-			as Dictionary).keys():
+	for cell_value: Variant in (partition.market_reservation.get(
+			"public_cells", {}) as Dictionary).keys():
 		var market_floor := cell_value as Vector3i
 		if not route_floors.has(market_floor):
 			route_floors.append(market_floor)
@@ -923,8 +925,16 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var market_candidates: Array[Dictionary] = []
 	market_candidates.assign(market_plan.get("candidates", []) as Array)
 	if market_candidates.is_empty():
-		last_failure = "no topology-first covered market fits the connected ground street"
-		return {}
+		if scale_profile.requires_covered_market:
+			last_failure = "no topology-first covered market fits the connected ground street"
+			return {}
+		# The covered bazaar is a city feature. A village takes one whenever
+		# its ground street can actually hold the measured canopy, aisle, and
+		# backing; when none fits, the hero-feature beam runs once with the
+		# market deliberately absent instead of rejecting the whole town. The
+		# sentinel is non-empty so a committed selection still reads as one;
+		# it is normalized back to a truly absent market after the beam.
+		market_candidates = [{"optional_absent": true}]
 	# Select three measured straight links *before* upper composition blocks are
 	# frozen. Each candidate shifts both endpoint blocks together by one fine
 	# cell, creating a genuine floorplate break while preserving exact sockets.
@@ -963,7 +973,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		var market_attempt_started := Time.get_ticks_msec()
 		if diagnostic_trace_skywalk_timing:
 			print("SKYWALK_TIMING market_begin parcel=",
-				candidate.backing_parcel_id)
+				candidate.get("backing_parcel_id", &""))
 		var market_owners := _protected_owners_with_market(protected_owners,
 			candidate)
 		# Cosmetic prefab alternatives often share the exact same protected
@@ -1002,8 +1012,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			raw_court_candidates.append(_absent_courtyard_bridge_candidate())
 		if raw_court_candidates.is_empty():
 			feature_set_attempts.append({
-				"market_parcel": candidate.backing_parcel_id,
-				"market_origin": candidate.origin, "landmark_count": 0,
+				"market_parcel": candidate.get("backing_parcel_id", &""),
+				"market_origin": candidate.get("origin", Vector3i.ZERO), "landmark_count": 0,
 				"landmark_recipes": [] as Array[StringName],
 				"courtyard_bridge_count": 0,
 				"skywalk_count": 0, "skywalk_candidate_count": 0})
@@ -1040,8 +1050,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 					or not _court_macro_conflict_is_recomposable(
 						court_candidate)):
 				feature_set_attempts.append({
-					"market_parcel": candidate.backing_parcel_id,
-					"market_origin": candidate.origin,
+					"market_parcel": candidate.get("backing_parcel_id", &""),
+					"market_origin": candidate.get("origin", Vector3i.ZERO),
 					"courtyard_bridge_count": 0,
 					"court_macro_fit": false,
 					"court_macro_side_count": int(court_candidate.get(
@@ -1079,8 +1089,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 					skywalk_corpus.size())
 			if skywalk_corpus.is_empty():
 				feature_set_attempts.append({
-					"market_parcel": candidate.backing_parcel_id,
-					"market_origin": candidate.origin,
+					"market_parcel": candidate.get("backing_parcel_id", &""),
+					"market_origin": candidate.get("origin", Vector3i.ZERO),
 					"courtyard_bridge_count": 1,
 					"landmark_count": 0,
 					"landmark_recipes": [] as Array[StringName],
@@ -1107,8 +1117,16 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				landmark_sets = landmark_sets_by_corpus[landmark_corpus_key] \
 					as Array[Dictionary]
 			else:
+				# Enumerate the richest requested hall count; a village whose
+				# landmark range starts at zero appends the hall-less set as
+				# the last-ranked fallback, so it takes a hall exactly when
+				# one genuinely fits among its parcels.
 				landmark_sets = _landmark_candidate_sets(landmark_candidates,
-					volume.world_seed, target_landmarks)
+					volume.world_seed, scale_profile.landmark_range.y)
+				if target_landmarks == 0 \
+						and scale_profile.landmark_range.y > 0:
+					landmark_sets.append_array(_landmark_candidate_sets(
+						[] as Array[Dictionary], volume.world_seed, 0))
 				landmark_sets_by_corpus[landmark_corpus_key] = landmark_sets
 			if diagnostic_trace_skywalk_timing:
 				print("SKYWALK_TIMING landmark_sets ms=",
@@ -1145,8 +1163,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 							"candidate_count", 0),
 						" selected=", trial_skywalks.size())
 				feature_set_attempts.append({
-					"market_parcel": candidate.backing_parcel_id,
-					"market_origin": candidate.origin,
+					"market_parcel": candidate.get("backing_parcel_id", &""),
+					"market_origin": candidate.get("origin", Vector3i.ZERO),
 					"courtyard_bridge_count": 1,
 					"courtyard_bridge_origin": court_reservation.origin,
 					"landmark_count": landmark_set.size(),
@@ -1160,7 +1178,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						"pair_frontier_count", 0))})
 				if landmark_set.size() < target_landmarks \
 						or trial_skywalks.size() \
-							< target_skywalks:
+							< scale_profile.skywalk_range.x:
 					continue
 				var market_landmark_owners := \
 					_protected_owners_with_landmarks(market_owners,
@@ -1433,13 +1451,18 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	if market_reservation.is_empty() or courtyard_bridge_reservation.is_empty() \
 			or landmark_reservations.size() < target_landmarks \
 			or skywalk_reservations.size() \
-				< target_skywalks:
+				< scale_profile.skywalk_range.x:
 		last_failure = "joint hero-feature beam found court=%d, %d landmarks, and %d skywalks (%s; %s)" \
 			% [int(not courtyard_bridge_reservation.is_empty()),
 				landmark_reservations.size(), skywalk_reservations.size(),
 				last_preplan_landmark_diagnostic,
 				last_preplan_skywalk_diagnostic]
 		return {}
+	# A committed absent-market sentinel becomes a genuinely absent market for
+	# every downstream consumer (composition, features, audits) — mirroring
+	# how optional-absent courts already flow through this beam.
+	if bool(market_reservation.get("optional_absent", false)):
+		market_reservation = {}
 	# Landmark and three-skywalk selection is the expensive part of this beam.
 	# Keep that complete feature set fixed while trying the tiny court frontier
 	# against the *final* room grammar it induces. A failed cantilever may be
@@ -1525,7 +1548,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# before room composition so the exact solver searches the real residual 3D
 	# mass instead of a much larger proxy volume. `protected_owners` remains the
 	# lineage-level exception map, while the grid is the authoritative occupancy.
-	if not _reserve_market_preplan(grid, market_reservation):
+	if not market_reservation.is_empty() \
+			and not _reserve_market_preplan(grid, market_reservation):
 		last_failure = "covered-market reservation changed before joint commit: %s" \
 			% grid.last_rejection
 		return {}
@@ -1536,17 +1560,18 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			% grid.last_rejection
 		return {}
 	last_preplan_market_diagnostic["selected"] = {
-		"parcel": market_reservation.backing_parcel_id,
-		"origin": market_reservation.origin,
-		"yaw": market_reservation.yaw_quarters,
-		"recipe": market_reservation.recipe_id,
+		"parcel": market_reservation.get("backing_parcel_id", &""),
+		"origin": market_reservation.get("origin", Vector3i.ZERO),
+		"yaw": market_reservation.get("yaw_quarters", 0),
+		"recipe": market_reservation.get("recipe_id", &""),
 		"open_horizon_max_cells": int(market_reservation.get(
 			"open_horizon_max_cells", -1)),
 		"open_horizon_total_cells": int(market_reservation.get(
 			"open_horizon_total_cells", -1)),
 		"core_radius_squared": float(market_reservation.get(
 			"core_radius_squared", -1.0))}
-	var market_feature_id := StringName(market_reservation.feature_id)
+	var market_feature_id := StringName(market_reservation.get("feature_id",
+		&""))
 	# Selected hero-feature endpoint blocks outrank generic room proposals. Make
 	# that priority explicit in the provisional-owner field so every displaced
 	# parcel either finds another legal block offset or drops transactionally.
@@ -1898,9 +1923,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						last_failure = "could not attach %s to %s" % [feature_id,
 							building_id]
 						return {}
-			if StringName(market_reservation.backing_parcel_id) == parcel.stable_id \
+			if StringName(market_reservation.get("backing_parcel_id", &"")) \
+					== parcel.stable_id \
 					and building.has_private_cell(
-						market_reservation.backing_cell as Vector3i):
+						market_reservation.get("backing_cell",
+						Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i):
 				if not building.add_feature(market_feature_id):
 					last_failure = "could not attach covered market to %s" % building_id
 					return {}
@@ -2843,6 +2870,21 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 				selected_small_tower_risk = int(ranked_pair.tower_risk)
 				selected_small_quality = int(ranked_pair.quality)
 				break
+			# A village that genuinely holds only one exact link keeps that
+			# one instead of rejecting the whole town; the profile minimum
+			# gate downstream still enforces the declared floor.
+			if selected_small.is_empty():
+				for candidate: Dictionary in candidates:
+					if not _skywalk_selection_preserves_endpoint_rooms(grid,
+							volume, [candidate] as Array[Dictionary],
+							proposals, protected_owners, volume.world_seed):
+						continue
+					selected_small = [candidate] as Array[Dictionary]
+					selected_small_tower_risk = _skywalk_combination_tower_risk(
+						selected_small, proposals, {})
+					selected_small_quality = int(candidate.blocker_count) * 100 \
+						- int(candidate.lower_cover) * 10
+					break
 		last_preplan_skywalk_diagnostic["landmark_filtered_candidate_count"] = \
 			candidates.size()
 		last_preplan_skywalk_diagnostic["landmark_attached_candidate_count"] = \
@@ -4374,6 +4416,8 @@ static func _market_backing_composition_survives(grid: WarrenSpatialGrid,
 static func _protected_owners_with_market(protected_owners: Dictionary,
 		market: Dictionary) -> Dictionary:
 	var trial := protected_owners.duplicate(true)
+	if market.is_empty():
+		return trial
 	var feature_id := StringName(market.feature_id)
 	var endpoint_allowance: Dictionary = {
 		StringName(market.backing_parcel_id): true}

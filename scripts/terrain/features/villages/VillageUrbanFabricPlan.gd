@@ -120,7 +120,7 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 			or StringName(fabric_audit.get("generation_source", "")) \
 				!= &"volumetric_warren" \
 			or int(fabric_audit.get("market_count", 0)) \
-				< WarrenMarketSolver.REQUIRED_MARKETS \
+				< _required_market_count(fabric_audit) \
 			or int(fabric_audit.get("skywalk_link_count", 0)) < 1 \
 			or int(fabric_audit.get("transverse_parcel_count", -1)) != 0 \
 			or int(fabric_audit.get(
@@ -131,6 +131,16 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 					.TARGET_MAX_UNCOVERED_ROUTE_COMPONENT_SIZE:
 		return false
 	return _validate_compiled_fabric(program)
+
+
+static func _required_market_count(audit: Dictionary) -> int:
+	## The covered bazaar is a city obligation; villages take one only when it
+	## fits. The legacy constant remains the fallback for audits that carry no
+	## size contract.
+	var profile := WarrenVillageScaleProfile.for_id(StringName(
+		audit.get("scale_profile_id", "")))
+	return int(profile.requires_covered_market) if profile != null \
+		else WarrenMarketSolver.REQUIRED_MARKETS
 
 
 static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
@@ -153,9 +163,12 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 			or int(audit.get("courtyard_upper_route_cell_count", 0)) \
 				>= WarrenSpatialFeatureSolver.MIN_COURT_UPPER_ROUTE_CELLS) \
 		and int(audit.get("covered_market_count", -1)) \
-			== int(profile.requires_covered_market) \
+			>= int(profile.requires_covered_market) \
+		and int(audit.get("covered_market_count", -1)) <= 1 \
 		and int(audit.get("prefab_landmark_count", -1)) \
-			== profile.landmark_range.x \
+			>= profile.landmark_range.x \
+		and int(audit.get("prefab_landmark_count", -1)) \
+			<= profile.landmark_range.y \
 		and int(audit.get("enclosed_skywalk_count", -1)) \
 			>= profile.skywalk_range.x \
 		and int(audit.get("enclosed_skywalk_count", -1)) \

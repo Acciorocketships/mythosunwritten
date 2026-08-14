@@ -22,7 +22,13 @@ static func envelope_from_massif(massif: WarrenMassif) -> WarrenVolumeEnvelope:
 	var envelope := WarrenVolumeEnvelope.new()
 	envelope.world_seed = massif.world_seed
 	envelope.address_bands = WarrenMassif.ADDRESS_BANDS
-	envelope.upper_route_crossovers = WarrenMassif.UPPER_ROUTE_CROSSOVERS
+	# Route self-crossings scale with the mountain: a grand mound interleaves
+	# its climb over the lower alleys twice, a village once. The quality
+	# meaning is unchanged — one public level must still roof another — and
+	# the footprint proxy is the massif's own column count (roughly pi times
+	# radius squared in macro columns).
+	envelope.upper_route_crossovers = WarrenMassif.UPPER_ROUTE_CROSSOVERS \
+		if massif.columns.size() >= 300 else 1
 	envelope.plinth_budget_bands = WarrenMassif.PLINTH_BUDGET_BANDS
 	var min_x := 2147483647
 	var max_x := -2147483648

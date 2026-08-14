@@ -303,6 +303,45 @@ infill placements are deliberately minimal (flush cap or base blocking; the
 flanking party walls are the reveal surfaces) — capture review judges whether
 the reveals need richer authored boarding.
 
+## Village-scale recalibration (2026-08-14, in flight)
+
+Review feedback: the radius-12 large town reads as a metropolis; a standard
+town should be roughly one fifth of it, and two other directives follow —
+compose the roofs properly (many read as one floating half-slope) and make
+towns performant enough to work in-game. All three pull the same way:
+smaller towns are the largest single performance lever.
+
+Profiles are resized (radii 7/8/9/11, room budgets 10-30/16-55/25-70/40-110,
+quotas scaled; core heights nearly unchanged so the hill stays vertical) and
+the metropolis-tuned absolute gates are being recalibrated one measured
+failure at a time, each with its own scan evidence:
+
+- the topology route floor now enforces the selected profile's own
+  `route_cell_range.x` (quality ratios untouched);
+- the covered bazaar is a city obligation — villages take one exactly when
+  the measured canopy/aisle/backing fits, through an `optional_absent`
+  market sentinel that mirrors the optional court, normalized after the
+  hero beam;
+- standard landmarks are `(0, 1)` take-when-it-fits, with the hall-less set
+  appended as the last-ranked fallback;
+- upper-route crossovers scale with the massif's column count (villages 1,
+  grand mounds 2);
+- the skywalk beam requests the profile's richer count but accepts its
+  declared minimum, including a single-link fallback in the pair path;
+- `MIN_BUILDINGS` 10 -> 6; balcony floors compact 0 / standard 1.
+
+State at the end of this session: standard seeds compile complete villages
+and fail only the final visual-quality bars — seed 1's best variants report
+71 through sightlines against the absolute 48 cap and 29.5% overhead
+against the unchanged 33% floor. Both bars are quality-bearing; do not
+lower them blindly. The open calibration questions are whether the
+through-sightline cap should scale with declared route budget (it is an
+absolute count tuned on 284-cell metropolis routes) and whether village
+overhead needs the single-flank jetty increment to clear 33% the same way
+variant 5 needed it for 38%. The pinned compact/variant-5 fixtures predate
+the resize and are superseded; new pinned fixtures must be chosen from the
+first sealing village seeds.
+
 ## Visual state (2026-08-13)
 
 The joined fixture renders to `/tmp/mythos-town-joins-after2` through

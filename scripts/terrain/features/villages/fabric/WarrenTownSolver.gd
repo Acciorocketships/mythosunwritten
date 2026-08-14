@@ -585,7 +585,8 @@ static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
 		return out
 	_attach_scale_profile(volume, profile)
 	if not WarrenPublicRealmCarver.passes_topology_gate(volume):
-		last_failure = "selected excavation no longer passes the topology gate"
+		last_failure = "selected excavation no longer passes the topology gate: %s" \
+			% WarrenPublicRealmCarver.topology_gate_failure(volume)
 		return out
 	var mass_context := volume.mass_context
 	var frontage_cells := volume.frontage_cells

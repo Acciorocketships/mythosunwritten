@@ -120,9 +120,10 @@ static func topology_gate_failure(plan: WarrenVolumePlan) -> String:
 	## derived episode consumed an otherwise viable street wall.
 	if plan == null or not plan.is_sealed():
 		return "unsealed plan"
-	if int(plan.audit.walk_cell_count) < MIN_ROUTE_CELLS:
+	var minimum_route_cells := _minimum_route_cells(plan)
+	if int(plan.audit.walk_cell_count) < minimum_route_cells:
 		return "walk cells %d < %d" % [int(plan.audit.walk_cell_count),
-			MIN_ROUTE_CELLS]
+			minimum_route_cells]
 	if int(plan.audit.elevation_band_count) < 4:
 		return "elevation bands %d < 4" % int(plan.audit.elevation_band_count)
 	if int(plan.audit.ramp_transition_count) < 1:
@@ -154,6 +155,17 @@ static func topology_gate_failure(plan: WarrenVolumePlan) -> String:
 		return "straight run %d > %d" % [int(
 			plan.audit.max_straight_run_cells), MAX_STRAIGHT_RUN]
 	return ""
+
+
+static func _minimum_route_cells(plan: WarrenVolumePlan) -> int:
+	## The route floor belongs to the selected size contract: a village-scale
+	## profile declares its own route budget and must meet its own minimum.
+	## The global constant remains the review-fixture fallback for plans that
+	## carry no attached profile, and every quality RATIO gate above stays
+	## scale-independent and untouched.
+	var profile := WarrenVillageScaleProfile.for_id(StringName(
+		plan.mass_context.get(&"scale_profile_id", &"")))
+	return profile.route_cell_range.x if profile != null else MIN_ROUTE_CELLS
 
 
 static func _grow_candidate(world_seed: int, attempt: int,

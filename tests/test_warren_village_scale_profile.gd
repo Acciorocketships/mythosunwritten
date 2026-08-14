@@ -26,8 +26,11 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 		var profile := WarrenVillageScaleProfile.for_id(id)
 		assert_not_null(profile)
 		assert_true(profile.validate())
-		assert_true(profile.requires_covered_market,
-			"every size keeps the embedded covered market")
+		assert_eq(profile.requires_covered_market,
+			profile.scale_id in [WarrenVillageScaleProfile.LARGE,
+				WarrenVillageScaleProfile.GRAND],
+			"the covered bazaar is a city obligation; villages take one "
+			+ "only when their ground street actually holds it")
 		profiles.append(profile)
 	for index in range(1, profiles.size()):
 		var smaller := profiles[index - 1]
@@ -49,19 +52,20 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 			smaller.minimum_inhabited_overhead_ratio)
 	for profile: WarrenVillageScaleProfile in profiles:
 		assert_gte(profile.skywalk_range.x, 1)
-		assert_gte(profile.cantilever_range.x, 4)
+		assert_gte(profile.cantilever_range.x, 2)
 	assert_eq([profiles[0].skywalk_range.x, profiles[1].skywalk_range.x,
 		profiles[2].skywalk_range.x, profiles[3].skywalk_range.x],
-		[1, 2, 3, 3],
-		"large and grand towns require at least three occupied links")
+		[1, 1, 2, 3],
+		"village-scale towns keep a modest occupied-link floor")
 	assert_eq([profiles[2].skywalk_range.y, profiles[3].skywalk_range.y],
-		[4, 4],
-		"large and grand towns request a fourth link; the sealed occluder "
+		[3, 4],
+		"large and grand towns request an extra link; the sealed occluder "
 		+ "ranking keeps it only when it adds distinct inhabited route cover")
 	assert_eq(profiles[0].landmark_range, Vector2i(0, 0))
-	assert_eq(profiles[1].landmark_range, Vector2i(1, 1))
-	assert_eq(profiles[2].landmark_range, Vector2i(2, 2))
-	assert_eq(profiles[3].landmark_range, Vector2i(3, 3))
+	assert_eq(profiles[1].landmark_range, Vector2i(0, 1),
+		"a standard village takes a hall exactly when one fits")
+	assert_eq(profiles[2].landmark_range, Vector2i(1, 1))
+	assert_eq(profiles[3].landmark_range, Vector2i(2, 2))
 	assert_false(profiles[0].requires_elevated_courtyard)
 	assert_false(profiles[1].requires_elevated_courtyard)
 	assert_true(profiles[2].requires_elevated_courtyard)
