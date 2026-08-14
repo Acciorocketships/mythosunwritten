@@ -781,9 +781,30 @@ diagnostics and must not order production candidates.
 
 ### Phase E — atomic roof neighborhoods
 
+Kickoff findings (2026-08-14): the cross-room neighborhood machinery already
+exists and works — `WarrenSpatialFabricCompiler._spatial_roof_neighborhood`
+classifies full-plate rooms through `FabricRoofTopologyPlan` and the
+junction module table, flattens whole incompatible campaigns together, and
+reports `roof_neighborhood_join_count`. The reason caps still dominate
+(44 setback caps vs 10 pitched on the compact fixture) is its entry gate:
+`_is_full_roof_plate` excludes every PARTIAL plate, and half-storey-staggered
+compositions make most exposed plates partial, so exactly the shoulders that
+form the boxy roofscape bypass the neighborhood solve and fall to per-room
+cap partitioning. The redesign is therefore: classify partial plates into
+the same neighborhood transaction (junction phases for half-storey steps
+already exist as STEPPED_EAVE/GABLE_WALL kinds), and only then let
+`_cap_pieces` consume what remains. A first bounded improvement is in place:
+`_cap_pieces` may now place up to three non-touching macro crowns per
+shoulder (a clear strip cell between crowns, so no untyped valley can form);
+it is inert on the compact fixture — its per-room plates are too small —
+and becomes meaningful once neighborhood-level plates reach it.
+
 - [ ] Build connected components of touching exposed roof plates.
 - [ ] Enumerate complete neighborhood recipes rather than independent room
   roofs.
+- [ ] Admit partial (staggered-shoulder) plates into
+  `_spatial_roof_neighborhood` with typed stepped junctions instead of
+  excluding them at `_is_full_roof_plate`.
 - [ ] Prefer continuous ridge and authored valley transactions; flatten only a
   complete incompatible component.
 - [ ] Make every partial shoulder an exact macro crown, lean-to, garden strip,

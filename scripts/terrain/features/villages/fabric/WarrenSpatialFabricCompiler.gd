@@ -2998,53 +2998,76 @@ static func _cap_pieces(face_cells: Array[Vector3i]) -> Array[Dictionary]:
 		remaining[cell] = true
 	var out: Array[Dictionary] = []
 	var y := face_cells[0].y if not face_cells.is_empty() else 0
-	# Exactly one largest recognizable crown may own an irregular shoulder. A
-	# second sibling gable over the same parent is not a larger house; it is the
-	# modular roof pile seen in close review, with intersecting valleys hidden by
-	# the parent's broad seam exception. The planner's admitted compound grammar
-	# already requires the residual to be terminal rows, so consuming one stamp
-	# here makes the construction pass match that proof.
-	var found_macro := false
-	for kind: StringName in [&"long", &"building", &"slim", &"row", &"tower"]:
-		if found_macro:
-			break
-		var ordered: Array[Vector3i] = []
-		ordered.assign(remaining.keys())
-		ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
-			return a.z < b.z if a.z != b.z else a.x < b.x)
-		for anchor: Vector3i in ordered:
-			for yaw in 4:
-				# Search a small origin halo around the first occupied cell;
-				# exact set containment is the authority, not this anchor phase.
-				for x in range(anchor.x - 3, anchor.x + 4):
-					for z in range(anchor.z - 3, anchor.z + 4):
-						var origin := Vector3i(x, y, z)
-						var stamp := WarrenRoomStamp.expected_private_cells(
-							kind, origin, yaw)
-						var top: Array[Vector3i] = []
-						var fits := true
-						for cell: Vector3i in stamp:
-							if cell.y != y:
+	# Several recognizable crowns may share an irregular shoulder, but only
+	# when they cannot touch: each additional stamp must keep at least one
+	# clear strip cell (Chebyshev distance two) from every accepted crown, so
+	# no sibling-gable valley can form and hide inside the parent's broad seam
+	# exception — the modular roof pile seen in close review. Touching-crown
+	# neighborhoods stay a future typed-valley transaction, not an overlap
+	# waiver. Largest kinds are still tried first and the residual remains
+	# terminal rows, so the planner's admitted compound grammar holds.
+	var crown_cells: Dictionary = {}
+	var crown_count := 0
+	while crown_count < 3:
+		var found_macro := false
+		for kind: StringName in [&"long", &"building", &"slim", &"row",
+				&"tower"]:
+			if found_macro:
+				break
+			var ordered: Array[Vector3i] = []
+			ordered.assign(remaining.keys())
+			ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+				return a.z < b.z if a.z != b.z else a.x < b.x)
+			for anchor: Vector3i in ordered:
+				for yaw in 4:
+					# Search a small origin halo around the first occupied cell;
+					# exact set containment is the authority, not this anchor
+					# phase.
+					for x in range(anchor.x - 3, anchor.x + 4):
+						for z in range(anchor.z - 3, anchor.z + 4):
+							var origin := Vector3i(x, y, z)
+							var stamp := WarrenRoomStamp.expected_private_cells(
+								kind, origin, yaw)
+							var top: Array[Vector3i] = []
+							var fits := true
+							for cell: Vector3i in stamp:
+								if cell.y != y:
+									continue
+								top.append(cell)
+								if not remaining.has(cell):
+									fits = false
+									break
+							if fits and not top.is_empty() and crown_count > 0:
+								for cell: Vector3i in top:
+									for z_offset in range(-1, 2):
+										for x_offset in range(-1, 2):
+											if crown_cells.has(cell + Vector3i(
+													x_offset, 0, z_offset)):
+												fits = false
+												break
+										if not fits:
+											break
+									if not fits:
+										break
+							if not fits or top.is_empty():
 								continue
-							top.append(cell)
-							if not remaining.has(cell):
-								fits = false
-								break
-						if not fits or top.is_empty():
-							continue
-						out.append({"kind": &"stamp", "room_kind": kind,
-							"origin": origin, "yaw_quarters": yaw,
-							"cells": top})
-						for cell: Vector3i in top:
-							remaining.erase(cell)
-						found_macro = true
-						break
+							out.append({"kind": &"stamp", "room_kind": kind,
+								"origin": origin, "yaw_quarters": yaw,
+								"cells": top})
+							for cell: Vector3i in top:
+								remaining.erase(cell)
+								crown_cells[cell] = true
+							found_macro = true
+							break
+						if found_macro:
+							break
 					if found_macro:
 						break
 				if found_macro:
 					break
-			if found_macro:
-				break
+		if not found_macro:
+			break
+		crown_count += 1
 	while not remaining.is_empty():
 		var ordered: Array[Vector3i] = []
 		ordered.assign(remaining.keys())
