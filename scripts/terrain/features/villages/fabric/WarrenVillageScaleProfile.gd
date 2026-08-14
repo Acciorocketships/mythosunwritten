@@ -134,7 +134,7 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 		STANDARD:
 			return WarrenVillageScaleProfile.new(STANDARD, 8,
 				Vector2i(13, 16), Vector2i(14, 22), Vector2i(6, 8),
-				5, 20, Vector2i(16, 55), 8, 3, Vector2i(1, 2),
+				5, 20, Vector2i(16, 60), 8, 3, Vector2i(1, 2),
 				Vector2i(1, 3), Vector2i(2, 3), Vector2i(0, 1), 0.33, false,
 				false)
 		LARGE:

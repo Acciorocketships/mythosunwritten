@@ -311,7 +311,7 @@ compose the roofs properly (many read as one floating half-slope) and make
 towns performant enough to work in-game. All three pull the same way:
 smaller towns are the largest single performance lever.
 
-Profiles are resized (radii 7/8/9/11, room budgets 10-30/16-55/25-70/40-110,
+Profiles are resized (radii 7/8/9/11, room budgets 10-30/16-60/25-70/40-110,
 quotas scaled; core heights nearly unchanged so the hill stays vertical) and
 the metropolis-tuned absolute gates are being recalibrated one measured
 failure at a time, each with its own scan evidence:
@@ -330,8 +330,14 @@ failure at a time, each with its own scan evidence:
   declared minimum, including a single-link fallback in the pair path;
 - `MIN_BUILDINGS` 10 -> 6; balcony floors compact 0 / standard 1.
 
-State at the end of this session: standard seeds compile complete villages
-and fail only the final visual-quality bars — seed 1's best variants report
+State at the end of this session: the radius-8 mountains naturally yield
+47-58 rooms, so the standard ceiling sits at 60; standard seeds compile
+complete villages and fail only late quality-bearing gates — per-seed
+variance now, not a shared constant: seed 1 hits the through-sightline cap
+(71 vs 48) and the 33% overhead floor (29.5%); seed 9 hits a genuine
+room-envelope collision its variant search could not route around; seed 8
+still starves on arcade crossovers; seeds 5/6 die in composition support
+and envelope tails — seed 1's best variants report
 71 through sightlines against the absolute 48 cap and 29.5% overhead
 against the unchanged 33% floor. Both bars are quality-bearing; do not
 lower them blindly. The open calibration questions are whether the
