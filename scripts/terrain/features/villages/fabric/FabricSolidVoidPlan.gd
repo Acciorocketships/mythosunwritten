@@ -7,7 +7,13 @@ extends RefCounted
 ## ranks and rejects candidates from this record instead of decorating a route
 ## and hoping that nearby buildings happen to form a maze.
 var stable_id: StringName
+## A street this many walk cells wide (4.5 m) can still read as an alley held
+## between two built edges; anything wider is a plaza or promenade.
+const MAX_ALLEY_SPAN_CELLS := 3
+
 var boundary_obligations: Array[Dictionary] = []
+var alley_bounded_cell_count := 0
+var alley_eligible_cell_count := 0
 var unbounded_obligations: Array[Dictionary] = []
 var building_base_bands: Array[int] = []
 var building_roof_bands: Array[int] = []
@@ -70,6 +76,9 @@ func audit() -> Dictionary:
 		"unbounded_route_side_count": unbounded_obligations.size(),
 		"solid_void_frontage_ratio": float(bounded_count) \
 			/ float(maxi(1, boundary_obligations.size())),
+		"alley_bounded_cell_count": alley_bounded_cell_count,
+		"alley_bounded_walk_ratio": float(alley_bounded_cell_count) \
+			/ float(maxi(1, alley_eligible_cell_count)),
 		"building_base_band_count": building_base_bands.size(),
 		"building_roof_band_count": building_roof_bands.size(),
 		"half_level_neighbor_pair_count": neighboring_half_level_pairs.size(),
@@ -123,6 +132,43 @@ func _build_boundary_obligations(surfaces: Dictionary, solids: Dictionary,
 			boundary_obligations.append(obligation)
 			if boundary_kind == &"open":
 				unbounded_obligations.append(obligation)
+	# The reviewed alley character is a per-cell fact: a walk cell reads as
+	# negative space between buildings when, along one axis, the street runs
+	# only a few cells wide and BOTH far edges carry real built boundaries.
+	# A side the street merely continues through indefinitely, or an open rim,
+	# is not a held flank — a one-sided promenade is not an alley.
+	alley_bounded_cell_count = 0
+	alley_eligible_cell_count = 0
+	var built_boundaries: Dictionary = {}
+	var obligated_cells: Dictionary = {}
+	for obligation: Dictionary in boundary_obligations:
+		obligated_cells[obligation.surface_cell as Vector3i] = true
+		if bool(obligation.bounded):
+			built_boundaries["%s/%s" % [obligation.surface_cell,
+				obligation.side]] = true
+	for cell_value: Variant in obligated_cells:
+		var cell := cell_value as Vector3i
+		alley_eligible_cell_count += 1
+		var alley := false
+		for axis: Array in [[Vector3i.LEFT, Vector3i.RIGHT],
+				[Vector3i.FORWARD, Vector3i.BACK]]:
+			var crossed := 0
+			var held := true
+			for direction: Vector3i in axis:
+				var edge := cell
+				while crossed <= MAX_ALLEY_SPAN_CELLS \
+						and _surface_cells.has(edge + direction):
+					edge += direction
+					crossed += 1
+				if crossed > MAX_ALLEY_SPAN_CELLS \
+						or not built_boundaries.has("%s/%s" % [edge,
+							direction]):
+					held = false
+					break
+			if held:
+				alley = true
+				break
+		alley_bounded_cell_count += int(alley)
 	boundary_obligations.sort_custom(_obligation_less)
 	unbounded_obligations.sort_custom(_obligation_less)
 

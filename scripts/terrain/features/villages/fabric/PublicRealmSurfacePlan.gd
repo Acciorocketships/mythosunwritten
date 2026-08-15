@@ -256,10 +256,10 @@ func audit() -> Dictionary:
 
 func _walk_network_audit() -> Dictionary:
 	## Sealed facts for the reviewed street character: the walk network must be
-	## ONE connected system spanning the settlement's bands, and its cells
-	## should read as negative space held by solid mass on both flanks. Same
-	## band neighbors connect directly; a band change is walkable only through
-	## a STAIR claim, exactly like the player.
+	## ONE connected system spanning the settlement's bands. Same-band
+	## neighbors connect directly; a band change is walkable only through a
+	## STAIR claim, exactly like the player. Both-flank boundedness lives on
+	## the solid/void plan, which owns the real construction cells.
 	var cells: Array[Vector3i] = []
 	var cell_set: Dictionary = {}
 	var stair_set: Dictionary = {}
@@ -270,29 +270,12 @@ func _walk_network_audit() -> Dictionary:
 		if int(claim.kind) == SurfaceKind.STAIR:
 			stair_set[_cell_key(cell)] = true
 	if cells.is_empty():
-		return {"walk_surface_component_count": 0, "walk_band_span": 0,
-			"bounded_walk_ratio": 0.0}
+		return {"walk_surface_component_count": 0, "walk_band_span": 0}
 	var bands: Dictionary = {}
-	var bounded := 0
-	var flank_eligible := 0
 	var component_of: Dictionary = {}
 	var component_count := 0
 	for cell: Vector3i in cells:
 		bands[cell.y] = true
-		if not stair_set.has(_cell_key(cell)):
-			flank_eligible += 1
-			var walled: Dictionary = {}
-			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-					Vector3i.FORWARD, Vector3i.BACK]:
-				var side := cell + direction
-				walled[direction] = _structural_solid_cells.has(
-						_cell_key(side)) \
-					or _structural_solid_cells.has(
-						_cell_key(side + Vector3i.UP))
-			bounded += int((bool(walled[Vector3i.LEFT]) \
-					and bool(walled[Vector3i.RIGHT])) \
-				or (bool(walled[Vector3i.FORWARD]) \
-					and bool(walled[Vector3i.BACK])))
 		if component_of.has(_cell_key(cell)):
 			continue
 		component_count += 1
@@ -318,7 +301,6 @@ func _walk_network_audit() -> Dictionary:
 	return {
 		"walk_surface_component_count": component_count,
 		"walk_band_span": bands.size(),
-		"bounded_walk_ratio": float(bounded) / float(maxi(1, flank_eligible)),
 	}
 
 
