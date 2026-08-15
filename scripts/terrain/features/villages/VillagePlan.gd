@@ -19,6 +19,11 @@ var _program: VillageProgram
 var _fields: WorldFieldBlockCache
 var _records: Dictionary = {}
 var _stats := {"queries": 0, "builds": 0, "evictions": 0}
+## True when the last _build's warren search stopped on its time budget
+## rather than a verdict. Such records must not enter the cache: each later
+## query runs another budgeted slice (resumed through the solution pin
+## cache) until the search seals or is genuinely exhausted.
+var _last_build_budget_interrupted := false
 
 func _init(world_seed: int, program: VillageProgram,
 		fields: WorldFieldBlockCache = null) -> void:
@@ -37,7 +42,8 @@ func record_for(frame: VillageFrame) -> VillageRecord:
 		_records.clear()
 		_stats.evictions += 1
 	var record := _build(frame)
-	_records[frame.settlement_id] = record
+	if not _last_build_budget_interrupted:
+		_records[frame.settlement_id] = record
 	_stats.builds += 1
 	return record
 
@@ -67,6 +73,8 @@ func _build(frame: VillageFrame) -> VillageRecord:
 		_program) if _program.settlement_fabric_program != null \
 		else VillageUrbanFabricSolver.solve(terrain, frame.settlement_id,
 			frame.centre, street_axis, tier, theme, _program)
+	_last_build_budget_interrupted = String(urban_fabric.reason) \
+		.begins_with("volume_production search budget")
 	if urban_fabric.accepted:
 		_materialize_urban_fabric(urban_fabric, payload, surfaces,
 			clearances, occupancy)
