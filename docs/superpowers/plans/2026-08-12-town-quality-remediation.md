@@ -383,6 +383,61 @@ Optimization plan beyond the rescale, in measured-leverage order:
    candidate rescans per placement, linear recipe socket lookups, and
    per-block composition offset solves.
 
+## Cohesion + partial-plate roofs (2026-08-15, commit 64867fe)
+
+User direction: the village-size town must be more cohesive — continuous
+paths rather than disconnected platforms, no buildings awkwardly on their
+own — and the floating-half-roof issue must be fixed.
+
+Cohesion measurement first: the pinned village fixture reports
+`legacy_unit_group_detached_building_stack_count` 26 vs 14 connected, but
+that legacy metric walks ROOM-kind socket bonds to a served entrance per
+unit-name stack — it measures door-network reachability, not physical
+contact, and the authoritative source-plan `detached_building_stack_count`
+is 0. The physically measurable lever at selection time is parcel side
+contact: `_precomposition_enclosure_audit` now counts parcels sharing no
+side cell with any neighbor (`detached_parcel_count`) and the frontier
+score charges 55 points per detached parcel. On seed-1 attempt-6 all eight
+partition variants tie at 4 detached parcels (parcel contact is fixed per
+carved topology), so the term discriminates between frontier topologies,
+not variants. Residual backfill additionally requires every candidate —
+addressed or not — to hold a >=2-cell side interface with established
+(non-residual) construction, and `RESIDUAL_MASSIF_EDGE_COLUMN_SCORE` is
+zeroed (the 8000-point edge reward was the mechanism that scattered
+freestanding rim houses). Fixture effect: one former freestanding backfill
+house is no longer admitted (41 -> 40 stacks); backfill count 3.
+
+Phase E landed its centerpiece: partial (staggered-shoulder) plates whose
+exposed region is exactly one authored roof footprint (2x2, 2x4, 4x4,
+4x6) are admitted into `_spatial_roof_neighborhood` as first-class pitched
+sections. The synthesized plate proposal carries the plate's own centered
+origin/yaw/kind, classifies through `FabricRoofTopologyPlan` (stepped
+junctions against taller neighbors, ridge continuations with aligned
+plates), and compiles via `_plate_roof_unit`, bearing on the exact room
+top cell under its `bearing.bottom` socket like a setback cap. Irregular
+remainders keep the cap vocabulary; flattened campaigns fall back to caps
+unchanged. Pinned fixture: pitched 8 -> 11 (3 plate sections), setback
+caps 30 -> 27, lean-tos 5, fabric seals.
+
+Also fixed: `_protected_owners_with_market` now ignores the
+optional-absent market sentinel (was raising a mid-solve script error on
+every village composition).
+
+Known baseline debt recorded, pre-existing at commit 7dfcd79 (verified by
+stashing the day's edits): the seed-7 large review fixture no longer
+seals — every attempt dies at the excavation topology gate (walk cells
+15 < 16, ramp transitions 0 < 1, no third-storey courtyard site), failing
+`test_warren_volumetric_solver` (seed-seven + determinism) and
+`test_warren_spatial_fabric_compiler` (measured-room-units). This is
+village-rescale fallout in the review-fixture corpus, to be recalibrated
+with the production-seal arc. `test_fabric_roof_topology` (82 asserts) and
+`test_settlement_fabric` pass clean with the plate change.
+
+Production seal for seed-1 standard remains gated exactly as before the
+day's work (overhead 0.295 vs 0.33 floor, sightlines 77 vs 48, plus two
+envelope tails on other variants) — the jetty increment stays the next
+overhead lever.
+
 ## Visual state (2026-08-13)
 
 The joined fixture renders to `/tmp/mythos-town-joins-after2` through
@@ -882,9 +937,14 @@ and becomes meaningful once neighborhood-level plates reach it.
 - [ ] Build connected components of touching exposed roof plates.
 - [ ] Enumerate complete neighborhood recipes rather than independent room
   roofs.
-- [ ] Admit partial (staggered-shoulder) plates into
+- [x] Admit partial (staggered-shoulder) plates into
   `_spatial_roof_neighborhood` with typed stepped junctions instead of
-  excluding them at `_is_full_roof_plate`.
+  excluding them at `_is_full_roof_plate`. Landed 2026-08-15 for plates
+  that are exactly one authored roof footprint (2x2/2x4/4x4/4x6); village
+  fixture converts 3 shoulders (pitched 8 -> 11, caps 30 -> 27).
+  Irregular plates (1-wide, 3-wide, L-shaped) still take caps — widening
+  needs either new authored shells or largest-subrectangle mixed
+  treatment with cap remainders.
 - [ ] Prefer continuous ridge and authored valley transactions; flatten only a
   complete incompatible component.
 - [ ] Make every partial shoulder an exact macro crown, lean-to, garden strip,
