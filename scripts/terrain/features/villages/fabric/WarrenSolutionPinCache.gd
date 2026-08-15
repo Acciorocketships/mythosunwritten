@@ -43,6 +43,16 @@ static func store_failure(city_seed: int, scale_id: StringName) -> void:
 	_save()
 
 
+static func store_progress(city_seed: int, scale_id: StringName,
+		attempts_tried: int) -> void:
+	## A time-budgeted search stopped before exhausting the deterministic
+	## attempt rotation. Remember how far it got so the next visit resumes
+	## instead of repeating the proven-failed prefix.
+	_ensure_loaded()
+	_entries[_key(city_seed, scale_id)] = {"attempts_tried": attempts_tried}
+	_save()
+
+
 static func override_path_for_tests(path: String) -> void:
 	_path = DEFAULT_PATH if path.is_empty() else path
 	_entries = {}

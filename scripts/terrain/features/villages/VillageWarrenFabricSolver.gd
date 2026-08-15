@@ -6,6 +6,11 @@ extends RefCounted
 ## 1.5 m vertical lattice, then rebuilds the selected topology attempt against
 ## those bands before materializing any geometry.
 const DATUM_GUARD := 0.08
+## The staged volumetric search runs on the single terrain worker; one slice
+## per record build keeps a hard-to-seal settlement from freezing chunk
+## streaming for minutes (measured 250 s exhausted searches). The
+## deterministic attempt rotation resumes across visits via the pin cache.
+const PRODUCTION_SEARCH_BUDGET_MS := 20000
 const MAX_TERRAIN_RELIEF := VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF
 const SUPPORT_STEP := 3.0
 const CLEARANCE_MARGIN := 1.5
@@ -38,11 +43,21 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 		preview = WarrenVolumetricSolver.solve_pinned(city_seed, {},
 			program.settlement_fabric_program, pin, scale_profile)
 	if preview == null:
+		# Budget each visit's search slice so one settlement can never stall
+		# the single terrain worker for minutes; the deterministic rotation
+		# resumes from the recorded prefix on the next visit.
 		preview = WarrenVolumetricSolver.solve(city_seed, {},
-			program.settlement_fabric_program, scale_profile)
+			program.settlement_fabric_program, scale_profile,
+			PRODUCTION_SEARCH_BUDGET_MS,
+			int(pin.get("attempts_tried", 0)))
 		if preview == null:
-			WarrenSolutionPinCache.store_failure(city_seed,
-				scale_profile.scale_id)
+			if WarrenVolumetricSolver.last_search_exhausted:
+				WarrenSolutionPinCache.store_failure(city_seed,
+					scale_profile.scale_id)
+			else:
+				WarrenSolutionPinCache.store_progress(city_seed,
+					scale_profile.scale_id,
+					WarrenVolumetricSolver.last_search_attempts_tried)
 			return _rejected(StringName("volume_%s" %
 				WarrenVolumetricSolver.last_failure))
 		WarrenSolutionPinCache.store_success(city_seed,

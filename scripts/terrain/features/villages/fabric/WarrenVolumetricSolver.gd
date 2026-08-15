@@ -58,6 +58,17 @@ const MIN_COURT_PARCEL_SIDE_COUNT := 2
 const MAX_COURT_OWNER_SOCKET_RECOMPOSITION_CELLS := 2
 
 static var last_failure := ""
+## Facts about the most recent staged production search: whether it visited
+## every attempt in the rotation (false when a time budget stopped it early)
+## and how many attempts have been tried including skipped prefixes, so a
+## budgeted caller can resume the deterministic rotation without repetition.
+static var last_search_exhausted := true
+static var last_search_attempts_tried := 0
+## Deadline for the current budgeted search in Time.get_ticks_msec() terms,
+## or -1 for unbudgeted solves. _solve_frontier honors it between ranked
+## candidates and reports crossing it through _frontier_budget_hit.
+static var _search_deadline_ms := -1
+static var _frontier_budget_hit := false
 static var last_diagnostic: Dictionary = {}
 static var last_preplan_skywalk_diagnostic: Dictionary = {}
 static var last_preplan_market_diagnostic: Dictionary = {}
@@ -82,7 +93,8 @@ static var _residual_bridge_counts: Dictionary = {}
 static func solve(world_seed: int,
 		ground_bands: Dictionary = {},
 		construction_program: SettlementFabricProgram = null,
-		scale_profile: WarrenVillageScaleProfile = null) -> WarrenSpatialPlan:
+		scale_profile: WarrenVillageScaleProfile = null,
+		max_solve_ms: int = -1, skip_attempts: int = 0) -> WarrenSpatialPlan:
 	last_failure = ""
 	last_diagnostic = {}
 	last_preplan_skywalk_diagnostic = {}
@@ -101,8 +113,34 @@ static func solve(world_seed: int,
 	var batch_count := 0
 	var attempted_count := 0
 	var batch_failures := PackedStringArray()
-	for attempt: int in _production_attempt_order(world_seed):
+	var search_started_ms := Time.get_ticks_msec()
+	last_search_exhausted = true
+	last_search_attempts_tried = skip_attempts
+	var attempt_order := _production_attempt_order(world_seed)
+	for attempt_index in attempt_order.size():
+		# A budgeted caller (the in-game terrain worker) resumes a sliced
+		# search exactly where the previous slice stopped: the rotation is
+		# deterministic, so skipping the already-tried prefix repeats no work.
+		if attempt_index < skip_attempts:
+			continue
+		if max_solve_ms >= 0 and attempt_index > skip_attempts \
+				and Time.get_ticks_msec() - search_started_ms > max_solve_ms:
+			last_search_exhausted = false
+			last_failure = ("production search budget %d ms exhausted after " \
+				+ "%d of %d attempts") % [max_solve_ms,
+				last_search_attempts_tried, attempt_order.size()]
+			return null
+		var attempt: int = attempt_order[attempt_index]
 		attempted_count += 1
+		last_search_attempts_tried = attempt_index + 1
+		# The first attempt of a budgeted slice always runs to completion so
+		# every visit makes real progress and no candidate is ever skipped;
+		# later attempts honor the deadline mid-frontier and are re-run whole
+		# on the next visit.
+		var first_of_slice := attempt_index == skip_attempts
+		_search_deadline_ms = -1 if max_solve_ms < 0 or first_of_slice \
+			else search_started_ms + max_solve_ms
+		_frontier_budget_hit = false
 		var frontier_started_ms := Time.get_ticks_msec()
 		var frontier := WarrenTownSolver.mass_first_attempt_frontier(world_seed,
 			attempt, ground_bands, profile)
@@ -116,12 +154,20 @@ static func solve(world_seed: int,
 			continue
 		batch_count += 1
 		var result := _solve_frontier(frontier, construction_program)
+		_search_deadline_ms = -1
 		if result != null:
 			result.audit["production_excavation_attempt_count"] = attempted_count
 			result.audit["production_frontier_batch_count"] = batch_count
 			result.audit["production_staged_frontier_count"] = frontier.size()
 			result.audit["production_selected_attempt"] = attempt
 			return result
+		if _frontier_budget_hit:
+			last_search_exhausted = false
+			last_search_attempts_tried = attempt_index
+			last_failure = ("production search budget %d ms reached inside " \
+				+ "attempt %d; it reruns whole next visit") % [max_solve_ms,
+				attempt]
+			return null
 		batch_failures.append("attempt %d: %s" % [attempt, last_failure])
 	last_failure = "no staged volumetric frontier sealed: %s" % \
 		" | ".join(batch_failures)
@@ -212,6 +258,12 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 	for ranked_index in ranked_variants.size():
 		if ranked_index < diagnostic_partition_first:
 			continue
+		if _search_deadline_ms >= 0 and partition_attempt_count > 0 \
+				and Time.get_ticks_msec() > _search_deadline_ms:
+			_frontier_budget_hit = true
+			last_failure = "search budget reached after %d ranked candidates" \
+				% partition_attempt_count
+			return null
 		var ranked := ranked_variants[ranked_index] as Dictionary
 		if diagnostic_partition_limit >= 0 \
 				and partition_attempt_count >= diagnostic_partition_limit:
