@@ -1863,6 +1863,41 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				fixed_feature_units, retry_flattened,
 				collision_flattened_component_count + 1)
 		if full and not _touches_public_air(source.grid, face_cells):
+			# A single-storey building's exposed lid read as a bare box in the
+			# annotated review. The authored railed terrace (lived-in first)
+			# is the deliberate closure for it; the plain flat plus garden
+			# remains the multi-storey default and the fallback.
+			if room.source_storey_index == 0:
+				for terrace_id: StringName in _flat_roof_terrace_candidates(
+						room, source.world_seed):
+					var terrace_recipe := program.recipe(terrace_id)
+					if terrace_recipe == null:
+						continue
+					var terrace := _full_roof_unit(room_id, room, parent_unit,
+						terrace_id, _roof_seams_for_candidate(
+							junction_room_seams, parent_unit.stable_id, out,
+							fixed_feature_units))
+					if _unit_touches_public_air(source.grid, terrace,
+							terrace_recipe):
+						attempt_failures.append(
+							"terrace %s: enters public air" % terrace_id)
+						continue
+					if not probe.add_unit(terrace):
+						attempt_failures.append("terrace %s: %s" % [
+							terrace_id, probe.last_rejection])
+						continue
+					out.append(terrace)
+					realized_face_count += face_cells.size()
+					flat_count += 1
+					flat_terrace_count += 1
+					lived_in_flat_terrace_count += int(
+						terrace_recipe.has_tag(&"lived_in_roof_terrace"))
+					flat_roof_recipe_counts[terrace_id] = int(
+						flat_roof_recipe_counts.get(terrace_id, 0)) + 1
+					selected = true
+					break
+			if selected:
+				continue
 			var flat_id := _flat_roof_recipe_id(room)
 			var flat := _full_roof_unit(room_id, room, parent_unit, flat_id,
 				_roof_seams_for_candidate(room_seams, parent_unit.stable_id, out,
