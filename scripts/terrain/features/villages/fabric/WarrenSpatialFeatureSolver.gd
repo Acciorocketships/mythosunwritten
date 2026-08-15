@@ -504,16 +504,16 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	# finite vocabularies separate prevents a decorative bay from becoming a
 	# complete miniature house glued to another house.
 	var recipe_ids: Array[StringName] = []
+	# Shed dormers are retired from wall-mounted projections: the reviewed
+	# capture showed the single sloped plane over an open frame reads as a
+	# stray floating stair, not a bay. Gable dormers keep the framed,
+	# obviously-inhabited silhouette.
 	if feature_kind == &"facade_bay":
 		recipe_ids.assign([
 			&"outcrop.dormer.gable.teal.left",
 			&"outcrop.dormer.gable.teal.right",
-			&"outcrop.dormer.shed.teal.left",
-			&"outcrop.dormer.shed.teal.right",
 			&"outcrop.dormer.gable.orange.left",
 			&"outcrop.dormer.gable.orange.right",
-			&"outcrop.dormer.shed.orange.left",
-			&"outcrop.dormer.shed.orange.right",
 		])
 	else:
 		recipe_ids.assign([
@@ -524,8 +524,6 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			&"outcrop.corner.wrap.right.amber",
 			&"outcrop.dormer.gable.teal.left",
 			&"outcrop.dormer.gable.orange.right",
-			&"outcrop.dormer.shed.teal.right",
-			&"outcrop.dormer.shed.orange.left",
 			&"outcrop.flue.corner.left.blue",
 			&"outcrop.flue.corner.right.orange",
 			&"outcrop.capped.corner.left.amber",

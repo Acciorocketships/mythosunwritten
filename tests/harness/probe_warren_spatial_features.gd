@@ -340,6 +340,23 @@ func _init() -> void:
 		print("FABRIC_SEALED=", compiled != null,
 			" failure=", WarrenSpatialFabricCompiler.last_failure,
 			" audit=", WarrenSpatialFabricCompiler.last_audit)
+		if compiled != null and "--dump-units" in OS.get_cmdline_user_args():
+			for unit: FabricUnit in compiled.units:
+				var unit_recipe := compiled.recipe(unit.recipe_id)
+				var bounds := AABB()
+				if unit_recipe != null \
+						and not unit_recipe.placements.is_empty():
+					bounds = unit.transform() \
+						* unit_recipe.local_clearance_bounds
+				print("UNIT id=", unit.stable_id, " recipe=", unit.recipe_id,
+					" origin=", unit.lattice_origin, " yaw=",
+					unit.yaw_quarters, " centre=", bounds.get_center(),
+					" size=", bounds.size)
+			for payload: Dictionary in compiled.surface_plan \
+					._transition_mesh_payloads:
+				var claim_cells := payload.get("claim_cells",
+					[] as Array[Vector3i]) as Array[Vector3i]
+				print("TRANSITION cells=", claim_cells)
 		if compiled != null:
 			print("UNSERVED_ENTRANCES=",
 				compiled.surface_plan.unserved_entrances)

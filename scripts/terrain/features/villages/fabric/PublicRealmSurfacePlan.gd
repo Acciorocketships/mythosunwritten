@@ -250,7 +250,76 @@ func audit() -> Dictionary:
 					== &"daylight_void").size(),
 	}
 	result.merge(_daylight_void_boundary_audit(), true)
+	result.merge(_walk_network_audit(), true)
 	return result
+
+
+func _walk_network_audit() -> Dictionary:
+	## Sealed facts for the reviewed street character: the walk network must be
+	## ONE connected system spanning the settlement's bands, and its cells
+	## should read as negative space held by solid mass on both flanks. Same
+	## band neighbors connect directly; a band change is walkable only through
+	## a STAIR claim, exactly like the player.
+	var cells: Array[Vector3i] = []
+	var cell_set: Dictionary = {}
+	var stair_set: Dictionary = {}
+	for claim: Dictionary in _claims.values():
+		var cell := claim.cell as Vector3i
+		cells.append(cell)
+		cell_set[_cell_key(cell)] = cell
+		if int(claim.kind) == SurfaceKind.STAIR:
+			stair_set[_cell_key(cell)] = true
+	if cells.is_empty():
+		return {"walk_surface_component_count": 0, "walk_band_span": 0,
+			"bounded_walk_ratio": 0.0}
+	var bands: Dictionary = {}
+	var bounded := 0
+	var flank_eligible := 0
+	var component_of: Dictionary = {}
+	var component_count := 0
+	for cell: Vector3i in cells:
+		bands[cell.y] = true
+		if not stair_set.has(_cell_key(cell)):
+			flank_eligible += 1
+			var walled: Dictionary = {}
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var side := cell + direction
+				walled[direction] = _structural_solid_cells.has(
+						_cell_key(side)) \
+					or _structural_solid_cells.has(
+						_cell_key(side + Vector3i.UP))
+			bounded += int((bool(walled[Vector3i.LEFT]) \
+					and bool(walled[Vector3i.RIGHT])) \
+				or (bool(walled[Vector3i.FORWARD]) \
+					and bool(walled[Vector3i.BACK])))
+		if component_of.has(_cell_key(cell)):
+			continue
+		component_count += 1
+		var frontier: Array[Vector3i] = [cell]
+		component_of[_cell_key(cell)] = component_count
+		while not frontier.is_empty():
+			var current: Vector3i = frontier.pop_back()
+			var current_is_stair: bool = stair_set.has(_cell_key(current))
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				for band_step in range(-1, 2):
+					var neighbor: Vector3i = current + direction \
+						+ Vector3i.UP * band_step
+					var neighbor_key := _cell_key(neighbor)
+					if not cell_set.has(neighbor_key) \
+							or component_of.has(neighbor_key):
+						continue
+					if band_step != 0 and not current_is_stair \
+							and not stair_set.has(neighbor_key):
+						continue
+					component_of[neighbor_key] = component_count
+					frontier.append(neighbor)
+	return {
+		"walk_surface_component_count": component_count,
+		"walk_band_span": bands.size(),
+		"bounded_walk_ratio": float(bounded) / float(maxi(1, flank_eligible)),
+	}
 
 
 func _structural_court_interior_cell_count() -> int:

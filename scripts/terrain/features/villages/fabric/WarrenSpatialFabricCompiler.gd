@@ -8,6 +8,9 @@ extends RefCounted
 ## envelopes. No method here may move, resize, or restamp the spatial topology.
 static var last_failure := ""
 static var last_audit: Dictionary = {}
+## Every campaign-flatten decision this compile, preserved across the atomic
+## retry recursion so the sealed audit names the actual colliding unit.
+static var _collision_flatten_triggers: Array[Dictionary] = []
 
 ## Facade and roof colour is owned by a jittered architectural district rather
 ## than hashed independently per room. Twelve fine cells are 18 m: large enough
@@ -1623,6 +1626,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		collision_flattened_component_count: int = 0) -> Array[FabricUnit]:
 	last_failure = ""
 	last_audit = {}
+	if collision_flattened_component_count == 0:
+		_collision_flatten_triggers.clear()
 	if source == null or not source.is_sealed() or program == null \
 			or room_units.is_empty():
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
@@ -1754,6 +1759,18 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		var plate_pitched := not full \
 			and bool(neighborhood_proposal.get("partial_plate", false)) \
 			and not bool(neighborhood_proposal.get("flat_roof", false))
+		# A classified junction IS the typed relationship that explains roof
+		# contact: a stepped eave dying into the half-storey neighbor's facade
+		# is the treatment the module table sealed, so that neighbor's room is
+		# a declared seam of the pitched shell, not an unrelated envelope.
+		var junction_room_seams := room_seams.duplicate()
+		for rule_value: Variant in neighborhood_proposal.get(
+				"roof_junction_rules", []) as Array:
+			var junction_neighbor := unit_by_room.get(StringName(
+				(rule_value as Dictionary).neighbor_id)) as FabricUnit
+			if junction_neighbor != null and not junction_room_seams.has(
+					junction_neighbor.stable_id):
+				junction_room_seams.append(junction_neighbor.stable_id)
 		if (full or plate_pitched) \
 				and not _touches_public_air(source.grid, face_cells):
 			var pitched_candidates := _full_roof_candidates(room,
@@ -1765,12 +1782,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				var pitched_id := StringName(candidate.recipe_id)
 				var yaw_offset := int(candidate.yaw_offset)
 				var pitched := _full_roof_unit(room_id, room, parent_unit,
-					pitched_id, _roof_seams_for_candidate(room_seams,
+					pitched_id, _roof_seams_for_candidate(junction_room_seams,
 						parent_unit.stable_id, out, fixed_feature_units),
 					yaw_offset) if full \
 					else _plate_roof_unit(room_id, room, parent_unit,
 						pitched_id, neighborhood_proposal,
-						_roof_seams_for_candidate(room_seams,
+						_roof_seams_for_candidate(junction_room_seams,
 							parent_unit.stable_id, out, fixed_feature_units))
 				var pitched_recipe := program.recipe(pitched_id)
 				if pitched_recipe == null:
@@ -1839,6 +1856,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				last_failure = "atomic roof neighborhood for %s rejected after its complete campaign was flattened: %s" % [
 					room_id, "; ".join(attempt_failures)]
 				return [] as Array[FabricUnit]
+			_collision_flatten_triggers.append({"room_id": room_id,
+				"campaign": campaign.duplicate(),
+				"attempts": attempt_failures.duplicate()})
 			return compile_roof_units(source, program, room_units,
 				fixed_feature_units, retry_flattened,
 				collision_flattened_component_count + 1)
@@ -1919,11 +1939,11 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				last_failure = "no native setback cap fits row %d for %s" % [
 					row_index, room_id]
 				return [] as Array[FabricUnit]
-			if not macro_piece:
-				var lean_to := _setback_lean_to_placement(source,
-					row, room, cap, unit_by_room)
-				if not lean_to.is_empty():
-					cap = lean_to
+			# Lean-tos are retired from spatial setback caps: the reviewed
+			# captures showed even a correctly seated shell reads as a tilted
+			# half-roof floating beside the mass, and the partial-plate
+			# neighborhood now provides the composed pitched alternative.
+			# The plain cap and garden vocabulary closes these strips.
 			# A setback roof is not a license to intersect every room that happens
 			# to share a party wall with its parent.  That broad exception admitted
 			# little gables deep into the valley between two continuing upper rooms.
@@ -2183,6 +2203,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"collision_flattened_roof_room_count": collision_flattened_rooms.size(),
 		"collision_flattened_roof_component_count": \
 			collision_flattened_component_count,
+		"collision_flatten_trigger_details": \
+			_collision_flatten_triggers.duplicate(true),
 	}
 	return out
 
@@ -2257,15 +2279,15 @@ static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,
 		unit_by_room: Dictionary, unit_by_private_cell: Dictionary,
 		prior_roofs: Array[FabricUnit]) -> Dictionary:
 	## Replace one colliding macro gable with a complete, lossless set of native
-	## strips.  The two phases deliberately form a tiny rule table: rows abutting
-	## a complete upper facade first become lean-tos; if that measured asset does
-	## not fit, every row falls back together to its shallow cap.
+	## strips. Lean-tos are retired from this fallback: the reviewed captures
+	## showed the seated shell still reads as a floating half-roof, and the
+	## partial-plate neighborhood now owns the composed pitched treatment.
 	var rows := _terminal_cap_rows(face_cells)
 	if rows.is_empty():
 		return {"units": [] as Array[FabricUnit],
 			"failure": "macro face set has no terminal strip partition"}
 	var failures := PackedStringArray()
-	for use_lean_to: bool in [true, false]:
+	for use_lean_to: bool in [false]:
 		var candidates: Array[FabricUnit] = []
 		var candidate_failure := ""
 		for strip_index in rows.size():

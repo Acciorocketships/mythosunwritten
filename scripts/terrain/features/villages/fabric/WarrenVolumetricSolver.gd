@@ -525,14 +525,30 @@ static func _precomposition_enclosure_audit(volume: WarrenVolumePlan,
 	var eligible_sides := 0
 	var enclosed_sides := 0
 	var overhead_count := 0
+	var bounded_count := 0
+	var route_bands: Dictionary = {}
 	for cell: Vector3i in route_floors:
+		route_bands[cell.y] = true
+		var walled: Dictionary = {}
 		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 				Vector3i.FORWARD, Vector3i.BACK]:
 			if route.has(cell + direction):
 				continue
 			eligible_sides += 1
-			enclosed_sides += int(occupied.has(cell + direction) \
-				or occupied.has(cell + direction + Vector3i.UP))
+			var built := occupied.has(cell + direction) \
+				or occupied.has(cell + direction + Vector3i.UP)
+			enclosed_sides += int(built)
+			# A street reads as negative space between buildings when both
+			# flanks are held — by proposed mass or by the uncarved inhabited
+			# mountain the rooms clad. Massif rock alone counts for
+			# boundedness, not for the stricter built-frontage ratio.
+			walled[direction] = built \
+				or grid.use_at(cell + direction) \
+					== WarrenSpatialGrid.Use.ALLOCATABLE
+		bounded_count += int((bool(walled.get(Vector3i.LEFT, false)) \
+				and bool(walled.get(Vector3i.RIGHT, false))) \
+			or (bool(walled.get(Vector3i.FORWARD, false)) \
+				and bool(walled.get(Vector3i.BACK, false))))
 		for rise in range(2, 7):
 			if occupied.has(cell + Vector3i.UP * rise):
 				overhead_count += 1
@@ -552,6 +568,9 @@ static func _precomposition_enclosure_audit(volume: WarrenVolumePlan,
 		"through_sightline_count": int(sightline.through_count),
 		"ground_through_sightline_count": int(ground_sightline.through_count),
 		"detached_parcel_count": detached_parcel_count,
+		"bounded_route_ratio": float(bounded_count) \
+			/ float(maxi(1, route.size())),
+		"route_band_span": route_bands.size(),
 	}
 
 
@@ -559,9 +578,13 @@ static func _precomposition_quality_score(volume: WarrenVolumePlan,
 		audit: Dictionary) -> float:
 	# Actual proposed street walls dominate; macro metrics only break ties between
 	# similarly dense fine-grid projections. Detached parcels cost real score:
-	# a village reads cohesive when its houses lean on one another.
+	# a village reads cohesive when its houses lean on one another. Streets held
+	# on both flanks and routes that climb across bands are the reviewed alley
+	# character, so they earn score directly.
 	return float(audit.overhead_route_ratio) * 1000.0 \
 		+ float(audit.frontage_ratio) * 450.0 \
+		+ float(audit.get("bounded_route_ratio", 0.0)) * 500.0 \
+		+ float(maxi(0, int(audit.get("route_band_span", 1)) - 1)) * 60.0 \
 		- float(audit.through_sightline_count) * 3.0 \
 		- float(audit.ground_through_sightline_count) * 7.0 \
 		- float(audit.get("detached_parcel_count", 0)) * 55.0 \
