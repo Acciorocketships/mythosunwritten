@@ -537,12 +537,36 @@ Runtime architecture landed and verified live:
   empty (live-verified: the game wrote `{attempts_tried: 5}` to
   user://warren_solution_pins.json during its first startup slice).
 
-Still open in this arc: raise the seal rate (winding carver), intra-
-attempt resume for the guaranteed-progress slice if 60 s proves too
-long in play, main-thread commit spike measurement once a settlement
-seals in-game, and moving the search off the chunk-critical path so a
-searching settlement never delays terrain (currently it shares the one
-worker with chunk builds).
+Live in-game session on the pinned world (2697992464), two runs:
+
+- The slice/resume/exhaust lifecycle verified end to end: the spawn
+  settlement's search ran 5 attempts in run one, resumed in run two,
+  and wrote its exhausted `{"failed": true}` pin; three neighbors hold
+  resumable progress pins; the sealing settlement (super (-1,1), city
+  seed 3613595803240038080, sealed headless at attempt 0/variant 3,
+  overhead 0.448, sightlines at cap, 52 stacks, pinned re-seal 10.5 s)
+  holds its success pin ready for the next visit.
+- **Design finding: settlement searches sit inside the startup loading
+  gate** (`_startup_feature_keys`) — a first load near settlements holds
+  the loading screen through every neighbor's budgeted search. The next
+  streaming lever is moving village record builds off the startup gate:
+  terrain and a placeholder site first, the village streamed in when its
+  search completes.
+- **Bug found**: teleporting during the loading screen orphans the
+  original spawn's feature keys; the one-way startup gate then never
+  completes (progress frozen at 0.85 with 14 pending keys). Unreachable
+  by normal play but worth a guard when the startup anchor moves.
+- Cross-process pin-cache wrinkle: the cache saves whole-file, so a
+  headless writer racing a running game loses its entry (observed once;
+  harmless — the pin is only a hint — but single-writer discipline or a
+  merge-on-save is warranted before headless pre-warming becomes a
+  workflow).
+
+Still open in this arc: seal rate (winding carver — 2 of 8 measured
+standard seeds seal), searches off the startup gate, the two items
+above, intra-attempt resume if the 60 s guaranteed-progress slice
+proves too long in play, and the main-thread commit-spike measurement
+once a sealed village actually renders in-game.
 
 ## Visual state (2026-08-13)
 
