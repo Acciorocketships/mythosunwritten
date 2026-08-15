@@ -506,6 +506,44 @@ ratios stay visually low (spec option C); residual stacking bonus for
 single-storey rim rooms (must compose with the established-contact
 rule); production seal (overhead jetty increment + sightline tail).
 
+## In-game and real-time loading (2026-08-15, commits b2926aa..5f70c2b)
+
+First production-sealed village: **city seed 7, standard, 12.2 s**, first
+attempt in its rotation, through every gate including the new alley and
+walk-network contracts (pinned+staged solves hash identical). Corpus
+reality on the pinned game world 2697992464: of the near-spawn
+settlements tried so far, none seal yet — site (0,0) standard fails in
+78 s (topology-gate cascade), site (-1,-1) standard in 408 s under CPU
+contention, the review-pinned (0,-1) compact in 10 s (carve too small);
+seeds 1 and 5 fail in 250-264 s. **Seal rate, not solve speed, is now
+the in-game headline**: the winding-carver arc must raise the fraction
+of carves that survive the topology and sightline gates.
+
+Runtime architecture landed and verified live:
+
+- `WarrenSolutionPinCache` (user://, generation-salted): success pins
+  re-seal only the winning candidate; failure pins skip exhausted
+  searches; progress pins resume a budgeted rotation. A stale pin can
+  only cost time — every pinned solve reruns every gate.
+- The production search is time-budgeted per record build
+  (`PRODUCTION_SEARCH_BUDGET_MS` 20 s): the first attempt of each slice
+  always completes (guaranteed progress, no skipped candidates), later
+  attempts honor the deadline between ranked frontier candidates.
+  Measured on the spawn settlement: 250 s monolith becomes 26 + 60 +
+  5 s slices; the 60 s slice is the guaranteed-progress attempt and
+  bounds the worst case at the costliest single attempt.
+- Budget-interrupted records stay out of VillagePlan's session cache so
+  later queries continue the search instead of freezing the settlement
+  empty (live-verified: the game wrote `{attempts_tried: 5}` to
+  user://warren_solution_pins.json during its first startup slice).
+
+Still open in this arc: raise the seal rate (winding carver), intra-
+attempt resume for the guaranteed-progress slice if 60 s proves too
+long in play, main-thread commit spike measurement once a settlement
+seals in-game, and moving the search off the chunk-critical path so a
+searching settlement never delays terrain (currently it shares the one
+worker with chunk builds).
+
 ## Visual state (2026-08-13)
 
 The joined fixture renders to `/tmp/mythos-town-joins-after2` through
