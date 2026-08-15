@@ -438,6 +438,52 @@ day's work (overhead 0.295 vs 0.33 floor, sightlines 77 vs 48, plus two
 envelope tails on other variants) — the jetty increment stays the next
 overhead lever.
 
+## Annotated review response (2026-08-15, commits d1a69d6..cc18e08)
+
+Ryan annotated the overview captures; the design answering them is
+`docs/superpowers/specs/2026-08-15-village-review-feedback-design.md`.
+Every annotation was identified by projecting the sealed fixture's unit
+bounds onto the annotated camera (probe `--dump-units` + a projector):
+
+- Both circled "awful" roofs: `roof.setback.lean.blue.2.positive`.
+  Lean-tos retired from spatial caps and the terminal fallback.
+- The "are these stairs?" stub: `outcrop.dormer.shed.orange.left` placed
+  as a facade bay. Shed dormers retired from wall projections.
+- The boring rim box: single-storey `spatial.residual.00` long with
+  `roof.flat.long`; its pitched attempt genuinely collides with the
+  neighboring parcel envelope. Dressing/stacking remains open.
+- The boxy crown includes the staggered trio 0011.part01 / 0012.part03 /
+  0014.part03, which took flat gardens because the campaign's pitched
+  member overhung exactly into the half-storey neighbor the junction
+  classifier had typed — and the envelope proof called that neighbor
+  unrelated, flattening the whole campaign. Junction neighbors are now
+  declared visual seams of the pitched shell. Fixture: pitched 10 -> 13,
+  flat 3 -> 1, lean-tos 5 -> 0, no collision flattens; the crown wears
+  real gables in the re-rendered captures
+  (`/tmp/mythos-village-feedback1`).
+- Campaign flatten decisions persist as
+  `collision_flatten_trigger_details` in the sealed audit.
+
+Route-character measurement (the layout arc's baseline, floors NOT yet
+set — corpus first):
+
+- Sealed fixture: `walk_surface_component_count` **1** (the walk network
+  is already one connected system — the "disconnected platforms" read is
+  about character, not topology), `walk_band_span` **7**,
+  `alley_bounded_walk_ratio` **0.33** (corridor march on the solid/void
+  plan: street <= 3 cells wide with built boundaries on both far edges;
+  per-flank strictness measured 0.0 and continuation-as-held measured
+  0.95 — both rejected as non-discriminating).
+- Precomposition: `bounded_route_ratio` and `route_band_span` now
+  measured per candidate and scored (500 / 60-per-band) in frontier
+  ranking alongside the detached-parcel penalty.
+
+Open next, in order: village-seed corpus measurement of the new route
+metrics, then topology-gate floors (stair transitions, band span, alley
+ratio) and carver scoring re-weights; crown serve-time large-kind
+preference; rim single-storey dressing (railed/furnished terrace +
+residual stacking bonus).
+
 ## Visual state (2026-08-13)
 
 The joined fixture renders to `/tmp/mythos-town-joins-after2` through
