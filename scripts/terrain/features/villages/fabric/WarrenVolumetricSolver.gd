@@ -128,6 +128,60 @@ static func solve(world_seed: int,
 	return null
 
 
+static func solve_pinned(world_seed: int, ground_bands: Dictionary,
+		construction_program: SettlementFabricProgram, pin: Dictionary,
+		scale_profile: WarrenVillageScaleProfile = null) -> WarrenSpatialPlan:
+	## Deterministic fast path: re-seal a previously selected candidate without
+	## repeating the staged search. The pin is a hint, never trusted state:
+	## the complete pipeline — composition, fabric compile, production quality
+	## gates, finalization — reruns from scratch, and any mismatch or failure
+	## returns null so the caller falls back to the full search. A stale pin
+	## can therefore cost only time, never correctness.
+	last_failure = ""
+	if construction_program == null or pin.is_empty() \
+			or not pin.has("attempt") or not pin.has("source_id") \
+			or not pin.has("variant"):
+		last_failure = "pinned volumetric solve requires attempt/source/variant"
+		return null
+	var profile := scale_profile if scale_profile != null \
+		else WarrenVillageScaleProfile.review_fixture()
+	var frontier := WarrenTownSolver.mass_first_attempt_frontier(world_seed,
+		int(pin.attempt), ground_bands, profile)
+	for volume: WarrenVolumePlan in frontier:
+		if String(volume.stable_id) != String(pin.source_id):
+			continue
+		var variant := int(pin.variant)
+		var proxy := _precomposition_enclosure_audit(volume, variant,
+			construction_program)
+		var plan := from_volume(volume, variant, construction_program, false)
+		if plan == null:
+			return null
+		for key: Variant in proxy.keys():
+			plan.audit["precomposition_%s" % String(key)] = proxy[key]
+		var fabric := WarrenSpatialFabricCompiler.solve(plan,
+			construction_program)
+		if fabric == null:
+			last_failure = "pinned fabric gate failed: %s" \
+				% WarrenSpatialFabricCompiler.last_failure
+			return null
+		var quality_failure := production_quality_failure(fabric.audit)
+		if not quality_failure.is_empty():
+			last_failure = "pinned quality gate failed: %s" % quality_failure
+			return null
+		var finalized := _finalize_selected_candidate(volume, variant,
+			construction_program, proxy, plan, fabric)
+		if finalized != null:
+			finalized.audit["production_selected_attempt"] = int(pin.attempt)
+			finalized.audit["production_selected_source_id"] = \
+				String(pin.source_id)
+			finalized.audit["production_selected_variant"] = variant
+			finalized.audit["production_pin_hit"] = true
+		return finalized
+	last_failure = "pinned source %s absent from attempt %d frontier" % [
+		String(pin.get("source_id", "")), int(pin.get("attempt", -1))]
+	return null
+
+
 static func _production_attempt_order(world_seed: int) -> Array[int]:
 	var out: Array[int] = []
 	var count := WarrenTownSolver.MASS_FIRST_EXCAVATION_ATTEMPTS
@@ -206,6 +260,10 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 							" accepted=", finalized != null)
 					if finalized != null:
 						last_failure = ""
+						finalized.audit["production_selected_source_id"] = \
+							String(volume.stable_id)
+						finalized.audit["production_selected_variant"] = \
+							variant
 						return finalized
 				else:
 					last_failure = quality_failure

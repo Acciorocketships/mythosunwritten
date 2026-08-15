@@ -23,11 +23,33 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	if program.settlement_fabric_program == null:
 		return _rejected(&"fabric_program")
 	var scale_profile := WarrenVillageScaleProfile.select(city_seed)
-	var preview := WarrenVolumetricSolver.solve(city_seed, {},
-		program.settlement_fabric_program, scale_profile)
+	# The staged search is deterministic per (seed, scale) but expensive, and
+	# it runs on the single terrain worker. Consult the persistent pin first:
+	# a success pin re-seals only the winning candidate through the identical
+	# gates; a failure pin skips a search already proven exhausted under the
+	# current generation salt. Either way the search remains the authority —
+	# pin misses and stale pins simply fall through to it.
+	var pin := WarrenSolutionPinCache.pin_for(city_seed,
+		scale_profile.scale_id)
+	if bool(pin.get("failed", false)):
+		return _rejected(&"volume_pinned_failure")
+	var preview: WarrenSpatialPlan = null
+	if pin.has("attempt"):
+		preview = WarrenVolumetricSolver.solve_pinned(city_seed, {},
+			program.settlement_fabric_program, pin, scale_profile)
 	if preview == null:
-		return _rejected(StringName("volume_%s" %
-			WarrenVolumetricSolver.last_failure))
+		preview = WarrenVolumetricSolver.solve(city_seed, {},
+			program.settlement_fabric_program, scale_profile)
+		if preview == null:
+			WarrenSolutionPinCache.store_failure(city_seed,
+				scale_profile.scale_id)
+			return _rejected(StringName("volume_%s" %
+				WarrenVolumetricSolver.last_failure))
+		WarrenSolutionPinCache.store_success(city_seed,
+			scale_profile.scale_id,
+			int(preview.audit.get("production_selected_attempt", -1)),
+			String(preview.audit.get("production_selected_source_id", "")),
+			int(preview.audit.get("production_selected_variant", -1)))
 	# The selector has already compiled and quality-gated its winning preview.
 	# Reuse that output-pure derivative instead of repeating the complete measured
 	# facade/roof/public-realm transaction at the production adapter boundary.

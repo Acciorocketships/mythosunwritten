@@ -106,7 +106,44 @@ func _init() -> void:
 				" serial_reuse=",
 				production.audit.get("serial_finalization_reuse_count", 0),
 				" profile=", production.audit.get("scale_profile_id", &""))
+			print("PRODUCTION_SELECTION attempt=",
+				production.audit.get("production_selected_attempt", -1),
+				" variant=", production.audit.get("partition_variant", -1),
+				" overhead=", production.audit.get("overhead_route_ratio", -1.0),
+				" through=", production.audit.get(
+					"through_sightline_count", -1),
+				" ground_through=", production.audit.get(
+					"ground_through_sightline_count", -1),
+				" stacks=", production.audit.get("building_stack_count", -1))
 		quit(0 if production != null else 1)
+		return
+	if "--production-pinned" in OS.get_cmdline_user_args():
+		var staged_started := Time.get_ticks_msec()
+		var staged := WarrenVolumetricSolver.solve(world_seed, {}, program,
+			profile)
+		var staged_ms := Time.get_ticks_msec() - staged_started
+		if staged == null:
+			print("PIN_PROBE staged solve failed: ",
+				WarrenVolumetricSolver.last_failure.left(400))
+			quit(1)
+			return
+		var pin := {
+			"attempt": staged.audit.get("production_selected_attempt", -1),
+			"source_id": staged.audit.get("production_selected_source_id", ""),
+			"variant": staged.audit.get("production_selected_variant", -1),
+		}
+		var pinned_started := Time.get_ticks_msec()
+		var pinned := WarrenVolumetricSolver.solve_pinned(world_seed, {},
+			program, pin, profile)
+		var pinned_ms := Time.get_ticks_msec() - pinned_started
+		print("PIN_PROBE staged_ms=", staged_ms, " pinned_ms=", pinned_ms,
+			" pin=", pin,
+			" pinned_accepted=", pinned != null,
+			" deterministic=", pinned != null \
+				and pinned.deterministic_signature().sha256_text() \
+					== staged.deterministic_signature().sha256_text(),
+			" failure=", WarrenVolumetricSolver.last_failure.left(400))
+		quit(0 if pinned != null else 1)
 		return
 	if "--recipe-bounds-only" in OS.get_cmdline_user_args():
 		for recipe: FabricRecipe in program.recipes():
