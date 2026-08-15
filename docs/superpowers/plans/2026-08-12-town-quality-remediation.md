@@ -487,10 +487,24 @@ Production now requires `alley_bounded_walk_ratio >= 0.30` for STANDARD
 (the measured floor) and `walk_surface_component_count == 1` at every
 scale — "no disconnected paths" is a hard contract.
 
+Rim dressing (commit ee5ee04): the authored railed flat-roof terrace
+vocabulary (`roof.flat.<kind>.terrace.<side>[.lived]`) existed but was
+never invoked — single-storey lids took the bare flat + garden the
+review flagged. Storey-zero rooms now try all four terrace orientations
+(lived-in first) before the plain flat; the rim residual long takes
+`roof.flat.long.terrace.west.lived`.
+
+Serve-time large-kind preference FALSIFIED as a de-boxing lever: the
+partitioner already serves SHAPES largest-first and each smaller shape
+is a strict subset, so the first admissible candidate is maximal; exact
+tower pairs are fully exploited (zero unclaimed). Remaining crown
+boxiness is carve-geometry-driven — the new bounded/band-span/detached
+frontier terms are the instrument that steers it.
+
 Open next, in order: carver-side winding/spine improvement if bounded
-ratios stay visually low (spec option C); crown serve-time large-kind
-preference; rim single-storey dressing (railed/furnished terrace +
-residual stacking bonus).
+ratios stay visually low (spec option C); residual stacking bonus for
+single-storey rim rooms (must compose with the established-contact
+rule); production seal (overhead jetty increment + sightline tail).
 
 ## Visual state (2026-08-13)
 
