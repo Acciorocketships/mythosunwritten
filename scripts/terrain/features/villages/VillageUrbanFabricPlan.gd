@@ -193,6 +193,7 @@ func _validate_compiled_fabric(program: VillageProgram) -> bool:
 			or terrain_relief_m > MAX_FABRIC_TERRAIN_RELIEF:
 		return false
 	if not _fabric_audit_matches_plan() \
+			or int(fabric_audit.get("walk_surface_component_count", 1)) != 1 \
 			or int(fabric_audit.get("detached_building_stack_count", -1)) != 0 \
 			or int(fabric_audit.get("stair_endpoint_gap_count", -1)) != 0 \
 			or int(fabric_audit.get(

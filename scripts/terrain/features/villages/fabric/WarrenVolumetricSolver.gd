@@ -328,7 +328,28 @@ static func production_quality_failure(audit: Dictionary) -> String:
 	if ground_through > MAX_PRODUCTION_GROUND_THROUGH_SIGHTLINES:
 		return "compiled town has %d ground through sightlines; maximum is %d" % [
 			ground_through, MAX_PRODUCTION_GROUND_THROUGH_SIGHTLINES]
+	var alley := float(audit.get("alley_bounded_walk_ratio", 0.0))
+	var minimum_alley := minimum_production_alley_ratio(audit)
+	if alley < minimum_alley:
+		return "compiled town alley-bounded walk ratio %.3f is below %.3f" % [
+			alley, minimum_alley]
 	return ""
+
+
+static func minimum_production_alley_ratio(audit: Dictionary) -> float:
+	## The reviewed street character: walk cells inside an alley at most
+	## three cells wide with real built edges on both flanks. Floors are
+	## corpus-measured, never aspirational: standard villages measured
+	## 0.30-0.53 at precomposition across six seeds and 0.33 sealed on the
+	## pinned fixture, so 0.30 gates regressions without rejecting any
+	## measured survivor. Other scales stay ungated until their corpus is
+	## measured.
+	var profile := WarrenVillageScaleProfile.for_id(StringName(
+		audit.get("scale_profile_id", "")))
+	if profile == null:
+		return 0.0
+	return 0.30 if profile.scale_id == WarrenVillageScaleProfile.STANDARD \
+		else 0.0
 
 
 static func minimum_production_overhead_ratio(audit: Dictionary) -> float:
@@ -529,26 +550,39 @@ static func _precomposition_enclosure_audit(volume: WarrenVolumePlan,
 	var route_bands: Dictionary = {}
 	for cell: Vector3i in route_floors:
 		route_bands[cell.y] = true
-		var walled: Dictionary = {}
 		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 				Vector3i.FORWARD, Vector3i.BACK]:
 			if route.has(cell + direction):
 				continue
 			eligible_sides += 1
-			var built := occupied.has(cell + direction) \
-				or occupied.has(cell + direction + Vector3i.UP)
-			enclosed_sides += int(built)
-			# A street reads as negative space between buildings when both
-			# flanks are held — by proposed mass or by the uncarved inhabited
-			# mountain the rooms clad. Massif rock alone counts for
-			# boundedness, not for the stricter built-frontage ratio.
-			walled[direction] = built \
-				or grid.use_at(cell + direction) \
-					== WarrenSpatialGrid.Use.ALLOCATABLE
-		bounded_count += int((bool(walled.get(Vector3i.LEFT, false)) \
-				and bool(walled.get(Vector3i.RIGHT, false))) \
-			or (bool(walled.get(Vector3i.FORWARD, false)) \
-				and bool(walled.get(Vector3i.BACK, false))))
+			enclosed_sides += int(occupied.has(cell + direction) \
+				or occupied.has(cell + direction + Vector3i.UP))
+		# A street reads as negative space between buildings when it runs at
+		# most an alley's width and BOTH far edges of one axis are held by
+		# proposed mass (or the proposed mass one band up on a half-storey
+		# flank). This mirrors the sealed alley_bounded_walk_ratio corridor
+		# march; per-flank 1-cell strictness measured 0.0 corpus-wide because
+		# carved streets are two cells wide.
+		var alley := false
+		for axis: Array in [[Vector3i.LEFT, Vector3i.RIGHT],
+				[Vector3i.FORWARD, Vector3i.BACK]]:
+			var crossed := 0
+			var held := true
+			for direction: Vector3i in axis:
+				var edge := cell
+				while crossed <= FabricSolidVoidPlan.MAX_ALLEY_SPAN_CELLS \
+						and route.has(edge + direction):
+					edge += direction
+					crossed += 1
+				if crossed > FabricSolidVoidPlan.MAX_ALLEY_SPAN_CELLS \
+						or not (occupied.has(edge + direction) \
+							or occupied.has(edge + direction + Vector3i.UP)):
+					held = false
+					break
+			if held:
+				alley = true
+				break
+		bounded_count += int(alley)
 		for rise in range(2, 7):
 			if occupied.has(cell + Vector3i.UP * rise):
 				overhead_count += 1

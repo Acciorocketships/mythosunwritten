@@ -164,3 +164,24 @@ func test_production_overhead_gate_uses_the_selected_scale_contract() -> void:
 	assert_eq(WarrenVolumetricSolver.minimum_production_overhead_ratio(audit),
 		WarrenVolumetricSolver.MIN_PRODUCTION_OVERHEAD_ROUTE_RATIO,
 		"legacy and malformed audits retain the reviewed large-town gate")
+
+
+func test_production_alley_gate_is_corpus_measured_per_scale() -> void:
+	var audit := {
+		"overhead_route_ratio": 0.40,
+		"through_sightline_count": 0,
+		"ground_through_sightline_count": 0,
+		"scale_profile_id": WarrenVillageScaleProfile.STANDARD,
+		"alley_bounded_walk_ratio": 0.33,
+	}
+	assert_eq(WarrenVolumetricSolver.production_quality_failure(audit), "",
+		"the pinned village fixture's measured 0.33 alley ratio passes")
+	audit["alley_bounded_walk_ratio"] = 0.20
+	assert_true(WarrenVolumetricSolver.production_quality_failure(audit) \
+		.begins_with("compiled town alley-bounded walk ratio"),
+		"a standard village below the measured corpus floor is rejected")
+	audit["scale_profile_id"] = WarrenVillageScaleProfile.COMPACT
+	assert_eq(WarrenVolumetricSolver.production_quality_failure(audit), "",
+		"unmeasured scales stay ungated until their corpus exists")
+	assert_eq(WarrenVolumetricSolver.minimum_production_alley_ratio({}), 0.0,
+		"legacy audits without a scale contract remain ungated")
