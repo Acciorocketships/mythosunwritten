@@ -478,9 +478,17 @@ set — corpus first):
   measured per candidate and scored (500 / 60-per-band) in frontier
   ranking alongside the detached-parcel penalty.
 
-Open next, in order: village-seed corpus measurement of the new route
-metrics, then topology-gate floors (stair transitions, band span, alley
-ratio) and carver scoring re-weights; crown serve-time large-kind
+Corpus measurement and gates (commit faa9305): the precomposition
+bounded ratio now uses the same corridor march as the sealed metric
+(the per-flank version measured 0.0 corpus-wide — streets are two cells
+wide). Standard corpus, seeds 1/2/3/5/7/11: bounded 0.30–0.53, band
+span 7–8 (seeds 4 and 8 produced no staged frontier at standard).
+Production now requires `alley_bounded_walk_ratio >= 0.30` for STANDARD
+(the measured floor) and `walk_surface_component_count == 1` at every
+scale — "no disconnected paths" is a hard contract.
+
+Open next, in order: carver-side winding/spine improvement if bounded
+ratios stay visually low (spec option C); crown serve-time large-kind
 preference; rim single-storey dressing (railed/furnished terrace +
 residual stacking bonus).
 
