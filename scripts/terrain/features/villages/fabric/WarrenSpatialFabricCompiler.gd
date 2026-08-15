@@ -1730,6 +1730,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var quarter_turned_square_roof_count := 0
 	var pending_roof_trims: Array[Dictionary] = []
 	var atomic_neighborhood_roof_count := 0
+	var partial_plate_pitched_count := 0
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
 		exposed_roof_room_kind_counts[room.kind] = int(
@@ -1750,9 +1751,14 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			and not bool(neighborhood_proposal.get("flat_roof", false)) \
 			and not (neighborhood_proposal.get(
 				"roof_junction_rules", []) as Array).is_empty()
-		if full and not _touches_public_air(source.grid, face_cells):
+		var plate_pitched := not full \
+			and bool(neighborhood_proposal.get("partial_plate", false)) \
+			and not bool(neighborhood_proposal.get("flat_roof", false))
+		if (full or plate_pitched) \
+				and not _touches_public_air(source.grid, face_cells):
 			var pitched_candidates := _full_roof_candidates(room,
-				source.world_seed, neighborhood_proposal)
+				source.world_seed, neighborhood_proposal) if full \
+				else _plate_roof_candidates(neighborhood_proposal)
 			var pitched_rejections: Array[Dictionary] = []
 			for candidate_index in pitched_candidates.size():
 				var candidate := pitched_candidates[candidate_index]
@@ -1761,7 +1767,11 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				var pitched := _full_roof_unit(room_id, room, parent_unit,
 					pitched_id, _roof_seams_for_candidate(room_seams,
 						parent_unit.stable_id, out, fixed_feature_units),
-					yaw_offset)
+					yaw_offset) if full \
+					else _plate_roof_unit(room_id, room, parent_unit,
+						pitched_id, neighborhood_proposal,
+						_roof_seams_for_candidate(room_seams,
+							parent_unit.stable_id, out, fixed_feature_units))
 				var pitched_recipe := program.recipe(pitched_id)
 				if pitched_recipe == null:
 					last_failure = "missing full roof recipe %s" % pitched_id
@@ -1786,8 +1796,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 							})
 					realized_face_count += face_cells.size()
 					pitched_count += 1
+					partial_plate_pitched_count += int(plate_pitched)
 					alternate_pitched_roof_count += int(candidate_index > 0)
-					quarter_turned_square_roof_count += int(yaw_offset != 0)
+					quarter_turned_square_roof_count += int(full \
+						and yaw_offset != 0)
 					var roof_family := _roof_recipe_family(pitched_id)
 					pitched_roof_family_counts[roof_family] = int(
 						pitched_roof_family_counts.get(roof_family, 0)) + 1
@@ -2112,6 +2124,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"roofed_room_count": room_ids.size(),
 		"roof_unit_count": out.size(),
 		"pitched_roof_count": pitched_count,
+		"partial_plate_pitched_roof_count": partial_plate_pitched_count,
 		"flat_roof_count": flat_count,
 		"flat_roof_terrace_count": flat_terrace_count,
 		"flat_roof_garden_count": flat_garden_count,
@@ -2603,8 +2616,17 @@ static func _spatial_roof_neighborhood(source: WarrenSpatialPlan,
 		if room == null:
 			continue
 		var face_cells := roof_faces_by_room[room_id] as Array[Vector3i]
-		if not _is_full_roof_plate(room, face_cells) \
-				or _touches_public_air(source.grid, face_cells):
+		if _touches_public_air(source.grid, face_cells):
+			continue
+		if not _is_full_roof_plate(room, face_cells):
+			# Phase E: a staggered shoulder whose exposed plate is exactly one
+			# authored roof footprint joins the neighborhood as a first-class
+			# pitched section with typed stepped junctions against its taller
+			# neighbors, instead of bypassing the atomic solve and falling to
+			# per-room caps that read as floating half-roofs.
+			var plate := _exact_partial_plate_proposal(room, face_cells)
+			if not plate.is_empty():
+				proposals.append(plate)
 			continue
 		proposals.append({
 			"stable_id": room_id,
@@ -2925,6 +2947,145 @@ static func _is_full_roof_plate(room: WarrenRoomStamp,
 	for cell: Vector3i in room.private_cells:
 		top_count += int(cell.y == room.lattice_origin.y + 1)
 	return face_cells.size() == top_count
+
+
+static func _exact_partial_plate_proposal(room: WarrenRoomStamp,
+		face_cells: Array[Vector3i]) -> Dictionary:
+	## A partial exposed plate participates in the roof neighborhood only when
+	## it is exactly one authored roof footprint: the pitched shell then covers
+	## the complete exposed region and the junction classifier owns every
+	## contact. Irregular remainders keep the finite setback-cap vocabulary.
+	if face_cells.is_empty():
+		return {}
+	var top_band := room.lattice_origin.y + 1
+	var minimum := face_cells[0]
+	var maximum := face_cells[0]
+	for cell: Vector3i in face_cells:
+		if cell.y != top_band:
+			return {}
+		minimum = Vector3i(mini(minimum.x, cell.x), top_band,
+			mini(minimum.z, cell.z))
+		maximum = Vector3i(maxi(maximum.x, cell.x), top_band,
+			maxi(maximum.z, cell.z))
+	var dims := Vector2i(maximum.x - minimum.x + 1, maximum.z - minimum.z + 1)
+	if dims.x * dims.y != face_cells.size():
+		return {}
+	var kind := &""
+	if dims == Vector2i(2, 2):
+		kind = &"tower"
+	elif dims == Vector2i(2, 4) or dims == Vector2i(4, 2):
+		kind = &"slim"
+	elif dims == Vector2i(4, 4):
+		kind = &"building"
+	elif dims == Vector2i(4, 6) or dims == Vector2i(6, 4):
+		kind = &"long"
+	else:
+		return {}
+	var plate_columns: Dictionary = {}
+	for cell: Vector3i in face_cells:
+		plate_columns[Vector2i(cell.x, cell.z)] = true
+	# Keep the room's own yaw when the footprint allows it so facade cadence and
+	# ridge orientation stay coherent; otherwise take the first quarter turn
+	# that lands the authored centered footprint exactly on the plate.
+	for yaw_offset in 4:
+		var yaw := posmod(room.yaw_quarters + yaw_offset, 4)
+		var zero_columns: Dictionary = {}
+		var zero_minimum := Vector2i(2147483647, 2147483647)
+		for cell: Vector3i in StaggeredFabricCompiler.proposal_occupied_cells({
+				"kind": kind, "origin": Vector3i.ZERO, "yaw_quarters": yaw,
+				"storeys": 1}):
+			if cell.y != 0:
+				continue
+			var column := Vector2i(cell.x, cell.z)
+			zero_columns[column] = true
+			zero_minimum = Vector2i(mini(zero_minimum.x, column.x),
+				mini(zero_minimum.y, column.y))
+		var shift := Vector2i(minimum.x, minimum.z) - zero_minimum
+		var matched := zero_columns.size() == plate_columns.size()
+		for column_value: Variant in zero_columns.keys():
+			matched = matched \
+				and plate_columns.has(column_value as Vector2i + shift)
+		if not matched:
+			continue
+		return {
+			"stable_id": room.stable_id,
+			"kind": kind,
+			"origin": Vector3i(shift.x, room.lattice_origin.y, shift.y),
+			"yaw_quarters": yaw,
+			"storeys": 1,
+			"route_y": room.lattice_origin.y,
+			"roof_feature": 0,
+			"theme": &"blue",
+			"ground_theme": &"blue",
+			"facade_phase": 0,
+			"partial_plate": true,
+		}
+	return {}
+
+
+static func _plate_roof_candidates(neighborhood_proposal: Dictionary) \
+		-> Array[Dictionary]:
+	## Mirror of the joined branch of _full_roof_candidates for admitted partial
+	## plates: the exact roof and trim components come from the plate proposal
+	## itself, so the pitched section lands on the plate rather than assuming
+	## the room's complete footprint.
+	var out: Array[Dictionary] = []
+	if neighborhood_proposal.is_empty() \
+			or bool(neighborhood_proposal.get("flat_roof", false)):
+		return out
+	var junction_rules := neighborhood_proposal.get(
+		"roof_junction_rules", []) as Array
+	var roof_component: Dictionary = {}
+	var trim_components: Array[Dictionary] = []
+	for component: Dictionary in StaggeredFabricCompiler \
+			.proposal_components(neighborhood_proposal):
+		var role := StringName(component.role)
+		if role == &"roof":
+			roof_component = component
+		elif String(role).begins_with("roof.trim."):
+			var trim := component.duplicate(true)
+			var neighbors: Array[StringName] = []
+			for rule: Dictionary in junction_rules:
+				if bool(rule.get("emits_module", false)) \
+						and int(rule.side) == int(component.roof_junction_side):
+					neighbors.append(StringName(rule.neighbor_id))
+			trim["neighbor_room_ids"] = neighbors
+			trim_components.append(trim)
+	if roof_component.is_empty():
+		return out
+	out.append({
+		"recipe_id": StringName(roof_component.recipe_id),
+		"yaw_offset": 0,
+		"uses_roof_neighborhood": not junction_rules.is_empty(),
+		"trim_components": trim_components,
+	})
+	var plain_id := _plain_pitched_recipe_id(
+		StringName(roof_component.recipe_id))
+	if plain_id != StringName(roof_component.recipe_id):
+		var plain := (out[0] as Dictionary).duplicate(true)
+		plain["recipe_id"] = plain_id
+		out.append(plain)
+	return out
+
+
+static func _plate_roof_unit(room_id: StringName, room: WarrenRoomStamp,
+		parent_unit: FabricUnit, recipe_id: StringName,
+		plate_proposal: Dictionary, seams: Array[StringName]) -> FabricUnit:
+	## The plate shell bears on the exact room top cell under its centered
+	## bearing.bottom socket, exactly like a setback cap, so the strict mutual
+	## socket-adjacency proof holds at the offset placement.
+	var plate_origin := plate_proposal.origin as Vector3i
+	var anchor_face := plate_origin + Vector3i.UP
+	var parent_local := _inverse_cell(anchor_face, room.lattice_origin,
+		room.yaw_quarters)
+	return FabricUnit.new(StringName("spatial.roof.%s" % room_id), recipe_id,
+		plate_origin + Vector3i.UP * WarrenSpatialGrid.STOREY_CELLS,
+		int(plate_proposal.yaw_quarters),
+		[parent_unit.stable_id] as Array[StringName],
+		[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
+			SettlementFabricProgram._bearing_cell_socket_id(&"top",
+				parent_local.x, parent_local.z))] as Array[Dictionary],
+		&"", seams)
 
 
 static func _touches_public_air(grid: WarrenSpatialGrid,

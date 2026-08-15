@@ -21,7 +21,11 @@ const MAX_OCCLUDER_RANK_SCAN := 24
 const RESIDUAL_OVERHEAD_ROUTE_CELL_SCORE := 50000
 const RESIDUAL_FRONTAGE_SIDE_SCORE := 15000
 const RESIDUAL_TERRAIN_ROOT_SCORE := 35000
-const RESIDUAL_MASSIF_EDGE_COLUMN_SCORE := 8000
+## Formerly 8000: rewarding massif-edge contact scattered freestanding rim
+## houses around the village. Edge taper is welcome only when a candidate
+## also leans on the town, which the mandatory established-contact rule now
+## enforces, so the edge itself earns nothing.
+const RESIDUAL_MASSIF_EDGE_COLUMN_SCORE := 0
 ## Screenshot-backed production gates. A town with every requested feature can
 ## still read as isolated facades around an open plaza; require the compiled
 ## exterior realm to keep most long views broken and a substantial fraction of
@@ -492,6 +496,24 @@ static func _precomposition_enclosure_audit(volume: WarrenVolumePlan,
 			occupied[cell] = parcel.stable_id
 	if proposal_count < MIN_BUILDINGS or occupied.is_empty():
 		return {}
+	# Cohesion is a first-class selection objective: a parcel none of whose
+	# occupied cells touch another parcel's mass reads as a building standing
+	# awkwardly alone, however legal its address is.
+	var parcel_owners: Dictionary = {}
+	var contact_parcels: Dictionary = {}
+	for cell_value: Variant in occupied:
+		var cell := cell_value as Vector3i
+		var owner := StringName(occupied[cell])
+		parcel_owners[owner] = true
+		if contact_parcels.has(owner):
+			continue
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor_owner: Variant = occupied.get(cell + direction)
+			if neighbor_owner != null and StringName(neighbor_owner) != owner:
+				contact_parcels[owner] = true
+				break
+	var detached_parcel_count := parcel_owners.size() - contact_parcels.size()
 	var route: Dictionary = {}
 	var ground_route: Dictionary = {}
 	for cell: Vector3i in route_floors:
@@ -529,17 +551,20 @@ static func _precomposition_enclosure_audit(volume: WarrenVolumePlan,
 			/ float(maxi(1, route.size())),
 		"through_sightline_count": int(sightline.through_count),
 		"ground_through_sightline_count": int(ground_sightline.through_count),
+		"detached_parcel_count": detached_parcel_count,
 	}
 
 
 static func _precomposition_quality_score(volume: WarrenVolumePlan,
 		audit: Dictionary) -> float:
 	# Actual proposed street walls dominate; macro metrics only break ties between
-	# similarly dense fine-grid projections.
+	# similarly dense fine-grid projections. Detached parcels cost real score:
+	# a village reads cohesive when its houses lean on one another.
 	return float(audit.overhead_route_ratio) * 1000.0 \
 		+ float(audit.frontage_ratio) * 450.0 \
 		- float(audit.through_sightline_count) * 3.0 \
 		- float(audit.ground_through_sightline_count) * 7.0 \
+		- float(audit.get("detached_parcel_count", 0)) * 55.0 \
 		+ float(volume.audit.get("all_overhang_walk_ratio", 0.0)) * 80.0 \
 		+ float(volume.audit.get("route_crossover_count", 0)) * 60.0
 
@@ -4416,7 +4441,7 @@ static func _market_backing_composition_survives(grid: WarrenSpatialGrid,
 static func _protected_owners_with_market(protected_owners: Dictionary,
 		market: Dictionary) -> Dictionary:
 	var trial := protected_owners.duplicate(true)
-	if market.is_empty():
+	if market.is_empty() or bool(market.get("optional_absent", false)):
 		return trial
 	var feature_id := StringName(market.feature_id)
 	var endpoint_allowance: Dictionary = {
@@ -8116,18 +8141,18 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		support_cell_by_owner[owner] = below
 	var required_bearing := maxi(1, ceili(float(footprint.size()) * 0.5))
 	var terrain_bearing := terrain_contacts >= required_bearing
-	# Grounded edge infill is allowed to taper the mountain by one complete
-	# building depth, but it may not bootstrap a chain of new ground houses away
-	# from the sealed town. Such chains produced the screenshot's thin spokes.
-	# A ground room must therefore address the public realm or share a real side
-	# interface with the established (non-residual) mass. Elevated residual rooms
-	# retain ordinary parent access so they can complete the inhabited mountain.
+	# Residual rooms complete the inhabited mass; they never scatter around
+	# it. Every candidate — addressed or not, grounded or elevated — must
+	# lean on established (non-residual) construction with a real side
+	# interface of at least two contact cells, so no backfill house ever
+	# stands awkwardly alone at the rim.
+	var established_parent := _largest_contact_owner(established_access_counts)
+	if established_parent.is_empty() \
+			or int(established_access_counts[established_parent]) < 2:
+		return {}
 	if not addressed:
 		if terrain_bearing:
-			access_parent_id = _largest_contact_owner(established_access_counts)
-			if access_parent_id.is_empty() \
-					or int(established_access_counts[access_parent_id]) < 2:
-				return {}
+			access_parent_id = established_parent
 		elif access_parent_id.is_empty() \
 				or int(access_counts[access_parent_id]) < 2:
 			return {}
