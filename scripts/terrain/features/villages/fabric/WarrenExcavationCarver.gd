@@ -293,6 +293,10 @@ const LANE_COST_PER_STRIDE_CELL := 45.0
 
 static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
+## Lane-reserve experiment knobs (tests/harness/warren_density_probe.gd).
+## Defaults reproduce the class constants exactly; production never sets them.
+static var lane_reserve_radius := LANE_ARCADE_RESERVE_CELLS
+static var lane_reserve_clearance_bands := 1 << 30
 
 
 static func carve(world_seed: int, massif: WarrenMassif,
@@ -576,20 +580,30 @@ static func _next_lane_anchor(world_seed: int, excavation: WarrenExcavation,
 
 static func _arcade_reserve(massif: WarrenMassif,
 		excavation: WarrenExcavation) -> Dictionary:
-	## Columns within LANE_ARCADE_RESERVE_CELLS of any grade route cell, which
-	## are the columns the ground arcade needs free of auxiliary walk realm.
+	## Columns within the reserve radius of any grade route cell, which are the
+	## columns the ground arcade needs free of auxiliary walk realm, mapped to
+	## the highest grade band that reserved them so a lane can be judged by how
+	## far above the ground street it runs.
 	var out: Dictionary = {}
+	var radius := lane_reserve_radius
 	for cell: Vector3i in excavation.route:
 		if not _is_at_grade(massif, cell):
 			continue
-		for x in range(cell.x - LANE_ARCADE_RESERVE_CELLS + 1,
-				cell.x + LANE_ARCADE_RESERVE_CELLS):
-			for z in range(cell.z - LANE_ARCADE_RESERVE_CELLS + 1,
-					cell.z + LANE_ARCADE_RESERVE_CELLS):
-				if absi(x - cell.x) + absi(z - cell.z) \
-						< LANE_ARCADE_RESERVE_CELLS:
-					out[Vector2i(x, z)] = true
+		for x in range(cell.x - radius + 1, cell.x + radius):
+			for z in range(cell.z - radius + 1, cell.z + radius):
+				if absi(x - cell.x) + absi(z - cell.z) < radius:
+					var column := Vector2i(x, z)
+					out[column] = maxi(int(out.get(column, -(1 << 30))), cell.y)
 	return out
+
+
+static func _reserved_for_lane(reserve: Dictionary, cell: Vector3i) -> bool:
+	## A reserved column blocks a lane cell unless the lane runs at least the
+	## clearance above the ground street that reserved it.
+	var column := Vector2i(cell.x, cell.z)
+	if not reserve.has(column):
+		return false
+	return cell.y - int(reserve[column]) < lane_reserve_clearance_bands
 
 
 static func _route_addressed_count(massif: WarrenMassif,
@@ -868,7 +882,7 @@ static func _lane_stride_cells(massif: WarrenMassif,
 		if not _slot_is_borable(massif, excavation, cell,
 				span.y - span.x + HEADROOM_BANDS):
 			return [] as Array[Vector3i]
-		if reserve.has(Vector2i(cell.x, cell.z)) \
+		if _reserved_for_lane(reserve, cell) \
 				or _completes_public_square(occupied, cell) \
 				or _folds_onto_route(occupied, previous, cell) \
 				or _addressable_sides(massif, excavation, cell) < 1:

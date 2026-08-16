@@ -51,6 +51,11 @@ const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
 ]
 static var last_failure := ""
+## Lane-reserve experiment knob, paired with
+## WarrenExcavationCarver.lane_reserve_clearance_bands: auxiliary walk cells at
+## least this many bands above a candidate root do not count against its
+## separation. Default reproduces the column-only rule; production never sets it.
+static var auxiliary_separation_clearance_bands := 1 << 30
 ## Non-semantic diagnostic for regression probes. The selected rank/length is
 ## never copied into a sealed plan and cannot affect deterministic output.
 static var last_selection_audit: Dictionary = {}
@@ -269,6 +274,8 @@ static func _distance_to_cells(root: Vector3i,
 		return 0
 	var result := 2147483647
 	for cell: Vector3i in cells:
+		if cell.y - root.y >= auxiliary_separation_clearance_bands:
+			continue
 		result = mini(result, absi(cell.x - root.x) + absi(cell.z - root.z))
 	return result
 

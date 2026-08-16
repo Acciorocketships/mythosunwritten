@@ -448,6 +448,100 @@ fabric_roof_topology 9/9) have identical pass/fail counts before and after
 Not addressed here: seed 3613's 175 s is ranking (six variants composed
 before the winner) — a better precomposition score, not a gate.
 
+### 8.6 Why the sightline gate fails (evidence for a constructive fix)
+
+Measured on 3910…/attempt 11 (fails, proxy 101) and 3613…/attempt 0
+`gallery0` (seals, proxy 20) with throwaway probes:
+
+- A *through sightline* is an eye-height chord from a route cell that leaves
+  the core in **both** directions without hitting **building** mass
+  (`SettlementFabricSolver._audit_sightlines`); the massif's own rock does
+  not occlude because unassigned mass is discarded (`_discard_unassigned_mass`).
+- 3910: 216 eye-height flank sides along the street; **198 solid massif**,
+  185 house-capable (≥ 4 bands above the floor); only **108 proposed** →
+  101 chords. **With all mass kept as occluders: 0 chords** (3613: 176 solid,
+  112 proposed, 20 chords → 0).
+- Route straightness is not the cause: the carver already caps runs at
+  `MAX_STRAIGHT_RUN = 4`.
+- `WarrenSolidPartitioner.street_wall_audit`: 3910 = 74 raw walls → owned 32,
+  plinth 12, kerb 13, undermined 8, short 9, unowned 0. 3613 = 64 → 29 / 13 /
+  13 / 7 / 2 / 0. The partitioner honours its contract; the contract houses
+  ~45 % of walls and trims the rest to air by policy (spec §3). Near-identical
+  buckets on the sealing and failing town — the *arrangement* of gaps decides.
+- `_fill_free_solid` (the interior-infill pass) places **0** houses on both:
+  every column beside a public cell is already claimed (251/…) or carved
+  (151/…) at `_top_band`; the interior 66 % of the hill is unaddressable.
+- Lanes — the mechanism meant to open the interior (lane curve 30 → 74 mean
+  houses was measured on radius-12 towns) — are 0–3 per town at the reviewed
+  village scale (3910: 2 lanes/11 cells; 3613: 1/6; 6357: 3/13; 7: 0; 166: 0).
+
+So at village scale the topology is a one-house-deep skin along a canyon,
+and whether the compiled town passes the sightline caps depends on where the
+skin's policy-trimmed gaps line up — hence compose-then-reject.
+
+### 8.7 Decision + O2 experiment (2026-08-16)
+
+Decision (Ryan): the sightline caps were guidance for the intended look, not
+a hard rule; enclosure should come from density. Landed:
+`production_quality_failure` no longer rejects on through/ground sightlines
+(overhead and alley ratios stay hard); the A0 pre-gate and per-source memo,
+which hard-rejected on the same metric, are removed; the precomposition
+ranking's proxy penalties remain the only sightline influence.
+
+O2 (density via lanes) was measured before touching production rules, with
+`tests/harness/warren_density_probe.gd` (frontier level, 9 seeds × 12
+attempts) and two experiment knobs (`WarrenExcavationCarver.lane_reserve_radius`,
+`lane_reserve_clearance_bands` paired with
+`WarrenGroundArcadeSolver.auxiliary_separation_clearance_bands`; defaults =
+production). Why lanes fail today: of ~11–14 anchors per town, 11–13 cannot
+make a first move — the arcade reserve (`LANE_ARCADE_RESERVE_CELLS = 4`
+around every grade route cell) covers 56–58 of ~120–135 columns.
+
+| variant | candidates/108 | arcade fails | lanes/cand | lane cells | houses/cand | mass ratio | proxy through | proxy overhead |
+|---|---|---|---|---|---|---|---|---|
+| baseline | 51 | 31 | 0.92 | 4.2 | 19.4 | 0.325 | 80 | 0.003 |
+| reserve radius 2 | 43 | 50 | 1.49 | 7.3 | 18.8 | 0.305 | 86 | 0.000 |
+| clearance 6 bands | 50 | 31 | 1.02 | 4.8 | 19.2 | 0.324 | 84 | 0.001 |
+| clearance 4 bands | 57 | 28 | 1.42 | 6.5 | 19.1 | 0.305 | 85 | 0.001 |
+| radius 2 + clearance 6 | 45 | 48 | 1.51 | 7.3 | 18.7 | 0.305 | 87 | 0.000 |
+
+More lanes do **not** raise house count at village scale (flat ~19/candidate),
+slightly worsen enclosure (lanes cut mass; proxy through +5–7), and a smaller
+reserve costs arcade candidates. Per seed, the two sealing towns (3613…, 7)
+have proxy through 44/39 and ground 12/22; failing seeds 91–165 — enclosure
+tracks route/massif shape, not lanes (seed 8702… has 3.5 lanes and through
+161). Front-rank houses are 1–2 columns (`footprint_families` 1cell 11–15,
+2cell 6–9, 4cell 1–2) because deeper footprints span more terrace relief
+(`footprint_fits_plinth_budget`, terrace tops). The precomposition overhead
+proxy is ~0 for every candidate: compiled overhead comes entirely from
+composition (skywalks/bridges), and that gate stays hard.
+
+Conclusion: at radius 7–8 the density lever is not lanes; it is footprint
+depth / how the front rank consumes interior mass (or courtyard/back-plot
+addressing) — a partitioner/massif-shape question for Ryan's design, not a
+tuning change. The reserve knobs are left at production defaults.
+
+Oracle under the guidance policy (vs the A0 state):
+
+| seed | A0 | guidance |
+|---|---|---|
+| 4242 std | 11.6 s fail | 61 s fail — all 8 variants fail composition (5 "authored room envelope: bridge room", 3 "retained arbitrary exposed") |
+| 991177 compact | 154 s fail | 182 s fail |
+| 3046… std | 11.6 s fail | 173 s fail |
+| 2697… compact | 11.2 s fail | 182 s fail |
+| 166… compact | 9.8 s fail | **79 s seal** (attempt 5 / v3, sig 0f1608f8dc9b) — new town |
+| 3910… std | 44 s fail | 448 s fail |
+| 6357… std | 10.8 s fail | 80 s fail |
+| 3613… std | 175 s seal (att 0 / v3) | **20 s seal** (att 2 / v2, sig 24122fd46b32) — an earlier variant the cap used to reject |
+| 7 std | 9.2 s seal | 10.8 s seal, identical |
+
+Seal rate 2/9 → 3/9 and the look-policy is honoured, but exhaustive failures
+are 5–15× slower because doomed sources are now fully composed. They are
+doomed by **composition** (bearing / authored room envelope), which the proxy
+sightline count was predicting — and which the pre-gate would also have used
+to block 166's new town. The next constructive frontier is therefore the
+room composition stage: why village-scale front ranks cannot compose.
+
 ---
 
 *Harness: `tests/harness/profile_startup_pipeline.gd` (new). Run:*
