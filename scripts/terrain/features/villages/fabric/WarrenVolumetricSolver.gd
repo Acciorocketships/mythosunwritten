@@ -1177,6 +1177,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		if requires_courtyard:
 			raw_court_candidates = _courtyard_cantilever_room_candidates(grid,
 				volume, proposals, construction_program, market_owners, public_air)
+		else:
+			raw_court_candidates.append(_absent_courtyard_bridge_candidate())
 		_rank_courtyard_candidates_for_macro(raw_court_candidates,
 				court_floors, macro_preflight)
 		if diagnostic_trace_skywalk_timing:
@@ -1200,8 +1202,6 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						as Dictionary).get("owner_parcel_ids", []),
 				})
 			print("SKYWALK_TIMING court_macro_candidates ", macro_preview)
-		else:
-			raw_court_candidates.append(_absent_courtyard_bridge_candidate())
 		if raw_court_candidates.is_empty():
 			feature_set_attempts.append({
 				"market_parcel": candidate.get("backing_parcel_id", &""),
