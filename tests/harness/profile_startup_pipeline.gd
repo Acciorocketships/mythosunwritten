@@ -31,7 +31,15 @@ func _init() -> void:
 	var seed_value := DEFAULT_SEED
 	var radius := 2
 	var do_grass := false
+	var max_keys := 1 << 30
+	var contexts_only := false
 	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--max-keys="):
+			max_keys = int(arg.trim_prefix("--max-keys="))
+		elif arg == "--contexts-only":
+			contexts_only = true
+		elif arg == "--solver-timing":
+			WarrenVolumetricSolver.diagnostic_trace_skywalk_timing = true
 		if arg.begins_with("--seed="):
 			seed_value = int(arg.trim_prefix("--seed="))
 		elif arg.begins_with("--radius="):
@@ -119,12 +127,20 @@ func _init() -> void:
 	print("[profile] startup supports=%s feature_keys=%d halo=%d" % [
 		str(supports), feature_keys.size(), halo])
 	var startup_started := Time.get_ticks_usec()
+	var keys_done := 0
 	for key: Vector2i in feature_keys:
+		if keys_done >= max_keys:
+			break
+		keys_done += 1
 		var key_started := Time.get_ticks_usec()
 		features.context_for(key)
 		print("[profile] startup.context key=%d,%d ms=%s" % [
 			key.x, key.y, _ms(Time.get_ticks_usec() - key_started)])
 	t = _mark("startup.contexts_total", startup_started)
+	if contexts_only:
+		print("[profile] DONE (contexts only) total_ms=%s" % _ms(Time.get_ticks_usec() - _t0))
+		quit()
+		return
 	for chunk: Vector2i in supports:
 		var built := _build_chunk(chunk, plan, water, mesher, water_builder,
 			dressing_program, features, fields, render_cache, seed_value, true)

@@ -307,6 +307,97 @@ Ranked by value-per-effort:
 
 ---
 
+## 8. Addendum (2026-08-16): inside the warren search — where 70–400 s per settlement goes
+
+Follow-up profiling of `WarrenVolumetricSolver.solve` on the three city seeds
+touched by the spawn halo (isolated probe `probe_warren_spatial_features.gd
+--production-only`, plus a temporarily-instrumented `context_for` replay).
+
+### 8.1 A diagnostic flag was changing the search (bug)
+
+`WarrenVolumetricSolver.gd:~1180-1204`: the wip checkpoint `80dc605`
+(2026-08-12) inserted `_rank_courtyard_candidates_for_macro(...)` and a
+`SKYWALK_TIMING` block between `if requires_courtyard:` and its `else:`, so
+the `else: raw_court_candidates.append(_absent_courtyard_bridge_candidate())`
+silently re-attached to `if diagnostic_trace_skywalk_timing:`. Consequences:
+
+- **Production** (flag off), compact/standard profiles
+  (`requires_elevated_courtyard = false`): the sentinel candidate is appended
+  → the full market/landmark/skywalk joint beam runs → *intended* but slow.
+  Large/grand (`true`): a bogus "no courtyard" candidate is added on top of
+  the real ones — extra work and a possible court-less seal for a profile
+  that requires a court.
+- **Every `--timing` harness/probe run** (flag on): compact/standard get *no*
+  court candidate → the market attempt fails immediately → the search is
+  ~16× faster **and different from what the game ships**. Seed 3910 standard:
+  **23.4 s with `--timing`, 367.5 s without**. Corpus/pin results gathered
+  under the flag do not reflect production.
+
+Fix (in working tree, uncommitted): move the `else` back to
+`if requires_courtyard:`.
+
+### 8.2 True production breakdown, seed 3910 standard (365.6 s, exhausted)
+
+| stage | n | total | per |
+|---|---|---|---|
+| frontier (excavation carve, 256 bores each) | 12 | 11.0 s | 0.9 s |
+| `partition_spatial` rejected (beam empty / composition failed) | 30 | 93.7 s | 3.1 s |
+| `partition_spatial` accepted = 3D room composition | 34 | **197.5 s** | 5.8 s |
+| `partition_fabric` compile | 34 | **62.1 s** | 1.8 s |
+
+Of the 34 variants that survived composition + fabric (~7.6 s each), **26
+were rejected by the sightline caps** ("N through sightlines; maximum 48",
+"ground … maximum 20") and 8 by fabric setback/roof gates. I.e. **~200 s of
+365 s is spent fully building towns that fail a count check at the very
+end.**
+
+Two structural facts make that avoidable:
+
+1. **The precomposition proxy already computes the sightline counts**
+   (`_precomposition_enclosure_audit` → `through_sightline_count`,
+   `ground_through_sightline_count`) and uses them only to *rank*
+   (`_precomposition_quality_score`), never to reject. Observed proxy vs
+   compiled: proxy 98–128 → compiled 74–104 (all fail); proxy 60 → 69–96
+   (fail); proxy 6 → 50–117 (fail — proxy under-predicts here). Rejecting
+   source volumes whose proxy exceeds the cap by a safety margin (e.g. > 78)
+   would have skipped 6 of the 8 source volumes (~48 of 64 variants) before
+   any composition. Needs corpus validation for zero false rejections.
+2. **The 8 partition variants of one source volume fail the same way**
+   (sightlines are a street-network property; variants change room choices,
+   per the code's own comment). Per-source results: 91/74/91 · 104/80/104 ·
+   93/93/93/89 · 97/97/97 · 85/86/86/86. A "topology-bound failure → skip the
+   source's remaining variants" memo removes ~7/8 of that cost. Same for
+   "final 3D room composition lost structural bearing" (4/8 variants on two
+   sources, ~4 s each).
+
+Also: `WarrenExcavationCarver.carve` runs 256 bores (~3.4 ms each) per outer
+attempt and selects by `_candidate_score`, which ignores the topology gate
+that runs immediately afterwards ("walk cells ≥ 12", "ramp transitions ≥ 1")
+— on the compact seed all 12 × 256 bores were discarded by it. Filtering
+inside the bore loop would let attempts produce candidates instead of a
+guaranteed 0.9 s miss.
+
+### 8.3 Per-settlement production numbers (instrumented `context_for` replay)
+
+| city seed / profile | in-game slices | isolated full search |
+|---|---|---|
+| 166… compact | 8.7 s (12 attempts, no candidates) | 8.5 s |
+| 6357… standard | 24.3 + 57.0 + 5.1 s (3 slices) | 12.1 s *with flag* (true path not measured) |
+| 3910… standard | 34.7 + 20.5 s (2 slices, 3 of 12 attempts) | 23.4 s with flag / **367.5 s true** |
+
+The 20 s budget's uncapped first attempt is why single slices hit 35–57 s.
+
+### 8.4 Expected effect
+
+Fix 8.1 + proxy sightline pre-gate + per-source failure memo + carver
+gate-aware selection: seed 3910's exhausted search ≈ 365 s → ~40–60 s (11 s
+carving + a handful of genuinely ambiguous compositions), and successful
+seals arrive earlier because fewer doomed variants precede the winner. This
+does not remove the need for the async/placeholder work (a hard seed still
+costs tens of seconds), but shrinks placeholder dwell time ~5–8×.
+
+---
+
 *Harness: `tests/harness/profile_startup_pipeline.gd` (new). Run:*
 ```
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path /Users/ryko/story \
