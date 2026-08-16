@@ -13,7 +13,7 @@ extends RefCounted
 ## (new gates, carver changes, recipe changes). Success pins self-heal without
 ## it (the pinned re-solve fails and the search reruns), but FAILURE entries
 ## would otherwise suppress a settlement that new code could now seal.
-const GENERATION_SALT := "2026-08-15a"
+const GENERATION_SALT := "2026-08-16a"
 const DEFAULT_PATH := "user://warren_solution_pins.json"
 
 static var _path := DEFAULT_PATH

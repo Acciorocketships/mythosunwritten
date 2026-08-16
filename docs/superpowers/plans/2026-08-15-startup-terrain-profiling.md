@@ -396,6 +396,58 @@ seals arrive earlier because fewer doomed variants precede the winner. This
 does not remove the need for the async/placeholder work (a hard seed still
 costs tens of seconds), but shrinks placeholder dwell time ~5–8×.
 
+### 8.5 Sub-project A0 result (2026-08-16, branch feat/async-settlement-resolution)
+
+Implemented (TDD, `tests/test_warren_search_pregates.gd`, 11 tests):
+
+1. `WarrenVolumetricSolver.precomposition_pregate_failure` — a source
+   volume whose *precomposition* through-sightline proxy exceeds the cap by
+   `PRECOMPOSITION_SIGHTLINE_MARGIN` (30 → limit 78) is dropped in
+   `_ranked_precomposition_variants` before any variant reaches composition.
+   Ground sightlines are not pre-gated (proxy under-predicts).
+2. `is_topology_bound_quality_failure` + a per-source retirement memo in
+   `_solve_frontier`: a compiled **through**-sightline count > 1.5 × cap
+   retires the source's remaining variants. Ground counts were tried and
+   **withdrawn by the oracle**: seed 3613… attempt 0 compiled 35 ground
+   sightlines on `gallery0/v4` while `gallery0/v3` (the recorded winner)
+   seals — ground daylight is variant-dependent.
+3. `WarrenExcavationCarver.carve_ranked` (`carve()` = its head) +
+   `WarrenTownSolver._gate_preferred_volume`, shared by the staged frontier
+   and the selected-attempt rebuild: the first ranked bore survivor that
+   passes the public-realm topology gate is taken (`TOPOLOGY_GATE_CANDIDATES
+   = 8`); the score-best is still reported when none passes. Compact seed
+   166… went from 0 candidates in 12 attempts to candidates on attempts
+   5/7/8/11.
+4. `WarrenSolutionPinCache.GENERATION_SALT` → `2026-08-16a`.
+
+Oracle (`tests/harness/warren_search_oracle.gd`, unbudgeted
+`WarrenVolumetricSolver.solve`, true production path; baseline = commit
+54e625d in a worktree):
+
+| seed / profile | before | after | outcome |
+|---|---|---|---|
+| world 4242 → 6052…0358 standard | 51.5 s | **11.6 s** | fail = fail |
+| world 991177 → 3360…9337 compact | 124.2 s | 154.5 s | fail = fail (attempt 8 now passes the gate and is composed; +1 candidate explored) |
+| world 3046246887 → 8702…6463 standard | 80.7 s | **11.6 s** | fail = fail |
+| world 2697992464 → 6046…5059 compact | 62.9 s | **11.2 s** | fail = fail |
+| 166029932451774690 compact | 8.6 s | 9.8 s | fail = fail (4 new candidates, all rejected early) |
+| 3910114991003307946 standard | 372.8 s | **44.2 s** | fail = fail |
+| 6357506428441529412 standard | 65.8 s | **10.8 s** | fail = fail |
+| 3613595803240038080 standard | 179.8 s | 174.8 s | **seal = seal**, attempt 0 / `gallery0` / variant 3, sig `d8f95ed1c4f5` identical |
+| 7 standard | 9.5 s | 9.2 s | **seal = seal**, attempt 4 / variant 0, sig `707e0d22b2a8` identical |
+
+Total 955.8 s → 437.7 s; the typical exhausted search drops from ~65 s to
+~11 s (6×), the worst from 373 s to 44 s (8×); both recorded sealing towns are
+bit-identical. Related GUT suites (volumetric_solver 43/45, massif 12/13,
+inhabited_massif 3/5, generation_mode 5/8, spatial_fabric_compiler 9/10,
+settlement_relief 16/17, solid_partitioner 21/25,
+excavation 6/17+7 risky, excavation_adapter 5/11, interstitial_joins 7/7,
+fabric_roof_topology 9/9) have identical pass/fail counts before and after
+— the non-passing cases pre-date A0.
+
+Not addressed here: seed 3613's 175 s is ranking (six variants composed
+before the winner) — a better precomposition score, not a gate.
+
 ---
 
 *Harness: `tests/harness/profile_startup_pipeline.gd` (new). Run:*

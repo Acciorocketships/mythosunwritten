@@ -105,6 +105,10 @@ static var GENERATION_MODE: StringName = MODE_ROUTE_FIRST
 ## seeds bought proportionally more gate survivors (34-41 of 64) and no new
 ## downstream behaviour, so the extra minute per call buys nothing today.
 const MASS_FIRST_EXCAVATION_ATTEMPTS := 12
+## How many ranked bore survivors of one excavation attempt are offered to the
+## topology gate before the attempt is declared a miss. The carver keeps only a
+## handful of its 256 bores, so this covers them all in practice.
+const TOPOLOGY_GATE_CANDIDATES := 8
 ## Attempts vary the CARVE seed, never the massif seed: the massif is
 ## deterministic per world seed, so rebuilding it per attempt would return the
 ## identical solid and the whole frontier would collapse to one route. A large
@@ -421,11 +425,12 @@ static func mass_first_frontier(world_seed: int,
 		attempted += 1
 		last_attempt_index = attempt
 		var output_count_before_attempt := out.size()
-		var excavation := WarrenExcavationCarver.carve(
-			world_seed + attempt * MASS_FIRST_ATTEMPT_STRIDE, massif, profile)
+		var excavations := WarrenExcavationCarver.carve_ranked(
+			world_seed + attempt * MASS_FIRST_ATTEMPT_STRIDE, massif, profile,
+			TOPOLOGY_GATE_CANDIDATES)
 		attempt_timing["excavation_ms"] = Time.get_ticks_msec() - stage_started_ms
 		stage_started_ms = Time.get_ticks_msec()
-		if excavation == null:
+		if excavations.is_empty():
 			excavation_failure = "%s diagnostic=%s" % [
 				WarrenExcavationCarver.last_failure,
 				WarrenExcavationCarver.last_diagnostic]
@@ -434,19 +439,6 @@ static func mass_first_frontier(world_seed: int,
 			attempt_timings.append(attempt_timing)
 			continue
 		carved += 1
-		var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
-			excavation)
-		attempt_timing["adapter_ms"] = Time.get_ticks_msec() - stage_started_ms
-		stage_started_ms = Time.get_ticks_msec()
-		if volume == null:
-			attempt_timing["outcome"] = &"adapter"
-			attempt_timing["total_ms"] = Time.get_ticks_msec() - attempt_started_ms
-			attempt_timings.append(attempt_timing)
-			continue
-		_attach_scale_profile(volume, profile)
-		adapted += 1
-		var mass_context := volume.mass_context
-		var frontage_cells := volume.frontage_cells
 		# Route-first candidates can only reach this frontier through
 		# WarrenPublicRealmCarver.sealed_candidate, which applies the carver's
 		# topology gate. Excavated candidates are held to that same bar instead
@@ -454,7 +446,21 @@ static func mass_first_frontier(world_seed: int,
 		# topology of the same measured quality. Two of its criteria genuinely
 		# bite here -- a complete six-band frontage on 55% of route cells, and
 		# at least one ramp -- because the excavation carver's own gates ask
-		# only for street-height flanking walls and no ramp at all.
+		# only for street-height flanking walls and no ramp at all. The carver
+		# ranks its survivors by its own score, which knows nothing of these
+		# criteria, so the first survivor that passes the gate is taken rather
+		# than discarding the attempt because the score-best one missed.
+		var volume := _gate_preferred_volume(excavations, massif, profile)
+		attempt_timing["adapter_ms"] = Time.get_ticks_msec() - stage_started_ms
+		stage_started_ms = Time.get_ticks_msec()
+		if volume == null:
+			attempt_timing["outcome"] = &"adapter"
+			attempt_timing["total_ms"] = Time.get_ticks_msec() - attempt_started_ms
+			attempt_timings.append(attempt_timing)
+			continue
+		adapted += 1
+		var mass_context := volume.mass_context
+		var frontage_cells := volume.frontage_cells
 		var passes_topology := WarrenPublicRealmCarver.passes_topology_gate(volume)
 		attempt_timing["topology_gate_ms"] = \
 			Time.get_ticks_msec() - stage_started_ms
@@ -573,17 +579,16 @@ static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
 	if massif == null:
 		last_failure = "massif rejected: %s" % WarrenMassifBuilder.last_failure
 		return out
-	var excavation := WarrenExcavationCarver.carve(
-		world_seed + attempt_index * MASS_FIRST_ATTEMPT_STRIDE, massif, profile)
-	if excavation == null:
+	var excavations := WarrenExcavationCarver.carve_ranked(
+		world_seed + attempt_index * MASS_FIRST_ATTEMPT_STRIDE, massif, profile,
+		TOPOLOGY_GATE_CANDIDATES)
+	if excavations.is_empty():
 		last_failure = "selected excavation no longer carves local terrain"
 		return out
-	var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
-		excavation)
+	var volume := _gate_preferred_volume(excavations, massif, profile)
 	if volume == null:
 		last_failure = WarrenExcavationVolumeAdapter.last_failure
 		return out
-	_attach_scale_profile(volume, profile)
 	if not WarrenPublicRealmCarver.passes_topology_gate(volume):
 		last_failure = "selected excavation no longer passes the topology gate: %s" \
 			% WarrenPublicRealmCarver.topology_gate_failure(volume)
@@ -604,6 +609,29 @@ static func mass_first_attempt_frontier(world_seed: int, attempt_index: int,
 	if out.is_empty():
 		last_failure = WarrenElevatedFrontageSolver.last_failure
 	return out
+
+
+## The one selection rule shared by the staged frontier and the selected-
+## attempt rebuild, so a pinned town re-derives the exact bore it was sealed
+## from. Adapts the carver's ranked survivors in order and returns the first
+## whose volume passes the public-realm topology gate; when none passes, the
+## best-ranked adapted volume is returned so callers report its gate failure
+## exactly as before. Null only when nothing adapts.
+static func _gate_preferred_volume(excavations: Array[WarrenExcavation],
+		massif: WarrenMassif, profile: WarrenVillageScaleProfile) \
+		-> WarrenVolumePlan:
+	var fallback: WarrenVolumePlan = null
+	for excavation: WarrenExcavation in excavations:
+		var volume := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
+			excavation)
+		if volume == null:
+			continue
+		_attach_scale_profile(volume, profile)
+		if WarrenPublicRealmCarver.passes_topology_gate(volume):
+			return volume
+		if fallback == null:
+			fallback = volume
+	return fallback
 
 
 static func _attach_scale_profile(volume: WarrenVolumePlan,

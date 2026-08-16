@@ -297,6 +297,23 @@ static var last_diagnostic: Dictionary = {}
 
 static func carve(world_seed: int, massif: WarrenMassif,
 		scale_profile: WarrenVillageScaleProfile = null) -> WarrenExcavation:
+	var ranked := carve_ranked(world_seed, massif, scale_profile, 1)
+	return ranked[0] if not ranked.is_empty() else null
+
+
+## The bounded bore search, returning up to `limit` laned and sealed
+## survivors ordered best-first by _candidate_score (ties broken by bore
+## index, so the order is deterministic). carve() is exactly the head of this
+## list. Callers that must satisfy a gate this carver does not know about (the
+## public-realm topology gate applied by the mass-first frontier) can walk the
+## ranking instead of discarding a whole attempt because its single best
+## survivor missed a count by one; profiling showed all 12 x 256 bores of a
+## compact seed thrown away that way while gate-passing survivors sat at
+## ranks 1-5.
+static func carve_ranked(world_seed: int, massif: WarrenMassif,
+		scale_profile: WarrenVillageScaleProfile, limit: int) \
+		-> Array[WarrenExcavation]:
+	var out: Array[WarrenExcavation] = []
 	last_failure = "no attempt sealed"
 	last_diagnostic = {
 		"best_grade_two_sided_address_ratio": 0.0,
@@ -305,43 +322,51 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	}
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
-		return null
+		return out
 	var constraints := _scale_constraints(scale_profile)
 	var portals := _portal_cells(massif)
 	if portals.is_empty():
 		last_failure = "no boundary column can host a portal"
-		return null
-	var best: WarrenExcavation = null
-	var best_score := INF
+		return out
+	var survivors: Array[Dictionary] = []
 	var rejected: Dictionary = {}
 	for attempt in ATTEMPTS:
 		var candidate := _bore(world_seed, attempt, massif, portals, rejected,
 			constraints)
 		if candidate == null:
 			continue
-		var score := _candidate_score(candidate, massif)
-		if best == null or score < best_score:
-			best = candidate
-			best_score = score
-	if best == null:
+		survivors.append({"score": _candidate_score(candidate, massif),
+			"attempt": attempt, "candidate": candidate})
+	if survivors.is_empty():
 		last_failure = "no attempt sealed (%s; best two-sided grade %d/%d=%.3f)" % [
 			_tally(rejected),
 			int(last_diagnostic.best_grade_two_sided_address_count),
 			int(last_diagnostic.best_grade_endpoint_count),
 			float(last_diagnostic.best_grade_two_sided_address_ratio)]
-		return null
+		return out
+	survivors.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if float(a.score) != float(b.score):
+			return float(a.score) < float(b.score)
+		return int(a.attempt) < int(b.attempt))
 	last_failure = ""
-	# Lanes are carved into the survivor, never into a candidate: every gate
-	# above has already chosen this route against the unlaned solid, so the
-	# selection is exactly the one the pre-lane carver made. `best` is re-sealed
-	# with its lanes so nothing downstream can receive a network seal() has not
-	# validated.
-	_carve_lanes(world_seed, best, massif, int(constraints.lane_budget),
-		int(constraints.lane_cell_budget))
-	if not best.seal():
-		last_failure = "lane network rejected: %s" % best.last_rejection
-		return null
-	return best
+	# Lanes are carved into survivors, never into candidates: every gate above
+	# has already chosen these routes against the unlaned solid, so the ranking
+	# is exactly the one the pre-lane carver made. Each is re-sealed with its
+	# lanes so nothing downstream can receive a network seal() has not
+	# validated; one that fails re-seal is dropped and the next takes its rank.
+	for index in mini(limit, survivors.size()):
+		var excavation := survivors[index].candidate as WarrenExcavation
+		_carve_lanes(world_seed, excavation, massif,
+			int(constraints.lane_budget), int(constraints.lane_cell_budget))
+		if not excavation.seal():
+			if out.is_empty():
+				last_failure = "lane network rejected: %s" \
+					% excavation.last_rejection
+			continue
+		out.append(excavation)
+	if not out.is_empty():
+		last_failure = ""
+	return out
 
 
 static func _reject(rejected: Dictionary, reason: String) -> void:

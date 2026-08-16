@@ -33,6 +33,24 @@ const RESIDUAL_MASSIF_EDGE_COLUMN_SCORE := 0
 const MIN_PRODUCTION_OVERHEAD_ROUTE_RATIO := 0.38
 const MAX_PRODUCTION_THROUGH_SIGHTLINES := 48
 const MAX_PRODUCTION_GROUND_THROUGH_SIGHTLINES := 20
+## The precomposition enclosure audit already measures through sightlines
+## against the proposed street walls. Profiling (2026-08-16, seed 3910
+## standard) showed ~200 s of a 365 s exhausted search spent fully composing
+## and compiling towns whose proxy count was already 2x the cap and whose
+## compiled count then failed it. The proxy over-predicted the compiled count
+## by at most 27 in that data, so a source volume is rejected before any of
+## its partition variants reaches composition only when the proxy exceeds the
+## cap by more than this margin. Ground sightlines are deliberately not
+## pre-gated: that proxy under-predicts (observed 6 -> 92 compiled).
+const PRECOMPOSITION_SIGHTLINE_MARGIN := 30
+## A compiled THROUGH sightline count this far past its cap is a street-network
+## property, not a room-choice one: sibling partition variants of the same
+## source volume failed identically in profiling (91/74/91, 104/80/104,
+## 93/93/93/89, 97/97/97). Such a failure retires the source's remaining
+## variants; a narrow miss (50 beside 96 and 117) does not. GROUND sightlines
+## are excluded: they depend on which rooms a variant puts at street level
+## (seed 3613595803240038080 attempt 0: 35 on one variant, sealed on another).
+const TOPOLOGY_BOUND_SIGHTLINE_RATIO := 1.5
 ## A bazaar must read as a chamber in the inhabited maze, not a canopy beside
 ## the town. Every aisle sight ray must meet market body or future building mass
 ## within this many 1.5 m cells.
@@ -85,6 +103,9 @@ static var diagnostic_trace_room_gate := false
 static var diagnostic_feature_market_limit := -1
 static var diagnostic_partition_limit := -1
 static var diagnostic_partition_first := 0
+## Last reason the precomposition pre-gate dropped a source volume ("" when the
+## most recent ranking dropped none). Diagnostic only; surfaces in failure text.
+static var last_precomposition_pregate_failure := ""
 ## Bridge-room admission telemetry for the residual backfill pass; reset per
 ## backfill run and surfaced through the residual audit keys.
 static var _residual_bridge_counts: Dictionary = {}
@@ -251,12 +272,25 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 	var ranked_variants := _ranked_precomposition_variants(frontier,
 		construction_program)
 	if ranked_variants.is_empty():
-		last_failure = "no volumetric parcel variant retained inhabited mass"
+		last_failure = "no volumetric parcel variant retained inhabited mass" \
+			if last_precomposition_pregate_failure.is_empty() \
+			else "precomposition pre-gate rejected every source (%s)" \
+				% last_precomposition_pregate_failure
 		return null
 	var failures := PackedStringArray()
 	var partition_attempt_count := 0
+	# Source volumes retired by a topology-bound compiled failure: their other
+	# partition variants share the street network and would fail the same way.
+	var retired_sources: Dictionary = {}
 	for ranked_index in ranked_variants.size():
 		if ranked_index < diagnostic_partition_first:
+			continue
+		var ranked_source := (ranked_variants[ranked_index].volume \
+			as WarrenVolumePlan).stable_id
+		if retired_sources.has(ranked_source):
+			failures.append("%s/v%d: skipped, source retired (%s)" % [
+				String(ranked_source), int(ranked_variants[ranked_index].variant),
+				String(retired_sources[ranked_source])])
 			continue
 		if _search_deadline_ms >= 0 and partition_attempt_count > 0 \
 				and Time.get_ticks_msec() > _search_deadline_ms:
@@ -319,6 +353,8 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 						return finalized
 				else:
 					last_failure = quality_failure
+					if is_topology_bound_quality_failure(fabric.audit):
+						retired_sources[volume.stable_id] = quality_failure
 					if diagnostic_trace_skywalk_timing:
 						print("SKYWALK_TIMING quality_rejection ", {
 							"overhead": fabric.audit.get(
@@ -421,6 +457,27 @@ static func _finalize_selected_candidate(volume: WarrenVolumePlan,
 		return proven_serial
 	last_failure = "final room cleanup rejected: %s" % " | ".join(failures)
 	return null
+
+
+## Cheap rejection of a source volume from its precomposition audit alone.
+## Empty when the volume may proceed to partition/composition.
+static func precomposition_pregate_failure(audit: Dictionary) -> String:
+	var through := int(audit.get("through_sightline_count", 0))
+	var limit := MAX_PRODUCTION_THROUGH_SIGHTLINES \
+		+ PRECOMPOSITION_SIGHTLINE_MARGIN
+	if through > limit:
+		return "precomposition proxy has %d through sightlines; limit %d" % [
+			through, limit]
+	return ""
+
+
+## True when a compiled quality failure is bound to the source volume's street
+## network rather than this partition variant's room choices, so the remaining
+## variants of the same source can be skipped without composing them.
+static func is_topology_bound_quality_failure(audit: Dictionary) -> bool:
+	var through := int(audit.get("through_sightline_count", 0))
+	return float(through) > float(MAX_PRODUCTION_THROUGH_SIGHTLINES) \
+		* TOPOLOGY_BOUND_SIGHTLINE_RATIO
 
 
 static func production_quality_failure(audit: Dictionary) -> String:
@@ -545,6 +602,7 @@ static func _ranked_precomposition_variants(
 		frontier: Array[WarrenVolumePlan],
 		construction_program: SettlementFabricProgram) -> Array[Dictionary]:
 	var ranked: Array[Dictionary] = []
+	last_precomposition_pregate_failure = ""
 	for volume: WarrenVolumePlan in frontier:
 		# Partition rotations alter local room choices but not the street network;
 		# one canonical VALID projection is sufficient to rank source volumes.
@@ -563,6 +621,13 @@ static func _ranked_precomposition_variants(
 				first_valid_variant = audit_variant
 				break
 		if audit.is_empty():
+			continue
+		# The street network is fixed across variants, so a proxy sightline
+		# count far above the compiled cap dooms every variant of this source.
+		var pregate_failure := precomposition_pregate_failure(audit)
+		if not pregate_failure.is_empty():
+			last_precomposition_pregate_failure = "%s: %s" % [
+				String(volume.stable_id), pregate_failure]
 			continue
 		# Partition variants are genuinely different macroscopic decompositions,
 		# not progressively better retries. A fixed zero-first order made every seed
