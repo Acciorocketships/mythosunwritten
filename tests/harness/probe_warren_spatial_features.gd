@@ -117,6 +117,25 @@ func _init() -> void:
 				" stacks=", production.audit.get("building_stack_count", -1))
 		quit(0 if production != null else 1)
 		return
+	if "--enumerate-settlements" in OS.get_cmdline_user_args():
+		var water := TerrainWorldTuning.make_water(world_seed)
+		var settlements := SettlementPlan.new(world_seed, water)
+		for sz in range(-3, 4):
+			for sx in range(-3, 4):
+				var site := settlements.site_for(Vector2i(sx, sz))
+				if site.is_empty():
+					continue
+				var cell := site.cell as Vector2i
+				var city_seed := Helper._mix64(world_seed \
+					^ VillagePlan.SEED_VERSION \
+					^ VillagePlan._SALT_WARREN_GEOMETRY)
+				city_seed = Helper._mix64(city_seed ^ Helper._mix64(cell.x))
+				city_seed = Helper._mix64(city_seed ^ Helper._mix64(cell.y))
+				print("SETTLEMENT super=", Vector2i(sx, sz), " cell=", cell,
+					" city_seed=", city_seed, " scale=",
+					WarrenVillageScaleProfile.select(city_seed).scale_id)
+		quit()
+		return
 	if "--production-pinned" in OS.get_cmdline_user_args():
 		var staged_started := Time.get_ticks_msec()
 		var staged := WarrenVolumetricSolver.solve(world_seed, {}, program,
