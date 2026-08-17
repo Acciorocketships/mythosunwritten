@@ -542,6 +542,53 @@ sightline count was predicting — and which the pre-gate would also have used
 to block 166's new town. The next constructive frontier is therefore the
 room composition stage: why village-scale front ranks cannot compose.
 
+### 8.8 Why composed towns are rejected (gate trace, 9 seeds, guidance policy)
+
+Full production solves with `--timing --gate-trace`; 211 rejected partition
+variants, 156 in composition, 41 at quality gates, 14 in fabric; **1,208 s**
+spent on rejected variants in total.
+
+| class | time | n | nature |
+|---|---|---|---|
+| `compact/standard partition formed N inhabited rooms; expected A..B` (`room_volume_budget`, compact 10..30 / standard 16..60) | **464 s (38 %)** | 85 | size quota checked after the ~5 s composition; compact towns compose **31–48** rooms on every variant of three seeds, standard 61–66 |
+| `alley-bounded walk ratio N is below 0.300` (standard-only regression floor from a 6-seed corpus) | **364 s (30 %)** | 34 | enclosure/character metric checked after fabric (~7 s); values 0.09–0.299, mostly 0.25–0.30 near-misses |
+| `joint hero-feature beam found court=0, 0 landmarks, 0 skywalks` | small (~0.4 s each) | 27 | cheap early miss |
+| bridge room has no built flank / lost structural bearing / retained arbitrary exposed shoulders / room-scale outcroppings unsupported / skywalk fits | ~200 s (17 %) | ~40 | genuinely structural composition failures |
+| overhead ratio, fabric setback/envelope, misc | ~180 s | ~50 | mixed |
+
+So ~70 % of village-scale composition waste is two thresholds applied after
+the expensive work, not structural inability. Sealed towns for reference:
+7 (standard) stacks 48, alley/overhead 0.55; 3613… stacks 49, overhead 0.54,
+through 52 / ground 27; 166… (compact) stacks 24, overhead 0.43, through 144.
+
+### 8.9 Decision: all enclosure/size metrics are guidance (2026-08-16)
+
+Ryan: "all of this is guidance, not hard ratios." Landed: the post-composition
+quality gate (`production_quality_failure`: overhead ratio, alley ratio —
+sightlines were already removed) is deleted with its three solver call sites
+and two adapter call sites; the inhabited-room range check is removed (the
+budget stays in the audit). Structural gates (bearing, envelopes, fabric
+compile, topology) are untouched. `GENERATION_SALT` → `2026-08-16b`.
+
+Oracle:
+
+| seed | A0 | sightlines guidance | all guidance |
+|---|---|---|---|
+| 4242 std | 11.6 s fail | 61 s fail | 62 s fail (composition: envelope / exposed shoulders) |
+| 991177 compact | 154 s fail | 182 s fail | **22.6 s seal** (att 6 / v0, 8f366f4ec0f3) |
+| 3046… std | 11.6 s fail | 173 s fail | **17.5 s seal** (att 0 / v4, 1a5db282bad6) |
+| 2697… compact | 11.2 s fail | 182 s fail | **6.4 s seal** (att 8 / v7, d5328bca744e) |
+| 166… compact | 9.8 s fail | 79 s seal | **24.1 s seal** (att 11 / v1, 896fa2468af2) |
+| 3910… std | 44 s fail | 448 s fail | **12.3 s seal** (att 11 / v4, ae9d0d98fa72) |
+| 6357… std | 10.8 s fail | 80 s fail | **16.3 s seal** (att 5 / v3, 3ee735d9d6bf) |
+| 3613… std | 175 s seal | 20 s seal | 19.5 s seal (same town, 24122fd46b32) |
+| 7 std | 9.2 s seal | 10.8 s seal | 10.8 s seal (identical, 707e0d22b2a8) |
+
+**Seal rate 2/9 → 8/9; every sealing town in 6–24 s; total 191 s** (vs
+1,236 s under sightlines-only guidance and 438 s under A0). The towns were
+composable all along; the thresholds were the wall. Enclosure/density now
+rests on the ranking terms and on Ryan's visual review of what seals.
+
 ---
 
 *Harness: `tests/harness/profile_startup_pipeline.gd` (new). Run:*

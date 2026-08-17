@@ -5,34 +5,24 @@ extends GutTest
 ## survivors that the very next gate discarded.
 
 
-# --- sightline counts are guidance, not a production gate --------------------
+# --- enclosure and size metrics are guidance, never a production gate --------
 
-func test_production_quality_gate_does_not_reject_on_sightlines() -> void:
-	# The through/ground sightline caps describe the enclosure the towns should
-	# read with; they are ranking guidance (the precomposition score already
-	# penalises the proxy counts), not a reason to throw away a fully composed
-	# and compiled town. Profiling showed ~200 s of a 365 s search spent on
-	# towns rejected by exactly this check at the very end.
-	var audit := {
-		"scale_profile_id": WarrenVillageScaleProfile.STANDARD,
-		"through_sightline_count": 999,
-		"ground_through_sightline_count": 999,
-		"overhead_route_ratio": 1.0,
-		"alley_bounded_walk_ratio": 1.0,
-	}
-	assert_eq(WarrenVolumetricSolver.production_quality_failure(audit), "")
+func test_no_post_composition_quality_gate_exists() -> void:
+	# Sightline counts, overhead ratio, alley-bounded ratio and the inhabited
+	# room range describe the look towns should read with. They shape the
+	# precomposition ranking; none of them may throw away a fully composed and
+	# compiled town. Profiling (docs §8.8) showed ~70 % of village-scale
+	# composition time spent on towns rejected by exactly these checks.
+	assert_false(WarrenVolumetricSolver.new().has_method(
+		"production_quality_failure"),
+		"the post-composition quality gate was removed; metrics are guidance")
 
 
-func test_production_quality_gate_still_rejects_open_overhead() -> void:
-	var audit := {
-		"scale_profile_id": WarrenVillageScaleProfile.STANDARD,
-		"through_sightline_count": 0,
-		"ground_through_sightline_count": 0,
-		"overhead_route_ratio": 0.0,
-		"alley_bounded_walk_ratio": 1.0,
-	}
-	assert_string_contains(
-		WarrenVolumetricSolver.production_quality_failure(audit), "overhead")
+func test_guidance_minimums_remain_available_for_ranking_and_audits() -> void:
+	assert_eq(WarrenVolumetricSolver.minimum_production_alley_ratio(
+		{"scale_profile_id": WarrenVillageScaleProfile.STANDARD}), 0.30)
+	assert_eq(WarrenVolumetricSolver.minimum_production_overhead_ratio({}),
+		WarrenVolumetricSolver.MIN_PRODUCTION_OVERHEAD_ROUTE_RATIO)
 
 
 static var _program_cache: SettlementFabricProgram

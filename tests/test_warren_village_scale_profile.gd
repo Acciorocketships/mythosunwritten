@@ -147,41 +147,30 @@ func test_final_village_feature_contract_is_scale_aware() -> void:
 		"the final audit must retain the exact selected size contract")
 
 
-func test_production_overhead_gate_uses_the_selected_scale_contract() -> void:
-	var audit := {
-		"overhead_route_ratio": 0.30,
-		"through_sightline_count": 0,
-		"ground_through_sightline_count": 0,
-	}
-	audit["scale_profile_id"] = WarrenVillageScaleProfile.COMPACT
-	assert_eq(WarrenVolumetricSolver.production_quality_failure(audit), "",
-		"a compact town with its required occupied link keeps its own ratio")
+func test_production_overhead_guidance_uses_the_selected_scale_contract() -> void:
+	# Guidance values, not gates (see WarrenVolumetricSolver notes): a compact
+	# town keeps its own reviewed overhead target; larger route programs are
+	# steered toward more overhead coverage; legacy audits fall back to the
+	# reviewed large-town value.
+	var audit := {"scale_profile_id": WarrenVillageScaleProfile.COMPACT}
+	assert_lt(WarrenVolumetricSolver.minimum_production_overhead_ratio(audit),
+		WarrenVolumetricSolver.MIN_PRODUCTION_OVERHEAD_ROUTE_RATIO,
+		"a compact town keeps its own smaller reviewed ratio")
 	audit["scale_profile_id"] = WarrenVillageScaleProfile.STANDARD
-	assert_true(WarrenVolumetricSolver.production_quality_failure(audit) \
-		.begins_with("compiled town overhead ratio"),
-		"larger route programs must earn their additional overhead coverage")
+	assert_gt(WarrenVolumetricSolver.minimum_production_overhead_ratio(audit),
+		0.30, "larger route programs are steered toward more overhead coverage")
 	audit.erase("scale_profile_id")
 	assert_eq(WarrenVolumetricSolver.minimum_production_overhead_ratio(audit),
 		WarrenVolumetricSolver.MIN_PRODUCTION_OVERHEAD_ROUTE_RATIO,
-		"legacy and malformed audits retain the reviewed large-town gate")
+		"legacy and malformed audits retain the reviewed large-town value")
 
 
-func test_production_alley_gate_is_corpus_measured_per_scale() -> void:
-	var audit := {
-		"overhead_route_ratio": 0.40,
-		"through_sightline_count": 0,
-		"ground_through_sightline_count": 0,
-		"scale_profile_id": WarrenVillageScaleProfile.STANDARD,
-		"alley_bounded_walk_ratio": 0.33,
-	}
-	assert_eq(WarrenVolumetricSolver.production_quality_failure(audit), "",
-		"the pinned village fixture's measured 0.33 alley ratio passes")
-	audit["alley_bounded_walk_ratio"] = 0.20
-	assert_true(WarrenVolumetricSolver.production_quality_failure(audit) \
-		.begins_with("compiled town alley-bounded walk ratio"),
-		"a standard village below the measured corpus floor is rejected")
-	audit["scale_profile_id"] = WarrenVillageScaleProfile.COMPACT
-	assert_eq(WarrenVolumetricSolver.production_quality_failure(audit), "",
-		"unmeasured scales stay ungated until their corpus exists")
+func test_production_alley_guidance_is_corpus_measured_per_scale() -> void:
+	assert_eq(WarrenVolumetricSolver.minimum_production_alley_ratio(
+		{"scale_profile_id": WarrenVillageScaleProfile.STANDARD}), 0.30,
+		"the pinned village fixture's measured corpus floor")
+	assert_eq(WarrenVolumetricSolver.minimum_production_alley_ratio(
+		{"scale_profile_id": WarrenVillageScaleProfile.COMPACT}), 0.0,
+		"unmeasured scales carry no floor")
 	assert_eq(WarrenVolumetricSolver.minimum_production_alley_ratio({}), 0.0,
-		"legacy audits without a scale contract remain ungated")
+		"legacy audits without a scale contract carry no floor")

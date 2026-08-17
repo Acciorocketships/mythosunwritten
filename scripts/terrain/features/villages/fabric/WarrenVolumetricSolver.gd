@@ -217,10 +217,6 @@ static func solve_pinned(world_seed: int, ground_bands: Dictionary,
 			last_failure = "pinned fabric gate failed: %s" \
 				% WarrenSpatialFabricCompiler.last_failure
 			return null
-		var quality_failure := production_quality_failure(fabric.audit)
-		if not quality_failure.is_empty():
-			last_failure = "pinned quality gate failed: %s" % quality_failure
-			return null
 		var finalized := _finalize_selected_candidate(volume, variant,
 			construction_program, proxy, plan, fabric)
 		if finalized != null:
@@ -306,49 +302,25 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 				last_failure = "production fabric gate failed: %s" \
 					% WarrenSpatialFabricCompiler.last_failure
 			else:
-				var quality_failure := production_quality_failure(fabric.audit)
-				if quality_failure.is_empty():
-					var finalize_started_ms := Time.get_ticks_msec()
-					var finalized := _finalize_selected_candidate(volume,
-						variant, construction_program, ranked.audit as Dictionary,
-						plan, fabric)
-					if diagnostic_trace_skywalk_timing:
-						print("SKYWALK_TIMING partition_finalize source=",
-							volume.stable_id, " variant=", variant, " ms=",
-							Time.get_ticks_msec() - finalize_started_ms,
-							" accepted=", finalized != null)
-					if finalized != null:
-						last_failure = ""
-						finalized.audit["production_selected_source_id"] = \
-							String(volume.stable_id)
-						finalized.audit["production_selected_variant"] = \
-							variant
-						return finalized
-				else:
-					last_failure = quality_failure
-					if diagnostic_trace_skywalk_timing:
-						print("SKYWALK_TIMING quality_rejection ", {
-							"overhead": fabric.audit.get(
-								"overhead_route_ratio", -1.0),
-							"route_cells": fabric.audit.get(
-								"enclosure_route_cell_count", -1),
-							"overhead_cells": fabric.audit.get(
-								"overhead_route_cell_count", -1),
-							"residual_rooms": plan.audit.get(
-								"residual_backfill_building_count", -1),
-							"residual_overhead": plan.audit.get(
-								"residual_backfill_overhead_route_cell_count", -1),
-							"skywalks": fabric.audit.get(
-								"skywalk_link_count", -1),
-							"planned_unique_skywalk_route_cover":
-								last_preplan_skywalk_diagnostic.get(
-									"selected_unique_route_cover_count", -1),
-							"planned_marginal_skywalk_route_cover":
-								last_preplan_skywalk_diagnostic.get(
-									"selected_marginal_route_cover_count", -1),
-							"market_covered": plan.audit.get(
-								"market_covered_aisle_cell_count", -1),
-						})
+				# Enclosure and size metrics (sightlines, overhead, alley ratio,
+				# room count) are guidance carried in the audit and the ranking,
+				# never a reason to discard a compiled town here.
+				var finalize_started_ms := Time.get_ticks_msec()
+				var finalized := _finalize_selected_candidate(volume,
+					variant, construction_program, ranked.audit as Dictionary,
+					plan, fabric)
+				if diagnostic_trace_skywalk_timing:
+					print("SKYWALK_TIMING partition_finalize source=",
+						volume.stable_id, " variant=", variant, " ms=",
+						Time.get_ticks_msec() - finalize_started_ms,
+						" accepted=", finalized != null)
+				if finalized != null:
+					last_failure = ""
+					finalized.audit["production_selected_source_id"] = \
+						String(volume.stable_id)
+					finalized.audit["production_selected_variant"] = \
+						variant
+					return finalized
 		if diagnostic_trace_room_gate:
 			print("SKYWALK_TIMING partition_rejected source=", volume.stable_id,
 				" variant=", variant, " failure=", last_failure.left(1200))
@@ -399,21 +371,17 @@ static func _finalize_selected_candidate(volume: WarrenVolumePlan,
 			failures.append("paired fabric gate: %s" % \
 				WarrenSpatialFabricCompiler.last_failure)
 		else:
-			var quality_failure := production_quality_failure(fabric.audit)
-			if not quality_failure.is_empty():
-				failures.append("paired production quality: %s" % quality_failure)
-			else:
-				for key: StringName in [&"frontage_ratio", &"overhead_route_ratio",
-						&"through_sightline_count",
-						&"ground_through_sightline_count"]:
-					finalized.audit[key] = fabric.audit.get(key, 0)
-				finalized.audit[
-					"paired_registration_finalization_count"] = 1
-				finalized.audit["serial_finalization_fallback_count"] = 0
-				finalized.audit["paired_registration_scale_skip_count"] = 0
-				finalized.cache_compiled_fabric(fabric)
-				return finalized
-	# The serial candidate passed the exact fabric and production-quality gates
+			for key: StringName in [&"frontage_ratio", &"overhead_route_ratio",
+					&"through_sightline_count",
+					&"ground_through_sightline_count"]:
+				finalized.audit[key] = fabric.audit.get(key, 0)
+			finalized.audit[
+				"paired_registration_finalization_count"] = 1
+			finalized.audit["serial_finalization_fallback_count"] = 0
+			finalized.audit["paired_registration_scale_skip_count"] = 0
+			finalized.cache_compiled_fabric(fabric)
+			return finalized
+	# The serial candidate passed the exact fabric gate
 	# immediately before this call. Rebuilding it after an optional paired pass
 	# fails is output-identical but was one of the largest first-load costs.
 	if proven_serial != null and proven_serial_fabric != null:
@@ -430,22 +398,9 @@ static func _finalize_selected_candidate(volume: WarrenVolumePlan,
 	return null
 
 
-static func production_quality_failure(audit: Dictionary) -> String:
-	## Sightline counts are deliberately absent here: see the note above
-	## MAX_PRODUCTION_THROUGH_SIGHTLINES. They shape the ranking, not the gate.
-	var overhead := float(audit.get("overhead_route_ratio", 0.0))
-	var minimum_overhead := minimum_production_overhead_ratio(audit)
-	if overhead < minimum_overhead:
-		return "compiled town overhead ratio %.3f is below %.3f" % [
-			overhead, minimum_overhead]
-	var alley := float(audit.get("alley_bounded_walk_ratio", 0.0))
-	var minimum_alley := minimum_production_alley_ratio(audit)
-	if alley < minimum_alley:
-		return "compiled town alley-bounded walk ratio %.3f is below %.3f" % [
-			alley, minimum_alley]
-	return ""
-
-
+## Guidance values (never gates — see the note above
+## MAX_PRODUCTION_THROUGH_SIGHTLINES): the reviewed alley-bounded walk ratio a
+## scale's towns should read with, for ranking and audits.
 static func minimum_production_alley_ratio(audit: Dictionary) -> float:
 	## The reviewed street character: walk cells inside an alley at most
 	## three cells wide with real built edges on both flanks. Floors are
@@ -777,14 +732,10 @@ static func from_volume(volume: WarrenVolumePlan,
 		construction_program, enable_paired_registration_relief)
 	if partition.is_empty():
 		return null
+	# room_volume_budget is guidance recorded in the audit below, not a gate:
+	# village-scale massifs compose 31-48 (compact) / 61-66 (standard) rooms,
+	# and the massif radius already bounds the town's size (docs §8.8).
 	var room_count := int(partition.room_count)
-	if room_count < scale_profile.room_volume_budget.x \
-			or room_count > scale_profile.room_volume_budget.y:
-		last_failure = ("%s partition formed %d inhabited rooms; expected %d..%d" \
-			% [scale_profile.scale_id, room_count,
-				scale_profile.room_volume_budget.x,
-				scale_profile.room_volume_budget.y])
-		return null
 	for cell_value: Variant in (partition.market_reservation.get(
 			"public_cells", {}) as Dictionary).keys():
 		var market_floor := cell_value as Vector3i
