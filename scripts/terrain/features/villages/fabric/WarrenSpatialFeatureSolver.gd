@@ -2236,8 +2236,25 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				continue
 			var facade_key := _balcony_facade_key(endpoint_cell, facing)
 			var guard_segment_count := 0
+			var support_count := 0
 			for placement: Dictionary in recipe.placements:
 				guard_segment_count += int(String(placement.id).begins_with("guard."))
+				support_count += int(String(placement.id).begins_with("support.") \
+					or String(placement.id).begins_with("brace."))
+			var minimum_walk_x := 2147483647
+			var maximum_walk_x := -2147483648
+			for walk_cell: Vector3i in recipe.walk_cells:
+				minimum_walk_x = mini(minimum_walk_x, walk_cell.x)
+				maximum_walk_x = maxi(maximum_walk_x, walk_cell.x)
+			var usable_width_cells := maximum_walk_x - minimum_walk_x + 1
+			var door_lateral_clearance_cells := mini(
+				(socket.cell as Vector3i).x - minimum_walk_x,
+				maximum_walk_x - (socket.cell as Vector3i).x)
+			# A straight platform is only a valid doorway destination when its side
+			# rails begin at least one full cell away from the threshold bay.
+			if not wraparound and door_lateral_clearance_cells < 1:
+				rejection_counts[&"body_blocked"] += 1
+				continue
 			candidates.append({"recipe_id": recipe_id, "origin": origin,
 				"yaw_quarters": yaw, "body": body, "clearance": clearance,
 				"clearance_only": clearance_audit.clearance_only,
@@ -2256,7 +2273,10 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 					else Vector3i.ZERO,
 				"return_contact_cells": return_contacts,
 				"usable_floor_cell_count": recipe.walk_cells.size(),
+				"usable_width_cells": usable_width_cells,
+				"door_lateral_clearance_cells": door_lateral_clearance_cells,
 				"guard_segment_count": guard_segment_count,
+				"support_count": support_count,
 				"covered_public_count": int(clearance_audit.covered_public_count),
 				"tie": posmod(Helper._mix64(world_seed ^ String(recipe_id).hash()
 					^ endpoint_cell.x * 31 ^ endpoint_cell.y * 43 \
@@ -2439,8 +2459,8 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 				"balcony_wraparound": bool(candidate.wraparound),
 				"balcony_return_contact_cell_count": (
 					candidate.return_contact_cells as Array).size(),
-				"balcony_usable_width_cells": 2 \
-					if bool(candidate.wraparound) else 2,
+				"balcony_usable_width_cells": int(
+					candidate.usable_width_cells),
 				"balcony_usable_depth_cells": 3 \
 					if bool(candidate.wraparound) else 2 if is_deep_walkout else 1,
 				"balcony_usable_floor_cell_count": int(
@@ -2458,11 +2478,13 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 				"balcony_stair_connected_to_public_floor": has_public_stair,
 				"balcony_door_clearance_depth_cells": 3 \
 					if bool(candidate.wraparound) else 2 if is_deep_walkout else 1,
+				"balcony_door_lateral_clearance_cells": int(
+					candidate.door_lateral_clearance_cells),
 				"balcony_continuous_front_deck": true,
 				"balcony_support_kind": &"full_storey_diagonal_braces" \
 					if has_public_stair or is_deep_walkout \
 					else &"shallow_timber_brackets",
-				"balcony_support_count": 2,
+				"balcony_support_count": int(candidate.support_count),
 				"balcony_reserved_headroom_cell_count": body.size(),
 				"balcony_visual_clearance_cell_count":
 					(candidate.clearance as Dictionary).size(),

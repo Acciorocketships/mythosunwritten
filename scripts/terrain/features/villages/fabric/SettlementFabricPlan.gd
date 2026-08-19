@@ -339,7 +339,19 @@ func connected_visual_envelope_conflicts() -> Array[Dictionary]:
 				and overlap.y <= TYPED_FLASHING_MAX_HEIGHT_M \
 				and minf(overlap.x, overlap.z) \
 					<= TYPED_FLASHING_MAX_HORIZONTAL_M
-			if bearing_seam_ok or lateral_seam_ok or typed_flashing_ok:
+			var left_shed := left_recipe.has_tag(&"setback_shed")
+			var right_shed := right_recipe.has_tag(&"setback_shed")
+			var typed_shed_ok := lateral_seam and (
+				(left_shed and _is_typed_shed_roof_contact(left_bounds,
+					right_bounds) if right_recipe.has_tag(&"roof")
+					else left_shed and _is_typed_shed_wall_contact(left_bounds,
+						right_bounds))
+				or (right_shed and _is_typed_shed_roof_contact(left_bounds,
+					right_bounds) if left_recipe.has_tag(&"roof")
+					else right_shed and _is_typed_shed_wall_contact(left_bounds,
+						right_bounds)))
+			if bearing_seam_ok or lateral_seam_ok or typed_flashing_ok \
+					or typed_shed_ok:
 				continue
 			conflicts.append({
 				"left": left.stable_id,
@@ -438,6 +450,13 @@ const DIAGNOSTIC_EDGE_NICK_METRES := 0.5
 ## overlap is the weatherproof join rather than an unresolved collision.
 const TYPED_FLASHING_MAX_HORIZONTAL_M := 0.90
 const TYPED_FLASHING_MAX_HEIGHT_M := 0.25
+## The authored setback shed is only 0.828 m tall.  Unlike a horizontal cap,
+## its complete pitch must enter the adjoining facade/eave far enough to make a
+## weatherproof T-junction.  These bounds are deliberately below one lattice
+## cell and apply only to an explicitly named lateral construction seam.
+const TYPED_SHED_WALL_MAX_HORIZONTAL_M := 0.90
+const TYPED_SHED_ROOF_MAX_HORIZONTAL_M := 1.60
+const TYPED_SHED_MAX_HEIGHT_M := 0.85
 
 
 static func _is_corner_nick(left: AABB, right: AABB) -> bool:
@@ -459,6 +478,22 @@ static func _is_edge_nick(left: AABB, right: AABB) -> bool:
 	for overlap: float in overlaps:
 		shallow_axis_count += int(overlap <= DIAGNOSTIC_EDGE_NICK_METRES)
 	return shallow_axis_count >= 2
+
+
+static func _is_typed_shed_wall_contact(left: AABB, right: AABB) -> bool:
+	if not _aabb_overlaps_volume(left, right):
+		return false
+	var overlap := _overlap_size(left, right)
+	return overlap.y <= TYPED_SHED_MAX_HEIGHT_M \
+		and minf(overlap.x, overlap.z) <= TYPED_SHED_WALL_MAX_HORIZONTAL_M
+
+
+static func _is_typed_shed_roof_contact(left: AABB, right: AABB) -> bool:
+	if not _aabb_overlaps_volume(left, right):
+		return false
+	var overlap := _overlap_size(left, right)
+	return overlap.y <= TYPED_SHED_MAX_HEIGHT_M \
+		and minf(overlap.x, overlap.z) <= TYPED_SHED_ROOF_MAX_HORIZONTAL_M
 
 
 static func _aabb_overlaps_volume(left: AABB, right: AABB,

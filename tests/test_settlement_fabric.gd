@@ -304,39 +304,43 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 	assert_true(balcony.asset_ids().has(SettlementFabricProgram.ROOF_PLANTER))
 	assert_true(balcony.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_TALL),
 		"balcony vegetation must remain inside the measured recipe")
-	assert_eq(balcony.walk_cells.size(), 2,
-		"a compact private walk-out owns one continuous 3 m deck")
-	assert_eq(balcony.headroom_cells.size(), 4)
+	assert_eq(balcony.walk_cells.size(), 4,
+		"a compact private walk-out owns one continuous 6 m deck")
+	assert_eq(balcony.headroom_cells.size(), 8)
 	assert_false(balcony.socket(&"room.back").is_empty(),
 		"the walk-out is entered through one exact parent-room portal")
+	var balcony_socket_x := (balcony.socket(&"room.back").cell as Vector3i).x
+	assert_gte(balcony_socket_x + 2, 1)
+	assert_gte(1 - balcony_socket_x, 1,
+		"the door bay needs one full cell of clearance from both side guards")
 	assert_true(balcony.socket(&"stair.high").is_empty())
 	assert_true(balcony.socket(&"stair.low").is_empty(),
 		"the compact walk-out must not advertise a stair that reaches no floor")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("guard.")).size(), 3,
+		return String(placement.id).begins_with("guard.")).size(), 4,
 		"the outer and side perimeter is completely guarded")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return placement.asset_id == SettlementFabricProgram.RAILING_MEDIUM
-	).size(), 1, "the front guard has no doubled doorway-axis post")
+	).size(), 2, "the 6 m front guard uses two complete authored runs")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("brace.")).size(), 2,
+		return String(placement.id).begins_with("brace.")).size(), 4,
 		"the overhang remains visibly bracket-supported")
 	var deep_balcony := program.recipe(
 		&"balcony.walkout.deep.left.blue.planted")
 	assert_not_null(deep_balcony)
 	assert_true(deep_balcony.has_tag(&"deep_walkout"))
 	assert_true(deep_balcony.has_tag(&"diagonal_support"))
-	assert_eq(deep_balcony.walk_cells.size(), 4,
+	assert_eq(deep_balcony.walk_cells.size(), 8,
 		"the preferred walk-out keeps the rail two cells from the door")
-	assert_eq(deep_balcony.headroom_cells.size(), 8)
+	assert_eq(deep_balcony.headroom_cells.size(), 16)
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("guard.")).size(), 5,
+		return String(placement.id).begins_with("guard.")).size(), 6,
 		"the deep deck closes its outer edge and both two-cell returns")
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return placement.asset_id == SettlementFabricProgram.RAILING_MEDIUM
-	).size(), 1, "the front guard has no doubled doorway-axis post")
+	).size(), 2, "the 6 m front guard uses two complete authored runs")
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("support.diagonal.")).size(), 2,
+		return String(placement.id).begins_with("support.diagonal.")).size(), 4,
 		"the deeper projection needs legible full-storey diagonal supports")
 	var market := program.recipe(&"market.covered.01.garden")
 	assert_not_null(market)
@@ -522,6 +526,36 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 			"bare canopy/frame components must never masquerade as markets")
 	for asset_id: StringName in program.referenced_asset_ids:
 		assert_false(String(asset_id).begins_with("sfbp.tent"), String(asset_id))
+
+
+func test_dormer_styles_keep_steep_gables_and_replace_the_weak_shell_with_sheds() -> void:
+	var program := _program()
+	for recipe_id: StringName in [
+		&"roof.tower.blue.dormer.left",
+		&"roof.slim.blue.dormer.left",
+		&"roof.row.blue.dormer.left",
+	]:
+		var recipe := program.recipe(recipe_id)
+		assert_not_null(recipe)
+		assert_true(recipe.has_tag(&"authored_gabled_dormer"))
+		assert_true(recipe.placements.any(func(placement: Dictionary) -> bool:
+			return String(placement.id).contains("dormer") \
+				and StringName(placement.asset_id) \
+					== SettlementFabricProgram.ROOF_WINDOW_02),
+			"the reviewed steep-sided gable is the retained gabled family")
+	for recipe_id: StringName in [
+		&"roof.tower.orange.dormer.right",
+		&"roof.slim.orange.dormer.right",
+		&"roof.row.orange.dormer.right",
+	]:
+		var recipe := program.recipe(recipe_id)
+		assert_not_null(recipe)
+		assert_true(recipe.has_tag(&"authored_shed_dormer"))
+		assert_true(recipe.placements.any(func(placement: Dictionary) -> bool:
+			return String(placement.id).contains("dormer") \
+				and StringName(placement.asset_id) \
+					== SettlementFabricProgram.ROOF_WINDOW_04),
+			"the weaker shallow gable is replaced by the complete shed shell")
 
 
 func test_addressed_room_vocabulary_has_two_exact_door_phases() -> void:
@@ -1022,6 +1056,16 @@ func test_flat_roof_fallbacks_have_measured_guarded_terrace_variants() -> void:
 				if lean != null:
 					assert_true(lean.has_tag(&"setback_lean_to"))
 					assert_true(lean.walk_cells.is_empty())
+				var shed_id := StringName("roof.setback.shed.%s.%d.%s" % [
+					family, length_cells, side])
+				var shed := program.recipe(shed_id)
+				assert_not_null(shed, "%s is missing" % shed_id)
+				if shed != null:
+					assert_true(shed.has_tag(&"setback_shed"))
+					assert_true(shed.has_tag(&"pitched_roof"))
+					assert_true(shed.walk_cells.is_empty())
+					assert_eq(shed.placements.size(), length_cells / 2,
+						"one unscaled 3 m shed should close each two-cell run")
 
 
 func test_exterior_builder_rejects_deferred_interior_route_units() -> void:

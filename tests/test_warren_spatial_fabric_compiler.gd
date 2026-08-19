@@ -213,6 +213,16 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
 	if program == null or spatial == null:
 		return
+	for building: WarrenBuildingVolume in spatial.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			var bridge_supports := room.audit.get(
+				"bridge_support_room_ids", []) as Array
+			assert_ne(bridge_supports.size(), 1,
+				("residual room %s may be a two-sided skywalk or an ordinary " \
+				+ "borne room, never a one-flank 3 m box") % room.stable_id)
+			assert_false(bool(room.audit.get(
+				"bridge_is_bracketed_jetty", false)),
+				"brackets do not turn a full one-cell room into an outcropping")
 	var realm := WarrenSpatialPublicRealmAdapter.from_spatial(spatial)
 	assert_not_null(realm, WarrenSpatialPublicRealmAdapter.last_failure)
 	var units := WarrenSpatialFabricCompiler.compile_room_units(spatial, program)
@@ -356,11 +366,11 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		"an inaccessible roof shoulder must never masquerade as a balcony")
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_plain_cap_unit_count),
-		int(WarrenSpatialFabricCompiler.last_audit.setback_cap_unit_count) \
-			- int(WarrenSpatialFabricCompiler.last_audit \
-				.setback_terrace_unit_count) \
-			- int(WarrenSpatialFabricCompiler.last_audit \
-				.setback_garden_unit_count))
+		0, "an exposed shoulder must resolve to a gable, lean-to, roof join, " \
+			+ "or deliberate large platform, never a modular lid")
+	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_shed_unit_count), 0,
+		"partial shoulders should use the shallow authored shed vocabulary")
 	assert_true(WarrenSpatialFabricCompiler.last_audit.has(
 		"setback_garden_unit_count"),
 		"roof gardens are optional within a sealed roof campaign")
@@ -373,6 +383,8 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.broken_atomic_roof_neighborhood_count), 0)
 	for roof: FabricUnit in roofs:
+		assert_false(String(roof.recipe_id).begins_with("roof.setback.cap."),
+			"small exposed flat roof pieces are forbidden")
 		var roof_recipe := program.recipe(roof.recipe_id)
 		for local_cell: Vector3i in roof_recipe.solid_cells:
 			var world_cell := FabricRecipe.transform_cell(local_cell,

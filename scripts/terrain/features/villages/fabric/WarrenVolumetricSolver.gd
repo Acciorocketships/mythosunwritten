@@ -8910,11 +8910,12 @@ static func _residual_bridge_span(cells: Array[Vector3i],
 	if bindings_by_direction.size() == 1:
 		_residual_bridge_counts["one_side_bound"] = int(
 			_residual_bridge_counts.get("one_side_bound", 0)) + 1
-	# Two exact socket bonds on distinct flanking buildings carry the room.
+	# Two exact socket bonds on distinct flanking rooms carry the room.
 	# Opposing walls are the classic street bridge; perpendicular walls are
-	# the corner-jetty form over a street bend — both leave no free span wider
-	# than one bay. A single bound wall stays rejected until the bracketed
-	# jetty vocabulary exists.
+	# the corner-bridge form over a street bend. A single bound wall is never an
+	# inhabited residual room: even with brackets it reads as a complete 3 m room
+	# pasted onto the parent facade, which is the forbidden one-cell box rather
+	# than a shallow outcropping.
 	var bound_directions: Array = bindings_by_direction.keys()
 	bound_directions.sort_custom(func(a: Variant, b: Variant) -> bool:
 		var left := a as Vector3i
@@ -8942,87 +8943,7 @@ static func _residual_bridge_span(cells: Array[Vector3i],
 				"parent_building_id": StringName(negative.building_id),
 				"parent_contact_cell": negative.contact_cell,
 			}
-	# One exact flank may carry a room no more than one 3 m bay beyond the
-	# bearing wall when a measured bracket course is committed with it. This is
-	# the ordinary medieval jetty form: inhabited mass closes the route overhead,
-	# the strict socket carries it into an established room, and the braces make
-	# the formerly free span visually and physically legible. Longer one-sided
-	# projections remain rejected.
-	if bound_directions.size() == 1:
-		var bound_direction := bound_directions[0] as Vector3i
-		var binding := bindings_by_direction[bound_direction] as Dictionary
-		var support_records := _residual_jetty_support_records(cells,
-			bound_direction)
-		if not support_records.is_empty():
-			_residual_bridge_counts["bracketed_one_side_bound"] = int(
-				_residual_bridge_counts.get("bracketed_one_side_bound", 0)) + 1
-			return {
-				"room_ids": [StringName(binding.room_id)] as Array[StringName],
-				"parent_building_id": StringName(binding.building_id),
-				"parent_contact_cell": binding.contact_cell,
-				"support_records": support_records,
-				"is_bracketed_jetty": true,
-			}
 	return {}
-
-
-static func _residual_jetty_support_records(cells: Array[Vector3i],
-		bound_direction: Vector3i) -> Array[Dictionary]:
-	## Tile the exact bearing edge with native 1.5/3 m brace courses. Local BACK
-	## points from the established flank into the projecting room; local RIGHT is
-	## therefore the course axis used by the authored support recipes.
-	var out: Array[Dictionary] = []
-	if cells.is_empty() or bound_direction not in [Vector3i.LEFT,
-			Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
-		return out
-	var base_y := cells[0].y
-	var minimum := cells[0]
-	var maximum := cells[0]
-	var columns: Dictionary = {}
-	for cell: Vector3i in cells:
-		base_y = mini(base_y, cell.y)
-		minimum = minimum.min(cell)
-		maximum = maximum.max(cell)
-		columns[Vector2i(cell.x, cell.z)] = true
-	var projection_depth := maximum.x - minimum.x + 1 \
-		if bound_direction.x != 0 else maximum.z - minimum.z + 1
-	if projection_depth > 2:
-		return out
-	var projection_direction := -bound_direction
-	var yaw := _yaw_for_direction(Vector3i.BACK, projection_direction)
-	if yaw < 0:
-		return out
-	var span_3d := FabricRecipe.transform_direction(Vector3i.RIGHT, yaw)
-	var span := Vector2i(span_3d.x, span_3d.z)
-	var attachment: Array[Vector2i] = []
-	for column_value: Variant in columns.keys():
-		var column := column_value as Vector2i
-		var on_edge := column.x == minimum.x if bound_direction == Vector3i.LEFT \
-			else column.x == maximum.x if bound_direction == Vector3i.RIGHT \
-			else column.y == minimum.z if bound_direction == Vector3i.FORWARD \
-			else column.y == maximum.z
-		if on_edge:
-			attachment.append(column)
-	attachment.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return a.x * span.x + a.y * span.y < b.x * span.x + b.y * span.y)
-	# The first implementation deliberately masters the native two-brace bay.
-	# Longer one-sided galleries need a separate multi-course frame review.
-	if attachment.size() > 2:
-		return [] as Array[Dictionary]
-	for index in range(1, attachment.size()):
-		if attachment[index] != attachment[index - 1] + span:
-			return [] as Array[Dictionary]
-	for index in range(0, attachment.size(), 2):
-		var course_size := mini(2, attachment.size() - index)
-		var column := attachment[index]
-		out.append({
-			"recipe_id": StringName("outcrop.support.bracketed.%d" \
-				% course_size),
-			"origin": Vector3i(column.x, base_y, column.y),
-			"yaw_quarters": yaw,
-			"role": StringName("residual_jetty_support.%02d" % (index / 2)),
-		})
-	return out
 
 
 static func _bridge_flank_binding(cell_set: Dictionary,

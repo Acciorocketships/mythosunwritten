@@ -489,11 +489,12 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   atomic bisected-host/open-branch construction; a compact crossing which has no authored watertight
   junction is flattened into a furnished roof campaign instead of overhanging its 3 m house.
   Pitched compact and slim roofs may receive measured dormers. Each uses one complete authored
-  attic-window shell at uniform 56% scale, retaining its window, cheeks, sill, supports, and closed
-  gabled or shed crown as one coherent asset. The blue compact tower retains the reviewed steep
+  attic-window shell, retaining its window, cheeks, sill, supports, and closed gabled or shed crown
+  as one coherent asset. The reviewed steep gable stays at 56% scale; the broader shed uses 50%,
+  a lower 0.22 m registration, and a 0.22 m downslope shift so its tail stays below the host ridge.
+  The blue compact tower retains the reviewed steep
   gable; the warm compact tower uses the lower-profile shed instead of the weaker shallow gable.
-  Gabled and lower-profile shed families use separate
-  vertical registrations so their feet and open backs remain buried in the host slope without
+  Gabled and lower-profile shed families use separate registrations so their feet and open backs remain buried in the host slope without
   hiding the glazing or exposing a roof hatch. Compact/wide eave offsets are 1.15/2.15 m.
   Long roofs may select a bilateral recipe with one dormer on each opposing pitch. True wraparound
   balcony recipes own two continuous 3 m deck rows, a native half-width third cell on the direct
@@ -505,9 +506,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   switchback, not a two-lane straight flight: one measured low tread lands on an existing
   `PUBLIC_FLOOR`, the opposite high tread meets the deck through one exact guard opening, and the
   module contract aligns the high tread plane rather than the taller handrail AABB. Compact and
-  deep walk-out balconies close their facade-width outer edge with one continuous authored 3 m
-  guard. They never meet two short fence repeats on the doorway centreline; side returns remain
-  independent complete guards, so removing the doubled post does not open an edge. Balconies are never
+  deep walk-out balconies use a four-cell-wide platform with the doorway in an inner bay, at least
+  one full cell of lateral clearance to each side guard, two complete 3 m front-guard runs, and four
+  measured supports. The nearest side-railing terminal post therefore cannot sit on the threshold;
+  the shared front-guard endpoint is between door bays and, on the preferred deep walkout, 3 m in
+  front of the facade. Balconies are never
   inferred from an accidentally exposed lower roof. None of these private visual treatments invents
   public walkability. Every candidate's
   complete transformed semantic solid volume is checked against the sealed 3D public-air grid—not

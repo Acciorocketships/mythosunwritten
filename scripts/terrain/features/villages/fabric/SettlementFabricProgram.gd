@@ -197,23 +197,29 @@ const FACE_PHASE_OFFSETS: Array[int] = [0, 3, 5, 4]
 ## preserving one exact fallback for every detailed variant.
 const BUILDING_STYLE_COUNT := 3
 const FACADE_PHASE_COUNT := BUILDING_STYLE_COUNT * 2
-## Dormers use the source pack's complete attic-window shells at a uniform
-## reduced scale. The gabled 001/002 and shed-roof 003/004 families supply real
+## Dormers use the source pack's complete attic-window shells at reviewed
+## family-specific reduced scales. The gabled 001/002 and shed-roof 003/004 families supply real
 ## cheeks, sills, windows, supports, and closed roofs in their authored
 ## proportions. Their open backs and feet sit below the host pitch.
 # Roof recipes use the wall-top/eave plane as local Y=0. The dormer's feet sit
 # above that datum but below the slope at their upslope X position; a negative
 # value wrongly exposed them beneath the building eave.
 const DORMER_EMBED_Y := 0.10
-## The authored shed shell has a much lower crown than the gabled shell. At the
-## gable datum its entire window course disappears behind the host tiles and it
-## reads as a roof hatch, so it needs a separate higher registration.
-const DORMER_SHED_EMBED_Y := 0.55
+## The shed source is broader and very slightly taller than the gabled source.
+# Its separate 50% scale and 0.22 m registration crown the 3.111 m shell at
+# 1.776 m, safely inside the compact host's 2.173 m ridge while leaving its
+# downslope window course readable.
+const DORMER_SHED_EMBED_Y := 0.22
 const DORMER_SCALE := Vector3(0.56, 0.56, 0.56)
+const DORMER_SHED_SCALE := Vector3(0.50, 0.50, 0.50)
 # Keep the complete shell far enough upslope for the host tiles to bury its
 # three construction feet. Its roof tail still runs inward beneath the pitch.
 const DORMER_COMPACT_EAVE_OFFSET := 1.15
 const DORMER_WIDE_EAVE_OFFSET := 2.15
+## Shed shells have a longer upslope roof tail than the steep gabled family.
+## Moving only that family slightly toward its eave keeps the open rear buried
+## below the host pitch instead of letting a stray timber lip cross the ridge.
+const DORMER_SHED_DOWNSLOPE_OFFSET := 0.22
 const FEATURE_PORTAL_NORTH := 1
 const FEATURE_PORTAL_EAST := 2
 const FEATURE_PORTAL_SOUTH := 4
@@ -599,6 +605,30 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			-1, ROOF_ORANGE),
 		_setback_lean_roof_recipe(&"roof.setback.lean.orange.6.positive", 6,
 			1, ROOF_ORANGE),
+		_setback_shed_roof_recipe(&"roof.setback.shed.blue.2.negative", 2,
+			-1, WINDOW_ROOF_BLUE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.blue.2.positive", 2,
+			1, WINDOW_ROOF_BLUE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.orange.2.negative", 2,
+			-1, WINDOW_ROOF_ORANGE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.orange.2.positive", 2,
+			1, WINDOW_ROOF_ORANGE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.blue.4.negative", 4,
+			-1, WINDOW_ROOF_BLUE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.blue.4.positive", 4,
+			1, WINDOW_ROOF_BLUE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.orange.4.negative", 4,
+			-1, WINDOW_ROOF_ORANGE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.orange.4.positive", 4,
+			1, WINDOW_ROOF_ORANGE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.blue.6.negative", 6,
+			-1, WINDOW_ROOF_BLUE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.blue.6.positive", 6,
+			1, WINDOW_ROOF_BLUE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.orange.6.negative", 6,
+			-1, WINDOW_ROOF_ORANGE, modules),
+		_setback_shed_roof_recipe(&"roof.setback.shed.orange.6.positive", 6,
+			1, WINDOW_ROOF_ORANGE, modules),
 		_interstitial_seal_recipe(&"interstitial.seal.1.capped", 1, true,
 			modules),
 		_interstitial_seal_recipe(&"interstitial.seal.1.buried", 1, false,
@@ -630,9 +660,9 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_dormered_slim_roof_recipe(&"roof.slim.blue.dormer.right",
 			ROOF_BLUE, ROOF_WINDOW_02, 1, modules),
 		_dormered_slim_roof_recipe(&"roof.slim.orange.dormer.left",
-			ROOF_ORANGE, ROOF_WINDOW_01, -1, modules),
+			ROOF_ORANGE, ROOF_WINDOW_04, -1, modules),
 		_dormered_slim_roof_recipe(&"roof.slim.orange.dormer.right",
-			ROOF_ORANGE, ROOF_WINDOW_01, 1, modules),
+			ROOF_ORANGE, ROOF_WINDOW_04, 1, modules),
 		_chimney_slim_roof_recipe(&"roof.slim.chimney.blue", ROOF_BLUE,
 			modules),
 		_chimney_slim_roof_recipe(&"roof.slim.chimney.orange", ROOF_ORANGE,
@@ -1513,9 +1543,9 @@ static func _append_row_vocabulary(candidates: Array[FabricRecipe],
 		{"id": &"roof.row.blue.dormer.right", "theme": ROOF_BLUE,
 			"asset": ROOF_WINDOW_02, "side": 1},
 		{"id": &"roof.row.orange.dormer.left", "theme": ROOF_ORANGE,
-			"asset": ROOF_WINDOW_01, "side": -1},
+			"asset": ROOF_WINDOW_04, "side": -1},
 		{"id": &"roof.row.orange.dormer.right", "theme": ROOF_ORANGE,
-			"asset": ROOF_WINDOW_01, "side": 1},
+			"asset": ROOF_WINDOW_04, "side": 1},
 	]
 	for spec: Dictionary in dormer_specs:
 		candidates.append(_dormered_row_roof_recipe(StringName(spec.id),
@@ -2495,6 +2525,46 @@ static func _setback_lean_roof_recipe(recipe_id: StringName,
 	return recipe_value
 
 
+static func _setback_shed_roof_recipe(recipe_id: StringName,
+		length_cells: int, eave_side: int, roof_asset: StringName,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## The one-cell shoulder is only 1.5 m deep. The former half-gable lean-to was
+	## authored for a 3 m slope and projected through buildings across a nominal
+	## alley. This reviewed window-roof mesh is a true shallow shed: 1.55 m deep,
+	## 3.06 m wide, and less than one metre high. One unscaled piece closes each
+	## 3 m run, with its timber fascia making the free high edge look finished.
+	assert(length_cells in [2, 4, 6] and eave_side in [-1, 1])
+	assert(roof_asset == WINDOW_ROOF_BLUE or roof_asset == WINDOW_ROOF_ORANGE)
+	assert(modules != null)
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"roof", &"thin_roof_face", &"setback_shed", &"occupied_mass",
+		&"pitched_roof",
+	], 1)
+	var yaw := 0.0 if eave_side < 0 else PI
+	var contract_value := modules.contract(roof_asset)
+	assert(contract_value != null)
+	# The adjoining room/roof already overhangs its logical wall plane. Move this
+	# shallow roof 0.62 m away from that bound edge so the two measured envelopes
+	# meet instead of burying one roof under the other. This is a recipe datum,
+	# not per-instance repair, and both drainage directions remain native scale.
+	var seam_offset_z := -float(eave_side) * 0.62
+	for run_index in length_cells / 2:
+		var target := Vector3((float(run_index) * 2.0 + 1.0) * CELL,
+			0.0, seam_offset_z)
+		var pose := _pose(target, yaw)
+		var transformed := pose * contract_value.visual_bounds
+		pose.origin.x += target.x - transformed.get_center().x
+		pose.origin.z += target.z - transformed.get_center().z
+		pose = modules.roof_bearing_aligned_transform(roof_asset, pose, 0.0)
+		recipe_value.add_placement(StringName("shed.%02d" % run_index),
+			roof_asset, pose)
+	for x in length_cells:
+		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
+	recipe_value.add_socket(&"bearing.bottom",
+		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
+	return recipe_value
+
+
 static func _short_roof_recipe(recipe_id: StringName,
 		roof_asset: StringName, modules: FabricModuleProgram) -> FabricRecipe:
 	## A broad one-storey closer is rare and must not read as a low shed. Keep
@@ -2647,9 +2717,16 @@ static func _add_compact_roof_dormer(recipe_value: FabricRecipe,
 	var embed_y := DORMER_EMBED_Y \
 		if former_dormer_asset in [ROOF_WINDOW_01, ROOF_WINDOW_02] \
 		else DORMER_SHED_EMBED_Y
+	var downslope := Vector3.ZERO
+	if former_dormer_asset in [ROOF_WINDOW_03, ROOF_WINDOW_04]:
+		downslope = Basis(Vector3.UP, yaw) * Vector3.BACK \
+			* DORMER_SHED_DOWNSLOPE_OFFSET
+	var scale_value := DORMER_SCALE \
+		if former_dormer_asset in [ROOF_WINDOW_01, ROOF_WINDOW_02] \
+		else DORMER_SHED_SCALE
 	recipe_value.add_placement(placement_id, former_dormer_asset,
-		_scaled_pose(base + Vector3.UP * embed_y, yaw,
-			DORMER_SCALE))
+		_scaled_pose(base + Vector3.UP * embed_y + downslope, yaw,
+			scale_value))
 	if not recipe_value.has_tag(&"complete_authored_dormer"):
 		recipe_value.role_tags.append(&"complete_authored_dormer")
 	var family_tag := &"authored_gabled_dormer" \
@@ -3682,9 +3759,13 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		back_socket_x: int, modules: FabricModuleProgram,
 		decorated: bool = false, depth_cells: int = 1,
 		diagonal_support: bool = false) -> FabricRecipe:
-	## One complete 3 m-wide occupied balcony. Compact fallback recipes are 1.5 m
-	## deep; the preferred walkouts are 3 m deep so the outer guard reads as a
-	## perimeter instead of a fence across the doorway. The logical cells are
+	## One complete 6 m-wide occupied balcony. A 3 m deck forced the 1.5 m doorway
+	## into one of its two halves, which left a side railing's terminal post on the
+	## threshold even when the doorway's facade edge was correctly unguarded. The
+	## four-cell platform puts the door in an inner bay and leaves at least one
+	## whole cell of lateral clearance to either side rail. Compact fallback
+	## recipes are 1.5 m deep; the preferred walkouts are 3 m deep so the outer
+	## guard reads as a perimeter instead of a fence across the doorway. The logical cells are
 	## exterior private walk/headroom, while continuous reviewed deck runs, every
 	## exposed rail, and the selected support course are one atomic measured
 	## construction. The parent room's finite
@@ -3707,39 +3788,44 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 	var recipe_value := FabricRecipe.new(recipe_id, tags, 1)
 	var deck_cells: Array[Vector3i] = []
 	for z in depth_cells:
-		for x in [-1, 0]:
+		for x in [-2, -1, 0, 1]:
 			deck_cells.append(Vector3i(x, 0, z))
-		# Each native 3 m gallery piece spans the full facade width. Adjacent
-		# depth runs meet on their authored edge and do not scale or overlap.
-		recipe_value.add_placement(StringName("floor.%d" % z), GALLERY_FLOOR,
-			modules.walk_aligned_transform(GALLERY_FLOOR,
-				_pose(Vector3(-CELL * 0.5, 0.0, float(z) * CELL), 0.0),
-				0.0))
-	# The facade-width outer edge is one continuous authored run. Two short
-	# repeats doubled their endpoint posts on the balcony centreline, directly in
-	# front of the door; the measured 3 m repeat keeps only the two outer posts.
-	recipe_value.add_placement(&"guard.front", RAILING_MEDIUM,
-		_pose(Vector3(-CELL * 0.5, 0.0,
-			(float(depth_cells) - 0.5) * CELL), 0.0))
+		# Two native 3 m gallery pieces span the 6 m facade. Adjacent width and
+		# depth runs meet on their authored edges and never scale or overlap.
+		for width_half in 2:
+			var floor_x := (-1.5 + float(width_half) * 2.0) * CELL
+			recipe_value.add_placement(StringName("floor.%d.%d" % [z,
+					width_half]), GALLERY_FLOOR,
+				modules.walk_aligned_transform(GALLERY_FLOOR,
+					_pose(Vector3(floor_x, 0.0, float(z) * CELL), 0.0),
+					0.0))
+	# Two continuous authored 3 m runs close the 6 m front. Their shared endpoint
+	# is between the two possible door bays and, on the preferred deep walkout,
+	# a full 3 m away from the threshold.
+	for width_half in 2:
+		var guard_x := (-1.5 + float(width_half) * 2.0) * CELL
+		recipe_value.add_placement(StringName("guard.front.%d" % width_half),
+			RAILING_MEDIUM, _pose(Vector3(guard_x, 0.0,
+				(float(depth_cells) - 0.5) * CELL), 0.0))
 	# Both end runs close every exposed depth cell. The parent facade is the only
 	# unguarded edge and contains the exact portal selected with this feature.
 	for z in depth_cells:
 		recipe_value.add_placement(StringName("guard.left.%d" % z), RAILING,
-			_pose(Vector3(-CELL * 1.5, 0.0, float(z) * CELL), -PI * 0.5))
+			_pose(Vector3(-CELL * 2.5, 0.0, float(z) * CELL), -PI * 0.5))
 		recipe_value.add_placement(StringName("guard.right.%d" % z), RAILING,
-			_pose(Vector3(CELL * 0.5, 0.0, float(z) * CELL), -PI * 0.5))
+			_pose(Vector3(CELL * 1.5, 0.0, float(z) * CELL), -PI * 0.5))
 	if diagonal_support:
 		var support_contract := modules.contract(DIAGONAL_BRACE)
 		assert(support_contract != null)
 		var support_bounds := support_contract.visual_bounds
-		for index in 2:
-			var brace_x := float(index - 1) * CELL
+		for index in 4:
+			var brace_x := float(index - 2) * CELL
 			recipe_value.add_placement(StringName("support.diagonal.%d" % index),
 				DIAGONAL_BRACE, _pose(Vector3(brace_x, -support_bounds.end.y,
 					-support_bounds.position.z), 0.0))
 	else:
-		for index in 2:
-			var brace_x := float(index - 1) * CELL
+		for index in 4:
+			var brace_x := float(index - 2) * CELL
 			recipe_value.add_placement(StringName("brace.%d" % index), BRACE,
 				_pose(Vector3(brace_x, -0.55, -CELL * 0.35), 0.0))
 	if decorated:
@@ -3747,7 +3833,9 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		# plants from silently widening the long-standing structural balcony
 		# contract used by older sectional fixtures, while production can prefer
 		# this richer version wherever its complete envelope fits.
-		var planter_x := -0.78 if back_socket_x == 0 else -0.18
+		# Keep decoration in the outer bay opposite the door rather than narrowing
+		# the threshold that this wider construction was introduced to protect.
+		var planter_x := -3.0 if back_socket_x == 0 else 1.35
 		recipe_value.add_placement(&"balcony.planter", ROOF_PLANTER,
 			_pose(Vector3(planter_x, 0.04, 0.26), 0.0))
 		var balcony_flower := ROOF_FLOWER_TALL if theme == &"blue" \
@@ -3758,7 +3846,7 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		recipe_value.role_tags.append(&"planted_balcony")
 	recipe_value.walk_cells.assign(deck_cells)
 	recipe_value.headroom_cells = FabricRecipe.box_cells(
-		Vector3i(-1, 0, 0), Vector3i(2, 2, depth_cells))
+		Vector3i(-2, 0, 0), Vector3i(4, 2, depth_cells))
 	recipe_value.inhabited_cells.assign(recipe_value.headroom_cells)
 	recipe_value.add_socket(&"room.back", FabricRecipe.SocketKind.ROOM,
 		Vector3i(back_socket_x, 0, 0), Vector3i.FORWARD)
