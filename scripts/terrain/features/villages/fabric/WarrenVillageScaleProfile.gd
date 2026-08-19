@@ -129,13 +129,13 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 			return WarrenVillageScaleProfile.new(COMPACT, 7,
 				Vector2i(12, 15), Vector2i(12, 18), Vector2i(5, 7),
 				4, 16, Vector2i(10, 30), 6, 2, Vector2i(1, 1),
-				Vector2i(0, 2), Vector2i(2, 2), Vector2i(0, 0), 0.29, false,
+				Vector2i(0, 2), Vector2i.ZERO, Vector2i(4, 4), 0.29, false,
 				false)
 		STANDARD:
 			return WarrenVillageScaleProfile.new(STANDARD, 8,
 				Vector2i(13, 16), Vector2i(14, 22), Vector2i(6, 8),
 				5, 20, Vector2i(16, 60), 8, 3, Vector2i(1, 2),
-				Vector2i(1, 3), Vector2i(2, 3), Vector2i(0, 1), 0.33, false,
+				Vector2i(1, 3), Vector2i.ZERO, Vector2i(4, 5), 0.33, false,
 				false)
 		LARGE:
 			# Skywalk range minimum below maximum: request the richer link
@@ -144,12 +144,12 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 			return WarrenVillageScaleProfile.new(LARGE, 9,
 				Vector2i(14, 17), Vector2i(16, 26), Vector2i(6, 9),
 				8, 32, Vector2i(25, 70), 12, 4, Vector2i(2, 3),
-				Vector2i(3, 4), Vector2i(3, 4), Vector2i(1, 1), 0.38, true)
+				Vector2i(3, 4), Vector2i.ZERO, Vector2i(5, 6), 0.38, true)
 		GRAND:
 			return WarrenVillageScaleProfile.new(GRAND, 11,
 				Vector2i(15, 18), Vector2i(20, 30), Vector2i(7, 10),
 				10, 40, Vector2i(40, 110), 16, 5, Vector2i(3, 4),
-				Vector2i(4, 6), Vector2i(4, 6), Vector2i(2, 2), 0.38, true)
+				Vector2i(4, 6), Vector2i.ZERO, Vector2i(6, 8), 0.38, true)
 		_:
 			return null
 

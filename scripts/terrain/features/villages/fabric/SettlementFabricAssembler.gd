@@ -219,7 +219,8 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 		return EnvironmentInstancePayload.new()
 	var retained := plan.retained_terrace_cells
 	var solids := plan.transformed_cells(&"solid")
-	var out := house_plinth_walls(retained, solids)
+	var bearing_footprint := plan.transformed_cells(&"terrain_bearing")
+	var out := house_plinth_walls(retained, solids, bearing_footprint)
 	assert(out.validate())
 	return out
 
@@ -237,7 +238,8 @@ static func building_ceiling(solids: Dictionary) -> Dictionary:
 
 
 static func house_plinth_walls(retained: Dictionary,
-		solids: Dictionary) -> EnvironmentInstancePayload:
+		solids: Dictionary, bearing_footprint: Dictionary = {}) \
+		-> EnvironmentInstancePayload:
 	## One authored HOUSE_PLINTH foundation piece per exposed plinth face, and
 	## never a second. Its top is flush with the house floor it carries and its
 	## bottom is buried in the bank below -- the same half-burial the one-band
@@ -250,7 +252,7 @@ static func house_plinth_walls(retained: Dictionary,
 	## key list, so the payload is byte-identical for identical input.
 	var out := EnvironmentInstancePayload.new()
 	var keys: Array[Vector4i] = []
-	keys.assign(plinth_faces(retained, solids).keys())
+	keys.assign(plinth_faces(retained, solids, bearing_footprint).keys())
 	keys.sort_custom(_face_before)
 	for key: Vector4i in keys:
 		var direction := FACE_DIRECTIONS[key.w]
@@ -267,7 +269,8 @@ static func house_plinth_walls(retained: Dictionary,
 	return out
 
 
-static func plinth_faces(retained: Dictionary, solids: Dictionary) -> Dictionary:
+static func plinth_faces(retained: Dictionary, solids: Dictionary,
+		bearing_footprint: Dictionary = {}) -> Dictionary:
 	## The faces stone is allowed to claim, keyed Vector4i(x, band, z, direction
 	## index into FACE_DIRECTIONS) at the TOP band of the run. A face qualifies
 	## only when a building stands directly on that cell (so the stone is part
@@ -299,11 +302,12 @@ static func plinth_faces(retained: Dictionary, solids: Dictionary) -> Dictionary
 	cells.sort_custom(_cell_before)
 	for cell: Vector3i in cells:
 		var above := cell + Vector3i.UP
-		if not solids.has(above):
+		if not solids.has(above) and not bearing_footprint.has(above):
 			continue
 		for index in FACE_DIRECTIONS.size():
 			var neighbor := cell + FACE_DIRECTIONS[index]
-			if retained.has(neighbor) or solids.has(neighbor):
+			if retained.has(neighbor) or solids.has(neighbor) \
+					or bearing_footprint.has(neighbor + Vector3i.UP):
 				continue
 			out[Vector4i(cell.x, cell.y, cell.z, index)] = true
 	return out
@@ -434,7 +438,7 @@ static func surface_visual_payload(plan: PublicRealmSurfacePlan) \
 		if kind == PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
 			cells = _without_cells(cells, courtyard_set)
 		_append_plank_tiles(out, cells, int(kind))
-	_append_courtyard_paving(out, courtyard_cells)
+	_append_courtyard_paving(out, courtyard_cells, plan)
 	for segment: Dictionary in plan.guard_segments:
 		var a := segment.a as Vector3
 		var b := segment.b as Vector3
@@ -469,7 +473,7 @@ static func production_surface_payload(plan: PublicRealmSurfacePlan) \
 		if kind == PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
 			cells = _without_cells(cells, courtyard_set)
 		_append_plank_tiles(out, cells, int(kind))
-	_append_courtyard_paving(out, courtyard_cells)
+	_append_courtyard_paving(out, courtyard_cells, plan)
 	for segment: Dictionary in plan.guard_segments:
 		var a := segment.a as Vector3
 		var b := segment.b as Vector3
@@ -547,7 +551,7 @@ static func _append_plank_tiles(out: EnvironmentInstancePayload,
 
 
 static func _append_courtyard_paving(out: EnvironmentInstancePayload,
-		cells: Array[Vector3i]) -> void:
+		cells: Array[Vector3i], plan: PublicRealmSurfacePlan) -> void:
 	## The elevated 6 m court stays timber-supported, but a checker of cool and
 	## warm weathered boards plus two edge planters separates it visually from
 	## through-galleries and broad roof decks. Every module still tiles the same
@@ -561,27 +565,53 @@ static func _append_courtyard_paving(out: EnvironmentInstancePayload,
 			Vector3(cell) + Vector3(0.5, 0.0, 0.5), yaw,
 			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
 			Color("b9c1b8") if yaw == 0 else Color("c8b79d"))
-	var minimum := cells[0]
-	var maximum := cells[0]
+	# Select actual supported perimeter cells rather than corners of the court's
+	# AABB. Compact towns can form L/T-shaped roof courts; the old rectangle
+	# shortcut could put the second planter over a missing corner. A corner is
+	# eligible only when two perpendicular sides leave the complete public-surface
+	# union. This also keeps a planter away from the exact route seam, whose
+	# neighboring public cell makes that side non-exposed.
+	var corner_cells: Array[Vector3i] = []
 	for cell: Vector3i in cells:
-		minimum = minimum.min(cell)
-		maximum = maximum.max(cell)
-	var min_edge := Vector2(float(minimum.x), float(minimum.z)) \
-		* FabricRecipe.CELL_SIZE
-	var max_edge := Vector2(float(maximum.x + 1), float(maximum.z + 1)) \
-		* FabricRecipe.CELL_SIZE
-	var inset := 0.68
-	var y := float(minimum.y) * FabricRecipe.CELL_SIZE + 0.04
-	var planter_positions: Array[Vector3] = [
-		Vector3(min_edge.x + inset, y, min_edge.y + inset),
-		Vector3(max_edge.x - inset, y, max_edge.y - inset),
-	]
-	for index in planter_positions.size():
+		var exposed: Array[Vector3i] = []
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			if plan == null or not plan.has_cell(cell + direction):
+				exposed.append(direction)
+		var has_corner := false
+		for first: Vector3i in exposed:
+			for second: Vector3i in exposed:
+				has_corner = has_corner or first.x * second.x \
+					+ first.z * second.z == 0
+		if has_corner:
+			corner_cells.append(cell)
+	if corner_cells.size() < 2:
+		corner_cells.assign(cells)
+	corner_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return _cell_before(a, b))
+	var first_cell := corner_cells[0]
+	var second_cell := corner_cells[1] if corner_cells.size() > 1 \
+		else corner_cells[0]
+	var best_distance := -1
+	for first_index in corner_cells.size():
+		for second_index in range(first_index + 1, corner_cells.size()):
+			var a := corner_cells[first_index]
+			var b := corner_cells[second_index]
+			var distance := absi(a.x - b.x) + absi(a.z - b.z)
+			if distance > best_distance:
+				best_distance = distance
+				first_cell = a
+				second_cell = b
+	var planter_cells: Array[Vector3i] = [first_cell, second_cell]
+	for index in planter_cells.size():
+		var cell := planter_cells[index]
+		var planter_position := (Vector3(cell) + Vector3(0.5, 0.0, 0.5)) \
+			* FabricRecipe.CELL_SIZE + Vector3.UP * 0.04
 		out.add(COURTYARD_PLANTER,
 			Transform3D(Basis(Vector3.UP, float(index) * PI),
-				planter_positions[index]), Color.WHITE,
-			StringName("courtyard-planter/%d/%d/%d/%d" % [minimum.x,
-				minimum.y, minimum.z, index]))
+				planter_position), Color.WHITE,
+			StringName("courtyard-planter/%d/%d/%d/%d" % [cell.x,
+				cell.y, cell.z, index]))
 
 
 static func _cell_set(cells: Array[Vector3i]) -> Dictionary:

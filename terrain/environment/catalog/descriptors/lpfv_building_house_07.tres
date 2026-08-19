@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_vq4tm"]
+
+[resource]
+script = ExtResource("1_vq4tm")
+id = &"lpfv.building.house.07"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_house_07.tres"
+tags = Array[StringName]([&"building", &"complete_house", &"prefab_anchor", &"village"])
+measured_aabb = AABB(-2.9345179, -0.0060320874, -3.5197878, 5.8690352, 5.4656467, 6.8448586)
+ground_contact_points = PackedVector2Array(0.75, -3.75, 1.5, -3.75, -3, -3, -2.25, -3, -1.5, -3, -0.75, -3, 0, -3, 0.75, -3, 1.5, -3, 2.25, -3, -3, -2.25, -2.25, -2.25, 2.25, -2.25, -2.25, -1.5, 2.25, -1.5, -2.25, -0.75, 2.25, -0.75, -2.25, 0, 2.25, 0, -2.25, 0.75, 2.25, 0.75, -2.25, 1.5, 2.25, 1.5, -3, 2.25, -2.25, 2.25, 2.25, 2.25, -3, 3, -2.25, 3, -1.5, 3, -0.75, 3, 0, 3, 1.5, 3, 2.25, 3)
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.building.house.07"

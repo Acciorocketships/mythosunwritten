@@ -301,7 +301,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   with pitched roofs. Every rectangular generated house names local Z as both parcel depth and
   ridge axis, requires the measured roof to be longer on Z than its X eave span, and rotates the
   parcel/roof contract together; production cannot admit a sideways wide house. Complete authored
-  3 m facade modules tile every side span with their source UVs. The stackable townhouse may fill
+  3 m facade modules tile every side span with their source UVs. Timber panels own one edge post,
+  so east/west faces use bake-time X-mirrored variants with corrected winding, normals, tangents,
+  collision, and material surfaces. Runtime transforms remain proper rotations; rectangular shells
+  must resolve to exactly one post at every corner, never doubled diagonal corners and empty opposite
+  corners. The stackable townhouse may fill
   upper-route pockets without admitting sideways buildings. A greedy three-or-more-storey stack is
   admitted only after a lower complete roof-step neighbor already exists, and exact selection rejects
   every remaining unstepped tall stack. A narrow tall lineage is accepted only when it has a real
@@ -309,9 +313,28 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   for three storeys, so a deliberate 2+2 whole-room step is not mislabeled as a vertical extrusion;
   central height descends through occupied neighbors.
   Exterior stair-facade doors use the same cardinal threshold contract as
-  other addressed rooms. Outcroppings are shallow roofed facade bays or roofed corner overlaps;
-  their side panels sit on the actual one-module shell planes rather than leaving untextured gaps,
-  never unroofed cubes, and markets draw only from the seven reviewed `stocked_market` prefabs;
+  other addressed rooms. Outcropping vocabulary retains two exact scales for diagnostic fixtures,
+  but production currently admits only the small facade bay while the basic composition pass is
+  being mastered. The disabled full-scale same-storey bump-out is a
+  3 m room plate shifted diagonally across a 3 m tower room: their shared 1.5 m quadrant remains the
+  parent's authored shell, while only the exposed L-shaped union shell, floor, braces, and roof are
+  emitted. It therefore reads as one compound building with no duplicate wall or texture in the
+  overlap. A small facade bay is instead a 1.5 m-wide embedded oriel with 0.9 m return cheeks and a
+  2.1 m partial-height authored window face. Its complete sill and shallow tiled canopy cover the
+  real face thickness, paired corbels carry it, and the parent remains a closed facade rather than
+  opening a full doorway-sized hole behind the small bay. A straight room pasted beyond a facade,
+  dormer, flue, or trim can satisfy neither massing contract. Its diagonal/corner-union recipes remain testable but
+  their scale quotas are zero and production rejects any survivor which still requires a tower
+  annex; they must not reappear through an implicit relief obligation. The optional bay search ranges across every eligible
+  lineage and caps successful commits, so two initially cramped lineages cannot suppress relief
+  elsewhere. Integrated upper-floorplate shifts still emit a `room_outcropping` fact, including
+  directly borne shifts that need no brackets. A tower-to-slim/row size change computes its real
+  bearing and extension before that outcropping classification: when exactly half of the upper
+  plate crosses a two-band public-route bay, the solver seals an `arcade_overhang_support` with one
+  complete authored stone portal on the outer face and explicit seams to both room plates. It may
+  never pass as a zero-extension setback or receive loose decorative stone fragments. Side panels sit on the actual one-module shell planes rather
+  than leaving untextured gaps, never unroofed cubes, and markets draw only from the seven reviewed
+  `stocked_market` prefabs;
   empty tent families are ineligible. The old terrain-massing planner below remains only for explicit
   custom-program fixtures; a solve selects exactly one generation kind and the two algorithms
   must never be mixed. Sectional production records also suppress the legacy outskirts/prop pass.
@@ -321,15 +344,54 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   of four size contracts: compact 55%, standard 30%, large 12%, grand 3%. Their planning diameters
   are 63/69/75/87 m; total inhabited-room budgets are 18--110/30--190/50--220/80--300; residual
   infill is capped separately at 12/16/24/32 rooms. Those totals include the late residual pass,
-  which may never disappear from size accounting. Required landmarks scale 0/1/2/3; skywalk
+  which may never disappear from size accounting. Complete authored-building ranges are
+  4/4--5/5--6/6--8 for compact/standard/large/grand. A bounded deterministic compatible-set beam
+  replaces the former hard-coded pair/triple enumeration, so the richer sets do not make generation
+  exponential. The reviewed catalog contains 32 distinct complete meshes: twelve Stylized
+  Fantasy Village interiors, seven tavern buildings, three alchemy buildings, two forges, seven
+  Low Poly Fantasy Village houses, and its church. They compile as indivisible measured prefabs.
+  Prefab admission uses unscaled 21/24/30/36 m maximum spans for compact/standard/large/grand,
+  so a giant authored building cannot consume a compact town but the broadest silhouettes remain
+  reachable in the larger profiles instead of being globally excluded.
+  Buildings with the same occupancy,
+  clearance, and socket signature share one topology proof but select a seed-varied visual
+  representative afterward, so deduplication cannot freeze a footprint family to one mesh. The
+  solver ranks compatible sets across the whole catalog before room composition. Skywalk
   ranges are 1/2/(3--4)/(3--4): large and grand request four occupied links and the sealed
   hero-feature ranking (exact composed recipe occluder route coverage, the same test as the final
   enclosure audit) keeps three only when the fourth provably adds no distinct inhabited route
-  cover — that redundancy is recorded as an exact diagnostic fact. Balconies scale 4/5/6/8 and
-  room cantilevers 4/5/6/8. Every size retains the covered market;
+  cover — that redundancy is recorded as an exact diagnostic fact. Balcony ranges are
+  0--2/1--3/3--4/4--6; production full-scale diagonal-outcropping ranges are temporarily zero for
+  every size. Every size retains the covered market;
   only large and grand require the elevated third-storey court. Stable source signatures and
   terrain-relative rebuilds carry the exact selected profile; a small town is never a cropped or
   mesh-scaled large one.
+  A new maze front end is under staged development behind the production boundary; it is not yet a
+  selectable generation mode. `WarrenMazeCarver` builds one deterministic entrance-to-summit spine,
+  coverage-driven alley network, a universal typed 6 m by 6 m market square, and open-air/tunnel
+  classification from the same `WarrenMassif`,
+  using the shared resource-free stride geometry in `WarrenPassageLatticeRules`. Its sealed
+  `WarrenMazeSourcePlan` is the prospective pre-`WarrenVolumePlan` authority: every public cell has a
+  typed spine/alley/market owner, one universal market-zone prefix, a block-thickness classification, and a
+  deterministic signature covering graph, air, and thickness state. The source seal requires one
+  exterior entrance, connected valid passage strides, capped straight runs, and at least 90% of
+  public cells retaining an inhabitable facade. It reports addressed-column reach and raw-solid
+  survival separately; the design's mass ratio is the later partition's share of post-carve SOLID,
+  not the fraction of the original massif left after intentional passage/shaft excavation. The
+  `WarrenMazeVolumeAdapter` seals a bidirectional bore/surface alignment audit before exposing the
+  common volume: every nominal passage cell retains at least two fine floor lanes, every emitted
+  floor remains inside the actually carved passage column/slot, and the second tread band of a
+  stair is recorded separately rather than misclassified as an invented path.
+  market widens a straight approach by two cells when possible and otherwise fills the missing
+  diagonal of a tight approach turn; alley growth treats that square as immutable topology and
+  restores the source frontage margin around it. `WarrenMazeBlockPartitioner` is an experimental
+  one-pass adapter to the existing authored tower/slim/row/building/long parcel contracts. It never
+  generates partition variants, but it does not yet own the deep block interior: the current corpus
+  seals 7/9 common volumes and assigns only 0.394 mean post-carve solid, so it is a compatibility
+  probe rather than permission to enable maze production. Do not
+  route production through this source until the remaining stamps, complete back/upper block ownership, direct downstream
+  reservations, the record/timing corpus, and visual review gates in
+  `docs/superpowers/plans/2026-08-16-maze-town-carver-refactor.md` are complete.
   Route-first uses `WarrenVolumeEnvelope` and the public-realm carver described below. Mass-first
   uses `WarrenMassifBuilder` to author one bounded 2--18-band **inhabited** Gaussian mountain directly
   above immutable terrain; `WarrenMassif.bearing_at()` is the terrain base, never a hidden stone
@@ -402,15 +464,29 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   crown is truncated. A compound gable does not exempt neighboring rooms from measured visual
   clearance, so a valley collision selects the matching plain shell or one coherent flat service
   closure instead of overlapping roofs. True one-storey tower/slim closers preferentially use their integrated chimney roofs.
-  Pitched compact and slim roofs may receive measured dormers. True wraparound balcony recipes own
-  an L-shaped walk surface, corner guards, diagonal braces, and a planted corner; they are never
+  Adjacent compact roof ends are editor-baked to exact 3 m runs: each keeps its authored exterior
+  gable and terminates at the shared open party seam, so equal-datum neighbours touch without
+  overlap or runtime scaling. Compatible one-valley building/long T-neighbourhoods use the existing
+  atomic bisected-host/open-branch construction; a compact crossing which has no authored watertight
+  junction is flattened into a furnished roof campaign instead of overhanging its 3 m house.
+  Pitched compact and slim roofs may receive measured dormers. Their construction sills sit 1.30 m
+  below the roof bearing and their compact/wide eave offsets are 1.25/2.20 m, respectively, so the
+  one-sided construction tail is buried in the pitch while the complete glazed face remains visible.
+  Long roofs may select a bilateral recipe with one dormer on each opposing pitch. True wraparound
+  balcony recipes own two continuous 3 m deck rows, a native half-width third cell on the direct
+  doorway circulation line, a 1.5 m side return, nine exposed-boundary guard sections, two
+  terrain-embedded full-storey diagonal braces, and a planted corner. The doorway seam is unguarded
+  and the first guard on its axis is three cells away. Their complete authored stair is a
+  switchback, not a two-lane straight flight: one measured low tread lands on an existing
+  `PUBLIC_FLOOR`, the opposite high tread meets the deck through one exact guard opening, and the
+  module contract aligns the high tread plane rather than the taller handrail AABB. They are never
   inferred from an accidentally exposed lower roof. None of these private visual treatments invents
   public walkability. Every candidate's
   complete transformed semantic solid volume is checked against the sealed 3D public-air grid—not
   just its first band—so a tall gable beneath an elevated street falls back to a non-occupying thin
-  weather cap instead of piercing route headroom. An unsupported
-  perpendicular-valley result triggers one finite rebuild which flattens only the two roofs in each
-  classified crossing; flat pairs emit no fictional pitched-junction module. Stone is concentrated
+  weather cap instead of piercing route headroom. An unsupported or multi-valley result triggers
+  one finite rebuild which flattens only the roofs in each
+  classified crossing; flat campaigns emit no fictional pitched-junction module. Stone is concentrated
   at real terrain bearing and retaining work; a sparse building-level rule may continue that masonry
   through the first upper storey as a coherent plinth, but never as arbitrary high cladding or a
   hidden podium. A house footprint may span at most the
@@ -428,8 +504,19 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   on at least three sides. The court additionally reserves explicit open-sky columns and proves
   actual public walk surfaces both below and above its XZ projection; swept headroom alone never
   counts as the over-court route. The
+  final exact selector also recognizes broad irregular roof courts assembled by the ordinary room
+  transaction. A court must contain at least twenty connected 1.5 m floor cells, meet the canonical
+  upper route through a player-width seam, remain irregular rather than a narrow strip, and bear on
+  multiple occupied buildings. For compact/standard towns, selection may retain the first fully
+  valid courtless candidate as a fallback while compiling only the next three ranked partition
+  variants; a genuine route-connected court within that bounded prefix wins. The fallback is
+  returned unchanged if no court seals or the time budget expires, so visual preference cannot turn
+  a valid real-time solve into a generation failure.
+  The
   fine-grid volumetric front end jointly selects exactly one covered market and its measured
-  skywalk set before room composition. The market attaches the atomic 6 x 3 m reviewed canopy plus
+  skywalk set before room composition. Straight and corner skywalk recipes share an explicit blue
+  or orange roof campaign; an L-link chooses the corner matching its arms (mixed arms resolve to
+  slate), so the turn cannot expose a one-piece warm patch inside an otherwise cool roof. The market attaches the atomic 6 x 3 m reviewed canopy plus
   authored stocked-table recipe to one exact terrain-rooted room `MARKET` socket. Four central
   public cells remain negative space beneath the canopy; when their lattice phase does not already
   meet one route episode, a bounded two-cell-wide aisle throat is carved to a two-lane seam. Every
@@ -535,14 +622,14 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   shaft. No accepted lineage may retain more than two consecutive identical tower floorplates, and
   no accepted tall lineage may remain a repeated world-space extrusion. Every occupied
   composition feature owns private volume through the same sealed exact-reservation contract; final
-  ownership validation is intentionally feature-kind-agnostic. Three distinct measured roofed annexes
-  are reserved against the remaining tall lineages before balconies, using authored AABB clearance as
-  well as the integer occupancy raster so dormers, corner wraps, flue bays, and full-room outcrops can
-  break the vertical read without clipping unrelated eaves.
+  ownership validation is intentionally feature-kind-agnostic. Full-scale annex/corner-union recipes
+  remain diagnostic-only and have zero production quota; no dormer, straight pasted-on room, flue bay,
+  or other decoration may silently substitute for them.
   After exact room composition, the same fine grid admits the scale-selected number of usable
-  balconies across multiple building owners. Each is one measured 3 x 1.5 m private occupied-floor recipe with
-  two deck tiles, full two-band headroom, a reviewed door facade, four exposed-edge railing runs,
-  twin cantilever brackets, one exact room/bearing socket, and a named visual seam to only its
+  balconies across multiple building owners. Each is one measured L-shaped private occupied-floor recipe with
+  two full-width deck rows, a third doorway-throat cell, a half-depth return, full two-band headroom, a
+  reviewed door facade, nine exposed-boundary railing sections, two full-storey diagonal supports, one
+  exact authored switchback stair, one exact room/bearing socket, and a named visual seam to only its
   source parcel stack. Selection permits at most two per building and forbids equal XZ/facing
   facade coordinates at different heights, so balconies cannot recreate a vertically repeated
   tower pattern. Their body, visual clearance, room endpoint, guard/open-seam/soffit faces, support,
@@ -552,13 +639,22 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   AABB with every earlier feature construction record—especially the diagonal and shallow support
   courses owned by room-scale outcroppings—because those oblique meshes are not represented by the
   private-volume raster alone. Measured brace clearance may
-  enter lower public air only as an explicit covered-street construction seam. Flowered balconies
+  enter lower public air only as an explicit covered-street construction seam, and a brace foot may
+  pass below the grid only within its horizontal bounds so it visibly embeds in immutable terrain.
+  Flowered balconies
   are separate measured recipes rather than props stamped onto the plain structural form; the same
   transactional rule owns the garden versions of stocked markets and the planter/flower variants
   of roof terraces and setback gardens. Their five reviewed flower families remain inside each
   recipe's visual-clearance and fallback contract.
-  Whole-room outcroppings are selected from shifted final room floorplates, not small houses pasted
-  onto facades. Each owns roof, floor, side shells, and support. The preferred support is a measured
+  Diagnostic whole-room outcroppings are either shifted final upper-room floorplates or same-storey
+  diagonal corner unions, never small houses pasted beyond a facade. Production currently selects
+  neither form. Each diagnostic recipe owns roof, floor, exposed side shells, and support while the
+  corner union deliberately omits its shared parent quadrant. Small embedded
+  oriels use an authored shallow tiled eave rather than a bare deck cap. A diagonal corner union uses
+  two opposed, end-trimmed authored low pitches whose measured high edges meet exactly as one convex
+  gable; the clipped runs preserve the exterior eaves while removing the decorative curls that used
+  to overlap at the seam. It therefore avoids the old wooden tabletop, a concave valley, and two
+  complete roofs crossing as a pinwheel. The preferred support is a measured
   diagonal timber course whose full 3D sweep must avoid public/daylight/service air, unrelated rooms,
   and feature clearance; a shallow bracket course is the explicit fallback, never horizontal trim
   masquerading as structure. Every accepted cantilever is either directly terrain/building-borne or
@@ -583,19 +679,27 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   surface that bears them; they are not a post-pass scatter that may clip walls or circulation.
   The fast diagnostic
   `tests/harness/warren_spatial_review.tscn` renders the already-sealed fine-grid candidate directly
-  and adds front/underside falsification views for every balcony; it deliberately bypasses corpus
+  and adds route-transition, authored-facing dormer, outcrop-oblique, and front/underside balcony
+  falsification views. `tests/harness/dormer_recipe_review.gd` separately renders the exact compiled
+  dormer recipes from catalog meshes to verify their roof intersection without town occlusion. It deliberately bypasses corpus
   selection and is not evidence that the production selector accepted a seed. Its
   `--production-terrain-site` mode instead runs the real selected settlement transaction, commits
   the exact production entry list (including terrain-derived support posts), renders surrounding
   `TerrainChunkMesher` chunks in the town's local frame, and omits the diagnostic road skin so paths
   remain the actual terrain or structural surfaces production owns. The spatial fabric
-  compiler deterministically alternates complete authored facade phases by storey and horizontal
-  slot, with theme/form-selected ivy, clothes, signs, or planter-and-flower windowboxes as measured
-  rich phases, then retries the plainer phase only when the richer measured envelope conflicts with
-  already accepted construction. Before that choice it derives the minimum mandatory authored roof closure
+  compiler assigns every segmented building lineage one of three deterministic authored
+  construction styles, independently of streaming. Each exact tower/slim/row/square/long footprint
+  has a flush and rich recipe in that style with identical solids, inhabited volume, sockets, and
+  entrances; storeys alternate only within the lineage's pair. Theme/form/style-selected ivy,
+  clothes, signs, or planter-and-flower windowboxes form the measured rich phase, which retries its
+  paired flush recipe when the projection conflicts with already accepted construction. Before that
+  choice it derives the minimum mandatory authored roof closure
   from the sealed roof faces (exact flat plates or plain setback caps) and reserves those measured
   AABBs against unrelated facade projections; a bay/laundry/sign phase may fall back, but cannot make
-  the later roof pass impossible. `SettlementFabricPlan.add_unit()` stages semantic occupancy and publishes
+  the later roof pass impossible. Every pitched roof placement is aligned from its measured visual
+  lower bound to the logical wall-top bearing plane; composite row/slim crowns may vary horizontally
+  but may not raise one neighboring shell above another. `SettlementFabricPlan.add_unit()` stages
+  semantic occupancy and publishes
   it only after visual-envelope validation, so a rejected rich phase cannot leave ghost claims that
   poison that exact fallback transaction.
   Production then compiles the sealed spatial plan and rejects it unless inhabited/structural mass
@@ -654,7 +758,12 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   The compiler derives facade openings, guards, and collision-bearing ramp/stair meshes from
   those same facts; each vertical transition covers every logical stair cell, owns two side rails,
   and meets both landings across exact two-lane seams. Horizontal courts render reviewed fixed
-  board assets while the generated union remains collision-only, avoiding the duplicate dark skin;
+  board assets while the generated union remains collision-only, avoiding the duplicate dark skin.
+  The fine spatial plan additionally proves the source volume's exact route surface is a subset of
+  the final connected route (late market aisles may only extend it), and the common spatial surface
+  compiler must receive that immutable volume lineage so every logical vertical edge has matching
+  render and collision geometry. The review harness includes low-landing transition captures; a
+  connected graph without a visible/collidable climb is a failure.
   stair/ramp meshes use a stable plank shader. Sparse timber supports derive from exposed court
   cells down to an explicit datum, while a court only one half-level above terrain is enclosed by
   fixed retaining-wall modules instead of becoming a crawl-height undercroft. The production

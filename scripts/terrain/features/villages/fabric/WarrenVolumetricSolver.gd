@@ -12,6 +12,10 @@ const GRID_PADDING_CELLS := 2
 const ROOF_CLEARANCE_CELLS := 2
 const MAX_PARTITION_VARIANTS := WarrenSolidPartitioner.PARTITION_VARIANTS
 const MAX_LANDMARK_SET_ATTEMPTS := 12
+## Complete-building selection used to enumerate only pairs/triples. A bounded
+## deterministic beam admits richer four-to-eight building sets without the
+## O(candidate_count^N) explosion that would prevent real-time generation.
+const MAX_LANDMARK_SET_BEAM := 192
 ## Bounded exact hero-feature frontier. Endpoint-compatible skywalk
 ## combinations are proved through the exact room composition and the sealed
 ## survivors are ranked by final recipe occluder route coverage; these bounds
@@ -26,6 +30,16 @@ const RESIDUAL_TERRAIN_ROOT_SCORE := 35000
 ## also leans on the town, which the mandatory established-contact rule now
 ## enforces, so the edge itself earns nothing.
 const RESIDUAL_MASSIF_EDGE_COLUMN_SCORE := 0
+## A roof court is selected from already-inhabited, coplanar room crowns before
+## composed features or roofs spend the same air.  These are deliberately broad
+## rectangles: a two-cell strip is a gallery, not the elevated civic space this
+## pass is meant to create.  Larger shapes rank first, with the two orientations
+## kept explicit so the deterministic search can fit either street bearing.
+const ROOFTOP_COURT_SHAPES: Array[Vector2i] = [
+	Vector2i(5, 4), Vector2i(4, 5), Vector2i(4, 4),
+	Vector2i(4, 3), Vector2i(3, 4),
+]
+const MIN_ROOFTOP_COURT_LIFT_CELLS := WarrenSpatialGrid.STOREY_CELLS
 ## Screenshot-backed production gates. A town with every requested feature can
 ## still read as isolated facades around an open plaza; require the compiled
 ## exterior realm to keep most long views broken and a substantial fraction of
@@ -92,6 +106,13 @@ static var diagnostic_trace_room_gate := false
 static var diagnostic_feature_market_limit := -1
 static var diagnostic_partition_limit := -1
 static var diagnostic_partition_first := 0
+## Compact/standard towns may form a broad route-connected roof court only
+## after the exact room fixed point. The cheap parcel proxy cannot predict it,
+## so inspect a small deterministic prefix of otherwise valid variants before
+## accepting the first courtless fallback. Three reaches the complete alternate
+## serving phase without turning the eight-variant family into an exhaustive
+## in-game search.
+const ROUTE_COURT_VARIANT_PROBE_COUNT := 3
 ## Bridge-room admission telemetry for the residual backfill pass; reset per
 ## backfill run and surfaced through the residual audit keys.
 static var _residual_bridge_counts: Dictionary = {}
@@ -258,11 +279,28 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 		return null
 	var failures := PackedStringArray()
 	var partition_attempt_count := 0
+	var courtless_fallback_plan: WarrenSpatialPlan
+	var courtless_fallback_fabric: SettlementFabricPlan
+	var courtless_fallback_volume: WarrenVolumePlan
+	var courtless_fallback_audit: Dictionary = {}
+	var courtless_fallback_variant := -1
+	var courtless_fallback_rank := -1
 	for ranked_index in ranked_variants.size():
 		if ranked_index < diagnostic_partition_first:
 			continue
 		if _search_deadline_ms >= 0 and partition_attempt_count > 0 \
 				and Time.get_ticks_msec() > _search_deadline_ms:
+			if courtless_fallback_plan != null:
+				var timed_fallback := _finalize_ranked_candidate(
+					courtless_fallback_volume, courtless_fallback_variant,
+					construction_program, courtless_fallback_audit,
+					courtless_fallback_plan, courtless_fallback_fabric)
+				if timed_fallback != null:
+					timed_fallback.audit["route_court_variant_probe_count"] = \
+						partition_attempt_count
+					timed_fallback.audit[
+						"route_court_variant_fallback_used"] = true
+					return timed_fallback
 			_frontier_budget_hit = true
 			last_failure = "search budget reached after %d ranked candidates" \
 				% partition_attempt_count
@@ -271,9 +309,21 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 		if diagnostic_partition_limit >= 0 \
 				and partition_attempt_count >= diagnostic_partition_limit:
 			break
-		partition_attempt_count += 1
 		var volume := ranked.volume as WarrenVolumePlan
 		var variant := int(ranked.variant)
+		if courtless_fallback_plan != null and (volume \
+				!= courtless_fallback_volume or ranked_index \
+				>= courtless_fallback_rank + ROUTE_COURT_VARIANT_PROBE_COUNT):
+			var fallback := _finalize_ranked_candidate(
+				courtless_fallback_volume, courtless_fallback_variant,
+				construction_program, courtless_fallback_audit,
+				courtless_fallback_plan, courtless_fallback_fabric)
+			if fallback != null:
+				fallback.audit["route_court_variant_probe_count"] = \
+					partition_attempt_count
+				fallback.audit["route_court_variant_fallback_used"] = true
+				return fallback
+		partition_attempt_count += 1
 		if diagnostic_trace_room_gate:
 			print("SKYWALK_TIMING partition_begin source=", volume.stable_id,
 				" variant=", variant, " proxy=", ranked.audit)
@@ -305,8 +355,23 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 				# Enclosure and size metrics (sightlines, overhead, alley ratio,
 				# room count) are guidance carried in the audit and the ranking,
 				# never a reason to discard a compiled town here.
+				var profile := _scale_profile_for_volume(volume)
+				var prefer_route_court := profile != null \
+					and not profile.requires_elevated_courtyard
+				var has_route_court := int(plan.audit.get(
+					"route_connected_rooftop_court_count", 0)) > 0
+				if prefer_route_court and not has_route_court:
+					if courtless_fallback_plan == null:
+						courtless_fallback_plan = plan
+						courtless_fallback_fabric = fabric
+						courtless_fallback_volume = volume
+						courtless_fallback_audit = (ranked.audit \
+							as Dictionary).duplicate(true)
+						courtless_fallback_variant = variant
+						courtless_fallback_rank = ranked_index
+					continue
 				var finalize_started_ms := Time.get_ticks_msec()
-				var finalized := _finalize_selected_candidate(volume,
+				var finalized := _finalize_ranked_candidate(volume,
 					variant, construction_program, ranked.audit as Dictionary,
 					plan, fabric)
 				if diagnostic_trace_skywalk_timing:
@@ -315,19 +380,41 @@ static func _solve_frontier(frontier: Array[WarrenVolumePlan],
 						Time.get_ticks_msec() - finalize_started_ms,
 						" accepted=", finalized != null)
 				if finalized != null:
-					last_failure = ""
-					finalized.audit["production_selected_source_id"] = \
-						String(volume.stable_id)
-					finalized.audit["production_selected_variant"] = \
-						variant
+					finalized.audit["route_court_variant_probe_count"] = \
+						partition_attempt_count
+					finalized.audit["route_court_variant_fallback_used"] = false
 					return finalized
 		if diagnostic_trace_room_gate:
 			print("SKYWALK_TIMING partition_rejected source=", volume.stable_id,
 				" variant=", variant, " failure=", last_failure.left(1200))
 		failures.append("%s/v%d: %s" % [String(volume.stable_id),
 			variant, last_failure])
+	if courtless_fallback_plan != null:
+		var fallback := _finalize_ranked_candidate(courtless_fallback_volume,
+			courtless_fallback_variant, construction_program,
+			courtless_fallback_audit, courtless_fallback_plan,
+			courtless_fallback_fabric)
+		if fallback != null:
+			fallback.audit["route_court_variant_probe_count"] = \
+				partition_attempt_count
+			fallback.audit["route_court_variant_fallback_used"] = true
+			return fallback
 	last_failure = "no volumetric partition sealed: %s" % " | ".join(failures)
 	return null
+
+
+static func _finalize_ranked_candidate(volume: WarrenVolumePlan, variant: int,
+		construction_program: SettlementFabricProgram,
+		precomposition_audit: Dictionary, plan: WarrenSpatialPlan,
+		fabric: SettlementFabricPlan) -> WarrenSpatialPlan:
+	var finalized := _finalize_selected_candidate(volume, variant,
+		construction_program, precomposition_audit, plan, fabric)
+	if finalized != null:
+		last_failure = ""
+		finalized.audit["production_selected_source_id"] = \
+			String(volume.stable_id)
+		finalized.audit["production_selected_variant"] = variant
+	return finalized
 
 
 static func _finalize_selected_candidate(volume: WarrenVolumePlan,
@@ -655,6 +742,8 @@ static func _precomposition_enclosure_audit(volume: WarrenVolumePlan,
 	var sightline := SettlementFabricSolver._audit_sightlines(route, occupied)
 	var ground_sightline := SettlementFabricSolver._audit_sightlines(
 		ground_route, occupied)
+	var court_supply := _precomposition_rooftop_court_supply(occupied, route,
+		volume)
 	return {
 		"proposal_count": proposal_count,
 		"projected_mass_cell_count": projected_mass_cell_count,
@@ -670,7 +759,71 @@ static func _precomposition_enclosure_audit(volume: WarrenVolumePlan,
 		"bounded_route_ratio": float(bounded_count) \
 			/ float(maxi(1, route.size())),
 		"route_band_span": route_bands.size(),
+		"broad_rooftop_court_cell_count": int(court_supply.get(
+			"broad_cell_count", 0)),
+		"broad_rooftop_court_short_span_cells": int(court_supply.get(
+			"short_span_cells", 0)),
+		"broad_rooftop_court_route_seam_count": int(court_supply.get(
+			"route_seam_count", 0)),
 	}
+
+
+static func _precomposition_rooftop_court_supply(occupied: Dictionary,
+		route: Dictionary, volume: WarrenVolumePlan) -> Dictionary:
+	## Cheap selection proxy for the later exact roof-court carve. Count only
+	## supported room crowns that are at least three cells broad on BOTH axes and
+	## meet the already carved route. A long two-cell strip is a gallery and earns
+	## no court credit, even when it has more cells than a small square.
+	var crowns: Dictionary = {}
+	for cell_value: Variant in occupied.keys():
+		var cell := cell_value as Vector3i
+		if occupied.has(cell + Vector3i.UP):
+			continue
+		var surface := cell + Vector3i.UP
+		var macro_column := Vector2i(floori(float(surface.x) / 2.0),
+			floori(float(surface.z) / 2.0))
+		if surface.y - volume.envelope.ground_at(macro_column) \
+				< MIN_ROOFTOP_COURT_LIFT_CELLS:
+			continue
+		crowns[surface] = true
+	var remaining := crowns.duplicate()
+	var best := {"broad_cell_count": 0, "short_span_cells": 0,
+		"route_seam_count": 0}
+	while not remaining.is_empty():
+		var start := remaining.keys()[0] as Vector3i
+		var frontier: Array[Vector3i] = [start]
+		var component: Array[Vector3i] = []
+		remaining.erase(start)
+		while not frontier.is_empty():
+			var current: Vector3i = frontier.pop_back()
+			component.append(current)
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var neighbor := current + direction
+				if remaining.erase(neighbor):
+					frontier.append(neighbor)
+		if component.size() < 12:
+			continue
+		var minimum := Vector2i(2147483647, 2147483647)
+		var maximum := Vector2i(-2147483648, -2147483648)
+		var seam_count := 0
+		for cell: Vector3i in component:
+			minimum = minimum.min(Vector2i(cell.x, cell.z))
+			maximum = maximum.max(Vector2i(cell.x, cell.z))
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				seam_count += int(route.has(cell + direction))
+		var spans := maximum - minimum + Vector2i.ONE
+		var short_span := mini(spans.x, spans.y)
+		if short_span < 3 or seam_count == 0:
+			continue
+		if component.size() > int(best.broad_cell_count) \
+				or (component.size() == int(best.broad_cell_count) \
+					and short_span > int(best.short_span_cells)):
+			best = {"broad_cell_count": component.size(),
+				"short_span_cells": short_span,
+				"route_seam_count": seam_count}
+	return best
 
 
 static func _precomposition_quality_score(volume: WarrenVolumePlan,
@@ -687,6 +840,10 @@ static func _precomposition_quality_score(volume: WarrenVolumePlan,
 		- float(audit.through_sightline_count) * 3.0 \
 		- float(audit.ground_through_sightline_count) * 7.0 \
 		- float(audit.get("detached_parcel_count", 0)) * 55.0 \
+		+ minf(24.0, float(audit.get(
+			"broad_rooftop_court_cell_count", 0))) * 4.0 \
+		+ (180.0 if int(audit.get("broad_rooftop_court_cell_count", 0)) \
+			>= 12 else 0.0) \
 		+ float(volume.audit.get("all_overhang_walk_ratio", 0.0)) * 80.0 \
 		+ float(volume.audit.get("route_crossover_count", 0)) * 60.0
 
@@ -747,6 +904,24 @@ static func from_volume(volume: WarrenVolumePlan,
 	if buildings.size() < MIN_BUILDINGS:
 		last_failure = "only %d volumetric buildings formed" % buildings.size()
 		return null
+	# A common roof court is a path decision, not a decorative roof prop. Carve
+	# its walk and full headroom now, while the final room crowns are known but
+	# before balconies, outcroppings, and roofs reserve the same volume. Large and
+	# grand profiles already carry their stricter authored third-storey court;
+	# compact and standard towns receive one route-connected roof court whenever
+	# their actual supported mass can form a broad, coplanar patch.
+	var rooftop_court := {"failed": false, "court_count": 0,
+		"floor_cells": [] as Array[Vector3i], "audit": {}}
+	if not scale_profile.requires_elevated_courtyard:
+		rooftop_court = _carve_route_connected_rooftop_court(grid, volume,
+			route_floors, buildings)
+		if bool(rooftop_court.get("failed", false)):
+			return null
+		for court_cell: Vector3i in rooftop_court.floor_cells \
+				as Array[Vector3i]:
+			if not route_floors.has(court_cell):
+				route_floors.append(court_cell)
+		route_floors.sort_custom(_cell_less)
 	var features := WarrenSpatialFeatureSolver.solve(grid, volume, buildings,
 		supports, partition.skywalk_reservations as Array[Dictionary],
 		partition.courtyard_bridge_reservation as Dictionary,
@@ -813,6 +988,12 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit["room_stamp_count"] = room_count
 	plan.audit["room_volume_budget_min"] = scale_profile.room_volume_budget.x
 	plan.audit["room_volume_budget_max"] = scale_profile.room_volume_budget.y
+	plan.audit["route_connected_rooftop_court_count"] = int(
+		rooftop_court.get("court_count", 0))
+	plan.audit["route_connected_rooftop_court_floor_cell_count"] = (
+		rooftop_court.floor_cells as Array).size()
+	plan.audit["route_connected_rooftop_court_audit"] = (
+		rooftop_court.audit as Dictionary).duplicate(true)
 	for key: StringName in [&"perimeter_parcel_count",
 			&"grounded_perimeter_parcel_count",
 			&"gateway_supported_perimeter_parcel_count",
@@ -1241,7 +1422,10 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				continue
 			var landmark_candidates: Array[Dictionary] = []
 			var landmark_stage_started := Time.get_ticks_msec()
-			if target_landmarks > 0:
+			# Every scale now integrates several complete authored buildings. Build
+			# the shared candidate corpus once, then let the bounded compatible-set
+			# search compare the selected scale's richest-to-minimum counts.
+			if scale_profile.landmark_range.y > 0:
 				var landmark_plan := _preplan_spatial_landmarks(grid, volume,
 					construction_program, court_owners, candidate,
 					[] as Array[Dictionary], macro_required_court_parcels)
@@ -1260,16 +1444,15 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				landmark_sets = landmark_sets_by_corpus[landmark_corpus_key] \
 					as Array[Dictionary]
 			else:
-				# Enumerate the richest requested hall count; a village whose
-				# landmark range starts at zero appends the hall-less set as
-				# the last-ranked fallback, so it takes a hall exactly when
-				# one genuinely fits among its parcels.
-				landmark_sets = _landmark_candidate_sets(landmark_candidates,
-					volume.world_seed, scale_profile.landmark_range.y)
-				if target_landmarks == 0 \
-						and scale_profile.landmark_range.y > 0:
+				# Enumerate every count in the selected size contract, richest
+				# first. Exact embeddedness/skywalk ranking normally keeps the
+				# richer complete-building set; the lower bound remains a genuine
+				# fallback when a second or third measured prefab cannot compose
+				# cleanly with this town's route and occupied mountain.
+				for landmark_count in range(scale_profile.landmark_range.y,
+						target_landmarks - 1, -1):
 					landmark_sets.append_array(_landmark_candidate_sets(
-						[] as Array[Dictionary], volume.world_seed, 0))
+						landmark_candidates, volume.world_seed, landmark_count))
 				landmark_sets_by_corpus[landmark_corpus_key] = landmark_sets
 			if diagnostic_trace_skywalk_timing:
 				print("SKYWALK_TIMING landmark_sets ms=",
@@ -2215,11 +2398,38 @@ static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
 	for parcel_id: StringName in additional_required_parcels:
 		required_parcels[parcel_id] = true
 	required_parcels.erase(&"")
+	# Compact warrens use the shipped 6--9 m complete-house family. A 15 m-wide
+	# prefab can satisfy a span-only gate while still dominating the whole village
+	# by footprint and height, so all three measured dimensions participate in the
+	# scale contract. Broader source silhouettes remain available as the selected
+	# fabric grows; meshes are never scaled.
+	var scale_profile_id := StringName(volume.mass_context.get(
+		&"scale_profile_id", WarrenVillageScaleProfile.LARGE))
+	var maximum_prefab_span := 21.0
+	var maximum_prefab_height := INF
+	var maximum_prefab_area := INF
+	match scale_profile_id:
+		WarrenVillageScaleProfile.COMPACT:
+			maximum_prefab_span = 10.0
+			maximum_prefab_height = 9.0
+			maximum_prefab_area = 75.0
+		WarrenVillageScaleProfile.STANDARD:
+			maximum_prefab_span = 24.0
+		WarrenVillageScaleProfile.LARGE:
+			maximum_prefab_span = 30.0
+		WarrenVillageScaleProfile.GRAND:
+			maximum_prefab_span = 36.0
+	var prefab_catalog_count := 0
 	var prefab_recipes: Array[FabricRecipe] = []
 	for recipe: FabricRecipe in program.recipes():
-		if recipe.has_tag(&"prefab_anchor") and not recipe.entrances.is_empty() \
-				and maxf(recipe.local_clearance_bounds.size.x,
-					recipe.local_clearance_bounds.size.z) <= 21.0:
+		if not recipe.has_tag(&"prefab_anchor"):
+			continue
+		prefab_catalog_count += 1
+		var bounds := recipe.local_clearance_bounds
+		if not recipe.entrances.is_empty() \
+			and maxf(bounds.size.x, bounds.size.z) <= maximum_prefab_span \
+			and bounds.size.y <= maximum_prefab_height \
+			and bounds.size.x * bounds.size.z <= maximum_prefab_area:
 			prefab_recipes.append(recipe)
 	var prefab_stamps: Dictionary = {}
 	for recipe: FabricRecipe in prefab_recipes:
@@ -2373,7 +2583,11 @@ static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
 			"transition_owner_ids": candidate.transition_owner_ids,
 			"footprint_area": candidate.footprint_area})
 	last_preplan_landmark_diagnostic = {"landing_count": landing_count,
+		"prefab_catalog_count": prefab_catalog_count,
 		"prefab_recipe_count": prefab_recipes.size(),
+		"maximum_prefab_span_m": maximum_prefab_span,
+		"maximum_prefab_height_m": maximum_prefab_height,
+		"maximum_prefab_area_m2": maximum_prefab_area,
 		"body_fit_count": body_fit_count,
 		"bearing_fit_count": bearing_fit_count,
 		"clearance_fit_count": clearance_fit_count,
@@ -2486,12 +2700,11 @@ static func _landmark_set_embeddedness(
 
 static func _landmark_candidate_sets(candidates: Array[Dictionary],
 		world_seed: int, target_count: int = 2) -> Array[Dictionary]:
-	## Compact towns keep their identity inside the connected inhabited mountain
-	## and do not spend half their apparent footprint on a detached prefab hall.
-	## Larger profiles add one, two, then three measured landmarks. Selection
-	## still precedes the skywalk beam so connectors route around the final
-	## authored mass instead of consuming its only viable anchor.
-	assert(target_count >= 0 and target_count <= 3)
+	## Every size may compose complete shipped buildings into its segmented mass,
+	## but only when their measured footprint, doorway, bearing, and city-contact
+	## facts fit. Selection still precedes the skywalk beam so connectors route
+	## around the final authored mass instead of consuming its only viable anchor.
+	assert(target_count >= 0 and target_count <= 8)
 	var out: Array[Dictionary] = []
 	if target_count == 0:
 		out.append({"reservations": [] as Array[Dictionary],
@@ -2521,6 +2734,9 @@ static func _landmark_candidate_sets(candidates: Array[Dictionary],
 			candidate_set.merge(_landmark_set_embeddedness(
 				candidate_set.reservations as Array[Dictionary]), true)
 			out.append(candidate_set)
+	if target_count > 3:
+		out = _landmark_candidate_set_beam(candidates, world_seed,
+			target_count)
 	if target_count == 3:
 		for first_index in candidates.size():
 			for second_index in range(first_index + 1, candidates.size()):
@@ -2615,38 +2831,28 @@ static func _landmark_candidate_sets(candidates: Array[Dictionary],
 					^ right_landing.x * 73 ^ right_landing.z * 89), 1000003)}
 			candidate_set.merge(_landmark_set_embeddedness(reservations), true)
 			out.append(candidate_set)
-	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a.minimum_city_contact_side_count) \
-				!= int(b.minimum_city_contact_side_count):
-			return int(a.minimum_city_contact_side_count) \
-				> int(b.minimum_city_contact_side_count)
-		if int(a.city_contact_side_count) != int(b.city_contact_side_count):
-			return int(a.city_contact_side_count) > int(b.city_contact_side_count)
-		if int(a.city_contact_score) != int(b.city_contact_score):
-			return int(a.city_contact_score) > int(b.city_contact_score)
-		if int(a.maximum_city_gap) != int(b.maximum_city_gap):
-			return int(a.maximum_city_gap) < int(b.maximum_city_gap)
-		if int(a.displaced_parcel_count) != int(b.displaced_parcel_count):
-			return int(a.displaced_parcel_count) < int(b.displaced_parcel_count)
-		if int(a.protected_cell_count) != int(b.protected_cell_count):
-			return int(a.protected_cell_count) < int(b.protected_cell_count)
-		if int(a.separation_squared) != int(b.separation_squared):
-			return int(a.separation_squared) > int(b.separation_squared)
-		if bool(a.distinct_source_families) != bool(b.distinct_source_families):
-			return bool(a.distinct_source_families)
-		if not is_equal_approx(float(a.footprint_area), float(b.footprint_area)):
-			return float(a.footprint_area) > float(b.footprint_area)
-		return int(a.tie) < int(b.tie))
+	out.sort_custom(_landmark_set_precedes)
 	var raw_compatible_count := out.size()
-	var unique: Array[Dictionary] = []
-	var seen_structures: Dictionary = {}
+	var structural_order: Array[String] = []
+	var representative_by_structure: Dictionary = {}
 	for candidate_set: Dictionary in out:
 		var structural_key := _landmark_structural_set_key(
 			candidate_set.reservations as Array[Dictionary])
-		if seen_structures.has(structural_key):
+		if not representative_by_structure.has(structural_key):
+			structural_order.append(structural_key)
+			representative_by_structure[structural_key] = candidate_set
 			continue
-		seen_structures[structural_key] = true
-		unique.append(candidate_set)
+		# Identical body/clearance/socket contracts share one topology proof, but
+		# they need not share one exterior forever. Select the reviewed complete
+		# mesh with the seed-derived tie after structural ranking, so House_01,
+		# House_02, and House_07 can vary between towns without multiplying the
+		# hero-feature search frontier.
+		var existing := representative_by_structure[structural_key] as Dictionary
+		if int(candidate_set.tie) < int(existing.tie):
+			representative_by_structure[structural_key] = candidate_set
+	var unique: Array[Dictionary] = []
+	for structural_key: String in structural_order:
+		unique.append(representative_by_structure[structural_key] as Dictionary)
 	out = unique
 	last_preplan_landmark_diagnostic["raw_compatible_pair_count"] = \
 		raw_compatible_count
@@ -2672,6 +2878,138 @@ static func _landmark_candidate_sets(candidates: Array[Dictionary],
 			"footprint_area": pair.footprint_area})
 	last_preplan_landmark_diagnostic["pair_preview"] = pair_preview
 	return out
+
+
+static func _landmark_candidate_set_beam(candidates: Array[Dictionary],
+		world_seed: int, target_count: int) -> Array[Dictionary]:
+	## Search compatible complete-building sets at bounded cost. Structurally
+	## identical mesh alternatives at one transform share the same topology state;
+	## the seed chooses their representative before the beam, exactly as the old
+	## pair/triple dedup did after exhaustive enumeration.
+	assert(target_count > 3 and target_count <= 8)
+	var representative_by_structure: Dictionary = {}
+	var structural_order := PackedStringArray()
+	for candidate: Dictionary in candidates:
+		var key := String(candidate.get("structural_signature",
+			_landmark_reservation_search_key(candidate)))
+		if not representative_by_structure.has(key):
+			structural_order.append(key)
+			representative_by_structure[key] = candidate
+		elif int(candidate.get("tie", 0)) < int((representative_by_structure[key]
+				as Dictionary).get("tie", 0)):
+			representative_by_structure[key] = candidate
+	var unique_candidates: Array[Dictionary] = []
+	for key: String in structural_order:
+		unique_candidates.append(representative_by_structure[key] as Dictionary)
+	var states: Array[Dictionary] = [{
+		"selection": [] as Array[Dictionary], "next_index": 0,
+	}]
+	for _depth in target_count:
+		var expanded: Array[Dictionary] = []
+		for state: Dictionary in states:
+			var selected := state.selection as Array[Dictionary]
+			for candidate_index in range(int(state.next_index),
+					unique_candidates.size()):
+				var candidate := unique_candidates[candidate_index]
+				var compatible := true
+				for existing: Dictionary in selected:
+					if not _landmark_candidates_compatible(existing, candidate):
+						compatible = false
+						break
+				if not compatible:
+					continue
+				var next_selection: Array[Dictionary] = []
+				next_selection.assign(selected)
+				next_selection.append(candidate)
+				expanded.append({"selection": next_selection,
+					"next_index": candidate_index + 1,
+					"set": _landmark_set_from_candidates(next_selection,
+						world_seed)})
+		if expanded.is_empty():
+			return [] as Array[Dictionary]
+		expanded.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			return _landmark_set_precedes(a.set as Dictionary,
+				b.set as Dictionary))
+		var seen_structures: Dictionary = {}
+		states = []
+		for state: Dictionary in expanded:
+			var structural_key := _landmark_structural_set_key(
+				(state.set as Dictionary).reservations as Array[Dictionary])
+			if seen_structures.has(structural_key):
+				continue
+			seen_structures[structural_key] = true
+			states.append(state)
+			if states.size() >= MAX_LANDMARK_SET_BEAM:
+				break
+	var out: Array[Dictionary] = []
+	for state: Dictionary in states:
+		out.append(state.set as Dictionary)
+	return out
+
+
+static func _landmark_set_from_candidates(selection: Array[Dictionary],
+		world_seed: int) -> Dictionary:
+	var reservations: Array[Dictionary] = []
+	var blocker_union: Dictionary = {}
+	var protected_union: Dictionary = {}
+	var source_families: Dictionary = {}
+	var landing_cells: Array[Vector3i] = []
+	var footprint_area := 0.0
+	var tie_value := world_seed
+	for candidate: Dictionary in selection:
+		var reservation := candidate.duplicate(true)
+		reservation["feature_id"] = StringName(
+			"spatial.feature.landmark.%02d" % reservations.size())
+		reservations.append(reservation)
+		blocker_union.merge(candidate.blocker_parcels as Dictionary, true)
+		protected_union.merge(candidate.protected_cells as Dictionary, true)
+		source_families[StringName(candidate.source_family)] = true
+		var landing := candidate.landing_cell as Vector3i
+		landing_cells.append(landing)
+		footprint_area += float(candidate.footprint_area)
+		tie_value ^= String(candidate.recipe_id).hash() \
+			^ landing.x * (31 + reservations.size() * 17) \
+			^ landing.z * (47 + reservations.size() * 19)
+	var separation := 0
+	for left_index in landing_cells.size():
+		for right_index in range(left_index + 1, landing_cells.size()):
+			var delta := Vector2i(landing_cells[left_index].x \
+				- landing_cells[right_index].x,
+				landing_cells[left_index].z - landing_cells[right_index].z)
+			separation += delta.length_squared()
+	var out := {"reservations": reservations,
+		"distinct_source_families": source_families.size() > 1,
+		"displaced_parcel_count": blocker_union.size(),
+		"protected_cell_count": protected_union.size(),
+		"separation_squared": separation,
+		"footprint_area": footprint_area,
+		"tie": posmod(Helper._mix64(tie_value), 1000003)}
+	out.merge(_landmark_set_embeddedness(reservations), true)
+	return out
+
+
+static func _landmark_set_precedes(a: Dictionary, b: Dictionary) -> bool:
+	if int(a.minimum_city_contact_side_count) \
+			!= int(b.minimum_city_contact_side_count):
+		return int(a.minimum_city_contact_side_count) \
+			> int(b.minimum_city_contact_side_count)
+	if int(a.city_contact_side_count) != int(b.city_contact_side_count):
+		return int(a.city_contact_side_count) > int(b.city_contact_side_count)
+	if int(a.city_contact_score) != int(b.city_contact_score):
+		return int(a.city_contact_score) > int(b.city_contact_score)
+	if int(a.maximum_city_gap) != int(b.maximum_city_gap):
+		return int(a.maximum_city_gap) < int(b.maximum_city_gap)
+	if int(a.displaced_parcel_count) != int(b.displaced_parcel_count):
+		return int(a.displaced_parcel_count) < int(b.displaced_parcel_count)
+	if int(a.protected_cell_count) != int(b.protected_cell_count):
+		return int(a.protected_cell_count) < int(b.protected_cell_count)
+	if int(a.separation_squared) != int(b.separation_squared):
+		return int(a.separation_squared) > int(b.separation_squared)
+	if bool(a.distinct_source_families) != bool(b.distinct_source_families):
+		return bool(a.distinct_source_families)
+	if not is_equal_approx(float(a.footprint_area), float(b.footprint_area)):
+		return float(a.footprint_area) > float(b.footprint_area)
+	return int(a.tie) < int(b.tie)
 
 
 static func _landmark_recipe_socket_signature(recipe: FabricRecipe,
@@ -6010,7 +6348,7 @@ static func _courtyard_cantilever_room_candidates(grid: WarrenSpatialGrid,
 	var court_y := 2147483647
 	for floor_value: Variant in floors.keys():
 		court_y = mini(court_y, (floor_value as Vector3i).y)
-	var corner_recipe := program.recipe(&"skywalk.corner.orange")
+	var corner_recipe := program.recipe(&"skywalk.corner.blue")
 	var bay_recipe := program.recipe(&"skywalk.cantilever.3.blue")
 	if corner_recipe == null or bay_recipe == null:
 		return out
@@ -6054,7 +6392,7 @@ static func _courtyard_cantilever_room_candidates(grid: WarrenSpatialGrid,
 					var bay_origin := WarrenAssetCompiler._attached_origin(bay_recipe,
 						&"room.west", bay_yaw, free_cell, along)
 					var components: Array[Dictionary] = [{
-						"recipe_id": &"skywalk.corner.orange",
+						"recipe_id": &"skywalk.corner.blue",
 						"origin": corner_origin, "yaw_quarters": corner_yaw}, {
 						"recipe_id": &"skywalk.cantilever.3.blue",
 						"origin": bay_origin, "yaw_quarters": bay_yaw}]
@@ -6447,7 +6785,10 @@ static func _raw_u_courtyard_bridges(left_endpoint: Dictionary,
 	var along := Vector3i(signi(delta.x), 0, signi(delta.z))
 	if along == Vector3i.ZERO or along == facing or along == -facing:
 		return out
-	var corner_recipe := program.recipe(&"skywalk.corner.orange")
+	# The socket geometry is identical across palette variants. Use the cool
+	# contract for layout, then campaign-match both knuckles to the selected
+	# middle span before the measured reservation is compiled.
+	var corner_recipe := program.recipe(&"skywalk.corner.blue")
 	if corner_recipe == null:
 		return out
 	var seen: Dictionary = {}
@@ -6502,11 +6843,13 @@ static func _raw_u_courtyard_bridges(left_endpoint: Dictionary,
 						"public_conflicts": public_conflicts})
 				continue
 			middle_fit_count += 1
+			var corner_recipe_id := _skywalk_corner_campaign_recipe(
+				StringName(middle.recipe_id), StringName(middle.recipe_id))
 			var components: Array[Dictionary] = [{
-				"recipe_id": &"skywalk.corner.orange", "origin": left_origin,
+				"recipe_id": corner_recipe_id, "origin": left_origin,
 				"yaw_quarters": left_yaw}]
 			components.append_array(middle.components as Array)
-			components.append({"recipe_id": &"skywalk.corner.orange",
+			components.append({"recipe_id": corner_recipe_id,
 				"origin": right_origin, "yaw_quarters": right_yaw})
 			var reservation := WarrenAssetCompiler._component_reservation(
 				components, program, public_air)
@@ -6760,7 +7103,7 @@ static func _raw_corner_skywalks_between_endpoints(left_endpoint: Dictionary,
 			or left_facing.x * right_facing.x \
 				+ left_facing.z * right_facing.z != 0:
 		return out
-	var corner_recipe := program.recipe(&"skywalk.corner.orange")
+	var corner_recipe := program.recipe(&"skywalk.corner.blue")
 	if corner_recipe == null:
 		return out
 	var seen: Dictionary = {}
@@ -6806,10 +7149,12 @@ static func _raw_corner_skywalks_between_endpoints(left_endpoint: Dictionary,
 			var right_origin := WarrenAssetCompiler._attached_origin(right_recipe,
 				&"room.west", right_yaw, right_corner_cell,
 				right_corner_facing)
+			var corner_recipe_id := _skywalk_corner_campaign_recipe(
+				left_recipe_id, right_recipe_id)
 			var components: Array[Dictionary] = [
 				{"recipe_id": left_recipe_id, "origin": left_origin,
 					"yaw_quarters": left_yaw},
-				{"recipe_id": &"skywalk.corner.orange", "origin": corner_origin,
+				{"recipe_id": corner_recipe_id, "origin": corner_origin,
 					"yaw_quarters": corner_yaw},
 				{"recipe_id": right_recipe_id, "origin": right_origin,
 					"yaw_quarters": right_yaw},
@@ -6821,7 +7166,7 @@ static func _raw_corner_skywalks_between_endpoints(left_endpoint: Dictionary,
 			reservation["visual_clearance_cells"] = \
 				_skywalk_visual_clearance_cells(components, program)
 			reservation["kind"] = &"corner"
-			reservation["recipe_id"] = &"skywalk.corner.orange"
+			reservation["recipe_id"] = corner_recipe_id
 			reservation["origin"] = corner_origin
 			reservation["yaw_quarters"] = corner_yaw
 			var left_record := left_endpoint.duplicate(true)
@@ -6835,6 +7180,18 @@ static func _raw_corner_skywalks_between_endpoints(left_endpoint: Dictionary,
 			seen[key] = true
 			out.append(reservation)
 	return out
+
+
+static func _skywalk_corner_campaign_recipe(left_recipe_id: StringName,
+		right_recipe_id: StringName) -> StringName:
+	## One occupied bridge-house is one roof campaign. A differently coloured
+	## knuckle made a single continuous pitched roof look patched together at the
+	## seam. Match both equal-family arms; mixed-length/mixed-family arms use slate
+	## as the quieter junction material rather than adding a third abrupt patch.
+	var left_orange := String(left_recipe_id).contains("orange")
+	var right_orange := String(right_recipe_id).contains("orange")
+	return &"skywalk.corner.orange" if left_orange and right_orange \
+		else &"skywalk.corner.blue"
 
 
 static func _skywalk_construction_key(reservation: Dictionary) -> String:
@@ -8093,6 +8450,10 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 			# parent, and the support graph keeps one terrain-reaching edge.
 			# Stamped after seal() because seal rebuilds the audit dictionary.
 			room.audit["bridge_support_room_ids"] = bridge_support_room_ids
+			room.audit["bridge_support_records"] = (
+				best.get("bridge_support_records", []) as Array).duplicate(true)
+			room.audit["bridge_is_bracketed_jetty"] = bool(best.get(
+				"bridge_is_bracketed_jetty", false))
 		if terrain_bearing:
 			terrain_support_ids.append(building_id)
 		else:
@@ -8228,7 +8589,6 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		if addressed else {}
 	var access_counts: Dictionary = {}
 	var access_cell_by_owner: Dictionary = {}
-	var established_access_counts: Dictionary = {}
 	for cell: Vector3i in cells:
 		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 				Vector3i.FORWARD, Vector3i.BACK]:
@@ -8238,9 +8598,6 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 				continue
 			access_counts[owner] = int(access_counts.get(owner, 0)) + 1
 			access_cell_by_owner[owner] = neighbor
-			if not String(owner).begins_with("spatial.residual."):
-				established_access_counts[owner] = int(
-					established_access_counts.get(owner, 0)) + 1
 	var access_parent_id := _largest_contact_owner(access_counts)
 	var terrain_contacts := 0
 	var support_counts: Dictionary = {}
@@ -8259,18 +8616,41 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		support_cell_by_owner[owner] = below
 	var required_bearing := maxi(1, ceili(float(footprint.size()) * 0.5))
 	var terrain_bearing := terrain_contacts >= required_bearing
-	# Residual rooms complete the inhabited mass; they never scatter around
-	# it. Every candidate — addressed or not, grounded or elevated — must
-	# lean on established (non-residual) construction with a real side
-	# interface of at least two contact cells, so no backfill house ever
-	# stands awkwardly alone at the rim.
-	var established_parent := _largest_contact_owner(established_access_counts)
-	if established_parent.is_empty() \
-			or int(established_access_counts[established_parent]) < 2:
+	var frontage_side_set: Dictionary = {}
+	for cell: Vector3i in cells:
+		for side_key: String in frontage_side_by_private_cell.get(cell,
+				PackedStringArray()) as PackedStringArray:
+			if uncovered_frontage_sides.has(side_key):
+				frontage_side_set[side_key] = true
+	var frontage_side_keys := PackedStringArray()
+	for side_key_value: Variant in frontage_side_set.keys():
+		frontage_side_keys.append(String(side_key_value))
+	frontage_side_keys.sort()
+	# Residual rooms complete the inhabited mass; they never scatter around it.
+	# Every candidate must lean on the already sealed connected fabric with a
+	# measured side interface. Earlier versions required direct contact with a
+	# pre-backfill room, which limited the entire pass to a one-room-deep fringe:
+	# a legal second infill room could not continue the same connected wing and
+	# most of the carved massif disappeared into lawn. A residual parent is safe
+	# here because it has already entered the support graph, shell, roof-clearance,
+	# and private-access transactions before the next candidate is considered.
+	var connected_parent := _largest_contact_owner(access_counts)
+	# A terrain-rooted, addressed infill room already has two independent
+	# cohesion facts: its exact street threshold and a full terrain bearing. Let
+	# one measured side cell stitch that room to the established fabric. Requiring
+	# two contacts here discarded otherwise roofable frontage at turns and left
+	# the carved route opening into broad lawns. Elevated or unaddressed residuals
+	# still require the original two-cell structural interface.
+	var measured_contact_count := int(access_counts.get(connected_parent, 0))
+	var closes_street_notch := terrain_bearing and addressed \
+		and frontage_side_keys.size() >= 2
+	var minimum_established_contact := 1 if terrain_bearing and addressed else 2
+	if not closes_street_notch and (connected_parent.is_empty() \
+			or measured_contact_count < minimum_established_contact):
 		return {}
 	if not addressed:
 		if terrain_bearing:
-			access_parent_id = established_parent
+			access_parent_id = connected_parent
 		elif access_parent_id.is_empty() \
 				or int(access_counts[access_parent_id]) < 2:
 			return {}
@@ -8333,16 +8713,6 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 	var overhead_route_floors: Array[Vector3i] = []
 	overhead_route_floors.assign(overhead_route_floor_set.keys())
 	overhead_route_floors.sort_custom(_cell_less)
-	var frontage_side_set: Dictionary = {}
-	for cell: Vector3i in cells:
-		for side_key: String in frontage_side_by_private_cell.get(cell,
-				PackedStringArray()) as PackedStringArray:
-			if uncovered_frontage_sides.has(side_key):
-				frontage_side_set[side_key] = true
-	var frontage_side_keys := PackedStringArray()
-	for side_key_value: Variant in frontage_side_set.keys():
-		frontage_side_keys.append(String(side_key_value))
-	frontage_side_keys.sort()
 	var tie := posmod(Helper._mix64(world_seed ^ origin.x * 73856093 \
 		^ origin.y * 83492791 ^ origin.z * 19349663 ^ kind.hash() ^ yaw * 97),
 		1000003)
@@ -8379,6 +8749,9 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		"support_parent_cell": support_parent_cell,
 		"bridge_support_room_ids": bridge_span.get("room_ids",
 			[] as Array[StringName]),
+		"bridge_support_records": bridge_span.get("support_records", []),
+		"bridge_is_bracketed_jetty": bool(bridge_span.get(
+			"is_bracketed_jetty", false)),
 		"massif_edge_contact_count": massif_edge_contact_count,
 		"overhead_route_floors": overhead_route_floors,
 		"frontage_side_keys": frontage_side_keys,
@@ -8469,7 +8842,87 @@ static func _residual_bridge_span(cells: Array[Vector3i],
 				"parent_building_id": StringName(negative.building_id),
 				"parent_contact_cell": negative.contact_cell,
 			}
+	# One exact flank may carry a room no more than one 3 m bay beyond the
+	# bearing wall when a measured bracket course is committed with it. This is
+	# the ordinary medieval jetty form: inhabited mass closes the route overhead,
+	# the strict socket carries it into an established room, and the braces make
+	# the formerly free span visually and physically legible. Longer one-sided
+	# projections remain rejected.
+	if bound_directions.size() == 1:
+		var bound_direction := bound_directions[0] as Vector3i
+		var binding := bindings_by_direction[bound_direction] as Dictionary
+		var support_records := _residual_jetty_support_records(cells,
+			bound_direction)
+		if not support_records.is_empty():
+			_residual_bridge_counts["bracketed_one_side_bound"] = int(
+				_residual_bridge_counts.get("bracketed_one_side_bound", 0)) + 1
+			return {
+				"room_ids": [StringName(binding.room_id)] as Array[StringName],
+				"parent_building_id": StringName(binding.building_id),
+				"parent_contact_cell": binding.contact_cell,
+				"support_records": support_records,
+				"is_bracketed_jetty": true,
+			}
 	return {}
+
+
+static func _residual_jetty_support_records(cells: Array[Vector3i],
+		bound_direction: Vector3i) -> Array[Dictionary]:
+	## Tile the exact bearing edge with native 1.5/3 m brace courses. Local BACK
+	## points from the established flank into the projecting room; local RIGHT is
+	## therefore the course axis used by the authored support recipes.
+	var out: Array[Dictionary] = []
+	if cells.is_empty() or bound_direction not in [Vector3i.LEFT,
+			Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+		return out
+	var base_y := cells[0].y
+	var minimum := cells[0]
+	var maximum := cells[0]
+	var columns: Dictionary = {}
+	for cell: Vector3i in cells:
+		base_y = mini(base_y, cell.y)
+		minimum = minimum.min(cell)
+		maximum = maximum.max(cell)
+		columns[Vector2i(cell.x, cell.z)] = true
+	var projection_depth := maximum.x - minimum.x + 1 \
+		if bound_direction.x != 0 else maximum.z - minimum.z + 1
+	if projection_depth > 2:
+		return out
+	var projection_direction := -bound_direction
+	var yaw := _yaw_for_direction(Vector3i.BACK, projection_direction)
+	if yaw < 0:
+		return out
+	var span_3d := FabricRecipe.transform_direction(Vector3i.RIGHT, yaw)
+	var span := Vector2i(span_3d.x, span_3d.z)
+	var attachment: Array[Vector2i] = []
+	for column_value: Variant in columns.keys():
+		var column := column_value as Vector2i
+		var on_edge := column.x == minimum.x if bound_direction == Vector3i.LEFT \
+			else column.x == maximum.x if bound_direction == Vector3i.RIGHT \
+			else column.y == minimum.z if bound_direction == Vector3i.FORWARD \
+			else column.y == maximum.z
+		if on_edge:
+			attachment.append(column)
+	attachment.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x * span.x + a.y * span.y < b.x * span.x + b.y * span.y)
+	# The first implementation deliberately masters the native two-brace bay.
+	# Longer one-sided galleries need a separate multi-course frame review.
+	if attachment.size() > 2:
+		return [] as Array[Dictionary]
+	for index in range(1, attachment.size()):
+		if attachment[index] != attachment[index - 1] + span:
+			return [] as Array[Dictionary]
+	for index in range(0, attachment.size(), 2):
+		var course_size := mini(2, attachment.size() - index)
+		var column := attachment[index]
+		out.append({
+			"recipe_id": StringName("outcrop.support.bracketed.%d" \
+				% course_size),
+			"origin": Vector3i(column.x, base_y, column.y),
+			"yaw_quarters": yaw,
+			"role": StringName("residual_jetty_support.%02d" % (index / 2)),
+		})
+	return out
 
 
 static func _bridge_flank_binding(cell_set: Dictionary,
@@ -8876,6 +9329,360 @@ static func _dictionary_component_sizes(cells: Dictionary) \
 	if sizes.size() > 16:
 		sizes.resize(16)
 	return sizes
+
+
+static func _carve_route_connected_rooftop_court(grid: WarrenSpatialGrid,
+		source: WarrenVolumePlan, route_floors: Array[Vector3i],
+		buildings: Array[WarrenBuildingVolume]) -> Dictionary:
+	## Turn one broad, supported room crown into canonical exterior circulation.
+	## The selected cells are not a platform floating over the town: every floor
+	## face is the top of inhabited volume, and a two-cell seam joins the existing
+	## bored route.  The later shell pass sees PUBLIC_FLOOR on that interface and
+	## therefore emits neither a pitched roof nor a second overlapping floor.
+	if grid == null or grid.is_sealed() or source == null \
+			or not source.is_sealed() or route_floors.is_empty() \
+			or buildings.is_empty():
+		last_failure = "roof-court planning lacks mutable town topology"
+		return {"failed": true}
+	var building_by_cell: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for cell: Vector3i in building.private_cells:
+			building_by_cell[cell] = building.stable_id
+	var available: Dictionary = {}
+	for cell_value: Variant in building_by_cell.keys():
+		var top_cell := cell_value as Vector3i
+		if building_by_cell.has(top_cell + Vector3i.UP):
+			continue
+		var surface := top_cell + Vector3i.UP
+		var headroom := surface + Vector3i.UP
+		if not grid.contains(surface) or not grid.contains(headroom) \
+				or grid.use_at(surface) not in [WarrenSpatialGrid.Use.OUTSIDE,
+					WarrenSpatialGrid.Use.ALLOCATABLE] \
+				or grid.use_at(headroom) not in [WarrenSpatialGrid.Use.OUTSIDE,
+					WarrenSpatialGrid.Use.ALLOCATABLE] \
+				or grid.reservation_bits_at(surface) != 0 \
+				or grid.reservation_bits_at(headroom) != 0 \
+				or not grid.face_claim(surface, Vector3i.DOWN).is_empty():
+			continue
+		var macro_column := Vector2i(floori(float(surface.x) / 2.0),
+			floori(float(surface.z) / 2.0))
+		if surface.y - source.envelope.ground_at(macro_column) \
+				< MIN_ROOFTOP_COURT_LIFT_CELLS:
+			continue
+		available[surface] = building_by_cell[top_cell]
+	if available.is_empty():
+		return {"failed": false, "court_count": 0,
+			"floor_cells": [] as Array[Vector3i],
+			"audit": {"candidate_count": 0, "rejection": &"no_room_crowns"}}
+	var route_set: Dictionary = {}
+	for floor: Vector3i in route_floors:
+		# A new court must join the actual bore (or its authored transition), not
+		# depend on another supplemental surface that the realm adapter has not
+		# connected yet.
+		if grid.owner_name_at(floor) == &"public.route":
+			route_set[floor] = true
+	var candidates: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	for surface_value: Variant in available.keys():
+		var anchor := surface_value as Vector3i
+		for shape: Vector2i in ROOFTOP_COURT_SHAPES:
+			# A real court may absorb the same-level path that enters it. Search
+			# every placement of this supported anchor inside the rectangle rather
+			# than insisting that all cells be removable roofs. This lets the route
+			# cross the broad roof plaza instead of hanging a one-cell doorway off a
+			# two-cell-wide private crown.
+			for anchor_z in shape.y:
+				for anchor_x in shape.x:
+					var corner := anchor - Vector3i(anchor_x, 0, anchor_z)
+					var candidate_key := "%d:%d:%d/%d:%d" % [corner.x,
+						corner.y, corner.z, shape.x, shape.y]
+					if seen.has(candidate_key):
+						continue
+					seen[candidate_key] = true
+					var cells: Array[Vector3i] = []
+					var new_cells: Array[Vector3i] = []
+					var owner_ids: Dictionary = {}
+					var route_inside_count := 0
+					var complete := true
+					for z_offset in shape.y:
+						for x_offset in shape.x:
+							var surface := corner + Vector3i(x_offset, 0,
+								z_offset)
+							if available.has(surface):
+								new_cells.append(surface)
+								owner_ids[StringName(available[surface])] = true
+							elif route_set.has(surface):
+								route_inside_count += 1
+							else:
+								complete = false
+								break
+							cells.append(surface)
+						if not complete:
+							break
+					if not complete or new_cells.size() < 8 \
+							or new_cells.size() * 5 < cells.size() * 3 \
+							or route_inside_count == 0:
+						continue
+					var best_seam_direction := Vector3i.ZERO
+					var best_seam_count := route_inside_count
+					for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+							Vector3i.FORWARD, Vector3i.BACK]:
+						var seam_count := 0
+						for cell: Vector3i in cells:
+							var on_edge := cell.x == corner.x \
+								if direction == Vector3i.LEFT \
+								else cell.x == corner.x + shape.x - 1 \
+									if direction == Vector3i.RIGHT \
+								else cell.z == corner.z \
+									if direction == Vector3i.FORWARD \
+								else cell.z == corner.z + shape.y - 1
+							if on_edge and route_set.has(cell + direction):
+								seam_count += 1
+						if seam_count > best_seam_count:
+							best_seam_count = seam_count
+							best_seam_direction = direction
+					if best_seam_count < 2:
+						continue
+					var enclosing_facade_cells := 0
+					for cell: Vector3i in cells:
+						for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+								Vector3i.FORWARD, Vector3i.BACK]:
+							var neighbor := cell + direction
+							if available.has(neighbor) or route_set.has(neighbor):
+								continue
+							enclosing_facade_cells += int(grid.use_at(neighbor) \
+								== WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+								or grid.use_at(neighbor + Vector3i.UP) \
+									== WarrenSpatialGrid.Use.PRIVATE_VOLUME)
+					var score := cells.size() * 10000 \
+						+ best_seam_count * 800 \
+						+ enclosing_facade_cells * 300 \
+						+ owner_ids.size() * 120 + corner.y * 10
+					var tie := posmod(Helper._mix64(source.world_seed \
+						^ corner.x * 73856093 ^ corner.y * 83492791 \
+						^ corner.z * 19349663 ^ shape.x * 131 \
+						^ shape.y * 197), 1000003)
+					candidates.append({"corner": corner, "shape": shape,
+						"cells": new_cells, "combined_cells": cells,
+						"owner_ids": owner_ids, "is_irregular": false,
+						"seam_direction": best_seam_direction,
+						"seam_count": best_seam_count,
+						"route_inside_count": route_inside_count,
+						"enclosing_facade_cell_count": enclosing_facade_cells,
+						"score": score, "tie": tie})
+	# Dense massing frequently forms an L/T roof union rather than one perfect
+	# rectangle. Accept the complete connected crown when it still meets two
+	# adjacent route lanes. This produces the requested non-boxy court outline
+	# while preserving a literal player-width graph seam.
+	if candidates.is_empty():
+		candidates = _irregular_rooftop_court_candidates(available, route_set,
+			grid, source.world_seed)
+	if candidates.is_empty():
+		return {"failed": false, "court_count": 0,
+			"floor_cells": [] as Array[Vector3i],
+			"audit": _rooftop_court_supply_audit(available, route_set)}
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.score) != int(b.score):
+			return int(a.score) > int(b.score)
+		return int(a.tie) < int(b.tie))
+	var selected := candidates[0] as Dictionary
+	var floors := selected.cells as Array[Vector3i]
+	var air_set: Dictionary = {}
+	for floor: Vector3i in floors:
+		air_set[floor] = true
+		air_set[floor + Vector3i.UP] = true
+	var air_cells: Array[Vector3i] = []
+	air_cells.assign(air_set.keys())
+	air_cells.sort_custom(_cell_less)
+	var feature_id := &"public.rooftop_court.00"
+	var carve := grid.begin_transaction(feature_id)
+	if not carve.require_use(air_cells, [WarrenSpatialGrid.Use.OUTSIDE,
+			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+			or not carve.reserve(air_cells,
+				WarrenSpatialGrid.Reservation.PUBLIC_CLEARANCE, feature_id) \
+			or not carve.assign_use(air_cells,
+				WarrenSpatialGrid.Use.PUBLIC_AIR, feature_id):
+		last_failure = "could not stage route-connected roof court"
+		return {"failed": true}
+	for floor: Vector3i in floors:
+		if not carve.claim_face(floor, Vector3i.DOWN,
+				WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, feature_id):
+			last_failure = "could not stage roof-court floor at %s" % floor
+			return {"failed": true}
+	if not carve.commit():
+		last_failure = "roof-court carve rejected: %s" % carve.last_rejection
+		return {"failed": true}
+	return {"failed": false, "court_count": 1, "floor_cells": floors,
+		"audit": {"candidate_count": candidates.size(),
+			"floor_cell_count": floors.size(),
+			"combined_floor_cell_count": (selected.get("combined_cells",
+				floors) as Array).size(),
+			"shape": selected.shape, "floor_band": (floors[0] as Vector3i).y,
+			"is_irregular": bool(selected.get("is_irregular", false)),
+			"route_inside_cell_count": int(selected.get(
+				"route_inside_count", 0)),
+			"supporting_building_count": (selected.owner_ids as Dictionary).size(),
+			"route_seam_cell_count": int(selected.seam_count),
+			"route_seam_direction": selected.seam_direction,
+			"enclosing_facade_cell_count": int(
+				selected.enclosing_facade_cell_count)}}
+
+
+static func _irregular_rooftop_court_candidates(available: Dictionary,
+		route_set: Dictionary, grid: WarrenSpatialGrid,
+		world_seed: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var remaining := available.duplicate()
+	while not remaining.is_empty():
+		var start := remaining.keys()[0] as Vector3i
+		var frontier: Array[Vector3i] = [start]
+		var cells: Array[Vector3i] = []
+		remaining.erase(start)
+		while not frontier.is_empty():
+			var current: Vector3i = frontier.pop_back()
+			cells.append(current)
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var neighbor := current + direction
+				if remaining.erase(neighbor):
+					frontier.append(neighbor)
+		if cells.size() < 12 or cells.size() > 24:
+			continue
+		cells.sort_custom(_cell_less)
+		var minimum := Vector2i(2147483647, 2147483647)
+		var maximum := Vector2i(-2147483648, -2147483648)
+		for cell: Vector3i in cells:
+			minimum = minimum.min(Vector2i(cell.x, cell.z))
+			maximum = maximum.max(Vector2i(cell.x, cell.z))
+		var spans := maximum - minimum + Vector2i.ONE
+		if mini(spans.x, spans.y) < 3:
+			# Long roof strips are useful galleries, but do not meet the civic-court
+			# contract and must keep their ordinary roof treatment.
+			continue
+		var seams: Array[Dictionary] = []
+		for cell: Vector3i in cells:
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var route_cell := cell + direction
+				if route_set.has(route_cell):
+					seams.append({"court_cell": cell, "route_cell": route_cell,
+						"direction": direction})
+		var selected_seam: Array[Dictionary] = []
+		for first_index in seams.size():
+			for second_index in range(first_index + 1, seams.size()):
+				var first := seams[first_index] as Dictionary
+				var second := seams[second_index] as Dictionary
+				var court_delta := (first.court_cell as Vector3i) \
+					- (second.court_cell as Vector3i)
+				var route_delta := (first.route_cell as Vector3i) \
+					- (second.route_cell as Vector3i)
+				if absi(court_delta.x) + absi(court_delta.z) == 1 \
+						and court_delta.y == 0 \
+						and absi(route_delta.x) + absi(route_delta.z) == 1 \
+						and route_delta.y == 0:
+					selected_seam.assign([first, second])
+					break
+			if not selected_seam.is_empty():
+				break
+		# A broad crown may meet one cell of an existing route node. The common
+		# realm adapter folds this connected patch into that same node, so this is
+		# not a one-lane graph edge and does not weaken the two-lane episode seam
+		# invariant. It is simply a 1.5 m opening from a path into a wider court.
+		if selected_seam.is_empty() and not seams.is_empty():
+			selected_seam.append(seams[0])
+		if selected_seam.is_empty():
+			continue
+		var owner_ids: Dictionary = {}
+		var enclosing_facade_cells := 0
+		for cell: Vector3i in cells:
+			owner_ids[StringName(available[cell])] = true
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var neighbor := cell + direction
+				if available.has(neighbor) or route_set.has(neighbor):
+					continue
+				enclosing_facade_cells += int(
+					grid.use_at(neighbor) == WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+					or grid.use_at(neighbor + Vector3i.UP) \
+						== WarrenSpatialGrid.Use.PRIVATE_VOLUME)
+		var seam_direction := (selected_seam[0] as Dictionary).direction \
+			as Vector3i
+		var tie := posmod(Helper._mix64(world_seed ^ start.x * 73856093 \
+			^ start.y * 83492791 ^ start.z * 19349663), 1000003)
+		out.append({"corner": start, "shape": Vector2i.ZERO,
+			"cells": cells, "owner_ids": owner_ids, "is_irregular": true,
+			"seam_direction": seam_direction, "seam_count": seams.size(),
+			"enclosing_facade_cell_count": enclosing_facade_cells,
+			"score": cells.size() * 9500 + enclosing_facade_cells * 300 \
+				+ seams.size() * 800 + owner_ids.size() * 120 + start.y * 10,
+			"tie": tie})
+	return out
+
+
+static func _rooftop_court_supply_audit(available: Dictionary,
+		route_set: Dictionary) -> Dictionary:
+	var remaining := available.duplicate()
+	var component_sizes := PackedInt32Array()
+	var component_details: Array[Dictionary] = []
+	var route_adjacent_count := 0
+	var route_adjacent_by_band: Dictionary = {}
+	for cell_value: Variant in available.keys():
+		var cell := cell_value as Vector3i
+		var adjacent := false
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			adjacent = adjacent or route_set.has(cell + direction)
+		route_adjacent_count += int(adjacent)
+		if adjacent:
+			route_adjacent_by_band[cell.y] = int(
+				route_adjacent_by_band.get(cell.y, 0)) + 1
+	while not remaining.is_empty():
+		var start := remaining.keys()[0] as Vector3i
+		var frontier: Array[Vector3i] = [start]
+		remaining.erase(start)
+		var size := 0
+		var minimum := start
+		var maximum := start
+		var nearest_route_distance := 2147483647
+		var nearest_route_cell := Vector3i(2147483647, 2147483647, 2147483647)
+		while not frontier.is_empty():
+			var current: Vector3i = frontier.pop_back()
+			size += 1
+			minimum = minimum.min(current)
+			maximum = maximum.max(current)
+			for route_value: Variant in route_set.keys():
+				var route_cell := route_value as Vector3i
+				var distance := absi(route_cell.x - current.x) \
+					+ absi(route_cell.y - current.y) \
+					+ absi(route_cell.z - current.z)
+				if distance < nearest_route_distance:
+					nearest_route_distance = distance
+					nearest_route_cell = route_cell
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var neighbor := current + direction
+				if remaining.erase(neighbor):
+					frontier.append(neighbor)
+		component_sizes.append(size)
+		component_details.append({"size": size, "minimum": minimum,
+			"maximum": maximum, "nearest_route_distance": nearest_route_distance,
+			"nearest_route_cell": nearest_route_cell})
+	component_sizes.sort()
+	component_sizes.reverse()
+	component_details.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.size) > int(b.size) if int(a.size) != int(b.size) \
+			else int(a.nearest_route_distance) < int(b.nearest_route_distance))
+	if component_sizes.size() > 12:
+		component_sizes.resize(12)
+	if component_details.size() > 12:
+		component_details.resize(12)
+	return {"candidate_count": 0,
+		"rejection": &"no_broad_route_connected_crown",
+		"available_room_crown_cell_count": available.size(),
+		"route_adjacent_room_crown_cell_count": route_adjacent_count,
+		"route_adjacent_room_crown_by_band": route_adjacent_by_band,
+		"room_crown_component_sizes": component_sizes,
+		"room_crown_component_details": component_details}
 
 
 static func _derive_shell(grid: WarrenSpatialGrid,

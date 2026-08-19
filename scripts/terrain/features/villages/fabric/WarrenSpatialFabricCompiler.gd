@@ -82,8 +82,16 @@ static func solve(source: WarrenSpatialPlan,
 			last_failure = "roof %s rejected by common fabric: %s" % [
 				unit.stable_id, result.last_rejection]
 			return null
+	var foundation_result := _retained_foundation_cells(source)
+	if not bool(foundation_result.get("valid", false)) \
+			or not result.set_retained_terrace(
+				foundation_result.get("cells", {}) as Dictionary):
+		last_failure = "spatial terrain foundations failed: %s" % String(
+			foundation_result.get("rejection", "overlaps built mass"))
+		return null
 	var surfaces := PublicRealmSurfaceSolver.solve(
-		StringName("%s.surfaces" % result.stable_id), realm, result)
+		StringName("%s.surfaces" % result.stable_id), realm, result,
+		source.source_volume)
 	if surfaces == null or not result.set_surface_plan(surfaces):
 		last_failure = "spatial public-surface closure failed"
 		return null
@@ -104,6 +112,12 @@ static func solve(source: WarrenSpatialPlan,
 	lineage.merge(room_audit, true)
 	lineage.merge(feature_audit, true)
 	lineage.merge(roof_audit, true)
+	lineage["retained_foundation_cell_count"] = int(
+		foundation_result.get("cell_count", 0))
+	lineage["retained_foundation_column_count"] = int(
+		foundation_result.get("column_count", 0))
+	lineage["retained_foundation_max_depth_bands"] = int(
+		foundation_result.get("max_depth_bands", 0))
 	lineage.merge(volumes.audit(), true)
 	lineage.merge(solid_void.audit(), true)
 	lineage["spatial_signature"] = source.deterministic_signature().sha256_text()
@@ -124,6 +138,55 @@ static func solve(source: WarrenSpatialPlan,
 		return null
 	last_audit = audit
 	return result
+
+
+static func _retained_foundation_cells(source: WarrenSpatialPlan) -> Dictionary:
+	## Spatial rooms are flat constructions on a terrain-relative source plan.
+	## Where a footprint crosses lower natural ground, retain the exact source
+	## mass between that ground and the room datum.  Public tunnels were already
+	## removed from source mass, so they can never be filled by this operation.
+	var cells: Dictionary = {}
+	var columns: Dictionary = {}
+	var max_depth := 0
+	if source == null or source.source_volume == null \
+			or source.source_volume.envelope == null:
+		return {"valid": false, "rejection": "missing source terrain envelope"}
+	var volume := source.source_volume
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not room.terrain_bearing:
+				continue
+			var footprint: Dictionary = {}
+			for cell: Vector3i in room.private_cells:
+				if cell.y == room.lattice_origin.y:
+					footprint[Vector2i(cell.x, cell.z)] = true
+			for fine_column_value: Variant in footprint.keys():
+				var fine_column := fine_column_value as Vector2i
+				var macro_column := Vector2i(
+					floori(float(fine_column.x) / 2.0),
+					floori(float(fine_column.y) / 2.0))
+				if not volume.envelope.contains_column(macro_column):
+					return {"valid": false, "rejection":
+						"terrain-bearing room %s leaves source ground at %s" % [
+							room.stable_id, fine_column]}
+				var bearing := volume.envelope.bearing_at(macro_column)
+				var support := room.lattice_origin.y
+				if bearing > support:
+					return {"valid": false, "rejection":
+						"terrain-bearing room %s begins below ground %d > %d" % [
+							room.stable_id, bearing, support]}
+				var depth := 0
+				for band in range(bearing, support):
+					if not volume.has_mass(Vector3i(macro_column.x, band,
+							macro_column.y)):
+						continue
+					cells[Vector3i(fine_column.x, band, fine_column.y)] = true
+					depth += 1
+				if depth > 0:
+					columns[fine_column] = true
+					max_depth = maxi(max_depth, depth)
+	return {"valid": true, "cells": cells, "cell_count": cells.size(),
+		"column_count": columns.size(), "max_depth_bands": max_depth}
 
 
 static func compile_room_units(source: WarrenSpatialPlan,
@@ -191,6 +254,9 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var physical_support_redirect_count := 0
 	var suppressed_party_wall_module_count := 0
 	var facade_family_counts: Dictionary = {}
+	var facade_style_counts: Dictionary = {}
+	var building_variant_counts: Dictionary = {}
+	var lineage_style_by_id: Dictionary = {}
 	var room_probe := SettlementFabricPlan.new(&"spatial.room-phase-selection")
 	for recipe_value: FabricRecipe in program.recipes():
 		if not room_probe.register_recipe(recipe_value):
@@ -348,6 +414,16 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		var facade_family := _room_recipe_facade_family(unit.recipe_id)
 		facade_family_counts[facade_family] = int(
 			facade_family_counts.get(facade_family, 0)) + 1
+		var facade_phase := _room_recipe_facade_phase(unit.recipe_id)
+		var style_key := StringName("%s.%d" % [String(room.kind),
+			facade_phase / 2])
+		facade_style_counts[style_key] = int(
+			facade_style_counts.get(style_key, 0)) + 1
+		var variant_key := StringName("%s.%s.%d" % [String(room.kind),
+			String(facade_family), facade_phase / 2])
+		building_variant_counts[variant_key] = int(
+			building_variant_counts.get(variant_key, 0)) + 1
+		lineage_style_by_id[room.source_parcel_id] = facade_phase / 2
 		units.append(unit)
 		unit_by_room[room.stable_id] = unit
 		for cell: Vector3i in room.private_cells:
@@ -369,6 +445,11 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		"feature_portal_room_count": feature_portal_masks.size(),
 		"feature_portal_opening_count": feature_portal_opening_count,
 		"facade_family_counts": facade_family_counts,
+		"facade_style_counts": facade_style_counts,
+		"facade_style_count": facade_style_counts.size(),
+		"building_variant_counts": building_variant_counts,
+		"building_variant_count": building_variant_counts.size(),
+		"styled_building_lineage_count": lineage_style_by_id.size(),
 	}
 	return units
 
@@ -524,7 +605,7 @@ static func _feature_portal_masks(source: WarrenSpatialPlan,
 	for feature: WarrenFeatureReservation in source.features:
 		if feature.construction_records.is_empty():
 			continue
-		if feature.kind in [&"tower_annex", &"facade_bay"]:
+		if feature.kind == &"tower_annex":
 			var room_id := StringName(feature.audit.get("annex_room_id", &""))
 			if room_id.is_empty() or feature.endpoints.size() != 1:
 				last_failure = "%s %s lacks one portal endpoint" % [
@@ -536,6 +617,14 @@ static func _feature_portal_masks(source: WarrenSpatialPlan,
 					(feature.endpoints[0] as Dictionary).cell as Vector3i,
 					_feature_endpoint_facing(feature, 0, facing)):
 				return {}
+		elif feature.kind == &"facade_bay":
+			# A bay window is a shallow projection from a complete facade, not a
+			# private doorway. Opening the parent's whole 1.5 x 3 m portal behind a
+			# half-width/partial-height bay exposed an arch-sized black cavity around
+			# it and made the construction read as an unfinished frame. The occupied
+			# parent room remains visually closed; the bay's declared semantic seam
+			# is sufficient for its measured overlap and bearing contract.
+			continue
 		elif feature.kind == &"balcony":
 			var room_id := StringName(feature.audit.get("balcony_room_id", &""))
 			if room_id.is_empty() or feature.endpoints.size() != 1:
@@ -702,8 +791,17 @@ static func _is_cardinal_xz(direction: Vector3i) -> bool:
 
 
 static func _is_phase_b_recipe(recipe_id: StringName) -> bool:
-	var id := String(recipe_id)
-	return id.ends_with(".b") or id.contains(".b.")
+	return _room_recipe_facade_phase(recipe_id) % 2 == 1
+
+
+static func _room_recipe_facade_phase(recipe_id: StringName) -> int:
+	var id := String(recipe_id).get_slice(".portal.", 0).trim_suffix(".door_b")
+	var suffix := id.get_slice(".", id.get_slice_count(".") - 1)
+	if suffix.length() != 1:
+		return 0
+	var phase := suffix.unicode_at(0) - "a".unicode_at(0)
+	return phase if phase >= 0 \
+		and phase < SettlementFabricProgram.FACADE_PHASE_COUNT else 0
 
 
 static func compile_feature_units(source: WarrenSpatialPlan,
@@ -767,6 +865,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var balcony_count := 0
 	var room_outcropping_support_count := 0
 	var frontier_gateway_support_count := 0
+	var arcade_overhang_support_count := 0
 	var tower_annex_count := 0
 	var facade_bay_count := 0
 	var landmark_count := 0
@@ -804,6 +903,11 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 				feature_units = _compile_frontier_gateway_supports(feature,
 					program, room_unit_by_stamp)
 				frontier_gateway_support_count += int(
+					not feature_units.is_empty())
+			&"arcade_overhang_support":
+				feature_units = _compile_arcade_overhang_supports(feature,
+					program, room_unit_by_stamp)
+				arcade_overhang_support_count += int(
 					not feature_units.is_empty())
 			&"tower_annex":
 				feature_units = _compile_tower_annex_feature(feature, program,
@@ -886,7 +990,8 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 		"realized_constructed_feature_count": skywalk_count + market_count \
 			+ balcony_count + tower_annex_count + facade_bay_count + landmark_count \
 			+ courtyard_bridge_count + room_outcropping_support_count \
-			+ frontier_gateway_support_count + interstitial_join_count,
+			+ frontier_gateway_support_count + arcade_overhang_support_count \
+			+ interstitial_join_count,
 		"skywalk_feature_count": skywalk_count,
 		"interstitial_join_feature_count": interstitial_join_count,
 		"courtyard_bridge_house_feature_count": courtyard_bridge_count,
@@ -896,6 +1001,8 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 			room_outcropping_support_count,
 		"frontier_gateway_support_feature_count":
 			frontier_gateway_support_count,
+		"arcade_overhang_support_feature_count":
+			arcade_overhang_support_count,
 		"tower_annex_feature_count": tower_annex_count,
 		"facade_bay_feature_count": facade_bay_count,
 		"prefab_landmark_feature_count": landmark_count,
@@ -978,8 +1085,9 @@ static func _compile_frontier_gateway_supports(
 	var room_id := StringName(feature.audit.get("gateway_room_id", &""))
 	var room_unit := room_unit_by_stamp.get(room_id) as FabricUnit
 	if room_unit == null or feature.construction_records.size() != 1 \
-			or not bool(feature.audit.get("gateway_is_terrain_anchored", false)):
-		last_failure = "frontier gateway %s lacks its terrain-rooted room or bracket" \
+			or not (bool(feature.audit.get("gateway_is_terrain_anchored", false)) \
+				or bool(feature.audit.get("gateway_is_flank_borne", false))):
+		last_failure = "gateway/jetty %s lacks its anchored room or bracket" \
 			% feature.stable_id
 		return out
 	var seams: Array[StringName] = [room_unit.stable_id]
@@ -1002,6 +1110,56 @@ static func _compile_frontier_gateway_supports(
 			or not recipe.headroom_cells.is_empty() \
 			or recipe.bearing_parent_count != 0:
 		last_failure = "frontier gateway %s has a non-attachment support recipe" \
+			% feature.stable_id
+		return [] as Array[FabricUnit]
+	out.append(FabricUnit.new(shell.stable_id, shell.recipe_id,
+		shell.lattice_origin, shell.yaw_quarters,
+		[] as Array[StringName], [] as Array[Dictionary], &"", seams))
+	return out
+
+
+static func _compile_arcade_overhang_supports(
+		feature: WarrenFeatureReservation,
+		program: SettlementFabricProgram,
+		room_unit_by_stamp: Dictionary) -> Array[FabricUnit]:
+	## The upper and lower rooms remain the occupied construction.  This adapter
+	## realizes the exact four-sided stone shell around their public-air span and
+	## declares every measured facade contact as authored joinery.
+	var out: Array[FabricUnit] = []
+	var upper_id := StringName(feature.audit.get("arcade_upper_room_id", &""))
+	var lower_id := StringName(feature.audit.get("arcade_lower_room_id", &""))
+	var upper_unit := room_unit_by_stamp.get(upper_id) as FabricUnit
+	var lower_unit := room_unit_by_stamp.get(lower_id) as FabricUnit
+	if upper_unit == null or lower_unit == null \
+			or feature.construction_records.size() != 1 \
+			or int(feature.audit.get("arcade_support_course_count", 0)) != 1:
+		last_failure = "arcade overhang %s lacks its rooms or foundation shell" \
+			% feature.stable_id
+		return out
+	var seams: Array[StringName] = [upper_unit.stable_id, lower_unit.stable_id]
+	for neighbor_value: Variant in feature.audit.get(
+			"arcade_support_neighbor_room_ids", []):
+		var neighbor_id := StringName(neighbor_value)
+		var neighbor_unit := room_unit_by_stamp.get(neighbor_id) as FabricUnit
+		if neighbor_unit == null:
+			last_failure = "arcade overhang %s names missing support seam %s" % [
+				feature.stable_id, neighbor_id]
+			return [] as Array[FabricUnit]
+		if not seams.has(neighbor_unit.stable_id):
+			seams.append(neighbor_unit.stable_id)
+	var record := feature.construction_records[0] as Dictionary
+	var shell := _feature_component_shell(feature, 0, record)
+	var recipe := program.recipe(shell.recipe_id)
+	if recipe == null or not recipe.has_tag(&"cantilever_support") \
+			or not recipe.has_tag(&"visual_attachment") \
+			or not recipe.has_tag(&"arcade_portal_support") \
+			or not recipe.has_tag(&"four_sided_foundation_shell") \
+			or recipe.placements.size() != 4 \
+			or not recipe.solid_cells.is_empty() \
+			or not recipe.walk_cells.is_empty() \
+			or not recipe.headroom_cells.is_empty() \
+			or recipe.bearing_parent_count != 0:
+		last_failure = "arcade overhang %s has an incomplete foundation recipe" \
 			% feature.stable_id
 		return [] as Array[FabricUnit]
 	out.append(FabricUnit.new(shell.stable_id, shell.recipe_id,
@@ -1035,8 +1193,7 @@ static func _compile_interstitial_join_feature(
 	var strip_cells: Dictionary = {}
 	for cell: Vector3i in feature.reserved_cells:
 		strip_cells[cell] = true
-	# Every room touching the strip (including the diagonal upper wall a
-	# stepped shoulder seals against) is an explicit visual seam.
+	# Every room touching the strip is an explicit visual seam.
 	var seams: Array[StringName] = []
 	var seam_set: Dictionary = {}
 	for building: WarrenBuildingVolume in source.buildings:
@@ -1582,7 +1739,8 @@ static func _socket_world_cell(unit_value: FabricUnit,
 static func _feature_units_match_reservation(
 		feature: WarrenFeatureReservation, units: Array[FabricUnit],
 		program: SettlementFabricProgram) -> bool:
-	if feature.kind in [&"room_outcropping", &"frontier_gateway_support"]:
+	if feature.kind in [&"room_outcropping", &"frontier_gateway_support",
+			&"arcade_overhang_support"]:
 		# The feature's reserved cells are the already-realized upper room. Its
 		# construction records are deliberately zero-cell bracket attachments;
 		# requiring them to reproduce the room would duplicate occupied mass.
@@ -2508,10 +2666,14 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		-> StringName:
 	if not (room.audit.get("bridge_support_room_ids", []) as Array).is_empty():
 		# A street-bridge room keeps its ordinary unaddressed shell but swaps
-		# the bearing contract: two flank parents through span sockets.
+		# the bearing contract: normally two flank parents through span sockets;
+		# the reviewed one-bay jetty uses one exact flank plus its separately
+		# reserved measured bracket course.
 		var bridge_theme := _architectural_district_theme(room.lattice_origin,
 			world_seed)
-		return StringName("room.bridge.%s.%s" % [
+		var bridge_family := "jetty" if bool(room.audit.get(
+			"bridge_is_bracketed_jetty", false)) else "bridge"
+		return StringName("room.%s.%s.%s" % [bridge_family,
 			"slim" if room.kind == &"slim" else "tower",
 			"orange" if bridge_theme == &"orange" else "blue"])
 	var prefix := "room.long" if room.kind == &"long" \
@@ -2545,18 +2707,31 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 	var phase_b := allow_phase_b and posmod(room.source_storey_index \
 		+ room.lattice_origin.x \
 		+ room.lattice_origin.z + world_seed, 2) == 1
+	var facade_phase := _building_style_index(room, world_seed) * 2 \
+		+ int(phase_b)
 	var base_recipe_id: StringName
 	if room.kind == &"long":
 		base_recipe_id = StringName("%s.upper%s.%s.%s" % [prefix, addressed, theme,
-			"b" if phase_b else "a"])
+			SettlementFabricProgram._facade_phase_suffix(facade_phase, true)])
 	else:
 		base_recipe_id = StringName("%s.upper%s.%s%s" % [prefix, addressed, theme,
-			".b" if phase_b else ""])
+			SettlementFabricProgram._facade_phase_suffix(facade_phase)])
 	if room.addressed:
 		base_recipe_id = SettlementFabricProgram.address_door_phase_recipe_id(
 			base_recipe_id, room.address_door_phase)
 	return SettlementFabricProgram.feature_portal_recipe_id(base_recipe_id,
 		feature_portal_mask) if feature_portal_mask > 0 else base_recipe_id
+
+
+static func _building_style_index(room: WarrenRoomStamp,
+		world_seed: int) -> int:
+	## One segment footprint chooses among complete authored construction
+	## families by building lineage, not by streaming chunk or individual wall.
+	## A stepped/tapered stack therefore keeps the same joinery vocabulary through
+	## every storey even when its footprint kind changes higher up.
+	var lineage_hash := String(room.source_parcel_id).hash()
+	return posmod(Helper._mix64(world_seed ^ lineage_hash \
+		^ 0x4255494c44494e47), SettlementFabricProgram.BUILDING_STYLE_COUNT)
 
 
 static func _full_roof_recipe_id(room: WarrenRoomStamp,
@@ -2719,11 +2894,10 @@ static func _spatial_roof_neighborhood(source: WarrenSpatialPlan,
 			var neighbor_id := StringName(seam.neighbor_id)
 			if String(owner_id) >= String(neighbor_id):
 				continue
-			# The generic table contains experimental valley flashing for isolated
-			# module proofs, but full-town captures show that the current authored
-			# roof shells still pile their eaves at these crossings. Until a true
-			# valley/cross-gable mesh exists, spatial production only promises the
-			# continuous-ridge and stepped-wall joins that visually close.
+			# Production admits one atomic perpendicular T-junction: the module
+			# table substitutes a bisected host roof and an open-ended branch as one
+			# construction. Parallel and higher-order valleys still flatten because
+			# no complete authored crossing exists for them.
 			if not _spatial_roof_join_supported(int(seam.kind)):
 				flattened[owner_id] = true
 				flattened[neighbor_id] = true
@@ -2828,6 +3002,7 @@ static func _spatial_roof_neighborhood(source: WarrenSpatialPlan,
 static func _spatial_roof_join_supported(kind: int) -> bool:
 	return kind in [
 		FabricRoofTopologyPlan.JunctionKind.RIDGE_CONTINUATION,
+		FabricRoofTopologyPlan.JunctionKind.PERPENDICULAR_VALLEY,
 		FabricRoofTopologyPlan.JunctionKind.STEPPED_EAVE_WALL,
 		FabricRoofTopologyPlan.JunctionKind.STEPPED_GABLE_WALL,
 	]
@@ -3773,7 +3948,8 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 	var room_id := room.stable_id
 	for key: String in ["annex_room_id", "balcony_room_id",
 			"market_backing_room_id", "courtyard_bridge_house_room_id",
-			"outcrop_upper_room_id", "outcrop_lower_room_id", "gateway_room_id"]:
+			"outcrop_upper_room_id", "outcrop_lower_room_id", "gateway_room_id",
+			"arcade_upper_room_id", "arcade_lower_room_id"]:
 		if StringName(feature.audit.get(key, &"")) == room_id:
 			return true
 	for neighbor_value: Variant in feature.audit.get(
@@ -3782,6 +3958,10 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 			return true
 	for neighbor_value: Variant in feature.audit.get(
 			"gateway_support_neighbor_room_ids", []):
+		if StringName(neighbor_value) == room_id:
+			return true
+	for neighbor_value: Variant in feature.audit.get(
+			"arcade_support_neighbor_room_ids", []):
 		if StringName(neighbor_value) == room_id:
 			return true
 	# An interstitial join is by definition wedged against its named wall,

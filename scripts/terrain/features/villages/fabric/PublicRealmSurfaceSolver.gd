@@ -6,7 +6,8 @@ extends RefCounted
 
 
 static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
-		fabric_plan: SettlementFabricPlan) -> PublicRealmSurfacePlan:
+		fabric_plan: SettlementFabricPlan,
+		volume: WarrenVolumePlan = null) -> PublicRealmSurfacePlan:
 	if stable_id.is_empty() or fabric_plan == null \
 			or (realm != null and not realm.is_sealed()):
 		return null
@@ -33,6 +34,24 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 			if realm != null and not realm.node(unit_value.public_node_id).has_cell(cell):
 				return null
 			if not result.add_claim(cell, kind, unit_value.stable_id):
+				return null
+	if volume != null:
+		if not volume.is_sealed() or realm == null:
+			return null
+		for transition_index in volume.transitions.size():
+			var transition := volume.transitions[transition_index]
+			if not transition.is_vertical():
+				continue
+			var node_id := StringName("volume.transition.%02d" % transition_index)
+			var transition_node := realm.node(node_id)
+			if transition_node == null or not _same_cells(
+					transition_node.surface_cells, transition.surface_cells()):
+				return null
+			var payload := WarrenTransitionSurfaceBuilder.build(
+				StringName("%s.mesh" % node_id), transition,
+				transition_node.surface_cells)
+			if payload.is_empty() \
+					or not result.add_transition_mesh_payload(payload):
 				return null
 	var structural_solids: Dictionary = {}
 	for cell_value: Variant in fabric_plan.transformed_cells(&"solid"):
@@ -85,3 +104,16 @@ static func _kind_for_recipe(recipe_value: FabricRecipe) \
 
 static func _cell_key(cell: Vector3i) -> String:
 	return "%d:%d:%d" % [cell.x, cell.y, cell.z]
+
+
+static func _same_cells(left: Array[Vector3i],
+		right: Array[Vector3i]) -> bool:
+	if left.size() != right.size():
+		return false
+	var remaining: Dictionary = {}
+	for cell: Vector3i in left:
+		remaining[cell] = true
+	for cell: Vector3i in right:
+		if not remaining.erase(cell):
+			return false
+	return remaining.is_empty()

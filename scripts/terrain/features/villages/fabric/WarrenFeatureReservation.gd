@@ -121,8 +121,9 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 			and endpoint_owners.size() < 2:
 		return _reject("skywalk lacks two distinct endpoint owners")
 	if kind in [&"enclosed_skywalk", &"covered_market", &"balcony",
-			&"tower_annex", &"prefab_landmark", &"room_outcropping",
-			&"courtyard_bridge_house", &"frontier_gateway_support"] \
+			&"tower_annex", &"prefab_landmark",
+			&"courtyard_bridge_house", &"frontier_gateway_support",
+			&"arcade_overhang_support"] \
 			and construction_records.is_empty():
 		return _reject("constructed feature has no exact asset record")
 	if kind == &"covered_market":
@@ -150,17 +151,32 @@ func seal(grid: WarrenSpatialGrid, supports: WarrenSupportGraph) -> bool:
 		if not bool(_audit_facts.get(
 				"outcrop_is_integrated_cantilever", false)):
 			return _reject("room outcropping is not an integrated cantilever")
-		if construction_records.is_empty() or int(_audit_facts.get(
-				"outcrop_support_course_count", -1)) \
-				!= construction_records.size():
+		var directly_borne := bool(_audit_facts.get(
+			"outcrop_is_directly_borne", false))
+		if (construction_records.is_empty() and not directly_borne) \
+				or int(_audit_facts.get("outcrop_support_course_count", -1)) \
+					!= construction_records.size():
 			return _reject("room outcropping lacks its exact bracket courses")
 	if kind == &"frontier_gateway_support":
 		if endpoint_owners.size() != 1 \
-				or not bool(_audit_facts.get(
+				or not (bool(_audit_facts.get(
 					"gateway_is_terrain_anchored", false)) \
+					or bool(_audit_facts.get(
+						"gateway_is_flank_borne", false))) \
 				or int(_audit_facts.get("gateway_support_course_count", -1)) \
 					!= construction_records.size():
-			return _reject("frontier gateway lacks its terrain anchor or bracket course")
+			return _reject("gateway or jetty lacks its declared anchor or bracket course")
+	if kind == &"arcade_overhang_support":
+		if endpoint_owners.size() != 1 \
+				or not bool(_audit_facts.get(
+					"arcade_is_route_spanning", false)) \
+				or int(_audit_facts.get("arcade_public_air_cell_count", 0)) \
+					< WarrenSpatialGrid.ROOM_BAY_CELLS.x \
+						* WarrenSpatialGrid.ROOM_BAY_CELLS.y \
+						* WarrenSpatialGrid.STOREY_CELLS \
+				or int(_audit_facts.get("arcade_support_course_count", -1)) \
+					!= construction_records.size():
+			return _reject("arcade overhang lacks its public passage or stone portal")
 	if kind == &"prefab_landmark":
 		if endpoints.size() != 1 or endpoint_owners.size() != 1 \
 				or not endpoint_owners.has(stable_id) \

@@ -70,6 +70,76 @@ func test_building_trimesh_uses_the_complete_merged_triangle_soup() -> void:
 	root.free()
 
 
+func test_axis_clip_keeps_authored_outer_end_and_opens_exact_party_seam() \
+		-> void:
+	var root := Node3D.new()
+	root.add_child(_box_instance("Roof", Vector3.ZERO,
+		Vector3(2.0, 1.0, 4.0), StandardMaterial3D.new()))
+	var source := EnvironmentBakeGeometry.merge_pieces(root,
+		Transform3D.IDENTITY)
+	root.free()
+	var clipped := EnvironmentBakeGeometry.clip_axis_range(source,
+		Vector3.AXIS_Z, -1.0, 2.0)
+	assert_not_null(clipped)
+	if clipped == null:
+		return
+	assert_almost_eq(clipped.get_aabb().position.z, -1.0, 0.0001)
+	assert_almost_eq(clipped.get_aabb().end.z, 2.0, 0.0001)
+	var faces := EnvironmentBakeGeometry.triangle_faces(clipped)
+	assert_gt(faces.size(), 0)
+	var authored_end_triangle_count := 0
+	var invented_seam_triangle_count := 0
+	for index in range(0, faces.size(), 3):
+		var all_authored_end := true
+		var all_party_seam := true
+		for corner in 3:
+			all_authored_end = all_authored_end \
+				and is_equal_approx(faces[index + corner].z, 2.0)
+			all_party_seam = all_party_seam \
+				and is_equal_approx(faces[index + corner].z, -1.0)
+		authored_end_triangle_count += int(all_authored_end)
+		invented_seam_triangle_count += int(all_party_seam)
+	assert_gt(authored_end_triangle_count, 0,
+		"the uncut authored gable/end face must survive")
+	assert_eq(invented_seam_triangle_count, 0,
+		"the semantic join stays open for its touching neighbour")
+
+
+func test_axis_mirror_reflects_joinery_without_a_negative_runtime_scale() \
+		-> void:
+	var source := ArrayMesh.new()
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for vertex: Vector3 in [
+			Vector3(-2.0, 0.0, 0.0),
+			Vector3(1.0, 0.0, 0.0),
+			Vector3(-2.0, 1.0, 0.0),
+	]:
+		surface.set_normal(Vector3.BACK)
+		surface.set_tangent(Plane(Vector3.RIGHT, 1.0))
+		surface.set_uv(Vector2(vertex.x, vertex.y))
+		surface.add_vertex(vertex)
+	surface.commit(source)
+	var mirrored := EnvironmentBakeGeometry.mirror_axis(source,
+		Vector3.AXIS_X)
+	assert_not_null(mirrored)
+	if mirrored == null:
+		return
+	assert_almost_eq(mirrored.get_aabb().position.x, -1.0, 0.0001)
+	assert_almost_eq(mirrored.get_aabb().end.x, 2.0, 0.0001,
+		"the one-sided source post moves to the opposite end")
+	var arrays := mirrored.surface_get_arrays(0)
+	var normals := arrays[Mesh.ARRAY_NORMAL] as PackedVector3Array
+	var tangents := arrays[Mesh.ARRAY_TANGENT] as PackedFloat32Array
+	var indices := arrays[Mesh.ARRAY_INDEX] as PackedInt32Array
+	assert_eq(indices.slice(0, 3), PackedInt32Array([0, 2, 1]),
+		"mirroring reverses triangle winding for ordinary back-face culling")
+	assert_almost_eq(normals[0].dot(Vector3.BACK), 1.0, 0.0001,
+		"reflected normals keep the authored face direction")
+	assert_almost_eq(tangents[0], -1.0, 0.0001)
+	assert_almost_eq(tangents[3], -1.0, 0.0001)
+
+
 func test_ground_contacts_follow_disjoint_feet_not_the_full_visual_bounds() -> void:
 	var piece := EnvironmentVisualPiece.new()
 	var feet := ArrayMesh.new()

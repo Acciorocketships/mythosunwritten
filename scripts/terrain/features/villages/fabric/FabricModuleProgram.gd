@@ -68,6 +68,18 @@ func add_prefab(asset_id: StringName,
 	return _add(contract)
 
 
+func add_switchback_stair(asset_id: StringName, low_tread_y: float,
+		high_tread_y: float, visual_clearance: float = 0.0) -> bool:
+	var contract_value := _contract(asset_id,
+		FabricModuleContract.Kind.STAIR_SWITCHBACK)
+	if contract_value == null:
+		return false
+	contract_value.stair_low_tread_y = low_tread_y
+	contract_value.stair_high_tread_y = high_tread_y
+	contract_value.visual_clearance = visual_clearance
+	return _add(contract_value)
+
+
 func seal() -> bool:
 	last_rejection = ""
 	if _sealed or _catalog == null or _contracts.is_empty():
@@ -142,6 +154,21 @@ func facade_aligned_transform(asset_id: StringName, pose: Transform3D,
 	return pose
 
 
+func roof_bearing_aligned_transform(asset_id: StringName, pose: Transform3D,
+		target_bearing_y: float) -> Transform3D:
+	## Roof imports do not share a trustworthy pivot: most begin at zero, while
+	## several complete boarded shells sit a few millimetres below it.  A roof
+	## recipe names the wall-top bearing plane, never the source pivot.  Pin the
+	## measured lowest visual point to that plane so adjacent roof modules cannot
+	## acquire different vertical datums merely because they came from different
+	## authored assets.
+	var contract_value := contract(asset_id)
+	assert(contract_value != null and contract_value.is_sealed())
+	var transformed := pose * contract_value.visual_bounds
+	pose.origin.y += target_bearing_y - transformed.position.y
+	return pose
+
+
 func stair_lane_transforms(asset_id: StringName,
 		corridor_minimum_x: int = -1, corridor_width_cells: int = 2) \
 		-> Array[Transform3D]:
@@ -170,6 +197,19 @@ func stair_lane_transforms(asset_id: StringName,
 			-bounds.position.y,
 			-bounds.end.z)))
 	return out
+
+
+func stair_high_aligned_transform(asset_id: StringName, pose: Transform3D,
+		target_high_tread_y: float) -> Transform3D:
+	## Pin the actual upper walking tread, never the decorative handrail top, to
+	## the destination platform. Village stair transforms permit yaw only, so the
+	## authored tread Y remains invariant under the supplied basis.
+	var contract_value := contract(asset_id)
+	assert(contract_value != null and contract_value.is_sealed())
+	assert(contract_value.kind == FabricModuleContract.Kind.STAIR_SWITCHBACK)
+	pose.origin.y += target_high_tread_y \
+		- (pose.origin.y + contract_value.stair_high_tread_y)
+	return pose
 
 
 func prefab_aligned_transform(asset_id: StringName, pose: Transform3D,
@@ -220,14 +260,16 @@ func add_roof_run(recipe: FabricRecipe, run_id: StringName,
 			"%d:positive" % index, roof_asset))
 		if contract(negative_asset) == null or contract(positive_asset) == null:
 			return false
+		var negative_pose := Transform3D(basis.rotated(Vector3.UP, PI),
+			Vector3(centre.x, base_y, centre.z) + run_offset
+			- pair_direction * repeat.pair_offset)
+		var positive_pose := Transform3D(basis,
+			Vector3(centre.x, base_y, centre.z) + run_offset
+			+ pair_direction * repeat.pair_offset)
 		recipe.add_placement(negative_id, negative_asset,
-			Transform3D(basis.rotated(Vector3.UP, PI),
-				Vector3(centre.x, base_y, centre.z) + run_offset
-				- pair_direction * repeat.pair_offset))
+			roof_bearing_aligned_transform(negative_asset, negative_pose, base_y))
 		recipe.add_placement(positive_id, positive_asset,
-			Transform3D(basis,
-				Vector3(centre.x, base_y, centre.z) + run_offset
-				+ pair_direction * repeat.pair_offset))
+			roof_bearing_aligned_transform(positive_asset, positive_pose, base_y))
 		placement_ids.append(negative_id)
 		placement_ids.append(positive_id)
 	var run_direction := basis * Vector3(repeat.repeat_axis)

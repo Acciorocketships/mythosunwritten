@@ -3,6 +3,11 @@ extends SceneTree
 ## Editor-only comparison of complete textured wall modules before admitting
 ## them to the finite runtime construction vocabulary.
 const SOURCES: Array[Dictionary] = [
+	{"label": "door 001", "path": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001.fbx"},
+	{"label": "door 001 alt", "path": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001_1.fbx"},
+	{"label": "door 002", "path": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_002.fbx"},
+	{"label": "door 003", "path": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_003.fbx"},
+	{"label": "door 004", "path": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_004.fbx"},
 	{"label": "window 001", "path": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_001.fbx"},
 	{"label": "window 010", "path": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_010.fbx"},
 	{"label": "window 020", "path": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_M_020.fbx"},

@@ -128,6 +128,73 @@ func test_a_square_room_draws_a_different_module_on_each_face() -> void:
 			"%s still repeats one wall module around its shell" % recipe_id)
 
 
+func test_timber_boxes_use_baked_handed_panels_on_both_side_faces() -> void:
+	## Every source timber panel owns its local -X post. If all four sides use
+	## that same handedness, two diagonal corners receive doubled perpendicular
+	## posts and the other two receive none. East/west must use baked mirror
+	## assets while north/south retain the authored panel and every runtime pose
+	## remains a proper rotation.
+	assert_not_null(_program)
+	for recipe_id: StringName in [
+			&"room.upper.blue", &"room.long.upper.orange.a",
+			&"room.tower.upper.amber", &"room.slim.upper.blue",
+			&"room.row.upper.orange",
+	]:
+		var recipe_value := _program.recipe(recipe_id)
+		assert_not_null(recipe_value, "missing handed-shell recipe %s" % recipe_id)
+		if recipe_value == null:
+			continue
+		var side_count := 0
+		var cardinal_count := 0
+		for placement: Dictionary in recipe_value.placements:
+			var placement_id := String(placement.id)
+			if not (placement_id.begins_with("left") \
+					or placement_id.begins_with("right") \
+					or placement_id.begins_with("west") \
+					or placement_id.begins_with("east") \
+					or placement_id.begins_with("front") \
+					or placement_id.begins_with("back") \
+					or placement_id in ["south", "north"]):
+				continue
+			cardinal_count += 1
+			var side := placement_id.begins_with("left") \
+				or placement_id.begins_with("right") \
+				or placement_id.begins_with("west") \
+				or placement_id.begins_with("east")
+			var asset_text := String(placement.asset_id)
+			assert_eq(asset_text.ends_with(".mirror_x"), side,
+				"%s/%s violates clockwise post ownership" % [recipe_id,
+					placement_id])
+			var pose := placement.transform as Transform3D
+			assert_almost_eq(pose.basis.determinant(), 1.0, 0.0001,
+				"handed facade variants must not leak negative runtime scale")
+			side_count += int(side)
+		assert_gt(cardinal_count, 0)
+		assert_gt(side_count, 0)
+
+
+func test_mirrored_facades_preserve_the_source_envelope() -> void:
+	for source_id: StringName in [
+			&"sfv.fabric.wall.wood.window.001",
+			&"sfv.fabric.wall.wood.window.020",
+			&"sfv.fabric.wall.wood.plain.005",
+			&"sfv.fabric.wall.wood.door.001",
+	]:
+		var mirror_id := SettlementFabricProgram._mirrored_facade_asset(source_id)
+		var source := _catalog.descriptor(source_id)
+		var mirror := _catalog.descriptor(mirror_id)
+		assert_not_null(source)
+		assert_not_null(mirror, "missing baked facade hand %s" % mirror_id)
+		if source == null or mirror == null:
+			continue
+		assert_almost_eq(mirror.measured_aabb.size.x,
+			source.measured_aabb.size.x, WIDTH_EPSILON)
+		assert_almost_eq(mirror.measured_aabb.size.y,
+			source.measured_aabb.size.y, WIDTH_EPSILON)
+		assert_almost_eq(mirror.measured_aabb.size.z,
+			source.measured_aabb.size.z, WIDTH_EPSILON)
+
+
 func test_widening_the_pools_left_every_room_envelope_where_it_was() -> void:
 	## Pinned from the pre-wave compile. If a widened pool ever admits a module
 	## that projects or over-spans, these boxes move and the parcel search this
@@ -224,6 +291,52 @@ func test_the_amber_family_compiles_a_complete_recipe_set() -> void:
 			var recipe_id := StringName("%s.amber%s" % [prefix, suffix])
 			assert_not_null(_program.recipe(recipe_id),
 				"missing %s" % recipe_id)
+
+
+func test_every_segmented_footprint_has_three_exact_building_styles() -> void:
+	## Segmentation owns the room footprint and topology. Style selection may
+	## change complete authored wall/door/detail compositions, but it may not
+	## mutate the segment's solids, inhabited volume, sockets, or entrances.
+	assert_not_null(_program)
+	var forms: Array[Dictionary] = [
+		{"prefix": "room.upper.blue", "long": false},
+		{"prefix": "room.tower.upper.blue", "long": false},
+		{"prefix": "room.slim.upper.blue", "long": false},
+		{"prefix": "room.row.upper.blue", "long": false},
+		{"prefix": "room.long.upper.blue", "long": true},
+	]
+	for form: Dictionary in forms:
+		var reference: FabricRecipe
+		var style_signatures: Dictionary = {}
+		for facade_phase in SettlementFabricProgram.FACADE_PHASE_COUNT:
+			var suffix := SettlementFabricProgram._facade_phase_suffix(
+				facade_phase, bool(form.long))
+			var recipe_id := StringName("%s%s%s" % [String(form.prefix),
+				"." if bool(form.long) else "", suffix])
+			var recipe_value := _program.recipe(recipe_id)
+			assert_not_null(recipe_value, "missing segmented style %s" % recipe_id)
+			if recipe_value == null:
+				continue
+			if reference == null:
+				reference = recipe_value
+			else:
+				assert_eq(recipe_value.solid_cells, reference.solid_cells,
+					"%s changed the segmented structural footprint" % recipe_id)
+				assert_eq(recipe_value.inhabited_cells, reference.inhabited_cells,
+					"%s changed the segmented inhabited volume" % recipe_id)
+				assert_eq(recipe_value.sockets, reference.sockets,
+					"%s changed the segmented connection contract" % recipe_id)
+				assert_eq(recipe_value.entrances, reference.entrances,
+					"%s changed the segmented entrance contract" % recipe_id)
+			if facade_phase % 2 == 0:
+				var assignment: Array[String] = []
+				for placement: Dictionary in recipe_value.placements:
+					assignment.append("%s=%s" % [String(placement.id),
+						String(placement.asset_id)])
+				style_signatures["|".join(assignment)] = true
+		assert_eq(style_signatures.size(),
+			SettlementFabricProgram.BUILDING_STYLE_COUNT,
+			"%s still collapses segmentation to one repeated shell" % form.prefix)
 
 
 func test_phase_b_facades_use_multiple_measured_detail_families() -> void:

@@ -2,8 +2,8 @@ extends GutTest
 
 ## Focused fixtures for the typed interstitial_join transaction: a
 ## sub-tolerance residual course trapped between occupied walls must classify
-## as exactly one authored closure (stepped shoulder lean-to or sealed
-## infill), and anything without a complete closure must refuse with a typed
+## as exactly one authored sealed closure, and anything without a complete
+## closure must refuse with a typed
 ## reason instead of silently exposing two unrelated facade meshes.
 
 
@@ -36,7 +36,7 @@ func _column(x: int, z: int, y_top: int) -> Array[Vector3i]:
 	return out
 
 
-func test_two_cell_shoulder_between_offset_walls_is_a_stepped_lean_to() -> void:
+func test_two_cell_shoulder_between_offset_walls_is_capped_infill() -> void:
 	var grid := _grid_with_massif(Vector3i(6, 6, 6))
 	# Lower building fills z<=1 to y=3 (so it continues above the slot);
 	# the neighbor fills z=3 only to y=1, leaving the slot (x 1..2, y 2, z 2)
@@ -54,9 +54,10 @@ func test_two_cell_shoulder_between_offset_walls_is_a_stepped_lean_to() -> void:
 			grid, cell), "%s must audit as a one-cell interstitial gap" % cell)
 	var classified := WarrenSpatialFeatureSolver._classify_interstitial_run(
 		grid, {}, slot, &"z")
-	assert_eq(StringName(classified.get("class", &"")), &"stepped_shoulder")
-	assert_eq(int(classified.get("wall_side", 0)), -1,
-		"the continuing upper wall is on the negative z side")
+	assert_eq(StringName(classified.get("class", &"")), &"sealed_infill",
+		"a narrow shoulder must not emit the visually floating lean-to roof")
+	assert_false(bool(classified.get("buried", true)),
+		"the open-sky shoulder gets a flush cap")
 	assert_eq(StringName(classified.get("bearing_kind", &"")), &"below")
 
 
@@ -94,7 +95,7 @@ func test_strip_buried_under_bridging_mass_is_buried_sealed_infill() -> void:
 		"a covered strip must omit its cap so no plate fights the soffit")
 
 
-func test_shoulder_may_not_bear_on_an_earlier_feature_strip() -> void:
+func test_strip_on_an_earlier_feature_side_anchors() -> void:
 	var grid := _grid_with_massif(Vector3i(6, 6, 6))
 	for x in range(1, 3):
 		_claim_private(grid, &"spatial.parcel.solid.0007.part00",
@@ -107,8 +108,9 @@ func test_shoulder_may_not_bear_on_an_earlier_feature_strip() -> void:
 	var slot: Array[Vector3i] = [Vector3i(1, 2, 2), Vector3i(2, 2, 2)]
 	var classified := WarrenSpatialFeatureSolver._classify_interstitial_run(
 		grid, {}, slot, &"z")
-	assert_ne(StringName(classified.get("class", &"")), &"stepped_shoulder",
-		"lean-to bearing requires real room mass with authored top sockets")
+	assert_eq(StringName(classified.get("class", &"")), &"sealed_infill")
+	assert_eq(StringName(classified.get("bearing_kind", &"")), &"side",
+		"feature strips do not become room-bearing roof lineages")
 
 
 func test_flush_parapet_slot_seals_side_anchored() -> void:
@@ -135,15 +137,7 @@ func test_interstitial_chunks_split_into_authored_lengths() -> void:
 	var run: Array[Vector3i] = []
 	for z in range(0, 5):
 		run.append(Vector3i(1, 2, z))
-	var shoulder_chunks := WarrenSpatialFeatureSolver._interstitial_chunks(
-		run, true)
-	assert_eq(shoulder_chunks.size(), 2)
-	assert_eq((shoulder_chunks[0] as Array).size(), 4,
-		"shoulders use the largest even authored bay")
-	assert_eq((shoulder_chunks[1] as Array).size(), 1,
-		"the odd remainder becomes a capped sealed end")
-	var seal_chunks := WarrenSpatialFeatureSolver._interstitial_chunks(
-		run, false)
+	var seal_chunks := WarrenSpatialFeatureSolver._interstitial_chunks(run)
 	assert_eq(seal_chunks.size(), 3)
 	assert_eq((seal_chunks[0] as Array).size(), 2)
 	assert_eq((seal_chunks[2] as Array).size(), 1)

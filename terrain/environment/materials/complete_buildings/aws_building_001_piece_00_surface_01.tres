@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "GLOW_YELLOW"
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.9026964, 0.82984805, 1)
+emission_enabled = true
+emission = Color(1, 0.77575177, 0.60589576, 1)

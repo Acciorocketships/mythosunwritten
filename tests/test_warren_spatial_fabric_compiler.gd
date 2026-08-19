@@ -1,6 +1,44 @@
 extends GutTest
 
 
+func test_arcade_overhang_adapter_binds_foundation_to_both_room_plates() -> void:
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	assert_not_null(program)
+	if program == null:
+		return
+	var upper := FabricUnit.new(&"unit.upper", &"room.slim.upper.blue",
+		Vector3i(0, 2, 0), 0)
+	var lower := FabricUnit.new(&"unit.lower", &"room.tower.base.rock",
+		Vector3i.ZERO, 0)
+	var feature := WarrenFeatureReservation.new(&"arcade.fixture",
+		&"arcade_overhang_support")
+	var foundation_id := SettlementFabricProgram \
+		.arcade_overhang_foundation_recipe_id(5)
+	assert_true(feature.add_construction_record(
+		foundation_id, Vector3i(0, 2, 0), 0,
+		&"arcade_stone_foundation"))
+	feature.audit = {
+		"arcade_upper_room_id": &"room.upper",
+		"arcade_lower_room_id": &"room.lower",
+		"arcade_support_course_count": 1,
+		"arcade_support_face_count": 4,
+		"arcade_support_neighbor_room_ids": [&"room.lower"],
+	}
+	var compiled := WarrenSpatialFabricCompiler \
+		._compile_arcade_overhang_supports(feature, program, {
+			&"room.upper": upper,
+			&"room.lower": lower,
+		})
+	assert_eq(compiled.size(), 1, WarrenSpatialFabricCompiler.last_failure)
+	if compiled.size() != 1:
+		return
+	var foundation := compiled[0] as FabricUnit
+	assert_eq(foundation.recipe_id, foundation_id)
+	assert_true(foundation.visual_seam_ids.has(upper.stable_id))
+	assert_true(foundation.visual_seam_ids.has(lower.stable_id))
+
+
 func test_roof_gate_checks_the_candidate_full_3d_solid_volume() -> void:
 	var grid := WarrenSpatialGrid.new(Vector3i(-2, 0, -2),
 		Vector3i(5, 5, 5))
@@ -130,12 +168,12 @@ func test_one_parent_shoulder_never_becomes_a_pile_of_sibling_gables() -> void:
 	assert_eq(realized.size(), faces.size())
 
 
-func test_spatial_roofs_reject_experimental_crossing_valleys() -> void:
+func test_spatial_roofs_admit_only_complete_atomic_t_valleys() -> void:
 	assert_true(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
 		FabricRoofTopologyPlan.JunctionKind.RIDGE_CONTINUATION))
 	assert_false(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
 		FabricRoofTopologyPlan.JunctionKind.PARALLEL_VALLEY))
-	assert_false(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
+	assert_true(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
 		FabricRoofTopologyPlan.JunctionKind.PERPENDICULAR_VALLEY))
 	assert_true(WarrenSpatialFabricCompiler._spatial_roof_join_supported(
 		FabricRoofTopologyPlan.JunctionKind.STEPPED_EAVE_WALL))
@@ -231,6 +269,7 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var constructed_balconies := 0
 	var constructed_outcropping_supports := 0
 	var constructed_frontier_gateway_supports := 0
+	var constructed_arcade_overhang_supports := 0
 	var constructed_tower_annexes := 0
 	var constructed_landmarks := 0
 	for feature: WarrenFeatureReservation in spatial.features:
@@ -246,6 +285,8 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 			feature.kind == &"room_outcropping")
 		constructed_frontier_gateway_supports += int(
 			feature.kind == &"frontier_gateway_support")
+		constructed_arcade_overhang_supports += int(
+			feature.kind == &"arcade_overhang_support")
 		constructed_tower_annexes += int(feature.kind == &"tower_annex")
 		constructed_landmarks += int(feature.kind == &"prefab_landmark")
 		expected_feature_units += feature.construction_records.size()
@@ -274,6 +315,9 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.frontier_gateway_support_feature_count),
 		constructed_frontier_gateway_supports)
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.arcade_overhang_support_feature_count),
+		constructed_arcade_overhang_supports)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.tower_annex_feature_count), constructed_tower_annexes)
 	assert_eq(constructed_tower_annexes,
@@ -342,6 +386,14 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	if sealed != null:
 		assert_true(sealed.is_sealed())
 		assert_eq(sealed.audit.generation_source, &"spatial_volumetric_warren")
+		assert_eq(int(sealed.audit.missing_source_route_floor_count), 0,
+			"spatial construction may not drop a floor owned by the bore")
+		assert_eq(int(sealed.audit.transition_mesh_count),
+			int(spatial.source_volume.audit.ramp_transition_count)
+				+ int(spatial.source_volume.audit.stair_transition_count),
+			"every logical vertical transition needs visible collision geometry")
+		assert_gt(int(sealed.audit.transition_triangle_count), 0,
+			"the reviewed spatial seed must realize its connected climbs")
 		assert_eq(int(sealed.audit.detached_building_stack_count), 0,
 			"spatial private-parent chains must all reach served thresholds")
 		assert_eq(int(sealed.audit.building_stack_count),

@@ -837,6 +837,14 @@ static func partition_parcels(volume: WarrenVolumePlan,
 	if volume == null:
 		last_partition_failure = "no volume to partition"
 		return null
+	var maze_source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if maze_source != null:
+		var maze_plan := WarrenMazeBlockPartitioner.partition(maze_source, volume)
+		if maze_plan == null:
+			last_partition_failure = "maze block partition: %s" \
+				% WarrenMazeBlockPartitioner.last_failure
+		return maze_plan
 	var massif := volume.mass_context.get(&"massif") as WarrenMassif
 	var bore := volume.mass_context.get(&"excavation") as WarrenExcavation
 	if massif == null or bore == null:

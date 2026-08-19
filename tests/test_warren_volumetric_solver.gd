@@ -69,6 +69,65 @@ func test_landmark_candidate_corpus_key_is_order_independent_and_exact() \
 		"a geometrically different candidate frontier must never reuse pairs")
 
 
+func test_structurally_identical_complete_houses_vary_by_seed() -> void:
+	var candidates: Array[Dictionary] = []
+	for recipe_id: StringName in [
+			&"anchor.prefab.10", &"anchor.prefab.11", &"anchor.prefab.16"]:
+		candidates.append({"recipe_id": recipe_id,
+			"origin": Vector3i.ZERO, "yaw_quarters": 0,
+			"landing_cell": Vector3i(1, 0, 2),
+			"protected_cells": {Vector3i.ZERO: true},
+			"blocker_parcels": {}, "footprint_area": 18.0,
+			"source_family": &"complete_house",
+			"structural_signature": "shared-small-house-contract"})
+	var selected_recipes: Dictionary = {}
+	for world_seed in 64:
+		var first := WarrenVolumetricSolver._landmark_candidate_sets(
+			candidates, world_seed, 1)
+		var repeated := WarrenVolumetricSolver._landmark_candidate_sets(
+			candidates, world_seed, 1)
+		assert_eq(first.size(), 1,
+			"one measured footprint should enter the topology frontier once")
+		assert_eq(repeated.size(), 1)
+		var selected := StringName(((first[0].reservations \
+			as Array[Dictionary])[0]).recipe_id)
+		var repeated_selected := StringName(((repeated[0].reservations \
+			as Array[Dictionary])[0]).recipe_id)
+		assert_eq(selected, repeated_selected,
+			"complete-building variation must remain seed deterministic")
+		selected_recipes[selected] = true
+	assert_gt(selected_recipes.size(), 1,
+		"visual alternatives sharing one footprint must vary between towns")
+
+
+func test_complete_building_beam_selects_four_compatible_distinct_assets() \
+		-> void:
+	var candidates: Array[Dictionary] = []
+	for index in 6:
+		var origin := Vector3i(index * 4, 0, 0)
+		candidates.append({"recipe_id": StringName("anchor.fixture.%02d" % index),
+			"source_family": &"fixture", "origin": origin,
+			"yaw_quarters": 0, "landing_cell": origin,
+			"protected_cells": {origin: true}, "blocker_parcels": {},
+			"structural_signature": "fixture-%02d" % index,
+			"footprint_area": 16.0 + float(index), "tie": index,
+			"city_contact_side_count": 2, "city_contact_edge_count": 2,
+			"city_contact_score": 8, "nearest_city_gap": 1,
+			"transition_owner_ids": [] as Array[StringName]})
+	var sets := WarrenVolumetricSolver._landmark_candidate_sets(candidates,
+		4242, 4)
+	assert_gt(sets.size(), 0,
+		"the bounded search must admit sets beyond the former triple ceiling")
+	for candidate_set: Dictionary in sets:
+		var reservations := candidate_set.reservations as Array[Dictionary]
+		assert_eq(reservations.size(), 4)
+		var recipes: Dictionary = {}
+		for reservation: Dictionary in reservations:
+			recipes[StringName(reservation.recipe_id)] = true
+		assert_eq(recipes.size(), 4,
+			"one complete mesh may appear at most once in a town")
+
+
 func test_touching_landmarks_share_one_explicit_party_wall() -> void:
 	var left := _rank_fixture_landmark(&"anchor.a", Vector3i.ZERO,
 		{Vector3i.ZERO: true}, {})
@@ -294,45 +353,119 @@ func test_balcony_measured_bounds_yield_to_existing_outcrop_supports() -> void:
 			[outcrop] as Array[WarrenFeatureReservation], program))
 
 
-func test_room_outcropping_geometry_requires_one_bounded_bearing_facade() -> void:
+func test_room_outcropping_geometry_requires_full_scale_diagonal_overlap() -> void:
 	var lower := _unsealed_room_for_geometry(&"lower", &"building",
 		Vector3i.ZERO)
 	var integrated := _unsealed_room_for_geometry(&"integrated", &"building",
-		Vector3i(1, WarrenSpatialGrid.STOREY_CELLS, 0))
+		Vector3i(1, WarrenSpatialGrid.STOREY_CELLS, 1))
 	var valid := WarrenSpatialFeatureSolver._room_cantilever_geometry(lower,
 		integrated)
 	assert_true(bool(valid.valid))
 	assert_eq(valid.direction, Vector2i.RIGHT)
+	assert_eq(valid.projection_directions,
+		[Vector2i.RIGHT, Vector2i.DOWN] as Array[Vector2i])
+	assert_eq(int(valid.projection_direction_count), 2)
+	assert_true(bool(valid.is_diagonal_overlap))
 	assert_eq(int(valid.depth_cells), 1)
-	assert_eq(int(valid.extension_column_count), 4)
-	assert_eq(int(valid.attachment_span_cells), 4)
-	assert_eq(int(valid.bearing_column_count), 12)
-	assert_almost_eq(float(valid.bearing_ratio), 0.75, 0.0001)
+	assert_eq(int(valid.extension_column_count), 7)
+	assert_eq(int(valid.attachment_span_cells), 5)
+	assert_eq(int(valid.bearing_column_count), 9)
+	assert_eq(int(valid.overlap_column_count), 9)
+	assert_almost_eq(float(valid.bearing_ratio), 9.0 / 16.0, 0.0001)
 	var supports := WarrenSpatialFeatureSolver._cantilever_support_records(
 		integrated, valid)
-	assert_eq(supports.size(), 2,
-		"the four-column bearing edge receives two native 3 m courses")
+	assert_eq(supports.size(), 4,
+		"both three-column legs receive native 3 m plus 1.5 m courses")
+	var support_directions: Dictionary = {}
 	for support: Dictionary in supports:
 		assert_eq(StringName(support.recipe_id),
-			&"outcrop.support.bracketed.2")
-		assert_eq(FabricRecipe.transform_direction(Vector3i.BACK,
-			int(support.yaw_quarters)), Vector3i.RIGHT,
-			"every unscaled bracket projects beneath the unsupported room")
+			&"outcrop.support.bracketed.2" \
+			if String(support.role).ends_with(".00") \
+			else &"outcrop.support.bracketed.1")
+		support_directions[FabricRecipe.transform_direction(Vector3i.BACK,
+			int(support.yaw_quarters))] = true
+	assert_true(support_directions.has(Vector3i.RIGHT))
+	assert_true(support_directions.has(Vector3i.BACK))
 
-	var glued_corner := _unsealed_room_for_geometry(&"glued", &"building",
-		Vector3i(1, WarrenSpatialGrid.STOREY_CELLS, 1))
-	var corner_result := WarrenSpatialFeatureSolver._room_cantilever_geometry(
-		lower, glued_corner)
-	assert_false(bool(corner_result.valid),
-		"a diagonally glued upper box is not one integrated facade jetty")
-	assert_eq(StringName(corner_result.rejection), &"multiple_facades")
+	var glued_end := _unsealed_room_for_geometry(&"glued", &"building",
+		Vector3i(1, WarrenSpatialGrid.STOREY_CELLS, 0))
+	var end_result := WarrenSpatialFeatureSolver._room_cantilever_geometry(
+		lower, glued_end)
+	assert_false(bool(end_result.valid),
+		"a one-axis room reads as a box glued to the parent's end")
+	assert_eq(StringName(end_result.rejection), &"diagonal_overlap_required")
 
 	var floating := _unsealed_room_for_geometry(&"floating", &"building",
-		Vector3i(3, WarrenSpatialGrid.STOREY_CELLS, 0))
+		Vector3i(3, WarrenSpatialGrid.STOREY_CELLS, 3))
 	var floating_result := WarrenSpatialFeatureSolver._room_cantilever_geometry(
 		lower, floating)
 	assert_false(bool(floating_result.valid))
-	assert_eq(StringName(floating_result.rejection), &"projection_too_deep")
+	assert_eq(StringName(floating_result.rejection), &"diagonal_overlap_required")
+
+
+func test_route_spanning_size_change_retains_its_true_projection_and_portal() \
+		-> void:
+	## Regression fixture from the reviewed town: half of the rotated slim upper
+	## plate bears on a tower and half spans an exact 3 m-wide public route.  A
+	## footprint mismatch is not a zero-extension setback.
+	var lower := WarrenRoomStamp.new(&"lower", &"source", &"tower",
+		Vector3i(-2, 0, 11), 3, 0, true, false)
+	lower.private_cells.assign(WarrenRoomStamp.expected_private_cells(
+		&"tower", lower.lattice_origin, lower.yaw_quarters))
+	var upper := WarrenRoomStamp.new(&"upper", &"source", &"slim",
+		Vector3i(-2, WarrenSpatialGrid.STOREY_CELLS, 10), 1, 1, false,
+		false)
+	upper.private_cells.assign(WarrenRoomStamp.expected_private_cells(
+		&"slim", upper.lattice_origin, upper.yaw_quarters))
+	var mismatch := WarrenSpatialFeatureSolver._room_cantilever_geometry(
+		lower, upper)
+	assert_false(bool(mismatch.valid))
+	assert_eq(StringName(mismatch.rejection), &"full_scale_overlap_required")
+	assert_eq(int(mismatch.bearing_column_count), 4)
+	assert_eq(int(mismatch.extension_column_count), 4,
+		"the unsupported half must survive rejection diagnostics")
+
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, 0, 0),
+		Vector3i(16, 6, 20))
+	assert_true(WarrenSpatialFeatureSolver._arcade_overhang_geometry(
+		lower, upper, grid).is_empty(),
+		"an arbitrary empty bay is not automatically a public arcade")
+	var extension: Array[Vector2i] = []
+	extension.assign(mismatch.extension_columns as Array)
+	var public_air: Array[Vector3i] = []
+	for column: Vector2i in extension:
+		for y in range(upper.lattice_origin.y - WarrenSpatialGrid.STOREY_CELLS,
+				upper.lattice_origin.y):
+			public_air.append(Vector3i(column.x, y, column.y))
+	var carve := grid.begin_transaction(&"public.route")
+	assert_true(carve.assign_use(public_air, WarrenSpatialGrid.Use.PUBLIC_AIR,
+		&"public.route"))
+	for cell: Vector3i in public_air:
+		if cell.y == upper.lattice_origin.y - WarrenSpatialGrid.STOREY_CELLS:
+			assert_true(carve.claim_face(cell, Vector3i.DOWN,
+				WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, &"public.route"))
+	# Continue the route beyond the projection's outer face, so the foundation
+	# derives one real arch instead of inventing an opening from empty air.
+	var outer_column := extension[0] + Vector2i.LEFT
+	var outer_cell := Vector3i(outer_column.x,
+		upper.lattice_origin.y - WarrenSpatialGrid.STOREY_CELLS, outer_column.y)
+	assert_true(carve.assign_use([outer_cell] as Array[Vector3i],
+		WarrenSpatialGrid.Use.PUBLIC_AIR, &"public.route"))
+	assert_true(carve.claim_face(outer_cell, Vector3i.DOWN,
+		WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, &"public.route"))
+	assert_true(carve.commit(), carve.last_rejection)
+	var arcade := WarrenSpatialFeatureSolver._arcade_overhang_geometry(lower,
+		upper, grid)
+	assert_true(bool(arcade.get("valid", false)))
+	assert_eq(int(arcade.depth_cells), 2)
+	assert_eq(int(arcade.attachment_span_cells), 2)
+	assert_eq((arcade.public_air_cells as Array).size(), 8)
+	var record := WarrenSpatialFeatureSolver._arcade_overhang_support_record(
+		upper, arcade)
+	assert_true(String(record.recipe_id).begins_with(
+		"overhang.support.arcade.rock."))
+	assert_eq(StringName(record.role), &"arcade_stone_foundation")
+	assert_gt(int(record.opening_mask), 0)
 
 
 func test_room_support_accepts_one_measured_corner_brace_but_not_floating_mass() \
@@ -489,6 +622,32 @@ func test_structural_outcropping_satisfies_one_tower_relief_obligation() -> void
 	assert_eq(WarrenSpatialFeatureSolver._tower_annex_relief_units(
 		[corner, flat] as Array[WarrenFeatureReservation]), 3,
 		"corner macro rooms break two facade planes; flat bays break one")
+
+
+func test_diagonal_outcrop_quota_uses_upper_tower_rooms_only() -> void:
+	var first_room := _unsealed_room_for_geometry(&"tower.a", &"tower",
+		Vector3i(0, WarrenSpatialGrid.STOREY_CELLS, 0))
+	first_room.source_parcel_id = &"source.a"
+	var second_room := _unsealed_room_for_geometry(&"tower.b", &"tower",
+		Vector3i(8, WarrenSpatialGrid.STOREY_CELLS * 2, 0))
+	second_room.source_parcel_id = &"source.b"
+	var wide_room := _unsealed_room_for_geometry(&"wide", &"building",
+		Vector3i(16, WarrenSpatialGrid.STOREY_CELLS * 3, 0))
+	wide_room.source_parcel_id = &"source.wide"
+	var first_building := WarrenBuildingVolume.new(&"building.a", 0)
+	first_building.room_records = [first_room] as Array[WarrenRoomStamp]
+	var second_building := WarrenBuildingVolume.new(&"building.b", 0)
+	second_building.room_records = [second_room] as Array[WarrenRoomStamp]
+	var wide_building := WarrenBuildingVolume.new(&"building.wide", 0)
+	wide_building.room_records = [wide_room] as Array[WarrenRoomStamp]
+	var targets := WarrenSpatialFeatureSolver._diagonal_outcrop_target_pool(
+		[first_building, second_building, wide_building] \
+			as Array[WarrenBuildingVolume], 91)
+	assert_eq(targets.size(), 2)
+	assert_eq(int(targets.get(&"source.a", 0)) \
+		+ int(targets.get(&"source.b", 0)), 2)
+	assert_false(targets.has(&"source.wide"),
+		"a tower-sized overlap must not masquerade as full scale on a 6 m room")
 
 
 func test_wrap_balcony_requires_a_side_wall_contact() -> void:
@@ -1373,6 +1532,7 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 	var markets: Array[WarrenFeatureReservation] = []
 	var balconies: Array[WarrenFeatureReservation] = []
 	var tower_annexes: Array[WarrenFeatureReservation] = []
+	var facade_bays: Array[WarrenFeatureReservation] = []
 	var landmarks: Array[WarrenFeatureReservation] = []
 	var outcroppings: Array[WarrenFeatureReservation] = []
 	var gateway_supports: Array[WarrenFeatureReservation] = []
@@ -1388,6 +1548,8 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 				balconies.append(feature)
 			&"tower_annex":
 				tower_annexes.append(feature)
+			&"facade_bay":
+				facade_bays.append(feature)
 			&"prefab_landmark":
 				landmarks.append(feature)
 			&"room_outcropping":
@@ -1403,6 +1565,22 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		assert_eq(gateway.construction_records.size(), 1)
 		assert_true(StringName(gateway.construction_records[0].recipe_id) in [
 			&"outcrop.support.bracketed.2", &"outcrop.support.diagonal.2"])
+	assert_eq(facade_bays.size(), int(plan.audit.get("facade_bay_count", 0)))
+	for bay: WarrenFeatureReservation in facade_bays:
+		assert_eq(bay.construction_records.size(), 1)
+		var bay_recipe_id := StringName(bay.construction_records[0].recipe_id)
+		assert_true(String(bay_recipe_id).begins_with("outcrop.embedded."),
+			"a facade bay must be a partial extrusion, not a glued-on room")
+		assert_true(bool(bay.audit.annex_is_embedded_partial_extrusion))
+		assert_almost_eq(float(bay.audit.annex_embedded_depth_m), 0.75, 0.001)
+		assert_almost_eq(float(bay.audit.annex_projected_depth_m), 0.75, 0.001)
+		var bay_recipe := _program().recipe(bay_recipe_id)
+		for required_piece: StringName in [&"floor", &"front", &"left",
+				&"right", &"cap"]:
+			assert_true(bay_recipe.placements.any(func(value: Dictionary) -> bool:
+				return StringName(value.id) == required_piece),
+				"%s lacks its %s architectural piece" % [bay_recipe_id,
+					required_piece])
 	assert_eq(courts.size(), 1)
 	if not courts.is_empty():
 		var court := courts[0]
@@ -1560,11 +1738,28 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 			"one-door straight shelves are not circulation or destinations")
 		assert_gte(int(balcony.audit.balcony_return_contact_cell_count), 1,
 			"every balcony must turn back into an inhabited side wall")
-		assert_eq(int(balcony.audit.balcony_usable_depth_cells), 2)
+		assert_eq(int(balcony.audit.balcony_usable_depth_cells), 3)
 		assert_eq(int(balcony.audit.balcony_door_count), 1)
-		assert_eq(int(balcony.audit.balcony_guard_segment_count), 6)
-		assert_eq(balcony.audit.balcony_support_kind, &"bracket_cantilever")
-		assert_eq(balcony.reserved_cells.size(), 6)
+		assert_eq(int(balcony.audit.balcony_guard_segment_count), 9)
+		assert_eq(int(balcony.audit.balcony_open_guard_seam_count), 1)
+		assert_eq(int(balcony.audit.balcony_door_guard_opening_count), 1)
+		assert_eq(int(balcony.audit.balcony_stair_count), 1)
+		assert_true(bool(balcony.audit.balcony_stair_connected_to_public_floor))
+		var stair_lows := balcony.audit.balcony_stair_low_landing_cells \
+			as Array[Vector3i]
+		assert_eq(stair_lows.size(), 1)
+		for stair_low: Vector3i in stair_lows:
+			assert_eq(plan.grid.use_at(stair_low), WarrenSpatialGrid.Use.PUBLIC_AIR)
+			assert_eq(int(plan.grid.face_claim(stair_low, Vector3i.DOWN).get(
+				"kind", -1)), WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR)
+		assert_eq(int(balcony.audit.balcony_door_clearance_depth_cells), 3,
+			"the outer guard must not stand directly in front of the door")
+		assert_true(bool(balcony.audit.balcony_continuous_front_deck),
+			"balcony front rails need one continuous authored platform below them")
+		assert_eq(balcony.audit.balcony_support_kind,
+			&"full_storey_diagonal_braces")
+		assert_eq(int(balcony.audit.balcony_support_count), 2)
+		assert_eq(balcony.reserved_cells.size(), 12)
 		var owner_id := StringName(balcony.audit.balcony_building_id)
 		balcony_owners[owner_id] = true
 		var facade_key := String(balcony.audit.balcony_facade_key)
@@ -1585,10 +1780,17 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 		assert_true(bool(outcrop.audit.outcrop_is_integrated_cantilever))
 		assert_gte(int(outcrop.audit.outcrop_room_footprint_column_count), 4)
 		assert_gte(int(outcrop.audit.outcrop_extension_column_count), 1)
-		assert_between(int(outcrop.audit.outcrop_projection_depth_cells), 1, 2)
+		assert_eq(int(outcrop.audit.outcrop_projection_depth_cells), 1)
+		assert_true(bool(outcrop.audit.outcrop_is_diagonal_overlap))
+		assert_eq(int(outcrop.audit.outcrop_projection_direction_count), 2)
+		assert_eq(int(outcrop.audit.outcrop_overlap_column_count),
+			int(outcrop.audit.outcrop_bearing_column_count))
 		assert_gte(int(outcrop.audit.outcrop_attachment_span_cells), 1)
 		assert_gte(float(outcrop.audit.outcrop_bearing_ratio), 0.5)
-		assert_gt(outcrop.construction_records.size(), 0)
+		var directly_borne := bool(outcrop.audit.get(
+			"outcrop_is_directly_borne", false))
+		assert_eq(outcrop.construction_records.is_empty(), directly_borne,
+			"only a floorplate already borne by adjacent occupied mass omits braces")
 		assert_eq(outcrop.construction_records.size(),
 			int(outcrop.audit.outcrop_support_course_count))
 		for record: Dictionary in outcrop.construction_records:

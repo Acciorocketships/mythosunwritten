@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_jhlkp"]
+
+[resource]
+script = ExtResource("1_jhlkp")
+id = &"sfv.fabric.wall.wood.window.roof.001.trimmed"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric_derivatives/sfv_fabric_wall_wood_window_roof_001_trimmed.tres"
+tags = Array[StringName]([&"bay_roof", &"building", &"fabric_wall", &"trimmed_eave", &"village"])
+measured_aabb = AABB(-1.25, -0.39614633, -0.8427793, 2.5, 0.80961186, 1.550241)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric_derivatives:sfv.fabric.wall.wood.window.roof.001.trimmed"

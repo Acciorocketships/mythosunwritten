@@ -76,6 +76,9 @@ var elevated_gallery_cells: Array[Vector3i] = []
 ## only so the broad-floor gate can distinguish the requested court motif from
 ## an accidental plaza made by unrelated route branches.
 var courtyard_cells: Array[Vector3i] = []
+## One explicitly authored ground-level 2x2 market square. Generic route
+## growth remains narrow; only a source-stamped square receives this exception.
+var market_square_cells: Array[Vector3i] = []
 var public_air_cells: Array[Vector3i] = []
 var daylight_void_cells: Array[Vector3i] = []
 var landing_cells: Array[Vector3i] = []
@@ -116,6 +119,7 @@ var _air_set: Dictionary = {}
 var _void_set: Dictionary = {}
 var _landing_set: Dictionary = {}
 var _courtyard_set: Dictionary = {}
+var _market_square_set: Dictionary = {}
 ## Cached fine-lattice floor ownership for public addresses.  A walk endpoint
 ## owns its complete 2x2 square; a stair/ramp intermediate owns only the exact
 ## two-lane treads from WarrenVolumeTransition.surface_cells().  Keeping this
@@ -180,6 +184,15 @@ func mark_courtyard_cell(cell: Vector3i) -> bool:
 	return add_landing(cell)
 
 
+func mark_market_square_cell(cell: Vector3i) -> bool:
+	if _sealed or not _walk_set.has(cell):
+		return false
+	if not _market_square_set.has(cell):
+		_market_square_set[cell] = true
+		market_square_cells.append(cell)
+	return add_landing(cell)
+
+
 func add_public_air(cell: Vector3i) -> void:
 	assert(not _sealed)
 	if not _air_set.has(cell):
@@ -237,6 +250,8 @@ func seal(p_entry_cell: Vector3i) -> bool:
 			return _reject("daylight void overlaps walk or public air at %s" % cell)
 	if not courtyard_cells.is_empty() and not _has_one_typed_courtyard():
 		return _reject("typed courtyard is not one 2x2 elevated square")
+	if not market_square_cells.is_empty() and not _has_one_typed_market_square():
+		return _reject("typed market is not one 2x2 ground square")
 	_exact_route_surface_set = _exact_route_surface_cells()
 	mass_cells = envelope.mass_cells.duplicate()
 	for cell: Vector3i in public_air_cells:
@@ -279,6 +294,20 @@ func has_exact_route_surface(cell: Vector3i) -> bool:
 	return _sealed and _exact_route_surface_set.has(_cell_key(cell))
 
 
+func exact_route_surface_cells() -> Array[Vector3i]:
+	## The canonical fine-grid floor carried by this volume. Consumers must
+	## compare against this set instead of expanding macro walk nodes again: a
+	## vertical stride owns only its exact two-lane tread/ramp span between the
+	## square endpoint landings.
+	var out: Array[Vector3i] = []
+	if not _sealed:
+		return out
+	out.assign(_exact_route_surface_set.values())
+	out.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return _cell_key(a) < _cell_key(b))
+	return out
+
+
 func address_bands() -> int:
 	## Bands of continuous mass beside a walk cell that make it ADDRESSED, taken
 	## from the envelope the route was cut through rather than from the constant
@@ -316,10 +345,18 @@ func deterministic_signature() -> String:
 	for cell: Vector3i in elevated_gallery_cells:
 		gallery_parts.append(_cell_key(cell))
 	gallery_parts.sort()
-	return "walk=%s|edges=%s|landings=%s|ground=%s|galleries=%s" % [
+	var market_parts := PackedStringArray()
+	for cell: Vector3i in market_square_cells:
+		market_parts.append(_cell_key(cell))
+	market_parts.sort()
+	var signature := "walk=%s|edges=%s|landings=%s|ground=%s|galleries=%s" % [
 		">".join(walk_parts), ">".join(transition_parts),
 		",".join(landing_parts), ",".join(ground_parts),
 		",".join(gallery_parts)]
+	# Preserve every legacy route signature byte-for-byte. The typed square is a
+	# maze-only addition and extends the signature only when it actually exists.
+	return signature if market_parts.is_empty() else "%s|market=%s" % [
+		signature, ",".join(market_parts)]
 
 
 func canonical_deterministic_signature() -> String:
@@ -596,6 +633,7 @@ func _build_audit() -> Dictionary:
 			float(ground_primary_two_sided_count) / float(ground_primary_count),
 		"elevated_gallery_walk_cell_count": elevated_gallery_cells.size(),
 		"elevated_courtyard_walk_cell_count": courtyard_cells.size(),
+		"market_square_walk_cell_count": market_square_cells.size(),
 		"daylight_void_cell_count": daylight_void_cells.size(),
 		"courtyard_daylight_macro_column_count":
 			_courtyard_daylight_macro_column_count(),
@@ -719,6 +757,10 @@ func _same_datum_public_square_count() -> int:
 				and _courtyard_set.has(back) \
 				and _courtyard_set.has(diagonal):
 			continue
+		if _market_square_set.has(cell) and _market_square_set.has(right) \
+				and _market_square_set.has(back) \
+				and _market_square_set.has(diagonal):
+			continue
 		result += 1
 	return result
 
@@ -730,6 +772,21 @@ func _has_one_typed_courtyard() -> bool:
 		if _courtyard_set.has(cell + Vector3i.RIGHT) \
 				and _courtyard_set.has(cell + Vector3i.BACK) \
 				and _courtyard_set.has(cell + Vector3i(1, 0, 1)):
+			return true
+	return false
+
+
+func _has_one_typed_market_square() -> bool:
+	if market_square_cells.size() != 4:
+		return false
+	for cell: Vector3i in market_square_cells:
+		if _market_square_set.has(cell + Vector3i.RIGHT) \
+				and _market_square_set.has(cell + Vector3i.BACK) \
+				and _market_square_set.has(cell + Vector3i(1, 0, 1)):
+			for market_cell: Vector3i in market_square_cells:
+				if market_cell.y != envelope.ground_at(
+						Vector2i(market_cell.x, market_cell.z)):
+					return false
 			return true
 	return false
 
@@ -843,15 +900,21 @@ func _exact_route_interior_cells(
 	# any interior cells created where other routes accrete around it remain and
 	# are still component-gated below.
 	if courtyard_cells.size() == 4:
-		var origin := _courtyard_macro_origin()
-		if origin.x != 2147483647:
-			var fine_origin := Vector3i(origin.x * 2, origin.y,
-				origin.z * 2)
-			for x_offset in [1, 2]:
-				for z_offset in [1, 2]:
-					result.erase(_cell_key(fine_origin \
-						+ Vector3i(x_offset, 0, z_offset)))
+		_remove_typed_square_interior(result, _courtyard_macro_origin())
+	if market_square_cells.size() == 4:
+		_remove_typed_square_interior(result, _market_macro_origin())
 	return result
+
+
+static func _remove_typed_square_interior(result: Dictionary,
+		origin: Vector3i) -> void:
+	if origin.x == 2147483647:
+		return
+	var fine_origin := Vector3i(origin.x * 2, origin.y, origin.z * 2)
+	for x_offset in [1, 2]:
+		for z_offset in [1, 2]:
+			result.erase(_cell_key(fine_origin \
+				+ Vector3i(x_offset, 0, z_offset)))
 
 
 func _courtyard_macro_origin() -> Vector3i:
@@ -859,6 +922,15 @@ func _courtyard_macro_origin() -> Vector3i:
 		if _courtyard_set.has(cell + Vector3i.RIGHT) \
 				and _courtyard_set.has(cell + Vector3i.BACK) \
 				and _courtyard_set.has(cell + Vector3i(1, 0, 1)):
+			return cell
+	return Vector3i(2147483647, 0, 0)
+
+
+func _market_macro_origin() -> Vector3i:
+	for cell: Vector3i in market_square_cells:
+		if _market_square_set.has(cell + Vector3i.RIGHT) \
+				and _market_square_set.has(cell + Vector3i.BACK) \
+				and _market_square_set.has(cell + Vector3i(1, 0, 1)):
 			return cell
 	return Vector3i(2147483647, 0, 0)
 

@@ -10,6 +10,7 @@ enum Kind {
 	ROOF_REPEAT,
 	ROOF_END,
 	PREFAB,
+	STAIR_SWITCHBACK,
 }
 
 var asset_id: StringName
@@ -26,6 +27,10 @@ var pair_offset := 0.0
 var seam_profile: StringName
 var material_family: StringName
 var visual_clearance := 0.0
+## Authored tread planes exclude handrails/posts from their vertical datums.
+## A switchback may therefore seal above its high walking surface.
+var stair_low_tread_y := 0.0
+var stair_high_tread_y := 0.0
 var _sealed := false
 var last_rejection := ""
 
@@ -60,6 +65,12 @@ func seal() -> bool:
 		Kind.ROOF_END:
 			if seam_profile.is_empty():
 				last_rejection = "roof end lacks a seam profile"
+				return false
+		Kind.STAIR_SWITCHBACK:
+			if stair_high_tread_y <= stair_low_tread_y \
+					or stair_low_tread_y < visual_bounds.position.y - 0.001 \
+					or stair_high_tread_y > visual_bounds.end.y + 0.001:
+				last_rejection = "switchback stair lacks measured tread planes"
 				return false
 	_sealed = true
 	return true

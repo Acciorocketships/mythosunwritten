@@ -29,6 +29,9 @@ static func from_volume(source: WarrenVolumePlan,
 		PublicRealmNode.AirRealm.EXTERIOR)
 	var node_ids: Array[StringName] = []
 	var walk_node_ids: Dictionary = {}
+	var elevated_supplemental_by_walk := \
+		_attached_elevated_supplemental_by_walk(source,
+			supplemental_surfaces)
 	var infill := WarrenPlatformInfillSolver.solve(source, parcels, pruning,
 		optional_infill_limit) \
 		if parcels != null and pruning != null else {
@@ -47,18 +50,32 @@ static func from_volume(source: WarrenVolumePlan,
 	var extensions := infill.extensions as Dictionary
 	for index in source.walk_cells.size():
 		var macro_cell := source.walk_cells[index]
+		var has_attached_roof_court := elevated_supplemental_by_walk.has(
+			macro_cell)
 		# Preserve the one authored third-storey court through the otherwise
 		# generic public-realm adapter. Its exact surface cells remain ordinary
 		# structural claims; the name lets the visual adapter give only this 6 m
-		# square a legible paving pattern without re-inferring topology.
+		# square a legible paving pattern without re-inferring topology. Compact
+		# and standard roof courts are already-sealed supplemental cells attached
+		# to one walk node; give that complete node the same typed name. Previously
+		# it stayed `volume.walk.*`, so a real 20-cell civic court rendered as an
+		# anonymous empty deck with none of the reviewed paving or edge planters.
 		var node_id := StringName("volume.courtyard.%02d" % index) \
-			if source.courtyard_cells.has(macro_cell) else \
+			if source.courtyard_cells.has(macro_cell) else StringName(
+				"volume.courtyard.rooftop.%02d" % index) \
+				if has_attached_roof_court else \
 			StringName("volume.walk.%02d" % index)
 		var surfaces := _square_surface_cells(macro_cell)
 		if extensions.has(macro_cell):
 			surfaces.append_array(extensions[macro_cell] as Array[Vector3i])
+		if has_attached_roof_court:
+			surfaces.append_array(elevated_supplemental_by_walk[macro_cell] \
+				as Array[Vector3i])
 		var node_value := PublicRealmNode.new(node_id,
-			_episode_kind(source, macro_cell), _surface_kind(source, macro_cell),
+			PublicRealmNode.EpisodeKind.COURT if has_attached_roof_court \
+				else _episode_kind(source, macro_cell),
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT \
+				if has_attached_roof_court else _surface_kind(source, macro_cell),
 			PublicRealmNode.AirRealm.EXTERIOR,
 			_cover_policy(source, macro_cell), surfaces, _air_for_surfaces(surfaces),
 			macro_cell.y, macro_cell.y, false, macro_cell == source.entry_cell)
@@ -126,11 +143,18 @@ static func from_volume(source: WarrenVolumePlan,
 		var surfaces := supplemental_components[component_index] \
 			as Array[Vector3i]
 		var node_id := StringName("volume.supplemental.%02d" % component_index)
+		var supplemental_kind := _supplemental_surface_kind(source, surfaces)
 		var node_value := PublicRealmNode.new(node_id,
-			PublicRealmNode.EpisodeKind.UNDERCROFT,
-			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
+			PublicRealmNode.EpisodeKind.COURT \
+				if supplemental_kind \
+					== PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT \
+				else PublicRealmNode.EpisodeKind.UNDERCROFT,
+			supplemental_kind,
 			PublicRealmNode.AirRealm.EXTERIOR,
-			PublicRealmNode.CoverPolicy.COVERED, surfaces,
+			PublicRealmNode.CoverPolicy.OPEN \
+				if supplemental_kind \
+					== PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT \
+				else PublicRealmNode.CoverPolicy.COVERED, surfaces,
 			_air_for_surfaces(surfaces), surfaces[0].y, surfaces[0].y,
 			false, false)
 		if not node_value.seal() or not realm.add_node(node_value):
@@ -241,6 +265,76 @@ static func _supplemental_surface_components(cells: Array[Vector3i],
 	components.sort_custom(func(a: Array, b: Array) -> bool:
 		return _fine_cell_less(a[0] as Vector3i, b[0] as Vector3i))
 	return components
+
+
+static func _attached_elevated_supplemental_by_walk(source: WarrenVolumePlan,
+		supplemental_surfaces: Array[Vector3i]) -> Dictionary:
+	## A route-connected roof court is part of the walk node it opens from, not a
+	## second graph episode pasted beside it. Folding the already-authoritative
+	## supplemental cells into that node permits a narrow doorway into the broad
+	## space while every inter-node route/stair seam keeps its existing two lanes.
+	var canonical: Dictionary = {}
+	for walk: Vector3i in source.walk_cells:
+		for cell: Vector3i in _square_surface_cells(walk):
+			canonical[cell] = true
+	for transition: WarrenVolumeTransition in source.transitions:
+		for cell: Vector3i in transition.surface_cells():
+			canonical[cell] = true
+	var remaining: Dictionary = {}
+	for cell: Vector3i in supplemental_surfaces:
+		if not canonical.has(cell):
+			remaining[cell] = true
+	var result: Dictionary = {}
+	while not remaining.is_empty():
+		var start := remaining.keys()[0] as Vector3i
+		var frontier: Array[Vector3i] = [start]
+		var component: Array[Vector3i] = []
+		remaining.erase(start)
+		while not frontier.is_empty():
+			var current: Vector3i = frontier.pop_back()
+			component.append(current)
+			for direction: Vector3i in CARDINAL_MACRO_DIRECTIONS:
+				var neighbor := current + direction
+				if remaining.erase(neighbor):
+					frontier.append(neighbor)
+		if _supplemental_surface_kind(source, component) \
+				!= PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
+			continue
+		var best_walk := Vector3i(2147483647, 2147483647, 2147483647)
+		var best_contact_count := 0
+		for walk: Vector3i in source.walk_cells:
+			var contact_count := 0
+			var walk_surfaces := _square_surface_cells(walk)
+			for court_cell: Vector3i in component:
+				for walk_cell: Vector3i in walk_surfaces:
+					var delta := court_cell - walk_cell
+					contact_count += int(delta.y == 0 \
+						and absi(delta.x) + absi(delta.z) == 1)
+			if contact_count > best_contact_count:
+				best_contact_count = contact_count
+				best_walk = walk
+		if best_contact_count <= 0:
+			continue
+		if not result.has(best_walk):
+			result[best_walk] = [] as Array[Vector3i]
+		(result[best_walk] as Array[Vector3i]).append_array(component)
+	for value: Variant in result.values():
+		(value as Array[Vector3i]).sort_custom(_fine_cell_less)
+	return result
+
+
+static func _supplemental_surface_kind(source: WarrenVolumePlan,
+		surfaces: Array[Vector3i]) -> PublicRealmSurfacePlan.SurfaceKind:
+	## Supplemental market aisles remain terrain streets. A route extension
+	## above its immutable terrain datum is structural circulation, so the common
+	## surface assembler gives it the same supported plank/collision treatment as
+	## authored upper terraces and courts.
+	for cell: Vector3i in surfaces:
+		var macro_column := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		if cell.y > source.envelope.ground_at(macro_column):
+			return PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT
+	return PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET
 
 
 static func _fine_cell_less(a: Vector3i, b: Vector3i) -> bool:

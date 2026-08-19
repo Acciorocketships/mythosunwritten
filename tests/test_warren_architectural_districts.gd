@@ -47,8 +47,32 @@ func test_vertical_storeys_share_a_quarter_but_keep_distinct_recipe_phases() \
 	assert_eq(WarrenSpatialFabricCompiler._room_recipe_facade_family(lower_id),
 		WarrenSpatialFabricCompiler._room_recipe_facade_family(upper_id),
 		"one vertical lineage crossed an architectural district")
+	assert_eq(WarrenSpatialFabricCompiler._room_recipe_facade_phase(lower_id) / 2,
+		WarrenSpatialFabricCompiler._room_recipe_facade_phase(upper_id) / 2,
+		"one vertical lineage crossed its segmented building style")
 	assert_ne(lower_id, upper_id,
 		"successive storeys lost their alternating authored facade treatment")
+
+
+func test_building_lineages_deterministically_reach_all_segment_styles() -> void:
+	var reached: Dictionary = {}
+	for index in 96:
+		var source_id := StringName("district.lineage.%d" % index)
+		var lower := WarrenRoomStamp.new(StringName("lower.%d" % index),
+			source_id, &"building", Vector3i(index * 2, 0, -index),
+			0, 0, false, false)
+		var upper := WarrenRoomStamp.new(StringName("upper.%d" % index),
+			source_id, &"slim", Vector3i(index * 2 + 3, 6, -index + 2),
+			1, 3, false, false)
+		var lower_style := WarrenSpatialFabricCompiler._building_style_index(
+			lower, 7007)
+		var upper_style := WarrenSpatialFabricCompiler._building_style_index(
+			upper, 7007)
+		assert_eq(lower_style, upper_style,
+			"a stepped stack changed construction family across its lineage")
+		reached[lower_style] = true
+	assert_eq(reached.size(), SettlementFabricProgram.BUILDING_STYLE_COUNT,
+		"the segmentation assignment cannot reach every building style")
 
 
 func test_broad_roofs_keep_the_town_palette_cool_weighted() \
@@ -117,9 +141,48 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 			"%s lost its finite dormer construction" % recipe_id)
 		var dormer_count := 0
 		for placement: Dictionary in recipe_value.placements:
-			dormer_count += int(String(placement.id).contains("dormer"))
+			if not String(placement.id).contains("dormer"):
+				continue
+			dormer_count += 1
+			var descriptor := _catalog.descriptor(StringName(placement.asset_id))
+			var bounds := (placement.transform as Transform3D) * \
+				descriptor.measured_aabb
+			assert_almost_eq(bounds.position.y,
+				SettlementFabricProgram.DORMER_EMBED_Y, 0.001,
+				"%s exposes the compact window's construction back" % recipe_id)
+			assert_lt(bounds.position.y, -0.10,
+				"%s must sink its open-backed sill into the host pitch" % recipe_id)
+			assert_lt(bounds.size.x, 1.7,
+				"%s dormer grew into a room-width second gable" % recipe_id)
+			assert_lt(bounds.size.y, 1.7,
+				"%s dormer grew into a full-storey second room" % recipe_id)
 		assert_eq(dormer_count, 1,
 			"%s must carry one integrated attic window" % recipe_id)
+		assert_true(recipe_value.has_tag(&"compact_composed_dormer"),
+			"%s did not retire the oversized stock A-frame" % recipe_id)
+		for stock_asset: StringName in [
+			SettlementFabricProgram.ROOF_WINDOW_01,
+			SettlementFabricProgram.ROOF_WINDOW_02,
+			SettlementFabricProgram.ROOF_WINDOW_03,
+			SettlementFabricProgram.ROOF_WINDOW_04,
+		]:
+			assert_false(recipe_value.asset_ids().has(stock_asset),
+				"%s still places a full-storey attic-window shell" % recipe_id)
+
+	var opposed := _program.recipe(&"roof.long.blue.dormer.pair.left")
+	assert_not_null(opposed)
+	if opposed == null:
+		return
+	assert_true(opposed.has_tag(&"opposed_dormer"))
+	var dormer_xs: Array[float] = []
+	for placement: Dictionary in opposed.placements:
+		if String(placement.id).contains("dormer"):
+			dormer_xs.append((placement.transform as Transform3D).origin.x)
+	assert_eq(dormer_xs.size(), 2)
+	assert_lt(dormer_xs.min(), -0.75,
+		"one longhouse dormer must face the negative eave")
+	assert_gt(dormer_xs.max(), -0.75,
+		"one longhouse dormer must face the positive eave")
 
 
 func test_plain_flat_roof_has_a_measured_central_garden_fallback() -> void:
@@ -157,8 +220,83 @@ func test_wrap_balconies_are_true_l_shaped_floorplates() -> void:
 		var columns: Dictionary = {}
 		for cell: Vector3i in recipe_value.walk_cells:
 			columns[Vector2i(cell.x, cell.z)] = true
-		assert_eq(columns.size(), 3,
-			"%s must turn one complete corner as an L" % recipe_id)
+		assert_eq(columns.size(), 6,
+			"%s must own a deep doorway landing plus one complete L return" \
+				% recipe_id)
+		var front_decks := 0
+		var return_decks := 0
+		var doorway_throats := 0
+		var diagonal_supports := 0
+		var guards := 0
+		var rail_blocks_door := false
+		var stair_high_tread_y := INF
+		var supports_meet_deck := true
+		for placement: Dictionary in recipe_value.placements:
+			front_decks += int(String(placement.id).begins_with("floor.front.") \
+				and StringName(placement.asset_id) \
+				== SettlementFabricProgram.GALLERY_FLOOR)
+			return_decks += int(StringName(placement.id) == &"floor.return" \
+				and StringName(placement.asset_id) \
+					== SettlementFabricProgram.SETBACK_CAP)
+			doorway_throats += int(StringName(placement.id) \
+					== &"floor.door.throat" and StringName(placement.asset_id) \
+					== SettlementFabricProgram.SETBACK_CAP)
+			diagonal_supports += int(String(placement.id).begins_with(
+					"support.diagonal.") \
+				and StringName(placement.asset_id) \
+					== SettlementFabricProgram.DIAGONAL_BRACE)
+			if String(placement.id).begins_with("support.diagonal."):
+				var support_contract := _program.module_program.contract(
+					SettlementFabricProgram.DIAGONAL_BRACE)
+				supports_meet_deck = supports_meet_deck and is_equal_approx(
+					(placement.transform as Transform3D).origin.y \
+						+ support_contract.visual_bounds.end.y, 0.0)
+			if StringName(placement.id) == &"stair.flight":
+				var stair_contract := _program.module_program.contract(
+					SettlementFabricProgram.STAIR_FULL)
+				stair_high_tread_y = (placement.transform as Transform3D).origin.y \
+					+ stair_contract.stair_high_tread_y
+			guards += int(String(placement.id).begins_with("guard."))
+			if String(placement.id).begins_with("guard."):
+				var guard_origin := (placement.transform as Transform3D).origin
+				rail_blocks_door = rail_blocks_door or (absf(guard_origin.x) < 0.1 \
+					and guard_origin.z > 0.0 \
+					and guard_origin.z < SettlementFabricProgram.CELL * 2.1)
+		assert_eq(front_decks, 2,
+			"%s needs two continuous native 3 m front-deck rows" % recipe_id)
+		assert_eq(return_decks, 1,
+			"%s needs one native 1.5 m side return" % recipe_id)
+		assert_eq(doorway_throats, 1,
+			"%s needs a third clear cell on the doorway circulation line" % recipe_id)
+		assert_eq(diagonal_supports, 2,
+			"%s needs two full-storey load paths below its overhang" % recipe_id)
+		assert_true(supports_meet_deck,
+			"%s support tops must meet the deck plane" % recipe_id)
+		assert_almost_eq(stair_high_tread_y, 0.0, 0.001,
+			"%s upper tread must be flush with the deck" % recipe_id)
+		assert_eq(guards, 9,
+			"%s must guard every exterior edge except its room and stair seams" \
+				% recipe_id)
+		assert_false(rail_blocks_door,
+			"%s must leave three clear cells on the doorway circulation line" \
+				% recipe_id)
+		assert_true(recipe_value.placements.any(func(value: Dictionary) -> bool:
+			return StringName(value.id) == &"stair.flight" \
+				and StringName(value.asset_id) \
+					== SettlementFabricProgram.STAIR_FULL),
+			"%s needs an authored flight at its open guard seam" % recipe_id)
+		var stair_high := recipe_value.socket(&"stair.high")
+		var stair_low := recipe_value.socket(&"stair.low")
+		assert_false(stair_high.is_empty())
+		assert_false(stair_low.is_empty())
+		assert_true(recipe_value.socket(&"stair.high.other").is_empty())
+		assert_true(recipe_value.socket(&"stair.low.other").is_empty())
+		assert_eq((stair_high.cell as Vector3i).y, 0)
+		assert_eq((stair_low.cell as Vector3i).y, -2)
+		assert_eq((stair_high.cell as Vector3i) - (stair_low.cell as Vector3i),
+			-(stair_high.facing as Vector3i) * 2 + Vector3i.UP * 2 \
+				+ Vector3i(0, 0, (stair_high.facing as Vector3i).x),
+			"the switchback's real high tread must meet the deck and its low tread the public floor")
 
 
 func test_lived_in_recipes_use_the_new_measured_prop_families() -> void:

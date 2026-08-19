@@ -1,4 +1,4 @@
-[gd_resource type="StandardMaterial3D" format=3 uid="uid://cilr5ps4qc6uw"]
+[gd_resource type="StandardMaterial3D" format=3]
 
 [resource]
 resource_name = "SFV_DOUBLE_SIDED_MATERIAL"

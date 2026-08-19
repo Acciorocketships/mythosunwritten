@@ -3,8 +3,20 @@
  "license": "Fantasy Village source-pack license",
  "default_scale": [
   1.0,
-  1.0,
-  1.0
+ 1.0,
+ 1.0
+ ],
+ "mirror_variants": [
+  {
+   "axis": "x",
+   "suffix": ".mirror_x",
+   "id_prefixes": [
+    "sfv.fabric.wall.wood.window.",
+    "sfv.fabric.wall.wood.plain.",
+    "sfv.fabric.wall.wood.door.",
+    "sfv.fabric.wall.rock.door."
+   ]
+  }
  ],
  "assets": [
   {

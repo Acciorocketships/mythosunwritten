@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 18
+const TOOL_VERSION := 20
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -59,9 +59,11 @@ func _bake_manifest(path: String) -> void:
 	var pack := String(manifest.get("pack", ""))
 	var license_label := String(manifest.get("license", ""))
 	var default_scale = manifest.get("default_scale", [1.0, 1.0, 1.0])
-	var entries: Array = manifest.get("assets", [])
+	var entries := _expanded_manifest_entries(manifest, path)
 	if pack.is_empty() or entries.is_empty():
 		_fail("Manifest %s requires pack and assets" % path)
+		return
+	if _failed:
 		return
 	if not _valid_scale(default_scale):
 		_fail("Manifest %s requires a finite positive three-axis default_scale" % path)
@@ -89,6 +91,70 @@ func _bake_manifest(path: String) -> void:
 		"license": license_label,
 		"assets": provenance,
 	}, "  ", true))
+
+
+func _expanded_manifest_entries(manifest: Dictionary, path: String) -> Array:
+	## A handed construction part is a baked asset, never a negative-scale
+	## runtime placement. A manifest may request deterministic mirrored variants
+	## for complete ID families without copying dozens of source-pack records.
+	var source_entries: Array = manifest.get("assets", [])
+	var out: Array = []
+	var ids: Dictionary = {}
+	for value: Variant in source_entries:
+		if not value is Dictionary:
+			_fail("Manifest %s contains a non-dictionary asset" % path)
+			return []
+		var entry := (value as Dictionary).duplicate(true)
+		var asset_id := String(entry.get("id", ""))
+		if asset_id.is_empty() or ids.has(asset_id):
+			_fail("Manifest %s contains an empty or duplicate asset id: %s" % [
+				path, asset_id])
+			return []
+		ids[asset_id] = true
+		out.append(entry)
+	var variant_specs: Variant = manifest.get("mirror_variants", [])
+	if not variant_specs is Array:
+		_fail("Manifest %s mirror_variants must be an array" % path)
+		return []
+	for spec_value: Variant in variant_specs:
+		if not spec_value is Dictionary:
+			_fail("Manifest %s contains a non-dictionary mirror variant" % path)
+			return []
+		var spec := spec_value as Dictionary
+		var suffix := String(spec.get("suffix", ""))
+		var axis := String(spec.get("axis", ""))
+		var prefixes: Variant = spec.get("id_prefixes", [])
+		if suffix.is_empty() or axis not in ["x", "y", "z"] \
+				or not prefixes is Array or (prefixes as Array).is_empty():
+			_fail("Manifest %s has an invalid mirror variant" % path)
+			return []
+		for value: Variant in source_entries:
+			var source := value as Dictionary
+			var source_id := String(source.get("id", ""))
+			var selected := false
+			for prefix_value: Variant in prefixes as Array:
+				var prefix := String(prefix_value)
+				if prefix.is_empty():
+					_fail("Manifest %s has an empty mirror id prefix" % path)
+					return []
+				selected = selected or source_id.begins_with(prefix)
+			if not selected:
+				continue
+			var derived_id := source_id + suffix
+			if ids.has(derived_id):
+				_fail("Manifest %s derives duplicate asset id %s" % [path,
+					derived_id])
+				return []
+			var derived := source.duplicate(true)
+			derived["id"] = derived_id
+			derived["mirror_axis"] = axis
+			var tags: Array = derived.get("tags", []) as Array
+			if not tags.has("mirrored_variant"):
+				tags.append("mirrored_variant")
+			derived["tags"] = tags
+			ids[derived_id] = true
+			out.append(derived)
+	return out
 
 func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		default_scale: Variant) -> Dictionary:
@@ -165,6 +231,19 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		_fail("green_hue must be absent or in [0,1]: %s" % asset_id)
 		root.free()
 		return {}
+	var material_override: Material = null
+	var material_override_path := String(entry.get("material_override", ""))
+	if not material_override_path.is_empty():
+		if not material_override_path.begins_with("res://"):
+			_fail("material_override must be a res:// path: %s" % asset_id)
+			root.free()
+			return {}
+		material_override = load(material_override_path) as Material
+		if material_override == null:
+			_fail("Cannot load material override for %s: %s" % [asset_id,
+				material_override_path])
+			root.free()
+			return {}
 	var pieces: Array[EnvironmentVisualPiece] = []
 	var bounds := AABB()
 	var has_bounds := false
@@ -192,6 +271,12 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		root.free()
 		return {}
 	var merge_pieces := bool(entry.get("merge_pieces", false))
+	var mirror_axis_name := String(entry.get("mirror_axis", ""))
+	if not mirror_axis_name.is_empty() \
+			and (mirror_axis_name not in ["x", "y", "z"] or not merge_pieces):
+		_fail("Asset %s mirror_axis requires x/y/z and merge_pieces" % asset_id)
+		root.free()
+		return {}
 	if merge_pieces and (ribbon_stride > 0 or component_ribbon_rows > 0):
 		_fail("Asset %s cannot combine merge_pieces with ribbon simplifiers" % asset_id)
 		root.free()
@@ -211,6 +296,14 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 			_fail("Could not merge structural visual pieces: %s" % asset_id)
 			root.free()
 			return {}
+		merged = _clip_merged_asset(merged, entry, asset_id)
+		if merged == null:
+			root.free()
+			return {}
+		merged = _mirror_merged_asset(merged, mirror_axis_name, asset_id)
+		if merged == null:
+			root.free()
+			return {}
 		var baked_mesh := _bake_mesh(merged, pack, asset_id, piece_index,
 			supports_color, material_tint, green_hue, fallback_albedo,
 			fallback_albedos_by_material)
@@ -220,6 +313,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		var piece := EnvironmentVisualPiece.new()
 		piece.mesh = baked_mesh
 		piece.local_transform = Transform3D.IDENTITY
+		_configure_visual_piece(piece, material_override, entry, supports_color)
 		pieces.append(piece)
 		bounds = baked_mesh.get_aabb()
 		has_bounds = true
@@ -237,6 +331,16 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 				visual_root, correction, collision_excluded)
 			if collision_mesh_override == null:
 				_fail("Collision mesh exclusions removed all geometry: %s" % asset_id)
+				root.free()
+				return {}
+			collision_mesh_override = _clip_merged_asset(collision_mesh_override,
+				entry, asset_id)
+			if collision_mesh_override == null:
+				root.free()
+				return {}
+			collision_mesh_override = _mirror_merged_asset(
+				collision_mesh_override, mirror_axis_name, asset_id)
+			if collision_mesh_override == null:
 				root.free()
 				return {}
 		stack.clear()
@@ -260,6 +364,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		var piece := EnvironmentVisualPiece.new()
 		piece.mesh = baked_mesh
 		piece.local_transform = correction
+		_configure_visual_piece(piece, material_override, entry, supports_color)
 		pieces.append(piece)
 		bounds = correction * baked_mesh.get_aabb()
 		has_bounds = true
@@ -281,6 +386,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		var piece := EnvironmentVisualPiece.new()
 		piece.mesh = baked_mesh
 		piece.local_transform = local
+		_configure_visual_piece(piece, material_override, entry, supports_color)
 		pieces.append(piece)
 		var piece_bounds: AABB = local * baked_mesh.get_aabb()
 		bounds = piece_bounds if not has_bounds else bounds.merge(piece_bounds)
@@ -346,6 +452,54 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		"parameters": entry.duplicate(true),
 		"metrics": metrics,
 	}
+
+
+func _clip_merged_asset(mesh: ArrayMesh, entry: Dictionary,
+		asset_id: String) -> ArrayMesh:
+	var axis_name := String(entry.get("clip_axis", ""))
+	var range_value: Variant = entry.get("clip_range", [])
+	if axis_name.is_empty() and range_value is Array \
+			and (range_value as Array).is_empty():
+		return mesh
+	if axis_name not in ["x", "y", "z"] or not range_value is Array \
+			or (range_value as Array).size() != 2:
+		_fail("clip_axis/clip_range must name x/y/z and two bounds: %s" \
+			% asset_id)
+		return null
+	var minimum := float((range_value as Array)[0])
+	var maximum := float((range_value as Array)[1])
+	if not is_finite(minimum) or not is_finite(maximum) or maximum <= minimum:
+		_fail("clip_range must be finite and increasing: %s" % asset_id)
+		return null
+	var axis := Vector3.AXIS_X if axis_name == "x" \
+		else Vector3.AXIS_Y if axis_name == "y" else Vector3.AXIS_Z
+	var clipped := EnvironmentBakeGeometry.clip_axis_range(mesh, axis,
+		minimum, maximum)
+	if clipped == null:
+		_fail("clip_range removed or could not clip asset: %s" % asset_id)
+	return clipped
+
+
+func _mirror_merged_asset(mesh: ArrayMesh, axis_name: String,
+		asset_id: String) -> ArrayMesh:
+	if axis_name.is_empty():
+		return mesh
+	var axis := Vector3.AXIS_X if axis_name == "x" \
+		else Vector3.AXIS_Y if axis_name == "y" else Vector3.AXIS_Z
+	var mirrored := EnvironmentBakeGeometry.mirror_axis(mesh, axis)
+	if mirrored == null:
+		_fail("mirror_axis could not reflect asset: %s" % asset_id)
+	return mirrored
+
+
+func _configure_visual_piece(piece: EnvironmentVisualPiece,
+		material_override: Material, entry: Dictionary,
+		supports_color: bool) -> void:
+	if material_override == null:
+		return
+	piece.material_override = material_override
+	piece.use_instance_color = bool(entry.get("use_instance_color",
+		supports_color))
 
 
 func _excluded_mesh_paths(entry: Dictionary, visual_root: Node,
@@ -1743,7 +1897,11 @@ func _prune_unmanifested_descriptors() -> void:
 				_fail("Invalid bake manifest during catalogue prune: %s" % path)
 				manifest_directory.list_dir_end()
 				return
-			for value: Variant in (parsed as Dictionary).get("assets", []):
+			var entries := _expanded_manifest_entries(parsed as Dictionary, path)
+			if _failed:
+				manifest_directory.list_dir_end()
+				return
+			for value: Variant in entries:
 				if value is Dictionary:
 					var asset_id := String((value as Dictionary).get("id", ""))
 					if not asset_id.is_empty():

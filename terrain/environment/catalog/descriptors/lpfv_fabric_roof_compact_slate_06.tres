@@ -1,15 +1,14 @@
 [gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
 
-[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_descriptor"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_6m6pw"]
 
 [resource]
-script = ExtResource("1_descriptor")
+script = ExtResource("1_6m6pw")
 id = &"lpfv.fabric.roof.compact.slate.06"
-visual_path = "res://terrain/environment/visuals/warren/lpfv_fabric_roof_compact_slate_06.tres"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06.tres"
 tags = Array[StringName]([&"building", &"compact_roof", &"fabric_roof", &"palette_variant", &"village"])
 measured_aabb = AABB(-1.828262, 0, -2.0819523, 3.656524, 2.1728587, 4.163907)
 ground_contact_points = PackedVector2Array()
 collision_piece_count = 1
 tint_group = &"identity"
-supports_instance_color = false
-provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.roof.compact.orange.06:slate_variant"
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.roof.compact.slate.06"

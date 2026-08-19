@@ -6,7 +6,7 @@ extends RefCounted
 ## its exact private/structural cells and construction transform. Generic room
 ## and roof compilation may respond to these facts but never recreate them.
 const TARGET_SKYWALKS := 3
-const TARGET_PREFAB_LANDMARKS := 2
+const TARGET_PREFAB_LANDMARKS := 4
 const MIN_TOWER_ANNEXES_PER_THREE_STOREY_LINEAGE := \
 	WarrenRoomCompositionPlanner.THREE_STOREY_TOWER_ANNEXES
 const MIN_TOWER_ANNEXES_PER_TALL_LINEAGE := \
@@ -28,6 +28,7 @@ static var last_failure := ""
 static var last_audit: Dictionary = {}
 static var last_skywalk_diagnostic: Dictionary = {}
 static var last_outcropping_diagnostic: Dictionary = {}
+static var last_annex_diagnostic: Dictionary = {}
 static var _last_interstitial_rejection := ""
 
 
@@ -44,6 +45,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	last_audit = {}
 	last_skywalk_diagnostic = {}
 	last_outcropping_diagnostic = {}
+	last_annex_diagnostic = {}
 	if grid == null or grid.is_sealed() or source == null \
 			or not source.is_sealed() or buildings.is_empty() or supports == null \
 			or not supports.is_sealed():
@@ -99,6 +101,16 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			% [landmarks.size(), target_landmarks]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(landmarks)
+	var residual_jetty_supports := _reserve_residual_jetty_supports(grid,
+		buildings, supports, construction_program, out, source.world_seed)
+	if not last_failure.is_empty():
+		return [] as Array[WarrenFeatureReservation]
+	out.append_array(residual_jetty_supports)
+	var arcade_overhang_supports := _reserve_arcade_overhang_supports(grid,
+		buildings, supports, construction_program, out, source.world_seed)
+	if not last_failure.is_empty():
+		return [] as Array[WarrenFeatureReservation]
+	out.append_array(arcade_overhang_supports)
 	var skywalks := _reserve_preplanned_skywalks(grid, buildings, supports,
 		preplanned_skywalks, landmarks) if not preplanned_skywalks.is_empty() \
 		else _reserve_skywalks(grid, buildings, supports, source.world_seed,
@@ -136,21 +148,30 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		source.world_seed, construction_program, out, target_outcroppings)
 	var unresolved_outcroppings := int(last_outcropping_diagnostic.get(
 		"unresolved_integrated_cantilever_count", 0))
-	if outcroppings.size() < minimum_outcroppings \
-			or unresolved_outcroppings != 0:
-		last_failure = ("only %d of %d room-scale outcroppings exist; " \
-			+ "%d structural cantilevers remain unsupported: %s") % [
-			outcroppings.size(), minimum_outcroppings, unresolved_outcroppings,
+	if unresolved_outcroppings != 0:
+		last_failure = ("%d structural cantilevers remain unsupported: %s") % [
+			unresolved_outcroppings,
 			JSON.stringify(last_outcropping_diagnostic)]
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(outcroppings)
 	var raw_tower_annex_targets := composition_audit.get(
 		"tower_relief_annex_target_by_lineage", {}) as Dictionary
+	# Full-room corner overlaps remain available as diagnostic recipes, but are
+	# deliberately not a production repair. If the room compiler still needs one
+	# to disguise a vertical shaft, reject this construction candidate and let the
+	# bounded town search choose coherent massing instead. Shallow embedded oriels
+	# are selected independently below and remain the production facade relief.
+	if target_outcroppings == 0 and not raw_tower_annex_targets.is_empty():
+		last_failure = ("room composition requires disabled diagonal outcroppings: " \
+			+ "%s") % [raw_tower_annex_targets]
+		return [] as Array[WarrenFeatureReservation]
 	var tower_relief := _tower_annex_targets_after_structural_outcroppings(
-		raw_tower_annex_targets, outcroppings)
+		raw_tower_annex_targets if target_outcroppings > 0 else {},
+		outcroppings)
 	var tower_annex_targets := tower_relief.targets as Dictionary
 	var tower_annexes := _reserve_tower_annexes(grid, buildings, supports,
 		source.world_seed, construction_program, out, tower_annex_targets)
+	var tower_annex_diagnostic := last_annex_diagnostic.duplicate(true)
 	var required_tower_annexes := 0
 	for target_value: Variant in tower_annex_targets.values():
 		required_tower_annexes += int(target_value)
@@ -171,7 +192,36 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			tower_annex_relief_units, required_tower_annexes,
 			tower_annexes.size(), annexes_by_source]
 		return [] as Array[WarrenFeatureReservation]
+	# A same-storey full-room bump-out is a diagonal union, not a small room
+	# attached beyond one facade. First satisfy the mandatory anti-shaft targets
+	# above, then search every eligible upper tower globally for the remaining
+	# visual quota. Choosing exactly N source IDs before spatial qualification made
+	# one blocked tower reject towns that still had several clear corner overlaps.
 	out.append_array(tower_annexes)
+	var desired_extra_diagonal := maxi(0,
+		target_outcroppings - outcroppings.size() - tower_annexes.size())
+	var extra_diagonal_outcrops: Array[WarrenFeatureReservation] = []
+	var extra_diagonal_diagnostic: Dictionary = {}
+	if desired_extra_diagonal > 0:
+		var diagonal_pool := _diagonal_outcrop_target_pool(buildings,
+			source.world_seed)
+		extra_diagonal_outcrops = _reserve_tower_annexes(grid, buildings,
+			supports, source.world_seed, construction_program, out, diagonal_pool,
+			&"tower_annex", desired_extra_diagonal)
+		extra_diagonal_diagnostic = last_annex_diagnostic.duplicate(true)
+		tower_annexes.append_array(extra_diagonal_outcrops)
+	var room_outcropping_count := outcroppings.size() + tower_annexes.size()
+	if room_outcropping_count < minimum_outcroppings:
+		last_failure = ("only %d of %d full-scale room outcroppings exist; " \
+			+ "vertical=%d diagonal-overlap=%d: %s") % [
+			room_outcropping_count, minimum_outcroppings, outcroppings.size(),
+			tower_annexes.size(), JSON.stringify(extra_diagonal_diagnostic)]
+		return [] as Array[WarrenFeatureReservation]
+	out.append_array(extra_diagonal_outcrops)
+	var diagonal_outcrop_sources: Dictionary = {}
+	for annex: WarrenFeatureReservation in tower_annexes:
+		diagonal_outcrop_sources[StringName(
+			annex.audit.annex_source_parcel_id)] = true
 	var balconies := _reserve_balconies(grid, buildings, supports,
 		source.world_seed, construction_program, out, target_balconies)
 	var balcony_buildings: Dictionary = {}
@@ -213,13 +263,15 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		facade_bay_target_count, source.world_seed)
 	var facade_bays := _reserve_tower_annexes(grid, buildings, supports,
 		source.world_seed, construction_program, out, facade_bay_targets,
-		&"facade_bay")
+		&"facade_bay", facade_bay_target_count)
+	var facade_bay_diagnostic := last_annex_diagnostic.duplicate(true)
 	out.append_array(facade_bays)
 	last_audit = {
 		"elevated_courtyard_count": int(
 			scale_profile.requires_elevated_courtyard),
 		"covered_market_count": int(market != null),
 		"frontier_gateway_support_count": gateway_supports.size(),
+		"arcade_overhang_support_count": arcade_overhang_supports.size(),
 		"frontier_gateway_direct_bearing_count": int(
 			gateway_resolution.get("direct_bearing_count", 0)),
 		"prefab_landmark_count": landmarks.size(),
@@ -235,13 +287,20 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		"facade_bay_target_count": facade_bay_target_count,
 		"facade_bay_source_count": facade_bay_targets.size(),
 		"facade_bay_count": facade_bays.size(),
+		"facade_bay_diagnostic": facade_bay_diagnostic,
+		"tower_annex_diagnostic": tower_annex_diagnostic,
+		"extra_diagonal_outcrop_diagnostic": extra_diagonal_diagnostic,
 		"interstitial_join_count": interstitial_joins.size(),
 		"interstitial_join_class_counts": interstitial_result.get(
 			"class_counts", {}),
 		"usable_balcony_count": balconies.size(),
 		"balcony_building_count": balcony_buildings.size(),
 		"wraparound_balcony_count": wraparound_balcony_count,
-		"room_outcropping_count": outcroppings.size(),
+		"room_outcropping_count": room_outcropping_count,
+		"vertical_floorplate_outcropping_count": outcroppings.size(),
+		"full_scale_diagonal_overlap_count": tower_annexes.size(),
+		"full_scale_diagonal_overlap_source_count":
+			diagonal_outcrop_sources.size(),
 		"feature_count": out.size(),
 	}
 	last_audit.merge(last_outcropping_diagnostic, false)
@@ -288,6 +347,43 @@ static func _tower_annex_relief_units(
 		var recipe_id := String(annex.audit.get("annex_recipe_id", ""))
 		units += 2 if recipe_id.contains("corner") else 1
 	return units
+
+
+static func _diagonal_outcrop_target_pool(
+		buildings: Array[WarrenBuildingVolume], world_seed: int) -> Dictionary:
+	## Return every real upper-storey tower floorplate as a bounded target pool.
+	## A tower room is 3 x 3 m, exactly the size of the reviewed diagonal corner
+	## recipe before their shared 1.5 x 1.5 m quadrant is removed. Larger parent
+	## rooms would make the same recipe read as a small applique, so they are not
+	## eligible for this full-scale contract.
+	var out: Dictionary = {}
+	var eligible_storeys_by_source: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.kind != &"tower" or room.source_storey_index < 1:
+				continue
+			if not eligible_storeys_by_source.has(room.source_parcel_id):
+				eligible_storeys_by_source[room.source_parcel_id] = {}
+			(eligible_storeys_by_source[room.source_parcel_id] \
+				as Dictionary)[room.source_storey_index] = true
+	var candidates: Array[Dictionary] = []
+	for source_value: Variant in eligible_storeys_by_source.keys():
+		var source_id := StringName(source_value)
+		var storeys := eligible_storeys_by_source[source_id] as Dictionary
+		candidates.append({
+			"source_id": source_id,
+			"capacity": mini(storeys.size(), 2),
+			"upper_storey": storeys.keys().max() if not storeys.is_empty() else -1,
+			"tie": posmod(Helper._mix64(world_seed \
+				^ String(source_id).hash() ^ 0x444941474f4e414c), 1000003),
+		})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.upper_storey) != int(b.upper_storey):
+			return int(a.upper_storey) > int(b.upper_storey)
+		return int(a.tie) < int(b.tie))
+	for candidate: Dictionary in candidates:
+		out[StringName(candidate.source_id)] = int(candidate.capacity)
+	return out
 
 
 static func _reserve_frontier_gateway_supports(grid: WarrenSpatialGrid,
@@ -398,6 +494,364 @@ static func _reserve_frontier_gateway_supports(grid: WarrenSpatialGrid,
 	return out
 
 
+static func _reserve_residual_jetty_supports(grid: WarrenSpatialGrid,
+		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
+		program: SettlementFabricProgram,
+		existing_features: Array[WarrenFeatureReservation], world_seed: int) \
+		-> Array[WarrenFeatureReservation]:
+	## Residual bridge rooms with two flanks need no added construction. A room
+	## admitted from one exact flank is different: its sealed room audit carries
+	## the measured bracket courses selected with the topology, and this adapter
+	## reserves those attachments before balconies or facade relief can spend the
+	## same envelope.
+	var out: Array[WarrenFeatureReservation] = []
+	if program == null:
+		last_failure = "residual jetties lack a construction program"
+		return out
+	var ordered: Array[Dictionary] = []
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			var records := room.audit.get("bridge_support_records", []) as Array
+			if records.is_empty():
+				continue
+			ordered.append({"building": building, "room": room,
+				"records": records})
+	ordered.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return String((a.room as WarrenRoomStamp).stable_id) \
+			< String((b.room as WarrenRoomStamp).stable_id))
+	for entry: Dictionary in ordered:
+		var building := entry.building as WarrenBuildingVolume
+		var room := entry.room as WarrenRoomStamp
+		var records := entry.records as Array
+		var related := {room.stable_id: true}
+		for flank_value: Variant in room.audit.get(
+				"bridge_support_room_ids", []) as Array:
+			related[StringName(flank_value)] = true
+		var analysis := _outcrop_support_analysis(records, related, buildings,
+			existing_features, program, world_seed)
+		if not StringName(analysis.conflict).is_empty():
+			last_failure = "residual jetty %s support conflicts with %s" % [
+				room.stable_id, StringName(analysis.conflict)]
+			return [] as Array[WarrenFeatureReservation]
+		var feature_id := StringName("spatial.feature.residual_jetty.%02d" \
+			% out.size())
+		var tx := grid.begin_transaction(feature_id)
+		if not tx.reserve(room.private_cells,
+				WarrenSpatialGrid.Reservation.FEATURE, feature_id) or not tx.commit():
+			last_failure = "residual jetty %s could not reserve its bracket seam" \
+				% room.stable_id
+			return [] as Array[WarrenFeatureReservation]
+		var feature := WarrenFeatureReservation.new(feature_id,
+			&"frontier_gateway_support")
+		if not feature.add_reserved_cells(room.private_cells) \
+				or not feature.add_endpoint(room.private_cells[0],
+					building.stable_id) \
+				or not feature.set_support_node(building.stable_id):
+			last_failure = "residual jetty %s support identity failed" \
+				% room.stable_id
+			return [] as Array[WarrenFeatureReservation]
+		for record_value: Variant in records:
+			var record := record_value as Dictionary
+			if not feature.add_construction_record(
+					StringName(record.recipe_id), record.origin as Vector3i,
+					int(record.yaw_quarters), StringName(record.role)):
+				last_failure = "residual jetty %s bracket record failed" \
+					% room.stable_id
+				return [] as Array[WarrenFeatureReservation]
+		if not feature.set_audit_facts({
+				"gateway_room_id": room.stable_id,
+				"gateway_is_terrain_anchored": false,
+				"gateway_is_flank_borne": true,
+				"gateway_support_course_count": records.size(),
+				"gateway_support_neighbor_room_ids":
+					analysis.neighbor_room_ids,
+			}) or not feature.seal(grid, supports):
+			last_failure = "residual jetty %s support seal failed: %s" % [
+				room.stable_id, feature.last_rejection]
+			return [] as Array[WarrenFeatureReservation]
+		out.append(feature)
+	return out
+
+
+static func _reserve_arcade_overhang_supports(grid: WarrenSpatialGrid,
+		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
+		program: SettlementFabricProgram,
+		existing_features: Array[WarrenFeatureReservation], world_seed: int) \
+		-> Array[WarrenFeatureReservation]:
+	## A larger upper plate may bridge one exact 3 x 3 m route bay while half of
+	## it bears on a tower.  That is useful carved-city massing, but the outer end
+	## cannot be treated as borne merely because the size-mismatch cantilever is
+	## outside the decorative diagonal-outcrop grammar.  Wrap every such passage
+	## in a complete four-sided stone base, with arches only where the exact route
+	## continues through its perimeter.
+	var out: Array[WarrenFeatureReservation] = []
+	if program == null:
+		last_failure = "arcade overhangs lack the measured foundation vocabulary"
+		return out
+	var rooms_by_source: Dictionary = {}
+	var building_by_room: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			building_by_room[room.stable_id] = building
+			if not rooms_by_source.has(room.source_parcel_id):
+				rooms_by_source[room.source_parcel_id] = [] \
+					as Array[WarrenRoomStamp]
+			(rooms_by_source[room.source_parcel_id] \
+				as Array[WarrenRoomStamp]).append(room)
+	var candidates: Array[Dictionary] = []
+	for rooms_value: Variant in rooms_by_source.values():
+		var rooms := rooms_value as Array[WarrenRoomStamp]
+		rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
+			return a.source_storey_index < b.source_storey_index)
+		for index in range(1, rooms.size()):
+			var lower := rooms[index - 1]
+			var upper := rooms[index]
+			var geometry := _arcade_overhang_geometry(lower, upper, grid)
+			if geometry.is_empty():
+				continue
+			candidates.append({"lower": lower, "upper": upper,
+				"geometry": geometry})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return String((a.upper as WarrenRoomStamp).stable_id) \
+			< String((b.upper as WarrenRoomStamp).stable_id))
+	for candidate: Dictionary in candidates:
+		var lower := candidate.lower as WarrenRoomStamp
+		var upper := candidate.upper as WarrenRoomStamp
+		var building := building_by_room.get(upper.stable_id) \
+			as WarrenBuildingVolume
+		var geometry := candidate.geometry as Dictionary
+		if building == null:
+			last_failure = "arcade overhang %s lost its upper building" \
+				% upper.stable_id
+			return [] as Array[WarrenFeatureReservation]
+		var record := _arcade_overhang_support_record(upper, geometry)
+		if record.is_empty():
+			last_failure = "arcade overhang %s has no exact foundation transform" \
+				% upper.stable_id
+			return [] as Array[WarrenFeatureReservation]
+		if program.recipe(StringName(record.recipe_id)) == null:
+			last_failure = "arcade overhang %s lacks foundation recipe %s" % [
+				upper.stable_id, StringName(record.recipe_id)]
+			return [] as Array[WarrenFeatureReservation]
+		var related := {upper.stable_id: true, lower.stable_id: true}
+		var analysis := _outcrop_support_analysis([record] as Array[Dictionary],
+			related, buildings, existing_features, program, world_seed)
+		if not StringName(analysis.conflict).is_empty():
+			last_failure = "arcade overhang %s portal conflicts with %s" % [
+				upper.stable_id, StringName(analysis.conflict)]
+			return [] as Array[WarrenFeatureReservation]
+		var feature_id := StringName("spatial.feature.arcade_overhang.%02d" \
+			% out.size())
+		var tx := grid.begin_transaction(feature_id)
+		if not tx.reserve(upper.private_cells,
+				WarrenSpatialGrid.Reservation.FEATURE, feature_id) or not tx.commit():
+			last_failure = "arcade overhang %s could not reserve its upper seam" \
+				% upper.stable_id
+			return [] as Array[WarrenFeatureReservation]
+		var feature := WarrenFeatureReservation.new(feature_id,
+			&"arcade_overhang_support")
+		if not feature.add_reserved_cells(upper.private_cells) \
+				or not feature.add_endpoint(upper.private_cells[0],
+					building.stable_id) \
+				or not feature.set_support_node(building.stable_id) \
+				or not feature.add_construction_record(
+					StringName(record.recipe_id), record.origin as Vector3i,
+					int(record.yaw_quarters), &"arcade_stone_foundation"):
+			last_failure = "arcade overhang %s foundation identity failed" \
+				% upper.stable_id
+			return [] as Array[WarrenFeatureReservation]
+		var neighbor_ids: Array[StringName] = [lower.stable_id]
+		for neighbor_value: Variant in analysis.neighbor_room_ids:
+			var neighbor_id := StringName(neighbor_value)
+			if neighbor_id != upper.stable_id and not neighbor_ids.has(neighbor_id):
+				neighbor_ids.append(neighbor_id)
+		neighbor_ids.sort()
+		if not feature.set_audit_facts({
+				"arcade_upper_room_id": upper.stable_id,
+				"arcade_lower_room_id": lower.stable_id,
+				"arcade_is_route_spanning": true,
+				"arcade_projection_direction": geometry.direction,
+				"arcade_projection_depth_cells": int(geometry.depth_cells),
+				"arcade_attachment_span_cells": int(
+					geometry.attachment_span_cells),
+				"arcade_public_air_cell_count": (
+					geometry.public_air_cells as Array).size(),
+				"arcade_opening_mask": int(record.opening_mask),
+				"arcade_opening_count": _bit_count_4(int(record.opening_mask)),
+				"arcade_support_face_count": 4,
+				"arcade_support_course_count": 1,
+				"arcade_support_neighbor_room_ids": neighbor_ids,
+			}) or not feature.seal(grid, supports):
+			last_failure = "arcade overhang %s portal seal failed: %s" % [
+				upper.stable_id, feature.last_rejection]
+			return [] as Array[WarrenFeatureReservation]
+		out.append(feature)
+	return out
+
+
+static func _arcade_overhang_geometry(lower: WarrenRoomStamp,
+		upper: WarrenRoomStamp, grid: WarrenSpatialGrid) -> Dictionary:
+	## Recognize only the basic, legible case: a two-cell tower plate is one half
+	## of a four-cell slim/row plate, and the other 3 x 3 m half spans two full
+	## public-air bands.  Larger or diagonal cases stay in their own grammars.
+	if lower == null or upper == null or grid == null \
+			or upper.lattice_origin.y - lower.lattice_origin.y \
+				!= WarrenSpatialGrid.STOREY_CELLS:
+		return {}
+	var lower_columns := _room_columns(lower)
+	var upper_columns := _room_columns(upper)
+	if lower_columns.size() != 4 or upper_columns.size() != 8:
+		return {}
+	var extension: Dictionary = {}
+	for column_value: Variant in upper_columns.keys():
+		var column := column_value as Vector2i
+		if not lower_columns.has(column):
+			extension[column] = true
+	for column_value: Variant in lower_columns.keys():
+		if not upper_columns.has(column_value):
+			return {}
+	if extension.size() != 4 or not _columns_are_connected(extension):
+		return {}
+	var lower_bounds := _column_bounds(lower_columns)
+	var extension_bounds := _column_bounds(extension)
+	var lower_min := lower_bounds.minimum as Vector2i
+	var lower_max := lower_bounds.maximum as Vector2i
+	var extension_min := extension_bounds.minimum as Vector2i
+	var extension_max := extension_bounds.maximum as Vector2i
+	var direction := Vector2i.ZERO
+	if extension_max.x == lower_min.x - 1 \
+			and extension_min.x == lower_min.x - 2 \
+			and extension_min.y == lower_min.y \
+			and extension_max.y == lower_max.y:
+		direction = Vector2i.LEFT
+	elif extension_min.x == lower_max.x + 1 \
+			and extension_max.x == lower_max.x + 2 \
+			and extension_min.y == lower_min.y \
+			and extension_max.y == lower_max.y:
+		direction = Vector2i.RIGHT
+	elif extension_max.y == lower_min.y - 1 \
+			and extension_min.y == lower_min.y - 2 \
+			and extension_min.x == lower_min.x \
+			and extension_max.x == lower_max.x:
+		direction = Vector2i.UP
+	elif extension_min.y == lower_max.y + 1 \
+			and extension_max.y == lower_max.y + 2 \
+			and extension_min.x == lower_min.x \
+			and extension_max.x == lower_max.x:
+		direction = Vector2i.DOWN
+	if direction == Vector2i.ZERO:
+		return {}
+	var attachment: Dictionary = {}
+	for column_value: Variant in lower_columns.keys():
+		var column := column_value as Vector2i
+		if extension.has(column + direction):
+			attachment[column] = true
+	if attachment.size() != 2:
+		return {}
+	var public_air_cells: Array[Vector3i] = []
+	for column_value: Variant in extension.keys():
+		var column := column_value as Vector2i
+		for y in range(upper.lattice_origin.y - WarrenSpatialGrid.STOREY_CELLS,
+				upper.lattice_origin.y):
+			var cell := Vector3i(column.x, y, column.y)
+			if grid.use_at(cell) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+				return {}
+			public_air_cells.append(cell)
+	var opening_directions: Array[Vector3i] = []
+	var passage_y := upper.lattice_origin.y - WarrenSpatialGrid.STOREY_CELLS
+	for opening_direction: Vector3i in [Vector3i.FORWARD, Vector3i.RIGHT,
+			Vector3i.BACK, Vector3i.LEFT]:
+		var direction_2d := Vector2i(opening_direction.x, opening_direction.z)
+		var opens := false
+		for column_value: Variant in extension.keys():
+			var column := column_value as Vector2i
+			var neighbor_column := column + direction_2d
+			if extension.has(neighbor_column):
+				continue
+			var neighbor := Vector3i(neighbor_column.x, passage_y,
+				neighbor_column.y)
+			var floor_claim := grid.face_claim(neighbor, Vector3i.DOWN)
+			if grid.use_at(neighbor) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+					and int(floor_claim.get("kind", -1)) \
+						== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+				opens = true
+				break
+		if opens:
+			opening_directions.append(opening_direction)
+	if opening_directions.is_empty():
+		return {}
+	return {
+		"valid": true,
+		"direction": direction,
+		"depth_cells": 2,
+		"attachment_span_cells": 2,
+		"attachment_columns": _sorted_columns(attachment),
+		"extension_columns": _sorted_columns(extension),
+		"public_air_cells": public_air_cells,
+		"opening_directions": opening_directions,
+	}
+
+
+static func _arcade_overhang_support_record(upper: WarrenRoomStamp,
+		geometry: Dictionary) -> Dictionary:
+	if upper == null or not bool(geometry.get("valid", false)):
+		return {}
+	var direction_2d := geometry.get("direction", Vector2i.ZERO) as Vector2i
+	var direction := Vector3i(direction_2d.x, 0, direction_2d.y)
+	var yaw := _yaw_for_local_direction(Vector3i.BACK, direction)
+	if yaw < 0:
+		return {}
+	var span_direction_3d := FabricRecipe.transform_direction(Vector3i.RIGHT,
+		yaw)
+	var span_direction := Vector2i(span_direction_3d.x, span_direction_3d.z)
+	var attachment: Array[Vector2i] = []
+	attachment.assign(geometry.get("attachment_columns", []) as Array)
+	if attachment.size() != 2:
+		return {}
+	attachment.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x * span_direction.x + a.y * span_direction.y \
+			< b.x * span_direction.x + b.y * span_direction.y)
+	if attachment[1] != attachment[0] + span_direction:
+		return {}
+	var opening_mask := 0
+	for world_direction_value: Variant in geometry.get("opening_directions", []):
+		var local_direction := FabricRecipe.transform_direction(
+			world_direction_value as Vector3i, 4 - yaw)
+		opening_mask |= _arcade_portal_bit(local_direction)
+	if opening_mask <= 0:
+		return {}
+	return {
+		"recipe_id": SettlementFabricProgram \
+			.arcade_overhang_foundation_recipe_id(opening_mask),
+		"origin": Vector3i(attachment[0].x, upper.lattice_origin.y,
+			attachment[0].y),
+		"yaw_quarters": yaw,
+		"role": &"arcade_stone_foundation",
+		"opening_mask": opening_mask,
+	}
+
+
+static func _arcade_portal_bit(direction: Vector3i) -> int:
+	match direction:
+		Vector3i.FORWARD:
+			return SettlementFabricProgram.FEATURE_PORTAL_NORTH
+		Vector3i.RIGHT:
+			return SettlementFabricProgram.FEATURE_PORTAL_EAST
+		Vector3i.BACK:
+			return SettlementFabricProgram.FEATURE_PORTAL_SOUTH
+		Vector3i.LEFT:
+			return SettlementFabricProgram.FEATURE_PORTAL_WEST
+		_:
+			return 0
+
+
+static func _bit_count_4(mask: int) -> int:
+	var count := 0
+	for bit in 4:
+		count += int(mask & (1 << bit) != 0)
+	return count
+
+
 static func _frontier_gateway_is_directly_borne(room: WarrenRoomStamp,
 		geometry: Dictionary, grid: WarrenSpatialGrid) -> bool:
 	if room == null or grid == null or not bool(geometry.get("valid", false)):
@@ -464,8 +918,10 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		world_seed: int, program: SettlementFabricProgram,
 		existing_features: Array[WarrenFeatureReservation],
 		tower_annex_targets: Dictionary,
-		feature_kind: StringName = &"tower_annex") \
+		feature_kind: StringName = &"tower_annex",
+		selection_limit: int = -1) \
 		-> Array[WarrenFeatureReservation]:
+	last_annex_diagnostic = {"feature_kind": feature_kind}
 	if program == null or feature_kind not in [&"tower_annex", &"facade_bay"]:
 		return [] as Array[WarrenFeatureReservation]
 	var rooms_by_source: Dictionary = {}
@@ -486,7 +942,15 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			target_sources[source_id] = int(
 				tower_annex_targets[source_value])
 	if target_sources.is_empty():
+		last_annex_diagnostic["target_source_count"] = 0
 		return [] as Array[WarrenFeatureReservation]
+	var endpoint_count := 0
+	var eligible_endpoint_count := 0
+	var recipe_attempt_count := 0
+	var feature_overlap_rejection_count := 0
+	var body_rejection_count := 0
+	var clearance_rejection_count := 0
+	var room_envelope_rejection_count := 0
 	var used_endpoint_cells: Dictionary = {}
 	for feature: WarrenFeatureReservation in existing_features:
 		for endpoint: Dictionary in feature.endpoints:
@@ -504,46 +968,57 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	# finite vocabularies separate prevents a decorative bay from becoming a
 	# complete miniature house glued to another house.
 	var recipe_ids: Array[StringName] = []
-	# Shed dormers are retired from wall-mounted projections: the reviewed
-	# capture showed the single sloped plane over an open frame reads as a
-	# stray floating stair, not a bay. Gable dormers keep the framed,
-	# obviously-inhabited silhouette.
+	# Facade bays are occupied pieces of architecture, not attic-window props or
+	# complete rooms attached at the facade. Each reviewed oriel crosses the
+	# parent wall plane: half of its 1.5 m shell is embedded and half projects.
 	if feature_kind == &"facade_bay":
 		recipe_ids.assign([
-			&"outcrop.dormer.gable.teal.left",
-			&"outcrop.dormer.gable.teal.right",
-			&"outcrop.dormer.gable.orange.left",
-			&"outcrop.dormer.gable.orange.right",
+			&"outcrop.embedded.blue", &"outcrop.embedded.orange",
+			&"outcrop.embedded.amber",
 		])
 	else:
+		# Every structural annex is now the full-scale diagonal union. The former
+		# straight 3 m boxes (`outcrop.blue/orange`) and dormer/flue/cap decorations
+		# remain valid vocabulary elsewhere, but cannot satisfy a room bump-out or
+		# tower-massing obligation.
 		recipe_ids.assign([
-			&"outcrop.blue", &"outcrop.orange",
-			&"outcrop.corner.wrap.left.amber",
+			&"outcrop.corner.wrap.left.blue",
 			&"outcrop.corner.wrap.right.blue",
 			&"outcrop.corner.wrap.left.orange",
+			&"outcrop.corner.wrap.right.orange",
+			&"outcrop.corner.wrap.left.amber",
 			&"outcrop.corner.wrap.right.amber",
-			&"outcrop.dormer.gable.teal.left",
-			&"outcrop.dormer.gable.orange.right",
-			&"outcrop.flue.corner.left.blue",
-			&"outcrop.flue.corner.right.orange",
-			&"outcrop.capped.corner.left.amber",
-			&"outcrop.capped.corner.right.amber",
 		])
 	var candidates: Array[Dictionary] = []
 	for endpoint: Dictionary in _balcony_room_endpoints(buildings):
+		endpoint_count += 1
 		var room := endpoint.room as WarrenRoomStamp
 		if not target_sources.has(room.source_parcel_id) \
 				or room.source_storey_index < 1 \
+				or feature_kind == &"tower_annex" and room.kind != &"tower" \
 				or used_endpoint_cells.has(endpoint.cell as Vector3i):
 			continue
+		eligible_endpoint_count += 1
 		var facing := endpoint.facing as Vector3i
 		var building := endpoint.building as WarrenBuildingVolume
+		var parent_theme := WarrenSpatialFabricCompiler \
+			._architectural_district_theme(room.lattice_origin, world_seed)
 		var allowed_owner_ids := owner_ids_by_source[room.source_parcel_id] \
 			as Dictionary
 		for recipe_id: StringName in recipe_ids:
+			recipe_attempt_count += 1
+			# The extrusion is part of this building's shell, so it must use the
+			# exact district facade family of its parent. A differently coloured
+			# annex made the clean lattice union still read as a second prefab.
+			if not String(recipe_id).ends_with(".%s" % String(parent_theme)):
+				continue
 			var recipe := program.recipe(recipe_id)
 			if recipe == null or not recipe.has_tag(&"outcropping") \
 					or recipe.bearing_parent_count != 1:
+				continue
+			if feature_kind == &"tower_annex" and (not recipe.has_tag(
+					&"full_scale_diagonal_overlap") or not recipe.has_tag(
+					&"no_duplicate_overlap_shell")):
 				continue
 			var socket := recipe.socket(&"room.back")
 			var yaw := _yaw_for_local_direction(Vector3i.FORWARD, -facing)
@@ -560,10 +1035,12 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			# compiler must never be asked to repair such an overlap visually.
 			if _feature_bounds_overlap_existing_features(feature_bounds,
 					existing_features, program):
+				feature_overlap_rejection_count += 1
 				continue
 			var body := _feature_recipe_cells(recipe, origin, yaw)
 			if body.is_empty() or not WarrenVolumetricSolver \
 					._skywalk_body_fits_grid(grid, body):
+				body_rejection_count += 1
 				continue
 			var components: Array[Dictionary] = [{"recipe_id": recipe_id,
 				"origin": origin, "yaw_quarters": yaw}]
@@ -571,10 +1048,12 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				._skywalk_visual_clearance_cells(components, program)
 			var clearance_audit := _balcony_clearance_audit(grid, clearance,
 				body, allowed_owner_ids, origin.y)
-			if not bool(clearance_audit.get("fits", false)) \
-					or not _tower_annex_clears_room_envelopes(recipe, origin,
-						yaw, room.source_parcel_id, buildings, program,
-						world_seed):
+			if not bool(clearance_audit.get("fits", false)):
+				clearance_rejection_count += 1
+				continue
+			if not _tower_annex_clears_room_envelopes(recipe, origin,
+					yaw, room.source_parcel_id, buildings, program, world_seed):
+				room_envelope_rejection_count += 1
 				continue
 			candidates.append({"recipe_id": recipe_id, "origin": origin,
 				"yaw_quarters": yaw, "body": body, "clearance": clearance,
@@ -586,6 +1065,17 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				"vertical_facade_key": _tower_annex_vertical_facade_key(
 					endpoint.cell as Vector3i, facing),
 				"room": room, "building": building,
+				"embedded_partial_extrusion": recipe.has_tag(
+					&"embedded_oriel"),
+				"embedded_depth_m": 0.75 if recipe.has_tag(
+					&"embedded_oriel") else 0.0,
+				"projected_depth_m": 0.75 if recipe.has_tag(
+					&"embedded_oriel") else 0.0,
+				"full_scale_diagonal_overlap": recipe.has_tag(
+					&"full_scale_diagonal_overlap"),
+				"compound_union_shell": recipe.has_tag(
+					&"compound_union_shell"),
+				"matches_parent_palette": true,
 				"allowed_owner_ids": allowed_owner_ids,
 				"tie": posmod(Helper._mix64(world_seed \
 					^ String(room.stable_id).hash() * 31 \
@@ -605,10 +1095,24 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				else int(a.body_cell_count) > int(b.body_cell_count)
 		return int(a.tie) < int(b.tie))
 	var out: Array[WarrenFeatureReservation] = []
+	var existing_kind_count := existing_features.filter(
+		func(feature: WarrenFeatureReservation) -> bool:
+			return feature.kind == feature_kind).size()
+	var refreshed_rejection_count := 0
+	var commit_rejection_count := 0
 	var source_ids: Array[StringName] = []
-	source_ids.assign(target_sources.keys())
-	source_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
-		return String(a) < String(b))
+	if feature_kind == &"facade_bay":
+		# Candidates already rank upper rooms first, then use the deterministic
+		# visual tie. Preserve that ordering while reducing to one search lane per
+		# lineage; lexical parcel order has no architectural meaning.
+		for candidate: Dictionary in candidates:
+			var source_id := (candidate.room as WarrenRoomStamp).source_parcel_id
+			if not source_ids.has(source_id):
+				source_ids.append(source_id)
+	else:
+		source_ids.assign(target_sources.keys())
+		source_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+			return String(a) < String(b))
 	var selected_by_source: Dictionary = {}
 	for source_id: StringName in source_ids:
 		selected_by_source[source_id] = [] as Array[Dictionary]
@@ -649,6 +1153,7 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 					candidate.allowed_owner_ids as Dictionary,
 					(candidate.origin as Vector3i).y)
 				if not bool(refreshed.get("fits", false)):
+					refreshed_rejection_count += 1
 					continue
 				if chosen.is_empty() or vertical_distance > chosen_distance:
 					chosen = candidate.duplicate()
@@ -659,11 +1164,31 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 			if chosen.is_empty():
 				continue
 			var feature := _commit_tower_annex(grid, chosen, supports,
-				out.size(), feature_kind)
+				existing_kind_count + out.size(), feature_kind)
 			if feature == null:
+				commit_rejection_count += 1
 				continue
 			prior.append(chosen)
 			out.append(feature)
+			if selection_limit >= 0 and out.size() >= selection_limit:
+				break
+		if selection_limit >= 0 and out.size() >= selection_limit:
+			break
+	last_annex_diagnostic = {
+		"feature_kind": feature_kind,
+		"target_source_count": target_sources.size(),
+		"endpoint_count": endpoint_count,
+		"eligible_endpoint_count": eligible_endpoint_count,
+		"recipe_attempt_count": recipe_attempt_count,
+		"feature_overlap_rejection_count": feature_overlap_rejection_count,
+		"body_rejection_count": body_rejection_count,
+		"clearance_rejection_count": clearance_rejection_count,
+		"room_envelope_rejection_count": room_envelope_rejection_count,
+		"candidate_count": candidates.size(),
+		"refreshed_rejection_count": refreshed_rejection_count,
+		"commit_rejection_count": commit_rejection_count,
+		"selected_count": out.size(),
+	}
 	return out
 
 
@@ -694,8 +1219,12 @@ static func _facade_bay_targets(buildings: Array[WarrenBuildingVolume],
 		tower_annexes: Array[WarrenFeatureReservation], target_count: int,
 		world_seed: int) -> Dictionary:
 	## One bay per lineage is enough to create a recognisable macroscopic wall
-	## rhythm without turning every facade module into noisy applique. Prefer
-	## upper occupied rooms and lineages not already repaired by a tower annex.
+	## rhythm without turning every facade module into noisy applique. Return the
+	## complete ranked source pool here: `target_count` caps successful commits,
+	## not search attempts. The former first-N shortlist could select two cramped
+	## lineages and conclude that an otherwise open town had no bay locations.
+	if target_count <= 0:
+		return {}
 	var excluded: Dictionary = {}
 	for annex: WarrenFeatureReservation in tower_annexes:
 		excluded[StringName(annex.audit.get(
@@ -720,7 +1249,7 @@ static func _facade_bay_targets(buildings: Array[WarrenBuildingVolume],
 			return int(a.upper_storey) > int(b.upper_storey)
 		return int(a.tie) < int(b.tie))
 	var out: Dictionary = {}
-	for index in mini(target_count, candidates.size()):
+	for index in candidates.size():
 		out[StringName(candidates[index].source_id)] = 1
 	return out
 
@@ -838,6 +1367,18 @@ static func _commit_tower_annex(grid: WarrenSpatialGrid,
 				"annex_relief_profile_key": "%s/%s" % [
 					String(room.source_parcel_id), String(candidate.recipe_id)],
 				"annex_reserved_cell_count": body.size(),
+				"annex_is_embedded_partial_extrusion": bool(candidate.get(
+					"embedded_partial_extrusion", false)),
+				"annex_embedded_depth_m": float(candidate.get(
+					"embedded_depth_m", 0.0)),
+				"annex_projected_depth_m": float(candidate.get(
+					"projected_depth_m", 0.0)),
+				"annex_is_full_scale_diagonal_overlap": bool(candidate.get(
+					"full_scale_diagonal_overlap", false)),
+				"annex_uses_compound_union_shell": bool(candidate.get(
+					"compound_union_shell", false)),
+				"annex_matches_parent_palette": bool(candidate.get(
+					"matches_parent_palette", false)),
 			}) or not feature.seal(grid, supports):
 		return null
 	return feature
@@ -1187,8 +1728,11 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		&"existing_feature_overlap": 0,
 		&"body_blocked": 0,
 		&"missing_return_contact": 0,
+		&"missing_public_stair_landing": 0,
 		&"clearance_blocked": 0,
 	}
+	var stair_rejection_samples: Array[Dictionary] = []
+	var clearance_rejection_samples: Array[Dictionary] = []
 	var recipe_ids: Array[StringName] = [
 		&"balcony.wrap.left.blue.planted",
 		&"balcony.wrap.right.orange.planted",
@@ -1241,6 +1785,54 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 					or return_contacts.is_empty():
 				rejection_counts[&"missing_return_contact"] += 1
 				continue
+			var stair_high := recipe.socket(&"stair.high")
+			var stair_low := recipe.socket(&"stair.low")
+			if stair_high.is_empty() or stair_low.is_empty():
+				rejection_counts[&"missing_public_stair_landing"] += 1
+				continue
+			var stair_high_world: Array[Vector3i] = [
+				FabricRecipe.transform_cell(stair_high.cell as Vector3i, origin, yaw),
+			]
+			var stair_low_world: Array[Vector3i] = [
+				FabricRecipe.transform_cell(stair_low.cell as Vector3i, origin, yaw),
+			]
+			var stair_lands := true
+			for index in stair_low_world.size():
+				var low_cell := stair_low_world[index]
+				var stair_floor := grid.face_claim(low_cell, Vector3i.DOWN)
+				stair_lands = stair_lands and body.has(stair_high_world[index]) \
+					and grid.use_at(low_cell) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+					and not stair_floor.is_empty() \
+					and int(stair_floor.get("kind", -1)) \
+						== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR
+			if not stair_lands:
+				rejection_counts[&"missing_public_stair_landing"] += 1
+				if stair_rejection_samples.size() < 12:
+					var nearby_public_floors: Array[Vector3i] = []
+					for nearby_z in range(origin.z - 3, origin.z + 4):
+						for nearby_x in range(origin.x - 3, origin.x + 4):
+							var nearby := Vector3i(nearby_x, origin.y - 1,
+								nearby_z)
+							var nearby_floor := grid.face_claim(nearby,
+								Vector3i.DOWN)
+							if grid.use_at(nearby) \
+									== WarrenSpatialGrid.Use.PUBLIC_AIR \
+									and int(nearby_floor.get("kind", -1)) \
+										== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+								nearby_public_floors.append(nearby)
+					stair_rejection_samples.append({
+						"recipe_id": recipe_id,
+						"origin": origin,
+						"yaw": yaw,
+						"high": stair_high_world,
+						"high_in_body": [body.has(stair_high_world[0])],
+						"low": stair_low_world,
+						"low_use": [grid.use_at(stair_low_world[0])],
+						"low_floor_kind": [int(grid.face_claim(
+							stair_low_world[0], Vector3i.DOWN).get("kind", -1))],
+						"nearby_public_floors": nearby_public_floors,
+					})
+				continue
 			if _feature_bounds_overlap_unrelated_room(recipe, origin, yaw,
 					building.stable_id, room.source_parcel_id,
 					return_contacts, room_clearance_bounds):
@@ -1264,8 +1856,16 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				body, owner_ids, origin.y)
 			if not bool(clearance_audit.get("fits", false)):
 				rejection_counts[&"clearance_blocked"] += 1
+				if clearance_rejection_samples.size() < 8:
+					var clearance_sample := clearance_audit.duplicate()
+					clearance_sample["origin"] = origin
+					clearance_sample["recipe_id"] = recipe_id
+					clearance_rejection_samples.append(clearance_sample)
 				continue
 			var facade_key := _balcony_facade_key(endpoint_cell, facing)
+			var guard_segment_count := 0
+			for placement: Dictionary in recipe.placements:
+				guard_segment_count += int(String(placement.id).begins_with("guard."))
 			candidates.append({"recipe_id": recipe_id, "origin": origin,
 				"yaw_quarters": yaw, "body": body, "clearance": clearance,
 				"clearance_only": clearance_audit.clearance_only,
@@ -1275,8 +1875,13 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				"building": building, "allowed_owner_ids": owner_ids,
 				"facade_key": facade_key,
 				"wraparound": recipe.has_tag(&"wraparound_balcony"),
+				"stair_high_cells": stair_high_world,
+				"stair_low_cells": stair_low_world,
+				"stair_outward": FabricRecipe.transform_direction(
+					stair_high.facing as Vector3i, yaw),
 				"return_contact_cells": return_contacts,
 				"usable_floor_cell_count": recipe.walk_cells.size(),
+				"guard_segment_count": guard_segment_count,
 				"covered_public_count": int(clearance_audit.covered_public_count),
 				"tie": posmod(Helper._mix64(world_seed ^ String(recipe_id).hash()
 					^ endpoint_cell.x * 31 ^ endpoint_cell.y * 43 \
@@ -1330,6 +1935,10 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		used_facades[String(candidate.facade_key)] = true
 	last_skywalk_diagnostic["balcony_candidate_count"] = candidates.size()
 	last_skywalk_diagnostic["balcony_rejection_counts"] = rejection_counts
+	last_skywalk_diagnostic["balcony_stair_rejection_samples"] = \
+		stair_rejection_samples
+	last_skywalk_diagnostic["balcony_clearance_rejection_samples"] = \
+		clearance_rejection_samples
 	return out
 
 
@@ -1350,6 +1959,9 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 	var room := candidate.room as WarrenRoomStamp
 	var allowed_owner_ids := candidate.allowed_owner_ids as Dictionary
 	var base_y := (candidate.origin as Vector3i).y
+	var stair_high_cells := candidate.stair_high_cells as Array[Vector3i]
+	var stair_low_cells := candidate.stair_low_cells as Array[Vector3i]
+	var stair_outward := candidate.stair_outward as Vector3i
 	var tx := grid.begin_transaction(feature_id)
 	if not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
 			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
@@ -1383,6 +1995,8 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 				kind = WarrenSpatialGrid.FaceKind.OPEN_SEAM
 			elif allowed_owner_ids.has(grid.owner_name_at(neighbor)):
 				kind = WarrenSpatialGrid.FaceKind.FACADE
+			elif cell in stair_high_cells and direction == stair_outward:
+				kind = WarrenSpatialGrid.FaceKind.OPEN_SEAM
 			elif cell.y == base_y:
 				kind = WarrenSpatialGrid.FaceKind.GUARD
 			if not tx.claim_face(cell, direction, kind, feature_id):
@@ -1407,14 +2021,24 @@ static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
 					candidate.return_contact_cells as Array).size(),
 				"balcony_usable_width_cells": 2 \
 					if bool(candidate.wraparound) else 2,
-				"balcony_usable_depth_cells": 2 \
+				"balcony_usable_depth_cells": 3 \
 					if bool(candidate.wraparound) else 1,
 				"balcony_usable_floor_cell_count": int(
 					candidate.usable_floor_cell_count),
 				"balcony_door_count": 1,
-				"balcony_guard_segment_count": 6 \
-					if bool(candidate.wraparound) else 4,
-				"balcony_support_kind": &"bracket_cantilever",
+				"balcony_guard_segment_count": int(
+					candidate.guard_segment_count),
+				"balcony_open_guard_seam_count": 1,
+				"balcony_door_guard_opening_count": 1,
+				"balcony_stair_count": 1,
+				"balcony_stair_high_landing_cells": stair_high_cells,
+				"balcony_stair_low_landing_cells": stair_low_cells,
+				"balcony_stair_connected_to_public_floor": true,
+				"balcony_door_clearance_depth_cells": 3 \
+					if bool(candidate.wraparound) else 1,
+				"balcony_continuous_front_deck": true,
+				"balcony_support_kind": &"full_storey_diagonal_braces",
+				"balcony_support_count": 2,
 				"balcony_reserved_headroom_cell_count": body.size(),
 				"balcony_visual_clearance_cell_count":
 					(candidate.clearance as Dictionary).size(),
@@ -1431,10 +2055,11 @@ static func _reserve_interstitial_joins(grid: WarrenSpatialGrid,
 		existing_features: Array[WarrenFeatureReservation]) -> Dictionary:
 	## Consume every one-cell interstitial slot with a typed two-owner
 	## construction. A slot is a 1.5 m residual course trapped between occupied
-	## walls; coincidental mesh adjacency is not a seam, so each slot becomes a
-	## stepped shoulder lean-to (bearing below, exactly one continuing upper
-	## wall), or deliberately sealed infill (slit between continuing walls,
-	## buried under bridging mass or capped to the sky). Any slot without a
+	## walls; coincidental mesh adjacency is not a seam, so each slot becomes
+	## deliberately sealed infill (buried under bridging mass or capped to the
+	## sky). The former one-sided lean-to shoulder is intentionally retired: a
+	## roof spanning a 1.5 m residual slot read as an unattached roof even when
+	## its conservative envelope and bearing seam were technically valid. Any slot without a
 	## complete authored closure rejects the town with a reason-coded refusal.
 	if program == null:
 		return {"failure": "interstitial joins need the measured vocabulary"}
@@ -1502,8 +2127,7 @@ static func _reserve_interstitial_joins(grid: WarrenSpatialGrid,
 			for offset in prefix_size:
 				accepted.append(run_cells[offset])
 			var run_class := StringName(classified.get("class", &""))
-			var chunks := _interstitial_chunks(accepted,
-				run_class == &"stepped_shoulder")
+			var chunks := _interstitial_chunks(accepted)
 			for chunk: Array[Vector3i] in chunks:
 				var feature := _commit_interstitial_join(grid, buildings,
 					supports, world_seed, program, chunk, trap_axis,
@@ -1548,30 +2172,13 @@ static func _interstitial_run(grid: WarrenSpatialGrid, gap_cells: Dictionary,
 
 
 static func _classify_interstitial_run(grid: WarrenSpatialGrid,
-		claimed: Dictionary, run_cells: Array[Vector3i],
-		trap_axis: StringName) -> Dictionary:
-	## Decide the single typed closure for a straight slot run. The distinction
-	## is measured, not stylistic: a stepped shoulder has bearing below and
-	## exactly one wall continuing above; sealed infill is a slit between two
-	## continuing walls or lies buried under bridging upper mass.
-	var trap_positive := Vector3i(1, 0, 0) if trap_axis == &"x" \
-		else Vector3i(0, 0, 1)
-	var continuing_sides: Dictionary = {}
-	for side: int in [-1, 1]:
-		var continuous := true
-		var owners: Dictionary = {}
-		for cell: Vector3i in run_cells:
-			var upper: Vector3i = cell + Vector3i.UP + trap_positive * side
-			if grid.use_at(upper) != WarrenSpatialGrid.Use.PRIVATE_VOLUME:
-				continuous = false
-				break
-			owners[grid.owner_name_at(upper)] = true
-		if continuous and owners.size() == 1:
-			continuing_sides[side] = StringName(owners.keys()[0])
-	# A stepped shoulder must bear on real room mass: its lean-to recipe binds
-	# one exact `bearing.top` column of the room below. Strips filled earlier
-	# in this pass count as generic support for sealed infill, but they author
-	# no bearing sockets, so they cannot carry a shoulder.
+		_claimed: Dictionary, run_cells: Array[Vector3i],
+		_trap_axis: StringName) -> Dictionary:
+	## Decide whether the deliberately sealed strip is buried by upper mass or
+	## capped to the sky, and whether it bears below or side-anchors to its two
+	## occupied neighbours. One-sided sloping closures are not admitted here:
+	## their roof footprint is necessarily wider than this residual course and
+	## proved visually ambiguous in adversarial captures.
 	var bearing_below := true
 	for cell: Vector3i in run_cells:
 		var below := cell + Vector3i.DOWN
@@ -1588,13 +2195,7 @@ static func _classify_interstitial_run(grid: WarrenSpatialGrid,
 					grid, above):
 			covered_above = false
 			break
-	if continuing_sides.size() == 1 and bearing_below and not covered_above \
-			and run_cells.size() >= 2:
-		return {"class": &"stepped_shoulder",
-			"wall_side": int(continuing_sides.keys()[0]),
-			"upper_owner": continuing_sides.values()[0],
-			"bearing_kind": &"below"}
-	# Every remaining trapped course seals as deliberate infill. With a
+	# Every trapped course seals as deliberate infill. With a
 	# continuing wall or bridging cover above it reads as a stepped seam;
 	# with two flush walltops it reads as a joined parapet between the two
 	# houses; over an alley it becomes the soffit of a one-cell underpass.
@@ -1606,22 +2207,15 @@ static func _classify_interstitial_run(grid: WarrenSpatialGrid,
 		"bearing_kind": &"below" if bearing_below else &"side"}
 
 
-static func _interstitial_chunks(run_cells: Array[Vector3i],
-		shoulder: bool) -> Array:
-	## Authored closures exist for finite lengths only: lean-to shoulders in
-	## 2/4/6-cell bays, sealed infill in 1/2-cell strips. Longer runs split
-	## deterministically from the run start; a shoulder remainder of one cell
-	## becomes a capped sealed end.
+static func _interstitial_chunks(run_cells: Array[Vector3i]) -> Array:
+	## Authored sealed closures exist in 1/2-cell strips. Longer runs split
+	## deterministically from the run start so no oversized cap is stretched
+	## across an unrelated pair of buildings.
 	var out: Array = []
 	var index := 0
 	while index < run_cells.size():
 		var take := 0
-		if shoulder:
-			take = mini(6, run_cells.size() - index)
-			if take % 2 == 1 and take > 1:
-				take -= 1
-		else:
-			take = mini(2, run_cells.size() - index)
+		take = mini(2, run_cells.size() - index)
 		var chunk: Array[Vector3i] = []
 		for offset in take:
 			chunk.append(run_cells[index + offset])
@@ -1632,7 +2226,7 @@ static func _interstitial_chunks(run_cells: Array[Vector3i],
 
 static func _commit_interstitial_join(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
-		world_seed: int, program: SettlementFabricProgram,
+		_world_seed: int, program: SettlementFabricProgram,
 		chunk: Array[Vector3i], trap_axis: StringName, classified: Dictionary,
 		ordinal: int) -> WarrenFeatureReservation:
 	var feature_id := StringName("spatial.feature.interstitial_join.%02d" \
@@ -1650,29 +2244,12 @@ static func _commit_interstitial_join(grid: WarrenSpatialGrid,
 	if yaw < 0:
 		_last_interstitial_rejection = "no yaw maps the recipe run axis"
 		return null
-	var local_z_world := FabricRecipe.transform_direction(Vector3i(0, 0, 1),
-		yaw)
 	var origin := chunk[0]
-	var run_class := StringName(classified.get("class", &""))
-	var chunk_class := run_class
-	var recipe_id := &""
-	if run_class == &"stepped_shoulder" and chunk.size() >= 2:
-		var wall_side := int(classified.get("wall_side", 1))
-		var wall_world := trap_positive * wall_side
-		var local_side := "positive" if local_z_world == wall_world \
-			else "negative"
-		var theme := WarrenSpatialFabricCompiler._architectural_district_theme(
-			origin, world_seed)
-		var family := "orange" if theme == &"orange" else "blue"
-		recipe_id = StringName("roof.setback.lean.%s.%d.%s" % [family,
-			chunk.size(), local_side])
-	else:
-		# One-cell shoulder remainders and every slit strip use sealed infill;
-		# a strip whose top is buried under bridging mass omits the cap.
-		chunk_class = &"sealed_infill"
-		var buried := bool(classified.get("buried", false))
-		recipe_id = StringName("interstitial.seal.%d.%s" % [chunk.size(),
-			"buried" if buried else "capped"])
+	var chunk_class := &"sealed_infill"
+	# A strip whose top is buried under bridging mass omits the cap.
+	var buried := bool(classified.get("buried", false))
+	var recipe_id := StringName("interstitial.seal.%d.%s" % [chunk.size(),
+		"buried" if buried else "capped"])
 	var recipe := program.recipe(recipe_id)
 	if recipe == null:
 		_last_interstitial_rejection = "missing measured recipe %s" % recipe_id
@@ -1926,7 +2503,17 @@ static func _balcony_clearance_audit(grid: WarrenSpatialGrid,
 	for cell_value: Variant in clearance.keys():
 		var cell := cell_value as Vector3i
 		if not grid.contains(cell):
-			return {"fits": false}
+			# A full-height balcony brace may deliberately terminate a few
+			# centimetres inside immutable terrain below the spatial lattice. Keep
+			# that load path instead of lifting it or rejecting the balcony; only
+			# vertically-below cells within the grid's horizontal footprint qualify.
+			var maximum := grid.minimum + grid.size
+			if cell.y < grid.minimum.y and cell.x >= grid.minimum.x \
+					and cell.x < maximum.x and cell.z >= grid.minimum.z \
+					and cell.z < maximum.z:
+				continue
+			return {"fits": false, "reason": &"outside_grid",
+				"blocked_cell": cell}
 		if body.has(cell):
 			continue
 		var use_value := grid.use_at(cell)
@@ -1939,11 +2526,15 @@ static func _balcony_clearance_audit(grid: WarrenSpatialGrid,
 			continue
 		if use_value not in [WarrenSpatialGrid.Use.OUTSIDE,
 				WarrenSpatialGrid.Use.ALLOCATABLE]:
-			return {"fits": false}
+			return {"fits": false, "reason": &"occupied",
+				"blocked_cell": cell, "blocked_use": use_value,
+				"blocked_owner": owner_id}
 		if (grid.reservation_bits_at(cell) & (
 				WarrenSpatialGrid.Reservation.FEATURE \
-				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE)) != 0:
-			return {"fits": false}
+					| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE)) != 0:
+			return {"fits": false, "reason": &"reserved",
+				"blocked_cell": cell,
+				"blocked_reservations": grid.reservation_bits_at(cell)}
 		clearance_only[cell] = true
 	return {"fits": true, "clearance_only": clearance_only,
 		"covered_public_cells": covered_public,
@@ -2694,6 +3285,8 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 	var measured_support_conflict_kinds: Dictionary = {}
 	var directly_borne_cantilever_count := 0
 	var support_required_cantilever_count := 0
+	var selected_support_required_cantilever_count := 0
+	var selected_directly_borne_cantilever_count := 0
 	var directly_borne_irregular_projection_count := 0
 	var unsupported_irregular_projection_count := 0
 	var unsupported_irregular_projection_details: Array[Dictionary] = []
@@ -2779,14 +3372,16 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 		var building := candidate.building as WarrenBuildingVolume
 		var upper := candidate.upper as WarrenRoomStamp
 		var geometry := candidate.cantilever_geometry as Dictionary
-		if _cantilever_is_directly_borne(upper, geometry, grid):
-			continue
-		var support_key := String(upper.stable_id)
-		if not support_options_by_upper.has(support_key):
-			continue
-		var support_option := support_options_by_upper[support_key] as Dictionary
-		var support_records := support_option.records as Array[Dictionary]
-		var support_analysis := support_option.analysis as Dictionary
+		var directly_borne := _cantilever_is_directly_borne(upper, geometry, grid)
+		var support_records: Array[Dictionary] = []
+		var support_analysis := {"neighbor_room_ids": [] as Array[StringName]}
+		if not directly_borne:
+			var support_key := String(upper.stable_id)
+			if not support_options_by_upper.has(support_key):
+				continue
+			var support_option := support_options_by_upper[support_key] as Dictionary
+			support_records.assign(support_option.records as Array)
+			support_analysis = support_option.analysis as Dictionary
 		var feature_id := StringName("spatial.feature.outcrop.%02d" % out.size())
 		var tx := grid.begin_transaction(feature_id)
 		if not tx.reserve(upper.private_cells,
@@ -2818,6 +3413,14 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 						upper.private_cells.size() / WarrenSpatialGrid.STOREY_CELLS,
 					"outcrop_is_integrated_cantilever": bool(geometry.valid),
 					"outcrop_projection_direction": geometry.direction as Vector2i,
+					"outcrop_projection_directions": geometry.get(
+						"projection_directions", []),
+					"outcrop_projection_direction_count": int(geometry.get(
+						"projection_direction_count", 0)),
+					"outcrop_is_diagonal_overlap": bool(geometry.get(
+						"is_diagonal_overlap", false)),
+					"outcrop_overlap_column_count": int(geometry.get(
+						"overlap_column_count", 0)),
 					"outcrop_projection_depth_cells": int(geometry.depth_cells),
 					"outcrop_attachment_span_cells": int(
 						geometry.attachment_span_cells),
@@ -2826,6 +3429,7 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 					"outcrop_support_course_count": support_records.size(),
 					"outcrop_support_neighbor_room_ids":
 						support_analysis.neighbor_room_ids,
+					"outcrop_is_directly_borne": directly_borne,
 					"outcrop_diagonal_support_course_count": support_records.filter(
 						func(record: Dictionary) -> bool:
 							return String(record.recipe_id).begins_with(
@@ -2836,6 +3440,10 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 				feature.last_rejection
 			return [] as Array[WarrenFeatureReservation]
 		out.append(feature)
+		if directly_borne:
+			selected_directly_borne_cantilever_count += 1
+		else:
+			selected_support_required_cantilever_count += 1
 	last_outcropping_diagnostic = {
 		"room_outcropping_candidate_count": candidates.size(),
 		"integrated_cantilever_candidate_count": valid_candidate_count,
@@ -2856,6 +3464,8 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 			measured_support_conflict_kinds,
 		"directly_borne_integrated_cantilever_count":
 			directly_borne_cantilever_count,
+		"selected_directly_borne_integrated_cantilever_count":
+			selected_directly_borne_cantilever_count,
 		"directly_borne_irregular_projection_count":
 			directly_borne_irregular_projection_count,
 		"unsupported_irregular_projection_count":
@@ -2866,7 +3476,7 @@ static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 			support_required_cantilever_count,
 		"unresolved_integrated_cantilever_count":
 			support_required_cantilever_count \
-			- out.size(),
+			- selected_support_required_cantilever_count,
 		"cantilever_support_assignment_node_count": int(
 			assignment_state.visited_node_count),
 		"cantilever_support_assignment_peak_count": int(
@@ -3119,14 +3729,36 @@ static func _projection_columns_are_directly_borne(upper: WarrenRoomStamp,
 static func _cantilever_support_records(upper: WarrenRoomStamp,
 		geometry: Dictionary, grid: WarrenSpatialGrid = null) \
 		-> Array[Dictionary]:
-	## Tile the exact bearing edge with native 3 m bracket pairs. Local BACK is
-	## the unsupported projection direction and local RIGHT follows the facade.
-	## Room side spans are even in the admissible 3/6/9 m vocabulary; an odd or
-	## discontinuous edge is rejected instead of receiving a stretched support.
+	## Tile each leg of the diagonal overlap with native 1.5/3 m bracket courses.
+	## The two perpendicular courses meet as one authored corner frame: no mesh is
+	## stretched and no independent room is attached at the end of the parent.
 	var out: Array[Dictionary] = []
 	if upper == null or not bool(geometry.get("valid", false)):
 		return out
-	var direction_2d := geometry.get("direction", Vector2i.ZERO) as Vector2i
+	var courses: Array[Dictionary] = []
+	courses.assign(geometry.get("projection_courses", []) as Array)
+	# Retain the single-course adapter for old diagnostic fixtures which exercise
+	# support tiling directly. Production outcroppings always provide two courses.
+	if courses.is_empty():
+		courses.append({
+			"direction": geometry.get("direction", Vector2i.ZERO),
+			"depth_cells": int(geometry.get("depth_cells", 0)),
+			"attachment_columns": geometry.get("attachment_columns", []),
+		})
+	for course_index in courses.size():
+		var course_records := _cantilever_support_course_records(upper,
+			geometry, courses[course_index], course_index, grid)
+		if course_records.is_empty():
+			return [] as Array[Dictionary]
+		out.append_array(course_records)
+	return out
+
+
+static func _cantilever_support_course_records(upper: WarrenRoomStamp,
+		geometry: Dictionary, course: Dictionary, course_index: int,
+		grid: WarrenSpatialGrid = null) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var direction_2d := course.get("direction", Vector2i.ZERO) as Vector2i
 	var direction := Vector3i(direction_2d.x, 0, direction_2d.y)
 	var yaw := _yaw_for_local_direction(Vector3i.BACK, direction)
 	if yaw < 0:
@@ -3135,7 +3767,7 @@ static func _cantilever_support_records(upper: WarrenRoomStamp,
 		yaw)
 	var span_direction := Vector2i(span_direction_3d.x, span_direction_3d.z)
 	var attachment: Array[Vector2i] = []
-	attachment.assign(geometry.get("attachment_columns", []) as Array)
+	attachment.assign(course.get("attachment_columns", []) as Array)
 	if attachment.size() == 1:
 		# A one-column corner jetty still receives the native two-brace course:
 		# the second brace lands on the adjacent borne floor column instead of
@@ -3168,7 +3800,7 @@ static func _cantilever_support_records(upper: WarrenRoomStamp,
 		# genuinely open slices; otherwise the full-width support recipe intersects
 		# the very construction already carrying it.
 		if _cantilever_course_is_directly_borne(grid, course_columns, direction,
-				upper.lattice_origin.y, int(geometry.depth_cells)):
+				upper.lattice_origin.y, int(course.get("depth_cells", 0))):
 			continue
 		var recipe_id := StringName("outcrop.support.diagonal.%d" % course_size) \
 			if _diagonal_cantilever_sweep_is_clear(grid, course_columns,
@@ -3178,7 +3810,8 @@ static func _cantilever_support_records(upper: WarrenRoomStamp,
 			"recipe_id": recipe_id,
 			"origin": Vector3i(column.x, upper.lattice_origin.y, column.y),
 			"yaw_quarters": yaw,
-			"role": StringName("cantilever_support.%02d" % (index / 2)),
+			"role": StringName("cantilever_support.%02d.%02d" % [
+				course_index, index / 2]),
 		})
 	return out
 
@@ -3226,14 +3859,25 @@ static func _diagonal_cantilever_sweep_is_clear(grid: WarrenSpatialGrid,
 
 static func _room_cantilever_geometry(lower: WarrenRoomStamp,
 		upper: WarrenRoomStamp) -> Dictionary:
-	## A room outcropping is an integrated floorplate change, not an arbitrary
-	## upper room which happens not to register with the room beneath it. Its
-	## unsupported columns form one contiguous strip beyond exactly one facade;
-	## at least half of the upper plate remains on real bearing, and projection
-	## depth is bounded to one 3 m bay. This describes the user's drawn jetty:
-	## continuous upper wall over a void, with a legible attachment edge.
+	## A full-scale room outcropping is the user's diagonal-overlap diagram: the
+	## next congruent floorplate moves exactly one 1.5 m cell on both axes. Most of
+	## the room therefore remains integrated with its parent while an L-shaped
+	## corner projects across two facades. A one-axis shift is deliberately not an
+	## outcropping; it reads as another box glued to the end of the first.
 	var lower_columns := _room_columns(lower)
 	var upper_columns := _room_columns(upper)
+	if lower_columns.size() < 4 or upper_columns.size() < 4:
+		return {}
+	var lower_bounds := _column_bounds(lower_columns)
+	var upper_bounds := _column_bounds(upper_columns)
+	var lower_size := (lower_bounds.maximum as Vector2i) \
+		- (lower_bounds.minimum as Vector2i) + Vector2i.ONE
+	var upper_size := (upper_bounds.maximum as Vector2i) \
+		- (upper_bounds.minimum as Vector2i) + Vector2i.ONE
+	if lower_columns.size() != lower_size.x * lower_size.y \
+			or upper_columns.size() != upper_size.x * upper_size.y:
+		return _cantilever_rejection({}, 0, upper_columns.size(),
+			&"nonrectangular_floorplate")
 	var extension: Dictionary = {}
 	var bearing_columns: Dictionary = {}
 	var bearing := 0
@@ -3244,64 +3888,56 @@ static func _room_cantilever_geometry(lower: WarrenRoomStamp,
 			bearing_columns[column] = true
 		else:
 			extension[column] = true
-	if upper_columns.size() < 4 or extension.is_empty():
+	if lower_columns.size() != upper_columns.size() or lower_size != upper_size:
+		return _cantilever_rejection(extension, bearing, upper_columns.size(),
+			&"full_scale_overlap_required")
+	var offset := (upper_bounds.minimum as Vector2i) \
+		- (lower_bounds.minimum as Vector2i)
+	if absi(offset.x) != 1 or absi(offset.y) != 1:
+		return _cantilever_rejection({}, 0, upper_columns.size(),
+			&"diagonal_overlap_required", offset, maxi(absi(offset.x),
+				absi(offset.y)))
+	if extension.is_empty():
 		return {}
-	var lower_bounds := _column_bounds(lower_columns)
-	var direction := Vector2i.ZERO
-	var depth := 0
-	for column_value: Variant in extension.keys():
-		var column := column_value as Vector2i
-		var outside := Vector2i.ZERO
-		var column_depth := 0
-		if column.x < int(lower_bounds.minimum.x):
-			outside = Vector2i.LEFT
-			column_depth = int(lower_bounds.minimum.x) - column.x
-		elif column.x > int(lower_bounds.maximum.x):
-			outside = Vector2i.RIGHT
-			column_depth = column.x - int(lower_bounds.maximum.x)
-		elif column.y < int(lower_bounds.minimum.y):
-			outside = Vector2i.UP
-			column_depth = int(lower_bounds.minimum.y) - column.y
-		elif column.y > int(lower_bounds.maximum.y):
-			outside = Vector2i.DOWN
-			column_depth = column.y - int(lower_bounds.maximum.y)
-		else:
-			return _cantilever_rejection(extension, bearing,
-				upper_columns.size(), &"internal_hole")
-		if direction == Vector2i.ZERO:
-			direction = outside
-		elif outside != direction:
-			return _cantilever_rejection(extension, bearing,
-				upper_columns.size(), &"multiple_facades")
-		depth = maxi(depth, column_depth)
-	if depth > 2:
-		return _cantilever_rejection(extension, bearing,
-			upper_columns.size(), &"projection_too_deep", direction, depth)
 	if not _columns_are_connected(extension):
 		return _cantilever_rejection(extension, bearing,
-			upper_columns.size(), &"disconnected_projection", direction, depth)
-	var attachment: Dictionary = {}
-	for column_value: Variant in extension.keys():
-		var column := column_value as Vector2i
-		var inward := column - direction
-		if lower_columns.has(inward):
-			attachment[inward] = true
-	if attachment.is_empty():
-		return _cantilever_rejection(extension, bearing,
-			upper_columns.size(), &"attachment_too_narrow", direction, depth,
-			attachment.size())
+			upper_columns.size(), &"disconnected_projection", offset, 1)
 	var bearing_ratio := float(bearing) / float(upper_columns.size())
 	if bearing_ratio < 0.50:
 		return _cantilever_rejection(extension, bearing,
-			upper_columns.size(), &"insufficient_bearing", direction, depth,
-			attachment.size())
+			upper_columns.size(), &"insufficient_bearing", offset, 1)
+	var directions: Array[Vector2i] = [
+		Vector2i(signi(offset.x), 0), Vector2i(0, signi(offset.y)),
+	]
+	var projection_courses: Array[Dictionary] = []
+	var all_attachment: Dictionary = {}
+	for direction: Vector2i in directions:
+		var attachment: Dictionary = {}
+		for bearing_value: Variant in bearing_columns.keys():
+			var bearing_column := bearing_value as Vector2i
+			if extension.has(bearing_column + direction):
+				attachment[bearing_column] = true
+				all_attachment[bearing_column] = true
+		if attachment.is_empty():
+			return _cantilever_rejection(extension, bearing,
+				upper_columns.size(), &"attachment_too_narrow", direction, 1)
+		projection_courses.append({
+			"direction": direction,
+			"depth_cells": 1,
+			"attachment_columns": _sorted_columns(attachment),
+		})
 	return {
 		"valid": true,
 		"rejection": &"",
-		"direction": direction,
-		"depth_cells": depth,
-		"attachment_span_cells": attachment.size(),
-		"attachment_columns": _sorted_columns(attachment),
+		"direction": directions[0],
+		"projection_directions": directions,
+		"projection_direction_count": directions.size(),
+		"projection_courses": projection_courses,
+		"is_diagonal_overlap": true,
+		"overlap_column_count": bearing,
+		"depth_cells": 1,
+		"attachment_span_cells": all_attachment.size(),
+		"attachment_columns": _sorted_columns(all_attachment),
 		"bearing_columns": _sorted_columns(bearing_columns),
 		"extension_columns": _sorted_columns(extension),
 		"extension_column_count": extension.size(),

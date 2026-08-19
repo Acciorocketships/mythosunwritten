@@ -77,6 +77,33 @@ func test_production_surface_bundle_carries_stair_transition_meshes() -> void:
 			"STAIR claim %s has no production surface mesh" % cell)
 
 
+func test_generic_surface_compiler_materializes_supplied_volume_transitions() \
+		-> void:
+	## Spatial towns use the common compiler after their exact route has been
+	## adapted. Supplying its immutable volume lineage must retain the same
+	## collision-bearing climbs as the older volume-specific compiler.
+	var volume := WarrenPublicRealmCarver.solve(0)
+	assert_not_null(volume, "route-first volume fixture must seal")
+	if volume == null:
+		return
+	var realm := WarrenVolumePublicRealmAdapter.from_volume(volume)
+	assert_not_null(realm, WarrenVolumePublicRealmAdapter.last_failure)
+	if realm == null:
+		return
+	var empty_fabric := SettlementFabricPlan.new(&"test.transition.lineage")
+	var surfaces := PublicRealmSurfaceSolver.solve(
+		&"test.transition.lineage.surfaces", realm, empty_fabric, volume)
+	assert_not_null(surfaces)
+	if surfaces == null:
+		return
+	var vertical_count := 0
+	for transition: WarrenVolumeTransition in volume.transitions:
+		vertical_count += int(transition.is_vertical())
+	assert_gt(vertical_count, 0)
+	assert_eq(int(surfaces.audit().transition_mesh_count), vertical_count)
+	assert_gt(int(surfaces.audit().transition_triangle_count), 0)
+
+
 func test_payload_surface_meshes_validate_and_respect_block_ownership() -> void:
 	var payload := EnvironmentInstancePayload.new()
 	var mesh := _stair_transition_payload(&"test.transition.own",
@@ -183,6 +210,30 @@ func test_a_bank_under_a_house_is_one_plinth_course_and_no_more() -> void:
 	assert_lte(SettlementFabricAssembler.tallest_bare_stone_stack_bands(payload),
 		SettlementFabricAssembler.STONE_BUDGET_BANDS,
 		"one course is one storey of stone, whatever the bank's depth")
+
+
+func test_hollow_room_bearing_footprint_closes_all_four_plinth_sides() -> void:
+	## Generated rooms are hollow shells: most footprint cells are headroom, not
+	## SOLID. Foundation eligibility must therefore use the recipe's explicit
+	## terrain-bearing rectangle instead of producing a few disconnected faces
+	## only beneath structural piers.
+	var retained: Dictionary = {}
+	var bearing: Dictionary = {}
+	for z in 2:
+		for x in 2:
+			retained[Vector3i(x, 0, z)] = true
+			bearing[Vector3i(x, 1, z)] = &"hollow-room"
+	var faces := SettlementFabricAssembler.plinth_faces(retained, {}, bearing)
+	assert_eq(faces.size(), 8,
+		"a 2x2 base has two modules on each of its four exterior sides")
+	var directions: Dictionary = {}
+	for key_value: Variant in faces.keys():
+		var key := key_value as Vector4i
+		directions[key.w] = int(directions.get(key.w, 0)) + 1
+	assert_eq(directions.size(), 4)
+	for index in 4:
+		assert_eq(int(directions.get(index, 0)), 2,
+			"foundation side %d must be continuous" % index)
 
 
 func test_the_hill_substrate_renderer_is_gone_and_may_not_return() -> void:

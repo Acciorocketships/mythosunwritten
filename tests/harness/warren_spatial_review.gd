@@ -25,8 +25,12 @@ var _solve_production := false
 var _production_terrain_site := false
 var _solve_only := false
 var _audit_only := false
+var _quality_dump := false
+var _capture_filter := ""
 var _trace_room_gate := false
 var _raw_frontier := false
+var _maze_source := false
+var _probe_ranked_limit := 0
 var _camera := Camera3D.new()
 var _spatial: WarrenSpatialPlan
 var _fabric: SettlementFabricPlan
@@ -53,6 +57,10 @@ func _ready() -> void:
 	if program == null:
 		_fail_and_quit("could not compile the settlement fabric program")
 		return
+	if _probe_ranked_limit > 0:
+		_probe_ranked_candidates(program)
+		get_tree().quit(0)
+		return
 	if _production_terrain_site:
 		var urban := _solve_production_site(catalog)
 		if urban == null or not urban.accepted \
@@ -67,6 +75,23 @@ func _ready() -> void:
 	elif _solve_production:
 		_spatial = WarrenVolumetricSolver.solve(_world_seed, {}, program,
 			WarrenVillageScaleProfile.for_id(_scale_id))
+	elif _maze_source:
+		var profile := WarrenVillageScaleProfile.for_id(_scale_id)
+		var massif := WarrenMassifBuilder.build(_world_seed, {}, profile)
+		var maze := WarrenMazeCarver.carve(_world_seed, massif, profile) \
+			if massif != null else null
+		var source := WarrenMazeVolumeAdapter.to_volume_plan(maze) \
+			if maze != null else null
+		if source == null:
+			_fail_and_quit("maze source rejected: %s / %s / %s" % [
+				WarrenMassifBuilder.last_failure, WarrenMazeCarver.last_failure,
+				WarrenMazeVolumeAdapter.last_failure])
+			return
+		print("[warren_spatial_review] selected maze source=",
+			"maze.%d" % maze.world_seed, " signature=",
+			maze.deterministic_signature().sha256_text())
+		_spatial = WarrenVolumetricSolver.from_volume(source, -1, program,
+			profile != null and profile.requires_elevated_courtyard)
 	else:
 		var source := _select_source(program)
 		if source == null:
@@ -81,8 +106,47 @@ func _ready() -> void:
 			% WarrenVolumetricSolver.last_failure)
 		return
 	if _solve_only:
+		var landmark_recipes: Array[StringName] = []
+		for feature: WarrenFeatureReservation in _spatial.features:
+			if feature.kind == &"prefab_landmark" \
+					and feature.construction_records.size() == 1:
+				landmark_recipes.append(StringName(
+					feature.construction_records[0].recipe_id))
+		var roof_court := _spatial.audit.get(
+			"route_connected_rooftop_court_audit", {}) as Dictionary
+		print(("[warren_spatial_review] solve_summary buildings=%d " \
+			+ "connected=%d route_floors=%d missing_roofs=%d landmarks=%s " \
+			+ "facade_bays=%d room_outcrops=%d unresolved_outcrops=%d " \
+			+ "roof_court=%d/%d residual_rooms=%d residual_frontage=%d") % [
+			int(_spatial.audit.get("building_count", 0)),
+			int(_spatial.audit.get("connected_building_stack_count", 0)),
+			int(_spatial.audit.get("public_route_floor_count", 0)),
+			int(_spatial.audit.get("missing_roof_face_count", 0)),
+			str(landmark_recipes),
+			int(_spatial.audit.get("facade_bay_count", 0)),
+			int(_spatial.audit.get("room_outcropping_count", 0)),
+			int(_spatial.audit.get(
+				"unresolved_integrated_cantilever_count", 0)),
+			int(roof_court.get("floor_cell_count", 0)),
+			int(roof_court.get("combined_floor_cell_count", 0)),
+			int(_spatial.audit.get("residual_backfill_building_count", 0)),
+			int(_spatial.audit.get("residual_backfill_frontage_side_count", 0)),
+		])
+		print("[warren_spatial_review] balcony_summary accepted=",
+			int(_spatial.audit.get("usable_balcony_count", 0)),
+			" candidates=", int(WarrenSpatialFeatureSolver \
+				.last_skywalk_diagnostic.get("balcony_candidate_count", 0)),
+			" rejections=", str(WarrenSpatialFeatureSolver \
+				.last_skywalk_diagnostic.get("balcony_rejection_counts", {})))
+		print("[warren_spatial_review] balcony_clearance_samples=",
+			str(WarrenSpatialFeatureSolver.last_skywalk_diagnostic.get(
+				"balcony_clearance_rejection_samples", [])))
 		print("[warren_spatial_review] solve_audit=",
 			JSON.stringify(_spatial.audit))
+		print("[warren_spatial_review] landmark_preplan=",
+			JSON.stringify(WarrenVolumetricSolver.last_preplan_landmark_diagnostic))
+		print("[warren_spatial_review] feature_diagnostic=",
+			JSON.stringify(WarrenSpatialFeatureSolver.last_skywalk_diagnostic))
 		get_tree().quit(0)
 		return
 	if _fabric == null:
@@ -91,6 +155,8 @@ func _ready() -> void:
 		_fail_and_quit("fabric compile rejected: %s" \
 			% WarrenSpatialFabricCompiler.last_failure)
 		return
+	if _quality_dump:
+		_print_quality_dump(program)
 	if _audit_only:
 		print("[warren_spatial_review] spatial_audit=",
 			JSON.stringify(_spatial.audit))
@@ -113,6 +179,14 @@ func _ready() -> void:
 			int(_spatial.audit.get("prefab_landmark_count", 0)),
 			int(_spatial.audit.get("usable_balcony_count", 0)),
 			int(committed.instance_count)])
+	print(("[warren_spatial_review] building_vocabulary lineages=%d " \
+		+ "variants=%d styles=%d families=%d kinds=%s") % [
+			int(_fabric.audit.get("styled_building_lineage_count", 0)),
+			int(_fabric.audit.get("building_variant_count", 0)),
+			int(_fabric.audit.get("facade_style_count", 0)),
+			(_fabric.audit.get("facade_family_counts", {}) as Dictionary).size(),
+			str(_fabric.audit.get("room_storey_kind_counts", {})),
+		])
 	print(("[warren_spatial_review] composition pairs=%d strong_registration=%d " \
 		+ "facade_planes=%d same_kind=%d same_axis=%d roofs=%d pitched=%d " \
 		+ "flat=%d roof_terraces=%d bare_flat=%d caps=%d lean_tos=%d " \
@@ -177,10 +251,18 @@ func _read_args() -> void:
 			_solve_only = true
 		elif args[index] == "--audit-only":
 			_audit_only = true
+		elif args[index] == "--quality-dump":
+			_quality_dump = true
+		elif args[index] == "--capture-filter" and index + 1 < args.size():
+			_capture_filter = args[index + 1]
 		elif args[index] == "--trace-room-gate":
 			_trace_room_gate = true
 		elif args[index] == "--raw-frontier":
 			_raw_frontier = true
+		elif args[index] == "--maze-source":
+			_maze_source = true
+		elif args[index] == "--probe-ranked" and index + 1 < args.size():
+			_probe_ranked_limit = maxi(1, int(args[index + 1]))
 		elif args[index] == "--production-terrain-site":
 			_production_terrain_site = true
 			_world_seed = DEFAULT_PRODUCTION_WORLD_SEED
@@ -188,6 +270,183 @@ func _read_args() -> void:
 			_super_cell.x = int(args[index + 1])
 		elif args[index] == "--super-z" and index + 1 < args.size():
 			_super_cell.y = int(args[index + 1])
+
+
+func _probe_ranked_candidates(program: SettlementFabricProgram) -> void:
+	## Quality-pass utility: report the exact room/court result of the ranked
+	## source/partition pairs without rendering each rejected town. This makes a
+	## candidate-selection change reviewable instead of choosing a prettier source
+	## from a debug proxy that never reached the sealed spatial transaction.
+	var profile := WarrenVillageScaleProfile.for_id(_scale_id)
+	var frontier := WarrenTownSolver.mass_first_attempt_frontier(_world_seed,
+		_attempt, {}, profile) if _attempt >= 0 \
+		else WarrenTownSolver.mass_first_frontier(_world_seed, {}, profile)
+	var ranked := WarrenVolumetricSolver._ranked_precomposition_variants(
+		frontier, program)
+	for rank_index in mini(_probe_ranked_limit, ranked.size()):
+		var ranked_value := ranked[rank_index] as Dictionary
+		var source := ranked_value.volume as WarrenVolumePlan
+		var variant := int(ranked_value.variant)
+		var exact_proxy := WarrenVolumetricSolver \
+			._precomposition_enclosure_audit(source, variant, program)
+		var spatial := WarrenVolumetricSolver.from_volume(source, variant,
+			program, false)
+		if spatial == null:
+			print("[warren_spatial_review] rank_probe rank=", rank_index,
+				" source=", source.stable_id, " variant=", variant,
+				" score=", ranked_value.score, " proxy_court=",
+				int(exact_proxy.get("broad_rooftop_court_cell_count", 0)),
+				" proxy_occupied=", int(exact_proxy.get("occupied_cell_count", 0)),
+				" proxy_bounded=", float(exact_proxy.get("bounded_route_ratio", 0.0)),
+				" accepted=false failure=",
+				WarrenVolumetricSolver.last_failure.left(400))
+			continue
+		var court := spatial.audit.get(
+			"route_connected_rooftop_court_audit", {}) as Dictionary
+		print("[warren_spatial_review] rank_probe rank=", rank_index,
+			" source=", source.stable_id, " variant=", variant,
+			" score=", ranked_value.score, " proxy_court=",
+			int(exact_proxy.get("broad_rooftop_court_cell_count", 0)),
+			" proxy_occupied=", int(exact_proxy.get("occupied_cell_count", 0)),
+			" proxy_bounded=", float(exact_proxy.get("bounded_route_ratio", 0.0)),
+			" accepted=true buildings=",
+			int(spatial.audit.get("building_count", 0)), " retained=",
+			int(spatial.audit.get("retained_private_mass_cell_count", 0)),
+			" discarded=", int(spatial.audit.get(
+				"unassigned_mass_cell_count", 0)), " court=",
+			int(court.get("floor_cell_count", 0)), "/",
+			int(court.get("combined_floor_cell_count", 0)), " court_audit=",
+			JSON.stringify(court))
+
+
+func _print_quality_dump(program: SettlementFabricProgram) -> void:
+	print("[warren_spatial_review] QUALITY_ROOMS_BEGIN")
+	for building: WarrenBuildingVolume in _spatial.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			var below := PackedStringArray()
+			if not room.terrain_bearing:
+				var columns: Dictionary = {}
+				for cell: Vector3i in room.private_cells:
+					if cell.y == room.lattice_origin.y:
+						columns[Vector2i(cell.x, cell.z)] = true
+				var ordered_columns: Array[Vector2i] = []
+				ordered_columns.assign(columns.keys())
+				ordered_columns.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+					return a.y < b.y if a.y != b.y else a.x < b.x)
+				for column: Vector2i in ordered_columns:
+					var support_cell := Vector3i(column.x,
+						room.lattice_origin.y - 1, column.y)
+					below.append("%s:u%d:o%s" % [support_cell,
+						_spatial.grid.use_at(support_cell),
+						String(_spatial.grid.owner_name_at(support_cell))])
+			print("[quality.room] id=", room.stable_id, " building=",
+				building.stable_id, " kind=", room.kind, " origin=",
+				room.lattice_origin, " yaw=", room.yaw_quarters,
+				" terrain_bearing=", room.terrain_bearing,
+				" addressed=", room.addressed,
+				" door_phase=", room.address_door_phase,
+				" threshold=", room.threshold_cell,
+				" frontage=", room.frontage_direction,
+				" landing=", room.threshold_cell + room.frontage_direction \
+					if room.addressed else Vector3i.ZERO,
+				" foundation=", _quality_foundation_facts(room),
+				" parent=", room.support_parent_parcel_id, ":",
+				room.support_parent_storey_index, " below=", ";".join(below))
+	print("[warren_spatial_review] QUALITY_ROOMS_END")
+	print("[warren_spatial_review] QUALITY_FEATURES_BEGIN")
+	for feature: WarrenFeatureReservation in _spatial.features:
+		var records := PackedStringArray()
+		for record: Dictionary in feature.construction_records:
+			records.append("%s@%s/r%d/%s" % [String(record.recipe_id),
+				str(record.origin), int(record.yaw_quarters), String(record.role)])
+		print("[quality.feature] id=", feature.stable_id, " kind=", feature.kind,
+			" reserved=", _quality_cell_bounds(feature.reserved_cells),
+			" bearing=", _quality_cell_bounds(feature.terrain_bearing_cells),
+			" endpoints=", feature.endpoints, " records=", ";".join(records),
+			" audit=", feature.audit)
+		if feature.kind == &"balcony":
+			_print_balcony_neighbor_dump(feature)
+	print("[warren_spatial_review] QUALITY_FEATURES_END")
+	print("[warren_spatial_review] QUALITY_UNITS_BEGIN")
+	for unit: FabricUnit in _fabric.units:
+		var recipe := program.recipe(unit.recipe_id)
+		var relevant := recipe != null and (recipe.has_tag(&"roof") \
+			or recipe.has_tag(&"room") \
+			or recipe.has_tag(&"balcony") or recipe.has_tag(&"outcropping") \
+			or recipe.has_tag(&"stair") or recipe.has_tag(&"prefab_anchor"))
+		if relevant:
+			var placements := PackedStringArray()
+			for placement: Dictionary in recipe.placements:
+				placements.append("%s:%s@%s" % [String(placement.id),
+					String(placement.asset_id),
+					str((placement.transform as Transform3D).origin)])
+			print("[quality.unit] id=", unit.stable_id, " recipe=", unit.recipe_id,
+				" origin=", unit.lattice_origin, " yaw=", unit.yaw_quarters,
+				" bounds=", unit.bounds, " tags=", recipe.role_tags,
+				" parents=", unit.parent_ids, " bonds=", unit.socket_bonds,
+				" seams=", unit.visual_seam_ids,
+				" suppressed=", unit.suppressed_placement_ids,
+				" placements=", ";".join(placements))
+	print("[warren_spatial_review] QUALITY_UNITS_END")
+
+
+func _quality_foundation_facts(room: WarrenRoomStamp) -> String:
+	if not room.terrain_bearing or _spatial.source_volume == null:
+		return "none"
+	var depths: Dictionary = {}
+	for cell: Vector3i in room.private_cells:
+		if cell.y != room.lattice_origin.y:
+			continue
+		var macro := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		var bearing := _spatial.source_volume.envelope.bearing_at(macro)
+		depths[room.lattice_origin.y - bearing] = true
+	var ordered: Array = depths.keys()
+	ordered.sort()
+	return "depths=%s" % str(ordered)
+
+
+func _print_balcony_neighbor_dump(feature: WarrenFeatureReservation) -> void:
+	## Review evidence for circulation composition: expose every non-outside cell
+	## within one lattice cell of the balcony, including the authoritative face
+	## kind on its top. This makes a stair/platform mismatch diagnosable without
+	## inferring topology from a perspective screenshot.
+	if feature.reserved_cells.is_empty():
+		return
+	var minimum := feature.reserved_cells[0] - Vector3i.ONE
+	var maximum := feature.reserved_cells[0] + Vector3i.ONE
+	for cell: Vector3i in feature.reserved_cells:
+		minimum = Vector3i(mini(minimum.x, cell.x - 1),
+			mini(minimum.y, cell.y - 1), mini(minimum.z, cell.z - 1))
+		maximum = Vector3i(maxi(maximum.x, cell.x + 1),
+			maxi(maximum.y, cell.y + 1), maxi(maximum.z, cell.z + 1))
+	var facts := PackedStringArray()
+	for y in range(minimum.y, maximum.y + 1):
+		for z in range(minimum.z, maximum.z + 1):
+			for x in range(minimum.x, maximum.x + 1):
+				var cell := Vector3i(x, y, z)
+				var use := _spatial.grid.use_at(cell)
+				if use == WarrenSpatialGrid.Use.OUTSIDE:
+					continue
+				var top_face := _spatial.grid.face_claim(cell, Vector3i.UP)
+				facts.append("%s:u%d:o%s:t%s" % [cell, use,
+					String(_spatial.grid.owner_name_at(cell)),
+					str(top_face.get("kind", -1))])
+	print("[quality.balcony.neighbors] id=", feature.stable_id,
+		" cells=", ";".join(facts))
+
+
+func _quality_cell_bounds(cells: Array[Vector3i]) -> String:
+	if cells.is_empty():
+		return "empty"
+	var minimum := cells[0]
+	var maximum := cells[0]
+	for cell: Vector3i in cells:
+		minimum = Vector3i(mini(minimum.x, cell.x), mini(minimum.y, cell.y),
+			mini(minimum.z, cell.z))
+		maximum = Vector3i(maxi(maximum.x, cell.x), maxi(maximum.y, cell.y),
+			maxi(maximum.z, cell.z))
+	return "%s..%s" % [minimum, maximum]
 
 
 func _solve_production_site(catalog: EnvironmentCatalog) \
@@ -372,13 +631,19 @@ func _capture_all() -> void:
 			span * 0.65, -span), "target": centre, "fov": 54.0},
 	]
 	views.append_array(_street_views())
+	views.append_array(_transition_views())
 	views.append_array(_market_views())
 	views.append_array(_courtyard_views())
+	views.append_array(_route_connected_rooftop_court_views())
 	views.append_array(_roof_terrace_views())
 	views.append_array(_dormer_views())
 	views.append_array(_roof_campaign_views())
 	views.append_array(_interstitial_gap_views())
 	views.append_array(_interstitial_join_views())
+	views.append_array(_residual_jetty_views())
+	views.append_array(_addressed_door_views())
+	views.append_array(_terrain_foundation_views())
+	views.append_array(_arcade_overhang_views())
 	views.append_array(_skywalk_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -386,6 +651,9 @@ func _capture_all() -> void:
 	views.append_array(_balcony_views())
 	views.append_array(_edge_nick_views())
 	for view: Dictionary in views:
+		if not _capture_filter.is_empty() \
+				and not String(view.id).contains(_capture_filter):
+			continue
 		_camera.fov = float(view.fov)
 		_camera.look_at_from_position(view.position as Vector3,
 			view.target as Vector3)
@@ -484,6 +752,53 @@ func _street_views() -> Array[Dictionary]:
 	return out
 
 
+func _transition_views() -> Array[Dictionary]:
+	## Photograph the real collision-bearing ramp/stair spans from their lower
+	## landing. A route graph can be connected while a visual adapter leaves an
+	## empty vertical seam, so overviews and same-level street shots are not a
+	## sufficient review gate for the complete walk.
+	var out: Array[Dictionary] = []
+	if _spatial == null or _spatial.source_volume == null:
+		return out
+	var ordinal := 0
+	for transition: WarrenVolumeTransition in \
+			_spatial.source_volume.transitions:
+		if not transition.is_vertical():
+			continue
+		var from_centre := Vector3(
+			float(transition.from_cell.x) \
+				* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+				+ FabricRecipe.CELL_SIZE * 0.5,
+			float(transition.from_cell.y) \
+				* WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
+			float(transition.from_cell.z) \
+				* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+				+ FabricRecipe.CELL_SIZE * 0.5)
+		var to_centre := Vector3(
+			float(transition.to_cell.x) \
+				* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+				+ FabricRecipe.CELL_SIZE * 0.5,
+			float(transition.to_cell.y) \
+				* WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
+			float(transition.to_cell.z) \
+				* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+				+ FabricRecipe.CELL_SIZE * 0.5)
+		var low := from_centre if from_centre.y <= to_centre.y else to_centre
+		var high := to_centre if from_centre.y <= to_centre.y else from_centre
+		var direction := high - low
+		direction.y = 0.0
+		if direction.length_squared() <= 0.01:
+			continue
+		direction = direction.normalized()
+		out.append({"id": "transition-%02d" % ordinal,
+			"position": low - direction * 0.6 + Vector3.UP * 1.25,
+			"target": high + Vector3.UP * 0.45, "fov": 70.0})
+		ordinal += 1
+		if ordinal >= 3:
+			break
+	return out
+
+
 func _roof_terrace_views() -> Array[Dictionary]:
 	## Furnished flat roofs are deliberately optional measured recipes. Give
 	## them their own adversarial view so benches, barrels, lamps, planters, and
@@ -522,28 +837,33 @@ func _roof_terrace_views() -> Array[Dictionary]:
 func _dormer_views() -> Array[Dictionary]:
 	## Verify the attic projection in the final selected construction, not just in
 	## an isolated recipe lineup. Aim along the slope-normal implied by the
-	## dormer's displacement from its owning roof centre so its face, cheeks, and
-	## intersection with the roof plane all remain visible.
+	## authored facing so its face, cheeks, and intersection with the roof plane
+	## all remain visible. Recipe bounds and roof centres can be asymmetric at a
+	## T-junction, so neither is a reliable proxy for the dormer's real front.
 	var out: Array[Dictionary] = []
 	for unit: FabricUnit in _fabric.units:
 		var recipe := _fabric.recipe(unit.recipe_id)
 		if recipe == null or not recipe.has_tag(&"dormer"):
 			continue
-		var dormer_local := Vector3.ZERO
+		var dormer_pose := Transform3D.IDENTITY
 		var found := false
 		for placement: Dictionary in recipe.placements:
 			if not String(placement.id).contains("dormer"):
 				continue
-			dormer_local = (placement.transform as Transform3D).origin
+			dormer_pose = placement.transform as Transform3D
 			found = true
 			break
 		if not found:
 			continue
 		var transform := unit.transform()
-		var target := transform * dormer_local + Vector3.UP * 0.5
+		# Aim at the authored glazing, not the buried construction sill. The latter
+		# is intentionally below the host roof and made correct seating look like an
+		# empty gable in the old review frame.
+		var target := transform * dormer_pose.origin + Vector3.UP * 1.35
 		var bounds := transform * recipe.local_clearance_bounds
-		var roof_centre := bounds.get_center()
-		var outward := target - roof_centre
+		# Every dormer recipe rotates local BACK toward its eave. Transform that
+		# authored direction through both placement and unit bearings.
+		var outward := transform.basis * dormer_pose.basis * Vector3.BACK
 		outward.y = 0.0
 		if outward.length_squared() <= 0.01:
 			outward = transform.basis * Vector3.BACK
@@ -825,6 +1145,53 @@ func _courtyard_views() -> Array[Dictionary]:
 	return out
 
 
+func _route_connected_rooftop_court_views() -> Array[Dictionary]:
+	## The compact/standard roof court is selected from final room crowns rather
+	## than `source_volume.courtyard_cells`, so the legacy courtyard cameras cannot
+	## find it. Resolve the exact canonical owner here: these captures must show the
+	## generated court and its real route opening, not whichever flat roof happens
+	## to be most visible from the campaign camera.
+	var floors: Array[Vector3i] = []
+	for cell: Vector3i in _spatial.route_floor_cells:
+		if _spatial.grid.owner_name_at(cell) == &"public.rooftop_court.00":
+			floors.append(cell)
+	if floors.is_empty():
+		return [] as Array[Dictionary]
+	var centre := _cell_centroid(floors)
+	var floor_set: Dictionary = {}
+	for floor: Vector3i in floors:
+		floor_set[floor] = true
+	var seam_floor := Vector3i.ZERO
+	var seam_route := Vector3i.ZERO
+	var has_seam := false
+	for floor: Vector3i in floors:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := floor + direction
+			if floor_set.has(neighbor) \
+					or _spatial.grid.owner_name_at(neighbor) != &"public.route":
+				continue
+			seam_floor = floor
+			seam_route = neighbor
+			has_seam = true
+			break
+		if has_seam:
+			break
+	var target := centre + Vector3.UP * 0.55
+	var overview_eye := _best_orbit_position(target, 13.5, 7.0)
+	var out: Array[Dictionary] = [{
+		"id": "rooftop-court-overview", "position": overview_eye,
+		"target": target, "fov": 56.0,
+	}]
+	if has_seam:
+		var entry_eye := _route_eye(seam_route)
+		var inward := Vector3(seam_floor - seam_route).normalized()
+		out.append({"id": "rooftop-court-entry", "position": entry_eye,
+			"target": entry_eye + inward * 7.5 + Vector3.UP * 0.25,
+			"fov": 72.0})
+	return out
+
+
 func _skywalk_views() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var ordinal := 0
@@ -869,25 +1236,198 @@ func _skywalk_views() -> Array[Dictionary]:
 				as Dictionary).cell as Vector3i
 			var seam_target := Vector3(endpoint_cell) * FabricRecipe.CELL_SIZE \
 				+ Vector3.UP * 1.4
-			# The bridge-house is an occupied private room. Put the diagnostic eye
-			# inside its actual reserved walk volume and look back at the exact room
-			# endpoint. This proves the private portal directly; an exterior orbit can
-			# only show the bridge's closed side facade or a neighboring roof.
-			var eye_cell := endpoint_cell + facing
-			if not body_set.has(eye_cell):
+			# Graph adjacency is already sealed by the feature reservation. Review the
+			# architectural joint from outside instead: an eye inside this narrow
+			# occupied bridge collides with a wall module and produces an unusable
+			# close-up. Two opposing obliques expose the door sill, the first bridge
+			# floor, and both side-wall returns in one image.
+			if not body_set.has(endpoint_cell + facing):
 				continue
-			for step in range(2, 4):
-				var deeper := endpoint_cell + facing * step
-				if not body_set.has(deeper):
-					break
-				eye_cell = deeper
-			var seam_eye := Vector3(eye_cell) * FabricRecipe.CELL_SIZE \
-				+ Vector3.UP * 1.4
-			out.append({"id": "skywalk-%02d-seam-%d" % [ordinal,
-				endpoint_index], "position": seam_eye,
-				"target": seam_target, "fov": 70.0})
+			var outward := Vector3(facing).normalized()
+			var tangent := Vector3(-outward.z, 0.0, outward.x)
+			for side in [-1, 1]:
+				var seam_eye := seam_target + outward * 9.0 \
+					+ tangent * float(side) * 7.5 + Vector3.UP * 5.0
+				out.append({"id": "skywalk-%02d-endpoint-%d-%s" % [ordinal,
+					endpoint_index, "left" if side < 0 else "right"],
+					"position": seam_eye,
+					"target": seam_target + outward * 0.45 \
+						- Vector3.UP * 0.20, "fov": 46.0})
 		ordinal += 1
 	return out
+
+
+func _residual_jetty_views() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var ordinal := 0
+	for feature: WarrenFeatureReservation in _spatial.features:
+		if feature.kind != &"frontier_gateway_support" \
+				or not bool(feature.audit.get("gateway_is_flank_borne", false)):
+			continue
+		var bounds := _feature_visual_bounds(feature)
+		var centre := _cell_centroid(feature.reserved_cells)
+		if bounds.size.length_squared() > 0.0:
+			centre = bounds.get_center() + Vector3.UP * 1.4
+		var ignored := [StringName("spatial.fabric.%s" % feature.stable_id)] \
+			as Array[StringName]
+		out.append({"id": "residual-jetty-%02d-oblique" % ordinal,
+			"position": _best_orbit_position(centre, 12.0, 2.5, ignored,
+				bounds), "target": centre, "fov": 58.0})
+		out.append({"id": "residual-jetty-%02d-underside" % ordinal,
+			"position": _best_orbit_position(centre - Vector3.UP * 2.0,
+				8.0, -1.5, ignored, bounds),
+			"target": centre - Vector3.UP * 1.5, "fov": 64.0})
+		ordinal += 1
+	return out
+
+
+func _arcade_overhang_views() -> Array[Dictionary]:
+	## Review the actual load path rather than the room crown.  The front camera
+	## stands beyond the unsupported half of the upper plate and looks through
+	## its stone portal; the oblique camera exposes both the portal, the soffit,
+	## and the tower half carrying the opposite end.
+	var out: Array[Dictionary] = []
+	var ordinal := 0
+	for feature: WarrenFeatureReservation in _spatial.features:
+		if feature.kind != &"arcade_overhang_support":
+			continue
+		var bounds := _feature_visual_bounds(feature)
+		var centre := bounds.get_center() if bounds.size.length_squared() > 0.0 \
+			else _cell_centroid(feature.reserved_cells)
+		var direction_2d := feature.audit.get(
+			"arcade_projection_direction", Vector2i.ZERO) as Vector2i
+		var outward := Vector3(direction_2d.x, 0.0, direction_2d.y)
+		if outward.length_squared() <= 0.0:
+			outward = Vector3.BACK
+		var across := Vector3(-outward.z, 0.0, outward.x)
+		var ignored := [StringName("spatial.fabric.%s" % feature.stable_id)] \
+			as Array[StringName]
+		var front_target := centre + Vector3.UP * 0.35
+		var front_eye := _best_directional_position(front_target, outward,
+			10.5, 1.6, ignored, bounds)
+		var oblique_preferred := (outward + across * 0.85).normalized()
+		var oblique_target := centre + Vector3.UP * 1.25
+		var oblique_eye := _best_directional_position(oblique_target,
+			oblique_preferred, 10.5, 2.8, ignored, bounds)
+		out.append({"id": "arcade-overhang-%02d-front" % ordinal,
+			"position": front_eye, "target": front_target, "fov": 58.0})
+		out.append({"id": "arcade-overhang-%02d-oblique" % ordinal,
+			"position": oblique_eye, "target": oblique_target, "fov": 58.0})
+		ordinal += 1
+	return out
+
+
+func _addressed_door_views() -> Array[Dictionary]:
+	## Every source threshold becomes an adversarial close-up.  The camera stands
+	## on the route-facing side, so a shifted facade aperture, absent platform,
+	## or guard crossing the doorway is visible rather than hidden by an overview.
+	var out: Array[Dictionary] = []
+	var rooms: Array[WarrenRoomStamp] = []
+	for building: WarrenBuildingVolume in _spatial.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.addressed:
+				rooms.append(room)
+	rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
+		return String(a.stable_id) < String(b.stable_id))
+	for ordinal in rooms.size():
+		var room := rooms[ordinal]
+		var threshold := Vector3(room.threshold_cell) * FabricRecipe.CELL_SIZE
+		var target := threshold + Vector3.UP * 1.05
+		var outward := Vector3(room.frontage_direction)
+		var landing_eye := Vector3(room.threshold_cell + room.frontage_direction) \
+			* FabricRecipe.CELL_SIZE + Vector3.UP * 1.45
+		out.append({"id": "door-%02d-phase-%d-threshold" % [ordinal,
+			room.address_door_phase], "position": landing_eye,
+			"target": target, "fov": 78.0})
+		# The context view may dodge a neighboring facade by thirty degrees, but it
+		# must never rotate to a different wall. That keeps the intended doorway and
+		# its landing legible together while still working inside a narrow canyon.
+		var unit_id := StringName("spatial.fabric.%s" % room.stable_id)
+		var directions: Array[Vector3] = [outward,
+			outward.rotated(Vector3.UP, PI / 6.0),
+			outward.rotated(Vector3.UP, -PI / 6.0)]
+		var context_eye := target + outward * 5.5 + Vector3.UP * 2.5
+		var best_score := 1 << 30
+		for direction: Vector3 in directions:
+			var candidate := target + direction * 5.5 + Vector3.UP * 2.5
+			var score := _view_occlusion_score(candidate, target,
+				[unit_id] as Array[StringName])
+			if score < best_score:
+				best_score = score
+				context_eye = candidate
+		out.append({"id": "door-%02d-phase-%d-context" % [ordinal,
+			room.address_door_phase], "position": context_eye,
+			"target": target, "fov": 58.0})
+	return out
+
+
+func _terrain_foundation_views() -> Array[Dictionary]:
+	## One independently selected camera in each compass quadrant exposes every
+	## side and the ground seam.  Constraining each search to its quadrant prevents
+	## the least-occluded selector from returning the same attractive facade four
+	## times, while the small angle/distance/height search keeps dense neighboring
+	## roofs from completely masking a required stone course.
+	var out: Array[Dictionary] = []
+	var rooms: Array[WarrenRoomStamp] = []
+	for building: WarrenBuildingVolume in _spatial.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.terrain_bearing:
+				rooms.append(room)
+	rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
+		return String(a.stable_id) < String(b.stable_id))
+	for ordinal in rooms.size():
+		var room := rooms[ordinal]
+		var foundation_kind := "retained" \
+			if _room_has_retained_foundation(room) else "flush"
+		var unit_id := StringName("spatial.fabric.%s" % room.stable_id)
+		var unit := _fabric.unit(unit_id)
+		if unit == null:
+			continue
+		var target := Vector3(unit.bounds.get_center().x,
+			float(room.lattice_origin.y) * FabricRecipe.CELL_SIZE + 1.0,
+			unit.bounds.get_center().z)
+		var own_bounds := _unit_visual_bounds(unit_id)
+		for view: Dictionary in [
+			{"id": "se", "direction": Vector3(1.0, 0.0, 1.0).normalized()},
+			{"id": "sw", "direction": Vector3(-1.0, 0.0, 1.0).normalized()},
+			{"id": "nw", "direction": Vector3(-1.0, 0.0, -1.0).normalized()},
+			{"id": "ne", "direction": Vector3(1.0, 0.0, -1.0).normalized()},
+		]:
+			var quadrant := view.direction as Vector3
+			var eye := target + quadrant * 10.5 + Vector3.UP * 3.0
+			var best_score := 1 << 30
+			for angle: float in [-PI / 8.0, 0.0, PI / 8.0]:
+				var direction := quadrant.rotated(Vector3.UP, angle).normalized()
+				for distance: float in [10.5, 14.0]:
+					for height: float in [3.0, 5.0]:
+						var candidate := target + direction * distance \
+							+ Vector3.UP * height
+						var score := _view_occlusion_score(candidate, target,
+							[unit_id] as Array[StringName])
+						if own_bounds.grow(0.25).has_point(candidate):
+							score += 1000
+						if score < best_score:
+							best_score = score
+							eye = candidate
+			out.append({"id": "foundation-%s-%02d-%s" % [foundation_kind,
+				ordinal, String(view.id)], "position": eye,
+				"target": target, "fov": 58.0})
+	return out
+
+
+func _room_has_retained_foundation(room: WarrenRoomStamp) -> bool:
+	if room == null or not room.terrain_bearing \
+			or _spatial.source_volume == null:
+		return false
+	for cell: Vector3i in room.private_cells:
+		if cell.y != room.lattice_origin.y:
+			continue
+		var macro := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		if _spatial.source_volume.envelope.bearing_at(macro) \
+				< room.lattice_origin.y:
+			return true
+	return false
 
 
 func _interstitial_gap_views() -> Array[Dictionary]:
@@ -935,13 +1475,45 @@ func _tower_annex_views() -> Array[Dictionary]:
 			continue
 		var record := feature.construction_records[0]
 		var centre := _cell_centroid(feature.reserved_cells)
-		var outward := Vector3(FabricRecipe.transform_direction(Vector3i.BACK,
-			int(record.yaw_quarters)))
+		var outward := Vector3(feature.audit.get("annex_endpoint_facing",
+			FabricRecipe.transform_direction(Vector3i.BACK,
+				int(record.yaw_quarters))))
 		var token := "tower-annex" if feature.kind == &"tower_annex" \
 			else "facade-bay"
-		out.append({"id": "%s-%02d" % [token, ordinal],
-			"position": centre + outward * 7.0 + Vector3.UP * 1.5,
-			"target": centre, "fov": 58.0})
+		var bounds := _feature_visual_bounds(feature)
+		var target := bounds.get_center() if bounds.size.length_squared() > 0.0 \
+			else centre + Vector3.UP * 1.5
+		var ignored := [StringName("spatial.fabric.%s" % feature.stable_id)] \
+			as Array[StringName]
+		var preferred := outward
+		if feature.kind == &"tower_annex":
+			# A corner-wrap bump-out is a diagonal union of two full-scale room
+			# plates. Photograph it from outside both exposed faces; a normal-only
+			# facade view hid the shared quadrant behind one cheek and made the
+			# feature read like a straight box pasted onto the wall.
+			var hand := -1.0 if ".left." in String(record.recipe_id) else 1.0
+			var side := Vector3(-outward.z, 0.0, outward.x) * hand
+			preferred = (outward + side).normalized()
+		# The 1.5 m embedded oriel was unreadably small in the same ten-metre
+		# composition used for the room-scale union.  Keep the annex contextual,
+		# but move the bay camera close enough to expose the parent wall crossing.
+		var distance := maxf(10.0, maxf(bounds.size.x, bounds.size.z) + 6.0) \
+			if feature.kind == &"tower_annex" else 5.5
+		var eye := _best_directional_position(target, preferred, distance,
+			3.0 if feature.kind == &"tower_annex" else 0.9, ignored, bounds)
+		out.append({"id": "%s-%02d-oblique" % [token, ordinal],
+			"position": eye, "target": target,
+			"fov": 54.0 if feature.kind == &"tower_annex" else 46.0})
+		if feature.kind == &"facade_bay":
+			# The oblique view proves the projection and return cheeks, but can hide
+			# the window face behind either cheek on a 1.5 m bay. Keep a true
+			# facade-normal capture as a separate obligation so a bay made from
+			# open framing or an accidentally recessed face cannot pass review.
+			var front_eye := _best_directional_position(target, outward, 4.8,
+				0.45, ignored, bounds)
+			out.append({"id": "%s-%02d-front" % [token, ordinal],
+				"position": front_eye, "target": target,
+				"fov": 42.0})
 		ordinal += 1
 	return out
 
@@ -1053,9 +1625,48 @@ func _balcony_views() -> Array[Dictionary]:
 		out.append({"id": "balcony-%02d%s-front" % [ordinal, token],
 			"position": front_eye,
 			"target": target, "fov": 56.0})
+		var door_axis_eye := target + outward * 7.5 + Vector3.UP * 0.45
+		out.append({"id": "balcony-%02d%s-door-axis" % [ordinal, token],
+			"position": door_axis_eye,
+			"target": target + Vector3.UP * 0.15, "fov": 48.0})
 		out.append({"id": "balcony-%02d%s-underside" % [ordinal, token],
 			"position": under_eye,
 			"target": target + Vector3.UP * -0.4, "fov": 58.0})
+		var stair_high_cells: Array[Vector3i] = []
+		for raw_cell: Variant in feature.audit.get(
+				"balcony_stair_high_landing_cells", []):
+			stair_high_cells.append(raw_cell as Vector3i)
+		var stair_low_cells: Array[Vector3i] = []
+		for raw_cell: Variant in feature.audit.get(
+				"balcony_stair_low_landing_cells", []):
+			stair_low_cells.append(raw_cell as Vector3i)
+		if not stair_high_cells.is_empty() and not stair_low_cells.is_empty():
+			var stair_high := _cell_centroid(stair_high_cells)
+			var stair_low := _cell_centroid(stair_low_cells)
+			var circulation := stair_high - stair_low
+			circulation.y = 0.0
+			if circulation.length_squared() > 0.01:
+				circulation = circulation.normalized()
+				var circulation_target := stair_high + Vector3.UP * 0.9
+				var entry_eye := stair_low - circulation * 3.25 \
+					+ Vector3.UP * 2.0
+				out.append({"id": "balcony-%02d%s-stair-entry" % [
+						ordinal, token], "position": entry_eye,
+					"target": circulation_target, "fov": 54.0})
+				var profile_direction := Vector3(-circulation.z, 0.0,
+					circulation.x)
+				var profile_target := (stair_low + stair_high) * 0.5 \
+					+ Vector3.UP * 0.65
+				var profile_eye := profile_target + profile_direction * 6.0 \
+					+ Vector3.UP * 1.1
+				out.append({"id": "balcony-%02d%s-stair-profile" % [
+						ordinal, token], "position": profile_eye,
+					"target": profile_target, "fov": 52.0})
+				var top_eye := bounds.get_center() + outward * 1.5 \
+					+ Vector3.UP * 11.0
+				out.append({"id": "balcony-%02d%s-circulation-top" % [
+						ordinal, token], "position": top_eye,
+					"target": bounds.get_center(), "fov": 48.0})
 		ordinal += 1
 	return out
 
@@ -1202,10 +1813,25 @@ func _build_ground() -> void:
 	# deep terrain columns so visual support review matches production rather than
 	# showing thin green slabs floating below otherwise valid foundations.
 	var envelope := _spatial.source_volume.envelope
+	var review_columns: Dictionary = {}
 	for column_value: Variant in envelope.height_bands.keys():
+		var envelope_column := column_value as Vector2i
+		review_columns[envelope_column] = float(
+			envelope.ground_at(envelope_column)) * FabricRecipe.CELL_SIZE
+	# A complete prefab may stand just beyond the authored massif while still
+	# bearing on immutable natural terrain. The old review surface stopped at the
+	# massif dictionary and therefore falsified those valid foundations as houses
+	# floating over the void. Extend only the exact sealed bearing columns; this
+	# cannot conceal a genuinely unsupported footprint.
+	for feature: WarrenFeatureReservation in _spatial.features:
+		for bearing_cell: Vector3i in feature.terrain_bearing_cells:
+			var bearing_column := Vector2i(floori(float(bearing_cell.x) / 2.0),
+				floori(float(bearing_cell.z) / 2.0))
+			review_columns[bearing_column] = float(bearing_cell.y) \
+				* FabricRecipe.CELL_SIZE
+	for column_value: Variant in review_columns.keys():
 		var column := column_value as Vector2i
-		var top := float(envelope.ground_at(column)) \
-			* FabricRecipe.CELL_SIZE
+		var top := float(review_columns[column])
 		var instance := MeshInstance3D.new()
 		var mesh := BoxMesh.new()
 		const REVIEW_GROUND_DEPTH_M := 30.0

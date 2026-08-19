@@ -76,7 +76,8 @@ static func envelope_from_massif(massif: WarrenMassif) -> WarrenVolumeEnvelope:
 
 
 static func to_volume_plan(massif: WarrenMassif,
-		excavation: WarrenExcavation) -> WarrenVolumePlan:
+		excavation: WarrenExcavation,
+		typed_market_cells: Array[Vector3i] = []) -> WarrenVolumePlan:
 	last_failure = ""
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
@@ -123,6 +124,10 @@ static func to_volume_plan(massif: WarrenMassif,
 	# satisfied without giving any of them a colliding public-realm surface.
 	for cell: Vector3i in excavation.public_cells():
 		plan.add_frontage(cell)
+	for cell: Vector3i in typed_market_cells:
+		if not plan.mark_market_square_cell(cell):
+			last_failure = "market square cell %s is not a walk node" % cell
+			return null
 	_close_landing_turns(plan)
 	plan.mass_context = {&"massif": massif, &"excavation": excavation}
 	if not plan.seal(excavation.portals[0]):

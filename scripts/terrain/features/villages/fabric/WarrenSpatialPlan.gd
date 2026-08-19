@@ -86,6 +86,9 @@ func seal(p_entry_floor_cell: Vector3i) -> bool:
 	entry_floor_cell = p_entry_floor_cell
 	if not _validate_route():
 		return false
+	var lineage_audit := _source_route_lineage_audit()
+	if int(lineage_audit.get("missing_source_route_floor_count", 0)) != 0:
+		return _reject("town path drops a bored route floor")
 	if not _validate_building_ownership():
 		return false
 	var access_audit := _building_access_audit()
@@ -125,6 +128,7 @@ func seal(p_entry_floor_cell: Vector3i) -> bool:
 		"building_count": buildings.size(),
 		"feature_count": features.size(),
 	}
+	audit.merge(lineage_audit, true)
 	audit.merge(interface_audit, true)
 	audit.merge(access_audit, true)
 	audit.merge(construction_plan.audit, true)
@@ -213,6 +217,33 @@ func _validate_route() -> bool:
 	if seen.size() != route_floor_cells.size():
 		return _reject("public route graph is disconnected")
 	return true
+
+
+func _source_route_lineage_audit() -> Dictionary:
+	## Late market aisles may deliberately extend the final public realm, but the
+	## town may never replace or omit any floor already sealed by the bore. This
+	## subset proof complements _validate_route(): one proves provenance, the
+	## other proves that the complete final network is still connected.
+	if source_volume == null or not source_volume.is_sealed():
+		return {
+			"source_route_floor_count": 0,
+			"missing_source_route_floor_count": 0,
+			"supplemental_route_floor_count": route_floor_cells.size(),
+		}
+	var source_cells := source_volume.exact_route_surface_cells()
+	var source_set: Dictionary = {}
+	var missing := 0
+	for cell: Vector3i in source_cells:
+		source_set[cell] = true
+		missing += int(not _route_set.has(cell))
+	var supplemental := 0
+	for cell: Vector3i in route_floor_cells:
+		supplemental += int(not source_set.has(cell))
+	return {
+		"source_route_floor_count": source_cells.size(),
+		"missing_source_route_floor_count": missing,
+		"supplemental_route_floor_count": supplemental,
+	}
 
 
 func _validate_building_ownership() -> bool:

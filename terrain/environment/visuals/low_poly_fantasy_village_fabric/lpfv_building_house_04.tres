@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_d0phq"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_building_house_04_piece_00.res" id="2_kwa71"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_7pu81"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_building_house_04_piece_00.res" id="4_4tajj"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_6fi36"]
+
+[sub_resource type="Resource" id="Resource_2myrr"]
+script = ExtResource("1_d0phq")
+shape = ExtResource("2_kwa71")
+
+[sub_resource type="Resource" id="Resource_lhanx"]
+script = ExtResource("3_7pu81")
+mesh = ExtResource("4_4tajj")
+
+[resource]
+script = ExtResource("5_6fi36")
+pieces = Array[ExtResource("3_7pu81")]([SubResource("Resource_lhanx")])
+collisions = Array[ExtResource("1_d0phq")]([SubResource("Resource_2myrr")])

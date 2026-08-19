@@ -367,7 +367,8 @@ func test_asset_aware_town_corpus_has_exact_envelopes_and_entrances() -> void:
 		assert_eq(int(assets.town.surfaces.audit().get(
 			"daylight_void_unbounded_edge_count", -1)), 0)
 		for recipe_id: StringName in [&"skywalk.3.blue", &"skywalk.6.orange",
-				&"skywalk.9.blue", &"skywalk.corner.orange"]:
+				&"skywalk.9.blue", &"skywalk.corner.blue",
+				&"skywalk.corner.orange"]:
 			var skywalk_recipe := program.recipe(recipe_id)
 			assert_not_null(skywalk_recipe)
 			if skywalk_recipe == null:

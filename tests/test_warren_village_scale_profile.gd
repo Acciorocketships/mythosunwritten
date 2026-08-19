@@ -52,7 +52,9 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 			smaller.minimum_inhabited_overhead_ratio)
 	for profile: WarrenVillageScaleProfile in profiles:
 		assert_gte(profile.skywalk_range.x, 1)
-		assert_gte(profile.cantilever_range.x, 2)
+		assert_eq(profile.cantilever_range, Vector2i.ZERO,
+			"production pauses diagonal/full-room outcroppings until their basic " \
+			+ "shell and roof joins pass visual review")
 	assert_eq([profiles[0].skywalk_range.x, profiles[1].skywalk_range.x,
 		profiles[2].skywalk_range.x, profiles[3].skywalk_range.x],
 		[1, 1, 2, 3],
@@ -61,11 +63,12 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 		[3, 4],
 		"large and grand towns request an extra link; the sealed occluder "
 		+ "ranking keeps it only when it adds distinct inhabited route cover")
-	assert_eq(profiles[0].landmark_range, Vector2i(0, 0))
-	assert_eq(profiles[1].landmark_range, Vector2i(0, 1),
-		"a standard village takes a hall exactly when one fits")
-	assert_eq(profiles[2].landmark_range, Vector2i(1, 1))
-	assert_eq(profiles[3].landmark_range, Vector2i(2, 2))
+	assert_eq(profiles[0].landmark_range, Vector2i(4, 4),
+		"even a compact village composes around four complete authored buildings")
+	assert_eq(profiles[1].landmark_range, Vector2i(4, 5),
+		"a standard village tries a fifth building without dropping below four")
+	assert_eq(profiles[2].landmark_range, Vector2i(5, 6))
+	assert_eq(profiles[3].landmark_range, Vector2i(6, 8))
 	assert_false(profiles[0].requires_elevated_courtyard)
 	assert_false(profiles[1].requires_elevated_courtyard)
 	assert_true(profiles[2].requires_elevated_courtyard)

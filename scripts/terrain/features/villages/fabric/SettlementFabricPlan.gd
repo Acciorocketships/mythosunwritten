@@ -483,6 +483,8 @@ func transformed_cells(layer: StringName,
 				local_cells = unit_recipe.inhabited_cells
 			&"occluder":
 				local_cells = unit_recipe.occluder_cells
+			&"terrain_bearing":
+				local_cells = unit_recipe.terrain_bearing_cells
 			_:
 				return {}
 		for local_cell: Vector3i in local_cells:
