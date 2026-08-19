@@ -338,12 +338,17 @@ func commit_chunk(data: Dictionary) -> Node3D:
 
 
 ## Main-thread compatibility wrapper used by unit tests and offline harnesses.
-func build_chunk(plan, chunk: Vector2i, region = null) -> Node3D:
+func build_chunk(plan, chunk: Vector2i, region = null,
+		water: WaterFieldContext = null,
+		features: FeatureContext = null) -> Node3D:
+	## Offline review harnesses use this compatibility adapter too.  Accept the
+	## same immutable water/feature context as `compute_chunk()` so a screenshot
+	## of production terrain cannot silently omit canonical village streets.
 	prepare_resources()
 	var centre := chunk * CELLS_PER_CHUNK + Vector2i.ONE * (CELLS_PER_CHUNK / 2)
 	var block_region: HeightfieldRegion = region if region != null \
 		else plan.compute_region(centre.x, centre.y, CELLS_PER_CHUNK)
-	return commit_chunk(compute_chunk(chunk, block_region))
+	return commit_chunk(compute_chunk(chunk, block_region, water, features))
 
 
 func _mesh_from_arrays(arrays: Array, material: Material) -> ArrayMesh:

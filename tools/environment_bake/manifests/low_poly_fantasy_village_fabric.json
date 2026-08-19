@@ -335,6 +335,36 @@
       "max_collision_pieces": 1
     },
     {
+      "id": "lpfv.fabric.door.closed.01",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Door1_02.glb",
+      "merge_pieces": true,
+      "derive_ground_contacts": true,
+      "collision_profile": "building_trimesh",
+      "tags": ["building", "closed_door", "fabric_door", "prefab_attachment", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 1048576,
+      "max_visual_triangles": 2500,
+      "max_collision_triangles": 2500,
+      "max_surfaces": 2,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.door.closed.02",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Door2_02.glb",
+      "merge_pieces": true,
+      "derive_ground_contacts": true,
+      "collision_profile": "building_trimesh",
+      "tags": ["building", "closed_door", "fabric_door", "prefab_attachment", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 1048576,
+      "max_visual_triangles": 2500,
+      "max_collision_triangles": 2500,
+      "max_surfaces": 2,
+      "max_collision_pieces": 1
+    },
+    {
       "id": "lpfv.fabric.prop.lantern.table.01",
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Lantern_01.glb",
       "merge_pieces": true,

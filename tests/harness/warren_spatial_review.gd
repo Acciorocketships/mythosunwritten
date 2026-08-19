@@ -36,6 +36,7 @@ var _spatial: WarrenSpatialPlan
 var _fabric: SettlementFabricPlan
 var _production_urban: VillageUrbanFabricPlan
 var _production_heightfield: HeightfieldPlan
+var _production_water_plan: WaterPlan
 var _production_site_cell := Vector2i.ZERO
 var _captures: Array[Dictionary] = []
 
@@ -468,6 +469,7 @@ func _quality_cell_bounds(cells: Array[Vector3i]) -> String:
 func _solve_production_site(catalog: EnvironmentCatalog) \
 		-> VillageUrbanFabricPlan:
 	var water := TerrainWorldTuning.make_water(_world_seed)
+	_production_water_plan = water
 	var site := SettlementPlan.new(_world_seed, water).site_for(_super_cell)
 	if site.is_empty():
 		return null
@@ -497,7 +499,11 @@ func _build_production_terrain(world_frame: Transform3D) -> void:
 	## Review the same immutable heightfield the placement solver sampled. Keep
 	## the authored town in its convenient local frame and transform real terrain
 	## back into that frame; all existing adversarial cameras then remain valid.
+	## The materialized town owns the canonical terrain-street shapes. Feed those
+	## exact production facts through the normal feature field so the review does
+	## not lie by rendering connected streets as undifferentiated grass.
 	assert(_production_heightfield != null)
+	assert(_production_water_plan != null)
 	var mesher := TerrainChunkMesher.new()
 	mesher.set_seed(_world_seed)
 	mesher.prepare_resources()
@@ -509,14 +515,35 @@ func _build_production_terrain(world_frame: Transform3D) -> void:
 	var chunk_hi := Vector2i(floori((centre.x + reach) \
 		/ TerrainChunkMesher.CHUNK_WORLD), floori((centre.y + reach) \
 		/ TerrainChunkMesher.CHUNK_WORLD))
+	var coverage := Rect2(Vector2(chunk_lo) * TerrainChunkMesher.CHUNK_WORLD,
+		Vector2(chunk_hi - chunk_lo + Vector2i.ONE) \
+			* TerrainChunkMesher.CHUNK_WORLD)
+	var ground := FeatureGroundField.new(_production_urban.surfaces,
+		_production_urban.clearances, 0.0)
+	var features := FeatureContext.new(coverage, ground,
+		EnvironmentInstancePayload.new())
+	print("[warren_spatial_review] production ground shapes=",
+		_production_urban.surfaces.size(), " clearances=",
+		_production_urban.clearances.size())
 	var terrain_root := Node3D.new()
 	terrain_root.name = "ProductionTerrainInTownFrame"
 	terrain_root.transform = world_frame.affine_inverse()
 	add_child(terrain_root)
 	for cz in range(chunk_lo.y, chunk_hi.y + 1):
 		for cx in range(chunk_lo.x, chunk_hi.x + 1):
+			var chunk := Vector2i(cx, cz)
+			var block_centre := chunk * TerrainChunkMesher.CELLS_PER_CHUNK \
+				+ Vector2i.ONE * (TerrainChunkMesher.CELLS_PER_CHUNK / 2)
+			var block_region := _production_heightfield.compute_region(
+				block_centre.x, block_centre.y,
+				TerrainChunkMesher.CELLS_PER_CHUNK)
+			var chunk_rect := Rect2(Vector2(chunk) \
+					* TerrainChunkMesher.CHUNK_WORLD,
+				Vector2.ONE * TerrainChunkMesher.CHUNK_WORLD)
+			var water := WaterFieldContext.build(_production_water_plan,
+				chunk_rect, block_region, 0.0)
 			terrain_root.add_child(mesher.build_chunk(_production_heightfield,
-				Vector2i(cx, cz)))
+				chunk, block_region, water, features))
 
 
 func _commit_production_entries(parent: Node3D,

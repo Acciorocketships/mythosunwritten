@@ -369,6 +369,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   exponential. The reviewed catalog contains 32 distinct complete meshes: twelve Stylized
   Fantasy Village interiors, seven tavern buildings, three alchemy buildings, two forges, seven
   Low Poly Fantasy Village houses, and its church. They compile as indivisible measured prefabs.
+  The seven LPFV houses ship with an empty front aperture and a centred `_01` jamb frame, so each
+  prefab recipe also owns one of the pack's two hinged `_02` closed leaves at the exact authored
+  jamb/hinge transform; the leaf carries
+  both visual and collision, while a retained clearance-only halo preserves the previously reviewed
+  prefab envelope and keeps this visual correction from reshuffling bounded town search.
   Prefab admission uses unscaled 21/24/30/36 m maximum spans for compact/standard/large/grand,
   so a giant authored building cannot consume a compact town but the broadest silhouettes remain
   reachable in the larger profiles instead of being globally excluded.
@@ -507,10 +512,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `PUBLIC_FLOOR`, the opposite high tread meets the deck through one exact guard opening, and the
   module contract aligns the high tread plane rather than the taller handrail AABB. Compact and
   deep walk-out balconies use a four-cell-wide platform with the doorway in an inner bay, at least
-  one full cell of lateral clearance to each side guard, two complete 3 m front-guard runs, and four
-  measured supports. The nearest side-railing terminal post therefore cannot sit on the threshold;
-  the shared front-guard endpoint is between door bays and, on the preferred deep walkout, 3 m in
-  front of the facade. Balconies are never
+  one full cell of lateral clearance to each side guard, one complete 3 m centre guard plus two
+  complete 1.5 m end guards, and four measured supports. The nearest side-railing terminal post
+  therefore cannot sit on the threshold, and both front-guard joins sit at the outer quarter points
+  rather than on either handed doorway axis. Balconies are never
   inferred from an accidentally exposed lower roof. None of these private visual treatments invents
   public walkability. Every candidate's
   complete transformed semantic solid volume is checked against the sealed 3D public-air grid—not

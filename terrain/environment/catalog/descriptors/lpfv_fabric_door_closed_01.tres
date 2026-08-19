@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_u6nmj"]
+
+[resource]
+script = ExtResource("1_u6nmj")
+id = &"lpfv.fabric.door.closed.01"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_door_closed_01.tres"
+tags = Array[StringName]([&"building", &"closed_door", &"fabric_door", &"prefab_attachment", &"village"])
+measured_aabb = AABB(-1.0957114, 0.0075887693, -0.1387922, 1.0966172, 1.8526899, 0.18222037)
+ground_contact_points = PackedVector2Array(-0.75, 0, 0, 0)
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.door.closed.01"

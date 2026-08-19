@@ -11,12 +11,22 @@ const DOOR_IDS: Array[StringName] = [
 	&"sfv.fabric.wall.wood.door.open.001",
 	&"sfv.fabric.wall.wood.door.closed.001",
 	&"sfv.fabric.wall.rock.door.closed.005",
+	&"lpfv.fabric.door.closed.01",
+	&"lpfv.fabric.door.closed.02",
 ]
 const LEAF_SOURCES: Array[Dictionary] = [
 	{"id": "sfv-door-leaf-001", "path":
 		"res://assets/FantasyVillageFBX/FBX/Building Attachables/Doors/SFV_Door_001.fbx"},
 	{"id": "sfv-door-leaf-002", "path":
 		"res://assets/FantasyVillageFBX/FBX/Building Attachables/Doors/SFV_Door_002.fbx"},
+	{"id": "lpfv-door1-01", "path":
+		"res://assets/LowPolyFantasyVillage/Models/HouseParts/Door1_01.glb"},
+	{"id": "lpfv-door1-02", "path":
+		"res://assets/LowPolyFantasyVillage/Models/HouseParts/Door1_02.glb"},
+	{"id": "lpfv-door2-01", "path":
+		"res://assets/LowPolyFantasyVillage/Models/HouseParts/Door2_01.glb"},
+	{"id": "lpfv-door2-02", "path":
+		"res://assets/LowPolyFantasyVillage/Models/HouseParts/Door2_02.glb"},
 ]
 const ROCK_DOOR_SOURCE := \
 	"res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_005.fbx"
@@ -82,6 +92,45 @@ func _run() -> void:
 			print("[door_recipe_review] captured %s" % path)
 		construction.queue_free()
 		await process_frame
+	var program := SettlementFabricProgram.compile(catalog)
+	assert(program != null)
+	var house_recipe := program.recipe(&"anchor.prefab.10")
+	assert(house_recipe != null)
+	var house_composite := Node3D.new()
+	world.add_child(house_composite)
+	var threshold_target := Vector3.ZERO
+	for placement: Dictionary in house_recipe.placements:
+		var descriptor := catalog.descriptor(StringName(placement.asset_id))
+		assert(descriptor != null)
+		var visual := load(descriptor.visual_path) as EnvironmentVisual
+		assert(visual != null)
+		for piece: EnvironmentVisualPiece in visual.pieces:
+			var instance := MeshInstance3D.new()
+			instance.mesh = piece.mesh
+			instance.transform = (placement.transform as Transform3D) \
+				* piece.local_transform
+			instance.material_override = piece.material_override
+			house_composite.add_child(instance)
+		if StringName(placement.id) == &"front.closed_door":
+			threshold_target = (placement.transform as Transform3D) \
+				* descriptor.measured_aabb.get_center()
+	assert(threshold_target != Vector3.ZERO)
+	var house_bounds := _visual_bounds(house_composite)
+	print("[door_recipe_review] house composite bounds=%s threshold=%s" % [
+		house_bounds, threshold_target])
+	await _capture_views(camera, "lpfv-house01-closed", house_bounds)
+	camera.position = threshold_target + Vector3.BACK * 4.5 + Vector3.UP * 0.1
+	camera.look_at(threshold_target)
+	for unused in 5:
+		await process_frame
+	RenderingServer.force_draw()
+	await process_frame
+	var threshold_path := "/tmp/warren-lpfv-house01-closed-threshold.png"
+	var threshold_image := root.get_texture().get_image()
+	assert(threshold_image != null and threshold_image.save_png(threshold_path) == OK)
+	print("[door_recipe_review] captured %s" % threshold_path)
+	house_composite.queue_free()
+	await process_frame
 	for source: Dictionary in LEAF_SOURCES:
 		var scene := load(String(source.path)) as PackedScene
 		assert(scene != null)

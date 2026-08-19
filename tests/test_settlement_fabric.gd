@@ -317,11 +317,15 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 	assert_true(balcony.socket(&"stair.low").is_empty(),
 		"the compact walk-out must not advertise a stair that reaches no floor")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("guard.")).size(), 4,
+		return String(placement.id).begins_with("guard.")).size(), 5,
 		"the outer and side perimeter is completely guarded")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return placement.asset_id == SettlementFabricProgram.RAILING_MEDIUM
-	).size(), 2, "the 6 m front guard uses two complete authored runs")
+	).size(), 1, "the 6 m front guard has one uninterrupted central run")
+	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
+		return String(placement.id).begins_with("guard.front.") \
+			and placement.asset_id == SettlementFabricProgram.RAILING
+	).size(), 2, "short end guards move the seams off the doorway sightline")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return String(placement.id).begins_with("brace.")).size(), 4,
 		"the overhang remains visibly bracket-supported")
@@ -334,11 +338,27 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		"the preferred walk-out keeps the rail two cells from the door")
 	assert_eq(deep_balcony.headroom_cells.size(), 16)
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("guard.")).size(), 6,
+		return String(placement.id).begins_with("guard.")).size(), 7,
 		"the deep deck closes its outer edge and both two-cell returns")
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return placement.asset_id == SettlementFabricProgram.RAILING_MEDIUM
-	).size(), 2, "the 6 m front guard uses two complete authored runs")
+	).size(), 1, "the 6 m front guard has one uninterrupted central run")
+	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
+		return String(placement.id).begins_with("guard.front.") \
+			and placement.asset_id == SettlementFabricProgram.RAILING
+	).size(), 2, "short end guards keep terminal posts off the door axis")
+	for door_axis_x: float in [-FabricRecipe.CELL_SIZE, 0.0]:
+		for placement: Dictionary in deep_balcony.placements:
+			if not String(placement.id).begins_with("guard.front."):
+				continue
+			var guard_descriptor := catalog.descriptor(
+				StringName(placement.asset_id))
+			var placed_guard := (placement.transform as Transform3D) \
+				* guard_descriptor.measured_aabb
+			assert_gt(absf(placed_guard.position.x - door_axis_x), 0.70,
+				"a front-guard seam must not land on either handed door axis")
+			assert_gt(absf(placed_guard.end.x - door_axis_x), 0.70,
+				"a front-guard seam must not land on either handed door axis")
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return String(placement.id).begins_with("support.diagonal.")).size(), 4,
 		"the deeper projection needs legible full-storey diagonal supports")
@@ -503,6 +523,42 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 			"anchor.prefab.%02d" % recipe_index))
 		assert_not_null(compact_recipe,
 			"every reviewed compact complete house must be selectable as a whole building")
+		if compact_recipe == null:
+			continue
+		var closed_leaves := compact_recipe.placements.filter(
+			func(value: Dictionary) -> bool:
+				return StringName(value.id) == &"front.closed_door")
+		assert_eq(closed_leaves.size(), 1,
+			"each LPFV prefab aperture owns exactly one closed leaf")
+		if closed_leaves.size() != 1:
+			continue
+		var leaf := closed_leaves[0] as Dictionary
+		assert_has(SettlementFabricProgram.LPFV_PREFAB_DOORS,
+			StringName(leaf.asset_id))
+		var door_descriptor := catalog.descriptor(StringName(leaf.asset_id))
+		assert_not_null(door_descriptor)
+		assert_has(door_descriptor.tags, &"closed_door")
+		assert_between(door_descriptor.measured_aabb.size.x, 1.0, 1.2,
+			"LPFV closed-door assets must be the narrow `_02` leaf, not the wider `_01` jamb")
+		assert_gt(door_descriptor.measured_aabb.size.y, 1.8,
+			"the closed leaf must fill the standing doorway height")
+		assert_lt(door_descriptor.measured_aabb.size.z, 0.25,
+			"the closed leaf must remain a thin slab at its threshold")
+		assert_eq(door_descriptor.collision_piece_count, 1,
+			"the finished closed leaf must block its visible aperture")
+		var building := compact_recipe.placements.filter(
+			func(value: Dictionary) -> bool:
+				return StringName(value.id) == &"building")[0] as Dictionary
+		var expected_leaf := (building.transform as Transform3D) \
+			* SettlementFabricProgram.LPFV_PREFAB_DOOR_ORIGIN
+		assert_eq((leaf.transform as Transform3D).origin, expected_leaf,
+			"closed leaf reuses the authored source-pack jamb transform")
+		var placed_leaf := (leaf.transform as Transform3D) \
+			* door_descriptor.measured_aabb
+		var house_bounds := (building.transform as Transform3D) \
+			* catalog.descriptor(house_id).measured_aabb
+		assert_true(house_bounds.grow(0.001).encloses(placed_leaf),
+			"the closed leaf must sit inside the complete house, never float at its eave")
 	for recipe_index in range(17, SettlementFabricProgram.PREFAB_ANCHORS.size()):
 		var complete_id := SettlementFabricProgram.PREFAB_ANCHORS[recipe_index]
 		var descriptor := catalog.descriptor(complete_id)

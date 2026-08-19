@@ -122,6 +122,18 @@ func set_local_clearance_bounds(bounds: AABB) -> bool:
 	return true
 
 
+func grow_local_clearance_bounds(bounds: AABB) -> bool:
+	## A recipe may retain a conservative, previously reviewed construction
+	## envelope after one of its visuals moves inward. The initial declaration is
+	## still single-owner; this operation can only enlarge it, never overwrite or
+	## shrink it.
+	if _sealed or not _has_declared_clearance_bounds or not bounds.has_volume() \
+			or not bounds.position.is_finite() or not bounds.size.is_finite():
+		return false
+	local_clearance_bounds = local_clearance_bounds.merge(bounds)
+	return true
+
+
 func seal(catalog: EnvironmentCatalog) -> bool:
 	last_rejection = ""
 	if _sealed or catalog == null or recipe_id.is_empty() \

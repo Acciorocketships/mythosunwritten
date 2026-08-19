@@ -76,6 +76,19 @@ const TERRACE_PLANT_LOW := &"lpfv.fabric.prop.plant.low.01"
 const TERRACE_PLANT_MID := &"lpfv.fabric.prop.plant.mid.02"
 const TERRACE_PLANT_BROAD := &"lpfv.fabric.prop.plant.broad.03"
 const TERRACE_PLANT_TALL := &"lpfv.fabric.prop.plant.tall.04"
+const LPFV_PREFAB_DOORS: Array[StringName] = [
+	&"lpfv.fabric.door.closed.01",
+	&"lpfv.fabric.door.closed.02",
+]
+# All seven complete houses reuse the same authored jamb transform. Their total
+# AABBs do not: Houses 03--06 extend far to the left, and every roof eave extends
+# well beyond the wall. Consequently neither an AABB centre nor its outer edge
+# identifies this aperture. The `_01` pieces are centred jamb frames already
+# merged into each house; the `_02` leaves are authored about their right hinge.
+# The 0.548 m half-leaf offset below puts that hinge on the jamb while keeping the
+# complete leaf centred in the opening. Production landmark captures visually
+# review this source-pack relationship.
+const LPFV_PREFAB_DOOR_ORIGIN := Vector3(1.311, 0.0, 2.869)
 const GABLE := &"sfv.fabric.gable.wood.m.001"
 const BRACE := &"sfv.fabric.brace.wood.002"
 const DIAGONAL_BRACE := &"sfbp.wwall.support.s.002"
@@ -844,8 +857,11 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		candidates.append(_prefab_recipe(StringName("anchor.prefab.%02d" % index),
 			PREFAB_ANCHORS[index], catalog, modules))
 	for candidate: FabricRecipe in candidates:
-		if candidate == null or not modules.apply_visual_envelope(candidate) \
-				or not candidate.seal(catalog) \
+		var compiled := candidate != null \
+			and modules.apply_visual_envelope(candidate)
+		if compiled:
+			compiled = _preserve_lpfv_prefab_clearance(candidate, modules)
+		if not compiled or not candidate.seal(catalog) \
 				or not program._add_recipe(candidate):
 			push_error("Could not compile settlement fabric recipe %s: %s" % [
 				"<null>" if candidate == null else candidate.recipe_id,
@@ -862,6 +878,35 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	program.referenced_asset_ids.sort_custom(func(a: StringName,
 			b: StringName) -> bool: return String(a) < String(b))
 	return program
+
+
+static func _preserve_lpfv_prefab_clearance(recipe_value: FabricRecipe,
+		modules: FabricModuleProgram) -> bool:
+	## Moving the leaf from the old logical-AABB guess into the actual authored
+	## jamb must not shrink a prefab recipe's already-reviewed construction
+	## clearance and thereby reshuffle bounded town search. Retain that former
+	## conservative envelope as an explicit clearance-only margin; no visual or
+	## collision is emitted at the obsolete location.
+	if recipe_value == null or not recipe_value.has_tag(&"prefab_anchor"):
+		return recipe_value != null
+	var leaf: Dictionary = {}
+	for placement: Dictionary in recipe_value.placements:
+		if StringName(placement.id) == &"front.closed_door":
+			leaf = placement
+			break
+	if leaf.is_empty() or recipe_value.entrances.size() != 1:
+		return true
+	var asset_id := StringName(leaf.asset_id)
+	var contract_value := modules.contract(asset_id)
+	if contract_value == null:
+		return false
+	var entrance_cell := recipe_value.entrances[0].cell as Vector3i
+	var boundary := (float(entrance_cell.z) + 0.5) * CELL
+	var old_pose := modules.facade_aligned_transform(asset_id,
+		_pose(Vector3(float(entrance_cell.x) * CELL, 0.0, boundary), 0.0),
+		Vector3i.BACK, boundary)
+	var old_bounds := old_pose * contract_value.clearance_bounds()
+	return recipe_value.grow_local_clearance_bounds(old_bounds)
 
 
 static func _compile_module_program(catalog: EnvironmentCatalog) \
@@ -891,7 +936,7 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 	]
 	for pool: Array[StringName] in [WOOD_FACADE_BLUE, WOOD_FACADE_ORANGE,
 			WOOD_FACADE_AMBER, ROCK_FACADE, WOOD_DOORS, ROCK_DOORS,
-			ROOF_CHIMNEYS]:
+			ROOF_CHIMNEYS, LPFV_PREFAB_DOORS]:
 		for asset_id: StringName in pool:
 			if not facade_assets.has(asset_id):
 				facade_assets.append(asset_id)
@@ -3765,8 +3810,10 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 	## four-cell platform puts the door in an inner bay and leaves at least one
 	## whole cell of lateral clearance to either side rail. Compact fallback
 	## recipes are 1.5 m deep; the preferred walkouts are 3 m deep so the outer
-	## guard reads as a perimeter instead of a fence across the doorway. The logical cells are
-	## exterior private walk/headroom, while continuous reviewed deck runs, every
+	## guard reads as a perimeter instead of a fence across the doorway. The front
+	## guard is centred on one uninterrupted 3 m rail; its two joins sit at the
+	## outer quarter points rather than putting a terminal post on the door axis.
+	## The logical cells are exterior private walk/headroom, while continuous reviewed deck runs, every
 	## exposed rail, and the selected support course are one atomic measured
 	## construction. The parent room's finite
 	## feature-portal variant owns the open doorway; placing another wall module
@@ -3799,14 +3846,19 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 				modules.walk_aligned_transform(GALLERY_FLOOR,
 					_pose(Vector3(floor_x, 0.0, float(z) * CELL), 0.0),
 					0.0))
-	# Two continuous authored 3 m runs close the 6 m front. Their shared endpoint
-	# is between the two possible door bays and, on the preferred deep walkout,
-	# a full 3 m away from the threshold.
-	for width_half in 2:
-		var guard_x := (-1.5 + float(width_half) * 2.0) * CELL
-		recipe_value.add_placement(StringName("guard.front.%d" % width_half),
-			RAILING_MEDIUM, _pose(Vector3(guard_x, 0.0,
-				(float(depth_cells) - 0.5) * CELL), 0.0))
+	# One 3 m centre run and two 1.5 m end runs close the same exact 6 m edge.
+	# Joining two medium runs put their doubled terminal post on the facade's
+	# central sightline: it was safely three metres from a deep-walkout threshold
+	# but still read as a fence post directly in front of the door. The new seams
+	# are at the outer quarter points, leaving uninterrupted horizontal rails (and
+	# no post) across either handed doorway axis without opening the perimeter.
+	var front_z := (float(depth_cells) - 0.5) * CELL
+	recipe_value.add_placement(&"guard.front.centre", RAILING_MEDIUM,
+		_pose(Vector3(-CELL * 0.5, 0.0, front_z), 0.0))
+	recipe_value.add_placement(&"guard.front.left", RAILING,
+		_pose(Vector3(-CELL * 2.0, 0.0, front_z), 0.0))
+	recipe_value.add_placement(&"guard.front.right", RAILING,
+		_pose(Vector3(CELL, 0.0, front_z), 0.0))
 	# Both end runs close every exposed depth cell. The parent facade is the only
 	# unguarded edge and contains the exact portal selected with this feature.
 	for z in depth_cells:
@@ -4265,6 +4317,19 @@ static func _prefab_recipe(recipe_id: StringName, asset_id: StringName,
 	recipe_value.add_placement(&"building", asset_id, prefab_transform)
 	var door_x := -1 if x_radius > 1 else 0
 	var door_cell := Vector3i(door_x, 0, z_radius - 1)
+	# LPFV complete houses deliberately ship with an empty doorway aperture. Their
+	# centred `_01` jamb is part of the merged house, while the hinged `_02` leaf is
+	# a separate authored asset. A finished static town must not expose that opening
+	# as an apparently open door. Attach one complete leaf at the exact threshold
+	# already owned by this recipe. It is a measured construction placement (visual
+	# + collision), not a post-build prop, and its hinge derives from the source
+	# jamb instead of the annex/roof's much larger total AABB.
+	if String(asset_id).begins_with("lpfv.building.house."):
+		var door_variant := int(String(asset_id).right(1).to_int()) % \
+			LPFV_PREFAB_DOORS.size()
+		var closed_door := LPFV_PREFAB_DOORS[door_variant]
+		recipe_value.add_placement(&"front.closed_door", closed_door,
+			prefab_transform * _pose(LPFV_PREFAB_DOOR_ORIGIN, 0.0))
 	var bearing_cells: Dictionary = {}
 	for point: Vector2 in descriptor.ground_contact_points:
 		var transformed := prefab_transform * Vector3(point.x, bounds.position.y,
