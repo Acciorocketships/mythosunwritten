@@ -76,10 +76,12 @@ func test_the_frozen_phases_still_name_the_pre_wave_modules() -> void:
 	assert_eq(SettlementFabricProgram.ROCK_FACADE.slice(0, 3),
 		[&"sfv.fabric.wall.rock.window.010", &"sfv.fabric.wall.rock.plain.001",
 			&"sfv.fabric.wall.rock.window.010"] as Array[StringName])
-	assert_eq(SettlementFabricProgram.WOOD_DOORS[0],
-		&"sfv.fabric.wall.wood.door.001")
-	assert_eq(SettlementFabricProgram.ROCK_DOORS[0],
-		&"sfv.fabric.wall.rock.door.005")
+	assert_eq(SettlementFabricProgram.WOOD_DOORS,
+		[SettlementFabricProgram.WOOD_DOOR_CLOSED] as Array[StringName],
+		"static timber thresholds must all render a closed leaf")
+	assert_eq(SettlementFabricProgram.ROCK_DOORS,
+		[SettlementFabricProgram.ROCK_DOOR_CLOSED] as Array[StringName],
+		"static stone thresholds must all render a closed leaf")
 
 
 func test_each_timber_family_offers_at_least_eight_distinct_modules() -> void:

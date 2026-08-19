@@ -452,7 +452,8 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		assert_true(embedded.has_tag(&"partial_extrusion"))
 		assert_eq(embedded.solid_cells.size(), 2,
 			"the oriel owns one half-width exterior column, not another room")
-		for required_piece: StringName in [&"bay.face", &"bay.face.right",
+		for required_piece: StringName in [&"bay.face", &"bay.post.left",
+				&"bay.post.right",
 				&"bay.cheek.left",
 				&"bay.cheek.right", &"bay.sill", &"bay.canopy",
 				&"bay.corbel.left", &"bay.corbel.right"]:
@@ -461,8 +462,13 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		var front := embedded.placements.filter(func(value: Dictionary) -> bool:
 			return StringName(value.id) == &"bay.face")[0] as Dictionary
 		assert_true(String(front.asset_id).contains("wall.wood.window.s"),
-			"the partial extrusion uses a half-width authored window face")
+			"the partial extrusion uses one normally proportioned window face")
 		assert_true(embedded.has_tag(&"partial_height_bay"))
+		var terminal_post := embedded.placements.filter(
+			func(value: Dictionary) -> bool:
+				return StringName(value.id) == &"bay.post.right")[0] as Dictionary
+		assert_eq(StringName(terminal_post.asset_id),
+			SettlementFabricProgram.PORTAL_JAMB)
 		assert_lt(embedded.local_bounds.position.z, -0.75,
 			"the bay must extend behind the parent facade plane")
 		assert_gt(embedded.local_bounds.end.z, -0.75,

@@ -186,9 +186,9 @@ func test_warren_fabric_kit_has_structural_collision_and_decor_stays_nonblocking
 	var catalog := EnvironmentCatalog.load_default()
 	var cache := EnvironmentRenderCache.new(catalog)
 	var structural: Array[StringName] = [
-		&"sfv.fabric.wall.rock.door.005",
+		&"sfv.fabric.wall.rock.door.closed.005",
 		&"sfv.fabric.wall.rock.window.010",
-		&"sfv.fabric.wall.wood.door.001",
+		&"sfv.fabric.wall.wood.door.closed.001",
 		&"sfv.fabric.wall.wood.window.001",
 		&"sfv.fabric.gable.wood.m.001",
 		&"sfv.fabric.roof.s.blue.001",

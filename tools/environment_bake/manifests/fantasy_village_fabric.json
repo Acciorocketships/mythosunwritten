@@ -1173,6 +1173,24 @@
    "max_collision_pieces": 1
   },
   {
+   "id": "sfv.fabric.wall.rock.door.closed.005",
+   "source": "res://tools/environment_bake/collision_sources/fantasy_village/sfv_wall_rock_door_closed_005.tscn",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 5000,
+   "max_collision_triangles": 5000,
+   "max_surfaces": 4,
+   "max_collision_pieces": 1
+  },
+  {
    "id": "sfv.fabric.wall.rock.door.006",
    "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_006.fbx",
    "merge_pieces": true,
@@ -1624,6 +1642,24 @@
   },
   {
    "id": "sfv.fabric.wall.wood.door.open.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001_1.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.wall.wood.door.closed.001",
    "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001_1.fbx",
    "merge_pieces": true,
    "collision_profile": "building_trimesh",

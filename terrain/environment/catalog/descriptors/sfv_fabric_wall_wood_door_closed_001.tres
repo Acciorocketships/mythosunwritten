@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_r0ffi"]
+
+[resource]
+script = ExtResource("1_r0ffi")
+id = &"sfv.fabric.wall.wood.door.closed.001"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001.tres"
+tags = Array[StringName]([&"building", &"fabric_wall", &"village"])
+measured_aabb = AABB(-1.5, -0.002118561, -0.56254995, 3, 3.0021186, 1.070858)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.wall.wood.door.closed.001"

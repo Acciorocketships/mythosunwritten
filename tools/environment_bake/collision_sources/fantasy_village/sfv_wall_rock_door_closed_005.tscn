@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/FantasyVillageFBX/FBX/Walls/Rock/Doors/SFV_Wall_Rock_Door_005.fbx" id="1_wall"]
+[ext_resource type="PackedScene" path="res://assets/FantasyVillageFBX/FBX/Building Attachables/Doors/SFV_Door_001.fbx" id="2_leaf"]
+
+[node name="SFVWallRockDoorClosed005" type="Node3D"]
+
+[node name="Wall" parent="." instance=ExtResource("1_wall")]
+
+[node name="Leaf" parent="." instance=ExtResource("2_leaf")]
+position = Vector3(-0.527, 0, 0)

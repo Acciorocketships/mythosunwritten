@@ -7,16 +7,17 @@ extends RefCounted
 const CELL := FabricRecipe.CELL_SIZE
 
 const ROCK_PLAIN := &"sfv.fabric.wall.rock.plain.001"
-const ROCK_DOOR := &"sfv.fabric.wall.rock.door.005"
 const ROCK_WINDOW := &"sfv.fabric.wall.rock.window.010"
 const WOOD_PLAIN := &"sfv.fabric.wall.wood.plain.001"
-const WOOD_DOOR := &"sfv.fabric.wall.wood.door.001"
-# The source pack's `_001_1` file is catalogued under the historical `open`
-# stable ID, but visual qualification proves it is the variant with the timber
-# leaf filling the arch.  Name the construction role after what it actually
-# renders so private elevated portals cannot accidentally select the empty
-# frame above.
-const WOOD_DOOR_CLOSED := &"sfv.fabric.wall.wood.door.open.001"
+# These two reviewed assemblies include a coplanar authored door leaf that
+# fully fills the arch. The stone version combines the original rock shell with
+# the standalone SFV leaf at bake time, preserving the masonry facade instead
+# of substituting a timber wall. Gameplay can replace either static assembly
+# with an interactive door later.
+const ROCK_DOOR_CLOSED := &"sfv.fabric.wall.rock.door.closed.005"
+const WOOD_DOOR_CLOSED := &"sfv.fabric.wall.wood.door.closed.001"
+const ROCK_DOOR := ROCK_DOOR_CLOSED
+const WOOD_DOOR := WOOD_DOOR_CLOSED
 const PORTAL_JAMB := &"sfv.deck.pillar.001"
 const FLOOR := &"sfv.fabric.floor.l.001"
 const GALLERY_FLOOR := &"sfv.fabric.gallery.floor.m.001"
@@ -166,20 +167,13 @@ const ROCK_FACADE: Array[StringName] = [
 	&"sfv.fabric.wall.rock.plain.002",
 	&"sfv.fabric.wall.rock.window.s.003",
 ]
-## Door modules follow the same rule: index 0 stays the shipped door so an
-## existing addressed room is unchanged, and the later entries are alternative
-## authored door frames of the same module width.
+## Static generated thresholds are closed. Open frames remain catalogued for a
+## future interactive-door assembly but are never selected as a finished wall.
 const WOOD_DOORS: Array[StringName] = [
-	&"sfv.fabric.wall.wood.door.001",
-	&"sfv.fabric.wall.wood.door.004",
-	&"sfv.fabric.wall.wood.door.002",
-	&"sfv.fabric.wall.wood.door.003",
+	WOOD_DOOR_CLOSED,
 ]
 const ROCK_DOORS: Array[StringName] = [
-	&"sfv.fabric.wall.rock.door.005",
-	&"sfv.fabric.wall.rock.door.006",
-	&"sfv.fabric.wall.rock.door.001",
-	&"sfv.fabric.wall.rock.door.009",
+	ROCK_DOOR_CLOSED,
 ]
 ## Roof-feature stacks. Index 0 is the shipped compact chimney; the rest are the
 ## authored SFV chimney family, so a capped bay is a different silhouette on
@@ -202,21 +196,23 @@ const FACE_PHASE_OFFSETS: Array[int] = [0, 3, 5, 4]
 ## preserving one exact fallback for every detailed variant.
 const BUILDING_STYLE_COUNT := 3
 const FACADE_PHASE_COUNT := BUILDING_STYLE_COUNT * 2
-## A compact dormer is a finite three-piece construction: one half-width window
-## face and two opposed, trimmed lean-to pitches meeting at a true ridge.  The
-## face's lower/back construction is buried in the host slope.  This avoids both
-## previous failures: a one-sided awning and a scaled full-storey A-frame whose
-## huge empty triangle overwhelmed the window.
-const DORMER_EMBED_Y := -0.20
-# Keep the authored window readable, but shorten its full-height S wall enough
-# that the one-sided top plate disappears beneath the two-pitch crown. At 54%
-# it floated visibly behind the ridge like a stray horizontal plank.
-const DORMER_FACE_SCALE := Vector3(0.78, 0.50, 0.62)
-const DORMER_PITCH_SCALE := Vector3(0.50, 0.65, 0.50)
-const DORMER_PITCH_SEAM_OFFSET := 0.42138965
-const DORMER_PITCH_Y := 1.22
-const DORMER_COMPACT_EAVE_OFFSET := 1.25
-const DORMER_WIDE_EAVE_OFFSET := 2.20
+## Dormers use the source pack's complete attic-window shells at a uniform
+## reduced scale. The gabled 001/002 and shed-roof 003/004 families supply real
+## cheeks, sills, windows, supports, and closed roofs in their authored
+## proportions. Their open backs and feet sit below the host pitch.
+# Roof recipes use the wall-top/eave plane as local Y=0. The dormer's feet sit
+# above that datum but below the slope at their upslope X position; a negative
+# value wrongly exposed them beneath the building eave.
+const DORMER_EMBED_Y := 0.10
+## The authored shed shell has a much lower crown than the gabled shell. At the
+## gable datum its entire window course disappears behind the host tiles and it
+## reads as a roof hatch, so it needs a separate higher registration.
+const DORMER_SHED_EMBED_Y := 0.55
+const DORMER_SCALE := Vector3(0.56, 0.56, 0.56)
+# Keep the complete shell far enough upslope for the host tiles to bury its
+# three construction feet. Its roof tail still runs inward beneath the pitch.
+const DORMER_COMPACT_EAVE_OFFSET := 1.15
+const DORMER_WIDE_EAVE_OFFSET := 2.15
 const FEATURE_PORTAL_NORTH := 1
 const FEATURE_PORTAL_EAST := 2
 const FEATURE_PORTAL_SOUTH := 4
@@ -838,7 +834,6 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 	var modules := FabricModuleProgram.new(catalog)
 	var facade_assets: Array[StringName] = [
 		ROCK_PLAIN, ROCK_DOOR, ROCK_WINDOW, WOOD_PLAIN, WOOD_DOOR,
-		WOOD_DOOR_CLOSED,
 		PORTAL_JAMB,
 		STAIR_HALF,
 		WALL_WOOD_S_A, WALL_WOOD_S_B, WALL_WOOD_CORNER_S,
@@ -2642,29 +2637,21 @@ static func _dormered_slim_roof_recipe(recipe_id: StringName,
 static func _add_compact_roof_dormer(recipe_value: FabricRecipe,
 		placement_id: StringName, former_dormer_asset: StringName,
 		base: Vector3, yaw: float) -> void:
-	var warm := former_dormer_asset in [ROOF_WINDOW_01, ROOF_WINDOW_04]
-	var face_asset := WALL_WOOD_WINDOW_S_ORANGE if warm \
-		else WALL_WOOD_WINDOW_S_BLUE
-	var pitch_asset := WINDOW_ROOF_ORANGE_TRIMMED if warm \
-		else WINDOW_ROOF_BLUE_TRIMMED
-	recipe_value.add_placement(placement_id, face_asset,
-		_scaled_pose(base + Vector3.UP * DORMER_EMBED_Y, yaw,
-			DORMER_FACE_SCALE))
-	var dormer_basis := Basis(Vector3.UP, yaw)
-	for side in [-1, 1]:
-		# Each source roof's high edge is 0.8427793 m behind its pivot. At
-		# 50% depth this exact offset brings both high edges to the same ridge;
-		# the low edges then fall outward over the two face corners.
-		var pitch_origin := base + Vector3.UP * DORMER_PITCH_Y \
-			+ dormer_basis * Vector3(float(side) \
-				* DORMER_PITCH_SEAM_OFFSET, 0.0, 0.0)
-		var pitch_yaw := yaw + float(side) * PI * 0.5
-		recipe_value.add_placement(StringName("compact_roof.pitch.%s.%s" % [
-			String(placement_id).replace("dormer", "window"),
-			"right" if side > 0 else "left"]), pitch_asset,
-			_scaled_pose(pitch_origin, pitch_yaw, DORMER_PITCH_SCALE))
-	if not recipe_value.has_tag(&"complete_gabled_dormer"):
-		recipe_value.role_tags.append(&"complete_gabled_dormer")
+	assert(former_dormer_asset in [ROOF_WINDOW_01, ROOF_WINDOW_02,
+		ROOF_WINDOW_03, ROOF_WINDOW_04])
+	var embed_y := DORMER_EMBED_Y \
+		if former_dormer_asset in [ROOF_WINDOW_01, ROOF_WINDOW_02] \
+		else DORMER_SHED_EMBED_Y
+	recipe_value.add_placement(placement_id, former_dormer_asset,
+		_scaled_pose(base + Vector3.UP * embed_y, yaw,
+			DORMER_SCALE))
+	if not recipe_value.has_tag(&"complete_authored_dormer"):
+		recipe_value.role_tags.append(&"complete_authored_dormer")
+	var family_tag := &"authored_gabled_dormer" \
+		if former_dormer_asset in [ROOF_WINDOW_01, ROOF_WINDOW_02] \
+		else &"authored_shed_dormer"
+	if not recipe_value.has_tag(family_tag):
+		recipe_value.role_tags.append(family_tag)
 
 
 static func _roof_seam_recipe(recipe_id: StringName, width_m: float,
@@ -3269,19 +3256,25 @@ static func _embedded_oriel_recipe(recipe_id: StringName, theme: StringName,
 	const BAY_CENTRE_Z := (BAY_BACK_Z + BAY_FRONT_Z) * 0.5
 	const BAY_DEPTH_SCALE := (BAY_FRONT_Z - BAY_BACK_Z) / CELL
 	const BAY_SILL_Y := 0.70
+	# Keep one normally proportioned authored window. Splitting two copies into
+	# half-width panels squeezed their glazing and doubled every sill/header,
+	# making the bay look like ornamental clutter instead of a small room volume.
+	var face_pose := _scaled_pose(Vector3(0.0, BAY_SILL_Y, BAY_CENTRE_Z),
+		0.0, Vector3(0.82, BAY_HEIGHT_SCALE, 1.0))
+	recipe_value.add_placement(&"bay.face", window_asset,
+		modules.facade_aligned_transform(window_asset, face_pose,
+			Vector3i.BACK, BAY_FRONT_Z))
+	# The source facade owns only its left terminal post. Frame both edges with
+	# the same pure timber jamb so its handed source geometry cannot leave one
+	# heavy side and one absent side. The left jamb covers the authored post; the
+	# right jamb supplies its exact reflected silhouette.
+	for side in [-1, 1]:
+		recipe_value.add_placement(StringName("bay.post.%s" % [
+			"left" if side < 0 else "right"]), PORTAL_JAMB,
+			_scaled_pose(Vector3(float(side) * 0.615, BAY_SILL_Y,
+				BAY_FRONT_Z - 0.276), 0.0,
+				Vector3(1.0, BAY_HEIGHT_SCALE, 1.0)))
 	var mirrored_window := _mirrored_facade_asset(window_asset)
-	for face: Dictionary in [
-		{"id": &"bay.face", "x": -0.375, "asset": window_asset},
-		{"id": &"bay.face.right", "x": 0.375,
-			"asset": mirrored_window},
-	]:
-		var face_asset := StringName(face.asset)
-		var face_pose := _scaled_pose(
-			Vector3(float(face.x), BAY_SILL_Y, BAY_CENTRE_Z), 0.0,
-			Vector3(0.50, BAY_HEIGHT_SCALE, 1.0))
-		recipe_value.add_placement(StringName(face.id), face_asset,
-			modules.facade_aligned_transform(face_asset, face_pose,
-				Vector3i.BACK, BAY_FRONT_Z))
 	for side: Dictionary in [
 		{"id": &"bay.cheek.left", "x": -0.75, "yaw": PI * 0.5,
 			"outward": Vector3i.LEFT, "asset": mirrored_window},
@@ -3308,7 +3301,9 @@ static func _embedded_oriel_recipe(recipe_id: StringName, theme: StringName,
 	# The face module has real thickness outside BAY_FRONT_Z. Carry the sill and
 	# canopy beneath/above that complete face, not merely beneath the return
 	# cheeks; the latter left the window wall hanging off the front of its deck.
-	var sill_pose := _scaled_pose(Vector3(0.0, 0.0, BAY_CENTRE_Z), 0.0,
+	# The deck source pivot is on its right edge. Shift it by half its authored
+	# width so the sill sits under the bay instead of projecting 1.5 m to the left.
+	var sill_pose := _scaled_pose(Vector3(0.75, 0.0, BAY_CENTRE_Z), 0.0,
 		Vector3(1.0, 1.0, BAY_DEPTH_SCALE))
 	recipe_value.add_placement(&"bay.sill", SETBACK_CAP,
 		modules.walk_aligned_transform(SETBACK_CAP, sill_pose, BAY_SILL_Y))

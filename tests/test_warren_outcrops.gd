@@ -248,7 +248,8 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 		if recipe_value == null:
 			continue
 		var required_parts: Dictionary = {
-			&"bay.face": false, &"bay.face.right": false,
+			&"bay.face": false, &"bay.post.left": false,
+			&"bay.post.right": false,
 			&"bay.cheek.left": false,
 			&"bay.cheek.right": false, &"bay.sill": false,
 			&"bay.canopy": false, &"bay.corbel.left": false,
@@ -288,19 +289,34 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 		assert_gt(placed_face.position.z, PARENT_FACADE_Z,
 			("the complete oriel window must sit outside the parent facade; %s " \
 				+ "would read as a recessed/concave frame") % recipe_id)
-		var right_face := recipe_value.placements.filter(
+		assert_false(recipe_value.placements.any(
 			func(value: Dictionary) -> bool:
-				return StringName(value.id) == &"bay.face.right")[0] as Dictionary
-		var right_contract := program.module_program.contract(
-			StringName(right_face.asset_id))
-		var placed_right := (right_face.transform as Transform3D) \
-			* right_contract.visual_bounds
-		assert_true(String(right_face.asset_id).ends_with(".mirror_x"),
-			"the right face must mirror the one-sided source joinery")
-		assert_lt(absf(placed_face.end.x - placed_right.position.x), 0.02,
-			"the paired window faces must meet without a daylight seam")
-		assert_lt(absf(placed_face.position.x + placed_right.end.x), 0.02,
-			"the paired face must finish symmetrically at both outside posts")
+				return StringName(value.id) == &"bay.face.right"),
+			"the oriel must not squeeze two complete windows into one bay")
+		var left_post := recipe_value.placements.filter(
+			func(value: Dictionary) -> bool:
+				return StringName(value.id) == &"bay.post.left")[0] as Dictionary
+		var post := recipe_value.placements.filter(
+			func(value: Dictionary) -> bool:
+				return StringName(value.id) == &"bay.post.right")[0] as Dictionary
+		var post_contract := program.module_program.contract(
+			StringName(post.asset_id))
+		var placed_post := (post.transform as Transform3D) \
+			* post_contract.visual_bounds
+		assert_eq(StringName(post.asset_id),
+			SettlementFabricProgram.PORTAL_JAMB,
+			"the missing terminal timber must be a pure wood jamb")
+		assert_between(placed_post.size.x, 0.25, 0.31,
+			"the right jamb must match the authored heavy post on the left")
+		assert_gt(placed_post.position.x, 0.45,
+			"the added terminal timber must close the source panel's right edge")
+		var left_contract := program.module_program.contract(
+			StringName(left_post.asset_id))
+		var placed_left := (left_post.transform as Transform3D) \
+			* left_contract.visual_bounds
+		assert_almost_eq(placed_left.position.x, -placed_post.end.x, 0.001,
+			"the two bay jambs must be exact reflected silhouettes")
+		assert_almost_eq(placed_left.size.x, placed_post.size.x, 0.001)
 		var cheek_bounds: Array[AABB] = []
 		for cheek_id: StringName in [&"bay.cheek.left", &"bay.cheek.right"]:
 			var cheek := recipe_value.placements.filter(

@@ -8,6 +8,8 @@ const RECIPE_IDS: Array[StringName] = [
 	&"roof.tower.orange.dormer.right",
 	&"roof.slim.blue.dormer.left",
 	&"roof.slim.orange.dormer.right",
+	&"roof.long.blue.dormer.left",
+	&"roof.square.orange.dormer.right",
 ]
 
 

@@ -150,31 +150,52 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 			assert_almost_eq(bounds.position.y,
 				SettlementFabricProgram.DORMER_EMBED_Y, 0.001,
 				"%s exposes the dormer face's construction back" % recipe_id)
-			assert_lt(bounds.position.y, -0.10,
-				"%s must bury its lower shell deeply in the host pitch" % recipe_id)
-			assert_lt(minf(bounds.size.x, bounds.size.z), 1.25,
+			assert_gte(bounds.position.y, 0.0,
+				"%s must not hang its construction feet below the building eave" % recipe_id)
+			assert_lt(bounds.position.y, 0.2,
+				"%s must remain embedded below the host roof slope" % recipe_id)
+			assert_lt(minf(bounds.size.x, bounds.size.z), 2.1,
 				"%s dormer facade grew into a room-width second gable" % recipe_id)
-			assert_lt(bounds.size.y, 1.7,
+			assert_lt(bounds.size.y, 2.1,
 				"%s dormer grew into a full-storey second room" % recipe_id)
 		assert_eq(dormer_count, 1,
 			"%s must carry one integrated attic window" % recipe_id)
-		assert_true(recipe_value.has_tag(&"complete_gabled_dormer"),
-			"%s lost its coherent two-pitch crown" % recipe_id)
-		var oversized_shell_count := 0
+		assert_true(recipe_value.has_tag(&"complete_authored_dormer"),
+			"%s lost its complete authored dormer shell" % recipe_id)
+		assert_true(recipe_value.has_tag(&"authored_gabled_dormer"),
+			"%s should use the compact gabled family" % recipe_id)
+		var authored_shell_count := 0
 		for stock_asset: StringName in [
 			SettlementFabricProgram.ROOF_WINDOW_01,
 			SettlementFabricProgram.ROOF_WINDOW_02,
 			SettlementFabricProgram.ROOF_WINDOW_03,
 			SettlementFabricProgram.ROOF_WINDOW_04,
 		]:
-			oversized_shell_count += int(recipe_value.asset_ids().has(stock_asset))
-		assert_eq(oversized_shell_count, 0,
-			"%s returned to an oversized full-storey attic-window shell" % recipe_id)
+			authored_shell_count += int(recipe_value.asset_ids().has(stock_asset))
+		assert_eq(authored_shell_count, 1,
+			"%s must contain one uniformly reduced authored dormer" % recipe_id)
 		var pitch_count := recipe_value.placements.filter(
 			func(value: Dictionary) -> bool:
 				return String(value.id).begins_with("compact_roof.pitch.")).size()
-		assert_eq(pitch_count, 2,
-			"%s dormer must close under two opposed roof pitches" % recipe_id)
+		assert_eq(pitch_count, 0,
+			"%s must not rebuild an authored dormer from detached awnings" % recipe_id)
+
+	for recipe_id: StringName in [
+		&"roof.long.blue.dormer.left",
+		&"roof.square.orange.dormer.right",
+	]:
+		var recipe_value := _program.recipe(recipe_id)
+		assert_not_null(recipe_value, String(recipe_id))
+		if recipe_value != null:
+			assert_true(recipe_value.has_tag(&"complete_authored_dormer"))
+			assert_true(recipe_value.has_tag(&"authored_shed_dormer"),
+				"%s should preserve the lower-profile shed family" % recipe_id)
+			var dormer := recipe_value.placements.filter(
+				func(value: Dictionary) -> bool:
+					return String(value.id).contains("dormer"))[0] as Dictionary
+			assert_almost_eq((dormer.transform as Transform3D).origin.y,
+				SettlementFabricProgram.DORMER_SHED_EMBED_Y, 0.001,
+				"%s must expose its low window course above the host tiles" % recipe_id)
 
 	var opposed := _program.recipe(&"roof.long.blue.dormer.pair.left")
 	assert_not_null(opposed)

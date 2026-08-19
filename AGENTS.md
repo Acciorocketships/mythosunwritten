@@ -318,17 +318,20 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   other addressed rooms. A generated facade may render a door-shaped module only for a sealed
   exterior entrance or typed private feature portal, and every exterior entrance must have an
   exact public-surface claim at its threshold; decorative or midair facade doors invalidate the
-  town. Outcropping vocabulary retains two exact scales for diagnostic fixtures,
+  town. Finished static entrances always select reviewed closed-leaf assemblies. The stone assembly
+  bakes the standalone arched leaf into the authored rock surround, so closing a threshold never
+  replaces its masonry family with a plaster/timber wall; empty door frames remain catalogued only
+  for a future interactive-door transaction. Outcropping vocabulary retains two exact scales for diagnostic fixtures,
   but production currently admits only the small facade bay while the basic composition pass is
   being mastered. The disabled full-scale same-storey bump-out is a
   3 m room plate shifted diagonally across a 3 m tower room: their shared 1.5 m quadrant remains the
   parent's authored shell, while only the exposed L-shaped union shell, floor, braces, and roof are
   emitted. It therefore reads as one compound building with no duplicate wall or texture in the
   overlap. A small facade bay is instead a 1.5 m-wide embedded oriel with 0.9 m return cheeks and a
-  1.38 m partial-height face assembled from a handed S window and its baked mirror. The paired
-  front lights meet at centre while retaining one outer timber on each side; glazed return cheeks
-  use the same family and put their posts at the parent seam rather than producing one oversized
-  front jamb. Its complete sill and shallow tiled canopy cover the real face thickness, paired
+  1.38 m partial-height face assembled from one normally proportioned authored S window. Identical
+  centered timber jambs cover both terminal edges, so the handed source panel cannot leave one
+  oversized post and one empty edge; glazed return cheeks use the same family and put their posts
+  at the parent seam. Its centered complete sill and shallow tiled canopy cover the real face thickness, paired
   corbels carry it, and the parent remains a closed facade rather than opening a full doorway-sized
   hole behind the small bay. A straight room pasted beyond a facade,
   dormer, flue, or trim can satisfy neither massing contract. Its diagonal/corner-union recipes remain testable but
@@ -480,12 +483,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   overlap or runtime scaling. Compatible one-valley building/long T-neighbourhoods use the existing
   atomic bisected-host/open-branch construction; a compact crossing which has no authored watertight
   junction is flattened into a furnished roof campaign instead of overhanging its 3 m house.
-  Pitched compact and slim roofs may receive measured dormers. Each is a compact authored window
-  face below two opposed trimmed pitches whose measured high edges meet at one exact ridge. The
-  face is shortened to half a storey and embedded 0.20 m into the host pitch, hiding both its lower
-  construction back and its one-sided top plate while the glazing remains visible; stock full-storey
-  A-frame dormers and one-sided awning crowns are ineligible. Compact/wide eave offsets remain
-  1.25/2.20 m, respectively.
+  Pitched compact and slim roofs may receive measured dormers. Each uses one complete authored
+  attic-window shell at uniform 56% scale, retaining its window, cheeks, sill, supports, and closed
+  gabled or shed crown as one coherent asset. Gabled and lower-profile shed families use separate
+  vertical registrations so their feet and open backs remain buried in the host slope without
+  hiding the glazing or exposing a roof hatch. Compact/wide eave offsets are 1.15/2.15 m.
   Long roofs may select a bilateral recipe with one dormer on each opposing pitch. True wraparound
   balcony recipes own two continuous 3 m deck rows, a native half-width third cell on the direct
   doorway circulation line, a 1.5 m side return, nine exposed-boundary guard sections, two
