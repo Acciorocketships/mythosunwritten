@@ -26,6 +26,7 @@ var unserved_entrances: Array[Dictionary] = []
 var unclassified_required_cells: Array[Vector3i] = []
 var _claims: Dictionary = {}
 var _entrance_openings: Dictionary = {}
+var _entrance_forecourt_join_points: Dictionary = {}
 var _public_openings: Dictionary = {}
 var _structural_solid_cells: Dictionary = {}
 var _daylight_void_cells: Array[Vector3i] = []
@@ -36,6 +37,7 @@ var _transition_claim_owners: Dictionary = {}
 ## full-headroom undercroft without sampling terrain again in the renderer.
 var _support_base_bands: Dictionary = {}
 var _sealed := false
+var _omitted_guard_post_count := 0
 var last_rejection := ""
 
 
@@ -254,6 +256,7 @@ func audit() -> Dictionary:
 		"unserved_entrance_count": unserved_entrances.size(),
 		"served_structural_entrance_count": _served_structural_entrance_count(),
 		"entrance_guard_conflict_count": _entrance_guard_conflict_count(),
+		"entrance_forecourt_join_count": _omitted_guard_post_count,
 		"wide_entrance_guard_opening_count": _wide_entrance_guard_opening_count(),
 		"daylight_void_guard_segment_count": guard_segments.filter(
 			func(value: Dictionary) -> bool:
@@ -632,12 +635,12 @@ func _classify_entrances(entrances: Array[Dictionary]) -> void:
 	entrance_records.clear()
 	unserved_entrances.clear()
 	_entrance_openings.clear()
+	_entrance_forecourt_join_points.clear()
 	for source: Dictionary in entrances:
 		var entrance := source.duplicate()
 		var landing := entrance.get("landing_cell", Vector3i()) as Vector3i
 		var facing := entrance.get("facing", Vector3i()) as Vector3i
 		var served := _claims.has(_cell_key(landing))
-		entrance["served"] = served
 		var guard_opening_cells: Array[Vector3i] = [landing]
 		var door_phase := int(entrance.get("door_phase", -1))
 		if door_phase in [0, 1]:
@@ -651,6 +654,7 @@ func _classify_entrances(entrances: Array[Dictionary]) -> void:
 				else -local_left)
 			if _claims.has(_cell_key(companion)):
 				guard_opening_cells.append(companion)
+		entrance["served"] = served
 		entrance["guard_opening_cells"] = guard_opening_cells
 		entrance_records.append(entrance)
 		if not served:
@@ -660,6 +664,17 @@ func _classify_entrances(entrances: Array[Dictionary]) -> void:
 			var opening_direction := -facing
 			_entrance_openings[_transition_key(opening_cell,
 				opening_direction)] = true
+		# A shallow forecourt can continue to either side of the handed threshold.
+		# Its two 1.5 m railing repeats otherwise put a terminal post directly on
+		# the doorway sightline. Mark both possible joints; guard construction joins
+		# one only when the finished surface actually owns exactly two collinear
+		# sections there, so this never invents a landing or removes a corner post.
+		var forecourt_guard := _guard_segment(landing, facing,
+			&"entrance_forecourt")
+		for forecourt_point: Vector3 in [forecourt_guard.a as Vector3,
+				forecourt_guard.b as Vector3]:
+			_entrance_forecourt_join_points[_point_key(forecourt_point)] = \
+				forecourt_point
 	entrance_records.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_id) < String(b.stable_id))
 	unserved_entrances.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -681,10 +696,10 @@ func _build_guards(structural_solid_cells: Dictionary,
 		daylight_void_cells: Array[Vector3i]) -> void:
 	guard_segments.clear()
 	guard_mesh_payload = {}
+	_omitted_guard_post_count = 0
 	var daylight_void_set: Dictionary = {}
 	for cell: Vector3i in daylight_void_cells:
 		daylight_void_set[_cell_key(cell)] = true
-	var post_centers: Dictionary = {}
 	for claim: Dictionary in _claims.values():
 		if int(claim.kind) != SurfaceKind.STRUCTURAL_COURT:
 			continue
@@ -704,12 +719,42 @@ func _build_guards(structural_solid_cells: Dictionary,
 				&"daylight_void" if daylight_void_set.has(_cell_key(neighbor)) \
 				else &"exposed_edge")
 			guard_segments.append(segment)
-			post_centers[_point_key(segment.a as Vector3)] = segment.a
-			post_centers[_point_key(segment.b as Vector3)] = segment.b
 	guard_segments.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_key) < String(b.stable_key))
 	if guard_segments.is_empty():
 		return
+	var segments_by_point: Dictionary = {}
+	for segment_index in guard_segments.size():
+		var segment := guard_segments[segment_index]
+		for point: Vector3 in [segment.a as Vector3, segment.b as Vector3]:
+			var key := _point_key(point)
+			if not segments_by_point.has(key):
+				segments_by_point[key] = [] as Array[int]
+			(segments_by_point[key] as Array[int]).append(segment_index)
+	var joined_points: Dictionary = {}
+	for key_value: Variant in _entrance_forecourt_join_points.keys():
+		var key := String(key_value)
+		var indices: Array = segments_by_point.get(key, []) as Array
+		if indices.size() != 2:
+			continue
+		var first := guard_segments[int(indices[0])]
+		var second := guard_segments[int(indices[1])]
+		var first_span := (first.b as Vector3) - (first.a as Vector3)
+		var second_span := (second.b as Vector3) - (second.a as Vector3)
+		if first_span.normalized().cross(second_span.normalized()).length() > 0.001:
+			continue
+		joined_points[key] = _entrance_forecourt_join_points[key]
+		first["visual_join_point"] = _entrance_forecourt_join_points[key]
+		second["visual_join_point"] = _entrance_forecourt_join_points[key]
+		guard_segments[int(indices[0])] = first
+		guard_segments[int(indices[1])] = second
+	_omitted_guard_post_count = joined_points.size()
+	var post_centers: Dictionary = {}
+	for segment: Dictionary in guard_segments:
+		for point: Vector3 in [segment.a as Vector3, segment.b as Vector3]:
+			var key := _point_key(point)
+			if not joined_points.has(key):
+				post_centers[key] = point
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var uvs := PackedVector2Array()

@@ -1363,6 +1363,29 @@
       "max_collision_pieces": 4
     },
     {
+      "id": "sfv.deck.railing.m.001",
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Fence/SFV_Fence_001.fbx",
+      "scale": [
+        1.352338,
+        1.0,
+        1.0
+      ],
+      "merge_pieces": true,
+      "collision_source": "res://tools/environment_bake/collision_sources/fantasy_village/fence_001.tscn",
+      "tags": [
+        "deck",
+        "railing",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 1048576,
+      "max_visual_triangles": 600,
+      "max_collision_triangles": 0,
+      "max_surfaces": 1,
+      "max_collision_pieces": 4
+    },
+    {
       "id": "sfv.fence.001",
       "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Fence/SFV_Fence_001.fbx",
       "merge_pieces": true,

@@ -41,7 +41,7 @@ func test_default_program_compiles_reviewed_catalog_metrics_and_slots() -> void:
 		&"sfv.building.interior.orange.005",
 		&"sfv.building.interior.orange.006",
 		&"sfv.deck.floor.s.001", &"sfv.deck.pillar.001",
-		&"sfv.deck.railing.s.001",
+		&"sfv.deck.railing.s.001", &"sfv.deck.railing.m.001",
 		&"sfv.fence.001", &"sfv.foundation.rock.001",
 		&"sfv.quest_board.001", &"sfv.stair.s.001",
 		&"sfv.well.001",

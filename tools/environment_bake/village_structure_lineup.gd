@@ -33,12 +33,23 @@ const MARKET_SOURCES: Array[Dictionary] = [
 	{"label": "butcher 3", "path": "res://assets/FantasyMarketFBX/FBX/Butcher Stall/Stall/SFM_Butcher_Stall_003.fbx"},
 	{"label": "butcher attach", "path": "res://assets/FantasyMarketFBX/FBX/Butcher Stall/Stall/SFM_Butcher_Stall_Attachable_001.fbx"},
 ]
+const FENCE_SOURCES: Array[Dictionary] = [
+	{"label": "fence 001", "path": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Fence/SFV_Fence_001.fbx"},
+	{"label": "fence 002", "path": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Fence/SFV_Fence_002.fbx"},
+	{"label": "fence 003", "path": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Fence/SFV_Fence_003.fbx"},
+	{"label": "handrail 001", "path": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_001.fbx"},
+	{"label": "handrail 002", "path": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_002.fbx"},
+	{"label": "handrail 003", "path": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_003.fbx"},
+	{"label": "handrail base 001", "path": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_Base_001.fbx"},
+	{"label": "handrail base 002", "path": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_Base_002.fbx"},
+]
 
 
 func _ready() -> void:
 	var family := _argument("--family", "houses")
 	var layout := _house_layout() if family == "houses" \
-		else _market_layout() if family == "markets" else _tent_layout()
+		else _market_layout() if family == "markets" \
+		else _fence_layout() if family == "fences" else _tent_layout()
 	_build_environment(layout)
 	_build_lineup(layout.items, int(layout.columns), layout.spacing)
 	await get_tree().process_frame
@@ -77,6 +88,14 @@ static func _market_layout() -> Dictionary:
 		"ground_size": Vector2(54.0, 49.0), "camera_size": 53.0,
 		"camera_position": Vector3(0.0, 44.0, 54.0),
 		"camera_target": Vector3(0.0, 1.5, 0.0)}
+
+
+static func _fence_layout() -> Dictionary:
+	return {"items": FENCE_SOURCES, "columns": 4,
+		"spacing": Vector2(5.0, 5.0),
+		"ground_size": Vector2(23.0, 18.0), "camera_size": 19.0,
+		"camera_position": Vector3(0.0, 10.0, 15.0),
+		"camera_target": Vector3(0.0, 0.7, 0.0)}
 
 
 func _build_environment(layout: Dictionary) -> void:

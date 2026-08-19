@@ -282,8 +282,12 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   sightline gates; these failures are intentionally
   preserved by the critical review harness rather than hidden by props or detached platforms. Its
   alignment revision treats exterior doors and deliberate floor openings as typed plan facts:
-  an addressed room is selected only when its exact threshold has an adjacent public landing, and
-  that threshold opens the derived guard; otherwise the facade is closed/windowed. The final
+  an addressed room is selected only when its exact handed 1.5 m threshold has an adjacent public
+  landing, and every real companion landing opens the remainder of the authored 3 m facade; the
+  doorway remains clear of derived guards and endpoint posts, otherwise the facade is
+  closed/windowed. Collinear short guards along its shallow forecourt coalesce into one authored
+  3 m rail with posts only at its outer ends, but only when the finished public surface owns both
+  sections. The final
   `PublicRealmSurfacePlan` transaction hard-rejects every remaining unserved exterior threshold,
   so a visible door can never survive as a later diagnostic over empty air. Stair audits
   require both player-width lanes at their exact low/high graph seams. Structural courts satisfy
@@ -329,9 +333,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   emitted. It therefore reads as one compound building with no duplicate wall or texture in the
   overlap. A small facade bay is instead a 1.5 m-wide embedded oriel with 0.9 m return cheeks and a
   1.38 m partial-height face assembled from one normally proportioned authored S window. Identical
-  centered timber jambs cover both terminal edges, so the handed source panel cannot leave one
-  oversized post and one empty edge; glazed return cheeks use the same family and put their posts
-  at the parent seam. Its centered complete sill and shallow tiled canopy cover the real face thickness, paired
+  centered timber jambs overlap the scaled centreline of the source panel's authored terminal post
+  and its exact reflection rather than widening either edge; glazed return cheeks meet that same
+  scaled face envelope at the parent seam. Its centered complete sill and shallow tiled canopy cover
+  the complete narrowed face and both returns, paired
   corbels carry it, and the parent remains a closed facade rather than opening a full doorway-sized
   hole behind the small bay. A straight room pasted beyond a facade,
   dormer, flue, or trim can satisfy neither massing contract. Its diagonal/corner-union recipes remain testable but
@@ -485,17 +490,24 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   junction is flattened into a furnished roof campaign instead of overhanging its 3 m house.
   Pitched compact and slim roofs may receive measured dormers. Each uses one complete authored
   attic-window shell at uniform 56% scale, retaining its window, cheeks, sill, supports, and closed
-  gabled or shed crown as one coherent asset. Gabled and lower-profile shed families use separate
+  gabled or shed crown as one coherent asset. The blue compact tower retains the reviewed steep
+  gable; the warm compact tower uses the lower-profile shed instead of the weaker shallow gable.
+  Gabled and lower-profile shed families use separate
   vertical registrations so their feet and open backs remain buried in the host slope without
   hiding the glazing or exposing a roof hatch. Compact/wide eave offsets are 1.15/2.15 m.
   Long roofs may select a bilateral recipe with one dormer on each opposing pitch. True wraparound
   balcony recipes own two continuous 3 m deck rows, a native half-width third cell on the direct
   doorway circulation line, a 1.5 m side return, nine exposed-boundary guard sections, two
-  terrain-embedded full-storey diagonal braces, and a planted corner. The doorway seam is unguarded
-  and the first guard on its axis is three cells away. Their complete authored stair is a
+  complete one-storey timber pillars beneath real outer deck cells, and a planted corner. The
+  doorway seam and both of its guard endpoints are keep-clear zones, so neither the direct rail
+  nor an adjacent repeat's terminal post can block the aperture; structural supports sit off the
+  doorway axis. Their complete authored stair is a
   switchback, not a two-lane straight flight: one measured low tread lands on an existing
   `PUBLIC_FLOOR`, the opposite high tread meets the deck through one exact guard opening, and the
-  module contract aligns the high tread plane rather than the taller handrail AABB. They are never
+  module contract aligns the high tread plane rather than the taller handrail AABB. Compact and
+  deep walk-out balconies close their facade-width outer edge with one continuous authored 3 m
+  guard. They never meet two short fence repeats on the doorway centreline; side returns remain
+  independent complete guards, so removing the doubled post does not open an edge. Balconies are never
   inferred from an accidentally exposed lower roof. None of these private visual treatments invents
   public walkability. Every candidate's
   complete transformed semantic solid volume is checked against the sealed 3D public-air grid—not

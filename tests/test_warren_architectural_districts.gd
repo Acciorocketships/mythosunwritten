@@ -129,7 +129,6 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 	assert_not_null(_program)
 	for recipe_id: StringName in [
 			&"roof.tower.blue.dormer.left",
-			&"roof.tower.orange.dormer.right",
 			&"roof.slim.blue.dormer.left",
 			&"roof.slim.orange.dormer.right",
 	]:
@@ -181,6 +180,7 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 			"%s must not rebuild an authored dormer from detached awnings" % recipe_id)
 
 	for recipe_id: StringName in [
+		&"roof.tower.orange.dormer.right",
 		&"roof.long.blue.dormer.left",
 		&"roof.square.orange.dormer.right",
 	]:
@@ -254,7 +254,7 @@ func test_wrap_balconies_are_true_l_shaped_floorplates() -> void:
 		var front_decks := 0
 		var return_decks := 0
 		var doorway_throats := 0
-		var diagonal_supports := 0
+		var pillar_supports := 0
 		var guards := 0
 		var rail_blocks_door := false
 		var stair_high_tread_y := INF
@@ -269,16 +269,18 @@ func test_wrap_balconies_are_true_l_shaped_floorplates() -> void:
 			doorway_throats += int(StringName(placement.id) \
 					== &"floor.door.throat" and StringName(placement.asset_id) \
 					== SettlementFabricProgram.SETBACK_CAP)
-			diagonal_supports += int(String(placement.id).begins_with(
-					"support.diagonal.") \
+			pillar_supports += int(String(placement.id).begins_with(
+					"support.pillar.") \
 				and StringName(placement.asset_id) \
-					== SettlementFabricProgram.DIAGONAL_BRACE)
-			if String(placement.id).begins_with("support.diagonal."):
+					== SettlementFabricProgram.DECK_PILLAR)
+			if String(placement.id).begins_with("support.pillar."):
 				var support_contract := _program.module_program.contract(
-					SettlementFabricProgram.DIAGONAL_BRACE)
+					SettlementFabricProgram.DECK_PILLAR)
 				supports_meet_deck = supports_meet_deck and is_equal_approx(
 					(placement.transform as Transform3D).origin.y \
 						+ support_contract.visual_bounds.end.y, 0.0)
+				assert_ne((placement.transform as Transform3D).origin.x, 0.0,
+					"a balcony support may not stand on the doorway axis")
 			if StringName(placement.id) == &"stair.flight":
 				var stair_contract := _program.module_program.contract(
 					SettlementFabricProgram.STAIR_FULL)
@@ -296,7 +298,7 @@ func test_wrap_balconies_are_true_l_shaped_floorplates() -> void:
 			"%s needs one native 1.5 m side return" % recipe_id)
 		assert_eq(doorway_throats, 1,
 			"%s needs a third clear cell on the doorway circulation line" % recipe_id)
-		assert_eq(diagonal_supports, 2,
+		assert_eq(pillar_supports, 2,
 			"%s needs two full-storey load paths below its overhang" % recipe_id)
 		assert_true(supports_meet_deck,
 			"%s support tops must meet the deck plane" % recipe_id)

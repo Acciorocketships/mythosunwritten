@@ -537,6 +537,7 @@ func test_village_colliders_follow_structural_parts_instead_of_prefab_boxes() ->
 		{"id": &"sfv.quest_board.001", "pieces": 4},
 		{"id": &"sfv.fence.001", "pieces": 4},
 		{"id": &"sfv.deck.railing.s.001", "pieces": 4},
+		{"id": &"sfv.deck.railing.m.001", "pieces": 4},
 	]:
 		var visual := cache.visual(expectation.id)
 		assert_eq(visual.collisions.size(), int(expectation.pieces),

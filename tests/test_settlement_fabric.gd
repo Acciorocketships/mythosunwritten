@@ -313,8 +313,11 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 	assert_true(balcony.socket(&"stair.low").is_empty(),
 		"the compact walk-out must not advertise a stair that reaches no floor")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("guard.")).size(), 4,
+		return String(placement.id).begins_with("guard.")).size(), 3,
 		"the outer and side perimeter is completely guarded")
+	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
+		return placement.asset_id == SettlementFabricProgram.RAILING_MEDIUM
+	).size(), 1, "the front guard has no doubled doorway-axis post")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return String(placement.id).begins_with("brace.")).size(), 2,
 		"the overhang remains visibly bracket-supported")
@@ -327,8 +330,11 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		"the preferred walk-out keeps the rail two cells from the door")
 	assert_eq(deep_balcony.headroom_cells.size(), 8)
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("guard.")).size(), 6,
+		return String(placement.id).begins_with("guard.")).size(), 5,
 		"the deep deck closes its outer edge and both two-cell returns")
+	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
+		return placement.asset_id == SettlementFabricProgram.RAILING_MEDIUM
+	).size(), 1, "the front guard has no doubled doorway-axis post")
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return String(placement.id).begins_with("support.diagonal.")).size(), 2,
 		"the deeper projection needs legible full-storey diagonal supports")
@@ -1267,7 +1273,7 @@ func test_sectional_surface_rejects_an_exterior_door_without_a_landing() -> void
 		"facing": Vector3i.BACK,
 	}
 	assert_false(surface.seal([], {}, {}, [entrance]),
-		"an exterior door may not survive without floor at its exact threshold")
+		"an exterior door may not survive without its exact public landing")
 	assert_eq(surface.unserved_entrances.size(), 1)
 	assert_true(surface.last_rejection.contains("no exact public landing"))
 
@@ -1275,14 +1281,15 @@ func test_sectional_surface_rejects_an_exterior_door_without_a_landing() -> void
 	assert_true(served.add_claim(Vector3i(3, 2, 0),
 		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
 	assert_true(served.seal([], {}, {}, [entrance]),
-		"the same doorway is valid once its exact landing belongs to the union")
+		"the same doorway is valid once its landing belongs to the union")
 	assert_true(served.validate())
 
 
 func test_generated_door_opens_both_guard_halves_of_its_authored_facade() \
 		-> void:
 	var surface := PublicRealmSurfacePlan.new(&"surface.wide-door")
-	for cell: Vector3i in [Vector3i.ZERO, Vector3i.LEFT, Vector3i.RIGHT]:
+	for cell: Vector3i in [Vector3i.ZERO, Vector3i.LEFT, Vector3i.RIGHT,
+			Vector3i.BACK, Vector3i.LEFT + Vector3i.BACK]:
 		assert_true(surface.add_claim(cell,
 			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
 	var entrance := {
@@ -1302,6 +1309,36 @@ func test_generated_door_opens_both_guard_halves_of_its_authored_facade() \
 		assert_false(guarded_edges.has("%d:%d:%d:0:-1" % [landing.x,
 			landing.y, landing.z]),
 			"no authored railing may cut across either half of the 3 m door")
+func test_handed_door_forecourt_uses_one_guard_run_without_a_centre_post() \
+		-> void:
+	var surface := PublicRealmSurfacePlan.new(&"surface.door-forecourt")
+	# Phase zero's optional facade companion is LEFT, while this real forecourt
+	# continues RIGHT. The post repair must follow the finished public surface,
+	# not assume the optional second doorway lane exists.
+	for cell: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT]:
+		assert_true(surface.add_claim(cell,
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
+	var entrance := {
+		"stable_id": &"door.phase-zero.shallow",
+		"landing_cell": Vector3i.ZERO,
+		"facing": Vector3i.BACK,
+		"door_phase": 0,
+	}
+	assert_true(surface.seal([], {}, {}, [entrance]))
+	assert_true(surface.validate())
+	assert_eq(int(surface.audit().wide_entrance_guard_opening_count), 0)
+	assert_eq(int(surface.audit().entrance_forecourt_join_count), 1,
+		"the two short outer guards share one doorway-axis post omission")
+	var joined_segments := 0
+	for segment: Dictionary in surface.guard_segments:
+		joined_segments += int(segment.has("visual_join_point"))
+	assert_eq(joined_segments, 2)
+	var payload := SettlementFabricAssembler.surface_visual_payload(surface)
+	assert_true(payload.validate())
+	assert_has(payload.asset_ids(), &"sfv.deck.railing.m.001")
+	assert_eq((payload.batches[&"sfv.deck.railing.m.001"] \
+		as Dictionary).transforms.size(), 1,
+		"one authored 3 m run replaces the pair with a centre post")
 
 
 func test_minimum_requirements_reject_incomplete_visual_slice() -> void:

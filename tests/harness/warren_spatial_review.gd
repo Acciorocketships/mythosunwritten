@@ -320,6 +320,22 @@ func _probe_ranked_candidates(program: SettlementFabricProgram) -> void:
 
 
 func _print_quality_dump(program: SettlementFabricProgram) -> void:
+	if _fabric.surface_plan != null:
+		print("[warren_spatial_review] QUALITY_ENTRANCES_BEGIN audit=",
+			JSON.stringify(_fabric.surface_plan.audit()))
+		for entrance: Dictionary in _fabric.surface_plan.entrance_records:
+			print("[quality.entrance] ", JSON.stringify(entrance))
+		for segment: Dictionary in _fabric.surface_plan.guard_segments:
+			print("[quality.guard] ", JSON.stringify(segment))
+		var guard_payload := SettlementFabricAssembler.surface_visual_payload(
+			_fabric.surface_plan)
+		for asset_id: StringName in guard_payload.asset_ids():
+			if String(asset_id).contains("railing"):
+				var batch := guard_payload.batches[asset_id] as Dictionary
+				print("[quality.guard.batch] asset=", asset_id, " count=",
+					(batch.transforms as Array).size(), " stable_ids=",
+					batch.ids)
+		print("[warren_spatial_review] QUALITY_ENTRANCES_END")
 	print("[warren_spatial_review] QUALITY_ROOMS_BEGIN")
 	for building: WarrenBuildingVolume in _spatial.buildings:
 		for room: WarrenRoomStamp in building.room_records:

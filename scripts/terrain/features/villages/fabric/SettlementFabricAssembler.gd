@@ -8,6 +8,7 @@ const PLANK_FLOOR := &"sfv.fabric.floor.l.001"
 const PLANK_GALLERY := &"sfv.fabric.gallery.floor.m.001"
 const PLANK_SINGLE := &"sfv.deck.floor.s.001"
 const PLANK_RAILING := &"sfv.deck.railing.s.001"
+const PLANK_RAILING_MEDIUM := &"sfv.deck.railing.m.001"
 const COURTYARD_PLANTER := &"sfv.fabric.planter.003"
 const TIMBER_SUPPORT := &"sfv.deck.pillar.001"
 const TIMBER_CORNER_POST := &"sfv.fabric.wall.wood.corner.s.001"
@@ -501,15 +502,7 @@ static func surface_visual_payload(plan: PublicRealmSurfacePlan) \
 			cells = _without_cells(cells, courtyard_set)
 		_append_plank_tiles(out, cells, int(kind))
 	_append_courtyard_paving(out, courtyard_cells, plan)
-	for segment: Dictionary in plan.guard_segments:
-		var a := segment.a as Vector3
-		var b := segment.b as Vector3
-		var delta := b - a
-		assert(is_equal_approx(delta.length(), FabricRecipe.CELL_SIZE))
-		var yaw := atan2(-delta.z, delta.x)
-		out.add(PLANK_RAILING,
-			Transform3D(Basis(Vector3.UP, yaw), (a + b) * 0.5),
-			Color.WHITE, StringName("public-guard/%s" % segment.stable_key))
+	_append_guard_instances(out, plan.guard_segments)
 	assert(out.validate())
 	return out
 
@@ -536,17 +529,61 @@ static func production_surface_payload(plan: PublicRealmSurfacePlan) \
 			cells = _without_cells(cells, courtyard_set)
 		_append_plank_tiles(out, cells, int(kind))
 	_append_courtyard_paving(out, courtyard_cells, plan)
-	for segment: Dictionary in plan.guard_segments:
-		var a := segment.a as Vector3
-		var b := segment.b as Vector3
-		var delta := b - a
-		assert(is_equal_approx(delta.length(), FabricRecipe.CELL_SIZE))
-		var yaw := atan2(-delta.z, delta.x)
-		out.add(PLANK_RAILING,
-			Transform3D(Basis(Vector3.UP, yaw), (a + b) * 0.5),
-			Color.WHITE, StringName("public-guard/%s" % segment.stable_key))
+	_append_guard_instances(out, plan.guard_segments)
 	assert(out.validate())
 	return out
+
+
+static func _append_guard_instances(out: EnvironmentInstancePayload,
+		segments: Array[Dictionary]) -> void:
+	## Two short guard segments may meet on the centreline of a generated 3 m
+	## doorway. Their collision-authoritative plan marks that exact shared point;
+	## render the pair as one baked 3 m fence so it retains endpoint posts without
+	## doubling a post in front of the door.
+	var used: Dictionary = {}
+	for index in segments.size():
+		if used.has(index):
+			continue
+		var segment := segments[index]
+		var asset_id := PLANK_RAILING
+		var a := segment.a as Vector3
+		var b := segment.b as Vector3
+		var stable_key := String(segment.stable_key)
+		if segment.has("visual_join_point"):
+			var join := segment.visual_join_point as Vector3
+			for other_index in range(index + 1, segments.size()):
+				if used.has(other_index):
+					continue
+				var other := segments[other_index]
+				if not other.has("visual_join_point") \
+						or not (other.visual_join_point as Vector3) \
+							.is_equal_approx(join):
+					continue
+				var first_outer := b if a.is_equal_approx(join) else a
+				var other_a := other.a as Vector3
+				var other_b := other.b as Vector3
+				var second_outer := other_b \
+					if other_a.is_equal_approx(join) else other_a
+				if not is_equal_approx(first_outer.distance_to(second_outer),
+						FabricRecipe.CELL_SIZE * 2.0):
+					continue
+				a = first_outer
+				b = second_outer
+				asset_id = PLANK_RAILING_MEDIUM
+				var keys := PackedStringArray([stable_key,
+					String(other.stable_key)])
+				keys.sort()
+				stable_key = "+".join(keys)
+				used[other_index] = true
+				break
+		var delta := b - a
+		var expected_length := FabricRecipe.CELL_SIZE * 2.0 \
+			if asset_id == PLANK_RAILING_MEDIUM else FabricRecipe.CELL_SIZE
+		assert(is_equal_approx(delta.length(), expected_length))
+		var yaw := atan2(-delta.z, delta.x)
+		out.add(asset_id, Transform3D(Basis(Vector3.UP, yaw), (a + b) * 0.5),
+			Color.WHITE, StringName("public-guard/%s" % stable_key))
+		used[index] = true
 
 
 static func production_surface_bundle(plan: PublicRealmSurfacePlan) \

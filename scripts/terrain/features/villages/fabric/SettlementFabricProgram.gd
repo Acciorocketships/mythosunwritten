@@ -79,6 +79,7 @@ const TERRACE_PLANT_TALL := &"lpfv.fabric.prop.plant.tall.04"
 const GABLE := &"sfv.fabric.gable.wood.m.001"
 const BRACE := &"sfv.fabric.brace.wood.002"
 const DIAGONAL_BRACE := &"sfbp.wwall.support.s.002"
+const DECK_PILLAR := &"sfv.deck.pillar.001"
 const WALL_WOOD_S_A := &"sfv.fabric.wall.wood.s.001"
 const WALL_WOOD_S_B := &"sfv.fabric.wall.wood.s.002"
 const WALL_WOOD_CORNER_S := &"sfv.fabric.wall.wood.corner.s.001"
@@ -226,6 +227,7 @@ const FEATURE_PORTAL_MASK_ALL := FEATURE_PORTAL_NORTH \
 const STAIR_FULL := &"sfv.fabric.stair.preset.003"
 const STAIR_HALF := &"sfv.stair.s.001"
 const RAILING := &"sfv.deck.railing.s.001"
+const RAILING_MEDIUM := &"sfv.deck.railing.m.001"
 
 ## Every reviewed stocked-stall prefab in the bake, not the seven that happened
 ## to exist before the wave. WarrenMarketSolver picks a family per origin and
@@ -515,9 +517,9 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_dormered_tower_roof_recipe(&"roof.tower.blue.dormer.right",
 			COMPACT_ROOF_SLATE_03, ROOF_WINDOW_02, 1, modules),
 		_dormered_tower_roof_recipe(&"roof.tower.orange.dormer.left",
-			COMPACT_ROOF_06, ROOF_WINDOW_01, -1, modules),
+			COMPACT_ROOF_06, ROOF_WINDOW_04, -1, modules),
 		_dormered_tower_roof_recipe(&"roof.tower.orange.dormer.right",
-			COMPACT_ROOF_06, ROOF_WINDOW_01, 1, modules),
+			COMPACT_ROOF_06, ROOF_WINDOW_04, 1, modules),
 		_chimney_tower_roof_recipe(&"roof.tower.chimney.blue",
 			COMPACT_ROOF_SLATE_03, modules),
 		_chimney_tower_roof_recipe(&"roof.tower.chimney.orange",
@@ -823,6 +825,9 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	for recipe_value: FabricRecipe in program._recipes.values():
 		for asset_id: StringName in recipe_value.asset_ids():
 			unique_assets[asset_id] = true
+	# Public-realm guard coalescing is an adapter over the sealed surface plan,
+	# not a FabricRecipe placement, so demand its authored 3 m repeat explicitly.
+	unique_assets[RAILING_MEDIUM] = true
 	program.referenced_asset_ids.assign(unique_assets.keys())
 	program.referenced_asset_ids.sort_custom(func(a: StringName,
 			b: StringName) -> bool: return String(a) < String(b))
@@ -3256,11 +3261,21 @@ static func _embedded_oriel_recipe(recipe_id: StringName, theme: StringName,
 	const BAY_CENTRE_Z := (BAY_BACK_Z + BAY_FRONT_Z) * 0.5
 	const BAY_DEPTH_SCALE := (BAY_FRONT_Z - BAY_BACK_Z) / CELL
 	const BAY_SILL_Y := 0.70
+	const BAY_FACE_WIDTH_SCALE := 0.82
+	# The authored S-window's terminal post is centred 0.615 m from the module
+	# origin.  Scale that centre with the face instead of retaining its unscaled
+	# coordinate: otherwise the added left jamb sits beside the authored timber,
+	# thickens that corner, and widens the whole bay beyond its little canopy.
+	const BAY_POST_CENTRE_X := 0.615 * BAY_FACE_WIDTH_SCALE
+	# Return cheeks meet the scaled face envelope, not the original 1.5 m module
+	# edges.  This keeps the oriel narrow and gives the canopy real drip coverage
+	# on both sides.
+	const BAY_FACE_EDGE_X := 0.75 * BAY_FACE_WIDTH_SCALE
 	# Keep one normally proportioned authored window. Splitting two copies into
 	# half-width panels squeezed their glazing and doubled every sill/header,
 	# making the bay look like ornamental clutter instead of a small room volume.
 	var face_pose := _scaled_pose(Vector3(0.0, BAY_SILL_Y, BAY_CENTRE_Z),
-		0.0, Vector3(0.82, BAY_HEIGHT_SCALE, 1.0))
+		0.0, Vector3(BAY_FACE_WIDTH_SCALE, BAY_HEIGHT_SCALE, 1.0))
 	recipe_value.add_placement(&"bay.face", window_asset,
 		modules.facade_aligned_transform(window_asset, face_pose,
 			Vector3i.BACK, BAY_FRONT_Z))
@@ -3271,14 +3286,14 @@ static func _embedded_oriel_recipe(recipe_id: StringName, theme: StringName,
 	for side in [-1, 1]:
 		recipe_value.add_placement(StringName("bay.post.%s" % [
 			"left" if side < 0 else "right"]), PORTAL_JAMB,
-			_scaled_pose(Vector3(float(side) * 0.615, BAY_SILL_Y,
+			_scaled_pose(Vector3(float(side) * BAY_POST_CENTRE_X, BAY_SILL_Y,
 				BAY_FRONT_Z - 0.276), 0.0,
 				Vector3(1.0, BAY_HEIGHT_SCALE, 1.0)))
 	var mirrored_window := _mirrored_facade_asset(window_asset)
 	for side: Dictionary in [
-		{"id": &"bay.cheek.left", "x": -0.75, "yaw": PI * 0.5,
+		{"id": &"bay.cheek.left", "x": -BAY_FACE_EDGE_X, "yaw": PI * 0.5,
 			"outward": Vector3i.LEFT, "asset": mirrored_window},
-		{"id": &"bay.cheek.right", "x": 0.75, "yaw": -PI * 0.5,
+		{"id": &"bay.cheek.right", "x": BAY_FACE_EDGE_X, "yaw": -PI * 0.5,
 			"outward": Vector3i.RIGHT, "asset": window_asset},
 	]:
 		var side_asset := StringName(side.asset)
@@ -3700,10 +3715,12 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 			modules.walk_aligned_transform(GALLERY_FLOOR,
 				_pose(Vector3(-CELL * 0.5, 0.0, float(z) * CELL), 0.0),
 				0.0))
-	for x in [-1, 0]:
-		recipe_value.add_placement(StringName("guard.front.%d" % (x + 1)),
-			RAILING, _pose(Vector3(float(x) * CELL, 0.0,
-				(float(depth_cells) - 0.5) * CELL), 0.0))
+	# The facade-width outer edge is one continuous authored run. Two short
+	# repeats doubled their endpoint posts on the balcony centreline, directly in
+	# front of the door; the measured 3 m repeat keeps only the two outer posts.
+	recipe_value.add_placement(&"guard.front", RAILING_MEDIUM,
+		_pose(Vector3(-CELL * 0.5, 0.0,
+			(float(depth_cells) - 0.5) * CELL), 0.0))
 	# Both end runs close every exposed depth cell. The parent facade is the only
 	# unguarded edge and contains the exact portal selected with this feature.
 	for z in depth_cells:
@@ -3840,20 +3857,24 @@ static func _wrap_balcony_recipe(recipe_id: StringName, theme: StringName,
 	stair_placement = modules.stair_high_aligned_transform(STAIR_FULL,
 		stair_placement, 0.0)
 	recipe_value.add_placement(&"stair.flight", STAIR_FULL, stair_placement)
-	# Two full-storey wall braces make the cantilever legible as structure. Their
-	# authored uprights pin to the parent facade and their measured tops meet the
-	# deck plane. Keep both on the inner/front spine: the complete switchback owns
-	# the outer corner with its landing posts and rails, so putting another brace
-	# there produces the crossed timber tangle seen in the circulation review.
-	var support_contract := modules.contract(DIAGONAL_BRACE)
+	# Two complete one-storey pillars carry the outer corner to the same lower
+	# datum as the switchback's real public landing.  The former diagonals were
+	# attached on the doorway centreline; although their tops met the deck, their
+	# feet ended against empty air whenever that facade stepped back.  Put both
+	# vertical load paths under actual deck cells on the return side, away from
+	# both the door throat and the stair's high-tread opening.
+	var support_contract := modules.contract(DECK_PILLAR)
 	assert(support_contract != null)
-	var support_bounds := support_contract.visual_bounds
-	for index in 2:
-		var support_x := 0.0
-		var support_z := -CELL * 0.5 + float(index) * CELL
-		recipe_value.add_placement(StringName("support.diagonal.%d" % index),
-			DIAGONAL_BRACE, _pose(Vector3(support_x, -support_bounds.end.y,
-				support_z - support_bounds.position.z), 0.0))
+	var support_cells: Array[Vector3i] = [
+		Vector3i(corner_x, -2, -1),
+		Vector3i(corner_x, -2, 0 if side > 0 else 1),
+	]
+	for index in support_cells.size():
+		var support_cell := support_cells[index]
+		var support_pose := _pose(Vector3(float(support_cell.x) * CELL,
+			float(support_cell.y) * CELL, float(support_cell.z) * CELL), 0.0)
+		recipe_value.add_placement(StringName("support.pillar.%d" % index),
+			DECK_PILLAR, support_pose)
 	var planter_x := float(corner_x) * CELL
 	recipe_value.add_placement(&"balcony.planter", ROOF_PLANTER,
 		_pose(Vector3(planter_x, 0.04, -CELL), 0.0))

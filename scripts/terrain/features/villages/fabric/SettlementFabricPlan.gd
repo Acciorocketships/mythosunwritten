@@ -133,9 +133,12 @@ func add_unit(unit: FabricUnit) -> bool:
 					and _is_edge_nick(clearance_bounds, existing_clearance):
 				continue
 			last_rejection = \
-				"visual envelope of %s %s intersects unrelated unit %s %s" % [
-					unit.stable_id, clearance_bounds, existing.stable_id,
-					existing_clearance]
+				("visual envelope of %s (%s at %s/r%d) %s intersects " \
+				+ "unrelated unit %s (%s at %s/r%d) %s") % [
+					unit.stable_id, unit.recipe_id, unit.lattice_origin,
+					unit.yaw_quarters, clearance_bounds, existing.stable_id,
+					existing.recipe_id, existing.lattice_origin,
+					existing.yaw_quarters, existing_clearance]
 			return false
 	_solid_owner = trial_solid
 	_walk_owner = trial_walk

@@ -308,8 +308,8 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 			"the missing terminal timber must be a pure wood jamb")
 		assert_between(placed_post.size.x, 0.25, 0.31,
 			"the right jamb must match the authored heavy post on the left")
-		assert_gt(placed_post.position.x, 0.45,
-			"the added terminal timber must close the source panel's right edge")
+		assert_gt(placed_post.position.x, 0.30,
+			"the added terminal timber must close the narrowed panel's right edge")
 		var left_contract := program.module_program.contract(
 			StringName(left_post.asset_id))
 		var placed_left := (left_post.transform as Transform3D) \
@@ -317,6 +317,10 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 		assert_almost_eq(placed_left.position.x, -placed_post.end.x, 0.001,
 			"the two bay jambs must be exact reflected silhouettes")
 		assert_almost_eq(placed_left.size.x, placed_post.size.x, 0.001)
+		assert_gt(placed_left.end.x, placed_face.position.x,
+			"the left jamb must overlap the scaled authored terminal timber")
+		assert_lt(placed_post.position.x, placed_face.end.x,
+			"the reflected right jamb must overlap the face instead of widening it")
 		var cheek_bounds: Array[AABB] = []
 		for cheek_id: StringName in [&"bay.cheek.left", &"bay.cheek.right"]:
 			var cheek := recipe_value.placements.filter(
@@ -338,6 +342,21 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 			"the left return must not consume the narrow bay as an oversized jamb")
 		assert_lt(cheek_bounds[1].size.x, 0.20,
 			"the right return must not consume the narrow bay as an oversized jamb")
+		var covered_bounds: Array[AABB] = [placed_face, placed_left, placed_post,
+			cheek_bounds[0], cheek_bounds[1]]
+		for cover_id: StringName in [&"bay.sill", &"bay.canopy"]:
+			var cover := recipe_value.placements.filter(
+				func(value: Dictionary) -> bool:
+					return StringName(value.id) == cover_id)[0] as Dictionary
+			var cover_contract := program.module_program.contract(
+				StringName(cover.asset_id))
+			var cover_bounds := (cover.transform as Transform3D) \
+				* cover_contract.visual_bounds
+			for covered: AABB in covered_bounds:
+				assert_lte(cover_bounds.position.x, covered.position.x + 0.01,
+					"%s must cover the bay's left edge" % cover_id)
+				assert_gte(cover_bounds.end.x, covered.end.x - 0.01,
+					"%s must cover the bay's right edge" % cover_id)
 
 
 func test_corner_wrap_bays_roof_only_the_exterior_union() -> void:
