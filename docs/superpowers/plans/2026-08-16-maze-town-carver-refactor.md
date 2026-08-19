@@ -231,8 +231,9 @@ main-thread commit hitch.
 - [x] Design and current pipeline reconciled.
 - [x] Open decisions resolved.
 - [x] M1 source plan and spine.
-- [ ] M2 alleys and air (coverage carving and air/tunnel classification land;
-  explicit loop joins remain).
+- [x] M2 alleys and air. Coverage carving, air/tunnel classification, and
+  deterministic explicit loop joins are sealed source facts; the common
+  volume adapter copies each closing seam without topology repair.
 - [ ] M3 stamps (the universal typed market square is complete; landmark,
   courtyard, occupied-link, and large-house stamps remain).
 - [ ] M4 one-pass partition (an experimental authored-envelope compatibility
@@ -249,13 +250,22 @@ main-thread commit hitch.
   structural duplicates share one topology state but choose a seed-varied
   complete-house exterior, preserving visual diversity without frontier cost. Facade
   relief uses complete framed roofed bays and searches all eligible lineages;
-  actual shifted upper rooms remain explicit structural outcroppings. L/T/ring/
+  actual shifted upper rooms remain explicit structural outcroppings. The common
+  compiler now rejects partial or floating generated plinths from the exact
+  assembler face set: a retained base must close all four perimeter directions,
+  render every exposed stone face, and meet stamped terrain within the native
+  3 m foundation height. It also rejects door-shaped generated facade modules
+  without an exterior entrance/private feature portal, and exterior entrances
+  without an exact public-surface landing. Ordinary shallow room jetties use
+  compact bracket courses rather than repeated storey-height diagonal posts.
+  L/T/ring/
   wing envelopes and the maze-direct quota pass remain).
 - [ ] M7 real-time integration.
 - [ ] M8 visual gate and mode switch.
 
 Current M1/M2 plus universal-market measurements over the nine production
-corpus seeds: 9/9 seal, 66.2 ms mean source time, 0.932 mean passage frontage,
+corpus seeds: 9/9 seal, 58.3 ms mean source time, 1.0 explicit loop joins,
+0.932 mean passage frontage,
 0.507 mean two-sided passage ratio, 0.673 mean addressed-column reach, and
 0.477 mean covered-passage ratio. Every source owns one typed 6 m by 6 m
 market square; a tight turning approach uses its missing diagonal instead of
@@ -281,3 +291,15 @@ solid ownership. This is an integration probe, not M4 acceptance. Interior
 back/upper ownership must raise that to at least 0.85 before the downstream
 mode can be considered. The earlier hostile old-partitioner probe was 8/9 and
 0.340 ownership; neither result is an acceptable fallback.
+
+The current compact rendered diagnostic is similarly a falsification fixture,
+not a mode-switch candidate. Its exact hard audits now report three of three
+retained foundations with closed shells, 23 of 23 exposed foundation faces,
+zero floating foundation columns, 13 of 13 visible generated facade doors with
+typed access, one connected 148-cell public surface, seven aligned vertical
+transitions, and zero unsupported stairs/platforms. The same pass still reports
+only 0.341 retained private mass, 0.248 bounded-walk ratio, zero composed-walk
+enclosure, fourteen plain setback caps, one complete-prefab source family, and
+no elevated court. Those are successful critic findings: M4 back/upper ownership
+and M6 compound-envelope work remain the next architectural fixes, rather than
+being hidden by additional facade props.

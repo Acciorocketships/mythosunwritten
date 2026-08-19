@@ -184,6 +184,21 @@ func test_landmark_embeddedness_counts_only_surviving_city_mass() -> void:
 	assert_has(audit.owner_ids, &"south.house")
 
 
+func test_complete_building_requires_a_direct_or_public_alley_city_seam() -> void:
+	assert_true(WarrenVolumetricSolver._landmark_embeddedness_has_city_seam({
+		"side_count": 1, "nearest_gap": 1}),
+		"the next fine cell forms a real party-wall or alley seam")
+	assert_true(WarrenVolumetricSolver._landmark_embeddedness_has_city_seam({
+		"side_count": 3, "nearest_gap": 2}),
+		"one typed public lane between two facades is a carved alley seam")
+	assert_false(WarrenVolumetricSolver._landmark_embeddedness_has_city_seam({
+		"side_count": 3, "nearest_gap": 3}),
+		"two empty columns are visual context, not integration")
+	assert_false(WarrenVolumetricSolver._landmark_embeddedness_has_city_seam({
+		"side_count": 0, "nearest_gap": 1}),
+		"an unexplained near cell may not admit a detached prefab")
+
+
 func test_landmark_ranking_prefers_city_contact_before_parcel_preservation() \
 		-> void:
 	var detached := _rank_fixture_set(&"detached", [
@@ -203,6 +218,36 @@ func test_landmark_ranking_prefers_city_contact_before_parcel_preservation() \
 		[] as Array[Dictionary], 0)
 	assert_eq(StringName(sets[0].stable_id), &"embedded",
 		"a landmark knit into the town outranks an open-lawn satellite")
+
+
+func test_landmark_ranking_keeps_a_wide_required_skywalk_frontier() -> void:
+	var brittle := _rank_fixture_set(&"brittle", [
+		_rank_fixture_landmark(&"anchor.brittle", Vector3i.ZERO, {}, {})] \
+			as Array[Dictionary])
+	brittle.merge({"minimum_city_contact_side_count": 3,
+		"city_contact_side_count": 4, "city_contact_score": 20,
+		"maximum_city_gap": 1}, true)
+	var resilient := _rank_fixture_set(&"resilient", [
+		_rank_fixture_landmark(&"anchor.resilient", Vector3i(3, 0, 0), {}, {})] \
+			as Array[Dictionary])
+	resilient.merge({"minimum_city_contact_side_count": 2,
+		"city_contact_side_count": 2, "city_contact_score": 8,
+		"maximum_city_gap": 1}, true)
+	var skywalks: Array[Dictionary] = []
+	for index in 4:
+		skywalks.append({"pair_key": "pair.%d" % index,
+			"reservation": {"owner_parcel_ids": []},
+			"body": {Vector3i(index, 2, 0): true}, "clearance": {},
+			"priority_cells": {}})
+	# The brittle set removes three choices while the resilient set preserves all.
+	(brittle.reservations[0].protected_cells as Dictionary).merge({
+		Vector3i(1, 2, 0): true, Vector3i(2, 2, 0): true,
+		Vector3i(3, 2, 0): true}, true)
+	var sets := [brittle, resilient] as Array[Dictionary]
+	WarrenVolumetricSolver._rank_landmark_sets_for_skywalks(sets, skywalks, 1)
+	assert_eq(StringName(sets[0].stable_id), &"resilient",
+		"after the immediate-seam gate, a robust occupied-link frontier outranks " \
+		+ "a brittle extra contact side")
 
 
 func test_landmark_skywalk_coverage_counts_distinct_external_buildings() \
@@ -424,6 +469,13 @@ func test_route_spanning_size_change_retains_its_true_projection_and_portal() \
 	assert_eq(int(mismatch.bearing_column_count), 4)
 	assert_eq(int(mismatch.extension_column_count), 4,
 		"the unsupported half must survive rejection diagnostics")
+	var shallow := WarrenSpatialFeatureSolver \
+		._shallow_room_overhang_geometry(lower, upper)
+	assert_true(bool(shallow.get("valid", false)),
+		"the same full room is a supported overhang, never a facade outcropping")
+	assert_eq(int(shallow.depth_cells), 2)
+	assert_eq(int(shallow.attachment_span_cells), 2)
+	assert_eq(int(shallow.extension_column_count), 4)
 
 	var grid := WarrenSpatialGrid.new(Vector3i(-8, 0, 0),
 		Vector3i(16, 6, 20))
@@ -468,7 +520,7 @@ func test_route_spanning_size_change_retains_its_true_projection_and_portal() \
 	assert_gt(int(record.opening_mask), 0)
 
 
-func test_room_support_accepts_one_measured_corner_brace_but_not_floating_mass() \
+func test_room_support_preflight_keeps_one_bracketable_edge_not_floating_mass() \
 		-> void:
 	var grid := WarrenSpatialGrid.new(Vector3i(-8, 0, -8),
 		Vector3i(16, 8, 16))
@@ -487,11 +539,19 @@ func test_room_support_accepts_one_measured_corner_brace_but_not_floating_mass()
 	assert_true(WarrenRoomCompositionPlanner
 		._floorplate_transition_is_structurally_legible(columns, {},
 			WarrenSpatialGrid.STOREY_CELLS, claimed, grid),
-		"one unsupported corner on a 7/8-borne room is a measured bracket case")
+		"a broad room may retain one shallow edge bay for explicit support")
 	assert_false(WarrenRoomCompositionPlanner
 		._floorplate_transition_is_structurally_legible(columns, {},
 			WarrenSpatialGrid.STOREY_CELLS, {}, grid),
 		"a room with no mass beneath it must never pass as a cantilever")
+	var fully_borne := claimed.duplicate()
+	var last_column := ordered[-1]
+	fully_borne[Vector3i(last_column.x,
+		WarrenSpatialGrid.STOREY_CELLS - 1, last_column.y)] = &"bearing"
+	assert_true(WarrenRoomCompositionPlanner
+		._floorplate_transition_is_structurally_legible(columns, {},
+			WarrenSpatialGrid.STOREY_CELLS, fully_borne, grid),
+		"an ordinary room transition needs exact bearing under every column")
 
 	var upper := _unsealed_room_for_geometry(&"corner", &"slim",
 		Vector3i(0, WarrenSpatialGrid.STOREY_CELLS, 0))
@@ -503,6 +563,70 @@ func test_room_support_accepts_one_measured_corner_brace_but_not_floating_mass()
 		upper, geometry)
 	assert_eq(supports.size(), 1,
 		"the native two-brace course must widen from the borne neighbor")
+
+
+func test_route_overhang_preflight_requires_native_arcade_floor_phase() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, 0, -8),
+		Vector3i(16, 8, 16))
+	var upper_record := WarrenRoomCompositionPlanner._record(&"slim",
+		Vector3i(0, 4, 0), 0, 2, 3)
+	var columns := upper_record.columns as Dictionary
+	var ordered: Array[Vector2i] = []
+	ordered.assign(columns.keys())
+	ordered.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x < b.x if a.x != b.x else a.y < b.y)
+	var unborne: Dictionary = {}
+	var claimed: Dictionary = {}
+	# One exact 2 x 2 half of the slim room bears on inhabited mass; the other
+	# half spans the route and therefore owes a complete four-sided arcade.
+	var minimum_z := 2147483647
+	for column: Vector2i in ordered:
+		minimum_z = mini(minimum_z, column.y)
+	for column: Vector2i in ordered:
+		if column.y <= minimum_z + 1:
+			claimed[Vector3i(column.x, 3, column.y)] = &"bearing"
+		else:
+			unborne[column] = true
+	assert_eq(unborne.size(), 4)
+	var route_cells: Array[Vector3i] = []
+	for column_value: Variant in unborne.keys():
+		var column := column_value as Vector2i
+		for y in range(1, 4):
+			route_cells.append(Vector3i(column.x, y, column.y))
+	var carve := grid.begin_transaction(&"route.half_phase")
+	assert_true(carve.assign_use(route_cells,
+		WarrenSpatialGrid.Use.PUBLIC_AIR, &"route.half_phase"))
+	for column_value: Variant in unborne.keys():
+		var column := column_value as Vector2i
+		assert_true(carve.claim_face(Vector3i(column.x, 1, column.y),
+			Vector3i.DOWN, WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR,
+			&"route.half_phase"))
+	assert_true(carve.commit(), carve.last_rejection)
+	assert_false(WarrenRoomCompositionPlanner
+		._floorplate_transition_is_structurally_legible(columns, {}, 4,
+			claimed, grid),
+		"a 4.5 m void may not receive a floating or floor-buried 3 m arcade")
+
+	var aligned := WarrenSpatialGrid.new(Vector3i(-8, 0, -8),
+		Vector3i(16, 8, 16))
+	var aligned_route: Array[Vector3i] = []
+	for column_value: Variant in unborne.keys():
+		var column := column_value as Vector2i
+		for y in range(0, 4):
+			aligned_route.append(Vector3i(column.x, y, column.y))
+	var aligned_carve := aligned.begin_transaction(&"route.full_courses")
+	assert_true(aligned_carve.assign_use(aligned_route,
+		WarrenSpatialGrid.Use.PUBLIC_AIR, &"route.full_courses"))
+	for column_value: Variant in unborne.keys():
+		var column := column_value as Vector2i
+		assert_true(aligned_carve.claim_face(Vector3i(column.x, 0, column.y),
+			Vector3i.DOWN, WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR,
+			&"route.full_courses"))
+	assert_true(aligned_carve.commit(), aligned_carve.last_rejection)
+	assert_true(WarrenRoomCompositionPlanner
+		._floorplate_transition_is_structurally_legible(columns, {}, 4,
+			claimed, aligned),
+		"two full authored courses may descend to one complete public floor")
 
 
 func test_macro_merge_bearing_reads_the_current_room_graph() -> void:
@@ -1426,9 +1550,9 @@ func test_seed_seven_becomes_a_sealed_fine_grid_town() -> void:
 	assert_eq(int(plan.audit.elevated_courtyard_count), 1)
 	assert_gte(int(plan.audit.courtyard_daylight_macro_column_count),
 		WarrenElevatedFrontageSolver.MIN_COURTYARD_DAYLIGHT_COLUMNS)
-	assert_gte(int(plan.audit.courtyard_upper_route_cell_count),
-		WarrenSpatialFeatureSolver.MIN_COURT_UPPER_ROUTE_CELLS,
-		"the upper courtyard crossing must contain actual walk floors")
+	assert_gte(int(plan.audit.courtyard_underbuilt_macro_column_count),
+		WarrenElevatedFrontageSolver.MIN_COURTYARD_UNDERBUILT_COLUMNS,
+		"the elevated court must stand on complete inhabited storeys")
 	assert_gte(int(plan.audit.composed_courtyard_side_count),
 		WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT,
 		"the final 3D room composition must preserve the promised court walls")

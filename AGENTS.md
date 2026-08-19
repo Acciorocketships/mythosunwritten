@@ -283,7 +283,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   preserved by the critical review harness rather than hidden by props or detached platforms. Its
   alignment revision treats exterior doors and deliberate floor openings as typed plan facts:
   an addressed room is selected only when its exact threshold has an adjacent public landing, and
-  that threshold opens the derived guard; otherwise the facade is closed/windowed. Stair audits
+  that threshold opens the derived guard; otherwise the facade is closed/windowed. The final
+  `PublicRealmSurfacePlan` transaction hard-rejects every remaining unserved exterior threshold,
+  so a visible door can never survive as a later diagnostic over empty air. Stair audits
   require both player-width lanes at their exact low/high graph seams. Structural courts satisfy
   bearing ancestry before surface compilation, while every reserved `DAYLIGHT_VOID` remains
   exterior headroom and receives derived guards. Guard openings are never inferred from arbitrary
@@ -313,16 +315,22 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   for three storeys, so a deliberate 2+2 whole-room step is not mislabeled as a vertical extrusion;
   central height descends through occupied neighbors.
   Exterior stair-facade doors use the same cardinal threshold contract as
-  other addressed rooms. Outcropping vocabulary retains two exact scales for diagnostic fixtures,
+  other addressed rooms. A generated facade may render a door-shaped module only for a sealed
+  exterior entrance or typed private feature portal, and every exterior entrance must have an
+  exact public-surface claim at its threshold; decorative or midair facade doors invalidate the
+  town. Outcropping vocabulary retains two exact scales for diagnostic fixtures,
   but production currently admits only the small facade bay while the basic composition pass is
   being mastered. The disabled full-scale same-storey bump-out is a
   3 m room plate shifted diagonally across a 3 m tower room: their shared 1.5 m quadrant remains the
   parent's authored shell, while only the exposed L-shaped union shell, floor, braces, and roof are
   emitted. It therefore reads as one compound building with no duplicate wall or texture in the
   overlap. A small facade bay is instead a 1.5 m-wide embedded oriel with 0.9 m return cheeks and a
-  2.1 m partial-height authored window face. Its complete sill and shallow tiled canopy cover the
-  real face thickness, paired corbels carry it, and the parent remains a closed facade rather than
-  opening a full doorway-sized hole behind the small bay. A straight room pasted beyond a facade,
+  1.38 m partial-height face assembled from a handed S window and its baked mirror. The paired
+  front lights meet at centre while retaining one outer timber on each side; glazed return cheeks
+  use the same family and put their posts at the parent seam rather than producing one oversized
+  front jamb. Its complete sill and shallow tiled canopy cover the real face thickness, paired
+  corbels carry it, and the parent remains a closed facade rather than opening a full doorway-sized
+  hole behind the small bay. A straight room pasted beyond a facade,
   dormer, flue, or trim can satisfy neither massing contract. Its diagonal/corner-union recipes remain testable but
   their scale quotas are zero and production rejects any survivor which still requires a tower
   annex; they must not reappear through an implicit relief obligation. The optional bay search ranges across every eligible
@@ -332,7 +340,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   bearing and extension before that outcropping classification: when exactly half of the upper
   plate crosses a two-band public-route bay, the solver seals an `arcade_overhang_support` with one
   complete authored stone portal on the outer face and explicit seams to both room plates. It may
-  never pass as a zero-extension setback or receive loose decorative stone fragments. Side panels sit on the actual one-module shell planes rather
+  never pass as a zero-extension setback or receive loose decorative stone fragments. Ordinary
+  shallow room jetties use compact wall-bracket courses; the full-storey diagonal asset is reserved
+  for deliberately deep authored features because its long upright reads as a dangling pole when
+  repeated below a shallow projection. Side panels sit on the actual one-module shell planes rather
   than leaving untextured gaps, never unroofed cubes, and markets draw only from the seven reviewed
   `stocked_market` prefabs;
   empty tent families are ineligible. The old terrain-massing planner below remains only for explicit
@@ -469,9 +480,12 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   overlap or runtime scaling. Compatible one-valley building/long T-neighbourhoods use the existing
   atomic bisected-host/open-branch construction; a compact crossing which has no authored watertight
   junction is flattened into a furnished roof campaign instead of overhanging its 3 m house.
-  Pitched compact and slim roofs may receive measured dormers. Their construction sills sit 1.30 m
-  below the roof bearing and their compact/wide eave offsets are 1.25/2.20 m, respectively, so the
-  one-sided construction tail is buried in the pitch while the complete glazed face remains visible.
+  Pitched compact and slim roofs may receive measured dormers. Each is a compact authored window
+  face below two opposed trimmed pitches whose measured high edges meet at one exact ridge. The
+  face is shortened to half a storey and embedded 0.20 m into the host pitch, hiding both its lower
+  construction back and its one-sided top plate while the glazing remains visible; stock full-storey
+  A-frame dormers and one-sided awning crowns are ineligible. Compact/wide eave offsets remain
+  1.25/2.20 m, respectively.
   Long roofs may select a bilateral recipe with one dormer on each opposing pitch. True wraparound
   balcony recipes own two continuous 3 m deck rows, a native half-width third cell on the direct
   doorway circulation line, a 1.5 m side return, nine exposed-boundary guard sections, two
@@ -489,7 +503,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   classified crossing; flat campaigns emit no fictional pitched-junction module. Stone is concentrated
   at real terrain bearing and retaining work; a sparse building-level rule may continue that masonry
   through the first upper storey as a coherent plinth, but never as arbitrary high cladding or a
-  hidden podium. A house footprint may span at most the
+  hidden podium. When any column of a generated building needs that plinth, the complete building
+  footprint receives one shared bottom course with a closed four-sided perimeter; every module is
+  source-mass-backed and its lowest edge meets terrain or an authored path surface. Individual
+  facade patches and floating partial courses are invalid. A house footprint may span at most the
   explicit one-storey plinth budget in sampled terrain height; larger risers must split into
   narrower terrain-rooted buildings rather than becoming masonry podiums. The buildable frontier
   is the tapered 3D envelope's real capacity boundary, never a radial outskirts ring. Every

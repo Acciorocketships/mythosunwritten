@@ -107,15 +107,6 @@ func test_mass_first_frontier_owns_one_supported_third_storey_courtyard() \
 		assert_gte(int(volume.audit.courtyard_daylight_macro_column_count),
 			WarrenElevatedFrontageSolver.MIN_COURTYARD_DAYLIGHT_COLUMNS,
 			"the court must own explicit open-sky shafts, not only headroom")
-		var threading := WarrenElevatedFrontageSolver \
-			._courtyard_vertical_route_floor_counts(volume.courtyard_cells,
-				volume)
-		assert_gte(int(threading.below),
-			WarrenElevatedFrontageSolver.MIN_COURTYARD_BELOW_ROUTE_CELLS,
-			"a real public walk surface passes beneath the court")
-		assert_gte(int(threading.above),
-			WarrenElevatedFrontageSolver.MIN_COURTYARD_ABOVE_ROUTE_CELLS,
-			"a real public walk surface—not merely swept headroom—crosses above")
 		assert_eq(int(volume.audit.same_datum_public_square_count), 0,
 			"only the typed court may consume the plaza exception")
 		var underbuilt := 0
@@ -129,7 +120,8 @@ func test_mass_first_frontier_owns_one_supported_third_storey_courtyard() \
 				supported = supported and volume.has_mass(
 					cell + Vector3i.DOWN * offset)
 			underbuilt += int(supported)
-		assert_gte(underbuilt, 2,
+		assert_gte(underbuilt,
+			WarrenElevatedFrontageSolver.MIN_COURTYARD_UNDERBUILT_COLUMNS,
 			"at least half the court stands on complete inhabited storeys")
 		assert_gte(_courtyard_addressed_perimeter_sides(volume), 3,
 			"three building walls and one route seam enclose the court")

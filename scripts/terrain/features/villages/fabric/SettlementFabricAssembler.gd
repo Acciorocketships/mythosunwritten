@@ -10,6 +10,7 @@ const PLANK_SINGLE := &"sfv.deck.floor.s.001"
 const PLANK_RAILING := &"sfv.deck.railing.s.001"
 const COURTYARD_PLANTER := &"sfv.fabric.planter.003"
 const TIMBER_SUPPORT := &"sfv.deck.pillar.001"
+const TIMBER_CORNER_POST := &"sfv.fabric.wall.wood.corner.s.001"
 const LOW_RETAINING_WALL := &"sfv.fabric.wall.rock.plain.001"
 ## The authored foundation piece, not a wall panel pressed into service as one.
 ## Same measured envelope as LOW_RETAINING_WALL (1.77 x 3.00 x 0.66, pivot at
@@ -43,7 +44,68 @@ static func payload(plan: SettlementFabricPlan) -> EnvironmentInstancePayload:
 		out.add(StringName(placement.asset_id),
 			placement.transform as Transform3D, Color.WHITE,
 			StringName(placement.stable_id))
+	out.append_from(modular_room_corner_payload(plan))
 	assert(out.validate())
+	return out
+
+
+static func modular_room_corner_payload(plan: SettlementFabricPlan) \
+		-> EnvironmentInstancePayload:
+	## Authored facade modules are handed: one carries a heavier edge frame than
+	## its mate. Four deterministic stitch posts make the final modular room read
+	## as one timber frame without changing the measured recipe envelope that the
+	## topology search uses. Shared world-space corners deduplicate, so a party
+	## wall gets one post rather than the doubled beam seen in review captures.
+	var out := EnvironmentInstancePayload.new()
+	if plan == null:
+		return out
+	var claimed_positions: Dictionary = {}
+	for unit: FabricUnit in plan.units:
+		var recipe_value := plan.recipe(unit.recipe_id)
+		if recipe_value == null:
+			continue
+		var local_posts := _modular_room_corner_transforms(recipe_value)
+		for index in local_posts.size():
+			var world_transform := unit.transform() * local_posts[index]
+			var origin := world_transform.origin
+			var key := "%d:%d:%d" % [roundi(origin.x * 1000.0),
+				roundi(origin.y * 1000.0), roundi(origin.z * 1000.0)]
+			if claimed_positions.has(key):
+				continue
+			claimed_positions[key] = true
+			out.add(TIMBER_CORNER_POST, world_transform, Color.WHITE,
+				StringName("%s/frame-corner-%d" % [unit.stable_id, index]))
+	assert(out.validate())
+	return out
+
+
+static func _modular_room_corner_transforms(recipe_value: FabricRecipe) \
+		-> Array[Transform3D]:
+	var out: Array[Transform3D] = []
+	if recipe_value == null or not recipe_value.has_tag(&"room") \
+			or not recipe_value.has_tag(&"generated_building") \
+			or recipe_value.has_tag(&"passage_room") \
+			or recipe_value.has_tag(&"stair_house"):
+		return out
+	var half_x := 3.0
+	var half_z := 3.0
+	if recipe_value.has_tag(&"long_building"):
+		half_z = 4.5
+	elif recipe_value.has_tag(&"slim_building"):
+		half_x = 1.5
+	elif recipe_value.has_tag(&"row_building"):
+		half_z = 1.5
+	elif recipe_value.has_tag(&"compact_tower") \
+			or recipe_value.has_tag(&"support_house"):
+		half_x = 1.5
+		half_z = 1.5
+	const POST_HALF_WIDTH := 0.375
+	var centre := Vector3(-0.75, 0.0, -0.75)
+	for signs: Vector2 in [Vector2(-1.0, -1.0), Vector2(1.0, -1.0),
+			Vector2(-1.0, 1.0), Vector2(1.0, 1.0)]:
+		out.append(Transform3D(Basis.IDENTITY, centre + Vector3(
+			signs.x * (half_x - POST_HALF_WIDTH), 0.0,
+			signs.y * (half_z - POST_HALF_WIDTH))))
 	return out
 
 

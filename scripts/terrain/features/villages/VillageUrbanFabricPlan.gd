@@ -160,8 +160,9 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 				>= WarrenElevatedFrontageSolver \
 					.MIN_COURTYARD_DAYLIGHT_COLUMNS) \
 		and (not profile.requires_elevated_courtyard \
-			or int(audit.get("courtyard_upper_route_cell_count", 0)) \
-				>= WarrenSpatialFeatureSolver.MIN_COURT_UPPER_ROUTE_CELLS) \
+			or int(audit.get("courtyard_underbuilt_macro_column_count", 0)) \
+				>= WarrenElevatedFrontageSolver \
+					.MIN_COURTYARD_UNDERBUILT_COLUMNS) \
 		and int(audit.get("covered_market_count", -1)) \
 			>= int(profile.requires_covered_market) \
 		and int(audit.get("covered_market_count", -1)) <= 1 \

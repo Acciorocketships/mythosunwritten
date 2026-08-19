@@ -144,6 +144,15 @@ func seal(required_cells: Array[Vector3i] = [],
 		return false
 	mesh_payloads.append_array(_transition_mesh_payloads)
 	_classify_entrances(entrances)
+	# A visible exterior door is a traversal promise, not facade decoration.
+	# Keeping an unserved record for a later audit allowed a plan to seal and a
+	# door to render with empty air below its threshold.  Refuse that geometry at
+	# the surface transaction, where both the exact aperture and final landing
+	# union are known.
+	if not unserved_entrances.is_empty():
+		last_rejection = "%d exterior entrances have no exact public landing" % \
+			unserved_entrances.size()
+		return false
 	_classify_public_openings(transition_seams)
 	_structural_solid_cells = structural_solid_cells.duplicate()
 	_daylight_void_cells.assign(daylight_void_cells)
@@ -154,7 +163,8 @@ func seal(required_cells: Array[Vector3i] = [],
 
 func validate() -> bool:
 	if not _sealed or stable_id.is_empty() or _claims.is_empty() \
-			or not unclassified_required_cells.is_empty():
+			or not unclassified_required_cells.is_empty() \
+			or not unserved_entrances.is_empty():
 		return false
 	var patch_cells: Dictionary = {}
 	for patch: Dictionary in patches:
@@ -244,6 +254,7 @@ func audit() -> Dictionary:
 		"unserved_entrance_count": unserved_entrances.size(),
 		"served_structural_entrance_count": _served_structural_entrance_count(),
 		"entrance_guard_conflict_count": _entrance_guard_conflict_count(),
+		"wide_entrance_guard_opening_count": _wide_entrance_guard_opening_count(),
 		"daylight_void_guard_segment_count": guard_segments.filter(
 			func(value: Dictionary) -> bool:
 				return StringName(value.get("boundary_kind", "")) \
@@ -546,11 +557,24 @@ func _entrance_guard_conflict_count() -> int:
 	for entrance: Dictionary in entrance_records:
 		if not bool(entrance.served):
 			continue
-		var landing := entrance.landing_cell as Vector3i
 		var facing := entrance.facing as Vector3i
-		var stable_key := "%d:%d:%d:%d:%d" % [landing.x, landing.y,
-			landing.z, -facing.x, -facing.z]
-		if guarded_edges.has(stable_key):
+		var opening_cells: Array = entrance.get("guard_opening_cells", []) as Array
+		if opening_cells.is_empty():
+			opening_cells = [entrance.landing_cell as Vector3i]
+		for cell_value: Variant in opening_cells:
+			var landing := cell_value as Vector3i
+			var stable_key := "%d:%d:%d:%d:%d" % [landing.x, landing.y,
+				landing.z, -facing.x, -facing.z]
+			if guarded_edges.has(stable_key):
+				count += 1
+	return count
+
+
+func _wide_entrance_guard_opening_count() -> int:
+	var count := 0
+	for entrance: Dictionary in entrance_records:
+		var opening_cells: Array = entrance.get("guard_opening_cells", []) as Array
+		if opening_cells.size() > 1:
 			count += 1
 	return count
 
@@ -614,11 +638,28 @@ func _classify_entrances(entrances: Array[Dictionary]) -> void:
 		var facing := entrance.get("facing", Vector3i()) as Vector3i
 		var served := _claims.has(_cell_key(landing))
 		entrance["served"] = served
+		var guard_opening_cells: Array[Vector3i] = [landing]
+		var door_phase := int(entrance.get("door_phase", -1))
+		if door_phase in [0, 1]:
+			# Generated facade doors are complete 3 m modules on a 1.5 m public
+			# lattice.  The declared threshold is the actually walkable half; the
+			# companion half changes with the mirrored door phase.  Open its guard
+			# only when a real public surface owns it, so the full authored arch is
+			# unobstructed without turning neighboring empty air into a promise.
+			var local_left: Vector3i = Vector3i(-facing.z, 0, facing.x)
+			var companion: Vector3i = landing + (local_left if door_phase == 0 \
+				else -local_left)
+			if _claims.has(_cell_key(companion)):
+				guard_opening_cells.append(companion)
+		entrance["guard_opening_cells"] = guard_opening_cells
 		entrance_records.append(entrance)
 		if not served:
 			unserved_entrances.append(entrance)
 			continue
-		_entrance_openings[_transition_key(landing, -facing)] = true
+		for opening_cell: Vector3i in guard_opening_cells:
+			var opening_direction := -facing
+			_entrance_openings[_transition_key(opening_cell,
+				opening_direction)] = true
 	entrance_records.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_id) < String(b.stable_id))
 	unserved_entrances.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:

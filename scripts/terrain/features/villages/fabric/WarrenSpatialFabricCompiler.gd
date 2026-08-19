@@ -25,6 +25,22 @@ const ARCHITECTURAL_DISTRICT_JITTER := 4
 ## a whole room cell. Height has its own much tighter thin-cap limit below.
 const SHALLOW_FLASHING_MAX_OVERLAP_M := 0.90
 const SHALLOW_FLASHING_MAX_HEIGHT_M := 0.25
+## A flat closure smaller than a complete 6 x 6 m building plate reads as the
+## exposed lid of a module, even when a planter is placed on it.  Small rooms
+## must resolve to a complete pitched crown; broad plates may retain the finite
+## terrace/garden fallback while the future court grammar owns true walkable
+## roof plazas.
+const MIN_INTENTIONAL_FLAT_ROOF_FACE_COUNT := 16
+## One- and two-cell cap slivers are the exact "tiny flat top" defect from the
+## adversarial captures.  They are not a roof vocabulary.  The bounded source
+## selector must choose a composition whose remainder admits at least a 6 m
+## authored run or a complete gabled stamp.
+const MIN_SETBACK_CAP_FACE_COUNT := 4
+## The reviewed foundation asset is exactly 3 m tall on the 1.5 m sectional
+## lattice. A retained house datum more than two bands above natural ground
+## would therefore leave daylight beneath the stone. Reject that source
+## construction instead of pretending one floating course reaches the terrain.
+const FOUNDATION_MODULE_HEIGHT_BANDS := 2
 
 
 static func solve(source: WarrenSpatialPlan,
@@ -89,6 +105,13 @@ static func solve(source: WarrenSpatialPlan,
 		last_failure = "spatial terrain foundations failed: %s" % String(
 			foundation_result.get("rejection", "overlaps built mass"))
 		return null
+	var foundation_audit := _foundation_shell_audit(foundation_result, result)
+	if int(foundation_audit.get("foundation_incomplete_shell_count", 0)) > 0 \
+			or int(foundation_audit.get("foundation_missing_face_count", 0)) > 0 \
+			or int(foundation_audit.get("foundation_floating_column_count", 0)) > 0:
+		last_failure = "spatial terrain foundation shell is incomplete: %s" % \
+			str(foundation_audit)
+		return null
 	var surfaces := PublicRealmSurfaceSolver.solve(
 		StringName("%s.surfaces" % result.stable_id), realm, result,
 		source.source_volume)
@@ -118,12 +141,19 @@ static func solve(source: WarrenSpatialPlan,
 		foundation_result.get("column_count", 0))
 	lineage["retained_foundation_max_depth_bands"] = int(
 		foundation_result.get("max_depth_bands", 0))
+	lineage.merge(foundation_audit, true)
 	lineage.merge(volumes.audit(), true)
 	lineage.merge(solid_void.audit(), true)
 	lineage["spatial_signature"] = source.deterministic_signature().sha256_text()
 	lineage["construction_signature"] = result.construction_signature()
 	lineage["generation_source"] = &"spatial_volumetric_warren"
 	var audit := SettlementFabricSolver.audit_plan(result, lineage)
+	if int(audit.get("orphan_exterior_door_module_count", 0)) > 0 \
+			or int(audit.get("entrance_surface_gap_count", 0)) > 0:
+		last_failure = "spatial visible-door contract failed: %s / %s" % [
+			str(audit.get("orphan_exterior_door_module_details", [])),
+			str(audit.get("entrance_surface_gap_details", []))]
+		return null
 	# Preserve the generic unit-name grouping as a diagnostic, but do not let it
 	# replace the source plan's explicit private-access proof. Recomposition makes
 	# one WarrenBuildingVolume per connected 3D owner, and its parent links are the
@@ -147,7 +177,10 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan) -> Dictionary:
 	## removed from source mass, so they can never be filled by this operation.
 	var cells: Dictionary = {}
 	var columns: Dictionary = {}
+	var room_records: Array[Dictionary] = []
 	var max_depth := 0
+	var terrain_bearing_room_count := 0
+	var flush_room_count := 0
 	if source == null or source.source_volume == null \
 			or source.source_volume.envelope == null:
 		return {"valid": false, "rejection": "missing source terrain envelope"}
@@ -156,10 +189,13 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan) -> Dictionary:
 		for room: WarrenRoomStamp in building.room_records:
 			if not room.terrain_bearing:
 				continue
+			terrain_bearing_room_count += 1
 			var footprint: Dictionary = {}
 			for cell: Vector3i in room.private_cells:
 				if cell.y == room.lattice_origin.y:
 					footprint[Vector2i(cell.x, cell.z)] = true
+			var bearing_by_column: Dictionary = {}
+			var room_needs_plinth := false
 			for fine_column_value: Variant in footprint.keys():
 				var fine_column := fine_column_value as Vector2i
 				var macro_column := Vector2i(
@@ -170,6 +206,7 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan) -> Dictionary:
 						"terrain-bearing room %s leaves source ground at %s" % [
 							room.stable_id, fine_column]}
 				var bearing := volume.envelope.bearing_at(macro_column)
+				bearing_by_column[fine_column] = bearing
 				var support := room.lattice_origin.y
 				if bearing > support:
 					return {"valid": false, "rejection":
@@ -179,14 +216,165 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan) -> Dictionary:
 				for band in range(bearing, support):
 					if not volume.has_mass(Vector3i(macro_column.x, band,
 							macro_column.y)):
-						continue
+						return {"valid": false, "rejection":
+							("terrain-bearing room %s has a foundation void " \
+							+ "between stamped ground %d and support %d at %s") % [
+								room.stable_id, bearing, support, fine_column]}
 					cells[Vector3i(fine_column.x, band, fine_column.y)] = true
 					depth += 1
+				if depth > FOUNDATION_MODULE_HEIGHT_BANDS:
+					return {"valid": false, "rejection":
+						("terrain-bearing room %s needs %d foundation bands; " \
+						+ "the authored stone course reaches only %d") % [
+							room.stable_id, depth,
+							FOUNDATION_MODULE_HEIGHT_BANDS]}
 				if depth > 0:
-					columns[fine_column] = true
+					room_needs_plinth = true
 					max_depth = maxi(max_depth, depth)
+			if not room_needs_plinth:
+				flush_room_count += 1
+				continue
+			# A plinth is one building-wide masonry course, not a sample of the
+			# terrain columns that happened to be low. Fill the complete course
+			# immediately below the room datum so `plinth_faces()` derives one
+			# closed perimeter. Columns already at grade bury this course in the
+			# terrain; columns over a drop expose it. Every column must still be
+			# real source mass and non-public, so this can never bridge a tunnel or
+			# manufacture a floating stone skirt.
+			var course_cells: Array[Vector3i] = []
+			for fine_column_value: Variant in footprint.keys():
+				var fine_column := fine_column_value as Vector2i
+				var macro_column := Vector2i(
+					floori(float(fine_column.x) / 2.0),
+					floori(float(fine_column.y) / 2.0))
+				var course_cell := Vector3i(fine_column.x,
+					room.lattice_origin.y - 1, fine_column.y)
+				if not volume.has_mass(Vector3i(macro_column.x,
+						course_cell.y, macro_column.y)) \
+						or source.grid.use_at(course_cell) \
+							== WarrenSpatialGrid.Use.PUBLIC_AIR:
+					return {"valid": false, "rejection":
+						("terrain-bearing room %s cannot close its plinth " \
+						+ "course at %s") % [room.stable_id, course_cell]}
+				cells[course_cell] = true
+				columns[fine_column] = true
+				course_cells.append(course_cell)
+			course_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+				if a.y != b.y:
+					return a.y < b.y
+				if a.z != b.z:
+					return a.z < b.z
+				return a.x < b.x)
+			room_records.append({
+				"room_id": room.stable_id,
+				"support_band": room.lattice_origin.y,
+				"course_cells": course_cells,
+				"bearing_by_column": bearing_by_column,
+			})
 	return {"valid": true, "cells": cells, "cell_count": cells.size(),
-		"column_count": columns.size(), "max_depth_bands": max_depth}
+		"column_count": columns.size(), "max_depth_bands": max_depth,
+		"terrain_bearing_room_count": terrain_bearing_room_count,
+		"flush_room_count": flush_room_count, "room_records": room_records}
+
+
+static func _foundation_shell_audit(foundation_result: Dictionary,
+		plan: SettlementFabricPlan) -> Dictionary:
+	## Audit the exact faces the assembler will render, not a looser proxy. Every
+	## exposed boundary of every building-wide course must own one stone module;
+	## every module must descend to (or slightly bury into) that room's stamped
+	## natural ground. The four-direction mask catches the old three-sided shell
+	## even when its raw face count happened to look plausible.
+	if plan == null or not bool(foundation_result.get("valid", false)):
+		return {
+			"foundation_building_count": 0,
+			"foundation_closed_shell_count": 0,
+			"foundation_incomplete_shell_count": 1,
+			"foundation_expected_face_count": 0,
+			"foundation_rendered_face_count": 0,
+			"foundation_missing_face_count": 0,
+			"foundation_floating_column_count": 0,
+			"foundation_shell_details": [],
+		}
+	var retained := foundation_result.get("cells", {}) as Dictionary
+	var solids := plan.transformed_cells(&"solid")
+	var bearing_footprint := plan.transformed_cells(&"terrain_bearing")
+	var rendered := SettlementFabricAssembler.plinth_faces(retained, solids,
+		bearing_footprint)
+	var expected_face_count := 0
+	var missing_face_count := 0
+	var floating_column_count := 0
+	var closed_shell_count := 0
+	var incomplete_shell_count := 0
+	var details: Array[Dictionary] = []
+	for record_value: Variant in foundation_result.get(
+			"room_records", []) as Array:
+		var record := record_value as Dictionary
+		var course_cells := record.get("course_cells", []) as Array[Vector3i]
+		var own_course: Dictionary = {}
+		for cell: Vector3i in course_cells:
+			own_course[cell] = true
+		var bearing_by_column := record.get(
+			"bearing_by_column", {}) as Dictionary
+		var direction_mask := 0
+		var exposed_direction_mask := 0
+		var room_expected_faces := 0
+		var room_missing_faces := 0
+		var room_floating_columns := 0
+		for cell: Vector3i in course_cells:
+			var bearing := int(bearing_by_column.get(
+				Vector2i(cell.x, cell.z), cell.y))
+			var module_bottom_band := cell.y + 1 \
+				- FOUNDATION_MODULE_HEIGHT_BANDS
+			if module_bottom_band > bearing:
+				room_floating_columns += 1
+			for direction_index in SettlementFabricAssembler.FACE_DIRECTIONS.size():
+				var direction := SettlementFabricAssembler \
+					.FACE_DIRECTIONS[direction_index]
+				var neighbor := cell + direction
+				if own_course.has(neighbor):
+					continue
+				direction_mask |= 1 << direction_index
+				# An exactly adjoining retained course or occupied building cell
+				# closes this seam. It is not an exposed side and must not receive
+				# two intersecting stone panels.
+				if retained.has(neighbor) or solids.has(neighbor) \
+						or bearing_footprint.has(neighbor + Vector3i.UP):
+					continue
+				exposed_direction_mask |= 1 << direction_index
+				room_expected_faces += 1
+				if not rendered.has(Vector4i(cell.x, cell.y, cell.z,
+						direction_index)):
+					room_missing_faces += 1
+		expected_face_count += room_expected_faces
+		missing_face_count += room_missing_faces
+		floating_column_count += room_floating_columns
+		var shell_is_closed := direction_mask == 15 \
+			and room_missing_faces == 0 and room_floating_columns == 0
+		closed_shell_count += int(shell_is_closed)
+		incomplete_shell_count += int(not shell_is_closed)
+		details.append({
+			"room_id": StringName(record.get("room_id", &"")),
+			"course_cell_count": course_cells.size(),
+			"perimeter_direction_mask": direction_mask,
+			"exposed_direction_mask": exposed_direction_mask,
+			"expected_face_count": room_expected_faces,
+			"missing_face_count": room_missing_faces,
+			"floating_column_count": room_floating_columns,
+		})
+	return {
+		"terrain_bearing_room_count": int(foundation_result.get(
+			"terrain_bearing_room_count", 0)),
+		"flush_foundation_room_count": int(foundation_result.get(
+			"flush_room_count", 0)),
+		"foundation_building_count": details.size(),
+		"foundation_closed_shell_count": closed_shell_count,
+		"foundation_incomplete_shell_count": incomplete_shell_count,
+		"foundation_expected_face_count": expected_face_count,
+		"foundation_rendered_face_count": rendered.size(),
+		"foundation_missing_face_count": missing_face_count,
+		"foundation_floating_column_count": floating_column_count,
+		"foundation_shell_details": details,
+	}
 
 
 static func compile_room_units(source: WarrenSpatialPlan,
@@ -864,6 +1052,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	var market_count := 0
 	var balcony_count := 0
 	var room_outcropping_support_count := 0
+	var room_overhang_support_count := 0
 	var frontier_gateway_support_count := 0
 	var arcade_overhang_support_count := 0
 	var tower_annex_count := 0
@@ -898,6 +1087,11 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 				feature_units = _compile_room_outcropping_supports(feature,
 					program, room_unit_by_stamp)
 				room_outcropping_support_count += int(
+					not feature_units.is_empty())
+			&"room_overhang_support":
+				feature_units = _compile_room_outcropping_supports(feature,
+					program, room_unit_by_stamp)
+				room_overhang_support_count += int(
 					not feature_units.is_empty())
 			&"frontier_gateway_support":
 				feature_units = _compile_frontier_gateway_supports(feature,
@@ -990,6 +1184,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 		"realized_constructed_feature_count": skywalk_count + market_count \
 			+ balcony_count + tower_annex_count + facade_bay_count + landmark_count \
 			+ courtyard_bridge_count + room_outcropping_support_count \
+			+ room_overhang_support_count \
 			+ frontier_gateway_support_count + arcade_overhang_support_count \
 			+ interstitial_join_count,
 		"skywalk_feature_count": skywalk_count,
@@ -999,6 +1194,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 		"balcony_feature_count": balcony_count,
 		"room_outcropping_support_feature_count":
 			room_outcropping_support_count,
+		"room_overhang_support_feature_count": room_overhang_support_count,
 		"frontier_gateway_support_feature_count":
 			frontier_gateway_support_count,
 		"arcade_overhang_support_feature_count":
@@ -1020,24 +1216,28 @@ static func _compile_room_outcropping_supports(
 	## records realize only the exact bracket courses derived from its sealed
 	## bearing edge; they neither restamp nor resize the room volume.
 	var out: Array[FabricUnit] = []
-	var upper_id := StringName(feature.audit.get("outcrop_upper_room_id", &""))
-	var lower_id := StringName(feature.audit.get("outcrop_lower_room_id", &""))
+	var overhang := feature.kind == &"room_overhang_support"
+	var upper_id := StringName(feature.audit.get(
+		"overhang_upper_room_id" if overhang else "outcrop_upper_room_id", &""))
+	var lower_id := StringName(feature.audit.get(
+		"overhang_lower_room_id" if overhang else "outcrop_lower_room_id", &""))
 	var upper_unit := room_unit_by_stamp.get(upper_id) as FabricUnit
 	var lower_unit := room_unit_by_stamp.get(lower_id) as FabricUnit
 	if upper_unit == null or lower_unit == null \
 			or feature.construction_records.is_empty() \
-			or not bool(feature.audit.get(
-				"outcrop_is_integrated_cantilever", false)):
-		last_failure = "room outcropping %s lacks its two room plates or supports" \
+			or not bool(feature.audit.get("overhang_is_supported" if overhang \
+				else "outcrop_is_integrated_cantilever", false)):
+		last_failure = "room projection %s lacks its two room plates or supports" \
 			% feature.stable_id
 		return out
 	var neighbor_units: Array[StringName] = []
 	for neighbor_value: Variant in feature.audit.get(
-			"outcrop_support_neighbor_room_ids", []):
+			"overhang_support_neighbor_room_ids" if overhang \
+			else "outcrop_support_neighbor_room_ids", []):
 		var neighbor_id := StringName(neighbor_value)
 		var neighbor_unit := room_unit_by_stamp.get(neighbor_id) as FabricUnit
 		if neighbor_unit == null:
-			last_failure = "room outcropping %s names missing support seam %s" % [
+			last_failure = "room projection %s names missing support seam %s" % [
 				feature.stable_id, neighbor_id]
 			return [] as Array[FabricUnit]
 		neighbor_units.append(neighbor_unit.stable_id)
@@ -1054,7 +1254,7 @@ static func _compile_room_outcropping_supports(
 				or not recipe.walk_cells.is_empty() \
 				or not recipe.headroom_cells.is_empty() \
 				or recipe.bearing_parent_count != 0:
-			last_failure = "room outcropping %s has a non-attachment support recipe" \
+			last_failure = "room projection %s has a non-attachment support recipe" \
 				% feature.stable_id
 			return [] as Array[FabricUnit]
 		# SettlementFabricPlan validates a visual seam against construction that
@@ -1739,8 +1939,8 @@ static func _socket_world_cell(unit_value: FabricUnit,
 static func _feature_units_match_reservation(
 		feature: WarrenFeatureReservation, units: Array[FabricUnit],
 		program: SettlementFabricProgram) -> bool:
-	if feature.kind in [&"room_outcropping", &"frontier_gateway_support",
-			&"arcade_overhang_support"]:
+	if feature.kind in [&"room_outcropping", &"room_overhang_support",
+			&"frontier_gateway_support", &"arcade_overhang_support"]:
 		# The feature's reserved cells are the already-realized upper room. Its
 		# construction records are deliberately zero-cell bracket attachments;
 		# requiring them to reproduce the room would duplicate occupied mass.
@@ -1826,6 +2026,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				feature_unit.stable_id, probe.last_rejection]
 			return [] as Array[FabricUnit]
 	var roof_faces_by_room := _roof_faces_by_room(source, room_id_by_cell)
+	var roof_room_id_by_face: Dictionary = {}
+	for roof_room_id_value: Variant in roof_faces_by_room.keys():
+		var roof_room_id := StringName(roof_room_id_value)
+		for roof_face: Vector3i in roof_faces_by_room[roof_room_id] \
+				as Array[Vector3i]:
+			roof_room_id_by_face[roof_face] = roof_room_id
 	var roof_neighborhood := _spatial_roof_neighborhood(source,
 		room_by_id, roof_faces_by_room)
 	if roof_neighborhood.is_empty() and not last_failure.is_empty():
@@ -2020,7 +2226,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			return compile_roof_units(source, program, room_units,
 				fixed_feature_units, retry_flattened,
 				collision_flattened_component_count + 1)
-		if full and not _touches_public_air(source.grid, face_cells):
+		if full and not _touches_public_air(source.grid, face_cells) \
+				and face_cells.size() >= MIN_INTENTIONAL_FLAT_ROOF_FACE_COUNT:
 			# A single-storey building's exposed lid read as a bare box in the
 			# annotated review. The authored railed terrace (lived-in first)
 			# is the deliberate closure for it; the plain flat plus garden
@@ -2132,11 +2339,39 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				last_failure = "no native setback cap fits row %d for %s" % [
 					row_index, room_id]
 				return [] as Array[FabricUnit]
-			# Lean-tos are retired from spatial setback caps: the reviewed
-			# captures showed even a correctly seated shell reads as a tilted
-			# half-roof floating beside the mass, and the partial-plate
-			# neighborhood now provides the composed pitched alternative.
-			# The plain cap and garden vocabulary closes these strips.
+			# A narrow shoulder may never survive as a tiny horizontal lid.  Its
+			# only admissible treatment is the measured half-gable whose complete
+			# long edge terminates in one continuing upper wall.  This produces the
+			# ordinary attached lean-to/T-roof relationship visible in real joined
+			# buildings; if the exact wall seam does not exist, reject the source
+			# composition instead of disguising the defect with a planter.
+			if not macro_piece:
+				var lean_to := _setback_lean_to_placement(source, row, room,
+					cap, unit_by_room)
+				if lean_to.is_empty():
+					lean_to = _setback_roof_join_placement(source, row, room,
+						cap, roof_room_id_by_face)
+				if not lean_to.is_empty():
+					cap = lean_to
+				elif row.size() < MIN_SETBACK_CAP_FACE_COUNT:
+					var top_context: Array[Dictionary] = []
+					for private_cell: Vector3i in room.private_cells:
+						if private_cell.y != room.lattice_origin.y + 1:
+							continue
+						var above := private_cell + Vector3i.UP
+						top_context.append({"cell": private_cell,
+							"above_use": source.grid.use_at(above),
+							"above_owner": source.grid.owner_name_at(above),
+							"reservation_bits": source.grid.reservation_bits_at(above),
+							"reservation_owners": source.grid \
+								.reservation_owner_names_at(above,
+									source.grid.reservation_bits_at(above)),
+							"is_roof_face": face_cells.has(private_cell)})
+					last_failure = ("roof remainder for %s contains a %d-cell " \
+						+ "exposed flat sliver without a complete upper-wall seam " \
+						+ "(source faces=%s; remainder=%s; top=%s)") % [room_id,
+						row.size(), face_cells, row, JSON.stringify(top_context)]
+					return [] as Array[FabricUnit]
 			# A setback roof is not a license to intersect every room that happens
 			# to share a party wall with its parent.  That broad exception admitted
 			# little gables deep into the valley between two continuing upper rooms.
@@ -2147,9 +2382,25 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			var seams := _roof_seams_for_candidate([] as Array[StringName],
 				parent_unit.stable_id, out, fixed_feature_units)
 			var end_wall_room_ids: Array[StringName] = []
-			if not macro_piece:
+			var edge_roof_room_ids: Array[StringName] = []
+			if macro_piece:
+				end_wall_room_ids = _setback_gable_end_room_ids(row, cap,
+					unit_by_private_cell)
+				for gable_room_id: StringName in end_wall_room_ids:
+					if not seams.has(gable_room_id):
+						seams.append(gable_room_id)
+				edge_roof_room_ids = _setback_complete_edge_roof_room_ids(
+					row, cap, room.stable_id, roof_room_id_by_face)
+				for edge_roof_room_id: StringName in edge_roof_room_ids:
+					for prior_roof: FabricUnit in out:
+						if String(prior_roof.stable_id).begins_with(
+								"spatial.roof.%s" % edge_roof_room_id) \
+								and not seams.has(prior_roof.stable_id):
+							seams.append(prior_roof.stable_id)
+			else:
 				end_wall_room_ids = _setback_wall_room_ids(row,
 					unit_by_private_cell)
+			seams = _unique_sorted_names(seams)
 			var upper_room_unit_id := StringName(cap.get(
 				"upper_room_unit_id", &""))
 			if not upper_room_unit_id.is_empty() \
@@ -2160,6 +2411,14 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				var upper_id := StringName(upper_id_value)
 				if not upper_id.is_empty() and not seams.has(upper_id):
 					seams.append(upper_id)
+			var roof_seam_room_id := StringName(cap.get(
+				"roof_seam_room_id", &""))
+			if not roof_seam_room_id.is_empty():
+				for prior_roof: FabricUnit in out:
+					if String(prior_roof.stable_id).begins_with(
+							"spatial.roof.%s" % roof_seam_room_id) \
+							and not seams.has(prior_roof.stable_id):
+						seams.append(prior_roof.stable_id)
 				seams = _unique_sorted_names(seams)
 			var cap_unit := _cap_unit(room_id, row_index, room, parent_unit,
 				cap, seams)
@@ -2180,12 +2439,56 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						StringName(cap.recipe_id))
 					if plain_id != StringName(cap.recipe_id):
 						fallback_ids.append(plain_id)
-					fallback_ids.append(_flat_roof_recipe_id_for_kind(
-						StringName(piece.room_kind)))
+					if row.size() >= MIN_INTENTIONAL_FLAT_ROOF_FACE_COUNT:
+						fallback_ids.append(_flat_roof_recipe_id_for_kind(
+							StringName(piece.room_kind)))
 					var fallback_failures := PackedStringArray([
 						terrace_rejection])
 					var fallback_selected := false
-					for fallback_id: StringName in fallback_ids:
+					# A square/tower crown has the same occupied footprint after a
+					# quarter turn, while its measured eave/ridge bounds do not. The
+					# full-room path already uses this alternative; compound shoulders
+					# need it too so diagonal eave corners can clear rather than overlap.
+					if StringName(piece.room_kind) in [&"tower", &"building"]:
+						var rotated_ids: Array[StringName] = [StringName(cap.recipe_id)]
+						if plain_id != StringName(cap.recipe_id):
+							rotated_ids.append(plain_id)
+						for rotated_id: StringName in rotated_ids:
+							var rotated_cap := cap.duplicate(true)
+							rotated_cap["recipe_id"] = rotated_id
+							rotated_cap["yaw_quarters"] = posmod(
+								int(cap.yaw_quarters) + 1, 4)
+							var rotated_seams: Array[StringName] = []
+							rotated_seams.assign(seams)
+							for original_gable_id: StringName in end_wall_room_ids:
+								rotated_seams.erase(original_gable_id)
+							var rotated_gable_room_ids := \
+								_setback_gable_end_room_ids(row, rotated_cap,
+									unit_by_private_cell)
+							for rotated_gable_id: StringName in rotated_gable_room_ids:
+								if not rotated_seams.has(rotated_gable_id):
+									rotated_seams.append(rotated_gable_id)
+							rotated_seams = _unique_sorted_names(rotated_seams)
+							var rotated_unit := _cap_unit(room_id, row_index,
+								room, parent_unit, rotated_cap, rotated_seams)
+							_append_shallow_prior_roof_seams(rotated_unit,
+								room_seams, out, program)
+							_append_shallow_room_seams(rotated_unit,
+								end_wall_room_ids, unit_by_room,
+								unit_by_private_cell, program)
+							var rotated_recipe := program.recipe(rotated_id)
+							if rotated_recipe != null \
+									and not _unit_touches_public_air(source.grid,
+										rotated_unit, rotated_recipe) \
+									and probe.add_unit(rotated_unit):
+								cap = rotated_cap
+								cap_unit = rotated_unit
+								fallback_selected = true
+								break
+							fallback_failures.append("%s/r1: %s" % [
+								rotated_id, probe.last_rejection])
+					for fallback_id: StringName in fallback_ids \
+							if not fallback_selected else [] as Array[StringName]:
 						cap["recipe_id"] = fallback_id
 						cap_unit = _cap_unit(room_id, row_index, room,
 							parent_unit, cap, seams)
@@ -2213,7 +2516,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						var terminal := _terminal_macro_cap_fallback(source,
 							program, probe, row, row_index, room_id, room,
 							parent_unit, seams, room_seams, unit_by_room,
-							unit_by_private_cell, out)
+							unit_by_private_cell, out, roof_room_id_by_face)
 						var terminal_units := terminal.get("units",
 							[] as Array[FabricUnit]) as Array[FabricUnit]
 						if terminal_units.is_empty():
@@ -2353,6 +2656,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"lamped_flat_roof_terrace_count": lamped_flat_terrace_count,
 		"bare_flat_roof_count": flat_count - flat_terrace_count \
 			- flat_garden_count,
+		"micro_flat_roof_count": 0,
 		"setback_cap_unit_count": cap_count,
 		"setback_lean_to_unit_count": lean_to_cap_count,
 		"setback_macro_gable_unit_count": macro_gable_cap_count,
@@ -2364,6 +2668,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"setback_dressed_unit_count": terrace_cap_count + garden_cap_count,
 		"setback_plain_cap_unit_count": cap_count - terrace_cap_count \
 			- garden_cap_count,
+		"micro_setback_cap_unit_count": 0,
 		"setback_terrace_fallback_count": terrace_cap_fallback_count,
 		"setback_garden_fallback_count": garden_cap_fallback_count,
 		"one_storey_chimney_roof_count": one_storey_chimney_roof_count,
@@ -2470,17 +2775,52 @@ static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,
 		room: WarrenRoomStamp, parent_unit: FabricUnit,
 		base_seams: Array[StringName], neighbor_room_unit_ids: Array[StringName],
 		unit_by_room: Dictionary, unit_by_private_cell: Dictionary,
-		prior_roofs: Array[FabricUnit]) -> Dictionary:
+		prior_roofs: Array[FabricUnit], roof_room_id_by_face: Dictionary) \
+		-> Dictionary:
 	## Replace one colliding macro gable with a complete, lossless set of native
-	## strips. Lean-tos are retired from this fallback: the reviewed captures
-	## showed the seated shell still reads as a floating half-roof, and the
-	## partial-plate neighborhood now owns the composed pitched treatment.
+	## strips. A wall-bound lean-to is tried first because it composes the lower
+	## shoulder into the continuing upper mass. Plain caps remain legal only for
+	## broad strips; a one/two-cell strip without one complete upper-wall seam is
+	## rejected rather than exposed as a modular lid.
+	# A complete 3 x 3 m room crown is the one exception to strip decomposition.
+	# If both authored gable orientations collide with higher adjoining mass, the
+	# existing measured tower flat is a coherent single-piece weather closure.
+	# It was authored specifically for diagonal/eave conflicts and is materially
+	# different from accepting two independent two-cell lids.
+	if face_cells.size() == MIN_SETBACK_CAP_FACE_COUNT:
+		var flat_id := _flat_roof_recipe_id(room)
+		var flat_seams: Array[StringName] = []
+		flat_seams.assign(base_seams)
+		for neighbor_id: StringName in neighbor_room_unit_ids:
+			if not flat_seams.has(neighbor_id):
+				flat_seams.append(neighbor_id)
+		var flat := _full_roof_unit(room_id, room, parent_unit, flat_id,
+			_unique_sorted_names(flat_seams))
+		_append_shallow_prior_roof_seams(flat, neighbor_room_unit_ids,
+			prior_roofs, program)
+		_append_shallow_room_seams(flat, neighbor_room_unit_ids, unit_by_room,
+			unit_by_private_cell, program)
+		var flat_recipe := program.recipe(flat_id)
+		if flat_recipe != null and not _unit_touches_public_air(source.grid,
+				flat, flat_recipe):
+			var flat_fit := _roof_units_fit_probe(program, probe.units,
+				[flat] as Array[FabricUnit])
+			if bool(flat_fit.get("fits", false)):
+				return {"units": [flat] as Array[FabricUnit],
+					"terminal_flat_closure": true}
 	var rows := _terminal_cap_rows(face_cells)
 	if rows.is_empty():
 		return {"units": [] as Array[FabricUnit],
 			"failure": "macro face set has no terminal strip partition"}
 	var failures := PackedStringArray()
-	for use_lean_to: bool in [false]:
+	# A compound shoulder can legitimately contain both conditions at once: one
+	# short run dies into a complete upper wall/roof seam, while the remaining
+	# broad run is open on both long sides.  Treating the entire partition as
+	# either all lean-to or all plain rejected that coherent T-roof campaign and
+	# encouraged callers to keep an overlapping macro gable instead.  The mixed
+	# phase keeps the rule local and exact: every sub-four-cell strip still needs
+	# a complete typed seam; only a broad strip may use the plain closure.
+	for phase in 3:
 		var candidates: Array[FabricUnit] = []
 		var candidate_failure := ""
 		for strip_index in rows.size():
@@ -2492,16 +2832,48 @@ static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,
 					% strip_index
 				break
 			cap["recipe_id"] = StringName("roof.setback.cap.%d" % strip.size())
-			if use_lean_to:
-				var lean_to := _setback_lean_to_placement(source, strip, room,
-					cap, unit_by_room)
-				if not lean_to.is_empty():
-					cap = lean_to
+			var lean_to := _setback_lean_to_placement(source, strip, room,
+				cap, unit_by_room)
+			if lean_to.is_empty():
+				lean_to = _setback_roof_join_placement(source, strip, room,
+					cap, roof_room_id_by_face)
+			var require_lean_to := phase == 1 \
+				or phase == 0 and strip.size() < MIN_SETBACK_CAP_FACE_COUNT
+			var require_plain := phase == 2
+			if require_lean_to:
+				if lean_to.is_empty():
+					candidate_failure = ("terminal strip %d has no complete " \
+						+ "upper-wall or roof seam for a lean-to") % strip_index
+					break
+				cap = lean_to
+			elif require_plain:
+				if strip.size() < MIN_SETBACK_CAP_FACE_COUNT:
+					candidate_failure = ("terminal strip %d would expose a " \
+						+ "%d-cell flat sliver") % [strip_index, strip.size()]
+					break
+			elif not lean_to.is_empty():
+				# The mixed phase also prefers the structural seam on a broad run;
+				# doing so makes the roofs visibly grow out of the adjoining mass.
+				cap = lean_to
 			var seams: Array[StringName] = []
 			seams.assign(base_seams)
 			var upper_id := StringName(cap.get("upper_room_unit_id", &""))
 			if not upper_id.is_empty() and not seams.has(upper_id):
 				seams.append(upper_id)
+			for upper_id_value: Variant in cap.get(
+					"upper_room_unit_ids", []) as Array:
+				var one_upper_id := StringName(upper_id_value)
+				if not one_upper_id.is_empty() \
+						and not seams.has(one_upper_id):
+					seams.append(one_upper_id)
+			var roof_seam_room_id := StringName(cap.get(
+				"roof_seam_room_id", &""))
+			if not roof_seam_room_id.is_empty():
+				for prior_roof: FabricUnit in prior_roofs:
+					if String(prior_roof.stable_id).begins_with(
+							"spatial.roof.%s" % roof_seam_room_id) \
+							and not seams.has(prior_roof.stable_id):
+						seams.append(prior_roof.stable_id)
 			for earlier: FabricUnit in candidates:
 				if not seams.has(earlier.stable_id):
 					seams.append(earlier.stable_id)
@@ -2525,8 +2897,9 @@ static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,
 				return {"units": candidates}
 			candidate_failure = String(fit.get("failure",
 				"terminal strip transaction rejected"))
-		failures.append("%s phase: %s" % [
-			"lean-to" if use_lean_to else "plain", candidate_failure])
+		var phase_name := "mixed" if phase == 0 \
+			else "lean-to" if phase == 1 else "plain"
+		failures.append("%s phase: %s" % [phase_name, candidate_failure])
 	return {"units": [] as Array[FabricUnit], "failure": "; ".join(failures)}
 
 
@@ -2554,15 +2927,18 @@ static func _roof_units_fit_probe(program: SettlementFabricProgram,
 static func _setback_lean_to_placement(source: WarrenSpatialPlan,
 		face_cells: Array[Vector3i], room: WarrenRoomStamp,
 		cap: Dictionary, unit_by_room: Dictionary) -> Dictionary:
-	## A lean-to is legal only where one complete long edge of the cap meets one
-	## continuing upper room. This is a measured wall/roof seam, not decoration
-	## inferred from proximity. One-cell caps have no 3 m repeat and remain plain.
+	## A lean-to is legal only where a complete long edge of the cap meets a
+	## continuing upper room. A strip with both long edges completely bounded is
+	## the typed narrow roof-trench case: one measured slope bridges the recess and
+	## declares both upper walls as seams. Partial contacts and one-cell caps remain
+	## invalid; they cannot be hidden by decoration.
 	if source == null or face_cells.size() not in [2, 4, 6] \
 			or cap.is_empty():
 		return {}
 	var origin := cap.origin as Vector3i
 	var yaw := int(cap.yaw_quarters)
 	var owner_by_side: Dictionary = {}
+	var owner_cell: Dictionary = {}
 	for side in [-1, 1]:
 		var side_owners: Dictionary = {}
 		var complete := true
@@ -2581,29 +2957,33 @@ static func _setback_lean_to_placement(source: WarrenSpatialPlan,
 				complete = false
 				break
 			side_owners[owner] = true
+			owner_cell[owner] = upper_neighbor
 		if complete and side_owners.size() == 1:
 			owner_by_side[side] = StringName(side_owners.keys()[0])
-	if owner_by_side.size() != 1:
+	if owner_by_side.size() not in [1, 2]:
 		return {}
-	var wall_side := int(owner_by_side.keys()[0])
-	var upper_room_unit_id := &""
-	var upper_building_id := StringName(owner_by_side[wall_side])
-	for building: WarrenBuildingVolume in source.buildings:
-		if building.stable_id != upper_building_id:
-			continue
-		for upper_room: WarrenRoomStamp in building.room_records:
-			if not unit_by_room.has(upper_room.stable_id):
+	var wall_sides: Array = owner_by_side.keys()
+	wall_sides.sort()
+	var wall_side := int(wall_sides[posmod(Helper._mix64(source.world_seed \
+		^ String(room.stable_id).hash()), wall_sides.size())])
+	var upper_room_unit_ids: Array[StringName] = []
+	for owner_value: Variant in owner_by_side.values():
+		var upper_building_id := StringName(owner_value)
+		var exemplar := owner_cell.get(upper_building_id,
+			Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+		for building: WarrenBuildingVolume in source.buildings:
+			if building.stable_id != upper_building_id:
 				continue
-			for upper_cell: Vector3i in upper_room.private_cells:
-				if source.grid.owner_name_at(upper_cell) == upper_building_id:
-					upper_room_unit_id = (unit_by_room[
-						upper_room.stable_id] as FabricUnit).stable_id
+			for upper_room: WarrenRoomStamp in building.room_records:
+				if unit_by_room.has(upper_room.stable_id) \
+						and upper_room.has_private_cell(exemplar):
+					upper_room_unit_ids.append((unit_by_room[
+						upper_room.stable_id] as FabricUnit).stable_id)
 					break
-			if not upper_room_unit_id.is_empty():
-				break
-		break
-	if upper_room_unit_id.is_empty():
+			break
+	if upper_room_unit_ids.size() != owner_by_side.size():
 		return {}
+	upper_room_unit_ids = _unique_sorted_names(upper_room_unit_ids)
 	var theme := _architectural_district_theme(room.lattice_origin,
 		source.world_seed)
 	var family := "orange" if theme == &"orange" else "blue"
@@ -2613,7 +2993,54 @@ static func _setback_lean_to_placement(source: WarrenSpatialPlan,
 		"origin": origin,
 		"yaw_quarters": yaw,
 		"anchor_face": cap.anchor_face,
-		"upper_room_unit_id": upper_room_unit_id,
+		"upper_room_unit_id": upper_room_unit_ids[0],
+		"upper_room_unit_ids": upper_room_unit_ids,
+	}
+
+
+static func _setback_roof_join_placement(source: WarrenSpatialPlan,
+		face_cells: Array[Vector3i], room: WarrenRoomStamp,
+		cap: Dictionary, roof_room_id_by_face: Dictionary) -> Dictionary:
+	## A narrow lower roof may die into one complete neighboring roof edge at the
+	## same band. This is the orthogonal roof-to-roof counterpart of the wall-bound
+	## lean-to. Every cell along one long edge must meet roof faces owned by one
+	## room; corner touches, partial contacts, and two-sided valleys remain invalid.
+	if source == null or face_cells.size() not in [2, 4, 6] \
+			or cap.is_empty():
+		return {}
+	var origin := cap.origin as Vector3i
+	var yaw := int(cap.yaw_quarters)
+	var neighbor_by_side: Dictionary = {}
+	for side in [-1, 1]:
+		var neighbor_ids: Dictionary = {}
+		var complete := true
+		for local_x in face_cells.size():
+			var row_cell := FabricRecipe.transform_cell(
+				Vector3i(local_x, 0, 0), origin, yaw) - Vector3i.UP
+			var side_direction := FabricRecipe.transform_direction(
+				Vector3i(0, 0, side), yaw)
+			var neighbor_face := row_cell + side_direction
+			var neighbor_id := StringName(roof_room_id_by_face.get(
+				neighbor_face, &""))
+			if neighbor_id.is_empty() or neighbor_id == room.stable_id:
+				complete = false
+				break
+			neighbor_ids[neighbor_id] = true
+		if complete and neighbor_ids.size() == 1:
+			neighbor_by_side[side] = StringName(neighbor_ids.keys()[0])
+	if neighbor_by_side.size() != 1:
+		return {}
+	var wall_side := int(neighbor_by_side.keys()[0])
+	var theme := _architectural_district_theme(room.lattice_origin,
+		source.world_seed)
+	var family := "orange" if theme == &"orange" else "blue"
+	return {
+		"recipe_id": StringName("roof.setback.lean.%s.%d.%s" % [family,
+			face_cells.size(), "negative" if wall_side < 0 else "positive"]),
+		"origin": origin,
+		"yaw_quarters": yaw,
+		"anchor_face": cap.anchor_face,
+		"roof_seam_room_id": neighbor_by_side[wall_side],
 	}
 
 
@@ -3614,16 +4041,21 @@ static func _append_shallow_prior_roof_seams(candidate: FabricUnit,
 	var candidate_roof_ids := _prior_roof_seams_for_neighbor_rooms(
 		neighbor_room_unit_ids, prior_roofs)
 	for prior: FabricUnit in prior_roofs:
-		if not candidate_roof_ids.has(prior.stable_id):
+		var typed_thin_cap := candidate_recipe.has_tag(&"thin_roof_face")
+		if not typed_thin_cap \
+				and not candidate_roof_ids.has(prior.stable_id):
 			continue
 		var prior_recipe := program.recipe(prior.recipe_id)
 		if prior_recipe == null:
 			continue
 		var prior_bounds := prior.transform() \
 			* prior_recipe.local_clearance_bounds
-		if SettlementFabricPlan._aabb_overlaps_volume(candidate_bounds,
+		var valid_contact := _is_shallow_flashing_contact(candidate_bounds,
+			prior_bounds) if typed_thin_cap \
+			else SettlementFabricPlan._aabb_overlaps_volume(candidate_bounds,
 				prior_bounds) and SettlementFabricPlan._is_edge_nick(
-				candidate_bounds, prior_bounds) \
+					candidate_bounds, prior_bounds)
+		if valid_contact \
 				and not candidate.visual_seam_ids.has(prior.stable_id):
 			candidate.visual_seam_ids.append(prior.stable_id)
 	candidate.visual_seam_ids = _unique_sorted_names(
@@ -3652,6 +4084,114 @@ static func _setback_wall_room_ids(face_cells: Array[Vector3i],
 			var room_unit_id := StringName(unit_by_private_cell.get(neighbor, &""))
 			if not room_unit_id.is_empty() and not out.has(room_unit_id):
 				out.append(room_unit_id)
+	return _unique_sorted_names(out)
+
+
+static func _setback_gable_end_room_ids(face_cells: Array[Vector3i],
+		cap: Dictionary,
+		unit_by_private_cell: Dictionary) -> Array[StringName]:
+	## A complete pitched crown may terminate into a taller facade at either
+	## gable end.  This is the exact T-building seam: every cell across that end
+	## must meet one room at the cap's own band.  Long eaves, partial contacts,
+	## mixed owners, and corner-only touches deliberately return no seam.
+	var out: Array[StringName] = []
+	if face_cells.is_empty() or cap.is_empty():
+		return out
+	var origin := cap.origin as Vector3i
+	var yaw := int(cap.yaw_quarters)
+	var cap_cells: Dictionary = {}
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for face: Vector3i in face_cells:
+		var cap_cell := face + Vector3i.UP
+		cap_cells[cap_cell] = true
+		var local := _inverse_cell(cap_cell, origin, yaw)
+		minimum = minimum.min(Vector2i(local.x, local.z))
+		maximum = maximum.max(Vector2i(local.x, local.z))
+	if minimum.x > maximum.x or minimum.y > maximum.y:
+		return out
+	for side in [-1, 1]:
+		var end_z := minimum.y if side < 0 else maximum.y
+		var owner_id := &""
+		var complete := true
+		for local_x in range(minimum.x, maximum.x + 1):
+			var edge_cell := FabricRecipe.transform_cell(
+				Vector3i(local_x, 0, end_z), origin, yaw)
+			if not cap_cells.has(edge_cell):
+				complete = false
+				break
+			var outward := FabricRecipe.transform_direction(
+				Vector3i(0, 0, side), yaw)
+			var neighbor_id := StringName(unit_by_private_cell.get(
+				edge_cell + outward, &""))
+			if neighbor_id.is_empty() \
+					or not owner_id.is_empty() and owner_id != neighbor_id:
+				complete = false
+				break
+			owner_id = neighbor_id
+		if complete and not owner_id.is_empty() and not out.has(owner_id):
+			out.append(owner_id)
+	return _unique_sorted_names(out)
+
+
+static func _setback_complete_edge_roof_room_ids(
+		face_cells: Array[Vector3i], cap: Dictionary,
+		owner_room_id: StringName,
+		roof_room_id_by_face: Dictionary) -> Array[StringName]:
+	## Two complete pitched crowns may share one full source-face edge.  Naming
+	## that exact edge is the construction fact behind a parallel valley or a
+	## perpendicular T-roof; it is not inferred from their broad visual AABBs.
+	## Partial edges and corner contacts remain unrelated and therefore collide.
+	var out: Array[StringName] = []
+	if face_cells.is_empty() or cap.is_empty():
+		return out
+	var origin := cap.origin as Vector3i
+	var yaw := int(cap.yaw_quarters)
+	var faces: Dictionary = {}
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for face: Vector3i in face_cells:
+		faces[face] = true
+		var local := _inverse_cell(face + Vector3i.UP, origin, yaw)
+		minimum = minimum.min(Vector2i(local.x, local.z))
+		maximum = maximum.max(Vector2i(local.x, local.z))
+	if minimum.x > maximum.x or minimum.y > maximum.y:
+		return out
+	for edge: Dictionary in [
+		{"axis": &"x", "value": minimum.x, "side": -1},
+		{"axis": &"x", "value": maximum.x, "side": 1},
+		{"axis": &"z", "value": minimum.y, "side": -1},
+		{"axis": &"z", "value": maximum.y, "side": 1},
+	]:
+		var neighbor_room_id := &""
+		var complete := true
+		var start := minimum.y if StringName(edge.axis) == &"x" else minimum.x
+		var finish := maximum.y if StringName(edge.axis) == &"x" else maximum.x
+		for along in range(start, finish + 1):
+			var local := Vector3i(int(edge.value), 0, along) \
+				if StringName(edge.axis) == &"x" \
+				else Vector3i(along, 0, int(edge.value))
+			var face := FabricRecipe.transform_cell(local, origin, yaw) \
+				- Vector3i.UP
+			if not faces.has(face):
+				complete = false
+				break
+			var local_direction := Vector3i(int(edge.side), 0, 0) \
+				if StringName(edge.axis) == &"x" \
+				else Vector3i(0, 0, int(edge.side))
+			var neighbor_face := face + FabricRecipe.transform_direction(
+				local_direction, yaw)
+			var one_neighbor := StringName(roof_room_id_by_face.get(
+				neighbor_face, &""))
+			if one_neighbor.is_empty() or one_neighbor == owner_room_id \
+					or not neighbor_room_id.is_empty() \
+						and neighbor_room_id != one_neighbor:
+				complete = false
+				break
+			neighbor_room_id = one_neighbor
+		if complete and not neighbor_room_id.is_empty() \
+				and not out.has(neighbor_room_id):
+			out.append(neighbor_room_id)
 	return _unique_sorted_names(out)
 
 
@@ -3949,11 +4489,16 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 	for key: String in ["annex_room_id", "balcony_room_id",
 			"market_backing_room_id", "courtyard_bridge_house_room_id",
 			"outcrop_upper_room_id", "outcrop_lower_room_id", "gateway_room_id",
-			"arcade_upper_room_id", "arcade_lower_room_id"]:
+			"arcade_upper_room_id", "arcade_lower_room_id",
+			"overhang_upper_room_id", "overhang_lower_room_id"]:
 		if StringName(feature.audit.get(key, &"")) == room_id:
 			return true
 	for neighbor_value: Variant in feature.audit.get(
 			"outcrop_support_neighbor_room_ids", []):
+		if StringName(neighbor_value) == room_id:
+			return true
+	for neighbor_value: Variant in feature.audit.get(
+			"overhang_support_neighbor_room_ids", []):
 		if StringName(neighbor_value) == room_id:
 			return true
 	for neighbor_value: Variant in feature.audit.get(

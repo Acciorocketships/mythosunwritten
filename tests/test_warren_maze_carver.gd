@@ -66,6 +66,8 @@ func test_each_scale_builds_one_connected_building_fronted_maze() -> void:
 			plan.scale_profile.route_span_range.x)
 		assert_gt(int(plan.audit.alley_cell_count), 0,
 			"the public realm is a network, not one canyon")
+		assert_gte(int(plan.audit.loop_join_count), 1,
+			"the public realm must contain a deliberate reconnecting loop")
 		for cell: Vector3i in plan.excavation.public_cells():
 			assert_eq(plan.state_at(cell),
 				WarrenMazeSourcePlan.CellState.PASSAGE)
@@ -90,6 +92,7 @@ func test_production_seed_corpus_seals_without_attempt_search() -> void:
 		sealed += 1
 		assert_true(plan.is_sealed())
 		assert_gte(float(plan.audit.frontage_ratio), 0.90)
+		assert_gte(int(plan.audit.loop_join_count), 1)
 		assert_eq(plan.excavation.portals.size(), 1)
 	assert_eq(sealed, PRODUCTION_CORPUS.size(),
 		"one deterministic construction seals every corpus seed")
@@ -158,6 +161,8 @@ func test_sealed_maze_adapts_without_repair_to_the_common_volume_contract() \
 		"the adapter may not invent a path outside the bore")
 	assert_gte(int(volume.audit.minimum_lane_count), 2,
 		"every bored passage cell needs a player-width two-lane floor")
+	assert_gte(volume.transitions.size(), volume.walk_cells.size(),
+		"the connected common-volume graph must preserve a real cycle")
 	for cell: Vector3i in plan.excavation.public_cells():
 		assert_true(volume.has_frontage(cell),
 			"every carved street cell reaches the common address contract")

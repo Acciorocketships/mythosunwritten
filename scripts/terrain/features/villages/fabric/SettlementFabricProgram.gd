@@ -202,14 +202,19 @@ const FACE_PHASE_OFFSETS: Array[int] = [0, 3, 5, 4]
 ## preserving one exact fallback for every detailed variant.
 const BUILDING_STYLE_COUNT := 3
 const FACADE_PHASE_COUNT := BUILDING_STYLE_COUNT * 2
-## Compact dormers are assembled from a 1.5 m window face and a matching window
-## canopy. Their sill is sunk just through the host pitch: the face remains
-## legible, while its open back and lower corners disappear into the roof. The
-## retired 2.8 x 3.1 m attic-window source read as an entire second gable room.
-const DORMER_EMBED_Y := -0.18
-const DORMER_FACE_SCALE := Vector3(0.78, 0.54, 0.62)
-const DORMER_CANOPY_SCALE := Vector3(0.43, 0.56, 0.43)
-const DORMER_CANOPY_Y := 1.20
+## A compact dormer is a finite three-piece construction: one half-width window
+## face and two opposed, trimmed lean-to pitches meeting at a true ridge.  The
+## face's lower/back construction is buried in the host slope.  This avoids both
+## previous failures: a one-sided awning and a scaled full-storey A-frame whose
+## huge empty triangle overwhelmed the window.
+const DORMER_EMBED_Y := -0.20
+# Keep the authored window readable, but shorten its full-height S wall enough
+# that the one-sided top plate disappears beneath the two-pitch crown. At 54%
+# it floated visibly behind the ridge like a stray horizontal plank.
+const DORMER_FACE_SCALE := Vector3(0.78, 0.50, 0.62)
+const DORMER_PITCH_SCALE := Vector3(0.50, 0.65, 0.50)
+const DORMER_PITCH_SEAM_OFFSET := 0.42138965
+const DORMER_PITCH_Y := 1.22
 const DORMER_COMPACT_EAVE_OFFSET := 1.25
 const DORMER_WIDE_EAVE_OFFSET := 2.20
 const FEATURE_PORTAL_NORTH := 1
@@ -725,6 +730,14 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			modules, true),
 		_balcony_recipe(&"balcony.bracketed.right.blue.planted", &"blue", 0,
 			modules, true),
+		_balcony_recipe(&"balcony.walkout.deep.left.blue.planted", &"blue", -1,
+			modules, true, 2, true),
+		_balcony_recipe(&"balcony.walkout.deep.right.orange.planted", &"orange", 0,
+			modules, true, 2, true),
+		_balcony_recipe(&"balcony.walkout.deep.left.amber.planted", &"amber", -1,
+			modules, true, 2, true),
+		_balcony_recipe(&"balcony.walkout.deep.right.blue.planted", &"blue", 0,
+			modules, true, 2, true),
 		_wrap_balcony_recipe(&"balcony.wrap.left.blue.planted", &"blue", -1,
 			modules),
 		_wrap_balcony_recipe(&"balcony.wrap.right.orange.planted", &"orange", 1,
@@ -1016,7 +1029,8 @@ static func _room_recipe(recipe_id: StringName, terrain_bearing: bool,
 		_facade_door(facade_family, facade_phase) if has_exterior_door \
 			else face_assets[0],
 		face_assets, 6.0, modules, &"front" if has_exterior_door else &"")
-	if not terrain_bearing and facade_phase % 2 == 1:
+	if not terrain_bearing and not has_exterior_door \
+			and facade_phase % 2 == 1:
 		_add_front_facade_detail(recipe_value,
 			_upper_facade_detail_kind(theme, &"square", facade_phase),
 			FabricModuleProgram.footprint_centre(Vector3i(-2, 0, -2),
@@ -1093,7 +1107,8 @@ static func _long_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 			modules.facade_aligned_transform(east_asset,
 				_pose(centre + Vector3(3.0, 0.0, z_offset), -PI * 0.5),
 				Vector3i.RIGHT, centre.x + 3.0))
-	if not terrain_bearing and facade_phase % 2 == 1:
+	if not terrain_bearing and not has_exterior_door \
+			and facade_phase % 2 == 1:
 		_add_front_facade_detail(recipe_value,
 			_upper_facade_detail_kind(theme, &"long", facade_phase), centre, 4.5)
 	var door_cell := Vector3i(-1, 0, 2)
@@ -1314,7 +1329,8 @@ static func _tower_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 			modules.facade_aligned_transform(asset_id,
 				_pose(centre + side.offset as Vector3, float(side.yaw)),
 				side.outward as Vector3i, float(side.boundary)))
-	if not terrain_bearing and facade_phase % 2 == 1:
+	if not terrain_bearing and not has_exterior_door \
+			and facade_phase % 2 == 1:
 		_add_front_facade_detail(recipe_value,
 			_upper_facade_detail_kind(theme, &"tower", facade_phase), centre, 1.5)
 	# At this lattice resolution a 3 m shell has no cell wholly inside it. Keep
@@ -1383,7 +1399,8 @@ static func _slim_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 		modules.facade_aligned_transform(rear_asset,
 			_pose(centre + Vector3(0.0, 0.0, -3.0), PI),
 			Vector3i.FORWARD, centre.z - 3.0))
-	if not terrain_bearing and facade_phase % 2 == 1:
+	if not terrain_bearing and not has_exterior_door \
+			and facade_phase % 2 == 1:
 		_add_front_facade_detail(recipe_value,
 			_upper_facade_detail_kind(theme, &"slim", facade_phase), centre, 3.0)
 	for index in 2:
@@ -1569,7 +1586,8 @@ static func _row_room_recipe(recipe_id: StringName, terrain_bearing: bool,
 				_pose(centre + Vector3(float(side.x), 0.0, 0.0),
 					float(side.yaw)), side.outward as Vector3i,
 				float(side.boundary)))
-	if not terrain_bearing and facade_phase % 2 == 1:
+	if not terrain_bearing and not has_exterior_door \
+			and facade_phase % 2 == 1:
 		_add_front_facade_detail(recipe_value,
 			_upper_facade_detail_kind(theme, &"row", facade_phase), centre, 1.5)
 	var pier_xz := Vector2i(-2, -1)
@@ -2624,25 +2642,29 @@ static func _dormered_slim_roof_recipe(recipe_id: StringName,
 static func _add_compact_roof_dormer(recipe_value: FabricRecipe,
 		placement_id: StringName, former_dormer_asset: StringName,
 		base: Vector3, yaw: float) -> void:
-	## The stock `roof.window` pieces are full-storey A-frames. A proper dormer is
-	## much smaller than its host facade, and its rear is construction hidden by
-	## the host pitch. Keep the old asset argument only as the deterministic colour
-	## selector so existing recipes and seed choices retain their blue/warm family.
 	var warm := former_dormer_asset in [ROOF_WINDOW_01, ROOF_WINDOW_04]
 	var face_asset := WALL_WOOD_WINDOW_S_ORANGE if warm \
 		else WALL_WOOD_WINDOW_S_BLUE
-	var canopy_asset := WINDOW_ROOF_ORANGE if warm else WINDOW_ROOF_BLUE
+	var pitch_asset := WINDOW_ROOF_ORANGE_TRIMMED if warm \
+		else WINDOW_ROOF_BLUE_TRIMMED
 	recipe_value.add_placement(placement_id, face_asset,
 		_scaled_pose(base + Vector3.UP * DORMER_EMBED_Y, yaw,
 			DORMER_FACE_SCALE))
-	# Do not include "dormer" in the canopy placement ID: audits count one
-	# inhabited window face per dormer, while this second piece is its roof cap.
-	var canopy_suffix := String(placement_id).replace("dormer", "window")
-	recipe_value.add_placement(StringName("compact_canopy.%s" % canopy_suffix),
-		canopy_asset, _scaled_pose(base + Vector3.UP * DORMER_CANOPY_Y,
-			yaw, DORMER_CANOPY_SCALE))
-	if not recipe_value.has_tag(&"compact_composed_dormer"):
-		recipe_value.role_tags.append(&"compact_composed_dormer")
+	var dormer_basis := Basis(Vector3.UP, yaw)
+	for side in [-1, 1]:
+		# Each source roof's high edge is 0.8427793 m behind its pivot. At
+		# 50% depth this exact offset brings both high edges to the same ridge;
+		# the low edges then fall outward over the two face corners.
+		var pitch_origin := base + Vector3.UP * DORMER_PITCH_Y \
+			+ dormer_basis * Vector3(float(side) \
+				* DORMER_PITCH_SEAM_OFFSET, 0.0, 0.0)
+		var pitch_yaw := yaw + float(side) * PI * 0.5
+		recipe_value.add_placement(StringName("compact_roof.pitch.%s.%s" % [
+			String(placement_id).replace("dormer", "window"),
+			"right" if side > 0 else "left"]), pitch_asset,
+			_scaled_pose(pitch_origin, pitch_yaw, DORMER_PITCH_SCALE))
+	if not recipe_value.has_tag(&"complete_gabled_dormer"):
+		recipe_value.role_tags.append(&"complete_gabled_dormer")
 
 
 static func _roof_seam_recipe(recipe_id: StringName, width_m: float,
@@ -3209,8 +3231,11 @@ static func _embedded_oriel_recipe(recipe_id: StringName, theme: StringName,
 	## A true partial extrusion through the parent's facade plane. The former
 	## construction used either a full-height room slice or a rotated dormer whose
 	## source A-frame sprawled across the facade. Build the actual architectural
-	## form: one half-width window face, two short return cheeks, a sill/deck, a
-	## tiny window canopy, and two corbels. The authored modules keep their UVs;
+	## form: one paired half-width window face, two glazed return cheeks, a
+	## sill/deck, a tiny window canopy, and two corbels. Pairing the authored
+	## handed wall with its baked mirror puts one timber at each outside corner;
+	## a single S panel always has a post on only one side and made the bay look
+	## broken. The authored modules keep their UVs;
 	## their construction transforms only shorten the bay below one storey and
 	## keep its projection shallower than one fine cell.
 	assert(theme in [&"blue", &"orange", &"amber"])
@@ -3228,35 +3253,53 @@ static func _embedded_oriel_recipe(recipe_id: StringName, theme: StringName,
 	elif theme == &"amber":
 		window_asset = WALL_WOOD_WINDOW_S_AMBER
 		canopy_asset = WINDOW_ROOF_ORANGE
-	# Preserve enough of the authored three-metre wall's vertical proportions for
-	# its plaster fields and window to remain legible. At 56% the timbers collapsed
-	# into a dense cage even though the shell was topologically closed. This is
-	# still decisively a partial-height bay: its 2.1 m face begins above the floor
-	# and ends below the parent storey's wall plate.
-	const BAY_HEIGHT_SCALE := 0.70
-	# A 0.9 m projection has real side-wall depth while remaining well below the
-	# 1.5 m fine cell and less than one third of the shallowest parent room.
-	const BAY_FRONT_Z := -0.90
-	const BAY_CENTRE_Z := -0.45
-	const BAY_SILL_Y := 0.38
-	var face_pose := _scaled_pose(Vector3(0.0, BAY_SILL_Y, BAY_CENTRE_Z),
-		0.0, Vector3(1.0, BAY_HEIGHT_SCALE, 1.0))
-	recipe_value.add_placement(&"bay.face", window_asset,
-		modules.facade_aligned_transform(window_asset, face_pose,
-			Vector3i.BACK, BAY_FRONT_Z))
+	# This is a window-sized oriel, not a nearly full-storey room.  Half-height
+	# keeps a 1.5 m authored window field while leaving an unmistakable band of
+	# parent facade both below its sill and above its little roof.
+	const BAY_HEIGHT_SCALE := 0.46
+	# The feature origin is the centre of the exterior lattice cell. Its parent
+	# facade is therefore at local Z = -0.75 m, not at zero. The previous recipe
+	# treated zero as the wall plane and put the window at Z = -0.90 m: behind the
+	# parent facade. Only the return cheeks projected outward, so every oblique
+	# view read as a concave timber frame. Cross the parent seam by 3 cm, then run
+	# one 0.90 m shallow box to the actual outer window plane. This is a convex
+	# partial extrusion and remains well inside its one-cell reservation.
+	const BAY_BACK_Z := -0.78
+	const BAY_FRONT_Z := 0.12
+	const BAY_CENTRE_Z := (BAY_BACK_Z + BAY_FRONT_Z) * 0.5
+	const BAY_DEPTH_SCALE := (BAY_FRONT_Z - BAY_BACK_Z) / CELL
+	const BAY_SILL_Y := 0.70
+	var mirrored_window := _mirrored_facade_asset(window_asset)
+	for face: Dictionary in [
+		{"id": &"bay.face", "x": -0.375, "asset": window_asset},
+		{"id": &"bay.face.right", "x": 0.375,
+			"asset": mirrored_window},
+	]:
+		var face_asset := StringName(face.asset)
+		var face_pose := _scaled_pose(
+			Vector3(float(face.x), BAY_SILL_Y, BAY_CENTRE_Z), 0.0,
+			Vector3(0.50, BAY_HEIGHT_SCALE, 1.0))
+		recipe_value.add_placement(StringName(face.id), face_asset,
+			modules.facade_aligned_transform(face_asset, face_pose,
+				Vector3i.BACK, BAY_FRONT_Z))
 	for side: Dictionary in [
 		{"id": &"bay.cheek.left", "x": -0.75, "yaw": PI * 0.5,
-			"outward": Vector3i.LEFT, "asset": WALL_WOOD_S_A},
+			"outward": Vector3i.LEFT, "asset": mirrored_window},
 		{"id": &"bay.cheek.right", "x": 0.75, "yaw": -PI * 0.5,
-			"outward": Vector3i.RIGHT, "asset": WALL_WOOD_S_B},
+			"outward": Vector3i.RIGHT, "asset": window_asset},
 	]:
 		var side_asset := StringName(side.asset)
 		# Scale in the cheek's authored local frame before yaw. Basis.scaled()
 		# scales world rows, so using _scaled_pose here left the rotated wall at
 		# its full 1.5 m length and buried 0.3 m behind the parent facade. The
-		# local 60% course is the intended 0.9 m return: face at -0.9, parent at 0.
+		# local 60% course is the intended 0.9 m return between the real parent
+		# boundary and the outer window face.
+		# The S wall is 0.469 m thick. Leaving that full thickness on both
+		# returns consumed almost two thirds of this 1.5 m-wide bay and produced
+		# the huge one-sided C-shaped jamb in oblique views. Preserve its authored
+		# length/UV face, but use a trim-depth shell at the two return planes.
 		var cheek_basis := Basis(Vector3.UP, float(side.yaw)) \
-			* Basis.from_scale(Vector3(0.60, BAY_HEIGHT_SCALE, 1.0))
+			* Basis.from_scale(Vector3(BAY_DEPTH_SCALE, BAY_HEIGHT_SCALE, 0.30))
 		var cheek_pose := Transform3D(cheek_basis,
 			Vector3(float(side.x), BAY_SILL_Y, BAY_CENTRE_Z))
 		recipe_value.add_placement(StringName(side.id), side_asset,
@@ -3265,23 +3308,23 @@ static func _embedded_oriel_recipe(recipe_id: StringName, theme: StringName,
 	# The face module has real thickness outside BAY_FRONT_Z. Carry the sill and
 	# canopy beneath/above that complete face, not merely beneath the return
 	# cheeks; the latter left the window wall hanging off the front of its deck.
-	var sill_pose := _scaled_pose(Vector3(0.0, 0.0, -0.72), 0.0,
-		Vector3(1.0, 1.0, 1.0))
+	var sill_pose := _scaled_pose(Vector3(0.0, 0.0, BAY_CENTRE_Z), 0.0,
+		Vector3(1.0, 1.0, BAY_DEPTH_SCALE))
 	recipe_value.add_placement(&"bay.sill", SETBACK_CAP,
 		modules.walk_aligned_transform(SETBACK_CAP, sill_pose, BAY_SILL_Y))
 	recipe_value.add_placement(&"bay.canopy", canopy_asset,
-		_scaled_pose(Vector3(0.0, 2.62, -0.85), 0.0,
-			Vector3(0.52, 0.78, 0.92)))
+		_scaled_pose(Vector3(0.0, 2.15, BAY_CENTRE_Z), 0.0,
+			Vector3(0.52, 0.42, 0.40)))
 	# The brace source pivot sits at one end of its 1.94 m beam. Offset the two
 	# mirrored instances back toward the bay centre so their visual centres land
 	# beneath the sill corners; placing their pivots at the corners produced two
 	# apparently detached planks projecting beyond the little bay.
 	recipe_value.add_placement(&"bay.corbel.left", BRACE,
-		_scaled_pose(Vector3(-0.11, -0.06, -0.92), 0.0,
-			Vector3(0.32, 0.80, 0.72)))
+		_scaled_pose(Vector3(-0.11, 0.27, -0.18), 0.0,
+			Vector3(0.32, 0.80, 0.60)))
 	recipe_value.add_placement(&"bay.corbel.right", BRACE,
-		_scaled_pose(Vector3(0.11, -0.06, -0.92), PI,
-			Vector3(0.32, 0.80, 0.72)))
+		_scaled_pose(Vector3(0.11, 0.27, -0.18), PI,
+			Vector3(0.32, 0.80, 0.60)))
 	# The grid conservatively owns the one exterior cell. The mesh deliberately
 	# crosses its inward boundary (local Z = -0.75 m) through the semantic room
 	# socket; only this declared parent seam may overlap the parent shell.
@@ -3627,43 +3670,66 @@ static func _skywalk_recipe(recipe_id: StringName, segments: int,
 
 static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		back_socket_x: int, modules: FabricModuleProgram,
-		decorated: bool = false) -> FabricRecipe:
-	## One complete 3 x 1.5 m occupied balcony. The logical cells are exterior
-	## private walk/headroom, while one continuous reviewed deck, four rail runs, and
-	## brackets are one atomic measured construction. The parent room's finite
+		decorated: bool = false, depth_cells: int = 1,
+		diagonal_support: bool = false) -> FabricRecipe:
+	## One complete 3 m-wide occupied balcony. Compact fallback recipes are 1.5 m
+	## deep; the preferred walkouts are 3 m deep so the outer guard reads as a
+	## perimeter instead of a fence across the doorway. The logical cells are
+	## exterior private walk/headroom, while continuous reviewed deck runs, every
+	## exposed rail, and the selected support course are one atomic measured
+	## construction. The parent room's finite
 	## feature-portal variant owns the open doorway; placing another wall module
 	## here would merely paste an arch over the room's still-closed facade. Left
 	## and right attachment variants shift the room socket without changing the
 	## usable floor, allowing a facade to stagger balconies instead of extruding
 	## the same coordinate through every storey.
-	assert(back_socket_x in [-1, 0])
-	var recipe_value := FabricRecipe.new(recipe_id, [
+	assert(back_socket_x in [-1, 0] and depth_cells in [1, 2])
+	assert(not diagonal_support or depth_cells == 2)
+	var tags: Array[StringName] = [
 		&"balcony", &"private_walk", &"exterior_occupied_floor",
 		&"bracket_supported", &"requires_room_portal",
 		&"overhead_occupied", theme,
-	], 1)
-	var deck_cells: Array[Vector3i] = [
-		Vector3i(-1, 0, 0), Vector3i(0, 0, 0),
 	]
-	# One native 3 m gallery piece spans the entire front. This removes the old
-	# centre crack and gives the outer rail posts one continuous supporting rim.
-	recipe_value.add_placement(&"floor.front", GALLERY_FLOOR,
-		modules.walk_aligned_transform(GALLERY_FLOOR,
-			_pose(Vector3(-CELL * 0.5, 0.0, 0.0), 0.0), 0.0))
-	for cell: Vector3i in deck_cells:
-		recipe_value.add_placement(StringName("guard.front.%d" % (cell.x + 1)),
-			RAILING, _pose(Vector3(float(cell.x) * CELL, 0.0, CELL * 0.5),
+	if depth_cells == 2:
+		tags.append(&"deep_walkout")
+	if diagonal_support:
+		tags.append(&"diagonal_support")
+	var recipe_value := FabricRecipe.new(recipe_id, tags, 1)
+	var deck_cells: Array[Vector3i] = []
+	for z in depth_cells:
+		for x in [-1, 0]:
+			deck_cells.append(Vector3i(x, 0, z))
+		# Each native 3 m gallery piece spans the full facade width. Adjacent
+		# depth runs meet on their authored edge and do not scale or overlap.
+		recipe_value.add_placement(StringName("floor.%d" % z), GALLERY_FLOOR,
+			modules.walk_aligned_transform(GALLERY_FLOOR,
+				_pose(Vector3(-CELL * 0.5, 0.0, float(z) * CELL), 0.0),
 				0.0))
-	# The two end rails close the 1.5 m depth; the parent facade is the only
+	for x in [-1, 0]:
+		recipe_value.add_placement(StringName("guard.front.%d" % (x + 1)),
+			RAILING, _pose(Vector3(float(x) * CELL, 0.0,
+				(float(depth_cells) - 0.5) * CELL), 0.0))
+	# Both end runs close every exposed depth cell. The parent facade is the only
 	# unguarded edge and contains the exact portal selected with this feature.
-	recipe_value.add_placement(&"guard.left", RAILING,
-		_pose(Vector3(-CELL * 1.5, 0.0, 0.0), -PI * 0.5))
-	recipe_value.add_placement(&"guard.right", RAILING,
-		_pose(Vector3(CELL * 0.5, 0.0, 0.0), -PI * 0.5))
-	for index in 2:
-		var brace_x := float(index - 1) * CELL
-		recipe_value.add_placement(StringName("brace.%d" % index), BRACE,
-			_pose(Vector3(brace_x, -0.55, -CELL * 0.35), 0.0))
+	for z in depth_cells:
+		recipe_value.add_placement(StringName("guard.left.%d" % z), RAILING,
+			_pose(Vector3(-CELL * 1.5, 0.0, float(z) * CELL), -PI * 0.5))
+		recipe_value.add_placement(StringName("guard.right.%d" % z), RAILING,
+			_pose(Vector3(CELL * 0.5, 0.0, float(z) * CELL), -PI * 0.5))
+	if diagonal_support:
+		var support_contract := modules.contract(DIAGONAL_BRACE)
+		assert(support_contract != null)
+		var support_bounds := support_contract.visual_bounds
+		for index in 2:
+			var brace_x := float(index - 1) * CELL
+			recipe_value.add_placement(StringName("support.diagonal.%d" % index),
+				DIAGONAL_BRACE, _pose(Vector3(brace_x, -support_bounds.end.y,
+					-support_bounds.position.z), 0.0))
+	else:
+		for index in 2:
+			var brace_x := float(index - 1) * CELL
+			recipe_value.add_placement(StringName("brace.%d" % index), BRACE,
+				_pose(Vector3(brace_x, -0.55, -CELL * 0.35), 0.0))
 	if decorated:
 		# Decoration is a separate measured construction variant. This prevents
 		# plants from silently widening the long-standing structural balcony
@@ -3680,7 +3746,7 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 		recipe_value.role_tags.append(&"planted_balcony")
 	recipe_value.walk_cells.assign(deck_cells)
 	recipe_value.headroom_cells = FabricRecipe.box_cells(
-		Vector3i(-1, 0, 0), Vector3i(2, 2, 1))
+		Vector3i(-1, 0, 0), Vector3i(2, 2, depth_cells))
 	recipe_value.inhabited_cells.assign(recipe_value.headroom_cells)
 	recipe_value.add_socket(&"room.back", FabricRecipe.SocketKind.ROOM,
 		Vector3i(back_socket_x, 0, 0), Vector3i.FORWARD)

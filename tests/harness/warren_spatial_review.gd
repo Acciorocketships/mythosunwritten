@@ -644,6 +644,7 @@ func _capture_all() -> void:
 	views.append_array(_addressed_door_views())
 	views.append_array(_terrain_foundation_views())
 	views.append_array(_arcade_overhang_views())
+	views.append_array(_room_overhang_support_views())
 	views.append_array(_skywalk_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -1317,6 +1318,47 @@ func _arcade_overhang_views() -> Array[Dictionary]:
 	return out
 
 
+func _room_overhang_support_views() -> Array[Dictionary]:
+	## A room-scale jetty is only successful when the visual support reads as a
+	## load path between the projecting floor and the parent facade. Photograph
+	## every retained course from below and obliquely from its projection side;
+	## overviews routinely turn an attached diagonal into an unexplained hanging
+	## pole and cannot falsify either endpoint.
+	var out: Array[Dictionary] = []
+	var ordinal := 0
+	for feature: WarrenFeatureReservation in _spatial.features:
+		if feature.kind != &"room_overhang_support":
+			continue
+		var bounds := _feature_visual_bounds(feature)
+		var centre := bounds.get_center() if bounds.size.length_squared() > 0.0 \
+			else _cell_centroid(feature.reserved_cells)
+		var direction_2d := feature.audit.get(
+			"overhang_projection_direction", Vector2i.ZERO) as Vector2i
+		var outward := Vector3(direction_2d.x, 0.0, direction_2d.y)
+		if outward.length_squared() <= 0.0:
+			outward = Vector3.BACK
+		outward = outward.normalized()
+		var across := Vector3(-outward.z, 0.0, outward.x)
+		var ignored := [StringName("spatial.fabric.%s" % feature.stable_id)] \
+			as Array[StringName]
+		var underside_target := centre - Vector3.UP \
+			* maxf(0.9, bounds.size.y * 0.22)
+		var underside_eye := _best_directional_position(underside_target,
+			outward, 7.5, -1.5, ignored, bounds)
+		var oblique_target := centre + Vector3.UP * 0.15
+		var oblique_eye := _best_directional_position(oblique_target,
+			(outward + across * 0.72).normalized(), 10.0, 2.2, ignored,
+			bounds)
+		out.append({"id": "room-overhang-%02d-underside" % ordinal,
+			"position": underside_eye, "target": underside_target,
+			"fov": 60.0})
+		out.append({"id": "room-overhang-%02d-oblique" % ordinal,
+			"position": oblique_eye, "target": oblique_target,
+			"fov": 56.0})
+		ordinal += 1
+	return out
+
+
 func _addressed_door_views() -> Array[Dictionary]:
 	## Every source threshold becomes an adversarial close-up.  The camera stands
 	## on the route-facing side, so a shifted facade aperture, absent platform,
@@ -1334,15 +1376,38 @@ func _addressed_door_views() -> Array[Dictionary]:
 		var threshold := Vector3(room.threshold_cell) * FabricRecipe.CELL_SIZE
 		var target := threshold + Vector3.UP * 1.05
 		var outward := Vector3(room.frontage_direction)
-		var landing_eye := Vector3(room.threshold_cell + room.frontage_direction) \
-			* FabricRecipe.CELL_SIZE + Vector3.UP * 1.45
+		var unit_id := StringName("spatial.fabric.%s" % room.stable_id)
+		var own_bounds := _unit_visual_bounds(unit_id)
+		# A threshold close-up must show the landing and its approach. Standing on
+		# the landing-cell centre regularly put the camera inside a guard, stair,
+		# or facade trim—the exact geometry this view is meant to judge. Search a
+		# narrow outward cone instead, at several pedestrian-scale distances and
+		# heights, while still refusing to look around a different facade.
+		var threshold_directions: Array[Vector3] = [outward,
+			outward.rotated(Vector3.UP, PI / 12.0),
+			outward.rotated(Vector3.UP, -PI / 12.0),
+			outward.rotated(Vector3.UP, PI / 6.0),
+			outward.rotated(Vector3.UP, -PI / 6.0)]
+		var landing_eye := target + outward * 3.0 + Vector3.UP * 0.65
+		var landing_score := 1 << 30
+		for direction: Vector3 in threshold_directions:
+			for distance: float in [2.6, 3.8, 5.0]:
+				for height: float in [0.45, 1.15, 1.85]:
+					var candidate := target + direction * distance \
+						+ Vector3.UP * height
+					var score := _view_occlusion_score(candidate, target,
+						[unit_id] as Array[StringName])
+					if own_bounds.grow(0.25).has_point(candidate):
+						score += 1000
+					if score < landing_score:
+						landing_score = score
+						landing_eye = candidate
 		out.append({"id": "door-%02d-phase-%d-threshold" % [ordinal,
 			room.address_door_phase], "position": landing_eye,
-			"target": target, "fov": 78.0})
+			"target": target, "fov": 68.0})
 		# The context view may dodge a neighboring facade by thirty degrees, but it
 		# must never rotate to a different wall. That keeps the intended doorway and
 		# its landing legible together while still working inside a narrow canyon.
-		var unit_id := StringName("spatial.fabric.%s" % room.stable_id)
 		var directions: Array[Vector3] = [outward,
 			outward.rotated(Vector3.UP, PI / 6.0),
 			outward.rotated(Vector3.UP, -PI / 6.0)]
@@ -1383,8 +1448,14 @@ func _terrain_foundation_views() -> Array[Dictionary]:
 		var unit := _fabric.unit(unit_id)
 		if unit == null:
 			continue
-		var target := Vector3(unit.bounds.get_center().x,
-			float(room.lattice_origin.y) * FabricRecipe.CELL_SIZE + 1.0,
+		var room_base_y := float(room.lattice_origin.y) \
+			* FabricRecipe.CELL_SIZE
+		# Retained courses live below the room floor. Aiming at the room wall made
+		# the camera selection prefer pretty facades while leaving the actual
+		# ground seam off-screen. Flush foundations remain just above floor level.
+		var target_y := room_base_y - 0.70 \
+			if foundation_kind == "retained" else room_base_y + 0.45
+		var target := Vector3(unit.bounds.get_center().x, target_y,
 			unit.bounds.get_center().z)
 		var own_bounds := _unit_visual_bounds(unit_id)
 		for view: Dictionary in [
@@ -1394,12 +1465,13 @@ func _terrain_foundation_views() -> Array[Dictionary]:
 			{"id": "ne", "direction": Vector3(1.0, 0.0, -1.0).normalized()},
 		]:
 			var quadrant := view.direction as Vector3
-			var eye := target + quadrant * 10.5 + Vector3.UP * 3.0
+			var eye := target + quadrant * 10.5 + Vector3.UP * 2.0
 			var best_score := 1 << 30
-			for angle: float in [-PI / 8.0, 0.0, PI / 8.0]:
+			for angle: float in [-PI / 4.0, -PI / 8.0, 0.0,
+					PI / 8.0, PI / 4.0]:
 				var direction := quadrant.rotated(Vector3.UP, angle).normalized()
-				for distance: float in [10.5, 14.0]:
-					for height: float in [3.0, 5.0]:
+				for distance: float in [10.5, 14.0, 18.0, 22.0]:
+					for height: float in [2.0, 4.0, 6.0]:
 						var candidate := target + direction * distance \
 							+ Vector3.UP * height
 						var score := _view_occlusion_score(candidate, target,

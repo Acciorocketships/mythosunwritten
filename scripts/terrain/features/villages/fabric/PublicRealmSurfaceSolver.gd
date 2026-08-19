@@ -70,6 +70,10 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 				unit_value.yaw_quarters)
 			var facing := FabricRecipe.transform_direction(
 				entrance.facing as Vector3i, unit_value.yaw_quarters)
+			var door_phase := -1
+			if recipe_value.has_tag(&"generated_building"):
+				door_phase = 1 if recipe_value.has_tag(
+					&"alternate_door_phase") else 0
 			entrances.append({
 				"stable_id": StringName("%s/%s" % [unit_value.stable_id,
 					StringName(entrance.id)]),
@@ -77,6 +81,7 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 				"threshold_cell": threshold,
 				"facing": facing,
 				"landing_cell": threshold + facing,
+				"door_phase": door_phase,
 			})
 	var required: Array[Vector3i] = []
 	var daylight_voids: Array[Vector3i] = []

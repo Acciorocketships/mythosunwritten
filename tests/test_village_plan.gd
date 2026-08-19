@@ -157,10 +157,8 @@ func test_reported_seed_builds_an_inhabited_dense_multilevel_village() -> void:
 	assert_eq(int(audit.elevated_courtyard_count), 1)
 	assert_eq(int(audit.courtyard_bridge_house_count), 1)
 	assert_gte(int(audit.courtyard_bridge_house_lower_public_column_count), 2)
-	assert_gte(int(audit.courtyard_below_route_cell_count),
-		WarrenSpatialFeatureSolver.MIN_COURT_BELOW_ROUTE_CELLS)
-	assert_gte(int(audit.courtyard_upper_route_cell_count),
-		WarrenSpatialFeatureSolver.MIN_COURT_UPPER_ROUTE_CELLS)
+	assert_gte(int(audit.courtyard_underbuilt_macro_column_count),
+		WarrenElevatedFrontageSolver.MIN_COURTYARD_UNDERBUILT_COLUMNS)
 	assert_gte(int(audit.courtyard_daylight_macro_column_count),
 		WarrenElevatedFrontageSolver.MIN_COURTYARD_DAYLIGHT_COLUMNS)
 	assert_gt(int(audit.courtyard_daylight_air_cell_count), 0,

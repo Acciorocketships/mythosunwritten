@@ -10,7 +10,11 @@ const REVIEW_SEED := 166029932451774690
 const REVIEW_ATTEMPT := 11
 const REVIEW_SOURCE_ID := \
 	&"warren.volume.mass.166029932462774723.arcade0.arcade1"
-const REVIEW_PARTITION_VARIANT := 0
+## Variant five is the sealed production composition for the review corpus.
+## Keeping this fixture on the former variant zero made every downstream
+## outcropping assertion silently risky once the stricter construction gates
+## correctly rejected that obsolete composition.
+const REVIEW_PARTITION_VARIANT := 5
 
 static var _built: SettlementFabricPlan
 static var _searched := false
@@ -48,6 +52,63 @@ func _town_with_outcrops() -> SettlementFabricPlan:
 func test_probe_seed_produces_an_outcropping_town() -> void:
 	assert_not_null(_town_with_outcrops(),
 		"no probe seed accepted a town containing an outcropping")
+
+
+func test_facade_bays_cannot_fragment_a_partial_roof_campaign() -> void:
+	var room := WarrenRoomStamp.new(&"room.roof.probe", &"source.roof.probe",
+		&"tower", Vector3i.ZERO, 0, 1, false, false,
+		Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO, 0,
+		&"source.support", 0)
+	assert_true(room.add_private_cells(WarrenRoomStamp.expected_private_cells(
+		&"tower", Vector3i.ZERO, 0)))
+	var top_cells := room.private_cells.filter(func(cell: Vector3i) -> bool:
+		return cell.y == 1) as Array[Vector3i]
+
+	var partial_grid := WarrenSpatialGrid.new(Vector3i(-2, -1, -2),
+		Vector3i(5, 4, 5))
+	var partial_tx := partial_grid.begin_transaction(&"mass.partial")
+	assert_true(partial_tx.assign_use([
+		top_cells[0] + Vector3i.UP, top_cells[1] + Vector3i.UP,
+	] as Array[Vector3i], WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+		&"mass.partial"))
+	assert_true(partial_tx.commit())
+	assert_true(WarrenSpatialFeatureSolver._room_has_partial_roof_campaign(
+		partial_grid, room),
+		"a bay must not consume one member of an already partial roof run")
+	var building := WarrenBuildingVolume.new(&"building.roof.probe", 0)
+	building.room_records = [room] as Array[WarrenRoomStamp]
+	var protected_crown := WarrenSpatialFeatureSolver \
+		._partial_roof_campaign_crown_cells(partial_grid,
+			[building] as Array[WarrenBuildingVolume])
+	assert_eq(protected_crown.size(), top_cells.size() - 2,
+		"every still-exposed crown cell in the partial campaign is protected")
+	assert_true(WarrenSpatialFeatureSolver._cell_sets_overlap({
+		top_cells[2] + Vector3i.UP: true,
+	}, protected_crown),
+		"a bay attached elsewhere may not consume this room's protected crown")
+	assert_false(WarrenSpatialFeatureSolver._cell_sets_overlap({
+		top_cells[0] + Vector3i.UP: true,
+	}, protected_crown),
+		"already-covered crown cells are not falsely reserved as roofs")
+
+	var complete_grid := WarrenSpatialGrid.new(Vector3i(-2, -1, -2),
+		Vector3i(5, 4, 5))
+	assert_false(WarrenSpatialFeatureSolver._room_has_partial_roof_campaign(
+		complete_grid, room),
+		"a complete eave remains eligible for shallow facade relief")
+
+	var covered_grid := WarrenSpatialGrid.new(Vector3i(-2, -1, -2),
+		Vector3i(5, 4, 5))
+	var covered_tx := covered_grid.begin_transaction(&"mass.covered")
+	var covered_crown: Array[Vector3i] = []
+	for cell: Vector3i in top_cells:
+		covered_crown.append(cell + Vector3i.UP)
+	assert_true(covered_tx.assign_use(covered_crown,
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME, &"mass.covered"))
+	assert_true(covered_tx.commit())
+	assert_false(WarrenSpatialFeatureSolver._room_has_partial_roof_campaign(
+		covered_grid, room),
+		"a room fully covered by upper mass has no roof run to fragment")
 
 
 func test_outcrops_are_shallow_projections() -> void:
@@ -187,7 +248,8 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 		if recipe_value == null:
 			continue
 		var required_parts: Dictionary = {
-			&"bay.face": false, &"bay.cheek.left": false,
+			&"bay.face": false, &"bay.face.right": false,
+			&"bay.cheek.left": false,
 			&"bay.cheek.right": false, &"bay.sill": false,
 			&"bay.canopy": false, &"bay.corbel.left": false,
 			&"bay.corbel.right": false,
@@ -211,10 +273,34 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 			StringName(face.asset_id))
 		var placed_face := (face.transform as Transform3D) \
 			* face_contract.visual_bounds
-		assert_gt(placed_face.size.y, 2.0,
-			"the authored plaster/window fields must not be crushed into a cage")
-		assert_lt(placed_face.size.y, 2.2,
-			"the oriel face must remain distinctly below a full storey")
+		assert_gt(placed_face.size.y, 1.35,
+			"the authored plaster/window fields must remain legible")
+		assert_lt(placed_face.size.y, 1.45,
+			"the oriel face must read as a window, not most of a storey")
+		assert_gte(placed_face.position.y, 0.6,
+			"the oriel must begin at window height rather than reading as a door")
+		assert_lte(placed_face.end.y, 2.2,
+			"the oriel must leave visible parent wall above its roof")
+		const PARENT_FACADE_Z := -FabricRecipe.CELL_SIZE * 0.5
+		assert_gt(placed_face.end.z, 0.10,
+			("the oriel window must be the convex outer face; %s still places " \
+			+ "it behind the parent facade") % recipe_id)
+		assert_gt(placed_face.position.z, PARENT_FACADE_Z,
+			("the complete oriel window must sit outside the parent facade; %s " \
+				+ "would read as a recessed/concave frame") % recipe_id)
+		var right_face := recipe_value.placements.filter(
+			func(value: Dictionary) -> bool:
+				return StringName(value.id) == &"bay.face.right")[0] as Dictionary
+		var right_contract := program.module_program.contract(
+			StringName(right_face.asset_id))
+		var placed_right := (right_face.transform as Transform3D) \
+			* right_contract.visual_bounds
+		assert_true(String(right_face.asset_id).ends_with(".mirror_x"),
+			"the right face must mirror the one-sided source joinery")
+		assert_lt(absf(placed_face.end.x - placed_right.position.x), 0.02,
+			"the paired window faces must meet without a daylight seam")
+		assert_lt(absf(placed_face.position.x + placed_right.end.x), 0.02,
+			"the paired face must finish symmetrically at both outside posts")
 		var cheek_bounds: Array[AABB] = []
 		for cheek_id: StringName in [&"bay.cheek.left", &"bay.cheek.right"]:
 			var cheek := recipe_value.placements.filter(
@@ -224,14 +310,18 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 				StringName(cheek.asset_id))
 			cheek_bounds.append((cheek.transform as Transform3D) \
 				* cheek_contract.visual_bounds)
-		assert_lte(cheek_bounds[0].position.z, -0.88,
-			"the left return cheek must reach the projected window face")
-		assert_lte(cheek_bounds[1].position.z, -0.88,
-			"the right return cheek must reach the projected window face")
-		assert_gte(cheek_bounds[0].end.z, -0.02,
-			"the left return cheek must close back to the parent facade")
-		assert_gte(cheek_bounds[1].end.z, -0.02,
-			"the right return cheek must close back to the parent facade")
+		assert_lte(cheek_bounds[0].position.z, PARENT_FACADE_Z - 0.02,
+			"the left return cheek must overlap the parent facade seam")
+		assert_lte(cheek_bounds[1].position.z, PARENT_FACADE_Z - 0.02,
+			"the right return cheek must overlap the parent facade seam")
+		assert_gte(cheek_bounds[0].end.z, 0.10,
+			"the left return cheek must reach the convex window face")
+		assert_gte(cheek_bounds[1].end.z, 0.10,
+			"the right return cheek must reach the convex window face")
+		assert_lt(cheek_bounds[0].size.x, 0.20,
+			"the left return must not consume the narrow bay as an oversized jamb")
+		assert_lt(cheek_bounds[1].size.x, 0.20,
+			"the right return must not consume the narrow bay as an oversized jamb")
 
 
 func test_corner_wrap_bays_roof_only_the_exterior_union() -> void:

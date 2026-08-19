@@ -211,6 +211,8 @@ static func audit_plan(plan: SettlementFabricPlan,
 	if plan.public_realm != null and plan.surface_plan != null:
 		result.merge(_audit_addressed_platform_terminals(plan), true)
 		result.merge(_audit_building_reachability(plan), true)
+	if plan.surface_plan != null:
+		result.merge(_audit_visible_door_contracts(plan), true)
 	if plan.volume_plan != null:
 		result.merge(plan.volume_plan.audit(), true)
 	if plan.solid_void_plan != null:
@@ -222,6 +224,68 @@ static func audit_plan(plan: SettlementFabricPlan,
 	result["stair_count"] = maxi(int(result.get("stair_count", 0)),
 		int(result.get("audited_stair_count", 0)))
 	return result
+
+
+static func _audit_visible_door_contracts(plan: SettlementFabricPlan) \
+		-> Dictionary:
+	## A facade door may be either an exterior entrance with an exact rendered
+	## landing, or an explicitly typed private portal into a balcony/skywalk.
+	## Merely placing a door-shaped wall module does not grant access. This closes
+	## the visual loophole where topology had zero unserved entrances because the
+	## mid-air door had never been registered as an entrance at all.
+	var door_module_count := 0
+	var orphan_door_module_count := 0
+	var orphan_details: Array[Dictionary] = []
+	for unit_value: FabricUnit in plan.units:
+		var recipe_value := plan.recipe(unit_value.recipe_id)
+		# Door-shaped arches in markets and arcade foundations are structural
+		# openings, not inhabited facades. Their traversal is owned by the public
+		# realm recipe itself, so the exterior-door contract applies only to
+		# generated room shells.
+		if not recipe_value.has_tag(&"generated_building"):
+			continue
+		var unit_door_count := 0
+		for placement: Dictionary in recipe_value.placements:
+			if unit_value.suppressed_placement_ids.has(
+					StringName(placement.id)):
+				continue
+			if _is_facade_door_asset(StringName(placement.asset_id)):
+				unit_door_count += 1
+		door_module_count += unit_door_count
+		if unit_door_count == 0 or not recipe_value.entrances.is_empty() \
+				or recipe_value.has_tag(&"feature_portal"):
+			continue
+		orphan_door_module_count += unit_door_count
+		orphan_details.append({
+			"unit_id": unit_value.stable_id,
+			"recipe_id": unit_value.recipe_id,
+			"door_module_count": unit_door_count,
+		})
+	var landing_surface_gap_count := 0
+	var landing_surface_gap_details: Array[Dictionary] = []
+	for entrance: Dictionary in plan.surface_plan.entrance_records:
+		var landing := entrance.get("landing_cell", Vector3i()) as Vector3i
+		if bool(entrance.get("served", false)) \
+				and plan.surface_plan.has_cell(landing):
+			continue
+		landing_surface_gap_count += 1
+		landing_surface_gap_details.append({
+			"entrance_id": StringName(entrance.get("stable_id", &"")),
+			"landing_cell": landing,
+		})
+	return {
+		"visible_facade_door_module_count": door_module_count,
+		"orphan_exterior_door_module_count": orphan_door_module_count,
+		"orphan_exterior_door_module_details": orphan_details,
+		"entrance_surface_gap_count": landing_surface_gap_count,
+		"entrance_surface_gap_details": landing_surface_gap_details,
+	}
+
+
+static func _is_facade_door_asset(asset_id: StringName) -> bool:
+	var text := String(asset_id).trim_suffix(".mirror_x")
+	return text.begins_with("sfv.fabric.wall.wood.door.") \
+		or text.begins_with("sfv.fabric.wall.rock.door.")
 
 
 static func _audit_building_reachability(plan: SettlementFabricPlan) \

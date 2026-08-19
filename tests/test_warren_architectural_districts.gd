@@ -149,25 +149,32 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 				descriptor.measured_aabb
 			assert_almost_eq(bounds.position.y,
 				SettlementFabricProgram.DORMER_EMBED_Y, 0.001,
-				"%s exposes the compact window's construction back" % recipe_id)
+				"%s exposes the dormer face's construction back" % recipe_id)
 			assert_lt(bounds.position.y, -0.10,
-				"%s must sink its open-backed sill into the host pitch" % recipe_id)
-			assert_lt(bounds.size.x, 1.7,
-				"%s dormer grew into a room-width second gable" % recipe_id)
+				"%s must bury its lower shell deeply in the host pitch" % recipe_id)
+			assert_lt(minf(bounds.size.x, bounds.size.z), 1.25,
+				"%s dormer facade grew into a room-width second gable" % recipe_id)
 			assert_lt(bounds.size.y, 1.7,
 				"%s dormer grew into a full-storey second room" % recipe_id)
 		assert_eq(dormer_count, 1,
 			"%s must carry one integrated attic window" % recipe_id)
-		assert_true(recipe_value.has_tag(&"compact_composed_dormer"),
-			"%s did not retire the oversized stock A-frame" % recipe_id)
+		assert_true(recipe_value.has_tag(&"complete_gabled_dormer"),
+			"%s lost its coherent two-pitch crown" % recipe_id)
+		var oversized_shell_count := 0
 		for stock_asset: StringName in [
 			SettlementFabricProgram.ROOF_WINDOW_01,
 			SettlementFabricProgram.ROOF_WINDOW_02,
 			SettlementFabricProgram.ROOF_WINDOW_03,
 			SettlementFabricProgram.ROOF_WINDOW_04,
 		]:
-			assert_false(recipe_value.asset_ids().has(stock_asset),
-				"%s still places a full-storey attic-window shell" % recipe_id)
+			oversized_shell_count += int(recipe_value.asset_ids().has(stock_asset))
+		assert_eq(oversized_shell_count, 0,
+			"%s returned to an oversized full-storey attic-window shell" % recipe_id)
+		var pitch_count := recipe_value.placements.filter(
+			func(value: Dictionary) -> bool:
+				return String(value.id).begins_with("compact_roof.pitch.")).size()
+		assert_eq(pitch_count, 2,
+			"%s dormer must close under two opposed roof pitches" % recipe_id)
 
 	var opposed := _program.recipe(&"roof.long.blue.dormer.pair.left")
 	assert_not_null(opposed)

@@ -15,8 +15,7 @@ const MIN_ROOT_RISE_BANDS := 2
 const MIN_BRANCH_SEPARATION_CELLS := 4
 const COURTYARD_RISE_BANDS := WarrenBuildingParcel.STOREY_BANDS * 2
 const MAX_COURTYARD_RISE_BANDS := COURTYARD_RISE_BANDS + 2
-const MIN_COURTYARD_BELOW_ROUTE_CELLS := 4
-const MIN_COURTYARD_ABOVE_ROUTE_CELLS := 2
+const MIN_COURTYARD_UNDERBUILT_COLUMNS := 2
 const MIN_COURTYARD_DAYLIGHT_COLUMNS := 2
 # Upper cul-de-sacs must be able to terminate at a building whose vertical
 # silhouette exceeds its footprint. One inhabited storey plus a roof was the
@@ -101,8 +100,11 @@ static func variants(source: WarrenVolumePlan,
 static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 	## A 6 x 6 m court is a deliberate exception to the one-macro-cell street
 	## width.  It is a four-edge loop rooted on the third-storey itinerary,
-	## projects over lower circulation, retains building-height mass around its
-	## perimeter, and leaves inhabited depth above its headroom.
+	## stands on inhabited structure, retains building-height mass around its
+	## perimeter, and keeps at least half of its columns open to daylight. Public
+	## routes below and occupied crossings above are valuable layered-city
+	## bonuses, but they are separate episodes rather than prerequisites for the
+	## court itself.
 	var best: Dictionary = {}
 	var best_score := -INF
 	last_courtyard_candidates = []
@@ -196,13 +198,14 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 			var daylight := _courtyard_daylight_plan(court, source)
 			max_address_sides = maxi(max_address_sides, address_sides)
 			max_upper_mass = maxi(max_upper_mass, upper_mass)
-			# A third-storey label alone is insufficient. The requested court is a
-			# true three-dimensional knot: existing public air must pass under its
-			# exact 6 x 6 m footprint and another public episode must cross above.
-			# Match the fine-grid feature proof here, before parcel/asset search.
-			if int(vertical_routes.below) < MIN_COURTYARD_BELOW_ROUTE_CELLS \
-					or int(vertical_routes.above) \
-						< MIN_COURTYARD_ABOVE_ROUTE_CELLS:
+			# A third-storey label alone is insufficient: at least half of the
+			# court must be the roof of complete inhabited storeys. The old gate
+			# additionally demanded public routes both below and above the same
+			# four columns. That made the court a rare route sandwich and rejected
+			# every otherwise valid large-town site. Lower tunnels and occupied
+			# crossings remain strongly preferred below, while the named court
+			# retains its own daylight and enclosure obligations.
+			if underbuilt_columns < MIN_COURTYARD_UNDERBUILT_COLUMNS:
 				continue
 			vertically_threaded_squares += 1
 			if int(daylight.column_count) < MIN_COURTYARD_DAYLIGHT_COLUMNS:
@@ -222,6 +225,7 @@ static func _best_courtyard(source: WarrenVolumePlan) -> Dictionary:
 			var tie := posmod(_hash(source.world_seed, BRANCH_COUNT,
 				root_index, axes[0].x * 31 + axes[0].y * 17), 1009)
 			var score := (100000.0 if root_is_primary else 0.0) \
+				+ float(underbuilt_columns) * 1200.0 \
 				+ float(int(vertical_routes.below)) * 450.0 \
 				+ float(int(vertical_routes.above)) * 300.0 \
 				+ float(int(daylight.column_count)) * 700.0 \

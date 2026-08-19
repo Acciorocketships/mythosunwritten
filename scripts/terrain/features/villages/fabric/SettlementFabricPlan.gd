@@ -330,7 +330,13 @@ func connected_visual_envelope_conflicts() -> Array[Dictionary]:
 			var bearing_seam_ok := direct_bearing and overlap.y <= 0.50
 			var lateral_seam_ok := lateral_seam \
 				and minf(overlap.x, overlap.z) <= 0.50
-			if bearing_seam_ok or lateral_seam_ok:
+			var typed_flashing_ok := lateral_seam \
+				and (left_recipe.has_tag(&"thin_roof_face") \
+					or right_recipe.has_tag(&"thin_roof_face")) \
+				and overlap.y <= TYPED_FLASHING_MAX_HEIGHT_M \
+				and minf(overlap.x, overlap.z) \
+					<= TYPED_FLASHING_MAX_HORIZONTAL_M
+			if bearing_seam_ok or lateral_seam_ok or typed_flashing_ok:
 				continue
 			conflicts.append({
 				"left": left.stable_id,
@@ -424,6 +430,11 @@ static var DIAGNOSTIC_ALLOW_EDGE_ENVELOPE_OVERLAP := false
 ## roof-to-roof corners looking like a second, unexplained failure mode.
 const DIAGNOSTIC_CORNER_NICK_METRES := 1.5
 const DIAGNOSTIC_EDGE_NICK_METRES := 0.5
+## Production typed-flashing bounds. These mirror the compiler's exact thin-cap
+## seam: the cap is deliberately lowered beneath a pitched eave, so a shallow
+## overlap is the weatherproof join rather than an unresolved collision.
+const TYPED_FLASHING_MAX_HORIZONTAL_M := 0.90
+const TYPED_FLASHING_MAX_HEIGHT_M := 0.25
 
 
 static func _is_corner_nick(left: AABB, right: AABB) -> bool:

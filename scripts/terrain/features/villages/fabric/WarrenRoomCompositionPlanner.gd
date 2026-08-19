@@ -247,6 +247,27 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 			% [int(shoulder_audit.unroofable_shoulder_count), shoulder_repair,
 				JSON.stringify(shoulder_audit.details)]
 		return {}
+	# A neighboring lineage may occupy most of a room's next band and leave one
+	# isolated top cell exposed even though both lineages are individually
+	# roofable.  Audit the final union, then remove only optional upper suffixes
+	# when the complete before/after bearing proof remains valid.  This closes the
+	# cross-lineage hole in the earlier per-stack shoulder test.
+	# An occupied skywalk is private building mass, not a decorative bridge laid
+	# over an already-finished roof. Include its exact body in the same roof-top
+	# visibility proof as rooms so hero selection cannot leave a one-cell roof
+	# shard beside or beneath a connector and discover it only during assembly.
+	var feature_roof_occupancy := _feature_roof_occupancy(
+		skywalk_reservations)
+	var global_roof_repair := _repair_global_unroofable_exposures(lineages,
+		grid, protected_owners, world_seed, feature_roof_occupancy)
+	var global_roof_audit := _global_exposed_roof_audit(lineages,
+		feature_roof_occupancy)
+	if int(global_roof_audit.unroofable_global_roof_component_count) > 0:
+		last_failure = ("3D composition retained %d cross-lineage roof " \
+			+ "slivers after %d optional crown repairs: %s") % [
+			int(global_roof_audit.unroofable_global_roof_component_count),
+			global_roof_repair, JSON.stringify(global_roof_audit.details)]
+		return {}
 	last_merge_diagnostic["variant_diagnostic"] = \
 		last_variant_diagnostic.duplicate(true)
 	var truncated_tower_storeys := _truncate_unpaired_towers(lineages)
@@ -275,6 +296,8 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	audit.merge(support_audit, false)
 	audit.merge(shoulder_audit, false)
 	audit["unroofable_shoulder_crown_repair_count"] = shoulder_repair
+	audit.merge(global_roof_audit, false)
+	audit["global_roof_crown_repair_count"] = global_roof_repair
 	last_audit = audit.duplicate(true)
 	var repeated_run := int(audit.get(
 		"max_identical_tower_floorplate_run_storeys", 0))
@@ -991,16 +1014,328 @@ static func _unroofable_shoulder_audit(lineages: Dictionary) -> Dictionary:
 		"unroofable_shoulder_details": details, "details": details}
 
 
+static func _feature_roof_occupancy(
+		skywalk_reservations: Array[Dictionary]) -> Dictionary:
+	var occupied: Dictionary = {}
+	for reservation_index in skywalk_reservations.size():
+		var reservation := skywalk_reservations[reservation_index]
+		var feature_id := StringName(reservation.get("feature_id",
+			"spatial.skywalk.%02d" % reservation_index))
+		for cell_value: Variant in (reservation.get("reserved_cells", {}) \
+				as Dictionary).keys():
+			var cell := cell_value as Vector3i
+			occupied[cell] = {
+				"lineage_id": feature_id,
+				"block_position": -1,
+				"kind": &"occupied_skywalk",
+				"origin": cell,
+				"columns": [Vector2i(cell.x, cell.z)],
+				"feature_blocker": true,
+			}
+	return occupied
+
+
+static func _global_exposed_roof_audit(lineages: Dictionary,
+		extra_occupied: Dictionary = {}) -> Dictionary:
+	## Prove the exposed top of every individual room against the complete town
+	## occupancy. Per-lineage transition checks cannot see an unrelated upper
+	## stack covering three quarters of a lower room and leaving one voxel lid.
+	var occupied: Dictionary = {}
+	var lineage_ids: Array[StringName] = []
+	lineage_ids.assign(lineages.keys())
+	lineage_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	for lineage_id: StringName in lineage_ids:
+		var blocks := (lineages[lineage_id] as Dictionary).blocks \
+			as Array[Dictionary]
+		for position in blocks.size():
+			var occupied_block := blocks[position] as Dictionary
+			for cell: Vector3i in occupied_block.cells:
+				occupied[cell] = {"lineage_id": lineage_id,
+					"block_position": position, "kind": occupied_block.kind,
+					"origin": occupied_block.origin,
+					"columns": (occupied_block.columns as Dictionary).keys()}
+	# Feature reservations are admitted only when they do not replace room mass,
+	# so room records remain authoritative in the impossible-overlap case. Their
+	# exact cells nevertheless count as upper occupied mass for exposed roofs.
+	for cell_value: Variant in extra_occupied.keys():
+		if not occupied.has(cell_value):
+			occupied[cell_value] = extra_occupied[cell_value]
+	var count := 0
+	var details: Array[Dictionary] = []
+	for lineage_id: StringName in lineage_ids:
+		var blocks := (lineages[lineage_id] as Dictionary).blocks \
+			as Array[Dictionary]
+		for position in blocks.size():
+			var block := blocks[position] as Dictionary
+			var block_origin := block.origin as Vector3i
+			for local_storey in range(int(block.end_storey) \
+					- int(block.start_storey)):
+				var room_origin := Vector3i(block_origin.x,
+					block_origin.y + local_storey \
+						* WarrenSpatialGrid.STOREY_CELLS,
+					block_origin.z)
+				var top_y := room_origin.y + WarrenSpatialGrid.STOREY_CELLS - 1
+				var exposed_columns: Dictionary = {}
+				var covered_by: Dictionary = {}
+				for room_cell: Vector3i in WarrenRoomStamp \
+						.expected_private_cells(StringName(block.kind), room_origin,
+							int(block.yaw_quarters)):
+					if room_cell.y != top_y:
+						continue
+					var above := room_cell + Vector3i.UP
+					if not occupied.has(above):
+						exposed_columns[Vector2i(room_cell.x, room_cell.z)] = true
+						continue
+					var blocker := occupied[above] as Dictionary
+					var blocker_key := "%s/%d" % [blocker.lineage_id,
+						int(blocker.block_position)]
+					covered_by[blocker_key] = blocker
+				if exposed_columns.is_empty():
+					continue
+				var upper_columns: Dictionary = {}
+				for occupied_cell_value: Variant in occupied.keys():
+					var occupied_cell := occupied_cell_value as Vector3i
+					if occupied_cell.y == top_y + 1:
+						upper_columns[Vector2i(occupied_cell.x,
+							occupied_cell.z)] = true
+				for component: Dictionary in _column_components(exposed_columns):
+					if _shoulder_component_is_roofable(component,
+							upper_columns, top_y):
+						continue
+					count += 1
+					if details.size() < 24:
+						var component_blockers := covered_by.duplicate()
+						for column_value: Variant in component.keys():
+							var column := column_value as Vector2i
+							for direction: Vector2i in [Vector2i.LEFT,
+									Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+								var neighbor := column + direction
+								var upper_cell := Vector3i(neighbor.x,
+									top_y + 1, neighbor.y)
+								if not occupied.has(upper_cell):
+									continue
+								var adjacent_blocker := occupied[upper_cell] \
+									as Dictionary
+								var adjacent_key := "%s/%d" % [
+									adjacent_blocker.lineage_id,
+									int(adjacent_blocker.block_position)]
+								component_blockers[adjacent_key] = \
+									adjacent_blocker
+						details.append({"lineage_id": lineage_id,
+							"block_position": position,
+							"source_block_index": int(block.source_block_index),
+							"local_storey": local_storey,
+							"cell_count": component.size(),
+							"cells": component.keys(),
+							"blockers": component_blockers.values()})
+	return {"unroofable_global_roof_component_count": count,
+		"unroofable_global_roof_component_details": details,
+		"details": details}
+
+
+static func _repair_global_unroofable_exposures(lineages: Dictionary,
+		grid: WarrenSpatialGrid, protected_owners: Dictionary,
+		world_seed: int, extra_occupied: Dictionary = {}) -> int:
+	## First move a complete blocker room to another measured, constraint-preserving
+	## stamp when that strictly reduces the final roof defect count. If no such
+	## room exists, remove the smallest optional upper suffix. The existing crown
+	## predicate protects identities and explicit support parents; the geometric
+	## cut proof protects incidental cross-lineage bearing with no formal edge.
+	var repaired := 0
+	for _iteration in 16:
+		var audit := _global_exposed_roof_audit(lineages, extra_occupied)
+		var before_count := int(audit.unroofable_global_roof_component_count)
+		if before_count == 0:
+			break
+		var details := audit.details as Array[Dictionary]
+		if details.is_empty():
+			break
+		var blocker_records: Array[Dictionary] = []
+		blocker_records.assign(details[0].blockers as Array)
+		blocker_records.append({
+			"lineage_id": StringName(details[0].lineage_id),
+			"block_position": int(details[0].block_position),
+		})
+		var recomposed := false
+		for blocker_value: Variant in blocker_records:
+			var blocker := blocker_value as Dictionary
+			var blocker_id := StringName(blocker.lineage_id)
+			var blocker_position := int(blocker.block_position)
+			if not lineages.has(blocker_id):
+				continue
+			var blocker_lineage := lineages[blocker_id] as Dictionary
+			var blocker_blocks := blocker_lineage.blocks as Array[Dictionary]
+			if blocker_position < 0 or blocker_position >= blocker_blocks.size():
+				continue
+			var current := blocker_blocks[blocker_position] as Dictionary
+			var previous := blocker_blocks[blocker_position - 1] as Dictionary \
+				if blocker_position > 0 else {}
+			var next := blocker_blocks[blocker_position + 1] as Dictionary \
+				if blocker_position + 1 < blocker_blocks.size() else {}
+			if previous.is_empty():
+				continue
+			var claimed_cells := _claimed_room_cells(lineages)
+			for cell: Vector3i in current.cells:
+				claimed_cells.erase(cell)
+			# Prefer absorbing the exposed shoulder into this upper room when the
+			# union is itself one complete authored floorplate. This turns a tiny
+			# roof remnant into a larger coherent upper storey without adding a
+			# decorative cube or changing the lower building.
+			var expanded_columns := (current.columns as Dictionary).duplicate()
+			for exposed_value: Variant in details[0].cells as Array:
+				expanded_columns[exposed_value as Vector2i] = true
+			var expanded_stamp := _exact_stamp_for_columns(expanded_columns,
+				(current.origin as Vector3i).y)
+			if not expanded_stamp.is_empty() and _candidate_matches_constraints(
+					StringName(expanded_stamp.kind),
+					expanded_stamp.origin as Vector3i,
+					int(expanded_stamp.yaw_quarters), current):
+				var expanded_record := _record(StringName(expanded_stamp.kind),
+					expanded_stamp.origin as Vector3i,
+					int(expanded_stamp.yaw_quarters), int(current.start_storey),
+					int(current.end_storey))
+				if not expanded_record.is_empty() \
+						and not _record_overlaps_claimed(expanded_record,
+							claimed_cells) \
+						and _record_is_clear_for_participants(grid,
+							protected_owners, expanded_record, {blocker_id: true}):
+					var expanded_replacement := current.duplicate(true)
+					for key: String in ["kind", "origin", "yaw_quarters",
+							"columns", "cells"]:
+						expanded_replacement[key] = expanded_record[key]
+					expanded_replacement["global_roof_repair"] = true
+					blocker_blocks[blocker_position] = expanded_replacement
+					blocker_lineage["blocks"] = blocker_blocks
+					lineages[blocker_id] = blocker_lineage
+					var expanded_after := int(_global_exposed_roof_audit(
+						lineages, extra_occupied) \
+						.unroofable_global_roof_component_count)
+					var expanded_valid := int(_lineage_support_audit(lineages,
+						grid).unsupported_transition_count) == 0 \
+						and int(_lineage_overlap_audit(lineages) \
+							.overlap_cell_count) == 0
+					if expanded_valid and expanded_after < before_count:
+						repaired += 1
+						recomposed = true
+						break
+					blocker_blocks[blocker_position] = current
+					blocker_lineage["blocks"] = blocker_blocks
+					lineages[blocker_id] = blocker_lineage
+			var variant_record := {"current": current, "previous": previous,
+				"next": next, "key": "%s/%d/global-roof" % [blocker_id,
+					blocker_position]}
+			var variants := _coupled_variants(grid, protected_owners,
+				claimed_cells, {blocker_id: true}, variant_record, world_seed,
+				true, false)
+			for variant: Dictionary in variants:
+				var replacement := _coupled_replacement(current, variant)
+				replacement["global_roof_repair"] = true
+				blocker_blocks[blocker_position] = replacement
+				blocker_lineage["blocks"] = blocker_blocks
+				lineages[blocker_id] = blocker_lineage
+				var after_count := int(_global_exposed_roof_audit(lineages,
+					extra_occupied) \
+					.unroofable_global_roof_component_count)
+				var structurally_valid := int(_lineage_support_audit(lineages,
+					grid).unsupported_transition_count) == 0 \
+					and int(_lineage_overlap_audit(lineages).overlap_cell_count) == 0
+				if structurally_valid and after_count < before_count:
+					repaired += 1
+					recomposed = true
+					break
+				blocker_blocks[blocker_position] = current
+				blocker_lineage["blocks"] = blocker_blocks
+				lineages[blocker_id] = blocker_lineage
+			if recomposed:
+				break
+		if recomposed:
+			continue
+		var required_bearers: Dictionary = {}
+		for lineage_value: Variant in lineages.values():
+			for block: Dictionary in (lineage_value as Dictionary).blocks \
+					as Array[Dictionary]:
+				var parent_id := StringName(block.get(
+					"support_parent_lineage_id", &""))
+				var parent_block := int(block.get(
+					"support_parent_source_block_index", -1))
+				if not parent_id.is_empty() and parent_block >= 0:
+					required_bearers["%s/%d" % [parent_id, parent_block]] = true
+		var candidates: Array[Dictionary] = []
+		var seen: Dictionary = {}
+		var cut_sources: Array[Dictionary] = []
+		cut_sources.assign(details[0].blockers as Array)
+		# The trapped lower crown can itself be the smallest optional suffix. The
+		# former repair considered only the rooms crowding it from above, so a
+		# structurally fixed upper socket made an otherwise disposable lower spur
+		# impossible to clean up.  Subject the owner to the identical optional-cut
+		# and complete bearing proof; required/addressed lineages still cannot move.
+		cut_sources.append({
+			"lineage_id": StringName(details[0].lineage_id),
+			"block_position": int(details[0].block_position),
+		})
+		for blocker_value: Variant in cut_sources:
+			var blocker := blocker_value as Dictionary
+			var candidate_id := StringName(blocker.lineage_id)
+			var position := int(blocker.block_position)
+			var key := "%s/%d" % [candidate_id, position]
+			if seen.has(key) or not lineages.has(candidate_id) or position <= 0:
+				continue
+			seen[key] = true
+			var lineage := lineages[candidate_id] as Dictionary
+			var blocks := lineage.blocks as Array[Dictionary]
+			if position >= blocks.size() or not _optional_suffix_can_terminate(
+					candidate_id, lineage, blocks, position, required_bearers):
+				continue
+			var removed_cells := 0
+			for cut_index in range(position, blocks.size()):
+				removed_cells += ((blocks[cut_index] as Dictionary).cells as Array).size()
+			candidates.append({"lineage_id": candidate_id,
+				"position": position, "removed_cells": removed_cells})
+		candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			return int(a.removed_cells) < int(b.removed_cells) \
+				if int(a.removed_cells) != int(b.removed_cells) \
+				else String(a.lineage_id) < String(b.lineage_id))
+		var accepted := false
+		for candidate: Dictionary in candidates:
+			var candidate_id := StringName(candidate.lineage_id)
+			var position := int(candidate.position)
+			if not _crown_cut_preserves_bearing(lineages, grid, candidate_id,
+					position):
+				continue
+			var lineage := lineages[candidate_id] as Dictionary
+			var original_blocks := (lineage.blocks as Array[Dictionary]).duplicate(
+				true) as Array[Dictionary]
+			var trial_blocks := original_blocks.duplicate(true) as Array[Dictionary]
+			trial_blocks.resize(position)
+			lineage["blocks"] = trial_blocks
+			lineages[candidate_id] = lineage
+			var after_count := int(_global_exposed_roof_audit(lineages,
+				extra_occupied) \
+				.unroofable_global_roof_component_count)
+			if after_count < before_count:
+				repaired += 1
+				accepted = true
+				break
+			lineage["blocks"] = original_blocks
+			lineages[candidate_id] = lineage
+		if not accepted:
+			break
+	return repaired
+
+
 static func _shoulder_component_is_roofable(component: Dictionary,
 		upper_columns: Dictionary, y: int) -> bool:
 	if not _exact_stamp_for_columns(component, y).is_empty():
 		return true
 	if _component_has_gabled_partition(component, y):
 		return true
-	# The only partial footprint admitted is the exact lean-to vocabulary: a
-	# straight 3/6/9 m row, one fine cell deep, with one complete long edge bound
-	# to the surviving upper room. Corners, branches, and isolated shelves have no
-	# authored roof contract and must make the composition candidate fail.
+	# The only partial footprint admitted is the exact sloped-infill vocabulary: a
+	# straight 3/6/9 m row, one fine cell deep, with each long edge either open or
+	# completely bound to an upper wall. One bound edge is a lean-to; two bound
+	# edges form a narrow typed roof trench whose slope joins both masses. Corners,
+	# branches, partial wall contacts, and isolated shelves have no authored roof
+	# contract and must make the composition candidate fail.
 	if component.size() not in [2, 4, 6]:
 		return false
 	var minimum := Vector2i(2147483647, 2147483647)
@@ -1028,8 +1363,7 @@ static func _shoulder_component_is_roofable(component: Dictionary,
 				complete_wall = false
 				break
 		wall_side_count += int(complete_wall)
-	return wall_side_count == 1
-
+	return wall_side_count in [1, 2]
 
 static func _component_has_gabled_partition(component: Dictionary,
 		_y: int) -> bool:
@@ -2185,11 +2519,11 @@ static func _floorplate_transition_is_structurally_legible(
 		upper_base_y: int, claimed_cells: Dictionary,
 		grid: WarrenSpatialGrid) -> bool:
 	## Logical ancestry is not visual bearing. Resolve the exact support under
-	## every candidate column, including neighboring inhabited mass, then admit
-	## only a fully borne plate or one bracketable room bay. A bracketable bay is
-	## one connected one/two-cell-deep strip, leaves at least half the room on
-	## direct bearing, and has a straight attachment course that the authored 3 m
-	## support pair plus optional one-brace terminal can tile without scaling.
+	## every candidate column, including neighbouring inhabited mass, then admit
+	## only a fully borne plate or one bracketable edge course. This is a cheap
+	## composition preflight only: the later feature transaction must classify the
+	## result as a measured shallow overhang/outcropping and build every support,
+	## otherwise the complete town is rejected.
 	if candidate_columns.is_empty():
 		return false
 	var borne: Dictionary = {}
@@ -2205,8 +2539,24 @@ static func _floorplate_transition_is_structurally_legible(
 			unborne[column] = true
 	if unborne.is_empty():
 		return true
+	# A 3 x 3 m tower is already the smallest complete room module. Letting even
+	# one of its four columns project makes the entire volume read as a small box
+	# glued to the side of another building. Only larger plates may spend a
+	# measured shallow overhang; compact towers must sit wholly on real bearing.
+	if candidate_columns.size() <= 4:
+		return false
 	if borne.size() * 2 < candidate_columns.size() \
 			or not _column_set_is_connected(unborne):
+		return false
+	# A deep projection over the carved route is not an ordinary timber jetty.
+	# It becomes a four-sided stone arcade in the feature transaction, whose
+	# authored shell is exactly one 3 m storey high per course. Reject the room
+	# composition here unless its complete 3 x 3 m opening can descend by whole
+	# courses to one canonical public floor. Letting a half-level mismatch reach
+	# assembly produces either a floating stone base or a shell buried through
+	# the route, neither of which is a valid repair.
+	if not _public_headroom_projection_has_native_arcade(
+			unborne, upper_base_y, grid):
 		return false
 	for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
 			Vector2i.UP, Vector2i.DOWN]:
@@ -2245,6 +2595,59 @@ static func _floorplate_transition_is_structurally_legible(
 				break
 		if valid:
 			return true
+	return false
+
+
+static func _public_headroom_projection_has_native_arcade(
+		unborne_columns: Dictionary, upper_base_y: int,
+		grid: WarrenSpatialGrid) -> bool:
+	if grid == null or unborne_columns.is_empty():
+		return true
+	var crosses_public_headroom := false
+	for column_value: Variant in unborne_columns.keys():
+		var column := column_value as Vector2i
+		if grid.use_at(Vector3i(column.x, upper_base_y - 1, column.y)) \
+				== WarrenSpatialGrid.Use.PUBLIC_AIR:
+			crosses_public_headroom = true
+			break
+	if not crosses_public_headroom:
+		return true
+	# The route-spanning support vocabulary closes one complete 2 x 2 lattice
+	# footprint on all four sides. Partial strips are brackets, not arcades, and
+	# must never be stretched across public air.
+	if unborne_columns.size() != 4:
+		return false
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for column_value: Variant in unborne_columns.keys():
+		var column := column_value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	if maximum - minimum != Vector2i.ONE:
+		return false
+	var passage_y := upper_base_y
+	while passage_y - WarrenSpatialGrid.STOREY_CELLS >= grid.minimum.y:
+		var course_base_y := passage_y - WarrenSpatialGrid.STOREY_CELLS
+		var complete_public_course := true
+		var complete_public_floor := true
+		for column_value: Variant in unborne_columns.keys():
+			var column := column_value as Vector2i
+			for y in range(course_base_y, passage_y):
+				if grid.use_at(Vector3i(column.x, y, column.y)) \
+						!= WarrenSpatialGrid.Use.PUBLIC_AIR:
+					complete_public_course = false
+					break
+			if not complete_public_course:
+				break
+			var floor_cell := Vector3i(column.x, course_base_y, column.y)
+			if int(grid.face_claim(floor_cell, Vector3i.DOWN).get(
+					"kind", -1)) != WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+				complete_public_floor = false
+		if not complete_public_course:
+			return false
+		if complete_public_floor:
+			return true
+		passage_y = course_base_y
 	return false
 
 

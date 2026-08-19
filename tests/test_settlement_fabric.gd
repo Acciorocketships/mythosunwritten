@@ -158,6 +158,29 @@ func test_structural_support_rhythm_anchors_corners_and_native_edge_pitch() \
 		Vector3i(3, 4, 5), [Vector3i.LEFT] as Array[Vector3i]))
 
 
+func test_every_modular_room_shell_has_four_symmetric_corner_posts() -> void:
+	var program := _program()
+	for recipe_id: StringName in [
+		&"room.base.rock", &"room.tower.base.rock",
+		&"room.slim.base.rock", &"room.row.base.rock",
+		&"room.long.base.rock", &"room.pier.base.rock",
+	]:
+		var recipe_value := program.recipe(recipe_id)
+		assert_not_null(recipe_value, "missing modular recipe %s" % recipe_id)
+		if recipe_value == null:
+			continue
+		var posts := SettlementFabricAssembler \
+			._modular_room_corner_transforms(recipe_value)
+		assert_eq(posts.size(), 4,
+			"%s needs one explicit timber post at every corner" % recipe_id)
+		var positions: Dictionary = {}
+		for post: Transform3D in posts:
+			var origin := post.origin
+			positions[Vector2(origin.x, origin.z)] = true
+		assert_eq(positions.size(), 4,
+			"corner framing may not double one side and omit the other")
+
+
 func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
 		-> void:
 	var surfaces := PublicRealmSurfacePlan.new(&"test.named.courtyard")
@@ -281,6 +304,34 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 	assert_true(balcony.asset_ids().has(SettlementFabricProgram.ROOF_PLANTER))
 	assert_true(balcony.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_TALL),
 		"balcony vegetation must remain inside the measured recipe")
+	assert_eq(balcony.walk_cells.size(), 2,
+		"a compact private walk-out owns one continuous 3 m deck")
+	assert_eq(balcony.headroom_cells.size(), 4)
+	assert_false(balcony.socket(&"room.back").is_empty(),
+		"the walk-out is entered through one exact parent-room portal")
+	assert_true(balcony.socket(&"stair.high").is_empty())
+	assert_true(balcony.socket(&"stair.low").is_empty(),
+		"the compact walk-out must not advertise a stair that reaches no floor")
+	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
+		return String(placement.id).begins_with("guard.")).size(), 4,
+		"the outer and side perimeter is completely guarded")
+	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
+		return String(placement.id).begins_with("brace.")).size(), 2,
+		"the overhang remains visibly bracket-supported")
+	var deep_balcony := program.recipe(
+		&"balcony.walkout.deep.left.blue.planted")
+	assert_not_null(deep_balcony)
+	assert_true(deep_balcony.has_tag(&"deep_walkout"))
+	assert_true(deep_balcony.has_tag(&"diagonal_support"))
+	assert_eq(deep_balcony.walk_cells.size(), 4,
+		"the preferred walk-out keeps the rail two cells from the door")
+	assert_eq(deep_balcony.headroom_cells.size(), 8)
+	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
+		return String(placement.id).begins_with("guard.")).size(), 6,
+		"the deep deck closes its outer edge and both two-cell returns")
+	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
+		return String(placement.id).begins_with("support.diagonal.")).size(), 2,
+		"the deeper projection needs legible full-storey diagonal supports")
 	var market := program.recipe(&"market.covered.01.garden")
 	assert_not_null(market)
 	assert_true(market.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_SMALL))
@@ -401,7 +452,8 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		assert_true(embedded.has_tag(&"partial_extrusion"))
 		assert_eq(embedded.solid_cells.size(), 2,
 			"the oriel owns one half-width exterior column, not another room")
-		for required_piece: StringName in [&"bay.face", &"bay.cheek.left",
+		for required_piece: StringName in [&"bay.face", &"bay.face.right",
+				&"bay.cheek.left",
 				&"bay.cheek.right", &"bay.sill", &"bay.canopy",
 				&"bay.corbel.left", &"bay.corbel.right"]:
 			assert_true(embedded.placements.any(func(value: Dictionary) -> bool:
@@ -1073,7 +1125,7 @@ func test_visual_rejection_rolls_back_staged_semantic_claims() -> void:
 func test_stacked_room_requires_the_declared_bearing_parent_socket() -> void:
 	var specs := _route_specs()
 	specs.append(SettlementFabricSolver.unit_spec(&"room.base",
-		&"room.base.rock", Vector3i(8, 0, 0)))
+		&"room.base.rock.closed", Vector3i(8, 0, 0)))
 	specs.append(SettlementFabricSolver.unit_spec(&"room.upper",
 		&"room.upper.blue", Vector3i(8, 2, 0), 0, [&"room.base"], [
 			FabricUnit.bond(&"bearing.bottom", &"room.base", &"bearing.top"),
@@ -1085,7 +1137,7 @@ func test_stacked_room_requires_the_declared_bearing_parent_socket() -> void:
 
 	var invalid_specs := _route_specs()
 	invalid_specs.append(SettlementFabricSolver.unit_spec(&"room.base",
-		&"room.base.rock", Vector3i(8, 0, 0)))
+		&"room.base.rock.closed", Vector3i(8, 0, 0)))
 	invalid_specs.append(SettlementFabricSolver.unit_spec(&"room.upper",
 		&"room.upper.blue", Vector3i(8, 2, 0), 0, [&"room.base"]))
 	assert_null(SettlementFabricSolver.new(_program()).solve_authored(
@@ -1197,6 +1249,53 @@ func test_sectional_surface_rejects_an_unclassified_required_interval() -> void:
 		PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET, &"owner"))
 	assert_false(surface.seal([Vector3i(50, 2, 50)]))
 	assert_eq(surface.unclassified_required_cells, [Vector3i(50, 2, 50)])
+
+
+func test_sectional_surface_rejects_an_exterior_door_without_a_landing() -> void:
+	var surface := PublicRealmSurfacePlan.new(&"surface.midair-door")
+	assert_true(surface.add_claim(Vector3i.ZERO,
+		PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET, &"street"))
+	var entrance := {
+		"stable_id": &"door.midair",
+		"landing_cell": Vector3i(3, 2, 0),
+		"facing": Vector3i.BACK,
+	}
+	assert_false(surface.seal([], {}, {}, [entrance]),
+		"an exterior door may not survive without floor at its exact threshold")
+	assert_eq(surface.unserved_entrances.size(), 1)
+	assert_true(surface.last_rejection.contains("no exact public landing"))
+
+	var served := PublicRealmSurfacePlan.new(&"surface.served-door")
+	assert_true(served.add_claim(Vector3i(3, 2, 0),
+		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
+	assert_true(served.seal([], {}, {}, [entrance]),
+		"the same doorway is valid once its exact landing belongs to the union")
+	assert_true(served.validate())
+
+
+func test_generated_door_opens_both_guard_halves_of_its_authored_facade() \
+		-> void:
+	var surface := PublicRealmSurfacePlan.new(&"surface.wide-door")
+	for cell: Vector3i in [Vector3i.ZERO, Vector3i.LEFT, Vector3i.RIGHT]:
+		assert_true(surface.add_claim(cell,
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
+	var entrance := {
+		"stable_id": &"door.phase-zero",
+		"landing_cell": Vector3i.ZERO,
+		"facing": Vector3i.BACK,
+		"door_phase": 0,
+	}
+	assert_true(surface.seal([], {}, {}, [entrance]))
+	assert_true(surface.validate())
+	assert_eq(int(surface.audit().wide_entrance_guard_opening_count), 1)
+	assert_eq(int(surface.audit().entrance_guard_conflict_count), 0)
+	var guarded_edges: Dictionary = {}
+	for segment: Dictionary in surface.guard_segments:
+		guarded_edges[String(segment.stable_key)] = true
+	for landing: Vector3i in [Vector3i.ZERO, Vector3i.LEFT]:
+		assert_false(guarded_edges.has("%d:%d:%d:0:-1" % [landing.x,
+			landing.y, landing.z]),
+			"no authored railing may cut across either half of the 3 m door")
 
 
 func test_minimum_requirements_reject_incomplete_visual_slice() -> void:

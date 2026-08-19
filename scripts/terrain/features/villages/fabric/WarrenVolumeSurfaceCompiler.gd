@@ -113,6 +113,7 @@ static func _entrances(parcels: WarrenParcelPlan) -> Array[Dictionary]:
 			"threshold_cell": threshold,
 			"facing": facing,
 			"landing_cell": threshold + facing,
+			"door_phase": parcel.address_door_phase,
 		})
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_id) < String(b.stable_id))
@@ -130,6 +131,10 @@ static func _fabric_entrances(plan: SettlementFabricPlan) \
 				unit_value.yaw_quarters)
 			var facing := FabricRecipe.transform_direction(
 				entrance.facing as Vector3i, unit_value.yaw_quarters)
+			var door_phase := -1
+			if recipe_value.has_tag(&"generated_building"):
+				door_phase = 1 if recipe_value.has_tag(
+					&"alternate_door_phase") else 0
 			out.append({
 				"stable_id": StringName("%s/%s" % [unit_value.stable_id,
 					StringName(entrance.id)]),
@@ -137,6 +142,7 @@ static func _fabric_entrances(plan: SettlementFabricPlan) \
 				"threshold_cell": threshold,
 				"facing": facing,
 				"landing_cell": threshold + facing,
+				"door_phase": door_phase,
 			})
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_id) < String(b.stable_id))

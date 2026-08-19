@@ -373,6 +373,32 @@ func test_phase_b_facades_use_multiple_measured_detail_families() -> void:
 	assert_true(planted_asset_ids.has(SettlementFabricProgram.TERRACE_PLANT_MID))
 
 
+func test_addressed_facades_never_place_soft_props_across_the_door() -> void:
+	## Ivy, signs, window boxes, and especially the 3.135 m clothesline are
+	## valuable on windowed upper facades. On an addressed recipe their shared
+	## front-face anchor crosses the authored arch even when the exact public
+	## landing and guard opening are otherwise correct.
+	assert_not_null(_program)
+	var addressed_count := 0
+	for recipe_value: FabricRecipe in _program.recipes():
+		if not recipe_value.has_tag(&"generated_building") \
+				or recipe_value.entrances.is_empty():
+			continue
+		addressed_count += 1
+		assert_false(recipe_value.has_tag(&"facade_detail"),
+			"%s may not decorate its exterior door plane" \
+				% recipe_value.recipe_id)
+		for placement: Dictionary in recipe_value.placements:
+			assert_false(StringName(placement.asset_id) in [
+				SettlementFabricProgram.FACADE_IVY,
+				SettlementFabricProgram.FACADE_CLOTHES,
+				SettlementFabricProgram.FACADE_SIGN,
+				SettlementFabricProgram.ROOF_PLANTER,
+			], "%s/%s crosses an addressed doorway" % [
+				recipe_value.recipe_id, placement.id])
+	assert_gt(addressed_count, 0)
+
+
 func test_the_market_pool_is_the_reviewed_stocked_seven() -> void:
 	## The other loose stall pieces are not complete stocked-market envelopes;
 	## only these seven prefabs are safe atomic fabric recipes.

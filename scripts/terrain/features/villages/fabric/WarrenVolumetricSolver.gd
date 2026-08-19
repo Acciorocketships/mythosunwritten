@@ -61,11 +61,16 @@ const MAX_MARKET_OPEN_HORIZON_CELLS := 4
 const LARGE_MARKET_OPEN_HORIZON_CELLS := 8
 const GRAND_MARKET_OPEN_HORIZON_CELLS := 10
 ## Landmark halls are allowed to replace ordinary parcels, but they must still
-## read as part of the inhabited mountain.  Measure surviving private mass just
-## beyond the landmark's authored visual envelope; a four-cell search is six
-## metres on the fine grid and therefore distinguishes a tight alley/roof seam
-## from the open-lawn satellite buildings caught by screenshot review.
+## read as part of the inhabited mountain. Measure surviving private mass just
+## beyond the landmark's authored visual envelope; the exact gap remains a
+## ranking fact while the later typed public-realm transaction decides whether
+## the space is a street rather than rejecting complete buildings prematurely.
 const LANDMARK_CITY_CONTACT_RADIUS_CELLS := 4
+## One fine cell of actual public circulation may sit between a complete
+## authored building and the retained mass: that is a 1.5 m carved alley, not
+## open lawn. The embeddedness probe validates that intervening cell against
+## the sealed public-air/public-floor graph before this distance is credited.
+const MAX_LANDMARK_CITY_GAP_CELLS := 2
 const COURTYARD_BRIDGE_FEATURE_ID := \
 	&"spatial.feature.courtyard_bridge_house.00"
 ## The third courtyard side may be a real occupied bridge-house selected by the
@@ -1531,6 +1536,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 							< scale_profile.skywalk_range.x:
 						trial_index += 1
 						continue
+					# Compact and standard towns have no authored elevated-court
+					# obligation. Keep their already ranked primary link plan; later
+					# exact fabric/roof compilation remains the authority and can reject
+					# the partition without making optional link alternatives alter room
+					# composition during this topology pass.
 					if not requires_courtyard:
 						sealed_trials.append({"plan": trial_plan, "result": {},
 							"covered": -1, "route_cells": route_walk.size(),
@@ -1589,7 +1599,17 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						if trial_index == 0:
 							var failure_signature := JSON.stringify(
 								_exact_room_preflight_failure_snapshot())
-							if not failure_signature.is_empty() \
+							# A repeated failure can memoize an actual elevated-court
+							# obligation because that same occupied bridge room is present
+							# in every landmark trial. Compact/standard profiles carry an
+							# empty sentinel here; repeated failures there belong to the
+							# changing landmark/skywalk composition and must advance through
+							# the bounded set frontier instead of falsely condemning a court
+							# which does not exist.
+							if requires_courtyard \
+									and not bool(court_candidate.get(
+										"optional_absent", false)) \
+									and not failure_signature.is_empty() \
 									and failure_signature != "{}":
 								repeated_exact_failure_counts[failure_signature] = int(
 									repeated_exact_failure_counts.get(
@@ -1658,8 +1678,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 							"reduced_link_count", false)),
 						"trial_index": trial_index})
 					if trial_index == 0:
-						# The primary plan sealed; only now is the bounded diverse
-						# alternate search worth its endpoint-composition proofs.
+						# Richer court towns inspect alternates only after the primary
+						# exact composition seals; this keeps the bounded search lazy.
 						skywalk_trial_plans.append_array(
 							_deferred_alternate_skywalk_plans(grid, volume,
 								proposals, trial_owners, trial_plan))
@@ -2521,7 +2541,7 @@ static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
 				var source_family := &"unknown" if assets.is_empty() else \
 					StringName(String(assets[0]).get_slice(".", 0))
 				var embeddedness := _landmark_embeddedness(protected_cells,
-					protected_owners, blockers)
+					protected_owners, blockers, grid)
 				var skywalk_socket_signature := \
 					_landmark_recipe_socket_signature(recipe, origin, yaw)
 				var structural_signature := \
@@ -2597,6 +2617,13 @@ static func _preplan_spatial_landmarks(grid: WarrenSpatialGrid,
 	return {"candidates": candidates}
 
 
+static func _landmark_embeddedness_has_city_seam(audit: Dictionary) -> bool:
+	return int(audit.get("side_count", 0)) > 0 \
+		and int(audit.get("nearest_gap",
+			LANDMARK_CITY_CONTACT_RADIUS_CELLS + 1)) \
+			<= MAX_LANDMARK_CITY_GAP_CELLS
+
+
 static func _translated_cell_set(local_cells: Dictionary,
 		origin: Vector3i) -> Dictionary:
 	var out: Dictionary = {}
@@ -2606,7 +2633,8 @@ static func _translated_cell_set(local_cells: Dictionary,
 
 
 static func _landmark_embeddedness(protected_cells: Dictionary,
-		protected_owners: Dictionary, blocker_parcels: Dictionary) -> Dictionary:
+		protected_owners: Dictionary, blocker_parcels: Dictionary,
+		grid: WarrenSpatialGrid = null) -> Dictionary:
 	## Collapse the authored 3D envelope to its horizontal silhouette, then look
 	## outward from every boundary face for surviving room envelopes.  Blocked
 	## parcels do not count: they will be removed by the landmark transaction and
@@ -2641,6 +2669,13 @@ static func _landmark_embeddedness(protected_cells: Dictionary,
 				var target := column + direction * distance
 				if footprint.has(target):
 					break
+				# Distance two is admitted only when its one intervening column is
+				# an exact public lane. Without this check, the same metric treats a
+				# strip of open lawn as urban integration.
+				if distance > 1 and grid != null \
+						and not _landmark_gap_is_public_lane(grid, column,
+							direction, distance, minimum_y, maximum_y):
+					continue
 				var distance_owners: Dictionary = {}
 				for y in range(minimum_y - 1, maximum_y + 2):
 					for owner_value: Variant in (protected_owners.get(
@@ -2667,6 +2702,28 @@ static func _landmark_embeddedness(protected_cells: Dictionary,
 		return String(a) < String(b))
 	return {"side_count": touched_sides.size(), "edge_count": edge_count,
 		"score": score, "nearest_gap": nearest_gap, "owner_ids": owner_ids}
+
+
+static func _landmark_gap_is_public_lane(grid: WarrenSpatialGrid,
+		boundary_column: Vector2i, direction: Vector2i, distance: int,
+		minimum_y: int, maximum_y: int) -> bool:
+	if grid == null or distance <= 1:
+		return distance <= 1
+	for step in range(1, distance):
+		var column := boundary_column + direction * step
+		var has_public_floor := false
+		for y in range(minimum_y - 1, maximum_y + 2):
+			var cell := Vector3i(column.x, y, column.y)
+			if grid.use_at(cell) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+				continue
+			var floor_claim := grid.face_claim(cell, Vector3i.DOWN)
+			if not floor_claim.is_empty() and int(floor_claim.get("kind", -1)) \
+					== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+				has_public_floor = true
+				break
+		if not has_public_floor:
+			return false
+	return true
 
 
 static func _landmark_set_embeddedness(
@@ -3080,9 +3137,8 @@ static func _rank_landmark_sets_for_skywalks(sets: Array[Dictionary],
 		landmark_set["skywalk_candidate_count"] = candidate_count
 		landmark_set["skywalk_pair_count"] = pair_keys.size()
 	sets.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		# Three links are the contract; surplus candidate count is not worth
-		# demolishing a street block around a landmark. First keep sets with a
-		# viable bridge frontier, then preserve the most inhabited frontage.
+		# The required link count is the contract; surplus candidates are only a
+		# late tie-break after keeping the landmark set embedded in inhabited mass.
 		var a_viable := int(a.skywalk_pair_count) \
 			>= target_skywalks \
 			and int(a.skywalk_candidate_count) \
@@ -3281,17 +3337,33 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 		var selected_small_tower_risk := 2147483647
 		var selected_small_support_risk := 2147483647
 		var selected_small_quality := 2147483647
+		var selected_small_rank_index := -1
+		var small_ranked_combinations: Array[Dictionary] = []
 		var ranked_pairs: Array[Dictionary] = []
 		if target_count == 1:
-			for candidate: Dictionary in candidates:
-				if not require_landmark_endpoint \
-						or int(candidate.get("landmark_endpoint_count", 0)) > 0:
-					selected_small.append(candidate)
-					selected_small_tower_risk = _skywalk_combination_tower_risk(
-						selected_small, proposals, {})
-					selected_small_quality = int(candidate.blocker_count) * 100 \
-						- int(candidate.lower_cover) * 10
-					break
+			for candidate_index in candidates.size():
+				var candidate := candidates[candidate_index]
+				if require_landmark_endpoint \
+						and int(candidate.get("landmark_endpoint_count", 0)) <= 0:
+					continue
+				var combination := [candidate] as Array[Dictionary]
+				var tower_risk := _skywalk_combination_tower_risk(
+					combination, proposals, {})
+				var quality := int(candidate.blocker_count) * 100 \
+					- int(candidate.lower_cover) * 10
+				small_ranked_combinations.append({
+					"indices": [candidate_index] as Array[int],
+					"tower_risk": tower_risk, "quality": quality})
+				if not selected_small.is_empty() \
+						or not _skywalk_selection_preserves_endpoint_rooms(grid,
+							volume, combination, proposals, protected_owners,
+							volume.world_seed):
+					continue
+				selected_small = combination
+				selected_small_rank_index = \
+					small_ranked_combinations.size() - 1
+				selected_small_tower_risk = tower_risk
+				selected_small_quality = quality
 		elif target_count == 2:
 			for first in candidates.size():
 				for second in range(first + 1, candidates.size()):
@@ -3343,29 +3415,46 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 				var indices := ranked_pair.indices as Vector2i
 				var pair := [candidates[indices.x], candidates[indices.y]] \
 					as Array[Dictionary]
-				if not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
+				small_ranked_combinations.append({
+					"indices": [indices.x, indices.y] as Array[int],
+					"tower_risk": int(ranked_pair.tower_risk),
+					"quality": int(ranked_pair.quality)})
+				if not selected_small.is_empty() \
+						or not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
 						pair, proposals, protected_owners, volume.world_seed):
 					continue
 				selected_small = pair
+				selected_small_rank_index = \
+					small_ranked_combinations.size() - 1
 				selected_small_support_risk = int(ranked_pair.support_risk)
 				selected_small_tower_risk = int(ranked_pair.tower_risk)
 				selected_small_quality = int(ranked_pair.quality)
-				break
 			# A village that genuinely holds only one exact link keeps that
 			# one instead of rejecting the whole town; the profile minimum
 			# gate downstream still enforces the declared floor.
 			if selected_small.is_empty():
-				for candidate: Dictionary in candidates:
+				small_ranked_combinations.clear()
+				for candidate_index in candidates.size():
+					var candidate := candidates[candidate_index]
+					var combination := [candidate] as Array[Dictionary]
+					var tower_risk := _skywalk_combination_tower_risk(
+						combination, proposals, {})
+					var quality := int(candidate.blocker_count) * 100 \
+						- int(candidate.lower_cover) * 10
+					small_ranked_combinations.append({
+						"indices": [candidate_index] as Array[int],
+						"tower_risk": tower_risk, "quality": quality})
+					if not selected_small.is_empty():
+						continue
 					if not _skywalk_selection_preserves_endpoint_rooms(grid,
-							volume, [candidate] as Array[Dictionary],
+							volume, combination,
 							proposals, protected_owners, volume.world_seed):
 						continue
-					selected_small = [candidate] as Array[Dictionary]
-					selected_small_tower_risk = _skywalk_combination_tower_risk(
-						selected_small, proposals, {})
-					selected_small_quality = int(candidate.blocker_count) * 100 \
-						- int(candidate.lower_cover) * 10
-					break
+					selected_small = combination
+					selected_small_rank_index = \
+						small_ranked_combinations.size() - 1
+					selected_small_tower_risk = tower_risk
+					selected_small_quality = quality
 		last_preplan_skywalk_diagnostic["landmark_filtered_candidate_count"] = \
 			candidates.size()
 		last_preplan_skywalk_diagnostic["landmark_attached_candidate_count"] = \
@@ -3408,6 +3497,17 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 		small_plan["landmark_transition_owner_ids"] = [] as Array[StringName]
 		small_plan["ranked_landmark_transition_owner_ids"] = \
 			landmark_transition_owner_ids
+		# Compact one-link and standard two-link towns need the same bounded
+		# post-roofability fallback as richer triple/quadruple towns. Endpoint
+		# composition is necessary but cannot see a one-cell cross-lineage roof
+		# sliver left by the chosen connector.
+		small_plan["alternate_search"] = {
+			"candidates": candidates,
+			"ranked_combinations": small_ranked_combinations,
+			"ranked_triples": [] as Array[Dictionary],
+			"pair_frontier_count": ranked_pairs.size(),
+			"primary_rank_index": selected_small_rank_index,
+		}
 		return small_plan
 	var selected: Array[Dictionary] = []
 	var selected_tower_risk := 2147483647
@@ -3570,10 +3670,10 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 	var plan := _landmark_skywalk_plan_for_combination(selected,
 		candidates.size(), pair_frontier.size(), selected_tower_risk,
 		landmark_transition_owner_ids)
-	# Deferred alternate search state. Proving diverse alternates costs one
-	# endpoint-composition proof per scanned combination, so it must not run for
-	# every landmark set: the enclosing feature transaction requests alternates
-	# lazily, only after this plan's own exact room preflight has sealed.
+	# Deferred alternate search state. The enclosing feature transaction requests
+	# this bounded frontier only for the selected landmark set. It may need the
+	# alternates even when the primary endpoint-valid plan fails the later global
+	# roofability proof.
 	plan["alternate_search"] = {
 		"candidates": candidates,
 		"ranked_combinations": ranked_combinations,
@@ -3591,10 +3691,10 @@ static func _skywalk_plan_for_landmarks(grid: WarrenSpatialGrid,
 static func _deferred_alternate_skywalk_plans(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, proposals: Array[Dictionary],
 		protected_owners: Dictionary, plan: Dictionary) -> Array[Dictionary]:
-	## Bounded, diverse alternates for the sealed occluder ranking. Runs only
-	## for a landmark set whose primary plan already sealed, so the extra
-	## endpoint-composition proofs are paid once per accepted feature set, not
-	## once per attempted landmark permutation. A reduced (one-fewer-link)
+	## Bounded, diverse alternates for exact composition/occluder ranking. Runs
+	## only for the selected landmark set, so the extra endpoint-composition
+	## proofs are paid once per feature-set attempt, not while building every
+	## landmark permutation. A reduced (one-fewer-link)
 	## triple is included so the exact ranking can prove or refute the fourth
 	## link's distinct inhabited route coverage.
 	var out: Array[Dictionary] = []
@@ -3615,7 +3715,6 @@ static func _deferred_alternate_skywalk_plans(grid: WarrenSpatialGrid,
 	primary.assign(plan.get("selected_candidates", []) as Array)
 	if primary.is_empty():
 		return out
-	var retained: Array = [primary]
 	var scanned := 0
 	var scan_start := maxi(0, int(search.get("primary_rank_index", -1)) + 1)
 	for rank_index in range(scan_start, ranked_combinations.size()):
@@ -3628,12 +3727,13 @@ static func _deferred_alternate_skywalk_plans(grid: WarrenSpatialGrid,
 		var combination: Array[Dictionary] = []
 		for candidate_index: int in indices:
 			combination.append(candidates[candidate_index])
-		if not _skywalk_combination_is_diverse(combination, retained):
-			continue
 		if not _skywalk_selection_preserves_endpoint_rooms(grid, volume,
 				combination, proposals, protected_owners, volume.world_seed):
 			continue
-		retained.append(combination)
+		# A construction-near alternate can still be structurally distinct at the
+		# roof interface. Do not discard it merely because it shares an endpoint
+		# pair with the primary; the exact composition audit below is the authority
+		# on whether that placement yields a coherent building/roof campaign.
 		out.append(_landmark_skywalk_plan_for_combination(combination,
 			candidates.size(), pair_frontier_count,
 			int(ranked.tower_risk), landmark_transition_owner_ids))
@@ -9003,7 +9103,62 @@ static func _residual_room_envelope_fits(candidate: WarrenRoomStamp,
 						existing_bounds) and not SettlementFabricPlan._is_edge_nick(
 						candidate_bounds, existing_bounds):
 					return false
-	return true
+	return _residual_roof_envelope_fits(candidate, building_by_id, program,
+		world_seed)
+
+
+static func _residual_roof_envelope_fits(candidate: WarrenRoomStamp,
+		building_by_id: Dictionary, program: SettlementFabricProgram,
+		world_seed: int) -> bool:
+	## Residual rooms are selected after the macro composition, so they must prove
+	## a complete roof profile before entering the grid. Room-shell adjacency alone
+	## is insufficient: the old preflight skipped every shared face and admitted a
+	## small infill whose eaves later passed through an upper neighboring facade.
+	var preferred := WarrenSpatialFabricCompiler._full_roof_recipe_id(candidate,
+		world_seed)
+	var roof_ids: Array[StringName] = [preferred]
+	var plain := WarrenSpatialFabricCompiler._plain_pitched_recipe_id(preferred)
+	if plain != preferred:
+		roof_ids.append(plain)
+	var yaw_offsets: Array[int] = [0]
+	if candidate.kind in [&"tower", &"building"]:
+		yaw_offsets.append(1)
+	for roof_id: StringName in roof_ids:
+		var roof_recipe := program.recipe(roof_id)
+		if roof_recipe == null:
+			continue
+		for yaw_offset: int in yaw_offsets:
+			var roof_transform := FabricRecipe.lattice_transform(
+				candidate.lattice_origin + Vector3i.UP \
+					* WarrenSpatialGrid.STOREY_CELLS,
+				posmod(candidate.yaw_quarters + yaw_offset, 4))
+			var roof_bounds := roof_transform * roof_recipe.local_clearance_bounds
+			var clear := true
+			for building_value: Variant in building_by_id.values():
+				var building := building_value as WarrenBuildingVolume
+				for existing: WarrenRoomStamp in building.room_records:
+					for phase_b: bool in [true, false]:
+						var existing_recipe := program.recipe(
+							WarrenSpatialFabricCompiler._room_recipe_id(existing,
+								world_seed, phase_b))
+						if existing_recipe == null:
+							return false
+						var existing_bounds := FabricRecipe.lattice_transform(
+							existing.lattice_origin, existing.yaw_quarters) \
+							* existing_recipe.local_clearance_bounds
+						if SettlementFabricPlan._aabb_overlaps_volume(roof_bounds,
+								existing_bounds) \
+								and not SettlementFabricPlan._is_edge_nick(
+									roof_bounds, existing_bounds):
+							clear = false
+							break
+					if not clear:
+						break
+				if not clear:
+					break
+			if clear:
+				return true
+	return false
 
 
 static func _rooms_share_lattice_face(left: WarrenRoomStamp,

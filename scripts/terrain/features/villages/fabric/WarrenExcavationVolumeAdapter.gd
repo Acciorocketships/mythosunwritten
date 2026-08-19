@@ -115,6 +115,26 @@ static func to_volume_plan(massif: WarrenMassif,
 				lane["transitions"] as Array[Dictionary],
 				"volume.lane%02d" % index, false):
 			return null
+	# A loop edge is deliberately separate from the ordered route/lane walks:
+	# both endpoints already exist, and this final seam is what turns the branch
+	# tree into a cyclic street graph.  Copy it as an ordinary transition; do
+	# not add or infer any new walk cell in this adapter.
+	for index in excavation.loop_edges.size():
+		var edge := excavation.loop_edges[index]
+		var from_cell := edge["from"] as Vector3i
+		var to_cell := edge["to"] as Vector3i
+		if not plan.has_walk(from_cell) or not plan.has_walk(to_cell):
+			last_failure = "loop edge %d has a non-walk endpoint" % index
+			return null
+		var span_walk: Array[Vector3i] = [from_cell, to_cell]
+		var seam := WarrenVolumeTransition.new(
+			StringName("volume.loop%02d" % index), from_cell, to_cell,
+			int(edge["kind"]) as WarrenVolumeTransition.Kind,
+			_swept_span(excavation, span_walk, 0, 1))
+		if not plan.add_transition(seam):
+			last_failure = "invalid loop edge %d (%s -> %s)" % [
+				index, from_cell, to_cell]
+			return null
 	# Every excavated cell is real street ground WarrenSolidPartitioner may
 	# legitimately root a house at (it already does: street_wall_faces()
 	# iterates excavation.public_cells() directly, unaware of which cells are
@@ -170,6 +190,7 @@ static func excavation_for_volume(excavation: WarrenExcavation,
 	out.transitions.assign(excavation.transitions)
 	out.covered = excavation.covered.duplicate()
 	out.lanes.assign(excavation.lanes)
+	out.loop_edges.assign(excavation.loop_edges)
 	out.carved = excavation.carved.duplicate()
 	for cell: Vector3i in volume.public_air_cells:
 		out.carved[cell] = true

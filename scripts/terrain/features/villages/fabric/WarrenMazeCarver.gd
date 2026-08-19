@@ -15,6 +15,10 @@ const MAX_ALLEY_CELLS := 8
 const SPINE_VISIT_BUDGET := 40000
 const MAX_DERIVED_ALLEY_CELLS := 320
 const OPEN_AIR_THICKNESS_CEILING := 2
+const MIN_LOOP_JOINS := 1
+const MAX_LOOP_JOINS := 2
+const MAX_LOOP_CONNECTOR_CELLS := 8
+const MAX_LOOP_SEARCH_VISITS_PER_ANCHOR := 500
 
 static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
@@ -79,6 +83,11 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	var before_frontage := _frontage_audit(massif, excavation)
 	_carve_alleys(world_seed, massif, excavation, thickness,
 		market_cells, profile)
+	var loop_target := MAX_LOOP_JOINS if profile.scale_id in [
+		WarrenVillageScaleProfile.LARGE,
+		WarrenVillageScaleProfile.GRAND] else MIN_LOOP_JOINS
+	_carve_loop_joins(world_seed, massif, excavation, thickness,
+		market_square, loop_target)
 	var after_frontage := _frontage_audit(massif, excavation)
 	if float(after_frontage.ratio) < FRONTAGE_FLOOR:
 		last_failure = "alley budget reached %.3f frontage, below %.3f" % [
@@ -118,6 +127,7 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	last_diagnostic = plan.audit.duplicate(true)
 	last_diagnostic["spine_visits"] = context.visits
 	last_diagnostic["lane_count"] = excavation.lanes.size()
+	last_diagnostic["loop_join_count"] = excavation.loop_edges.size()
 	return plan
 
 
@@ -207,6 +217,28 @@ static func _stamp_market_square(world_seed: int, massif: WarrenMassif,
 		excavation.lanes.append({"anchor": anchor, "cells": lane_cells,
 			"transitions": transitions, "feature_kind": &"market_square"})
 		var square := candidate.square as Array[Vector3i]
+		# Close the square's fourth side explicitly.  The typed market is already
+		# the one deliberate broad public floor, so this seam creates the
+		# universal reconnecting loop without boring another plaza or asking a
+		# downstream adapter to infer adjacency from touching surfaces.
+		var endpoint: Vector3i = lane_cells.back()
+		var predecessor: Vector3i = anchor if lane_cells.size() == 1 \
+			else lane_cells[lane_cells.size() - 2]
+		var loop_target := Vector3i(2147483647, 2147483647, 2147483647)
+		for square_cell: Vector3i in square:
+			if square_cell == endpoint or square_cell == predecessor:
+				continue
+			var delta: Vector3i = square_cell - endpoint
+			if delta.y == 0 and absi(delta.x) + absi(delta.z) == 1:
+				loop_target = square_cell
+				break
+		if loop_target.x == 2147483647:
+			excavation.lanes.pop_back()
+			for air: Vector3i in carved:
+				excavation.carved.erase(air)
+			continue
+		excavation.loop_edges.append({"from": endpoint, "to": loop_target,
+			"kind": WarrenVolumeTransition.Kind.LEVEL})
 		var fronted_square_cells := 0
 		for cell: Vector3i in square:
 			fronted_square_cells += int(_addressable_sides(massif,
@@ -218,6 +250,7 @@ static func _stamp_market_square(world_seed: int, massif: WarrenMassif,
 			square.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
 				return _cell_less(a, b))
 			return square
+		excavation.loop_edges.pop_back()
 		excavation.lanes.pop_back()
 		for air: Vector3i in carved:
 			excavation.carved.erase(air)
@@ -412,6 +445,312 @@ static func _next_alley_anchor(world_seed: int,
 		if not market_set.has(anchor) and not tried.has(anchor):
 			return anchor
 	return Vector3i(2147483647, 2147483647, 2147483647)
+
+
+static func _carve_loop_joins(world_seed: int, massif: WarrenMassif,
+		excavation: WarrenExcavation, thickness: Dictionary,
+		market_square: Array[Vector3i], target_count: int) -> void:
+	## Close the branch tree with an explicit short connector.  Each connector
+	## is still a narrow alley: only its first and last cells touch old public
+	## realm, every intermediate is newly bored, at least one solid flank remains
+	## inhabitable, and the universal market is excluded.  Searching both
+	## cardinal orders between nearby graph nodes admits straight or one-bend
+	## tunnels without introducing an unconstrained second route solver.
+	var market_set: Dictionary = {}
+	for cell: Vector3i in market_square:
+		market_set[cell] = true
+	var loop_cells: Dictionary = {}
+	while excavation.loop_edges.size() < target_count:
+		var public_set: Dictionary = {}
+		for cell: Vector3i in excavation.public_cells():
+			public_set[cell] = true
+		var walk_set: Dictionary = {}
+		var walk_nodes := _walk_nodes(excavation)
+		for cell: Vector3i in walk_nodes:
+			walk_set[cell] = true
+		walk_nodes.assign(walk_set.keys())
+		walk_nodes.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			return _cell_less(a, b))
+		var candidates: Array[Dictionary] = []
+		for first_index in walk_nodes.size():
+			var anchor := walk_nodes[first_index]
+			if market_set.has(anchor):
+				continue
+			for second_index in range(first_index + 1, walk_nodes.size()):
+				var target := walk_nodes[second_index]
+				var distance := absi(target.x - anchor.x) \
+					+ absi(target.z - anchor.z)
+				if target.y != anchor.y or market_set.has(target) \
+						or distance < 2 \
+						or distance > MAX_LOOP_CONNECTOR_CELLS + 1:
+					continue
+				for path_value: Variant in _manhattan_connector_paths(
+						anchor, target):
+					var cells := path_value as Array[Vector3i]
+					if not _loop_connector_is_legal(massif, excavation,
+							public_set, walk_set, thickness, market_set,
+							loop_cells, anchor, target, cells):
+						continue
+					var frontage := 0
+					var centre_distance := 0.0
+					for cell: Vector3i in cells:
+						frontage += _addressable_sides(massif, excavation,
+							cell)
+						centre_distance += Vector2(float(cell.x),
+							float(cell.z)).length_squared()
+					candidates.append({"cells": cells, "anchor": anchor,
+						"target": target, "frontage": frontage,
+						"score": -float(frontage) * 1000.0
+							+ float(cells.size()) * 80.0
+							+ centre_distance * 0.25,
+						"tie": WarrenPassageLatticeRules.hash_key(world_seed,
+							0x100F, cells.back(), first_index * 131
+								+ second_index * 7
+								+ excavation.loop_edges.size())})
+		if candidates.is_empty():
+			candidates = _winding_loop_connector_candidates(world_seed,
+				massif, excavation, public_set, walk_set, thickness,
+				market_set, loop_cells, walk_nodes)
+		candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			if not is_equal_approx(float(a.score), float(b.score)):
+				return float(a.score) < float(b.score)
+			if int(a.tie) != int(b.tie):
+				return int(a.tie) < int(b.tie)
+			return _cell_less(a.cell as Vector3i, b.cell as Vector3i))
+		if candidates.is_empty():
+			break
+		var committed := false
+		for candidate: Dictionary in candidates:
+			var cells := candidate.cells as Array[Vector3i]
+			var carved: Array[Vector3i] = []
+			var transitions: Array[Dictionary] = []
+			var previous := candidate.anchor as Vector3i
+			for cell: Vector3i in cells:
+				for band in range(cell.y, cell.y \
+						+ WarrenPassageLatticeRules.HEADROOM_BANDS):
+					var air := Vector3i(cell.x, band, cell.z)
+					excavation.carved[air] = true
+					carved.append(air)
+				transitions.append({"from": previous, "to": cell,
+					"kind": WarrenVolumeTransition.Kind.LEVEL})
+				previous = cell
+			var lane := {"anchor": candidate.anchor,
+				"cells": cells, "transitions": transitions,
+				"feature_kind": &"loop_join"}
+			var edge := {"from": cells.back(), "to": candidate.target,
+				"kind": WarrenVolumeTransition.Kind.LEVEL}
+			excavation.lanes.append(lane)
+			excavation.loop_edges.append(edge)
+			var audit := _frontage_audit(massif, excavation)
+			if float(audit.ratio) >= FRONTAGE_FLOOR:
+				for cell: Vector3i in cells:
+					loop_cells[cell] = true
+				committed = true
+				break
+			excavation.loop_edges.pop_back()
+			excavation.lanes.pop_back()
+			for air: Vector3i in carved:
+				excavation.carved.erase(air)
+		if not committed:
+			break
+
+
+static func _manhattan_connector_paths(anchor: Vector3i,
+		target: Vector3i) -> Array:
+	var out: Array = []
+	var x_first: Array[Vector3i] = []
+	var cursor := anchor
+	while cursor.x != target.x:
+		cursor += Vector3i(signi(target.x - cursor.x), 0, 0)
+		if cursor != target:
+			x_first.append(cursor)
+	while cursor.z != target.z:
+		cursor += Vector3i(0, 0, signi(target.z - cursor.z))
+		if cursor != target:
+			x_first.append(cursor)
+	if not x_first.is_empty():
+		out.append(x_first)
+	var z_first: Array[Vector3i] = []
+	cursor = anchor
+	while cursor.z != target.z:
+		cursor += Vector3i(0, 0, signi(target.z - cursor.z))
+		if cursor != target:
+			z_first.append(cursor)
+	while cursor.x != target.x:
+		cursor += Vector3i(signi(target.x - cursor.x), 0, 0)
+		if cursor != target:
+			z_first.append(cursor)
+	if not z_first.is_empty() and z_first != x_first:
+		out.append(z_first)
+	return out
+
+
+static func _winding_loop_connector_candidates(world_seed: int,
+		massif: WarrenMassif, excavation: WarrenExcavation,
+		public_set: Dictionary, walk_set: Dictionary, thickness: Dictionary,
+		market_set: Dictionary, loop_cells: Dictionary,
+		walk_nodes: Array[Vector3i]) -> Array[Dictionary]:
+	## If no straight/one-bend seam fits, run one bounded breadth-first search
+	## from each graph node.  This is still one deterministic construction: the
+	## search emits only short, same-datum, cardinal corridors and ranks the
+	## resulting seams once.  It exists because winding branches often leave no
+	## legal Manhattan rectangle even though a narrow dogleg can reconnect them.
+	var out: Array[Dictionary] = []
+	var emitted: Dictionary = {}
+	for anchor_index in walk_nodes.size():
+		var anchor := walk_nodes[anchor_index]
+		if market_set.has(anchor):
+			continue
+		var queue: Array[Dictionary] = [{"cell": anchor,
+			"path": [] as Array[Vector3i]}]
+		var visited: Dictionary = {anchor: true}
+		var cursor := 0
+		var visits := 0
+		var anchor_candidates := 0
+		while cursor < queue.size() \
+				and visits < MAX_LOOP_SEARCH_VISITS_PER_ANCHOR \
+				and anchor_candidates < 4:
+			var state := queue[cursor]
+			cursor += 1
+			visits += 1
+			var current := state.cell as Vector3i
+			var path := state.path as Array[Vector3i]
+			if path.size() >= MAX_LOOP_CONNECTOR_CELLS:
+				continue
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var next := current + Vector3i(direction.x, 0, direction.y)
+				if visited.has(next) or public_set.has(next) \
+						or market_set.has(next) or loop_cells.has(next) \
+						or int(thickness.get(Vector2i(next.x, next.z), 0)) < 1 \
+						or _addressable_sides(massif, excavation, next) < 1 \
+						or not WarrenPassageLatticeRules.slot_is_borable(
+							massif, excavation, next,
+							WarrenPassageLatticeRules.HEADROOM_BANDS):
+					continue
+				var old_neighbours: Array[Vector3i] = []
+				var invalid_old_neighbour := false
+				for side: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+					var neighbour := next + Vector3i(side.x, 0, side.y)
+					if not public_set.has(neighbour):
+						continue
+					if not walk_set.has(neighbour):
+						invalid_old_neighbour = true
+						break
+					old_neighbours.append(neighbour)
+				if invalid_old_neighbour:
+					continue
+				var target := Vector3i(2147483647, 2147483647,
+					2147483647)
+				var has_target := false
+				for neighbour: Vector3i in old_neighbours:
+					if neighbour == anchor and path.is_empty():
+						continue
+					if neighbour == anchor or market_set.has(neighbour) \
+							or has_target:
+						invalid_old_neighbour = true
+						break
+					target = neighbour
+					has_target = true
+				if invalid_old_neighbour:
+					continue
+				if path.is_empty() and anchor not in old_neighbours:
+					continue
+				if not path.is_empty() and not old_neighbours.is_empty() \
+						and not has_target:
+					continue
+				var next_path: Array[Vector3i] = []
+				next_path.assign(path)
+				next_path.append(next)
+				if has_target:
+					if not _loop_connector_is_legal(massif, excavation,
+							public_set, walk_set, thickness, market_set,
+							loop_cells, anchor, target, next_path):
+						continue
+					var key := "%s>%s:%s" % [anchor, target, next_path]
+					if emitted.has(key):
+						continue
+					emitted[key] = true
+					var frontage := 0
+					var centre_distance := 0.0
+					for cell: Vector3i in next_path:
+						frontage += _addressable_sides(massif, excavation,
+							cell)
+						centre_distance += Vector2(float(cell.x),
+							float(cell.z)).length_squared()
+					out.append({"cells": next_path, "anchor": anchor,
+						"target": target, "frontage": frontage,
+						"score": -float(frontage) * 1000.0
+							+ float(next_path.size()) * 95.0
+							+ centre_distance * 0.25,
+						"tie": WarrenPassageLatticeRules.hash_key(
+							world_seed, 0x100D, next_path.back(),
+							anchor_index * 31 + next_path.size() * 7
+								+ excavation.loop_edges.size())})
+					anchor_candidates += 1
+					continue
+				var simulated_walk := walk_set.duplicate()
+				for cell: Vector3i in next_path:
+					simulated_walk[cell] = true
+				if _forms_untyped_public_square(simulated_walk, next):
+					continue
+				visited[next] = true
+				queue.append({"cell": next, "path": next_path})
+	return out
+
+
+static func _loop_connector_is_legal(massif: WarrenMassif,
+		excavation: WarrenExcavation, public_set: Dictionary,
+		walk_set: Dictionary, thickness: Dictionary, market_set: Dictionary,
+		loop_cells: Dictionary, anchor: Vector3i, target: Vector3i,
+		cells: Array[Vector3i]) -> bool:
+	if cells.is_empty() or cells.size() > MAX_LOOP_CONNECTOR_CELLS:
+		return false
+	var simulated_walk := walk_set.duplicate()
+	for index in cells.size():
+		var cell := cells[index]
+		if public_set.has(cell) or market_set.has(cell) \
+				or loop_cells.has(cell) \
+				or int(thickness.get(Vector2i(cell.x, cell.z), 0)) < 1 \
+				or _addressable_sides(massif, excavation, cell) < 1 \
+				or not WarrenPassageLatticeRules.slot_is_borable(massif,
+					excavation, cell,
+					WarrenPassageLatticeRules.HEADROOM_BANDS):
+			return false
+		var allowed_old_neighbours: Dictionary = {}
+		if index == 0:
+			allowed_old_neighbours[anchor] = true
+		if index == cells.size() - 1:
+			allowed_old_neighbours[target] = true
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			var neighbour := cell + Vector3i(direction.x, 0, direction.y)
+			if public_set.has(neighbour) \
+					and not allowed_old_neighbours.has(neighbour):
+				return false
+		simulated_walk[cell] = true
+		if _forms_untyped_public_square(simulated_walk, cell):
+			return false
+	return true
+
+
+static func _forms_untyped_public_square(walk_set: Dictionary,
+		join: Vector3i) -> bool:
+	## A macro walk node expands to a 2x2 player-width surface in the common
+	## volume plan.  Completing any four-node square here would therefore make
+	## an accidental broad floor.  The market is already present and the join is
+	## forbidden from entering it, so every square involving this new cell is
+	## necessarily untyped.
+	for offset_x in [-1, 0]:
+		for offset_z in [-1, 0]:
+			var origin := join + Vector3i(offset_x, 0, offset_z)
+			var complete := true
+			for dx in 2:
+				for dz in 2:
+					var cell := origin + Vector3i(dx, 0, dz)
+					if cell != join and not walk_set.has(cell):
+						complete = false
+			if complete:
+				return true
+	return false
 
 
 static func _grow_alley(world_seed: int, massif: WarrenMassif,

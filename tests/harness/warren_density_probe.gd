@@ -113,7 +113,7 @@ func _run_maze(city_seeds: Array[String], label: String,
 	## partition, assets, and composition so the new one-pass carver's topology
 	## cost and guarantees are visible without the retired search obscuring them.
 	var totals := {"sealed": 0, "failed": 0, "elapsed_ms": 0,
-		"passages": 0, "spine": 0, "alleys": 0, "markets": 0,
+		"passages": 0, "spine": 0, "alleys": 0, "markets": 0, "loops": 0,
 		"frontage": 0.0, "columns": 0.0, "two_sided": 0.0,
 		"covered": 0.0, "solid": 0.0, "partitioned": 0,
 		"partition_ms": 0, "parcels": 0, "mass_assignment": 0.0}
@@ -142,6 +142,7 @@ func _run_maze(city_seeds: Array[String], label: String,
 		totals.spine += int(audit.spine_cell_count)
 		totals.alleys += int(audit.alley_cell_count)
 		totals.markets += int(audit.market_cell_count)
+		totals.loops += int(audit.loop_join_count)
 		totals.frontage += float(audit.frontage_ratio)
 		totals.columns += float(audit.addressed_column_ratio)
 		totals.two_sided += float(audit.two_sided_passage_ratio)
@@ -171,11 +172,12 @@ func _run_maze(city_seeds: Array[String], label: String,
 				partition_summary = " partition_ms=%d parcels=%d mass_assignment=%.3f" \
 					% [partition_elapsed, parcels.parcels.size(), assignment]
 		print(("MAZE_DENSITY %s seed=%d %s ms=%d passages=%d spine=%d " \
-			+ "alleys=%d market=%d frontage=%.3f columns=%.3f two_sided=%.3f " \
+			+ "alleys=%d market=%d loops=%d frontage=%.3f columns=%.3f two_sided=%.3f " \
 			+ "covered=%.3f source_solid=%.3f thickness=%s%s") % [label,
 				city_seed, String(profile.scale_id), elapsed,
 				int(audit.passage_cell_count), int(audit.spine_cell_count),
 				int(audit.alley_cell_count), int(audit.market_cell_count),
+				int(audit.loop_join_count),
 				float(audit.frontage_ratio),
 				float(audit.addressed_column_ratio),
 				float(audit.two_sided_passage_ratio),
@@ -184,12 +186,13 @@ func _run_maze(city_seeds: Array[String], label: String,
 				str(audit.block_thickness_histogram), partition_summary])
 	var count := maxi(1, int(totals.sealed))
 	print(("MAZE_DENSITY %s TOTAL sealed=%d failed=%d mean_ms=%.1f " \
-		+ "passages=%.1f spine=%.1f alleys=%.1f market=%.1f frontage=%.3f " \
+		+ "passages=%.1f spine=%.1f alleys=%.1f market=%.1f loops=%.1f frontage=%.3f " \
 		+ "columns=%.3f two_sided=%.3f covered=%.3f source_solid=%.3f") % [
 			label, int(totals.sealed), int(totals.failed),
 			float(totals.elapsed_ms) / count, float(totals.passages) / count,
 			float(totals.spine) / count, float(totals.alleys) / count,
-			float(totals.markets) / count, float(totals.frontage) / count,
+			float(totals.markets) / count, float(totals.loops) / count,
+			float(totals.frontage) / count,
 			float(totals.columns) / count, float(totals.two_sided) / count,
 			float(totals.covered) / count, float(totals.solid) / count])
 	if measure_partition:

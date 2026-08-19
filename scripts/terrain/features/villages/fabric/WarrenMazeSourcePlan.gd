@@ -88,6 +88,8 @@ func seal() -> bool:
 		return _reject("market square is detached from its spine approach")
 	if summit_cell != excavation.route.back():
 		return _reject("summit arrival is not the spine terminus")
+	if excavation.loop_edges.is_empty():
+		return _reject("public passage graph is a branch tree without a loop join")
 	for column: Vector2i in massif.columns:
 		if not block_thickness.has(column):
 			return _reject("column %s has no block-thickness classification" % column)
@@ -156,6 +158,9 @@ func deterministic_signature() -> String:
 		for transition: Dictionary in lane.transitions as Array[Dictionary]:
 			parts.append("lt:%s>%s:%d" % [str(transition.from),
 				str(transition.to), int(transition.kind)])
+	for edge: Dictionary in excavation.loop_edges:
+		parts.append("loop:%s>%s:%d" % [str(edge.from), str(edge.to),
+			int(edge.kind)])
 	var air: Array[Vector3i] = []
 	air.assign(excavation.carved.keys())
 	air.sort_custom(Callable(WarrenMazeSourcePlan, "_cell_less"))
@@ -217,6 +222,7 @@ func _build_audit() -> Dictionary:
 		"market_cell_count": _market_cell_count(),
 		"market_approach_cell_count": market_zone.size(),
 		"market_square_cell_count": market_square_cells.size(),
+		"loop_join_count": excavation.loop_edges.size(),
 		"house_capable_column_count": house_capable,
 		"fronted_house_column_count": addressed_columns.size(),
 		# The sealed source invariant is path-centric: almost every public cell

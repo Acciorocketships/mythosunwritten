@@ -32,6 +32,12 @@ var route: Array[Vector3i] = []
 ## network as a whole. A lane is public realm and a street wall for ownership
 ## and addressing; it is not part of the route those gates measure.
 var lanes: Array[Dictionary] = []
+## Explicit graph edges which close an already carved lane back onto an older
+## public cell.  A loop edge owns no additional walk cell: its `from` and `to`
+## endpoints are adjacent cells already present in `route`/`lanes`.  Keeping
+## this separate from ordered lane walks lets the source remain a set of simple
+## non-revisiting paths while still sealing a cyclic public graph.
+var loop_edges: Array[Dictionary] = []
 var carved: Dictionary = {}
 var covered: Dictionary = {}
 var transitions: Array[Dictionary] = []
@@ -83,7 +89,38 @@ func seal() -> bool:
 		return false
 	if not _lanes_hang_off_the_public_realm(seen):
 		return false
+	if not _loop_edges_close_the_public_graph(seen):
+		return false
 	_sealed = true
+	return true
+
+
+func _loop_edges_close_the_public_graph(public_cells: Dictionary) -> bool:
+	var seen_edges: Dictionary = {}
+	for index in loop_edges.size():
+		var edge := loop_edges[index]
+		var from_cell := edge.get("from", Vector3i(2147483647, 0, 0)) \
+			as Vector3i
+		var to_cell := edge.get("to", Vector3i(2147483647, 0, 0)) \
+			as Vector3i
+		if not public_cells.has(from_cell) or not public_cells.has(to_cell):
+			last_rejection = "loop edge %d names a non-public endpoint" % index
+			return false
+		var delta := to_cell - from_cell
+		if delta.y != 0 or absi(delta.x) + absi(delta.z) != 1:
+			last_rejection = "loop edge %d is not one level cardinal seam" % index
+			return false
+		if int(edge.get("kind", -1)) != WarrenVolumeTransition.Kind.LEVEL:
+			last_rejection = "loop edge %d has a non-level seam kind" % index
+			return false
+		var left := from_cell if _cell_less(from_cell, to_cell) else to_cell
+		var right := to_cell if left == from_cell else from_cell
+		var key := "%d:%d:%d>%d:%d:%d" % [left.x, left.y, left.z,
+			right.x, right.y, right.z]
+		if seen_edges.has(key):
+			last_rejection = "duplicate loop edge %s" % key
+			return false
+		seen_edges[key] = true
 	return true
 
 
@@ -259,3 +296,11 @@ func headroom_slot(cell: Vector3i) -> Array[Vector3i]:
 	for band in range(cell.y, cell.y + HEADROOM_BANDS):
 		out.append(Vector3i(cell.x, band, cell.z))
 	return out
+
+
+static func _cell_less(a: Vector3i, b: Vector3i) -> bool:
+	if a.y != b.y:
+		return a.y < b.y
+	if a.z != b.z:
+		return a.z < b.z
+	return a.x < b.x
