@@ -188,6 +188,17 @@ func _ready() -> void:
 			(_fabric.audit.get("facade_family_counts", {}) as Dictionary).size(),
 			str(_fabric.audit.get("room_storey_kind_counts", {})),
 		])
+	print(("[warren_spatial_review] modular_boxes total=%d roofed_houses=%d " \
+		+ "support_courses=%d skywalks=%d partial_bearing=%d roofless=%d " \
+		+ "unclassified=%d") % [
+			int(_fabric.audit.get("modular_box_room_count", 0)),
+			int(_fabric.audit.get("modular_box_roofed_house_count", 0)),
+			int(_fabric.audit.get("modular_box_support_course_count", 0)),
+			int(_fabric.audit.get("modular_box_skywalk_count", 0)),
+			int(_fabric.audit.get("modular_box_partial_bearing_count", 0)),
+			int(_fabric.audit.get("modular_box_roofless_house_count", 0)),
+			int(_fabric.audit.get("modular_box_unclassified_count", 0)),
+		])
 	print(("[warren_spatial_review] composition pairs=%d strong_registration=%d " \
 		+ "facade_planes=%d same_kind=%d same_axis=%d roofs=%d pitched=%d " \
 		+ "flat=%d roof_terraces=%d bare_flat=%d caps=%d lean_tos=%d " \
@@ -695,8 +706,7 @@ func _capture_all() -> void:
 	views.append_array(_balcony_views())
 	views.append_array(_edge_nick_views())
 	for view: Dictionary in views:
-		if not _capture_filter.is_empty() \
-				and not String(view.id).contains(_capture_filter):
+		if not _capture_matches_filter(String(view.id)):
 			continue
 		_camera.fov = float(view.fov)
 		_camera.look_at_from_position(view.position as Vector3,
@@ -716,6 +726,17 @@ func _capture_all() -> void:
 		print("[warren_spatial_review] captured ", path)
 	_write_manifest()
 	get_tree().quit()
+
+
+func _capture_matches_filter(view_id: String) -> bool:
+	## A comma-separated review filter captures several related defect families
+	## through one expensive production solve (for example dormer,door,balcony).
+	if _capture_filter.is_empty():
+		return true
+	for token: String in _capture_filter.split(",", false):
+		if view_id.contains(token.strip_edges()):
+			return true
+	return false
 
 
 func _street_views() -> Array[Dictionary]:

@@ -420,6 +420,18 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 			"a 3 m foundation module must reach the stamped natural ground")
 		assert_eq(int(sealed.audit.foundation_rendered_face_count),
 			int(sealed.audit.foundation_expected_face_count))
+		assert_gt(int(sealed.audit.modular_box_room_count), 0,
+			"the reviewed seed must exercise compact modular construction")
+		assert_eq(int(sealed.audit.modular_box_room_count),
+			int(sealed.audit.modular_box_roofed_house_count) \
+				+ int(sealed.audit.modular_box_support_course_count) \
+				+ int(sealed.audit.modular_box_skywalk_count),
+			"every 3 m cuboid must be a roofed house, a borne stack course, " \
+				+ "or a typed two-ended skywalk")
+		assert_eq(int(sealed.audit.modular_box_partial_bearing_count), 0,
+			"a 3 m room may not become a bracketed box jutting from a facade")
+		assert_eq(int(sealed.audit.modular_box_roofless_house_count), 0)
+		assert_eq(int(sealed.audit.modular_box_unclassified_count), 0)
 		assert_eq(int(sealed.audit.orphan_exterior_door_module_count), 0,
 			"a visible facade door must be an entrance or typed private portal")
 		assert_eq(int(sealed.audit.entrance_surface_gap_count), 0,

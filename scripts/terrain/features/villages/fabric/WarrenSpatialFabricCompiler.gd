@@ -69,6 +69,17 @@ static func solve(source: WarrenSpatialPlan,
 	if roofs.is_empty():
 		return null
 	var roof_audit := last_audit.duplicate(true)
+	var modular_box_audit := _modular_box_use_audit(source, program, rooms,
+		roofs)
+	if int(modular_box_audit.get("modular_box_unclassified_count", 0)) > 0 \
+			or int(modular_box_audit.get("modular_box_roofless_house_count", 0)) \
+				> 0 \
+			or int(modular_box_audit.get("modular_box_partial_bearing_count", 0)) \
+				> 0:
+		last_failure = "spatial modular-box contract failed: %s" % \
+			JSON.stringify(modular_box_audit.get(
+				"modular_box_invalid_details", []))
+		return null
 	var result := SettlementFabricPlan.new(StringName("%s.fabric" % \
 		source.stable_id))
 	if not result.set_public_realm(realm):
@@ -130,6 +141,7 @@ static func solve(source: WarrenSpatialPlan,
 	lineage.merge(room_audit, true)
 	lineage.merge(feature_audit, true)
 	lineage.merge(roof_audit, true)
+	lineage.merge(modular_box_audit, true)
 	lineage["retained_foundation_cell_count"] = int(
 		foundation_result.get("cell_count", 0))
 	lineage["retained_foundation_column_count"] = int(
@@ -163,6 +175,141 @@ static func solve(source: WarrenSpatialPlan,
 		return null
 	last_audit = audit
 	return result
+
+
+static func _modular_box_use_audit(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, room_units: Array[FabricUnit],
+		roof_units: Array[FabricUnit]) -> Dictionary:
+	## A compact 3 m x 3 m room is useful vocabulary, but it may not become a
+	## pasted-on voxel. Every such room must be one of the authored uses reviewed
+	## for the town: a fully borne course in a real stack, a two-ended occupied
+	## bridge, or the top room of a compact house with an actual roof. Larger
+	## cantilevers have their own typed support transaction; a tower-sized room
+	## never inherits that exception.
+	var room_by_id: Dictionary = {}
+	var room_by_unit_id: Dictionary = {}
+	var unit_by_room_id: Dictionary = {}
+	var room_id_by_cell: Dictionary = {}
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			room_by_id[room.stable_id] = room
+			for cell: Vector3i in room.private_cells:
+				room_id_by_cell[cell] = room.stable_id
+	for unit: FabricUnit in room_units:
+		var room_id := StringName(String(unit.stable_id).trim_prefix(
+			"spatial.fabric."))
+		if not room_by_id.has(room_id):
+			continue
+		unit_by_room_id[room_id] = unit
+		room_by_unit_id[unit.stable_id] = room_by_id[room_id]
+	var roofs_by_parent: Dictionary = {}
+	for roof: FabricUnit in roof_units:
+		var recipe := program.recipe(roof.recipe_id)
+		if recipe == null or not recipe.has_tag(&"roof"):
+			continue
+		for parent_id: StringName in roof.parent_ids:
+			if not room_by_unit_id.has(parent_id):
+				continue
+			var owned := roofs_by_parent.get(parent_id,
+				[] as Array[FabricUnit]) as Array[FabricUnit]
+			owned.append(roof)
+			roofs_by_parent[parent_id] = owned
+	var tower_count := 0
+	var roofed_house_count := 0
+	var support_course_count := 0
+	var skywalk_count := 0
+	var roofless_house_count := 0
+	var partial_bearing_count := 0
+	var unclassified_count := 0
+	var details: Array[Dictionary] = []
+	var invalid_details: Array[Dictionary] = []
+	var room_ids: Array[StringName] = []
+	room_ids.assign(room_by_id.keys())
+	room_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	for room_id: StringName in room_ids:
+		var room := room_by_id[room_id] as WarrenRoomStamp
+		if room.kind != &"tower":
+			continue
+		tower_count += 1
+		var unit := unit_by_room_id.get(room_id) as FabricUnit
+		var upper_room_ids: Dictionary = {}
+		var footprint_columns: Dictionary = {}
+		var borne_columns: Dictionary = {}
+		for cell: Vector3i in room.private_cells:
+			if cell.y == room.lattice_origin.y:
+				footprint_columns[Vector2i(cell.x, cell.z)] = true
+			if cell.y != room.lattice_origin.y \
+					+ WarrenSpatialGrid.STOREY_CELLS - 1:
+				continue
+			var upper_id := StringName(room_id_by_cell.get(cell + Vector3i.UP,
+				&""))
+			if not upper_id.is_empty() and upper_id != room_id:
+				upper_room_ids[upper_id] = true
+		if room.terrain_bearing:
+			borne_columns = footprint_columns.duplicate()
+		elif unit != null:
+			for parent_id: StringName in unit.parent_ids:
+				var parent := room_by_unit_id.get(parent_id) as WarrenRoomStamp
+				if parent == null:
+					continue
+				for column_value: Variant in footprint_columns.keys():
+					var column := column_value as Vector2i
+					if parent.has_private_cell(Vector3i(column.x,
+							room.lattice_origin.y - 1, column.y)):
+						borne_columns[column] = true
+		var bridge_supports := room.audit.get(
+			"bridge_support_room_ids", []) as Array
+		var is_skywalk := bridge_supports.size() == 2
+		var owned_roofs := roofs_by_parent.get(
+			unit.stable_id if unit != null else &"",
+			[] as Array[FabricUnit]) as Array[FabricUnit]
+		var classification := &""
+		if is_skywalk:
+			classification = &"occupied_skywalk"
+			skywalk_count += 1
+		elif borne_columns.size() != footprint_columns.size():
+			classification = &"partial_bearing"
+			partial_bearing_count += 1
+		elif not upper_room_ids.is_empty():
+			classification = &"support_course"
+			support_course_count += 1
+		elif not owned_roofs.is_empty():
+			classification = &"roofed_compact_house"
+			roofed_house_count += 1
+		else:
+			classification = &"roofless_house"
+			roofless_house_count += 1
+		if unit == null or classification.is_empty():
+			classification = &"unclassified"
+			unclassified_count += 1
+		var roof_ids: Array[StringName] = []
+		for roof: FabricUnit in owned_roofs:
+			roof_ids.append(roof.stable_id)
+		var detail := {"room_id": room_id,
+			"classification": classification,
+			"terrain_bearing": room.terrain_bearing,
+			"bearing_column_count": borne_columns.size(),
+			"footprint_column_count": footprint_columns.size(),
+			"upper_room_ids": upper_room_ids.keys(),
+			"roof_unit_ids": roof_ids,
+			"bridge_support_count": bridge_supports.size()}
+		if details.size() < 32:
+			details.append(detail)
+		if classification in [&"partial_bearing", &"roofless_house",
+				&"unclassified"] and invalid_details.size() < 16:
+			invalid_details.append(detail)
+	return {
+		"modular_box_room_count": tower_count,
+		"modular_box_roofed_house_count": roofed_house_count,
+		"modular_box_support_course_count": support_course_count,
+		"modular_box_skywalk_count": skywalk_count,
+		"modular_box_roofless_house_count": roofless_house_count,
+		"modular_box_partial_bearing_count": partial_bearing_count,
+		"modular_box_unclassified_count": unclassified_count,
+		"modular_box_details": details,
+		"modular_box_invalid_details": invalid_details,
+	}
 
 
 static func _retained_foundation_cells(source: WarrenSpatialPlan) -> Dictionary:

@@ -1864,7 +1864,9 @@ func _assert_composed_spatial_features(plan: WarrenSpatialPlan) -> void:
 			"every balcony must turn back into an inhabited side wall")
 		assert_eq(int(balcony.audit.balcony_usable_depth_cells), 3)
 		assert_eq(int(balcony.audit.balcony_door_count), 1)
-		assert_eq(int(balcony.audit.balcony_guard_segment_count), 9)
+		assert_eq(int(balcony.audit.balcony_guard_segment_count), 8,
+			"the parent building closes both inner edges; neither receives a " \
+			+ "redundant rail or doorway-adjacent post")
 		assert_eq(int(balcony.audit.balcony_open_guard_seam_count), 1)
 		assert_eq(int(balcony.audit.balcony_door_guard_opening_count), 1)
 		assert_eq(int(balcony.audit.balcony_stair_count), 1)

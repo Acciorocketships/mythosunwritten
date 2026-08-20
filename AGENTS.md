@@ -311,7 +311,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   so east/west faces use bake-time X-mirrored variants with corrected winding, normals, tangents,
   collision, and material surfaces. Runtime transforms remain proper rotations; rectangular shells
   must resolve to exactly one post at every corner, never doubled diagonal corners and empty opposite
-  corners. The stackable townhouse may fill
+  corners. Every compact 3 m by 3 m modular room is also classified at the final fabric boundary:
+  it must be a fully borne stack/foundation course, a two-ended occupied skywalk, or the roofed top
+  of a compact house. Partial-bearing tower rooms, roofless compact houses, and unclassified
+  micro-boxes reject the transaction; larger jetties remain governed by their separate exact
+  bracket/support proof. The stackable townhouse may fill
   upper-route pockets without admitting sideways buildings. A greedy three-or-more-storey stack is
   admitted only after a lower complete roof-step neighbor already exists, and exact selection rejects
   every remaining unstepped tall stack. A narrow tall lineage is accepted only when it has a real

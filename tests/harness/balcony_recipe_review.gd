@@ -75,6 +75,11 @@ func _run() -> void:
 		for view: Dictionary in [
 			{"id": "door-axis", "position": Vector3(0.0, 5.2, 12.0),
 				"target": Vector3(0.0, 4.1, 2.6)},
+			# Stand inside the perimeter so the outer guard cannot occlude the
+			# threshold. This is the adversarial view for a redundant facade-side
+			# rail or a terminal post left in the authored doorway approach.
+			{"id": "door-threshold", "position": Vector3(0.0, 4.45, 3.45),
+				"target": Vector3(0.0, 4.35, 1.25)},
 			{"id": "stair-profile", "position": Vector3(-10.0, 4.5, 8.0)
 					if String(case_value.id).begins_with("left")
 					else Vector3(10.0, 4.5, 8.0),

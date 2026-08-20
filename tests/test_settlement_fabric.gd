@@ -362,6 +362,19 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 	assert_eq(deep_balcony.placements.filter(func(placement: Dictionary) -> bool:
 		return String(placement.id).begins_with("support.diagonal.")).size(), 4,
 		"the deeper projection needs legible full-storey diagonal supports")
+	for wrap_id: StringName in [&"balcony.wrap.left.blue.planted",
+			&"balcony.wrap.right.orange.planted"]:
+		var wrap_balcony := program.recipe(wrap_id)
+		assert_not_null(wrap_balcony)
+		for placement: Dictionary in wrap_balcony.placements:
+			if not String(placement.id).begins_with("guard."):
+				continue
+			var guard_pose := placement.transform as Transform3D
+			var horizontal_guard := absf(guard_pose.basis.x.x) > 0.9
+			assert_false(horizontal_guard and is_equal_approx(
+				guard_pose.origin.z, -FabricRecipe.CELL_SIZE * 0.5),
+				"the complete parent facade is structural backing; a redundant " \
+				+ "rail there puts its terminal post in the door approach")
 	var market := program.recipe(&"market.covered.01.garden")
 	assert_not_null(market)
 	assert_true(market.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_SMALL))

@@ -3952,8 +3952,16 @@ static func _wrap_balcony_recipe(recipe_id: StringName, theme: StringName,
 	recipe_value.add_placement(&"floor.return", SETBACK_CAP,
 		modules.walk_aligned_transform(SETBACK_CAP, return_pose, 0.0))
 	var parent_edges: Dictionary = {}
-	parent_edges[WarrenSpatialGrid._face_key(Vector3i.ZERO,
-		Vector3i.FORWARD)] = true
+	# Both cells in the 3 m inner row terminate against the parent facade.  The
+	# former recipe opened only the exact socket cell and then emitted a railing
+	# along the neighboring half of that same wall.  Its terminal post landed in
+	# the authored arch's clear approach, so the door looked fenced off even
+	# though the topology called the threshold open.  The building is already the
+	# guard on this entire edge; keep both facade halves free of rails and posts.
+	for parent_cell: Vector3i in [Vector3i.ZERO,
+			Vector3i(corner_x, 0, 0)]:
+		parent_edges[WarrenSpatialGrid._face_key(parent_cell,
+			Vector3i.FORWARD)] = true
 	var side_cell := Vector3i(corner_x, 0, -1)
 	var side_to_room := Vector3i.RIGHT if side < 0 else Vector3i.LEFT
 	parent_edges[WarrenSpatialGrid._face_key(side_cell, side_to_room)] = true
