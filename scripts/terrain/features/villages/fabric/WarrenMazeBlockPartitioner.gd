@@ -117,7 +117,7 @@ static func _translate_claims(source: WarrenMazeSourcePlan,
 	if not plan.seal(parcels):
 		last_failure = "maze parcel plan rejected: %s" % plan.last_rejection
 		return null
-	var ownership := _ownership_audit(source, volume, parcels)
+	var ownership := _ownership_audit_translated(source, volume, parcels)
 	last_diagnostic = {
 		"translated_claim_count": source.parcel_claims.size(),
 		"parcel_count": parcels.size(),
@@ -321,6 +321,12 @@ static func _neighbor_contact_count(footprint: Array[Vector2i],
 static func _ownership_audit(source: WarrenMazeSourcePlan,
 		volume: WarrenVolumePlan,
 		parcels: Array[WarrenBuildingParcel]) -> Dictionary:
+	## LEGACY-path ownership audit only (the greedy shapes-menu path in
+	## `partition()`). Its fixtures always carve directly and never run
+	## P3/P4, so `source.reservations`/`column_edits`/`foundation_columns` are
+	## always empty here and this stays byte-identical to what it always was.
+	## The TRANSLATED path (`_translate_claims`) uses `_ownership_audit_translated`
+	## below instead -- see that function's own header for why.
 	var owned: Dictionary = {}
 	var owned_columns: Dictionary = {}
 	var family_counts: Dictionary = {}
@@ -345,11 +351,11 @@ static func _ownership_audit(source: WarrenMazeSourcePlan,
 	# parcel's own `proposal().occupied_cells` is expressed in (the fine
 	# FabricRecipe render grid, doubled in x/z) -- that mismatch is exactly
 	# why the loop above only ever registers a coincidental few of a
-	# parcel's own cells as "owned", pre-existing behaviour this change does
-	# not touch. Reused for BOTH partition paths: the legacy greedy path
-	# always sees an empty `source.reservations`/`column_edits` (its
-	# fixtures carve directly, never run P3/P4), so this is a byte-identical
-	# no-op there.
+	# parcel's own cells as "owned". On THIS (legacy) path the two loops
+	# below are always a no-op (empty reservations/foundation_columns, per
+	# this function's own header); the aliasing bug in the loop above stays
+	# untouched here -- it only matters for the translated path, which reads
+	# real ledger data and gets the fix in `_ownership_audit_translated`.
 	for reservation: Dictionary in source.reservations:
 		for column: Vector2i in reservation.get("cells", []) as Array[Vector2i]:
 			_mark_owned_column_range(volume, column,
@@ -362,6 +368,65 @@ static func _ownership_audit(source: WarrenMazeSourcePlan,
 		_mark_owned_column_range(volume, column, source.massif.base_at(column),
 			source.effective_base(column), &"maze.foundation", owned,
 			owned_columns)
+	var post_carve_solid := volume.mass_cells.size()
+	return {
+		"post_carve_solid_cell_count": post_carve_solid,
+		"owned_solid_cell_count": owned.size(),
+		"owned_solid_ratio": float(owned.size()) \
+			/ float(maxi(1, post_carve_solid)),
+		"owned_column_count": owned_columns.size(),
+		"footprint_family_counts": family_counts,
+	}
+
+
+static func _ownership_audit_translated(source: WarrenMazeSourcePlan,
+		volume: WarrenVolumePlan,
+		parcels: Array[WarrenBuildingParcel]) -> Dictionary:
+	## TRANSLATED-path ownership audit. `_ownership_audit` above (kept for the
+	## legacy greedy path only) reads a parcel's owned cells through
+	## `WarrenParcelConstruction.proposal(parcel).occupied_cells`, which is
+	## expressed on the FINE render grid (doubled in x/z -- see that
+	## function's own comment) and only coincidentally aliases against
+	## `volume.has_mass`'s MACRO cells; on the legacy path that mismatch was
+	## always moot (its fixtures never populate reservations/column_edits), but
+	## on the translated path it silently mis-counts almost every claim's own
+	## footprint by coincidental grid alias -- sometimes crediting cells that
+	## are not really the claim's own, sometimes missing cells that are, with
+	## no consistent direction (measured both ways across the pinned seeds:
+	## see the final-fix report for old vs. new numbers).
+	##
+	## `WarrenBuildingParcel.occupied_cells()` (as opposed to
+	## `WarrenParcelConstruction.proposal(parcel)`'s fine-grid field of the
+	## same name) is already exactly footprint x [base_band, top_band) at the
+	## SAME macro resolution `volume.has_mass` reads -- `seal()` built it that
+	## way and required `has_mass` true for every cell in it before it would
+	## even seal -- so this reads that directly instead of going through the
+	## fine-grid detour.
+	##
+	## Reservation footprints are read exactly as the legacy audit already
+	## reads them (effective_base/effective_top over a reservation's own
+	## cells -- already macro-resolution, no bug there). The legacy audit's
+	## foundation-crediting loop (marking [massif.base_at, effective_base) as
+	## owned) is dropped here outright: WarrenMazeVolumeAdapter._edited_massif
+	## raises an edited column's OWN base to effective_base before building
+	## `volume`, so `volume` never contains mass below that raised floor to
+	## begin with -- the range that loop marks can never be solid in `volume`,
+	## so it could never register anything. Measured as a no-op, not kept as
+	## a conservative extra check.
+	var owned: Dictionary = {}
+	var owned_columns: Dictionary = {}
+	var family_counts: Dictionary = {}
+	for parcel: WarrenBuildingParcel in parcels:
+		for cell: Vector3i in parcel.occupied_cells():
+			owned[cell] = parcel.stable_id
+			owned_columns[Vector2i(cell.x, cell.z)] = parcel.stable_id
+		var family := "%dx%d" % [parcel.width_cells, parcel.depth_cells]
+		family_counts[family] = int(family_counts.get(family, 0)) + 1
+	for reservation: Dictionary in source.reservations:
+		for column: Vector2i in reservation.get("cells", []) as Array[Vector2i]:
+			_mark_owned_column_range(volume, column,
+				source.effective_base(column), source.effective_top(column),
+				&"maze.reservation", owned, owned_columns)
 	var post_carve_solid := volume.mass_cells.size()
 	return {
 		"post_carve_solid_cell_count": post_carve_solid,

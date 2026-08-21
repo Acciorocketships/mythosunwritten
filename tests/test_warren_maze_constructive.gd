@@ -392,6 +392,60 @@ func test_stamp_edits_stay_within_one_band_and_own_apron() -> void:
 			"stamp edit at %s is not inside any claim's footprint or its apron" \
 				% column)
 
+	# Final-review fix wave (finding 1): a batch of offender edits is recorded
+	# all-or-nothing via WarrenMazeStampPass._record_offender_batch, so a real
+	# stamp run can never leave a partially-committed batch behind. There is
+	# no dedicated "partial batch" outcome key -- confirming stamp_outcomes
+	# never grows one is a canary against a future regression reintroducing
+	# the per-offender early-return the fix replaced.
+	var stamp_outcomes := plan.audit.get("stamp_outcomes", {}) as Dictionary
+	assert_false(stamp_outcomes.has("partial_batch"),
+		"a partial_batch outcome key would mean the atomic-commit invariant broke")
+
+
+func test_record_offender_batch_is_all_or_nothing_when_an_offender_hosts_a_passage() -> void:
+	## Direct unit test on WarrenMazeStampPass._record_offender_batch (finding
+	## 1's strongest form): a synthetic batch of two offenders where the FIRST
+	## is individually valid and the SECOND hosts a passage on some band. The
+	## old code (a bare loop calling plan.record_edit per offender, aborting
+	## on the first rejection) would have already committed the first
+	## offender's edit before ever reaching the second -- stranding a floor/top
+	## edit with no claim recorded to match it. The fixed batch helper
+	## validates every offender first and commits nothing if any of them fails.
+	var plan := _unsealed_fixture()
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	assert_false(plan.passage_cells().is_empty())
+
+	var passage_columns: Dictionary = {}
+	for cell: Vector3i in plan.passage_cells():
+		passage_columns[Vector2i(cell.x, cell.z)] = true
+	var passage_column := Vector2i(plan.passage_cells()[0].x,
+		plan.passage_cells()[0].z)
+
+	var clean_column: Vector2i
+	var found_clean := false
+	for column: Vector2i in plan.massif.columns.keys():
+		if not passage_columns.has(column):
+			clean_column = column
+			found_clean = true
+			break
+	assert_true(found_clean,
+		"fixture must contain at least one column with no passage on any band")
+
+	var floor_band := plan.massif.base_at(clean_column)
+	var top_band := plan.massif.top_at(clean_column)
+	var outcomes: Dictionary = {}
+	var offenders: Array[Vector2i] = [clean_column, passage_column]
+	var committed := WarrenMazeStampPass._record_offender_batch(plan, offenders,
+		floor_band, top_band, &"stamp", outcomes)
+
+	assert_false(committed,
+		"a batch containing a passage-hosting offender must not commit")
+	assert_true(plan.column_edits.is_empty(),
+		"zero edits may be recorded when any offender in the batch is rejected -- " \
+			+ "including the earlier, individually-valid offender")
+	assert_eq(int(outcomes.get("edit_rejected", 0)), 1)
+
 
 func test_foundations_are_derived_from_datum_minus_terrain() -> void:
 	## Same sloped-fixture technique as
@@ -693,3 +747,73 @@ func test_seal_preserves_a_nonempty_foundation_columns_audit() -> void:
 	assert_false(foundation_columns.is_empty(),
 		"a slope this steep must raise at least one claimed column's floor " \
 			+ "above terrain, and seal() must not wipe it from the audit")
+
+
+func test_seal_rejects_a_stamp_edit_outside_every_claims_apron() -> void:
+	## Finding 4 (final-review fix wave): seal() must validate that every
+	## stamp-phase edit sits within one column of some claim's own footprint --
+	## a doctored plan with a stamp edit far from every claim must fail seal
+	## with a named, apron-specific reason. WarrenMazeStampPass's own candidate
+	## enumeration is supposed to guarantee this by construction; this test
+	## proves seal() actually re-checks it rather than trusting that.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var plan := WarrenMazeSitePlanner.plan(12, {}, profile, &"stamp")
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	assert_false(plan.is_sealed())
+	assert_false(plan.parcel_claims.is_empty(),
+		"fixture must have real claims to build an apron against")
+
+	var apron_columns: Dictionary = {}
+	for claim: Dictionary in plan.parcel_claims:
+		for member: Vector2i in claim.footprint as Array[Vector2i]:
+			apron_columns[member] = true
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				apron_columns[member + direction] = true
+	var passage_columns: Dictionary = {}
+	for cell: Vector3i in plan.passage_cells():
+		passage_columns[Vector2i(cell.x, cell.z)] = true
+
+	var offending_column: Vector2i
+	var found := false
+	for column: Vector2i in plan.massif.columns.keys():
+		if apron_columns.has(column) or passage_columns.has(column):
+			continue
+		offending_column = column
+		found = true
+		break
+	assert_true(found,
+		"fixture must contain a column outside every claim's footprint+apron " \
+			+ "to doctor an out-of-apron edit onto")
+
+	# Doctored directly on the ledger (bypassing record_edit) so the edit is
+	# otherwise fully legal -- at the pre-edit surface (drift 0, well inside
+	# the +/-1 budget), not a passage column, not sinking below terrain --
+	# isolating the apron rule as the only thing that can reject it.
+	plan.column_edits[offending_column] = {
+		"floor_band": plan.massif.base_at(offending_column),
+		"top_band": plan.massif.top_at(offending_column),
+		"phase": &"stamp",
+	}
+	assert_false(plan.seal(), "an out-of-apron stamp edit must fail seal")
+	assert_true(plan.last_rejection.contains("apron"),
+		"expected an apron-named rejection, got: %s" % plan.last_rejection)
+
+
+func test_seal_rejects_pairwise_overlapping_claims() -> void:
+	## Finding 4 (final-review fix wave): claims must be pairwise disjoint --
+	## a doctored plan with two claims sharing a footprint column must fail
+	## seal with a named, disjointness-specific reason.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var plan := WarrenMazeSitePlanner.plan(12, {}, profile, &"stamp")
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	assert_false(plan.is_sealed())
+	assert_gte(plan.parcel_claims.size(), 1,
+		"fixture must have at least one real claim to duplicate")
+
+	var duplicate := (plan.parcel_claims[0] as Dictionary).duplicate(true)
+	plan.parcel_claims.append(duplicate)
+	assert_false(plan.seal(),
+		"two claims sharing a footprint column must fail seal")
+	assert_true(plan.last_rejection.contains("disjoint"),
+		"expected a claims-must-be-disjoint rejection, got: %s" \
+			% plan.last_rejection)

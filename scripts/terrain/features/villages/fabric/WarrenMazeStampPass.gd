@@ -670,6 +670,39 @@ static func _compare_candidates(left: Dictionary, right: Dictionary) -> bool:
 	return int(left.shape_index) < int(right.shape_index)
 
 
+## All-or-nothing offender commit: validates every offender in the batch
+## against WarrenMazeSourcePlan.can_record_edit (a passage-hosting column, or
+## a floor sinking below terrain -- record_edit's own gates, checked without
+## mutating the ledger) BEFORE recording any of them. Only once the whole
+## batch clears does it call record_edit for real, once per offender. All
+## four call sites in this file (direct rect/L placement, back-extension,
+## lateral extension) used to call plan.record_edit per offender inline and
+## abort mid-loop on the first rejection -- which could leave an earlier
+## offender in the same batch already committed to the ledger with no claim
+## ever recorded to match it (an orphaned floor/top edit), since a rejection
+## only ever happens when an offender turns out to host a passage on some
+## other band (state the ±1-band datum gate in _footprint_offenders never
+## checks) or -- for extension, where budget/geometry gates already ran --
+## essentially never. Returns false (and bumps "edit_rejected" once) without
+## recording anything if any offender fails; true once every offender in the
+## batch is actually committed.
+static func _record_offender_batch(plan: WarrenMazeSourcePlan,
+		offenders: Array[Vector2i], floor_band: int, top_band: int,
+		phase: StringName, outcomes: Dictionary) -> bool:
+	for column: Vector2i in offenders:
+		if not plan.can_record_edit(column, floor_band):
+			_bump(outcomes, "edit_rejected")
+			return false
+	for column: Vector2i in offenders:
+		if not plan.record_edit(column, floor_band, top_band, phase):
+			# Unreachable given the validation pass above (can_record_edit
+			# mirrors record_edit's own gates exactly), but never leave a
+			# partially-committed batch if the two ever somehow disagree.
+			_bump(outcomes, "edit_rejected")
+			return false
+	return true
+
+
 static func _run_pass(plan: WarrenMazeSourcePlan,
 		candidates: Array[Dictionary], claimed_columns: Dictionary,
 		outcomes: Dictionary, lineage_seed: Dictionary) -> void:
@@ -694,10 +727,9 @@ static func _try_place_rect(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 		_bump(outcomes, "insufficient_height")
 		return
 	var offenders := candidate.offenders as Array[Vector2i]
-	for column: Vector2i in offenders:
-		if not plan.record_edit(column, floor_band, top_band, &"stamp"):
-			_bump(outcomes, "edit_rejected")
-			return
+	if not _record_offender_batch(plan, offenders, floor_band, top_band,
+			&"stamp", outcomes):
+		return
 	plan.parcel_claims.append({"footprint": footprint.duplicate(),
 		"floor_band": floor_band, "top_band": top_band,
 		"door_walk": candidate.walk as Vector3i,
@@ -726,10 +758,9 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 		_bump(outcomes, "insufficient_height")
 		return
 	var offenders := candidate.offenders as Array[Vector2i]
-	for column: Vector2i in offenders:
-		if not plan.record_edit(column, floor_band, top_band, &"stamp"):
-			_bump(outcomes, "edit_rejected")
-			return
+	if not _record_offender_batch(plan, offenders, floor_band, top_band,
+			&"stamp", outcomes):
+		return
 	lineage_seed.count = int(lineage_seed.count) + 1
 	var lineage := StringName("maze.lineage.%d" % int(lineage_seed.count))
 	plan.parcel_claims.append({"footprint": main.duplicate(),
@@ -821,11 +852,9 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 			floor_band, false)
 		if extended_top < top_band:
 			break
-		for column: Vector2i in offenders:
-			if not plan.record_edit(column, floor_band, extended_top,
-					&"stamp"):
-				_bump(outcomes, "edit_rejected")
-				return
+		if not _record_offender_batch(plan, offenders, floor_band,
+				extended_top, &"stamp", outcomes):
+			return
 		for column: Vector2i in row:
 			claimed_columns[column] = true
 		footprint.append_array(row)
@@ -941,11 +970,9 @@ static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
 			false)
 		if extended_top < top_band:
 			break
-		for column: Vector2i in offenders:
-			if not plan.record_edit(column, floor_band, extended_top,
-					&"stamp"):
-				_bump(outcomes, "edit_rejected")
-				return
+		if not _record_offender_batch(plan, offenders, floor_band,
+				extended_top, &"stamp", outcomes):
+			return
 		for column: Vector2i in row:
 			claimed_columns[column] = true
 		footprint.append_array(row)

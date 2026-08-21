@@ -505,8 +505,31 @@ superseded by the following controller-authoritative criteria:
   seeds, and every translated cell publishes its full
   `maze_ownership_breakdown` quadruple (claimed / reserved /
   buildable_unclaimed / unbuildable — see table).
-- **(f)** buildable_unclaimed ratio ≤ 0.40 — **measured**: every translated
-  cell clears this comfortably; the worst case (compact seed 9) is 0.240.
+- **(f)** buildable_unclaimed/(claimed+reserved+buildable_unclaimed) ≤ 0.40 —
+  **correction (final-review fix wave, 2026-08-21)**: the figure originally
+  recorded here (worst case 0.240, "every translated cell clears this
+  comfortably") used the wrong denominator — claimed+reserved+
+  buildable_unclaimed+**unbuildable** (the full column count) instead of the
+  criterion's own accounted-for total, claimed+reserved+buildable_unclaimed.
+  Recomputed per cell from the table's own claimed/reserved/buildable_unclaimed
+  quadruples below: **20/22 cells pass ≤ 0.40 under the correct denominator**;
+  two exceed it and are recorded as acknowledged outliers (the same treatment
+  (e) already gives its sub-0.35 ownership cells) rather than silently
+  corrected away:
+  - **compact seed 9**: 23/(17+6+23) = 23/46 = **0.500**
+  - **standard seed 3**: 24/(16+16+24) = 24/56 = **0.429**
+
+  The gate itself is enforced only on the two pinned seeds
+  (`test_translator_partition_is_one_to_one_with_claims`, seeds 4 and 12
+  compact, `tests/test_warren_maze_constructive.gd`) — using the same correct
+  denominator the test code already computed (`accounted_for =
+  claimed+reserved+buildable_unclaimed`; only this doc's prose had the wrong
+  figure). Both pinned cells pass comfortably:
+  - **compact seed 4**: 19/(26+17+19) = 19/62 = **0.3065**
+  - **compact seed 12**: 23/(31+10+23) = 23/64 = **0.3594**
+
+  Per-seed corpus-wide floor stays deferred to slice 2, matching the same
+  scope split (e) already draws for its own sub-0.35 outliers.
 - **(g)** deterministic signatures — each translated cell's source-plan
   signature (`deterministic_signature().sha256_text().left(12)`) is printed
   in the table for the record. The actual re-run-twice determinism proof is
@@ -626,6 +649,37 @@ harness-only change:
 | `tests/test_warren_maze_carver.gd` | 7/7 | **7/7 passed** |
 | `tests/test_warren_spatial_fabric_compiler.gd` | 11/11 | **11/11 passed** |
 | `warren_solve_profile.gd --city-seed 166029932451774690 --scale compact --no-rank-probe` (production route-first path) | `sealed=true` | `PROFILE solve total_ms=28322 sealed=true` |
+
+### Final-review fix wave addendum (2026-08-21)
+
+Four findings from the whole-branch review were fixed after the measurements
+above (full detail:
+`.superpowers/sdd/2026-08-20-constructive-maze-slice1/final-fix-report.md`):
+transactional offender-batch commits in `WarrenMazeStampPass` (finding 1),
+this doc's criterion (f) denominator correction above (finding 2), a
+macro-resolution rewrite of the TRANSLATED path's ownership-ratio numerator
+in `WarrenMazeBlockPartitioner` (finding 3), and new seal-side ledger
+invariants — apron membership and pairwise claim disjointness — in
+`WarrenMazeSourcePlan.seal()` (finding 4).
+
+Finding 3 changed what `maze_owned_solid_ratio` actually measures on the
+TRANSLATED path: the old numerator read a parcel's owned cells through
+`WarrenParcelConstruction.proposal(parcel).occupied_cells`, expressed on a
+different (fine, doubled) grid than `volume.has_mass`, so it only
+coincidentally aliased against the real macro cells — sometimes over-,
+sometimes under-crediting a seed's true ownership. The new numerator reads
+`WarrenBuildingParcel.occupied_cells()` directly (already the exact macro
+`footprint x [base_band, top_band)`, verified `has_mass` at seal time), so
+it is the first accurate measurement of this ratio the translated path has
+had. Under it, the **18/18 constructive-suite gate above is now 20/21**
+(two new seal-rejection tests and one new offender-batch unit test were also
+added; 20/21, not 18/18, is the current total): `compact seed 4`'s ratio rose
+0.3783 → 0.4213 (clears 0.35), but `compact seed 12`'s fell 0.3860 → **0.3360
+— genuinely below the pinned-seed 0.35 floor**. Per the finding's own
+instruction, the `test_translator_partition_is_one_to_one_with_claims`
+assertion was left unweakened rather than adjusted to fit; this one failure
+is an accepted, reported concern (DONE_WITH_CONCERNS), not a masked
+regression — see the final-fix report for the full accounting.
 
 ### Debug-view render (for the record)
 

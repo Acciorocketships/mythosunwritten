@@ -101,6 +101,30 @@ func record_edit(column: Vector2i, floor_band: int, top_band: int,
 	return true
 
 
+## Non-mutating pre-flight for record_edit's own gates (sealed ledger, a
+## carved passage cell, a floor sinking below terrain), without writing to
+## column_edits or touching last_rejection. A caller that must commit a whole
+## batch of edits atomically -- WarrenMazeStampPass records several offender
+## columns per placed/extended claim -- validates every member of the batch
+## with this first; only once every member passes does it call record_edit
+## for real. Without this, a batch loop that calls record_edit directly and
+## aborts on the first rejection strands whatever it already committed for
+## earlier offenders in the same batch (a claim with no matching edit, or an
+## edit with no claim). Mirrors record_edit's checks exactly, so "would
+## record_edit accept this" and "does can_record_edit say yes" can never
+## disagree.
+func can_record_edit(column: Vector2i, floor_band: int) -> bool:
+	if _sealed:
+		return false
+	if _column_has_passage(column):
+		return false
+	if massif == null or not massif.has_column(column):
+		return false
+	if floor_band < massif.base_at(column):
+		return false
+	return true
+
+
 func seal() -> bool:
 	last_rejection = ""
 	if _sealed or scale_profile == null or not scale_profile.validate() \
@@ -143,6 +167,25 @@ func seal() -> bool:
 	for column: Vector2i in massif.columns:
 		if not block_thickness.has(column):
 			return _reject("column %s has no block-thickness classification" % column)
+	# Claims must be pairwise disjoint -- WarrenMazeStampPass's own claimed_columns
+	# bookkeeping is the only thing that ever enforced this during generation, so
+	# seal() re-checks it as a real invariant rather than trusting that
+	# bookkeeping never lied. The same pass also builds the footprint-plus-1-column
+	# apron every stamp-phase edit below must land inside.
+	var claim_owner: Dictionary = {}
+	var apron_columns: Dictionary = {}
+	for index in parcel_claims.size():
+		var claim := parcel_claims[index] as Dictionary
+		for member: Vector2i in claim.get("footprint", []) as Array[Vector2i]:
+			if claim_owner.has(member):
+				return _reject(
+					("claim %d and claim %d both claim column %s -- " \
+						+ "claims must be pairwise disjoint") \
+						% [int(claim_owner[member]), index, member])
+			claim_owner[member] = index
+			apron_columns[member] = true
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				apron_columns[member + direction] = true
 	var edit_columns: Array[Vector2i] = []
 	edit_columns.assign(column_edits.keys())
 	edit_columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
@@ -156,6 +199,24 @@ func seal() -> bool:
 		if _column_has_passage(column):
 			return _reject(
 				"edit at column %s touches a carved passage cell" % column)
+		# Reservation-phase edits may level/sink a reservation's footprint
+		# further than one band by design (a market approach, a landmark plinth)
+		# and never claim a footprint of their own to be inside the apron of --
+		# only stamp-phase (parcel-claim offender) edits are held to the
+		# +/-1-band, in-apron budget WarrenMazeStampPass's own candidate
+		# enumeration (_footprint_offenders) already meant to guarantee.
+		if StringName(edit.get("phase", &"")) == &"stamp":
+			var drift := absi(int(edit.get("floor_band", 0)) \
+				- massif.base_at(column))
+			if drift > 1:
+				return _reject(
+					("stamp edit at column %s moves its floor %d bands from " \
+						+ "the pre-edit surface, past the +/-1 budget") \
+						% [column, drift])
+			if not apron_columns.has(column):
+				return _reject(
+					("stamp edit at column %s is outside every claim's " \
+						+ "footprint and its 1-column apron") % column)
 	# Phases (reserve/stamp) already wrote audit facts before seal runs; seal
 	# contributes its own freshly computed keys, it never destroys theirs.
 	var built := _build_audit()
