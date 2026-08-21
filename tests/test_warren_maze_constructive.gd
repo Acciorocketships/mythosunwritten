@@ -204,14 +204,17 @@ func test_reservation_pass_selects_different_optional_subsets_across_seeds() -> 
 
 
 func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
-	## Geometry-aware exit assertion (controller ruling, replacing the flat
-	## median->=4 bar): the flood-fill evidence in the task-4 report showed
-	## median-4 is a carve-geometry ceiling on this fixture, not a stamping
-	## defect -- carver block-thickening is scheduled for a later slice. This
-	## keeps three checks a correct stamping pass must still clear: no claim
-	## degenerates into a pencil tower, the town is at least half claims that
-	## clear a single-column footprint, and every seed lands at least one
-	## genuinely building-shaped (area >= 4) claim.
+	## Geometry-aware exit assertion (controller ruling #2): a building is a
+	## LINEAGE, not a single claim -- the L-shape already treats two claims
+	## sharing one lineage_hint as one building, and WarrenMazeStampPass's
+	## bounded lineage-grouping post-pass extends that to every claim, so a
+	## staircase-shaped blob split into several rectangles for the footprint
+	## contract still reads as one stepped building here. Checks: no claim
+	## degenerates into a pencil tower (per claim), the town is at least half
+	## lineages that clear a single-column footprint (summed per lineage),
+	## every seed lands at least one genuinely building-shaped (area >= 4)
+	## claim, and the grouping rule itself holds -- every lineage's claims
+	## stay within one band of each other.
 	for city_seed: int in [1, 3, 4, 12]:
 		var profile := WarrenVillageScaleProfile.for_id(&"compact")
 		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
@@ -221,19 +224,41 @@ func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
 		assert_true(WarrenMazeReservationPass.reserve(plan, profile))
 		assert_true(WarrenMazeStampPass.stamp(plan, profile),
 			WarrenMazeStampPass.last_failure)
-		var sizes: Array[int] = []
 		var has_area_4_or_more := false
+		var lineage_areas: Dictionary = {}
+		var lineage_floors: Dictionary = {}
 		for claim: Dictionary in plan.parcel_claims:
 			var footprint := claim.footprint as Array[Vector2i]
-			sizes.append(footprint.size())
 			has_area_4_or_more = has_area_4_or_more or footprint.size() >= 4
 			if footprint.size() == 1:
 				assert_lte(int(claim.top_band) - int(claim.floor_band),
 					2 * WarrenBuildingParcel.STOREY_BANDS,
 					"a 1x1 claim may not become a pencil tower")
-		sizes.sort()
-		assert_gte(sizes[sizes.size() / 2], 2,
-			"seed %d: median footprint must clear a single column" % city_seed)
+			var lineage := StringName(claim.get("lineage_hint", &""))
+			assert_ne(lineage, &"",
+				"seed %d: every claim must belong to a lineage after grouping" \
+					% city_seed)
+			lineage_areas[lineage] = int(lineage_areas.get(lineage, 0)) \
+				+ footprint.size()
+			var floors: Array = lineage_floors.get(lineage, [])
+			floors.append(int(claim.floor_band))
+			lineage_floors[lineage] = floors
+		for lineage: Variant in lineage_floors.keys():
+			var floors: Array = lineage_floors[lineage]
+			var lowest: int = floors[0]
+			var highest: int = floors[0]
+			for value: int in floors:
+				lowest = mini(lowest, value)
+				highest = maxi(highest, value)
+			assert_lte(highest - lowest, 1,
+				"seed %d: lineage %s spans more than one band" \
+					% [city_seed, String(lineage)])
+		var sums: Array[int] = []
+		sums.assign(lineage_areas.values())
+		sums.sort()
+		assert_gte(sums[sums.size() / 2], 2,
+			"seed %d: median lineage footprint must clear a single column" \
+				% city_seed)
 		assert_true(has_area_4_or_more,
 			"seed %d: at least one claim must be building-shaped (area >= 4)" \
 				% city_seed)

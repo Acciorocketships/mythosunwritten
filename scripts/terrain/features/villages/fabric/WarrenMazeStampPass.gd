@@ -65,6 +65,8 @@ const MAX_LATERAL_EXTENSION_WIDTH := 3
 ## Back- and lateral-extension are re-run this many times, alternating, so a
 ## claim can walk around a corridor's corners one straight lane at a time.
 const EXTENSION_ROUNDS := 2
+## Hard cap on how many claims one lineage (one building) may group.
+const MAX_LINEAGE_SIZE := 3
 const SCORE_SALT := 0x53544D50
 
 static var last_failure := ""
@@ -119,6 +121,14 @@ static func stamp(plan: WarrenMazeSourcePlan,
 	# keeps a maze block's leftover frontage from reporting as a run of
 	# separate pencils once it is this fragmented.
 	_merge_small_claims(plan, outcomes)
+
+	# A building is a lineage, not a single claim -- the L-shape already
+	# treats its two arms that way. This bounded post-pass extends the same
+	# idea to whatever the merge above could not fold into one rectangle
+	# (e.g. a staircase-shaped blob), so a blob split into several small
+	# rectangles for the footprint contract still reads as one stepped
+	# building downstream.
+	_group_lineages(plan, lineage_seed)
 
 	plan.audit["stamp_outcomes"] = outcomes
 	return true
@@ -215,6 +225,121 @@ static func _shape_id_for_footprint(footprint: Array[Vector2i]) -> StringName:
 		min_z = mini(min_z, column.y)
 		max_z = maxi(max_z, column.y)
 	return StringName("%dx%d" % [max_x - min_x + 1, max_z - min_z + 1])
+
+
+## Bounded lineage-grouping post-pass: within each connected blob of claimed
+## columns, groups ADJACENT claims into shared lineage_hints when their
+## floor_bands differ by at most one band, capped at MAX_LINEAGE_SIZE claims
+## per lineage. Processes claims in a deterministic sorted order (by each
+## claim's own minimum column) and greedily attaches an ungrouped claim to
+## the first adjacent, floor-compatible group with room, else opens a new
+## one -- so a chain longer than the cap becomes several lineages, each
+## still internally adjacent. An L pair already carries a shared
+## lineage_hint and is seeded as one two-member group up front, so a third
+## claim can still join it (counting toward the cap) but the pair itself is
+## never broken apart. A claim with no adjacent, compatible neighbor becomes
+## a lineage of one -- still assigned a unique hint, never left blank, so a
+## consumer that groups by lineage_hint never accidentally lumps every
+## isolated claim into one bucket.
+static func _group_lineages(plan: WarrenMazeSourcePlan,
+		lineage_seed: Dictionary) -> void:
+	var claims := plan.parcel_claims
+	if claims.is_empty():
+		return
+	var order: Array[int] = []
+	for index in claims.size():
+		order.append(index)
+	order.sort_custom(func(left: int, right: int) -> bool:
+		return _column_less(_claim_min_column(claims[left].footprint as \
+				Array[Vector2i]),
+			_claim_min_column(claims[right].footprint as Array[Vector2i])))
+
+	var groups: Array[Dictionary] = []
+	var hint_to_group: Dictionary = {}
+	var claim_group: Dictionary = {}
+	for index: int in order:
+		var claim := claims[index] as Dictionary
+		var hint := StringName(claim.get("lineage_hint", &""))
+		if hint == &"":
+			continue
+		if not hint_to_group.has(hint):
+			hint_to_group[hint] = groups.size()
+			groups.append({"hint": hint, "members": [] as Array[int],
+				"columns": {}, "floors": [] as Array[int]})
+		var group_index: int = hint_to_group[hint]
+		_add_claim_to_group(groups[group_index], index, claim)
+		claim_group[index] = group_index
+
+	for index: int in order:
+		if claim_group.has(index):
+			continue
+		var claim := claims[index] as Dictionary
+		var footprint := claim.footprint as Array[Vector2i]
+		var floor_band := int(claim.floor_band)
+		var attached := -1
+		for group_index in groups.size():
+			var group := groups[group_index]
+			if (group.members as Array).size() >= MAX_LINEAGE_SIZE:
+				continue
+			var floors := (group.floors as Array).duplicate()
+			floors.append(floor_band)
+			var lowest: int = floors[0]
+			var highest: int = floors[0]
+			for value: int in floors:
+				lowest = mini(lowest, value)
+				highest = maxi(highest, value)
+			if highest - lowest > 1:
+				continue
+			if not _footprints_adjacent(footprint,
+					group.columns as Dictionary):
+				continue
+			attached = group_index
+			break
+		if attached < 0:
+			lineage_seed.count = int(lineage_seed.count) + 1
+			attached = groups.size()
+			groups.append({"hint": StringName("maze.lineage.%d" \
+				% int(lineage_seed.count)), "members": [] as Array[int],
+				"columns": {}, "floors": [] as Array[int]})
+		_add_claim_to_group(groups[attached], index, claim)
+		claim_group[index] = attached
+
+	for group: Dictionary in groups:
+		var hint := group.hint as StringName
+		for index: int in group.members as Array[int]:
+			(claims[index] as Dictionary)["lineage_hint"] = hint
+
+
+static func _add_claim_to_group(group: Dictionary, index: int,
+		claim: Dictionary) -> void:
+	(group.members as Array).append(index)
+	(group.floors as Array).append(int(claim.floor_band))
+	var columns := group.columns as Dictionary
+	for column: Vector2i in claim.footprint as Array[Vector2i]:
+		columns[column] = true
+
+
+static func _footprints_adjacent(footprint: Array[Vector2i],
+		group_columns: Dictionary) -> bool:
+	for column: Vector2i in footprint:
+		for direction: Vector2i in CARDINALS:
+			if group_columns.has(column + direction):
+				return true
+	return false
+
+
+static func _claim_min_column(footprint: Array[Vector2i]) -> Vector2i:
+	var best := footprint[0]
+	for column: Vector2i in footprint:
+		if _column_less(column, best):
+			best = column
+	return best
+
+
+static func _column_less(a: Vector2i, b: Vector2i) -> bool:
+	if a.y != b.y:
+		return a.y < b.y
+	return a.x < b.x
 
 
 ## Mirrors WarrenMazeBlockPartitioner._frontage_faces's enumeration and total
