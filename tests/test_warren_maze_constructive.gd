@@ -345,3 +345,86 @@ func test_stamp_edits_stay_within_one_band_and_own_apron() -> void:
 		assert_true(inside_apron,
 			"stamp edit at %s is not inside any claim's footprint or its apron" \
 				% column)
+
+
+func test_foundations_are_derived_from_datum_minus_terrain() -> void:
+	## Same sloped-fixture technique as
+	## test_stamp_edits_stay_within_one_band_and_own_apron: a flat
+	## ground_bands fixture never raises any column's floor above its own
+	## terrain sample, so foundation_columns would be vacuously empty. Slope
+	## the input, learn the footprint from a flat build first (it is
+	## seed-dependent), then rebuild sloped over the same columns.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var city_seed := 12
+	var flat_massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+	assert_not_null(flat_massif, WarrenMassifBuilder.last_failure)
+	var min_x := 2147483647
+	for column: Vector2i in flat_massif.columns.keys():
+		min_x = mini(min_x, column.x)
+	var ground_bands: Dictionary = {}
+	for column: Vector2i in flat_massif.columns.keys():
+		ground_bands[column] = int(floor(float(column.x - min_x) / 3.0))
+	var massif := WarrenMassifBuilder.build(city_seed, ground_bands, profile)
+	assert_not_null(massif, WarrenMassifBuilder.last_failure)
+	assert_gt(massif.columns.size(), 0,
+		"the sloped fixture must actually have columns, or every assertion " \
+			+ "below passes vacuously")
+	var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	assert_true(WarrenMazeStampPass.stamp(plan, profile),
+		WarrenMazeStampPass.last_failure)
+
+	# Every claimed column's effective floor sits at or above its own terrain
+	# sample -- the immutable-floor rule enforced through the whole pipeline.
+	var claimed_columns: Dictionary = {}
+	for claim: Dictionary in plan.parcel_claims:
+		for column: Vector2i in claim.footprint as Array[Vector2i]:
+			claimed_columns[column] = true
+			assert_gte(plan.effective_base(column), plan.massif.base_at(column),
+				"claimed column %s sits below terrain" % column)
+	assert_gt(claimed_columns.size(), 0,
+		"the sloped fixture must actually claim columns, or the map is empty " \
+			+ "and every assertion below passes vacuously")
+
+	var foundation_columns := plan.audit.get("foundation_columns", {}) \
+		as Dictionary
+	assert_false(foundation_columns.is_empty(),
+		"a slope this steep must raise at least one claimed column's floor " \
+			+ "above terrain")
+
+	# Every claim column whose floor_band clears terrain appears with the
+	# right depth; every claim column at grade is omitted entirely.
+	for claim: Dictionary in plan.parcel_claims:
+		var floor_band := int(claim.floor_band)
+		for column: Vector2i in claim.footprint as Array[Vector2i]:
+			var terrain := plan.massif.base_at(column)
+			if floor_band > terrain:
+				assert_true(foundation_columns.has(column),
+					("claimed column %s at floor %d above terrain %d is " \
+						+ "missing from foundation_columns") \
+							% [column, floor_band, terrain])
+				assert_eq(int(foundation_columns[column]), floor_band - terrain,
+					"foundation depth at %s is wrong" % column)
+			else:
+				assert_false(foundation_columns.has(column),
+					"claimed column %s at grade must not appear in " \
+						% column + "foundation_columns")
+
+	# Same contract for reservation cells whose datum_band clears terrain.
+	for reservation: Dictionary in plan.reservations:
+		var datum := int(reservation.datum_band)
+		for column: Vector2i in reservation.cells as Array[Vector2i]:
+			var terrain := plan.massif.base_at(column)
+			if datum > terrain:
+				assert_true(foundation_columns.has(column),
+					("reservation column %s at datum %d above terrain %d is " \
+						+ "missing from foundation_columns") \
+							% [column, datum, terrain])
+				assert_eq(int(foundation_columns[column]), datum - terrain,
+					"foundation depth at %s is wrong" % column)
+			else:
+				assert_false(foundation_columns.has(column),
+					"reservation column %s at grade must not appear in " \
+						% column + "foundation_columns")

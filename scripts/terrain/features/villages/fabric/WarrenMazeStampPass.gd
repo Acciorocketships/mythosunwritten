@@ -153,8 +153,34 @@ static func stamp(plan: WarrenMazeSourcePlan,
 	# building downstream.
 	_group_lineages(plan, lineage_seed)
 
+	derive_foundations(plan)
+
 	plan.audit["stamp_outcomes"] = outcomes
 	return true
+
+
+## Pure derivation, run last: for every claimed or reserved column whose
+## datum (a claim's floor_band, a reservation's datum_band) sits above the
+## column's own terrain sample, records how many bands of rock foundation
+## that datum now stands on. Never rejects, never edits -- foundations are
+## read off the ledger the earlier passes already committed, not a new gate
+## on it. A column at grade (datum == terrain) is omitted entirely, so a
+## consumer can treat "column present" as "this column needs a foundation".
+static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
+	var foundation_columns: Dictionary = {}
+	for claim: Dictionary in plan.parcel_claims:
+		var floor_band := int(claim.floor_band)
+		for column: Vector2i in claim.footprint as Array[Vector2i]:
+			var depth := floor_band - plan.massif.base_at(column)
+			if depth > 0:
+				foundation_columns[column] = depth
+	for reservation: Dictionary in plan.reservations:
+		var datum := int(reservation.datum_band)
+		for column: Vector2i in reservation.cells as Array[Vector2i]:
+			var depth := datum - plan.massif.base_at(column)
+			if depth > 0:
+				foundation_columns[column] = depth
+	plan.audit["foundation_columns"] = foundation_columns
 
 
 ## Repeatedly finds a 1x1 claim next to another claim (1x1 or larger, but
