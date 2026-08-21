@@ -444,6 +444,192 @@ convention).
 
 ---
 
+## Slice-1 measured results (2026-08-21)
+
+Measured by `tests/harness/warren_maze_mode_sweep.gd --constructive`, which
+runs the real one-pass pipeline per (seed, scale) cell — no search, no
+retry, no fixture shortcuts:
+
+```
+Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- \
+  --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --constructive
+```
+
+For each cell: `WarrenMazeSitePlanner.plan(seed, {}, profile)`, then — only
+if that sealed — `WarrenMazeVolumeAdapter.to_volume_plan(plan)` and
+`WarrenMazeBlockPartitioner.partition(plan, volume)`.
+
+### Exit criteria as amended
+
+The slice-1 exit was re-scoped mid-execution (see `progress.md` Task 6/7/8
+rulings). The plan's original prose above ("24/24 …", "≥ 0.85 …") is
+superseded by the following controller-authoritative criteria:
+
+- **(a)** ≥ 22/24 of seeds 1–12 × {compact, standard} seal one-pass through
+  `WarrenMazeSitePlanner` — **measured 23/24** (only compact seed 7 fails,
+  at carve).
+- **(b)** every sealed source translates 1:1 to parcels — **measured
+  22/23**. The one exception (compact seed 8) fails one stage *earlier*, at
+  the volume adapter, so the partitioner's own 1:1 guarantee was never
+  exercised against it and remains unbroken for every source that actually
+  reaches the partitioner (`WarrenMazeBlockPartitioner._translate_claims`
+  fails closed — any dropped claim aborts the whole plan — so a non-null
+  result is 1:1 by construction). See "New finding" below.
+- **(c)** median LINEAGE footprint total ≥ 2 — **measured**: every one of
+  the 22 translated cells clears this (range 2–8; see table). This is the
+  amended metric — the plan's original "median parcel footprint ≥ 4
+  columns" undercounted, since a stamped L-pair is one building split into
+  two claims; grouping by `lineage_hint` before taking the median (i.e.
+  median-per-lineage, not median-per-claim) is the correct building-level
+  measure.
+- **(d)** zero 1×1 claims above 2 storeys — enforced by construction in
+  `WarrenMazeStampPass` (clamped `top_band` for 1×1 shapes) and covered by
+  `test_stamping_produces_building_shaped_claims_not_pencils` in the 18/18
+  regression suite; the sweep itself does not print per-claim footprint
+  sizes, so this was not independently re-measured here.
+- **(e)** `maze_owned_solid_ratio` ≥ 0.35, with `maze_ownership_breakdown`
+  published — **measured**: median 0.378 across the 22 translated cells
+  (range 0.2315–0.4958). 15/22 (68%) cells individually clear 0.35; 7/22
+  fall short (lowest: compact seed 9 at 0.2315). The **0.85 target from the
+  original plan is explicitly moved to slice 2**; this slice's floor is
+  0.35, and every translated cell publishes its full
+  `maze_ownership_breakdown` quadruple (claimed / reserved /
+  buildable_unclaimed / unbuildable — see table).
+- **(f)** buildable_unclaimed ratio ≤ 0.40 — **measured**: every translated
+  cell clears this comfortably; the worst case (compact seed 9) is 0.240.
+- **(g)** deterministic signatures — each translated cell's source-plan
+  signature (`deterministic_signature().sha256_text().left(12)`) is printed
+  in the table for the record. The actual re-run-twice determinism proof is
+  `test_signature_covers_ledger_claims_and_reservations` and
+  `test_carve_can_return_an_unsealed_plan_for_the_phase_pipeline` in the
+  18/18 regression suite — the sweep runs each cell once.
+
+Other amendments carried into this run:
+
+- **0.85 → slice 2**: the plan's original `maze_owned_solid_ratio ≥ 0.85`
+  exit is retired in favor of (e) above; 0.85 remains the slice-2 target.
+- **median-per-claim → median-per-lineage**: see (c) above.
+- **The seal-audit merge fix** (commit `f044f31`): `WarrenMazeSourcePlan.seal()`
+  previously replaced `audit` wholesale, wiping `foundation_columns` /
+  `reservation_outcomes` / stamp-phase keys written before seal; it now
+  merges its own freshly computed keys over the existing dictionary (fresh
+  keys win on conflict, phase keys survive). Without this fix,
+  `foundation_columns` below would read 0 for every plan, genuine
+  foundations included.
+- **Known carver limitations, routed to slice 1.5** (not fixed this slice):
+  - **compact seed 7**: fails at carve — `alley budget reached 0.850
+    frontage, below 0.900` (Task 6 finding).
+  - **seed 12 at the `large` scale roll** (via
+    `WarrenVillageScaleProfile.select`, outside this sweep's
+    compact/standard matrix, but reproduced again by the Task 9 render
+    below): fails at seal — "a passage exceeds its straight-run cap"
+    (Task 8 finding; large/grand are never in the compact/standard corpus,
+    so this does not affect (a)).
+  - **New finding, this task**: **compact seed 8** fails at the volume
+    adapter — `WarrenVolumePlan.seal()` rejects with "exact public route
+    expands into a broad floor slab". Same failure class as the other two
+    (an excavation/route-geometry limitation surfacing downstream of a
+    successful source seal, not a partitioner or ledger bug). Flagged here
+    for the slice-1.5 ledger; not investigated further as part of this
+    verification task.
+
+### Measured corpus (24 cells: seeds 1–12 × {compact, standard})
+
+| seed | scale | sealed | translated | parcels | median lineage | ownership | claimed | reserved | buildable_unclaimed | unbuildable | foundation cols | signature |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | compact | true | true | 15 | 2 | 0.3866 | 30 | 6 | 5 | 48 | 0 | `251d98ec9cf8` |
+| 1 | standard | true | true | 18 | 2 | 0.3610 | 33 | 16 | 11 | 60 | 8 | `fe27b9490110` |
+| 2 | compact | true | true | 7 | 8 | 0.4958 | 23 | 12 | 21 | 40 | 0 | `08eb6567e786` |
+| 2 | standard | true | true | 21 | 2 | 0.2824 | 36 | 20 | 15 | 62 | 2 | `41093a373f39` |
+| 3 | compact | true | true | 8 | 2 | 0.4255 | 20 | 10 | 17 | 34 | 2 | `7fd2b2940162` |
+| 3 | standard | true | true | 7 | 3 | 0.2911 | 16 | 16 | 24 | 57 | 2 | `3850cd602fc7` |
+| 4 | compact | true | true | 13 | 3 | 0.3783 | 26 | 17 | 19 | 42 | 3 | `7110bbd8ac45` |
+| 4 | standard | true | true | 15 | 4 | 0.3696 | 35 | 18 | 31 | 57 | 5 | `2956631f6546` |
+| 5 | compact | true | true | 13 | 3 | 0.4027 | 23 | 6 | 10 | 53 | 4 | `52a9c67574f5` |
+| 5 | standard | true | true | 14 | 4 | 0.3957 | 32 | 16 | 11 | 64 | 8 | `118db7c05c0b` |
+| 6 | compact | true | true | 8 | 2 | 0.4337 | 18 | 9 | 15 | 57 | 3 | `5d97253c7abd` |
+| 6 | standard | true | true | 17 | 3 | 0.2600 | 34 | 10 | 20 | 69 | 2 | `e0a447bee4c2` |
+| 7 | compact | **false** | — | — | — | — | — | — | — | — | — | — |
+| 7 | standard | true | true | 18 | 3 | 0.3441 | 35 | 12 | 8 | 74 | 1 | `dc7e13fa170e` |
+| 8 | compact | true | **false** | — | — | — | — | — | — | — | — | — |
+| 8 | standard | true | true | 22 | 3 | 0.3580 | 44 | 23 | 9 | 63 | 3 | `e1721281d622` |
+| 9 | compact | true | true | 8 | 2 | 0.2315 | 17 | 6 | 23 | 50 | 6 | `7a5611f66dde` |
+| 9 | standard | true | true | 18 | 3 | 0.3333 | 41 | 12 | 9 | 64 | 7 | `ec8e29a2f609` |
+| 10 | compact | true | true | 9 | 2 | 0.3951 | 20 | 12 | 18 | 46 | 5 | `05586a6f7d9f` |
+| 10 | standard | true | true | 21 | 2 | 0.3037 | 36 | 20 | 7 | 66 | 2 | `9b5eb17e311b` |
+| 11 | compact | true | true | 14 | 2 | 0.3782 | 27 | 13 | 1 | 55 | 3 | `47b34f8334a3` |
+| 11 | standard | true | true | 16 | 2 | 0.3829 | 33 | 10 | 5 | 81 | 1 | `5871566ba775` |
+| 12 | compact | true | true | 11 | 2 | 0.3860 | 31 | 10 | 23 | 37 | 0 | `27b3f649d5ab` |
+| 12 | standard | true | true | 17 | 4 | 0.4300 | 39 | 16 | 12 | 71 | 3 | `69fb149ea438` |
+
+`SWEEP RESULT constructive sealed=23/24 translated=22/23`
+
+Failure detail for the two non-translating cells:
+- **compact seed 7** (stage `carve`): `carve: alley budget reached 0.850
+  frontage, below 0.900`
+- **compact seed 8** (stage `adapter`, source did seal): `plan seal
+  rejected: exact public route expands into a broad floor slab`
+
+Raw sweep output (log: `sweep_constructive.log`):
+
+```
+SWEEP constructive seeds=12 scales=2 total=24
+SWEEP seed=1 scale=compact sealed=true translated=true parcels=15 median_lineage=2 ownership=0.3866 breakdown=claimed=30,reserved=6,buildable_unclaimed=5,unbuildable=48 foundation_columns=0 signature=251d98ec9cf8
+SWEEP seed=1 scale=standard sealed=true translated=true parcels=18 median_lineage=2 ownership=0.3610 breakdown=claimed=33,reserved=16,buildable_unclaimed=11,unbuildable=60 foundation_columns=8 signature=fe27b9490110
+SWEEP seed=2 scale=compact sealed=true translated=true parcels=7 median_lineage=8 ownership=0.4958 breakdown=claimed=23,reserved=12,buildable_unclaimed=21,unbuildable=40 foundation_columns=0 signature=08eb6567e786
+SWEEP seed=2 scale=standard sealed=true translated=true parcels=21 median_lineage=2 ownership=0.2824 breakdown=claimed=36,reserved=20,buildable_unclaimed=15,unbuildable=62 foundation_columns=2 signature=41093a373f39
+SWEEP seed=3 scale=compact sealed=true translated=true parcels=8 median_lineage=2 ownership=0.4255 breakdown=claimed=20,reserved=10,buildable_unclaimed=17,unbuildable=34 foundation_columns=2 signature=7fd2b2940162
+SWEEP seed=3 scale=standard sealed=true translated=true parcels=7 median_lineage=3 ownership=0.2911 breakdown=claimed=16,reserved=16,buildable_unclaimed=24,unbuildable=57 foundation_columns=2 signature=3850cd602fc7
+SWEEP seed=4 scale=compact sealed=true translated=true parcels=13 median_lineage=3 ownership=0.3783 breakdown=claimed=26,reserved=17,buildable_unclaimed=19,unbuildable=42 foundation_columns=3 signature=7110bbd8ac45
+SWEEP seed=4 scale=standard sealed=true translated=true parcels=15 median_lineage=4 ownership=0.3696 breakdown=claimed=35,reserved=18,buildable_unclaimed=31,unbuildable=57 foundation_columns=5 signature=2956631f6546
+SWEEP seed=5 scale=compact sealed=true translated=true parcels=13 median_lineage=3 ownership=0.4027 breakdown=claimed=23,reserved=6,buildable_unclaimed=10,unbuildable=53 foundation_columns=4 signature=52a9c67574f5
+SWEEP seed=5 scale=standard sealed=true translated=true parcels=14 median_lineage=4 ownership=0.3957 breakdown=claimed=32,reserved=16,buildable_unclaimed=11,unbuildable=64 foundation_columns=8 signature=118db7c05c0b
+SWEEP seed=6 scale=compact sealed=true translated=true parcels=8 median_lineage=2 ownership=0.4337 breakdown=claimed=18,reserved=9,buildable_unclaimed=15,unbuildable=57 foundation_columns=3 signature=5d97253c7abd
+SWEEP seed=6 scale=standard sealed=true translated=true parcels=17 median_lineage=3 ownership=0.2600 breakdown=claimed=34,reserved=10,buildable_unclaimed=20,unbuildable=69 foundation_columns=2 signature=e0a447bee4c2
+SWEEP seed=7 scale=compact sealed=false stage=carve reason=carve: alley budget reached 0.850 frontage, below 0.900
+SWEEP seed=7 scale=standard sealed=true translated=true parcels=18 median_lineage=3 ownership=0.3441 breakdown=claimed=35,reserved=12,buildable_unclaimed=8,unbuildable=74 foundation_columns=1 signature=dc7e13fa170e
+SWEEP seed=8 scale=compact sealed=true stage=adapter reason=plan seal rejected: exact public route expands into a broad floor slab
+SWEEP seed=8 scale=standard sealed=true translated=true parcels=22 median_lineage=3 ownership=0.3580 breakdown=claimed=44,reserved=23,buildable_unclaimed=9,unbuildable=63 foundation_columns=3 signature=e1721281d622
+SWEEP seed=9 scale=compact sealed=true translated=true parcels=8 median_lineage=2 ownership=0.2315 breakdown=claimed=17,reserved=6,buildable_unclaimed=23,unbuildable=50 foundation_columns=6 signature=7a5611f66dde
+SWEEP seed=9 scale=standard sealed=true translated=true parcels=18 median_lineage=3 ownership=0.3333 breakdown=claimed=41,reserved=12,buildable_unclaimed=9,unbuildable=64 foundation_columns=7 signature=ec8e29a2f609
+SWEEP seed=10 scale=compact sealed=true translated=true parcels=9 median_lineage=2 ownership=0.3951 breakdown=claimed=20,reserved=12,buildable_unclaimed=18,unbuildable=46 foundation_columns=5 signature=05586a6f7d9f
+SWEEP seed=10 scale=standard sealed=true translated=true parcels=21 median_lineage=2 ownership=0.3037 breakdown=claimed=36,reserved=20,buildable_unclaimed=7,unbuildable=66 foundation_columns=2 signature=9b5eb17e311b
+SWEEP seed=11 scale=compact sealed=true translated=true parcels=14 median_lineage=2 ownership=0.3782 breakdown=claimed=27,reserved=13,buildable_unclaimed=1,unbuildable=55 foundation_columns=3 signature=47b34f8334a3
+SWEEP seed=11 scale=standard sealed=true translated=true parcels=16 median_lineage=2 ownership=0.3829 breakdown=claimed=33,reserved=10,buildable_unclaimed=5,unbuildable=81 foundation_columns=1 signature=5871566ba775
+SWEEP seed=12 scale=compact sealed=true translated=true parcels=11 median_lineage=2 ownership=0.3860 breakdown=claimed=31,reserved=10,buildable_unclaimed=23,unbuildable=37 foundation_columns=0 signature=27b3f649d5ab
+SWEEP seed=12 scale=standard sealed=true translated=true parcels=17 median_lineage=4 ownership=0.4300 breakdown=claimed=39,reserved=16,buildable_unclaimed=12,unbuildable=71 foundation_columns=3 signature=69fb149ea438
+SWEEP RESULT constructive sealed=23/24 translated=22/23
+```
+
+### Regression gates
+
+All four gates pass; the legacy pipeline is untouched by this task's
+harness-only change:
+
+| Gate | Expected | Measured |
+|---|---|---|
+| `tests/test_warren_maze_constructive.gd` | 18/18 | **18/18 passed** |
+| `tests/test_warren_maze_carver.gd` | 7/7 | **7/7 passed** |
+| `tests/test_warren_spatial_fabric_compiler.gd` | 11/11 | **11/11 passed** |
+| `warren_solve_profile.gd --city-seed 166029932451774690 --scale compact --no-rank-probe` (production route-first path) | `sealed=true` | `PROFILE solve total_ms=28322 sealed=true` |
+
+### Debug-view render (for the record)
+
+`tests/harness/maze_source_review.tscn -- --seeds 4,12 --phases all` (GUI
+mode) produced **27 captures + `index.json`** in the run's capture
+directory. Seed 4 (rolls to `compact`) renders clean through all six
+phases (`massif`, `bore`, `air`, `reserve`, `stamp`, `final`) including the
+three closeups (`large_house`, `landmark_plot`, `garden_terrace`). Seed 12
+(rolls to `large` via the harness's own scale selection, not the
+compact/standard matrix above) renders phases 1–5 and then reproduces the
+known carver limitation noted above: `WARNING: seed 12 state=final
+rejected: seal: a passage exceeds its straight-run cap` — expected, and
+consistent with the Task 8 finding. No new geometry issues were observed in
+this render; texture/asset fidelity is out of scope for slice 1 per the
+brief.
+
+---
+
 ## Follow-up plans (not this document)
 
 - **Slice 1.5:** noise-based massif behind the unchanged interface (spec
