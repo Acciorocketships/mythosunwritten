@@ -204,6 +204,14 @@ func test_reservation_pass_selects_different_optional_subsets_across_seeds() -> 
 
 
 func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
+	## Geometry-aware exit assertion (controller ruling, replacing the flat
+	## median->=4 bar): the flood-fill evidence in the task-4 report showed
+	## median-4 is a carve-geometry ceiling on this fixture, not a stamping
+	## defect -- carver block-thickening is scheduled for a later slice. This
+	## keeps three checks a correct stamping pass must still clear: no claim
+	## degenerates into a pencil tower, the town is at least half claims that
+	## clear a single-column footprint, and every seed lands at least one
+	## genuinely building-shaped (area >= 4) claim.
 	for city_seed: int in [1, 3, 4, 12]:
 		var profile := WarrenVillageScaleProfile.for_id(&"compact")
 		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
@@ -214,28 +222,76 @@ func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
 		assert_true(WarrenMazeStampPass.stamp(plan, profile),
 			WarrenMazeStampPass.last_failure)
 		var sizes: Array[int] = []
+		var has_area_4_or_more := false
 		for claim: Dictionary in plan.parcel_claims:
 			var footprint := claim.footprint as Array[Vector2i]
 			sizes.append(footprint.size())
+			has_area_4_or_more = has_area_4_or_more or footprint.size() >= 4
 			if footprint.size() == 1:
 				assert_lte(int(claim.top_band) - int(claim.floor_band),
 					2 * WarrenBuildingParcel.STOREY_BANDS,
 					"a 1x1 claim may not become a pencil tower")
 		sizes.sort()
-		assert_gte(sizes[sizes.size() / 2], 4,
-			"seed %d: median footprint must be building-shaped" % city_seed)
+		assert_gte(sizes[sizes.size() / 2], 2,
+			"seed %d: median footprint must clear a single column" % city_seed)
+		assert_true(has_area_4_or_more,
+			"seed %d: at least one claim must be building-shaped (area >= 4)" \
+				% city_seed)
 
 
 func test_stamp_edits_stay_within_one_band_and_own_apron() -> void:
+	## A flat ground_bands fixture never varies massif.base_at, so the +/-1
+	## band edit path never fires and this test used to assert nothing (see
+	## task-4 report). Slope the input instead: base rises one band every 3
+	## columns across the massif's own star-shaped footprint. The footprint
+	## is seed-dependent (WarrenMassifBuilder only creates a column where the
+	## Gaussian field clears MIN_COLUMN_BANDS), so it is learned from a flat
+	## build first, then the same columns are rebuilt with a sloped
+	## ground_bands (`base := int(ground_bands.get(column, 0))` per column,
+	## per WarrenMassifBuilder.build).
 	var profile := WarrenVillageScaleProfile.for_id(&"compact")
-	var massif := WarrenMassifBuilder.build(12, {}, profile)
-	var plan := WarrenMazeCarver.carve(12, massif, profile, false)
-	WarrenMazeReservationPass.reserve(plan, profile)
-	WarrenMazeStampPass.stamp(plan, profile)
+	var city_seed := 1
+	var flat_massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+	assert_not_null(flat_massif, WarrenMassifBuilder.last_failure)
+	var min_x := 2147483647
+	for column: Vector2i in flat_massif.columns.keys():
+		min_x = mini(min_x, column.x)
+	var ground_bands: Dictionary = {}
+	for column: Vector2i in flat_massif.columns.keys():
+		ground_bands[column] = int(floor(float(column.x - min_x) / 3.0))
+	var massif := WarrenMassifBuilder.build(city_seed, ground_bands, profile)
+	assert_not_null(massif, WarrenMassifBuilder.last_failure)
+	var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	assert_true(WarrenMazeStampPass.stamp(plan, profile),
+		WarrenMazeStampPass.last_failure)
+
+	var stamp_edit_columns: Array[Vector2i] = []
 	for column_value: Variant in plan.column_edits.keys():
 		var column := column_value as Vector2i
 		var edit := plan.column_edits[column] as Dictionary
 		if StringName(edit.phase) != &"stamp":
 			continue
+		stamp_edit_columns.append(column)
 		assert_lte(absi(int(edit.floor_band) - plan.massif.base_at(column)), 1,
 			"stamp edits move at most one band")
+	assert_gt(stamp_edit_columns.size(), 0,
+		"the sloped fixture must actually exercise the stamp-phase edit path")
+
+	# Every stamp-phase edited column sits inside some claim's footprint, or
+	# at most one column outside it -- the footprint + 1-column apron rule.
+	for column: Vector2i in stamp_edit_columns:
+		var inside_apron := false
+		for claim: Dictionary in plan.parcel_claims:
+			for member: Vector2i in claim.footprint as Array[Vector2i]:
+				var delta := member - column
+				if absi(delta.x) + absi(delta.y) <= 1:
+					inside_apron = true
+					break
+			if inside_apron:
+				break
+		assert_true(inside_apron,
+			"stamp edit at %s is not inside any claim's footprint or its apron" \
+				% column)

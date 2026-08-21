@@ -111,8 +111,110 @@ static func stamp(plan: WarrenMazeSourcePlan,
 		"_compare_candidates"))
 	_run_pass(plan, infill_candidates, claimed_columns, outcomes, lineage_seed)
 
+	# Infill routinely lands several 1x1s that a face-by-face view cannot see
+	# are actually contiguous: two 1x1s side by side, or a 1x1 sitting flush
+	# against an edge of an existing rectangle. Absorbing those into one
+	# larger rectangular claim (never into an L piece, and only when the
+	# union is still a solid rectangle at a matching floor_band) is what
+	# keeps a maze block's leftover frontage from reporting as a run of
+	# separate pencils once it is this fragmented.
+	_merge_small_claims(plan, outcomes)
+
 	plan.audit["stamp_outcomes"] = outcomes
 	return true
+
+
+## Repeatedly finds a 1x1 claim next to another claim (1x1 or larger, but
+## never an L piece) at the same floor_band whose union is still a solid
+## axis-aligned rectangle, and folds the 1x1 into it. Runs to a fixed point:
+## each successful merge removes one claim, so this always terminates, and a
+## chain of three or more collinear 1x1s is absorbed one at a time (A+B -> a
+## 1x2, then that 1x2 + C -> a 1x3, ...).
+static func _merge_small_claims(plan: WarrenMazeSourcePlan,
+		outcomes: Dictionary) -> void:
+	while _merge_small_claims_once(plan, outcomes):
+		pass
+
+
+static func _merge_small_claims_once(plan: WarrenMazeSourcePlan,
+		outcomes: Dictionary) -> bool:
+	var column_to_claim: Dictionary = {}
+	for index in plan.parcel_claims.size():
+		var claim := plan.parcel_claims[index] as Dictionary
+		if String(claim.get("shape_id", "")).begins_with("L."):
+			continue
+		for column: Vector2i in claim.footprint as Array[Vector2i]:
+			column_to_claim[column] = index
+	for index in plan.parcel_claims.size():
+		var claim_a := plan.parcel_claims[index] as Dictionary
+		var footprint_a := claim_a.footprint as Array[Vector2i]
+		if footprint_a.size() != 1 \
+				or String(claim_a.get("shape_id", "")).begins_with("L."):
+			continue
+		var column := footprint_a[0]
+		for direction: Vector2i in CARDINALS:
+			var neighbor := column + direction
+			if not column_to_claim.has(neighbor):
+				continue
+			var other_index := int(column_to_claim[neighbor])
+			if other_index == index:
+				continue
+			var claim_b := plan.parcel_claims[other_index] as Dictionary
+			if int(claim_a.floor_band) != int(claim_b.floor_band):
+				continue
+			var footprint_b := claim_b.footprint as Array[Vector2i]
+			var merged := footprint_b.duplicate()
+			merged.append(column)
+			if not _is_axis_rectangle(merged):
+				continue
+			var floor_band := int(claim_b.floor_band)
+			var new_top := _claim_top_band(plan, merged, floor_band, false)
+			if new_top < 0:
+				continue
+			for edited_column: Vector2i in merged:
+				if plan.column_edits.has(edited_column):
+					var edit := plan.column_edits[edited_column] as Dictionary
+					plan.record_edit(edited_column, int(edit.floor_band),
+						new_top, StringName(edit.phase))
+			claim_b["footprint"] = merged
+			claim_b["top_band"] = new_top
+			claim_b["shape_id"] = _shape_id_for_footprint(merged)
+			plan.parcel_claims.remove_at(index)
+			_bump(outcomes, "infill_merged")
+			return true
+	return false
+
+
+static func _is_axis_rectangle(footprint: Array[Vector2i]) -> bool:
+	if footprint.is_empty():
+		return false
+	var min_x := 2147483647
+	var max_x := -2147483648
+	var min_z := 2147483647
+	var max_z := -2147483648
+	var seen: Dictionary = {}
+	for column: Vector2i in footprint:
+		if seen.has(column):
+			return false
+		seen[column] = true
+		min_x = mini(min_x, column.x)
+		max_x = maxi(max_x, column.x)
+		min_z = mini(min_z, column.y)
+		max_z = maxi(max_z, column.y)
+	return (max_x - min_x + 1) * (max_z - min_z + 1) == footprint.size()
+
+
+static func _shape_id_for_footprint(footprint: Array[Vector2i]) -> StringName:
+	var min_x := 2147483647
+	var max_x := -2147483648
+	var min_z := 2147483647
+	var max_z := -2147483648
+	for column: Vector2i in footprint:
+		min_x = mini(min_x, column.x)
+		max_x = maxi(max_x, column.x)
+		min_z = mini(min_z, column.y)
+		max_z = maxi(max_z, column.y)
+	return StringName("%dx%d" % [max_x - min_x + 1, max_z - min_z + 1])
 
 
 ## Mirrors WarrenMazeBlockPartitioner._frontage_faces's enumeration and total
