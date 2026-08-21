@@ -132,6 +132,15 @@ static func _translate_claims(source: WarrenMazeSourcePlan,
 	# stable parcel id it was translated onto.
 	if not lineage_hints.is_empty():
 		plan.audit["maze_lineage_hints"] = lineage_hints
+	# Column-level breakdown of the source massif, mirroring the classification
+	# Task 4's round-4 fix report instrumented by hand (task-4-report.md,
+	# "Fix report round 4"): every massif column is claimed by a translated
+	# parcel, reserved by P3, geometrically buildable but never claimed, or
+	# neither. This is the M4/slice-2 diagnostic the ownership ratio alone
+	# can't give a fix a lever against -- see the ratio's own comment for why
+	# 0.85 is no longer measured here.
+	plan.audit["maze_ownership_breakdown"] = _ownership_breakdown(source,
+		parcels)
 	return plan
 
 
@@ -372,3 +381,56 @@ static func _mark_owned_column_range(volume: WarrenVolumePlan,
 		if volume.has_mass(cell):
 			owned[cell] = marker
 			owned_columns[Vector2i(cell.x, cell.z)] = marker
+
+
+static func _ownership_breakdown(source: WarrenMazeSourcePlan,
+		parcels: Array[WarrenBuildingParcel]) -> Dictionary:
+	## Every massif column falls into exactly one bucket: claimed by a
+	## translated parcel, reserved by P3, geometrically buildable from its own
+	## effective floor but never claimed, or neither. `claimed`/`reserved`
+	## come straight off the sealed facts (a parcel's own footprint, a
+	## reservation's own cells); `buildable` reuses the SAME ceiling test
+	## WarrenMazeStampPass enumerates candidates against
+	## (`_column_ceiling`/`MIN_HOUSE_BANDS`), just restated here rather than
+	## reached into that file's own private helper, so this stays a read of
+	## public source-plan facts only.
+	var claimed: Dictionary = {}
+	for parcel: WarrenBuildingParcel in parcels:
+		for column: Vector2i in parcel.footprint:
+			claimed[column] = true
+	var reserved: Dictionary = {}
+	for reservation: Dictionary in source.reservations:
+		for column: Vector2i in reservation.get("cells", []) as Array[Vector2i]:
+			reserved[column] = true
+	var buildable_unclaimed := 0
+	var unbuildable := 0
+	for column: Vector2i in source.massif.columns:
+		if claimed.has(column) or reserved.has(column):
+			continue
+		var floor_band := source.effective_base(column)
+		if _column_ceiling(source, column, floor_band) - floor_band \
+				>= WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
+			buildable_unclaimed += 1
+		else:
+			unbuildable += 1
+	return {
+		"claimed": claimed.size(),
+		"reserved": reserved.size(),
+		"buildable_unclaimed": buildable_unclaimed,
+		"unbuildable": unbuildable,
+	}
+
+
+static func _column_ceiling(source: WarrenMazeSourcePlan, column: Vector2i,
+		floor_band: int) -> int:
+	## Mirrors WarrenMazeStampPass._column_ceiling exactly (continuous SOLID
+	## state from `floor_band` up to the massif's own top): the highest band
+	## this column could carry a claim to if one were placed here, read
+	## through the public `state_at` contract rather than that file's own
+	## private helper.
+	var top_limit := source.massif.top_at(column)
+	var y := floor_band
+	while y < top_limit and source.state_at(Vector3i(column.x, y, column.y)) \
+			== WarrenMazeSourcePlan.CellState.SOLID:
+		y += 1
+	return y

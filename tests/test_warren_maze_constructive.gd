@@ -594,9 +594,44 @@ func test_translator_partition_is_one_to_one_with_claims() -> void:
 		assert_eq(parcels.parcels.size(), plan.parcel_claims.size(),
 			"seed %d: translation is 1:1 -- a dropped claim is a generator bug" \
 				% city_seed)
-		assert_gte(float(parcels.audit.get("maze_owned_solid_ratio", 0.0)), 0.85,
-			"seed %d: the M4 ownership floor is the slice-1 exit; measured %s" \
-				% [city_seed, parcels.audit.get("maze_owned_solid_ratio", 0.0)])
+		# Controller ruling (fix round 2, task-7-report.md): 0.85 was
+		# mis-scoped at the SOURCE level -- the old pipeline only ever cleared
+		# it at COMPOSITION, where rooms expand into back/upper mass beyond
+		# each parcel's own 2D footprint. That floor now belongs to slice 2's
+		# composition-stage exit, not this translator's. What this stage can
+		# actually promise, and what stays gated here: a real (if modest)
+		# floor on the 2D-footprint ratio, a fully-accounted column breakdown
+		# so the composition stage inherits real numbers instead of a black
+		# box, and a cap on how much of the town is buildable mass this stage
+		# left on the table entirely.
+		var ratio := float(parcels.audit.get("maze_owned_solid_ratio", 0.0))
+		assert_gte(ratio, 0.35,
+			"seed %d: 2D-footprint ownership floor; measured %s" \
+				% [city_seed, ratio])
+		var breakdown := parcels.audit.get("maze_ownership_breakdown", {}) \
+			as Dictionary
+		assert_true(breakdown.has("claimed") and breakdown.has("reserved") \
+			and breakdown.has("buildable_unclaimed") \
+			and breakdown.has("unbuildable"),
+			"seed %d: ownership breakdown must publish all four counts: %s" \
+				% [city_seed, breakdown])
+		var total_columns := plan.massif.columns.size()
+		var breakdown_total := int(breakdown.get("claimed", 0)) \
+			+ int(breakdown.get("reserved", 0)) \
+			+ int(breakdown.get("buildable_unclaimed", 0)) \
+			+ int(breakdown.get("unbuildable", 0))
+		assert_eq(breakdown_total, total_columns,
+			"seed %d: breakdown counts must sum to the massif's %d columns, got %d: %s" \
+				% [city_seed, total_columns, breakdown_total, breakdown])
+		var accounted_for := int(breakdown.get("claimed", 0)) \
+			+ int(breakdown.get("reserved", 0)) \
+			+ int(breakdown.get("buildable_unclaimed", 0))
+		var unclaimed_buildable_ratio := float(breakdown.get(
+			"buildable_unclaimed", 0)) / float(maxi(1, accounted_for))
+		assert_lte(unclaimed_buildable_ratio, 0.40,
+			("seed %d: buildable_unclaimed/(claimed+reserved+buildable_unclaimed) " \
+				+ "= %s must stay <= 0.40: %s") \
+				% [city_seed, unclaimed_buildable_ratio, breakdown])
 
 
 func test_plan_rejects_an_unknown_stop_after_stage() -> void:
