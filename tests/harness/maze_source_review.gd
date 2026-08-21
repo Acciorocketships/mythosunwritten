@@ -20,7 +20,10 @@ extends Node3D
 ##     --seeds 4,12 --phases all --output /tmp/maze-shots [--legend]
 
 const CELL := 3.0        # macro lattice cell, metres
-const BAND := 3.0         # one vertical band, metres
+const BAND := 1.5         # one vertical band, metres (WarrenBuildingParcel
+                          # .STOREY_BANDS 2 bands/storey * this == 3.0 m,
+                          # matching WarrenSpatialGrid.STOREY_CELLS 2 *
+                          # CELL_SIZE_M 1.5 -- a storey really is 3 m)
 
 const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN,
@@ -691,6 +694,7 @@ func _legend_bbcode(city_seed: int, profile: WarrenVillageScaleProfile,
 	lines.append("[b]constructive maze debug view[/b]")
 	lines.append("seed %d   scale %s   state %s" % [city_seed,
 		String(profile.scale_id), String(state)])
+	lines.append("1 band = 1.5 m, 1 storey = 2 bands = 3 m")
 	if plan != null:
 		var stacked := _count_stacked_columns(plan)
 		var breakdown := _ownership_breakdown(plan)
