@@ -29,13 +29,15 @@ const CARDINALS: Array[Vector2i] = [
 ## Coloured-by-meaning palette. Reservations and house claims are opaque
 ## (they are the town's owned mass); passages are translucent voxels PLUS a
 ## no-depth-test line so the street network reads from any angle, even
-## through a wall; unclaimed retained solid is a faint translucent grey --
-## after the slice-1b skyline trim it should be rare.
+## through a wall. Post-trim, whatever solid remains unclaimed is real
+## structural mountain -- the rock a climbing street is cut into, or a tunnel
+## roof -- not a generator error, so it draws OPAQUE as retained rock, same
+## family as foundations but a visibly different stone tone: RETAINED_ROCK
+## is rock nobody built on, FOUNDATION_COLOR is rock that IS carrying a
+## raised floor above it.
 const TERRAIN_COLOR := Color("6b8f5a")
-const FOUNDATION_COLOR := Color("3a3a3a")
-const GREY_COLOR := Color("b7b7ae")
-const UNCLAIMED_ALPHA := 0.18
-const MASSIF_SOLID_ALPHA := 0.6
+const FOUNDATION_COLOR := Color("4a4640")
+const RETAINED_ROCK_COLOR := Color("8a8578")
 const PASSAGE_ALPHA := 0.45
 const SPINE_COLOR := Color("e8c76a")
 const ALLEY_COLOR := Color("cf9350")
@@ -306,8 +308,21 @@ func _terrain_apron_columns(massif: WarrenMassif) -> Dictionary:
 
 func _draw_massif_solid(root: Node3D, massif: WarrenMassif) -> void:
 	for column: Vector2i in massif.columns:
-		_box_column(root, column, massif.base_at(column),
-			massif.top_at(column), GREY_COLOR, MASSIF_SOLID_ALPHA)
+		_draw_rock_column(root, column, massif.base_at(column),
+			massif.top_at(column))
+
+
+## Retained rock: opaque stone with a slightly darker outline box, same
+## treatment as a reservation. Used for the raw pre-carve massif, whole
+## unclaimed columns, and whatever solid a claimed/reserved column doesn't
+## itself own (a raised floor's rock gap, the roof mass above a house) --
+## after the generator's own skyline trim this is genuinely structural
+## (streets cut into a mountain, tunnel roofs), never an error to hide.
+func _draw_rock_column(root: Node3D, column: Vector2i, y0: int, y1: int) -> void:
+	if y1 <= y0:
+		return
+	_box_column_outline(root, column, y0, y1, RETAINED_ROCK_COLOR.darkened(0.35))
+	_box_column(root, column, y0, y1, RETAINED_ROCK_COLOR)
 
 
 func _draw_columns(root: Node3D, plan: WarrenMazeSourcePlan,
@@ -350,23 +365,22 @@ func _draw_stacked_column(root: Node3D, column: Vector2i, base: int, top: int,
 		if show_foundation:
 			_box_column(root, column, base, first_floor, FOUNDATION_COLOR)
 		else:
-			_box_column(root, column, base, first_floor, GREY_COLOR,
-				UNCLAIMED_ALPHA)
+			_draw_rock_column(root, column, base, first_floor)
 	var cursor := first_floor
 	for tier_info: Dictionary in tiers:
 		var floor_band := int(tier_info.floor_band)
 		if floor_band > cursor:
-			# Connective mass between two stacked tiers -- structural, opaque,
+			# Connective mass between two stacked tiers -- structural rock,
 			# rare (a flush stack leaves no gap).
-			_box_column(root, column, cursor, floor_band, GREY_COLOR)
+			_draw_rock_column(root, column, cursor, floor_band)
 		var visual_top := maxi(floor_band + 1, int(tier_info.top_band))
 		_box_column(root, column, floor_band, visual_top,
 			tier_info.color as Color)
 		cursor = maxi(cursor, visual_top)
 	if cursor < top:
-		# Mass above the topmost claim that no claim ever reached -- the
-		# skyline trim's target. Faint: after Task 1's trim this is rare.
-		_box_column(root, column, cursor, top, GREY_COLOR, UNCLAIMED_ALPHA)
+		# Mass above the topmost claim that no claim ever reaches -- after
+		# the skyline trim this is the mountain's own remaining shoulder.
+		_draw_rock_column(root, column, cursor, top)
 
 
 func _draw_reservation_column(root: Node3D, column: Vector2i, base: int,
@@ -376,14 +390,13 @@ func _draw_reservation_column(root: Node3D, column: Vector2i, base: int,
 		if show_foundation:
 			_box_column(root, column, base, floor_band, FOUNDATION_COLOR)
 		else:
-			_box_column(root, column, base, floor_band, GREY_COLOR,
-				UNCLAIMED_ALPHA)
+			_draw_rock_column(root, column, base, floor_band)
 	var visual_top := maxi(floor_band + 1, top_band)
 	_box_column_outline(root, column, floor_band, visual_top,
 		colour.darkened(0.45))
 	_box_column(root, column, floor_band, visual_top, colour)
 	if visual_top < top:
-		_box_column(root, column, visual_top, top, GREY_COLOR, UNCLAIMED_ALPHA)
+		_draw_rock_column(root, column, visual_top, top)
 
 
 func _draw_solid_runs(root: Node3D, plan: WarrenMazeSourcePlan,
@@ -395,11 +408,10 @@ func _draw_solid_runs(root: Node3D, plan: WarrenMazeSourcePlan,
 		if solid and run_start < 0:
 			run_start = band
 		elif not solid and run_start >= 0:
-			_box_column(root, column, run_start, band, GREY_COLOR,
-				UNCLAIMED_ALPHA)
+			_draw_rock_column(root, column, run_start, band)
 			run_start = -1
 	if run_start >= 0:
-		_box_column(root, column, run_start, stop, GREY_COLOR, UNCLAIMED_ALPHA)
+		_draw_rock_column(root, column, run_start, stop)
 
 
 ## Groups parcel_claims by column, sorted by floor_band ascending (tier 0 =
@@ -692,8 +704,10 @@ func _legend_bbcode(city_seed: int, profile: WarrenVillageScaleProfile,
 		house_swatches += _swatch_glyph(colour)
 	lines.append(house_swatches \
 		+ " house (lineage hash mod 8; darker = higher stacked floor)")
-	lines.append(_swatch(FOUNDATION_COLOR, "foundation (raised floor support)"))
-	lines.append(_swatch(GREY_COLOR, "unclaimed retained solid (faint)"))
+	lines.append(_swatch(FOUNDATION_COLOR,
+		"foundation (rock bearing a raised floor -- deep under upper streets)"))
+	lines.append(_swatch(RETAINED_ROCK_COLOR,
+		"retained rock (under streets / tunnel roofs)"))
 	lines.append(_swatch(TERRAIN_COLOR, "terrain apron"))
 	lines.append("[b]reservations (opaque, dark outline)[/b]")
 	lines.append(_swatch(RESERVATION_COLORS[&"courtyard"] as Color, "courtyard"))
@@ -703,6 +717,8 @@ func _legend_bbcode(city_seed: int, profile: WarrenVillageScaleProfile,
 		"landmark"))
 	lines.append(_swatch(RESERVATION_COLORS[&"garden_terrace"] as Color,
 		"garden terrace"))
+	lines.append(
+		"plots: courtyard/garden flat, large house/landmark 3-storey envelope")
 	lines.append(_swatch(SKYWALK_COLOR, "skywalk (overhead bar)"))
 	lines.append("[b]passages (translucent corridor + through-wall line)[/b]")
 	lines.append(_swatch(SPINE_COLOR, "spine (thick line, wide corridor)"))
