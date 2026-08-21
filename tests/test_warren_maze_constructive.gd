@@ -95,6 +95,29 @@ func test_reservation_pass_lands_features_with_reason_codes() -> void:
 			for passage: Vector3i in plan.passage_cells():
 				assert_ne(cell, Vector2i(passage.x, passage.z),
 					"reservations never claim street columns")
+	# The brief's prose is the authority: every non-optional kind either lands
+	# at least its quota minimum, or the shortfall is itself a reason-coded
+	# outcome -- a silent, unaccounted skip is what this guards against.
+	for entry: Dictionary in WarrenMazeReservationPass.REGISTRY:
+		if bool(entry.optional):
+			continue
+		var kind := entry.kind as StringName
+		var quota := (entry.quota as Dictionary).get(
+			"compact", Vector2i.ZERO) as Vector2i
+		var placed := 0
+		for reservation: Dictionary in plan.reservations:
+			if StringName(reservation.get("kind", &"")) == kind:
+				placed += 1
+		var has_shortfall_outcome := false
+		for outcome: Dictionary in outcomes:
+			if StringName(outcome.get("kind", &"")) == kind \
+					and StringName(outcome.get("result", &"")) \
+						== &"quota_shortfall":
+				has_shortfall_outcome = true
+				break
+		assert_true(placed >= quota.x or has_shortfall_outcome,
+			"%s must land >= its quota minimum (%d) or record a quota_shortfall outcome; placed=%d" \
+				% [String(kind), quota.x, placed])
 
 
 func test_reservation_edits_carry_reserve_phase_and_avoid_passage_columns() -> void:
@@ -115,6 +138,34 @@ func test_reservation_edits_carry_reserve_phase_and_avoid_passage_columns() -> v
 			"every edit the reservation pass records is phase reserve")
 		assert_false(passage_columns.has(column),
 			"an edit must never touch a passage column")
+
+
+func test_overhead_reservations_never_claim_passage_columns() -> void:
+	## test_reservation_edits_carry_reserve_phase_and_avoid_passage_columns only
+	## walks column_edits, which claim_overhead never writes (it records a
+	## reservation with no edits), so it cannot cover a skywalk_span flank
+	## that is itself a passage column. Seed 2 compact was probed to actually
+	## land an overhead reservation, so this exercises the real code path
+	## rather than vacuously passing on an empty reservation list.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var massif := WarrenMassifBuilder.build(2, {}, profile)
+	var plan := WarrenMazeCarver.carve(2, massif, profile, false)
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	var passage_columns: Dictionary = {}
+	for cell: Vector3i in plan.passage_cells():
+		passage_columns[Vector2i(cell.x, cell.z)] = true
+	var overhead_reservations: Array[Dictionary] = []
+	for reservation: Dictionary in plan.reservations:
+		if not (reservation.walk_cells as Array).is_empty():
+			overhead_reservations.append(reservation)
+	assert_gt(overhead_reservations.size(), 0,
+		"seed 2 compact is expected to land at least one skywalk_span reservation")
+	for reservation: Dictionary in overhead_reservations:
+		for cell: Vector2i in reservation.cells:
+			assert_false(passage_columns.has(cell),
+				"an overhead reservation's flanking column must never be a passage column")
 
 
 func test_reservation_pass_selects_different_optional_subsets_across_seeds() -> void:

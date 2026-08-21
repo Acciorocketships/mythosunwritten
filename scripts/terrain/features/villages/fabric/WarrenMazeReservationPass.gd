@@ -79,8 +79,8 @@ static func _place_instance(plan: WarrenMazeSourcePlan, entry: Dictionary,
 	var kind := entry.kind as StringName
 	var edit := entry.edit as StringName
 	if edit == &"claim_overhead":
-		return _place_overhead(plan, kind, claimed_columns, claimed_walk_cells,
-			instance_index)
+		return _place_overhead(plan, kind, passage_columns, claimed_columns,
+			claimed_walk_cells, instance_index)
 	return _place_patch(plan, entry, passage_columns, claimed_columns,
 		instance_index)
 
@@ -119,10 +119,10 @@ static func _place_patch(plan: WarrenMazeSourcePlan, entry: Dictionary,
 
 
 static func _place_overhead(plan: WarrenMazeSourcePlan, kind: StringName,
-		claimed_columns: Dictionary, claimed_walk_cells: Dictionary,
-		instance_index: int) -> Dictionary:
-	var candidates := _overhead_candidates(plan, claimed_columns,
-		claimed_walk_cells)
+		passage_columns: Dictionary, claimed_columns: Dictionary,
+		claimed_walk_cells: Dictionary, instance_index: int) -> Dictionary:
+	var candidates := _overhead_candidates(plan, passage_columns,
+		claimed_columns, claimed_walk_cells)
 	if candidates.is_empty():
 		return {"kind": kind, "result": &"skip", "reason": "no_candidates"}
 	var start := posmod(Helper._mix64(plan.world_seed ^ int(kind.hash())
@@ -339,8 +339,8 @@ static func _rim_columns(massif: WarrenMassif,
 
 
 static func _overhead_candidates(plan: WarrenMazeSourcePlan,
-		claimed_columns: Dictionary, claimed_walk_cells: Dictionary) \
-		-> Array[Dictionary]:
+		passage_columns: Dictionary, claimed_columns: Dictionary,
+		claimed_walk_cells: Dictionary) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var axis_pairs := [
 		[Vector2i.RIGHT, Vector2i.LEFT], [Vector2i.DOWN, Vector2i.UP],
@@ -354,6 +354,13 @@ static func _overhead_candidates(plan: WarrenMazeSourcePlan,
 		for pair: Array in axis_pairs:
 			var flank_a := column + (pair[0] as Vector2i)
 			var flank_b := column + (pair[1] as Vector2i)
+			# A flank column may itself carry a vertically crossing passage at
+			# a different band (WarrenPassageLatticeRules keeps a full solid
+			# separator between them, not a whole-column exclusion), so SOLID
+			# at this one band is not enough -- reject any flank that hosts a
+			# passage cell anywhere in its column.
+			if passage_columns.has(flank_a) or passage_columns.has(flank_b):
+				continue
 			if claimed_columns.has(flank_a) or claimed_columns.has(flank_b):
 				continue
 			if plan.state_at(Vector3i(flank_a.x, cell.y, flank_a.y)) \
