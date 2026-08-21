@@ -462,3 +462,76 @@ func test_foundations_are_derived_from_datum_minus_terrain() -> void:
 			assert_false(overhead_foundation_columns.has(column),
 				("overhead reservation flank column %s must not appear in " \
 					+ "foundation_columns") % column)
+
+
+
+func test_site_planner_seals_the_corpus_one_pass() -> void:
+	## The planner's own corpus: seeds 1-12 x {compact, standard}. A handful of
+	## seeds are known to miss the carve-stage frontage floor (see
+	## WarrenMazeCarver's own seed-7-compact caveat, task-3-report.md); this
+	## only asserts the failures stay confined to massif/carve -- a reserve,
+	## stamp, or seal failure here would mean the planner's own wiring (not a
+	## pre-existing generation gate) broke the corpus.
+	var scale_ids: Array[StringName] = [&"compact", &"standard"]
+	var success := 0
+	var total := 0
+	var failure_table: Array[String] = []
+	for scale_id: StringName in scale_ids:
+		var profile := WarrenVillageScaleProfile.for_id(scale_id)
+		for city_seed in range(1, 13):
+			total += 1
+			var result := WarrenMazeSitePlanner.plan(city_seed, {}, profile)
+			if result != null:
+				success += 1
+				assert_true(result.is_sealed(),
+					"%s seed %d: plan() with default stop_after must return a sealed plan" \
+						% [String(scale_id), city_seed])
+			else:
+				var failure := WarrenMazeSitePlanner.last_failure
+				failure_table.append("%s seed %d: %s" \
+					% [String(scale_id), city_seed, failure])
+				assert_true(failure.begins_with("massif:") \
+						or failure.begins_with("carve:"),
+					"%s seed %d: only massif/carve failures are known-acceptable, got: %s" \
+						% [String(scale_id), city_seed, failure])
+				assert_false(failure.begins_with("reserve:"),
+					"%s seed %d: the planner's own reserve wiring must not fail: %s" \
+						% [String(scale_id), city_seed, failure])
+				assert_false(failure.begins_with("stamp:"),
+					"%s seed %d: the planner's own stamp wiring must not fail: %s" \
+						% [String(scale_id), city_seed, failure])
+	assert_gte(success, 22,
+		"expected >= 22/24 successes, got %d/%d:\n%s" \
+			% [success, total, "\n".join(failure_table)])
+
+	var compact_profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var first := WarrenMazeSitePlanner.plan(12, {}, compact_profile)
+	assert_not_null(first, WarrenMazeSitePlanner.last_failure)
+	var second := WarrenMazeSitePlanner.plan(12, {}, compact_profile)
+	assert_not_null(second, WarrenMazeSitePlanner.last_failure)
+	assert_eq(first.deterministic_signature(), second.deterministic_signature(),
+		"two one-pass runs of the same seed/profile must seal identically")
+
+
+func test_stop_after_exposes_each_phase_uncontaminated() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var carved := WarrenMazeSitePlanner.plan(12, {}, profile, &"carve")
+	assert_false(carved.is_sealed())
+	assert_eq(carved.reservations.size(), 0)
+	assert_eq(carved.parcel_claims.size(), 0)
+	var reserved := WarrenMazeSitePlanner.plan(12, {}, profile, &"reserve")
+	assert_gt(reserved.reservations.size(), 0)
+	assert_eq(reserved.parcel_claims.size(), 0,
+		"reserve must not have stamped anything yet")
+	var stamped := WarrenMazeSitePlanner.plan(12, {}, profile, &"stamp")
+	assert_gt(stamped.parcel_claims.size(), 0)
+
+
+func test_plan_rejects_an_unknown_stop_after_stage() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var result := WarrenMazeSitePlanner.plan(12, {}, profile, &"bogus")
+	assert_null(result)
+	assert_ne(WarrenMazeSitePlanner.last_failure, "",
+		"an unknown stop_after stage must set last_failure")
+	assert_true(WarrenMazeSitePlanner.last_failure.contains("bogus"),
+		"the failure message should name the offending stop_after value")
