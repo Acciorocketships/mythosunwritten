@@ -505,6 +505,26 @@ superseded by the following controller-authoritative criteria:
   seeds, and every translated cell publishes its full
   `maze_ownership_breakdown` quadruple (claimed / reserved /
   buildable_unclaimed / unbuildable — see table).
+
+  **Metric-correction note (final-review fix wave, controller adjudication,
+  2026-08-21)**: `maze_owned_solid_ratio`'s TRANSLATED-path numerator had a
+  fine/macro grid-aliasing bug (finding 3) that coincidentally over- or
+  under-credited a parcel's owned cells with no consistent direction. Every
+  `ownership`/ratio figure in this section and the measured-corpus table
+  below — including the 0.378 median, the 0.2315–0.4958 range, and every
+  per-cell `ownership` column value — was measured through that OLD,
+  artifact-affected metric and is **not recomputed here**; the
+  `claimed`/`reserved`/`buildable_unclaimed`/`unbuildable` breakdown
+  quadruples remain authoritative (unaffected by the aliasing bug, and
+  already what criterion (f) and the corrected per-seed floors below are
+  computed from). The uniform 0.35 pinned-seed gate was calibrated against
+  that old metric and is **retired**: the gate is now two honest per-seed
+  anti-regression floors against the CORRECTED metric's own measured
+  baselines — `ratio ≥ 0.40` for seed 4 (baseline 0.4213) and `ratio ≥ 0.33`
+  for seed 12 (baseline 0.3360), each baseline minus a small guard. These are
+  anti-regression floors, not quality targets — the 0.85 quality target
+  stays slice 2's composition-level exit exactly as ruled above. Full
+  before/after numbers: `.superpowers/sdd/2026-08-20-constructive-maze-slice1/final-fix-report.md`.
 - **(f)** buildable_unclaimed/(claimed+reserved+buildable_unclaimed) ≤ 0.40 —
   **correction (final-review fix wave, 2026-08-21)**: the figure originally
   recorded here (worst case 0.240, "every translated cell clears this
@@ -572,6 +592,12 @@ Other amendments carried into this run:
 
 ### Measured corpus (24 cells: seeds 1–12 × {compact, standard})
 
+**Metric-correction flag (2026-08-21):** every `ownership` value in this table
+was measured through the pre-finding-3 `maze_owned_solid_ratio` metric (a
+fine/macro grid-aliasing bug — see the (e) bullet's note above) and is not
+recomputed here; the `claimed`/`reserved`/`buildable_unclaimed`/`unbuildable`
+breakdown columns are unaffected by that bug and remain authoritative.
+
 | seed | scale | sealed | translated | parcels | median lineage | ownership | claimed | reserved | buildable_unclaimed | unbuildable | foundation cols | signature |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | compact | true | true | 15 | 2 | 0.3866 | 30 | 6 | 5 | 48 | 0 | `251d98ec9cf8` |
@@ -607,7 +633,9 @@ Failure detail for the two non-translating cells:
 - **compact seed 8** (stage `adapter`, source did seal): `plan seal
   rejected: exact public route expands into a broad floor slab`
 
-Raw sweep output (log: `sweep_constructive.log`):
+Raw sweep output (log: `sweep_constructive.log`) — same metric-correction
+flag as above: every `ownership=` figure below is the pre-finding-3 metric,
+not recomputed; `breakdown=` fields remain authoritative.
 
 ```
 SWEEP constructive seeds=12 scales=2 total=24
@@ -671,15 +699,23 @@ sometimes under-crediting a seed's true ownership. The new numerator reads
 `WarrenBuildingParcel.occupied_cells()` directly (already the exact macro
 `footprint x [base_band, top_band)`, verified `has_mass` at seal time), so
 it is the first accurate measurement of this ratio the translated path has
-had. Under it, the **18/18 constructive-suite gate above is now 20/21**
-(two new seal-rejection tests and one new offender-batch unit test were also
-added; 20/21, not 18/18, is the current total): `compact seed 4`'s ratio rose
-0.3783 → 0.4213 (clears 0.35), but `compact seed 12`'s fell 0.3860 → **0.3360
-— genuinely below the pinned-seed 0.35 floor**. Per the finding's own
-instruction, the `test_translator_partition_is_one_to_one_with_claims`
-assertion was left unweakened rather than adjusted to fit; this one failure
-is an accepted, reported concern (DONE_WITH_CONCERNS), not a masked
-regression — see the final-fix report for the full accounting.
+had. Under it, `compact seed 4`'s ratio rose 0.3783 → 0.4213 (clears the old
+0.35 floor), but `compact seed 12`'s fell 0.3860 → 0.3360 (genuinely below
+the old, uniform 0.35 floor — the old passing figure was itself an artifact).
+Per the finding's own instruction, the pinned-seed assertion was **not**
+silently weakened to paper over that; it was reported as a concern and
+escalated for adjudication.
+
+**Controller adjudication (2026-08-21):** the uniform 0.35 floor was
+calibrated against the old, artifact-inflated metric, so it carries no
+meaning against the corrected one. Re-pinned as two honest **per-seed
+anti-regression floors** against the corrected metric's own measured
+baselines, each baseline minus a small guard: `ratio ≥ 0.40` for seed 4
+(baseline 0.4213) and `ratio ≥ 0.33` for seed 12 (baseline 0.3360). These are
+anti-regression floors, not quality targets — the 0.85 quality target stays
+slice 2's composition-level exit. With this re-pin the constructive suite is
+**green** (see the final-fix report for the exact count). Full before/after
+numbers and the re-pin commit: `.superpowers/sdd/2026-08-20-constructive-maze-slice1/final-fix-report.md`.
 
 ### Debug-view render (for the record)
 

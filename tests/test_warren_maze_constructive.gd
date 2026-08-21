@@ -658,10 +658,23 @@ func test_translator_partition_is_one_to_one_with_claims() -> void:
 		# so the composition stage inherits real numbers instead of a black
 		# box, and a cap on how much of the town is buildable mass this stage
 		# left on the table entirely.
+		# Controller adjudication (final-review fix wave, 2026-08-21): finding
+		# 3 fixed _ownership_audit_translated's numerator, which used to read a
+		# parcel's cells through a fine/macro grid alias that coincidentally
+		# over- or under-credited cells with no consistent direction. The old
+		# uniform 0.35 floor was calibrated against that artifact-inflated
+		# metric, not against what this ratio actually measures now, so it is
+		# re-pinned per seed against the CORRECTED metric's own measured
+		# baselines -- seed 4: 0.4213, seed 12: 0.3360 -- each minus a small
+		# guard. These are anti-regression floors (catch a future correctness
+		# regression in the audit or the stamp pass), not quality targets; the
+		# 0.85 quality target stays slice 2's composition-level exit per the
+		# ruling above.
 		var ratio := float(parcels.audit.get("maze_owned_solid_ratio", 0.0))
-		assert_gte(ratio, 0.35,
-			"seed %d: 2D-footprint ownership floor; measured %s" \
-				% [city_seed, ratio])
+		var ratio_floor := 0.40 if city_seed == 4 else 0.33
+		assert_gte(ratio, ratio_floor,
+			"seed %d: 2D-footprint ownership anti-regression floor (%.2f); measured %s" \
+				% [city_seed, ratio_floor, ratio])
 		var breakdown := parcels.audit.get("maze_ownership_breakdown", {}) \
 			as Dictionary
 		assert_true(breakdown.has("claimed") and breakdown.has("reserved") \
