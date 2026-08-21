@@ -33,6 +33,19 @@ var audit: Dictionary = {}
 var last_rejection := ""
 var _sealed := false
 
+## Constructive edit ledger: Vector2i column -> {floor_band, top_band, phase}.
+## Overlays the sealed massif; a raised floor_band leaves a rock foundation
+## below it (foundation_depth), a lowered one is forbidden -- terrain is the
+## immutable floor and carved passage cells are never edited.
+var column_edits: Dictionary = {}
+## Stamped houses as data: {footprint: Array[Vector2i], floor_band: int,
+## top_band: int, door_walk: Vector3i, door_column: Vector2i,
+## frontage: Vector2i, lineage_hint: StringName, shape_id: StringName}.
+var parcel_claims: Array[Dictionary] = []
+## Typed large features: {kind: StringName, cells: Array[Vector2i],
+## datum_band: int, walk_cells: Array[Vector3i], audit: Dictionary}.
+var reservations: Array[Dictionary] = []
+
 
 func _init(p_world_seed: int, p_profile: WarrenVillageScaleProfile,
 		p_massif: WarrenMassif, p_excavation: WarrenExcavation) -> void:
@@ -48,6 +61,41 @@ func mark_passage(cell: Vector3i, kind: StringName) -> bool:
 	if passage_kinds.has(cell) and passage_kinds[cell] != kind:
 		return false
 	passage_kinds[cell] = kind
+	return true
+
+
+func effective_base(column: Vector2i) -> int:
+	if column_edits.has(column):
+		return int((column_edits[column] as Dictionary).get("floor_band", 0))
+	return massif.base_at(column)
+
+
+func effective_top(column: Vector2i) -> int:
+	if column_edits.has(column):
+		return int((column_edits[column] as Dictionary).get("top_band", 0))
+	return massif.top_at(column)
+
+
+func foundation_depth(column: Vector2i) -> int:
+	## Bands of rock a raised floor now stands on above the sampled terrain.
+	## Zero when the ledger never touched this column or only lowered it --
+	## record_edit already forbids sinking below the terrain sample, so the
+	## clamp only guards a column with no edit at all.
+	return maxi(0, effective_base(column) - massif.base_at(column))
+
+
+func record_edit(column: Vector2i, floor_band: int, top_band: int,
+		phase: StringName) -> bool:
+	if _column_has_passage(column):
+		return _reject("edit at column %s would touch a carved passage cell" \
+			% column)
+	if massif == null or not massif.has_column(column):
+		return _reject("edit at column %s has no massif column" % column)
+	if floor_band < massif.base_at(column):
+		return _reject("edit at column %s would sink its floor below terrain" \
+			% column)
+	column_edits[column] = {"floor_band": floor_band, "top_band": top_band,
+		"phase": phase}
 	return true
 
 
@@ -93,6 +141,19 @@ func seal() -> bool:
 	for column: Vector2i in massif.columns:
 		if not block_thickness.has(column):
 			return _reject("column %s has no block-thickness classification" % column)
+	var edit_columns: Array[Vector2i] = []
+	edit_columns.assign(column_edits.keys())
+	edit_columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+	for column: Vector2i in edit_columns:
+		var edit := column_edits[column] as Dictionary
+		if not massif.has_column(column):
+			return _reject("edit at column %s has no massif column" % column)
+		if int(edit.get("floor_band", 0)) < massif.base_at(column):
+			return _reject(
+				"edit at column %s sinks its floor below terrain" % column)
+		if _column_has_passage(column):
+			return _reject(
+				"edit at column %s touches a carved passage cell" % column)
 	audit = _build_audit()
 	if int(audit.get("max_spine_straight_run", 0)) \
 			> MAX_SPINE_STRAIGHT_RUN \
@@ -173,6 +234,54 @@ func deterministic_signature() -> String:
 	for column: Vector2i in columns:
 		parts.append("t:%d,%d:%d" % [column.x, column.y,
 			int(block_thickness[column])])
+	var edit_columns: Array[Vector2i] = []
+	edit_columns.assign(column_edits.keys())
+	edit_columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+	for column: Vector2i in edit_columns:
+		var edit := column_edits[column] as Dictionary
+		parts.append("e:%d,%d:%d,%d:%s" % [column.x, column.y,
+			int(edit.get("floor_band", 0)), int(edit.get("top_band", 0)),
+			String(edit.get("phase", &""))])
+	var claim_lines := PackedStringArray()
+	for claim: Dictionary in parcel_claims:
+		var footprint: Array = claim.get("footprint", [])
+		var footprint_cells: Array[Vector2i] = []
+		footprint_cells.assign(footprint)
+		footprint_cells.sort_custom(Callable(WarrenMazeSourcePlan,
+			"_column_less"))
+		var footprint_text := PackedStringArray()
+		for cell: Vector2i in footprint_cells:
+			footprint_text.append("%d,%d" % [cell.x, cell.y])
+		var door_walk: Vector3i = claim.get("door_walk", Vector3i.ZERO)
+		var door_column: Vector2i = claim.get("door_column", Vector2i.ZERO)
+		var frontage: Vector2i = claim.get("frontage", Vector2i.ZERO)
+		claim_lines.append("c:%s:%d,%d:%d,%d,%d:%d,%d:%d,%d:%s:%s" % [
+			"+".join(footprint_text),
+			int(claim.get("floor_band", 0)), int(claim.get("top_band", 0)),
+			door_walk.x, door_walk.y, door_walk.z,
+			door_column.x, door_column.y,
+			frontage.x, frontage.y,
+			String(claim.get("lineage_hint", &"")),
+			String(claim.get("shape_id", &""))])
+	claim_lines.sort()
+	for line: String in claim_lines:
+		parts.append(line)
+	var reservation_lines := PackedStringArray()
+	for reservation: Dictionary in reservations:
+		var cells: Array = reservation.get("cells", [])
+		var reservation_cells: Array[Vector2i] = []
+		reservation_cells.assign(cells)
+		reservation_cells.sort_custom(Callable(WarrenMazeSourcePlan,
+			"_column_less"))
+		var cells_text := PackedStringArray()
+		for cell: Vector2i in reservation_cells:
+			cells_text.append("%d,%d" % [cell.x, cell.y])
+		reservation_lines.append("r:%s:%s" % [
+			String(reservation.get("kind", &"")),
+			"+".join(cells_text)])
+	reservation_lines.sort()
+	for line: String in reservation_lines:
+		parts.append(line)
 	return "|".join(parts)
 
 
@@ -306,6 +415,13 @@ static func _has_typed_square(cells: Array[Vector3i]) -> bool:
 	return false
 
 
+func _column_has_passage(column: Vector2i) -> bool:
+	for cell: Vector3i in passage_kinds.keys():
+		if cell.x == column.x and cell.z == column.y:
+			return true
+	return false
+
+
 func _reject(reason: String) -> bool:
 	last_rejection = reason
 	return false
@@ -316,4 +432,10 @@ static func _cell_less(a: Vector3i, b: Vector3i) -> bool:
 		return a.y < b.y
 	if a.z != b.z:
 		return a.z < b.z
+	return a.x < b.x
+
+
+static func _column_less(a: Vector2i, b: Vector2i) -> bool:
+	if a.y != b.y:
+		return a.y < b.y
 	return a.x < b.x
