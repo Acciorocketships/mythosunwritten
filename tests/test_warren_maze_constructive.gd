@@ -948,67 +948,91 @@ func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
 	## neighbour ("shoulder"), or to bare terrain when isolated. The pre-trim
 	## comparison run (skyline_trim_enabled = false) is what proves passage
 	## columns are genuinely untouched, not just coincidentally unchanged.
-	var profile := WarrenVillageScaleProfile.for_id(&"compact")
-	var city_seed := 4
+	## Fix round 1 (2026-08-21 review): seed 12 added alongside seed 4 -- it
+	## is the seed that actually exercises a flush-stacked claim sharing a
+	## column with a pre-existing stamp-phase offender edit below it (see
+	## WarrenMazeStampPass._refresh_stacked_edit_tops), the exact scenario
+	## the reviewer's Important finding was about. The explicit `>=` check
+	## below is the general form of the invariant (never below the tallest
+	## claim actually built there); the `==` check that follows it is the
+	## full skyline-trim promise for a genuinely claimed, non-passage,
+	## non-reservation column, which subsumes the `>=` but is kept separate
+	## so a regression that only breaks equality (not the inequality) still
+	## fails loudly with the right assertion.
+	for city_seed: int in [4, 12]:
+		var profile := WarrenVillageScaleProfile.for_id(&"compact")
 
-	WarrenMazeStampPass.skyline_trim_enabled = false
-	var pre_massif := WarrenMassifBuilder.build(city_seed, {}, profile)
-	var pre_plan := WarrenMazeCarver.carve(city_seed, pre_massif, profile,
-		false)
-	assert_not_null(pre_plan, WarrenMazeCarver.last_failure)
-	assert_true(WarrenMazeReservationPass.reserve(pre_plan, profile),
-		WarrenMazeReservationPass.last_failure)
-	assert_true(WarrenMazeStampPass.stamp(pre_plan, profile),
-		WarrenMazeStampPass.last_failure)
-	WarrenMazeStampPass.skyline_trim_enabled = true
+		WarrenMazeStampPass.skyline_trim_enabled = false
+		var pre_massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+		var pre_plan := WarrenMazeCarver.carve(city_seed, pre_massif, profile,
+			false)
+		assert_not_null(pre_plan, WarrenMazeCarver.last_failure)
+		assert_true(WarrenMazeReservationPass.reserve(pre_plan, profile),
+			WarrenMazeReservationPass.last_failure)
+		assert_true(WarrenMazeStampPass.stamp(pre_plan, profile),
+			WarrenMazeStampPass.last_failure)
+		WarrenMazeStampPass.skyline_trim_enabled = true
 
-	var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
-	var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
-	assert_not_null(plan, WarrenMazeCarver.last_failure)
-	assert_true(WarrenMazeReservationPass.reserve(plan, profile),
-		WarrenMazeReservationPass.last_failure)
-	assert_true(WarrenMazeStampPass.stamp(plan, profile),
-		WarrenMazeStampPass.last_failure)
+		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+		var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+		assert_not_null(plan, WarrenMazeCarver.last_failure)
+		assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+			WarrenMazeReservationPass.last_failure)
+		assert_true(WarrenMazeStampPass.stamp(plan, profile),
+			WarrenMazeStampPass.last_failure)
 
-	var trim_outcomes := plan.audit.get("trim_outcomes", {}) as Dictionary
-	assert_false(trim_outcomes.is_empty(),
-		"seed 4 compact must actually trim something")
+		var trim_outcomes := plan.audit.get("trim_outcomes", {}) as Dictionary
+		assert_false(trim_outcomes.is_empty(),
+			"seed %d compact must actually trim something" % city_seed)
 
-	var passage_columns: Dictionary = {}
-	for cell: Vector3i in plan.passage_cells():
-		passage_columns[Vector2i(cell.x, cell.z)] = true
-	var reservation_columns: Dictionary = {}
-	for reservation: Dictionary in plan.reservations:
-		for column: Vector2i in reservation.get("cells", []) as Array:
-			reservation_columns[column] = true
-	var claim_tops: Dictionary = {}
-	for claim: Dictionary in plan.parcel_claims:
-		var top := int(claim.top_band)
-		for column: Vector2i in claim.footprint as Array[Vector2i]:
-			claim_tops[column] = maxi(int(claim_tops.get(column, top)), top)
+		var passage_columns: Dictionary = {}
+		for cell: Vector3i in plan.passage_cells():
+			passage_columns[Vector2i(cell.x, cell.z)] = true
+		var reservation_columns: Dictionary = {}
+		for reservation: Dictionary in plan.reservations:
+			for column: Vector2i in reservation.get("cells", []) as Array:
+				reservation_columns[column] = true
+		var claim_tops: Dictionary = {}
+		for claim: Dictionary in plan.parcel_claims:
+			var top := int(claim.top_band)
+			for column: Vector2i in claim.footprint as Array[Vector2i]:
+				claim_tops[column] = maxi(int(claim_tops.get(column, top)),
+					top)
 
-	for column: Vector2i in plan.massif.columns.keys():
-		if passage_columns.has(column):
-			assert_eq(plan.effective_top(column),
-				pre_plan.effective_top(column),
-				"passage column %s must be untouched by skyline trim" % column)
-			continue
-		if reservation_columns.has(column):
-			continue
-		if claim_tops.has(column):
-			assert_eq(plan.effective_top(column), int(claim_tops[column]),
-				("claimed column %s must trim exactly to its tallest " \
-					+ "claim's own top") % column)
-		else:
-			var bound := plan.effective_base(column)
-			for direction: Vector2i in WarrenMazeStampPass.CARDINALS:
-				var neighbor := column + direction
-				if claim_tops.has(neighbor):
-					bound = maxi(bound, int(claim_tops[neighbor]))
-			assert_lte(plan.effective_top(column), bound,
-				("unclaimed column %s must trim to at most its tallest " \
-					+ "claimed neighbour, or its own terrain if isolated") \
-					% column)
+		# General invariant, every claimed column: effective_top can never
+		# fall below the tallest claim actually built there -- the exact
+		# thing a stale, never-refreshed offender edit under a flush-stacked
+		# claim used to violate (seal()'s own general check now mirrors this).
+		for column: Vector2i in claim_tops.keys():
+			assert_gte(plan.effective_top(column), int(claim_tops[column]),
+				("seed %d: claimed column %s effective_top %d must be >= " \
+					+ "its tallest claim's own top %d") \
+					% [city_seed, column, plan.effective_top(column),
+						int(claim_tops[column])])
+
+		for column: Vector2i in plan.massif.columns.keys():
+			if passage_columns.has(column):
+				assert_eq(plan.effective_top(column),
+					pre_plan.effective_top(column),
+					"seed %d: passage column %s must be untouched by " \
+						% [city_seed, column] + "skyline trim")
+				continue
+			if reservation_columns.has(column):
+				continue
+			if claim_tops.has(column):
+				assert_eq(plan.effective_top(column), int(claim_tops[column]),
+					("seed %d: claimed column %s must trim exactly to its " \
+						+ "tallest claim's own top") % [city_seed, column])
+			else:
+				var bound := plan.effective_base(column)
+				for direction: Vector2i in WarrenMazeStampPass.CARDINALS:
+					var neighbor := column + direction
+					if claim_tops.has(neighbor):
+						bound = maxi(bound, int(claim_tops[neighbor]))
+				assert_lte(plan.effective_top(column), bound,
+					("seed %d: unclaimed column %s must trim to at most " \
+						+ "its tallest claimed neighbour, or its own " \
+						+ "terrain if isolated") % [city_seed, column])
 
 
 func test_seal_rejects_a_trim_that_cuts_into_a_house() -> void:

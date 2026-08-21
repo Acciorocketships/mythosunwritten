@@ -394,11 +394,7 @@ static func _merge_small_claims_once(plan: WarrenMazeSourcePlan,
 				claim_b.door_walk as Vector3i, claimed_intervals)
 			if new_top < 0:
 				continue
-			for edited_column: Vector2i in merged:
-				if plan.column_edits.has(edited_column):
-					var edit := plan.column_edits[edited_column] as Dictionary
-					plan.record_edit(edited_column, int(edit.floor_band),
-						new_top, StringName(edit.phase))
+			_refresh_stacked_edit_tops(plan, merged, new_top)
 			claim_b["footprint"] = merged
 			claim_b["top_band"] = new_top
 			claim_b["shape_id"] = _shape_id_for_footprint(merged)
@@ -867,6 +863,7 @@ static func _try_place_rect(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 	if not _record_offender_batch(plan, offenders, floor_band, top_band,
 			&"stamp", outcomes):
 		return
+	_refresh_stacked_edit_tops(plan, footprint, top_band)
 	plan.parcel_claims.append({"footprint": footprint.duplicate(),
 		"floor_band": floor_band, "top_band": top_band,
 		"door_walk": door_walk,
@@ -904,6 +901,7 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 	if not _record_offender_batch(plan, offenders, floor_band, top_band,
 			&"stamp", outcomes):
 		return
+	_refresh_stacked_edit_tops(plan, combined, top_band)
 	lineage_seed.count = int(lineage_seed.count) + 1
 	var lineage := StringName("maze.lineage.%d" % int(lineage_seed.count))
 	plan.parcel_claims.append({"footprint": main.duplicate(),
@@ -1004,6 +1002,7 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 			return
 		footprint.append_array(row)
 		top_band = extended_top
+		_refresh_stacked_edit_tops(plan, footprint, top_band)
 		_claim_interval(claimed_intervals, footprint, floor_band, top_band)
 		_bump(outcomes, "back_extended")
 	claim["footprint"] = footprint
@@ -1126,6 +1125,7 @@ static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
 		footprint.append_array(row)
 		top_band = extended_top
 		width += 1
+		_refresh_stacked_edit_tops(plan, footprint, top_band)
 		_claim_interval(claimed_intervals, footprint, floor_band, top_band)
 		_bump(outcomes, "lateral_extended")
 	claim["footprint"] = footprint
@@ -1322,6 +1322,34 @@ static func _claim_interval(claimed_intervals: Dictionary,
 				kept.append(interval)
 		kept.append(Vector2i(floor_band, top_band))
 		claimed_intervals[column] = kept
+
+
+## Fix round 1 (2026-08-21 review, Important finding): a flush-stacked claim's
+## own placement is deliberately exempt from _footprint_offenders on the
+## column it stacks on (see _stacks_on_existing_claim), so that column never
+## reaches _record_offender_batch for THIS claim -- only the claim below it
+## ever wrote column_edits for that column, at the LOWER claim's own top.
+## Without this refresh, that entry stays stuck at the lower tier's top
+## forever: effective_top(column) would keep reading the lower tier's roof
+## even after a second claim is flush-stacked on top of it, which is wrong
+## (the column's real known-built extent now reaches the UPPER tier's top)
+## and, worse, is invisible to skyline trim's own self-heal (current_top >
+## roof never fires when current_top is already BELOW roof, not above it).
+## Called after every claim placement/extension/merge commit, over the
+## claim's own full footprint: any column already carrying an edit gets its
+## top_band raised to max(existing, this claim's own top) -- floor_band and
+## phase are always preserved, only top_band ever moves, and only upward. A
+## column with no edit at all is untouched (nothing to refresh).
+static func _refresh_stacked_edit_tops(plan: WarrenMazeSourcePlan,
+		footprint: Array[Vector2i], top_band: int) -> void:
+	for column: Vector2i in footprint:
+		if not plan.column_edits.has(column):
+			continue
+		var edit := plan.column_edits[column] as Dictionary
+		var existing_top := int(edit.get("top_band", 0))
+		if top_band > existing_top:
+			plan.record_edit(column, int(edit.get("floor_band", 0)), top_band,
+				StringName(edit.get("phase", &"stamp")))
 
 
 static func _neighbor_contact_count(footprint: Array[Vector2i],

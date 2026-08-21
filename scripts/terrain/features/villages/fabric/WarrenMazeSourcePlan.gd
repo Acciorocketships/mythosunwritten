@@ -278,6 +278,29 @@ func seal() -> bool:
 				return _reject(
 					("stamp edit at column %s is outside every claim's " \
 						+ "footprint and its 1-column apron") % column)
+	# Fix round 1 (2026-08-21 review, Important finding): the trim-specific
+	# check above only ever looks at TRIMMED edits, so a column that never
+	# got trimmed but whose recorded top_band is stale for another reason
+	# (a flush-stacked claim's own placement is deliberately exempt from
+	# ever writing that column's offender edit -- see
+	# WarrenMazeStampPass._stacks_on_existing_claim -- so a lower tier's own
+	# offender-correction edit could in principle be left stuck below a
+	# later, taller claim stacked on the same column) would sail through
+	# unnoticed. This is the general form of the same invariant, over every
+	# claimed column regardless of trim status: effective_top can never sit
+	# below the tallest claim actually built there. A column with no edit at
+	# all trivially satisfies this (effective_top reads massif.top_at, and no
+	# claim's ceiling can ever exceed that), so only edited columns can ever
+	# fail it in practice -- but this checks every claimed column, not just
+	# the edited subset, so bookkeeping is never trusted over the real claim
+	# data.
+	for column: Vector2i in claim_tops.keys():
+		var claim_top := int(claim_tops[column])
+		if effective_top(column) < claim_top:
+			return _reject(
+				("stacked column %s effective_top %d is below the tallest " \
+					+ "claim actually built there (top %d)") \
+					% [column, effective_top(column), claim_top])
 	# Phases (reserve/stamp) already wrote audit facts before seal runs; seal
 	# contributes its own freshly computed keys, it never destroys theirs.
 	var built := _build_audit()
