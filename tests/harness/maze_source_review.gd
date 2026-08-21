@@ -26,25 +26,51 @@ const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN,
 ]
 
-## Coloured-by-meaning palette. Reservations are translucent; claims and
-## retained solid are opaque; the golden-ratio hue walk (LINEAGE_HUE_STEP)
-## is the prototype's own scheme, kept so an L-pair sharing a hue is the
-## visible check that pairing worked.
+## Coloured-by-meaning palette. Reservations and house claims are opaque
+## (they are the town's owned mass); passages are translucent voxels PLUS a
+## no-depth-test line so the street network reads from any angle, even
+## through a wall; unclaimed retained solid is a faint translucent grey --
+## after the slice-1b skyline trim it should be rare.
 const TERRAIN_COLOR := Color("6b8f5a")
 const FOUNDATION_COLOR := Color("3a3a3a")
 const GREY_COLOR := Color("b7b7ae")
+const UNCLAIMED_ALPHA := 0.18
+const MASSIF_SOLID_ALPHA := 0.6
+const PASSAGE_ALPHA := 0.45
 const SPINE_COLOR := Color("e8c76a")
 const ALLEY_COLOR := Color("cf9350")
 const MARKET_COLOR := Color("6fc4b8")
 const COVERED_COLOR := Color("d8f5f0")
 const SKYWALK_COLOR := Color("5aa9e6")
+const SPINE_WIDTH := 0.5
+const ALLEY_WIDTH := 0.25
+const MARKET_WIDTH := 0.45
 const RESERVATION_COLORS := {
 	&"courtyard": Color("4f9e5c"),
 	&"large_house": Color("e08a3c"),
 	&"landmark_plot": Color("9a5fc7"),
 	&"garden_terrace": Color("b5d94c"),
 }
-const LINEAGE_HUE_STEP := 0.6180339887
+const OUTLINE_MARGIN := 0.05
+
+## Fixed ramp of 8 saturated, warm house colours. A claim's own lineage_hint
+## hashes into this table (not the old pale golden-ratio HSV walk) so two
+## unrelated houses reliably land on two different, clearly-saturated hues.
+## Claims stacked on one column (an upper street's house above a lower
+## house's roof) all draw from the LOWEST tier's hue -- one hue per physical
+## stack -- stepped darker per floor above the lowest, so a stack still
+## reads as one coherent tower rather than an unrelated colour jump.
+const LINEAGE_PALETTE: Array[Color] = [
+	Color("d1495b"), # rose red
+	Color("ef8354"), # coral orange
+	Color("f4c95d"), # golden yellow
+	Color("8a5a44"), # warm brown
+	Color("c1440e"), # burnt orange
+	Color("9e2a2b"), # brick red
+	Color("e07a5f"), # terracotta
+	Color("a44a3f"), # rust
+]
+const STACK_FLOOR_STEP := 0.85
 
 const FULL_BATTERY: Array[Dictionary] = [
 	{"id": "iso", "dir": Vector3(1.0, 0.95, 1.0), "dist": 2.1},
@@ -63,7 +89,6 @@ const ALL_STATES: Array[StringName] = [
 var _output_dir := "/tmp/maze-source-review"
 var _seeds: Array[int] = [4]
 var _phases_all := false
-var _show_legend := false
 var _camera := Camera3D.new()
 var _captures: Array[Dictionary] = []
 var _metrics: Dictionary = {}
@@ -92,13 +117,11 @@ func _read_args() -> void:
 		elif args[index] == "--phases" and index + 1 < args.size():
 			_phases_all = args[index + 1].strip_edges() == "all"
 		elif args[index] == "--legend":
-			_show_legend = true
+			pass # legend is always baked into every capture now; kept as a no-op
 
 
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(_output_dir)
-	if _show_legend:
-		_print_legend()
 	for city_seed: int in _seeds:
 		await _render_seed(city_seed)
 	var file := FileAccess.open("%s/index.json" % _output_dir, FileAccess.WRITE)
@@ -152,12 +175,15 @@ func _render_seed(city_seed: int) -> void:
 				continue
 			_draw_terrain(root, plan.massif)
 			_draw_columns(root, plan, state)
+			_draw_passage_voxels(root, plan)
 			_draw_path(root, plan)
 			if state == &"air":
 				_draw_covered_bars(root, plan)
 			_draw_skywalk_bars(root, plan)
 			if state == &"final":
 				final_plan = plan
+
+		_build_legend(root, city_seed, profile, state, plan)
 
 		print("[maze_source_review] seed=%d scale=%s state=%s" % [city_seed,
 			String(profile.scale_id), String(state)])
@@ -281,12 +307,12 @@ func _terrain_apron_columns(massif: WarrenMassif) -> Dictionary:
 func _draw_massif_solid(root: Node3D, massif: WarrenMassif) -> void:
 	for column: Vector2i in massif.columns:
 		_box_column(root, column, massif.base_at(column),
-			massif.top_at(column), GREY_COLOR)
+			massif.top_at(column), GREY_COLOR, MASSIF_SOLID_ALPHA)
 
 
 func _draw_columns(root: Node3D, plan: WarrenMazeSourcePlan,
 		state: StringName) -> void:
-	var claim_lookup := _claim_lookup(plan)
+	var claims_by_column := _claims_by_column(plan)
 	var reservation_lookup := _reservation_lookup(plan)
 	var foundation_lookup: Dictionary = {}
 	if state == &"final":
@@ -295,17 +321,15 @@ func _draw_columns(root: Node3D, plan: WarrenMazeSourcePlan,
 	for column: Vector2i in plan.massif.columns:
 		var base := plan.massif.base_at(column)
 		var top := plan.massif.top_at(column)
-		if claim_lookup.has(column):
-			var info := claim_lookup[column] as Dictionary
-			_draw_owned_column(root, column, base, top,
-				int(info.floor_band), int(info.top_band), info.color as Color,
-				false, foundation_lookup.has(column))
+		if claims_by_column.has(column):
+			_draw_stacked_column(root, column, base, top,
+				claims_by_column[column] as Array, foundation_lookup.has(column))
 		elif reservation_lookup.has(column):
 			var info := reservation_lookup[column] as Dictionary
 			var floor_band := plan.effective_base(column)
 			var top_band := plan.effective_top(column)
-			_draw_owned_column(root, column, base, top, floor_band, top_band,
-				info.color as Color, true, foundation_lookup.has(column))
+			_draw_reservation_column(root, column, base, top, floor_band,
+				top_band, info.color as Color, foundation_lookup.has(column))
 		else:
 			_draw_solid_runs(root, plan, column, base, top)
 
@@ -315,18 +339,51 @@ func _draw_columns(root: Node3D, plan: WarrenMazeSourcePlan,
 ## runs through a column that fronts or reserves against it), so the
 ## foundation/owned/remainder split below never needs a carved-gap scan --
 ## only the generic unclaimed branch (_draw_solid_runs) does.
-func _draw_owned_column(root: Node3D, column: Vector2i, base: int, top: int,
-		floor_band: int, top_band: int, colour: Color, translucent: bool,
+##
+## `tiers` is one column's stack of claims (Task 1: an upper street's house
+## may sit flush above a lower house's roof), lowest floor_band first, each
+## already carrying its stack-stepped colour from _claims_by_column.
+func _draw_stacked_column(root: Node3D, column: Vector2i, base: int, top: int,
+		tiers: Array, show_foundation: bool) -> void:
+	var first_floor := int((tiers[0] as Dictionary).floor_band)
+	if first_floor > base:
+		if show_foundation:
+			_box_column(root, column, base, first_floor, FOUNDATION_COLOR)
+		else:
+			_box_column(root, column, base, first_floor, GREY_COLOR,
+				UNCLAIMED_ALPHA)
+	var cursor := first_floor
+	for tier_info: Dictionary in tiers:
+		var floor_band := int(tier_info.floor_band)
+		if floor_band > cursor:
+			# Connective mass between two stacked tiers -- structural, opaque,
+			# rare (a flush stack leaves no gap).
+			_box_column(root, column, cursor, floor_band, GREY_COLOR)
+		var visual_top := maxi(floor_band + 1, int(tier_info.top_band))
+		_box_column(root, column, floor_band, visual_top,
+			tier_info.color as Color)
+		cursor = maxi(cursor, visual_top)
+	if cursor < top:
+		# Mass above the topmost claim that no claim ever reached -- the
+		# skyline trim's target. Faint: after Task 1's trim this is rare.
+		_box_column(root, column, cursor, top, GREY_COLOR, UNCLAIMED_ALPHA)
+
+
+func _draw_reservation_column(root: Node3D, column: Vector2i, base: int,
+		top: int, floor_band: int, top_band: int, colour: Color,
 		show_foundation: bool) -> void:
 	if floor_band > base:
-		var segment_colour := FOUNDATION_COLOR if show_foundation \
-			else GREY_COLOR
-		_box_column(root, column, base, floor_band, segment_colour)
+		if show_foundation:
+			_box_column(root, column, base, floor_band, FOUNDATION_COLOR)
+		else:
+			_box_column(root, column, base, floor_band, GREY_COLOR,
+				UNCLAIMED_ALPHA)
 	var visual_top := maxi(floor_band + 1, top_band)
-	_box_column(root, column, floor_band, visual_top, colour, translucent)
-	var remainder_start := maxi(visual_top, top_band)
-	if remainder_start < top:
-		_box_column(root, column, remainder_start, top, GREY_COLOR)
+	_box_column_outline(root, column, floor_band, visual_top,
+		colour.darkened(0.45))
+	_box_column(root, column, floor_band, visual_top, colour)
+	if visual_top < top:
+		_box_column(root, column, visual_top, top, GREY_COLOR, UNCLAIMED_ALPHA)
 
 
 func _draw_solid_runs(root: Node3D, plan: WarrenMazeSourcePlan,
@@ -338,29 +395,49 @@ func _draw_solid_runs(root: Node3D, plan: WarrenMazeSourcePlan,
 		if solid and run_start < 0:
 			run_start = band
 		elif not solid and run_start >= 0:
-			_box_column(root, column, run_start, band, GREY_COLOR)
+			_box_column(root, column, run_start, band, GREY_COLOR,
+				UNCLAIMED_ALPHA)
 			run_start = -1
 	if run_start >= 0:
-		_box_column(root, column, run_start, stop, GREY_COLOR)
+		_box_column(root, column, run_start, stop, GREY_COLOR, UNCLAIMED_ALPHA)
 
 
-func _claim_lookup(plan: WarrenMazeSourcePlan) -> Dictionary:
-	var lineage_index: Dictionary = {}
-	var next_index := 0
-	var out: Dictionary = {}
+## Groups parcel_claims by column, sorted by floor_band ascending (tier 0 =
+## lowest). Every tier on a column draws from the LOWEST tier's lineage hue,
+## stepped darker per tier (STACK_FLOOR_STEP), so a stacked column reads as
+## one coherent tower rather than two unrelated house colours colliding.
+func _claims_by_column(plan: WarrenMazeSourcePlan) -> Dictionary:
+	var raw: Dictionary = {}
 	for claim: Dictionary in plan.parcel_claims:
-		var hint := String(claim.get("lineage_hint", &""))
-		if not lineage_index.has(hint):
-			lineage_index[hint] = next_index
-			next_index += 1
-		var hue := fposmod(float(lineage_index[hint]) * LINEAGE_HUE_STEP, 1.0)
-		var colour := Color.from_hsv(hue, 0.42, 0.86)
-		var floor_band := int(claim.get("floor_band", 0))
-		var top_band := int(claim.get("top_band", 0))
+		var entry := {"floor_band": int(claim.get("floor_band", 0)),
+			"top_band": int(claim.get("top_band", 0)),
+			"lineage_hint": StringName(claim.get("lineage_hint", &""))}
 		for column: Vector2i in claim.get("footprint", []) as Array[Vector2i]:
-			out[column] = {"floor_band": floor_band, "top_band": top_band,
-				"color": colour}
+			var list: Array = raw.get(column, [])
+			list.append(entry)
+			raw[column] = list
+	var out: Dictionary = {}
+	for column: Vector2i in raw.keys():
+		var list: Array = raw[column]
+		list.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			return int(a.floor_band) < int(b.floor_band))
+		var base_colour := _lineage_colour(StringName(list[0].lineage_hint))
+		var tiers: Array = []
+		for tier in list.size():
+			var source := list[tier] as Dictionary
+			var factor := pow(STACK_FLOOR_STEP, float(tier))
+			var stepped := Color(base_colour.r * factor, base_colour.g * factor,
+				base_colour.b * factor, 1.0)
+			tiers.append({"floor_band": int(source.floor_band),
+				"top_band": int(source.top_band), "tier": tier,
+				"color": stepped})
+		out[column] = tiers
 	return out
+
+
+func _lineage_colour(hint: StringName) -> Color:
+	var index := absi(String(hint).hash()) % LINEAGE_PALETTE.size()
+	return LINEAGE_PALETTE[index]
 
 
 func _reservation_lookup(plan: WarrenMazeSourcePlan) -> Dictionary:
@@ -383,6 +460,29 @@ func _reservation_lookup(plan: WarrenMazeSourcePlan) -> Dictionary:
 ## Path network, covered-passage markers, skywalk bars.
 ## ---------------------------------------------------------------------
 
+## Requirement 1: every passage cell (not just the walked route) as its own
+## translucent open-corridor voxel, sized to the excavation's real headroom
+## (HEADROOM_BANDS bands), so the street network reads as open volume from
+## any angle rather than only along the thin route line.
+func _draw_passage_voxels(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
+	var height := float(WarrenExcavation.HEADROOM_BANDS) * BAND
+	for cell: Vector3i in plan.passage_cells():
+		var kind := StringName(plan.passage_kinds.get(cell, &""))
+		var colour := _passage_colour(kind)
+		var origin := Vector3(float(cell.x) * CELL, float(cell.y) * BAND \
+			+ height * 0.5, float(cell.z) * CELL)
+		_box(root, origin, Vector3(CELL * 0.92, height, CELL * 0.92), colour,
+			PASSAGE_ALPHA)
+
+
+func _passage_colour(kind: StringName) -> Color:
+	if kind == WarrenMazeSourcePlan.PASSAGE_ALLEY:
+		return ALLEY_COLOR
+	if kind == WarrenMazeSourcePlan.PASSAGE_MARKET:
+		return MARKET_COLOR
+	return SPINE_COLOR
+
+
 func _draw_path(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
 	var route: Array[Vector3i] = plan.excavation.route
 	for index in range(1, route.size()):
@@ -403,11 +503,11 @@ func _draw_path_edge(root: Node3D, plan: WarrenMazeSourcePlan, a: Vector3i,
 	var kind_b := StringName(plan.passage_kinds.get(b, &""))
 	if kind_a == WarrenMazeSourcePlan.PASSAGE_MARKET \
 			or kind_b == WarrenMazeSourcePlan.PASSAGE_MARKET:
-		_edge(root, a, b, 0.55, MARKET_COLOR)
+		_edge(root, a, b, MARKET_WIDTH, MARKET_COLOR)
 	elif is_route:
-		_edge(root, a, b, 0.55, SPINE_COLOR)
+		_edge(root, a, b, SPINE_WIDTH, SPINE_COLOR)
 	else:
-		_edge(root, a, b, 0.22, ALLEY_COLOR)
+		_edge(root, a, b, ALLEY_WIDTH, ALLEY_COLOR)
 
 
 func _draw_covered_bars(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
@@ -422,7 +522,7 @@ func _draw_covered_bars(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
 		var origin := Vector3(float(cell.x) * CELL, float(roof.y) * BAND + 0.1,
 			float(cell.z) * CELL)
 		_box(root, origin, Vector3(CELL * 0.7, 0.18, CELL * 0.7),
-			COVERED_COLOR, true)
+			COVERED_COLOR, 0.6)
 
 
 func _draw_skywalk_bars(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
@@ -448,7 +548,7 @@ func _draw_skywalk_bars(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
 		var horizontal := a.x != b.x
 		var size := Vector3(length, BAND * 0.3, CELL * 0.6) if horizontal \
 			else Vector3(CELL * 0.6, BAND * 0.3, length)
-		_box(root, origin, size, SKYWALK_COLOR, true)
+		_box(root, origin, size, SKYWALK_COLOR)
 
 
 ## ---------------------------------------------------------------------
@@ -475,6 +575,7 @@ func _record_metrics(city_seed: int, plan: WarrenMazeSourcePlan) -> void:
 	var breakdown := _ownership_breakdown(plan)
 	var total_columns := plan.massif.columns.size()
 	var ratio := float(breakdown.claimed) / float(maxi(1, total_columns))
+	var stacked_columns := _count_stacked_columns(plan)
 
 	var outcomes: Array = []
 	for outcome: Dictionary in plan.audit.get(
@@ -492,8 +593,17 @@ func _record_metrics(city_seed: int, plan: WarrenMazeSourcePlan) -> void:
 		"median_lineage_footprint": median,
 		"ownership_ratio": ratio,
 		"ownership_breakdown": breakdown,
+		"stacked_columns": stacked_columns,
 		"reservation_outcomes": outcomes,
 	}
+
+
+func _count_stacked_columns(plan: WarrenMazeSourcePlan) -> int:
+	var stacked := 0
+	for tiers: Variant in _claims_by_column(plan).values():
+		if (tiers as Array).size() > 1:
+			stacked += 1
+	return stacked
 
 
 ## Mirrors WarrenMazeBlockPartitioner._ownership_breakdown, restated here
@@ -534,28 +644,80 @@ func _column_ceiling(plan: WarrenMazeSourcePlan, column: Vector2i,
 	return y
 
 
-func _print_legend() -> void:
-	print("[maze_source_review] legend:")
-	print("  terrain quad               ", TERRAIN_COLOR.to_html(false))
-	print("  foundation (rock)          ", FOUNDATION_COLOR.to_html(false))
-	print("  unclaimed retained solid   ", GREY_COLOR.to_html(false))
-	print("  claim (lineage hue)        golden-ratio HSV walk; an L-pair "
-		+ "shares one hue")
-	print("  reservation:courtyard      ",
-		(RESERVATION_COLORS[&"courtyard"] as Color).to_html(false))
-	print("  reservation:large_house    ",
-		(RESERVATION_COLORS[&"large_house"] as Color).to_html(false))
-	print("  reservation:landmark_plot  ",
-		(RESERVATION_COLORS[&"landmark_plot"] as Color).to_html(false))
-	print("  reservation:garden_terrace ",
-		(RESERVATION_COLORS[&"garden_terrace"] as Color).to_html(false))
-	print("  reservation:skywalk_span   ", SKYWALK_COLOR.to_html(false),
-		" (overhead bar)")
-	print("  path: spine (thick)        ", SPINE_COLOR.to_html(false))
-	print("  path: alley (thin)         ", ALLEY_COLOR.to_html(false))
-	print("  path: market               ", MARKET_COLOR.to_html(false))
-	print("  covered-passage marker     ", COVERED_COLOR.to_html(false),
-		" (air state only)")
+## ---------------------------------------------------------------------
+## Legend: a CanvasLayer overlay baked into every capture (requirement 3).
+## ---------------------------------------------------------------------
+
+func _build_legend(root: Node3D, city_seed: int, profile: WarrenVillageScaleProfile,
+		state: StringName, plan: WarrenMazeSourcePlan) -> void:
+	var layer := CanvasLayer.new()
+	root.add_child(layer)
+	var panel := PanelContainer.new()
+	panel.position = Vector2(16.0, 16.0)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.05, 0.07, 0.78)
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 10.0
+	style.content_margin_bottom = 10.0
+	panel.add_theme_stylebox_override("panel", style)
+	layer.add_child(panel)
+	var label := RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.fit_content = true
+	label.scroll_active = false
+	label.custom_minimum_size = Vector2(430.0, 10.0)
+	label.add_theme_font_size_override("normal_font_size", 22)
+	label.add_theme_font_size_override("bold_font_size", 22)
+	label.text = _legend_bbcode(city_seed, profile, state, plan)
+	panel.add_child(label)
+
+
+func _legend_bbcode(city_seed: int, profile: WarrenVillageScaleProfile,
+		state: StringName, plan: WarrenMazeSourcePlan) -> String:
+	var lines := PackedStringArray()
+	lines.append("[b]constructive maze debug view[/b]")
+	lines.append("seed %d   scale %s   state %s" % [city_seed,
+		String(profile.scale_id), String(state)])
+	if plan != null:
+		var stacked := _count_stacked_columns(plan)
+		var breakdown := _ownership_breakdown(plan)
+		var total_columns := maxi(1, plan.massif.columns.size())
+		var ratio := float(breakdown.claimed) / float(total_columns)
+		lines.append("parcels %d   stacked columns %d   ownership %.0f%%" \
+			% [plan.parcel_claims.size(), stacked, ratio * 100.0])
+	lines.append("")
+	var house_swatches := ""
+	for colour: Color in LINEAGE_PALETTE:
+		house_swatches += _swatch_glyph(colour)
+	lines.append(house_swatches \
+		+ " house (lineage hash mod 8; darker = higher stacked floor)")
+	lines.append(_swatch(FOUNDATION_COLOR, "foundation (raised floor support)"))
+	lines.append(_swatch(GREY_COLOR, "unclaimed retained solid (faint)"))
+	lines.append(_swatch(TERRAIN_COLOR, "terrain apron"))
+	lines.append("[b]reservations (opaque, dark outline)[/b]")
+	lines.append(_swatch(RESERVATION_COLORS[&"courtyard"] as Color, "courtyard"))
+	lines.append(_swatch(RESERVATION_COLORS[&"large_house"] as Color,
+		"large house"))
+	lines.append(_swatch(RESERVATION_COLORS[&"landmark_plot"] as Color,
+		"landmark"))
+	lines.append(_swatch(RESERVATION_COLORS[&"garden_terrace"] as Color,
+		"garden terrace"))
+	lines.append(_swatch(SKYWALK_COLOR, "skywalk (overhead bar)"))
+	lines.append("[b]passages (translucent corridor + through-wall line)[/b]")
+	lines.append(_swatch(SPINE_COLOR, "spine (thick line, wide corridor)"))
+	lines.append(_swatch(ALLEY_COLOR, "alley (thin line, narrow corridor)"))
+	lines.append(_swatch(MARKET_COLOR, "market"))
+	lines.append(_swatch(COVERED_COLOR, "covered-passage marker (air state)"))
+	return "\n".join(lines)
+
+
+func _swatch(colour: Color, label: String) -> String:
+	return "%s %s" % [_swatch_glyph(colour), label]
+
+
+func _swatch_glyph(colour: Color) -> String:
+	return "[color=#%s]■[/color]" % colour.to_html(false)
 
 
 ## ---------------------------------------------------------------------
@@ -563,7 +725,7 @@ func _print_legend() -> void:
 ## ---------------------------------------------------------------------
 
 func _box_column(root: Node3D, column: Vector2i, y0: int, y1: int,
-		colour: Color, translucent: bool = false) -> void:
+		colour: Color, alpha: float = 1.0) -> void:
 	if y1 <= y0:
 		return
 	var height := float(y1 - y0) * BAND
@@ -571,20 +733,33 @@ func _box_column(root: Node3D, column: Vector2i, y0: int, y1: int,
 	var origin := Vector3(float(column.x) * CELL, centre_y,
 		float(column.y) * CELL)
 	_box(root, origin, Vector3(CELL * 0.94, height * 0.96, CELL * 0.94),
-		colour, translucent)
+		colour, alpha)
+
+
+func _box_column_outline(root: Node3D, column: Vector2i, y0: int, y1: int,
+		colour: Color) -> void:
+	if y1 <= y0:
+		return
+	var height := float(y1 - y0) * BAND
+	var centre_y := (float(y0) + float(y1)) * 0.5 * BAND
+	var origin := Vector3(float(column.x) * CELL, centre_y,
+		float(column.y) * CELL)
+	var margin := OUTLINE_MARGIN * 2.0
+	_box(root, origin, Vector3(CELL * 0.94 + margin, height * 0.96 + margin,
+		CELL * 0.94 + margin), colour)
 
 
 func _box(root: Node3D, origin: Vector3, size: Vector3, colour: Color,
-		translucent: bool = false) -> void:
+		alpha: float = 1.0) -> void:
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	var material := StandardMaterial3D.new()
 	var draw_colour := colour
-	if translucent:
+	draw_colour.a = alpha
+	if alpha < 0.999:
 		# Transparency mode alone does nothing without an actual alpha < 1;
-		# the source colour is opaque (reservation/marker palette is all
-		# full-alpha), so the see-through look has to be applied here.
-		draw_colour.a = 0.55
+		# the source palette is otherwise full-alpha, so the see-through
+		# look has to be applied here.
 		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.albedo_color = draw_colour
 	material.roughness = 0.85
@@ -611,6 +786,9 @@ func _edge(root: Node3D, from: Vector3i, to: Vector3i, thickness: float,
 	var material := StandardMaterial3D.new()
 	material.albedo_color = colour
 	material.roughness = 0.7
+	# Requirement 1: the polyline must read through solids from any angle, so
+	# it ignores the depth test rather than being occluded by nearer walls.
+	material.no_depth_test = true
 	mesh.material = material
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh
