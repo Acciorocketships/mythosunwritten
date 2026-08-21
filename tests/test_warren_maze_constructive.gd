@@ -78,3 +78,75 @@ func test_record_edit_on_a_sealed_plan_is_rejected() -> void:
 		plan.massif.top_at(column), &"reserve"),
 		"a sealed plan's ledger is frozen")
 	assert_true(plan.column_edits.is_empty())
+
+
+func test_reservation_pass_lands_features_with_reason_codes() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var massif := WarrenMassifBuilder.build(12, {}, profile)
+	var plan := WarrenMazeCarver.carve(12, massif, profile, false)
+	assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	var outcomes := plan.audit.get("reservation_outcomes", []) as Array
+	assert_gt(outcomes.size(), 0)
+	for outcome: Dictionary in outcomes:
+		assert_true(outcome.has("kind") and outcome.has("result"))
+	for reservation: Dictionary in plan.reservations:
+		for cell: Vector2i in reservation.cells:
+			for passage: Vector3i in plan.passage_cells():
+				assert_ne(cell, Vector2i(passage.x, passage.z),
+					"reservations never claim street columns")
+
+
+func test_reservation_edits_carry_reserve_phase_and_avoid_passage_columns() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"standard")
+	var massif := WarrenMassifBuilder.build(1, {}, profile)
+	var plan := WarrenMazeCarver.carve(1, massif, profile, false)
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	assert_false(plan.column_edits.is_empty(),
+		"the reservation pass should have recorded at least one edit")
+	var passage_columns: Dictionary = {}
+	for cell: Vector3i in plan.passage_cells():
+		passage_columns[Vector2i(cell.x, cell.z)] = true
+	for column: Vector2i in plan.column_edits.keys():
+		var edit := plan.column_edits[column] as Dictionary
+		assert_eq(StringName(edit.get("phase", &"")), &"reserve",
+			"every edit the reservation pass records is phase reserve")
+		assert_false(passage_columns.has(column),
+			"an edit must never touch a passage column")
+
+
+func test_reservation_pass_selects_different_optional_subsets_across_seeds() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var optional_kinds: Array[StringName] = []
+	for entry: Dictionary in WarrenMazeReservationPass.REGISTRY:
+		if bool(entry.optional):
+			optional_kinds.append(entry.kind as StringName)
+	var subsets: Dictionary = {}
+	for city_seed in range(1, 13):
+		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+		var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+		if plan == null:
+			# A handful of seeds fail the P1/P2 carve itself (unrelated to this
+			# pass, e.g. seed 7 misses the frontage floor at compact scale);
+			# the reservation pass has nothing to run against those.
+			continue
+		assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+			WarrenMazeReservationPass.last_failure)
+		var selected: Dictionary = {}
+		for outcome: Dictionary in plan.audit.get(
+				"reservation_outcomes", []) as Array:
+			var kind := StringName(outcome.get("kind", &""))
+			if kind in optional_kinds and StringName(outcome.get(
+					"result", &"")) != &"optional_not_selected":
+				selected[kind] = true
+		var keys: Array = selected.keys()
+		keys.sort()
+		subsets[city_seed] = str(keys)
+	var distinct: Dictionary = {}
+	for value: Variant in subsets.values():
+		distinct[value] = true
+	assert_gt(distinct.size(), 1,
+		"optional subsets across seeds 1-12 must show real variation: %s" \
+			% str(subsets))
