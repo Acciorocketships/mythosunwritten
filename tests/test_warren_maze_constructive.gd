@@ -201,3 +201,41 @@ func test_reservation_pass_selects_different_optional_subsets_across_seeds() -> 
 	assert_gt(distinct.size(), 1,
 		"optional subsets across seeds 1-12 must show real variation: %s" \
 			% str(subsets))
+
+
+func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
+	for city_seed: int in [1, 3, 4, 12]:
+		var profile := WarrenVillageScaleProfile.for_id(&"compact")
+		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+		var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+		if plan == null:
+			continue
+		assert_true(WarrenMazeReservationPass.reserve(plan, profile))
+		assert_true(WarrenMazeStampPass.stamp(plan, profile),
+			WarrenMazeStampPass.last_failure)
+		var sizes: Array[int] = []
+		for claim: Dictionary in plan.parcel_claims:
+			var footprint := claim.footprint as Array[Vector2i]
+			sizes.append(footprint.size())
+			if footprint.size() == 1:
+				assert_lte(int(claim.top_band) - int(claim.floor_band),
+					2 * WarrenBuildingParcel.STOREY_BANDS,
+					"a 1x1 claim may not become a pencil tower")
+		sizes.sort()
+		assert_gte(sizes[sizes.size() / 2], 4,
+			"seed %d: median footprint must be building-shaped" % city_seed)
+
+
+func test_stamp_edits_stay_within_one_band_and_own_apron() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var massif := WarrenMassifBuilder.build(12, {}, profile)
+	var plan := WarrenMazeCarver.carve(12, massif, profile, false)
+	WarrenMazeReservationPass.reserve(plan, profile)
+	WarrenMazeStampPass.stamp(plan, profile)
+	for column_value: Variant in plan.column_edits.keys():
+		var column := column_value as Vector2i
+		var edit := plan.column_edits[column] as Dictionary
+		if StringName(edit.phase) != &"stamp":
+			continue
+		assert_lte(absi(int(edit.floor_band) - plan.massif.base_at(column)), 1,
+			"stamp edits move at most one band")
