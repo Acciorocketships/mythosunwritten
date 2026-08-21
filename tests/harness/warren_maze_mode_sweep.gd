@@ -162,6 +162,10 @@ func _lineage_footprint_totals(lineage_hints: Dictionary,
 
 
 func _median(values: Array[int]) -> int:
+	## Upper-middle element, not an even-count average -- a report-only
+	## approximation (matches the convention this codebase already uses for
+	## footprint medians in test_warren_maze_constructive.gd), fine for a
+	## sweep metric but not a precise statistical median.
 	if values.is_empty():
 		return 0
 	var sorted_values := values.duplicate()

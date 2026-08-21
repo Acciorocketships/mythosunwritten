@@ -474,7 +474,8 @@ superseded by the following controller-authoritative criteria:
   exercised against it and remains unbroken for every source that actually
   reaches the partitioner (`WarrenMazeBlockPartitioner._translate_claims`
   fails closed — any dropped claim aborts the whole plan — so a non-null
-  result is 1:1 by construction). See "New finding" below.
+  result is 1:1 by construction). Ruled pre-existing, not a slice-1
+  regression — see "compact seed 8" under known carver limitations below.
 - **(c)** median LINEAGE footprint total ≥ 2 — **measured**: every one of
   the 22 translated cells clears this (range 2–8; see table). This is the
   amended metric — the plan's original "median parcel footprint ≥ 4
@@ -488,11 +489,20 @@ superseded by the following controller-authoritative criteria:
   regression suite; the sweep itself does not print per-claim footprint
   sizes, so this was not independently re-measured here.
 - **(e)** `maze_owned_solid_ratio` ≥ 0.35, with `maze_ownership_breakdown`
-  published — **measured**: median 0.378 across the 22 translated cells
-  (range 0.2315–0.4958). 15/22 (68%) cells individually clear 0.35; 7/22
-  fall short (lowest: compact seed 9 at 0.2315). The **0.85 target from the
-  original plan is explicitly moved to slice 2**; this slice's floor is
-  0.35, and every translated cell publishes its full
+  published. **Controller ruling on scope**: ≥ 0.35 is **enforced as a gate**
+  only on the two pinned seeds (`test_translator_partition_is_one_to_one_with_claims`,
+  seeds 4 and 12 compact, in the 18/18 regression suite —
+  `tests/test_warren_maze_constructive.gd:607-610`). Corpus-wide it is a
+  **reported aggregate, not a per-seed gate**: median 0.378 across the 22
+  translated cells (range 0.2315–0.4958) clears 0.35. 15/22 (68%) cells also
+  clear 0.35 individually; the other 7/22 (lowest: compact seed 9 at 0.2315)
+  are recorded data, not gate failures — a per-seed corpus-wide floor is
+  deferred to slice 2's composition-level ownership work (rooms expanding
+  into back/upper mass beyond each parcel's 2D footprint), the same scope
+  split the fix-round-2 ruling already drew for the retired 0.85 target (see
+  the comment at that test). The **0.85 target from the original plan is
+  explicitly moved to slice 2**; this slice's floor is 0.35 on the pinned
+  seeds, and every translated cell publishes its full
   `maze_ownership_breakdown` quadruple (claimed / reserved /
   buildable_unclaimed / unbuildable — see table).
 - **(f)** buildable_unclaimed ratio ≤ 0.40 — **measured**: every translated
@@ -525,13 +535,17 @@ Other amendments carried into this run:
     below): fails at seal — "a passage exceeds its straight-run cap"
     (Task 8 finding; large/grand are never in the compact/standard corpus,
     so this does not affect (a)).
-  - **New finding, this task**: **compact seed 8** fails at the volume
-    adapter — `WarrenVolumePlan.seal()` rejects with "exact public route
-    expands into a broad floor slab". Same failure class as the other two
-    (an excavation/route-geometry limitation surfacing downstream of a
-    successful source seal, not a partitioner or ledger bug). Flagged here
-    for the slice-1.5 ledger; not investigated further as part of this
-    verification task.
+  - **compact seed 8**: fails at the volume adapter — `WarrenVolumePlan.seal()`
+    rejects with "exact public route expands into a broad floor slab".
+    **Controller ruling**: pre-existing, not introduced by slice 1 — the
+    same rejection was already observed as `adapt_fail` for seed 8 compact
+    in the pre-slice matrix probe on 2026-08-20, before any slice-1 commit.
+    Ledgered as the third known carver/adapter limitation for slice 1.5,
+    alongside the other two above. One honest caveat: this ruling rests on
+    that pre-slice observation, not a fresh isolation on top of slice 1's
+    own changes — slice 1.5 should still confirm the edited-massif adapter
+    path (`WarrenMazeVolumeAdapter._edited_massif`, new in Task 7) isn't
+    compounding it before assuming the failure is unchanged.
 
 ### Measured corpus (24 cells: seeds 1–12 × {compact, standard})
 
