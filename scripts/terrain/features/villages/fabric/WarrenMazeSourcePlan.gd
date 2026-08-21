@@ -156,7 +156,10 @@ func seal() -> bool:
 		if _column_has_passage(column):
 			return _reject(
 				"edit at column %s touches a carved passage cell" % column)
-	audit = _build_audit()
+	# Phases (reserve/stamp) already wrote audit facts before seal runs; seal
+	# contributes its own freshly computed keys, it never destroys theirs.
+	var built := _build_audit()
+	audit.merge(built, true)
 	if int(audit.get("max_spine_straight_run", 0)) \
 			> MAX_SPINE_STRAIGHT_RUN \
 			or int(audit.get("max_alley_straight_run", 0)) \

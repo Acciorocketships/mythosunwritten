@@ -642,3 +642,54 @@ func test_plan_rejects_an_unknown_stop_after_stage() -> void:
 		"an unknown stop_after stage must set last_failure")
 	assert_true(WarrenMazeSitePlanner.last_failure.contains("bogus"),
 		"the failure message should name the offending stop_after value")
+
+
+func test_seal_merges_audit_instead_of_replacing_it() -> void:
+	## seal() used to do `audit = _build_audit()`, a wholesale replacement
+	## that destroyed audit keys earlier phases had already written
+	## (reservation_outcomes, stamp_outcomes, foundation_columns). A full
+	## one-pass planner run exercises every phase, so a sealed plan's audit
+	## must still carry all of them.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var plan := WarrenMazeSitePlanner.plan(4, {}, profile)
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	if plan == null:
+		return
+	assert_true(plan.is_sealed(), plan.last_rejection)
+	assert_true(plan.audit.has("reservation_outcomes"),
+		"seal() must not wipe reservation_outcomes written by the reserve phase")
+	assert_true(plan.audit.has("stamp_outcomes"),
+		"seal() must not wipe stamp_outcomes written by the stamp phase")
+	assert_true(plan.audit.has("foundation_columns"),
+		"seal() must not wipe foundation_columns written by the stamp phase")
+
+
+func test_seal_preserves_a_nonempty_foundation_columns_audit() -> void:
+	## Same sloped-fixture technique as
+	## test_stamp_edits_stay_within_one_band_and_own_apron: a flat
+	## ground_bands fixture never raises any claimed column's floor above its
+	## own terrain sample, so foundation_columns would be vacuously empty and
+	## this could not prove survival through seal()'s merge. Slope the input,
+	## learn the footprint from a flat build first (it is seed-dependent),
+	## then rebuild sloped over the same columns and run the full planner
+	## through seal().
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var city_seed := 1
+	var flat_massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+	assert_not_null(flat_massif, WarrenMassifBuilder.last_failure)
+	var min_x := 2147483647
+	for column: Vector2i in flat_massif.columns.keys():
+		min_x = mini(min_x, column.x)
+	var ground_bands: Dictionary = {}
+	for column: Vector2i in flat_massif.columns.keys():
+		ground_bands[column] = int(floor(float(column.x - min_x) / 3.0))
+	var plan := WarrenMazeSitePlanner.plan(city_seed, ground_bands, profile)
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	if plan == null:
+		return
+	assert_true(plan.is_sealed(), plan.last_rejection)
+	var foundation_columns := plan.audit.get("foundation_columns", {}) \
+		as Dictionary
+	assert_false(foundation_columns.is_empty(),
+		"a slope this steep must raise at least one claimed column's floor " \
+			+ "above terrain, and seal() must not wipe it from the audit")

@@ -150,16 +150,6 @@ func _render_seed(city_seed: int) -> void:
 				if stop_after == &"carve":
 					carve_failed = true
 				continue
-			if state == &"final":
-				# WarrenMazeSourcePlan.seal() replaces `audit` wholesale with
-				# _build_audit()'s own key set, which does not include
-				# foundation_columns -- so a truly sealed plan's audit no
-				# longer carries what stamp() derived. Foundation depth is a
-				# pure, side-effect-free derivation of already-public facts
-				# (parcel_claims/reservations/massif), so it is safe and
-				# byte-identical to recompute it here rather than trust the
-				# (now-missing) sealed audit key.
-				WarrenMazeStampPass.derive_foundations(plan)
 			_draw_terrain(root, plan.massif)
 			_draw_columns(root, plan, state)
 			_draw_path(root, plan)
@@ -486,25 +476,15 @@ func _record_metrics(city_seed: int, plan: WarrenMazeSourcePlan) -> void:
 	var total_columns := plan.massif.columns.size()
 	var ratio := float(breakdown.claimed) / float(maxi(1, total_columns))
 
-	# Same audit-wipe as the foundation lookup: the sealed plan's own audit no
-	# longer carries reservation_outcomes (seal() overwrote it), and unlike
-	# foundation depth this is a genuine decision LOG (attempts that were
-	# skipped or not selected), not something recomputable from the final
-	# committed reservations alone. A fresh stop_after=&"reserve" replan is
-	# the only way to read it back -- cheap and stateless per the planner's
-	# own contract (WarrenMazeSitePlanner header comment).
 	var outcomes: Array = []
-	var reserve_plan := WarrenMazeSitePlanner.plan(city_seed, {},
-		plan.scale_profile, &"reserve")
-	if reserve_plan != null:
-		for outcome: Dictionary in reserve_plan.audit.get(
-				"reservation_outcomes", []) as Array:
-			var clean := {}
-			for key: Variant in outcome.keys():
-				var value: Variant = outcome[key]
-				clean[String(key)] = String(value) \
-					if typeof(value) == TYPE_STRING_NAME else value
-			outcomes.append(clean)
+	for outcome: Dictionary in plan.audit.get(
+			"reservation_outcomes", []) as Array:
+		var clean := {}
+		for key: Variant in outcome.keys():
+			var value: Variant = outcome[key]
+			clean[String(key)] = String(value) \
+				if typeof(value) == TYPE_STRING_NAME else value
+		outcomes.append(clean)
 
 	_metrics[str(city_seed)] = {
 		"scale": String(plan.scale_profile.scale_id),
