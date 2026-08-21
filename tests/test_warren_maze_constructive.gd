@@ -217,7 +217,12 @@ func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
 	## footprint (summed per lineage), every seed lands at least one
 	## genuinely building-shaped (area >= 4) claim, and the grouping rule
 	## itself holds -- every lineage's claims stay within one band of
-	## each other.
+	## each other. Also asserts the three translatability invariants
+	## directly (controller ruling #3, following Task 7's discovery that
+	## most claims could not seal as parcels): floor_band == door_walk.y,
+	## every footprint stays within the authored size menu, and every
+	## claim's door_walk sits on a passage cell adjacent to its own
+	## footprint.
 	for city_seed: int in [1, 3, 4, 12]:
 		var profile := WarrenVillageScaleProfile.for_id(&"compact")
 		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
@@ -241,6 +246,47 @@ func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
 					"a 1x1 claim may not become a pencil tower")
 			var shape_id := String(claim.get("shape_id", ""))
 			var door_column := claim.door_column as Vector2i
+			var door_walk := claim.door_walk as Vector3i
+			var claim_frontage := claim.frontage as Vector2i
+
+			# Invariant 1: the datum is the addressing street's own
+			# elevation, never a footprint-terrain majority --
+			# WarrenBuildingParcel.seal()'s unconditional first check is
+			# address_walk_cell.y != base_band -> false.
+			assert_eq(int(claim.floor_band), door_walk.y,
+				"seed %d: claim at door_column %s has floor_band %d != door_walk.y %d" \
+					% [city_seed, str(door_column), int(claim.floor_band),
+						door_walk.y])
+
+			# Invariant 2: every footprint, after back-extension, lateral
+			# extension, and 1x1 merges, must stay within the authored size
+			# menu -- WarrenParcelConstruction.profile_for has no template
+			# for anything else.
+			var claim_into_block := -claim_frontage
+			var claim_depth := WarrenMazeStampPass._footprint_depth(
+				footprint, claim_into_block)
+			var claim_width := footprint.size() / claim_depth
+			assert_true(WarrenMazeStampPass._is_menu_shape(claim_width,
+				claim_depth),
+				("seed %d: claim at door_column %s is %dx%d (w x d), " \
+					+ "outside the authored size menu") \
+						% [city_seed, str(door_column), claim_width,
+							claim_depth])
+
+			# Invariant 3: every claim -- including an L's wing -- carries a
+			# door_walk on a passage cell adjacent to its OWN footprint, so
+			# door_serves_address can hold for some phase.
+			assert_true(footprint.has(door_column),
+				"seed %d: claim at door_column %s does not contain its own threshold" \
+					% [city_seed, str(door_column)])
+			assert_eq(door_column + claim_frontage,
+				Vector2i(door_walk.x, door_walk.z),
+				"seed %d: claim at door_column %s: threshold + frontage != door_walk" \
+					% [city_seed, str(door_column)])
+			assert_true(plan.passage_kinds.has(door_walk),
+				"seed %d: claim at door_column %s: door_walk %s is not a passage cell" \
+					% [city_seed, str(door_column), str(door_walk)])
+
 			if not shape_id.begins_with("L.") \
 					and original_arm_depths.has(door_column):
 				var into_block := -(claim.frontage as Vector2i)

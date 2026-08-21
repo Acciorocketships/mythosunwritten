@@ -10,15 +10,25 @@ extends RefCounted
 ## datum -- is rescued with a SMALL bounded edit (offender columns only, at
 ## most +/-1 band) instead of being discarded outright. On corpora with real
 ## per-column terrain relief this is what stops a raised threshold from
-## forcing a whole footprint down to 1x1. Two further measures, born out of
-## iterating against a corpus with NO terrain relief (ground_bands = {}, so
-## every effective_base is 0 and this edit never fires): every 2-wide rect
-## also tries the MIRRORED side of its threshold (an unmirrored shape always
-## claims its second column on one fixed side, so a face whose free neighbor
-## sits on the other side could never claim a 2-wide footprint at all), and
-## a placed rectangular claim is grown afterward into whatever unclaimed
-## columns border it, deepening and widening in alternating rounds so it can
-## walk around a corridor's corners.
+## forcing a whole footprint down to 1x1. A placed rectangular claim is also
+## grown afterward into whatever unclaimed columns border it, deepening and
+## widening in alternating rounds so it can walk around a corridor's corners.
+##
+## Every claim must stay TRANSLATABLE: WarrenParcelConstruction's authored
+## templates fix a door at one specific end of the width axis (the minimum
+## perpendicular-projection column of its own depth row) -- never a free
+## choice, never mirrorable, since a template only carries one door position
+## and address_door_phase is a 1.5m in-module shift, not a whole-column swap.
+## An earlier round tried a MIRRORED variant of every 2-wide shape (claiming
+## its second column on the OTHER side of the threshold) to fix a real
+## one-sidedness starvation bug, but a mirrored footprint puts the door at
+## the WRONG end -- WarrenBuildingParcel.seal() still succeeds (geometry is
+## still a legal rectangle) yet WarrenParcelConstruction.door_serves_address
+## always fails, since the authored template's fixed door position lands one
+## macro column away from the real door. That variant is gone; every
+## rectangular footprint here -- from direct placement, back-extension,
+## lateral extension, or a 1x1 merge -- is checked (or by construction
+## guaranteed) to keep door_column at that same minimum-projection position.
 ##
 ## Reads mass through the still-unsealed WarrenMazeSourcePlan directly
 ## (state_at / effective_top), never through a WarrenVolumePlan: P4 runs
@@ -37,28 +47,23 @@ const CARDINALS: Array[Vector2i] = [
 ## depth = straight back from the door). The L is two rectangles -- a
 ## door-bearing 2x2 main arm and a 1x2 wing -- sharing one lineage_hint; both
 ## wing lanes are enumerated as separate menu entries so the global sort
-## picks whichever orientation actually fits. Every width-2 rect also gets a
-## mirrored variant: an unmirrored 2-wide shape always claims its second
-## column on the same fixed side of the threshold (matching
-## WarrenMazeBlockPartitioner's own convention), so a face whose free
-## neighbor sits on the OTHER side could never claim a 2-wide footprint at
-## all -- that one-sidedness, not terrain, is what starved most faces down
-## to 1x1 before the mirror was added.
+## picks whichever orientation actually fits. No mirrored variants (see the
+## class comment): every width-2 rect always claims its second column on the
+## same fixed side of the threshold, at width_index 1 -- the minimum
+## perpendicular-projection column (the threshold itself) stays door_column,
+## matching what WarrenParcelConstruction's authored templates require.
 const SHAPE_MENU: Array[Dictionary] = [
-	{"id": &"2x3", "kind": &"rect", "width": 2, "depth": 3, "mirror": false},
-	{"id": &"2x3", "kind": &"rect", "width": 2, "depth": 3, "mirror": true},
-	{"id": &"2x2", "kind": &"rect", "width": 2, "depth": 2, "mirror": false},
-	{"id": &"2x2", "kind": &"rect", "width": 2, "depth": 2, "mirror": true},
+	{"id": &"2x3", "kind": &"rect", "width": 2, "depth": 3},
+	{"id": &"2x2", "kind": &"rect", "width": 2, "depth": 2},
 	{"id": &"L", "kind": &"l", "wing_lane": 1},
 	{"id": &"L", "kind": &"l", "wing_lane": 0},
-	{"id": &"1x2", "kind": &"rect", "width": 1, "depth": 2, "mirror": false},
-	{"id": &"2x1", "kind": &"rect", "width": 2, "depth": 1, "mirror": false},
-	{"id": &"2x1", "kind": &"rect", "width": 2, "depth": 1, "mirror": true},
-	{"id": &"1x1", "kind": &"rect", "width": 1, "depth": 1, "mirror": false},
+	{"id": &"1x2", "kind": &"rect", "width": 1, "depth": 2},
+	{"id": &"2x1", "kind": &"rect", "width": 2, "depth": 1},
+	{"id": &"1x1", "kind": &"rect", "width": 1, "depth": 1},
 ]
-const ALL_SHAPE_INDICES: Array[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-## <= 2 columns: 1x2, 2x1 (both orientations), 1x1 -- the infill pass's menu.
-const SMALL_SHAPE_INDICES: Array[int] = [6, 7, 8, 9]
+const ALL_SHAPE_INDICES: Array[int] = [0, 1, 2, 3, 4, 5, 6]
+## <= 2 columns: 1x2, 2x1, 1x1 -- the infill pass's menu.
+const SMALL_SHAPE_INDICES: Array[int] = [4, 5, 6]
 ## Back-extension deepens an already-placed rectangular claim into unclaimed
 ## interior columns directly behind it, at most this many extra columns.
 const MAX_BACK_EXTENSION_DEPTH := 3
@@ -71,6 +76,17 @@ const EXTENSION_ROUNDS := 2
 ## Hard cap on how many claims one lineage (one building) may group.
 const MAX_LINEAGE_SIZE := 3
 const SCORE_SALT := 0x53544D50
+## The only (width, depth) rectangles WarrenParcelConstruction.profile_for
+## actually authors (tower/slim/row/building/long) -- WarrenBuildingParcel's
+## own seal() independently forbids depth < width except for the row
+## exception (width 2, depth 1), which is exactly this set. Extension and
+## merge must never grow a claim's footprint past this vocabulary: a claim
+## whose real footprint has no authored profile can never seal as a parcel,
+## no matter how legal its geometry otherwise is.
+const MENU_SHAPES: Array[Vector2i] = [
+	Vector2i(1, 1), Vector2i(1, 2), Vector2i(2, 1), Vector2i(2, 2),
+	Vector2i(2, 3),
+]
 
 static var last_failure := ""
 
@@ -238,6 +254,24 @@ static func _merge_small_claims_once(plan: WarrenMazeSourcePlan,
 			merged.append(column)
 			if not _is_axis_rectangle(merged):
 				continue
+			# Invariant 2: refuse a merge that would leave the size menu, the
+			# same rule extension already follows -- `into_block` here is
+			# claim_b's own axis, and `_footprint_depth`/size division give
+			# exactly the (width, depth) WarrenBuildingParcel.seal() would
+			# derive from this same rectangle via frontage_direction.
+			var into_block_b := -(claim_b.frontage as Vector2i)
+			var merged_depth := _footprint_depth(merged, into_block_b)
+			var merged_width := merged.size() / merged_depth
+			if not _is_menu_shape(merged_width, merged_depth):
+				continue
+			# Invariant 3: the absorbed 1x1 must land behind/beside
+			# door_column, never in front of or ahead of it in projection
+			# order -- claim_a's own door is discarded (it stops being an
+			# independent claim), so only claim_b's door survives, and it
+			# must stay the merged footprint's minimum-projection column.
+			if not _door_position_valid(merged,
+					claim_b.door_column as Vector2i, into_block_b):
+				continue
 			var floor_band := int(claim_b.floor_band)
 			var new_top := _claim_top_band(plan, merged, floor_band, false)
 			if new_top < 0:
@@ -273,6 +307,45 @@ static func _is_axis_rectangle(footprint: Array[Vector2i]) -> bool:
 		min_z = mini(min_z, column.y)
 		max_z = maxi(max_z, column.y)
 	return (max_x - min_x + 1) * (max_z - min_z + 1) == footprint.size()
+
+
+## Whether (width, depth), measured relative to `into_block` exactly as
+## WarrenBuildingParcel.seal() measures its own width_cells/depth_cells from
+## frontage_direction, is one of the five authored parcel profiles. A growth
+## step (back-extension, lateral extension, or a 1x1 merge) that would leave
+## this vocabulary must be refused outright, not committed and hoped for --
+## WarrenParcelConstruction.profile_for returns {} for anything else, which
+## fails door_serves_address unconditionally.
+static func _is_menu_shape(width: int, depth: int) -> bool:
+	return Vector2i(width, depth) in MENU_SHAPES
+
+
+## Invariant 3's general form: door_column must be the footprint's own
+## frontmost, then leftmost, column -- minimum projection onto into_block
+## (depth) first, then minimum projection onto perpendicular (width) among
+## whatever shares that same minimum depth -- exactly where
+## WarrenParcelConstruction's authored templates fix their door. True by
+## construction for direct placement (_rect_footprint never mirrors) and for
+## back-extension (which only ever adds rows strictly behind door_column's
+## own), so this exists to gate the two paths that could otherwise violate it
+## on either axis: lateral extension growing the wrong way, and a 1x1 merge
+## landing in front of or beside door_column on the wrong side.
+static func _door_position_valid(footprint: Array[Vector2i],
+		door_column: Vector2i, into_block: Vector2i) -> bool:
+	var perpendicular := Vector2i(-into_block.y, into_block.x)
+	var door_depth := door_column.x * into_block.x + door_column.y * into_block.y
+	var door_projection := door_column.x * perpendicular.x \
+		+ door_column.y * perpendicular.y
+	for column: Vector2i in footprint:
+		var depth := column.x * into_block.x + column.y * into_block.y
+		if depth < door_depth:
+			return false
+		if depth > door_depth:
+			continue
+		var projection := column.x * perpendicular.x + column.y * perpendicular.y
+		if projection < door_projection:
+			return false
+	return true
 
 
 static func _shape_id_for_footprint(footprint: Array[Vector2i]) -> StringName:
@@ -477,8 +550,7 @@ static func _enumerate_candidates(plan: WarrenMazeSourcePlan,
 			var candidate: Dictionary
 			if StringName(entry.kind) == &"rect":
 				var footprint := _rect_footprint(walk, into_block,
-					int(entry.width), int(entry.depth),
-					bool(entry.get("mirror", false)))
+					int(entry.width), int(entry.depth))
 				candidate = _build_rect_candidate(plan, face_index,
 					shape_index, entry, walk, door_column, frontage,
 					footprint, claimed_columns)
@@ -497,7 +569,13 @@ static func _build_rect_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 		footprint: Array[Vector2i], claimed_columns: Dictionary) -> Dictionary:
 	if not _footprint_available(plan, footprint, claimed_columns):
 		return {}
-	var datum_info := _column_datum(plan, footprint)
+	# Always true by construction (_rect_footprint never mirrors) -- a
+	# defensive invariant-3 check anyway, since this is the one place every
+	# rectangular candidate is born.
+	if not _door_position_valid(footprint, door_column, -frontage):
+		return {}
+	var floor_band := walk.y
+	var datum_info := _footprint_offenders(plan, footprint, floor_band)
 	if not bool(datum_info.get("ok", false)):
 		return {}
 	var offenders := datum_info.offenders as Array[Vector2i]
@@ -508,7 +586,7 @@ static func _build_rect_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 		- offenders.size() * 50 + tie
 	return {"face_index": face_index, "shape_index": shape_index,
 		"score": score, "kind": &"rect", "footprint": footprint,
-		"datum": int(datum_info.datum), "offenders": offenders, "walk": walk,
+		"datum": floor_band, "offenders": offenders, "walk": walk,
 		"door_column": door_column, "frontage": frontage,
 		"shape_id": StringName(entry.id), "is_1x1": footprint.size() == 1}
 
@@ -530,10 +608,21 @@ static func _build_l_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 	combined.append_array(wing)
 	if not _footprint_available(plan, combined, claimed_columns):
 		return {}
-	var datum_info := _column_datum(plan, combined)
+	var floor_band := walk.y
+	var datum_info := _footprint_offenders(plan, combined, floor_band)
 	if not bool(datum_info.get("ok", false)):
 		return {}
 	var offenders := datum_info.offenders as Array[Vector2i]
+	# The wing arm needs its OWN door -- a passage cell at this same
+	# floor_band, adjacent to one of its own columns -- or it can never
+	# independently seal as a parcel (WarrenBuildingParcel.seal() requires
+	# `unique.has(threshold_column)`, and the wing's footprint never contains
+	# the main arm's door_column). No legal wing door means no L here; the
+	# plain 2x2 main-arm-only rectangle is a separately enumerated candidate
+	# at this same face and remains free to compete on its own.
+	var wing_door := _find_wing_door(plan, wing, floor_band)
+	if wing_door.is_empty():
+		return {}
 	var contact := _neighbor_contact_count(combined, claimed_columns)
 	var tie := posmod(WarrenPassageLatticeRules.hash_key(plan.world_seed,
 		SCORE_SALT, walk, shape_index), 100)
@@ -541,9 +630,36 @@ static func _build_l_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 		- offenders.size() * 50 + tie
 	return {"face_index": face_index, "shape_index": shape_index,
 		"score": score, "kind": &"l", "main_footprint": main,
-		"wing_footprint": wing, "datum": int(datum_info.datum),
+		"wing_footprint": wing, "datum": floor_band,
 		"offenders": offenders, "walk": walk, "door_column": door_column,
-		"frontage": frontage, "is_1x1": false}
+		"frontage": frontage, "wing_door_walk": wing_door.door_walk,
+		"wing_door_column": wing_door.door_column,
+		"wing_frontage": wing_door.frontage, "is_1x1": false}
+
+
+## First passage cell (in a fixed, deterministic column/direction order)
+## exactly at `floor_band`, cardinal-adjacent to one of `wing`'s own columns
+## -- a legal door for the wing arm to address independently, per invariant
+## 3. Empty when none exists.
+static func _find_wing_door(plan: WarrenMazeSourcePlan,
+		wing: Array[Vector2i], floor_band: int) -> Dictionary:
+	for column: Vector2i in wing:
+		for direction: Vector2i in CARDINALS:
+			var neighbor := column + direction
+			var candidate_walk := Vector3i(neighbor.x, floor_band, neighbor.y)
+			if not plan.passage_kinds.has(candidate_walk):
+				continue
+			# The wing's own frontage need not align with the main arm's --
+			# it addresses whichever passage it actually found. Invariant 3
+			# still applies against THAT axis: this candidate door_column
+			# must be the wing's own minimum-projection column, or this
+			# particular (column, direction) pair is not a legal wing door
+			# even though a passage sits there.
+			if not _door_position_valid(wing, column, -direction):
+				continue
+			return {"door_walk": candidate_walk, "door_column": column,
+				"frontage": direction}
+	return {}
 
 
 static func _compare_candidates(left: Dictionary, right: Dictionary) -> bool:
@@ -624,10 +740,10 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 		"shape_id": &"L.main"})
 	plan.parcel_claims.append({"footprint": wing.duplicate(),
 		"floor_band": floor_band, "top_band": top_band,
-		"door_walk": candidate.walk as Vector3i,
-		"door_column": candidate.door_column as Vector2i,
-		"frontage": candidate.frontage as Vector2i, "lineage_hint": lineage,
-		"shape_id": &"L.wing"})
+		"door_walk": candidate.wing_door_walk as Vector3i,
+		"door_column": candidate.wing_door_column as Vector2i,
+		"frontage": candidate.wing_frontage as Vector2i,
+		"lineage_hint": lineage, "shape_id": &"L.wing"})
 	for column: Vector2i in combined:
 		claimed_columns[column] = true
 	_bump(outcomes, "placed")
@@ -664,11 +780,19 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 		return
 	var floor_band := int(claim.floor_band)
 	var top_band := int(claim.top_band)
+	var width := width_columns.size()
 	var depth_used := _footprint_depth(footprint, into_block)
 	var original_depth: int = original_depths.get(claim_index, depth_used)
 	var already_added := depth_used - original_depth
 	var remaining_budget := maxi(0, MAX_BACK_EXTENSION_DEPTH - already_added)
 	for extra in remaining_budget:
+		# Invariant 2: a growth step that would leave the authored size menu
+		# is refused outright, before even checking geometry -- WarrenMassif
+		# columns run far deeper than any real building footprint, so without
+		# this a claim would happily deepen past what the parcel translator
+		# can ever construct.
+		if not _is_menu_shape(width, depth_used + extra + 1):
+			break
 		var row: Array[Vector2i] = []
 		for lane_column: Vector2i in width_columns:
 			row.append(lane_column + into_block * (depth_used + extra))
@@ -776,41 +900,58 @@ static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
 	var footprint := (claim.footprint as Array[Vector2i]).duplicate()
 	var into_block := -(claim.frontage as Vector2i)
 	var perpendicular := Vector2i(-into_block.y, into_block.x)
+	var door_column := claim.door_column as Vector2i
 	var floor_band := int(claim.floor_band)
 	var top_band := int(claim.top_band)
-	for direction: Vector2i in [perpendicular, -perpendicular]:
-		for extra in MAX_LATERAL_EXTENSION_WIDTH:
-			var row := _outer_lane(footprint, into_block, direction)
-			if not _footprint_available(plan, row, claimed_columns):
+	# Depth never changes during lateral extension (only width does), so it
+	# is computed once.
+	var depth := _footprint_depth(footprint, into_block)
+	var width := footprint.size() / depth
+	# Grow toward +perpendicular ONLY, never -perpendicular: -perpendicular
+	# would insert a new column BEFORE door_column in projection order,
+	# breaking invariant 3 (door_column must stay the footprint's own
+	# minimum-projection column -- see _door_position_valid). This is the
+	# same direction _rect_footprint always uses for width_index 1, so it
+	# never leaves an already-valid door position invalid; the explicit
+	# check below is a defensive belt on top of that.
+	for extra in MAX_LATERAL_EXTENSION_WIDTH:
+		# Invariant 2: refuse a growth step that would leave the menu.
+		if not _is_menu_shape(width + 1, depth):
+			break
+		var row := _outer_lane(footprint, into_block, perpendicular)
+		if not _footprint_available(plan, row, claimed_columns):
+			break
+		var prospective := footprint.duplicate()
+		prospective.append_array(row)
+		if not _door_position_valid(prospective, door_column, into_block):
+			break
+		var offenders: Array[Vector2i] = []
+		var feasible := true
+		for column: Vector2i in row:
+			var base := plan.effective_base(column)
+			if base == floor_band:
+				continue
+			if base > floor_band or floor_band - base > 1:
+				feasible = false
 				break
-			var offenders: Array[Vector2i] = []
-			var feasible := true
-			for column: Vector2i in row:
-				var base := plan.effective_base(column)
-				if base == floor_band:
-					continue
-				if base > floor_band or floor_band - base > 1:
-					feasible = false
-					break
-				offenders.append(column)
-			if not feasible:
-				break
-			var extended_footprint := footprint.duplicate()
-			extended_footprint.append_array(row)
-			var extended_top := _claim_top_band(plan, extended_footprint,
-				floor_band, false)
-			if extended_top < top_band:
-				break
-			for column: Vector2i in offenders:
-				if not plan.record_edit(column, floor_band, extended_top,
-						&"stamp"):
-					_bump(outcomes, "edit_rejected")
-					return
-			for column: Vector2i in row:
-				claimed_columns[column] = true
-			footprint.append_array(row)
-			top_band = extended_top
-			_bump(outcomes, "lateral_extended")
+			offenders.append(column)
+		if not feasible:
+			break
+		var extended_top := _claim_top_band(plan, prospective, floor_band,
+			false)
+		if extended_top < top_band:
+			break
+		for column: Vector2i in offenders:
+			if not plan.record_edit(column, floor_band, extended_top,
+					&"stamp"):
+				_bump(outcomes, "edit_rejected")
+				return
+		for column: Vector2i in row:
+			claimed_columns[column] = true
+		footprint.append_array(row)
+		top_band = extended_top
+		width += 1
+		_bump(outcomes, "lateral_extended")
 	claim["footprint"] = footprint
 	claim["top_band"] = top_band
 
@@ -844,16 +985,19 @@ static func _outer_lane(footprint: Array[Vector2i], into_block: Vector2i,
 	return out
 
 
+## width_index 0 is always the threshold (door_column) itself -- the
+## door position WarrenParcelConstruction's authored templates fix, at the
+## minimum perpendicular-projection column of the door's own depth row (see
+## the class comment). Never mirrored: there is no valid alternative.
 static func _rect_footprint(walk: Vector3i, into_block: Vector2i,
-		width: int, depth: int, mirror: bool = false) -> Array[Vector2i]:
+		width: int, depth: int) -> Array[Vector2i]:
 	var perpendicular := Vector2i(-into_block.y, into_block.x)
 	var threshold := Vector2i(walk.x, walk.z) + into_block
-	var start := -(width - 1) if mirror else 0
 	var out: Array[Vector2i] = []
 	for depth_offset in depth:
 		for width_index in width:
 			out.append(threshold + into_block * depth_offset \
-				+ perpendicular * (start + width_index))
+				+ perpendicular * width_index)
 	return out
 
 
@@ -871,28 +1015,19 @@ static func _footprint_available(plan: WarrenMazeSourcePlan,
 	return true
 
 
-## The largest common effective_base among the footprint's columns becomes
-## the claim's floor_band; any column below it is a within-budget offender
-## (raised at most one band), and any column above it makes the whole
-## footprint infeasible -- the immutable-floor rule (record_edit) forbids
-## ever lowering a column's floor below its own terrain sample, so an
-## outlier that is genuinely taller than the datum can never be reconciled
-## by editing, only by choosing a different footprint.
-static func _column_datum(plan: WarrenMazeSourcePlan,
-		footprint: Array[Vector2i]) -> Dictionary:
-	var counts: Dictionary = {}
-	for column: Vector2i in footprint:
-		var base := plan.effective_base(column)
-		counts[base] = int(counts.get(base, 0)) + 1
-	var values: Array = counts.keys()
-	values.sort()
-	var datum: int = values[0]
-	var best_count := int(counts[datum])
-	for value: Variant in values:
-		var count := int(counts[value])
-		if count > best_count or (count == best_count and int(value) > datum):
-			datum = int(value)
-			best_count = count
+## The datum is the addressing street's own elevation (`walk.y` of the face a
+## candidate is anchored to), never the footprint's own terrain majority --
+## WarrenBuildingParcel.seal()'s very first check is
+## `address_walk_cell.y != base_band -> false`, an unconditional invariant, so
+## floor_band can only ever be the door's own band. A footprint column within
+## one band of that fixed datum is a within-budget offender (raised to match,
+## same record_edit rules as before); a column further away, in either
+## direction, makes the WHOLE footprint infeasible at this shape -- not
+## edited, not substituted -- so the candidate simply does not exist at this
+## size and a smaller shape (independently enumerated at the same face) is
+## free to succeed instead.
+static func _footprint_offenders(plan: WarrenMazeSourcePlan,
+		footprint: Array[Vector2i], datum: int) -> Dictionary:
 	var offenders: Array[Vector2i] = []
 	for column: Vector2i in footprint:
 		var base := plan.effective_base(column)
@@ -901,7 +1036,7 @@ static func _column_datum(plan: WarrenMazeSourcePlan,
 		if base > datum or datum - base > 1:
 			return {"ok": false}
 		offenders.append(column)
-	return {"ok": true, "datum": datum, "offenders": offenders}
+	return {"ok": true, "offenders": offenders}
 
 
 static func _column_ceiling(plan: WarrenMazeSourcePlan, column: Vector2i,
