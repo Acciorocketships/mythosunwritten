@@ -446,6 +446,9 @@ convention).
 
 ## Follow-up plans (not this document)
 
+- **Slice 1.5:** noise-based massif behind the unchanged interface (spec
+  section "Noise-based massif"); slice-1 exit metrics re-run on the noise
+  corpus; debug-view phase-1 renders are the tuning instrument.
 - **Slice 2:** composition consumes `reservations` directly; hero beam deleted; gate disposition table applied; 24/24 composed+fabric on flat ground.
 - **Slice 3:** real-terrain sites (production site + sloped fixtures) via `ground_bands`; `SettlementReliefPlan` verification.
 - **Slice 4:** mode flip; delete the searched pipeline, pin cache, budget slicing, `GENERATION_MODE`; retire legacy greedy partition path and search harnesses; salt machinery removed with the pin cache.

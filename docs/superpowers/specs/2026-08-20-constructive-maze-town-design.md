@@ -198,8 +198,30 @@ dead-symbol grep plus the full suite.
   test corpus as they are discovered (Ryan's "rules we add as we go"), never
   as new runtime rejection paths.
 
+## Noise-based massif (scheduled: slice 1.5)
+
+Measured 2026-08-20: the Gaussian massif is shape-monotone — across 24 builds,
+relief is always 0 (no ridges or saddles), the widest plateau is always 6–8
+cells, and the terrace ladder `[2,3,4,6,7,8,10,11,12,14]` repeats verbatim
+across seeds. Every town is the same concentric mound with ±10% size jitter,
+so silhouette variation cannot come from the carve or feature palette alone.
+
+The swap is contained behind the massif interface (`has_column` / `top_at` /
+`base_at` / `bearing_at`): `WarrenMassifBuilder` gains a seeded, quantized
+noise heightfield (2.5D — noise drives per-column height above the terrain
+sample; no overhangs or floating mass). Targets: non-zero relief (ridges,
+saddles, occasional twin peaks), varied plateau widths and terrace ladders,
+eccentric non-circular footprints — while keeping the buildable-layer bounds
+and every carve invariant (connectivity, frontage, stride legality) as the
+safety net, and slice 1's exit metrics (median footprint, ownership, no
+pencils) re-verified on the noise corpus before slice 2 begins.
+
+Sequenced at 1.5, not 1, deliberately: noise multiplies terrace steps — the
+exact geometry the new stamping pass must absorb — so the pipeline is proven
+on simple geometry first, then hardened against noise with the debug view's
+phase-1 massif renders as the tuning instrument.
+
 ## Out of scope
 
-Noise-based massif (later contained swap behind the same massif interface),
-multi-entrance boring, async settlement streaming (shrinks but is not
+Multi-entrance boring, async settlement streaming (shrinks but is not
 replaced), and biome/theme variation beyond the registry palette.
