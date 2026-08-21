@@ -412,8 +412,12 @@ func test_foundations_are_derived_from_datum_minus_terrain() -> void:
 					"claimed column %s at grade must not appear in " \
 						% column + "foundation_columns")
 
-	# Same contract for reservation cells whose datum_band clears terrain.
+	# Same contract for reservation cells whose datum_band clears terrain --
+	# except overhead (skywalk_span) reservations, which are excluded
+	# outright regardless of datum vs terrain (see the next block).
 	for reservation: Dictionary in plan.reservations:
+		if not (reservation.get("walk_cells", []) as Array).is_empty():
+			continue
 		var datum := int(reservation.datum_band)
 		for column: Vector2i in reservation.cells as Array[Vector2i]:
 			var terrain := plan.massif.base_at(column)
@@ -428,3 +432,33 @@ func test_foundations_are_derived_from_datum_minus_terrain() -> void:
 				assert_false(foundation_columns.has(column),
 					"reservation column %s at grade must not appear in " \
 						% column + "foundation_columns")
+
+	# Overhead (skywalk_span) reservations are excluded outright, even when
+	# their walk band clears terrain -- their flanks stand on grounded rock
+	# (claim_overhead never edits a floor), so a foundation entry there would
+	# be nonsense for slice-2's retained-foundation machinery. Seed 2 compact
+	# is the fixture test_overhead_reservations_never_claim_passage_columns
+	# already relies on to actually land a skywalk_span reservation.
+	var overhead_profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var overhead_massif := WarrenMassifBuilder.build(2, {}, overhead_profile)
+	var overhead_plan := WarrenMazeCarver.carve(2, overhead_massif,
+		overhead_profile, false)
+	assert_not_null(overhead_plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(overhead_plan,
+		overhead_profile), WarrenMazeReservationPass.last_failure)
+	assert_true(WarrenMazeStampPass.stamp(overhead_plan, overhead_profile),
+		WarrenMazeStampPass.last_failure)
+	var overhead_reservations: Array[Dictionary] = []
+	for reservation: Dictionary in overhead_plan.reservations:
+		if not (reservation.walk_cells as Array).is_empty():
+			overhead_reservations.append(reservation)
+	assert_gt(overhead_reservations.size(), 0,
+		"seed 2 compact is expected to land at least one skywalk_span " \
+			+ "reservation")
+	var overhead_foundation_columns := overhead_plan.audit.get(
+		"foundation_columns", {}) as Dictionary
+	for reservation: Dictionary in overhead_reservations:
+		for column: Vector2i in reservation.cells as Array[Vector2i]:
+			assert_false(overhead_foundation_columns.has(column),
+				("overhead reservation flank column %s must not appear in " \
+					+ "foundation_columns") % column)

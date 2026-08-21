@@ -166,6 +166,13 @@ static func stamp(plan: WarrenMazeSourcePlan,
 ## read off the ledger the earlier passes already committed, not a new gate
 ## on it. A column at grade (datum == terrain) is omitted entirely, so a
 ## consumer can treat "column present" as "this column needs a foundation".
+## Overhead (skywalk_span) reservations are excluded outright: their
+## datum_band is a neighboring walkway's height, not a floor for THIS
+## column, and claim_overhead never edits the flank columns' floors, so they
+## already stand on grounded natural rock -- any entry here would drive
+## slice-2's retained-foundation machinery to build a foundation for a
+## column that never asked for one. Skywalk support is slice-2 composition's
+## job, not this derivation's.
 static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 	var foundation_columns: Dictionary = {}
 	for claim: Dictionary in plan.parcel_claims:
@@ -175,6 +182,11 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 			if depth > 0:
 				foundation_columns[column] = depth
 	for reservation: Dictionary in plan.reservations:
+		# Skip overhead reservations: datum is a neighboring walk band, not
+		# this column's floor, and its flank columns are grounded natural
+		# rock (claim_overhead records no edit).
+		if not (reservation.get("walk_cells", []) as Array).is_empty():
+			continue
 		var datum := int(reservation.datum_band)
 		for column: Vector2i in reservation.cells as Array[Vector2i]:
 			var depth := datum - plan.massif.base_at(column)
