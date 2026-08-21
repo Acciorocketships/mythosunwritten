@@ -364,6 +364,12 @@ func test_stamp_edits_stay_within_one_band_and_own_apron() -> void:
 	assert_true(WarrenMazeStampPass.stamp(plan, profile),
 		WarrenMazeStampPass.last_failure)
 
+	## Refined 2026-08-21 (the tiers unlock): a stamp edit may now also be a
+	## BEARING edit, which may move its floor by more than one band as long
+	## as the pre-edit massif carried continuous solid mass through it --
+	## _column_bears proved that precisely (band-by-band, ledger-aware) at
+	## placement time; this mirrors seal()'s own cheaper re-validation
+	## (a massif-range check) rather than re-deriving the full walk here.
 	var stamp_edit_columns: Array[Vector2i] = []
 	for column_value: Variant in plan.column_edits.keys():
 		var column := column_value as Vector2i
@@ -371,8 +377,13 @@ func test_stamp_edits_stay_within_one_band_and_own_apron() -> void:
 		if StringName(edit.phase) != &"stamp":
 			continue
 		stamp_edit_columns.append(column)
-		assert_lte(absi(int(edit.floor_band) - plan.massif.base_at(column)), 1,
-			"stamp edits move at most one band")
+		var floor_band := int(edit.floor_band)
+		var drift := absi(floor_band - plan.massif.base_at(column))
+		if drift > 1:
+			assert_true(bool(edit.get("bearing", false)),
+				("stamp edit at %s moves its floor %d bands but is not " 					+ "marked bearing") % [column, drift])
+			assert_true(plan.massif.base_at(column) <= floor_band 					and floor_band <= plan.massif.top_at(column),
+				("bearing edit at %s must have its floor within the " 					+ "pre-edit massif's own [base, top] range") % column)
 	assert_gt(stamp_edit_columns.size(), 0,
 		"the sloped fixture must actually exercise the stamp-phase edit path")
 
@@ -437,7 +448,7 @@ func test_record_offender_batch_is_all_or_nothing_when_an_offender_hosts_a_passa
 	var outcomes: Dictionary = {}
 	var offenders: Array[Vector2i] = [clean_column, passage_column]
 	var committed := WarrenMazeStampPass._record_offender_batch(plan, offenders,
-		floor_band, top_band, &"stamp", outcomes)
+		floor_band, top_band, &"stamp", outcomes, {})
 
 	assert_false(committed,
 		"a batch containing a passage-hosting offender must not commit")
@@ -687,14 +698,20 @@ func test_translator_partition_is_one_to_one_with_claims() -> void:
 		# roughly its own storeys instead of the full massif ceiling, which
 		# raises the 2D-footprint ratio's DENOMINATOR-shrinking effect more
 		# than it costs the numerator -- measured seed 4: 0.4213 -> 0.5583,
-		# seed 12: 0.3360 -> 0.4751. Per the ruling that an ownership floor may
-		# only move UP (never be weakened), both floors are re-pinned to the
-		# new measured baseline minus the same small guard. These stay
+		# seed 12: 0.3360 -> 0.4751.
+		# Re-pinned upward again (fix round 4, bearing/tiers unlock,
+		# 2026-08-21): upper-street houses that now bear directly on the
+		# mountain claim MORE of the massif's own volume per column (the
+		# bearing rock they stand on becomes owned foundation, not
+		# unclaimed mass), measured seed 4: 0.5583 -> 0.6419, seed 12:
+		# 0.4751 -> 0.6073. Per the ruling that an ownership floor may only
+		# move UP (never be weakened), both floors are re-pinned again to
+		# the new measured baseline minus the same small guard. These stay
 		# anti-regression floors (catch a future correctness regression in the
 		# audit, stamp, or trim pass), not quality targets; the 0.85 quality
 		# target stays slice 2's composition-level exit per the ruling above.
 		var ratio := float(parcels.audit.get("maze_owned_solid_ratio", 0.0))
-		var ratio_floor := 0.53 if city_seed == 4 else 0.45
+		var ratio_floor := 0.62 if city_seed == 4 else 0.58
 		assert_gte(ratio, ratio_floor,
 			"seed %d: 2D-footprint ownership anti-regression floor (%.2f); measured %s" \
 				% [city_seed, ratio_floor, ratio])
@@ -909,7 +926,43 @@ func test_upper_streets_stack_claims_above_lower_houses() -> void:
 	## (tiers actually exist), and NO column may ever show two overlapping
 	## claims (the core occupancy invariant every placement/extension/merge
 	## site is now built on).
+	##
+	## Refined 2026-08-21 (the tiers unlock, bearing): a column with
+	## continuous solid mass from its own base up to a candidate's floor is
+	## no longer held to the +/-1 terrain-offender budget (see
+	## WarrenMazeStampPass._column_bears) -- an upper-street house may now
+	## bear directly on the mountain rather than needing a lower claim's roof
+	## to stack on. `upper_claims` (floor_band >= 4 bands above the column's
+	## own massif base -- i.e. addressing a street two-plus storeys up) and a
+	## direct anti-floating check (every such claim's own footprint columns
+	## must have continuous SOLID mass, via state_at_raw -- the pre-ledger
+	## truth, since a bearing column's OWN floor-raising edit makes the
+	## ledger-aware state_at report AIR below it by design once the edit
+	## exists, which would make a naive post-hoc check misreport every real
+	## bearing column as "floating") are measured in the SAME loop as the
+	## stacking check above.
+	##
+	## CONCERN (see task-1-report.md, fix round 4): the coordinator's brief
+	## asked for >= 25% of claims to be upper-street across this corpus.
+	## Measured or (aggregate across seeds 1/3/4/12): 8/63 = 12.7% (seed
+	## breakdown: 1/18, 1/11, 2/17, 4/17). Investigated directly (not just
+	## accepted) -- the shortfall is a genuine property of THIS massif, not a
+	## bug: most high-elevation candidate footprints include at least one
+	## column near an existing passage's own carved headroom (spine/alley
+	## tunnels run through the massif at many elevations in a compact town),
+	## which breaks bearing continuity for that footprint outright, by
+	## design and correctly (building there really would float over a
+	## carved void). Widening the mechanism further to hit 25% would mean
+	## either loosening _column_bears' continuity check (reintroducing real
+	## floating claims) or extending scope into back-/lateral-extension
+	## (not asked, and back_extend/lateral_extend intentionally keep the old
+	## +/-1-only rule per the brief). The threshold below is pinned to the
+	## measured, verified-correct aggregate minus a guard, not weakened
+	## further; flagged for the coordinator's attention rather than silently
+	## substituted.
 	var found_stack := false
+	var total_claims := 0
+	var upper_claims := 0
 	for city_seed: int in [1, 3, 4, 12]:
 		var profile := WarrenVillageScaleProfile.for_id(&"compact")
 		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
@@ -924,7 +977,24 @@ func test_upper_streets_stack_claims_above_lower_houses() -> void:
 		for claim: Dictionary in plan.parcel_claims:
 			var floor_band := int(claim.floor_band)
 			var top_band := int(claim.top_band)
-			for column: Vector2i in claim.footprint as Array[Vector2i]:
+			var footprint := claim.footprint as Array[Vector2i]
+			total_claims += 1
+			var door_column := claim.door_column as Vector2i
+			if floor_band - plan.massif.base_at(door_column) >= 4:
+				upper_claims += 1
+				for column: Vector2i in footprint:
+					var column_base := plan.massif.base_at(column)
+					if column_base >= floor_band:
+						continue
+					for y in range(column_base, floor_band):
+						assert_eq(plan.state_at_raw(
+								Vector3i(column.x, y, column.y)),
+							WarrenMazeSourcePlan.CellState.SOLID,
+							("seed %d: upper-street claim at door %s has " \
+								+ "a gap below its floor at column %s, " \
+								+ "band %d -- it would float") \
+								% [city_seed, door_column, column, y])
+			for column: Vector2i in footprint:
 				var existing: Array = intervals_by_column.get(column, [])
 				for interval: Vector2i in existing:
 					var overlaps := floor_band < interval.y \
@@ -940,6 +1010,13 @@ func test_upper_streets_stack_claims_above_lower_houses() -> void:
 	assert_true(found_stack,
 		"at least one column across seeds 1,3,4,12 compact must carry two " \
 			+ "disjoint-band claims -- tiers must actually exist")
+	var upper_ratio := float(upper_claims) / float(maxi(1, total_claims))
+	assert_gte(upper_ratio, 0.10,
+		("upper-street claim ratio %.3f (%d/%d) across seeds 1,3,4,12 " \
+			+ "compact must clear the measured anti-regression floor -- " \
+			+ "see the test's own comment for why this is 0.10, not the " \
+			+ "brief's 0.25 target") % [upper_ratio, upper_claims,
+				total_claims])
 
 
 func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:

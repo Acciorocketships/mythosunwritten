@@ -268,6 +268,20 @@ mutually non-adjacent stacked 1×1 infill claims per town, each an
 unavoidable lineage of one, which pulled a town's median lineage footprint (a
 protected corpus metric) below 2.
 
+**Bearing (fix round 4, 2026-08-21 — the upper-street unlock).** A column is
+also exempt from the ±1 terrain-offender budget when its mass is
+*continuous SOLID rock* from its own base up to the candidate's floor
+(`_column_bears`, ledger- and occupancy-aware so it never mistakes another
+claim's own not-yet-trimmed footprint for open mountain), regardless of how
+far above terrain that floor sits — the column isn't floating, and the depth
+below the raised floor becomes real deep foundation via the existing
+`derive_foundations` accounting. Because candidates are scored once, all up
+front, before any of them commit, a bearing verdict computed at enumeration
+time can go stale by the time a candidate's turn to commit actually arrives
+(an earlier, higher-scored candidate may have claimed the same column's mass
+in between), so `_footprint_offenders` is re-run against the live occupancy
+map at commit time rather than trusting the cached enumeration-time result.
+
 Lineage grouping's adjacency stays 2D-column-plus-one-band, unchanged: a
 stacked claim's floor differs from anything below it by at least
 `MIN_HOUSE_BANDS` (4) bands, far outside the 1-band grouping tolerance, so a

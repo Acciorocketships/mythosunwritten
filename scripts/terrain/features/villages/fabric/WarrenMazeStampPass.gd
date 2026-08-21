@@ -732,6 +732,7 @@ static func _build_rect_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 	if not bool(datum_info.get("ok", false)):
 		return {}
 	var offenders := datum_info.offenders as Array[Vector2i]
+	var bearing_columns := datum_info.bearing_columns as Dictionary
 	var contact := _neighbor_contact_count(footprint, claimed_intervals)
 	var tie := posmod(WarrenPassageLatticeRules.hash_key(plan.world_seed,
 		SCORE_SALT, walk, shape_index), 100)
@@ -739,7 +740,8 @@ static func _build_rect_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 		- offenders.size() * 50 + tie
 	return {"face_index": face_index, "shape_index": shape_index,
 		"score": score, "kind": &"rect", "footprint": footprint,
-		"datum": floor_band, "offenders": offenders, "walk": walk,
+		"datum": floor_band, "offenders": offenders,
+		"bearing_columns": bearing_columns, "walk": walk,
 		"door_column": door_column, "frontage": frontage,
 		"shape_id": StringName(entry.id), "is_1x1": footprint.size() == 1}
 
@@ -770,6 +772,7 @@ static func _build_l_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 	if not bool(datum_info.get("ok", false)):
 		return {}
 	var offenders := datum_info.offenders as Array[Vector2i]
+	var bearing_columns := datum_info.bearing_columns as Dictionary
 	# The wing arm needs its OWN door -- a passage cell at this same
 	# floor_band, adjacent to one of its own columns -- or it can never
 	# independently seal as a parcel (WarrenBuildingParcel.seal() requires
@@ -788,7 +791,8 @@ static func _build_l_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 	return {"face_index": face_index, "shape_index": shape_index,
 		"score": score, "kind": &"l", "main_footprint": main,
 		"wing_footprint": wing, "datum": floor_band,
-		"offenders": offenders, "walk": walk, "door_column": door_column,
+		"offenders": offenders, "bearing_columns": bearing_columns,
+		"walk": walk, "door_column": door_column,
 		"frontage": frontage, "wing_door_walk": wing_door.door_walk,
 		"wing_door_column": wing_door.door_column,
 		"wing_frontage": wing_door.frontage, "is_1x1": false}
@@ -842,16 +846,22 @@ static func _compare_candidates(left: Dictionary, right: Dictionary) -> bool:
 ## checks) or -- for extension, where budget/geometry gates already ran --
 ## essentially never. Returns false (and bumps "edit_rejected" once) without
 ## recording anything if any offender fails; true once every offender in the
-## batch is actually committed.
+## batch is actually committed. `bearing_columns` (only ever non-empty from
+## the two direct-placement call sites, which alone can produce a bearing
+## offender via _footprint_offenders) marks which offenders in THIS batch
+## are bearing -- extension's own inline offender check has no bearing
+## concept and always passes {}.
 static func _record_offender_batch(plan: WarrenMazeSourcePlan,
 		offenders: Array[Vector2i], floor_band: int, top_band: int,
-		phase: StringName, outcomes: Dictionary) -> bool:
+		phase: StringName, outcomes: Dictionary,
+		bearing_columns: Dictionary) -> bool:
 	for column: Vector2i in offenders:
 		if not plan.can_record_edit(column, floor_band):
 			_bump(outcomes, "edit_rejected")
 			return false
 	for column: Vector2i in offenders:
-		if not plan.record_edit(column, floor_band, top_band, phase):
+		if not plan.record_edit(column, floor_band, top_band, phase,
+				bearing_columns.has(column)):
 			# Unreachable given the validation pass above (can_record_edit
 			# mirrors record_edit's own gates exactly), but never leave a
 			# partially-committed batch if the two ever somehow disagree.
@@ -880,6 +890,17 @@ static func _try_place_rect(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 			floor_band, floor_band + 1):
 		_bump(outcomes, "column_taken")
 		return
+	# Re-derive offenders/bearing against the LIVE claimed_intervals, never
+	# the stale enumeration-time snapshot cached on `candidate` -- see
+	# _footprint_offenders' own comment: a bearing verdict in particular can
+	# go stale the instant an EARLIER candidate in this same sorted pass
+	# commits a claim over ground this one also needs, since main_candidates
+	# is scored once, entirely up front, before anything is placed.
+	var datum_info := _footprint_offenders(plan, footprint, floor_band,
+		claimed_intervals)
+	if not bool(datum_info.get("ok", false)):
+		_bump(outcomes, "column_taken")
+		return
 	var top_band := _claim_top_band(plan, footprint, floor_band,
 		bool(candidate.is_1x1), door_walk, claimed_intervals)
 	if top_band < 0:
@@ -889,9 +910,10 @@ static func _try_place_rect(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 			floor_band, top_band):
 		_bump(outcomes, "column_taken")
 		return
-	var offenders := candidate.offenders as Array[Vector2i]
+	var offenders := datum_info.offenders as Array[Vector2i]
+	var bearing_columns := datum_info.bearing_columns as Dictionary
 	if not _record_offender_batch(plan, offenders, floor_band, top_band,
-			&"stamp", outcomes):
+			&"stamp", outcomes, bearing_columns):
 		return
 	_refresh_stacked_edit_tops(plan, footprint, top_band)
 	plan.parcel_claims.append({"footprint": footprint.duplicate(),
@@ -918,6 +940,13 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 			floor_band, floor_band + 1):
 		_bump(outcomes, "column_taken")
 		return
+	# See _try_place_rect: re-derive against the LIVE claimed_intervals,
+	# never the stale enumeration-time snapshot cached on `candidate`.
+	var datum_info := _footprint_offenders(plan, combined, floor_band,
+		claimed_intervals)
+	if not bool(datum_info.get("ok", false)):
+		_bump(outcomes, "column_taken")
+		return
 	var top_band := _claim_top_band(plan, combined, floor_band, false,
 		door_walk, claimed_intervals)
 	if top_band < 0:
@@ -927,9 +956,10 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 			floor_band, top_band):
 		_bump(outcomes, "column_taken")
 		return
-	var offenders := candidate.offenders as Array[Vector2i]
+	var offenders := datum_info.offenders as Array[Vector2i]
+	var bearing_columns := datum_info.bearing_columns as Dictionary
 	if not _record_offender_batch(plan, offenders, floor_band, top_band,
-			&"stamp", outcomes):
+			&"stamp", outcomes, bearing_columns):
 		return
 	_refresh_stacked_edit_tops(plan, combined, top_band)
 	lineage_seed.count = int(lineage_seed.count) + 1
@@ -1028,7 +1058,7 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 				extended_top):
 			break
 		if not _record_offender_batch(plan, offenders, floor_band,
-				extended_top, &"stamp", outcomes):
+				extended_top, &"stamp", outcomes, {}):
 			return
 		footprint.append_array(row)
 		top_band = extended_top
@@ -1150,7 +1180,7 @@ static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
 				extended_top):
 			break
 		if not _record_offender_batch(plan, offenders, floor_band,
-				extended_top, &"stamp", outcomes):
+				extended_top, &"stamp", outcomes, {}):
 			return
 		footprint.append_array(row)
 		top_band = extended_top
@@ -1237,10 +1267,10 @@ static func _footprint_available(plan: WarrenMazeSourcePlan,
 ## floor_band can only ever be the door's own band. A footprint column within
 ## one band of that fixed datum is a within-budget offender (raised to match,
 ## same record_edit rules as before); a column further away, in either
-## direction, makes the WHOLE footprint infeasible at this shape -- not
-## edited, not substituted -- so the candidate simply does not exist at this
-## size and a smaller shape (independently enumerated at the same face) is
-## free to succeed instead.
+## direction, makes the WHOLE footprint infeasible at this shape UNLESS it
+## BEARS (see _column_bears) -- not edited, not substituted -- so the
+## candidate simply does not exist at this size and a smaller shape
+## (independently enumerated at the same face) is free to succeed instead.
 ##
 ## A column already carrying a claimed interval whose own top sits exactly
 ## (flush -- see _stacks_on_existing_claim) at this candidate's datum is
@@ -1252,20 +1282,41 @@ static func _footprint_available(plan: WarrenMazeSourcePlan,
 ## floor, which for a claim several bands up a climbing street is nowhere
 ## near within the +/-1 budget, even though the column is solid, claimed,
 ## and fully able to carry a second storey directly on top of the first.
+##
+## Refined 2026-08-21 (the tiers unlock): a column whose mass is BEARING --
+## continuous SOLID rock from its own effective_base up to (not including)
+## datum, checked band-by-band, no gap -- is likewise exempt from the +/-1
+## budget, regardless of how far above terrain datum actually sits. The
+## column isn't floating: an upper-street house standing on this rock is
+## standing on real mountain, and the depth below it becomes deep foundation
+## (derive_foundations already computes floor - terrain for exactly this).
+## A column whose mass does NOT reach the floor -- any gap, a carved
+## passage, genuinely empty air -- would float if built on, and stays
+## subject to the existing +/-1 rule exactly as before. Returns which
+## offenders are bearing (as opposed to within-budget) in `bearing_columns`,
+## so the caller can record `bearing: true` on those specific edits for
+## seal()'s own (cheaper, massif-range) re-validation of the same rule.
 static func _footprint_offenders(plan: WarrenMazeSourcePlan,
 		footprint: Array[Vector2i], datum: int,
 		claimed_intervals: Dictionary) -> Dictionary:
 	var offenders: Array[Vector2i] = []
+	var bearing_columns: Dictionary = {}
 	for column: Vector2i in footprint:
 		if _stacks_on_existing_claim(claimed_intervals, column, datum):
 			continue
 		var base := plan.effective_base(column)
 		if base == datum:
 			continue
-		if base > datum or datum - base > 1:
+		if base > datum:
+			return {"ok": false}
+		if _column_bears(plan, column, datum, claimed_intervals):
+			offenders.append(column)
+			bearing_columns[column] = true
+			continue
+		if datum - base > 1:
 			return {"ok": false}
 		offenders.append(column)
-	return {"ok": true, "offenders": offenders}
+	return {"ok": true, "offenders": offenders, "bearing_columns": bearing_columns}
 
 
 static func _stacks_on_existing_claim(claimed_intervals: Dictionary,
@@ -1283,6 +1334,41 @@ static func _stacks_on_existing_claim(claimed_intervals: Dictionary,
 		if interval.y == datum:
 			return true
 	return false
+
+
+## Whether `column` is BEARING at `floor_band`: every band from this
+## column's own effective_base up to (not including) floor_band is SOLID,
+## per the ledger-aware state_at, AND genuinely unclaimed -- no OTHER claim's
+## own interval overlaps that same [base, floor_band) range. The claimed
+## check matters because state_at alone cannot tell "raw mountain rock" from
+## "another claim's own footprint that just hasn't needed a floor-correction
+## edit yet": skyline trim (which is what would actually carve that other
+## claim's footprint's mass down to its own bounds) never runs until every
+## claim in this pass is placed, so an already-committed claim's columns
+## still read fully SOLID underneath it the whole time stamping continues.
+## Without this, a later candidate whose footprint happens to pass OVER an
+## earlier, non-flush-adjacent claim's own column (same column, a real gap
+## between the two claims' bands -- not the flush case _stacks_on_existing_
+## claim already exempts) would wrongly treat that claim's own territory as
+## bearable rock, silently double-claim the column, and get dropped later at
+## translation when WarrenMazeVolumeAdapter's edited massif reflects
+## whichever claim's edit happened to be recorded last for that column.
+## A column whose own base already sits at or above floor_band has nothing
+## to check and does not bear (the base==datum and base>datum cases are
+## handled by the caller before this is ever reached).
+static func _column_bears(plan: WarrenMazeSourcePlan, column: Vector2i,
+		floor_band: int, claimed_intervals: Dictionary) -> bool:
+	var base := plan.effective_base(column)
+	if base >= floor_band:
+		return false
+	for interval: Vector2i in claimed_intervals.get(column, []) as Array:
+		if interval.x < floor_band and interval.y > base:
+			return false
+	for y in range(base, floor_band):
+		if plan.state_at(Vector3i(column.x, y, column.y)) \
+				!= WarrenMazeSourcePlan.CellState.SOLID:
+			return false
+	return true
 
 
 ## Walks up from `floor_band` while the column stays SOLID, same as before --
@@ -1392,8 +1478,12 @@ static func _refresh_stacked_edit_tops(plan: WarrenMazeSourcePlan,
 		var edit := plan.column_edits[column] as Dictionary
 		var existing_top := int(edit.get("top_band", 0))
 		if top_band > existing_top:
+			# Preserve bearing: a raise here must never quietly demote a
+			# bearing column back to a within-budget-only one, or seal()'s
+			# own re-validation would wrongly re-apply the +/-1 rule to it.
 			plan.record_edit(column, int(edit.get("floor_band", 0)), top_band,
-				StringName(edit.get("phase", &"stamp")))
+				StringName(edit.get("phase", &"stamp")),
+				bool(edit.get("bearing", false)))
 
 
 static func _neighbor_contact_count(footprint: Array[Vector2i],

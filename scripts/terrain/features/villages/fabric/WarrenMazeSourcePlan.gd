@@ -85,7 +85,14 @@ func foundation_depth(column: Vector2i) -> int:
 
 
 func record_edit(column: Vector2i, floor_band: int, top_band: int,
-		phase: StringName) -> bool:
+		phase: StringName, bearing: bool = false) -> bool:
+	## `bearing` (refined 2026-08-21, the tiers unlock): true when this
+	## floor-raising edit stands on continuous pre-edit rock rather than a
+	## within-+/-1-band terrain correction -- WarrenMazeStampPass._column_bears
+	## decides which, at the moment the offender is committed. Recorded on
+	## the edit itself so seal() can re-validate the +/-1 stamp-phase budget
+	## cheaply (a massif-range check) instead of re-walking every band, and
+	## so a consumer (the debug view) can render bearing mass distinctly.
 	if _sealed:
 		return _reject("plan is sealed; the ledger is frozen")
 	if _column_has_passage(column):
@@ -97,7 +104,7 @@ func record_edit(column: Vector2i, floor_band: int, top_band: int,
 		return _reject("edit at column %s would sink its floor below terrain" \
 			% column)
 	column_edits[column] = {"floor_band": floor_band, "top_band": top_band,
-		"phase": phase}
+		"phase": phase, "bearing": bearing}
 	return true
 
 
@@ -132,15 +139,21 @@ func record_trim(column: Vector2i, top_band: int) -> bool:
 				+ "top_band %d is below the required %d (passage y + " \
 				+ "HEADROOM_BANDS)") % [column, top_band, headroom_floor])
 	var phase := StringName(&"trim")
+	var bearing := false
 	if column_edits.has(column):
 		var existing := column_edits[column] as Dictionary
 		floor_band = int(existing.get("floor_band", floor_band))
 		phase = StringName(existing.get("phase", &"trim"))
+		# A trim never changes floor_band or bearing status -- only top_band
+		# moves -- so a bearing stamp-phase edit that later gets trimmed
+		# must keep carrying bearing: true, or seal()'s own re-validation
+		# would wrongly re-apply the +/-1 budget to it.
+		bearing = bool(existing.get("bearing", false))
 	# "Only lowers": a requested top_band that would RAISE this column's
 	# current top is simply clamped away rather than applied or rejected.
 	var new_top := mini(top_band, effective_top(column))
 	column_edits[column] = {"floor_band": floor_band, "top_band": new_top,
-		"phase": phase, "trimmed": true}
+		"phase": phase, "trimmed": true, "bearing": bearing}
 	return true
 
 
@@ -306,16 +319,30 @@ func seal() -> bool:
 		# further than one band by design (a market approach, a landmark plinth)
 		# and never claim a footprint of their own to be inside the apron of --
 		# only stamp-phase (parcel-claim offender) edits are held to the
-		# +/-1-band, in-apron budget WarrenMazeStampPass's own candidate
-		# enumeration (_footprint_offenders) already meant to guarantee.
+		# +/-1-band-OR-bearing, in-apron budget WarrenMazeStampPass's own
+		# candidate enumeration (_footprint_offenders) already meant to
+		# guarantee. Refined 2026-08-21 (the tiers unlock): a drift beyond
+		# +/-1 is legal when the edit is bearing -- re-validated here
+		# against the PRE-EDIT, RAW massif (never the ledger: the ledger is
+		# exactly what's being checked), not by trusting the recorded
+		# `bearing` flag alone. This is the cheap form of the same rule
+		# _column_bears enforces precisely at placement time (a per-band
+		# solid walk with ledger/passage awareness); the massif-range check
+		# here is a sufficient, inexpensive sanity bound for seal's own
+		# re-derivation, not a byte-for-byte replay of that walk.
 		if StringName(edit.get("phase", &"")) == &"stamp":
-			var drift := absi(int(edit.get("floor_band", 0)) \
-				- massif.base_at(column))
+			var floor_band := int(edit.get("floor_band", 0))
+			var drift := absi(floor_band - massif.base_at(column))
 			if drift > 1:
-				return _reject(
-					("stamp edit at column %s moves its floor %d bands from " \
-						+ "the pre-edit surface, past the +/-1 budget") \
-						% [column, drift])
+				var bears := bool(edit.get("bearing", false)) \
+					and massif.base_at(column) <= floor_band \
+					and floor_band <= massif.top_at(column)
+				if not bears:
+					return _reject(
+						("stamp edit at column %s moves its floor %d " \
+							+ "bands from the pre-edit surface, past the " \
+							+ "+/-1 budget, and is not a bearing edit onto " \
+							+ "continuous pre-edit mass") % [column, drift])
 			if not apron_columns.has(column):
 				return _reject(
 					("stamp edit at column %s is outside every claim's " \
