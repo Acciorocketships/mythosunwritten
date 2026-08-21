@@ -238,11 +238,19 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		minimum_balconies)
 	if balconies.size() < minimum_balconies \
 			or balcony_buildings.size() < minimum_balcony_buildings:
-		last_failure = ("only %d balconies across %d buildings fit; " \
-			+ "need %d across %d; candidate audit=%s") \
-			% [balconies.size(), balcony_buildings.size(), minimum_balconies,
-				minimum_balcony_buildings, last_skywalk_diagnostic]
-		return [] as Array[WarrenFeatureReservation]
+		# A balcony quota is facade richness, not structure. In one-pass mode a
+		# shortfall ships a plainer town instead of no town.
+		if not WarrenTownSolver.feature_quotas_are_advisory():
+			last_failure = ("only %d balconies across %d buildings fit; " \
+				+ "need %d across %d; candidate audit=%s") \
+				% [balconies.size(), balcony_buildings.size(),
+					minimum_balconies, minimum_balcony_buildings,
+					last_skywalk_diagnostic]
+			return [] as Array[WarrenFeatureReservation]
+		WarrenVolumetricSolver.last_advisory_shortfalls["balconies"] = \
+			balconies.size()
+		WarrenVolumetricSolver.last_advisory_shortfalls["balconies_target"] = \
+			minimum_balconies
 	out.append_array(balconies)
 	var wraparound_balcony_count := 0
 	for balcony: WarrenFeatureReservation in balconies:

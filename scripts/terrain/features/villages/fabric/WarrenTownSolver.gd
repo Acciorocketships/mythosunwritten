@@ -94,7 +94,28 @@ const ASSET_AWARE_MAX_CORE_OPEN_RATIO := 0.25
 ## rather than a const so tests and corpus probes can flip it per call.
 const MODE_ROUTE_FIRST := &"route_first"
 const MODE_MASS_FIRST := &"mass_first"
+## Solid-first single-pass generation: one deterministic WarrenMazeCarver bore
+## per town, no attempt rotation and no ranked candidate corpus. Wired end to
+## end and selectable, but NOT production-ready: measured 2026-08-20 it seals
+## 0 of 9 corpus seeds because the M3 courtyard/landmark/occupied-link stamps
+## and M4 partition ownership are unfinished. Flip GENERATION_MODE to this and
+## run tests/harness/warren_maze_mode_sweep.gd to re-measure.
+const MODE_MAZE := &"maze"
 static var GENERATION_MODE: StringName = MODE_ROUTE_FIRST
+
+
+static func feature_quotas_are_advisory() -> bool:
+	## In a searched mode a quota shortfall is useful: it discards one candidate
+	## and the rotation supplies another. In one-pass solid-first mode there is
+	## no other candidate, so rejecting a fully partitioned 18-54 parcel town for
+	## owning no courtyard does not yield a better village — it yields NO
+	## village. Richness quotas therefore become audit facts at runtime and stay
+	## hard assertions in the test corpus, where a regression must still fail.
+	##
+	## This never relaxes STRUCTURAL correctness (unsupported rooms, floating
+	## geometry, doors onto air). Those remain fatal in every mode: shipping
+	## visibly broken construction is worse than shipping none.
+	return GENERATION_MODE == MODE_MAZE
 ## One attempt is a full 256-bore WarrenExcavationCarver search over an
 ## already-built massif, measured at ~0.9 s (the massif itself is 6 ms and is
 ## built once, since WarrenMassifBuilder.build is deterministic per seed).

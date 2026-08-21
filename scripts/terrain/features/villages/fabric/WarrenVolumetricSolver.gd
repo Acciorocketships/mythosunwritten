@@ -103,6 +103,10 @@ static var _last_skywalk_selection_failure := ""
 ## Harness-only performance seam. Production never sets this; it lets a probe
 ## stop after geometric/fixed-block skywalk filtering instead of paying for the
 ## endpoint-composition beam while diagnosing candidate growth.
+## Richness quotas a one-pass solve fell short of but shipped anyway. Empty in
+## every searched mode. Merged into the sealed plan's audit so a plain town is
+## a visible, reviewable fact rather than a silent one.
+static var last_advisory_shortfalls: Dictionary = {}
 static var diagnostic_stop_after_skywalk_candidates := false
 static var diagnostic_stop_after_skywalk_individual := false
 static var diagnostic_skywalk_candidate_limit := -1
@@ -138,6 +142,14 @@ static func solve(world_seed: int,
 		return null
 	var profile := scale_profile if scale_profile != null \
 		else WarrenVillageScaleProfile.review_fixture()
+	if WarrenTownSolver.GENERATION_MODE == WarrenTownSolver.MODE_MAZE:
+		# Solid-first: one deterministic carve, no attempt rotation, no ranked
+		# candidate corpus. There is nothing to resume, so a budgeted caller's
+		# slice bookkeeping collapses to a single completed attempt.
+		last_search_exhausted = true
+		last_search_attempts_tried = 1
+		return _solve_maze(world_seed, ground_bands, construction_program,
+			profile)
 	# A bore is itself an expensive bounded search. Visit every attempt exactly
 	# once in a seed-rotated coprime cycle and exact-solve each surviving family
 	# immediately. This preserves the complete fallback corpus, prevents every
@@ -207,6 +219,71 @@ static func solve(world_seed: int,
 	return null
 
 
+static func _solve_maze(world_seed: int, ground_bands: Dictionary,
+		construction_program: SettlementFabricProgram,
+		profile: WarrenVillageScaleProfile) -> WarrenSpatialPlan:
+	## MODE_MAZE production entry. The whole point of the solid-first front end
+	## is that the source is correct by construction, so there is exactly one
+	## source, one partition, and one composition. A rejection here is a real
+	## defect in the carver or a gate it has not yet learned to satisfy — it is
+	## never retried with a different bore.
+	var started_ms := Time.get_ticks_msec()
+	last_advisory_shortfalls = {}
+	var massif := WarrenMassifBuilder.build(world_seed, ground_bands, profile)
+	if massif == null:
+		last_failure = "maze massif rejected: %s" % WarrenMassifBuilder.last_failure
+		return null
+	var maze := WarrenMazeCarver.carve(world_seed, massif, profile)
+	if maze == null:
+		last_failure = "maze carve rejected: %s" % WarrenMazeCarver.last_failure
+		return null
+	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze)
+	if volume == null:
+		last_failure = "maze volume adapter rejected: %s" \
+			% WarrenMazeVolumeAdapter.last_failure
+		return null
+	var source_ms := Time.get_ticks_msec() - started_ms
+	var spatial_started_ms := Time.get_ticks_msec()
+	# The maze partitioner is deterministic and ignores the variant index, so
+	# the eight-variant rotation is meaningless here: pass -1 for "the one".
+	var plan := from_volume(volume, -1, construction_program,
+		profile.requires_elevated_courtyard)
+	var spatial_ms := Time.get_ticks_msec() - spatial_started_ms
+	if plan == null:
+		last_failure = "maze composition rejected: %s" % last_failure
+		return null
+	var fabric_started_ms := Time.get_ticks_msec()
+	var fabric := WarrenSpatialFabricCompiler.solve(plan, construction_program)
+	var fabric_ms := Time.get_ticks_msec() - fabric_started_ms
+	if fabric == null:
+		last_failure = "maze fabric gate failed: %s" \
+			% WarrenSpatialFabricCompiler.last_failure
+		return null
+	if diagnostic_trace_skywalk_timing:
+		print("SKYWALK_TIMING maze_source ms=", source_ms)
+		print("SKYWALK_TIMING partition_spatial source=", volume.stable_id,
+			" variant=-1 ms=", spatial_ms, " accepted=", true)
+		print("SKYWALK_TIMING partition_fabric source=", volume.stable_id,
+			" variant=-1 ms=", fabric_ms, " accepted=", true)
+	var finalized := _finalize_ranked_candidate(volume, -1,
+		construction_program, {}, plan, fabric)
+	if finalized == null:
+		last_failure = "maze finalization rejected: %s" % last_failure
+		return null
+	finalized.audit["production_generation_mode"] = String(
+		WarrenTownSolver.MODE_MAZE)
+	finalized.audit["production_excavation_attempt_count"] = 1
+	finalized.audit["production_frontier_batch_count"] = 1
+	finalized.audit["production_staged_frontier_count"] = 1
+	finalized.audit["production_selected_attempt"] = 0
+	finalized.audit["route_court_variant_probe_count"] = 1
+	finalized.audit["route_court_variant_fallback_used"] = false
+	finalized.audit["maze_source_ms"] = source_ms
+	finalized.audit["advisory_shortfalls"] = last_advisory_shortfalls.duplicate()
+	finalized.audit["advisory_shortfall_count"] = last_advisory_shortfalls.size()
+	return finalized
+
+
 static func solve_pinned(world_seed: int, ground_bands: Dictionary,
 		construction_program: SettlementFabricProgram, pin: Dictionary,
 		scale_profile: WarrenVillageScaleProfile = null) -> WarrenSpatialPlan:
@@ -217,8 +294,18 @@ static func solve_pinned(world_seed: int, ground_bands: Dictionary,
 	## returns null so the caller falls back to the full search. A stale pin
 	## can therefore cost only time, never correctness.
 	last_failure = ""
-	if construction_program == null or pin.is_empty() \
-			or not pin.has("attempt") or not pin.has("source_id") \
+	if construction_program == null:
+		last_failure = "pinned volumetric solve requires measured vocabulary"
+		return null
+	if WarrenTownSolver.GENERATION_MODE == WarrenTownSolver.MODE_MAZE:
+		# Solid-first generation has one source per town, so a pin carries no
+		# information the carve does not already reproduce. Re-solve directly
+		# rather than failing and driving the caller into a search that does
+		# not exist in this mode.
+		return _solve_maze(world_seed, ground_bands, construction_program,
+			scale_profile if scale_profile != null \
+				else WarrenVillageScaleProfile.review_fixture())
+	if pin.is_empty() or not pin.has("attempt") or not pin.has("source_id") \
 			or not pin.has("variant"):
 		last_failure = "pinned volumetric solve requires attempt/source/variant"
 		return null
@@ -868,11 +955,13 @@ static func from_volume(volume: WarrenVolumePlan,
 	var bounds := _grid_bounds(massif)
 	var grid := WarrenSpatialGrid.new(bounds.minimum, bounds.size)
 	if not grid.is_valid() or not _project_massif(grid, massif):
+		last_failure = "spatial grid invalid or massif projection failed"
 		return null
 	var projected_mass_cell_count := grid.cells_with_use(
 		WarrenSpatialGrid.Use.ALLOCATABLE).size()
 	var route_floors := _carve_public_volume(grid, volume)
 	if route_floors.is_empty():
+		last_failure = "public volume carve produced no route floor"
 		return null
 	var parcel_plan := WarrenTownSolver.partition_parcels(volume,
 		partition_variant, construction_program)
@@ -885,14 +974,20 @@ static func from_volume(volume: WarrenVolumePlan,
 	if scale_profile == null:
 		last_failure = "macro volume carries an invalid scale profile"
 		return null
+	var quotas_advisory := WarrenTownSolver.feature_quotas_are_advisory()
 	if scale_profile.requires_elevated_courtyard \
 			and courtyard_parcel_sides < MIN_COURT_PARCEL_SIDE_COUNT:
-		last_failure = "courtyard partition forms only %d exact room sides" \
-			% courtyard_parcel_sides
-		return null
+		if not quotas_advisory:
+			last_failure = "courtyard partition forms only %d exact room sides" \
+				% courtyard_parcel_sides
+			return null
+		last_advisory_shortfalls["courtyard_parcel_sides"] = \
+			courtyard_parcel_sides
 	var partition := _partition_rooms(grid, volume, parcel_plan,
 		construction_program, enable_paired_registration_relief)
 	if partition.is_empty():
+		if last_failure.is_empty():
+			last_failure = "room partition produced no result"
 		return null
 	# room_volume_budget is guidance recorded in the audit below, not a gate:
 	# village-scale massifs compose 31-48 (compact) / 61-66 (standard) rooms,
@@ -921,6 +1016,8 @@ static func from_volume(volume: WarrenVolumePlan,
 		rooftop_court = _carve_route_connected_rooftop_court(grid, volume,
 			route_floors, buildings)
 		if bool(rooftop_court.get("failed", false)):
+			last_failure = "route-connected rooftop court carve failed: %s" \
+				% JSON.stringify(rooftop_court.get("audit", {}))
 			return null
 		for court_cell: Vector3i in rooftop_court.floor_cells \
 				as Array[Vector3i]:
@@ -944,6 +1041,8 @@ static func from_volume(volume: WarrenVolumePlan,
 	var retained_private_cell_count := grid.cells_with_use(
 		WarrenSpatialGrid.Use.PRIVATE_VOLUME).size()
 	if not _discard_unassigned_mass(grid) or not _derive_shell(grid, buildings):
+		last_failure = "unassigned-mass discard or shell derivation failed: %s" \
+			% grid.last_rejection
 		return null
 	var plan := WarrenSpatialPlan.new(
 		StringName("warren.spatial.%d.v%d" % [volume.world_seed,
@@ -1176,6 +1275,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
 		construction_program: SettlementFabricProgram,
 		enable_paired_registration_relief: bool = true) -> Dictionary:
+	# Breadcrumb: several stages below call helpers that reset last_failure on
+	# entry, so a real rejection reason could be cleared before it reached the
+	# caller and surfaced as a bare "no result". Any path that returns {} without
+	# writing its own reason now carries this instead of nothing.
+	last_failure = "room partition: no stage reported a reason"
 	var scale_profile := _scale_profile_for_volume(volume)
 	if scale_profile == null:
 		last_failure = "room partition has an invalid scale profile"
@@ -1187,6 +1291,14 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# (skywalk_range.x) still gates every accepted plan.
 	var target_skywalks := scale_profile.skywalk_range.y
 	var target_landmarks := scale_profile.landmark_range.x
+	if WarrenTownSolver.feature_quotas_are_advisory():
+		# One-pass mode: a quota the carver cannot yet supply must not become a
+		# constraint the beam then fails to satisfy. Ask for zero so the beam
+		# commits through its ORDINARY success branch — every downstream stage
+		# then sees a properly committed (if empty) feature set instead of a
+		# bypassed one. What the town lacks is recorded, not enforced.
+		target_skywalks = 0
+		target_landmarks = 0
 	var proposals: Array[Dictionary] = []
 	var rejected_unfloored_addresses := 0
 	for parcel: WarrenBuildingParcel in parcels.parcels:
@@ -1254,9 +1366,12 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var market_candidates: Array[Dictionary] = []
 	market_candidates.assign(market_plan.get("candidates", []) as Array)
 	if market_candidates.is_empty():
-		if scale_profile.requires_covered_market:
+		if scale_profile.requires_covered_market \
+				and not WarrenTownSolver.feature_quotas_are_advisory():
 			last_failure = "no topology-first covered market fits the connected ground street"
 			return {}
+		if scale_profile.requires_covered_market:
+			last_advisory_shortfalls["covered_market"] = 0
 		# The covered bazaar is a city feature. A village takes one whenever
 		# its ground street can actually hold the measured canopy, aisle, and
 		# backing; when none fits, the hero-feature beam runs once with the
@@ -1794,16 +1909,31 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		maximum_exact_skywalk_candidate_count
 	last_preplan_landmark_diagnostic["maximum_skywalk_pair_frontier_count"] = \
 		maximum_skywalk_pair_frontier_count
-	if market_reservation.is_empty() or courtyard_bridge_reservation.is_empty() \
-			or landmark_reservations.size() < target_landmarks \
-			or skywalk_reservations.size() \
-				< scale_profile.skywalk_range.x:
+	# The market is structural, not a richness quota: downstream composition and
+	# the public realm both consume it, so its absence stays fatal in every mode.
+	# Court/landmark/skywalk counts are richness — in one-pass mode a shortfall
+	# is recorded and the town ships plainer rather than not at all.
+	var quotas_advisory := WarrenTownSolver.feature_quotas_are_advisory()
+	var short_hero_features := courtyard_bridge_reservation.is_empty() \
+		or landmark_reservations.size() < target_landmarks \
+		or skywalk_reservations.size() < scale_profile.skywalk_range.x
+	if market_reservation.is_empty() \
+			or (short_hero_features and not quotas_advisory):
 		last_failure = "joint hero-feature beam found court=%d, %d landmarks, and %d skywalks (%s; %s)" \
 			% [int(not courtyard_bridge_reservation.is_empty()),
 				landmark_reservations.size(), skywalk_reservations.size(),
 				last_preplan_landmark_diagnostic,
 				last_preplan_skywalk_diagnostic]
 		return {}
+	if short_hero_features:
+		last_advisory_shortfalls["hero_courtyard_bridges"] = int(
+			not courtyard_bridge_reservation.is_empty())
+		last_advisory_shortfalls["hero_landmarks"] = \
+			landmark_reservations.size()
+		last_advisory_shortfalls["hero_landmarks_target"] = target_landmarks
+		last_advisory_shortfalls["hero_skywalks"] = skywalk_reservations.size()
+		last_advisory_shortfalls["hero_skywalks_target"] = \
+			scale_profile.skywalk_range.x
 	# A committed absent-market sentinel becomes a genuinely absent market for
 	# every downstream consumer (composition, features, audits) — mirroring
 	# how optional-absent courts already flow through this beam.
@@ -2335,6 +2465,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		scale_profile.residual_room_budget,
 		scale_profile.residual_kind_budget, construction_program)
 	if bool(backfill.get("failed", false)):
+		last_failure = "residual room backfill failed: %s" % JSON.stringify(
+			backfill.get("failure", backfill))
 		return {}
 	composition_audit["residual_backfill_building_count"] = int(
 		backfill.get("building_count", 0))
@@ -2376,6 +2508,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	if not supports.seal(required_supports):
 		last_failure = "support DAG rejected: %s" % supports.last_rejection
 		return {}
+	last_failure = ""
 	return {"buildings": buildings, "supports": supports,
 		"room_count": room_count, "offset_blocks": offset_blocks,
 		"handoffs": handoffs,
