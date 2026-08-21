@@ -93,6 +93,13 @@ const RESERVATION_INTERVAL := Vector2i(-1000000, 1000000)
 ## default; a test that needs the pre-trim plan flips this off rather than
 ## re-deriving stamp()'s whole pipeline up to a hypothetical stop_after.
 static var skyline_trim_enabled := true
+## Bands of built roof _skyline_trim leaves standing over a covered
+## passage's own WarrenExcavation.HEADROOM_BANDS of required air -- refined
+## 2026-08-21: a passage-hosting column is no longer exempt from trim
+## outright (that left every covered tunnel standing under the FULL
+## massif ceiling), but a bare street still wants a roof over its headroom,
+## not just the headroom itself.
+const TUNNEL_ROOF_BANDS := 1
 ## The only (width, depth) rectangles WarrenParcelConstruction.profile_for
 ## actually authors (tower/slim/row/building/long) -- WarrenBuildingParcel's
 ## own seal() independently forbids depth < width except for the row
@@ -260,25 +267,33 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 ## P4.5 -- discards unclaimed mass above whatever roofline the claims below
 ## actually reach, instead of leaving a column's full massif-ceiling silhouette
 ## standing over a 2-4 storey house. For every massif column, in deterministic
-## sorted order, skipping any column that hosts a passage cell (streets are
-## immutable) or is a reservation cell (already typed, already leveled by P3):
+## sorted order, skipping any column that is a reservation cell (already
+## typed, already leveled by P3) -- reservations stay exempt outright:
 ## a CLAIMED column (one owned by at least one parcel_claims footprint,
 ## possibly stacked) trims down to the tallest claim's own top_band -- its
 ## real roofline, never higher, never lower, since a trim can only lower.
-## An UNCLAIMED column takes its "shoulder" from the tallest claim among its
-## four cardinal neighbours (matching, not exceeding, whatever roofline the
-## claimed mass next to it actually reaches); with no claimed neighbour at
-## all, the column is genuinely isolated mass and is discarded flush to its
-## own terrain (the old pipeline's `_discard_unassigned_mass`). Every target
-## is computed first, entirely from the PRE-trim claim tops and PRE-trim
-## effective_top -- trimming one column never changes another column's
-## target -- then applied in the same sorted order, so the result is
-## independent of Dictionary iteration order. Returns counts by outcome kind
-## for `plan.audit["trim_outcomes"]`.
+## A PASSAGE-HOSTING column (refined 2026-08-21: no longer exempt outright,
+## which used to leave every covered tunnel -- ~47% of the network --
+## standing under the full massif) keeps `keep = max(any claim's own top on
+## this column, highest passage cell y + WarrenExcavation.HEADROOM_BANDS +
+## TUNNEL_ROOF_BANDS)`, then folds in the same 4-neighbour "shoulder" an
+## unclaimed column uses (a tunnel between two tall buildings should read at
+## least as tall as they do, not just clear its own headroom) -- trims to
+## `max(keep, shoulder)`. An UNCLAIMED, non-passage column takes its
+## "shoulder" from the tallest claim among its four cardinal neighbours; with
+## no claimed neighbour at all, the column is genuinely isolated mass and is
+## discarded flush to its own terrain (the old pipeline's
+## `_discard_unassigned_mass`). Every target is computed first, entirely from
+## the PRE-trim claim tops and PRE-trim effective_top -- trimming one column
+## never changes another column's target -- then applied in the same sorted
+## order, so the result is independent of Dictionary iteration order.
+## Returns counts by outcome kind for `plan.audit["trim_outcomes"]`.
 static func _skyline_trim(plan: WarrenMazeSourcePlan) -> Dictionary:
-	var passage_columns: Dictionary = {}
+	var passage_max_y: Dictionary = {}
 	for cell: Vector3i in plan.passage_cells():
-		passage_columns[Vector2i(cell.x, cell.z)] = true
+		var column := Vector2i(cell.x, cell.z)
+		passage_max_y[column] = maxi(int(passage_max_y.get(column, cell.y)),
+			cell.y)
 	var reservation_columns: Dictionary = {}
 	for reservation: Dictionary in plan.reservations:
 		for column: Vector2i in reservation.get("cells", []) as Array:
@@ -295,9 +310,24 @@ static func _skyline_trim(plan: WarrenMazeSourcePlan) -> Dictionary:
 
 	var targets: Array[Dictionary] = []
 	for column: Vector2i in columns:
-		if passage_columns.has(column) or reservation_columns.has(column):
+		if reservation_columns.has(column):
 			continue
 		var current_top := plan.effective_top(column)
+		if passage_max_y.has(column):
+			var keep := int(claim_tops.get(column, -2147483648))
+			keep = maxi(keep, int(passage_max_y[column]) \
+				+ WarrenExcavation.HEADROOM_BANDS + TUNNEL_ROOF_BANDS)
+			var passage_shoulder := -2147483648
+			for direction: Vector2i in CARDINALS:
+				var neighbor := column + direction
+				if claim_tops.has(neighbor):
+					passage_shoulder = maxi(passage_shoulder,
+						int(claim_tops[neighbor]))
+			var target := maxi(keep, passage_shoulder)
+			if current_top > target:
+				targets.append({"column": column, "top": target,
+					"kind": &"tunnel_roof"})
+			continue
 		if claim_tops.has(column):
 			var roof := int(claim_tops[column])
 			if current_top > roof:

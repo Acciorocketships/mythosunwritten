@@ -275,16 +275,25 @@ stacked pair is never mistaken for one lineage.
 
 **3. Skyline trim (P4.5)**, called from `stamp()` after lineage grouping,
 before `derive_foundations`, over every massif column in deterministic sorted
-order (skipping any column that hosts a passage cell or is a reservation
-cell): a **claimed** column trims down to the tallest claim's own top on that
-column (its real roofline); an **unclaimed** column takes its "shoulder" —
-the tallest claim among its four cardinal neighbours — trimming to that, or,
-with no claimed neighbour at all, discards straight to its own terrain (the
-old pipeline's `_discard_unassigned_mass`, now reached by construction rather
-than as a separate late step). Every target is computed first, entirely from
-pre-trim claim tops and pre-trim `effective_top`, then applied in the same
-sorted order — deterministic regardless of Dictionary iteration order.
-Outcomes are counted by kind in `plan.audit["trim_outcomes"]`.
+order (skipping only reservation cells — already typed, already leveled by
+P3, stay exempt outright): a **claimed** column trims down to the tallest
+claim's own top on that column (its real roofline). A **passage-hosting**
+column (refined 2026-08-21: no longer exempt outright — that left every
+covered tunnel, ~47% of the network, standing under the full massif ceiling)
+keeps `keep = max(any claim's own top on the column, highest passage cell y +
+WarrenExcavation.HEADROOM_BANDS + WarrenMazeStampPass.TUNNEL_ROOF_BANDS)`
+(`TUNNEL_ROOF_BANDS := 1`, a thin roof over the required headroom), folds in
+the same 4-neighbour "shoulder" an unclaimed column uses (a tunnel between
+two tall buildings should read at least as tall as they do), and trims to
+`max(keep, shoulder)`. An **unclaimed, non-passage** column takes its
+"shoulder" — the tallest claim among its four cardinal neighbours — trimming
+to that, or, with no claimed neighbour at all, discards straight to its own
+terrain (the old pipeline's `_discard_unassigned_mass`, now reached by
+construction rather than as a separate late step). Every target is computed
+first, entirely from pre-trim claim tops and pre-trim `effective_top`, then
+applied in the same sorted order — deterministic regardless of Dictionary
+iteration order. Outcomes are counted by kind (`claimed_roof`, `tunnel_roof`,
+`shoulder`, `discarded`) in `plan.audit["trim_outcomes"]`.
 `WarrenMazeStampPass.skyline_trim_enabled` (default true) exists solely so a
 test can compare a plan's pre- and post-trim tops.
 
@@ -295,13 +304,20 @@ offender correction, or a reservation edit); it keeps the existing entry's
 `floor_band`/`phase` and marks `trimmed: true`, or, for a column with no
 prior edit, creates one at `{floor_band: effective_base, top_band, phase:
 &"trim"}`. It rejects (false + `last_rejection`) when the ledger is sealed,
-when the column hosts a carved passage cell, or when the requested
-`top_band` would sink below the column's own `effective_base`. `seal()`
-additionally validates that no trimmed column's final `top_band` falls below
-the tallest claim on that column — a trim may discard mass no claim reaches,
-never cut into a house. `deterministic_signature()`'s `e:` lines append `:t`
-when the edit is a trim, so a trimmed and an untrimmed ledger with otherwise
-identical floor/top values still produce distinct signatures.
+or when the requested `top_band` would sink below the column's own
+`effective_base`. Refined 2026-08-21: a passage-hosting column is no longer
+rejected outright (`record_edit`/`can_record_edit` still reject ANY other
+edit there — a real floor correction or a leveling edit — streets stay
+otherwise immutable); instead `record_trim` rejects iff `top_band` would fall
+below `(any passage cell y hosted in that column) + HEADROOM_BANDS` — a trim
+may never cut into a passage's own required headroom.
+`WarrenMazeSourcePlan._passage_headroom_floor(column)` is that shared bound.
+`seal()` mirrors both trim gates: no trimmed column's final `top_band` falls
+below the tallest claim on that column (a trim may discard mass no claim
+reaches, never cut into a house) and, for a passage-hosting column, never
+below its own headroom floor. `deterministic_signature()`'s `e:` lines append
+`:t` when the edit is a trim, so a trimmed and an untrimmed ledger with
+otherwise identical floor/top values still produce distinct signatures.
 
 Derived foundations (P5) are stacking-aware: only the *lowest* claim on a
 column ever needs a foundation reaching down to terrain — everything stacked

@@ -108,21 +108,29 @@ func record_edit(column: Vector2i, floor_band: int, top_band: int,
 ## or an earlier reservation edit): only top_band moves. A column with no
 ## prior edit gets a brand-new entry at its own effective_base, phase
 ## &"trim", so foundation_depth (base-derived) is unaffected either way.
-## Rejects: a sealed ledger, a column that hosts a carved passage cell (streets
-## are immutable), and a requested top_band below the column's own
-## effective_base (a trim may lower mass, never sink the floor).
+## Rejects: a sealed ledger, a requested top_band below the column's own
+## effective_base (a trim may lower mass, never sink the floor), and --
+## refined 2026-08-21 -- a requested top_band that would cut into a
+## passage-hosting column's own headroom. Passage-hosting columns are no
+## longer exempt outright (a covered tunnel's roof gets trimmed too, just
+## never below HEADROOM_BANDS of air over the passage cell itself); streets
+## remain otherwise immutable via record_edit/can_record_edit, which still
+## reject ANY edit -- floor or top -- on a passage column outright.
 func record_trim(column: Vector2i, top_band: int) -> bool:
 	if _sealed:
 		return _reject("plan is sealed; the ledger is frozen")
-	if _column_has_passage(column):
-		return _reject("trim at column %s would touch a carved passage cell" \
-			% column)
 	if massif == null or not massif.has_column(column):
 		return _reject("trim at column %s has no massif column" % column)
 	var floor_band := effective_base(column)
 	if top_band < floor_band:
 		return _reject("trim at column %s would sink below its own floor" \
 			% column)
+	var headroom_floor := _passage_headroom_floor(column)
+	if headroom_floor >= 0 and top_band < headroom_floor:
+		return _reject(
+			("trim at column %s would cut into a passage's own headroom: " \
+				+ "top_band %d is below the required %d (passage y + " \
+				+ "HEADROOM_BANDS)") % [column, top_band, headroom_floor])
 	var phase := StringName(&"trim")
 	if column_edits.has(column):
 		var existing := column_edits[column] as Dictionary
@@ -134,6 +142,20 @@ func record_trim(column: Vector2i, top_band: int) -> bool:
 	column_edits[column] = {"floor_band": floor_band, "top_band": new_top,
 		"phase": phase, "trimmed": true}
 	return true
+
+
+## The lowest legal top_band a trim may ever leave on `column`: the highest
+## passage cell hosted there, plus WarrenExcavation.HEADROOM_BANDS of
+## required air above it -- -1 (no floor) when the column hosts no passage
+## cell at all. Shared between record_trim's own gate and seal()'s mirror of
+## the same rule, so the two can never disagree about what "cuts into a
+## passage's headroom" means.
+func _passage_headroom_floor(column: Vector2i) -> int:
+	var floor_needed := -1
+	for cell: Vector3i in passage_kinds.keys():
+		if cell.x == column.x and cell.z == column.y:
+			floor_needed = maxi(floor_needed, cell.y + WarrenExcavation.HEADROOM_BANDS)
+	return floor_needed
 
 
 ## Non-mutating pre-flight for record_edit's own gates (sealed ledger, a
@@ -246,20 +268,40 @@ func seal() -> bool:
 		if int(edit.get("floor_band", 0)) < massif.base_at(column):
 			return _reject(
 				"edit at column %s sinks its floor below terrain" % column)
-		if _column_has_passage(column):
+		# Streets stay immutable for a real (reserve/stamp) edit -- passage
+		# columns never get a floor correction or a leveling edit. A trim is
+		# the one deliberate exception (refined 2026-08-21): a covered
+		# passage's own roof gets trimmed too, so this general check is
+		# scoped to non-trim edits; the trim-specific headroom check just
+		# below is what actually bounds a trim on a passage column.
+		if not bool(edit.get("trimmed", false)) and _column_has_passage(column):
 			return _reject(
 				"edit at column %s touches a carved passage cell" % column)
 		# A trim may only ever discard mass no claim reaches -- never cut into
-		# one. claim_tops (built above from parcel_claims, band-aware) is the
+		# one, and never into a passage's own required headroom.
+		# claim_tops (built above from parcel_claims, band-aware) is the
 		# tallest roof any claim on this column actually needs; a trim whose
 		# own top_band lands below that has quietly amputated a house.
-		if bool(edit.get("trimmed", false)) and claim_tops.has(column) \
-				and int(edit.get("top_band", 0)) < int(claim_tops[column]):
-			return _reject(
-				("trim at column %s cuts into a claim: top_band %d is below " \
-					+ "the tallest claim's own top %d") \
-					% [column, int(edit.get("top_band", 0)),
-						int(claim_tops[column])])
+		# _passage_headroom_floor mirrors record_trim's own gate exactly, so
+		# the two can never disagree about what "cuts into a passage's
+		# headroom" means.
+		if bool(edit.get("trimmed", false)):
+			if claim_tops.has(column) \
+					and int(edit.get("top_band", 0)) < int(claim_tops[column]):
+				return _reject(
+					("trim at column %s cuts into a claim: top_band %d is " \
+						+ "below the tallest claim's own top %d") \
+						% [column, int(edit.get("top_band", 0)),
+							int(claim_tops[column])])
+			var headroom_floor := _passage_headroom_floor(column)
+			if headroom_floor >= 0 \
+					and int(edit.get("top_band", 0)) < headroom_floor:
+				return _reject(
+					("trim at column %s cuts into a passage's own headroom: " \
+						+ "top_band %d is below the required %d (passage y " \
+						+ "+ HEADROOM_BANDS)") \
+						% [column, int(edit.get("top_band", 0)),
+							headroom_floor])
 		# Reservation-phase edits may level/sink a reservation's footprint
 		# further than one band by design (a market approach, a landmark plinth)
 		# and never claim a footprint of their own to be inside the apron of --

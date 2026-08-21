@@ -945,9 +945,7 @@ func test_upper_streets_stack_claims_above_lower_houses() -> void:
 func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
 	## Task 1's P4.5: mass no claim reaches gets discarded -- to a claimed
 	## column's own tallest roof, to an unclaimed column's tallest claimed
-	## neighbour ("shoulder"), or to bare terrain when isolated. The pre-trim
-	## comparison run (skyline_trim_enabled = false) is what proves passage
-	## columns are genuinely untouched, not just coincidentally unchanged.
+	## neighbour ("shoulder"), or to bare terrain when isolated.
 	## Fix round 1 (2026-08-21 review): seed 12 added alongside seed 4 -- it
 	## is the seed that actually exercises a flush-stacked claim sharing a
 	## column with a pre-existing stamp-phase offender edit below it (see
@@ -959,20 +957,17 @@ func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
 	## non-reservation column, which subsumes the `>=` but is kept separate
 	## so a regression that only breaks equality (not the inequality) still
 	## fails loudly with the right assertion.
+	## Refinement (2026-08-21, tunnel roofs): passage-hosting columns are no
+	## longer exempt outright -- a covered tunnel used to keep the FULL
+	## massif ceiling standing over it (~47% of the network, per the
+	## rendered debug view). They now trim to max(any claim's own top on the
+	## column, highest passage y + HEADROOM_BANDS + TUNNEL_ROOF_BANDS,
+	## shoulder), never below the passage's own required headroom --
+	## `trim_outcomes.has("tunnel_roof")` proves the mechanism actually fired
+	## rather than every passage column already happening to satisfy the
+	## bound.
 	for city_seed: int in [4, 12]:
 		var profile := WarrenVillageScaleProfile.for_id(&"compact")
-
-		WarrenMazeStampPass.skyline_trim_enabled = false
-		var pre_massif := WarrenMassifBuilder.build(city_seed, {}, profile)
-		var pre_plan := WarrenMazeCarver.carve(city_seed, pre_massif, profile,
-			false)
-		assert_not_null(pre_plan, WarrenMazeCarver.last_failure)
-		assert_true(WarrenMazeReservationPass.reserve(pre_plan, profile),
-			WarrenMazeReservationPass.last_failure)
-		assert_true(WarrenMazeStampPass.stamp(pre_plan, profile),
-			WarrenMazeStampPass.last_failure)
-		WarrenMazeStampPass.skyline_trim_enabled = true
-
 		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
 		var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
 		assert_not_null(plan, WarrenMazeCarver.last_failure)
@@ -984,10 +979,15 @@ func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
 		var trim_outcomes := plan.audit.get("trim_outcomes", {}) as Dictionary
 		assert_false(trim_outcomes.is_empty(),
 			"seed %d compact must actually trim something" % city_seed)
+		assert_true(trim_outcomes.has("tunnel_roof"),
+			("seed %d compact must actually trim at least one passage-" \
+				+ "hosting column's own roof") % city_seed)
 
-		var passage_columns: Dictionary = {}
+		var passage_max_y: Dictionary = {}
 		for cell: Vector3i in plan.passage_cells():
-			passage_columns[Vector2i(cell.x, cell.z)] = true
+			var passage_column := Vector2i(cell.x, cell.z)
+			passage_max_y[passage_column] = maxi(
+				int(passage_max_y.get(passage_column, cell.y)), cell.y)
 		var reservation_columns: Dictionary = {}
 		for reservation: Dictionary in plan.reservations:
 			for column: Vector2i in reservation.get("cells", []) as Array:
@@ -1011,13 +1011,32 @@ func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
 						int(claim_tops[column])])
 
 		for column: Vector2i in plan.massif.columns.keys():
-			if passage_columns.has(column):
-				assert_eq(plan.effective_top(column),
-					pre_plan.effective_top(column),
-					"seed %d: passage column %s must be untouched by " \
-						% [city_seed, column] + "skyline trim")
-				continue
 			if reservation_columns.has(column):
+				continue
+			if passage_max_y.has(column):
+				var keep := int(claim_tops.get(column, -2147483648))
+				keep = maxi(keep, int(passage_max_y[column]) \
+					+ WarrenExcavation.HEADROOM_BANDS \
+					+ WarrenMazeStampPass.TUNNEL_ROOF_BANDS)
+				var shoulder := -2147483648
+				for direction: Vector2i in WarrenMazeStampPass.CARDINALS:
+					var neighbor := column + direction
+					if claim_tops.has(neighbor):
+						shoulder = maxi(shoulder, int(claim_tops[neighbor]))
+				var bound := maxi(keep, shoulder)
+				assert_lte(plan.effective_top(column), bound,
+					("seed %d: passage column %s effective_top %d must be " \
+						+ "<= max(keep, shoulder) (%d)") \
+						% [city_seed, column, plan.effective_top(column),
+							bound])
+				var headroom_floor := int(passage_max_y[column]) \
+					+ WarrenExcavation.HEADROOM_BANDS
+				assert_gte(plan.effective_top(column), headroom_floor,
+					("seed %d: passage column %s effective_top %d must " \
+						+ "keep >= HEADROOM_BANDS of air above its own " \
+						+ "passage cell (needs >= %d)") \
+						% [city_seed, column, plan.effective_top(column),
+							headroom_floor])
 				continue
 			if claim_tops.has(column):
 				assert_eq(plan.effective_top(column), int(claim_tops[column]),
@@ -1127,3 +1146,27 @@ func test_state_at_reads_through_the_edit_ledger() -> void:
 		claim_column.y)
 	assert_eq(plan.state_at(inside), WarrenMazeSourcePlan.CellState.SOLID,
 		"a band inside a claim's own footprint/floor must still report SOLID")
+
+
+func test_seal_rejects_a_trim_that_cuts_into_headroom() -> void:
+	## Refinement (2026-08-21, tunnel roofs): passage-hosting columns are no
+	## longer exempt from trim outright, so a trim recorded directly on the
+	## ledger (bypassing record_trim) that cuts below a passage cell's own
+	## required HEADROOM_BANDS of air must fail seal, named "headroom" --
+	## mirrors test_seal_rejects_a_trim_that_cuts_into_a_house's doctoring
+	## style for the claim case.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var plan := WarrenMazeSitePlanner.plan(12, {}, profile, &"stamp")
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	assert_false(plan.is_sealed())
+	assert_false(plan.passage_cells().is_empty(),
+		"fixture must have real passage cells to doctor a bad trim onto")
+
+	var passage_cell := plan.passage_cells()[0]
+	var column := Vector2i(passage_cell.x, passage_cell.z)
+	plan.column_edits[column] = {"floor_band": plan.massif.base_at(column),
+		"top_band": passage_cell.y, "phase": &"trim", "trimmed": true}
+	assert_false(plan.seal(),
+		"a trim that cuts into a passage's own headroom must fail seal")
+	assert_true(plan.last_rejection.contains("headroom"),
+		"expected a headroom-named rejection, got: %s" % plan.last_rejection)
