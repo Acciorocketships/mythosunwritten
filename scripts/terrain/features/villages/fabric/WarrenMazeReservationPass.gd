@@ -34,6 +34,17 @@ const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
 ]
 const RIM_KINDS: Array[StringName] = [&"courtyard", &"garden_terrace"]
+## Reservation plot heights (2026-08-21 refinement): storeys above each
+## kind's own datum -- skywalk_span is deliberately absent (claim_overhead
+## never touches a floor at all; its flanks stand on grounded natural rock,
+## untouched by this dictionary). 0-storey kinds (courtyard, garden_terrace)
+## are open flat plots -- top == datum, no built mass above the leveled/
+## sunk floor. large_house and landmark_plot get a real 3-storey envelope so
+## the plot reads as a building site, not a hole.
+const PLOT_STOREYS: Dictionary = {
+	&"courtyard": 0, &"garden_terrace": 0, &"large_house": 3,
+	&"landmark_plot": 3,
+}
 
 static var last_failure := ""
 
@@ -162,12 +173,21 @@ static func _apply_sink_to_terrain(plan: WarrenMazeSourcePlan,
 	var datum := 2147483647
 	for column: Vector2i in footprint:
 		datum = mini(datum, plan.massif.base_at(column))
+	# 0-storey kind (courtyard): each column keeps sinking to its OWN terrain
+	# (not a shared datum), so top == that column's own floor -- already
+	# exactly "datum + 0*STOREY_BANDS" per column in the plan's own edit
+	# ledger; plot_top on the reservation records the nominal open-plot
+	# height (datum + PLOT_STOREYS*STOREY_BANDS) for consumers, even where a
+	# sloped footprint's own per-column tops vary from it.
+	var plot_top := datum \
+		+ int(PLOT_STOREYS.get(kind, 0)) * WarrenBuildingParcel.STOREY_BANDS
 	for column: Vector2i in footprint:
 		var floor_band := plan.massif.base_at(column)
 		if not plan.record_edit(column, floor_band, floor_band, &"reserve"):
 			return {}
 	plan.reservations.append({"kind": kind, "cells": footprint.duplicate(),
-		"datum_band": datum, "walk_cells": [] as Array[Vector3i], "audit": {}})
+		"datum_band": datum, "plot_top": plot_top,
+		"walk_cells": [] as Array[Vector3i], "audit": {}})
 	return {"kind": kind, "result": &"fit", "placed": true,
 		"cells": footprint.size()}
 
@@ -183,12 +203,21 @@ static func _apply_level_to_datum(plan: WarrenMazeSourcePlan,
 		var base := plan.effective_base(column)
 		if base > datum or datum - base > 1:
 			return {}
+	# Reservation plots get real heights (2026-08-21 refinement): every
+	# column in the patch shares ONE top, datum + this kind's own storey
+	# budget in bands -- an open flat plot for a 0-storey kind (garden_
+	# terrace), a real building envelope for large_house/landmark_plot.
+	# Replaces the old maxi(effective_top, datum), which kept whatever the
+	# raw massif ceiling already was for that column -- the same
+	# massif-ceiling-derived-height bug Task 1 fixed for houses.
+	var plot_top := datum \
+		+ int(PLOT_STOREYS.get(kind, 0)) * WarrenBuildingParcel.STOREY_BANDS
 	for column: Vector2i in footprint:
-		var top := maxi(plan.effective_top(column), datum)
-		if not plan.record_edit(column, datum, top, &"reserve"):
+		if not plan.record_edit(column, datum, plot_top, &"reserve"):
 			return {}
 	plan.reservations.append({"kind": kind, "cells": footprint.duplicate(),
-		"datum_band": datum, "walk_cells": [] as Array[Vector3i], "audit": {}})
+		"datum_band": datum, "plot_top": plot_top,
+		"walk_cells": [] as Array[Vector3i], "audit": {}})
 	return {"kind": kind, "result": &"fit", "placed": true,
 		"cells": footprint.size()}
 

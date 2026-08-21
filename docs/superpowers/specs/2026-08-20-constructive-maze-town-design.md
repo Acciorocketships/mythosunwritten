@@ -268,19 +268,42 @@ mutually non-adjacent stacked 1×1 infill claims per town, each an
 unavoidable lineage of one, which pulled a town's median lineage footprint (a
 protected corpus metric) below 2.
 
-**Bearing (fix round 4, 2026-08-21 — the upper-street unlock).** A column is
-also exempt from the ±1 terrain-offender budget when its mass is
-*continuous SOLID rock* from its own base up to the candidate's floor
-(`_column_bears`, ledger- and occupancy-aware so it never mistakes another
-claim's own not-yet-trimmed footprint for open mountain), regardless of how
-far above terrain that floor sits — the column isn't floating, and the depth
-below the raised floor becomes real deep foundation via the existing
-`derive_foundations` accounting. Because candidates are scored once, all up
-front, before any of them commit, a bearing verdict computed at enumeration
-time can go stale by the time a candidate's turn to commit actually arrives
-(an earlier, higher-scored candidate may have claimed the same column's mass
-in between), so `_footprint_offenders` is re-run against the live occupancy
-map at commit time rather than trusting the cached enumeration-time result.
+**Bearing (fix round 4, 2026-08-21 — the upper-street unlock; refined fix
+round 5 — plinth bearing).** A column is also exempt from the ±1
+terrain-offender budget when it *bears* at the candidate's floor
+(`_column_bears`): only the `PLINTH_BANDS` (2) immediately below the floor
+need be SOLID, not the whole column down to its own base — a room may sit
+directly over a covered passage's own roof by design, a real slab
+separating the two. The column isn't floating, and the depth below the
+raised floor becomes real deep foundation via the existing
+`derive_foundations` accounting. Bearing refuses a column that ANY other
+claim already occupies, at ANY band, not only a band overlapping the
+plinth: `record_edit` overwrites `column_edits[column]` wholesale (a column
+carries exactly one ledger entry, floor and top together), so writing a
+bearing edit for a column another, non-overlapping claim already touches
+would silently erase that claim's own floor the moment
+`WarrenMazeVolumeAdapter` reads `effective_base` for it — surfacing much
+later, as a translation-time "generator bug" claim drop, far from where the
+real conflict was written (measured on the standard-scale sweep, which the
+compact-only pinned test corpus never exercised: 22/23 → 14/23 translated
+before this hardening, restored to 22/23 after). Because candidates are
+scored once, all up front, before any of them commit, a bearing verdict
+computed at enumeration time can go stale by the time a candidate's turn to
+commit actually arrives (an earlier, higher-scored candidate may have
+claimed the same column's mass in between), so `_footprint_offenders` is
+re-run against the live occupancy map at commit time rather than trusting
+the cached enumeration-time result. `WarrenMazeSourcePlan.seal()` re-derives
+the same plinth test for a bearing stamp-phase edit's own ±1-budget
+exemption, against the pre-edit, raw massif/excavation
+(`state_at_raw`) — never the ledger, and never trusting the recorded
+`bearing` flag alone.
+
+Measured effect (compact scale, seeds 1/3/4/12, aggregate): unchanged at
+8/63 = 12.7% both before and after the plinth refinement — verified this
+is a genuine property of the compact-scale corpus (most of its
+high-elevation candidates sit within `HEADROOM_BANDS + PLINTH_BANDS` (5
+bands) of some nearby passage, where plinth and continuity-to-base agree),
+not a bug in the mechanism itself.
 
 Lineage grouping's adjacency stays 2D-column-plus-one-band, unchanged: a
 stacked claim's floor differs from anything below it by at least
@@ -289,27 +312,51 @@ stacked pair is never mistaken for one lineage.
 
 **3. Skyline trim (P4.5)**, called from `stamp()` after lineage grouping,
 before `derive_foundations`, over every massif column in deterministic sorted
-order (skipping only reservation cells — already typed, already leveled by
-P3, stay exempt outright): a **claimed** column trims down to the tallest
-claim's own top on that column (its real roofline). A **passage-hosting**
-column (refined 2026-08-21: no longer exempt outright — that left every
-covered tunnel, ~47% of the network, standing under the full massif ceiling)
-keeps `keep = max(any claim's own top on the column, highest passage cell y +
-WarrenExcavation.HEADROOM_BANDS + WarrenMazeStampPass.TUNNEL_ROOF_BANDS)`
-(`TUNNEL_ROOF_BANDS := 1`, a thin roof over the required headroom), folds in
-the same 4-neighbour "shoulder" an unclaimed column uses (a tunnel between
-two tall buildings should read at least as tall as they do), and trims to
-`max(keep, shoulder)`. An **unclaimed, non-passage** column takes its
-"shoulder" — the tallest claim among its four cardinal neighbours — trimming
-to that, or, with no claimed neighbour at all, discards straight to its own
-terrain (the old pipeline's `_discard_unassigned_mass`, now reached by
-construction rather than as a separate late step). Every target is computed
-first, entirely from pre-trim claim tops and pre-trim `effective_top`, then
-applied in the same sorted order — deterministic regardless of Dictionary
-iteration order. Outcomes are counted by kind (`claimed_roof`, `tunnel_roof`,
-`shoulder`, `discarded`) in `plan.audit["trim_outcomes"]`.
+order (skipping only a skywalk_span reservation's flank columns —
+`claim_overhead` never touches a floor at all, so they stand on grounded
+natural rock and stay exempt outright): a **claimed** column trims down to
+the tallest claim's own top on that column (its real roofline). A
+**reservation** column (refined 2026-08-21: every other reservation kind now
+carries a real ledger top of its own — see "Reservation plot heights" below
+— so it no longer needs a blanket exemption either) trims down to its own
+`plot_top`, the same way a claimed column trims to its own roof, and is
+deliberately routed here rather than into the unclaimed shoulder/discard
+branch below: a reservation's datum is its own floor, not stray unassigned
+mass. A **passage-hosting** column (refined 2026-08-21: no longer exempt
+outright — that left every covered tunnel, ~47% of the network, standing
+under the full massif ceiling) keeps `keep = max(any claim's own top on the
+column, highest passage cell y + WarrenExcavation.HEADROOM_BANDS +
+WarrenMazeStampPass.TUNNEL_ROOF_BANDS)` (`TUNNEL_ROOF_BANDS := 1`, a thin
+roof over the required headroom), folds in the same 4-neighbour "shoulder" an
+unclaimed column uses (a tunnel between two tall buildings should read at
+least as tall as they do), and trims to `max(keep, shoulder)`. An
+**unclaimed, non-passage, non-reservation** column takes its "shoulder" — the
+tallest claim among its four cardinal neighbours — trimming to that, or, with
+no claimed neighbour at all, discards straight to its own terrain (the old
+pipeline's `_discard_unassigned_mass`, now reached by construction rather
+than as a separate late step). Every target is computed first, entirely from
+pre-trim claim tops and pre-trim `effective_top`, then applied in the same
+sorted order — deterministic regardless of Dictionary iteration order.
+Outcomes are counted by kind (`claimed_roof`, `reservation_roof`,
+`tunnel_roof`, `shoulder`, `discarded`) in `plan.audit["trim_outcomes"]`.
 `WarrenMazeStampPass.skyline_trim_enabled` (default true) exists solely so a
 test can compare a plan's pre- and post-trim tops.
+
+**Reservation plot heights (fix round 5, 2026-08-21).**
+`WarrenMazeReservationPass.PLOT_STOREYS: Dictionary` gives each non-skywalk
+kind a storey budget above its own datum — `{courtyard: 0, garden_terrace:
+0, large_house: 3, landmark_plot: 3}` (skywalk_span is absent: `claim_overhead`
+never edits a floor). When `_apply_level_to_datum` places a patch
+(large_house, landmark_plot, garden_terrace), every column's ledger top
+becomes `datum + PLOT_STOREYS[kind] * WarrenBuildingParcel.STOREY_BANDS`,
+replacing the old `maxi(effective_top, datum)` — which just preserved
+whatever the raw massif ceiling already was, the same
+massif-ceiling-derived-height bug Task 1 fixed for houses. A 0-storey kind
+is an open flat plot (top == datum); `_apply_sink_to_terrain` (courtyard)
+keeps sinking each column to its own terrain rather than a shared datum, so
+its per-column top already equals "datum + 0" by construction on the flat
+test corpus. The reservation dict gains `plot_top` for consumers (the
+skyline-trim `reservation_roof` branch above, and the debug view).
 
 **4. `WarrenMazeSourcePlan.record_trim(column, top_band) -> bool`** only ever
 lowers a column's `top_band` — never raises it, and never touches

@@ -321,28 +321,35 @@ func seal() -> bool:
 		# only stamp-phase (parcel-claim offender) edits are held to the
 		# +/-1-band-OR-bearing, in-apron budget WarrenMazeStampPass's own
 		# candidate enumeration (_footprint_offenders) already meant to
-		# guarantee. Refined 2026-08-21 (the tiers unlock): a drift beyond
-		# +/-1 is legal when the edit is bearing -- re-validated here
-		# against the PRE-EDIT, RAW massif (never the ledger: the ledger is
-		# exactly what's being checked), not by trusting the recorded
-		# `bearing` flag alone. This is the cheap form of the same rule
-		# _column_bears enforces precisely at placement time (a per-band
-		# solid walk with ledger/passage awareness); the massif-range check
-		# here is a sufficient, inexpensive sanity bound for seal's own
-		# re-derivation, not a byte-for-byte replay of that walk.
+		# guarantee. Refined 2026-08-21 (plinth bearing): a drift beyond +/-1
+		# is legal when the edit is bearing -- re-validated here with the
+		# SAME plinth test WarrenMazeStampPass._column_bears applies at
+		# placement time (only the PLINTH_BANDS immediately below the floor
+		# need to be solid, not the whole column down to its own base --
+		# "lower tunnels beneath are allowed"), against the PRE-EDIT, RAW
+		# massif/excavation via state_at_raw (never the ledger: the ledger is
+		# exactly what's being checked, and never trusting the recorded
+		# `bearing` flag alone either).
 		if StringName(edit.get("phase", &"")) == &"stamp":
 			var floor_band := int(edit.get("floor_band", 0))
 			var drift := absi(floor_band - massif.base_at(column))
 			if drift > 1:
-				var bears := bool(edit.get("bearing", false)) \
-					and massif.base_at(column) <= floor_band \
-					and floor_band <= massif.top_at(column)
+				var bears := false
+				if bool(edit.get("bearing", false)):
+					var plinth_floor := maxi(massif.base_at(column),
+						floor_band - WarrenMazeStampPass.PLINTH_BANDS)
+					bears = true
+					for y in range(plinth_floor, floor_band):
+						if state_at_raw(Vector3i(column.x, y, column.y)) \
+								!= CellState.SOLID:
+							bears = false
+							break
 				if not bears:
 					return _reject(
 						("stamp edit at column %s moves its floor %d " \
 							+ "bands from the pre-edit surface, past the " \
 							+ "+/-1 budget, and is not a bearing edit onto " \
-							+ "continuous pre-edit mass") % [column, drift])
+							+ "a solid plinth") % [column, drift])
 			if not apron_columns.has(column):
 				return _reject(
 					("stamp edit at column %s is outside every claim's " \

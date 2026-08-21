@@ -100,6 +100,13 @@ static var skyline_trim_enabled := true
 ## massif ceiling), but a bare street still wants a roof over its headroom,
 ## not just the headroom itself.
 const TUNNEL_ROOF_BANDS := 1
+## Plinth-bearing depth (refined 2026-08-21, replacing continuity-to-base):
+## a footprint column bears at a candidate floor when only THIS many bands
+## directly below the floor are solid (state_at, ledger-aware) -- not the
+## whole column down to its own base. WarrenMazeSourcePlan.seal() re-derives
+## the same test (against the pre-edit, raw massif/excavation) to validate a
+## bearing stamp-phase edit cheaply; see _column_bears' own comment for why.
+const PLINTH_BANDS := 2
 ## The only (width, depth) rectangles WarrenParcelConstruction.profile_for
 ## actually authors (tower/slim/row/building/long) -- WarrenBuildingParcel's
 ## own seal() independently forbids depth < width except for the row
@@ -267,9 +274,15 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 ## P4.5 -- discards unclaimed mass above whatever roofline the claims below
 ## actually reach, instead of leaving a column's full massif-ceiling silhouette
 ## standing over a 2-4 storey house. For every massif column, in deterministic
-## sorted order, skipping any column that is a reservation cell (already
-## typed, already leveled by P3) -- reservations stay exempt outright:
-## a CLAIMED column (one owned by at least one parcel_claims footprint,
+## sorted order: a SKYWALK-FLANK column (claim_overhead never edits a floor at
+## all -- its flanks stand on grounded natural rock) stays exempt outright,
+## untouched. A RESERVATION column (refined 2026-08-21: every other kind now
+## carries a real ledger top -- see WarrenMazeReservationPass.PLOT_STOREYS --
+## so it no longer needs a blanket exemption either) trims down to its own
+## plot_top, exactly like a claimed column trims to its own roof -- deliberately
+## routed here rather than falling into the unclaimed shoulder/discard branch
+## below, since a reservation's datum is its own floor, not stray unassigned
+## mass. A CLAIMED column (one owned by at least one parcel_claims footprint,
 ## possibly stacked) trims down to the tallest claim's own top_band -- its
 ## real roofline, never higher, never lower, since a trim can only lower.
 ## A PASSAGE-HOSTING column (refined 2026-08-21: no longer exempt outright,
@@ -279,25 +292,32 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 ## TUNNEL_ROOF_BANDS)`, then folds in the same 4-neighbour "shoulder" an
 ## unclaimed column uses (a tunnel between two tall buildings should read at
 ## least as tall as they do, not just clear its own headroom) -- trims to
-## `max(keep, shoulder)`. An UNCLAIMED, non-passage column takes its
-## "shoulder" from the tallest claim among its four cardinal neighbours; with
-## no claimed neighbour at all, the column is genuinely isolated mass and is
-## discarded flush to its own terrain (the old pipeline's
-## `_discard_unassigned_mass`). Every target is computed first, entirely from
-## the PRE-trim claim tops and PRE-trim effective_top -- trimming one column
-## never changes another column's target -- then applied in the same sorted
-## order, so the result is independent of Dictionary iteration order.
-## Returns counts by outcome kind for `plan.audit["trim_outcomes"]`.
+## `max(keep, shoulder)`. An UNCLAIMED, non-passage, non-reservation column
+## takes its "shoulder" from the tallest claim among its four cardinal
+## neighbours; with no claimed neighbour at all, the column is genuinely
+## isolated mass and is discarded flush to its own terrain (the old
+## pipeline's `_discard_unassigned_mass`). Every target is computed first,
+## entirely from the PRE-trim claim tops and PRE-trim effective_top --
+## trimming one column never changes another column's target -- then applied
+## in the same sorted order, so the result is independent of Dictionary
+## iteration order. Returns counts by outcome kind for
+## `plan.audit["trim_outcomes"]`.
 static func _skyline_trim(plan: WarrenMazeSourcePlan) -> Dictionary:
 	var passage_max_y: Dictionary = {}
 	for cell: Vector3i in plan.passage_cells():
 		var column := Vector2i(cell.x, cell.z)
 		passage_max_y[column] = maxi(int(passage_max_y.get(column, cell.y)),
 			cell.y)
-	var reservation_columns: Dictionary = {}
+	var skywalk_flank_columns: Dictionary = {}
+	var reservation_tops: Dictionary = {}
 	for reservation: Dictionary in plan.reservations:
+		if StringName(reservation.get("kind", &"")) == &"skywalk_span":
+			for column: Vector2i in reservation.get("cells", []) as Array:
+				skywalk_flank_columns[column] = true
+			continue
+		var plot_top := int(reservation.get("plot_top", 0))
 		for column: Vector2i in reservation.get("cells", []) as Array:
-			reservation_columns[column] = true
+			reservation_tops[column] = plot_top
 	var claim_tops: Dictionary = {}
 	for claim: Dictionary in plan.parcel_claims:
 		var top := int(claim.top_band)
@@ -310,9 +330,15 @@ static func _skyline_trim(plan: WarrenMazeSourcePlan) -> Dictionary:
 
 	var targets: Array[Dictionary] = []
 	for column: Vector2i in columns:
-		if reservation_columns.has(column):
+		if skywalk_flank_columns.has(column):
 			continue
 		var current_top := plan.effective_top(column)
+		if reservation_tops.has(column):
+			var plot_roof := int(reservation_tops[column])
+			if current_top > plot_roof:
+				targets.append({"column": column, "top": plot_roof,
+					"kind": &"reservation_roof"})
+			continue
 		if passage_max_y.has(column):
 			var keep := int(claim_tops.get(column, -2147483648))
 			keep = maxi(keep, int(passage_max_y[column]) \
@@ -1336,23 +1362,26 @@ static func _stacks_on_existing_claim(claimed_intervals: Dictionary,
 	return false
 
 
-## Whether `column` is BEARING at `floor_band`: every band from this
-## column's own effective_base up to (not including) floor_band is SOLID,
-## per the ledger-aware state_at, AND genuinely unclaimed -- no OTHER claim's
-## own interval overlaps that same [base, floor_band) range. The claimed
-## check matters because state_at alone cannot tell "raw mountain rock" from
-## "another claim's own footprint that just hasn't needed a floor-correction
-## edit yet": skyline trim (which is what would actually carve that other
-## claim's footprint's mass down to its own bounds) never runs until every
-## claim in this pass is placed, so an already-committed claim's columns
-## still read fully SOLID underneath it the whole time stamping continues.
-## Without this, a later candidate whose footprint happens to pass OVER an
-## earlier, non-flush-adjacent claim's own column (same column, a real gap
-## between the two claims' bands -- not the flush case _stacks_on_existing_
-## claim already exempts) would wrongly treat that claim's own territory as
-## bearable rock, silently double-claim the column, and get dropped later at
-## translation when WarrenMazeVolumeAdapter's edited massif reflects
-## whichever claim's edit happened to be recorded last for that column.
+## Whether `column` is BEARING at `floor_band`: PLINTH-BASED (refined
+## 2026-08-21, replacing "continuous solid all the way down to the column's
+## own base") -- only the PLINTH_BANDS immediately below the floor need to
+## be SOLID, not the whole column's depth. "Lower tunnels beneath are
+## allowed" is the point: a room built directly over a covered passage's own
+## roof is by design (a real 2-band slab separates it from the tunnel below,
+## the passage's own carved headroom notwithstanding), so requiring
+## continuity all the way to base -- which the old rule did -- rejected
+## every candidate anywhere near a tunnel even though only a thin plinth
+## directly under the new floor actually needs to hold it up. `state_at`
+## (ledger-aware, so an already-recorded edit or an earlier claim's own
+## committed mass counts, same as before) already returns non-SOLID for a
+## passage cell, so "no passage cell in the plinth range" falls out of the
+## same per-band SOLID check, no separate test needed. The occupancy check
+## (no OTHER claim's own interval overlaps the plinth range) is unchanged
+## from the continuity-to-base version and for the same reason: state_at
+## alone cannot tell "raw mountain rock" from "another claim's own footprint
+## that hasn't been trimmed away yet" (trim never runs until every claim in
+## this pass is placed), so without it a bearing candidate could silently
+## double-claim a column another claim already owns.
 ## A column whose own base already sits at or above floor_band has nothing
 ## to check and does not bear (the base==datum and base>datum cases are
 ## handled by the caller before this is ever reached).
@@ -1361,10 +1390,25 @@ static func _column_bears(plan: WarrenMazeSourcePlan, column: Vector2i,
 	var base := plan.effective_base(column)
 	if base >= floor_band:
 		return false
-	for interval: Vector2i in claimed_intervals.get(column, []) as Array:
-		if interval.x < floor_band and interval.y > base:
-			return false
-	for y in range(base, floor_band):
+	# Fix round 5 (translation-drop regression, found via the standard-scale
+	# sweep the compact-only pinned corpus never exercised): bearing must
+	# refuse a column that ANY other claim already occupies, at ANY band --
+	# not just a band that overlaps this candidate's own plinth range.
+	# record_edit overwrites column_edits[column] WHOLESALE (floor_band AND
+	# top_band together, since a column carries only one ledger entry), so a
+	# bearing edit here would silently rewrite another, non-overlapping
+	# claim's own floor the moment WarrenMazeVolumeAdapter reads
+	# effective_base for that column -- that claim's own [floor, top) range
+	# would no longer exist in the adapted volume at all, and
+	# WarrenBuildingParcel.seal() would reject it, later, at translation, far
+	# from where the real cause was written. A plinth-range-only overlap
+	# check (the first version of this fix) missed exactly this: two claims
+	# whose BANDS never touch can still collide on the SAME column's single
+	# ledger entry.
+	if claimed_intervals.has(column):
+		return false
+	var plinth_floor := maxi(base, floor_band - PLINTH_BANDS)
+	for y in range(plinth_floor, floor_band):
 		if plan.state_at(Vector3i(column.x, y, column.y)) \
 				!= WarrenMazeSourcePlan.CellState.SOLID:
 			return false

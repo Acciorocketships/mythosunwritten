@@ -927,39 +927,54 @@ func test_upper_streets_stack_claims_above_lower_houses() -> void:
 	## claims (the core occupancy invariant every placement/extension/merge
 	## site is now built on).
 	##
-	## Refined 2026-08-21 (the tiers unlock, bearing): a column with
-	## continuous solid mass from its own base up to a candidate's floor is
-	## no longer held to the +/-1 terrain-offender budget (see
+	## Refined 2026-08-21 (the tiers unlock, bearing): a column bears at a
+	## candidate floor -- exempt from the +/-1 terrain-offender budget -- when
+	## it is genuinely unclaimed and SOLID (see
 	## WarrenMazeStampPass._column_bears) -- an upper-street house may now
 	## bear directly on the mountain rather than needing a lower claim's roof
 	## to stack on. `upper_claims` (floor_band >= 4 bands above the column's
 	## own massif base -- i.e. addressing a street two-plus storeys up) and a
 	## direct anti-floating check (every such claim's own footprint columns
-	## must have continuous SOLID mass, via state_at_raw -- the pre-ledger
-	## truth, since a bearing column's OWN floor-raising edit makes the
-	## ledger-aware state_at report AIR below it by design once the edit
+	## must have SOLID mass through their own plinth, via state_at_raw -- the
+	## pre-ledger truth, since a bearing column's OWN floor-raising edit makes
+	## the ledger-aware state_at report AIR below it by design once the edit
 	## exists, which would make a naive post-hoc check misreport every real
 	## bearing column as "floating") are measured in the SAME loop as the
 	## stacking check above.
 	##
-	## CONCERN (see task-1-report.md, fix round 4): the coordinator's brief
-	## asked for >= 25% of claims to be upper-street across this corpus.
-	## Measured or (aggregate across seeds 1/3/4/12): 8/63 = 12.7% (seed
-	## breakdown: 1/18, 1/11, 2/17, 4/17). Investigated directly (not just
-	## accepted) -- the shortfall is a genuine property of THIS massif, not a
-	## bug: most high-elevation candidate footprints include at least one
-	## column near an existing passage's own carved headroom (spine/alley
-	## tunnels run through the massif at many elevations in a compact town),
-	## which breaks bearing continuity for that footprint outright, by
-	## design and correctly (building there really would float over a
-	## carved void). Widening the mechanism further to hit 25% would mean
-	## either loosening _column_bears' continuity check (reintroducing real
-	## floating claims) or extending scope into back-/lateral-extension
-	## (not asked, and back_extend/lateral_extend intentionally keep the old
-	## +/-1-only rule per the brief). The threshold below is pinned to the
-	## measured, verified-correct aggregate minus a guard, not weakened
-	## further; flagged for the coordinator's attention rather than silently
-	## substituted.
+	## Plinth refinement (2026-08-21, second pass): _column_bears no longer
+	## requires continuity all the way down to the column's own base -- only
+	## the PLINTH_BANDS (2) immediately below the floor need to be solid, so
+	## a room may sit directly over a covered passage's own roof (a real
+	## slab separates them; "lower tunnels beneath are allowed" by design).
+	##
+	## CONCERN (see task-1-report.md, fix rounds 4-5): the coordinator's
+	## brief asked for >= 25% of claims to be upper-street across this
+	## corpus, and expected the plinth refinement specifically to raise the
+	## ratio "well above" the 12.7% measured with the earlier
+	## continuity-to-base rule. Re-measured after implementing plinth
+	## bearing exactly as specified: aggregate across seeds 1/3/4/12 is
+	## STILL 8/63 = 12.7% -- byte-for-byte the same claims (same door
+	## columns, same floors) as before the plinth change, confirmed directly
+	## (not just accepted): a 12-seed compact sweep gives 18/162 = 11.1%,
+	## consistent with the 4-seed figure, so this isn't a fluke of the pinned
+	## seeds. Investigated why: HEADROOM_BANDS (3) + PLINTH_BANDS (2) means a
+	## floor needs to clear FIVE bands above any nearby passage's own
+	## elevation before its plinth stops overlapping that passage's carved
+	## headroom -- verified directly on a real column (seed 1, door-adjacent
+	## column (2,0): a passage at y=0 with carved headroom through y=2 means
+	## floor=4's plinth [2,4) still overlaps it and correctly fails to bear,
+	## while floor=5's plinth [3,5) clears it and correctly bears). Compact
+	## massifs simply don't have much vertical relief between a climbing
+	## street and the nearest tunnel below it, so most of this scale's
+	## high-elevation candidates sit right at the floor=4-5 boundary where
+	## plinth and continuity-to-base agree. The mechanism is verified correct
+	## (the plinth test itself works exactly as specified); the shortfall is
+	## a genuine, measured property of the compact-scale corpus, not a bug in
+	## this implementation. The threshold below stays pinned to the measured,
+	## verified-correct aggregate minus a guard -- unchanged from the prior
+	## fix round, since the measurement didn't move -- flagged for the
+	## coordinator's attention rather than silently substituted or inflated.
 	var found_stack := false
 	var total_claims := 0
 	var upper_claims := 0
@@ -984,14 +999,24 @@ func test_upper_streets_stack_claims_above_lower_houses() -> void:
 				upper_claims += 1
 				for column: Vector2i in footprint:
 					var column_base := plan.massif.base_at(column)
-					if column_base >= floor_band:
+					# Plinth check (2026-08-21 refinement), not full
+					# continuity to base: WarrenMazeStampPass._column_bears
+					# only guarantees the PLINTH_BANDS immediately below the
+					# floor are solid -- a lower tunnel beneath is allowed
+					# by design -- so that is the invariant this direct
+					# anti-floating check actually verifies, against the
+					# RAW pre-ledger truth (state_at_raw), not a ledger
+					# artifact.
+					var plinth_floor := maxi(column_base,
+						floor_band - WarrenMazeStampPass.PLINTH_BANDS)
+					if plinth_floor >= floor_band:
 						continue
-					for y in range(column_base, floor_band):
+					for y in range(plinth_floor, floor_band):
 						assert_eq(plan.state_at_raw(
 								Vector3i(column.x, y, column.y)),
 							WarrenMazeSourcePlan.CellState.SOLID,
 							("seed %d: upper-street claim at door %s has " \
-								+ "a gap below its floor at column %s, " \
+								+ "a gap in its plinth at column %s, " \
 								+ "band %d -- it would float") \
 								% [city_seed, door_column, column, y])
 			for column: Vector2i in footprint:
@@ -1247,3 +1272,46 @@ func test_seal_rejects_a_trim_that_cuts_into_headroom() -> void:
 		"a trim that cuts into a passage's own headroom must fail seal")
 	assert_true(plan.last_rejection.contains("headroom"),
 		"expected a headroom-named rejection, got: %s" % plan.last_rejection)
+
+
+func test_reservation_plots_carry_ledger_heights() -> void:
+	## Refinement (2026-08-21, reservation plot heights): every non-skywalk
+	## reservation kind now gets a real ledger top -- open flat plots for
+	## the 0-storey kinds (courtyard, garden_terrace), a real building
+	## envelope for large_house/landmark_plot -- via
+	## WarrenMazeReservationPass.PLOT_STOREYS, instead of the old
+	## maxi(effective_top, datum) which just preserved whatever the raw
+	## massif ceiling already was (the same massif-ceiling-derived-height
+	## bug Task 1 fixed for houses). skywalk_span is deliberately excluded
+	## (claim_overhead never touches a floor at all -- its flanks stand on
+	## grounded natural rock, untouched by this dictionary or by this test).
+	var found_non_skywalk := false
+	for city_seed: int in [4, 12]:
+		var profile := WarrenVillageScaleProfile.for_id(&"compact")
+		var plan := WarrenMazeSitePlanner.plan(city_seed, {}, profile)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		for reservation: Dictionary in plan.reservations:
+			var kind := StringName(reservation.get("kind", &""))
+			if kind == &"skywalk_span":
+				continue
+			found_non_skywalk = true
+			var datum := int(reservation.get("datum_band", 0))
+			var storeys := int(
+				WarrenMazeReservationPass.PLOT_STOREYS.get(kind, 0))
+			var expected_top := datum \
+				+ storeys * WarrenBuildingParcel.STOREY_BANDS
+			assert_eq(int(reservation.get("plot_top", -1)), expected_top,
+				("seed %d: reservation kind %s plot_top must equal datum " \
+					+ "(%d) + PLOT_STOREYS*STOREY_BANDS (%d)") \
+					% [city_seed, kind, datum, expected_top])
+			for column: Vector2i in reservation.get("cells", []) as Array:
+				assert_eq(plan.effective_top(column), expected_top,
+					("seed %d: reservation kind %s column %s " \
+						+ "effective_top must equal datum + " \
+						+ "PLOT_STOREYS*STOREY_BANDS (%d)") \
+						% [city_seed, kind, column, expected_top])
+	assert_true(found_non_skywalk,
+		"seeds 4/12 compact must place at least one non-skywalk " \
+			+ "reservation, or this test passes vacuously")
