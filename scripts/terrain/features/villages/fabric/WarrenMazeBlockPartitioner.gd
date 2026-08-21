@@ -33,6 +33,8 @@ static func partition(source: WarrenMazeSourcePlan,
 			or volume.mass_context.get(&"maze_source_plan") != source:
 		last_failure = "missing or mismatched sealed maze source and volume"
 		return null
+	if not source.parcel_claims.is_empty():
+		return _translate_claims(source, volume)
 	var faces := _frontage_faces(source, volume)
 	last_diagnostic = {"frontage_face_count": faces.size(),
 		"candidate_rejections": {}}
@@ -75,6 +77,79 @@ static func partition(source: WarrenMazeSourcePlan,
 	for key: Variant in last_diagnostic.keys():
 		plan.audit["maze_%s" % String(key)] = last_diagnostic[key]
 	return plan
+
+
+static func _translate_claims(source: WarrenMazeSourcePlan,
+		volume: WarrenVolumePlan) -> WarrenParcelPlan:
+	## The maze's own enumeration, scoring and shape choice already happened
+	## in WarrenMazeStampPass; a sealed `source.parcel_claims` is a finished
+	## decision, not raw material for a second search. This stage only proves
+	## each claim's real construction contract -- a sealed WarrenBuildingParcel
+	## whose threshold actually serves its own claimed address -- and
+	## translates it 1:1. No shapes menu, no scoring, no claiming loop: a
+	## claim that cannot seal on either door phase is a generator bug (a claim
+	## the stamp pass should never have produced), not a shape this stage may
+	## silently substitute or drop.
+	var parcels: Array[WarrenBuildingParcel] = []
+	var lineage_hints: Dictionary = {}
+	var failures: Array[String] = []
+	for index in source.parcel_claims.size():
+		var claim := source.parcel_claims[index] as Dictionary
+		var stable_id := StringName("parcel.maze.%04d" % index)
+		var footprint := claim.get("footprint", []) as Array[Vector2i]
+		var parcel := _seal_claim(stable_id, claim, footprint, volume)
+		if parcel == null:
+			failures.append("claim %d at door_column %s (shape %s)" % [
+				index, claim.get("door_column", Vector2i.ZERO),
+				String(claim.get("shape_id", &""))])
+			continue
+		parcels.append(parcel)
+		var lineage_hint := StringName(claim.get("lineage_hint", &""))
+		if not lineage_hint.is_empty():
+			lineage_hints[String(stable_id)] = lineage_hint
+	if not failures.is_empty():
+		last_failure = "translation dropped %d/%d claims (generator bug): %s" \
+			% [failures.size(), source.parcel_claims.size(),
+				"; ".join(failures)]
+		return null
+	var plan := WarrenParcelPlan.new(
+		StringName("%s.maze_parcels" % volume.stable_id), volume)
+	if not plan.seal(parcels):
+		last_failure = "maze parcel plan rejected: %s" % plan.last_rejection
+		return null
+	var ownership := _ownership_audit(source, volume, parcels)
+	last_diagnostic = {
+		"translated_claim_count": source.parcel_claims.size(),
+		"parcel_count": parcels.size(),
+	}
+	last_diagnostic.merge(ownership, true)
+	for key: Variant in last_diagnostic.keys():
+		plan.audit["maze_%s" % String(key)] = last_diagnostic[key]
+	# WarrenBuildingParcel has no metadata slot of its own (it is pure
+	# geometry/address), so the claim's authored lineage grouping -- which the
+	# construction/composition stages need to treat several claims as one
+	# building -- is carried on the plan's own audit instead, keyed by the
+	# stable parcel id it was translated onto.
+	if not lineage_hints.is_empty():
+		plan.audit["maze_lineage_hints"] = lineage_hints
+	return plan
+
+
+static func _seal_claim(stable_id: StringName, claim: Dictionary,
+		footprint: Array[Vector2i],
+		volume: WarrenVolumePlan) -> WarrenBuildingParcel:
+	var floor_band := int(claim.get("floor_band", 0))
+	var top_band := int(claim.get("top_band", 0))
+	var door_walk := claim.get("door_walk", Vector3i.ZERO) as Vector3i
+	var door_column := claim.get("door_column", Vector2i.ZERO) as Vector2i
+	var frontage := claim.get("frontage", Vector2i.ZERO) as Vector2i
+	for door_phase in 2:
+		var parcel := WarrenBuildingParcel.new(stable_id, footprint, floor_band,
+			top_band, door_walk, door_column, frontage, door_phase)
+		if parcel.seal(volume) \
+				and WarrenParcelConstruction.door_serves_address(parcel):
+			return parcel
+	return null
 
 
 static func _frontage_faces(source: WarrenMazeSourcePlan,
@@ -248,6 +323,36 @@ static func _ownership_audit(source: WarrenMazeSourcePlan,
 				owned_columns[Vector2i(cell.x, cell.z)] = parcel.stable_id
 		var family := "%dx%d" % [parcel.width_cells, parcel.depth_cells]
 		family_counts[family] = int(family_counts.get(family, 0)) + 1
+	# Reservation footprints (the market approach flanks, a landmark or
+	# skywalk landing -- any of P3's typed large features) and the rock
+	# foundation under a ledger-raised floor are both deliberate construction
+	# the maze's own ledger already committed to; neither is a
+	# WarrenBuildingParcel (a reservation is never translated into one, and a
+	# foundation is the ledger's own below-floor stonework, not a room), so
+	# neither ever appears in a parcel's own occupied_cells -- but they are
+	# not unclaimed waste either. Controller ruling: count them as owned
+	# solid too. Marked directly at the same macro (column, band) resolution
+	# `volume.mass_cells`/`has_mass` use, which is NOT the resolution a
+	# parcel's own `proposal().occupied_cells` is expressed in (the fine
+	# FabricRecipe render grid, doubled in x/z) -- that mismatch is exactly
+	# why the loop above only ever registers a coincidental few of a
+	# parcel's own cells as "owned", pre-existing behaviour this change does
+	# not touch. Reused for BOTH partition paths: the legacy greedy path
+	# always sees an empty `source.reservations`/`column_edits` (its
+	# fixtures carve directly, never run P3/P4), so this is a byte-identical
+	# no-op there.
+	for reservation: Dictionary in source.reservations:
+		for column: Vector2i in reservation.get("cells", []) as Array[Vector2i]:
+			_mark_owned_column_range(volume, column,
+				source.effective_base(column), source.effective_top(column),
+				&"maze.reservation", owned, owned_columns)
+	var foundation_columns := source.audit.get("foundation_columns", {}) \
+		as Dictionary
+	for column_value: Variant in foundation_columns.keys():
+		var column := column_value as Vector2i
+		_mark_owned_column_range(volume, column, source.massif.base_at(column),
+			source.effective_base(column), &"maze.foundation", owned,
+			owned_columns)
 	var post_carve_solid := volume.mass_cells.size()
 	return {
 		"post_carve_solid_cell_count": post_carve_solid,
@@ -257,3 +362,13 @@ static func _ownership_audit(source: WarrenMazeSourcePlan,
 		"owned_column_count": owned_columns.size(),
 		"footprint_family_counts": family_counts,
 	}
+
+
+static func _mark_owned_column_range(volume: WarrenVolumePlan,
+		column: Vector2i, base: int, top: int, marker: StringName,
+		owned: Dictionary, owned_columns: Dictionary) -> void:
+	for y in range(base, top):
+		var cell := Vector3i(column.x, y, column.y)
+		if volume.has_mass(cell):
+			owned[cell] = marker
+			owned_columns[Vector2i(cell.x, cell.z)] = marker

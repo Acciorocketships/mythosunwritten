@@ -527,6 +527,32 @@ func test_stop_after_exposes_each_phase_uncontaminated() -> void:
 	assert_gt(stamped.parcel_claims.size(), 0)
 
 
+func test_translator_partition_is_one_to_one_with_claims() -> void:
+	for city_seed in [12, 4]:
+		var profile := WarrenVillageScaleProfile.for_id(&"compact")
+		var plan := WarrenMazeSitePlanner.plan(city_seed, {}, profile)
+		assert_not_null(plan, "seed %d: %s" \
+			% [city_seed, WarrenMazeSitePlanner.last_failure])
+		if plan == null:
+			continue
+		var volume := WarrenMazeVolumeAdapter.to_volume_plan(plan)
+		assert_not_null(volume, "seed %d: %s" \
+			% [city_seed, WarrenMazeVolumeAdapter.last_failure])
+		if volume == null:
+			continue
+		var parcels := WarrenMazeBlockPartitioner.partition(plan, volume)
+		assert_not_null(parcels, "seed %d: %s" \
+			% [city_seed, WarrenMazeBlockPartitioner.last_failure])
+		if parcels == null:
+			continue
+		assert_eq(parcels.parcels.size(), plan.parcel_claims.size(),
+			"seed %d: translation is 1:1 -- a dropped claim is a generator bug" \
+				% city_seed)
+		assert_gte(float(parcels.audit.get("maze_owned_solid_ratio", 0.0)), 0.85,
+			"seed %d: the M4 ownership floor is the slice-1 exit; measured %s" \
+				% [city_seed, parcels.audit.get("maze_owned_solid_ratio", 0.0)])
+
+
 func test_plan_rejects_an_unknown_stop_after_stage() -> void:
 	var profile := WarrenVillageScaleProfile.for_id(&"compact")
 	var result := WarrenMazeSitePlanner.plan(12, {}, profile, &"bogus")

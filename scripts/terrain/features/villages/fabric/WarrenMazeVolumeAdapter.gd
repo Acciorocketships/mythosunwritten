@@ -12,8 +12,13 @@ static func to_volume_plan(source: WarrenMazeSourcePlan) -> WarrenVolumePlan:
 	if source == null or not source.is_sealed():
 		last_failure = "maze source plan missing or unsealed"
 		return null
+	var massif := source.massif
+	if not source.column_edits.is_empty():
+		massif = _edited_massif(source)
+		if massif == null:
+			return null
 	var volume := WarrenExcavationVolumeAdapter.to_volume_plan(
-		source.massif, source.excavation, source.market_square_cells)
+		massif, source.excavation, source.market_square_cells)
 	if volume == null:
 		last_failure = WarrenExcavationVolumeAdapter.last_failure
 		return null
@@ -33,6 +38,42 @@ static func to_volume_plan(source: WarrenMazeSourcePlan) -> WarrenVolumePlan:
 		source.scale_profile.deterministic_signature()
 	volume.audit.merge(alignment, true)
 	return volume
+
+
+static func _edited_massif(source: WarrenMazeSourcePlan) -> WarrenMassif:
+	## The constructive ledger (parcel-claim offenders, reservation footprints)
+	## overlays a handful of columns with a raised floor and/or a trimmed roof
+	## on top of the sealed Task-1 massif. Downstream excavation must see that
+	## edited world -- otherwise the volume's mass disagrees with the very
+	## addresses the source plan already sealed against. Only edited columns
+	## move; every other column is copied through byte-for-byte, so the
+	## edited copy's column SET (and therefore its footprint topology) is
+	## identical to the sealed massif's own. WarrenMassif.seal() only checks
+	## that topology (single connected component, no interior hole) -- it
+	## never inspects band values -- so a legally-edited copy of an
+	## already-sealed massif cannot newly fail seal() here.
+	var columns: Dictionary = {}
+	for column: Vector2i in source.massif.columns:
+		var entry := (source.massif.columns[column] as Dictionary).duplicate()
+		if source.column_edits.has(column):
+			entry["base"] = source.effective_base(column)
+			entry["top"] = source.effective_top(column)
+		columns[column] = entry
+	var edited := WarrenMassif.with_columns(source.massif.world_seed, columns,
+		source.massif.core_top_bands)
+	# Mirrors WarrenMassifBuilder.build's own derivation: core_top_bands is the
+	# deepest authored layer over any column, and an edit can change a
+	# column's layer (raised floor, trimmed roof) without changing which
+	# column is deepest.
+	var core_top_bands := 0
+	for column: Vector2i in edited.columns:
+		core_top_bands = maxi(core_top_bands, edited.layer_at(column))
+	edited.core_top_bands = core_top_bands
+	if not edited.seal():
+		last_failure = "edited massif copy failed to seal: %s" \
+			% edited.last_rejection
+		return null
+	return edited
 
 
 static func _bore_surface_alignment(source: WarrenMazeSourcePlan,

@@ -70,6 +70,19 @@ func _init(p_world_seed: int) -> void:
 	world_seed = p_world_seed
 
 
+static func with_columns(p_world_seed: int, p_columns: Dictionary,
+		p_core_top_bands: int) -> WarrenMassif:
+	## Factory for a massif built from already-decided column bands (an edited
+	## copy of a sealed massif, e.g.) rather than from the Gaussian builder.
+	## Still just data until the caller calls seal() -- this never seals on
+	## its own, so a caller that forgets to seal gets the same unsealed-object
+	## contract as `WarrenMassif.new(...)` followed by manual field writes.
+	var massif := WarrenMassif.new(p_world_seed)
+	massif.columns = p_columns
+	massif.core_top_bands = p_core_top_bands
+	return massif
+
+
 func seal() -> bool:
 	if columns.is_empty():
 		last_rejection = "empty massif"
