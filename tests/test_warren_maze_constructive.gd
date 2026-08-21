@@ -1055,3 +1055,75 @@ func test_seal_rejects_a_trim_that_cuts_into_a_house() -> void:
 		"a trim that cuts below a claim's own top must fail seal")
 	assert_true(plan.last_rejection.contains("trim"),
 		"expected a trim-named rejection, got: %s" % plan.last_rejection)
+
+
+func test_state_at_reads_through_the_edit_ledger() -> void:
+	## Follow-up fix (2026-08-21 review): state_at used to test raw
+	## massif.base_at/top_at, ignoring the edit ledger entirely -- a trimmed
+	## column's discarded mass (and a raised floor's opened-up gap) kept
+	## reporting SOLID forever, so every state_at consumer downstream of a
+	## sealed plan (the debug view chief among them) kept seeing ghost mass
+	## skyline trim had already discarded. state_at now reads
+	## effective_base/effective_top; state_at_raw is the escape hatch for the
+	## one caller (WarrenMazeStampPass._column_ceiling, mid-stamping, before
+	## any trim exists) that genuinely needs the pre-ledger truth.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var city_seed := 4
+
+	# Pre-trim comparison run, same technique as
+	# test_skyline_trim_removes_unclaimed_mass_above_roofs.
+	WarrenMazeStampPass.skyline_trim_enabled = false
+	var pre_massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+	var pre_plan := WarrenMazeCarver.carve(city_seed, pre_massif, profile,
+		false)
+	assert_not_null(pre_plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(pre_plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	assert_true(WarrenMazeStampPass.stamp(pre_plan, profile),
+		WarrenMazeStampPass.last_failure)
+	WarrenMazeStampPass.skyline_trim_enabled = true
+
+	var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+	var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	assert_true(WarrenMazeStampPass.stamp(plan, profile),
+		WarrenMazeStampPass.last_failure)
+
+	var trimmed_column: Vector2i
+	var trimmed_top := -1
+	var found_trim := false
+	for column: Vector2i in plan.column_edits.keys():
+		var edit := plan.column_edits[column] as Dictionary
+		if bool(edit.get("trimmed", false)):
+			trimmed_column = column
+			trimmed_top = int(edit.get("top_band", 0))
+			found_trim = true
+			break
+	assert_true(found_trim, "seed 4 compact must record at least one trim")
+
+	# A band at/above the trimmed top must now report AIR -- the whole point
+	# of this fix (ghost mass a consumer used to still see is genuinely gone).
+	var above := Vector3i(trimmed_column.x, trimmed_top, trimmed_column.y)
+	assert_eq(plan.state_at(above), WarrenMazeSourcePlan.CellState.AIR,
+		"a band at the trimmed column's own top must report AIR post-trim")
+
+	# The SAME cell, pre-trim, must still have reported SOLID -- proving the
+	# change is ledger-driven (the trim genuinely happened), not a
+	# regression of the untrimmed massif's own solidity.
+	assert_lt(trimmed_top, pre_plan.massif.top_at(trimmed_column),
+		("fixture must actually carry raw mass above the trimmed top, or " \
+			+ "this comparison is vacuous"))
+	assert_eq(pre_plan.state_at(above), WarrenMazeSourcePlan.CellState.SOLID,
+		"the same cell, pre-trim, must have reported SOLID")
+
+	# A band inside a real claim's own footprint must still report SOLID.
+	assert_false(plan.parcel_claims.is_empty(),
+		"fixture must have real claims, or the SOLID check below is vacuous")
+	var claim := plan.parcel_claims[0] as Dictionary
+	var claim_column: Vector2i = (claim.footprint as Array[Vector2i])[0]
+	var inside := Vector3i(claim_column.x, int(claim.floor_band),
+		claim_column.y)
+	assert_eq(plan.state_at(inside), WarrenMazeSourcePlan.CellState.SOLID,
+		"a band inside a claim's own footprint/floor must still report SOLID")

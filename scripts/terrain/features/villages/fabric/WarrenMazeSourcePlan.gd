@@ -321,7 +321,45 @@ func is_sealed() -> bool:
 	return _sealed
 
 
+## SOLID reads through the edit ledger (effective_base/effective_top), not
+## the raw sealed massif -- P4.5's skyline trim lowers a column's recorded
+## top to discard mass no claim reaches, and a raised floor (an offender
+## correction, or a reservation edit) can also open a gap below a claim's own
+## floor; both must stop reporting as SOLID here or every state_at consumer
+## (frontage-face enumeration, ceiling walks, the debug view, anything that
+## asks "is there still rock here") keeps seeing ghost mass the ledger has
+## already discarded. Passage cells and carved air are unaffected -- the
+## ledger never edits those, and they are checked first regardless.
 func state_at(cell: Vector3i) -> CellState:
+	if passage_kinds.has(cell):
+		return CellState.PASSAGE
+	if excavation != null and excavation.carved.has(cell):
+		return CellState.AIR
+	var column := Vector2i(cell.x, cell.z)
+	if massif != null and massif.has_column(column) \
+			and cell.y >= effective_base(column) \
+			and cell.y < effective_top(column):
+		return CellState.SOLID
+	return CellState.AIR
+
+
+## The RAW, pre-ledger physical state -- passage/carved-air exclusions are
+## identical to state_at (the ledger never edits those), but the solid range
+## is the SEALED MASSIF's own [base_at, top_at), never effective_base/
+## effective_top. Exists for exactly one caller class: a mid-stamping ceiling
+## walk (WarrenMazeStampPass._column_ceiling) that must find how much
+## PHYSICAL rock still stands above a column, independent of what an
+## earlier, already-placed claim on that SAME column recorded as ITS OWN
+## roof. A stamp-phase offender edit's top_band is bookkeeping for THAT
+## claim (skyline trim, foundation depth) -- it does not mean the mass above
+## it was removed (nothing is removed until skyline trim runs, at the very
+## end of stamp(), long after every ceiling walk has already happened) -- so
+## state_at()'s ledger-aware upper bound would incorrectly collapse a
+## flush-stacked claim's ceiling to zero the moment the claim below it
+## happened to need a floor correction. A caller that wants the FINAL,
+## trim-aware truth (the translator, the debug view, anything reading a
+## sealed plan) wants state_at(), not this.
+func state_at_raw(cell: Vector3i) -> CellState:
 	if passage_kinds.has(cell):
 		return CellState.PASSAGE
 	if excavation != null and excavation.carved.has(cell):

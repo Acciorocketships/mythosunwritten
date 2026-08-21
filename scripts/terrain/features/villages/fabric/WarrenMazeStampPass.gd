@@ -1262,11 +1262,25 @@ static func _stacks_on_existing_claim(claimed_intervals: Dictionary,
 ## owns. Self-intervals (an interval whose own floor equals `floor_band` --
 ## this exact claim, mid extension or merge) never cap: the strict `>` skips
 ## them.
+##
+## Reads state_at_raw, NOT the ledger-aware state_at: at the point this ever
+## runs (mid-stamping, before this or any later claim commits, long before
+## skyline trim), nothing has genuinely been removed yet. An earlier claim
+## sharing this SAME column at a lower tier may already carry a stamp-phase
+## offender edit recording ITS OWN roof -- that is bookkeeping for skyline
+## trim and foundation depth, not proof the mass above it is gone. Reading
+## the ledger-aware state_at here would make a flush-stacked claim's own
+## ceiling collapse to floor_band (zero usable height) the instant the claim
+## below it happened to need a floor correction -- the claimed_intervals cap
+## just below is the correct, purpose-built way to bound this walk by
+## another claim's territory; the raw walk only ever answers "is there still
+## physical rock here", never "has some other claim already decided its own
+## roof is here".
 static func _column_ceiling(plan: WarrenMazeSourcePlan, column: Vector2i,
 		floor_band: int, claimed_intervals: Dictionary) -> int:
 	var top_limit := plan.massif.top_at(column)
 	var y := floor_band
-	while y < top_limit and plan.state_at(Vector3i(column.x, y, column.y)) \
+	while y < top_limit and plan.state_at_raw(Vector3i(column.x, y, column.y)) \
 			== WarrenMazeSourcePlan.CellState.SOLID:
 		y += 1
 	for interval: Vector2i in claimed_intervals.get(column, []) as Array:
