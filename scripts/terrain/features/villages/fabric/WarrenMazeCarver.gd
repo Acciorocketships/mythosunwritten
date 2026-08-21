@@ -25,7 +25,8 @@ static var last_diagnostic: Dictionary = {}
 
 
 static func carve(world_seed: int, massif: WarrenMassif,
-		scale_profile: WarrenVillageScaleProfile = null) -> WarrenMazeSourcePlan:
+		scale_profile: WarrenVillageScaleProfile = null,
+		seal_plan: bool = true) -> WarrenMazeSourcePlan:
 	last_failure = ""
 	last_diagnostic = {}
 	var profile := scale_profile if scale_profile != null \
@@ -119,15 +120,16 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		"cells": market_square.duplicate(), "adaptation": &"fit"})
 	plan.summit_cell = excavation.route.back()
 	plan.block_thickness = thickness
-	if not plan.seal():
-		last_failure = "maze source plan rejected: %s" % plan.last_rejection
-		last_diagnostic = {"stage": &"source_seal", "audit": plan.audit,
-			"lane_count": excavation.lanes.size()}
-		return null
-	last_diagnostic = plan.audit.duplicate(true)
-	last_diagnostic["spine_visits"] = context.visits
-	last_diagnostic["lane_count"] = excavation.lanes.size()
-	last_diagnostic["loop_join_count"] = excavation.loop_edges.size()
+	if seal_plan:
+		if not plan.seal():
+			last_failure = "maze source plan rejected: %s" % plan.last_rejection
+			last_diagnostic = {"stage": &"source_seal", "audit": plan.audit,
+				"lane_count": excavation.lanes.size()}
+			return null
+		last_diagnostic = plan.audit.duplicate(true)
+		last_diagnostic["spine_visits"] = context.visits
+		last_diagnostic["lane_count"] = excavation.lanes.size()
+		last_diagnostic["loop_join_count"] = excavation.loop_edges.size()
 	return plan
 
 

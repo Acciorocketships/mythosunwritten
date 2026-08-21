@@ -86,6 +86,8 @@ func foundation_depth(column: Vector2i) -> int:
 
 func record_edit(column: Vector2i, floor_band: int, top_band: int,
 		phase: StringName) -> bool:
+	if _sealed:
+		return _reject("plan is sealed; the ledger is frozen")
 	if _column_has_passage(column):
 		return _reject("edit at column %s would touch a carved passage cell" \
 			% column)
