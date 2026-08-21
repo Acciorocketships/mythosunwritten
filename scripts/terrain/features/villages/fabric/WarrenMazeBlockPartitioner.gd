@@ -79,32 +79,15 @@ static func partition(source: WarrenMazeSourcePlan,
 
 static func _frontage_faces(source: WarrenMazeSourcePlan,
 		volume: WarrenVolumePlan) -> Array[Dictionary]:
-	var faces: Array[Dictionary] = []
-	var seen: Dictionary = {}
-	for passage: Vector3i in source.passage_cells():
-		for into_block: Vector2i in CARDINALS:
-			var column := Vector2i(passage.x, passage.z) + into_block
-			var wall := Vector3i(column.x, passage.y, column.y)
-			if not volume.has_mass(wall):
-				continue
-			var key := "%d:%d:%d:%d:%d" % [column.x, passage.y,
-				column.y, into_block.x, into_block.y]
-			if seen.has(key):
-				continue
-			seen[key] = true
-			faces.append({"walk": passage, "column": column,
-				"into_block": into_block,
-				"tie": WarrenPassageLatticeRules.hash_key(source.world_seed,
-					0x50415243, wall, into_block.x * 3 + into_block.y)})
-	faces.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
-		var left_walk := left.walk as Vector3i
-		var right_walk := right.walk as Vector3i
-		if left_walk.y != right_walk.y:
-			return left_walk.y < right_walk.y
-		if int(left.tie) != int(right.tie):
-			return int(left.tie) < int(right.tie)
-		return _cell_less(left_walk, right_walk))
-	return faces
+	## Delegates to WarrenMazeStampPass.frontage_faces_from_plan, the single
+	## shared implementation (a duplication finding on an earlier round
+	## flagged this method and P4's own copy as byte-for-byte duplicates that
+	## could drift; see that method's own comment for the full equivalence
+	## argument). `volume` is unused in the body now -- the shared
+	## implementation reads solidity through `source` directly -- but the
+	## parameter stays for call-site/signature stability; `partition()` still
+	## has a sealed `volume` in hand and still passes it here.
+	return WarrenMazeStampPass.frontage_faces_from_plan(source)
 
 
 static func _face_is_owned(face: Dictionary,
@@ -274,11 +257,3 @@ static func _ownership_audit(source: WarrenMazeSourcePlan,
 		"owned_column_count": owned_columns.size(),
 		"footprint_family_counts": family_counts,
 	}
-
-
-static func _cell_less(left: Vector3i, right: Vector3i) -> bool:
-	if left.y != right.y:
-		return left.y < right.y
-	if left.x != right.x:
-		return left.x < right.x
-	return left.z < right.z

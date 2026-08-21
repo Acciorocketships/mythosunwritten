@@ -22,9 +22,12 @@ extends RefCounted
 ##
 ## Reads mass through the still-unsealed WarrenMazeSourcePlan directly
 ## (state_at / effective_top), never through a WarrenVolumePlan: P4 runs
-## before any volume exists. _frontage_faces_from_plan mirrors
-## WarrenMazeBlockPartitioner._frontage_faces's enumeration and ordering
-## contract on purpose -- see that method for the volume-backed original.
+## before any volume exists. frontage_faces_from_plan is the single shared
+## implementation of frontage-face enumeration/sort/tie-break --
+## WarrenMazeBlockPartitioner._frontage_faces delegates to it rather than
+## keeping its own volume-backed copy, so the two paths cannot drift; see
+## that method's comment for why the plan-based mass test and its own
+## legacy volume.has_mass test agree for every caller it actually sees.
 
 const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
@@ -87,7 +90,7 @@ static func stamp(plan: WarrenMazeSourcePlan,
 		for column: Vector2i in reservation.get("cells", []) as Array:
 			claimed_columns[column] = true
 
-	var faces := _frontage_faces_from_plan(plan)
+	var faces := frontage_faces_from_plan(plan)
 	var outcomes: Dictionary = {}
 	var lineage_seed := {"count": 0}
 
@@ -97,6 +100,26 @@ static func stamp(plan: WarrenMazeSourcePlan,
 		"_compare_candidates"))
 	_run_pass(plan, main_candidates, claimed_columns, outcomes, lineage_seed)
 
+	# The door-arm depth every rectangular claim placed at, snapshotted once
+	# here (before any extension round) and never recomputed from a
+	# since-extended footprint -- back-extension reads this to cap its own
+	# CUMULATIVE growth across every round at MAX_BACK_EXTENSION_DEPTH total,
+	# not per round. Also published into the audit, keyed by door_column
+	# (stable across every later merge/lineage step), so a test can check the
+	# cap held on the final claims.
+	var original_arm_depths: Dictionary = {}
+	var original_arm_depth_by_door: Dictionary = {}
+	for index in plan.parcel_claims.size():
+		var claim := plan.parcel_claims[index] as Dictionary
+		if String(claim.get("shape_id", "")).begins_with("L."):
+			continue
+		var into_block := -(claim.frontage as Vector2i)
+		var depth := _footprint_depth(claim.footprint as Array[Vector2i],
+			into_block)
+		original_arm_depths[index] = depth
+		original_arm_depth_by_door[claim.door_column as Vector2i] = depth
+	plan.audit["stamp_original_arm_depth"] = original_arm_depth_by_door
+
 	# Both extension passes preserve rectangularity (a lane is claimed only
 	# all-or-nothing), so alternating them repeatedly lets an existing claim
 	# grow around a corner one straight lane at a time: a maze block is
@@ -104,7 +127,7 @@ static func stamp(plan: WarrenMazeSourcePlan,
 	# deepening (or vice versa) routinely opens room the first attempt in
 	# that direction did not have yet.
 	for _round in EXTENSION_ROUNDS:
-		_back_extend(plan, claimed_columns, outcomes)
+		_back_extend(plan, claimed_columns, outcomes, original_arm_depths)
 		_lateral_extend(plan, claimed_columns, outcomes)
 
 	var infill_candidates := _enumerate_candidates(plan, faces,
@@ -342,13 +365,34 @@ static func _column_less(a: Vector2i, b: Vector2i) -> bool:
 	return a.x < b.x
 
 
-## Mirrors WarrenMazeBlockPartitioner._frontage_faces's enumeration and total
-## order exactly, but reads solidity through the plan (state_at /
-## effective_top) instead of a WarrenVolumePlan -- P4 runs before any volume
-## exists. A face whose wall column was already flattened by a P3 reservation
-## edit (effective_top <= the passage's own band) is not a real wall and is
-## excluded, which volume.has_mass would have caught for free.
-static func _frontage_faces_from_plan(
+## The single shared frontage-face enumeration: every (passage cell x
+## cardinal direction) pair whose wall column is solid, deduplicated and
+## sorted into one deterministic total order. Both P4 (this file, before any
+## WarrenVolumePlan exists) and the legacy WarrenMazeBlockPartitioner (after
+## one exists) call this exact implementation -- extracted so the two could
+## not silently drift, per a duplication finding on an earlier round of this
+## file, which had kept a byte-for-byte copy in each place.
+##
+## Reads solidity through the plan (state_at == SOLID, plus
+## effective_top(column) > the passage's own band -- a wall column a P3
+## reservation already flattened to zero height is not a real wall) rather
+## than through a WarrenVolumePlan.has_mass(wall) test, which is what the
+## legacy partitioner used to test directly. Those two tests agree exactly
+## for the only caller that still reaches this code through the legacy path
+## (WarrenMazeBlockPartitioner._frontage_faces, called from partition() with
+## an unedited `source`: every partition() caller carves first and never
+## stamps): WarrenExcavationVolumeAdapter builds `volume.mass_cells` as the
+## massif's full per-column [base, top) range minus `excavation.carved` (see
+## that adapter's own header comment), which is precisely what
+## `state_at(cell) == SOLID` tests; and an unedited plan's `column_edits` is
+## empty, so `effective_top` reads through to `massif.top_at` everywhere,
+## making the extra effective_top guard here trivially true whenever
+## `state_at(wall) == SOLID` is (a solid cell is by definition inside its
+## column's [base, top) range) -- so it can never diverge from what
+## volume.has_mass(wall) would already have excluded. The carver regression
+## suite (test_warren_maze_carver.gd) pins this equivalence: the partitioner
+## must still produce byte-identical parcels through this shared path.
+static func frontage_faces_from_plan(
 		plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
 	var faces: Array[Dictionary] = []
 	var seen: Dictionary = {}
@@ -552,20 +596,29 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 
 
 ## Deepens every already-placed, purely-rectangular claim into unclaimed
-## interior columns directly behind it (same width, up to
-## MAX_BACK_EXTENSION_DEPTH more columns of depth, same datum rules) before
-## the small-shape infill pass runs. This is what turns a 2-wide claim that
-## stopped short of a terrace step into a proper building instead of leaving
-## the columns behind it to straggle in as separate 1x1 infill.
+## interior columns directly behind it (same width, same datum rules) before
+## the small-shape infill pass runs -- but never past MAX_BACK_EXTENSION_DEPTH
+## TOTAL, no matter how many EXTENSION_ROUNDS it takes: `original_depths`
+## (claim index -> depth at the moment the main pass placed it, snapshotted
+## once before any round) is what bounds this call's own budget, rather than
+## always re-deriving up to MAX_BACK_EXTENSION_DEPTH more from the CURRENT
+## (possibly already-extended-this-round-or-a-prior-one) footprint, which
+## would let a claim's depth grow unboundedly across rounds instead of
+## capping at a true one-building depth. This is what turns a 2-wide claim
+## that stopped short of a terrace step into a proper building instead of
+## leaving the columns behind it to straggle in as separate 1x1 infill.
 static func _back_extend(plan: WarrenMazeSourcePlan, claimed_columns: Dictionary,
-		outcomes: Dictionary) -> void:
-	for claim: Dictionary in plan.parcel_claims:
+		outcomes: Dictionary, original_depths: Dictionary) -> void:
+	for index in plan.parcel_claims.size():
+		var claim := plan.parcel_claims[index] as Dictionary
 		if not String(claim.get("shape_id", "")).begins_with("L."):
-			_back_extend_claim(plan, claim, claimed_columns, outcomes)
+			_back_extend_claim(plan, claim, index, claimed_columns, outcomes,
+				original_depths)
 
 
 static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
-		claimed_columns: Dictionary, outcomes: Dictionary) -> void:
+		claim_index: int, claimed_columns: Dictionary, outcomes: Dictionary,
+		original_depths: Dictionary) -> void:
 	var footprint := (claim.footprint as Array[Vector2i]).duplicate()
 	var into_block := -(claim.frontage as Vector2i)
 	var width_columns := _lateral_lane(footprint, into_block)
@@ -574,7 +627,10 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 	var floor_band := int(claim.floor_band)
 	var top_band := int(claim.top_band)
 	var depth_used := _footprint_depth(footprint, into_block)
-	for extra in MAX_BACK_EXTENSION_DEPTH:
+	var original_depth: int = original_depths.get(claim_index, depth_used)
+	var already_added := depth_used - original_depth
+	var remaining_budget := maxi(0, MAX_BACK_EXTENSION_DEPTH - already_added)
+	for extra in remaining_budget:
 		var row: Array[Vector2i] = []
 		for lane_column: Vector2i in width_columns:
 			row.append(lane_column + into_block * (depth_used + extra))
@@ -735,7 +791,9 @@ static func _outer_lane(footprint: Array[Vector2i], into_block: Vector2i,
 			groups[depth] = [] as Array[Vector2i]
 		(groups[depth] as Array).append(column)
 	var out: Array[Vector2i] = []
-	for depth_key: Variant in groups.keys():
+	var depth_keys: Array = groups.keys()
+	depth_keys.sort()
+	for depth_key: Variant in depth_keys:
 		var group := groups[depth_key] as Array
 		var best: Vector2i = group[0]
 		var best_projection := best.x * direction.x + best.y * direction.y

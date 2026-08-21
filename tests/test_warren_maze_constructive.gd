@@ -210,11 +210,14 @@ func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
 	## bounded lineage-grouping post-pass extends that to every claim, so a
 	## staircase-shaped blob split into several rectangles for the footprint
 	## contract still reads as one stepped building here. Checks: no claim
-	## degenerates into a pencil tower (per claim), the town is at least half
-	## lineages that clear a single-column footprint (summed per lineage),
-	## every seed lands at least one genuinely building-shaped (area >= 4)
-	## claim, and the grouping rule itself holds -- every lineage's claims
-	## stay within one band of each other.
+	## degenerates into a pencil tower (per claim), no rectangular claim's
+	## footprint reaches deeper from its door_column than its original shape
+	## depth plus the back-extension cap (per claim -- the cumulative-depth
+	## fix), the town is at least half lineages that clear a single-column
+	## footprint (summed per lineage), every seed lands at least one
+	## genuinely building-shaped (area >= 4) claim, and the grouping rule
+	## itself holds -- every lineage's claims stay within one band of
+	## each other.
 	for city_seed: int in [1, 3, 4, 12]:
 		var profile := WarrenVillageScaleProfile.for_id(&"compact")
 		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
@@ -224,6 +227,8 @@ func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
 		assert_true(WarrenMazeReservationPass.reserve(plan, profile))
 		assert_true(WarrenMazeStampPass.stamp(plan, profile),
 			WarrenMazeStampPass.last_failure)
+		var original_arm_depths := plan.audit.get(
+			"stamp_original_arm_depth", {}) as Dictionary
 		var has_area_4_or_more := false
 		var lineage_areas: Dictionary = {}
 		var lineage_floors: Dictionary = {}
@@ -234,6 +239,26 @@ func test_stamping_produces_building_shaped_claims_not_pencils() -> void:
 				assert_lte(int(claim.top_band) - int(claim.floor_band),
 					2 * WarrenBuildingParcel.STOREY_BANDS,
 					"a 1x1 claim may not become a pencil tower")
+			var shape_id := String(claim.get("shape_id", ""))
+			var door_column := claim.door_column as Vector2i
+			if not shape_id.begins_with("L.") \
+					and original_arm_depths.has(door_column):
+				var into_block := -(claim.frontage as Vector2i)
+				var max_projection := 0
+				for column: Vector2i in footprint:
+					var delta := column - door_column
+					var projection := delta.x * into_block.x \
+						+ delta.y * into_block.y
+					max_projection = maxi(max_projection, projection)
+				var extent := max_projection + 1
+				var allowed := int(original_arm_depths[door_column]) \
+					+ WarrenMazeStampPass.MAX_BACK_EXTENSION_DEPTH
+				assert_lte(extent, allowed,
+					("seed %d: claim at door %s reaches %d deep, past its " \
+						+ "original depth (%d) plus the back-extension cap (%d)") \
+							% [city_seed, str(door_column), extent,
+								int(original_arm_depths[door_column]),
+								WarrenMazeStampPass.MAX_BACK_EXTENSION_DEPTH])
 			var lineage := StringName(claim.get("lineage_hint", &""))
 			assert_ne(lineage, &"",
 				"seed %d: every claim must belong to a lineage after grouping" \
