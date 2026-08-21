@@ -306,9 +306,25 @@ func test_stamp_edits_stay_within_one_band_and_own_apron() -> void:
 - Test: `tests/test_warren_maze_constructive.gd`
 
 **Interfaces:**
-- Produces: `WarrenMazeSitePlanner.plan(world_seed: int, ground_bands: Dictionary, profile: WarrenVillageScaleProfile) -> WarrenMazeSourcePlan` — massif → carve(unsealed) → reserve → stamp → foundations → `seal()`; null + `last_failure` on any hard failure.
+- Produces: `WarrenMazeSitePlanner.plan(world_seed: int, ground_bands: Dictionary, profile: WarrenVillageScaleProfile, stop_after: StringName = &"") -> WarrenMazeSourcePlan` — massif → carve(unsealed) → reserve → stamp → foundations → `seal()`; null + `last_failure` on any hard failure.
+- `stop_after` returns the **unsealed** plan mid-pipeline for the debug view: `&"carve"` (after bore + air), `&"reserve"`, `&"stamp"`; empty runs to the sealed end. Phases are pure and cost milliseconds, so the debug view re-runs the planner per phase instead of the planner keeping snapshot state.
 
-- [ ] **Step 1: Failing test** — 24/24: for seeds 1–12 × {compact, standard}, `plan(...)` returns a **sealed** plan (or the specific carve/adapt failures already known — assert the count of successes ≥ 22 and every failure names carve/adapter, never reserve/stamp/seal), and the signature is identical across two calls.
+- [ ] **Step 1: Failing test** — 24/24: for seeds 1–12 × {compact, standard}, `plan(...)` returns a **sealed** plan (or the specific carve/adapt failures already known — assert the count of successes ≥ 22 and every failure names carve/adapter, never reserve/stamp/seal), and the signature is identical across two calls. Plus the phase contract:
+
+```gdscript
+func test_stop_after_exposes_each_phase_uncontaminated() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var carved := WarrenMazeSitePlanner.plan(12, {}, profile, &"carve")
+	assert_false(carved.is_sealed())
+	assert_eq(carved.reservations.size(), 0)
+	assert_eq(carved.parcel_claims.size(), 0)
+	var reserved := WarrenMazeSitePlanner.plan(12, {}, profile, &"reserve")
+	assert_gt(reserved.reservations.size(), 0)
+	assert_eq(reserved.parcel_claims.size(), 0,
+		"reserve must not have stamped anything yet")
+	var stamped := WarrenMazeSitePlanner.plan(12, {}, profile, &"stamp")
+	assert_gt(stamped.parcel_claims.size(), 0)
+```
 - [ ] **Step 2–4: Red, implement, green.**
 - [ ] **Step 5: Commit** — `feat(villages): one-pass constructive site planner`
 
@@ -377,18 +393,39 @@ The view renders the town as a plain 3D grid — air invisible, solids colored b
 - **Air**: nothing. Unclaimed retained solid: neutral light grey (this is the
   ownership gap made visible — the 0.85 target is literally "little grey").
 
-**Controls:** `--seeds a,b,c --output DIR` (existing), plus `--legend` printing
-the color table; captures iso / iso-rear / top / street per seed plus one
-close-up per reservation, and writes `index.json` with per-seed metrics
-(parcels, median footprint, ownership, reservation outcomes). GUI mode only
-(headless capture hangs — project convention).
+**Phase sequence:** the view renders SIX states per seed, one directory of
+captures each, by calling the planner with increasing `stop_after` (plus the
+raw massif drawn directly from `WarrenMassifBuilder` for state 1):
+
+| state | source | what it isolates |
+|---|---|---|
+| 1 `massif` | `WarrenMassifBuilder.build` directly | terrain anchoring, terrace shape |
+| 2 `bore` | `stop_after = &"carve"`, geometry only | spine/alley routing, stride legality |
+| 3 `air` | same plan, covered/open coloring (a passage cell with mass above = covered bar) | tunnel vs sky classification |
+| 4 `reserve` | `stop_after = &"reserve"` | feature placement + big edits |
+| 5 `stamp` | `stop_after = &"stamp"` | claims, L-pairs, small edits |
+| 6 `final` | full sealed plan | foundations + everything |
+
+States 2 and 3 come from one carve call — air is a coloring of the carved
+plan, not a separate carver stop (no carver surgery needed). Each state gets
+iso + top; state 6 gets the full battery + reservation close-ups. Filenames:
+`maze-seed-<N>-<state>-<view>.png`.
+
+**Controls:** `--seeds a,b,c --output DIR` (existing), plus `--phases all`
+(default: final only) and `--legend` printing the color table; writes
+`index.json` with per-seed metrics (parcels, median footprint, ownership,
+reservation outcomes). GUI mode only (headless capture hangs — project
+convention).
 
 - [ ] **Step 1: Rewrite the draw function** to consume `parcel_claims` /
   `reservations` / `column_edits` / `foundation_columns` instead of the
   legacy partitioner output; keep the environment/camera/capture scaffolding.
-- [ ] **Step 2: Run on seeds 4, 7, 12**; visually verify: no pencil forest,
-  L-pairs share color, foundations under downhill edges, grey (unowned) is
-  sparse, path polyline is connected and enters from exactly one portal.
+- [ ] **Step 2: Run on seeds 4, 7, 12 with `--phases all`**; visually verify
+  per state: (1) terraces sit on the terrain floor, (2) the bore enters from
+  one portal and stays connected, (3) covered spans sit only over deep blocks,
+  (4) reservations claim no streets and their edits read as terraces,
+  (5) no pencil forest and L-pairs share color, (6) foundations appear under
+  every downhill edge and grey (unowned) is sparse.
 - [ ] **Step 3: Commit** — `feat(villages): constructive geometry debug view`
 
 ---
