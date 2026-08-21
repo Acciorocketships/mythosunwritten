@@ -221,6 +221,95 @@ exact geometry the new stamping pass must absorb — so the pipeline is proven
 on simple geometry first, then hardened against noise with the debug view's
 phase-1 massif renders as the tuning instrument.
 
+## House heights, stacked claims, and skyline trim (slice 1b task 1, approved in chat 2026-08-21)
+
+Measured on the flat-terrain seed corpus (seeds 1–12, compact): P4's ceiling
+derivation walked every claim's footprint up through solid mass to the
+massif's own top, giving every house the same height as its column — up to a
+14-band, 7-storey tower on a compact-scale massif. This section replaces that
+with a bounded storey budget, extends claim occupancy to a third dimension so
+upper streets can build above lower houses, and trims whatever built mass no
+claim ever reaches.
+
+**1. Storey budget.** `WarrenMazeStampPass.STOREY_BUDGET: Dictionary` gives a
+per-scale `(min, max)` storey range — `{compact: (2,3), standard: (2,3),
+large: (2,4), grand: (3,4)}`. Each claim rolls a storey count once, seeded off
+its own door_walk cell (`posmod(Helper._mix64(plan.world_seed ^
+Helper._mix64(door_walk.x * 73856093 ^ door_walk.y * 19349663 ^ door_walk.z *
+83492791)), max - min + 1) + min`), and its top is
+`min(ceiling-derived top, floor_band + storeys * WarrenBuildingParcel.STOREY_BANDS)`.
+`MIN_HOUSE_BANDS` and the existing 1×1 pencil clamp (2 storeys max) still
+apply on top of the roll — a claim can end up shorter than its storey budget
+allows (a shallow ceiling), never taller.
+
+**2. Claim occupancy is a column × band-interval map.** The 2D
+`claimed_columns: Dictionary[Vector2i → bool]` becomes `claimed_intervals:
+Dictionary[Vector2i → Array[Vector2i(floor_band, top_band)]]` (half-open
+ranges). A reservation still claims the whole column, at every band.
+`_footprint_available(footprint, floor, top)` now means "no band overlap on
+any column, at any existing interval"; `_column_ceiling` additionally stops
+at the floor of the lowest claimed interval strictly above the query floor,
+so a lower claim's own ceiling walk can never reach up through mass an
+already-placed stacked claim owns. Every placement, back-extension, lateral
+extension, and small-claim merge site reads and writes this same map.
+
+A column-keyed terrain-offender check (`_footprint_offenders`) exists purely
+to correct small (±1 band) mismatches between a candidate's own street
+elevation and that column's raw terrain sample — a check that, unmodified,
+would reject essentially every candidate whose street climbs more than one
+band above grade, since raw terrain stays flat while a maze's streets climb
+through the solid mass independent of it. A column already carrying a
+claimed interval whose own top lands *exactly* on the new candidate's floor
+(flush — no gap) is exempt from that terrain check: it isn't standing on raw
+terrain, it's standing on the roof of the claim below. This flush-only rule
+is deliberately narrower than "any existing claim below at any gap distance"
+— that wider form was tried and measurably over-produced dozens of small,
+mutually non-adjacent stacked 1×1 infill claims per town, each an
+unavoidable lineage of one, which pulled a town's median lineage footprint (a
+protected corpus metric) below 2.
+
+Lineage grouping's adjacency stays 2D-column-plus-one-band, unchanged: a
+stacked claim's floor differs from anything below it by at least
+`MIN_HOUSE_BANDS` (4) bands, far outside the 1-band grouping tolerance, so a
+stacked pair is never mistaken for one lineage.
+
+**3. Skyline trim (P4.5)**, called from `stamp()` after lineage grouping,
+before `derive_foundations`, over every massif column in deterministic sorted
+order (skipping any column that hosts a passage cell or is a reservation
+cell): a **claimed** column trims down to the tallest claim's own top on that
+column (its real roofline); an **unclaimed** column takes its "shoulder" —
+the tallest claim among its four cardinal neighbours — trimming to that, or,
+with no claimed neighbour at all, discards straight to its own terrain (the
+old pipeline's `_discard_unassigned_mass`, now reached by construction rather
+than as a separate late step). Every target is computed first, entirely from
+pre-trim claim tops and pre-trim `effective_top`, then applied in the same
+sorted order — deterministic regardless of Dictionary iteration order.
+Outcomes are counted by kind in `plan.audit["trim_outcomes"]`.
+`WarrenMazeStampPass.skyline_trim_enabled` (default true) exists solely so a
+test can compare a plan's pre- and post-trim tops.
+
+**4. `WarrenMazeSourcePlan.record_trim(column, top_band) -> bool`** only ever
+lowers a column's `top_band` — never raises it, and never touches
+`floor_band` or `phase` for a column that already carries an edit (an
+offender correction, or a reservation edit); it keeps the existing entry's
+`floor_band`/`phase` and marks `trimmed: true`, or, for a column with no
+prior edit, creates one at `{floor_band: effective_base, top_band, phase:
+&"trim"}`. It rejects (false + `last_rejection`) when the ledger is sealed,
+when the column hosts a carved passage cell, or when the requested
+`top_band` would sink below the column's own `effective_base`. `seal()`
+additionally validates that no trimmed column's final `top_band` falls below
+the tallest claim on that column — a trim may discard mass no claim reaches,
+never cut into a house. `deterministic_signature()`'s `e:` lines append `:t`
+when the edit is a trim, so a trimmed and an untrimmed ledger with otherwise
+identical floor/top values still produce distinct signatures.
+
+Derived foundations (P5) are stacking-aware: only the *lowest* claim on a
+column ever needs a foundation reaching down to terrain — everything stacked
+above it is supported by the mass (and claim) below, not by an independent
+foundation of its own — so `derive_foundations` keys `foundation_columns` by
+each column's minimum floor_band across every claim that touches it, not by
+whichever claim happened to be recorded last.
+
 ## Out of scope
 
 Multi-entrance boring, async settlement streaming (shrinks but is not

@@ -494,23 +494,38 @@ func test_foundations_are_derived_from_datum_minus_terrain() -> void:
 		"a slope this steep must raise at least one claimed column's floor " \
 			+ "above terrain")
 
-	# Every claim column whose floor_band clears terrain appears with the
-	# right depth; every claim column at grade is omitted entirely.
+	# A column may now carry more than one claim (Task 1 stacking): only the
+	# LOWEST claim's floor_band on a given column ever needs a foundation
+	# reaching down to terrain (everything stacked above it is supported by
+	# the mass/claim below, not by an independent foundation), so the
+	# governing floor per column is the minimum across every claim that
+	# touches it -- exactly what WarrenMazeStampPass.derive_foundations keys
+	# foundation_columns by.
+	var min_floor_by_column: Dictionary = {}
 	for claim: Dictionary in plan.parcel_claims:
 		var floor_band := int(claim.floor_band)
 		for column: Vector2i in claim.footprint as Array[Vector2i]:
-			var terrain := plan.massif.base_at(column)
-			if floor_band > terrain:
-				assert_true(foundation_columns.has(column),
-					("claimed column %s at floor %d above terrain %d is " \
-						+ "missing from foundation_columns") \
-							% [column, floor_band, terrain])
-				assert_eq(int(foundation_columns[column]), floor_band - terrain,
-					"foundation depth at %s is wrong" % column)
-			else:
-				assert_false(foundation_columns.has(column),
-					"claimed column %s at grade must not appear in " \
-						% column + "foundation_columns")
+			if not min_floor_by_column.has(column) \
+					or floor_band < int(min_floor_by_column[column]):
+				min_floor_by_column[column] = floor_band
+
+	# Every claimed column whose GOVERNING (lowest) floor_band clears terrain
+	# appears with the right depth; every claimed column at grade is omitted
+	# entirely.
+	for column: Vector2i in min_floor_by_column.keys():
+		var floor_band := int(min_floor_by_column[column])
+		var terrain := plan.massif.base_at(column)
+		if floor_band > terrain:
+			assert_true(foundation_columns.has(column),
+				("claimed column %s at floor %d above terrain %d is " \
+					+ "missing from foundation_columns") \
+						% [column, floor_band, terrain])
+			assert_eq(int(foundation_columns[column]), floor_band - terrain,
+				"foundation depth at %s is wrong" % column)
+		else:
+			assert_false(foundation_columns.has(column),
+				"claimed column %s at grade must not appear in " \
+					% column + "foundation_columns")
 
 	# Same contract for reservation cells whose datum_band clears terrain --
 	# except overhead (skywalk_span) reservations, which are excluded
@@ -663,15 +678,23 @@ func test_translator_partition_is_one_to_one_with_claims() -> void:
 		# parcel's cells through a fine/macro grid alias that coincidentally
 		# over- or under-credited cells with no consistent direction. The old
 		# uniform 0.35 floor was calibrated against that artifact-inflated
-		# metric, not against what this ratio actually measures now, so it is
+		# metric, not against what this ratio actually measures now, so it was
 		# re-pinned per seed against the CORRECTED metric's own measured
 		# baselines -- seed 4: 0.4213, seed 12: 0.3360 -- each minus a small
-		# guard. These are anti-regression floors (catch a future correctness
-		# regression in the audit or the stamp pass), not quality targets; the
-		# 0.85 quality target stays slice 2's composition-level exit per the
-		# ruling above.
+		# guard.
+		# Re-pinned upward (slice 1b task 1, 2026-08-21): the storey budget
+		# and skyline trim shrink every claimed column's edited volume down to
+		# roughly its own storeys instead of the full massif ceiling, which
+		# raises the 2D-footprint ratio's DENOMINATOR-shrinking effect more
+		# than it costs the numerator -- measured seed 4: 0.4213 -> 0.5583,
+		# seed 12: 0.3360 -> 0.4751. Per the ruling that an ownership floor may
+		# only move UP (never be weakened), both floors are re-pinned to the
+		# new measured baseline minus the same small guard. These stay
+		# anti-regression floors (catch a future correctness regression in the
+		# audit, stamp, or trim pass), not quality targets; the 0.85 quality
+		# target stays slice 2's composition-level exit per the ruling above.
 		var ratio := float(parcels.audit.get("maze_owned_solid_ratio", 0.0))
-		var ratio_floor := 0.40 if city_seed == 4 else 0.33
+		var ratio_floor := 0.53 if city_seed == 4 else 0.45
 		assert_gte(ratio, ratio_floor,
 			"seed %d: 2D-footprint ownership anti-regression floor (%.2f); measured %s" \
 				% [city_seed, ratio_floor, ratio])
@@ -830,3 +853,181 @@ func test_seal_rejects_pairwise_overlapping_claims() -> void:
 	assert_true(plan.last_rejection.contains("disjoint"),
 		"expected a claims-must-be-disjoint rejection, got: %s" \
 			% plan.last_rejection)
+
+
+func test_claims_respect_the_scale_storey_budget() -> void:
+	## Task 1 (2026-08-21): the old massif-ceiling-derived house height let a
+	## claim grow as tall as its column's solid extent (up to a 14-band/
+	## 7-storey tower); STOREY_BUDGET now caps every claim at 2-3 storeys
+	## (compact) worth of bands, floored by MIN_HOUSE_BANDS. Checks both the
+	## bound itself and that the bound actually BITES somewhere per seed --
+	## comparing the storey-capped top_band against the same column's raw,
+	## uncapped solid ceiling (WarrenMazeStampPass._column_ceiling with an
+	## empty claimed_intervals, i.e. no stacking cap either) proves the cap is
+	## the thing doing the work, not an accident of a shallow massif.
+	var budget: Vector2i = WarrenMazeStampPass.STOREY_BUDGET[&"compact"]
+	var max_height := budget.y * WarrenBuildingParcel.STOREY_BANDS
+	for city_seed: int in [1, 3, 4, 12]:
+		var profile := WarrenVillageScaleProfile.for_id(&"compact")
+		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+		var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+		if plan == null:
+			continue
+		assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+			WarrenMazeReservationPass.last_failure)
+		assert_true(WarrenMazeStampPass.stamp(plan, profile),
+			WarrenMazeStampPass.last_failure)
+		assert_false(plan.parcel_claims.is_empty(),
+			"seed %d: fixture must produce real claims, or every assertion " \
+				% city_seed + "below passes vacuously")
+		var cap_bit := false
+		for claim: Dictionary in plan.parcel_claims:
+			var height := int(claim.top_band) - int(claim.floor_band)
+			assert_lte(height, max_height,
+				("seed %d: claim at door_column %s is %d bands tall, past " \
+					+ "the compact storey budget's %d-band cap") \
+					% [city_seed, str(claim.door_column), height, max_height])
+			assert_gte(height, WarrenMazeSourcePlan.MIN_HOUSE_BANDS,
+				("seed %d: claim at door_column %s is %d bands tall, below " \
+					+ "MIN_HOUSE_BANDS") \
+					% [city_seed, str(claim.door_column), height])
+			var raw_ceiling := WarrenMazeStampPass._column_ceiling(plan,
+				claim.door_column as Vector2i, int(claim.floor_band), {})
+			cap_bit = cap_bit or raw_ceiling > int(claim.top_band)
+		assert_true(cap_bit,
+			("seed %d: at least one claim must be shorter than its raw, " \
+				+ "uncapped column ceiling -- otherwise the storey budget " \
+				+ "never actually bit") % city_seed)
+
+
+func test_upper_streets_stack_claims_above_lower_houses() -> void:
+	## Task 1: claimed occupancy is now band-interval-based, so a column may
+	## carry more than one claim as long as their [floor_band, top_band)
+	## ranges stay disjoint -- an upper street's house built above a lower
+	## one's roof. Across the same seed x scale corpus as the sibling
+	## building-shape test, at least one column somewhere must show this
+	## (tiers actually exist), and NO column may ever show two overlapping
+	## claims (the core occupancy invariant every placement/extension/merge
+	## site is now built on).
+	var found_stack := false
+	for city_seed: int in [1, 3, 4, 12]:
+		var profile := WarrenVillageScaleProfile.for_id(&"compact")
+		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+		var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+		if plan == null:
+			continue
+		assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+			WarrenMazeReservationPass.last_failure)
+		assert_true(WarrenMazeStampPass.stamp(plan, profile),
+			WarrenMazeStampPass.last_failure)
+		var intervals_by_column: Dictionary = {}
+		for claim: Dictionary in plan.parcel_claims:
+			var floor_band := int(claim.floor_band)
+			var top_band := int(claim.top_band)
+			for column: Vector2i in claim.footprint as Array[Vector2i]:
+				var existing: Array = intervals_by_column.get(column, [])
+				for interval: Vector2i in existing:
+					var overlaps := floor_band < interval.y \
+						and top_band > interval.x
+					assert_false(overlaps,
+						("seed %d: two claims on column %s overlap: " \
+							+ "[%d,%d) and [%d,%d)") \
+							% [city_seed, str(column), interval.x, interval.y,
+								floor_band, top_band])
+				existing.append(Vector2i(floor_band, top_band))
+				intervals_by_column[column] = existing
+				found_stack = found_stack or existing.size() > 1
+	assert_true(found_stack,
+		"at least one column across seeds 1,3,4,12 compact must carry two " \
+			+ "disjoint-band claims -- tiers must actually exist")
+
+
+func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
+	## Task 1's P4.5: mass no claim reaches gets discarded -- to a claimed
+	## column's own tallest roof, to an unclaimed column's tallest claimed
+	## neighbour ("shoulder"), or to bare terrain when isolated. The pre-trim
+	## comparison run (skyline_trim_enabled = false) is what proves passage
+	## columns are genuinely untouched, not just coincidentally unchanged.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var city_seed := 4
+
+	WarrenMazeStampPass.skyline_trim_enabled = false
+	var pre_massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+	var pre_plan := WarrenMazeCarver.carve(city_seed, pre_massif, profile,
+		false)
+	assert_not_null(pre_plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(pre_plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	assert_true(WarrenMazeStampPass.stamp(pre_plan, profile),
+		WarrenMazeStampPass.last_failure)
+	WarrenMazeStampPass.skyline_trim_enabled = true
+
+	var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+	var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+		WarrenMazeReservationPass.last_failure)
+	assert_true(WarrenMazeStampPass.stamp(plan, profile),
+		WarrenMazeStampPass.last_failure)
+
+	var trim_outcomes := plan.audit.get("trim_outcomes", {}) as Dictionary
+	assert_false(trim_outcomes.is_empty(),
+		"seed 4 compact must actually trim something")
+
+	var passage_columns: Dictionary = {}
+	for cell: Vector3i in plan.passage_cells():
+		passage_columns[Vector2i(cell.x, cell.z)] = true
+	var reservation_columns: Dictionary = {}
+	for reservation: Dictionary in plan.reservations:
+		for column: Vector2i in reservation.get("cells", []) as Array:
+			reservation_columns[column] = true
+	var claim_tops: Dictionary = {}
+	for claim: Dictionary in plan.parcel_claims:
+		var top := int(claim.top_band)
+		for column: Vector2i in claim.footprint as Array[Vector2i]:
+			claim_tops[column] = maxi(int(claim_tops.get(column, top)), top)
+
+	for column: Vector2i in plan.massif.columns.keys():
+		if passage_columns.has(column):
+			assert_eq(plan.effective_top(column),
+				pre_plan.effective_top(column),
+				"passage column %s must be untouched by skyline trim" % column)
+			continue
+		if reservation_columns.has(column):
+			continue
+		if claim_tops.has(column):
+			assert_eq(plan.effective_top(column), int(claim_tops[column]),
+				("claimed column %s must trim exactly to its tallest " \
+					+ "claim's own top") % column)
+		else:
+			var bound := plan.effective_base(column)
+			for direction: Vector2i in WarrenMazeStampPass.CARDINALS:
+				var neighbor := column + direction
+				if claim_tops.has(neighbor):
+					bound = maxi(bound, int(claim_tops[neighbor]))
+			assert_lte(plan.effective_top(column), bound,
+				("unclaimed column %s must trim to at most its tallest " \
+					+ "claimed neighbour, or its own terrain if isolated") \
+					% column)
+
+
+func test_seal_rejects_a_trim_that_cuts_into_a_house() -> void:
+	## Mirrors test_seal_rejects_a_stamp_edit_outside_every_claims_apron's
+	## doctoring style: a trim recorded directly on the ledger (bypassing
+	## record_trim) that cuts a real claim's own footprint down to nothing
+	## must fail seal, named "trim".
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var plan := WarrenMazeSitePlanner.plan(12, {}, profile, &"stamp")
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	assert_false(plan.is_sealed())
+	assert_gte(plan.parcel_claims.size(), 1,
+		"fixture must have at least one real claim to doctor a bad trim onto")
+
+	var claim := plan.parcel_claims[0] as Dictionary
+	var column: Vector2i = (claim.footprint as Array[Vector2i])[0]
+	plan.column_edits[column] = {"floor_band": int(claim.floor_band),
+		"top_band": int(claim.floor_band), "phase": &"trim", "trimmed": true}
+	assert_false(plan.seal(),
+		"a trim that cuts below a claim's own top must fail seal")
+	assert_true(plan.last_rejection.contains("trim"),
+		"expected a trim-named rejection, got: %s" % plan.last_rejection)

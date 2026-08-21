@@ -76,6 +76,23 @@ const EXTENSION_ROUNDS := 2
 ## Hard cap on how many claims one lineage (one building) may group.
 const MAX_LINEAGE_SIZE := 3
 const SCORE_SALT := 0x53544D50
+## Per-scale (min, max) storey count a claim's roll may land in -- see
+## _roll_storeys. Task 1 (2026-08-21): replaces the old massif-ceiling-derived
+## house height (which made every house as tall as its column, up to a
+## 14-band/7-storey tower) with a bounded, seeded storey budget.
+const STOREY_BUDGET: Dictionary = {
+	&"compact": Vector2i(2, 3), &"standard": Vector2i(2, 3),
+	&"large": Vector2i(2, 4), &"grand": Vector2i(3, 4),
+}
+## A reservation cell's claimed interval: wide enough to exceed any real
+## band value (bands run 0..~20) so it always covers the whole column,
+## without risking int overflow the way INT32_MIN/MAX sentinels would in
+## interval-arithmetic (e.g. `interval.x > floor_band`).
+const RESERVATION_INTERVAL := Vector2i(-1000000, 1000000)
+## Test-only escape hatch: stop() calls the skyline trim step (P4.5) by
+## default; a test that needs the pre-trim plan flips this off rather than
+## re-deriving stamp()'s whole pipeline up to a hypothetical stop_after.
+static var skyline_trim_enabled := true
 ## The only (width, depth) rectangles WarrenParcelConstruction.profile_for
 ## actually authors (tower/slim/row/building/long) -- WarrenBuildingParcel's
 ## own seal() independently forbids depth < width except for the row
@@ -101,20 +118,26 @@ static func stamp(plan: WarrenMazeSourcePlan,
 	if plan.massif == null or not plan.massif.is_sealed():
 		return _fail("stamp pass requires a sealed massif")
 
-	var claimed_columns: Dictionary = {}
+	## claimed_intervals: Vector2i column -> Array[Vector2i(floor_band,
+	## top_band)], half-open bands. Replaces a plain 2D claimed-or-not map so a
+	## column can carry more than one claim -- an upper street's frontage
+	## stacked above a lower house's roof -- as long as their band ranges
+	## stay disjoint. A reservation still claims the WHOLE column, at every
+	## band, via RESERVATION_INTERVAL.
+	var claimed_intervals: Dictionary = {}
 	for reservation: Dictionary in plan.reservations:
 		for column: Vector2i in reservation.get("cells", []) as Array:
-			claimed_columns[column] = true
+			claimed_intervals[column] = [RESERVATION_INTERVAL]
 
 	var faces := frontage_faces_from_plan(plan)
 	var outcomes: Dictionary = {}
 	var lineage_seed := {"count": 0}
 
-	var main_candidates := _enumerate_candidates(plan, faces, claimed_columns,
+	var main_candidates := _enumerate_candidates(plan, faces, claimed_intervals,
 		ALL_SHAPE_INDICES)
 	main_candidates.sort_custom(Callable(WarrenMazeStampPass,
 		"_compare_candidates"))
-	_run_pass(plan, main_candidates, claimed_columns, outcomes, lineage_seed)
+	_run_pass(plan, main_candidates, claimed_intervals, outcomes, lineage_seed)
 
 	# The door-arm depth every rectangular claim placed at, snapshotted once
 	# here (before any extension round) and never recomputed from a
@@ -143,14 +166,14 @@ static func stamp(plan: WarrenMazeSourcePlan,
 	# deepening (or vice versa) routinely opens room the first attempt in
 	# that direction did not have yet.
 	for _round in EXTENSION_ROUNDS:
-		_back_extend(plan, claimed_columns, outcomes, original_arm_depths)
-		_lateral_extend(plan, claimed_columns, outcomes)
+		_back_extend(plan, claimed_intervals, outcomes, original_arm_depths)
+		_lateral_extend(plan, claimed_intervals, outcomes)
 
 	var infill_candidates := _enumerate_candidates(plan, faces,
-		claimed_columns, SMALL_SHAPE_INDICES)
+		claimed_intervals, SMALL_SHAPE_INDICES)
 	infill_candidates.sort_custom(Callable(WarrenMazeStampPass,
 		"_compare_candidates"))
-	_run_pass(plan, infill_candidates, claimed_columns, outcomes, lineage_seed)
+	_run_pass(plan, infill_candidates, claimed_intervals, outcomes, lineage_seed)
 
 	# Infill routinely lands several 1x1s that a face-by-face view cannot see
 	# are actually contiguous: two 1x1s side by side, or a 1x1 sitting flush
@@ -159,7 +182,7 @@ static func stamp(plan: WarrenMazeSourcePlan,
 	# union is still a solid rectangle at a matching floor_band) is what
 	# keeps a maze block's leftover frontage from reporting as a run of
 	# separate pencils once it is this fragmented.
-	_merge_small_claims(plan, outcomes)
+	_merge_small_claims(plan, claimed_intervals, outcomes)
 
 	# A building is a lineage, not a single claim -- the L-shape already
 	# treats its two arms that way. This bounded post-pass extends the same
@@ -168,6 +191,17 @@ static func stamp(plan: WarrenMazeSourcePlan,
 	# rectangles for the footprint contract still reads as one stepped
 	# building downstream.
 	_group_lineages(plan, lineage_seed)
+
+	# P4.5 -- skyline trim: every claimed column's mass above its own roof
+	# (or, if unclaimed, above the tallest adjacent claim's roof, or all the
+	# way to terrain when no claimed neighbour exists) is now dead weight the
+	# storey budget above left behind. Runs after lineage grouping (so a
+	# roof line reflects every claim, including anything a merge folded in)
+	# and before derive_foundations (foundations are read off the FINAL,
+	# trimmed edit ledger). skyline_trim_enabled exists solely so a test can
+	# compare a stamped plan's pre- and post-trim tops.
+	if skyline_trim_enabled:
+		plan.audit["trim_outcomes"] = _skyline_trim(plan)
 
 	derive_foundations(plan)
 
@@ -182,6 +216,13 @@ static func stamp(plan: WarrenMazeSourcePlan,
 ## read off the ledger the earlier passes already committed, not a new gate
 ## on it. A column at grade (datum == terrain) is omitted entirely, so a
 ## consumer can treat "column present" as "this column needs a foundation".
+## Stacked columns (Task 1): a column may now carry more than one claim at
+## different floor_bands. Only the LOWEST claim on a column ever needs a
+## foundation reaching down to terrain -- everything stacked above it is
+## supported by the mass (and, when present, the claim) below, never by an
+## independent foundation of its own -- so foundation depth is keyed by each
+## column's minimum floor_band across every claim that touches it, not by
+## whichever claim happened to be recorded last.
 ## Overhead (skywalk_span) reservations are excluded outright: their
 ## datum_band is a neighboring walkway's height, not a floor for THIS
 ## column, and claim_overhead never edits the flank columns' floors, so they
@@ -190,13 +231,18 @@ static func stamp(plan: WarrenMazeSourcePlan,
 ## column that never asked for one. Skywalk support is slice-2 composition's
 ## job, not this derivation's.
 static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
-	var foundation_columns: Dictionary = {}
+	var min_floor_band: Dictionary = {}
 	for claim: Dictionary in plan.parcel_claims:
 		var floor_band := int(claim.floor_band)
 		for column: Vector2i in claim.footprint as Array[Vector2i]:
-			var depth := floor_band - plan.massif.base_at(column)
-			if depth > 0:
-				foundation_columns[column] = depth
+			if not min_floor_band.has(column) \
+					or floor_band < int(min_floor_band[column]):
+				min_floor_band[column] = floor_band
+	var foundation_columns: Dictionary = {}
+	for column: Vector2i in min_floor_band.keys():
+		var depth := int(min_floor_band[column]) - plan.massif.base_at(column)
+		if depth > 0:
+			foundation_columns[column] = depth
 	for reservation: Dictionary in plan.reservations:
 		# Skip overhead reservations: datum is a neighboring walk band, not
 		# this column's floor, and its flank columns are grounded natural
@@ -211,6 +257,77 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 	plan.audit["foundation_columns"] = foundation_columns
 
 
+## P4.5 -- discards unclaimed mass above whatever roofline the claims below
+## actually reach, instead of leaving a column's full massif-ceiling silhouette
+## standing over a 2-4 storey house. For every massif column, in deterministic
+## sorted order, skipping any column that hosts a passage cell (streets are
+## immutable) or is a reservation cell (already typed, already leveled by P3):
+## a CLAIMED column (one owned by at least one parcel_claims footprint,
+## possibly stacked) trims down to the tallest claim's own top_band -- its
+## real roofline, never higher, never lower, since a trim can only lower.
+## An UNCLAIMED column takes its "shoulder" from the tallest claim among its
+## four cardinal neighbours (matching, not exceeding, whatever roofline the
+## claimed mass next to it actually reaches); with no claimed neighbour at
+## all, the column is genuinely isolated mass and is discarded flush to its
+## own terrain (the old pipeline's `_discard_unassigned_mass`). Every target
+## is computed first, entirely from the PRE-trim claim tops and PRE-trim
+## effective_top -- trimming one column never changes another column's
+## target -- then applied in the same sorted order, so the result is
+## independent of Dictionary iteration order. Returns counts by outcome kind
+## for `plan.audit["trim_outcomes"]`.
+static func _skyline_trim(plan: WarrenMazeSourcePlan) -> Dictionary:
+	var passage_columns: Dictionary = {}
+	for cell: Vector3i in plan.passage_cells():
+		passage_columns[Vector2i(cell.x, cell.z)] = true
+	var reservation_columns: Dictionary = {}
+	for reservation: Dictionary in plan.reservations:
+		for column: Vector2i in reservation.get("cells", []) as Array:
+			reservation_columns[column] = true
+	var claim_tops: Dictionary = {}
+	for claim: Dictionary in plan.parcel_claims:
+		var top := int(claim.top_band)
+		for column: Vector2i in claim.footprint as Array[Vector2i]:
+			claim_tops[column] = maxi(int(claim_tops.get(column, top)), top)
+
+	var columns: Array[Vector2i] = []
+	columns.assign(plan.massif.columns.keys())
+	columns.sort_custom(Callable(WarrenMazeStampPass, "_column_less"))
+
+	var targets: Array[Dictionary] = []
+	for column: Vector2i in columns:
+		if passage_columns.has(column) or reservation_columns.has(column):
+			continue
+		var current_top := plan.effective_top(column)
+		if claim_tops.has(column):
+			var roof := int(claim_tops[column])
+			if current_top > roof:
+				targets.append({"column": column, "top": roof,
+					"kind": &"claimed_roof"})
+			continue
+		var shoulder := -2147483648
+		for direction: Vector2i in CARDINALS:
+			var neighbor := column + direction
+			if claim_tops.has(neighbor):
+				shoulder = maxi(shoulder, int(claim_tops[neighbor]))
+		if shoulder > -2147483648:
+			if current_top > shoulder:
+				targets.append({"column": column, "top": shoulder,
+					"kind": &"shoulder"})
+		else:
+			var base := plan.effective_base(column)
+			if current_top > base:
+				targets.append({"column": column, "top": base,
+					"kind": &"discarded"})
+
+	var trim_outcomes: Dictionary = {}
+	for target: Dictionary in targets:
+		if plan.record_trim(target.column as Vector2i, int(target.top)):
+			_bump(trim_outcomes, String(target.kind as StringName))
+		else:
+			_bump(trim_outcomes, "rejected")
+	return trim_outcomes
+
+
 ## Repeatedly finds a 1x1 claim next to another claim (1x1 or larger, but
 ## never an L piece) at the same floor_band whose union is still a solid
 ## axis-aligned rectangle, and folds the 1x1 into it. Runs to a fixed point:
@@ -218,13 +335,13 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 ## chain of three or more collinear 1x1s is absorbed one at a time (A+B -> a
 ## 1x2, then that 1x2 + C -> a 1x3, ...).
 static func _merge_small_claims(plan: WarrenMazeSourcePlan,
-		outcomes: Dictionary) -> void:
-	while _merge_small_claims_once(plan, outcomes):
+		claimed_intervals: Dictionary, outcomes: Dictionary) -> void:
+	while _merge_small_claims_once(plan, claimed_intervals, outcomes):
 		pass
 
 
 static func _merge_small_claims_once(plan: WarrenMazeSourcePlan,
-		outcomes: Dictionary) -> bool:
+		claimed_intervals: Dictionary, outcomes: Dictionary) -> bool:
 	var column_to_claim: Dictionary = {}
 	for index in plan.parcel_claims.size():
 		var claim := plan.parcel_claims[index] as Dictionary
@@ -273,7 +390,8 @@ static func _merge_small_claims_once(plan: WarrenMazeSourcePlan,
 					claim_b.door_column as Vector2i, into_block_b):
 				continue
 			var floor_band := int(claim_b.floor_band)
-			var new_top := _claim_top_band(plan, merged, floor_band, false)
+			var new_top := _claim_top_band(plan, merged, floor_band, false,
+				claim_b.door_walk as Vector3i, claimed_intervals)
 			if new_top < 0:
 				continue
 			for edited_column: Vector2i in merged:
@@ -285,6 +403,7 @@ static func _merge_small_claims_once(plan: WarrenMazeSourcePlan,
 			claim_b["top_band"] = new_top
 			claim_b["shape_id"] = _shape_id_for_footprint(merged)
 			plan.parcel_claims.remove_at(index)
+			_claim_interval(claimed_intervals, merged, floor_band, new_top)
 			_bump(outcomes, "infill_merged")
 			return true
 	return false
@@ -536,7 +655,7 @@ static func frontage_faces_from_plan(
 
 
 static func _enumerate_candidates(plan: WarrenMazeSourcePlan,
-		faces: Array[Dictionary], claimed_columns: Dictionary,
+		faces: Array[Dictionary], claimed_intervals: Dictionary,
 		shape_indices: Array[int]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for face_index in faces.size():
@@ -553,11 +672,11 @@ static func _enumerate_candidates(plan: WarrenMazeSourcePlan,
 					int(entry.width), int(entry.depth))
 				candidate = _build_rect_candidate(plan, face_index,
 					shape_index, entry, walk, door_column, frontage,
-					footprint, claimed_columns)
+					footprint, claimed_intervals)
 			else:
 				candidate = _build_l_candidate(plan, face_index, shape_index,
 					entry, walk, door_column, frontage, into_block,
-					claimed_columns)
+					claimed_intervals)
 			if not candidate.is_empty():
 				out.append(candidate)
 	return out
@@ -566,20 +685,28 @@ static func _enumerate_candidates(plan: WarrenMazeSourcePlan,
 static func _build_rect_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 		shape_index: int, entry: Dictionary, walk: Vector3i,
 		door_column: Vector2i, frontage: Vector2i,
-		footprint: Array[Vector2i], claimed_columns: Dictionary) -> Dictionary:
-	if not _footprint_available(plan, footprint, claimed_columns):
+		footprint: Array[Vector2i],
+		claimed_intervals: Dictionary) -> Dictionary:
+	var floor_band := walk.y
+	# A probe availability check (the one-band window [floor, floor+1)) --
+	# the real [floor, top) window isn't known until _claim_top_band runs at
+	# placement time, so this only rules out a footprint that already sits
+	# INSIDE some existing claim's or reservation's band range at its own
+	# floor. _try_place_rect re-checks with the real top before committing.
+	if not _footprint_available(plan, footprint, claimed_intervals,
+			floor_band, floor_band + 1):
 		return {}
 	# Always true by construction (_rect_footprint never mirrors) -- a
 	# defensive invariant-3 check anyway, since this is the one place every
 	# rectangular candidate is born.
 	if not _door_position_valid(footprint, door_column, -frontage):
 		return {}
-	var floor_band := walk.y
-	var datum_info := _footprint_offenders(plan, footprint, floor_band)
+	var datum_info := _footprint_offenders(plan, footprint, floor_band,
+		claimed_intervals)
 	if not bool(datum_info.get("ok", false)):
 		return {}
 	var offenders := datum_info.offenders as Array[Vector2i]
-	var contact := _neighbor_contact_count(footprint, claimed_columns)
+	var contact := _neighbor_contact_count(footprint, claimed_intervals)
 	var tie := posmod(WarrenPassageLatticeRules.hash_key(plan.world_seed,
 		SCORE_SALT, walk, shape_index), 100)
 	var score := footprint.size() * 10000 + contact * 400 \
@@ -594,7 +721,7 @@ static func _build_rect_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 static func _build_l_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 		shape_index: int, entry: Dictionary, walk: Vector3i,
 		door_column: Vector2i, frontage: Vector2i, into_block: Vector2i,
-		claimed_columns: Dictionary) -> Dictionary:
+		claimed_intervals: Dictionary) -> Dictionary:
 	var main := _rect_footprint(walk, into_block, 2, 2)
 	var perpendicular := Vector2i(-into_block.y, into_block.x)
 	var threshold := Vector2i(walk.x, walk.z) + into_block
@@ -606,10 +733,14 @@ static func _build_l_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 	var combined: Array[Vector2i] = []
 	combined.append_array(main)
 	combined.append_array(wing)
-	if not _footprint_available(plan, combined, claimed_columns):
-		return {}
 	var floor_band := walk.y
-	var datum_info := _footprint_offenders(plan, combined, floor_band)
+	# See _build_rect_candidate: a one-band probe, the real window isn't
+	# known until placement time.
+	if not _footprint_available(plan, combined, claimed_intervals,
+			floor_band, floor_band + 1):
+		return {}
+	var datum_info := _footprint_offenders(plan, combined, floor_band,
+		claimed_intervals)
 	if not bool(datum_info.get("ok", false)):
 		return {}
 	var offenders := datum_info.offenders as Array[Vector2i]
@@ -623,7 +754,7 @@ static func _build_l_candidate(plan: WarrenMazeSourcePlan, face_index: int,
 	var wing_door := _find_wing_door(plan, wing, floor_band)
 	if wing_door.is_empty():
 		return {}
-	var contact := _neighbor_contact_count(combined, claimed_columns)
+	var contact := _neighbor_contact_count(combined, claimed_intervals)
 	var tie := posmod(WarrenPassageLatticeRules.hash_key(plan.world_seed,
 		SCORE_SALT, walk, shape_index), 100)
 	var score := combined.size() * 10000 + contact * 400 \
@@ -704,27 +835,33 @@ static func _record_offender_batch(plan: WarrenMazeSourcePlan,
 
 
 static func _run_pass(plan: WarrenMazeSourcePlan,
-		candidates: Array[Dictionary], claimed_columns: Dictionary,
+		candidates: Array[Dictionary], claimed_intervals: Dictionary,
 		outcomes: Dictionary, lineage_seed: Dictionary) -> void:
 	for candidate: Dictionary in candidates:
 		if StringName(candidate.kind) == &"rect":
-			_try_place_rect(plan, candidate, claimed_columns, outcomes)
+			_try_place_rect(plan, candidate, claimed_intervals, outcomes)
 		else:
-			_try_place_l(plan, candidate, claimed_columns, outcomes,
+			_try_place_l(plan, candidate, claimed_intervals, outcomes,
 				lineage_seed)
 
 
 static func _try_place_rect(plan: WarrenMazeSourcePlan, candidate: Dictionary,
-		claimed_columns: Dictionary, outcomes: Dictionary) -> void:
+		claimed_intervals: Dictionary, outcomes: Dictionary) -> void:
 	var footprint := candidate.footprint as Array[Vector2i]
-	if not _footprint_available(plan, footprint, claimed_columns):
+	var floor_band := int(candidate.datum)
+	var door_walk := candidate.walk as Vector3i
+	if not _footprint_available(plan, footprint, claimed_intervals,
+			floor_band, floor_band + 1):
 		_bump(outcomes, "column_taken")
 		return
-	var floor_band := int(candidate.datum)
 	var top_band := _claim_top_band(plan, footprint, floor_band,
-		bool(candidate.is_1x1))
+		bool(candidate.is_1x1), door_walk, claimed_intervals)
 	if top_band < 0:
 		_bump(outcomes, "insufficient_height")
+		return
+	if not _footprint_available(plan, footprint, claimed_intervals,
+			floor_band, top_band):
+		_bump(outcomes, "column_taken")
 		return
 	var offenders := candidate.offenders as Array[Vector2i]
 	if not _record_offender_batch(plan, offenders, floor_band, top_band,
@@ -732,30 +869,36 @@ static func _try_place_rect(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 		return
 	plan.parcel_claims.append({"footprint": footprint.duplicate(),
 		"floor_band": floor_band, "top_band": top_band,
-		"door_walk": candidate.walk as Vector3i,
+		"door_walk": door_walk,
 		"door_column": candidate.door_column as Vector2i,
 		"frontage": candidate.frontage as Vector2i, "lineage_hint": &"",
 		"shape_id": candidate.shape_id as StringName})
-	for column: Vector2i in footprint:
-		claimed_columns[column] = true
+	_claim_interval(claimed_intervals, footprint, floor_band, top_band)
 	_bump(outcomes, "placed")
 
 
 static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
-		claimed_columns: Dictionary, outcomes: Dictionary,
+		claimed_intervals: Dictionary, outcomes: Dictionary,
 		lineage_seed: Dictionary) -> void:
 	var main := candidate.main_footprint as Array[Vector2i]
 	var wing := candidate.wing_footprint as Array[Vector2i]
 	var combined: Array[Vector2i] = []
 	combined.append_array(main)
 	combined.append_array(wing)
-	if not _footprint_available(plan, combined, claimed_columns):
+	var floor_band := int(candidate.datum)
+	var door_walk := candidate.walk as Vector3i
+	if not _footprint_available(plan, combined, claimed_intervals,
+			floor_band, floor_band + 1):
 		_bump(outcomes, "column_taken")
 		return
-	var floor_band := int(candidate.datum)
-	var top_band := _claim_top_band(plan, combined, floor_band, false)
+	var top_band := _claim_top_band(plan, combined, floor_band, false,
+		door_walk, claimed_intervals)
 	if top_band < 0:
 		_bump(outcomes, "insufficient_height")
+		return
+	if not _footprint_available(plan, combined, claimed_intervals,
+			floor_band, top_band):
+		_bump(outcomes, "column_taken")
 		return
 	var offenders := candidate.offenders as Array[Vector2i]
 	if not _record_offender_batch(plan, offenders, floor_band, top_band,
@@ -765,7 +908,7 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 	var lineage := StringName("maze.lineage.%d" % int(lineage_seed.count))
 	plan.parcel_claims.append({"footprint": main.duplicate(),
 		"floor_band": floor_band, "top_band": top_band,
-		"door_walk": candidate.walk as Vector3i,
+		"door_walk": door_walk,
 		"door_column": candidate.door_column as Vector2i,
 		"frontage": candidate.frontage as Vector2i, "lineage_hint": lineage,
 		"shape_id": &"L.main"})
@@ -775,8 +918,7 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 		"door_column": candidate.wing_door_column as Vector2i,
 		"frontage": candidate.wing_frontage as Vector2i,
 		"lineage_hint": lineage, "shape_id": &"L.wing"})
-	for column: Vector2i in combined:
-		claimed_columns[column] = true
+	_claim_interval(claimed_intervals, combined, floor_band, top_band)
 	_bump(outcomes, "placed")
 
 
@@ -792,17 +934,18 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 ## capping at a true one-building depth. This is what turns a 2-wide claim
 ## that stopped short of a terrace step into a proper building instead of
 ## leaving the columns behind it to straggle in as separate 1x1 infill.
-static func _back_extend(plan: WarrenMazeSourcePlan, claimed_columns: Dictionary,
-		outcomes: Dictionary, original_depths: Dictionary) -> void:
+static func _back_extend(plan: WarrenMazeSourcePlan,
+		claimed_intervals: Dictionary, outcomes: Dictionary,
+		original_depths: Dictionary) -> void:
 	for index in plan.parcel_claims.size():
 		var claim := plan.parcel_claims[index] as Dictionary
 		if not String(claim.get("shape_id", "")).begins_with("L."):
-			_back_extend_claim(plan, claim, index, claimed_columns, outcomes,
+			_back_extend_claim(plan, claim, index, claimed_intervals, outcomes,
 				original_depths)
 
 
 static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
-		claim_index: int, claimed_columns: Dictionary, outcomes: Dictionary,
+		claim_index: int, claimed_intervals: Dictionary, outcomes: Dictionary,
 		original_depths: Dictionary) -> void:
 	var footprint := (claim.footprint as Array[Vector2i]).duplicate()
 	var into_block := -(claim.frontage as Vector2i)
@@ -827,7 +970,8 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 		var row: Array[Vector2i] = []
 		for lane_column: Vector2i in width_columns:
 			row.append(lane_column + into_block * (depth_used + extra))
-		if not _footprint_available(plan, row, claimed_columns):
+		if not _footprint_available(plan, row, claimed_intervals, floor_band,
+				floor_band + 1):
 			break
 		# Anchor to the claim's already-committed floor_band (not a fresh
 		# per-row majority): a column below it needs at most one band of
@@ -849,16 +993,18 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 		var extended_footprint := footprint.duplicate()
 		extended_footprint.append_array(row)
 		var extended_top := _claim_top_band(plan, extended_footprint,
-			floor_band, false)
+			floor_band, false, claim.door_walk as Vector3i, claimed_intervals)
 		if extended_top < top_band:
+			break
+		if not _footprint_available(plan, row, claimed_intervals, floor_band,
+				extended_top):
 			break
 		if not _record_offender_batch(plan, offenders, floor_band,
 				extended_top, &"stamp", outcomes):
 			return
-		for column: Vector2i in row:
-			claimed_columns[column] = true
 		footprint.append_array(row)
 		top_band = extended_top
+		_claim_interval(claimed_intervals, footprint, floor_band, top_band)
 		_bump(outcomes, "back_extended")
 	claim["footprint"] = footprint
 	claim["top_band"] = top_band
@@ -917,14 +1063,14 @@ static func _footprint_depth(footprint: Array[Vector2i],
 ## and is what actually moves the median, since back-extension alone cannot
 ## reach past a lane that is right behind the claim.
 static func _lateral_extend(plan: WarrenMazeSourcePlan,
-		claimed_columns: Dictionary, outcomes: Dictionary) -> void:
+		claimed_intervals: Dictionary, outcomes: Dictionary) -> void:
 	for claim: Dictionary in plan.parcel_claims:
 		if not String(claim.get("shape_id", "")).begins_with("L."):
-			_lateral_extend_claim(plan, claim, claimed_columns, outcomes)
+			_lateral_extend_claim(plan, claim, claimed_intervals, outcomes)
 
 
 static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
-		claim: Dictionary, claimed_columns: Dictionary,
+		claim: Dictionary, claimed_intervals: Dictionary,
 		outcomes: Dictionary) -> void:
 	var footprint := (claim.footprint as Array[Vector2i]).duplicate()
 	var into_block := -(claim.frontage as Vector2i)
@@ -948,7 +1094,8 @@ static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
 		if not _is_menu_shape(width + 1, depth):
 			break
 		var row := _outer_lane(footprint, into_block, perpendicular)
-		if not _footprint_available(plan, row, claimed_columns):
+		if not _footprint_available(plan, row, claimed_intervals, floor_band,
+				floor_band + 1):
 			break
 		var prospective := footprint.duplicate()
 		prospective.append_array(row)
@@ -967,17 +1114,19 @@ static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
 		if not feasible:
 			break
 		var extended_top := _claim_top_band(plan, prospective, floor_band,
-			false)
+			false, claim.door_walk as Vector3i, claimed_intervals)
 		if extended_top < top_band:
+			break
+		if not _footprint_available(plan, row, claimed_intervals, floor_band,
+				extended_top):
 			break
 		if not _record_offender_batch(plan, offenders, floor_band,
 				extended_top, &"stamp", outcomes):
 			return
-		for column: Vector2i in row:
-			claimed_columns[column] = true
 		footprint.append_array(row)
 		top_band = extended_top
 		width += 1
+		_claim_interval(claimed_intervals, footprint, floor_band, top_band)
 		_bump(outcomes, "lateral_extended")
 	claim["footprint"] = footprint
 	claim["top_band"] = top_band
@@ -1028,8 +1177,14 @@ static func _rect_footprint(walk: Vector3i, into_block: Vector2i,
 	return out
 
 
+## `claimed_intervals` overlay: no footprint column may overlap ANY existing
+## claimed or reserved [floor, top) band range on that column. `(floor_band,
+## floor_band + 1)` is the standard probe a candidate builder uses before its
+## own real top is known (see _build_rect_candidate); a placement site
+## re-checks with the real computed top before committing.
 static func _footprint_available(plan: WarrenMazeSourcePlan,
-		footprint: Array[Vector2i], claimed_columns: Dictionary) -> bool:
+		footprint: Array[Vector2i], claimed_intervals: Dictionary,
+		floor_band: int, top_band: int) -> bool:
 	if footprint.is_empty():
 		return false
 	var seen: Dictionary = {}
@@ -1037,8 +1192,11 @@ static func _footprint_available(plan: WarrenMazeSourcePlan,
 		if seen.has(column):
 			return false
 		seen[column] = true
-		if not plan.massif.has_column(column) or claimed_columns.has(column):
+		if not plan.massif.has_column(column):
 			return false
+		for interval: Vector2i in claimed_intervals.get(column, []) as Array:
+			if floor_band < interval.y and top_band > interval.x:
+				return false
 	return true
 
 
@@ -1053,10 +1211,24 @@ static func _footprint_available(plan: WarrenMazeSourcePlan,
 ## edited, not substituted -- so the candidate simply does not exist at this
 ## size and a smaller shape (independently enumerated at the same face) is
 ## free to succeed instead.
+##
+## A column already carrying a claimed interval whose own top sits exactly
+## (flush -- see _stacks_on_existing_claim) at this candidate's datum is
+## exempt from the terrain check entirely -- it isn't standing on raw
+## terrain, it's standing on the mass (and, by construction, the
+## previously-cleared offender budget) the claim below it already
+## established. Without this, an upper street's frontage could never
+## stack above a lower house: `effective_base` reads the column's TERRAIN
+## floor, which for a claim several bands up a climbing street is nowhere
+## near within the +/-1 budget, even though the column is solid, claimed,
+## and fully able to carry a second storey directly on top of the first.
 static func _footprint_offenders(plan: WarrenMazeSourcePlan,
-		footprint: Array[Vector2i], datum: int) -> Dictionary:
+		footprint: Array[Vector2i], datum: int,
+		claimed_intervals: Dictionary) -> Dictionary:
 	var offenders: Array[Vector2i] = []
 	for column: Vector2i in footprint:
+		if _stacks_on_existing_claim(claimed_intervals, column, datum):
+			continue
 		var base := plan.effective_base(column)
 		if base == datum:
 			continue
@@ -1066,23 +1238,59 @@ static func _footprint_offenders(plan: WarrenMazeSourcePlan,
 	return {"ok": true, "offenders": offenders}
 
 
+static func _stacks_on_existing_claim(claimed_intervals: Dictionary,
+		column: Vector2i, datum: int) -> bool:
+	## Flush only: the candidate's own floor must land exactly on an existing
+	## claim's own top on this column -- a storey built directly on the roof
+	## of the one below, no void between them. A wider (any-gap) allowance
+	## was tried and measurably over-produces: dozens of small, mutually
+	## non-adjacent stacked 1x1 infill claims per town, each an unavoidable
+	## lineage of one, which drags the town's MEDIAN lineage footprint (a
+	## protected corpus metric) below 2 -- see the plan doc's measured
+	## before/after. Flush-only keeps the mechanism (and the corpus test that
+	## proves it fires) while bounding it to genuine "next storey up" tiers.
+	for interval: Vector2i in claimed_intervals.get(column, []) as Array:
+		if interval.y == datum:
+			return true
+	return false
+
+
+## Walks up from `floor_band` while the column stays SOLID, same as before --
+## but also stops at the floor of the lowest claimed interval strictly above
+## `floor_band` on this column, so a lower claim's own ceiling computation can
+## never reach up through mass an upper, already-placed stacked claim already
+## owns. Self-intervals (an interval whose own floor equals `floor_band` --
+## this exact claim, mid extension or merge) never cap: the strict `>` skips
+## them.
 static func _column_ceiling(plan: WarrenMazeSourcePlan, column: Vector2i,
-		floor_band: int) -> int:
+		floor_band: int, claimed_intervals: Dictionary) -> int:
 	var top_limit := plan.massif.top_at(column)
 	var y := floor_band
 	while y < top_limit and plan.state_at(Vector3i(column.x, y, column.y)) \
 			== WarrenMazeSourcePlan.CellState.SOLID:
 		y += 1
+	for interval: Vector2i in claimed_intervals.get(column, []) as Array:
+		if interval.x > floor_band:
+			y = mini(y, interval.x)
 	return y
 
 
+## `door_walk` seeds a per-claim storey roll inside STOREY_BUDGET[scale_id]
+## (min, max) storeys -- the task-1 fix for the old massif-ceiling-derived
+## house height. The final top is the smaller of the ceiling-derived top (as
+## before, aligned to a STOREY_BANDS boundary) and floor + storeys *
+## STOREY_BANDS; MIN_HOUSE_BANDS and the 1x1 clamp still apply on top of that.
 static func _claim_top_band(plan: WarrenMazeSourcePlan,
-		footprint: Array[Vector2i], floor_band: int, is_1x1: bool) -> int:
+		footprint: Array[Vector2i], floor_band: int, is_1x1: bool,
+		door_walk: Vector3i, claimed_intervals: Dictionary) -> int:
 	var min_top := 2147483647
 	for column: Vector2i in footprint:
-		min_top = mini(min_top, _column_ceiling(plan, column, floor_band))
+		min_top = mini(min_top, _column_ceiling(plan, column, floor_band,
+			claimed_intervals))
 	var top := min_top - posmod(min_top - floor_band,
 		WarrenBuildingParcel.STOREY_BANDS)
+	var storeys := _roll_storeys(plan, door_walk)
+	top = mini(top, floor_band + storeys * WarrenBuildingParcel.STOREY_BANDS)
 	if top - floor_band < WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
 		return -1
 	if is_1x1:
@@ -1090,8 +1298,34 @@ static func _claim_top_band(plan: WarrenMazeSourcePlan,
 	return top
 
 
+static func _roll_storeys(plan: WarrenMazeSourcePlan,
+		door_walk: Vector3i) -> int:
+	var budget: Vector2i = STOREY_BUDGET.get(plan.scale_profile.scale_id,
+		Vector2i(2, 3))
+	var mixed := Helper._mix64(plan.world_seed ^ Helper._mix64(
+		door_walk.x * 73856093 ^ door_walk.y * 19349663 \
+			^ door_walk.z * 83492791))
+	return posmod(mixed, budget.y - budget.x + 1) + budget.x
+
+
+## Records (or, for a column already carrying THIS SAME claim -- same
+## floor_band -- re-records) one claim's [floor_band, top_band) on every
+## footprint column. A claim's top can only ever grow (extension, merge), so
+## a later call for the same floor_band always supersedes the earlier one
+## rather than appending a second, stale entry beside it.
+static func _claim_interval(claimed_intervals: Dictionary,
+		footprint: Array[Vector2i], floor_band: int, top_band: int) -> void:
+	for column: Vector2i in footprint:
+		var kept: Array[Vector2i] = []
+		for interval: Vector2i in claimed_intervals.get(column, []) as Array:
+			if interval.x != floor_band:
+				kept.append(interval)
+		kept.append(Vector2i(floor_band, top_band))
+		claimed_intervals[column] = kept
+
+
 static func _neighbor_contact_count(footprint: Array[Vector2i],
-		claimed_columns: Dictionary) -> int:
+		claimed_intervals: Dictionary) -> int:
 	var footprint_set: Dictionary = {}
 	for column: Vector2i in footprint:
 		footprint_set[column] = true
@@ -1100,7 +1334,7 @@ static func _neighbor_contact_count(footprint: Array[Vector2i],
 		for direction: Vector2i in CARDINALS:
 			var neighbor := column + direction
 			if not footprint_set.has(neighbor) \
-					and claimed_columns.has(neighbor):
+					and claimed_intervals.has(neighbor):
 				contacts[neighbor] = true
 	return contacts.size()
 

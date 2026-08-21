@@ -101,6 +101,41 @@ func record_edit(column: Vector2i, floor_band: int, top_band: int,
 	return true
 
 
+## P4.5 skyline trim: lowers a column's top_band to discard mass no claim
+## ever reaches. Unlike record_edit, this can only ever LOWER top_band --
+## trim never raises mass, and never touches floor_band or phase for a
+## column that already carries an edit (an offender correction from stamp,
+## or an earlier reservation edit): only top_band moves. A column with no
+## prior edit gets a brand-new entry at its own effective_base, phase
+## &"trim", so foundation_depth (base-derived) is unaffected either way.
+## Rejects: a sealed ledger, a column that hosts a carved passage cell (streets
+## are immutable), and a requested top_band below the column's own
+## effective_base (a trim may lower mass, never sink the floor).
+func record_trim(column: Vector2i, top_band: int) -> bool:
+	if _sealed:
+		return _reject("plan is sealed; the ledger is frozen")
+	if _column_has_passage(column):
+		return _reject("trim at column %s would touch a carved passage cell" \
+			% column)
+	if massif == null or not massif.has_column(column):
+		return _reject("trim at column %s has no massif column" % column)
+	var floor_band := effective_base(column)
+	if top_band < floor_band:
+		return _reject("trim at column %s would sink below its own floor" \
+			% column)
+	var phase := StringName(&"trim")
+	if column_edits.has(column):
+		var existing := column_edits[column] as Dictionary
+		floor_band = int(existing.get("floor_band", floor_band))
+		phase = StringName(existing.get("phase", &"trim"))
+	# "Only lowers": a requested top_band that would RAISE this column's
+	# current top is simply clamped away rather than applied or rejected.
+	var new_top := mini(top_band, effective_top(column))
+	column_edits[column] = {"floor_band": floor_band, "top_band": new_top,
+		"phase": phase, "trimmed": true}
+	return true
+
+
 ## Non-mutating pre-flight for record_edit's own gates (sealed ledger, a
 ## carved passage cell, a floor sinking below terrain), without writing to
 ## column_edits or touching last_rejection. A caller that must commit a whole
@@ -167,22 +202,37 @@ func seal() -> bool:
 	for column: Vector2i in massif.columns:
 		if not block_thickness.has(column):
 			return _reject("column %s has no block-thickness classification" % column)
-	# Claims must be pairwise disjoint -- WarrenMazeStampPass's own claimed_columns
-	# bookkeeping is the only thing that ever enforced this during generation, so
-	# seal() re-checks it as a real invariant rather than trusting that
-	# bookkeeping never lied. The same pass also builds the footprint-plus-1-column
-	# apron every stamp-phase edit below must land inside.
+	# Claims must be pairwise disjoint -- WarrenMazeStampPass's own
+	# claimed_intervals bookkeeping is the only thing that ever enforced this
+	# during generation, so seal() re-checks it as a real invariant rather
+	# than trusting that bookkeeping never lied. Band-aware (Task 1,
+	# 2026-08-21): two claims may legally share a column -- an upper street's
+	# house stacked above a lower one -- as long as their own [floor, top)
+	# band ranges stay disjoint; only an actual band overlap is rejected. The
+	# same pass also builds the footprint-plus-1-column apron every
+	# stamp-phase edit below must land inside, and `claim_tops` (the tallest
+	# claim on each column) is what the trim-validity check below measures
+	# against.
 	var claim_owner: Dictionary = {}
+	var claim_tops: Dictionary = {}
 	var apron_columns: Dictionary = {}
 	for index in parcel_claims.size():
 		var claim := parcel_claims[index] as Dictionary
+		var claim_floor := int(claim.get("floor_band", 0))
+		var claim_top := int(claim.get("top_band", 0))
 		for member: Vector2i in claim.get("footprint", []) as Array[Vector2i]:
-			if claim_owner.has(member):
-				return _reject(
-					("claim %d and claim %d both claim column %s -- " \
-						+ "claims must be pairwise disjoint") \
-						% [int(claim_owner[member]), index, member])
-			claim_owner[member] = index
+			var owners: Array = claim_owner.get(member, [])
+			for owner: Dictionary in owners:
+				if claim_floor < int(owner.top) and claim_top > int(owner.floor):
+					return _reject(
+						("claim %d and claim %d both claim column %s -- " \
+							+ "claims must be pairwise disjoint") \
+							% [int(owner.index), index, member])
+			owners.append({"index": index, "floor": claim_floor,
+				"top": claim_top})
+			claim_owner[member] = owners
+			claim_tops[member] = maxi(int(claim_tops.get(member, claim_top)),
+				claim_top)
 			apron_columns[member] = true
 			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
 				apron_columns[member + direction] = true
@@ -199,6 +249,17 @@ func seal() -> bool:
 		if _column_has_passage(column):
 			return _reject(
 				"edit at column %s touches a carved passage cell" % column)
+		# A trim may only ever discard mass no claim reaches -- never cut into
+		# one. claim_tops (built above from parcel_claims, band-aware) is the
+		# tallest roof any claim on this column actually needs; a trim whose
+		# own top_band lands below that has quietly amputated a house.
+		if bool(edit.get("trimmed", false)) and claim_tops.has(column) \
+				and int(edit.get("top_band", 0)) < int(claim_tops[column]):
+			return _reject(
+				("trim at column %s cuts into a claim: top_band %d is below " \
+					+ "the tallest claim's own top %d") \
+					% [column, int(edit.get("top_band", 0)),
+						int(claim_tops[column])])
 		# Reservation-phase edits may level/sink a reservation's footprint
 		# further than one band by design (a market approach, a landmark plinth)
 		# and never claim a footprint of their own to be inside the apron of --
@@ -305,9 +366,10 @@ func deterministic_signature() -> String:
 	edit_columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
 	for column: Vector2i in edit_columns:
 		var edit := column_edits[column] as Dictionary
-		parts.append("e:%d,%d:%d,%d:%s" % [column.x, column.y,
+		parts.append("e:%d,%d:%d,%d:%s%s" % [column.x, column.y,
 			int(edit.get("floor_band", 0)), int(edit.get("top_band", 0)),
-			String(edit.get("phase", &""))])
+			String(edit.get("phase", &"")),
+			":t" if bool(edit.get("trimmed", false)) else ""])
 	var claim_lines := PackedStringArray()
 	for claim: Dictionary in parcel_claims:
 		var footprint: Array = claim.get("footprint", [])
