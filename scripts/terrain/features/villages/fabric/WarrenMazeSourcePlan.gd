@@ -16,6 +16,18 @@ const MIN_HOUSE_BANDS := 4
 const MAX_SPINE_STRAIGHT_RUN := 6
 const MAX_ALLEY_STRAIGHT_RUN := 4
 
+## The four things a plot can be (2026-08-21 plot-model design). A deck is a
+## plot with zero height, a bridge is a plot whose floor is a street's own
+## headroom top, an asset is a plot with a catalog footprint, and a house is
+## anything the partition grows.
+const PLOT_HOUSE := &"house"
+const PLOT_ASSET := &"asset"
+const PLOT_DECK := &"deck"
+const PLOT_BRIDGE := &"bridge"
+const PLOT_KINDS: Array[StringName] = [
+	PLOT_HOUSE, PLOT_ASSET, PLOT_DECK, PLOT_BRIDGE,
+]
+
 var world_seed: int
 var scale_profile: WarrenVillageScaleProfile
 var massif: WarrenMassif
@@ -45,6 +57,21 @@ var parcel_claims: Array[Dictionary] = []
 ## Typed large features: {kind: StringName, cells: Array[Vector2i],
 ## datum_band: int, walk_cells: Array[Vector3i], audit: Dictionary}.
 var reservations: Array[Dictionary] = []
+
+## The town as plots (2026-08-21 plot-model design): {id: StringName, kind:
+## StringName, cells: Array[Vector2i], floor: int, top: int, door_walk:
+## Vector3i, building_id: StringName}. ROCK IS NEVER STORED -- solid_at
+## derives it from these plus the massif, so this array plus the excavation is
+## the whole town. Append through add_plot, which is the only thing that
+## checks the support rule.
+var plots: Array[Dictionary] = []
+## Vector2i column -> Array[int] of indices into `plots`. Keeps solid_at O(the
+## plots standing on one column) rather than O(the whole town).
+var _plot_columns: Dictionary = {}
+## Vector2i column -> int: the derived rock top of a column carrying NO plot,
+## computed once at seal (see rock_shoulder). Empty while the plan is
+## unsealed, where the massif envelope answers instead.
+var _rock_shoulders: Dictionary = {}
 
 
 func _init(p_world_seed: int, p_profile: WarrenVillageScaleProfile,
@@ -451,6 +478,13 @@ func seal() -> bool:
 				("stacked column %s effective_top %d is below the tallest " \
 					+ "claim actually built there (top %d)") \
 					% [column, effective_top(column), claim_top])
+	# The plot model's own invariants (2026-08-21 design): solids contiguous
+	# from terrain on every column, every plot still supported, no plot
+	# standing in a carved street's headroom, plots pairwise disjoint. A town
+	# with no plots satisfies all four trivially.
+	var plot_failure := _plot_rejection()
+	if plot_failure != "":
+		return _reject(plot_failure)
 	# Phases (reserve/stamp) already wrote audit facts before seal runs; seal
 	# contributes its own freshly computed keys, it never destroys theirs.
 	var built := _build_audit()
@@ -541,6 +575,385 @@ func state_at_raw(cell: Vector3i) -> CellState:
 			and cell.y < massif.top_at(column):
 		return CellState.SOLID
 	return CellState.AIR
+
+
+# --- Plot model ------------------------------------------------------------
+# The 2026-08-21 plot-model design: one plot concept, rock derived rather than
+# stored, and one support rule that replaces bearing, plinth, flush-stack,
+# tunnel-roof, and per-cell headroom. Everything below is independent of the
+# edit ledger above, which a later task deletes; nothing here reads it.
+
+
+## Adds one plot, after checking everything the model can check about it: its
+## shape (every key present and typed, a non-empty 4-connected footprint of
+## unique columns, top >= floor, a deck exactly flat, an unused id), the one
+## support rule on every column, that no carved cell stands inside the band
+## interval it occupies, and that it stays disjoint from the plots already on
+## those columns. Stores a COPY, so a caller may reuse and mutate its own
+## dictionary. False with `last_rejection` naming the failed rule otherwise;
+## a sealed plan accepts nothing.
+##
+## `top` is NOT clamped to the massif: the envelope is a planning reference
+## and the rock of a column with no plot, never a ceiling.
+func add_plot(plot: Dictionary) -> bool:
+	if _sealed:
+		return _reject("plan is sealed; no plot may be added")
+	var shape := _plot_shape_rejection(plot)
+	if shape != "":
+		return _reject(shape)
+	var placement := _plot_placement_rejection(plot, -1)
+	if placement != "":
+		return _reject(placement)
+	var cells: Array[Vector2i] = []
+	cells.assign(plot["cells"])
+	plots.append({
+		"id": StringName(plot["id"]),
+		"kind": StringName(plot["kind"]),
+		"cells": cells,
+		"floor": int(plot["floor"]),
+		"top": int(plot["top"]),
+		"door_walk": plot["door_walk"] as Vector3i,
+		"building_id": StringName(plot["building_id"]),
+	})
+	for column: Vector2i in cells:
+		var indices: Array = _plot_columns.get(column, [])
+		indices.append(plots.size() - 1)
+		_plot_columns[column] = indices
+	# Shoulders describe a finished town; a new plot moves them. They are only
+	# ever read after a successful seal, but a REJECTED seal leaves its own
+	# cache behind, and this plan is still open for more plots.
+	_rock_shoulders.clear()
+	return true
+
+
+## The one support rule. A plot may occupy `cell` at `floor` when
+##
+##   1. the band below the floor is solid -- rock, a retained tunnel-roof
+##      slab, or another plot's top (solid_at answers all three), and
+##   2. no carved air stands in the MIN_HOUSE_BANDS of clearance above it.
+##
+## Rule 2 is CLEARANCE, not "above every passage in this column" (controller
+## ruling, 2026-08-22): a house tiered under an upper street has that street's
+## own band as its top and must stay legal. Its consequence at the bottom end
+## is that a plot can never sit AT a passage's headroom top -- the band below
+## it would be carved -- so a tunnel-roof or bridge plot sits one band higher,
+## on the retained roof slab that is its rock.
+func plot_support_ok(cell: Vector2i, floor: int) -> bool:
+	if not solid_at(Vector3i(cell.x, floor - 1, cell.y)):
+		return false
+	return _first_carved_band(cell, floor, floor + MIN_HOUSE_BANDS) < 0
+
+
+## Derived solid mass; rock is never stored. A carved street cell or its
+## headroom is air, a band inside some plot's [floor, top) is that plot's own
+## mass, everything below the lowest plot floor on the column is rock down to
+## the terrain, and a column carrying no plot is rock up to its shoulder.
+## Everything else is air -- including the envelope standing above a plot's
+## top, which is exactly the mass the old skyline trim used to have to remove.
+##
+## Terrain is solid (controller ruling, 2026-08-22): below massif.base_at the
+## ground is untouched sample, which is what lets a house fronting a grade
+## street stand at floor == base_at. A column outside the massif is air
+## everywhere. A deck contributes nothing here: its [floor, top) is empty.
+func solid_at(cell: Vector3i) -> bool:
+	if passage_kinds.has(cell):
+		return false
+	if excavation != null and excavation.carved.has(cell):
+		return false
+	var column := Vector2i(cell.x, cell.z)
+	if massif == null or not massif.has_column(column):
+		return false
+	if cell.y < massif.base_at(column):
+		return true
+	var indices: Array = _plot_columns.get(column, [])
+	if indices.is_empty():
+		return cell.y < rock_shoulder(column)
+	for index: int in indices:
+		var plot := plots[index] as Dictionary
+		if cell.y >= int(plot["floor"]) and cell.y < int(plot["top"]):
+			return true
+	return cell.y < _lowest_plot_floor(column)
+
+
+## The top of derived rock on `column`.
+##
+## A column that carries plots of its own answers with its lowest plot floor:
+## rock fills the column from terrain up to the building standing on it.
+##
+## A column with no plot answers the massif envelope while the plan is
+## UNSEALED -- the envelope stands during planning, or nothing could ever be
+## placed on it -- and, once SEALED, the lowest plot floor bordering the
+## connected no-plot region this column belongs to, so leftover rock steps
+## down to meet the town instead of towering over it. A region that touches no
+## plot at all keeps its envelope. A column outside the massif carries no rock
+## at all.
+func rock_shoulder(column: Vector2i) -> int:
+	if massif == null or not massif.has_column(column):
+		return 0
+	if _plot_columns.has(column):
+		return _lowest_plot_floor(column)
+	if _rock_shoulders.has(column):
+		return int(_rock_shoulders[column])
+	return massif.top_at(column)
+
+
+## The derived facts composition reads off a plot: `roofed` (no plot stands on
+## any of its columns at its own top -- a roof deck up there means this plot
+## has no roof of its own), `bears_on_rock` (every column's floor - 1 is rock
+## rather than another plot, which is the existing terrain_bearing ->
+## .base.rock composition rule stated at the source), and `tiered` (its top is
+## an upper street's own band, within the footprint or its 1-column apron).
+func plot_facts(plot: Dictionary) -> Dictionary:
+	var id := StringName(plot.get("id", &""))
+	var floor_band := int(plot.get("floor", 0))
+	var top_band := int(plot.get("top", 0))
+	var roofed := true
+	var bears_on_rock := not (plot.get("cells", []) as Array).is_empty()
+	var apron: Dictionary = {}
+	for cell_value: Variant in plot.get("cells", []) as Array:
+		var column := cell_value as Vector2i
+		apron[column] = true
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			apron[column + direction] = true
+		if not solid_at(Vector3i(column.x, floor_band - 1, column.y)):
+			bears_on_rock = false
+		for index: int in _plot_columns.get(column, []) as Array:
+			var other := plots[index] as Dictionary
+			if StringName(other["id"]) == id:
+				continue
+			var other_floor := int(other["floor"])
+			var other_top := _plot_reserved_top(other)
+			if top_band >= other_floor and top_band < other_top:
+				roofed = false
+			if floor_band - 1 >= other_floor and floor_band - 1 < other_top:
+				bears_on_rock = false
+	var tiered := false
+	for cell: Vector3i in passage_kinds.keys():
+		if cell.y == top_band and apron.has(Vector2i(cell.x, cell.z)):
+			tiered = true
+			break
+	return {"roofed": roofed, "bears_on_rock": bears_on_rock,
+		"tiered": tiered}
+
+
+func _lowest_plot_floor(column: Vector2i) -> int:
+	var out := 0
+	var found := false
+	for index: int in _plot_columns.get(column, []) as Array:
+		var floor_band := int((plots[index] as Dictionary)["floor"])
+		out = floor_band if not found else mini(out, floor_band)
+		found = true
+	return out
+
+
+static func _plot_reserved_top(plot: Dictionary) -> int:
+	## The band interval a plot RESERVES on its columns is [floor, this),
+	## which is [floor, top) for anything with height and the single floor
+	## band for a deck. A deck adds no solid mass (solid_at reads [floor,
+	## top), which is empty for it) but two decks may still not share a band.
+	return maxi(int(plot["top"]), int(plot["floor"]) + 1)
+
+
+func _first_carved_band(column: Vector2i, from_band: int,
+		to_band: int) -> int:
+	## The lowest carved band in [from_band, to_band) on `column`, -1 when the
+	## range is clear. `excavation.carved` is every cell the bore removed --
+	## each walk cell plus the void above it -- so this is the ONE reading of
+	## "a street or its headroom is in the way" the support rule, add_plot,
+	## and seal all share.
+	if excavation == null:
+		return -1
+	for band in range(from_band, to_band):
+		if excavation.carved.has(Vector3i(column.x, band, column.y)):
+			return band
+	return -1
+
+
+func _plot_shape_rejection(plot: Dictionary) -> String:
+	## "" when the dictionary really is a plot, else why it is not. Shape
+	## alone: nothing here looks at the town around it.
+	for key: String in ["id", "kind", "cells", "floor", "top", "door_walk",
+			"building_id"]:
+		if not plot.has(key):
+			return "plot is missing the %s key" % key
+	if typeof(plot["id"]) != TYPE_STRING_NAME \
+			or typeof(plot["kind"]) != TYPE_STRING_NAME \
+			or typeof(plot["building_id"]) != TYPE_STRING_NAME:
+		return "plot id, kind, and building_id must be StringNames"
+	if typeof(plot["cells"]) != TYPE_ARRAY or typeof(plot["floor"]) != TYPE_INT \
+			or typeof(plot["top"]) != TYPE_INT \
+			or typeof(plot["door_walk"]) != TYPE_VECTOR3I:
+		return "plot cells, floor, top, or door_walk has the wrong type"
+	var id := StringName(plot["id"])
+	var kind := StringName(plot["kind"])
+	if kind not in PLOT_KINDS:
+		return "plot %s has unknown kind %s" % [id, kind]
+	for existing: Dictionary in plots:
+		if StringName(existing["id"]) == id:
+			return "plot id %s is already taken" % id
+	var cells: Array = plot["cells"]
+	if cells.is_empty():
+		return "plot %s has an empty footprint" % id
+	var members: Dictionary = {}
+	for cell_value: Variant in cells:
+		if typeof(cell_value) != TYPE_VECTOR2I:
+			return "plot %s has a footprint member that is not a column" % id
+		var column := cell_value as Vector2i
+		if members.has(column):
+			return "plot %s repeats column %s" % [id, column]
+		members[column] = true
+	if not _footprint_is_connected(members, cells[0] as Vector2i):
+		return "plot %s has a disconnected footprint" % id
+	if int(plot["top"]) < int(plot["floor"]):
+		return "plot %s has a top below its floor" % id
+	if kind == PLOT_DECK and int(plot["top"]) != int(plot["floor"]):
+		return "deck %s must be flat: top must equal floor" % id
+	return ""
+
+
+static func _footprint_is_connected(members: Dictionary,
+		start: Vector2i) -> bool:
+	var frontier: Array[Vector2i] = [start]
+	var seen: Dictionary = {start: true}
+	var head := 0
+	while head < frontier.size():
+		var column := frontier[head]
+		head += 1
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			var next := column + direction
+			if members.has(next) and not seen.has(next):
+				seen[next] = true
+				frontier.append(next)
+	return seen.size() == members.size()
+
+
+func _rebuild_plot_columns() -> void:
+	## Seal re-derives the per-column index from `plots` themselves rather
+	## than trusting add_plot's own running bookkeeping -- the same discipline
+	## the claim validations above follow.
+	_plot_columns.clear()
+	for index in plots.size():
+		for cell_value: Variant in (plots[index] as Dictionary)["cells"] \
+				as Array:
+			var column := cell_value as Vector2i
+			var indices: Array = _plot_columns.get(column, [])
+			indices.append(index)
+			_plot_columns[column] = indices
+
+
+func _rebuild_rock_shoulders() -> void:
+	## One shoulder per no-plot column, computed once at seal: flood the
+	## 4-neighbour regions of columns that carry no plot and give every member
+	## of a region the lowest floor of the plots bordering it, or the massif
+	## envelope where a region borders no plot at all. Region membership and a
+	## minimum are both order-free, so the sorted seed walk is belt and braces.
+	_rock_shoulders.clear()
+	if massif == null:
+		return
+	var columns: Array[Vector2i] = []
+	columns.assign(massif.columns.keys())
+	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+	var seen: Dictionary = {}
+	for column: Vector2i in columns:
+		if _plot_columns.has(column) or seen.has(column):
+			continue
+		var region: Array[Vector2i] = [column]
+		seen[column] = true
+		var shoulder := -1
+		var head := 0
+		while head < region.size():
+			var current := region[head]
+			head += 1
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var next := current + direction
+				if not massif.has_column(next):
+					continue
+				if _plot_columns.has(next):
+					var floor_band := _lowest_plot_floor(next)
+					shoulder = floor_band if shoulder < 0 \
+						else mini(shoulder, floor_band)
+				elif not seen.has(next):
+					seen[next] = true
+					region.append(next)
+		for member: Vector2i in region:
+			_rock_shoulders[member] = shoulder if shoulder >= 0 \
+				else massif.top_at(member)
+
+
+func _plot_rejection() -> String:
+	## Seal's plot half: the stack invariant on every column, then every plot
+	## re-checked against the finished town. "" when the town is sound.
+	_rebuild_plot_columns()
+	_rebuild_rock_shoulders()
+	var columns: Array[Vector2i] = []
+	columns.assign(massif.columns.keys())
+	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+	for column: Vector2i in columns:
+		# Solids must be contiguous from terrain: rock, then plots in floor
+		# order. A carved band is a permitted gap (a street runs through the
+		# block, and the mass above it is a real roof); any OTHER air band
+		# with solid mass above it means something floats.
+		var scan_top := massif.top_at(column)
+		for index: int in _plot_columns.get(column, []) as Array:
+			scan_top = maxi(scan_top, _plot_reserved_top(plots[index]))
+		var air_band := -1
+		for band in range(massif.base_at(column), scan_top):
+			var cell := Vector3i(column.x, band, column.y)
+			if solid_at(cell):
+				if air_band >= 0:
+					return ("column %s floats: solid mass at band %d stands " \
+						+ "over open air at band %d") % [column, band, air_band]
+			elif air_band < 0 and not excavation.carved.has(cell):
+				air_band = band
+	for index in plots.size():
+		var placement := _plot_placement_rejection(plots[index], index)
+		if placement != "":
+			return placement
+	return ""
+
+
+func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
+	## Why this plot may not stand where it says it does -- the one support
+	## rule, a carved cell inside the band interval it occupies, or an overlap
+	## with a plot already standing on one of its columns -- and "" when it
+	## may. `self_index` is the plot's own slot in `plots` when it is already
+	## stored (seal re-checking a finished town) and -1 when it is not
+	## (add_plot vetting a newcomer), so add_plot's own gate and seal's mirror
+	## of it can never disagree about what a legal plot is.
+	##
+	## The carved check is where "every passage cell and its carved headroom
+	## stays air" actually lives: solid_at answers air for a carved cell
+	## whatever a plot claims, so the invariant that can really fail is the
+	## one stated from the plot's side -- no plot claims a carved band.
+	var id := StringName(plot["id"])
+	var floor_band := int(plot["floor"])
+	var reserved_top := _plot_reserved_top(plot)
+	for cell_value: Variant in plot["cells"] as Array:
+		var column := cell_value as Vector2i
+		if not plot_support_ok(column, floor_band):
+			if not solid_at(Vector3i(column.x, floor_band - 1, column.y)):
+				return ("plot %s breaks support rule 1 at column %s: band %d " \
+					+ "below its floor is not solid") \
+					% [id, column, floor_band - 1]
+			return ("plot %s breaks support rule 2 at column %s: carved air " \
+				+ "stands inside its clearance [%d, %d)") \
+				% [id, column, floor_band, floor_band + MIN_HOUSE_BANDS]
+		var carved := _first_carved_band(column, floor_band, reserved_top)
+		if carved >= 0:
+			return ("plot %s covers carved band %d at column %s -- a street " \
+				+ "and its headroom are immutable") % [id, carved, column]
+		for index: int in _plot_columns.get(column, []) as Array:
+			if index == self_index:
+				continue
+			var other := plots[index] as Dictionary
+			if floor_band < _plot_reserved_top(other) \
+					and reserved_top > int(other["floor"]):
+				return "plot %s overlaps plot %s at column %s" \
+					% [id, StringName(other["id"]), column]
+	return ""
+
+
+# --- End plot model --------------------------------------------------------
 
 
 func passage_cells() -> Array[Vector3i]:
@@ -645,6 +1058,25 @@ func deterministic_signature() -> String:
 			"+".join(cells_text)])
 	reservation_lines.sort()
 	for line: String in reservation_lines:
+		parts.append(line)
+	# `plot:`, not `p:` -- that prefix already belongs to the passage cells
+	# above. Ids are unique, so sorting the whole line sorts by id and the
+	# order plots were added can never show in the signature.
+	var plot_lines := PackedStringArray()
+	for plot: Dictionary in plots:
+		var plot_cells: Array[Vector2i] = []
+		plot_cells.assign(plot["cells"])
+		plot_cells.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+		var plot_text := PackedStringArray()
+		for cell: Vector2i in plot_cells:
+			plot_text.append("%d,%d" % [cell.x, cell.y])
+		var door: Vector3i = plot["door_walk"]
+		plot_lines.append("plot:%s:%s:%s:%d,%d:%d,%d,%d:%s" % [
+			String(plot["id"]), String(plot["kind"]),
+			"+".join(plot_text), int(plot["floor"]), int(plot["top"]),
+			door.x, door.y, door.z, String(plot["building_id"])])
+	plot_lines.sort()
+	for line: String in plot_lines:
 		parts.append(line)
 	return "|".join(parts)
 
