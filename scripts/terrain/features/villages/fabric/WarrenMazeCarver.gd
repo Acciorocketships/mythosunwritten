@@ -14,12 +14,12 @@ const MIN_ALLEY_CELLS := 3
 const MAX_ALLEY_CELLS := 8
 const SPINE_VISIT_BUDGET := 40000
 const MAX_DERIVED_ALLEY_CELLS := 320
-const OPEN_AIR_THICKNESS_CEILING := 2
-## Lowered from the design's 5 (2026-08-22): with a period of 5, the
-## seed-1..6 standard corpus retained bridge spans on only 1 of 6 towns --
-## legal flank/mass candidates are inherently sparse near the thin-roofed
-## edge of a hill massif. 4 does not materially change that (still 1 of 6);
-## see task-2-report.md for per-seed counts and the DONE_WITH_CONCERNS note.
+## Controller ruling (2026-08-22, task-2 follow-up): a passage cell now
+## opens to sky by default -- the block-thickness heuristic that used to
+## gate this was starving bridge-span eligibility, since "would-be-open"
+## cells were concentrated at the massif's thin, peripheral edge where a
+## genuine two-block-connecting span is structurally rare. See
+## task-2-report.md for the before/after per-seed counts.
 const BRIDGE_SPAN_PERIOD := 4
 const MIN_LOOP_JOINS := 1
 const MAX_LOOP_JOINS := 2
@@ -108,8 +108,8 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	for cell: Vector3i in market_square:
 		if cell not in forced_open:
 			forced_open.append(cell)
-	_open_passages_to_air(world_seed, massif, excavation, thickness,
-		forced_open, profile)
+	_open_passages_to_air(world_seed, massif, excavation, forced_open,
+		profile)
 	_finalize_excavation(massif, excavation)
 	if not excavation.seal():
 		last_failure = "maze excavation rejected: %s" % excavation.last_rejection
@@ -894,50 +894,62 @@ static func _alley_stride_is_legal(massif: WarrenMassif,
 
 
 static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
-		excavation: WarrenExcavation, thickness: Dictionary,
-		market_zone: Array, profile: WarrenVillageScaleProfile) -> void:
+		excavation: WarrenExcavation, market_zone: Array,
+		profile: WarrenVillageScaleProfile) -> void:
+	## Controller ruling (2026-08-22): a passage cell opens to sky by
+	## default now. The three exceptions that stay covered are the market
+	## (`market_zone`, forced covered rather than forced open), a
+	## `_column_is_public_facade` over/under crossing (opening it would erase
+	## a wall an earlier crossing already proved), and a seeded bridge span
+	## cell (its retained overhead mass is the skywalk deck itself).
 	var market_set: Dictionary = {}
 	for value: Variant in market_zone:
 		market_set[value as Vector3i] = true
-	# Seeded bridge spans intercept a handful of would-be-open cells before
-	# the sky opens over them: their overhead mass stays retained, becoming a
-	# skywalk deck connecting the two blocks the span's flanks front. Every
-	# other would-be-open cell keeps opening exactly as before.
 	var bridged := _select_bridge_spans(world_seed, massif, excavation,
-		thickness, market_set, profile)
+		market_set, profile)
+	# A bridge cell's own column can also host a lower, unrelated passage
+	# cell (the pre-existing over/under crossing pattern this maze already
+	# carves) that would otherwise open straight past the bridge's retained
+	# roof now that opening is the default. Cap every other cell's climb at
+	# the lowest bridge floor sharing its column, so the bridge's mass -- and
+	# the `covered` promise its acceptance check made -- survives intact.
+	var bridge_ceiling: Dictionary = {}
+	for cell_value: Variant in bridged.keys():
+		var cell := cell_value as Vector3i
+		var column := Vector2i(cell.x, cell.z)
+		if not bridge_ceiling.has(column) or cell.y < int(bridge_ceiling[column]):
+			bridge_ceiling[column] = cell.y
 	for cell: Vector3i in excavation.public_cells():
 		if bridged.has(cell):
 			continue
 		var column := Vector2i(cell.x, cell.z)
-		if not _would_be_open(massif, excavation, thickness, market_set, cell):
+		if market_set.has(cell) \
+				or _column_is_public_facade(massif, excavation, column, cell):
 			continue
-		for band in range(cell.y, massif.top_at(column)):
+		var ceiling := massif.top_at(column)
+		if bridge_ceiling.has(column):
+			ceiling = mini(ceiling, int(bridge_ceiling[column]))
+		for band in range(cell.y, ceiling):
 			excavation.carved[Vector3i(cell.x, band, cell.z)] = true
 
 
-static func _would_be_open(massif: WarrenMassif, excavation: WarrenExcavation,
-		thickness: Dictionary, market_set: Dictionary, cell: Vector3i) -> bool:
-	var column := Vector2i(cell.x, cell.z)
-	var open := market_set.has(cell) \
-		or int(thickness.get(column, 2)) <= OPEN_AIR_THICKNESS_CEILING
-	# An over/under crossing deliberately uses the solid above one passage
-	# as an inhabited facade beside another. Opening that whole column would
-	# erase the wall the network already proved and turn a mountain crossing
-	# into an unowned shaft.
-	if open and _column_is_public_facade(massif, excavation, column, cell):
-		open = false
-	return open
+static func _bridge_eligible(massif: WarrenMassif, excavation: WarrenExcavation,
+		market_set: Dictionary, cell: Vector3i) -> bool:
+	## Every cell opens to sky except a market cell or a facade crossing (see
+	## `_open_passages_to_air`), so a bridge-span run candidate needs only
+	## rule those two out -- there is no more thickness gate to also check.
+	return not market_set.has(cell) and not _column_is_public_facade(massif,
+		excavation, Vector2i(cell.x, cell.z), cell)
 
 
 static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
-		excavation: WarrenExcavation, thickness: Dictionary,
-		market_set: Dictionary, profile: WarrenVillageScaleProfile) -> Dictionary:
+		excavation: WarrenExcavation, market_set: Dictionary,
+		profile: WarrenVillageScaleProfile) -> Dictionary:
 	## Walks the spine then each lane in array order (never dictionary order)
-	## looking for maximal runs of would-be-open, non-market, non-portal,
-	## level-stride cells -- the flat, thin-roofed street segments that would
-	## otherwise become one continuous open-air canyon. Every
-	## BRIDGE_SPAN_PERIOD cells of such a run, at a seeded phase, a
-	## one-or-two-cell span is proposed; it is accepted into
+	## looking for maximal runs of non-market, non-portal, non-facade-crossing,
+	## level-stride cells -- every such cell would otherwise open straight to
+	## the sky. Every BRIDGE_SPAN_PERIOD cells of such a run, at a seeded
+	## phase, a one-or-two-cell span is proposed; it is accepted into
 	## `excavation.bridge_spans` only when its flanks prove it genuinely
 	## connects two blocks, up to the profile's skywalk quota.
 	var accepted: Dictionary = {}
@@ -963,9 +975,7 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 		for index in range(1, walk.size()):
 			var cell := walk[index]
 			var eligible := level_cells.has(cell) and cell != portal \
-				and not market_set.has(cell) \
-				and _would_be_open(massif, excavation, thickness, market_set,
-					cell)
+				and _bridge_eligible(massif, excavation, market_set, cell)
 			if eligible:
 				run.append(cell)
 				directions[cell] = Vector2i(cell.x - walk[index - 1].x,
