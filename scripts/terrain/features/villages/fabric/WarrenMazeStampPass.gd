@@ -257,6 +257,16 @@ static func stamp(plan: WarrenMazeSourcePlan,
 ## edited column; it carries a `plot_top` key the flank fallback never sets,
 ## which is what distinguishes the two below. Skywalk support beyond that is
 ## still slice-2 composition's job, not this derivation's.
+## Bridge-capable columns (controller ruling, 2026-08-22): a PASSAGE-HOSTING
+## column's own floor is never measured against terrain at all -- it bears on
+## that passage's own required headroom (a bridge deck standing directly on
+## the street, or a claim bearing on a lower, unrelated tunnel's own trimmed
+## roof slab), and the rock between terrain and that headroom is real,
+## untouched massif the street itself already runs through, not something
+## construction needs to fabricate as foundation. `_foundation_depth_for`
+## measures from `WarrenMazeSourcePlan._passage_headroom_floor(column)`
+## instead of `massif.base_at(column)` for such a column; a non-passage
+## column is unaffected.
 static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 	var min_floor_band: Dictionary = {}
 	for claim: Dictionary in plan.parcel_claims:
@@ -267,7 +277,8 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 				min_floor_band[column] = floor_band
 	var foundation_columns: Dictionary = {}
 	for column: Vector2i in min_floor_band.keys():
-		var depth := int(min_floor_band[column]) - plan.massif.base_at(column)
+		var depth := _foundation_depth_for(plan, column,
+			int(min_floor_band[column]))
 		if depth > 0:
 			foundation_columns[column] = depth
 	for reservation: Dictionary in plan.reservations:
@@ -283,10 +294,21 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 			continue
 		var datum := int(reservation.datum_band)
 		for column: Vector2i in reservation.cells as Array[Vector2i]:
-			var depth := datum - plan.massif.base_at(column)
+			var depth := _foundation_depth_for(plan, column, datum)
 			if depth > 0:
 				foundation_columns[column] = depth
 	plan.audit["foundation_columns"] = foundation_columns
+
+
+## Shared depth formula for derive_foundations' two loops (claim columns,
+## reservation columns): terrain-based for an ordinary column, headroom-based
+## for a passage-hosting one -- see derive_foundations' own header for why.
+static func _foundation_depth_for(plan: WarrenMazeSourcePlan,
+		column: Vector2i, floor_band: int) -> int:
+	var headroom_floor := plan._passage_headroom_floor(column)
+	if headroom_floor >= 0:
+		return floor_band - headroom_floor
+	return floor_band - plan.massif.base_at(column)
 
 
 ## P4.5 -- discards unclaimed mass above whatever roofline the claims below

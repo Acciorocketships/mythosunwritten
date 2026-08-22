@@ -486,35 +486,69 @@ regardless of how far above the passage the floor sat. Measured on seeds
 1/3/4/12 compact (aggregate): 24/68 = 35.3% of claims are upper-street,
 up from 8/63 = 12.7% before this rule.
 
-**Confirmed blocked (not hacked around): the translator loses one column
-per town whose bridge/bearing edit clears a passage's headroom.**
-`WarrenMazeVolumeAdapter._edited_massif` overwrites an edited column's
-reported `[base, top)` with `effective_base`/`effective_top` wholesale —
+**Fixed (controller ruling, 2026-08-22): the translator no longer loses a
+column's street to a bridge/bearing edit.** `WarrenMazeVolumeAdapter.
+_edited_massif` used to overwrite an edited column's reported `[base, top)`
+with `effective_base`/`effective_top` wholesale for every edited column —
 correct for an ordinary foundation-raising edit (the discarded gap becomes
-construction's own foundation courses per this design's P5 section), but
-for a column whose edit clears a *hosted passage's* own headroom, the
-discarded gap contains that passage's own walk cell. The edited envelope
-then reports that column's ground at the edit's raised floor instead of
-true terrain, and `WarrenVolumeEnvelope.contains_air_column` rejects the
-passage's own walk cell as outside its own envelope —
-`WarrenExcavationVolumeAdapter.to_volume_plan`'s `WarrenVolumePlan.seal()`
-names it `"walk cell leaves the envelope at <cell>"`. This fires for *any*
-edit rule 3 or rule 4 legalizes on a passage-hosting column — reproduced on
-both `test_translator_partition_is_one_to_one_with_claims`'s pinned seeds (4
-and 12 compact), confirmed via `WarrenMazeVolumeAdapter.last_failure` naming
-the exact mechanism, not a generic failure. `WarrenMazeVolumeAdapter.gd` is
-outside this task's five-file scope (`WarrenMazeStampPass.gd`,
-`WarrenMazeReservationPass.gd`, `WarrenMazeSourcePlan.gd`, this doc, the
-test file); the fix belongs in `_edited_massif` (a passage-hosting column's
-reported *ground* should stay at true terrain — the true base a walk cell
-needs to remain contained — while only its *top* extends to cover the
-edit's own built plot) and is follow-up work, not this task's. The pinned
-translator test now tolerates exactly this named rejection reason for these
-two seeds (and only this one) while still asserting every other invariant
-live for any seed whose translation succeeds; every other pinned test in
+construction's own foundation courses, below), but for a column whose edit
+clears a *hosted passage's* own headroom (rule 3's bridge deck, or rule 4's
+bearing-on-tunnel-roof claim), the discarded gap contained that passage's
+own walk cell, and `WarrenVolumeEnvelope.contains_air_column` rejected it
+as outside its own envelope (`"walk cell leaves the envelope at <cell>"`).
+Fixed at the source: a passage-hosting column's ledger floor means "the
+house floor above the street", never "the bottom of this column's mass"
+(`WarrenMazeSourcePlan.effective_base()` documents this explicitly now).
+`_edited_massif` now keeps such a column's `base` at the ORIGINAL massif
+base — true terrain, the rock the street itself still stands on — and only
+raises `top` to the ledger's own `effective_top`; a non-passage column is
+unchanged. `WarrenMazeSourcePlan.state_at()` gained the same two-zone
+reading: below the highest hosted passage's own headroom floor, it reports
+the RAW massif range (real rock the ledger never legitimately reaches,
+since `record_edit`/`record_trim`'s own gates already forbid a
+passage-hosting column's floor or trimmed top from ever landing below that
+line); at and above it, ledger-aware reporting is unchanged.
+`WarrenMazeStampPass.derive_foundations` measures a passage-hosting
+column's foundation depth from that same headroom floor rather than
+terrain — the rock between terrain and the headroom is real, untouched
+massif the street already runs through, not something construction needs
+to fabricate.
+
+**Newly exposed by that fix, still open: `WarrenBuildingParcel.
+_has_continuous_bearing` assumes unbroken continuity from a column's true
+ground to its own floor.** `WarrenExcavationVolumeAdapter`'s legacy bearing
+check walks `[envelope.ground_at(column), base_band)` demanding `has_mass`
+at every band — a check that was ALREADY vacuous for any edited column
+before this fix (the old `_edited_massif` bug made `ground_at` collapse to
+the claim's own floor for every edited column, so the walk range was always
+empty and trivially passed), and is now, for the first time, actually
+exercised for a passage-hosting column — where it necessarily crosses that
+passage's own carved headroom (never solid by definition) and fails.
+`WarrenMazeStampPass._column_bears` already solved exactly this problem at
+the SOURCE-PLAN level (the PLINTH_BANDS refinement in the prior section: a
+column bears when only the plinth immediately below its floor is solid, not
+the whole column down to true ground) before a claim is ever allowed to
+place — `_has_continuous_bearing` is a sibling, translator-side bearing
+check that was never updated to the same model. Confirmed via direct
+reproduction: with the `_edited_massif` fix applied, 21 of 24
+seed×scale combinations (including both of `test_translator_partition_is_
+one_to_one_with_claims`'s pinned seeds, 4 and 12 compact) now fail
+translation with `"translation dropped N/M claims (generator bug)"`
+instead of the old envelope rejection — every dropped claim is a
+bearing/bridge claim on a passage-hosting column, `WarrenBuildingParcel.
+seal()`'s `bearing_columns.size() * 2 < footprint.size()` check failing
+because `_has_continuous_bearing` finds AIR in that column's own carved
+headroom partway through its walk. `WarrenBuildingParcel.gd` is outside
+this task's authorized scope; the fix likely belongs in
+`_has_continuous_bearing` (skip a hosted passage's own headroom the same
+way `_column_bears`'s plinth check already does, rather than demanding
+continuity through it) and is follow-up work, not this task's. The pinned
+translator test carries its full, unnarrowed assertions on both seeds;
+`test_foundations_are_derived_from_datum_minus_terrain` was updated for the
+new headroom-based depth formula and passes; every other pinned test in
 this suite (the source-plan ledger, the reservation/stamp passes, `seal()`)
 is unaffected and stays fully assertive, since none of them depend on the
-volume adapter.
+volume adapter or the translator.
 
 ## Out of scope
 

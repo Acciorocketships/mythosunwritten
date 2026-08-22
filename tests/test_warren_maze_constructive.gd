@@ -536,44 +536,59 @@ func test_foundations_are_derived_from_datum_minus_terrain() -> void:
 					or floor_band < int(min_floor_by_column[column]):
 				min_floor_by_column[column] = floor_band
 
-	# Every claimed column whose GOVERNING (lowest) floor_band clears terrain
-	# appears with the right depth; every claimed column at grade is omitted
-	# entirely.
+	# Every claimed column whose GOVERNING (lowest) floor_band clears its own
+	# foundation datum appears with the right depth; every claimed column at
+	# (or below) grade is omitted entirely. Bridge-capable columns
+	# (controller ruling, 2026-08-22, slice 1c task 1): a PASSAGE-HOSTING
+	# column's datum is that passage's own required headroom floor
+	# (WarrenMazeSourcePlan._passage_headroom_floor), never terrain -- the
+	# rock between terrain and the headroom is real, untouched massif the
+	# street already runs through, not something construction fabricates as
+	# foundation. A non-passage column's datum stays terrain, unchanged.
 	for column: Vector2i in min_floor_by_column.keys():
 		var floor_band := int(min_floor_by_column[column])
-		var terrain := plan.massif.base_at(column)
-		if floor_band > terrain:
+		var headroom_floor := plan._passage_headroom_floor(column)
+		var datum := headroom_floor if headroom_floor >= 0 \
+			else plan.massif.base_at(column)
+		if floor_band > datum:
 			assert_true(foundation_columns.has(column),
-				("claimed column %s at floor %d above terrain %d is " \
-					+ "missing from foundation_columns") \
-						% [column, floor_band, terrain])
-			assert_eq(int(foundation_columns[column]), floor_band - terrain,
+				("claimed column %s at floor %d above its own foundation " \
+					+ "datum %d is missing from foundation_columns") \
+						% [column, floor_band, datum])
+			assert_eq(int(foundation_columns[column]), floor_band - datum,
 				"foundation depth at %s is wrong" % column)
 		else:
 			assert_false(foundation_columns.has(column),
-				"claimed column %s at grade must not appear in " \
-					% column + "foundation_columns")
+				"claimed column %s at or below its own foundation datum " \
+					% column + "must not appear in foundation_columns")
 
-	# Same contract for reservation cells whose datum_band clears terrain --
-	# except overhead (skywalk_span) reservations, which are excluded
-	# outright regardless of datum vs terrain (see the next block).
+	# Same contract for reservation cells whose datum_band clears their own
+	# foundation datum -- except a FLANK-search skywalk_span reservation
+	# (walk_cells non-empty, no `plot_top` key), which is excluded outright
+	# regardless of datum vs terrain (see the next block); a bridge-consumed
+	# one (walk_cells non-empty, has `plot_top`) is a real edited column and
+	# is checked exactly like any other reservation.
 	for reservation: Dictionary in plan.reservations:
-		if not (reservation.get("walk_cells", []) as Array).is_empty():
+		if not (reservation.get("walk_cells", []) as Array).is_empty() \
+				and not reservation.has("plot_top"):
 			continue
-		var datum := int(reservation.datum_band)
+		var datum_band := int(reservation.datum_band)
 		for column: Vector2i in reservation.cells as Array[Vector2i]:
-			var terrain := plan.massif.base_at(column)
-			if datum > terrain:
+			var headroom_floor := plan._passage_headroom_floor(column)
+			var datum := headroom_floor if headroom_floor >= 0 \
+				else plan.massif.base_at(column)
+			if datum_band > datum:
 				assert_true(foundation_columns.has(column),
-					("reservation column %s at datum %d above terrain %d is " \
-						+ "missing from foundation_columns") \
-							% [column, datum, terrain])
-				assert_eq(int(foundation_columns[column]), datum - terrain,
+					("reservation column %s at datum_band %d above its " \
+						+ "own foundation datum %d is missing from " \
+						+ "foundation_columns") \
+							% [column, datum_band, datum])
+				assert_eq(int(foundation_columns[column]), datum_band - datum,
 					"foundation depth at %s is wrong" % column)
 			else:
 				assert_false(foundation_columns.has(column),
-					"reservation column %s at grade must not appear in " \
-						% column + "foundation_columns")
+					"reservation column %s at or below its own foundation " \
+						% column + "datum must not appear in foundation_columns")
 
 	# Overhead (skywalk_span) reservations are excluded outright, even when
 	# their walk band clears terrain -- their flanks stand on grounded rock
@@ -678,38 +693,9 @@ func test_translator_partition_is_one_to_one_with_claims() -> void:
 		if plan == null:
 			continue
 		var volume := WarrenMazeVolumeAdapter.to_volume_plan(plan)
+		assert_not_null(volume, "seed %d: %s" \
+			% [city_seed, WarrenMazeVolumeAdapter.last_failure])
 		if volume == null:
-			# CONFIRMED BLOCKED (slice 1c task 1, 2026-08-22, reported in
-			# task-1-report.md rather than hacked around -- WarrenMazeVolume
-			# Adapter.gd is outside this task's five-file scope): rule 4's
-			# bridge-capable ledger unlock (WarrenMazeSourcePlan.record_edit/
-			# WarrenMazeStampPass._column_bears) legally lets a claim's floor
-			# clear a HOSTED PASSAGE's own headroom -- a bearing claim
-			# standing on a lower tunnel's own roof slab, or a skywalk_span
-			# reservation's deck built directly on a bridge span. But
-			# WarrenMazeVolumeAdapter._edited_massif overwrites that
-			# column's reported [base, top) with effective_base/
-			# effective_top WHOLESALE for any edited column -- correct for
-			# an ordinary foundation-raising edit (the discarded gap becomes
-			# construction's own foundation courses, per the design doc's P5
-			# section), but for THIS column the discarded gap contains the
-			# passage's own walk cell, whose column-level ground the
-			# envelope now reports as the edit's raised floor instead of
-			# true terrain. WarrenVolumeEnvelope.contains_air_column then
-			# rejects that walk cell as outside its own envelope --
-			# WarrenExcavationVolumeAdapter.to_volume_plan's own seal()
-			# names it "walk cell leaves the envelope at <cell>". Both
-			# pinned seeds (4, 12 compact) hit this whenever their own
-			# upper-street/tunnel-crossing claims exercise the unlock (which
-			# this same corpus's test_upper_streets_stack_claims_above_
-			# lower_houses independently requires >= 10% of claims to do) --
-			# confirmed via WarrenMazeVolumeAdapter.last_failure naming the
-			# exact mechanism below, not a generic/unrelated failure.
-			assert_true(WarrenMazeVolumeAdapter.last_failure.contains(
-					"leaves the envelope"),
-				("seed %d: translation failed for a reason OTHER than the " \
-					+ "known, reported passage-envelope limitation: %s") \
-					% [city_seed, WarrenMazeVolumeAdapter.last_failure])
 			continue
 		var parcels := WarrenMazeBlockPartitioner.partition(plan, volume)
 		assert_not_null(parcels, "seed %d: %s" \

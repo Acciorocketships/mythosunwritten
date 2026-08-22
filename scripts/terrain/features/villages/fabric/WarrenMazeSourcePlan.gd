@@ -65,6 +65,16 @@ func mark_passage(cell: Vector3i, kind: StringName) -> bool:
 
 
 func effective_base(column: Vector2i) -> int:
+	## For a PASSAGE-HOSTING column, this is the house/plot floor built
+	## ABOVE that passage's own required headroom (a bridge deck, or a
+	## claim bearing on a lower tunnel's own trimmed roof, per rule 4's
+	## bridge-capable ledger) -- never "the bottom of this column's mass".
+	## The real bottom of mass for such a column is state_at()'s job to
+	## reconstruct (raw massif below the highest hosted passage's own
+	## headroom, ledger-driven at and above it): this accessor alone answers
+	## "where does the built floor sit", not "where does solid rock start".
+	## For a non-passage column the two questions have always had the same
+	## answer, and still do.
 	if column_edits.has(column):
 		return int((column_edits[column] as Dictionary).get("floor_band", 0))
 	return massif.base_at(column)
@@ -454,15 +464,36 @@ func is_sealed() -> bool:
 ## asks "is there still rock here") keeps seeing ghost mass the ledger has
 ## already discarded. Passage cells and carved air are unaffected -- the
 ## ledger never edits those, and they are checked first regardless.
+##
+## Bridge-capable columns (2026-08-22, controller ruling on slice 1c task
+## 1): a PASSAGE-HOSTING column's ledger entry describes the floor built
+## ABOVE that passage's own headroom, never the bottom of the column's
+## mass (see effective_base()'s own comment) -- so below the highest
+## hosted passage's own headroom floor, this reads the RAW, pre-ledger
+## massif range instead of effective_base/effective_top. The rock under a
+## street (and under any lower, unrelated tunnel's own roof slab) is real,
+## untouched terrain that no edit ever legitimately reaches: record_edit's
+## own gate requires floor_band >= _passage_headroom_floor(column) for a
+## passage-hosting column, so a ledger edit's own floor can never land
+## below that line, and record_trim's own gate refuses to trim a
+## passage-hosting column's top below it either -- nothing in the ledger
+## ever describes state below this line for such a column, so reading raw
+## massif there is not an approximation, it is the only truthful reading.
+## At or above that line, ledger-aware reporting is unchanged.
 func state_at(cell: Vector3i) -> CellState:
 	if passage_kinds.has(cell):
 		return CellState.PASSAGE
 	if excavation != null and excavation.carved.has(cell):
 		return CellState.AIR
 	var column := Vector2i(cell.x, cell.z)
-	if massif != null and massif.has_column(column) \
-			and cell.y >= effective_base(column) \
-			and cell.y < effective_top(column):
+	if massif == null or not massif.has_column(column):
+		return CellState.AIR
+	var headroom_floor := _passage_headroom_floor(column)
+	if headroom_floor >= 0 and cell.y < headroom_floor:
+		if cell.y >= massif.base_at(column) and cell.y < massif.top_at(column):
+			return CellState.SOLID
+		return CellState.AIR
+	if cell.y >= effective_base(column) and cell.y < effective_top(column):
 		return CellState.SOLID
 	return CellState.AIR
 

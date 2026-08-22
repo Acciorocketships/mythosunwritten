@@ -52,12 +52,35 @@ static func _edited_massif(source: WarrenMazeSourcePlan) -> WarrenMassif:
 	## that topology (single connected component, no interior hole) -- it
 	## never inspects band values -- so a legally-edited copy of an
 	## already-sealed massif cannot newly fail seal() here.
+	##
+	## Bridge-capable columns (2026-08-22, controller ruling on slice 1c
+	## task 1): a passage-hosting column's edited floor means "the
+	## bridge/bearing house floor above the street's own headroom", never
+	## "bottom of mass" -- overwriting `base` up to that floor the way every
+	## other edited column's is would delete the passage's own walk cell
+	## from the envelope entirely (`WarrenVolumeEnvelope.contains_air_column`
+	## requires `ground_at(column) <= walk cell y`), which is exactly what
+	## used to make `WarrenExcavationVolumeAdapter` reject the street as
+	## "leaving the envelope". Such a column instead keeps `base` at the
+	## ORIGINAL massif base -- true terrain, the rock the street itself still
+	## stands on -- and only raises `top` to the ledger's own effective_top;
+	## the actual carved passage cells (and their headroom) are excluded
+	## from the final `mass_cells` regardless, since
+	## `WarrenExcavationVolumeAdapter` subtracts every swept transition cell
+	## sourced directly from `excavation.carved`, independent of what this
+	## massif copy's own base/top report. A column with no hosted passage
+	## keeps the pre-existing behaviour (both base and top move to the
+	## ledger's own values; the discarded gap becomes construction's own
+	## foundation courses, per this design's P5 section).
 	var columns: Dictionary = {}
 	for column: Vector2i in source.massif.columns:
 		var entry := (source.massif.columns[column] as Dictionary).duplicate()
 		if source.column_edits.has(column):
-			entry["base"] = source.effective_base(column)
-			entry["top"] = source.effective_top(column)
+			if source._passage_headroom_floor(column) >= 0:
+				entry["top"] = source.effective_top(column)
+			else:
+				entry["base"] = source.effective_base(column)
+				entry["top"] = source.effective_top(column)
 		columns[column] = entry
 	var edited := WarrenMassif.with_columns(source.massif.world_seed, columns,
 		source.massif.core_top_bands)
