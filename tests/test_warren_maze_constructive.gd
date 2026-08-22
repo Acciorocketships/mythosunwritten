@@ -741,8 +741,22 @@ func test_translator_partition_is_one_to_one_with_claims() -> void:
 		# anti-regression floors (catch a future correctness regression in the
 		# audit, stamp, or trim pass), not quality targets; the 0.85 quality
 		# target stays slice 2's composition-level exit per the ruling above.
+		# Re-pinned upward again (slice 1c task 1, controller rulings
+		# 2026-08-22 x2): WarrenMazeVolumeAdapter._edited_massif and
+		# WarrenBuildingParcel._has_continuous_bearing both had to become
+		# passage-aware before a bridge/bearing claim's own column could
+		# translate at all (see task-1-report.md's addenda) -- seed 4 is
+		# fully measurable end-to-end for the first time in this test's own
+		# history as a result, measured 0.6419 -> 0.6885. Seed 12 still
+		# cannot seal a full WarrenParcelPlan (one remaining, precisely
+		# diagnosed dropped claim -- a stair-adjacent passage cell whose
+		# REAL carved slot is one band taller than the generic
+		# WarrenExcavation.HEADROOM_BANDS constant _passage_headroom_floor
+		# assumes, unrelated to and outside this task's own bearing fix; see
+		# the addendum), so its own floor (0.58) is carried forward
+		# unmeasured rather than re-pinned on no new data.
 		var ratio := float(parcels.audit.get("maze_owned_solid_ratio", 0.0))
-		var ratio_floor := 0.62 if city_seed == 4 else 0.58
+		var ratio_floor := 0.66 if city_seed == 4 else 0.58
 		assert_gte(ratio, ratio_floor,
 			"seed %d: 2D-footprint ownership anti-regression floor (%.2f); measured %s" \
 				% [city_seed, ratio_floor, ratio])

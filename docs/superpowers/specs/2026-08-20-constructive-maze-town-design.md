@@ -514,41 +514,59 @@ terrain — the rock between terrain and the headroom is real, untouched
 massif the street already runs through, not something construction needs
 to fabricate.
 
-**Newly exposed by that fix, still open: `WarrenBuildingParcel.
-_has_continuous_bearing` assumes unbroken continuity from a column's true
-ground to its own floor.** `WarrenExcavationVolumeAdapter`'s legacy bearing
-check walks `[envelope.ground_at(column), base_band)` demanding `has_mass`
-at every band — a check that was ALREADY vacuous for any edited column
-before this fix (the old `_edited_massif` bug made `ground_at` collapse to
-the claim's own floor for every edited column, so the walk range was always
-empty and trivially passed), and is now, for the first time, actually
-exercised for a passage-hosting column — where it necessarily crosses that
-passage's own carved headroom (never solid by definition) and fails.
-`WarrenMazeStampPass._column_bears` already solved exactly this problem at
-the SOURCE-PLAN level (the PLINTH_BANDS refinement in the prior section: a
-column bears when only the plinth immediately below its floor is solid, not
-the whole column down to true ground) before a claim is ever allowed to
-place — `_has_continuous_bearing` is a sibling, translator-side bearing
-check that was never updated to the same model. Confirmed via direct
-reproduction: with the `_edited_massif` fix applied, 21 of 24
-seed×scale combinations (including both of `test_translator_partition_is_
-one_to_one_with_claims`'s pinned seeds, 4 and 12 compact) now fail
-translation with `"translation dropped N/M claims (generator bug)"`
-instead of the old envelope rejection — every dropped claim is a
-bearing/bridge claim on a passage-hosting column, `WarrenBuildingParcel.
-seal()`'s `bearing_columns.size() * 2 < footprint.size()` check failing
-because `_has_continuous_bearing` finds AIR in that column's own carved
-headroom partway through its walk. `WarrenBuildingParcel.gd` is outside
-this task's authorized scope; the fix likely belongs in
-`_has_continuous_bearing` (skip a hosted passage's own headroom the same
-way `_column_bears`'s plinth check already does, rather than demanding
-continuity through it) and is follow-up work, not this task's. The pinned
-translator test carries its full, unnarrowed assertions on both seeds;
-`test_foundations_are_derived_from_datum_minus_terrain` was updated for the
-new headroom-based depth formula and passes; every other pinned test in
-this suite (the source-plan ledger, the reservation/stamp passes, `seal()`)
-is unaffected and stays fully assertive, since none of them depend on the
-volume adapter or the translator.
+**Fixed (controller ruling, 2026-08-22, additive-only):
+`WarrenBuildingParcel._has_continuous_bearing` gained a second branch for
+bearing on a tunnel's own roof.** The legacy check demanded unbroken solid
+mass from `envelope.ground_at(column)` up to a parcel's own floor — vacuous
+for any edited column under the old `_edited_massif` bug (`ground_at`
+collapsed to the edited floor, so the walk range was always empty), and,
+once that bug was fixed, genuinely exercised for a passage-hosting column
+for the first time, where it necessarily crosses that passage's own carved
+headroom and fails. The FIRST branch (full continuity) is byte-for-byte
+unchanged and always tried first; a SECOND branch, tried only when the
+first fails, passes iff every non-solid cell between ground and the floor
+is public realm (`WarrenVolumePlan.has_public_air` — the volume's own
+authoritative record of what the excavation carved, read through the
+volume rather than the source plan), the `PLINTH_BANDS` bands directly
+below the floor are solid (the tunnel's own roof slab) *unless* the floor
+lands exactly `TUNNEL_ROOF_BANDS` above the carved run's own top (the one
+flush case `WarrenMazeStampPass._column_bears` already grants
+unconditionally, for the identical reason), and everything below the
+lowest carved cell is solid down to ground. Both constants are referenced
+from `WarrenMazeStampPass`, never duplicated. Regression-proven additive:
+`test_warren_maze_carver.gd` (10/10), `test_warren_spatial_fabric_compiler.
+gd` (11/11), and `test_settlement_fabric.gd` (42/42) — the legacy,
+non-maze parcel consumers — all pass unchanged.
+
+Measured effect on the full 24 seed×scale sweep (source seal → volume →
+translated `WarrenParcelPlan`): 18/23 reachable combinations now translate
+end-to-end, up from 1/23 with only the `_edited_massif` fix applied (one
+seed, compact 7, never reaches translation — a pre-existing carve-stage
+floor miss, unrelated). Of the 5 that still fail: 2 are pre-existing,
+unrelated seal rejections (compact 8's route/floor-slab gate, compact 11's
+load-path gate); 3 share one precisely diagnosed, narrower remaining gap —
+`WarrenMazeSourcePlan._passage_headroom_floor` measures a hosted passage's
+headroom using the fixed `WarrenExcavation.HEADROOM_BANDS` constant, not
+that specific cell's own real carved height
+(`excavation.slot_bands(cell)`), which is one band taller for a stair's
+intermediate stride cell. `WarrenMazeStampPass._column_bears`'s exact-flush
+exemption then certifies a claim as bearing using the WRONG (too-low)
+threshold for such a cell, when the real carved slot leaves its floor
+resting on one more band of open air than the generic constant assumes —
+confirmed identical on all 3 occurrences (`slot_bands = 4` where
+`HEADROOM_BANDS = 3`). This is a narrow, pre-existing defect in the
+source-plan's own bearing decision (predating today's fix, and outside its
+scope: fixing it would change which claims get created at stamp time
+across the whole corpus, not just how the translator reads them), not a
+regression from today's additive change — `WarrenBuildingParcel`'s own
+volume-grounded check correctly refuses to certify these 3 claims as
+bearing on real rock, since for these specific cells they genuinely are
+not. One of the three is `test_translator_partition_is_one_to_one_with_
+claims`'s own pinned seed 12; the other two are outside the pinned
+seeds. Seed 4 (the sibling pinned seed) now translates fully clean (0
+dropped claims, `maze_owned_solid_ratio = 0.6885`, re-pinned from 0.62 to
+0.66); seed 12's ownership floor (0.58) is carried forward unmeasured, one
+claim short of a sealed `WarrenParcelPlan`.
 
 ## Out of scope
 

@@ -178,12 +178,80 @@ func slot_signature() -> String:
 		frontage_direction.x, frontage_direction.y, address_door_phase]
 
 
+## Legacy behaviour (unchanged): a column bears when it is SOLID, without
+## gaps, from the envelope's own ground up to this parcel's own floor.
+## Additive branch below (controller ruling, 2026-08-22): when that fails,
+## a column may still bear on a TUNNEL'S OWN ROOF -- the same case
+## WarrenMazeStampPass._column_bears already proves legal at the source-plan
+## level (task 1's plinth refinement) before a maze claim is ever allowed to
+## place. This function only ever ADDS a second way to pass; the first
+## branch's own check and return value are untouched, so any caller whose
+## column already bore under the old rule bears identically under the new
+## one -- the legacy (non-maze) partitioner path, which never has a
+## public-realm carved gap in its own footprint columns, can never reach the
+## second branch's own true-returning paths (no carved cell means
+## `lowest_carved` stays -1 and it returns false, same as the old code
+## simply returning false outright).
 func _has_continuous_bearing(volume: WarrenVolumePlan,
 		column: Vector2i) -> bool:
 	var ground := volume.envelope.ground_at(column)
 	if base_band < ground:
 		return false
+	var continuous := true
 	for y in range(ground, base_band):
+		if not volume.has_mass(Vector3i(column.x, y, column.y)):
+			continuous = false
+			break
+	if continuous:
+		return true
+	return _has_tunnel_roof_bearing(volume, column, ground)
+
+
+## Second branch of _has_continuous_bearing (additive, 2026-08-22): legal
+## iff (a) every non-solid cell between `ground` and this parcel's own floor
+## is PUBLIC REALM -- a passage cell or its swept headroom, read through the
+## volume's own `has_public_air` (the authoritative accessor
+## WarrenExcavationVolumeAdapter._add_transitions populates via
+## `add_public_air` for exactly the cells `WarrenExcavation.carved` removed;
+## never reaches into the source plan directly, per the ruling), (b) the
+## PLINTH_BANDS bands directly below `base_band` are solid -- the tunnel's
+## own roof slab this parcel actually bears on -- UNLESS `base_band` lands
+## exactly `TUNNEL_ROOF_BANDS` above the carved run's own top, the one
+## flush case WarrenMazeStampPass._column_bears grants unconditionally (its
+## own plinth window there straddles the carved headroom by design, so
+## demanding it be solid would reject the exact case the source-plan
+## already proved legal before this claim was ever placed) -- and (c) below
+## the LOWEST carved cell found, mass is solid all the way down to
+## `ground`: real rock under the street, not a second unrelated gap. Both
+## constants are referenced from WarrenMazeStampPass, never duplicated, so
+## the two bearing checks can never quietly drift apart.
+func _has_tunnel_roof_bearing(volume: WarrenVolumePlan, column: Vector2i,
+		ground: int) -> bool:
+	var lowest_carved := -1
+	var carved_top := -1
+	for y in range(ground, base_band):
+		var cell := Vector3i(column.x, y, column.y)
+		if volume.has_mass(cell):
+			continue
+		if not volume.has_public_air(cell):
+			return false
+		if lowest_carved < 0 or y < lowest_carved:
+			lowest_carved = y
+		carved_top = maxi(carved_top, y + 1)
+	if lowest_carved < 0:
+		# Unreachable given the loop above (any non-solid, non-carved cell
+		# already returned false, so completing the loop with no carved cell
+		# found means every band was solid -- the first branch would already
+		# have returned true and this function would never have been
+		# called), kept as a defensive refusal rather than a silent accept.
+		return false
+	if base_band != carved_top + WarrenMazeStampPass.TUNNEL_ROOF_BANDS:
+		var plinth_floor := maxi(ground,
+			base_band - WarrenMazeStampPass.PLINTH_BANDS)
+		for y in range(plinth_floor, base_band):
+			if not volume.has_mass(Vector3i(column.x, y, column.y)):
+				return false
+	for y in range(ground, lowest_carved):
 		if not volume.has_mass(Vector3i(column.x, y, column.y)):
 			return false
 	return true
