@@ -91,8 +91,14 @@ defines each feature kind: quota range per scale profile, patch shapes,
 allowed edit ops, and priority. Initial entries:
 
 1. **market** (universal; exists today) — level to one datum.
-2. **courtyard / park** — lower built mass toward the terrain floor; terrain
-   showing through is the park surface.
+2. **courtyard / park** — level to the adjoining street, flat, at grade with
+   the walk it opens off (`level_to_walk`). Superseded 2026-08-21 by
+   controller ruling: the original design here ("lower built mass toward
+   the terrain floor; terrain showing through is the park surface") is
+   retired -- the user's direction is "no exposed ground," so there is no
+   sink-to-terrain fallback for a courtyard or garden terrace at any scale;
+   see "Tier-driven heights, street-level courtyards, and the
+   bridge-capable ledger" below for the current rule.
 3. **landmark plot** — level + clear for the measured prefab families.
 4. **large-house plot** — level a 3×2+ macro patch for L/T envelopes.
 5. **skywalk span** — claim a retained-overhead span from P2 as a typed
@@ -352,11 +358,12 @@ becomes `datum + PLOT_STOREYS[kind] * WarrenBuildingParcel.STOREY_BANDS`,
 replacing the old `maxi(effective_top, datum)` — which just preserved
 whatever the raw massif ceiling already was, the same
 massif-ceiling-derived-height bug Task 1 fixed for houses. A 0-storey kind
-is an open flat plot (top == datum); `_apply_sink_to_terrain` (courtyard)
-keeps sinking each column to its own terrain rather than a shared datum, so
-its per-column top already equals "datum + 0" by construction on the flat
-test corpus. The reservation dict gains `plot_top` for consumers (the
-skyline-trim `reservation_roof` branch above, and the debug view).
+is an open flat plot (top == datum). (Superseded 2026-08-21: courtyard
+itself moved off `_apply_level_to_datum` onto the new `level_to_walk` op
+entirely — see "Street-level courtyards and gardens" below; garden_terrace
+moved with it. `_apply_level_to_datum` now governs large_house and
+landmark_plot only.) The reservation dict gains `plot_top` for consumers
+(the skyline-trim `reservation_roof` branch above, and the debug view).
 
 **4. `WarrenMazeSourcePlan.record_trim(column, top_band) -> bool`** only ever
 lowers a column's `top_band` — never raises it, and never touches
@@ -428,12 +435,23 @@ rises above datum on any column fails fit outright (try shrink/move, same
 ladder as every other reservation) rather than partially leveling. A patch
 with no adjoining passage cell at all (a candidate anchored purely at the
 settlement rim, nowhere near a street) has no datum to level to and fails
-fit the same way — `_apply_sink_to_terrain` (unchanged) stays in the file
-but is no longer reachable through the registry for either kind, since it
-can no longer promise the one invariant this op exists to guarantee: every
-landed reservation is a single, real-street-anchored elevation, never a
-per-column terrain average. The reservation dict gains `plot_kind: &"flat"`
-for both kinds; `PLOT_STOREYS` is unchanged (0 for both — an open plot, no
+fit the same way. **Rim sink-to-terrain retired (2026-08-21, controller
+ruling):** the brief's original fallback — sink each column to its own
+terrain when a rim-anchored candidate has no adjoining street — is REMOVED
+outright, not merely unreachable: `_apply_sink_to_terrain` and the
+rim-anchor addition to `_patch_candidates` (`_rim_columns`, the retired
+`RIM_KINDS` constant) are deleted from the file. The user's latest
+direction is "no exposed ground" — a courtyard or garden terrace is a
+street-level flat plot only, at every scale, with no per-column-terrain
+escape hatch. Confirmed safe to delete outright (not merely dead code) by
+direct measurement: removing the rim-anchor addition produces
+byte-identical reservation counts across the full seeds 1-12 x {compact,
+standard} corpus, because `_apply_level_to_walk` requires a real adjoining
+passage cell regardless of which anchor a candidate footprint was
+enumerated from, and every footprint a rim anchor ever reached was already
+reachable from a passage-adjacent one. The reservation dict gains
+`plot_kind: &"flat"` for both kinds; `PLOT_STOREYS` is unchanged (0 for
+both — an open plot, no
 built mass above the leveled floor).
 
 **3. Skywalk spans, non-optional, bridge-consuming.** `skywalk_span`'s quota
@@ -539,34 +557,48 @@ gd` (11/11), and `test_settlement_fabric.gd` (42/42) — the legacy,
 non-maze parcel consumers — all pass unchanged.
 
 Measured effect on the full 24 seed×scale sweep (source seal → volume →
-translated `WarrenParcelPlan`): 18/23 reachable combinations now translate
-end-to-end, up from 1/23 with only the `_edited_massif` fix applied (one
-seed, compact 7, never reaches translation — a pre-existing carve-stage
-floor miss, unrelated). Of the 5 that still fail: 2 are pre-existing,
+translated `WarrenParcelPlan`), as of the `WarrenBuildingParcel` fix alone
+(before the per-cell headroom fix below): 18/23 reachable combinations
+translated end-to-end, up from 1/23 with only the `_edited_massif` fix
+applied (one seed, compact 7, never reaches translation — a pre-existing
+carve-stage floor miss, unrelated). 5 still failed: 2 pre-existing,
 unrelated seal rejections (compact 8's route/floor-slab gate, compact 11's
-load-path gate); 3 share one precisely diagnosed, narrower remaining gap —
-`WarrenMazeSourcePlan._passage_headroom_floor` measures a hosted passage's
-headroom using the fixed `WarrenExcavation.HEADROOM_BANDS` constant, not
-that specific cell's own real carved height
+load-path gate); 3 shared one precisely diagnosed, narrower remaining
+gap, fixed next.
+
+**Fixed (controller ruling, 2026-08-22): passage headroom is a per-cell
+fact, not a constant.** The 3 remaining drops above all shared one root
+cause: `WarrenMazeSourcePlan._passage_headroom_floor` measured a hosted
+passage's headroom using the fixed `WarrenExcavation.HEADROOM_BANDS`
+constant, not that specific cell's own real carved height
 (`excavation.slot_bands(cell)`), which is one band taller for a stair's
-intermediate stride cell. `WarrenMazeStampPass._column_bears`'s exact-flush
-exemption then certifies a claim as bearing using the WRONG (too-low)
-threshold for such a cell, when the real carved slot leaves its floor
-resting on one more band of open air than the generic constant assumes —
-confirmed identical on all 3 occurrences (`slot_bands = 4` where
-`HEADROOM_BANDS = 3`). This is a narrow, pre-existing defect in the
-source-plan's own bearing decision (predating today's fix, and outside its
-scope: fixing it would change which claims get created at stamp time
-across the whole corpus, not just how the translator reads them), not a
-regression from today's additive change — `WarrenBuildingParcel`'s own
-volume-grounded check correctly refuses to certify these 3 claims as
-bearing on real rock, since for these specific cells they genuinely are
-not. One of the three is `test_translator_partition_is_one_to_one_with_
-claims`'s own pinned seed 12; the other two are outside the pinned
-seeds. Seed 4 (the sibling pinned seed) now translates fully clean (0
-dropped claims, `maze_owned_solid_ratio = 0.6885`, re-pinned from 0.62 to
-0.66); seed 12's ownership floor (0.58) is carried forward unmeasured, one
-claim short of a sealed `WarrenParcelPlan`.
+intermediate stride cell (it carries both treads). `WarrenMazeStampPass.
+_column_bears`'s exact-flush exemption then certified a claim as bearing
+using the WRONG (too-low) threshold for such a cell — the real carved slot
+left its floor resting on one more band of open air than the generic
+constant assumed. Fixed at the single source of truth: new
+`WarrenMazeSourcePlan.passage_headroom_top(cell) = cell.y +
+excavation.slot_bands(cell)`; `_passage_headroom_floor` (the shared bound
+every headroom-measuring rule already went through — `record_edit`,
+`can_record_edit`, `record_trim`, `seal()`'s headroom validations,
+`state_at()`, `_column_bears`'s flush exemption) now computes its per-column
+max through this one function. `WarrenMazeStampPass._skyline_trim`'s
+tunnel-roof `keep` and `WarrenMazeReservationPass._claim_bridge_span`'s
+bridge datum, which read the constant directly rather than through
+`_passage_headroom_floor`, were updated to the same per-cell value.
+`WarrenBuildingParcel.gd` needed no change — its own tunnel-roof bearing
+check already read real carved cells off the volume (`has_public_air`),
+never the constant, which is exactly why it caught the 3 claims as
+genuinely not bearing on solid rock in the first place.
+
+With this fix, the sweep reaches **22/23** — matching this design's own
+pre-slice-1c historical baseline exactly. The one remaining failure
+(compact seed 8, the route/floor-slab gate above) is pre-existing and
+unrelated to headroom or bearing. Both of `test_translator_partition_is_
+one_to_one_with_claims`'s pinned seeds now translate fully clean with no
+tolerance branch: seed 4 unchanged at `maze_owned_solid_ratio = 0.6885`
+(floor re-pinned 0.62 → 0.66); seed 12 measured for the first time at
+`0.6750` (floor re-pinned 0.58 → 0.65).
 
 ## Out of scope
 

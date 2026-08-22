@@ -8,6 +8,11 @@ extends RefCounted
 ## reason-coded audit fact; reserve() only returns false on a contract
 ## violation such as being called with a sealed plan.
 const REGISTRY: Array[Dictionary] = [
+	# Rim sink-to-terrain RETIRED (2026-08-21 controller ruling, slice 1c
+	# task 1): the user's direction is "no exposed ground" -- courtyard and
+	# garden_terrace are street-level flat plots only, leveled to the
+	# adjoining walk (level_to_walk), never sunk to a per-column terrain
+	# average. See _apply_level_to_walk's own header.
 	{"kind": &"courtyard", "optional": false, "quota": {"compact": Vector2i(0, 1),
 		"standard": Vector2i(1, 1), "large": Vector2i(1, 2),
 		"grand": Vector2i(1, 2)}, "patch": Vector2i(2, 2),
@@ -38,7 +43,6 @@ const REGISTRY: Array[Dictionary] = [
 const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
 ]
-const RIM_KINDS: Array[StringName] = [&"courtyard", &"garden_terrace"]
 ## Reservation plot heights (2026-08-21 refinement): storeys above each
 ## kind's own datum -- skywalk_span is deliberately absent (claim_overhead
 ## never touches a floor at all; its flanks stand on grounded natural rock,
@@ -264,8 +268,6 @@ static func _try_fit_and_edit(plan: WarrenMazeSourcePlan, kind: StringName,
 	if footprint.is_empty():
 		return {}
 	match edit:
-		&"sink_to_terrain":
-			return _apply_sink_to_terrain(plan, kind, footprint)
 		&"level_to_datum":
 			return _apply_level_to_datum(plan, kind, footprint)
 		&"level_to_walk":
@@ -273,45 +275,25 @@ static func _try_fit_and_edit(plan: WarrenMazeSourcePlan, kind: StringName,
 	return {}
 
 
-static func _apply_sink_to_terrain(plan: WarrenMazeSourcePlan,
-		kind: StringName, footprint: Array[Vector2i]) -> Dictionary:
-	var datum := 2147483647
-	for column: Vector2i in footprint:
-		datum = mini(datum, plan.massif.base_at(column))
-	# 0-storey kind (courtyard): each column keeps sinking to its OWN terrain
-	# (not a shared datum), so top == that column's own floor -- already
-	# exactly "datum + 0*STOREY_BANDS" per column in the plan's own edit
-	# ledger; plot_top on the reservation records the nominal open-plot
-	# height (datum + PLOT_STOREYS*STOREY_BANDS) for consumers, even where a
-	# sloped footprint's own per-column tops vary from it.
-	var plot_top := datum \
-		+ int(PLOT_STOREYS.get(kind, 0)) * WarrenBuildingParcel.STOREY_BANDS
-	for column: Vector2i in footprint:
-		var floor_band := plan.massif.base_at(column)
-		if not plan.record_edit(column, floor_band, floor_band, &"reserve"):
-			return {}
-	plan.reservations.append({"kind": kind, "cells": footprint.duplicate(),
-		"datum_band": datum, "plot_top": plot_top,
-		"walk_cells": [] as Array[Vector3i], "audit": {}})
-	return {"kind": kind, "result": &"fit", "placed": true,
-		"cells": footprint.size()}
-
-
-## Rule 2 (street-level courtyards/gardens, slice 1c task 1, 2026-08-22):
-## courtyard and garden_terrace's own registry edit. datum is the y of the
-## lowest passage cell cardinally adjacent to the patch -- "the adjoining
-## walk cell the patch was enumerated from" -- never a terrain majority, so
-## the plot always reads as an extension of the street it opens off, not a
-## dip or a mound. Every column becomes a perfectly flat open plot at that
-## one shared elevation (`{floor: datum, top: datum}`, zero built height,
-## `plot_kind: &"flat"` on the reservation for consumers). `sink_to_terrain`
-## (unchanged, above) survives in the file as the rim-anchored kind's older
-## per-column behaviour, but is no longer reachable through the registry --
-## a candidate with no adjoining passage cell at all (purely rim-anchored,
-## nowhere near a street) has no walk datum to level to and simply fails
-## fit here, same as any other unmet precondition, rather than falling back
-## to a per-column terrain sink that could no longer promise the shared,
-## single-elevation plot this op exists to guarantee.
+## Rule 2 (street-level courtyards/gardens, slice 1c task 1, 2026-08-22;
+## rim sink-to-terrain retired 2026-08-21 by controller ruling -- "no
+## exposed ground": courtyard and garden_terrace level to the adjoining
+## walk ONLY, never sink to a per-column terrain average). courtyard and
+## garden_terrace's own registry edit. datum is the y of the lowest passage
+## cell cardinally adjacent to the patch -- "the adjoining walk cell the
+## patch was enumerated from" -- never a terrain majority, so the plot
+## always reads as an extension of the street it opens off, not a dip or a
+## mound. Every column becomes a perfectly flat open plot at that one
+## shared elevation (`{floor: datum, top: datum}`, zero built height,
+## `plot_kind: &"flat"` on the reservation for consumers). A candidate with
+## no adjoining passage cell at all (anchored purely at the settlement's
+## rim, nowhere near a street) has no walk datum to level to and simply
+## fails fit here, same as any other unmet precondition -- there is no
+## per-column terrain-sink fallback for that case; `_patch_candidates`
+## no longer even enumerates rim-only anchors for these two kinds (removed
+## alongside the old sink op: confirmed by direct measurement across the
+## full seeds 1-12 x {compact, standard} corpus that they never produced a
+## placement the passage-adjacent anchor set did not already reach).
 static func _apply_level_to_walk(plan: WarrenMazeSourcePlan,
 		kind: StringName, footprint: Array[Vector2i]) -> Dictionary:
 	var walk := _adjoining_walk_cell(plan, footprint)
@@ -438,10 +420,17 @@ static func _shrink_variants(footprint: Array[Vector2i]) -> Array:
 static func _patch_candidates(plan: WarrenMazeSourcePlan, kind: StringName,
 		patch: Vector2i, passage_columns: Dictionary,
 		claimed_columns: Dictionary) -> Array[Dictionary]:
+	# Rim-only anchors (WarrenMassif boundary columns not already
+	# passage-adjacent) were removed from this enumeration alongside the
+	# retired sink_to_terrain rim fallback (2026-08-21 controller ruling):
+	# _apply_level_to_walk requires a real adjoining passage cell regardless
+	# of which anchor a candidate footprint was enumerated from, and a
+	# direct measurement across the full seeds 1-12 x {compact, standard}
+	# corpus confirmed rim-only anchors never produced a courtyard/
+	# garden_terrace placement the passage-adjacent anchor set did not
+	# already reach on its own (byte-identical reservation counts with the
+	# rim addition removed).
 	var anchors: Dictionary = _passage_adjacent_columns(plan, passage_columns)
-	if kind in RIM_KINDS:
-		for column: Vector2i in _rim_columns(plan.massif, passage_columns):
-			anchors[column] = true
 	var anchor_list: Array[Vector2i] = []
 	anchor_list.assign(anchors.keys())
 	anchor_list.sort_custom(_column_less)
@@ -519,19 +508,6 @@ static func _passage_adjacent_columns(plan: WarrenMazeSourcePlan,
 			if plan.massif.has_column(column) \
 					and not passage_columns.has(column):
 				out[column] = true
-	return out
-
-
-static func _rim_columns(massif: WarrenMassif,
-		passage_columns: Dictionary) -> Dictionary:
-	var out: Dictionary = {}
-	for column: Vector2i in massif.columns.keys():
-		if passage_columns.has(column):
-			continue
-		for direction: Vector2i in CARDINALS:
-			if not massif.has_column(column + direction):
-				out[column] = true
-				break
 	return out
 
 

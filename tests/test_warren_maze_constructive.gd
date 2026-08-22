@@ -127,10 +127,14 @@ func test_reservation_edits_carry_reserve_phase_and_avoid_passage_columns() -> v
 	## a skywalk deck directly on top of the street, legal exactly when the
 	## edit's own floor clears every hosted passage's own headroom (the same
 	## bound WarrenMazeSourcePlan._passage_headroom_floor shares with
-	## record_trim and seal()). Re-derived here independently (max hosted
-	## passage y + WarrenExcavation.HEADROOM_BANDS per column) rather than
-	## reaching into the plan's own private helper, so this test does not
-	## just check the implementation against itself.
+	## record_trim and seal()). Per-column aggregation (max across every
+	## hosted passage cell) is re-derived independently here rather than
+	## calling `_passage_headroom_floor` itself, so this test does not just
+	## check the implementation against itself -- but the per-cell headroom
+	## VALUE now comes from the public `plan.passage_headroom_top(cell)`
+	## (controller ruling, 2026-08-22: cell.y + excavation.slot_bands(cell),
+	## never the flat HEADROOM_BANDS constant, which undercounts a
+	## stair/ramp intermediate cell's own taller carved slot).
 	var profile := WarrenVillageScaleProfile.for_id(&"standard")
 	var massif := WarrenMassifBuilder.build(1, {}, profile)
 	var plan := WarrenMazeCarver.carve(1, massif, profile, false)
@@ -142,7 +146,7 @@ func test_reservation_edits_carry_reserve_phase_and_avoid_passage_columns() -> v
 	var passage_headroom_floor: Dictionary = {}
 	for cell: Vector3i in plan.passage_cells():
 		var column := Vector2i(cell.x, cell.z)
-		var floor_needed := cell.y + WarrenExcavation.HEADROOM_BANDS
+		var floor_needed := plan.passage_headroom_top(cell)
 		passage_headroom_floor[column] = maxi(
 			int(passage_headroom_floor.get(column, floor_needed)), floor_needed)
 	for column: Vector2i in plan.column_edits.keys():
@@ -1501,6 +1505,9 @@ func test_houses_under_upper_streets_rise_to_meet_them() -> void:
 	assert_gt(total_mass, 0,
 		"the pinned corpus must produce at least one upper-street flank " \
 			+ "band to measure, or this test passes vacuously")
+	assert_gt(total_tiered, 0,
+		"the pinned corpus must produce at least one tiered claim, or the " \
+			+ "tiered-exactness loop above passes vacuously on zero iterations")
 	var claim_share := float(claim_mass) / float(maxi(1, total_mass))
 	print(("houses_under_upper_streets_rise_to_meet_them: claim=%d rock=%d " \
 		+ "share=%.4f tiered_claims=%d") \
