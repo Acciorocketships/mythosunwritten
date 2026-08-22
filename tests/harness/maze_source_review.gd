@@ -45,11 +45,22 @@ const PASSAGE_ALPHA := 0.45
 const SPINE_COLOR := Color("e8c76a")
 const ALLEY_COLOR := Color("cf9350")
 const MARKET_COLOR := Color("6fc4b8")
-const COVERED_COLOR := Color("d8f5f0")
 const SKYWALK_COLOR := Color("5aa9e6")
 const SPINE_WIDTH := 0.5
 const ALLEY_WIDTH := 0.25
 const MARKET_WIDTH := 0.45
+## Task 3 (tunnels/bridges/plots): a covered passage cell's roof draws in a
+## dark, distinctly cool tone -- never confusable with the warm retained-rock/
+## foundation family -- and its through-wall line (drawn only for covered
+## segments now; an open-to-sky segment's own translucent voxel already reads
+## from any angle) uses the same cool family so "this is covered" reads as
+## one consistent signal whether you are looking at the roof or the line.
+const TUNNEL_ROOF_COLOR := Color("2a2130")
+const TUNNEL_LINE_COLOR := Color("ff3ec9")
+## Flat reservations (courtyard/garden_terrace, plot_kind == &"flat") are an
+## open plot at street datum, not a building -- a thin slab reads as ground,
+## not a lump of mass.
+const FLAT_SLAB_HEIGHT := 0.3
 const RESERVATION_COLORS := {
 	&"courtyard": Color("4f9e5c"),
 	&"large_house": Color("e08a3c"),
@@ -179,12 +190,13 @@ func _render_seed(city_seed: int) -> void:
 					carve_failed = true
 				continue
 			_draw_terrain(root, plan.massif)
-			_draw_columns(root, plan, state)
+			var claims_by_column := _claims_by_column(plan)
+			var bridge_columns := _bridge_span_columns(plan)
+			_draw_columns(root, plan, state, claims_by_column, bridge_columns)
 			_draw_passage_voxels(root, plan)
 			_draw_path(root, plan)
-			if state == &"air":
-				_draw_covered_bars(root, plan)
-			_draw_skywalk_bars(root, plan)
+			_draw_covered_roofs(root, plan)
+			_draw_bridge_spans(root, plan, claims_by_column, bridge_columns)
 			if state == &"final":
 				final_plan = plan
 
@@ -316,11 +328,13 @@ func _draw_massif_solid(root: Node3D, massif: WarrenMassif) -> void:
 
 
 ## Retained rock: opaque stone with a slightly darker outline box, same
-## treatment as a reservation. Used for the raw pre-carve massif, whole
-## unclaimed columns, and whatever solid a claimed/reserved column doesn't
-## itself own (a raised floor's rock gap, the roof mass above a house) --
-## after the generator's own skyline trim this is genuinely structural
-## (streets cut into a mountain, tunnel roofs), never an error to hide.
+## treatment as a reservation. Used for the raw pre-carve massif and generic
+## unclaimed columns, where [y0, y1) is already known to be one unbroken
+## solid run (the massif's own range, or a run _draw_solid_runs already
+## scanned) -- after the generator's own skyline trim this is genuinely
+## structural (streets cut into a mountain, tunnel roofs), never an error to
+## hide. A claimed/reserved column's own gaps go through _draw_gap instead
+## (below), since slice 1c task 3 lets those be passage-hosting.
 func _draw_rock_column(root: Node3D, column: Vector2i, y0: int, y1: int) -> void:
 	if y1 <= y0:
 		return
@@ -328,9 +342,42 @@ func _draw_rock_column(root: Node3D, column: Vector2i, y0: int, y1: int) -> void
 	_box_column(root, column, y0, y1, RETAINED_ROCK_COLOR)
 
 
+## Fills [y0, y1) with `colour` wherever the plan itself still reports SOLID
+## there, rather than blindly boxing the whole span like _draw_rock_column.
+## Slice 1c task 3: a claimed/reserved column can now be passage-hosting (a
+## bridge house, a tunnel-roof-bearing claim, a skywalk deck) -- the mass
+## below its own floor (or above its own roof) may legitimately contain the
+## passage's own PASSAGE/AIR cells now, and painting the whole span opaque
+## would bury the passage voxel under solid rock/foundation, defeating the
+## entire point of this view. `outline_colour` with alpha 0 (the default)
+## skips the darker outline box -- FOUNDATION_COLOR never drew one, only
+## retained rock did.
+func _draw_gap(root: Node3D, plan: WarrenMazeSourcePlan, column: Vector2i,
+		y0: int, y1: int, colour: Color,
+		outline_colour: Color = Color(0.0, 0.0, 0.0, 0.0)) -> void:
+	if y1 <= y0:
+		return
+	var draw_outline := outline_colour.a > 0.0
+	var run_start := -1
+	for band in range(y0, y1):
+		var solid := plan.state_at(Vector3i(column.x, band, column.y)) \
+			== WarrenMazeSourcePlan.CellState.SOLID
+		if solid and run_start < 0:
+			run_start = band
+		elif not solid and run_start >= 0:
+			if draw_outline:
+				_box_column_outline(root, column, run_start, band, outline_colour)
+			_box_column(root, column, run_start, band, colour)
+			run_start = -1
+	if run_start >= 0:
+		if draw_outline:
+			_box_column_outline(root, column, run_start, y1, outline_colour)
+		_box_column(root, column, run_start, y1, colour)
+
+
 func _draw_columns(root: Node3D, plan: WarrenMazeSourcePlan,
-		state: StringName) -> void:
-	var claims_by_column := _claims_by_column(plan)
+		state: StringName, claims_by_column: Dictionary,
+		bridge_columns: Dictionary) -> void:
 	var reservation_lookup := _reservation_lookup(plan)
 	var foundation_lookup: Dictionary = {}
 	if state == &"final":
@@ -340,42 +387,59 @@ func _draw_columns(root: Node3D, plan: WarrenMazeSourcePlan,
 		var base := plan.massif.base_at(column)
 		var top := plan.massif.top_at(column)
 		if claims_by_column.has(column):
-			_draw_stacked_column(root, column, base, top,
+			_draw_stacked_column(root, plan, column, base, top,
 				claims_by_column[column] as Array, foundation_lookup.has(column))
 		elif reservation_lookup.has(column):
 			var info := reservation_lookup[column] as Dictionary
 			var floor_band := plan.effective_base(column)
 			var top_band := plan.effective_top(column)
-			_draw_reservation_column(root, column, base, top, floor_band,
-				top_band, info.color as Color, foundation_lookup.has(column))
+			_draw_reservation_column(root, plan, column, base, top, floor_band,
+				top_band, info.color as Color, foundation_lookup.has(column),
+				StringName(info.get("plot_kind", &"")))
+		elif bridge_columns.has(column):
+			continue # _draw_bridge_spans draws this column's real block.
 		else:
 			_draw_solid_runs(root, plan, column, base, top)
 
 
-## Every claimed or reserved column is, by construction, a wall column: the
-## whole [base, top) interval is untouched original mass (a passage never
-## runs through a column that fronts or reserves against it), so the
-## foundation/owned/remainder split below never needs a carved-gap scan --
-## only the generic unclaimed branch (_draw_solid_runs) does.
+## A claimed or reserved column USED to be, by construction, a wall column
+## (the whole [base, top) interval untouched original mass, since a passage
+## never ran through a column that fronted or reserved against it) -- slice
+## 1c task 1 broke that invariant on purpose (an upper street's house may
+## bear on a lower one's roof) and task 3 lets a claim sit directly on a
+## passage-hosting column (a bridge house, a tunnel-roof-bearing claim), so
+## the foundation/owned/remainder split below now needs the same carved-gap
+## scan the generic unclaimed branch (_draw_solid_runs) always used -- see
+## _draw_gap.
 ##
 ## `tiers` is one column's stack of claims (Task 1: an upper street's house
 ## may sit flush above a lower house's roof), lowest floor_band first, each
 ## already carrying its stack-stepped colour from _claims_by_column.
-func _draw_stacked_column(root: Node3D, column: Vector2i, base: int, top: int,
-		tiers: Array, show_foundation: bool) -> void:
+## `plan` (slice 1c task 3): a claimed column can now be passage-hosting (a
+## bridge house, a tunnel-roof-bearing claim -- rule 4), so the mass below its
+## own first floor is no longer guaranteed to be one unbroken solid run --
+## it may legitimately contain the passage's own PASSAGE/AIR cells. Every gap
+## drawn here goes through _draw_gap, which asks plan.state_at per band
+## instead of assuming solid, so the passage voxel underneath is never buried
+## under an opaque rock/foundation box.
+func _draw_stacked_column(root: Node3D, plan: WarrenMazeSourcePlan,
+		column: Vector2i, base: int, top: int, tiers: Array,
+		show_foundation: bool) -> void:
 	var first_floor := int((tiers[0] as Dictionary).floor_band)
 	if first_floor > base:
 		if show_foundation:
-			_box_column(root, column, base, first_floor, FOUNDATION_COLOR)
+			_draw_gap(root, plan, column, base, first_floor, FOUNDATION_COLOR)
 		else:
-			_draw_rock_column(root, column, base, first_floor)
+			_draw_gap(root, plan, column, base, first_floor,
+				RETAINED_ROCK_COLOR, RETAINED_ROCK_COLOR.darkened(0.35))
 	var cursor := first_floor
 	for tier_info: Dictionary in tiers:
 		var floor_band := int(tier_info.floor_band)
 		if floor_band > cursor:
 			# Connective mass between two stacked tiers -- structural rock,
 			# rare (a flush stack leaves no gap).
-			_draw_rock_column(root, column, cursor, floor_band)
+			_draw_gap(root, plan, column, cursor, floor_band,
+				RETAINED_ROCK_COLOR, RETAINED_ROCK_COLOR.darkened(0.35))
 		var visual_top := maxi(floor_band + 1, int(tier_info.top_band))
 		_box_column(root, column, floor_band, visual_top,
 			tier_info.color as Color)
@@ -383,23 +447,49 @@ func _draw_stacked_column(root: Node3D, column: Vector2i, base: int, top: int,
 	if cursor < top:
 		# Mass above the topmost claim that no claim ever reaches -- after
 		# the skyline trim this is the mountain's own remaining shoulder.
-		_draw_rock_column(root, column, cursor, top)
+		_draw_gap(root, plan, column, cursor, top, RETAINED_ROCK_COLOR,
+			RETAINED_ROCK_COLOR.darkened(0.35))
 
 
-func _draw_reservation_column(root: Node3D, column: Vector2i, base: int,
-		top: int, floor_band: int, top_band: int, colour: Color,
-		show_foundation: bool) -> void:
+func _draw_reservation_column(root: Node3D, plan: WarrenMazeSourcePlan,
+		column: Vector2i, base: int, top: int, floor_band: int, top_band: int,
+		colour: Color, show_foundation: bool, plot_kind: StringName) -> void:
 	if floor_band > base:
 		if show_foundation:
-			_box_column(root, column, base, floor_band, FOUNDATION_COLOR)
+			_draw_gap(root, plan, column, base, floor_band, FOUNDATION_COLOR)
 		else:
-			_draw_rock_column(root, column, base, floor_band)
+			_draw_gap(root, plan, column, base, floor_band,
+				RETAINED_ROCK_COLOR, RETAINED_ROCK_COLOR.darkened(0.35))
+	if plot_kind == &"flat":
+		# Task 3 requirement 3: courtyard/garden read as an open plot, not a lump of
+		# building. A flat reservation's own floor_band == top_band == datum
+		# -- the ledger already reports every band above as AIR (an open sky
+		# plot) -- so there is deliberately no "mass above" draw here: the old
+		# generic box math would paint a rock dome over sky state_at no
+		# longer agrees exists.
+		_draw_flat_slab(root, column, floor_band, colour)
+		return
 	var visual_top := maxi(floor_band + 1, top_band)
 	_box_column_outline(root, column, floor_band, visual_top,
 		colour.darkened(0.45))
 	_box_column(root, column, floor_band, visual_top, colour)
 	if visual_top < top:
-		_draw_rock_column(root, column, visual_top, top)
+		_draw_gap(root, plan, column, visual_top, top, RETAINED_ROCK_COLOR,
+			RETAINED_ROCK_COLOR.darkened(0.35))
+
+
+## Task 3 requirement 3: a thin slab at the datum rather than a full-band box, so a
+## flat courtyard/garden plot reads as open ground even from an iso angle.
+func _draw_flat_slab(root: Node3D, column: Vector2i, band: int,
+		colour: Color) -> void:
+	var centre_y := float(band) * BAND + FLAT_SLAB_HEIGHT * 0.5
+	var origin := Vector3(float(column.x) * CELL, centre_y,
+		float(column.y) * CELL)
+	var margin := OUTLINE_MARGIN * 2.0
+	_box(root, origin, Vector3(CELL * 0.94 + margin,
+		FLAT_SLAB_HEIGHT + margin, CELL * 0.94 + margin), colour.darkened(0.45))
+	_box(root, origin, Vector3(CELL * 0.94, FLAT_SLAB_HEIGHT, CELL * 0.94),
+		colour)
 
 
 func _draw_solid_runs(root: Node3D, plan: WarrenMazeSourcePlan,
@@ -456,19 +546,67 @@ func _lineage_colour(hint: StringName) -> Color:
 
 
 func _reservation_lookup(plan: WarrenMazeSourcePlan) -> Dictionary:
-	## skywalk_span is deliberately excluded: its flank columns are unedited
-	## natural wall mass (claim_overhead never records an edit), so they
-	## fall through to the ordinary retained-solid branch and the span
-	## itself is drawn separately as an overhead bar (_draw_skywalk_bars).
+	## skywalk_span is deliberately excluded here: unlike every other kind,
+	## it does not always own natural, ungrounded wall mass -- a bridge-
+	## consumed instance genuinely edits its own passage-hosting columns, so
+	## _draw_bridge_spans (which agrees with the generator's own datum/
+	## plot_top formula for EVERY bridge span, not just the ones that became
+	## a formal reservation) draws it instead, as a real block rather than
+	## the old thin overhead bar.
 	var out: Dictionary = {}
 	for reservation: Dictionary in plan.reservations:
 		var kind := StringName(reservation.get("kind", &""))
 		if kind == &"skywalk_span":
 			continue
 		var colour: Color = RESERVATION_COLORS.get(kind, Color("aaaaaa"))
+		var plot_kind := StringName(reservation.get("plot_kind", &""))
 		for column: Vector2i in reservation.get("cells", []) as Array[Vector2i]:
-			out[column] = {"kind": kind, "color": colour}
+			out[column] = {"kind": kind, "color": colour, "plot_kind": plot_kind}
 	return out
+
+
+## column -> {datum, plot_top}, mirroring WarrenMazeReservationPass.
+## _claim_bridge_span's own formula exactly (max passage_headroom_top across
+## the span's own cells, one storey above) so the debug view always draws
+## the SAME deck height the generator would edit to -- whether or not this
+## particular span actually became a formal skywalk_span reservation. The
+## reservation quota can leave spans over; an unclaimed, unreserved bridge
+## span should still read as a bridge, never as unlabeled retained rock.
+func _bridge_span_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
+	var out: Dictionary = {}
+	for span_value: Variant in plan.excavation.bridge_spans:
+		var span := span_value as Array[Vector3i]
+		if span.is_empty():
+			continue
+		var datum := plan.passage_headroom_top(span[0])
+		for cell: Vector3i in span:
+			datum = maxi(datum, plan.passage_headroom_top(cell))
+		var plot_top := datum + WarrenBuildingParcel.STOREY_BANDS
+		for cell: Vector3i in span:
+			var column := Vector2i(cell.x, cell.z)
+			var existing: Dictionary = out.get(column, {})
+			out[column] = {"datum": maxi(datum, int(existing.get("datum", datum))),
+				"plot_top": maxi(plot_top, int(existing.get("plot_top", plot_top)))}
+	return out
+
+
+## Every cell any bridge span retains, for _draw_covered_roofs' own skip
+## check (a bridge cell gets the taller, distinctly-coloured deck block from
+## _draw_bridge_spans instead of the plain tunnel-roof slab).
+func _bridge_span_cells(plan: WarrenMazeSourcePlan) -> Dictionary:
+	var out: Dictionary = {}
+	for span_value: Variant in plan.excavation.bridge_spans:
+		for cell: Vector3i in span_value as Array[Vector3i]:
+			out[cell] = true
+	return out
+
+
+func _count_tiered_claims(plan: WarrenMazeSourcePlan) -> int:
+	var count := 0
+	for claim: Dictionary in plan.parcel_claims:
+		if bool(claim.get("tiered", false)):
+			count += 1
+	return count
 
 
 ## ---------------------------------------------------------------------
@@ -512,58 +650,75 @@ func _draw_path(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
 			false)
 
 
+## Task 3 requirement 4: the no-depth-test through-wall line is only needed where
+## rock actually hides the corridor from view -- an open-to-sky segment's own
+## translucent voxel (_draw_passage_voxels, drawn for every passage cell
+## regardless) already reads from any angle. A covered segment draws the
+## line in the alternate tunnel colour instead of its usual spine/alley/
+## market colour, so a covered stretch of street reads as covered at a
+## glance, whichever kind of passage it is.
 func _draw_path_edge(root: Node3D, plan: WarrenMazeSourcePlan, a: Vector3i,
 		b: Vector3i, is_route: bool) -> void:
+	var covered := bool(plan.excavation.covered.get(a, false)) \
+		or bool(plan.excavation.covered.get(b, false))
+	if not covered:
+		return
 	var kind_a := StringName(plan.passage_kinds.get(a, &""))
 	var kind_b := StringName(plan.passage_kinds.get(b, &""))
 	if kind_a == WarrenMazeSourcePlan.PASSAGE_MARKET \
 			or kind_b == WarrenMazeSourcePlan.PASSAGE_MARKET:
-		_edge(root, a, b, MARKET_WIDTH, MARKET_COLOR)
+		_edge(root, a, b, MARKET_WIDTH, TUNNEL_LINE_COLOR)
 	elif is_route:
-		_edge(root, a, b, SPINE_WIDTH, SPINE_COLOR)
+		_edge(root, a, b, SPINE_WIDTH, TUNNEL_LINE_COLOR)
 	else:
-		_edge(root, a, b, ALLEY_WIDTH, ALLEY_COLOR)
+		_edge(root, a, b, ALLEY_WIDTH, TUNNEL_LINE_COLOR)
 
 
-func _draw_covered_bars(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
+## Task 3 requirement 1: every COVERED passage cell gets a dark, 1-band tunnel-roof
+## slab at its own real headroom top (plan.passage_headroom_top -- a stair
+## stride cell's own carved slot runs one band taller than the flat
+## HEADROOM_BANDS constant, so a per-cell query is the only correct height).
+## Bridge-span cells are excluded: _draw_bridge_spans already draws a taller,
+## distinctly-coloured deck block starting at the very same y, which reads
+## as "bridge" rather than "tunnel" -- drawing both would just paint two
+## colours over the same band.
+func _draw_covered_roofs(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
+	var bridge_cells := _bridge_span_cells(plan)
 	for cell: Vector3i in plan.passage_cells():
+		if bridge_cells.has(cell) \
+				or not bool(plan.excavation.covered.get(cell, false)):
+			continue
 		var column := Vector2i(cell.x, cell.z)
-		var roof := Vector3i(cell.x, cell.y + plan.excavation.slot_bands(cell),
-			cell.z)
-		var covered: bool = plan.massif.top_at(column) > roof.y \
-			and not plan.excavation.carved.has(roof)
-		if not covered:
-			continue
-		var origin := Vector3(float(cell.x) * CELL, float(roof.y) * BAND + 0.1,
-			float(cell.z) * CELL)
-		_box(root, origin, Vector3(CELL * 0.7, 0.18, CELL * 0.7),
-			COVERED_COLOR, 0.6)
+		var roof_y := plan.passage_headroom_top(cell)
+		_box_column(root, column, roof_y, roof_y + 1, TUNNEL_ROOF_COLOR)
 
 
-func _draw_skywalk_bars(root: Node3D, plan: WarrenMazeSourcePlan) -> void:
-	for reservation: Dictionary in plan.reservations:
-		if StringName(reservation.get("kind", &"")) != &"skywalk_span":
+## Task 3 requirement 2: every retained bridge span reads as a real block -- never a
+## thin bar -- house-coloured where a claim actually built on top of it (a
+## bridge house; already drawn by _draw_stacked_column, which now respects
+## the passage beneath it via _draw_gap, so nothing further is drawn here for
+## a claimed column), else the skywalk deck's own blue block from
+## datum..plot_top, drawn here regardless of whether this particular span
+## became a FORMAL skywalk_span reservation -- the quota can leave spans
+## over, and an unclaimed one should still read as a bridge.
+func _draw_bridge_spans(root: Node3D, plan: WarrenMazeSourcePlan,
+		claims_by_column: Dictionary, bridge_columns: Dictionary) -> void:
+	for column: Vector2i in bridge_columns.keys():
+		if claims_by_column.has(column):
 			continue
-		var walk_cells: Array[Vector3i] = reservation.get("walk_cells", []) \
-			as Array[Vector3i]
-		var cells: Array[Vector2i] = reservation.get("cells", []) \
-			as Array[Vector2i]
-		if walk_cells.is_empty() or cells.size() < 2:
-			continue
-		var walk: Vector3i = walk_cells[0]
-		var band := walk.y + WarrenExcavation.HEADROOM_BANDS
-		var a := cells[0]
-		var b := cells[1]
-		var centre_column := Vector2((float(a.x) + float(b.x)) * 0.5,
-			(float(a.y) + float(b.y)) * 0.5)
-		var length := Vector2(float(a.x - b.x), float(a.y - b.y)).length() \
-			* CELL + CELL
-		var origin := Vector3(centre_column.x * CELL, float(band) * BAND,
-			centre_column.y * CELL)
-		var horizontal := a.x != b.x
-		var size := Vector3(length, BAND * 0.3, CELL * 0.6) if horizontal \
-			else Vector3(CELL * 0.6, BAND * 0.3, length)
-		_box(root, origin, size, SKYWALK_COLOR)
+		var info := bridge_columns[column] as Dictionary
+		var datum := int(info.datum)
+		var plot_top := int(info.plot_top)
+		var base := plan.massif.base_at(column)
+		var top := plan.massif.top_at(column)
+		_draw_gap(root, plan, column, base, datum, RETAINED_ROCK_COLOR,
+			RETAINED_ROCK_COLOR.darkened(0.35))
+		_box_column_outline(root, column, datum, plot_top,
+			SKYWALK_COLOR.darkened(0.45))
+		_box_column(root, column, datum, plot_top, SKYWALK_COLOR)
+		if plot_top < top:
+			_draw_gap(root, plan, column, plot_top, top, RETAINED_ROCK_COLOR,
+				RETAINED_ROCK_COLOR.darkened(0.35))
 
 
 ## ---------------------------------------------------------------------
@@ -697,11 +852,13 @@ func _legend_bbcode(city_seed: int, profile: WarrenVillageScaleProfile,
 	lines.append("1 band = 1.5 m, 1 storey = 2 bands = 3 m")
 	if plan != null:
 		var stacked := _count_stacked_columns(plan)
+		var tiered := _count_tiered_claims(plan)
 		var breakdown := _ownership_breakdown(plan)
 		var total_columns := maxi(1, plan.massif.columns.size())
 		var ratio := float(breakdown.claimed) / float(total_columns)
-		lines.append("parcels %d   stacked columns %d   ownership %.0f%%" \
-			% [plan.parcel_claims.size(), stacked, ratio * 100.0])
+		lines.append(
+			"parcels %d   stacked columns %d   tiered houses %d   ownership %.0f%%" \
+			% [plan.parcel_claims.size(), stacked, tiered, ratio * 100.0])
 	lines.append("")
 	var house_swatches := ""
 	for colour: Color in LINEAGE_PALETTE:
@@ -710,25 +867,31 @@ func _legend_bbcode(city_seed: int, profile: WarrenVillageScaleProfile,
 		+ " house (lineage hash mod 8; darker = higher stacked floor)")
 	lines.append(_swatch(FOUNDATION_COLOR,
 		"foundation (rock bearing a raised floor -- deep under upper streets)"))
-	lines.append(_swatch(RETAINED_ROCK_COLOR,
-		"retained rock (under streets / tunnel roofs)"))
+	lines.append(_swatch(RETAINED_ROCK_COLOR, "retained rock (under streets)"))
+	lines.append(_swatch(TUNNEL_ROOF_COLOR,
+		"tunnel roof (covered passage, 1 band at headroom top)"))
 	lines.append(_swatch(TERRAIN_COLOR, "terrain apron"))
 	lines.append("[b]reservations (opaque, dark outline)[/b]")
-	lines.append(_swatch(RESERVATION_COLORS[&"courtyard"] as Color, "courtyard"))
+	lines.append(_swatch(RESERVATION_COLORS[&"courtyard"] as Color,
+		"courtyard (flat plot, 0.3 m slab)"))
 	lines.append(_swatch(RESERVATION_COLORS[&"large_house"] as Color,
 		"large house"))
 	lines.append(_swatch(RESERVATION_COLORS[&"landmark_plot"] as Color,
 		"landmark"))
 	lines.append(_swatch(RESERVATION_COLORS[&"garden_terrace"] as Color,
-		"garden terrace"))
+		"garden terrace (flat plot, 0.3 m slab)"))
 	lines.append(
-		"plots: courtyard/garden flat, large house/landmark 3-storey envelope")
-	lines.append(_swatch(SKYWALK_COLOR, "skywalk (overhead bar)"))
-	lines.append("[b]passages (translucent corridor + through-wall line)[/b]")
-	lines.append(_swatch(SPINE_COLOR, "spine (thick line, wide corridor)"))
-	lines.append(_swatch(ALLEY_COLOR, "alley (thin line, narrow corridor)"))
-	lines.append(_swatch(MARKET_COLOR, "market"))
-	lines.append(_swatch(COVERED_COLOR, "covered-passage marker (air state)"))
+		"plots: courtyard/garden flat 0.3 m slab, large house/landmark 3-storey")
+	lines.append(_swatch(SKYWALK_COLOR,
+		"bridge deck, reserved (block, datum..+1 storey)"))
+	lines.append(
+		"bridge deck, claimed: house colour (same stack-tier shading as a claim)")
+	lines.append("[b]passages (translucent corridor voxel)[/b]")
+	lines.append(_swatch(SPINE_COLOR, "spine voxel (wide corridor)"))
+	lines.append(_swatch(ALLEY_COLOR, "alley voxel (narrow corridor)"))
+	lines.append(_swatch(MARKET_COLOR, "market voxel"))
+	lines.append(_swatch(TUNNEL_LINE_COLOR,
+		"through-wall line (covered segments only; open segments need no line)"))
 	return "\n".join(lines)
 
 
