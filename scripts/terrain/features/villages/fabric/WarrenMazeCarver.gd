@@ -15,6 +15,12 @@ const MAX_ALLEY_CELLS := 8
 const SPINE_VISIT_BUDGET := 40000
 const MAX_DERIVED_ALLEY_CELLS := 320
 const OPEN_AIR_THICKNESS_CEILING := 2
+## Lowered from the design's 5 (2026-08-22): with a period of 5, the
+## seed-1..6 standard corpus retained bridge spans on only 1 of 6 towns --
+## legal flank/mass candidates are inherently sparse near the thin-roofed
+## edge of a hill massif. 4 does not materially change that (still 1 of 6);
+## see task-2-report.md for per-seed counts and the DONE_WITH_CONCERNS note.
+const BRIDGE_SPAN_PERIOD := 4
 const MIN_LOOP_JOINS := 1
 const MAX_LOOP_JOINS := 2
 const MAX_LOOP_CONNECTOR_CELLS := 8
@@ -102,8 +108,8 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	for cell: Vector3i in market_square:
 		if cell not in forced_open:
 			forced_open.append(cell)
-	_open_passages_to_air(massif, excavation, thickness,
-		forced_open)
+	_open_passages_to_air(world_seed, massif, excavation, thickness,
+		forced_open, profile)
 	_finalize_excavation(massif, excavation)
 	if not excavation.seal():
 		last_failure = "maze excavation rejected: %s" % excavation.last_rejection
@@ -887,26 +893,169 @@ static func _alley_stride_is_legal(massif: WarrenMassif,
 	return true
 
 
-static func _open_passages_to_air(massif: WarrenMassif,
+static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, thickness: Dictionary,
-		market_zone: Array) -> void:
+		market_zone: Array, profile: WarrenVillageScaleProfile) -> void:
 	var market_set: Dictionary = {}
 	for value: Variant in market_zone:
 		market_set[value as Vector3i] = true
+	# Seeded bridge spans intercept a handful of would-be-open cells before
+	# the sky opens over them: their overhead mass stays retained, becoming a
+	# skywalk deck connecting the two blocks the span's flanks front. Every
+	# other would-be-open cell keeps opening exactly as before.
+	var bridged := _select_bridge_spans(world_seed, massif, excavation,
+		thickness, market_set, profile)
 	for cell: Vector3i in excavation.public_cells():
+		if bridged.has(cell):
+			continue
 		var column := Vector2i(cell.x, cell.z)
-		var open := market_set.has(cell) \
-			or int(thickness.get(column, 2)) <= OPEN_AIR_THICKNESS_CEILING
-		# An over/under crossing deliberately uses the solid above one passage
-		# as an inhabited facade beside another. Opening that whole column would
-		# erase the wall the network already proved and turn a mountain crossing
-		# into an unowned shaft.
-		if open and _column_is_public_facade(massif, excavation, column, cell):
-			open = false
-		if not open:
+		if not _would_be_open(massif, excavation, thickness, market_set, cell):
 			continue
 		for band in range(cell.y, massif.top_at(column)):
 			excavation.carved[Vector3i(cell.x, band, cell.z)] = true
+
+
+static func _would_be_open(massif: WarrenMassif, excavation: WarrenExcavation,
+		thickness: Dictionary, market_set: Dictionary, cell: Vector3i) -> bool:
+	var column := Vector2i(cell.x, cell.z)
+	var open := market_set.has(cell) \
+		or int(thickness.get(column, 2)) <= OPEN_AIR_THICKNESS_CEILING
+	# An over/under crossing deliberately uses the solid above one passage
+	# as an inhabited facade beside another. Opening that whole column would
+	# erase the wall the network already proved and turn a mountain crossing
+	# into an unowned shaft.
+	if open and _column_is_public_facade(massif, excavation, column, cell):
+		open = false
+	return open
+
+
+static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
+		excavation: WarrenExcavation, thickness: Dictionary,
+		market_set: Dictionary, profile: WarrenVillageScaleProfile) -> Dictionary:
+	## Walks the spine then each lane in array order (never dictionary order)
+	## looking for maximal runs of would-be-open, non-market, non-portal,
+	## level-stride cells -- the flat, thin-roofed street segments that would
+	## otherwise become one continuous open-air canyon. Every
+	## BRIDGE_SPAN_PERIOD cells of such a run, at a seeded phase, a
+	## one-or-two-cell span is proposed; it is accepted into
+	## `excavation.bridge_spans` only when its flanks prove it genuinely
+	## connects two blocks, up to the profile's skywalk quota.
+	var accepted: Dictionary = {}
+	var quota := profile.skywalk_range.y
+	if quota <= 0 or excavation.route.is_empty():
+		return accepted
+	var portal := excavation.route[0]
+	var walks: Array[Array] = [excavation.route]
+	var walk_transitions: Array[Array] = [excavation.transitions]
+	for lane: Dictionary in excavation.lanes:
+		var walk: Array[Vector3i] = [lane.anchor as Vector3i]
+		walk.append_array(lane.cells as Array[Vector3i])
+		walks.append(walk)
+		walk_transitions.append(lane.transitions as Array[Dictionary])
+	for walk_index in walks.size():
+		if excavation.bridge_spans.size() >= quota:
+			break
+		var walk := walks[walk_index] as Array[Vector3i]
+		var level_cells := _level_stride_cells(walk,
+			walk_transitions[walk_index] as Array[Dictionary])
+		var run: Array[Vector3i] = []
+		var directions: Dictionary = {}
+		for index in range(1, walk.size()):
+			var cell := walk[index]
+			var eligible := level_cells.has(cell) and cell != portal \
+				and not market_set.has(cell) \
+				and _would_be_open(massif, excavation, thickness, market_set,
+					cell)
+			if eligible:
+				run.append(cell)
+				directions[cell] = Vector2i(cell.x - walk[index - 1].x,
+					cell.z - walk[index - 1].z)
+				continue
+			if not run.is_empty():
+				_select_spans_in_run(world_seed, massif, excavation, run,
+					directions, quota, accepted)
+				run = []
+				directions = {}
+				if excavation.bridge_spans.size() >= quota:
+					break
+		if not run.is_empty():
+			_select_spans_in_run(world_seed, massif, excavation, run,
+				directions, quota, accepted)
+	return accepted
+
+
+static func _level_stride_cells(walk: Array[Vector3i],
+		transitions: Array[Dictionary]) -> Dictionary:
+	## The subset of `walk`'s cells whose incoming transition is a rise-0
+	## LEVEL stride. LEVEL is the only Kind whose run is always 1
+	## (WarrenExcavation.kind_allows), so each LEVEL spec's `to` cell is
+	## exactly one new walk cell -- there is never an intermediate cell to
+	## also mark, unlike a multi-cell STAIR or RAMP span.
+	var out: Dictionary = {}
+	var cursor := 0
+	for spec: Dictionary in transitions:
+		var from_cell := spec.from as Vector3i
+		var to_cell := spec.to as Vector3i
+		var run := absi(to_cell.x - from_cell.x) + absi(to_cell.z - from_cell.z)
+		cursor += run
+		if cursor >= walk.size():
+			break
+		if int(spec.kind) == WarrenVolumeTransition.Kind.LEVEL:
+			out[walk[cursor]] = true
+	return out
+
+
+static func _select_spans_in_run(world_seed: int, massif: WarrenMassif,
+		excavation: WarrenExcavation, run: Array[Vector3i],
+		directions: Dictionary, quota: int, accepted: Dictionary) -> void:
+	if run.is_empty():
+		return
+	var phase := WarrenPassageLatticeRules.hash_key(world_seed, 0xB21D6E,
+		run[0], 0) % BRIDGE_SPAN_PERIOD
+	var index := phase
+	while index < run.size():
+		if excavation.bridge_spans.size() >= quota:
+			return
+		var start_cell := run[index]
+		var length_hash := WarrenPassageLatticeRules.hash_key(world_seed,
+			0xB21D6E, start_cell, 1)
+		var length := mini(1 + (length_hash % 2), run.size() - index)
+		var span: Array[Vector3i] = run.slice(index, index + length)
+		if _bridge_span_is_legal(massif, excavation, span, directions):
+			excavation.bridge_spans.append(span)
+			for cell: Vector3i in span:
+				accepted[cell] = true
+		index += BRIDGE_SPAN_PERIOD
+
+
+static func _bridge_span_is_legal(massif: WarrenMassif,
+		excavation: WarrenExcavation, span: Array[Vector3i],
+		directions: Dictionary) -> bool:
+	for cell: Vector3i in span:
+		var direction := directions.get(cell, Vector2i.ZERO) as Vector2i
+		if direction == Vector2i.ZERO:
+			return false
+		var perpendicular := Vector2i(-direction.y, direction.x)
+		var column := Vector2i(cell.x, cell.z)
+		var roof_band := cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS
+		for flank: Vector2i in [column + perpendicular, column - perpendicular]:
+			if not _column_is_solid_at(massif, excavation, flank, cell.y) \
+					or not _column_is_solid_at(massif, excavation, flank,
+						roof_band):
+				return false
+		if massif.top_at(column) - cell.y \
+				< WarrenPassageLatticeRules.HEADROOM_BANDS + 2:
+			return false
+	return true
+
+
+static func _column_is_solid_at(massif: WarrenMassif,
+		excavation: WarrenExcavation, column: Vector2i, band: int) -> bool:
+	if not massif.has_column(column):
+		return false
+	if band < massif.base_at(column) or band >= massif.top_at(column):
+		return false
+	return not excavation.carved.has(Vector3i(column.x, band, column.y))
 
 
 static func _column_is_public_facade(massif: WarrenMassif,

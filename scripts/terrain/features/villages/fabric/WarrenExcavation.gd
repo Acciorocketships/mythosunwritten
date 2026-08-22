@@ -38,6 +38,13 @@ var lanes: Array[Dictionary] = []
 ## this separate from ordered lane walks lets the source remain a set of simple
 ## non-revisiting paths while still sealing a cyclic public graph.
 var loop_edges: Array[Dictionary] = []
+## Level-stride public cells whose overhead mass the carver deliberately
+## retained instead of opening to the sky, so the retained mass forms a
+## walkable deck connecting the two blocks that flank the cell. Each entry is
+## one contiguous, ordered `Array[Vector3i]` run of already-public (route or
+## lane) cells; `_finalize_excavation` marks them `covered` the same as any
+## other roofed passage cell.
+var bridge_spans: Array[Array] = []
 var carved: Dictionary = {}
 var covered: Dictionary = {}
 var transitions: Array[Dictionary] = []
@@ -91,6 +98,8 @@ func seal() -> bool:
 		return false
 	if not _loop_edges_close_the_public_graph(seen):
 		return false
+	if not _bridge_spans_are_legal(seen):
+		return false
 	_sealed = true
 	return true
 
@@ -121,6 +130,37 @@ func _loop_edges_close_the_public_graph(public_cells: Dictionary) -> bool:
 			last_rejection = "duplicate loop edge %s" % key
 			return false
 		seen_edges[key] = true
+	return true
+
+
+func _bridge_spans_are_legal(public_cells: Dictionary) -> bool:
+	## A bridge span retains the overhead mass a would-be-open street cell
+	## would otherwise lose, so a consumer can build a skywalk deck across it.
+	## Each entry must be a genuine slice of already-walked public realm: a
+	## contiguous, level run of cells the route or a lane actually carved, and
+	## one `_finalize_excavation` in turn marked covered -- never an
+	## independent claim the carver invented after the fact.
+	for index in bridge_spans.size():
+		var span := bridge_spans[index] as Array[Vector3i]
+		if span.is_empty():
+			last_rejection = "bridge span %d has no cells" % index
+			return false
+		for cell_index in span.size():
+			var cell := span[cell_index]
+			if not public_cells.has(cell):
+				last_rejection = "bridge span %d cell %s is not public realm" \
+					% [index, cell]
+				return false
+			if not bool(covered.get(cell, false)):
+				last_rejection = "bridge span %d cell %s is not covered" \
+					% [index, cell]
+				return false
+			if cell_index > 0:
+				var delta := cell - span[cell_index - 1]
+				if delta.y != 0 or absi(delta.x) + absi(delta.z) != 1:
+					last_rejection = "bridge span %d is not contiguous at %s" \
+						% [index, cell]
+					return false
 	return true
 
 

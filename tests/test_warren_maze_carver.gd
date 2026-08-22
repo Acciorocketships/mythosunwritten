@@ -206,3 +206,130 @@ func test_shared_stride_rules_match_the_transition_vocabulary() -> void:
 		WarrenPassageLatticeRules.STAIR_UP.kind, 1, 2))
 	assert_true(WarrenExcavation.kind_allows(
 		WarrenPassageLatticeRules.RAMP_UP.kind, 1, 3))
+
+
+func _plan_walks(plan: WarrenMazeSourcePlan) -> Array:
+	## Route then each lane's own [anchor] + cells walk, mirroring exactly the
+	## sequences WarrenMazeCarver._select_bridge_spans iterated over. A bridge
+	## span must be locatable as a contiguous run of one of these.
+	var walks: Array = [plan.excavation.route]
+	for lane: Dictionary in plan.excavation.lanes:
+		var walk: Array[Vector3i] = [lane.anchor as Vector3i]
+		walk.append_array(lane.cells as Array[Vector3i])
+		walks.append(walk)
+	return walks
+
+
+func _locate_span(walks: Array, span: Array) -> Dictionary:
+	var span_cells := span as Array[Vector3i]
+	for walk_value: Variant in walks:
+		var walk := walk_value as Array[Vector3i]
+		for start in range(walk.size() - span_cells.size() + 1):
+			var matches := true
+			for offset in span_cells.size():
+				if walk[start + offset] != span_cells[offset]:
+					matches = false
+					break
+			if matches:
+				return {"walk": walk, "start": start}
+	return {}
+
+
+func test_bridge_spans_are_retained_over_open_streets() -> void:
+	var seeds: Array[int] = [1, 2, 3, 4, 5, 6]
+	var seeds_with_spans := 0
+	var summary := PackedStringArray()
+	for seed in seeds:
+		var plan := _plan(seed, WarrenVillageScaleProfile.STANDARD)
+		assert_not_null(plan, "seed %d: %s; %s" % [seed,
+			WarrenMazeCarver.last_failure, WarrenMazeCarver.last_diagnostic])
+		if plan == null:
+			continue
+		var spans := plan.excavation.bridge_spans
+		summary.append("%d:%d" % [seed, spans.size()])
+		if spans.is_empty():
+			continue
+		seeds_with_spans += 1
+		var walks := _plan_walks(plan)
+		for span_value: Variant in spans:
+			var span := span_value as Array[Vector3i]
+			assert_gt(span.size(), 0, "seed %d span is non-empty" % seed)
+			var located := _locate_span(walks, span)
+			assert_false(located.is_empty(),
+				"seed %d span %s must lie on the route or a lane" % [seed, span])
+			if located.is_empty():
+				continue
+			var walk := located.walk as Array[Vector3i]
+			var start := int(located.start)
+			for offset in span.size():
+				var cell := span[offset]
+				assert_true(bool(plan.excavation.covered.get(cell, false)),
+					"seed %d span cell %s must be covered" % [seed, cell])
+				assert_false(cell in plan.market_square_cells,
+					"seed %d span cell %s must not be a market-square cell" \
+						% [seed, cell])
+				assert_false(cell in plan.market_zone,
+					"seed %d span cell %s must not be the market approach or " \
+						% [seed, cell] + "the portal")
+				var previous: Vector3i = walk[start + offset - 1]
+				var direction := Vector2i(cell.x - previous.x,
+					cell.z - previous.z)
+				assert_ne(direction, Vector2i.ZERO,
+					"seed %d span cell %s needs a level travel direction" \
+						% [seed, cell])
+				var perpendicular := Vector2i(-direction.y, direction.x)
+				var column := Vector2i(cell.x, cell.z)
+				var roof := cell.y + WarrenExcavation.HEADROOM_BANDS
+				for flank: Vector2i in [column + perpendicular,
+						column - perpendicular]:
+					assert_eq(plan.state_at(Vector3i(flank.x, cell.y, flank.y)),
+						WarrenMazeSourcePlan.CellState.SOLID,
+						"seed %d span cell %s flank %s must be solid at floor" \
+							% [seed, cell, flank])
+					assert_eq(plan.state_at(Vector3i(flank.x, roof, flank.y)),
+						WarrenMazeSourcePlan.CellState.SOLID,
+						"seed %d span cell %s flank %s must be solid at roof" \
+							% [seed, cell, flank])
+				assert_gte(plan.massif.top_at(column) - cell.y,
+					WarrenExcavation.HEADROOM_BANDS + 2,
+					"seed %d span cell %s needs enough retained mass" \
+						% [seed, cell])
+			# The cells just outside the span, in the same walk, prove this is
+			# a bridge crossing an open street rather than a tunnel that
+			# happens to stop retaining its roof.
+			var before_index := start - 1
+			if before_index >= 0:
+				assert_false(bool(plan.excavation.covered.get(
+					walk[before_index], false)),
+					"seed %d span %s predecessor %s must be open" \
+						% [seed, span, walk[before_index]])
+			var after_index := start + span.size()
+			if after_index < walk.size():
+				assert_false(bool(plan.excavation.covered.get(
+					walk[after_index], false)),
+					"seed %d span %s successor %s must be open" \
+						% [seed, span, walk[after_index]])
+	assert_gte(seeds_with_spans, 4,
+		"at least 4 of 6 standard seeds must retain a bridge span: %s" \
+			% ", ".join(summary))
+
+
+func test_bridge_spans_are_deterministic() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(
+		WarrenVillageScaleProfile.STANDARD)
+	var massif := WarrenMassifBuilder.build(2, {}, profile)
+	assert_not_null(massif, WarrenMassifBuilder.last_failure)
+	if massif == null:
+		return
+	var first := WarrenMazeCarver.carve(2, massif, profile)
+	var second := WarrenMazeCarver.carve(2, massif, profile)
+	assert_not_null(first, WarrenMazeCarver.last_failure)
+	assert_not_null(second, WarrenMazeCarver.last_failure)
+	if first == null or second == null:
+		return
+	assert_eq(first.excavation.bridge_spans.size(),
+		second.excavation.bridge_spans.size())
+	for index in first.excavation.bridge_spans.size():
+		assert_eq(first.excavation.bridge_spans[index] as Array[Vector3i],
+			second.excavation.bridge_spans[index] as Array[Vector3i])
+	assert_eq(first.deterministic_signature(), second.deterministic_signature())

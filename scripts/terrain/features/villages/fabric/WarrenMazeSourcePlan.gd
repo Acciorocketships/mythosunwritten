@@ -486,6 +486,10 @@ func deterministic_signature() -> String:
 	for edge: Dictionary in excavation.loop_edges:
 		parts.append("loop:%s>%s:%d" % [str(edge.from), str(edge.to),
 			int(edge.kind)])
+	for span_index in excavation.bridge_spans.size():
+		var span := excavation.bridge_spans[span_index] as Array[Vector3i]
+		for cell: Vector3i in span:
+			parts.append("b:%d:%d,%d,%d" % [span_index, cell.x, cell.y, cell.z])
 	var air: Array[Vector3i] = []
 	air.assign(excavation.carved.keys())
 	air.sort_custom(Callable(WarrenMazeSourcePlan, "_cell_less"))
