@@ -907,18 +907,17 @@ static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 		market_set[value as Vector3i] = true
 	var bridged := _select_bridge_spans(world_seed, massif, excavation,
 		market_set, profile)
-	# A bridge cell's own column can also host a lower, unrelated passage
-	# cell (the pre-existing over/under crossing pattern this maze already
-	# carves) that would otherwise open straight past the bridge's retained
-	# roof now that opening is the default. Cap every other cell's climb at
-	# the lowest bridge floor sharing its column, so the bridge's mass -- and
-	# the `covered` promise its acceptance check made -- survives intact.
-	var bridge_ceiling: Dictionary = {}
-	for cell_value: Variant in bridged.keys():
-		var cell := cell_value as Vector3i
-		var column := Vector2i(cell.x, cell.z)
-		if not bridge_ceiling.has(column) or cell.y < int(bridge_ceiling[column]):
-			bridge_ceiling[column] = cell.y
+	# A bridge's own column, and both of its flank columns, can also host a
+	# lower, unrelated passage cell (the pre-existing over/under crossing
+	# pattern this maze already carves) that would otherwise open straight
+	# past the bridge's retained deck or flank walls now that opening is the
+	# default. Cap that lower cell's climb at the lowest bridge floor sharing
+	# its column -- but review finding (2026-08-22, Critical): only when it
+	# actually sits BELOW that floor. A passage at or above a bridge's own
+	# deck is unrelated to it and must still open all the way to the sky, or
+	# `range(cell.y, ceiling)` silently empties and strands it covered
+	# forever, violating open-by-default.
+	var carve_cap := _build_bridge_carve_cap(bridged)
 	for cell: Vector3i in excavation.public_cells():
 		if bridged.has(cell):
 			continue
@@ -927,10 +926,48 @@ static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 				or _column_is_public_facade(massif, excavation, column, cell):
 			continue
 		var ceiling := massif.top_at(column)
-		if bridge_ceiling.has(column):
-			ceiling = mini(ceiling, int(bridge_ceiling[column]))
+		if carve_cap.has(column):
+			var cap := int(carve_cap[column])
+			if cell.y < cap:
+				ceiling = mini(ceiling, cap)
 		for band in range(cell.y, ceiling):
 			excavation.carved[Vector3i(cell.x, band, cell.z)] = true
+
+
+static func _build_bridge_carve_cap(bridged: Dictionary) -> Dictionary:
+	## `bridged`: Vector3i cell -> Vector2i travel direction, one entry per
+	## accepted bridge-span cell. Returns Vector2i column -> int cap: the
+	## lowest y that column must stay solid from, upward -- a bridge's own
+	## column (its retained headroom and roof) and both of its flank columns
+	## (the two blocks its legality check already certified solid at the
+	## passage and roof bands). Any OTHER passage cell sharing a capped
+	## column must not carve past this y when it opens to sky by default, or
+	## it would punch straight through mass the bridge's acceptance already
+	## promised. Factored out as a static helper (review finding 2026-08-22,
+	## Important) so the cap computation is unit-testable on its own, without
+	## needing a full carve to exercise it.
+	var cap: Dictionary = {}
+	for cell_value: Variant in bridged.keys():
+		var cell := cell_value as Vector3i
+		var direction := bridged[cell_value] as Vector2i
+		var column := Vector2i(cell.x, cell.z)
+		_tighten_carve_cap(cap, column, cell.y)
+		for flank: Vector2i in _bridge_flank_columns(cell, direction):
+			_tighten_carve_cap(cap, flank, cell.y)
+	return cap
+
+
+static func _tighten_carve_cap(cap: Dictionary, column: Vector2i,
+		y: int) -> void:
+	if not cap.has(column) or y < int(cap[column]):
+		cap[column] = y
+
+
+static func _bridge_flank_columns(cell: Vector3i,
+		direction: Vector2i) -> Array[Vector2i]:
+	var perpendicular := Vector2i(-direction.y, direction.x)
+	var column := Vector2i(cell.x, cell.z)
+	return [column + perpendicular, column - perpendicular]
 
 
 static func _bridge_eligible(massif: WarrenMassif, excavation: WarrenExcavation,
@@ -1067,13 +1104,13 @@ static func _select_span_in_window(world_seed: int, massif: WarrenMassif,
 		if _bridge_span_is_legal(massif, excavation, span, directions):
 			excavation.bridge_spans.append(span)
 			for cell: Vector3i in span:
-				accepted[cell] = true
+				accepted[cell] = directions.get(cell, Vector2i.ZERO)
 			return
 		if length > 1:
 			var fallback: Array[Vector3i] = run.slice(index, index + 1)
 			if _bridge_span_is_legal(massif, excavation, fallback, directions):
 				excavation.bridge_spans.append(fallback)
-				accepted[candidate] = true
+				accepted[candidate] = directions.get(candidate, Vector2i.ZERO)
 				return
 
 
@@ -1084,10 +1121,9 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 		var direction := directions.get(cell, Vector2i.ZERO) as Vector2i
 		if direction == Vector2i.ZERO:
 			return false
-		var perpendicular := Vector2i(-direction.y, direction.x)
 		var column := Vector2i(cell.x, cell.z)
 		var roof_band := cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS
-		for flank: Vector2i in [column + perpendicular, column - perpendicular]:
+		for flank: Vector2i in _bridge_flank_columns(cell, direction):
 			if not _column_is_solid_at(massif, excavation, flank, cell.y) \
 					or not _column_is_solid_at(massif, excavation, flank,
 						roof_band):

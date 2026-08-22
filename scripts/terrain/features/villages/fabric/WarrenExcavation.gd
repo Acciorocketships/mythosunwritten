@@ -140,6 +140,16 @@ func _bridge_spans_are_legal(public_cells: Dictionary) -> bool:
 	## contiguous, level run of cells the route or a lane actually carved, and
 	## one `_finalize_excavation` in turn marked covered -- never an
 	## independent claim the carver invented after the fact.
+	##
+	## Review finding (2026-08-22, Important): a bridge's legality check at
+	## selection time certified its two flank columns solid at the passage and
+	## roof bands, but nothing re-checked that promise once the rest of the
+	## town's default-open carving ran -- an unrelated lower passage sharing a
+	## flank column could hollow exactly those bands out afterwards. Re-derive
+	## each span cell's travel direction from the walk itself (no massif
+	## needed, only `carved`) and re-verify both flank columns are still
+	## uncarved at [cell.y, cell.y + HEADROOM_BANDS] against the FINAL carved
+	## set, so a hollowed flank can never seal.
 	for index in bridge_spans.size():
 		var span := bridge_spans[index] as Array[Vector3i]
 		if span.is_empty():
@@ -161,7 +171,41 @@ func _bridge_spans_are_legal(public_cells: Dictionary) -> bool:
 					last_rejection = "bridge span %d is not contiguous at %s" \
 						% [index, cell]
 					return false
+			var direction := _bridge_span_direction(cell)
+			if direction == Vector2i.ZERO:
+				last_rejection = "bridge span %d cell %s has no walk direction " \
+					% [index, cell] + "to derive a flank from"
+				return false
+			var perpendicular := Vector2i(-direction.y, direction.x)
+			var column := Vector2i(cell.x, cell.z)
+			var roof_band := cell.y + HEADROOM_BANDS
+			for flank: Vector2i in [column + perpendicular, column - perpendicular]:
+				if carved.has(Vector3i(flank.x, cell.y, flank.y)) \
+						or carved.has(Vector3i(flank.x, roof_band, flank.y)):
+					last_rejection = ("bridge span %d cell %s flank %s was " \
+						+ "hollowed out after selection") % [index, cell, flank]
+					return false
 	return true
+
+
+func _bridge_span_direction(cell: Vector3i) -> Vector2i:
+	## The unit travel direction a bridge cell was reached by, re-derived from
+	## the walk itself (route, or an `[anchor] + lane.cells` walk) rather than
+	## trusted from carve-time bookkeeping -- this is exactly the datum the
+	## flank re-check above needs and seal() has no other way to reconstruct
+	## without a massif reference.
+	var route_index := route.find(cell)
+	if route_index > 0:
+		var previous := route[route_index - 1]
+		return Vector2i(cell.x - previous.x, cell.z - previous.z)
+	for lane: Dictionary in lanes:
+		var walk: Array[Vector3i] = [lane.get("anchor", Vector3i.ZERO) as Vector3i]
+		walk.append_array(lane.get("cells", []) as Array[Vector3i])
+		var lane_index := walk.find(cell)
+		if lane_index > 0:
+			var previous := walk[lane_index - 1]
+			return Vector2i(cell.x - previous.x, cell.z - previous.z)
+	return Vector2i.ZERO
 
 
 func _lanes_hang_off_the_public_realm(seen: Dictionary) -> bool:

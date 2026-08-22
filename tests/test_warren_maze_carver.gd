@@ -238,12 +238,17 @@ func _locate_span(walks: Array, span: Array) -> Dictionary:
 func _neighbor_may_stay_covered(plan: WarrenMazeSourcePlan,
 		cell: Vector3i) -> bool:
 	## Streets open to sky by default; the only cells that stay covered on
-	## purpose are the market approach/square and a facade over/under
-	## crossing (WarrenMazeCarver._open_passages_to_air). A bridge span's
-	## immediate walk neighbour is only a genuine "not a tunnel end" proof
-	## when it is NOT covered for one of those two documented reasons.
+	## purpose are the market approach/square, a facade over/under crossing
+	## (WarrenMazeCarver._open_passages_to_air), and another bridge-span cell
+	## (review finding 2026-08-22, minor: two spans can sit walk-adjacent when
+	## one window ends right where the next begins). A bridge span's immediate
+	## walk neighbour is only a genuine "not a tunnel end" proof when it is
+	## NOT covered for one of those three documented reasons.
 	if cell in plan.market_zone or cell in plan.market_square_cells:
 		return true
+	for span: Array in plan.excavation.bridge_spans:
+		if cell in span:
+			return true
 	return WarrenMazeCarver._column_is_public_facade(plan.massif,
 		plan.excavation, Vector2i(cell.x, cell.z), cell)
 
@@ -351,3 +356,134 @@ func test_bridge_spans_are_deterministic() -> void:
 		assert_eq(first.excavation.bridge_spans[index] as Array[Vector3i],
 			second.excavation.bridge_spans[index] as Array[Vector3i])
 	assert_eq(first.deterministic_signature(), second.deterministic_signature())
+
+
+func _bridge_cell_directions(plan: WarrenMazeSourcePlan) -> Dictionary:
+	## Vector3i bridge cell -> Vector2i travel direction, re-derived from the
+	## walk (route, or an `[anchor] + lane.cells` walk) the same way
+	## WarrenExcavation._bridge_span_direction does for seal()'s own
+	## flank re-check, so the test's notion of "flank" can never silently
+	## diverge from the carver's or the excavation's.
+	var walks := _plan_walks(plan)
+	var directions: Dictionary = {}
+	for span_value: Variant in plan.excavation.bridge_spans:
+		var span := span_value as Array[Vector3i]
+		var located := _locate_span(walks, span)
+		if located.is_empty():
+			continue
+		var walk := located.walk as Array[Vector3i]
+		var start := int(located.start)
+		for offset in span.size():
+			var cell := span[offset]
+			var previous: Vector3i = walk[start + offset - 1]
+			directions[cell] = Vector2i(cell.x - previous.x,
+				cell.z - previous.z)
+	return directions
+
+
+func _bridge_protected_columns(directions: Dictionary) -> Dictionary:
+	## Vector2i column -> int cap, mirroring
+	## WarrenMazeCarver._build_bridge_carve_cap exactly, but re-derived here
+	## independently rather than calling the carver's helper, so this test
+	## does not just check the implementation against itself.
+	var protected_columns: Dictionary = {}
+	for cell_value: Variant in directions.keys():
+		var cell := cell_value as Vector3i
+		var direction := directions[cell_value] as Vector2i
+		var column := Vector2i(cell.x, cell.z)
+		if not protected_columns.has(column) or cell.y < int(protected_columns[column]):
+			protected_columns[column] = cell.y
+		for flank: Vector2i in WarrenMazeCarver._bridge_flank_columns(cell, direction):
+			if not protected_columns.has(flank) or cell.y < int(protected_columns[flank]):
+				protected_columns[flank] = cell.y
+	return protected_columns
+
+
+func _assert_bridge_carve_cap_pair(plan: WarrenMazeSourcePlan, other: Vector3i,
+		column: Vector2i, bridge_y: int) -> void:
+	## `other` may share either the bridge's OWN column or a flank column. On
+	## its own column, [bridge_y, bridge_y + HEADROOM_BANDS) is the bridge
+	## cell's own pre-existing walk tunnel -- always carved regardless of this
+	## fix, so only the specific roof band is a claim this mechanism actually
+	## makes; on a flank column there is no such pre-existing tunnel, but the
+	## roof band is still the one invariant guaranteed identically in both
+	## cases, so that is what gets asserted uniformly.
+	var roof := bridge_y + WarrenExcavation.HEADROOM_BANDS
+	if other.y < bridge_y:
+		for band in range(other.y + WarrenExcavation.HEADROOM_BANDS, bridge_y):
+			assert_true(plan.excavation.carved.has(
+				Vector3i(other.x, band, other.z)),
+				"column %s band %d below the bridge floor %d must be " \
+					% [column, band, bridge_y] + "carved (open)")
+		assert_false(plan.excavation.carved.has(
+			Vector3i(other.x, roof, other.z)),
+			"column %s roof band %d for bridge floor %d must stay solid, " \
+				% [column, roof, bridge_y] + "not carved")
+	else:
+		for band in range(other.y, plan.massif.top_at(column)):
+			assert_true(plan.excavation.carved.has(
+				Vector3i(other.x, band, other.z)),
+				"column %s band %d above the bridge floor %d must open " \
+					% [column, band, bridge_y] + "fully to sky")
+
+
+func _assert_bridge_carve_cap_helper_synthetic() -> void:
+	## No seed-1..12 standard corpus pair existed on this run; unit-test the
+	## factored WarrenMazeCarver._build_bridge_carve_cap helper directly
+	## (review finding 2026-08-22, Important) so the cross-column protection
+	## mechanism is never left completely untested.
+	var bridge_cell := Vector3i(10, 5, 10)
+	var direction := Vector2i(1, 0)
+	var cap := WarrenMazeCarver._build_bridge_carve_cap(
+		{bridge_cell: direction})
+	var own_column := Vector2i(10, 10)
+	var flank_a := Vector2i(10, 11)
+	var flank_b := Vector2i(10, 9)
+	assert_eq(int(cap.get(own_column, -1)), 5,
+		"the bridge's own column must be capped at its floor")
+	assert_eq(int(cap.get(flank_a, -1)), 5,
+		"the +z flank column must be capped at the bridge floor")
+	assert_eq(int(cap.get(flank_b, -1)), 5,
+		"the -z flank column must be capped at the bridge floor")
+	# Two bridge cells sharing a column take the lower (tighter) cap.
+	var lower_cell := Vector3i(10, 2, 10)
+	var cap_two := WarrenMazeCarver._build_bridge_carve_cap(
+		{bridge_cell: direction, lower_cell: direction})
+	assert_eq(int(cap_two.get(own_column, -1)), 2,
+		"two bridges sharing a column must cap at the lower floor")
+
+
+func test_bridge_carve_cap_protects_decks_and_opens_upper_passages() -> void:
+	var found_pair := false
+	for seed in range(1, 13):
+		var plan := _plan(seed, WarrenVillageScaleProfile.STANDARD)
+		if plan == null or plan.excavation.bridge_spans.is_empty():
+			continue
+		var directions := _bridge_cell_directions(plan)
+		var protected_columns := _bridge_protected_columns(directions)
+		if protected_columns.is_empty():
+			continue
+		var bridge_cells: Dictionary = {}
+		for cell_value: Variant in directions.keys():
+			bridge_cells[cell_value as Vector3i] = true
+		for other: Vector3i in plan.excavation.public_cells():
+			if bridge_cells.has(other):
+				continue
+			var column := Vector2i(other.x, other.z)
+			if not protected_columns.has(column):
+				continue
+			# `other` may independently stay covered for a reason unrelated to
+			# this fix (the market, or its own facade crossing) -- its carve
+			# state then proves nothing about the bridge cap, so skip it rather
+			# than asserting a behaviour this mechanism never claimed to cause.
+			if other in plan.market_zone or other in plan.market_square_cells \
+					or WarrenMazeCarver._column_is_public_facade(plan.massif,
+						plan.excavation, column, other):
+				continue
+			found_pair = true
+			var bridge_y := int(protected_columns[column])
+			print("seed %d: passage %s shares column %s with a bridge " \
+				% [seed, other, column] + "floor at y=%d" % bridge_y)
+			_assert_bridge_carve_cap_pair(plan, other, column, bridge_y)
+	if not found_pair:
+		_assert_bridge_carve_cap_helper_synthetic()
