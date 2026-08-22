@@ -1,5 +1,8 @@
 # Constructive Maze — Slice 1c: Tier-Driven Heights, Street-Level Courtyards, Bridge Spans, Readable Tunnels
 
+> **SUPERSEDED (2026-08-21).** History only — do not execute. The single live plan is `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md`.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development. Approved in chat 2026-08-21.
 
 **Goal:** The town's exterior reads as construction, not rock: houses under upper streets rise to meet them (tiers), courtyards are flat plots at street level, the carver deliberately leaves bridge spans over open streets so skywalks exist, and the debug view distinguishes tunnels, bridges, and plots.

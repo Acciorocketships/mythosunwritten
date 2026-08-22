@@ -1,5 +1,8 @@
 # Maze town carver refactor and iteration plan
 
+> **SUPERSEDED (2026-08-21).** History only — do not execute. The single live plan is `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md`.
+
+
 Date: 2026-08-16
 
 Source design: `../specs/2026-08-16-maze-town-carver-design.md`

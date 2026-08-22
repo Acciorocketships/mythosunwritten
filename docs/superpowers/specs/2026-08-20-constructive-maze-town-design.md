@@ -1,5 +1,8 @@
 # Constructive maze town generation — design (2026-08-20)
 
+> **Note (2026-08-21):** the reservation pass, stamping pass, edit ledger, skyline trim, and foundation sections below are superseded by `2026-08-21-plot-model-design.md`. The principle, gate disposition, deletion scope, and success criteria remain in force. Roadmap: `../plans/2026-08-21-maze-town-master-plan.md`.
+
+
 Approved in-chat (Ryan, 2026-08-20). Supersedes the falsification-era rules of
 `2026-08-16-maze-town-carver-design.md` for everything downstream of the bore;
 the bore itself (spine, alleys, stride legality, air classification) is kept.

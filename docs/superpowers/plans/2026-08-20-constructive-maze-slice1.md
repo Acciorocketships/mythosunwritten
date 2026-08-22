@@ -1,5 +1,8 @@
 # Constructive Maze — Slice 1: Source-Side Pipeline Implementation Plan
 
+> **SUPERSEDED (2026-08-21).** History only — do not execute. The single live plan is `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md`.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the editable-ledger source pipeline — reservation pass, global largest-first stamping with bounded edits, foundations by construction, translator partition — so every corpus seed produces real building-shaped parcels (no pencil towers) with ≥ 0.85 solid ownership, entirely at the source-plan level.

@@ -1,5 +1,8 @@
 # Constructive Maze — Slice 1b: House Heights, Stacked Claims, Skyline Trim, Readable Debug View
 
+> **SUPERSEDED (2026-08-21).** History only — do not execute. The single live plan is `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md`.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Houses get realistic heights, upper streets can build above lower houses (tiers), unclaimed built mass above roofs is trimmed away, and the debug view becomes readable (visible path, saturated palette, legend).

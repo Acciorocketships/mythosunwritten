@@ -1,5 +1,8 @@
 # Village Solve Optimisation Implementation Plan
 
+> **SUPERSEDED (2026-08-21).** History only — do not execute. The single live plan is `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md`.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Cut one production village solve from a measured 28.5 s (best case) / 85.4 s (failing case) toward the ~2 s target, by deleting provably-wasted search work rather than by weakening any gate.
