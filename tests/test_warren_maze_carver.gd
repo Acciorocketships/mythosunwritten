@@ -235,6 +235,19 @@ func _locate_span(walks: Array, span: Array) -> Dictionary:
 	return {}
 
 
+func _neighbor_may_stay_covered(plan: WarrenMazeSourcePlan,
+		cell: Vector3i) -> bool:
+	## Streets open to sky by default; the only cells that stay covered on
+	## purpose are the market approach/square and a facade over/under
+	## crossing (WarrenMazeCarver._open_passages_to_air). A bridge span's
+	## immediate walk neighbour is only a genuine "not a tunnel end" proof
+	## when it is NOT covered for one of those two documented reasons.
+	if cell in plan.market_zone or cell in plan.market_square_cells:
+		return true
+	return WarrenMazeCarver._column_is_public_facade(plan.massif,
+		plan.excavation, Vector2i(cell.x, cell.z), cell)
+
+
 func test_bridge_spans_are_retained_over_open_streets() -> void:
 	var seeds: Array[int] = [1, 2, 3, 4, 5, 6]
 	var seeds_with_spans := 0
@@ -296,19 +309,24 @@ func test_bridge_spans_are_retained_over_open_streets() -> void:
 						% [seed, cell])
 			# The cells just outside the span, in the same walk, prove this is
 			# a bridge crossing an open street rather than a tunnel that
-			# happens to stop retaining its roof.
+			# happens to stop retaining its roof. Since streets open to sky by
+			# default now, the only legitimate reason a neighbour stays covered
+			# is that it is itself another deliberately-covered feature (the
+			# market, or a facade crossing) -- not an arbitrary dead end.
 			var before_index := start - 1
 			if before_index >= 0:
-				assert_false(bool(plan.excavation.covered.get(
-					walk[before_index], false)),
-					"seed %d span %s predecessor %s must be open" \
-						% [seed, span, walk[before_index]])
+				var predecessor := walk[before_index]
+				assert_true(not bool(plan.excavation.covered.get(predecessor, false)) \
+						or _neighbor_may_stay_covered(plan, predecessor),
+					"seed %d span %s predecessor %s must be open, or itself a " \
+						% [seed, span, predecessor] + "market/facade cell")
 			var after_index := start + span.size()
 			if after_index < walk.size():
-				assert_false(bool(plan.excavation.covered.get(
-					walk[after_index], false)),
-					"seed %d span %s successor %s must be open" \
-						% [seed, span, walk[after_index]])
+				var successor := walk[after_index]
+				assert_true(not bool(plan.excavation.covered.get(successor, false)) \
+						or _neighbor_may_stay_covered(plan, successor),
+					"seed %d span %s successor %s must be open, or itself a " \
+						% [seed, span, successor] + "market/facade cell")
 	assert_gte(seeds_with_spans, 4,
 		"at least 4 of 6 standard seeds must retain a bridge span: %s" \
 			% ", ".join(summary))

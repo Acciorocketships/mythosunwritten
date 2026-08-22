@@ -946,12 +946,18 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, market_set: Dictionary,
 		profile: WarrenVillageScaleProfile) -> Dictionary:
 	## Walks the spine then each lane in array order (never dictionary order)
-	## looking for maximal runs of non-market, non-portal, non-facade-crossing,
-	## level-stride cells -- every such cell would otherwise open straight to
-	## the sky. Each such run is handed to `_select_spans_in_run`, which does a
-	## deterministic window search (see its own comment) rather than sampling
-	## one candidate per period; an accepted span's flanks prove it genuinely
-	## connects two blocks. Selection stops at the profile's skywalk quota.
+	## collecting every non-market, non-portal, non-facade-crossing,
+	## level-stride cell -- each would otherwise open straight to the sky.
+	## Controller ruling (2026-08-22, third follow-up): windows are anchored
+	## to the whole walk, not reset per run. One cumulative counter advances
+	## across every eligible cell of the spine then each lane in order (a run
+	## boundary -- a market cell, a facade crossing, a non-level stride --
+	## never resets it); `window_index = (counter + phase) / PERIOD` with a
+	## single seeded `phase` computed once for the whole town, so a short run
+	## is always scanned rather than sometimes falling entirely before the
+	## first window boundary. A span itself can never cross a run boundary
+	## (each candidate still only reaches within its own physical run), but
+	## two candidates from different runs can now share one window index.
 	var accepted: Dictionary = {}
 	var quota := profile.skywalk_range.y
 	if quota <= 0 or excavation.route.is_empty():
@@ -964,9 +970,12 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 		walk.append_array(lane.cells as Array[Vector3i])
 		walks.append(walk)
 		walk_transitions.append(lane.transitions as Array[Dictionary])
+	# One flat, walk-ordered list of every eligible cell across the whole
+	# town. Each record keeps its own physical run (and that run's shared
+	# direction map) so a span candidate is still only ever built from cells
+	# the walk actually placed next to each other.
+	var candidates: Array[Dictionary] = []
 	for walk_index in walks.size():
-		if excavation.bridge_spans.size() >= quota:
-			break
 		var walk := walks[walk_index] as Array[Vector3i]
 		var level_cells := _level_stride_cells(walk,
 			walk_transitions[walk_index] as Array[Dictionary])
@@ -982,16 +991,39 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 					cell.z - walk[index - 1].z)
 				continue
 			if not run.is_empty():
-				_select_spans_in_run(world_seed, massif, excavation, run,
-					directions, quota, accepted)
+				_append_run_candidates(candidates, run, directions)
 				run = []
 				directions = {}
-				if excavation.bridge_spans.size() >= quota:
-					break
 		if not run.is_empty():
-			_select_spans_in_run(world_seed, massif, excavation, run,
-				directions, quota, accepted)
+			_append_run_candidates(candidates, run, directions)
+	if candidates.is_empty():
+		return accepted
+	var phase := WarrenPassageLatticeRules.hash_key(world_seed, 0xB21D6E,
+		portal, 0) % BRIDGE_SPAN_PERIOD
+	var window: Array[Dictionary] = []
+	var window_index := -1
+	for counter in candidates.size():
+		var record := candidates[counter]
+		var this_window := (counter + phase) / BRIDGE_SPAN_PERIOD
+		if this_window != window_index:
+			if not window.is_empty():
+				_select_span_in_window(world_seed, massif, excavation, window,
+					accepted)
+				if excavation.bridge_spans.size() >= quota:
+					return accepted
+			window = []
+			window_index = this_window
+		window.append(record)
+	if not window.is_empty():
+		_select_span_in_window(world_seed, massif, excavation, window,
+			accepted)
 	return accepted
+
+
+static func _append_run_candidates(candidates: Array[Dictionary],
+		run: Array[Vector3i], directions: Dictionary) -> void:
+	for index in run.size():
+		candidates.append({"run": run, "index": index, "directions": directions})
 
 
 static func _level_stride_cells(walk: Array[Vector3i],
@@ -1015,46 +1047,34 @@ static func _level_stride_cells(walk: Array[Vector3i],
 	return out
 
 
-static func _select_spans_in_run(world_seed: int, massif: WarrenMassif,
-		excavation: WarrenExcavation, run: Array[Vector3i],
-		directions: Dictionary, quota: int, accepted: Dictionary) -> void:
-	## Controller ruling (2026-08-22, second follow-up): a fixed-phase sample
-	## of one cell per period missed legal cells that existed elsewhere in the
-	## same window purely by chance. Deterministic window search fixes that:
-	## the seeded hash only picks which run-index the first window starts
-	## counting from (a phase in [0, PERIOD)); every window of PERIOD cells
-	## after that is then scanned in full, in walk order, for the first cell
-	## that can host a span, so a legal cell already counted in that window is
-	## never skipped by bad luck. At most one span per window.
-	if run.is_empty():
-		return
-	var phase := WarrenPassageLatticeRules.hash_key(world_seed, 0xB21D6E,
-		run[0], 0) % BRIDGE_SPAN_PERIOD
-	var window_start := phase
-	while window_start < run.size():
-		if excavation.bridge_spans.size() >= quota:
+static func _select_span_in_window(world_seed: int, massif: WarrenMassif,
+		excavation: WarrenExcavation, window: Array[Dictionary],
+		accepted: Dictionary) -> void:
+	## Scans one window's cells in walk order and accepts the first one that
+	## can host a span (at most one span per window index). A cell already
+	## claimed by an earlier window's overflowing 2-cell span is skipped.
+	for record: Dictionary in window:
+		var run := record.run as Array[Vector3i]
+		var index := int(record.index)
+		var directions := record.directions as Dictionary
+		var candidate := run[index]
+		if accepted.has(candidate):
+			continue
+		var length_hash := WarrenPassageLatticeRules.hash_key(world_seed,
+			0xB21D6E, candidate, 1)
+		var length := mini(1 + (length_hash % 2), run.size() - index)
+		var span: Array[Vector3i] = run.slice(index, index + length)
+		if _bridge_span_is_legal(massif, excavation, span, directions):
+			excavation.bridge_spans.append(span)
+			for cell: Vector3i in span:
+				accepted[cell] = true
 			return
-		var window_end := mini(window_start + BRIDGE_SPAN_PERIOD, run.size())
-		for index in range(window_start, window_end):
-			var candidate := run[index]
-			if accepted.has(candidate):
-				continue
-			var length_hash := WarrenPassageLatticeRules.hash_key(world_seed,
-				0xB21D6E, candidate, 1)
-			var length := mini(1 + (length_hash % 2), run.size() - index)
-			var span: Array[Vector3i] = run.slice(index, index + length)
-			if _bridge_span_is_legal(massif, excavation, span, directions):
-				excavation.bridge_spans.append(span)
-				for cell: Vector3i in span:
-					accepted[cell] = true
-				break
-			if length > 1:
-				var fallback: Array[Vector3i] = run.slice(index, index + 1)
-				if _bridge_span_is_legal(massif, excavation, fallback, directions):
-					excavation.bridge_spans.append(fallback)
-					accepted[candidate] = true
-					break
-		window_start += BRIDGE_SPAN_PERIOD
+		if length > 1:
+			var fallback: Array[Vector3i] = run.slice(index, index + 1)
+			if _bridge_span_is_legal(massif, excavation, fallback, directions):
+				excavation.bridge_spans.append(fallback)
+				accepted[candidate] = true
+				return
 
 
 static func _bridge_span_is_legal(massif: WarrenMassif,
