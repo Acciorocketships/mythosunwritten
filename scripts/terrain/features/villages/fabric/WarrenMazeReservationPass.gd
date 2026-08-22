@@ -11,7 +11,7 @@ const REGISTRY: Array[Dictionary] = [
 	{"kind": &"courtyard", "optional": false, "quota": {"compact": Vector2i(0, 1),
 		"standard": Vector2i(1, 1), "large": Vector2i(1, 2),
 		"grand": Vector2i(1, 2)}, "patch": Vector2i(2, 2),
-		"edit": &"sink_to_terrain"},
+		"edit": &"level_to_walk"},
 	{"kind": &"large_house", "optional": false, "quota": {"compact": Vector2i(0, 1),
 		"standard": Vector2i(1, 2), "large": Vector2i(2, 3),
 		"grand": Vector2i(2, 4)}, "patch": Vector2i(3, 2),
@@ -20,14 +20,19 @@ const REGISTRY: Array[Dictionary] = [
 		"standard": Vector2i(0, 1), "large": Vector2i(1, 2),
 		"grand": Vector2i(1, 2)}, "patch": Vector2i(3, 3),
 		"edit": &"level_to_datum"},
-	{"kind": &"skywalk_span", "optional": true, "quota": {"compact": Vector2i(0, 1),
+	# Non-optional (slice 1c task 1, 2026-08-22): a skywalk is now a required
+	# feature of every town, not a coin-flip -- see claim_overhead's own
+	# comment for why it can still satisfy its quota even on a town whose
+	# carver bridge_spans is empty (it falls back to the pre-existing flank
+	# search).
+	{"kind": &"skywalk_span", "optional": false, "quota": {"compact": Vector2i(1, 1),
 		"standard": Vector2i(1, 2), "large": Vector2i(2, 3),
 		"grand": Vector2i(3, 4)}, "patch": Vector2i.ZERO,
 		"edit": &"claim_overhead"},
 	{"kind": &"garden_terrace", "optional": true, "quota": {"compact": Vector2i(0, 1),
 		"standard": Vector2i(0, 1), "large": Vector2i(0, 2),
 		"grand": Vector2i(0, 2)}, "patch": Vector2i(2, 1),
-		"edit": &"level_to_datum"},
+		"edit": &"level_to_walk"},
 ]
 
 const CARDINALS: Array[Vector2i] = [
@@ -132,6 +137,24 @@ static func _place_patch(plan: WarrenMazeSourcePlan, entry: Dictionary,
 static func _place_overhead(plan: WarrenMazeSourcePlan, kind: StringName,
 		passage_columns: Dictionary, claimed_columns: Dictionary,
 		claimed_walk_cells: Dictionary, instance_index: int) -> Dictionary:
+	## Rule 3 (skywalk spans non-optional, slice 1c task 1, 2026-08-22): a
+	## carver bridge_span -- overhead mass the excavation already retained
+	## over an open street specifically so a skywalk deck could stand on it
+	## -- is a strictly better site than the flank search below (real
+	## retained rock, not a wall this pass has to hope stays solid), so it is
+	## always tried FIRST, in bridge_spans' own order. `claimed_walk_cells`
+	## is shared across every instance of this kind within one reserve() run
+	## (passed by reference from _place_instance's caller), so the first
+	## unconsumed span in array order is always the next one _claim_bridge_
+	## span reaches -- no separate cursor needed. Only once every span is
+	## either consumed or blocked does this fall through to the pre-existing
+	## flank search, so a town with an empty bridge_spans (or one already
+	## exhausted by an earlier instance) still satisfies its quota exactly as
+	## it always could.
+	var bridge_result := _claim_bridge_span(plan, kind, claimed_columns,
+		claimed_walk_cells)
+	if not bridge_result.is_empty():
+		return bridge_result
 	var candidates := _overhead_candidates(plan, passage_columns,
 		claimed_columns, claimed_walk_cells)
 	if candidates.is_empty():
@@ -156,6 +179,77 @@ static func _place_overhead(plan: WarrenMazeSourcePlan, kind: StringName,
 	return {"kind": kind, "result": &"skip", "reason": "no_fit"}
 
 
+## Rule 3's bridge-consuming path: the first entry of `plan.excavation.
+## bridge_spans` not already consumed by an earlier skywalk_span instance and
+## not blocked by another reservation/claim, in array order (bridge_spans'
+## own order is already deterministic -- see WarrenMazeCarver._select_bridge_
+## spans). {} when none qualifies, so the caller falls through to the
+## pre-existing flank search.
+##
+## Unlike the flank search (which never edits a floor at all), this DOES
+## edit -- the reservation's own `cells` are the span's PASSAGE columns
+## themselves (the retained bridge deck), not flanking wall columns: `datum`
+## is the deck's own floor, one HEADROOM_BANDS clear of the street below (the
+## same bound record_edit/can_record_edit/seal() now all share via
+## WarrenMazeSourcePlan._passage_headroom_floor -- rule 4's bridge-capable
+## ledger unlock is exactly what makes this edit legal), and `plot_top` is
+## one storey above that. All-or-nothing, mirroring
+## WarrenMazeStampPass._record_offender_batch's own pattern: every column is
+## validated via can_record_edit before any of them commits via record_edit,
+## so a span that (should never, but) fails partway through is walked away
+## from with the ledger untouched rather than left half-edited.
+static func _claim_bridge_span(plan: WarrenMazeSourcePlan, kind: StringName,
+		claimed_columns: Dictionary, claimed_walk_cells: Dictionary) -> Dictionary:
+	for span_value: Variant in plan.excavation.bridge_spans:
+		var span := span_value as Array[Vector3i]
+		if span.is_empty():
+			continue
+		var already_used := false
+		for cell: Vector3i in span:
+			if claimed_walk_cells.has(cell):
+				already_used = true
+				break
+		if already_used:
+			continue
+		var columns: Array[Vector2i] = []
+		var seen_columns: Dictionary = {}
+		var blocked := false
+		for cell: Vector3i in span:
+			var column := Vector2i(cell.x, cell.z)
+			if claimed_columns.has(column):
+				blocked = true
+				break
+			if not seen_columns.has(column):
+				seen_columns[column] = true
+				columns.append(column)
+		if blocked:
+			continue
+		var datum := span[0].y + WarrenExcavation.HEADROOM_BANDS
+		var plot_top := datum + WarrenBuildingParcel.STOREY_BANDS
+		var edit_ok := true
+		for column: Vector2i in columns:
+			if not plan.can_record_edit(column, datum):
+				edit_ok = false
+				break
+		if not edit_ok:
+			continue
+		for column: Vector2i in columns:
+			if not plan.record_edit(column, datum, plot_top, &"reserve"):
+				# Unreachable given the can_record_edit pre-check above (the
+				# same mirrored gates), but never leave a half-edited span if
+				# the two ever somehow disagree.
+				return {}
+		for cell: Vector3i in span:
+			claimed_walk_cells[cell] = true
+		for column: Vector2i in columns:
+			claimed_columns[column] = true
+		plan.reservations.append({"kind": kind, "cells": columns.duplicate(),
+			"datum_band": datum, "plot_top": plot_top,
+			"walk_cells": span.duplicate(), "audit": {}})
+		return {"kind": kind, "result": &"fit", "placed": true}
+	return {}
+
+
 static func _try_fit_and_edit(plan: WarrenMazeSourcePlan, kind: StringName,
 		edit: StringName, footprint: Array[Vector2i]) -> Dictionary:
 	if footprint.is_empty():
@@ -165,6 +259,8 @@ static func _try_fit_and_edit(plan: WarrenMazeSourcePlan, kind: StringName,
 			return _apply_sink_to_terrain(plan, kind, footprint)
 		&"level_to_datum":
 			return _apply_level_to_datum(plan, kind, footprint)
+		&"level_to_walk":
+			return _apply_level_to_walk(plan, kind, footprint)
 	return {}
 
 
@@ -190,6 +286,69 @@ static func _apply_sink_to_terrain(plan: WarrenMazeSourcePlan,
 		"walk_cells": [] as Array[Vector3i], "audit": {}})
 	return {"kind": kind, "result": &"fit", "placed": true,
 		"cells": footprint.size()}
+
+
+## Rule 2 (street-level courtyards/gardens, slice 1c task 1, 2026-08-22):
+## courtyard and garden_terrace's own registry edit. datum is the y of the
+## lowest passage cell cardinally adjacent to the patch -- "the adjoining
+## walk cell the patch was enumerated from" -- never a terrain majority, so
+## the plot always reads as an extension of the street it opens off, not a
+## dip or a mound. Every column becomes a perfectly flat open plot at that
+## one shared elevation (`{floor: datum, top: datum}`, zero built height,
+## `plot_kind: &"flat"` on the reservation for consumers). `sink_to_terrain`
+## (unchanged, above) survives in the file as the rim-anchored kind's older
+## per-column behaviour, but is no longer reachable through the registry --
+## a candidate with no adjoining passage cell at all (purely rim-anchored,
+## nowhere near a street) has no walk datum to level to and simply fails
+## fit here, same as any other unmet precondition, rather than falling back
+## to a per-column terrain sink that could no longer promise the shared,
+## single-elevation plot this op exists to guarantee.
+static func _apply_level_to_walk(plan: WarrenMazeSourcePlan,
+		kind: StringName, footprint: Array[Vector2i]) -> Dictionary:
+	var walk := _adjoining_walk_cell(plan, footprint)
+	if walk.is_empty():
+		return {}
+	var datum := int(walk.y)
+	for column: Vector2i in footprint:
+		if plan.massif.base_at(column) > datum:
+			return {}
+	for column: Vector2i in footprint:
+		if not plan.record_edit(column, datum, datum, &"reserve"):
+			return {}
+	plan.reservations.append({"kind": kind, "cells": footprint.duplicate(),
+		"datum_band": datum, "plot_top": datum, "plot_kind": &"flat",
+		"walk_cells": [] as Array[Vector3i], "audit": {}})
+	return {"kind": kind, "result": &"fit", "placed": true,
+		"cells": footprint.size()}
+
+
+## The lowest passage y cardinally adjacent to any column of `footprint` --
+## {} when the patch borders no passage cell at all (a candidate anchored
+## purely at the settlement's rim, nowhere near a street). The minimum, not
+## whichever cell is found first, so the result stays independent of
+## `passage_cells()`'s own (y, z, x) sort order -- a footprint bordering two
+## streets at different elevations always levels to the LOWER one, the one
+## that needs the least grading to reach.
+static func _adjoining_walk_cell(plan: WarrenMazeSourcePlan,
+		footprint: Array[Vector2i]) -> Dictionary:
+	var columns: Dictionary = {}
+	for column: Vector2i in footprint:
+		columns[column] = true
+	var found := false
+	var best_y := 0
+	for cell: Vector3i in plan.passage_cells():
+		var passage_column := Vector2i(cell.x, cell.z)
+		var adjacent := false
+		for direction: Vector2i in CARDINALS:
+			if columns.has(passage_column + direction):
+				adjacent = true
+				break
+		if not adjacent:
+			continue
+		if not found or cell.y < best_y:
+			found = true
+			best_y = cell.y
+	return {"y": best_y} if found else {}
 
 
 static func _apply_level_to_datum(plan: WarrenMazeSourcePlan,

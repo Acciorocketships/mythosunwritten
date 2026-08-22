@@ -84,6 +84,12 @@ const STOREY_BUDGET: Dictionary = {
 	&"compact": Vector2i(2, 3), &"standard": Vector2i(2, 3),
 	&"large": Vector2i(2, 4), &"grand": Vector2i(3, 4),
 }
+## Slice 1c task 1 (2026-08-22): a tiered claim's roof stops at the y of a
+## real overhead street rather than a seeded roll -- see _find_tier_top --
+## but a pathological street many bands above a shallow floor must still not
+## produce an unbounded tower; this is the same kind of hard ceiling
+## STOREY_BUDGET's own (min, max) already gives the seeded-roll path.
+const MAX_TIER_STOREYS := 6
 ## A reservation cell's claimed interval: wide enough to exceed any real
 ## band value (bands run 0..~20) so it always covers the whole column,
 ## without risking int overflow the way INT32_MIN/MAX sentinels would in
@@ -237,13 +243,20 @@ static func stamp(plan: WarrenMazeSourcePlan,
 ## independent foundation of its own -- so foundation depth is keyed by each
 ## column's minimum floor_band across every claim that touches it, not by
 ## whichever claim happened to be recorded last.
-## Overhead (skywalk_span) reservations are excluded outright: their
-## datum_band is a neighboring walkway's height, not a floor for THIS
-## column, and claim_overhead never edits the flank columns' floors, so they
-## already stand on grounded natural rock -- any entry here would drive
-## slice-2's retained-foundation machinery to build a foundation for a
-## column that never asked for one. Skywalk support is slice-2 composition's
-## job, not this derivation's.
+## Overhead (skywalk_span) reservations from the FLANK-search fallback are
+## excluded outright: their datum_band is a neighboring walkway's height, not
+## a floor for THIS column, and that path never edits the flank columns'
+## floors, so they already stand on grounded natural rock -- any entry here
+## would drive slice-2's retained-foundation machinery to build a foundation
+## for a column that never asked for one. Refined 2026-08-22 (slice 1c task
+## 1, the bridge-consuming path): a skywalk_span reservation drawn from
+## `plan.excavation.bridge_spans` instead genuinely DOES edit its own cells
+## (the retained bridge deck's own columns, raised to datum_band via
+## record_edit -- see WarrenMazeReservationPass._claim_bridge_span) and
+## therefore genuinely does need a foundation entry, exactly like any other
+## edited column; it carries a `plot_top` key the flank fallback never sets,
+## which is what distinguishes the two below. Skywalk support beyond that is
+## still slice-2 composition's job, not this derivation's.
 static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 	var min_floor_band: Dictionary = {}
 	for claim: Dictionary in plan.parcel_claims:
@@ -258,10 +271,15 @@ static func derive_foundations(plan: WarrenMazeSourcePlan) -> void:
 		if depth > 0:
 			foundation_columns[column] = depth
 	for reservation: Dictionary in plan.reservations:
-		# Skip overhead reservations: datum is a neighboring walk band, not
-		# this column's floor, and its flank columns are grounded natural
-		# rock (claim_overhead records no edit).
-		if not (reservation.get("walk_cells", []) as Array).is_empty():
+		# Skip a FLANK-search overhead reservation only -- datum is a
+		# neighboring walk band, not this column's floor, and that path's
+		# flank columns are grounded natural rock (no edit was ever
+		# recorded). A bridge-consumed skywalk_span reservation (identified
+		# by the `plot_top` key the flank path never sets -- see this
+		# function's own header) DID edit its own cells and falls through to
+		# the normal accounting below like any other reservation.
+		if not (reservation.get("walk_cells", []) as Array).is_empty() \
+				and not reservation.has("plot_top"):
 			continue
 		var datum := int(reservation.datum_band)
 		for column: Vector2i in reservation.cells as Array[Vector2i]:
@@ -311,7 +329,20 @@ static func _skyline_trim(plan: WarrenMazeSourcePlan) -> Dictionary:
 	var skywalk_flank_columns: Dictionary = {}
 	var reservation_tops: Dictionary = {}
 	for reservation: Dictionary in plan.reservations:
-		if StringName(reservation.get("kind", &"")) == &"skywalk_span":
+		# A FLANK-search skywalk_span (no `plot_top` -- see derive_
+		# foundations' own header for the same discriminator) never edits a
+		# floor at all; its flank columns stay exempt from trim outright,
+		# same as always. A BRIDGE-consumed skywalk_span (refined 2026-08-22,
+		# slice 1c task 1) genuinely owns its own cells -- the retained
+		# deck's own columns, already at their final plot_top via record_edit
+		# -- and is routed through the ordinary reservation_tops branch below
+		# like any other reservation kind, so a stray taller pre-edit ceiling
+		# would still get trimmed down to it (record_edit already sets
+		# effective_top to plot_top directly, so this is normally a no-op,
+		# but the invariant should hold by the same mechanism every other
+		# reservation kind uses, not by a coincidence of edit ordering).
+		if StringName(reservation.get("kind", &"")) == &"skywalk_span" \
+				and not reservation.has("plot_top"):
 			for column: Vector2i in reservation.get("cells", []) as Array:
 				skywalk_flank_columns[column] = true
 			continue
@@ -446,13 +477,15 @@ static func _merge_small_claims_once(plan: WarrenMazeSourcePlan,
 					claim_b.door_column as Vector2i, into_block_b):
 				continue
 			var floor_band := int(claim_b.floor_band)
-			var new_top := _claim_top_band(plan, merged, floor_band, false,
+			var top_result := _claim_top_band(plan, merged, floor_band, false,
 				claim_b.door_walk as Vector3i, claimed_intervals)
+			var new_top := int(top_result.top)
 			if new_top < 0:
 				continue
 			_refresh_stacked_edit_tops(plan, merged, new_top)
 			claim_b["footprint"] = merged
 			claim_b["top_band"] = new_top
+			claim_b["tiered"] = bool(top_result.tiered)
 			claim_b["shape_id"] = _shape_id_for_footprint(merged)
 			plan.parcel_claims.remove_at(index)
 			_claim_interval(claimed_intervals, merged, floor_band, new_top)
@@ -927,8 +960,9 @@ static func _try_place_rect(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 	if not bool(datum_info.get("ok", false)):
 		_bump(outcomes, "column_taken")
 		return
-	var top_band := _claim_top_band(plan, footprint, floor_band,
+	var top_result := _claim_top_band(plan, footprint, floor_band,
 		bool(candidate.is_1x1), door_walk, claimed_intervals)
+	var top_band := int(top_result.top)
 	if top_band < 0:
 		_bump(outcomes, "insufficient_height")
 		return
@@ -947,7 +981,8 @@ static func _try_place_rect(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 		"door_walk": door_walk,
 		"door_column": candidate.door_column as Vector2i,
 		"frontage": candidate.frontage as Vector2i, "lineage_hint": &"",
-		"shape_id": candidate.shape_id as StringName})
+		"shape_id": candidate.shape_id as StringName,
+		"tiered": bool(top_result.tiered)})
 	_claim_interval(claimed_intervals, footprint, floor_band, top_band)
 	_bump(outcomes, "placed")
 
@@ -973,8 +1008,9 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 	if not bool(datum_info.get("ok", false)):
 		_bump(outcomes, "column_taken")
 		return
-	var top_band := _claim_top_band(plan, combined, floor_band, false,
+	var top_result := _claim_top_band(plan, combined, floor_band, false,
 		door_walk, claimed_intervals)
+	var top_band := int(top_result.top)
 	if top_band < 0:
 		_bump(outcomes, "insufficient_height")
 		return
@@ -990,17 +1026,18 @@ static func _try_place_l(plan: WarrenMazeSourcePlan, candidate: Dictionary,
 	_refresh_stacked_edit_tops(plan, combined, top_band)
 	lineage_seed.count = int(lineage_seed.count) + 1
 	var lineage := StringName("maze.lineage.%d" % int(lineage_seed.count))
+	var tiered := bool(top_result.tiered)
 	plan.parcel_claims.append({"footprint": main.duplicate(),
 		"floor_band": floor_band, "top_band": top_band,
 		"door_walk": door_walk,
 		"door_column": candidate.door_column as Vector2i,
 		"frontage": candidate.frontage as Vector2i, "lineage_hint": lineage,
-		"shape_id": &"L.main"})
+		"shape_id": &"L.main", "tiered": tiered})
 	plan.parcel_claims.append({"footprint": wing.duplicate(),
 		"floor_band": floor_band, "top_band": top_band,
 		"door_walk": candidate.wing_door_walk as Vector3i,
 		"door_column": candidate.wing_door_column as Vector2i,
-		"frontage": candidate.wing_frontage as Vector2i,
+		"frontage": candidate.wing_frontage as Vector2i, "tiered": tiered,
 		"lineage_hint": lineage, "shape_id": &"L.wing"})
 	_claim_interval(claimed_intervals, combined, floor_band, top_band)
 	_bump(outcomes, "placed")
@@ -1076,8 +1113,9 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 			break
 		var extended_footprint := footprint.duplicate()
 		extended_footprint.append_array(row)
-		var extended_top := _claim_top_band(plan, extended_footprint,
+		var extended_result := _claim_top_band(plan, extended_footprint,
 			floor_band, false, claim.door_walk as Vector3i, claimed_intervals)
+		var extended_top := int(extended_result.top)
 		if extended_top < top_band:
 			break
 		if not _footprint_available(plan, row, claimed_intervals, floor_band,
@@ -1088,6 +1126,7 @@ static func _back_extend_claim(plan: WarrenMazeSourcePlan, claim: Dictionary,
 			return
 		footprint.append_array(row)
 		top_band = extended_top
+		claim["tiered"] = bool(extended_result.tiered)
 		_refresh_stacked_edit_tops(plan, footprint, top_band)
 		_claim_interval(claimed_intervals, footprint, floor_band, top_band)
 		_bump(outcomes, "back_extended")
@@ -1198,8 +1237,9 @@ static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
 			offenders.append(column)
 		if not feasible:
 			break
-		var extended_top := _claim_top_band(plan, prospective, floor_band,
+		var extended_result := _claim_top_band(plan, prospective, floor_band,
 			false, claim.door_walk as Vector3i, claimed_intervals)
+		var extended_top := int(extended_result.top)
 		if extended_top < top_band:
 			break
 		if not _footprint_available(plan, row, claimed_intervals, floor_band,
@@ -1211,6 +1251,7 @@ static func _lateral_extend_claim(plan: WarrenMazeSourcePlan,
 		footprint.append_array(row)
 		top_band = extended_top
 		width += 1
+		claim["tiered"] = bool(extended_result.tiered)
 		_refresh_stacked_edit_tops(plan, footprint, top_band)
 		_claim_interval(claimed_intervals, footprint, floor_band, top_band)
 		_bump(outcomes, "lateral_extended")
@@ -1407,6 +1448,25 @@ static func _column_bears(plan: WarrenMazeSourcePlan, column: Vector2i,
 	# ledger entry.
 	if claimed_intervals.has(column):
 		return false
+	# Bridge-capable ledger (rule 4, slice 1c task 1, 2026-08-22): a column
+	# that hosts a passage elsewhere in its own vertical extent -- typically
+	# a lower tunnel crossing beneath this footprint column, exactly the
+	# "lower tunnels beneath are allowed" case this function's own header
+	# already describes -- bears automatically the instant its floor lands
+	# EXACTLY on that tunnel's own future-trimmed roof slab (passage y +
+	# WarrenExcavation.HEADROOM_BANDS + TUNNEL_ROOF_BANDS): the same flush
+	# exemption _stacks_on_existing_claim grants an already-placed claim's
+	# own roof, extended to the not-yet-claimed tunnel roof skyline trim will
+	# leave standing there regardless. Mirrors record_edit/can_record_edit/
+	# seal()'s shared _passage_headroom_floor bound, offset by one more
+	# TUNNEL_ROOF_BANDS for the roof slab itself. Any OTHER floor on a
+	# passage-hosting column -- above or below that exact threshold -- falls
+	# through unmodified to the plinth continuity walk below, which
+	# (correctly) fails for anything still inside the passage's own carved
+	# headroom.
+	var headroom_floor := plan._passage_headroom_floor(column)
+	if headroom_floor >= 0 and floor_band == headroom_floor + TUNNEL_ROOF_BANDS:
+		return true
 	var plinth_floor := maxi(base, floor_band - PLINTH_BANDS)
 	for y in range(plinth_floor, floor_band):
 		if plan.state_at(Vector3i(column.x, y, column.y)) \
@@ -1451,25 +1511,91 @@ static func _column_ceiling(plan: WarrenMazeSourcePlan, column: Vector2i,
 
 ## `door_walk` seeds a per-claim storey roll inside STOREY_BUDGET[scale_id]
 ## (min, max) storeys -- the task-1 fix for the old massif-ceiling-derived
-## house height. The final top is the smaller of the ceiling-derived top (as
-## before, aligned to a STOREY_BANDS boundary) and floor + storeys *
-## STOREY_BANDS; MIN_HOUSE_BANDS and the 1x1 clamp still apply on top of that.
+## house height. Slice 1c task 1 (2026-08-22, tier-driven height): when a
+## real overhead street exists (_find_tier_top), the roof rises to MEET it --
+## `top == tier_top` exactly, not the seeded roll -- clamped by the same
+## storey-aligned ceiling term the seeded-roll path already computes (so a
+## claim can never be built taller than its column's own solid extent or
+## another claim already stacked above it) and by MAX_TIER_STOREYS. Every
+## candidate compared against `top` in the min() below is itself
+## floor_band + a whole multiple of STOREY_BANDS -- `ceiling_top` by its own
+## rounding, the MAX_TIER_STOREYS term by construction, and tier_top because
+## _find_tier_top only ever returns a passage y at that same parity -- so the
+## result always satisfies WarrenBuildingParcel.seal()'s own
+## `(top_band - base_band - ROOF_RESERVATION_BANDS) % STOREY_BANDS == 0`
+## requirement, whether or not the tier path fires. `tiered` is true only
+## when the final top is UNCLAMPED tier_top -- a claim whose street target
+## got cut short by a lower physical ceiling or the MAX_TIER_STOREYS cap (or
+## the 1x1 clamp below) reports tiered: false, since its roof no longer
+## actually equals any real street. When no tier exists at all, the
+## pre-task-1 seeded-roll path is unchanged. MIN_HOUSE_BANDS and the 1x1
+## clamp still apply on top of either path.
 static func _claim_top_band(plan: WarrenMazeSourcePlan,
 		footprint: Array[Vector2i], floor_band: int, is_1x1: bool,
-		door_walk: Vector3i, claimed_intervals: Dictionary) -> int:
+		door_walk: Vector3i, claimed_intervals: Dictionary) -> Dictionary:
 	var min_top := 2147483647
 	for column: Vector2i in footprint:
 		min_top = mini(min_top, _column_ceiling(plan, column, floor_band,
 			claimed_intervals))
-	var top := min_top - posmod(min_top - floor_band,
+	var ceiling_top := min_top - posmod(min_top - floor_band,
 		WarrenBuildingParcel.STOREY_BANDS)
-	var storeys := _roll_storeys(plan, door_walk)
-	top = mini(top, floor_band + storeys * WarrenBuildingParcel.STOREY_BANDS)
+	var tier_top := _find_tier_top(plan, footprint, floor_band)
+	var top: int
+	var tiered := false
+	if tier_top >= 0:
+		var tier_ceiling := mini(ceiling_top, floor_band \
+			+ MAX_TIER_STOREYS * WarrenBuildingParcel.STOREY_BANDS)
+		top = mini(tier_top, tier_ceiling)
+		tiered = top == tier_top
+	else:
+		var storeys := _roll_storeys(plan, door_walk)
+		top = mini(ceiling_top,
+			floor_band + storeys * WarrenBuildingParcel.STOREY_BANDS)
 	if top - floor_band < WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
-		return -1
+		return {"top": -1, "tiered": false}
 	if is_1x1:
-		top = mini(top, floor_band + 2 * WarrenBuildingParcel.STOREY_BANDS)
-	return top
+		var clamped := mini(top, floor_band + 2 * WarrenBuildingParcel.STOREY_BANDS)
+		if clamped != top:
+			tiered = false
+		top = clamped
+	return {"top": top, "tiered": tiered}
+
+
+## Rule 1 (tier-driven height, slice 1c task 1, 2026-08-22): the lowest
+## passage cell y that both (a) sits at least MIN_HOUSE_BANDS above this
+## candidate's own floor -- a street directly at or barely above the floor
+## can never be a roof, it would leave no usable storey beneath it -- and (b)
+## lies in one of `footprint`'s own columns (an upper street running directly
+## OVER part of the block) or in its 1-column cardinal apron (a street
+## running BESIDE the block). -1 when no such passage cell exists, in which
+## case _claim_top_band falls back to the pre-task-1 seeded roll.
+##
+## Pre-filtered to the SAME parity WarrenBuildingParcel.seal() requires of
+## every top_band (STOREY_BANDS-aligned relative to floor_band) -- a passage
+## y at the wrong parity is skipped outright rather than returned and later
+## silently rounded down to a height that no longer equals any real street,
+## which would make `tiered: true` a lie. MIN_HOUSE_BANDS (4) is itself a
+## whole multiple of STOREY_BANDS (2), so the two filters compose cleanly.
+static func _find_tier_top(plan: WarrenMazeSourcePlan,
+		footprint: Array[Vector2i], floor_band: int) -> int:
+	var columns: Dictionary = {}
+	for column: Vector2i in footprint:
+		columns[column] = true
+		for direction: Vector2i in CARDINALS:
+			columns[column + direction] = true
+	var min_needed := floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS
+	var tier_top := -1
+	for cell_value: Variant in plan.passage_kinds.keys():
+		var cell := cell_value as Vector3i
+		if cell.y < min_needed:
+			continue
+		if posmod(cell.y - floor_band, WarrenBuildingParcel.STOREY_BANDS) != 0:
+			continue
+		if not columns.has(Vector2i(cell.x, cell.z)):
+			continue
+		if tier_top < 0 or cell.y < tier_top:
+			tier_top = cell.y
+	return tier_top
 
 
 static func _roll_storeys(plan: WarrenMazeSourcePlan,

@@ -93,11 +93,27 @@ func record_edit(column: Vector2i, floor_band: int, top_band: int,
 	## the edit itself so seal() can re-validate the +/-1 stamp-phase budget
 	## cheaply (a massif-range check) instead of re-walking every band, and
 	## so a consumer (the debug view) can render bearing mass distinctly.
+	##
+	## Bridge-capable ledger (refined 2026-08-22, slice 1c task 1): a
+	## passage-hosting column is no longer rejected outright -- a floor
+	## raised to clear every passage cell that column hosts, plus
+	## WarrenExcavation.HEADROOM_BANDS of required street air above the
+	## highest one, is legal (a bridge house, or a skywalk_span's own deck
+	## reservation, built directly on top of the street rather than beside
+	## it). `_passage_headroom_floor` is the SAME shared bound record_trim's
+	## own gate and seal()'s mirror of both already use, so "would this edit
+	## cut into a passage's own headroom" can never disagree across the three
+	## call sites. Streets stay otherwise immutable: any floor at or below
+	## that bound -- including one that never reaches down into
+	## [passage y, passage y + HEADROOM_BANDS) at all -- is still refused.
 	if _sealed:
 		return _reject("plan is sealed; the ledger is frozen")
-	if _column_has_passage(column):
-		return _reject("edit at column %s would touch a carved passage cell" \
-			% column)
+	var headroom_floor := _passage_headroom_floor(column)
+	if headroom_floor >= 0 and floor_band < headroom_floor:
+		return _reject(
+			("edit at column %s would cut into a passage's own headroom: " \
+				+ "floor_band %d is below the required %d (passage y + " \
+				+ "HEADROOM_BANDS)") % [column, floor_band, headroom_floor])
 	if massif == null or not massif.has_column(column):
 		return _reject("edit at column %s has no massif column" % column)
 	if floor_band < massif.base_at(column):
@@ -186,7 +202,8 @@ func _passage_headroom_floor(column: Vector2i) -> int:
 func can_record_edit(column: Vector2i, floor_band: int) -> bool:
 	if _sealed:
 		return false
-	if _column_has_passage(column):
+	var headroom_floor := _passage_headroom_floor(column)
+	if headroom_floor >= 0 and floor_band < headroom_floor:
 		return false
 	if massif == null or not massif.has_column(column):
 		return false
@@ -281,15 +298,28 @@ func seal() -> bool:
 		if int(edit.get("floor_band", 0)) < massif.base_at(column):
 			return _reject(
 				"edit at column %s sinks its floor below terrain" % column)
-		# Streets stay immutable for a real (reserve/stamp) edit -- passage
-		# columns never get a floor correction or a leveling edit. A trim is
-		# the one deliberate exception (refined 2026-08-21): a covered
-		# passage's own roof gets trimmed too, so this general check is
-		# scoped to non-trim edits; the trim-specific headroom check just
-		# below is what actually bounds a trim on a passage column.
-		if not bool(edit.get("trimmed", false)) and _column_has_passage(column):
-			return _reject(
-				"edit at column %s touches a carved passage cell" % column)
+		# Streets stay immutable for a real (reserve/stamp) edit in the sense
+		# that matters -- [passage y, passage y + HEADROOM_BANDS) is never
+		# touched -- but a passage-hosting column is no longer rejected
+		# outright (refined 2026-08-22, the bridge-capable ledger unlock,
+		# slice 1c task 1): a floor at or above every hosted passage's own
+		# headroom floor is a legal bridge house or skywalk_span deck.
+		# Mirrors record_edit/can_record_edit's own gate exactly (same
+		# _passage_headroom_floor bound), so the three can never disagree. A
+		# trim is scoped out of this general check (the trim-specific
+		# headroom check just below governs it instead) since a trim edit's
+		# own "floor_band" entry is the column's pre-existing floor, not a
+		# new one being placed.
+		if not bool(edit.get("trimmed", false)):
+			var edit_headroom_floor := _passage_headroom_floor(column)
+			if edit_headroom_floor >= 0 \
+					and int(edit.get("floor_band", 0)) < edit_headroom_floor:
+				return _reject(
+					("edit at column %s cuts into a passage's own headroom: " \
+						+ "floor_band %d is below the required %d (passage " \
+						+ "y + HEADROOM_BANDS)") \
+						% [column, int(edit.get("floor_band", 0)),
+							edit_headroom_floor])
 		# A trim may only ever discard mass no claim reaches -- never cut into
 		# one, and never into a passage's own required headroom.
 		# claim_tops (built above from parcel_claims, band-aware) is the
@@ -336,14 +366,32 @@ func seal() -> bool:
 			if drift > 1:
 				var bears := false
 				if bool(edit.get("bearing", false)):
-					var plinth_floor := maxi(massif.base_at(column),
-						floor_band - WarrenMazeStampPass.PLINTH_BANDS)
-					bears = true
-					for y in range(plinth_floor, floor_band):
-						if state_at_raw(Vector3i(column.x, y, column.y)) \
-								!= CellState.SOLID:
-							bears = false
-							break
+					# Tunnel-roof exemption (rule 4, slice 1c task 1,
+					# 2026-08-22): mirrors _column_bears' own SAME special
+					# case exactly -- a floor landing exactly on a hosted
+					# passage's own future-trimmed roof slab (passage y +
+					# HEADROOM_BANDS + TUNNEL_ROOF_BANDS) bears automatically,
+					# without the continuity walk below (whose plinth window
+					# would otherwise dip into that passage's own carved
+					# headroom and always fail it). Re-derived here against
+					# the pre-edit, raw massif/excavation
+					# (_passage_headroom_floor reads passage_kinds, not the
+					# ledger), never trusting the recorded `bearing` flag
+					# alone -- same discipline as the continuity walk it sits
+					# beside.
+					var headroom_floor := _passage_headroom_floor(column)
+					if headroom_floor >= 0 and floor_band == headroom_floor \
+							+ WarrenMazeStampPass.TUNNEL_ROOF_BANDS:
+						bears = true
+					else:
+						var plinth_floor := maxi(massif.base_at(column),
+							floor_band - WarrenMazeStampPass.PLINTH_BANDS)
+						bears = true
+						for y in range(plinth_floor, floor_band):
+							if state_at_raw(Vector3i(column.x, y, column.y)) \
+									!= CellState.SOLID:
+								bears = false
+								break
 				if not bears:
 					return _reject(
 						("stamp edit at column %s moves its floor %d " \
@@ -680,13 +728,6 @@ static func _has_typed_square(cells: Array[Vector3i]) -> bool:
 		if claimed.has(cell + Vector3i.RIGHT) \
 				and claimed.has(cell + Vector3i.BACK) \
 				and claimed.has(cell + Vector3i(1, 0, 1)):
-			return true
-	return false
-
-
-func _column_has_passage(column: Vector2i) -> bool:
-	for cell: Vector3i in passage_kinds.keys():
-		if cell.x == column.x and cell.z == column.y:
 			return true
 	return false
 
