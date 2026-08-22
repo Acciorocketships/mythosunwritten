@@ -328,8 +328,11 @@ static func _foundation_depth_for(plan: WarrenMazeSourcePlan,
 ## A PASSAGE-HOSTING column (refined 2026-08-21: no longer exempt outright,
 ## which used to leave every covered tunnel -- ~47% of the network --
 ## standing under the full massif) keeps `keep = max(any claim's own top on
-## this column, highest passage cell y + WarrenExcavation.HEADROOM_BANDS +
-## TUNNEL_ROOF_BANDS)`, then folds in the same 4-neighbour "shoulder" an
+## this column, highest plan.passage_headroom_top(cell) among the column's
+## own passage cells, + TUNNEL_ROOF_BANDS)` (refined again 2026-08-22: the
+## per-cell real carved headroom, not cell.y + the flat HEADROOM_BANDS
+## constant -- a stair/ramp intermediate cell's own slot runs one band
+## taller), then folds in the same 4-neighbour "shoulder" an
 ## unclaimed column uses (a tunnel between two tall buildings should read at
 ## least as tall as they do, not just clear its own headroom) -- trims to
 ## `max(keep, shoulder)`. An UNCLAIMED, non-passage, non-reservation column
@@ -343,11 +346,17 @@ static func _foundation_depth_for(plan: WarrenMazeSourcePlan,
 ## iteration order. Returns counts by outcome kind for
 ## `plan.audit["trim_outcomes"]`.
 static func _skyline_trim(plan: WarrenMazeSourcePlan) -> Dictionary:
-	var passage_max_y: Dictionary = {}
+	# Per-cell real headroom (controller ruling, 2026-08-22): keyed by the
+	# MAX of plan.passage_headroom_top(cell) -- cell.y + excavation.
+	# slot_bands(cell), never the flat HEADROOM_BANDS constant, which
+	# undercounts a stair/ramp intermediate stride cell's own taller carved
+	# slot -- across every passage cell hosted in that column.
+	var passage_headroom_floor: Dictionary = {}
 	for cell: Vector3i in plan.passage_cells():
 		var column := Vector2i(cell.x, cell.z)
-		passage_max_y[column] = maxi(int(passage_max_y.get(column, cell.y)),
-			cell.y)
+		var top := plan.passage_headroom_top(cell)
+		passage_headroom_floor[column] = maxi(
+			int(passage_headroom_floor.get(column, top)), top)
 	var skywalk_flank_columns: Dictionary = {}
 	var reservation_tops: Dictionary = {}
 	for reservation: Dictionary in plan.reservations:
@@ -392,10 +401,10 @@ static func _skyline_trim(plan: WarrenMazeSourcePlan) -> Dictionary:
 				targets.append({"column": column, "top": plot_roof,
 					"kind": &"reservation_roof"})
 			continue
-		if passage_max_y.has(column):
+		if passage_headroom_floor.has(column):
 			var keep := int(claim_tops.get(column, -2147483648))
-			keep = maxi(keep, int(passage_max_y[column]) \
-				+ WarrenExcavation.HEADROOM_BANDS + TUNNEL_ROOF_BANDS)
+			keep = maxi(keep, int(passage_headroom_floor[column]) \
+				+ TUNNEL_ROOF_BANDS)
 			var passage_shoulder := -2147483648
 			for direction: Vector2i in CARDINALS:
 				var neighbor := column + direction
@@ -1475,13 +1484,16 @@ static func _column_bears(plan: WarrenMazeSourcePlan, column: Vector2i,
 	# a lower tunnel crossing beneath this footprint column, exactly the
 	# "lower tunnels beneath are allowed" case this function's own header
 	# already describes -- bears automatically the instant its floor lands
-	# EXACTLY on that tunnel's own future-trimmed roof slab (passage y +
-	# WarrenExcavation.HEADROOM_BANDS + TUNNEL_ROOF_BANDS): the same flush
-	# exemption _stacks_on_existing_claim grants an already-placed claim's
-	# own roof, extended to the not-yet-claimed tunnel roof skyline trim will
-	# leave standing there regardless. Mirrors record_edit/can_record_edit/
-	# seal()'s shared _passage_headroom_floor bound, offset by one more
-	# TUNNEL_ROOF_BANDS for the roof slab itself. Any OTHER floor on a
+	# EXACTLY on that tunnel's own future-trimmed roof slab
+	# (plan.passage_headroom_top(cell) -- the REAL per-cell carved headroom,
+	# not cell.y + the flat HEADROOM_BANDS constant, since a stair/ramp
+	# intermediate cell's own slot runs one band taller -- plus
+	# TUNNEL_ROOF_BANDS): the same flush exemption _stacks_on_existing_claim
+	# grants an already-placed claim's own roof, extended to the
+	# not-yet-claimed tunnel roof skyline trim will leave standing there
+	# regardless. Mirrors record_edit/can_record_edit/seal()'s shared
+	# _passage_headroom_floor bound, offset by one more TUNNEL_ROOF_BANDS for
+	# the roof slab itself. Any OTHER floor on a
 	# passage-hosting column -- above or below that exact threshold -- falls
 	# through unmodified to the plinth continuity walk below, which
 	# (correctly) fails for anything still inside the passage's own carved

@@ -742,21 +742,22 @@ func test_translator_partition_is_one_to_one_with_claims() -> void:
 		# audit, stamp, or trim pass), not quality targets; the 0.85 quality
 		# target stays slice 2's composition-level exit per the ruling above.
 		# Re-pinned upward again (slice 1c task 1, controller rulings
-		# 2026-08-22 x2): WarrenMazeVolumeAdapter._edited_massif and
+		# 2026-08-22 x3): WarrenMazeVolumeAdapter._edited_massif and
 		# WarrenBuildingParcel._has_continuous_bearing both had to become
 		# passage-aware before a bridge/bearing claim's own column could
-		# translate at all (see task-1-report.md's addenda) -- seed 4 is
-		# fully measurable end-to-end for the first time in this test's own
-		# history as a result, measured 0.6419 -> 0.6885. Seed 12 still
-		# cannot seal a full WarrenParcelPlan (one remaining, precisely
-		# diagnosed dropped claim -- a stair-adjacent passage cell whose
-		# REAL carved slot is one band taller than the generic
-		# WarrenExcavation.HEADROOM_BANDS constant _passage_headroom_floor
-		# assumes, unrelated to and outside this task's own bearing fix; see
-		# the addendum), so its own floor (0.58) is carried forward
-		# unmeasured rather than re-pinned on no new data.
+		# translate at all, and WarrenMazeSourcePlan.passage_headroom_top
+		# (the real, per-cell carved headroom, replacing cell.y + the flat
+		# HEADROOM_BANDS constant everywhere a passage's own required
+		# clearance is measured) fixed the one remaining dropped claim on a
+		# stair-adjacent cell whose real carved slot ran one band taller than
+		# the constant assumed (see task-1-report.md's addenda). Both pinned
+		# seeds now translate fully end-to-end for the first time in this
+		# test's own history: seed 4 measured 0.6419 -> 0.6885 (unchanged by
+		# this final fix, already fully green), seed 12 measured for the
+		# first time at 0.6750 (previously unmeasurable). Both floors
+		# re-pinned upward to the newly measured baselines minus a guard.
 		var ratio := float(parcels.audit.get("maze_owned_solid_ratio", 0.0))
-		var ratio_floor := 0.66 if city_seed == 4 else 0.58
+		var ratio_floor := 0.66 if city_seed == 4 else 0.65
 		assert_gte(ratio, ratio_floor,
 			"seed %d: 2D-footprint ownership anti-regression floor (%.2f); measured %s" \
 				% [city_seed, ratio_floor, ratio])
@@ -1071,11 +1072,15 @@ func test_upper_streets_stack_claims_above_lower_houses() -> void:
 					# continuity assertion for exactly that column/floor
 					# combination; every other bearing column still gets the
 					# full anti-floating check.
+					# Controller ruling (2026-08-22): the real, per-cell headroom
+					# (plan.passage_headroom_top), not cell.y + the flat
+					# HEADROOM_BANDS constant -- a stair/ramp intermediate cell's
+					# own carved slot runs one band taller.
 					var headroom_floor := -1
 					for cell: Vector3i in plan.passage_cells():
 						if cell.x == column.x and cell.z == column.y:
 							headroom_floor = maxi(headroom_floor,
-								cell.y + WarrenExcavation.HEADROOM_BANDS)
+								plan.passage_headroom_top(cell))
 					if headroom_floor >= 0 and floor_band == headroom_floor \
 							+ WarrenMazeStampPass.TUNNEL_ROOF_BANDS:
 						continue
@@ -1165,11 +1170,17 @@ func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
 			("seed %d compact must actually trim at least one passage-" \
 				+ "hosting column's own roof") % city_seed)
 
-		var passage_max_y: Dictionary = {}
+		# Controller ruling (2026-08-22): the real, per-cell headroom top
+		# (plan.passage_headroom_top), not cell.y + the flat HEADROOM_BANDS
+		# constant -- a stair/ramp intermediate cell's own carved slot runs
+		# one band taller, and production's own _skyline_trim now measures it
+		# the same way.
+		var passage_headroom_floor: Dictionary = {}
 		for cell: Vector3i in plan.passage_cells():
 			var passage_column := Vector2i(cell.x, cell.z)
-			passage_max_y[passage_column] = maxi(
-				int(passage_max_y.get(passage_column, cell.y)), cell.y)
+			var top := plan.passage_headroom_top(cell)
+			passage_headroom_floor[passage_column] = maxi(
+				int(passage_headroom_floor.get(passage_column, top)), top)
 		var reservation_columns: Dictionary = {}
 		for reservation: Dictionary in plan.reservations:
 			for column: Vector2i in reservation.get("cells", []) as Array:
@@ -1195,10 +1206,9 @@ func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
 		for column: Vector2i in plan.massif.columns.keys():
 			if reservation_columns.has(column):
 				continue
-			if passage_max_y.has(column):
+			if passage_headroom_floor.has(column):
 				var keep := int(claim_tops.get(column, -2147483648))
-				keep = maxi(keep, int(passage_max_y[column]) \
-					+ WarrenExcavation.HEADROOM_BANDS \
+				keep = maxi(keep, int(passage_headroom_floor[column]) \
 					+ WarrenMazeStampPass.TUNNEL_ROOF_BANDS)
 				var shoulder := -2147483648
 				for direction: Vector2i in WarrenMazeStampPass.CARDINALS:
@@ -1211,8 +1221,7 @@ func test_skyline_trim_removes_unclaimed_mass_above_roofs() -> void:
 						+ "<= max(keep, shoulder) (%d)") \
 						% [city_seed, column, plan.effective_top(column),
 							bound])
-				var headroom_floor := int(passage_max_y[column]) \
-					+ WarrenExcavation.HEADROOM_BANDS
+				var headroom_floor := int(passage_headroom_floor[column])
 				assert_gte(plan.effective_top(column), headroom_floor,
 					("seed %d: passage column %s effective_top %d must " \
 						+ "keep >= HEADROOM_BANDS of air above its own " \
@@ -1590,15 +1599,20 @@ func test_bridge_claims_clear_street_headroom() -> void:
 			WarrenMazeReservationPass.last_failure)
 		assert_true(WarrenMazeStampPass.stamp(plan, profile),
 			WarrenMazeStampPass.last_failure)
-		var passage_max_y: Dictionary = {}
+		# Controller ruling (2026-08-22): the real, per-cell headroom top
+		# (plan.passage_headroom_top), not cell.y + the flat HEADROOM_BANDS
+		# constant -- a stair/ramp intermediate cell's own carved slot runs
+		# one band taller.
+		var passage_headroom_floor: Dictionary = {}
 		for cell: Vector3i in plan.passage_cells():
 			var column := Vector2i(cell.x, cell.z)
-			passage_max_y[column] = maxi(int(passage_max_y.get(column, cell.y)),
-				cell.y)
+			var top := plan.passage_headroom_top(cell)
+			passage_headroom_floor[column] = maxi(
+				int(passage_headroom_floor.get(column, top)), top)
 		for claim: Dictionary in plan.parcel_claims:
 			var floor_band := int(claim.floor_band)
 			for column: Vector2i in claim.footprint as Array[Vector2i]:
-				if not passage_max_y.has(column):
+				if not passage_headroom_floor.has(column):
 					continue
 				# Only a column whose floor the ledger actually RAISED above
 				# its own natural terrain is bound by the headroom rule at
@@ -1616,14 +1630,13 @@ func test_bridge_claims_clear_street_headroom() -> void:
 				if plan.effective_base(column) <= plan.massif.base_at(column):
 					continue
 				checked_columns += 1
-				var required := int(passage_max_y[column]) \
-					+ WarrenExcavation.HEADROOM_BANDS
+				var required := int(passage_headroom_floor[column])
 				assert_gte(floor_band, required,
 					("seed %d: claim at door %s has footprint column %s " \
-						+ "hosting a passage at y %d, but its own floor %d " \
-						+ "does not clear the required headroom %d") \
+						+ "hosting a passage with real headroom top %d, but its " \
+						+ "own floor %d does not clear it") \
 						% [city_seed, str(claim.door_column), column,
-							int(passage_max_y[column]), floor_band, required])
+							required, floor_band])
 	assert_gt(checked_columns, 0,
 		"the pinned corpus must produce at least one claim whose footprint " \
 			+ "column was actually raised above terrain on a passage-" \
@@ -1657,5 +1670,95 @@ func test_bridge_claims_clear_street_headroom() -> void:
 	assert_false(plan.seal(),
 		"a stamp edit that touches a passage column without clearing its " \
 			+ "own headroom must fail seal")
+	assert_true(plan.last_rejection.contains("headroom"),
+		"expected a headroom-named rejection, got: %s" % plan.last_rejection)
+
+
+func test_passage_headroom_is_a_per_cell_fact_not_a_constant() -> void:
+	## Controller ruling (2026-08-22): WarrenMazeSourcePlan.passage_headroom_top
+	## (cell.y + excavation.slot_bands(cell)) replaces cell.y +
+	## WarrenExcavation.HEADROOM_BANDS everywhere a passage's own required
+	## clearance is measured -- a stair/ramp intermediate stride cell's own
+	## carved slot runs one band taller than a plain LEVEL cell's, and the
+	## flat constant silently undercounted it (see task-1-report.md's third
+	## addendum: this is exactly what let a claim seal as "bearing" on what
+	## the real volume still shows as open carved air).
+	var checked := 0
+	var found_taller_slot := false
+	for city_seed in range(1, 13):
+		var profile := WarrenVillageScaleProfile.for_id(&"compact")
+		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
+		var plan := WarrenMazeCarver.carve(city_seed, massif, profile, false)
+		if plan == null:
+			continue
+		assert_true(WarrenMazeReservationPass.reserve(plan, profile),
+			WarrenMazeReservationPass.last_failure)
+		assert_true(WarrenMazeStampPass.stamp(plan, profile),
+			WarrenMazeStampPass.last_failure)
+		for claim: Dictionary in plan.parcel_claims:
+			var floor_band := int(claim.floor_band)
+			for column: Vector2i in claim.footprint as Array[Vector2i]:
+				# Only a column whose floor the ledger actually RAISED above its
+				# own natural terrain is bound by the headroom rule at all -- a
+				# footprint column that merely happens to share (x, z) with an
+				# unrelated passage many bands above its own UNEDITED roof never
+				# touched that passage's headroom in the first place (see
+				# test_bridge_claims_clear_street_headroom's own comment for the
+				# identical reasoning).
+				if plan.effective_base(column) <= plan.massif.base_at(column):
+					continue
+				for cell: Vector3i in plan.passage_cells():
+					if cell.x != column.x or cell.z != column.y:
+						continue
+					checked += 1
+					var real_top := plan.passage_headroom_top(cell)
+					if plan.excavation.slot_bands(cell) \
+							> WarrenExcavation.HEADROOM_BANDS:
+						found_taller_slot = true
+					assert_gte(floor_band, real_top,
+						("seed %d: claim at door %s has footprint column " \
+							+ "%s hosting passage cell %s (real headroom " \
+							+ "top %d, slot_bands %d) but its own floor %d " \
+							+ "does not clear it") \
+							% [city_seed, str(claim.door_column), column,
+								cell, real_top,
+								plan.excavation.slot_bands(cell), floor_band])
+	assert_gt(checked, 0,
+		"the pinned corpus must produce at least one claim whose " \
+			+ "footprint touches a passage-hosting column, or this check " \
+			+ "is vacuous")
+	assert_true(found_taller_slot,
+		"the pinned corpus must include at least one passage cell whose " \
+			+ "real carved slot exceeds HEADROOM_BANDS (a stair/ramp " \
+			+ "intermediate cell), or this test never exercises the " \
+			+ "actual fix")
+
+	# seal() rejects a doctored claim one band below a stair cell's REAL
+	# headroom -- the exact gap the old, constant-based rule used to miss:
+	# floor = real_headroom_top - 1 was illegal all along (still inside the
+	# cell's own carved slot) but the flat HEADROOM_BANDS constant would
+	# have called it legal.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var plan := WarrenMazeSitePlanner.plan(12, {}, profile, &"stamp")
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	assert_false(plan.is_sealed())
+	var stair_cell := Vector3i(0, 0, -4)
+	assert_true(plan.passage_kinds.has(stair_cell),
+		("fixture must still carry the known stair-adjacent passage cell " \
+			+ "at %s -- reproduction may need re-pinning if the carve " \
+			+ "corpus changed") % stair_cell)
+	var real_slot := plan.excavation.slot_bands(stair_cell)
+	assert_gt(real_slot, WarrenExcavation.HEADROOM_BANDS,
+		("fixture cell %s must have a real carved slot taller than " \
+			+ "HEADROOM_BANDS, or this doctoring proves nothing") % stair_cell)
+	var real_top := plan.passage_headroom_top(stair_cell)
+	var offending_column := Vector2i(stair_cell.x, stair_cell.z)
+	plan.column_edits[offending_column] = {
+		"floor_band": real_top - 1,
+		"top_band": real_top - 1 + WarrenMazeSourcePlan.MIN_HOUSE_BANDS,
+		"phase": &"stamp"}
+	assert_false(plan.seal(),
+		"a stamp edit one band below a stair cell's REAL headroom must " \
+			+ "fail seal")
 	assert_true(plan.last_rejection.contains("headroom"),
 		"expected a headroom-named rejection, got: %s" % plan.last_rejection)

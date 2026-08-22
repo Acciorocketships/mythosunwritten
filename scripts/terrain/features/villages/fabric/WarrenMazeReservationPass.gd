@@ -224,7 +224,16 @@ static func _claim_bridge_span(plan: WarrenMazeSourcePlan, kind: StringName,
 				columns.append(column)
 		if blocked:
 			continue
-		var datum := span[0].y + WarrenExcavation.HEADROOM_BANDS
+		# Per-cell real headroom (controller ruling, 2026-08-22): the deck's
+		# own floor is the MAX of plan.passage_headroom_top(cell) -- cell.y +
+		# excavation.slot_bands(cell) -- across every span cell, never
+		# span[0].y + the flat HEADROOM_BANDS constant, which undercounts a
+		# stair/ramp intermediate stride cell's own taller carved slot. Span
+		# cells are a LEVEL-stride run and normally share one slot height, but
+		# this stays correct even if one cell's own slot happens to differ.
+		var datum := plan.passage_headroom_top(span[0])
+		for cell: Vector3i in span:
+			datum = maxi(datum, plan.passage_headroom_top(cell))
 		var plot_top := datum + WarrenBuildingParcel.STOREY_BANDS
 		var edit_ok := true
 		for column: Vector2i in columns:

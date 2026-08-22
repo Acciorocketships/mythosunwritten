@@ -183,17 +183,33 @@ func record_trim(column: Vector2i, top_band: int) -> bool:
 	return true
 
 
+## The real, per-cell top of a passage cell's own carved headroom slot --
+## cell.y + excavation.slot_bands(cell) -- controller ruling (2026-08-22):
+## NOT cell.y + WarrenExcavation.HEADROOM_BANDS, which undercounts a
+## stair/ramp intermediate stride cell's own taller carved slot (it carries
+## both treads, one band more than a plain LEVEL cell -- see
+## WarrenExcavation.slot_bands' own header). This is the ONE source of truth
+## every headroom-measuring rule in this file, WarrenMazeStampPass, and
+## WarrenMazeReservationPass must use instead of re-deriving the
+## constant-based approximation that used to certify a claim as bearing on
+## what a stair-adjacent column's real carved slot still shows as open air.
+## HEADROOM_BANDS itself stays meaningful only where it genuinely names a
+## MINIMUM (e.g. the carver's own span-legality mass check) -- never as a
+## stand-in for a specific cell's own real headroom.
+func passage_headroom_top(cell: Vector3i) -> int:
+	return cell.y + excavation.slot_bands(cell)
+
+
 ## The lowest legal top_band a trim may ever leave on `column`: the highest
-## passage cell hosted there, plus WarrenExcavation.HEADROOM_BANDS of
-## required air above it -- -1 (no floor) when the column hosts no passage
-## cell at all. Shared between record_trim's own gate and seal()'s mirror of
-## the same rule, so the two can never disagree about what "cuts into a
-## passage's headroom" means.
+## passage_headroom_top() among every passage cell hosted there -- -1 (no
+## floor) when the column hosts no passage cell at all. Shared between
+## record_trim's own gate and seal()'s mirror of the same rule, so the two
+## can never disagree about what "cuts into a passage's headroom" means.
 func _passage_headroom_floor(column: Vector2i) -> int:
 	var floor_needed := -1
 	for cell: Vector3i in passage_kinds.keys():
 		if cell.x == column.x and cell.z == column.y:
-			floor_needed = maxi(floor_needed, cell.y + WarrenExcavation.HEADROOM_BANDS)
+			floor_needed = maxi(floor_needed, passage_headroom_top(cell))
 	return floor_needed
 
 
