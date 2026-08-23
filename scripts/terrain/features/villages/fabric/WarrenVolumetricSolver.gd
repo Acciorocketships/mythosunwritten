@@ -1185,6 +1185,14 @@ static func from_volume(volume: WarrenVolumePlan,
 			retained_rock.roof_cells)
 		plan.audit["maze_retained_unroomed_plot_stone_cells"] = int(
 			retained_rock.unroomed_plot_cells)
+		# TASK C5e RULING 2. The parapet course above a flat crown's slab,
+		# left as AIR instead of retained as stone, so the crown is an open
+		# terrace rather than a masonry block with a timber sill. Counted here
+		# rather than inferred from the drop in the stone total, because a
+		# stack parent deliberately KEEPS its parapet -- see
+		# `_maze_released_parapet_cells`.
+		plan.audit["maze_released_parapet_cell_count"] = int(
+			retained_rock.released_parapet_cells)
 		plan.audit["maze_plot_mass_cell_count"] = int(
 			plot_mass_audit.plot_cells)
 		plan.audit["maze_plot_roomed_cell_count"] = int(plot_mass_audit.roomed)
@@ -1599,11 +1607,13 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	# them apart is what makes the difference measurable.
 	var plot_mass := _maze_plot_mass_cells(volume)
 	var plot_roof := _maze_plot_roof_cells(volume)
+	var released := _maze_released_parapet_cells(volume)
 	var cells: Array[Vector3i] = []
 	var skipped := 0
 	var rock_cells := 0
 	var unroomed_plot_cells := 0
 	var roof_cells := 0
+	var released_cells := 0
 	var lowest := grid.minimum.y
 	var highest := grid.minimum.y + grid.size.y
 	for column_value: Variant in source.massif.columns.keys():
@@ -1617,6 +1627,9 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 				if not grid.contains(fine) or grid.use_at(fine) \
 						!= WarrenSpatialGrid.Use.OUTSIDE:
 					continue
+				if released.has(fine):
+					released_cells += 1
+					continue
 				if _feature_bit_is_taken(grid, fine):
 					skipped += 1
 					continue
@@ -1629,14 +1642,84 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 				cells.append(fine)
 	if cells.is_empty():
 		return {"failed": false, "cells": 0, "skipped": skipped,
-			"rock_cells": 0, "unroomed_plot_cells": 0, "roof_cells": 0}
+			"rock_cells": 0, "unroomed_plot_cells": 0, "roof_cells": 0,
+			"released_parapet_cells": released_cells}
 	cells.sort_custom(_cell_less)
 	if not _claim_maze_stone(grid, cells):
 		return {"failed": true, "cells": 0, "skipped": skipped,
-			"rock_cells": 0, "unroomed_plot_cells": 0, "roof_cells": 0}
+			"rock_cells": 0, "unroomed_plot_cells": 0, "roof_cells": 0,
+			"released_parapet_cells": released_cells}
 	return {"failed": false, "cells": cells.size(), "skipped": skipped,
 		"rock_cells": rock_cells,
-		"unroomed_plot_cells": unroomed_plot_cells, "roof_cells": roof_cells}
+		"unroomed_plot_cells": unroomed_plot_cells, "roof_cells": roof_cells,
+		"released_parapet_cells": released_cells}
+
+
+static func _maze_released_parapet_cells(volume: WarrenVolumePlan) \
+		-> Dictionary:
+	## TASK C5e RULING 2 -- THE PARAPET IS RELEASED TO AIR.
+	##
+	## A flat-roofed plot's crown is `[flat_roof_base_band, top)`: the first
+	## band carries the authored one-band `roof.flat.*` slab the roof compiler
+	## builds, and on the EVEN heights the planner produces one more band is
+	## left over. That leftover band used to be retained STONE, and it is why
+	## every crown in the C5d captures reads from above as a stone block with
+	## a timber sill: the slab is BENEATH a solid course of masonry that
+	## covers the whole footprint, not a terrace.
+	##
+	## It is released here -- claimed by nobody, left as air -- so the built
+	## crown is slab plus open sky and `SettlementFabricAssembler
+	## .maze_terrace_railings` can guard its edges.
+	##
+	## THE DESIGN DECISION RULING 2 LEAVES OPEN, and which way it went.
+	## A child of a stacked house stands at `parent.top_band`, which is one
+	## band ABOVE the slab: what it really rests on is that parapet course.
+	## The two admissible answers were to release the band anyway and teach
+	## the seam to accept a floor one band clear of the slab, or to keep the
+	## parcel's built top AT the slab wherever nothing stands on it. This is
+	## the second: a plot that is a STACK PARENT keeps its parapet, because
+	## something really does stand on it and `WarrenRoomCompositionPlanner
+	## ._floorplate_transition_is_structurally_legible` proves that bearing by
+	## asking the grid whether the band below the child is STRUCTURAL_VOLUME.
+	## Every other flat plot -- 34 of 36, 39 of 39 and 37 of 40 house plots on
+	## the three sealing seeds -- ends at its slab.
+	##
+	## The choice costs nothing and changes no seam: `WarrenParcelPlan
+	## .building_support_is_valid`, `WarrenBuildingParcel.top_band` and every
+	## deterministic signature are untouched, so the plot's `top` remains the
+	## massing envelope it always was while the BUILT crown stops one band
+	## lower. Releasing it under a child instead would have put a band of air
+	## between a house and the house it stands on.
+	##
+	## Precisely the complement of `_maze_flat_slab_cells`, which claims the
+	## same bands for the stack parents this function skips.
+	##
+	## Empty for a searched volume, which is what keeps every reader maze-only.
+	var out: Dictionary = {}
+	var source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null:
+		return out
+	var parents: Dictionary = {}
+	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
+			source)["parents"] as Dictionary).values():
+		parents[StringName(parent_value)] = true
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
+				or parents.has(StringName(plot["id"])) \
+				or not WarrenMazeBlockPartitioner.plot_is_flat_roofed(source,
+					plot):
+			continue
+		var top_band := int(plot["top"])
+		var roof_base := WarrenBuildingParcel.flat_roof_base_band(
+			int(plot["floor"]), top_band)
+		for band in range(roof_base + 1, top_band):
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				for fine: Vector3i in _fine_square(Vector3i(column.x, band,
+						column.y)):
+					out[fine] = true
+	return out
 
 
 static func _maze_plot_roof_cells(volume: WarrenVolumePlan) -> Dictionary:

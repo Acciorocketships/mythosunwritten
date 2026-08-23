@@ -347,20 +347,39 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	# directly on the rock descends exactly as it did before, which is what
 	# keeps every rock-borne house in this corpus byte-identical.
 	#
-	# MEASURED AND REVERTED TWICE: NO DESCENT AT ALL. Returning `base_band`
-	# for every maze parcel -- the plot model taken literally, so a house on a
-	# hill column becomes a short house on a tall stone base rather than
-	# storeys -- was better on C5c's number (12/compact 0.200 unroomed with 1
-	# uncomposed parcel of 29, against 0.267 and 6) and cost 4/compact and
-	# 3/standard their towns at PITCHED roof gates. Task C5d made maze houses
-	# flat-roofed by default, removed those crowns, and re-applied it: on the
-	# 24-seed maze sweep it went 10/24 sealed DOWN to 9/24, and 3/standard
-	# lost its town again -- at `roof remainder for
-	# spatial.parcel.maze.house.033 ... 1-cell exposed sliver`, a partial
-	# plate, which is the one roof family flat-first does not remove because
-	# no authored `roof.flat.*` module covers half a footprint. Reverted
-	# again. What has to move first is the partial-plate vocabulary, not this
-	# rule.
+	# MEASURED AND REVERTED THREE TIMES: NO DESCENT AT ALL. Returning
+	# `base_band` for every maze parcel -- the plot model taken literally, so a
+	# house on a hill column becomes a short house on a tall stone base rather
+	# than storeys -- was better on C5c's number (12/compact 0.200 unroomed
+	# with 1 uncomposed parcel of 29, against 0.267 and 6) and cost 4/compact
+	# and 3/standard their towns at PITCHED roof gates. Task C5d made maze
+	# houses flat-roofed by default, removed those crowns, and re-applied it:
+	# the 24-seed maze sweep went 10/24 sealed DOWN to 9/24 and 3/standard lost
+	# its town again, at a PARTIAL PLATE -- `roof remainder for
+	# spatial.parcel.maze.house.033 ... 1-cell exposed sliver` -- which is the
+	# one roof family flat-first could not remove.
+	#
+	# TASK C5e re-applied it a THIRD time, with the partial-plate vocabulary
+	# finally in place (`WarrenSpatialFabricCompiler._tile_flat_plate`), and it
+	# is no longer a strict loss -- it is a TRADE, which is why the numbers are
+	# here in full rather than summarised:
+	#
+	# * every planner seed still seals (12/compact, 4/compact, 3/standard AND
+	#   9/standard), which is ruling 4's own gate, and the composition is far
+	#   better -- unroomed plot mass 0.226/0.211/0.281/0.260 -> 0.156/0.142/
+	#   0.224/0.176, uncomposed parcels 6/3/4/6 -> 1/1/2/1, back-room stamped
+	#   share 0.806/0.692/0.587/0.558 -> 0.838/0.700/0.739/0.585;
+	# * the CORPUS goes 18/24 sealed DOWN to 16/24. It gains 6/compact and
+	#   loses 1/standard, 10/standard and 11/compact, all three at
+	#   `authored room envelope gate failed: room ... failed measured phase
+	#   selection` -- the family 12/standard already dies at, not a roof gate;
+	# * route floor standing on stone falls from 1.000/1.000/1.000/1.000 to
+	#   0.968/0.950/0.979/1.000, and 0.950 is exactly `ROUTE_ON_STONE_FLOOR`.
+	#   That is the defect Task C5 ruling 3 existed to remove.
+	#
+	# Reverted again, on the discipline every task in this phase has kept: no
+	# change ships that costs a seed that sealed its town. What has to move
+	# first is now the AUTHORED ROOM ENVELOPE selection, not the roof.
 	var maze_source := parcel.source.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if maze_source != null:

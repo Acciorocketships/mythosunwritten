@@ -31,6 +31,31 @@ const SHALLOW_FLASHING_MAX_HEIGHT_M := 0.25
 ## terrace/garden fallback while the future court grammar owns true walkable
 ## roof plazas.
 const MIN_INTENTIONAL_FLAT_ROOF_FACE_COUNT := 16
+## TASK C5e RULING 1 -- the authored modules a PARTIAL flat plate is tiled
+## with, LARGEST FIRST, and the whole of the vocabulary that tiling may use.
+## A flat crown another storey stands on part of has no single `roof.flat.*`
+## unit for the shape that is left over, and every one of the eight
+## partial-plate seeds C5d measured died of exactly that.
+##
+## The first three are the ordinary flat slabs at their own footprints (4x4,
+## 2x4 and 2x2 fine cells): a tiled crown is built out of the same authored
+## plank lids as an untiled one, so the two read alike from above.
+##
+## The `roof.setback.cap.*` family is the authored ONE-CELL-WIDE thin plank
+## cap, and it is here because the shape measurement says it has to be: on the
+## three sealing seeds the partial remainders are 2x2 fine blocks (15 of 33)
+## and ONE-CELL-WIDE 2-cell strips (18 of 33), and no `roof.flat.*` module is
+## narrower than two cells. It is the same module the setback vocabulary uses
+## for this exact shape; what a flat crown does NOT take is that vocabulary's
+## rule that a strip must become a pitched shed, because a flat crown's whole
+## surface is already a horizontal plank lid (see the forbidden-plain-cap gate
+## at the foot of `compile_roof_units`, which counts only the setback path's
+## own caps and which this branch deliberately does not enter).
+const FLAT_PLATE_TILE_RECIPES: Array[StringName] = [
+	&"roof.flat.square", &"roof.flat.slim", &"roof.flat.tower",
+	&"roof.setback.cap.6", &"roof.setback.cap.4", &"roof.setback.cap.2",
+	&"roof.setback.cap.1",
+]
 ## The reviewed foundation asset is exactly 3 m tall on the 1.5 m sectional
 ## lattice. A retained house datum more than two bands above natural ground
 ## would therefore leave daylight beneath the stone. Reject that source
@@ -163,6 +188,7 @@ static func solve(source: WarrenSpatialPlan,
 		foundation_result.get("max_depth_bands", 0))
 	lineage.merge(foundation_audit, true)
 	lineage.merge(stone_audit, true)
+	lineage.merge(_maze_terrace_audit(result), true)
 	lineage.merge(volumes.audit(), true)
 	lineage.merge(solid_void.audit(), true)
 	lineage["spatial_signature"] = source.deterministic_signature().sha256_text()
@@ -553,6 +579,32 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 			"maze_unroomed_plot_share", 0.0)),
 		"maze_stone_cells": maze_stone,
 		"flush_room_count": flush_room_count, "room_records": room_records}
+
+
+static func _maze_terrace_audit(plan: SettlementFabricPlan) -> Dictionary:
+	## TASK C5e RULING 3. What the flat crowns really are, and what they wear.
+	## The rule and the payload are both `SettlementFabricAssembler`'s, so this
+	## audit reads them rather than restating them: how many cells of open
+	## crown the town built, how many of their boundaries are a fall, and how
+	## many railing instances the renderer is handed for those boundaries.
+	##
+	## They are three separate statements on purpose. A 3 m module spans two
+	## boundaries, so the rail count is deliberately NOT the edge count and no
+	## test should assert they are equal; what a test can hold is that every
+	## edge is covered exactly once, which needs both numbers published.
+	##
+	## Every count is zero on a legacy plan, which tags no maze stone.
+	if plan == null:
+		return {"maze_terrace_deck_cell_count": 0,
+			"maze_terrace_edge_count": 0, "maze_terrace_railing_count": 0}
+	return {
+		"maze_terrace_deck_cell_count": SettlementFabricAssembler \
+			.maze_terrace_deck_cells(plan).size(),
+		"maze_terrace_edge_count": SettlementFabricAssembler \
+			.maze_terrace_edges(plan).size(),
+		"maze_terrace_railing_count": SettlementFabricAssembler \
+			.maze_terrace_railings(plan).instance_count,
+	}
 
 
 static func _maze_stone_skin_audit(plan: SettlementFabricPlan) -> Dictionary:
@@ -2632,6 +2684,10 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var maze_pitched_refused_count := 0
 	var maze_crown_fell_through_count := 0
 	var maze_pitched_rooms: Array[StringName] = []
+	var maze_tiled_plate_count := 0
+	var maze_plate_tile_count := 0
+	var maze_plate_refused_count := 0
+	var maze_plate_tile_recipe_counts: Dictionary = {}
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
 		exposed_roof_room_kind_counts[room.kind] = int(
@@ -2869,6 +2925,52 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					probe.last_rejection])
 			rejected_flat_count += 1
 			plot_flat_rejected_count += 1
+		if plot_flat and not full \
+				and not _touches_public_air(source.grid, face_cells):
+			# TASK C5e RULING 1 -- A PARTIAL PLATE TILES.
+			#
+			# Another storey of this same building stands on part of this
+			# crown, so the exposed remainder is not a complete footprint and
+			# no single `roof.flat.*` module covers it. Before this task the
+			# remainder went to the finite setback vocabulary and was required
+			# to become a pitched shed or gable: eight of the thirteen
+			# non-sealing corpus seeds, the 9/standard pin and the blocker on
+			# the no-descent relaxation were all that one refusal.
+			#
+			# The remainder is covered with authored flat modules instead
+			# (`_tile_flat_plate`, and `FLAT_PLATE_TILE_RECIPES` for why that
+			# vocabulary and no other). Each tile is a real roof unit, so the
+			# whole crown still answers the source-face identity below; the
+			# tiling is one transaction, so a shape it cannot cover changes
+			# nothing and keeps the setback vocabulary it had before.
+			var tiling := _tile_flat_plate(source, program, probe, room_id,
+				room, parent_unit, face_cells, room_seams, out,
+				fixed_feature_units, unit_by_room, unit_by_private_cell)
+			var plate_tiles := tiling.get("units",
+				[] as Array[FabricUnit]) as Array[FabricUnit]
+			if not plate_tiles.is_empty():
+				var committed := true
+				for plate_tile: FabricUnit in plate_tiles:
+					if probe.add_unit(plate_tile):
+						out.append(plate_tile)
+						continue
+					last_failure = "proved flat plate tiling changed before commit for %s: %s" % [
+						room_id, probe.last_rejection]
+					committed = false
+					break
+				if not committed:
+					return [] as Array[FabricUnit]
+				realized_face_count += face_cells.size()
+				maze_tiled_plate_count += 1
+				maze_plate_tile_count += plate_tiles.size()
+				for plate_tile: FabricUnit in plate_tiles:
+					maze_plate_tile_recipe_counts[plate_tile.recipe_id] = int(
+						maze_plate_tile_recipe_counts.get(
+							plate_tile.recipe_id, 0)) + 1
+				continue
+			maze_plate_refused_count += 1
+			attempt_failures.append("flat plate tiling: %s" % String(
+				tiling.get("failure", "rejected")))
 		if full and not plot_flat \
 				and not _touches_public_air(source.grid, face_cells) \
 				and face_cells.size() >= MIN_INTENTIONAL_FLAT_ROOF_FACE_COUNT:
@@ -3385,6 +3487,21 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"maze_pitched_refused_count": maze_pitched_refused_count,
 		"maze_crown_fell_through_count": maze_crown_fell_through_count,
 		"maze_pitched_roof_rooms": maze_pitched_rooms,
+		# TASK C5e RULING 1 -- the partial-plate triple. `_tiled_count` is the
+		# crowns whose uncovered remainder really was covered with authored
+		# flat modules, `_tile_count` the modules that took, and
+		# `_refused_count` the crowns whose shape this vocabulary could not
+		# cover and which therefore kept the finite setback vocabulary. The
+		# three of them, plus `plot_flat_roof_partial_plate_count` above,
+		# state the whole disposition of a maze town's partial plates:
+		# `_tiled + _refused` is every partial flat plate, and
+		# `plot_flat_roof_partial_plate_count` counts only the refused ones,
+		# because a tiled crown never reaches the setback vocabulary at all.
+		"maze_partial_plate_tiled_count": maze_tiled_plate_count,
+		"maze_partial_plate_tile_count": maze_plate_tile_count,
+		"maze_partial_plate_refused_count": maze_plate_refused_count,
+		"maze_partial_plate_tile_recipe_counts": \
+			maze_plate_tile_recipe_counts,
 		# A plot slab is a DELIBERATE closure, not the unarticulated lid the
 		# review round complained about, so it is excluded from the bare count
 		# rather than inflating it (Task C5 ruling 1).
@@ -3501,6 +3618,133 @@ static func _cap_unit(room_id: StringName, row_index: int,
 		[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
 			SettlementFabricProgram._bearing_cell_socket_id(&"top",
 				parent_local.x, parent_local.z))] as Array[Dictionary], &"", seams)
+
+
+static func _tile_flat_plate(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, probe: SettlementFabricPlan,
+		room_id: StringName, room: WarrenRoomStamp, parent_unit: FabricUnit,
+		face_cells: Array[Vector3i], room_seams: Array[StringName],
+		prior_roofs: Array[FabricUnit],
+		fixed_feature_units: Array[FabricUnit], unit_by_room: Dictionary,
+		unit_by_private_cell: Dictionary) -> Dictionary:
+	## TASK C5e RULING 1. Cover the uncovered part of a flat crown with
+	## authored flat units, and return them as ONE transaction:
+	## `{units, failure}` with an empty unit list when any part of the shape
+	## has no module, exactly like `_terminal_macro_cap_fallback` beside it.
+	##
+	## DETERMINISTIC AND SEARCHLESS, which is the ruling's own requirement.
+	## The exposed cells are sorted once (z, then x); the first cell that is
+	## still uncovered becomes the MINIMUM corner of the next tile; and the
+	## largest module of `FLAT_PLATE_TILE_RECIPES` whose exact footprint lies
+	## inside the uncovered set is the one placed. There is no backtracking and
+	## no alternative partition: a shape this vocabulary cannot cover is
+	## refused here and keeps the setback vocabulary it had before.
+	##
+	## Every tile is a REAL roof unit -- its own bearing bond onto the parent
+	## room's own per-cell top socket, its own seams, and its faces counted in
+	## `realized_roof_face_count` by the caller -- so a tiled crown satisfies
+	## the same source-face identity a slab does.
+	if face_cells.is_empty():
+		return {"units": [] as Array[FabricUnit],
+			"failure": "no exposed plate to tile"}
+	var pending: Dictionary = {}
+	for cell: Vector3i in face_cells:
+		pending[cell] = true
+	var order: Array[Vector3i] = []
+	order.assign(face_cells)
+	order.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		return a.z < b.z if a.z != b.z else a.x < b.x)
+	var tiles: Array[FabricUnit] = []
+	for anchor: Vector3i in order:
+		if not pending.has(anchor):
+			continue
+		var placed := false
+		for recipe_id: StringName in FLAT_PLATE_TILE_RECIPES:
+			var recipe := program.recipe(recipe_id)
+			if recipe == null:
+				continue
+			for yaw in 2:
+				var footprint := _tile_footprint(recipe, yaw)
+				if footprint.is_empty():
+					continue
+				var minimum := footprint[0] as Vector3i
+				for local_cell: Vector3i in footprint:
+					minimum = Vector3i(mini(minimum.x, local_cell.x), 0,
+						mini(minimum.z, local_cell.z))
+				# The module's own cells sit one band ABOVE the faces they
+				# close, which is where every roof unit in this file stands.
+				var origin := anchor + Vector3i.UP - minimum
+				var covered: Array[Vector3i] = []
+				var fits := true
+				for local_cell: Vector3i in footprint:
+					var face := local_cell + origin + Vector3i.DOWN
+					fits = fits and pending.has(face)
+					covered.append(face)
+				if not fits:
+					continue
+				var parent_local := _inverse_cell(origin + Vector3i.DOWN,
+					room.lattice_origin, room.yaw_quarters)
+				var seam_roofs: Array[FabricUnit] = []
+				seam_roofs.assign(prior_roofs)
+				seam_roofs.append_array(tiles)
+				var tile := FabricUnit.new(
+					StringName("spatial.roof.%s.tile%02d" % [room_id,
+						tiles.size()]), recipe_id, origin, yaw,
+					[parent_unit.stable_id] as Array[StringName],
+					[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
+						SettlementFabricProgram._bearing_cell_socket_id(
+							&"top", parent_local.x, parent_local.z))] \
+						as Array[Dictionary], &"",
+					_roof_seams_for_candidate(room_seams,
+						parent_unit.stable_id, seam_roofs,
+						fixed_feature_units))
+				_append_shallow_prior_roof_seams(tile, room_seams, seam_roofs,
+					program)
+				_append_shallow_room_seams(tile, _setback_wall_room_ids(
+					covered, unit_by_private_cell), unit_by_room,
+					unit_by_private_cell, program)
+				if _unit_touches_public_air(source.grid, tile, recipe):
+					continue
+				for face: Vector3i in covered:
+					pending.erase(face)
+				tiles.append(tile)
+				placed = true
+				break
+			if placed:
+				break
+		if not placed:
+			return {"units": [] as Array[FabricUnit],
+				"failure": "no authored flat module fits the plate at %s" \
+					% anchor}
+	# SettlementFabricPlan admits one unit at a time and cannot roll a set
+	# back, so the whole tiling is proved on its own rebuilt probe before any
+	# of it reaches the authoritative one.
+	var fit := _roof_units_fit_probe(program, probe.units, tiles)
+	if not bool(fit.get("fits", false)):
+		return {"units": [] as Array[FabricUnit],
+			"failure": String(fit.get("failure", "plate tiling rejected"))}
+	return {"units": tiles}
+
+
+static func _tile_footprint(recipe: FabricRecipe, yaw: int) -> Array[Vector3i]:
+	## The cells one flat module really occupies at this yaw, taken from the
+	## recipe rather than from a table: the authored thin plank cap claims its
+	## strip as OCCLUDER cells only (it is a weather face, not mass), while
+	## every `roof.flat.*` slab claims the same cells as solid.
+	var out: Array[Vector3i] = []
+	var seen: Dictionary = {}
+	var local_cells: Array[Vector3i] = recipe.solid_cells \
+		if not recipe.solid_cells.is_empty() else recipe.occluder_cells
+	for local_cell: Vector3i in local_cells:
+		var rotated := FabricRecipe.transform_cell(local_cell, Vector3i.ZERO,
+			yaw)
+		if seen.has(rotated):
+			continue
+		seen[rotated] = true
+		out.append(rotated)
+	return out
 
 
 static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,

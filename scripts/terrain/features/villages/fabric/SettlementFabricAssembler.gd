@@ -358,6 +358,15 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	out.append_from(maze_stone_walls(retained, solids,
 		public_floor_cells(plan.surface_plan),
 		plinth_faces(retained, solids, bearing_footprint)))
+	# TASK C5e RULING 3. The other half of what a maze town's crown wears.
+	# The parapet course that used to cap every flat roof is released to air
+	# by `WarrenVolumetricSolver._maze_released_parapet_cells`, so the slab is
+	# an open terrace and its exposed edges take a railing. It rides here
+	# rather than in its own payload because this is the one function BOTH the
+	# production materialiser and the review commit already call for the
+	# retained crown, and a terrace with no rail is the same defect as a
+	# mountain with no skin.
+	out.append_from(maze_terrace_railings(plan))
 	assert(out.validate())
 	return out
 
@@ -604,6 +613,139 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 			STONE_FACE_DIRECTIONS[key.w], faces[key] as Vector3i),
 			Color.WHITE,
 			StringName("maze-stone/%d/%d/%d/%d" % [key.x, key.y, key.z,
+				key.w]))
+	assert(out.validate())
+	return out
+
+
+static func maze_terrace_deck_cells(plan: SettlementFabricPlan) -> Dictionary:
+	## TASK C5e RULING 3 -- which cells of this town are an OPEN FLAT CROWN,
+	## as `cell -> unit id`.
+	##
+	## MAZE ONLY, on this file's own maze key: a plan that tags no retained
+	## cell MAZE_STONE_TAG is a legacy plan and gets nothing, exactly as
+	## `maze_stone_walls` gets nothing there. That matters because a legacy
+	## town's rare flat lid is a searched fallback under a roof campaign, not
+	## a terrace anybody stands on, and its payload must stay byte-identical.
+	##
+	## A crown is a unit whose recipe is one of the two authored flat families
+	## -- the `roof.flat.*` slab (`flat_roof`) and the thin plank cap that
+	## tiles a partial plate (`setback_cap`, see
+	## `WarrenSpatialFabricCompiler.FLAT_PLATE_TILE_RECIPES`) -- with NOTHING
+	## BEARING ON IT. The last clause is what tells a terrace from a plinth: a
+	## flat roof carrying a planter or another storey is not a crown a viewer
+	## walks out onto, and its own accent already dresses it.
+	##
+	## The thin cap claims its strip as occluder cells only (it is a weather
+	## face, not mass), so both layers are read.
+	var out: Dictionary = {}
+	if plan == null or maze_stone_cells(plan.retained_terrace_cells).is_empty():
+		return out
+	var borne_on: Dictionary = {}
+	for unit: FabricUnit in plan.units:
+		for parent_id: StringName in unit.parent_ids:
+			borne_on[parent_id] = true
+	for unit: FabricUnit in plan.units:
+		if borne_on.has(unit.stable_id):
+			continue
+		var recipe := plan.recipe(unit.recipe_id)
+		if recipe == null or not (recipe.has_tag(&"flat_roof") \
+				or recipe.has_tag(&"setback_cap")):
+			continue
+		var local_cells: Dictionary = {}
+		for local_cell: Vector3i in recipe.solid_cells:
+			local_cells[local_cell] = true
+		for local_cell: Vector3i in recipe.occluder_cells:
+			local_cells[local_cell] = true
+		for local_value: Variant in local_cells.keys():
+			out[FabricRecipe.transform_cell(local_value as Vector3i,
+				unit.lattice_origin, unit.yaw_quarters)] = unit.stable_id
+	return out
+
+
+static func maze_terrace_edges(plan: SettlementFabricPlan) -> Dictionary:
+	## TASK C5e RULING 3 -- the open edges of every flat crown, keyed
+	## Vector4i(x, band, z, index into FACE_DIRECTIONS) and valued `true`.
+	##
+	## A crown cell owes a railing on a horizontal boundary whose neighbour AT
+	## THE CROWN'S OWN BAND is open air. Four things close a boundary and each
+	## of them is a real reason:
+	##
+	## * another crown cell -- the terrace simply continues;
+	## * any other built solid -- the room stacked on this crown, the party
+	##   wall of a taller neighbour, the next house's slab;
+	## * retained stone -- a rock shoulder or a parapet somebody really kept;
+	## * a public floor that PLANKS itself -- a deck, an interior passage or a
+	##   bridge at this very band, which you step straight out onto.
+	##
+	## Everything else is a fall, including the swept headroom of a street
+	## many bands below: that is the edge a railing exists for.
+	var deck := maze_terrace_deck_cells(plan)
+	var out: Dictionary = {}
+	if deck.is_empty():
+		return out
+	var solids := plan.transformed_cells(&"solid")
+	var retained := plan.retained_terrace_cells
+	var paved := public_floor_cells(plan.surface_plan)
+	for cell_value: Variant in deck.keys():
+		var cell := cell_value as Vector3i
+		for index in FACE_DIRECTIONS.size():
+			var neighbor := cell + FACE_DIRECTIONS[index]
+			if deck.has(neighbor) or solids.has(neighbor) \
+					or retained.has(neighbor) or paved.has(neighbor):
+				continue
+			out[Vector4i(cell.x, cell.y, cell.z, index)] = true
+	return out
+
+
+static func maze_terrace_railings(plan: SettlementFabricPlan) \
+		-> EnvironmentInstancePayload:
+	## TASK C5e RULING 3 -- one authored railing per open crown edge, through
+	## the same transform idiom `_append_guard_instances` uses for a public
+	## deck's guard: the module stands ON the walk surface, centred on the
+	## boundary, with its own local +X along the edge.
+	##
+	## The 3 m module spans TWO fine cells, so adjacent open edges in the same
+	## plane are PAIRED and the pair emits one instance -- the same reasoning
+	## that pairs the stone caps above, and what keeps a terrace edge reading
+	## as one run of fence rather than as a row of 1.5 m panels each with its
+	## own terminal posts. An odd leftover takes the authored 1.5 m module,
+	## which is the same asset the public guards already use.
+	##
+	## A crown's walk surface is the BOTTOM of its own band: the authored flat
+	## module is walk-aligned to local y = 0 and the unit stands at
+	## `band * CELL_SIZE`, so the rail's base sits exactly on the planks.
+	var out := EnvironmentInstancePayload.new()
+	var edges := maze_terrace_edges(plan)
+	if edges.is_empty():
+		return out
+	var keys: Array[Vector4i] = []
+	keys.assign(edges.keys())
+	keys.sort_custom(_face_before)
+	var paired: Dictionary = {}
+	for key: Vector4i in keys:
+		if paired.has(key):
+			continue
+		paired[key] = true
+		var direction := FACE_DIRECTIONS[key.w]
+		# The edge runs across its own normal; sweeping the sorted keys toward
+		# the positive tangent makes the pairing deterministic.
+		var tangent := Vector3i.BACK if direction.x != 0 else Vector3i.RIGHT
+		var mate := Vector4i(key.x + tangent.x, key.y, key.z + tangent.z,
+			key.w)
+		var span := 0
+		if edges.has(mate) and not paired.has(mate):
+			paired[mate] = true
+			span = 1
+		var boundary := (Vector3(key.x, 0.0, key.z) \
+			+ Vector3(direction) * 0.5) * FabricRecipe.CELL_SIZE
+		var origin := boundary + Vector3(tangent) * FabricRecipe.CELL_SIZE \
+			* 0.5 * float(span)
+		origin.y = float(key.y) * FabricRecipe.CELL_SIZE
+		out.add(PLANK_RAILING_MEDIUM if span == 1 else PLANK_RAILING,
+			Transform3D(Basis(Vector3.UP, atan2(-float(tangent.z),
+				float(tangent.x))), origin), Color.WHITE,
+			StringName("maze-terrace-rail/%d/%d/%d/%d" % [key.x, key.y, key.z,
 				key.w]))
 	assert(out.validate())
 	return out

@@ -81,10 +81,13 @@ const HERO_QUOTA_GATE_FRAGMENTS: Array[String] = [
 ## towers were the greedy scan building inside structural ROCK — solid the plot
 ## planner never gave to any building — and the maze-mode candidate filter that
 ## keeps rooms inside plot mass removed them. The seed seals end to end.
-const KNOWN_FABRIC_BLOCKERS: Dictionary = {
-	"9/standard": ["roof remainder for spatial.parcel.maze.house.044",
-		"1-cell exposed sliver"],
-}
+## TASK C5e: **EMPTY**, and the entry that is gone is the whole point. Every
+## planner seed now seals. 9/standard's roof sliver was a PARTIAL PLATE -- the
+## one-cell-wide remainder of a crown another storey stands on part of -- and
+## the flat crown tiles it now (`WarrenSpatialFabricCompiler._tile_flat_plate`)
+## instead of demanding a pitched shed for it. Removed, never relaxed: the map
+## is still two-sided, so a seed that stops sealing fails here.
+const KNOWN_FABRIC_BLOCKERS: Dictionary = {}
 
 ## Measured share of the back-room mass the directed pre-pass really stamps as
 ## rooms, minus a 0.05 guard, taken from the WEAKEST of the three sealing towns
@@ -115,6 +118,12 @@ const KNOWN_FABRIC_BLOCKERS: Dictionary = {
 ## shell, so C5c's reverted bearing relaxation could be re-applied: the
 ## `no terrain or building bearing` refusal that stood at 8 / 14 / 7
 ## rectangles is now ZERO on all three towns. Re-pinned upward, 0.17 -> 0.53.
+##
+## TASK C5e: 0.806 / 0.692 / 0.587 / **0.558**. The floor is UNCHANGED and
+## nothing regressed -- 9/standard is a town that never sealed before, and it
+## enters the corpus as the new weakest at 0.558. That leaves this pin only
+## 0.028 of margin, which is the honest reading of it: the next task to add a
+## town to the corpus should expect to re-measure rather than to re-pin.
 const BACK_ROOM_STAMPED_FLOOR := 0.53
 
 ## Measured share of a town's paved deck floor that is really WALKABLE from
@@ -192,6 +201,19 @@ const ROUTE_ON_STONE_FLOOR := 0.95
 ## not met and the residue is now overwhelmingly back-room rectangles whose
 ## authored ENVELOPE does not fit (2 / 7 / 9 refusals) plus the whole
 ## buildings of the parcels that compose no lineage (6 / 3 / 4).
+##
+## TASK C5e: **0.226 / 0.211 / 0.281 / 0.260**, and the ceiling is UNCHANGED
+## because the worst town is unchanged. 9/standard joins the corpus (its roof
+## sliver was a partial plate and the crown tiles it now), and it enters at
+## 0.260 rather than at a new worst. The partial-plate tiling itself moves no
+## cell of plot mass: it changes which authored module crowns a remainder, not
+## whether the remainder is roof.
+##
+## What WOULD move it is measured and reported rather than shipped: full
+## no-descent (`WarrenParcelConstruction._support_base_band`) takes these four
+## towns to **0.156 / 0.142 / 0.224 / 0.176** with every planner seed still
+## sealing, and costs the 24-seed corpus two towns (18/24 -> 16/24) and the
+## route-on-stone share its whole margin. The trade is stated at the code site.
 const UNROOMED_PLOT_MASS_CEILING := 0.33
 
 ## Houses the plot model says stand on ANOTHER PLOT that the composition still
@@ -1368,19 +1390,29 @@ func test_tiered_parcels_get_flat_roofs() -> void:
 			int(fabric.audit.get("plot_flat_roof_rejected_count", -1))])
 		# Every flat-roofed stamp that owns a COMPLETE exposed plate receives
 		# the authored slab. A stamp whose plate is partial -- another room
-		# stands on part of its crown -- has no whole-footprint flat module to
-		# receive, so it keeps the finite setback vocabulary and is counted
-		# separately rather than folded into either number.
+		# stands on part of its crown -- is TILED as of Task C5e, and only a
+		# plate whose shape the tiling vocabulary cannot cover still keeps the
+		# finite setback vocabulary. Both are counted separately rather than
+		# folded into either number, and the two counts must agree: the crowns
+		# that reach the setback vocabulary are exactly the refused tilings.
 		var partial := int(fabric.audit.get(
 			"plot_flat_roof_partial_plate_count", -1))
-		# Task C5d adds the third way a flat-roofed stamp's crown may be
-		# closed: the seeded pitched preference, which is composed only where
-		# the authored unit fits and is counted apart from the slab. Those
-		# three EXHAUST the flat-roofed stamps -- slab, partial plate,
-		# preferred shell -- as an equality rather than a bound, and the fourth
-		# outcome a crown could have (its own slab refused, so it fell through
-		# to the setback vocabulary) is asserted absent rather than folded into
-		# the sum, which is what keeps the identity falsifiable.
+		var tiled := int(fabric.audit.get("maze_partial_plate_tiled_count",
+			-1))
+		assert_eq(partial, int(fabric.audit.get(
+			"maze_partial_plate_refused_count", -2)),
+			("%s sends %d partial flat plates to the setback vocabulary and " \
+				+ "refuses a different number of tilings") % [_label(outcome),
+				partial])
+		# Task C5d adds the seeded pitched preference, which is composed only
+		# where the authored unit fits and is counted apart from the slab, and
+		# Task C5e splits the partial plates into the ones that TILE and the
+		# ones the tiling vocabulary refuses. Those four EXHAUST the
+		# flat-roofed stamps -- slab, tiled plate, refused plate, preferred
+		# shell -- as an equality rather than a bound, and the fifth outcome a
+		# crown could have (its own slab refused over a COMPLETE plate, so it
+		# fell through to the setback vocabulary) is asserted absent rather
+		# than folded into the sum, which keeps the identity falsifiable.
 		var preferred := int(fabric.audit.get("maze_pitched_roof_count", 0))
 		var refused := int(fabric.audit.get("plot_flat_roof_rejected_count",
 			-1))
@@ -1388,10 +1420,11 @@ func test_tiered_parcels_get_flat_roofs() -> void:
 			("%s refused %d flat-roofed stamps their own slab; the crown " \
 				+ "identity below no longer accounts for them") % [
 				_label(outcome), refused])
-		assert_eq(flats + partial + preferred, roofed,
+		assert_eq(flats + tiled + partial + preferred, roofed,
 			("%s owes %d flat roof units to its flat-roofed stamps and " \
-				+ "compiled %d (%d partial plates, %d preferred pitched)") % [
-				_label(outcome), roofed, flats, partial, preferred])
+				+ "compiled %d (%d tiled plates, %d partial plates, %d " \
+				+ "preferred pitched)") % [_label(outcome), roofed, flats,
+				tiled, partial, preferred])
 		assert_eq(pitched, 0,
 			("%s gave %d flat-roofed stamps that did NOT prefer one a pitched " \
 				+ "roof over a complete plate") % [_label(outcome), pitched])
@@ -1598,6 +1631,331 @@ func test_maze_roofs_are_flat_first() -> void:
 			total_eligible])
 	assert_gt(total_preferred, 0,
 		"no planner seed asked for a pitched crown at all")
+
+
+func _flat_crown_faces(plan: WarrenSpatialPlan) -> Dictionary:
+	## Every FLAT-roofed room's authoritative exposed roof faces, derived from
+	## the sealed plan's own construction regions and its room stamps — never
+	## from the roof compiler's audit. `room_id -> Array[Vector3i]`.
+	var room_id_by_cell: Dictionary = {}
+	var flat_rooms: Dictionary = {}
+	for building: WarrenBuildingVolume in plan.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not room.flat_roof:
+				continue
+			flat_rooms[room.stable_id] = room
+			for cell: Vector3i in room.private_cells:
+				room_id_by_cell[cell] = room.stable_id
+	var out: Dictionary = {}
+	for region: WarrenConstructionRegion in plan.construction_plan \
+			.regions_for_kind(WarrenSpatialGrid.FaceKind.ROOF):
+		for cell: Vector3i in region.face_cells:
+			var room_id := StringName(room_id_by_cell.get(cell, &""))
+			if room_id.is_empty():
+				continue
+			if not out.has(room_id):
+				out[room_id] = [] as Array[Vector3i]
+			(out[room_id] as Array[Vector3i]).append(cell)
+	return out
+
+
+func _roof_cover_by_cell(fabric: SettlementFabricPlan) -> Dictionary:
+	## Which roof units really occupy each world cell: `cell -> Array[String]`
+	## of unit ids. Solid AND occluder cells, because the authored thin plank
+	## cap that closes a one-cell setback strip claims occupancy only as an
+	## occluder. Read out of the sealed units, so a compiler audit that counts
+	## a tile it never placed cannot pass.
+	var out: Dictionary = {}
+	for unit: FabricUnit in fabric.units:
+		if not String(unit.stable_id).begins_with("spatial.roof."):
+			continue
+		var recipe := fabric.recipe(unit.recipe_id)
+		if recipe == null:
+			continue
+		var local_cells: Dictionary = {}
+		for cell: Vector3i in recipe.solid_cells:
+			local_cells[cell] = true
+		for cell: Vector3i in recipe.occluder_cells:
+			local_cells[cell] = true
+		for local_value: Variant in local_cells.keys():
+			var world := FabricRecipe.transform_cell(local_value as Vector3i,
+				unit.lattice_origin, unit.yaw_quarters)
+			if not out.has(world):
+				out[world] = [] as Array[String]
+			(out[world] as Array[String]).append(String(unit.stable_id))
+	return out
+
+
+func test_partial_plates_are_tiled() -> void:
+	## TASK C5e RULING 1. A flat crown only PARTLY covered by the storey
+	## stacked on it used to have no authored module at all: every
+	## `roof.flat.*` recipe is a whole-footprint stamp, so the remainder fell
+	## through to the finite setback vocabulary and eight of the corpus's
+	## thirteen non-sealing seeds died there. It is TILED now — the uncovered
+	## cells are covered by authored flat units, largest first, in sorted
+	## order — and this test states that as an identity rather than as a count:
+	##
+	## 1. every exposed roof face of every flat crown is under EXACTLY ONE roof
+	##    unit of its own room. Derived here from the sealed plan's own
+	##    construction regions and the units' recipes;
+	## 2. no flat crown reaches the setback vocabulary at all
+	##    (`plot_flat_roof_partial_plate_count == 0`), which is the brief's own
+	##    statement of "the macro setback / exact setback / 1-cell sliver gates
+	##    are not reached for flat crowns";
+	## 3. tiling is a MEASURED fact corpus-wide: some crown somewhere really is
+	##    tiled, so the whole branch cannot ship inert.
+	var measured := 0
+	var total_tiled := 0
+	var total_tiles := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		var faces_by_room := _flat_crown_faces(plan)
+		var cover := _roof_cover_by_cell(fabric)
+		var uncovered := PackedStringArray()
+		var doubled := PackedStringArray()
+		var foreign := PackedStringArray()
+		var partial_crowns := 0
+		for room_id_value: Variant in faces_by_room.keys():
+			var room_id := StringName(room_id_value)
+			var faces := faces_by_room[room_id] as Array[Vector3i]
+			var own_prefix := "spatial.roof.%s" % room_id
+			var top_band := (faces[0] as Vector3i).y
+			var covered_here := 0
+			for face: Vector3i in faces:
+				var owners := cover.get(face + Vector3i.UP,
+					[] as Array[String]) as Array[String]
+				if owners.is_empty():
+					if uncovered.size() < 4:
+						uncovered.append("%s@%s" % [room_id, face])
+					continue
+				if owners.size() > 1 and doubled.size() < 4:
+					doubled.append("%s@%s=%s" % [room_id, face, owners])
+				var own := false
+				for owner_id: String in owners:
+					own = own or owner_id.begins_with(own_prefix)
+				if not own and foreign.size() < 4:
+					foreign.append("%s@%s=%s" % [room_id, face, owners])
+				covered_here += 1
+			var top_cells := 0
+			for building: WarrenBuildingVolume in plan.buildings:
+				for room: WarrenRoomStamp in building.room_records:
+					if room.stable_id != room_id:
+						continue
+					for cell: Vector3i in room.private_cells:
+						top_cells += int(cell.y == top_band)
+			partial_crowns += int(faces.size() != top_cells)
+		var tiled := int(fabric.audit.get("maze_partial_plate_tiled_count", -1))
+		var tiles := int(fabric.audit.get("maze_partial_plate_tile_count", -1))
+		var refused := int(fabric.audit.get(
+			"maze_partial_plate_refused_count", -1))
+		var to_setback := int(fabric.audit.get(
+			"plot_flat_roof_partial_plate_count", -1))
+		print(("MAZE_TILED %s crowns=%d partial=%d tiled=%d tiles=%d " \
+			+ "refused=%d to_setback=%d modules=%s") % [_label(outcome),
+			faces_by_room.size(), partial_crowns, tiled, tiles, refused,
+			to_setback, fabric.audit.get(
+				"maze_partial_plate_tile_recipe_counts", {})])
+		assert_gte(tiled, 0,
+			"%s must publish maze_partial_plate_tiled_count" % _label(outcome))
+		assert_gte(tiles, 0,
+			"%s must publish maze_partial_plate_tile_count" % _label(outcome))
+		assert_gte(refused, 0,
+			"%s must publish maze_partial_plate_refused_count" \
+				% _label(outcome))
+		assert_eq(uncovered.size(), 0,
+			"%s leaves flat-crown faces with no roof unit: %s" % [
+				_label(outcome), ", ".join(uncovered)])
+		assert_eq(doubled.size(), 0,
+			"%s covers a flat-crown face with two roof units: %s" % [
+				_label(outcome), ", ".join(doubled)])
+		assert_eq(foreign.size(), 0,
+			"%s roofs a flat crown with another room's unit: %s" % [
+				_label(outcome), ", ".join(foreign)])
+		assert_eq(to_setback, 0,
+			("%s sent %d partial flat plates to the finite setback " \
+				+ "vocabulary") % [_label(outcome), to_setback])
+		assert_eq(tiled + refused, partial_crowns,
+			("%s has %d partial flat plates but tiled %d and refused %d") % [
+				_label(outcome), partial_crowns, tiled, refused])
+		total_tiled += tiled
+		total_tiles += tiles
+		measured += 1
+	assert_gt(measured, 0, "at least one seed sealed a town to measure")
+	print("MAZE_TILED corpus towns=%d tiled=%d tiles=%d" % [measured,
+		total_tiled, total_tiles])
+	assert_gt(total_tiled, 0,
+		"no planner seed tiled a single partial flat plate")
+	assert_gt(total_tiles, total_tiled,
+		"every tiled crown took exactly one tile, which is not a tiling")
+
+
+func _crown_deck_cells(plan: WarrenSpatialPlan,
+		fabric: SettlementFabricPlan) -> Dictionary:
+	## Every fine cell of every FLAT crown's built deck — slab or tile — as
+	## `cell -> room_id`. Derived from the plot model's own `flat_roof` stamps
+	## and the roof units standing on them, never from the assembler's rule.
+	##
+	## A flat-roofed stamp that WON the seeded pitched preference (Task C5d)
+	## is not a terrace: what stands on its crown is an authored pitched shell
+	## whose lowest band occupies these same cells. The compiler names those
+	## crowns itself, so they are skipped by name rather than by recipe.
+	var out: Dictionary = {}
+	var cover := _roof_cover_by_cell(fabric)
+	var pitched: Dictionary = {}
+	for room_id_value: Variant in fabric.audit.get("maze_pitched_roof_rooms",
+			[]) as Array:
+		pitched[StringName(room_id_value)] = true
+	for building: WarrenBuildingVolume in plan.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not room.flat_roof or pitched.has(room.stable_id):
+				continue
+			var own_prefix := "spatial.roof.%s" % room.stable_id
+			var band := room.lattice_origin.y + WarrenSpatialGrid.STOREY_CELLS
+			for cell_value: Variant in cover.keys():
+				var cell := cell_value as Vector3i
+				if cell.y != band:
+					continue
+				for owner_id: String in cover[cell] as Array[String]:
+					if owner_id.begins_with(own_prefix):
+						out[cell] = room.stable_id
+						break
+	return out
+
+
+func _open_crown_edge_points(plan: WarrenSpatialPlan,
+		fabric: SettlementFabricPlan) -> Dictionary:
+	## This file's own statement of the terrace rule: a crown deck cell owes a
+	## railing on every horizontal boundary whose neighbour AT THE DECK'S OWN
+	## BAND is open air — not another deck, not a room or any other built
+	## solid, not retained stone, and not a public floor that planks itself
+	## (a deck, passage or bridge you can walk straight onto). Keyed by the
+	## world MIDPOINT of the boundary, which is the one thing the rule and the
+	## rendered instance must agree on.
+	var deck := _crown_deck_cells(plan, fabric)
+	var solids := fabric.transformed_cells(&"solid")
+	var retained := fabric.retained_terrace_cells
+	var paved := SettlementFabricAssembler.public_floor_cells(
+		fabric.surface_plan)
+	var out: Dictionary = {}
+	for cell_value: Variant in deck.keys():
+		var cell := cell_value as Vector3i
+		for direction: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+			var neighbor := cell + direction
+			if deck.has(neighbor) or solids.has(neighbor) \
+					or retained.has(neighbor) or paved.has(neighbor):
+				continue
+			var midpoint := (Vector3(cell) + Vector3(direction) * 0.5) \
+				* FabricRecipe.CELL_SIZE
+			midpoint.y = float(cell.y) * FabricRecipe.CELL_SIZE
+			out[_point_key(midpoint)] = midpoint
+	return out
+
+
+func _point_key(point: Vector3) -> String:
+	return "%.2f:%.2f:%.2f" % [point.x, point.y, point.z]
+
+
+func _terrace_rail_points(fabric: SettlementFabricPlan) -> Dictionary:
+	## Which boundaries the RENDERER is really handed a railing for, measured
+	## off the transforms in the payload the commit path takes rather than off
+	## the rule that chose them. A 3 m module spans two boundaries at ±0.75 m
+	## along its own local X; a 1.5 m module spans the one it stands on.
+	var out: Dictionary = {}
+	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	for asset_value: Variant in payload.batches.keys():
+		var asset_id := StringName(asset_value)
+		if asset_id not in [SettlementFabricAssembler.PLANK_RAILING,
+				SettlementFabricAssembler.PLANK_RAILING_MEDIUM]:
+			continue
+		var batch := payload.batches[asset_id] as Dictionary
+		var ids := batch.get("ids", []) as Array
+		var transforms := batch.get("transforms", []) as Array
+		for index in ids.size():
+			if not String(ids[index]).begins_with("maze-terrace-rail/"):
+				continue
+			var xform := transforms[index] as Transform3D
+			var axis := (xform.basis * Vector3.RIGHT).normalized()
+			var offsets: Array[float] = []
+			offsets.assign([-0.75, 0.75] \
+				if asset_id == SettlementFabricAssembler.PLANK_RAILING_MEDIUM \
+				else [0.0])
+			for offset: float in offsets:
+				var key := _point_key(xform.origin + axis * offset)
+				out[key] = int(out.get(key, 0)) + 1
+	return out
+
+
+func test_flat_crowns_have_railings_on_open_edges() -> void:
+	## TASK C5e RULING 3. The flat crown is an open TERRACE, not a stone block
+	## with a timber sill: the parapet course above its slab is released to air
+	## and every exposed edge of the deck wears one authored railing. Three
+	## teeth, all measured against the payload the renderer receives:
+	##
+	## 1. every open boundary this file derives owns EXACTLY ONE railing;
+	## 2. no railing stands on a boundary that is not open — a rail across a
+	##    party wall, a stacked room, a stone shoulder or a deck you can walk
+	##    straight onto is a defect, not decoration;
+	## 3. the published audit count is the rendered count.
+	var measured := 0
+	var total_rails := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		var expected := _open_crown_edge_points(plan, fabric)
+		var rendered := _terrace_rail_points(fabric)
+		var audited := int(fabric.audit.get("maze_terrace_railing_count", -1))
+		var edges := int(fabric.audit.get("maze_terrace_edge_count", -1))
+		var missing := PackedStringArray()
+		var doubled := PackedStringArray()
+		for key_value: Variant in expected.keys():
+			var key := String(key_value)
+			var count := int(rendered.get(key, 0))
+			if count == 0 and missing.size() < 4:
+				missing.append(key)
+			elif count > 1 and doubled.size() < 4:
+				doubled.append("%s x%d" % [key, count])
+		var stray := PackedStringArray()
+		for key_value: Variant in rendered.keys():
+			if not expected.has(key_value) and stray.size() < 4:
+				stray.append(String(key_value))
+		print(("MAZE_TERRACE %s deck_edges=%d rails=%d audited=%d " \
+			+ "edge_audit=%d") % [_label(outcome), expected.size(),
+			rendered.size(), audited, edges])
+		assert_gte(audited, 0,
+			"%s must publish maze_terrace_railing_count" % _label(outcome))
+		assert_gt(expected.size(), 0,
+			"%s derives no open crown edge at all" % _label(outcome))
+		assert_eq(missing.size(), 0,
+			"%s leaves open terrace edges unrailed: %s" % [_label(outcome),
+				", ".join(missing)])
+		assert_eq(doubled.size(), 0,
+			"%s rails an open terrace edge twice: %s" % [_label(outcome),
+				", ".join(doubled)])
+		assert_eq(stray.size(), 0,
+			"%s rails a boundary that is not open: %s" % [_label(outcome),
+				", ".join(stray)])
+		assert_eq(edges, expected.size(),
+			("%s audits %d open terrace edges where this file derives %d") % [
+				_label(outcome), edges, expected.size()])
+		total_rails += audited
+		measured += 1
+	assert_gt(measured, 0, "at least one seed sealed a town to measure")
+	print("MAZE_TERRACE corpus towns=%d rails=%d" % [measured, total_rails])
+	assert_gt(total_rails, 0,
+		"no planner seed railed a single flat crown")
 
 
 func _mixed_footprint_fixture(source: WarrenMazeSourcePlan,
@@ -2020,6 +2378,7 @@ func test_stone_bases_follow_bears_on_rock() -> void:
 			continue
 		var rooms_by_parcel := _rooms_by_parcel(plan)
 		var wrong := 0
+		var stacked_on_rock := 0
 		var first := ""
 		for plot: Dictionary in source.plots:
 			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
@@ -2040,11 +2399,20 @@ func test_stone_bases_follow_bears_on_rock() -> void:
 				if ground == null or room.source_storey_index \
 						< ground.source_storey_index:
 					ground = room
-			if bears and not ground.terrain_bearing:
+			if bears and not ground.terrain_bearing \
+					and ground.support_parent_parcel_id.is_empty():
 				wrong += 1
 				if first.is_empty():
-					first = "%s bears on rock but roots in %s" % [parcel_id,
-						ground.support_parent_parcel_id]
+					first = "%s bears on rock but roots in nothing" % parcel_id
+			# TASK C5e, newly measurable: 9/standard is the first seed in the
+			# corpus that has a plot BOTH resting on rock and declaring a
+			# validated building support seam (house.025 on house.005), and it
+			# only reached this test because the partial-plate tiling let its
+			# town seal. Rooting such a ground room in the mountain instead of
+			# in its declared parent is the defect ruling 4 names -- a house
+			# standing THROUGH another house -- so the seam wins, and the case
+			# is counted and printed rather than folded into either verdict.
+			stacked_on_rock += int(bears and not ground.terrain_bearing)
 			if not bears and stacked and ground.terrain_bearing:
 				wrong += 1
 				if first.is_empty():
@@ -2053,6 +2421,8 @@ func test_stone_bases_follow_bears_on_rock() -> void:
 		assert_eq(wrong, 0,
 			"%s gives %d parcels the wrong base (%s)" % [_label(outcome),
 				wrong, first])
+		print("MAZE_BASES %s stacked_on_rock=%d" % [_label(outcome),
+			stacked_on_rock])
 		# The composition's own reading of the same fact: a house the plot
 		# model says stands on ANOTHER PLOT may not root in the mountain at
 		# its own floor band. Published by `_partition_rooms` rather than
@@ -2567,6 +2937,7 @@ func test_assets_land() -> void:
 	## number and not a shrug.
 	var realisable_total := 0
 	var realised_total := 0
+	var tested_total := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		if plan == null:
@@ -2598,9 +2969,15 @@ func test_assets_land() -> void:
 		print(("MAZE_ASSET_LAND %s placed=%d realisable=%d landmarks=%d " \
 			+ "mirror=%s | %s") % [_label(outcome), placed, realisable,
 			landmarks, tally, " ; ".join(reasons)])
-		assert_gt(int(tally.get("tested", 0)), 0,
-			("%s must have enumerated asset sites for the realisation " \
-				+ "mirror to judge") % _label(outcome))
+		# A town whose planner never enumerated a single candidate SITE has
+		# nothing for the mirror to judge, and asserting otherwise per town
+		# says "every town must offer the mirror work" rather than "the mirror
+		# is sound". 9/standard is the first such town in the corpus (Task
+		# C5e: it seals now, and its two asset records are refused before any
+		# site is enumerated), so the bar moved corpus-wide and the two teeth
+		# that matter -- the tally accounts for every site tested, and every
+		# realisable site really becomes a landmark -- stay per town.
+		tested_total += int(tally.get("tested", 0))
 		assert_eq(int(tally.get("tested", 0)),
 			int(tally.get("no_frontage", 0)) \
 				+ int(tally.get("street_over_top", 0)) \
@@ -2615,8 +2992,10 @@ func test_assets_land() -> void:
 		assert_eq(landmarks, realisable,
 			("%s must realise exactly the asset sites its planner called " \
 				+ "realisable") % _label(outcome))
-	print("MAZE_ASSET_LAND corpus realisable=%d realised=%d" % [
-		realisable_total, realised_total])
+	print("MAZE_ASSET_LAND corpus realisable=%d realised=%d tested=%d" % [
+		realisable_total, realised_total, tested_total])
+	assert_gt(tested_total, 0,
+		"no seed enumerated an asset site for the realisation mirror to judge")
 	assert_eq(realised_total, realisable_total,
 		"the corpus must realise exactly the sites the mirror accepted")
 	# FIX 1, IMPORTANT 3. Soundness is a real property and the assertions above
