@@ -285,11 +285,20 @@ static func _join(plan: WarrenMazeSourcePlan, column: Vector2i,
 	if not plan.plot_support_ok(column, floor_band):
 		return {"tier": -1, "reason": "support rule refuses this floor"}
 	var tier := -1
+	var above := 0
 	for band: int in streets.get(column, []) as Array:
-		if band >= floor_band and (tier < 0 or band < tier):
-			tier = band
+		if band < floor_band:
+			continue
+		above += 1
+		tier = band if tier < 0 else mini(tier, band)
 	if tier < 0:
 		return {"tier": -1, "reason": ""}
+	# A roof can carry exactly one street: its own. The footprint's top is the
+	# LOWEST street across its columns, so a column hosting a second one above
+	# that lands it over open air -- on a column carrying a plot there is
+	# nothing above the plot's top but sky.
+	if above > 1:
+		return {"tier": tier, "reason": "second street above the tier"}
 	if tier < floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
 		return {"tier": tier, "reason": "tier below MIN_HOUSE_BANDS"}
 	if tier > floor_band + MAX_TIER_BANDS:
@@ -383,24 +392,45 @@ static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
 			top = cap if clear else mini(top, cap)
 		var dropped: Dictionary = {}
 		for column: Vector2i in cells:
-			var one := [column] as Array[Vector2i]
-			var ceiling := _lowest_above(claims, one, floor_band)
-			# A column whose own street stands above this roof goes too, or the
-			# house takes the rock out from under that street: above the lowest
-			# plot floor on a column, solid mass is plots only. Off the
-			# footprint the sealed rock shoulder keeps that street its ground.
-			var street := _lowest_street(streets, one, minimum, reach, false)
+			var ceiling := _lowest_above(claims, [column] as Array[Vector2i],
+				floor_band)
+			# Every street this roof cannot carry sends its column away, not
+			# just the lowest one: the house would take the rock out from under
+			# that street and leave its floor hanging, since above the lowest
+			# plot floor on a column solid mass is plots only. Off the footprint
+			# the sealed rock shoulder keeps the street its ground.
 			if ceiling >= 0 and (ceiling < minimum \
 					or ceiling > top and ceiling <= reach) \
-					or street > top:
+					or _street_above(streets, column, floor_band, top):
 				dropped[column] = true
 		if dropped.is_empty() or cells.size() <= 1:
 			break
-		for column: Vector2i in dropped:
-			_release(claims, column, floor_band)
+		# The component walk, not `dropped`, decides who really leaves: it keeps
+		# a dropped SEED and it strands columns the drop disconnected. Claims
+		# are handed back for exactly the difference, or a phantom claim keeps
+		# capping the roofs beneath a column nobody owns.
+		var before := cells
 		cells = _keep_component(cells, dropped, building["seed"] as Vector2i)
+		var kept: Dictionary = {}
+		for column: Vector2i in cells:
+			kept[column] = true
+		for column: Vector2i in before:
+			if not kept.has(column):
+				_release(claims, column, floor_band)
 		building["cells"] = cells
 	return {"top": top, "tiered": street_top >= 0 and top == street_top}
+
+
+static func _street_above(streets: Dictionary, column: Vector2i,
+		floor_band: int, top: int) -> bool:
+	## Does this column host a street the roof at `top` cannot carry? Only a
+	## street exactly at `top` is carried (it runs across the roof); one below
+	## the floor is this house's own bearing, and anything else is a floor left
+	## hanging. Mirrors the asset path's check in WarrenPlotReservations.
+	for band: int in streets.get(column, []) as Array:
+		if band >= floor_band and band != top:
+			return true
+	return false
 
 
 static func _lowest_street(streets: Dictionary, cells: Array[Vector2i],

@@ -1011,3 +1011,24 @@ func test_planner_is_deterministic() -> void:
 		assert_eq(str(first.audit.get("plot_outcomes", {})),
 			str(second.audit.get("plot_outcomes", {})),
 			"seed %d %s audits the same outcomes twice" % [seed_value, scale])
+
+
+func test_streets_keep_their_floor() -> void:
+	# The addendum's claim, pinned as equality rather than as a ceiling: the
+	# plot layer never leaves a street standing over air that the bore had not
+	# already left. A carve-stage gap is a lower street's headroom eating an
+	# upper street's floor, which no plot can repair; anything above that count
+	# is a house or an asset that built the ground out from under a street.
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		var bore := _carved_town(seed_value, scale).street_floor_gaps()
+		var sealed_gaps := int(plan.audit.get("street_floor_gaps", -1))
+		gut.p("seed %d %s: street_floor_gaps %d, the bore left %d" % [
+			seed_value, scale, sealed_gaps, bore])
+		assert_eq(sealed_gaps, bore,
+			"seed %d %s adds no floating street" % [seed_value, scale])
