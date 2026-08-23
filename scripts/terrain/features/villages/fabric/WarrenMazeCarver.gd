@@ -6,7 +6,7 @@ extends RefCounted
 ## then extend that same connected public graph. There is no attempt index,
 ## survivor ranking, or complete-plan alternative.
 const MIN_HOUSE_BANDS := WarrenMazeSourcePlan.MIN_HOUSE_BANDS
-const FRONTAGE_FLOOR := 0.90
+const FRONTAGE_FLOOR := WarrenMazeSourcePlan.FRONTAGE_FLOOR
 const FRONTAGE_BUFFER_TARGET := 0.92
 const MAX_SPINE_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_SPINE_STRAIGHT_RUN
 const MAX_ALLEY_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN
@@ -96,13 +96,24 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	_carve_loop_joins(world_seed, massif, excavation, thickness,
 		market_square, loop_target)
 	var after_frontage := _frontage_audit(massif, excavation)
-	if float(after_frontage.ratio) < FRONTAGE_FLOOR:
-		last_failure = "alley budget reached %.3f frontage, below %.3f" % [
-			float(after_frontage.ratio), FRONTAGE_FLOOR]
-		last_diagnostic = {"stage": &"alleys", "before": before_frontage,
-			"after": after_frontage, "lane_count": excavation.lanes.size(),
-			"lane_cells": excavation.lane_cells().size()}
-		return null
+	# TASK D1 FIX 1, controller ruling: ADVISORY. FRONTAGE_FLOOR is the
+	# growth POLICY both ratchets steer by, not a verdict on the town. It is
+	# not one of the four hard runtime rules (street connectivity,
+	# walkability, headroom; no overlap; every plot supported), and on real
+	# ground the achievable ratio is genuinely lower -- a hillside street's
+	# uphill flank is a retaining bank, not a house wall, and neither the
+	# bank nor the plot model may be changed to make it one (terrain is
+	# immutable; a plot may not be buried, support rule 3). Rules become
+	# repairs: the shortfall ships as an audit fact -- `frontage_ratio` in
+	# the sealed plan's own audit, surfaced as `advisory_shortfalls
+	# ["frontage"]` by `WarrenVolumetricSolver._solve_maze` -- and the
+	# REQUIREMENT it used to stand in for is carried where it belongs, by
+	# the plot layer's coverage pins (every street-fronting slot filled,
+	# buildable coverage >= 0.91). The diagnostic is kept whether or not
+	# the town clears the floor, so the sweep can still read the stage.
+	last_diagnostic = {"stage": &"alleys", "before": before_frontage,
+		"after": after_frontage, "lane_count": excavation.lanes.size(),
+		"lane_cells": excavation.lane_cells().size()}
 	var forced_open: Array[Vector3i] = []
 	forced_open.assign(excavation.route.slice(0, market_cells))
 	for cell: Vector3i in market_square:
@@ -626,6 +637,17 @@ static func _carve_loop_joins(world_seed: int, massif: WarrenMassif,
 			return _cell_less(a.cell as Vector3i, b.cell as Vector3i))
 		if candidates.is_empty():
 			break
+		# TASK D1 FIX 1. The same RATCHET `_carve_alleys` needed, and for the
+		# same reason: written as `>= FRONTAGE_FLOOR` this commits a loop join
+		# only when it REACHES the floor, so a town that arrives short rolls
+		# back every connector -- including one that carries the ratio part of
+		# the way there -- and closes its street graph with nothing. Measured
+		# once per iteration, before any candidate is tried, so a join may
+		# never lower the ratio and, once at or above the floor, may never
+		# take it below that. A town whose alleys already cleared the floor is
+		# unaffected: the ratchet is then exactly the floor.
+		var frontage_before := float(_frontage_audit(massif,
+			excavation).ratio)
 		var committed := false
 		for candidate: Dictionary in candidates:
 			var cells := candidate.cells as Array[Vector3i]
@@ -649,7 +671,7 @@ static func _carve_loop_joins(world_seed: int, massif: WarrenMassif,
 			excavation.lanes.append(lane)
 			excavation.loop_edges.append(edge)
 			var audit := _frontage_audit(massif, excavation)
-			if float(audit.ratio) >= FRONTAGE_FLOOR:
+			if float(audit.ratio) >= minf(FRONTAGE_FLOOR, frontage_before):
 				for cell: Vector3i in cells:
 					loop_cells[cell] = true
 				committed = true

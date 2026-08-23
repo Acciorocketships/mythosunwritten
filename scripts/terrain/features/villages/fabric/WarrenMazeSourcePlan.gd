@@ -13,6 +13,16 @@ const PASSAGE_KINDS: Array[StringName] = [
 	PASSAGE_SPINE, PASSAGE_ALLEY, PASSAGE_MARKET,
 ]
 const MIN_HOUSE_BANDS := 4
+
+## Share of public cells the source AIMS to leave with an inhabitable facade
+## beside them. ADVISORY since task D1's controller ruling: it is the growth
+## policy `WarrenMazeCarver`'s alley and loop-join ratchets steer by, and the
+## bar the shortfall is reported against, never a rejection. It is not one of
+## the four hard runtime rules, and on real ground it is not always reachable
+## -- a hillside street's uphill flank is a retaining bank, which neither the
+## carver nor the plot model may turn into a house wall. The REQUIREMENT it
+## used to stand in for lives in the plot layer's coverage pins.
+const FRONTAGE_FLOOR := 0.90
 const MAX_SPINE_STRAIGHT_RUN := 6
 const MAX_ALLEY_STRAIGHT_RUN := 4
 
@@ -153,9 +163,6 @@ func seal() -> bool:
 			or int(audit.get("max_alley_straight_run", 0)) \
 				> MAX_ALLEY_STRAIGHT_RUN:
 		return _reject("a passage exceeds its straight-run cap")
-	if float(audit.get("frontage_ratio", 0.0)) < 0.90:
-		return _reject("frontage %.3f is below the 0.900 source floor" \
-			% float(audit.frontage_ratio))
 	# The plot model's own invariants (2026-08-21 design): solids contiguous
 	# from terrain on every column, every plot still supported, no plot
 	# standing in a carved street's headroom, plots pairwise disjoint. A town

@@ -55,6 +55,10 @@ const TRANSLATOR_NO_PLOTS := "sealed maze source carries no plots"
 const ADVISORY_SHORTFALL_KEYS: Array[String] = [
 	"covered_market", "courtyard_parcel_sides", "balconies", "landmarks",
 	"skywalks", "assets", "courtyard_bridges", "bridges",
+	# TASK D1 FIX 1's controller ruling: the source's addressed-frontage bar
+	# is advisory in maze mode. A town short of it ships and records the ratio
+	# it reached (plus `frontage_target`, the policy it was measured against).
+	"frontage",
 ]
 
 ## Hero-quota gate texts. None of them may appear on a maze-mode failure: in
@@ -285,21 +289,24 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ## took 12/standard, and full no-descent then took 6/compact). Pinned at
 ## measured MINUS ONE, so one town's worth of drift is a report rather than a
 ## red suite and two is a regression. The plan's Phase C exit wants 22+/24 and
-## it is NOT met: the misses are 7/compact (the maze SOURCE's alley budget) and
-## 8/compact (the volume ADAPTER's broad floor slab), both pre-existing Phase B
-## gates and the two allowed misses, plus 9/compact (a duplicate public-realm
-## edge). Each is named in the task report with its gate.
+## it IS met as of task D1 fix 1, at 22/24. The two remaining misses are
+## 8/compact (the volume ADAPTER's broad floor slab) and 9/compact (a duplicate
+## public-realm edge); each is named in the task report with its gate.
 ##
-## TASK D1 re-pinned this UPWARD, 19 -> 21, on the same 24-town flat corpus.
-## 4/standard's `roofless_house` back room is gone: the alley pass's own
-## frontage guard used to refuse EVERY lane in a town that arrived below the
-## floor, so 4/standard composed with no alleys at all and squeaked past the
-## graph gate on its loop joins. With the guard stated as a ratchet it grows
-## its streets, and the town it then builds does not hit that contract. Nothing
-## else on the flat corpus moved (7/compact still misses, at 0.870 rather than
-## 0.850, having now actually spent its alley budget).
+## TASK D1 re-pinned this UPWARD twice on the same 24-town flat corpus, 19 ->
+## 21 -> 22, both times as a consequence of one defect rather than of tuning:
+##
+##   - `4/standard`'s `roofless_house` back room went with the alley RATCHET.
+##     The alley pass's frontage guard used to refuse EVERY lane in a town that
+##     arrived below the floor, so 4/standard composed with no alleys at all
+##     and squeaked past the graph gate on its loop joins; with the guard
+##     stated as a ratchet it grows its streets and the town it then builds
+##     does not hit that contract.
+##   - `7/compact` went with the controller's ADVISORY ruling on the source's
+##     addressed-frontage bar. It reaches 0.870 (up from 0.850, having actually
+##     spent its alley budget now) and ships with the shortfall recorded.
 const MAZE_SWEEP := preload("res://tests/harness/warren_maze_mode_sweep.gd")
-const CORPUS_SEALED_FLOOR := 21
+const CORPUS_SEALED_FLOOR := 22
 const CORPUS_SWEEP_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard"]
 
@@ -3494,34 +3501,33 @@ const SLOPED_GROUND: Array[Dictionary] = [
 	{"ground": STEP_GROUND, "seed": 3, "scale": &"standard"},
 ]
 
-## Sloped rows the carver refuses at the source, and the gate each dies at.
-## `ramp/12/compact` reaches 0.872 addressed frontage against a 0.900 floor.
-## The alley pass really runs on real ground now (task D1 fixed the guard that
-## deadlocked it below the floor) and climbs 0.789 -> 0.872 over seven lanes;
-## it cannot reach the quota because a hillside street's uphill flank is a
-## retaining bank rather than a house wall, and the quota was calibrated where
-## no flank ever is. Reported to the controller as a design gap rather than
-## worked around; the row is pinned by name AND by gate so it cannot start
-## failing somewhere else in silence.
-const SLOPED_SOURCE_REFUSALS: Dictionary = {
-	"ramp/12/compact": "alley budget reached",
-}
 
 ## Ceiling on a SLOPED town's unroomed plot-mass share: measured worst (0.337,
-## ramp 3/standard) plus the 0.05 guard this file's flat pin uses. It sits
-## above `UNROOMED_PLOT_MASS_CEILING` (0.28) because relief really does leave
-## more of the mass unbuilt -- a house whose plot floor follows a climbing
-## street reaches less of the column under it -- and the two are pinned apart
-## rather than the flat one being loosened. Re-pin upward only, and report.
+## ramp 3/standard) plus the 0.05 guard this file's flat pin uses = 0.387,
+## rounded to two places IN THE SAFE DIRECTION, which for a ceiling is UP.
+## That is this file's own convention, not a new one:
+## `UNROOMED_PLOT_MASS_CEILING` is 0.28 from a measured 0.224 + 0.05 = 0.274,
+## and the plots suite's `BUILDABLE_COVERAGE_FLOOR` is 0.91 from 0.965 - 0.05
+## = 0.915 rounded DOWN because it is a floor.
+##
+## It sits above `UNROOMED_PLOT_MASS_CEILING` (0.28) because relief really does
+## leave more of the mass unbuilt -- a house whose plot floor follows a
+## climbing street reaches less of the column under it -- and the two are
+## pinned apart rather than the flat one being loosened. Re-pin upward only,
+## and report.
 const SLOPED_UNROOMED_PLOT_MASS_CEILING := 0.39
 
-## Wall-clock ceiling per sloped town, measured (2786 / 6427 / 8184 ms) with
-## the same ~1.4x headroom the flat pins carry. Sloped solves are NOT slower in
-## kind: the ramp's 3/standard is 6427 against its flat twin's 5554.
+## Wall-clock ceiling per sloped town: measured (2161 / 6377 / 2782 / 8207 ms)
+## x 2.0. Wall clock on a shared machine is noisy in a way a cell count is not,
+## and these exist to catch a town that has fallen into a SEARCH -- an order of
+## magnitude -- not to police a 30 % drift, so they are pinned looser than the
+## flat `PLANNER_SOLVE_MS_CEILING`'s 1.5x. Sloped solves are not slower in
+## kind: ramp 3/standard is 6377 ms against its flat twin's 5554.
 const SLOPED_SOLVE_MS_CEILING: Dictionary = {
-	"ramp/3/standard": 9000,
-	"step/12/compact": 4200,
-	"step/3/standard": 11500,
+	"ramp/12/compact": 4400,
+	"ramp/3/standard": 12800,
+	"step/12/compact": 5600,
+	"step/3/standard": 16500,
 }
 
 ## The seed the `solve_selected` re-solve is exercised on for each profile.
@@ -3598,41 +3604,57 @@ func test_sloped_ground_composes() -> void:
 	##
 	## The relief the massif received is asserted, not merely printed: a
 	## fixture that silently flattened would pass everything else vacuously.
+	##
+	## FIX 1: all four rows compose. `ramp 12/compact` used to die at the
+	## source's addressed-frontage bar; the controller ruled that bar ADVISORY
+	## in maze mode, so the town ships and RECORDS the ratio it reached instead.
+	## That record is asserted here -- a shortfall that is not published is the
+	## failure mode the ruling creates, and it is exactly what this catches.
 	var composed := 0
+	var short_rows := 0
 	for outcome: Dictionary in _sloped_corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
-		var failure := String(outcome.failure)
 		var key := _row_key(outcome)
-		var refusal := String(SLOPED_SOURCE_REFUSALS.get(key, ""))
+		assert_not_null(plan, "%s must compose on real ground: %s" % [
+			_label(outcome), String(outcome.failure).left(200)])
 		if plan == null:
-			print("MAZE_SLOPED_COMPOSE %s REFUSED ms=%d %s" % [
-				_label(outcome), int(outcome.ms), failure.left(180)])
-			assert_ne(refusal, "", "%s must compose on real ground: %s" % [
-				_label(outcome), failure.left(200)])
-			assert_true(failure.contains(refusal),
-				"%s must still die at its pinned gate '%s', not: %s" % [
-					_label(outcome), refusal, failure.left(200)])
 			continue
-		assert_eq(refusal, "",
-			"%s now composes; delete its SLOPED_SOURCE_REFUSALS entry" % key)
 		composed += 1
 		var source := _maze_source(plan)
 		assert_not_null(source, "%s must carry its maze source" % key)
 		var relief := 0 if source == null else source.massif.relief_bands()
+		var frontage := -1.0 if source == null \
+			else float(source.audit.get("frontage_ratio", -1.0))
 		var share := float(plan.audit.get("maze_unroomed_plot_share", -1.0))
+		var shortfalls := plan.audit.get("advisory_shortfalls",
+			{}) as Dictionary
 		var fabric := plan.compiled_fabric_cache()
 		assert_not_null(fabric, "%s must carry its compiled fabric" % key)
 		var standing: Dictionary = {} if fabric == null \
 			else _route_floor_standing(plan, fabric)
 		print(("MAZE_SLOPED_COMPOSE %s SEALED ms=%d relief=%d plots=%d " \
-			+ "unroomed=%.3f route_on_stone=%.3f holes=%s") % [
+			+ "frontage=%.3f unroomed=%.3f route_on_stone=%.3f holes=%s") % [
 			_label(outcome), int(outcome.ms), relief,
-			0 if source == null else source.plots.size(), share,
+			0 if source == null else source.plots.size(), frontage, share,
 			float(standing.get("share", -1.0)),
 			str(standing.get("holes", {}))])
 		assert_gte(relief, 3,
 			("%s must stand on real relief; the fixture handed the massif " \
 				+ "%d bands") % [key, relief])
+		# The ruling's teeth: below the advisory bar the town ships, but only
+		# WITH the fact. Above it, it must not invent one.
+		if frontage >= 0.0 and frontage < WarrenMazeSourcePlan.FRONTAGE_FLOOR:
+			short_rows += 1
+			assert_almost_eq(float(shortfalls.get("frontage", -1.0)),
+				frontage, 0.0005,
+				("%s addresses %.3f of its passage cells and must " \
+					+ "say so in its advisory shortfalls") % [key, frontage])
+			assert_almost_eq(float(shortfalls.get("frontage_target", -1.0)),
+				WarrenMazeSourcePlan.FRONTAGE_FLOOR, 0.0005,
+				"%s must publish the bar it fell short of" % key)
+		else:
+			assert_false(shortfalls.has("frontage"),
+				"%s clears the frontage bar and must report no shortfall" % key)
 		assert_true(SLOPED_SOLVE_MS_CEILING.has(key),
 			"%s must carry a measured solve-time ceiling" % key)
 		assert_lt(int(outcome.ms), int(SLOPED_SOLVE_MS_CEILING.get(key,
@@ -3648,7 +3670,13 @@ func test_sloped_ground_composes() -> void:
 				+ "them stand on anything") % [key,
 				plan.route_floor_cells.size(),
 				float(standing.get("share", 0.0))])
-	assert_gt(composed, 0, "the sloped corpus must compose at least one town")
+	assert_eq(composed, SLOPED_GROUND.size(),
+		"every sloped row must compose")
+	# The advisory branch must be EXERCISED, or the assertions above are
+	# decoration: one sloped row is measurably short of the bar and ships.
+	assert_gt(short_rows, 0,
+		("no sloped row fell short of the advisory frontage bar; the branch " \
+			+ "the ruling created is untested here"))
 
 
 func test_solve_selected_rebuilds_the_maze_on_real_ground() -> void:

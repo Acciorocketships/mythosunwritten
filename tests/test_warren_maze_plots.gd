@@ -600,6 +600,12 @@ const FRONTING_SLOT_FLOOR := 0.85
 const FOOTPRINT_FLOOR := 1.8
 
 static var _sealed_plans: Dictionary = {}
+## The site planner's own failure text at the moment each plan was built.
+## `WarrenMazeSitePlanner.last_failure` is a STATIC every later call
+## overwrites, so reading it beside a CACHED plan reports whichever town
+## was planned most recently -- the `_parcel_failures` idiom, for the same
+## reason and with the same keys.
+static var _sealed_failures: Dictionary = {}
 static var _carved_plans: Dictionary = {}
 static var _volumes: Dictionary = {}
 static var _parcel_plans: Dictionary = {}
@@ -614,9 +620,12 @@ func _sealed_town(seed_value: int, scale: StringName,
 	## band frame (task D1); every flat caller omits it and keys as before.
 	var key := _town_key(seed_value, scale, ground)
 	if not _sealed_plans.has(key):
-		_sealed_plans[key] = WarrenMazeSitePlanner.plan(seed_value,
+		var plan := WarrenMazeSitePlanner.plan(seed_value,
 			_ground_bands(ground, seed_value, scale),
 			WarrenVillageScaleProfile.for_id(scale))
+		_sealed_plans[key] = plan
+		_sealed_failures[key] = "" if plan != null \
+			else WarrenMazeSitePlanner.last_failure
 	return _sealed_plans[key] as WarrenMazeSourcePlan
 
 
@@ -1360,6 +1369,32 @@ func test_streets_keep_their_floor() -> void:
 	assert_gte(checked, TRANSLATE_FLOOR,
 		"%d of %d towns seal and can be checked at all" % [checked,
 			2 * CORPUS_SEEDS])
+	# TASK D1 FIX 1. Street walkability is a HARD rule and the ground is
+	# where it is hardest: a house whose floor follows a climbing street
+	# reaches under the street above it, which is exactly the shape that
+	# takes a floor away. The same equality, on the sloped rows.
+	var sloped_checked := 0
+	for row: Dictionary in SLOPED_GROUND:
+		var seed_value := int(row["seed"])
+		var scale := StringName(row["scale"])
+		var ground := StringName(row["ground"])
+		var plan := _sealed_town(seed_value, scale, ground)
+		var carved := _carved_town(seed_value, scale, ground)
+		var label := _sloped_label(row)
+		assert_not_null(plan, "%s must seal: %s" % [label,
+			_sealed_failure(seed_value, scale, ground).left(160)])
+		if plan == null or carved == null:
+			continue
+		sloped_checked += 1
+		var bore := carved.street_floor_gaps()
+		var sealed_gaps := int(plan.audit.get("street_floor_gaps", -1))
+		print(("MAZE_SLOPED_FLOORS_KEPT %s street_floor_gaps=%d bore=%d " \
+			+ "refused=%d") % [label, sealed_gaps, bore,
+			_stranding_refusals(plan)])
+		assert_eq(sealed_gaps, bore,
+			"%s adds no floating street on real ground" % label)
+	assert_eq(sloped_checked, SLOPED_GROUND.size(),
+		"every sloped row must seal far enough to check its street floors")
 
 
 # --- Adapter and translator (task B3) ---------------------------------------
@@ -1397,8 +1432,8 @@ func _parcels_of(seed_value: int, scale: StringName,
 		var source := _sealed_town(seed_value, scale, ground)
 		var volume := _volume_of(seed_value, scale, ground)
 		var plan: WarrenParcelPlan = null
-		var reason := WarrenMazeSitePlanner.last_failure if source == null \
-			else WarrenMazeVolumeAdapter.last_failure
+		var reason := _sealed_failure(seed_value, scale, ground) \
+			if source == null else WarrenMazeVolumeAdapter.last_failure
 		if volume != null:
 			plan = WarrenMazeBlockPartitioner.partition(source, volume)
 			reason = WarrenMazeBlockPartitioner.last_failure
@@ -2294,18 +2329,15 @@ const SLOPED_GROUND: Array[Dictionary] = [
 	{"ground": STEP_GROUND, "seed": 3, "scale": &"standard"},
 ]
 
-## Sloped rows whose SOURCE the carver refuses, and the gate text each dies at.
-## `ramp/12/compact` reaches 0.872 addressed frontage against a 0.900 floor:
-## the alley pass now really runs on real ground (task D1 fixed the guard that
-## deadlocked it) and climbs 0.789 -> 0.872 over seven lanes, but a hillside
-## street's uphill flank is a retaining bank rather than a house wall and the
-## quota was calibrated where no flank ever is. Reported to the controller as a
-## design gap, not worked around here: the row is pinned by NAME and by GATE,
-## so it cannot start failing somewhere else in silence, and it must be deleted
-## from this dictionary the day the quota's disposition is decided.
-const SLOPED_SOURCE_REFUSALS: Dictionary = {
-	"ramp/12/compact": "alley budget reached",
-}
+## Addressed-frontage share the sloped rows must still reach. FIX 1's
+## controller ruling made `WarrenMazeSourcePlan.FRONTAGE_FLOOR` (0.90)
+## ADVISORY in maze mode, so no row is pinned as a refusal any more -- what a
+## short town owes instead is the FACT, which `test_sloped_ground_composes`
+## reads out of its advisory shortfalls. This floor exists so the ratchets
+## cannot quietly stop working and leave a town at 0.4: measured worst across
+## the sloped rows is 0.872 (ramp 12/compact, the only row below the policy),
+## pinned two guard-steps under it. Re-pin upward only.
+const SLOPED_FRONTAGE_FLOOR := 0.82
 
 
 static func _town_key(seed_value: int, scale: StringName,
@@ -2336,9 +2368,14 @@ func _sloped_label(row: Dictionary) -> String:
 		String(row["scale"])]
 
 
-func _sloped_key(row: Dictionary) -> String:
-	return "%s/%d/%s" % [String(row["ground"]), int(row["seed"]),
-		String(row["scale"])]
+func _sealed_failure(seed_value: int, scale: StringName,
+		ground: StringName = FLAT_GROUND) -> String:
+	## The planner's refusal for this row, recorded when the row was built.
+	## `WarrenMazeSitePlanner.last_failure` is a STATIC every later call
+	## overwrites, so reading it beside a CACHED plan reports whichever town was
+	## planned most recently. Same idiom, same keys, as `_parcel_failure`.
+	return String(_sealed_failures.get(_town_key(seed_value, scale, ground),
+		""))
 
 
 func _sloped_source(row: Dictionary) -> WarrenMazeSourcePlan:
@@ -2363,40 +2400,43 @@ func test_sloped_ground_seals_and_translates() -> void:
 	## silently flattened (a span shorter than the footprint, a profile whose
 	## risers fall outside it) would report relief 0 and pass everything else
 	## vacuously, so the relief is asserted, not just shown.
+	##
+	## FIX 1: every row now seals. The one that did not (`ramp 12/compact`, at
+	## 0.872 addressed frontage against a 0.900 policy) was refused by a gate
+	## the controller has since ruled advisory; it is no longer pinned as a
+	## known refusal, it is required to seal like the rest.
 	var sealed_rows := 0
 	for row: Dictionary in SLOPED_GROUND:
+		var seed_value := int(row["seed"])
+		var scale := StringName(row["scale"])
+		var ground := StringName(row["ground"])
 		var label := _sloped_label(row)
 		var source := _sloped_source(row)
-		var refusal := String(SLOPED_SOURCE_REFUSALS.get(_sloped_key(row), ""))
+		assert_not_null(source, "%s must seal on real ground: %s" % [label,
+			_sealed_failure(seed_value, scale, ground).left(180)])
 		if source == null:
-			var failure := WarrenMazeSitePlanner.last_failure
-			print("MAZE_SLOPED %s source refused: %s" % [label,
-				failure.left(140)])
-			assert_ne(refusal, "",
-				"%s must seal on real ground: %s" % [label, failure.left(160)])
-			assert_true(failure.contains(refusal),
-				"%s must still die at its pinned gate '%s', not: %s" % [
-					label, refusal, failure.left(160)])
 			continue
-		assert_eq(refusal, "",
-			"%s now seals; delete its SLOPED_SOURCE_REFUSALS entry" % label)
 		sealed_rows += 1
 		var relief := source.massif.relief_bands()
-		var parcels := _parcels_of(int(row["seed"]),
-			StringName(row["scale"]), StringName(row["ground"]))
-		print("MAZE_SLOPED %s relief=%d plots=%d parcels=%s" % [label, relief,
-			source.plots.size(),
+		var frontage := float(source.audit.get("frontage_ratio", -1.0))
+		var parcels := _parcels_of(seed_value, scale, ground)
+		print("MAZE_SLOPED %s relief=%d frontage=%.3f plots=%d parcels=%s" % [
+			label, relief, frontage, source.plots.size(),
 			str(parcels.parcels.size()) if parcels != null \
-				else "REFUSED " + _parcel_failure(int(row["seed"]),
-					StringName(row["scale"]),
-					StringName(row["ground"])).left(140)])
+				else "REFUSED " + _parcel_failure(seed_value, scale,
+					ground).left(140)])
 		assert_gte(relief, 3,
 			("%s must stand on real relief; the fixture handed the massif " \
 				+ "%d bands") % [label, relief])
+		# The frontage bar is advisory since FIX 1, but the ratchets are still
+		# the growth policy: a row that collapses well under what they achieve
+		# is a broken ratchet, not an accepted shortfall.
+		assert_gte(frontage, SLOPED_FRONTAGE_FLOOR,
+			"%s addresses only %.3f of its passage cells" % [label, frontage])
 		assert_not_null(parcels, "%s must translate: %s" % [label,
-			_parcel_failure(int(row["seed"]), StringName(row["scale"]),
-				StringName(row["ground"])).left(200)])
-	assert_gt(sealed_rows, 0, "the sloped corpus must seal at least one town")
+			_parcel_failure(seed_value, scale, ground).left(200)])
+	assert_eq(sealed_rows, SLOPED_GROUND.size(),
+		"every sloped row must seal")
 
 
 func test_no_plot_stands_inside_the_hillside() -> void:

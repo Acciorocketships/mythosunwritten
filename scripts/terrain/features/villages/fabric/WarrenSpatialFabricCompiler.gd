@@ -521,13 +521,15 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 					floori(float(fine_column.y) / 2.0))
 				var course_cell := Vector3i(fine_column.x,
 					room.lattice_origin.y - 1, fine_column.y)
-				var buried := maze_mode and course_cell.y < int(
-						bearing_by_column.get(fine_column,
-							volume.envelope.bearing_at(macro_column)))
-				if not buried and not volume.has_mass(Vector3i(macro_column.x,
-						course_cell.y, macro_column.y)) \
-						or source.grid.use_at(course_cell) \
-							== WarrenSpatialGrid.Use.PUBLIC_AIR:
+				# `bearing_by_column` holds every fine column of this footprint
+				# (the loop above writes one entry per column before this one
+				# runs), so it is read directly rather than defaulted.
+				var buried := maze_mode \
+					and course_cell.y < int(bearing_by_column[fine_column])
+				if (not buried and not volume.has_mass(Vector3i(
+							macro_column.x, course_cell.y, macro_column.y))) \
+					or source.grid.use_at(course_cell) \
+						== WarrenSpatialGrid.Use.PUBLIC_AIR:
 					return {"valid": false, "rejection":
 						("terrain-bearing room %s cannot close its plinth " \
 						+ "course at %s") % [room.stable_id, course_cell]}

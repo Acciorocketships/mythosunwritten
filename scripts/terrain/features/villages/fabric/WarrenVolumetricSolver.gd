@@ -272,6 +272,17 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 		last_failure = "maze source rejected: %s" \
 			% WarrenMazeSitePlanner.last_failure
 		return null
+	# TASK D1 FIX 1, controller ruling. The source's addressed-frontage bar
+	# is advisory: `WarrenMazeCarver`'s ratchets still steer growth by it,
+	# and a town that cannot reach it on real ground ships and says so.
+	# Recorded here rather than in the carver because this dictionary is
+	# the one place a maze town's shortfalls are collected, and it is what
+	# reaches the sealed plan's audit.
+	var frontage := float(maze.audit.get("frontage_ratio", 1.0))
+	if frontage < WarrenMazeSourcePlan.FRONTAGE_FLOOR:
+		last_advisory_shortfalls["frontage"] = frontage
+		last_advisory_shortfalls["frontage_target"] = \
+			WarrenMazeSourcePlan.FRONTAGE_FLOOR
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze)
 	if volume == null:
 		last_failure = "maze volume adapter rejected: %s" \

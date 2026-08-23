@@ -59,12 +59,25 @@ the plots are the town. `deterministic_signature()` covers plots.
 
 A plot may occupy column `c` at floor `F` iff:
 
-1. `solid_at(c, F − 1)` — the band below the floor is solid (rock or another
-   plot's top), and
-2. `F ≥ passage_headroom_top(p)` for every passage cell `p` in column `c`.
+1. `solid_at(c, F − 1)` — the band below the floor is solid (rock, a retained
+   tunnel-roof slab, or another plot's top),
+2. no carved air stands in the `MIN_HOUSE_BANDS` of clearance above the floor
+   — `_first_carved_band(c, F, F + MIN_HOUSE_BANDS) < 0` — which is the
+   per-cell reading of "a plot never sits inside a passage's headroom", and
+3. `F ≥ massif.base_at(c)` — the floor stands **on** this column's terrain
+   rather than inside it.
 
 This single rule replaces bearing, plinth, flush-stack, tunnel-roof, and
 per-cell headroom. Tiers, bridges, and stacking all fall out of it.
+
+Clause 3 is clause 1's other half and only has content once the ground is not
+flat (task D1). `solid_at` answers TRUE for **every** band below
+`massif.base_at` — terrain is untouched sample, and that is exactly what lets a
+house fronting a grade street stand at `F == base_at` — so clause 1 alone is
+satisfied at any depth: a footprint reaching from a low street onto a column
+three bands further uphill passed it while buried three bands inside the bank.
+On a flat frame every base is zero and no plot floor is negative, so clause 3
+is unreachable and the flat corpus is unchanged by it.
 
 ## Pipeline
 
@@ -86,9 +99,12 @@ landmarks; quotas per `WarrenVillageScaleProfile` scale id), enumerate every
 site where the template's footprint is street-fronting and supportable; score
 it by **terrain modification cost** = Σ over footprint columns of
 `|massif.top_at(c) − datum|` where `datum` is the fronting street's band; take
-the minimum-cost site (deterministic tie-break by position). Modification is
-allowed — the plot's floor is the datum, and rock/air adjust by derivation.
-Skip with a reason when no site exists.
+the minimum-cost site (deterministic tie-break by position). What "cost"
+measures is how much *derived* mass — rock above the terrain, or air where the
+envelope stood — the site rearranges. **Natural terrain is immutable**: the
+site's datum may stand on the ground or on retained mass above it, never below
+it (support rule clause 3), so a bank is never cut to make a site cheap. Skip
+with a reason when no site exists.
 
 ### P3b — decks
 
