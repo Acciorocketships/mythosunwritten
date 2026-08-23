@@ -618,39 +618,59 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 	return out
 
 
-static func maze_terrace_deck_cells(plan: SettlementFabricPlan) -> Dictionary:
+static func maze_terrace_crown_units(plan: SettlementFabricPlan) -> Dictionary:
+	## The PLOT MODEL's own flat crowns, as `unit id -> true`, read from the
+	## sealed plan's audit where `WarrenSpatialFabricCompiler.compile_roof_
+	## units` published them: the `roof.flat.*` slab of every `flat_roof` room
+	## stamp, plus the tiles that complete a partial one.
+	##
+	## REVIEW FIX 1, IMPORTANT 2 -- why the list and not a recipe tag. The
+	## first pass selected any unit tagged `flat_roof`/`setback_cap` with
+	## nothing bearing on it, which is a WIDER set than the plot-flat crowns:
+	## it would rail the weather shoulder of a pitched house and double an
+	## authored terrace rail. It was inert only because this corpus emits no
+	## setback caps outside the tiling. The compiler knows which units are
+	## crowns because it built them, and this file cannot re-derive it -- it
+	## holds the fabric plan, not the room stamps that carry `flat_roof`.
+	##
+	## Empty for every legacy plan, which publishes no such key, which is what
+	## keeps the whole terrace rule maze-only and every legacy payload
+	## byte-identical.
+	var out: Dictionary = {}
+	if plan == null:
+		return out
+	for unit_value: Variant in plan.audit.get("maze_terrace_crown_unit_ids",
+			[]) as Array:
+		out[StringName(unit_value)] = true
+	return out
+
+
+static func maze_terrace_deck_cells(plan: SettlementFabricPlan,
+		crown_unit_ids: Dictionary = {}) -> Dictionary:
 	## TASK C5e RULING 3 -- which cells of this town are an OPEN FLAT CROWN,
 	## as `cell -> unit id`.
 	##
-	## MAZE ONLY, on this file's own maze key: a plan that tags no retained
-	## cell MAZE_STONE_TAG is a legacy plan and gets nothing, exactly as
-	## `maze_stone_walls` gets nothing there. That matters because a legacy
-	## town's rare flat lid is a searched fallback under a roof campaign, not
-	## a terrace anybody stands on, and its payload must stay byte-identical.
+	## `crown_unit_ids` is `maze_terrace_crown_units(plan)` and defaults to it;
+	## the compiler passes its own list explicitly because it audits this rule
+	## before the plan is sealed.
 	##
-	## A crown is a unit whose recipe is one of the two authored flat families
-	## -- the `roof.flat.*` slab (`flat_roof`) and the thin plank cap that
-	## tiles a partial plate (`setback_cap`, see
-	## `WarrenSpatialFabricCompiler.FLAT_PLATE_TILE_RECIPES`) -- with NOTHING
-	## BEARING ON IT. The last clause is what tells a terrace from a plinth: a
-	## flat roof carrying a planter or another storey is not a crown a viewer
-	## walks out onto, and its own accent already dresses it.
-	##
-	## The thin cap claims its strip as occluder cells only (it is a weather
-	## face, not mass), so both layers are read.
+	## A crown unit's occupancy is read from BOTH the solid and the occluder
+	## layer, because the authored thin plank cap that tiles a one-cell setback
+	## strip claims its cells as occluder only (it is a weather face, not
+	## mass).
 	var out: Dictionary = {}
-	if plan == null or maze_stone_cells(plan.retained_terrace_cells).is_empty():
+	if plan == null:
 		return out
-	var borne_on: Dictionary = {}
+	var crowns := crown_unit_ids
+	if crowns.is_empty():
+		crowns = maze_terrace_crown_units(plan)
+	if crowns.is_empty():
+		return out
 	for unit: FabricUnit in plan.units:
-		for parent_id: StringName in unit.parent_ids:
-			borne_on[parent_id] = true
-	for unit: FabricUnit in plan.units:
-		if borne_on.has(unit.stable_id):
+		if not crowns.has(unit.stable_id):
 			continue
 		var recipe := plan.recipe(unit.recipe_id)
-		if recipe == null or not (recipe.has_tag(&"flat_roof") \
-				or recipe.has_tag(&"setback_cap")):
+		if recipe == null:
 			continue
 		var local_cells: Dictionary = {}
 		for local_cell: Vector3i in recipe.solid_cells:
@@ -663,7 +683,8 @@ static func maze_terrace_deck_cells(plan: SettlementFabricPlan) -> Dictionary:
 	return out
 
 
-static func maze_terrace_edges(plan: SettlementFabricPlan) -> Dictionary:
+static func maze_terrace_edges(plan: SettlementFabricPlan,
+		crown_unit_ids: Dictionary = {}) -> Dictionary:
 	## TASK C5e RULING 3 -- the open edges of every flat crown, keyed
 	## Vector4i(x, band, z, index into FACE_DIRECTIONS) and valued `true`.
 	##
@@ -680,7 +701,7 @@ static func maze_terrace_edges(plan: SettlementFabricPlan) -> Dictionary:
 	##
 	## Everything else is a fall, including the swept headroom of a street
 	## many bands below: that is the edge a railing exists for.
-	var deck := maze_terrace_deck_cells(plan)
+	var deck := maze_terrace_deck_cells(plan, crown_unit_ids)
 	var out: Dictionary = {}
 	if deck.is_empty():
 		return out
@@ -698,8 +719,8 @@ static func maze_terrace_edges(plan: SettlementFabricPlan) -> Dictionary:
 	return out
 
 
-static func maze_terrace_railings(plan: SettlementFabricPlan) \
-		-> EnvironmentInstancePayload:
+static func maze_terrace_railings(plan: SettlementFabricPlan,
+		crown_unit_ids: Dictionary = {}) -> EnvironmentInstancePayload:
 	## TASK C5e RULING 3 -- one authored railing per open crown edge, through
 	## the same transform idiom `_append_guard_instances` uses for a public
 	## deck's guard: the module stands ON the walk surface, centred on the
@@ -716,7 +737,7 @@ static func maze_terrace_railings(plan: SettlementFabricPlan) \
 	## module is walk-aligned to local y = 0 and the unit stands at
 	## `band * CELL_SIZE`, so the rail's base sits exactly on the planks.
 	var out := EnvironmentInstancePayload.new()
-	var edges := maze_terrace_edges(plan)
+	var edges := maze_terrace_edges(plan, crown_unit_ids)
 	if edges.is_empty():
 		return out
 	var keys: Array[Vector4i] = []

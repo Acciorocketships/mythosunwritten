@@ -233,6 +233,15 @@ const UNROOMED_PLOT_MASS_CEILING := 0.33
 ## contract Phase E/F owns. Re-pin DOWNWARD only.
 const UNROOTED_TERRAIN_BEARING_CEILING := 4
 
+## Houses whose plot facts say they bear on rock AND that declare a validated
+## building-support seam onto another plot, so their ground room roots in that
+## parent rather than in the mountain. The seam wins -- rooting such a room in
+## terrain is the "house standing THROUGH another house" defect ruling 4 names
+## -- but it is a disagreement between two plot facts and it must stay rare.
+## Measured 0 / 0 / 0 / 1 on the four planner seeds (9/standard's house.025 on
+## house.005), pinned at one above the worst. Re-pin DOWNWARD only.
+const STACKED_ON_ROCK_CEILING := 2
+
 ## Every gate `_partition_rooms` may drop a parcel at. A gate outside this set
 ## means a parcel now leaves composition through a door nobody decided on --
 ## the same drift `ADVISORY_SHORTFALL_KEYS` and `BRIDGE_RELEASE_REASONS` exist
@@ -1862,33 +1871,41 @@ func _point_key(point: Vector3) -> String:
 	return "%.2f:%.2f:%.2f" % [point.x, point.y, point.z]
 
 
-func _terrace_rail_points(fabric: SettlementFabricPlan) -> Dictionary:
-	## Which boundaries the RENDERER is really handed a railing for, measured
-	## off the transforms in the payload the commit path takes rather than off
-	## the rule that chose them. A 3 m module spans two boundaries at ±0.75 m
-	## along its own local X; a 1.5 m module spans the one it stands on.
-	var out: Dictionary = {}
+func _terrace_rail_instances(fabric: SettlementFabricPlan) -> Array:
+	## Every railing instance the RENDERER is handed for a terrace edge, out of
+	## the payload the commit path takes, as {asset_id, transform}.
+	var out: Array = []
 	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
 	for asset_value: Variant in payload.batches.keys():
 		var asset_id := StringName(asset_value)
-		if asset_id not in [SettlementFabricAssembler.PLANK_RAILING,
-				SettlementFabricAssembler.PLANK_RAILING_MEDIUM]:
-			continue
 		var batch := payload.batches[asset_id] as Dictionary
 		var ids := batch.get("ids", []) as Array
 		var transforms := batch.get("transforms", []) as Array
 		for index in ids.size():
 			if not String(ids[index]).begins_with("maze-terrace-rail/"):
 				continue
-			var xform := transforms[index] as Transform3D
-			var axis := (xform.basis * Vector3.RIGHT).normalized()
-			var offsets: Array[float] = []
-			offsets.assign([-0.75, 0.75] \
-				if asset_id == SettlementFabricAssembler.PLANK_RAILING_MEDIUM \
-				else [0.0])
-			for offset: float in offsets:
-				var key := _point_key(xform.origin + axis * offset)
-				out[key] = int(out.get(key, 0)) + 1
+			out.append({"asset_id": asset_id,
+				"transform": transforms[index] as Transform3D})
+	return out
+
+
+func _terrace_rail_points(fabric: SettlementFabricPlan) -> Dictionary:
+	## Which boundaries the RENDERER is really handed a railing for, measured
+	## off the transforms in the payload the commit path takes rather than off
+	## the rule that chose them. A 3 m module spans two boundaries at ±0.75 m
+	## along its own local X; a 1.5 m module spans the one it stands on.
+	var out: Dictionary = {}
+	for instance: Dictionary in _terrace_rail_instances(fabric):
+		var asset_id := StringName(instance["asset_id"])
+		var xform := instance["transform"] as Transform3D
+		var axis := (xform.basis * Vector3.RIGHT).normalized()
+		var offsets: Array[float] = []
+		offsets.assign([-0.75, 0.75] \
+			if asset_id == SettlementFabricAssembler.PLANK_RAILING_MEDIUM \
+			else [0.0])
+		for offset: float in offsets:
+			var key := _point_key(xform.origin + axis * offset)
+			out[key] = int(out.get(key, 0)) + 1
 	return out
 
 
@@ -1916,6 +1933,7 @@ func test_flat_crowns_have_railings_on_open_edges() -> void:
 			continue
 		var expected := _open_crown_edge_points(plan, fabric)
 		var rendered := _terrace_rail_points(fabric)
+		var instances := _terrace_rail_instances(fabric)
 		var audited := int(fabric.audit.get("maze_terrace_railing_count", -1))
 		var edges := int(fabric.audit.get("maze_terrace_edge_count", -1))
 		var missing := PackedStringArray()
@@ -1950,6 +1968,9 @@ func test_flat_crowns_have_railings_on_open_edges() -> void:
 		assert_eq(edges, expected.size(),
 			("%s audits %d open terrace edges where this file derives %d") % [
 				_label(outcome), edges, expected.size()])
+		assert_eq(audited, instances.size(),
+			("%s publishes %d railings and hands the renderer %d") % [
+				_label(outcome), audited, instances.size()])
 		total_rails += audited
 		measured += 1
 	assert_gt(measured, 0, "at least one seed sealed a town to measure")
@@ -2190,6 +2211,18 @@ func test_rock_is_retained_as_stone() -> void:
 			("%s lays %d route floor cells and only %.3f of them stand on " \
 				+ "anything") % [_label(outcome),
 				plan.route_floor_cells.size(), share])
+		# TASK C5e, review fix 1 (CRITICAL). The share alone has 0.05 of slack
+		# and it hid a real defect: releasing a flat crown's parapet course
+		# took away the band a TIERED house's own street floor stands on, and
+		# 6 / 8 / 4 walk cells per town were left over `Use.OUTSIDE` while the
+		# share still passed (4/compact landed exactly on the floor). OUTSIDE
+		# is the one hole that is never explainable -- terrain, stone, a room,
+		# a street below and a step are all admitted above -- so it is pinned
+		# at zero rather than left inside the tolerance.
+		assert_eq(int(holes.get(WarrenSpatialGrid.Use.OUTSIDE, 0)), 0,
+			("%s lays %d route floor cells over nothing at all (first %s)") \
+				% [_label(outcome),
+				int(holes.get(WarrenSpatialGrid.Use.OUTSIDE, 0)), first_hole])
 		measured += 1
 	assert_gt(measured, 0, "at least one seed seals far enough to measure")
 
@@ -2412,7 +2445,8 @@ func test_stone_bases_follow_bears_on_rock() -> void:
 			# in its declared parent is the defect ruling 4 names -- a house
 			# standing THROUGH another house -- so the seam wins, and the case
 			# is counted and printed rather than folded into either verdict.
-			stacked_on_rock += int(bears and not ground.terrain_bearing)
+			stacked_on_rock += int(bears and not ground.terrain_bearing \
+				and not ground.support_parent_parcel_id.is_empty())
 			if not bears and stacked and ground.terrain_bearing:
 				wrong += 1
 				if first.is_empty():
@@ -2423,6 +2457,9 @@ func test_stone_bases_follow_bears_on_rock() -> void:
 				wrong, first])
 		print("MAZE_BASES %s stacked_on_rock=%d" % [_label(outcome),
 			stacked_on_rock])
+		assert_lte(stacked_on_rock, STACKED_ON_ROCK_CEILING,
+			("%s roots %d houses that bear on rock in another house instead") \
+				% [_label(outcome), stacked_on_rock])
 		# The composition's own reading of the same fact: a house the plot
 		# model says stands on ANOTHER PLOT may not root in the mountain at
 		# its own floor band. Published by `_partition_rooms` rather than

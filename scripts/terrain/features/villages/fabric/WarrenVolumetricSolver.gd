@@ -1085,7 +1085,7 @@ static func from_volume(volume: WarrenVolumePlan,
 	# back every cell of it the source calls solid (Task C5 ruling 3), after
 	# the shell so no room's facade changes, and give it one sealed feature
 	# owner so the sealed plan can carry it as structure.
-	var retained_rock := _retain_maze_rock(grid, volume)
+	var retained_rock := _retain_maze_rock(grid, volume, route_floors)
 	if bool(retained_rock.failed):
 		return null
 	# Ruling 1: with every use settled, ask the plot mass what became of it.
@@ -1563,7 +1563,8 @@ static func _retain_maze_slab_courses(grid: WarrenSpatialGrid,
 
 
 static func _retain_maze_rock(grid: WarrenSpatialGrid,
-		volume: WarrenVolumePlan) -> Dictionary:
+		volume: WarrenVolumePlan,
+		route_floors: Array[Vector3i] = [] as Array[Vector3i]) -> Dictionary:
 	## Ruling 3. Every fine cell the SOURCE calls solid at or above its own
 	## column's terrain datum that the composed town did not build in is
 	## retained as stone instead of being thrown away: shoulders, tunnel roofs,
@@ -1607,7 +1608,7 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	# them apart is what makes the difference measurable.
 	var plot_mass := _maze_plot_mass_cells(volume)
 	var plot_roof := _maze_plot_roof_cells(volume)
-	var released := _maze_released_parapet_cells(volume)
+	var released := _maze_released_parapet_cells(volume, route_floors)
 	var cells: Array[Vector3i] = []
 	var skipped := 0
 	var rock_cells := 0
@@ -1655,8 +1656,8 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 		"released_parapet_cells": released_cells}
 
 
-static func _maze_released_parapet_cells(volume: WarrenVolumePlan) \
-		-> Dictionary:
+static func _maze_released_parapet_cells(volume: WarrenVolumePlan,
+		route_floors: Array[Vector3i] = [] as Array[Vector3i]) -> Dictionary:
 	## TASK C5e RULING 2 -- THE PARAPET IS RELEASED TO AIR.
 	##
 	## A flat-roofed plot's crown is `[flat_roof_base_band, top)`: the first
@@ -1692,7 +1693,8 @@ static func _maze_released_parapet_cells(volume: WarrenVolumePlan) \
 	## between a house and the house it stands on.
 	##
 	## Precisely the complement of `_maze_flat_slab_cells`, which claims the
-	## same bands for the stack parents this function skips.
+	## same bands for the stack parents this function skips, LESS the cells a
+	## public floor stands on (see the loop below).
 	##
 	## Empty for a searched volume, which is what keeps every reader maze-only.
 	var out: Dictionary = {}
@@ -1704,6 +1706,18 @@ static func _maze_released_parapet_cells(volume: WarrenVolumePlan) \
 	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
 			source)["parents"] as Dictionary).values():
 		parents[StringName(parent_value)] = true
+	# NOTHING IS RELEASED UNDER A PUBLIC FLOOR (review fix 1, CRITICAL).
+	# A tiered house's crown may BE a street, and the walk surface of that
+	# street stands on the very band this function would otherwise release.
+	# The first pass checked only that the released band was not itself a
+	# passage cell, which is a different question, and the cost was measured:
+	# route floor standing on something fell from 1.000 on every town to
+	# 0.969 / 0.950 / 0.980 with 6 / 8 / 4 walk cells over `Use.OUTSIDE`, and
+	# 4/compact landed exactly on `ROUTE_ON_STONE_FLOOR`. This is the same
+	# `route_floors` set the composition test measures that share against.
+	var floors: Dictionary = {}
+	for cell: Vector3i in route_floors:
+		floors[cell] = true
 	for plot: Dictionary in source.plots:
 		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
 				or parents.has(StringName(plot["id"])) \
@@ -1718,6 +1732,8 @@ static func _maze_released_parapet_cells(volume: WarrenVolumePlan) \
 				var column := cell_value as Vector2i
 				for fine: Vector3i in _fine_square(Vector3i(column.x, band,
 						column.y)):
+					if floors.has(fine + Vector3i.UP):
+						continue
 					out[fine] = true
 	return out
 

@@ -369,17 +369,23 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	#   better -- unroomed plot mass 0.226/0.211/0.281/0.260 -> 0.156/0.142/
 	#   0.224/0.176, uncomposed parcels 6/3/4/6 -> 1/1/2/1, back-room stamped
 	#   share 0.806/0.692/0.587/0.558 -> 0.838/0.700/0.739/0.585;
-	# * the CORPUS goes 18/24 sealed DOWN to 16/24. It gains 6/compact and
-	#   loses 1/standard, 10/standard and 11/compact, all three at
-	#   `authored room envelope gate failed: room ... failed measured phase
-	#   selection` -- the family 12/standard already dies at, not a roof gate;
-	# * route floor standing on stone falls from 1.000/1.000/1.000/1.000 to
-	#   0.968/0.950/0.979/1.000, and 0.950 is exactly `ROUTE_ON_STONE_FLOOR`.
-	#   That is the defect Task C5 ruling 3 existed to remove.
+	# * its ONLY cost is the CORPUS: 18/24 sealed DOWN to 16/24. It gains
+	#   6/compact and loses 1/standard, 10/standard and 11/compact, all three
+	#   at `authored room envelope gate failed: room ... failed measured phase
+	#   selection` -- the family 12/standard already dies at, not a roof gate.
 	#
-	# Reverted again, on the discipline every task in this phase has kept: no
-	# change ships that costs a seed that sealed its town. What has to move
-	# first is now the AUTHORED ROOM ENVELOPE selection, not the roof.
+	# REVIEW FIX 1 CORRECTS THIS ENTRY. The first pass also charged relaxation
+	# 1 with dropping route-floor-on-stone to 0.968/0.950/0.979, which was
+	# wrong: that was a defect in the parapet release measured in the same run
+	# (`WarrenVolumetricSolver._maze_released_parapet_cells` was taking away
+	# the band a tiered house's own street floor stands on). With the release
+	# fixed, relaxation 1 re-measured at **1.000 on all four towns** -- it
+	# costs nothing there.
+	#
+	# Reverted again on the controller's ruling and on the discipline every
+	# task in this phase has kept: no change ships that costs a seed that
+	# sealed its town. It is C6's to ship, AFTER the authored room envelope
+	# selection stops refusing those three towns.
 	var maze_source := parcel.source.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if maze_source != null:
