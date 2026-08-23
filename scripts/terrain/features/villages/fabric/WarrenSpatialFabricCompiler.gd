@@ -472,6 +472,18 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 		"column_count": columns.size(), "max_depth_bands": max_depth,
 		"terrain_bearing_room_count": terrain_bearing_room_count,
 		"maze_retained_rock_cells": maze_stone.size(),
+		# TASK C5c RULING 1: the retained channel carries ONE material and TWO
+		# facts. `WarrenVolumetricSolver` split them where the split is decided
+		# -- derived rock outside every plot, versus plot mass the composition
+		# never built in -- and this reads that decision rather than re-deriving
+		# it from a source plan the compiler would then have to know about.
+		# Absent (and therefore zero) on every legacy plan.
+		"maze_derived_rock_cells": int(source.audit.get(
+			"maze_retained_rock_cells", 0)),
+		"maze_unroomed_plot_cells": int(source.audit.get(
+			"maze_unroomed_plot_cells", 0)),
+		"maze_unroomed_plot_share": float(source.audit.get(
+			"maze_unroomed_plot_share", 0.0)),
 		"maze_stone_cells": maze_stone,
 		"flush_room_count": flush_room_count, "room_records": room_records}
 
@@ -714,6 +726,14 @@ static func _foundation_shell_audit(foundation_result: Dictionary,
 		# record and therefore no shell to close.
 		"maze_retained_rock_cells": int(foundation_result.get(
 			"maze_retained_rock_cells", 0)),
+		# The same stone told apart (Task C5c ruling 1): derived rock the plot
+		# model wants, versus unroomed plot mass it does not.
+		"maze_derived_rock_cells": int(foundation_result.get(
+			"maze_derived_rock_cells", 0)),
+		"maze_unroomed_plot_cells": int(foundation_result.get(
+			"maze_unroomed_plot_cells", 0)),
+		"maze_unroomed_plot_share": float(foundation_result.get(
+			"maze_unroomed_plot_share", 0.0)),
 		"maze_plinth_faces_suppressed_by_stone": maze_suppressed_face_count,
 		"foundation_building_count": details.size(),
 		"foundation_closed_shell_count": closed_shell_count,

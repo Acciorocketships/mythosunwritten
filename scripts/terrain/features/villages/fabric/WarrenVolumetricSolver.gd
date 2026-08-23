@@ -1088,6 +1088,8 @@ static func from_volume(volume: WarrenVolumePlan,
 	var retained_rock := _retain_maze_rock(grid, volume)
 	if bool(retained_rock.failed):
 		return null
+	# Ruling 1: with every use settled, ask the plot mass what became of it.
+	var plot_mass_audit := _maze_plot_mass_audit(grid, volume)
 	var stone_result := _maze_stone_reservation(grid, supports)
 	if bool(stone_result.failed):
 		return null
@@ -1173,6 +1175,29 @@ static func from_volume(volume: WarrenVolumePlan,
 		plan.audit["maze_retained_rock_cell_count"] = int(retained_rock.cells)
 		plan.audit["maze_retained_rock_skipped_reserved"] = \
 			int(slab_courses.skipped) + int(retained_rock.skipped)
+		# Ruling 1: the same stone, told apart. `maze_retained_rock_cells` is
+		# DERIVED rock -- solid the plot planner gave to nobody, which the plot
+		# model wants as a modest base. `maze_unroomed_plot_cells` is plot mass
+		# the composition never built in, which is the quarry block, and
+		# `maze_unroomed_plot_share` is its share of the whole plot mass.
+		plan.audit["maze_retained_rock_cells"] = int(retained_rock.rock_cells)
+		plan.audit["maze_retained_rock_stone_roof_cells"] = int(
+			retained_rock.roof_cells)
+		plan.audit["maze_retained_unroomed_plot_stone_cells"] = int(
+			retained_rock.unroomed_plot_cells)
+		plan.audit["maze_plot_mass_cell_count"] = int(
+			plot_mass_audit.plot_cells)
+		plan.audit["maze_plot_roomed_cell_count"] = int(plot_mass_audit.roomed)
+		plan.audit["maze_plot_roofed_cell_count"] = int(plot_mass_audit.roofed)
+		plan.audit["maze_plot_public_cell_count"] = int(plot_mass_audit.public)
+		plan.audit["maze_plot_feature_cell_count"] = int(
+			plot_mass_audit.feature)
+		plan.audit["maze_plot_unbuildable_cell_count"] = int(
+			plot_mass_audit.unbuildable)
+		plan.audit["maze_unroomed_plot_cells"] = int(plot_mass_audit.unroomed)
+		plan.audit["maze_unroomed_plot_uses"] = (
+			plot_mass_audit.unroomed_uses as Dictionary).duplicate()
+		plan.audit["maze_unroomed_plot_share"] = float(plot_mass_audit.share)
 		plan.audit["maze_retained_stone_cell_count"] = 0 \
 			if retained_stone == null \
 			else retained_stone.reserved_cells.size()
@@ -1546,9 +1571,21 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	var source := volume.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if source == null or source.massif == null:
-		return {"failed": false, "cells": 0, "skipped": 0}
+		return {"failed": false, "cells": 0, "skipped": 0, "rock_cells": 0,
+			"unroomed_plot_cells": 0, "roof_cells": 0}
+	# TASK C5c RULING 1 -- the TAG. Retained stone is one material and one
+	# owner, but it is two different facts about the town: `rock` is derived
+	# stone the plot planner never gave to anybody, and `unroomed_plot_mass`
+	# is a building the composition failed to build. The first is the modest
+	# base the plot model asks for; the second is the quarry block. Counting
+	# them apart is what makes the difference measurable.
+	var plot_mass := _maze_plot_mass_cells(volume)
+	var plot_roof := _maze_plot_roof_cells(volume)
 	var cells: Array[Vector3i] = []
 	var skipped := 0
+	var rock_cells := 0
+	var unroomed_plot_cells := 0
+	var roof_cells := 0
 	var lowest := grid.minimum.y
 	var highest := grid.minimum.y + grid.size.y
 	for column_value: Variant in source.massif.columns.keys():
@@ -1565,13 +1602,143 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 				if _feature_bit_is_taken(grid, fine):
 					skipped += 1
 					continue
+				if not plot_mass.has(fine):
+					rock_cells += 1
+				elif plot_roof.has(fine):
+					roof_cells += 1
+				else:
+					unroomed_plot_cells += 1
 				cells.append(fine)
 	if cells.is_empty():
-		return {"failed": false, "cells": 0, "skipped": skipped}
+		return {"failed": false, "cells": 0, "skipped": skipped,
+			"rock_cells": 0, "unroomed_plot_cells": 0, "roof_cells": 0}
 	cells.sort_custom(_cell_less)
 	if not _claim_maze_stone(grid, cells):
-		return {"failed": true, "cells": 0, "skipped": skipped}
-	return {"failed": false, "cells": cells.size(), "skipped": skipped}
+		return {"failed": true, "cells": 0, "skipped": skipped,
+			"rock_cells": 0, "unroomed_plot_cells": 0, "roof_cells": 0}
+	return {"failed": false, "cells": cells.size(), "skipped": skipped,
+		"rock_cells": rock_cells,
+		"unroomed_plot_cells": unroomed_plot_cells, "roof_cells": roof_cells}
+
+
+static func _maze_plot_roof_cells(volume: WarrenVolumePlan) -> Dictionary:
+	## Every FINE cell of a house plot's own ROOF band span. A flat-roofed plot
+	## keeps `[flat_roof_base_band, top)` -- the authored one-band `roof.flat.*`
+	## unit Task C5 compiles plus, on an even height, its stone parapet course.
+	## Every other house plot keeps the authored pitched reservation,
+	## `[top - ROOF_RESERVATION_BANDS, top)`. Both spans are roof BY THE HEIGHT
+	## CONTRACT `WarrenBuildingParcel._height_is_legal` states, so no room may
+	## ever stand there and this mass must not count against the unroomed
+	## share.
+	##
+	## House plots only: an asset plot is a prefab that carries its own crown,
+	## a bridge is one storey of deck, and a deck has no height at all.
+	##
+	## Empty for a searched volume, which is what keeps every reader maze-only.
+	var out: Dictionary = {}
+	var source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null:
+		return out
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+			continue
+		var floor_band := int(plot["floor"])
+		var top_band := int(plot["top"])
+		var roof_base := WarrenBuildingParcel.flat_roof_base_band(floor_band,
+			top_band) \
+			if WarrenMazeBlockPartitioner.plot_is_flat_roofed(source, plot) \
+			else top_band - WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+		for band in range(maxi(floor_band, roof_base), top_band):
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				for fine: Vector3i in _fine_square(Vector3i(column.x, band,
+						column.y)):
+					out[fine] = true
+	return out
+
+
+static func _maze_plot_mass_audit(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan) -> Dictionary:
+	## TASK C5c RULING 1 -- the measurement this whole task is judged on.
+	##
+	## Every fine cell of every plot's own `[floor, top)` is classified exactly
+	## once, so `roomed + roofed + public + unroomed == plot_cells` is an
+	## identity and nothing hides in a rounding:
+	##
+	## - ROOMED: `PRIVATE_VOLUME` -- a room, a back room, a bridge room, a
+	##   landmark body. What the town actually built.
+	## - ROOFED: inside `_maze_plot_roof_cells`. Roof is not a room, and the
+	##   plot model asked for it (Task C5 built these bands), so it never
+	##   counts against the share.
+	## - PUBLIC: a street, a deck or a daylight void the carve bored back out
+	##   of the plot. The realm's, not a shortfall.
+	## - FEATURE: structure some OTHER feature built inside the plot -- a
+	##   market post, a link's bearing. Built, and not this pass's stone.
+	## - UNBUILDABLE: mass the SOURCE itself does not offer -- a bore ran
+	##   through it, or it lies below its own column's `massif.base_at`, where
+	##   the heightfield draws the ground and `_retain_maze_rock` deliberately
+	##   draws nothing. Exactly the complement of the retention pass's own
+	##   candidate domain, which is what makes UNROOMED and the stone that pass
+	##   claims the same number.
+	## - UNROOMED: the residue -- the quarry block. Plot mass composition made
+	##   neither room nor roof, which `_retain_maze_rock` then ships as stone.
+	##
+	## Empty for a searched volume.
+	var out: Dictionary = {"plot_cells": 0, "roomed": 0, "roofed": 0,
+		"public": 0, "feature": 0, "unbuildable": 0, "unroomed": 0,
+		"share": 0.0, "unroomed_uses": {}}
+	var source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null or source.massif == null:
+		return out
+	var roof := _maze_plot_roof_cells(volume)
+	var plot_cells := 0
+	var roomed := 0
+	var roofed := 0
+	var public := 0
+	var feature := 0
+	var unbuildable := 0
+	var unroomed := 0
+	var unroomed_uses: Dictionary = {}
+	for cell_value: Variant in _maze_plot_mass_cells(volume).keys():
+		var cell := cell_value as Vector3i
+		plot_cells += 1
+		var use := grid.use_at(cell) if grid.contains(cell) \
+			else WarrenSpatialGrid.Use.OUTSIDE
+		var macro := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		if use == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+			roomed += 1
+		elif use in [WarrenSpatialGrid.Use.PUBLIC_AIR,
+				WarrenSpatialGrid.Use.DAYLIGHT_AIR]:
+			public += 1
+		elif use == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME \
+				and grid.owner_name_at(cell) != MAZE_STONE_FEATURE_ID:
+			feature += 1
+		elif roof.has(cell):
+			roofed += 1
+		elif not grid.contains(cell) \
+				or cell.y < source.massif.base_at(macro) \
+				or not source.solid_at(Vector3i(macro.x, cell.y, macro.y)):
+			unbuildable += 1
+		else:
+			unroomed += 1
+			# Which USE the residue wears. Every cell here should be the
+			# retained stone `_retain_maze_rock` claimed; a different use is a
+			# cell the retention pass never saw, and naming it is cheaper than
+			# guessing at it later.
+			unroomed_uses[use] = int(unroomed_uses.get(use, 0)) + 1
+	out["plot_cells"] = plot_cells
+	out["roomed"] = roomed
+	out["roofed"] = roofed
+	out["public"] = public
+	out["feature"] = feature
+	out["unbuildable"] = unbuildable
+	out["unroomed"] = unroomed
+	out["unroomed_uses"] = unroomed_uses
+	out["share"] = float(unroomed) / float(maxi(1, plot_cells))
+	return out
 
 
 static func _feature_bit_is_taken(grid: WarrenSpatialGrid,
@@ -1843,9 +2010,17 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# reaches. Empty in every searched mode, and counted rather than assumed.
 	var deck_floors := _maze_deck_floor_cells(volume)
 	var deck_addressed_parcels := 0
+	# TASK C5c RULING 4. Parcel id -> the gate that dropped it, written at
+	# every point a parcel can leave the composition, so a plot that composes
+	# no lineage says WHY instead of vanishing. Recorded for every mode and
+	# published for a maze town only, where a dropped parcel is a whole
+	# building's worth of stone the town then has to carry.
+	var parcel_gate_by_id: Dictionary = {}
+	var parcel_gate_detail_by_id: Dictionary = {}
 	for parcel: WarrenBuildingParcel in parcels.parcels:
 		var proposal := WarrenParcelConstruction.proposal(parcel)
 		if proposal.is_empty():
+			parcel_gate_by_id[parcel.stable_id] = &"proposal_rejected"
 			continue
 		# Mass-first frontage includes intermediate stair/ramp macro cells. Only
 		# two fine lanes inside such a square carry the actual transition surface;
@@ -1854,6 +2029,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		# room composition, and keep the same fact as a final room/building seal.
 		if not _parcel_address_has_public_floor(grid, parcel):
 			rejected_unfloored_addresses += 1
+			parcel_gate_by_id[parcel.stable_id] = \
+				&"rejected_unfloored_address"
 			continue
 		if not deck_floors.is_empty():
 			deck_addressed_parcels += int(deck_floors.has(
@@ -2687,11 +2864,13 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		# merely counting it in the audit would recreate the collision that the
 		# preflight explicitly resolved.
 		if court_displaced_parcels.has(parcel.stable_id):
+			parcel_gate_by_id[parcel.stable_id] = &"court_displaced"
 			continue
 		var storeys := int(proposal.storeys)
 		var origin := proposal.origin as Vector3i
 		var base_plate := _proposal_base_plate(proposal)
 		if storeys <= 0 or base_plate.is_empty():
+			parcel_gate_by_id[parcel.stable_id] = &"proposal_has_no_storeys"
 			continue
 		var threshold := WarrenParcelConstruction.threshold_cell(parcel)
 		var addressed_storey := clampi(floori(float(threshold.y - origin.y) \
@@ -2711,11 +2890,19 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				break
 			forced_offsets[block] = wanted
 		if forced_offsets.is_empty():
+			parcel_gate_by_id[parcel.stable_id] = &"forced_offsets_conflict"
 			continue
 		var offsets := _composition_offsets(grid, base_plate, origin.y,
 			storeys, protected_owners, parcel.stable_id, volume.world_seed,
 			forced_offsets)
 		if offsets.is_empty():
+			parcel_gate_by_id[parcel.stable_id] = \
+				&"exact_composition_unsolved"
+			if volume.mass_context.has(&"maze_source_plan"):
+				parcel_gate_detail_by_id[parcel.stable_id] = \
+					_maze_exact_composition_conflict(grid, base_plate,
+						origin.y, storeys, protected_owners,
+						parcel.stable_id)
 			continue
 		solved_offsets_by_parcel[parcel.stable_id] = offsets
 		exact_forced_offsets_by_parcel[parcel.stable_id] = forced_offsets
@@ -3144,6 +3331,32 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		# building behind it. Published beside the declared count because
 		# "declared 3" and "declared 3, built 0" are different towns.
 		composition_audit["maze_uncomposed_stack_count"] = uncomposed_stacks
+		# RULING 4. Every parcel that composed no lineage, with the gate that
+		# dropped it. A parcel is a whole building's worth of plot mass, so an
+		# uncomposed one is the single largest contribution a town can make to
+		# its own quarry block; naming the gate is what lets the next pass fix
+		# the fixable ones instead of guessing.
+		var uncomposed_parcels: Array[Dictionary] = []
+		var uncomposed_gates: Dictionary = {}
+		for parcel: WarrenBuildingParcel in parcels.parcels:
+			if composed_parcels.has(parcel.stable_id):
+				continue
+			var gate := StringName(parcel_gate_by_id.get(parcel.stable_id,
+				&"structural_yielded_lineage"))
+			uncomposed_parcels.append({"parcel_id": parcel.stable_id,
+				"gate": gate, "floor": parcel.base_band,
+				"top": parcel.top_band, "area": parcel.area_cells(),
+				"detail": String(parcel_gate_detail_by_id.get(
+					parcel.stable_id, ""))})
+			uncomposed_gates[gate] = int(uncomposed_gates.get(gate, 0)) + 1
+		uncomposed_parcels.sort_custom(func(a: Dictionary,
+				b: Dictionary) -> bool:
+			return String(a.parcel_id) < String(b.parcel_id))
+		composition_audit["maze_uncomposed_parcels"] = uncomposed_parcels
+		composition_audit["maze_uncomposed_parcel_count"] = \
+			uncomposed_parcels.size()
+		composition_audit["maze_uncomposed_parcel_gates"] = uncomposed_gates
+		composition_audit["maze_parcel_count"] = parcels.parcels.size()
 		composition_audit["maze_unrooted_terrain_bearing_count"] = \
 			unrooted_bearing.size()
 		composition_audit["maze_unrooted_terrain_bearing_details"] = \
@@ -9546,6 +9759,58 @@ static func _composition_offsets(grid: WarrenSpatialGrid,
 			return [] as Array[Vector2i]
 		out.append(chosen)
 	return out
+
+
+static func _maze_exact_composition_conflict(grid: WarrenSpatialGrid,
+		base_plate: Dictionary, origin_y: int, storeys: int,
+		protected_owners: Dictionary, parcel_id: StringName) -> String:
+	## TASK C5c RULING 4's diagnosis. `_composition_offsets` returns an empty
+	## offset list without saying which cell refused it, and on a maze town
+	## that is the gate almost every uncomposed parcel dies at. Re-walk the
+	## parcel's own UNSHIFTED plate and name the first cell that is not free
+	## mass: its band, the use it carries, and whoever else claimed it.
+	##
+	## Maze mode only and only on the failure path, so a composed parcel pays
+	## nothing for it. It reads exactly what `_plate_fits` reads, including the
+	## paired-allowance escape, so the two can never disagree about what a
+	## conflict is.
+	var columns: Array[Vector2i] = []
+	columns.assign(base_plate.keys())
+	columns.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		return a.x < b.x)
+	for storey in storeys:
+		for y_offset in WarrenSpatialGrid.STOREY_CELLS:
+			var band := origin_y \
+				+ storey * WarrenSpatialGrid.STOREY_CELLS + y_offset
+			for column: Vector2i in columns:
+				var cell := Vector3i(column.x, band, column.y)
+				if not grid.contains(cell):
+					return "storey %d cell %s is outside the grid" % [storey,
+						cell]
+				if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE:
+					return "storey %d cell %s is use %d owned by %s" % [
+						storey, cell, grid.use_at(cell),
+						grid.owner_name_at(cell)]
+				var others: Array[StringName] = []
+				for owner_value: Variant in (protected_owners.get(cell,
+						{}) as Dictionary).keys():
+					var other := StringName(owner_value)
+					if other == parcel_id:
+						continue
+					var allowance: Variant = (protected_owners[cell] \
+						as Dictionary)[owner_value]
+					if allowance is Dictionary \
+							and (allowance as Dictionary).has(parcel_id):
+						continue
+					others.append(other)
+				if others.is_empty():
+					continue
+				others.sort()
+				return "storey %d cell %s is claimed by %s" % [storey, cell,
+					others]
+	return "no unshifted conflict"
 
 
 static func _plate_fits(grid: WarrenSpatialGrid, base_plate: Dictionary,

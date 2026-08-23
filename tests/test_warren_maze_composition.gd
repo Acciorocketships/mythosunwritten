@@ -151,6 +151,35 @@ const BRIDGE_OUTCOMES: Array[String] = ["stamped", "open_deck", "released"]
 ## upward only.
 const ROUTE_ON_STONE_FLOOR := 0.95
 
+## TASK C5c RULING 1 and 6. Ceiling on the share of a town's PLOT MASS that
+## composition turned into neither room nor roof and `_retain_maze_rock` then
+## shipped as stone. In the plot model every plot cell is a building, so this
+## share is exactly the quarry block the C5b render showed: stone pillars as
+## tall as the houses.
+##
+## The denominator is the whole plot mass (`cells x [floor, top)` of every
+## plot); the numerator excludes rooms, the plot's own roof band span, and any
+## street or daylight void the carve bored back out of a plot. Pinned at the
+## measured WORST of the sealing towns plus 0.05. **Re-pin DOWNWARD only** --
+## this is a ceiling, and a rise is a regression.
+##
+## MEASURED BEFORE ANY OF TASK C5c's COMPOSITION WORK: 0.321 / 0.390 / 0.341
+## on 12/compact, 4/compact and 3/standard, so the ceiling is the worst of
+## them plus 0.05. This commit only MEASURES -- it changes no composition --
+## and the number is deliberately in history before the work that must move
+## it. The controller's goal is 0.15.
+const UNROOMED_PLOT_MASS_CEILING := 0.44
+
+## Every gate `_partition_rooms` may drop a parcel at. A gate outside this set
+## means a parcel now leaves composition through a door nobody decided on --
+## the same drift `ADVISORY_SHORTFALL_KEYS` and `BRIDGE_RELEASE_REASONS` exist
+## to catch.
+const UNCOMPOSED_PARCEL_GATES: Array[String] = [
+	"proposal_rejected", "rejected_unfloored_address", "court_displaced",
+	"proposal_has_no_storeys", "forced_offsets_conflict",
+	"exact_composition_unsolved", "structural_yielded_lineage",
+]
+
 
 static var _program_cache: SettlementFabricProgram
 ## One production solve per (seed, scale) shared by every test in the file.
@@ -437,6 +466,135 @@ func test_back_rooms_become_rooms() -> void:
 		assert_gte(share, BACK_ROOM_STAMPED_FLOOR,
 			"%s stamps only %.3f of its back-room mass" % [_label(outcome),
 				share])
+	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func test_unroomed_plot_mass_is_bounded() -> void:
+	## TASK C5c RULINGS 1 and 6 -- the measurement the task is judged on.
+	##
+	## Plot mass is buildable mass: the plot planner already decided every one
+	## of these cells belongs to a building. What composition does not build
+	## in, `_retain_maze_rock` retains and the stone skin renders, which is why
+	## the C5b review shot shows a quarry block instead of a town. This asserts
+	## the four buckets really partition the plot mass -- so no cause can hide
+	## in a rounding -- and pins the unroomed share.
+	##
+	## The causes are PRINTED beside the share, per seed: the back-room mass
+	## the directed pass could not stamp (by refusal), the parcels that
+	## composed no lineage (by gate), and the declared stacks nothing was built
+	## on. Those three plus the greedy backfill are the whole of the remainder.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var plot_cells := int(plan.audit.get("maze_plot_mass_cell_count", -1))
+		assert_gt(plot_cells, 0,
+			"%s must publish the plot mass it was handed" % _label(outcome))
+		if plot_cells <= 0:
+			continue
+		measured += 1
+		var roomed := int(plan.audit.get("maze_plot_roomed_cell_count", -1))
+		var roofed := int(plan.audit.get("maze_plot_roofed_cell_count", -1))
+		var public := int(plan.audit.get("maze_plot_public_cell_count", -1))
+		var feature := int(plan.audit.get("maze_plot_feature_cell_count", -1))
+		var unbuildable := int(plan.audit.get(
+			"maze_plot_unbuildable_cell_count", -1))
+		var unroomed := int(plan.audit.get("maze_unroomed_plot_cells", -1))
+		var share := float(plan.audit.get("maze_unroomed_plot_share", -1.0))
+		var rock := int(plan.audit.get("maze_retained_rock_cells", -1))
+		print(("MAZE_PLOT_MASS %s plot=%d roomed=%d roofed=%d public=%d " \
+			+ "feature=%d unbuildable=%d unroomed=%d share=%.3f rock=%d " \
+			+ "stone_total=%d") % [
+			_label(outcome), plot_cells, roomed, roofed, public, feature,
+			unbuildable, unroomed, share, rock,
+			int(plan.audit.get("maze_retained_rock_cell_count", -1))])
+		print("MAZE_PLOT_MASS_USES %s %s" % [_label(outcome),
+			plan.audit.get("maze_unroomed_plot_uses", {})])
+		print("MAZE_PLOT_MASS_CAUSES %s back_room_unstamped=%d refusals=%s" \
+			% [_label(outcome),
+			int((plan.audit.get("maze_back_room_unstamped_cells", {}) \
+				as Dictionary).get("count", -1)),
+			plan.audit.get("maze_back_room_refusals", {})])
+		print(("MAZE_PLOT_MASS_CAUSES %s parcels=%d uncomposed=%d gates=%s " \
+			+ "uncomposed_stacks=%d residual_rooms=%d back_rooms=%d") % [
+			_label(outcome), int(plan.audit.get("maze_parcel_count", -1)),
+			int(plan.audit.get("maze_uncomposed_parcel_count", -1)),
+			plan.audit.get("maze_uncomposed_parcel_gates", {}),
+			int(plan.audit.get("maze_uncomposed_stack_count", -1)),
+			int(plan.audit.get("residual_backfill_building_count", -1)),
+			int(plan.audit.get("maze_back_room_building_count", -1))])
+		assert_eq(roomed + roofed + public + feature + unbuildable + unroomed,
+			plot_cells,
+			("%s must account for every plot cell: roomed, roofed, public, " \
+				+ "feature, unbuildable and unroomed are the whole") \
+				% _label(outcome))
+		# The stone the retention pass tagged and the residue this audit
+		# derives are two readings of one fact. The ONE legal way they part is
+		# a cell whose non-shareable FEATURE bit another owner already held --
+		# `_retain_maze_rock` skips and counts exactly those.
+		var retained_unroomed := int(plan.audit.get(
+			"maze_retained_unroomed_plot_stone_cells", -1))
+		assert_between(unroomed - retained_unroomed, 0,
+			int(plan.audit.get("maze_retained_rock_skipped_reserved", -1)),
+			("%s retains %d of the %d plot cells it left unroomed") % [
+				_label(outcome), retained_unroomed, unroomed])
+		assert_almost_eq(share, float(unroomed) / float(plot_cells), 0.0005,
+			"%s must publish the share it measured" % _label(outcome))
+		assert_lte(share, UNROOMED_PLOT_MASS_CEILING,
+			"%s leaves %.3f of its plot mass unroomed" % [_label(outcome),
+				share])
+	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func test_uncomposed_parcels_are_explained() -> void:
+	## TASK C5c RULING 4. A parcel that composes no lineage is a whole
+	## building's worth of plot mass the town then carries as stone, and the
+	## single largest thing it can do to its own unroomed share. Every one of
+	## them must name the gate that dropped it, drawn from a fixed vocabulary,
+	## so a new silent drop cannot appear without this test saying so.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var parcel_count := int(plan.audit.get("maze_parcel_count", -1))
+		assert_gt(parcel_count, 0,
+			"%s must publish the parcels it was handed" % _label(outcome))
+		if parcel_count <= 0:
+			continue
+		measured += 1
+		var records := plan.audit.get("maze_uncomposed_parcels", []) as Array
+		var gates := plan.audit.get("maze_uncomposed_parcel_gates",
+			{}) as Dictionary
+		print("MAZE_UNCOMPOSED %s parcels=%d uncomposed=%d gates=%s" % [
+			_label(outcome), parcel_count, records.size(), gates])
+		for record_value: Variant in records:
+			var record := record_value as Dictionary
+			print("MAZE_UNCOMPOSED_DETAIL %s %s gate=%s area=%s [%s,%s) %s" % [
+				_label(outcome), record.get("parcel_id", &""),
+				record.get("gate", &""), record.get("area", -1),
+				record.get("floor", -1), record.get("top", -1),
+				record.get("detail", "")])
+		assert_eq(records.size(),
+			int(plan.audit.get("maze_uncomposed_parcel_count", -1)),
+			"%s must count exactly the uncomposed parcels it names" \
+				% _label(outcome))
+		var tallied := 0
+		for count_value: Variant in gates.values():
+			tallied += int(count_value)
+		assert_eq(tallied, records.size(),
+			"%s gate tally must account for every uncomposed parcel" \
+				% _label(outcome))
+		for record_value: Variant in records:
+			var record := record_value as Dictionary
+			assert_true(record.has("parcel_id") and record.has("gate"),
+				"%s uncomposed record %s is incomplete" % [_label(outcome),
+					record])
+			assert_true(String(record.get("gate", "")) \
+				in UNCOMPOSED_PARCEL_GATES,
+				"%s parcel %s names an unknown gate %s" % [_label(outcome),
+					record.get("parcel_id", &""), record.get("gate", &"")])
 	assert_gt(measured, 0, "at least one seed seals far enough to measure")
 
 
