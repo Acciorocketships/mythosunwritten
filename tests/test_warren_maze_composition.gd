@@ -508,9 +508,16 @@ func _is_walkable(plan: WarrenSpatialPlan, cell: Vector3i) -> bool:
 
 func _walkable_from_entry(plan: WarrenSpatialPlan) -> Dictionary:
 	## Flood the sealed grid from the town entry over walkable cells, stepping
-	## 4-adjacent in x/z within one band. Deliberately NOT a walk of
-	## `route_floor_cells`: `WarrenSpatialPlan._validate_route` already proves
-	## that array connected, so asserting over it would be vacuous.
+	## 4-adjacent in x/z within one band.
+	##
+	## Honest about its own strength: `WarrenSpatialPlan._validate_route`
+	## already proves the route ARRAY connected under the same adjacency, so a
+	## deck cell that reached `route_floor_cells` is connected by construction
+	## and this flood mostly restates that. It is kept because it walks the
+	## GRID -- uses and face claims -- rather than the array, so it would still
+	## catch a cell that seal accepted and the grid does not back. The
+	## load-bearing assertions of the deck test are the other three: route
+	## membership, `maze_deck_cell_count`, and `surface_plan.has_cell`.
 	var seen: Dictionary = {plan.entry_floor_cell: true}
 	var frontier: Array[Vector3i] = [plan.entry_floor_cell]
 	while not frontier.is_empty():
@@ -633,6 +640,25 @@ func test_bridges_become_rooms_or_audited_releases() -> void:
 		assert_eq(rooms, stamped,
 			"%s must build exactly the bridge rooms it claims" % _label(
 				outcome))
+		for record_value: Variant in outcomes:
+			var record := record_value as Dictionary
+			if String(record.get("outcome", "")) != "stamped":
+				continue
+			# A stamped span must carry the two-flank contract the fabric
+			# compiler bonds against. Live today and asserted the moment the
+			# model gap closes, rather than written after the fact.
+			var room := _bridge_room(plan, StringName(record["id"]),
+				outcomes)
+			assert_not_null(room,
+				"%s stamped %s but built no bridge room" % [_label(outcome),
+					record.get("id", &"")])
+			if room == null:
+				continue
+			var flanks := room.audit.get("bridge_support_room_ids",
+				[]) as Array
+			assert_eq(flanks.size(), 2,
+				"%s bridge room %s must name two flank rooms" % [
+					_label(outcome), room.stable_id])
 		if records.is_empty():
 			continue
 		measured += 1
@@ -644,6 +670,346 @@ func test_bridges_become_rooms_or_audited_releases() -> void:
 			"%s stamps only %.3f of its bridge plots" % [_label(outcome),
 				share])
 	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func _bridge_room(plan: WarrenSpatialPlan, bridge_id: StringName,
+		outcomes: Array) -> WarrenRoomStamp:
+	## The room a stamped bridge record built. `_stamp_maze_bridges` numbers
+	## its buildings by STAMP order, so the index is the record's position
+	## among the stamped ones, not among all records.
+	var index := 0
+	for record_value: Variant in outcomes:
+		var record := record_value as Dictionary
+		if String(record.get("outcome", "")) != "stamped":
+			continue
+		if StringName(record["id"]) == bridge_id:
+			break
+		index += 1
+	var wanted := StringName("spatial.maze_bridge.%02d" % index)
+	for building: WarrenBuildingVolume in plan.buildings:
+		if building.stable_id == wanted:
+			return building.room_records[0]
+	return null
+
+
+func test_bridge_flanks_at_storey_level_are_reported() -> void:
+	## IMPORTANT 3's corpus question, asked of the plans this file already
+	## solved: is there a sealing town where a bridge's floor really lies
+	## inside a flanking house PARCEL's composed storeys, rather than in the
+	## roof course its rooms stop at? Every such case is printed with what the
+	## pass then did with it, so "no bridge stamps" can never be mistaken for
+	## "no bridge was ever offered a flank".
+	var checked := PackedStringArray()
+	var cases := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		checked.append(_label(outcome))
+		var source := plan.source_volume.mass_context.get(
+			&"maze_source_plan") as WarrenMazeSourcePlan
+		var parcels := WarrenMazeBlockPartitioner.partition(source,
+			plan.source_volume)
+		assert_not_null(parcels,
+			"%s must re-translate its own sealed source" % _label(outcome))
+		if parcels == null:
+			continue
+		var outcomes := plan.audit.get("maze_bridge_outcomes", []) as Array
+		for record_value: Variant in outcomes:
+			var record := record_value as Dictionary
+			var plot := _plot_by_id(source, StringName(record["id"]))
+			var flanks := _storey_level_flanks(parcels, plot)
+			if flanks.is_empty():
+				continue
+			cases += 1
+			print(("MAZE_BRIDGE_FLANK %s %s floor=%d flanks=%s -> %s (%s) " \
+				+ "counts=%s") % [_label(outcome), record["id"],
+					int(plot["floor"]), flanks, record["outcome"],
+					record["reason"], record.get("span_counts", {})])
+		# The diagnosis a released span published must survive to the audit;
+		# `_backfill_residual_rooms` wipes the counter it is read from.
+		for record_value: Variant in outcomes:
+			var record := record_value as Dictionary
+			assert_true(record.get("span_counts", null) is Dictionary,
+				"%s bridge outcome %s must carry its span diagnosis" % [
+					_label(outcome), record.get("id", &"")])
+	print("MAZE_BRIDGE_FLANK checked=%s storey_level_cases=%d" % [
+		", ".join(checked), cases])
+	if cases == 0:
+		print(("MAZE_BRIDGE_FLANK SKIPPED: no sealing seed of %s offers a " \
+			+ "bridge whose floor lies inside a flank parcel's storeys") % [
+				", ".join(checked)])
+
+
+func _plot_by_id(source: WarrenMazeSourcePlan,
+		plot_id: StringName) -> Dictionary:
+	for plot: Dictionary in source.plots:
+		if StringName(plot["id"]) == plot_id:
+			return plot
+	return {}
+
+
+func _storey_level_flanks(parcels: WarrenParcelPlan,
+		plot: Dictionary) -> Array[String]:
+	## Every parcel 4-adjacent to this bridge whose own composed storeys
+	## contain the bridge floor -- `[base_band, roof_base_band())`, which is
+	## where its rooms are, not `[base_band, top_band)`, which includes the
+	## roof course a bridge cannot bear on.
+	var out: Array[String] = []
+	if plot.is_empty():
+		return out
+	var columns: Dictionary = {}
+	for cell_value: Variant in plot["cells"] as Array:
+		columns[cell_value as Vector2i] = true
+	var band := int(plot["floor"])
+	for parcel: WarrenBuildingParcel in parcels.parcels:
+		var roof_base := parcel.base_band + parcel.storey_count() \
+			* WarrenBuildingParcel.STOREY_BANDS
+		if band < parcel.base_band or band >= roof_base:
+			continue
+		var beside := false
+		for column: Vector2i in parcel.footprint:
+			for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+					Vector2i.UP, Vector2i.DOWN]:
+				beside = beside or columns.has(column + direction)
+			if beside:
+				break
+		if beside:
+			out.append("%s[%d,%d)%s" % [parcel.stable_id, parcel.base_band,
+				roof_base, "" if (band - parcel.base_band) % 2 == 0 \
+					else " offset"])
+	return out
+
+
+func test_bridge_shells_match_the_span_shape() -> void:
+	## `_maze_bridge_kind` is the whole vocabulary decision of the bridge
+	## pass, and no corpus town reaches it with anything but a tower, so it is
+	## asserted directly.
+	var one: Array[Vector2i] = [Vector2i(2, -3)]
+	assert_eq(WarrenVolumetricSolver._maze_bridge_kind(one), &"tower",
+		"a one-cell span is a tower")
+	var along_x: Array[Vector2i] = [Vector2i(2, -3), Vector2i(3, -3)]
+	assert_eq(WarrenVolumetricSolver._maze_bridge_kind(along_x), &"slim",
+		"two cells in a line are a slim")
+	var along_z: Array[Vector2i] = [Vector2i(2, -3), Vector2i(2, -2)]
+	assert_eq(WarrenVolumetricSolver._maze_bridge_kind(along_z), &"slim",
+		"the line may run either way")
+	var backward: Array[Vector2i] = [Vector2i(3, -3), Vector2i(2, -3)]
+	assert_eq(WarrenVolumetricSolver._maze_bridge_kind(backward), &"slim",
+		"and in either order")
+	var diagonal: Array[Vector2i] = [Vector2i(2, -3), Vector2i(3, -2)]
+	assert_eq(WarrenVolumetricSolver._maze_bridge_kind(diagonal), &"",
+		"a diagonal pair is not an authored shell")
+	var apart: Array[Vector2i] = [Vector2i(2, -3), Vector2i(5, -3)]
+	assert_eq(WarrenVolumetricSolver._maze_bridge_kind(apart), &"",
+		"two cells that do not touch are not one room")
+	var three: Array[Vector2i] = [Vector2i(2, -3), Vector2i(3, -3),
+		Vector2i(4, -3)]
+	assert_eq(WarrenVolumetricSolver._maze_bridge_kind(three), &"",
+		"a three-cell span has no shell in this vocabulary")
+	var none: Array[Vector2i] = []
+	assert_eq(WarrenVolumetricSolver._maze_bridge_kind(none), &"",
+		"an empty span is not a room")
+
+
+func test_bridge_cells_are_one_authored_storey() -> void:
+	## `_maze_bridge_cells` expands a span into fine mass, and that mass must
+	## be exactly what the chosen shell stamps -- the two facts the pass then
+	## relies on without re-checking.
+	var one: Array[Vector2i] = [Vector2i(2, -3)]
+	var tower := WarrenVolumetricSolver._maze_bridge_cells(one, 9, 11)
+	assert_eq(tower.size(), 8, "a one-cell span is 2x2 fine over two bands")
+	var wanted: Dictionary = {}
+	for cell: Vector3i in tower:
+		wanted[cell] = true
+	assert_eq(wanted.size(), 8, "and carries no duplicate cell")
+	for x in [4, 5]:
+		for z in [-6, -5]:
+			for y in [9, 10]:
+				assert_true(wanted.has(Vector3i(x, y, z)),
+					"macro (2, -3) at band 9 covers %s" % Vector3i(x, y, z))
+	assert_true(_stamps_exactly(&"tower", tower),
+		"a one-cell span is exactly a tower shell")
+	var two: Array[Vector2i] = [Vector2i(2, -3), Vector2i(3, -3)]
+	var slim := WarrenVolumetricSolver._maze_bridge_cells(two, 9, 11)
+	assert_eq(slim.size(), 16, "a two-cell span is twice that")
+	assert_true(_stamps_exactly(&"slim", slim),
+		"a two-cell span is exactly a slim shell")
+	assert_false(_stamps_exactly(&"tower", slim),
+		"and is refused as a tower, at every yaw")
+
+
+func _stamps_exactly(kind: StringName, cells: Array[Vector3i]) -> bool:
+	## True when some yaw of `kind` stamps exactly `cells` -- the search the
+	## bridge pass runs before it trusts an origin.
+	for yaw in 4:
+		if WarrenVolumetricSolver._maze_back_room_origin(kind, cells,
+				yaw).x != 2147483647:
+			return true
+	return false
+
+
+func test_a_bound_span_stamps_a_bridge_room() -> void:
+	## The bridge stamping path end to end, on the geometry no corpus town
+	## offers: a one-cell span between two flank rooms standing at the
+	## bridge's OWN band. Every step is the production function -- the
+	## two-flank socket proof, the authored envelope preflight, and the shared
+	## private-room stamp -- so this is what distinguishes "the corpus has no
+	## such bridge" from "the predicate never binds".
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, 0, -8),
+		Vector3i(24, 16, 24))
+	assert_true(grid.is_valid(), "the synthetic grid is usable")
+	var band := 4
+	assert_true(_fill_allocatable(grid), "synthetic massif projects")
+	assert_true(_carve_synthetic_street(grid, band), "synthetic street carves")
+	var west := _synthetic_flank(grid, &"flank.west", -1, band)
+	var east := _synthetic_flank(grid, &"flank.east", 1, band)
+	assert_not_null(west, "west flank composes")
+	assert_not_null(east, "east flank composes")
+	if west == null or east == null:
+		return
+	var building_by_id: Dictionary = {}
+	var building_by_cell: Dictionary = {}
+	var buildings: Array[WarrenBuildingVolume] = [west, east]
+	for building: WarrenBuildingVolume in buildings:
+		building_by_id[building.stable_id] = building
+		for cell: Vector3i in building.private_cells:
+			building_by_cell[cell] = building.stable_id
+	var columns: Array[Vector2i] = [Vector2i(0, 0)]
+	var kind := WarrenVolumetricSolver._maze_bridge_kind(columns)
+	var cells := WarrenVolumetricSolver._maze_bridge_cells(columns, band,
+		band + WarrenSpatialGrid.STOREY_CELLS)
+	var span := WarrenVolumetricSolver._residual_bridge_span(cells,
+		building_by_id, building_by_cell, 12345, _program())
+	assert_false(span.is_empty(),
+		"two flank rooms at the bridge band bind the span")
+	if span.is_empty():
+		return
+	var flank_ids := span.room_ids as Array
+	assert_eq(flank_ids.size(), 2, "a span bears on exactly two rooms")
+	assert_ne(StringName(flank_ids[0]), StringName(flank_ids[1]),
+		"and on two DISTINCT rooms, never one wall twice")
+	var origin := WarrenVolumetricSolver._maze_back_room_origin(kind, cells,
+		0)
+	assert_ne(origin.x, 2147483647, "the span is an authored tower shell")
+	var parent := building_by_id[StringName(span.parent_building_id)] \
+		as WarrenBuildingVolume
+	var parent_room := WarrenVolumetricSolver._maze_back_room_parent_room(
+		parent, span.parent_contact_cell as Vector3i)
+	assert_not_null(parent_room, "the bearing flank names a room")
+	var roof := WarrenVolumetricSolver._residual_roof_feature(kind, origin,
+		12345)
+	var probe := WarrenRoomStamp.new(&"probe", &"probe", kind, origin, 0, 0,
+		false, false, Vector3i(2147483647, 2147483647, 2147483647),
+		Vector3i.ZERO, roof, parent_room.source_parcel_id,
+		parent_room.source_storey_index)
+	probe.private_cells.assign(cells)
+	assert_true(WarrenVolumetricSolver._residual_room_envelope_fits(probe,
+		building_by_id, _program(), 12345),
+		"the bridge shell fits between its two flanks")
+	var supports := WarrenSupportGraph.new()
+	assert_true(supports.add_node(&"flank.west") \
+		and supports.add_node(&"flank.east"), "flanks enter the support DAG")
+	var required: Array[StringName] = []
+	var terrain: Array[StringName] = []
+	var edges: Array[Dictionary] = []
+	var built := WarrenVolumetricSolver._stamp_maze_private_room(grid,
+		supports, {"building_id": &"spatial.maze_bridge.00",
+			"source_id": &"maze.bridge.00", "kind": kind, "origin": origin,
+			"yaw": 0, "cells": cells, "floor_band": band,
+			"terrain_bearing": false, "access_id": &"flank.west",
+			"support_parcel_id": parent_room.source_parcel_id,
+			"support_storey_index": parent_room.source_storey_index,
+			"roof_feature": roof, "parent_building_id": parent.stable_id},
+		buildings, building_by_id, building_by_cell, required, terrain, edges)
+	assert_not_null(built, "the bridge room stamps: %s" \
+		% WarrenVolumetricSolver.last_failure)
+	if built == null:
+		return
+	for cell: Vector3i in cells:
+		assert_eq(grid.use_at(cell), WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+			"%s became the bridge's own private volume" % cell)
+		assert_eq(grid.owner_name_at(cell), &"spatial.maze_bridge.00",
+			"%s is owned by the bridge" % cell)
+	assert_eq(built.private_parent_ids, [&"flank.west"] as Array[StringName],
+		"a bridge reaches the street through its flank house")
+	assert_eq(edges, [{"child": &"spatial.maze_bridge.00",
+		"parent": &"flank.west"}] as Array[Dictionary],
+		"and carries one support edge to the bearing flank")
+	assert_eq(terrain, [] as Array[StringName],
+		"a bridge over a street never claims terrain bearing")
+	assert_eq(required, [&"spatial.maze_bridge.00"] as Array[StringName],
+		"and is a required support of the sealed town")
+	assert_eq(buildings.size(), 3, "the caller's building list grew by one")
+	var room := built.room_records[0]
+	room.audit["bridge_support_room_ids"] = span.room_ids
+	assert_eq((room.audit.get("bridge_support_room_ids", []) as Array).size(),
+		2, "the compiler reads two flanks to bond, not a parent below")
+
+
+func _fill_allocatable(grid: WarrenSpatialGrid) -> bool:
+	var cells: Array[Vector3i] = []
+	for x in range(-8, 16):
+		for y in range(0, 16):
+			for z in range(-8, 16):
+				cells.append(Vector3i(x, y, z))
+	var tx := grid.begin_transaction(&"massif.allocation")
+	return tx.assign_use(cells, WarrenSpatialGrid.Use.ALLOCATABLE,
+		&"massif.allocation") and tx.commit()
+
+
+func _carve_synthetic_street(grid: WarrenSpatialGrid, band: int) -> bool:
+	## The bore, in miniature: one lane of swept public air on a classified
+	## public floor, which is what lets a flank building seal with a threshold.
+	var air: Array[Vector3i] = []
+	for x in range(-4, 6):
+		for y in range(band, band + WarrenVolumePlan.HEADROOM_BANDS):
+			air.append(Vector3i(x, y, -1))
+	var carve := grid.begin_transaction(&"public.route")
+	if not carve.require_use(air,
+			[WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+			or not carve.reserve(air,
+				WarrenSpatialGrid.Reservation.PUBLIC_CLEARANCE,
+				&"public.route") \
+			or not carve.assign_use(air, WarrenSpatialGrid.Use.PUBLIC_AIR,
+				&"public.route"):
+		return false
+	for x in range(-4, 6):
+		if not carve.claim_face(Vector3i(x, band, -1), Vector3i.DOWN,
+				WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, &"public.route"):
+			return false
+	return carve.commit()
+
+
+func _synthetic_flank(grid: WarrenSpatialGrid, id: StringName, macro_x: int,
+		band: int) -> WarrenBuildingVolume:
+	## One addressed tower storey on the macro column `macro_x`, standing at
+	## the same band a bridge beside it would occupy.
+	var cells: Array[Vector3i] = []
+	for y in range(band, band + WarrenSpatialGrid.STOREY_CELLS):
+		for x in range(macro_x * 2, macro_x * 2 + 2):
+			for z in 2:
+				cells.append(Vector3i(x, y, z))
+	var tx := grid.begin_transaction(id)
+	if not tx.assign_use(cells, WarrenSpatialGrid.Use.PRIVATE_VOLUME, id) \
+			or not tx.commit():
+		return null
+	var origin := WarrenVolumetricSolver._maze_back_room_origin(&"tower",
+		cells, 0)
+	var room := WarrenRoomStamp.new(StringName("%s.room00" % id), id,
+		&"tower", origin, 0, 0, true, false)
+	var building := WarrenBuildingVolume.new(id, band)
+	if not building.add_private_cells(cells) \
+			or not room.add_private_cells(cells) \
+			or not room.seal(grid, id) or not building.add_room(room) \
+			or not building.add_threshold(Vector3i(macro_x * 2, band, 0),
+				Vector3i(macro_x * 2, band, -1)) \
+			or not building.seal(grid):
+		return null
+	return building
+
+
+
 
 
 func test_maze_mode_is_deterministic() -> void:

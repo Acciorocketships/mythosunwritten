@@ -1316,20 +1316,29 @@ static func _pave_maze_decks(grid: WarrenSpatialGrid,
 	## and no carved band in the MIN_HOUSE_BANDS above it, so a deck can never
 	## overlap a street's own air, and a collision here is a generator defect
 	## that must be loud rather than silently absorbed.
-	var source := volume.mass_context.get(&"maze_source_plan") \
-		as WarrenMazeSourcePlan
-	if source == null:
-		return 0
-	var floors: Dictionary = {}
-	for plot: Dictionary in source.plots:
-		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_DECK:
-			continue
-		var band := int(plot["floor"])
-		for cell_value: Variant in plot["cells"] as Array:
-			var column := cell_value as Vector2i
-			for fine: Vector3i in _fine_square(Vector3i(column.x, band,
-					column.y)):
-				floors[fine] = true
+	##
+	## DECK COUPLINGS. A deck cell is indistinguishable from a bored street
+	## cell to everything that reads the grid, which is the point -- it is a
+	## public floor -- but three later stages change their answer because of
+	## it, and each is a real behaviour change rather than a formality:
+	##
+	## (a) `_parcel_address_has_public_floor` accepts a parcel whose door
+	##     landing is a deck cell, so a parcel that used to be counted in
+	##     `rejected_unfloored_address_count` can now enter composition. Decks
+	##     ADD parcels, and an empty proposal list is a hard rejection, so this
+	##     coupling can only help a town -- but it does move the room set.
+	##     Counted as `maze_deck_addressed_parcel_count`.
+	## (b) `_carve_route_connected_rooftop_court` skips any crown that already
+	##     carries a face claim or a reservation, so a deck lying on a house
+	##     roof removes that crown from the roof-court candidates. (Its seam
+	##     set is separately restricted to cells owned by `public.route`, so a
+	##     deck can never SUPPLY the seam either.)
+	## (c) `_backfill_residual_rooms` builds its route set from every
+	##     PUBLIC_AIR cell carrying a PUBLIC_FLOOR face, ignoring owner, so
+	##     deck cells count as uncovered route floors and as frontage sides.
+	##     The greedy scan is therefore biased toward roofing and fronting the
+	##     plazas, exactly as it is toward streets.
+	var floors := _maze_deck_floor_cells(volume)
 	if floors.is_empty():
 		return 0
 	var air: Dictionary = {}
@@ -1363,6 +1372,28 @@ static func _pave_maze_decks(grid: WarrenSpatialGrid,
 	return floors.size()
 
 
+static func _maze_deck_floor_cells(volume: WarrenVolumePlan) -> Dictionary:
+	## Every FINE cell a deck plot's own floor band covers, as a set. A deck
+	## has no height (`top == floor`), so this one band is the whole of it.
+	## Empty for a searched volume, which is what keeps every reader of it
+	## maze-only.
+	var out: Dictionary = {}
+	var source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null:
+		return out
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_DECK:
+			continue
+		var band := int(plot["floor"])
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			for fine: Vector3i in _fine_square(Vector3i(column.x, band,
+					column.y)):
+				out[fine] = true
+	return out
+
+
 static func _partition_rooms(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
 		construction_program: SettlementFabricProgram,
@@ -1393,6 +1424,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		target_landmarks = 0
 	var proposals: Array[Dictionary] = []
 	var rejected_unfloored_addresses := 0
+	# Coupling (a) of `_pave_maze_decks`: a paved deck is a legal address
+	# landing, so a maze parcel can enter composition on a plaza that no bore
+	# reaches. Empty in every searched mode, and counted rather than assumed.
+	var deck_floors := _maze_deck_floor_cells(volume)
+	var deck_addressed_parcels := 0
 	for parcel: WarrenBuildingParcel in parcels.parcels:
 		var proposal := WarrenParcelConstruction.proposal(parcel)
 		if proposal.is_empty():
@@ -1405,6 +1441,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		if not _parcel_address_has_public_floor(grid, parcel):
 			rejected_unfloored_addresses += 1
 			continue
+		if not deck_floors.is_empty():
+			deck_addressed_parcels += int(deck_floors.has(
+				WarrenParcelConstruction.threshold_cell(parcel) \
+					+ Vector3i(parcel.frontage_direction.x, 0,
+						parcel.frontage_direction.y)))
 		proposal["parcel"] = parcel
 		proposals.append(proposal)
 	if proposals.is_empty():
@@ -2624,6 +2665,8 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# Published for a maze town and only for one: a legacy plan's audit gains
 	# no zeroed key it has no records behind.
 	if volume.mass_context.has(&"maze_source_plan"):
+		composition_audit["maze_deck_addressed_parcel_count"] = \
+			deck_addressed_parcels
 		composition_audit["maze_bridge_rooms"] = int(bridges.get("stamped", 0))
 		composition_audit["maze_bridge_outcomes"] = (
 			bridges.get("outcomes", []) as Array).duplicate(true)
@@ -9413,11 +9456,17 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 			outcomes.append(_maze_bridge_release(id,
 				"span footprint is not an authored shell"))
 			continue
+		# `_residual_bridge_span` accumulates its diagnosis into one static
+		# counter dictionary that `_backfill_residual_rooms` wipes on entry.
+		# Snapshot it per record here, or the only explanation of WHY a span
+		# did not bind is gone by the time the audit is read.
+		_residual_bridge_counts = {}
 		var span := _residual_bridge_span(cells, building_by_id,
 			building_by_cell, volume.world_seed, construction_program)
+		var span_counts := _residual_bridge_counts.duplicate(true)
 		if span.is_empty():
 			outcomes.append(_maze_bridge_release(id,
-				"span has no two bound flank bearings"))
+				"span has no two bound flank bearings", span_counts))
 			continue
 		var parent_building := building_by_id.get(
 			StringName(span.parent_building_id)) as WarrenBuildingVolume
@@ -9425,7 +9474,7 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 			span.parent_contact_cell as Vector3i)
 		if parent_room == null:
 			outcomes.append(_maze_bridge_release(id,
-				"bearing flank has no room to name"))
+				"bearing flank has no room to name", span_counts))
 			continue
 		var building_id := StringName("spatial.maze_bridge.%02d" % stamped)
 		var roof_feature := _residual_roof_feature(kind, origin,
@@ -9439,7 +9488,7 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 		if not _residual_room_envelope_fits(probe, building_by_id,
 				construction_program, volume.world_seed):
 			outcomes.append(_maze_bridge_release(id,
-				"authored envelope does not fit"))
+				"authored envelope does not fit", span_counts))
 			continue
 		var built := _stamp_maze_private_room(grid, supports, {
 			"building_id": building_id,
@@ -9464,16 +9513,23 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 			"support_records", []) as Array).duplicate(true)
 		room.audit["bridge_is_bracketed_jetty"] = bool(span.get(
 			"is_bracketed_jetty", false))
-		outcomes.append({"id": id, "outcome": "stamped", "reason": ""})
+		outcomes.append({"id": id, "outcome": "stamped", "reason": "",
+			"span_counts": span_counts})
 		stamped += 1
 	return {"failed": false, "record_count": records.size(),
 		"stamped": stamped, "released": outcomes.size() - stamped,
 		"outcomes": outcomes}
 
 
-static func _maze_bridge_release(id: StringName,
-		reason: String) -> Dictionary:
-	return {"id": id, "outcome": "released", "reason": reason}
+static func _string_name_less(left: StringName,
+		right: StringName) -> bool:
+	return String(left) < String(right)
+
+
+static func _maze_bridge_release(id: StringName, reason: String,
+		counts: Dictionary = {}) -> Dictionary:
+	return {"id": id, "outcome": "released", "reason": reason,
+		"span_counts": counts}
 
 
 static func _maze_bridge_kind(columns: Array[Vector2i]) -> StringName:
@@ -9539,14 +9595,21 @@ static func _maze_bridge_access_id(record: Dictionary,
 				for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
 						Vector2i.UP, Vector2i.DOWN]:
 					beside = beside or footprint.has(column + direction)
+				if beside:
+					break
 			var owner := StringName(plot["building_id"])
 			if beside and not wanted.has(owner):
 				wanted.append(owner)
-	wanted.sort()
+	# Lexical, never `Array[StringName].sort()`: StringName compares by its
+	# interned pointer, so the default sort orders by whatever order the town
+	# happened to intern its ids in. That is stable inside one process and
+	# different in the next, which is exactly the nondeterminism a seeded
+	# generator may not have.
+	wanted.sort_custom(_string_name_less)
 	for owner: StringName in wanted:
 		var members: Array[StringName] = []
 		members.assign(groups.get(owner, []) as Array)
-		members.sort()
+		members.sort_custom(_string_name_less)
 		for parcel_id: StringName in members:
 			var access := StringName(access_by_parcel.get(parcel_id, &""))
 			if not access.is_empty():
