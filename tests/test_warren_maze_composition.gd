@@ -54,7 +54,7 @@ const TRANSLATOR_NO_PLOTS := "sealed maze source carries no plots"
 ## under the emitting code's own names and are folded away before the check.
 const ADVISORY_SHORTFALL_KEYS: Array[String] = [
 	"covered_market", "courtyard_parcel_sides", "balconies", "landmarks",
-	"skywalks", "assets", "courtyard_bridges",
+	"skywalks", "assets", "courtyard_bridges", "bridges",
 ]
 
 ## Hero-quota gate texts. None of them may appear on a maze-mode failure: in
@@ -101,6 +101,42 @@ const KNOWN_FABRIC_BLOCKERS: Dictionary = {
 ## rectangles standing more than the authored stone course above their own
 ## ground with no building underneath. All four are left to the greedy scan.
 const BACK_ROOM_STAMPED_FLOOR := 0.17
+
+## Measured share of a town's paved deck floor that is really WALKABLE from
+## the town entry, minus a 0.05 guard. A plaza the player cannot reach is a
+## hole in the fabric wearing paving, so this is the assertion that gives
+## ruling 1 its teeth; the BFS behind it walks the sealed GRID rather than the
+## route array, which `WarrenSpatialPlan._validate_route` has already proved
+## connected. Re-pin upward only.
+const DECK_REACHABLE_FLOOR := 0.95
+
+## Measured share of the planner's bridge plots that become real bridge rooms,
+## minus a 0.05 guard. It is **0.000 on this corpus**, so this line is a
+## placeholder that becomes a real floor the day the model gap below closes;
+## the teeth of `test_bridges_become_rooms_or_audited_releases` are the
+## accounting identity, the reason vocabulary, and the shortfall equality.
+##
+## Why zero, measured: a bridge floor is `passage headroom top + 1`, and on all
+## three bridges of the three sealing towns that band is exactly the flanking
+## houses' ROOF course (`house.032[2,8)` and `house.030[2,8)` both stop their
+## rooms at band 6, which is bridge.00's floor). A roof is not a room, so the
+## two-sided socket bearing a bridge needs cannot be bound -- and
+## `WarrenSpatialFabricCompiler` re-runs that same bond strictly, so a bridge
+## stamped without it would reject the whole town instead of one span.
+const BRIDGE_STAMPED_FLOOR := 0.0
+
+## Every reason `_stamp_maze_bridges` may release a span for. A reason outside
+## this set means the pass grew a new refusal nobody decided on, which is the
+## same drift `ADVISORY_SHORTFALL_KEYS` exists to catch.
+const BRIDGE_RELEASE_REASONS: Array[String] = [
+	"span is not a one-storey tower or slim shell",
+	"span mass is already spent or feature-reserved",
+	"no flank house composed a building at this floor",
+	"span footprint is not an authored shell",
+	"span has no two bound flank bearings",
+	"bearing flank has no room to name",
+	"authored envelope does not fit",
+]
 
 static var _program_cache: SettlementFabricProgram
 ## One production solve per (seed, scale) shared by every test in the file.
@@ -409,7 +445,9 @@ func test_residual_rooms_stay_inside_plots() -> void:
 		for building: WarrenBuildingVolume in plan.buildings:
 			if not String(building.stable_id).begins_with("spatial.residual.") \
 					and not String(building.stable_id).begins_with(
-						"spatial.maze_back."):
+						"spatial.maze_back.") \
+					and not String(building.stable_id).begins_with(
+						"spatial.maze_bridge."):
 				continue
 			checked += 1
 			for cell: Vector3i in building.private_cells:
@@ -423,6 +461,189 @@ func test_residual_rooms_stay_inside_plots() -> void:
 				_label(outcome), outside, first])
 	assert_gt(checked, 0,
 		"at least one sealed seed really has residual or back-room buildings")
+
+
+func _source_plots(plan: WarrenSpatialPlan,
+		kind: StringName) -> Array[Dictionary]:
+	## The planner's own records of one plot kind, read from the sealed maze
+	## source the plan itself carries. Free: no second site plan.
+	var out: Array[Dictionary] = []
+	var source := plan.source_volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null:
+		return out
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) == kind:
+			out.append(plot)
+	return out
+
+
+func _deck_floor_cells(plan: WarrenSpatialPlan) -> Array[Vector3i]:
+	## Every FINE cell a deck plot's own floor band covers. A deck has no
+	## height (top == floor), so this one band is the whole of it.
+	var out: Array[Vector3i] = []
+	for plot: Dictionary in _source_plots(plan,
+			WarrenMazeSourcePlan.PLOT_DECK):
+		var band := int(plot["floor"])
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			for x_offset in 2:
+				for z_offset in 2:
+					out.append(Vector3i(column.x * 2 + x_offset, band,
+						column.y * 2 + z_offset))
+	return out
+
+
+func _is_walkable(plan: WarrenSpatialPlan, cell: Vector3i) -> bool:
+	## One walkable public cell: swept public air standing on a classified
+	## public floor. Read from the GRID, which is the authority the paving and
+	## the surface solver both consume.
+	if not plan.grid.contains(cell) \
+			or plan.grid.use_at(cell) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+		return false
+	var floor_claim := plan.grid.face_claim(cell, Vector3i.DOWN)
+	return not floor_claim.is_empty() and int(floor_claim.get("kind", -1)) \
+		== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR
+
+
+func _walkable_from_entry(plan: WarrenSpatialPlan) -> Dictionary:
+	## Flood the sealed grid from the town entry over walkable cells, stepping
+	## 4-adjacent in x/z within one band. Deliberately NOT a walk of
+	## `route_floor_cells`: `WarrenSpatialPlan._validate_route` already proves
+	## that array connected, so asserting over it would be vacuous.
+	var seen: Dictionary = {plan.entry_floor_cell: true}
+	var frontier: Array[Vector3i] = [plan.entry_floor_cell]
+	while not frontier.is_empty():
+		var cell: Vector3i = frontier.pop_back()
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			for rise: int in [-1, 0, 1]:
+				var next := cell + direction + Vector3i.UP * rise
+				if seen.has(next) or not _is_walkable(plan, next):
+					continue
+				seen[next] = true
+				frontier.append(next)
+	return seen
+
+
+func test_decks_are_walkable_public_floor() -> void:
+	## Ruling 1: a deck plot is a PLAZA, not a record. Its floor band is paved
+	## as public floor with the same swept headroom a street gets, it joins the
+	## town's route surfaces, and the town can WALK onto it. Before this pass
+	## the planner's decks were audit facts composition discarded.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var cells := _deck_floor_cells(plan)
+		assert_eq(int(plan.audit.get("maze_deck_cell_count", -1)),
+			cells.size(),
+			"%s must publish the deck mass it paved" % _label(outcome))
+		if cells.is_empty():
+			# A scale's deck quota is what the planner ASKS for; a town whose
+			# streets grew no region of DECK_MIN columns legitimately has
+			# none, and paving zero cells is the right answer there.
+			continue
+		measured += 1
+		var route: Dictionary = {}
+		for cell: Vector3i in plan.route_floor_cells:
+			route[cell] = true
+		var unpaved := 0
+		var first := ""
+		for cell: Vector3i in cells:
+			if _is_walkable(plan, cell) and route.has(cell):
+				continue
+			unpaved += 1
+			if first.is_empty():
+				first = "%s" % cell
+		assert_eq(unpaved, 0,
+			"%s leaves %d of %d deck cells unpaved (first %s)" % [
+				_label(outcome), unpaved, cells.size(), first])
+		var walkable := _walkable_from_entry(plan)
+		var reached := 0
+		for cell: Vector3i in cells:
+			reached += int(walkable.has(cell))
+		var share := float(reached) / float(cells.size())
+		# The paving itself, not the topology that permits it: the compiled
+		# fabric's own surface union must carry every deck cell, or the plaza
+		# renders as a hole the player can nonetheless walk into.
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		var unsurfaced := 0
+		if fabric != null and fabric.surface_plan != null:
+			for cell: Vector3i in cells:
+				unsurfaced += int(not fabric.surface_plan.has_cell(cell))
+		assert_eq(unsurfaced, 0,
+			"%s leaves %d deck cells out of the public-realm surface" % [
+				_label(outcome), unsurfaced])
+		print("MAZE_DECKS %s paved=%d reachable=%d share=%.3f surfaced=%d" % [
+			_label(outcome), cells.size(), reached, share,
+			cells.size() - unsurfaced])
+		assert_gte(share, DECK_REACHABLE_FLOOR,
+			"%s paves %d deck cells but only %.3f of them are reachable" % [
+				_label(outcome), cells.size(), share])
+	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func test_bridges_become_rooms_or_audited_releases() -> void:
+	## Ruling 2: every bridge plot is either a real one-storey room bearing on
+	## its two flanks, or a RELEASED record with a reason. Nothing vanishes and
+	## nothing rejects the town.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var records := _source_plots(plan,
+			WarrenMazeSourcePlan.PLOT_BRIDGE)
+		var stamped := int(plan.audit.get("maze_bridge_rooms", -1))
+		var outcomes := plan.audit.get("maze_bridge_outcomes", []) as Array
+		var released := 0
+		for record_value: Variant in outcomes:
+			var record := record_value as Dictionary
+			assert_true(record.has("id") and record.has("outcome") \
+				and record.has("reason"),
+				"%s bridge outcome %s is incomplete" % [_label(outcome),
+					record])
+			if String(record.get("outcome", "")) == "stamped":
+				continue
+			released += 1
+			assert_eq(String(record.get("outcome", "")), "released",
+				"%s bridge outcome %s names no known verdict" % [
+					_label(outcome), record])
+			assert_has(BRIDGE_RELEASE_REASONS,
+				String(record.get("reason", "")),
+				"%s released bridge %s for an unvocabularised reason" % [
+					_label(outcome), record.get("id", &"")])
+		assert_eq(outcomes.size(), records.size(),
+			"%s must report one outcome per bridge plot" % _label(outcome))
+		assert_eq(stamped + released, records.size(),
+			"%s must account for every bridge plot" % _label(outcome))
+		var shortfalls := plan.audit.get("advisory_shortfalls", {}) \
+			as Dictionary
+		assert_eq(int(shortfalls.get("bridges", 0)), released,
+			"%s must record its released bridges as a shortfall" % _label(
+				outcome))
+		var rooms := 0
+		for building: WarrenBuildingVolume in plan.buildings:
+			rooms += int(String(building.stable_id).begins_with(
+				"spatial.maze_bridge."))
+		assert_eq(rooms, stamped,
+			"%s must build exactly the bridge rooms it claims" % _label(
+				outcome))
+		if records.is_empty():
+			continue
+		measured += 1
+		var share := float(stamped) / float(records.size())
+		print("MAZE_BRIDGES %s stamped=%d/%d share=%.3f released=%d %s" % [
+			_label(outcome), stamped, records.size(), share, released,
+			outcomes])
+		assert_gte(share, BRIDGE_STAMPED_FLOOR,
+			"%s stamps only %.3f of its bridge plots" % [_label(outcome),
+				share])
+	assert_gt(measured, 0, "at least one seed seals far enough to measure")
 
 
 func test_maze_mode_is_deterministic() -> void:

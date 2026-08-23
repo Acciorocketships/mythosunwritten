@@ -979,6 +979,13 @@ static func from_volume(volume: WarrenVolumePlan,
 	if route_floors.is_empty():
 		last_failure = "public volume carve produced no route floor"
 		return null
+	# Maze mode: a DECK plot is a PLAZA, and a plaza is paved public floor.
+	# Carved here, beside the bore's own streets and before any parcel or room
+	# is composed, so a deck can never be mass some later pass claims. Empty on
+	# every searched volume, which is what keeps legacy composition identical.
+	var deck_cell_count := _pave_maze_decks(grid, volume, route_floors)
+	if deck_cell_count < 0:
+		return null
 	var parcel_plan := WarrenTownSolver.partition_parcels(volume,
 		partition_variant, construction_program)
 	if parcel_plan == null:
@@ -1132,6 +1139,8 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit["preplanned_landmark_count"] = (
 		partition.landmark_reservations as Array).size()
 	plan.audit.merge(WarrenSpatialFeatureSolver.last_audit, true)
+	if volume.mass_context.has(&"maze_source_plan"):
+		plan.audit["maze_deck_cell_count"] = deck_cell_count
 	# A spatial topology is not production-valid until the authored construction
 	# shells for its final recomposed rooms clear every unrelated hero feature.
 	# This exact, bounded gate runs once per complete partition survivor.  It lets
@@ -1285,6 +1294,73 @@ static func _carve_public_volume(grid: WarrenSpatialGrid,
 	out.assign(route.keys())
 	out.sort_custom(_cell_less)
 	return out
+
+
+static func _pave_maze_decks(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, route_floors: Array[Vector3i]) -> int:
+	## Maze mode's deck plots, paved. Returns the fine floor cells paved, or
+	## -1 with `last_failure` set.
+	##
+	## A deck is the one plot kind with no height (`top == floor`): a
+	## courtyard, plaza or terrace the plot planner grew off a street at that
+	## street's own datum. Its surface is the top of whatever is solid at
+	## `floor - 1` -- rock, or a house roof -- so paving it is exactly what
+	## `_carve_public_volume` does for a bored street: the band itself and the
+	## headroom above it become PUBLIC_AIR, and the floor band claims a
+	## PUBLIC_FLOOR face. Folding the result into `route_floors` is what
+	## carries it to `WarrenSpatialPlan`, and from there to the public-realm
+	## adapter and the surface solver that actually lay the paving.
+	##
+	## The carve is deliberately STRICT about what it may take: a deck column
+	## is refused upstream unless `plot_support_ok` finds solid at `floor - 1`
+	## and no carved band in the MIN_HOUSE_BANDS above it, so a deck can never
+	## overlap a street's own air, and a collision here is a generator defect
+	## that must be loud rather than silently absorbed.
+	var source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null:
+		return 0
+	var floors: Dictionary = {}
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_DECK:
+			continue
+		var band := int(plot["floor"])
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			for fine: Vector3i in _fine_square(Vector3i(column.x, band,
+					column.y)):
+				floors[fine] = true
+	if floors.is_empty():
+		return 0
+	var air: Dictionary = {}
+	for floor_value: Variant in floors.keys():
+		var floor_cell := floor_value as Vector3i
+		for y_offset in WarrenVolumePlan.HEADROOM_BANDS:
+			air[floor_cell + Vector3i.UP * y_offset] = true
+	var air_cells: Array[Vector3i] = []
+	air_cells.assign(air.keys())
+	var carve := grid.begin_transaction(&"public.maze_deck")
+	if not carve.require_use(air_cells, [WarrenSpatialGrid.Use.OUTSIDE,
+			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+			or not carve.reserve(air_cells,
+				WarrenSpatialGrid.Reservation.PUBLIC_CLEARANCE,
+				&"public.maze_deck") \
+			or not carve.assign_use(air_cells,
+				WarrenSpatialGrid.Use.PUBLIC_AIR, &"public.maze_deck"):
+		last_failure = "could not stage maze deck carve"
+		return -1
+	for floor_value: Variant in floors.keys():
+		if not carve.claim_face(floor_value as Vector3i, Vector3i.DOWN,
+				WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, &"public.maze_deck"):
+			last_failure = "could not stage maze deck floor"
+			return -1
+	if not carve.commit():
+		last_failure = "maze deck carve rejected: %s" % carve.last_rejection
+		return -1
+	for floor_value: Variant in floors.keys():
+		route_floors.append(floor_value as Vector3i)
+	route_floors.sort_custom(_cell_less)
+	return floors.size()
 
 
 static func _partition_rooms(grid: WarrenSpatialGrid,
@@ -2536,6 +2612,24 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		back_rooms.get("unstamped_cells", {}) as Dictionary).duplicate(true)
 	composition_audit["maze_back_room_refusals"] = (
 		back_rooms.get("refusals", {}) as Dictionary).duplicate()
+	# Bridges after back rooms and before the greedy scan: a bridge bears on
+	# its two flanks, so every directed room that could BE a flank is standing
+	# first, and the mass a released bridge leaves is still there for the scan.
+	var bridges := _stamp_maze_bridges(grid, volume, parcels, buildings,
+		supports, required_supports, terrain_support_ids, support_edges,
+		protected_owners, construction_program)
+	if bool(bridges.get("failed", false)):
+		last_failure = "maze bridge stamping failed: %s" % last_failure
+		return {}
+	# Published for a maze town and only for one: a legacy plan's audit gains
+	# no zeroed key it has no records behind.
+	if volume.mass_context.has(&"maze_source_plan"):
+		composition_audit["maze_bridge_rooms"] = int(bridges.get("stamped", 0))
+		composition_audit["maze_bridge_outcomes"] = (
+			bridges.get("outcomes", []) as Array).duplicate(true)
+	if int(bridges.get("record_count", 0)) > 0:
+		# Never a rejection: a span the flanks cannot carry ships as rock.
+		last_advisory_shortfalls["bridges"] = int(bridges.get("released", 0))
 	var backfill := _backfill_residual_rooms(grid, volume, buildings, supports,
 		required_supports, terrain_support_ids, support_edges, protected_owners,
 		scale_profile.residual_room_budget,
@@ -9146,43 +9240,21 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 			_note_maze_back_room_refusal(refusals,
 				"authored envelope does not fit")
 			continue
-		var assign := grid.begin_transaction(building_id)
-		if not assign.require_use(cells,
-				[WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
-				or not assign.assign_use(cells,
-					WarrenSpatialGrid.Use.PRIVATE_VOLUME, building_id) \
-				or not assign.commit():
-			last_failure = "back room %s changed before commit: %s" % [
-				building_id, assign.last_rejection]
+		if _stamp_maze_private_room(grid, supports, {
+				"building_id": building_id, "source_id": source_id,
+				"kind": kind, "origin": origin, "yaw": yaw, "cells": cells,
+				"floor_band": band, "terrain_bearing": terrain_bearing,
+				"access_id": StringName(item["access_id"]),
+				"support_parcel_id": support_source,
+				"support_storey_index": support_storey,
+				"roof_feature": roof_feature,
+				"parent_building_id": &"" if terrain_bearing \
+					else parent_building.stable_id},
+				buildings, building_by_id, building_by_cell,
+				required_supports, terrain_support_ids,
+				support_edges) == null:
 			return {"failed": true}
-		var room := WarrenRoomStamp.new(
-			StringName("%s.room00" % building_id), source_id, kind, origin,
-			yaw, 0, terrain_bearing, false,
-			Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO,
-			roof_feature, support_source, support_storey)
-		var building := WarrenBuildingVolume.new(building_id, band)
-		if not building.add_private_cells(cells) \
-				or not room.add_private_cells(cells) \
-				or not room.seal(grid, building_id) \
-				or not building.add_room(room) \
-				or not building.add_private_parent(
-					StringName(item["access_id"])) \
-				or not building.seal(grid) \
-				or not supports.add_node(building_id):
-			last_failure = ("back room %s failed its building transaction: " \
-				+ "%s/%s") % [building_id, room.last_rejection,
-					building.last_rejection]
-			return {"failed": true}
-		if terrain_bearing:
-			terrain_support_ids.append(building_id)
-		else:
-			support_edges.append({"child": building_id,
-				"parent": parent_building.stable_id})
-		required_supports.append(building_id)
-		buildings.append(building)
-		building_by_id[building_id] = building
 		for cell: Vector3i in cells:
-			building_by_cell[cell] = building_id
 			stamped_cells[cell] = true
 		added += 1
 	var unstamped: Array[Vector3i] = []
@@ -9196,6 +9268,290 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 		"rectangle_count": rectangle_count, "record_count": records.size(),
 		"refusals": refusals,
 		"unstamped_cells": {"count": unstamped.size(), "cells": unstamped}}
+
+
+static func _stamp_maze_private_room(grid: WarrenSpatialGrid,
+		supports: WarrenSupportGraph, spec: Dictionary,
+		buildings: Array[WarrenBuildingVolume], building_by_id: Dictionary,
+		building_by_cell: Dictionary, required_supports: Array[StringName],
+		terrain_support_ids: Array[StringName],
+		support_edges: Array[Dictionary]) -> WarrenBuildingVolume:
+	## The one step both DIRECTED maze passes share: take a rectangle whose
+	## mass, shell and bearing are already proved and make it a private room of
+	## an existing lineage -- one grid transaction, one `WarrenRoomStamp`, one
+	## `WarrenBuildingVolume` reaching the street through `add_private_parent`,
+	## and the support-graph wiring. Returns the sealed building, or null with
+	## `last_failure` set; a null is a broken invariant, never a refusal, and
+	## every refusal a caller can survive is decided BEFORE this is called.
+	##
+	## `spec` carries `building_id`, `source_id`, `kind`, `origin`, `yaw`,
+	## `cells`, `floor_band`, `terrain_bearing`, `access_id`,
+	## `support_parcel_id`, `support_storey_index`, `roof_feature` and
+	## `parent_building_id` (empty when the room stands on the ground).
+	var cells := spec["cells"] as Array[Vector3i]
+	var building_id := StringName(spec["building_id"])
+	var assign := grid.begin_transaction(building_id)
+	if not assign.require_use(cells,
+			[WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+			or not assign.assign_use(cells,
+				WarrenSpatialGrid.Use.PRIVATE_VOLUME, building_id) \
+			or not assign.commit():
+		last_failure = "maze room %s changed before commit: %s" % [
+			building_id, assign.last_rejection]
+		return null
+	var terrain_bearing := bool(spec["terrain_bearing"])
+	var room := WarrenRoomStamp.new(
+		StringName("%s.room00" % building_id),
+		StringName(spec["source_id"]), StringName(spec["kind"]),
+		spec["origin"] as Vector3i, int(spec["yaw"]), 0, terrain_bearing,
+		false, Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO,
+		int(spec["roof_feature"]), StringName(spec["support_parcel_id"]),
+		int(spec["support_storey_index"]))
+	var building := WarrenBuildingVolume.new(building_id,
+		int(spec["floor_band"]))
+	if not building.add_private_cells(cells) \
+			or not room.add_private_cells(cells) \
+			or not room.seal(grid, building_id) \
+			or not building.add_room(room) \
+			or not building.add_private_parent(
+				StringName(spec["access_id"])) \
+			or not building.seal(grid) \
+			or not supports.add_node(building_id):
+		last_failure = ("maze room %s failed its building transaction: " \
+			+ "%s/%s") % [building_id, room.last_rejection,
+				building.last_rejection]
+		return null
+	if terrain_bearing:
+		terrain_support_ids.append(building_id)
+	else:
+		support_edges.append({"child": building_id,
+			"parent": StringName(spec["parent_building_id"])})
+	required_supports.append(building_id)
+	buildings.append(building)
+	building_by_id[building_id] = building
+	for cell: Vector3i in cells:
+		building_by_cell[cell] = building_id
+	return building
+
+
+static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
+		buildings: Array[WarrenBuildingVolume],
+		supports: WarrenSupportGraph, required_supports: Array[StringName],
+		terrain_support_ids: Array[StringName],
+		support_edges: Array[Dictionary], protected_owners: Dictionary,
+		construction_program: SettlementFabricProgram) -> Dictionary:
+	## The second DIRECTED pass. A `maze_bridges` record is a one-storey plot
+	## the carver retained over a street it kept covered, so it is a private
+	## BRIDGE ROOM of the house beside it -- a tower over a one-cell span, a
+	## slim over a two-cell one -- and not a skywalk: an authored skywalk
+	## recipe needs a flank STOREY floor exactly at the bridge band, which the
+	## span's own `headroom top + roof` datum does not promise.
+	##
+	## What it bears on is its two FLANKS, never the street below, so
+	## admission runs the residual machinery's own two-sided socket proof
+	## against the flanks' real measured recipes -- the same proof
+	## `WarrenSpatialFabricCompiler` re-runs strictly when it bonds the span.
+	##
+	## A record this pass cannot stand up is RELEASED, never rejected: its
+	## bands stay rock and its reason is published in `maze_bridge_outcomes`.
+	##
+	## Maze mode only: `maze_bridges` exists on no searched plan.
+	var empty := {"failed": false, "record_count": 0, "stamped": 0,
+		"released": 0, "outcomes": [] as Array[Dictionary]}
+	var records := parcels.audit.get("maze_bridges", []) as Array
+	if records.is_empty():
+		return empty
+	var building_by_id: Dictionary = {}
+	var building_by_cell: Dictionary = {}
+	var access_by_parcel := _maze_back_room_access_roots(buildings,
+		building_by_id, building_by_cell)
+	var outcomes: Array[Dictionary] = []
+	var stamped := 0
+	for record_value: Variant in records:
+		var record := record_value as Dictionary
+		var id := StringName(record["id"])
+		var columns: Array[Vector2i] = []
+		columns.assign(record["cells"] as Array)
+		var floor_band := int(record["floor"])
+		var top_band := int(record["top"])
+		var kind := _maze_bridge_kind(columns)
+		if kind.is_empty() \
+				or top_band - floor_band != WarrenSpatialGrid.STOREY_CELLS:
+			outcomes.append(_maze_bridge_release(id,
+				"span is not a one-storey tower or slim shell"))
+			continue
+		var cells := _maze_bridge_cells(columns, floor_band, top_band)
+		var blocked := false
+		for cell: Vector3i in cells:
+			if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE \
+					or _residual_feature_protected(grid, cell,
+						protected_owners):
+				blocked = true
+				break
+		if blocked:
+			outcomes.append(_maze_bridge_release(id,
+				"span mass is already spent or feature-reserved"))
+			continue
+		var access_id := _maze_bridge_access_id(record, volume, parcels,
+			access_by_parcel, columns, floor_band)
+		if access_id.is_empty():
+			outcomes.append(_maze_bridge_release(id,
+				"no flank house composed a building at this floor"))
+			continue
+		var yaw := -1
+		var origin := Vector3i(2147483647, 2147483647, 2147483647)
+		for candidate_yaw in 4:
+			var candidate := _maze_back_room_origin(kind, cells,
+				candidate_yaw)
+			if candidate.x == 2147483647:
+				continue
+			yaw = candidate_yaw
+			origin = candidate
+			break
+		if yaw < 0:
+			outcomes.append(_maze_bridge_release(id,
+				"span footprint is not an authored shell"))
+			continue
+		var span := _residual_bridge_span(cells, building_by_id,
+			building_by_cell, volume.world_seed, construction_program)
+		if span.is_empty():
+			outcomes.append(_maze_bridge_release(id,
+				"span has no two bound flank bearings"))
+			continue
+		var parent_building := building_by_id.get(
+			StringName(span.parent_building_id)) as WarrenBuildingVolume
+		var parent_room := _maze_back_room_parent_room(parent_building,
+			span.parent_contact_cell as Vector3i)
+		if parent_room == null:
+			outcomes.append(_maze_bridge_release(id,
+				"bearing flank has no room to name"))
+			continue
+		var building_id := StringName("spatial.maze_bridge.%02d" % stamped)
+		var roof_feature := _residual_roof_feature(kind, origin,
+			volume.world_seed)
+		var probe := WarrenRoomStamp.new(&"maze.bridge.envelope.probe",
+			&"maze.bridge.envelope.probe", kind, origin, yaw, 0, false, false,
+			Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO,
+			roof_feature, parent_room.source_parcel_id,
+			parent_room.source_storey_index)
+		probe.private_cells.assign(cells)
+		if not _residual_room_envelope_fits(probe, building_by_id,
+				construction_program, volume.world_seed):
+			outcomes.append(_maze_bridge_release(id,
+				"authored envelope does not fit"))
+			continue
+		var built := _stamp_maze_private_room(grid, supports, {
+			"building_id": building_id,
+			"source_id": StringName("maze.bridge.%02d" % stamped),
+			"kind": kind, "origin": origin, "yaw": yaw, "cells": cells,
+			"floor_band": floor_band, "terrain_bearing": false,
+			"access_id": access_id,
+			"support_parcel_id": parent_room.source_parcel_id,
+			"support_storey_index": parent_room.source_storey_index,
+			"roof_feature": roof_feature,
+			"parent_building_id": parent_building.stable_id},
+			buildings, building_by_id, building_by_cell, required_supports,
+			terrain_support_ids, support_edges)
+		if built == null:
+			return {"failed": true}
+		# Stamped after seal(), which rebuilds the room's audit. This is what
+		# the fabric compiler reads to bond BOTH span sockets instead of
+		# looking for a bearing parent underneath the room.
+		var room := built.room_records[0]
+		room.audit["bridge_support_room_ids"] = span.room_ids
+		room.audit["bridge_support_records"] = (span.get(
+			"support_records", []) as Array).duplicate(true)
+		room.audit["bridge_is_bracketed_jetty"] = bool(span.get(
+			"is_bracketed_jetty", false))
+		outcomes.append({"id": id, "outcome": "stamped", "reason": ""})
+		stamped += 1
+	return {"failed": false, "record_count": records.size(),
+		"stamped": stamped, "released": outcomes.size() - stamped,
+		"outcomes": outcomes}
+
+
+static func _maze_bridge_release(id: StringName,
+		reason: String) -> Dictionary:
+	return {"id": id, "outcome": "released", "reason": reason}
+
+
+static func _maze_bridge_kind(columns: Array[Vector2i]) -> StringName:
+	## A retained span is one macro cell, or two in a line -- exactly the tower
+	## and slim shells of the room vocabulary. Anything else is a span shape
+	## this pass does not author, and it is released rather than forced.
+	if columns.size() == 1:
+		return &"tower"
+	if columns.size() != 2:
+		return &""
+	var delta := columns[1] - columns[0]
+	return &"slim" if absi(delta.x) + absi(delta.y) == 1 else &""
+
+
+static func _maze_bridge_cells(columns: Array[Vector2i], floor_band: int,
+		top_band: int) -> Array[Vector3i]:
+	## The one storey of fine mass a bridge plot owns.
+	var out: Array[Vector3i] = []
+	for column: Vector2i in columns:
+		for band in range(floor_band, top_band):
+			out.append_array(_fine_square(Vector3i(column.x, band, column.y)))
+	return out
+
+
+static func _maze_bridge_access_id(record: Dictionary,
+		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
+		access_by_parcel: Dictionary, columns: Array[Vector2i],
+		floor_band: int) -> StringName:
+	## The building volume a bridge room reaches the street through: the house
+	## beside the span. The planner names one whenever a house plot stood at
+	## the bridge's own floor as the span was placed, and the record then
+	## carries that house's building group; a record naming ITSELF found none,
+	## so the flanks are searched here for a house PLOT 4-adjacent to the span
+	## whose `[floor, top)` contains the bridge floor.
+	##
+	## The search is over PLOTS rather than parcel rectangles because a plot's
+	## flanking column is often the part its door rectangle left over -- back
+	## room mass of the same house. The house is still the house; which of its
+	## rectangles touches the span decides nothing about who owns the bridge.
+	## Lowest group id where several qualify, and the first parcel of that
+	## group which actually composed a volume wins.
+	var groups := parcels.audit.get("maze_buildings", {}) as Dictionary
+	var wanted: Array[StringName] = []
+	var group := StringName(record["building_id"])
+	if group != StringName(record["id"]):
+		wanted.append(group)
+	else:
+		var footprint: Dictionary = {}
+		for column: Vector2i in columns:
+			footprint[column] = true
+		var source := volume.mass_context.get(&"maze_source_plan") \
+			as WarrenMazeSourcePlan
+		if source == null:
+			return &""
+		for plot: Dictionary in source.plots:
+			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
+					or floor_band < int(plot["floor"]) \
+					or floor_band >= int(plot["top"]):
+				continue
+			var beside := false
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+						Vector2i.UP, Vector2i.DOWN]:
+					beside = beside or footprint.has(column + direction)
+			var owner := StringName(plot["building_id"])
+			if beside and not wanted.has(owner):
+				wanted.append(owner)
+	wanted.sort()
+	for owner: StringName in wanted:
+		var members: Array[StringName] = []
+		members.assign(groups.get(owner, []) as Array)
+		members.sort()
+		for parcel_id: StringName in members:
+			var access := StringName(access_by_parcel.get(parcel_id, &""))
+			if not access.is_empty():
+				return access
+	return &""
 
 
 static func _maze_back_room_access_roots(
