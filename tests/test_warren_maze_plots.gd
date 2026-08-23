@@ -1528,6 +1528,8 @@ func test_corpus_translates() -> void:
 	gut.p("corpus: %d/%d towns translate" % [translated, 2 * CORPUS_SEEDS])
 	assert_gte(translated, TRANSLATE_FLOOR,
 		"%d/%d towns translate" % [translated, 2 * CORPUS_SEEDS])
+
+
 # --- Pipeline and the Phase B exit metric (task B4) -------------------------
 # What survived the deleted constructive suite: the phase pipeline, the corpus
 # seal rate, seal's audit merge, and the exterior-rock ratio the plot model was
@@ -1541,6 +1543,30 @@ func test_corpus_translates() -> void:
 ## only as the town gets less rocky -- a rise past it is a regression to
 ## report, never to accommodate.
 const EXTERIOR_ROCK_CEILING := 0.24
+
+## Measured `maze_ownership_ratio` on the four planner towns, 2026-08-22 --
+## plot-owned cells (parcels plus their back rooms) over the plan's own
+## derived solid -- each minus a 0.05 guard, rounded down to two places:
+## seed 12 compact 0.6667 -> 0.61, seed 4 compact 0.7227 -> 0.67,
+## seed 3 standard 0.6762 -> 0.62, seed 9 standard 0.7685 -> 0.71.
+## Anti-regression floors, re-pinned UPWARD only; a drop is a regression to
+## report, never to accommodate.
+##
+## History (task B4): the deleted constructive suite pinned this same idea at
+## 0.66 (seed 4 compact) and 0.65 (seed 12 compact) in
+## test_translator_partition_is_one_to_one_with_claims, measured on
+## `maze_owned_solid_ratio` -- the ledger-era 2D-footprint metric that died
+## with the edit ledger. That metric and this one count different things
+## (this denominator is real derived solid, this numerator includes back-room
+## mass), so the old numbers are not comparable and these floors are freshly
+## measured rather than carried across. The old pair is recorded here so the
+## history survives the deletion.
+const OWNERSHIP_FLOOR: Dictionary = {
+	"12/compact": 0.61,
+	"4/compact": 0.67,
+	"3/standard": 0.62,
+	"9/standard": 0.71,
+}
 
 
 func test_carve_returns_an_unsealed_plan_for_the_phase_pipeline() -> void:
@@ -1720,3 +1746,30 @@ func test_exterior_rock_ratio_is_pinned() -> void:
 		assert_lte(ratio, EXTERIOR_ROCK_CEILING,
 			"seed %d %s: exterior rock ratio %.4f is past its pinned ceiling" \
 				% [seed_value, scale, ratio])
+func test_ownership_is_pinned_on_the_planner_seeds() -> void:
+	## The ownership floor the deleted constructive suite carried, restated on
+	## the live metric (see OWNERSHIP_FLOOR for the measured values and for
+	## what the old ledger-era floors were). Read off the translated parcel
+	## plan's own audit; test_translator_emits_one_parcel_group_per_building
+	## and test_volume_matches_solid_at are what falsify the metric itself
+	## against the sealed plan, so this test's only job is the floor.
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var key := "%d/%s" % [seed_value, scale]
+		assert_true(OWNERSHIP_FLOOR.has(key),
+			"every planner seed carries a pinned ownership floor: %s" % key)
+		var parcels := _parcels_of(seed_value, scale)
+		assert_not_null(parcels, _parcel_failure(seed_value, scale))
+		if parcels == null or not OWNERSHIP_FLOOR.has(key):
+			continue
+		var ratio := float(parcels.audit.get("maze_ownership_ratio", 0.0))
+		var pinned := float(OWNERSHIP_FLOOR[key])
+		gut.p(("seed %d %s: ownership %.4f (floor %.2f) -- %d owned of %d " \
+			+ "solid, %d rock") % [seed_value, scale, ratio, pinned,
+				int(parcels.audit.get("maze_owned_cells", 0)),
+				int(parcels.audit.get("maze_solid_cells", 0)),
+				int(parcels.audit.get("maze_rock_cells", 0))])
+		assert_gte(ratio, pinned,
+			"seed %d %s: ownership %.4f fell below its pinned floor %.2f" \
+				% [seed_value, scale, ratio, pinned])

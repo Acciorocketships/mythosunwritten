@@ -243,11 +243,12 @@ func _has_continuous_bearing(volume: WarrenVolumePlan,
 ## never reaches into the source plan directly, per the ruling), (b) the
 ## PLINTH_BANDS bands directly below `base_band` are solid -- the tunnel's
 ## own roof slab this parcel actually bears on -- UNLESS `base_band` lands
-## exactly `TUNNEL_ROOF_BANDS` above the carved run's own top, the one
-## flush case the source plan's own support rule grants unconditionally (its
-## own plinth window there straddles the carved headroom by design, so
-## demanding it be solid would reject the exact case the source plan
-## already proved legal before this plot was ever placed) -- and (c) below
+## exactly `TUNNEL_ROOF_BANDS` above the carved run's own top, which is
+## where the source plan stands a bridge. Its support rule asks only that
+## `solid_at(floor - 1)` hold, and the retained roof slab is exactly that
+## one band of rock, so demanding a full PLINTH_BANDS window there would
+## reject the very plot the source plan already proved legal before this
+## parcel was ever translated -- and (c) below
 ## the LOWEST carved cell found, mass is solid all the way down to
 ## `ground`: real rock under the street, not a second unrelated gap. Both
 ## constants are referenced from the plot layer that owns them

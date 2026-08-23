@@ -543,8 +543,10 @@ static func _footprint_is_connected(members: Dictionary,
 
 func _rebuild_plot_columns() -> void:
 	## Seal re-derives the per-column index from `plots` themselves rather
-	## than trusting add_plot's own running bookkeeping -- the same discipline
-	## the claim validations above follow.
+	## than trusting add_plot's own running bookkeeping: the sealed town is
+	## judged on what `plots` really holds, so a plot appended straight onto
+	## the array -- or an index left stale by a refused seal -- can never buy
+	## itself a pass through the checks that read this.
 	_plot_columns.clear()
 	for index in plots.size():
 		for cell_value: Variant in (plots[index] as Dictionary)["cells"] \
