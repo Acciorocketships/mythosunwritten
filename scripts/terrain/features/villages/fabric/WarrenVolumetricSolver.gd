@@ -1565,9 +1565,22 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	## the FACADE it has always been, and deciding otherwise is a visual
 	## question this task does not own.
 	##
-	## Returns `{failed, cells, skipped}`; `skipped` counts cells another
-	## feature already holds the non-shareable FEATURE bit on -- see
-	## `_feature_bit_is_taken`.
+	## Returns SIX keys:
+	##
+	## - `failed` -- the grid transaction was rejected; the town is lost.
+	## - `cells` -- how many cells this pass claimed, all tags together. It is
+	##   `rock_cells + roof_cells + unroomed_plot_cells`.
+	## - `skipped` -- cells another feature already holds the non-shareable
+	##   FEATURE bit on, which this pass steps around rather than fighting for;
+	##   see `_feature_bit_is_taken`.
+	## - `rock_cells` -- DERIVED ROCK: claimed cells inside no plot at all. The
+	##   modest stone base the plot model asks for.
+	## - `roof_cells` -- claimed cells inside a plot's own roof band span
+	##   (`_maze_plot_roof_cells`). Roof by the height contract, so stone here
+	##   is the parapet course rather than a shortfall.
+	## - `unroomed_plot_cells` -- the rest: plot mass the composition made
+	##   neither room nor roof. The quarry block, and the number Task C5c
+	##   exists to move.
 	var source := volume.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if source == null or source.massif == null:
@@ -2031,6 +2044,9 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			rejected_unfloored_addresses += 1
 			parcel_gate_by_id[parcel.stable_id] = \
 				&"rejected_unfloored_address"
+			if volume.mass_context.has(&"maze_source_plan"):
+				parcel_gate_detail_by_id[parcel.stable_id] = \
+					_maze_unfloored_address_detail(grid, volume, parcel)
 			continue
 		if not deck_floors.is_empty():
 			deck_addressed_parcels += int(deck_floors.has(
@@ -3114,15 +3130,35 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						and bears_on_rock_by_parcel.has(parcel.stable_id) \
 						and not bool(bears_on_rock_by_parcel[
 							parcel.stable_id]):
-					# RULING 4's disagreement, published rather than flipped.
-					# The plot says this house stands on ANOTHER PLOT, and the
-					# composition rooted it in the mountain at its own floor
-					# band -- so it would wear a stone base it has not earned.
-					# It cannot simply be set false: an unrooted stamp with no
-					# support parent does not seal, so the honest answer is to
-					# name it. Zero on the whole corpus once the stacked-house
-					# seam declares (ruling 2), which is what makes this a
-					# regression guard rather than a tolerated shortfall.
+					# Task C3 ruling 4's disagreement, published rather than
+					# flipped. The plot says this house stands on ANOTHER PLOT,
+					# and the composition rooted it in the mountain at its own
+					# floor band -- so it wears a `base.rock` shell it has not
+					# earned. It cannot simply be set false: an unrooted stamp
+					# with no support parent does not seal, so the honest
+					# answer is to name it.
+					#
+					# TASK C5c: THIS IS NO LONGER ZERO, and the old note here
+					# ("zero once the stacked-house seam declares") was true
+					# for the wrong reason. It read zero because a maze parcel
+					# DESCENDED through the plot below and swallowed it, so no
+					# room was ever left standing on another plot's roof. Fix 1
+					# stopped that descent (`WarrenParcelConstruction
+					# ._support_base_band`) and the disagreement it was hiding
+					# is now visible and bounded: 3 / 4 / 1 on the three
+					# sealing seeds, every one of them a plot whose seam
+					# `WarrenMazeBlockPartitioner.stack_parents` could not
+					# declare because its columns are covered by more than one
+					# plot below (a PARTIAL stack).
+					#
+					# What such a house loses is its base PALETTE, not its
+					# structure: `WarrenSpatialFabricCompiler
+					# ._retained_foundation_cells` already refuses to lay a
+					# masonry course on another house's roof. Closing it is the
+					# partial-stack seam, a planner-side contract Phase E/F
+					# owns. `UNROOTED_TERRAIN_BEARING_CEILING` pins the count
+					# against the same derivation, so a NEW cause cannot hide
+					# inside the tolerated one.
 					unrooted_bearing.append({
 						"parcel_id": parcel.stable_id,
 						"origin": room_origin,
@@ -3277,7 +3313,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		back_rooms.get("addressed_count", 0))
 	composition_audit["maze_back_rooms_private"] = int(
 		back_rooms.get("private_count", 0))
-	composition_audit["maze_back_rooms_unstamped"] = (
+	composition_audit["maze_back_rooms_unstamped_cells"] = (
 		back_rooms.get("unstamped_cells", {}) as Dictionary).get("count", 0)
 	composition_audit["maze_back_room_cell_count"] = int(
 		back_rooms.get("cell_count", 0))
@@ -3723,12 +3759,23 @@ static func _maze_landmark_refusal(grid: WarrenSpatialGrid,
 	# one-cell `roof_eave_halo` -- so a prefab whose measured envelope stops
 	# exactly at a neighbour's cells still meets that neighbour's roof in
 	# `compile_room_units`, and there the verdict is the whole town rather than
-	# one asset. Ask for the cell of air here instead. Measured on the same
-	# clearance the reservation carries, so an asset admitted by this test is
-	# one the envelope gate will not later reject.
+	# one asset. Ask for the cell of air here instead.
+	#
+	# FIX 1, IMPORTANT 3: at the ROOF BAND ONLY, which is where the precedent
+	# puts it. `_backfill_residual_rooms` halos `roof_clearance` cells -- the
+	# band above a room -- and nothing else; halo every band of a prefab's
+	# envelope and the rule stops being an eave rule and becomes a one-cell
+	# setback from every wall, which refuses exactly the embedded siting
+	# `_landmark_embeddedness` is asking for. Walls may meet; eaves may not.
+	var envelope_top := -2147483648
+	for cell_value: Variant in protected_cells.keys():
+		envelope_top = maxi(envelope_top, (cell_value as Vector3i).y)
 	var halo: Dictionary = {}
 	for cell_value: Variant in protected_cells.keys():
 		var cell := cell_value as Vector3i
+		if cell.y != envelope_top:
+			halo[cell] = true
+			continue
 		for z_offset in range(-1, 2):
 			for x_offset in range(-1, 2):
 				halo[cell + Vector3i(x_offset, 0, z_offset)] = true
@@ -9818,6 +9865,40 @@ static func _composition_offsets(grid: WarrenSpatialGrid,
 			return [] as Array[Vector2i]
 		out.append(chosen)
 	return out
+
+
+static func _maze_unfloored_address_detail(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, parcel: WarrenBuildingParcel) -> String:
+	## Why `_parcel_address_has_public_floor` refused this parcel's door, in
+	## the vocabulary of the thing that decides it: which fine lane the door
+	## opens onto, what the grid made of that lane, and whether the SOURCE
+	## calls the macro square a walk cell, a transition, or neither.
+	##
+	## Maze mode only and only on the failure path. A door faces a passage cell
+	## BY CONSTRUCTION in the plot model -- the plot planner put it there -- so
+	## a landing with no floor is a disagreement between the planner and the
+	## carve, and naming which of the three it is decides where the fix goes.
+	var threshold := WarrenParcelConstruction.threshold_cell(parcel)
+	if threshold.x == 2147483647:
+		return "parcel has no authored threshold cell"
+	var landing := threshold + Vector3i(parcel.frontage_direction.x, 0,
+		parcel.frontage_direction.y)
+	var macro := Vector3i(floori(float(landing.x) / 2.0), landing.y,
+		floori(float(landing.z) / 2.0))
+	var is_walk := volume.walk_cells.has(macro)
+	var is_transition := false
+	for transition: WarrenVolumeTransition in volume.transitions:
+		for surface: Vector3i in transition.surface_cells():
+			if surface == landing:
+				is_transition = true
+				break
+		if is_transition:
+			break
+	var floor_claim := grid.face_claim(landing, Vector3i.DOWN)
+	return ("landing %s (macro %s) use %d floor kind %d owner %s; " \
+		+ "source walk=%s transition_surface=%s") % [landing, macro,
+		grid.use_at(landing), int(floor_claim.get("kind", -1)),
+		floor_claim.get("owner", &"-"), is_walk, is_transition]
 
 
 static func _maze_exact_composition_conflict(grid: WarrenSpatialGrid,

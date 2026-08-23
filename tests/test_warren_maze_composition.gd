@@ -101,7 +101,7 @@ const KNOWN_FABRIC_BLOCKERS: Dictionary = {
 ## rectangles standing more than the authored stone course above their own
 ## ground with no building underneath. All four are left to the greedy scan.
 ##
-## TASK C5c: 0.556 / 0.179 / 0.405. The floor is UNCHANGED and 4/compact's
+## TASK C5c: 0.556 / 0.179 / 0.400. The floor is UNCHANGED and 4/compact's
 ## share really did fall (0.318 -> 0.179) -- but the NUMERATOR did not move at
 ## all (56 cells both times). What grew is the denominator: nine more of that
 ## town's parcels now compose a building, so nine more back-room records have
@@ -171,14 +171,14 @@ const ROUTE_ON_STONE_FLOOR := 0.95
 ## measured WORST of the sealing towns plus 0.05. **Re-pin DOWNWARD only** --
 ## this is a ceiling, and a rise is a regression.
 ##
-## Measured after Task C5c: 0.267 / 0.305 / 0.319 on 12/compact, 4/compact and
-## 3/standard (from 0.321 / 0.390 / 0.341). The controller's goal was 0.15 and
-## it is NOT met; what stands between is stated in the task report, and its two
-## biggest pieces are named there rather than guessed at here: back-room
-## rectangles the authored ROOF vocabulary cannot crown beside their
-## neighbours, and the plot's own roof reservation, which is roof rather than
-## quarry but is not room either.
-const UNROOMED_PLOT_MASS_CEILING := 0.37
+## Measured after Task C5c fix 1: 0.267 / 0.305 / 0.312 on 12/compact,
+## 4/compact and 3/standard (from 0.321 / 0.390 / 0.341). The controller's goal
+## was 0.15 and it is NOT met; what stands between is stated in the task
+## report, and its two biggest pieces are named there rather than guessed at
+## here: back-room rectangles the authored ROOF vocabulary cannot crown beside
+## their neighbours, and the plot's own roof reservation, which is roof rather
+## than quarry but is not room either.
+const UNROOMED_PLOT_MASS_CEILING := 0.36
 
 ## Houses the plot model says stand on ANOTHER PLOT that the composition still
 ## roots in the mountain at their own floor band, because
@@ -494,7 +494,7 @@ func test_back_rooms_become_rooms() -> void:
 		assert_eq(addressed + private_rooms, rooms,
 			"%s must class every back room as addressed or private" \
 				% _label(outcome))
-		assert_eq(int(plan.audit.get("maze_back_rooms_unstamped", -1)),
+		assert_eq(int(plan.audit.get("maze_back_rooms_unstamped_cells", -1)),
 			int(unstamped.get("count", -1)),
 			"%s must publish one unstamped count, not two" % _label(outcome))
 		assert_eq(stamped + int(unstamped.get("count", -1)), total,
@@ -564,6 +564,12 @@ func test_unroomed_plot_mass_is_bounded() -> void:
 			int(plan.audit.get("maze_uncomposed_stack_count", -1)),
 			int(plan.audit.get("residual_backfill_building_count", -1)),
 			int(plan.audit.get("maze_back_room_building_count", -1))])
+		# This identity guards the PLUMBING, not the classification: it proves
+		# every plot cell reached exactly one bucket and that none was counted
+		# twice or dropped. Whether a cell was put in the RIGHT bucket is a
+		# question about `_maze_plot_mass_audit`'s rules, and the retention
+		# identity below plus `test_stone_split_reconciles_across_the_compiler`
+		# are what hold those.
 		assert_eq(roomed + roofed + public + feature + unbuildable + unroomed,
 			plot_cells,
 			("%s must account for every plot cell: roomed, roofed, public, " \
@@ -1432,7 +1438,10 @@ func test_rock_is_retained_as_stone() -> void:
 			missing += 1
 			if first.is_empty():
 				first = "%s" % cell
-		var audited := int(fabric.audit.get("maze_retained_rock_cells", -1))
+		# `maze_retained_stone_cells` is the WHOLE retained maze channel;
+		# `maze_retained_rock_cells` is the DERIVED ROCK inside it. The rename
+		# is Task C5c fix 1's: one name, one meaning, in both audits.
+		var audited := int(fabric.audit.get("maze_retained_stone_cells", -1))
 		var skipped := int(plan.audit.get(
 			"maze_retained_rock_skipped_reserved", -1))
 		var suppressed := int(fabric.audit.get(
@@ -1497,6 +1506,163 @@ func test_rock_is_retained_as_stone() -> void:
 				plan.route_floor_cells.size(), share])
 		measured += 1
 	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func _room_is_stone_borne(plan: WarrenSpatialPlan,
+		source: WarrenMazeSourcePlan, room: WarrenRoomStamp) -> bool:
+	## `WarrenSpatialFabricCompiler._retained_foundation_cells`'s maze branch,
+	## re-derived from the sealed plan and the sealed source rather than read
+	## back out of the audit it is meant to check. A terrain-bearing room is
+	## carried by retained stone -- and therefore takes no plinth course of its
+	## own -- when any footprint column has a broken span below it, a span
+	## deeper than one authored course, or another plot underneath.
+	if not room.terrain_bearing:
+		return false
+	var volume := plan.source_volume
+	var support := room.lattice_origin.y
+	for cell: Vector3i in room.private_cells:
+		if cell.y != support:
+			continue
+		var macro := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		if not volume.envelope.contains_column(macro):
+			continue
+		var bearing := volume.envelope.bearing_at(macro)
+		if support - bearing > WarrenSpatialFabricCompiler \
+				.FOUNDATION_MODULE_HEIGHT_BANDS \
+				or source.rock_shoulder(macro) < support:
+			return true
+		for band in range(bearing, support):
+			if not volume.has_mass(Vector3i(macro.x, band, macro.y)):
+				return true
+	return false
+
+
+func test_stone_borne_rooms_are_counted() -> void:
+	## TASK C5c FIX 1, IMPORTANT 5(a). Ruling 4 taught the foundation gate to
+	## accept a maze terrain-bearing room standing on a tier, a tunnel roof or
+	## a deep rock base, and to give it NO plinth -- one masonry course under a
+	## room six bands up is a floating stone skirt. That relaxation had no test
+	## reading it. Count the rooms it really applies to, from the sealed plan
+	## and the sealed source, and hold the compiler's published count to it.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		var source := _maze_source(plan)
+		if fabric == null or source == null:
+			continue
+		measured += 1
+		var derived := 0
+		var terrain_rooms := 0
+		for building: WarrenBuildingVolume in plan.buildings:
+			for room: WarrenRoomStamp in building.room_records:
+				terrain_rooms += int(room.terrain_bearing)
+				derived += int(_room_is_stone_borne(plan, source, room))
+		var audited := int(fabric.audit.get("maze_stone_borne_room_count", -1))
+		print("MAZE_STONE_BORNE %s terrain_rooms=%d stone_borne=%d/%d" % [
+			_label(outcome), terrain_rooms, audited, derived])
+		assert_eq(audited, derived,
+			("%s must publish exactly the terrain-bearing rooms the retained " \
+				+ "stone carries") % _label(outcome))
+		assert_lte(derived, terrain_rooms,
+			"%s cannot carry more rooms than it roots" % _label(outcome))
+	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func test_stone_split_reconciles_across_the_compiler() -> void:
+	## TASK C5c FIX 1, IMPORTANT 5(b). The solver decides the rock/roof/unroomed
+	## split; the fabric audit only FORWARDS it, so the two must agree cell for
+	## cell -- a forwarded number that has quietly drifted is worse than no
+	## number at all. The three tags must also add up to the retention pass's
+	## own total, which is what makes them a partition rather than three
+	## overlapping counts.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		measured += 1
+		var rock := int(plan.audit.get("maze_retained_rock_cells", -1))
+		var roof := int(plan.audit.get(
+			"maze_retained_rock_stone_roof_cells", -1))
+		var unroomed := int(plan.audit.get(
+			"maze_retained_unroomed_plot_stone_cells", -1))
+		var total := int(plan.audit.get("maze_retained_rock_cell_count", -1))
+		print(("MAZE_STONE_SPLIT %s rock=%d roof=%d unroomed=%d total=%d " \
+			+ "channel=%d") % [_label(outcome), rock, roof, unroomed, total,
+			int(fabric.audit.get("maze_retained_stone_cells", -1))])
+		assert_eq(rock + roof + unroomed, total,
+			("%s retention split must partition the stone it claimed") \
+				% _label(outcome))
+		for key: String in ["maze_retained_rock_cells",
+				"maze_retained_rock_stone_roof_cells",
+				"maze_unroomed_plot_cells"]:
+			assert_eq(int(fabric.audit.get(key, -1)),
+				int(plan.audit.get(key, -2)),
+				"%s fabric audit must forward %s unchanged" % [
+					_label(outcome), key])
+		assert_almost_eq(float(fabric.audit.get("maze_unroomed_plot_share",
+			-1.0)), float(plan.audit.get("maze_unroomed_plot_share", -2.0)),
+			0.0001,
+			"%s fabric audit must forward the share unchanged" \
+				% _label(outcome))
+		# The channel the assembler renders is the whole retained set minus
+		# whatever the fabric had already built in, so it can only be smaller.
+		assert_between(int(fabric.audit.get("maze_retained_stone_cells", -1)),
+			1, total + int(plan.audit.get("maze_slab_course_cell_count", 0)),
+			"%s retained channel must lie inside the stone the solver claimed" \
+				% _label(outcome))
+	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func test_every_plot_column_stands_on_solid() -> void:
+	## TASK C5c FIX 1, IMPORTANT 5(c). `WarrenParcelConstruction
+	## .has_perimeter_grounding` used to prove a boundary house's load path by
+	## asking whether its room stack descends to natural ground. Ruling 4 stops
+	## a maze parcel descending, so that question became the wrong one and the
+	## maze branch answers `true` instead -- leaning entirely on the plot
+	## planner's own support rule.
+	##
+	## This is that rule, read back out of the sealed source: every column of
+	## every plot has SOLID directly beneath its floor. If it ever stops being
+	## true, the relaxation above is unsupported and this says so at the source
+	## of it rather than at a render three stages later.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var source := _maze_source(plan)
+		if source == null:
+			continue
+		var floating := 0
+		var first := ""
+		for plot: Dictionary in source.plots:
+			if StringName(plot["kind"]) == WarrenMazeSourcePlan.PLOT_DECK:
+				continue
+			var floor_band := int(plot["floor"])
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				checked += 1
+				if source.solid_at(Vector3i(column.x, floor_band - 1,
+						column.y)):
+					continue
+				floating += 1
+				if first.is_empty():
+					first = "%s at %s band %d" % [plot["id"], column,
+						floor_band - 1]
+		print("MAZE_PLOT_SUPPORT %s columns=%d floating=%d" % [
+			_label(outcome), checked, floating])
+		assert_eq(floating, 0,
+			"%s has %d plot columns standing on nothing (%s)" % [
+				_label(outcome), floating, first])
+	assert_gt(checked, 0, "at least one seed seals far enough to measure")
 
 
 func _rooms_by_parcel(plan: WarrenSpatialPlan) -> Dictionary:
@@ -1568,6 +1734,31 @@ func test_stone_bases_follow_bears_on_rock() -> void:
 			"maze_unrooted_terrain_bearing_count", -1))
 		print("MAZE_BASES %s parcels=%d unrooted_terrain_bearing=%d" % [
 			_label(outcome), checked, unrooted])
+		# TASK C5c FIX 1, IMPORTANT 5(d). The ceiling alone would let a NEW
+		# cause hide inside the tolerated one, so derive the count as well:
+		# a house plot the source says stands on another plot, whose composed
+		# ground room still roots in the mountain at its own floor band. That
+		# is the audit's own definition, read from the sealed source and the
+		# sealed plan instead of from the audit it checks.
+		var derived_unrooted := 0
+		for plot: Dictionary in source.plots:
+			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
+					or bool(source.plot_facts(plot).get("bears_on_rock",
+						false)):
+				continue
+			var stacked_rooms := rooms_by_parcel.get(StringName(
+				"parcel.maze.%s" % String(plot["id"])), []) as Array
+			var lowest: WarrenRoomStamp = null
+			for room_value: Variant in stacked_rooms:
+				var room := room_value as WarrenRoomStamp
+				if lowest == null or room.source_storey_index \
+						< lowest.source_storey_index:
+					lowest = room
+			derived_unrooted += int(lowest != null and lowest.terrain_bearing \
+				and lowest.lattice_origin.y >= int(plot["floor"]))
+		assert_eq(unrooted, derived_unrooted,
+			("%s must publish exactly the houses that stand on another plot " \
+				+ "and still claim terrain") % _label(outcome))
 		assert_between(unrooted, 0, UNROOTED_TERRAIN_BEARING_CEILING,
 			"%s roots %d houses in terrain the plot says they never touch: %s" \
 				% [_label(outcome), unrooted, str(plan.audit.get(
@@ -2073,7 +2264,7 @@ func test_assets_land() -> void:
 		for record_value: Variant in plan.audit.get(
 				"maze_asset_outcomes", []) as Array:
 			var record := record_value as Dictionary
-			reasons.append(String(record.get("reason", "")).left(80))
+			reasons.append(String(record.get("reason", "")).left(240))
 		realisable_total += realisable
 		realised_total += landmarks
 		print(("MAZE_ASSET_LAND %s placed=%d realisable=%d landmarks=%d " \

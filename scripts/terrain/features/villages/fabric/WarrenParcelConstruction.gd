@@ -338,6 +338,23 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	# underneath and stays where the plot planner put it; a parcel sitting
 	# directly on the rock descends exactly as it did before, which is what
 	# keeps every rock-borne house in this corpus byte-identical.
+	#
+	# MEASURED AND REVERTED: NO DESCENT AT ALL. Returning `base_band` for every
+	# maze parcel -- the plot model taken literally, so a house on a hill
+	# column becomes a short house on a tall stone base rather than storeys --
+	# is BETTER by the number this task is judged on: 12/compact reached 0.200
+	# unroomed with 1 uncomposed parcel of 29, against 0.267 and 6 for the rule
+	# above. It cost 4/compact and 3/standard their whole towns, because every
+	# rock-borne house changed height at once and their neighbours' roofs no
+	# longer fitted (`macro setback roof 0 ... complete fallbacks were
+	# rejected`, `roof remainder ... 1-cell exposed sliver`). The binding
+	# constraint is the ROOF vocabulary, not the descent -- the same verdict
+	# `WarrenVolumetricSolver._maze_back_room_bears_terrain` records for its
+	# own reverted experiment.
+	#
+	# FOR THE NEXT TASK: a controller ruling makes maze houses FLAT-ROOFED by
+	# default, which removes the pitched crowns that failed. Re-open this
+	# experiment then; it is the single largest remaining move on the share.
 	var maze_source := parcel.source.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if maze_source != null:

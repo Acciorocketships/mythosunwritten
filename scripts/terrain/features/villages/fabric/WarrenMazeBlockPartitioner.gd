@@ -421,8 +421,33 @@ static func _parcel_for_plot(source: WarrenMazeSourcePlan,
 				refusal = "no rectangle bears on the parent's own footprint"
 				continue
 			if WarrenParcelConstruction.door_serves_address(parcel):
-				return {"parcel": parcel, "skipped": index,
-					"reason": first_refusal}
+				# TASK C5c FIX 1. `door_serves_address` proves the doorway
+				# opens inside the claimed 3 m walk square; it cannot say
+				# WHICH of that square's two fine lanes the door faces, and a
+				# stair or ramp intermediate square owns only its exact
+				# two-lane tread span (`WarrenVolumeTransition.surface_cells`).
+				# A door aimed at either unused half opens into swept public
+				# air with no floor under it, and `WarrenVolumetricSolver
+				# ._parcel_address_has_public_floor` then drops the whole
+				# parcel -- a building's worth of plot mass lost to a lane
+				# choice this loop was already free to make differently.
+				#
+				# `has_exact_route_surface` exists for exactly this question
+				# and says so in its own docstring; `WarrenSolidPartitioner`
+				# :1020 already asks it. The maze translator simply never
+				# adopted it. Asking here lets the OTHER door phase, or a
+				# smaller rectangle, win instead, and a plot where no lane is
+				# floored is refused with a reason rather than dropped in
+				# silence three stages later.
+				if volume.has_exact_route_surface(
+						WarrenParcelConstruction.threshold_cell(parcel)
+						+ Vector3i(parcel.frontage_direction.x, 0,
+							parcel.frontage_direction.y)):
+					return {"parcel": parcel, "skipped": index,
+						"reason": first_refusal}
+				refusal = "the door lane opens onto swept headroom, " \
+					+ "not onto the passage floor"
+				continue
 			refusal = "no authored door module serves the address"
 		if first_refusal == "":
 			first_refusal = "%d columns at %s: %s" % [

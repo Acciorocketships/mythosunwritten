@@ -155,6 +155,13 @@ const DECK_QUOTA: Dictionary = {
 }
 ## One salt per seeded roll, so two rolls on the same cell cannot agree by
 ## accident. Both go through WarrenPassageLatticeRules.hash_key.
+## Fine cells of margin the realisation mirror keeps around a prefab's whole
+## measured reach, mirroring the one-cell eave halo
+## `WarrenVolumetricSolver._maze_landmark_refusal` applies at the roof band.
+## See `_site_realises` for why asking it of the whole box is deliberately
+## conservative rather than exact.
+const EAVE_HALO_CELLS := 1
+
 const ASSET_QUOTA_SALT := 0x51071
 const DECK_QUOTA_SALT := 0x4dec5
 
@@ -300,18 +307,40 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	## prefab by its DOORWAY, not by the plot's centre: it takes the frontage
 	## the plot addressed its street across, tries each fine lane of that 3 m
 	## street cell whose inward neighbour is plot mass, and refuses the lane
-	## whose body leaves the residual mass, whose bearing does not meet natural
-	## ground, or whose measured clearance reaches a neighbouring plot.
+	## whose body leaves the residual mass, whose bearing rests on nothing, or
+	## whose measured clearance -- plus the one-cell eave halo at its own roof
+	## band -- meets a neighbouring plot.
 	##
-	## This restates those three facts in macro columns, one per step below.
+	## This restates those two facts in macro columns, one per step below.
 	## `reach_*` is the union of body and clearance, so "inside this plot's own
 	## footprint" answers the body and the clearance together -- the footprint
 	## is column-exclusive, so mass this plot owns is mass no other plot can
-	## own. Bearing is the legacy rule verbatim: every column under a
-	## terrain-bearing cell must have its natural ground AT the datum.
+	## own -- and the eave halo is asked as one further fine cell of margin on
+	## the same box. That margin is deliberately CONSERVATIVE: the builder
+	## halos only the roof band and lets an eave overhang rock or a street,
+	## while this asks the whole box to keep its margin inside the plot. The
+	## mirror may refuse a site the builder would have taken; it may never
+	## accept one the builder refuses, and that direction is the whole property.
+	##
+	## TASK C5c FIX 1, IMPORTANT 4 -- the two clauses that moved:
+	##
+	## - A STREET OVER THE TOP is no longer a refusal. C5b refused it because
+	##   the prefab claimed a ROOF face on the boundary the route already owned
+	##   and `_reserve_landmark_preplans` killed the town at the joint commit.
+	##   Ruling 5 fixed that at the commit -- a maze landmark now skips a ROOF
+	##   face the public realm owns -- so the mirror must stop refusing what
+	##   the builder accepts. `street_over_top` stays in the tally vocabulary
+	##   and reads zero.
+	## - BEARING follows the builder's own relaxed rule (see
+	##   `WarrenVolumetricSolver._landmark_bearing_follows_terrain`): natural
+	##   ground AT the datum, or a datum ABOVE it whose band below is solid the
+	##   source retains as stone. C2 kept it strict because nothing rendered
+	##   that rock; Task C5b renders it. Asked of an UNSEALED plan, where a
+	##   column carrying no plot yet answers its massif envelope rather than
+	##   its eventual plot floor -- which can only make this stricter than the
+	##   sealed builder, never looser, because `_footprint` already refuses any
+	##   column another plot has taken.
 	var columns := _footprint_columns(cells)
-	if _street_runs_over(streets, cells, datum):
-		return _tally(mirror, "street_over_top")
 	var frontage := _frontage_direction(columns, Vector2i(door.x, door.z))
 	if frontage == Vector2i.ZERO:
 		return _tally(mirror, "no_frontage")
@@ -328,8 +357,9 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 			if not columns.has(_macro_column(doorway)):
 				continue
 			if not _fine_box_inside(columns, doorway, side, lateral,
-					int(template["reach_forward"]), int(template["reach_left"]),
-					int(template["reach_right"])):
+					int(template["reach_forward"]) + EAVE_HALO_CELLS,
+					int(template["reach_left"]) + EAVE_HALO_CELLS,
+					int(template["reach_right"]) + EAVE_HALO_CELLS):
 				continue
 			body_fits = true
 			if _fine_box_bears(plan, doorway, side, lateral,
@@ -351,25 +381,6 @@ static func _footprint_columns(cells: Array[Vector2i]) -> Dictionary:
 	for column: Vector2i in cells:
 		out[column] = true
 	return out
-
-
-static func _street_runs_over(streets: Dictionary, cells: Array[Vector2i],
-		datum: int) -> bool:
-	## `_no_street_left_hanging` lets a passage run across an asset's TOP,
-	## where the plot bears that street's floor. A LANDMARK cannot: the prefab
-	## claims a ROOF face on its own top band, the route has already claimed
-	## the PUBLIC_FLOOR face on that same boundary, and
-	## `_reserve_landmark_preplans` then kills the whole town at the joint
-	## commit -- measured on seed 4/compact as `face claim conflict at
-	## 2:3:4/0:1:0 ... existing owner=public.route`. A site the builder would
-	## die on is not a site the mirror may accept. (Raising the plot one band
-	## so the two faces fall on different boundaries was tried and measured
-	## worse: taller asset plots cost seeds 12 and 4 their whole towns.)
-	for column: Vector2i in cells:
-		for band: int in streets.get(column, []) as Array:
-			if band >= datum:
-				return true
-	return false
 
 
 static func _frontage_direction(columns: Dictionary,
@@ -409,12 +420,23 @@ static func _fine_box_inside(columns: Dictionary, doorway: Vector2i,
 static func _fine_box_bears(plan: WarrenMazeSourcePlan, doorway: Vector2i,
 		side: Vector2i, lateral: Vector2i, forward: int, left: int, right: int,
 		datum: int) -> bool:
+	## The builder's `_landmark_bearing_follows_terrain`, restated in macro
+	## columns. Natural ground AT the datum is the original rule; a datum ABOVE
+	## natural ground is accepted when the band below it is solid the source
+	## calls its own, because that solid is the derived rock Task C5 retains
+	## and Task C5b draws. Below natural ground is never accepted -- there the
+	## heightfield owns the ground and the prefab would be buried.
 	for step in range(0, forward + 1):
 		for across in range(-right, left + 1):
 			var column := _macro_column(doorway + side * step \
 				+ lateral * across)
-			if not plan.massif.has_column(column) \
-					or plan.massif.bearing_at(column) != datum:
+			if not plan.massif.has_column(column):
+				return false
+			var ground := plan.massif.bearing_at(column)
+			if ground == datum:
+				continue
+			if datum < ground or not plan.solid_at(Vector3i(column.x,
+					datum - 1, column.y)):
 				return false
 	return true
 
