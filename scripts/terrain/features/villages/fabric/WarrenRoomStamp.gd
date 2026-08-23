@@ -25,13 +25,20 @@ var threshold_cell := Vector3i(2147483647, 2147483647, 2147483647)
 var frontage_direction := Vector3i.ZERO
 var address_door_phase: int
 var roof_feature: int
-## Additive (Task C5, controller ruling 1): the SOURCE parcel declared its
-## crown a slab, because something stands on it -- an upper street, a terrace,
-## a deck or another house. `WarrenSpatialFabricCompiler.compile_roof_units`
-## must then give this room's exposed plate the authored `roof.flat.*` shell
-## rather than the pitched one its own heuristics would choose, and must not
-## count that shell as a BARE flat roof: it is the deliberate closure the plot
-## model asked for, not the fallback the review round complained about.
+## Additive (Task C5 ruling 1, widened by Task C5d ruling 1): the SOURCE
+## parcel declared this crown a SLAB. That is now the plot model's default and
+## not an exception -- every maze house is flat-roofed, because the tiered hill
+## town's vernacular is the flat roof; it was originally set only where
+## something stood on the crown (an upper street, a terrace, a deck or another
+## house), and that narrower reading survives as
+## `WarrenMazeBlockPartitioner.plot_crown_carries_public_realm`.
+##
+## `WarrenSpatialFabricCompiler.compile_roof_units` must give this room's
+## exposed plate the authored `roof.flat.*` shell rather than the pitched one
+## its own heuristics would choose -- unless `roof_preference` below asks
+## otherwise and the authored unit fits -- and must not count that shell as a
+## BARE flat roof: it is the deliberate closure the plot model asked for, not
+## the fallback the review round complained about.
 ##
 ## Defaulted false and never set by a legacy caller, so every route-first and
 ## mass-first stamp keeps the exact contract it always had.

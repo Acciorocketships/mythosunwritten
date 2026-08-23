@@ -35,13 +35,16 @@ static func proposal(parcel: WarrenBuildingParcel) -> Dictionary:
 		"storeys": parcel.storey_count() + lower_storeys,
 		"route_y": parcel.base_band,
 		"roof_feature": _roof_feature(parcel, profile),
-		# The parcel's own roof contract, carried to composition (Task C5,
-		# controller ruling 1). Something stands ON a flat-roofed parcel, so
-		# its crown is a slab and never a pitched shell. FALSE on every parcel
-		# the route-first and mass-first partitioners build, and the legacy
-		# staggered compiler still OVERWRITES this key with its own pairwise
-		# flattening verdict (`WarrenAssetCompiler` :951/:987), so seeding it
-		# here changes no legacy proposal.
+		# The parcel's own roof contract, carried to composition (Task C5
+		# ruling 1, widened by Task C5d ruling 1). A flat-roofed parcel's crown
+		# is a SLAB rather than a pitched shell; in the plot model that is
+		# every house, because the tiered hill town's vernacular is the flat
+		# roof, and `roof_preference` below is the only thing that can ask for
+		# a pitched shell back. FALSE on every parcel the route-first and
+		# mass-first partitioners build, and the legacy staggered compiler
+		# still OVERWRITES this key with its own pairwise flattening verdict
+		# (`WarrenAssetCompiler` :951/:987), so seeding it here changes no
+		# legacy proposal.
 		"flat_roof": parcel.flat_roof,
 		# The parcel's roof PREFERENCE beside its roof contract (Task C5d
 		# ruling 2). Empty on every legacy proposal and on most maze houses;

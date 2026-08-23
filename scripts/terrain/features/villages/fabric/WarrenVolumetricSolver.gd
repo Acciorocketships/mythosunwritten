@@ -1204,7 +1204,12 @@ static func from_volume(volume: WarrenVolumePlan,
 		for key: StringName in [&"maze_stacked_plot_count",
 				&"maze_declared_stack_count", &"maze_stack_refusal_count",
 				&"maze_stack_slab_gap_count", &"maze_partial_stack_count",
-				&"maze_stack_parents", &"maze_stack_refusals"]:
+				&"maze_stack_parents", &"maze_stack_refusals",
+				# TASK C5d -- how many houses ASKED for a pitched roof, which
+				# is the denominator the fabric's own
+				# `maze_pitched_roof_count` is read against.
+				&"maze_pitched_preference_count",
+				&"maze_pitched_preference_parcels"]:
 			plan.audit[key] = parcel_plan.audit.get(key, -1)
 	# A spatial topology is not production-valid until the authored construction
 	# shells for its final recomposed rooms clear every unrelated hero feature.
@@ -10764,8 +10769,22 @@ static func _maze_back_room_bears_terrain(grid: WarrenSpatialGrid,
 	## 4): a mirror stricter than the builder refuses rectangles the real
 	## compile would have taken, and one looser than the builder rejects the
 	## whole town instead of one rectangle.
+	##
+	## STONE-BORNE IS A ROOM-LEVEL VERDICT, not a per-column one, and that is
+	## the whole shape of this function (C5d fix #1, Important 1). The builder
+	## sets one `stone_borne` flag for the room the moment ANY column is
+	## carried by stone, and then demands real source mass under EVERY column
+	## at `band - 1` -- including the columns that were themselves at grade.
+	## Deciding it per column let a MIXED footprint through: one stone-borne
+	## column that stands on mass, plus one at grade with `depth == 0` that
+	## never reached the standing test at all. The mirror said yes, the builder
+	## then said `terrain-bearing room ... stands on nothing at ...` and took
+	## the whole town rather than the one rectangle -- exactly the failure mode
+	## this mirror exists to prevent.
 	var maze_source := volume.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
+	var stone_borne := false
+	var plinth_columns: Array[Vector2i] = []
 	for column: Vector2i in columns:
 		if not volume.envelope.contains_column(column):
 			return false
@@ -10782,20 +10801,27 @@ static func _maze_back_room_bears_terrain(grid: WarrenSpatialGrid,
 				or depth > WarrenSpatialFabricCompiler \
 					.FOUNDATION_MODULE_HEIGHT_BANDS \
 				or maze_source.rock_shoulder(column) < band):
-			# `WarrenSpatialFabricCompiler._retained_foundation_cells`, line
-			# for line: the plot planner's own support rule already proved
-			# this floor stands on something, the mass below it is stone or
-			# another building rather than this room's masonry course, and the
-			# one thing that still has to hold is that there IS mass directly
-			# beneath every column.
-			if not volume.has_mass(Vector3i(column.x, band - 1, column.y)):
-				return false
+			# A tier, a tunnel roof, or a bored street under the hill: the plot
+			# planner's own support rule already proved this floor stands on
+			# something, and the mass below it is stone or another building
+			# rather than this room's masonry course.
+			stone_borne = true
 			continue
 		if not span_is_whole or depth > WarrenSpatialFabricCompiler \
 				.FOUNDATION_MODULE_HEIGHT_BANDS:
 			return false
-		if depth == 0:
-			continue
+		if depth > 0:
+			plinth_columns.append(column)
+	if stone_borne:
+		# `_retained_foundation_cells`'s second check, over the whole
+		# footprint: the room takes no plinth at all, so the only thing that
+		# still has to hold is that there IS real source mass directly beneath
+		# every column of it.
+		for column: Vector2i in columns:
+			if not volume.has_mass(Vector3i(column.x, band - 1, column.y)):
+				return false
+		return true
+	for column: Vector2i in plinth_columns:
 		for fine: Vector3i in _fine_square(Vector3i(column.x, band - 1,
 				column.y)):
 			if grid.use_at(fine) == WarrenSpatialGrid.Use.PUBLIC_AIR:

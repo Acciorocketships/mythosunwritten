@@ -1375,14 +1375,23 @@ func test_tiered_parcels_get_flat_roofs() -> void:
 			"plot_flat_roof_partial_plate_count", -1))
 		# Task C5d adds the third way a flat-roofed stamp's crown may be
 		# closed: the seeded pitched preference, which is composed only where
-		# the authored unit fits and is counted apart from the slab.
+		# the authored unit fits and is counted apart from the slab. Those
+		# three EXHAUST the flat-roofed stamps -- slab, partial plate,
+		# preferred shell -- as an equality rather than a bound, and the fourth
+		# outcome a crown could have (its own slab refused, so it fell through
+		# to the setback vocabulary) is asserted absent rather than folded into
+		# the sum, which is what keeps the identity falsifiable.
 		var preferred := int(fabric.audit.get("maze_pitched_roof_count", 0))
-		var refused := int(fabric.audit.get("plot_flat_roof_rejected_count", 0))
-		assert_gte(flats + partial + preferred + refused, roofed,
+		var refused := int(fabric.audit.get("plot_flat_roof_rejected_count",
+			-1))
+		assert_eq(refused, 0,
+			("%s refused %d flat-roofed stamps their own slab; the crown " \
+				+ "identity below no longer accounts for them") % [
+				_label(outcome), refused])
+		assert_eq(flats + partial + preferred, roofed,
 			("%s owes %d flat roof units to its flat-roofed stamps and " \
-				+ "compiled %d (%d partial plates, %d preferred pitched, %d " \
-				+ "refused slabs)") % [_label(outcome), roofed, flats, partial,
-				preferred, refused])
+				+ "compiled %d (%d partial plates, %d preferred pitched)") % [
+				_label(outcome), roofed, flats, partial, preferred])
 		assert_eq(pitched, 0,
 			("%s gave %d flat-roofed stamps that did NOT prefer one a pitched " \
 				+ "roof over a complete plate") % [_label(outcome), pitched])
@@ -1482,9 +1491,18 @@ func test_maze_roofs_are_flat_first() -> void:
 	## 3. every PITCHED crown stands on a stamp THIS FILE independently finds
 	##    eligible, so a pitched eave can never reach over a neighbour's plot
 	##    or a street it was never measured against;
-	## 4. the maze roof triple is published, and its flat half agrees with the
-	##    slab count Task C5 already published under its own name.
+	## 4. the seeded preference is a MEASURED fact corpus-wide -- some crown
+	##    somewhere really is pitched -- and never asks for more crowns than
+	##    the geometry admits.
+	##
+	## `maze_flat_roof_count` is deliberately NOT asserted against
+	## `plot_flat_roof_count`: it is the same variable published under the
+	## name ruling 2 names, so the equality could not fail. This file reads
+	## `plot_flat_roof_count`.
 	var measured := 0
+	var total_pitched := 0
+	var total_eligible := 0
+	var total_preferred := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		if plan == null:
@@ -1511,29 +1529,46 @@ func test_maze_roofs_are_flat_first() -> void:
 			continue
 		var crowns := int(fabric.audit.get("plot_flat_roof_room_count", -1))
 		var pitched := int(fabric.audit.get("maze_pitched_roof_count", -1))
-		var flats := int(fabric.audit.get("maze_flat_roof_count", -1))
+		var flats := int(fabric.audit.get("plot_flat_roof_count", -1))
 		var refused := int(fabric.audit.get("maze_pitched_refused_count", -1))
+		var fell_through := int(fabric.audit.get(
+			"maze_crown_fell_through_count", -1))
+		# The translator's own denominator, forwarded onto the sealed plan: how
+		# many houses ASKED. The compiler can only ever compose a subset of
+		# them, and the geometry can only ever admit a subset of the plots.
+		var preferred := int(plan.audit.get("maze_pitched_preference_count",
+			-1))
 		var eligible := _pitched_eligible_parcels(plan)
 		print(("MAZE_FLAT_FIRST %s crowns=%d flat=%d pitched=%d refused=%d " \
-			+ "eligible=%d faces=%d/%d") % [_label(outcome), crowns, flats,
-			pitched, refused, eligible.size(),
+			+ "fell_through=%d preferred=%d eligible=%d rate=%.2f " \
+			+ "faces=%d/%d") % [_label(outcome), crowns, flats, pitched,
+			refused, fell_through, preferred, eligible.size(),
+			0.0 if eligible.is_empty() \
+				else float(preferred) / float(eligible.size()),
 			int(fabric.audit.get("realized_roof_face_count", -1)),
 			int(fabric.audit.get("source_roof_face_count", -1))])
 		assert_gte(pitched, 0,
 			"%s must publish maze_pitched_roof_count" % _label(outcome))
 		assert_gte(refused, 0,
 			"%s must publish maze_pitched_refused_count" % _label(outcome))
-		assert_eq(flats, int(fabric.audit.get("plot_flat_roof_count", -2)),
-			("%s: the maze flat count and the plot slab count are one " \
-				+ "number") % _label(outcome))
+		assert_gte(fell_through, 0,
+			"%s must publish maze_crown_fell_through_count" % _label(outcome))
+		assert_gte(preferred, 0,
+			"%s must publish maze_pitched_preference_count" % _label(outcome))
 		assert_gt(flats, 0,
 			"%s composed no flat roof at all" % _label(outcome))
 		assert_eq(int(fabric.audit.get("realized_roof_face_count", -1)),
 			int(fabric.audit.get("source_roof_face_count", -2)),
 			"%s left a roofable crown without a roof unit" % _label(outcome))
-		assert_lte(pitched, eligible.size(),
-			("%s composed %d pitched crowns where only %d plots are " \
-				+ "eligible") % [_label(outcome), pitched, eligible.size()])
+		assert_lte(preferred, eligible.size(),
+			("%s asked for %d pitched crowns where only %d plots are " \
+				+ "eligible") % [_label(outcome), preferred, eligible.size()])
+		assert_lte(pitched, preferred,
+			("%s composed %d pitched crowns from %d preferences") % [
+				_label(outcome), pitched, preferred])
+		total_pitched += pitched
+		total_eligible += eligible.size()
+		total_preferred += preferred
 		for room_id_value: Variant in fabric.audit.get(
 				"maze_pitched_roof_rooms", []) as Array:
 			var room := room_by_id.get(
@@ -1550,6 +1585,123 @@ func test_maze_roofs_are_flat_first() -> void:
 					_label(outcome), room.stable_id])
 		measured += 1
 	assert_gt(measured, 0, "at least one seed sealed a town to measure")
+	print(("MAZE_FLAT_FIRST corpus towns=%d pitched=%d preferred=%d " \
+		+ "eligible=%d") % [measured, total_pitched, total_preferred,
+		total_eligible])
+	# The preference is a measured FACT, not just a wired-up path: somewhere in
+	# the four planner seeds an authored pitched shell really stands on a
+	# freestanding crown. Without this the whole feature could be inert and
+	# every per-seed assertion above would still pass.
+	assert_gt(total_pitched, 0,
+		("no planner seed composed a single pitched crown from %d " \
+			+ "preferences over %d eligible plots") % [total_preferred,
+			total_eligible])
+	assert_gt(total_preferred, 0,
+		"no planner seed asked for a pitched crown at all")
+
+
+func _mixed_footprint_fixture(source: WarrenMazeSourcePlan,
+		plan: WarrenSpatialPlan) -> Dictionary:
+	## A two-column footprint at ONE band that the builder would call
+	## stone-borne and then reject. It is a FIXTURE and not a find, because the
+	## corpus cannot produce one: in every sealed maze town the source mass is
+	## continuous from band 0 upward under every column, so the only column
+	## with nothing beneath its own floor sits at band 0 -- and no column can
+	## be stone-borne at band 0. The defect is real and latent rather than
+	## live, and a fixture is the only honest way to pin it.
+	##
+	## Everything that DECIDES the outcome is real: both columns and both
+	## `rock_shoulder` readings come from the sealed source, so `borne` is a
+	## column the band really stands above the top of derived rock on (the
+	## builder calls it stone-borne) and `at_grade` is one whose rock really
+	## reaches the band (the builder does not). Only the envelope and the mass
+	## around them are made here, and only `bearing_at`, `contains_column` and
+	## `has_mass` are read, which is the whole of what the predicate touches.
+	var lowest := Vector2i.ZERO
+	var highest := Vector2i.ZERO
+	var lowest_shoulder := 2147483647
+	var highest_shoulder := -2147483648
+	for column_value: Variant in source.massif.columns.keys():
+		var column := column_value as Vector2i
+		var shoulder := source.rock_shoulder(column)
+		if shoulder < lowest_shoulder:
+			lowest_shoulder = shoulder
+			lowest = column
+		if shoulder > highest_shoulder:
+			highest_shoulder = shoulder
+			highest = column
+	if highest_shoulder <= lowest_shoulder:
+		return {}
+	var band := lowest_shoulder + 1
+	var envelope := WarrenVolumeEnvelope.new()
+	envelope.world_seed = source.world_seed
+	envelope.radius_x = 2
+	envelope.radius_z = 2
+	envelope.max_height_bands = band + 2
+	for column: Vector2i in [lowest, highest]:
+		envelope.ground_bands[column] = 0
+		envelope.bearing_bands[column] = band
+		envelope.height_bands[column] = band + 2
+	var volume := WarrenVolumePlan.new(&"c5d.bearing.mirror.fixture",
+		source.world_seed, envelope)
+	volume.mass_context[&"maze_source_plan"] = source
+	# The stone-borne column stands on real mass; the at-grade one has nothing
+	# under its own floor, which is the exact shape the builder refuses.
+	volume.mass_cells[Vector3i(lowest.x, band - 1, lowest.y)] = true
+	volume.mass_cells[Vector3i(lowest.x, band, lowest.y)] = true
+	volume.mass_cells[Vector3i(highest.x, band, highest.y)] = true
+	return {"volume": volume, "grid": plan.grid, "band": band,
+		"borne": lowest, "at_grade": highest}
+
+
+func test_maze_back_room_bearing_mirrors_the_builder() -> void:
+	## C5d fix #1. `WarrenVolumetricSolver._maze_back_room_bears_terrain` is a
+	## MIRROR of `WarrenSpatialFabricCompiler._retained_foundation_cells`, and
+	## the builder's `stone_borne` verdict is per ROOM, not per column: one
+	## carried column makes the WHOLE room stone-borne, and then every column
+	## of it -- including the ones at grade -- has to stand on real source mass
+	## at `band - 1`.
+	##
+	## Deciding it per column let a MIXED footprint through: one stone-borne
+	## column that does stand on mass, plus one at grade whose `depth == 0`
+	## short-circuited before the standing test ever ran. The mirror said yes
+	## and the builder then rejected the whole TOWN with `terrain-bearing room
+	## … stands on nothing at …`, which is the one failure mode this mirror
+	## exists to prevent.
+	##
+	## Two teeth on the same fixture: the stone-borne column bears on its own,
+	## so the refusal below can only come from the MIX; and the mixed footprint
+	## is refused.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var source := _maze_source(plan)
+		if source == null or source.massif == null:
+			continue
+		var fixture := _mixed_footprint_fixture(source, plan)
+		if fixture.is_empty():
+			continue
+		var volume := fixture.volume as WarrenVolumePlan
+		var band := int(fixture.band)
+		var borne: Array[Vector2i] = [fixture.borne as Vector2i]
+		var mixed: Array[Vector2i] = [fixture.borne as Vector2i,
+			fixture.at_grade as Vector2i]
+		print("MAZE_BEARING_MIRROR %s band=%d stone_borne=%s at_grade=%s" % [
+			_label(outcome), band, fixture.borne, fixture.at_grade])
+		assert_true(WarrenVolumetricSolver._maze_back_room_bears_terrain(
+			fixture.grid as WarrenSpatialGrid, volume, borne, band),
+			("%s: a stone-borne column standing on real mass bears on its " \
+				+ "own") % _label(outcome))
+		assert_false(WarrenVolumetricSolver._maze_back_room_bears_terrain(
+			fixture.grid as WarrenSpatialGrid, volume, mixed, band),
+			("%s: a mixed footprint whose at-grade column stands on nothing " \
+				+ "must be refused here, or the builder rejects the whole " \
+				+ "town for it") % _label(outcome))
+		checked += 1
+	assert_gt(checked, 0,
+		"no sealed town could supply the mirror fixture; this proved nothing")
 
 
 func _rock_cells(plan: WarrenSpatialPlan) -> Dictionary:

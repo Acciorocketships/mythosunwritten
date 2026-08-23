@@ -2630,6 +2630,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var plot_flat_rejected_count := 0
 	var maze_pitched_count := 0
 	var maze_pitched_refused_count := 0
+	var maze_crown_fell_through_count := 0
 	var maze_pitched_rooms: Array[StringName] = []
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
@@ -2980,6 +2981,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		# counts only that case, and the composition test requires it to be
 		# zero.
 		plot_flat_partial_plate_count += int(plot_flat and not full)
+		# TASK C5d, review minor 8. A COMPLETE plate that reaches the finite
+		# setback vocabulary took neither the preferred pitched shell nor its
+		# own slab, so `maze_pitched_refused_count` alone would imply it fell
+		# back to a slab it never got. Counted here instead of being excluded
+		# anywhere: this is the crown that fell through both.
+		maze_crown_fell_through_count += int(plot_flat and full)
 		var pieces := _cap_pieces(face_cells)
 		if pieces.is_empty():
 			last_failure = "no finite setback cap partition fits roof region for %s (%s; %s)" \
@@ -3358,16 +3365,25 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"plot_flat_roof_pitched_count": plot_flat_pitched_count,
 		"plot_flat_roof_partial_plate_count": plot_flat_partial_plate_count,
 		"plot_flat_roof_rejected_count": plot_flat_rejected_count,
-		# TASK C5d RULING 2 -- the maze roof triple, so a reader finds both
-		# halves of one decision beside each other. `maze_flat_roof_count` is
-		# `plot_flat_roof_count` under the name the ruling names: the crowns
-		# that took the authored slab. `maze_pitched_roof_count` is the crowns
-		# the seeded preference really won, and `maze_pitched_refused_count`
-		# the preferred crowns whose authored shell would not fit and took the
-		# slab instead.
+		# TASK C5d RULING 2 -- the maze roof triple, so a reader finds every
+		# half of one decision beside the others.
+		#
+		# `maze_flat_roof_count` is an ALIAS of `plot_flat_roof_count` two
+		# lines up -- the same variable, published under the name the ruling
+		# names. It is not an independent measurement and no test should
+		# assert the two are equal.
+		#
+		# `maze_pitched_roof_count` is the crowns the seeded preference really
+		# won. `maze_pitched_refused_count` is the preferred crowns whose
+		# authored shell did not fit; each of those then tried its own slab.
+		# `maze_crown_fell_through_count` is the complete plates that got
+		# NEITHER -- neither a preferred shell nor a slab -- and went on to the
+		# finite setback vocabulary, so a reader is never left assuming a
+		# refused preference always landed on a slab.
 		"maze_flat_roof_count": plot_flat_count,
 		"maze_pitched_roof_count": maze_pitched_count,
 		"maze_pitched_refused_count": maze_pitched_refused_count,
+		"maze_crown_fell_through_count": maze_crown_fell_through_count,
 		"maze_pitched_roof_rooms": maze_pitched_rooms,
 		# A plot slab is a DELIBERATE closure, not the unarticulated lid the
 		# review round complained about, so it is excluded from the bare count

@@ -19,29 +19,33 @@ var frontage_direction: Vector2i
 ## Phase zero preserves the original high-local-X threshold; phase one selects
 ## the other half without moving the facade module or changing the footprint.
 var address_door_phase: int
-## Additive (2026-08-22, controller ruling on the plot model): something
-## stands ON this parcel's top band -- an upper street, a terrace, or another
-## building -- so its roof is a slab rather than the authored pitched
-## reservation, and its height owes the storey grid nothing beyond one storey
-## and that slab (see `_height_is_legal`). Defaulted false and never set by a
-## legacy caller, so every parcel the route-first pipeline builds keeps the
-## exact contract it always had.
+## Additive (2026-08-22, controller ruling on the plot model): this parcel's
+## roof is a SLAB rather than the authored pitched reservation, so its height
+## owes the storey grid nothing beyond one storey and that slab (see
+## `_height_is_legal`). It was originally set only where something stood ON
+## the top band -- an upper street, a terrace, or another building -- and Task
+## C5d made it the plot model's DEFAULT: every maze house is flat-roofed,
+## because the tiered hill town's vernacular is the flat roof.
+## `WarrenMazeBlockPartitioner.plot_is_flat_roofed` owns that rule and
+## `plot_crown_carries_public_realm` keeps the older, narrower reading for the
+## one consumer that still needs it. Defaulted false and never set by a legacy
+## caller, so every parcel the route-first pipeline builds keeps the exact
+## contract it always had.
 ##
 ## READ BY THE PLAN'S SUPPORT RULE since Task C3: a flat roof is one band of
 ## SLAB, so a building stacked on this parcel stands on `top_band` rather than
 ## on `roof_base_band()`, and `WarrenParcelPlan._building_support_is_valid`
 ## admits exactly that seam for a flat-roofed parent.
 ##
-## THE ROOF COMPILER STILL DOES NOT READ IT. It shares a name with
-## `proposal["flat_roof"]` -- the older staggered roof flag
-## `WarrenAssetCompiler` sets at :951/:952 and :987/:988 and
-## `StaggeredFabricCompiler` consumes at :458 -- but the two are NOT wired
-## together, so beyond the support seam this flag governs the parcel's height
-## contract (`_height_is_legal`, `storey_count`, `roof_base_band`) and nothing
-## else. The name is deliberate and stays: they mean the same thing about a
-## building. Phase C is what must join them -- seed `proposal["flat_roof"]`
-## from `parcel.flat_roof` where the maze proposals are built, so a plot the
-## planner tiered actually composes a flat roof instead of a pitched one.
+## READ BY THE ROOF COMPILER since Task C5, which is what closed the older
+## split: `WarrenParcelConstruction.proposal()` seeds `proposal["flat_roof"]`
+## from this field, `WarrenRoomStamp` carries it, and
+## `WarrenSpatialFabricCompiler.compile_roof_units` gives such a crown the
+## authored `roof.flat.*` slab. It shares its name with the staggered roof
+## flag `WarrenAssetCompiler` sets at :951/:952 and :987/:988 and
+## `StaggeredFabricCompiler` consumes at :458, which still OVERWRITES the
+## proposal key on the legacy path; the name is deliberate and stays, because
+## they mean the same thing about a building.
 var flat_roof := false
 ## Additive (Task C5d, controller ruling 2): what the plot model would RATHER
 ## see on this building's crown. Empty on every parcel the route-first and
