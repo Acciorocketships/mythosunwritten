@@ -3271,6 +3271,14 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		back_rooms.get("rectangle_count", 0))
 	composition_audit["maze_back_room_building_count"] = int(
 		back_rooms.get("building_count", 0))
+	# RULING 3: a back room that found a street of its own, versus one reached
+	# through the house in front of it.
+	composition_audit["maze_back_rooms_addressed"] = int(
+		back_rooms.get("addressed_count", 0))
+	composition_audit["maze_back_rooms_private"] = int(
+		back_rooms.get("private_count", 0))
+	composition_audit["maze_back_rooms_unstamped"] = (
+		back_rooms.get("unstamped_cells", {}) as Dictionary).get("count", 0)
 	composition_audit["maze_back_room_cell_count"] = int(
 		back_rooms.get("cell_count", 0))
 	composition_audit["maze_back_room_stamped_cell_count"] = int(
@@ -3709,8 +3717,23 @@ static func _maze_landmark_refusal(grid: WarrenSpatialGrid,
 				protected_owners):
 		return {"reason": ("measured clearance at %s leaves the grid or " \
 			+ "meets another feature") % origin}
-	var blockers: Dictionary = {}
+	# TASK C5c RULING 5, the other half of letting a prefab commit. A house's
+	# AUTHORED SHELL is wider than its footprint -- native eaves overhang by a
+	# fraction of a fine cell, which is why the residual scan carries a
+	# one-cell `roof_eave_halo` -- so a prefab whose measured envelope stops
+	# exactly at a neighbour's cells still meets that neighbour's roof in
+	# `compile_room_units`, and there the verdict is the whole town rather than
+	# one asset. Ask for the cell of air here instead. Measured on the same
+	# clearance the reservation carries, so an asset admitted by this test is
+	# one the envelope gate will not later reject.
+	var halo: Dictionary = {}
 	for cell_value: Variant in protected_cells.keys():
+		var cell := cell_value as Vector3i
+		for z_offset in range(-1, 2):
+			for x_offset in range(-1, 2):
+				halo[cell + Vector3i(x_offset, 0, z_offset)] = true
+	var blockers: Dictionary = {}
+	for cell_value: Variant in halo.keys():
 		for owner_value: Variant in (protected_owners.get(cell_value, {}) \
 				as Dictionary).keys():
 			blockers[StringName(owner_value)] = true
@@ -3738,6 +3761,10 @@ static func _maze_landmark_refusal(grid: WarrenSpatialGrid,
 	return {"reservation": {
 		"feature_id": StringName("spatial.feature.landmark.%02d" % index),
 		"recipe_id": recipe.recipe_id, "source_family": source_family,
+		# RULING 5: this reservation, and only this one, lets the commit skip
+		# a ROOF face the public realm already owns -- see
+		# `_reserve_landmark_preplan`.
+		"route_roof_is_shared": true,
 		"origin": origin, "yaw_quarters": yaw, "landing_cell": landing,
 		"entrance_cell": entrance_cell, "entrance_facing": -side,
 		"body": body, "bearing_cells": bearing, "clearance": clearance,
@@ -6052,6 +6079,8 @@ static func _reserve_landmark_preplan(grid: WarrenSpatialGrid,
 	var skywalk_socket_faces := landmark.get("skywalk_socket_faces", {}) \
 		as Dictionary
 	var party_wall_faces := landmark.get("party_wall_faces", {}) as Dictionary
+	var route_roof_is_shared := bool(landmark.get("route_roof_is_shared",
+		false))
 	var tx := grid.begin_transaction(feature_id)
 	if body.is_empty() or bearing.is_empty() \
 			or not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
@@ -6089,6 +6118,21 @@ static func _reserve_landmark_preplan(grid: WarrenSpatialGrid,
 				kind = WarrenSpatialGrid.FaceKind.ROOF
 			elif direction == Vector3i.DOWN:
 				kind = WarrenSpatialGrid.FaceKind.PRIVATE_FLOOR
+			# TASK C5c RULING 5. A prefab under an upper street meets that
+			# street's PUBLIC_FLOOR on its own top boundary, and the route
+			# claimed that face first. Claiming ROOF there is not a better
+			# answer than the one already on the grid -- it is the same
+			# boundary described twice -- so the prefab takes no claim and the
+			# street keeps its floor. `WarrenPlotPlanner._no_street_left
+			# _hanging` allows the arrangement on purpose: the plot BEARS that
+			# street. Maze-only, and carried on the reservation the maze asset
+			# pass builds rather than on a mode global, so no searched landmark
+			# can silently stop rejecting a conflict it is meant to reject.
+			if route_roof_is_shared and direction == Vector3i.UP:
+				var existing := grid.face_claim(cell, Vector3i.UP)
+				if not existing.is_empty() and int(existing.get("kind", -1)) \
+						== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+					continue
 			if not tx.claim_face(cell, direction, kind, feature_id):
 				return false
 	return tx.commit()
@@ -6099,11 +6143,26 @@ static func _landmark_bearing_follows_terrain(bearing: Dictionary,
 	var massif := volume.mass_context.get("massif") as WarrenMassif
 	if massif == null:
 		return false
+	# TASK C5c RULING 5. In a searched town the only thing under a prefab is
+	# terrain, so "follows terrain" and "stands on something" are one test. In
+	# MAZE mode they are two: the plot planner sited this asset on a plot whose
+	# floor may be bands above natural ground, and what fills the gap is the
+	# derived rock Task C5 retains and Task C5b skins as real stone. C2 kept
+	# the rule strict because nothing drew that rock; it is drawn now, so the
+	# honest test is that every bearing cell rests on SOLID the source names --
+	# the plot's own flat floor at the datum, or the retained stone under it --
+	# and never on air.
+	var source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
 	for cell_value: Variant in bearing.keys():
 		var cell := cell_value as Vector3i
 		var macro_column := Vector2i(floori(float(cell.x) / 2.0),
 			floori(float(cell.z) / 2.0))
-		if massif.bearing_at(macro_column) != cell.y:
+		if massif.bearing_at(macro_column) == cell.y:
+			continue
+		if source == null or cell.y < massif.bearing_at(macro_column) \
+				or not source.solid_at(Vector3i(macro_column.x, cell.y - 1,
+					macro_column.y)):
 			return false
 	return true
 
@@ -9889,7 +9948,8 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 	## Maze mode only: `maze_back_rooms` exists on no searched plan, so the
 	## empty-record guard is what keeps legacy composition byte-identical.
 	var empty := {"failed": false, "cell_count": 0, "stamped_cell_count": 0,
-		"building_count": 0, "rectangle_count": 0, "record_count": 0,
+		"building_count": 0, "addressed_count": 0, "private_count": 0,
+		"rectangle_count": 0, "record_count": 0,
 		"refusals": {},
 		"unstamped_cells": {"count": 0, "cells": [] as Array[Vector3i]}}
 	var records := parcels.audit.get("maze_back_rooms", []) as Array
@@ -9965,6 +10025,8 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 	work.sort_custom(_maze_back_room_less)
 	var stamped_cells: Dictionary = {}
 	var added := 0
+	var addressed_count := 0
+	var private_count := 0
 	for item: Dictionary in work:
 		var cells := item["cells"] as Array[Vector3i]
 		var blocked := false
@@ -9983,6 +10045,14 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 		var kind := StringName(item["kind"])
 		var yaw := int(item["yaw"])
 		var origin := _maze_back_room_origin(kind, cells, yaw)
+		# TASK C5c RULING 3 -- THE SECOND DOOR. A back room whose own shell can
+		# open an authored doorway onto a street is an ADDRESSED room of this
+		# building, not a windowless cell reached through the house in front of
+		# it: the plot is a corner and this is its second frontage.
+		var address := _maze_back_room_address(grid, kind, cells, yaw)
+		if not address.is_empty():
+			yaw = int(address.yaw)
+			origin = address.origin as Vector3i
 		if origin.x == 2147483647:
 			_note_maze_back_room_refusal(refusals,
 				"rectangle is not an authored shell")
@@ -10033,10 +10103,15 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 			else parent_room.source_storey_index
 		var roof_feature := _residual_roof_feature(kind, origin,
 			volume.world_seed)
+		var addressed := not address.is_empty()
+		var threshold_cell := address.get("threshold",
+			Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+		var frontage_direction := address.get("direction",
+			Vector3i.ZERO) as Vector3i
 		var probe := WarrenRoomStamp.new(&"maze.back.envelope.probe",
 			&"maze.back.envelope.probe", kind, origin, yaw, 0, terrain_bearing,
-			false, Vector3i(2147483647, 2147483647, 2147483647),
-			Vector3i.ZERO, roof_feature, support_source, support_storey, 0,
+			addressed, threshold_cell, frontage_direction, roof_feature,
+			support_source, support_storey, 0,
 			bool(item.get("flat_roof", false)))
 		probe.private_cells.assign(cells)
 		if not _residual_room_envelope_fits(probe, building_by_id,
@@ -10048,6 +10123,8 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 				"building_id": building_id, "source_id": source_id,
 				"kind": kind, "origin": origin, "yaw": yaw, "cells": cells,
 				"floor_band": band, "terrain_bearing": terrain_bearing,
+				"addressed": addressed, "threshold_cell": threshold_cell,
+				"frontage_direction": frontage_direction,
 				"access_id": StringName(item["access_id"]),
 				"support_parcel_id": support_source,
 				"support_storey_index": support_storey,
@@ -10061,6 +10138,8 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 			return {"failed": true}
 		for cell: Vector3i in cells:
 			stamped_cells[cell] = true
+		addressed_count += int(addressed)
+		private_count += int(not addressed)
 		added += 1
 	var unstamped: Array[Vector3i] = []
 	for cell_value: Variant in candidate_cells.keys():
@@ -10070,6 +10149,7 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 	unstamped.sort_custom(_cell_less)
 	return {"failed": false, "cell_count": candidate_cells.size(),
 		"stamped_cell_count": stamped_cells.size(), "building_count": added,
+		"addressed_count": addressed_count, "private_count": private_count,
 		"rectangle_count": rectangle_count, "record_count": records.size(),
 		"refusals": refusals,
 		"unstamped_cells": {"count": unstamped.size(), "cells": unstamped}}
@@ -10094,6 +10174,14 @@ static func _stamp_maze_private_room(grid: WarrenSpatialGrid,
 	## `support_parcel_id`, `support_storey_index`, `roof_feature`,
 	## `parent_building_id` (empty when the room stands on the ground) and the
 	## optional `flat_roof` a back room inherits from its own parcel.
+	##
+	## Task C5c ruling 3 adds the optional `addressed`, `threshold_cell` and
+	## `frontage_direction`: a rectangle whose own authored doorway meets a
+	## street reaches it directly, with a threshold of its own, instead of
+	## through the building in front of it. An addressed room takes the
+	## threshold INSTEAD of `add_private_parent` -- exactly as the greedy
+	## backfill does -- because a building with both would claim two ways in
+	## and `WarrenBuildingVolume.seal` wants one.
 	var cells := spec["cells"] as Array[Vector3i]
 	var building_id := StringName(spec["building_id"])
 	var assign := grid.begin_transaction(building_id)
@@ -10106,11 +10194,16 @@ static func _stamp_maze_private_room(grid: WarrenSpatialGrid,
 			building_id, assign.last_rejection]
 		return null
 	var terrain_bearing := bool(spec["terrain_bearing"])
+	var addressed := bool(spec.get("addressed", false))
+	var threshold_cell := spec.get("threshold_cell",
+		Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+	var frontage_direction := spec.get("frontage_direction",
+		Vector3i.ZERO) as Vector3i
 	var room := WarrenRoomStamp.new(
 		StringName("%s.room00" % building_id),
 		StringName(spec["source_id"]), StringName(spec["kind"]),
 		spec["origin"] as Vector3i, int(spec["yaw"]), 0, terrain_bearing,
-		false, Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO,
+		addressed, threshold_cell, frontage_direction,
 		int(spec["roof_feature"]), StringName(spec["support_parcel_id"]),
 		int(spec["support_storey_index"]), 0,
 		bool(spec.get("flat_roof", false)))
@@ -10120,7 +10213,9 @@ static func _stamp_maze_private_room(grid: WarrenSpatialGrid,
 			or not room.add_private_cells(cells) \
 			or not room.seal(grid, building_id) \
 			or not building.add_room(room) \
-			or not building.add_private_parent(
+			or addressed and not building.add_threshold(threshold_cell,
+				threshold_cell + frontage_direction) \
+			or not addressed and not building.add_private_parent(
 				StringName(spec["access_id"])) \
 			or not building.seal(grid) \
 			or not supports.add_node(building_id):
@@ -10481,6 +10576,47 @@ static func _maze_back_room_cells(columns: Array[Vector2i],
 	return out
 
 
+static func _maze_back_room_address(grid: WarrenSpatialGrid,
+		kind: StringName, cells: Array[Vector3i],
+		parcel_yaw: int) -> Dictionary:
+	## TASK C5c RULING 3. Can this back-room rectangle open its OWN authored
+	## doorway onto a street?
+	##
+	## The rectangle already stands at the parcel's frontage yaw, whose door
+	## faces the house in front of it -- so the question is which of the four
+	## yaws stamps this exact box AND puts the authored threshold
+	## `_residual_authored_threshold` names against canonical public floor.
+	## That is the same admission the greedy backfill applies to a residual
+	## room, asked here of a rectangle the plot planner already chose, so the
+	## facade compiler can never be handed a doorway its shell cannot render.
+	##
+	## The parcel's own yaw is tried FIRST and the rest in ascending order, so
+	## a rectangle that can face two streets keeps the orientation of the house
+	## it belongs to. Returns `{yaw, origin, threshold, direction}` or empty.
+	## Four yaws of constant work per rectangle: this is a decision, not a
+	## search.
+	var yaws: Array[int] = [parcel_yaw]
+	for yaw in 4:
+		if yaw != parcel_yaw:
+			yaws.append(yaw)
+	for yaw: int in yaws:
+		var origin := _maze_back_room_origin(kind, cells, yaw)
+		if origin.x == 2147483647:
+			continue
+		var threshold := _residual_authored_threshold(kind, origin, yaw)
+		var direction := FabricRecipe.transform_direction(Vector3i.BACK, yaw)
+		var landing := threshold + direction
+		if grid.use_at(landing) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+			continue
+		var floor_claim := grid.face_claim(landing, Vector3i.DOWN)
+		if floor_claim.is_empty() or int(floor_claim.get("kind", -1)) \
+				!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+			continue
+		return {"yaw": yaw, "origin": origin, "threshold": threshold,
+			"direction": direction}
+	return {}
+
+
 static func _maze_back_room_origin(kind: StringName, cells: Array[Vector3i],
 		yaw: int) -> Vector3i:
 	## The lattice origin at which `kind` at `yaw` stamps exactly `cells`. Both
@@ -10518,6 +10654,17 @@ static func _maze_back_room_bears_terrain(grid: WarrenSpatialGrid,
 	## `WarrenSpatialFabricCompiler._retained_foundation_cells` enforces on any
 	## terrain-bearing room -- asked HERE, before the room enters the grid,
 	## because there it rejects the whole town rather than one rectangle.
+	##
+	## TASK C5c MEASURED AND REVERTED. The compiler's own rule moved in ruling
+	## 4 (a maze room deeper than one plinth course is carried by the retained
+	## mountain and takes no plinth), and relaxing this mirror to match it does
+	## stamp more back rooms -- 3/standard went 0.319 -> 0.301 unroomed, 11 ->
+	## 14 back rooms. It also cost 12/compact and 4/compact their whole towns
+	## at the ROOF gates (`macro setback roof 0 ... complete fallbacks were
+	## rejected`), because every extra room is another crown the roof
+	## vocabulary has to fit beside its neighbours. The binding constraint on
+	## this corpus is the roof, not the bearing, so the strict mirror stays
+	## until the roof vocabulary can carry the denser town.
 	for column: Vector2i in columns:
 		if not volume.envelope.contains_column(column):
 			return false
@@ -10585,6 +10732,23 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 	# an empty set is what leaves the candidate check below byte-identical for
 	# every legacy mode.
 	var plot_mass_cells := _maze_plot_mass_cells(volume)
+	# TASK C5c RULING 2 -- the budget is a SEARCHED town's idea. There the
+	# greedy scan roams the whole massif and the budget is what stops it
+	# turning a mountain into a rash of towers; here every candidate is already
+	# confined to plot mass the planner assigned to a building, so a cap on the
+	# COUNT just leaves buildings unbuilt. The scan therefore runs until no
+	# candidate fits, bounded -- as ruling 2 asks -- by the plot-mass cell count
+	# rather than by a room budget: a room owns at least one cell, so this can
+	# never bind, and it can never diverge either.
+	#
+	# Keyed on the plot mass rather than on `feature_quotas_are_advisory()`,
+	# which is a global the review harness does not set: `--maze-source`
+	# composes a maze volume with GENERATION_MODE still route-first, and a
+	# review render that backfilled differently from production would be a
+	# picture of a town nobody ships.
+	if not plot_mass_cells.is_empty():
+		maximum_buildings = plot_mass_cells.size()
+		maximum_per_kind = plot_mass_cells.size()
 	# Index each still-uncovered public floor by the private-volume cells that
 	# could form its ceiling. This turns the first part of residual packing into
 	# an explicit tunnel/bridge-house pass: complete inhabited rooms that span a

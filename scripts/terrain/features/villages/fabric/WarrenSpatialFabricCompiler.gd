@@ -346,6 +346,19 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 			or source.source_volume.envelope == null:
 		return {"valid": false, "rejection": "missing source terrain envelope"}
 	var volume := source.source_volume
+	# TASK C5c RULING 4. In the plot model a house begins at its PLOT's floor
+	# and never descends through the mass beneath it, because that mass is the
+	# plot below or the derived rock the source retains (see
+	# `WarrenParcelConstruction._support_base_band`). A house on a tier is
+	# therefore routinely more than one authored plinth course above natural
+	# ground, and the retained stone Task C5b skins is what carries it. Such a
+	# room takes NO plinth at all -- one course under a room standing six bands
+	# up would be a floating stone skirt -- and the whole span below it is
+	# already the maze-stone channel's.
+	var maze_source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	var maze_mode := maze_source != null
+	var maze_stone_borne_room_count := 0
 	for building: WarrenBuildingVolume in source.buildings:
 		for room: WarrenRoomStamp in building.room_records:
 			if not room.terrain_bearing:
@@ -357,6 +370,12 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 					footprint[Vector2i(cell.x, cell.z)] = true
 			var bearing_by_column: Dictionary = {}
 			var room_needs_plinth := false
+			# Buffered, not committed: a maze room the span below turns out to
+			# carry contributes no plinth cell at all, and a half-written
+			# course is exactly the partial shell `_foundation_shell_audit`
+			# refuses.
+			var room_plinth_cells: Dictionary = {}
+			var stone_borne := false
 			for fine_column_value: Variant in footprint.keys():
 				var fine_column := fine_column_value as Vector2i
 				var macro_column := Vector2i(
@@ -374,15 +393,34 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 						"terrain-bearing room %s begins below ground %d > %d" % [
 							room.stable_id, bearing, support]}
 				var depth := 0
+				var span_is_whole := true
 				for band in range(bearing, support):
 					if not volume.has_mass(Vector3i(macro_column.x, band,
 							macro_column.y)):
-						return {"valid": false, "rejection":
-							("terrain-bearing room %s has a foundation void " \
-							+ "between stamped ground %d and support %d at %s") % [
-								room.stable_id, bearing, support, fine_column]}
-					cells[Vector3i(fine_column.x, band, fine_column.y)] = true
+						span_is_whole = false
+						break
+					room_plinth_cells[Vector3i(fine_column.x, band,
+						fine_column.y)] = true
 					depth += 1
+				# `rock_shoulder` is the source's own top of derived rock on a
+				# column, and on a column carrying plots it IS that column's
+				# lowest plot floor -- so a room standing above it stands on
+				# ANOTHER PLOT's building, and a masonry course laid on that
+				# building's roof would be a stone band between two houses.
+				if maze_mode and (not span_is_whole \
+						or depth > FOUNDATION_MODULE_HEIGHT_BANDS \
+						or maze_source.rock_shoulder(macro_column) < support):
+					# A tier, a tunnel roof, or a bored street under the hill:
+					# the plot planner's own support rule already proved this
+					# floor stands on something, and the mass below is stone or
+					# another building rather than this room's masonry course.
+					stone_borne = true
+					continue
+				if not span_is_whole:
+					return {"valid": false, "rejection":
+						("terrain-bearing room %s has a foundation void " \
+						+ "between stamped ground %d and support %d at %s") % [
+							room.stable_id, bearing, support, fine_column]}
 				if depth > FOUNDATION_MODULE_HEIGHT_BANDS:
 					return {"valid": false, "rejection":
 						("terrain-bearing room %s needs %d foundation bands; " \
@@ -392,6 +430,25 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 				if depth > 0:
 					room_needs_plinth = true
 					max_depth = maxi(max_depth, depth)
+			if stone_borne:
+				# The room still has to STAND on something: the band directly
+				# beneath every one of its footprint columns must be real
+				# source mass. That is the plot planner's support rule read
+				# back out of the sealed source, and it is what keeps this
+				# branch from forgiving a genuinely floating room.
+				for fine_column_value: Variant in footprint.keys():
+					var fine_column := fine_column_value as Vector2i
+					var macro_column := Vector2i(
+						floori(float(fine_column.x) / 2.0),
+						floori(float(fine_column.y) / 2.0))
+					if not volume.has_mass(Vector3i(macro_column.x,
+							room.lattice_origin.y - 1, macro_column.y)):
+						return {"valid": false, "rejection":
+							("terrain-bearing room %s stands on nothing at " \
+							+ "%s") % [room.stable_id, fine_column]}
+				maze_stone_borne_room_count += 1
+				continue
+			cells.merge(room_plinth_cells, true)
 			if not room_needs_plinth:
 				flush_room_count += 1
 				continue
@@ -472,6 +529,7 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 		"column_count": columns.size(), "max_depth_bands": max_depth,
 		"terrain_bearing_room_count": terrain_bearing_room_count,
 		"maze_retained_rock_cells": maze_stone.size(),
+		"maze_stone_borne_room_count": maze_stone_borne_room_count,
 		# TASK C5c RULING 1: the retained channel carries ONE material and TWO
 		# facts. `WarrenVolumetricSolver` split them where the split is decided
 		# -- derived rock outside every plot, versus plot mass the composition
@@ -730,6 +788,11 @@ static func _foundation_shell_audit(foundation_result: Dictionary,
 		# model wants, versus unroomed plot mass it does not.
 		"maze_derived_rock_cells": int(foundation_result.get(
 			"maze_derived_rock_cells", 0)),
+		# Rooms on a tier, a tunnel roof or a deep rock base: terrain-bearing,
+		# but carried by retained stone or by the house below rather than by an
+		# authored plinth course of their own (Task C5c ruling 4).
+		"maze_stone_borne_room_count": int(foundation_result.get(
+			"maze_stone_borne_room_count", 0)),
 		"maze_unroomed_plot_cells": int(foundation_result.get(
 			"maze_unroomed_plot_cells", 0)),
 		"maze_unroomed_plot_share": float(foundation_result.get(

@@ -100,6 +100,14 @@ const KNOWN_FABRIC_BLOCKERS: Dictionary = {
 ## authored shell or roof will not fit beside the house in front of them, and
 ## rectangles standing more than the authored stone course above their own
 ## ground with no building underneath. All four are left to the greedy scan.
+##
+## TASK C5c: 0.556 / 0.179 / 0.405. The floor is UNCHANGED and 4/compact's
+## share really did fall (0.318 -> 0.179) -- but the NUMERATOR did not move at
+## all (56 cells both times). What grew is the denominator: nine more of that
+## town's parcels now compose a building, so nine more back-room records have
+## a lineage to belong to and their mass counts as offered. The share is a
+## ratio of two moving numbers and this is the honest reading of it; the
+## absolute stamped mass is in the task report beside it.
 const BACK_ROOM_STAMPED_FLOOR := 0.17
 
 ## Measured share of a town's paved deck floor that is really WALKABLE from
@@ -163,12 +171,31 @@ const ROUTE_ON_STONE_FLOOR := 0.95
 ## measured WORST of the sealing towns plus 0.05. **Re-pin DOWNWARD only** --
 ## this is a ceiling, and a rise is a regression.
 ##
-## MEASURED BEFORE ANY OF TASK C5c's COMPOSITION WORK: 0.321 / 0.390 / 0.341
-## on 12/compact, 4/compact and 3/standard, so the ceiling is the worst of
-## them plus 0.05. This commit only MEASURES -- it changes no composition --
-## and the number is deliberately in history before the work that must move
-## it. The controller's goal is 0.15.
-const UNROOMED_PLOT_MASS_CEILING := 0.44
+## Measured after Task C5c: 0.267 / 0.305 / 0.319 on 12/compact, 4/compact and
+## 3/standard (from 0.321 / 0.390 / 0.341). The controller's goal was 0.15 and
+## it is NOT met; what stands between is stated in the task report, and its two
+## biggest pieces are named there rather than guessed at here: back-room
+## rectangles the authored ROOF vocabulary cannot crown beside their
+## neighbours, and the plot's own roof reservation, which is roof rather than
+## quarry but is not room either.
+const UNROOMED_PLOT_MASS_CEILING := 0.37
+
+## Houses the plot model says stand on ANOTHER PLOT that the composition still
+## roots in the mountain at their own floor band, because
+## `WarrenMazeBlockPartitioner.stack_parents` declares a seam only for a plot
+## covered on EVERY column by exactly one other plot. Task C3 published the
+## count and Task C5 pinned it at zero -- truthfully, but only because a maze
+## parcel then DESCENDED through the plot below and swallowed it. Task C5c
+## stopped the descent (it was deadlocking both parcels in the protected-owner
+## map and costing 9, 12 and 6 parcels per town), and the disagreement it was
+## hiding is now visible and bounded: 3 / 4 / 1 on the three sealing seeds.
+##
+## What such a house loses is its base PALETTE -- `_room_recipe_id` gives a
+## terrain-bearing room `base.rock` -- not its structure: the compiler's
+## `stone_borne` branch already refuses to lay a masonry course on another
+## house's roof. Closing it is the partial-stack seam, which is a planner-side
+## contract Phase E/F owns. Re-pin DOWNWARD only.
+const UNROOTED_TERRAIN_BEARING_CEILING := 4
 
 ## Every gate `_partition_rooms` may drop a parcel at. A gate outside this set
 ## means a parcel now leaves composition through a door nobody decided on --
@@ -453,10 +480,23 @@ func test_back_rooms_become_rooms() -> void:
 			continue
 		measured += 1
 		var share := float(stamped) / float(total)
+		var addressed := int(plan.audit.get("maze_back_rooms_addressed", -1))
+		var private_rooms := int(plan.audit.get("maze_back_rooms_private", -1))
+		var rooms := int(plan.audit.get("maze_back_room_building_count", -1))
 		print(("MAZE_BACK_ROOMS %s stamped=%d/%d share=%.3f rooms=%d " \
-			+ "unstamped=%d") % [_label(outcome), stamped, total, share,
-				int(plan.audit.get("maze_back_room_building_count", -1)),
+			+ "addressed=%d private=%d unstamped=%d") % [_label(outcome),
+				stamped, total, share, rooms, addressed, private_rooms,
 				int(unstamped.get("count", -1))])
+		# RULING 3: every stamped back room is either a room with a street
+		# door of its own or one reached through the house in front of it.
+		# There is no third thing, and a room that claimed both ways in would
+		# not have sealed.
+		assert_eq(addressed + private_rooms, rooms,
+			"%s must class every back room as addressed or private" \
+				% _label(outcome))
+		assert_eq(int(plan.audit.get("maze_back_rooms_unstamped", -1)),
+			int(unstamped.get("count", -1)),
+			"%s must publish one unstamped count, not two" % _label(outcome))
 		assert_eq(stamped + int(unstamped.get("count", -1)), total,
 			("%s must account for every back-room cell: stamped plus " \
 				+ "unstamped is the whole") % _label(outcome))
@@ -1528,7 +1568,7 @@ func test_stone_bases_follow_bears_on_rock() -> void:
 			"maze_unrooted_terrain_bearing_count", -1))
 		print("MAZE_BASES %s parcels=%d unrooted_terrain_bearing=%d" % [
 			_label(outcome), checked, unrooted])
-		assert_eq(unrooted, 0,
+		assert_between(unrooted, 0, UNROOTED_TERRAIN_BEARING_CEILING,
 			"%s roots %d houses in terrain the plot says they never touch: %s" \
 				% [_label(outcome), unrooted, str(plan.audit.get(
 					"maze_unrooted_terrain_bearing_details", []))])
@@ -2066,10 +2106,11 @@ func test_assets_land() -> void:
 	# Ruling 3 wanted a landmark, so while there is none this test says so out
 	# loud instead of going green on a vacuous identity.
 	if realised_total == 0:
-		pending(("no asset realises on the corpus: blocked by " \
-			+ "_reserve_landmark_preplan's ROOF-face claim against " \
-			+ "route-owned PUBLIC_FLOOR faces and by bearing-off-natural-" \
-			+ "ground -- see task-c5b-report §5c"))
+		pending(("no asset realises on the corpus: the ROOF-face and " \
+			+ "bearing-off-natural-ground gates are both open since Task " \
+			+ "C5c ruling 5, and every remaining site is refused because " \
+			+ "its measured envelope plus the one-cell eave halo meets a " \
+			+ "neighbouring plot -- see task-c5c-report"))
 		return
 	assert_gte(realised_total, 1,
 		"ruling 3 wants a landmark the production pass really builds")

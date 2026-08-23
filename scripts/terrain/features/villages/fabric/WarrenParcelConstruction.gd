@@ -317,6 +317,33 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	if parcel == null or parcel.source == null \
 			or parcel.bearing_columns.size() != parcel.footprint.size():
 		return parcel.base_band if parcel != null else 0
+	# A MAZE PARCEL NEVER DESCENDS THROUGH ANOTHER PLOT (Task C5c ruling 4).
+	#
+	# Descent is a route-first idea: there, a parcel addressed from an upper
+	# street is a short house on an abstract proof column unless it is rooted
+	# at natural ground, and the mass it descends through is unclaimed massif.
+	# In MAZE mode the mass under a plot is either derived rock -- which a
+	# house may still take, and does, so a hill column becomes storeys rather
+	# than a podium -- or ANOTHER PLOT, which is somebody else's building.
+	#
+	# Descending into that other plot made two parcels claim one cell in
+	# `_partition_rooms`'s protected-owner map, and `_plate_fits` then refused
+	# BOTH of them: measured as 9 of 29, 12 of 32 and 6 of 35 parcels composing
+	# no lineage on the three sealing seeds, in mutually-blocking pairs, which
+	# was the single largest source of unroomed plot mass.
+	#
+	# `rock_shoulder` is the source's own answer for the top of derived rock on
+	# a column, and on a column carrying plots it IS that column's lowest plot
+	# floor. So a parcel whose floor stands above it on any column has a plot
+	# underneath and stays where the plot planner put it; a parcel sitting
+	# directly on the rock descends exactly as it did before, which is what
+	# keeps every rock-borne house in this corpus byte-identical.
+	var maze_source := parcel.source.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if maze_source != null:
+		for column: Vector2i in parcel.footprint:
+			if maze_source.rock_shoulder(column) < parcel.base_band:
+				return parcel.base_band
 	var envelope := parcel.source.envelope
 	var highest_ground := -2147483648
 	var lowest_ground := 2147483647
@@ -397,6 +424,17 @@ static func has_perimeter_grounding(parcel: WarrenBuildingParcel) -> bool:
 	var construction := proposal(parcel)
 	if construction.is_empty():
 		return false
+	# THE PLOT MODEL'S LOAD PATH IS THE MOUNTAIN (Task C5c ruling 4). The test
+	# below asks whether the parcel's own room stack descends to natural
+	# ground, which is the right question when the mass under a boundary house
+	# is unclaimed massif the stack may take. In MAZE mode it is not: it is the
+	# plot below, or the derived rock the source retains and Task C5 renders as
+	# stone, and `_support_base_band` deliberately refuses to descend through
+	# either. What remains to prove is the continuity of that mass, and the
+	# `bearing_columns == footprint` test above has already proved it for every
+	# column -- including a column bearing on a tunnel roof.
+	if parcel.source.mass_context.has(&"maze_source_plan"):
+		return true
 	var highest_ground := -2147483648
 	for column: Vector2i in parcel.footprint:
 		highest_ground = maxi(highest_ground,
