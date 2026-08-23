@@ -145,6 +145,11 @@ static func partition(source: WarrenMazeSourcePlan,
 	plan.audit["maze_stack_refusal_count"] = stack_refusals.size()
 	plan.audit["maze_stack_slab_gap_count"] = _slab_gap_count(stack_refusals)
 	plan.audit["maze_stack_refusals"] = stack_refusals
+	# Child parcel id -> the parcel it stands on, published so the seam can be
+	# checked against the sealed plan itself rather than trusted: every value
+	# here must name a house parcel the translation really emitted.
+	plan.audit["maze_stack_parents"] = _stack_parcel_ids(
+		stacking["parents"] as Dictionary)
 	var ownership := _ownership(source, parcels, back_rooms, assets)
 	plan.audit.merge(ownership, true)
 	last_diagnostic.merge(ownership, true)
@@ -162,9 +167,13 @@ static func _stack_parents(source: WarrenMazeSourcePlan) -> Dictionary:
 	## on, so those plots stay exactly as they are today (terrain-borne) and
 	## are counted instead of guessed at.
 	##
-	## BRIDGES are excluded. A bridge translates to a typed record and never to
-	## a parcel, so naming one as a support parent would name a parcel that
-	## does not exist and `WarrenParcelPlan.seal` would refuse the whole town.
+	## ONLY A HOUSE CAN BE A PARENT. A bridge and an asset both translate to
+	## typed records and never to parcels, so naming one as a support parent
+	## would name a `parcel.maze.<id>` that does not exist: the child would
+	## find nothing, fall through terrain-borne with no refusal published, and
+	## the stacked count would be an overcount of plots that never declared
+	## anything (review finding 2026-08-23, Important 1). A deck has no height
+	## to stand on in the first place.
 	var parents: Dictionary = {}
 	var partial := 0
 	for plot: Dictionary in source.plots:
@@ -179,7 +188,7 @@ static func _stack_parents(source: WarrenMazeSourcePlan) -> Dictionary:
 			for other: Dictionary in source.plots:
 				if StringName(other["id"]) == StringName(plot["id"]) \
 						or StringName(other["kind"]) \
-							== WarrenMazeSourcePlan.PLOT_BRIDGE \
+							!= WarrenMazeSourcePlan.PLOT_HOUSE \
 						or not (other["cells"] as Array).has(column) \
 						or floor_band - 1 < int(other["floor"]) \
 						or floor_band - 1 >= int(other["top"]):
@@ -256,6 +265,16 @@ static func _translate_houses(source: WarrenMazeSourcePlan,
 		var parcel := outcome["parcel"] as WarrenBuildingParcel
 		if parcel != null:
 			parcel_by_id[parcel.stable_id] = parcel
+	return out
+
+
+static func _stack_parcel_ids(parents: Dictionary) -> Dictionary:
+	## The plot-id stacking map restated in parcel ids, which is the vocabulary
+	## every consumer of the seam speaks.
+	var out: Dictionary = {}
+	for child_value: Variant in parents.keys():
+		out[StringName("parcel.maze.%s" % String(child_value))] = StringName(
+			"parcel.maze.%s" % String(parents[child_value]))
 	return out
 
 

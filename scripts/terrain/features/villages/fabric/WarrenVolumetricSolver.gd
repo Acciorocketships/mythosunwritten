@@ -86,9 +86,9 @@ const MAX_COURT_OWNER_SOCKET_RECOMPOSITION_CELLS := 2
 ## runs across the parcel's frontage and `depth` along it, which is exactly the
 ## reading `WarrenBuildingParcel.seal` and `WarrenParcelConstruction`'s own
 ## `profile_for` give a parcel's rectangle -- so a back room's kind means the
-## as the kind of the house standing in front of it. Used only by the directed
-## maze back-room pass; the greedy residual scan enumerates `WarrenRoomStamp
-## .KINDS` directly because it has no frontage to reckon from.
+## same thing as the kind of the house standing in front of it. Used only by
+## the directed maze back-room pass; the greedy residual scan enumerates
+## `WarrenRoomStamp.KINDS` directly because it has no frontage to reckon from.
 const MAZE_BACK_ROOM_KINDS: Array[Dictionary] = [
 	{"kind": &"long", "width": 2, "depth": 3},
 	{"kind": &"building", "width": 2, "depth": 2},
@@ -2568,7 +2568,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		skywalk_plan.get("unique_route_cover_count", 0))
 	composition_audit["preplanned_skywalk_marginal_route_cover_count"] = int(
 		skywalk_plan.get("marginal_route_cover_count", 0))
-	room_count += int(backfill.get("building_count", 0))
+	# Every stamped back room is one WarrenRoomStamp in the sealed plan, so it
+	# belongs in the same count the greedy backfill's rooms do; leaving it out
+	# made `room_stamp_count` understate a maze town by its whole directed pass.
+	room_count += int(back_rooms.get("building_count", 0)) \
+		+ int(backfill.get("building_count", 0))
 	if buildings.size() < MIN_BUILDINGS:
 		last_failure = "room partition formed only %d buildings" % buildings.size()
 		return {}

@@ -1695,8 +1695,9 @@ func _stack_parent_plot_id(plan: WarrenMazeSourcePlan,
 	## on EVERY one of its columns, or "" when the plot stands on terrain, on
 	## rock, or only partly on somebody. Computed from the sealed plan alone —
 	## never from the translator's own bookkeeping — so this is an independent
-	## statement of what a stacked house is. Bridges are excluded: a bridge is
-	## a typed record, never a parcel, so nothing can name one as its parent.
+	## statement of what a stacked house is. Only a HOUSE can be a parent: a
+	## bridge and an asset are both typed records, never parcels, so nothing
+	## can name either one as the parcel it bears on.
 	var floor_band := int(plot["floor"])
 	var lower: Dictionary = {}
 	for cell_value: Variant in plot["cells"] as Array:
@@ -1705,7 +1706,7 @@ func _stack_parent_plot_id(plan: WarrenMazeSourcePlan,
 		for other: Dictionary in plan.plots:
 			if StringName(other["id"]) == StringName(plot["id"]) \
 					or StringName(other["kind"]) \
-						== WarrenMazeSourcePlan.PLOT_BRIDGE \
+						!= WarrenMazeSourcePlan.PLOT_HOUSE \
 					or not (other["cells"] as Array).has(column) \
 					or floor_band - 1 < int(other["floor"]) \
 					or floor_band - 1 >= int(other["top"]):
@@ -1758,6 +1759,9 @@ func test_stacked_houses_declare_their_parent() -> void:
 				continue
 			var parent := _parcel_named(parcels, StringName("parcel.maze.%s" \
 				% String(parent_plot_id)))
+			assert_not_null(parent, ("a stack parent is a HOUSE plot, so it " \
+				+ "always has a parcel: %s under %s") % [plot["id"],
+					parent_plot_id])
 			if parent == null:
 				continue
 			seed_stacked += 1
@@ -1783,6 +1787,18 @@ func test_stacked_houses_declare_their_parent() -> void:
 				"a declared parent is a building support, not terrain")
 			assert_true(WarrenParcelPlan.building_support_is_valid(child,
 				parent), "a declared seam is one the plan itself accepts")
+		# Every entry the translator recorded resolves to a parcel the town
+		# really emitted, on both ends. An asset or a bridge admitted as a
+		# parent would name a `parcel.maze.<id>` that does not exist.
+		var published := parcels.audit.get("maze_stack_parents",
+			{}) as Dictionary
+		for child_value: Variant in published.keys():
+			assert_not_null(_parcel_named(parcels, StringName(child_value)),
+				"stacked child %s must be a parcel" % child_value)
+			assert_not_null(_parcel_named(parcels,
+				StringName(published[child_value])),
+				"stack parent %s must be a house parcel" \
+					% published[child_value])
 		print(("MAZE_STACKS seed %d/%s stacked=%d declared=%d slab_gap=%d " \
 			+ "partial=%d %s") % [seed_value, scale, seed_stacked,
 				int(parcels.audit.get("maze_stacked_parcel_count", -1)),
@@ -1802,7 +1818,12 @@ func test_stacked_houses_declare_their_parent() -> void:
 		return
 	var host: WarrenBuildingParcel = null
 	for parcel: WarrenBuildingParcel in parcels_12.parcels:
-		if parcel.flat_roof and parcel.height_bands() >= 4 and host == null:
+		# A parcel that DESCENDS owns more composed storeys than its own
+		# `storey_count()`, so `_stacked_on` below would name the wrong storey
+		# and this test would fail for a reason that is not the seam rule.
+		if parcel.flat_roof and parcel.height_bands() >= 4 and host == null \
+				and int(WarrenParcelConstruction.proposal(parcel).get(
+					"storeys", -1)) == parcel.storey_count():
 			host = parcel
 	assert_not_null(host, "the town has a flat-roofed parcel to stand on")
 	if host == null:
@@ -1825,7 +1846,16 @@ func test_stacked_houses_declare_their_parent() -> void:
 	assert_false(WarrenParcelPlan.building_support_is_valid(
 		_stacked_on(pitched, pitched.top_band), pitched),
 		"a pitched parent's top band is roof reservation, not a seam")
-	assert_gte(declared, 0, "declared stacks are counted")
+	# Whatever the corpus declares, the translator's own count must agree with
+	# what the parcels say: the audit may not claim a seam no parcel carries.
+	var counted := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var parcels := _parcels_of(int(spec["seed"]), StringName(spec["scale"]))
+		if parcels == null:
+			continue
+		counted += int(parcels.audit.get("maze_stacked_parcel_count", -1))
+	assert_eq(counted, declared,
+		"the stacked-parcel count is the number of parcels that declare one")
 
 
 func _stacked_on(parent: WarrenBuildingParcel,
