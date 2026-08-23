@@ -385,6 +385,9 @@ const FOOTPRINT_FLOOR := 1.8
 
 static var _sealed_plans: Dictionary = {}
 static var _carved_plans: Dictionary = {}
+static var _volumes: Dictionary = {}
+static var _parcel_plans: Dictionary = {}
+static var _parcel_failures: Dictionary = {}
 
 
 func _sealed_town(seed_value: int, scale: StringName) -> WarrenMazeSourcePlan:
@@ -1032,3 +1035,331 @@ func test_streets_keep_their_floor() -> void:
 			seed_value, scale, sealed_gaps, bore])
 		assert_eq(sealed_gaps, bore,
 			"seed %d %s adds no floating street" % [seed_value, scale])
+
+
+# --- Adapter and translator (task B3) ---------------------------------------
+# The two downstream seams read plots and nothing else: the volume is
+# `solid_at` made into an envelope, and every house/asset plot becomes exactly
+# one sealed parcel plus its own back rooms. Both are falsified against the
+# sealed plan directly, never against the adapters' own bookkeeping.
+
+## The 24-town corpus the translation rate is measured on: seeds 1..12 at both
+## scales. `TRANSLATE_FLOOR` is the plan's own acceptance bar (22/24); it is a
+## floor to re-pin upward, never downward.
+const CORPUS_SEEDS := 12
+const TRANSLATE_FLOOR := 22
+
+
+func _volume_of(seed_value: int, scale: StringName) -> WarrenVolumePlan:
+	## One adapted volume per (seed, scale). The adapter is pure over a sealed
+	## plan, so this cache is the plan a fresh call would build.
+	var key := "%d/%s" % [seed_value, scale]
+	if not _volumes.has(key):
+		_volumes[key] = WarrenMazeVolumeAdapter.to_volume_plan(
+			_sealed_town(seed_value, scale))
+	return _volumes[key] as WarrenVolumePlan
+
+
+func _parcels_of(seed_value: int, scale: StringName) -> WarrenParcelPlan:
+	## One translated parcel plan per (seed, scale), with the translator's own
+	## failure text kept beside it so a corpus row can report why.
+	var key := "%d/%s" % [seed_value, scale]
+	if not _parcel_plans.has(key):
+		var volume := _volume_of(seed_value, scale)
+		var plan: WarrenParcelPlan = null
+		var reason := WarrenMazeVolumeAdapter.last_failure
+		if volume != null:
+			plan = WarrenMazeBlockPartitioner.partition(
+				_sealed_town(seed_value, scale), volume)
+			reason = WarrenMazeBlockPartitioner.last_failure
+		_parcel_plans[key] = plan
+		_parcel_failures[key] = "" if plan != null else reason
+	return _parcel_plans[key] as WarrenParcelPlan
+
+
+func _parcel_failure(seed_value: int, scale: StringName) -> String:
+	return String(_parcel_failures.get("%d/%s" % [seed_value, scale], ""))
+
+
+func _plot_ceiling(plan: WarrenMazeSourcePlan, column: Vector2i) -> int:
+	## The highest band anything on this column can reach: the massif
+	## envelope, the tallest plot top standing there, or the rock shoulder a
+	## taller neighbour left it -- whichever is highest. Re-derived here from
+	## the plots themselves rather than read off the adapter's own scan.
+	var out := maxi(plan.massif.top_at(column), plan.rock_shoulder(column))
+	for plot: Dictionary in plan.plots:
+		if (plot["cells"] as Array).has(column):
+			out = maxi(out, int(plot["top"]))
+	return out
+
+
+func test_volume_matches_solid_at() -> void:
+	# The adapter's whole contract in one sentence: the volume's mass IS the
+	# plan's derived solid. Checked cell by cell over the massif, so a column
+	# the adapter leaves too tall (leftover envelope) or too short (a plot cut
+	# off) is a named mismatch rather than a ratio that drifts.
+	for spec: Dictionary in [{"seed": 12, "scale": &"compact"},
+			{"seed": 3, "scale": &"standard"}]:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		var volume := _volume_of(seed_value, scale)
+		assert_not_null(volume, WarrenMazeVolumeAdapter.last_failure)
+		if volume == null:
+			continue
+		var checked := 0
+		var mismatches: Array[String] = []
+		for column: Vector2i in _sorted_columns(plan):
+			var ceiling := _plot_ceiling(plan, column)
+			for band in range(plan.massif.base_at(column), ceiling + 1):
+				var cell := Vector3i(column.x, band, column.y)
+				checked += 1
+				if volume.has_mass(cell) == plan.solid_at(cell):
+					continue
+				if mismatches.size() < 6:
+					mismatches.append("%s mass=%s solid=%s" % [cell,
+						volume.has_mass(cell), plan.solid_at(cell)])
+		gut.p("seed %d %s: %d cells checked, %d mismatched" % [seed_value,
+			scale, checked, mismatches.size()])
+		assert_gt(checked, 800, "the sweep must cover a real town")
+		assert_eq(mismatches.size(), 0,
+			"seed %d %s volume mass is solid_at: %s" % [seed_value, scale,
+				"; ".join(mismatches)])
+
+
+func test_translator_emits_one_parcel_group_per_building() -> void:
+	# One plot, one parcel, no orphan cells: the parcel's rectangle sits
+	# inside its plot, its door really serves its address, and the cells the
+	# rectangle left over are all recorded as that building's back rooms.
+	for spec: Dictionary in [{"seed": 12, "scale": &"compact"},
+			{"seed": 3, "scale": &"standard"}]:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		var parcels := _parcels_of(seed_value, scale)
+		assert_not_null(parcels, "seed %d %s translation: %s" % [seed_value,
+			scale, _parcel_failure(seed_value, scale)])
+		if parcels == null or plan == null:
+			continue
+		var by_id: Dictionary = {}
+		for parcel: WarrenBuildingParcel in parcels.parcels:
+			assert_false(by_id.has(parcel.stable_id),
+				"parcel %s is emitted once" % parcel.stable_id)
+			by_id[parcel.stable_id] = parcel
+		var back_rooms: Dictionary = {}
+		for record: Dictionary in parcels.audit.get("maze_back_rooms",
+				[]) as Array:
+			assert_false(back_rooms.has(StringName(record["parcel_id"])),
+				"one back-room record per parcel")
+			assert_false((record["cells"] as Array).is_empty(),
+				"an empty back-room record is omitted, not recorded")
+			back_rooms[StringName(record["parcel_id"])] = record
+		var buildings := parcels.audit.get("maze_buildings", {}) as Dictionary
+		var expected_buildings: Dictionary = {}
+		var building_plots := 0
+		for plot: Dictionary in plan.plots:
+			var kind := StringName(plot["kind"])
+			if kind != WarrenMazeSourcePlan.PLOT_HOUSE \
+					and kind != WarrenMazeSourcePlan.PLOT_ASSET:
+				continue
+			building_plots += 1
+			expected_buildings[StringName(plot["building_id"])] = true
+			var id := StringName("parcel.maze.%s" % String(plot["id"]))
+			assert_true(by_id.has(id), "plot %s became parcel %s" % [
+				plot["id"], id])
+			if not by_id.has(id):
+				continue
+			var parcel := by_id[id] as WarrenBuildingParcel
+			assert_true(WarrenParcelConstruction.door_serves_address(parcel),
+				"parcel %s serves its own address" % id)
+			assert_eq(parcel.base_band, int(plot["floor"]),
+				"parcel %s keeps its plot floor" % id)
+			assert_eq(parcel.top_band, int(plot["top"]),
+				"parcel %s keeps its plot top" % id)
+			assert_eq(parcel.address_walk_cell, plot["door_walk"] as Vector3i,
+				"parcel %s keeps its plot door" % id)
+			var owned: Dictionary = {}
+			for column: Vector2i in parcel.footprint:
+				assert_true((plot["cells"] as Array).has(column),
+					"parcel %s stays inside plot %s" % [id, plot["id"]])
+				owned[column] = true
+			for column_value: Variant in (back_rooms.get(id,
+					{}) as Dictionary).get("cells", []) as Array:
+				var column := column_value as Vector2i
+				assert_false(owned.has(column),
+					"back room %s does not re-own a parcel column" % id)
+				owned[column] = true
+			assert_eq(owned.size(), (plot["cells"] as Array).size(),
+				"parcel %s plus its back rooms cover plot %s exactly" % [
+					id, plot["id"]])
+		gut.p("seed %d %s: %d building plots, %d parcels, %d back rooms" % [
+			seed_value, scale, building_plots, parcels.parcels.size(),
+			back_rooms.size()])
+		assert_gt(building_plots, 4, "the town has buildings to translate")
+		assert_eq(parcels.parcels.size(), building_plots,
+			"every house and asset plot becomes exactly one parcel")
+		assert_eq(buildings.size(), expected_buildings.size(),
+			"maze_buildings keys are the building plots' own group ids")
+		for key: Variant in expected_buildings.keys():
+			assert_true(buildings.has(key),
+				"maze_buildings carries building %s" % key)
+
+
+func test_decks_and_bridges_translate_to_typed_records() -> void:
+	# Decks and bridges are composition's own typed records, never parcels.
+	var decks_seen := 0
+	var bridges_seen := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		var parcels := _parcels_of(seed_value, scale)
+		if parcels == null or plan == null:
+			gut.p("seed %d %s did not translate: %s" % [seed_value, scale,
+				_parcel_failure(seed_value, scale)])
+			continue
+		var records: Dictionary = {
+			WarrenMazeSourcePlan.PLOT_DECK: {},
+			WarrenMazeSourcePlan.PLOT_BRIDGE: {},
+		}
+		for key: StringName in [WarrenMazeSourcePlan.PLOT_DECK,
+				WarrenMazeSourcePlan.PLOT_BRIDGE]:
+			var audit_key := "maze_decks" if key \
+				== WarrenMazeSourcePlan.PLOT_DECK else "maze_bridges"
+			for record: Dictionary in parcels.audit.get(audit_key,
+					[]) as Array:
+				(records[key] as Dictionary)[StringName(record["id"])] = record
+		for plot: Dictionary in plan.plots:
+			var kind := StringName(plot["kind"])
+			if not records.has(kind):
+				continue
+			var id := StringName(plot["id"])
+			var typed := records[kind] as Dictionary
+			assert_true(typed.has(id), "plot %s has a typed record" % id)
+			assert_null(_parcel_named(parcels,
+				StringName("parcel.maze.%s" % id)),
+				"plot %s is a record, never a parcel" % id)
+			if not typed.has(id):
+				continue
+			var record := typed[id] as Dictionary
+			assert_eq(record["cells"], plot["cells"],
+				"record %s keeps the plot's own cells" % id)
+			assert_eq(int(record["floor"]), int(plot["floor"]),
+				"record %s keeps the plot's own floor" % id)
+			assert_eq(record["door_walk"] as Vector3i,
+				plot["door_walk"] as Vector3i,
+				"record %s keeps the plot's own door" % id)
+			if kind == WarrenMazeSourcePlan.PLOT_BRIDGE:
+				assert_eq(int(record["top"]), int(plot["top"]),
+					"bridge %s keeps its own top" % id)
+				assert_eq(StringName(record["building_id"]),
+					StringName(plot["building_id"]),
+					"bridge %s keeps its own building group" % id)
+				bridges_seen += 1
+			else:
+				decks_seen += 1
+	gut.p("typed records: %d decks, %d bridges" % [decks_seen, bridges_seen])
+	assert_gt(decks_seen, 0, "the corpus really contains decks")
+	assert_gt(bridges_seen, 0, "the corpus really contains bridges")
+
+
+func _parcel_named(plan: WarrenParcelPlan,
+		id: StringName) -> WarrenBuildingParcel:
+	for parcel: WarrenBuildingParcel in plan.parcels:
+		if parcel.stable_id == id:
+			return parcel
+	return null
+
+
+func test_flat_roof_parcels_relax_parity_only_for_tiered_plots() -> void:
+	# A tiered plot's top is an upper street's own band, which owes the storey
+	# grid nothing. `flat_roof` buys exactly that one relaxation: an odd
+	# five-band parcel seals when it is flagged and is refused when it is not,
+	# and the even four-band parcel every legacy caller builds is untouched.
+	var plan := _sealed_town(12, &"compact")
+	var volume := _volume_of(12, &"compact")
+	var parcels := _parcels_of(12, &"compact")
+	assert_not_null(parcels, _parcel_failure(12, &"compact"))
+	if parcels == null or volume == null or plan == null:
+		return
+	var host: WarrenBuildingParcel = null
+	var flagged := 0
+	for parcel: WarrenBuildingParcel in parcels.parcels:
+		if parcel.height_bands() >= 6 and host == null:
+			host = parcel
+		# The flag is a plot fact, not a repair: it is set exactly where
+		# something stands on this plot's roof.
+		for plot: Dictionary in plan.plots:
+			if StringName("parcel.maze.%s" % String(plot["id"])) \
+					!= parcel.stable_id:
+				continue
+			var facts := plan.plot_facts(plot)
+			var standing := bool(facts["tiered"]) or not bool(facts["roofed"])
+			flagged += int(parcel.flat_roof)
+			assert_eq(parcel.flat_roof, standing,
+				"parcel %s is flat-roofed exactly when something stands on " \
+				% parcel.stable_id + "its roof")
+	assert_gt(flagged, 0, "the town really has something standing on a roof")
+	assert_not_null(host, "the town has a six-band parcel to restate")
+	if host == null:
+		return
+	var flat := _restate(host, host.base_band + 5, true)
+	var odd := _restate(host, host.base_band + 5, false)
+	var even := _restate(host, host.base_band + 4, false)
+	assert_true(flat.seal(volume), "a flat-roofed five-band parcel seals")
+	assert_false(odd.seal(volume), "an odd five-band parcel is still refused")
+	assert_true(even.seal(volume), "the even four-band parcel is untouched")
+	assert_false(WarrenBuildingParcel.new(host.stable_id, host.footprint,
+		host.base_band, host.base_band + 2, host.address_walk_cell,
+		host.threshold_column, host.frontage_direction, 0,
+		true).seal(volume),
+		"flat_roof still demands a storey plus a band of roof")
+
+
+func _restate(host: WarrenBuildingParcel, top_band: int,
+		flat_roof: bool) -> WarrenBuildingParcel:
+	## The same slot as `host` at another top band, so only the height rule
+	## can decide the outcome.
+	return WarrenBuildingParcel.new(host.stable_id, host.footprint,
+		host.base_band, top_band, host.address_walk_cell,
+		host.threshold_column, host.frontage_direction,
+		host.address_door_phase, flat_roof)
+
+
+func test_corpus_translates() -> void:
+	# The plan's own acceptance bar, measured rather than asserted seed by
+	# seed: at least TRANSLATE_FLOOR of the 24 towns adapt and translate. Each
+	# failure reports the adapter's or the translator's verbatim reason.
+	var translated := 0
+	var failures: Array[String] = []
+	for scale: StringName in [&"compact", &"standard"]:
+		for seed_value in range(1, CORPUS_SEEDS + 1):
+			var plan := _sealed_town(seed_value, scale)
+			if plan == null:
+				failures.append("seed %d %s seal: %s" % [seed_value, scale,
+					WarrenMazeSitePlanner.last_failure])
+				continue
+			var parcels := _parcels_of(seed_value, scale)
+			if parcels == null:
+				failures.append("seed %d %s: %s" % [seed_value, scale,
+					_parcel_failure(seed_value, scale)])
+				continue
+			translated += 1
+			gut.p(("seed %d %s: %d parcels, %d back-room cells, %d decks, " \
+				+ "%d bridges, ownership %.3f (%d owned of %d solid, " \
+				+ "%d rock)") % [seed_value, scale, parcels.parcels.size(),
+					int(parcels.audit.get("maze_back_room_cells", 0)),
+					(parcels.audit.get("maze_decks", []) as Array).size(),
+					(parcels.audit.get("maze_bridges", []) as Array).size(),
+					float(parcels.audit.get("maze_ownership_ratio", 0.0)),
+					int(parcels.audit.get("maze_owned_cells", 0)),
+					int(parcels.audit.get("maze_solid_cells", 0)),
+					int(parcels.audit.get("maze_rock_cells", 0))])
+	for failure: String in failures:
+		gut.p(failure)
+	gut.p("corpus: %d/%d towns translate" % [translated, 2 * CORPUS_SEEDS])
+	assert_gte(translated, TRANSLATE_FLOOR,
+		"%d/%d towns translate" % [translated, 2 * CORPUS_SEEDS])

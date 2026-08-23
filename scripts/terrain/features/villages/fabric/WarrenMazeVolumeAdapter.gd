@@ -2,8 +2,9 @@ class_name WarrenMazeVolumeAdapter
 extends RefCounted
 
 ## Narrow migration seam from the sealed maze source into the existing volume
-## contract. It performs no topology repair and creates no feature branches;
-## stamps will be translated here only after they become sealed source facts.
+## contract. It performs no topology repair and creates no feature branches:
+## the volume's solid is the plan's own `solid_at`, column by column, and the
+## public realm is the excavation the bore already carved.
 static var last_failure := ""
 
 
@@ -12,11 +13,9 @@ static func to_volume_plan(source: WarrenMazeSourcePlan) -> WarrenVolumePlan:
 	if source == null or not source.is_sealed():
 		last_failure = "maze source plan missing or unsealed"
 		return null
-	var massif := source.massif
-	if not source.column_edits.is_empty():
-		massif = _edited_massif(source)
-		if massif == null:
-			return null
+	var massif := _derived_massif(source)
+	if massif == null:
+		return null
 	var volume := WarrenExcavationVolumeAdapter.to_volume_plan(
 		massif, source.excavation, source.market_square_cells)
 	if volume == null:
@@ -40,63 +39,89 @@ static func to_volume_plan(source: WarrenMazeSourcePlan) -> WarrenVolumePlan:
 	return volume
 
 
-static func _edited_massif(source: WarrenMazeSourcePlan) -> WarrenMassif:
-	## The constructive ledger (parcel-claim offenders, reservation footprints)
-	## overlays a handful of columns with a raised floor and/or a trimmed roof
-	## on top of the sealed Task-1 massif. Downstream excavation must see that
-	## edited world -- otherwise the volume's mass disagrees with the very
-	## addresses the source plan already sealed against. Only edited columns
-	## move; every other column is copied through byte-for-byte, so the
-	## edited copy's column SET (and therefore its footprint topology) is
-	## identical to the sealed massif's own. WarrenMassif.seal() only checks
-	## that topology (single connected component, no interior hole) -- it
-	## never inspects band values -- so a legally-edited copy of an
-	## already-sealed massif cannot newly fail seal() here.
+static func _derived_massif(source: WarrenMazeSourcePlan) -> WarrenMassif:
+	## The massif is the buildable ENVELOPE; the sealed plan's plots are the
+	## town that was actually built inside it, and `solid_at` is the only
+	## authority on which of the two a band belongs to (rock under a plot,
+	## a plot, a rock shoulder, or air). This copy restates that authority as
+	## the one thing the existing excavation adapter reads: a per-column top.
 	##
-	## Bridge-capable columns (2026-08-22, controller ruling on slice 1c
-	## task 1): a passage-hosting column's edited floor means "the
-	## bridge/bearing house floor above the street's own headroom", never
-	## "bottom of mass" -- overwriting `base` up to that floor the way every
-	## other edited column's is would delete the passage's own walk cell
-	## from the envelope entirely (`WarrenVolumeEnvelope.contains_air_column`
-	## requires `ground_at(column) <= walk cell y`), which is exactly what
-	## used to make `WarrenExcavationVolumeAdapter` reject the street as
-	## "leaving the envelope". Such a column instead keeps `base` at the
-	## ORIGINAL massif base -- true terrain, the rock the street itself still
-	## stands on -- and only raises `top` to the ledger's own effective_top;
-	## the actual carved passage cells (and their headroom) are excluded
-	## from the final `mass_cells` regardless, since
-	## `WarrenExcavationVolumeAdapter` subtracts every swept transition cell
-	## sourced directly from `excavation.carved`, independent of what this
-	## massif copy's own base/top report. A column with no hosted passage
-	## keeps the pre-existing behaviour (both base and top move to the
-	## ledger's own values; the discarded gap becomes construction's own
-	## foundation courses, per this design's P5 section).
+	## `base` never moves -- terrain below `massif.base_at` is untouched
+	## ground, the rock a street itself stands on, and the carved cells above
+	## it are subtracted from the volume by WarrenExcavationVolumeAdapter
+	## straight out of `excavation.carved` regardless of what this copy says.
+	## The sealed stack invariant (solid is one contiguous run from terrain,
+	## minus carved cells) is what makes a single top per column EXACT rather
+	## than approximate; test_volume_matches_solid_at proves it cell by cell.
+	##
+	## Only the column SET matters to WarrenMassif.seal() (single connected
+	## component, no interior hole) and this copy keeps every column the
+	## sealed massif had, so a legally derived copy of an already-sealed
+	## massif cannot newly fail seal() here.
 	var columns: Dictionary = {}
+	var ceilings := _plot_ceilings(source)
 	for column: Vector2i in source.massif.columns:
 		var entry := (source.massif.columns[column] as Dictionary).duplicate()
-		if source.column_edits.has(column):
-			if source._passage_headroom_floor(column) >= 0:
-				entry["top"] = source.effective_top(column)
-			else:
-				entry["base"] = source.effective_base(column)
-				entry["top"] = source.effective_top(column)
+		var base := source.massif.base_at(column)
+		# Three things can put derived solid on a column, and the scan has to
+		# reach the highest of them: the envelope itself, a plot standing on
+		# it, and -- on a column carrying no plot -- the ROCK SHOULDER, which
+		# is the lowest floor of the plots bordering this column's own no-plot
+		# region and can perfectly well stand above this column's envelope
+		# where a taller neighbour was built out.
+		var ceiling := maxi(source.massif.top_at(column),
+			int(ceilings.get(column, base)))
+		entry["top"] = _derived_top(source, column, base,
+			maxi(ceiling, source.rock_shoulder(column)))
 		columns[column] = entry
-	var edited := WarrenMassif.with_columns(source.massif.world_seed, columns,
+	var derived := WarrenMassif.with_columns(source.massif.world_seed, columns,
 		source.massif.core_top_bands)
 	# Mirrors WarrenMassifBuilder.build's own derivation: core_top_bands is the
-	# deepest authored layer over any column, and an edit can change a
-	# column's layer (raised floor, trimmed roof) without changing which
-	# column is deepest.
+	# deepest authored layer over any column, and deriving a column's top from
+	# the town standing on it can change which column is deepest.
 	var core_top_bands := 0
-	for column: Vector2i in edited.columns:
-		core_top_bands = maxi(core_top_bands, edited.layer_at(column))
-	edited.core_top_bands = core_top_bands
-	if not edited.seal():
-		last_failure = "edited massif copy failed to seal: %s" \
-			% edited.last_rejection
+	for column: Vector2i in derived.columns:
+		core_top_bands = maxi(core_top_bands, derived.layer_at(column))
+	derived.core_top_bands = core_top_bands
+	if not derived.seal():
+		last_failure = "derived massif copy failed to seal: %s" \
+			% derived.last_rejection
 		return null
-	return edited
+	return derived
+
+
+static func _derived_top(source: WarrenMazeSourcePlan, column: Vector2i,
+		base: int, ceiling: int) -> int:
+	## One band above the highest band this column still owns: solid mass, or
+	## the void a passage was bored through.
+	##
+	## The CARVED half of that is not mass and never becomes mass -- the
+	## excavation adapter subtracts every carved cell from the envelope's own
+	## solid -- but the envelope has to reach over a street all the same:
+	## WarrenVolumePlan.seal() refuses a walk cell whose swept headroom leaves
+	## the envelope (`WarrenVolumeEnvelope.contains_air_column`), which is
+	## exactly the street this adapter is carrying across. Stopping at the
+	## highest SOLID band would delete every open street from the volume's own
+	## envelope and reject the plan the maze already sealed.
+	for band in range(ceiling - 1, base - 1, -1):
+		var cell := Vector3i(column.x, band, column.y)
+		if source.solid_at(cell) or source.excavation.carved.has(cell):
+			return band + 1
+	return base
+
+
+static func _plot_ceilings(source: WarrenMazeSourcePlan) -> Dictionary:
+	## Vector2i column -> the highest plot top standing on it. A plot is NOT
+	## clamped to the massif (WarrenMazeSourcePlan.add_plot says so), so a
+	## house that rose to meet an upper street can stand above the envelope it
+	## grew out of; the derivation scan has to reach it.
+	var out: Dictionary = {}
+	for plot: Dictionary in source.plots:
+		var top := int(plot["top"])
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			out[column] = maxi(int(out.get(column, top)), top)
+	return out
 
 
 static func _bore_surface_alignment(source: WarrenMazeSourcePlan,

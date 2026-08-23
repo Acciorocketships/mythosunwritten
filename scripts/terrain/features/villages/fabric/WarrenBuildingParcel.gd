@@ -19,6 +19,14 @@ var frontage_direction: Vector2i
 ## Phase zero preserves the original high-local-X threshold; phase one selects
 ## the other half without moving the facade module or changing the footprint.
 var address_door_phase: int
+## Additive (2026-08-22, controller ruling on the plot model): something
+## stands ON this parcel's top band -- an upper street, a terrace, or another
+## building -- so its roof is a slab rather than the authored pitched
+## reservation, and its height owes the storey grid nothing beyond one storey
+## and that slab (see `_height_is_legal`). Defaulted false and never set by a
+## legacy caller, so every parcel the route-first pipeline builds keeps the
+## exact contract it always had.
+var flat_roof := false
 var bearing_columns: Array[Vector2i] = []
 var support_mode: StringName
 ## Optional explicit building-on-building bearing seam. The upper parcel keeps
@@ -37,7 +45,8 @@ func _init(p_stable_id: StringName, p_footprint: Array[Vector2i],
 		p_base_band: int, p_top_band: int, p_address_walk_cell: Vector3i,
 		p_threshold_column: Vector2i,
 		p_frontage_direction: Vector2i,
-		p_address_door_phase: int = 0) -> void:
+		p_address_door_phase: int = 0,
+		p_flat_roof: bool = false) -> void:
 	stable_id = p_stable_id
 	footprint.assign(p_footprint)
 	base_band = p_base_band
@@ -46,14 +55,13 @@ func _init(p_stable_id: StringName, p_footprint: Array[Vector2i],
 	threshold_column = p_threshold_column
 	frontage_direction = p_frontage_direction
 	address_door_phase = p_address_door_phase
+	flat_roof = p_flat_roof
 
 
 func seal(volume: WarrenVolumePlan) -> bool:
 	if _sealed or stable_id.is_empty() or volume == null \
 			or not volume.is_sealed() or footprint.is_empty() \
-			or top_band - base_band < STOREY_BANDS + ROOF_RESERVATION_BANDS \
-			or posmod(top_band - base_band - ROOF_RESERVATION_BANDS,
-				STOREY_BANDS) != 0 \
+			or not _height_is_legal() \
 			or address_walk_cell.y != base_band \
 			or not volume.has_frontage(address_walk_cell) \
 			or absi(frontage_direction.x) + absi(frontage_direction.y) != 1 \
@@ -115,6 +123,18 @@ func seal(volume: WarrenVolumePlan) -> bool:
 	source = volume
 	_sealed = true
 	return true
+
+
+## Whole storeys plus the authored roof reservation -- unless something sits
+## ON this roof (`flat_roof`), where the top band is that street's, terrace's
+## or upper building's own and owes the storey grid nothing. A flat-roofed
+## parcel still has to be a building: one storey and one band of slab.
+func _height_is_legal() -> bool:
+	if flat_roof:
+		return top_band - base_band >= STOREY_BANDS + 1
+	return top_band - base_band >= STOREY_BANDS + ROOF_RESERVATION_BANDS \
+		and posmod(top_band - base_band - ROOF_RESERVATION_BANDS,
+			STOREY_BANDS) == 0
 
 
 func is_sealed() -> bool:
