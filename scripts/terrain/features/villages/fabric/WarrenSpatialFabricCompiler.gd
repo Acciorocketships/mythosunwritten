@@ -137,6 +137,11 @@ static func solve(source: WarrenSpatialPlan,
 		last_failure = "spatial exterior-air proof failed: %s" % \
 			FabricVolumeClassifier.last_failure
 		return null
+	var stone_audit := _maze_stone_skin_audit(result)
+	if int(stone_audit.get("maze_stone_missing_face_count", 0)) > 0:
+		last_failure = "retained maze stone is not fully skinned: %s" % \
+			str(stone_audit)
+		return null
 	var solid_void := FabricSolidVoidClassifier.solve(
 		StringName("%s.solid-void" % result.stable_id), realm, result)
 	if solid_void == null or not result.set_solid_void_plan(solid_void):
@@ -156,6 +161,7 @@ static func solve(source: WarrenSpatialPlan,
 	lineage["retained_foundation_max_depth_bands"] = int(
 		foundation_result.get("max_depth_bands", 0))
 	lineage.merge(foundation_audit, true)
+	lineage.merge(stone_audit, true)
 	lineage.merge(volumes.audit(), true)
 	lineage.merge(solid_void.audit(), true)
 	lineage["spatial_signature"] = source.deterministic_signature().sha256_text()
@@ -438,6 +444,12 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 	# built in is skipped rather than refused: `set_retained_terrace` rejects
 	# an overlap with solid outright, and the one-band `roof.flat.*` unit
 	# standing on a flat parcel's slab is exactly such an overlap.
+	#
+	# TASK C5b RULING 1: they enter it TAGGED. The assembler skins a retained
+	# mountain and a building's plinth course by two different rules, and the
+	# only thing that tells the two apart at render time is this value. No
+	# reader of the channel has ever looked at a retained cell's value, and a
+	# legacy plan still writes `true`, so the tag is additive.
 	var maze_stone: Dictionary = {}
 	if source.grid != null:
 		var maze_owned: Array[Vector3i] = []
@@ -453,7 +465,7 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 		for cell: Vector3i in maze_owned:
 			if built.has(cell):
 				continue
-			cells[cell] = true
+			cells[cell] = SettlementFabricAssembler.MAZE_STONE_TAG
 			maze_stone[cell] = true
 	return {"valid": true, "cells": cells, "cell_count": cells.size(),
 		"column_count": columns.size(), "max_depth_bands": max_depth,
@@ -461,6 +473,55 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 		"maze_retained_rock_cells": maze_stone.size(),
 		"maze_stone_cells": maze_stone,
 		"flush_room_count": flush_room_count, "room_records": room_records}
+
+
+static func _maze_stone_skin_audit(plan: SettlementFabricPlan) -> Dictionary:
+	## TASK C5b RULING 2 -- the skin is an IDENTITY, not a hope. The face rule
+	## and the payload are both the assembler's, so this audit states that the
+	## panels it emitted are exactly the exposed faces it derived: every face
+	## rendered, none rendered twice, and none rendered for a cell the plan
+	## does not call retained maze stone.
+	##
+	## It runs AFTER `set_surface_plan` and not beside the plinth shell audit,
+	## because a sky-facing face is only suppressed by the paved floor above
+	## it, and the surface plan is the only place that fact lives. Every count
+	## is zero on a legacy plan, which tags no cell.
+	if plan == null:
+		return {"maze_stone_cell_count": 0,
+			"maze_stone_exposed_face_count": 0,
+			"maze_stone_expected_face_count": 0,
+			"maze_stone_rendered_face_count": 0,
+			"maze_stone_missing_face_count": 0,
+			"maze_stone_top_face_count": 0,
+			"maze_stone_bottom_face_count": 0}
+	var retained := plan.retained_terrace_cells
+	var stone := SettlementFabricAssembler.maze_stone_cells(retained)
+	var solids := plan.transformed_cells(&"solid")
+	var paved := SettlementFabricAssembler.public_floor_cells(plan.surface_plan)
+	var exposed := SettlementFabricAssembler.exposed_maze_stone_faces(retained,
+		solids, paved)
+	var faces := SettlementFabricAssembler.maze_stone_faces(retained, solids,
+		paved)
+	var top_face_count := 0
+	var bottom_face_count := 0
+	for key_value: Variant in exposed.keys():
+		var key := key_value as Vector4i
+		top_face_count += int(SettlementFabricAssembler \
+			.STONE_FACE_DIRECTIONS[key.w] == Vector3i.UP)
+		bottom_face_count += int(SettlementFabricAssembler \
+			.STONE_FACE_DIRECTIONS[key.w] == Vector3i.DOWN)
+	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
+		solids, paved)
+	return {
+		"maze_stone_cell_count": stone.size(),
+		"maze_stone_exposed_face_count": exposed.size(),
+		"maze_stone_expected_face_count": faces.size(),
+		"maze_stone_rendered_face_count": rendered.instance_count,
+		"maze_stone_missing_face_count": maxi(faces.size()
+			- rendered.instance_count, 0),
+		"maze_stone_top_face_count": top_face_count,
+		"maze_stone_bottom_face_count": bottom_face_count,
+	}
 
 
 static func _foundation_shell_audit(foundation_result: Dictionary,

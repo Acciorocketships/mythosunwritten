@@ -1553,3 +1553,219 @@ func test_maze_mode_is_deterministic() -> void:
 	assert_eq(first_plan.deterministic_signature(),
 		repeated_plan.deterministic_signature(),
 		"maze mode is a pure function of (seed, ground bands, scale profile)")
+
+
+func _maze_stone_instance_count(fabric: SettlementFabricPlan) -> int:
+	## Instances the assembler really emitted for retained maze stone, counted
+	## out of the payload the renderer commits rather than out of the rule that
+	## produced it.
+	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	var count := 0
+	for asset_value: Variant in payload.batches.keys():
+		var batch := payload.batches[asset_value] as Dictionary
+		for id_value: Variant in batch.get("ids", []) as Array:
+			count += int(String(id_value).begins_with("maze-stone/"))
+	return count
+
+
+func _exposed_stone_faces(fabric: SettlementFabricPlan) -> Dictionary:
+	## The test's own statement of the face rule, derived from the sealed plan
+	## and never from the assembler: a retained maze-stone cell owes a panel on
+	## every side whose neighbour is not mass, on a top whose neighbour is
+	## neither mass nor a public floor that draws itself, and on a bottom whose
+	## neighbour is not mass -- the roof of a bored passage.
+	var out: Dictionary = {}
+	var retained := fabric.retained_terrace_cells
+	var solids := fabric.transformed_cells(&"solid")
+	var paved: Dictionary = {}
+	if fabric.surface_plan != null:
+		for kind in PublicRealmSurfacePlan.SurfaceKind.values():
+			for cell: Vector3i in fabric.surface_plan.cells_for_kind(kind):
+				paved[cell] = true
+	for cell_value: Variant in retained.keys():
+		var tag: Variant = retained[cell_value]
+		if not (tag is StringName) or StringName(tag) \
+				!= SettlementFabricAssembler.MAZE_STONE_TAG:
+			continue
+		var cell := cell_value as Vector3i
+		for index in 6:
+			var direction: Vector3i = [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK, Vector3i.UP,
+				Vector3i.DOWN][index]
+			var neighbor := cell + direction
+			if retained.has(neighbor) or solids.has(neighbor) \
+					or (direction == Vector3i.UP and paved.has(neighbor)):
+				continue
+			out[Vector4i(cell.x, cell.y, cell.z, index)] = true
+	return out
+
+
+func test_retained_stone_is_skinned() -> void:
+	## TASK C5b RULING 1 AND 2. The mountain a maze town is cut out of is
+	## 1292-1530 fine cells of the plan and, before this task, exactly zero
+	## rendered panels. Every exposed face of it must now own one rock module,
+	## the audit must state that as an identity, and the identity must hold
+	## against the payload the renderer is actually handed.
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		var expected := int(fabric.audit.get(
+			"maze_stone_expected_face_count", -1))
+		var rendered := int(fabric.audit.get(
+			"maze_stone_rendered_face_count", -1))
+		var missing := int(fabric.audit.get(
+			"maze_stone_missing_face_count", -1))
+		var stone_cells := int(fabric.audit.get("maze_stone_cell_count", -1))
+		var tops := int(fabric.audit.get("maze_stone_top_face_count", -1))
+		var bottoms := int(fabric.audit.get(
+			"maze_stone_bottom_face_count", -1))
+		var raw := int(fabric.audit.get("maze_stone_exposed_face_count", -1))
+		var derived := _exposed_stone_faces(fabric)
+		var instances := _maze_stone_instance_count(fabric)
+		var panels := SettlementFabricAssembler.maze_stone_faces(
+			fabric.retained_terrace_cells,
+			fabric.transformed_cells(&"solid"),
+			SettlementFabricAssembler.public_floor_cells(fabric.surface_plan))
+		var uncovered := 0
+		for key_value: Variant in derived.keys():
+			var face := key_value as Vector4i
+			if face.w >= SettlementFabricAssembler.FACE_DIRECTIONS.size():
+				uncovered += int(not panels.has(face))
+				continue
+			# A 3 m course covers its own band and the one below it, so the
+			# panel that closes this face is at this band or the next one up.
+			uncovered += int(not panels.has(face) and not panels.has(
+				Vector4i(face.x, face.y + 1, face.z, face.w)))
+		print(("MAZE_STONE_SKIN %s cells=%d exposed=%d derived=%d " \
+			+ "expected=%d rendered=%d missing=%d instances=%d " \
+			+ "uncovered=%d tops=%d bottoms=%d") % [
+			_label(outcome), stone_cells, raw, derived.size(), expected,
+			rendered, missing, instances, uncovered, tops, bottoms])
+		assert_gt(stone_cells, 0,
+			"%s must publish the retained maze stone it kept" % _label(outcome))
+		assert_gt(expected, 0,
+			"%s retained mountain must expose faces to skin" % _label(outcome))
+		assert_eq(rendered, expected,
+			"%s must render one panel per exposed stone face" \
+				% _label(outcome))
+		assert_eq(missing, 0,
+			"%s may leave no exposed stone face unskinned" % _label(outcome))
+		assert_eq(derived.size(), raw,
+			("%s audited exposed-face count must equal the shell derived " \
+				+ "from the sealed plan alone") % _label(outcome))
+		assert_eq(uncovered, 0,
+			("%s must cover every exposed face of the mountain with a " \
+				+ "course, or the shell has holes") % _label(outcome))
+		assert_lt(expected, raw,
+			("%s must course its side faces at the module's own height, " \
+				+ "not hang one panel per band") % _label(outcome))
+		assert_eq(instances, expected,
+			("%s must hand the renderer exactly the panels it audited") \
+				% _label(outcome))
+		assert_gt(tops, 0,
+			("%s open shoulder must be capped, or the mountain is a hollow " \
+				+ "shell") % _label(outcome))
+		assert_gt(bottoms, 0,
+			("%s bored passages must get a stone roof, or a street looks up " \
+				+ "through the mountain") % _label(outcome))
+		# No boundary may wear two panels: a plinth face and a stone face on
+		# the same seam would intersect in one plane.
+		var plinths := SettlementFabricAssembler.plinth_faces(
+			fabric.retained_terrace_cells,
+			fabric.transformed_cells(&"solid"),
+			fabric.transformed_cells(&"terrain_bearing"))
+		var doubled := 0
+		for key_value: Variant in plinths.keys():
+			var key := key_value as Vector4i
+			var direction := SettlementFabricAssembler.FACE_DIRECTIONS[key.w]
+			var opposite := Vector3i(key.x, key.y, key.z) + direction
+			var back_index := key.w + 1 - 2 * (key.w % 2)
+			doubled += int(derived.has(Vector4i(opposite.x, opposite.y,
+				opposite.z, back_index)))
+		assert_eq(doubled, 0,
+			"%s may never put a plinth panel and a stone panel on one seam" \
+				% _label(outcome))
+
+
+func _asset_plot_records(world_seed: int, scale_id: StringName) -> Array:
+	## The planner's own asset outcomes, straight off a fresh source plan.
+	var profile := WarrenVillageScaleProfile.for_id(scale_id)
+	var maze := WarrenMazeSitePlanner.plan(world_seed, {}, profile)
+	if maze == null:
+		return []
+	var outcomes: Dictionary = maze.audit.get("plot_outcomes", {})
+	return outcomes.get("assets", []) as Array
+
+
+func test_assets_land() -> void:
+	## TASK C5b RULING 3. C2 measured three asset plots and ZERO landmarks:
+	## the planner sited assets by a footprint that never had to hold the
+	## prefab once it was anchored by its own doorway, so `_maze_asset_
+	## landmark` refused every one and could not have done otherwise.
+	##
+	## The planner now carries the entrance-relative envelope and mirrors the
+	## builder's own three tests before it commits a site. This asserts the
+	## mirror is SOUND -- every site it calls realisable really becomes a
+	## prefab landmark -- and publishes, per seed, which of the builder's
+	## tests the town's sites actually fail, so "no asset lands here" is a
+	## number and not a shrug.
+	var realisable_total := 0
+	var realised_total := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var records := _asset_plot_records(int(outcome.seed),
+			StringName(outcome.scale))
+		var landmarks := _feature_count(plan, &"prefab_landmark")
+		var realisable := 0
+		var placed := 0
+		var tally: Dictionary = {}
+		for record_value: Variant in records:
+			var record := record_value as Dictionary
+			assert_true(record.has("realisable") and record.has("mirror"),
+				"%s asset outcome must publish the mirror's verdict" \
+					% _label(outcome))
+			placed += int(record.get("site", null) != null)
+			realisable += int(bool(record.get("realisable", false)))
+			var mirror := record.get("mirror", {}) as Dictionary
+			for key: String in ["tested", "no_frontage", "street_over_top",
+					"body_outside_plot", "bearing_off_ground", "realisable"]:
+				tally[key] = int(tally.get(key, 0)) + int(mirror.get(key, 0))
+		var reasons := PackedStringArray()
+		for record_value: Variant in plan.audit.get(
+				"maze_asset_outcomes", []) as Array:
+			var record := record_value as Dictionary
+			reasons.append(String(record.get("reason", "")).left(80))
+		realisable_total += realisable
+		realised_total += landmarks
+		print(("MAZE_ASSET_LAND %s placed=%d realisable=%d landmarks=%d " \
+			+ "mirror=%s | %s") % [_label(outcome), placed, realisable,
+			landmarks, tally, " ; ".join(reasons)])
+		assert_gt(int(tally.get("tested", 0)), 0,
+			("%s must have enumerated asset sites for the realisation " \
+				+ "mirror to judge") % _label(outcome))
+		assert_eq(int(tally.get("tested", 0)),
+			int(tally.get("no_frontage", 0)) \
+				+ int(tally.get("street_over_top", 0)) \
+				+ int(tally.get("body_outside_plot", 0)) \
+				+ int(tally.get("bearing_off_ground", 0)) \
+				+ int(tally.get("realisable", 0)),
+			"%s mirror tally must account for every site it tested" \
+				% _label(outcome))
+		# SOUNDNESS. This is the whole point of the mirror: a site it accepts
+		# is a site `_maze_asset_landmark` can stand a prefab on. It bites the
+		# moment the mirror is looser than the builder.
+		assert_eq(landmarks, realisable,
+			("%s must realise exactly the asset sites its planner called " \
+				+ "realisable") % _label(outcome))
+	print("MAZE_ASSET_LAND corpus realisable=%d realised=%d" % [
+		realisable_total, realised_total])
+	assert_eq(realised_total, realisable_total,
+		"the corpus must realise exactly the sites the mirror accepted")
