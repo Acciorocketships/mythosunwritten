@@ -94,10 +94,24 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	out.append_array(gateway_supports)
 	var landmarks := _record_preplanned_landmarks(grid, supports,
 		preplanned_landmarks)
+	# A LOST preplanned record is structural in every mode and writes its own
+	# failure; a short count with no failure is the richness quota, which
+	# one-pass mode may ship without.
+	var landmark_record_failure := last_failure
 	if landmarks.size() < target_landmarks:
-		last_failure = "only %d of %d topology-first prefab landmarks survived" \
-			% [landmarks.size(), target_landmarks]
-		return [] as Array[WarrenFeatureReservation]
+		# A landmark quota is town richness, not structure. In one-pass mode
+		# the source itself decides how many complete authored buildings this
+		# town gets, so a shortfall ships a plainer town instead of no town.
+		if not WarrenTownSolver.feature_quotas_are_advisory() \
+				or not landmark_record_failure.is_empty():
+			last_failure = ("only %d of %d topology-first prefab " \
+				+ "landmarks survived") % [landmarks.size(),
+					target_landmarks]
+			return [] as Array[WarrenFeatureReservation]
+		WarrenVolumetricSolver.last_advisory_shortfalls["landmarks"] = \
+			landmarks.size()
+		WarrenVolumetricSolver.last_advisory_shortfalls["landmarks_target"] = \
+			target_landmarks
 	out.append_array(landmarks)
 	var residual_jetty_supports := _reserve_residual_jetty_supports(grid,
 		buildings, supports, construction_program, out, source.world_seed)
@@ -115,11 +129,21 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		else _reserve_skywalks(grid, buildings, supports, source.world_seed,
 			target_skywalks)
 	if skywalks.size() < target_skywalks:
+		# Occupied links are richness too: the one-pass source owns its own
+		# bridge plan, so a town it gave no link ships without one. A link
+		# that was PREPLANNED and then lost is a different fact — that writes
+		# its own failure, and it stays fatal in every mode.
 		var detail := last_failure
-		last_failure = "only %d of %d topology-first skywalks fit: %s (%s)" % [
-			skywalks.size(), target_skywalks, detail,
-			last_skywalk_diagnostic]
-		return [] as Array[WarrenFeatureReservation]
+		if not WarrenTownSolver.feature_quotas_are_advisory() \
+				or not detail.is_empty():
+			last_failure = ("only %d of %d topology-first skywalks fit: " \
+				+ "%s (%s)") % [skywalks.size(), target_skywalks, detail,
+					last_skywalk_diagnostic]
+			return [] as Array[WarrenFeatureReservation]
+		WarrenVolumetricSolver.last_advisory_shortfalls["skywalks"] = \
+			skywalks.size()
+		WarrenVolumetricSolver.last_advisory_shortfalls["skywalks_target"] = \
+			target_skywalks
 	out.append_array(skywalks)
 	var courtyard_bridge: WarrenFeatureReservation
 	if scale_profile.requires_elevated_courtyard:

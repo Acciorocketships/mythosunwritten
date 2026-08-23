@@ -1411,6 +1411,35 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var exact_room_preflight_cache_hit_count := 0
 	var selected_court_alternatives: Array[Dictionary] = []
 	var selected_market_landmark_owners: Dictionary = {}
+	var maze_asset_outcomes: Array[Dictionary] = []
+	# One pass, no search. In maze mode the plot planner already decided this
+	# town's features, so the four nested loops below have nothing left to
+	# choose: `_maze_feature_pass` fills exactly the locals their commit fills
+	# and then empties the market corpus, so they iterate zero times. Every
+	# searched mode reaches them with the corpus untouched, byte for byte.
+	if volume.mass_context.has(&"maze_source_plan"):
+		var maze_features := _maze_feature_pass(grid, volume, parcels,
+			proposals, construction_program, protected_owners,
+			court_fixed_blocks_by_parcel, public_air, market_candidates,
+			enable_paired_registration_relief)
+		market_reservation = maze_features.market_reservation as Dictionary
+		courtyard_bridge_candidate = \
+			maze_features.courtyard_bridge_candidate as Dictionary
+		courtyard_bridge_reservation = \
+			maze_features.courtyard_bridge_reservation as Dictionary
+		skywalk_plan = maze_features.skywalk_plan as Dictionary
+		landmark_reservations.assign(
+			maze_features.landmark_reservations as Array)
+		selected_exact_composition = \
+			maze_features.selected_exact_composition as Dictionary
+		selected_occluder_rank = \
+			maze_features.selected_occluder_rank as Dictionary
+		selected_court_alternatives.assign(
+			maze_features.selected_court_alternatives as Array)
+		selected_market_landmark_owners = \
+			maze_features.selected_market_landmark_owners as Dictionary
+		maze_asset_outcomes.assign(maze_features.asset_outcomes as Array)
+		market_candidates.clear()
 	for candidate: Dictionary in market_candidates:
 		if diagnostic_feature_market_limit >= 0 \
 				and market_attempt_count >= diagnostic_feature_market_limit:
@@ -2191,6 +2220,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				composed_court_side_mask]
 		return {}
 	var composition_audit := composition.audit as Dictionary
+	# What became of every asset plot the one-pass source placed: a prefab
+	# landmark, or a named reason it could not be one. Maze mode only; a
+	# searched town has no asset plots to account for.
+	if volume.mass_context.has(&"maze_source_plan"):
+		composition_audit["maze_asset_outcomes"] = maze_asset_outcomes
 	composition_audit["macro_preflight_deferred_to_final_count"] = int(
 		not requires_courtyard)
 	composition_audit["court_displaced_parcel_count"] = \
@@ -2521,6 +2555,386 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		"courtyard_bridge_reservation": courtyard_bridge_reservation,
 		"landmark_reservations": landmark_reservations,
 		"market_reservation": market_reservation}
+
+
+static func _maze_feature_pass(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
+		proposals: Array[Dictionary], program: SettlementFabricProgram,
+		protected_owners: Dictionary,
+		court_fixed_blocks_by_parcel: Dictionary, public_air: Dictionary,
+		market_candidates: Array[Dictionary],
+		enable_paired_registration_relief: bool) -> Dictionary:
+	## The one-pass replacement for the joint hero-feature beam.
+	##
+	## A maze town's features are not something composition discovers: the plot
+	## planner chose them, so there is nothing to search over and nothing a
+	## richer trial could improve. Market, court, landmarks and links are
+	## selected once, in that order, and every quota the source could not
+	## supply becomes an entry in `last_advisory_shortfalls` rather than a
+	## rejection. The dictionary returned is exactly what the beam's commit
+	## writes into its own locals, so control rejoins the shared post-beam
+	## code unchanged.
+	##
+	## Skywalks are deliberately absent here: the source's `maze_bridges` are
+	## a later task's contract, and an empty link plan is an audit fact.
+	var scale_profile := _scale_profile_for_volume(volume)
+	# The bazaar: the first candidate of the corpus `_preplan_spatial_market`
+	# already ranked. The beam retried the corpus only because a later hero
+	# feature could consume the socket this one wanted; with no such feature
+	# left to search for, the ranking's own first choice is the choice.
+	var market_reservation: Dictionary = {"optional_absent": true} \
+		if market_candidates.is_empty() else market_candidates[0]
+	if bool(market_reservation.get("optional_absent", false)):
+		# Recorded whether or not the profile REQUIRES a market: a village
+		# whose street could hold no measured canopy shipped without one, and
+		# that is a fact about the town either way.
+		last_advisory_shortfalls["covered_market"] = 0
+	var market_owners := _protected_owners_with_market(protected_owners,
+		market_reservation)
+	var skywalk_plan: Dictionary = {
+		"reservations": [] as Array[Dictionary],
+		"selected_candidates": [] as Array[Dictionary],
+		"forced_offsets": {}, "priority_cells": {},
+		"candidate_count": 0,
+	}
+	# The threaded upper court is a size invariant of large and grand towns
+	# only. Elsewhere the absent sentinel is the honest selection: it reserves
+	# no cells, moves no rooms, and compiles no feature.
+	var court := _maze_court_candidate(grid, volume, proposals, program,
+		scale_profile, market_reservation, market_owners,
+		court_fixed_blocks_by_parcel, public_air, skywalk_plan,
+		enable_paired_registration_relief)
+	var court_candidate := court.candidate as Dictionary
+	var court_owners := _protected_owners_with_courtyard_bridge(market_owners,
+		court_candidate)
+	var assets := _maze_asset_landmarks(grid, volume, parcels, program,
+		court_owners)
+	var landmarks: Array[Dictionary] = []
+	landmarks.assign(assets.reservations as Array)
+	if int(assets.shortfall_count) > 0:
+		last_advisory_shortfalls["assets"] = int(assets.shortfall_count)
+	last_preplan_landmark_diagnostic = {
+		"maze_asset_record_count": (assets.outcomes as Array).size(),
+		"maze_asset_landmark_count": landmarks.size(),
+		"maze_asset_outcomes": assets.outcomes,
+	}
+	last_preplan_skywalk_diagnostic = {"maze_skywalk_count": 0}
+	return {
+		"market_reservation": market_reservation,
+		"courtyard_bridge_candidate": court_candidate,
+		"courtyard_bridge_reservation": court_candidate.reservation \
+			as Dictionary,
+		"landmark_reservations": landmarks,
+		"skywalk_plan": skywalk_plan,
+		"selected_exact_composition": court.exact_composition as Dictionary,
+		"selected_occluder_rank": {},
+		"selected_court_alternatives": [court_candidate] as Array[Dictionary],
+		"selected_market_landmark_owners": _protected_owners_with_landmarks(
+			market_owners, landmarks),
+		"asset_outcomes": assets.outcomes,
+	}
+
+
+static func _maze_court_candidate(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, proposals: Array[Dictionary],
+		program: SettlementFabricProgram,
+		scale_profile: WarrenVillageScaleProfile,
+		market_reservation: Dictionary, market_owners: Dictionary,
+		court_fixed_blocks_by_parcel: Dictionary, public_air: Dictionary,
+		skywalk_plan: Dictionary,
+		enable_paired_registration_relief: bool) -> Dictionary:
+	## The court half of the one-pass feature selection. Profiles without an
+	## elevated-court invariant take the absent sentinel outright; the ones
+	## that have it take the FIRST cantilever whose exact room envelopes
+	## survive, in the order `_courtyard_cantilever_room_candidates` produced
+	## them. There is no ranking loop: a court the source cannot host is a
+	## shortfall, exactly like a market it cannot host.
+	var absent := _maze_dressed_court_candidate(
+		_absent_courtyard_bridge_candidate())
+	if not scale_profile.requires_elevated_courtyard:
+		return {"candidate": absent, "exact_composition": {}}
+	var raw_candidates := _courtyard_cantilever_room_candidates(grid, volume,
+		proposals, program, market_owners, public_air)
+	for raw_candidate: Dictionary in raw_candidates:
+		var candidate := _maze_dressed_court_candidate(raw_candidate)
+		var exact_result: Dictionary = {}
+		if not _court_candidate_preserves_exact_room_envelopes(grid, volume,
+				proposals, program, market_reservation, candidate,
+				market_owners, court_fixed_blocks_by_parcel, skywalk_plan,
+				enable_paired_registration_relief, exact_result):
+			continue
+		var composition := exact_result.get("composition", {}) as Dictionary \
+			if not bool(exact_result.get("recomposition_required", false)) \
+			else {}
+		return {"candidate": candidate, "exact_composition": composition}
+	last_advisory_shortfalls["courtyard_bridges"] = 0
+	return {"candidate": absent, "exact_composition": {}}
+
+
+static func _maze_dressed_court_candidate(
+		raw_candidate: Dictionary) -> Dictionary:
+	## The beam's own two lines of court bookkeeping: a deep copy carrying its
+	## own reservation, stamped with the courtyard feature id so the post-beam
+	## construction key matches the one it later searches alternatives by.
+	var candidate := raw_candidate.duplicate(true)
+	var reservation := (raw_candidate.reservation as Dictionary).duplicate(true)
+	reservation["feature_id"] = COURTYARD_BRIDGE_FEATURE_ID
+	candidate["reservation"] = reservation
+	return candidate
+
+
+static func _maze_asset_landmarks(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
+		program: SettlementFabricProgram,
+		protected_owners: Dictionary) -> Dictionary:
+	## Every `maze_assets` record becomes a prefab-landmark reservation at the
+	## site the planner costed for it, or a counted outcome saying why it could
+	## not. An asset is never a rejection: its mass is already the plot
+	## planner's, and a recipe that will not sit on it leaves that mass as the
+	## derived rock it was, one landmark poorer and one audit line richer.
+	##
+	## Each accepted landmark joins the protected-owner map before the next
+	## record is tried, which is how two assets whose measured clearance
+	## envelopes overlap resolve deterministically instead of both committing.
+	var reservations: Array[Dictionary] = []
+	var outcomes: Array[Dictionary] = []
+	var shortfall_count := 0
+	var owners := protected_owners
+	for record: Dictionary in parcels.audit.get("maze_assets", []) as Array:
+		var attempt := _maze_asset_landmark(grid, volume, program, owners,
+			record, reservations.size())
+		var reservation := attempt.get("reservation", {}) as Dictionary
+		outcomes.append({
+			"id": StringName(record["id"]),
+			"kind_id": StringName(record["kind_id"]),
+			"placed": not reservation.is_empty(),
+			"reason": String(attempt.get("reason", "")),
+		})
+		if reservation.is_empty():
+			shortfall_count += 1
+			continue
+		reservations.append(reservation)
+		owners = _protected_owners_with_landmarks(owners,
+			[reservation] as Array[Dictionary])
+	return {"reservations": reservations, "outcomes": outcomes,
+		"shortfall_count": shortfall_count}
+
+
+static func _maze_asset_landmark(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, program: SettlementFabricProgram,
+		protected_owners: Dictionary, record: Dictionary,
+		index: int) -> Dictionary:
+	## One asset record against one catalog recipe at one site. This is the
+	## per-candidate half of `_preplan_spatial_landmarks` with the search
+	## removed: there the landing, recipe and yaw are enumerated over the whole
+	## town; here the plot fixes the site, the planner fixed the recipe, and
+	## the door fixes the facing, so the only remaining freedom is which fine
+	## lane of the 3 m street cell the doorway opens onto.
+	##
+	## Returns `{reservation}` on success or `{reason}` on refusal; the same
+	## measured facts the searched path admits a candidate on are what refuse
+	## it here, so an asset that becomes a shortfall is one the fine grid
+	## genuinely could not host.
+	var kind_id := StringName(record["kind_id"])
+	var recipe := program.recipe(kind_id)
+	if recipe == null or not recipe.has_tag(&"prefab_anchor") \
+			or not recipe.has_tag(&"terrain_bearing") \
+			or recipe.bearing_parent_count != 0 \
+			or recipe.entrances.is_empty():
+		return {"reason": "%s is not an entranced terrain-rooted anchor" \
+			% kind_id}
+	var frontage := _maze_asset_frontage(record)
+	if frontage == Vector2i.ZERO:
+		return {"reason": "no footprint column fronts the plot's own door"}
+	# From the doorway into the mass: the inverse of the frontage the plot
+	# addressed its street across.
+	var side := Vector3i(-frontage.x, 0, -frontage.y)
+	var footprint := _maze_asset_fine_footprint(record)
+	var entrance := recipe.entrances[0] as Dictionary
+	var yaw := _yaw_for_direction(entrance.facing as Vector3i, -side)
+	if yaw < 0:
+		return {"reason": "%s has no yaw that opens its entrance onto %s" \
+			% [kind_id, frontage]}
+	var reasons := PackedStringArray()
+	for landing: Vector3i in _maze_asset_landings(record, side, footprint):
+		var origin := landing + side - FabricRecipe.transform_cell(
+			entrance.cell as Vector3i, Vector3i.ZERO, yaw)
+		var refusal := _maze_landmark_refusal(grid, volume, program, recipe,
+			protected_owners, origin, yaw, landing, side, index)
+		if refusal.has("reservation"):
+			return refusal
+		# Every lane is reported, not just the first: which of the two fine
+		# doorways a 3 m street cell offers a prefab failed on, and how, is
+		# the fact a template revision needs.
+		reasons.append("lane %s: %s" % [landing, refusal.reason])
+	if reasons.is_empty():
+		return {"reason": "the plot's door cell offers no public landing"}
+	return {"reason": "; ".join(reasons)}
+
+
+static func _maze_landmark_refusal(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, program: SettlementFabricProgram,
+		recipe: FabricRecipe, protected_owners: Dictionary,
+		origin: Vector3i, yaw: int, landing: Vector3i, side: Vector3i,
+		index: int) -> Dictionary:
+	## The measured admission test, in the order `_preplan_spatial_landmarks`
+	## applies it, each failure naming itself. Returns `{reservation}` or
+	## `{reason}`.
+	var entrance_cell := landing + side
+	if not grid.contains(landing):
+		return {"reason": "landing %s is outside the grid" % landing}
+	var floor_claim := grid.face_claim(landing, Vector3i.DOWN)
+	if grid.use_at(landing) != WarrenSpatialGrid.Use.PUBLIC_AIR \
+			or floor_claim.is_empty() \
+			or int(floor_claim.get("kind", -1)) \
+				!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+		return {"reason": "landing %s is not canonical public floor" % landing}
+	if not grid.contains(entrance_cell) \
+			or grid.use_at(entrance_cell) not in [
+				WarrenSpatialGrid.Use.OUTSIDE,
+				WarrenSpatialGrid.Use.ALLOCATABLE]:
+		return {"reason": "doorway cell %s is already spoken for" \
+			% entrance_cell}
+	var body: Dictionary = {}
+	for cells: Array[Vector3i] in [recipe.solid_cells, recipe.headroom_cells,
+			recipe.walk_cells]:
+		for local_cell: Vector3i in cells:
+			body[FabricRecipe.transform_cell(local_cell, origin, yaw)] = true
+	if body.is_empty() or not _skywalk_body_fits_grid(grid, body):
+		return {"reason": "body at %s/r%d does not fit the residual mass%s" \
+			% [origin, yaw, _maze_body_conflict_text(grid, body)]}
+	var bearing: Dictionary = {}
+	for local_cell: Vector3i in recipe.terrain_bearing_cells:
+		bearing[FabricRecipe.transform_cell(local_cell, origin, yaw)] = true
+	if bearing.is_empty() or not _landmark_bearing_follows_terrain(bearing,
+			volume):
+		return {"reason": "bearing at band %d does not follow terrain" \
+			% origin.y}
+	var components: Array[Dictionary] = [{"recipe_id": recipe.recipe_id,
+		"origin": origin, "yaw_quarters": yaw}]
+	var clearance := _skywalk_visual_clearance_cells(components, program)
+	var protected_cells := clearance.duplicate()
+	protected_cells.merge(body, true)
+	protected_cells.merge(bearing, true)
+	if clearance.is_empty() or not _cells_fit_grid(grid, clearance) \
+			or not _skywalk_clearance_fits_grid(grid, clearance) \
+			or not _skywalk_clearance_fits_protected(protected_cells,
+				protected_owners):
+		return {"reason": ("measured clearance at %s leaves the grid or " \
+			+ "meets another feature") % origin}
+	var blockers: Dictionary = {}
+	for cell_value: Variant in protected_cells.keys():
+		for owner_value: Variant in (protected_owners.get(cell_value, {}) \
+				as Dictionary).keys():
+			blockers[StringName(owner_value)] = true
+	if not blockers.is_empty():
+		# The searched path DISPLACES the parcels a landmark overlaps. A maze
+		# town may not: the plot planner already partitioned this mass and a
+		# prefab is not entitled to delete a neighbour's house.
+		return {"reason": "clearance overlaps %d plot(s): %s" % [
+			blockers.size(), blockers.keys()]}
+	var assets := recipe.asset_ids()
+	var source_family := &"unknown" if assets.is_empty() else \
+		StringName(String(assets[0]).get_slice(".", 0))
+	var embeddedness := _landmark_embeddedness(protected_cells,
+		protected_owners, blockers, grid)
+	var socket_signature := _landmark_recipe_socket_signature(recipe, origin,
+		yaw)
+	return {"reservation": {
+		"feature_id": StringName("spatial.feature.landmark.%02d" % index),
+		"recipe_id": recipe.recipe_id, "source_family": source_family,
+		"origin": origin, "yaw_quarters": yaw, "landing_cell": landing,
+		"entrance_cell": entrance_cell, "entrance_facing": -side,
+		"body": body, "bearing_cells": bearing, "clearance": clearance,
+		"protected_cells": protected_cells,
+		"blocker_parcels": blockers, "blocker_count": blockers.size(),
+		"city_contact_side_count": embeddedness.side_count,
+		"city_contact_edge_count": embeddedness.edge_count,
+		"city_contact_score": embeddedness.score,
+		"nearest_city_gap": embeddedness.nearest_gap,
+		"transition_owner_ids": embeddedness.owner_ids,
+		"height_cell_count": ceili(recipe.local_clearance_bounds.size.y \
+			/ FabricRecipe.CELL_SIZE),
+		"skywalk_socket_signature": socket_signature,
+		"structural_signature": ("%s/body=%s/protected=%s/sockets=%s" % [
+			source_family, _cell_set_signature(body),
+			_cell_set_signature(protected_cells),
+			socket_signature]).sha256_text(),
+		"footprint_area": recipe.local_clearance_bounds.size.x \
+			* recipe.local_clearance_bounds.size.z,
+		# The searched path breaks ranking ties with a seeded hash. Nothing
+		# ranks these, so the field is present for shape and constant.
+		"tie": 0,
+	}}
+
+
+static func _maze_body_conflict_text(grid: WarrenSpatialGrid,
+		body: Dictionary) -> String:
+	## The first few cells of a refused prefab body that are not free mass, so
+	## an audited shortfall says WHERE the template and the recipe disagree
+	## instead of only that they did.
+	var parts := PackedStringArray()
+	var ordered: Array[Vector3i] = []
+	ordered.assign(body.keys())
+	ordered.sort_custom(_cell_less)
+	for cell: Vector3i in ordered:
+		if grid.contains(cell) and grid.use_at(cell) in [
+				WarrenSpatialGrid.Use.OUTSIDE,
+				WarrenSpatialGrid.Use.ALLOCATABLE]:
+			continue
+		parts.append("%s=%d" % [cell, grid.use_at(cell) \
+			if grid.contains(cell) else -1])
+		if parts.size() >= 4:
+			break
+	return "" if parts.is_empty() else " at %s" % ",".join(parts)
+
+
+static func _maze_asset_frontage(record: Dictionary) -> Vector2i:
+	## The cardinal from the asset's own footprint toward the street cell the
+	## planner addressed it across. Scanned in one fixed order so the answer is
+	## a pure function of the record.
+	var columns: Dictionary = {}
+	for cell_value: Variant in record["cells"] as Array:
+		columns[cell_value as Vector2i] = true
+	var door_walk := record["door_walk"] as Vector3i
+	var door_column := Vector2i(door_walk.x, door_walk.z)
+	for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT,
+			Vector2i.UP]:
+		if columns.has(door_column - direction):
+			return direction
+	return Vector2i.ZERO
+
+
+static func _maze_asset_fine_footprint(record: Dictionary) -> Dictionary:
+	## The plot's macro columns at construction resolution: four fine cells per
+	## column, all at the plot's own floor band.
+	var out: Dictionary = {}
+	var floor_band := int(record["floor"])
+	for cell_value: Variant in record["cells"] as Array:
+		var column := cell_value as Vector2i
+		for x_offset in 2:
+			for z_offset in 2:
+				out[Vector3i(column.x * 2 + x_offset, floor_band,
+					column.y * 2 + z_offset)] = true
+	return out
+
+
+static func _maze_asset_landings(record: Dictionary, side: Vector3i,
+		footprint: Dictionary) -> Array[Vector3i]:
+	## The fine public lanes of the plot's own 3 m door cell that actually face
+	## its footprint. A macro street cell carries two lanes across and two
+	## along; only the ones whose inward neighbour is plot mass can be this
+	## landmark's doorway, which leaves at most two, in sorted order.
+	var door_walk := record["door_walk"] as Vector3i
+	var out: Array[Vector3i] = []
+	for x_offset in 2:
+		for z_offset in 2:
+			var landing := Vector3i(door_walk.x * 2 + x_offset, door_walk.y,
+				door_walk.z * 2 + z_offset)
+			if footprint.has(landing + side):
+				out.append(landing)
+	out.sort_custom(_cell_less)
+	return out
 
 
 static func _parcel_address_has_public_floor(grid: WarrenSpatialGrid,

@@ -6,12 +6,16 @@ extends RefCounted
 ## the plot planner decided the town; nothing here enumerates, scores, or
 ## grows an alternative partition.
 ##
-## One house or asset plot becomes ONE sealed WarrenBuildingParcel -- the
-## largest rectangle inside that plot which can carry its own door -- and the
-## cells the rectangle leaves over are that building's back rooms, recorded on
-## the parcel plan for composition's residual-room machinery. Decks and
-## bridges are typed records, never parcels: a deck has no height to build and
-## a bridge's door is a covered passage cell.
+## One HOUSE plot becomes ONE sealed WarrenBuildingParcel -- the largest
+## rectangle inside that plot which can carry its own door -- and the cells
+## the rectangle leaves over are that building's back rooms, recorded on the
+## parcel plan for composition's residual-room machinery. Decks, bridges and
+## assets are typed records, never parcels: a deck has no height to build, a
+## bridge's door is a covered passage cell, and an ASSET is a complete
+## authored building the planner already chose a recipe for (controller
+## ruling, 2026-08-23). Parcelling an asset would ask the room grammar to
+## invent walls for a prefab that ships with its own; composition instead
+## reserves it as a prefab landmark from `maze_assets`.
 ##
 ## A plot whose door rectangle cannot seal is a GENERATOR bug -- a plot the
 ## planner should never have placed -- not a shape this stage may silently
@@ -43,16 +47,27 @@ static func partition(source: WarrenMazeSourcePlan,
 	var back_rooms: Array[Dictionary] = []
 	var decks: Array[Dictionary] = []
 	var bridges: Array[Dictionary] = []
+	var assets: Array[Dictionary] = []
 	var buildings: Dictionary = {}
 	var untranslated: Array[Dictionary] = []
 	var shrunk: Dictionary = {}
+	var recipe_by_asset := _recipe_by_asset(source)
 	for plot: Dictionary in source.plots:
 		match StringName(plot["kind"]):
 			WarrenMazeSourcePlan.PLOT_DECK:
 				decks.append(_deck_record(plot))
 			WarrenMazeSourcePlan.PLOT_BRIDGE:
 				bridges.append(_bridge_record(plot))
-			WarrenMazeSourcePlan.PLOT_HOUSE, WarrenMazeSourcePlan.PLOT_ASSET:
+			WarrenMazeSourcePlan.PLOT_ASSET:
+				var kind_id := StringName(recipe_by_asset.get(
+					StringName(plot["id"]), &""))
+				if kind_id.is_empty():
+					untranslated.append({"id": StringName(plot["id"]),
+						"kind": StringName(plot["kind"]),
+						"reason": "asset plot names no catalog recipe"})
+					continue
+				assets.append(_asset_record(plot, kind_id))
+			WarrenMazeSourcePlan.PLOT_HOUSE:
 				var outcome := _parcel_for_plot(source, volume, plot)
 				var parcel := outcome["parcel"] as WarrenBuildingParcel
 				if parcel == null:
@@ -84,6 +99,7 @@ static func partition(source: WarrenMazeSourcePlan,
 		"back_room_count": back_rooms.size(),
 		"deck_count": decks.size(),
 		"bridge_count": bridges.size(),
+		"asset_count": assets.size(),
 		"shrunk_parcel_count": shrunk.size(),
 		"untranslated": untranslated,
 	}
@@ -104,11 +120,12 @@ static func partition(source: WarrenMazeSourcePlan,
 	plan.audit["maze_back_rooms"] = back_rooms
 	plan.audit["maze_decks"] = decks
 	plan.audit["maze_bridges"] = bridges
+	plan.audit["maze_assets"] = assets
 	plan.audit["maze_buildings"] = buildings
 	plan.audit["maze_untranslated"] = untranslated
 	plan.audit["maze_shrunk_parcel_count"] = shrunk.size()
 	plan.audit["maze_shrunk_parcels"] = shrunk
-	var ownership := _ownership(source, parcels, back_rooms)
+	var ownership := _ownership(source, parcels, back_rooms, assets)
 	plan.audit.merge(ownership, true)
 	last_diagnostic.merge(ownership, true)
 	return plan
@@ -280,6 +297,39 @@ static func _deck_record(plot: Dictionary) -> Dictionary:
 	}
 
 
+static func _recipe_by_asset(source: WarrenMazeSourcePlan) -> Dictionary:
+	## plot id -> the `prefab_anchor` recipe the reservation pass chose for it.
+	## The plot itself carries only the macro footprint the template implied;
+	## which recipe that template stands for lives in the planner's own
+	## outcome record, and composition needs the recipe, not the template.
+	var out: Dictionary = {}
+	var outcomes := source.audit.get("plot_outcomes", {}) as Dictionary
+	for record_value: Variant in outcomes.get("assets", []) as Array:
+		# A quota slot with no site left is a null record, not a plot: it
+		# never reached `add_plot`, so there is nothing here to name.
+		var record := record_value as Dictionary
+		if record.get("site", null) == null:
+			continue
+		var site := record["site"] as Dictionary
+		out[StringName(site["id"])] = StringName(record["kind_id"])
+	return out
+
+
+static func _asset_record(plot: Dictionary, kind_id: StringName) -> Dictionary:
+	## A complete authored building at the site the planner costed for it.
+	## `kind_id` is the catalog recipe composition must realise; `door_walk`
+	## is the street cell its entrance has to open onto, at `floor`.
+	return {
+		"id": StringName(plot["id"]),
+		"kind_id": kind_id,
+		"cells": (plot["cells"] as Array[Vector2i]).duplicate(),
+		"floor": int(plot["floor"]),
+		"top": int(plot["top"]),
+		"door_walk": plot["door_walk"] as Vector3i,
+		"building_id": StringName(plot["building_id"]),
+	}
+
+
 static func _bridge_record(plot: Dictionary) -> Dictionary:
 	## A bridge spans a retained street; its `door_walk` is that covered
 	## passage cell, which is public realm rather than an address, so it can
@@ -296,14 +346,20 @@ static func _bridge_record(plot: Dictionary) -> Dictionary:
 
 static func _ownership(source: WarrenMazeSourcePlan,
 		parcels: Array[WarrenBuildingParcel],
-		back_rooms: Array[Dictionary]) -> Dictionary:
+		back_rooms: Array[Dictionary],
+		assets: Array[Dictionary]) -> Dictionary:
 	## How much of the town above terrain the translation actually owns:
-	## parcel cells plus back-room cells over every solid cell in
-	## [massif.base_at, the column's own top). `rock_cells` is the rest of
-	## that solid which no plot stands in -- interior structure and the rock
-	## shoulders, which are derived mass rather than construction. Deck plots
-	## are in neither bucket by design: they are typed records with no mass at
-	## all ([floor, top) is empty for them).
+	## parcel cells plus back-room cells plus ASSET cells over every solid
+	## cell in [massif.base_at, the column's own top). `rock_cells` is the
+	## rest of that solid which no plot stands in -- interior structure and
+	## the rock shoulders, which are derived mass rather than construction.
+	## Deck plots are in neither bucket by design: they are typed records with
+	## no mass at all ([floor, top) is empty for them).
+	##
+	## An asset is a typed record rather than a parcel, but unlike a deck or a
+	## bridge it is real occupied mass the translation DID dispose of, so it
+	## belongs in the numerator exactly as a back room does. Leaving it out
+	## would charge the ratio for a landmark the town actually builds.
 	##
 	## BRIDGE mass leaves the DENOMINATOR too (review finding 2026-08-23,
 	## minor 15). A bridge is also a typed record -- it translates to an
@@ -342,17 +398,12 @@ static func _ownership(source: WarrenMazeSourcePlan,
 	var parcel_cells := 0
 	for parcel: WarrenBuildingParcel in parcels:
 		parcel_cells += parcel.occupied_cells().size()
-	var back_room_cells := 0
-	for record: Dictionary in back_rooms:
-		# Through solid_at, the same predicate the denominator counts: a
-		# back room owns the mass that is really there, never a band of its
-		# own plot that a street was bored through.
-		for cell_value: Variant in record["cells"] as Array:
-			var column := cell_value as Vector2i
-			for band in range(int(record["floor"]), int(record["top"])):
-				back_room_cells += int(source.solid_at(
-					Vector3i(column.x, band, column.y)))
-	var owned_cells := parcel_cells + back_room_cells
+	# Through solid_at, the same predicate the denominator counts: a back room
+	# or an asset owns the mass that is really there, never a band of its own
+	# plot that a street was bored through.
+	var back_room_cells := _record_solid_cells(source, back_rooms)
+	var asset_cells := _record_solid_cells(source, assets)
+	var owned_cells := parcel_cells + back_room_cells + asset_cells
 	return {
 		"maze_ownership_ratio": float(owned_cells) \
 			/ float(maxi(1, solid_cells)),
@@ -361,7 +412,21 @@ static func _ownership(source: WarrenMazeSourcePlan,
 		"maze_rock_cells": rock_cells,
 		"maze_parcel_cells": parcel_cells,
 		"maze_back_room_cells": back_room_cells,
+		"maze_asset_cells": asset_cells,
 	}
+
+
+static func _record_solid_cells(source: WarrenMazeSourcePlan,
+		records: Array[Dictionary]) -> int:
+	## Solid bands inside every record's own [floor, top) span.
+	var out := 0
+	for record: Dictionary in records:
+		for cell_value: Variant in record["cells"] as Array:
+			var column := cell_value as Vector2i
+			for band in range(int(record["floor"]), int(record["top"])):
+				out += int(source.solid_at(
+					Vector3i(column.x, band, column.y)))
+	return out
 
 
 static func _band_inside(spans: Array, band: int) -> bool:

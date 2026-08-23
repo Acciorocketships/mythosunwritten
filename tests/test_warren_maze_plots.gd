@@ -1369,9 +1369,15 @@ func test_volume_matches_solid_at() -> void:
 
 
 func test_translator_emits_one_parcel_group_per_building() -> void:
-	# One plot, one parcel, no orphan cells: the parcel's rectangle sits
+	# One HOUSE plot, one parcel, no orphan cells: the parcel's rectangle sits
 	# inside its plot, its door really serves its address, and the cells the
 	# rectangle left over are all recorded as that building's back rooms.
+	#
+	# ASSET plots take the other road (controller ruling, 2026-08-23): the
+	# planner already chose a complete authored building for them, so they
+	# become `maze_assets` records for composition to reserve as prefab
+	# landmarks and must NEVER appear as parcels. Both halves are asserted
+	# here so the split cannot silently drift back.
 	for spec: Dictionary in [{"seed": 12, "scale": &"compact"},
 			{"seed": 3, "scale": &"standard"}]:
 		var seed_value := int(spec["seed"])
@@ -1398,12 +1404,40 @@ func test_translator_emits_one_parcel_group_per_building() -> void:
 		var buildings := parcels.audit.get("maze_buildings", {}) as Dictionary
 		var shrunk := parcels.audit.get("maze_shrunk_parcels",
 			{}) as Dictionary
+		var asset_records: Dictionary = {}
+		for record: Dictionary in parcels.audit.get("maze_assets",
+				[]) as Array:
+			assert_false(asset_records.has(StringName(record["id"])),
+				"one asset record per asset plot")
+			asset_records[StringName(record["id"])] = record
 		var expected_buildings: Dictionary = {}
 		var building_plots := 0
+		var asset_plots := 0
 		for plot: Dictionary in plan.plots:
 			var kind := StringName(plot["kind"])
-			if kind != WarrenMazeSourcePlan.PLOT_HOUSE \
-					and kind != WarrenMazeSourcePlan.PLOT_ASSET:
+			if kind == WarrenMazeSourcePlan.PLOT_ASSET:
+				asset_plots += 1
+				var asset_id := StringName(plot["id"])
+				assert_false(by_id.has(StringName("parcel.maze.%s" \
+					% String(asset_id))),
+					"asset plot %s is never a parcel" % asset_id)
+				assert_true(asset_records.has(asset_id),
+					"asset plot %s became a maze_assets record" % asset_id)
+				var asset := asset_records.get(asset_id, {}) as Dictionary
+				assert_ne(String(asset.get("kind_id", &"")), "",
+					"asset %s names its catalog recipe" % asset_id)
+				assert_eq(int(asset.get("floor", -1)), int(plot["floor"]),
+					"asset %s keeps its plot floor" % asset_id)
+				assert_eq(int(asset.get("top", -1)), int(plot["top"]),
+					"asset %s keeps its plot top" % asset_id)
+				assert_eq(asset.get("door_walk", Vector3i.ZERO) as Vector3i,
+					plot["door_walk"] as Vector3i,
+					"asset %s keeps its plot door" % asset_id)
+				assert_eq((asset.get("cells", []) as Array).size(),
+					(plot["cells"] as Array).size(),
+					"asset %s keeps its whole footprint" % asset_id)
+				continue
+			if kind != WarrenMazeSourcePlan.PLOT_HOUSE:
 				continue
 			building_plots += 1
 			expected_buildings[StringName(plot["building_id"])] = true
@@ -1450,16 +1484,20 @@ func test_translator_emits_one_parcel_group_per_building() -> void:
 			assert_lte(parcel.footprint.size(), largest,
 				"parcel %s cannot exceed the plot's own largest rectangle"
 					% id)
-		gut.p(("seed %d %s: %d building plots, %d parcels, %d back rooms, " \
-			+ "%d shrunk") % [seed_value, scale, building_plots,
-				parcels.parcels.size(), back_rooms.size(), shrunk.size()])
+		gut.p(("seed %d %s: %d house plots, %d parcels, %d back rooms, " \
+			+ "%d shrunk, %d asset plots, %d asset records") % [seed_value,
+				scale, building_plots, parcels.parcels.size(),
+				back_rooms.size(), shrunk.size(), asset_plots,
+				asset_records.size()])
 		for key: Variant in shrunk.keys():
 			gut.p("  shrunk %s: %s" % [key, shrunk[key]])
 		assert_gt(building_plots, 4, "the town has buildings to translate")
 		assert_eq(parcels.parcels.size(), building_plots,
-			"every house and asset plot becomes exactly one parcel")
+			"every house plot becomes exactly one parcel, and only those")
+		assert_eq(asset_records.size(), asset_plots,
+			"every asset plot becomes exactly one maze_assets record")
 		assert_eq(buildings.size(), expected_buildings.size(),
-			"maze_buildings keys are the building plots' own group ids")
+			"maze_buildings keys are the house plots' own group ids")
 		for key: Variant in expected_buildings.keys():
 			assert_true(buildings.has(key),
 				"maze_buildings carries building %s" % key)
