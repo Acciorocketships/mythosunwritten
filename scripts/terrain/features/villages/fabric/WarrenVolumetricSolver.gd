@@ -82,6 +82,20 @@ const MIN_COURT_PARCEL_SIDE_COUNT := 2
 ## one fine-grid (3 m x 1.5 m) socket strip; unrelated room mass remains a hard
 ## conflict and larger self-conflicts are not waved through.
 const MAX_COURT_OWNER_SOCKET_RECOMPOSITION_CELLS := 2
+## The five authored room shells as MACRO footprints, largest first. `width`
+## runs across the parcel's frontage and `depth` along it, which is exactly the
+## reading `WarrenBuildingParcel.seal` and `WarrenParcelConstruction`'s own
+## `profile_for` give a parcel's rectangle -- so a back room's kind means the
+## as the kind of the house standing in front of it. Used only by the directed
+## maze back-room pass; the greedy residual scan enumerates `WarrenRoomStamp
+## .KINDS` directly because it has no frontage to reckon from.
+const MAZE_BACK_ROOM_KINDS: Array[Dictionary] = [
+	{"kind": &"long", "width": 2, "depth": 3},
+	{"kind": &"building", "width": 2, "depth": 2},
+	{"kind": &"slim", "width": 1, "depth": 2},
+	{"kind": &"row", "width": 2, "depth": 1},
+	{"kind": &"tower", "width": 1, "depth": 1},
+]
 
 static var last_failure := ""
 ## Facts about the most recent staged production search: whether it visited
@@ -2496,6 +2510,32 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# inhabited bearing plus a face-adjacent private access parent. These are
 	# ordinary WarrenBuildingVolume records and enter the same support, shell,
 	# authored-envelope, and construction transactions as frontage buildings.
+	# Before the greedy scan: the DIRECTED pass. A maze town's leftover plot
+	# mass is not something to discover -- the plot planner assigned it to a
+	# building already -- so it is stamped from the record rather than searched
+	# for, and only what that pass cannot stand up is left to the greedy scan
+	# below. `maze_back_rooms` exists on no searched plan, so this is a no-op
+	# in every legacy mode.
+	var back_rooms := _stamp_maze_back_rooms(grid, volume, parcels, proposals,
+		buildings, supports, required_supports, terrain_support_ids,
+		support_edges, protected_owners, construction_program)
+	if bool(back_rooms.get("failed", false)):
+		last_failure = "maze back-room stamping failed: %s" % last_failure
+		return {}
+	composition_audit["maze_back_room_record_count"] = int(
+		back_rooms.get("record_count", 0))
+	composition_audit["maze_back_room_rectangle_count"] = int(
+		back_rooms.get("rectangle_count", 0))
+	composition_audit["maze_back_room_building_count"] = int(
+		back_rooms.get("building_count", 0))
+	composition_audit["maze_back_room_cell_count"] = int(
+		back_rooms.get("cell_count", 0))
+	composition_audit["maze_back_room_stamped_cell_count"] = int(
+		back_rooms.get("stamped_cell_count", 0))
+	composition_audit["maze_back_room_unstamped_cells"] = (
+		back_rooms.get("unstamped_cells", {}) as Dictionary).duplicate(true)
+	composition_audit["maze_back_room_refusals"] = (
+		back_rooms.get("refusals", {}) as Dictionary).duplicate()
 	var backfill := _backfill_residual_rooms(grid, volume, buildings, supports,
 		required_supports, terrain_support_ids, support_edges, protected_owners,
 		scale_profile.residual_room_budget,
@@ -8930,6 +8970,408 @@ static func _segment_cells(base_plate: Dictionary, origin_y: int,
 	return out
 
 
+static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
+		proposals: Array[Dictionary],
+		buildings: Array[WarrenBuildingVolume],
+		supports: WarrenSupportGraph, required_supports: Array[StringName],
+		terrain_support_ids: Array[StringName],
+		support_edges: Array[Dictionary], protected_owners: Dictionary,
+		construction_program: SettlementFabricProgram) -> Dictionary:
+	## The DIRECTED residual pass. The plot planner already decided which mass
+	## belongs to which house, so the cells a house's door rectangle left over
+	## are not something composition has to discover: each `maze_back_rooms`
+	## record is cut into rectangles of the five-kind vocabulary and stamped as
+	## rooms of the same building, at the same storeys, reaching the street
+	## through the parcel's own volume instead of a threshold of their own.
+	##
+	## Runs BEFORE `_backfill_residual_rooms`, which then sees the result as
+	## ordinary sealed fabric. A rectangle this pass cannot stand up is left in
+	## `maze_back_room_unstamped_cells` for the greedy scan to try, never
+	## silently dropped.
+	##
+	## Maze mode only: `maze_back_rooms` exists on no searched plan, so the
+	## empty-record guard is what keeps legacy composition byte-identical.
+	var empty := {"failed": false, "cell_count": 0, "stamped_cell_count": 0,
+		"building_count": 0, "rectangle_count": 0, "record_count": 0,
+		"refusals": {},
+		"unstamped_cells": {"count": 0, "cells": [] as Array[Vector3i]}}
+	var records := parcels.audit.get("maze_back_rooms", []) as Array
+	if records.is_empty():
+		return empty
+	var parcel_by_id: Dictionary = {}
+	for proposal: Dictionary in proposals:
+		var proposed := proposal.parcel as WarrenBuildingParcel
+		parcel_by_id[proposed.stable_id] = proposed
+	var building_by_id: Dictionary = {}
+	var building_by_cell: Dictionary = {}
+	var access_by_parcel := _maze_back_room_access_roots(buildings,
+		building_by_id, building_by_cell)
+	# One work item per (rectangle, storey), ordered by BAND: no back room is
+	# then ever stamped before the mass it stands on, and no lower room's roof
+	# preflight has to argue with the upper room that will replace that roof.
+	var work: Array[Dictionary] = []
+	var candidate_cells: Dictionary = {}
+	var refusals: Dictionary = {}
+	var rectangle_count := 0
+	for record_index in records.size():
+		var record := records[record_index] as Dictionary
+		var parcel := parcel_by_id.get(
+			StringName(record["parcel_id"])) as WarrenBuildingParcel
+		if parcel == null:
+			# The parcel left composition, so its back rooms have no building
+			# to belong to and no storeys to copy.
+			_note_maze_back_room_refusal(refusals, "parcel left composition")
+			continue
+		var yaw := _yaw_for_direction(Vector3i.BACK,
+			Vector3i(parcel.frontage_direction.x, 0,
+				parcel.frontage_direction.y))
+		var access_id := StringName(access_by_parcel.get(parcel.stable_id,
+			&""))
+		if yaw < 0 or access_id.is_empty():
+			_note_maze_back_room_refusal(refusals,
+				"parcel volume has no frontage yaw or access root")
+			continue
+		var floor_band := int(record["floor"])
+		var rectangles := _maze_back_room_rectangles(
+			record["cells"] as Array, parcel.frontage_direction)
+		rectangle_count += rectangles.size()
+		for rectangle_index in rectangles.size():
+			var rectangle := rectangles[rectangle_index] as Dictionary
+			for storey in parcel.storey_count():
+				var band := floor_band \
+					+ storey * WarrenSpatialGrid.STOREY_CELLS
+				var cells := _maze_back_room_cells(
+					rectangle["columns"] as Array[Vector2i], band)
+				var allocatable := true
+				for cell: Vector3i in cells:
+					if grid.use_at(cell) \
+							!= WarrenSpatialGrid.Use.ALLOCATABLE:
+						allocatable = false
+						continue
+					# The denominator is the mass this pass could really have
+					# taken: a plot band a street was bored through is not
+					# back-room mass and never counts against the share.
+					candidate_cells[cell] = true
+				if not allocatable:
+					_note_maze_back_room_refusal(refusals,
+						"storey is not whole allocatable mass")
+					continue
+				work.append({"kind": StringName(rectangle["kind"]),
+					"columns": rectangle["columns"], "cells": cells,
+					"band": band, "yaw": yaw, "access_id": access_id,
+					"record": record_index, "rectangle": rectangle_index})
+	work.sort_custom(_maze_back_room_less)
+	var stamped_cells: Dictionary = {}
+	var added := 0
+	for item: Dictionary in work:
+		var cells := item["cells"] as Array[Vector3i]
+		var blocked := false
+		for cell: Vector3i in cells:
+			if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE \
+					or _residual_feature_protected(grid, cell,
+						protected_owners):
+				blocked = true
+				break
+		if blocked:
+			_note_maze_back_room_refusal(refusals,
+				"mass already spent or feature-reserved")
+			continue
+		var band := int(item["band"])
+		var columns := item["columns"] as Array[Vector2i]
+		var kind := StringName(item["kind"])
+		var yaw := int(item["yaw"])
+		var origin := _maze_back_room_origin(kind, cells, yaw)
+		if origin.x == 2147483647:
+			_note_maze_back_room_refusal(refusals,
+				"rectangle is not an authored shell")
+			continue
+		var terrain_bearing := _maze_back_room_bears_terrain(grid, volume,
+			columns, band)
+		var support_parent_id := &""
+		var support_parent_cell := Vector3i(2147483647, 2147483647, 2147483647)
+		if not terrain_bearing:
+			var support_counts: Dictionary = {}
+			var support_cell_by_owner: Dictionary = {}
+			for cell: Vector3i in cells:
+				if cell.y != band:
+					continue
+				var below := cell + Vector3i.DOWN
+				var owner := StringName(building_by_cell.get(below, &""))
+				if owner.is_empty():
+					continue
+				support_counts[owner] = int(
+					support_counts.get(owner, 0)) + 1
+				support_cell_by_owner[owner] = below
+			support_parent_id = _largest_contact_owner(support_counts)
+			var required := maxi(1, columns.size() * 2)
+			if support_parent_id.is_empty() \
+					or int(support_counts[support_parent_id]) < required:
+				# Neither the ground nor half a floorplate of inhabited mass
+				# stands under this rectangle. What is usually there instead is
+				# structural ROCK, which is derived stone rather than
+				# construction and which no room may name as its bearing.
+				_note_maze_back_room_refusal(refusals,
+					"no terrain or building bearing")
+				continue
+			support_parent_cell = support_cell_by_owner[
+				support_parent_id] as Vector3i
+		var parent_building := building_by_id.get(support_parent_id) \
+			as WarrenBuildingVolume
+		var parent_room := _maze_back_room_parent_room(parent_building,
+			support_parent_cell)
+		if not terrain_bearing and parent_room == null:
+			_note_maze_back_room_refusal(refusals,
+				"bearing parent has no room to name")
+			continue
+		var building_id := StringName("spatial.maze_back.%02d" % added)
+		var source_id := StringName("maze.back.%02d" % added)
+		var support_source := &"" if terrain_bearing \
+			else parent_room.source_parcel_id
+		var support_storey := -1 if terrain_bearing \
+			else parent_room.source_storey_index
+		var roof_feature := _residual_roof_feature(kind, origin,
+			volume.world_seed)
+		var probe := WarrenRoomStamp.new(&"maze.back.envelope.probe",
+			&"maze.back.envelope.probe", kind, origin, yaw, 0, terrain_bearing,
+			false, Vector3i(2147483647, 2147483647, 2147483647),
+			Vector3i.ZERO, roof_feature, support_source, support_storey)
+		probe.private_cells.assign(cells)
+		if not _residual_room_envelope_fits(probe, building_by_id,
+				construction_program, volume.world_seed):
+			_note_maze_back_room_refusal(refusals,
+				"authored envelope does not fit")
+			continue
+		var assign := grid.begin_transaction(building_id)
+		if not assign.require_use(cells,
+				[WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+				or not assign.assign_use(cells,
+					WarrenSpatialGrid.Use.PRIVATE_VOLUME, building_id) \
+				or not assign.commit():
+			last_failure = "back room %s changed before commit: %s" % [
+				building_id, assign.last_rejection]
+			return {"failed": true}
+		var room := WarrenRoomStamp.new(
+			StringName("%s.room00" % building_id), source_id, kind, origin,
+			yaw, 0, terrain_bearing, false,
+			Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO,
+			roof_feature, support_source, support_storey)
+		var building := WarrenBuildingVolume.new(building_id, band)
+		if not building.add_private_cells(cells) \
+				or not room.add_private_cells(cells) \
+				or not room.seal(grid, building_id) \
+				or not building.add_room(room) \
+				or not building.add_private_parent(
+					StringName(item["access_id"])) \
+				or not building.seal(grid) \
+				or not supports.add_node(building_id):
+			last_failure = ("back room %s failed its building transaction: " \
+				+ "%s/%s") % [building_id, room.last_rejection,
+					building.last_rejection]
+			return {"failed": true}
+		if terrain_bearing:
+			terrain_support_ids.append(building_id)
+		else:
+			support_edges.append({"child": building_id,
+				"parent": parent_building.stable_id})
+		required_supports.append(building_id)
+		buildings.append(building)
+		building_by_id[building_id] = building
+		for cell: Vector3i in cells:
+			building_by_cell[cell] = building_id
+			stamped_cells[cell] = true
+		added += 1
+	var unstamped: Array[Vector3i] = []
+	for cell_value: Variant in candidate_cells.keys():
+		var cell := cell_value as Vector3i
+		if not stamped_cells.has(cell):
+			unstamped.append(cell)
+	unstamped.sort_custom(_cell_less)
+	return {"failed": false, "cell_count": candidate_cells.size(),
+		"stamped_cell_count": stamped_cells.size(), "building_count": added,
+		"rectangle_count": rectangle_count, "record_count": records.size(),
+		"refusals": refusals,
+		"unstamped_cells": {"count": unstamped.size(), "cells": unstamped}}
+
+
+static func _maze_back_room_access_roots(
+		buildings: Array[WarrenBuildingVolume], building_by_id: Dictionary,
+		building_by_cell: Dictionary) -> Dictionary:
+	## Source parcel id -> the volume a back room of that parcel should name as
+	## its private parent, indexing the two cell/id maps on the same walk. The
+	## ADDRESSED segment is preferred because it is the access root of its own
+	## lineage; an all-transferred lineage falls back to its lowest segment id,
+	## which reaches the street through the chain `_partition_rooms` built.
+	var addressed: Dictionary = {}
+	var any: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		building_by_id[building.stable_id] = building
+		for cell: Vector3i in building.private_cells:
+			building_by_cell[cell] = building.stable_id
+		var target := addressed if not building.thresholds.is_empty() else any
+		for room: WarrenRoomStamp in building.room_records:
+			var current := StringName(target.get(room.source_parcel_id, &""))
+			if current.is_empty() \
+					or String(building.stable_id) < String(current):
+				target[room.source_parcel_id] = building.stable_id
+	for parcel_value: Variant in any.keys():
+		var parcel_id := StringName(parcel_value)
+		if not addressed.has(parcel_id):
+			addressed[parcel_id] = any[parcel_id]
+	return addressed
+
+
+static func _maze_back_room_parent_room(building: WarrenBuildingVolume,
+		cell: Vector3i) -> WarrenRoomStamp:
+	if building == null:
+		return null
+	for room: WarrenRoomStamp in building.room_records:
+		if room.has_private_cell(cell):
+			return room
+	return building.room_records[0] if not building.room_records.is_empty() \
+		else null
+
+
+static func _note_maze_back_room_refusal(refusals: Dictionary,
+		reason: String) -> void:
+	refusals[reason] = int(refusals.get(reason, 0)) + 1
+
+
+static func _maze_back_room_less(left: Dictionary,
+		right: Dictionary) -> bool:
+	if int(left["band"]) != int(right["band"]):
+		return int(left["band"]) < int(right["band"])
+	if int(left["record"]) != int(right["record"]):
+		return int(left["record"]) < int(right["record"])
+	return int(left["rectangle"]) < int(right["rectangle"])
+
+
+static func _maze_back_room_rectangles(columns: Array,
+		frontage: Vector2i) -> Array[Dictionary]:
+	## Cut one back-room record's macro columns into axis-aligned rectangles of
+	## the five-kind vocabulary, largest first. Greedy and deterministic: walk
+	## the still-unclaimed columns in (z, x) order and take the biggest kind
+	## whose whole rectangle is unclaimed, anchored at that column's minimum
+	## corner. A 1 x 1 tower always fits, so no column is left uncut.
+	var free: Dictionary = {}
+	for column_value: Variant in columns:
+		free[column_value as Vector2i] = true
+	var order: Array[Vector2i] = []
+	order.assign(free.keys())
+	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x < b.x if a.y == b.y else a.y < b.y)
+	var out: Array[Dictionary] = []
+	for anchor: Vector2i in order:
+		if not free.has(anchor):
+			continue
+		for shape: Dictionary in MAZE_BACK_ROOM_KINDS:
+			var span := Vector2i(int(shape["depth"]), int(shape["width"])) \
+				if frontage.x != 0 \
+				else Vector2i(int(shape["width"]), int(shape["depth"]))
+			var claimed: Array[Vector2i] = []
+			for x in range(anchor.x, anchor.x + span.x):
+				for z in range(anchor.y, anchor.y + span.y):
+					if free.has(Vector2i(x, z)):
+						claimed.append(Vector2i(x, z))
+			if claimed.size() != span.x * span.y:
+				continue
+			for column: Vector2i in claimed:
+				free.erase(column)
+			out.append({"kind": StringName(shape["kind"]),
+				"columns": claimed})
+			break
+	return out
+
+
+static func _maze_back_room_cells(columns: Array[Vector2i],
+		band: int) -> Array[Vector3i]:
+	## One storey of fine mass under a macro rectangle.
+	var out: Array[Vector3i] = []
+	for column: Vector2i in columns:
+		for y_offset in WarrenSpatialGrid.STOREY_CELLS:
+			out.append_array(_fine_square(Vector3i(column.x, band + y_offset,
+				column.y)))
+	return out
+
+
+static func _maze_back_room_origin(kind: StringName, cells: Array[Vector3i],
+		yaw: int) -> Vector3i:
+	## The lattice origin at which `kind` at `yaw` stamps exactly `cells`. Both
+	## are boxes, so aligning their minimum corners decides it; the set
+	## comparison afterwards is what refuses a rectangle whose extent is not
+	## this kind's, rather than trusting the caller's arithmetic.
+	var invalid := Vector3i(2147483647, 2147483647, 2147483647)
+	var local := WarrenRoomStamp.expected_private_cells(kind, Vector3i.ZERO,
+		yaw)
+	if local.is_empty() or local.size() != cells.size():
+		return invalid
+	var local_minimum := local[0]
+	for cell: Vector3i in local:
+		local_minimum = local_minimum.min(cell)
+	var target_minimum := cells[0]
+	var wanted: Dictionary = {}
+	for cell: Vector3i in cells:
+		target_minimum = target_minimum.min(cell)
+		wanted[cell] = true
+	var origin := target_minimum - local_minimum
+	for cell: Vector3i in WarrenRoomStamp.expected_private_cells(kind, origin,
+			yaw):
+		if not wanted.has(cell):
+			return invalid
+	return origin
+
+
+static func _maze_back_room_bears_terrain(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan, columns: Array[Vector2i],
+		band: int) -> bool:
+	## A back room stands on the ground when every one of its macro columns has
+	## unbroken source mass from its own stamped bearing datum up to the room's
+	## floor, and that rise is short enough for the authored stone course to
+	## close. This is exactly the contract
+	## `WarrenSpatialFabricCompiler._retained_foundation_cells` enforces on any
+	## terrain-bearing room -- asked HERE, before the room enters the grid,
+	## because there it rejects the whole town rather than one rectangle.
+	for column: Vector2i in columns:
+		if not volume.envelope.contains_column(column):
+			return false
+		var ground := volume.envelope.bearing_at(column)
+		var depth := band - ground
+		if depth < 0 or depth > WarrenSpatialFabricCompiler \
+				.FOUNDATION_MODULE_HEIGHT_BANDS:
+			return false
+		for lower_band in range(ground, band):
+			if not volume.has_mass(Vector3i(column.x, lower_band, column.y)):
+				return false
+		if depth == 0:
+			continue
+		for fine: Vector3i in _fine_square(Vector3i(column.x, band - 1,
+				column.y)):
+			if grid.use_at(fine) == WarrenSpatialGrid.Use.PUBLIC_AIR:
+				return false
+	return true
+
+
+static func _maze_plot_mass_cells(volume: WarrenVolumePlan) -> Dictionary:
+	## Every FINE cell inside some plot's own `[floor, top)`. In the plot model
+	## this is the whole of a maze town's buildable mass: solid that no plot
+	## stands in is structural ROCK -- interior stone the source plan derived,
+	## which C5 renders and which is never a room. Empty for a searched volume,
+	## which is what makes the residual filter maze-only.
+	var out: Dictionary = {}
+	var source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null:
+		return out
+	for plot: Dictionary in source.plots:
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			for band in range(int(plot["floor"]), int(plot["top"])):
+				for fine: Vector3i in _fine_square(Vector3i(column.x, band,
+						column.y)):
+					out[fine] = true
+	return out
+
+
 static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, buildings: Array[WarrenBuildingVolume],
 		supports: WarrenSupportGraph, required_supports: Array[StringName],
@@ -8950,6 +9392,12 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 		building_by_id[building.stable_id] = building
 		for cell: Vector3i in building.private_cells:
 			building_by_cell[cell] = building.stable_id
+	# In the plot model a room may stand only in mass some plot claimed; solid
+	# outside every plot is structural ROCK, which the source plan derived and
+	# which is stone rather than construction. Empty on a searched volume, and
+	# an empty set is what leaves the candidate check below byte-identical for
+	# every legacy mode.
+	var plot_mass_cells := _maze_plot_mass_cells(volume)
 	# Index each still-uncovered public floor by the private-volume cells that
 	# could form its ceiling. This turns the first part of residual packing into
 	# an explicit tunnel/bridge-house pass: complete inhabited rooms that span a
@@ -9032,7 +9480,8 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 						frontage_side_by_private_cell,
 						uncovered_frontage_sides,
 						volume.world_seed,
-						int(kind_counts.get(kind, 0)), construction_program)
+						int(kind_counts.get(kind, 0)), construction_program,
+						plot_mass_cells)
 					if candidate.is_empty():
 						continue
 					if best.is_empty() or float(candidate.score) \
@@ -9189,14 +9638,22 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		frontage_side_by_private_cell: Dictionary,
 		uncovered_frontage_sides: Dictionary,
 		world_seed: int, existing_kind_count: int,
-		construction_program: SettlementFabricProgram) -> Dictionary:
+		construction_program: SettlementFabricProgram,
+		plot_mass_cells: Dictionary = {}) -> Dictionary:
 	var cells := WarrenRoomStamp.expected_private_cells(kind, origin, yaw)
 	if cells.is_empty():
 		return {}
+	# `plot_mass_cells` is empty in every searched mode and the short-circuit
+	# below therefore never even reads the dictionary there. In MAZE mode it is
+	# the town's plot mass, and a cell outside it is structural ROCK: derived
+	# stone the plot planner never gave to a building, which the greedy scan
+	# used to fill with unroofable towers.
 	var footprint: Dictionary = {}
 	for cell: Vector3i in cells:
 		if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE \
 				or roof_eave_halo.has(cell) \
+				or not plot_mass_cells.is_empty() \
+					and not plot_mass_cells.has(cell) \
 				or _residual_feature_protected(grid, cell, protected_owners):
 			return {}
 		footprint[Vector2i(cell.x, cell.z)] = true

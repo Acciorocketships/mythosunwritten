@@ -66,28 +66,41 @@ const HERO_QUOTA_GATE_FRAGMENTS: Array[String] = [
 ]
 
 ## Seeds that compose a town and then lose it to a STRUCTURAL gate in
-## `WarrenSpatialFabricCompiler` — a room the roof vocabulary cannot cover.
-## Both are room/roof contracts, not feature quotas, and both were masked
-## until Task C2 opened the hero-feature gate that used to reject these towns
-## first; the counterfactual of translating asset plots back into parcels
-## reproduces each of them unchanged, so neither belongs to the asset model.
+## `WarrenSpatialFabricCompiler` — a room the roof vocabulary cannot cover. It
+## is a room/roof contract, not a feature quota, and it was masked until Task
+## C2 opened the hero-feature gate that used to reject the town first.
 ##
 ## Pinned at the DEFECT level, not the gate level: every fragment listed must
-## appear in the failure. The modular-box gate alone covers three different
-## contract violations over any room in the town, so pinning its headline
-## would silently accept a partial-bearing or unclassified room somewhere
-## else as "the known blocker"; naming the classification as well means only
-## THIS defect passes.
+## appear in the failure, so a different defect at the same gate cannot pass
+## itself off as "the known blocker".
 ##
 ## The pin is two-sided on purpose. A seed that dies at a DIFFERENT gate fails
 ## here because the map went stale, and a seed that starts SEALING fails here
-## because its entry is now a lie that must be deleted.
+## because its entry is now a lie that must be deleted. 3/STANDARD IS EXACTLY
+## THAT CASE and its entry is gone as of Task C3: its two roofless residual
+## towers were the greedy scan building inside structural ROCK — solid the plot
+## planner never gave to any building — and the maze-mode candidate filter that
+## keeps rooms inside plot mass removed them. The seed seals end to end.
 const KNOWN_FABRIC_BLOCKERS: Dictionary = {
-	"3/standard": ["spatial modular-box contract failed", "roofless_house",
-		"spatial.residual.00.room00", "spatial.residual.02.room00"],
 	"9/standard": ["roof remainder for spatial.parcel.maze.house.044",
 		"1-cell exposed sliver"],
 }
+
+## Measured share of the back-room mass the directed pre-pass really stamps as
+## rooms, minus a 0.05 guard, taken from the WEAKEST of the three sealing towns
+## (0.372, 0.227, 0.344 at the pass's first delivery). The denominator is the
+## ALLOCATABLE fine mass the back-room records cover when the pass begins — the
+## cells it could have taken — so a plot band a street was bored through never
+## counts against it. Re-pin upward only: a drop is a regression to report,
+## never to relax.
+##
+## What the remainder is, measured from `maze_back_room_refusals`: records
+## whose parcel composed no building at all (its lineage was dropped), storeys
+## whose mass the composed parcels themselves moved into, rectangles whose
+## authored shell or roof will not fit beside the house in front of them, and
+## rectangles standing more than the authored stone course above their own
+## ground with no building underneath. All four are left to the greedy scan.
+const BACK_ROOM_STAMPED_FLOOR := 0.17
 
 static var _program_cache: SettlementFabricProgram
 ## One production solve per (seed, scale) shared by every test in the file.
@@ -316,6 +329,100 @@ func test_assets_become_landmarks_or_audited_shortfalls() -> void:
 				assert_false(String(record.get("reason", "")).is_empty(),
 					"%s unplaced asset %s must name a reason" % [
 						_label(outcome), record.get("id", &"")])
+
+
+func _plot_mass_cells(plan: WarrenSpatialPlan) -> Dictionary:
+	## Every FINE cell inside some plot's own `[floor, top)`, read from the
+	## sealed maze source the plan itself carries. In the plot model this is
+	## the whole of the town's buildable mass: anything solid outside it is
+	## structural ROCK, which is derived stone and never a room.
+	var out: Dictionary = {}
+	var source := plan.source_volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null:
+		return out
+	for plot: Dictionary in source.plots:
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			for band in range(int(plot["floor"]), int(plot["top"])):
+				for x_offset in 2:
+					for z_offset in 2:
+						out[Vector3i(column.x * 2 + x_offset, band,
+							column.y * 2 + z_offset)] = true
+	return out
+
+
+func test_back_rooms_become_rooms() -> void:
+	## The cells a house plot's door rectangle left over are that building's
+	## back rooms, and the directed pre-pass is what turns them into real
+	## WarrenRoomStamps. Before it existed they were plot mass nobody claimed
+	## and `_discard_unassigned_mass` threw them away.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var total := int(plan.audit.get("maze_back_room_cell_count", -1))
+		var stamped := int(plan.audit.get("maze_back_room_stamped_cell_count",
+			-1))
+		var unstamped := plan.audit.get("maze_back_room_unstamped_cells",
+			{}) as Dictionary
+		assert_gt(total, 0,
+			"%s must publish the back-room mass it was handed" \
+				% _label(outcome))
+		if total <= 0:
+			continue
+		measured += 1
+		var share := float(stamped) / float(total)
+		print(("MAZE_BACK_ROOMS %s stamped=%d/%d share=%.3f rooms=%d " \
+			+ "unstamped=%d") % [_label(outcome), stamped, total, share,
+				int(plan.audit.get("maze_back_room_building_count", -1)),
+				int(unstamped.get("count", -1))])
+		assert_eq(stamped + int(unstamped.get("count", -1)), total,
+			("%s must account for every back-room cell: stamped plus " \
+				+ "unstamped is the whole") % _label(outcome))
+		assert_eq((unstamped.get("cells", []) as Array).size(),
+			int(unstamped.get("count", -1)),
+			"%s must name the cells it could not stamp" % _label(outcome))
+		assert_gte(share, BACK_ROOM_STAMPED_FLOOR,
+			"%s stamps only %.3f of its back-room mass" % [_label(outcome),
+				share])
+	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func test_residual_rooms_stay_inside_plots() -> void:
+	## Ruling 1: in the plot model, mass that is not inside a plot is
+	## structural ROCK, and the greedy residual scan may not build in it. Every
+	## room the backfill admits — and every back room the pre-pass stamps —
+	## must lie inside some plot's own band span, checked against the sealed
+	## source rather than against the audit that claims it.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var plot_mass := _plot_mass_cells(plan)
+		assert_gt(plot_mass.size(), 0,
+			"%s must carry its own sealed maze source" % _label(outcome))
+		var outside := 0
+		var first := ""
+		for building: WarrenBuildingVolume in plan.buildings:
+			if not String(building.stable_id).begins_with("spatial.residual.") \
+					and not String(building.stable_id).begins_with(
+						"spatial.maze_back."):
+				continue
+			checked += 1
+			for cell: Vector3i in building.private_cells:
+				if plot_mass.has(cell):
+					continue
+				outside += 1
+				if first.is_empty():
+					first = "%s at %s" % [building.stable_id, cell]
+		assert_eq(outside, 0,
+			"%s builds %d residual cells in structural rock (%s)" % [
+				_label(outcome), outside, first])
+	assert_gt(checked, 0,
+		"at least one sealed seed really has residual or back-room buildings")
 
 
 func test_maze_mode_is_deterministic() -> void:

@@ -27,13 +27,18 @@ var address_door_phase: int
 ## legacy caller, so every parcel the route-first pipeline builds keeps the
 ## exact contract it always had.
 ##
-## COMPOSITION DOES NOT READ THIS YET (review finding 2026-08-23, Important
-## 3). It shares a name with `proposal["flat_roof"]` -- the older staggered
-## roof flag `WarrenAssetCompiler` sets at :951/:952 and :987/:988 and
+## READ BY THE PLAN'S SUPPORT RULE since Task C3: a flat roof is one band of
+## SLAB, so a building stacked on this parcel stands on `top_band` rather than
+## on `roof_base_band()`, and `WarrenParcelPlan._building_support_is_valid`
+## admits exactly that seam for a flat-roofed parent.
+##
+## THE ROOF COMPILER STILL DOES NOT READ IT. It shares a name with
+## `proposal["flat_roof"]` -- the older staggered roof flag
+## `WarrenAssetCompiler` sets at :951/:952 and :987/:988 and
 ## `StaggeredFabricCompiler` consumes at :458 -- but the two are NOT wired
-## together, so today this flag governs the parcel's height contract
-## (`_height_is_legal`, `storey_count`, `roof_base_band`) and nothing else.
-## The name is deliberate and stays: they mean the same thing about a
+## together, so beyond the support seam this flag governs the parcel's height
+## contract (`_height_is_legal`, `storey_count`, `roof_base_band`) and nothing
+## else. The name is deliberate and stays: they mean the same thing about a
 ## building. Phase C is what must join them -- seed `proposal["flat_roof"]`
 ## from `parcel.flat_roof` where the maze proposals are built, so a plot the
 ## planner tiered actually composes a flat roof instead of a pitched one.

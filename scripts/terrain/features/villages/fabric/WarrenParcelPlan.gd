@@ -76,9 +76,32 @@ func seal(p_parcels: Array[WarrenBuildingParcel],
 
 func _building_support_is_valid(child: WarrenBuildingParcel,
 		parcel_by_id: Dictionary) -> bool:
-	var parent := parcel_by_id.get(child.support_parent_parcel_id) \
-		as WarrenBuildingParcel
-	if parent == null or child.base_band != parent.roof_base_band():
+	return building_support_is_valid(child,
+		parcel_by_id.get(child.support_parent_parcel_id) \
+			as WarrenBuildingParcel)
+
+
+## The complete building-on-building bearing seam, as one rule any producer of
+## a seam can ask BEFORE it declares one. Lifted out of the sealed-plan check
+## (2026-08-23) rather than restated: a translator that decides a stack and a
+## plan that refuses one must never read two different rules.
+static func building_support_is_valid(child: WarrenBuildingParcel,
+		parent: WarrenBuildingParcel) -> bool:
+	if parent == null:
+		return false
+	# Legacy seam (unchanged): the child's floor IS the parent's own roof base,
+	# because a pitched parent reserves its roof volume and the upper building
+	# starts where that reservation starts.
+	#
+	# Additive (2026-08-23, controller ruling on stacked houses): a FLAT-roofed
+	# parent has no pitched reservation at all -- its top band is one band of
+	# slab -- so a building standing on it stands on the TOP FACE of that slab,
+	# which is `parent.top_band`. `flat_roof` is false on every parcel the
+	# route-first and mass-first partitioners build, so this branch is
+	# unreachable outside the plot model and the legacy rule is byte-identical.
+	if child.base_band != parent.roof_base_band() \
+			and not (parent.flat_roof \
+				and child.base_band == parent.top_band):
 		return false
 	var overlap := 0
 	for column: Vector2i in child.footprint:

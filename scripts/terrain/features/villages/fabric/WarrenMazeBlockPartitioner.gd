@@ -52,6 +52,17 @@ static func partition(source: WarrenMazeSourcePlan,
 	var untranslated: Array[Dictionary] = []
 	var shrunk: Dictionary = {}
 	var recipe_by_asset := _recipe_by_asset(source)
+	# A plot standing on another plot's top band is a building ON a building,
+	# and the parcel has to SAY so before it seals: left undeclared it claims
+	# terrain bearing and `WarrenParcelConstruction` descends its whole room
+	# stack straight through the house underneath. Houses are therefore built
+	# in FLOOR order, so a parent parcel (and its own storey count) always
+	# exists before the child that names it. Only the build order moves: every
+	# array below is still emitted in the source's own plot order.
+	var stacking := _stack_parents(source)
+	var stack_refusals: Dictionary = {}
+	var house_outcomes := _translate_houses(source, volume,
+		stacking["parents"] as Dictionary, stack_refusals)
 	for plot: Dictionary in source.plots:
 		match StringName(plot["kind"]):
 			WarrenMazeSourcePlan.PLOT_DECK:
@@ -68,7 +79,8 @@ static func partition(source: WarrenMazeSourcePlan,
 					continue
 				assets.append(_asset_record(plot, kind_id))
 			WarrenMazeSourcePlan.PLOT_HOUSE:
-				var outcome := _parcel_for_plot(source, volume, plot)
+				var outcome := house_outcomes[
+					StringName(plot["id"])] as Dictionary
 				var parcel := outcome["parcel"] as WarrenBuildingParcel
 				if parcel == null:
 					untranslated.append({"id": StringName(plot["id"]),
@@ -101,6 +113,8 @@ static func partition(source: WarrenMazeSourcePlan,
 		"bridge_count": bridges.size(),
 		"asset_count": assets.size(),
 		"shrunk_parcel_count": shrunk.size(),
+		"stacked_parcel_count": (stacking["parents"] as Dictionary).size() \
+			- stack_refusals.size(),
 		"untranslated": untranslated,
 	}
 	if not untranslated.is_empty():
@@ -125,14 +139,152 @@ static func partition(source: WarrenMazeSourcePlan,
 	plan.audit["maze_untranslated"] = untranslated
 	plan.audit["maze_shrunk_parcel_count"] = shrunk.size()
 	plan.audit["maze_shrunk_parcels"] = shrunk
+	plan.audit["maze_stacked_parcel_count"] = \
+		(stacking["parents"] as Dictionary).size() - stack_refusals.size()
+	plan.audit["maze_partial_stack_count"] = int(stacking["partial_count"])
+	plan.audit["maze_stack_refusal_count"] = stack_refusals.size()
+	plan.audit["maze_stack_slab_gap_count"] = _slab_gap_count(stack_refusals)
+	plan.audit["maze_stack_refusals"] = stack_refusals
 	var ownership := _ownership(source, parcels, back_rooms, assets)
 	plan.audit.merge(ownership, true)
 	last_diagnostic.merge(ownership, true)
 	return plan
 
 
+static func _stack_parents(source: WarrenMazeSourcePlan) -> Dictionary:
+	## `{parents: {house plot id -> the house plot it stands ON},
+	## partial_count: int}`.
+	##
+	## A house plot is STACKED when one other plot's `[floor, top)` contains
+	## `floor - 1` on EVERY one of its columns. Partial stacking -- some
+	## columns over a plot, or columns over two different plots -- is NOT a
+	## seam: there is no single parent to name and no single top storey to bear
+	## on, so those plots stay exactly as they are today (terrain-borne) and
+	## are counted instead of guessed at.
+	##
+	## BRIDGES are excluded. A bridge translates to a typed record and never to
+	## a parcel, so naming one as a support parent would name a parcel that
+	## does not exist and `WarrenParcelPlan.seal` would refuse the whole town.
+	var parents: Dictionary = {}
+	var partial := 0
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+			continue
+		var floor_band := int(plot["floor"])
+		var lower: Dictionary = {}
+		var uncovered := false
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			var covered := false
+			for other: Dictionary in source.plots:
+				if StringName(other["id"]) == StringName(plot["id"]) \
+						or StringName(other["kind"]) \
+							== WarrenMazeSourcePlan.PLOT_BRIDGE \
+						or not (other["cells"] as Array).has(column) \
+						or floor_band - 1 < int(other["floor"]) \
+						or floor_band - 1 >= int(other["top"]):
+					continue
+				lower[StringName(other["id"])] = true
+				covered = true
+			uncovered = uncovered or not covered
+		if lower.is_empty():
+			continue
+		if uncovered or lower.size() != 1:
+			partial += 1
+			continue
+		parents[StringName(plot["id"])] = StringName(lower.keys()[0])
+	return {"parents": parents, "partial_count": partial}
+
+
+static func _translate_houses(source: WarrenMazeSourcePlan,
+		volume: WarrenVolumePlan, parents: Dictionary,
+		refusals: Dictionary) -> Dictionary:
+	## Every house plot's translation outcome, keyed by plot id, built in FLOOR
+	## order so a stacked child always finds its parent already sealed.
+	##
+	## A child that cannot seal WITH its declared parent falls back to the
+	## terrain-borne parcel it is today rather than failing the whole town, and
+	## the fall-back is named in `refusals`. Silent substitution is what this
+	## translator refuses everywhere else, so it is recorded here too.
+	var order: Array[Dictionary] = []
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) == WarrenMazeSourcePlan.PLOT_HOUSE:
+			order.append(plot)
+	order.sort_custom(Callable(WarrenMazeBlockPartitioner, "_floor_less"))
+	var parcel_by_id: Dictionary = {}
+	var out: Dictionary = {}
+	for plot: Dictionary in order:
+		var plot_id := StringName(plot["id"])
+		var parent := parcel_by_id.get(StringName("parcel.maze.%s" \
+			% String(parents.get(plot_id, &"")))) as WarrenBuildingParcel
+		var slab_gap := int(plot["floor"]) - parent.roof_base_band() \
+			if parent != null else 0
+		if slab_gap > 0:
+			# THE SLAB IS NOT CONSTRUCTION YET. A flat-roofed parent's rooms
+			# stop at `roof_base_band()`; the bands between there and its
+			# `top_band` are the slab, which today is derived mass no building
+			# owns and `_discard_unassigned_mass` throws away. Declaring a
+			# bearing seam onto it would say the child rests on the parent's
+			# top storey when it rests on nothing, and
+			# `WarrenRoomCompositionPlanner`'s own transition audit is right to
+			# refuse the town for it (measured: seeds 12/compact and 9/standard
+			# lose composition outright, every column of the child's first
+			# block unborne). The plot stays terrain-borne exactly as it is
+			# today and the gap is published rather than guessed at; the seam
+			# below becomes live the moment the slab is real construction.
+			refusals[String(plot_id)] = ("%s leaves a %d-band flat slab " \
+				+ "between its top room and this floor") % [parent.stable_id,
+					slab_gap]
+			parent = null
+		if parent != null and not _parent_owns_its_top_storey(parent):
+			# `WarrenParcelPlan._building_support_is_valid` measures the
+			# parent's top storey through `WarrenParcelConstruction.proposal`,
+			# which counts the storeys a fully borne parcel DESCENDS through as
+			# well as its own. Where those two disagree the seam the ruling
+			# names (`storey_count() - 1`) is not the storey the plan would
+			# accept, and declaring it anyway would reject the town.
+			refusals[String(plot_id)] = ("parent %s descends below its own " \
+				+ "floor, so its top storey is not storey_count() - 1") \
+				% parent.stable_id
+			parent = null
+		var outcome := _parcel_for_plot(source, volume, plot, parent)
+		if parent != null and outcome["parcel"] == null:
+			refusals[String(plot_id)] = "stacked on %s: %s" % [
+				parent.stable_id, outcome["reason"]]
+			outcome = _parcel_for_plot(source, volume, plot, null)
+		out[plot_id] = outcome
+		var parcel := outcome["parcel"] as WarrenBuildingParcel
+		if parcel != null:
+			parcel_by_id[parcel.stable_id] = parcel
+	return out
+
+
+static func _slab_gap_count(refusals: Dictionary) -> int:
+	## How many stacked plots stayed terrain-borne because their parent's flat
+	## slab stands between the two. A separate count from the whole refusal
+	## set, because this one is a MODEL gap waiting on real slab construction
+	## rather than a property of one plot.
+	var out := 0
+	for reason_value: Variant in refusals.values():
+		out += int(String(reason_value).contains("flat slab"))
+	return out
+
+
+static func _parent_owns_its_top_storey(parent: WarrenBuildingParcel) -> bool:
+	var proposal := WarrenParcelConstruction.proposal(parent)
+	return not proposal.is_empty() \
+		and int(proposal["storeys"]) == parent.storey_count()
+
+
+static func _floor_less(left: Dictionary, right: Dictionary) -> bool:
+	if int(left["floor"]) != int(right["floor"]):
+		return int(left["floor"]) < int(right["floor"])
+	return String(left["id"]) < String(right["id"])
+
+
 static func _parcel_for_plot(source: WarrenMazeSourcePlan,
-		volume: WarrenVolumePlan, plot: Dictionary) -> Dictionary:
+		volume: WarrenVolumePlan, plot: Dictionary,
+		support_parent: WarrenBuildingParcel = null) -> Dictionary:
 	## The plot's own door, floor and top; the only open question is which
 	## rectangle of its footprint carries the facade. Candidates come in
 	## largest-first order and the first one whose real authored doorway opens
@@ -174,7 +326,27 @@ static func _parcel_for_plot(source: WarrenMazeSourcePlan,
 				candidate["footprint"] as Array[Vector2i], floor_band,
 				top_band, door_walk, candidate["threshold"] as Vector2i,
 				candidate["frontage"] as Vector2i, door_phase, flat_roof)
+			# The seam is declared BEFORE the seal: it decides the support
+			# mode, and `WarrenParcelConstruction._support_base_band` reads it
+			# to keep the room stack at this plot's own floor instead of
+			# descending it through the house underneath.
+			if support_parent != null and not parcel.set_building_support(
+					support_parent.stable_id,
+					support_parent.storey_count() - 1):
+				continue
 			if not parcel.seal(volume):
+				continue
+			# The plot below is what this plot STANDS on, but the parcel below
+			# is only that plot's own door rectangle. Ask the plan's own seam
+			# rule whether this rectangle really bears on it -- a rectangle
+			# that overhangs the parent's footprint is not a stacked house,
+			# and declaring it would make `WarrenParcelPlan.seal` refuse the
+			# whole town. Largest-first order means this picks the biggest
+			# rectangle that CAN bear.
+			if support_parent != null \
+					and not WarrenParcelPlan.building_support_is_valid(parcel,
+						support_parent):
+				refusal = "no rectangle bears on the parent's own footprint"
 				continue
 			if WarrenParcelConstruction.door_serves_address(parcel):
 				return {"parcel": parcel, "skipped": index,

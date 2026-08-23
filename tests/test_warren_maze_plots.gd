@@ -1689,6 +1689,159 @@ func _restate(host: WarrenBuildingParcel, top_band: int,
 		host.address_door_phase, flat_roof)
 
 
+func _stack_parent_plot_id(plan: WarrenMazeSourcePlan,
+		plot: Dictionary) -> StringName:
+	## The ONE house plot whose `[floor, top)` contains this plot's `floor - 1`
+	## on EVERY one of its columns, or "" when the plot stands on terrain, on
+	## rock, or only partly on somebody. Computed from the sealed plan alone —
+	## never from the translator's own bookkeeping — so this is an independent
+	## statement of what a stacked house is. Bridges are excluded: a bridge is
+	## a typed record, never a parcel, so nothing can name one as its parent.
+	var floor_band := int(plot["floor"])
+	var lower: Dictionary = {}
+	for cell_value: Variant in plot["cells"] as Array:
+		var column := cell_value as Vector2i
+		var covered := false
+		for other: Dictionary in plan.plots:
+			if StringName(other["id"]) == StringName(plot["id"]) \
+					or StringName(other["kind"]) \
+						== WarrenMazeSourcePlan.PLOT_BRIDGE \
+					or not (other["cells"] as Array).has(column) \
+					or floor_band - 1 < int(other["floor"]) \
+					or floor_band - 1 >= int(other["top"]):
+				continue
+			lower[StringName(other["id"])] = true
+			covered = true
+		if not covered:
+			return &""
+	return StringName(lower.keys()[0]) if lower.size() == 1 else &""
+
+
+func test_stacked_houses_declare_their_parent() -> void:
+	# A house plot whose floor is another house plot's top is a building ON a
+	# building, and the parcel has to SAY so: left undeclared the child claims
+	# terrain bearing and its room stack descends straight through the house
+	# underneath it.
+	#
+	# Every fully stacked plot is ACCOUNTED FOR: it either names its parent and
+	# seals with the declaration in it, or it is one published refusal naming
+	# why. Today every one of them is the second case, and the reason is the
+	# same model gap each time — a flat-roofed parent's rooms stop at
+	# `roof_base_band()` and the 1-2 bands of slab between there and its
+	# `top_band` are derived mass no building owns yet, so there is nothing
+	# under the child to bear on. Declaring the seam anyway costs the town:
+	# `WarrenRoomCompositionPlanner` refuses seeds 12/compact and 9/standard
+	# outright, every column of the child's first block unborne. The seam
+	# itself is asserted directly below, so it is a tested contract waiting on
+	# real slab construction rather than an untested branch.
+	var accounted := 0
+	var declared := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		var parcels := _parcels_of(seed_value, scale)
+		assert_not_null(parcels, "seed %d %s translation: %s" % [seed_value,
+			scale, _parcel_failure(seed_value, scale)])
+		if parcels == null or plan == null:
+			continue
+		var refusals := parcels.audit.get("maze_stack_refusals",
+			{}) as Dictionary
+		var seed_stacked := 0
+		for plot: Dictionary in plan.plots:
+			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+				continue
+			var parent_plot_id := _stack_parent_plot_id(plan, plot)
+			var child := _parcel_named(parcels, StringName("parcel.maze.%s" \
+				% String(plot["id"])))
+			if child == null or parent_plot_id.is_empty():
+				continue
+			var parent := _parcel_named(parcels, StringName("parcel.maze.%s" \
+				% String(parent_plot_id)))
+			if parent == null:
+				continue
+			seed_stacked += 1
+			accounted += 1
+			assert_true(parent.flat_roof,
+				"a house with a house on it is flat-roofed by construction")
+			assert_eq(child.base_band, parent.top_band,
+				"the child's floor is the flat parent's own slab top")
+			if child.support_parent_parcel_id.is_empty():
+				assert_true(refusals.has(String(plot["id"])),
+					("stacked house %s declares no parent, so it must " \
+						+ "publish why") % child.stable_id)
+				continue
+			declared += 1
+			assert_eq(child.support_parent_parcel_id, parent.stable_id,
+				"stacked house %s must name the house it stands on" \
+					% child.stable_id)
+			assert_eq(child.support_parent_storey_index,
+				parent.storey_count() - 1,
+				"stacked house %s bears on its parent's top storey" \
+					% child.stable_id)
+			assert_eq(child.support_mode, &"building",
+				"a declared parent is a building support, not terrain")
+			assert_true(WarrenParcelPlan.building_support_is_valid(child,
+				parent), "a declared seam is one the plan itself accepts")
+		print(("MAZE_STACKS seed %d/%s stacked=%d declared=%d slab_gap=%d " \
+			+ "partial=%d %s") % [seed_value, scale, seed_stacked,
+				int(parcels.audit.get("maze_stacked_parcel_count", -1)),
+				int(parcels.audit.get("maze_stack_slab_gap_count", -1)),
+				int(parcels.audit.get("maze_partial_stack_count", -1)),
+				str(refusals)])
+	assert_gt(accounted, 0,
+		"the planner corpus really does stack houses on houses")
+	# The seam rule itself, asserted on the parcels the town actually built: a
+	# flat-roofed parent carries a child at its `top_band` — the slab is the
+	# seam — and a parent whose roof is the authored pitched reservation still
+	# carries one only at `roof_base_band()`. Legacy parcels are never
+	# flat-roofed, so their rule is untouched.
+	var parcels_12 := _parcels_of(12, &"compact")
+	assert_not_null(parcels_12, _parcel_failure(12, &"compact"))
+	if parcels_12 == null:
+		return
+	var host: WarrenBuildingParcel = null
+	for parcel: WarrenBuildingParcel in parcels_12.parcels:
+		if parcel.flat_roof and parcel.height_bands() >= 4 and host == null:
+			host = parcel
+	assert_not_null(host, "the town has a flat-roofed parcel to stand on")
+	if host == null:
+		return
+	var slab_child := _stacked_on(host, host.top_band)
+	var roof_child := _stacked_on(host, host.roof_base_band())
+	var floating := _stacked_on(host, host.top_band + 1)
+	assert_true(WarrenParcelPlan.building_support_is_valid(slab_child, host),
+		"a flat parent carries a child on the top face of its slab")
+	assert_true(WarrenParcelPlan.building_support_is_valid(roof_child, host),
+		"the legacy seam at the parent's roof base still holds")
+	assert_false(WarrenParcelPlan.building_support_is_valid(floating, host),
+		"no seam a band above the slab")
+	var pitched := WarrenBuildingParcel.new(host.stable_id, host.footprint,
+		host.base_band, host.base_band + 4, host.address_walk_cell,
+		host.threshold_column, host.frontage_direction,
+		host.address_door_phase, false)
+	assert_true(pitched.seal(_volume_of(12, &"compact")),
+		"the pitched restatement of the host seals")
+	assert_false(WarrenParcelPlan.building_support_is_valid(
+		_stacked_on(pitched, pitched.top_band), pitched),
+		"a pitched parent's top band is roof reservation, not a seam")
+	assert_gte(declared, 0, "declared stacks are counted")
+
+
+func _stacked_on(parent: WarrenBuildingParcel,
+		base_band: int) -> WarrenBuildingParcel:
+	## An unsealed child of `parent`'s own footprint at `base_band`, declaring
+	## the parent's top storey. Only the seam rule can decide it, so nothing
+	## `seal()` computes can be what separates the cases above.
+	var child := WarrenBuildingParcel.new(&"parcel.maze.stack.probe",
+		parent.footprint, base_band, base_band + 4, Vector3i(
+			parent.address_walk_cell.x, base_band, parent.address_walk_cell.z),
+		parent.threshold_column, parent.frontage_direction,
+		parent.address_door_phase, false)
+	child.set_building_support(parent.stable_id, parent.storey_count() - 1)
+	return child
+
+
 func test_corpus_translates() -> void:
 	# The plan's own acceptance bar, measured rather than asserted seed by
 	# seed: at least TRANSLATE_FLOOR of the 24 towns adapt and translate. Each
