@@ -322,6 +322,31 @@ func rock_shoulder(column: Vector2i) -> int:
 	return massif.top_at(column)
 
 
+## Instrumentation for the unclamped shoulder (review finding 2026-08-23,
+## minor 5): the columns carrying NO plot whose sealed `rock_shoulder` stands
+## ABOVE their own massif envelope, in column order. `rock_shoulder` has no
+## upper clamp -- a no-plot region takes the LOWEST floor of the plots
+## bordering it, and `_street_rock_floors` can raise it further so a passage
+## keeps its ground -- so leftover rock may legitimately grow past the terrace
+## it started from. Nothing rejects that; the `--constructive` sweep reports
+## this count per town, so a clamp can be argued from measurement rather than
+## from suspicion. Empty on an unsealed plan, where every no-plot column
+## answers its envelope by definition.
+func raised_shoulder_columns() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if massif == null:
+		return out
+	var columns: Array[Vector2i] = []
+	columns.assign(massif.columns.keys())
+	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+	for column: Vector2i in columns:
+		if _plot_columns.has(column):
+			continue
+		if rock_shoulder(column) > massif.top_at(column):
+			out.append(column)
+	return out
+
+
 ## The highest band anything on `column` can reach: its massif envelope, the
 ## rock shoulder a taller neighbour left it, or the tallest plot top standing
 ## on it -- whichever is highest. A plot is NOT clamped to the massif and a
@@ -412,11 +437,18 @@ func street_floor_gaps() -> int:
 
 
 ## Phase B's exit metric: how much of the town's own SKIN is bare rock rather
-## than building. An EXTERIOR cell is a solid cell above its column's terrain
-## sample (the ground itself is never skin) with at least one 4-neighbour at
-## the same band that is not solid -- air, carved street, or off the massif
-## entirely -- so it is a face somebody standing in the town can see. Each one
-## is `plot` when a plot's own [floor, top) covers it and `rock` otherwise.
+## than building. An EXTERIOR cell is a solid cell in the massif's own band
+## range with at least one exposed face: a 4-neighbour at the same band that
+## is not solid -- air, carved street, or off the massif entirely -- or
+## nothing solid directly above it. Each one is `plot` when a plot's own
+## [floor, top) covers it and `rock` otherwise.
+##
+## REDEFINED (review finding 2026-08-23, minor 6): this used to scan
+## `range(base_at + 1, ceiling)` and side faces only, which dropped band
+## `base_at` -- massif mass that `_build_audit` itself counts from `base_at`
+## -- and never charged a bare rock TOP for being the thing you look down on.
+## Both are skin, so both are counted now; the pinned ceiling was re-measured
+## against this definition and the two numbers are not comparable.
 ##
 ## `{exterior_cells, rock_cells, plot_cells, ratio}` with ratio =
 ## rock/exterior (0.0 for a town with no skin at all). The goal is near zero
@@ -436,17 +468,16 @@ func exterior_rock_ratio() -> Dictionary:
 	columns.assign(massif.columns.keys())
 	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
 	for column: Vector2i in columns:
-		for band in range(massif.base_at(column) + 1,
-				column_ceiling(column)):
+		for band in range(massif.base_at(column), column_ceiling(column)):
 			var cell := Vector3i(column.x, band, column.y)
 			if not solid_at(cell):
 				continue
-			var exposed := false
+			var exposed := not solid_at(Vector3i(column.x, band + 1, column.y))
 			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
-				if not solid_at(Vector3i(column.x + direction.x, band,
-						column.y + direction.y)):
-					exposed = true
+				if exposed:
 					break
+				exposed = not solid_at(Vector3i(column.x + direction.x, band,
+					column.y + direction.y))
 			if not exposed:
 				continue
 			exterior_cells += 1
@@ -481,9 +512,14 @@ func _first_carved_band(column: Vector2i, from_band: int,
 	return -1
 
 
-func _plot_shape_rejection(plot: Dictionary) -> String:
+func _plot_shape_rejection(plot: Dictionary, self_index: int = -1) -> String:
 	## "" when the dictionary really is a plot, else why it is not. Shape
-	## alone: nothing here looks at the town around it.
+	## alone: nothing here looks at the town around it, except the one thing
+	## shape cannot answer on its own -- that no OTHER plot already carries
+	## this id. `self_index` is the plot's own slot in `plots` when it is
+	## already stored (seal re-checking a finished town) and -1 when it is not
+	## (add_plot vetting a newcomer), exactly as _plot_placement_rejection
+	## uses it, so the two readings of "already taken" cannot disagree.
 	for key: String in ["id", "kind", "cells", "floor", "top", "door_walk",
 			"building_id"]:
 		if not plot.has(key):
@@ -500,8 +536,10 @@ func _plot_shape_rejection(plot: Dictionary) -> String:
 	var kind := StringName(plot["kind"])
 	if kind not in PLOT_KINDS:
 		return "plot %s has unknown kind %s" % [id, kind]
-	for existing: Dictionary in plots:
-		if StringName(existing["id"]) == id:
+	for existing_index in plots.size():
+		if existing_index == self_index:
+			continue
+		if StringName((plots[existing_index] as Dictionary)["id"]) == id:
 			return "plot id %s is already taken" % id
 	var cells: Array = plot["cells"]
 	if cells.is_empty():
@@ -543,10 +581,14 @@ static func _footprint_is_connected(members: Dictionary,
 
 func _rebuild_plot_columns() -> void:
 	## Seal re-derives the per-column index from `plots` themselves rather
-	## than trusting add_plot's own running bookkeeping: the sealed town is
-	## judged on what `plots` really holds, so a plot appended straight onto
-	## the array -- or an index left stale by a refused seal -- can never buy
-	## itself a pass through the checks that read this.
+	## than trusting add_plot's own running bookkeeping, so a plot appended
+	## straight onto the public array -- or an index left stale by a refused
+	## seal -- still faces the PLACEMENT checks that read this.
+	##
+	## Rebuilding the index is only half of that guarantee and never claimed
+	## the other half (review finding 2026-08-23, minor 7): shape is invisible
+	## from here, so _plot_rejection re-runs _plot_shape_rejection over the
+	## stored plots before calling this.
 	_plot_columns.clear()
 	for index in plots.size():
 		for cell_value: Variant in (plots[index] as Dictionary)["cells"] \
@@ -638,8 +680,21 @@ func _street_floor_gaps() -> int:
 
 
 func _plot_rejection() -> String:
-	## Seal's plot half: the stack invariant on every column, then every plot
-	## re-checked against the finished town. "" when the town is sound.
+	## Seal's plot half: every stored plot re-checked for SHAPE, then the
+	## stack invariant on every column, then every plot re-checked for
+	## PLACEMENT against the finished town. "" when the town is sound.
+	##
+	## The shape sweep is not redundant with add_plot's (review finding
+	## 2026-08-23, minor 7): `plots` is public, so a caller can append a
+	## dictionary straight onto it -- a disconnected footprint, a duplicate
+	## id, a deck with height -- and, before this, seal judged it on placement
+	## alone and let it through. It runs FIRST because the column index and
+	## the shoulders below are built from `cells`, and a malformed footprint
+	## has no business seeding either.
+	for index in plots.size():
+		var shape := _plot_shape_rejection(plots[index], index)
+		if shape != "":
+			return shape
 	_rebuild_plot_columns()
 	_rebuild_rock_shoulders()
 	var columns: Array[Vector2i] = []
@@ -682,9 +737,32 @@ func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
 	## stays air" actually lives: solid_at answers air for a carved cell
 	## whatever a plot claims, so the invariant that can really fail is the
 	## one stated from the plot's side -- no plot claims a carved band.
+	##
+	## The `door_walk` check (review finding 2026-08-23, minor 8) is the same
+	## kind of rule: composition places the door module at that cell, so a
+	## house or an asset has to address a real passage cell 4-adjacent to its
+	## own footprint. A DECK's door_walk is the street it grew off and a
+	## BRIDGE's is the span cell it stands over -- neither is beside its
+	## footprint, both are exempt, and the model says so rather than leaving
+	## the field unchecked for all four kinds.
 	var id := StringName(plot["id"])
+	var kind := StringName(plot["kind"])
 	var floor_band := int(plot["floor"])
 	var reserved_top := _plot_reserved_top(plot)
+	if kind in [PLOT_HOUSE, PLOT_ASSET]:
+		var door := plot["door_walk"] as Vector3i
+		if not passage_kinds.has(door):
+			return "plot %s has a door_walk at %s that is not a passage cell" \
+				% [id, door]
+		var addressed := false
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			if absi(column.x - door.x) + absi(column.y - door.z) == 1:
+				addressed = true
+				break
+		if not addressed:
+			return ("plot %s has a door_walk at %s that no footprint column " \
+				+ "touches") % [id, door]
 	for cell_value: Variant in plot["cells"] as Array:
 		var column := cell_value as Vector2i
 		if not plot_support_ok(column, floor_band):

@@ -301,32 +301,44 @@ static func _ownership(source: WarrenMazeSourcePlan,
 	## parcel cells plus back-room cells over every solid cell in
 	## [massif.base_at, the column's own top). `rock_cells` is the rest of
 	## that solid which no plot stands in -- interior structure and the rock
-	## shoulders, which are derived mass rather than construction. Bridge and
-	## deck plots are in neither bucket by design: they are typed records.
+	## shoulders, which are derived mass rather than construction. Deck plots
+	## are in neither bucket by design: they are typed records with no mass at
+	## all ([floor, top) is empty for them).
 	##
-	## An audit fact, pinned nowhere here (the phase sweep reads it).
+	## BRIDGE mass leaves the DENOMINATOR too (review finding 2026-08-23,
+	## minor 15). A bridge is also a typed record -- it translates to an
+	## occupied-link reservation, never to a parcel -- so no parcel or back
+	## room can ever own its bands, and counting them as solid the
+	## translation failed to own charged the ratio for mass nothing was ever
+	## going to claim. A town with more skywalks scored worse for having
+	## them. Bridge bands are now outside both buckets, exactly like decks.
+	##
+	## An audit fact, pinned nowhere here (the phase sweep and the plots suite
+	## read it).
 	var plot_bands: Dictionary = {}
+	var bridge_bands: Dictionary = {}
 	for plot: Dictionary in source.plots:
+		var bridge := StringName(plot["kind"]) \
+			== WarrenMazeSourcePlan.PLOT_BRIDGE
 		for cell_value: Variant in plot["cells"] as Array:
 			var column := cell_value as Vector2i
-			var spans: Array = plot_bands.get(column, [])
+			var into := bridge_bands if bridge else plot_bands
+			var spans: Array = into.get(column, [])
 			spans.append(Vector2i(int(plot["floor"]), int(plot["top"])))
-			plot_bands[column] = spans
+			into[column] = spans
 	var solid_cells := 0
 	var rock_cells := 0
 	for column: Vector2i in source.massif.columns:
 		var spans := plot_bands.get(column, []) as Array
+		var bridges := bridge_bands.get(column, []) as Array
 		for band in range(source.massif.base_at(column),
 				source.column_ceiling(column)):
 			if not source.solid_at(Vector3i(column.x, band, column.y)):
 				continue
+			if _band_inside(bridges, band):
+				continue
 			solid_cells += 1
-			var inside := false
-			for span: Vector2i in spans:
-				if band >= span.x and band < span.y:
-					inside = true
-					break
-			rock_cells += int(not inside)
+			rock_cells += int(not _band_inside(spans, band))
 	var parcel_cells := 0
 	for parcel: WarrenBuildingParcel in parcels:
 		parcel_cells += parcel.occupied_cells().size()
@@ -350,3 +362,12 @@ static func _ownership(source: WarrenMazeSourcePlan,
 		"maze_parcel_cells": parcel_cells,
 		"maze_back_room_cells": back_room_cells,
 	}
+
+
+static func _band_inside(spans: Array, band: int) -> bool:
+	## Does `band` fall in any [x, y) span? One reading for both the bridge
+	## exclusion and the rock split, so the two can never drift apart.
+	for span: Vector2i in spans:
+		if band >= span.x and band < span.y:
+			return true
+	return false

@@ -148,8 +148,13 @@ func _bridge_spans_are_legal(public_cells: Dictionary) -> bool:
 	## flank column could hollow exactly those bands out afterwards. Re-derive
 	## each span cell's travel direction from the walk itself (no massif
 	## needed, only `carved`) and re-verify both flank columns are still
-	## uncarved at [cell.y, cell.y + HEADROOM_BANDS] against the FINAL carved
-	## set, so a hollowed flank can never seal.
+	## uncarved on EVERY band of [cell.y, cell.y + HEADROOM_BANDS] against the
+	## FINAL carved set, so a hollowed flank can never seal.
+	##
+	## Review finding (2026-08-23, minor): the two END bands are not the
+	## interval. A crossing passage carved at cell.y + 1 leaves the flank
+	## hollow exactly where the bridge's wall has to be, and the old two-band
+	## reading called that legal. Every band between floor and roof is checked.
 	for index in bridge_spans.size():
 		var span := bridge_spans[index] as Array[Vector3i]
 		if span.is_empty():
@@ -180,10 +185,12 @@ func _bridge_spans_are_legal(public_cells: Dictionary) -> bool:
 			var column := Vector2i(cell.x, cell.z)
 			var roof_band := cell.y + HEADROOM_BANDS
 			for flank: Vector2i in [column + perpendicular, column - perpendicular]:
-				if carved.has(Vector3i(flank.x, cell.y, flank.y)) \
-						or carved.has(Vector3i(flank.x, roof_band, flank.y)):
+				for band in range(cell.y, roof_band + 1):
+					if not carved.has(Vector3i(flank.x, band, flank.y)):
+						continue
 					last_rejection = ("bridge span %d cell %s flank %s was " \
-						+ "hollowed out after selection") % [index, cell, flank]
+						+ "hollowed out at band %d after selection") \
+						% [index, cell, flank, band]
 					return false
 	return true
 
@@ -373,9 +380,15 @@ func slot_bands(cell: Vector3i) -> int:
 
 
 func headroom_slot(cell: Vector3i) -> Array[Vector3i]:
-	## The exact cells one walk cell removes. Consumers that rebuild the
-	## solid (parcelling, meshing) need this to agree with `carved` exactly
-	## rather than each re-deriving a headroom convention of their own.
+	## The NOMINAL bore slot above one walk cell: HEADROOM_BANDS tall, the
+	## convention every consumer that reserves headroom shares rather than
+	## re-deriving one of its own.
+	##
+	## It is NOT the truth for any specific cell (review finding 2026-08-23,
+	## minor): since the open-to-sky policy a street's real slot runs to the
+	## envelope, and a stair's intermediate cell carries both treads, so both
+	## are taller than this. `carved` -- read through `slot_bands` -- is what
+	## a cell really lost; ask that whenever the answer has to be exact.
 	var out: Array[Vector3i] = []
 	for band in range(cell.y, cell.y + HEADROOM_BANDS):
 		out.append(Vector3i(cell.x, band, cell.z))

@@ -26,6 +26,17 @@ var address_door_phase: int
 ## and that slab (see `_height_is_legal`). Defaulted false and never set by a
 ## legacy caller, so every parcel the route-first pipeline builds keeps the
 ## exact contract it always had.
+##
+## COMPOSITION DOES NOT READ THIS YET (review finding 2026-08-23, Important
+## 3). It shares a name with `proposal["flat_roof"]` -- the older staggered
+## roof flag `WarrenAssetCompiler` sets at :951/:952 and :987/:988 and
+## `StaggeredFabricCompiler` consumes at :458 -- but the two are NOT wired
+## together, so today this flag governs the parcel's height contract
+## (`_height_is_legal`, `storey_count`, `roof_base_band`) and nothing else.
+## The name is deliberate and stays: they mean the same thing about a
+## building. Phase C is what must join them -- seed `proposal["flat_roof"]`
+## from `parcel.flat_roof` where the maze proposals are built, so a plot the
+## planner tiered actually composes a flat roof instead of a pitched one.
 var flat_roof := false
 var bearing_columns: Array[Vector2i] = []
 var support_mode: StringName
@@ -183,12 +194,16 @@ func deterministic_signature() -> String:
 	for column: Vector2i in footprint:
 		footprint_parts.append("%d:%d" % [column.x, column.y])
 	footprint_parts.sort()
-	return "%s@%d..%d>A%d:%d/F%d:%d/D%d/O%d/P%s:%d" % [
+	# `/R` is `flat_roof` (review finding 2026-08-23, Important 2): it changes
+	# the height rule, the storey count and the roof base band, so two parcels
+	# that differ only in it are two different buildings and may not share an
+	# identity.
+	return "%s@%d..%d>A%d:%d/F%d:%d/D%d/O%d/P%s:%d/R%d" % [
 		",".join(footprint_parts), base_band, top_band,
 		address_walk_cell.x, address_walk_cell.z,
 		frontage_direction.x, frontage_direction.y, address_door_phase,
 		int(has_occupied_overpass), String(support_parent_parcel_id),
-		support_parent_storey_index]
+		support_parent_storey_index, int(flat_roof)]
 
 
 func slot_signature() -> String:

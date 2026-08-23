@@ -12,15 +12,34 @@ func _unsealed_fixture() -> WarrenMazeSourcePlan:
 	return WarrenMazeCarver.carve(12, massif, profile, false)
 
 
-func _plot(id: StringName, cells: Array[Vector2i], floor_band: int,
-		top_band: int, kind: StringName = &"house") -> Dictionary:
+func _doors_for(plan: WarrenMazeSourcePlan,
+		cells: Array[Vector2i]) -> Array[Vector3i]:
+	## Every passage cell 4-adjacent in x/z to this footprint, in the plan's
+	## own cell order -- exactly what add_plot demands of a house's or an
+	## asset's `door_walk` (review finding 2026-08-23, minor 8). Derived here
+	## from `passage_cells` so a fixture never leans on the rule under test.
+	var out: Array[Vector3i] = []
+	for cell: Vector3i in plan.passage_cells():
+		for column: Vector2i in cells:
+			if absi(column.x - cell.x) + absi(column.y - cell.z) == 1:
+				out.append(cell)
+				break
+	return out
+
+
+func _plot(plan: WarrenMazeSourcePlan, id: StringName,
+		cells: Array[Vector2i], floor_band: int, top_band: int,
+		kind: StringName = &"house") -> Dictionary:
+	## A legal plot record on `plan` -- including a real `door_walk`, so a
+	## fixture only ever breaks the ONE rule its own test is about.
+	var doors := _doors_for(plan, cells)
 	return {
 		"id": id,
 		"kind": kind,
 		"cells": cells,
 		"floor": floor_band,
 		"top": top_band,
-		"door_walk": Vector3i.ZERO,
+		"door_walk": doors[0] if not doors.is_empty() else Vector3i.ZERO,
 		"building_id": id,
 	}
 
@@ -36,13 +55,19 @@ func _sorted_columns(plan: WarrenMazeSourcePlan) -> Array[Vector2i]:
 func _clean_columns(plan: WarrenMazeSourcePlan, wanted: int,
 		bands: int) -> Array[Vector2i]:
 	## Massif columns the carver never touched at all, carrying at least
-	## `bands` bands of envelope. Measured straight off excavation.carved so a
-	## fixture search never leans on the rule under test.
+	## `bands` bands of envelope AND addressing a street. Measured straight off
+	## excavation.carved so a fixture search never leans on the rule under test.
+	##
+	## The address filter arrived with minor 8 (2026-08-23): a house plot needs
+	## a `door_walk` on a passage cell beside its footprint, so a column that
+	## fronts nothing is not a site a legal house fixture can be built on.
 	var out: Array[Vector2i] = []
 	for column: Vector2i in _sorted_columns(plan):
 		var base := plan.massif.base_at(column)
 		var top := plan.massif.top_at(column)
 		if top - base < bands:
+			continue
+		if _doors_for(plan, [column] as Array[Vector2i]).is_empty():
 			continue
 		var clear := true
 		for band in range(base, top):
@@ -98,12 +123,12 @@ func test_add_plot_enforces_support_and_headroom() -> void:
 	var street_column := Vector2i(street.x, street.z)
 	var headroom_top := plan.passage_headroom_top(street)
 	assert_gt(headroom_top, street.y, "a passage owns a carved slot")
-	assert_false(plan.add_plot(_plot(&"in_the_slot",
+	assert_false(plan.add_plot(_plot(plan, &"in_the_slot",
 		[street_column] as Array[Vector2i], street.y + 1,
 		street.y + 1 + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
 		"a plot may not stand inside a passage's own headroom")
 	assert_string_contains(plan.last_rejection, "support rule 1")
-	assert_false(plan.add_plot(_plot(&"on_the_headroom_top",
+	assert_false(plan.add_plot(_plot(plan, &"on_the_headroom_top",
 		[street_column] as Array[Vector2i], headroom_top,
 		headroom_top + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
 		"a plot may not sit AT a headroom top -- the band below it is carved")
@@ -113,7 +138,7 @@ func test_add_plot_enforces_support_and_headroom() -> void:
 	if not under.is_empty():
 		var under_cell: Vector3i = under.cell
 		var under_floor: int = under.floor
-		assert_false(plan.add_plot(_plot(&"under_the_street",
+		assert_false(plan.add_plot(_plot(plan, &"under_the_street",
 			[Vector2i(under_cell.x, under_cell.z)] as Array[Vector2i],
 			under_floor,
 			under_floor + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
@@ -130,7 +155,7 @@ func test_add_plot_enforces_support_and_headroom() -> void:
 	var roof_column := Vector2i(roof_cell.x, roof_cell.z)
 	assert_true(plan.plot_support_ok(roof_column, roof_floor),
 		"one band above a tunnel's headroom is a solid roof slab")
-	assert_true(plan.add_plot(_plot(&"tunnel_roof",
+	assert_true(plan.add_plot(_plot(plan, &"tunnel_roof",
 		[roof_column] as Array[Vector2i], roof_floor,
 		roof_floor + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
 		plan.last_rejection)
@@ -153,8 +178,8 @@ func test_solid_at_derives_rock_under_plots_and_air_above() -> void:
 	var top_band := floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS
 	assert_true(plan.solid_at(Vector3i(column.x, top_band, column.y)),
 		"the envelope stands on a column with no plot")
-	assert_true(plan.add_plot(_plot(&"grounded", [column] as Array[Vector2i],
-		floor_band, top_band)), plan.last_rejection)
+	assert_true(plan.add_plot(_plot(plan, &"grounded",
+		[column] as Array[Vector2i], floor_band, top_band)), plan.last_rejection)
 	assert_true(plan.solid_at(Vector3i(column.x, base - 1, column.y)),
 		"terrain below the sampled band is solid ground")
 	assert_true(plan.solid_at(Vector3i(column.x, base, column.y)),
@@ -229,7 +254,7 @@ func test_add_plot_on_a_sealed_plan_changes_nothing() -> void:
 		return
 	var column := columns[0]
 	var floor_band := plan.massif.base_at(column) + 2
-	assert_true(plan.add_plot(_plot(&"only", [column] as Array[Vector2i],
+	assert_true(plan.add_plot(_plot(plan, &"only", [column] as Array[Vector2i],
 		floor_band, floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
 		plan.last_rejection)
 	assert_true(plan.seal(), plan.last_rejection)
@@ -241,7 +266,7 @@ func test_add_plot_on_a_sealed_plan_changes_nothing() -> void:
 	assert_false(plan.solid_at(probe), "nothing stands above a shoulder")
 	# A plot that would have been perfectly legal an instant before the seal.
 	var bare_base := plan.massif.base_at(bare)
-	assert_false(plan.add_plot(_plot(&"too_late", [bare] as Array[Vector2i],
+	assert_false(plan.add_plot(_plot(plan, &"too_late", [bare] as Array[Vector2i],
 		bare_base, bare_base + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
 		"a sealed plan accepts no plot")
 	assert_string_contains(plan.last_rejection, "sealed")
@@ -263,7 +288,7 @@ func test_stack_invariant_rejects_a_floating_plot_at_seal() -> void:
 	var base := grounded.massif.base_at(column)
 	# The envelope supports a plot anywhere while the plan is unsealed, so a
 	# single high plot is legal: the rock below it derives down to terrain.
-	assert_true(grounded.add_plot(_plot(&"upper",
+	assert_true(grounded.add_plot(_plot(grounded, &"upper",
 		[column] as Array[Vector2i], base + 6, base + 10)),
 		grounded.last_rejection)
 	assert_true(grounded.seal(), grounded.last_rejection)
@@ -271,12 +296,12 @@ func test_stack_invariant_rejects_a_floating_plot_at_seal() -> void:
 	var floating_column := _clean_columns(floating, 1, 11)[0]
 	var floating_base := floating.massif.base_at(floating_column)
 	assert_eq(floating_column, column, "both fixtures pick the same column")
-	assert_true(floating.add_plot(_plot(&"upper",
+	assert_true(floating.add_plot(_plot(floating, &"upper",
 		[floating_column] as Array[Vector2i], floating_base + 6,
 		floating_base + 10)), floating.last_rejection)
 	# Adding a lower plot pulls the derived rock down to ITS floor, which
 	# strands the upper plot over three bands of open air.
-	assert_true(floating.add_plot(_plot(&"lower",
+	assert_true(floating.add_plot(_plot(floating, &"lower",
 		[floating_column] as Array[Vector2i], floating_base,
 		floating_base + 3)), floating.last_rejection)
 	assert_false(floating.solid_at(Vector3i(floating_column.x,
@@ -296,7 +321,7 @@ func test_stack_invariant_rejects_a_floating_plot_at_seal() -> void:
 		floating.massif.top_at(open_column),
 		"the envelope stands again after a rejected seal")
 	var open_base := floating.massif.base_at(open_column)
-	assert_true(floating.add_plot(_plot(&"after_the_failure",
+	assert_true(floating.add_plot(_plot(floating, &"after_the_failure",
 		[open_column] as Array[Vector2i], open_base + 2,
 		open_base + 2 + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
 		floating.last_rejection)
@@ -319,24 +344,24 @@ func test_add_plot_rejects_a_plot_overlapping_one_already_standing() -> void:
 	var column := columns[0]
 	var base := plan.massif.base_at(column)
 	var span := WarrenMazeSourcePlan.MIN_HOUSE_BANDS
-	assert_true(plan.add_plot(_plot(&"first", [column] as Array[Vector2i],
+	assert_true(plan.add_plot(_plot(plan, &"first", [column] as Array[Vector2i],
 		base, base + span)), plan.last_rejection)
 	# Straddling: its floor sits inside the first plot's own band interval.
-	assert_false(plan.add_plot(_plot(&"straddler",
+	assert_false(plan.add_plot(_plot(plan, &"straddler",
 		[column] as Array[Vector2i], base + span - 1, base + 2 * span)),
 		"a plot may not share a band with one already on the column")
 	assert_string_contains(plan.last_rejection, "overlaps plot first")
 	assert_eq(plan.plots.size(), 1, "a refused plot is never stored")
 	# Flush above is not an overlap: [floor, top) is half-open, so a second
 	# plot starting exactly at the first one's top is a legal upper storey.
-	assert_true(plan.add_plot(_plot(&"stacked", [column] as Array[Vector2i],
+	assert_true(plan.add_plot(_plot(plan, &"stacked", [column] as Array[Vector2i],
 		base + span, base + 2 * span)), plan.last_rejection)
 	# A deck reserves its single floor band even though it adds no mass, so
 	# nothing else may claim that band either.
-	assert_true(plan.add_plot(_plot(&"roof_deck",
+	assert_true(plan.add_plot(_plot(plan, &"roof_deck",
 		[column] as Array[Vector2i], base + 2 * span, base + 2 * span,
 		WarrenMazeSourcePlan.PLOT_DECK)), plan.last_rejection)
-	assert_false(plan.add_plot(_plot(&"over_the_deck",
+	assert_false(plan.add_plot(_plot(plan, &"over_the_deck",
 		[column] as Array[Vector2i], base + 2 * span,
 		base + 2 * span + span)),
 		"a deck's own floor band is reserved against everything else")
@@ -350,6 +375,88 @@ func test_add_plot_rejects_a_plot_overlapping_one_already_standing() -> void:
 		"building_id": &"smuggled"})
 	assert_false(plan.seal(), "a smuggled overlapping plot may not seal")
 	assert_string_contains(plan.last_rejection, "overlaps plot")
+
+
+func test_seal_rejects_a_plot_appended_straight_onto_the_array() -> void:
+	## `plots` is public, so a caller can skip add_plot entirely. Seal re-runs
+	## the SHAPE rules over every stored plot (review finding 2026-08-23,
+	## minor 7), so a footprint whose halves do not touch -- or a second plot
+	## wearing an id already in the town -- can no longer buy a sealed town by
+	## going round the front door.
+	var plan := _unsealed_fixture()
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	var columns := _clean_columns(plan, 1, 9)
+	assert_eq(columns.size(), 1, "the compact fixture keeps a clean column")
+	if columns.is_empty():
+		return
+	var column := columns[0]
+	var base := plan.massif.base_at(column)
+	var legal := _plot(plan, &"legal", [column] as Array[Vector2i], base,
+		base + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)
+	assert_true(plan.add_plot(legal), plan.last_rejection)
+	var split: Array[Vector2i] = [column + Vector2i(4, 0),
+		column + Vector2i(8, 0)]
+	var malformed := _plot(plan, &"appended", split, base,
+		base + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)
+	plan.plots.append(malformed)
+	assert_false(plan.seal(),
+		"seal judges the plots the array really holds, not the ones add_plot " \
+		+ "happened to vet")
+	assert_string_contains(plan.last_rejection, "disconnected footprint")
+	assert_false(plan.is_sealed())
+	plan.plots.remove_at(plan.plots.size() - 1)
+	plan.plots.append(legal.duplicate())
+	assert_false(plan.seal(), "two stored plots may not share an id")
+	assert_string_contains(plan.last_rejection, "already taken")
+	plan.plots.remove_at(plan.plots.size() - 1)
+	assert_true(plan.seal(), plan.last_rejection)
+
+
+func test_add_plot_demands_a_real_door_for_a_house_or_an_asset() -> void:
+	## `door_walk` is the cell composition puts the door module on, so a house
+	## or an asset has to address a real passage cell 4-adjacent to its own
+	## footprint (review finding 2026-08-23, minor 8). A deck's door_walk is
+	## the street it grew off and a bridge's is the span cell underneath it --
+	## neither is beside its own footprint, and both are exempt.
+	var plan := _unsealed_fixture()
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	var columns := _clean_columns(plan, 1, 9)
+	assert_eq(columns.size(), 1, "the compact fixture keeps a clean column")
+	if columns.is_empty():
+		return
+	var column := columns[0]
+	var base := plan.massif.base_at(column)
+	var top := base + WarrenMazeSourcePlan.MIN_HOUSE_BANDS
+	var nowhere := _plot(plan, &"no_such_street",
+		[column] as Array[Vector2i], base, top)
+	nowhere["door_walk"] = Vector3i(999, 999, 999)
+	assert_false(plan.add_plot(nowhere),
+		"a house may not address a cell that is not a passage at all")
+	assert_string_contains(plan.last_rejection, "door_walk")
+	var detached := _plot(plan, &"detached", [column] as Array[Vector2i],
+		base, top, WarrenMazeSourcePlan.PLOT_ASSET)
+	for cell: Vector3i in plan.passage_cells():
+		if absi(column.x - cell.x) + absi(column.y - cell.z) > 1:
+			detached["door_walk"] = cell
+			break
+	assert_ne(detached["door_walk"] as Vector3i, Vector3i.ZERO,
+		"the fixture has a street this footprint does not touch")
+	assert_false(plan.add_plot(detached),
+		"an asset is held to the same rule: a real street, but its own")
+	assert_string_contains(plan.last_rejection, "door_walk")
+	assert_eq(plan.plots.size(), 0, "a doorless plot is never stored")
+	assert_true(plan.add_plot(_plot(plan, &"addressed",
+		[column] as Array[Vector2i], base, top)), plan.last_rejection)
+	# Both exempt kinds, each carrying a deliberately impossible door.
+	var span_top := top + WarrenBuildingParcel.STOREY_BANDS
+	var bridge := _plot(plan, &"span", [column] as Array[Vector2i], top,
+		span_top, WarrenMazeSourcePlan.PLOT_BRIDGE)
+	bridge["door_walk"] = Vector3i(999, 999, 999)
+	assert_true(plan.add_plot(bridge), plan.last_rejection)
+	var deck := _plot(plan, &"roof_deck", [column] as Array[Vector2i],
+		span_top, span_top, WarrenMazeSourcePlan.PLOT_DECK)
+	deck["door_walk"] = Vector3i(999, 999, 999)
+	assert_true(plan.add_plot(deck), plan.last_rejection)
 
 
 func test_passage_headroom_is_a_per_cell_fact_not_a_constant() -> void:
@@ -415,10 +522,10 @@ func test_signature_covers_plots() -> void:
 	assert_eq(sites.size(), 2, "the compact fixture keeps two clean columns")
 	if sites.size() < 2:
 		return
-	var alpha := _plot(&"alpha", [sites[0]] as Array[Vector2i],
+	var alpha := _plot(first, &"alpha", [sites[0]] as Array[Vector2i],
 		first.massif.base_at(sites[0]),
 		first.massif.base_at(sites[0]) + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)
-	var beta := _plot(&"beta", [sites[1]] as Array[Vector2i],
+	var beta := _plot(first, &"beta", [sites[1]] as Array[Vector2i],
 		first.massif.base_at(sites[1]),
 		first.massif.base_at(sites[1]) + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)
 	assert_true(first.add_plot(alpha), first.last_rejection)
@@ -436,11 +543,19 @@ func test_signature_covers_plots() -> void:
 		first.deterministic_signature(),
 		"a plot must change the sealed identity")
 	# Every field a plot signs has to reach the signature: two towns whose
-	# plots differ in exactly one of them may not sign alike.
+	# plots differ in exactly one of them may not sign alike. The rival door
+	# is a SECOND legal door on alpha's own footprint (minor 8, 2026-08-23):
+	# add_plot refuses a door that addresses nothing, so the only way to vary
+	# this field is to vary it between two real addresses.
+	var alpha_doors := _doors_for(first, [sites[0]] as Array[Vector2i])
+	assert_gte(alpha_doors.size(), 2,
+		"alpha's column fronts two streets, so its door can really differ")
+	if alpha_doors.size() < 2:
+		return
 	for field: String in ["door_walk", "building_id"]:
 		var variant := _unsealed_fixture()
 		var changed := alpha.duplicate()
-		changed[field] = Vector3i(3, 4, 5) if field == "door_walk" \
+		changed[field] = alpha_doors[1] if field == "door_walk" \
 			else &"another_building"
 		assert_true(variant.add_plot(changed), variant.last_rejection)
 		assert_true(variant.add_plot(beta), variant.last_rejection)
@@ -1117,25 +1232,57 @@ func test_planner_is_deterministic() -> void:
 			"seed %d %s audits the same outcomes twice" % [seed_value, scale])
 
 
+func _stranding_refusals(plan: WarrenMazeSourcePlan) -> int:
+	## How many houses this town refused to commit because their roof could
+	## not carry a street standing on the footprint -- the guard
+	## WarrenPlotPlanner._raise_buildings applies before add_plot (review
+	## finding 2026-08-23, Important 1). A coverage fact, reported and never
+	## pinned: zero is the good outcome and any number is legal.
+	var out := 0
+	var outcomes := plan.audit.get("plot_outcomes", {}) as Dictionary
+	for record: Dictionary in outcomes.get("buildings", []) as Array:
+		out += int(String(record.get("reason", "")).contains(
+			"would strand a street"))
+	return out
+
+
 func test_streets_keep_their_floor() -> void:
 	# The addendum's claim, pinned as equality rather than as a ceiling: the
 	# plot layer never leaves a street standing over air that the bore had not
 	# already left. A carve-stage gap is a lower street's headroom eating an
 	# upper street's floor, which no plot can repair; anything above that count
 	# is a house or an asset that built the ground out from under a street.
-	for spec: Dictionary in PLANNER_SEEDS:
-		var seed_value := int(spec["seed"])
-		var scale := StringName(spec["scale"])
-		var plan := _sealed_town(seed_value, scale)
-		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
-		if plan == null:
-			continue
-		var bore := _carved_town(seed_value, scale).street_floor_gaps()
-		var sealed_gaps := int(plan.audit.get("street_floor_gaps", -1))
-		gut.p("seed %d %s: street_floor_gaps %d, the bore left %d" % [
-			seed_value, scale, sealed_gaps, bore])
-		assert_eq(sealed_gaps, bore,
-			"seed %d %s adds no floating street" % [seed_value, scale])
+	#
+	# Corpus-wide, not the four planner seeds (review finding 2026-08-23,
+	# Important 1): street walkability is a HARD rule, and a hard rule proved
+	# on four towns is a hard rule proved on four towns. Seeds whose plan does
+	# not seal are skipped and named.
+	var checked := 0
+	var stranded_refusals := 0
+	var skipped := PackedStringArray()
+	for scale: StringName in [&"compact", &"standard"]:
+		for seed_value in range(1, CORPUS_SEEDS + 1):
+			var plan := _sealed_town(seed_value, scale)
+			var carved := _carved_town(seed_value, scale)
+			if plan == null or carved == null:
+				skipped.append("%d %s" % [seed_value, scale])
+				continue
+			var bore := carved.street_floor_gaps()
+			var sealed_gaps := int(plan.audit.get("street_floor_gaps", -1))
+			var refusals := _stranding_refusals(plan)
+			stranded_refusals += refusals
+			checked += 1
+			gut.p(("seed %d %s: street_floor_gaps %d, the bore left %d, " \
+				+ "%d house(s) refused to strand a street") % [seed_value,
+					scale, sealed_gaps, bore, refusals])
+			assert_eq(sealed_gaps, bore,
+				"seed %d %s adds no floating street" % [seed_value, scale])
+	gut.p("street floors: %d/%d towns checked, %d skipped (%s); %d houses " \
+		% [checked, 2 * CORPUS_SEEDS, skipped.size(), ", ".join(skipped),
+			stranded_refusals] + "refused corpus-wide to keep a street up")
+	assert_gte(checked, TRANSLATE_FLOOR,
+		"%d of %d towns seal and can be checked at all" % [checked,
+			2 * CORPUS_SEEDS])
 
 
 # --- Adapter and translator (task B3) ---------------------------------------
@@ -1480,6 +1627,18 @@ func test_flat_roof_parcels_relax_parity_where_something_stands_on_the_roof() \
 		host.threshold_column, host.frontage_direction, 0,
 		true).seal(volume),
 		"flat_roof still demands a storey plus a band of roof")
+	# `flat_roof` is part of a parcel's IDENTITY (review finding 2026-08-23,
+	# Important 2): it changes the height rule, the storey count and the roof
+	# base band, so two parcels alike in every other field are two different
+	# buildings. Both restated fresh and unsealed, so nothing seal computes
+	# can be what separates them.
+	var signed_flat := _restate(host, host.base_band + 5, true)
+	var signed_pitched := _restate(host, host.base_band + 5, false)
+	assert_ne(signed_flat.deterministic_signature(),
+		signed_pitched.deterministic_signature(),
+		"flat_roof reaches deterministic_signature")
+	assert_eq(signed_flat.slot_signature(), signed_pitched.slot_signature(),
+		"the horizontal construction slot is deliberately blind to it")
 
 
 func _restate(host: WarrenBuildingParcel, top_band: int,
@@ -1536,21 +1695,37 @@ func test_corpus_translates() -> void:
 # built to drive down. Every ledger, reservation, stamp, trim, and foundation
 # test went with the code it described.
 
-## Measured exterior-rock ratio on the four planner towns, 2026-08-22:
-## seed 12 compact 0.1877, seed 4 compact 0.1214, seed 3 standard 0.1564,
-## seed 9 standard 0.0686. The ceiling is the worst of those plus a 0.05
+## Measured exterior-rock ratio on the four planner towns, 2026-08-23:
+## seed 12 compact 0.2605, seed 4 compact 0.1878, seed 3 standard 0.2255,
+## seed 9 standard 0.1358. The ceiling is the worst of those plus a 0.05
 ## guard, rounded up to two places. A CEILING, so it is re-pinned DOWNWARD
 ## only as the town gets less rocky -- a rise past it is a regression to
 ## report, never to accommodate.
-const EXTERIOR_ROCK_CEILING := 0.24
+##
+## The METRIC was redefined in the same pass (review finding 2026-08-23,
+## minor 6): `exterior_rock_ratio` now scans from band `base_at` rather than
+## `base_at + 1` and counts an up-facing exposure as skin, not side faces
+## alone. So this rise from 0.24 is a wider measurement, NOT a rockier town --
+## the same four towns read 0.1877 / 0.1214 / 0.1564 / 0.0686 under the old
+## narrow definition, and the two sets of numbers are not comparable. Every
+## later movement of this constant is a real change and must be reported as
+## one.
+const EXTERIOR_ROCK_CEILING := 0.32
 
-## Measured `maze_ownership_ratio` on the four planner towns, 2026-08-22 --
+## Measured `maze_ownership_ratio` on the four planner towns, 2026-08-23 --
 ## plot-owned cells (parcels plus their back rooms) over the plan's own
 ## derived solid -- each minus a 0.05 guard, rounded down to two places:
-## seed 12 compact 0.6667 -> 0.61, seed 4 compact 0.7227 -> 0.67,
-## seed 3 standard 0.6762 -> 0.62, seed 9 standard 0.7685 -> 0.71.
+## seed 12 compact 0.6667 -> 0.61, seed 4 compact 0.7253 -> 0.67,
+## seed 3 standard 0.6803 -> 0.63, seed 9 standard 0.7727 -> 0.72.
 ## Anti-regression floors, re-pinned UPWARD only; a drop is a regression to
 ## report, never to accommodate.
+##
+## Three of the four rose when bridge mass left the DENOMINATOR (review
+## finding 2026-08-23, minor 15): a bridge translates to a typed
+## occupied-link record, never to a parcel, so counting its bands as solid
+## the translation failed to own charged a town for having skywalks. The four
+## read 0.6667 / 0.7227 / 0.6762 / 0.7685 before that fix; seed 12 compact
+## retains no span at all, which is why its number did not move.
 ##
 ## History (task B4): the deleted constructive suite pinned this same idea at
 ## 0.66 (seed 4 compact) and 0.65 (seed 12 compact) in
@@ -1564,8 +1739,8 @@ const EXTERIOR_ROCK_CEILING := 0.24
 const OWNERSHIP_FLOOR: Dictionary = {
 	"12/compact": 0.61,
 	"4/compact": 0.67,
-	"3/standard": 0.62,
-	"9/standard": 0.71,
+	"3/standard": 0.63,
+	"9/standard": 0.72,
 }
 
 
@@ -1711,11 +1886,15 @@ func test_exterior_rock_ratio_is_pinned() -> void:
 		var rock := 0
 		var in_plot := 0
 		for column: Vector2i in _sorted_columns(plan):
-			for band in range(plan.massif.base_at(column) + 1,
+			for band in range(plan.massif.base_at(column),
 					plan.column_ceiling(column)):
 				if not plan.solid_at(Vector3i(column.x, band, column.y)):
 					continue
-				var exposed := false
+				# Side faces AND the up-facing one, over the massif's own band
+				# range from base_at (minor 6, 2026-08-23): a bare rock top is
+				# skin you look down on, and band base_at is massif mass.
+				var exposed := not plan.solid_at(
+					Vector3i(column.x, band + 1, column.y))
 				for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
 					exposed = exposed or not plan.solid_at(Vector3i(
 						column.x + direction.x, band, column.y + direction.y))

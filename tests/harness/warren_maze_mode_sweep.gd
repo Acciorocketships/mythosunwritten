@@ -151,13 +151,18 @@ func _source_metrics(plan: WarrenMazeSourcePlan) -> Dictionary:
 			house_columns += (plot["cells"] as Array).size()
 	var houses := int(counts[WarrenMazeSourcePlan.PLOT_HOUSE])
 	var exterior := plan.audit.get("exterior_rock_ratio", {}) as Dictionary
+	# `raised_shoulders`: no-plot columns whose sealed rock shoulder stands
+	# ABOVE their own massif envelope (review finding 2026-08-23, minor 5).
+	# `rock_shoulder` has no upper clamp; this is the measurement that says
+	# whether it needs one, and no rule is pinned on it yet.
 	return {"line": ("SWEEP seed=%d scale=%s sealed=true plots=%d houses=%d "
 		+ "assets=%d decks=%d bridges=%d tiered=%d mean_footprint=%.2f "
-		+ "exterior_rock=%.4f") % [
+		+ "exterior_rock=%.4f raised_shoulders=%d") % [
 		plan.world_seed, String(plan.scale_profile.scale_id),
 		plan.plots.size(), houses,
 		int(counts[WarrenMazeSourcePlan.PLOT_ASSET]),
 		int(counts[WarrenMazeSourcePlan.PLOT_DECK]),
 		int(counts[WarrenMazeSourcePlan.PLOT_BRIDGE]), tiered,
 		float(house_columns) / float(maxi(1, houses)),
-		float(exterior.get("ratio", 0.0))]}
+		float(exterior.get("ratio", 0.0)),
+		plan.raised_shoulder_columns().size()]}

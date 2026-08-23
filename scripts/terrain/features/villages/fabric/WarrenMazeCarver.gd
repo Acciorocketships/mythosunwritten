@@ -1117,6 +1117,13 @@ static func _select_span_in_window(world_seed: int, massif: WarrenMassif,
 static func _bridge_span_is_legal(massif: WarrenMassif,
 		excavation: WarrenExcavation, span: Array[Vector3i],
 		directions: Dictionary) -> bool:
+	## A span is legal when both flank columns are solid on EVERY band from
+	## the passage floor to its roof -- the wall the skywalk needs, not just
+	## its two ends. Review finding (2026-08-23, minor): the old check tested
+	## `cell.y` and the roof band only, so a crossing passage carved at
+	## cell.y + 1 left the flank hollow through the middle and still passed.
+	## WarrenExcavation._bridge_spans_are_legal re-checks the same interval
+	## against the FINAL carved set; the two readings must agree.
 	for cell: Vector3i in span:
 		var direction := directions.get(cell, Vector2i.ZERO) as Vector2i
 		if direction == Vector2i.ZERO:
@@ -1124,10 +1131,9 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 		var column := Vector2i(cell.x, cell.z)
 		var roof_band := cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS
 		for flank: Vector2i in _bridge_flank_columns(cell, direction):
-			if not _column_is_solid_at(massif, excavation, flank, cell.y) \
-					or not _column_is_solid_at(massif, excavation, flank,
-						roof_band):
-				return false
+			for band in range(cell.y, roof_band + 1):
+				if not _column_is_solid_at(massif, excavation, flank, band):
+					return false
 		if massif.top_at(column) - cell.y \
 				< WarrenPassageLatticeRules.HEADROOM_BANDS + 2:
 			return false

@@ -320,16 +320,21 @@ func test_bridge_spans_are_retained_over_open_streets() -> void:
 				var perpendicular := Vector2i(-direction.y, direction.x)
 				var column := Vector2i(cell.x, cell.z)
 				var roof := cell.y + WarrenExcavation.HEADROOM_BANDS
+				# The whole interval, not its two ends (review finding
+				# 2026-08-23, minor): a crossing passage at cell.y + 1 would
+				# leave the flank hollow exactly where the skywalk's wall has
+				# to be. Mirrors WarrenMazeCarver._bridge_span_is_legal and
+				# WarrenExcavation._bridge_spans_are_legal, which both now
+				# read range(cell.y, roof + 1).
 				for flank: Vector2i in [column + perpendicular,
 						column - perpendicular]:
-					assert_eq(plan.state_at(Vector3i(flank.x, cell.y, flank.y)),
-						WarrenMazeSourcePlan.CellState.SOLID,
-						"seed %d span cell %s flank %s must be solid at floor" \
-							% [seed, cell, flank])
-					assert_eq(plan.state_at(Vector3i(flank.x, roof, flank.y)),
-						WarrenMazeSourcePlan.CellState.SOLID,
-						"seed %d span cell %s flank %s must be solid at roof" \
-							% [seed, cell, flank])
+					for band in range(cell.y, roof + 1):
+						assert_eq(plan.state_at(
+							Vector3i(flank.x, band, flank.y)),
+							WarrenMazeSourcePlan.CellState.SOLID,
+							("seed %d span cell %s flank %s must be solid " \
+								+ "at band %d of [%d, %d]") % [seed, cell,
+									flank, band, cell.y, roof])
 				assert_gte(plan.massif.top_at(column) - cell.y,
 					WarrenExcavation.HEADROOM_BANDS + 2,
 					"seed %d span cell %s needs enough retained mass" \

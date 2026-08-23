@@ -84,7 +84,7 @@ static func reserve(plan: WarrenMazeSourcePlan,
 	var streets := WarrenPlotPlanner.street_bands(plan)
 	var blocked := WarrenPlotPlanner.blocked_columns(plan)
 	_place_assets(plan, profile, streets, blocked, outcomes)
-	_grow_decks(plan, blocked, outcomes)
+	_grow_decks(plan, streets, blocked, outcomes)
 
 
 static func _place_assets(plan: WarrenMazeSourcePlan,
@@ -191,6 +191,11 @@ static func _no_street_left_hanging(streets: Dictionary, column: Vector2i,
 	## between or above would lose the rock under that street's floor, because
 	## above the lowest plot floor on a column solid mass is plots and nothing
 	## else.
+	##
+	## `_deck_column_ok` shares it with `top == datum` (a deck is flat), so
+	## both P3 paths state the rule once. A house does not need it: it rises
+	## to meet the street instead, which is what WarrenPlotPlanner's own
+	## `_street_above` is for.
 	for band: int in streets.get(column, []) as Array:
 		if band >= datum and band != top:
 			return false
@@ -254,8 +259,8 @@ static func _site_less(a: Dictionary, b: Dictionary) -> bool:
 	return int(a["template"]) < int(b["template"])
 
 
-static func _grow_decks(plan: WarrenMazeSourcePlan, blocked: Dictionary,
-		outcomes: Dictionary) -> void:
+static func _grow_decks(plan: WarrenMazeSourcePlan, streets: Dictionary,
+		blocked: Dictionary, outcomes: Dictionary) -> void:
 	## Walk the streets in order and grow the flattest connected region beside
 	## each one, keeping them until the scale's quota is met. The seeded
 	## variation is the quota roll: a candidate is never skipped on a coin flip,
@@ -271,7 +276,7 @@ static func _grow_decks(plan: WarrenMazeSourcePlan, blocked: Dictionary,
 	for street: Vector3i in WarrenPlotPlanner.walk_order(plan):
 		if accepted >= quota:
 			break
-		var region := _deck_region(plan, street, blocked, cap)
+		var region := _deck_region(plan, street, streets, blocked, cap)
 		if region.size() < DECK_MIN:
 			continue
 		var id := StringName("deck.%02d" % records.size())
@@ -291,7 +296,8 @@ static func _grow_decks(plan: WarrenMazeSourcePlan, blocked: Dictionary,
 
 
 static func _deck_region(plan: WarrenMazeSourcePlan, street: Vector3i,
-		blocked: Dictionary, cap: int) -> Array[Vector2i]:
+		streets: Dictionary, blocked: Dictionary,
+		cap: int) -> Array[Vector2i]:
 	## Try each of the street's four neighbours as a root, cheapest first, and
 	## keep the first region that reaches DECK_MIN. One root at a time is what
 	## makes a deck connected: two opposite neighbours of the same street cell
@@ -301,19 +307,20 @@ static func _deck_region(plan: WarrenMazeSourcePlan, street: Vector3i,
 	var origin := Vector2i(street.x, street.z)
 	for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
 		var root := origin + direction
-		if _deck_column_ok(plan, root, street.y, blocked):
+		if _deck_column_ok(plan, root, street.y, streets, blocked):
 			roots.append(root)
 	roots.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return WarrenPlotPlanner.closer(plan, a, b, street.y))
 	for root: Vector2i in roots:
-		var region := _deck_from(plan, root, street.y, blocked, cap)
+		var region := _deck_from(plan, root, street.y, streets, blocked, cap)
 		if region.size() >= DECK_MIN:
 			return region
 	return [] as Array[Vector2i]
 
 
 static func _deck_from(plan: WarrenMazeSourcePlan, root: Vector2i, datum: int,
-		blocked: Dictionary, cap: int) -> Array[Vector2i]:
+		streets: Dictionary, blocked: Dictionary,
+		cap: int) -> Array[Vector2i]:
 	## Cheapest-first growth from one root. Every frontier column is a
 	## 4-neighbour of a column already in the region, so the result is one
 	## connected floor by construction.
@@ -327,7 +334,8 @@ static func _deck_from(plan: WarrenMazeSourcePlan, root: Vector2i, datum: int,
 			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
 				var next := from + direction
 				if seen.has(next) \
-						or not _deck_column_ok(plan, next, datum, blocked):
+						or not _deck_column_ok(plan, next, datum, streets,
+							blocked):
 					continue
 				seen[next] = true
 				frontier.append(next)
@@ -345,9 +353,22 @@ static func _deck_from(plan: WarrenMazeSourcePlan, root: Vector2i, datum: int,
 
 
 static func _deck_column_ok(plan: WarrenMazeSourcePlan, column: Vector2i,
-		datum: int, blocked: Dictionary) -> bool:
+		datum: int, streets: Dictionary, blocked: Dictionary) -> bool:
 	## A deck column: unclaimed, on the massif, standing within a band of the
-	## street's own datum, and accepted by the support rule there.
+	## street's own datum, accepted by the support rule there, and leaving no
+	## street on it hanging.
+	##
+	## The last guard is the asset path's (review finding 2026-08-23, minor
+	## 10). A deck is flat -- top == floor == datum -- so the only passage it
+	## can carry above its own floor is one AT the datum, which runs across
+	## it; anything higher would lose the rock under that street's floor,
+	## because above the lowest plot floor on a column solid mass is plots and
+	## nothing else. Today the flatness test makes such a street impossible
+	## (a passage at datum + 4 or above needs an envelope the |top_at - datum|
+	## <= 1 test already refused), so this is belt to that brace: the rule the
+	## deck actually depends on is written down where it is depended on,
+	## rather than resting on another rule's incidental range.
 	return not blocked.has(column) and plan.massif.has_column(column) \
 		and absi(plan.massif.top_at(column) - datum) <= 1 \
-		and plan.plot_support_ok(column, datum)
+		and plan.plot_support_ok(column, datum) \
+		and _no_street_left_hanging(streets, column, datum, datum)

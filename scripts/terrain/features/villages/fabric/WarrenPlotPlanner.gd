@@ -337,8 +337,21 @@ static func _raise_buildings(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		var top := int(roof["top"])
 		var record := {"id": id, "cells": cells.size(), "floor": floor_band,
 			"top": top, "tiered": bool(roof["tiered"]), "reason": ""}
+		# The last word on the hard rule, checked here rather than trusted
+		# from the height fixpoint (review finding 2026-08-23, Important 1).
+		# `_building_top` exits its loop on `cells.size() <= 1` as well as on
+		# an empty `dropped`, so a single-column house can come back with the
+		# very street it could not carry still on it -- reachable through the
+		# `cap` override, where a house claimed above forces `top = cap` below
+		# the tier and the upper house then fails its own add_plot and
+		# releases, after this one has already committed. A refused house is a
+		# coverage fact this record publishes; a floating street is a broken
+		# hard rule, so the house gives way.
+		var stranding := _stranding_refusal(streets, cells, floor_band, top)
 		if top < floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
 			record["reason"] = "no footprint here reaches MIN_HOUSE_BANDS"
+		elif stranding != "":
+			record["reason"] = stranding
 		elif not plan.add_plot({"id": id,
 				"kind": WarrenMazeSourcePlan.PLOT_HOUSE, "cells": cells,
 				"floor": floor_band, "top": top,
@@ -404,6 +417,11 @@ static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
 					or ceiling > top and ceiling <= reach) \
 					or _street_above(streets, column, floor_band, top):
 				dropped[column] = true
+		# The second disjunct exits with `dropped` STILL non-empty: a
+		# one-column house has nothing left to shed, so it returns the height
+		# it has and the offending street with it. That is why
+		# `_raise_buildings` re-asks `_stranding_refusal` before it commits --
+		# this loop settles a shape, it does not certify one.
 		if dropped.is_empty() or cells.size() <= 1:
 			break
 		# The component walk, not `dropped`, decides who really leaves: it keeps
@@ -420,6 +438,19 @@ static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
 				_release(claims, column, floor_band)
 		building["cells"] = cells
 	return {"top": top, "tiered": street_top >= 0 and top == street_top}
+
+
+static func _stranding_refusal(streets: Dictionary, cells: Array[Vector2i],
+		floor_band: int, top: int) -> String:
+	## "" when a roof at `top` carries every street standing on this
+	## footprint, else the reason naming the first column it would leave
+	## hanging. `_raise_buildings` asks before it commits, so the fixpoint in
+	## `_building_top` decides the SHAPE and this decides whether the shape it
+	## settled on may stand at all.
+	for column: Vector2i in cells:
+		if _street_above(streets, column, floor_band, top):
+			return "would strand a street on column %s" % column
+	return ""
 
 
 static func _street_above(streets: Dictionary, column: Vector2i,
