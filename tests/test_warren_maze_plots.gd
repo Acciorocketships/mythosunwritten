@@ -220,6 +220,38 @@ func test_solid_at_derives_rock_under_plots_and_air_above() -> void:
 		"street_floor_gaps audits exactly the undercut streets")
 
 
+func test_add_plot_on_a_sealed_plan_changes_nothing() -> void:
+	var plan := _unsealed_fixture()
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	var columns := _clean_columns(plan, 2, 8)
+	assert_eq(columns.size(), 2, "the compact fixture keeps two clean columns")
+	if columns.size() < 2:
+		return
+	var column := columns[0]
+	var floor_band := plan.massif.base_at(column) + 2
+	assert_true(plan.add_plot(_plot(&"only", [column] as Array[Vector2i],
+		floor_band, floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
+		plan.last_rejection)
+	assert_true(plan.seal(), plan.last_rejection)
+	var bare := columns[1]
+	var shoulder := plan.rock_shoulder(bare)
+	var probe := Vector3i(bare.x, shoulder, bare.y)
+	assert_eq(shoulder, floor_band,
+		"the sealed shoulder steps down to the only plot in town")
+	assert_false(plan.solid_at(probe), "nothing stands above a shoulder")
+	# A plot that would have been perfectly legal an instant before the seal.
+	var bare_base := plan.massif.base_at(bare)
+	assert_false(plan.add_plot(_plot(&"too_late", [bare] as Array[Vector2i],
+		bare_base, bare_base + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
+		"a sealed plan accepts no plot")
+	assert_string_contains(plan.last_rejection, "sealed")
+	assert_eq(plan.plots.size(), 1, "the sealed town keeps its one plot")
+	assert_eq(plan.rock_shoulder(bare), shoulder,
+		"a refused plot may not move a sealed plan's derived rock")
+	assert_false(plan.solid_at(probe),
+		"a refused plot may not raise a sealed plan's derived rock")
+
+
 func test_stack_invariant_rejects_a_floating_plot_at_seal() -> void:
 	var grounded := _unsealed_fixture()
 	assert_not_null(grounded, WarrenMazeCarver.last_failure)

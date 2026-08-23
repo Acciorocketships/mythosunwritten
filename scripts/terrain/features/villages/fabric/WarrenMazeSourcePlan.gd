@@ -610,16 +610,20 @@ func state_at_raw(cell: Vector3i) -> CellState:
 ## `top` is NOT clamped to the massif: the envelope is a planning reference
 ## and the rock of a column with no plot, never a ceiling.
 func add_plot(plot: Dictionary) -> bool:
+	# FIRST, before anything below touches state: a sealed plan is finished,
+	# and a refused plot may not move so much as a cached band of it. The
+	# shoulders below it are the sealed town's own derivation and nothing
+	# rebuilds them once _sealed is true.
+	if _sealed:
+		return _reject("plan is sealed; no plot may be added")
 	last_rejection = ""
 	# Sealed shoulders describe a FINISHED town. seal() already throws its
 	# own cache away on the one path that can leave one behind (its plot
 	# checks run last for exactly that reason), so this is the belt to that
-	# brace: however seal's checks are ever reordered, a plot is judged
-	# against the envelope that is really standing, never against the
-	# shoulders of an attempt that failed.
+	# brace: however seal's checks are ever reordered, a plot on an OPEN plan
+	# is judged against the envelope that is really standing, never against
+	# the shoulders of an attempt that failed.
 	_rock_shoulders.clear()
-	if _sealed:
-		return _reject("plan is sealed; no plot may be added")
 	var shape := _plot_shape_rejection(plot)
 	if shape != "":
 		return _reject(shape)
