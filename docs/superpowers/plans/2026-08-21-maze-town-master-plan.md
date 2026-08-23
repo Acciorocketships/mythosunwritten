@@ -17,7 +17,7 @@
 |---|---|---|
 | A | Constructive source layer (reservations, stamping, ledger, trim, foundations, debug view) — slices 1/1b/1c | **done; replaced** by B. 22/23 seeds translate 1:1; ownership 0.69/0.69 on seeds 4/12 **on the old owned-solid metric** (`maze_owned_solid_ratio`, the ledger-era 2D-footprint ratio, deleted with the ledger in B4 — history only, not comparable with the live metric below); bridges on 6/6 standard seeds; carver tunnel policy (open by default + seeded spans) is kept |
 | B | **Plot-layer rewrite** (plot model) | **done** (B1–B5 + whole-branch review fix wave). Tasks below; measurements under *Phase B measured results* |
-| C | Composition consumes plots; delete the hero-feature beam; gate disposition | after B |
+| C | Composition consumes plots; delete the hero-feature beam; gate disposition | **done with two misses** (C1–C6). 20/24 towns compose + pass the fabric gate against a 22+/24 exit; solve 2.4–10.4 s against a ≤ 3 s exit, which moves to Phase F. Measurements under *Phase C measured results* |
 | D | Real-terrain sites (production seed + sloped fixtures) | after C |
 | E | Noise massif + carver vertical momentum/descent (variation) | after C (independent of D) |
 | F | Mode flip; delete searched pipeline, pin cache, budget slicing, `GENERATION_MODE` | after D & E, gated on G |
@@ -175,7 +175,7 @@ Milestone: `WarrenVolumetricSolver._solve_maze` composes from plots: houses/asse
 - `_solve_maze` and the harness build the source with `WarrenMazeSitePlanner.plan(world_seed, ground_bands, profile)` (plots) — `last_failure` carries the planner's stage failure; `WarrenMazeCarver.carve` is no longer called from either.
 - `tests/test_warren_maze_composition.gd`: `_program()` compiled once (`SettlementFabricProgram.compile(EnvironmentCatalog.load_default())`); `test_maze_mode_reaches_composition` — for the four planner seeds run `WarrenVolumetricSolver.solve(seed, {}, program, profile)` with `GENERATION_MODE = MODE_MAZE` (restored in `after_each`), print per seed: sealed?, `last_failure` (first 160 chars), ms; assert the failure, when present, is NOT at the source/adapter/translator stage (i.e. composition was reached — the string does not start with `maze massif`/`maze carve`/`maze volume adapter`/`sealed maze source carries no plots`); `test_maze_mode_is_deterministic` on seed 12 compact when it seals (skip with a printed reason when it does not — this task establishes the baseline, C2 makes it seal).
 - The sweep's `--mode maze` prints the 24-row matrix with the gate each town dies at; paste it into the report as the Phase C baseline.
-- [ ] Commit — `feat(villages): maze mode composes from the plot planner; composition baseline`.
+- [x] Commit — `feat(villages): maze mode composes from the plot planner; composition baseline`.
 
 ### Task C2: Gate disposition — maze-mode feature pass replaces the beam
 
@@ -184,32 +184,32 @@ Milestone: `WarrenVolumetricSolver._solve_maze` composes from plots: houses/asse
 - `_maze_feature_pass` (one pass, no search): market = the first viable `_preplan_spatial_market` candidate (or the absent sentinel → `advisory_shortfalls["covered_market"]`); courtyard bridge = the absent sentinel unless `requires_elevated_courtyard` (large/grand keep the existing cantilever candidates but take the first that seals — no ranking loop); landmarks = asset plots translated into landmark reservations (`maze_assets` record from the translator — add it in this task: `{id, kind_id, cells, floor, door_walk}` — mapped to `recipe_id = kind_id`, `origin`/`yaw_quarters` from the footprint and the door facing, run through the same `_reserve_landmark_preplan` commit; an asset whose recipe cannot be placed at that site is an audited shortfall, never a rejection); skywalks = none in this task (C4 adds bridges). The pass then continues into the existing exact-composition code (`:2101` onward) unchanged.
 - The unconditional `market_reservation.is_empty()` reject at `:1918-1926` and the `skywalk_range.x` floors at `:1625-1628`/`:1650-1653` are not reached on the maze branch; on the legacy branch they are unchanged.
 - Tests: `test_maze_mode_seals_the_planner_seeds` (all four seal through `solve`; report ms), `test_hero_shortfalls_are_audit_facts` (`advisory_shortfalls` keys present with counts; no hero quota rejects), determinism on seed 12 compact (signature equality across two solves), route-first mode test file green.
-- [ ] Commit — `feat(villages): maze-mode feature pass — hero quotas become audit facts`.
+- [x] Commit — `feat(villages): maze-mode feature pass — hero quotas become audit facts`.
 
 ### Task C3: Back rooms and stacked houses
 
 **Files:** modify `WarrenMazeBlockPartitioner.gd` (stacked plots: `support_parent_parcel_id`/`support_parent_storey_index` from the plot whose `[floor, top)` contains `floor − 1`; bridges excluded), `WarrenBuildingParcel.gd`/`WarrenParcelPlan.gd` (`_building_support_is_valid` and `roof_base_band()` accept a child at a flat-roof parent's `top_band` — the slab is the seam), `WarrenVolumetricSolver.gd` (a directed residual pre-pass `_stamp_maze_back_rooms` before `_backfill_residual_rooms`: each `maze_back_rooms` record decomposed into rectangles from the five-kind vocabulary (2×3, 2×2, 1×2, 2×1, 1×1), each stamped as a `WarrenRoomStamp` at the plot's `[floor, top)` with private access from the parcel's building (`add_private_parent`), envelope-checked with the same `_residual_room_envelope_fits`; cells that cannot be stamped are recorded in `composition_audit["maze_back_room_unstamped_cells"]` and left to the greedy backfill); test file.
 - Tests: `test_stacked_houses_declare_their_parent` (every house plot with a plot below carries a valid parent after `WarrenParcelPlan.seal`), `test_back_rooms_become_rooms` (share of back-room cells stamped, reported and pinned at measured − 0.05 on the four seeds), suites green.
-- [ ] Commit — `feat(villages): back rooms stamped from plots; stacked houses declare their parent`.
+- [x] Commit — `feat(villages): back rooms stamped from plots; stacked houses declare their parent`.
 
 ### Task C4: Decks and bridges
 
 **Files:** modify `WarrenMazeVolumeAdapter.gd` (deck cells → `volume.courtyard_cells` at the deck floor AND public floor surfaces so `_carve_public_volume` paves them as walkable `PUBLIC_FLOOR`; the plan's `maze_decks` records are the source), `WarrenVolumetricSolver.gd` (`_maze_feature_pass` skywalks: each `maze_bridges` record → a spatial skywalk reservation between the two flank parcels' room sockets at the bridge floor via the existing `_raw_straight_skywalk_reservation` builder; when no socket pair matches, `advisory_shortfalls["bridges"] += 1` and the span's retained mass is released to rock — audited, never rejected), `WarrenMazeBlockPartitioner.gd` (bridge record gains `flank_parcel_ids`); test file.
 - Tests: `test_decks_are_walkable_public_floor` (every deck cell has a `PUBLIC_FLOOR` face in the sealed spatial plan and is reachable from the route), `test_bridges_become_skywalks_or_audited_shortfalls` (count of skywalk features + shortfalls == bridge plots on the four seeds; report the ratio).
-- [ ] Commit — `feat(villages): decks pave as plazas; bridge plots become skywalks`.
+- [x] Commit — `feat(villages): decks pave as plazas; bridge plots become skywalks`.
 
 ### Task C5: Flat roofs, stone bases, first built-town render
 
 **Files:** modify `WarrenParcelConstruction.gd` (`proposal()` emits `flat_roof`), `WarrenRoomStamp.gd` (carries `flat_roof`), `WarrenSpatialFabricCompiler.gd` (`compile_roof_units` honours a stamp's `flat_roof` — the tiered house's roof is the upper street's slab/terrace, never a pitched roof), `WarrenMazeBlockPartitioner.gd` (`bears_on_rock` → the parcel's terrain-bearing fact so stacked houses do not get a stone base), harness; the user's built-town captures.
 - Render seeds 4, 3, 9 with `warren_spatial_review.tscn -- --maze-source --mode maze --seed N --scale <id> --output .../scratchpad/phase-c-view` (GUI); the implementer reads the iso/street/orbit captures and writes an honest verdict; every blocker that stops a capture is fixed in this task or recorded with its gate.
 - Tests: `test_tiered_parcels_get_flat_roofs` (fabric audit `flat_roof_count` ≥ tiered parcel count on a seed with tiers), fabric compiler 11/11, settlement 42/42.
-- [ ] Commit — `feat(villages): flat roofs and stone bases from plot facts; first built maze town`.
+- [x] Commit — `feat(villages): flat roofs and stone bases from plot facts; first built maze town`.
 
 ### Task C5b: Stone skin, realisable assets, the built-town battery
 
 **Files:** modify `SettlementFabricAssembler.gd` (retained maze stone is skinned: every exposed face of a retained stone cell — side faces whose neighbour is air/outside/public air, top faces whose cell above is air and not a paved public floor — emits the rock module the plinth path already uses; internal faces between stone and stone, stone and a building, or stone and a paved floor emit nothing), `WarrenSpatialFabricCompiler.gd` (`_foundation_shell_audit` counts expected vs rendered stone faces for maze stone the same way it does for plinths; `maze_stone_face_count`), `WarrenPlotReservations.gd` + `tests/test_warren_maze_plots.gd` (asset templates carry the recipe's entrance offset and clearance extents so the planner's site test mirrors `_maze_asset_landmark`'s realisation checks — body inside the plot, bearing at the street datum, clearance clear of other plots; ≥ 1 asset lands on the planner seeds or the 24-seed corpus, reported), `tests/test_warren_maze_composition.gd` (`test_retained_stone_is_skinned`: rendered stone faces == audited exposed faces on the sealing seeds; `test_assets_land` — the landmark success path asserted through the production pass), `tests/harness/warren_spatial_review.gd` only if a capture is needed.
 - Render seeds 12/compact, 4/compact, 3/standard (GUI, `--maze-source --mode maze`); read overview, street, foundation, and plaza captures; write the honest verdict (stone mountain present? plazas on stone? stone bases? roofs? what is broken); fix what blocks a capture.
-- [ ] Commit — `feat(villages): retained stone skinned; assets realisable; built-town battery`.
+- [x] Commit — `feat(villages): retained stone skinned; assets realisable; built-town battery`.
 
 ### Task C5c: Compose the plot mass
 
@@ -218,7 +218,7 @@ The quarry-block verdict (C5b) is unroomed PLOT mass retained as stone: only 23�
 **Files:** modify `WarrenVolumetricSolver.gd` (`_retain_maze_rock` tags cells `rock` (derived rock: `solid_at` true and inside no plot) vs `unroomed_plot_mass` (inside a plot's `[floor, top)`, claimed by no room/roof/feature) — two audit counts `maze_retained_rock_cells` / `maze_unroomed_plot_cells` and the share `maze_unroomed_plot_share` = unroomed / plot mass; maze mode lifts `residual_room_budget`/`residual_kind_budget` (the greedy backfill, already confined to plot mass, runs until no candidate fits); the directed back-room pass stamps street-fronting back-room rectangles as ADDRESSED rooms (their own authored threshold onto the street's public floor) before private ones; the `_residual_room_envelope_fits` roof preflight applies only to rectangles whose top is the plot's top; parcels that compose no lineage are diagnosed — `composition_audit["maze_uncomposed_parcels"]` with the gate that dropped each (`_parcel_address_has_public_floor`, exact composition yield, bearing) — and the fixable causes fixed; `_reserve_landmark_preplan` skips (does not claim) a ROOF face the route already owns and accepts bearing on retained maze stone, so assets realise), `WarrenSpatialFabricCompiler.gd` (the stone audit reports both tags), `tests/test_warren_maze_composition.gd`.
 - Tests: `test_unroomed_plot_mass_is_bounded` (share reported per seed; CEILING pinned at measured + 0.05 after the work — goal ≤ 0.15, report honestly if missed with the remaining causes), `test_back_rooms_become_rooms` re-pinned upward, `test_assets_land` un-pended when ≥ 1 realises (report which seed), `test_uncomposed_parcels_are_explained` (every uncomposed parcel carries a gate name).
 - Render seeds 12 and 3 after; read the overviews: does the stone recede to bases, shoulders, slabs and tunnel roofs with houses on top?
-- [ ] Commit — `feat(villages): compose the plot mass — back rooms, lifted residual budget, assets realised`.
+- [x] Commit — `feat(villages): compose the plot mass — back rooms, lifted residual budget, assets realised`.
 
 ### Task C5d: Flat-roof-first composition
 
@@ -227,7 +227,7 @@ C5c measured that the binding constraint on plot-mass composition is the authore
 **Files:** modify `WarrenMazeBlockPartitioner.gd` (`flat_roof = true` for every house parcel and back room in maze mode; a pitched roof is a seeded PREFERENCE recorded on the parcel (`roof_preference = &"pitched"`) for houses whose plot top is strictly above every 4-neighbour plot's top and above the adjacent street bands — the only places a pitched unit can fit without a halo conflict), `WarrenSpatialFabricCompiler.gd` (`compile_roof_units`: a maze stamp composes its flat unit unless `roof_preference == pitched` AND the pitched unit fits with no displacement and no halo conflict — then pitched; never the reverse; audit `maze_pitched_roof_count` / `maze_flat_roof_count` / `maze_pitched_refused_count`), `WarrenParcelConstruction.gd` + `WarrenVolumetricSolver.gd` (re-apply C5c's two reverted relaxations — full no-descent in maze mode; back-room bearing mirroring the compiler's `stone_borne` branch — now that the roof gate is gone; keep them only if the three sealing seeds keep sealing, else report the gate), `tests/test_warren_maze_composition.gd`.
 - Measure: unroomed share per seed before → after (re-pin the ceiling DOWN only if measured lower), pitched/flat counts, 9/standard status (its pin removed if it clears), corpus seal count via the sweep (`--mode maze`, 24 seeds — report how many now seal; the Phase C exit wants 22+/24).
 - Render seeds 12 and 3; verdict: a terraced town of flat-roofed stone-and-timber houses with the occasional pitched roof on a freestanding house — does it read that way?
-- [ ] Commit — `feat(villages): flat-roof-first maze composition; pitched roofs where they fit`.
+- [x] Commit — `feat(villages): flat-roof-first maze composition; pitched roofs where they fit`.
 
 ### Task C5e: Partial plates tile; roofs are terraces
 
@@ -236,16 +236,89 @@ C5d left two things: 8 of the 13 non-sealing corpus seeds (and 9/standard, and t
 **Files:** modify `WarrenSpatialFabricCompiler.gd` (a partial plate is tiled: the uncovered cells of a flat crown are covered greedily with `roof.flat.tower`/`.slim` (and `.square` where a 2×2 fits) units in sorted order, each a normal roof unit in the face identity; `maze_partial_plate_tiled_count` / `_tile_count`; the `macro setback roof 0`, `exact setback roof`, and `1-cell exposed sliver` gates are not reached for flat crowns), `WarrenVolumetricSolver.gd` + `WarrenParcelConstruction.gd` (the flat parcel's parapet band above the slab is NOT retained stone: it is released to air, so the plot's `top` stays the massing envelope while the built crown is slab + open terrace; re-apply relaxation 1 (full no-descent) now that the partial-plate gate is gone, keeping it only if the three sealing seeds still seal), `SettlementFabricAssembler.gd` (a railing — `RAILING_MEDIUM`, already referenced by the program — on every exposed edge of a flat crown's slab whose neighbour at the slab band is air; no railing against a stacked room, a deck at the same band, or a street on the roof; audit `maze_terrace_railing_count`), `tests/test_warren_maze_composition.gd`.
 - Measure: unroomed share (ceiling DOWN only), corpus seal count via the sweep (report; C6 pins), 9/standard (remove the pin if cleared), per-seed ms.
 - Render seeds 12 and 3; verdict: terraces with railings, stone only as bases/shoulders/slabs, houses visible from above?
-- [ ] Commit — `feat(villages): partial plates tile; flat roofs are open terraces with railings`.
+- [x] Commit — `feat(villages): partial plates tile; flat roofs are open terraces with railings`.
 
 ### Task C6: Corpus exit and performance
 
 **Files:** `tests/harness/warren_maze_stage_probe.gd` (stage timings per seed incl. composition sub-stages from `SKYWALK_TIMING`), `tests/test_warren_maze_composition.gd` (`test_corpus_composes` — the four seeds must seal; the 24-seed matrix is asserted via the sweep's JSON summary written to the scratchpad: ≥ 22/24 compose + fabric), `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md` ("Phase C measured results": per-seed ms, gates, shortfalls).
 - Solve ≤ 3 s per town on the measured baseline (report the distribution; if a seed exceeds it, name the stage and the fix or the ruling).
-- [ ] Commit — `test(villages): maze composition corpus exit; stage timings`.
+- [x] Commit — `test(villages): maze composition corpus exit; stage timings`.
 
 ### Phase C exit
 - 22+/24 compose and pass the fabric gate; hero quotas are audit facts; the four planner seeds render as asset towns; solve ≤ 3 s; legacy modes byte-identical; suites green.
+
+### Phase C measured results
+
+`Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --scale compact,standard`, at Task C6. The run writes its matrix to `user://warren_maze_mode_sweep.json`, which is what `tests/test_warren_maze_composition.gd::test_corpus_composes` asserts against (pinned at measured − 1 = **19**).
+
+**sealed 20/24 · exit bar 22+/24 — MISSED by two**
+
+| seed | scale | ms | outcome / gate |
+|---|---|---|---|
+| 1 | compact | 2073 | sealed |
+| 1 | standard | 6523 | sealed |
+| 2 | compact | 2455 | sealed |
+| 2 | standard | 14360 | sealed |
+| 3 | compact | 1467 | sealed |
+| 3 | standard | 5550 | sealed |
+| 4 | compact | 3944 | sealed |
+| 4 | standard | 8068 | **fabric** — `spatial modular-box contract failed: "classification":"roofless_house" … spatial.maze_back.04.room00` |
+| 5 | compact | 2157 | sealed |
+| 5 | standard | 3545 | sealed |
+| 6 | compact | 2837 | sealed |
+| 6 | standard | 9919 | sealed |
+| 7 | compact | 43 | **source** — `carve: alley budget reached 0.850 frontage, below 0.900` (pre-existing Phase B gate) |
+| 7 | standard | 7263 | sealed |
+| 8 | compact | 212 | **adapter** — `plan seal rejected: exact public route expands into a broad floor slab` (pre-existing Phase B gate) |
+| 8 | standard | 8801 | sealed |
+| 9 | compact | 1825 | **fabric** — `public realm adaptation failed: realm seal failed: invalid or duplicate edge volume.edge.34` |
+| 9 | standard | 10341 | sealed |
+| 10 | compact | 2177 | sealed |
+| 10 | standard | 8680 | sealed |
+| 11 | compact | 2605 | sealed |
+| 11 | standard | 6304 | sealed |
+| 12 | compact | 2478 | sealed |
+| 12 | standard | 7142 | sealed |
+
+Two of the four misses (7/compact, 8/compact) are the Phase B source/adapter gates already recorded above; they have never composed and are the two allowed misses. The other two are one seed each at two different gates — a back room the modular-box contract calls roofless, and a duplicate public-realm edge — and neither is a family.
+
+**The corpus ladder**
+
+| | C5b | C5c | C5d | C5e | **C6** |
+|---|---|---|---|---|---|
+| towns sealed of 24 | — | — | 11 | 18 | **20** |
+| unroomed plot mass (12/c · 4/c · 3/s · 9/s) | 0.321 / 0.390 / 0.341 / — | 0.267 / 0.305 / 0.319 / — | 0.226 / 0.211 / 0.281 / — | 0.226 / 0.211 / 0.281 / 0.260 | **0.156 / 0.142 / 0.224 / 0.176** |
+| uncomposed parcels | 9 / 12 / 7 / — | 6 / 3 / 5 / — | 6 / 3 / 4 / — | 6 / 3 / 4 / 6 | **1 / 1 / 2 / 1** |
+| back-room stamped share | — | 0.556 / 0.179 / 0.400 / — | 0.806 / 0.692 / 0.587 / — | 0.806 / 0.692 / 0.587 / 0.558 | **0.838 / 0.700 / 0.739 / 0.585** |
+
+C6 shipped two things: the `authored room envelope gate failed: room … failed measured phase selection` family was diagnosed as an ORDERING defect (an optional phase-B facade projection reaching into a room whose mandatory shell had not been compiled yet) and closed by `WarrenSpatialFabricCompiler._required_room_clearance`, which took 12/standard; and full no-descent for maze parcels (`WarrenParcelConstruction._support_base_band`), reverted three times before, then shipped because with the family closed it loses no seed and gains 6/compact. The unroomed goal of 0.15 is met on 4/compact (0.142) and missed on the other three, worst 0.224.
+
+**Exit numbers**
+
+- **Seal + fabric** 20/24 against 22+/24 — **MISSED**, by 4/standard and 9/compact; the other two misses are the pre-existing Phase B source/adapter gates.
+- **Solve time** 2442 / 3935 / 5554 / 10383 ms on the four planner seeds (12/compact, 4/compact, 3/standard, 9/standard) against a **≤ 3 s** exit — **MISSED** on three of four; 1.5–14.4 s across the 20 sealing towns of the corpus. Pinned at measured × 1.5 in `PLANNER_SOLVE_MS_CEILING`. **The ≤ 3 s target moves to the Phase F exit** on the controller's note: Phase F deletes the searched pipeline and the pin cache, which is where the remaining structural cost lives.
+- **Where the time goes** (`tests/harness/warren_maze_stage_probe.gd`, per planner seed, ms): it is NOT the hero beam — advisory quotas collapse that to 24–36 ms.
+
+| stage | 12/compact | 4/compact | 3/standard | 9/standard |
+|---|---|---|---|---|
+| massif | 3 | 4 | 4 | 4 |
+| carve | 59 | 55 | 44 | 47 |
+| plots (reserve + partition + seal) | 84 | 100 | 183 | 157 |
+| adapter | 11 | 9 | 10 | 11 |
+| parcels | 15 | 17 | 19 | 24 |
+| hero beam | 30 | 24 | 31 | 36 |
+| **room composition** | **632** | **723** | **2370** | **5659** |
+| residual / back rooms | 200 | **1219** | 265 | 234 |
+| feature pass | 53 | 39 | 65 | 135 |
+| authored room envelope gate | 244 | 229 | 645 | 801 |
+| composition remainder | 305 | 330 | 405 | 522 |
+| fabric compile | 784 | 1163 | 1509 | 2795 |
+
+`room_composition` — the per-parcel exact block solve plus `WarrenRoomCompositionPlanner` — is 43–76 % of the composition and scales with room count (60 → 98 rooms is 632 → 5659 ms). The fabric compile is second. 4/compact is the one town where the residual backfill dominates instead.
+
+- **Hero quotas** are audit facts on every sealing town (`advisory_shortfalls`: covered_market, landmarks, skywalks, balconies, bridges, assets), never rejections.
+- **Legacy byte-identity** holds: fabric compiler 11/11, settlement fabric 42/42, generation-mode 6/8 (the same two pre-existing seed-7 failures).
+- **Still open into D/E/F:** the two one-seed gates above; the 0.15 unroomed goal on three of four planner seeds; the ≤ 3 s solve.
 
 # Phase D — Real-terrain sites
 
