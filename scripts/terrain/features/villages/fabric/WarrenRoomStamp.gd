@@ -25,6 +25,17 @@ var threshold_cell := Vector3i(2147483647, 2147483647, 2147483647)
 var frontage_direction := Vector3i.ZERO
 var address_door_phase: int
 var roof_feature: int
+## Additive (Task C5, controller ruling 1): the SOURCE parcel declared its
+## crown a slab, because something stands on it -- an upper street, a terrace,
+## a deck or another house. `WarrenSpatialFabricCompiler.compile_roof_units`
+## must then give this room's exposed plate the authored `roof.flat.*` shell
+## rather than the pitched one its own heuristics would choose, and must not
+## count that shell as a BARE flat roof: it is the deliberate closure the plot
+## model asked for, not the fallback the review round complained about.
+##
+## Defaulted false and never set by a legacy caller, so every route-first and
+## mass-first stamp keeps the exact contract it always had.
+var flat_roof := false
 var private_cells: Array[Vector3i] = []
 var audit: Dictionary = {}
 var last_rejection := ""
@@ -41,7 +52,8 @@ func _init(p_stable_id: StringName, p_source_parcel_id: StringName,
 		p_roof_feature: int = 0,
 		p_support_parent_parcel_id: StringName = &"",
 		p_support_parent_storey_index: int = -1,
-		p_address_door_phase: int = 0) -> void:
+		p_address_door_phase: int = 0,
+		p_flat_roof: bool = false) -> void:
 	stable_id = p_stable_id
 	source_parcel_id = p_source_parcel_id
 	kind = p_kind
@@ -62,6 +74,7 @@ func _init(p_stable_id: StringName, p_source_parcel_id: StringName,
 	frontage_direction = p_frontage_direction
 	address_door_phase = p_address_door_phase
 	roof_feature = p_roof_feature
+	flat_roof = p_flat_roof
 
 
 func add_private_cells(cells: Array[Vector3i]) -> bool:
@@ -123,6 +136,7 @@ func seal(grid: WarrenSpatialGrid, building_id: StringName) -> bool:
 		"address_door_phase": address_door_phase,
 		"terrain_bearing": terrain_bearing,
 		"roof_feature": roof_feature,
+		"flat_roof": flat_roof,
 	}
 	_sealed = true
 	return true
@@ -137,7 +151,12 @@ func has_private_cell(cell: Vector3i) -> bool:
 
 
 func deterministic_signature() -> String:
-	return "%s/%s/%s@%d:%d:%d/r%d/s%d/b%d/p=%s:%d/a%d/dp%d/t=%d:%d:%d/f=%d:%d:%d/rf%d" % [
+	# `/FR` is appended only for a flat-roofed stamp. It is a different
+	# construction (a slab crown instead of a pitched shell) so it may not
+	# share an identity with the pitched stamp it is otherwise identical to;
+	# suffixing rather than always emitting keeps every legacy signature -- no
+	# legacy stamp is ever flat-roofed -- byte-identical.
+	return "%s/%s/%s@%d:%d:%d/r%d/s%d/b%d/p=%s:%d/a%d/dp%d/t=%d:%d:%d/f=%d:%d:%d/rf%d%s" % [
 		String(stable_id), String(source_parcel_id), String(kind),
 		lattice_origin.x, lattice_origin.y, lattice_origin.z, yaw_quarters,
 		source_storey_index, int(terrain_bearing),
@@ -145,7 +164,7 @@ func deterministic_signature() -> String:
 		int(addressed), address_door_phase,
 		threshold_cell.x, threshold_cell.y, threshold_cell.z,
 		frontage_direction.x, frontage_direction.y, frontage_direction.z,
-		roof_feature]
+		roof_feature, "/FR" if flat_roof else ""]
 
 
 static func expected_private_cells(p_kind: StringName, origin: Vector3i,

@@ -36,6 +36,13 @@ const MIN_INTENTIONAL_FLAT_ROOF_FACE_COUNT := 16
 ## would therefore leave daylight beneath the stone. Reject that source
 ## construction instead of pretending one floating course reaches the terrain.
 const FOUNDATION_MODULE_HEIGHT_BANDS := 2
+## Grid owner of every fine cell maze mode keeps as STONE rather than building
+## in: a flat-roofed plot's slab course and the leftover rock the town was cut
+## out of (Task C5 rulings 2 and 3). `WarrenVolumetricSolver` assigns it; this
+## file is where the fact is consumed -- as bearing for a house stacked on a
+## flat roof, and as retained terrace the assembler renders in stone -- so the
+## name lives here and the dependency runs one way.
+const MAZE_RETAINED_STONE_ID := &"spatial.feature.maze_stone.00"
 
 
 static func solve(source: WarrenSpatialPlan,
@@ -104,7 +111,7 @@ static func solve(source: WarrenSpatialPlan,
 			last_failure = "roof %s rejected by common fabric: %s" % [
 				unit.stable_id, result.last_rejection]
 			return null
-	var foundation_result := _retained_foundation_cells(source)
+	var foundation_result := _retained_foundation_cells(source, result)
 	if not bool(foundation_result.get("valid", false)) \
 			or not result.set_retained_terrace(
 				foundation_result.get("cells", {}) as Dictionary):
@@ -246,7 +253,11 @@ static func _modular_box_use_audit(source: WarrenSpatialPlan,
 				&""))
 			if not upper_id.is_empty() and upper_id != room_id:
 				upper_room_ids[upper_id] = true
-		if room.terrain_bearing:
+		if room.terrain_bearing \
+				or _bears_on_retained_stone(source.grid, room):
+			# Retained stone is a complete bearing plate (Task C5 ruling 2), so
+			# a compact room standing on a flat roof's slab is as borne as one
+			# standing on the ground.
 			borne_columns = footprint_columns.duplicate()
 		elif unit != null:
 			for parent_id: StringName in unit.parent_ids:
@@ -312,7 +323,8 @@ static func _modular_box_use_audit(source: WarrenSpatialPlan,
 	}
 
 
-static func _retained_foundation_cells(source: WarrenSpatialPlan) -> Dictionary:
+static func _retained_foundation_cells(source: WarrenSpatialPlan,
+		plan: SettlementFabricPlan = null) -> Dictionary:
 	## Spatial rooms are flat constructions on a terrain-relative source plan.
 	## Where a footprint crosses lower natural ground, retain the exact source
 	## mass between that ground and the room datum.  Public tunnels were already
@@ -413,9 +425,34 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan) -> Dictionary:
 				"course_cells": course_cells,
 				"bearing_by_column": bearing_by_column,
 			})
+	# TASK C5 RULING 3 -- maze mode's retained STONE, which is the same
+	# material through the same channel and is deliberately NOT a building
+	# plinth. `WarrenVolumetricSolver` already decided which cells these are
+	# (the flat-roof slab courses and every leftover cell the source calls
+	# solid at or above its own terrain datum) and owns them in the grid, so
+	# this reads the decision instead of making a second one.
+	#
+	# They enter `cells` -- the set `set_retained_terrace` receives -- but NOT
+	# `room_records`, so the building-shell checks below still audit exactly
+	# the building plinths they always audited. A cell the fabric already
+	# built in is skipped rather than refused: `set_retained_terrace` rejects
+	# an overlap with solid outright, and the one-band `roof.flat.*` unit
+	# standing on a flat parcel's slab is exactly such an overlap.
+	var maze_stone_cells := 0
+	if source.grid != null:
+		var built: Dictionary = {} if plan == null \
+			else plan.transformed_cells(&"solid")
+		for cell: Vector3i in source.grid.cells_with_use(
+				WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
+			if source.grid.owner_name_at(cell) != MAZE_RETAINED_STONE_ID \
+					or cells.has(cell) or built.has(cell):
+				continue
+			cells[cell] = true
+			maze_stone_cells += 1
 	return {"valid": true, "cells": cells, "cell_count": cells.size(),
 		"column_count": columns.size(), "max_depth_bands": max_depth,
 		"terrain_bearing_room_count": terrain_bearing_room_count,
+		"maze_retained_rock_cells": maze_stone_cells,
 		"flush_room_count": flush_room_count, "room_records": room_records}
 
 
@@ -508,6 +545,11 @@ static func _foundation_shell_audit(foundation_result: Dictionary,
 			"terrain_bearing_room_count", 0)),
 		"flush_foundation_room_count": int(foundation_result.get(
 			"flush_room_count", 0)),
+		# Retained stone that is NOT a building plinth (Task C5 ruling 3):
+		# counted, and outside every check above, because it owns no room
+		# record and therefore no shell to close.
+		"maze_retained_rock_cells": int(foundation_result.get(
+			"maze_retained_rock_cells", 0)),
 		"foundation_building_count": details.size(),
 		"foundation_closed_shell_count": closed_shell_count,
 		"foundation_incomplete_shell_count": incomplete_shell_count,
@@ -582,6 +624,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var hero_feature_facade_fallback_count := 0
 	var roof_clearance_facade_fallback_count := 0
 	var physical_support_redirect_count := 0
+	var retained_stone_bearing_count := 0
 	var suppressed_party_wall_module_count := 0
 	var facade_family_counts: Dictionary = {}
 	var facade_style_counts: Dictionary = {}
@@ -595,8 +638,21 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 	for room: WarrenRoomStamp in rooms:
 		var feature_portal_mask := int(feature_portal_masks.get(room.stable_id, 0))
+		# TASK C5 RULING 2. A house stacked on a flat roof rests on the slab
+		# that closes the parcel below it -- the authored one-band
+		# `roof.flat.*` unit and the retained stone parapet above it -- and the
+		# parent's own top ROOM stops one or two bands lower, so there is no
+		# socket down there to meet. Structurally this is a room standing on a
+		# complete bearing plate, exactly like a room standing on ground, and
+		# it is compiled as one: a `base.*` recipe (no bearing parent) and no
+		# bond. Ruling 4 is what keeps it out of STONE -- see `_room_recipe_id`.
+		var on_retained_stone := not room.terrain_bearing \
+			and _bears_on_retained_stone(source.grid, room) \
+			and program.recipe(_room_recipe_id(room, source.world_seed, true,
+				feature_portal_mask, true)) != null
+		retained_stone_bearing_count += int(on_retained_stone)
 		var recipe_id := _room_recipe_id(room, source.world_seed, true,
-			feature_portal_mask)
+			feature_portal_mask, on_retained_stone)
 		var desired_phase_b := _is_phase_b_recipe(recipe_id)
 		desired_phase_b_count += int(desired_phase_b)
 		var recipe := program.recipe(recipe_id)
@@ -646,6 +702,11 @@ static func compile_room_units(source: WarrenSpatialPlan,
 					return [] as Array[FabricUnit]
 				parents.append(flank_unit.stable_id)
 				bonds.append(span_bond)
+		elif on_retained_stone:
+			# No bearing bond, for the reason stated at the recipe choice
+			# above. The room's ANCESTRY is untouched: the support DAG and the
+			# private-access proof still name the house underneath it.
+			pass
 		elif not room.terrain_bearing:
 			var parent_key := _source_level_key(
 				room.support_parent_parcel_id,
@@ -693,7 +754,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			if desired_rejection.is_empty():
 				desired_rejection = room_probe.last_rejection
 			var fallback_id := _room_recipe_id(room, source.world_seed, false,
-				feature_portal_mask)
+				feature_portal_mask, on_retained_stone)
 			if fallback_id == recipe_id:
 				last_audit["room_phase_failure"] = \
 					_room_phase_failure_audit(room, recipe, seams,
@@ -770,6 +831,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		"required_roof_clearance_envelope_count": \
 			required_roof_clearance.size(),
 		"physical_support_redirect_count": physical_support_redirect_count,
+		"retained_stone_bearing_room_count": retained_stone_bearing_count,
 		"suppressed_party_wall_module_count": \
 			suppressed_party_wall_module_count,
 		"feature_portal_room_count": feature_portal_masks.size(),
@@ -2193,6 +2255,45 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		flattened_proposal["flat_roof"] = true
 		flattened_proposal["roof_junction_rules"] = [] as Array[Dictionary]
 		roof_proposal_by_room[flattened_room_id] = flattened_proposal
+	# TASK C5 RULING 1 -- a SOURCE flat roof, decided by the plot model rather
+	# than by this compiler's measured-collision heuristics. Something stands
+	# on the crown of a `flat_roof` stamp (an upper street, a terrace, a deck,
+	# or the house stacked on it), so it may never receive a pitched shell,
+	# and no neighbour may plan a ridge/valley join into it. Both facts are
+	# stated exactly the way the collision retry above states them, so the
+	# selector below needs no second notion of "this roof is flat".
+	var plot_flat_room_ids: Dictionary = {}
+	for room_id_value: Variant in roof_faces_by_room.keys():
+		var plot_room_id := StringName(room_id_value)
+		if not (room_by_id[plot_room_id] as WarrenRoomStamp).flat_roof:
+			continue
+		plot_flat_room_ids[plot_room_id] = true
+		if not roof_proposal_by_room.has(plot_room_id):
+			continue
+		var plot_proposal := (roof_proposal_by_room[
+			plot_room_id] as Dictionary).duplicate(true)
+		plot_proposal["flat_roof"] = true
+		plot_proposal["roof_junction_rules"] = [] as Array[Dictionary]
+		roof_proposal_by_room[plot_room_id] = plot_proposal
+	if not plot_flat_room_ids.is_empty():
+		for neighbor_id_value: Variant in roof_proposal_by_room.keys():
+			var neighbor_id := StringName(neighbor_id_value)
+			var neighbor_proposal := roof_proposal_by_room[
+				neighbor_id] as Dictionary
+			var kept: Array[Dictionary] = []
+			for rule_value: Variant in neighbor_proposal.get(
+					"roof_junction_rules", []) as Array:
+				var rule := rule_value as Dictionary
+				if plot_flat_room_ids.has(StringName(rule.get("neighbor_id",
+						&""))):
+					continue
+				kept.append(rule)
+			if kept.size() == (neighbor_proposal.get("roof_junction_rules",
+					[]) as Array).size():
+				continue
+			var trimmed := neighbor_proposal.duplicate(true)
+			trimmed["roof_junction_rules"] = kept
+			roof_proposal_by_room[neighbor_id] = trimmed
 	var room_ids: Array[StringName] = []
 	room_ids.assign(roof_faces_by_room.keys())
 	room_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -2244,6 +2345,11 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var pending_roof_trims: Array[Dictionary] = []
 	var atomic_neighborhood_roof_count := 0
 	var partial_plate_pitched_count := 0
+	var plot_flat_room_count := 0
+	var plot_flat_count := 0
+	var plot_flat_pitched_count := 0
+	var plot_flat_partial_plate_count := 0
+	var plot_flat_rejected_count := 0
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
 		exposed_roof_room_kind_counts[room.kind] = int(
@@ -2279,7 +2385,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			if junction_neighbor != null and not junction_room_seams.has(
 					junction_neighbor.stable_id):
 				junction_room_seams.append(junction_neighbor.stable_id)
-		if (full or plate_pitched) \
+		var plot_flat := plot_flat_room_ids.has(room_id)
+		plot_flat_room_count += int(plot_flat)
+		if (full or plate_pitched) and not plot_flat \
 				and not _touches_public_air(source.grid, face_cells):
 			var pitched_candidates := _full_roof_candidates(room,
 				source.world_seed, neighborhood_proposal) if full \
@@ -2370,7 +2478,40 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			return compile_roof_units(source, program, room_units,
 				fixed_feature_units, retry_flattened,
 				collision_flattened_component_count + 1)
-		if full and not _touches_public_air(source.grid, face_cells) \
+		if plot_flat and full \
+				and not _touches_public_air(source.grid, face_cells):
+			# The plot's own slab, at the same lattice datum every full roof
+			# unit uses and exactly one band tall (the authored `roof.flat.*`
+			# extent). No garden accent: a street, a terrace or another house
+			# is about to stand on this plate, and the multi-storey default
+			# below would furnish it with planters they would intersect.
+			var slab_id := _flat_roof_recipe_id(room)
+			var slab_recipe := program.recipe(slab_id)
+			if slab_recipe == null:
+				last_failure = "missing exact flat roof recipe %s" % slab_id
+				return [] as Array[FabricUnit]
+			var slab := _full_roof_unit(room_id, room, parent_unit, slab_id,
+				_roof_seams_for_candidate(room_seams, parent_unit.stable_id,
+					out, fixed_feature_units))
+			if _unit_touches_public_air(source.grid, slab, slab_recipe):
+				attempt_failures.append(
+					"plot flat %s: exact roof volume enters public air" \
+						% slab_id)
+			elif probe.add_unit(slab):
+				out.append(slab)
+				realized_face_count += face_cells.size()
+				flat_count += 1
+				plot_flat_count += 1
+				flat_roof_recipe_counts[slab_id] = int(
+					flat_roof_recipe_counts.get(slab_id, 0)) + 1
+				continue
+			else:
+				attempt_failures.append("plot flat %s: %s" % [slab_id,
+					probe.last_rejection])
+			rejected_flat_count += 1
+			plot_flat_rejected_count += 1
+		if full and not plot_flat \
+				and not _touches_public_air(source.grid, face_cells) \
 				and face_cells.size() >= MIN_INTENTIONAL_FLAT_ROOF_FACE_COUNT:
 			# A single-storey building's exposed lid read as a bare box in the
 			# annotated review. The authored railed terrace (lived-in first)
@@ -2465,6 +2606,22 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					continue
 				rejected_flat_count += 1
 				attempt_failures.append("flat: %s" % probe.last_rejection)
+		# Reaching the finite setback vocabulary on a flat-roofed stamp means
+		# one of two different things, and they are counted apart because only
+		# one of them is a defect.
+		#
+		# PARTIAL PLATE (measured, and the authored vocabulary's own limit):
+		# another room stands on part of this crown, so the exposed remainder
+		# is not a complete footprint and there is no `roof.flat.*` module for
+		# it -- every flat recipe is a whole-footprint stamp. The remainder
+		# keeps the finite setback vocabulary. Counted, never called pitched.
+		#
+		# FULL PLATE that still lands here: the slab was authored for this
+		# exact plate and was refused, so the room really did receive a
+		# pitched shell against ruling 1. `plot_flat_roof_pitched_count`
+		# counts only that case, and the composition test requires it to be
+		# zero.
+		plot_flat_partial_plate_count += int(plot_flat and not full)
 		var pieces := _cap_pieces(face_cells)
 		if pieces.is_empty():
 			last_failure = "no finite setback cap partition fits roof region for %s (%s; %s)" \
@@ -2670,6 +2827,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 							last_failure = "macro setback roof %d for %s and its complete fallbacks were rejected: %s" % [
 								row_index, room_id, "; ".join(fallback_failures)]
 							return [] as Array[FabricUnit]
+						plot_flat_pitched_count += int(plot_flat and full) \
+							* terminal_units.size()
 						for terminal_unit: FabricUnit in terminal_units:
 							if not probe.add_unit(terminal_unit):
 								last_failure = "proved terminal roof fallback changed before commit for %s: %s" % [
@@ -2722,6 +2881,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 								probe.last_rejection]
 						return [] as Array[FabricUnit]
 			out.append(cap_unit)
+			plot_flat_pitched_count += int(plot_flat and full and not String(
+				cap_unit.recipe_id).begins_with("roof.flat."))
 			realized_face_count += row.size()
 			cap_count += 1
 			plain_cap_count += int(String(cap_unit.recipe_id) \
@@ -2822,8 +2983,16 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"awning_flat_roof_terrace_count": awning_flat_terrace_count,
 		"furnished_flat_roof_terrace_count": furnished_flat_terrace_count,
 		"lamped_flat_roof_terrace_count": lamped_flat_terrace_count,
+		"plot_flat_roof_room_count": plot_flat_room_count,
+		"plot_flat_roof_count": plot_flat_count,
+		"plot_flat_roof_pitched_count": plot_flat_pitched_count,
+		"plot_flat_roof_partial_plate_count": plot_flat_partial_plate_count,
+		"plot_flat_roof_rejected_count": plot_flat_rejected_count,
+		# A plot slab is a DELIBERATE closure, not the unarticulated lid the
+		# review round complained about, so it is excluded from the bare count
+		# rather than inflating it (Task C5 ruling 1).
 		"bare_flat_roof_count": flat_count - flat_terrace_count \
-			- flat_garden_count,
+			- flat_garden_count - plot_flat_count,
 		"micro_flat_roof_count": 0,
 		"setback_cap_unit_count": cap_count,
 		"setback_lean_to_unit_count": lean_to_cap_count,
@@ -3226,8 +3395,8 @@ static func _setback_gable_placement(piece: Dictionary,
 
 
 static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
-		allow_phase_b: bool = true, feature_portal_mask: int = 0) \
-		-> StringName:
+		allow_phase_b: bool = true, feature_portal_mask: int = 0,
+		on_retained_stone: bool = false) -> StringName:
 	if not (room.audit.get("bridge_support_room_ids", []) as Array).is_empty():
 		# A street-bridge room keeps its ordinary unaddressed shell but swaps
 		# the bearing contract: normally two flank parents through span sockets;
@@ -3244,8 +3413,18 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		else "room.slim" if room.kind == &"slim" \
 		else "room.row" if room.kind == &"row" \
 		else "room.tower" if room.kind == &"tower" else "room"
-	if room.terrain_bearing:
-		var terrain_recipe := StringName("%s.base.rock%s" % [prefix,
+	if room.terrain_bearing or on_retained_stone:
+		# TASK C5 RULING 4 -- the stone base is a PLOT fact. A ground storey
+		# that really stands on rock or terrain is built of rock; a house
+		# standing on ANOTHER HOUSE's slab takes the same complete
+		# no-bearing-parent `base.*` shell in its own district's timber
+		# palette, because what carries it is that house, not the mountain.
+		# `on_retained_stone` is false on every legacy stamp, so the rock
+		# branch is byte-identical.
+		var base_theme := "rock" if room.terrain_bearing \
+			else String(_architectural_district_theme(room.lattice_origin,
+				world_seed))
+		var terrain_recipe := StringName("%s.base.%s%s" % [prefix, base_theme,
 			"" if room.addressed else ".closed"])
 		if room.addressed:
 			terrain_recipe = SettlementFabricProgram.address_door_phase_recipe_id(
@@ -4566,6 +4745,30 @@ static func _bearing_bond(upper: WarrenRoomStamp,
 		&"bottom", upper_local.x, upper_local.z), lower_unit_id,
 		SettlementFabricProgram._bearing_cell_socket_id(&"top", lower_local.x,
 		lower_local.z))
+
+
+static func _bears_on_retained_stone(grid: WarrenSpatialGrid,
+		room: WarrenRoomStamp) -> bool:
+	## Every column of this room's floor plate rests on a cell the plot model
+	## kept as STONE. That is a complete bearing plate -- the flat roof unit
+	## and its parapet course are construction, and the retained rock is the
+	## mountain -- so the room needs no socket bond to a lower room.
+	##
+	## Deliberately strict: one column short of a complete plate is a
+	## cantilever, which has its own typed transaction, so this returns false
+	## and the ordinary support-parent path decides.
+	if grid == null:
+		return false
+	var columns := 0
+	for cell: Vector3i in room.private_cells:
+		if cell.y != room.lattice_origin.y:
+			continue
+		columns += 1
+		var below := cell + Vector3i.DOWN
+		if grid.use_at(below) != WarrenSpatialGrid.Use.STRUCTURAL_VOLUME \
+				or grid.owner_name_at(below) != MAZE_RETAINED_STONE_ID:
+			return false
+	return columns > 0
 
 
 static func _physical_support_parent(upper: WarrenRoomStamp,

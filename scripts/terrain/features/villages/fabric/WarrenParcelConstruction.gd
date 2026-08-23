@@ -35,6 +35,14 @@ static func proposal(parcel: WarrenBuildingParcel) -> Dictionary:
 		"storeys": parcel.storey_count() + lower_storeys,
 		"route_y": parcel.base_band,
 		"roof_feature": _roof_feature(parcel, profile),
+		# The parcel's own roof contract, carried to composition (Task C5,
+		# controller ruling 1). Something stands ON a flat-roofed parcel, so
+		# its crown is a slab and never a pitched shell. FALSE on every parcel
+		# the route-first and mass-first partitioners build, and the legacy
+		# staggered compiler still OVERWRITES this key with its own pairwise
+		# flattening verdict (`WarrenAssetCompiler` :951/:987), so seeding it
+		# here changes no legacy proposal.
+		"flat_roof": parcel.flat_roof,
 	}
 	result["occupied_cells"] = \
 		StaggeredFabricCompiler.proposal_occupied_cells(result)

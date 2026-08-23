@@ -138,6 +138,20 @@ const BRIDGE_RELEASE_REASONS: Array[String] = [
 	"authored envelope does not fit",
 ]
 
+## Every verdict a bridge record may carry. `open_deck` joins the vocabulary
+## in Task C5: a span whose two flanks both present a FLAT surface at its own
+## floor band is a rooftop walkway rather than a room, so it is paved as
+## public floor instead of released back to rock.
+const BRIDGE_OUTCOMES: Array[String] = ["stamped", "open_deck", "released"]
+
+## Measured share of the route floor a maze town lays that really stands on
+## something solid -- retained stone, a compiled building, or an inhabited
+## room -- minus a 0.05 guard. Before Task C5 every leftover rock cell was
+## discarded, so a bored street's own floor stood on nothing at all. Re-pin
+## upward only.
+const ROUTE_ON_STONE_FLOOR := 0.95
+
+
 static var _program_cache: SettlementFabricProgram
 ## One production solve per (seed, scale) shared by every test in the file.
 ## Four maze towns is the corpus; solving them once each is what keeps this
@@ -594,10 +608,11 @@ func test_decks_are_walkable_public_floor() -> void:
 	assert_gt(measured, 0, "at least one seed seals far enough to measure")
 
 
-func test_bridges_become_rooms_or_audited_releases() -> void:
-	## Ruling 2: every bridge plot is either a real one-storey room bearing on
-	## its two flanks, or a RELEASED record with a reason. Nothing vanishes and
-	## nothing rejects the town.
+func test_bridges_become_rooms_decks_or_audited_releases() -> void:
+	## Ruling 2 (C4) extended by ruling 5 (C5): every bridge plot is either a
+	## real one-storey room bearing on its two flanks, an OPEN DECK paved
+	## between two flat flank surfaces, or a RELEASED record with a reason.
+	## Nothing vanishes and nothing rejects the town.
 	var measured := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
@@ -606,27 +621,49 @@ func test_bridges_become_rooms_or_audited_releases() -> void:
 		var records := _source_plots(plan,
 			WarrenMazeSourcePlan.PLOT_BRIDGE)
 		var stamped := int(plan.audit.get("maze_bridge_rooms", -1))
+		var paved := int(plan.audit.get("maze_bridge_open_decks", -1))
 		var outcomes := plan.audit.get("maze_bridge_outcomes", []) as Array
 		var released := 0
+		var open_decks := 0
+		var route: Dictionary = {}
+		for cell: Vector3i in plan.route_floor_cells:
+			route[cell] = true
 		for record_value: Variant in outcomes:
 			var record := record_value as Dictionary
 			assert_true(record.has("id") and record.has("outcome") \
 				and record.has("reason"),
 				"%s bridge outcome %s is incomplete" % [_label(outcome),
 					record])
-			if String(record.get("outcome", "")) == "stamped":
-				continue
-			released += 1
-			assert_eq(String(record.get("outcome", "")), "released",
+			var verdict := String(record.get("outcome", ""))
+			assert_has(BRIDGE_OUTCOMES, verdict,
 				"%s bridge outcome %s names no known verdict" % [
 					_label(outcome), record])
+			if verdict == "stamped":
+				continue
+			if verdict == "open_deck":
+				open_decks += 1
+				# An open deck is PAVING, so the fact to check is the paving:
+				# the span's own floor band is walkable public floor that
+				# joined the town's route surfaces.
+				var unpaved := 0
+				for cell: Vector3i in _bridge_floor_cells(plan,
+						StringName(record["id"])):
+					unpaved += int(not _is_walkable(plan, cell) \
+						or not route.has(cell))
+				assert_eq(unpaved, 0,
+					"%s open bridge deck %s leaves %d floor cells unpaved" % [
+						_label(outcome), record.get("id", &""), unpaved])
+				continue
+			released += 1
 			assert_has(BRIDGE_RELEASE_REASONS,
 				String(record.get("reason", "")),
 				"%s released bridge %s for an unvocabularised reason" % [
 					_label(outcome), record.get("id", &"")])
 		assert_eq(outcomes.size(), records.size(),
 			"%s must report one outcome per bridge plot" % _label(outcome))
-		assert_eq(stamped + released, records.size(),
+		assert_eq(paved, open_decks,
+			"%s must publish the open bridge decks it paved" % _label(outcome))
+		assert_eq(stamped + open_decks + released, records.size(),
 			"%s must account for every bridge plot" % _label(outcome))
 		var shortfalls := plan.audit.get("advisory_shortfalls", {}) \
 			as Dictionary
@@ -670,6 +707,25 @@ func test_bridges_become_rooms_or_audited_releases() -> void:
 			"%s stamps only %.3f of its bridge plots" % [_label(outcome),
 				share])
 	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func _bridge_floor_cells(plan: WarrenSpatialPlan,
+		bridge_id: StringName) -> Array[Vector3i]:
+	## Every FINE cell of one bridge plot's own floor band, read from the
+	## sealed source rather than from the pass that paved it.
+	var out: Array[Vector3i] = []
+	for plot: Dictionary in _source_plots(plan,
+			WarrenMazeSourcePlan.PLOT_BRIDGE):
+		if StringName(plot["id"]) != bridge_id:
+			continue
+		var band := int(plot["floor"])
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			for x_offset in 2:
+				for z_offset in 2:
+					out.append(Vector3i(column.x * 2 + x_offset, band,
+						column.y * 2 + z_offset))
+	return out
 
 
 func _bridge_room(plan: WarrenSpatialPlan, bridge_id: StringName,
@@ -1016,6 +1072,361 @@ func _synthetic_flank(grid: WarrenSpatialGrid, id: StringName, macro_x: int,
 			or not building.seal(grid):
 		return null
 	return building
+
+
+func _maze_source(plan: WarrenSpatialPlan) -> WarrenMazeSourcePlan:
+	return plan.source_volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+
+
+func _flat_roof_by_parcel(plan: WarrenSpatialPlan) -> Dictionary:
+	## Parcel id -> whether the plot planner declared that house's roof a
+	## SLAB. Something stands on its top band -- an upper street (`tiered`) or
+	## another plot occupying its own columns there (`not roofed`) -- so it
+	## owes the storey grid one storey and one band of slab instead of the
+	## authored pitched reservation. Read from the sealed source's own facts,
+	## not from the parcel the translator built out of them.
+	var out: Dictionary = {}
+	var source := _maze_source(plan)
+	if source == null:
+		return out
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+			continue
+		var facts := source.plot_facts(plot)
+		out[StringName("parcel.maze.%s" % String(plot["id"]))] = \
+			bool(facts.get("tiered", false)) \
+			or not bool(facts.get("roofed", true))
+	return out
+
+
+func test_tiered_parcels_get_flat_roofs() -> void:
+	## Ruling 1: a plot something STANDS ON has a flat roof, and the spatial
+	## roof compiler is what has to know it. Two teeth, neither of which reads
+	## the other's answer: every room stamp of such a parcel must carry the
+	## flag (the plot fact really reaches the stamp through the proposal), and
+	## every one of those stamps that owns an exposed roof plate must receive
+	## a FLAT roof unit instead of the pitched shell the heuristics would pick.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var flat_by_parcel := _flat_roof_by_parcel(plan)
+		assert_gt(flat_by_parcel.size(), 0,
+			"%s must carry its own sealed maze source" % _label(outcome))
+		var mismatched := 0
+		var first := ""
+		var flat_stamps := 0
+		for building: WarrenBuildingVolume in plan.buildings:
+			for room: WarrenRoomStamp in building.room_records:
+				if not flat_by_parcel.has(room.source_parcel_id):
+					continue
+				var wanted := bool(flat_by_parcel[room.source_parcel_id])
+				flat_stamps += int(room.flat_roof)
+				if room.flat_roof == wanted:
+					continue
+				mismatched += 1
+				if first.is_empty():
+					first = "%s wants flat_roof=%s" % [room.stable_id,
+						str(wanted)]
+		assert_eq(mismatched, 0,
+			("%s stamps %d rooms whose flat_roof disagrees with the plot " \
+				+ "(%s)") % [_label(outcome), mismatched, first])
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		var roofed := int(fabric.audit.get("plot_flat_roof_room_count", -1))
+		var flats := int(fabric.audit.get("plot_flat_roof_count", -1))
+		var pitched := int(fabric.audit.get("plot_flat_roof_pitched_count",
+			-1))
+		print(("MAZE_FLAT_ROOFS %s stamps=%d roofed=%d flat_units=%d " \
+			+ "pitched=%d partial=%d rejected=%d") % [_label(outcome),
+			flat_stamps, roofed, flats, pitched,
+			int(fabric.audit.get("plot_flat_roof_partial_plate_count", -1)),
+			int(fabric.audit.get("plot_flat_roof_rejected_count", -1))])
+		# Every flat-roofed stamp that owns a COMPLETE exposed plate receives
+		# the authored slab. A stamp whose plate is partial -- another room
+		# stands on part of its crown -- has no whole-footprint flat module to
+		# receive, so it keeps the finite setback vocabulary and is counted
+		# separately rather than folded into either number.
+		var partial := int(fabric.audit.get(
+			"plot_flat_roof_partial_plate_count", -1))
+		assert_gte(flats + partial, roofed,
+			("%s owes %d flat roof units to its flat-roofed stamps and " \
+				+ "compiled %d (%d partial plates)") % [_label(outcome),
+				roofed, flats, partial])
+		assert_eq(pitched, 0,
+			("%s gave %d flat-roofed stamps a pitched roof over a complete " \
+				+ "plate") % [_label(outcome), pitched])
+		assert_gt(flats, 0,
+			"%s compiled no flat roof at all" % _label(outcome))
+		measured += int(flat_stamps > 0)
+	assert_gt(measured, 0,
+		"at least one sealing seed really has a flat-roofed parcel")
+
+
+func _rock_cells(plan: WarrenSpatialPlan) -> Dictionary:
+	## Every FINE cell of the source plan's ROCK: derived solid at or above the
+	## massif's own bearing datum that lies inside no plot's `[floor, top)`.
+	## Terrain below `base_at` belongs to the heightfield, not to the town, and
+	## is deliberately excluded.
+	var out: Dictionary = {}
+	var source := _maze_source(plan)
+	if source == null or source.massif == null:
+		return out
+	var plot_mass := _plot_mass_cells(plan)
+	for column_value: Variant in source.massif.columns.keys():
+		var column := column_value as Vector2i
+		for band in range(source.massif.base_at(column),
+				source.massif.top_at(column) + 1):
+			if not source.solid_at(Vector3i(column.x, band, column.y)):
+				continue
+			for x_offset in 2:
+				for z_offset in 2:
+					var fine := Vector3i(column.x * 2 + x_offset, band,
+						column.y * 2 + z_offset)
+					if plot_mass.has(fine):
+						continue
+					out[fine] = true
+	return out
+
+
+func test_rock_is_retained_as_stone() -> void:
+	## Ruling 3: rock is STONE, not nothing. Every fine cell of the source
+	## plan's leftover mass -- shoulders, tunnel roofs, street-floor slabs,
+	## plinths, the interior nobody built in -- that no room, feature or public
+	## realm took must reach the fabric's retained-terrace channel instead of
+	## `_discard_unassigned_mass`. The second assertion is the one a player
+	## feels: a street's walk surface must stand on something.
+	var measured := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		var solids := fabric.transformed_cells(&"solid")
+		var retained := fabric.retained_terrace_cells
+		var expected := 0
+		var missing := 0
+		var first := ""
+		for cell_value: Variant in _rock_cells(plan).keys():
+			var cell := cell_value as Vector3i
+			var use := plan.grid.use_at(cell)
+			if use in [WarrenSpatialGrid.Use.PUBLIC_AIR,
+					WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+					WarrenSpatialGrid.Use.DAYLIGHT_AIR] \
+					or solids.has(cell):
+				continue
+			expected += 1
+			if retained.has(cell):
+				continue
+			missing += 1
+			if first.is_empty():
+				first = "%s" % cell
+		var audited := int(fabric.audit.get("maze_retained_rock_cells", -1))
+		print("MAZE_ROCK %s rock=%d retained=%d audited=%d missing=%d" % [
+			_label(outcome), expected, retained.size(), audited, missing])
+		assert_eq(missing, 0,
+			"%s discards %d of %d rock cells (first %s)" % [_label(outcome),
+				missing, expected, first])
+		assert_gt(audited, 0,
+			"%s must publish the retained rock it kept" % _label(outcome))
+		var standing := 0
+		var floating := 0
+		var first_hole := ""
+		var holes: Dictionary = {}
+		var source := _maze_source(plan)
+		for cell: Vector3i in plan.route_floor_cells:
+			var below := cell + Vector3i.DOWN
+			# Terrain is the heightfield's, and the heightfield draws it: a
+			# street cut at its own column's ground datum stands on the
+			# mountain, not on anything this fabric owes a module for.
+			var column := Vector2i(floori(float(cell.x) / 2.0),
+				floori(float(cell.z) / 2.0))
+			var on_terrain := source != null and source.massif != null \
+				and source.massif.has_column(column) \
+				and below.y < source.massif.base_at(column)
+			# A route floor whose lower neighbour is the street itself is a
+			# STEP: the passage climbs a band and the cell below belongs to
+			# the run it climbed from. Nothing is owed a module there. What
+			# this assertion is really about is OUTSIDE -- a walk surface with
+			# literally nothing under it, which is what every leftover rock
+			# cell was before Task C5 retained it.
+			if on_terrain or retained.has(below) or solids.has(below) \
+					or plan.grid.use_at(below) in [
+						WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+						WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
+						WarrenSpatialGrid.Use.PUBLIC_AIR]:
+				standing += 1
+				continue
+			floating += 1
+			holes[plan.grid.use_at(below)] = int(
+				holes.get(plan.grid.use_at(below), 0)) + 1
+			if first_hole.is_empty():
+				first_hole = "%s under %s owner=%s" % [cell, below,
+					plan.grid.owner_name_at(below)]
+		var share := float(standing) \
+			/ float(maxi(1, plan.route_floor_cells.size()))
+		print(("MAZE_ROUTE_STONE %s standing=%d/%d share=%.3f holes=%s " \
+			+ "first=%s") % [_label(outcome), standing,
+			plan.route_floor_cells.size(), share, str(holes), first_hole])
+		assert_gte(share, ROUTE_ON_STONE_FLOOR,
+			("%s lays %d route floor cells and only %.3f of them stand on " \
+				+ "anything") % [_label(outcome),
+				plan.route_floor_cells.size(), share])
+		measured += 1
+	assert_gt(measured, 0, "at least one seed seals far enough to measure")
+
+
+func _rooms_by_parcel(plan: WarrenSpatialPlan) -> Dictionary:
+	var out: Dictionary = {}
+	for building: WarrenBuildingVolume in plan.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			var rooms: Array = out.get(room.source_parcel_id, [])
+			rooms.append(room)
+			out[room.source_parcel_id] = rooms
+	return out
+
+
+func test_stone_bases_follow_bears_on_rock() -> void:
+	## Ruling 4: the stone base is a PLOT fact, not a composition accident. A
+	## house whose columns really stand on rock or terrain roots in the ground
+	## and wears the plinth course; a house standing on another house names
+	## that house instead, and gets no stone at all.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var source := _maze_source(plan)
+		assert_not_null(source,
+			"%s must carry its own sealed maze source" % _label(outcome))
+		if source == null:
+			continue
+		var rooms_by_parcel := _rooms_by_parcel(plan)
+		var wrong := 0
+		var first := ""
+		for plot: Dictionary in source.plots:
+			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+				continue
+			var parcel_id := StringName("parcel.maze.%s" % String(plot["id"]))
+			var rooms := rooms_by_parcel.get(parcel_id, []) as Array
+			if rooms.is_empty():
+				continue
+			checked += 1
+			var bears := bool(source.plot_facts(plot).get("bears_on_rock",
+				false))
+			var ground: WarrenRoomStamp = null
+			var stacked := false
+			for room_value: Variant in rooms:
+				var room := room_value as WarrenRoomStamp
+				stacked = stacked or not room.terrain_bearing \
+					and room.support_parent_parcel_id != parcel_id
+				if ground == null or room.source_storey_index \
+						< ground.source_storey_index:
+					ground = room
+			if bears and not ground.terrain_bearing:
+				wrong += 1
+				if first.is_empty():
+					first = "%s bears on rock but roots in %s" % [parcel_id,
+						ground.support_parent_parcel_id]
+			if not bears and stacked and ground.terrain_bearing:
+				wrong += 1
+				if first.is_empty():
+					first = "%s stands on a house and still claims terrain" \
+						% parcel_id
+		assert_eq(wrong, 0,
+			"%s gives %d parcels the wrong base (%s)" % [_label(outcome),
+				wrong, first])
+		# The composition's own reading of the same fact: a house the plot
+		# model says stands on ANOTHER PLOT may not root in the mountain at
+		# its own floor band. Published by `_partition_rooms` rather than
+		# re-derived here, so a future planner change that reintroduces the
+		# defect fails at the source of it.
+		var unrooted := int(plan.audit.get(
+			"maze_unrooted_terrain_bearing_count", -1))
+		print("MAZE_BASES %s parcels=%d unrooted_terrain_bearing=%d" % [
+			_label(outcome), checked, unrooted])
+		assert_eq(unrooted, 0,
+			"%s roots %d houses in terrain the plot says they never touch: %s" \
+				% [_label(outcome), unrooted, str(plan.audit.get(
+					"maze_unrooted_terrain_bearing_details", []))])
+	assert_gt(checked, 0, "at least one sealing seed really composes a house")
+
+
+func test_stacked_houses_bond_to_flat_roofs() -> void:
+	## Ruling 2: a flat-roofed parcel FILLS its plot -- its rooms, its flat
+	## roof unit and its retained slab course occupy `[base_band, top_band)` --
+	## so a house at that parcel's `top_band` really does stand on something
+	## and may declare the seam. Before Task C5 the slab was derived mass no
+	## building owned, and every one of these stacks fell back to claiming
+	## terrain bearing straight through the house underneath it.
+	var declared_total := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var stacked := int(plan.audit.get("maze_stacked_plot_count", -1))
+		var declared := int(plan.audit.get("maze_declared_stack_count", -1))
+		var gaps := int(plan.audit.get("maze_stack_slab_gap_count", -1))
+		print("MAZE_STACKS %s stacked_plots=%d declared=%d slab_gaps=%d" % [
+			_label(outcome), stacked, declared, gaps])
+		assert_gte(stacked, 0,
+			"%s must publish how many plots its planner stacked" % _label(
+				outcome))
+		assert_eq(gaps, 0,
+			("%s refuses %d stacked houses for a slab gap the flat roof now " \
+				+ "fills") % [_label(outcome), gaps])
+		# Independent of the count: EVERY declared child that composed a
+		# building must have a ground room that names the parent parcel and
+		# does not claim terrain bearing. A child whose lineage the
+		# composition dropped altogether builds nothing at all, which is a
+		# different (and older) defect -- counted, not asserted away.
+		var rooms_by_parcel := _rooms_by_parcel(plan)
+		var seams := 0
+		var uncomposed := 0
+		var wrong := ""
+		for child_value: Variant in (plan.audit.get("maze_stack_parents",
+				{}) as Dictionary).keys():
+			var child_id := StringName(child_value)
+			var parent_id := StringName((plan.audit["maze_stack_parents"] \
+				as Dictionary)[child_id])
+			var ground: WarrenRoomStamp = null
+			for room_value: Variant in rooms_by_parcel.get(child_id,
+					[]) as Array:
+				var room := room_value as WarrenRoomStamp
+				if ground == null or room.source_storey_index \
+						< ground.source_storey_index:
+					ground = room
+			if ground == null:
+				uncomposed += 1
+				continue
+			if ground.terrain_bearing \
+					or ground.support_parent_parcel_id != parent_id:
+				if wrong.is_empty():
+					wrong = "%s roots in %s instead of %s" % [child_id,
+						"terrain" if ground.terrain_bearing \
+							else ground.support_parent_parcel_id, parent_id]
+				continue
+			seams += 1
+		print("MAZE_STACK_SEAMS %s declared=%d bonded=%d uncomposed=%d" % [
+			_label(outcome), declared, seams, uncomposed])
+		assert_eq(wrong, "",
+			"%s declared a stack the composition did not build: %s" % [
+				_label(outcome), wrong])
+		assert_lte(seams + uncomposed, maxi(0, declared),
+			"%s builds more stacked ground rooms than it declared" % _label(
+				outcome))
+		declared_total += seams
+	assert_gt(declared_total, 0,
+		"no planner seed builds a stacked house bonded to a flat roof")
 
 
 func test_maze_mode_is_deterministic() -> void:

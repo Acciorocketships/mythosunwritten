@@ -141,6 +141,14 @@ static func partition(source: WarrenMazeSourcePlan,
 	plan.audit["maze_shrunk_parcels"] = shrunk
 	plan.audit["maze_stacked_parcel_count"] = \
 		(stacking["parents"] as Dictionary).size() - stack_refusals.size()
+	# The same two facts under names that cannot be misread: how many plots
+	# the PLANNER stacked, and how many of those seams the translation really
+	# declared. The pair is what a reader needs to tell "the planner grew no
+	# stacks" from "every stack was refused".
+	plan.audit["maze_stacked_plot_count"] = \
+		(stacking["parents"] as Dictionary).size()
+	plan.audit["maze_declared_stack_count"] = \
+		(stacking["parents"] as Dictionary).size() - stack_refusals.size()
 	plan.audit["maze_partial_stack_count"] = int(stacking["partial_count"])
 	plan.audit["maze_stack_refusal_count"] = stack_refusals.size()
 	plan.audit["maze_stack_slab_gap_count"] = _slab_gap_count(stack_refusals)
@@ -150,10 +158,32 @@ static func partition(source: WarrenMazeSourcePlan,
 	# here must name a house parcel the translation really emitted.
 	plan.audit["maze_stack_parents"] = _stack_parcel_ids(
 		stacking["parents"] as Dictionary)
+	# TASK C5 RULING 4 -- the plot's own bearing fact, per parcel. A house
+	# whose every column has solid under its floor and no other plot occupying
+	# that band stands on ROCK or terrain and wears the stone base; a house
+	# standing on another house does not, because what carries it is that
+	# house's slab. Composition reads this where it decides a stamp's
+	# `terrain_bearing`; nothing here re-derives the rule.
+	plan.audit["maze_parcel_bears_on_rock"] = _bears_on_rock_by_parcel(source)
 	var ownership := _ownership(source, parcels, back_rooms, assets)
 	plan.audit.merge(ownership, true)
 	last_diagnostic.merge(ownership, true)
 	return plan
+
+
+static func _bears_on_rock_by_parcel(
+		source: WarrenMazeSourcePlan) -> Dictionary:
+	## Parcel id -> `plot_facts(plot).bears_on_rock`, for every house plot the
+	## translation could name a parcel for. Published rather than recomputed
+	## downstream: the fact belongs to the source plan and this is the one
+	## place that reads it into parcel vocabulary.
+	var out: Dictionary = {}
+	for plot: Dictionary in source.plots:
+		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+			continue
+		out[StringName("parcel.maze.%s" % String(plot["id"]))] = bool(
+			source.plot_facts(plot).get("bears_on_rock", false))
+	return out
 
 
 static func _stack_parents(source: WarrenMazeSourcePlan) -> Dictionary:
@@ -226,24 +256,28 @@ static func _translate_houses(source: WarrenMazeSourcePlan,
 		var plot_id := StringName(plot["id"])
 		var parent := parcel_by_id.get(StringName("parcel.maze.%s" \
 			% String(parents.get(plot_id, &"")))) as WarrenBuildingParcel
-		var slab_gap := int(plot["floor"]) - parent.roof_base_band() \
-			if parent != null else 0
-		if slab_gap > 0:
-			# THE SLAB IS NOT CONSTRUCTION YET. A flat-roofed parent's rooms
-			# stop at `roof_base_band()`; the bands between there and its
-			# `top_band` are the slab, which today is derived mass no building
-			# owns and `_discard_unassigned_mass` throws away. Declaring a
-			# bearing seam onto it would say the child rests on the parent's
-			# top storey when it rests on nothing, and
-			# `WarrenRoomCompositionPlanner`'s own transition audit is right to
-			# refuse the town for it (measured: seeds 12/compact and 9/standard
-			# lose composition outright, every column of the child's first
-			# block unborne). The plot stays terrain-borne exactly as it is
-			# today and the gap is published rather than guessed at; the seam
-			# below becomes live the moment the slab is real construction.
-			refusals[String(plot_id)] = ("%s leaves a %d-band flat slab " \
-				+ "between its top room and this floor") % [parent.stable_id,
-					slab_gap]
+		var child_floor := int(plot["floor"])
+		var seam_is_legible := parent != null \
+			and (child_floor == parent.roof_base_band() \
+				or parent.flat_roof and child_floor == parent.top_band)
+		if parent != null and not seam_is_legible:
+			# THE SLAB IS CONSTRUCTION SINCE TASK C5, but only where the plot
+			# model really built it. A flat-roofed parent fills its plot: its
+			# rooms reach `roof_base_band()`, the authored one-band
+			# `roof.flat.*` unit sits on them, and any remaining band is the
+			# retained stone parapet `WarrenVolumetricSolver
+			# ._retain_maze_slab_courses` marks STRUCTURAL_VOLUME before
+			# composition. A child standing on `top_band` therefore stands on
+			# something, and `WarrenRoomCompositionPlanner` can see it.
+			#
+			# A child at any OTHER band still rests on nothing -- there is no
+			# slab there to bear on -- so it stays terrain-borne exactly as it
+			# was, and the gap is published rather than guessed at.
+			refusals[String(plot_id)] = ("%s leaves a %d-band unbuilt slab " \
+				+ "gap between its own construction and this floor") % [
+					parent.stable_id, child_floor - parent.top_band \
+						if parent.flat_roof \
+						else child_floor - parent.roof_base_band()]
 			parent = null
 		if parent != null and not _parent_owns_its_top_storey(parent):
 			# `WarrenParcelPlan._building_support_is_valid` measures the
@@ -279,13 +313,15 @@ static func _stack_parcel_ids(parents: Dictionary) -> Dictionary:
 
 
 static func _slab_gap_count(refusals: Dictionary) -> int:
-	## How many stacked plots stayed terrain-borne because their parent's flat
-	## slab stands between the two. A separate count from the whole refusal
-	## set, because this one is a MODEL gap waiting on real slab construction
-	## rather than a property of one plot.
+	## How many stacked plots stayed terrain-borne because their parent builds
+	## nothing at the band they stand on. A separate count from the whole
+	## refusal set: before Task C5 made the flat slab real construction this
+	## was every stack in the corpus, and it is the number that says whether
+	## the plot model and the composition still disagree about where a
+	## building stops.
 	var out := 0
 	for reason_value: Variant in refusals.values():
-		out += int(String(reason_value).contains("flat slab"))
+		out += int(String(reason_value).contains("unbuilt slab gap"))
 	return out
 
 
