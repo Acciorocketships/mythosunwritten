@@ -296,7 +296,7 @@ C6 shipped two things: the `authored room envelope gate failed: room … failed 
 **Exit numbers**
 
 - **Seal + fabric** 20/24 against 22+/24 — **MISSED**, by 4/standard and 9/compact; the other two misses are the pre-existing Phase B source/adapter gates.
-- **Solve time** 2442 / 3935 / 5554 / 10383 ms on the four planner seeds (12/compact, 4/compact, 3/standard, 9/standard) against a **≤ 3 s** exit — **MISSED** on three of four; 1.5–14.4 s across the 20 sealing towns of the corpus. Pinned at measured × 1.5 in `PLANNER_SOLVE_MS_CEILING`. **The ≤ 3 s target moves to the Phase F exit** on the controller's note: Phase F deletes the searched pipeline and the pin cache, which is where the remaining structural cost lives.
+- **Solve time** 2442 / 3935 / 5554 / 10383 ms on the four planner seeds (12/compact, 4/compact, 3/standard, 9/standard) against a **≤ 3 s** exit — **MISSED** on three of four; 1.5–14.4 s across the 20 sealing towns of the corpus. Pinned at measured × 1.5 in `PLANNER_SOLVE_MS_CEILING`. **The ≤ 3 s target moves to the Phase F exit** on the controller's note — as a SCHEDULING decision, not because F's deletions pay for it. The table below is the measurement, and it says the cost is **`room_composition`** (`WarrenVolumetricSolver._composition_offsets` plus `WarrenRoomCompositionPlanner.solve`), which is 43–76 % of the composition and superlinear in room count (60 → 98 rooms is 632 → 5659 ms). That code is on the maze path and F does **not** delete it: F deletes the searched frontier, the 12-attempt rotation, the landmark set beam and the pin cache, and the hero beam those belong to is already down to 24–36 ms here. **F's performance task must therefore name the exact block solve / room composition as its subject**; a phase that only removes the search will arrive at the same 10 s on 9/standard.
 - **Where the time goes** (`tests/harness/warren_maze_stage_probe.gd`, per planner seed, ms): it is NOT the hero beam — advisory quotas collapse that to 24–36 ms.
 
 | stage | 12/compact | 4/compact | 3/standard | 9/standard |
@@ -348,6 +348,8 @@ Milestone: noise massif behind the unchanged interface (relief > 0, varied plate
 # Phase F — Mode flip and deletion
 
 Milestone: `GENERATION_MODE` removed (maze is the only path); delete the 12-attempt rotation, ranked variants, courtless fallback, budget slicing, `carve_ranked`, the landmark set beam, `WarrenSolutionPinCache` + salt machinery + VillagePlan integration; retire search-only tests/harnesses. Exit: dead-symbol grep clean; full suite green; in-game cold load near settlements measured.
+
+**Phase C's ≤ 3 s solve target lands here, and it needs its own task.** The deletions above do not pay for it: Phase C measured the hero beam at 24–36 ms and `room_composition` — `WarrenVolumetricSolver._composition_offsets` plus `WarrenRoomCompositionPlanner.solve` — at 632 / 723 / 2370 / 5659 ms on the four planner seeds, superlinear in room count and squarely on the maze path. F's performance task must attack that, with the fabric compile (784 → 2795 ms) second; see *Phase C measured results* for the full stage table.
 
 # Phase G — Visual gate
 

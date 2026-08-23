@@ -286,6 +286,17 @@ static func profile_for(parcel: WarrenBuildingParcel) -> Dictionary:
 
 
 static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
+	## HOW FAR A ROOM STACK DESCENDS BELOW ITS ADDRESSED LEVEL.
+	##
+	## READ THE MODE FIRST. Everything from here to "THE STOREY PARITY" is the
+	## ROUTE-FIRST and MASS-FIRST contract, where the mass under a house is
+	## unclaimed massif a stack may take. **A MAZE PARCEL NEVER DESCENDS AT
+	## ALL** -- in the plot model that mass belongs to somebody, and the plot
+	## says where the house starts -- so none of the reasoning below applies to
+	## it. That branch, and the three tasks that measured and reverted it before
+	## Task C6 shipped it, are at the foot of this doc block just above the
+	## `maze_source` test.
+	##
 	## A uniform room stack may descend only when every footprint column owns a
 	## continuous source-mass bearing path. Mixed-span parcels intentionally stay
 	## at their addressed level; a later explicit overhang/support recipe must

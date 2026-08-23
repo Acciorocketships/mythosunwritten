@@ -268,12 +268,18 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 
 ## TASK C6 RULING 3. The 24-seed corpus exit, as data. The composition file
 ## solves four towns and has a ~4 min budget, so it cannot solve 24 more; the
-## sweep harness already does, and now writes its matrix to
-## `WarrenMazeModeSweep.SUMMARY_PATH` for `test_corpus_composes` to read:
+## sweep harness already does, and writes its matrix to `MAZE_SWEEP.SUMMARY_PATH`
+## for `test_corpus_composes` to read:
 ##
 ##   Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd \
 ##     -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze \
 ##     --scale compact,standard
+##
+## The path and the staleness fingerprint are the HARNESS's constants, read
+## through this preload, so the two halves of the contract cannot drift apart.
+## A summary whose fingerprint no longer matches the fabric layer on disk is
+## refused as stale rather than believed: a green corpus assertion measured
+## against deleted code is worse than no assertion.
 ##
 ## MEASURED 20/24 at Task C6 (18/24 at C5e; the authored-room-envelope family
 ## took 12/standard, and full no-descent then took 6/compact). Pinned at
@@ -285,7 +291,7 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ## `roofless_house` back room at the modular-box contract) and 9/compact (a
 ## duplicate public-realm edge). Each is named in the task report with its
 ## gate.
-const CORPUS_SWEEP_SUMMARY_PATH := "user://warren_maze_mode_sweep.json"
+const MAZE_SWEEP := preload("res://tests/harness/warren_maze_mode_sweep.gd")
 const CORPUS_SEALED_FLOOR := 19
 const CORPUS_SWEEP_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard"]
@@ -293,6 +299,16 @@ const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard"]
 ## The composition family this task closed. A sweep row that dies here again is
 ## a regression of Task C6 ruling 1, not a new gate, so it is pinned by name.
 const RETIRED_CORPUS_GATE := "failed measured phase selection"
+
+## TASK C6 RULING 1. How many optional facade projections one town may lose to
+## `_required_room_clearance`, measured (1 / 2 / 4 / 2 on 12/compact,
+## 4/compact, 3/standard, 9/standard) plus 3. The gate exists to give a town
+## back, and giving one back costs an authored ivy, sign, laundry line or
+## windowbox; a version of it that started demoting facades wholesale would
+## still seal every town and would still pass every other assertion in this
+## file, so the narrowness is pinned rather than assumed. Re-pin UPWARD only
+## with a measurement and a reason.
+const MAZE_FACADE_YIELD_CEILING := 7
 
 ## TASK C6 RULING 3. Per planner seed, the measured production solve x 1.5:
 ## 2442 / 3935 / 5554 / 10383 ms measured in this file, with the vocabulary
@@ -3181,6 +3197,10 @@ func test_optional_facade_projections_yield_to_mandatory_shells() -> void:
 		assert_eq(yield_count, yields.size(),
 			"%s counts %d facade yields but names %d" % [_label(outcome),
 				yield_count, yields.size()])
+		assert_lte(yield_count, MAZE_FACADE_YIELD_CEILING,
+			("%s gave up %d optional facades to mandatory room shells; the " \
+				+ "gate is meant to be narrow") % [_label(outcome),
+				yield_count])
 		assert_lte(yield_count, fallbacks,
 			("%s attributes %d facade fallbacks to the mandatory-shell gate " \
 				+ "but only took %d fallbacks in all") % [_label(outcome),
@@ -3282,12 +3302,26 @@ func test_corpus_composes() -> void:
 			("%s solved in %d ms against a %d ms ceiling; name the stage " \
 				+ "with tests/harness/warren_maze_stage_probe.gd before " \
 				+ "re-pinning") % [_label(outcome), int(outcome.ms), ceiling])
+	_assert_stage_stamps_are_whole()
 	var summary := _corpus_sweep_summary()
 	if summary.is_empty():
 		pending(("the 24-seed corpus matrix has not been measured on this " \
 			+ "machine: run tests/harness/warren_maze_mode_sweep.gd -- " \
 			+ "--seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --scale " \
-			+ "compact,standard, which writes %s") % CORPUS_SWEEP_SUMMARY_PATH)
+			+ "compact,standard, which writes %s") % MAZE_SWEEP.SUMMARY_PATH)
+		return
+	# A summary is evidence about the code that produced it and nothing else.
+	# Without this the file survives every later edit and reports a green
+	# corpus measured against a tree that no longer exists.
+	var fingerprint := MAZE_SWEEP.production_fingerprint()
+	assert_ne(fingerprint, "",
+		"the fabric script directory could not be fingerprinted")
+	if String(summary.get("fingerprint", "")) != fingerprint:
+		pending(("the recorded 24-seed corpus matrix is STALE -- it was " \
+			+ "measured against a different %s. Re-run " \
+			+ "tests/harness/warren_maze_mode_sweep.gd -- --seeds " \
+			+ "1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --scale " \
+			+ "compact,standard") % MAZE_SWEEP.PRODUCTION_SCRIPT_DIR)
 		return
 	# A three-seed spot check is not the corpus. Refuse to score against one.
 	assert_eq(String(summary.get("mode", "")),
@@ -3332,11 +3366,52 @@ func test_corpus_composes() -> void:
 			+ "towns died there again: %s") % ", ".join(retired))
 
 
+func _assert_stage_stamps_are_whole() -> void:
+	## TASK C6 RULING 4's machinery, guarded. The stage table in the report and
+	## the plan is only worth reading if the stamps are really taken, so assert
+	## the two nestings they claim: the three sub-stages of `_partition_rooms`
+	## fit inside it, and the composition's own stages fit inside the whole
+	## composition. A stamp that stopped firing reads as 0 and fails the first
+	## check; a stamp bracketing the wrong span fails the second.
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var stages := plan.audit.get("maze_stage_ms", {}) as Dictionary
+		var spatial_ms := int(plan.audit.get("maze_spatial_ms", -1))
+		print("MAZE_STAGE_MS %s spatial=%d %s" % [_label(outcome), spatial_ms,
+			str(stages)])
+		assert_gt(spatial_ms, 0,
+			"%s must publish its composition wall clock" % _label(outcome))
+		for stage: String in ["parcels", "partition_rooms", "hero_beam",
+				"room_composition", "residual_rooms", "feature_solver",
+				"room_gate"]:
+			assert_true(stages.has(stage),
+				"%s never stamped the %s stage" % [_label(outcome), stage])
+			assert_gt(int(stages.get(stage, -1)), 0,
+				"%s stamped %s at zero ms, which is not a measurement" % [
+					_label(outcome), stage])
+		var inside_partition := int(stages.get("hero_beam", 0)) \
+			+ int(stages.get("room_composition", 0)) \
+			+ int(stages.get("residual_rooms", 0))
+		assert_lte(inside_partition, int(stages.get("partition_rooms", 0)),
+			("%s stamps %d ms inside a %d ms room partition") % [
+				_label(outcome), inside_partition,
+				int(stages.get("partition_rooms", 0))])
+		var inside_composition := int(stages.get("parcels", 0)) \
+			+ int(stages.get("partition_rooms", 0)) \
+			+ int(stages.get("feature_solver", 0)) \
+			+ int(stages.get("room_gate", 0))
+		assert_lte(inside_composition, spatial_ms,
+			"%s stamps %d ms inside a %d ms composition" % [_label(outcome),
+				inside_composition, spatial_ms])
+
+
 func _corpus_sweep_summary() -> Dictionary:
 	## The sweep's own matrix, or {} when this machine has never run it.
-	if not FileAccess.file_exists(CORPUS_SWEEP_SUMMARY_PATH):
+	if not FileAccess.file_exists(MAZE_SWEEP.SUMMARY_PATH):
 		return {}
-	var file := FileAccess.open(CORPUS_SWEEP_SUMMARY_PATH, FileAccess.READ)
+	var file := FileAccess.open(MAZE_SWEEP.SUMMARY_PATH, FileAccess.READ)
 	if file == null:
 		return {}
 	var parsed: Variant = JSON.parse_string(file.get_as_text())

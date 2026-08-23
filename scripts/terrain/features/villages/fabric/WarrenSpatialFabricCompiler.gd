@@ -1241,6 +1241,32 @@ static func _room_phase_failure_audit(room: WarrenRoomStamp,
 		"declared_seams": declared_seams.duplicate(), "overlaps": overlaps}
 
 
+static func _party_wall_allowed_room_ids(source: WarrenSpatialPlan,
+		room: WarrenRoomStamp, room_id_by_private_cell: Dictionary) \
+		-> Dictionary:
+	## The rooms a reservation belonging to `room` may be met by: itself, and
+	## every room on the far side of a PARTY_WALL face. A party wall IS the
+	## shell contract for "these two shells touch", so a reservation it makes
+	## can never be a reason to refuse the neighbour it shares that wall with.
+	##
+	## One statement of it, because both pre-passes need it and a reservation
+	## that admitted a different set of neighbours from the other would be a
+	## silent disagreement about what contact means.
+	var allowed_room_ids: Dictionary = {room.stable_id: true}
+	for cell: Vector3i in room.private_cells:
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor_id := StringName(room_id_by_private_cell.get(
+				cell + direction, &""))
+			if neighbor_id.is_empty() or neighbor_id == room.stable_id:
+				continue
+			var claim := source.grid.face_claim(cell, direction)
+			if int(claim.get("kind", -1)) \
+					== WarrenSpatialGrid.FaceKind.PARTY_WALL:
+				allowed_room_ids[neighbor_id] = true
+	return allowed_room_ids
+
+
 static func _required_room_clearance(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram, rooms: Array[WarrenRoomStamp],
 		room_id_by_private_cell: Dictionary,
@@ -1272,23 +1298,8 @@ static func _required_room_clearance(source: WarrenSpatialPlan,
 		var required_recipe := program.recipe(required_id)
 		if required_recipe == null or required_recipe.placements.is_empty():
 			continue
-		# A party wall is the shell contract for "these two shells touch"; it is
-		# the same admission `_required_roof_clearance` grants, read from the
-		# same face claims, so the two pre-passes cannot disagree about which
-		# neighbours a room is allowed to meet.
-		var allowed_room_ids: Dictionary = {room.stable_id: true}
-		for cell: Vector3i in room.private_cells:
-			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-					Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
-					Vector3i.BACK]:
-				var neighbor_id := StringName(room_id_by_private_cell.get(
-					cell + direction, &""))
-				if neighbor_id.is_empty() or neighbor_id == room.stable_id:
-					continue
-				var claim := source.grid.face_claim(cell, direction)
-				if int(claim.get("kind", -1)) \
-						== WarrenSpatialGrid.FaceKind.PARTY_WALL:
-					allowed_room_ids[neighbor_id] = true
+		var allowed_room_ids := _party_wall_allowed_room_ids(source, room,
+			room_id_by_private_cell)
 		out.append({"owner_room_id": room.stable_id,
 			"recipe_id": required_id,
 			"bounds": FabricRecipe.lattice_transform(room.lattice_origin,
@@ -1350,19 +1361,8 @@ static func _required_roof_clearance(source: WarrenSpatialPlan,
 			continue
 		var face_cells := roof_faces_by_room[room.stable_id] \
 			as Array[Vector3i]
-		var allowed_room_ids: Dictionary = {room.stable_id: true}
-		for cell: Vector3i in room.private_cells:
-			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-					Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
-					Vector3i.BACK]:
-				var neighbor_id := StringName(room_id_by_private_cell.get(
-					cell + direction, &""))
-				if neighbor_id.is_empty() or neighbor_id == room.stable_id:
-					continue
-				var claim := source.grid.face_claim(cell, direction)
-				if int(claim.get("kind", -1)) \
-						== WarrenSpatialGrid.FaceKind.PARTY_WALL:
-					allowed_room_ids[neighbor_id] = true
+		var allowed_room_ids := _party_wall_allowed_room_ids(source, room,
+			room_id_by_private_cell)
 		if _is_full_roof_plate(room, face_cells) \
 				and not _touches_public_air(source.grid, face_cells):
 			var flat_id := _flat_roof_recipe_id(room)

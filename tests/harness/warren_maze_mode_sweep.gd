@@ -39,6 +39,35 @@ const CONSTRUCTIVE_SCALES: Array[StringName] = [
 ## (`WarrenSolutionPinCache`, `heightfield_shot`).
 const SUMMARY_PATH := "user://warren_maze_mode_sweep.json"
 
+## The directory whose contents decide the matrix. A sweep summary is only
+## evidence about the code that produced it, so it carries a fingerprint of
+## every script in the village fabric layer and the test refuses a summary
+## whose fingerprint no longer matches the tree it is running against. The
+## whole directory rather than a hand-kept list of files: a list is a thing
+## that goes stale silently, and a stale list is exactly the failure mode this
+## fingerprint exists to prevent.
+const PRODUCTION_SCRIPT_DIR := "res://scripts/terrain/features/villages/fabric"
+
+
+static func production_fingerprint() -> String:
+	## One hex digest over the sorted (path, content hash) pairs of every
+	## `.gd` file in the fabric layer. Content rather than modification time,
+	## so a checkout or a `touch` does not invalidate a still-valid sweep and
+	## an edit-and-revert does not leave one falsely invalid.
+	var directory := DirAccess.open(PRODUCTION_SCRIPT_DIR)
+	if directory == null:
+		return ""
+	var names := PackedStringArray()
+	for file_name: String in directory.get_files():
+		if file_name.ends_with(".gd"):
+			names.append(file_name)
+	names.sort()
+	var joined := PackedStringArray()
+	for file_name: String in names:
+		joined.append("%s:%s" % [file_name, FileAccess.get_sha256(
+			"%s/%s" % [PRODUCTION_SCRIPT_DIR, file_name])])
+	return "\n".join(joined).sha256_text()
+
 
 func _init() -> void:
 	var seeds: Array[int] = []
@@ -118,7 +147,8 @@ func _write_summary(mode: StringName, seeds: Array[int],
 		sealed_count: int, attempted: int, total_ms: int) -> void:
 	## The matrix as data. `seeds` and `scales` are written so a reader can tell
 	## a full 24-town corpus run from a three-seed spot check and refuse to
-	## score itself against the wrong one.
+	## score itself against the wrong one, and `fingerprint` so it can tell a
+	## matrix measured on THIS code from one left behind by an earlier tree.
 	var scales := PackedStringArray()
 	for scale_id: StringName in scale_ids:
 		scales.append(String(scale_id))
@@ -128,6 +158,7 @@ func _write_summary(mode: StringName, seeds: Array[int],
 		return
 	file.store_string(JSON.stringify({
 		"mode": String(mode),
+		"fingerprint": production_fingerprint(),
 		"seeds": seeds,
 		"scales": scales,
 		"sealed": sealed_count,
