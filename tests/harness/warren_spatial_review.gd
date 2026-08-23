@@ -30,6 +30,8 @@ var _capture_filter := ""
 var _trace_room_gate := false
 var _raw_frontier := false
 var _maze_source := false
+## `--mode <id>`; empty leaves WarrenTownSolver.GENERATION_MODE alone.
+var _generation_mode := StringName()
 var _probe_ranked_limit := 0
 var _camera := Camera3D.new()
 var _spatial: WarrenSpatialPlan
@@ -78,21 +80,29 @@ func _ready() -> void:
 			WarrenVillageScaleProfile.for_id(_scale_id))
 	elif _maze_source:
 		var profile := WarrenVillageScaleProfile.for_id(_scale_id)
-		var massif := WarrenMassifBuilder.build(_world_seed, {}, profile)
-		var maze := WarrenMazeCarver.carve(_world_seed, massif, profile) \
-			if massif != null else null
+		# The whole one-pass site plan, not the bare bore: a plan without plots
+		# carries no town, and the block partitioner refuses to translate one.
+		var maze := WarrenMazeSitePlanner.plan(_world_seed, {}, profile)
 		var source := WarrenMazeVolumeAdapter.to_volume_plan(maze) \
 			if maze != null else null
 		if source == null:
-			_fail_and_quit("maze source rejected: %s / %s / %s" % [
-				WarrenMassifBuilder.last_failure, WarrenMazeCarver.last_failure,
+			_fail_and_quit("maze source rejected: %s / %s" % [
+				WarrenMazeSitePlanner.last_failure,
 				WarrenMazeVolumeAdapter.last_failure])
 			return
 		print("[warren_spatial_review] selected maze source=",
 			"maze.%d" % maze.world_seed, " signature=",
 			maze.deterministic_signature().sha256_text())
+		# `--maze-source` renders the composition production runs, so it should
+		# be able to run under production's own mode: MODE_MAZE is what turns
+		# richness quotas advisory (WarrenTownSolver.feature_quotas_are_advisory).
+		# Without `--mode maze` this harness stays STRICTER than production.
+		var restored_mode := WarrenTownSolver.GENERATION_MODE
+		if _generation_mode != &"":
+			WarrenTownSolver.GENERATION_MODE = _generation_mode
 		_spatial = WarrenVolumetricSolver.from_volume(source, -1, program,
 			profile != null and profile.requires_elevated_courtyard)
+		WarrenTownSolver.GENERATION_MODE = restored_mode
 	else:
 		var source := _select_source(program)
 		if source == null:
@@ -273,6 +283,8 @@ func _read_args() -> void:
 			_raw_frontier = true
 		elif args[index] == "--maze-source":
 			_maze_source = true
+		elif args[index] == "--mode" and index + 1 < args.size():
+			_generation_mode = StringName(args[index + 1])
 		elif args[index] == "--probe-ranked" and index + 1 < args.size():
 			_probe_ranked_limit = maxi(1, int(args[index + 1]))
 		elif args[index] == "--production-terrain-site":

@@ -8,6 +8,12 @@ extends SceneTree
 ##   Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- \
 ##     --seeds 1,2,3,4,5,6,7,8,9 --mode maze
 ##
+## Each row names the GATE the town died at — the head of the solver's own
+## failure — so a corpus-wide run reads as a disposition of gates rather than a
+## count of rejections. `--scale compact,standard` runs every seed at each
+## named profile instead of the one WarrenVillageScaleProfile.select() rolls
+## for it, which is how the Phase C baseline matrix is measured.
+##
 ## --constructive switches to the plot-model exit-criteria matrix instead: for
 ## every seed x {compact, standard} it runs the real pipeline --
 ## WarrenMazeSitePlanner.plan() (massif -> carve -> reserve -> partition ->
@@ -27,6 +33,7 @@ const CONSTRUCTIVE_SCALES: Array[StringName] = [
 
 func _init() -> void:
 	var seeds: Array[int] = []
+	var scale_ids: Array[StringName] = []
 	var mode := WarrenTownSolver.MODE_MAZE
 	var constructive := false
 	var args := OS.get_cmdline_user_args()
@@ -34,12 +41,19 @@ func _init() -> void:
 		if args[index] == "--seeds" and index + 1 < args.size():
 			for token: String in args[index + 1].split(",", false):
 				seeds.append(int(token.strip_edges()))
+		elif args[index] == "--scale" and index + 1 < args.size():
+			for token: String in args[index + 1].split(",", false):
+				scale_ids.append(StringName(token.strip_edges()))
 		elif args[index] == "--mode" and index + 1 < args.size():
 			mode = StringName(args[index + 1])
 		elif args[index] == "--constructive":
 			constructive = true
 	if seeds.is_empty():
 		seeds = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+	if scale_ids.is_empty():
+		# The empty id means "whatever this seed rolls" — the profile
+		# production would actually pick for it.
+		scale_ids = [StringName()]
 
 	if constructive:
 		_run_constructive(seeds)
@@ -49,28 +63,46 @@ func _init() -> void:
 	var catalog := EnvironmentCatalog.load_default()
 	var program := SettlementFabricProgram.compile(catalog)
 	WarrenTownSolver.GENERATION_MODE = mode
-	print("SWEEP mode=%s seeds=%d" % [String(mode), seeds.size()])
+	print("SWEEP mode=%s seeds=%d scales=%d" % [String(mode), seeds.size(),
+		scale_ids.size()])
 
 	var sealed_count := 0
+	var attempted := 0
 	var total_ms := 0
 	for city_seed: int in seeds:
-		var profile := WarrenVillageScaleProfile.select(city_seed)
-		var started := Time.get_ticks_msec()
-		var plan := WarrenVolumetricSolver.solve(city_seed, {}, program, profile)
-		var elapsed := Time.get_ticks_msec() - started
-		total_ms += elapsed
-		if plan != null:
-			sealed_count += 1
-			print("SWEEP seed=%d scale=%s ms=%d SEALED rooms=%s" % [city_seed,
-				String(profile.scale_id), elapsed,
-				str(plan.audit.get("room_storey_kind_counts", {}))])
-		else:
-			print("SWEEP seed=%d scale=%s ms=%d FAILED %s" % [city_seed,
-				String(profile.scale_id), elapsed,
-				WarrenVolumetricSolver.last_failure.left(160)])
+		for scale_id: StringName in scale_ids:
+			attempted += 1
+			var profile := WarrenVillageScaleProfile.select(city_seed) \
+				if scale_id == StringName() \
+				else WarrenVillageScaleProfile.for_id(scale_id)
+			var started := Time.get_ticks_msec()
+			var plan := WarrenVolumetricSolver.solve(city_seed, {}, program,
+				profile)
+			var elapsed := Time.get_ticks_msec() - started
+			total_ms += elapsed
+			if plan != null:
+				sealed_count += 1
+				print("SWEEP seed=%d scale=%s ms=%d SEALED rooms=%s" % [
+					city_seed, String(profile.scale_id), elapsed,
+					str(plan.audit.get("room_storey_kind_counts", {}))])
+				continue
+			var failure := WarrenVolumetricSolver.last_failure
+			print("SWEEP seed=%d scale=%s ms=%d FAILED gate=[%s] reason=%s" % [
+				city_seed, String(profile.scale_id), elapsed,
+				_gate_of(failure), failure.left(160)])
 	print("SWEEP RESULT mode=%s sealed=%d/%d total_ms=%d" % [String(mode),
-		sealed_count, seeds.size(), total_ms])
+		sealed_count, attempted, total_ms])
 	quit()
+
+
+func _gate_of(failure: String) -> String:
+	## The head of a failure — enough words to name the gate a town died at
+	## without pasting a whole diagnostic into every row of the matrix.
+	var words := failure.split(" ", false)
+	var kept := PackedStringArray()
+	for index in mini(12, words.size()):
+		kept.append(words[index])
+	return " ".join(kept)
 
 
 func _run_constructive(seeds: Array[int]) -> void:

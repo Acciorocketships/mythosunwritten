@@ -225,17 +225,19 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	## MODE_MAZE production entry. The whole point of the solid-first front end
 	## is that the source is correct by construction, so there is exactly one
 	## source, one partition, and one composition. A rejection here is a real
-	## defect in the carver or a gate it has not yet learned to satisfy — it is
-	## never retried with a different bore.
+	## defect in the site plan or a gate it has not yet learned to satisfy — it
+	## is never retried with a different bore.
+	##
+	## The source is the site planner's whole one-pass pipeline (massif ->
+	## carve -> reserve -> partition -> seal), never the bare bore: a plan
+	## without plots carries no town to translate, and the block partitioner
+	## rightly refuses one.
 	var started_ms := Time.get_ticks_msec()
 	last_advisory_shortfalls = {}
-	var massif := WarrenMassifBuilder.build(world_seed, ground_bands, profile)
-	if massif == null:
-		last_failure = "maze massif rejected: %s" % WarrenMassifBuilder.last_failure
-		return null
-	var maze := WarrenMazeCarver.carve(world_seed, massif, profile)
+	var maze := WarrenMazeSitePlanner.plan(world_seed, ground_bands, profile)
 	if maze == null:
-		last_failure = "maze carve rejected: %s" % WarrenMazeCarver.last_failure
+		last_failure = "maze source rejected: %s" \
+			% WarrenMazeSitePlanner.last_failure
 		return null
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze)
 	if volume == null:
