@@ -15,8 +15,8 @@
 
 | phase | content | status |
 |---|---|---|
-| A | Constructive source layer (reservations, stamping, ledger, trim, foundations, debug view) — slices 1/1b/1c | **done; being replaced** by B. 22/23 seeds translate 1:1; ownership 0.69/0.69 on seeds 4/12; bridges on 6/6 standard seeds; carver tunnel policy (open by default + seeded spans) is kept |
-| B | **Plot-layer rewrite** (plot model) | **next** — tasks below |
+| A | Constructive source layer (reservations, stamping, ledger, trim, foundations, debug view) — slices 1/1b/1c | **done; replaced** by B. 22/23 seeds translate 1:1; ownership 0.69/0.69 on seeds 4/12 **on the old owned-solid metric** (`maze_owned_solid_ratio`, the ledger-era 2D-footprint ratio, deleted with the ledger in B4 — history only, not comparable with the live metric below); bridges on 6/6 standard seeds; carver tunnel policy (open by default + seeded spans) is kept |
+| B | **Plot-layer rewrite** (plot model) | **done** (B1–B5 + whole-branch review fix wave). Tasks below; measurements under *Phase B measured results* |
 | C | Composition consumes plots; delete the hero-feature beam; gate disposition | after B |
 | D | Real-terrain sites (production seed + sloped fixtures) | after C |
 | E | Noise massif + carver vertical momentum/descent (variation) | after C (independent of D) |
@@ -29,7 +29,7 @@ The **built-town view** the user keeps asking for arrives at the end of Phase C.
 
 - Plain lattice data in the source plan; natural terrain immutable; carved streets and their headroom immutable after the bore.
 - Determinism: pure function of (city seed, ground bands, scale profile); sorted iteration wherever order affects output; `deterministic_signature()` covers plots.
-- *Rules become repairs*: no new runtime rejection paths; shortfalls are audit facts asserted in tests. Hard runtime rules only: street connectivity/walkability/headroom, no overlap, every plot supported.
+- *Rules become repairs*: no new runtime rejection paths; shortfalls are audit facts asserted in tests. Hard runtime rules only: street connectivity/walkability/headroom, no overlap, every plot supported. Street walkability is the goal; the carver's own over/under crossings at exact headroom distance leave 0–6 floor gaps per town today (measured corpus-wide 2026-08-23; the plan's earlier "1–3" understated it), carried to Phase C gate disposition / Phase E carver — the plot layer is pinned to add none (`test_streets_keep_their_floor` asserts sealed `street_floor_gaps` equals the carve-stage count on every sealing seed).
 - TABS; commit only named files; never `.uid`; carver (`test_warren_maze_carver.gd` 10/10), fabric compiler (11/11), settlement fabric (42/42) stay green in every task; never weaken an assertion silently — re-pin measured floors upward only, report drops.
 - Test command: `/Applications/Godot.app/Contents/MacOS/Godot --headless --path /Users/ryko/story -s addons/gut/gut_cmdln.gd -gtest=res://tests/<file>.gd -gexit` (output to a file). New `class_name` ⇒ `--import` once first. GUI renders never use `--headless`.
 
@@ -98,7 +98,65 @@ Strategy: **build the new model alongside, switch the planner to it, then delete
 
 ### Phase B exit
 
-- Exterior rock ratio (share of above-street-level exterior faces that are rock) ≤ pinned ceiling; share of buildable columns in a plot ≥ pinned floor; 22+/24 translate; pinned seeds' ownership ≥ 0.69; plot-layer code ≤ 700 lines; suites green; view readable.
+- Exterior rock ratio (share of the town's exposed skin that is rock) ≤ pinned ceiling; share of buildable columns in a plot ≥ pinned floor; 22+/24 translate; **`maze_ownership_ratio` ≥ its per-seed pinned floor** on the four planner seeds; plot-layer code ≤ 700 lines; suites green; view readable.
+
+The ownership metric is `maze_ownership_ratio` = plot-owned solid cells (parcel cells + back-room cells) / solid cells, both counted through `solid_at` over `[massif.base_at, column_ceiling)`; bridge bands are in neither (a bridge is a typed record, never a parcel). Its four floors, measured minus a 0.05 guard (`OWNERSHIP_FLOOR` in `tests/test_warren_maze_plots.gd`, re-pinned upward only):
+
+| seed | scale | measured | floor | measured before the 2026-08-23 fix wave |
+|---|---|---|---|---|
+| 12 | compact | 0.6667 | 0.61 | 0.6667 (no bridge on this seed) |
+| 4 | compact | 0.7253 | 0.67 | 0.7227 |
+| 3 | standard | 0.6803 | **0.63** (was 0.62) | 0.6762 |
+| 9 | standard | 0.7727 | **0.72** (was 0.71) | 0.7685 |
+
+Three of the four rose when bridge mass left the denominator (whole-branch review, minor 15): a bridge translates to an occupied-link reservation, never to a parcel, so counting its bands as solid-the-translation-failed-to-own charged a town for having skywalks. Floors re-pinned upward accordingly.
+
+*History:* the phase originally read "pinned seeds' ownership ≥ 0.69", carried from slice 1c's 0.69/0.69 on seeds 4/12. Those two numbers are the **old owned-solid metric** (`maze_owned_solid_ratio`), which died with the edit ledger in B4; it counted a different numerator and a different denominator and is not comparable with the live metric above.
+
+
+### Phase B measured results
+
+`Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --constructive`, re-run 2026-08-23 after the whole-branch review's fix wave. Exterior rock is the WIDENED metric (band `base_at` included, up-facing rock counted as skin) and ownership excludes bridge bands, so both of those columns differ from B4's own table in `task-4-report.md`; every other column is unchanged.
+
+**sealed 23/24 · translated 22/23 (22/24 overall)**
+
+| seed | scale | sealed | plots | houses | assets | decks | bridges | tiered | mean fp | ext. rock | raised shoulders | parcels | back-room cells | ownership | translated |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | compact | yes | 34 | 31 | 1 | 1 | 1 | 3 | 1.77 | 0.2006 | 0 | 32 | 88 | 0.7468 | yes |
+| 2 | compact | yes | 19 | 17 | 2 | 0 | 0 | 4 | 4.06 | 0.1411 | 2 | 19 | 267 | 0.7632 | yes |
+| 3 | compact | yes | 20 | 17 | 2 | 1 | 0 | 3 | 3.18 | 0.2013 | 0 | 19 | 169 | 0.7302 | yes |
+| 4 | compact | yes | 34 | 32 | 1 | 0 | 1 | 7 | 2.44 | 0.1878 | 7 | 33 | 173 | 0.7253 | yes |
+| 5 | compact | yes | 30 | 27 | 1 | 1 | 1 | 4 | 2.26 | 0.1715 | 0 | 28 | 144 | 0.7751 | yes |
+| 6 | compact | yes | 28 | 26 | 1 | 1 | 0 | 6 | 3.04 | 0.1575 | 0 | 27 | 207 | 0.7179 | yes |
+| 7 | compact | **no** | — | — | — | — | — | — | — | — | — | — | — | — | `stage=carve` — alley budget reached 0.850 frontage, below 0.900 |
+| 8 | compact | yes | 32 | 29 | 1 | 1 | 1 | 4 | 2.41 | 0.1889 | 0 | — | — | — | **no** — `stage=adapter`: plan seal rejected: exact public route expands into a broad floor slab |
+| 9 | compact | yes | 31 | 28 | 1 | 1 | 1 | 5 | 2.00 | 0.2629 | 1 | 29 | 98 | 0.6273 | yes |
+| 10 | compact | yes | 22 | 19 | 2 | 1 | 0 | 3 | 2.95 | 0.2192 | 1 | 21 | 186 | 0.6685 | yes |
+| 11 | compact | yes | 27 | 23 | 2 | 1 | 1 | 5 | 2.09 | 0.1747 | 0 | 25 | 111 | 0.7778 | yes |
+| 12 | compact | yes | 31 | 29 | 1 | 1 | 0 | 11 | 2.41 | 0.2605 | 11 | 30 | 136 | 0.6667 | yes |
+| 1 | standard | yes | 32 | 29 | 2 | 0 | 1 | 5 | 2.59 | 0.1469 | 0 | 31 | 196 | 0.7685 | yes |
+| 2 | standard | yes | 49 | 47 | 0 | 1 | 1 | 4 | 2.02 | 0.1583 | 3 | 47 | 162 | 0.7617 | yes |
+| 3 | standard | yes | 39 | 35 | 1 | 1 | 2 | 6 | 2.06 | 0.2255 | 0 | 36 | 144 | 0.6803 | yes |
+| 4 | standard | yes | 46 | 41 | 1 | 2 | 2 | 17 | 2.39 | 0.2334 | 12 | 42 | 208 | 0.6494 | yes |
+| 5 | standard | yes | 38 | 32 | 3 | 2 | 1 | 11 | 1.88 | 0.2146 | 0 | 35 | 155 | 0.7056 | yes |
+| 6 | standard | yes | 41 | 37 | 2 | 0 | 2 | 5 | 2.22 | 0.1286 | 0 | 39 | 205 | 0.8101 | yes |
+| 7 | standard | yes | 45 | 43 | 0 | 0 | 2 | 4 | 2.09 | 0.1367 | 0 | 43 | 194 | 0.7922 | yes |
+| 8 | standard | yes | 53 | 49 | 2 | 0 | 2 | 7 | 1.84 | 0.1399 | 0 | 51 | 166 | 0.7848 | yes |
+| 9 | standard | yes | 44 | 41 | 0 | 1 | 2 | 5 | 2.32 | 0.1358 | 2 | 41 | 194 | 0.7727 | yes |
+| 10 | standard | yes | 42 | 38 | 2 | 0 | 2 | 5 | 2.00 | 0.1240 | 0 | 40 | 200 | 0.8109 | yes |
+| 11 | standard | yes | 44 | 40 | 1 | 1 | 2 | 8 | 2.00 | 0.1598 | 0 | 41 | 148 | 0.7738 | yes |
+| 12 | standard | yes | 44 | 40 | 1 | 1 | 2 | 7 | 2.27 | 0.1459 | 0 | 41 | 234 | 0.7865 | yes |
+
+**Exit numbers**
+
+- **Buildable coverage** 0.965 (pinned floor 0.91) — share of street-fronting columns inside a plot.
+- **Fronting (column, band) slot share** 0.897 (pinned floor 0.85).
+- **Exterior rock** 0.124–0.263 across the corpus; the four planner seeds read 0.2605 / 0.1878 / 0.2255 / 0.1358, so `EXTERIOR_ROCK_CEILING` is pinned at **0.32** (worst + 0.05, rounded up). These are the WIDENED metric of minor 6 (band `base_at` included, up-facing rock counted as skin); under the older side-faces-only definition the same corpus read 0.069–0.188 with the ceiling at 0.24. The two are not comparable — a later movement of this ceiling is a real change.
+- **Seal / translate** 23/24 seal, 22/24 translate (seed 7 compact fails at `carve`, seed 8 compact at `adapter`).
+- **Mean house footprint** 1.77–4.06 macro columns (pinned floor 1.8 on the four planner seeds).
+- **Street floors** sealed `street_floor_gaps` equals the carve-stage count on all 23 sealing towns; the plot layer adds none. The bore itself leaves 0–6 per town.
+- **Raised shoulders** (instrumentation, no rule): 39 no-plot columns across the 23 sealing towns stand above their own massif envelope, in 8 towns, worst 12 (seed 4 standard). `rock_shoulder` has no upper clamp; whether it needs one is a Phase C/E question.
+- **Plot-layer size** 1033 code lines against the spec's ≤ 700 — **recorded as MISSED and accepted** (B4 ruling): the layer replaced 4,632 deleted lines with ~1,500 and each file has one responsibility.
 
 ---
 
