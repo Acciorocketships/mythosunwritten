@@ -220,6 +220,15 @@ The quarry-block verdict (C5b) is unroomed PLOT mass retained as stone: only 23�
 - Render seeds 12 and 3 after; read the overviews: does the stone recede to bases, shoulders, slabs and tunnel roofs with houses on top?
 - [ ] Commit — `feat(villages): compose the plot mass — back rooms, lifted residual budget, assets realised`.
 
+### Task C5d: Flat-roof-first composition
+
+C5c measured that the binding constraint on plot-mass composition is the authored PITCHED roof vocabulary (eave halos, macro setbacks, 1-cell slivers), not composition: two relaxations that would have taken the unroomed share toward 0.2 each cost sealing seeds their towns at roof gates. The plot model's town is a tiered hill town; its vernacular is the flat roof (a 1-band slab + parapet course, already wired in C5).
+
+**Files:** modify `WarrenMazeBlockPartitioner.gd` (`flat_roof = true` for every house parcel and back room in maze mode; a pitched roof is a seeded PREFERENCE recorded on the parcel (`roof_preference = &"pitched"`) for houses whose plot top is strictly above every 4-neighbour plot's top and above the adjacent street bands — the only places a pitched unit can fit without a halo conflict), `WarrenSpatialFabricCompiler.gd` (`compile_roof_units`: a maze stamp composes its flat unit unless `roof_preference == pitched` AND the pitched unit fits with no displacement and no halo conflict — then pitched; never the reverse; audit `maze_pitched_roof_count` / `maze_flat_roof_count` / `maze_pitched_refused_count`), `WarrenParcelConstruction.gd` + `WarrenVolumetricSolver.gd` (re-apply C5c's two reverted relaxations — full no-descent in maze mode; back-room bearing mirroring the compiler's `stone_borne` branch — now that the roof gate is gone; keep them only if the three sealing seeds keep sealing, else report the gate), `tests/test_warren_maze_composition.gd`.
+- Measure: unroomed share per seed before → after (re-pin the ceiling DOWN only if measured lower), pitched/flat counts, 9/standard status (its pin removed if it clears), corpus seal count via the sweep (`--mode maze`, 24 seeds — report how many now seal; the Phase C exit wants 22+/24).
+- Render seeds 12 and 3; verdict: a terraced town of flat-roofed stone-and-timber houses with the occasional pitched roof on a freestanding house — does it read that way?
+- [ ] Commit — `feat(villages): flat-roof-first maze composition; pitched roofs where they fit`.
+
 ### Task C6: Corpus exit and performance
 
 **Files:** `tests/harness/warren_maze_stage_probe.gd` (stage timings per seed incl. composition sub-stages from `SKYWALK_TIMING`), `tests/test_warren_maze_composition.gd` (`test_corpus_composes` — the four seeds must seal; the 24-seed matrix is asserted via the sweep's JSON summary written to the scratchpad: ≥ 22/24 compose + fabric), `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md` ("Phase C measured results": per-seed ms, gates, shortfalls).
