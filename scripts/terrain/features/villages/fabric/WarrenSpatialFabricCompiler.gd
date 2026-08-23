@@ -943,6 +943,20 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var feature_portal_opening_count := 0
 	for mask_value: Variant in feature_portal_masks.values():
 		feature_portal_opening_count += _feature_portal_bit_count(int(mask_value))
+	# TASK C6 RULING 1. The ROOMS are authoritative plan facts here too, and the
+	# ordering argument above is theirs as well: reserve the smallest measured
+	# shell every room is REQUIRED to take before choosing anyone's optional
+	# phase-B projection. Maze towns are where this bites -- the plot model
+	# stacks unrelated houses one band apart across a corner, so an ivy, sign or
+	# laundry piece hung 0.3-0.8 m off the front of a house at band 2 reaches
+	# into the footprint of a house at band 4 that has not been compiled yet.
+	# When that house's turn came, the only recovery `compile_room_units` owns
+	# -- demote THIS room from phase B to phase A -- was already spent on the
+	# wrong room: a ground room's `*.base.*` shell is mandatory and has no
+	# phase-B mate at all, so `fallback_id == recipe_id` and the town died.
+	# Measured: it is the whole `failed measured phase selection` family.
+	var required_room_clearance := _required_room_clearance(source, program,
+		rooms, room_id_by_private_cell, feature_portal_masks)
 	var units: Array[FabricUnit] = []
 	var unit_by_room: Dictionary = {}
 	var prior_unit_by_cell: Dictionary = {}
@@ -951,6 +965,8 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var facade_phase_fallback_count := 0
 	var hero_feature_facade_fallback_count := 0
 	var roof_clearance_facade_fallback_count := 0
+	var required_room_facade_fallback_count := 0
+	var required_room_yields: Array[Dictionary] = []
 	var physical_support_redirect_count := 0
 	var retained_stone_bearing_count := 0
 	var suppressed_party_wall_module_count := 0
@@ -966,18 +982,8 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 	for room: WarrenRoomStamp in rooms:
 		var feature_portal_mask := int(feature_portal_masks.get(room.stable_id, 0))
-		# TASK C5 RULING 2. A house stacked on a flat roof rests on the slab
-		# that closes the parcel below it -- the authored one-band
-		# `roof.flat.*` unit and the retained stone parapet above it -- and the
-		# parent's own top ROOM stops one or two bands lower, so there is no
-		# socket down there to meet. Structurally this is a room standing on a
-		# complete bearing plate, exactly like a room standing on ground, and
-		# it is compiled as one: a `base.*` recipe (no bearing parent) and no
-		# bond. Ruling 4 is what keeps it out of STONE -- see `_room_recipe_id`.
-		var on_retained_stone := not room.terrain_bearing \
-			and _bears_on_retained_stone(source.grid, room) \
-			and program.recipe(_room_recipe_id(room, source.world_seed, true,
-				feature_portal_mask, true)) != null
+		var on_retained_stone := _room_bears_on_retained_stone(source, program,
+			room, feature_portal_mask)
 		retained_stone_bearing_count += int(on_retained_stone)
 		var recipe_id := _room_recipe_id(room, source.world_seed, true,
 			feature_portal_mask, on_retained_stone)
@@ -1067,22 +1073,27 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		if not unit.is_valid():
 			last_failure = "room %s produced an invalid fabric unit" % room.stable_id
 			return [] as Array[FabricUnit]
+		var fallback_id := _room_recipe_id(room, source.world_seed, false,
+			feature_portal_mask, on_retained_stone)
+		var fallback_recipe := program.recipe(fallback_id)
 		var feature_conflict := _room_feature_envelope_conflict(source,
 			program, room, recipe)
 		var roof_conflict := _room_required_roof_conflict(room, recipe,
 			required_roof_clearance)
+		var projection_conflict := _room_optional_projection_conflict(room,
+			recipe, fallback_recipe, required_room_clearance)
 		var desired_rejection := "visual envelope intersects unrelated feature %s" \
 			% feature_conflict if not feature_conflict.is_empty() \
 			else "visual envelope intersects required roof %s" % roof_conflict \
-			if not roof_conflict.is_empty() else ""
+			if not roof_conflict.is_empty() \
+			else "optional facade projection intersects required room %s" \
+			% projection_conflict if not projection_conflict.is_empty() else ""
 		var desired_added := feature_conflict.is_empty() \
-			and roof_conflict.is_empty() \
+			and roof_conflict.is_empty() and projection_conflict.is_empty() \
 			and room_probe.add_unit(unit)
 		if not desired_added:
 			if desired_rejection.is_empty():
 				desired_rejection = room_probe.last_rejection
-			var fallback_id := _room_recipe_id(room, source.world_seed, false,
-				feature_portal_mask, on_retained_stone)
 			if fallback_id == recipe_id:
 				last_audit["room_phase_failure"] = \
 					_room_phase_failure_audit(room, recipe, seams,
@@ -1090,7 +1101,6 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				last_failure = "room %s failed measured phase selection: %s" % [
 					room.stable_id, desired_rejection]
 				return [] as Array[FabricUnit]
-			var fallback_recipe := program.recipe(fallback_id)
 			if fallback_recipe == null \
 					or not _recipe_stays_inside_stamp(fallback_recipe, room) \
 					or not _entrance_matches(fallback_recipe, room):
@@ -1127,6 +1137,16 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				not feature_conflict.is_empty())
 			roof_clearance_facade_fallback_count += int(
 				not roof_conflict.is_empty())
+			required_room_facade_fallback_count += int(
+				not projection_conflict.is_empty())
+			if not projection_conflict.is_empty():
+				# Named, not just counted: this is the fact a test can check
+				# against the sealed plan and the measured vocabulary without
+				# asking the compiler what it decided.
+				required_room_yields.append({"room_id": room.stable_id,
+					"desired_recipe_id": recipe_id,
+					"chosen_recipe_id": fallback_id,
+					"required": projection_conflict})
 		selected_phase_b_count += int(_is_phase_b_recipe(unit.recipe_id))
 		suppressed_party_wall_module_count += \
 			unit.suppressed_placement_ids.size()
@@ -1156,8 +1176,13 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			hero_feature_facade_fallback_count,
 		"roof_clearance_facade_fallback_count": \
 			roof_clearance_facade_fallback_count,
+		"required_room_facade_fallback_count": \
+			required_room_facade_fallback_count,
+		"required_room_facade_yields": required_room_yields,
 		"required_roof_clearance_envelope_count": \
 			required_roof_clearance.size(),
+		"required_room_clearance_envelope_count": \
+			required_room_clearance.size(),
 		"physical_support_redirect_count": physical_support_redirect_count,
 		"retained_stone_bearing_room_count": retained_stone_bearing_count,
 		"suppressed_party_wall_module_count": \
@@ -1214,6 +1239,98 @@ static func _room_phase_failure_audit(room: WarrenRoomStamp,
 		"kind": room.kind, "origin": room.lattice_origin,
 		"recipe_id": recipe.recipe_id, "bounds": bounds,
 		"declared_seams": declared_seams.duplicate(), "overlaps": overlaps}
+
+
+static func _required_room_clearance(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, rooms: Array[WarrenRoomStamp],
+		room_id_by_private_cell: Dictionary,
+		feature_portal_masks: Dictionary) -> Array[Dictionary]:
+	## TASK C6 RULING 1. The mandatory shell of every room: the recipe
+	## `_room_recipe_id` returns with `allow_phase_b` false, which is the
+	## SMALLEST authored construction that room can ever be built from. A
+	## ground or retained-stone room has only that one shell; an upper room may
+	## additionally hang an ivy, sign, laundry or windowbox piece off its front,
+	## and that piece is optional by construction -- see
+	## `SettlementFabricProgram._add_front_facade_detail`, whose own doc says it
+	## exists so a detail "can fall back to the flush phase-A shell at a tight
+	## party wall instead of clipping a lane".
+	##
+	## MAZE TOWNS ONLY, because the ordering defect is theirs: the plot model
+	## packs unrelated houses one band apart across a shared corner, and the
+	## selection loop walks rooms bottom band first, so the projecting room is
+	## almost always compiled BEFORE the mandatory room it reaches into. On a
+	## route-first or mass-first plan this returns an empty list and the gate
+	## below is inert, so every legacy payload is byte-identical.
+	var out: Array[Dictionary] = []
+	if source.source_volume == null \
+			or not source.source_volume.mass_context.has(&"maze_source_plan"):
+		return out
+	for room: WarrenRoomStamp in rooms:
+		var mask := int(feature_portal_masks.get(room.stable_id, 0))
+		var required_id := _room_recipe_id(room, source.world_seed, false, mask,
+			_room_bears_on_retained_stone(source, program, room, mask))
+		var required_recipe := program.recipe(required_id)
+		if required_recipe == null or required_recipe.placements.is_empty():
+			continue
+		# A party wall is the shell contract for "these two shells touch"; it is
+		# the same admission `_required_roof_clearance` grants, read from the
+		# same face claims, so the two pre-passes cannot disagree about which
+		# neighbours a room is allowed to meet.
+		var allowed_room_ids: Dictionary = {room.stable_id: true}
+		for cell: Vector3i in room.private_cells:
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+					Vector3i.BACK]:
+				var neighbor_id := StringName(room_id_by_private_cell.get(
+					cell + direction, &""))
+				if neighbor_id.is_empty() or neighbor_id == room.stable_id:
+					continue
+				var claim := source.grid.face_claim(cell, direction)
+				if int(claim.get("kind", -1)) \
+						== WarrenSpatialGrid.FaceKind.PARTY_WALL:
+					allowed_room_ids[neighbor_id] = true
+		out.append({"owner_room_id": room.stable_id,
+			"recipe_id": required_id,
+			"bounds": FabricRecipe.lattice_transform(room.lattice_origin,
+				room.yaw_quarters) * required_recipe.local_clearance_bounds,
+			"allowed_room_ids": allowed_room_ids})
+	return out
+
+
+static func _room_optional_projection_conflict(room: WarrenRoomStamp,
+		recipe: FabricRecipe, fallback_recipe: FabricRecipe,
+		required_room_clearance: Array[Dictionary]) -> StringName:
+	## Refuse a phase-B facade whose OPTIONAL projection is the sole reason its
+	## envelope meets a room that has no choice about its own shell.
+	##
+	## The last clause is the whole safety of this gate, and it is why it can
+	## never demote a facade for a contact the fabric already forgives: if the
+	## FLUSH phase-A shell meets that same room too, the projection is not the
+	## cause and nothing is refused. Every relation the plan admits by
+	## construction -- a bearing parent under a stacked room, a party wall, a
+	## bridge flank -- meets flush as well as projecting, so it is skipped here
+	## and stays the business of `SettlementFabricPlan.add_unit`.
+	if required_room_clearance.is_empty() or room == null or recipe == null \
+			or fallback_recipe == null \
+			or recipe.recipe_id == fallback_recipe.recipe_id \
+			or recipe.placements.is_empty():
+		return &""
+	var transform := FabricRecipe.lattice_transform(room.lattice_origin,
+		room.yaw_quarters)
+	var projecting_bounds := transform * recipe.local_clearance_bounds
+	var flush_bounds := transform * fallback_recipe.local_clearance_bounds
+	for required: Dictionary in required_room_clearance:
+		if StringName(required.owner_room_id) == room.stable_id \
+				or (required.allowed_room_ids as Dictionary).has(
+					room.stable_id):
+			continue
+		var required_bounds := required.bounds as AABB
+		if not _aabb_overlaps_volume(projecting_bounds, required_bounds) \
+				or _aabb_overlaps_volume(flush_bounds, required_bounds):
+			continue
+		return StringName("%s/%s" % [required.owner_room_id,
+			required.recipe_id])
+	return &""
 
 
 static func _required_roof_clearance(source: WarrenSpatialPlan,
@@ -4064,6 +4181,27 @@ static func _setback_gable_placement(piece: Dictionary,
 			return {}
 	return {"recipe_id": recipe_id, "origin": origin,
 		"yaw_quarters": yaw, "anchor_face": origin - Vector3i.UP}
+
+
+static func _room_bears_on_retained_stone(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, room: WarrenRoomStamp,
+		feature_portal_mask: int) -> bool:
+	## TASK C5 RULING 2. A house stacked on a flat roof rests on the slab that
+	## closes the parcel below it -- the authored one-band `roof.flat.*` unit
+	## and the retained stone parapet above it -- and the parent's own top ROOM
+	## stops one or two bands lower, so there is no socket down there to meet.
+	## Structurally this is a room standing on a complete bearing plate,
+	## exactly like a room standing on ground, and it is compiled as one: a
+	## `base.*` recipe (no bearing parent) and no bond. Ruling 4 is what keeps
+	## it out of STONE -- see `_room_recipe_id`.
+	##
+	## One statement of the decision, because the mandatory-shell pre-pass
+	## (`_required_room_clearance`) and the selection loop must never disagree
+	## about which recipe a room is required to take.
+	return not room.terrain_bearing \
+		and _bears_on_retained_stone(source.grid, room) \
+		and program.recipe(_room_recipe_id(room, source.world_seed, true,
+			feature_portal_mask, true)) != null
 
 
 static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,

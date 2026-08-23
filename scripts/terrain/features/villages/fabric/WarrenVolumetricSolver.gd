@@ -121,6 +121,13 @@ static var _last_skywalk_selection_failure := ""
 ## every searched mode. Merged into the sealed plan's audit so a plain town is
 ## a visible, reviewable fact rather than a silent one.
 static var last_advisory_shortfalls: Dictionary = {}
+## TASK C6 RULING 4. Wall clock per composition sub-stage, in ms, for the ONE
+## maze town currently being solved. Reset by `_solve_maze` and merged into the
+## sealed plan's audit, so the stage probe can print a table per planner seed
+## without a second solve and without parsing trace lines. Never written on a
+## route-first or mass-first solve: every stamp is keyed on the volume's own
+## maze source, so a legacy audit gains no key.
+static var last_maze_stage_ms: Dictionary = {}
 static var diagnostic_stop_after_skywalk_candidates := false
 static var diagnostic_stop_after_skywalk_individual := false
 static var diagnostic_skywalk_candidate_limit := -1
@@ -233,6 +240,17 @@ static func solve(world_seed: int,
 	return null
 
 
+static func _stamp_maze_stage(volume: WarrenVolumePlan, stage: StringName,
+		started_ms: int) -> void:
+	## One stage's elapsed ms, accumulated so a stage entered twice reads as its
+	## total rather than as its last visit. Maze only; a millisecond clock is
+	## the cheapest thing in this file and the branch costs a dictionary probe.
+	if volume == null or not volume.mass_context.has(&"maze_source_plan"):
+		return
+	last_maze_stage_ms[stage] = int(last_maze_stage_ms.get(stage, 0)) \
+		+ Time.get_ticks_msec() - started_ms
+
+
 static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 		construction_program: SettlementFabricProgram,
 		profile: WarrenVillageScaleProfile) -> WarrenSpatialPlan:
@@ -248,6 +266,7 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	## rightly refuses one.
 	var started_ms := Time.get_ticks_msec()
 	last_advisory_shortfalls = {}
+	last_maze_stage_ms = {}
 	var maze := WarrenMazeSitePlanner.plan(world_seed, ground_bands, profile)
 	if maze == null:
 		last_failure = "maze source rejected: %s" \
@@ -295,6 +314,9 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	finalized.audit["route_court_variant_probe_count"] = 1
 	finalized.audit["route_court_variant_fallback_used"] = false
 	finalized.audit["maze_source_ms"] = source_ms
+	finalized.audit["maze_spatial_ms"] = spatial_ms
+	finalized.audit["maze_fabric_ms"] = fabric_ms
+	finalized.audit["maze_stage_ms"] = last_maze_stage_ms.duplicate()
 	finalized.audit["advisory_shortfalls"] = last_advisory_shortfalls.duplicate()
 	finalized.audit["advisory_shortfall_count"] = last_advisory_shortfalls.size()
 	return finalized
@@ -993,8 +1015,10 @@ static func from_volume(volume: WarrenVolumePlan,
 	var slab_courses := _retain_maze_slab_courses(grid, volume)
 	if bool(slab_courses.failed):
 		return null
+	var parcels_started_ms := Time.get_ticks_msec()
 	var parcel_plan := WarrenTownSolver.partition_parcels(volume,
 		partition_variant, construction_program)
+	_stamp_maze_stage(volume, &"parcels", parcels_started_ms)
 	if parcel_plan == null:
 		last_failure = WarrenTownSolver.last_partition_failure
 		return null
@@ -1013,8 +1037,10 @@ static func from_volume(volume: WarrenVolumePlan,
 			return null
 		last_advisory_shortfalls["courtyard_parcel_sides"] = \
 			courtyard_parcel_sides
+	var partition_started_ms := Time.get_ticks_msec()
 	var partition := _partition_rooms(grid, volume, parcel_plan,
 		construction_program, enable_paired_registration_relief)
+	_stamp_maze_stage(volume, &"partition_rooms", partition_started_ms)
 	if partition.is_empty():
 		if last_failure.is_empty():
 			last_failure = "room partition produced no result"
@@ -1061,12 +1087,14 @@ static func from_volume(volume: WarrenVolumePlan,
 			if not route_floors.has(court_cell):
 				route_floors.append(court_cell)
 		route_floors.sort_custom(_cell_less)
+	var features_started_ms := Time.get_ticks_msec()
 	var features := WarrenSpatialFeatureSolver.solve(grid, volume, buildings,
 		supports, partition.skywalk_reservations as Array[Dictionary],
 		partition.courtyard_bridge_reservation as Dictionary,
 		partition.market_reservation as Dictionary,
 		partition.landmark_reservations as Array[Dictionary],
 		construction_program, partition.composition_audit as Dictionary)
+	_stamp_maze_stage(volume, &"feature_solver", features_started_ms)
 	if features.is_empty():
 		last_failure = WarrenSpatialFeatureSolver.last_failure
 		return null
@@ -1225,8 +1253,10 @@ static func from_volume(volume: WarrenVolumePlan,
 	# the existing topology/partition frontier advance past a courtyard placement
 	# whose measured eaves collide, without inflating every 3D search cell with a
 	# conservative halo or teaching the renderer to forgive the intersection.
+	var room_gate_started_ms := Time.get_ticks_msec()
 	var room_units := WarrenSpatialFabricCompiler.compile_room_units(plan,
 		construction_program)
+	_stamp_maze_stage(volume, &"room_gate", room_gate_started_ms)
 	if room_units.is_empty():
 		last_failure = "authored room envelope gate failed: %s" \
 			% WarrenSpatialFabricCompiler.last_failure
@@ -2101,6 +2131,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# caller and surfaced as a bare "no result". Any path that returns {} without
 	# writing its own reason now carries this instead of nothing.
 	last_failure = "room partition: no stage reported a reason"
+	var partition_rooms_started_ms := Time.get_ticks_msec()
 	var scale_profile := _scale_profile_for_volume(volume)
 	if scale_profile == null:
 		last_failure = "room partition has an invalid scale profile"
@@ -2759,6 +2790,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 				break
 		if not market_reservation.is_empty():
 			break
+	_stamp_maze_stage(volume, &"hero_beam", partition_rooms_started_ms)
 	var skywalk_reservations: Array[Dictionary] = []
 	skywalk_reservations.assign(skywalk_plan.get("reservations", []) as Array)
 	var maximum_joint_skywalk_count := 0
@@ -2971,6 +3003,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# upper bands that are not doors, court edges, market sockets, or skywalk
 	# endpoints. This separates immutable topology from mutable construction
 	# form and prevents proposal iteration order from deciding who survives.
+	var room_composition_started_ms := Time.get_ticks_msec()
 	var solved_offsets_by_parcel: Dictionary = {}
 	var exact_forced_offsets_by_parcel: Dictionary = {}
 	var court_displaced_parcels: Dictionary = {}
@@ -3062,6 +3095,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			composition.lineages as Dictionary, grid):
 		last_failure = "final 3D room composition lost structural bearing"
 		return {}
+	_stamp_maze_stage(volume, &"room_composition", room_composition_started_ms)
 	var composed_court_side_mask := _composition_courtyard_side_mask(
 		court_floors, composition, courtyard_bridge_candidate.body as Dictionary)
 	var composed_court_side_count := _side_mask_count(composed_court_side_mask)
@@ -3525,10 +3559,12 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		# roofs beside it asked for -- so it leaves the count.
 		last_advisory_shortfalls["bridges"] = int(bridges.get("released", 0)) \
 			- paved_bridges.size()
+	var residual_started_ms := Time.get_ticks_msec()
 	var backfill := _backfill_residual_rooms(grid, volume, buildings, supports,
 		required_supports, terrain_support_ids, support_edges, protected_owners,
 		scale_profile.residual_room_budget,
 		scale_profile.residual_kind_budget, construction_program)
+	_stamp_maze_stage(volume, &"residual_rooms", residual_started_ms)
 	if bool(backfill.get("failed", false)):
 		last_failure = "residual room backfill failed: %s" % JSON.stringify(
 			backfill.get("failure", backfill))

@@ -382,16 +382,33 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	# fixed, relaxation 1 re-measured at **1.000 on all four towns** -- it
 	# costs nothing there.
 	#
-	# Reverted again on the controller's ruling and on the discipline every
-	# task in this phase has kept: no change ships that costs a seed that
-	# sealed its town. It is C6's to ship, AFTER the authored room envelope
-	# selection stops refusing those three towns.
+	# TASK C6 SHIPS IT, and the condition C5e attached to it was met first.
+	# The three towns relaxation 1 used to cost -- 1/standard, 10/standard and
+	# 11/compact -- all died in the `failed measured phase selection` family,
+	# and that family was an ORDERING defect rather than a vocabulary limit:
+	# an optional phase-B facade projection hung off a house at a low band
+	# reached into the mandatory shell of a house at a higher band that had not
+	# been compiled yet (`WarrenSpatialFabricCompiler._required_room_clearance`
+	# is the fix, C6 ruling 1).
+	#
+	# MEASURED WITH THAT FIX IN PLACE, which is the only comparison that means
+	# anything now: the 24-seed corpus is 19/24 WITHOUT no-descent and 20/24
+	# WITH it. No seed is lost -- the three it used to cost all keep their
+	# towns -- and it gains 6/compact, whose diagonal-outcropping refusal goes
+	# away when its parcels stop reaching down through each other. Per planner
+	# seed (12/compact, 4/compact, 3/standard, 9/standard) it takes unroomed
+	# plot mass 0.226/0.211/0.281/0.260 -> 0.156/0.142/0.224/0.176 and
+	# uncomposed parcels 6/3/4/6 -> 1/1/2/1, with route floor on stone still
+	# 1.000 on all four.
+	#
+	# So a maze parcel now takes the plot model literally: it never descends,
+	# and a house on a hill column is a short house on a tall stone base rather
+	# than storeys of house buried in the mountain. `rock_shoulder` no longer
+	# needs asking -- the answer is the same for every column.
 	var maze_source := parcel.source.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if maze_source != null:
-		for column: Vector2i in parcel.footprint:
-			if maze_source.rock_shoulder(column) < parcel.base_band:
-				return parcel.base_band
+		return parcel.base_band
 	var envelope := parcel.source.envelope
 	var highest_ground := -2147483648
 	var lowest_ground := 2147483647

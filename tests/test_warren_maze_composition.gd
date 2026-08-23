@@ -124,6 +124,10 @@ const KNOWN_FABRIC_BLOCKERS: Dictionary = {}
 ## enters the corpus as the new weakest at 0.558. That leaves this pin only
 ## 0.028 of margin, which is the honest reading of it: the next task to add a
 ## town to the corpus should expect to re-measure rather than to re-pin.
+## TASK C6: **0.838 / 0.700 / 0.739 / 0.585** with full no-descent shipped.
+## 9/standard is still the weakest and is unchanged at 0.585; the floor keeps
+## its 0.055 of margin and is NOT re-pinned, because one town moving while the
+## weakest stands still is not evidence about the weakest.
 const BACK_ROOM_STAMPED_FLOOR := 0.53
 
 ## Measured share of a town's paved deck floor that is really WALKABLE from
@@ -209,12 +213,21 @@ const ROUTE_ON_STONE_FLOOR := 0.95
 ## cell of plot mass: it changes which authored module crowns a remainder, not
 ## whether the remainder is roof.
 ##
-## What WOULD move it is measured and reported rather than shipped: full
-## no-descent (`WarrenParcelConstruction._support_base_band`) takes these four
-## towns to **0.156 / 0.142 / 0.224 / 0.176** with every planner seed still
-## sealing, and costs the 24-seed corpus two towns (18/24 -> 16/24) and the
-## route-on-stone share its whole margin. The trade is stated at the code site.
-const UNROOMED_PLOT_MASS_CEILING := 0.33
+## TASK C6: **0.156 / 0.142 / 0.224 / 0.176**, re-pinned DOWN 0.33 -> 0.28.
+## This is the full no-descent that C5c, C5d and C5e each measured and each
+## reverted: a maze parcel now takes the plot model literally and never
+## descends, so a house on a hill column is a short house on a tall stone base
+## instead of storeys buried in the mountain, and the parcels that used to
+## deadlock each other in the protected-owner map compose (uncomposed parcels
+## 6/3/4/6 -> 1/1/2/1). It ships here because ruling 1's fix removed the reason
+## it cost seeds: the corpus is 19/24 without it and **20/24 with it**.
+##
+## The 0.15 goal is MET on 4/compact and missed on the other three, worst
+## 0.224. What is left is not the descent: it is back-room rectangles whose
+## authored envelope does not fit (2 / 7 / 7 / 8 refusals), storeys that are
+## not whole allocatable mass (3 / 5 / 7 / 12), and the one or two parcels per
+## town that still compose no lineage.
+const UNROOMED_PLOT_MASS_CEILING := 0.28
 
 ## Houses the plot model says stand on ANOTHER PLOT that the composition still
 ## roots in the mountain at their own floor band, because
@@ -253,6 +266,56 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ]
 
 
+## TASK C6 RULING 3. The 24-seed corpus exit, as data. The composition file
+## solves four towns and has a ~4 min budget, so it cannot solve 24 more; the
+## sweep harness already does, and now writes its matrix to
+## `WarrenMazeModeSweep.SUMMARY_PATH` for `test_corpus_composes` to read:
+##
+##   Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd \
+##     -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze \
+##     --scale compact,standard
+##
+## MEASURED 20/24 at Task C6 (18/24 at C5e; the authored-room-envelope family
+## took 12/standard, and full no-descent then took 6/compact). Pinned at
+## measured MINUS ONE, so one town's worth of drift is a report rather than a
+## red suite and two is a regression. The plan's Phase C exit wants 22+/24 and
+## it is NOT met: the four misses are 7/compact (the maze SOURCE's alley
+## budget) and 8/compact (the volume ADAPTER's broad floor slab), both
+## pre-existing Phase B gates and the two allowed misses, plus 4/standard (a
+## `roofless_house` back room at the modular-box contract) and 9/compact (a
+## duplicate public-realm edge). Each is named in the task report with its
+## gate.
+const CORPUS_SWEEP_SUMMARY_PATH := "user://warren_maze_mode_sweep.json"
+const CORPUS_SEALED_FLOOR := 19
+const CORPUS_SWEEP_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard"]
+
+## The composition family this task closed. A sweep row that dies here again is
+## a regression of Task C6 ruling 1, not a new gate, so it is pinned by name.
+const RETIRED_CORPUS_GATE := "failed measured phase selection"
+
+## TASK C6 RULING 3. Per planner seed, the measured production solve x 1.5:
+## 2442 / 3935 / 5554 / 10383 ms measured in this file, with the vocabulary
+## compiled before the clock starts. The plan's <= 3 s target is met by ONE of
+## the four and does not move here -- these are regression ceilings for the
+## towns this file already solves, and the target itself moves to the Phase F
+## exit on the controller's note. Where the time goes, per stage, is
+## `tests/harness/warren_maze_stage_probe.gd --seeds 12,4 --scale compact`
+## (and 3,9 at standard). It is NOT the hero beam -- advisory quotas collapse
+## that to 24-36 ms -- it is `room_composition`, the per-parcel exact block
+## solve plus `WarrenRoomCompositionPlanner`: 632 / 723 / 2370 / 5659 ms, which
+## is 43-76 % of the composition and rises with room count. The fabric compile
+## is second (784 / 1163 / 1509 / 2795) and the authored room envelope gate
+## third (244 / 229 / 645 / 801). 4/compact is the one town where the residual
+## backfill spikes (1219 ms).
+const PLANNER_SOLVE_MS_CEILING: Dictionary = {
+	"12/compact": 3700,
+	"4/compact": 5950,
+	"3/standard": 8350,
+	"9/standard": 15600,
+}
+
+
 static var _program_cache: SettlementFabricProgram
 ## One production solve per (seed, scale) shared by every test in the file.
 ## Four maze towns is the corpus; solving them once each is what keeps this
@@ -279,9 +342,14 @@ func _solve(world_seed: int, scale_id: StringName) -> Dictionary:
 	## One real production solve. Reports the town (or null), the failure it
 	## died with, and the wall clock — the three facts the baseline is made of.
 	var profile := WarrenVillageScaleProfile.for_id(scale_id)
+	# Compile the vocabulary BEFORE the clock starts. It is compiled once per
+	# process, so leaving it inside the measurement charged the whole cost to
+	# whichever seed happened to solve first -- 4906 ms against 2481 ms for the
+	# same town in the sweep harness, which is not a fact about the town.
+	var program := _program()
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
 	var started_ms := Time.get_ticks_msec()
-	var plan := WarrenVolumetricSolver.solve(world_seed, {}, _program(),
+	var plan := WarrenVolumetricSolver.solve(world_seed, {}, program,
 		profile)
 	var elapsed_ms := Time.get_ticks_msec() - started_ms
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
@@ -3049,3 +3117,242 @@ func test_assets_land() -> void:
 		return
 	assert_gte(realised_total, 1,
 		"ruling 3 wants a landmark the production pass really builds")
+
+
+func test_optional_facade_projections_yield_to_mandatory_shells() -> void:
+	## TASK C6 RULING 1. `authored room envelope gate failed: room … failed
+	## measured phase selection` was the last composition family standing, and
+	## it was an ORDERING defect, not a vocabulary limit.
+	##
+	## A phase-B facade recipe hangs an ivy, sign, laundry or windowbox piece
+	## 0.3–0.8 m off the front of its shell, and that piece is measured into the
+	## room's clearance envelope. `compile_room_units` walks rooms bottom band
+	## first, so on a plot-model town the projecting house is compiled BEFORE
+	## the house that sits one band up and one cell across from it — and when
+	## that house's turn came, the compiler's only recovery (demote THIS room
+	## from phase B to phase A) was spent on the wrong room. A ground room's
+	## `*.base.*` shell is mandatory and has no phase-B mate at all, so
+	## `fallback_id == recipe_id` and the whole town was refused.
+	##
+	## `_required_room_clearance` reserves every room's MANDATORY shell before
+	## anyone's optional projection is chosen, exactly as the roof pre-pass
+	## already does for roofs. This test does not take the compiler's word for
+	## any of it: for every yield the audit names it re-derives both envelopes
+	## from the room stamps in the sealed plan and the boxes in the measured
+	## vocabulary, and asserts the projection really did meet the mandatory
+	## shell and the flush shell really does not.
+	var measured := 0
+	var total_yields := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		var room_by_id: Dictionary = {}
+		for building: WarrenBuildingVolume in plan.buildings:
+			for room: WarrenRoomStamp in building.room_records:
+				room_by_id[room.stable_id] = room
+		var envelopes := int(fabric.audit.get(
+			"required_room_clearance_envelope_count", -1))
+		var yields: Array = fabric.audit.get(
+			"required_room_facade_yields", []) as Array
+		var yield_count := int(fabric.audit.get(
+			"required_room_facade_fallback_count", -1))
+		var fallbacks := int(fabric.audit.get(
+			"facade_phase_fallback_count", -1))
+		var desired_b := int(fabric.audit.get(
+			"desired_facade_phase_b_count", -1))
+		var selected_b := int(fabric.audit.get(
+			"selected_facade_phase_b_count", -1))
+		print(("MAZE_FACADE_YIELD %s rooms=%d envelopes=%d desired_b=%d " \
+			+ "selected_b=%d fallbacks=%d yields=%d") % [_label(outcome),
+			room_by_id.size(), envelopes, desired_b, selected_b, fallbacks,
+			yield_count])
+		# The pre-pass is a fact about EVERY room, not about the ones that
+		# happened to fail: a mandatory shell missing from the reservation is
+		# a room some later projection may still be allowed to reach into.
+		assert_eq(envelopes, room_by_id.size(),
+			("%s reserves %d mandatory room shells for %d rooms") % [
+				_label(outcome), envelopes, room_by_id.size()])
+		assert_eq(yield_count, yields.size(),
+			"%s counts %d facade yields but names %d" % [_label(outcome),
+				yield_count, yields.size()])
+		assert_lte(yield_count, fallbacks,
+			("%s attributes %d facade fallbacks to the mandatory-shell gate " \
+				+ "but only took %d fallbacks in all") % [_label(outcome),
+				yield_count, fallbacks])
+		assert_lte(desired_b - selected_b, fallbacks,
+			("%s lost %d phase-B facades but recorded %d fallbacks") % [
+				_label(outcome), desired_b - selected_b, fallbacks])
+		for entry_value: Variant in yields:
+			var entry := entry_value as Dictionary
+			var room := room_by_id.get(StringName(
+				entry.get("room_id", &""))) as WarrenRoomStamp
+			assert_not_null(room, "%s names a yield for an unknown room %s" % [
+				_label(outcome), entry.get("room_id", &"")])
+			if room == null:
+				continue
+			var built := fabric.unit(StringName("spatial.fabric.%s" \
+				% room.stable_id))
+			assert_not_null(built,
+				"%s names a yield for a room with no built unit: %s" % [
+					_label(outcome), room.stable_id])
+			if built == null:
+				continue
+			# 1. The room really took the flush shell, in the shipped fabric.
+			assert_eq(String(built.recipe_id),
+				String(entry.get("chosen_recipe_id", &"")),
+				"%s says %s fell back but it is built as %s" % [
+					_label(outcome), room.stable_id, built.recipe_id])
+			var split := String(entry.get("required", "")).split("/", false)
+			assert_eq(split.size(), 2,
+				"%s yield names no required room/recipe pair: %s" % [
+					_label(outcome), entry.get("required", "")])
+			if split.size() != 2:
+				continue
+			var victim := room_by_id.get(StringName(split[0])) \
+				as WarrenRoomStamp
+			assert_not_null(victim,
+				"%s yields to a room that is not in the plan: %s" % [
+					_label(outcome), split[0]])
+			if victim == null:
+				continue
+			var wanted := _clearance_box(room,
+				StringName(entry.get("desired_recipe_id", &"")))
+			var taken := _clearance_box(room, built.recipe_id)
+			var required := _clearance_box(victim, StringName(split[1]))
+			assert_true(wanted.has_volume() and taken.has_volume() \
+				and required.has_volume(),
+				"%s yield names a recipe the vocabulary does not measure: %s" \
+					% [_label(outcome), str(entry)])
+			# 2. The PROJECTION really met the mandatory shell, and
+			# 3. the FLUSH shell really does not — which is the whole claim the
+			#    gate makes and the only reason demoting the facade is a fix
+			#    rather than a random loss of detail.
+			assert_true(SettlementFabricPlan._aabb_overlaps_volume(wanted,
+				required),
+				("%s demoted %s but its phase-B envelope never met %s") % [
+					_label(outcome), room.stable_id, split[0]])
+			assert_false(SettlementFabricPlan._aabb_overlaps_volume(taken,
+				required),
+				("%s demoted %s to a shell that still meets %s") % [
+					_label(outcome), room.stable_id, split[0]])
+		total_yields += maxi(0, yield_count)
+		measured += 1
+	assert_gt(measured, 0, "at least one seed sealed a town to measure")
+	print("MAZE_FACADE_YIELD corpus towns=%d yields=%d" % [measured,
+		total_yields])
+	# The branch cannot ship inert: somewhere on this corpus an optional facade
+	# really does give way to a shell that has no choice.
+	assert_gt(total_yields, 0,
+		"no planner seed yielded a single facade to a mandatory room shell")
+
+
+func _clearance_box(room: WarrenRoomStamp, recipe_id: StringName) -> AABB:
+	## The measured clearance envelope an authored recipe occupies when it is
+	## stamped at this room — derived from the room stamp in the sealed plan
+	## and the box in the compiled vocabulary, never from the compiler's own
+	## bookkeeping.
+	var recipe := _program().recipe(recipe_id)
+	if recipe == null:
+		return AABB()
+	return FabricRecipe.lattice_transform(room.lattice_origin,
+		room.yaw_quarters) * recipe.local_clearance_bounds
+
+
+func test_corpus_composes() -> void:
+	## TASK C6 RULING 3 — the Phase C exit measurement, in two halves.
+	##
+	## The four planner seeds are solved here and must seal inside their own
+	## measured wall clock. The 24-town matrix is asserted from the sweep's
+	## written summary, because solving it a second time inside this file would
+	## double its budget for no new information.
+	for outcome: Dictionary in _corpus():
+		var ceiling := int(PLANNER_SOLVE_MS_CEILING.get(
+			"%d/%s" % [int(outcome.seed), String(outcome.scale)], 0))
+		assert_gt(ceiling, 0,
+			"%s has no measured solve-time ceiling" % _label(outcome))
+		assert_not_null(outcome.plan, "%s must seal its town: %s" % [
+			_label(outcome), String(outcome.failure).left(200)])
+		assert_lte(int(outcome.ms), ceiling,
+			("%s solved in %d ms against a %d ms ceiling; name the stage " \
+				+ "with tests/harness/warren_maze_stage_probe.gd before " \
+				+ "re-pinning") % [_label(outcome), int(outcome.ms), ceiling])
+	var summary := _corpus_sweep_summary()
+	if summary.is_empty():
+		pending(("the 24-seed corpus matrix has not been measured on this " \
+			+ "machine: run tests/harness/warren_maze_mode_sweep.gd -- " \
+			+ "--seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --scale " \
+			+ "compact,standard, which writes %s") % CORPUS_SWEEP_SUMMARY_PATH)
+		return
+	# A three-seed spot check is not the corpus. Refuse to score against one.
+	assert_eq(String(summary.get("mode", "")),
+		String(WarrenTownSolver.MODE_MAZE),
+		"the recorded sweep is not a maze sweep")
+	assert_eq(_int_array(summary.get("seeds", [])), CORPUS_SWEEP_SEEDS,
+		"the recorded sweep does not cover the corpus seeds")
+	assert_eq(_string_array(summary.get("scales", [])), CORPUS_SWEEP_SCALES,
+		"the recorded sweep does not cover both corpus scales")
+	var rows: Array = summary.get("rows", []) as Array
+	assert_eq(rows.size(), CORPUS_SWEEP_SEEDS.size() \
+		* CORPUS_SWEEP_SCALES.size(),
+		"the recorded sweep has %d rows, not one per corpus town" % rows.size())
+	var sealed_count := 0
+	var failures := PackedStringArray()
+	var retired := PackedStringArray()
+	for row_value: Variant in rows:
+		var row := row_value as Dictionary
+		var label := "%d/%s" % [int(row.get("seed", -1)),
+			String(row.get("scale", ""))]
+		if bool(row.get("sealed", false)):
+			sealed_count += 1
+			continue
+		failures.append("%s [%s]" % [label,
+			String(row.get("gate", "")).left(90)])
+		if String(row.get("failure", "")).contains(RETIRED_CORPUS_GATE):
+			retired.append(label)
+	print("MAZE_CORPUS sealed=%d/%d failures=%s" % [sealed_count, rows.size(),
+		", ".join(failures)])
+	assert_eq(sealed_count, int(summary.get("sealed", -1)),
+		"the recorded sweep's own seal count disagrees with its rows")
+	# Two-sided, like every pin in this file: below the floor is a regression
+	# to report, and comfortably above it is a pin that has gone stale.
+	assert_gte(sealed_count, CORPUS_SEALED_FLOOR,
+		"the maze corpus seals %d of %d towns: %s" % [sealed_count,
+			rows.size(), ", ".join(failures)])
+	assert_lt(sealed_count, rows.size(),
+		("the whole corpus seals; delete the shortfall note above " \
+			+ "CORPUS_SEALED_FLOOR and re-pin"))
+	assert_eq(retired.size(), 0,
+		("Task C6 ruling 1 closed the measured-phase-selection family; these " \
+			+ "towns died there again: %s") % ", ".join(retired))
+
+
+func _corpus_sweep_summary() -> Dictionary:
+	## The sweep's own matrix, or {} when this machine has never run it.
+	if not FileAccess.file_exists(CORPUS_SWEEP_SUMMARY_PATH):
+		return {}
+	var file := FileAccess.open(CORPUS_SWEEP_SUMMARY_PATH, FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	return parsed as Dictionary if parsed is Dictionary else {}
+
+
+func _int_array(value: Variant) -> Array[int]:
+	var out: Array[int] = []
+	for item: Variant in (value as Array if value is Array else []):
+		out.append(int(item))
+	return out
+
+
+func _string_array(value: Variant) -> Array[String]:
+	var out: Array[String] = []
+	for item: Variant in (value as Array if value is Array else []):
+		out.append(String(item))
+	return out

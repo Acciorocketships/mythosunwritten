@@ -30,6 +30,15 @@ const CONSTRUCTIVE_SCALES: Array[StringName] = [
 	WarrenVillageScaleProfile.COMPACT, WarrenVillageScaleProfile.STANDARD,
 ]
 
+## TASK C6 RULING 3. Where the corpus matrix is left for
+## `tests/test_warren_maze_composition.gd::test_corpus_composes` to assert.
+## The composition suite has a ~4 min budget and cannot afford 24 more
+## production solves, so the sweep — which already runs them — writes the
+## matrix down and the test reads it. `user://` because that is where every
+## other machine-local harness artifact in this repository lives
+## (`WarrenSolutionPinCache`, `heightfield_shot`).
+const SUMMARY_PATH := "user://warren_maze_mode_sweep.json"
+
 
 func _init() -> void:
 	var seeds: Array[int] = []
@@ -69,6 +78,7 @@ func _init() -> void:
 	var sealed_count := 0
 	var attempted := 0
 	var total_ms := 0
+	var rows: Array[Dictionary] = []
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			attempted += 1
@@ -82,17 +92,53 @@ func _init() -> void:
 			total_ms += elapsed
 			if plan != null:
 				sealed_count += 1
+				rows.append({"seed": city_seed,
+					"scale": String(profile.scale_id), "ms": elapsed,
+					"sealed": true, "gate": "", "failure": ""})
 				print("SWEEP seed=%d scale=%s ms=%d SEALED rooms=%s" % [
 					city_seed, String(profile.scale_id), elapsed,
 					str(plan.audit.get("room_storey_kind_counts", {}))])
 				continue
 			var failure := WarrenVolumetricSolver.last_failure
+			rows.append({"seed": city_seed, "scale": String(profile.scale_id),
+				"ms": elapsed, "sealed": false, "gate": _gate_of(failure),
+				"failure": failure.left(240)})
 			print("SWEEP seed=%d scale=%s ms=%d FAILED gate=[%s] reason=%s" % [
 				city_seed, String(profile.scale_id), elapsed,
 				_gate_of(failure), failure.left(160)])
 	print("SWEEP RESULT mode=%s sealed=%d/%d total_ms=%d" % [String(mode),
 		sealed_count, attempted, total_ms])
+	_write_summary(mode, seeds, scale_ids, rows, sealed_count, attempted,
+		total_ms)
 	quit()
+
+
+func _write_summary(mode: StringName, seeds: Array[int],
+		scale_ids: Array[StringName], rows: Array[Dictionary],
+		sealed_count: int, attempted: int, total_ms: int) -> void:
+	## The matrix as data. `seeds` and `scales` are written so a reader can tell
+	## a full 24-town corpus run from a three-seed spot check and refuse to
+	## score itself against the wrong one.
+	var scales := PackedStringArray()
+	for scale_id: StringName in scale_ids:
+		scales.append(String(scale_id))
+	var file := FileAccess.open(SUMMARY_PATH, FileAccess.WRITE)
+	if file == null:
+		print("SWEEP SUMMARY unwritable path=%s" % SUMMARY_PATH)
+		return
+	file.store_string(JSON.stringify({
+		"mode": String(mode),
+		"seeds": seeds,
+		"scales": scales,
+		"sealed": sealed_count,
+		"attempted": attempted,
+		"total_ms": total_ms,
+		"unix_time": int(Time.get_unix_time_from_system()),
+		"rows": rows,
+	}, "\t"))
+	file.close()
+	print("SWEEP SUMMARY written path=%s sealed=%d/%d" % [SUMMARY_PATH,
+		sealed_count, attempted])
 
 
 func _gate_of(failure: String) -> String:
