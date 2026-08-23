@@ -214,7 +214,8 @@ static func candidate_address_landing(parcel: WarrenBuildingParcel,
 	var preview := WarrenBuildingParcel.new(parcel.stable_id,
 		parcel.footprint, parcel.base_band, parcel.top_band,
 		parcel.address_walk_cell, parcel.threshold_column,
-		parcel.frontage_direction, parcel.address_door_phase)
+		parcel.frontage_direction, parcel.address_door_phase,
+		parcel.flat_roof)
 	if not parcel.support_parent_parcel_id.is_empty() \
 			and not preview.set_building_support(
 				parcel.support_parent_parcel_id,

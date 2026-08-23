@@ -153,7 +153,14 @@ func height_bands() -> int:
 	return top_band - base_band
 
 
+## Whole storeys of room under the roof. A flat-roofed parcel reserves ONE
+## band for its slab -- the street, terrace or building standing on it needs
+## nothing more -- instead of the authored pitched roof's own
+## ROOF_RESERVATION_BANDS, and the integer division leaves any odd remainder
+## with that slab rather than crediting it as habitable storey.
 func storey_count() -> int:
+	if flat_roof:
+		return (height_bands() - 1) / STOREY_BANDS
 	return (height_bands() - ROOF_RESERVATION_BANDS) / STOREY_BANDS
 
 

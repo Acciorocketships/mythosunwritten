@@ -36,25 +36,35 @@ static func partition(source: WarrenMazeSourcePlan,
 			or volume.mass_context.get(&"maze_source_plan") != source:
 		last_failure = "missing or mismatched sealed maze source and volume"
 		return null
+	if source.plots.is_empty():
+		last_failure = "sealed maze source carries no plots to translate"
+		return null
 	var parcels: Array[WarrenBuildingParcel] = []
 	var back_rooms: Array[Dictionary] = []
 	var decks: Array[Dictionary] = []
 	var bridges: Array[Dictionary] = []
 	var buildings: Dictionary = {}
 	var untranslated: Array[Dictionary] = []
+	var shrunk: Dictionary = {}
 	for plot: Dictionary in source.plots:
 		match StringName(plot["kind"]):
 			WarrenMazeSourcePlan.PLOT_DECK:
 				decks.append(_deck_record(plot))
 			WarrenMazeSourcePlan.PLOT_BRIDGE:
 				bridges.append(_bridge_record(plot))
-			_:
-				var parcel := _parcel_for_plot(source, volume, plot)
+			WarrenMazeSourcePlan.PLOT_HOUSE, WarrenMazeSourcePlan.PLOT_ASSET:
+				var outcome := _parcel_for_plot(source, volume, plot)
+				var parcel := outcome["parcel"] as WarrenBuildingParcel
 				if parcel == null:
 					untranslated.append({"id": StringName(plot["id"]),
 						"kind": StringName(plot["kind"]),
-						"reason": last_failure})
+						"reason": String(outcome["reason"])})
 					continue
+				# A plot whose winner was not its own largest rectangle gave
+				# mass up, and giving mass up silently is how an ownership
+				# regression hides: name it and why.
+				if int(outcome["skipped"]) > 0:
+					shrunk[String(plot["id"])] = outcome["reason"]
 				parcels.append(parcel)
 				var group := StringName(plot["building_id"])
 				var members: Array = buildings.get(group,
@@ -64,15 +74,17 @@ static func partition(source: WarrenMazeSourcePlan,
 				var back := _back_room_record(plot, parcel)
 				if not back.is_empty():
 					back_rooms.append(back)
-	# `last_failure` doubled as the scratch reason each refused plot recorded;
-	# clear it so a translation that finished cannot report a stale one.
-	last_failure = ""
+			_:
+				untranslated.append({"id": StringName(plot["id"]),
+					"kind": StringName(plot["kind"]),
+					"reason": "unknown plot kind %s" % plot["kind"]})
 	last_diagnostic = {
 		"plot_count": source.plots.size(),
 		"parcel_count": parcels.size(),
 		"back_room_count": back_rooms.size(),
 		"deck_count": decks.size(),
 		"bridge_count": bridges.size(),
+		"shrunk_parcel_count": shrunk.size(),
 		"untranslated": untranslated,
 	}
 	if not untranslated.is_empty():
@@ -94,6 +106,8 @@ static func partition(source: WarrenMazeSourcePlan,
 	plan.audit["maze_bridges"] = bridges
 	plan.audit["maze_buildings"] = buildings
 	plan.audit["maze_untranslated"] = untranslated
+	plan.audit["maze_shrunk_parcel_count"] = shrunk.size()
+	plan.audit["maze_shrunk_parcels"] = shrunk
 	var ownership := _ownership(source, parcels, back_rooms)
 	plan.audit.merge(ownership, true)
 	last_diagnostic.merge(ownership, true)
@@ -101,13 +115,18 @@ static func partition(source: WarrenMazeSourcePlan,
 
 
 static func _parcel_for_plot(source: WarrenMazeSourcePlan,
-		volume: WarrenVolumePlan,
-		plot: Dictionary) -> WarrenBuildingParcel:
+		volume: WarrenVolumePlan, plot: Dictionary) -> Dictionary:
 	## The plot's own door, floor and top; the only open question is which
 	## rectangle of its footprint carries the facade. Candidates come in
 	## largest-first order and the first one whose real authored doorway opens
 	## onto the plot's own street cell wins, so a plot always yields the
 	## biggest buildable street-facing rectangle it can.
+	##
+	## Returns `{parcel, skipped, reason}`: `skipped` counts the LARGER
+	## rectangles refused before the winner and `reason` names why the first
+	## of them was refused, so shrinking is a published fact rather than a
+	## silent substitution. A null parcel means every candidate was refused
+	## and `reason` is the whole plot's refusal.
 	var floor_band := int(plot["floor"])
 	var top_band := int(plot["top"])
 	var door_walk := plot["door_walk"] as Vector3i
@@ -126,21 +145,32 @@ static func _parcel_for_plot(source: WarrenMazeSourcePlan,
 		or not bool(facts.get("roofed", true))
 	var candidates := _rectangles(plot, door_walk)
 	if candidates.is_empty():
-		last_failure = "no street-facing rectangle inside the plot"
-		return null
-	for candidate: Dictionary in candidates:
+		return {"parcel": null, "skipped": 0,
+			"reason": "no street-facing rectangle inside the plot"}
+	var first_refusal := ""
+	for index in candidates.size():
+		var candidate := candidates[index]
+		var refusal := "footprint has no mass, no bearing, or an illegal " \
+			+ "height here"
 		for door_phase in 2:
 			var parcel := WarrenBuildingParcel.new(stable_id,
 				candidate["footprint"] as Array[Vector2i], floor_band,
 				top_band, door_walk, candidate["threshold"] as Vector2i,
 				candidate["frontage"] as Vector2i, door_phase, flat_roof)
-			if parcel.seal(volume) \
-					and WarrenParcelConstruction.door_serves_address(parcel):
-				return parcel
-	last_failure = ("none of %d rectangles sealed on either door phase " \
-		+ "(floor %d, top %d, flat_roof %s)") % [candidates.size(),
-			floor_band, top_band, flat_roof]
-	return null
+			if not parcel.seal(volume):
+				continue
+			if WarrenParcelConstruction.door_serves_address(parcel):
+				return {"parcel": parcel, "skipped": index,
+					"reason": first_refusal}
+			refusal = "no authored door module serves the address"
+		if first_refusal == "":
+			first_refusal = "%d columns at %s: %s" % [
+				int(candidate["area"]), candidate["minimum"], refusal]
+	return {"parcel": null, "skipped": candidates.size(),
+		"reason": ("none of %d rectangles sealed on either door phase " \
+			+ "(floor %d, top %d, flat_roof %s); largest: %s") % [
+				candidates.size(), floor_band, top_band, flat_roof,
+				first_refusal]}
 
 
 static func _rectangles(plot: Dictionary,
@@ -286,14 +316,8 @@ static func _ownership(source: WarrenMazeSourcePlan,
 	var rock_cells := 0
 	for column: Vector2i in source.massif.columns:
 		var spans := plot_bands.get(column, []) as Array
-		# The same reach WarrenMazeVolumeAdapter derives a column's top over:
-		# a plot is not clamped to the massif, and a no-plot column's rock
-		# shoulder can stand above the envelope a taller neighbour left it.
-		var ceiling := maxi(source.massif.top_at(column),
-			source.rock_shoulder(column))
-		for span: Vector2i in spans:
-			ceiling = maxi(ceiling, span.y)
-		for band in range(source.massif.base_at(column), ceiling):
+		for band in range(source.massif.base_at(column),
+				source.column_ceiling(column)):
 			if not source.solid_at(Vector3i(column.x, band, column.y)):
 				continue
 			solid_cells += 1
@@ -308,8 +332,14 @@ static func _ownership(source: WarrenMazeSourcePlan,
 		parcel_cells += parcel.occupied_cells().size()
 	var back_room_cells := 0
 	for record: Dictionary in back_rooms:
-		back_room_cells += (record["cells"] as Array).size() \
-			* (int(record["top"]) - int(record["floor"]))
+		# Through solid_at, the same predicate the denominator counts: a
+		# back room owns the mass that is really there, never a band of its
+		# own plot that a street was bored through.
+		for cell_value: Variant in record["cells"] as Array:
+			var column := cell_value as Vector2i
+			for band in range(int(record["floor"]), int(record["top"])):
+				back_room_cells += int(source.solid_at(
+					Vector3i(column.x, band, column.y)))
 	var owned_cells := parcel_cells + back_room_cells
 	return {
 		"maze_ownership_ratio": float(owned_cells) \

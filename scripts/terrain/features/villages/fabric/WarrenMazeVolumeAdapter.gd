@@ -59,20 +59,14 @@ static func _derived_massif(source: WarrenMazeSourcePlan) -> WarrenMassif:
 	## sealed massif had, so a legally derived copy of an already-sealed
 	## massif cannot newly fail seal() here.
 	var columns: Dictionary = {}
-	var ceilings := _plot_ceilings(source)
 	for column: Vector2i in source.massif.columns:
 		var entry := (source.massif.columns[column] as Dictionary).duplicate()
-		var base := source.massif.base_at(column)
-		# Three things can put derived solid on a column, and the scan has to
-		# reach the highest of them: the envelope itself, a plot standing on
-		# it, and -- on a column carrying no plot -- the ROCK SHOULDER, which
-		# is the lowest floor of the plots bordering this column's own no-plot
-		# region and can perfectly well stand above this column's envelope
-		# where a taller neighbour was built out.
-		var ceiling := maxi(source.massif.top_at(column),
-			int(ceilings.get(column, base)))
-		entry["top"] = _derived_top(source, column, base,
-			maxi(ceiling, source.rock_shoulder(column)))
+		# The scan has to start above everything that can put derived solid on
+		# this column -- its own envelope, a plot standing on it, the rock
+		# shoulder a taller neighbour left it -- which is exactly the plan's
+		# own `column_ceiling`.
+		entry["top"] = _derived_top(source, column,
+			source.massif.base_at(column), source.column_ceiling(column))
 		columns[column] = entry
 	var derived := WarrenMassif.with_columns(source.massif.world_seed, columns,
 		source.massif.core_top_bands)
@@ -108,20 +102,6 @@ static func _derived_top(source: WarrenMazeSourcePlan, column: Vector2i,
 		if source.solid_at(cell) or source.excavation.carved.has(cell):
 			return band + 1
 	return base
-
-
-static func _plot_ceilings(source: WarrenMazeSourcePlan) -> Dictionary:
-	## Vector2i column -> the highest plot top standing on it. A plot is NOT
-	## clamped to the massif (WarrenMazeSourcePlan.add_plot says so), so a
-	## house that rose to meet an upper street can stand above the envelope it
-	## grew out of; the derivation scan has to reach it.
-	var out: Dictionary = {}
-	for plot: Dictionary in source.plots:
-		var top := int(plot["top"])
-		for cell_value: Variant in plot["cells"] as Array:
-			var column := cell_value as Vector2i
-			out[column] = maxi(int(out.get(column, top)), top)
-	return out
 
 
 static func _bore_surface_alignment(source: WarrenMazeSourcePlan,

@@ -1081,18 +1081,6 @@ func _parcel_failure(seed_value: int, scale: StringName) -> String:
 	return String(_parcel_failures.get("%d/%s" % [seed_value, scale], ""))
 
 
-func _plot_ceiling(plan: WarrenMazeSourcePlan, column: Vector2i) -> int:
-	## The highest band anything on this column can reach: the massif
-	## envelope, the tallest plot top standing there, or the rock shoulder a
-	## taller neighbour left it -- whichever is highest. Re-derived here from
-	## the plots themselves rather than read off the adapter's own scan.
-	var out := maxi(plan.massif.top_at(column), plan.rock_shoulder(column))
-	for plot: Dictionary in plan.plots:
-		if (plot["cells"] as Array).has(column):
-			out = maxi(out, int(plot["top"]))
-	return out
-
-
 func test_volume_matches_solid_at() -> void:
 	# The adapter's whole contract in one sentence: the volume's mass IS the
 	# plan's derived solid. Checked cell by cell over the massif, so a column
@@ -1113,8 +1101,10 @@ func test_volume_matches_solid_at() -> void:
 		var checked := 0
 		var mismatches: Array[String] = []
 		for column: Vector2i in _sorted_columns(plan):
-			var ceiling := _plot_ceiling(plan, column)
-			for band in range(plan.massif.base_at(column), ceiling + 1):
+			# One band past everything the plan says this column can reach,
+			# so the sweep also proves the adapter left no mass above it.
+			for band in range(plan.massif.base_at(column),
+					plan.column_ceiling(column) + 1):
 				var cell := Vector3i(column.x, band, column.y)
 				checked += 1
 				if volume.has_mass(cell) == plan.solid_at(cell):
@@ -1158,6 +1148,8 @@ func test_translator_emits_one_parcel_group_per_building() -> void:
 				"an empty back-room record is omitted, not recorded")
 			back_rooms[StringName(record["parcel_id"])] = record
 		var buildings := parcels.audit.get("maze_buildings", {}) as Dictionary
+		var shrunk := parcels.audit.get("maze_shrunk_parcels",
+			{}) as Dictionary
 		var expected_buildings: Dictionary = {}
 		var building_plots := 0
 		for plot: Dictionary in plan.plots:
@@ -1195,9 +1187,26 @@ func test_translator_emits_one_parcel_group_per_building() -> void:
 			assert_eq(owned.size(), (plot["cells"] as Array).size(),
 				"parcel %s plus its back rooms cover plot %s exactly" % [
 					id, plot["id"]])
-		gut.p("seed %d %s: %d building plots, %d parcels, %d back rooms" % [
-			seed_value, scale, building_plots, parcels.parcels.size(),
-			back_rooms.size()])
+			# The translator returns the largest rectangle THAT SEALS, so the
+			# maximality has to be falsified against the test's own
+			# enumeration: either the parcel really is the biggest legal
+			# rectangle in the plot, or the plot is published as shrunk with
+			# the reason the bigger one was refused.
+			var largest := _largest_rectangle_area(plot)
+			if parcel.footprint.size() != largest:
+				assert_true(shrunk.has(String(plot["id"])),
+					"plot %s took %d of %d columns and says why" % [
+						plot["id"], parcel.footprint.size(), largest])
+				assert_ne(String(shrunk.get(String(plot["id"]), "")), "",
+					"plot %s names the reason it shrank" % plot["id"])
+			assert_lte(parcel.footprint.size(), largest,
+				"parcel %s cannot exceed the plot's own largest rectangle"
+					% id)
+		gut.p(("seed %d %s: %d building plots, %d parcels, %d back rooms, " \
+			+ "%d shrunk") % [seed_value, scale, building_plots,
+				parcels.parcels.size(), back_rooms.size(), shrunk.size()])
+		for key: Variant in shrunk.keys():
+			gut.p("  shrunk %s: %s" % [key, shrunk[key]])
 		assert_gt(building_plots, 4, "the town has buildings to translate")
 		assert_eq(parcels.parcels.size(), building_plots,
 			"every house and asset plot becomes exactly one parcel")
@@ -1266,6 +1275,46 @@ func test_decks_and_bridges_translate_to_typed_records() -> void:
 	assert_gt(bridges_seen, 0, "the corpus really contains bridges")
 
 
+func _largest_rectangle_area(plot: Dictionary) -> int:
+	## The biggest axis-aligned rectangle of this plot's own cells that
+	## contains a column 4-adjacent to its door and obeys the parcel shape
+	## rule (deeper than wide, or the one 2-wide by 1-deep rowhouse).
+	## Deliberately a second, independent implementation: it is what the
+	## translator's own choice is falsified against.
+	var cells: Dictionary = {}
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for cell_value: Variant in plot["cells"] as Array:
+		var column := cell_value as Vector2i
+		cells[column] = true
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	var door := plot["door_walk"] as Vector3i
+	var best := 0
+	for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT,
+			Vector2i.UP]:
+		var threshold := Vector2i(door.x, door.z) - direction
+		if not cells.has(threshold):
+			continue
+		for x0 in range(minimum.x, threshold.x + 1):
+			for x1 in range(threshold.x, maximum.x + 1):
+				for z0 in range(minimum.y, threshold.y + 1):
+					for z1 in range(threshold.y, maximum.y + 1):
+						var span := Vector2i(x1 - x0 + 1, z1 - z0 + 1)
+						var depth := span.x if direction.x != 0 else span.y
+						var width := span.y if direction.x != 0 else span.x
+						if depth < width \
+								and not (width == 2 and depth == 1):
+							continue
+						var whole := true
+						for x in range(x0, x1 + 1):
+							for z in range(z0, z1 + 1):
+								whole = whole and cells.has(Vector2i(x, z))
+						if whole:
+							best = maxi(best, span.x * span.y)
+	return best
+
+
 func _parcel_named(plan: WarrenParcelPlan,
 		id: StringName) -> WarrenBuildingParcel:
 	for parcel: WarrenBuildingParcel in plan.parcels:
@@ -1274,11 +1323,13 @@ func _parcel_named(plan: WarrenParcelPlan,
 	return null
 
 
-func test_flat_roof_parcels_relax_parity_only_for_tiered_plots() -> void:
-	# A tiered plot's top is an upper street's own band, which owes the storey
-	# grid nothing. `flat_roof` buys exactly that one relaxation: an odd
+func test_flat_roof_parcels_relax_parity_where_something_stands_on_the_roof() \
+		-> void:
+	# A plot with a street, a terrace or another building ON its top band owes
+	# the storey grid nothing up there. `flat_roof` buys exactly that: an odd
 	# five-band parcel seals when it is flagged and is refused when it is not,
-	# and the even four-band parcel every legacy caller builds is untouched.
+	# the even four-band parcel every legacy caller builds is untouched, and a
+	# flagged parcel counts its storeys against a one-band slab.
 	var plan := _sealed_town(12, &"compact")
 	var volume := _volume_of(12, &"compact")
 	var parcels := _parcels_of(12, &"compact")
@@ -1309,9 +1360,20 @@ func test_flat_roof_parcels_relax_parity_only_for_tiered_plots() -> void:
 	var flat := _restate(host, host.base_band + 5, true)
 	var odd := _restate(host, host.base_band + 5, false)
 	var even := _restate(host, host.base_band + 4, false)
+	var shallow := _restate(host, host.base_band + 3, true)
 	assert_true(flat.seal(volume), "a flat-roofed five-band parcel seals")
 	assert_false(odd.seal(volume), "an odd five-band parcel is still refused")
 	assert_true(even.seal(volume), "the even four-band parcel is untouched")
+	assert_true(shallow.seal(volume), "a flat-roofed three-band parcel seals")
+	# The top band is the slab, so five bands are two storeys under it; a
+	# pitched parcel still reserves the authored two.
+	assert_eq(flat.storey_count(), 2, "five flat bands are two storeys")
+	assert_eq(flat.roof_base_band(), host.base_band + 4,
+		"the flat slab starts above the storeys it carries")
+	assert_eq(shallow.storey_count(), 1, "three flat bands are one storey")
+	assert_eq(even.storey_count(), 1, "the pitched parcel is unchanged")
+	assert_eq(even.roof_base_band(), host.base_band + 2,
+		"the pitched roof reservation is unchanged")
 	assert_false(WarrenBuildingParcel.new(host.stable_id, host.footprint,
 		host.base_band, host.base_band + 2, host.address_walk_cell,
 		host.threshold_column, host.frontage_direction, 0,
@@ -1348,9 +1410,11 @@ func test_corpus_translates() -> void:
 					_parcel_failure(seed_value, scale)])
 				continue
 			translated += 1
-			gut.p(("seed %d %s: %d parcels, %d back-room cells, %d decks, " \
-				+ "%d bridges, ownership %.3f (%d owned of %d solid, " \
-				+ "%d rock)") % [seed_value, scale, parcels.parcels.size(),
+			gut.p(("seed %d %s: %d parcels (%d shrunk), %d back-room " \
+				+ "cells, %d decks, %d bridges, ownership %.3f (%d owned " \
+				+ "of %d solid, %d rock)") % [seed_value, scale,
+					parcels.parcels.size(),
+					int(parcels.audit.get("maze_shrunk_parcel_count", 0)),
 					int(parcels.audit.get("maze_back_room_cells", 0)),
 					(parcels.audit.get("maze_decks", []) as Array).size(),
 					(parcels.audit.get("maze_bridges", []) as Array).size(),

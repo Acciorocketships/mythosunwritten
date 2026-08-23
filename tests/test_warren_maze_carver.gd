@@ -174,11 +174,20 @@ func test_sealed_maze_adapts_without_repair_to_the_common_volume_contract() \
 func test_one_pass_block_partition_uses_authored_parcel_contracts() -> void:
 	# M4 is still behind the production boundary. Pin one compatibility fixture
 	# while the corpus-level solid-ownership and reservation gates are developed.
+	#
+	# Re-targeted onto the plot model (2026-08-22, task B3): the translator
+	# reads PLOTS, so the fixture is the whole site planner rather than the
+	# bore alone -- a carve-stage plan has no plots and nothing to translate.
+	# Every assertion below is the same claim it always made about the
+	# authored parcel contract; only the solid-ownership key moved, from the
+	# deleted ledger audit's `maze_owned_solid_ratio` to the plot model's own
+	# `maze_ownership_ratio` (plot-owned cells over derived solid), at the
+	# same 0.35 compatibility bar.
 	var seed := 166029932451774690
 	var profile := WarrenVillageScaleProfile.select(seed)
-	var massif := WarrenMassifBuilder.build(seed, {}, profile)
-	var source := WarrenMazeCarver.carve(seed, massif, profile)
-	assert_not_null(source, "seed %d source" % seed)
+	var source := WarrenMazeSitePlanner.plan(seed, {}, profile)
+	assert_not_null(source, "seed %d source: %s" % [seed,
+		WarrenMazeSitePlanner.last_failure])
 	if source == null:
 		return
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
@@ -193,8 +202,21 @@ func test_one_pass_block_partition_uses_authored_parcel_contracts() -> void:
 		return
 	assert_true(parcels.is_sealed())
 	assert_gt(parcels.parcels.size(), 9)
-	assert_gt(float(parcels.audit.get("maze_owned_solid_ratio", 0.0)), 0.35,
+	assert_gt(float(parcels.audit.get("maze_ownership_ratio", 0.0)), 0.35,
 		"compatibility proof only; M4's corpus acceptance remains 0.85+")
+	# The test's own name, now asserted rather than implied: every parcel is
+	# sealed, opens its authored doorway onto its own address, and is one of
+	# the five measured construction shapes.
+	for parcel: WarrenBuildingParcel in parcels.parcels:
+		assert_true(parcel.is_sealed(),
+			"parcel %s is sealed" % parcel.stable_id)
+		assert_true(WarrenParcelConstruction.door_serves_address(parcel),
+			"parcel %s serves its own address" % parcel.stable_id)
+		var profile_kind := StringName(WarrenParcelConstruction.profile_for(
+			parcel).get("kind", &""))
+		assert_true(profile_kind in [&"tower", &"slim", &"row", &"building",
+			&"long"], "parcel %s is an authored contract shape (%s)" % [
+				parcel.stable_id, profile_kind])
 
 
 func test_shared_stride_rules_match_the_transition_vocabulary() -> void:

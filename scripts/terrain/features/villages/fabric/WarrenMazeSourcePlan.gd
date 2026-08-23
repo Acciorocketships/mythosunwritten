@@ -719,6 +719,22 @@ func rock_shoulder(column: Vector2i) -> int:
 	return massif.top_at(column)
 
 
+## The highest band anything on `column` can reach: its massif envelope, the
+## rock shoulder a taller neighbour left it, or the tallest plot top standing
+## on it -- whichever is highest. A plot is NOT clamped to the massif and a
+## no-plot column's shoulder can stand above its own envelope, so this is the
+## one reach rule every consumer scanning a column bottom-to-top shares
+## (WarrenMazeVolumeAdapter's derived top, the translator's ownership sweep,
+## and the tests that falsify both). Zero outside the massif.
+func column_ceiling(column: Vector2i) -> int:
+	if massif == null or not massif.has_column(column):
+		return 0
+	var out := maxi(massif.top_at(column), rock_shoulder(column))
+	for index: int in _plot_columns.get(column, []) as Array:
+		out = maxi(out, int((plots[index] as Dictionary)["top"]))
+	return out
+
+
 ## The derived facts composition reads off a plot: `roofed` (no plot stands on
 ## any of its columns at its own top -- a roof deck up there means this plot
 ## has no roof of its own), `bears_on_rock` (every column's floor - 1 is rock
