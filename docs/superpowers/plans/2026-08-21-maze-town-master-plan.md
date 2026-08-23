@@ -322,7 +322,24 @@ C6 shipped two things: the `authored room envelope gate failed: room … failed 
 
 # Phase D — Real-terrain sites
 
-Milestone: production site (seed 2697992464, super (0,-1)) and ≥2 sloped fixtures seal, translate, compose; `SettlementReliefPlan` blending verified; deck/plot datums follow slope. Exit: sites render in `--production-terrain-site`.
+Milestone: the maze pipeline runs on real sampled ground (production site seed 2697992464, super (0,-1), plus ≥2 sloped fixtures) end to end — seal, translate, compose, render — with deck/plot datums following the slope. The production entry (`VillageWarrenFabricSolver.solve`) works in maze mode on sloped placements.
+
+### Task D1: Sloped ground through the plot pipeline; solve_selected for maze
+
+**Files:** modify `VillageWarrenFabricSolver.gd` (`solve_selected` gains a maze branch: one-pass re-solve `WarrenVolumetricSolver._solve_maze(city_seed, ground_bands, program, profile)` — no attempt/frontier machinery, no `mass_first_attempt_index`; the preview-entry comparison stays and its refusal rate is measured), `WarrenVolumetricSolver.gd` only if `_solve_maze` mishandles non-empty bands; the plot layer only where a measured sloped defect demands it (each such change named); test `tests/test_warren_maze_composition.gd` + `tests/test_warren_maze_plots.gd`.
+- Fixtures: `tests/fixtures/warren_stamped_ground.gd` (existing) plus one more sloped profile; ≥2 sloped fixtures × 2 seeds: seal, translate (parcels), compose, fabric-gate; deck datums equal their fronting street bands on slope; house floors follow street bands; route-on-stone 1.000; unroomed share reported (pin at measured + 0.05 for sloped only).
+- `solve_selected` maze: on a sloped fixture, the re-solve seals and the entry matches the preview on at least one quarter (report the per-quarter refusal reasons).
+- [ ] Commit — `feat(villages): the plot pipeline solves on real ground; maze solve_selected`.
+
+### Task D2: The production site, rendered
+
+**Files:** harness flags only (`tests/harness/warren_spatial_review.gd` `--production-terrain-site --super-x 0 --super-z -1` in maze mode; check what it needs), `VillagePlan`/pin-cache interplay only if it blocks (maze pins carry no attempt — store/consume must round-trip).
+- Run the pinned production settlement (world seed 2697992464, super (0,-1) — reported settlement 29bc5c240c52f84a) through the REAL production path in maze mode; render the battery; read the captures; verdict (terraces on real slope? entry lift legal? anything floating?). Measure wall-clock for the full production solve on the terrain worker path (the old searched pipeline took 154-210 s of startup; report the maze number).
+- Tests: a composition test pinning the production site seals in maze mode (skip-with-reason if the terrain fixture cannot load headless — say why).
+- [ ] Commit — `feat(villages): the production site builds a maze town on real terrain`.
+
+### Phase D exit
+- ≥2 sloped fixtures + the production site seal/translate/compose in maze mode; datums follow slope; the battery renders; the production solve time is reported.
 
 # Phase E — Variation
 
