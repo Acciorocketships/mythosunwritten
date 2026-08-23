@@ -285,14 +285,21 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ## took 12/standard, and full no-descent then took 6/compact). Pinned at
 ## measured MINUS ONE, so one town's worth of drift is a report rather than a
 ## red suite and two is a regression. The plan's Phase C exit wants 22+/24 and
-## it is NOT met: the four misses are 7/compact (the maze SOURCE's alley
-## budget) and 8/compact (the volume ADAPTER's broad floor slab), both
-## pre-existing Phase B gates and the two allowed misses, plus 4/standard (a
-## `roofless_house` back room at the modular-box contract) and 9/compact (a
-## duplicate public-realm edge). Each is named in the task report with its
-## gate.
+## it is NOT met: the misses are 7/compact (the maze SOURCE's alley budget) and
+## 8/compact (the volume ADAPTER's broad floor slab), both pre-existing Phase B
+## gates and the two allowed misses, plus 9/compact (a duplicate public-realm
+## edge). Each is named in the task report with its gate.
+##
+## TASK D1 re-pinned this UPWARD, 19 -> 21, on the same 24-town flat corpus.
+## 4/standard's `roofless_house` back room is gone: the alley pass's own
+## frontage guard used to refuse EVERY lane in a town that arrived below the
+## floor, so 4/standard composed with no alleys at all and squeaked past the
+## graph gate on its loop joins. With the guard stated as a ratchet it grows
+## its streets, and the town it then builds does not hit that contract. Nothing
+## else on the flat corpus moved (7/compact still misses, at 0.870 rather than
+## 0.850, having now actually spent its alley budget).
 const MAZE_SWEEP := preload("res://tests/harness/warren_maze_mode_sweep.gd")
-const CORPUS_SEALED_FLOOR := 19
+const CORPUS_SEALED_FLOOR := 21
 const CORPUS_SWEEP_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard"]
 
@@ -354,18 +361,22 @@ func after_each() -> void:
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
 
 
-func _solve(world_seed: int, scale_id: StringName) -> Dictionary:
+func _solve(world_seed: int, scale_id: StringName,
+		ground: StringName = FLAT_GROUND) -> Dictionary:
 	## One real production solve. Reports the town (or null), the failure it
 	## died with, and the wall clock — the three facts the baseline is made of.
+	## `ground` names the authored band frame (task D1); every flat caller
+	## omits it and passes `{}` exactly as before.
 	var profile := WarrenVillageScaleProfile.for_id(scale_id)
 	# Compile the vocabulary BEFORE the clock starts. It is compiled once per
 	# process, so leaving it inside the measurement charged the whole cost to
 	# whichever seed happened to solve first -- 4906 ms against 2481 ms for the
 	# same town in the sweep harness, which is not a fact about the town.
 	var program := _program()
+	var bands := _ground_bands(ground, world_seed, scale_id)
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
 	var started_ms := Time.get_ticks_msec()
-	var plan := WarrenVolumetricSolver.solve(world_seed, {}, program,
+	var plan := WarrenVolumetricSolver.solve(world_seed, bands, program,
 		profile)
 	var elapsed_ms := Time.get_ticks_msec() - started_ms
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
@@ -374,14 +385,16 @@ func _solve(world_seed: int, scale_id: StringName) -> Dictionary:
 		"ms": elapsed_ms,
 		"seed": world_seed,
 		"scale": scale_id,
+		"ground": ground,
 		"failure": "" if plan != null else WarrenVolumetricSolver.last_failure,
 	}
 
 
-func _solved(world_seed: int, scale_id: StringName) -> Dictionary:
-	var key := "%d/%s" % [world_seed, String(scale_id)]
+func _solved(world_seed: int, scale_id: StringName,
+		ground: StringName = FLAT_GROUND) -> Dictionary:
+	var key := _town_key(world_seed, scale_id, ground)
 	if not _solve_cache.has(key):
-		_solve_cache[key] = _solve(world_seed, scale_id)
+		_solve_cache[key] = _solve(world_seed, scale_id, ground)
 	return _solve_cache[key] as Dictionary
 
 
@@ -395,7 +408,11 @@ func _corpus() -> Array[Dictionary]:
 
 
 func _label(outcome: Dictionary) -> String:
-	return "seed %d/%s" % [int(outcome.seed), String(outcome.scale)]
+	var ground := StringName(outcome.get("ground", FLAT_GROUND))
+	return "seed %d/%s" % [int(outcome.seed), String(outcome.scale)] \
+		if ground == FLAT_GROUND \
+		else "%s seed %d/%s" % [String(ground), int(outcome.seed),
+			String(outcome.scale)]
 
 
 func _pre_composition_stage(failure: String) -> String:
@@ -2193,6 +2210,54 @@ func _rock_cells(plan: WarrenSpatialPlan) -> Dictionary:
 	return out
 
 
+func _route_floor_standing(plan: WarrenSpatialPlan,
+		fabric: SettlementFabricPlan) -> Dictionary:
+	## How many of a town's route floor cells stand on something, and what
+	## the rest stand over. Extracted verbatim from
+	## `test_rock_is_retained_as_stone` (task D1) so the sloped corpus
+	## scores the identical predicate rather than a second reading of it.
+	var solids := fabric.transformed_cells(&"solid")
+	var retained := fabric.retained_terrace_cells
+	var standing := 0
+	var floating := 0
+	var first_hole := ""
+	var holes: Dictionary = {}
+	var source := _maze_source(plan)
+	for cell: Vector3i in plan.route_floor_cells:
+		var below := cell + Vector3i.DOWN
+		# Terrain is the heightfield's, and the heightfield draws it: a
+		# street cut at its own column's ground datum stands on the
+		# mountain, not on anything this fabric owes a module for.
+		var column := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		var on_terrain := source != null and source.massif != null \
+			and source.massif.has_column(column) \
+			and below.y < source.massif.base_at(column)
+		# A route floor whose lower neighbour is the street itself is a
+		# STEP: the passage climbs a band and the cell below belongs to
+		# the run it climbed from. Nothing is owed a module there. What
+		# this assertion is really about is OUTSIDE -- a walk surface with
+		# literally nothing under it, which is what every leftover rock
+		# cell was before Task C5 retained it.
+		if on_terrain or retained.has(below) or solids.has(below) \
+				or plan.grid.use_at(below) in [
+					WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+					WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
+					WarrenSpatialGrid.Use.PUBLIC_AIR]:
+			standing += 1
+			continue
+		floating += 1
+		holes[plan.grid.use_at(below)] = int(
+			holes.get(plan.grid.use_at(below), 0)) + 1
+		if first_hole.is_empty():
+			first_hole = "%s under %s owner=%s" % [cell, below,
+				plan.grid.owner_name_at(below)]
+	return {"standing": standing, "floating": floating,
+		"holes": holes, "first_hole": first_hole,
+		"share": float(standing)
+			/ float(maxi(1, plan.route_floor_cells.size()))}
+
+
 func test_rock_is_retained_as_stone() -> void:
 	## Ruling 3: rock is STONE, not nothing. Every fine cell of the source
 	## plan's leftover mass -- shoulders, tunnel roofs, street-floor slabs,
@@ -2252,40 +2317,10 @@ func test_rock_is_retained_as_stone() -> void:
 				missing, expected, first])
 		assert_gt(audited, 0,
 			"%s must publish the retained rock it kept" % _label(outcome))
-		var standing := 0
-		var floating := 0
-		var first_hole := ""
-		var holes: Dictionary = {}
-		var source := _maze_source(plan)
-		for cell: Vector3i in plan.route_floor_cells:
-			var below := cell + Vector3i.DOWN
-			# Terrain is the heightfield's, and the heightfield draws it: a
-			# street cut at its own column's ground datum stands on the
-			# mountain, not on anything this fabric owes a module for.
-			var column := Vector2i(floori(float(cell.x) / 2.0),
-				floori(float(cell.z) / 2.0))
-			var on_terrain := source != null and source.massif != null \
-				and source.massif.has_column(column) \
-				and below.y < source.massif.base_at(column)
-			# A route floor whose lower neighbour is the street itself is a
-			# STEP: the passage climbs a band and the cell below belongs to
-			# the run it climbed from. Nothing is owed a module there. What
-			# this assertion is really about is OUTSIDE -- a walk surface with
-			# literally nothing under it, which is what every leftover rock
-			# cell was before Task C5 retained it.
-			if on_terrain or retained.has(below) or solids.has(below) \
-					or plan.grid.use_at(below) in [
-						WarrenSpatialGrid.Use.PRIVATE_VOLUME,
-						WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
-						WarrenSpatialGrid.Use.PUBLIC_AIR]:
-				standing += 1
-				continue
-			floating += 1
-			holes[plan.grid.use_at(below)] = int(
-				holes.get(plan.grid.use_at(below), 0)) + 1
-			if first_hole.is_empty():
-				first_hole = "%s under %s owner=%s" % [cell, below,
-					plan.grid.owner_name_at(below)]
+		var standing_audit := _route_floor_standing(plan, fabric)
+		var standing := int(standing_audit["standing"])
+		var holes := standing_audit["holes"] as Dictionary
+		var first_hole := String(standing_audit["first_hole"])
 		var share := float(standing) \
 			/ float(maxi(1, plan.route_floor_cells.size()))
 		print(("MAZE_ROUTE_STONE %s standing=%d/%d share=%.3f holes=%s " \
@@ -3431,3 +3466,247 @@ func _string_array(value: Variant) -> Array[String]:
 	for item: Variant in (value as Array if value is Array else []):
 		out.append(String(item))
 	return out
+
+
+# --- Real ground (task D1) --------------------------------------------------
+# Everything above composes on a FLAT frame. These tests run the identical
+# production entry point on two authored band profiles and pin what only real
+# ground can decide: that a hillside town composes at all, that its street
+# floors still stand on stone, what share of its plot mass it leaves unroomed,
+# and that `solve_selected` -- the production placement re-solve -- has a maze
+# branch that works.
+
+const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
+
+## Cache key for the flat frame every test above this section uses.
+const FLAT_GROUND := &"flat"
+## A one-directional natural hillside, SLOPE_RELIEF_BANDS across the footprint.
+const RAMP_GROUND := &"ramp"
+## Two benches split by one RISER_BANDS terrace step through the footprint.
+const STEP_GROUND := &"step"
+
+## The sloped corpus: two ground profiles over two of the four planner towns,
+## so every sloped row shares its seed, scale and solve cache with a flat twin.
+const SLOPED_GROUND: Array[Dictionary] = [
+	{"ground": RAMP_GROUND, "seed": 12, "scale": &"compact"},
+	{"ground": RAMP_GROUND, "seed": 3, "scale": &"standard"},
+	{"ground": STEP_GROUND, "seed": 12, "scale": &"compact"},
+	{"ground": STEP_GROUND, "seed": 3, "scale": &"standard"},
+]
+
+## Sloped rows the carver refuses at the source, and the gate each dies at.
+## `ramp/12/compact` reaches 0.872 addressed frontage against a 0.900 floor.
+## The alley pass really runs on real ground now (task D1 fixed the guard that
+## deadlocked it below the floor) and climbs 0.789 -> 0.872 over seven lanes;
+## it cannot reach the quota because a hillside street's uphill flank is a
+## retaining bank rather than a house wall, and the quota was calibrated where
+## no flank ever is. Reported to the controller as a design gap rather than
+## worked around; the row is pinned by name AND by gate so it cannot start
+## failing somewhere else in silence.
+const SLOPED_SOURCE_REFUSALS: Dictionary = {
+	"ramp/12/compact": "alley budget reached",
+}
+
+## Ceiling on a SLOPED town's unroomed plot-mass share: measured worst (0.337,
+## ramp 3/standard) plus the 0.05 guard this file's flat pin uses. It sits
+## above `UNROOMED_PLOT_MASS_CEILING` (0.28) because relief really does leave
+## more of the mass unbuilt -- a house whose plot floor follows a climbing
+## street reaches less of the column under it -- and the two are pinned apart
+## rather than the flat one being loosened. Re-pin upward only, and report.
+const SLOPED_UNROOMED_PLOT_MASS_CEILING := 0.39
+
+## Wall-clock ceiling per sloped town, measured (2786 / 6427 / 8184 ms) with
+## the same ~1.4x headroom the flat pins carry. Sloped solves are NOT slower in
+## kind: the ramp's 3/standard is 6427 against its flat twin's 5554.
+const SLOPED_SOLVE_MS_CEILING: Dictionary = {
+	"ramp/3/standard": 9000,
+	"step/12/compact": 4200,
+	"step/3/standard": 11500,
+}
+
+## The seed the `solve_selected` re-solve is exercised on for each profile.
+## Ruling 5 asks for the RAMP; 1/compact is a ramp town whose flat preview
+## seals, which is the precondition for there being anything to re-solve. The
+## step profile runs beside it on a corpus seed.
+const SELECTED_ROWS: Array[Dictionary] = [
+	{"ground": RAMP_GROUND, "seed": 1, "scale": &"compact"},
+	{"ground": STEP_GROUND, "seed": 12, "scale": &"compact"},
+]
+
+
+static func _town_key(seed_value: int, scale: StringName,
+		ground: StringName) -> String:
+	## Flat keys are unprefixed, so every cache entry the flat tests share is
+	## exactly the string they used before the ground axis existed.
+	return "%d/%s" % [seed_value, String(scale)] if ground == FLAT_GROUND \
+		else "%s/%d/%s" % [String(ground), seed_value, String(scale)]
+
+
+func _ground_bands(ground: StringName, seed_value: int,
+		scale: StringName) -> Dictionary:
+	## The authored band frame for one row. The span is the profile's own
+	## `radius_cells`, which is exactly the square `WarrenMassifBuilder` reads:
+	## a shorter frame would default the rim to band zero and invent a cliff
+	## the fixture never described.
+	var profile := WarrenVillageScaleProfile.for_id(scale)
+	match ground:
+		RAMP_GROUND:
+			return StampedGround.slope(profile.radius_cells, seed_value)
+		STEP_GROUND:
+			return StampedGround.terrace_step(profile.radius_cells, seed_value)
+	return {}
+
+
+func _sloped_corpus() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row: Dictionary in SLOPED_GROUND:
+		out.append(_solved(int(row["seed"]), StringName(row["scale"]),
+			StringName(row["ground"])))
+	return out
+
+
+func _row_key(outcome: Dictionary) -> String:
+	return "%s/%d/%s" % [String(outcome.get("ground", FLAT_GROUND)),
+		int(outcome.seed), String(outcome.scale)]
+
+
+func _quarter_bands(bands: Dictionary, quarter: int) -> Dictionary:
+	## The same ground frame read in the town's own lattice after a yaw of
+	## `quarter` right angles -- which is what `VillageWarrenFabricSolver
+	## ._sample_ground_bands` hands `solve_selected` for that placement
+	## candidate. Rotating the FRAME is the exact dual of rotating the town,
+	## and the four quarters are the same set of frames under either sign
+	## convention, so this needs no agreement with `Basis`'s handedness.
+	var out: Dictionary = {}
+	for column: Vector2i in bands:
+		var source := column
+		match posmod(quarter, 4):
+			1:
+				source = Vector2i(column.y, -column.x)
+			2:
+				source = Vector2i(-column.x, -column.y)
+			3:
+				source = Vector2i(-column.y, column.x)
+		out[column] = int(bands.get(source, 0))
+	return out
+
+
+func test_sloped_ground_composes() -> void:
+	## TASK D1 RULING 4. The production entry point, on real bands, per
+	## fixture-seed: does the town seal, how long does it take, how much of its
+	## plot mass stays unroomed, and do its street floors still stand on stone?
+	##
+	## The relief the massif received is asserted, not merely printed: a
+	## fixture that silently flattened would pass everything else vacuously.
+	var composed := 0
+	for outcome: Dictionary in _sloped_corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		var failure := String(outcome.failure)
+		var key := _row_key(outcome)
+		var refusal := String(SLOPED_SOURCE_REFUSALS.get(key, ""))
+		if plan == null:
+			print("MAZE_SLOPED_COMPOSE %s REFUSED ms=%d %s" % [
+				_label(outcome), int(outcome.ms), failure.left(180)])
+			assert_ne(refusal, "", "%s must compose on real ground: %s" % [
+				_label(outcome), failure.left(200)])
+			assert_true(failure.contains(refusal),
+				"%s must still die at its pinned gate '%s', not: %s" % [
+					_label(outcome), refusal, failure.left(200)])
+			continue
+		assert_eq(refusal, "",
+			"%s now composes; delete its SLOPED_SOURCE_REFUSALS entry" % key)
+		composed += 1
+		var source := _maze_source(plan)
+		assert_not_null(source, "%s must carry its maze source" % key)
+		var relief := 0 if source == null else source.massif.relief_bands()
+		var share := float(plan.audit.get("maze_unroomed_plot_share", -1.0))
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric, "%s must carry its compiled fabric" % key)
+		var standing: Dictionary = {} if fabric == null \
+			else _route_floor_standing(plan, fabric)
+		print(("MAZE_SLOPED_COMPOSE %s SEALED ms=%d relief=%d plots=%d " \
+			+ "unroomed=%.3f route_on_stone=%.3f holes=%s") % [
+			_label(outcome), int(outcome.ms), relief,
+			0 if source == null else source.plots.size(), share,
+			float(standing.get("share", -1.0)),
+			str(standing.get("holes", {}))])
+		assert_gte(relief, 3,
+			("%s must stand on real relief; the fixture handed the massif " \
+				+ "%d bands") % [key, relief])
+		assert_true(SLOPED_SOLVE_MS_CEILING.has(key),
+			"%s must carry a measured solve-time ceiling" % key)
+		assert_lt(int(outcome.ms), int(SLOPED_SOLVE_MS_CEILING.get(key,
+			MAXIMUM_SOLVE_MS)),
+			"%s composed in %d ms, past its measured ceiling" % [key,
+				int(outcome.ms)])
+		assert_between(share, 0.0, SLOPED_UNROOMED_PLOT_MASS_CEILING,
+			"%s leaves %.3f of its plot mass unroomed" % [key, share])
+		if fabric == null:
+			continue
+		assert_gte(float(standing.get("share", 0.0)), ROUTE_ON_STONE_FLOOR,
+			("%s lays %d route floor cells on real ground and only %.3f of " \
+				+ "them stand on anything") % [key,
+				plan.route_floor_cells.size(),
+				float(standing.get("share", 0.0))])
+	assert_gt(composed, 0, "the sloped corpus must compose at least one town")
+
+
+func test_solve_selected_rebuilds_the_maze_on_real_ground() -> void:
+	## TASK D1 RULING 1 and 5. `WarrenVolumetricSolver.solve_selected` is what
+	## `VillageWarrenFabricSolver` calls once a placement's terrain has been
+	## sampled, and its mass-first machinery (`mass_first_attempt_index`, the
+	## ranked frontier, the partition variant) has no maze equivalent: before
+	## this task it could not run in MODE_MAZE at all. The maze branch re-runs
+	## the identical one-pass solve with the placement's real bands.
+	##
+	## The preview is the FLAT solve of the same seed, exactly as production
+	## builds it, and each cardinal quarter's bands are that quarter's reading
+	## of the ground frame. The bands are built here rather than by driving
+	## `VillageWarrenFabricSolver.solve` with a terrain view -- that end-to-end
+	## run is task D2's. Per-quarter outcomes are printed; the bar is that at
+	## least one quarter of each profile re-solves and lands its entrance where
+	## the preview did, because that is the (x, z) the village road was aligned
+	## to and the only part of the entry cell production compares.
+	var program := _program()
+	for row: Dictionary in SELECTED_ROWS:
+		var seed_value := int(row["seed"])
+		var scale_id := StringName(row["scale"])
+		var ground := StringName(row["ground"])
+		var label := "%s %d/%s" % [String(ground), seed_value,
+			String(scale_id)]
+		var preview := _solved(seed_value, scale_id).plan as WarrenSpatialPlan
+		assert_not_null(preview,
+			"%s needs a sealed flat preview to re-solve from" % label)
+		if preview == null:
+			continue
+		var entry := preview.source_volume.entry_cell
+		var bands := _ground_bands(ground, seed_value, scale_id)
+		var matched := 0
+		WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
+		for quarter in 4:
+			var started_ms := Time.get_ticks_msec()
+			var rebuilt := WarrenVolumetricSolver.solve_selected(seed_value,
+				preview, _quarter_bands(bands, quarter), program)
+			var elapsed_ms := Time.get_ticks_msec() - started_ms
+			if rebuilt == null:
+				print("MAZE_SELECTED %s quarter %d REFUSED ms=%d %s" % [
+					label, quarter, elapsed_ms,
+					WarrenVolumetricSolver.last_failure.left(150)])
+				continue
+			var built := rebuilt.source_volume.entry_cell
+			var lands := Vector2i(built.x, built.z) == Vector2i(entry.x,
+				entry.z)
+			matched += int(lands)
+			print(("MAZE_SELECTED %s quarter %d SEALED ms=%d entry=%s " \
+				+ "preview=%s lands=%s") % [label, quarter, elapsed_ms,
+				str(built), str(entry), str(lands)])
+			assert_true(rebuilt.is_sealed(),
+				"%s quarter %d returned an unsealed plan" % [label, quarter])
+			assert_not_null(rebuilt.source_volume.mass_context.get(
+				&"maze_source_plan"),
+				("%s quarter %d re-solved something that is not a maze " \
+					+ "town") % [label, quarter])
+		WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+		assert_gt(matched, 0,
+			("%s: no cardinal quarter re-solved with its entrance landing " \
+				+ "where the preview's did") % label)

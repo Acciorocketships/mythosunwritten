@@ -606,24 +606,29 @@ static var _parcel_plans: Dictionary = {}
 static var _parcel_failures: Dictionary = {}
 
 
-func _sealed_town(seed_value: int, scale: StringName) -> WarrenMazeSourcePlan:
-	## One sealed plan per (seed, scale), built once and shared by every test
-	## in this file -- the whole pipeline is pure, so a cached plan is the same
-	## plan a fresh call would build.
-	var key := "%d/%s" % [seed_value, scale]
+func _sealed_town(seed_value: int, scale: StringName,
+		ground: StringName = FLAT_GROUND) -> WarrenMazeSourcePlan:
+	## One sealed plan per (seed, scale, ground), built once and shared by
+	## every test in this file -- the whole pipeline is pure, so a cached plan
+	## is the same plan a fresh call would build. `ground` names the authored
+	## band frame (task D1); every flat caller omits it and keys as before.
+	var key := _town_key(seed_value, scale, ground)
 	if not _sealed_plans.has(key):
-		_sealed_plans[key] = WarrenMazeSitePlanner.plan(seed_value, {},
+		_sealed_plans[key] = WarrenMazeSitePlanner.plan(seed_value,
+			_ground_bands(ground, seed_value, scale),
 			WarrenVillageScaleProfile.for_id(scale))
 	return _sealed_plans[key] as WarrenMazeSourcePlan
 
 
-func _carved_town(seed_value: int, scale: StringName) -> WarrenMazeSourcePlan:
+func _carved_town(seed_value: int, scale: StringName,
+		ground: StringName = FLAT_GROUND) -> WarrenMazeSourcePlan:
 	## The same town stopped straight after the bore: no plot has been placed,
 	## so it answers "what did the massif and the excavation alone allow here"
 	## without any of the planner's own decisions folded in.
-	var key := "%d/%s" % [seed_value, scale]
+	var key := _town_key(seed_value, scale, ground)
 	if not _carved_plans.has(key):
-		_carved_plans[key] = WarrenMazeSitePlanner.plan(seed_value, {},
+		_carved_plans[key] = WarrenMazeSitePlanner.plan(seed_value,
+			_ground_bands(ground, seed_value, scale),
 			WarrenVillageScaleProfile.for_id(scale), &"carve")
 	return _carved_plans[key] as WarrenMazeSourcePlan
 
@@ -1370,35 +1375,42 @@ const CORPUS_SEEDS := 12
 const TRANSLATE_FLOOR := 22
 
 
-func _volume_of(seed_value: int, scale: StringName) -> WarrenVolumePlan:
-	## One adapted volume per (seed, scale). The adapter is pure over a sealed
-	## plan, so this cache is the plan a fresh call would build.
-	var key := "%d/%s" % [seed_value, scale]
+func _volume_of(seed_value: int, scale: StringName,
+		ground: StringName = FLAT_GROUND) -> WarrenVolumePlan:
+	## One adapted volume per (seed, scale, ground). The adapter is pure over a
+	## sealed plan, so this cache is the plan a fresh call would build.
+	var key := _town_key(seed_value, scale, ground)
 	if not _volumes.has(key):
-		_volumes[key] = WarrenMazeVolumeAdapter.to_volume_plan(
-			_sealed_town(seed_value, scale))
+		var source := _sealed_town(seed_value, scale, ground)
+		_volumes[key] = null if source == null \
+			else WarrenMazeVolumeAdapter.to_volume_plan(source)
 	return _volumes[key] as WarrenVolumePlan
 
 
-func _parcels_of(seed_value: int, scale: StringName) -> WarrenParcelPlan:
-	## One translated parcel plan per (seed, scale), with the translator's own
-	## failure text kept beside it so a corpus row can report why.
-	var key := "%d/%s" % [seed_value, scale]
+func _parcels_of(seed_value: int, scale: StringName,
+		ground: StringName = FLAT_GROUND) -> WarrenParcelPlan:
+	## One translated parcel plan per (seed, scale, ground), with the
+	## translator's own failure text kept beside it so a corpus row can report
+	## why.
+	var key := _town_key(seed_value, scale, ground)
 	if not _parcel_plans.has(key):
-		var volume := _volume_of(seed_value, scale)
+		var source := _sealed_town(seed_value, scale, ground)
+		var volume := _volume_of(seed_value, scale, ground)
 		var plan: WarrenParcelPlan = null
-		var reason := WarrenMazeVolumeAdapter.last_failure
+		var reason := WarrenMazeSitePlanner.last_failure if source == null \
+			else WarrenMazeVolumeAdapter.last_failure
 		if volume != null:
-			plan = WarrenMazeBlockPartitioner.partition(
-				_sealed_town(seed_value, scale), volume)
+			plan = WarrenMazeBlockPartitioner.partition(source, volume)
 			reason = WarrenMazeBlockPartitioner.last_failure
 		_parcel_plans[key] = plan
 		_parcel_failures[key] = "" if plan != null else reason
 	return _parcel_plans[key] as WarrenParcelPlan
 
 
-func _parcel_failure(seed_value: int, scale: StringName) -> String:
-	return String(_parcel_failures.get("%d/%s" % [seed_value, scale], ""))
+func _parcel_failure(seed_value: int, scale: StringName,
+		ground: StringName = FLAT_GROUND) -> String:
+	return String(_parcel_failures.get(_town_key(seed_value, scale, ground),
+		""))
 
 
 func test_volume_matches_solid_at() -> void:
@@ -2253,3 +2265,286 @@ func test_ownership_is_pinned_on_the_planner_seeds() -> void:
 		assert_gte(ratio, pinned,
 			"seed %d %s: ownership %.4f fell below its pinned floor %.2f" \
 				% [seed_value, scale, ratio, pinned])
+
+
+# --- Real ground (task D1) --------------------------------------------------
+# Everything above this line runs the plot pipeline on a FLAT frame
+# (`ground_bands = {}`), which is what Phases A-C measured. `WarrenMassifBuilder
+# .build` has taken a per-column band dictionary since Phase A and the plot
+# model was designed for it -- floors follow street bands, `solid_at`'s terrain
+# rule reads `massif.base_at` -- but nothing had ever run the pipeline on a
+# non-empty frame. These tests do, on two authored profiles, and pin the facts
+# that are only decidable once the ground moves.
+
+const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
+
+## Cache key for the flat frame every test above this section uses.
+const FLAT_GROUND := &"flat"
+## A one-directional natural hillside, SLOPE_RELIEF_BANDS across the footprint.
+const RAMP_GROUND := &"ramp"
+## Two benches split by one RISER_BANDS terrace step through the footprint.
+const STEP_GROUND := &"step"
+
+## The sloped corpus: two ground profiles over two of the four planner towns,
+## so a sloped row and its flat twin are the same seed, scale and cache.
+const SLOPED_GROUND: Array[Dictionary] = [
+	{"ground": RAMP_GROUND, "seed": 12, "scale": &"compact"},
+	{"ground": RAMP_GROUND, "seed": 3, "scale": &"standard"},
+	{"ground": STEP_GROUND, "seed": 12, "scale": &"compact"},
+	{"ground": STEP_GROUND, "seed": 3, "scale": &"standard"},
+]
+
+## Sloped rows whose SOURCE the carver refuses, and the gate text each dies at.
+## `ramp/12/compact` reaches 0.872 addressed frontage against a 0.900 floor:
+## the alley pass now really runs on real ground (task D1 fixed the guard that
+## deadlocked it) and climbs 0.789 -> 0.872 over seven lanes, but a hillside
+## street's uphill flank is a retaining bank rather than a house wall and the
+## quota was calibrated where no flank ever is. Reported to the controller as a
+## design gap, not worked around here: the row is pinned by NAME and by GATE,
+## so it cannot start failing somewhere else in silence, and it must be deleted
+## from this dictionary the day the quota's disposition is decided.
+const SLOPED_SOURCE_REFUSALS: Dictionary = {
+	"ramp/12/compact": "alley budget reached",
+}
+
+
+static func _town_key(seed_value: int, scale: StringName,
+		ground: StringName) -> String:
+	## Flat keys are unprefixed, so every cache entry the flat tests share is
+	## exactly the string they used before the ground axis existed.
+	return "%d/%s" % [seed_value, scale] if ground == FLAT_GROUND \
+		else "%s/%d/%s" % [String(ground), seed_value, scale]
+
+
+func _ground_bands(ground: StringName, seed_value: int,
+		scale: StringName) -> Dictionary:
+	## The authored band frame for one row. The span is the profile's own
+	## `radius_cells`, which is exactly the square `WarrenMassifBuilder` reads:
+	## a shorter frame would default the rim to band zero and invent a cliff
+	## the fixture never described.
+	var profile := WarrenVillageScaleProfile.for_id(scale)
+	match ground:
+		RAMP_GROUND:
+			return StampedGround.slope(profile.radius_cells, seed_value)
+		STEP_GROUND:
+			return StampedGround.terrace_step(profile.radius_cells, seed_value)
+	return {}
+
+
+func _sloped_label(row: Dictionary) -> String:
+	return "%s %d/%s" % [String(row["ground"]), int(row["seed"]),
+		String(row["scale"])]
+
+
+func _sloped_key(row: Dictionary) -> String:
+	return "%s/%d/%s" % [String(row["ground"]), int(row["seed"]),
+		String(row["scale"])]
+
+
+func _sloped_source(row: Dictionary) -> WarrenMazeSourcePlan:
+	return _sealed_town(int(row["seed"]), StringName(row["scale"]),
+		StringName(row["ground"]))
+
+
+func _street_band_set(plan: WarrenMazeSourcePlan) -> Dictionary:
+	## Vector2i column -> Dictionary of the bands a passage walks there.
+	var out: Dictionary = {}
+	for cell: Vector3i in plan.passage_cells():
+		var column := Vector2i(cell.x, cell.z)
+		var bands: Dictionary = out.get(column, {})
+		bands[cell.y] = true
+		out[column] = bands
+	return out
+
+
+func test_sloped_ground_seals_and_translates() -> void:
+	## TASK D1 RULING 4. Seal and translate, per fixture-seed, with the relief
+	## the massif actually received printed beside the counts -- a fixture that
+	## silently flattened (a span shorter than the footprint, a profile whose
+	## risers fall outside it) would report relief 0 and pass everything else
+	## vacuously, so the relief is asserted, not just shown.
+	var sealed_rows := 0
+	for row: Dictionary in SLOPED_GROUND:
+		var label := _sloped_label(row)
+		var source := _sloped_source(row)
+		var refusal := String(SLOPED_SOURCE_REFUSALS.get(_sloped_key(row), ""))
+		if source == null:
+			var failure := WarrenMazeSitePlanner.last_failure
+			print("MAZE_SLOPED %s source refused: %s" % [label,
+				failure.left(140)])
+			assert_ne(refusal, "",
+				"%s must seal on real ground: %s" % [label, failure.left(160)])
+			assert_true(failure.contains(refusal),
+				"%s must still die at its pinned gate '%s', not: %s" % [
+					label, refusal, failure.left(160)])
+			continue
+		assert_eq(refusal, "",
+			"%s now seals; delete its SLOPED_SOURCE_REFUSALS entry" % label)
+		sealed_rows += 1
+		var relief := source.massif.relief_bands()
+		var parcels := _parcels_of(int(row["seed"]),
+			StringName(row["scale"]), StringName(row["ground"]))
+		print("MAZE_SLOPED %s relief=%d plots=%d parcels=%s" % [label, relief,
+			source.plots.size(),
+			str(parcels.parcels.size()) if parcels != null \
+				else "REFUSED " + _parcel_failure(int(row["seed"]),
+					StringName(row["scale"]),
+					StringName(row["ground"])).left(140)])
+		assert_gte(relief, 3,
+			("%s must stand on real relief; the fixture handed the massif " \
+				+ "%d bands") % [label, relief])
+		assert_not_null(parcels, "%s must translate: %s" % [label,
+			_parcel_failure(int(row["seed"]), StringName(row["scale"]),
+				StringName(row["ground"])).left(200)])
+	assert_gt(sealed_rows, 0, "the sloped corpus must seal at least one town")
+
+
+func test_no_plot_stands_inside_the_hillside() -> void:
+	## TASK D1, support rule 3. `solid_at` answers TRUE for every band below
+	## `massif.base_at` -- terrain is untouched sample -- so rule 1 ("the band
+	## below the floor is solid") is satisfied at ANY depth, and a house
+	## fronting a low street could reach onto a column three bands further
+	## uphill while buried three bands inside the bank. The translator then
+	## refuses it as a generator bug, which is how it was found.
+	##
+	## Two teeth. First, no sealed plot on real ground is buried. Second, the
+	## RULE itself is falsified on a column the fixture guarantees exists: a
+	## floor below that column's own terrain must be refused even though the
+	## band beneath it is solid, so a future revision cannot delete rule 3 and
+	## still pass by luck of the fixtures.
+	var probed := 0
+	for row: Dictionary in SLOPED_GROUND:
+		var source := _sloped_source(row)
+		if source == null:
+			continue
+		var label := _sloped_label(row)
+		var buried := 0
+		var deepest := 0
+		var first := ""
+		for plot: Dictionary in source.plots:
+			var floor_band := int(plot["floor"])
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				var dug := source.massif.base_at(column) - floor_band
+				if dug <= 0:
+					continue
+				buried += 1
+				deepest = maxi(deepest, dug)
+				if first.is_empty():
+					first = "%s at %s, floor %d under terrain %d" % [
+						plot["id"], column, floor_band,
+						source.massif.base_at(column)]
+		print("MAZE_SLOPED_BURIED %s plots=%d buried_columns=%d deepest=%d" % [
+			label, source.plots.size(), buried, deepest])
+		assert_eq(buried, 0,
+			"%s stands %d plot columns inside the hillside (%s)" % [
+				label, buried, first])
+		# The rule, not the outcome: find a street band with a column beside it
+		# whose terrain stands higher, and prove the model refuses a floor
+		# there while `solid_at` alone would have admitted it.
+		var carved := _carved_town(int(row["seed"]), StringName(row["scale"]),
+			StringName(row["ground"]))
+		if carved == null:
+			continue
+		for cell: Vector3i in carved.passage_cells():
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var column := Vector2i(cell.x + direction.x,
+					cell.z + direction.y)
+				if not carved.massif.has_column(column) \
+						or carved.massif.base_at(column) <= cell.y:
+					continue
+				probed += 1
+				assert_true(carved.solid_at(Vector3i(column.x, cell.y - 1,
+					column.y)),
+					("%s: the band under a buried floor at %s is terrain, " \
+						+ "so support rule 1 alone admits it") % [label,
+						column])
+				assert_false(carved.plot_support_ok(column, cell.y),
+					("%s: support rule 3 must refuse a floor at band %d on " \
+						+ "column %s, whose terrain stands at %d") % [label,
+						cell.y, column, carved.massif.base_at(column)])
+	assert_gt(probed, 0,
+		"the sloped fixtures must present at least one uphill bank to refuse")
+
+
+func test_house_floors_follow_their_door_street_band() -> void:
+	## TASK D1 RULING 4. The plot model's central claim about real ground: a
+	## house's floor IS the band of the street its door opens onto, whatever
+	## the terrain under the rest of its footprint does. On flat ground every
+	## street is at band zero and this is unfalsifiable; on a hillside the
+	## streets step, so it is the whole rule.
+	var houses := 0
+	for row: Dictionary in SLOPED_GROUND:
+		var source := _sloped_source(row)
+		if source == null:
+			continue
+		var label := _sloped_label(row)
+		var levels: Dictionary = {}
+		var mismatched := 0
+		var first := ""
+		var row_houses := 0
+		for plot: Dictionary in source.plots:
+			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+				continue
+			houses += 1
+			row_houses += 1
+			var floor_band := int(plot["floor"])
+			levels[floor_band] = true
+			var door := plot["door_walk"] as Vector3i
+			if floor_band == door.y:
+				continue
+			mismatched += 1
+			if first.is_empty():
+				first = "%s floor %d, door %s" % [plot["id"], floor_band, door]
+		var floors: Array = levels.keys()
+		floors.sort()
+		print("MAZE_SLOPED_FLOORS %s houses=%d distinct_floor_bands=%s" % [
+			label, row_houses, str(floors)])
+		assert_eq(mismatched, 0,
+			("%s has %d houses whose floor is not the street band their " \
+				+ "door opens onto (%s)") % [label, mismatched, first])
+		assert_gt(floors.size(), 1,
+			("%s must stand its houses on more than one floor band; a " \
+				+ "single-level town on relief means the streets ignored " \
+				+ "the ground") % label)
+	assert_gt(houses, 0, "the sloped corpus must place houses to measure")
+
+
+func test_deck_datums_equal_their_fronting_street_band() -> void:
+	## TASK D1 RULING 4. A deck is street-level public ground beside the
+	## passage it grew off, so its datum is that passage's own band -- again
+	## vacuous on a flat frame and load-bearing on a stepped one. Measured
+	## against the sealed plan's passages, never against the planner's record.
+	var decks := 0
+	for row: Dictionary in SLOPED_GROUND:
+		var source := _sloped_source(row)
+		if source == null:
+			continue
+		var label := _sloped_label(row)
+		var streets := _street_band_set(source)
+		var unfronted := 0
+		var first := ""
+		var row_decks := 0
+		for plot: Dictionary in source.plots:
+			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_DECK:
+				continue
+			decks += 1
+			row_decks += 1
+			var datum := int(plot["floor"])
+			var fronted := false
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+					fronted = fronted or (streets.get(column + direction,
+						{}) as Dictionary).has(datum)
+			if fronted:
+				continue
+			unfronted += 1
+			if first.is_empty():
+				first = "%s at datum %d" % [plot["id"], datum]
+		print("MAZE_SLOPED_DECKS %s decks=%d off_datum=%d" % [label,
+			row_decks, unfronted])
+		assert_eq(unfronted, 0,
+			("%s has %d decks whose datum is not the band of any street " \
+				+ "beside them (%s)") % [label, unfronted, first])
+	assert_gt(decks, 0, "the sloped corpus must place decks to measure")

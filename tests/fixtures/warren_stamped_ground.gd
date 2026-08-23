@@ -72,3 +72,85 @@ static func ramp(span: int, bands_per_column: float = 0.25) -> Dictionary:
 		for x in range(-span, span + 1):
 			bands[Vector2i(x, z)] = int(float(x + span) * bands_per_column)
 	return bands
+
+
+## Default bands of fall across the whole footprint for `slope()`, overridable
+## per call so a suite can measure how a rule degrades with grade. Five is the
+## middle of the 4-6 band range Task D1 measures the plot pipeline over, and it
+## is relief a NATURAL hillside hands back through the five-probe ceil: 7.5 m
+## of fall over a compact town's 45 m span is a 17 % grade, well inside what
+## SettlementReliefPlan will stamp a settlement onto.
+##
+## It is ALSO steeper than a production placement will ever accept --
+## VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF is 4.5 m, three bands --
+## which is deliberate: the fixture is the harsher half of the envelope, and
+## `hill()` and `terrace_step()` sit at the production ceiling.
+const SLOPE_RELIEF_BANDS := 5
+
+## Where `terrace_step()`'s riser crosses the frame, as a fraction of the span
+## measured from the low edge. Just past the middle, so the step runs THROUGH
+## the footprint rather than past its rim and the town straddles the riser
+## instead of standing entirely on one bench.
+const STEP_RISER_FRACTION := 0.62
+
+
+static func slope(span: int, world_seed: int = 0,
+		relief_bands: int = SLOPE_RELIEF_BANDS) -> Dictionary:
+	## A one-directional natural hillside: `relief_bands` of fall across the
+	## footprint in unit risers, evenly spaced along one cardinal the seed
+	## picks. Unlike `hill()` this is not a stamped terrace family -- it is the
+	## staircase an UNTERRACED slope becomes once the production sampler ceils
+	## it into 1.5 m bands, which is the other half of what
+	## VillageWarrenFabricSolver._sample_ground_bands can read back.
+	##
+	## Deliberately not `ramp()`: that one is a float gradient parameterised in
+	## bands-per-column for the gate-invariance property, and it slopes along
+	## +x on every seed. This one pins the RELIEF (what the town has to climb)
+	## rather than the gradient, and turns with the seed so two fixture seeds
+	## are two different hillsides rather than one hillside twice.
+	var quarter := posmod(world_seed * 73856093 ^ 2311, 4)
+	var bands: Dictionary = {}
+	# Columns, not steps: dividing by the column COUNT keeps the far edge one
+	# short of the exclusive top level, so the frame falls through exactly
+	# `relief_bands` and not one more.
+	var extent := float(maxi(1, span * 2 + 1))
+	for z in range(-span, span + 1):
+		for x in range(-span, span + 1):
+			var along := 0
+			match quarter:
+				0:
+					along = x + span
+				1:
+					along = z + span
+				2:
+					along = span - x
+				_:
+					along = span - z
+			bands[Vector2i(x, z)] = int(floor(float(along) / extent \
+				* float(relief_bands + 1)))
+	return bands
+
+
+static func terrace_step(span: int, world_seed: int = 0) -> Dictionary:
+	## Two flat benches split by ONE riser: the simplest thing a stamped
+	## settlement terrace does, isolated from `hill()`'s three-bench bell so a
+	## failure can be attributed to the step itself. The riser is RISER_BANDS,
+	## the same 4 m terrain storey read through 1.5 m bands that `hill()` uses,
+	## and it crosses the footprint on a seed-picked cardinal.
+	var quarter := posmod(world_seed * 73856093 ^ 2311, 4)
+	var bands: Dictionary = {}
+	var riser_at := int(round(float(span * 2) * STEP_RISER_FRACTION)) - span
+	for z in range(-span, span + 1):
+		for x in range(-span, span + 1):
+			var along := 0
+			match quarter:
+				0:
+					along = x
+				1:
+					along = z
+				2:
+					along = -x
+				_:
+					along = -z
+			bands[Vector2i(x, z)] = RISER_BANDS if along >= riser_at else 0
+	return bands

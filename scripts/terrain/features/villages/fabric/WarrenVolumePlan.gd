@@ -777,6 +777,17 @@ func _has_one_typed_courtyard() -> bool:
 
 
 func _has_one_typed_market_square() -> bool:
+	## GROUND square, in the sense that separates it from `courtyard_cells`:
+	## one 2x2 whose four cells share a datum and none of which is cut BELOW
+	## the terrain it stands on. Written as equality while every ground frame
+	## was flat, where the two readings coincide -- and only there. A level
+	## 2x2 on a hillside always has a low side standing on the mass the
+	## terrain step left under it, so equality made the universal market
+	## impossible on real ground rather than merely rarer (task D1; the same
+	## rule relaxed the same way in `WarrenMazeCarver._stamp_market_square`,
+	## which is the only producer of these cells). Strictly a relaxation, so
+	## nothing that seals today stops sealing; a square below its own ground
+	## would be cut terrain and stays refused.
 	if market_square_cells.size() != 4:
 		return false
 	for cell: Vector3i in market_square_cells:
@@ -784,8 +795,9 @@ func _has_one_typed_market_square() -> bool:
 				and _market_square_set.has(cell + Vector3i.BACK) \
 				and _market_square_set.has(cell + Vector3i(1, 0, 1)):
 			for market_cell: Vector3i in market_square_cells:
-				if market_cell.y != envelope.ground_at(
-						Vector2i(market_cell.x, market_cell.z)):
+				if market_cell.y != cell.y \
+						or market_cell.y < envelope.ground_at(
+							Vector2i(market_cell.x, market_cell.z)):
 					return false
 			return true
 	return false

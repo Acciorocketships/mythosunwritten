@@ -145,21 +145,53 @@ static func _stamp_market_square(world_seed: int, massif: WarrenMassif,
 	## Widen one two-cell run of the ground approach by one cell to a side. The
 	## resulting 2x2 is explicit source topology and remains one connected lane;
 	## generic passage growth is still forbidden from making broad floors.
+	##
+	## TASK D1. The square's two extra cells are admitted by
+	## `slot_is_borable` alone, which refuses a cell BELOW its own terrain --
+	## the bank stays uncut, as the immutable-terrain rule requires -- and
+	## admits one standing ON the mass a downhill step left under it. The
+	## stricter `is_at_grade` that used to guard them as well says
+	## `cell.y == base_at`, which on flat ground is implied by borability (the
+	## approach is at grade and the side cells share its band) and on a slope
+	## silently became "the square's far side must be at the SAME terrain
+	## height as its approach". A 2 x 2 level square never is on a hillside,
+	## so the universal market simply refused: 7 of 24 corpus towns on the
+	## 5-band ramp fixture, and it was the single largest sloped rejection.
+	## The approach itself stays at grade -- `_search_spine` requires it and
+	## `WarrenMazeSourcePlan.seal` re-checks it -- so the market remains the
+	## ground-level room off the town's own street, now with a retained
+	## terrace under its low side instead of nothing at all.
+	##
+	## TASK D1, second half. The approach cells this square is built from must
+	## be WALK NODES, not merely route cells. `WarrenExcavationVolumeAdapter`
+	## makes a walk cell out of a transition's endpoint only -- a STAIR's or a
+	## RAMP's intermediate stride cell is bored public floor but never a graph
+	## node (its own docstring says why: the transition already owns that
+	## column's tread surface) -- and both the square's typed cells
+	## (`mark_market_square_cell`) and its closing loop edge are refused
+	## against a non-node. On flat ground the invariant held silently: an
+	## at-grade approach can only be made of LEVEL, run-one moves, so every
+	## approach cell WAS a node. On real ground the approach follows the
+	## terrain up, so it contains stride intermediates, and the square landed
+	## on one -- "loop edge 0 has a non-walk endpoint" and "market square cell
+	## ... is not a walk node", 3 of 24 corpus towns on the ramp fixture.
+	var nodes: Dictionary = {}
+	for cell: Vector3i in _walk_nodes(excavation):
+		nodes[cell] = true
 	var candidates: Array[Dictionary] = []
 	for index in range(market_approach.size() - 1):
 		var first := market_approach[index] as Vector3i
 		var second := market_approach[index + 1] as Vector3i
 		var delta := second - first
-		if delta.y != 0 or absi(delta.x) + absi(delta.z) != 1:
+		if delta.y != 0 or absi(delta.x) + absi(delta.z) != 1 \
+				or not nodes.has(first) or not nodes.has(second):
 			continue
 		var travel := Vector2i(delta.x, delta.z)
 		for side_sign in [-1, 1]:
 			var side := Vector2i(-travel.y * side_sign, travel.x * side_sign)
 			var side_first := first + Vector3i(side.x, 0, side.y)
 			var side_second := second + Vector3i(side.x, 0, side.y)
-			if not WarrenPassageLatticeRules.is_at_grade(massif, side_first) \
-					or not WarrenPassageLatticeRules.is_at_grade(massif, side_second) \
-					or not WarrenPassageLatticeRules.slot_is_borable(massif,
+			if not WarrenPassageLatticeRules.slot_is_borable(massif,
 						excavation, side_first,
 						WarrenPassageLatticeRules.HEADROOM_BANDS) \
 					or not WarrenPassageLatticeRules.slot_is_borable(massif,
@@ -192,11 +224,12 @@ static func _stamp_market_square(world_seed: int, massif: WarrenMassif,
 		if first.y != corner.y or corner.y != third.y \
 				or absi(incoming.x) + absi(incoming.z) != 1 \
 				or absi(outgoing.x) + absi(outgoing.z) != 1 \
-				or incoming.x * outgoing.x + incoming.z * outgoing.z != 0:
+				or incoming.x * outgoing.x + incoming.z * outgoing.z != 0 \
+				or not nodes.has(first) or not nodes.has(corner) \
+				or not nodes.has(third):
 			continue
 		var missing := first + outgoing
-		if not WarrenPassageLatticeRules.is_at_grade(massif, missing) \
-				or not WarrenPassageLatticeRules.slot_is_borable(massif,
+		if not WarrenPassageLatticeRules.slot_is_borable(massif,
 				excavation, missing,
 				WarrenPassageLatticeRules.HEADROOM_BANDS):
 			continue
@@ -213,6 +246,9 @@ static func _stamp_market_square(world_seed: int, massif: WarrenMassif,
 		return int(a.tie) < int(b.tie))
 	for candidate: Dictionary in candidates:
 		var lane_cells := candidate.lane_cells as Array[Vector3i]
+		if not _square_stands_alone(nodes, candidate.square as Array[Vector3i],
+				lane_cells):
+			continue
 		var carved: Array[Vector3i] = []
 		for cell: Vector3i in lane_cells:
 			for band in range(cell.y, cell.y \
@@ -250,10 +286,19 @@ static func _stamp_market_square(world_seed: int, massif: WarrenMassif,
 		var fronted_square_cells := 0
 		for cell: Vector3i in square:
 			fronted_square_cells += int(_addressable_sides(massif,
-				excavation, cell) >= 1)
+				excavation, cell) >= 1 or _bank_sides(massif, cell) >= 1)
 		# Two held corners plus the two-cell street mouth produce a recognisable
 		# square bounded on its long sides. The graph-wide frontage seal below still
 		# prevents this local exception from opening the rest of the town.
+		#
+		# TASK D1: a HELD corner, not strictly a housed one. Terrain that
+		# stands above the square's own datum is a retaining bank, and a
+		# square backed by one is bounded exactly as this rule intends --
+		# more so than one facing open air. On flat ground no side is ever
+		# a bank, so `_bank_sides` is zero everywhere and nothing moves.
+		# On a hillside the uphill flank of a contour street IS the bank,
+		# and counting it as absence is what left compact ramp towns with
+		# a geometrically legal square their own approach refused.
 		if fronted_square_cells >= 2:
 			square.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
 				return _cell_less(a, b))
@@ -263,6 +308,46 @@ static func _stamp_market_square(world_seed: int, massif: WarrenMassif,
 		for air: Vector3i in carved:
 			excavation.carved.erase(air)
 	return [] as Array[Vector3i]
+
+
+static func _square_stands_alone(nodes: Dictionary, square: Array[Vector3i],
+		lane_cells: Array[Vector3i]) -> bool:
+	## TASK D1. The universal market is the ONE broad public floor a maze town
+	## is allowed (`WarrenVolumePlan._same_datum_public_square_count` exempts
+	## exactly the four cells named as `market_square_cells`), so its two new
+	## cells may not ALSO close a second same-datum 2 x 2 with walk nodes the
+	## spine already owns. `_search_spine` asks `completes_public_square` of
+	## every stride it carves; this stamp never asked it of its own, and on
+	## flat ground it never had to -- an at-grade approach runs level, the
+	## spine cannot fold back beside it inside the market prefix, and the
+	## square's own cells were the only broad floor in the town. On a hillside
+	## the approach climbs and turns, the spine passes back alongside its own
+	## mouth, and the square's far cell closes a block with it: 4 of 24 corpus
+	## towns on the ramp fixture, refused by the volume seal one stage later
+	## as "public route contains a broad same-datum 2x2 block".
+	##
+	## Walk NODES, not every public cell, because that is the exact set the
+	## seal audits; a stride intermediate is bored floor the surface pass gives
+	## to its own transition and never becomes a second 2 x 2 corner.
+	var claimed := nodes.duplicate()
+	var inside: Dictionary = {}
+	for cell: Vector3i in square:
+		inside[cell] = true
+	for cell: Vector3i in lane_cells:
+		claimed[cell] = true
+	for cell: Vector3i in lane_cells:
+		for x_offset in [-1, 0]:
+			for z_offset in [-1, 0]:
+				var origin := cell + Vector3i(x_offset, 0, z_offset)
+				var complete := true
+				var all_inside := true
+				for member: Vector3i in [origin, origin + Vector3i.RIGHT,
+						origin + Vector3i.BACK, origin + Vector3i(1, 0, 1)]:
+					complete = complete and claimed.has(member)
+					all_inside = all_inside and inside.has(member)
+				if complete and not all_inside:
+					return false
+	return true
 
 
 static func _search_spine(context: Dictionary, current: Vector3i,
@@ -419,6 +504,19 @@ static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 			break
 		tried[anchor] = true
 		var ratio_before := float(audit.column_ratio)
+		# TASK D1. The passage-frontage guard is RATCHET, not floor: no lane
+		# may take the ratio below where this loop found it, and once at or
+		# above FRONTAGE_FLOOR none may take it below that. Written as the bare
+		# floor, it read "no lane at all" for a town that arrived here already
+		# short -- every candidate, including one that would have climbed back
+		# toward the floor, was rolled back, so the town died with `before ==
+		# after` and ZERO alleys. Measured: that is EVERY frontage rejection in
+		# the corpus, on all four ground fixtures (flat 7/compact 0.850,
+		# and 16 sloped towns at 0.632-0.875), each with one lane -- the market
+		# square's own -- and no alley ever grown. A town whose spine already
+		# clears the floor is unaffected, since the ratchet is then exactly the
+		# floor, which is why every other flat town is untouched.
+		var passage_before := float(audit.ratio)
 		var lane := _grow_alley(world_seed, massif, excavation, public_set,
 			thickness, anchor, cell_budget - used_cells)
 		if lane.is_empty():
@@ -427,7 +525,8 @@ static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 		var after_lane := _frontage_audit(massif, excavation)
 		var ratio_after := float(after_lane.column_ratio)
 		if ratio_after <= ratio_before \
-				or float(after_lane.ratio) < FRONTAGE_FLOOR:
+				or float(after_lane.ratio) < minf(FRONTAGE_FLOOR,
+					passage_before):
 			excavation.lanes.pop_back()
 			WarrenPassageLatticeRules.rollback(excavation, public_set,
 				lane.cells as Array[Vector3i],
@@ -1231,6 +1330,21 @@ static func _stride_is_at_grade(massif: WarrenMassif,
 		if not WarrenPassageLatticeRules.is_at_grade(massif, cell):
 			return false
 	return true
+
+
+static func _bank_sides(massif: WarrenMassif, cell: Vector3i) -> int:
+	## 4-neighbour columns whose TERRAIN stands above this cell's band: the
+	## uphill bank a street cut along a contour runs against. Never a house
+	## wall (`_column_carries_house_at` refuses it, and so does the plot
+	## model's own support rule 3 -- a plot may not be buried), but it is
+	## solid ground holding the cell's edge, which is what a rule about a
+	## public space being BOUNDED is asking about. Zero on flat input.
+	var out := 0
+	for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+		var column := Vector2i(cell.x + direction.x, cell.z + direction.y)
+		out += int(massif.has_column(column)
+			and massif.base_at(column) > cell.y)
+	return out
 
 
 static func _addressable_sides(massif: WarrenMassif,

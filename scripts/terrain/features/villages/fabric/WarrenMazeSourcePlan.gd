@@ -254,8 +254,9 @@ func add_plot(plot: Dictionary) -> bool:
 ## The one support rule. A plot may occupy `cell` at `floor` when
 ##
 ##   1. the band below the floor is solid -- rock, a retained tunnel-roof
-##      slab, or another plot's top (solid_at answers all three), and
-##   2. no carved air stands in the MIN_HOUSE_BANDS of clearance above it.
+##      slab, or another plot's top (solid_at answers all three),
+##   2. no carved air stands in the MIN_HOUSE_BANDS of clearance above it, and
+##   3. the floor stands ON this column's terrain rather than inside it.
 ##
 ## Rule 2 is CLEARANCE, not "above every passage in this column" (controller
 ## ruling, 2026-08-22): a house tiered under an upper street has that street's
@@ -263,7 +264,25 @@ func add_plot(plot: Dictionary) -> bool:
 ## is that a plot can never sit AT a passage's headroom top -- the band below
 ## it would be carved -- so a tunnel-roof or bridge plot sits one band higher,
 ## on the retained roof slab that is its rock.
+##
+## Rule 3 is rule 1's other half, and it only exists once the ground is not
+## flat (task D1). `solid_at` answers TRUE for every band below
+## `massif.base_at` -- terrain is untouched sample, and that is what lets a
+## house fronting a grade street stand at `floor == base_at` -- so rule 1
+## alone is satisfied vacuously at ANY depth: a footprint that reaches from a
+## low street onto a column three bands further uphill passed it while buried
+## three bands inside the bank. Measured on the terrace-step fixture, that is
+## exactly the plot the translator then refuses as a generator bug
+## ("footprint has no mass, no bearing, or an illegal height here", 16 of 24
+## corpus towns). A buried column is not a house the composition can build,
+## so the model refuses the column here and `WarrenPlotPlanner._join` grows
+## the footprint somewhere else -- the uphill column stays free for a house
+## standing on the bench it actually belongs to. On flat input every column's
+## base is zero and no plot floor is negative, so this is a no-op and the flat
+## corpus is unchanged.
 func plot_support_ok(cell: Vector2i, floor: int) -> bool:
+	if massif != null and floor < massif.base_at(cell):
+		return false
 	if not solid_at(Vector3i(cell.x, floor - 1, cell.y)):
 		return false
 	return _first_carved_band(cell, floor, floor + MIN_HOUSE_BANDS) < 0
@@ -766,6 +785,12 @@ func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
 	for cell_value: Variant in plot["cells"] as Array:
 		var column := cell_value as Vector2i
 		if not plot_support_ok(column, floor_band):
+			if massif != null and floor_band < massif.base_at(column):
+				return ("plot %s breaks support rule 3 at column %s: its " \
+					+ "floor %d is %d bands inside the terrain, which " \
+					+ "stands at %d") % [id, column, floor_band,
+						massif.base_at(column) - floor_band,
+						massif.base_at(column)]
 			if not solid_at(Vector3i(column.x, floor_band - 1, column.y)):
 				return ("plot %s breaks support rule 1 at column %s: band %d " \
 					+ "below its floor is not solid") \

@@ -490,8 +490,29 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 			# immediately below the room datum so `plinth_faces()` derives one
 			# closed perimeter. Columns already at grade bury this course in the
 			# terrain; columns over a drop expose it. Every column must still be
-			# real source mass and non-public, so this can never bridge a tunnel or
-			# manufacture a floating stone skirt.
+			# real source mass or its own untouched ground, and non-public, so
+			# this can never bridge a tunnel or manufacture a floating stone
+			# skirt.
+			#
+			# TASK D1. "Bury this course in the terrain" is what the paragraph
+			# above always claimed and what only real ground can produce: a
+			# room straddling a one-band step needs the course on its low
+			# columns, and on its AT-GRADE columns that same band is inside the
+			# hillside. The envelope models no cell below a column's own
+			# terrain, so `has_mass` answered false and the course could not
+			# close -- the ramp fixture's 3/standard died exactly there. A band
+			# below `bearing_at` is untouched ground by construction (nothing
+			# is borable under it: `slot_is_borable` refuses `cell.y <
+			# base_at`), so it is the one other thing a masonry course may
+			# legitimately sit in. On flat input every bearing is zero and a
+			# room needing a plinth stands at datum >= 1, so the clause is
+			# unreachable and the flat corpus is unmoved.
+			#
+			# Keyed on the maze source all the same, the way C6's
+			# `_required_room_clearance` is: the relaxation is equally true of
+			# a mass-first town on a real hillside, but the legacy path is
+			# byte-identical this phase and a shared file is where that would
+			# quietly stop being so.
 			var course_cells: Array[Vector3i] = []
 			for fine_column_value: Variant in footprint.keys():
 				var fine_column := fine_column_value as Vector2i
@@ -500,7 +521,10 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 					floori(float(fine_column.y) / 2.0))
 				var course_cell := Vector3i(fine_column.x,
 					room.lattice_origin.y - 1, fine_column.y)
-				if not volume.has_mass(Vector3i(macro_column.x,
+				var buried := maze_mode and course_cell.y < int(
+						bearing_by_column.get(fine_column,
+							volume.envelope.bearing_at(macro_column)))
+				if not buried and not volume.has_mass(Vector3i(macro_column.x,
 						course_cell.y, macro_column.y)) \
 						or source.grid.use_at(course_cell) \
 							== WarrenSpatialGrid.Use.PUBLIC_AIR:

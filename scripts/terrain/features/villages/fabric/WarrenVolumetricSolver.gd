@@ -655,21 +655,46 @@ static func solve_selected(world_seed: int, selected: WarrenSpatialPlan,
 	## placement must not pay for the complete twelve-bore and eight-partition
 	## search again for every yaw, nor silently switch to a different maze after
 	## the road has already been aligned to the preview entrance.
+	##
+	## The public signature is unchanged for the legacy caller; MODE_MAZE takes
+	## the branch below and everything after it is the mass-first path exactly
+	## as it was.
 	last_failure = ""
 	if selected == null or not selected.is_sealed() \
 			or selected.source_volume == null or construction_program == null:
 		last_failure = "selected volumetric preview is missing or unsealed"
-		return null
-	var attempt := WarrenTownSolver.mass_first_attempt_index(world_seed,
-		selected.source_volume)
-	if attempt < 0:
-		last_failure = "selected preview has no mass-first excavation identity"
 		return null
 	var profile_id := StringName(selected.source_volume.mass_context.get(
 		&"scale_profile_id", WarrenVillageScaleProfile.LARGE))
 	var profile := WarrenVillageScaleProfile.for_id(profile_id)
 	if profile == null:
 		last_failure = "selected preview has an invalid scale profile"
+		return null
+	if WarrenTownSolver.GENERATION_MODE == WarrenTownSolver.MODE_MAZE:
+		# TASK D1, controller ruling 1. Solid-first generation has ONE
+		# source per (seed, bands): no bore attempt to look up, no ranked
+		# frontier to search for the preview's topology inside, and no
+		# partition variant to carry across. The terrain rebuild is
+		# therefore the identical one-pass solve the preview itself came
+		# from, with the placement's real bands instead of the flat frame.
+		# Dispatched on GENERATION_MODE, the same key `solve` uses at the
+		# head of this file, rather than on the preview volume's own maze
+		# source: they agree on every production path, and reading the mode
+		# keeps one answer to "which pipeline is this process building".
+		#
+		# The rebuilt entrance is deliberately NOT compared to the
+		# preview's here. On real ground the entry cell's BAND is the
+		# terrain the portal stands on, so an exact Vector3i comparison
+		# would refuse every sloped placement by construction. The road was
+		# aligned to where the mouth LANDS, and
+		# `VillageWarrenFabricSolver.solve` compares exactly that -- the
+		# entry's (x, z) -- immediately after this call.
+		return _solve_maze(world_seed, ground_bands, construction_program,
+			profile)
+	var attempt := WarrenTownSolver.mass_first_attempt_index(world_seed,
+		selected.source_volume)
+	if attempt < 0:
+		last_failure = "selected preview has no mass-first excavation identity"
 		return null
 	var candidates := WarrenTownSolver.mass_first_attempt_frontier(world_seed,
 		attempt, ground_bands, profile)
