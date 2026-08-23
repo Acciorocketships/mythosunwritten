@@ -75,13 +75,27 @@ const MAZE_STONE_MODULE := LOW_RETAINING_WALL
 ## bottom course of an odd run buries its lower half in the mass beneath,
 ## exactly as a building plinth buries its own.
 const STONE_COURSE_BANDS := 2
-## The 3 m module laid flat spans two cells along its former height axis. It is
-## placed to cover this cell and ONE neighbour, chosen in this fixed order from
-## the neighbours that are themselves closed (stone, plinth or building), so a
-## cap never juts into a street's headroom when it has solid mass to lean on.
-## An isolated cap with no closed neighbour is centred instead.
+## The 3 m module laid flat spans two cells along its former height axis, so a
+## cap always covers this cell and ONE neighbour, chosen in this fixed order.
+## FIX 1, CRITICAL 1: the neighbour is preferentially another exposed cap cell
+## that has no slab yet -- adjacent capped cells are PAIRED and the pair emits
+## one slab, where the first pass emitted one each and laid them coplanar. An
+## odd leftover leans on a neighbour that is closed mass (stone, plinth or
+## building) instead, which owns no cap of its own and so cannot be covered
+## twice; that also keeps the slab out of a street's headroom where there is
+## mass to lean on. A cap with neither is centred on its own cell.
 const STONE_CAP_PARTNERS: Array[Vector3i] = [Vector3i.BACK, Vector3i.FORWARD,
 	Vector3i.RIGHT, Vector3i.LEFT]
+## The public-surface kinds that PLANK a floor, and so draw the boundary a
+## stone cap would otherwise have to close. Exactly the three
+## `production_surface_payload` tiles: TERRAIN_STREET is worn-path paint on the
+## terrain mesh and STAIR is a generated transition mesh, and neither puts
+## anything at the top of the stone cell it runs over (fix 1, IMPORTANT 4).
+const PAVED_FLOOR_KINDS: Array[int] = [
+	PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+	PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
+	PublicRealmSurfacePlan.SurfaceKind.BRIDGE,
+]
 
 
 static func payload(plan: SettlementFabricPlan) -> EnvironmentInstancePayload:
@@ -342,7 +356,8 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	var bearing_footprint := plan.transformed_cells(&"terrain_bearing")
 	var out := house_plinth_walls(retained, solids, bearing_footprint)
 	out.append_from(maze_stone_walls(retained, solids,
-		public_floor_cells(plan.surface_plan)))
+		public_floor_cells(plan.surface_plan),
+		plinth_faces(retained, solids, bearing_footprint)))
 	assert(out.validate())
 	return out
 
@@ -418,12 +433,34 @@ static func plinth_faces(retained: Dictionary, solids: Dictionary,
 	##
 	## The 3 m module hung from this band also covers the band below it, which
 	## is why the earth skin skips both.
+	##
+	## TASK C5b FIX 1, IMPORTANT 2. A retained cell the compiler tagged as the
+	## MOUNTAIN is never a building's course, whatever happens to stand on it:
+	## the stone skin below already owns every exposed face of it, so a plinth
+	## panel here would put a SECOND, different module in the very same plane
+	## -- `HOUSE_PLINTH` and `MAZE_STONE_MODULE` at one transform. A plinth is
+	## a building's own base course; the mountain is not a building. Legacy
+	## plans tag no cell, so this removes no legacy face.
 	var out: Dictionary = {}
+	var stone := maze_stone_cells(retained)
 	var cells: Array[Vector3i] = []
 	cells.assign(retained.keys())
 	cells.sort_custom(_cell_before)
 	for cell: Vector3i in cells:
+		if stone.has(cell):
+			continue
 		var above := cell + Vector3i.UP
+		# TASK C5b FIX 1, IMPORTANT 2. The DECLARED run is one course, and this
+		# is where that promise is kept: a retained cell under another retained
+		# cell is a bank the course above already faces, and its own 3 m module
+		# would cover this band a second time. Measured on seed 12/compact as
+		# four panels below the course at (7, 0, -6) and (9, 0, 0), where the
+		# course cell above is also carried in the solid projection -- panels
+		# `house_plinth_walls` promises never to render and the shell audit
+		# never expected, so `foundation_rendered_face_count` stood four above
+		# `foundation_expected_face_count`.
+		if retained.has(above):
+			continue
 		if not solids.has(above) and not bearing_footprint.has(above):
 			continue
 		for index in FACE_DIRECTIONS.size():
@@ -447,31 +484,39 @@ static func maze_stone_cells(retained: Dictionary) -> Dictionary:
 
 
 static func maze_stone_faces(retained: Dictionary, solids: Dictionary,
-		paved: Dictionary = {}) -> Dictionary:
+		paved: Dictionary = {}, plinths: Dictionary = {}) -> Dictionary:
 	## TASK C5b RULING 1 -- the retained mountain is a SHELL, not a voxel dump.
-	## One face per EXPOSED boundary of a retained maze-stone cell, keyed
-	## Vector4i(x, band, z, index into STONE_FACE_DIRECTIONS). A face is
-	## exposed when the neighbour on that side is not mass: another retained
-	## cell (stone or a building's plinth course), a building cell, or -- for
-	## the sky-facing top only -- a paved public floor, all emit nothing,
-	## because something else already closes that seam and two panels in one
-	## plane is the artefact this rule exists to avoid.
+	## The panels that shell needs, keyed Vector4i(x, band, z, index into
+	## STONE_FACE_DIRECTIONS) at the cell each panel hangs from, and VALUED
+	## with the neighbour offset that panel reaches over (`Vector3i.ZERO` for a
+	## side panel, and for a cap with nothing beside it to lean on).
 	##
-	## The paved exception is the top face's alone. A stone cell BESIDE a
-	## street must still wear its retaining face -- that is the whole point of
-	## "the street stands on stone" -- while a stone cell UNDER one would only
-	## put rock behind the planks or the worn-path surface that already draws
-	## that floor.
+	## The module is 3 m long whichever way it is laid, so both rules below are
+	## about covering two cells with one instance rather than one each:
+	##
+	## * A SIDE run is coursed at the module's own height (STONE_COURSE_BANDS),
+	##   counting down from the top of the column's contiguous exposed run.
+	## * A CAP is PAIRED. Laid flat the module spans two cells along its former
+	##   height axis, so emitting one per exposed top or bottom face laid two
+	##   coplanar slabs over every adjacent pair -- 248 tops and 259 bottoms on
+	##   seed 12 for barely half that much ground (fix 1, CRITICAL 1). Adjacent
+	##   exposed cap cells are matched instead and the pair owns ONE slab; an
+	##   odd leftover leans over closed mass, exactly as before.
+	##
+	## `plinths` is `plinth_faces()` for the same plan. A building's plinth
+	## panel is 3 m too, so it already closes the top band of any stone run
+	## directly beneath it, and a stone panel there would intersect it in
+	## plane; that run starts one band lower instead (fix 1, IMPORTANT 2).
 	##
 	## Pure function of integer cell sets whose loops run over a sorted key
 	## list, so the payload is byte-identical for identical input.
 	var exposed := exposed_maze_stone_faces(retained, solids, paved)
 	var out: Dictionary = {}
+	var caps: Array[Vector4i] = []
 	for key_value: Variant in exposed.keys():
 		var key := key_value as Vector4i
 		if key.w >= FACE_DIRECTIONS.size():
-			# A cap closes one cell boundary and cannot course: emit it.
-			out[key] = true
+			caps.append(key)
 			continue
 		# Keep the top of every STONE_COURSE_BANDS-tall course, counting down
 		# from the top of this column's own contiguous run.
@@ -480,17 +525,39 @@ static func maze_stone_faces(retained: Dictionary, solids: Dictionary,
 		while exposed.has(probe):
 			above += 1
 			probe.y += 1
+		if _plinth_covers(plinths, probe):
+			above += 1
 		if above % STONE_COURSE_BANDS == 0:
-			out[key] = true
+			out[key] = Vector3i.ZERO
+	caps.sort_custom(_face_before)
+	var paired: Dictionary = {}
+	for key: Vector4i in caps:
+		if paired.has(key):
+			continue
+		paired[key] = true
+		out[key] = _maze_stone_cap_partner(key, exposed, paired, retained,
+			solids)
 	return out
 
 
 static func exposed_maze_stone_faces(retained: Dictionary,
 		solids: Dictionary, paved: Dictionary = {}) -> Dictionary:
 	## The raw shell: every boundary of retained maze stone that meets
-	## something other than mass, before the side faces are coursed. Audited
-	## beside the panel count so "the shell is complete" and "the panels are
-	## the shell" stay two separate, checkable statements.
+	## something other than mass, before the side faces are coursed and the
+	## caps are paired. Audited beside the panel count so "the shell is
+	## complete" and "the panels cover the shell" stay two separate, checkable
+	## statements.
+	##
+	## A face is exposed when the neighbour on that side is not mass: another
+	## retained cell (stone or a building's plinth course), a building cell,
+	## or -- for the sky-facing top only -- a public floor that PLANKS itself
+	## (`public_floor_cells`), all emit nothing, because something else already
+	## closes that seam.
+	##
+	## The paved exception is the top face's alone. A stone cell BESIDE a
+	## street must still wear its retaining face -- that is the whole point of
+	## "the street stands on stone" -- while a stone cell UNDER a planked floor
+	## would only put rock behind the planks that already draw it.
 	var stone := maze_stone_cells(retained)
 	var out: Dictionary = {}
 	if stone.is_empty():
@@ -511,8 +578,9 @@ static func exposed_maze_stone_faces(retained: Dictionary,
 
 
 static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
-		paved: Dictionary = {}) -> EnvironmentInstancePayload:
-	## One MAZE_STONE_MODULE per face of `maze_stone_faces`, through the same
+		paved: Dictionary = {}, plinths: Dictionary = {}) \
+		-> EnvironmentInstancePayload:
+	## One MAZE_STONE_MODULE per panel of `maze_stone_faces`, through the same
 	## transform idiom `house_plinth_walls` uses for a building's own plinth: a
 	## side panel hangs from the top of its cell and buries its lower half in
 	## the course beneath, so a run of stone reads as one coursed masonry mass.
@@ -523,15 +591,18 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 	## rotation puts the module's own rock face -- its former front -- toward
 	## the sky (or, for a passage roof, toward the floor), and sinks it by
 	## STONE_CAP_HALF_DEPTH so that face is flush with the boundary it closes.
+	## Each slab covers its own cell and the neighbour `maze_stone_faces`
+	## paired it with, and no cell is covered twice.
 	var out := EnvironmentInstancePayload.new()
-	var faces := maze_stone_faces(retained, solids, paved)
+	var faces := maze_stone_faces(retained, solids, paved, plinths)
 	var keys: Array[Vector4i] = []
 	keys.assign(faces.keys())
 	keys.sort_custom(_face_before)
 	for key: Vector4i in keys:
 		var cell := Vector3i(key.x, key.y, key.z)
 		out.add(MAZE_STONE_MODULE, _maze_stone_transform(cell,
-			STONE_FACE_DIRECTIONS[key.w], retained, solids), Color.WHITE,
+			STONE_FACE_DIRECTIONS[key.w], faces[key] as Vector3i),
+			Color.WHITE,
 			StringName("maze-stone/%d/%d/%d/%d" % [key.x, key.y, key.z,
 				key.w]))
 	assert(out.validate())
@@ -539,7 +610,10 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 
 
 static func _maze_stone_transform(cell: Vector3i, direction: Vector3i,
-		retained: Dictionary, solids: Dictionary) -> Transform3D:
+		partner: Vector3i) -> Transform3D:
+	## `partner` is the neighbour a horizontal cap reaches over -- the module
+	## laid flat spans two cells -- and is Vector3i.ZERO for a side panel and
+	## for a cap centred on its own cell.
 	var lattice := Vector3(cell) * FabricRecipe.CELL_SIZE
 	if direction.y == 0:
 		var midpoint := Vector3(lattice.x, 0.0, lattice.z) \
@@ -547,10 +621,6 @@ static func _maze_stone_transform(cell: Vector3i, direction: Vector3i,
 		midpoint.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE - 3.0
 		return Transform3D(Basis(Vector3.UP,
 			PI * 0.5 if direction.x != 0 else 0.0), midpoint)
-	# A cap spans two cells along its former height axis. `partner` is the
-	# neighbour it reaches over; Vector3i.ZERO means nothing solid was beside
-	# it and the module is centred on its own cell instead.
-	var partner := _maze_stone_cap_partner(cell, retained, solids)
 	var half := Vector3(partner) * FabricRecipe.CELL_SIZE * 0.5
 	var span := 3.0 if direction == Vector3i.UP else -3.0
 	var basis := Basis(Vector3.RIGHT, -PI * 0.5 * signf(span))
@@ -567,23 +637,65 @@ static func _maze_stone_transform(cell: Vector3i, direction: Vector3i,
 	return Transform3D(basis, origin)
 
 
-static func _maze_stone_cap_partner(cell: Vector3i, retained: Dictionary,
+static func _maze_stone_cap_partner(key: Vector4i, exposed: Dictionary,
+		paired: Dictionary, retained: Dictionary,
 		solids: Dictionary) -> Vector3i:
+	## Which neighbour this cap slab reaches over, in the fixed
+	## STONE_CAP_PARTNERS order. First choice is an exposed cap cell that has
+	## no slab of its own yet: that is the PAIR, and it is why one slab serves
+	## two cells instead of two slabs serving one each. `paired` is written
+	## through -- a mate this returns is spoken for and will not emit again.
+	## Failing that, the slab leans over closed mass (stone, plinth or
+	## building), which owns no cap of its own here and therefore cannot be
+	## covered twice; an isolated cap with neither is centred on its own cell.
+	for partner: Vector3i in STONE_CAP_PARTNERS:
+		var mate := Vector4i(key.x + partner.x, key.y + partner.y,
+			key.z + partner.z, key.w)
+		if exposed.has(mate) and not paired.has(mate):
+			paired[mate] = true
+			return partner
+	var cell := Vector3i(key.x, key.y, key.z)
 	for partner: Vector3i in STONE_CAP_PARTNERS:
 		var neighbor := cell + partner
+		if exposed.has(Vector4i(neighbor.x, neighbor.y, neighbor.z, key.w)):
+			continue
 		if retained.has(neighbor) or solids.has(neighbor):
 			return partner
 	return Vector3i.ZERO
 
 
+static func _plinth_covers(plinths: Dictionary, face: Vector4i) -> bool:
+	## Is this boundary already closed by a building's plinth panel? A plinth
+	## panel is 3 m tall and hangs from the top of its own cell, so it covers
+	## its band and the one below. It may be keyed from either side of the
+	## plane it stands in -- from the cell itself, or from the cell across the
+	## boundary facing back -- and the stone skin must defer to it in both
+	## cases or the two modules intersect (fix 1, IMPORTANT 2).
+	if plinths.is_empty():
+		return false
+	if plinths.has(face):
+		return true
+	var direction := FACE_DIRECTIONS[face.w]
+	return plinths.has(Vector4i(face.x + direction.x, face.y,
+		face.z + direction.z, face.w + 1 - 2 * (face.w % 2)))
+
+
 static func public_floor_cells(surface_plan: PublicRealmSurfacePlan) \
 		-> Dictionary:
-	## Every cell any public floor claims, of any kind. Used only to keep a
-	## stone cap out from under a floor that draws itself.
+	## Every cell a public floor PLANKS. Used only to keep a stone cap out from
+	## under a floor that draws itself.
+	##
+	## TASK C5b FIX 1, IMPORTANT 4: three of the five surface kinds, not all
+	## five. `production_surface_payload` planks STRUCTURAL_COURT,
+	## INTERIOR_PASSAGE and BRIDGE; TERRAIN_STREET is worn-path paint on the
+	## real terrain mesh, which in a maze town lies BELOW the retained stone,
+	## and STAIR is a generated transition mesh. Neither draws anything at the
+	## stone cell's own top boundary, so suppressing the cap there left the
+	## mountain open to the sky under a street.
 	var out: Dictionary = {}
 	if surface_plan == null:
 		return out
-	for kind in PublicRealmSurfacePlan.SurfaceKind.values():
+	for kind in PAVED_FLOOR_KINDS:
 		for cell: Vector3i in surface_plan.cells_for_kind(kind):
 			out[cell] = true
 	return out

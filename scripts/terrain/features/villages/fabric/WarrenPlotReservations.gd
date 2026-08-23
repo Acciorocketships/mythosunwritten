@@ -303,43 +303,21 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	## whose body leaves the residual mass, whose bearing does not meet natural
 	## ground, or whose measured clearance reaches a neighbouring plot.
 	##
-	## This restates those three facts in macro columns. `reach_*` is the union
-	## of body and clearance, so "inside this plot's own footprint" answers the
-	## body and the clearance together -- the footprint is column-exclusive, so
-	## mass this plot owns is mass no other plot can own. Bearing is the
-	## legacy rule verbatim: every column under a terrain-bearing cell must
-	## have its natural ground AT the datum.
-	##
-	## One lane is enough, because the builder returns on the first lane that
-	## fits.
-	var columns: Dictionary = {}
-	for column: Vector2i in cells:
-		columns[column] = true
-		# `_no_street_left_hanging` lets a passage run across an asset's TOP,
-		# where the plot bears that street's floor. A LANDMARK cannot: the
-		# prefab claims a ROOF face on its own top band, the route has already
-		# claimed the PUBLIC_FLOOR face on that same boundary, and
-		# `_reserve_landmark_preplans` then kills the whole town at the joint
-		# commit -- measured on seed 4/compact as `face claim conflict at
-		# 2:3:4/0:1:0 ... existing owner=public.route`. A site the builder
-		# would die on is not a site the mirror may accept. (Raising the plot
-		# one band so the two faces fall on different boundaries was tried
-		# and measured worse: taller asset plots cost seeds 12 and 4 their
-		# whole towns.)
-		for band: int in streets.get(column, []) as Array:
-			if band >= datum:
-				return _tally(mirror, "street_over_top")
-	var door_column := Vector2i(door.x, door.z)
-	var frontage := Vector2i.ZERO
-	for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT,
-			Vector2i.UP]:
-		if columns.has(door_column - direction):
-			frontage = direction
-			break
+	## This restates those three facts in macro columns, one per step below.
+	## `reach_*` is the union of body and clearance, so "inside this plot's own
+	## footprint" answers the body and the clearance together -- the footprint
+	## is column-exclusive, so mass this plot owns is mass no other plot can
+	## own. Bearing is the legacy rule verbatim: every column under a
+	## terrain-bearing cell must have its natural ground AT the datum.
+	var columns := _footprint_columns(cells)
+	if _street_runs_over(streets, cells, datum):
+		return _tally(mirror, "street_over_top")
+	var frontage := _frontage_direction(columns, Vector2i(door.x, door.z))
 	if frontage == Vector2i.ZERO:
 		return _tally(mirror, "no_frontage")
 	# From the doorway into the mass, and the lateral axis the prefab's own
-	# +X maps onto once its entrance faces the street.
+	# +X maps onto once its entrance faces the street. One lane is enough,
+	# because the builder returns on the first lane that fits.
 	var side := -frontage
 	var lateral := Vector2i(-side.y, side.x)
 	var body_fits := false
@@ -364,6 +342,45 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 				return true
 	return _tally(mirror,
 		"bearing_off_ground" if body_fits else "body_outside_plot")
+
+
+static func _footprint_columns(cells: Array[Vector2i]) -> Dictionary:
+	## The site's own macro columns as a set. Column-exclusive by construction,
+	## so "inside this set" is also "owned by no other plot".
+	var out: Dictionary = {}
+	for column: Vector2i in cells:
+		out[column] = true
+	return out
+
+
+static func _street_runs_over(streets: Dictionary, cells: Array[Vector2i],
+		datum: int) -> bool:
+	## `_no_street_left_hanging` lets a passage run across an asset's TOP,
+	## where the plot bears that street's floor. A LANDMARK cannot: the prefab
+	## claims a ROOF face on its own top band, the route has already claimed
+	## the PUBLIC_FLOOR face on that same boundary, and
+	## `_reserve_landmark_preplans` then kills the whole town at the joint
+	## commit -- measured on seed 4/compact as `face claim conflict at
+	## 2:3:4/0:1:0 ... existing owner=public.route`. A site the builder would
+	## die on is not a site the mirror may accept. (Raising the plot one band
+	## so the two faces fall on different boundaries was tried and measured
+	## worse: taller asset plots cost seeds 12 and 4 their whole towns.)
+	for column: Vector2i in cells:
+		for band: int in streets.get(column, []) as Array:
+			if band >= datum:
+				return true
+	return false
+
+
+static func _frontage_direction(columns: Dictionary,
+		door_column: Vector2i) -> Vector2i:
+	## The side of the street cell this plot addresses: the first direction
+	## whose opposite neighbour is the plot's own mass.
+	for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT,
+			Vector2i.UP]:
+		if columns.has(door_column - direction):
+			return direction
+	return Vector2i.ZERO
 
 
 static func _tally(mirror: Dictionary, reason: String) -> bool:

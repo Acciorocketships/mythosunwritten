@@ -1555,31 +1555,95 @@ func test_maze_mode_is_deterministic() -> void:
 		"maze mode is a pure function of (seed, ground bands, scale profile)")
 
 
-func _maze_stone_instance_count(fabric: SettlementFabricPlan) -> int:
-	## Instances the assembler really emitted for retained maze stone, counted
-	## out of the payload the renderer commits rather than out of the rule that
-	## produced it.
+func _stone_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
+	## Every retained-maze-stone instance the renderer is really handed, as
+	## {face, transform}. Read out of the payload the commit path takes, never
+	## out of the rule that produced it, so a bookkeeping fix that does not
+	## reach the renderer cannot pass.
+	var out: Array[Dictionary] = []
 	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
-	var count := 0
 	for asset_value: Variant in payload.batches.keys():
 		var batch := payload.batches[asset_value] as Dictionary
-		for id_value: Variant in batch.get("ids", []) as Array:
-			count += int(String(id_value).begins_with("maze-stone/"))
-	return count
+		var ids := batch.get("ids", []) as Array
+		var transforms := batch.get("transforms", []) as Array
+		for index in ids.size():
+			var id := String(ids[index])
+			if not id.begins_with("maze-stone/"):
+				continue
+			var parts := id.trim_prefix("maze-stone/").split("/")
+			out.append({
+				"face": Vector4i(int(parts[0]), int(parts[1]), int(parts[2]),
+					int(parts[3])),
+				"transform": transforms[index] as Transform3D})
+	return out
+
+
+func _maze_stone_instance_count(fabric: SettlementFabricPlan) -> int:
+	return _stone_instances(fabric).size()
+
+
+func _cap_coverage(instances: Array[Dictionary]) -> Dictionary:
+	## How many horizontal slabs really lie over each capped cell, measured off
+	## the TRANSFORMS the renderer is handed rather than off the rule that
+	## chose them. A cap is the 3 m module laid flat, so its own former height
+	## axis -- local +Y, 3 m of it -- sweeps the cells it covers: a cell is
+	## covered when its centre falls strictly inside that sweep and within half
+	## a cell of its centreline. Two slabs over one cell are the coplanar
+	## doubled caps of fix 1, CRITICAL 1.
+	var out: Dictionary = {}
+	for instance: Dictionary in instances:
+		var face := instance["face"] as Vector4i
+		if face.w < SettlementFabricAssembler.FACE_DIRECTIONS.size():
+			continue
+		var xform := instance["transform"] as Transform3D
+		var sweep := xform.basis * Vector3(0.0, 3.0, 0.0)
+		var axis := sweep.normalized()
+		for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT, Vector3i.LEFT,
+				Vector3i.BACK, Vector3i.FORWARD]:
+			var cell := Vector3i(face.x, face.y, face.z) + offset
+			var delta := Vector3(cell) * FabricRecipe.CELL_SIZE - xform.origin
+			delta.y = 0.0
+			var along := delta.dot(axis)
+			var perpendicular := (delta - axis * along).length()
+			if along <= 0.05 or along >= sweep.length() - 0.05 \
+					or perpendicular >= FabricRecipe.CELL_SIZE * 0.5:
+				continue
+			var key := Vector4i(cell.x, cell.y, cell.z, face.w)
+			out[key] = int(out.get(key, 0)) + 1
+	return out
+
+
+func _plane_key(cell: Vector3i, index: int) -> Vector3i:
+	## The vertical plane a side panel stands in, as the boundary between two
+	## columns: Vector3i(x, 0 for an x-normal plane / 1 for a z-normal one, z).
+	## The same plane has two keyings -- one from each side -- and this
+	## canonicalises them, which is the whole point of the overlap check below.
+	var direction: Vector3i = SettlementFabricAssembler.FACE_DIRECTIONS[index]
+	return Vector3i(cell.x + mini(direction.x, 0),
+		0 if direction.x != 0 else 1, cell.z + mini(direction.z, 0))
 
 
 func _exposed_stone_faces(fabric: SettlementFabricPlan) -> Dictionary:
 	## The test's own statement of the face rule, derived from the sealed plan
 	## and never from the assembler: a retained maze-stone cell owes a panel on
 	## every side whose neighbour is not mass, on a top whose neighbour is
-	## neither mass nor a public floor that draws itself, and on a bottom whose
-	## neighbour is not mass -- the roof of a bored passage.
+	## neither mass nor a public floor that PLANKS itself, and on a bottom
+	## whose neighbour is not mass -- the roof of a bored passage.
+	##
+	## Three surface kinds plank a floor, not five (fix 1, IMPORTANT 4):
+	## `SettlementFabricAssembler.production_surface_payload` tiles
+	## STRUCTURAL_COURT, INTERIOR_PASSAGE and BRIDGE. A TERRAIN_STREET is paint
+	## on the terrain mesh, which in a maze town lies below the retained stone,
+	## and a STAIR is a generated transition mesh; neither draws the top of the
+	## stone cell it runs over.
 	var out: Dictionary = {}
 	var retained := fabric.retained_terrace_cells
 	var solids := fabric.transformed_cells(&"solid")
 	var paved: Dictionary = {}
 	if fabric.surface_plan != null:
-		for kind in PublicRealmSurfacePlan.SurfaceKind.values():
+		for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+				PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
+				PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
 			for cell: Vector3i in fabric.surface_plan.cells_for_kind(kind):
 				paved[cell] = true
 	for cell_value: Variant in retained.keys():
@@ -1606,6 +1670,11 @@ func test_retained_stone_is_skinned() -> void:
 	## rendered panels. Every exposed face of it must now own one rock module,
 	## the audit must state that as an identity, and the identity must hold
 	## against the payload the renderer is actually handed.
+	##
+	## FIX 1 adds the three facts the first pass got wrong: a capped cell wears
+	## exactly ONE slab (CRITICAL 1), no stone panel shares a plane with a
+	## building's plinth panel (IMPORTANT 2), and the building shell's own
+	## rendered/expected identity holds on a maze town too, not only on legacy.
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		if plan == null:
@@ -1619,40 +1688,87 @@ func test_retained_stone_is_skinned() -> void:
 			"maze_stone_expected_face_count", -1))
 		var rendered := int(fabric.audit.get(
 			"maze_stone_rendered_face_count", -1))
-		var missing := int(fabric.audit.get(
-			"maze_stone_missing_face_count", -1))
+		var missing := int(fabric.audit.get("maze_stone_missing_face_count", -1))
 		var stone_cells := int(fabric.audit.get("maze_stone_cell_count", -1))
 		var tops := int(fabric.audit.get("maze_stone_top_face_count", -1))
 		var bottoms := int(fabric.audit.get(
 			"maze_stone_bottom_face_count", -1))
+		var top_slabs := int(fabric.audit.get("maze_stone_top_slab_count", -1))
+		var bottom_slabs := int(fabric.audit.get(
+			"maze_stone_bottom_slab_count", -1))
+		var paved_suppressed := int(fabric.audit.get(
+			"maze_stone_faces_suppressed_by_paving", -1))
 		var raw := int(fabric.audit.get("maze_stone_exposed_face_count", -1))
 		var derived := _exposed_stone_faces(fabric)
-		var instances := _maze_stone_instance_count(fabric)
+		var instances := _stone_instances(fabric)
+		var plinths := SettlementFabricAssembler.plinth_faces(
+			fabric.retained_terrace_cells,
+			fabric.transformed_cells(&"solid"),
+			fabric.transformed_cells(&"terrain_bearing"))
 		var panels := SettlementFabricAssembler.maze_stone_faces(
 			fabric.retained_terrace_cells,
 			fabric.transformed_cells(&"solid"),
-			SettlementFabricAssembler.public_floor_cells(fabric.surface_plan))
+			SettlementFabricAssembler.public_floor_cells(fabric.surface_plan),
+			plinths)
+		# A plinth panel is 3 m tall and hangs from the top of its own cell, so
+		# it closes its band and the one below -- on either keying of its
+		# plane. A stone face there is covered by that panel, and a stone panel
+		# there would intersect it.
+		var plinth_bands: Dictionary = {}
+		for key_value: Variant in plinths.keys():
+			var key := key_value as Vector4i
+			var plane := _plane_key(Vector3i(key.x, key.y, key.z), key.w)
+			for band in [key.y, key.y - 1]:
+				plinth_bands[Vector4i(plane.x, band, plane.z, plane.y)] = true
 		var uncovered := 0
+		var coverage := _cap_coverage(instances)
+		var doubled_caps := 0
 		for key_value: Variant in derived.keys():
 			var face := key_value as Vector4i
 			if face.w >= SettlementFabricAssembler.FACE_DIRECTIONS.size():
-				uncovered += int(not panels.has(face))
+				var slabs := int(coverage.get(face, 0))
+				uncovered += int(slabs == 0)
+				doubled_caps += int(slabs > 1)
 				continue
 			# A 3 m course covers its own band and the one below it, so the
-			# panel that closes this face is at this band or the next one up.
+			# panel that closes this face is at this band or the next one up --
+			# or it is a building's plinth panel standing in the same plane.
+			var plane := _plane_key(Vector3i(face.x, face.y, face.z), face.w)
+			if plinth_bands.has(Vector4i(plane.x, face.y, plane.z, plane.y)):
+				continue
 			uncovered += int(not panels.has(face) and not panels.has(
 				Vector4i(face.x, face.y + 1, face.z, face.w)))
+		var stone_plinth_same_face_overlap := 0
+		for instance: Dictionary in instances:
+			var face := instance["face"] as Vector4i
+			if face.w >= SettlementFabricAssembler.FACE_DIRECTIONS.size():
+				continue
+			var plane := _plane_key(Vector3i(face.x, face.y, face.z), face.w)
+			for band in [face.y, face.y - 1]:
+				stone_plinth_same_face_overlap += int(plinth_bands.has(
+					Vector4i(plane.x, band, plane.z, plane.y)))
+		var foundation_expected := int(fabric.audit.get(
+			"foundation_expected_face_count", -1))
+		var foundation_rendered := int(fabric.audit.get(
+			"foundation_rendered_face_count", -1))
 		print(("MAZE_STONE_SKIN %s cells=%d exposed=%d derived=%d " \
 			+ "expected=%d rendered=%d missing=%d instances=%d " \
-			+ "uncovered=%d tops=%d bottoms=%d") % [
+			+ "uncovered=%d tops=%d bottoms=%d top_slabs=%d " \
+			+ "bottom_slabs=%d doubled_caps=%d plinth_overlap=%d " \
+			+ "paved_suppressed=%d deferred_to_plinth=%d " \
+			+ "foundation=%d/%d") % [
 			_label(outcome), stone_cells, raw, derived.size(), expected,
-			rendered, missing, instances, uncovered, tops, bottoms])
+			rendered, missing, instances.size(), uncovered, tops, bottoms,
+			top_slabs, bottom_slabs, doubled_caps,
+			stone_plinth_same_face_overlap, paved_suppressed,
+			int(fabric.audit.get("maze_stone_faces_deferred_to_plinth", -1)),
+			foundation_rendered, foundation_expected])
 		assert_gt(stone_cells, 0,
 			"%s must publish the retained maze stone it kept" % _label(outcome))
 		assert_gt(expected, 0,
 			"%s retained mountain must expose faces to skin" % _label(outcome))
 		assert_eq(rendered, expected,
-			"%s must render one panel per exposed stone face" \
+			"%s must render one panel per emitted stone panel" \
 				% _label(outcome))
 		assert_eq(missing, 0,
 			"%s may leave no exposed stone face unskinned" % _label(outcome))
@@ -1665,7 +1781,7 @@ func test_retained_stone_is_skinned() -> void:
 		assert_lt(expected, raw,
 			("%s must course its side faces at the module's own height, " \
 				+ "not hang one panel per band") % _label(outcome))
-		assert_eq(instances, expected,
+		assert_eq(instances.size(), expected,
 			("%s must hand the renderer exactly the panels it audited") \
 				% _label(outcome))
 		assert_gt(tops, 0,
@@ -1674,12 +1790,29 @@ func test_retained_stone_is_skinned() -> void:
 		assert_gt(bottoms, 0,
 			("%s bored passages must get a stone roof, or a street looks up " \
 				+ "through the mountain") % _label(outcome))
+		# FIX 1, CRITICAL 1. The 3 m module laid flat spans TWO cells, so a
+		# slab per exposed cap face put two coplanar slabs over every adjacent
+		# pair. Measured off the transforms themselves.
+		assert_eq(doubled_caps, 0,
+			("%s may never lay two coplanar slabs over one capped cell") \
+				% _label(outcome))
+		assert_lt(top_slabs, tops,
+			("%s must PAIR its top caps: a flat 3 m module covers two cells, " \
+				+ "so slabs must be fewer than capped cells") % _label(outcome))
+		assert_lt(bottom_slabs, bottoms,
+			("%s must pair its passage-roof caps for the same reason") \
+				% _label(outcome))
+		# FIX 1, IMPORTANT 2. Two different modules in one plane is the
+		# artefact; the stone starts below a building's plinth instead.
+		assert_eq(stone_plinth_same_face_overlap, 0,
+			("%s may never stand a stone panel in the same plane and band " \
+				+ "as a building's plinth panel") % _label(outcome))
+		assert_eq(foundation_rendered, foundation_expected,
+			("%s building shell must render exactly the plinth faces it " \
+				+ "expects -- the mountain owes none of them") \
+				% _label(outcome))
 		# No boundary may wear two panels: a plinth face and a stone face on
 		# the same seam would intersect in one plane.
-		var plinths := SettlementFabricAssembler.plinth_faces(
-			fabric.retained_terrace_cells,
-			fabric.transformed_cells(&"solid"),
-			fabric.transformed_cells(&"terrain_bearing"))
 		var doubled := 0
 		for key_value: Variant in plinths.keys():
 			var key := key_value as Vector4i
@@ -1769,3 +1902,16 @@ func test_assets_land() -> void:
 		realisable_total, realised_total])
 	assert_eq(realised_total, realisable_total,
 		"the corpus must realise exactly the sites the mirror accepted")
+	# FIX 1, IMPORTANT 3. Soundness is a real property and the assertions above
+	# state it, but on a corpus that realises nothing they read
+	# `assert_eq(0, 0)` and report a PASS for an outcome nobody delivered.
+	# Ruling 3 wanted a landmark, so while there is none this test says so out
+	# loud instead of going green on a vacuous identity.
+	if realised_total == 0:
+		pending(("no asset realises on the corpus: blocked by " \
+			+ "_reserve_landmark_preplan's ROOF-face claim against " \
+			+ "route-owned PUBLIC_FLOOR faces and by bearing-off-natural-" \
+			+ "ground -- see task-c5b-report §5c"))
+		return
+	assert_gte(realised_total, 1,
+		"ruling 3 wants a landmark the production pass really builds")

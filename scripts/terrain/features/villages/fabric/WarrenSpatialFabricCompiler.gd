@@ -138,7 +138,8 @@ static func solve(source: WarrenSpatialPlan,
 			FabricVolumeClassifier.last_failure
 		return null
 	var stone_audit := _maze_stone_skin_audit(result)
-	if int(stone_audit.get("maze_stone_missing_face_count", 0)) > 0:
+	if int(stone_audit.get("maze_stone_missing_face_count", 0)) > 0 \
+			or int(stone_audit.get("maze_stone_doubled_cap_count", 0)) > 0:
 		last_failure = "retained maze stone is not fully skinned: %s" % \
 			str(stone_audit)
 		return null
@@ -478,50 +479,134 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 static func _maze_stone_skin_audit(plan: SettlementFabricPlan) -> Dictionary:
 	## TASK C5b RULING 2 -- the skin is an IDENTITY, not a hope. The face rule
 	## and the payload are both the assembler's, so this audit states that the
-	## panels it emitted are exactly the exposed faces it derived: every face
-	## rendered, none rendered twice, and none rendered for a cell the plan
-	## does not call retained maze stone.
+	## panels it emitted really COVER the shell it derived: every exposed face
+	## closed by something, no cap covered twice, and the panel count handed to
+	## the renderer equal to the panel count the rule produced.
 	##
 	## It runs AFTER `set_surface_plan` and not beside the plinth shell audit,
-	## because a sky-facing face is only suppressed by the paved floor above
+	## because a sky-facing face is only suppressed by the planked floor above
 	## it, and the surface plan is the only place that fact lives. Every count
 	## is zero on a legacy plan, which tags no cell.
+	##
+	## FIX 1, MINOR 5. `maze_stone_missing_face_count` used to be
+	## `expected - rendered`, which is one instance per panel by construction
+	## and so could never be anything but zero. It is now a COVERAGE
+	## shortfall, stated here in this file's own terms -- a 3 m module covers
+	## two bands, a flat one covers two cells, a building's plinth panel
+	## covers the band beneath it -- so the gate in `solve` bites if the
+	## assembler's coursing or pairing ever leaves the mountain open.
 	if plan == null:
 		return {"maze_stone_cell_count": 0,
 			"maze_stone_exposed_face_count": 0,
 			"maze_stone_expected_face_count": 0,
 			"maze_stone_rendered_face_count": 0,
 			"maze_stone_missing_face_count": 0,
+			"maze_stone_doubled_cap_count": 0,
 			"maze_stone_top_face_count": 0,
-			"maze_stone_bottom_face_count": 0}
+			"maze_stone_bottom_face_count": 0,
+			"maze_stone_top_slab_count": 0,
+			"maze_stone_bottom_slab_count": 0,
+			"maze_stone_faces_suppressed_by_paving": 0,
+			"maze_stone_faces_deferred_to_plinth": 0}
 	var retained := plan.retained_terrace_cells
 	var stone := SettlementFabricAssembler.maze_stone_cells(retained)
 	var solids := plan.transformed_cells(&"solid")
+	var bearing_footprint := plan.transformed_cells(&"terrain_bearing")
+	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+		bearing_footprint)
 	var paved := SettlementFabricAssembler.public_floor_cells(plan.surface_plan)
 	var exposed := SettlementFabricAssembler.exposed_maze_stone_faces(retained,
 		solids, paved)
 	var faces := SettlementFabricAssembler.maze_stone_faces(retained, solids,
-		paved)
+		paved, plinths)
+	var sides := SettlementFabricAssembler.FACE_DIRECTIONS.size()
+	# TASK C5b FIX 1, IMPORTANT 4. What the planked-floor exception really
+	# costs the shell, now that it is three surface kinds and not five.
+	var suppressed_by_paving := 0
+	for cell_value: Variant in stone.keys():
+		var above := (cell_value as Vector3i) + Vector3i.UP
+		suppressed_by_paving += int(paved.has(above) and not retained.has(above) \
+			and not solids.has(above))
+	# Which cells each horizontal slab covers: its own, and the neighbour the
+	# assembler paired it with.
+	var cap_coverage: Dictionary = {}
+	var top_slabs := 0
+	var bottom_slabs := 0
+	var deferred_to_plinth := 0
+	for key_value: Variant in faces.keys():
+		var key := key_value as Vector4i
+		if key.w < sides:
+			continue
+		var direction := SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w]
+		top_slabs += int(direction == Vector3i.UP)
+		bottom_slabs += int(direction == Vector3i.DOWN)
+		cap_coverage[key] = int(cap_coverage.get(key, 0)) + 1
+		var partner := faces[key] as Vector3i
+		if partner == Vector3i.ZERO:
+			continue
+		var mate := Vector4i(key.x + partner.x, key.y + partner.y,
+			key.z + partner.z, key.w)
+		cap_coverage[mate] = int(cap_coverage.get(mate, 0)) + 1
 	var top_face_count := 0
 	var bottom_face_count := 0
+	var missing_face_count := 0
+	var doubled_cap_count := 0
 	for key_value: Variant in exposed.keys():
 		var key := key_value as Vector4i
-		top_face_count += int(SettlementFabricAssembler \
-			.STONE_FACE_DIRECTIONS[key.w] == Vector3i.UP)
-		bottom_face_count += int(SettlementFabricAssembler \
-			.STONE_FACE_DIRECTIONS[key.w] == Vector3i.DOWN)
+		if key.w >= sides:
+			var direction := SettlementFabricAssembler \
+				.STONE_FACE_DIRECTIONS[key.w]
+			top_face_count += int(direction == Vector3i.UP)
+			bottom_face_count += int(direction == Vector3i.DOWN)
+			var slabs := int(cap_coverage.get(key, 0))
+			missing_face_count += int(slabs == 0)
+			doubled_cap_count += int(slabs > 1)
+			continue
+		# A side course hangs from the top of its cell and is 3 m tall, so the
+		# panel that closes this band is keyed at this band or the one above.
+		if faces.has(key) \
+				or faces.has(Vector4i(key.x, key.y + 1, key.z, key.w)):
+			continue
+		# ... unless a building's own plinth panel already stands in this
+		# plane one band up, in which case the stone deliberately starts below
+		# it rather than intersecting it (fix 1, IMPORTANT 2).
+		if _plinth_closes_band(plinths, key):
+			deferred_to_plinth += 1
+			continue
+		missing_face_count += 1
 	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
-		solids, paved)
+		solids, paved, plinths)
 	return {
 		"maze_stone_cell_count": stone.size(),
 		"maze_stone_exposed_face_count": exposed.size(),
 		"maze_stone_expected_face_count": faces.size(),
 		"maze_stone_rendered_face_count": rendered.instance_count,
-		"maze_stone_missing_face_count": maxi(faces.size()
-			- rendered.instance_count, 0),
+		"maze_stone_missing_face_count": missing_face_count,
+		"maze_stone_doubled_cap_count": doubled_cap_count,
 		"maze_stone_top_face_count": top_face_count,
 		"maze_stone_bottom_face_count": bottom_face_count,
+		"maze_stone_top_slab_count": top_slabs,
+		"maze_stone_bottom_slab_count": bottom_slabs,
+		"maze_stone_faces_suppressed_by_paving": suppressed_by_paving,
+		"maze_stone_faces_deferred_to_plinth": deferred_to_plinth,
 	}
+
+
+static func _plinth_closes_band(plinths: Dictionary, face: Vector4i) -> bool:
+	## Does a building's plinth panel already close the band this stone face
+	## stands in? The panel hangs from the top of its own cell and is 3 m tall,
+	## so a plinth face one band ABOVE this one, in the same plane, covers it.
+	## The plane has two keyings -- the cell above, or the cell across the
+	## boundary one band up facing back -- and this audit checks both, because
+	## the assembler must defer to either.
+	if plinths.is_empty():
+		return false
+	var above := Vector4i(face.x, face.y + 1, face.z, face.w)
+	if plinths.has(above):
+		return true
+	var direction := SettlementFabricAssembler.FACE_DIRECTIONS[face.w]
+	return plinths.has(Vector4i(above.x + direction.x, above.y,
+		above.z + direction.z, face.w + 1 - 2 * (face.w % 2)))
 
 
 static func _foundation_shell_audit(foundation_result: Dictionary,
