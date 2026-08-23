@@ -1681,13 +1681,13 @@ func _parcel_named(plan: WarrenParcelPlan,
 	return null
 
 
-func test_flat_roof_parcels_relax_parity_where_something_stands_on_the_roof() \
-		-> void:
-	# A plot with a street, a terrace or another building ON its top band owes
-	# the storey grid nothing up there. `flat_roof` buys exactly that: an odd
-	# five-band parcel seals when it is flagged and is refused when it is not,
-	# the even four-band parcel every legacy caller builds is untouched, and a
-	# flagged parcel counts its storeys against a one-band slab.
+func test_flat_roof_parcels_relax_parity_for_every_maze_house() -> void:
+	# TASK C5d: the tiered hill town's vernacular is the FLAT roof, so every
+	# maze house parcel is flagged -- not only the ones a street, a terrace or
+	# another building stands on. `flat_roof` buys the relaxed height rule: an
+	# odd five-band parcel seals when it is flagged and is refused when it is
+	# not, the even four-band parcel every legacy caller builds is untouched,
+	# and a flagged parcel counts its storeys against a one-band slab.
 	var plan := _sealed_town(12, &"compact")
 	var volume := _volume_of(12, &"compact")
 	var parcels := _parcels_of(12, &"compact")
@@ -1696,22 +1696,28 @@ func test_flat_roof_parcels_relax_parity_where_something_stands_on_the_roof() \
 		return
 	var host: WarrenBuildingParcel = null
 	var flagged := 0
+	var standing_count := 0
 	for parcel: WarrenBuildingParcel in parcels.parcels:
 		if parcel.height_bands() >= 6 and host == null:
 			host = parcel
-		# The flag is a plot fact, not a repair: it is set exactly where
-		# something stands on this plot's roof.
+		# The flag is a MODE fact now, not a per-plot repair: in the plot model
+		# every house is slab-crowned, and the plot fact that used to decide it
+		# is still measured beside it so a town with nothing standing on any
+		# roof cannot pass this test vacuously.
 		for plot: Dictionary in plan.plots:
 			if StringName("parcel.maze.%s" % String(plot["id"])) \
 					!= parcel.stable_id:
 				continue
 			var facts := plan.plot_facts(plot)
-			var standing := bool(facts["tiered"]) or not bool(facts["roofed"])
+			standing_count += int(bool(facts["tiered"]) \
+				or not bool(facts["roofed"]))
 			flagged += int(parcel.flat_roof)
-			assert_eq(parcel.flat_roof, standing,
-				"parcel %s is flat-roofed exactly when something stands on " \
-				% parcel.stable_id + "its roof")
-	assert_gt(flagged, 0, "the town really has something standing on a roof")
+			assert_true(parcel.flat_roof,
+				"maze house parcel %s is flat-roofed by default" \
+				% parcel.stable_id)
+	assert_gt(flagged, 0, "the town really has flat-roofed house parcels")
+	assert_gt(standing_count, 0,
+		"the town really has something standing on a roof")
 	assert_not_null(host, "the town has a six-band parcel to restate")
 	if host == null:
 		return

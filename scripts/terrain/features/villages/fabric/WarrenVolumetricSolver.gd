@@ -1894,8 +1894,8 @@ static func _maze_column_is_flat_at(source: WarrenMazeSourcePlan,
 				return true
 		elif kind == WarrenMazeSourcePlan.PLOT_HOUSE \
 				and int(plot["top"]) == band \
-				and WarrenMazeBlockPartitioner.plot_is_flat_roofed(source,
-					plot):
+				and WarrenMazeBlockPartitioner \
+					.plot_crown_carries_public_realm(source, plot):
 			return true
 	return false
 
@@ -3176,7 +3176,10 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 					room_door_phase,
 					# The parcel's own roof contract reaches the stamp here
 					# (Task C5 ruling 1). False on every legacy proposal.
-					bool(proposal.get("flat_roof", false)))
+					bool(proposal.get("flat_roof", false)),
+					# ... and its roof PREFERENCE beside it (Task C5d ruling
+					# 2). Empty on every legacy proposal.
+					StringName(proposal.get("roof_preference", &"")))
 				if not room.add_private_cells(room_cells) \
 						or not room.seal(grid, building_id) \
 						or not building.add_room(room):
@@ -10419,11 +10422,17 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 		var building_id := StringName("spatial.maze_bridge.%02d" % stamped)
 		var roof_feature := _residual_roof_feature(kind, origin,
 			volume.world_seed)
+		# TASK C5d RULING 1 -- a bridge room is the plot model's construction
+		# too, so its crown is a slab like every house's. It carries no parcel
+		# to inherit the flag from (a bridge is a typed record, never a
+		# parcel), so it is stated here, and the probe states it as well or
+		# the preflight would prove a PITCHED envelope for a span the real
+		# compile then crowns flat.
 		var probe := WarrenRoomStamp.new(&"maze.bridge.envelope.probe",
 			&"maze.bridge.envelope.probe", kind, origin, yaw, 0, false, false,
 			Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO,
 			roof_feature, parent_room.source_parcel_id,
-			parent_room.source_storey_index)
+			parent_room.source_storey_index, 0, true)
 		probe.private_cells.assign(cells)
 		if not _residual_room_envelope_fits(probe, building_by_id,
 				construction_program, volume.world_seed):
@@ -10439,6 +10448,7 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 			"support_parcel_id": parent_room.source_parcel_id,
 			"support_storey_index": parent_room.source_storey_index,
 			"roof_feature": roof_feature,
+			"flat_roof": true,
 			"parent_building_id": parent_building.stable_id},
 			buildings, building_by_id, building_by_cell, required_supports,
 			terrain_support_ids, support_edges)
@@ -10736,27 +10746,54 @@ static func _maze_back_room_bears_terrain(grid: WarrenSpatialGrid,
 	## terrain-bearing room -- asked HERE, before the room enters the grid,
 	## because there it rejects the whole town rather than one rectangle.
 	##
-	## TASK C5c MEASURED AND REVERTED. The compiler's own rule moved in ruling
-	## 4 (a maze room deeper than one plinth course is carried by the retained
-	## mountain and takes no plinth), and relaxing this mirror to match it does
-	## stamp more back rooms -- 3/standard went 0.319 -> 0.301 unroomed, 11 ->
-	## 14 back rooms. It also cost 12/compact and 4/compact their whole towns
-	## at the ROOF gates (`macro setback roof 0 ... complete fallbacks were
-	## rejected`), because every extra room is another crown the roof
-	## vocabulary has to fit beside its neighbours. The binding constraint on
-	## this corpus is the roof, not the bearing, so the strict mirror stays
-	## until the roof vocabulary can carry the denser town.
+	## TASK C5c MEASURED AND REVERTED, TASK C5d RE-APPLIED. The compiler's own
+	## rule moved in C5c ruling 4 -- a maze room deeper than one plinth course
+	## is carried by the retained mountain and takes no plinth -- and relaxing
+	## this mirror to match it stamps more back rooms (3/standard went 0.319 ->
+	## 0.301 unroomed, 11 -> 14 back rooms) but cost 12/compact and 4/compact
+	## their towns at the PITCHED roof gates, because every extra room was
+	## another authored crown to fit beside its neighbours. C5d made maze
+	## houses flat-roofed, so the marginal room now brings a one-band slab
+	## rather than a shell with an eave, and the mirror is aligned to the
+	## builder here: a column the compiler would call STONE-BORNE -- a tier, a
+	## tunnel roof, or a bored street under the hill -- is bearing, and the
+	## only thing left to prove for it is that the room stands on real source
+	## mass, which is the compiler's own second check.
+	##
+	## Mirroring rather than approximating is deliberate (C5c fix #1, Important
+	## 4): a mirror stricter than the builder refuses rectangles the real
+	## compile would have taken, and one looser than the builder rejects the
+	## whole town instead of one rectangle.
+	var maze_source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
 	for column: Vector2i in columns:
 		if not volume.envelope.contains_column(column):
 			return false
 		var ground := volume.envelope.bearing_at(column)
 		var depth := band - ground
-		if depth < 0 or depth > WarrenSpatialFabricCompiler \
-				.FOUNDATION_MODULE_HEIGHT_BANDS:
+		if depth < 0:
 			return false
+		var span_is_whole := true
 		for lower_band in range(ground, band):
 			if not volume.has_mass(Vector3i(column.x, lower_band, column.y)):
+				span_is_whole = false
+				break
+		if maze_source != null and (not span_is_whole \
+				or depth > WarrenSpatialFabricCompiler \
+					.FOUNDATION_MODULE_HEIGHT_BANDS \
+				or maze_source.rock_shoulder(column) < band):
+			# `WarrenSpatialFabricCompiler._retained_foundation_cells`, line
+			# for line: the plot planner's own support rule already proved
+			# this floor stands on something, the mass below it is stone or
+			# another building rather than this room's masonry course, and the
+			# one thing that still has to hold is that there IS mass directly
+			# beneath every column.
+			if not volume.has_mass(Vector3i(column.x, band - 1, column.y)):
 				return false
+			continue
+		if not span_is_whole or depth > WarrenSpatialFabricCompiler \
+				.FOUNDATION_MODULE_HEIGHT_BANDS:
+			return false
 		if depth == 0:
 			continue
 		for fine: Vector3i in _fine_square(Vector3i(column.x, band - 1,

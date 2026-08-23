@@ -36,6 +36,13 @@ var roof_feature: int
 ## Defaulted false and never set by a legacy caller, so every route-first and
 ## mass-first stamp keeps the exact contract it always had.
 var flat_roof := false
+## Additive (Task C5d, controller ruling 2): the source parcel's roof
+## PREFERENCE, carried beside its roof contract. `&"pitched"` names a crown
+## the plot model found geometrically free -- strictly above every neighbour
+## plot and street -- so `WarrenSpatialFabricCompiler.compile_roof_units` may
+## try the authored pitched shell there before the slab. Empty everywhere
+## else, legacy included.
+var roof_preference: StringName = &""
 var private_cells: Array[Vector3i] = []
 var audit: Dictionary = {}
 var last_rejection := ""
@@ -53,7 +60,8 @@ func _init(p_stable_id: StringName, p_source_parcel_id: StringName,
 		p_support_parent_parcel_id: StringName = &"",
 		p_support_parent_storey_index: int = -1,
 		p_address_door_phase: int = 0,
-		p_flat_roof: bool = false) -> void:
+		p_flat_roof: bool = false,
+		p_roof_preference: StringName = &"") -> void:
 	stable_id = p_stable_id
 	source_parcel_id = p_source_parcel_id
 	kind = p_kind
@@ -75,6 +83,7 @@ func _init(p_stable_id: StringName, p_source_parcel_id: StringName,
 	address_door_phase = p_address_door_phase
 	roof_feature = p_roof_feature
 	flat_roof = p_flat_roof
+	roof_preference = p_roof_preference
 
 
 func add_private_cells(cells: Array[Vector3i]) -> bool:
@@ -137,6 +146,7 @@ func seal(grid: WarrenSpatialGrid, building_id: StringName) -> bool:
 		"terrain_bearing": terrain_bearing,
 		"roof_feature": roof_feature,
 		"flat_roof": flat_roof,
+		"roof_preference": roof_preference,
 	}
 	_sealed = true
 	return true
@@ -155,8 +165,10 @@ func deterministic_signature() -> String:
 	# construction (a slab crown instead of a pitched shell) so it may not
 	# share an identity with the pitched stamp it is otherwise identical to;
 	# suffixing rather than always emitting keeps every legacy signature -- no
-	# legacy stamp is ever flat-roofed -- byte-identical.
-	return "%s/%s/%s@%d:%d:%d/r%d/s%d/b%d/p=%s:%d/a%d/dp%d/t=%d:%d:%d/f=%d:%d:%d/rf%d%s" % [
+	# legacy stamp is ever flat-roofed -- byte-identical. `/RP` is the roof
+	# PREFERENCE (Task C5d), appended on the same terms and for the same
+	# reason: it selects a different authored crown.
+	return "%s/%s/%s@%d:%d:%d/r%d/s%d/b%d/p=%s:%d/a%d/dp%d/t=%d:%d:%d/f=%d:%d:%d/rf%d%s%s" % [
 		String(stable_id), String(source_parcel_id), String(kind),
 		lattice_origin.x, lattice_origin.y, lattice_origin.z, yaw_quarters,
 		source_storey_index, int(terrain_bearing),
@@ -164,7 +176,9 @@ func deterministic_signature() -> String:
 		int(addressed), address_door_phase,
 		threshold_cell.x, threshold_cell.y, threshold_cell.z,
 		frontage_direction.x, frontage_direction.y, frontage_direction.z,
-		roof_feature, "/FR" if flat_roof else ""]
+		roof_feature, "/FR" if flat_roof else "",
+		"" if roof_preference.is_empty() \
+			else "/RP%s" % String(roof_preference)]
 
 
 static func expected_private_cells(p_kind: StringName, origin: Vector3i,

@@ -43,6 +43,11 @@ static func proposal(parcel: WarrenBuildingParcel) -> Dictionary:
 		# flattening verdict (`WarrenAssetCompiler` :951/:987), so seeding it
 		# here changes no legacy proposal.
 		"flat_roof": parcel.flat_roof,
+		# The parcel's roof PREFERENCE beside its roof contract (Task C5d
+		# ruling 2). Empty on every legacy proposal and on most maze houses;
+		# `&"pitched"` names a crown the roof compiler should try the authored
+		# pitched shell on before falling back to the slab.
+		"roof_preference": parcel.roof_preference,
 	}
 	result["occupied_cells"] = \
 		StaggeredFabricCompiler.proposal_occupied_cells(result)
@@ -339,22 +344,20 @@ static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
 	# directly on the rock descends exactly as it did before, which is what
 	# keeps every rock-borne house in this corpus byte-identical.
 	#
-	# MEASURED AND REVERTED: NO DESCENT AT ALL. Returning `base_band` for every
-	# maze parcel -- the plot model taken literally, so a house on a hill
-	# column becomes a short house on a tall stone base rather than storeys --
-	# is BETTER by the number this task is judged on: 12/compact reached 0.200
-	# unroomed with 1 uncomposed parcel of 29, against 0.267 and 6 for the rule
-	# above. It cost 4/compact and 3/standard their whole towns, because every
-	# rock-borne house changed height at once and their neighbours' roofs no
-	# longer fitted (`macro setback roof 0 ... complete fallbacks were
-	# rejected`, `roof remainder ... 1-cell exposed sliver`). The binding
-	# constraint is the ROOF vocabulary, not the descent -- the same verdict
-	# `WarrenVolumetricSolver._maze_back_room_bears_terrain` records for its
-	# own reverted experiment.
-	#
-	# FOR THE NEXT TASK: a controller ruling makes maze houses FLAT-ROOFED by
-	# default, which removes the pitched crowns that failed. Re-open this
-	# experiment then; it is the single largest remaining move on the share.
+	# MEASURED AND REVERTED TWICE: NO DESCENT AT ALL. Returning `base_band`
+	# for every maze parcel -- the plot model taken literally, so a house on a
+	# hill column becomes a short house on a tall stone base rather than
+	# storeys -- was better on C5c's number (12/compact 0.200 unroomed with 1
+	# uncomposed parcel of 29, against 0.267 and 6) and cost 4/compact and
+	# 3/standard their towns at PITCHED roof gates. Task C5d made maze houses
+	# flat-roofed by default, removed those crowns, and re-applied it: on the
+	# 24-seed maze sweep it went 10/24 sealed DOWN to 9/24, and 3/standard
+	# lost its town again -- at `roof remainder for
+	# spatial.parcel.maze.house.033 ... 1-cell exposed sliver`, a partial
+	# plate, which is the one roof family flat-first does not remove because
+	# no authored `roof.flat.*` module covers half a footprint. Reverted
+	# again. What has to move first is the partial-plate vocabulary, not this
+	# rule.
 	var maze_source := parcel.source.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if maze_source != null:

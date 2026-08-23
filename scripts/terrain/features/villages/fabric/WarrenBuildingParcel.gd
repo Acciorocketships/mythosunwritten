@@ -43,6 +43,20 @@ var address_door_phase: int
 ## from `parcel.flat_roof` where the maze proposals are built, so a plot the
 ## planner tiered actually composes a flat roof instead of a pitched one.
 var flat_roof := false
+## Additive (Task C5d, controller ruling 2): what the plot model would RATHER
+## see on this building's crown. Empty on every parcel the route-first and
+## mass-first partitioners build, and empty on most maze houses too; a maze
+## house whose plot top stands strictly above every 4-neighbour plot and every
+## adjacent street band -- the only place an authored pitched unit can sit
+## without its eave meeting somebody -- carries `&"pitched"` when the seeded
+## roll selects it.
+##
+## A PREFERENCE, never a contract. `flat_roof` still decides the height rule,
+## the storey count and the roof base band; this only asks
+## `WarrenSpatialFabricCompiler.compile_roof_units` to try the authored
+## pitched shell on that crown first, and a shell that would displace or
+## halo-conflict is refused back to the slab and counted.
+var roof_preference: StringName = &""
 var bearing_columns: Array[Vector2i] = []
 var support_mode: StringName
 ## Optional explicit building-on-building bearing seam. The upper parcel keeps
@@ -220,13 +234,17 @@ func deterministic_signature() -> String:
 	# `/R` is `flat_roof` (review finding 2026-08-23, Important 2): it changes
 	# the height rule, the storey count and the roof base band, so two parcels
 	# that differ only in it are two different buildings and may not share an
-	# identity.
-	return "%s@%d..%d>A%d:%d/F%d:%d/D%d/O%d/P%s:%d/R%d" % [
+	# identity. `/RP` is `roof_preference` (Task C5d), for the same reason and
+	# with the same care: it is appended only when the preference is really
+	# set, so every legacy signature stays byte-identical.
+	return "%s@%d..%d>A%d:%d/F%d:%d/D%d/O%d/P%s:%d/R%d%s" % [
 		",".join(footprint_parts), base_band, top_band,
 		address_walk_cell.x, address_walk_cell.z,
 		frontage_direction.x, frontage_direction.y, address_door_phase,
 		int(has_occupied_overpass), String(support_parent_parcel_id),
-		support_parent_storey_index, int(flat_roof)]
+		support_parent_storey_index, int(flat_roof),
+		"" if roof_preference.is_empty() \
+			else "/RP%s" % String(roof_preference)]
 
 
 func slot_signature() -> String:

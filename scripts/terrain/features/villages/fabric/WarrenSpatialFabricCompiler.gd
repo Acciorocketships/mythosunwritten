@@ -2489,6 +2489,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			last_failure = "roof selection rejected fixed feature %s: %s" % [
 				feature_unit.stable_id, probe.last_rejection]
 			return [] as Array[FabricUnit]
+	# Is this the PLOT MODEL's town? One reading, taken from the volume the
+	# spatial plan was composed from, for the one legacy rule Task C5d ruling
+	# 1 has to switch off (the dormer bar, at the foot of this function).
+	# Empty on every route-first and mass-first plan.
+	var maze_plot_model := source.source_volume != null \
+		and source.source_volume.mass_context.has(&"maze_source_plan")
 	var roof_faces_by_room := _roof_faces_by_room(source, room_id_by_cell)
 	var roof_room_id_by_face: Dictionary = {}
 	for roof_room_id_value: Variant in roof_faces_by_room.keys():
@@ -2522,12 +2528,24 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	# and no neighbour may plan a ridge/valley join into it. Both facts are
 	# stated exactly the way the collision retry above states them, so the
 	# selector below needs no second notion of "this roof is flat".
+	#
+	# TASK C5d RULING 2 -- among those flat crowns, the ones the plot model
+	# would RATHER see pitched. The stamp carries the preference from the
+	# parcel the plot translated to; nothing here re-derives the geometry that
+	# decided it. The proposal is still marked flat, so the neighbours still
+	# drop their junction rules and a refusal still cannot trigger the
+	# atomic-neighbourhood retry: the preference changes which authored unit
+	# is TRIED, never what this crown is to anybody else.
 	var plot_flat_room_ids: Dictionary = {}
+	var plot_pitched_room_ids: Dictionary = {}
 	for room_id_value: Variant in roof_faces_by_room.keys():
 		var plot_room_id := StringName(room_id_value)
-		if not (room_by_id[plot_room_id] as WarrenRoomStamp).flat_roof:
+		var plot_room := room_by_id[plot_room_id] as WarrenRoomStamp
+		if not plot_room.flat_roof:
 			continue
 		plot_flat_room_ids[plot_room_id] = true
+		if plot_room.roof_preference == &"pitched":
+			plot_pitched_room_ids[plot_room_id] = true
 		if not roof_proposal_by_room.has(plot_room_id):
 			continue
 		var plot_proposal := (roof_proposal_by_room[
@@ -2610,6 +2628,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var plot_flat_pitched_count := 0
 	var plot_flat_partial_plate_count := 0
 	var plot_flat_rejected_count := 0
+	var maze_pitched_count := 0
+	var maze_pitched_refused_count := 0
+	var maze_pitched_rooms: Array[StringName] = []
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
 		exposed_roof_room_kind_counts[room.kind] = int(
@@ -2646,6 +2667,13 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					junction_neighbor.stable_id):
 				junction_room_seams.append(junction_neighbor.stable_id)
 		var plot_flat := plot_flat_room_ids.has(room_id)
+		# A crown the plot model asked for a pitched shell on. It is a
+		# flat-roofed stamp in every other respect -- same height contract,
+		# same retained slab courses, same silence toward its neighbours'
+		# junction rules -- so this only selects which authored unit is tried
+		# first, and only over a COMPLETE plate.
+		var pitched_preferred := plot_flat \
+			and plot_pitched_room_ids.has(room_id)
 		plot_flat_room_count += int(plot_flat)
 		if (full or plate_pitched) and not plot_flat \
 				and not _touches_public_air(source.grid, face_cells):
@@ -2738,6 +2766,76 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			return compile_roof_units(source, program, room_units,
 				fixed_feature_units, retry_flattened,
 				collision_flattened_component_count + 1)
+		if pitched_preferred and full \
+				and not _touches_public_air(source.grid, face_cells):
+			# TASK C5d RULING 2 -- the seeded pitched preference, MEASURED.
+			#
+			# The plot model found this crown geometrically free: its plot top
+			# stands strictly above every 4-neighbour plot's top and every
+			# adjacent street band, so an authored eave has nothing to reach
+			# over. A pitched recipe is exactly the plot's own two-band roof
+			# reservation tall and sits at the same lattice datum the slab
+			# would, so a shell that lands here displaces no room and no
+			# neighbour.
+			#
+			# The candidates are the ordinary finite full-roof set taken with
+			# an EMPTY neighbourhood proposal, because this stamp's own
+			# proposal says `flat_roof` and would return none. That is the
+			# right reading twice over: an eligible crown is by construction
+			# alone at the top of its block, so there is no joined campaign to
+			# belong to, and a refusal here can therefore never reach the
+			# atomic-neighbourhood retry. A refusal is an audit count and the
+			# slab below is the fallback -- never a rejection of the town.
+			var preferred_candidates := _full_roof_candidates(room,
+				source.world_seed)
+			for preferred_index in preferred_candidates.size():
+				var preferred_candidate := preferred_candidates[
+					preferred_index]
+				var preferred_id := StringName(preferred_candidate.recipe_id)
+				var preferred_yaw := int(preferred_candidate.yaw_offset)
+				var preferred_recipe := program.recipe(preferred_id)
+				if preferred_recipe == null:
+					last_failure = "missing full roof recipe %s" % preferred_id
+					return [] as Array[FabricUnit]
+				var preferred_unit := _full_roof_unit(room_id, room,
+					parent_unit, preferred_id, _roof_seams_for_candidate(
+						room_seams, parent_unit.stable_id, out,
+						fixed_feature_units), preferred_yaw)
+				if _unit_touches_public_air(source.grid, preferred_unit,
+						preferred_recipe):
+					attempt_failures.append(("preferred pitched %s/r%d: " \
+						+ "exact roof volume enters public air") % [
+							preferred_id, preferred_yaw])
+					continue
+				if not probe.add_unit(preferred_unit):
+					attempt_failures.append("preferred pitched %s/r%d: %s" % [
+						preferred_id, preferred_yaw, probe.last_rejection])
+					continue
+				out.append(preferred_unit)
+				realized_face_count += face_cells.size()
+				pitched_count += 1
+				maze_pitched_count += 1
+				maze_pitched_rooms.append(room_id)
+				alternate_pitched_roof_count += int(preferred_index > 0)
+				quarter_turned_square_roof_count += int(preferred_yaw != 0)
+				var preferred_family := _roof_recipe_family(preferred_id)
+				pitched_roof_family_counts[preferred_family] = int(
+					pitched_roof_family_counts.get(preferred_family, 0)) + 1
+				pitched_roof_recipe_counts[preferred_id] = int(
+					pitched_roof_recipe_counts.get(preferred_id, 0)) + 1
+				one_storey_chimney_roof_count += int(
+					room.source_storey_index == 0 \
+						and String(preferred_id).contains(".short."))
+				dormered_pitched_roof_count += int(preferred_recipe.has_tag(
+					&"dormer"))
+				paired_dormer_roof_count += int(preferred_recipe.has_tag(
+					&"paired_dormer"))
+				selected = true
+				break
+			if not selected:
+				maze_pitched_refused_count += 1
+		if selected:
+			continue
 		if plot_flat and full \
 				and not _touches_public_air(source.grid, face_cells):
 			# The plot's own slab, at the same lattice datum every full roof
@@ -3094,6 +3192,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 								return [] as Array[FabricUnit]
 							out.append(terminal_unit)
 							plot_flat_pitched_count += int(plot_flat and full \
+								and not pitched_preferred \
 								and not String(terminal_unit.recipe_id) \
 									.begins_with("roof.flat."))
 							cap_count += 1
@@ -3142,8 +3241,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 								probe.last_rejection]
 						return [] as Array[FabricUnit]
 			out.append(cap_unit)
-			plot_flat_pitched_count += int(plot_flat and full and not String(
-				cap_unit.recipe_id).begins_with("roof.flat."))
+			plot_flat_pitched_count += int(plot_flat and full \
+				and not pitched_preferred and not String(
+					cap_unit.recipe_id).begins_with("roof.flat."))
 			realized_face_count += row.size()
 			cap_count += 1
 			plain_cap_count += int(String(cap_unit.recipe_id) \
@@ -3220,7 +3320,16 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		last_failure = "roof campaign retained %d forbidden exposed modular caps" \
 			% plain_cap_count
 		return [] as Array[FabricUnit]
-	if dormered_pitched_roof_count == 0:
+	# TASK C5d RULING 1. The dormer bar is a SEARCHED town's quality rule: it
+	# exists so a route-first roofscape cannot come out as an unarticulated
+	# field of plain gables, and there the selector can go and choose another
+	# composition. The plot model's roofscape is deliberately FLAT -- a tiered
+	# hill town of slab crowns with the occasional pitched roof where one
+	# fits -- so "no dormer anywhere" is its vernacular rather than its defect,
+	# and there is no other composition to select: this gate simply threw the
+	# town away (measured: seed 1/standard, `roof campaign has no integrated
+	# dormer`).
+	if dormered_pitched_roof_count == 0 and not maze_plot_model:
 		last_failure = ("roof campaign has no integrated dormer; select another " \
 			+ "sealed composition instead of accepting an unarticulated roof field")
 		return [] as Array[FabricUnit]
@@ -3249,6 +3358,17 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"plot_flat_roof_pitched_count": plot_flat_pitched_count,
 		"plot_flat_roof_partial_plate_count": plot_flat_partial_plate_count,
 		"plot_flat_roof_rejected_count": plot_flat_rejected_count,
+		# TASK C5d RULING 2 -- the maze roof triple, so a reader finds both
+		# halves of one decision beside each other. `maze_flat_roof_count` is
+		# `plot_flat_roof_count` under the name the ruling names: the crowns
+		# that took the authored slab. `maze_pitched_roof_count` is the crowns
+		# the seeded preference really won, and `maze_pitched_refused_count`
+		# the preferred crowns whose authored shell would not fit and took the
+		# slab instead.
+		"maze_flat_roof_count": plot_flat_count,
+		"maze_pitched_roof_count": maze_pitched_count,
+		"maze_pitched_refused_count": maze_pitched_refused_count,
+		"maze_pitched_roof_rooms": maze_pitched_rooms,
 		# A plot slab is a DELIBERATE closure, not the unarticulated lid the
 		# review round complained about, so it is excluded from the bare count
 		# rather than inflating it (Task C5 ruling 1).
