@@ -124,10 +124,19 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(arcade_overhang_supports)
 	var room_overhang_supports: Array[WarrenFeatureReservation] = []
-	var skywalks := _reserve_preplanned_skywalks(grid, buildings, supports,
-		preplanned_skywalks, landmarks) if not preplanned_skywalks.is_empty() \
-		else _reserve_skywalks(grid, buildings, supports, source.world_seed,
-			target_skywalks)
+	# One-pass mode plans its own links. An empty preplanned set there means
+	# this town HAS no links, not that the legacy scanner should go looking
+	# for some after room composition has already spent the mass -- which is
+	# the very rediscovery `_reserve_preplanned_skywalks` exists to replace.
+	# Keyed on the same switch that turns the floor below into a shortfall, so
+	# no configuration can refuse the search and then reject for its absence.
+	var skywalks: Array[WarrenFeatureReservation] = []
+	if not preplanned_skywalks.is_empty():
+		skywalks = _reserve_preplanned_skywalks(grid, buildings, supports,
+			preplanned_skywalks, landmarks)
+	elif not WarrenTownSolver.feature_quotas_are_advisory():
+		skywalks = _reserve_skywalks(grid, buildings, supports,
+			source.world_seed, target_skywalks)
 	if skywalks.size() < target_skywalks:
 		# Occupied links are richness too: the one-pass source owns its own
 		# bridge plan, so a town it gave no link ships without one. A link

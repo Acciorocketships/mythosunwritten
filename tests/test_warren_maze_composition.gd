@@ -72,12 +72,21 @@ const HERO_QUOTA_GATE_FRAGMENTS: Array[String] = [
 ## first; the counterfactual of translating asset plots back into parcels
 ## reproduces each of them unchanged, so neither belongs to the asset model.
 ##
+## Pinned at the DEFECT level, not the gate level: every fragment listed must
+## appear in the failure. The modular-box gate alone covers three different
+## contract violations over any room in the town, so pinning its headline
+## would silently accept a partial-bearing or unclassified room somewhere
+## else as "the known blocker"; naming the classification as well means only
+## THIS defect passes.
+##
 ## The pin is two-sided on purpose. A seed that dies at a DIFFERENT gate fails
 ## here because the map went stale, and a seed that starts SEALING fails here
 ## because its entry is now a lie that must be deleted.
 const KNOWN_FABRIC_BLOCKERS: Dictionary = {
-	"3/standard": "spatial modular-box contract failed",
-	"9/standard": "roof remainder for spatial.parcel.maze.house.044",
+	"3/standard": ["spatial modular-box contract failed", "roofless_house",
+		"spatial.residual.00.room00", "spatial.residual.02.room00"],
+	"9/standard": ["roof remainder for spatial.parcel.maze.house.044",
+		"1-cell exposed sliver"],
 }
 
 static var _program_cache: SettlementFabricProgram
@@ -184,10 +193,10 @@ func _asset_plot_count(world_seed: int, scale_id: StringName) -> int:
 	return count
 
 
-func _landmark_feature_count(plan: WarrenSpatialPlan) -> int:
+func _feature_count(plan: WarrenSpatialPlan, kind: StringName) -> int:
 	var count := 0
 	for feature: WarrenFeatureReservation in plan.features:
-		count += int(feature.kind == &"prefab_landmark")
+		count += int(feature.kind == kind)
 	return count
 
 
@@ -226,12 +235,13 @@ func test_maze_mode_seals_the_planner_seeds() -> void:
 			assert_not_null(plan, "%s must seal a town: %s" % [
 				_label(outcome), failure.left(200)])
 			continue
-		var pinned := String(KNOWN_FABRIC_BLOCKERS[key])
 		assert_null(plan, ("%s now seals; delete its KNOWN_FABRIC_BLOCKERS " \
 			+ "entry") % _label(outcome))
-		if plan == null:
+		if plan != null:
+			continue
+		for pinned: String in KNOWN_FABRIC_BLOCKERS[key] as Array:
 			assert_true(failure.contains(pinned),
-				"%s must still die at its pinned gate '%s', not: %s" % [
+				"%s must still die at its pinned defect '%s', not: %s" % [
 					_label(outcome), pinned, failure.left(200)])
 
 
@@ -260,6 +270,20 @@ func test_hero_shortfalls_are_audit_facts() -> void:
 		assert_eq(int(plan.audit.get("advisory_shortfall_count", -1)),
 			shortfalls.size(),
 			"%s shortfall count must match its own record" % _label(outcome))
+		# One pass means one authority on links. `WarrenSpatialFeatureSolver`
+		# still owns a legacy scanner that rediscovers straight links after
+		# room composition when nothing was preplanned; in maze mode it must
+		# never run, so every committed link is one the plan asked for. That
+		# count is zero until C4 translates `maze_bridges`, and the shortfall
+		# above is what records the absence.
+		var preplanned := int(plan.audit.get("preplanned_skywalk_count", -1))
+		assert_eq(_feature_count(plan, &"enclosed_skywalk"), preplanned,
+			("%s must commit only preplanned links; the legacy skywalk " \
+				+ "search may not run in one-pass mode") % _label(outcome))
+		if preplanned == 0:
+			assert_eq(int(shortfalls.get("skywalks", -1)), 0,
+				("%s commits no link, so the absence must be the recorded " \
+					+ "shortfall") % _label(outcome))
 
 
 func test_assets_become_landmarks_or_audited_shortfalls() -> void:
@@ -271,7 +295,7 @@ func test_assets_become_landmarks_or_audited_shortfalls() -> void:
 			continue
 		var asset_plots := _asset_plot_count(int(outcome.seed),
 			StringName(outcome.scale))
-		var landmarks := _landmark_feature_count(plan)
+		var landmarks := _feature_count(plan, &"prefab_landmark")
 		var shortfalls := plan.audit.get("advisory_shortfalls", {}) \
 			as Dictionary
 		var short := int(shortfalls.get("assets", 0))

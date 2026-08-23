@@ -2582,8 +2582,11 @@ static func _maze_feature_pass(grid: WarrenSpatialGrid,
 	# already ranked. The beam retried the corpus only because a later hero
 	# feature could consume the socket this one wanted; with no such feature
 	# left to search for, the ranking's own first choice is the choice.
-	var market_reservation: Dictionary = {"optional_absent": true} \
-		if market_candidates.is_empty() else market_candidates[0]
+	# `_partition_rooms` owns the absent sentinel and substitutes it for an
+	# empty market plan before this branch is reached, so there is exactly one
+	# place a sentinel is born and the corpus here is never empty.
+	assert(not market_candidates.is_empty())
+	var market_reservation: Dictionary = market_candidates[0]
 	if bool(market_reservation.get("optional_absent", false)):
 		# Recorded whether or not the profile REQUIRES a market: a village
 		# whose street could hold no measured canopy shipped without one, and
@@ -2831,8 +2834,16 @@ static func _maze_landmark_refusal(grid: WarrenSpatialGrid,
 		# The searched path DISPLACES the parcels a landmark overlaps. A maze
 		# town may not: the plot planner already partitioned this mass and a
 		# prefab is not entitled to delete a neighbour's house.
+		#
+		# Sorted, like every other landmark id list that reaches an audit:
+		# a Dictionary's key order is cell iteration order, which would make
+		# the published reason depend on where the overlap was noticed first.
+		var blocker_ids: Array[StringName] = []
+		blocker_ids.assign(blockers.keys())
+		blocker_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+			return String(a) < String(b))
 		return {"reason": "clearance overlaps %d plot(s): %s" % [
-			blockers.size(), blockers.keys()]}
+			blocker_ids.size(), blocker_ids]}
 	var assets := recipe.asset_ids()
 	var source_family := &"unknown" if assets.is_empty() else \
 		StringName(String(assets[0]).get_slice(".", 0))
