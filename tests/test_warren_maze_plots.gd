@@ -302,6 +302,107 @@ func test_stack_invariant_rejects_a_floating_plot_at_seal() -> void:
 		floating.last_rejection)
 
 
+func test_add_plot_rejects_a_plot_overlapping_one_already_standing() -> void:
+	## Ported from the deleted constructive suite's
+	## test_seal_rejects_pairwise_overlapping_claims (task B4): claims are gone,
+	## but their disjointness rule survives as the plot model's own, and it is
+	## now checked in BOTH directions -- add_plot refuses the newcomer, and
+	## seal re-derives the same rule over a town doctored behind add_plot's
+	## back, so the gate is never the only thing standing between the model and
+	## two buildings in the same band.
+	var plan := _unsealed_fixture()
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	var columns := _clean_columns(plan, 2, 10)
+	assert_eq(columns.size(), 2, "the compact fixture keeps two clean columns")
+	if columns.size() < 2:
+		return
+	var column := columns[0]
+	var base := plan.massif.base_at(column)
+	var span := WarrenMazeSourcePlan.MIN_HOUSE_BANDS
+	assert_true(plan.add_plot(_plot(&"first", [column] as Array[Vector2i],
+		base, base + span)), plan.last_rejection)
+	# Straddling: its floor sits inside the first plot's own band interval.
+	assert_false(plan.add_plot(_plot(&"straddler",
+		[column] as Array[Vector2i], base + span - 1, base + 2 * span)),
+		"a plot may not share a band with one already on the column")
+	assert_string_contains(plan.last_rejection, "overlaps plot first")
+	assert_eq(plan.plots.size(), 1, "a refused plot is never stored")
+	# Flush above is not an overlap: [floor, top) is half-open, so a second
+	# plot starting exactly at the first one's top is a legal upper storey.
+	assert_true(plan.add_plot(_plot(&"stacked", [column] as Array[Vector2i],
+		base + span, base + 2 * span)), plan.last_rejection)
+	# A deck reserves its single floor band even though it adds no mass, so
+	# nothing else may claim that band either.
+	assert_true(plan.add_plot(_plot(&"roof_deck",
+		[column] as Array[Vector2i], base + 2 * span, base + 2 * span,
+		WarrenMazeSourcePlan.PLOT_DECK)), plan.last_rejection)
+	assert_false(plan.add_plot(_plot(&"over_the_deck",
+		[column] as Array[Vector2i], base + 2 * span,
+		base + 2 * span + span)),
+		"a deck's own floor band is reserved against everything else")
+	assert_string_contains(plan.last_rejection, "overlaps plot roof_deck")
+	# Seal re-derives the rule rather than trusting add_plot ever ran: a plot
+	# appended straight onto `plots` must still be rejected.
+	plan.plots.append({"id": &"smuggled",
+		"kind": WarrenMazeSourcePlan.PLOT_HOUSE,
+		"cells": [column] as Array[Vector2i], "floor": base,
+		"top": base + span, "door_walk": Vector3i.ZERO,
+		"building_id": &"smuggled"})
+	assert_false(plan.seal(), "a smuggled overlapping plot may not seal")
+	assert_string_contains(plan.last_rejection, "overlaps plot")
+
+
+func test_passage_headroom_is_a_per_cell_fact_not_a_constant() -> void:
+	## Ported from the deleted constructive suite (task B4), re-derived against
+	## plots instead of the ledger. `passage_headroom_top` is cell.y +
+	## excavation.slot_bands(cell) -- NOT cell.y +
+	## WarrenExcavation.HEADROOM_BANDS, which undercounts a stair/ramp
+	## intermediate stride cell's own taller carved slot (it carries both
+	## treads). The corpus must contain such a cell, and the band the flat
+	## constant would have called free above it -- really still inside the
+	## carved slot -- must carry no plot and no derived mass.
+	var taller_slots := 0
+	var probed := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		for cell: Vector3i in plan.passage_cells():
+			var slot := plan.excavation.slot_bands(cell)
+			assert_eq(plan.passage_headroom_top(cell), cell.y + slot,
+				"passage_headroom_top is the cell's own carved slot")
+			if slot <= WarrenExcavation.HEADROOM_BANDS:
+				continue
+			taller_slots += 1
+			# The exact band the constant would have freed. It is inside the
+			# real slot, so it is carved: no plot may claim it and nothing
+			# derives mass there.
+			var column := Vector2i(cell.x, cell.z)
+			var band := cell.y + WarrenExcavation.HEADROOM_BANDS
+			probed += 1
+			assert_false(plan.solid_at(Vector3i(column.x, band, column.y)),
+				("seed %d %s: band %d over passage %s is inside its real " \
+					+ "carved slot (%d bands) and may not be solid") \
+					% [seed_value, scale, band, cell, slot])
+			for plot: Dictionary in plan.plots:
+				if not (plot["cells"] as Array).has(column):
+					continue
+				var floor_band := int(plot["floor"])
+				var reserved := maxi(int(plot["top"]), floor_band + 1)
+				assert_false(band >= floor_band and band < reserved,
+					("seed %d %s: plot %s covers band %d, inside passage " \
+						+ "%s's own %d-band carved slot") \
+						% [seed_value, scale, plot["id"], band, cell, slot])
+	assert_gt(taller_slots, 0,
+		"the corpus must carve at least one stair/ramp cell whose real slot " \
+			+ "exceeds HEADROOM_BANDS, or the flat constant is never wrong")
+	gut.p("passage cells with a slot taller than HEADROOM_BANDS: %d (%d probed)" \
+		% [taller_slots, probed])
+
+
 func test_signature_covers_plots() -> void:
 	var bare := _unsealed_fixture()
 	assert_not_null(bare, WarrenMazeCarver.last_failure)
@@ -1427,3 +1528,195 @@ func test_corpus_translates() -> void:
 	gut.p("corpus: %d/%d towns translate" % [translated, 2 * CORPUS_SEEDS])
 	assert_gte(translated, TRANSLATE_FLOOR,
 		"%d/%d towns translate" % [translated, 2 * CORPUS_SEEDS])
+# --- Pipeline and the Phase B exit metric (task B4) -------------------------
+# What survived the deleted constructive suite: the phase pipeline, the corpus
+# seal rate, seal's audit merge, and the exterior-rock ratio the plot model was
+# built to drive down. Every ledger, reservation, stamp, trim, and foundation
+# test went with the code it described.
+
+## Measured exterior-rock ratio on the four planner towns, 2026-08-22:
+## seed 12 compact 0.1877, seed 4 compact 0.1214, seed 3 standard 0.1564,
+## seed 9 standard 0.0686. The ceiling is the worst of those plus a 0.05
+## guard, rounded up to two places. A CEILING, so it is re-pinned DOWNWARD
+## only as the town gets less rocky -- a rise past it is a regression to
+## report, never to accommodate.
+const EXTERIOR_ROCK_CEILING := 0.24
+
+
+func test_carve_returns_an_unsealed_plan_for_the_phase_pipeline() -> void:
+	## Ported from the deleted constructive suite (task B4): the carver's own
+	## deferred-seal contract, which the whole stop_after pipeline rests on --
+	## sealing later may not change what was carved.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var massif := WarrenMassifBuilder.build(12, {}, profile)
+	var plan := WarrenMazeCarver.carve(12, massif, profile, false)
+	assert_not_null(plan, WarrenMazeCarver.last_failure)
+	assert_false(plan.is_sealed())
+	assert_true(plan.seal(), plan.last_rejection)
+	var sealed := WarrenMazeCarver.carve(12, massif, profile)
+	assert_not_null(sealed, WarrenMazeCarver.last_failure)
+	assert_eq(plan.deterministic_signature(),
+		sealed.deterministic_signature(),
+		"deferred seal must not change what was carved")
+
+
+func test_stop_after_exposes_each_phase_uncontaminated() -> void:
+	## Ported from the deleted constructive suite (task B4), re-targeted onto
+	## the plot pipeline's own stages: carve exposes a town with no plots at
+	## all, reserve adds assets and decks and nothing the partition grows, and
+	## partition adds the houses and bridges but still hands back an OPEN plan.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var carved := WarrenMazeSitePlanner.plan(12, {}, profile, &"carve")
+	assert_not_null(carved, WarrenMazeSitePlanner.last_failure)
+	assert_false(carved.is_sealed())
+	assert_eq(carved.plots.size(), 0, "the bore alone places no plot")
+
+	var reserved := WarrenMazeSitePlanner.plan(12, {}, profile, &"reserve")
+	assert_not_null(reserved, WarrenMazeSitePlanner.last_failure)
+	assert_false(reserved.is_sealed())
+	assert_gt(reserved.plots.size(), 0, "reserve places assets and decks")
+	for plot: Dictionary in reserved.plots:
+		assert_true(StringName(plot["kind"]) in [
+			WarrenMazeSourcePlan.PLOT_ASSET, WarrenMazeSourcePlan.PLOT_DECK],
+			"reserve must not have partitioned anything yet: %s is a %s" \
+				% [plot["id"], plot["kind"]])
+
+	var partitioned := WarrenMazeSitePlanner.plan(12, {}, profile,
+		&"partition")
+	assert_not_null(partitioned, WarrenMazeSitePlanner.last_failure)
+	assert_false(partitioned.is_sealed(),
+		"stop_after hands back an open plan, whatever the stage")
+	assert_gt(_plots_of_kind(partitioned,
+		WarrenMazeSourcePlan.PLOT_HOUSE).size(), 0,
+		"partition grows houses")
+	assert_gt(partitioned.plots.size(), reserved.plots.size(),
+		"partition adds to what reserve left standing")
+
+
+func test_plan_rejects_an_unknown_stop_after_stage() -> void:
+	## Ported from the deleted constructive suite (task B4), unchanged.
+	var profile := WarrenVillageScaleProfile.for_id(&"compact")
+	var result := WarrenMazeSitePlanner.plan(12, {}, profile, &"bogus")
+	assert_null(result)
+	assert_ne(WarrenMazeSitePlanner.last_failure, "",
+		"an unknown stop_after stage must set last_failure")
+	assert_true(WarrenMazeSitePlanner.last_failure.contains("bogus"),
+		"the failure message should name the offending stop_after value")
+
+
+func test_site_planner_seals_the_corpus_one_pass() -> void:
+	## Ported from the deleted constructive suite (task B4). The planner's own
+	## corpus: seeds 1..12 x {compact, standard}. A handful of seeds are known
+	## to miss the carve-stage frontage floor; this asserts the failures stay
+	## confined to massif/carve -- a seal failure here would mean the plot
+	## layer built a town its own model refuses, which is the planner's bug,
+	## not a pre-existing generation gate.
+	var success := 0
+	var total := 0
+	var failures: Array[String] = []
+	for scale: StringName in [&"compact", &"standard"]:
+		for seed_value in range(1, CORPUS_SEEDS + 1):
+			total += 1
+			var plan := _sealed_town(seed_value, scale)
+			if plan != null:
+				success += 1
+				assert_true(plan.is_sealed(),
+					"seed %d %s: plan() must return a sealed plan" \
+						% [seed_value, scale])
+				continue
+			# The cache keeps the null, not the reason; re-run the failing
+			# town (it fails in the first two phases, so it is cheap) to read
+			# the planner's own verbatim failure back.
+			WarrenMazeSitePlanner.plan(seed_value, {},
+				WarrenVillageScaleProfile.for_id(scale))
+			var failure := WarrenMazeSitePlanner.last_failure
+			failures.append("seed %d %s: %s" % [seed_value, scale, failure])
+			assert_true(failure.begins_with("massif:") \
+					or failure.begins_with("carve:"),
+				"seed %d %s: only massif/carve failures are known-acceptable, got: %s" \
+					% [seed_value, scale, failure])
+	for failure: String in failures:
+		gut.p(failure)
+	gut.p("corpus: %d/%d towns seal one-pass" % [success, total])
+	assert_gte(success, TRANSLATE_FLOOR,
+		"expected >= %d/%d seals, got %d" % [TRANSLATE_FLOOR, total, success])
+
+
+func test_seal_merges_audit_instead_of_replacing_it() -> void:
+	## Ported from the deleted constructive suite (task B4), re-targeted onto
+	## the plot layer's own audit. seal() used to do `audit = _build_audit()`,
+	## a wholesale replacement that destroyed whatever the earlier phases had
+	## already written. A full one-pass run exercises every phase, so a sealed
+	## plan must still carry `plot_outcomes` alongside seal's own keys.
+	var plan := _sealed_town(4, &"compact")
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	if plan == null:
+		return
+	assert_true(plan.is_sealed(), plan.last_rejection)
+	assert_true(plan.audit.has("plot_outcomes"),
+		"seal() must not wipe the plot phases' own outcomes")
+	var outcomes := plan.audit.get("plot_outcomes", {}) as Dictionary
+	assert_gt((outcomes.get("buildings", []) as Array).size(), 0,
+		"the outcomes seal preserved must be a real record, not an empty one")
+	for key: String in ["frontage_ratio", "street_floor_gaps",
+			"exterior_rock_ratio"]:
+		assert_true(plan.audit.has(key),
+			"seal contributes its own %s alongside what it preserved" % key)
+
+
+func test_exterior_rock_ratio_is_pinned() -> void:
+	## Phase B's exit metric: of the solid cells on the town's own skin above
+	## grade, how many are bare rock rather than building. Reported per town
+	## and pinned as a ceiling (see EXTERIOR_ROCK_CEILING for the measured
+	## values). Every count is re-derived here off `solid_at` and `plots`
+	## directly, so the number the plan audits is falsified rather than
+	## trusted.
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		var measured := plan.exterior_rock_ratio()
+		assert_eq(str(plan.audit.get("exterior_rock_ratio", {})),
+			str(measured), "seal audits exactly what the accessor derives")
+		var exterior := 0
+		var rock := 0
+		var in_plot := 0
+		for column: Vector2i in _sorted_columns(plan):
+			for band in range(plan.massif.base_at(column) + 1,
+					plan.column_ceiling(column)):
+				if not plan.solid_at(Vector3i(column.x, band, column.y)):
+					continue
+				var exposed := false
+				for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+					exposed = exposed or not plan.solid_at(Vector3i(
+						column.x + direction.x, band, column.y + direction.y))
+				if not exposed:
+					continue
+				exterior += 1
+				var owned := false
+				for plot: Dictionary in plan.plots:
+					if not (plot["cells"] as Array).has(column):
+						continue
+					if band >= int(plot["floor"]) and band < int(plot["top"]):
+						owned = true
+						break
+				in_plot += int(owned)
+				rock += int(not owned)
+		assert_eq(int(measured["exterior_cells"]), exterior,
+			"seed %d %s: exterior cell count" % [seed_value, scale])
+		assert_eq(int(measured["rock_cells"]), rock,
+			"seed %d %s: exterior rock count" % [seed_value, scale])
+		assert_eq(int(measured["plot_cells"]), in_plot,
+			"seed %d %s: exterior plot count" % [seed_value, scale])
+		assert_gt(exterior, 0,
+			"seed %d %s has a skin to measure" % [seed_value, scale])
+		var ratio := float(measured["ratio"])
+		gut.p("seed %d %s: exterior rock %d/%d = %.4f (plot %d, ceiling %.2f)" \
+			% [seed_value, scale, rock, exterior, ratio, in_plot,
+				EXTERIOR_ROCK_CEILING])
+		assert_lte(ratio, EXTERIOR_ROCK_CEILING,
+			"seed %d %s: exterior rock ratio %.4f is past its pinned ceiling" \
+				% [seed_value, scale, ratio])

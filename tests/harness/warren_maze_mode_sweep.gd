@@ -8,13 +8,14 @@ extends SceneTree
 ##   Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- \
 ##     --seeds 1,2,3,4,5,6,7,8,9 --mode maze
 ##
-## --constructive switches to the slice-1 exit-criteria matrix instead: for
-## every seed x {compact, standard} it runs the real constructive pipeline --
-## WarrenMazeSitePlanner.plan() -> WarrenMazeVolumeAdapter.to_volume_plan() ->
-## WarrenMazeBlockPartitioner.partition() -- and reports the metrics the
-## slice-1 exit criteria are measured against (see docs/superpowers/plans/
-## 2026-08-20-constructive-maze-slice1.md, "Slice-1 measured results"). --mode
-## is irrelevant to this path and is accepted (and ignored) in either order.
+## --constructive switches to the plot-model exit-criteria matrix instead: for
+## every seed x {compact, standard} it runs the real pipeline --
+## WarrenMazeSitePlanner.plan() (massif -> carve -> reserve -> partition ->
+## seal) -> WarrenMazeVolumeAdapter.to_volume_plan() ->
+## WarrenMazeBlockPartitioner.partition() -- and reports the metrics Phase B is
+## measured against (see docs/superpowers/specs/2026-08-21-plot-model-design.md,
+## "Success criteria"). --mode is irrelevant to this path and is accepted (and
+## ignored) in either order.
 ##
 ##   Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- \
 ##     --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --constructive
@@ -92,14 +93,13 @@ func _run_constructive(seeds: Array[int]) -> void:
 
 
 func _constructive_outcome(city_seed: int, scale_id: StringName) -> Dictionary:
-	## Runs the real one-pass constructive pipeline for one (seed, scale) cell
-	## of the matrix -- WarrenMazeSitePlanner.plan() (massif -> carve -> reserve
-	## -> partition -> seal) then, only if that sealed, WarrenMazeVolumeAdapter and
-	## WarrenMazeBlockPartitioner (the same production entry points the
-	## constructive debug view and the translator tests exercise) -- and
-	## reports the amended slice-1 exit metrics (see the controller amendments
-	## recorded in docs/superpowers/plans/2026-08-20-constructive-maze-slice1.md,
-	## "Slice-1 measured results").
+	## Runs the real one-pass pipeline for one (seed, scale) cell of the matrix
+	## -- WarrenMazeSitePlanner.plan() (massif -> carve -> reserve -> partition
+	## -> seal) then, only if that sealed, WarrenMazeVolumeAdapter and
+	## WarrenMazeBlockPartitioner (the same production entry points the debug
+	## view and the plot tests exercise) -- and reports the plot-model exit
+	## metrics. Every source-side number comes off the sealed plan's own plots
+	## and audit; every translated number off the parcel plan's audit.
 	var profile := WarrenVillageScaleProfile.for_id(scale_id)
 	var plan := WarrenMazeSitePlanner.plan(city_seed, {}, profile)
 	if plan == null:
@@ -110,70 +110,54 @@ func _constructive_outcome(city_seed: int, scale_id: StringName) -> Dictionary:
 			"line": "SWEEP seed=%d scale=%s sealed=false stage=%s reason=%s" % [
 				city_seed, String(scale_id), stage, reason.left(160)]}
 
+	var source := _source_metrics(plan)
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(plan)
 	if volume == null:
 		return {"sealed": true, "translated": false,
-			"line": "SWEEP seed=%d scale=%s sealed=true stage=adapter reason=%s" % [
-				city_seed, String(scale_id),
-				WarrenMazeVolumeAdapter.last_failure.left(160)]}
+			"line": "%s translated=false stage=adapter reason=%s" % [
+				String(source.line), WarrenMazeVolumeAdapter.last_failure.left(120)]}
 
 	var parcels := WarrenMazeBlockPartitioner.partition(plan, volume)
 	if parcels == null:
 		return {"sealed": true, "translated": false,
-			"line": "SWEEP seed=%d scale=%s sealed=true stage=partition reason=%s" % [
-				city_seed, String(scale_id),
-				WarrenMazeBlockPartitioner.last_failure.left(160)]}
+			"line": "%s translated=false stage=partition reason=%s" % [
+				String(source.line),
+				WarrenMazeBlockPartitioner.last_failure.left(120)]}
 
-	var lineage_hints := parcels.audit.get("maze_lineage_hints", {}) as Dictionary
-	var median_lineage := _median(_lineage_footprint_totals(lineage_hints,
-		parcels.parcels))
-	var ownership := float(parcels.audit.get("maze_owned_solid_ratio", 0.0))
-	var breakdown := parcels.audit.get("maze_ownership_breakdown", {}) as Dictionary
-	var foundation_column_count := \
-		(plan.audit.get("foundation_columns", {}) as Dictionary).size()
 	var signature := plan.deterministic_signature().sha256_text().left(12)
 	return {"sealed": true, "translated": true,
-		"line": ("SWEEP seed=%d scale=%s sealed=true translated=true parcels=%d "
-			+ "median_lineage=%d ownership=%.4f breakdown=%s "
-			+ "foundation_columns=%d signature=%s") % [
-			city_seed, String(scale_id), parcels.parcels.size(), median_lineage,
-			ownership, _format_breakdown(breakdown), foundation_column_count,
-			signature]}
+		"line": ("%s translated=true parcels=%d back_room_cells=%d "
+			+ "ownership=%.4f signature=%s") % [
+			String(source.line), parcels.parcels.size(),
+			int(parcels.audit.get("maze_back_room_cells", 0)),
+			float(parcels.audit.get("maze_ownership_ratio", 0.0)), signature]}
 
 
-func _lineage_footprint_totals(lineage_hints: Dictionary,
-		parcels: Array[WarrenBuildingParcel]) -> Array[int]:
-	## Groups translated parcels by their shared lineage (an L-pair's two
-	## claims, or any other claim family the stamp pass tagged with a common
-	## lineage_hint) and sums each group's footprint column count -- the
-	## amended exit metric is median LINEAGE footprint, not median per-claim
-	## footprint (a stamped L-pair is one building split into two claims, and
-	## the old per-claim median counted it as two small buildings). A parcel
-	## with no lineage_hint is its own singleton lineage.
-	var totals: Dictionary = {}
-	for parcel: WarrenBuildingParcel in parcels:
-		var stable_id := String(parcel.stable_id)
-		var hint := StringName(lineage_hints.get(stable_id, &""))
-		var group_key := String(hint) if not hint.is_empty() else stable_id
-		totals[group_key] = int(totals.get(group_key, 0)) + parcel.footprint.size()
-	var out: Array[int] = []
-	out.assign(totals.values())
-	return out
-
-
-func _median(values: Array[int]) -> int:
-	## Upper-middle element, not an even-count average -- a report-only
-	## approximation (matches the convention this codebase already uses for
-	## footprint medians in test_warren_maze_constructive.gd), fine for a
-	## sweep metric but not a precise statistical median.
-	if values.is_empty():
-		return 0
-	var sorted_values := values.duplicate()
-	sorted_values.sort()
-	return sorted_values[sorted_values.size() / 2]
-
-
-func _format_breakdown(breakdown: Dictionary) -> String:
-	return "claimed=%s,reserved=%s,buildable_unclaimed=%s,unbuildable=%s" % [
-		breakdown.get("claimed", 0), breakdown.get("reserved", 0),
-		breakdown.get("buildable_unclaimed", 0), breakdown.get("unbuildable", 0)]
+func _source_metrics(plan: WarrenMazeSourcePlan) -> Dictionary:
+	## The sealed plan's own half of a row: what the plot layer built, and how
+	## much of the town's skin it left as bare rock. Counted off `plots` and
+	## `plot_facts` directly rather than off the planner's own bookkeeping, so
+	## a row reports the town that really sealed.
+	var counts: Dictionary = {}
+	for kind: StringName in WarrenMazeSourcePlan.PLOT_KINDS:
+		counts[kind] = 0
+	var tiered := 0
+	var house_columns := 0
+	for plot: Dictionary in plan.plots:
+		var kind := StringName(plot["kind"])
+		counts[kind] = int(counts.get(kind, 0)) + 1
+		tiered += int(bool(plan.plot_facts(plot).tiered))
+		if kind == WarrenMazeSourcePlan.PLOT_HOUSE:
+			house_columns += (plot["cells"] as Array).size()
+	var houses := int(counts[WarrenMazeSourcePlan.PLOT_HOUSE])
+	var exterior := plan.audit.get("exterior_rock_ratio", {}) as Dictionary
+	return {"line": ("SWEEP seed=%d scale=%s sealed=true plots=%d houses=%d "
+		+ "assets=%d decks=%d bridges=%d tiered=%d mean_footprint=%.2f "
+		+ "exterior_rock=%.4f") % [
+		plan.world_seed, String(plan.scale_profile.scale_id),
+		plan.plots.size(), houses,
+		int(counts[WarrenMazeSourcePlan.PLOT_ASSET]),
+		int(counts[WarrenMazeSourcePlan.PLOT_DECK]),
+		int(counts[WarrenMazeSourcePlan.PLOT_BRIDGE]), tiered,
+		float(house_columns) / float(maxi(1, houses)),
+		float(exterior.get("ratio", 0.0))]}

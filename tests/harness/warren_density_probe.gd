@@ -162,8 +162,12 @@ func _run_maze(city_seeds: Array[String], label: String,
 				partition_summary = " partition=FAILED partition_ms=%d reason=%s" % [
 					partition_elapsed, reason]
 			else:
+				# `maze_ownership_ratio` (task B4): the deleted ledger audit's
+				# `maze_owned_solid_ratio` no longer exists, so this always
+				# fell through to the coarse retained-mass fallback, which
+				# stays the answer for a non-maze volume.
 				var assignment := float(parcels.audit.get(
-					"maze_owned_solid_ratio", float(
+					"maze_ownership_ratio", float(
 						parcels.retained_mass_cells.size()) \
 						/ float(maxi(1, volume.mass_cells.size()))))
 				totals.partitioned += 1

@@ -30,9 +30,8 @@ const PLOT_KINDS: Array[StringName] = [
 ## The minimum slab a COVERED passage keeps overhead: one band of retained
 ## mass between a tunnel's own headroom and whatever stands on it. A sealed
 ## rock shoulder never cuts below it, and a plot bearing on a tunnel roof
-## sits exactly this far above that passage's headroom top. WarrenMazeStampPass
-## and WarrenBuildingParcel still carry their own copy of this number; a later
-## task re-points them here.
+## sits exactly this far above that passage's headroom top. The one copy in
+## the codebase: WarrenPlotPlanner and WarrenBuildingParcel both read it here.
 const TUNNEL_ROOF_BANDS := 1
 
 var world_seed: int
@@ -51,19 +50,6 @@ var block_thickness: Dictionary = {}
 var audit: Dictionary = {}
 var last_rejection := ""
 var _sealed := false
-
-## Constructive edit ledger: Vector2i column -> {floor_band, top_band, phase}.
-## Overlays the sealed massif; a raised floor_band leaves a rock foundation
-## below it (foundation_depth), a lowered one is forbidden -- terrain is the
-## immutable floor and carved passage cells are never edited.
-var column_edits: Dictionary = {}
-## Stamped houses as data: {footprint: Array[Vector2i], floor_band: int,
-## top_band: int, door_walk: Vector3i, door_column: Vector2i,
-## frontage: Vector2i, lineage_hint: StringName, shape_id: StringName}.
-var parcel_claims: Array[Dictionary] = []
-## Typed large features: {kind: StringName, cells: Array[Vector2i],
-## datum_band: int, walk_cells: Array[Vector3i], audit: Dictionary}.
-var reservations: Array[Dictionary] = []
 
 ## The town as plots (2026-08-21 plot-model design): {id: StringName, kind:
 ## StringName, cells: Array[Vector2i], floor: int, top: int, door_walk:
@@ -98,178 +84,21 @@ func mark_passage(cell: Vector3i, kind: StringName) -> bool:
 	return true
 
 
-func effective_base(column: Vector2i) -> int:
-	## For a PASSAGE-HOSTING column, this is the house/plot floor built
-	## ABOVE that passage's own required headroom (a bridge deck, or a
-	## claim bearing on a lower tunnel's own trimmed roof, per rule 4's
-	## bridge-capable ledger) -- never "the bottom of this column's mass".
-	## The real bottom of mass for such a column is state_at()'s job to
-	## reconstruct (raw massif below the highest hosted passage's own
-	## headroom, ledger-driven at and above it): this accessor alone answers
-	## "where does the built floor sit", not "where does solid rock start".
-	## For a non-passage column the two questions have always had the same
-	## answer, and still do.
-	if column_edits.has(column):
-		return int((column_edits[column] as Dictionary).get("floor_band", 0))
-	return massif.base_at(column)
-
-
-func effective_top(column: Vector2i) -> int:
-	if column_edits.has(column):
-		return int((column_edits[column] as Dictionary).get("top_band", 0))
-	return massif.top_at(column)
-
-
-func foundation_depth(column: Vector2i) -> int:
-	## Bands of rock a raised floor now stands on above the sampled terrain.
-	## Zero when the ledger never touched this column or only lowered it --
-	## record_edit already forbids sinking below the terrain sample, so the
-	## clamp only guards a column with no edit at all.
-	return maxi(0, effective_base(column) - massif.base_at(column))
-
-
-func record_edit(column: Vector2i, floor_band: int, top_band: int,
-		phase: StringName, bearing: bool = false) -> bool:
-	## `bearing` (refined 2026-08-21, the tiers unlock): true when this
-	## floor-raising edit stands on continuous pre-edit rock rather than a
-	## within-+/-1-band terrain correction -- WarrenMazeStampPass._column_bears
-	## decides which, at the moment the offender is committed. Recorded on
-	## the edit itself so seal() can re-validate the +/-1 stamp-phase budget
-	## cheaply (a massif-range check) instead of re-walking every band, and
-	## so a consumer (the debug view) can render bearing mass distinctly.
-	##
-	## Bridge-capable ledger (refined 2026-08-22, slice 1c task 1): a
-	## passage-hosting column is no longer rejected outright -- a floor
-	## raised to clear every passage cell that column hosts, plus
-	## WarrenExcavation.HEADROOM_BANDS of required street air above the
-	## highest one, is legal (a bridge house, or a skywalk_span's own deck
-	## reservation, built directly on top of the street rather than beside
-	## it). `_passage_headroom_floor` is the SAME shared bound record_trim's
-	## own gate and seal()'s mirror of both already use, so "would this edit
-	## cut into a passage's own headroom" can never disagree across the three
-	## call sites. Streets stay otherwise immutable: any floor at or below
-	## that bound -- including one that never reaches down into
-	## [passage y, passage y + HEADROOM_BANDS) at all -- is still refused.
-	if _sealed:
-		return _reject("plan is sealed; the ledger is frozen")
-	var headroom_floor := _passage_headroom_floor(column)
-	if headroom_floor >= 0 and floor_band < headroom_floor:
-		return _reject(
-			("edit at column %s would cut into a passage's own headroom: " \
-				+ "floor_band %d is below the required %d (passage y + " \
-				+ "HEADROOM_BANDS)") % [column, floor_band, headroom_floor])
-	if massif == null or not massif.has_column(column):
-		return _reject("edit at column %s has no massif column" % column)
-	if floor_band < massif.base_at(column):
-		return _reject("edit at column %s would sink its floor below terrain" \
-			% column)
-	column_edits[column] = {"floor_band": floor_band, "top_band": top_band,
-		"phase": phase, "bearing": bearing}
-	return true
-
-
-## P4.5 skyline trim: lowers a column's top_band to discard mass no claim
-## ever reaches. Unlike record_edit, this can only ever LOWER top_band --
-## trim never raises mass, and never touches floor_band or phase for a
-## column that already carries an edit (an offender correction from stamp,
-## or an earlier reservation edit): only top_band moves. A column with no
-## prior edit gets a brand-new entry at its own effective_base, phase
-## &"trim", so foundation_depth (base-derived) is unaffected either way.
-## Rejects: a sealed ledger, a requested top_band below the column's own
-## effective_base (a trim may lower mass, never sink the floor), and --
-## refined 2026-08-21 -- a requested top_band that would cut into a
-## passage-hosting column's own headroom. Passage-hosting columns are no
-## longer exempt outright (a covered tunnel's roof gets trimmed too, just
-## never below HEADROOM_BANDS of air over the passage cell itself); streets
-## remain otherwise immutable via record_edit/can_record_edit, which still
-## reject ANY edit -- floor or top -- on a passage column outright.
-func record_trim(column: Vector2i, top_band: int) -> bool:
-	if _sealed:
-		return _reject("plan is sealed; the ledger is frozen")
-	if massif == null or not massif.has_column(column):
-		return _reject("trim at column %s has no massif column" % column)
-	var floor_band := effective_base(column)
-	if top_band < floor_band:
-		return _reject("trim at column %s would sink below its own floor" \
-			% column)
-	var headroom_floor := _passage_headroom_floor(column)
-	if headroom_floor >= 0 and top_band < headroom_floor:
-		return _reject(
-			("trim at column %s would cut into a passage's own headroom: " \
-				+ "top_band %d is below the required %d (passage y + " \
-				+ "HEADROOM_BANDS)") % [column, top_band, headroom_floor])
-	var phase := StringName(&"trim")
-	var bearing := false
-	if column_edits.has(column):
-		var existing := column_edits[column] as Dictionary
-		floor_band = int(existing.get("floor_band", floor_band))
-		phase = StringName(existing.get("phase", &"trim"))
-		# A trim never changes floor_band or bearing status -- only top_band
-		# moves -- so a bearing stamp-phase edit that later gets trimmed
-		# must keep carrying bearing: true, or seal()'s own re-validation
-		# would wrongly re-apply the +/-1 budget to it.
-		bearing = bool(existing.get("bearing", false))
-	# "Only lowers": a requested top_band that would RAISE this column's
-	# current top is simply clamped away rather than applied or rejected.
-	var new_top := mini(top_band, effective_top(column))
-	column_edits[column] = {"floor_band": floor_band, "top_band": new_top,
-		"phase": phase, "trimmed": true, "bearing": bearing}
-	return true
-
-
 ## The real, per-cell top of a passage cell's own carved headroom slot --
 ## cell.y + excavation.slot_bands(cell) -- controller ruling (2026-08-22):
 ## NOT cell.y + WarrenExcavation.HEADROOM_BANDS, which undercounts a
 ## stair/ramp intermediate stride cell's own taller carved slot (it carries
 ## both treads, one band more than a plain LEVEL cell -- see
 ## WarrenExcavation.slot_bands' own header). This is the ONE source of truth
-## every headroom-measuring rule in this file, WarrenMazeStampPass, and
-## WarrenMazeReservationPass must use instead of re-deriving the
-## constant-based approximation that used to certify a claim as bearing on
-## what a stair-adjacent column's real carved slot still shows as open air.
+## every headroom-measuring rule in this file and in WarrenPlotPlanner must
+## use instead of re-deriving the constant-based approximation that used to
+## certify a plot as bearing on what a stair-adjacent column's real carved
+## slot still shows as open air.
 ## HEADROOM_BANDS itself stays meaningful only where it genuinely names a
 ## MINIMUM (e.g. the carver's own span-legality mass check) -- never as a
 ## stand-in for a specific cell's own real headroom.
 func passage_headroom_top(cell: Vector3i) -> int:
 	return cell.y + excavation.slot_bands(cell)
-
-
-## The lowest legal top_band a trim may ever leave on `column`: the highest
-## passage_headroom_top() among every passage cell hosted there -- -1 (no
-## floor) when the column hosts no passage cell at all. Shared between
-## record_trim's own gate and seal()'s mirror of the same rule, so the two
-## can never disagree about what "cuts into a passage's headroom" means.
-func _passage_headroom_floor(column: Vector2i) -> int:
-	var floor_needed := -1
-	for cell: Vector3i in passage_kinds.keys():
-		if cell.x == column.x and cell.z == column.y:
-			floor_needed = maxi(floor_needed, passage_headroom_top(cell))
-	return floor_needed
-
-
-## Non-mutating pre-flight for record_edit's own gates (sealed ledger, a
-## carved passage cell, a floor sinking below terrain), without writing to
-## column_edits or touching last_rejection. A caller that must commit a whole
-## batch of edits atomically -- WarrenMazeStampPass records several offender
-## columns per placed/extended claim -- validates every member of the batch
-## with this first; only once every member passes does it call record_edit
-## for real. Without this, a batch loop that calls record_edit directly and
-## aborts on the first rejection strands whatever it already committed for
-## earlier offenders in the same batch (a claim with no matching edit, or an
-## edit with no claim). Mirrors record_edit's checks exactly, so "would
-## record_edit accept this" and "does can_record_edit say yes" can never
-## disagree.
-func can_record_edit(column: Vector2i, floor_band: int) -> bool:
-	if _sealed:
-		return false
-	var headroom_floor := _passage_headroom_floor(column)
-	if headroom_floor >= 0 and floor_band < headroom_floor:
-		return false
-	if massif == null or not massif.has_column(column):
-		return false
-	if floor_band < massif.base_at(column):
-		return false
-	return true
 
 
 func seal() -> bool:
@@ -314,179 +143,9 @@ func seal() -> bool:
 	for column: Vector2i in massif.columns:
 		if not block_thickness.has(column):
 			return _reject("column %s has no block-thickness classification" % column)
-	# Claims must be pairwise disjoint -- WarrenMazeStampPass's own
-	# claimed_intervals bookkeeping is the only thing that ever enforced this
-	# during generation, so seal() re-checks it as a real invariant rather
-	# than trusting that bookkeeping never lied. Band-aware (Task 1,
-	# 2026-08-21): two claims may legally share a column -- an upper street's
-	# house stacked above a lower one -- as long as their own [floor, top)
-	# band ranges stay disjoint; only an actual band overlap is rejected. The
-	# same pass also builds the footprint-plus-1-column apron every
-	# stamp-phase edit below must land inside, and `claim_tops` (the tallest
-	# claim on each column) is what the trim-validity check below measures
-	# against.
-	var claim_owner: Dictionary = {}
-	var claim_tops: Dictionary = {}
-	var apron_columns: Dictionary = {}
-	for index in parcel_claims.size():
-		var claim := parcel_claims[index] as Dictionary
-		var claim_floor := int(claim.get("floor_band", 0))
-		var claim_top := int(claim.get("top_band", 0))
-		for member: Vector2i in claim.get("footprint", []) as Array[Vector2i]:
-			var owners: Array = claim_owner.get(member, [])
-			for owner: Dictionary in owners:
-				if claim_floor < int(owner.top) and claim_top > int(owner.floor):
-					return _reject(
-						("claim %d and claim %d both claim column %s -- " \
-							+ "claims must be pairwise disjoint") \
-							% [int(owner.index), index, member])
-			owners.append({"index": index, "floor": claim_floor,
-				"top": claim_top})
-			claim_owner[member] = owners
-			claim_tops[member] = maxi(int(claim_tops.get(member, claim_top)),
-				claim_top)
-			apron_columns[member] = true
-			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
-				apron_columns[member + direction] = true
-	var edit_columns: Array[Vector2i] = []
-	edit_columns.assign(column_edits.keys())
-	edit_columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
-	for column: Vector2i in edit_columns:
-		var edit := column_edits[column] as Dictionary
-		if not massif.has_column(column):
-			return _reject("edit at column %s has no massif column" % column)
-		if int(edit.get("floor_band", 0)) < massif.base_at(column):
-			return _reject(
-				"edit at column %s sinks its floor below terrain" % column)
-		# Streets stay immutable for a real (reserve/stamp) edit in the sense
-		# that matters -- [passage y, passage y + HEADROOM_BANDS) is never
-		# touched -- but a passage-hosting column is no longer rejected
-		# outright (refined 2026-08-22, the bridge-capable ledger unlock,
-		# slice 1c task 1): a floor at or above every hosted passage's own
-		# headroom floor is a legal bridge house or skywalk_span deck.
-		# Mirrors record_edit/can_record_edit's own gate exactly (same
-		# _passage_headroom_floor bound), so the three can never disagree. A
-		# trim is scoped out of this general check (the trim-specific
-		# headroom check just below governs it instead) since a trim edit's
-		# own "floor_band" entry is the column's pre-existing floor, not a
-		# new one being placed.
-		if not bool(edit.get("trimmed", false)):
-			var edit_headroom_floor := _passage_headroom_floor(column)
-			if edit_headroom_floor >= 0 \
-					and int(edit.get("floor_band", 0)) < edit_headroom_floor:
-				return _reject(
-					("edit at column %s cuts into a passage's own headroom: " \
-						+ "floor_band %d is below the required %d (passage " \
-						+ "y + HEADROOM_BANDS)") \
-						% [column, int(edit.get("floor_band", 0)),
-							edit_headroom_floor])
-		# A trim may only ever discard mass no claim reaches -- never cut into
-		# one, and never into a passage's own required headroom.
-		# claim_tops (built above from parcel_claims, band-aware) is the
-		# tallest roof any claim on this column actually needs; a trim whose
-		# own top_band lands below that has quietly amputated a house.
-		# _passage_headroom_floor mirrors record_trim's own gate exactly, so
-		# the two can never disagree about what "cuts into a passage's
-		# headroom" means.
-		if bool(edit.get("trimmed", false)):
-			if claim_tops.has(column) \
-					and int(edit.get("top_band", 0)) < int(claim_tops[column]):
-				return _reject(
-					("trim at column %s cuts into a claim: top_band %d is " \
-						+ "below the tallest claim's own top %d") \
-						% [column, int(edit.get("top_band", 0)),
-							int(claim_tops[column])])
-			var headroom_floor := _passage_headroom_floor(column)
-			if headroom_floor >= 0 \
-					and int(edit.get("top_band", 0)) < headroom_floor:
-				return _reject(
-					("trim at column %s cuts into a passage's own headroom: " \
-						+ "top_band %d is below the required %d (passage y " \
-						+ "+ HEADROOM_BANDS)") \
-						% [column, int(edit.get("top_band", 0)),
-							headroom_floor])
-		# Reservation-phase edits may level/sink a reservation's footprint
-		# further than one band by design (a market approach, a landmark plinth)
-		# and never claim a footprint of their own to be inside the apron of --
-		# only stamp-phase (parcel-claim offender) edits are held to the
-		# +/-1-band-OR-bearing, in-apron budget WarrenMazeStampPass's own
-		# candidate enumeration (_footprint_offenders) already meant to
-		# guarantee. Refined 2026-08-21 (plinth bearing): a drift beyond +/-1
-		# is legal when the edit is bearing -- re-validated here with the
-		# SAME plinth test WarrenMazeStampPass._column_bears applies at
-		# placement time (only the PLINTH_BANDS immediately below the floor
-		# need to be solid, not the whole column down to its own base --
-		# "lower tunnels beneath are allowed"), against the PRE-EDIT, RAW
-		# massif/excavation via state_at_raw (never the ledger: the ledger is
-		# exactly what's being checked, and never trusting the recorded
-		# `bearing` flag alone either).
-		if StringName(edit.get("phase", &"")) == &"stamp":
-			var floor_band := int(edit.get("floor_band", 0))
-			var drift := absi(floor_band - massif.base_at(column))
-			if drift > 1:
-				var bears := false
-				if bool(edit.get("bearing", false)):
-					# Tunnel-roof exemption (rule 4, slice 1c task 1,
-					# 2026-08-22): mirrors _column_bears' own SAME special
-					# case exactly -- a floor landing exactly on a hosted
-					# passage's own future-trimmed roof slab (passage y +
-					# HEADROOM_BANDS + TUNNEL_ROOF_BANDS) bears automatically,
-					# without the continuity walk below (whose plinth window
-					# would otherwise dip into that passage's own carved
-					# headroom and always fail it). Re-derived here against
-					# the pre-edit, raw massif/excavation
-					# (_passage_headroom_floor reads passage_kinds, not the
-					# ledger), never trusting the recorded `bearing` flag
-					# alone -- same discipline as the continuity walk it sits
-					# beside.
-					var headroom_floor := _passage_headroom_floor(column)
-					if headroom_floor >= 0 and floor_band == headroom_floor \
-							+ WarrenMazeStampPass.TUNNEL_ROOF_BANDS:
-						bears = true
-					else:
-						var plinth_floor := maxi(massif.base_at(column),
-							floor_band - WarrenMazeStampPass.PLINTH_BANDS)
-						bears = true
-						for y in range(plinth_floor, floor_band):
-							if state_at_raw(Vector3i(column.x, y, column.y)) \
-									!= CellState.SOLID:
-								bears = false
-								break
-				if not bears:
-					return _reject(
-						("stamp edit at column %s moves its floor %d " \
-							+ "bands from the pre-edit surface, past the " \
-							+ "+/-1 budget, and is not a bearing edit onto " \
-							+ "a solid plinth") % [column, drift])
-			if not apron_columns.has(column):
-				return _reject(
-					("stamp edit at column %s is outside every claim's " \
-						+ "footprint and its 1-column apron") % column)
-	# Fix round 1 (2026-08-21 review, Important finding): the trim-specific
-	# check above only ever looks at TRIMMED edits, so a column that never
-	# got trimmed but whose recorded top_band is stale for another reason
-	# (a flush-stacked claim's own placement is deliberately exempt from
-	# ever writing that column's offender edit -- see
-	# WarrenMazeStampPass._stacks_on_existing_claim -- so a lower tier's own
-	# offender-correction edit could in principle be left stuck below a
-	# later, taller claim stacked on the same column) would sail through
-	# unnoticed. This is the general form of the same invariant, over every
-	# claimed column regardless of trim status: effective_top can never sit
-	# below the tallest claim actually built there. A column with no edit at
-	# all trivially satisfies this (effective_top reads massif.top_at, and no
-	# claim's ceiling can ever exceed that), so only edited columns can ever
-	# fail it in practice -- but this checks every claimed column, not just
-	# the edited subset, so bookkeeping is never trusted over the real claim
-	# data.
-	for column: Vector2i in claim_tops.keys():
-		var claim_top := int(claim_tops[column])
-		if effective_top(column) < claim_top:
-			return _reject(
-				("stacked column %s effective_top %d is below the tallest " \
-					+ "claim actually built there (top %d)") \
-					% [column, effective_top(column), claim_top])
-	# Phases (reserve/stamp) already wrote audit facts before seal runs; seal
-	# contributes its own freshly computed keys, it never destroys theirs.
+	# The plot phases already wrote audit facts before seal runs (the plot
+	# planner's own `plot_outcomes`); seal contributes its own freshly
+	# computed keys, it never destroys theirs.
 	var built := _build_audit()
 	audit.merge(built, true)
 	if int(audit.get("max_spine_straight_run", 0)) \
@@ -509,8 +168,10 @@ func seal() -> bool:
 		_rock_shoulders.clear()
 		return _reject(plot_failure)
 	# Rules become repairs: a street whose own floor is not solid is an audit
-	# fact here, never a rejection.
+	# fact here, never a rejection. Both facts are measured AFTER the plot
+	# checks, which is what builds the sealed rock shoulders they read.
 	audit["street_floor_gaps"] = _street_floor_gaps()
+	audit["exterior_rock_ratio"] = exterior_rock_ratio()
 	_sealed = true
 	return true
 
@@ -519,74 +180,16 @@ func is_sealed() -> bool:
 	return _sealed
 
 
-## SOLID reads through the edit ledger (effective_base/effective_top), not
-## the raw sealed massif -- P4.5's skyline trim lowers a column's recorded
-## top to discard mass no claim reaches, and a raised floor (an offender
-## correction, or a reservation edit) can also open a gap below a claim's own
-## floor; both must stop reporting as SOLID here or every state_at consumer
-## (frontage-face enumeration, ceiling walks, the debug view, anything that
-## asks "is there still rock here") keeps seeing ghost mass the ledger has
-## already discarded. Passage cells and carved air are unaffected -- the
-## ledger never edits those, and they are checked first regardless.
-##
-## Bridge-capable columns (2026-08-22, controller ruling on slice 1c task
-## 1): a PASSAGE-HOSTING column's ledger entry describes the floor built
-## ABOVE that passage's own headroom, never the bottom of the column's
-## mass (see effective_base()'s own comment) -- so below the highest
-## hosted passage's own headroom floor, this reads the RAW, pre-ledger
-## massif range instead of effective_base/effective_top. The rock under a
-## street (and under any lower, unrelated tunnel's own roof slab) is real,
-## untouched terrain that no edit ever legitimately reaches: record_edit's
-## own gate requires floor_band >= _passage_headroom_floor(column) for a
-## passage-hosting column, so a ledger edit's own floor can never land
-## below that line, and record_trim's own gate refuses to trim a
-## passage-hosting column's top below it either -- nothing in the ledger
-## ever describes state below this line for such a column, so reading raw
-## massif there is not an approximation, it is the only truthful reading.
-## At or above that line, ledger-aware reporting is unchanged.
+## The three-state reading of one cell, for the two review harnesses that
+## paint a town: a carved street cell is PASSAGE, anything `solid_at` calls
+## mass is SOLID, and everything else -- carved headroom, the air above a
+## roof, a column outside the massif -- is AIR. A thin wrapper over the
+## derivation and nothing more: the plot model answers "is there mass here",
+## and this only names the answer in the vocabulary a renderer wants.
 func state_at(cell: Vector3i) -> CellState:
 	if passage_kinds.has(cell):
 		return CellState.PASSAGE
-	if excavation != null and excavation.carved.has(cell):
-		return CellState.AIR
-	var column := Vector2i(cell.x, cell.z)
-	if massif == null or not massif.has_column(column):
-		return CellState.AIR
-	var headroom_floor := _passage_headroom_floor(column)
-	if headroom_floor >= 0 and cell.y < headroom_floor:
-		if cell.y >= massif.base_at(column) and cell.y < massif.top_at(column):
-			return CellState.SOLID
-		return CellState.AIR
-	if cell.y >= effective_base(column) and cell.y < effective_top(column):
-		return CellState.SOLID
-	return CellState.AIR
-
-
-## The RAW, pre-ledger physical state -- passage/carved-air exclusions are
-## identical to state_at (the ledger never edits those), but the solid range
-## is the SEALED MASSIF's own [base_at, top_at), never effective_base/
-## effective_top. Exists for exactly one caller class: a mid-stamping ceiling
-## walk (WarrenMazeStampPass._column_ceiling) that must find how much
-## PHYSICAL rock still stands above a column, independent of what an
-## earlier, already-placed claim on that SAME column recorded as ITS OWN
-## roof. A stamp-phase offender edit's top_band is bookkeeping for THAT
-## claim (skyline trim, foundation depth) -- it does not mean the mass above
-## it was removed (nothing is removed until skyline trim runs, at the very
-## end of stamp(), long after every ceiling walk has already happened) -- so
-## state_at()'s ledger-aware upper bound would incorrectly collapse a
-## flush-stacked claim's ceiling to zero the moment the claim below it
-## happened to need a floor correction. A caller that wants the FINAL,
-## trim-aware truth (the translator, the debug view, anything reading a
-## sealed plan) wants state_at(), not this.
-func state_at_raw(cell: Vector3i) -> CellState:
-	if passage_kinds.has(cell):
-		return CellState.PASSAGE
-	if excavation != null and excavation.carved.has(cell):
-		return CellState.AIR
-	var column := Vector2i(cell.x, cell.z)
-	if massif != null and massif.has_column(column) \
-			and cell.y >= massif.base_at(column) \
-			and cell.y < massif.top_at(column):
+	if solid_at(cell):
 		return CellState.SOLID
 	return CellState.AIR
 
@@ -594,8 +197,8 @@ func state_at_raw(cell: Vector3i) -> CellState:
 # --- Plot model ------------------------------------------------------------
 # The 2026-08-21 plot-model design: one plot concept, rock derived rather than
 # stored, and one support rule that replaces bearing, plinth, flush-stack,
-# tunnel-roof, and per-cell headroom. Everything below is independent of the
-# edit ledger above, which a later task deletes; nothing here reads it.
+# tunnel-roof, and per-cell headroom. This is the whole town: the reservation
+# pass, the stamp pass, and the edit ledger they shared are gone (task B4).
 
 
 ## Adds one plot, after checking everything the model can check about it: its
@@ -806,6 +409,61 @@ func first_carved_band(column: Vector2i, from_band: int,
 ## `audit["street_floor_gaps"]` once the town is finished.
 func street_floor_gaps() -> int:
 	return _street_floor_gaps()
+
+
+## Phase B's exit metric: how much of the town's own SKIN is bare rock rather
+## than building. An EXTERIOR cell is a solid cell above its column's terrain
+## sample (the ground itself is never skin) with at least one 4-neighbour at
+## the same band that is not solid -- air, carved street, or off the massif
+## entirely -- so it is a face somebody standing in the town can see. Each one
+## is `plot` when a plot's own [floor, top) covers it and `rock` otherwise.
+##
+## `{exterior_cells, rock_cells, plot_cells, ratio}` with ratio =
+## rock/exterior (0.0 for a town with no skin at all). The goal is near zero
+## above street level: rock should be the town's interior structure, not its
+## outside. Seal records this whole dictionary under
+## `audit["exterior_rock_ratio"]`; a plan is only worth measuring once the
+## sealed rock shoulders exist, so an unsealed plan answers against the raw
+## massif envelope instead and reads too rocky.
+func exterior_rock_ratio() -> Dictionary:
+	var exterior_cells := 0
+	var rock_cells := 0
+	var plot_cells := 0
+	if massif == null:
+		return {"exterior_cells": 0, "rock_cells": 0, "plot_cells": 0,
+			"ratio": 0.0}
+	var columns: Array[Vector2i] = []
+	columns.assign(massif.columns.keys())
+	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+	for column: Vector2i in columns:
+		for band in range(massif.base_at(column) + 1,
+				column_ceiling(column)):
+			var cell := Vector3i(column.x, band, column.y)
+			if not solid_at(cell):
+				continue
+			var exposed := false
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				if not solid_at(Vector3i(column.x + direction.x, band,
+						column.y + direction.y)):
+					exposed = true
+					break
+			if not exposed:
+				continue
+			exterior_cells += 1
+			var in_plot := false
+			for index: int in _plot_columns.get(column, []) as Array:
+				var plot := plots[index] as Dictionary
+				if band >= int(plot["floor"]) and band < int(plot["top"]):
+					in_plot = true
+					break
+			plot_cells += int(in_plot)
+			rock_cells += int(not in_plot)
+	return {
+		"exterior_cells": exterior_cells,
+		"rock_cells": rock_cells,
+		"plot_cells": plot_cells,
+		"ratio": float(rock_cells) / float(maxi(1, exterior_cells)),
+	}
 
 
 func _first_carved_band(column: Vector2i, from_band: int,
@@ -1107,55 +765,6 @@ func deterministic_signature() -> String:
 	for column: Vector2i in columns:
 		parts.append("t:%d,%d:%d" % [column.x, column.y,
 			int(block_thickness[column])])
-	var edit_columns: Array[Vector2i] = []
-	edit_columns.assign(column_edits.keys())
-	edit_columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
-	for column: Vector2i in edit_columns:
-		var edit := column_edits[column] as Dictionary
-		parts.append("e:%d,%d:%d,%d:%s%s" % [column.x, column.y,
-			int(edit.get("floor_band", 0)), int(edit.get("top_band", 0)),
-			String(edit.get("phase", &"")),
-			":t" if bool(edit.get("trimmed", false)) else ""])
-	var claim_lines := PackedStringArray()
-	for claim: Dictionary in parcel_claims:
-		var footprint: Array = claim.get("footprint", [])
-		var footprint_cells: Array[Vector2i] = []
-		footprint_cells.assign(footprint)
-		footprint_cells.sort_custom(Callable(WarrenMazeSourcePlan,
-			"_column_less"))
-		var footprint_text := PackedStringArray()
-		for cell: Vector2i in footprint_cells:
-			footprint_text.append("%d,%d" % [cell.x, cell.y])
-		var door_walk: Vector3i = claim.get("door_walk", Vector3i.ZERO)
-		var door_column: Vector2i = claim.get("door_column", Vector2i.ZERO)
-		var frontage: Vector2i = claim.get("frontage", Vector2i.ZERO)
-		claim_lines.append("c:%s:%d,%d:%d,%d,%d:%d,%d:%d,%d:%s:%s" % [
-			"+".join(footprint_text),
-			int(claim.get("floor_band", 0)), int(claim.get("top_band", 0)),
-			door_walk.x, door_walk.y, door_walk.z,
-			door_column.x, door_column.y,
-			frontage.x, frontage.y,
-			String(claim.get("lineage_hint", &"")),
-			String(claim.get("shape_id", &""))])
-	claim_lines.sort()
-	for line: String in claim_lines:
-		parts.append(line)
-	var reservation_lines := PackedStringArray()
-	for reservation: Dictionary in reservations:
-		var cells: Array = reservation.get("cells", [])
-		var reservation_cells: Array[Vector2i] = []
-		reservation_cells.assign(cells)
-		reservation_cells.sort_custom(Callable(WarrenMazeSourcePlan,
-			"_column_less"))
-		var cells_text := PackedStringArray()
-		for cell: Vector2i in reservation_cells:
-			cells_text.append("%d,%d" % [cell.x, cell.y])
-		reservation_lines.append("r:%s:%s" % [
-			String(reservation.get("kind", &"")),
-			"+".join(cells_text)])
-	reservation_lines.sort()
-	for line: String in reservation_lines:
-		parts.append(line)
 	# `plot:`, not `p:` -- that prefix already belongs to the passage cells
 	# above. Ids are unique, so sorting the whole line sorts by id and the
 	# order plots were added can never show in the signature.

@@ -7,10 +7,11 @@ extends RefCounted
 ## support, clearance, and disjointness stay WarrenMazeSourcePlan's rules.
 ## Nothing here rejects a town -- shortfalls are `audit["plot_outcomes"]` facts.
 
-## Bands of solid mass a bearing plot needs directly beneath its floor.
-## Identical to WarrenMazeStampPass.PLINTH_BANDS; a later task re-points
-## WarrenBuildingParcel here and deletes that copy. Unread here: it lives in
-## this file so the number ends up with one home.
+## Bands of solid mass a bearing plot needs directly beneath its floor. The
+## source plan's own support rule is what the plot layer places against, so
+## nothing in this file reads this: it lives here because the parcel-level
+## restatement of the same rule (WarrenBuildingParcel._has_tunnel_roof_bearing)
+## needs the number, and the number has exactly one home.
 const PLINTH_BANDS := 2
 ## Largest house footprint a scale may grow, in macro columns; each building
 ## rolls its own cap in [2, this], so a block is a mix of sizes. Only the

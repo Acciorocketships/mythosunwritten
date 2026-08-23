@@ -209,7 +209,7 @@ func slot_signature() -> String:
 ## gaps, from the envelope's own ground up to this parcel's own floor.
 ## Additive branch below (controller ruling, 2026-08-22): when that fails,
 ## a column may still bear on a TUNNEL'S OWN ROOF -- the same case
-## WarrenMazeStampPass._column_bears already proves legal at the source-plan
+## the source plan's own support rule already proves legal at the source-plan
 ## level (task 1's plinth refinement) before a maze claim is ever allowed to
 ## place. This function only ever ADDS a second way to pass; the first
 ## branch's own check and return value are untouched, so any caller whose
@@ -244,14 +244,15 @@ func _has_continuous_bearing(volume: WarrenVolumePlan,
 ## PLINTH_BANDS bands directly below `base_band` are solid -- the tunnel's
 ## own roof slab this parcel actually bears on -- UNLESS `base_band` lands
 ## exactly `TUNNEL_ROOF_BANDS` above the carved run's own top, the one
-## flush case WarrenMazeStampPass._column_bears grants unconditionally (its
+## flush case the source plan's own support rule grants unconditionally (its
 ## own plinth window there straddles the carved headroom by design, so
-## demanding it be solid would reject the exact case the source-plan
-## already proved legal before this claim was ever placed) -- and (c) below
+## demanding it be solid would reject the exact case the source plan
+## already proved legal before this plot was ever placed) -- and (c) below
 ## the LOWEST carved cell found, mass is solid all the way down to
 ## `ground`: real rock under the street, not a second unrelated gap. Both
-## constants are referenced from WarrenMazeStampPass, never duplicated, so
-## the two bearing checks can never quietly drift apart.
+## constants are referenced from the plot layer that owns them
+## (WarrenMazeSourcePlan.TUNNEL_ROOF_BANDS, WarrenPlotPlanner.PLINTH_BANDS),
+## never duplicated, so the two bearing checks can never quietly drift apart.
 func _has_tunnel_roof_bearing(volume: WarrenVolumePlan, column: Vector2i,
 		ground: int) -> bool:
 	var lowest_carved := -1
@@ -272,9 +273,9 @@ func _has_tunnel_roof_bearing(volume: WarrenVolumePlan, column: Vector2i,
 		# have returned true and this function would never have been
 		# called), kept as a defensive refusal rather than a silent accept.
 		return false
-	if base_band != carved_top + WarrenMazeStampPass.TUNNEL_ROOF_BANDS:
+	if base_band != carved_top + WarrenMazeSourcePlan.TUNNEL_ROOF_BANDS:
 		var plinth_floor := maxi(ground,
-			base_band - WarrenMazeStampPass.PLINTH_BANDS)
+			base_band - WarrenPlotPlanner.PLINTH_BANDS)
 		for y in range(plinth_floor, base_band):
 			if not volume.has_mass(Vector3i(column.x, y, column.y)):
 				return false
