@@ -110,6 +110,7 @@ func _render_seed(city_seed: int) -> void:
 	var profile := WarrenVillageScaleProfile.select(city_seed)
 	var states: Array[StringName] = ALL_STATES if _phases_all \
 		else [&"final"] as Array[StringName]
+	var carved: WarrenMazeSourcePlan = null
 
 	for state: StringName in states:
 		for child in get_children():
@@ -135,12 +136,18 @@ func _render_seed(city_seed: int) -> void:
 					String(state), WarrenMazeSitePlanner.last_failure])
 				continue
 			massif = plan.massif
+			# Coverage's demand needs a carve-stage plan; reuse bore/tunnel's.
+			if STOP_AFTER[state] == &"carve":
+				carved = plan
+			elif carved == null:
+				carved = WarrenMazeSitePlanner.plan(city_seed, {}, profile,
+					&"carve")
 
 		var root := Node3D.new()
 		root.add_to_group(&"maze_geometry")
 		add_child(root)
 		_draw_state(root, state, massif, plan)
-		var facts := _record_metrics(city_seed, state, profile, plan)
+		var facts := _record_metrics(city_seed, state, profile, plan, carved)
 		_build_legend(root, city_seed, profile, state, facts)
 		print("[maze_source_review] seed=%d scale=%s state=%s" % [city_seed,
 			String(profile.scale_id), String(state)])
@@ -301,20 +308,17 @@ func _plot_floors(plan: WarrenMazeSourcePlan) -> Dictionary:
 ## same numbers back for the legend. A ratio is -1.0 -- recorded null, printed
 ## `n/a` -- where the state carries no such fact.
 func _record_metrics(city_seed: int, state: StringName,
-		profile: WarrenVillageScaleProfile,
-		plan: WarrenMazeSourcePlan) -> Dictionary:
+		profile: WarrenVillageScaleProfile, plan: WarrenMazeSourcePlan,
+		carved: WarrenMazeSourcePlan) -> Dictionary:
 	var facts := {"plots": 0, "houses": 0, "assets": 0, "decks": 0,
 		"bridges": 0, "tiered": 0, "exterior_rock": -1.0, "coverage": -1.0,
 		"ownership": -1.0}
 	if plan != null:
-		var owned: Dictionary = {}
 		for plot: Dictionary in plan.plots:
 			facts.plots += 1
 			# The four plot kinds all pluralise with a bare "s".
 			facts["%ss" % String(plot["kind"])] += 1
 			facts.tiered += int(bool(plan.plot_facts(plot)["tiered"]))
-			for cell_value: Variant in plot["cells"] as Array:
-				owned[cell_value as Vector2i] = true
 		# A sealed plan carries the skin ratio in its audit; an unsealed
 		# snapshot is measured on the spot by the very same method.
 		var skin: Dictionary = plan.audit.get("exterior_rock_ratio", {}) \
@@ -322,23 +326,8 @@ func _record_metrics(city_seed: int, state: StringName,
 		if skin.is_empty():
 			skin = plan.exterior_rock_ratio()
 		facts.exterior_rock = float(skin.get("ratio", 0.0))
-		# Coverage, restated from the plots suite's own
-		# test_partition_fills_every_street_fronting_column: the share of
-		# columns with room for a house in them at all that are in a plot.
-		var buildable := 0
-		var inside := 0
-		for column: Vector2i in plan.massif.columns:
-			var run := 0
-			var longest := 0
-			for band in range(plan.massif.base_at(column),
-					plan.massif.top_at(column)):
-				run = 0 if plan.excavation.carved.has(
-					Vector3i(column.x, band, column.y)) else run + 1
-				longest = maxi(longest, run)
-			if longest >= WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
-				buildable += 1
-				inside += int(owned.has(column))
-		facts.coverage = float(inside) / float(maxi(1, buildable))
+		if state != &"bore" and state != &"tunnel":
+			facts.coverage = _fronting_coverage(carved, plan)
 		if state == &"final":
 			facts.ownership = _translated_ownership(plan)
 	var row := facts.duplicate()
@@ -350,6 +339,39 @@ func _record_metrics(city_seed: int, state: StringName,
 	by_state[String(state)] = row
 	_metrics[str(city_seed)] = by_state
 	return facts
+
+
+## Coverage, restated exactly from the plots suite's own
+## test_partition_fills_every_street_fronting_column (its per-`demanded_slots`
+## measure): a slot (column, band) is demanded where a passage cell's
+## 4-neighbour column has `plot_support_ok` true at that band, read off the
+## carve-stage plan alone; covered when some plot of the drawn state claims
+## that column over `[floor, max(top, floor+1))`. `coverage = covered /
+## demanded`.
+func _fronting_coverage(carved: WarrenMazeSourcePlan,
+		plan: WarrenMazeSourcePlan) -> float:
+	if carved == null:
+		return -1.0
+	var seen: Dictionary = {}
+	var demanded := 0
+	var covered := 0
+	for cell: Vector3i in carved.passage_cells():
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			var column := Vector2i(cell.x, cell.z) + direction
+			var slot := Vector3i(column.x, cell.y, column.y)
+			if seen.has(slot) or not carved.massif.has_column(column) \
+					or not carved.plot_support_ok(column, cell.y):
+				continue
+			seen[slot] = true
+			demanded += 1
+			for plot: Dictionary in plan.plots:
+				var floor_band := int(plot["floor"])
+				var reserved := maxi(int(plot["top"]), floor_band + 1)
+				if slot.y >= floor_band and slot.y < reserved \
+						and (plot["cells"] as Array).has(column):
+					covered += 1
+					break
+	return float(covered) / float(maxi(1, demanded))
 
 
 ## `maze_ownership_ratio`: owned parcel mass over the plan's own derived solid,
