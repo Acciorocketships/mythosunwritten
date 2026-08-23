@@ -27,6 +27,13 @@ const PLOT_BRIDGE := &"bridge"
 const PLOT_KINDS: Array[StringName] = [
 	PLOT_HOUSE, PLOT_ASSET, PLOT_DECK, PLOT_BRIDGE,
 ]
+## The minimum slab a COVERED passage keeps overhead: one band of retained
+## mass between a tunnel's own headroom and whatever stands on it. A sealed
+## rock shoulder never cuts below it, and a plot bearing on a tunnel roof
+## sits exactly this far above that passage's headroom top. WarrenMazeStampPass
+## and WarrenBuildingParcel still carry their own copy of this number; a later
+## task re-points them here.
+const TUNNEL_ROOF_BANDS := 1
 
 var world_seed: int
 var scale_profile: WarrenVillageScaleProfile
@@ -478,13 +485,6 @@ func seal() -> bool:
 				("stacked column %s effective_top %d is below the tallest " \
 					+ "claim actually built there (top %d)") \
 					% [column, effective_top(column), claim_top])
-	# The plot model's own invariants (2026-08-21 design): solids contiguous
-	# from terrain on every column, every plot still supported, no plot
-	# standing in a carved street's headroom, plots pairwise disjoint. A town
-	# with no plots satisfies all four trivially.
-	var plot_failure := _plot_rejection()
-	if plot_failure != "":
-		return _reject(plot_failure)
 	# Phases (reserve/stamp) already wrote audit facts before seal runs; seal
 	# contributes its own freshly computed keys, it never destroys theirs.
 	var built := _build_audit()
@@ -497,6 +497,20 @@ func seal() -> bool:
 	if float(audit.get("frontage_ratio", 0.0)) < 0.90:
 		return _reject("frontage %.3f is below the 0.900 source floor" \
 			% float(audit.frontage_ratio))
+	# The plot model's own invariants (2026-08-21 design): solids contiguous
+	# from terrain on every column, every plot still supported, no plot
+	# standing in a carved street's headroom, plots pairwise disjoint. A town
+	# with no plots satisfies all four trivially. Deliberately the LAST check:
+	# it is the only one that leaves a cache behind (the sealed rock
+	# shoulders), so this is the only rejecting return that has to throw one
+	# away, and a rejected seal always leaves the plan as open as it found it.
+	var plot_failure := _plot_rejection()
+	if plot_failure != "":
+		_rock_shoulders.clear()
+		return _reject(plot_failure)
+	# Rules become repairs: a street whose own floor is not solid is an audit
+	# fact here, never a rejection.
+	audit["street_floor_gaps"] = _street_floor_gaps()
 	_sealed = true
 	return true
 
@@ -596,6 +610,14 @@ func state_at_raw(cell: Vector3i) -> CellState:
 ## `top` is NOT clamped to the massif: the envelope is a planning reference
 ## and the rock of a column with no plot, never a ceiling.
 func add_plot(plot: Dictionary) -> bool:
+	last_rejection = ""
+	# Sealed shoulders describe a FINISHED town. seal() already throws its
+	# own cache away on the one path that can leave one behind (its plot
+	# checks run last for exactly that reason), so this is the belt to that
+	# brace: however seal's checks are ever reordered, a plot is judged
+	# against the envelope that is really standing, never against the
+	# shoulders of an attempt that failed.
+	_rock_shoulders.clear()
 	if _sealed:
 		return _reject("plan is sealed; no plot may be added")
 	var shape := _plot_shape_rejection(plot)
@@ -619,10 +641,6 @@ func add_plot(plot: Dictionary) -> bool:
 		var indices: Array = _plot_columns.get(column, [])
 		indices.append(plots.size() - 1)
 		_plot_columns[column] = indices
-	# Shoulders describe a finished town; a new plot moves them. They are only
-	# ever read after a successful seal, but a REJECTED seal leaves its own
-	# cache behind, and this plan is still open for more plots.
-	_rock_shoulders.clear()
 	return true
 
 
@@ -808,6 +826,8 @@ func _plot_shape_rejection(plot: Dictionary) -> String:
 		return "plot %s has a top below its floor" % id
 	if kind == PLOT_DECK and int(plot["top"]) != int(plot["floor"]):
 		return "deck %s must be flat: top must equal floor" % id
+	if kind != PLOT_DECK and int(plot["top"]) == int(plot["floor"]):
+		return "plot %s has no height: only a deck may be flat" % id
 	return ""
 
 
@@ -847,9 +867,16 @@ func _rebuild_rock_shoulders() -> void:
 	## of a region the lowest floor of the plots bordering it, or the massif
 	## envelope where a region borders no plot at all. Region membership and a
 	## minimum are both order-free, so the sorted seed walk is belt and braces.
+	##
+	## A region shoulder may never cut the ground out from under a street
+	## (controller ruling, 2026-08-22): a column hosting passages keeps at
+	## least what _street_rock_floors says those passages need, so an
+	## un-built tunnel keeps its roof slab and a street keeps the rock it
+	## stands on even where the town around it stepped down.
 	_rock_shoulders.clear()
 	if massif == null:
 		return
+	var street_floors := _street_rock_floors()
 	var columns: Array[Vector2i] = []
 	columns.assign(massif.columns.keys())
 	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
@@ -876,8 +903,42 @@ func _rebuild_rock_shoulders() -> void:
 					seen[next] = true
 					region.append(next)
 		for member: Vector2i in region:
-			_rock_shoulders[member] = shoulder if shoulder >= 0 \
+			var derived := shoulder if shoulder >= 0 \
 				else massif.top_at(member)
+			_rock_shoulders[member] = maxi(derived,
+				int(street_floors.get(member, derived)))
+
+
+func _street_rock_floors() -> Dictionary:
+	## Vector2i column -> the rock top the passages it hosts need under and
+	## over them: the highest hosted passage's own headroom top, plus
+	## TUNNEL_ROOF_BANDS where the carver left that passage COVERED (the
+	## retained slab is the tunnel's roof; an open passage is carved to the
+	## envelope, so its headroom top already is that envelope). One pass over
+	## the passages, so a shoulder walk stays a column lookup. Columns hosting
+	## no passage at all are absent.
+	var out: Dictionary = {}
+	for cell: Vector3i in passage_kinds.keys():
+		var column := Vector2i(cell.x, cell.z)
+		var need := passage_headroom_top(cell)
+		if excavation != null and bool(excavation.covered.get(cell, false)):
+			need += TUNNEL_ROOF_BANDS
+		out[column] = maxi(int(out.get(column, need)), need)
+	return out
+
+
+func _street_floor_gaps() -> int:
+	## Audit fact, never a gate (rules become repairs): how many passage cells
+	## have nothing solid under the band they walk on. A cell at its own
+	## terrain band counts as grounded -- solid_at answers true for the
+	## untouched ground below massif.base_at -- so this counts real holes: a
+	## street left hanging where a lower passage's headroom eats its floor, or
+	## where the plot layer has yet to build the mass it stands on.
+	var out := 0
+	for cell: Vector3i in passage_cells():
+		if not solid_at(Vector3i(cell.x, cell.y - 1, cell.z)):
+			out += 1
+	return out
 
 
 func _plot_rejection() -> String:

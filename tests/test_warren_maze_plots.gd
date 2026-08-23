@@ -191,6 +191,33 @@ func test_solid_at_derives_rock_under_plots_and_air_above() -> void:
 		"sealing steps leftover rock down to the plot bordering its region")
 	assert_false(plan.solid_at(Vector3i(neighbour.x, floor_band, neighbour.y)),
 		"nothing stands above a sealed shoulder")
+	# ...but it never steps down THROUGH a street. Every passage keeps the
+	# mass it stands on and every covered passage keeps its roof slab, on
+	# columns that carry no plot of their own. A cell whose own floor band is
+	# carved is a lower street's headroom eating an upper street's floor --
+	# the plot layer cannot repair that, so it is counted, not asserted away.
+	var undercut := 0
+	var ungrounded := 0
+	var covered_count := 0
+	var roofless := 0
+	for street_cell: Vector3i in plan.passage_cells():
+		var below := Vector3i(street_cell.x, street_cell.y - 1, street_cell.z)
+		if plan.excavation.carved.has(below):
+			undercut += 1
+		elif not plan.solid_at(below):
+			ungrounded += 1
+		if not bool(plan.excavation.covered.get(street_cell, false)):
+			continue
+		covered_count += 1
+		if not plan.solid_at(Vector3i(street_cell.x,
+				plan.passage_headroom_top(street_cell), street_cell.z)):
+			roofless += 1
+	assert_gt(covered_count, 0, "the fixture keeps covered passages")
+	assert_eq(ungrounded, 0,
+		"a sealed shoulder never cuts the ground from under a street")
+	assert_eq(roofless, 0, "a covered passage keeps its retained roof slab")
+	assert_eq(int(plan.audit.street_floor_gaps), undercut,
+		"street_floor_gaps audits exactly the undercut streets")
 
 
 func test_stack_invariant_rejects_a_floating_plot_at_seal() -> void:
@@ -225,6 +252,22 @@ func test_stack_invariant_rejects_a_floating_plot_at_seal() -> void:
 	assert_false(floating.seal(), "a floating plot may not seal")
 	assert_string_contains(floating.last_rejection, "floats")
 	assert_false(floating.is_sealed())
+	# A rejected seal leaves the plan exactly as open as it found it: the
+	# shoulders that attempt computed must not outlive it, or the next plot
+	# would be judged against a town that never sealed.
+	var spare := _clean_columns(floating, 3, 8)
+	assert_gte(spare.size(), 2, "the fixture keeps spare clean columns")
+	if spare.size() < 2:
+		return
+	var open_column := spare[1] if spare[0] == floating_column else spare[0]
+	assert_eq(floating.rock_shoulder(open_column),
+		floating.massif.top_at(open_column),
+		"the envelope stands again after a rejected seal")
+	var open_base := floating.massif.base_at(open_column)
+	assert_true(floating.add_plot(_plot(&"after_the_failure",
+		[open_column] as Array[Vector2i], open_base + 2,
+		open_base + 2 + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)),
+		floating.last_rejection)
 
 
 func test_signature_covers_plots() -> void:
@@ -259,3 +302,16 @@ func test_signature_covers_plots() -> void:
 	assert_ne(bare.deterministic_signature(),
 		first.deterministic_signature(),
 		"a plot must change the sealed identity")
+	# Every field a plot signs has to reach the signature: two towns whose
+	# plots differ in exactly one of them may not sign alike.
+	for field: String in ["door_walk", "building_id"]:
+		var variant := _unsealed_fixture()
+		var changed := alpha.duplicate()
+		changed[field] = Vector3i(3, 4, 5) if field == "door_walk" \
+			else &"another_building"
+		assert_true(variant.add_plot(changed), variant.last_rejection)
+		assert_true(variant.add_plot(beta), variant.last_rejection)
+		assert_true(variant.seal(), variant.last_rejection)
+		assert_ne(first.deterministic_signature(),
+			variant.deterministic_signature(),
+			"%s is part of a plot's sealed identity" % field)
