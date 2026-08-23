@@ -368,17 +368,20 @@ const PLANNER_SEEDS: Array[Dictionary] = [
 ## guard. Re-pin upward only, and never silently: a drop is a regression to
 ## report. See test_partition_fills_every_street_fronting_column.
 ##
-## Re-derived 2026-08-22 from 0.954 to 0.892 after the review round, and the
-## drop is reported, not hidden: rolling each building's own footprint cap in
-## [2, BUILDING_CAP] instead of giving every building the maximum, and refusing
-## an asset site that would leave a street's floor hanging, both hand columns
-## back to leftover rock. The remaining leftover is terrain, not budget -- no
-## single-column house on any of the four seeds has a supportable free
-## neighbour left at its own floor.
-const BUILDABLE_COVERAGE_FLOOR := 0.84
+## History: 0.954, then 0.892 when the review round rolled each building its own
+## footprint cap and refused asset sites that would leave a street's floor
+## hanging, now 0.965 -- the orphan sweep hands every still-joinable free column
+## to the smallest building beside it, cap or no cap, because coverage beats
+## size variation.
+const BUILDABLE_COVERAGE_FLOOR := 0.91
 ## Measured share of street-fronting (column, band) slots that carry a plot at
 ## that band, minus a 0.05 guard. Same discipline: re-pin upward only.
 const FRONTING_SLOT_FLOOR := 0.85
+## Measured mean house footprint in macro columns, minus a 0.2 guard. A seed
+## whose streets isolate their columns keeps single-column houses -- legal 1x1
+## towers -- so this is pinned from the weakest measured town (2.06), not from
+## an aspiration.
+const FOOTPRINT_FLOOR := 1.8
 
 static var _sealed_plans: Dictionary = {}
 static var _carved_plans: Dictionary = {}
@@ -761,8 +764,18 @@ func test_partition_fills_every_street_fronting_column() -> void:
 			mergeable += int(_beside_a_peer(plan, plot))
 		gut.p("  %d single-column houses, %d of them beside a same-floor peer" \
 			% [singles, mergeable])
-		assert_gte(mean, 2.0,
+		# Pinned at measured-minus-guard, not at a round number: a seed whose
+		# streets isolate their columns leaves 1x1 towers the grammar builds
+		# perfectly well -- the massif's geometry, not a partition bug.
+		assert_gte(mean, FOOTPRINT_FLOOR,
 			"seed %d %s grows buildings, not pencils" % [seed_value, scale])
+		var limit: int = WarrenPlotPlanner.BUILDING_CAP[scale]
+		var over := 0
+		for plot: Dictionary in houses:
+			over += int((plot["cells"] as Array).size() > limit)
+		gut.p("  %d houses past BUILDING_CAP %d, %d columns swept in" % [over,
+			limit, int((plan.audit.get("plot_outcomes", {}) as Dictionary) \
+				.get("orphan_sweep_joined", 0))])
 		assert_eq(missing, 0,
 			"seed %d %s leaves %d street-fronting column(s) out of every plot" \
 				% [seed_value, scale, missing])

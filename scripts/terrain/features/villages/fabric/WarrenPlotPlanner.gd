@@ -2,24 +2,19 @@ class_name WarrenPlotPlanner
 extends RefCounted
 
 ## P4 (houses, heights, bridges) of the 2026-08-21 plot-model design, plus the
-## shared helpers P3 borrows. Static and program-free: the only things it ever
-## changes on a plan are `add_plot` and `audit`, and support, clearance, and
-## disjointness stay WarrenMazeSourcePlan's rules, never re-derived here.
-## `reserve` delegates to WarrenPlotReservations.
-##
-## Nothing here rejects a town: a seed the join rule turns away, a roof that
-## cannot reach its own minimum, a span whose clearance was eaten are all
-## outcomes in `audit["plot_outcomes"]` (rules become repairs).
+## shared helpers P3 borrows; `reserve` delegates to WarrenPlotReservations.
+## Static and program-free: it only ever touches `add_plot` and `audit`, and
+## support, clearance, and disjointness stay WarrenMazeSourcePlan's rules.
+## Nothing here rejects a town -- shortfalls are `audit["plot_outcomes"]` facts.
 
 ## Bands of solid mass a bearing plot needs directly beneath its floor.
 ## Identical to WarrenMazeStampPass.PLINTH_BANDS; a later task re-points
-## WarrenBuildingParcel here and deletes that copy. Nothing in this planner
-## reads it -- the support rule already answers "may a plot stand here" -- it
-## lives here so the number ends up with one home.
+## WarrenBuildingParcel here and deletes that copy. Unread here: it lives in
+## this file so the number ends up with one home.
 const PLINTH_BANDS := 2
 ## Largest house footprint a scale may grow, in macro columns; each building
-## rolls its own cap in [2, this], so a block is a mix of sizes rather than a
-## grid of identical boxes.
+## rolls its own cap in [2, this], so a block is a mix of sizes. Only the
+## orphan sweep may pass it, and only to keep a column out of leftover rock.
 const BUILDING_CAP: Dictionary = {
 	&"compact": 4, &"standard": 5, &"large": 6, &"grand": 8,
 }
@@ -30,17 +25,15 @@ const STOREY_BUDGET: Dictionary = {
 	&"compact": Vector2i(1, 2), &"standard": Vector2i(1, 3),
 	&"large": Vector2i(2, 3), &"grand": Vector2i(2, 4),
 }
-## The tallest a house may ever be, in bands: six storeys. It bounds three
-## things at once -- how far a roof may climb to meet a street, how far it may
-## climb to meet a plot claimed above it, and which streets a column may bring
-## into a footprint at all. A column whose own street stands further above the
-## floor than this cannot join: the house could neither reach that street nor
-## stop short of it without leaving the street's floor hanging over open air,
-## because above the lowest plot floor on a column, solid mass is plots only.
+## The tallest a house may ever be, in bands: six storeys. It bounds how far a
+## roof climbs to meet a street or a plot claimed above it, and which streets a
+## column may bring into a footprint -- one whose street stands further above
+## the floor than this cannot join, since the house could neither reach it nor
+## stop short without leaving that street's floor hanging.
 const MAX_TIER_BANDS := 12
 ## One salt per seeded roll, so two rolls on the same cell cannot agree by
-## accident. Both go through WarrenPassageLatticeRules.hash_key; nothing in
-## this file touches randi() or an RNG with state of its own.
+## accident. Both go through WarrenPassageLatticeRules.hash_key; nothing here
+## touches randi().
 const STOREY_SALT := 0x570e5
 const FOOTPRINT_SALT := 0xf007e
 
@@ -56,8 +49,8 @@ static func reserve(plan: WarrenMazeSourcePlan,
 
 ## P4: seed a house at every street-fronting column, grow the partition
 ## largest-first (absorbing bare neighbouring seeds so a block is buildings
-## rather than pencils), raise each house to the street above it or to its
-## storey roll, then drop a bridge onto every retained span.
+## rather than pencils), sweep up the orphan columns, raise each house to the
+## street above it or to its storey roll, then bridge every retained span.
 static func partition(plan: WarrenMazeSourcePlan,
 		profile: WarrenVillageScaleProfile) -> void:
 	if plan == null or profile == null or plan.is_sealed():
@@ -72,13 +65,12 @@ static func partition(plan: WarrenMazeSourcePlan,
 		refusals)
 	out["seed_refusals"] = refusals
 	_grow_buildings(plan, buildings, streets, blocked, claims, slots)
+	out["orphan_sweep_joined"] = _orphan_sweep(plan, buildings, streets,
+		blocked, claims, slots)
 	out["buildings"] = _raise_buildings(plan, streets, claims, buildings)
 	out["bridges"] = _span_bridges(plan)
-	var owned := owned_columns(plan)
-	var leftover := 0
-	for column: Vector2i in plan.massif.columns:
-		leftover += int(not owned.has(column))
-	out["leftover_columns"] = leftover
+	out["leftover_columns"] = plan.massif.columns.size() \
+		- owned_columns(plan).size()
 	out["street_floor_gaps"] = plan.street_floor_gaps()
 
 
@@ -89,10 +81,9 @@ static func _seed_buildings(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		blocked: Dictionary, claims: Dictionary, slots: Dictionary,
 		refusals: Array[Dictionary]) -> Array[Dictionary]:
 	## One seed per (column, band): a street cell claims each of its four
-	## neighbour columns at its own band, which is exactly what lets an upper
-	## street's house stack on the roof of the lower street's tiered house. A
-	## pair is visited once, from the first street cell in walk order that
-	## fronts it, and a refusal there is recorded rather than retried.
+	## neighbour columns at its own band, which is what lets an upper street's
+	## house stack on the roof of the lower one's tiered house. A pair is seen
+	## once, from the first street that fronts it, and a refusal is recorded.
 	var out: Array[Dictionary] = []
 	var visited: Dictionary = {}
 	for street: Vector3i in walk_order(plan):
@@ -121,32 +112,26 @@ static func _grow_buildings(plan: WarrenMazeSourcePlan,
 		buildings: Array[Dictionary], streets: Dictionary,
 		blocked: Dictionary, claims: Dictionary, slots: Dictionary) -> void:
 	## The single priority loop: the largest building that can still grow (ties
-	## to the lowest id) takes its one best adjacent column and the loop runs
-	## again. That column is either free rock or a BARE SEED at the same floor
-	## -- a building of one column that never grew -- which is absorbed whole:
-	## its cell joins, its id retires, and its door is dropped in favour of the
-	## absorber's. Without absorption a warren where nearly every column fronts
-	## a street partitions into one-column pencils, because seeding claims
-	## everything before growth begins.
-	##
-	## A building that finds no candidate is stalled for good -- columns are
-	## only claimed, never released, while growth runs -- so this terminates
-	## after at most one stall per building plus one step per column.
+	## to the lowest id) takes its one best adjacent column, and the loop runs
+	## again. That column is free rock or a BARE SEED at the same floor -- a
+	## building of one column that never grew -- absorbed whole: its cell joins,
+	## its id retires, its door gives way to the absorber's. Without it a warren
+	## where nearly every column fronts a street partitions into pencils. A
+	## building with no candidate stalls for good, so this ends after one stall
+	## each plus one step per column.
 	var limit := int(BUILDING_CAP.get(plan.scale_profile.scale_id, 4))
-	var caps: Array[int] = []
-	var stalled: Array[bool] = []
-	stalled.resize(buildings.size())
 	for index in buildings.size():
-		caps.append(roll(plan, FOOTPRINT_SALT,
-			buildings[index]["door"] as Vector3i, index, Vector2i(2, limit)))
+		buildings[index]["cap"] = roll(plan, FOOTPRINT_SALT,
+			buildings[index]["door"] as Vector3i, index, Vector2i(2, limit))
+		buildings[index]["stalled"] = false
 	while true:
 		var choice := -1
 		var largest := 0
 		for index in buildings.size():
 			var building := buildings[index]
 			var size := (building["cells"] as Array).size()
-			if stalled[index] or bool(building["retired"]) \
-					or size >= caps[index] or size <= largest:
+			if bool(building["stalled"]) or bool(building["retired"]) \
+					or size >= int(building["cap"]) or size <= largest:
 				continue
 			largest = size
 			choice = index
@@ -156,7 +141,7 @@ static func _grow_buildings(plan: WarrenMazeSourcePlan,
 		var pick := _best_join(plan, building, choice, streets, blocked,
 			claims, slots, buildings)
 		if pick.is_empty():
-			stalled[choice] = true
+			building["stalled"] = true
 			continue
 		var column := pick["column"] as Vector2i
 		var floor_band := int(building["floor"])
@@ -177,8 +162,7 @@ static func _best_join(plan: WarrenMazeSourcePlan, building: Dictionary,
 		claims: Dictionary, slots: Dictionary,
 		buildings: Array[Dictionary]) -> Dictionary:
 	## The adjacent column this building would rather have -- free rock or an
-	## absorbable bare seed, ranked alike by |top_at - floor| then column order
-	## -- and the tier band taking it would bind.
+	## absorbable bare seed, ranked alike by |top_at - floor| then column order.
 	var floor_band := int(building["floor"])
 	var members: Dictionary = {}
 	for column: Vector2i in building["cells"] as Array[Vector2i]:
@@ -207,6 +191,76 @@ static func _best_join(plan: WarrenMazeSourcePlan, building: Dictionary,
 	return best
 
 
+static func _orphan_sweep(plan: WarrenMazeSourcePlan,
+		buildings: Array[Dictionary], streets: Dictionary,
+		blocked: Dictionary, claims: Dictionary, slots: Dictionary) -> int:
+	## Coverage beats size variation: once the capped loop is done, every free
+	## supportable column that can still join a building does, cap or no cap. It
+	## goes to the SMALLEST adjacent building, so a block evens out instead of
+	## fattening whichever came first, and it repeats because a column with no
+	## neighbour to join can gain one as the sweep fills the gap beside it.
+	var limit := int(BUILDING_CAP.get(plan.scale_profile.scale_id, 4))
+	var columns: Array[Vector2i] = []
+	columns.assign(plan.massif.columns.keys())
+	columns.sort_custom(Callable(WarrenPlotPlanner, "column_less"))
+	var joined := 0
+	var moved := true
+	while moved:
+		moved = false
+		for column: Vector2i in columns:
+			if blocked.has(column) \
+					or not (claims.get(column, []) as Array).is_empty():
+				continue
+			var host := _orphan_host(plan, column, buildings, streets, blocked,
+				claims, slots, limit)
+			if host.is_empty():
+				continue
+			var owner := int(host["owner"])
+			var building := buildings[owner]
+			var floor_band := int(building["floor"])
+			(building["cells"] as Array[Vector2i]).append(column)
+			if int(host["tier"]) >= 0:
+				building["tier"] = int(host["tier"])
+			claims[column] = [floor_band]
+			slots[_slot(column, floor_band)] = owner
+			joined += 1
+			moved = true
+	return joined
+
+
+static func _orphan_host(plan: WarrenMazeSourcePlan, column: Vector2i,
+		buildings: Array[Dictionary], streets: Dictionary,
+		blocked: Dictionary, claims: Dictionary, slots: Dictionary,
+		limit: int) -> Dictionary:
+	## The building this orphan should join: the smallest adjacent one the join
+	## rule accepts at its own floor, ties to the lowest id. One under
+	## BUILDING_CAP always wins; only when every candidate sits at that ceiling
+	## is a building pushed past it, rock being the costlier outcome.
+	var best: Dictionary = {}
+	var under: Dictionary = {}
+	for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+		var next := column + direction
+		for band: int in claims.get(next, []) as Array:
+			var owner := int(slots.get(_slot(next, band), -1))
+			if owner < 0 or bool(buildings[owner]["retired"]):
+				continue
+			var join := _join(plan, column, band, streets, blocked, claims,
+				int(buildings[owner]["tier"]), false)
+			if String(join["reason"]) != "":
+				continue
+			var size := (buildings[owner]["cells"] as Array).size()
+			var candidate := {"owner": owner, "size": size,
+				"tier": int(join["tier"])}
+			var rank := Vector2i(size, owner)
+			if best.is_empty() or rank < Vector2i(int(best["size"]),
+					int(best["owner"])):
+				best = candidate
+			if size < limit and (under.is_empty() or rank \
+					< Vector2i(int(under["size"]), int(under["owner"]))):
+				under = candidate
+	return best if under.is_empty() else under
+
+
 static func _join(plan: WarrenMazeSourcePlan, column: Vector2i,
 		floor_band: int, streets: Dictionary, blocked: Dictionary,
 		claims: Dictionary, bound: int, absorb: bool) -> Dictionary:
@@ -216,15 +270,12 @@ static func _join(plan: WarrenMazeSourcePlan, column: Vector2i,
 	## Only that lowest one matters: anything above it sits above the roof this
 	## house will grow, so it is none of this footprint's business.
 	##
-	## Two strengthenings of the stated rule, both to keep the town sealable
-	## rather than strict for its own sake: `blocked` holds every column an
-	## asset, a deck, or a retained bridge span owns (a house under a deck
-	## strands it -- a deck adds no solid mass, so everything above it floats --
-	## and one under an asset strands the asset unless their bands meet), and
-	## two houses may share a column only MIN_HOUSE_BANDS apart or more, so the
-	## lower one's roof can always reach the upper one's floor. `absorb` waives
-	## the second for the bare seed being swallowed, which claimed this very
-	## band itself.
+	## Two strengthenings, both to keep the town sealable: `blocked` holds every
+	## column an asset, a deck, or a retained bridge span owns (a house under a
+	## deck strands it -- a deck adds no solid mass), and two houses share a
+	## column only MIN_HOUSE_BANDS apart or more, so the lower roof can always
+	## reach the upper floor. `absorb` waives the second for the bare seed being
+	## swallowed, which claimed this band itself.
 	if blocked.has(column) or not plan.massif.has_column(column):
 		return {"tier": -1, "reason": "column already spoken for"}
 	for other: int in claims.get(column, []) as Array:
@@ -254,10 +305,9 @@ static func _join(plan: WarrenMazeSourcePlan, column: Vector2i,
 static func _raise_buildings(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		claims: Dictionary, buildings: Array[Dictionary]) -> Array[Dictionary]:
 	## Heights, then commit, in ascending floor order -- so a tiered house is
-	## already standing when the house stacked on its roof asks the support rule
-	## whether the band below it is solid. A building that does not stand gives
-	## its claims back, so nothing above it is still capped by a roof that never
-	## got built.
+	## standing when the house stacked on its roof asks whether the band below
+	## is solid. One that does not stand gives its claims back, so nothing above
+	## it is capped by a roof that never got built.
 	var records: Array[Dictionary] = []
 	var order: Array[int] = []
 	order.assign(range(buildings.size()))
@@ -293,18 +343,17 @@ static func _raise_buildings(plan: WarrenMazeSourcePlan, streets: Dictionary,
 
 static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		claims: Dictionary, building: Dictionary, index: int) -> Dictionary:
-	## A roof is, in order of preference, the street running through this
-	## footprint (the tier the whole model exists for), the lowest street past
-	## its one-column apron, or the scale's seeded storey budget. It then has to
-	## agree with whatever else is claimed above this floor on the same columns,
-	## and a column it cannot agree with leaves the footprint -- hence the loop:
-	## a smaller footprint sees a different street and a different ceiling.
+	## A roof is, in preference order, the street through this footprint (the
+	## tier the whole model exists for), the lowest street past its one-column
+	## apron, or the scale's seeded storey budget. It then has to agree with
+	## whatever else is claimed above this floor on the same columns, and a
+	## column it cannot agree with leaves the footprint -- hence the loop.
 	var floor_band := int(building["floor"])
 	var minimum := floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS
 	var reach := floor_band + MAX_TIER_BANDS
-	# The parcel contract exactly: whole storeys plus the roof reservation, so
-	# a house the translator receives already has a legal envelope. `index` is
-	# in the hash, or the four houses around one street cell would be clones.
+	# The parcel contract exactly -- whole storeys plus the roof reservation --
+	# so the translator receives a legal envelope. `index` is in the hash, or
+	# the four houses around one street cell would be clones.
 	var rolled := floor_band + WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
 		+ WarrenBuildingParcel.STOREY_BANDS * roll(plan, STOREY_SALT,
 			building["door"] as Vector3i, index, STOREY_BUDGET.get(
@@ -319,26 +368,27 @@ static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		if street_top < 0:
 			street_top = _lowest_street(streets, cells, minimum, reach, true)
 		top = street_top if street_top >= 0 else rolled
-		# Something is claimed above this floor on one of these columns. Meet
-		# it: a roof that stops short of the house stacked on it strands that
-		# house, and the stack invariant fails the whole town for it. Two things
-		# stop the climb -- a street carved through the gap, and MAX_TIER_BANDS.
-		# Where a street stops it the mismatching column leaves the footprint;
-		# where MAX_TIER_BANDS stops it this house keeps its own height and the
-		# claim above is the one that gives way, refused at its own commit.
+		# Something is claimed above this floor here. Meet it: a roof stopping
+		# short of the house stacked on it strands that house, and the stack
+		# invariant fails the whole town for it. A street in the gap stops the
+		# climb (the mismatching column then leaves the footprint), and so does
+		# MAX_TIER_BANDS -- there this house keeps its height and the claim
+		# above gives way at its own commit.
 		var cap := _lowest_above(claims, cells, floor_band)
 		if cap >= 0:
-			top = cap if cap <= reach and _uncarved(plan, cells, floor_band,
-				cap) else mini(top, cap)
+			var clear := cap <= reach
+			for column: Vector2i in cells:
+				clear = clear and plan.first_carved_band(column, floor_band,
+					cap) < 0
+			top = cap if clear else mini(top, cap)
 		var dropped: Dictionary = {}
 		for column: Vector2i in cells:
 			var one := [column] as Array[Vector2i]
 			var ceiling := _lowest_above(claims, one, floor_band)
-			# A column whose own street stands above this roof has to go too:
-			# the house would take the rock out from under that street and
-			# leave its floor hanging, because above the lowest plot floor on a
-			# column solid mass is plots and nothing else. Off the footprint,
-			# the sealed rock shoulder keeps the street its ground.
+			# A column whose own street stands above this roof goes too, or the
+			# house takes the rock out from under that street: above the lowest
+			# plot floor on a column, solid mass is plots only. Off the
+			# footprint the sealed rock shoulder keeps that street its ground.
 			var street := _lowest_street(streets, one, minimum, reach, false)
 			if ceiling >= 0 and (ceiling < minimum \
 					or ceiling > top and ceiling <= reach) \
@@ -355,9 +405,9 @@ static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
 
 static func _lowest_street(streets: Dictionary, cells: Array[Vector2i],
 		minimum: int, reach: int, apron: bool) -> int:
-	## The lowest street band in [minimum, reach] running through these columns,
-	## or -1. `apron` looks one column further out -- the difference between a
-	## street crossing this roof and one running past it.
+	## The lowest street band in [minimum, reach] through these columns, or -1.
+	## `apron` looks one column further out -- the difference between a street
+	## crossing this roof and one running past it.
 	var columns: Dictionary = {}
 	for column: Vector2i in cells:
 		columns[column] = true
@@ -373,22 +423,11 @@ static func _lowest_street(streets: Dictionary, cells: Array[Vector2i],
 	return out
 
 
-static func _uncarved(plan: WarrenMazeSourcePlan, cells: Array[Vector2i],
-		from_band: int, to_band: int) -> bool:
-	## Could a plot fill [from_band, to_band) on these columns at all, or does a
-	## street run through it? Streets are immutable, so this is the one thing
-	## that stops a roof from rising to meet the plot above it.
-	for column: Vector2i in cells:
-		if plan.first_carved_band(column, from_band, to_band) >= 0:
-			return false
-	return true
-
-
 static func _lowest_above(claims: Dictionary, cells: Array[Vector2i],
 		floor_band: int) -> int:
 	## The lowest floor another house claims above this one on these columns, or
 	## -1 when the sky is clear. Assets and decks never share a column with a
-	## house (see _join), so houses are the whole story.
+	## house (see _join).
 	var out := -1
 	for column: Vector2i in cells:
 		for band: int in claims.get(column, []) as Array:
@@ -399,8 +438,8 @@ static func _lowest_above(claims: Dictionary, cells: Array[Vector2i],
 
 static func _keep_component(cells: Array[Vector2i], dropped: Dictionary,
 		seed_column: Vector2i) -> Array[Vector2i]:
-	## The seed's connected component once the offending columns leave, so a
-	## shrunken footprint is still the 4-connected footprint add_plot demands.
+	## The seed's connected component once the offenders leave, so a shrunken
+	## footprint is still the 4-connected footprint add_plot demands.
 	var members: Dictionary = {}
 	for column: Vector2i in cells:
 		if not dropped.has(column):
@@ -421,8 +460,8 @@ static func _keep_component(cells: Array[Vector2i], dropped: Dictionary,
 
 
 static func _release(claims: Dictionary, column: Vector2i, band: int) -> void:
-	## Hand one claim back. A column a footprint dropped, or a building that
-	## never stood, must stop capping the roofs beneath it.
+	## Hand one claim back: a dropped column, or a building that never stood,
+	## must stop capping the roofs beneath it.
 	var bands: Array = claims.get(column, [])
 	var at := bands.find(band)
 	if at < 0:
@@ -437,8 +476,8 @@ static func _release(claims: Dictionary, column: Vector2i, band: int) -> void:
 static func _span_bridges(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
 	## Every span whose overhead mass the carver retained becomes a one-storey
 	## plot on that slab, one band above the highest headroom the span owns.
-	## Placed last, so an adjacent house sharing the bridge's own floor is
-	## already standing and can lend it a building id.
+	## Placed last, so an adjacent house sharing the bridge's floor is already
+	## standing and can lend it a building id.
 	var records: Array[Dictionary] = []
 	for index in plan.excavation.bridge_spans.size():
 		var span: Array = plan.excavation.bridge_spans[index]
@@ -469,9 +508,8 @@ static func _span_bridges(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
 
 static func _bridge_owner(plan: WarrenMazeSourcePlan, cells: Array[Vector2i],
 		floor_band: int, own_id: StringName) -> StringName:
-	## The house a bridge belongs to: one standing at the bridge's own floor on
-	## a column beside the span, lowest id where several qualify -- so the
-	## answer never depends on the order plots happened to be added.
+	## The house a bridge belongs to: one standing at the bridge's own floor
+	## beside the span, lowest id where several qualify.
 	var members: Dictionary = {}
 	for column: Vector2i in cells:
 		members[column] = true
@@ -500,13 +538,14 @@ static func outcomes(plan: WarrenMazeSourcePlan) -> Dictionary:
 	if not plan.audit.has("plot_outcomes"):
 		plan.audit["plot_outcomes"] = {"assets": [], "decks": [],
 			"decks_short": 0, "seed_refusals": [], "buildings": [],
-			"bridges": [], "leftover_columns": 0, "street_floor_gaps": 0}
+			"bridges": [], "orphan_sweep_joined": 0, "leftover_columns": 0,
+			"street_floor_gaps": 0}
 	return plan.audit["plot_outcomes"] as Dictionary
 
 
 ## Street cells in the order the town is walked: the spine, then each lane from
-## its anchor outward, then -- so nothing is ever missed -- whatever passage
-## cells that walk did not reach, in sorted order.
+## its anchor outward, then -- so nothing is missed -- whatever passage cells
+## that walk did not reach, in sorted order.
 static func walk_order(plan: WarrenMazeSourcePlan) -> Array[Vector3i]:
 	var out: Array[Vector3i] = []
 	var seen: Dictionary = {}
@@ -548,9 +587,8 @@ static func owned_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
 
 
 ## Columns nothing new may claim: whatever already carries a plot, plus the
-## retained bridge spans. The carver kept that overhead mass precisely so a
-## bridge could stand on it, so no earlier phase may build the column out from
-## under it.
+## retained bridge spans -- the carver kept that mass overhead so a bridge could
+## stand on it.
 static func blocked_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
 	var out := owned_columns(plan)
 	for span_value: Variant in plan.excavation.bridge_spans:
@@ -568,8 +606,8 @@ static func roll(plan: WarrenMazeSourcePlan, salt: int, cell: Vector3i,
 		maxi(1, range_value.y - range_value.x + 1))
 
 
-## Which column a growth step would rather have: the one whose envelope stands
-## nearest the datum, then the one that sorts first.
+## Which column a growth step would rather have: envelope nearest the datum,
+## then column order.
 static func closer(plan: WarrenMazeSourcePlan, a: Vector2i, b: Vector2i,
 		datum: int) -> bool:
 	var cost_a := absi(plan.massif.top_at(a) - datum)
@@ -583,6 +621,6 @@ static func column_less(a: Vector2i, b: Vector2i) -> bool:
 
 
 static func _slot(column: Vector2i, band: int) -> Vector3i:
-	## A (column, band) key -- one house per column per band, which is what
-	## makes seeding and absorption agree about who owns what.
+	## A (column, band) key: one house per column per band, which is what makes
+	## seeding, absorption, and the sweep agree about who owns what.
 	return Vector3i(column.x, band, column.y)
