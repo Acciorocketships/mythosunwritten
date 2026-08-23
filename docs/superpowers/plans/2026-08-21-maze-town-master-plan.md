@@ -162,7 +162,57 @@ Three of the four rose when bridge mass left the denominator (whole-branch revie
 
 # Phase C — Composition consumes plots (the built town)
 
-Milestone: `WarrenVolumetricSolver._solve_maze` composes from plots: houses/assets → room composition on the translated parcels (back rooms via residual machinery), decks → court/plaza reservations, bridges → occupied-link reservations; the joint hero-feature beam is deleted; gate disposition per the constructive spec (hero quotas → audit facts; structural gates stay). Exit: 22+/24 seeds compose and pass the fabric gate; `warren_spatial_review.tscn --maze-source` renders the asset town; solve ≤ 3 s.
+Milestone: `WarrenVolumetricSolver._solve_maze` composes from plots: houses/assets → room composition on the translated parcels (back rooms via a directed residual pre-pass), decks → walkable public floors (plazas/terraces), bridges → spatial skywalk reservations, assets → landmark reservations; the hero-feature beam is **bypassed** in maze mode (deleted in Phase F with the modes that still share it); gate disposition per the constructive spec (hero quotas → audit facts; structural gates stay). Exit: 22+/24 seeds compose and pass the fabric gate; `warren_spatial_review.tscn --maze-source` renders the asset town; solve ≤ 3 s.
+
+**Map (read before any task):** `.superpowers/sdd/2026-08-21-maze-town-master-plan/phase-c-map.md` — the call graph, reservation contracts, gates, residual-room machinery, and the two facts that shape this phase: (1) `_solve_maze` and `warren_spatial_review --maze-source` still call `WarrenMazeCarver.carve` (no plots); (2) in advisory mode the beam still demands `skywalk_range.x` skywalks at `_partition_rooms:1625-1628` and rejects unconditionally when `market_reservation` is empty at `:1918-1926`, so maze-mode composition cannot currently succeed at all.
+
+**Global constraints for Phase C (in addition to the plan's):** route-first and mass-first paths stay byte-identical until Phase F (`tests/test_warren_generation_mode.gd`, fabric compiler 11/11, settlement fabric 42/42, and `tests/test_warren_volumetric_solver.gd` minus its two full-solve tests stay green); every maze-mode branch is keyed on `WarrenTownSolver.GENERATION_MODE == MODE_MAZE` or on `volume.mass_context.has(&"maze_source_plan")`, never on a new global; no new search loops — one pass, audit facts for shortfalls; the composition test file `tests/test_warren_maze_composition.gd` stays under ~4 min (program compile once per file; the four planner seeds 12/4 compact, 3/9 standard; the 24-seed matrix lives in the sweep harness).
+
+### Task C1: Plots into production; composition baseline
+
+**Files:** modify `WarrenVolumetricSolver.gd` (`_solve_maze`), `tests/harness/warren_spatial_review.gd` (`--maze-source` branch; add `--mode maze` that sets/restores `WarrenTownSolver.GENERATION_MODE`), `tests/harness/warren_maze_mode_sweep.gd` (`--mode maze` rows report the failing gate name); create `tests/test_warren_maze_composition.gd`.
+
+- `_solve_maze` and the harness build the source with `WarrenMazeSitePlanner.plan(world_seed, ground_bands, profile)` (plots) — `last_failure` carries the planner's stage failure; `WarrenMazeCarver.carve` is no longer called from either.
+- `tests/test_warren_maze_composition.gd`: `_program()` compiled once (`SettlementFabricProgram.compile(EnvironmentCatalog.load_default())`); `test_maze_mode_reaches_composition` — for the four planner seeds run `WarrenVolumetricSolver.solve(seed, {}, program, profile)` with `GENERATION_MODE = MODE_MAZE` (restored in `after_each`), print per seed: sealed?, `last_failure` (first 160 chars), ms; assert the failure, when present, is NOT at the source/adapter/translator stage (i.e. composition was reached — the string does not start with `maze massif`/`maze carve`/`maze volume adapter`/`sealed maze source carries no plots`); `test_maze_mode_is_deterministic` on seed 12 compact when it seals (skip with a printed reason when it does not — this task establishes the baseline, C2 makes it seal).
+- The sweep's `--mode maze` prints the 24-row matrix with the gate each town dies at; paste it into the report as the Phase C baseline.
+- [ ] Commit — `feat(villages): maze mode composes from the plot planner; composition baseline`.
+
+### Task C2: Gate disposition — maze-mode feature pass replaces the beam
+
+**Files:** modify `WarrenVolumetricSolver.gd` (`_partition_rooms`: a maze-mode branch `_maze_feature_pass` taken when the volume carries a maze source; the legacy beam untouched for the other modes), `WarrenSpatialFeatureSolver.gd` (`:98` landmark floor and `:119` skywalk floor become advisory shortfalls in maze mode like `:240-252` balconies), `WarrenTownSolver.gd` (`feature_quotas_are_advisory` stays the switch); test file.
+
+- `_maze_feature_pass` (one pass, no search): market = the first viable `_preplan_spatial_market` candidate (or the absent sentinel → `advisory_shortfalls["covered_market"]`); courtyard bridge = the absent sentinel unless `requires_elevated_courtyard` (large/grand keep the existing cantilever candidates but take the first that seals — no ranking loop); landmarks = asset plots translated into landmark reservations (`maze_assets` record from the translator — add it in this task: `{id, kind_id, cells, floor, door_walk}` — mapped to `recipe_id = kind_id`, `origin`/`yaw_quarters` from the footprint and the door facing, run through the same `_reserve_landmark_preplan` commit; an asset whose recipe cannot be placed at that site is an audited shortfall, never a rejection); skywalks = none in this task (C4 adds bridges). The pass then continues into the existing exact-composition code (`:2101` onward) unchanged.
+- The unconditional `market_reservation.is_empty()` reject at `:1918-1926` and the `skywalk_range.x` floors at `:1625-1628`/`:1650-1653` are not reached on the maze branch; on the legacy branch they are unchanged.
+- Tests: `test_maze_mode_seals_the_planner_seeds` (all four seal through `solve`; report ms), `test_hero_shortfalls_are_audit_facts` (`advisory_shortfalls` keys present with counts; no hero quota rejects), determinism on seed 12 compact (signature equality across two solves), route-first mode test file green.
+- [ ] Commit — `feat(villages): maze-mode feature pass — hero quotas become audit facts`.
+
+### Task C3: Back rooms and stacked houses
+
+**Files:** modify `WarrenMazeBlockPartitioner.gd` (stacked plots: `support_parent_parcel_id`/`support_parent_storey_index` from the plot whose `[floor, top)` contains `floor − 1`; bridges excluded), `WarrenBuildingParcel.gd`/`WarrenParcelPlan.gd` (`_building_support_is_valid` and `roof_base_band()` accept a child at a flat-roof parent's `top_band` — the slab is the seam), `WarrenVolumetricSolver.gd` (a directed residual pre-pass `_stamp_maze_back_rooms` before `_backfill_residual_rooms`: each `maze_back_rooms` record decomposed into rectangles from the five-kind vocabulary (2×3, 2×2, 1×2, 2×1, 1×1), each stamped as a `WarrenRoomStamp` at the plot's `[floor, top)` with private access from the parcel's building (`add_private_parent`), envelope-checked with the same `_residual_room_envelope_fits`; cells that cannot be stamped are recorded in `composition_audit["maze_back_room_unstamped_cells"]` and left to the greedy backfill); test file.
+- Tests: `test_stacked_houses_declare_their_parent` (every house plot with a plot below carries a valid parent after `WarrenParcelPlan.seal`), `test_back_rooms_become_rooms` (share of back-room cells stamped, reported and pinned at measured − 0.05 on the four seeds), suites green.
+- [ ] Commit — `feat(villages): back rooms stamped from plots; stacked houses declare their parent`.
+
+### Task C4: Decks and bridges
+
+**Files:** modify `WarrenMazeVolumeAdapter.gd` (deck cells → `volume.courtyard_cells` at the deck floor AND public floor surfaces so `_carve_public_volume` paves them as walkable `PUBLIC_FLOOR`; the plan's `maze_decks` records are the source), `WarrenVolumetricSolver.gd` (`_maze_feature_pass` skywalks: each `maze_bridges` record → a spatial skywalk reservation between the two flank parcels' room sockets at the bridge floor via the existing `_raw_straight_skywalk_reservation` builder; when no socket pair matches, `advisory_shortfalls["bridges"] += 1` and the span's retained mass is released to rock — audited, never rejected), `WarrenMazeBlockPartitioner.gd` (bridge record gains `flank_parcel_ids`); test file.
+- Tests: `test_decks_are_walkable_public_floor` (every deck cell has a `PUBLIC_FLOOR` face in the sealed spatial plan and is reachable from the route), `test_bridges_become_skywalks_or_audited_shortfalls` (count of skywalk features + shortfalls == bridge plots on the four seeds; report the ratio).
+- [ ] Commit — `feat(villages): decks pave as plazas; bridge plots become skywalks`.
+
+### Task C5: Flat roofs, stone bases, first built-town render
+
+**Files:** modify `WarrenParcelConstruction.gd` (`proposal()` emits `flat_roof`), `WarrenRoomStamp.gd` (carries `flat_roof`), `WarrenSpatialFabricCompiler.gd` (`compile_roof_units` honours a stamp's `flat_roof` — the tiered house's roof is the upper street's slab/terrace, never a pitched roof), `WarrenMazeBlockPartitioner.gd` (`bears_on_rock` → the parcel's terrain-bearing fact so stacked houses do not get a stone base), harness; the user's built-town captures.
+- Render seeds 4, 3, 9 with `warren_spatial_review.tscn -- --maze-source --mode maze --seed N --scale <id> --output .../scratchpad/phase-c-view` (GUI); the implementer reads the iso/street/orbit captures and writes an honest verdict; every blocker that stops a capture is fixed in this task or recorded with its gate.
+- Tests: `test_tiered_parcels_get_flat_roofs` (fabric audit `flat_roof_count` ≥ tiered parcel count on a seed with tiers), fabric compiler 11/11, settlement 42/42.
+- [ ] Commit — `feat(villages): flat roofs and stone bases from plot facts; first built maze town`.
+
+### Task C6: Corpus exit and performance
+
+**Files:** `tests/harness/warren_maze_stage_probe.gd` (stage timings per seed incl. composition sub-stages from `SKYWALK_TIMING`), `tests/test_warren_maze_composition.gd` (`test_corpus_composes` — the four seeds must seal; the 24-seed matrix is asserted via the sweep's JSON summary written to the scratchpad: ≥ 22/24 compose + fabric), `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md` ("Phase C measured results": per-seed ms, gates, shortfalls).
+- Solve ≤ 3 s per town on the measured baseline (report the distribution; if a seed exceeds it, name the stage and the fix or the ruling).
+- [ ] Commit — `test(villages): maze composition corpus exit; stage timings`.
+
+### Phase C exit
+- 22+/24 compose and pass the fabric gate; hero quotas are audit facts; the four planner seeds render as asset towns; solve ≤ 3 s; legacy modes byte-identical; suites green.
 
 # Phase D — Real-terrain sites
 
