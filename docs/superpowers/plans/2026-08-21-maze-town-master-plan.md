@@ -205,6 +205,12 @@ Milestone: `WarrenVolumetricSolver._solve_maze` composes from plots: houses/asse
 - Tests: `test_tiered_parcels_get_flat_roofs` (fabric audit `flat_roof_count` ≥ tiered parcel count on a seed with tiers), fabric compiler 11/11, settlement 42/42.
 - [ ] Commit — `feat(villages): flat roofs and stone bases from plot facts; first built maze town`.
 
+### Task C5b: Stone skin, realisable assets, the built-town battery
+
+**Files:** modify `SettlementFabricAssembler.gd` (retained maze stone is skinned: every exposed face of a retained stone cell — side faces whose neighbour is air/outside/public air, top faces whose cell above is air and not a paved public floor — emits the rock module the plinth path already uses; internal faces between stone and stone, stone and a building, or stone and a paved floor emit nothing), `WarrenSpatialFabricCompiler.gd` (`_foundation_shell_audit` counts expected vs rendered stone faces for maze stone the same way it does for plinths; `maze_stone_face_count`), `WarrenPlotReservations.gd` + `tests/test_warren_maze_plots.gd` (asset templates carry the recipe's entrance offset and clearance extents so the planner's site test mirrors `_maze_asset_landmark`'s realisation checks — body inside the plot, bearing at the street datum, clearance clear of other plots; ≥ 1 asset lands on the planner seeds or the 24-seed corpus, reported), `tests/test_warren_maze_composition.gd` (`test_retained_stone_is_skinned`: rendered stone faces == audited exposed faces on the sealing seeds; `test_assets_land` — the landmark success path asserted through the production pass), `tests/harness/warren_spatial_review.gd` only if a capture is needed.
+- Render seeds 12/compact, 4/compact, 3/standard (GUI, `--maze-source --mode maze`); read overview, street, foundation, and plaza captures; write the honest verdict (stone mountain present? plazas on stone? stone bases? roofs? what is broken); fix what blocks a capture.
+- [ ] Commit — `feat(villages): retained stone skinned; assets realisable; built-town battery`.
+
 ### Task C6: Corpus exit and performance
 
 **Files:** `tests/harness/warren_maze_stage_probe.gd` (stage timings per seed incl. composition sub-stages from `SKYWALK_TIMING`), `tests/test_warren_maze_composition.gd` (`test_corpus_composes` — the four seeds must seal; the 24-seed matrix is asserted via the sweep's JSON summary written to the scratchpad: ≥ 22/24 compose + fabric), `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md` ("Phase C measured results": per-seed ms, gates, shortfalls).
