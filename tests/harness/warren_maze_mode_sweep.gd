@@ -94,7 +94,7 @@ func _run_constructive(seeds: Array[int]) -> void:
 func _constructive_outcome(city_seed: int, scale_id: StringName) -> Dictionary:
 	## Runs the real one-pass constructive pipeline for one (seed, scale) cell
 	## of the matrix -- WarrenMazeSitePlanner.plan() (massif -> carve -> reserve
-	## -> stamp -> seal) then, only if that sealed, WarrenMazeVolumeAdapter and
+	## -> partition -> seal) then, only if that sealed, WarrenMazeVolumeAdapter and
 	## WarrenMazeBlockPartitioner (the same production entry points the
 	## constructive debug view and the translator tests exercise) -- and
 	## reports the amended slice-1 exit metrics (see the controller amendments

@@ -347,3 +347,511 @@ func test_signature_covers_plots() -> void:
 		assert_ne(first.deterministic_signature(),
 			variant.deterministic_signature(),
 			"%s is part of a plot's sealed identity" % field)
+
+
+# --- WarrenPlotPlanner (task B2) --------------------------------------------
+# P3 (assets, decks) and P4 (houses, heights, bridges). Every fact below is
+# measured off the sealed plan and falsified against an independent
+# re-derivation from the still-unsealed carve-stage plan, never against the
+# planner's own bookkeeping.
+
+## The four (seed, scale) towns the plot-planner facts are measured on. Two
+## compact and two standard: enough spread for tiers and bridges to appear
+## without pushing the file past its ~60 s budget.
+const PLANNER_SEEDS: Array[Dictionary] = [
+	{"seed": 12, "scale": &"compact"},
+	{"seed": 4, "scale": &"compact"},
+	{"seed": 3, "scale": &"standard"},
+	{"seed": 9, "scale": &"standard"},
+]
+## Measured share of buildable columns that end up inside a plot, minus a 0.05
+## guard. Re-pin upward only, and never silently: a drop is a regression to
+## report. See test_partition_fills_every_street_fronting_column.
+const BUILDABLE_COVERAGE_FLOOR := 0.90
+
+static var _sealed_plans: Dictionary = {}
+static var _carved_plans: Dictionary = {}
+
+
+func _sealed_town(seed_value: int, scale: StringName) -> WarrenMazeSourcePlan:
+	## One sealed plan per (seed, scale), built once and shared by every test
+	## in this file -- the whole pipeline is pure, so a cached plan is the same
+	## plan a fresh call would build.
+	var key := "%d/%s" % [seed_value, scale]
+	if not _sealed_plans.has(key):
+		_sealed_plans[key] = WarrenMazeSitePlanner.plan(seed_value, {},
+			WarrenVillageScaleProfile.for_id(scale))
+	return _sealed_plans[key] as WarrenMazeSourcePlan
+
+
+func _carved_town(seed_value: int, scale: StringName) -> WarrenMazeSourcePlan:
+	## The same town stopped straight after the bore: no plot has been placed,
+	## so it answers "what did the massif and the excavation alone allow here"
+	## without any of the planner's own decisions folded in.
+	var key := "%d/%s" % [seed_value, scale]
+	if not _carved_plans.has(key):
+		_carved_plans[key] = WarrenMazeSitePlanner.plan(seed_value, {},
+			WarrenVillageScaleProfile.for_id(scale), &"carve")
+	return _carved_plans[key] as WarrenMazeSourcePlan
+
+
+func _plots_of_kind(plan: WarrenMazeSourcePlan,
+		kind: StringName) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for plot: Dictionary in plan.plots:
+		if StringName(plot["kind"]) == kind:
+			out.append(plot)
+	return out
+
+
+func _template_for(kind_id: StringName) -> Dictionary:
+	for template: Dictionary in WarrenPlotPlanner.ASSET_TEMPLATES:
+		if StringName(template["kind_id"]) == kind_id:
+			return template
+	return {}
+
+
+func _street_bands(plan: WarrenMazeSourcePlan) -> Dictionary:
+	## Vector2i column -> Array[int] of the bands a passage walks there.
+	var out: Dictionary = {}
+	for cell: Vector3i in plan.passage_cells():
+		var column := Vector2i(cell.x, cell.z)
+		var bands: Array = out.get(column, [])
+		if not bands.has(cell.y):
+			bands.append(cell.y)
+		out[column] = bands
+	return out
+
+
+func _asset_sites(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
+	## Every street-fronting, supportable asset site on a plot-free plan, with
+	## its terrain-modification cost -- the test's own enumeration of the
+	## candidate set the planner claims to have taken a minimum over.
+	var out: Array[Dictionary] = []
+	var streets := _street_bands(plan)
+	var columns := _sorted_columns(plan)
+	for template: Dictionary in WarrenPlotPlanner.ASSET_TEMPLATES:
+		for orientation in 2:
+			var width := int(template["width"]) if orientation == 0 \
+				else int(template["depth"])
+			var depth := int(template["depth"]) if orientation == 0 \
+				else int(template["width"])
+			for anchor: Vector2i in columns:
+				var footprint: Array[Vector2i] = []
+				var inside := true
+				for dz in depth:
+					for dx in width:
+						var member := anchor + Vector2i(dx, dz)
+						if not plan.massif.has_column(member):
+							inside = false
+							break
+						footprint.append(member)
+					if not inside:
+						break
+				if not inside:
+					continue
+				var members: Dictionary = {}
+				for member: Vector2i in footprint:
+					members[member] = true
+				var datums: Dictionary = {}
+				for member: Vector2i in footprint:
+					for direction: Vector2i in \
+							WarrenPassageLatticeRules.DIRECTIONS:
+						var next := member + direction
+						if members.has(next):
+							continue
+						for band: int in streets.get(next, []) as Array:
+							datums[band] = true
+				var bands: Array = datums.keys()
+				bands.sort()
+				for datum: int in bands:
+					var cost := 0
+					var supported := true
+					for member: Vector2i in footprint:
+						if not plan.plot_support_ok(member, datum):
+							supported = false
+							break
+						cost += absi(plan.massif.top_at(member) - datum)
+					if not supported:
+						continue
+					out.append({"kind_id": StringName(template["kind_id"]),
+						"orientation": orientation, "anchor": anchor,
+						"datum": datum, "cost": cost,
+						"cells": footprint.duplicate()})
+	return out
+
+
+func test_asset_templates_match_the_catalog() -> void:
+	# ASSET_TEMPLATES is a table so the planner stays program-free: it may
+	# never load the catalog at runtime. This is the only thing that keeps the
+	# table honest -- it re-derives the macro footprints straight from the
+	# compiled fabric program and demands the table equal them exactly.
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	assert_not_null(program, "the settlement fabric program must compile")
+	if program == null:
+		return
+	var expected: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	for recipe_value: FabricRecipe in program.recipes():
+		if not recipe_value.has_tag(&"prefab_anchor"):
+			continue
+		var fine := recipe_value.local_clearance_bounds.size \
+			/ FabricRecipe.CELL_SIZE
+		var footprint := Vector3i(ceili(fine.x / 2.0), ceili(fine.z / 2.0),
+			ceili(fine.y))
+		if seen.has(footprint):
+			continue
+		seen[footprint] = true
+		expected.append({"kind_id": recipe_value.recipe_id,
+			"width": footprint.x, "depth": footprint.y,
+			"height_bands": footprint.z})
+	assert_gt(expected.size(), 0, "the catalog ships prefab anchor recipes")
+	assert_eq(WarrenPlotPlanner.ASSET_TEMPLATES.size(), expected.size(),
+		"one template per unique macro footprint in the catalog")
+	for index in mini(WarrenPlotPlanner.ASSET_TEMPLATES.size(),
+			expected.size()):
+		var actual := WarrenPlotPlanner.ASSET_TEMPLATES[index] as Dictionary
+		var wanted := expected[index] as Dictionary
+		assert_eq(StringName(actual.get("kind_id", &"")),
+			StringName(wanted["kind_id"]),
+			"template %d names its catalog recipe" % index)
+		for field: String in ["width", "depth", "height_bands"]:
+			assert_eq(int(actual.get(field, -1)), int(wanted[field]),
+				"template %d %s" % [index, field])
+	gut.p("ASSET_TEMPLATES: %d unique macro footprints from %d recipes" % [
+		expected.size(), WarrenPlotPlanner.ASSET_TEMPLATES.size()])
+
+
+func test_assets_sit_at_the_minimum_modification_site() -> void:
+	var plan := _sealed_town(12, &"compact")
+	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	if plan == null:
+		return
+	var assets := _plots_of_kind(plan, WarrenMazeSourcePlan.PLOT_ASSET)
+	var outcomes: Dictionary = plan.audit.get("plot_outcomes", {})
+	var records: Array = outcomes.get("assets", [])
+	assert_gt(records.size(), 0, "the scale quota asks for assets")
+	assert_gt(assets.size(), 0, "seed 12 compact places at least one asset")
+	if assets.is_empty():
+		return
+	var carved := _carved_town(12, &"compact")
+	var sites := _asset_sites(carved)
+	assert_gt(sites.size(), 0, "the test enumerates candidate sites of its own")
+	var best := sites[0].cost as int
+	for site: Dictionary in sites:
+		best = mini(best, int(site["cost"]))
+	# The FIRST asset is the one placed against an empty town, so its site is
+	# comparable with an enumeration that knows nothing about the others.
+	var first := assets[0] as Dictionary
+	var template := _template_for(StringName(
+		(records[0] as Dictionary).get("kind_id", &"")))
+	assert_false(template.is_empty(), "a placed asset names a real template")
+	var datum := int(first["floor"])
+	var cost := 0
+	for cell_value: Variant in first["cells"] as Array:
+		var column := cell_value as Vector2i
+		assert_true(carved.plot_support_ok(column, datum),
+			"asset column %s is supportable at its datum" % column)
+		cost += absi(plan.massif.top_at(column) - datum)
+	assert_eq(cost, best,
+		"the asset stands at the minimum terrain-modification cost")
+	for plot: Dictionary in assets:
+		var members: Array = plot["cells"]
+		var chosen := _template_for(StringName(String(plot["id"])))
+		var sizes: Dictionary = {"x": {}, "z": {}}
+		for cell_value: Variant in members:
+			var column := cell_value as Vector2i
+			(sizes["x"] as Dictionary)[column.x] = true
+			(sizes["z"] as Dictionary)[column.y] = true
+		assert_eq(members.size(),
+			(sizes["x"] as Dictionary).size() * (sizes["z"] as Dictionary).size(),
+			"asset %s is a solid rectangle" % plot["id"])
+		var door: Vector3i = plot["door_walk"]
+		assert_true(plan.passage_kinds.has(door),
+			"asset %s fronts a real street cell" % plot["id"])
+		assert_eq(door.y, int(plot["floor"]),
+			"asset %s takes its datum from the street it fronts" % plot["id"])
+		assert_eq(StringName(plot["building_id"]), StringName(plot["id"]),
+			"asset %s is its own building" % plot["id"])
+	gut.p("seed 12 compact: %d/%d assets placed, min cost %d" % [
+		assets.size(), records.size(), best])
+
+
+func test_decks_are_flat_street_level_regions() -> void:
+	var total := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		var carved := _carved_town(seed_value, scale)
+		var quota: Vector2i = WarrenPlotPlanner.DECK_QUOTA[scale]
+		var cap: int = WarrenPlotPlanner.DECK_MAX[scale]
+		var decks := _plots_of_kind(plan, WarrenMazeSourcePlan.PLOT_DECK)
+		total += decks.size()
+		assert_lte(decks.size(), quota.y,
+			"seed %d never exceeds its deck quota" % seed_value)
+		for deck: Dictionary in decks:
+			var datum := int(deck["floor"])
+			assert_eq(int(deck["top"]), datum,
+				"deck %s is flat" % deck["id"])
+			var cells: Array = deck["cells"]
+			assert_gte(cells.size(), WarrenPlotPlanner.DECK_MIN,
+				"deck %s clears the deck minimum" % deck["id"])
+			assert_lte(cells.size(), cap,
+				"deck %s stays inside the scale's area cap" % deck["id"])
+			var members: Dictionary = {}
+			for cell_value: Variant in cells:
+				members[cell_value as Vector2i] = true
+			for cell_value: Variant in cells:
+				var column := cell_value as Vector2i
+				assert_lte(absi(plan.massif.top_at(column) - datum), 1,
+					"deck %s cell %s is within a band of its datum" % [
+						deck["id"], column])
+				assert_true(carved.plot_support_ok(column, datum),
+					"deck %s cell %s is supportable at the datum" % [
+						deck["id"], column])
+			var door: Vector3i = deck["door_walk"]
+			assert_true(plan.passage_kinds.has(door),
+				"deck %s grew off a real street cell" % deck["id"])
+			assert_eq(door.y, datum, "deck %s sits at its street's band" \
+				% deck["id"])
+			var touches := false
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				touches = touches \
+					or members.has(Vector2i(door.x, door.z) + direction)
+			assert_true(touches, "deck %s adjoins the street it grew from" \
+				% deck["id"])
+	assert_gt(total, 0, "the corpus grows at least one deck")
+	gut.p("decks across the four towns: %d" % total)
+
+
+func test_partition_fills_every_street_fronting_column() -> void:
+	var demanded := 0
+	var supplied := 0
+	var buildable := 0
+	var buildable_in_plot := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		var carved := _carved_town(seed_value, scale)
+		var owned: Dictionary = {}
+		for plot: Dictionary in plan.plots:
+			for cell_value: Variant in plot["cells"] as Array:
+				owned[cell_value as Vector2i] = true
+		# Demand, re-derived from the carve-stage plan alone: a column a street
+		# fronts and the support rule accepts at that street's own band.
+		var fronting: Dictionary = {}
+		for cell: Vector3i in carved.passage_cells():
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var column := Vector2i(cell.x, cell.z) + direction
+				if not carved.massif.has_column(column):
+					continue
+				if carved.plot_support_ok(column, cell.y):
+					fronting[column] = true
+		var missing := 0
+		for column: Vector2i in fronting:
+			if not owned.has(column):
+				missing += 1
+		demanded += fronting.size()
+		supplied += fronting.size() - missing
+		assert_eq(missing, 0,
+			"seed %d %s leaves %d street-fronting column(s) out of every plot" \
+				% [seed_value, scale, missing])
+		# The broader measure: every column with room for a house in it at all.
+		for column: Vector2i in _sorted_columns(carved):
+			var longest := 0
+			var run := 0
+			for band in range(carved.massif.base_at(column),
+					carved.massif.top_at(column)):
+				run = 0 if carved.excavation.carved.has(
+					Vector3i(column.x, band, column.y)) else run + 1
+				longest = maxi(longest, run)
+			if longest < WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
+				continue
+			buildable += 1
+			buildable_in_plot += int(owned.has(column))
+	assert_gt(demanded, 0, "the corpus has street-fronting columns to fill")
+	assert_eq(supplied, demanded,
+		"every street-fronting supportable column is in a plot")
+	var share := float(buildable_in_plot) / float(maxi(1, buildable))
+	gut.p("buildable columns in a plot: %d/%d = %.3f (floor %.2f)" % [
+		buildable_in_plot, buildable, share, BUILDABLE_COVERAGE_FLOOR])
+	assert_gte(share, BUILDABLE_COVERAGE_FLOOR,
+		"the share of buildable columns inside a plot holds its pinned floor")
+
+
+func test_houses_rise_to_meet_upper_streets() -> void:
+	var tiered := 0
+	var houses := 0
+	var skipped := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		var outcomes: Dictionary = plan.audit.get("plot_outcomes", {})
+		var records: Array = outcomes.get("buildings", [])
+		var by_id: Dictionary = {}
+		for plot: Dictionary in plan.plots:
+			by_id[StringName(plot["id"])] = plot
+		for record: Dictionary in records:
+			var plot: Dictionary = by_id.get(StringName(record["id"]), {})
+			if String(record["reason"]) != "":
+				skipped += 1
+				assert_true(plot.is_empty(),
+					"a building the planner recorded as skipped never stands")
+				continue
+			assert_false(plot.is_empty(),
+				"every audited building that reports no reason is a real plot")
+			if plot.is_empty():
+				continue
+			houses += 1
+			assert_gte(int(plot["top"]) - int(plot["floor"]),
+				WarrenMazeSourcePlan.MIN_HOUSE_BANDS,
+				"house %s is at least MIN_HOUSE_BANDS tall" % plot["id"])
+			if not bool(record["tiered"]):
+				continue
+			tiered += 1
+			# A tiered roof is a street's own band, measured off the passages
+			# rather than off the planner's flag.
+			var apron: Dictionary = {}
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				apron[column] = true
+				for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+					apron[column + direction] = true
+			var meets := false
+			for cell: Vector3i in plan.passage_cells():
+				meets = meets or cell.y == int(plot["top"]) \
+					and apron.has(Vector2i(cell.x, cell.z))
+			assert_true(meets,
+				"tiered house %s tops out at a street's band" % plot["id"])
+			assert_true(bool(plan.plot_facts(plot).tiered),
+				"the plan derives the same tier fact for %s" % plot["id"])
+	assert_gt(tiered, 0, "the corpus tiers at least one house")
+	gut.p("tiered houses across the four towns: %d of %d (%d skipped)" % [
+		tiered, houses, skipped])
+
+
+func test_bridge_plots_sit_on_retained_spans() -> void:
+	var bridges := 0
+	var spans := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		spans += plan.excavation.bridge_spans.size()
+		var by_columns: Dictionary = {}
+		for plot: Dictionary in _plots_of_kind(plan,
+				WarrenMazeSourcePlan.PLOT_BRIDGE):
+			bridges += 1
+			var key := PackedStringArray()
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				key.append("%d,%d" % [column.x, column.y])
+			by_columns["+".join(key)] = plot
+		for span_value: Variant in plan.excavation.bridge_spans:
+			var span: Array = span_value
+			var key := PackedStringArray()
+			var floor_band := 0
+			for cell_value: Variant in span:
+				var cell := cell_value as Vector3i
+				key.append("%d,%d" % [cell.x, cell.z])
+				assert_true(plan.passage_kinds.has(cell),
+					"a bridge span is made of passage cells")
+				floor_band = maxi(floor_band,
+					plan.passage_headroom_top(cell)
+						+ WarrenMazeSourcePlan.TUNNEL_ROOF_BANDS)
+			var plot: Dictionary = by_columns.get("+".join(key), {})
+			if plot.is_empty():
+				# The support rule owns this, not the planner: a span whose
+				# own clearance is eaten by another street above it cannot
+				# carry a bridge, and that is an audited fact, not a repair.
+				assert_true(_bridge_skipped(plan, "+".join(key)),
+					"span %s has a bridge or an audited reason" \
+						% "+".join(key))
+				continue
+			assert_eq(int(plot["floor"]), floor_band,
+				"bridge %s stands on the span's retained roof slab" \
+					% plot["id"])
+			assert_eq(int(plot["top"]),
+				floor_band + WarrenBuildingParcel.STOREY_BANDS,
+				"bridge %s is one storey" % plot["id"])
+			assert_true(plan.solid_at(Vector3i(span[0].x, floor_band - 1,
+				span[0].z)), "the span's overhead mass really was retained")
+			var owner := StringName(plot["building_id"])
+			if owner == StringName(plot["id"]):
+				continue
+			var host: Dictionary = {}
+			for other: Dictionary in plan.plots:
+				if StringName(other["id"]) == owner:
+					host = other
+			assert_false(host.is_empty(),
+				"bridge %s names a real building" % plot["id"])
+			if host.is_empty():
+				continue
+			assert_eq(int(host["floor"]), int(plot["floor"]),
+				"bridge %s joins a building sharing its floor" % plot["id"])
+	assert_gt(spans, 0, "the corpus retains bridge spans")
+	assert_gt(bridges, 0, "retained spans become bridge plots")
+	gut.p("bridges across the four towns: %d of %d retained spans" % [
+		bridges, spans])
+
+
+func _bridge_skipped(plan: WarrenMazeSourcePlan, columns: String) -> bool:
+	## True when the planner audited a reason for the bridge that is missing
+	## from these columns, so a silently dropped span still fails the test.
+	for record: Dictionary in (plan.audit.get("plot_outcomes", {}) \
+			as Dictionary).get("bridges", []) as Array:
+		if String(record["reason"]) == "":
+			continue
+		var span: Array = plan.excavation.bridge_spans[
+			int(String(record["id"]).right(2))]
+		var key := PackedStringArray()
+		var seen: Dictionary = {}
+		for cell_value: Variant in span:
+			var cell := cell_value as Vector3i
+			if seen.has(Vector2i(cell.x, cell.z)):
+				continue
+			seen[Vector2i(cell.x, cell.z)] = true
+			key.append("%d,%d" % [cell.x, cell.z])
+		if "+".join(key) == columns:
+			return true
+	return false
+
+
+func test_planner_is_deterministic() -> void:
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var first := _sealed_town(seed_value, scale)
+		assert_not_null(first, WarrenMazeSitePlanner.last_failure)
+		var second := WarrenMazeSitePlanner.plan(seed_value, {},
+			WarrenVillageScaleProfile.for_id(scale))
+		assert_not_null(second, WarrenMazeSitePlanner.last_failure)
+		if first == null or second == null:
+			continue
+		assert_eq(first.deterministic_signature(),
+			second.deterministic_signature(),
+			"seed %d %s signs the same town twice" % [seed_value, scale])
+		assert_gt(first.plots.size(), 0,
+			"seed %d %s builds a town worth signing" % [seed_value, scale])
+		assert_true(first.deterministic_signature().contains("plot:house."),
+			"seed %d %s partitions houses into the signature" % [seed_value,
+				scale])
+		assert_eq(str(first.audit.get("plot_outcomes", {})),
+			str(second.audit.get("plot_outcomes", {})),
+			"seed %d %s audits the same outcomes twice" % [seed_value, scale])

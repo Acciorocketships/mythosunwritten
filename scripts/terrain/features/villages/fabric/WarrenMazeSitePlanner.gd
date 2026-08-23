@@ -2,13 +2,16 @@ class_name WarrenMazeSitePlanner
 extends RefCounted
 
 ## One-pass entry point for the constructive maze-town pipeline: massif ->
-## carve (unsealed) -> reserve -> stamp (which derives foundations internally)
-## -> seal. Every phase is pure and costs milliseconds, so `stop_after` simply
-## re-runs the pipeline from scratch up to and including the named phase and
-## hands back the still-unsealed plan; the debug view that wants a mid-pipeline
-## snapshot calls plan() again with a different stop_after rather than this
-## planner keeping any state of its own between calls.
-const STOP_AFTER_STAGES: Array[StringName] = [&"carve", &"reserve", &"stamp"]
+## carve (unsealed) -> reserve (assets + decks) -> partition (houses, heights,
+## bridges) -> seal. Every phase is pure and costs milliseconds, so
+## `stop_after` simply re-runs the pipeline from scratch up to and including
+## the named phase and hands back the still-unsealed plan; the debug view that
+## wants a mid-pipeline snapshot calls plan() again with a different
+## stop_after rather than this planner keeping any state of its own between
+## calls.
+const STOP_AFTER_STAGES: Array[StringName] = [
+	&"carve", &"reserve", &"partition",
+]
 
 static var last_failure := ""
 
@@ -34,16 +37,14 @@ static func plan(world_seed: int, ground_bands: Dictionary,
 	if stop_after == &"carve":
 		return source_plan
 
-	if not WarrenMazeReservationPass.reserve(source_plan, profile):
-		last_failure = "reserve: %s" % WarrenMazeReservationPass.last_failure
-		return null
+	# The plot layer never fails: shortfalls are audit facts (rules become
+	# repairs), so neither phase has a rejection path to translate here.
+	WarrenPlotPlanner.reserve(source_plan, profile)
 	if stop_after == &"reserve":
 		return source_plan
 
-	if not WarrenMazeStampPass.stamp(source_plan, profile):
-		last_failure = "stamp: %s" % WarrenMazeStampPass.last_failure
-		return null
-	if stop_after == &"stamp":
+	WarrenPlotPlanner.partition(source_plan, profile)
+	if stop_after == &"partition":
 		return source_plan
 
 	if not source_plan.seal():

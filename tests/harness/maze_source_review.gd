@@ -11,7 +11,7 @@ extends Node3D
 ##   2 bore    -- stop_after = &"carve", geometry only (routing, stride legality)
 ##   3 air     -- same carved plan, covered/open colouring (tunnel vs sky)
 ##   4 reserve -- stop_after = &"reserve" (feature placement, big edits)
-##   5 stamp   -- stop_after = &"stamp" (claims, L-pairs, small edits)
+##   5 partition -- stop_after = &"partition" (houses, heights, bridges)
 ##   6 final   -- full sealed plan (foundations + everything)
 ##
 ## GUI mode only -- headless capture scenes hang.
@@ -99,7 +99,7 @@ const ISO_TOP_BATTERY: Array[Dictionary] = [
 	{"id": "top", "dir": Vector3(0.02, 1.0, 0.02), "dist": 1.9},
 ]
 const ALL_STATES: Array[StringName] = [
-	&"massif", &"bore", &"air", &"reserve", &"stamp", &"final",
+	&"massif", &"bore", &"air", &"reserve", &"partition", &"final",
 ]
 
 var _output_dir := "/tmp/maze-source-review"
@@ -241,8 +241,8 @@ func _stop_after_for(state: StringName) -> StringName:
 			return &"carve"
 		&"reserve":
 			return &"reserve"
-		&"stamp":
-			return &"stamp"
+		&"partition":
+			return &"partition"
 		_:
 			return &""
 
