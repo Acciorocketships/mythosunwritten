@@ -1746,6 +1746,8 @@ func test_exterior_rock_ratio_is_pinned() -> void:
 		assert_lte(ratio, EXTERIOR_ROCK_CEILING,
 			"seed %d %s: exterior rock ratio %.4f is past its pinned ceiling" \
 				% [seed_value, scale, ratio])
+
+
 func test_ownership_is_pinned_on_the_planner_seeds() -> void:
 	## The ownership floor the deleted constructive suite carried, restated on
 	## the live metric (see OWNERSHIP_FLOOR for the measured values and for
