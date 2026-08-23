@@ -776,6 +776,22 @@ static func _plot_reserved_top(plot: Dictionary) -> int:
 	return maxi(int(plot["top"]), int(plot["floor"]) + 1)
 
 
+## The lowest carved band in [from_band, to_band) on `column`, -1 when the
+## range is clear -- the public form of the reading the support rule, add_plot,
+## and seal all share, so a planner asking "is a street in the way of this
+## mass" never has to walk `excavation.carved` for itself.
+func first_carved_band(column: Vector2i, from_band: int,
+		to_band: int) -> int:
+	return _first_carved_band(column, from_band, to_band)
+
+
+## How many passage cells have nothing solid under the band they walk on. An
+## audit fact, never a gate; seal records the same number under
+## `audit["street_floor_gaps"]` once the town is finished.
+func street_floor_gaps() -> int:
+	return _street_floor_gaps()
+
+
 func _first_carved_band(column: Vector2i, from_band: int,
 		to_band: int) -> int:
 	## The lowest carved band in [from_band, to_band) on `column`, -1 when the
