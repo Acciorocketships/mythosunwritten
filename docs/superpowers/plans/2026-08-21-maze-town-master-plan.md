@@ -229,6 +229,15 @@ C5c measured that the binding constraint on plot-mass composition is the authore
 - Render seeds 12 and 3; verdict: a terraced town of flat-roofed stone-and-timber houses with the occasional pitched roof on a freestanding house — does it read that way?
 - [ ] Commit — `feat(villages): flat-roof-first maze composition; pitched roofs where they fit`.
 
+### Task C5e: Partial plates tile; roofs are terraces
+
+C5d left two things: 8 of the 13 non-sealing corpus seeds (and 9/standard, and the reverted relaxation 1) die at a partial-plate roof gate — a flat crown only partly covered by a stacked room has no authored `roof.flat.*` unit that matches the uncovered shape; and the flat roof's parapet course is retained STONE, so from above every house reads as a stone block with a timber sill instead of a terrace.
+
+**Files:** modify `WarrenSpatialFabricCompiler.gd` (a partial plate is tiled: the uncovered cells of a flat crown are covered greedily with `roof.flat.tower`/`.slim` (and `.square` where a 2×2 fits) units in sorted order, each a normal roof unit in the face identity; `maze_partial_plate_tiled_count` / `_tile_count`; the `macro setback roof 0`, `exact setback roof`, and `1-cell exposed sliver` gates are not reached for flat crowns), `WarrenVolumetricSolver.gd` + `WarrenParcelConstruction.gd` (the flat parcel's parapet band above the slab is NOT retained stone: it is released to air, so the plot's `top` stays the massing envelope while the built crown is slab + open terrace; re-apply relaxation 1 (full no-descent) now that the partial-plate gate is gone, keeping it only if the three sealing seeds still seal), `SettlementFabricAssembler.gd` (a railing — `RAILING_MEDIUM`, already referenced by the program — on every exposed edge of a flat crown's slab whose neighbour at the slab band is air; no railing against a stacked room, a deck at the same band, or a street on the roof; audit `maze_terrace_railing_count`), `tests/test_warren_maze_composition.gd`.
+- Measure: unroomed share (ceiling DOWN only), corpus seal count via the sweep (report; C6 pins), 9/standard (remove the pin if cleared), per-seed ms.
+- Render seeds 12 and 3; verdict: terraces with railings, stone only as bases/shoulders/slabs, houses visible from above?
+- [ ] Commit — `feat(villages): partial plates tile; flat roofs are open terraces with railings`.
+
 ### Task C6: Corpus exit and performance
 
 **Files:** `tests/harness/warren_maze_stage_probe.gd` (stage timings per seed incl. composition sub-stages from `SKYWALK_TIMING`), `tests/test_warren_maze_composition.gd` (`test_corpus_composes` — the four seeds must seal; the 24-seed matrix is asserted via the sweep's JSON summary written to the scratchpad: ≥ 22/24 compose + fabric), `docs/superpowers/plans/2026-08-21-maze-town-master-plan.md` ("Phase C measured results": per-seed ms, gates, shortfalls).
