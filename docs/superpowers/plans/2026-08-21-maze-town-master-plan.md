@@ -253,7 +253,7 @@ Milestone: production site (seed 2697992464, super (0,-1)) and ≥2 sloped fixtu
 
 # Phase E — Variation
 
-Milestone: noise massif behind the unchanged interface (relief > 0, varied plateaus/terrace ladders, eccentric footprints); carver vertical momentum + post-summit descent. Exit: Phase B/C metrics hold on the noise corpus; silhouettes measurably differ across seeds.
+Milestone: noise massif behind the unchanged interface (relief > 0, varied plateaus/terrace ladders, eccentric footprints); carver vertical momentum + post-summit descent; house/roof variation and outcroppings. **Binding visual direction (user, 2026-08-24):** (1) stone faces concentrate in the bottom 1–2 storeys relative to local ground/street level — not everywhere, some areas only (a per-band exterior-stone metric replaces the flat ratio); (2) the city's silhouette falls toward its edges in CLUSTERS — terraced descent, never sheer multi-storey rim walls and never per-column noise; (3) more variation in house and roof types (pitched where free-standing, storey diversity, façade families) and more outcroppings/cantilevers (re-enable the outcropping machinery for maze mode). Exit: Phase B/C metrics hold on the noise corpus; silhouettes measurably differ across seeds; the three directions above are each measured and shown in the battery.
 
 # Phase F — Mode flip and deletion
 
