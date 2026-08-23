@@ -113,7 +113,7 @@ const DECK_REACHABLE_FLOOR := 0.95
 ## Measured share of the planner's bridge plots that become real bridge rooms,
 ## minus a 0.05 guard. It is **0.000 on this corpus**, so this line is a
 ## placeholder that becomes a real floor the day the model gap below closes;
-## the teeth of `test_bridges_become_rooms_or_audited_releases` are the
+## the teeth of `test_bridges_become_rooms_decks_or_audited_releases` are the
 ## accounting identity, the reason vocabulary, and the shortfall equality.
 ##
 ## Why zero, measured: a bridge floor is `passage headroom top + 1`, and on all
@@ -638,6 +638,10 @@ func test_bridges_become_rooms_decks_or_audited_releases() -> void:
 			assert_has(BRIDGE_OUTCOMES, verdict,
 				"%s bridge outcome %s names no known verdict" % [
 					_label(outcome), record])
+			assert_true(record.has("flat_flank_columns") \
+				and record.has("flat_flank_sides"),
+				("%s bridge outcome %s must publish why it is or is not an " \
+					+ "open deck") % [_label(outcome), record.get("id", &"")])
 			if verdict == "stamped":
 				continue
 			if verdict == "open_deck":
@@ -1231,8 +1235,20 @@ func test_rock_is_retained_as_stone() -> void:
 			if first.is_empty():
 				first = "%s" % cell
 		var audited := int(fabric.audit.get("maze_retained_rock_cells", -1))
-		print("MAZE_ROCK %s rock=%d retained=%d audited=%d missing=%d" % [
-			_label(outcome), expected, retained.size(), audited, missing])
+		var skipped := int(plan.audit.get(
+			"maze_retained_rock_skipped_reserved", -1))
+		var suppressed := int(fabric.audit.get(
+			"maze_plinth_faces_suppressed_by_stone", -1))
+		print(("MAZE_ROCK %s rock=%d retained=%d audited=%d missing=%d " \
+			+ "skipped_reserved=%d plinth_faces_suppressed=%d") % [
+			_label(outcome), expected, retained.size(), audited, missing,
+			skipped, suppressed])
+		assert_gte(skipped, 0,
+			"%s must publish the rock cells another feature had reserved" \
+				% _label(outcome))
+		assert_gte(suppressed, 0,
+			"%s must publish the plinth faces retained stone suppressed" \
+				% _label(outcome))
 		assert_eq(missing, 0,
 			"%s discards %d of %d rock cells (first %s)" % [_label(outcome),
 				missing, expected, first])
@@ -1416,8 +1432,14 @@ func test_stacked_houses_bond_to_flat_roofs() -> void:
 							else ground.support_parent_parcel_id, parent_id]
 				continue
 			seams += 1
-		print("MAZE_STACK_SEAMS %s declared=%d bonded=%d uncomposed=%d" % [
-			_label(outcome), declared, seams, uncomposed])
+		print(("MAZE_STACK_SEAMS %s declared=%d bonded=%d uncomposed=%d " \
+			+ "audited_uncomposed=%d") % [_label(outcome), declared, seams,
+			uncomposed, int(plan.audit.get("maze_uncomposed_stack_count",
+				-1))])
+		assert_eq(int(plan.audit.get("maze_uncomposed_stack_count", -1)),
+			uncomposed,
+			"%s must publish the declared stacks that composed nothing" \
+				% _label(outcome))
 		assert_eq(wrong, "",
 			"%s declared a stack the composition did not build: %s" % [
 				_label(outcome), wrong])
@@ -1427,6 +1449,92 @@ func test_stacked_houses_bond_to_flat_roofs() -> void:
 		declared_total += seams
 	assert_gt(declared_total, 0,
 		"no planner seed builds a stacked house bonded to a flat roof")
+
+
+func test_retained_rock_skips_a_cell_another_feature_reserved() -> void:
+	## Review IMPORTANT 1. `Reservation.FEATURE` is NON-SHAREABLE, and retained
+	## stone is the one claim in this pipeline that sweeps a whole volume
+	## instead of placing an authored shape -- so it is the one that can meet a
+	## cell some other feature reserved without ever assigning it a use (the
+	## elevated court does exactly that, and `_discard_unassigned_mass` then
+	## turns those cells OUTSIDE, straight into this pass's candidate set).
+	## Reserving one of them fails the whole grid transaction and kills the
+	## town. The pass must SKIP it and count it.
+	##
+	## Unit-style on purpose: one real maze source, two identical grids, one
+	## pre-reserved cell between them. No solve, no fabric, ~1 s.
+	var profile := WarrenVillageScaleProfile.for_id(
+		WarrenVillageScaleProfile.COMPACT)
+	var source := WarrenMazeSitePlanner.plan(12, {}, profile)
+	assert_not_null(source, "the pinned planner seed must still plan a town")
+	if source == null:
+		return
+	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
+	assert_not_null(volume, "the maze source must adapt to a volume")
+	if volume == null:
+		return
+	var baseline := _rock_retention_probe(source, volume, Vector3i(2147483647,
+		2147483647, 2147483647))
+	assert_gt(int(baseline.result.cells), 0,
+		"the probe must retain real rock before the reservation is added")
+	assert_eq(int(baseline.result.skipped), 0,
+		"an unreserved grid skips nothing")
+	assert_gt((baseline.cells as Array).size(), 0,
+		"the probe must expose the cells it retained")
+	# Take a cell the baseline really retained and give its FEATURE bit to
+	# somebody else, exactly as a composed feature would.
+	var taken := (baseline.cells as Array[Vector3i])[
+		(baseline.cells as Array).size() / 2]
+	var guarded := _rock_retention_probe(source, volume, taken)
+	assert_false(bool(guarded.result.failed),
+		"a foreign FEATURE reservation must never reject the retention pass")
+	assert_eq(int(guarded.result.skipped), 1,
+		"the pass must count the one cell it could not claim")
+	assert_eq(int(guarded.result.cells), int(baseline.result.cells) - 1,
+		"the pass must retain everything else")
+	# And the sealed reservation must still be buildable over what is left.
+	var supports := WarrenSupportGraph.new()
+	var stone := WarrenVolumetricSolver._maze_stone_reservation(
+		guarded.grid as WarrenSpatialGrid, supports)
+	assert_false(bool(stone.failed),
+		"retained stone must still seal around the reserved cell")
+	var feature := stone.feature as WarrenFeatureReservation
+	assert_not_null(feature, "retained stone must produce a sealed feature")
+	if feature == null:
+		return
+	assert_eq(feature.reserved_cells.size(), int(guarded.result.cells),
+		"the sealed feature must own exactly the cells the pass claimed")
+	assert_false(feature.reserved_cells.has(taken),
+		"the sealed feature must not own the cell it skipped")
+
+
+func _rock_retention_probe(source: WarrenMazeSourcePlan,
+		volume: WarrenVolumePlan, reserved: Vector3i) -> Dictionary:
+	## One fresh grid carrying the source's projected mass, discarded down to
+	## OUTSIDE exactly as `from_volume` leaves it before `_retain_maze_rock`
+	## runs, optionally with one cell's FEATURE bit already owned by somebody
+	## else. Returns `{grid, result, cells}`.
+	var bounds := WarrenVolumetricSolver._grid_bounds(source.massif)
+	var grid := WarrenSpatialGrid.new(bounds.minimum as Vector3i,
+		bounds.size as Vector3i)
+	assert_true(grid.is_valid(), "the probe grid must be valid")
+	assert_true(WarrenVolumetricSolver._project_massif(grid, source.massif),
+		"the probe grid must carry the source massif")
+	assert_true(WarrenVolumetricSolver._discard_unassigned_mass(grid),
+		"the probe grid must reach the state the retention pass expects")
+	if reserved.x != 2147483647:
+		var claim := grid.begin_transaction(&"probe.other_feature")
+		assert_true(claim.reserve([reserved] as Array[Vector3i],
+			WarrenSpatialGrid.Reservation.FEATURE, &"probe.other_feature") \
+			and claim.commit(), "the probe reservation must commit")
+	var result := WarrenVolumetricSolver._retain_maze_rock(grid, volume)
+	var cells: Array[Vector3i] = []
+	for cell: Vector3i in grid.cells_with_use(
+			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
+		if grid.owner_name_at(cell) \
+				== WarrenSpatialFabricCompiler.MAZE_RETAINED_STONE_ID:
+			cells.append(cell)
+	return {"grid": grid, "result": result, "cells": cells}
 
 
 func test_maze_mode_is_deterministic() -> void:

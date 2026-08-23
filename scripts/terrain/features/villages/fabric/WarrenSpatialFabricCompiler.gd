@@ -438,21 +438,28 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 	# built in is skipped rather than refused: `set_retained_terrace` rejects
 	# an overlap with solid outright, and the one-band `roof.flat.*` unit
 	# standing on a flat parcel's slab is exactly such an overlap.
-	var maze_stone_cells := 0
+	var maze_stone: Dictionary = {}
 	if source.grid != null:
-		var built: Dictionary = {} if plan == null \
-			else plan.transformed_cells(&"solid")
+		var maze_owned: Array[Vector3i] = []
 		for cell: Vector3i in source.grid.cells_with_use(
 				WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
-			if source.grid.owner_name_at(cell) != MAZE_RETAINED_STONE_ID \
-					or cells.has(cell) or built.has(cell):
+			if source.grid.owner_name_at(cell) == MAZE_RETAINED_STONE_ID \
+					and not cells.has(cell):
+				maze_owned.append(cell)
+		# The solid projection is only needed when there is retained stone to
+		# subtract it from, and it is not free: skip it on every legacy plan.
+		var built: Dictionary = {} if plan == null or maze_owned.is_empty() \
+			else plan.transformed_cells(&"solid")
+		for cell: Vector3i in maze_owned:
+			if built.has(cell):
 				continue
 			cells[cell] = true
-			maze_stone_cells += 1
+			maze_stone[cell] = true
 	return {"valid": true, "cells": cells, "cell_count": cells.size(),
 		"column_count": columns.size(), "max_depth_bands": max_depth,
 		"terrain_bearing_room_count": terrain_bearing_room_count,
-		"maze_retained_rock_cells": maze_stone_cells,
+		"maze_retained_rock_cells": maze_stone.size(),
+		"maze_stone_cells": maze_stone,
 		"flush_room_count": flush_room_count, "room_records": room_records}
 
 
@@ -475,6 +482,9 @@ static func _foundation_shell_audit(foundation_result: Dictionary,
 			"foundation_shell_details": [],
 		}
 	var retained := foundation_result.get("cells", {}) as Dictionary
+	var maze_stone := foundation_result.get(
+		"maze_stone_cells", {}) as Dictionary
+	var maze_suppressed_face_count := 0
 	var solids := plan.transformed_cells(&"solid")
 	var bearing_footprint := plan.transformed_cells(&"terrain_bearing")
 	var rendered := SettlementFabricAssembler.plinth_faces(retained, solids,
@@ -518,6 +528,14 @@ static func _foundation_shell_audit(foundation_result: Dictionary,
 				# two intersecting stone panels.
 				if retained.has(neighbor) or solids.has(neighbor) \
 						or bearing_footprint.has(neighbor + Vector3i.UP):
+					# TASK C5, review IMPORTANT 2 (measurement only). Retained
+					# maze STONE closes this seam in the plan and renders
+					# nothing at all today, so the panel this course would have
+					# worn disappears without anything taking its place. That is
+					# a render debt C5b inherits, and this is its size.
+					maze_suppressed_face_count += int(maze_stone.has(neighbor) \
+						and not solids.has(neighbor) \
+						and not bearing_footprint.has(neighbor + Vector3i.UP))
 					continue
 				exposed_direction_mask |= 1 << direction_index
 				room_expected_faces += 1
@@ -550,6 +568,7 @@ static func _foundation_shell_audit(foundation_result: Dictionary,
 		# record and therefore no shell to close.
 		"maze_retained_rock_cells": int(foundation_result.get(
 			"maze_retained_rock_cells", 0)),
+		"maze_plinth_faces_suppressed_by_stone": maze_suppressed_face_count,
 		"foundation_building_count": details.size(),
 		"foundation_closed_shell_count": closed_shell_count,
 		"foundation_incomplete_shell_count": incomplete_shell_count,
@@ -2827,14 +2846,15 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 							last_failure = "macro setback roof %d for %s and its complete fallbacks were rejected: %s" % [
 								row_index, room_id, "; ".join(fallback_failures)]
 							return [] as Array[FabricUnit]
-						plot_flat_pitched_count += int(plot_flat and full) \
-							* terminal_units.size()
 						for terminal_unit: FabricUnit in terminal_units:
 							if not probe.add_unit(terminal_unit):
 								last_failure = "proved terminal roof fallback changed before commit for %s: %s" % [
 									room_id, probe.last_rejection]
 								return [] as Array[FabricUnit]
 							out.append(terminal_unit)
+							plot_flat_pitched_count += int(plot_flat and full \
+								and not String(terminal_unit.recipe_id) \
+									.begins_with("roof.flat."))
 							cap_count += 1
 							plain_cap_count += int(String(
 								terminal_unit.recipe_id).begins_with(

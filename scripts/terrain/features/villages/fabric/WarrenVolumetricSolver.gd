@@ -990,8 +990,8 @@ static func from_volume(volume: WarrenVolumePlan,
 	# Retained before composition because a house stacked on that plot proves
 	# its bearing against the grid, and the band under it has to be structure
 	# by then (Task C5 ruling 2). Zero on every searched volume.
-	var slab_cell_count := _retain_maze_slab_courses(grid, volume)
-	if slab_cell_count < 0:
+	var slab_courses := _retain_maze_slab_courses(grid, volume)
+	if bool(slab_courses.failed):
 		return null
 	var parcel_plan := WarrenTownSolver.partition_parcels(volume,
 		partition_variant, construction_program)
@@ -1085,12 +1085,13 @@ static func from_volume(volume: WarrenVolumePlan,
 	# back every cell of it the source calls solid (Task C5 ruling 3), after
 	# the shell so no room's facade changes, and give it one sealed feature
 	# owner so the sealed plan can carry it as structure.
-	var rock_cell_count := _retain_maze_rock(grid, volume)
-	if rock_cell_count < 0:
+	var retained_rock := _retain_maze_rock(grid, volume)
+	if bool(retained_rock.failed):
 		return null
-	var retained_stone := _maze_stone_reservation(grid, supports)
-	if retained_stone == null and not last_failure.is_empty():
+	var stone_result := _maze_stone_reservation(grid, supports)
+	if bool(stone_result.failed):
 		return null
+	var retained_stone := stone_result.feature as WarrenFeatureReservation
 	var plan := WarrenSpatialPlan.new(
 		StringName("warren.spatial.%d.v%d" % [volume.world_seed,
 			partition_variant]), volume.world_seed, grid)
@@ -1168,8 +1169,10 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit.merge(WarrenSpatialFeatureSolver.last_audit, true)
 	if volume.mass_context.has(&"maze_source_plan"):
 		plan.audit["maze_deck_cell_count"] = deck_cell_count
-		plan.audit["maze_slab_course_cell_count"] = slab_cell_count
-		plan.audit["maze_retained_rock_cell_count"] = rock_cell_count
+		plan.audit["maze_slab_course_cell_count"] = int(slab_courses.cells)
+		plan.audit["maze_retained_rock_cell_count"] = int(retained_rock.cells)
+		plan.audit["maze_retained_rock_skipped_reserved"] = \
+			int(slab_courses.skipped) + int(retained_rock.skipped)
 		plan.audit["maze_retained_stone_cell_count"] = 0 \
 			if retained_stone == null \
 			else retained_stone.reserved_cells.size()
@@ -1463,7 +1466,7 @@ static func _maze_flat_slab_cells(volume: WarrenVolumePlan) -> Dictionary:
 	if source == null:
 		return out
 	var parents: Dictionary = {}
-	for parent_value: Variant in (WarrenMazeBlockPartitioner._stack_parents(
+	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
 			source)["parents"] as Dictionary).values():
 		parents[StringName(parent_value)] = true
 	if parents.is_empty():
@@ -1472,16 +1475,11 @@ static func _maze_flat_slab_cells(volume: WarrenVolumePlan) -> Dictionary:
 		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
 				or not parents.has(StringName(plot["id"])):
 			continue
-		var facts := source.plot_facts(plot)
-		if not (bool(facts.get("tiered", false)) \
-				or not bool(facts.get("roofed", true))):
+		if not WarrenMazeBlockPartitioner.plot_is_flat_roofed(source, plot):
 			continue
-		var floor_band := int(plot["floor"])
 		var top_band := int(plot["top"])
-		var storeys := (top_band - floor_band - 1) \
-			/ WarrenBuildingParcel.STOREY_BANDS
-		var roof_base := floor_band \
-			+ storeys * WarrenBuildingParcel.STOREY_BANDS
+		var roof_base := WarrenBuildingParcel.flat_roof_base_band(
+			int(plot["floor"]), top_band)
 		for band in range(roof_base, top_band):
 			for cell_value: Variant in plot["cells"] as Array:
 				var column := cell_value as Vector2i
@@ -1492,7 +1490,7 @@ static func _maze_flat_slab_cells(volume: WarrenVolumePlan) -> Dictionary:
 
 
 static func _retain_maze_slab_courses(grid: WarrenSpatialGrid,
-		volume: WarrenVolumePlan) -> int:
+		volume: WarrenVolumePlan) -> Dictionary:
 	## Ruling 2, and the reason it runs HERE -- before any parcel or room is
 	## composed. A stacked child's bearing is proved by
 	## `WarrenRoomCompositionPlanner._floorplate_transition_is_structurally_legible`,
@@ -1501,31 +1499,33 @@ static func _retain_maze_slab_courses(grid: WarrenSpatialGrid,
 	## can never reach (they stop at `roof_base_band()`), so claiming it early
 	## costs the composition nothing it could otherwise have built.
 	##
-	## Returns the cells retained, or -1 with `last_failure` set.
+	## Returns `{failed, cells, skipped}`; `skipped` counts cells another
+	## feature already holds the non-shareable FEATURE bit on -- see
+	## `_feature_bit_is_taken`.
 	var slab := _maze_flat_slab_cells(volume)
 	if slab.is_empty():
-		return 0
+		return {"failed": false, "cells": 0, "skipped": 0}
 	var cells: Array[Vector3i] = []
+	var skipped := 0
 	for cell_value: Variant in slab.keys():
 		var cell := cell_value as Vector3i
-		if grid.contains(cell) and grid.use_at(cell) \
-				== WarrenSpatialGrid.Use.ALLOCATABLE:
-			cells.append(cell)
+		if not grid.contains(cell) or grid.use_at(cell) \
+				!= WarrenSpatialGrid.Use.ALLOCATABLE:
+			continue
+		if _feature_bit_is_taken(grid, cell):
+			skipped += 1
+			continue
+		cells.append(cell)
 	if cells.is_empty():
-		return 0
+		return {"failed": false, "cells": 0, "skipped": skipped}
 	cells.sort_custom(_cell_less)
-	var retain := grid.begin_transaction(MAZE_STONE_FEATURE_ID)
-	if not retain.assign_use(cells,
-			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME, MAZE_STONE_FEATURE_ID) \
-			or not retain.commit():
-		last_failure = "could not retain maze slab courses: %s" \
-			% retain.last_rejection
-		return -1
-	return cells.size()
+	if not _claim_maze_stone(grid, cells):
+		return {"failed": true, "cells": 0, "skipped": skipped}
+	return {"failed": false, "cells": cells.size(), "skipped": skipped}
 
 
 static func _retain_maze_rock(grid: WarrenSpatialGrid,
-		volume: WarrenVolumePlan) -> int:
+		volume: WarrenVolumePlan) -> Dictionary:
 	## Ruling 3. Every fine cell the SOURCE calls solid at or above its own
 	## column's terrain datum that the composed town did not build in is
 	## retained as stone instead of being thrown away: shoulders, tunnel roofs,
@@ -1540,12 +1540,15 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	## the FACADE it has always been, and deciding otherwise is a visual
 	## question this task does not own.
 	##
-	## Returns the cells retained, or -1 with `last_failure` set.
+	## Returns `{failed, cells, skipped}`; `skipped` counts cells another
+	## feature already holds the non-shareable FEATURE bit on -- see
+	## `_feature_bit_is_taken`.
 	var source := volume.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if source == null or source.massif == null:
-		return 0
+		return {"failed": false, "cells": 0, "skipped": 0}
 	var cells: Array[Vector3i] = []
+	var skipped := 0
 	var lowest := grid.minimum.y
 	var highest := grid.minimum.y + grid.size.y
 	for column_value: Variant in source.massif.columns.keys():
@@ -1556,48 +1559,84 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 				continue
 			for fine: Vector3i in _fine_square(Vector3i(column.x, band,
 					column.y)):
-				if grid.contains(fine) and grid.use_at(fine) \
-						== WarrenSpatialGrid.Use.OUTSIDE:
-					cells.append(fine)
+				if not grid.contains(fine) or grid.use_at(fine) \
+						!= WarrenSpatialGrid.Use.OUTSIDE:
+					continue
+				if _feature_bit_is_taken(grid, fine):
+					skipped += 1
+					continue
+				cells.append(fine)
 	if cells.is_empty():
-		return 0
+		return {"failed": false, "cells": 0, "skipped": skipped}
 	cells.sort_custom(_cell_less)
+	if not _claim_maze_stone(grid, cells):
+		return {"failed": true, "cells": 0, "skipped": skipped}
+	return {"failed": false, "cells": cells.size(), "skipped": skipped}
+
+
+static func _feature_bit_is_taken(grid: WarrenSpatialGrid,
+		cell: Vector3i) -> bool:
+	## Does some OTHER owner already hold this cell's non-shareable FEATURE
+	## reservation bit?
+	##
+	## Retained stone is the only claim in this pipeline that sweeps a whole
+	## volume rather than placing one authored shape, so it is the only one
+	## that can meet a reservation somebody else made for a cell they never
+	## assigned a use to -- `WarrenSpatialFeatureSolver`'s elevated-court
+	## protection is exactly that, and `_discard_unassigned_mass` then turns
+	## those cells OUTSIDE, straight into this pass's candidate set. Reserving
+	## one of them fails the whole grid transaction, which would kill the town
+	## for a cell nobody was going to see. Skipping it is the answer, and it is
+	## COUNTED (`maze_retained_rock_skipped_reserved`) rather than silent.
+	return (grid.reservation_bits_at(cell)
+		& WarrenSpatialGrid.Reservation.FEATURE) != 0 \
+		and not grid.reservation_owned_by(cell,
+			WarrenSpatialGrid.Reservation.FEATURE, MAZE_STONE_FEATURE_ID)
+
+
+static func _claim_maze_stone(grid: WarrenSpatialGrid,
+		cells: Array[Vector3i]) -> bool:
+	## One transaction claims the use AND the reservation together, so a cell
+	## is never ours-by-use and unreserved: the sealed plan requires every
+	## STRUCTURAL_VOLUME cell to name a feature that really reserved it, and
+	## reserving in a second pass would leave a window in which another feature
+	## could take the bit out from under a cell we already own.
 	var retain := grid.begin_transaction(MAZE_STONE_FEATURE_ID)
-	if not retain.assign_use(cells,
-			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME, MAZE_STONE_FEATURE_ID) \
+	if not retain.assign_use(cells, WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
+			MAZE_STONE_FEATURE_ID) \
+			or not retain.reserve(cells,
+				WarrenSpatialGrid.Reservation.FEATURE,
+				MAZE_STONE_FEATURE_ID) \
 			or not retain.commit():
-		last_failure = "could not retain maze rock: %s" % retain.last_rejection
-		return -1
-	return cells.size()
+		last_failure = "could not retain maze stone: %s" % retain.last_rejection
+		return false
+	return true
 
 
 static func _maze_stone_reservation(grid: WarrenSpatialGrid,
-		supports: WarrenSupportGraph) -> WarrenFeatureReservation:
+		supports: WarrenSupportGraph) -> Dictionary:
 	## One sealed reservation over every retained stone cell, which is what
-	## lets `WarrenSpatialPlan.seal` accept them as STRUCTURAL_VOLUME. Null
-	## with `last_failure` set on a broken invariant, and null with no failure
-	## when the town retained nothing at all.
+	## lets `WarrenSpatialPlan.seal` accept them as STRUCTURAL_VOLUME. The two
+	## retention passes already hold the FEATURE bit on every cell here (see
+	## `_claim_maze_stone`), so this only gathers and seals.
+	##
+	## Returns `{feature, failed}`: a town that retained NOTHING is
+	## `{null, false}`, which is a legitimate answer and not a failure.
 	var cells: Array[Vector3i] = []
 	for cell: Vector3i in grid.cells_with_use(
 			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
 		if grid.owner_name_at(cell) == MAZE_STONE_FEATURE_ID:
 			cells.append(cell)
 	if cells.is_empty():
-		return null
-	var reserve := grid.begin_transaction(MAZE_STONE_FEATURE_ID)
-	if not reserve.reserve(cells, WarrenSpatialGrid.Reservation.FEATURE,
-			MAZE_STONE_FEATURE_ID) or not reserve.commit():
-		last_failure = "could not reserve retained maze stone: %s" \
-			% reserve.last_rejection
-		return null
+		return {"feature": null, "failed": false}
 	var feature := WarrenFeatureReservation.new(MAZE_STONE_FEATURE_ID,
 		&"maze_retained_stone")
 	if not feature.add_reserved_cells(cells) or not feature.seal(grid,
 			supports):
 		last_failure = "retained maze stone did not seal: %s" \
 			% feature.last_rejection
-		return null
-	return feature
+		return {"feature": null, "failed": true}
+	return {"feature": feature, "failed": false}
 
 
 static func _maze_deck_floor_cells(volume: WarrenVolumePlan) -> Dictionary:
@@ -1622,43 +1661,63 @@ static func _maze_deck_floor_cells(volume: WarrenVolumePlan) -> Dictionary:
 	return out
 
 
-static func _maze_open_bridge_flank_columns(source: WarrenMazeSourcePlan,
-		span: Array[Vector2i], floor_band: int) -> Array[Vector2i]:
+static func _maze_open_bridge_flanks(source: WarrenMazeSourcePlan,
+		span: Array[Vector2i], floor_band: int) -> Dictionary:
 	## The columns beside a bridge span that present a FLAT WALKABLE SURFACE at
-	## the span's own floor band: a flat-roofed house whose `top_band` is that
-	## band -- its slab is the roof the walkway continues across -- or a deck
-	## plot paved at it. Two of them is what turns a span the flanks cannot
-	## carry as a ROOM into a rooftop walkway between two roofs.
+	## the span's own floor band -- a flat-roofed house whose `top_band` IS that
+	## band (its slab is the roof the walkway continues across) or a deck plot
+	## paved at it -- and whether two of them face each other.
+	##
+	## `{columns: int, sides: int, opposite: bool}`.
+	##
+	## OPPOSITE SIDES, not merely two columns. Two flat columns on the SAME
+	## side of a span are one roof, and a walkway needs a roof at each end.
+	## `WarrenExcavation.seal` derives a bridge's flanks the same way -- the
+	## span's own cells run ALONG the passage it covers, so the flanks are the
+	## perpendicular pair -- and a one-column span, having no axis of its own,
+	## may be crossed on either axis.
 	var span_set: Dictionary = {}
 	for column: Vector2i in span:
 		span_set[column] = true
-	var out: Array[Vector2i] = []
+	var flat_by_side: Dictionary = {}
 	var seen: Dictionary = {}
 	for column: Vector2i in span:
 		for direction: Vector2i in CARDINAL_COLUMNS:
 			var neighbor := column + direction
 			if span_set.has(neighbor) or seen.has(neighbor):
 				continue
-			for plot: Dictionary in source.plots:
-				if not (plot["cells"] as Array).has(neighbor):
-					continue
-				var kind := StringName(plot["kind"])
-				var flat := false
-				if kind == WarrenMazeSourcePlan.PLOT_DECK:
-					flat = int(plot["floor"]) == floor_band
-				elif kind == WarrenMazeSourcePlan.PLOT_HOUSE \
-						and int(plot["top"]) == floor_band:
-					var facts := source.plot_facts(plot)
-					flat = bool(facts.get("tiered", false)) \
-						or not bool(facts.get("roofed", true))
-				if not flat:
-					continue
-				seen[neighbor] = true
-				out.append(neighbor)
-				break
-	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return a.x < b.x if a.y == b.y else a.y < b.y)
-	return out
+			if not _maze_column_is_flat_at(source, neighbor, floor_band):
+				continue
+			seen[neighbor] = true
+			flat_by_side[direction] = int(
+				flat_by_side.get(direction, 0)) + 1
+	var axes: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN]
+	if span.size() == 2:
+		var travel := span[1] - span[0]
+		axes = [Vector2i(-travel.y, travel.x)]
+	var opposite := false
+	for axis: Vector2i in axes:
+		opposite = opposite or flat_by_side.has(axis) \
+			and flat_by_side.has(-axis)
+	return {"columns": seen.size(), "sides": flat_by_side.size(),
+		"opposite": opposite}
+
+
+static func _maze_column_is_flat_at(source: WarrenMazeSourcePlan,
+		column: Vector2i, band: int) -> bool:
+	for plot: Dictionary in source.plots:
+		if not (plot["cells"] as Array).has(column):
+			continue
+		var kind := StringName(plot["kind"])
+		if kind == WarrenMazeSourcePlan.PLOT_DECK:
+			if int(plot["floor"]) == band:
+				return true
+		elif kind == WarrenMazeSourcePlan.PLOT_HOUSE \
+				and int(plot["top"]) == band \
+				and WarrenMazeBlockPartitioner.plot_is_flat_roofed(source,
+					plot):
+			return true
+	return false
 
 
 static func _pave_open_bridge_decks(grid: WarrenSpatialGrid,
@@ -1674,7 +1733,7 @@ static func _pave_open_bridge_decks(grid: WarrenSpatialGrid,
 	## Returns `{failed, paved_ids, floor_cells}`. A span whose mass is no
 	## longer free, or whose flanks are not both flat, is left to its release.
 	var out := {"failed": false, "paved_ids": {} as Dictionary,
-		"flank_counts": {} as Dictionary,
+		"flanks": {} as Dictionary,
 		"floor_cells": [] as Array[Vector3i]}
 	var source := volume.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
@@ -1691,10 +1750,9 @@ static func _pave_open_bridge_decks(grid: WarrenSpatialGrid,
 		var columns: Array[Vector2i] = []
 		columns.assign(record["cells"] as Array)
 		var floor_band := int(record["floor"])
-		var flat_flanks := _maze_open_bridge_flank_columns(source, columns,
-			floor_band)
-		(out["flank_counts"] as Dictionary)[id] = flat_flanks.size()
-		if flat_flanks.size() < 2:
+		var flanks := _maze_open_bridge_flanks(source, columns, floor_band)
+		(out["flanks"] as Dictionary)[id] = flanks
+		if not bool(flanks.opposite):
 			continue
 		var record_floors: Array[Vector3i] = []
 		var record_air: Array[Vector3i] = []
@@ -3062,15 +3120,30 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var paved_bridges := open_decks.get("paved_ids", {}) as Dictionary
 	for outcome_value: Variant in bridge_outcomes:
 		var bridge_outcome := outcome_value as Dictionary
-		bridge_outcome["flat_flank_columns"] = int((open_decks.get(
-			"flank_counts", {}) as Dictionary).get(
-				StringName(bridge_outcome["id"]), -1))
+		var flanks := (open_decks.get("flanks", {}) as Dictionary).get(
+			StringName(bridge_outcome["id"]), {}) as Dictionary
+		bridge_outcome["flat_flank_columns"] = int(flanks.get("columns", -1))
+		bridge_outcome["flat_flank_sides"] = int(flanks.get("sides", -1))
 		if paved_bridges.has(StringName(bridge_outcome["id"])):
 			bridge_outcome["outcome"] = "open_deck"
 			bridge_outcome["reason"] = ""
 	# Published for a maze town and only for one: a legacy plan's audit gains
 	# no zeroed key it has no records behind.
 	if volume.mass_context.has(&"maze_source_plan"):
+		var composed_parcels: Dictionary = {}
+		for composed: WarrenBuildingVolume in buildings:
+			for composed_room: WarrenRoomStamp in composed.room_records:
+				composed_parcels[composed_room.source_parcel_id] = true
+		var uncomposed_stacks := 0
+		for child_value: Variant in (parcels.audit.get("maze_stack_parents",
+				{}) as Dictionary).keys():
+			uncomposed_stacks += int(not composed_parcels.has(
+				StringName(child_value)))
+		# A declared seam the composition never built on: the child parcel's
+		# whole lineage was dropped, so the stack is a plan fact with no
+		# building behind it. Published beside the declared count because
+		# "declared 3" and "declared 3, built 0" are different towns.
+		composition_audit["maze_uncomposed_stack_count"] = uncomposed_stacks
 		composition_audit["maze_unrooted_terrain_bearing_count"] = \
 			unrooted_bearing.size()
 		composition_audit["maze_unrooted_terrain_bearing_details"] = \

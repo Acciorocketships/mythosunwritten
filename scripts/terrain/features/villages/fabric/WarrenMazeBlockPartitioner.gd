@@ -59,7 +59,7 @@ static func partition(source: WarrenMazeSourcePlan,
 	# in FLOOR order, so a parent parcel (and its own storey count) always
 	# exists before the child that names it. Only the build order moves: every
 	# array below is still emitted in the source's own plot order.
-	var stacking := _stack_parents(source)
+	var stacking := stack_parents(source)
 	var stack_refusals: Dictionary = {}
 	var house_outcomes := _translate_houses(source, volume,
 		stacking["parents"] as Dictionary, stack_refusals)
@@ -171,6 +171,25 @@ static func partition(source: WarrenMazeSourcePlan,
 	return plan
 
 
+## Does something STAND ON this plot's roof, so that the roof is a slab and
+## owes the storey grid nothing? Either an upper street meets it (`tiered`, the
+## case the tier model exists for) or another plot occupies its own columns at
+## its top band (`not roofed` -- a stacked house, or a roof deck).
+##
+## THE ONE OWNER OF THE RULE. The translator decides a parcel's `flat_roof`
+## with it, and `WarrenVolumetricSolver` asks it twice more -- once to retain a
+## stack parent's slab before composition, once to decide whether a bridge's
+## flank presents a flat surface -- so three readings of "tiered or not roofed"
+## can never drift apart.
+static func plot_is_flat_roofed(source: WarrenMazeSourcePlan,
+		plot: Dictionary) -> bool:
+	if source == null or plot.is_empty():
+		return false
+	var facts := source.plot_facts(plot)
+	return bool(facts.get("tiered", false)) \
+		or not bool(facts.get("roofed", true))
+
+
 static func _bears_on_rock_by_parcel(
 		source: WarrenMazeSourcePlan) -> Dictionary:
 	## Parcel id -> `plot_facts(plot).bears_on_rock`, for every house plot the
@@ -186,7 +205,7 @@ static func _bears_on_rock_by_parcel(
 	return out
 
 
-static func _stack_parents(source: WarrenMazeSourcePlan) -> Dictionary:
+static func stack_parents(source: WarrenMazeSourcePlan) -> Dictionary:
 	## `{parents: {house plot id -> the house plot it stands ON},
 	## partial_count: int}`.
 	##
@@ -364,9 +383,7 @@ static func _parcel_for_plot(source: WarrenMazeSourcePlan,
 	# first of those lands on the storey grid by construction. A plot with a
 	# real roof of its own is untouched and still owes whole storeys plus its
 	# roof reservation.
-	var facts := source.plot_facts(plot)
-	var flat_roof := bool(facts.get("tiered", false)) \
-		or not bool(facts.get("roofed", true))
+	var flat_roof := plot_is_flat_roofed(source, plot)
 	var candidates := _rectangles(plot, door_walk)
 	if candidates.is_empty():
 		return {"parcel": null, "skipped": 0,

@@ -176,8 +176,26 @@ func height_bands() -> int:
 ## with that slab rather than crediting it as habitable storey.
 func storey_count() -> int:
 	if flat_roof:
-		return (height_bands() - 1) / STOREY_BANDS
+		return flat_storey_count(height_bands())
 	return (height_bands() - ROOF_RESERVATION_BANDS) / STOREY_BANDS
+
+
+## The two halves of the flat-roof height contract, as statics, because the
+## composition has to answer them for a PLOT before any parcel exists (Task C5:
+## `WarrenVolumetricSolver._maze_flat_slab_cells` retains the slab bands before
+## `partition_parcels` runs). Re-deriving `(height - 1) / STOREY_BANDS` there is
+## how a slab and a storey count come to disagree about where a building stops.
+static func flat_storey_count(height_bands_value: int) -> int:
+	return (height_bands_value - 1) / STOREY_BANDS
+
+
+## First band of a flat-roofed building's SLAB: the authored one-band
+## `roof.flat.*` unit sits here and anything left between this and `top_band`
+## is a retained stone parapet course.
+static func flat_roof_base_band(base_band_value: int,
+		top_band_value: int) -> int:
+	return base_band_value + flat_storey_count(
+		top_band_value - base_band_value) * STOREY_BANDS
 
 
 func set_building_support(parent_id: StringName,
