@@ -1375,6 +1375,11 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 	## (each candidate still only reaches within its own physical run), but
 	## two candidates from different runs can now share one window index.
 	var accepted: Dictionary = {}
+	# Opened here rather than on first use, so an empty ledger means "no
+	# candidate run offered a span" and a missing one means the seed-time
+	# proof never ran at all (TASK E3 ruling 3).
+	excavation.bridge_span_audit = {"seeded": [] as Array[Dictionary],
+		"refused": [] as Array[Dictionary]}
 	var quota := profile.skywalk_range.y
 	if quota <= 0 or excavation.route.is_empty():
 		return accepted
@@ -1480,22 +1485,39 @@ static func _select_span_in_window(world_seed: int, massif: WarrenMassif,
 			0xB21D6E, candidate, 1)
 		var length := mini(1 + (length_hash % 2), run.size() - index)
 		var span: Array[Vector3i] = run.slice(index, index + length)
-		if _bridge_span_is_legal(massif, excavation, span, directions):
+		var proof: Dictionary = {}
+		if _bridge_span_is_legal(massif, excavation, span, directions, proof):
 			excavation.bridge_spans.append(span)
+			_record_bridge_proof(excavation, proof, true)
 			for cell: Vector3i in span:
 				accepted[cell] = directions.get(cell, Vector2i.ZERO)
 			return
+		_record_bridge_proof(excavation, proof, false)
 		if length > 1:
 			var fallback: Array[Vector3i] = run.slice(index, index + 1)
-			if _bridge_span_is_legal(massif, excavation, fallback, directions):
+			var fallback_proof: Dictionary = {}
+			if _bridge_span_is_legal(massif, excavation, fallback, directions,
+					fallback_proof):
 				excavation.bridge_spans.append(fallback)
+				_record_bridge_proof(excavation, fallback_proof, true)
 				accepted[candidate] = directions.get(candidate, Vector2i.ZERO)
 				return
+			_record_bridge_proof(excavation, fallback_proof, false)
+
+
+static func _record_bridge_proof(excavation: WarrenExcavation,
+		proof: Dictionary, seeded: bool) -> void:
+	## One line of the seed-time flank ledger. Every candidate a window really
+	## tested lands here, seeded or refused with its reason, so "this town has
+	## no bridges" and "this town's bridges were all refused at their flanks"
+	## are different readings rather than the same silence.
+	(excavation.bridge_span_audit["seeded" if seeded else "refused"] \
+		as Array[Dictionary]).append(proof)
 
 
 static func _bridge_span_is_legal(massif: WarrenMassif,
 		excavation: WarrenExcavation, span: Array[Vector3i],
-		directions: Dictionary) -> bool:
+		directions: Dictionary, record: Dictionary) -> bool:
 	## A span is legal when both flank columns are solid on EVERY band from
 	## the passage floor to its roof -- the wall the skywalk needs, not just
 	## its two ends. Review finding (2026-08-23, minor): the old check tested
@@ -1503,20 +1525,86 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 	## cell.y + 1 left the flank hollow through the middle and still passed.
 	## WarrenExcavation._bridge_spans_are_legal re-checks the same interval
 	## against the FINAL carved set; the two readings must agree.
+	##
+	## TASK E3 RULING 3 -- and the flanks must be able to CARRY A ROOM at the
+	## bridge's own band, not merely to wall its passage. `record` is the
+	## caller's ledger line and is always written: a candidate the carver
+	## tested and refused is a fact the audit needs as much as one it took.
+	var storey := _bridge_room_storey(excavation, span)
+	var flank_columns: Array[Vector2i] = []
+	record["cells"] = span.duplicate()
+	record["floor"] = storey.x
+	record["top"] = storey.y
+	record["flanks"] = flank_columns
+	record["reason"] = ""
 	for cell: Vector3i in span:
 		var direction := directions.get(cell, Vector2i.ZERO) as Vector2i
 		if direction == Vector2i.ZERO:
+			_note_bridge_refusal(record,
+				"span cell %s has no travel direction" % cell)
 			return false
 		var column := Vector2i(cell.x, cell.z)
 		var roof_band := cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS
 		for flank: Vector2i in _bridge_flank_columns(cell, direction):
+			if not flank_columns.has(flank):
+				flank_columns.append(flank)
 			for band in range(cell.y, roof_band + 1):
 				if not _column_is_solid_at(massif, excavation, flank, band):
+					_note_bridge_refusal(record,
+						("flank column %s is hollow at band %d, below the " \
+							+ "span's own roof") % [flank, band])
+					return false
+			# THE SEED-TIME MIRROR of the compiler's `bridge room ... has no
+			# built flank` gate. A bridge room is not carried by the street it
+			# spans: `WarrenVolumetricSolver._residual_bridge_span` binds it to
+			# two flanking ROOMS through their measured bearing sockets, and a
+			# socket only exists where a room really stands at the bridge's own
+			# band. Until Task E3 the carver proved only the passage wall --
+			# solid from the walk floor to its roof -- and a span whose flanks
+			# were bare rock two bands higher was seeded anyway. The plot
+			# planner then authored a bridge plot on it, composition stamped
+			# the room against whatever happened to be adjacent, and the fabric
+			# compiler killed the whole town a stage later when that flank
+			# composed no unit (measured: `step/12/compact`, pinned by Task E2
+			# in SLOPED_KNOWN_REFUSALS). Solid mass here is necessary, not
+			# sufficient -- a house has still to compose in it -- but a span
+			# that fails it can never gain a flank room, so seeding one only
+			# spends retained mass and risks the town.
+			for band in range(storey.x, storey.y):
+				if not _column_is_solid_at(massif, excavation, flank, band):
+					_note_bridge_refusal(record,
+						("flank column %s carries no room mass at band %d " \
+							+ "of the bridge storey [%d, %d)") % [flank, band,
+							storey.x, storey.y])
 					return false
 		if massif.top_at(column) - cell.y \
 				< WarrenPassageLatticeRules.HEADROOM_BANDS + 2:
+			_note_bridge_refusal(record,
+				"column %s has no retained mass above the span" % column)
 			return false
 	return true
+
+
+static func _bridge_room_storey(excavation: WarrenExcavation,
+		span: Array[Vector3i]) -> Vector2i:
+	## The `[floor, top)` band interval a bridge plot would occupy over this
+	## span, derived exactly as `WarrenPlotPlanner._span_bridges` derives it:
+	## the highest headroom top any span cell owns, plus the retained tunnel
+	## roof, and one storey tall. `slot_bands` reads the carved set back, so
+	## this is the real bore rather than the nominal one -- and it is called
+	## before `_open_passages_to_air` has touched any bridged cell, which is
+	## the same carved set the planner will later read.
+	var floor_band := 0
+	for index in span.size():
+		var cell := span[index]
+		var top := cell.y + excavation.slot_bands(cell) \
+			+ WarrenMazeSourcePlan.TUNNEL_ROOF_BANDS
+		floor_band = top if index == 0 else maxi(floor_band, top)
+	return Vector2i(floor_band, floor_band + WarrenBuildingParcel.STOREY_BANDS)
+
+
+static func _note_bridge_refusal(record: Dictionary, reason: String) -> void:
+	record["reason"] = reason
 
 
 static func _column_is_solid_at(massif: WarrenMassif,

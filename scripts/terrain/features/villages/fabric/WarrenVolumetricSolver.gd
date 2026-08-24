@@ -10581,7 +10581,8 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 		# did not bind is gone by the time the audit is read.
 		_residual_bridge_counts = {}
 		var span := _residual_bridge_span(cells, building_by_id,
-			building_by_cell, volume.world_seed, construction_program)
+			building_by_cell, volume.world_seed, construction_program,
+			_maze_bridge_proved_flanks(volume, columns))
 		var span_counts := _residual_bridge_counts.duplicate(true)
 		if span.is_empty():
 			outcomes.append(_maze_bridge_release(id,
@@ -10650,6 +10651,43 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 static func _string_name_less(left: StringName,
 		right: StringName) -> bool:
 	return String(left) < String(right)
+
+
+static func _maze_bridge_proved_flanks(volume: WarrenVolumePlan,
+		columns: Array[Vector2i]) -> Dictionary:
+	## TASK E3 RULING 3. The macro columns `WarrenMazeCarver` proved could
+	## carry a room at this span's own band, as a set. Matched on the span's
+	## own columns rather than on a record index, so the two sides cannot drift
+	## apart if either list is ever reordered. `{}` when the source carries no
+	## ledger -- an older plan, or a span this carver never tested -- and an
+	## empty set restores the unrestricted search, which is exactly the
+	## behaviour every caller had before this task.
+	var source := volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null or source.excavation == null:
+		return {}
+	var wanted: Dictionary = {}
+	for column: Vector2i in columns:
+		wanted[column] = true
+	for record_value: Variant in source.excavation.bridge_span_audit.get(
+			"seeded", []) as Array:
+		var record := record_value as Dictionary
+		var span_columns: Dictionary = {}
+		for cell_value: Variant in record.get("cells", []) as Array:
+			var cell := cell_value as Vector3i
+			span_columns[Vector2i(cell.x, cell.z)] = true
+		if span_columns.size() != wanted.size():
+			continue
+		var same := true
+		for column_value: Variant in span_columns.keys():
+			same = same and wanted.has(column_value as Vector2i)
+		if not same:
+			continue
+		var out: Dictionary = {}
+		for column_value: Variant in record.get("flanks", []) as Array:
+			out[column_value as Vector2i] = true
+		return out
+	return {}
 
 
 static func _maze_bridge_release(id: StringName, reason: String,
@@ -11545,12 +11583,25 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 
 static func _residual_bridge_span(cells: Array[Vector3i],
 		building_by_id: Dictionary, building_by_cell: Dictionary,
-		world_seed: int, program: SettlementFabricProgram) -> Dictionary:
+		world_seed: int, program: SettlementFabricProgram,
+		proved_flank_columns: Dictionary = {}) -> Dictionary:
 	## Prove the two-sided wall bearing for a candidate bridge room: on each of
 	## two opposing sides, one distinct established flanking room whose centred
 	## cardinal bearing socket exactly meets a cell of this footprint. The
 	## proof runs against the flanks' real measured recipes, so the strict
 	## compile-time `_sockets_meet` bond can never disagree with admission.
+	##
+	## TASK E3 RULING 3 -- `proved_flank_columns` is the set of macro columns
+	## the CARVER proved could carry a room at this span's own band before it
+	## seeded the span (`WarrenExcavation.bridge_span_audit`). When it is
+	## non-empty the search binds through those columns only, so the bond the
+	## builder makes is the one the seed-time proof was about. Without it the
+	## search took the first bindable pair in a fixed direction order, which on
+	## `step/12/compact` bonded a perpendicular house whose own floor stood a
+	## band ABOVE the bridge and whose lineage the fabric compiler then dropped
+	## -- `bridge room ... has no built flank`, the whole town, one stage later.
+	## EMPTY for every legacy caller (`_backfill_residual_rooms` passes none),
+	## which is what keeps the searched modes byte-identical.
 	if program == null:
 		return {}
 	var cell_set: Dictionary = {}
@@ -11562,6 +11613,14 @@ static func _residual_bridge_span(cells: Array[Vector3i],
 		for cell: Vector3i in cells:
 			var neighbor := cell + direction
 			if cell_set.has(neighbor):
+				continue
+			if not proved_flank_columns.is_empty() \
+					and not proved_flank_columns.has(Vector2i(
+						floori(float(neighbor.x) / 2.0),
+						floori(float(neighbor.z) / 2.0))):
+				_residual_bridge_counts["unproved_flank_column"] = int(
+					_residual_bridge_counts.get("unproved_flank_column",
+						0)) + 1
 				continue
 			var owner := StringName(building_by_cell.get(neighbor, &""))
 			if owner.is_empty():

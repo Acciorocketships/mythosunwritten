@@ -22,6 +22,35 @@ const BUILDING_CAP: Dictionary = {
 ## (min, max) storeys an untiered house may roll. The height that comes out
 ## follows the parcel contract exactly -- STOREY_BANDS per storey plus
 ## ROOF_RESERVATION_BANDS -- so compact's (1, 2) is a 4- or 6-band house.
+##
+## TASK E3 RULING 1 MEASURED FOUR WIDENINGS OF THIS TABLE AND SHIPPED NONE.
+## The reason to want one: over the 24-town flat corpus the 799 houses stand at
+## only FOUR distinct heights (4 bands x 385, 5 x 64, 6 x 242, 8 x 108), and a
+## COMPACT town has only two of them -- every untiered house in it is one storey
+## or two. The odd 5s are TIERED houses whose top is a street's own band, so
+## this roll is the only source of storey diversity the model has and its range
+## is two values wide.
+##
+## Every widening measured cost exactly two of the twenty-four towns, and never
+## the same two:
+##
+##   * +1 storey on every scale -- 22/24. `2/compact` at phase selection,
+##     `7/standard` at a partial-plate roof sliver.
+##   * +1 storey on compact only -- 22/24. `2/compact` and `7/compact`, both
+##     at phase selection.
+##   * +1 for footprints of at most 2 columns -- 22/24. `5/standard` at an
+##     unsupported irregular room projection, `11/compact` at a cross-lineage
+##     roof sliver.
+##   * +1 for footprints of one column -- 22/24. `7/standard` at a
+##     modular-box partial bearing, `11/compact` at a cross-lineage sliver.
+##
+## Three different Phase C VOCABULARY families, none of them this file's: a
+## taller house grows one more part-row of rooms, and each new crown is another
+## chance for a partial plate, a cross-lineage sliver, or a facade phase with
+## nowhere to go. The sweep's wall clock also rose 32-79 %. The plot planner is
+## not the binding constraint on storey diversity -- the authored roof and room
+## vocabulary is -- so the table stays where Task 4 measured it and the finding
+## is recorded here instead of being paid for with two towns.
 const STOREY_BUDGET: Dictionary = {
 	&"compact": Vector2i(1, 2), &"standard": Vector2i(1, 3),
 	&"large": Vector2i(2, 3), &"grand": Vector2i(2, 4),
@@ -651,6 +680,23 @@ static func owned_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
 ## Columns nothing new may claim: whatever already carries a plot, plus the
 ## retained bridge spans -- the carver kept that mass overhead so a bridge could
 ## stand on it.
+##
+## TASK E3 RULING 2 MEASURED THE RELAXATION HERE AND SHIPPED NONE. Every one of
+## the 24-town corpus's 214 unfilled street-fronting (column, band) slots was
+## attributed, and NOT ONE of them is the alley/block-thickness shadow Task E2
+## named: 101 are columns an ASSET holds and 25 a DECK holds -- this rule -- 83
+## are a second street on a column another house already claims within
+## MIN_HOUSE_BANDS, and 5 are unrecorded. Letting a house stand UNDER a
+## reserved plot where MIN_HOUSE_BANDS of clearance really exists (with the
+## reserved floors seeded into the partition's own `claims`, so the roof has to
+## rise to meet them exactly) recovers the fronting share 0.865 -> 0.909,
+## buildable coverage 0.946 -> 0.951, and 28 more houses -- and costs FIVE
+## towns (`2/standard`, `3/compact`, `9/compact`, `9/standard`, `12/compact`,
+## at roofless-house and partial-bearing modular-box contracts, a balcony
+## visual envelope, and two phase selections). Narrowed to DECKS alone it still
+## costs one (`10/standard`, roofless house). The recoverable slots are real
+## and the lever is here; what refuses them is the same room/roof vocabulary
+## that refuses a taller house (see STOREY_BUDGET).
 static func blocked_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
 	var out := owned_columns(plan)
 	for span_value: Variant in plan.excavation.bridge_spans:

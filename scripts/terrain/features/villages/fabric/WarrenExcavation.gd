@@ -45,6 +45,14 @@ var loop_edges: Array[Dictionary] = []
 ## lane) cells; `_finalize_excavation` marks them `covered` the same as any
 ## other roofed passage cell.
 var bridge_spans: Array[Array] = []
+## TASK E3 RULING 3 -- the seed-time flank proof, published so it can be read
+## rather than trusted. `{"seeded": Array[Dictionary], "refused":
+## Array[Dictionary]}`, each record naming the span's cells, the storey band
+## interval a bridge room would occupy there, and the two flank columns the
+## proof ran against. Written only by `WarrenMazeCarver._select_bridge_spans`;
+## an excavation carved by any other producer leaves it empty, which is what
+## keeps every legacy consumer byte-identical.
+var bridge_span_audit: Dictionary = {}
 var carved: Dictionary = {}
 var covered: Dictionary = {}
 var transitions: Array[Dictionary] = []

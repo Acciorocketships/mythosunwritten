@@ -356,7 +356,7 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 				door.z * 2 + z_offset) + side
 			if not columns.has(_macro_column(doorway)):
 				continue
-			if not _fine_box_inside(columns, doorway, side, lateral,
+			if not _fine_box_inside(plan, columns, doorway, side, lateral,
 					int(template["reach_forward"]) + EAVE_HALO_CELLS,
 					int(template["reach_left"]) + EAVE_HALO_CELLS,
 					int(template["reach_right"]) + EAVE_HALO_CELLS):
@@ -406,13 +406,33 @@ static func _macro_column(fine: Vector2i) -> Vector2i:
 	return Vector2i(floori(float(fine.x) / 2.0), floori(float(fine.y) / 2.0))
 
 
-static func _fine_box_inside(columns: Dictionary, doorway: Vector2i,
-		side: Vector2i, lateral: Vector2i, forward: int, left: int,
-		right: int) -> bool:
+static func _fine_box_inside(plan: WarrenMazeSourcePlan, columns: Dictionary,
+		doorway: Vector2i, side: Vector2i, lateral: Vector2i, forward: int,
+		left: int, right: int) -> bool:
+	## TASK E3 RULING 4. A column OFF THE MASSIF is as good as one this plot
+	## owns, and that is the whole of the alignment.
+	##
+	## The property this test exists for is the builder's: a prefab's measured
+	## envelope, plus the eave halo at its roof band, may not meet a
+	## NEIGHBOURING PLOT (`WarrenVolumetricSolver._maze_landmark_refusal`'s
+	## blocker list). At source stage the houses do not exist yet, so "inside my
+	## own footprint" was the only sound way to say "owned by nobody else" --
+	## P4 gives essentially every remaining massif column to a house. But a
+	## column the MASSIF does not have can never carry a plot at all: there is
+	## no mass there for one to stand on and `_footprint` refuses it outright.
+	## An eave that overhangs the edge of the hill therefore meets nothing, and
+	## refusing it was pessimism with no property behind it.
+	##
+	## Measured: the mirror accepted 0 of 78 sites on the 24-town corpus before
+	## this and 2 after, against 2 landmarks the production pass really builds.
+	## It stays SOUND -- still stricter than the builder at every other point,
+	## still asking of the whole box what the builder asks only of the roof
+	## band -- which is the direction `test_assets_land` pins.
 	for step in range(0, forward + 1):
 		for across in range(-right, left + 1):
-			if not columns.has(_macro_column(doorway + side * step \
-					+ lateral * across)):
+			var column := _macro_column(doorway + side * step \
+				+ lateral * across)
+			if not columns.has(column) and plan.massif.has_column(column):
 				return false
 	return true
 

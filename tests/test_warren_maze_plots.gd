@@ -796,9 +796,25 @@ func _asset_sites(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
 						cost += absi(plan.massif.top_at(member) - datum)
 					if not supported:
 						continue
+					# TASK E3 RULING 4. `_best_asset_site` takes the cheapest
+					# site the REALISATION MIRROR accepts and falls back to the
+					# cheapest site full stop, so a candidate set with no
+					# realisability on it cannot say which of the two branches
+					# the planner should have taken. The predicate is the
+					# oracle here and the ORDERING is what is under test: this
+					# enumeration is the test's own, and what it checks is that
+					# the planner picked the cheapest candidate the oracle
+					# accepts.
+					var doors := WarrenPlotReservations._fronting_doors(
+						footprint, streets)
+					var realisable := doors.has(datum) \
+						and WarrenPlotReservations._site_realises(plan, streets,
+							template, footprint, doors[datum] as Vector3i,
+							datum)
 					out.append({"kind_id": StringName(template["kind_id"]),
 						"orientation": orientation, "anchor": anchor,
 						"datum": datum, "cost": cost,
+						"realisable": realisable,
 						"cells": footprint.duplicate()})
 	return out
 
@@ -949,8 +965,43 @@ func test_assets_sit_at_the_minimum_modification_site() -> void:
 		assert_true(carved.plot_support_ok(column, datum),
 			"asset column %s is supportable at its datum" % column)
 		cost += absi(plan.massif.top_at(column) - datum)
-	assert_eq(cost, best,
-		"the asset stands at the minimum terrain-modification cost")
+	# TASK E3 RULING 4 RE-TARGETED THIS ASSERTION, and it is stronger for it.
+	# `_best_asset_site` has always tracked TWO winners: the cheapest site the
+	# prefab really lands on, and the cheapest site full stop. It returns the
+	# first when one exists. Until E3 the realisation mirror accepted nothing on
+	# this corpus, so the second branch was the only one ever taken and "the
+	# minimum cost site" and "the site the planner picked" were the same
+	# sentence; the mirror now accepts 12/compact's site and the planner takes a
+	# REALISABLE site at cost 50 over an unrealisable one at 30. That is the
+	# ordering the file documents and the whole point of the mirror -- a plot
+	# that becomes a landmark beats a cheaper plot that never can.
+	#
+	# So the invariant is stated as the two-tier one it always was: minimal
+	# among realisable sites when the record is realisable, minimal full stop
+	# when it is not. The enumeration is this test's own, so both halves still
+	# check the planner against an independent derivation.
+	var realisable := bool((records[0] as Dictionary).get("realisable", false))
+	var best_realisable := -1
+	for site: Dictionary in sites:
+		if not bool(site.get("realisable", false)):
+			continue
+		best_realisable = int(site["cost"]) if best_realisable < 0 \
+			else mini(best_realisable, int(site["cost"]))
+	gut.p("asset site cost %d; cheapest %d, cheapest realisable %d (%s)" % [
+		cost, best, best_realisable,
+		"realisable" if realisable else "fallback"])
+	if realisable:
+		assert_gte(best_realisable, 0,
+			"the planner called its site realisable and this test finds none")
+		assert_eq(cost, best_realisable,
+			"the asset stands at the minimum cost among REALISABLE sites")
+		assert_gte(cost, best,
+			"a realisable site can never be cheaper than the cheapest site")
+	else:
+		assert_eq(best_realisable, -1,
+			"the planner fell back where this test finds a realisable site")
+		assert_eq(cost, best,
+			"the asset stands at the minimum terrain-modification cost")
 	for plot: Dictionary in assets:
 		var members: Array = plot["cells"]
 		var sizes: Dictionary = {"x": {}, "z": {}}

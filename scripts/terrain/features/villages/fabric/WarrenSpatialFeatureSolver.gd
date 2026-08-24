@@ -15,6 +15,39 @@ const TARGET_BALCONIES := 6
 const MIN_BALCONY_BUILDINGS := 3
 const MAX_BALCONIES_PER_BUILDING := 2
 const TARGET_ROOM_OUTCROPPINGS := 6
+## TASK E3 RULING 1 MEASURED THE MAZE OUTCROPPING FAMILY AND SHIPPED NOTHING.
+##
+## `WarrenVillageScaleProfile.cantilever_range` is `Vector2i.ZERO` on every
+## scale, which switches the whole family off: measured over the 24-town flat
+## corpus, `room_outcropping_count` and
+## `vertical_floorplate_outcropping_count` are **0 on every town**. The
+## milestone asks for them back ("more outcroppings like we had before"), so a
+## maze-only target (compact 2, standard 3, large 4, grand 5) was wired into
+## `desired_extra_diagonal` below -- the profile itself deliberately untouched,
+## since `cantilever_range` is part of `deterministic_signature` and every
+## searched town reads it. Two measurements followed and both refuse the
+## feature:
+##
+##   * as written, the corpus fell 24/24 -> 22/24. `3/compact` and
+##     `11/compact` each reserved one diagonal corner-wrap annex and then died
+##     at `room ...partNN.room00 failed measured phase selection: visual
+##     envelope`, because `_tower_annex_clears_room_envelopes` exempts the
+##     annex's whole SOURCE LINEAGE -- right for a searched building whose
+##     parts are composed to interlock, wrong for a maze lineage whose parts
+##     are the rectangles one plot was cut into.
+##   * narrowing that exemption to the annex's own parent ROOM restored
+##     24/24 and then selected **zero** annexes on all 24 towns.
+##
+## The pool is the reason for both. `_diagonal_outcrop_target_pool` takes only
+## `tower`-kind rooms on an upper storey, and a maze town offers ONE such
+## parcel (measured `target_source_count: 1`, `eligible_endpoint_count: 4`,
+## every theme-matching attempt refused by `_skywalk_body_fits_grid`). The pool
+## grows with taller houses, and `WarrenPlotPlanner.STOREY_BUDGET` records why
+## taller houses could not be shipped either. A real maze outcropping needs
+## either that vocabulary work or the bracketed-jetty producer
+## `WarrenVolumetricSolver._residual_bridge_span` never got -- it is read for
+## `is_bracketed_jetty` in three places and set in none. NEITHER EXPERIMENT IS
+## SHIPPED: `cantilever_range` still decides the target, and it is zero.
 const MIN_COURT_SIDE_COUNT := 3
 const MIN_COURT_DAYLIGHT_MACRO_COLUMNS := 2
 const MAX_CANTILEVER_SUPPORT_ASSIGNMENT_NODES := 4096
@@ -263,7 +296,8 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		diagonal_outcrop_sources[StringName(
 			annex.audit.annex_source_parcel_id)] = true
 	var balconies := _reserve_balconies(grid, buildings, supports,
-		source.world_seed, construction_program, out, target_balconies)
+		source.world_seed, construction_program, out, target_balconies,
+		source.mass_context.has(&"maze_source_plan"))
 	var balcony_buildings: Dictionary = {}
 	for balcony: WarrenFeatureReservation in balconies:
 		balcony_buildings[StringName(balcony.audit.balcony_building_id)] = true
@@ -2084,7 +2118,8 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
 		existing_features: Array[WarrenFeatureReservation],
-		target_count: int = TARGET_BALCONIES) \
+		target_count: int = TARGET_BALCONIES,
+		allow_private_walkouts: bool = false) \
 		-> Array[WarrenFeatureReservation]:
 	## Search the actual three-dimensional residual void around upper room
 	## sockets. A candidate is a complete measured recipe and owns its deck,
@@ -2131,7 +2166,20 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 	# its parent-room portal: it owns one continuous deck, a completely guarded
 	# outer perimeter, and two authored brackets.  Larger towns retain the richer
 	# public-stair contract used by their non-zero balcony minimum.
-	if target_count <= 2:
+	#
+	# TASK E3 RULING 1 -- and for every PLOT-MODEL town, whatever its budget.
+	# Measured over the 24-town flat corpus: compact towns stood 2 balconies
+	# each and EVERY STANDARD TOWN STOOD ZERO, because standard's
+	# `balcony_range` of (1, 3) puts it over this threshold and leaves it the
+	# wraparound vocabulary alone -- which needs a public stair landing under
+	# the facade, and a maze town's upper facade never has one. "A larger town
+	# retains the richer contract" is a SEARCHED town's trade: there the beam
+	# can choose another composition that does have the landing. The plot model
+	# has exactly one composition, so the same rule simply deletes the feature.
+	# Measured after: 3 balconies across 3 buildings on every standard town --
+	# the four planner towns together go from 2 balconies on 2 buildings to 8
+	# on 8 -- and the corpus still seals 24/24.
+	if target_count <= 2 or allow_private_walkouts:
 		recipe_ids.append_array([
 			&"balcony.walkout.deep.left.blue.planted",
 			&"balcony.walkout.deep.right.orange.planted",

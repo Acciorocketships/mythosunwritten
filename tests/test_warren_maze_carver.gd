@@ -557,8 +557,34 @@ func _neighbor_may_stay_covered(plan: WarrenMazeSourcePlan,
 		plan.excavation, Vector2i(cell.x, cell.z), cell)
 
 
+## Standard seeds, of the twelve scanned, that must still retain at least one
+## bridge span.
+##
+## TASK E3 RULING 3 re-pinned this and WIDENED the sample in the same step, and
+## both halves are the same measurement. The seed-time flank proof
+## (`WarrenMazeCarver._bridge_span_is_legal`) now asks the two flank columns to
+## carry ROOM MASS across the bridge's own storey, not merely to wall the
+## passage below it, and that refuses 126 of the 361 candidates the flat corpus
+## offers -- corpus spans 27 -> 10. On the six seeds this test used to scan the
+## count fell from 4 to 2, which is too thin a sample to pin anything on, so
+## the scan is now seeds 1..12, where 5 seeds retain a span (4, 5, 7, 10, 12).
+## Pinned one seed under that.
+##
+## The drop is a REPORTED regression on a visual feature and it is also the
+## point: before E3 the flat 24-town corpus composed **zero** bridge rooms and
+## **zero** open bridge decks from all 27 spans, so every one of them was rock
+## retained over a street plus two columns no house could claim. Removing 17 of
+## them moved the plot layer's own numbers the right way (street-fronting slots
+## 0.7740 -> 0.7750, buildable coverage 0.9449 -> 0.9460, pitched-eligible
+## crowns 245 -> 250) and cost nothing that was ever built. A softer bar --
+## the bridge's FLOOR band alone rather than its whole storey -- was measured
+## and rejected: it retains 11 spans instead of 10, so the storey the rule
+## really means costs one span over the corpus.
+const BRIDGE_SPAN_SEED_FLOOR := 4
+
+
 func test_bridge_spans_are_retained_over_open_streets() -> void:
-	var seeds: Array[int] = [1, 2, 3, 4, 5, 6]
+	var seeds: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 	var seeds_with_spans := 0
 	var summary := PackedStringArray()
 	for seed in seeds:
@@ -641,9 +667,111 @@ func test_bridge_spans_are_retained_over_open_streets() -> void:
 						or _neighbor_may_stay_covered(plan, successor),
 					"seed %d span %s successor %s must be open, or itself a " \
 						% [seed, span, successor] + "market/facade cell")
-	assert_gte(seeds_with_spans, 4,
-		"at least 4 of 6 standard seeds must retain a bridge span: %s" \
-			% ", ".join(summary))
+	assert_gte(seeds_with_spans, BRIDGE_SPAN_SEED_FLOOR,
+		"at least %d of %d standard seeds must retain a bridge span: %s" % [
+			BRIDGE_SPAN_SEED_FLOOR, seeds.size(), ", ".join(summary)])
+
+
+## Candidates the E3 flank proof itself must have refused across the twelve
+## standard seeds, minus a guard. Counted by FAMILY, not in total: the ledger's
+## refusals are mostly the pre-existing hollow-passage-wall rule, and a pin on
+## the sum would stay green with the new branch switched off. Measured 84 of
+## 246 candidates refused for room mass (240 refused in all). Pinned as a
+## floor, not an equality -- refusing more unbuildable spans is an improvement,
+## and the count that must not drift the other way is
+## `BRIDGE_SPAN_SEED_FLOOR`'s.
+const BRIDGE_FLANK_REFUSAL_FLOOR := 70
+## The refusal `_bridge_span_is_legal` writes for the E3 rule, so the tally
+## below can tell it from the passage-wall family it sits beside.
+const BRIDGE_FLANK_REFUSAL_REASON := "carries no room mass"
+
+
+func test_a_seeded_bridge_span_proves_two_room_capable_flanks() -> void:
+	## TASK E3 RULING 3. A bridge room is carried by its two FLANKING ROOMS --
+	## `WarrenVolumetricSolver._residual_bridge_span` bonds it through their
+	## measured bearing sockets, and the fabric compiler re-proves the bond
+	## strictly. Until this task the carver proved only that the flanks walled
+	## the PASSAGE (solid from the walk floor to its roof) and said nothing
+	## about the band the bridge room itself would occupy, so a span between
+	## two blocks that both stop below it was seeded anyway. `step/12/compact`
+	## is what that costs: the plot planner authored a bridge plot, composition
+	## bonded it to whatever happened to be adjacent, and the compiler killed
+	## the whole town one stage later with `bridge room ... has no built flank`
+	## (Task E2 pinned it in `SLOPED_KNOWN_REFUSALS`; Task E3 removes the pin).
+	##
+	## Two teeth. Every SEEDED span's published flanks are re-derived here from
+	## the sealed plan's own cell states rather than read back from the ledger,
+	## so a carver that published a proof it did not run is red; and the ledger
+	## must record real REFUSALS, so a proof that accepts everything is red too.
+	var tested := 0
+	var refused := 0
+	var unflanked := 0
+	var summary := PackedStringArray()
+	for seed in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]:
+		var plan := _plan(seed, WarrenVillageScaleProfile.STANDARD)
+		assert_not_null(plan, "seed %d: %s" % [seed,
+			WarrenMazeCarver.last_failure])
+		if plan == null:
+			continue
+		var ledger := plan.excavation.bridge_span_audit
+		assert_true(ledger.has("seeded") and ledger.has("refused"),
+			"seed %d must publish the seed-time flank ledger" % seed)
+		var seeded := ledger.get("seeded", []) as Array
+		var rejects := ledger.get("refused", []) as Array
+		var local_unflanked := 0
+		for record_value: Variant in rejects:
+			local_unflanked += int(String((record_value as Dictionary).get(
+				"reason", "")).contains(BRIDGE_FLANK_REFUSAL_REASON))
+		refused += rejects.size()
+		unflanked += local_unflanked
+		tested += seeded.size() + rejects.size()
+		assert_eq(seeded.size(), plan.excavation.bridge_spans.size(),
+			"seed %d seeded %d spans and published %d proofs" % [seed,
+				plan.excavation.bridge_spans.size(), seeded.size()])
+		summary.append("%d:%d/%d/%d" % [seed, seeded.size(), local_unflanked,
+			rejects.size()])
+		for record_value: Variant in seeded:
+			var record := record_value as Dictionary
+			var flanks := record.get("flanks", []) as Array
+			assert_gte(flanks.size(), 2,
+				"seed %d span %s must name both flank columns" % [seed,
+					record.get("cells", [])])
+			var floor_band := int(record["floor"])
+			var top_band := int(record["top"])
+			assert_eq(top_band - floor_band, WarrenBuildingParcel.STOREY_BANDS,
+				"seed %d span %s must reserve exactly one storey" % [seed,
+					record.get("cells", [])])
+			# The bridge plot the planner will author over this span, derived
+			# independently of the carver: the highest headroom top the span
+			# owns plus the retained tunnel roof (WarrenPlotPlanner
+			# ._span_bridges' own formula). A carver whose ledger disagreed
+			# with the planner would prove the wrong bands.
+			var expected := 0
+			for cell_value: Variant in record.get("cells", []) as Array:
+				var cell := cell_value as Vector3i
+				expected = maxi(expected, plan.passage_headroom_top(cell) \
+					+ WarrenMazeSourcePlan.TUNNEL_ROOF_BANDS)
+			assert_eq(floor_band, expected,
+				"seed %d span %s proved band %d where the plot floor is %d" % [
+					seed, record.get("cells", []), floor_band, expected])
+			for flank_value: Variant in flanks:
+				var flank := flank_value as Vector2i
+				for band in range(floor_band, top_band):
+					assert_eq(plan.state_at(Vector3i(flank.x, band, flank.y)),
+						WarrenMazeSourcePlan.CellState.SOLID,
+						("seed %d span %s flank %s carries no room mass at " \
+							+ "band %d of its bridge storey [%d, %d)") % [seed,
+							record.get("cells", []), flank, band, floor_band,
+							top_band])
+	gut.p(("bridge flank proof seeded/unflanked/refused: %s " \
+		+ "(tested %d, refused %d, of them %d for room mass)") % [
+		" ".join(summary), tested, refused, unflanked])
+	assert_gt(tested, 0, "no seed offered the flank proof a single candidate")
+	assert_gte(unflanked, BRIDGE_FLANK_REFUSAL_FLOOR,
+		("the E3 flank proof refused %d of %d candidates for room mass (%d " \
+			+ "refused in all); it refused at least %d when this was " \
+			+ "measured") % [unflanked, tested, refused,
+			BRIDGE_FLANK_REFUSAL_FLOOR])
 
 
 func test_bridge_spans_are_deterministic() -> void:
