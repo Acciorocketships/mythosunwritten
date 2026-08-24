@@ -345,6 +345,32 @@ Milestone: the maze pipeline runs on real sampled ground (production site seed 2
 
 Milestone: noise massif behind the unchanged interface (relief > 0, varied plateaus/terrace ladders, eccentric footprints); carver vertical momentum + post-summit descent; house/roof variation and outcroppings. **Binding visual direction (user, 2026-08-24):** (1) stone faces concentrate in the bottom 1–2 storeys relative to local ground/street level — not everywhere, some areas only (a per-band exterior-stone metric replaces the flat ratio); (2) the city's silhouette falls toward its edges in CLUSTERS — terraced descent, never sheer multi-storey rim walls and never per-column noise; (3) more variation in house and roof types (pitched where free-standing, storey diversity, façade families) and more outcroppings/cantilevers (re-enable the outcropping machinery for maze mode). Exit: Phase B/C metrics hold on the noise corpus; silhouettes measurably differ across seeds; the three directions above are each measured and shown in the battery.
 
+### Task E1: Noise massif — clustered descent to the rim
+
+**Files:** `WarrenMassifBuilder.gd` (behind the unchanged `build(world_seed, ground_bands, profile)` interface: a seeded terraced height field — low-frequency value noise quantized to whole terrace levels (storey multiples), a radial envelope so height falls toward the rim in CLUSTERS (terrace steps of 1-2 storeys, plateaus merged so neighbouring columns cluster rather than dither), core height from the profile as today; determinism and the massif's seal invariants unchanged), `tests/test_warren_massif*.gd` (find the massif's own suite), the plots/composition suites re-measured.
+- Exit metrics (pinned, measured-first): rim wall height — for every massif boundary column, `top_at − terrain` ≤ 2 storeys + 1 band (no sheer multi-storey rim walls); terrace cluster count ≥ 2 and mean cluster size ≥ 4 columns per town (clusters, not noise); silhouette variance — max `top_at` and terrace-ladder histograms differ across the 4 planner seeds (report). The 24-seed corpus re-runs (expect a reshuffle; re-pin `CORPUS_SEALED_FLOOR` honestly in either direction WITH a ruling if it drops); the four-colour debug view renders the massif state readably.
+- [ ] Commit — `feat(villages): noise massif — clustered terraced descent`.
+
+### Task E2: Carver momentum and descent
+
+**Files:** `WarrenMazeCarver.gd` (spine stride selection gains momentum — a climb continues in its direction unless the terrace forces a turn; after the summit the spine DESCENDS toward the far rim rather than wandering level; alleys prefer contour-following on the new massif), tests (route span, turn count, descent-after-summit fact pinned at measured).
+- [ ] Commit — `feat(villages): carver momentum and post-summit descent`.
+
+### Task E3: Variation — roofs, storeys, outcroppings
+
+**Files:** `WarrenPlotPlanner.gd` (wider seeded storey budgets; pitched-preference eligibility naturally broadens on the descending massif — measure the pitched rate and tune the preference probability to land 20-40% of eligible crowns pitched), `WarrenVolumetricSolver.gd` (re-enable the residual outcropping/bracketed-jetty forms for maze plot mass; balconies already advisory — measure), `WarrenPlotReservations.gd` (deck quotas up on the new terraces if cheap), tests (per-town measured counts: pitched roofs, outcroppings/cantilevers, balconies, deck cells — pinned as floors at measured − guard; the user's "more variation" is judged in G).
+- [ ] Commit — `feat(villages): roof, storey, and outcropping variation`.
+
+### Task E4: Stone concentrates low
+
+**Files:** `WarrenMazeSourcePlan.gd` (a per-band exterior-stone profile relative to the LOCAL street/ground band replaces the flat `exterior_rock_ratio` as the pinned metric: stone faces ≤ 2 storeys above local datum vs above; the raised-shoulder instrumentation (39 columns) becomes a clamp if the measurement says so), the sweep, tests (pin: share of exterior stone faces above 2 storeys over local datum ≤ ceiling at measured + guard, expected to FALL with E1-E3; report the per-band histogram per seed).
+- Render seeds 12, 3 + one noise seed; verdict against the user's three directions.
+- [ ] Commit — `feat(villages): stone concentrates in the bottom storeys`.
+
+### Phase E exit
+- The three user directions measured and met on the battery seeds: no sheer rim walls (E1 pin), stone low (E4 pin), variation counts (E3 pins); corpus re-pinned honestly; silhouettes differ across seeds; solve time regression < 20%.
+
+
 # Phase F — Mode flip and deletion
 
 Milestone: `GENERATION_MODE` removed (maze is the only path); delete the 12-attempt rotation, ranked variants, courtless fallback, budget slicing, `carve_ranked`, the landmark set beam, `WarrenSolutionPinCache` + salt machinery + VillagePlan integration; retire search-only tests/harnesses. Exit: dead-symbol grep clean; full suite green; in-game cold load near settlements measured.
