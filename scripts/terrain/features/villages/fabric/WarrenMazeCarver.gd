@@ -1540,12 +1540,27 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 	## bridge's own band, not merely to wall its passage. `record` is the
 	## caller's ledger line and is always written: a candidate the carver
 	## tested and refused is a fact the audit needs as much as one it took.
+	##
+	## TASK E3b RULING 3 -- and ONE such flank is now enough, because a
+	## one-flank span is buildable: `WarrenVolumetricSolver
+	## ._residual_bridge_span` composes
+	## it as the authored BRACKETED JETTY (`room.jetty.*`, one bearing parent
+	## plus a measured bracket course) instead of releasing it. E3 wrote this
+	## proof when only the two-flank `room.bridge.*` form existed, so "every
+	## flank carries a room" was then the right bar and it cut the corpus from
+	## 27 seeded spans to 10 with ZERO built. The bar is now "at least one flank
+	## carries a room", the room-capable columns are published as `room_flanks`,
+	## and `_maze_bridge_proved_flanks` hands exactly those to the builder -- so
+	## the bond the builder makes is still the one this proof was about, and a
+	## span with no room-capable flank is still refused by name.
 	var storey := _bridge_room_storey(excavation, span)
 	var flank_columns: Array[Vector2i] = []
+	var room_flank_columns: Array[Vector2i] = []
 	record["cells"] = span.duplicate()
 	record["floor"] = storey.x
 	record["top"] = storey.y
 	record["flanks"] = flank_columns
+	record["room_flanks"] = room_flank_columns
 	record["reason"] = ""
 	for cell: Vector3i in span:
 		var direction := directions.get(cell, Vector2i.ZERO) as Vector2i
@@ -1579,17 +1594,22 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 			# sufficient -- a house has still to compose in it -- but a span
 			# that fails it can never gain a flank room, so seeding one only
 			# spends retained mass and risks the town.
+			var carries_room := true
 			for band in range(storey.x, storey.y):
 				if not _column_is_solid_at(massif, excavation, flank, band):
-					record["reason"] = ("flank column %s carries no room " \
-						+ "mass at band %d of the bridge storey [%d, %d)") \
-						% [flank, band, storey.x, storey.y]
-					return false
+					carries_room = false
+					break
+			if carries_room and not room_flank_columns.has(flank):
+				room_flank_columns.append(flank)
 		if massif.top_at(column) - cell.y \
 				< WarrenPassageLatticeRules.HEADROOM_BANDS + 2:
 			record["reason"] = \
 				"column %s has no retained mass above the span" % column
 			return false
+	if room_flank_columns.is_empty():
+		record["reason"] = ("no flank column carries room mass across the " \
+			+ "bridge storey [%d, %d)") % [storey.x, storey.y]
+		return false
 	return true
 
 

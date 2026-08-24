@@ -10580,13 +10580,17 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 		# Snapshot it per record here, or the only explanation of WHY a span
 		# did not bind is gone by the time the audit is read.
 		_residual_bridge_counts = {}
+		# TASK E3b RULING 3. The plot model's own spans are the one caller that
+		# may take the BRACKETED JETTY form when only one proved flank binds:
+		# every other caller passes nothing and keeps the two-flank-only rule.
 		var span := _residual_bridge_span(cells, building_by_id,
 			building_by_cell, volume.world_seed, construction_program,
-			_maze_bridge_proved_flanks(volume, columns))
+			_maze_bridge_proved_flanks(volume, columns), true)
 		var span_counts := _residual_bridge_counts.duplicate(true)
 		if span.is_empty():
 			outcomes.append(_maze_bridge_release(id,
-				"span has no two bound flank bearings", span_counts))
+				"span has no bound flank bearing or bracketed jetty",
+				span_counts))
 			continue
 		var parent_building := building_by_id.get(
 			StringName(span.parent_building_id)) as WarrenBuildingVolume
@@ -10683,8 +10687,12 @@ static func _maze_bridge_proved_flanks(volume: WarrenVolumePlan,
 			same = same and wanted.has(column_value as Vector2i)
 		if not same:
 			continue
+		# TASK E3b RULING 3. The ROOM-CAPABLE subset, not every walling flank:
+		# those are the columns the seed-time proof really argued could carry a
+		# room at this band, and binding through anything else is what produced
+		# `bridge room ... has no built flank` before E3.
 		var out: Dictionary = {}
-		for column_value: Variant in record.get("flanks", []) as Array:
+		for column_value: Variant in record.get("room_flanks", []) as Array:
 			out[column_value as Vector2i] = true
 		return out
 	return {}
@@ -11584,7 +11592,8 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 static func _residual_bridge_span(cells: Array[Vector3i],
 		building_by_id: Dictionary, building_by_cell: Dictionary,
 		world_seed: int, program: SettlementFabricProgram,
-		proved_flank_columns: Dictionary = {}) -> Dictionary:
+		proved_flank_columns: Dictionary = {},
+		jetty_brackets: bool = false) -> Dictionary:
 	## Prove the two-sided wall bearing for a candidate bridge room: on each of
 	## two opposing sides, one distinct established flanking room whose centred
 	## cardinal bearing socket exactly meets a cell of this footprint. The
@@ -11685,7 +11694,104 @@ static func _residual_bridge_span(cells: Array[Vector3i],
 				"parent_building_id": StringName(negative.building_id),
 				"parent_contact_cell": negative.contact_cell,
 			}
-	return {}
+	# TASK E3b RULING 3 -- THE BRACKETED JETTY GETS ITS PRODUCER.
+	#
+	# `is_bracketed_jetty` was READ in three places and SET in none:
+	# `_room_recipe_id` picks the authored `room.jetty.*` shell for it (one
+	# bearing parent, role `bracketed_jetty_room`) instead of `room.bridge.*`
+	# (two), `_residual_room_candidate` carries it, and this function's
+	# `support_records` are what `WarrenSpatialFeatureSolver
+	# ._reserve_residual_jetty_supports` reserves as the measured bracket
+	# course. All three were dead: the search above returns only on a
+	# TWO-flank pair, so no span was ever a jetty and no bracket was ever
+	# reserved.
+	#
+	# The form the three consumers describe, stated as the admission rule:
+	# ONE exact flank socket bond, plus a measured bracket course under the
+	# bearing edge that the feature solver can really commit. That is what the
+	# comment above means by "even with brackets" -- a one-flank room with NO
+	# bracket is the forbidden box; with the authored course beneath it, it is
+	# the reviewed one-bay jetty, which is the cantilever the milestone asks
+	# for. `jetty_brackets` is false for every legacy caller
+	# (`_backfill_residual_rooms` passes nothing), so the searched modes are
+	# byte-identical and only the plot model's own spans may become one.
+	if not jetty_brackets or bindings_by_direction.size() != 1:
+		return {}
+	var jetty_direction := bound_directions[0] as Vector3i
+	var jetty_binding := bindings_by_direction[jetty_direction] as Dictionary
+	var jetty_records := _bridge_jetty_support_records(cells, jetty_direction,
+		program)
+	if jetty_records.is_empty():
+		_residual_bridge_counts["jetty_unbracketed"] = int(
+			_residual_bridge_counts.get("jetty_unbracketed", 0)) + 1
+		return {}
+	_residual_bridge_counts["jetty_bound"] = int(
+		_residual_bridge_counts.get("jetty_bound", 0)) + 1
+	return {
+		"room_ids": [StringName(jetty_binding.room_id)] as Array[StringName],
+		"parent_building_id": StringName(jetty_binding.building_id),
+		"parent_contact_cell": jetty_binding.contact_cell,
+		"is_bracketed_jetty": true,
+		"support_records": jetty_records,
+	}
+
+
+static func _bridge_jetty_support_records(cells: Array[Vector3i],
+		flank_direction: Vector3i,
+		program: SettlementFabricProgram) -> Array[Dictionary]:
+	## TASK E3b RULING 3. The measured bracket course under a ONE-flank bridge
+	## room, in the shape `_reserve_residual_jetty_supports` reserves and
+	## `_outcrop_support_analysis` validates: `{recipe_id, origin, yaw_quarters,
+	## role}` against a recipe tagged `cantilever_support`.
+	##
+	## The geometry is the diagonal outcropping's own, restated for a span. The
+	## BEARING EDGE is the room's floor-band columns that touch the flank; the
+	## authored brace attaches there and projects OUTWARD (away from the flank)
+	## under the cantilevered half. The course tiles that edge in native 3 m
+	## pairs with the authored 1.5 m terminal for an odd column, exactly as
+	## `WarrenSpatialFeatureSolver._cantilever_support_course_records` does, and
+	## refuses outright if the edge is not one contiguous run -- a scaled or
+	## invented support is never the answer.
+	var out: Array[Dictionary] = []
+	if cells.is_empty() or program == null:
+		return out
+	var cell_set: Dictionary = {}
+	var floor_band := cells[0].y
+	for cell: Vector3i in cells:
+		cell_set[cell] = true
+		floor_band = mini(floor_band, cell.y)
+	var edge: Array[Vector2i] = []
+	for cell: Vector3i in cells:
+		if cell.y != floor_band or cell_set.has(cell + flank_direction):
+			continue
+		edge.append(Vector2i(cell.x, cell.z))
+	if edge.is_empty():
+		return out
+	var yaw := WarrenSpatialFeatureSolver._yaw_for_local_direction(
+		Vector3i.BACK, -flank_direction)
+	if yaw < 0:
+		return out
+	var span_direction_3d := FabricRecipe.transform_direction(Vector3i.RIGHT,
+		yaw)
+	var span_direction := Vector2i(span_direction_3d.x, span_direction_3d.z)
+	edge.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x * span_direction.x + a.y * span_direction.y \
+			< b.x * span_direction.x + b.y * span_direction.y)
+	for index in range(1, edge.size()):
+		if edge[index] != edge[index - 1] + span_direction:
+			return [] as Array[Dictionary]
+	for index in range(0, edge.size(), 2):
+		var course_size := mini(2, edge.size() - index)
+		var recipe_id := StringName("outcrop.support.bracketed.%d" \
+			% course_size)
+		var recipe := program.recipe(recipe_id)
+		if recipe == null or not recipe.has_tag(&"cantilever_support"):
+			return [] as Array[Dictionary]
+		out.append({"recipe_id": recipe_id,
+			"origin": Vector3i(edge[index].x, floor_band, edge[index].y),
+			"yaw_quarters": yaw,
+			"role": StringName("bridge_jetty_support.%02d" % (index / 2))})
+	return out
 
 
 static func _bridge_flank_binding(cell_set: Dictionary,

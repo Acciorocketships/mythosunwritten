@@ -21,18 +21,19 @@ const BUILDING_CAP: Dictionary = {
 }
 ## (min, max) storeys an untiered house may roll. The height that comes out
 ## follows the parcel contract exactly -- STOREY_BANDS per storey plus
-## ROOF_RESERVATION_BANDS -- so compact's (1, 2) is a 4- or 6-band house.
+## ROOF_RESERVATION_BANDS -- so compact's (1, 3) is a 4-, 6- or 8-band house.
 ##
-## TASK E3 RULING 1 MEASURED FOUR WIDENINGS OF THIS TABLE AND SHIPPED NONE.
-## The reason to want one: over the 24-town flat corpus the 799 houses stand at
-## only FOUR distinct heights (4 bands x 385, 5 x 64, 6 x 242, 8 x 108), and a
-## COMPACT town has only two of them -- every untiered house in it is one storey
-## or two. The odd 5s are TIERED houses whose top is a street's own band, so
-## this roll is the only source of storey diversity the model has and its range
-## is two values wide.
+## TASK E3 MEASURED FOUR WIDENINGS OF THIS TABLE AND SHIPPED NONE; TASK E3b
+## SHIPS THE WIDEST OF THEM, +1 STOREY ON EVERY SCALE, AT 24/24.
 ##
-## Every widening measured cost exactly two of the twenty-four towns, and never
-## the same two:
+## The reason to want one: over the 24-town flat corpus the 736 houses stood at
+## only FOUR distinct heights (4 bands x 344, 5 x 66, 6 x 225, 8 x 101), and
+## EIGHT of the twelve COMPACT towns had only two untiered heights -- every
+## untiered house one storey or two. The odd 5s are TIERED houses whose top is
+## a street's own band, so this roll is the only source of storey diversity the
+## model has.
+##
+## E3's four measurements, each costing exactly two of the twenty-four towns:
 ##
 ##   * +1 storey on every scale -- 22/24. `2/compact` at phase selection,
 ##     `7/standard` at a partial-plate roof sliver.
@@ -44,16 +45,32 @@ const BUILDING_CAP: Dictionary = {
 ##   * +1 for footprints of one column -- 22/24. `7/standard` at a
 ##     modular-box partial bearing, `11/compact` at a cross-lineage sliver.
 ##
-## Three different Phase C VOCABULARY families, none of them this file's: a
-## taller house grows one more part-row of rooms, and each new crown is another
-## chance for a partial plate, a cross-lineage sliver, or a facade phase with
-## nowhere to go. The sweep's wall clock also rose 32-79 %. The plot planner is
-## not the binding constraint on storey diversity -- the authored roof and room
-## vocabulary is -- so the table stays where Task 4 measured it and the finding
-## is recorded here instead of being paid for with two towns.
+## E3 concluded the binding constraint was the authored roof and room
+## vocabulary rather than this file, and that was right. E3b re-measured the
+## first row against the fixed gates and BOTH towns came back:
+##
+##   * `7/standard` -- the partial-plate roof sliver. Its crown carried a
+##     STREET on one cell, and that vetoed the whole crown out of the flat
+##     vocabulary; a maze flat crown now TILES instead
+##     (`WarrenSpatialFabricCompiler`, gate 1).
+##   * `2/compact` -- `room ...house.010.part02.room00 failed measured phase
+##     selection: visual envelope intersects unrelated feature
+##     spatial.feature.balcony.00`. A balcony treated its whole SOURCE LINEAGE
+##     as a named seam while the compiler relates it to its own room alone
+##     (`WarrenSpatialFeatureSolver._feature_bounds_overlap_unrelated_room`).
+##
+## Measured after, on the same 24-town corpus: **24/24 sealed**, every COMPACT
+## town at three or four distinct house heights (worst 3, and 3 on the untiered
+## reading too, where eight of twelve stood 2), and the corpus at FIVE heights
+## -- of 741 houses, 4 x 253, 5 x 66, 6 x 193, 8 x 146, 10 x 83. Every STANDARD
+## town stands all five. The three narrower rows above exist only to dodge the
+## cost
+## the first one used to carry; that cost is gone, so they are superseded by
+## this table rather than re-measured. The sweep's wall clock rises with the
+## storeys, which is the price of them.
 const STOREY_BUDGET: Dictionary = {
-	&"compact": Vector2i(1, 2), &"standard": Vector2i(1, 3),
-	&"large": Vector2i(2, 3), &"grand": Vector2i(2, 4),
+	&"compact": Vector2i(1, 3), &"standard": Vector2i(1, 4),
+	&"large": Vector2i(2, 4), &"grand": Vector2i(2, 5),
 }
 ## The tallest a house may ever be, in bands: six storeys. It bounds how far a
 ## roof climbs to meet a street or a plot claimed above it, and which streets a

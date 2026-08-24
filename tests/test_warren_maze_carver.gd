@@ -586,7 +586,14 @@ func _neighbor_may_stay_covered(plan: WarrenMazeSourcePlan,
 ## A softer bar -- the bridge's FLOOR band alone rather than its whole storey
 ## -- was measured and rejected: it retains 11 spans instead of 10, so the
 ## storey the rule really means costs one span over the corpus.
-const BRIDGE_SPAN_SEED_FLOOR := 4
+##
+## TASK E3b RULING 3 RE-PINS THIS UPWARD, 4 -> 8. Requiring room mass on EVERY
+## flank was right while the two-flank `room.bridge.*` was the only buildable
+## span; a ONE-flank span now composes as the authored bracketed jetty, so the
+## bar is one room-capable flank and the carver seeds **17 spans across TEN of
+## the twelve standard seeds** where E3 seeded 10 across five. Pinned two under
+## the measurement, which is the same headroom this constant carried before.
+const BRIDGE_SPAN_SEED_FLOOR := 8
 
 
 func test_bridge_spans_are_retained_over_open_streets() -> void:
@@ -678,37 +685,52 @@ func test_bridge_spans_are_retained_over_open_streets() -> void:
 			BRIDGE_SPAN_SEED_FLOOR, seeds.size(), ", ".join(summary)])
 
 
-## Candidates the E3 flank proof itself must have refused across the twelve
+## Candidates the flank proof itself must have refused across the twelve
 ## standard seeds, minus a guard. Counted by FAMILY, not in total: the ledger's
 ## refusals are mostly the pre-existing hollow-passage-wall rule, and a pin on
-## the sum would stay green with the new branch switched off. Measured 84 of
-## 246 candidates refused for room mass (240 refused in all). Pinned as a
-## floor, not an equality -- refusing more unbuildable spans is an improvement,
-## and the count that must not drift the other way is
-## `BRIDGE_SPAN_SEED_FLOOR`'s.
-const BRIDGE_FLANK_REFUSAL_FLOOR := 70
-## The refusal `_bridge_span_is_legal` writes for the E3 rule, so the tally
+## the sum would stay green with the branch switched off.
+##
+## TASK E3b RULING 3 RE-PINS THIS DOWNWARD, 70 -> 4, and the reason is the
+## whole point of that ruling. Task E3 measured 84 of 246 candidates refused
+## because SOME flank could not carry a room, which was the right bar while the
+## only buildable span was the two-flank `room.bridge.*`. A one-flank span is
+## now buildable as the authored bracketed jetty, so the bar is "NO flank
+## carries a room" and the family measures **5 of 140** (123 refused in all,
+## almost all of them the pre-existing hollow-passage-wall rule). The candidate
+## population shrank with it -- accepting a span consumes the mass later
+## candidates would have used -- and the spans this releases are the feature
+## the milestone asks for, not slack: seeded spans go 10 -> **17** across the
+## twelve standard seeds. `BRIDGE_SPAN_SEED_FLOOR` is the count that must not
+## drift the other way and it is re-pinned upward in the same step.
+const BRIDGE_FLANK_REFUSAL_FLOOR := 4
+## The refusal `_bridge_span_is_legal` writes for this rule, so the tally
 ## below can tell it from the passage-wall family it sits beside.
-const BRIDGE_FLANK_REFUSAL_REASON := "carries no room mass"
+const BRIDGE_FLANK_REFUSAL_REASON := "no flank column carries room mass"
 
 
-func test_a_seeded_bridge_span_proves_two_room_capable_flanks() -> void:
-	## TASK E3 RULING 3. A bridge room is carried by its two FLANKING ROOMS --
-	## `WarrenVolumetricSolver._residual_bridge_span` bonds it through their
-	## measured bearing sockets, and the fabric compiler re-proves the bond
-	## strictly. Until this task the carver proved only that the flanks walled
-	## the PASSAGE (solid from the walk floor to its roof) and said nothing
-	## about the band the bridge room itself would occupy, so a span between
-	## two blocks that both stop below it was seeded anyway. `step/12/compact`
-	## is what that costs: the plot planner authored a bridge plot, composition
-	## bonded it to whatever happened to be adjacent, and the compiler killed
-	## the whole town one stage later with `bridge room ... has no built flank`
-	## (Task E2 pinned it in `SLOPED_KNOWN_REFUSALS`; Task E3 removes the pin).
+func test_a_seeded_bridge_span_proves_a_room_capable_flank() -> void:
+	## TASK E3 RULING 3, as TASK E3b RULING 3 restates it. A bridge room is
+	## carried by its FLANKING ROOMS -- `WarrenVolumetricSolver
+	## ._residual_bridge_span` bonds it through their measured bearing sockets,
+	## and the fabric compiler re-proves the bond strictly. Until E3 the carver
+	## proved only that the flanks walled the PASSAGE (solid from the walk
+	## floor to its roof) and said nothing about the band the bridge room
+	## itself would occupy, so a span between two blocks that both stop below
+	## it was seeded anyway; `step/12/compact` is what that cost (`bridge room
+	## ... has no built flank`, the whole town).
 	##
-	## Two teeth. Every SEEDED span's published flanks are re-derived here from
-	## the sealed plan's own cell states rather than read back from the ledger,
-	## so a carver that published a proof it did not run is red; and the ledger
-	## must record real REFUSALS, so a proof that accepts everything is red too.
+	## E3 demanded room mass on EVERY flank because the two-flank
+	## `room.bridge.*` shell was the only buildable form. E3b gives the
+	## one-flank form its producer -- the authored `room.jetty.*` shell with a
+	## measured bracket course -- so the bar is now ONE room-capable flank, and
+	## the proof publishes WHICH columns those are (`room_flanks`) rather than
+	## implying all of them.
+	##
+	## Three teeth. Every seeded span names at least one room flank; every
+	## column it names is re-derived here from the sealed plan's own cell
+	## states rather than read back from the ledger, so a carver that published
+	## a proof it did not run is red; and the ledger must record real REFUSALS
+	## by name, so a proof that accepts everything is red too.
 	var tested := 0
 	var refused := 0
 	var unflanked := 0
@@ -739,9 +761,19 @@ func test_a_seeded_bridge_span_proves_two_room_capable_flanks() -> void:
 		for record_value: Variant in seeded:
 			var record := record_value as Dictionary
 			var flanks := record.get("flanks", []) as Array
+			var room_flanks := record.get("room_flanks", []) as Array
 			assert_gte(flanks.size(), 2,
 				"seed %d span %s must name both flank columns" % [seed,
 					record.get("cells", [])])
+			assert_gte(room_flanks.size(), 1,
+				("seed %d span %s was seeded with no room-capable flank at " \
+					+ "all, which nothing can build on") % [seed,
+					record.get("cells", [])])
+			for room_flank_value: Variant in room_flanks:
+				assert_true(flanks.has(room_flank_value),
+					("seed %d span %s names room flank %s that is not one of " \
+						+ "its own walling flanks %s") % [seed,
+						record.get("cells", []), room_flank_value, flanks])
 			var floor_band := int(record["floor"])
 			var top_band := int(record["top"])
 			assert_eq(top_band - floor_band, WarrenBuildingParcel.STOREY_BANDS,
@@ -760,23 +792,23 @@ func test_a_seeded_bridge_span_proves_two_room_capable_flanks() -> void:
 			assert_eq(floor_band, expected,
 				"seed %d span %s proved band %d where the plot floor is %d" % [
 					seed, record.get("cells", []), floor_band, expected])
-			for flank_value: Variant in flanks:
+			for flank_value: Variant in room_flanks:
 				var flank := flank_value as Vector2i
 				for band in range(floor_band, top_band):
 					assert_eq(plan.state_at(Vector3i(flank.x, band, flank.y)),
 						WarrenMazeSourcePlan.CellState.SOLID,
-						("seed %d span %s flank %s carries no room mass at " \
-							+ "band %d of its bridge storey [%d, %d)") % [seed,
-							record.get("cells", []), flank, band, floor_band,
-							top_band])
+						("seed %d span %s room flank %s carries no room mass " \
+							+ "at band %d of its bridge storey [%d, %d)") % [
+							seed, record.get("cells", []), flank, band,
+							floor_band, top_band])
 	gut.p(("bridge flank proof seeded/unflanked/refused: %s " \
 		+ "(tested %d, refused %d, of them %d for room mass)") % [
 		" ".join(summary), tested, refused, unflanked])
 	assert_gt(tested, 0, "no seed offered the flank proof a single candidate")
 	assert_gte(unflanked, BRIDGE_FLANK_REFUSAL_FLOOR,
-		("the E3 flank proof refused %d of %d candidates for room mass (%d " \
-			+ "refused in all); it refused at least %d when this was " \
-			+ "measured") % [unflanked, tested, refused,
+		("the flank proof refused %d of %d candidates because NO flank " \
+			+ "carries a room (%d refused in all); it refused at least %d " \
+			+ "when this was measured") % [unflanked, tested, refused,
 			BRIDGE_FLANK_REFUSAL_FLOOR])
 
 

@@ -2847,6 +2847,35 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var maze_plate_tile_count := 0
 	var maze_plate_refused_count := 0
 	var maze_plate_tile_recipe_counts: Dictionary = {}
+	# TASK E3b RULING 1 -- THE TWO VOCABULARY GATES, AND THEIR AUDIT.
+	#
+	# `maze_street_borne_plate_count` (gate 1): flat crowns admitted to the
+	# tiling because part of the plate carries a STREET
+	# (`_touches_public_air`). Before this task one such cell vetoed the whole
+	# crown -- slab AND tiles -- and sent it to the finite setback vocabulary,
+	# where a leftover one-cell strip has no authored shed and the town died.
+	#
+	# `maze_lid_repair_cap_count` / `_cell_count` (gate 2): one-cell setback
+	# strips kept as plank caps because the maze lid CONTINUES across them,
+	# with `maze_cross_lineage_repairs` the subset whose continuing crown
+	# belongs to another lineage. Both are keyed on `plot_flat`, which only the
+	# maze translator's own `flat_roof` stamp ever sets.
+	#
+	# GATE 2'S OTHER HALF WAS FALSIFIED AND IS NOT HERE. The brief's premise
+	# was that a partial plate cannot TILE across a lineage boundary, so a
+	# one-cell strip against a neighbour's crown has no module. It always has
+	# one: `roof.setback.cap.1` is a ONE-CELL authored module and
+	# `_tile_flat_plate` sweeps cell by cell, so the last recipe in
+	# `FLAT_PLATE_TILE_RECIPES` fits every anchor unconditionally and the
+	# tiling can never fail for want of a module -- measured
+	# `maze_partial_plate_refused_count == 0` on all 24 corpus towns, before
+	# and after. A cross-lineage TILE was built, measured inert for exactly
+	# that reason, and removed rather than shipped dead; the sliver repair
+	# below is the half that is real.
+	var maze_street_borne_plate_count := 0
+	var maze_cross_lineage_repairs := 0
+	var maze_lid_repair_cap_count := 0
+	var maze_lid_repair_cell_count := 0
 	# TASK C5e RULING 3, review fix 1 (IMPORTANT 2). The units that really ARE
 	# a plot-flat crown -- this branch's own slabs and the tiles that complete
 	# a partial one -- named as they are emitted. The assembler cannot re-derive
@@ -3058,8 +3087,29 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				maze_pitched_refused_count += 1
 		if selected:
 			continue
-		if plot_flat and full \
-				and not _touches_public_air(source.grid, face_cells):
+		# TASK E3b RULING 1, GATE 1 -- WHEN ONE SLAB CANNOT STAND, TILE.
+		#
+		# Two facts can stop a plot-flat crown taking one whole-footprint
+		# `roof.flat.*` slab: another storey stands on part of it (a PARTIAL
+		# plate, C5e's case), or part of it carries a STREET (`street_borne`:
+		# the slab's own solid volume would enter that street's headroom).
+		# Before this task only the first went to the tiling; the street vetoed
+		# the WHOLE crown -- slab and tiles alike -- and dropped it into the
+		# finite setback vocabulary, where a leftover one-cell strip has no
+		# authored shed and the town died (measured: `7/standard` under the
+		# +1-storey widening, `roof remainder for
+		# ...house.000.part01.room00 contains a 1-cell exposed sliver`, with a
+		# street standing on one cell of that same crown).
+		#
+		# The rule is now one sentence: A MAZE FLAT CROWN NEVER LEAVES THE FLAT
+		# VOCABULARY. It slabs when a slab can stand and tiles when one cannot,
+		# and the tiling proves each module on its own -- so the cells under a
+		# street take the thin plank cap that claims no mass rather than a slab
+		# that would enter the street.
+		var street_borne := plot_flat \
+			and _touches_public_air(source.grid, face_cells)
+		maze_street_borne_plate_count += int(street_borne)
+		if plot_flat and full and not street_borne:
 			# The plot's own slab, at the same lattice datum every full roof
 			# unit uses and exactly one band tall (the authored `roof.flat.*`
 			# extent). No garden accent: a street, a terrace or another house
@@ -3091,8 +3141,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					probe.last_rejection])
 			rejected_flat_count += 1
 			plot_flat_rejected_count += 1
-		if plot_flat and not full \
-				and not _touches_public_air(source.grid, face_cells):
+		if plot_flat and (not full or street_borne):
 			# TASK C5e RULING 1 -- A PARTIAL PLATE TILES.
 			#
 			# Another storey of this same building stands on part of this
@@ -3274,6 +3323,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				last_failure = "no native setback cap fits row %d for %s" % [
 					row_index, room_id]
 				return [] as Array[FabricUnit]
+			# Set by the one-cell lid repair below, and read where the
+			# forbidden-plain-cap gate counts this row's unit.
+			var lid_repaired := false
 			# An exposed shoulder may never survive as a horizontal modular lid,
 			# regardless of its length or whether a planter could dress it. Its only
 			# admissible treatment is a measured half-gable whose complete long edge
@@ -3288,7 +3340,35 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						cap, roof_room_id_by_face)
 				var shed := _setback_shed_placement(row, room,
 					source.world_seed, cap, roof_join)
-				if shed.is_empty():
+				# TASK E3b RULING 1, GATE 2 -- THE CROSS-LINEAGE SLIVER REPAIR.
+				#
+				# `_setback_shed_placement` is authored for 2, 4 and 6 cells,
+				# so a ONE-cell strip has no shed at all and this is where the
+				# town died. The shoulder rule above is right about an exposed
+				# shoulder -- but this strip is not one when the flat lid
+				# CONTINUES across its long edges: on a maze crown the whole
+				# roof surface is already a horizontal plank lid (C5e ruling
+				# 1), so a plank strip carrying it on is that crown's
+				# vernacular rather than a modular lid pasted on a shoulder.
+				# `_maze_lid_repair_neighbors` is the proof, and it is the
+				# LINEAGE-AGNOSTIC half of this task: the continuing crown may
+				# belong to another lineage, provided every room involved --
+				# this one and each continuing neighbour -- is a maze flat
+				# stamp. The repaired cap is deliberately NOT counted in
+				# `plain_cap_count`, for the same reason the tiling branch is
+				# not: the forbidden-plain-cap gate is about exposed shoulders,
+				# and this strip is proved not to be one.
+				var lid_repair: Dictionary = {}
+				if shed.is_empty() and plot_flat:
+					lid_repair = _maze_lid_repair_neighbors(row,
+						room_id, roof_room_id_by_face, plot_flat_room_ids)
+				if shed.is_empty() and not lid_repair.is_empty():
+					lid_repaired = true
+					maze_lid_repair_cap_count += 1
+					maze_lid_repair_cell_count += row.size()
+					maze_cross_lineage_repairs += int(bool(
+						lid_repair.get("cross_lineage", false)))
+				elif shed.is_empty():
 					var top_context: Array[Dictionary] = []
 					for private_cell: Vector3i in room.private_cells:
 						if private_cell.y != room.lattice_origin.y + 1:
@@ -3307,7 +3387,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						+ "(source faces=%s; remainder=%s; top=%s)") % [room_id,
 						row.size(), face_cells, row, JSON.stringify(top_context)]
 					return [] as Array[FabricUnit]
-				cap = shed
+				if not shed.is_empty():
+					cap = shed
 			# A setback roof is not a license to intersect every room that happens
 			# to share a party wall with its parent.  That broad exception admitted
 			# little gables deep into the valley between two continuing upper rooms.
@@ -3522,8 +3603,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 					cap_unit.recipe_id).begins_with("roof.flat."))
 			realized_face_count += row.size()
 			cap_count += 1
-			plain_cap_count += int(String(cap_unit.recipe_id) \
-				.begins_with("roof.setback.cap."))
+			plain_cap_count += int(not lid_repaired \
+				and String(cap_unit.recipe_id).begins_with("roof.setback.cap."))
 			lean_to_cap_count += int(String(cap_unit.recipe_id) \
 				.begins_with("roof.setback.lean."))
 			shed_cap_count += int(String(cap_unit.recipe_id) \
@@ -3667,6 +3748,20 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"maze_partial_plate_tiled_count": maze_tiled_plate_count,
 		"maze_partial_plate_tile_count": maze_plate_tile_count,
 		"maze_partial_plate_refused_count": maze_plate_refused_count,
+		# TASK E3b RULING 1 -- the two gates, published so a test can assert
+		# them rather than infer them from a seal.
+		#
+		# `maze_street_borne_plate_count`: crowns that carry a street on part of
+		# their plate and are TILED for it (gate 1). Before this task each of
+		# them left the flat vocabulary entirely.
+		# `maze_lid_repair_cap_count` / `_cell_count`: one-cell setback strips
+		# kept as plank caps because the maze lid continues across them, and
+		# `maze_cross_lineage_repairs` the subset whose continuing crown belongs
+		# to ANOTHER lineage -- the sliver repair proper.
+		"maze_street_borne_plate_count": maze_street_borne_plate_count,
+		"maze_lid_repair_cap_count": maze_lid_repair_cap_count,
+		"maze_lid_repair_cell_count": maze_lid_repair_cell_count,
+		"maze_cross_lineage_repairs": maze_cross_lineage_repairs,
 		"maze_partial_plate_tile_recipe_counts": \
 			maze_plate_tile_recipe_counts,
 		"maze_terrace_crown_unit_ids": maze_terrace_crown_units,
@@ -3788,6 +3883,53 @@ static func _cap_unit(room_id: StringName, row_index: int,
 				parent_local.x, parent_local.z))] as Array[Dictionary], &"", seams)
 
 
+static func _maze_lid_repair_neighbors(row: Array[Vector3i],
+		room_id: StringName, roof_room_id_by_face: Dictionary,
+		plot_flat_room_ids: Dictionary) -> Dictionary:
+	## TASK E3b RULING 1, GATE 2. Does the flat lid CONTINUE across this
+	## setback strip's long edges? Returns `{}` when it does not -- the strip is
+	## then the exposed shoulder the shed rule exists for -- and otherwise
+	## `{cross_lineage}`, true when at least one continuing crown belongs to
+	## another room.
+	##
+	## The proof, cell by cell: every cell of the strip must have at least one
+	## horizontal neighbour AT ITS OWN BAND that is another room's or this
+	## room's exposed ROOF FACE, and every such neighbour's room must be a maze
+	## flat crown (`plot_flat_room_ids`). Both halves matter. Without the first,
+	## a strip hanging off the end of a crown would be repaired; without the
+	## second, a pitched neighbour's weather shoulder would be read as a
+	## continuing plank lid, which is exactly the modular-lid defect the shed
+	## rule forbids. `plot_flat_room_ids` is EMPTY on every route-first and
+	## mass-first plan, so no legacy strip can be repaired here.
+	if row.is_empty() or plot_flat_room_ids.is_empty():
+		return {}
+	var strip: Dictionary = {}
+	for cell: Vector3i in row:
+		strip[cell] = true
+	var cross_lineage := false
+	for cell: Vector3i in row:
+		var continued := false
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if strip.has(neighbor):
+				continue
+			var neighbor_room := StringName(roof_room_id_by_face.get(neighbor,
+				&""))
+			if neighbor_room.is_empty():
+				continue
+			if not plot_flat_room_ids.has(neighbor_room):
+				# A neighbouring crown that is not a maze flat stamp cannot
+				# carry the argument, and admitting it here would be the
+				# lineage-agnostic rule reaching past the maze.
+				return {}
+			continued = true
+			cross_lineage = cross_lineage or neighbor_room != room_id
+		if not continued:
+			return {}
+	return {"cross_lineage": cross_lineage}
+
+
 static func _tile_flat_plate(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram, probe: SettlementFabricPlan,
 		room_id: StringName, room: WarrenRoomStamp, parent_unit: FabricUnit,
@@ -3813,6 +3955,15 @@ static func _tile_flat_plate(source: WarrenSpatialPlan,
 	## room's own per-cell top socket, its own seams, and its faces counted in
 	## `realized_roof_face_count` by the caller -- so a tiled crown satisfies
 	## the same source-face identity a slab does.
+	##
+	## TASK E3b RULING 1. The vocabulary's LAST entry, `roof.setback.cap.1`, is
+	## a ONE-CELL module, so the sweep below can cover any shape whatever and
+	## this function never fails for want of a module -- only the whole-set
+	## probe at the foot can refuse a plate. That is the measurement (0 refusals
+	## on all 24 corpus towns) that falsified the brief's "a partial plate
+	## cannot tile across a lineage boundary": there is no untileable seam, so a
+	## cross-lineage tile has nothing to do and is not here. What the plate
+	## really could not do was carry a STREET; that is gate 1, at the caller.
 	if face_cells.is_empty():
 		return {"units": [] as Array[FabricUnit],
 			"failure": "no exposed plate to tile"}

@@ -165,7 +165,7 @@ const BRIDGE_RELEASE_REASONS: Array[String] = [
 	"span mass is already spent or feature-reserved",
 	"no flank house composed a building at this floor",
 	"span footprint is not an authored shell",
-	"span has no two bound flank bearings",
+	"span has no bound flank bearing or bracketed jetty",
 	"bearing flank has no room to name",
 	"authored envelope does not fit",
 ]
@@ -263,11 +263,22 @@ const ROUTE_ON_STONE_FLOOR := 0.95
 ##
 ## Pinned at the measured worst plus one rounding step, NOT at this file's
 ## usual +0.05. Fix round 2 of TASK E1 established why: the share is an exact
-## integer ratio out of a deterministic pipeline (528 unroomed of 1784 plot
-## bands here), bit-identical between runs, so there is no flake to buy a guard
-## against and a wider guard would only hide the next real movement. Still well
-## under Task C6's original 0.33.
-const UNROOMED_PLOT_MASS_CEILING := 0.30
+## integer ratio out of a deterministic pipeline, bit-identical between runs,
+## so there is no flake to buy a guard against and a wider guard would only
+## hide the next real movement.
+##
+## TASK E3b RE-PINS THIS UPWARD, 0.30 -> 0.33, AND IT IS A COST RATHER THAN A
+## CORRECTION. The +1-storey widening `WarrenPlotPlanner.STOREY_BUDGET` now
+## ships buys five distinct house heights where the corpus had four and gives
+## every compact town at least three; what it does not buy is rooms for all of
+## the extra bands, so the mass a taller house adds and the composition does
+## not room is retained as STONE. Measured before -> after on the four planner
+## towns: 0.226 -> 0.280, 0.211 -> **0.200**, 0.281 -> 0.309, 0.260 -> 0.319.
+## 4/compact improves; the two standard towns carry the regression. 0.33 is
+## Task C6's original value, so this is a return to it rather than new slack,
+## and it is the number to attack next: the lever is the room composition's
+## storey budget per lineage, not the plot planner.
+const UNROOMED_PLOT_MASS_CEILING := 0.33
 
 ## Houses the plot model says stand on ANOTHER PLOT that the composition still
 ## roots in the mountain at their own floor band, because
@@ -402,7 +413,11 @@ const MAZE_FACADE_YIELD_CEILING := 7
 ## third (244 / 229 / 645 / 801). 4/compact is the one town where the residual
 ## backfill spikes (1219 ms).
 const PLANNER_SOLVE_MS_CEILING: Dictionary = {
-	"12/compact": 3700,
+	# TASK E3b: 3700 -> 5900. The +1-storey widening measured 4725 ms here, up
+	# from ~3000; a taller house is more rooms and `room_composition` is
+	# superlinear in room count (C6 ruling 3). Pinned at the measurement plus
+	# this file's usual quarter, which is the same headroom 4/compact carries.
+	"12/compact": 5900,
 	"4/compact": 5950,
 	# TASK E1: 5554 -> 8831 ms measured, x1.5. The town did not get slower per
 	# unit of work, it got bigger: the noise massif's terraces partition into
@@ -1461,6 +1476,109 @@ func test_a_bound_span_stamps_a_bridge_room() -> void:
 		"a two-sided span is not a bracketed jetty")
 
 
+func test_a_one_flank_span_becomes_a_bracketed_jetty() -> void:
+	## TASK E3b RULING 3. `is_bracketed_jetty` was READ in three places and SET
+	## in none, so the whole jetty form was dead code: `_residual_bridge_span`
+	## returned only on a TWO-flank pair, `_room_recipe_id`'s `room.jetty.*`
+	## branch could never be taken, and `_reserve_residual_jetty_supports` --
+	## the pass that reserves the bracket courses -- had no producer to consume.
+	##
+	## The same synthetic geometry as `test_a_bound_span_stamps_a_bridge_room`
+	## with the EAST flank removed, which is the case the corpus offers and the
+	## two-sided proof refused. Four teeth, all read off production output:
+	## the span stamps rather than releasing; its audit says one flank and
+	## `bridge_is_bracketed_jetty`; its `bridge_support_records` are real
+	## `cantilever_support` recipes at the room's own floor band; and the
+	## recipe `WarrenSpatialFabricCompiler` will build it from is the authored
+	## ONE-parent `room.jetty.*` shell rather than the two-parent bridge.
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, 0, -8),
+		Vector3i(24, 16, 24))
+	assert_true(grid.is_valid(), "the synthetic grid is usable")
+	var band := 4
+	assert_true(_fill_allocatable(grid), "synthetic massif projects")
+	assert_true(_carve_synthetic_street(grid, band), "synthetic street carves")
+	var west := _synthetic_flank(grid, &"flank.west", -1, band)
+	assert_not_null(west, "west flank composes")
+	if west == null:
+		return
+	var columns: Array[Vector2i] = [Vector2i(0, 0)]
+	var volume := WarrenVolumePlan.new(&"synthetic.jetty", 12345, null)
+	var parcels := WarrenParcelPlan.new(&"synthetic.jetty.parcels", volume)
+	parcels.audit["maze_bridges"] = [{
+		"id": &"bridge.00", "cells": columns, "floor": band,
+		"top": band + WarrenSpatialGrid.STOREY_CELLS,
+		"door_walk": Vector3i(0, band - 1, 0),
+		"building_id": &"house.west"}]
+	parcels.audit["maze_buildings"] = {&"house.west": [&"flank.west"]}
+	var supports := WarrenSupportGraph.new()
+	assert_true(supports.add_node(&"flank.west"),
+		"the one flank enters the support DAG")
+	var buildings: Array[WarrenBuildingVolume] = [west]
+	var required: Array[StringName] = []
+	var terrain: Array[StringName] = []
+	var edges: Array[Dictionary] = []
+	var program := _program()
+	var result := WarrenVolumetricSolver._stamp_maze_bridges(grid, volume,
+		parcels, buildings, supports, required, terrain, edges, {}, program)
+	assert_false(bool(result.get("failed", false)),
+		"the bridge pass completed: %s" % WarrenVolumetricSolver.last_failure)
+	var outcomes := result.get("outcomes", []) as Array
+	assert_eq(outcomes.size(), 1, "one record, one outcome")
+	if outcomes.size() != 1:
+		return
+	var outcome := outcomes[0] as Dictionary
+	print("MAZE_JETTY outcome=%s reason=%s counts=%s" % [
+		outcome.get("outcome", ""), outcome.get("reason", ""),
+		outcome.get("span_counts", {})])
+	assert_eq(String(outcome.get("outcome", "")), "stamped",
+		"a one-flank span with a bracket course stamps: %s" \
+			% outcome.get("reason", ""))
+	var counts := outcome.get("span_counts", {}) as Dictionary
+	assert_eq(int(counts.get("one_side_bound", -1)), 1,
+		"exactly one wall bound, which is what a jetty is")
+	assert_eq(int(counts.get("jetty_bound", -1)), 1,
+		"and the bracket course was selected for it")
+	assert_eq(buildings.size(), 2, "the caller's building list grew by one")
+	if buildings.size() != 2:
+		return
+	var room := buildings[1].room_records[0]
+	var flanks := room.audit.get("bridge_support_room_ids", []) as Array
+	assert_eq(flanks.size(), 1, "a jetty names ONE flank: %s" % [flanks])
+	assert_true(flanks.has(StringName("flank.west.room00")),
+		"and it is the flank that really bound: %s" % [flanks])
+	assert_true(bool(room.audit.get("bridge_is_bracketed_jetty", false)),
+		"the fact the three consumers read is finally SET")
+	var records := room.audit.get("bridge_support_records", []) as Array
+	assert_gt(records.size(), 0,
+		"a jetty carries its measured bracket courses")
+	for record_value: Variant in records:
+		var record := record_value as Dictionary
+		var support := program.recipe(StringName(record.get("recipe_id", &"")))
+		assert_not_null(support,
+			"bracket recipe %s exists" % record.get("recipe_id", &""))
+		if support == null:
+			continue
+		# The same tag `_outcrop_support_analysis` demands before it will
+		# reserve a course, so a record this test accepts is one the feature
+		# solver can really commit.
+		assert_true(support.has_tag(&"cantilever_support"),
+			"%s is a measured cantilever support" % support.recipe_id)
+		assert_eq((record.get("origin", Vector3i.ZERO) as Vector3i).y, band,
+			"the course stands at the jetty's own floor band")
+	# The consumer that was unreachable: one bearing parent, not two.
+	var recipe_id := WarrenSpatialFabricCompiler._room_recipe_id(room,
+		volume.world_seed)
+	assert_true(String(recipe_id).begins_with("room.jetty."),
+		"a bracketed jetty builds from the authored jetty shell, not %s" \
+			% recipe_id)
+	var jetty_recipe := program.recipe(recipe_id)
+	assert_not_null(jetty_recipe, "%s is authored" % recipe_id)
+	if jetty_recipe == null:
+		return
+	assert_eq(jetty_recipe.bearing_parent_count, 1,
+		"and that shell bears on exactly one flank")
+
+
 func _fill_allocatable(grid: WarrenSpatialGrid) -> bool:
 	var cells: Array[Vector3i] = []
 	for x in range(-8, 16):
@@ -1878,7 +1996,22 @@ const BALCONY_BUILDING_FLOOR := 6
 ## `WarrenSpatialFeatureSolver`'s note above `MIN_COURT_SIDE_COUNT`). Pinned so
 ## the day the vocabulary work lands, this is a re-pin somebody has to look at
 ## rather than a number nobody was watching.
+##
+## TASK E3b RE-MEASURED IT ON THE TALLER TOWN AND IT IS STILL ZERO, for a
+## reason that is now structural rather than circumstantial: a diagonal annex
+## needs OUTSIDE or ALLOCATABLE cells beside an upper room, and a town carved
+## out of a mountain has none. The pool grew from 1 target source to 7 and
+## every one of the 168 recipe attempts died in `_skywalk_body_fits_grid`.
+## The maze town's cantilever is the BRACKETED JETTY instead
+## (`test_a_one_flank_span_becomes_a_bracketed_jetty`), which stands on mass
+## the carver deliberately retained over a street.
 const ROOM_OUTCROPPING_COUNT := 0
+## Embedded oriel bays per town -- the production facade relief, and the only
+## projection every corpus town really carries. Measured 2 on all 24 towns of
+## the sweep corpus and on all four planner towns. It is what the milestone's
+## "more outcroppings" gets today, and naming it here keeps the honest number
+## beside the zero above rather than leaving the reader with only the zero.
+const FACADE_BAY_FLOOR := 2
 
 
 func test_facade_projections_and_crowns_carry_the_measured_variation() -> void:
@@ -1887,6 +2020,8 @@ func test_facade_projections_and_crowns_carry_the_measured_variation() -> void:
 	var balconies := 0
 	var balcony_buildings := 0
 	var outcroppings := 0
+	var jetties := 0
+	var bridge_rooms := 0
 	var measured := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
@@ -1907,11 +2042,31 @@ func test_facade_projections_and_crowns_carry_the_measured_variation() -> void:
 		balconies += town_balconies
 		balcony_buildings += int(plan.audit.get("balcony_building_count", 0))
 		outcroppings += town_outcrops
+		var town_bays := int(plan.audit.get("facade_bay_count", -1))
+		# TASK E3b RULING 3. The bracketed jetties this town really stands, off
+		# the room stamps rather than off any audit: the fact the three
+		# consumers read (`bridge_is_bracketed_jetty`) had no producer at all
+		# before this task, so counting it here is what says whether the wiring
+		# reaches a real town.
+		var town_jetties := 0
+		var town_bridge_rooms := 0
+		for building: WarrenBuildingVolume in plan.buildings:
+			for room: WarrenRoomStamp in building.room_records:
+				if (room.audit.get("bridge_support_room_ids",
+						[]) as Array).is_empty():
+					continue
+				town_bridge_rooms += 1
+				town_jetties += int(bool(room.audit.get(
+					"bridge_is_bracketed_jetty", false)))
+		jetties += town_jetties
+		bridge_rooms += town_bridge_rooms
+		assert_gte(town_bays, FACADE_BAY_FLOOR,
+			"%s stands %d embedded oriel bays" % [_label(outcome), town_bays])
 		print(("MAZE_VARIATION %s pitched=%d/%d balconies=%d/%d " \
-			+ "outcroppings=%d facade_bays=%d") % [_label(outcome),
-			town_pitched, town_eligible, town_balconies,
+			+ "outcroppings=%d facade_bays=%d bridge_rooms=%d jetties=%d") % [
+			_label(outcome), town_pitched, town_eligible, town_balconies,
 			int(plan.audit.get("balcony_building_count", -1)), town_outcrops,
-			int(plan.audit.get("facade_bay_count", -1))])
+			town_bays, town_bridge_rooms, town_jetties])
 		assert_gte(town_balconies, 0,
 			"%s must publish usable_balcony_count" % _label(outcome))
 		assert_gte(town_outcrops, 0,
@@ -1919,8 +2074,9 @@ func test_facade_projections_and_crowns_carry_the_measured_variation() -> void:
 	assert_gt(measured, 0, "at least one seed sealed a town to measure")
 	var share := float(pitched) / float(maxi(1, eligible))
 	print(("MAZE_VARIATION corpus pitched=%d/%d=%.3f balconies=%d " \
-		+ "buildings=%d outcroppings=%d") % [pitched, eligible, share,
-		balconies, balcony_buildings, outcroppings])
+		+ "buildings=%d outcroppings=%d bridge_rooms=%d jetties=%d") % [
+		pitched, eligible, share, balconies, balcony_buildings, outcroppings,
+		bridge_rooms, jetties])
 	assert_gte(share, PITCHED_CROWN_SHARE_FLOOR,
 		("%d of %d eligible crowns compose pitched (%.3f), under the " \
 			+ "measured floor") % [pitched, eligible, share])
@@ -2096,6 +2252,124 @@ func test_partial_plates_are_tiled() -> void:
 		"no planner seed tiled a single partial flat plate")
 	assert_gt(total_tiles, total_tiled,
 		"every tiled crown took exactly one tile, which is not a tiling")
+
+
+## TASK E3b RULING 1, GATE 1. The seed whose flat crown really carries a
+## STREET on part of its plate, and the town the veto on that used to kill.
+## `7/standard` is the row Task E3 recorded against the +1-storey widening
+## (`roof remainder for ...house.000.part01.room00 contains a 1-cell exposed
+## sliver`), and it is measured here rather than assumed: the test re-derives
+## which crowns carry public air from the sealed grid and requires the
+## compiler's own count to agree.
+const STREET_BORNE_SEED := 7
+const STREET_BORNE_SCALE := &"standard"
+
+
+func test_a_street_borne_crown_stays_in_the_flat_vocabulary() -> void:
+	## TASK E3b RULING 1, GATE 1. A plot-flat crown used to be thrown out of the
+	## WHOLE flat vocabulary -- slab and tiles alike -- by ONE face cell whose
+	## band above is public air, and it landed in the finite setback vocabulary,
+	## where a leftover one-cell strip has no authored shed. That is what killed
+	## `7/standard`. A maze flat crown now never leaves the flat vocabulary: it
+	## slabs when a slab can stand and TILES when one cannot, and each module is
+	## proved on its own, so the cells under a street take the thin plank cap
+	## that claims no mass.
+	##
+	## Three teeth. The town seals; the compiler's published count of
+	## street-borne plates equals this file's own derivation from the sealed
+	## grid; and no flat crown reaches the setback vocabulary at all.
+	var outcome := _solved(STREET_BORNE_SEED, STREET_BORNE_SCALE)
+	var plan := outcome.plan as WarrenSpatialPlan
+	assert_not_null(plan, "%s composes: %s" % [_label(outcome),
+		outcome.get("failure", "")])
+	if plan == null:
+		return
+	var fabric := plan.compiled_fabric_cache()
+	assert_not_null(fabric, "%s must carry its compiled fabric" \
+		% _label(outcome))
+	if fabric == null:
+		return
+	# The derivation, from the plan rather than from the compiler: a flat crown
+	# is street-borne when any of its exposed roof faces has PUBLIC_AIR one band
+	# above -- the exact predicate `_touches_public_air` states.
+	var faces_by_room := _flat_crown_faces(plan)
+	var derived_street_borne := 0
+	var street_borne_rooms := PackedStringArray()
+	for room_id_value: Variant in faces_by_room.keys():
+		var carries_street := false
+		for face: Vector3i in faces_by_room[room_id_value] as Array[Vector3i]:
+			if plan.grid.use_at(face + Vector3i.UP) \
+					== WarrenSpatialGrid.Use.PUBLIC_AIR:
+				carries_street = true
+				break
+		if carries_street:
+			derived_street_borne += 1
+			if street_borne_rooms.size() < 4:
+				street_borne_rooms.append(String(room_id_value))
+	var published := int(fabric.audit.get("maze_street_borne_plate_count", -1))
+	var to_setback := int(fabric.audit.get(
+		"plot_flat_roof_partial_plate_count", -1))
+	print(("MAZE_STREET_BORNE %s derived=%d published=%d to_setback=%d " \
+		+ "rooms=%s") % [_label(outcome), derived_street_borne, published,
+		to_setback, ", ".join(street_borne_rooms)])
+	assert_gt(derived_street_borne, 0,
+		"%s must really stand a street on a flat crown, or it proves nothing" \
+			% _label(outcome))
+	assert_eq(published, derived_street_borne,
+		("%s publishes %d street-borne plates against %d derived from its " \
+			+ "grid") % [_label(outcome), published, derived_street_borne])
+	assert_eq(to_setback, 0,
+		("%s sent %d flat crowns to the finite setback vocabulary; a maze " \
+			+ "flat crown never leaves the flat one") % [_label(outcome),
+				to_setback])
+
+
+func test_a_one_cell_maze_sliver_is_repaired_only_where_the_lid_continues() \
+		-> void:
+	## TASK E3b RULING 1, GATE 2 -- the cross-lineage sliver repair, stated
+	## directly against its own proof. `_setback_shed_placement` is authored for
+	## 2, 4 and 6 cells, so a ONE-cell strip has no shed and the compiler
+	## refused the whole town for it. A strip is only an exposed SHOULDER when
+	## the lid stops at it; when the flat lid continues across its long edge it
+	## is a seam inside a horizontal plank surface, and on a maze crown that
+	## surface is the vernacular.
+	##
+	## Six cases, and the two that must stay refused are the point: a strip with
+	## no continuing neighbour at all, and one whose neighbour is a crown the
+	## plot model did NOT declare flat -- admitting that would read a pitched
+	## house's weather shoulder as a plank lid, which is the modular-lid defect
+	## the shed rule exists to prevent.
+	var strip: Array[Vector3i] = [Vector3i(0, 3, 7)]
+	var flat_crowns := {StringName("room.a"): true, StringName("room.b"): true}
+	var same_room := WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(
+		strip, &"room.a", {Vector3i(1, 3, 7): StringName("room.a")},
+		flat_crowns)
+	assert_false(same_room.is_empty(),
+		"a strip whose own crown continues beside it is repaired")
+	assert_false(bool(same_room.get("cross_lineage", true)),
+		"and that is not a cross-lineage repair")
+	var across := WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
+		&"room.a", {Vector3i(1, 3, 7): StringName("room.b")}, flat_crowns)
+	assert_false(across.is_empty(),
+		"a strip whose NEIGHBOUR lineage continues the lid is repaired too")
+	assert_true(bool(across.get("cross_lineage", false)),
+		"and that one is the cross-lineage repair this task exists for")
+	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
+			&"room.a", {}, flat_crowns).is_empty(),
+		"a strip with nothing beside it is the exposed shoulder, still refused")
+	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
+			&"room.a", {Vector3i(1, 3, 7): StringName("room.c")},
+			flat_crowns).is_empty(),
+		"a neighbour the plot model never called flat carries no argument")
+	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
+			&"room.a", {Vector3i(0, 4, 7): StringName("room.b")},
+			flat_crowns).is_empty(),
+		"a crown one band ABOVE is not this lid continuing")
+	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
+			&"room.a", {Vector3i(1, 3, 7): StringName("room.b")},
+			{}).is_empty(),
+		"and a plan with no plot-flat crowns at all -- every legacy town " \
+			+ "-- is never repaired here")
 
 
 func _crown_deck_cells(plan: WarrenSpatialPlan,
@@ -3977,7 +4251,11 @@ const SLOPED_UNROOMED_PLOT_MASS_CEILING := 0.39
 const SLOPED_KNOWN_REFUSALS: Dictionary = {}
 
 const SLOPED_SOLVE_MS_CEILING: Dictionary = {
-	"ramp/12/compact": 4400,
+	# TASK E3b: 4400 -> 10600, the same storey widening as
+	# `PLANNER_SOLVE_MS_CEILING["12/compact"]` and for the same reason.
+	# Measured 9214 ms; the other three sloped rows stayed inside their
+	# ceilings (9575/12800, 4785/5600, 8485/16500) and are untouched.
+	"ramp/12/compact": 10600,
 	"ramp/3/standard": 12800,
 	"step/12/compact": 5600,
 	"step/3/standard": 16500,

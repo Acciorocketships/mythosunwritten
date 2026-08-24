@@ -48,6 +48,27 @@ const TARGET_ROOM_OUTCROPPINGS := 6
 ## `WarrenVolumetricSolver._residual_bridge_span` never got -- it is read for
 ## `is_bracketed_jetty` in three places and set in none. NEITHER EXPERIMENT IS
 ## SHIPPED: `cantilever_range` still decides the target, and it is zero.
+##
+## TASK E3b RE-APPLIED BOTH ON TOP OF THE SHIPPED TALLER HOUSES AND REVERTED
+## THEM AGAIN, and the second measurement replaces E3's diagnosis with a
+## stronger one. The pool did grow exactly as E3 predicted -- `12/standard`
+## goes `target_source_count` 1 -> **7**, `eligible_endpoint_count` 4 -> **28**,
+## `recipe_attempt_count` 24 -> **168** -- and the outcome is still **zero
+## candidates**, because **53 of those attempts die at
+## `_skywalk_body_fits_grid` and none at the room envelope**
+## (`room_envelope_rejection_count: 0`, so the narrowed lineage exemption is
+## not what refuses them either).
+##
+## THE REASON IS THE TOWN, NOT THE QUOTA. A diagonal annex needs OUTSIDE or
+## ALLOCATABLE cells beside an upper room, and a town CARVED OUT OF A MOUNTAIN
+## has none: every cell beside a house is another plot's private volume, the
+## retained rock the town was cut from, or a street's public air, and
+## `_skywalk_body_fits_grid` admits none of the three. No quota, pool or
+## exemption can produce a diagonal corner outcropping here; only mass the
+## carver deliberately RETAINED over a void can carry one, which is exactly
+## what a bridge span is. That is why Task E3b spent its outcropping ruling on
+## the bracketed jetty (`WarrenVolumetricSolver._residual_bridge_span`, now
+## with a producer) instead of on this family.
 const MIN_COURT_SIDE_COUNT := 3
 const MIN_COURT_DAYLIGHT_MACRO_COLUMNS := 2
 const MAX_CANTILEVER_SUPPORT_ASSIGNMENT_NODES := 4096
@@ -98,6 +119,14 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	var target_balconies := scale_profile.balcony_range.y
 	var minimum_outcroppings := scale_profile.cantilever_range.x
 	var target_outcroppings := scale_profile.cantilever_range.y
+	# "This town came from the plot model", read once. Three rules in this file
+	# turn on it -- the balcony walk-out vocabulary, the two balcony envelope
+	# agreements, and the maze diagonal-outcrop target -- and all three exist
+	# for one reason: a maze lineage's parts are the rectangles one plot was cut
+	# into and there is exactly one composition, so nothing here may select a
+	# feature the compiler will refuse and expect another composition to save
+	# the town.
+	var plot_model_source := source.mass_context.has(&"maze_source_plan")
 	# A village whose ground street holds no measured bazaar runs without one;
 	# a profile that requires the market never reaches this stage marketless
 	# because the hero-feature beam already rejected the town.
@@ -297,7 +326,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			annex.audit.annex_source_parcel_id)] = true
 	var balconies := _reserve_balconies(grid, buildings, supports,
 		source.world_seed, construction_program, out, target_balconies,
-		source.mass_context.has(&"maze_source_plan"))
+		plot_model_source)
 	var balcony_buildings: Dictionary = {}
 	for balcony: WarrenFeatureReservation in balconies:
 		balcony_buildings[StringName(balcony.audit.balcony_building_id)] = true
@@ -2119,12 +2148,24 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		world_seed: int, program: SettlementFabricProgram,
 		existing_features: Array[WarrenFeatureReservation],
 		target_count: int = TARGET_BALCONIES,
-		allow_private_walkouts: bool = false) \
+		plot_model_source: bool = false) \
 		-> Array[WarrenFeatureReservation]:
 	## Search the actual three-dimensional residual void around upper room
 	## sockets. A candidate is a complete measured recipe and owns its deck,
 	## private headroom, guards, door seam, support, and clearance before roofs
 	## are allowed to compile around it.
+	##
+	## `plot_model_source` is one fact -- "this town came from the plot model"
+	## (`mass_context.has(&"maze_source_plan")`) -- with two consequences,
+	## and it
+	## is named after the fact rather than after either of them. It ADMITS the
+	## private walk-out vocabulary whatever the budget (Task E3, at the recipe
+	## list below), and it NARROWS the source-lineage exemption to the balcony's
+	## own parent room (Task E3b, at
+	## `_feature_bounds_overlap_unrelated_room`). Both are true for the same
+	## reason: a maze lineage's parts are the rectangles one plot was cut into,
+	## not a composed building, and there is no second composition to fall back
+	## on. False for every searched caller.
 	if program == null:
 		return [] as Array[WarrenFeatureReservation]
 	var used_endpoint_cells: Dictionary = {}
@@ -2150,6 +2191,7 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		&"missing_public_stair_landing": 0,
 		&"portal_room_overlap": 0,
 		&"clearance_blocked": 0,
+		&"accepted_balcony_overlap": 0,
 	}
 	var stair_rejection_samples: Array[Dictionary] = []
 	var clearance_rejection_samples: Array[Dictionary] = []
@@ -2179,7 +2221,7 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 	# Measured after: 3 balconies across 3 buildings on every standard town --
 	# the four planner towns together go from 2 balconies on 2 buildings to 8
 	# on 8 -- and the corpus still seals 24/24.
-	if target_count <= 2 or allow_private_walkouts:
+	if target_count <= 2 or plot_model_source:
 		recipe_ids.append_array([
 			&"balcony.walkout.deep.left.blue.planted",
 			&"balcony.walkout.deep.right.orange.planted",
@@ -2286,7 +2328,8 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				continue
 			if _feature_bounds_overlap_unrelated_room(recipe, origin, yaw,
 					building.stable_id, room.source_parcel_id,
-					return_contacts, room_clearance_bounds):
+					return_contacts, room_clearance_bounds, room.stable_id,
+					plot_model_source):
 				rejection_counts[&"unrelated_room_overlap"] += 1
 				continue
 			# The feature also changes its parent shell from a closed wall module to
@@ -2387,6 +2430,20 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 	var used_facades: Dictionary = {}
 	var used_rooms: Dictionary = {}
 	var wraparound_count := 0
+	# TASK E3b. The measured envelopes of the balconies ACCEPTED IN THIS PASS.
+	# Each candidate was proved against `existing_features` and against the
+	# grid, and both are re-checked below -- but the grid is a lattice raster
+	# and
+	# the compiler's own gate is a measured AABB, which is strictly finer. Two
+	# balconies on different buildings at different bands therefore passed the
+	# raster and then collided in measured space, and `compile_feature_units`
+	# threw the town away for it (measured: `10/standard` under the +1-storey
+	# widening, `balcony.walkout.deep.right.orange.planted at (-9, 4, -3)`
+	# against `balcony.walkout.deep.left.amber.planted at (-7, 2, -7)`).
+	# Plot-model only, and for the same reason as the lineage narrowing above:
+	# a searched town can select another composition when the compiler refuses,
+	# and the plot model has exactly one.
+	var accepted_bounds: Array[AABB] = []
 	for candidate: Dictionary in candidates:
 		if out.size() >= target_count:
 			break
@@ -2410,9 +2467,24 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		candidate["clearance_only"] = refreshed.clearance_only
 		candidate["covered_public_cells"] = refreshed.covered_public_cells
 		candidate["covered_public_count"] = refreshed.covered_public_count
+		var candidate_recipe := program.recipe(StringName(candidate.recipe_id))
+		var candidate_bounds := FabricRecipe.lattice_transform(
+			candidate.origin as Vector3i, int(candidate.yaw_quarters)) \
+			* candidate_recipe.local_clearance_bounds
+		if plot_model_source:
+			var collides := false
+			for accepted: AABB in accepted_bounds:
+				if SettlementFabricPlan._aabb_overlaps_volume(candidate_bounds,
+						accepted):
+					collides = true
+					break
+			if collides:
+				rejection_counts[&"accepted_balcony_overlap"] += 1
+				continue
 		var feature := _commit_balcony(grid, candidate, supports, out.size())
 		if feature == null:
 			continue
+		accepted_bounds.append(candidate_bounds)
 		out.append(feature)
 		wraparound_count += int(bool(candidate.wraparound))
 		count_by_building[building.stable_id] = int(count_by_building.get(
@@ -3033,11 +3105,34 @@ static func _room_clearance_bounds(
 static func _feature_bounds_overlap_unrelated_room(recipe: FabricRecipe,
 		origin: Vector3i, yaw_quarters: int, building_id: StringName,
 		related_source_id: StringName, return_contacts: Array[Vector3i],
-		room_bounds: Array[Dictionary]) -> bool:
+		room_bounds: Array[Dictionary], parent_room_id: StringName = &"",
+		strict_room_lineage: bool = false) -> bool:
+	## TASK E3b. `strict_room_lineage` narrows the SOURCE-LINEAGE exemption to
+	## the feature's own parent room, and it exists because the two sides of
+	## this
+	## fact disagreed. Here a balcony treated its whole `source_parcel_id` as a
+	## named seam; `WarrenSpatialFabricCompiler._feature_is_related_to_room`,
+	## which decides the same question when the ROOMS compile, relates a balcony
+	## to `balcony_room_id` and to nothing else. In a SEARCHED building the two
+	## readings agree in practice -- its parts are composed to interlock --
+	## but a
+	## maze lineage's parts are the rectangles ONE PLOT was cut into, so a
+	## balcony hung on `part00` could overlap `part02`'s envelope unopposed here
+	## and then kill the town one stage later at `room ...part02.room00 failed
+	## measured phase selection: visual envelope intersects unrelated feature
+	## spatial.feature.balcony.00` (measured: `2/compact` under every storey
+	## widening; it is the same defect Task E3 named at
+	## `_tower_annex_clears_room_envelopes`).
+	##
+	## The narrowing only ever REFUSES a candidate the compiler was going to
+	## refuse anyway, so it cannot admit anything new, and it is false for every
+	## searched caller.
 	var feature_bounds := FabricRecipe.lattice_transform(origin, yaw_quarters) \
 		* recipe.local_clearance_bounds
 	for record: Dictionary in room_bounds:
-		var same_source := StringName(record.source_parcel_id) == related_source_id
+		var same_source := StringName(record.room_id) == parent_room_id \
+			if strict_room_lineage \
+			else StringName(record.source_parcel_id) == related_source_id
 		var return_room := StringName(record.building_id) == building_id \
 			and _cells_intersect(record.private_cells as Array[Vector3i],
 				return_contacts)
