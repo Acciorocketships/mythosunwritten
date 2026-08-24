@@ -361,6 +361,15 @@ Milestone: noise massif behind the unchanged interface (relief > 0, varied plate
 **Files:** `WarrenPlotPlanner.gd` (wider seeded storey budgets; pitched-preference eligibility naturally broadens on the descending massif — measure the pitched rate and tune the preference probability to land 20-40% of eligible crowns pitched), `WarrenVolumetricSolver.gd` (re-enable the residual outcropping/bracketed-jetty forms for maze plot mass; balconies already advisory — measure), `WarrenPlotReservations.gd` (deck quotas up on the new terraces if cheap), tests (per-town measured counts: pitched roofs, outcroppings/cantilevers, balconies, deck cells — pinned as floors at measured − guard; the user's "more variation" is judged in G).
 - [ ] Commit — `feat(villages): roof, storey, and outcropping variation`.
 
+### Task E3b: The two vocabulary gates
+
+E3 measured eight variation changes (storey widenings, outcropping enablements, density levers) and every one died at the same two Phase C composition gates: (a) the partial-plate flat module cannot tile ACROSS LINEAGE BOUNDARIES (C5e's tiling stops at a lineage edge, so a crown shared by a house and its stacked/back-room lineage has an untileable seam), and (b) the cross-lineage 1-cell sliver repair (the roof remainder family) cannot repair a sliver whose neighbour belongs to another lineage. Fixing both unlocks storeys, density and outcroppings at once. Also: `is_bracketed_jetty` is read in three places and set in none — the jetty/outcropping form is dead code; wire it.
+
+**Files:** `WarrenSpatialFabricCompiler.gd` (the two gates: tiling and sliver repair become lineage-agnostic for maze flat crowns — a tile/repair may span lineages when both rooms are maze stamps; audit counts), `WarrenVolumetricSolver.gd` (`_residual_bridge_span` sets `is_bracketed_jetty` where the jetty form actually holds — read the three consumers for the intended semantics; the outcropping enablement re-applied from E3's recorded attempt), `WarrenPlotPlanner.gd` (the storey widenings re-applied from E3's recorded attempts, one at a time), tests.
+- Discipline: each re-applied change lands only if the corpus holds 24/24 and no sloped row is lost; measured at each step; every E3-recorded attempt either ships or gets its stop-evidence updated with the post-gate-fix numbers.
+- Exit: compact towns ≥ 3 distinct house heights; outcroppings ≥ 1 on at least half the corpus towns (measured-first floors); the variation tables re-printed; renders (seed 12 + 3) read for the verdict.
+- [ ] Commit — `feat(villages): cross-lineage plates and slivers; the variation attempts ship`.
+
 ### Task E4: Stone concentrates low
 
 **Files:** `WarrenMazeSourcePlan.gd` (a per-band exterior-stone profile relative to the LOCAL street/ground band replaces the flat `exterior_rock_ratio` as the pinned metric: stone faces ≤ 2 storeys above local datum vs above; the raised-shoulder instrumentation (39 columns) becomes a clamp if the measurement says so), the sweep, tests (pin: share of exterior stone faces above 2 storeys over local datum ≤ ceiling at measured + guard, expected to FALL with E1-E3; report the per-band histogram per seed).
